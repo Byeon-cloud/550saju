@@ -36,9 +36,15 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
-            <div className="bg-brand-surface rounded-t-3xl px-6 py-8">
+            <div className="bg-white rounded-t-brand-2xl px-6 pt-3 pb-8"
+              style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}
+            >
+              {/* 핸들바 */}
+              <div className="flex justify-center mb-4">
+                <div className="w-10 h-1 rounded-full bg-brand-secondary" />
+              </div>
               {title && (
-                <h2 className="text-lg font-bold text-brand-text mb-4">{title}</h2>
+                <h2 className="text-h1 text-brand-text mb-4">{title}</h2>
               )}
               {children}
             </div>

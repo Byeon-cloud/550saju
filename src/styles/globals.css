@@ -1,50 +1,284 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand-gold: #B8A080;
+    --brand-gold-light: #D4C4A8;
+    --brand-gold-dark: #8C7456;
+    --brand-accent: #C8956C;
+
+    --bg-cream: #FBF8F3;
+    --bg-warm: #F6F1EA;
+    --bg-card: #FFFFFF;
+    --bg-card-alt: #FDFCFA;
+    --bg-surface: #F8F5F0;
+    --bg-glow: rgba(200,149,108,0.06);
+
+    --text-primary: #2C2418;
+    --text-secondary: #5C4F3D;
+    --text-muted: #9C8E7C;
+    --text-hint: #BEB3A4;
+
+    --border-main: #E8E0D4;
+    --border-subtle: #F0EBE3;
+    --border-gold: rgba(184,160,128,0.3);
+
+    --shadow-soft: 0 1px 4px rgba(44,36,24,0.04);
+    --shadow-card: 0 2px 12px rgba(44,36,24,0.05), 0 0 0 1px rgba(232,224,212,0.6);
+    --shadow-elevated: 0 8px 32px rgba(44,36,24,0.08), 0 0 0 1px rgba(232,224,212,0.4);
+    --shadow-glow: 0 4px 24px rgba(200,149,108,0.12);
+
+    --oheng-wood: #3A9D5C;
+    --oheng-wood-light: #EDF7F0;
+    --oheng-wood-bg: #F4FAF6;
+    --oheng-fire: #E05252;
+    --oheng-fire-light: #FFF0F0;
+    --oheng-fire-bg: #FFF7F7;
+    --oheng-earth: #D4952E;
+    --oheng-earth-light: #FFF8ED;
+    --oheng-earth-bg: #FFFBF4;
+    --oheng-metal: #8B8B8B;
+    --oheng-metal-light: #F5F5F5;
+    --oheng-metal-bg: #FAFAFA;
+    --oheng-water: #4A8AD4;
+    --oheng-water-light: #EDF4FC;
+    --oheng-water-bg: #F5F9FE;
+  }
+
   html {
     font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
-      system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo',
-      'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji',
-      'Segoe UI Symbol', sans-serif;
+      system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'ss01', 'cv01';
   }
 
   body {
-    @apply bg-brand-background text-brand-text;
     margin: 0;
     padding: 0;
+    background: #EDE8DE;
+    color: var(--text-primary);
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.95); opacity: 0.5; }
+    50% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.5; }
   }
 }
 
 @layer components {
+  /* ===== 앱 컨테이너 ===== */
+  .app-container {
+    @apply mx-auto max-w-mobile min-h-screen relative;
+    background: var(--bg-cream);
+  }
+
   .page-container {
-    @apply mx-auto w-full max-w-mobile min-h-screen px-5 py-6;
+    @apply w-full px-5 pt-4 pb-28;
   }
 
+  /* ===== 카드 시스템 ===== */
   .card {
-    @apply bg-brand-surface rounded-2xl border border-brand-border p-5;
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: var(--shadow-card);
+    border: none;
   }
 
-  .btn-primary {
-    @apply bg-brand-primary text-white font-semibold rounded-xl px-6 py-3.5
-           hover:bg-brand-primary-hover active:scale-[0.98] transition-all
-           disabled:opacity-50 disabled:cursor-not-allowed;
+  .card-elevated {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: var(--shadow-elevated);
   }
 
-  .btn-secondary {
-    @apply bg-brand-surface text-brand-text font-semibold rounded-xl px-6 py-3.5
-           border border-brand-border
-           hover:bg-brand-background active:scale-[0.98] transition-all;
+  .card-glass {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: var(--shadow-card);
   }
 
+  .card-gradient {
+    background: linear-gradient(145deg, #FFFFFF 0%, var(--bg-card-alt) 100%);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: var(--shadow-elevated);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .card-gold {
+    background: linear-gradient(135deg, #FFF9F2 0%, #FFF4E8 50%, #FFF9F2 100%);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: var(--shadow-glow);
+    border: 1px solid rgba(184,160,128,0.2);
+  }
+
+  /* ===== 섹션 배경 ===== */
+  .section-warm {
+    background: linear-gradient(180deg, var(--bg-cream) 0%, var(--bg-warm) 100%);
+    padding: 24px 20px;
+    margin: 0 -20px;
+  }
+
+  .section-accent {
+    background: linear-gradient(180deg, #FFF9F2 0%, #FFF4EA 100%);
+    padding: 24px 20px;
+    margin: 0 -20px;
+  }
+
+  /* ===== 타이포그래피 ===== */
   .section-title {
-    @apply text-lg font-bold text-brand-text;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
   }
 
-  .text-muted {
-    @apply text-brand-muted text-sm;
+  .section-subtitle {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ===== 뱃지 ===== */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .badge-gold {
+    background: linear-gradient(135deg, rgba(184,160,128,0.12), rgba(200,149,108,0.12));
+    color: var(--brand-gold-dark);
+  }
+
+  .badge-success {
+    background: var(--oheng-wood-light);
+    color: #2B7A40;
+  }
+
+  .badge-warning {
+    background: var(--oheng-fire-light);
+    color: #C43C3C;
+  }
+
+  .badge-info {
+    background: var(--oheng-water-light);
+    color: #3A72B5;
+  }
+
+  .badge-special {
+    background: #F3EDF8;
+    color: #7B4DAA;
+  }
+
+  /* ===== 구분선 ===== */
+  .divider-gradient {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-main), transparent);
+  }
+
+  .divider-gold {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--brand-gold-light), transparent);
+  }
+
+  /* ===== 스켈레톤 ===== */
+  .skeleton {
+    background: linear-gradient(90deg, #F0EBE3 25%, #FAF7F2 50%, #F0EBE3 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease infinite;
+    border-radius: 8px;
+  }
+}
+
+@layer utilities {
+  .text-display {
+    font-size: 28px;
+    line-height: 1.25;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .text-h1 {
+    font-size: 22px;
+    line-height: 1.35;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .text-h2 {
+    font-size: 17px;
+    line-height: 1.4;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .text-h3 {
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 700;
+  }
+  .text-body {
+    font-size: 14px;
+    line-height: 1.85;
+    font-weight: 400;
+  }
+  .text-body-sm {
+    font-size: 13px;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+  .text-caption {
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+  .text-label {
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .text-tiny {
+    font-size: 10px;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .text-gold {
+    color: var(--brand-gold-dark);
+  }
+  .text-accent {
+    color: var(--brand-accent);
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
