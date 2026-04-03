@@ -5,12 +5,12 @@ interface HealthVisProps {
   elements: OhengDistribution;
 }
 
-const HEALTH: { oheng: OhengType; organ: string; emoji: string }[] = [
-  { oheng: '목', organ: '간/담/눈/신경', emoji: '👁️' },
-  { oheng: '화', organ: '심장/소장/혈액', emoji: '❤️' },
-  { oheng: '토', organ: '비장/위/소화', emoji: '🫁' },
-  { oheng: '금', organ: '폐/대장/피부', emoji: '🫧' },
-  { oheng: '수', organ: '신장/방광/뼈', emoji: '💧' },
+const HEALTH: { oheng: OhengType; organ: string }[] = [
+  { oheng: '목', organ: '간/담/눈/신경' },
+  { oheng: '화', organ: '심장/소장/혈액' },
+  { oheng: '토', organ: '비장/위/소화' },
+  { oheng: '금', organ: '폐/대장/피부' },
+  { oheng: '수', organ: '신장/방광/뼈' },
 ];
 
 function getStatus(count: number): { label: string; color: string; bg: string } {
@@ -22,14 +22,14 @@ function getStatus(count: number): { label: string; color: string; bg: string } 
 export function HealthVis({ elements }: HealthVisProps) {
   return (
     <div className="space-y-2">
-      {HEALTH.map(({ oheng, organ, emoji }) => {
+      {HEALTH.map(({ oheng, organ }) => {
         const count = elements[oheng] || 0;
         const info = OHENG_MAP[oheng];
         const st = getStatus(count);
         return (
-          <div key={oheng} className="flex items-center gap-3 rounded-brand-md px-3 py-2.5"
+          <div key={oheng} className="flex items-center gap-3 rounded-xl px-3 py-2.5"
             style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-soft)' }}>
-            <span className="text-[16px]">{emoji}</span>
+            <span className="text-[14px] font-black" style={{ color: info.color }}>{info.hanja}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-[12px] font-bold" style={{ color: info.colorDark }}>

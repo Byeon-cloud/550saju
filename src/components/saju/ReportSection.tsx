@@ -15,10 +15,14 @@ export function ReportSection({ icon, title, content, defaultOpen = false, visua
   return (
     <div className="card overflow-hidden">
       <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center gap-3 py-0.5">
-        <span className="w-8 h-8 rounded-full flex items-center justify-center text-[15px] shrink-0"
-          style={{ background: 'var(--bg-surface)' }}>
-          {icon}
-        </span>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: 'rgba(201,169,110,0.1)' }}>
+          {icon ? (
+            <span className="text-[14px] font-bold" style={{ color: '#C9A96E' }}>{icon}</span>
+          ) : (
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-gold" />
+          )}
+        </div>
         <span className="flex-1 text-left text-[14px] font-bold" style={{ color: 'var(--text-primary)' }}>
           {title}
         </span>

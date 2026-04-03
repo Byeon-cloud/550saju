@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head><title>사주500 앱 아이콘 — 동전 두 개</title></head>
+<body style="background:#333; display:flex; flex-direction:column; align-items:center; padding:40px; gap:20px;">
+<h2 style="color:#fff">앱 아이콘 (1024 x 1024px) — 동전 두 개</h2>
+<canvas id="c" width="1024" height="1024"></canvas>
+<button onclick="download()" style="padding:12px 32px; font-size:16px; cursor:pointer; border-radius:8px; border:none; background:#C9A96E; color:#fff; font-weight:bold;">PNG 다운로드</button>
+
+<script>
+const S = 1024;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.style.width = '512px';
+canvas.style.height = '512px';
+
+const cx = S/2, cy = S/2;
+
+// ====== 배경 — 딥 네이비 그라데이션 ======
+const bg = ctx.createRadialGradient(cx, cy*0.85, 0, cx, cy, S*0.6);
+bg.addColorStop(0, '#243656');
+bg.addColorStop(1, '#131D30');
+ctx.fillStyle = bg;
+ctx.fillRect(0, 0, S, S);
+
+// ====== 동전 그리기 함수 ======
+function drawCoin(x, y, radius, mainText, mainSize, subText, rotation) {
+  ctx.save();
+  ctx.translate(x, y);
+  if (rotation) ctx.rotate(rotation);
+
+  const ridgeCount = Math.round(radius * 0.35);
+
+  // 드롭 섀도우
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 50;
+  ctx.shadowOffsetX = 8;
+  ctx.shadowOffsetY = 15;
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+
+  // 동전 베이스 — 골드 메탈릭
+  const coinG = ctx.createLinearGradient(-radius, -radius, radius*0.7, radius);
+  coinG.addColorStop(0, '#EEDCB0');
+  coinG.addColorStop(0.15, '#DECA90');
+  coinG.addColorStop(0.4, '#C9A96E');
+  coinG.addColorStop(0.6, '#B5954E');
+  coinG.addColorStop(0.85, '#C9A96E');
+  coinG.addColorStop(1, '#DECA90');
+  ctx.fillStyle = coinG;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI*2);
+  ctx.fill();
+
+  // 톱니
+  ctx.strokeStyle = 'rgba(130,105,45,0.3)';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < ridgeCount; i++) {
+    const a = (i / ridgeCount) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * (radius - 10), Math.sin(a) * (radius - 10));
+    ctx.lineTo(Math.cos(a) * (radius - 2), Math.sin(a) * (radius - 2));
+    ctx.stroke();
+  }
+
+  // 외곽/내곽 링
+  ctx.strokeStyle = 'rgba(120,95,40,0.45)';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(0, 0, radius - 1, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(120,95,40,0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, radius - 18, 0, Math.PI*2); ctx.stroke();
+
+  // 동전 두께감 (하단 엣지)
+  const edgeG = ctx.createLinearGradient(0, radius*0.3, 0, radius);
+  edgeG.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeG.addColorStop(1, 'rgba(80,60,20,0.15)');
+  ctx.fillStyle = edgeG;
+  ctx.beginPath(); ctx.arc(0, 0, radius - 1, 0, Math.PI*2); ctx.fill();
+
+  // 상단 반사
+  const topHL = ctx.createLinearGradient(0, -radius, 0, -radius*0.3);
+  topHL.addColorStop(0, 'rgba(255,255,255,0.15)');
+  topHL.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = topHL;
+  ctx.beginPath(); ctx.arc(0, 0, radius - 2, 0, Math.PI*2); ctx.fill();
+
+  // 메인 텍스트 — 엠보싱 3레이어
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 ${mainSize}px Pretendard, "Noto Sans KR", Georgia, serif`;
+
+  // 그림자 (오목)
+  ctx.fillStyle = 'rgba(90,70,25,0.45)';
+  ctx.fillText(mainText, 2, 4);
+
+  // 하이라이트 (볼록)
+  ctx.fillStyle = 'rgba(250,235,195,0.5)';
+  ctx.fillText(mainText, -1, -2);
+
+  // 메인 — 메탈 그라데이션
+  const tG = ctx.createLinearGradient(0, -mainSize*0.45, 0, mainSize*0.45);
+  tG.addColorStop(0, '#EAD8A8');
+  tG.addColorStop(0.3, '#B89850');
+  tG.addColorStop(0.5, '#A08538');
+  tG.addColorStop(0.7, '#B89850');
+  tG.addColorStop(1, '#D4BC82');
+  ctx.fillStyle = tG;
+  ctx.fillText(mainText, 0, 0);
+
+  // 서브 텍스트 (있으면)
+  if (subText) {
+    ctx.font = `700 ${mainSize * 0.22}px Pretendard, serif`;
+    ctx.fillStyle = 'rgba(140,115,55,0.5)';
+    ctx.fillText(subText, 1, mainSize * 0.52 + 1);
+    ctx.fillStyle = 'rgba(200,175,110,0.7)';
+    ctx.fillText(subText, 0, mainSize * 0.52);
+  }
+
+  ctx.restore();
+}
+
+// ====== 뒤쪽 동전 (運) — 살짝 기울어져서 뒤에 ======
+drawCoin(
+  cx + 130,   // 오른쪽 위
+  cy - 80,
+  300,        // 반지름
+  '運',       // 메인 텍스트
+  280,        // 텍스트 크기
+  '',
+  0.15        // 살짝 기울임
+);
+
+// ====== 앞쪽 동전 (500) — 정면, 크게 ======
+drawCoin(
+  cx - 80,    // 왼쪽 아래
+  cy + 60,
+  340,        // 반지름 (더 큼)
+  '500',      // 메인 텍스트
+  240,        // 텍스트 크기
+  '',
+  -0.08       // 살짝 반대로 기울임
+);
+
+function download() {
+  const a = document.createElement('a');
+  a.download = 'saju500-icon-1024x1024.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>

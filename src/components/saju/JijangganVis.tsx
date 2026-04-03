@@ -11,7 +11,7 @@ export function JijangganVis({ jijangganList, labels }: JijangganVisProps) {
   return (
     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${jijangganList.length}, 1fr)` }}>
       {jijangganList.map((jj, idx) => (
-        <div key={idx} className="rounded-brand-md overflow-hidden"
+        <div key={idx} className="rounded-xl overflow-hidden"
           style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-soft)' }}>
           {/* 지지 라벨 */}
           <div className="text-center py-1.5"

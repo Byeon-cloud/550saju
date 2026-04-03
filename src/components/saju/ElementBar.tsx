@@ -7,7 +7,7 @@ interface ElementBarProps {
 }
 
 const ORDER: OhengType[] = ['목', '화', '토', '금', '수'];
-const EMOJI: Record<OhengType, string> = { 목: '🌳', 화: '🔥', 토: '⛰️', 금: '⚔️', 수: '💧' };
+const HANJA: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
 
 export function ElementBar({ elements }: ElementBarProps) {
   const max = Math.max(...Object.values(elements), 1);
@@ -25,7 +25,7 @@ export function ElementBar({ elements }: ElementBarProps) {
         return (
           <div key={key} className="flex items-center gap-2.5">
             <div className="w-[52px] flex items-center gap-1">
-              <span className="text-[13px]">{EMOJI[key]}</span>
+              <span className="text-[12px] font-black" style={{ color: info.color }}>{HANJA[key]}</span>
               <span className="text-[12px] font-bold" style={{ color: info.colorDark }}>{key}</span>
             </div>
             <div className="flex-1 h-[22px] rounded-full overflow-hidden relative"

@@ -1,101 +1,688 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
+import { getReports, spendBalance, type LocalReport } from '@/services/storage/localStore';
+import { CHEONGAN_OHENG } from '@/constants/oheng';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
+import { useToast } from '@/components/common/Toast';
+import { generateDailyFortune } from '@/services/ai/reportGenerator';
 
-const QUESTIONS = [
-  { q: '오늘 아침 기분이 어떤가요?', options: ['상쾌해요', '보통이에요', '무거워요'] },
-  { q: '요즘 가장 신경 쓰이는 건?', options: ['일/공부', '사람관계', '돈', '건강', '연애'] },
-  { q: '오늘 하루 바라는 건?', options: ['좋은 소식', '평온한 하루', '새로운 만남', '성취감'] },
-];
+// ─── 시간대 감지 (7단계) ───
+type TimeSlot = 'latenight' | 'dawn' | 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
 
-const FORTUNE = {
-  grade: '상', emoji: '🌟', title: '새로운 시작의 기운',
-  content: `오늘은 목(木)의 기운이 강하게 작용하는 날입니다. 새로운 시작에 유리한 에너지가 감돌고 있어요.\n\n특히 오전 중에 떠오르는 아이디어나 영감을 놓치지 마세요. 평소와 다른 루트로 출퇴근하거나, 새로운 카페를 방문하는 것만으로도 좋은 기운을 받을 수 있습니다.\n\n대인관계에서는 솔직한 소통이 열쇠입니다. 오늘은 용기 내어 속마음을 표현해보세요.`,
-  lucky: { color: '초록색', number: 3, direction: '동쪽' },
+function getTimeSlot(): TimeSlot {
+  const h = new Date().getHours();
+  if (h >= 0 && h < 5) return 'latenight';
+  if (h >= 5 && h < 7) return 'dawn';
+  if (h >= 7 && h < 12) return 'morning';
+  if (h >= 12 && h < 14) return 'noon';
+  if (h >= 14 && h < 18) return 'afternoon';
+  if (h >= 18 && h < 21) return 'evening';
+  return 'night';
+}
+
+const TIME_CONTEXT: Record<TimeSlot, { greeting: string; tone: string; label: string; sub: string }> = {
+  latenight: {
+    greeting: '이 늦은 밤, 마음에 무언가 남았군요',
+    tone: '이 시간까지 고민하고 계신다면, 꽤 중요한 문제인 것 같아요. 차분히 풀어볼게요.',
+    label: '자시(子時)',
+    sub: '수(水)의 기운이 가장 깊은 시간',
+  },
+  dawn: {
+    greeting: '이른 아침이에요. 하루의 시작을 함께할게요',
+    tone: '동이 트기 전, 차분한 에너지가 흐르고 있어요. 오늘의 방향을 잡아볼게요.',
+    label: '인시(寅時)',
+    sub: '목(木)의 기운이 움트는 시간',
+  },
+  morning: {
+    greeting: '좋은 아침이에요!',
+    tone: '하루를 시작하는 양(陽)의 기운이 가장 좋은 시간이에요.',
+    label: '오전',
+    sub: '새로운 시작에 유리한 시간대',
+  },
+  noon: {
+    greeting: '점심시간이네요. 잠깐 쉬면서 봐요',
+    tone: '정오의 화(火) 기운이 가장 강한 시간. 직감이 또렷해져요.',
+    label: '오시(午時)',
+    sub: '화(火)의 기운이 절정인 시간',
+  },
+  afternoon: {
+    greeting: '오후의 기운을 읽어볼게요',
+    tone: '하루의 후반부, 남은 시간을 어떻게 쓸지 함께 봐요.',
+    label: '오후',
+    sub: '금(金)의 수렴 기운으로 판단력이 좋아지는 시간',
+  },
+  evening: {
+    greeting: '오늘 하루 수고하셨어요',
+    tone: '하루를 마무리하는 시간이에요. 내일을 위한 기운도 함께 볼게요.',
+    label: '저녁',
+    sub: '하루를 돌아보기에 좋은 시간',
+  },
+  night: {
+    greeting: '고요한 밤이에요. 편안하게 봐요',
+    tone: '밤에 보는 운세는 더 솔직해져요. 마음 깊은 곳의 이야기를 해볼까요.',
+    label: '해시(亥時)',
+    sub: '수(水)의 기운이 시작되는 시간',
+  },
 };
 
-export function DailyFortunePage() {
-  const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
+// ─── 시간대별 맞춤 질문 ───
+function getQuestions(slot: TimeSlot, hasHistory: boolean) {
+  // Q1 — 시간대 전용 질문
+  const q1Map: Record<TimeSlot, { q: string; sub: string; options: { label: string }[] }> = {
+    latenight: {
+      q: '이 늦은 밤, 마음에 걸리는 게 있나요?',
+      sub: '새벽의 고민은 보통 가장 중요한 것이에요',
+      options: [
+        { label: '잠이 안 올 만큼의 고민' },
+        { label: '내일이 중요한 날이라서' },
+        { label: '문득 미래가 궁금해서' },
+        { label: '그냥 마음이 심란해서' },
+      ],
+    },
+    dawn: {
+      q: '이른 아침에 운세를 보시는 이유가 있나요?',
+      sub: '인시(寅時)의 목(木) 기운 속에서 직감이 맑아져요',
+      options: [
+        { label: '오늘 중요한 일이 있어서' },
+        { label: '일찍 일어나는 습관' },
+        { label: '기분 좋게 시작하고 싶어서' },
+        { label: '어젯밤 꿈이 신경 쓰여서' },
+      ],
+    },
+    morning: {
+      q: '오늘 가장 중요한 일정은 뭔가요?',
+      sub: '오행의 흐름이 활동에 따라 달라져요',
+      options: [
+        { label: '업무 · 회의' },
+        { label: '중요한 만남' },
+        { label: '재정 관련 결정' },
+        { label: '공부 · 자기개발' },
+      ],
+    },
+    noon: {
+      q: '오늘 오전은 어땠나요?',
+      sub: '오전의 에너지가 오후 운세에 영향을 줘요',
+      options: [
+        { label: '순조로웠어요' },
+        { label: '예상치 못한 일이 있었어요' },
+        { label: '아직 본격적으로 시작 전' },
+        { label: '조금 피곤해요' },
+      ],
+    },
+    afternoon: {
+      q: '오후에 특별히 기대되는 일이 있나요?',
+      sub: '금(金)의 수렴 기운이 판단력을 높여줘요',
+      options: [
+        { label: '중요한 결정이 남았어요' },
+        { label: '사람을 만날 예정이에요' },
+        { label: '마감이 있어요' },
+        { label: '여유로운 오후예요' },
+      ],
+    },
+    evening: {
+      q: '오늘 하루 중 가장 기억에 남는 순간은?',
+      sub: '하루의 에너지 흐름을 읽어볼게요',
+      options: [
+        { label: '좋은 일이 있었어요' },
+        { label: '아쉬운 일이 있었어요' },
+        { label: '중요한 깨달음이 있었어요' },
+        { label: '평범한 하루였어요' },
+      ],
+    },
+    night: {
+      q: '밤에 운세를 보게 된 이유가 있나요?',
+      sub: '밤의 직감은 낮보다 예리해요',
+      options: [
+        { label: '내일이 걱정돼서' },
+        { label: '문득 궁금해져서' },
+        { label: '오늘 일이 마음에 걸려서' },
+        { label: '큰 결정 앞에 서 있어서' },
+      ],
+    },
+  };
 
-  function selectAnswer(answer: string) {
-    setAnswers([...answers, answer]);
-    setTimeout(() => setStep(step + 1), 300);
+  const base = [
+    q1Map[slot],
+
+    // Q2: 고민 영역
+    {
+      q: hasHistory ? '지난번 분석 이후, 요즘 가장 신경 쓰이는 건?' : '요즘 가장 풀고 싶은 고민은?',
+      sub: hasHistory ? '이전 사주 데이터를 참고해서 더 정확하게 봐드릴게요' : '고민의 영역에 맞춰 운세 포커스를 잡아요',
+      options: [
+        { label: '이직 · 진로' },
+        { label: '연애 · 관계' },
+        { label: '재정 · 투자' },
+        { label: '체력 · 건강' },
+        { label: '목표 달성' },
+        { label: '인간관계' },
+      ],
+    },
+
+    // Q3: 서술형 — 자유 입력
+    {
+      q: '오늘 특별히 궁금한 게 있다면 적어주세요',
+      sub: '적어주신 내용을 반영해서 더 정확한 운세를 알려드릴게요. 건너뛰어도 괜찮아요.',
+      options: [],
+      isTextInput: true,
+    },
+  ];
+
+  return base;
+}
+
+// ─── 결과 데이터 (시간대+이전 데이터 반영) ───
+function getFortuneResult(slot: TimeSlot, hasHistory: boolean, ilgan?: string, ilganOheng?: string, recentReport?: any) {
+  const timeAdvice: Record<TimeSlot, string> = {
+    latenight: '이 시간까지 깨어 계신 당신에게 — 지금 떠오르는 생각을 메모해두세요. 새벽의 직감이 가장 정확해요.',
+    dawn: '이른 아침의 기운이 맑습니다. 오늘 가장 중요한 일을 오전에 배치하세요.',
+    morning: '오전 중으로 가장 중요한 결정을 내리세요. 오늘은 직감이 논리보다 정확한 날입니다.',
+    noon: '점심 후에는 급한 결정을 피하세요. 오후 3시 이후에 중요한 대화를 나누면 좋습니다.',
+    afternoon: '오후에는 사람과의 소통에서 기회가 옵니다. 미뤄둔 연락이 있다면 지금 하세요.',
+    evening: '오늘의 에너지를 내일로 연결하세요. 저녁에 계획을 세우면 내일 실행력이 2배가 됩니다.',
+    night: '밤의 직감을 믿으세요. 지금 떠오르는 아이디어를 적어두면 내일 빛을 발해요.',
+  };
+
+  // 날짜 + 사주 데이터 기반 맞춤 점수
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 86400000);
+  const ilganSeed = ilgan ? ilgan.charCodeAt(0) : 0;
+  const seed = (n: number) => ((dayOfYear * 7919 + n * 104729 + ilganSeed * 31) % 100);
+  const s = (n: number, min: number, max: number) => min + (seed(n) % (max - min + 1));
+
+  // 사주 오행 기반 보정 — 해당 오행이 강하면 관련 운세 점수 UP
+  const elements = recentReport?.sajuData?.elements;
+  const ohengBonus = (key: string) => elements ? Math.min(10, (elements[key as keyof typeof elements] || 0) * 2) : 0;
+
+  const loveScore = Math.min(98, s(1, 55, 90) + ohengBonus('화'));
+  const careerScore = Math.min(98, s(2, 50, 88) + ohengBonus('금') + ohengBonus('토'));
+  const wealthScore = Math.min(98, s(3, 45, 85) + ohengBonus('토'));
+  const healthScore = Math.min(98, s(4, 55, 90) - (elements ? Object.values(elements).filter(v => v === 0).length * 5 : 0));
+  const avgScore = Math.round((loveScore + careerScore + wealthScore + healthScore) / 4);
+
+  const grade = avgScore >= 85 ? 'S' : avgScore >= 75 ? 'A' : avgScore >= 65 ? 'B' : 'C';
+  const gradeLabels: Record<string, Record<string, string>> = {
+    S: { default: '최고의 하루', latenight: '새벽의 축복', night: '밤의 기적' },
+    A: { default: '좋은 하루', latenight: '새벽의 선물', night: '밤의 지혜' },
+    B: { default: '무난한 하루', latenight: '차분한 새벽', night: '고요한 밤' },
+    C: { default: '조심할 하루', latenight: '신중한 새벽', night: '돌아보는 밤' },
+  };
+  const gradeLabel = gradeLabels[grade]?.[slot] || gradeLabels[grade]?.default || '오늘의 운세';
+  const gradeColor = grade === 'S' ? '#C9A96E' : grade === 'A' ? '#2D8A4E' : grade === 'B' ? '#2D4470' : '#D32F2F';
+
+  const personalTouch = ilgan
+    ? `${ilgan} 일간인 당신에게 오늘은 특히 ${s(5, 0, 1) ? '행동력' : '판단력'}이 빛나는 날이에요.`
+    : '';
+
+  const summaries = [
+    '소통과 관계에서 기회가 오는 날입니다. 중요한 연락은 오전에 먼저 하세요.',
+    '새로운 시작의 기운이 강한 날입니다. 미루던 일을 시작하기 좋아요.',
+    '재물의 흐름이 좋은 날입니다. 소비보다 투자에 눈을 돌려보세요.',
+    '건강 에너지가 충만한 날입니다. 운동이나 야외활동을 추천해요.',
+    '직관이 또렷한 날입니다. 고민하던 문제의 답이 떠오를 수 있어요.',
+    '인간관계에서 뜻밖의 도움이 올 수 있는 날이에요.',
+  ];
+
+  return {
+    grade,
+    gradeLabel,
+    gradeColor,
+    summary: hasHistory
+      ? `${TIME_CONTEXT[slot].tone}\n\n${ilganOheng ? `${ilgan}(${ilganOheng}) 일간인 ${recentReport!.name}님에게 ` : ''}${summaries[dayOfYear % summaries.length]}\n\n${personalTouch}${elements ? `\n\n오행 흐름: 오늘은 ${['목', '화', '토', '금', '수'][dayOfYear % 5]}(${['木', '火', '土', '金', '水'][dayOfYear % 5]})의 기운이 강한 날이에요. ${(elements as Record<string, number>)[['목', '화', '토', '금', '수'][dayOfYear % 5]] > 2 ? '사주와 공명하는 날이라 평소보다 에너지가 좋습니다.' : '사주에 부족한 기운을 보충하기 좋은 날이에요.'}` : ''}`
+      : `${TIME_CONTEXT[slot].tone}\n\n${summaries[dayOfYear % summaries.length]}\n\n사주를 등록하면 오행의 흐름에 맞춘 더 정확한 맞춤 운세를 받을 수 있어요.`,
+    scores: [
+      { label: '연애운', score: loveScore, color: '#C9A96E' },
+      { label: '직장운', score: careerScore, color: '#2D4470' },
+      { label: '재물운', score: wealthScore, color: '#D4A843' },
+      { label: '건강운', score: healthScore, color: '#2E7D32' },
+    ],
+    lucky: {
+      color: ['파란색', '초록색', '흰색', '노란색', '검은색', '보라색', '분홍색'][dayOfYear % 7],
+      colorHex: ['#1565C0', '#2D8A4E', '#FFFFFF', '#F57F17', '#212121', '#7B1FA2', '#E91E63'][dayOfYear % 7],
+      number: s(6, 1, 9),
+      direction: ['동쪽', '서쪽', '남쪽', '북쪽'][dayOfYear % 4],
+      item: ['은 액세서리', '가죽 소품', '나무 재질 물건', '물병', '수정 장식'][dayOfYear % 5],
+      food: ['해산물', '닭고기', '콩나물국', '녹차', '견과류', '검은깨죽'][dayOfYear % 6],
+    },
+    advice: timeAdvice[slot],
+  };
+}
+
+export function DailyFortunePage() {
+  usePageTitle('오늘의 운세');
+  const navigate = useNavigate();
+  const toast = useToast();
+  // 질문 단계 제거 — 서술형 1페이지로 변경
+  const [showResult, setShowResult] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<LocalReport | null>(null);
+  const [profileSelected, setProfileSelected] = useState(false);
+
+  const timeSlot = useMemo(() => getTimeSlot(), []);
+  const ctx = TIME_CONTEXT[timeSlot];
+
+  // 프로필 목록 (중복 제거)
+  const profiles = useMemo(() => {
+    const all = getReports();
+    const seen = new Map<string, LocalReport>();
+    for (const r of all) {
+      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
+      if (!seen.has(key)) seen.set(key, r);
+    }
+    return Array.from(seen.values());
+  }, []);
+
+  const recentReport = selectedProfile;
+  const hasHistory = !!recentReport;
+  const ilgan = recentReport?.sajuData.pillars[2]?.천간;
+  const ilganOheng = ilgan ? CHEONGAN_OHENG[ilgan] : undefined;
+
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
+
+  const questions = useMemo(() => getQuestions(timeSlot, hasHistory), [timeSlot, hasHistory]);
+  const localResult = useMemo(() => getFortuneResult(timeSlot, hasHistory, ilgan, ilganOheng, recentReport), [timeSlot, hasHistory, ilgan, ilganOheng, recentReport]);
+  const result = aiResult || localResult;
+  const [userConcern, setUserConcern] = useState('');
+  const [answers, setAnswers] = useState<number[]>([]);
+  const currentQ = answers.length;
+  const isOtherPerson = recentReport && recentReport.input.relation && recentReport.input.relation !== '본인' && recentReport.input.relation !== 'self';
+  const targetName = recentReport?.name || '';
+
+  function selectOption(idx: number) {
+    const next = [...answers, idx];
+    setAnswers(next);
+    if (next.length === questions.length) {
+      submitFortune();
+    }
   }
 
-  const showResult = step >= QUESTIONS.length;
+  async function submitFortune() {
+    // 과금: 무료 1회 → 이후 1운
+    if (hasFreePass('daily')) {
+      useFreePass('daily');
+    } else if (spendBalance(1)) {
+      toast.show('1운이 차감됐어요', 'info');
+    } else {
+      toast.show('잔액이 부족해요', 'warning');
+      navigate('/charge', { state: { message: '오늘의 운세에 1운이 필요해요' } });
+      return;
+    }
+
+    setShowResult(true);
+
+    // AI API 호출 (백그라운드) — 실패 시 로컬 결과 유지
+    try {
+      setAiLoading(true);
+      const sajuSummary = selectedProfile?.sajuData ? {
+        ilgan: selectedProfile.sajuData.pillars[2]?.천간 || '',
+        oheng: ilganOheng || '',
+        name: selectedProfile.name || '',
+      } : undefined;
+
+      const aiData = await generateDailyFortune(answers, timeSlot, sajuSummary);
+      if (aiData) setAiResult(aiData);
+    } catch (e) {
+      console.warn('[DailyFortune] AI 호출 실패, 로컬 결과 사용:', e);
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+  const timeStr = today.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+  // 프로필 미선택 → 선택 화면
+  if (!profileSelected && profiles.length > 0) {
+    return (
+      <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
+        <div className="px-5 pt-6 space-y-5">
+          <FadeIn>
+            <h1 className="text-display text-text-primary">누구의 운세를{'\n'}확인할까요?</h1>
+            <p className="text-body-sm text-text-muted mt-2">이전에 입력한 사주를 선택하거나, 사주 없이 진행할 수 있어요.</p>
+          </FadeIn>
+
+          <div className="space-y-2">
+            {profiles.map((r) => {
+              const il = r.sajuData.pillars[2]?.천간 || '';
+              const oh = il ? CHEONGAN_OHENG[il] : '';
+              const rel = r.input.relation || '본인';
+              return (
+                <motion.button
+                  key={r.id}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { setSelectedProfile(r); setProfileSelected(true); }}
+                  className="card w-full text-left py-4 px-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: rel === '본인' ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
+                      <span className="text-h3 font-bold" style={{ color: rel === '본인' ? '#1B2A4A' : '#C9A96E' }}>
+                        {r.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-h3 text-text-primary">{r.name}</p>
+                        <span className="text-caption text-text-hint">{rel}</span>
+                      </div>
+                      <p className="text-caption text-text-muted">
+                        {il ? `${il}(${oh}) 일간` : '사주 정보'}
+                      </p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => { setSelectedProfile(null); setProfileSelected(true); }}
+            className="w-full card text-center py-5 border-2 border-dashed border-border"
+          >
+            <p className="text-h3 text-text-muted">사주 없이 일반 운세 보기</p>
+          </button>
+
+          <button
+            onClick={() => navigate('/input?new=1')}
+            className="w-full text-center text-caption text-brand-gold font-semibold py-2"
+          >
+            새 사주 입력하기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 프로필 없으면 바로 진행 (사주 없이)
+  if (!profileSelected && profiles.length === 0) {
+    setProfileSelected(true);
+  }
 
   return (
-    <div className="page-container min-h-screen flex flex-col">
-      {!showResult ? (
-        <div className="flex-1 flex flex-col justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div key={step} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
-              <FadeIn>
-                <p className="text-[12px] font-bold mb-2" style={{ color: 'var(--brand-accent)' }}>
-                  {step + 1}/{QUESTIONS.length}
-                </p>
-                <h2 className="text-h1 mb-6" style={{ color: 'var(--text-primary)' }}>{QUESTIONS[step].q}</h2>
-                <div className="flex flex-col gap-2.5">
-                  {QUESTIONS[step].options.map((opt) => (
-                    <button key={opt} onClick={() => selectAnswer(opt)}
-                      className="card text-left text-[14px] font-bold hover:shadow-brand-lg transition-all"
-                      style={{ color: 'var(--text-primary)' }}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </FadeIn>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      ) : (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="flex-1">
-          <FadeIn>
-            <div className="text-center pt-6 mb-6">
-              <span className="text-[48px]">{FORTUNE.emoji}</span>
-              <p className="text-h1 mt-3" style={{ color: 'var(--text-primary)' }}>{FORTUNE.title}</p>
-              <span className="badge badge-gold mt-2">오늘의 운세: {FORTUNE.grade}</span>
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.15}>
-            <div className="card mb-4">
-              <p className="text-[13px] leading-[1.85] whitespace-pre-line" style={{ color: 'var(--text-secondary)' }}>
-                {FORTUNE.content}
+    <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
+      <div className="px-5 pt-4 space-y-5">
+
+        {/* 시간대별 인사 */}
+        <FadeIn>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-caption font-semibold text-brand-gold">{ctx.label}</span>
+            <span className="text-caption text-text-hint">·</span>
+            <p className="text-caption text-text-muted">{dateStr} {timeStr}</p>
+          </div>
+          <h1 className="text-display text-text-primary">{ctx.greeting}</h1>
+          <p className="text-caption text-text-hint mt-1">{ctx.sub}</p>
+          {hasHistory && (
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-brand-gold/8 border border-brand-gold/15">
+              <div className="w-4 h-4 rounded-full bg-brand-gold/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
+              </div>
+              <p className="text-caption text-brand-navy">
+                {recentReport!.name}님의 사주({ilgan}{ilganOheng ? ` ${ilganOheng}` : ''} 일간) 기반 맞춤 운세
               </p>
             </div>
-          </FadeIn>
-          <FadeIn delay={0.25}>
-            <div className="card mb-6">
-              <p className="text-[13px] font-bold mb-3" style={{ color: 'var(--text-primary)' }}>오늘의 행운 포인트</p>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                {[
-                  { label: '행운색', val: FORTUNE.lucky.color },
-                  { label: '행운 숫자', val: FORTUNE.lucky.number },
-                  { label: '행운 방향', val: FORTUNE.lucky.direction },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-[10px]" style={{ color: 'var(--text-hint)' }}>{item.label}</p>
-                    <p className="text-[14px] font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{item.val}</p>
+          )}
+        </FadeIn>
+
+        <AnimatePresence mode="wait">
+          {!showResult ? (
+            isOtherPerson ? (
+            /* ====== 타인 → 서술형 1페이지 ====== */
+            <motion.div key="other-input" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}>
+              <div className="space-y-5">
+                <div className="card-navy py-5 px-5">
+                  <h2 className="text-h1 text-white leading-snug">{targetName}님에 대해{'\n'}알려주세요</h2>
+                  <p className="text-body-sm text-white/50 mt-2">
+                    {targetName}님이 요즘 어떤 고민을 하고 있는지, 알고 있는 범위에서 적어주세요.
+                  </p>
+                </div>
+
+                <textarea
+                  value={userConcern}
+                  onChange={(e) => setUserConcern(e.target.value)}
+                  placeholder={`예: ${targetName}님이 이직을 고민하고 있어요 / 연애 문제로 힘들어해요...`}
+                  maxLength={300}
+                  rows={5}
+                  className="input-field w-full !rounded-2xl resize-none text-body"
+                  style={{ paddingTop: 16, paddingBottom: 16, minHeight: 150 }}
+                />
+
+                <div className="flex gap-2">
+                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune}>운세 보기</Button>
+                  <button onClick={submitFortune} className="flex-shrink-0 px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface">건너뛰기</button>
+                </div>
+
+                <div className="card-gold py-4 px-4">
+                  <p className="text-body-sm text-text-primary font-semibold">더 정확한 운세는 {targetName}님이 직접 확인하면 좋아요</p>
+                  <p className="text-caption text-text-muted mt-1">사주500을 공유하면 {targetName}님도 직접 운세를 볼 수 있어요</p>
+                  <button onClick={async () => { const { shareResult } = await import('@/utils/share'); shareResult({ name: targetName, reportId: 'daily' }); }}
+                    className="mt-2 text-caption text-brand-gold font-bold">{targetName}님에게 공유하기 →</button>
+                </div>
+              </div>
+            </motion.div>
+            ) : (
+            /* ====== 본인 → 기존 3단계 질문 ====== */
+            <motion.div key={`q-${currentQ}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+              {currentQ < questions.length && (
+                <div className="space-y-4">
+                  <div className="flex gap-1.5">
+                    {questions.map((_: any, i: number) => (
+                      <motion.div key={i} className={`h-1 flex-1 rounded-full ${i <= currentQ ? 'bg-brand-gold' : 'bg-border-light'}`}
+                        animate={i === currentQ ? { opacity: [0.5, 1, 0.5] } : {}} transition={i === currentQ ? { duration: 1.5, repeat: Infinity } : {}} />
+                    ))}
                   </div>
+                  <div className="card-navy">
+                    <p className="text-caption text-white/40 mb-1">{currentQ + 1}/{questions.length}</p>
+                    <h2 className="text-h1 text-white leading-snug">{questions[currentQ].q}</h2>
+                    <p className="text-caption text-white/50 mt-2">{questions[currentQ].sub}</p>
+                  </div>
+                  {(questions[currentQ] as any).isTextInput ? (
+                    <div className="space-y-4">
+                      <textarea value={userConcern} onChange={(e) => setUserConcern(e.target.value)}
+                        placeholder="예: 오늘 면접이 있는데 잘 될까요?&#10;요즘 연인과 사이가 안 좋아요..."
+                        maxLength={300} rows={5}
+                        className="input-field w-full !rounded-2xl resize-none text-body"
+                        style={{ paddingTop: 16, paddingBottom: 16, minHeight: 150 }} />
+                      <div className="flex gap-2">
+                        <button onClick={() => selectOption(0)} className="flex-1 py-3.5 rounded-xl text-body-sm font-bold text-white bg-brand-gold">운세 보기</button>
+                        <button onClick={() => selectOption(-1)} className="px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface">건너뛰기</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`grid gap-2.5 ${questions[currentQ].options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                      {questions[currentQ].options.map((opt: any, i: number) => (
+                        <motion.button key={i} whileTap={{ scale: 0.93 }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.06, duration: 0.25 }} onClick={() => selectOption(i)}
+                          className="card text-left px-4 py-3.5 active:bg-bg-surface flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-full bg-brand-navy/8 text-brand-navy text-tiny font-bold flex items-center justify-center flex-shrink-0">
+                            {String.fromCharCode(65 + i)}</span>
+                          <p className="text-body-sm text-text-primary font-medium leading-snug">{opt.label}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+            )
+          ) : (
+            <motion.div
+              key="result"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-4"
+            >
+              {/* AI 로딩 표시 */}
+              {aiLoading && (
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <div className="w-4 h-4 rounded-full border-2 border-brand-gold border-t-transparent animate-spin" />
+                  <span className="text-caption text-text-muted">AI가 맞춤 운세를 분석하고 있어요...</span>
+                </div>
+              )}
+
+              {/* 등급 카드 */}
+              <div className="card-navy text-center py-8">
+                <motion.div
+                  className="w-20 h-20 rounded-2xl mx-auto flex items-center justify-center mb-3"
+                  style={{ background: result.gradeColor + '25' }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
+                >
+                  <span className="text-4xl font-black text-white">{result.grade}</span>
+                </motion.div>
+                <p className="text-h2" style={{ color: result.gradeColor }}>{result.gradeLabel}</p>
+                <p className="text-caption text-white/40 mt-1">{dateStr}</p>
+              </div>
+
+              {/* 요약 */}
+              <div className="card">
+                <p className="text-body text-text-secondary leading-relaxed whitespace-pre-line">
+                  {result.summary}
+                </p>
+              </div>
+
+              {/* 점수 */}
+              <div className="grid grid-cols-4 gap-2">
+                {result.scores.map((s: any, i: number) => (
+                  <motion.div
+                    key={s.label}
+                    className="card text-center py-3 space-y-1.5"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + i * 0.08 }}
+                  >
+                    <div className="w-2 h-2 rounded-full mx-auto" style={{ background: s.color }} />
+                    <div className="relative w-full h-1.5 bg-border-light rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: s.color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${s.score}%` }}
+                        transition={{ delay: 0.5 + i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                      />
+                    </div>
+                    <p className="text-h3" style={{ color: s.color }}>{s.score}</p>
+                    <p className="text-tiny text-text-muted">{s.label}</p>
+                  </motion.div>
                 ))}
               </div>
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.35}>
-            <div className="card-gold text-center py-6 mb-4">
-              <p className="text-h2" style={{ color: 'var(--text-primary)' }}>더 깊이 알고 싶다면</p>
-              <p className="text-[12px] mt-1 mb-4" style={{ color: 'var(--text-muted)' }}>
-                AI가 분석하는 극상 사주 풀이, 단 550원
-              </p>
-              <Button variant="gold" onClick={() => navigate('/input')}>내 사주 보러 가기</Button>
-            </div>
-          </FadeIn>
-        </motion.div>
-      )}
+
+              {/* 행운 아이템 */}
+              <div className="card-gold">
+                <h3 className="text-h3 text-text-primary mb-3">오늘의 행운</h3>
+                <div className="grid grid-cols-3 gap-y-4 gap-x-3">
+                  {[
+                    { label: '컬러', value: result.lucky.color, hex: result.lucky.colorHex },
+                    { label: '숫자', value: String(result.lucky.number) },
+                    { label: '방위', value: result.lucky.direction },
+                    { label: '아이템', value: result.lucky.item },
+                    { label: '음식', value: result.lucky.food },
+                  ].map((item) => (
+                    <div key={item.label} className="text-center">
+                      {item.hex && (
+                        <div className="w-6 h-6 rounded-full mx-auto mb-1 shadow-sm border border-white/50"
+                          style={{ background: item.hex }} />
+                      )}
+                      <p className="text-h3 text-text-primary">{item.value}</p>
+                      <p className="text-tiny text-text-muted mt-0.5">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 시간대별 조언 */}
+              <div className="card-emphasis">
+                <p className="text-label text-brand-gold mb-2">{ctx.label}의 조언</p>
+                <p className="text-body text-text-primary leading-relaxed">
+                  {result.advice}
+                </p>
+              </div>
+
+              {/* 사주 연계 — 있을 때만 */}
+              {hasHistory && (
+                <div className="card">
+                  <p className="text-h3 text-text-primary mb-3">내 사주와 오늘의 기운</p>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 flex-shrink-0" />
+                      <p className="text-body-sm text-text-secondary leading-relaxed">
+                        {ilgan}({ilganOheng}) 일간인 {recentReport!.name}님에게 오늘은
+                        {result.scores[0].score > 75 ? ' 연애운이 특히 좋은 날이에요.' : result.scores[1].score > 75 ? ' 직장에서 좋은 소식이 있을 수 있어요.' : ' 안정적인 하루가 될 거예요.'}
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 flex-shrink-0" />
+                      <p className="text-body-sm text-text-secondary leading-relaxed">
+                        오행 기준으로 오늘은 {['목(木)', '화(火)', '토(土)', '금(金)', '수(水)'][new Date().getDay() % 5]} 기운이 강해요.
+                        {recentReport!.sajuData.elements ? (() => {
+                          const todayOheng = ['목', '화', '토', '금', '수'][new Date().getDay() % 5] as string;
+                          const myVal = (recentReport!.sajuData.elements as any)[todayOheng] || 0;
+                          return myVal >= 2
+                            ? ' 사주와 공명하는 날이라 에너지가 좋아요.'
+                            : ' 평소 부족한 기운을 보충하기 좋은 날이에요.';
+                        })() : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 오늘의 시간대별 흐름 */}
+              <div className="card">
+                <p className="text-h3 text-text-primary mb-3">시간대별 흐름</p>
+                <div className="space-y-2">
+                  {[
+                    { time: '오전', desc: '양(陽) 기운이 강해 새로운 시작에 유리해요', score: Math.min(98, result.scores[1].score + 5) },
+                    { time: '오후', desc: '금(金) 기운으로 판단력과 결정력이 좋아져요', score: result.scores[2].score },
+                    { time: '저녁', desc: '수(水) 기운이 내면 성찰과 휴식에 적합해요', score: Math.min(98, result.scores[3].score + 3) },
+                  ].map((slot) => (
+                    <div key={slot.time} className="flex items-center gap-3 py-2">
+                      <span className="text-label text-brand-gold w-10 flex-shrink-0">{slot.time}</span>
+                      <div className="flex-1">
+                        <div className="h-2 rounded-full bg-border-light overflow-hidden mb-1">
+                          <motion.div className="h-full rounded-full bg-brand-gold" initial={{ width: 0 }} animate={{ width: `${slot.score}%` }} transition={{ duration: 1 }} />
+                        </div>
+                        <p className="text-caption text-text-muted">{slot.desc}</p>
+                      </div>
+                      <span className="text-label text-text-primary w-8 text-right">{slot.score}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="space-y-3">
+                <Button variant="gold" fullWidth size="lg" onClick={() => navigate('/input')}>
+                  {hasHistory ? '더 깊은 분석 보러 가기' : '내 사주도 분석해보기'}
+                </Button>
+                <p className="text-center text-tiny text-text-hint">1운(500원) · 12가지 심층 분석</p>
+
+                <button
+                  onClick={async () => {
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: '오늘의 운세 — 사주500',
+                          text: `오늘 운세 등급 ${result.grade}! 나도 확인해볼까?`,
+                          url: window.location.href,
+                        });
+                      } catch { /* 취소 */ }
+                    }
+                  }}
+                  className="w-full text-center text-caption text-text-muted py-2"
+                >
+                  오늘의 운세 공유하기
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

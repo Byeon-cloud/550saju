@@ -41,7 +41,7 @@ export function PillarCard({ pillar, index, isMe, sipsung, jijanggan, totalPilla
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <div className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{ background: 'var(--bg-warm)' }}>
-              <span className="text-lg opacity-50">🕐</span>
+              <span className="text-[13px] font-bold opacity-40" style={{ color: 'var(--text-hint)' }}>時</span>
             </div>
             <span className="text-[11px] font-medium" style={{ color: 'var(--text-hint)' }}>출생시간</span>
             <span className="text-[10px]" style={{ color: 'var(--text-hint)' }}>미입력</span>

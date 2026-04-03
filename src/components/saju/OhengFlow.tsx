@@ -6,7 +6,7 @@ interface OhengFlowProps {
 }
 
 const FLOW: OhengType[] = ['목', '화', '토', '금', '수'];
-const EMOJI: Record<OhengType, string> = { 목: '🌳', 화: '🔥', 토: '⛰️', 금: '⚔️', 수: '💧' };
+const HANJA: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
 
 /** 오행 상생상극 순환 도식 — 원형 배치 */
 export function OhengFlow({ elements }: OhengFlowProps) {
@@ -57,9 +57,10 @@ export function OhengFlow({ elements }: OhengFlowProps) {
               {/* 메인 원 */}
               <circle cx={p.x} cy={p.y} r={nodeR} fill={info.colorLight}
                 stroke={count > 0 ? info.color : 'var(--border-main)'} strokeWidth={count > 0 ? 2 : 1} />
-              {/* 이모지 */}
-              <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="15" dominantBaseline="central">
-                {EMOJI[key]}
+              {/* 한자 심볼 */}
+              <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="14" fontWeight="900" dominantBaseline="central"
+                fill={count > 0 ? info.color : 'var(--text-hint)'}>
+                {HANJA[key]}
               </text>
               {/* 한자 + 개수 */}
               <text x={p.x} y={p.y + 10} textAnchor="middle" fontSize="11" fontWeight="800"

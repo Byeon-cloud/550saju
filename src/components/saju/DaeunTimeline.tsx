@@ -26,7 +26,7 @@ export function DaeunTimeline({ daeunList }: DaeunTimelineProps) {
               )}
             </div>
             <div className={`flex-1 pb-3 pl-1.5 ${d.isCurrent ? '' : 'opacity-60'}`}>
-              <div className={`rounded-brand-md px-3 py-2.5 ${
+              <div className={`rounded-xl px-3 py-2.5 ${
                 d.isCurrent ? 'card-gold' : ''
               }`} style={d.isCurrent ? {} : { background: 'var(--bg-card)', boxShadow: 'var(--shadow-soft)' }}>
                 <div className="flex items-center justify-between">

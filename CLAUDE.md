@@ -139,7 +139,37 @@ users/{uid}/profiles/{pid}      - 프로필 (이름, 생년월일, 만세력 캐
 users/{uid}/reports/{rid}       - 리포트 (AI 생성 결과, 점수, 공유ID)
 users/{uid}/payments/{payid}    - 결제내역 (충전/사용/환불)
 users/{uid}/dailyFortune/{date} - 일일운세
+users/{uid}/chats/{chatId}     - 채팅 기록
+users/{uid}/shareLogs/{logId}  - 공유 리워드 로그
 ```
+
+### 데이터 보관 정책
+
+| 데이터 | 보관 기간 | 근거 |
+|--------|-----------|------|
+| 사주 리포트 (유료) | 영구 (계정 생존) | 핵심 가치, 비용 무시 가능 ($3/10만유저/월) |
+| 유저 프로필 | 영구 | 재분석 필요 |
+| 결제 기록 | 5년 | 전자상거래법 |
+| 일일 운세 (무료) | 30일 롤링 | 에페메럴 콘텐츠 |
+| 채팅 기록 | 90일 | 업계 표준 |
+| 비활성 계정 | 1년 후 분리 보관, 3년 후 삭제 | 개인정보보호법 |
+| 계정 삭제 후 | 5일 이내 삭제 | 개인정보보호법 |
+
+### 멀티 플랫폼 계정 전략
+
+```
+앱인토스(토스 로그인) ─┐
+                      ├→ Firebase Auth (provider link) → 하나의 uid
+웹(카카오/구글/네이버) ─┘
+```
+
+- **서버는 하나** (Firebase Firestore + Functions + Auth)
+- **프론트엔드만 분기** (isAppsInToss() 감지)
+- **결제 분기**: 앱인토스=IAP, 웹=토스페이먼츠 PG
+- **계정 통합**: 전화번호 기반 (Phase 2)
+  - 같은 전화번호로 다른 provider 로그인 시 → 기존 계정에 link
+  - Firebase Auth의 `linkWithCredential()` 사용
+  - Phase 1에서는 플랫폼별 독립 계정 → Phase 2에서 통합
 
 ---
 
@@ -187,15 +217,20 @@ users/{uid}/dailyFortune/{date} - 일일운세
 
 ---
 
-## 현재 상태 (2026.03.30)
+## 현재 상태 (2026.04.03)
 
 - [x] 사주아이 벤치마킹 완료
-- [x] 사업기획서 v1
-- [x] 만세력 라이브러리 선정 (lunar-javascript)
-- [x] 8글자 완전판 데이터 추출 성공
-- [x] AI 프롬프트 v2 (전체 고급 데이터 포함)
-- [x] 결과 페이지 v4 프로토타입 (4기둥/시간미입력/반응형/인포그래픽)
-- [x] 브랜딩 가이드 확정
-- [x] 가격 전략 확정 (550 시리즈)
-- [x] 기술 설계서 완성 (폴더구조/데이터모델/API)
-- [ ] **다음: 프로젝트 스캐폴딩 생성 + 개발 시작**
+- [x] 만세력 라이브러리 (lunar-javascript) + 8글자 데이터 추출
+- [x] AI 프롬프트 v2 (학술 기반 6대 원전 + 소름 포인트)
+- [x] 브랜딩 확정 (Deep Navy + Gold, "사주500")
+- [x] 가격 전략 확정 (1운=500원, 프리미엄 10운 준비)
+- [x] 전체 12페이지 프론트엔드 구현 완료
+- [x] 코드 스플리팅 (초기 로드 gzip ~100KB)
+- [x] Cloud Functions 5개 (Claude/Gemini 연동 + IAP 지급 + 공유 리워드)
+- [x] 앱인토스 정책 준수 (뒤로가기 금지, 라이트모드, TDS 52px, IAP)
+- [x] 운(運) 잔액 3종 분리 (paid/bonus/reward) + 어뷰징 방지
+- [x] 공유 리워드 시스템 (0.5운/회, 월 5운 한도)
+- [x] 일일 무료 패스 (오늘운세/꿈해몽 무료, 사주대화 1일 1회)
+- [x] 글로벌 BalanceBar + Toast + ShareModal
+- [x] granite.config.ts + PWA manifest
+- [ ] **다음: Firebase deploy + 실제 API 테스트 + 앱인토스 ait build**

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>사주500 결과 미리보기 캡처</title>
+<style>
+  body { background: #111; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 20px; font-family: Pretendard, sans-serif; }
+  h2 { color: #fff; }
+  .preview { display: flex; gap: 30px; }
+  iframe { border: none; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  button { padding: 12px 32px; font-size: 16px; cursor: pointer; border-radius: 8px; border: none; background: #C9A96E; color: #fff; font-weight: bold; }
+  p { color: #888; font-size: 14px; }
+</style>
+</head>
+<body>
+<h2>실제 앱 결과 화면 미리보기</h2>
+<p>아래 화면을 스크린샷(Win+Shift+S)으로 캡처하세요</p>
+
+<div class="preview">
+  <!-- 결과 페이지 — 상단 (사주 4기둥 + 오행) -->
+  <iframe
+    src="https://appintoss-saju.web.app/result/local"
+    width="375"
+    height="812"
+    style="transform: scale(0.9);"
+  ></iframe>
+
+  <!-- 홈 화면 -->
+  <iframe
+    src="https://appintoss-saju.web.app/"
+    width="375"
+    height="812"
+    style="transform: scale(0.9);"
+  ></iframe>
+</div>
+
+<p>💡 캡처 후 Gemini/ChatGPT에 이 스크린샷과 함께 프롬프트를 넣으면 더 현실감 있는 마케팅 이미지를 만들 수 있어요</p>
+</body>
+</html>

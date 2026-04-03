@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head><title>사주500 OG 이미지 생성기</title></head>
+<body style="background:#222; display:flex; flex-direction:column; align-items:center; padding:40px; gap:20px;">
+<h2 style="color:#fff">OG 이미지 (1200 x 600px)</h2>
+<canvas id="c" width="1200" height="600"></canvas>
+<button onclick="download()" style="padding:12px 32px; font-size:16px; cursor:pointer;">PNG 다운로드</button>
+
+<script>
+const W = 1200, H = 600;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.style.width = '600px';
+canvas.style.height = '300px';
+
+// 배경
+const grad = ctx.createLinearGradient(0, 0, W, H);
+grad.addColorStop(0, '#1B2A4A');
+grad.addColorStop(1, '#243656');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, W, H);
+
+// 골드 데코
+ctx.fillStyle = 'rgba(201,169,110,0.06)';
+ctx.beginPath();
+ctx.arc(W - 200, 150, 250, 0, Math.PI * 2);
+ctx.fill();
+
+// 로고
+ctx.fillStyle = '#FFFFFF';
+ctx.font = '900 64px sans-serif';
+ctx.fillText('사주', 80, 160);
+ctx.fillStyle = '#C9A96E';
+ctx.fillText('500', 230, 160);
+
+// 메인 카피
+ctx.fillStyle = '#FFFFFF';
+ctx.font = '700 40px sans-serif';
+ctx.fillText('500원에 만나는 정통 사주 풀이', 80, 250);
+
+// 서브
+ctx.fillStyle = 'rgba(255,255,255,0.5)';
+ctx.font = '400 24px sans-serif';
+ctx.fillText('성격, 직업, 연애, 재물, 건강까지 12가지 심층 분석', 80, 310);
+ctx.fillText('600년 명리학 원전 기반 · 자동결제 없음', 80, 345);
+
+// 태그
+ctx.fillStyle = 'rgba(201,169,110,0.15)';
+roundRect(ctx, 80, 400, 130, 40, 20); ctx.fill();
+roundRect(ctx, 224, 400, 150, 40, 20); ctx.fill();
+roundRect(ctx, 388, 400, 110, 40, 20); ctx.fill();
+roundRect(ctx, 512, 400, 160, 40, 20); ctx.fill();
+
+ctx.fillStyle = '#E8D5A8';
+ctx.font = '600 20px sans-serif';
+ctx.fillText('사주 풀이', 108, 426);
+ctx.fillText('오늘의 운세', 248, 426);
+ctx.fillText('꿈해몽', 416, 426);
+ctx.fillText('사주 상담', 548, 426);
+
+// 하단
+ctx.fillStyle = 'rgba(255,255,255,0.3)';
+ctx.font = '400 18px sans-serif';
+ctx.textAlign = 'center';
+ctx.fillText('사주500 — 정통 명리학의 현대적 해석', W/2, H - 30);
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+function download() {
+  const link = document.createElement('a');
+  link.download = 'saju500-og-1200x600.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>

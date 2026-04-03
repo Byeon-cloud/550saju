@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head><title>사주500 미리보기 스크린샷</title></head>
+<body style="background:#222; display:flex; flex-direction:column; align-items:center; padding:40px; gap:20px;">
+<h2 style="color:#fff">미리보기 스크린샷 (1504 x 741px)</h2>
+<canvas id="c" width="1504" height="741"></canvas>
+<button onclick="download()" style="padding:12px 32px; font-size:16px; cursor:pointer; border-radius:8px; border:none; background:#C9A96E; color:#fff; font-weight:bold;">PNG 다운로드</button>
+
+<script>
+const W = 1504, H = 741;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.style.width = '752px';
+canvas.style.height = '370px';
+
+// ====== 배경 — 딥 네이비 그라데이션 ======
+const bg = ctx.createLinearGradient(0, 0, W, H);
+bg.addColorStop(0, '#1B2A4A');
+bg.addColorStop(0.5, '#243656');
+bg.addColorStop(1, '#1B2A4A');
+ctx.fillStyle = bg;
+ctx.fillRect(0, 0, W, H);
+
+// 골드 빛 (중앙 상단)
+const glow = ctx.createRadialGradient(W/2, H*0.3, 0, W/2, H*0.4, W*0.4);
+glow.addColorStop(0, 'rgba(201,169,110,0.08)');
+glow.addColorStop(1, 'rgba(0,0,0,0)');
+ctx.fillStyle = glow;
+ctx.fillRect(0, 0, W, H);
+
+// ====== 좌측 — 텍스트 영역 ======
+
+// 로고
+ctx.fillStyle = '#FFFFFF';
+ctx.font = '900 52px Pretendard, sans-serif';
+ctx.fillText('사주', 100, 150);
+ctx.fillStyle = '#C9A96E';
+ctx.fillText('500', 235, 150);
+
+// 메인 카피
+ctx.fillStyle = '#FFFFFF';
+ctx.font = '900 44px Pretendard, sans-serif';
+ctx.fillText('나도 몰랐던 나를,', 100, 240);
+ctx.fillText('사주가 알고 있었습니다', 100, 295);
+
+// 서브 카피
+ctx.fillStyle = 'rgba(255,255,255,0.5)';
+ctx.font = '400 22px Pretendard, sans-serif';
+ctx.fillText('600년 명리학 원전에 기반한 정통 사주 풀이', 100, 350);
+ctx.fillText('500원으로 성격, 직업, 연애, 건강까지 12가지 심층 분석', 100, 380);
+
+// 특징 태그
+const tags = ['매일 무료 운세', '사주 상담', '꿈해몽', '궁합'];
+let tx = 100;
+ctx.font = '600 18px Pretendard, sans-serif';
+tags.forEach(tag => {
+  const tw = ctx.measureText(tag).width + 28;
+  rr(ctx, tx, 420, tw, 36, 18);
+  ctx.fillStyle = 'rgba(201,169,110,0.12)';
+  ctx.fill();
+  ctx.fillStyle = '#E8D5A8';
+  ctx.fillText(tag, tx + 14, 444);
+  tx += tw + 10;
+});
+
+// CTA 느낌
+ctx.fillStyle = '#C9A96E';
+rr(ctx, 100, 500, 260, 52, 12);
+ctx.fill();
+ctx.fillStyle = '#FFFFFF';
+ctx.font = '700 20px Pretendard, sans-serif';
+ctx.fillText('내 사주 알아보기', 145, 532);
+
+// 가격
+ctx.fillStyle = 'rgba(255,255,255,0.35)';
+ctx.font = '400 16px Pretendard, sans-serif';
+ctx.fillText('1운(500원) · 자동결제 없음 · 3분 완성', 100, 580);
+
+// ====== 우측 — 폰 목업 (앱 화면) ======
+const phoneX = 850, phoneY = 60;
+const phoneW = 320, phoneH = 640;
+const phoneR = 40;
+
+// 폰 그림자
+ctx.save();
+ctx.shadowColor = 'rgba(0,0,0,0.4)';
+ctx.shadowBlur = 60;
+ctx.shadowOffsetX = 10;
+ctx.shadowOffsetY = 20;
+
+// 폰 프레임
+ctx.fillStyle = '#111';
+rr(ctx, phoneX, phoneY, phoneW, phoneH, phoneR);
+ctx.fill();
+ctx.restore();
+
+// 폰 화면 (앱 미리보기)
+const scrX = phoneX + 8, scrY = phoneY + 8;
+const scrW = phoneW - 16, scrH = phoneH - 16;
+const scrR = phoneR - 4;
+
+// 화면 배경
+const scrBg = ctx.createLinearGradient(scrX, scrY, scrX, scrY + scrH);
+scrBg.addColorStop(0, '#F7F8FA');
+scrBg.addColorStop(1, '#F0F1F5');
+ctx.fillStyle = scrBg;
+rr(ctx, scrX, scrY, scrW, scrH, scrR);
+ctx.fill();
+
+// 상태바
+ctx.fillStyle = '#1B2A4A';
+rr(ctx, scrX, scrY, scrW, 44, scrR);
+ctx.fill();
+
+// 상태바 — 로고
+ctx.fillStyle = '#fff';
+ctx.font = '700 14px Pretendard, sans-serif';
+ctx.fillText('사주', scrX + 14, scrY + 28);
+ctx.fillStyle = '#C9A96E';
+ctx.fillText('500', scrX + 42, scrY + 28);
+
+// 상태바 — 잔액
+ctx.fillStyle = 'rgba(201,169,110,0.2)';
+rr(ctx, scrX + scrW - 80, scrY + 10, 68, 24, 12);
+ctx.fill();
+ctx.fillStyle = '#E8D5A8';
+ctx.font = '600 11px Pretendard, sans-serif';
+ctx.fillText('3운  +', scrX + scrW - 65, scrY + 26);
+
+// 히어로 카드 (네이비)
+const heroY = scrY + 56;
+ctx.fillStyle = '#1B2A4A';
+rr(ctx, scrX + 12, heroY, scrW - 24, 130, 14);
+ctx.fill();
+
+ctx.fillStyle = 'rgba(255,255,255,0.4)';
+ctx.font = '400 10px Pretendard, sans-serif';
+ctx.fillText('4월 3일 (목)', scrX + 24, heroY + 22);
+
+ctx.fillStyle = '#fff';
+ctx.font = '800 16px Pretendard, sans-serif';
+ctx.fillText('나도 몰랐던 나를,', scrX + 24, heroY + 48);
+ctx.fillText('사주가 알고 있었습니다', scrX + 24, heroY + 68);
+
+ctx.fillStyle = '#C9A96E';
+rr(ctx, scrX + 24, heroY + 90, scrW - 48, 28, 6);
+ctx.fill();
+ctx.fillStyle = '#fff';
+ctx.font = '700 11px Pretendard, sans-serif';
+ctx.fillText('내 사주 알아보기', scrX + 80, heroY + 108);
+
+// 서비스 카드들
+const cardY = heroY + 145;
+const cards = [
+  { title: '오늘의 운세', tag: '매일 무료', color: '#1B2A4A' },
+  { title: '꿈해몽', tag: '매일 무료', color: '#F4F5F8' },
+];
+
+cards.forEach((card, i) => {
+  const cy = cardY + i * 62;
+  ctx.fillStyle = card.color === '#1B2A4A' ? '#1B2A4A' : '#FFFFFF';
+  rr(ctx, scrX + 12, cy, scrW - 24, 52, 10);
+  ctx.fill();
+
+  if (card.color === '#FFFFFF') {
+    ctx.strokeStyle = '#E2E5EC';
+    ctx.lineWidth = 1;
+    rr(ctx, scrX + 12, cy, scrW - 24, 52, 10);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = card.color === '#1B2A4A' ? '#fff' : '#1B2A4A';
+  ctx.font = '700 13px Pretendard, sans-serif';
+  ctx.fillText(card.title, scrX + 24, cy + 24);
+
+  ctx.fillStyle = card.color === '#1B2A4A' ? 'rgba(232,213,168,0.6)' : '#8892A4';
+  ctx.font = '400 10px Pretendard, sans-serif';
+  ctx.fillText(card.tag, scrX + 24, cy + 40);
+});
+
+// 서비스 카드 — 사주 풀이
+const sajuY = cardY + 134;
+ctx.fillStyle = '#FFFFFF';
+rr(ctx, scrX + 12, sajuY, scrW - 24, 60, 10);
+ctx.fill();
+ctx.strokeStyle = '#E2E5EC';
+ctx.lineWidth = 1;
+rr(ctx, scrX + 12, sajuY, scrW - 24, 60, 10);
+ctx.stroke();
+
+ctx.fillStyle = '#1B2A4A';
+ctx.font = '700 13px Pretendard, sans-serif';
+ctx.fillText('내 사주 풀이', scrX + 55, sajuY + 24);
+ctx.fillStyle = '#8892A4';
+ctx.font = '400 10px Pretendard, sans-serif';
+ctx.fillText('12가지 항목을 그림과 함께 분석', scrX + 55, sajuY + 40);
+
+// 가격
+ctx.fillStyle = '#C9A96E';
+ctx.font = '800 16px Pretendard, sans-serif';
+ctx.fillText('1운', scrX + scrW - 55, sajuY + 30);
+ctx.fillStyle = '#8892A4';
+ctx.font = '400 9px Pretendard, sans-serif';
+ctx.fillText('500원', scrX + scrW - 55, sajuY + 44);
+
+// 태극 미니 아이콘
+ctx.fillStyle = 'rgba(27,42,74,0.06)';
+rr(ctx, scrX + 24, sajuY + 12, 22, 22, 6);
+ctx.fill();
+
+// 하단 탭바
+ctx.fillStyle = '#FFFFFF';
+rr(ctx, scrX + 8, scrY + scrH - 48, scrW - 16, 44, 14);
+ctx.fill();
+
+const tabLabels = ['홈', '사주분석', '사주대화', '보관함', '내 정보'];
+ctx.font = '500 8px Pretendard, sans-serif';
+tabLabels.forEach((label, i) => {
+  const tabX = scrX + 18 + i * (scrW - 36) / 5;
+  ctx.fillStyle = i === 0 ? '#C9A96E' : '#A8B1C1';
+  ctx.fillText(label, tabX, scrY + scrH - 18);
+  // 도트
+  ctx.beginPath();
+  ctx.arc(tabX + ctx.measureText(label).width/2, scrY + scrH - 30, 2.5, 0, Math.PI*2);
+  ctx.fill();
+});
+
+// ====== 우측 하단 — 참고 원전 ======
+ctx.fillStyle = 'rgba(255,255,255,0.2)';
+ctx.font = '400 14px Pretendard, sans-serif';
+ctx.fillText('적천수 · 자평진전 · 궁통보감 · 삼명통회 · 연해자평', 100, 640);
+
+ctx.fillStyle = 'rgba(255,255,255,0.12)';
+ctx.font = '400 12px Pretendard, sans-serif';
+ctx.fillText('600년간 검증된 정통 명리학 원전에 기반', 100, 665);
+
+function rr(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y);
+  c.quadraticCurveTo(x+w,y,x+w,y+r); c.lineTo(x+w,y+h-r);
+  c.quadraticCurveTo(x+w,y+h,x+w-r,y+h); c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r); c.lineTo(x,y+r);
+  c.quadraticCurveTo(x,y,x+r,y); c.closePath();
+}
+
+function download() {
+  const a = document.createElement('a');
+  a.download = 'saju500-screenshot-1504x741.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>

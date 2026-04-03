@@ -2,12 +2,19 @@ import { type ButtonHTMLAttributes } from 'react';
 import { motion } from 'framer-motion';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'gold';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'gold' | 'navy';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   loading?: boolean;
 }
 
+/**
+ * 550사주 버튼 — Deep Navy + Gold
+ * Primary: 골드 배경 (CTA)
+ * Navy: 네이비 배경 (보조 CTA)
+ * Secondary: 투명 + 골드 테두리
+ * Ghost: 텍스트만
+ */
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -18,19 +25,20 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const base = 'font-bold transition-all duration-200 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2';
+  const base = 'font-bold transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2';
 
   const variants = {
-    primary: 'bg-brand-primary text-white hover:bg-brand-primary-hover shadow-brand-sm hover:shadow-brand-md',
-    secondary: 'bg-white text-brand-text-secondary border border-brand-border hover:border-brand-primary hover:text-brand-primary',
-    ghost: 'bg-transparent text-brand-muted hover:text-brand-text hover:bg-brand-surface-warm',
-    gold: 'bg-gradient-to-r from-brand-gold to-brand-accent text-white shadow-brand-glow hover:shadow-brand-lg',
+    primary: 'bg-brand-gold text-white hover:bg-brand-hover shadow-glow',
+    navy: 'bg-brand-navy text-white hover:bg-brand-navy-light shadow-md',
+    secondary: 'bg-transparent text-brand-gold border-[1.5px] border-brand-gold hover:bg-gold-bg/50',
+    ghost: 'bg-transparent text-brand-navy hover:bg-bg-surface',
+    gold: 'bg-gradient-to-r from-brand-gold to-brand-gold-vivid text-white shadow-glow',
   };
 
   const sizes = {
     sm: 'h-9 px-4 text-[12px] rounded-full',
-    md: 'h-12 px-6 text-[14px] rounded-brand-md',
-    lg: 'h-[54px] px-8 text-[15px] rounded-brand-lg',
+    md: 'h-[48px] px-6 text-[14px] rounded-xl',
+    lg: 'h-[52px] px-8 text-[16px] rounded-xl',
   };
 
   return (

@@ -13,6 +13,7 @@ export type Gender = 'male' | 'female';
 /** 사주 입력 */
 export interface SajuInput {
   name?: string;
+  relation?: string;
   birthYear: number;
   birthMonth: number;
   birthDay: number;

@@ -1,64 +1,193 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
 import { FadeIn } from '@/components/common/FadeIn';
 import { CHARGE_PACKAGES } from '@/constants/pricing';
+import { getBalance } from '@/services/storage/localStore';
+import { purchasePackage } from '@/services/payment/iapService';
+import { useToast } from '@/components/common/Toast';
+import { usePageTitle } from '@/hooks/usePageTitle';
+
 
 export function ChargePage() {
-  const [selectedId, setSelectedId] = useState<string>('yearly');
-  const balance = 0;
-  const selected = CHARGE_PACKAGES.find((p) => p.id === selectedId);
+  usePageTitle('운(運) 충전');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const fromMessage = (location.state as any)?.message as string | undefined;
+  const [selected, setSelected] = useState('serious');
+  const [balance, setBalanceDisplay] = useState(() => getBalance());
+  const [purchasing, setPurchasing] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const toast = useToast();
+  const selectedPkg = CHARGE_PACKAGES.find(p => p.id === selected);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-cream)' }}>
+    <div className="min-h-screen bg-bg-page">
       <Header title="운(運) 충전" />
-      <div className="page-container flex-1 flex flex-col">
+      <div className="px-4 pt-4 pb-[120px] space-y-5">
+
+        {/* 잔액 부족 안내 (다른 페이지에서 넘어온 경우) */}
+        {fromMessage && (
+          <FadeIn>
+            <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)' }}>
+              <p className="text-caption text-brand-gold font-semibold text-center">{fromMessage}</p>
+            </div>
+          </FadeIn>
+        )}
+
+        {/* 잔액 카드 */}
         <FadeIn>
-          <div className="card-gold text-center py-6 mb-5">
-            <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>현재 잔액</p>
-            <p className="text-display mt-1" style={{ color: 'var(--brand-gold-dark)' }}>{balance} 운</p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--text-hint)' }}>(= {(balance * 550).toLocaleString()}원)</p>
+          <div className="card-gold py-5 px-5">
+            <p className="text-caption text-text-muted">현재 내 잔액</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-display text-text-primary">{balance}</span>
+              <span className="text-h2 text-brand-gold">운</span>
+            </div>
           </div>
         </FadeIn>
 
-        <div className="flex flex-col gap-3 mb-6">
-          {CHARGE_PACKAGES.map((pkg, i) => {
-            const sel = selectedId === pkg.id;
-            const rec = pkg.id === 'yearly';
-            return (
-              <FadeIn key={pkg.id} delay={i * 0.08}>
-                <button onClick={() => setSelectedId(pkg.id)}
-                  className="w-full card text-left relative transition-all"
-                  style={sel ? { boxShadow: 'var(--shadow-glow)', border: '2px solid var(--brand-gold)' } : {}}>
-                  {rec && <span className="absolute -top-2.5 left-4 badge badge-gold">추천</span>}
+        {/* 운이 뭔지 설명 — 친절하게 */}
+        <FadeIn delay={0.03}>
+          <div className="card py-4 px-5">
+            <p className="text-h3 text-text-primary mb-3">운(運)으로 이런 걸 할 수 있어요</p>
+            <div className="space-y-2.5">
+              {[
+                { service: '내 사주 풀이', desc: '성격, 직업, 연애 등 12가지 분석', cost: '1운' },
+                { service: '사주 상담', desc: '대화로 주고받는 1:1 상담 5회', cost: '1운' },
+                { service: '궁합 분석', desc: '두 사람의 사주 비교', cost: '1운' },
+                { service: '대운 해설', desc: '10년 단위 운의 흐름', cost: '1운' },
+                { service: '월별 운세', desc: '올해 12개월 점수와 조언', cost: '1운' },
+              ].map((item) => (
+                <div key={item.service} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-label text-text-primary">{item.service}</p>
+                    <p className="text-[10px] text-text-muted">{item.desc}</p>
+                  </div>
+                  <span className="text-caption text-brand-gold font-bold flex-shrink-0 ml-3">{item.cost}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* 충전 패키지 */}
+        <FadeIn delay={0.06}>
+          <p className="text-h3 text-text-primary mb-3">충전 패키지</p>
+          <div className="space-y-3">
+            {CHARGE_PACKAGES.map((pkg) => {
+              const isSelected = selected === pkg.id;
+              const totalUn = pkg.un + pkg.bonusUn;
+              const originalPrice = totalUn * 500;
+              const isSaving = originalPrice > pkg.price;
+              const saveAmount = originalPrice - pkg.price;
+
+              return (
+                <motion.button
+                  key={pkg.id}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSelected(pkg.id)}
+                  className={`w-full rounded-2xl text-left p-4 transition-all relative overflow-hidden ${
+                    isSelected
+                      ? 'border-2 border-brand-gold shadow-glow'
+                      : 'border border-border-light'
+                  }`}
+                  style={{ background: isSelected ? 'var(--bg-gold-solid)' : 'var(--bg-card)' }}
+                >
+                  {/* 추천 배지 */}
+                  {pkg.id === 'serious' && (
+                    <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl"
+                      style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                      <span className="text-[10px] font-bold text-white">추천</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[14px] font-bold" style={{ color: 'var(--text-primary)' }}>{pkg.name}</p>
-                      <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                        {pkg.un}운{pkg.bonusUn > 0 && <span className="font-bold" style={{ color: 'var(--brand-accent)' }}> +{pkg.bonusUn}운</span>}
-                      </p>
+                      {/* 패키지명 + 운 수량 */}
+                      <p className="text-h3 text-text-primary">{pkg.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-h1 text-brand-gold">{pkg.un}운</span>
+                        {pkg.bonusUn > 0 && (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                            style={{ background: 'rgba(46,125,50,0.1)', color: '#2E7D32' }}>
+                            +{pkg.bonusUn}운 보너스
+                          </span>
+                        )}
+                      </div>
+                      {/* 할인 정보 */}
+                      {isSaving && (
+                        <p className="text-[10px] text-func-success font-semibold mt-1">
+                          {saveAmount.toLocaleString()}원 절약 ({pkg.discount}% 할인)
+                        </p>
+                      )}
                     </div>
+
                     <div className="text-right">
-                      <p className="text-[16px] font-bold" style={{ color: 'var(--text-primary)' }}>{pkg.price.toLocaleString()}원</p>
-                      {pkg.discount > 0 && <p className="text-[11px] font-bold" style={{ color: 'var(--brand-accent)' }}>{pkg.discount}% 할인</p>}
+                      {/* 할인 전 가격 (취소선) */}
+                      {isSaving && (
+                        <p className="text-[11px] text-text-hint line-through">
+                          {originalPrice.toLocaleString()}원
+                        </p>
+                      )}
+                      {/* 실제 결제 가격 */}
+                      <p className="text-h1 text-text-primary">{pkg.price.toLocaleString()}<span className="text-body-sm">원</span></p>
+                      {/* 운당 가격 */}
+                      {totalUn > 1 && (
+                        <p className="text-[10px] text-text-muted mt-0.5">
+                          1운당 {Math.round(pkg.price / totalUn).toLocaleString()}원
+                        </p>
+                      )}
                     </div>
                   </div>
-                  {rec && <p className="text-[10px] font-medium mt-2" style={{ color: 'var(--brand-accent)' }}>프리미엄과 같은 가격!</p>}
-                </button>
-              </FadeIn>
-            );
-          })}
-        </div>
-
-        <div className="mt-auto pb-2">
-          <Button fullWidth size="lg" variant="gold" onClick={() => {}}>
-            {selected ? `${selected.price.toLocaleString()}원 결제하기` : '결제하기'}
-          </Button>
-          <div className="mt-4 space-y-1">
-            <p className="text-[10px]" style={{ color: 'var(--text-hint)' }}>· 운은 결제일로부터 1년간 유효합니다</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-hint)' }}>· 보너스 운은 환불 불가합니다</p>
+                </motion.button>
+              );
+            })}
           </div>
-        </div>
+        </FadeIn>
+
+        {/* 안내 */}
+        <FadeIn delay={0.09}>
+          <div className="space-y-1.5 px-1">
+            <p className="text-caption text-text-hint">· 보너스 운과 리워드 운은 환불 대상에서 제외돼요</p>
+            <p className="text-caption text-text-hint">· 유효기간 없어요. 충전한 운은 사라지지 않아요</p>
+            <p className="text-caption text-text-hint">· 자동결제 없음. 한 번 충전으로 끝</p>
+          </div>
+        </FadeIn>
+      </div>
+
+      {/* 하단 CTA */}
+      <div className="sticky-cta-bottom">
+        {message && (
+          <p className={`text-center text-caption mb-2 ${message.includes('충전') ? 'text-func-success' : 'text-func-warning'}`}>
+            {message}
+          </p>
+        )}
+        <Button
+          fullWidth
+          size="lg"
+          loading={purchasing}
+          onClick={async () => {
+            if (!selectedPkg || purchasing) return;
+            setPurchasing(true);
+            setMessage(null);
+            const result = await purchasePackage(selectedPkg);
+            setPurchasing(false);
+            setMessage(result.message);
+            if (result.success) {
+              setBalanceDisplay(getBalance());
+              toast.show(result.message, 'success');
+              setTimeout(() => navigate(-1), 1500);
+            } else {
+              toast.show(result.message, 'warning');
+            }
+          }}
+        >
+          {selectedPkg
+            ? `${selectedPkg.price.toLocaleString()}원 결제하기`
+            : '패키지를 선택해주세요'}
+        </Button>
       </div>
     </div>
   );
