@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^2.0.5",
+    "@tosspayments/tosspayments-sdk": "^2.6.0",
     "firebase": "^10.14.1",
     "framer-motion": "^11.18.2",
     "html2canvas": "^1.4.1",

@@ -1,0 +1,13 @@
+{
+  "appName": "saju500",
+  "permissions": [
+    {
+      "name": "clipboard",
+      "access": "read"
+    },
+    {
+      "name": "clipboard",
+      "access": "write"
+    }
+  ]
+}

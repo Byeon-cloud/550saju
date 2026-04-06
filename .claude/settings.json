@@ -63,7 +63,28 @@
       "Read(//c/Program Files/**)",
       "Bash(where nvm.exe)",
       "Bash(cmd //c \"nvm version\")",
-      "Bash(cmd //c \"nvm install 20\")"
+      "Bash(cmd //c \"nvm install 20\")",
+      "Bash(cmd //c \"cd /d C:\\\\Users\\\\quswn\\\\AppData\\\\Local\\\\nvm && nvm.exe install 20\")",
+      "Bash(export NVM_HOME=\"/c/Users/quswn/AppData/Local/nvm\")",
+      "Bash(\"$NVM_HOME/nvm.exe\" root:*)",
+      "Bash(\"$NVM_HOME/nvm.exe\" install:*)",
+      "Bash(\"$NVM_HOME/nvm.exe\" use:*)",
+      "Read(//c/nvm4w/**)",
+      "Read(//c/nvm4w//**)",
+      "Bash(\"$NVM_HOME/nvm.exe\" list:*)",
+      "Bash(rm \"/c/nvm4w/nodejs\")",
+      "Bash(export PATH=\"/c/Users/quswn/AppData/Local/nvm/v20.20.2:/c/Users/quswn/AppData/Local/nvm/nodejs:$PATH\")",
+      "Bash(export PATH=\"/c/Users/quswn/AppData/Local/nvm/v20.20.2:$PATH\")",
+      "Bash(npx granite:*)",
+      "Bash(ls dist/assets/*.js)",
+      "Bash(ls -lh d:/550saju/*.ait)",
+      "Bash(firebase deploy:*)",
+      "Bash(ls \"d:/550saju/.env\"*)",
+      "Bash(firebase functions:secrets:set TOSS_PAYMENTS_SECRET_KEY)"
+    ],
+    "additionalDirectories": [
+      "C:\\nvm4w",
+      "C:\\Users\\quswn\\AppData\\Local\\nvm"
     ]
   }
 }

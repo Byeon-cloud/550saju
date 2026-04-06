@@ -6,6 +6,7 @@
  * 테스트: 샌드박스 앱에서 intoss://saju500
  * 배포: npx ait deploy --api-key {KEY}
  */
+// @apps-in-toss/web-framework
 export default {
   appName: 'saju500',
   brand: {

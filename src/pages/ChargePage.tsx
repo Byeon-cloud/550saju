@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
 import { FadeIn } from '@/components/common/FadeIn';
 import { CHARGE_PACKAGES } from '@/constants/pricing';
-import { getBalance } from '@/services/storage/localStore';
+import { getBalance, addPaidBalance } from '@/services/storage/localStore';
 import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -15,6 +15,7 @@ export function ChargePage() {
   usePageTitle('운(運) 충전');
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fromMessage = (location.state as any)?.message as string | undefined;
   const [selected, setSelected] = useState('serious');
   const [balance, setBalanceDisplay] = useState(() => getBalance());
@@ -22,6 +23,47 @@ export function ChargePage() {
   const [message, setMessage] = useState<string | null>(null);
   const toast = useToast();
   const selectedPkg = CHARGE_PACKAGES.find(p => p.id === selected);
+
+  // 토스페이먼츠 결제 후 리다이렉트 복귀 처리
+  useEffect(() => {
+    const pgStatus = searchParams.get('pg');
+    const paymentKey = searchParams.get('paymentKey');
+    const orderId = searchParams.get('orderId');
+    const amount = searchParams.get('amount');
+
+    if (pgStatus === 'fail') {
+      const errMsg = searchParams.get('message') || '결제가 취소됐어요';
+      toast.show(errMsg, 'warning');
+      setSearchParams({}, { replace: true });
+      return;
+    }
+
+    if (paymentKey && orderId && amount) {
+      setPurchasing(true);
+      setMessage('결제 확인 중...');
+
+      import('@/services/payment/tossPayments').then(({ confirmTossPayment }) => {
+        confirmTossPayment(paymentKey, orderId, Number(amount))
+          .then((result) => {
+            if (result.success && result.paidUn != null) {
+              addPaidBalance(result.paidUn, result.bonusUn || 0);
+              setBalanceDisplay(getBalance());
+              toast.show(result.message, 'success');
+            } else {
+              toast.show(result.message || '결제 처리에 실패했어요', 'warning');
+            }
+          })
+          .catch((err) => {
+            toast.show('결제 확인 실패: ' + (err.message || '다시 시도해주세요'), 'warning');
+          })
+          .finally(() => {
+            setPurchasing(false);
+            setMessage(null);
+            setSearchParams({}, { replace: true });
+          });
+      });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg-page">

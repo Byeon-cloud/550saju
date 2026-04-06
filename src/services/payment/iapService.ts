@@ -39,7 +39,7 @@ export async function purchasePackage(pkg: ChargePackage): Promise<{ success: bo
   if (isAppsInToss()) {
     return purchaseViaIAP(pkg);
   }
-  return purchaseDevMode(pkg);
+  return purchaseViaWeb(pkg);
 }
 
 /**
@@ -139,14 +139,17 @@ export async function restorePendingPurchases(): Promise<void> {
   }
 }
 
-/** 개발 모드 — 로컬 잔액 직접 증가 */
-async function purchaseDevMode(pkg: ChargePackage): Promise<{ success: boolean; message: string }> {
-  addPaidBalance(pkg.un, pkg.bonusUn);
-  const total = pkg.un + pkg.bonusUn;
-  return {
-    success: true,
-    message: `${total}운이 충전되었습니다`,
-  };
+/** 웹 브라우저 — 토스페이먼츠 PG 결제 */
+async function purchaseViaWeb(pkg: ChargePackage): Promise<{ success: boolean; message: string }> {
+  try {
+    const { requestTossPayment } = await import('@/services/payment/tossPayments');
+    await requestTossPayment(pkg);
+    // requestTossPayment은 리다이렉트 발생 — 여기 도달하면 취소된 것
+    return { success: false, message: '결제가 취소됐어요' };
+  } catch (err: any) {
+    console.error('[Web Payment]', err);
+    return { success: false, message: err.message || '결제 처리 중 오류가 발생했어요' };
+  }
 }
 
 /** 운 사용 — reward → bonus → paid 순으로 차감 */

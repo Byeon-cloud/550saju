@@ -104,7 +104,7 @@ export async function exchangeTossToken(
 
   // mTLS agent — 토스 API 호출 시 필수
   const agent = createMtlsAgent(mtlsCert, mtlsKey);
-  const fetchOptions: RequestInit = { agent: agent as any };
+  const fetchOptions: any = { agent };
 
   // 1. authorizationCode → accessToken (POST, JSON)
   const tokenRes = await fetch(TOSS_TOKEN_URL, {
