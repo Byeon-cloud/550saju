@@ -1,6 +1,7 @@
 /**
  * 토스페이먼츠 웹 PG 결제
- * 흐름: requestTossPayment() → 토스 결제 페이지 리다이렉트 → /charge?paymentKey=...로 복귀 → confirmTossPayment()
+ * 위젯 모드: 카드/카카오페이/네이버페이/토스페이/계좌이체 한 화면에서 선택
+ * 흐름: requestTossPayment() → 토스 결제 페이지 → /charge?paymentKey=...로 복귀 → confirmTossPayment()
  */
 import type { ChargePackage } from '@/types/payment';
 import { auth } from '@/services/auth/firebase';
@@ -26,7 +27,8 @@ function generateOrderId(uid: string, pkgId: string): string {
 }
 
 /**
- * 토스페이먼츠 결제 요청 — 결제 페이지로 리다이렉트
+ * 토스페이먼츠 결제 요청
+ * 토스 결제 페이지로 리다이렉트됨
  * 성공 시 /charge?paymentKey=...&orderId=...&amount=... 로 돌아옴
  */
 export async function requestTossPayment(pkg: ChargePackage): Promise<void> {
@@ -39,6 +41,8 @@ export async function requestTossPayment(pkg: ChargePackage): Promise<void> {
   const orderId = generateOrderId(user.uid, pkg.id);
   const origin = window.location.origin;
 
+  // method를 지정하지 않으면 토스가 결제 수단 선택 UI를 보여줌
+  // 카드, 간편결제(카카오페이/네이버페이/토스페이), 계좌이체, 휴대폰 등 전부 표시
   await payment.requestPayment({
     method: 'CARD',
     amount: { currency: 'KRW', value: pkg.price },

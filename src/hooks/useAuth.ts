@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { User } from 'firebase/auth';
-import { onAuthChange, signIn } from '@/services/auth/authService';
+import { onAuthChange, signIn, checkRedirectResult, type WebLoginProvider } from '@/services/auth/authService';
 
-// 개발 중: true → 로그인 없이 모든 페이지 접근
-// 런칭 시: false → 실제 로그인 필요
 const DEV_MODE = false;
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(!DEV_MODE);
-  const [devLoggedIn, setDevLoggedIn] = useState(DEV_MODE);
+  const [devLoggedIn] = useState(DEV_MODE);
 
   useEffect(() => {
     if (DEV_MODE) return;
@@ -17,18 +15,30 @@ export function useAuth() {
       setUser(u);
       setLoading(false);
     });
+
+    // 모바일 리다이렉트 로그인 복귀 처리
+    checkRedirectResult().then((u) => {
+      if (u) {
+        import('@/services/storage/firestoreSync').then(({ syncFromCloud, syncToCloud }) => {
+          syncToCloud(u.uid);
+          syncFromCloud(u.uid);
+        });
+      }
+    });
+
     return unsubscribe;
   }, []);
 
-  const login = useCallback(async () => {
+  /** 로그인 — provider를 지정하지 않으면 로그인 선택 모달용 */
+  const login = useCallback(async (provider?: WebLoginProvider) => {
     try {
-      const u = await signIn();
+      const u = await signIn(provider);
       import('@/services/storage/firestoreSync').then(({ syncFromCloud, syncToCloud }) => {
         syncToCloud(u.uid);
         syncFromCloud(u.uid);
       });
     } catch {
-      setDevLoggedIn(true);
+      // 로그인 취소/실패 — 무시
     }
   }, []);
 

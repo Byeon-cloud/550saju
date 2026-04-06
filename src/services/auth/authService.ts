@@ -1,7 +1,10 @@
 import {
   signInWithPopup,
   signInWithCustomToken,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
+  OAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   type User,
@@ -11,16 +14,62 @@ import { isAppsInToss } from '@/services/payment/iapService';
 
 const googleProvider = new GoogleAuthProvider();
 
+// 카카오 — Firebase OpenID Connect (프로바이더 ID: oidc.kakao)
+const kakaoProvider = new OAuthProvider('oidc.kakao');
+
+// 네이버 — Firebase OpenID Connect (프로바이더 ID: oidc.naver)
+const naverProvider = new OAuthProvider('oidc.naver');
+
+export type WebLoginProvider = 'google' | 'kakao' | 'naver';
+
 /**
  * 로그인 — 플랫폼 자동 분기
  * 앱인토스: appLogin() → authorizationCode → 서버 토큰 교환 → signInWithCustomToken
- * 웹: Google 팝업 로그인 (Phase 2에서 카카오/네이버 추가)
+ * 웹: 사용자가 선택한 프로바이더로 로그인
  */
-export async function signIn(): Promise<User> {
+export async function signIn(provider?: WebLoginProvider): Promise<User> {
   if (isAppsInToss()) {
     return signInWithToss();
   }
-  return signInWithGoogle();
+  return signInWithWeb(provider || 'google');
+}
+
+/** 웹 로그인 — Google/카카오/네이버 */
+async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
+  const providers: Record<WebLoginProvider, GoogleAuthProvider | OAuthProvider> = {
+    google: googleProvider,
+    kakao: kakaoProvider,
+    naver: naverProvider,
+  };
+
+  try {
+    // 모바일에서는 redirect 방식이 더 안정적
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      await signInWithRedirect(auth, providers[provider]);
+      // 리다이렉트 후 복귀 시 getRedirectResult로 처리
+      const result = await getRedirectResult(auth);
+      if (result) return result.user;
+      throw new Error('로그인이 취소됐어요');
+    }
+
+    // PC에서는 popup
+    const result = await signInWithPopup(auth, providers[provider]);
+    return result.user;
+  } catch (err: any) {
+    console.error(`[Auth] ${provider} 로그인 실패:`, err);
+    throw err;
+  }
+}
+
+/** 리다이렉트 복귀 시 결과 확인 (App.tsx에서 호출) */
+export async function checkRedirectResult(): Promise<User | null> {
+  try {
+    const result = await getRedirectResult(auth);
+    return result?.user || null;
+  } catch {
+    return null;
+  }
 }
 
 /** 앱인토스 토스 로그인 */
@@ -29,29 +78,20 @@ async function signInWithToss(): Promise<User> {
     const sdkName = '@apps-in-toss/' + 'web-framework';
     const { appLogin } = await import(/* @vite-ignore */ sdkName);
 
-    // 1. 토스에서 인증 코드 받기
     const { authorizationCode } = await appLogin();
 
-    // 2. Cloud Function으로 토큰 교환
     const { getFunctions, httpsCallable } = await import('firebase/functions');
     const functions = getFunctions(undefined, 'asia-northeast3');
     const loginFn = httpsCallable(functions, 'loginWithToss');
     const result = await loginFn({ authorizationCode });
     const { customToken } = result.data as { customToken: string; uid: string };
 
-    // 3. Firebase 로그인
     const credential = await signInWithCustomToken(auth, customToken);
     return credential.user;
   } catch (err) {
     console.error('[Auth] 토스 로그인 실패:', err);
     throw err;
   }
-}
-
-/** Google 로그인 (웹용) */
-async function signInWithGoogle(): Promise<User> {
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
 }
 
 /** 로그아웃 */

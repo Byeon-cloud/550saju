@@ -78,9 +78,8 @@ export function MyPage() {
         <FadeIn><div className="px-5 pt-4"><h1 className="text-display text-text-primary">내 정보</h1></div></FadeIn>
         <LoginPrompt
           title="로그인이 필요해요"
-          description={"로그인하면 내 사주 프로필,\n잔액, 분석 이력을 확인할 수 있습니다."}
-          buttonLabel="로그인하기"
-          onLogin={devLogin}
+          description={"로그인하면 내 사주 프로필,\n잔액, 분석 이력을 확인할 수 있어요."}
+          onLogin={(provider) => devLogin(provider)}
         />
       </div>
     );
