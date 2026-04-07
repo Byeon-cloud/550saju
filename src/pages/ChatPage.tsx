@@ -393,8 +393,8 @@ export function ChatPage() {
       {showBuyCredits && (
         <div className="flex-shrink-0 px-4 pb-2">
           <div className="rounded-2xl p-4" style={{ background: 'var(--bg-gold-solid)', border: '1px solid rgba(201,169,110,0.2)' }}>
-            <p className="text-h3 text-text-primary">대화권이 필요해요</p>
-            <p className="text-caption text-text-muted mt-1">1운으로 3회 대화할 수 있어요</p>
+            <p className="text-h3 text-text-primary">대화권이 모두 소진됐어요</p>
+            <p className="text-caption text-text-muted mt-1">1운(500원)으로 3회 추가 대화할 수 있어요</p>
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSajuContext } from '@/contexts/SajuContext';
 import { generateReport } from '@/services/ai/reportGenerator';
+import { saveReport, generateId } from '@/services/storage/localStore';
 
 const STEPS = [
   '만세력을 계산하고 있어요...',
@@ -84,6 +85,16 @@ export function LoadingPage() {
     async function callGenerateReport() {
       try {
         const result = await generateReport(sajuData!, situation || undefined);
+        // 유료 분석 결과를 로컬에 저장 (보관함에 표시되도록)
+        saveReport({
+          id: result.reportId || generateId(),
+          name: sajuData!.input?.name || '나',
+          input: sajuData!.input as any,
+          sajuData: sajuData!,
+          type: 'paid',
+          createdAt: Date.now(),
+          aiResult: result.content,
+        });
         navigate(`/result/${result.reportId}`, { replace: true });
       } catch (err) {
         console.warn('[LoadingPage] 서버 호출 실패, 로컬 fallback:', err);

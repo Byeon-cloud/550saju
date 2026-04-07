@@ -189,8 +189,40 @@ export function ChargePage() {
           </div>
         </FadeIn>
 
-        {/* 안내 */}
+        {/* 무료로 운 받기 — 공유 리워드 */}
         <FadeIn delay={0.09}>
+          <button
+            onClick={async () => {
+              try {
+                const { shareResult } = await import('@/utils/share');
+                const { claimShareReward } = await import('@/services/share/shareReward');
+                const success = await shareResult({ name: '사주500', reportId: 'invite' });
+                if (success) {
+                  const earned = claimShareReward();
+                  if (earned > 0) {
+                    setBalanceDisplay(getBalance());
+                    toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+                  }
+                }
+              } catch { /* 무시 */ }
+            }}
+            className="w-full card-gold py-4 px-5 text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-h3 text-text-primary">친구에게 공유하면 1운 적립</p>
+                <p className="text-caption text-text-muted mt-0.5">새 친구에게 공유할 때마다 계속 받아요</p>
+              </div>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                <span className="text-[10px] font-black text-white">運</span>
+              </div>
+            </div>
+          </button>
+        </FadeIn>
+
+        {/* 안내 */}
+        <FadeIn delay={0.12}>
           <div className="space-y-1.5 px-1">
             <p className="text-caption text-text-hint">· 보너스 운과 리워드 운은 환불 대상에서 제외돼요</p>
             <p className="text-caption text-text-hint">· 유효기간 없어요. 충전한 운은 사라지지 않아요</p>

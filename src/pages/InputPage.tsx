@@ -13,6 +13,7 @@ import type { LocalReport } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { triggerPromotionEvent, PROMO_EVENTS } from '@/services/toss/tossPromotion';
+import { BannerAd as BannerAdStep5 } from '@/components/ads/BannerAd';
 
 const TOTAL_STEPS = 5;
 
@@ -166,7 +167,7 @@ export function InputPage() {
       <div className="absolute bottom-40 -left-20 w-48 h-48 rounded-full opacity-[0.015] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #1B2A4A, transparent 70%)' }} />
 
-      <Header title="사주 입력" showBack />
+      <Header title="사주 입력" />
 
       {/* Step Indicator — Figma 6바 */}
       <div className="flex items-center gap-1 px-4 py-2">
@@ -181,7 +182,7 @@ export function InputPage() {
       </div>
 
       {/* 콘텐츠 — 하단 CTA 높이(100px) + 여유(20px) 확보 */}
-      <div className="flex-1 px-4 pt-6 pb-[120px] overflow-y-auto">
+      <div className="flex-1 px-4 pt-6 pb-[180px] overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -261,7 +262,13 @@ export function InputPage() {
             {step === 2 && <Step2 birthYear={birthYear} setBirthYear={setBirthYear} birthMonth={birthMonth} setBirthMonth={setBirthMonth} birthDay={birthDay} setBirthDay={setBirthDay} calendarType={calendarType} setCalendarType={setCalendarType} />}
             {step === 3 && <Step3 gender={gender} setGender={setGender} onAutoNext={() => setStep(4)} />}
             {step === 4 && <Step4 knowsTime={knowsTime} setKnowsTime={setKnowsTime} timeIndex={timeIndex} setTimeIndex={setTimeIndex} />}
-            {step === 5 && sajuData && sajuInput && <Step5 sajuData={sajuData} name={name} input={sajuInput} />}
+            {step === 5 && sajuData && sajuInput && (
+              <div id="step5-content">
+                <Step5 sajuData={sajuData} name={name} input={sajuInput} />
+                {/* 배너 광고 — 앱인토스에서만 */}
+                <div className="mt-4"><BannerAdStep5 /></div>
+              </div>
+            )}
             {/* Step6 제거 — 상황질문은 상세분석 시작 후 로딩 중에 물어볼 수 있음 */}
           </motion.div>
         </AnimatePresence>
@@ -281,7 +288,7 @@ export function InputPage() {
             </Button>
           </div>
         ) : (
-          /* Step 5: 사주팔자 결과 — 사진저장 + 상세분석 */
+          /* Step 5: 사주팔자 결과 — 상세분석 + 공유 + 사진저장 */
           <div className="space-y-2">
             <Button fullWidth size="lg" variant="gold" onClick={startAnalysis}>
               상세 분석 받기 (1운)
@@ -293,34 +300,35 @@ export function InputPage() {
               <button
                 onClick={async () => {
                   try {
+                    const { shareResult } = await import('@/utils/share');
+                    await shareResult({ name: name || '사주팔자', reportId: 'free' });
+                  } catch {
+                    toast.show('공유에 실패했어요', 'warning');
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl text-caption font-bold text-white"
+                style={{ background: '#C9A96E' }}
+              >
+                친구에게 공유하고 1운 받기
+              </button>
+              <button
+                onClick={async () => {
+                  try {
                     const html2canvas = (await import('html2canvas')).default;
-                    const target = document.querySelector('.flex-1.px-4') as HTMLElement;
-                    if (!target) { toast.show('캡처할 영역을 찾을 수 없어요', 'warning'); return; }
+                    const target = document.getElementById('step5-content') as HTMLElement;
+                    if (!target) { toast.show('캡처 영역을 찾을 수 없어요', 'warning'); return; }
                     toast.show('이미지를 준비하고 있어요...', 'info');
                     const canvas = await html2canvas(target, { backgroundColor: '#F4F5F8', scale: 2, useCORS: true });
-
-                    // 모바일: Web Share API로 공유/저장
                     if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
                       canvas.toBlob(async (blob) => {
                         if (!blob) return;
                         const file = new File([blob], `사주500_${name || '사주팔자'}.png`, { type: 'image/png' });
-                        try {
-                          await navigator.share({ files: [file], title: '내 사주팔자 — 사주500' });
-                          toast.show('저장 또는 공유 완료!', 'success');
-                        } catch {
-                          // 공유 취소 시 링크 다운로드 폴백
-                          downloadCanvas(canvas);
-                        }
+                        try { await navigator.share({ files: [file], title: '내 사주팔자 — 사주500' }); } catch { /* 취소 */ }
                       }, 'image/png');
                     } else {
-                      // PC: 다운로드
-                      downloadCanvas(canvas);
-                    }
-
-                    function downloadCanvas(c: HTMLCanvasElement) {
                       const link = document.createElement('a');
                       link.download = `사주500_${name || '사주팔자'}.png`;
-                      link.href = c.toDataURL('image/png');
+                      link.href = canvas.toDataURL('image/png');
                       link.click();
                       toast.show('사진이 저장됐어요!', 'success');
                     }
@@ -328,15 +336,9 @@ export function InputPage() {
                     toast.show('화면을 길게 눌러서 저장해주세요', 'info');
                   }
                 }}
-                className="flex-1 py-3 rounded-xl text-caption font-semibold text-text-muted bg-bg-surface border border-border-light"
+                className="w-20 py-3 rounded-xl text-caption font-semibold text-text-muted bg-bg-surface border border-border-light"
               >
-                사진 저장
-              </button>
-              <button
-                onClick={() => navigate('/')}
-                className="flex-1 py-3 rounded-xl text-caption font-semibold text-text-muted bg-bg-surface border border-border-light"
-              >
-                홈으로
+                저장
               </button>
             </div>
           </div>

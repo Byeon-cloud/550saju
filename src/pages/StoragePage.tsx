@@ -51,9 +51,11 @@ export function StoragePage() {
 
   // 콘텐츠 필터
   const contentReports = useMemo(() => {
-    if (contentTab === '전체') return reports.filter(r => r.type === 'paid');
+    if (contentTab === '전체') return reports;
     if (contentTab === '상세 분석') return reports.filter(r => r.type === 'paid');
-    return [];
+    if (contentTab === '오늘운세') return reports.filter(r => r.type === 'daily' as any);
+    if (contentTab === '꿈해몽') return reports.filter(r => r.type === 'dream' as any);
+    return reports;
   }, [reports, contentTab]);
 
   function getIlgan(r: LocalReport) {
