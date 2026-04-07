@@ -85,7 +85,9 @@
       "Bash(/c/Users/quswn/AppData/Local/nvm/v20.20.2/npx.cmd tsc:*)",
       "Bash(export PATH=\"/c/Users/quswn/AppData/Local/nvm/nodejs:/c/Users/quswn/AppData/Local/nvm/v20.20.2:$PATH\")",
       "Bash(node node_modules/.bin/tsc -b)",
-      "Bash(cmd //c \"npx tsc -b\")"
+      "Bash(cmd //c \"npx tsc -b\")",
+      "Bash(wait bo2rep4i7:*)",
+      "Bash(node node_modules/typescript/bin/tsc -b)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",

@@ -349,13 +349,33 @@ export function DreamPage() {
                     같은 꿈이라도 사주의 오행 분포에 따라 해석이 완전히 달라져요.{'\n'}
                     내 사주 원국에 맞춘 심층 해몽을 받아보세요.
                   </p>
-                  <Button variant="gold" fullWidth size="lg" className="mt-3" onClick={() => {
-                    if (spendBalance(1)) {
-                      toast.show('1운이 차감됐어요. 심층 해몽을 준비하고 있어요', 'info');
-                      // TODO: 사주 연계 AI 해몽 호출
-                    } else {
+                  <Button variant="gold" fullWidth size="lg" className="mt-3" onClick={async () => {
+                    // 사주 데이터 확인
+                    const { getReports: fetchReports } = await import('@/services/storage/localStore');
+                    const myReport = fetchReports().find((r: any) => !r.input?.relation || r.input.relation === '본인');
+                    if (!myReport?.sajuData) {
+                      toast.show('먼저 사주를 분석해주세요', 'warning');
+                      navigate('/input');
+                      return;
+                    }
+                    if (!spendBalance(1)) {
                       toast.show('잔액이 부족해요', 'warning');
                       navigate('/charge', { state: { message: '심층 해몽에 1운이 필요해요' } });
+                      return;
+                    }
+                    toast.show('사주 연계 심층 해몽을 분석하고 있어요...', 'info');
+                    try {
+                      const { generateDream } = await import('@/services/ai/reportGenerator');
+                      const categoryLabel = DREAM_CATEGORIES.find(c => c.id === selectedCategory)?.label || '기타';
+                      const fullText = [dreamText, concern ? `\n현재 고민: ${concern}` : '', '\n\n[심층 분석 요청] 사주 원국의 오행 분포와 연계하여 이 꿈이 가진 의미를 더 깊이 해석해주세요.'].join('');
+                      const result = await generateDream(categoryLabel, fullText, myReport.sajuData);
+                      if (result) setAiResult(result);
+                      toast.show('심층 해몽이 완성됐어요!', 'success');
+                    } catch {
+                      // 실패 시 환불
+                      const { addRewardBalance } = await import('@/services/storage/localStore');
+                      addRewardBalance(1);
+                      toast.show('분석에 실패했어요. 1운이 환불됐어요.', 'warning');
                     }
                   }}>
                     사주 연계 심층 해몽 (1운)
