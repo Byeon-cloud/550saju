@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   resolve: {
     alias: {
@@ -11,19 +11,20 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true,
+    host: true,
   },
   optimizeDeps: {
     exclude: ['@apps-in-toss/web-framework'],
   },
   esbuild: {
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
   },
   build: {
     outDir: 'dist',
     sourcemap: false,
+    minify: 'esbuild',
     rollupOptions: {
-      external: ['@apps-in-toss/web-framework'],
+      external: ['@apps-in-toss/web-framework', '@apps-in-toss/web-framework/config'],
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
@@ -34,4 +35,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

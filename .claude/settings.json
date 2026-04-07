@@ -87,7 +87,20 @@
       "Bash(node node_modules/.bin/tsc -b)",
       "Bash(cmd //c \"npx tsc -b\")",
       "Bash(wait bo2rep4i7:*)",
-      "Bash(node node_modules/typescript/bin/tsc -b)"
+      "Bash(node node_modules/typescript/bin/tsc -b)",
+      "Bash(xxd d:/550saju/saju500.ait)",
+      "Bash(ls -la d:/550saju/saju500.ait*)",
+      "Read(//d/550saju/**)",
+      "Read(//d/550saju/src//**)",
+      "Read(//d/550saju/src/constants/**)",
+      "Read(//d/550saju/dist//**)",
+      "Read(//d/550saju/dist/web//**)",
+      "Read(//d/appintoss/my-mbti-app/dist//**)",
+      "Read(//d/550saju/src/**)",
+      "Read(//d/550saju/src/components/**)",
+      "Read(//d/appintoss/my-mbti-app/src/**)",
+      "Read(//d/550saju/.granite//**)",
+      "Read(//d/appintoss/my-mbti-app/.granite//**)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",
