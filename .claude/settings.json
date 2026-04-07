@@ -80,7 +80,12 @@
       "Bash(ls -lh d:/550saju/*.ait)",
       "Bash(firebase deploy:*)",
       "Bash(ls \"d:/550saju/.env\"*)",
-      "Bash(firebase functions:secrets:set TOSS_PAYMENTS_SECRET_KEY)"
+      "Bash(firebase functions:secrets:set TOSS_PAYMENTS_SECRET_KEY)",
+      "Read(//d/appintoss/my-mbti-app/**)",
+      "Bash(/c/Users/quswn/AppData/Local/nvm/v20.20.2/npx.cmd tsc:*)",
+      "Bash(export PATH=\"/c/Users/quswn/AppData/Local/nvm/nodejs:/c/Users/quswn/AppData/Local/nvm/v20.20.2:$PATH\")",
+      "Bash(node node_modules/.bin/tsc -b)",
+      "Bash(cmd //c \"npx tsc -b\")"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",

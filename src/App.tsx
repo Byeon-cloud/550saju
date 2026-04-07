@@ -121,23 +121,65 @@ export function App() {
       restorePendingPurchases();
     });
 
-    // 2. 앱인토스 네비바 액세서리 버튼 (보관함)
+    // 2. 앱인토스 전용 초기화
     import('@/services/payment/iapService').then(({ isAppsInToss }) => {
-      if (isAppsInToss()) {
-        const sdkName = '@apps-in-toss/' + 'web-framework';
-        import(/* @vite-ignore */ sdkName).then((mod: any) => {
-          mod.partner?.addAccessoryButton?.({
-            id: 'charge',
-            title: '충전',
-            icon: { name: 'icon-coin-mono' },
+      if (!isAppsInToss()) return;
+
+      const sdkName = '@apps-in-toss/' + 'web-framework';
+      import(/* @vite-ignore */ sdkName).then((mod: any) => {
+        // 네비바 충전 버튼
+        mod.partner?.addAccessoryButton?.({
+          id: 'charge',
+          title: '충전',
+          icon: { name: 'icon-coin-mono' },
+        });
+        mod.tdsEvent?.addEventListener?.('navigationAccessoryEvent', {
+          onEvent: ({ id }: { id: string }) => {
+            if (id === 'charge') window.location.href = '/charge';
+          },
+        });
+
+        // 뒤로가기 핸들러 — 페이지별 분기
+        const currentPathRef = { value: window.location.pathname };
+        // pathname 변경 감지
+        const observer = new MutationObserver(() => {
+          currentPathRef.value = window.location.pathname;
+        });
+        observer.observe(document.querySelector('head')!, { childList: true, subtree: true });
+        // popstate로도 감지
+        window.addEventListener('popstate', () => {
+          currentPathRef.value = window.location.pathname;
+        });
+        // pushState/replaceState 감지
+        const origPush = history.pushState;
+        history.pushState = function (...args) {
+          origPush.apply(this, args);
+          currentPathRef.value = window.location.pathname;
+        };
+        const origReplace = history.replaceState;
+        history.replaceState = function (...args) {
+          origReplace.apply(this, args);
+          currentPathRef.value = window.location.pathname;
+        };
+
+        if (mod.registerBackHandler) {
+          mod.registerBackHandler(() => {
+            const path = currentPathRef.value;
+            // 홈/메인이면 앱 종료
+            if (path === '/' || path === '/home') {
+              mod.closeView?.();
+              return;
+            }
+            // 결과 페이지면 홈으로
+            if (path.startsWith('/result')) {
+              window.location.href = '/';
+              return;
+            }
+            // 그 외 → 브라우저 뒤로가기
+            window.history.back();
           });
-          mod.tdsEvent?.addEventListener?.('navigationAccessoryEvent', {
-            onEvent: ({ id }: { id: string }) => {
-              if (id === 'charge') window.location.href = '/charge';
-            },
-          });
-        }).catch(() => {});
-      }
+        }
+      }).catch(() => {});
     });
   }, []);
 

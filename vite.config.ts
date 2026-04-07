@@ -16,9 +16,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@apps-in-toss/web-framework'],
   },
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+  },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
     rollupOptions: {
       external: ['@apps-in-toss/web-framework'],
       output: {
