@@ -67,13 +67,13 @@ function getBalanceDetail(): BalanceDetail {
     if (raw) return JSON.parse(raw);
 
     // 레거시 마이그레이션: 기존 단일 잔액 → paid로 이전
-    const legacy = Number(localStorage.getItem(BALANCE_LEGACY_KEY)) || 3;
+    const legacy = Number(localStorage.getItem(BALANCE_LEGACY_KEY)) || 1;
     const detail: BalanceDetail = { paid: legacy, bonus: 0, reward: 0 };
     setBalanceDetail(detail);
     localStorage.removeItem(BALANCE_LEGACY_KEY);
     return detail;
   } catch {
-    return { paid: 3, bonus: 0, reward: 0 };
+    return { paid: 1, bonus: 0, reward: 0 };
   }
 }
 

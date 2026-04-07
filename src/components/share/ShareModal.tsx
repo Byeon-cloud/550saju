@@ -115,7 +115,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                         </div>
                         <p className="text-caption text-text-primary">
                           공유하면 <span className="font-bold text-brand-gold">1운</span> 적립!
-                          <span className="text-text-hint"> (오늘 {remaining}회 남음)</span>
+                          <span className="text-text-hint"> 새 친구에게 공유할 때마다 받아요</span>
                         </p>
                       </div>
                     )}

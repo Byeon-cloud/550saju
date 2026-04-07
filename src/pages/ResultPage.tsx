@@ -1610,7 +1610,7 @@ export function ResultPage() {
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { title: '궁합 분석', desc: '1운', action: () => window.location.href = '/compat' },
-                  { title: '대운 상세', desc: '1운', action: () => window.location.href = '/input' },
+                  { title: '대운 상세', desc: '1운', action: () => window.location.href = '/daeun' },
                   { title: '공유하기', desc: '+1운', action: () => setShowShareModal(true) },
                 ].map((item) => (
                   <button key={item.title} onClick={item.action} className="card text-center py-3 space-y-1 hover-lift">
