@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BannerAd } from '@/components/ads/BannerAd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
@@ -382,6 +383,9 @@ export function DreamPage() {
                   </Button>
                 </div>
               </FadeIn>
+
+              {/* 배너 광고 — 앱인토스에서만 */}
+              <BannerAd className="mt-3" />
 
               <button onClick={reset} className="w-full text-center text-caption text-text-muted mt-2">
                 다른 꿈 해몽하기

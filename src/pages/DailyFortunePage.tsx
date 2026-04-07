@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
+import { BannerAd as BannerAdLazy } from '@/components/ads/BannerAd';
 import { getReports, spendBalance, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -678,6 +679,8 @@ export function DailyFortunePage() {
                 >
                   오늘의 운세 공유하기
                 </button>
+                {/* 배너 광고 — 앱인토스에서만 */}
+                <BannerAdLazy className="mt-3" />
               </div>
             </motion.div>
           )}

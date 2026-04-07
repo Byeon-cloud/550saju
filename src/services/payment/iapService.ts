@@ -26,10 +26,10 @@ export function isAppsInToss(): boolean {
  * 공급가 기준 (VAT 별도 → 소비자가는 +10%)
  */
 const IAP_PRODUCT_MAP: Record<string, { sku: string; paidUn: number; bonusUn: number }> = {
-  once:    { sku: 'saju500.un.1',   paidUn: 1,  bonusUn: 0 },
-  more:    { sku: 'saju500.un.4',   paidUn: 3,  bonusUn: 1 },
-  serious: { sku: 'saju500.un.7',   paidUn: 5,  bonusUn: 2 },
-  yearly:  { sku: 'saju500.un.15',  paidUn: 10, bonusUn: 5 },
+  once:    { sku: 'ait.0000025955.8f74931d.d3f5a2a979.5185316383',  paidUn: 1,  bonusUn: 0 },
+  more:    { sku: 'ait.0000025955.5d5bec27.6ee0778e2a.5185547787',  paidUn: 3,  bonusUn: 1 },
+  serious: { sku: 'ait.0000025955.79d2ae48.26de419a84.5185590911',  paidUn: 5,  bonusUn: 2 },
+  yearly:  { sku: 'ait.0000025955.304b4aa7.cabbd01e5e.5185730660',  paidUn: 10, bonusUn: 5 },
 };
 
 /**
