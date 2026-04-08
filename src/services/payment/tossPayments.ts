@@ -65,7 +65,7 @@ export async function confirmTossPayment(
 ): Promise<{ success: boolean; message: string; totalUn?: number; paidUn?: number; bonusUn?: number }> {
   const { getFunctions, httpsCallable } = await import('firebase/functions');
   const { app } = await import('@/services/auth/firebase');
-  const functions = getFunctions(app, 'asia-northeast3');
+  const functions = getFunctions(app, 'us-central1');
   const confirmFn = httpsCallable(functions, 'confirmPayment');
 
   const result = await confirmFn({ paymentKey, orderId, amount });

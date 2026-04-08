@@ -574,8 +574,11 @@ function PillarCard({ p, index, total }: { p: V4Pillar; index: number; total: nu
 function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements; hasBirthTime: boolean }) {
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 4 }}>
         ▎오행 상생상극 — 이 사주의 핵심 구조
+      </div>
+      <div style={{ fontSize: 10, color: '#a0937f', marginBottom: 10, lineHeight: 1.5 }}>
+        <span style={{ color: '#2E7D32', fontWeight: 700 }}>상생(→생→)</span>은 에너지를 키워주고, <span style={{ color: '#c62828', fontWeight: 700 }}>상극(→극→)</span>은 에너지를 억제해요
       </div>
       <div
         className="flex items-center justify-center gap-1 flex-wrap"
@@ -864,20 +867,22 @@ function HealthVis() {
 
 function GaewoonVis() {
   const items = [
-    { label: '색상', desc: '검정·남색(수) + 흰색·은색(금)' },
-    { label: '방위', desc: '북(수)·서(금) 방향으로 책상 배치' },
-    { label: '음식', desc: '해산물·검은깨(수) + 배·닭고기(금)' },
-    { label: '운동', desc: '수영 최고! 요가·등산도 추천' },
+    { label: '색상', desc: '검정·남색(수) + 흰색·은색(금)', icon: '🎨' },
+    { label: '방위', desc: '북(수)·서(금) 방향으로 책상 배치', icon: '🧭' },
+    { label: '음식', desc: '해산물·검은깨(수) + 배·닭고기(금)', icon: '🍽️' },
+    { label: '운동', desc: '수영 최고! 요가·등산도 추천', icon: '🏊' },
   ];
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
       <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 10 }}>▎개운법 한눈에</div>
       <div className="grid grid-cols-2 gap-2">
         {items.map((it, i) => (
-          <div key={i} className="p-3 rounded-xl text-center" style={{ background: '#fff', border: '1px solid #e8e0d4' }}>
-            <div className="w-6 h-6 rounded-full mx-auto mb-1" style={{ background: '#C9A96E20', border: '1.5px solid #C9A96E' }} />
-            <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 2 }}>{it.label}</div>
-            <div style={{ fontSize: 10, color: '#8b7e6f' }}>{it.desc}</div>
+          <div key={i} className="p-3 rounded-xl" style={{ background: '#fff', border: '1px solid #e8e0d4' }}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span style={{ fontSize: 20 }}>{it.icon}</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#6b5b47' }}>{it.label}</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#6b5b47', fontWeight: 500, lineHeight: 1.5 }}>{it.desc}</div>
           </div>
         ))}
       </div>
@@ -1439,13 +1444,35 @@ export function ResultPage() {
                 <ScoreRing label="건강운" score={scores.health} color="#059669" delay={400} />
                 <ScoreRing label="잠재력" score={scores.potential} color="#ea580c" delay={500} />
               </div>
+              {/* 점수 해석 가이드 */}
+              <div className="mt-4 pt-3 border-t border-border-light">
+                {(() => {
+                  const best = Object.entries(scores).reduce((a, b) => a[1] > b[1] ? a : b);
+                  const worst = Object.entries(scores).reduce((a, b) => a[1] < b[1] ? a : b);
+                  const labels: Record<string, string> = { career: '직업운', love: '애정운', wealth: '재물운', social: '대인운', health: '건강운', potential: '잠재력' };
+                  return (
+                    <div className="space-y-1.5">
+                      <p style={{ fontSize: 12, color: '#2E7D32', fontWeight: 600 }}>
+                        가장 강한 운: {labels[best[0]]} ({best[1]}점) — 이 영역에서 타고난 재능이 빛나요
+                      </p>
+                      <p style={{ fontSize: 12, color: '#D32F2F', fontWeight: 600 }}>
+                        보완이 필요한 운: {labels[worst[0]]} ({worst[1]}점) — 의식적인 노력이 도움돼요
+                      </p>
+                      <p style={{ fontSize: 11, color: '#8b7e6f' }}>
+                        점수는 사주 원국의 오행 분포와 십성 관계를 기반으로 산출했어요
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </LocalFadeIn>
 
           {/* 대운 흐름 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-3">대운 흐름</h2>
+              <h2 className="text-h3 text-text-primary mb-1">대운 흐름</h2>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>10년 단위로 바뀌는 운의 큰 흐름이에요. <span style={{ fontWeight: 700, color: '#C9A96E' }}>현재 대운</span>이 강조되어 있어요.</p>
               <div className="space-y-2.5">
                 {v4Daeun.map((d, i) => {
                   const ec = EC[d.elem];
@@ -1494,23 +1521,24 @@ export function ResultPage() {
           {/* 납음 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-3">납음 — 근본 에너지</h2>
+              <h2 className="text-h3 text-text-primary mb-1">납음 — 근본 에너지</h2>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>사주의 가장 근본적인 기운이에요. 이 사람의 <span style={{ fontWeight: 700, color: '#6b5b47' }}>본질적 에너지 성질</span>을 나타내요.</p>
               <div className="space-y-2">
                 {v4Napeum.map((n, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#faf7f2' }}>
-                    <span style={{ fontSize: 20 }}>{n.icon}</span>
-                    <div>
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
+                    <span style={{ fontSize: 24 }}>{n.icon}</span>
+                    <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span style={{ fontSize: 12, fontWeight: 800, color: '#6b5b47' }}>{n.hanja}</span>
-                        <span style={{ fontSize: 10, color: '#a0937f' }}>{n.kr}</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47' }}>{n.hanja}</span>
+                        <span style={{ fontSize: 11, color: '#a0937f', fontWeight: 600 }}>{n.kr}</span>
                         <span
                           className="rounded"
-                          style={{ padding: '1px 6px', background: '#e8e0d4', color: '#6b5b47', fontSize: 10 }}
+                          style={{ padding: '2px 8px', background: '#C9A96E20', color: '#C9A96E', fontSize: 10, fontWeight: 700 }}
                         >
                           {n.pillar}
                         </span>
                       </div>
-                      <div style={{ fontSize: 11, color: '#8b7e6f', marginTop: 2 }}>{n.desc}</div>
+                      <div style={{ fontSize: 12, color: '#6b5b47', marginTop: 4, fontWeight: 500, lineHeight: 1.5 }}>{n.desc}</div>
                     </div>
                   </div>
                 ))}
@@ -1521,7 +1549,8 @@ export function ResultPage() {
           {/* 신살 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-3">신살 — 타고난 별</h2>
+              <h2 className="text-h3 text-text-primary mb-1">신살 — 타고난 별</h2>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}><span style={{ color: '#2e7d32', fontWeight: 700 }}>길신</span>은 타고난 좋은 기운, <span style={{ color: '#e65100', fontWeight: 700 }}>흉살</span>은 주의하면 오히려 강점이 돼요.</p>
               <div className="mb-4">
                 <div className="text-label text-func-success mb-2">길신</div>
                 <div className="space-y-1.5">
@@ -1560,7 +1589,8 @@ export function ResultPage() {
           {/* 공망 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-3">공망 — 비어있는 에너지</h2>
+              <h2 className="text-h3 text-text-primary mb-1">공망 — 비어있는 에너지</h2>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>비어있다고 나쁜 게 아니에요. 오히려 <span style={{ fontWeight: 700, color: '#6a1b9a' }}>집착을 내려놓으면 자유로운 영역</span>이에요.</p>
               <div className="space-y-2">
                 {v4Gongmang.map((g, i) => (
                   <div key={i} className="p-3 rounded-xl" style={{ background: '#f3e5f5', border: '1px solid #e1bee7' }}>

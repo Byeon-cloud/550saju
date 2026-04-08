@@ -81,7 +81,8 @@ async function signInWithToss(): Promise<User> {
     const { authorizationCode } = await appLogin();
 
     const { getFunctions, httpsCallable } = await import('firebase/functions');
-    const functions = getFunctions(undefined, 'asia-northeast3');
+    const { app: firebaseApp } = await import('./firebase');
+    const functions = getFunctions(firebaseApp, 'us-central1');
     const loginFn = httpsCallable(functions, 'loginWithToss');
     const result = await loginFn({ authorizationCode });
     const { customToken } = result.data as { customToken: string; uid: string };

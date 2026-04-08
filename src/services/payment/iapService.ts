@@ -68,7 +68,7 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
 
                 // 2. 서버에 비동기 기록 (실패해도 return true)
                 import('firebase/functions').then(({ getFunctions, httpsCallable }) => {
-                  const fns = getFunctions(undefined, 'asia-northeast3');
+                  const fns = getFunctions(undefined, 'us-central1');
                   httpsCallable(fns, 'grantPurchase')({
                     orderId,
                     sku: product.sku,

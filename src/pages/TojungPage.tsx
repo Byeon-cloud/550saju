@@ -56,8 +56,10 @@ export function TojungPage() {
       setPhase('result');
     } catch (e: any) {
       console.error('토정비결 실패:', e);
+      const { addRewardBalance } = await import('@/services/storage/localStore');
+      addRewardBalance(1);
       setPhase('select');
-      toast.show('분석에 실패했어요', 'warning');
+      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
     } finally {
       clearInterval(interval);
     }

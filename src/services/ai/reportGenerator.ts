@@ -9,7 +9,7 @@ import type {
   TojungResponse,
 } from '@/types/report';
 
-const functions = getFunctions(app, 'asia-northeast3');
+const functions = getFunctions(app, 'us-central1');
 
 /**
  * AI 사주 리포트 생성 — Firebase Function → Claude Sonnet 4.6

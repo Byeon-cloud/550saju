@@ -58,9 +58,11 @@ export function CompatResultPage() {
     ).then(res => {
       setResult(res.content);
       setPhase('result');
-    }).catch(e => {
+    }).catch(async (e) => {
       console.error('궁합 분석 실패:', e);
-      toast.show('분석에 실패했어요', 'warning');
+      const { addRewardBalance } = await import('@/services/storage/localStore');
+      addRewardBalance(1);
+      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
       navigate('/compat');
     }).finally(() => clearInterval(interval));
   }, []);

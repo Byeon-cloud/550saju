@@ -42,7 +42,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
         try {
           const { getFunctions, httpsCallable } = await import('firebase/functions');
           const { app } = await import('@/services/auth/firebase');
-          const fns = getFunctions(app, 'asia-northeast3');
+          const fns = getFunctions(app, 'us-central1');
           await httpsCallable(fns, 'grantShareReward')({});
         } catch (e) {
           console.warn('[ShareReward] 서버 기록 실패:', e);

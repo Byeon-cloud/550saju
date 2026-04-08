@@ -59,9 +59,12 @@ export function DaeunPage() {
       setPhase('result');
     } catch (e: any) {
       console.error('대운 분석 실패:', e);
-      setError(e.message || '분석에 실패했어요. 다시 시도해주세요.');
+      // API 실패 시 1운 환불
+      const { addRewardBalance } = await import('@/services/storage/localStore');
+      addRewardBalance(1);
+      setError('분석에 실패했어요. 1운이 환불됐어요.');
       setPhase('select');
-      toast.show('분석에 실패했어요', 'warning');
+      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
     } finally {
       clearInterval(interval);
     }
