@@ -32,13 +32,21 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
   const remaining = getRemainingShareRewards();
 
   async function handleShare() {
-    const success = await shareResult({ name, reportId, topScore });
+    let success = await shareResult({ name, reportId, topScore });
+
+    // 공유 실패 시 클립보드 복사로 폴백
+    if (!success) {
+      try {
+        const url = `${window.location.origin}/share/${reportId}`;
+        await navigator.clipboard.writeText(url);
+        success = true;
+      } catch { /* 무시 */ }
+    }
 
     if (success) {
       if (hasReward) {
         const earned = claimShareReward();
         setRewardAmount(earned);
-        // 서버에도 리워드 기록 (실패해도 로컬은 이미 적립됨)
         try {
           const { getFunctions, httpsCallable } = await import('firebase/functions');
           const { app } = await import('@/services/auth/firebase');

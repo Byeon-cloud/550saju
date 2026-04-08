@@ -202,9 +202,20 @@ export function ChargePage() {
                   if (earned > 0) {
                     setBalanceDisplay(getBalance());
                     toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+                  } else {
+                    toast.show('공유 링크가 복사됐어요!', 'success');
                   }
+                } else {
+                  // 공유 실패 시 클립보드 복사 시도
+                  const url = `${window.location.origin}/share/invite`;
+                  await navigator.clipboard.writeText(url);
+                  toast.show('초대 링크가 복사됐어요! 친구에게 보내주세요', 'success');
+                  const earned = claimShareReward();
+                  if (earned > 0) setBalanceDisplay(getBalance());
                 }
-              } catch { /* 무시 */ }
+              } catch {
+                toast.show('공유에 실패했어요. 다시 시도해주세요', 'warning');
+              }
             }}
             className="w-full card-gold py-4 px-5 text-left"
           >
