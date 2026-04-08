@@ -149,6 +149,13 @@ export function InputPage() {
           type: 'free', // 무료 사주팔자 확인
         };
         saveReport(report);
+
+        // 궁합에서 왔으면 사주 저장 후 궁합으로 복귀
+        const fromParam = new URLSearchParams(window.location.search).get('from');
+        if (fromParam === 'compat') {
+          navigate('/compat', { replace: true });
+          return;
+        }
       }
     }
   }
@@ -319,11 +326,14 @@ export function InputPage() {
                     if (!target) { toast.show('캡처 영역을 찾을 수 없어요', 'warning'); return; }
                     toast.show('이미지를 준비하고 있어요...', 'info');
                     const canvas = await html2canvas(target, { backgroundColor: '#F4F5F8', scale: 2, useCORS: true });
-                    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+                    if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
                       canvas.toBlob(async (blob) => {
                         if (!blob) return;
                         const file = new File([blob], `사주500_${name || '사주팔자'}.png`, { type: 'image/png' });
-                        try { await navigator.share({ files: [file], title: '내 사주팔자 — 사주500' }); } catch { /* 취소 */ }
+                        try {
+                          await navigator.share({ files: [file], title: '내 사주팔자 — 사주500' });
+                          toast.show('공유시트에서 "이미지 저장"을 눌러주세요', 'info');
+                        } catch { /* 취소 */ }
                       }, 'image/png');
                     } else {
                       const link = document.createElement('a');

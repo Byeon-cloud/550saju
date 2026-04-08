@@ -82,6 +82,7 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
         { label: '내일이 중요한 날이라서' },
         { label: '문득 미래가 궁금해서' },
         { label: '그냥 마음이 심란해서' },
+        { label: '기타 (직접 입력)' },
       ],
     },
     dawn: {
@@ -92,6 +93,7 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
         { label: '일찍 일어나는 습관' },
         { label: '기분 좋게 시작하고 싶어서' },
         { label: '어젯밤 꿈이 신경 쓰여서' },
+        { label: '기타 (직접 입력)' },
       ],
     },
     morning: {
@@ -102,6 +104,7 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
         { label: '중요한 만남' },
         { label: '재정 관련 결정' },
         { label: '공부 · 자기개발' },
+        { label: '기타 (직접 입력)' },
       ],
     },
     noon: {
@@ -112,6 +115,7 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
         { label: '예상치 못한 일이 있었어요' },
         { label: '아직 본격적으로 시작 전' },
         { label: '조금 피곤해요' },
+        { label: '기타 (직접 입력)' },
       ],
     },
     afternoon: {
@@ -122,6 +126,7 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
         { label: '사람을 만날 예정이에요' },
         { label: '마감이 있어요' },
         { label: '여유로운 오후예요' },
+        { label: '기타 (직접 입력)' },
       ],
     },
     evening: {
@@ -132,6 +137,7 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
         { label: '아쉬운 일이 있었어요' },
         { label: '중요한 깨달음이 있었어요' },
         { label: '평범한 하루였어요' },
+        { label: '기타 (직접 입력)' },
       ],
     },
     night: {
@@ -142,6 +148,7 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
         { label: '문득 궁금해져서' },
         { label: '오늘 일이 마음에 걸려서' },
         { label: '큰 결정 앞에 서 있어서' },
+        { label: '기타 (직접 입력)' },
       ],
     },
   };
@@ -151,22 +158,22 @@ function getQuestions(slot: TimeSlot, hasHistory: boolean) {
 
     // Q2: 고민 영역
     {
-      q: hasHistory ? '지난번 분석 이후, 요즘 가장 신경 쓰이는 건?' : '요즘 가장 풀고 싶은 고민은?',
-      sub: hasHistory ? '이전 사주 데이터를 참고해서 더 정확하게 봐드릴게요' : '고민의 영역에 맞춰 운세 포커스를 잡아요',
+      q: '요즘 가장 신경 쓰이는 게 뭔가요?',
+      sub: '고민의 영역에 맞춰 더 정확한 운세를 알려드릴게요',
       options: [
         { label: '이직 · 진로' },
         { label: '연애 · 관계' },
         { label: '재정 · 투자' },
         { label: '체력 · 건강' },
-        { label: '목표 달성' },
         { label: '인간관계' },
+        { label: '기타 (직접 입력)' },
       ],
     },
 
     // Q3: 서술형 — 자유 입력
     {
-      q: '오늘 특별히 궁금한 게 있다면 적어주세요',
-      sub: '적어주신 내용을 반영해서 더 정확한 운세를 알려드릴게요. 건너뛰어도 괜찮아요.',
+      q: '오늘 궁금한 게 있다면 자유롭게 적어주세요',
+      sub: '구체적일수록 더 높은 퀄리티의 맞춤 운세를 받을 수 있어요. 건너뛰어도 괜찮아요.',
       options: [],
       isTextInput: true,
     },

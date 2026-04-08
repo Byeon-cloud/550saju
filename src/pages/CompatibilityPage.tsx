@@ -250,7 +250,7 @@ export function CompatibilityPage() {
               )}
 
               <div className="mt-4 space-y-2">
-                <Button fullWidth onClick={() => { setShowPicker(null); navigate('/input'); }}>
+                <Button fullWidth onClick={() => { setShowPicker(null); navigate('/input?new=1&from=compat'); }}>
                   새 사주 입력하기
                 </Button>
                 <button
