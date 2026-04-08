@@ -67,7 +67,7 @@ export async function generateCompatibilityAnalysis(
   const userPrompt = buildCompatPrompt(sajuData1, sajuData2, relation);
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-5-20250514',
+    model: 'claude-4-sonnet-20250514',
     max_tokens: 8000,
     temperature: 0.7,
     system: SYSTEM_PROMPT,

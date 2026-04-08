@@ -67,7 +67,7 @@ async function generateSajuReport(apiKey, sajuData, situation, reportType) {
     const client = new sdk_1.default({ apiKey });
     const userPrompt = buildUserPrompt(sajuData, situation);
     const message = await client.messages.create({
-        model: 'claude-sonnet-4-5-20250514',
+        model: 'claude-4-sonnet-20250514',
         max_tokens: 8000,
         temperature: 0.7,
         system: SYSTEM_PROMPT,
