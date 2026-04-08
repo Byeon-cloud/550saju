@@ -54,7 +54,7 @@ export async function generateMonthlyFortune(
   const userPrompt = buildMonthlyPrompt(sajuData);
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6-20250514',
+    model: 'claude-sonnet-4-5-20250514',
     max_tokens: 8000,
     temperature: 0.7,
     system: SYSTEM_PROMPT,

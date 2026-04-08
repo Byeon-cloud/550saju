@@ -60,7 +60,7 @@ async function generateDaeunAnalysis(apiKey, sajuData) {
     const client = new sdk_1.default({ apiKey });
     const userPrompt = buildDaeunPrompt(sajuData);
     const message = await client.messages.create({
-        model: 'claude-sonnet-4-6-20250514',
+        model: 'claude-sonnet-4-5-20250514',
         max_tokens: 8000,
         temperature: 0.7,
         system: SYSTEM_PROMPT,

@@ -101,7 +101,18 @@
       "Read(//d/appintoss/my-mbti-app/src/**)",
       "Read(//d/550saju/.granite//**)",
       "Read(//d/appintoss/my-mbti-app/.granite//**)",
-      "Bash(FUNCTIONS_DISCOVERY_TIMEOUT=60000 firebase deploy --only functions)"
+      "Bash(FUNCTIONS_DISCOVERY_TIMEOUT=60000 firebase deploy --only functions)",
+      "Bash(firebase functions:list)",
+      "Bash(curl -s \"https://us-central1-appintoss-saju.cloudfunctions.net/disconnectToss\")",
+      "Bash(curl -s \"https://appintoss-saju.web.app\")",
+      "Bash(firebase functions:secrets:access TOSS_PAYMENTS_SECRET_KEY)",
+      "Bash(firebase functions:log --only generateDaeun)",
+      "Bash(xxd)",
+      "Bash(printf \"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\")",
+      "Bash(printf \"AIzaSyBEf6E7_n8FjOgNpbbPi5VKhpjVK_bwBv0\")",
+      "Bash(printf \"test_sk_D5GePWvyJnrK0W0k6q8gmeYBlNkw\")",
+      "Bash(node -e ':*)",
+      "Bash(firebase functions:log)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",
