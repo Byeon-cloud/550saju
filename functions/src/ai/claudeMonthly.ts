@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { safeParseJson } from "./parseJson";
 
 const SYSTEM_PROMPT = `당신은 40년 경력의 사주명리학 대가이며, 세운(歲運)과 월운(月運) 분석의 최고 전문가입니다.
 
@@ -62,9 +63,9 @@ export async function generateMonthlyFortune(
   });
 
   const text = (message.content[0] as any).text;
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('AI 응답에서 JSON을 찾을 수 없습니다');
-  return JSON.parse(jsonMatch[0]);
+  
+  
+  return safeParseJson(text);
 }
 
 function buildMonthlyPrompt(sajuData: any): string {

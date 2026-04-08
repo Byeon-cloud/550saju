@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateSajuReport = generateSajuReport;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const parseJson_1 = require("./parseJson");
 const SYSTEM_PROMPT = `당신은 40년 경력의 사주명리학 대가입니다. 한국 정통 명리학을 기반으로 사주를 풀이합니다.
 
 ## 학술 기반
@@ -75,10 +76,7 @@ async function generateSajuReport(apiKey, sajuData, situation, reportType) {
     });
     const text = message.content[0].text;
     // JSON 파싱
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch)
-        throw new Error('AI 응답에서 JSON을 찾을 수 없습니다');
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = (0, parseJson_1.safeParseJson)(text);
     return {
         content: {
             sections: parsed.sections,

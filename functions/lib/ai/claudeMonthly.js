@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateMonthlyFortune = generateMonthlyFortune;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const parseJson_1 = require("./parseJson");
 const SYSTEM_PROMPT = `당신은 40년 경력의 사주명리학 대가이며, 세운(歲運)과 월운(月運) 분석의 최고 전문가입니다.
 
 ## 학술 기반
@@ -61,10 +62,7 @@ async function generateMonthlyFortune(apiKey, sajuData) {
         messages: [{ role: 'user', content: userPrompt }],
     });
     const text = message.content[0].text;
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch)
-        throw new Error('AI 응답에서 JSON을 찾을 수 없습니다');
-    return JSON.parse(jsonMatch[0]);
+    return (0, parseJson_1.safeParseJson)(text);
 }
 function buildMonthlyPrompt(sajuData) {
     const p = sajuData.pillars || [];
