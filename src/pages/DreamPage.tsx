@@ -147,6 +147,11 @@ export function DreamPage() {
     } finally {
       setIsLoading(false);
       setPhase('result');
+      // 보관함 저장
+      try {
+        const { saveReport, generateId } = await import('@/services/storage/localStore');
+        saveReport({ id: generateId(), name: '꿈해몽', input: {} as any, sajuData: {} as any, type: 'free' as any, createdAt: Date.now(), contentType: 'dream' as any });
+      } catch { /* 무시 */ }
     }
   }
 

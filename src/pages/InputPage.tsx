@@ -228,6 +228,12 @@ export function InputPage() {
                           } else {
                             setKnowsTime(false);
                           }
+                          // 궁합에서 왔으면 사주 저장 후 궁합으로 복귀
+                          const fromParam = new URLSearchParams(window.location.search).get('from');
+                          if (fromParam === 'compat') {
+                            navigate('/compat', { replace: true });
+                            return;
+                          }
                           setStep(5);
                         }}
                         className="card w-full text-left py-4 px-4"

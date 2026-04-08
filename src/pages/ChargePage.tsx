@@ -194,24 +194,41 @@ export function ChargePage() {
           <button
             onClick={async () => {
               try {
-                const { shareResult } = await import('@/utils/share');
-                const { claimShareReward } = await import('@/services/share/shareReward');
-                const success = await shareResult({ name: '사주500', reportId: 'invite' });
-                if (success) {
-                  const earned = claimShareReward();
-                  if (earned > 0) {
-                    setBalanceDisplay(getBalance());
-                    toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-                  } else {
-                    toast.show('공유 링크가 복사됐어요!', 'success');
-                  }
+                const { isAppsInToss } = await import('@/services/payment/iapService');
+                if (isAppsInToss()) {
+                  // 앱인토스: contactsViral SDK로 공유 리워드
+                  const sdkName = '@apps-in-toss/' + 'web-framework';
+                  const { contactsViral } = await import(/* @vite-ignore */ sdkName);
+                  contactsViral({
+                    options: { moduleId: 'a56725a6-4c52-40e5-b68b-2f752caf0a94' },
+                    onEvent: (event: any) => {
+                      if (event.type === 'sendViral') {
+                        setBalanceDisplay(getBalance());
+                        toast.show('공유 완료! 리워드가 적립돼요', 'success');
+                      }
+                    },
+                    onError: () => {
+                      toast.show('공유에 실패했어요', 'warning');
+                    },
+                  });
                 } else {
-                  // 공유 실패 시 클립보드 복사 시도
-                  const url = `${window.location.origin}/share/invite`;
-                  await navigator.clipboard.writeText(url);
-                  toast.show('초대 링크가 복사됐어요! 친구에게 보내주세요', 'success');
-                  const earned = claimShareReward();
-                  if (earned > 0) setBalanceDisplay(getBalance());
+                  // 웹: Web Share API + 클립보드 폴백
+                  const { shareResult } = await import('@/utils/share');
+                  const { claimShareReward } = await import('@/services/share/shareReward');
+                  const success = await shareResult({ name: '사주500', reportId: 'invite' });
+                  if (success) {
+                    const earned = claimShareReward();
+                    if (earned > 0) {
+                      setBalanceDisplay(getBalance());
+                      toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+                    } else {
+                      toast.show('공유 링크가 복사됐어요!', 'success');
+                    }
+                  } else {
+                    const url = `${window.location.origin}/share/invite`;
+                    await navigator.clipboard.writeText(url);
+                    toast.show('초대 링크가 복사됐어요! 친구에게 보내주세요', 'success');
+                  }
                 }
               } catch {
                 toast.show('공유에 실패했어요. 다시 시도해주세요', 'warning');

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
 import { BannerAd as BannerAdLazy } from '@/components/ads/BannerAd';
-import { getReports, spendBalance, type LocalReport } from '@/services/storage/localStore';
+import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
@@ -319,6 +319,11 @@ export function DailyFortunePage() {
     }
 
     setShowResult(true);
+
+    // 보관함에 저장
+    if (selectedProfile) {
+      saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free' as any, createdAt: Date.now(), contentType: 'daily' as any });
+    }
 
     // AI API 호출 (백그라운드) — 실패 시 로컬 결과 유지
     try {

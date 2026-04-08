@@ -100,7 +100,8 @@
       "Read(//d/550saju/src/components/**)",
       "Read(//d/appintoss/my-mbti-app/src/**)",
       "Read(//d/550saju/.granite//**)",
-      "Read(//d/appintoss/my-mbti-app/.granite//**)"
+      "Read(//d/appintoss/my-mbti-app/.granite//**)",
+      "Bash(FUNCTIONS_DISCOVERY_TIMEOUT=60000 firebase deploy --only functions)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",
