@@ -52,9 +52,11 @@ export function StoragePage() {
   // 콘텐츠 필터
   const contentReports = useMemo(() => {
     if (contentTab === '전체') return reports;
-    if (contentTab === '상세 분석') return reports.filter(r => r.type === 'paid');
-    if (contentTab === '오늘운세') return reports.filter(r => r.type === 'daily' as any);
-    if (contentTab === '꿈해몽') return reports.filter(r => r.type === 'dream' as any);
+    if (contentTab === '상세 분석') return reports.filter(r => r.type === 'paid' && !(r as any).contentType);
+    if (contentTab === '오늘운세') return reports.filter(r => (r as any).contentType === 'daily' || r.type === ('daily' as any));
+    if (contentTab === '꿈해몽') return reports.filter(r => (r as any).contentType === 'dream' || r.type === ('dream' as any));
+    if (contentTab === '궁합') return reports.filter(r => (r as any).contentType === 'compat');
+    if (contentTab === '상담') return []; // 채팅은 별도 chatRooms
     return reports;
   }, [reports, contentTab]);
 

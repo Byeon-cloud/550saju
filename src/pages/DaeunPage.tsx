@@ -7,7 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { DaeunTimeline } from '@/components/saju/DaeunTimeline';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, type LocalReport } from '@/services/storage/localStore';
+import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
 import { generateDaeunAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -56,6 +56,7 @@ export function DaeunPage() {
     try {
       const res = await generateDaeunAnalysis(selected.sajuData);
       setResult(res.content);
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid' as any, createdAt: Date.now(), contentType: 'daeun' as any });
       setPhase('result');
     } catch (e: any) {
       console.error('대운 분석 실패:', e);

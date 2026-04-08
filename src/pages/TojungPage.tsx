@@ -7,7 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { TojungMonthCard } from '@/components/saju/TojungMonthCard';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, type LocalReport } from '@/services/storage/localStore';
+import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
 import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -53,6 +53,7 @@ export function TojungPage() {
     try {
       const res = await generateTojungBigyeol(selected.sajuData);
       setResult(res.content);
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid' as any, createdAt: Date.now(), contentType: 'tojung' as any });
       setPhase('result');
     } catch (e: any) {
       console.error('토정비결 실패:', e);

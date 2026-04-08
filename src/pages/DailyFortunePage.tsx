@@ -672,19 +672,24 @@ export function DailyFortunePage() {
 
                 <button
                   onClick={async () => {
+                    const shareData = {
+                      title: '오늘의 운세 — 사주500',
+                      text: `${targetName || '내'}  운세 등급 ${result.grade}등급! 오늘 하루의 운세가 궁금하다면?`,
+                      url: `${window.location.origin}/daily`,
+                    };
                     if (navigator.share) {
+                      try { await navigator.share(shareData); } catch { /* 취소 */ }
+                    } else {
                       try {
-                        await navigator.share({
-                          title: '오늘의 운세 — 사주500',
-                          text: `오늘 운세 등급 ${result.grade}! 나도 확인해볼까?`,
-                          url: window.location.href,
-                        });
-                      } catch { /* 취소 */ }
+                        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+                        // toast는 상위에서 쓸 수 없으니 alert 대체
+                      } catch { /* 무시 */ }
                     }
                   }}
-                  className="w-full text-center text-caption text-text-muted py-2"
+                  className="w-full py-3 rounded-xl text-caption font-bold"
+                  style={{ background: '#C9A96E20', color: '#C9A96E' }}
                 >
-                  오늘의 운세 공유하기
+                  친구에게 공유하기
                 </button>
                 {/* 배너 광고 — 앱인토스에서만 */}
                 <BannerAdLazy className="mt-3" />
