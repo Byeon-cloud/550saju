@@ -8,7 +8,7 @@ const generative_ai_1 = require("@google/generative-ai");
  */
 async function generateChatAnswerAI(apiKey, question, sajuData, chatHistory, timeSlot) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro-preview-05-06' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
     // 사주 데이터를 최대한 상세하게 전달
     let sajuContext = '사주 정보가 없습니다. 일반 명리학 상식으로 답변하세요.';
     if (sajuData) {

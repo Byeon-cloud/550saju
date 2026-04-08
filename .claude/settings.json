@@ -112,7 +112,12 @@
       "Bash(printf \"AIzaSyBEf6E7_n8FjOgNpbbPi5VKhpjVK_bwBv0\")",
       "Bash(printf \"test_sk_D5GePWvyJnrK0W0k6q8gmeYBlNkw\")",
       "Bash(node -e ':*)",
-      "Bash(firebase functions:log)"
+      "Bash(firebase functions:log)",
+      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSyBEf6E7_n8FjOgNpbbPi5VKhpjVK_bwBv0\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);if\\(j.models\\) j.models.forEach\\(m=>console.log\\(m.name,m.supportedGenerationMethods?.join\\(','\\)\\)\\); else console.log\\(d.slice\\(0,300\\)\\);}\\)\")",
+      "Bash(sed -i \"s/gemini-2.5-pro-preview-05-06/gemini-2.5-pro/g\" geminiChat.ts geminiDream.ts geminiTojung.ts)",
+      "Bash(sed -i \"s/gemini-2.5-flash-preview-05-20/gemini-2.5-flash/g\" geminiFortune.ts)",
+      "Bash(grep -rn \"model:\" d:/550saju/functions/src/ai/*.ts)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",

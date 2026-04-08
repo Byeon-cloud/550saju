@@ -8,7 +8,7 @@ const generative_ai_1 = require("@google/generative-ai");
  */
 async function generateTojungBigyeol(apiKey, sajuData) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro-preview-05-06' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
     const userPrompt = buildTojungPrompt(sajuData);
     const prompt = `## 역할
 당신은 토정비결(土亭秘訣)의 최고 전문가입니다. 이토정(李土亭, 이지함) 선생의 학문을 계승한 대가로서, 주역(周易) 64괘를 활용한 전통 토정비결을 현대어로 풀이합니다.

@@ -7,7 +7,7 @@ const generative_ai_1 = require("@google/generative-ai");
  */
 async function generateDailyFortuneAI(apiKey, answers, timeSlot, sajuSummary) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const timeContext = {
         dawn: '새벽 시간에 운세를 보고 있습니다. 이 시간까지 깨어있다면 중요한 고민이 있을 가능성이 높습니다.',
         morning: '아침에 하루를 시작하며 운세를 보고 있습니다.',

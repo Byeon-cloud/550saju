@@ -10,7 +10,7 @@ export async function generateDreamInterpretation(
   sajuData?: any,
 ): Promise<{ title: string; interpretation: string; luckyAction: string; category: string }> {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro-preview-05-06' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
   const sajuContext = sajuData?.pillars
     ? `## 이 사람의 사주 정보

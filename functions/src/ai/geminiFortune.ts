@@ -10,7 +10,7 @@ export async function generateDailyFortuneAI(
   sajuSummary?: { ilgan: string; oheng: string; name: string },
 ): Promise<any> {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const timeContext: Record<string, string> = {
     dawn: '새벽 시간에 운세를 보고 있습니다. 이 시간까지 깨어있다면 중요한 고민이 있을 가능성이 높습니다.',
