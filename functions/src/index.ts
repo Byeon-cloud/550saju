@@ -70,7 +70,7 @@ const DEV_MODE = false;
  * 사주 리포트 생성 — Claude Sonnet 4.6
  */
 export const generateReport = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -95,7 +95,7 @@ export const generateReport = onCall(
     try {
       const { generateSajuReport } = await lazyClaudeReport();
       const result = await generateSajuReport(
-        ANTHROPIC_KEY.value(),
+        GEMINI_KEY.value(),
         sajuData,
         situation,
         reportType || 'basic',
@@ -231,7 +231,7 @@ export const grantPurchase = onCall(
  * 대운 해설 — Claude Sonnet 4.6
  */
 export const generateDaeun = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -252,7 +252,7 @@ export const generateDaeun = onCall(
 
     try {
       const { generateDaeunAnalysis } = await lazyClaudeDaeun();
-      const result = await generateDaeunAnalysis(ANTHROPIC_KEY.value(), sajuData);
+      const result = await generateDaeunAnalysis(GEMINI_KEY.value(), sajuData);
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, type: 'daeun', content: result,
@@ -271,7 +271,7 @@ export const generateDaeun = onCall(
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
 export const generateMonthly = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -292,7 +292,7 @@ export const generateMonthly = onCall(
 
     try {
       const { generateMonthlyFortune } = await lazyClaudeMonthly();
-      const result = await generateMonthlyFortune(ANTHROPIC_KEY.value(), sajuData);
+      const result = await generateMonthlyFortune(GEMINI_KEY.value(), sajuData);
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, type: 'monthly', content: result,
@@ -311,7 +311,7 @@ export const generateMonthly = onCall(
  * 궁합 분석 — Claude Sonnet 4.6
  */
 export const generateCompatibility = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { sajuData1, sajuData2, relation } = request.data;
     if (!sajuData1 || !sajuData2) throw new HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
@@ -333,7 +333,7 @@ export const generateCompatibility = onCall(
     try {
       const { generateCompatibilityAnalysis } = await lazyClaudeCompat();
       const result = await generateCompatibilityAnalysis(
-        ANTHROPIC_KEY.value(), sajuData1, sajuData2, relation || '연인'
+        GEMINI_KEY.value(), sajuData1, sajuData2, relation || '연인'
       );
       const reportRef = db.collection('reports').doc();
       await reportRef.set({

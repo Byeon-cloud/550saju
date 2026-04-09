@@ -91,7 +91,7 @@ const DEV_MODE = false;
 /**
  * 사주 리포트 생성 — Claude Sonnet 4.6
  */
-exports.generateReport = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' }, async (request) => {
+exports.generateReport = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' }, async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -113,7 +113,7 @@ exports.generateReport = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
     }
     try {
         const { generateSajuReport } = await lazyClaudeReport();
-        const result = await generateSajuReport(ANTHROPIC_KEY.value(), sajuData, situation, reportType || 'basic');
+        const result = await generateSajuReport(GEMINI_KEY.value(), sajuData, situation, reportType || 'basic');
         // Firestore에 리포트 저장
         const reportRef = db.collection('reports').doc();
         await reportRef.set({
@@ -202,7 +202,7 @@ exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256Mi
 /**
  * 대운 해설 — Claude Sonnet 4.6
  */
-exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' }, async (request) => {
+exports.generateDaeun = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' }, async (request) => {
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -222,7 +222,7 @@ exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutS
     }
     try {
         const { generateDaeunAnalysis } = await lazyClaudeDaeun();
-        const result = await generateDaeunAnalysis(ANTHROPIC_KEY.value(), sajuData);
+        const result = await generateDaeunAnalysis(GEMINI_KEY.value(), sajuData);
         const reportRef = db.collection('reports').doc();
         await reportRef.set({
             uid, type: 'daeun', content: result,
@@ -239,7 +239,7 @@ exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutS
 /**
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
-exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' }, async (request) => {
+exports.generateMonthly = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' }, async (request) => {
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -259,7 +259,7 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
     }
     try {
         const { generateMonthlyFortune } = await lazyClaudeMonthly();
-        const result = await generateMonthlyFortune(ANTHROPIC_KEY.value(), sajuData);
+        const result = await generateMonthlyFortune(GEMINI_KEY.value(), sajuData);
         const reportRef = db.collection('reports').doc();
         await reportRef.set({
             uid, type: 'monthly', content: result,
@@ -276,7 +276,7 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
 /**
  * 궁합 분석 — Claude Sonnet 4.6
  */
-exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' }, async (request) => {
+exports.generateCompatibility = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' }, async (request) => {
     const { sajuData1, sajuData2, relation } = request.data;
     if (!sajuData1 || !sajuData2)
         throw new https_1.HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
@@ -296,7 +296,7 @@ exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
     }
     try {
         const { generateCompatibilityAnalysis } = await lazyClaudeCompat();
-        const result = await generateCompatibilityAnalysis(ANTHROPIC_KEY.value(), sajuData1, sajuData2, relation || '연인');
+        const result = await generateCompatibilityAnalysis(GEMINI_KEY.value(), sajuData1, sajuData2, relation || '연인');
         const reportRef = db.collection('reports').doc();
         await reportRef.set({
             uid, type: 'compatibility', content: result,

@@ -124,7 +124,13 @@
       "Bash(sed -i 's/timeoutSeconds: 60, memory: '\\\\''512MiB'\\\\''/timeoutSeconds: 300, memory: '\\\\''1GiB'\\\\''/g' index.ts)",
       "Bash(sed -i 's/timeoutSeconds: 45, memory: '\\\\''256MiB'\\\\''/timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\''/g' index.ts)",
       "Bash(sed -i 's/timeoutSeconds: 30, memory: '\\\\''256MiB'\\\\''/timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\''/g' index.ts)",
-      "Bash(firebase functions:log --only generateTojung)"
+      "Bash(firebase functions:log --only generateTojung)",
+      "Bash(grep -l \"claude-4-sonnet\\\\|@anthropic-ai\" d:/550saju/functions/src/ai/claude*.ts)",
+      "Bash(sed -i 's/{ secrets: \\\\[ANTHROPIC_KEY\\\\], timeoutSeconds: 300, memory: '\\\\''1GiB'\\\\'' }/{ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\'' }/g' index.ts)",
+      "Bash(sed -i 's/ANTHROPIC_KEY.value\\(\\), sajuData\\)/GEMINI_KEY.value\\(\\), sajuData\\)/g' index.ts)",
+      "Bash(sed -i 's/ANTHROPIC_KEY.value\\(\\), sajuData1, sajuData2/GEMINI_KEY.value\\(\\), sajuData1, sajuData2/g' index.ts)",
+      "Bash(sed -i \"s/generationConfig: { maxOutputTokens: 4000 }/generationConfig: { maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }/\" claudeDaeun.ts claudeMonthly.ts claudeCompat.ts)",
+      "Bash(sed -i \"s/generationConfig: { maxOutputTokens: 6000 }/generationConfig: { maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }/\" claudeReport.ts)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",

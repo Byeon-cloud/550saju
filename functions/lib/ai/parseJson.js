@@ -2,45 +2,48 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.safeParseJson = safeParseJson;
 /**
- * AI 응답에서 JSON을 안전하게 추출
- * Claude/Gemini가 가끔 깨진 JSON을 반환하므로 견고하게 처리
+ * AI 응답에서 JSON을 안전하게 추출 — Gemini/Claude 모두 대응
  */
 function safeParseJson(text) {
     // 1. 코드블록 제거
     let cleaned = text
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
         .trim();
-    // 2. JSON 객체 추출
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    if (!match)
+    // 2. 앞뒤 설명 텍스트 제거 — { 로 시작하는 부분부터
+    const firstBrace = cleaned.indexOf('{');
+    if (firstBrace > 0)
+        cleaned = cleaned.slice(firstBrace);
+    // 3. 마지막 } 이후 텍스트 제거
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (lastBrace >= 0)
+        cleaned = cleaned.slice(0, lastBrace + 1);
+    if (!cleaned.startsWith('{')) {
         throw new Error('AI 응답에서 JSON을 찾을 수 없습니다');
-    let jsonStr = match[0];
-    // 3. 일반적인 JSON 깨짐 복구
-    // 제어 문자 제거 (탭, 줄바꿈은 유지)
-    jsonStr = jsonStr.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
-    // 4. 파싱 시도
-    try {
-        return JSON.parse(jsonStr);
     }
-    catch (e1) {
-        // 5. trailing comma 복구 시도
+    // 4. 제어 문자 제거
+    cleaned = cleaned.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+    // 5. 파싱 시도
+    try {
+        return JSON.parse(cleaned);
+    }
+    catch {
+        // 6. trailing comma 복구
         try {
-            const fixed = jsonStr
+            const fixed = cleaned
                 .replace(/,\s*}/g, '}')
                 .replace(/,\s*]/g, ']');
             return JSON.parse(fixed);
         }
-        catch (e2) {
-            // 6. 잘린 JSON 복구 — 마지막 완전한 프로퍼티까지만
+        catch {
+            // 7. 잘린 JSON — 마지막 유효한 위치까지
             try {
-                // 열린 중괄호/대괄호 수 세서 닫아주기
                 let depth = 0;
                 let lastValid = 0;
-                for (let i = 0; i < jsonStr.length; i++) {
-                    if (jsonStr[i] === '{' || jsonStr[i] === '[')
+                for (let i = 0; i < cleaned.length; i++) {
+                    if (cleaned[i] === '{' || cleaned[i] === '[')
                         depth++;
-                    if (jsonStr[i] === '}' || jsonStr[i] === ']') {
+                    if (cleaned[i] === '}' || cleaned[i] === ']') {
                         depth--;
                         if (depth === 0) {
                             lastValid = i + 1;
@@ -48,12 +51,11 @@ function safeParseJson(text) {
                         }
                     }
                 }
-                if (lastValid > 0) {
-                    return JSON.parse(jsonStr.slice(0, lastValid));
-                }
+                if (lastValid > 0)
+                    return JSON.parse(cleaned.slice(0, lastValid));
             }
             catch { }
-            throw new Error(`JSON 파싱 실패: ${e1.message}`);
+            throw new Error('JSON 파싱 실패');
         }
     }
 }
