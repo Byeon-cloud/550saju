@@ -24,7 +24,7 @@ export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: a
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema } as any,
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
   });
   const prompt = buildPrompt(sajuData1, sajuData2, relation);
   const r = await model.generateContent('사주명리학 궁합 분석 전문가로서 두 사람의 궁합을 분석해주세요. 카테고리는 personality(성격), values(가치관), communication(소통), emotion(감정), future(미래) 5개.\n\n' + prompt);

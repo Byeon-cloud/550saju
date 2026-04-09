@@ -23,7 +23,7 @@ async function generateDaeunAnalysis(apiKey, sajuData) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema },
+        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 },
     });
     const prompt = buildPrompt(sajuData);
     const r = await model.generateContent('사주명리학 대운 분석 전문가로서 구체적이고 소름돋는 분석을 해주세요.\n\n' + prompt);

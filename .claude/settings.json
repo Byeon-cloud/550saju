@@ -130,7 +130,8 @@
       "Bash(sed -i 's/ANTHROPIC_KEY.value\\(\\), sajuData\\)/GEMINI_KEY.value\\(\\), sajuData\\)/g' index.ts)",
       "Bash(sed -i 's/ANTHROPIC_KEY.value\\(\\), sajuData1, sajuData2/GEMINI_KEY.value\\(\\), sajuData1, sajuData2/g' index.ts)",
       "Bash(sed -i \"s/generationConfig: { maxOutputTokens: 4000 }/generationConfig: { maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }/\" claudeDaeun.ts claudeMonthly.ts claudeCompat.ts)",
-      "Bash(sed -i \"s/generationConfig: { maxOutputTokens: 6000 }/generationConfig: { maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }/\" claudeReport.ts)"
+      "Bash(sed -i \"s/generationConfig: { maxOutputTokens: 6000 }/generationConfig: { maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }/\" claudeReport.ts)",
+      "Bash(grep \"maxOutputTokens\" d:/550saju/functions/src/ai/claude*.ts d:/550saju/functions/src/ai/gemini*.ts)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",

@@ -43,7 +43,7 @@ async function generateSajuReport(apiKey, sajuData, situation, _reportType) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema },
+        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 },
     });
     const userPrompt = buildUserPrompt(sajuData, situation);
     const systemMsg = `사주명리학 40년 경력 대가로서 12섹션 분석. 소름 포인트: 각 섹션 첫 2문장에서 "어떻게 알았지?" 할 정도로 구체적 행동 패턴 묘사. 섹션 ID: summary, personality, social, career, wealth, love, health, year2026, daeun, mission, luck, luckyProfile. 각 섹션 content 200자 이상. careerFit 5개, monthlyFortune 12개월.`;

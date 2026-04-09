@@ -20,8 +20,8 @@ const responseSchema = {
 export async function generateMonthlyFortune(apiKey: string, sajuData: any): Promise<any> {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema } as any,
+    model: 'gemini-2.5-pro',
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
   });
   const prompt = buildPrompt(sajuData);
   const r = await model.generateContent('사주명리학 월운 분석 전문가로서 2026년 12개월 운세를 분석해주세요.\n\n' + prompt);
