@@ -120,7 +120,10 @@
       "Bash(grep -rn \"model:\" d:/550saju/functions/src/ai/*.ts)",
       "Bash(firebase functions:log --limit 50)",
       "Bash(grep -n \"JSON.parse\\\\|jsonMatch\" d:/550saju/functions/src/ai/claude*.ts)",
-      "Bash(bash /tmp/fix_json.sh)"
+      "Bash(bash /tmp/fix_json.sh)",
+      "Bash(sed -i 's/timeoutSeconds: 60, memory: '\\\\''512MiB'\\\\''/timeoutSeconds: 300, memory: '\\\\''1GiB'\\\\''/g' index.ts)",
+      "Bash(sed -i 's/timeoutSeconds: 45, memory: '\\\\''256MiB'\\\\''/timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\''/g' index.ts)",
+      "Bash(sed -i 's/timeoutSeconds: 30, memory: '\\\\''256MiB'\\\\''/timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\''/g' index.ts)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",

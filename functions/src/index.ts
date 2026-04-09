@@ -70,7 +70,7 @@ const DEV_MODE = false;
  * 사주 리포트 생성 — Claude Sonnet 4.6
  */
 export const generateReport = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 60, memory: '512MiB' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
   async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -124,7 +124,7 @@ export const generateReport = onCall(
  * 오늘의 운세 — Gemini 2.5 Flash (무료)
  */
 export const generateDailyFortune = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 30, memory: '256MiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { answers, timeSlot, sajuSummary } = request.data;
 
@@ -144,7 +144,7 @@ export const generateDailyFortune = onCall(
  * AI 대화 — Gemini 2.5 Pro
  */
 export const generateChatAnswer = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 30, memory: '256MiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question) throw new HttpsError('invalid-argument', '질문이 없습니다');
@@ -166,7 +166,7 @@ export const generateChatAnswer = onCall(
  * 꿈해몽 — Gemini 2.5 Flash (무료)
  */
 export const generateDream = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 30, memory: '256MiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { category, dreamText, sajuData } = request.data;
     if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');
@@ -231,7 +231,7 @@ export const grantPurchase = onCall(
  * 대운 해설 — Claude Sonnet 4.6
  */
 export const generateDaeun = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 60, memory: '512MiB' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -271,7 +271,7 @@ export const generateDaeun = onCall(
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
 export const generateMonthly = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 60, memory: '512MiB' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -311,7 +311,7 @@ export const generateMonthly = onCall(
  * 궁합 분석 — Claude Sonnet 4.6
  */
 export const generateCompatibility = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 60, memory: '512MiB' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB' },
   async (request) => {
     const { sajuData1, sajuData2, relation } = request.data;
     if (!sajuData1 || !sajuData2) throw new HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
@@ -353,7 +353,7 @@ export const generateCompatibility = onCall(
  * 토정비결 — Gemini 2.5 Pro
  */
 export const generateTojung = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 45, memory: '256MiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -503,7 +503,7 @@ export const confirmPayment = onCall(
  * body: { userKey: number, referrer: 'UNLINK' | 'WITHDRAWAL_TERMS' | 'WITHDRAWAL_TOSS' }
  */
 export const disconnectToss = onRequest(
-  { secrets: [TOSS_DISCONNECT_AUTH], timeoutSeconds: 30, memory: '256MiB' },
+  { secrets: [TOSS_DISCONNECT_AUTH], timeoutSeconds: 120, memory: '512MiB' },
   async (req, res) => {
     // Basic Auth 검증 — 토스가 콘솔 입력값을 base64로 인코딩해서 보냄
     const authHeader = req.headers.authorization;
