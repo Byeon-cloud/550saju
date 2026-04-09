@@ -123,7 +123,8 @@
       "Bash(bash /tmp/fix_json.sh)",
       "Bash(sed -i 's/timeoutSeconds: 60, memory: '\\\\''512MiB'\\\\''/timeoutSeconds: 300, memory: '\\\\''1GiB'\\\\''/g' index.ts)",
       "Bash(sed -i 's/timeoutSeconds: 45, memory: '\\\\''256MiB'\\\\''/timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\''/g' index.ts)",
-      "Bash(sed -i 's/timeoutSeconds: 30, memory: '\\\\''256MiB'\\\\''/timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\''/g' index.ts)"
+      "Bash(sed -i 's/timeoutSeconds: 30, memory: '\\\\''256MiB'\\\\''/timeoutSeconds: 120, memory: '\\\\''512MiB'\\\\''/g' index.ts)",
+      "Bash(firebase functions:log --only generateTojung)"
     ],
     "additionalDirectories": [
       "C:\\nvm4w",

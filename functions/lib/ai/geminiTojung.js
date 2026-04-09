@@ -61,18 +61,31 @@ async function generateTojungBigyeol(apiKey, sajuData) {
 }
 
 ${userPrompt}`;
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    try {
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-        if (!jsonMatch)
-            throw new Error('JSON 파싱 실패');
-        return JSON.parse(jsonMatch[0]);
+    // 최대 2번 재시도
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            const result = await model.generateContent(prompt);
+            const text = result.response.text();
+            const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').trim();
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            if (!jsonMatch)
+                throw new Error('JSON not found');
+            try {
+                return JSON.parse(jsonMatch[0]);
+            }
+            catch {
+                const fixed = jsonMatch[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+                return JSON.parse(fixed);
+            }
+        }
+        catch (e) {
+            if (attempt === 1)
+                throw new Error('토정비결 AI 응답 실패: ' + e.message);
+            // 첫 번째 실패 시 1초 대기 후 재시도
+            await new Promise(r => setTimeout(r, 1000));
+        }
     }
-    catch {
-        throw new Error('토정비결 AI 응답 파싱 실패');
-    }
+    throw new Error('토정비결 생성 실패');
 }
 function buildTojungPrompt(sajuData) {
     const p = sajuData.pillars || [];
