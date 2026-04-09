@@ -6,17 +6,21 @@ const responseSchema = {
     type: generative_ai_1.SchemaType.OBJECT,
     properties: {
         yearOverview: { type: generative_ai_1.SchemaType.OBJECT, properties: {
-                총운: { type: generative_ai_1.SchemaType.STRING }, 금전운: { type: generative_ai_1.SchemaType.STRING },
-                건강운: { type: generative_ai_1.SchemaType.STRING }, 직장운: { type: generative_ai_1.SchemaType.STRING },
-                애정운: { type: generative_ai_1.SchemaType.STRING }, 결혼운: { type: generative_ai_1.SchemaType.STRING },
+                총운: { type: generative_ai_1.SchemaType.STRING, description: '60자' },
+                금전운: { type: generative_ai_1.SchemaType.STRING, description: '40자' },
+                건강운: { type: generative_ai_1.SchemaType.STRING, description: '40자' },
+                직장운: { type: generative_ai_1.SchemaType.STRING, description: '40자' },
+                애정운: { type: generative_ai_1.SchemaType.STRING, description: '40자' },
+                결혼운: { type: generative_ai_1.SchemaType.STRING, description: '40자' },
             } },
         months: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.OBJECT, properties: {
                     month: { type: generative_ai_1.SchemaType.NUMBER }, 괘: { type: generative_ai_1.SchemaType.STRING },
-                    괘의미: { type: generative_ai_1.SchemaType.STRING }, 전통해석: { type: generative_ai_1.SchemaType.STRING },
-                    현대해석: { type: generative_ai_1.SchemaType.STRING }, score: { type: generative_ai_1.SchemaType.NUMBER },
-                    keyword: { type: generative_ai_1.SchemaType.STRING },
+                    괘의미: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
+                    전통해석: { type: generative_ai_1.SchemaType.STRING, description: '30자 고풍 문체' },
+                    현대해석: { type: generative_ai_1.SchemaType.STRING, description: '50자 해요체' },
+                    score: { type: generative_ai_1.SchemaType.NUMBER }, keyword: { type: generative_ai_1.SchemaType.STRING },
                 } } },
-        luckyAdvice: { type: generative_ai_1.SchemaType.STRING },
+        luckyAdvice: { type: generative_ai_1.SchemaType.STRING, description: '60자' },
     },
 };
 async function generateTojungBigyeol(apiKey, sajuData) {
@@ -25,8 +29,7 @@ async function generateTojungBigyeol(apiKey, sajuData) {
         model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 },
     });
-    const prompt = buildPrompt(sajuData);
-    const r = await model.generateContent('토정비결 전문가로서 2026년 토정비결을 작성. 주역 64괘 활용. 전통해석은 고풍 문체, 현대해석은 해요체. 6대운 각 60자, 12개월 각 현대해석 50자.\n\n' + prompt);
+    const r = await model.generateContent('토정비결 전문가. 2026년. 주역 64괘. 전통해석 고풍, 현대해석 해요체. 간결하게.\n\n' + buildPrompt(sajuData));
     return JSON.parse(r.response.text());
 }
 function buildPrompt(d) {

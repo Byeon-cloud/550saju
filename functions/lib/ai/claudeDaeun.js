@@ -26,7 +26,7 @@ async function generateDaeunAnalysis(apiKey, sajuData) {
         generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 },
     });
     const prompt = buildPrompt(sajuData);
-    const r = await model.generateContent('사주명리학 대운 분석 전문가로서 구체적이고 소름돋는 분석을 해주세요.\n\n' + prompt);
+    const r = await model.generateContent('대운 분석. 구체적 묘사. overview 80자, detail 각60자, currentHighlight 100자. 간결하게.\n\n' + prompt);
     return JSON.parse(r.response.text());
 }
 function buildPrompt(d) {

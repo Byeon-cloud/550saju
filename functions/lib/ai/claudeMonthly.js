@@ -2,30 +2,31 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateMonthlyFortune = generateMonthlyFortune;
 const generative_ai_1 = require("@google/generative-ai");
-const responseSchema = {
+const summarySchema = {
     type: generative_ai_1.SchemaType.OBJECT,
     properties: {
-        yearOverview: { type: generative_ai_1.SchemaType.STRING, description: '2026년 전체 운세 100~200자' },
+        yearOverview: { type: generative_ai_1.SchemaType.STRING, description: '2026년 개요 80자' },
         bestMonth: { type: generative_ai_1.SchemaType.NUMBER },
         worstMonth: { type: generative_ai_1.SchemaType.NUMBER },
         months: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.OBJECT, properties: {
                     month: { type: generative_ai_1.SchemaType.NUMBER }, score: { type: generative_ai_1.SchemaType.NUMBER },
-                    theme: { type: generative_ai_1.SchemaType.STRING, description: '이달 테마 10~20자' },
-                    advice: { type: generative_ai_1.SchemaType.STRING, description: '핵심 조언 60~100자' },
+                    theme: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
+                    advice: { type: generative_ai_1.SchemaType.STRING, description: '40자' },
+                    career: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
+                    love: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
+                    wealth: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
+                    caution: { type: generative_ai_1.SchemaType.STRING, description: '20자' },
                     luckyDay: { type: generative_ai_1.SchemaType.STRING }, luckyItem: { type: generative_ai_1.SchemaType.STRING },
-                    career: { type: generative_ai_1.SchemaType.STRING }, love: { type: generative_ai_1.SchemaType.STRING },
-                    wealth: { type: generative_ai_1.SchemaType.STRING }, caution: { type: generative_ai_1.SchemaType.STRING },
                 } } },
     },
 };
 async function generateMonthlyFortune(apiKey, sajuData) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-pro',
-        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 },
+        model: 'gemini-2.5-flash',
+        generationConfig: { responseMimeType: 'application/json', responseSchema: summarySchema, maxOutputTokens: 8192 },
     });
-    const prompt = buildPrompt(sajuData);
-    const r = await model.generateContent('사주명리학 월운 분석 전문가로서 2026년 12개월 운세를 분석해주세요.\n\n' + prompt);
+    const r = await model.generateContent('사주 월운 전문가. 2026년 12개월. 간결하게.\n\n' + buildPrompt(sajuData));
     return JSON.parse(r.response.text());
 }
 function buildPrompt(d) {

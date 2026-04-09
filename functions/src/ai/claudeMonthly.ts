@@ -1,18 +1,20 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
-const responseSchema = {
+const summarySchema = {
   type: SchemaType.OBJECT,
   properties: {
-    yearOverview: { type: SchemaType.STRING, description: '2026년 전체 운세 100~200자' },
+    yearOverview: { type: SchemaType.STRING, description: '2026년 개요 80자' },
     bestMonth: { type: SchemaType.NUMBER },
     worstMonth: { type: SchemaType.NUMBER },
     months: { type: SchemaType.ARRAY, items: { type: SchemaType.OBJECT, properties: {
       month: { type: SchemaType.NUMBER }, score: { type: SchemaType.NUMBER },
-      theme: { type: SchemaType.STRING, description: '이달 테마 10~20자' },
-      advice: { type: SchemaType.STRING, description: '핵심 조언 60~100자' },
+      theme: { type: SchemaType.STRING, description: '15자' },
+      advice: { type: SchemaType.STRING, description: '40자' },
+      career: { type: SchemaType.STRING, description: '15자' },
+      love: { type: SchemaType.STRING, description: '15자' },
+      wealth: { type: SchemaType.STRING, description: '15자' },
+      caution: { type: SchemaType.STRING, description: '20자' },
       luckyDay: { type: SchemaType.STRING }, luckyItem: { type: SchemaType.STRING },
-      career: { type: SchemaType.STRING }, love: { type: SchemaType.STRING },
-      wealth: { type: SchemaType.STRING }, caution: { type: SchemaType.STRING },
     } } },
   },
 };
@@ -20,11 +22,10 @@ const responseSchema = {
 export async function generateMonthlyFortune(apiKey: string, sajuData: any): Promise<any> {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-pro',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
+    model: 'gemini-2.5-flash',
+    generationConfig: { responseMimeType: 'application/json', responseSchema: summarySchema, maxOutputTokens: 8192 } as any,
   });
-  const prompt = buildPrompt(sajuData);
-  const r = await model.generateContent('사주명리학 월운 분석 전문가로서 2026년 12개월 운세를 분석해주세요.\n\n' + prompt);
+  const r = await model.generateContent('사주 월운 전문가. 2026년 12개월. 간결하게.\n\n' + buildPrompt(sajuData));
   return JSON.parse(r.response.text());
 }
 

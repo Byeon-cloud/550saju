@@ -4,17 +4,21 @@ const responseSchema = {
   type: SchemaType.OBJECT,
   properties: {
     yearOverview: { type: SchemaType.OBJECT, properties: {
-      총운: { type: SchemaType.STRING }, 금전운: { type: SchemaType.STRING },
-      건강운: { type: SchemaType.STRING }, 직장운: { type: SchemaType.STRING },
-      애정운: { type: SchemaType.STRING }, 결혼운: { type: SchemaType.STRING },
+      총운: { type: SchemaType.STRING, description: '60자' },
+      금전운: { type: SchemaType.STRING, description: '40자' },
+      건강운: { type: SchemaType.STRING, description: '40자' },
+      직장운: { type: SchemaType.STRING, description: '40자' },
+      애정운: { type: SchemaType.STRING, description: '40자' },
+      결혼운: { type: SchemaType.STRING, description: '40자' },
     } },
     months: { type: SchemaType.ARRAY, items: { type: SchemaType.OBJECT, properties: {
       month: { type: SchemaType.NUMBER }, 괘: { type: SchemaType.STRING },
-      괘의미: { type: SchemaType.STRING }, 전통해석: { type: SchemaType.STRING },
-      현대해석: { type: SchemaType.STRING }, score: { type: SchemaType.NUMBER },
-      keyword: { type: SchemaType.STRING },
+      괘의미: { type: SchemaType.STRING, description: '15자' },
+      전통해석: { type: SchemaType.STRING, description: '30자 고풍 문체' },
+      현대해석: { type: SchemaType.STRING, description: '50자 해요체' },
+      score: { type: SchemaType.NUMBER }, keyword: { type: SchemaType.STRING },
     } } },
-    luckyAdvice: { type: SchemaType.STRING },
+    luckyAdvice: { type: SchemaType.STRING, description: '60자' },
   },
 };
 
@@ -24,8 +28,7 @@ export async function generateTojungBigyeol(apiKey: string, sajuData: any): Prom
     model: 'gemini-2.5-flash',
     generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
   });
-  const prompt = buildPrompt(sajuData);
-  const r = await model.generateContent('토정비결 전문가로서 2026년 토정비결을 작성. 주역 64괘 활용. 전통해석은 고풍 문체, 현대해석은 해요체. 6대운 각 60자, 12개월 각 현대해석 50자.\n\n' + prompt);
+  const r = await model.generateContent('토정비결 전문가. 2026년. 주역 64괘. 전통해석 고풍, 현대해석 해요체. 간결하게.\n\n' + buildPrompt(sajuData));
   return JSON.parse(r.response.text());
 }
 
