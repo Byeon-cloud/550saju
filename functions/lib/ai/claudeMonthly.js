@@ -18,7 +18,7 @@ async function generateMonthlyFortune(apiKey, sajuData) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 },
+        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 5120 },
     });
     const r = await model.generateContent('2026 월별운세. 12개월. theme10자 advice30자 간결하게.\n\n' + buildPrompt(sajuData));
     return JSON.parse(r.response.text());

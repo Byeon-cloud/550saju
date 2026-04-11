@@ -22,7 +22,7 @@ export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Prom
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 } as any,
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
   });
   const prompt = buildPrompt(sajuData);
   const r = await model.generateContent('대운분석. 간결하게.\n\n' + prompt);

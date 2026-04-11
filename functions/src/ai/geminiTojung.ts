@@ -26,7 +26,7 @@ export async function generateTojungBigyeol(apiKey: string, sajuData: any): Prom
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 } as any,
   });
   const r = await model.generateContent('토정비결 전문가. 2026년. 주역 64괘. 전통해석 고풍, 현대해석 해요체. 간결하게.\n\n' + buildPrompt(sajuData));
   return JSON.parse(r.response.text());
