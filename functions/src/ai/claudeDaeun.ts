@@ -5,7 +5,7 @@ export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Prom
   const client = new Anthropic({ apiKey });
   const r = await client.messages.create({
     model: 'claude-4-sonnet-20250514',
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [{ role: 'user', content: buildPrompt(sajuData) }],
   });
   return safeParseJson((r.content[0] as any).text);

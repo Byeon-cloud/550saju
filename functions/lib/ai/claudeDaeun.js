@@ -10,7 +10,7 @@ async function generateDaeunAnalysis(apiKey, sajuData) {
     const client = new sdk_1.default({ apiKey });
     const r = await client.messages.create({
         model: 'claude-4-sonnet-20250514',
-        max_tokens: 2048,
+        max_tokens: 4096,
         messages: [{ role: 'user', content: buildPrompt(sajuData) }],
     });
     return (0, parseJson_1.safeParseJson)(r.content[0].text);

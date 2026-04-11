@@ -1,42 +1,26 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
-
-const responseSchema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    yearOverview: { type: SchemaType.OBJECT, properties: {
-      총운: { type: SchemaType.STRING, description: '60자' },
-      금전운: { type: SchemaType.STRING, description: '40자' },
-      건강운: { type: SchemaType.STRING, description: '40자' },
-      직장운: { type: SchemaType.STRING, description: '40자' },
-      애정운: { type: SchemaType.STRING, description: '40자' },
-      결혼운: { type: SchemaType.STRING, description: '40자' },
-    } },
-    months: { type: SchemaType.ARRAY, items: { type: SchemaType.OBJECT, properties: {
-      month: { type: SchemaType.NUMBER }, 괘: { type: SchemaType.STRING },
-      괘의미: { type: SchemaType.STRING, description: '15자' },
-      전통해석: { type: SchemaType.STRING, description: '30자 고풍 문체' },
-      현대해석: { type: SchemaType.STRING, description: '50자 해요체' },
-      score: { type: SchemaType.NUMBER }, keyword: { type: SchemaType.STRING },
-    } } },
-    luckyAdvice: { type: SchemaType.STRING, description: '60자' },
-  },
-};
+import Anthropic from '@anthropic-ai/sdk';
+import { safeParseJson } from './parseJson';
 
 export async function generateTojungBigyeol(apiKey: string, sajuData: any): Promise<any> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 } as any,
+  const client = new Anthropic({ apiKey });
+  const r = await client.messages.create({
+    model: 'claude-4-sonnet-20250514',
+    max_tokens: 4096,
+    messages: [{ role: 'user', content: buildPrompt(sajuData) }],
   });
-  const r = await model.generateContent('토정비결 전문가. 2026년. 주역 64괘. 전통해석 고풍, 현대해석 해요체. 간결하게.\n\n' + buildPrompt(sajuData));
-  return JSON.parse(r.response.text());
+  return safeParseJson((r.content[0] as any).text);
 }
 
 function buildPrompt(d: any): string {
   const p = d.pillars || [];
-  let s = `${d.input?.name || '미상'}, ${d.input?.gender === 'male' ? '남' : '여'}, ${d.input?.birthYear}년생\n사주: `;
-  p.forEach((x: any, i: number) => { if (x.available !== false) s += `${'년월일시'[i]}:${x.천간}${x.지지} `; });
-  if (d.elements) s += `\n오행: 목${d.elements.목}화${d.elements.화}토${d.elements.토}금${d.elements.금}수${d.elements.수}`;
-  if (d.띠) s += `\n띠: ${d.띠}`;
-  return s;
+  let saju = '';
+  p.forEach((x: any, i: number) => { if (x.available !== false) saju += `${'년월일시'[i]}:${x.천간}${x.지지} `; });
+  const el = d.elements || {};
+
+  return `토정비결 전문가. 2026년 토정비결. ${d.input?.name||'미상'} ${d.input?.gender==='male'?'남':'여'} ${d.input?.birthYear}년생
+사주: ${saju}
+오행: 목${el.목||0}화${el.화||0}토${el.토||0}금${el.금||0}수${el.수||0}
+${d.띠 ? '띠: '+d.띠 : ''}
+주역 64괘 기반 토정비결. JSON만:
+{"yearOverview":{"총운":"100자","금전운":"60자","건강운":"60자","직장운":"60자","애정운":"60자","결혼운":"60자"},"months":[{"month":1,"괘":"수풍정(水風井)","괘의미":"15자","전통해석":"고풍문체30자","현대해석":"해요체80자소름포인트","score":75,"keyword":"만남"}],"luckyAdvice":"80자"}`;
 }

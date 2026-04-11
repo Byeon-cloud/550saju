@@ -5,7 +5,7 @@ export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: a
   const client = new Anthropic({ apiKey });
   const r = await client.messages.create({
     model: 'claude-4-sonnet-20250514',
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [{ role: 'user', content: buildPrompt(sajuData1, sajuData2, relation) }],
   });
   return safeParseJson((r.content[0] as any).text);
