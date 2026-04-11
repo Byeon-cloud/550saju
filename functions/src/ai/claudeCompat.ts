@@ -1,44 +1,29 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
-
-const responseSchema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    overallScore: { type: SchemaType.NUMBER },
-    summary: { type: SchemaType.STRING, description: '궁합 총평 150~300자' },
-    categories: { type: SchemaType.ARRAY, items: { type: SchemaType.OBJECT, properties: {
-      id: { type: SchemaType.STRING }, name: { type: SchemaType.STRING },
-      score: { type: SchemaType.NUMBER }, description: { type: SchemaType.STRING, description: '100~200자' },
-    } } },
-    strengths: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    challenges: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    advice: { type: SchemaType.STRING, description: '종합 조언 100~200자' },
-    futureOutlook: { type: SchemaType.STRING, description: '미래 전망 80~150자' },
-    ohengHarmony: { type: SchemaType.OBJECT, properties: {
-      person1Element: { type: SchemaType.STRING }, person2Element: { type: SchemaType.STRING },
-      relation: { type: SchemaType.STRING }, description: { type: SchemaType.STRING },
-    } },
-  },
-};
+import Anthropic from '@anthropic-ai/sdk';
+import { safeParseJson } from './parseJson';
 
 export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: any, sajuData2: any, relation: string): Promise<any> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 } as any,
+  const client = new Anthropic({ apiKey });
+  const r = await client.messages.create({
+    model: 'claude-4-sonnet-20250514',
+    max_tokens: 2048,
+    messages: [{ role: 'user', content: buildPrompt(sajuData1, sajuData2, relation) }],
   });
-  const prompt = buildPrompt(sajuData1, sajuData2, relation);
-  const r = await model.generateContent('사주명리학 궁합 분석 전문가로서 두 사람의 궁합을 분석해주세요. 카테고리는 personality(성격), values(가치관), communication(소통), emotion(감정), future(미래) 5개.\n\n' + prompt);
-  return JSON.parse(r.response.text());
+  return safeParseJson((r.content[0] as any).text);
 }
 
 function person(label: string, d: any): string {
   const p = d.pillars || [];
-  let s = `\n${label}: ${d.input?.name || '미상'} (${d.input?.gender === 'male' ? '남' : '여'})\n사주: `;
+  let s = `${label}: ${d.input?.name||'미상'}(${d.input?.gender==='male'?'남':'여'}) `;
   p.forEach((x: any, i: number) => { if (x.available !== false) s += `${'년월일시'[i]}:${x.천간}${x.지지} `; });
-  if (d.elements) s += `\n오행: 목${d.elements.목}화${d.elements.화}토${d.elements.토}금${d.elements.금}수${d.elements.수}`;
+  const el = d.elements || {};
+  s += `오행:목${el.목||0}화${el.화||0}토${el.토||0}금${el.금||0}수${el.수||0}`;
   return s;
 }
 
 function buildPrompt(d1: any, d2: any, rel: string): string {
-  return `관계: ${rel}${person('사람1', d1)}${person('사람2', d2)}`;
+  return `사주궁합분석. 관계:${rel}
+${person('1', d1)}
+${person('2', d2)}
+JSON만. 소름돋게:
+{"overallScore":78,"summary":"150자소름포인트","categories":[{"id":"personality","name":"성격궁합","score":80,"description":"80자"},{"id":"values","name":"가치관","score":75,"description":"80자"},{"id":"communication","name":"소통","score":82,"description":"80자"},{"id":"emotion","name":"감정","score":70,"description":"80자"},{"id":"future","name":"미래","score":85,"description":"80자"}],"strengths":["30자","30자","30자"],"challenges":["30자","30자","30자"],"advice":"100자","futureOutlook":"80자","ohengHarmony":{"person1Element":"목","person2Element":"화","relation":"상생","description":"60자"}}`;
 }

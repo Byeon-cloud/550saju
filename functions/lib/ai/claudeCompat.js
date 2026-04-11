@@ -1,46 +1,34 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCompatibilityAnalysis = generateCompatibilityAnalysis;
-const generative_ai_1 = require("@google/generative-ai");
-const responseSchema = {
-    type: generative_ai_1.SchemaType.OBJECT,
-    properties: {
-        overallScore: { type: generative_ai_1.SchemaType.NUMBER },
-        summary: { type: generative_ai_1.SchemaType.STRING, description: '궁합 총평 150~300자' },
-        categories: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.OBJECT, properties: {
-                    id: { type: generative_ai_1.SchemaType.STRING }, name: { type: generative_ai_1.SchemaType.STRING },
-                    score: { type: generative_ai_1.SchemaType.NUMBER }, description: { type: generative_ai_1.SchemaType.STRING, description: '100~200자' },
-                } } },
-        strengths: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.STRING } },
-        challenges: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.STRING } },
-        advice: { type: generative_ai_1.SchemaType.STRING, description: '종합 조언 100~200자' },
-        futureOutlook: { type: generative_ai_1.SchemaType.STRING, description: '미래 전망 80~150자' },
-        ohengHarmony: { type: generative_ai_1.SchemaType.OBJECT, properties: {
-                person1Element: { type: generative_ai_1.SchemaType.STRING }, person2Element: { type: generative_ai_1.SchemaType.STRING },
-                relation: { type: generative_ai_1.SchemaType.STRING }, description: { type: generative_ai_1.SchemaType.STRING },
-            } },
-    },
-};
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const parseJson_1 = require("./parseJson");
 async function generateCompatibilityAnalysis(apiKey, sajuData1, sajuData2, relation) {
-    const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 },
+    const client = new sdk_1.default({ apiKey });
+    const r = await client.messages.create({
+        model: 'claude-4-sonnet-20250514',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: buildPrompt(sajuData1, sajuData2, relation) }],
     });
-    const prompt = buildPrompt(sajuData1, sajuData2, relation);
-    const r = await model.generateContent('사주명리학 궁합 분석 전문가로서 두 사람의 궁합을 분석해주세요. 카테고리는 personality(성격), values(가치관), communication(소통), emotion(감정), future(미래) 5개.\n\n' + prompt);
-    return JSON.parse(r.response.text());
+    return (0, parseJson_1.safeParseJson)(r.content[0].text);
 }
 function person(label, d) {
     const p = d.pillars || [];
-    let s = `\n${label}: ${d.input?.name || '미상'} (${d.input?.gender === 'male' ? '남' : '여'})\n사주: `;
+    let s = `${label}: ${d.input?.name || '미상'}(${d.input?.gender === 'male' ? '남' : '여'}) `;
     p.forEach((x, i) => { if (x.available !== false)
         s += `${'년월일시'[i]}:${x.천간}${x.지지} `; });
-    if (d.elements)
-        s += `\n오행: 목${d.elements.목}화${d.elements.화}토${d.elements.토}금${d.elements.금}수${d.elements.수}`;
+    const el = d.elements || {};
+    s += `오행:목${el.목 || 0}화${el.화 || 0}토${el.토 || 0}금${el.금 || 0}수${el.수 || 0}`;
     return s;
 }
 function buildPrompt(d1, d2, rel) {
-    return `관계: ${rel}${person('사람1', d1)}${person('사람2', d2)}`;
+    return `사주궁합분석. 관계:${rel}
+${person('1', d1)}
+${person('2', d2)}
+JSON만. 소름돋게:
+{"overallScore":78,"summary":"150자소름포인트","categories":[{"id":"personality","name":"성격궁합","score":80,"description":"80자"},{"id":"values","name":"가치관","score":75,"description":"80자"},{"id":"communication","name":"소통","score":82,"description":"80자"},{"id":"emotion","name":"감정","score":70,"description":"80자"},{"id":"future","name":"미래","score":85,"description":"80자"}],"strengths":["30자","30자","30자"],"challenges":["30자","30자","30자"],"advice":"100자","futureOutlook":"80자","ohengHarmony":{"person1Element":"목","person2Element":"화","relation":"상생","description":"60자"}}`;
 }
 //# sourceMappingURL=claudeCompat.js.map

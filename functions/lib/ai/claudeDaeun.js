@@ -1,45 +1,33 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDaeunAnalysis = generateDaeunAnalysis;
-const generative_ai_1 = require("@google/generative-ai");
-const responseSchema = {
-    type: generative_ai_1.SchemaType.OBJECT,
-    properties: {
-        overview: { type: generative_ai_1.SchemaType.STRING, description: '전체 대운 흐름 요약 100~200자' },
-        periods: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.OBJECT, properties: {
-                    간지: { type: generative_ai_1.SchemaType.STRING }, 시작나이: { type: generative_ai_1.SchemaType.NUMBER }, 끝나이: { type: generative_ai_1.SchemaType.NUMBER },
-                    isCurrent: { type: generative_ai_1.SchemaType.BOOLEAN }, theme: { type: generative_ai_1.SchemaType.STRING }, score: { type: generative_ai_1.SchemaType.NUMBER },
-                    detail: { type: generative_ai_1.SchemaType.STRING, description: '이 시기 특징 80~150자' },
-                    advice: { type: generative_ai_1.SchemaType.STRING, description: '핵심 조언 30~50자' },
-                } } },
-        currentHighlight: { type: generative_ai_1.SchemaType.STRING, description: '현재 대운 심층 150~300자' },
-        transitionAdvice: { type: generative_ai_1.SchemaType.STRING, description: '전환기 조언 60~100자' },
-        lifePhaseMap: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.OBJECT, properties: {
-                    phase: { type: generative_ai_1.SchemaType.STRING }, daeun: { type: generative_ai_1.SchemaType.STRING }, theme: { type: generative_ai_1.SchemaType.STRING },
-                } } },
-    },
-};
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const parseJson_1 = require("./parseJson");
 async function generateDaeunAnalysis(apiKey, sajuData) {
-    const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 },
+    const client = new sdk_1.default({ apiKey });
+    const r = await client.messages.create({
+        model: 'claude-4-sonnet-20250514',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: buildPrompt(sajuData) }],
     });
-    const prompt = buildPrompt(sajuData);
-    const r = await model.generateContent('대운분석. 간결하게.\n\n' + prompt);
-    return JSON.parse(r.response.text());
+    return (0, parseJson_1.safeParseJson)(r.content[0].text);
 }
 function buildPrompt(d) {
     const p = d.pillars || [];
-    let s = `${d.input?.name || '미상'}, ${d.input?.gender === 'male' ? '남' : '여'}\n사주: `;
+    let saju = '';
     p.forEach((x, i) => { if (x.available !== false)
-        s += `${'년월일시'[i]}:${x.천간}${x.지지} `; });
-    if (d.elements)
-        s += `\n오행: 목${d.elements.목}화${d.elements.화}토${d.elements.토}금${d.elements.금}수${d.elements.수}`;
-    if (d.daeun?.length) {
-        s += '\n대운: ';
-        d.daeun.forEach((x) => { s += `${x.간지}(${x.시작나이 || ''}~${x.끝나이 || ''})${x.isCurrent ? ' ★' : ''} `; });
-    }
-    return s;
+        saju += `${'년월일시'[i]}:${x.천간}${x.지지} `; });
+    const el = d.elements || {};
+    let daeunList = '';
+    d.daeun?.forEach((x) => { daeunList += `${x.간지}(${x.시작나이 || ''}~${x.끝나이 || ''})${x.isCurrent ? ' ★' : ''} `; });
+    return `사주명리학 대운분석. ${d.input?.name || '미상'} ${d.input?.gender === 'male' ? '남' : '여'}
+사주: ${saju}
+오행: 목${el.목 || 0}화${el.화 || 0}토${el.토 || 0}금${el.금 || 0}수${el.수 || 0}
+대운: ${daeunList}
+JSON만 출력. 소름돋게 구체적으로:
+{"overview":"전체흐름80자","periods":[{"간지":"","age":"1~10세","theme":"8자","score":75,"detail":"각60자구체적","advice":"25자"}],"currentHighlight":"현재대운120자소름포인트","transitionAdvice":"전환기50자","lifePhaseMap":[{"phase":"청소년기","daeun":"甲子","theme":"8자"}]}`;
 }
 //# sourceMappingURL=claudeDaeun.js.map
