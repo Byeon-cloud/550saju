@@ -2,21 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateMonthlyFortune = generateMonthlyFortune;
 const generative_ai_1 = require("@google/generative-ai");
-const summarySchema = {
+const responseSchema = {
     type: generative_ai_1.SchemaType.OBJECT,
     properties: {
-        yearOverview: { type: generative_ai_1.SchemaType.STRING, description: '2026년 개요 80자' },
+        yearOverview: { type: generative_ai_1.SchemaType.STRING },
         bestMonth: { type: generative_ai_1.SchemaType.NUMBER },
         worstMonth: { type: generative_ai_1.SchemaType.NUMBER },
         months: { type: generative_ai_1.SchemaType.ARRAY, items: { type: generative_ai_1.SchemaType.OBJECT, properties: {
                     month: { type: generative_ai_1.SchemaType.NUMBER }, score: { type: generative_ai_1.SchemaType.NUMBER },
-                    theme: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
-                    advice: { type: generative_ai_1.SchemaType.STRING, description: '40자' },
-                    career: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
-                    love: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
-                    wealth: { type: generative_ai_1.SchemaType.STRING, description: '15자' },
-                    caution: { type: generative_ai_1.SchemaType.STRING, description: '20자' },
-                    luckyDay: { type: generative_ai_1.SchemaType.STRING }, luckyItem: { type: generative_ai_1.SchemaType.STRING },
+                    theme: { type: generative_ai_1.SchemaType.STRING }, advice: { type: generative_ai_1.SchemaType.STRING },
                 } } },
     },
 };
@@ -24,9 +18,9 @@ async function generateMonthlyFortune(apiKey, sajuData) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema: summarySchema, maxOutputTokens: 8192 },
+        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 },
     });
-    const r = await model.generateContent('사주 월운 전문가. 2026년 12개월. 간결하게.\n\n' + buildPrompt(sajuData));
+    const r = await model.generateContent('2026 월별운세. 12개월. theme10자 advice30자 간결하게.\n\n' + buildPrompt(sajuData));
     return JSON.parse(r.response.text());
 }
 function buildPrompt(d) {

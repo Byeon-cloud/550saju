@@ -104,7 +104,7 @@ export function AILoading({ name = '', type = '분석', steps }: Props) {
       </AnimatePresence>
 
       {elapsed > 15 && (
-        <p className="text-[10px] text-text-hint mt-4">AI가 꼼꼼하게 분석하고 있어요. 조금만 기다려주세요.</p>
+        <p className="text-[10px] text-text-hint mt-4">꼼꼼하게 풀이하고 있어요. 조금만 기다려주세요.</p>
       )}
     </div>
   );

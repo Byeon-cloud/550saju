@@ -1,20 +1,14 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
-const summarySchema = {
+const responseSchema = {
   type: SchemaType.OBJECT,
   properties: {
-    yearOverview: { type: SchemaType.STRING, description: '2026년 개요 80자' },
+    yearOverview: { type: SchemaType.STRING },
     bestMonth: { type: SchemaType.NUMBER },
     worstMonth: { type: SchemaType.NUMBER },
     months: { type: SchemaType.ARRAY, items: { type: SchemaType.OBJECT, properties: {
       month: { type: SchemaType.NUMBER }, score: { type: SchemaType.NUMBER },
-      theme: { type: SchemaType.STRING, description: '15자' },
-      advice: { type: SchemaType.STRING, description: '40자' },
-      career: { type: SchemaType.STRING, description: '15자' },
-      love: { type: SchemaType.STRING, description: '15자' },
-      wealth: { type: SchemaType.STRING, description: '15자' },
-      caution: { type: SchemaType.STRING, description: '20자' },
-      luckyDay: { type: SchemaType.STRING }, luckyItem: { type: SchemaType.STRING },
+      theme: { type: SchemaType.STRING }, advice: { type: SchemaType.STRING },
     } } },
   },
 };
@@ -23,9 +17,9 @@ export async function generateMonthlyFortune(apiKey: string, sajuData: any): Pro
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema: summarySchema, maxOutputTokens: 8192 } as any,
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 } as any,
   });
-  const r = await model.generateContent('사주 월운 전문가. 2026년 12개월. 간결하게.\n\n' + buildPrompt(sajuData));
+  const r = await model.generateContent('2026 월별운세. 12개월. theme10자 advice30자 간결하게.\n\n' + buildPrompt(sajuData));
   return JSON.parse(r.response.text());
 }
 

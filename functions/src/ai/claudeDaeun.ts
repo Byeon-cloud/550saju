@@ -22,10 +22,10 @@ export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Prom
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 6144 } as any,
   });
   const prompt = buildPrompt(sajuData);
-  const r = await model.generateContent('대운 분석. 구체적 묘사. overview 80자, detail 각60자, currentHighlight 100자. 간결하게.\n\n' + prompt);
+  const r = await model.generateContent('대운분석. 간결하게.\n\n' + prompt);
   return JSON.parse(r.response.text());
 }
 
