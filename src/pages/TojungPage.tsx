@@ -11,6 +11,7 @@ import { getReports, spendBalance, saveReport, generateId, type LocalReport } fr
 import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { AILoading } from '@/components/common/AILoading';
 import type { TojungResponse } from '@/types/report';
 
 type Phase = 'select' | 'loading' | 'result';
@@ -116,19 +117,7 @@ export function TojungPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)' }}>
-        <motion.div className="w-16 h-16 rounded-full border-3 border-border-light border-t-brand-gold mb-6"
-          animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }} />
-        <AnimatePresence mode="wait">
-          <motion.p key={loadingStep} className="text-h3 text-text-primary"
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            {LOADING_STEPS[loadingStep]}
-          </motion.p>
-        </AnimatePresence>
-        <p className="text-caption text-text-muted mt-2">{selected?.name}님의 토정비결을 작성하고 있어요</p>
-      </div>
-    );
+    return <AILoading name={selected?.name} type="토정비결" steps={['올해의 괘를 뽑고 있어요', '월별 괘를 배치하고 있어요', '전통 해석을 현대어로 풀고 있어요']} />;
   }
 
   // ─── 결과 ───

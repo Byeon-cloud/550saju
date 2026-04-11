@@ -10,6 +10,7 @@ import { ShareModal } from '@/components/share/ShareModal';
 import { generateCompatibilityAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { AILoading } from '@/components/common/AILoading';
 import type { CompatibilityResponse } from '@/types/report';
 
 const LOADING_STEPS = [
@@ -73,26 +74,7 @@ export function CompatResultPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center" style={{ background: 'var(--bg-page-gradient)' }}>
-        <motion.div className="w-16 h-16 rounded-full border-3 border-border-light border-t-brand-gold mb-6"
-          animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }} />
-
-        {/* 두 사람 이름 */}
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-h2 text-text-primary">{state.person1.name}</span>
-          <span className="text-caption text-text-muted">×</span>
-          <span className="text-h2 text-text-primary">{state.person2.name}</span>
-        </div>
-
-        <AnimatePresence mode="wait">
-          <motion.p key={loadingStep} className="text-body-sm text-text-muted"
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            {LOADING_STEPS[loadingStep]}
-          </motion.p>
-        </AnimatePresence>
-      </div>
-    );
+    return <AILoading name={`${state.person1.name} × ${state.person2.name}`} type="궁합 분석" steps={['두 사람의 오행을 비교하고 있어요', '십성 관계를 분석하고 있어요', '궁합 점수를 계산하고 있어요']} />;
   }
 
   // ─── 결과 ───
