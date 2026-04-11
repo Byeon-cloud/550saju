@@ -24,7 +24,7 @@ export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: a
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any, thinkingConfig: { thinkingBudget: 0 }, } as any);
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 65536 } as any, thinkingConfig: { thinkingBudget: 0 }, } as any);
   const r = await model.generateContent(buildPrompt(sajuData1, sajuData2, relation));
   return JSON.parse(r.response.text());
 }

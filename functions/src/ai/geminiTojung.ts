@@ -20,7 +20,7 @@ export async function generateTojungBigyeol(apiKey: string, sajuData: any): Prom
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any,
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 65536 } as any,
     thinkingConfig: { thinkingBudget: 0 },
   } as any);
   const now = new Date().getMonth() + 1;
