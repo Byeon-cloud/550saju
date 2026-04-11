@@ -18,7 +18,7 @@ async function generateMonthlyFortune(apiKey, sajuData) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 },
+        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 }, thinkingConfig: { thinkingBudget: 0 },
     });
     const r = await model.generateContent(buildPrompt(sajuData));
     return JSON.parse(r.response.text());

@@ -22,8 +22,7 @@ export async function generateTojungBigyeol(apiKey: string, sajuData: any): Prom
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 16384 } as any,
-  });
+    generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 8192 } as any, thinkingConfig: { thinkingBudget: 0 }, } as any);
   const currentMonth = new Date().getMonth() + 1; // 1~12
   const r = await model.generateContent(`토정비결 전문가. 2026년. 주역64괘. 전통해석 고풍문체, 현대해석 해요체. 소름돋게 구체적으로. ${currentMonth}월~12월만 생성 (${currentMonth-1}월 이전은 제외).\n\n` + buildPrompt(sajuData));
   return JSON.parse(r.response.text());
