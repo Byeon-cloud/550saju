@@ -353,7 +353,7 @@ export const generateCompatibility = onCall(
  * 토정비결 — Gemini 2.5 Pro
  */
 export const generateTojung = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -374,7 +374,7 @@ export const generateTojung = onCall(
 
     try {
       const { generateTojungBigyeol } = await lazyGeminiTojung();
-      const result = await generateTojungBigyeol(ANTHROPIC_KEY.value(), sajuData);
+      const result = await generateTojungBigyeol(GEMINI_KEY.value(), sajuData);
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, type: 'tojung', content: result,
