@@ -134,7 +134,7 @@ exports.generateReport = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSec
 /**
  * 오늘의 운세 — Gemini 2.5 Flash (무료)
  */
-exports.generateDailyFortune = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1 }, async (request) => {
+exports.generateDailyFortune = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0 }, async (request) => {
     const { answers, timeSlot, sajuSummary } = request.data;
     const { generateDailyFortuneAI } = await lazyGeminiFortune();
     const result = await generateDailyFortuneAI(GEMINI_KEY.value(), answers || [], timeSlot || 'morning', sajuSummary);
@@ -143,7 +143,7 @@ exports.generateDailyFortune = (0, https_1.onCall)({ secrets: [GEMINI_KEY], time
 /**
  * AI 대화 — Gemini 2.5 Pro
  */
-exports.generateChatAnswer = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1 }, async (request) => {
+exports.generateChatAnswer = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0 }, async (request) => {
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question)
         throw new https_1.HttpsError('invalid-argument', '질문이 없습니다');
@@ -154,7 +154,7 @@ exports.generateChatAnswer = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeou
 /**
  * 꿈해몽 — Gemini 2.5 Flash (무료)
  */
-exports.generateDream = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1 }, async (request) => {
+exports.generateDream = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0 }, async (request) => {
     const { category, dreamText, sajuData } = request.data;
     if (!category)
         throw new https_1.HttpsError('invalid-argument', '카테고리가 없습니다');
@@ -313,7 +313,7 @@ exports.generateCompatibility = (0, https_1.onCall)({ secrets: [GEMINI_KEY], tim
 /**
  * 토정비결 — Gemini 2.5 Pro
  */
-exports.generateTojung = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1 }, async (request) => {
+exports.generateTojung = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0 }, async (request) => {
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
