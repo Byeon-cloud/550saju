@@ -63,27 +63,10 @@ export function MyPage() {
     };
   }, [latestReport]);
 
-  // 비로그인 시 자동 devLogin (QA용)
-  useEffect(() => {
-    if (!loading && !isLoggedIn) devLogin();
-  }, [loading, isLoggedIn, devLogin]);
-
   if (loading) return null;
 
-  // 비로그인 → 로그인 모달 (devLogin 실패 시)
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
-        {/* BalanceBar가 safe-area 처리 */}
-        <FadeIn><div className="px-5 pt-4"><h1 className="text-display text-text-primary">내 정보</h1></div></FadeIn>
-        <LoginPrompt
-          title="로그인이 필요해요"
-          description={"로그인하면 내 사주 프로필,\n잔액, 분석 이력을 확인할 수 있어요."}
-          onLogin={(provider) => devLogin(provider)}
-        />
-      </div>
-    );
-  }
+  // 로그인 없이도 로컬 데이터로 마이페이지 진입 가능
+  // (앱인토스에서는 토스 로그인, 웹에서는 소셜 로그인 — 별도 섹션으로 처리)
 
   return (
     <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
@@ -251,17 +234,30 @@ export function MyPage() {
           </div>
         </FadeIn>
 
-        {/* ====== 로그아웃 ====== */}
+        {/* ====== 로그인/로그아웃 ====== */}
         <FadeIn delay={0.12}>
-          <div className="flex gap-4 justify-center pt-2">
-            <button onClick={() => toast.show('로그아웃 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-text-secondary transition-colors">
-              로그아웃
-            </button>
-            <span className="text-caption text-text-disabled">·</span>
-            <button onClick={() => toast.show('회원탈퇴 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-func-danger transition-colors">
-              회원탈퇴
-            </button>
-          </div>
+          {isLoggedIn ? (
+            <div className="flex gap-4 justify-center pt-2">
+              <button onClick={() => toast.show('로그아웃 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-text-secondary transition-colors">
+                로그아웃
+              </button>
+              <span className="text-caption text-text-disabled">·</span>
+              <button onClick={() => toast.show('회원탈퇴 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-func-danger transition-colors">
+                회원탈퇴
+              </button>
+            </div>
+          ) : (
+            <div className="card text-center py-5 space-y-2">
+              <p className="text-body-sm text-text-muted">로그인하면 클라우드 동기화가 가능해요</p>
+              <button
+                onClick={() => devLogin()}
+                className="px-6 py-2.5 rounded-xl text-caption font-bold text-white"
+                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}
+              >
+                로그인
+              </button>
+            </div>
+          )}
         </FadeIn>
       </div>
     </div>

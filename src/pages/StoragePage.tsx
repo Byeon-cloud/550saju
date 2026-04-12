@@ -221,7 +221,7 @@ export function StoragePage() {
                         <div className="flex items-center gap-2">
                           <p className="text-h3 text-text-primary">{r.name}</p>
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand-gold/10 text-brand-gold">
-                            상세 분석
+                            {r.contentType === 'daily' ? '오늘운세' : r.contentType === 'dream' ? '꿈해몽' : r.contentType === 'compat' ? '궁합' : r.contentType === 'daeun' ? '대운' : r.contentType === 'monthly' ? '월별' : r.contentType === 'tojung' ? '토정비결' : r.contentType === 'topic' ? ((r.aiResult as any)?.topicId === 'love' ? '연애운' : (r.aiResult as any)?.topicId === 'wealth' ? '재물운' : (r.aiResult as any)?.topicId === 'career' ? '취업운' : '심층분석') : '상세 분석'}
                           </span>
                         </div>
                         <p className="text-caption text-text-muted truncate">
@@ -243,13 +243,40 @@ export function StoragePage() {
             </div>
           </FadeIn>
         ) : (
-          <EmptyState
-            icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="1.5"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18" /><path d="M10 13h4" strokeLinecap="round" /></svg>}
-            title={contentTab === '전체' ? '아직 이용 기록이 없어요' : `${contentTab} 기록이 없어요`}
-            description="서비스를 이용하면 여기에 기록이 남아요."
-            actionLabel="사주 분석하기"
-            onAction={() => navigate('/input')}
-          />
+          <FadeIn delay={0.08}>
+            {contentTab === '심층분석' ? (
+              <div className="space-y-4">
+                <EmptyState
+                  icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="1.5"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18" /><path d="M10 13h4" strokeLinecap="round" /></svg>}
+                  title="아직 심층분석 기록이 없어요"
+                  description="궁금한 운세를 골라서 깊이 있게 분석받아보세요."
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'love', icon: '愛', label: '연애운', color: '#E91E63' },
+                    { id: 'wealth', icon: '財', label: '재물운', color: '#C9A96E' },
+                    { id: 'career', icon: '事', label: '취업운', color: '#1565C0' },
+                    { id: 'health', icon: '健', label: '건강운', color: '#2E7D32' },
+                  ].map((t) => (
+                    <button key={t.id} onClick={() => navigate(`/topic/${t.id}`)}
+                      className="card py-3.5 px-3 flex items-center gap-2">
+                      <span className="text-[15px] font-black" style={{ color: t.color }}>{t.icon}</span>
+                      <span className="text-caption font-semibold text-text-primary">{t.label}</span>
+                      <span className="ml-auto text-[9px] text-brand-gold font-bold">1운</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="1.5"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18" /><path d="M10 13h4" strokeLinecap="round" /></svg>}
+                title={contentTab === '전체' ? '아직 이용 기록이 없어요' : `${contentTab} 기록이 없어요`}
+                description="서비스를 이용하면 여기에 기록이 남아요."
+                actionLabel="사주 분석하기"
+                onAction={() => navigate('/input')}
+              />
+            )}
+          </FadeIn>
         ))}
       </div>
 
