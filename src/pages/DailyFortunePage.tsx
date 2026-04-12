@@ -70,117 +70,15 @@ const TIME_CONTEXT: Record<TimeSlot, { greeting: string; tone: string; label: st
   },
 };
 
-// ─── 시간대별 맞춤 질문 ───
-function getQuestions(slot: TimeSlot, hasHistory: boolean) {
-  // Q1 — 시간대 전용 질문
-  const q1Map: Record<TimeSlot, { q: string; sub: string; options: { label: string }[] }> = {
-    latenight: {
-      q: '이 늦은 밤, 마음에 걸리는 게 있나요?',
-      sub: '새벽의 고민은 보통 가장 중요한 것이에요',
-      options: [
-        { label: '잠이 안 올 만큼의 고민' },
-        { label: '내일이 중요한 날이라서' },
-        { label: '문득 미래가 궁금해서' },
-        { label: '그냥 마음이 심란해서' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-    dawn: {
-      q: '이른 아침에 운세를 보시는 이유가 있나요?',
-      sub: '인시(寅時)의 목(木) 기운 속에서 직감이 맑아져요',
-      options: [
-        { label: '오늘 중요한 일이 있어서' },
-        { label: '일찍 일어나는 습관' },
-        { label: '기분 좋게 시작하고 싶어서' },
-        { label: '어젯밤 꿈이 신경 쓰여서' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-    morning: {
-      q: '오늘 가장 중요한 일정은 뭔가요?',
-      sub: '오행의 흐름이 활동에 따라 달라져요',
-      options: [
-        { label: '업무 · 회의' },
-        { label: '중요한 만남' },
-        { label: '재정 관련 결정' },
-        { label: '공부 · 자기개발' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-    noon: {
-      q: '오늘 오전은 어땠나요?',
-      sub: '오전의 에너지가 오후 운세에 영향을 줘요',
-      options: [
-        { label: '순조로웠어요' },
-        { label: '예상치 못한 일이 있었어요' },
-        { label: '아직 본격적으로 시작 전' },
-        { label: '조금 피곤해요' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-    afternoon: {
-      q: '오후에 특별히 기대되는 일이 있나요?',
-      sub: '금(金)의 수렴 기운이 판단력을 높여줘요',
-      options: [
-        { label: '중요한 결정이 남았어요' },
-        { label: '사람을 만날 예정이에요' },
-        { label: '마감이 있어요' },
-        { label: '여유로운 오후예요' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-    evening: {
-      q: '오늘 하루 중 가장 기억에 남는 순간은?',
-      sub: '하루의 에너지 흐름을 읽어볼게요',
-      options: [
-        { label: '좋은 일이 있었어요' },
-        { label: '아쉬운 일이 있었어요' },
-        { label: '중요한 깨달음이 있었어요' },
-        { label: '평범한 하루였어요' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-    night: {
-      q: '밤에 운세를 보게 된 이유가 있나요?',
-      sub: '밤의 직감은 낮보다 예리해요',
-      options: [
-        { label: '내일이 걱정돼서' },
-        { label: '문득 궁금해져서' },
-        { label: '오늘 일이 마음에 걸려서' },
-        { label: '큰 결정 앞에 서 있어서' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-  };
-
-  const base = [
-    q1Map[slot],
-
-    // Q2: 고민 영역
-    {
-      q: '요즘 가장 신경 쓰이는 게 뭔가요?',
-      sub: '고민의 영역에 맞춰 더 정확한 운세를 알려드릴게요',
-      options: [
-        { label: '이직 · 진로' },
-        { label: '연애 · 관계' },
-        { label: '재정 · 투자' },
-        { label: '체력 · 건강' },
-        { label: '인간관계' },
-        { label: '기타 (직접 입력)' },
-      ],
-    },
-
-    // Q3: 서술형 — 자유 입력
-    {
-      q: '오늘 궁금한 게 있다면 자유롭게 적어주세요',
-      sub: '구체적일수록 더 높은 퀄리티의 맞춤 운세를 받을 수 있어요. 건너뛰어도 괜찮아요.',
-      options: [],
-      isTextInput: true,
-    },
-  ];
-
-  return base;
-}
+// ─── 고민 영역 칩 (1단계 선택 UI용) ───
+const CONCERN_CHIPS = [
+  { id: 'career',  label: '이직 · 진로',   icon: '事' },
+  { id: 'love',    label: '연애 · 관계',   icon: '愛' },
+  { id: 'wealth',  label: '재정 · 투자',   icon: '財' },
+  { id: 'health',  label: '체력 · 건강',   icon: '健' },
+  { id: 'people',  label: '인간관계',       icon: '人' },
+  { id: 'general', label: '전반적인 흐름',  icon: '運' },
+];
 
 // ─── 결과 데이터 (시간대+이전 데이터 반영) ───
 function getFortuneResult(slot: TimeSlot, hasHistory: boolean, ilgan?: string, ilganOheng?: string, recentReport?: any) {
@@ -262,10 +160,12 @@ export function DailyFortunePage() {
   usePageTitle('오늘의 운세');
   const navigate = useNavigate();
   const toast = useToast();
-  // 질문 단계 제거 — 서술형 1페이지로 변경
   const [showResult, setShowResult] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<LocalReport | null>(null);
   const [profileSelected, setProfileSelected] = useState(false);
+  // 새 단순화 UX: 고민 영역 칩 선택 + 자유 입력
+  const [selectedConcern, setSelectedConcern] = useState<string>('');
+  const [userConcern, setUserConcern] = useState('');
 
   const timeSlot = useMemo(() => getTimeSlot(), []);
   const ctx = TIME_CONTEXT[timeSlot];
@@ -281,6 +181,7 @@ export function DailyFortunePage() {
     return Array.from(seen.values());
   }, []);
 
+  // 단일 프로필이면 자동 선택
   const recentReport = selectedProfile;
   const hasHistory = !!recentReport;
   const ilgan = recentReport?.sajuData.pillars[2]?.천간;
@@ -289,21 +190,15 @@ export function DailyFortunePage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
 
-  const questions = useMemo(() => getQuestions(timeSlot, hasHistory), [timeSlot, hasHistory]);
   const localResult = useMemo(() => getFortuneResult(timeSlot, hasHistory, ilgan, ilganOheng, recentReport), [timeSlot, hasHistory, ilgan, ilganOheng, recentReport]);
   const result = aiResult || localResult;
-  const [userConcern, setUserConcern] = useState('');
-  const [answers, setAnswers] = useState<number[]>([]);
-  const currentQ = answers.length;
   const isOtherPerson = recentReport && recentReport.input.relation && recentReport.input.relation !== '본인' && recentReport.input.relation !== 'self';
   const targetName = recentReport?.name || '';
 
-  function selectOption(idx: number) {
-    const next = [...answers, idx];
-    setAnswers(next);
-    if (next.length === questions.length) {
-      submitFortune();
-    }
+  // 단일 프로필 자동 선택
+  if (!profileSelected && profiles.length === 1) {
+    setSelectedProfile(profiles[0]);
+    setProfileSelected(true);
   }
 
   async function submitFortune() {
@@ -322,10 +217,13 @@ export function DailyFortunePage() {
 
     // 보관함에 저장
     if (selectedProfile) {
-      saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free' as any, createdAt: Date.now(), contentType: 'daily' as any });
+      saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free' as any, createdAt: Date.now() as any } as any);
     }
 
     // AI API 호출 (백그라운드) — 실패 시 로컬 결과 유지
+    // concern 칩 → index 배열로 변환
+    const concernIdx = CONCERN_CHIPS.findIndex(c => c.id === selectedConcern);
+    const answersArr = [concernIdx >= 0 ? concernIdx : 5];
     try {
       setAiLoading(true);
       const sajuSummary = selectedProfile?.sajuData ? {
@@ -334,7 +232,7 @@ export function DailyFortunePage() {
         name: selectedProfile.name || '',
       } : undefined;
 
-      const aiData = await generateDailyFortune(answers, timeSlot, sajuSummary);
+      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary);
       if (aiData) setAiResult(aiData);
     } catch (e) {
       console.warn('[DailyFortune] AI 호출 실패, 로컬 결과 사용:', e);
@@ -411,7 +309,7 @@ export function DailyFortunePage() {
   }
 
   // 프로필 없으면 바로 진행 (사주 없이)
-  if (!profileSelected && profiles.length === 0) {
+  if (!profileSelected && profiles.length === 0 && !selectedProfile) {
     setProfileSelected(true);
   }
 
@@ -477,48 +375,58 @@ export function DailyFortunePage() {
               </div>
             </motion.div>
             ) : (
-            /* ====== 본인 → 기존 3단계 질문 ====== */
-            <motion.div key={`q-${currentQ}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-              {currentQ < questions.length && (
-                <div className="space-y-4">
-                  <div className="flex gap-1.5">
-                    {questions.map((_: any, i: number) => (
-                      <motion.div key={i} className={`h-1 flex-1 rounded-full ${i <= currentQ ? 'bg-brand-gold' : 'bg-border-light'}`}
-                        animate={i === currentQ ? { opacity: [0.5, 1, 0.5] } : {}} transition={i === currentQ ? { duration: 1.5, repeat: Infinity } : {}} />
+            /* ====== 본인 → 단순화된 단일 화면 (고민 영역 + 자유 입력) ====== */
+            <motion.div key="concern-input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+              <div className="space-y-5">
+                <div className="card-navy py-5 px-5">
+                  <h2 className="text-h1 text-white leading-snug">
+                    {ctx.greeting}
+                  </h2>
+                  <p className="text-caption text-white/50 mt-2">{ctx.sub}</p>
+                </div>
+
+                {/* 고민 영역 칩 */}
+                <div>
+                  <p className="text-h3 text-text-primary mb-3">요즘 가장 신경 쓰이는 영역은?</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CONCERN_CHIPS.map((chip, i) => (
+                      <motion.button
+                        key={chip.id}
+                        whileTap={{ scale: 0.93 }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => setSelectedConcern(prev => prev === chip.id ? '' : chip.id)}
+                        className={`card py-3.5 px-3 flex flex-col items-center gap-1 transition-all ${
+                          selectedConcern === chip.id ? 'border-2 border-brand-gold' : ''
+                        }`}
+                        style={selectedConcern === chip.id ? { background: 'rgba(201,169,110,0.06)' } : {}}
+                      >
+                        <span className="text-[17px] font-black text-brand-gold">{chip.icon}</span>
+                        <p className="text-[11px] text-text-primary font-medium text-center leading-tight">{chip.label}</p>
+                      </motion.button>
                     ))}
                   </div>
-                  <div className="card-navy">
-                    <p className="text-caption text-white/40 mb-1">{currentQ + 1}/{questions.length}</p>
-                    <h2 className="text-h1 text-white leading-snug">{questions[currentQ].q}</h2>
-                    <p className="text-caption text-white/50 mt-2">{questions[currentQ].sub}</p>
-                  </div>
-                  {(questions[currentQ] as any).isTextInput ? (
-                    <div className="space-y-4">
-                      <textarea value={userConcern} onChange={(e) => setUserConcern(e.target.value)}
-                        placeholder="예: 오늘 면접이 있는데 잘 될까요?&#10;요즘 연인과 사이가 안 좋아요..."
-                        maxLength={300} rows={5}
-                        className="input-field w-full !rounded-2xl resize-none text-body"
-                        style={{ paddingTop: 16, paddingBottom: 16, minHeight: 150 }} />
-                      <div className="flex gap-2">
-                        <button onClick={() => selectOption(0)} className="flex-1 py-3.5 rounded-xl text-body-sm font-bold text-white bg-brand-gold">운세 보기</button>
-                        <button onClick={() => selectOption(-1)} className="px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface">건너뛰기</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={`grid gap-2.5 ${questions[currentQ].options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                      {questions[currentQ].options.map((opt: any, i: number) => (
-                        <motion.button key={i} whileTap={{ scale: 0.93 }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.06, duration: 0.25 }} onClick={() => selectOption(i)}
-                          className="card text-left px-4 py-3.5 active:bg-bg-surface flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-brand-navy/8 text-brand-navy text-tiny font-bold flex items-center justify-center flex-shrink-0">
-                            {String.fromCharCode(65 + i)}</span>
-                          <p className="text-body-sm text-text-primary font-medium leading-snug">{opt.label}</p>
-                        </motion.button>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              )}
+
+                {/* 자유 입력 */}
+                <div>
+                  <p className="text-h3 text-text-primary mb-2">구체적으로 궁금한 게 있다면 <span className="text-text-hint font-normal text-caption">(선택)</span></p>
+                  <textarea
+                    value={userConcern}
+                    onChange={(e) => setUserConcern(e.target.value)}
+                    placeholder="예: 오늘 면접이 있는데 잘 될까요?&#10;이번 달 재테크 타이밍이 궁금해요..."
+                    maxLength={300} rows={3}
+                    className="input-field w-full !rounded-2xl resize-none text-body"
+                    style={{ paddingTop: 14, paddingBottom: 14, minHeight: 90 }}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune}>운세 보기</Button>
+                  <button onClick={submitFortune} className="flex-shrink-0 px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface">건너뛰기</button>
+                </div>
+              </div>
             </motion.div>
             )
           ) : (

@@ -156,12 +156,12 @@ export function ChatPage() {
   async function sendMessage(text: string) {
     if (!text.trim() || isLoading) return;
 
-    // 1. 매일 무료 1회 체크
+    // 1. 매일 무료 1회 체크 (첫 메시지 + 아직 무료 미사용)
     if (chatCount === 0 && hasFreePass('chat')) {
       useFreePass('chat');
     }
-    // 2. 무료 소진 → 대화권 체크
-    else if (!hasDailyFree) {
+    // 2. 무료 소진 + 대화권 확인
+    else {
       if (getChatCredits() > 0) {
         useChatCredit();
       } else {
@@ -338,7 +338,7 @@ export function ChatPage() {
             </motion.div>
           ))}
 
-          {/* 로딩 타이핑 인디케이터 */}
+          {/* 로딩 — 한자 타이핑 인디케이터 */}
           {isLoading && (
             <motion.div
               key="loading"
@@ -347,17 +347,27 @@ export function ChatPage() {
               className="flex justify-start"
             >
               <div
-                className="rounded-2xl px-4 py-3 flex items-center gap-1.5"
-                style={{ background: '#FFFFFF', border: '1px solid #E2E5EC' }}
+                className="rounded-2xl px-4 py-3 flex items-center gap-2"
+                style={{ background: '#FFFFFF', border: '1px solid #E2E5EC', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
               >
-                {[0, 1, 2].map((i) => (
-                  <motion.div
+                {['命', '理', '학'].map((char, i) => (
+                  <motion.span
                     key={i}
-                    className="w-2 h-2 rounded-full bg-brand-gold/40"
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                  />
+                    className="text-[13px] font-bold"
+                    style={{ color: '#C9A96E' }}
+                    animate={{ opacity: [0.2, 1, 0.2] }}
+                    transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.3 }}
+                  >
+                    {char}
+                  </motion.span>
                 ))}
+                <motion.span
+                  className="text-[11px] text-text-hint ml-1"
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 1.4, repeat: Infinity, delay: 0.6 }}
+                >
+                  분석 중...
+                </motion.span>
               </div>
             </motion.div>
           )}

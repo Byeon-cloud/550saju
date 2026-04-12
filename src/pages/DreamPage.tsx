@@ -113,14 +113,8 @@ export function DreamPage() {
 
   function selectCategory(id: string) {
     setSelectedCategory(id);
-    // "직접 적을게요" 선택 시 바로 상세 입력으로
-    if (id === 'other') {
-      setTimeout(() => setPhase('detail'), 200);
-    }
-  }
-
-  function goToDetail() {
-    setPhase('detail');
+    // 모든 카테고리 선택 시 자동으로 detail 단계로 이동 (300ms 딜레이 — 선택 시각 피드백 후)
+    setTimeout(() => setPhase('detail'), 300);
   }
 
   const [aiResult, setAiResult] = useState<{ title: string; interpretation: string; luckyAction: string; category: string } | null>(null);
@@ -150,7 +144,7 @@ export function DreamPage() {
       // 보관함 저장
       try {
         const { saveReport, generateId } = await import('@/services/storage/localStore');
-        saveReport({ id: generateId(), name: '꿈해몽', input: {} as any, sajuData: {} as any, type: 'free' as any, createdAt: Date.now(), contentType: 'dream' as any });
+        saveReport({ id: generateId(), name: '꿈해몽', input: {} as any, sajuData: {} as any, type: 'free' as any, createdAt: Date.now() as any } as any);
       } catch { /* 무시 */ }
     }
   }
@@ -229,7 +223,7 @@ export function DreamPage() {
             </motion.div>
           )}
 
-          {/* ====== Phase 2: 상세 입력 (선택) ====== */}
+          {/* ====== Phase 2: 상세 입력 ====== */}
           {phase === 'detail' && (
             <motion.div
               key="detail"
@@ -239,10 +233,24 @@ export function DreamPage() {
               className="space-y-5"
             >
               <FadeIn>
+                {/* 선택된 카테고리 표시 */}
+                {selectedCategory && selectedCategory !== 'other' && (() => {
+                  const cat = DREAM_CATEGORIES.find(c => c.id === selectedCategory);
+                  return cat ? (
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: `${cat.color}15` }}>
+                        <span className="text-[13px] font-black" style={{ color: cat.color }}>{cat.icon}</span>
+                      </div>
+                      <span className="text-caption font-semibold" style={{ color: cat.color }}>{cat.label}</span>
+                      <button onClick={() => setPhase('category')} className="ml-auto text-caption text-text-hint">변경</button>
+                    </div>
+                  ) : null;
+                })()}
                 <h2 className="text-display text-text-primary">꿈의 내용을{'\n'}자유롭게 적어주세요</h2>
                 <p className="text-body text-text-muted mt-3 leading-relaxed">
                   더 자세히 적을수록 정확한 해몽이 가능해요.{'\n'}
-                  생략하고 바로 결과를 볼 수도 있어요.
+                  건너뛰고 바로 결과를 볼 수도 있어요.
                 </p>
               </FadeIn>
 
@@ -398,20 +406,40 @@ export function DreamPage() {
             </motion.div>
           )}
 
-          {/* ====== 로딩 ====== */}
+          {/* ====== 로딩 — 한자 해석 애니메이션 ====== */}
           {isLoading && (
             <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-20"
+              className="flex flex-col items-center justify-center py-24 space-y-6"
             >
-              <motion.div
-                className="w-12 h-12 rounded-full border-3 border-border-light border-t-brand-gold"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              />
-              <p className="text-body-sm text-text-muted mt-4">꿈의 의미를 풀어보고 있어요...</p>
+              {/* 한자 3글자 순차 등장 */}
+              <div className="flex items-center gap-4">
+                {[
+                  { char: '夢', label: '꿈' },
+                  { char: '解', label: '해석' },
+                  { char: '釋', label: '풀이' },
+                ].map(({ char, label }, i) => (
+                  <motion.div
+                    key={i}
+                    className="flex flex-col items-center gap-1"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: [0, 1, 0.6, 1], y: 0 }}
+                    transition={{ delay: i * 0.4, duration: 0.6, repeat: Infinity, repeatDelay: 1.6 }}
+                  >
+                    <span className="text-4xl font-black" style={{ color: '#C9A96E' }}>{char}</span>
+                    <span className="text-[9px] text-text-hint">{label}</span>
+                  </motion.div>
+                ))}
+              </div>
+              <motion.p
+                className="text-body-sm text-text-muted"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                꿈의 의미를 명리학으로 풀어보고 있어요
+              </motion.p>
             </motion.div>
           )}
 
@@ -419,16 +447,7 @@ export function DreamPage() {
       </div>
 
       {/* CTA — 카테고리/상세 단계에서만 표시 */}
-      {phase === 'category' && selectedCategory && (
-        <div className="sticky-cta-bottom">
-          <Button fullWidth size="lg" onClick={goToDetail}>
-            다음
-          </Button>
-          <button onClick={analyze} className="w-full text-center text-caption text-brand-gold mt-2">
-            바로 결과 보기
-          </button>
-        </div>
-      )}
+      {/* 카테고리 선택 후 자동 이동 — 별도 CTA 불필요 */}
 
       {phase === 'detail' && (
         <div className="sticky-cta-bottom">
