@@ -117,6 +117,18 @@ export async function generateCompatibilityAnalysis(
 }
 
 /**
+ * 주제별 심층분석 — Firebase Function → Gemini 2.5 Flash
+ */
+export async function generateTopicAnalysis(
+  topicId: string,
+  sajuData: SajuData,
+): Promise<{ reportId: string; content: any }> {
+  const fn = aiCallable('generateTopicAnalysis');
+  const result = await fn({ topicId, sajuData });
+  return result.data as { reportId: string; content: any };
+}
+
+/**
  * 토정비결 — Firebase Function → Gemini 2.5 Pro
  */
 export async function generateTojungBigyeol(

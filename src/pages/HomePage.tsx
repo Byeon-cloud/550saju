@@ -404,6 +404,46 @@ export function HomePage() {
           </div>
         </FadeIn>
 
+        {/* ====== 주제별 심층 분석 ====== */}
+        <FadeIn delay={0.15}>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-h2 text-text-primary">주제별 심층 분석</h2>
+              <span className="text-caption text-brand-gold font-semibold">각 1운</span>
+            </div>
+            <p className="text-caption text-text-muted -mt-1">궁금한 운세만 골라서 깊이 있게</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: 'love',     icon: '愛', label: '연애운',       color: '#E91E63' },
+                { id: 'wealth',   icon: '財', label: '재물운',       color: '#C9A96E' },
+                { id: 'career',   icon: '事', label: '취업·이직운', color: '#1565C0' },
+                { id: 'marriage', icon: '婚', label: '결혼운',       color: '#E91E63' },
+                { id: 'business', icon: '商', label: '사업운',       color: '#2D8A4E' },
+                { id: 'health',   icon: '健', label: '건강운',       color: '#2E7D32' },
+                { id: 'reunion',  icon: '緣', label: '재회운',       color: '#7B1FA2' },
+                { id: 'study',    icon: '學', label: '학업운',       color: '#0288D1' },
+                { id: 'social',   icon: '人', label: '대인관계운',   color: '#F57F17' },
+                { id: 'moving',   icon: '動', label: '이사운',       color: '#757575' },
+              ].map((t) => (
+                <motion.button
+                  key={t.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate(`/topic/${t.id}`)}
+                  className="card py-4 px-4 flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${t.color}12` }}>
+                    <span className="text-[17px] font-black" style={{ color: t.color }}>{t.icon}</span>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-body-sm font-semibold text-text-primary">{t.label}</p>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+
         {/* ====== 최근 분석 ====== */}
         {hasHistory && (
           <FadeIn delay={0.12}>

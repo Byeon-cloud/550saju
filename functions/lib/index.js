@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortune = exports.generateReport = exports.loginWithToss = void 0;
+exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortune = exports.generateReport = exports.loginWithToss = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -46,6 +46,7 @@ const lazyGeminiTojung = () => Promise.resolve().then(() => __importStar(require
 const lazyGeminiFortune = () => Promise.resolve().then(() => __importStar(require('./ai/geminiFortune')));
 const lazyGeminiChat = () => Promise.resolve().then(() => __importStar(require('./ai/geminiChat')));
 const lazyGeminiDream = () => Promise.resolve().then(() => __importStar(require('./ai/geminiDream')));
+const lazyGeminiTopic = () => Promise.resolve().then(() => __importStar(require('./ai/geminiTopic')));
 const lazyTossAuth = () => Promise.resolve().then(() => __importStar(require('./auth/tossAuth')));
 admin.initializeApp();
 const db = admin.firestore();
@@ -492,6 +493,42 @@ exports.disconnectToss = (0, https_1.onRequest)({ secrets: [TOSS_DISCONNECT_AUTH
     catch (error) {
         console.error('[disconnectToss] 에러:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+/**
+ * 주제별 심층분석 — Gemini 2.5 Flash (1운)
+ * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
+ */
+exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0 }, async (request) => {
+    const { topicId, sajuData } = request.data;
+    if (!topicId || !sajuData)
+        throw new https_1.HttpsError('invalid-argument', 'topicId, sajuData 필요');
+    const uid = request.auth?.uid || 'anonymous';
+    // 잔액 차감
+    if (!DEV_MODE && request.auth) {
+        const userRef = db.collection('users').doc(uid);
+        await db.runTransaction(async (tx) => {
+            const doc = await tx.get(userRef);
+            const bal = doc.data()?.balance ?? 0;
+            if (bal < 1)
+                throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
+            tx.update(userRef, { balance: admin.firestore.FieldValue.increment(-1), totalSpent: admin.firestore.FieldValue.increment(1) });
+        });
+    }
+    try {
+        const { generateTopicAnalysisAI } = await lazyGeminiTopic();
+        const result = await generateTopicAnalysisAI(GEMINI_KEY.value(), topicId, sajuData);
+        const reportRef = db.collection('reports').doc();
+        await reportRef.set({
+            uid, topicId, ...result, type: 'topic',
+            aiModel: 'gemini-2.5-flash',
+            generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return { reportId: reportRef.id, content: result };
+    }
+    catch (error) {
+        console.error('generateTopicAnalysis error:', error);
+        throw new https_1.HttpsError('internal', `분석 실패: ${error.message || 'unknown'}`);
     }
 });
 //# sourceMappingURL=index.js.map

@@ -24,6 +24,7 @@ const DaeunPage = lazy(() => import('@/pages/DaeunPage').then(m => ({ default: m
 const MonthlyPage = lazy(() => import('@/pages/MonthlyPage').then(m => ({ default: m.MonthlyPage })));
 const CompatResultPage = lazy(() => import('@/pages/CompatResultPage').then(m => ({ default: m.CompatResultPage })));
 const TojungPage = lazy(() => import('@/pages/TojungPage').then(m => ({ default: m.TojungPage })));
+const TopicAnalysisPage = lazy(() => import('@/pages/TopicAnalysisPage').then(m => ({ default: m.TopicAnalysisPage })));
 const TermsPage = lazy(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 
@@ -97,6 +98,7 @@ function AnimatedRoutes() {
             <Route path="/daeun" element={<DaeunPage />} />
             <Route path="/monthly" element={<MonthlyPage />} />
             <Route path="/tojung" element={<TojungPage />} />
+            <Route path="/topic/:topicId" element={<TopicAnalysisPage />} />
             <Route path="/storage" element={<StoragePage />} />
             <Route path="/charge" element={<ChargePage />} />
             <Route path="/my" element={<MyPage />} />

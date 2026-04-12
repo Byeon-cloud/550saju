@@ -12,7 +12,7 @@
 
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
 
-export type ContentType = 'report' | 'daily' | 'dream' | 'daeun' | 'monthly' | 'compat' | 'tojung';
+export type ContentType = 'report' | 'daily' | 'dream' | 'daeun' | 'monthly' | 'compat' | 'tojung' | 'topic';
 
 export interface LocalReport {
   id: string;

@@ -10,6 +10,7 @@ const lazyGeminiTojung = () => import('./ai/geminiTojung');
 const lazyGeminiFortune = () => import('./ai/geminiFortune');
 const lazyGeminiChat = () => import('./ai/geminiChat');
 const lazyGeminiDream = () => import('./ai/geminiDream');
+const lazyGeminiTopic = () => import('./ai/geminiTopic');
 const lazyTossAuth = () => import('./auth/tossAuth');
 
 admin.initializeApp();
@@ -561,6 +562,48 @@ export const disconnectToss = onRequest(
     } catch (error: any) {
       console.error('[disconnectToss] 에러:', error);
       res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/**
+ * 주제별 심층분석 — Gemini 2.5 Flash (1운)
+ * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
+ */
+export const generateTopicAnalysis = onCall(
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0 },
+  async (request) => {
+    const { topicId, sajuData } = request.data;
+    if (!topicId || !sajuData) throw new HttpsError('invalid-argument', 'topicId, sajuData 필요');
+
+    const uid = request.auth?.uid || 'anonymous';
+
+    // 잔액 차감
+    if (!DEV_MODE && request.auth) {
+      const userRef = db.collection('users').doc(uid);
+      await db.runTransaction(async (tx) => {
+        const doc = await tx.get(userRef);
+        const bal = doc.data()?.balance ?? 0;
+        if (bal < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+        tx.update(userRef, { balance: admin.firestore.FieldValue.increment(-1), totalSpent: admin.firestore.FieldValue.increment(1) });
+      });
+    }
+
+    try {
+      const { generateTopicAnalysisAI } = await lazyGeminiTopic();
+      const result = await generateTopicAnalysisAI(GEMINI_KEY.value(), topicId, sajuData);
+
+      const reportRef = db.collection('reports').doc();
+      await reportRef.set({
+        uid, topicId, ...result, type: 'topic',
+        aiModel: 'gemini-2.5-flash',
+        generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return { reportId: reportRef.id, content: result };
+    } catch (error: any) {
+      console.error('generateTopicAnalysis error:', error);
+      throw new HttpsError('internal', `분석 실패: ${error.message || 'unknown'}`);
     }
   }
 );
