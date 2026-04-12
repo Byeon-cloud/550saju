@@ -54,7 +54,7 @@ export function TojungPage() {
     try {
       const res = await generateTojungBigyeol(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid' as any, createdAt: Date.now(), contentType: 'tojung' as any });
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', createdAt: new Date().toISOString() });
       setPhase('result');
     } catch (e: any) {
       console.error('토정비결 실패:', e);

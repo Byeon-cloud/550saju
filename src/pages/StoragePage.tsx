@@ -10,7 +10,7 @@ import { getChatRooms, type ChatRoom } from '@/services/storage/chatStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
-const CONTENT_TABS = ['전체', '상세 분석', '오늘운세', '꿈해몽', '궁합', '상담'] as const;
+const CONTENT_TABS = ['전체', '상세 분석', '오늘운세', '꿈해몽', '궁합', '대운·월운', '상담'] as const;
 
 export function StoragePage() {
   usePageTitle('보관함');
@@ -52,10 +52,11 @@ export function StoragePage() {
   // 콘텐츠 필터
   const contentReports = useMemo(() => {
     if (contentTab === '전체') return reports;
-    if (contentTab === '상세 분석') return reports.filter(r => r.type === 'paid' && !(r as any).contentType);
-    if (contentTab === '오늘운세') return reports.filter(r => (r as any).contentType === 'daily' || r.type === ('daily' as any));
-    if (contentTab === '꿈해몽') return reports.filter(r => (r as any).contentType === 'dream' || r.type === ('dream' as any));
-    if (contentTab === '궁합') return reports.filter(r => (r as any).contentType === 'compat');
+    if (contentTab === '상세 분석') return reports.filter(r => !r.contentType || r.contentType === 'report');
+    if (contentTab === '오늘운세') return reports.filter(r => r.contentType === 'daily');
+    if (contentTab === '꿈해몽') return reports.filter(r => r.contentType === 'dream');
+    if (contentTab === '궁합') return reports.filter(r => r.contentType === 'compat');
+    if (contentTab === '대운·월운') return reports.filter(r => r.contentType === 'daeun' || r.contentType === 'monthly' || r.contentType === 'tojung');
     if (contentTab === '상담') return []; // 채팅은 별도 chatRooms
     return reports;
   }, [reports, contentTab]);

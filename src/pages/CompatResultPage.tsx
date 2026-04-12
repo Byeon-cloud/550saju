@@ -59,7 +59,7 @@ export function CompatResultPage() {
     ).then(async (res) => {
       setResult(res.content);
       const { saveReport, generateId } = await import('@/services/storage/localStore');
-      saveReport({ id: res.reportId || generateId(), name: `${state!.person1.name} × ${state!.person2.name}`, input: state!.person1.input || state!.person1.sajuData?.input, sajuData: state!.person1.sajuData, type: 'paid' as any, createdAt: Date.now(), contentType: 'compat' as any });
+      saveReport({ id: res.reportId || generateId(), name: `${state!.person1.name} × ${state!.person2.name}`, input: state!.person1.input || state!.person1.sajuData?.input, sajuData: state!.person1.sajuData, type: 'paid', contentType: 'compat', createdAt: new Date().toISOString() });
       setPhase('result');
     }).catch(async (e) => {
       console.error('궁합 분석 실패:', e);

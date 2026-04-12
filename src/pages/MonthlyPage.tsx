@@ -52,7 +52,7 @@ export function MonthlyPage() {
     try {
       const res = await generateMonthlyFortune2026(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid' as any, createdAt: Date.now(), contentType: 'monthly' as any });
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', createdAt: new Date().toISOString() });
       setPhase('result');
     } catch (e: any) {
       console.error('월별 운세 실패:', e);

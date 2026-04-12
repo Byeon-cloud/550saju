@@ -12,15 +12,21 @@
 
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
 
+export type ContentType = 'report' | 'daily' | 'dream' | 'daeun' | 'monthly' | 'compat' | 'tojung';
+
 export interface LocalReport {
   id: string;
   name: string;
   input: SajuInput;
   sajuData: SajuData;
   situation?: Situation;
-  createdAt: string;
+  createdAt: string | number;
   /** 'free' = 무료 사주팔자, 'paid' = 상세 분석(1운) */
   type?: 'free' | 'paid';
+  /** 콘텐츠 분류 */
+  contentType?: ContentType;
+  /** AI 결과 원문 (ResultPage 등에서 사용) */
+  aiResult?: any;
 }
 
 /** 운 잔액 유형별 구조 */

@@ -2,44 +2,76 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDailyFortuneAI = generateDailyFortuneAI;
 const generative_ai_1 = require("@google/generative-ai");
+const responseSchema = {
+    type: generative_ai_1.SchemaType.OBJECT,
+    properties: {
+        grade: { type: generative_ai_1.SchemaType.STRING },
+        gradeLabel: { type: generative_ai_1.SchemaType.STRING },
+        summary: { type: generative_ai_1.SchemaType.STRING },
+        scores: { type: generative_ai_1.SchemaType.OBJECT, properties: {
+                love: { type: generative_ai_1.SchemaType.NUMBER }, career: { type: generative_ai_1.SchemaType.NUMBER },
+                wealth: { type: generative_ai_1.SchemaType.NUMBER }, health: { type: generative_ai_1.SchemaType.NUMBER },
+            } },
+        lucky: { type: generative_ai_1.SchemaType.OBJECT, properties: {
+                color: { type: generative_ai_1.SchemaType.STRING }, colorHex: { type: generative_ai_1.SchemaType.STRING },
+                number: { type: generative_ai_1.SchemaType.NUMBER }, direction: { type: generative_ai_1.SchemaType.STRING },
+                item: { type: generative_ai_1.SchemaType.STRING }, food: { type: generative_ai_1.SchemaType.STRING },
+            } },
+        advice: { type: generative_ai_1.SchemaType.STRING },
+    },
+};
 /**
- * 오늘의 운세 — Gemini 2.5 Flash (무료 티어)
+ * 오늘의 운세 — Gemini 2.5 Flash
+ * 사주 리포트 수준의 퀄리티를 무료 티어에서 구현
  */
 async function generateDailyFortuneAI(apiKey, answers, timeSlot, sajuSummary) {
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const timeContext = {
-        dawn: '새벽 시간에 운세를 보고 있습니다. 이 시간까지 깨어있다면 중요한 고민이 있을 가능성이 높습니다.',
-        morning: '아침에 하루를 시작하며 운세를 보고 있습니다.',
-        afternoon: '오후 시간, 하루의 절반이 지난 시점에서 운세를 봅니다.',
-        evening: '저녁, 하루를 마무리하는 시간에 운세를 봅니다.',
-        night: '밤 늦은 시간에 운세를 보고 있습니다. 밤의 직감은 예리합니다.',
+    const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 65536 },
+        thinkingConfig: { thinkingBudget: 0 },
+    });
+    const timeLabels = {
+        latenight: '자시(子時) — 수(水)의 깊은 기운. 이 시간까지 깨어있다면 중요한 고민이 있음.',
+        dawn: '인시(寅時) — 목(木)의 움트는 기운. 하루의 방향을 잡는 시간.',
+        morning: '오전 — 양(陽) 기운이 충만. 새로운 시작에 유리한 시간대.',
+        noon: '오시(午時) — 화(火)의 절정. 직감이 또렷해지는 시간.',
+        afternoon: '오후 — 금(金)의 수렴 기운. 판단력과 결정력이 좋아지는 시간.',
+        evening: '저녁 — 하루를 정리하고 내일을 설계하는 시간.',
+        night: '해시(亥時) — 수(水)의 시작. 밤의 직감이 낮보다 예리한 시간.',
     };
-    const personalContext = sajuSummary
-        ? `이 사용자의 일간은 ${sajuSummary.ilgan}(${sajuSummary.oheng})입니다. ${sajuSummary.name}님에게 맞춤 운세를 제공하세요.`
-        : '사주 정보가 없는 일반 사용자입니다.';
-    const prompt = `당신은 따뜻하고 프로페셔널한 운세 전문가입니다.
+    const concernLabels = ['이직·진로', '연애·관계', '재정·투자', '체력·건강', '인간관계', '전반적 흐름'];
+    const concern = answers.length > 0 ? concernLabels[answers[0]] || '전반적 흐름' : '전반적 흐름';
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+    const prompt = `당신은 명리학 40년 경력의 운세 전문가입니다.
+"돈 주고 본 것 같아. 소름돋아." — 이 반응이 나올 정도로 구체적이고 맞춤형으로 작성하세요.
 
-${timeContext[timeSlot] || timeContext.morning}
-${personalContext}
-사용자 답변 인덱스: ${JSON.stringify(answers)}
+## 오늘의 정보
+날짜: ${dateStr}
+시간대: ${timeLabels[timeSlot] || timeLabels.morning}
+사용자의 관심사: ${concern}
 
-오늘의 운세를 JSON으로 작성하세요:
-{
-  "grade": "A" ~ "D" (A가 최고),
-  "gradeLabel": "등급 한국어 라벨",
-  "summary": "3~4줄 운세 요약 (${timeSlot === 'dawn' ? '새벽의 고민을 다독여주는' : timeSlot === 'night' ? '밤의 직감을 살려주는' : '하루를 이끌어주는'} 톤)",
-  "scores": {"love": 0-100, "career": 0-100, "wealth": 0-100, "health": 0-100},
-  "lucky": {"color": "색 이름", "colorHex": "#HEX", "number": 숫자, "direction": "방위", "item": "아이템", "food": "음식"},
-  "advice": "시간대에 맞는 한 줄 핵심 조언"
-}
+## 사주 정보
+${sajuSummary ? `이름: ${sajuSummary.name}, 일간: ${sajuSummary.ilgan}(${sajuSummary.oheng})
+→ ${sajuSummary.oheng} 일간의 특성을 오늘의 운세에 구체적으로 반영하세요.
+→ 예: 목(木) 일간이면 "오늘 성장과 새 시작의 기운이 특히 강합니다"
+→ 예: 금(金) 일간이면 "결단력이 빛나는 날이에요. 미루던 결정을 내리세요"` : '사주 미등록 사용자 — 일반적이되 구체적인 운세 제공'}
 
-JSON만 출력하세요.`;
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch)
-        throw new Error('Gemini 응답 파싱 실패');
-    return JSON.parse(jsonMatch[0]);
+## ⭐ 소름 포인트 (반드시 summary에 1~2개 포함)
+- 시간대와 오행을 연결: "이 시간에 운세를 보셨다는 건, 수(水)의 직감이 작동하고 있다는 뜻이에요"
+- 관심사와 사주를 연결: "${concern}이 신경 쓰이시는 이유가 사주에서 보여요"
+- 오늘 날짜의 천간지지와 일간의 관계 언급
+- 구체적 시간/방향/숫자 조언: "오늘 3시 이후에 중요한 대화를 하세요"
+
+## 작성 규칙
+- grade: S(90+) > A(75+) > B(60+) > C(60 미만)
+- gradeLabel: 시간대 반영 (새벽이면 "새벽의 축복", 밤이면 "밤의 지혜" 등)
+- summary: 150자 이상. 시간대 톤 + 사주 맞춤 해석 + 소름 포인트 포함. 줄바꿈(\\n) 사용.
+- scores: 사주 오행에 기반한 구체적 점수 (무작위 금지)
+- lucky: 사주 오행의 부족한 기운을 보충하는 색/방향/아이템 추천
+- advice: ${timeSlot === 'latenight' ? '새벽의 고민을 다독여주는' : timeSlot === 'night' ? '밤의 직감을 살려주는' : '하루를 이끌어주는'} 한 줄 핵심 조언 (30자 이상)`;
+    const r = await model.generateContent(prompt);
+    return JSON.parse(r.response.text());
 }
 //# sourceMappingURL=geminiFortune.js.map

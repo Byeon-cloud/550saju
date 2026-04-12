@@ -92,7 +92,8 @@ export function LoadingPage() {
           input: sajuData!.input as any,
           sajuData: sajuData!,
           type: 'paid',
-          createdAt: Date.now(),
+          contentType: 'report',
+          createdAt: new Date().toISOString(),
           aiResult: result.content,
         });
         navigate(`/result/${result.reportId}`, { replace: true });

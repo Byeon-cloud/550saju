@@ -144,7 +144,8 @@ export function DreamPage() {
       // 보관함 저장
       try {
         const { saveReport, generateId } = await import('@/services/storage/localStore');
-        saveReport({ id: generateId(), name: '꿈해몽', input: {} as any, sajuData: {} as any, type: 'free' as any, createdAt: Date.now() as any } as any);
+        const latestRpt = fetchReports().find((r: any) => !r.input?.relation || r.input.relation === '본인') || null;
+        saveReport({ id: generateId(), name: latestRpt?.name || '꿈해몽', input: latestRpt?.input || {} as any, sajuData: latestRpt?.sajuData || {} as any, type: 'free', contentType: 'dream', createdAt: new Date().toISOString() });
       } catch { /* 무시 */ }
     }
   }

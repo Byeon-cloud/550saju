@@ -57,7 +57,7 @@ export function DaeunPage() {
     try {
       const res = await generateDaeunAnalysis(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid' as any, createdAt: Date.now(), contentType: 'daeun' as any });
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'daeun', createdAt: new Date().toISOString() });
       setPhase('result');
     } catch (e: any) {
       console.error('대운 분석 실패:', e);

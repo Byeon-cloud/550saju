@@ -217,7 +217,7 @@ export function DailyFortunePage() {
 
     // 보관함에 저장
     if (selectedProfile) {
-      saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free' as any, createdAt: Date.now() as any } as any);
+      saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free', contentType: 'daily', createdAt: new Date().toISOString() });
     }
 
     // AI API 호출 (백그라운드) — 실패 시 로컬 결과 유지
