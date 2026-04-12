@@ -11,76 +11,100 @@ import { getChatCredits, useChatCredit, addChatCredits } from '@/services/storag
 import { spendBalance } from '@/services/storage/localStore';
 import {
   getChatRooms, getChatRoom, createChatRoom, addChatMessage, completeChatRoom, updateRoomName,
-  type ChatRoom, type ChatMessage, type ChatCategory,
+  type ChatRoom, type ChatMessage,
 } from '@/services/storage/chatStore';
 import { useToast } from '@/components/common/Toast';
 import type { SajuData } from '@/types/saju';
 
-/* ─── 카테고리 설정 ─── */
-const CATEGORIES: { id: ChatCategory; label: string; icon: string; color: string; desc: string }[] = [
-  { id: 'love', label: '연애', icon: '愛', color: '#E91E63', desc: '인연·썸·이별·궁합' },
-  { id: 'career', label: '직장', icon: '事', color: '#1565C0', desc: '이직·적성·승진' },
-  { id: 'wealth', label: '재물', icon: '財', color: '#C9A96E', desc: '돈·투자·사업' },
-  { id: 'free', label: '자유', icon: '話', color: '#4A5568', desc: '뭐든 물어보세요' },
-];
-
-const CATEGORY_WELCOME: Record<ChatCategory, { greeting: string; questions: string[] }> = {
-  love: {
-    greeting: '마음에 담아둔 사람이 있으신가요?\n사주로 인연의 흐름을 읽어볼게요.',
-    questions: ['올해 좋은 인연이 올까요?', '지금 만나는 사람이랑 잘 될까요?', '전 애인이 자꾸 생각나요'],
-  },
-  career: {
-    greeting: '직장 고민이 있으시군요.\n사주에서 지금이 어떤 시기인지 봐드릴게요.',
-    questions: ['올해 이직해도 괜찮을까요?', '지금 직장에서 계속 버텨야 할까요?', '나한테 맞는 직업이 뭘까요?'],
-  },
-  wealth: {
-    greeting: '돈 이야기, 솔직하게 해봐요.\n사주가 말하는 재물의 흐름을 알려드릴게요.',
-    questions: ['올해 재물운이 어때요?', '투자해도 될 시기인가요?', '돈이 자꾸 새는 느낌이에요'],
-  },
-  free: {
-    greeting: '',  // 시간대별 인사 사용
-    questions: [],
-  },
-};
-
-/* 시간대 인사 (자유 대화용) */
+/* ─── 시간대 인사 ─── */
 function getTimeGreeting() {
   const h = new Date().getHours();
-  if (h < 5) return '이 늦은 밤, 마음에 무언가 담긴 게 있으시군요.\n새벽의 고요한 기운 속에서 이야기 나눠볼까요.';
-  if (h < 7) return '이른 아침이네요.\n오늘 하루의 기운을 미리 확인해볼까요?';
-  if (h < 12) return '좋은 아침이에요!\n오전의 양(陽) 기운과 함께 궁금한 걸 물어보세요.';
-  if (h < 14) return '점심시간, 잠깐의 여유를 내셨군요.\n편하게 이야기해주세요.';
-  if (h < 18) return '오후의 여유로운 시간이에요.\n궁금한 점이 있으시면 편하게 물어보세요.';
-  if (h < 21) return '하루가 저물어가네요.\n오늘 하루를 돌아보며 이야기 나눠볼까요.';
-  return '고요한 밤이에요.\n밤의 직감은 낮보다 예리하니, 편하게 이야기해주세요.';
+  if (h < 5) return { label: '고요한 새벽', greeting: '이 늦은 밤, 마음에 무언가 담긴 게 있으시군요.\n편하게 이야기해주세요.', headerBg: '#0F1D35' };
+  if (h < 7) return { label: '이른 아침', greeting: '이른 아침이네요.\n오늘 하루의 기운을 미리 확인해볼까요?', headerBg: '#1B2A4A' };
+  if (h < 12) return { label: '좋은 아침', greeting: '좋은 아침이에요!\n오늘 궁금한 점이 있으시면 편하게 물어보세요.', headerBg: '#1B2A4A' };
+  if (h < 14) return { label: '점심시간', greeting: '점심시간, 잠깐의 여유를 내셨군요.\n편하게 이야기해주세요.', headerBg: '#1B2A4A' };
+  if (h < 18) return { label: '오후의 여유', greeting: '오후의 여유로운 시간이에요.\n궁금한 점이 있으시면 물어보세요.', headerBg: '#1B2A4A' };
+  if (h < 21) return { label: '저녁 시간', greeting: '하루가 저물어가네요.\n오늘 하루를 돌아보며 이야기 나눠볼까요.', headerBg: '#1B2A4A' };
+  return { label: '고요한 밤', greeting: '고요한 밤이에요.\n밤의 직감은 낮보다 예리하니, 편하게 이야기해주세요.', headerBg: '#0F1D35' };
 }
 
-/* 자동 이름 추출 */
+/* 추천 주제 — 시간대+프로필에 따라 */
+function getSuggestedTopics(hasProfile: boolean) {
+  const h = new Date().getHours();
+  if (hasProfile) {
+    if (h < 7) return ['오늘 중요한 일이 있는데 어떨까요?', '요즘 고민이 있어요', '올해 운세가 궁금해요'];
+    if (h < 12) return ['오늘 하루 운세가 궁금해요', '이직을 고민하고 있어요', '연애운이 궁금해요'];
+    if (h < 18) return ['오후에 미팅이 있는데 잘 될까요?', '재테크 시기가 궁금해요', '건강이 걱정돼요'];
+    if (h < 22) return ['내일은 어떤 하루가 될까요?', '요즘 관계가 좀 복잡해요', '올해 남은 기간 운세'];
+    return ['잠이 안 오는데 고민이 있어요', '올해 인연이 올까요?', '마음이 좀 복잡해요'];
+  }
+  return ['올해 운세가 궁금해요', '내 연애 스타일이 궁금해요', '사주로 뭘 알 수 있나요?'];
+}
+
+/* 자동 대화방 이름 */
 function autoRoomName(text: string): string {
   if (/이직|퇴사|취업|직장|직업|승진|면접/.test(text)) return '이직·직장 상담';
-  if (/연애|사랑|썸|이별|전 ?애인|인연|결혼/.test(text)) return '연애 상담';
+  if (/연애|사랑|썸|이별|전 ?애인|인연|결혼|궁합/.test(text)) return '연애 상담';
   if (/돈|재물|투자|재테크|부업|사업/.test(text)) return '재물 상담';
   if (/건강|피곤|아프|스트레스|불안|잠/.test(text)) return '고민 상담';
   if (/운세|올해|내년|이번 ?달/.test(text)) return '운세 상담';
   return text.slice(0, 18) + (text.length > 18 ? '...' : '');
 }
 
-/* 심층분석 추천 토픽 매핑 */
-function getRelatedTopic(text: string): { id: string; label: string } | null {
-  if (/연애|사랑|썸|이별|인연|결혼/.test(text)) return { id: 'love', label: '연애운 심층분석' };
-  if (/이직|취업|직장|직업|승진/.test(text)) return { id: 'career', label: '취업·이직운 심층분석' };
-  if (/돈|재물|투자|재테크|사업/.test(text)) return { id: 'wealth', label: '재물운 심층분석' };
-  if (/건강|피곤|아프/.test(text)) return { id: 'health', label: '건강운 심층분석' };
-  if (/결혼|배우자/.test(text)) return { id: 'marriage', label: '결혼운 심층분석' };
+/* 대화 중 콘텐츠 추천 매핑 */
+interface ContentRecommendation {
+  type: 'topic' | 'compat' | 'tojung' | 'daeun' | 'monthly';
+  path: string;
+  title: string;
+  desc: string;
+  icon: string;
+  color: string;
+}
+
+function getContentRecommendation(allUserTexts: string, msgCount: number): ContentRecommendation | null {
+  if (msgCount < 2) return null;
+
+  // 3회마다 한 번씩만 추천 (대화 흐름 방해 방지)
+  if (msgCount % 3 !== 0) return null;
+
+  if (/궁합|상대방|남자친구|여자친구|배우자|커플/.test(allUserTexts))
+    return { type: 'compat', path: '/compat', title: '궁합 분석 해보는 거 어때요?', desc: '두 사람의 사주를 비교해서 성격·소통·감정 궁합을 점수로', icon: '合', color: '#E91E63' };
+
+  if (/이직|취업|직장|직업|승진|적성/.test(allUserTexts))
+    return { type: 'topic', path: '/topic/career', title: '취업·이직운 심층분석 추천드려요', desc: '이직 타이밍, 맞는 업종, 면접 유리한 날까지 상세 분석', icon: '事', color: '#1565C0' };
+
+  if (/연애|사랑|썸|이별|인연/.test(allUserTexts))
+    return { type: 'topic', path: '/topic/love', title: '연애운 심층분석을 받아보시겠어요?', desc: '이상형, 인연 시기, 연애 패턴까지 깊이 있게', icon: '愛', color: '#E91E63' };
+
+  if (/돈|재물|투자|재테크|사업/.test(allUserTexts))
+    return { type: 'topic', path: '/topic/wealth', title: '재물운 심층분석이 도움될 거예요', desc: '돈 흐름, 투자 적기, 새는 돈 패턴까지', icon: '財', color: '#C9A96E' };
+
+  if (/건강|피곤|아프/.test(allUserTexts))
+    return { type: 'topic', path: '/topic/health', title: '건강운 심층분석을 추천합니다', desc: '오행별 취약 장기, 주의 시기, 체질 분석', icon: '健', color: '#2E7D32' };
+
+  if (/결혼|배우자|혼인/.test(allUserTexts))
+    return { type: 'topic', path: '/topic/marriage', title: '결혼운 심층분석 보시겠어요?', desc: '결혼 적기, 배우자 성향, 결혼 후 생활까지', icon: '婚', color: '#E91E63' };
+
+  if (/올해|내년|2026|대운/.test(allUserTexts))
+    return { type: 'tojung', path: '/tojung', title: '토정비결로 올해를 더 자세히 보시겠어요?', desc: '2026년 월별 운세 + 전통 해석', icon: '卜', color: '#C9A96E' };
+
+  if (/대운|10년|흐름|시기/.test(allUserTexts))
+    return { type: 'daeun', path: '/daeun', title: '대운 해설을 받아보시는 건 어떨까요?', desc: '10년 단위 운의 흐름, 지금이 어떤 시기인지', icon: '運', color: '#1B2A4A' };
+
+  // 기본 — 5회 이후에 월별운세 추천
+  if (msgCount >= 5)
+    return { type: 'monthly', path: '/monthly', title: '월별 운세도 확인해보세요', desc: '2026년 12개월 흐름을 한눈에', icon: '月', color: '#4A5568' };
+
   return null;
 }
 
-/* ─── 태극 아바타 SVG ─── */
-function TaegukAvatar() {
+/* ─── 태극 아바타 ─── */
+function TaegukAvatar({ size = 32 }: { size?: number }) {
+  const s = size * 0.5;
   return (
-    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
-      style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.15)' }}>
-      <svg width="16" height="16" viewBox="0 0 24 24">
+    <div className="rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+      style={{ width: size, height: size, background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.12)' }}>
+      <svg width={s} height={s} viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="11" stroke="#C9A96E" strokeWidth="1" fill="none" opacity="0.4" />
         <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#C9A96E" fillOpacity="0.5" />
         <circle cx="12" cy="7" r="2" fill="#C9A96E" />
@@ -91,7 +115,7 @@ function TaegukAvatar() {
 }
 
 /* ============================================================
-   메인 — roomId로 분기
+   메인
    ============================================================ */
 export function ChatPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -101,7 +125,7 @@ export function ChatPage() {
 }
 
 /* ============================================================
-   A. 대화방 목록 — 분위기 있는 진입
+   A. 대화방 목록 — 바로 대화 시작 + 이전 대화 리스트
    ============================================================ */
 function ChatRoomList() {
   const navigate = useNavigate();
@@ -111,52 +135,73 @@ function ChatRoomList() {
   const userName = myProfile?.name || '';
   const ilgan = myProfile?.sajuData.pillars[2]?.천간 || '';
   const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
+  const timeCtx = useMemo(() => getTimeGreeting(), []);
+  const suggestedTopics = useMemo(() => getSuggestedTopics(hasProfile), [hasProfile]);
 
   useEffect(() => { setRooms(getChatRooms()); }, []);
 
-  function startChat(category: ChatCategory) {
-    const catLabel = CATEGORIES.find(c => c.id === category)?.label || '대화';
-    const name = category === 'free'
-      ? (userName || new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }))
-      : `${catLabel} 상담`;
-    const room = createChatRoom(name, category);
+  function startNewChat() {
+    const name = userName || new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+    const room = createChatRoom(name);
     navigate(`/chat/${room.id}`);
   }
-
-  const h = new Date().getHours();
-  const timeLabel = h < 5 ? '고요한 새벽' : h < 7 ? '이른 아침' : h < 12 ? '좋은 아침' : h < 14 ? '점심시간' : h < 18 ? '오후의 여유' : h < 21 ? '저녁 시간' : '고요한 밤';
 
   return (
     <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
       {/* 분위기 헤더 */}
-      <div className="px-5 pt-5 pb-6 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #1B2A4A 0%, #0F1D35 100%)' }}>
+      <div className="px-5 pt-5 pb-6 relative overflow-hidden" style={{ background: `linear-gradient(180deg, ${timeCtx.headerBg} 0%, ${timeCtx.headerBg}E0 100%)` }}>
         <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-[0.04]"
           style={{ background: 'radial-gradient(circle, #C9A96E, transparent 70%)' }} />
-        <p className="text-[10px] text-white/30 mb-2">{timeLabel}</p>
-        <h1 className="text-h1 text-white leading-snug">
-          {hasProfile
-            ? `${ilgan}(${oheng}) 일간\n${userName}님의 대화방`
-            : '마음 속 이야기를\n들려주세요'}
-        </h1>
-        <p className="text-caption text-white/40 mt-2">정통 명리학 기반 1:1 사주 상담</p>
+        <div className="flex items-center gap-3 mb-3">
+          <TaegukAvatar size={40} />
+          <div>
+            <p className="text-[10px] text-white/30">{timeCtx.label}</p>
+            <h1 className="text-h2 text-white">사주 상담</h1>
+          </div>
+        </div>
+        {hasProfile ? (
+          <p className="text-[13px] text-white/60 leading-relaxed">{userName}님, {timeCtx.greeting.split('\n')[0]}</p>
+        ) : (
+          <p className="text-[13px] text-white/60 leading-relaxed">{timeCtx.greeting.split('\n')[0]}</p>
+        )}
       </div>
 
       <div className="px-5 pt-4 space-y-5">
-        {/* 카테고리 선택 */}
+        {/* 새 대화 시작 */}
         <FadeIn delay={0.03}>
-          <p className="text-label text-text-hint font-bold mb-2">어떤 이야기가 궁금하세요?</p>
-          <div className="grid grid-cols-4 gap-2">
-            {CATEGORIES.map((cat, i) => (
-              <motion.button key={cat.id} whileTap={{ scale: 0.92 }}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                onClick={() => startChat(cat.id)}
-                className="card py-4 flex flex-col items-center gap-1.5">
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                  style={{ background: `${cat.color}12` }}>
-                  <span className="text-[18px] font-black" style={{ color: cat.color }}>{cat.icon}</span>
-                </div>
-                <p className="text-[12px] font-bold text-text-primary">{cat.label}</p>
-                <p className="text-[9px] text-text-hint leading-tight text-center">{cat.desc}</p>
+          <motion.button whileTap={{ scale: 0.98 }} onClick={startNewChat}
+            className="w-full rounded-2xl py-5 px-5 text-left"
+            style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)', boxShadow: '0 4px 16px rgba(201,169,110,0.3)' }}>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(255,255,255,0.2)' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                  <path d="M21 12a9 9 0 01-9 9c-1.5 0-2.9-.4-4.1-1L3 21l1.1-4.1A9 9 0 1121 12z" />
+                  <path d="M12 8v8M8 12h8" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-[16px] font-bold text-white">새 대화 시작하기</p>
+                <p className="text-[11px] text-white/70 mt-0.5">편하게 아무거나 물어보세요</p>
+              </div>
+            </div>
+          </motion.button>
+        </FadeIn>
+
+        {/* 오늘 이런 거 물어보면 어때요? */}
+        <FadeIn delay={0.06}>
+          <p className="text-[11px] text-text-hint font-semibold mb-2">이런 거 물어보면 어때요?</p>
+          <div className="flex flex-wrap gap-1.5">
+            {suggestedTopics.map((topic, i) => (
+              <motion.button key={i} whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + i * 0.04 }}
+                onClick={() => {
+                  const room = createChatRoom(autoRoomName(topic));
+                  navigate(`/chat/${room.id}`, { state: { firstMessage: topic } });
+                }}
+                className="px-3 py-2 rounded-full text-[11px] font-medium"
+                style={{ background: '#F5F0E8', color: '#8B7A5E', border: '1px solid #E8E0D4' }}>
+                {topic}
               </motion.button>
             ))}
           </div>
@@ -164,43 +209,32 @@ function ChatRoomList() {
 
         {/* 이전 대화 */}
         {rooms.length > 0 && (
-          <FadeIn delay={0.08}>
-            <p className="text-label text-text-hint font-bold mb-2">이전 대화</p>
+          <FadeIn delay={0.1}>
+            <p className="text-[11px] text-text-hint font-semibold mb-2">이전 대화</p>
             <div className="space-y-2">
-              {rooms.map((room) => {
-                const catInfo = CATEGORIES.find(c => c.id === room.category);
-                return (
-                  <motion.button key={room.id} whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(`/chat/${room.id}`)}
-                    className={`card w-full text-left py-3.5 px-4 ${room.completed ? 'opacity-60' : ''}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: room.completed ? '#F0EBE310' : `${catInfo?.color || '#C9A96E'}10` }}>
-                        {room.completed
-                          ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="2.5"><path d="M20 6L9 17l-5-5" /></svg>
-                          : <span className="text-[14px] font-black" style={{ color: catInfo?.color || '#C9A96E' }}>{catInfo?.icon || '話'}</span>
-                        }
+              {rooms.map((room) => (
+                <motion.button key={room.id} whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(`/chat/${room.id}`)}
+                  className={`card w-full text-left py-3 px-4 ${room.completed ? 'opacity-50' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <TaegukAvatar size={36} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-semibold text-text-primary truncate">{room.name}</p>
+                        {room.completed && <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-border-light text-text-hint flex-shrink-0">완료</span>}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-body-sm font-semibold text-text-primary truncate">{room.name}</p>
-                          {room.completed && <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-border-light text-text-hint flex-shrink-0">완료</span>}
-                        </div>
-                        <p className="text-[11px] text-text-muted truncate mt-0.5">{room.lastMessage || '대화를 시작해보세요'}</p>
-                      </div>
-                      <div className="flex-shrink-0 text-right pl-2">
-                        <p className="text-[10px] text-text-hint">{new Date(room.updatedAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</p>
-                        <p className="text-[9px] text-text-disabled">{Math.floor(room.messages.filter(m => m.role === 'user').length)}회</p>
-                      </div>
+                      <p className="text-[11px] text-text-muted truncate mt-0.5">{room.lastMessage || '대화를 시작해보세요'}</p>
                     </div>
-                  </motion.button>
-                );
-              })}
+                    <div className="flex-shrink-0 text-right pl-2">
+                      <p className="text-[10px] text-text-hint">{new Date(room.updatedAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
             </div>
           </FadeIn>
         )}
 
-        {/* 안내 문구 */}
         <p className="text-[9px] text-text-disabled text-center px-4 leading-relaxed pt-2">
           매일 1회 무료 · 추가 대화 1운(500원)=3회
         </p>
@@ -210,7 +244,7 @@ function ChatRoomList() {
 }
 
 /* ============================================================
-   B. 대화 뷰 — 아바타, 맞춤 웰컴, 심층분석 유도
+   B. 대화 뷰
    ============================================================ */
 function ChatView({ roomId }: { roomId: string }) {
   const navigate = useNavigate();
@@ -222,9 +256,9 @@ function ChatView({ roomId }: { roomId: string }) {
   const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [showWrapUp, setShowWrapUp] = useState(false);
-  const [category, setCategory] = useState<ChatCategory>('free');
   const [roomNameSet, setRoomNameSet] = useState(false);
   const toast = useToast();
+  const timeCtx = useMemo(() => getTimeGreeting(), []);
 
   const myProfile = useMemo(() => getMyProfile(), []);
   const sajuData: SajuData | undefined = myProfile?.sajuData;
@@ -238,7 +272,6 @@ function ChatView({ roomId }: { roomId: string }) {
     const room = getChatRoom(roomId);
     if (room) {
       setIsCompleted(!!room.completed);
-      setCategory(room.category || 'free');
       if (room.messages.length > 0) {
         setMessages(room.messages);
         setRoomNameSet(true);
@@ -248,19 +281,14 @@ function ChatView({ roomId }: { roomId: string }) {
       }
     }
 
-    // 빈 방 → 카테고리별 웰컴 메시지
-    const cat = room?.category || 'free';
-    const catWelcome = CATEGORY_WELCOME[cat];
-    const baseGreeting = catWelcome.greeting || getTimeGreeting();
+    // 빈 방 → 웰컴 메시지
     const personalGreeting = hasProfile
-      ? `${userName}님, ${baseGreeting}`
-      : baseGreeting;
+      ? `${userName}님, ${timeCtx.greeting}`
+      : `${timeCtx.greeting}\n\n사주를 등록하면 더 정확한 맞춤 상담을 받을 수 있어요.`;
 
-    const defaultQuestions = catWelcome.questions.length > 0
-      ? catWelcome.questions
-      : hasProfile
-        ? ['올해 나에게 가장 좋은 달은?', '내 사주에서 가장 강한 기운은?', '요즘 고민이 있어요']
-        : ['내 연애 스타일이 궁금해요', '올해 운세가 궁금해요', '사주명리학이 뭔가요?'];
+    const defaultQuestions = hasProfile
+      ? ['올해 나에게 가장 좋은 달은?', '내 사주에서 강한 기운은?', '요즘 고민이 있어요']
+      : ['내 연애 스타일이 궁금해요', '올해 운세가 궁금해요', '사주로 뭘 알 수 있나요?'];
 
     const welcomeMsg: ChatMessage = {
       id: 'welcome', role: 'assistant', content: personalGreeting,
@@ -268,13 +296,18 @@ function ChatView({ roomId }: { roomId: string }) {
     };
     setMessages([welcomeMsg]);
     addChatMessage(roomId, welcomeMsg);
+
+    // state로 전달된 firstMessage가 있으면 바로 전송
+    const state = window.history.state?.usr as any;
+    if (state?.firstMessage) {
+      setTimeout(() => sendMessage(state.firstMessage), 500);
+    }
   }, [roomId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, isLoading]);
 
-  // 메시지 전송
   async function sendMessage(text: string) {
     if (!text.trim() || isLoading || isCompleted) return;
 
@@ -286,10 +319,8 @@ function ChatView({ roomId }: { roomId: string }) {
       else { setShowBuyCredits(true); return; }
     }
 
-    // 첫 메시지로 대화방 이름 자동 설정
     if (!roomNameSet) {
-      const autoName = autoRoomName(text.trim());
-      updateRoomName(roomId, autoName);
+      updateRoomName(roomId, autoRoomName(text.trim()));
       setRoomNameSet(true);
     }
 
@@ -336,27 +367,21 @@ function ChatView({ roomId }: { roomId: string }) {
     finally { setIsLoading(false); }
   }
 
-  // 심층분석 추천 (3번째 AI 응답마다)
+  // 콘텐츠 추천
   const userMsgCount = messages.filter(m => m.role === 'user').length;
   const allUserTexts = messages.filter(m => m.role === 'user').map(m => m.content).join(' ');
-  const relatedTopic = getRelatedTopic(allUserTexts);
-  const showTopicCard = relatedTopic && userMsgCount >= 3 && userMsgCount % 3 === 0 && !isCompleted;
-
-  const headerBg = (() => {
-    const h = new Date().getHours();
-    return (h < 5 || h >= 21) ? '#0F1D35' : '#1B2A4A';
-  })();
+  const contentRec = getContentRecommendation(allUserTexts, userMsgCount);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F4F5F8' }}>
       {/* 헤더 */}
-      <div className="flex-shrink-0 px-4 pt-safe-top" style={{ background: headerBg }}>
+      <div className="flex-shrink-0 px-4 pt-safe-top" style={{ background: timeCtx.headerBg }}>
         <div className="flex items-center justify-between h-[52px]">
           <div className="flex items-center gap-2">
             <button onClick={() => navigate('/chat')} className="w-8 h-8 flex items-center justify-center -ml-1">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8D5A8" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
             </button>
-            <TaegukAvatar />
+            <TaegukAvatar size={28} />
             <div>
               <h1 className="text-[14px] text-white font-bold">사주 상담</h1>
               <p className="text-[9px] text-white/35">{isCompleted ? '상담 완료' : hasProfile ? `${ilgan}(${oheng}) 일간` : '정통 명리학 기반'}</p>
@@ -372,9 +397,7 @@ function ChatView({ roomId }: { roomId: string }) {
           {messages.map((msg, idx) => (
             <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'}`}>
-              {/* AI 아바타 */}
               {msg.role === 'assistant' && <TaegukAvatar />}
-
               <div className={`max-w-[80%] ${msg.role === 'user' ? '' : 'flex-1'}`}>
                 <div className="rounded-2xl px-4 py-3 text-[14px] leading-[1.7]"
                   style={msg.role === 'user'
@@ -432,18 +455,19 @@ function ChatView({ roomId }: { roomId: string }) {
           )}
         </AnimatePresence>
 
-        {/* 심층분석 추천 카드 */}
-        {showTopicCard && relatedTopic && (
+        {/* 콘텐츠 추천 카드 */}
+        {contentRec && !isCompleted && (
           <FadeIn delay={0.3}>
-            <button onClick={() => navigate(`/topic/${relatedTopic.id}`)}
-              className="w-full rounded-2xl p-3.5 text-left flex items-center gap-3"
-              style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.08), rgba(201,169,110,0.03))', border: '1px solid rgba(201,169,110,0.2)' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(201,169,110,0.12)' }}>
-                <span className="text-[13px] font-black text-brand-gold">深</span>
+            <button onClick={() => navigate(contentRec.path)}
+              className="w-full rounded-2xl p-4 text-left flex items-center gap-3"
+              style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.06), rgba(201,169,110,0.02))', border: '1px solid rgba(201,169,110,0.18)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${contentRec.color}12` }}>
+                <span className="text-[15px] font-black" style={{ color: contentRec.color }}>{contentRec.icon}</span>
               </div>
               <div className="flex-1">
-                <p className="text-[12px] font-bold text-text-primary">{relatedTopic.label}</p>
-                <p className="text-[10px] text-text-muted">대화보다 더 깊은 분석이 필요하다면 · 1운</p>
+                <p className="text-[12px] font-bold text-text-primary">{contentRec.title}</p>
+                <p className="text-[10px] text-text-muted mt-0.5">{contentRec.desc} · 1운</p>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
             </button>
@@ -454,7 +478,7 @@ function ChatView({ roomId }: { roomId: string }) {
         {!hasProfile && messages.length <= 1 && (
           <FadeIn delay={0.3}>
             <button onClick={() => navigate('/input')} className="card-gold w-full text-left">
-              <p className="text-[12px] font-semibold text-text-primary">내 사주를 먼저 등록하면 더 정확해요</p>
+              <p className="text-[12px] font-semibold text-text-primary">내 사주를 등록하면 더 정확해요</p>
               <p className="text-[10px] mt-1 text-text-muted">생년월일시 입력 후 맞춤 상담을 받아보세요</p>
             </button>
           </FadeIn>
@@ -498,7 +522,7 @@ function ChatView({ roomId }: { roomId: string }) {
             style={{ background: '#FFFFFF', border: '1px solid #E8E0D4', boxShadow: '0 -2px 8px rgba(0,0,0,0.03)' }}>
             <textarea value={inputText} onChange={e => setInputText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(inputText); } }}
-              placeholder="궁금한 점을 물어보세요..." rows={1}
+              placeholder="편하게 물어보세요..." rows={1}
               className="flex-1 bg-transparent text-text-primary text-[14px] placeholder-text-hint resize-none outline-none px-2 py-2 max-h-[100px]"
               style={{ scrollbarWidth: 'none' }} />
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => sendMessage(inputText)}
