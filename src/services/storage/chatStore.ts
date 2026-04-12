@@ -28,15 +28,18 @@ export interface ChatMessage {
   timestamp: string; // ISO
 }
 
+export type ChatCategory = 'love' | 'career' | 'wealth' | 'free';
+
 export interface ChatRoom {
   id: string;
-  name: string; // 사주 프로필 이름 또는 "새 대화"
-  profileId?: string; // 연결된 사주 프로필 ID
+  name: string;
+  profileId?: string;
+  category?: ChatCategory;
   lastMessage: string;
   updatedAt: string; // ISO
   messages: ChatMessage[];
-  completed?: boolean; // 마무리된 대화방
-  completedAt?: string; // 마무리 시각
+  completed?: boolean;
+  completedAt?: string;
 }
 
 function getRooms(): ChatRoom[] {
@@ -67,10 +70,11 @@ export function getChatRoom(id: string): ChatRoom | null {
 }
 
 /** 새 채팅방 생성 */
-export function createChatRoom(name: string): ChatRoom {
+export function createChatRoom(name: string, category?: ChatCategory): ChatRoom {
   const room: ChatRoom = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     name,
+    category: category || 'free',
     lastMessage: '',
     updatedAt: new Date().toISOString(),
     messages: [],
@@ -79,6 +83,15 @@ export function createChatRoom(name: string): ChatRoom {
   rooms.unshift(room);
   saveRooms(rooms);
   return room;
+}
+
+/** 대화방 이름 변경 (첫 질문 기반 자동) */
+export function updateRoomName(roomId: string, name: string): void {
+  const rooms = getRooms();
+  const room = rooms.find(r => r.id === roomId);
+  if (!room) return;
+  room.name = name;
+  saveRooms(rooms);
 }
 
 /** 메시지 추가 */
