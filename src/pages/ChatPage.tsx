@@ -197,7 +197,7 @@ function ChatRoomList() {
                 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + i * 0.04 }}
                 onClick={() => {
                   const room = createChatRoom(autoRoomName(topic));
-                  navigate(`/chat/${room.id}`, { state: { firstMessage: topic } });
+                  navigate(`/chat/${room.id}`, { state: { prefill: topic } });
                 }}
                 className="px-3 py-2 rounded-full text-[11px] font-medium"
                 style={{ background: '#F5F0E8', color: '#8B7A5E', border: '1px solid #E8E0D4' }}>
@@ -260,15 +260,12 @@ function ChatRoomList() {
                       </p>
                     </div>
                   </div>
-                  <button onClick={() => {
-                    if (spendBalance(1)) { addChatCredits(3); setRooms([...rooms]); /* re-render */ }
-                    else navigate('/charge');
-                  }}
+                  <button onClick={() => navigate('/charge')}
                     className="px-4 py-2 rounded-xl text-[11px] font-bold"
                     style={totalRemaining > 0
                       ? { background: '#F5F0E8', color: '#8B7A5E' }
                       : { background: 'linear-gradient(135deg, #C9A96E, #D4A843)', color: '#FFF' }}>
-                    {totalRemaining > 0 ? '충전' : '1운으로 충전'}
+                    {totalRemaining > 0 ? '충전' : '충전하기'}
                   </button>
                 </div>
               </div>
@@ -334,10 +331,10 @@ function ChatView({ roomId }: { roomId: string }) {
     setMessages([welcomeMsg]);
     addChatMessage(roomId, welcomeMsg);
 
-    // state로 전달된 firstMessage가 있으면 바로 전송
+    // state로 전달된 prefill이 있으면 입력창에 미리 채우기 (유저가 직접 전송)
     const state = window.history.state?.usr as any;
-    if (state?.firstMessage) {
-      setTimeout(() => sendMessage(state.firstMessage), 500);
+    if (state?.prefill) {
+      setInputText(state.prefill);
     }
   }, [roomId]); // eslint-disable-line react-hooks/exhaustive-deps
 
