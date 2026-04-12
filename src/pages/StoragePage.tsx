@@ -169,7 +169,7 @@ export function StoragePage() {
             {chatRooms.length > 0 ? (
               <div className="space-y-2">
                 {chatRooms.map((room) => (
-                  <button key={room.id} onClick={() => navigate('/chat')} className="card w-full text-left py-3.5 px-4">
+                  <button key={room.id} onClick={() => navigate(`/chat/${room.id}`)} className="card w-full text-left py-3.5 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: 'rgba(201,169,110,0.1)' }}>

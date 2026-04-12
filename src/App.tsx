@@ -105,6 +105,7 @@ function AnimatedRoutes() {
             <Route path="/share/:id" element={<SharePage />} />
             <Route path="/dream" element={<DreamPage />} />
             <Route path="/chat" element={<ChatPage />} />
+            <Route path="/chat/:roomId" element={<ChatPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="*" element={<NotFoundPage />} />

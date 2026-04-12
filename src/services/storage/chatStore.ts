@@ -31,9 +31,12 @@ export interface ChatMessage {
 export interface ChatRoom {
   id: string;
   name: string; // 사주 프로필 이름 또는 "새 대화"
+  profileId?: string; // 연결된 사주 프로필 ID
   lastMessage: string;
   updatedAt: string; // ISO
   messages: ChatMessage[];
+  completed?: boolean; // 마무리된 대화방
+  completedAt?: string; // 마무리 시각
 }
 
 function getRooms(): ChatRoom[] {
@@ -91,6 +94,16 @@ export function addChatMessage(roomId: string, message: ChatMessage): void {
   }
   room.lastMessage = message.content.slice(0, 50);
   room.updatedAt = new Date().toISOString();
+  saveRooms(rooms);
+}
+
+/** 대화 마무리 */
+export function completeChatRoom(roomId: string): void {
+  const rooms = getRooms();
+  const room = rooms.find(r => r.id === roomId);
+  if (!room) return;
+  room.completed = true;
+  room.completedAt = new Date().toISOString();
   saveRooms(rooms);
 }
 
