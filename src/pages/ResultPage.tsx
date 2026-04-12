@@ -430,14 +430,17 @@ function LocalFadeIn({ children, delay = 0 }: { children: ReactNode; delay?: num
 }
 
 // ─── ScoreRing ───
-function ScoreRing({ label, score, color, delay = 0 }: {
-  label: string; score: number; color: string; delay?: number;
+function ScoreRing({ label, score, color, delay = 0, topicId }: {
+  label: string; score: number; color: string; delay?: number; topicId?: string;
 }) {
   const [ref, v] = useLocalInView(0.3);
   const r = 32;
   const c = 2 * Math.PI * r;
+  const navigate = useNavigate();
   return (
-    <div ref={ref} className="flex flex-col items-center gap-1">
+    <div ref={ref} className="flex flex-col items-center gap-1"
+      onClick={topicId ? () => navigate(`/topic/${topicId}`) : undefined}
+      style={topicId ? { cursor: 'pointer' } : {}}>
       <div className="relative" style={{ width: 72, height: 72 }}>
         <svg viewBox="0 0 80 80" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
           <circle cx="40" cy="40" r={r} fill="none" stroke="#f0ebe3" strokeWidth="4.5" />
@@ -455,6 +458,7 @@ function ScoreRing({ label, score, color, delay = 0 }: {
         </div>
       </div>
       <span style={{ color: '#8b7e6f', fontSize: 11 }}>{label}</span>
+      {topicId && <span style={{ color, fontSize: 9, fontWeight: 700, marginTop: -2 }}>심층분석 →</span>}
     </div>
   );
 }
@@ -1437,11 +1441,11 @@ export function ResultPage() {
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-3">운세 종합 점수</h2>
               <div className="grid grid-cols-3 gap-2">
-                <ScoreRing label="직업운" score={scores.career} color="#2563eb" />
-                <ScoreRing label="애정운" score={scores.love} color="#db2777" delay={100} />
-                <ScoreRing label="재물운" score={scores.wealth} color="#d97706" delay={200} />
-                <ScoreRing label="대인운" score={scores.social} color="#7c3aed" delay={300} />
-                <ScoreRing label="건강운" score={scores.health} color="#059669" delay={400} />
+                <ScoreRing label="직업운" score={scores.career} color="#2563eb" topicId="career" />
+                <ScoreRing label="애정운" score={scores.love} color="#db2777" delay={100} topicId="love" />
+                <ScoreRing label="재물운" score={scores.wealth} color="#d97706" delay={200} topicId="wealth" />
+                <ScoreRing label="대인운" score={scores.social} color="#7c3aed" delay={300} topicId="social" />
+                <ScoreRing label="건강운" score={scores.health} color="#059669" delay={400} topicId="health" />
                 <ScoreRing label="잠재력" score={scores.potential} color="#ea580c" delay={500} />
               </div>
               {/* 점수 해석 가이드 */}
