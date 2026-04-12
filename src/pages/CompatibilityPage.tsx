@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
-import { getReports, type LocalReport } from '@/services/storage/localStore';
+import { getReports, getMyProfile, type LocalReport } from '@/services/storage/localStore';
 import { spendBalance } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -17,7 +17,7 @@ export function CompatibilityPage() {
   const navigate = useNavigate();
   const reports = useMemo(() => getReports(), []);
 
-  const [person1, setPerson1] = useState<LocalReport | null>(reports[0] || null);
+  const [person1, setPerson1] = useState<LocalReport | null>(getMyProfile() || reports[0] || null);
   const [person2, setPerson2] = useState<LocalReport | null>(null);
   const [relation, setRelation] = useState<string | null>(null);
   const toast = useToast();

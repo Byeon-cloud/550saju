@@ -39,6 +39,7 @@ export interface BalanceDetail {
 const REPORTS_KEY = 'saju500_reports';
 const BALANCE_KEY = 'saju500_balance_v2';
 const BALANCE_LEGACY_KEY = 'saju500_balance';
+const MY_PROFILE_KEY = 'saju500_my_profile';
 
 // ─── 리포트 ───
 
@@ -63,6 +64,29 @@ export function getReport(id: string): LocalReport | null {
 export function deleteReport(id: string): void {
   const reports = getReports().filter(r => r.id !== id);
   localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+}
+
+// ─── 내 프로필 (본인 사주 고정) ───
+
+/** 본인 프로필 조회 — pinned ID 우선, 없으면 relation '본인' 자동 탐색+고정 */
+export function getMyProfile(): LocalReport | null {
+  const myId = localStorage.getItem(MY_PROFILE_KEY);
+  if (myId) {
+    const report = getReport(myId);
+    if (report) return report;
+  }
+  // fallback: relation이 '본인'이거나 미지정인 첫 번째 리포트
+  const reports = getReports();
+  const found = reports.find(r =>
+    !r.input?.relation || r.input.relation === '본인' || r.input.relation === 'self'
+  ) || null;
+  if (found) localStorage.setItem(MY_PROFILE_KEY, found.id);
+  return found;
+}
+
+/** 본인 프로필 고정 */
+export function setMyProfile(reportId: string): void {
+  localStorage.setItem(MY_PROFILE_KEY, reportId);
 }
 
 // ─── 잔액 (유형별) ───

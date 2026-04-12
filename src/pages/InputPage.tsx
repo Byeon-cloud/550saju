@@ -8,7 +8,7 @@ import { useSajuContext } from '@/contexts/SajuContext';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import type { CalendarType, Gender, SajuInput, Pillar } from '@/types/saju';
 import type { Relation } from '@/types/user';
-import { saveReport, generateId, getReports, spendBalance } from '@/services/storage/localStore';
+import { saveReport, generateId, getReports, spendBalance, setMyProfile } from '@/services/storage/localStore';
 import type { LocalReport } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -149,6 +149,10 @@ export function InputPage() {
           type: 'free', // 무료 사주팔자 확인
         };
         saveReport(report);
+        // 본인 사주면 "내 프로필"로 고정
+        if (!sajuInput.relation || sajuInput.relation === '본인') {
+          setMyProfile(report.id);
+        }
 
         // 궁합에서 왔으면 사주 저장 후 궁합으로 복귀
         const fromParam = new URLSearchParams(window.location.search).get('from');

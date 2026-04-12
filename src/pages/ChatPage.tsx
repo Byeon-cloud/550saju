@@ -3,7 +3,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
-import { getReports } from '@/services/storage/localStore';
+import { getMyProfile } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
@@ -119,8 +119,8 @@ export function ChatPage() {
 
   const timeCtx = useMemo(() => getTimeContext(), []);
 
-  // 사주 데이터 (최근 리포트에서 가져옴)
-  const latestReport = useMemo(() => getReports()[0] || null, []);
+  // 사주 데이터 ("내 프로필" 고정)
+  const latestReport = useMemo(() => getMyProfile(), []);
   const sajuData: SajuData | undefined = latestReport?.sajuData;
   const hasProfile = !!latestReport;
 

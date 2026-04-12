@@ -14,7 +14,7 @@ import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO } from '@/constants/oh
 import { ErrorState } from '@/components/common/ErrorState';
 import { ShareModal } from '@/components/share/ShareModal';
 
-import { getReport, getReports } from '@/services/storage/localStore';
+import { getReport, getReports, getMyProfile } from '@/services/storage/localStore';
 import { LuckyProfile } from '@/components/saju/LuckyProfile';
 import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
 import { RelationshipMap } from '@/components/saju/RelationshipMap';
@@ -1162,7 +1162,9 @@ export function ResultPage() {
       const report = getReport(reportId);
       if (report) return report.sajuData;
     }
-    // 3. 최근 리포트
+    // 3. 내 프로필 우선, 없으면 최근 리포트
+    const myProfile = getMyProfile();
+    if (myProfile) return myProfile.sajuData;
     const reports = getReports();
     if (reports.length > 0) return reports[0].sajuData;
     // 4. 데모 데이터
