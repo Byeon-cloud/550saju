@@ -235,9 +235,46 @@ function ChatRoomList() {
           </FadeIn>
         )}
 
-        <p className="text-[9px] text-text-disabled text-center px-4 leading-relaxed pt-2">
-          매일 1회 무료 · 추가 대화 1운(500원)=3회
-        </p>
+        {/* 대화권 상태 */}
+        <FadeIn delay={0.12}>
+          {(() => {
+            const hasFree = hasFreePass('chat');
+            const credits = getChatCredits();
+            const totalRemaining = (hasFree ? 1 : 0) + credits;
+            return (
+              <div className="card py-3.5 px-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                      style={{ background: totalRemaining > 0 ? 'rgba(201,169,110,0.1)' : 'rgba(211,47,47,0.08)' }}>
+                      <span className="text-[14px] font-black" style={{ color: totalRemaining > 0 ? '#C9A96E' : '#D32F2F' }}>
+                        {totalRemaining}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-semibold text-text-primary">
+                        {totalRemaining > 0 ? `대화 ${totalRemaining}회 가능` : '대화권이 없어요'}
+                      </p>
+                      <p className="text-[10px] text-text-hint">
+                        {hasFree ? `무료 1회${credits > 0 ? ` + ${credits}회` : ''}` : credits > 0 ? `${credits}회 남음` : '1운으로 3회 충전'}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => {
+                    if (spendBalance(1)) { addChatCredits(3); setRooms([...rooms]); /* re-render */ }
+                    else navigate('/charge');
+                  }}
+                    className="px-4 py-2 rounded-xl text-[11px] font-bold"
+                    style={totalRemaining > 0
+                      ? { background: '#F5F0E8', color: '#8B7A5E' }
+                      : { background: 'linear-gradient(135deg, #C9A96E, #D4A843)', color: '#FFF' }}>
+                    {totalRemaining > 0 ? '충전' : '1운으로 충전'}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+        </FadeIn>
       </div>
     </div>
   );
@@ -387,6 +424,22 @@ function ChatView({ roomId }: { roomId: string }) {
               <p className="text-[9px] text-white/35">{isCompleted ? '상담 완료' : hasProfile ? `${ilgan}(${oheng}) 일간` : '정통 명리학 기반'}</p>
             </div>
           </div>
+          {/* 잔여 대화권 */}
+          {!isCompleted && (() => {
+            const hasFree = hasFreePass('chat');
+            const credits = getChatCredits();
+            const total = (hasFree ? 1 : 0) + credits;
+            return (
+              <button onClick={() => total === 0 ? navigate('/charge') : undefined}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="text-[10px] font-bold" style={{ color: total > 0 ? '#E8D5A8' : '#FF6B6B' }}>
+                  {total > 0 ? `${total}회` : '0회'}
+                </span>
+                {total === 0 && <span className="text-[9px] text-white/40">충전</span>}
+              </button>
+            );
+          })()}
         </div>
         <div className="h-px bg-white/8" />
       </div>
