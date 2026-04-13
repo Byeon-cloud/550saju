@@ -34,36 +34,44 @@ function buildPrompt(d) {
     const currentDaeun = d.daeun?.find((x) => x.isCurrent || x.현재);
     const today = new Date();
     const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월`;
-    return `당신은 명리학 40년 대가입니다. "돈 주고 본 것 같아. 소름돋아." 수준의 대운 분석.
+    // 대운 periods를 사주 데이터에서 직접 구성
+    const periodsTemplate = (d.daeun || []).map((du) => {
+        const isCurrent = du.isCurrent || du.현재 || false;
+        return `{"간지":"${du.간지}","시작나이":${du.시작나이 || 0},"끝나이":${du.끝나이 || 0},"isCurrent":${isCurrent},"theme":"4글자 키워드","career":"80자 이상 직업운","love":"80자 이상 연애운","wealth":"80자 이상 재물운","health":"80자 이상 건강운","score":1~100,"advice":"50자 이상 조언"}`;
+    }).join(',\n    ');
+    return `명리학 40년 대가. "소름돋는" 대운 분석.
 
-⚠️ 현재 날짜: ${dateStr} — 반드시 이 기준으로 과거/현재/미래를 구분하세요.
+⚠️ 현재 날짜: ${dateStr}
 
 ## 사주 원국
 ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 
-## 오행 분포
-목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
-${Object.entries(el).filter(([, v]) => v === 0).map(([k]) => `→ ${k} 없음`).join('\n')}
-
+## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
 ## 십성: ${sipsung || '미상'}
-
 ## 대운 리스트
 ${daeunList}
-현재 대운: ${currentDaeun ? `${currentDaeun.간지}` : '미상'}
+## 이름: ${d.input?.name || '미상'}, ${d.input?.gender === 'male' ? '남' : '여'}
 
-## 이름: ${d.input?.name || '미상'}, 성별: ${d.input?.gender === 'male' ? '남' : '여'}
-
-## ⭐ 소름 포인트 필수
-- 과거 대운: "~했을 가능성이 높습니다" (맞추면 소름)
+## ⭐ 소름 포인트
+- 과거 대운: "~했을 가능성이 높습니다"
 - 현재 대운: "지금 느끼시는 ~한 감정은 이 대운 때문입니다"
-- 미래 대운: "~세 무렵에 중요한 변화가 있을 거예요"
+- 미래 대운: "~세 무렵에 변화가"
 
 ## 출력 (JSON만, 코드블록 없이)
+⚠️ periods의 간지/시작나이/끝나이/isCurrent는 아래 값을 그대로 사용하세요.
 {
-  "overview": "200자 이상. 전체 대운 흐름의 핵심 패턴.",
-  "periods": [{"간지": "甲子", "age": "1~10세", "theme": "4글자", "score": 1-10, "detail": "150자 이상. 구체적 묘사."}, ...],
-  "currentHighlight": "200자 이상. 현재 대운의 소름 포인트.",
-  "transitionAdvice": "100자 이상. 다음 대운 준비 조언."
+  "overview": "200자 이상. 전체 대운 흐름.",
+  "periods": [
+    ${periodsTemplate}
+  ],
+  "currentHighlight": "200자 이상. 현재 대운 소름 포인트.",
+  "transitionAdvice": "100자 이상. 다음 대운 준비 조언.",
+  "lifePhaseMap": [
+    {"phase":"성장기","daeun":"간지","theme":"키워드"},
+    {"phase":"도약기","daeun":"간지","theme":"키워드"},
+    {"phase":"전성기","daeun":"간지","theme":"키워드"},
+    {"phase":"수확기","daeun":"간지","theme":"키워드"}
+  ]
 }`;
 }
 //# sourceMappingURL=claudeDaeun.js.map
