@@ -15,7 +15,8 @@ const RELATIONS = ['연인', '배우자', '썸', '이별', '친구', '동료', '
 export function CompatibilityPage() {
   usePageTitle('궁합');
   const navigate = useNavigate();
-  const reports = useMemo(() => getReports(), []);
+  // 매 렌더링마다 최신 리포트 조회 (InputPage에서 돌아왔을 때 갱신)
+  const [reports, setReports] = useState(() => getReports());
 
   const [person1, setPerson1] = useState<LocalReport | null>(getMyProfile() || reports[0] || null);
   const [person2, setPerson2] = useState<LocalReport | null>(null);
@@ -23,6 +24,19 @@ export function CompatibilityPage() {
   const toast = useToast();
   const [showPicker, setShowPicker] = useState<1 | 2 | null>(null);
   const [customRelation, setCustomRelation] = useState('');
+
+  // InputPage에서 /compat으로 복귀 시 → 최신 리포트를 person2에 자동 선택
+  useEffect(() => {
+    const freshReports = getReports();
+    setReports(freshReports);
+    // person2가 비어있고, 방금 입력한 사주(reports[0])가 person1과 다르면 자동 선택
+    if (!person2 && freshReports.length >= 2) {
+      const latest = freshReports[0];
+      if (latest && person1 && latest.id !== person1.id) {
+        setPerson2(latest);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function getIlgan(r: LocalReport) {
     const ilgan = r.sajuData.pillars[2]?.천간 || '';

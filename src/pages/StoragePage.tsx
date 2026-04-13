@@ -39,10 +39,13 @@ export function StoragePage() {
     setDeleteTarget(null);
   }
 
-  // 프로필 목록 (중복 제거)
+  // 프로필 목록 (중복 제거, 궁합/꿈해몽 등 비개인 데이터 제외)
   const profiles = useMemo(() => {
     const seen = new Map<string, LocalReport>();
     for (const r of reports) {
+      // 궁합 결과나 사주 데이터 없는 항목은 프로필에서 제외
+      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
+      if (!r.input?.birthYear) continue;
       const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
       if (!seen.has(key)) seen.set(key, r);
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { User } from 'firebase/auth';
-import { onAuthChange, signIn, checkRedirectResult, type WebLoginProvider } from '@/services/auth/authService';
+import { onAuthChange, signIn, checkRedirectResult, ensureAuth, type WebLoginProvider } from '@/services/auth/authService';
 
 const DEV_MODE = false;
 
@@ -11,6 +11,9 @@ export function useAuth() {
 
   useEffect(() => {
     if (DEV_MODE) return;
+    // 익명 로그인 자동 수행 → Cloud Functions 호출 가능하게
+    ensureAuth();
+
     const unsubscribe = onAuthChange((u) => {
       setUser(u);
       setLoading(false);

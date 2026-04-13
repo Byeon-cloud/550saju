@@ -59,7 +59,16 @@ export function CompatResultPage() {
     ).then(async (res) => {
       setResult(res.content);
       const { saveReport, generateId } = await import('@/services/storage/localStore');
-      saveReport({ id: res.reportId || generateId(), name: `${state!.person1.name} × ${state!.person2.name}`, input: state!.person1.input || state!.person1.sajuData?.input, sajuData: state!.person1.sajuData, type: 'paid', contentType: 'compat', createdAt: new Date().toISOString() });
+      // 궁합 결과를 보관함에 저장 (relation 필드로 궁합임을 표시 — 프로필 목록에서 제외됨)
+      saveReport({
+        id: res.reportId || generateId(),
+        name: `${state!.person1.name} × ${state!.person2.name}`,
+        input: { ...state!.person1.input, relation: 'compat' } as any,
+        sajuData: state!.person1.sajuData,
+        type: 'paid',
+        contentType: 'compat',
+        createdAt: new Date().toISOString(),
+      });
       setPhase('result');
     }).catch(async (e) => {
       console.error('궁합 분석 실패:', e);

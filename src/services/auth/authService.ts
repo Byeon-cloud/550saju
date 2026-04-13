@@ -3,6 +3,7 @@ import {
   signInWithCustomToken,
   signInWithRedirect,
   getRedirectResult,
+  signInAnonymously,
   GoogleAuthProvider,
   OAuthProvider,
   signOut as firebaseSignOut,
@@ -11,6 +12,20 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { isAppsInToss } from '@/services/payment/iapService';
+
+/**
+ * 익명 로그인 — 앱 시작 시 자동 수행
+ * 모든 유저에게 Firebase Auth 토큰을 부여하여 Cloud Functions 호출 가능하게
+ * 나중에 토스/소셜 로그인 시 linkWithCredential로 계정 연결
+ */
+export async function ensureAuth(): Promise<void> {
+  if (auth.currentUser) return; // 이미 로그인됨
+  try {
+    await signInAnonymously(auth);
+  } catch (e) {
+    console.warn('[Auth] 익명 로그인 실패:', e);
+  }
+}
 
 const googleProvider = new GoogleAuthProvider();
 
