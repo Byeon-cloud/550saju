@@ -23,7 +23,7 @@ export async function generateDreamInterpretation(
 ): Promise<{ title: string; interpretation: string; luckyAction: string; category: string; verdict?: string; verdictScore?: number }> {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.5-pro',
     generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 65536 } as any,
   } as any);
 
