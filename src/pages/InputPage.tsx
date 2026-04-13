@@ -54,6 +54,10 @@ export function InputPage() {
     const all = getReports();
     const seen = new Map<string, LocalReport>();
     for (const r of all) {
+      // 궁합 결과 제외
+      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
+      if (r.name?.includes('×') || r.name?.includes('x')) continue;
+      if (!r.input?.birthYear) continue;
       const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
       if (!seen.has(key)) seen.set(key, r);
     }

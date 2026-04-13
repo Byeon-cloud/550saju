@@ -51,6 +51,8 @@ export function TopicAnalysisPage() {
     const seen = new Map<string, LocalReport>();
     for (const r of all) {
       if (!r.sajuData?.pillars?.length) continue;
+      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
+      if (r.name?.includes('×') || r.name?.includes('x')) continue;
       const key = `${r.name}_${r.input?.birthYear}_${r.input?.birthMonth}_${r.input?.birthDay}`;
       if (!seen.has(key)) seen.set(key, r);
     }
