@@ -206,11 +206,11 @@ export function ChargePage() {
                     options: { moduleId: 'a56725a6-4c52-40e5-b68b-2f752caf0a94' },
                     onEvent: async (event: any) => {
                       if (event.type === 'sendViral') {
-                        // 앱인토스가 공유 확인 → 운 적립
-                        const { claimShareReward } = await import('@/services/share/shareReward');
-                        const earned = claimShareReward();
+                        // 앱인토스 공유 확인 → 제한 없이 적립 (contactsViral이 중복 관리)
+                        const { claimShareRewardUnlimited } = await import('@/services/share/shareReward');
+                        const earned = claimShareRewardUnlimited();
                         setBalanceDisplay(getBalance());
-                        toast.show(earned > 0 ? `공유 완료! ${earned}운이 적립됐어요` : '공유 완료!', 'success');
+                        toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
                       }
                     },
                     onError: () => {

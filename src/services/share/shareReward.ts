@@ -49,7 +49,15 @@ export function canEarnShareReward(): boolean {
 }
 
 /**
- * 공유 리워드 적립
+ * 앱인토스 공유 리워드 적립 — 제한 없음 (contactsViral이 자체 관리)
+ */
+export function claimShareRewardUnlimited(): number {
+  addRewardBalance(REWARD_PER_SHARE);
+  return REWARD_PER_SHARE;
+}
+
+/**
+ * 웹 공유 리워드 적립 — 일 3회 제한
  * @returns 적립된 운 (0이면 한도 초과)
  */
 export function claimShareReward(): number {
