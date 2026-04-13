@@ -140,7 +140,7 @@ export const generateReport = onCall(
 export const generateDailyFortune = onCall(
   { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
   async (request) => {
-    const { answers, timeSlot, sajuSummary } = request.data;
+    const { answers, timeSlot, sajuSummary, concern } = request.data;
 
     const { generateDailyFortuneAI } = await lazyGeminiFortune();
     const result = await generateDailyFortuneAI(
@@ -148,6 +148,7 @@ export const generateDailyFortune = onCall(
       answers || [],
       timeSlot || 'morning',
       sajuSummary,
+      concern,
     );
 
     return result;
@@ -220,12 +221,8 @@ export const grantPurchase = onCall(
 
     await db.runTransaction(async (tx) => {
       const userRef = db.collection('users').doc(effectiveUid);
-      const userDoc = await tx.get(userRef);
-      const data = userDoc.data() || {};
-      // 유형별 잔액 관리
       tx.update(userRef, {
-        'balance.paid': (data.balance?.paid ?? 0) + paidUn,
-        'balance.bonus': (data.balance?.bonus ?? 0) + (bonusUn || 0),
+        balance: admin.firestore.FieldValue.increment(totalUn),
         totalCharged: admin.firestore.FieldValue.increment(paidUn),
       });
       tx.set(paymentRef, {
@@ -494,12 +491,8 @@ export const confirmPayment = onCall(
 
     await db.runTransaction(async (tx) => {
       const userRef = db.collection('users').doc(uid);
-      const userDoc = await tx.get(userRef);
-      const data = userDoc.data() || {};
-
       tx.update(userRef, {
-        'balance.paid': (data.balance?.paid ?? 0) + pkg.paidUn,
-        'balance.bonus': (data.balance?.bonus ?? 0) + pkg.bonusUn,
+        balance: admin.firestore.FieldValue.increment(totalUn),
         totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
       });
 

@@ -184,7 +184,7 @@ export async function exchangeTossToken(
       name: userName,
       birthday: userBirthday,
       gender: userGender,
-      balance: { paid: 0, bonus: 0, reward: 0 },
+      balance: 0,
       totalCharged: 0,
       totalSpent: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),

@@ -36,9 +36,10 @@ export async function generateDailyFortune(
   answers: number[],
   timeSlot: string,
   sajuSummary?: { ilgan: string; oheng: string; name: string },
+  concern?: string,
 ): Promise<any> {
   const fn = aiCallable('generateDailyFortune');
-  const result = await fn({ answers, timeSlot, sajuSummary });
+  const result = await fn({ answers, timeSlot, sajuSummary, concern });
   return result.data;
 }
 
