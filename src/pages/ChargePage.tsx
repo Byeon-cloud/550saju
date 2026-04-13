@@ -217,8 +217,12 @@ export function ChargePage() {
                   // 웹: Web Share API + 클립보드 폴백
                   const { shareResult } = await import('@/utils/share');
                   const { claimShareReward } = await import('@/services/share/shareReward');
-                  const success = await shareResult({ name: '사주500', reportId: 'invite' });
-                  if (success) {
+                  const url = `${window.location.origin}/share/invite`;
+                  let shared = await shareResult({ name: '사주500', reportId: 'invite' });
+                  if (!shared) {
+                    try { await navigator.clipboard.writeText(url); shared = true; } catch { /* 무시 */ }
+                  }
+                  if (shared) {
                     const earned = claimShareReward();
                     if (earned > 0) {
                       setBalanceDisplay(getBalance());
@@ -227,13 +231,14 @@ export function ChargePage() {
                       toast.show('공유 링크가 복사됐어요!', 'success');
                     }
                   } else {
-                    const url = `${window.location.origin}/share/invite`;
-                    await navigator.clipboard.writeText(url);
-                    toast.show('초대 링크가 복사됐어요! 친구에게 보내주세요', 'success');
+                    // 모든 공유 방법 실패 → 수동 복사 안내
+                    toast.show(`초대 링크: ${url}`, 'info');
                   }
                 }
-              } catch {
-                toast.show('공유에 실패했어요. 다시 시도해주세요', 'warning');
+              } catch (e) {
+                console.warn('[Share] 공유 실패:', e);
+                // 마지막 폴백: URL 직접 표시
+                toast.show('공유 링크를 복사해주세요: saju500.web.app', 'info');
               }
             }}
             className="w-full card-gold py-4 px-5 text-left"
