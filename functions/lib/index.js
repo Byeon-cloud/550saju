@@ -94,7 +94,7 @@ const DEV_MODE = false;
 /**
  * 사주 리포트 생성 — Claude Sonnet
  */
-exports.generateReport = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true }, async (request) => {
+exports.generateReport = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true }, async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -205,7 +205,7 @@ exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256Mi
 /**
  * 대운 해설 — Claude Sonnet 4.6
  */
-exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true }, async (request) => {
+exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true }, async (request) => {
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -242,7 +242,7 @@ exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutS
 /**
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
-exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true }, async (request) => {
+exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true }, async (request) => {
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -279,7 +279,7 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
 /**
  * 궁합 분석 — Claude Sonnet 4.6
  */
-exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true }, async (request) => {
+exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true }, async (request) => {
     const { sajuData1, sajuData2, relation } = request.data;
     if (!sajuData1 || !sajuData2)
         throw new https_1.HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
@@ -316,7 +316,7 @@ exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
 /**
  * 토정비결 — Gemini 2.5 Pro
  */
-exports.generateTojung = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true }, async (request) => {
+exports.generateTojung = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true }, async (request) => {
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -499,7 +499,7 @@ exports.disconnectToss = (0, https_1.onRequest)({ secrets: [TOSS_DISCONNECT_AUTH
  * 주제별 심층분석 — Gemini 2.5 Flash (1운)
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
  */
-exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true }, async (request) => {
+exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true }, async (request) => {
     const { topicId, sajuData } = request.data;
     if (!topicId || !sajuData)
         throw new https_1.HttpsError('invalid-argument', 'topicId, sajuData 필요');

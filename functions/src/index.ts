@@ -73,7 +73,7 @@ const DEV_MODE = false;
  * 사주 리포트 생성 — Claude Sonnet
  */
 export const generateReport = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
   async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -234,7 +234,7 @@ export const grantPurchase = onCall(
  * 대운 해설 — Claude Sonnet 4.6
  */
 export const generateDaeun = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -274,7 +274,7 @@ export const generateDaeun = onCall(
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
 export const generateMonthly = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -314,7 +314,7 @@ export const generateMonthly = onCall(
  * 궁합 분석 — Claude Sonnet 4.6
  */
 export const generateCompatibility = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
   async (request) => {
     const { sajuData1, sajuData2, relation } = request.data;
     if (!sajuData1 || !sajuData2) throw new HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
@@ -356,7 +356,7 @@ export const generateCompatibility = onCall(
  * 토정비결 — Gemini 2.5 Pro
  */
 export const generateTojung = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -571,7 +571,7 @@ export const disconnectToss = onRequest(
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
  */
 export const generateTopicAnalysis = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
   async (request) => {
     const { topicId, sajuData } = request.data;
     if (!topicId || !sajuData) throw new HttpsError('invalid-argument', 'topicId, sajuData 필요');
