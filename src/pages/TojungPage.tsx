@@ -7,7 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { TojungMonthCard } from '@/components/saju/TojungMonthCard';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
+import { getReports, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
 import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -41,6 +41,16 @@ export function TojungPage() {
 
   async function startAnalysis() {
     if (!selected) return;
+
+    // 캐시 확인 — 이전에 분석한 적 있으면 무료로 바로 보여줌
+    const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'tojung');
+    if (cached?.aiResult) {
+      setResult(cached.aiResult);
+      setPhase('result');
+      toast.show('이전 분석 결과를 불러왔어요', 'info');
+      return;
+    }
+
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '토정비결에 1운이 필요해요' } });
@@ -54,7 +64,8 @@ export function TojungPage() {
     try {
       const res = await generateTojungBigyeol(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', createdAt: new Date().toISOString() });
+      // aiResult에 결과 저장 → 같은 사람이면 다음에 캐시로 반환
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', aiResult: res.content, createdAt: new Date().toISOString() });
       setPhase('result');
     } catch (e: any) {
       console.error('토정비결 실패:', e);

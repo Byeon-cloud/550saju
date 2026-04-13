@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/common/Button';
+import { isAppsInToss } from '@/services/payment/iapService';
 import {
   canEarnShareReward,
   claimShareReward,
-  getRemainingShareRewards,
 } from '@/services/share/shareReward';
 import { shareResult } from '@/utils/share';
 
@@ -13,46 +13,75 @@ interface ShareModalProps {
   onClose: () => void;
   name: string;
   reportId: string;
-  /** 점수 요약 (공유 카드에 표시) */
   topScore?: { label: string; score: number };
 }
 
 /**
- * 공유 모달 — 리워드 안내 + 공유 채널 선택
+ * 공유 모달
  *
- * UX 흐름:
- * 1. 모달 오픈 → 리워드 안내 ("공유하면 1운 적립!")
- * 2. 공유 버튼 클릭 → Web Share API 호출
- * 3. 공유 완료 → 리워드 적립 → 성공 토스트
+ * 앱인토스: contactsViral SDK → 공유 리워드 1운 (하루 3회)
+ * 웹: Web Share API (카카오/인스타 등) → 리워드 없음
+ * 웹 폴백: 클립보드 복사 → 리워드 없음
  */
 export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareModalProps) {
-  const [shared, setShared] = useState(false);
+  const [phase, setPhase] = useState<'ready' | 'copied' | 'shared'>('ready');
   const [rewardAmount, setRewardAmount] = useState(0);
-  const hasReward = canEarnShareReward();
-  const remaining = getRemainingShareRewards();
+  const inToss = isAppsInToss();
 
   async function handleShare() {
-    // 실제 공유 (카톡, 인스타 등)만 리워드 대상
-    const success = await shareResult({ name, reportId, topScore });
+    try {
+      const success = await shareResult({ name, reportId, topScore });
 
-    if (success) {
-      if (hasReward) {
-        const earned = claimShareReward();
-        setRewardAmount(earned);
-        // 서버 기록 (로그인됐을 때만)
-        try {
-          const { auth } = await import('@/services/auth/firebase');
-          if (auth.currentUser) {
-            const { getFunctions, httpsCallable } = await import('firebase/functions');
-            const { app } = await import('@/services/auth/firebase');
-            await httpsCallable(getFunctions(app, 'us-central1'), 'grantShareReward')({});
-          }
-        } catch { /* 무시 */ }
+      if (success) {
+        // 앱인토스에서만 리워드
+        if (inToss && canEarnShareReward()) {
+          const earned = claimShareReward();
+          setRewardAmount(earned);
+          try {
+            const { auth } = await import('@/services/auth/firebase');
+            if (auth.currentUser) {
+              const { getFunctions, httpsCallable } = await import('firebase/functions');
+              const { app } = await import('@/services/auth/firebase');
+              await httpsCallable(getFunctions(app, 'us-central1'), 'grantShareReward')({});
+            }
+          } catch { /* 무시 */ }
+        }
+        setPhase('shared');
+        return;
       }
-      import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.SHARE_RESULT));
-      setShared(true);
+    } catch {
+      // Web Share API 실패
     }
-    // 공유 취소/실패 → 아무것도 안 함 (모달 유지, 다시 시도 가능)
+
+    // 웹 폴백 → 클립보드 복사
+    await copyToClipboard();
+  }
+
+  async function copyToClipboard() {
+    const url = `${window.location.origin}/share/${reportId}`;
+    const text = `${name}님의 사주 결과 — 사주500\n${url}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setPhase('copied');
+    } catch {
+      // clipboard도 실패하면 강제로 textarea 사용
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setPhase('copied');
+    }
+  }
+
+  // 모달 닫을 때 상태 초기화
+  function handleClose() {
+    setPhase('ready');
+    setRewardAmount(0);
+    onClose();
   }
 
   return (
@@ -64,7 +93,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} />
 
           <motion.div
             className="relative w-full max-w-[340px]"
@@ -76,7 +105,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
             <div className="rounded-3xl overflow-hidden"
               style={{ background: 'var(--bg-card)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
 
-              {/* 상단 — 프리뷰 카드 (네이비 배경) */}
+              {/* 프리뷰 카드 */}
               <div className="px-5 pt-6 pb-5" style={{ background: 'linear-gradient(135deg, #1B2A4A, #243656)' }}>
                 <div className="text-center">
                   <p className="text-[10px] text-white/30 mb-1">사주500 분석 결과</p>
@@ -90,7 +119,6 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                       </div>
                     </div>
                   )}
-                  {/* 블러 영역 — 궁금증 유발 */}
                   <div className="mt-4 px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <div className="space-y-1.5" style={{ filter: 'blur(4px)' }}>
                       <div className="h-2.5 w-3/4 mx-auto rounded bg-white/15" />
@@ -104,12 +132,12 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                 </div>
               </div>
 
-              {/* 하단 — 공유 액션 */}
+              {/* 하단 액션 */}
               <div className="px-5 py-5">
-                {!shared ? (
+                {phase === 'ready' && (
                   <>
-                    {/* 리워드 안내 */}
-                    {hasReward && (
+                    {/* 앱인토스에서만 리워드 안내 */}
+                    {inToss && canEarnShareReward() && (
                       <div className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl"
                         style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.12)' }}>
                         <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
@@ -118,7 +146,6 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                         </div>
                         <p className="text-caption text-text-primary">
                           공유하면 <span className="font-bold text-brand-gold">1운</span> 적립!
-                          <span className="text-text-hint"> 새 친구에게 공유할 때마다 받아요</span>
                         </p>
                       </div>
                     )}
@@ -127,17 +154,43 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                       친구에게 공유하기
                     </Button>
 
-                    <button onClick={onClose}
-                      className="w-full text-center text-caption text-text-muted mt-3 py-1">
+                    {/* 웹에서는 복사 버튼도 별도로 */}
+                    {!inToss && (
+                      <button onClick={copyToClipboard}
+                        className="w-full text-center text-caption text-brand-gold font-semibold mt-3 py-1">
+                        링크 복사하기
+                      </button>
+                    )}
+
+                    <button onClick={handleClose}
+                      className="w-full text-center text-caption text-text-muted mt-2 py-1">
                       닫기
                     </button>
                   </>
-                ) : (
-                  /* 공유 완료 */
+                )}
+
+                {phase === 'copied' && (
                   <div className="text-center py-2">
                     <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
+                      initial={{ scale: 0 }} animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                      className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
+                      style={{ background: 'rgba(201,169,110,0.1)' }}
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    </motion.div>
+                    <p className="text-h3 text-text-primary">링크가 복사됐어요</p>
+                    <p className="text-caption text-text-muted mt-1">카카오톡, 인스타 등에 붙여넣기 하세요</p>
+                    <Button fullWidth size="lg" onClick={handleClose} className="mt-4">확인</Button>
+                  </div>
+                )}
+
+                {phase === 'shared' && (
+                  <div className="text-center py-2">
+                    <motion.div
+                      initial={{ scale: 0 }} animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                       className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
                       style={{ background: 'rgba(46,125,50,0.1)' }}
@@ -149,17 +202,14 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                     <p className="text-h3 text-text-primary">공유 완료!</p>
                     {rewardAmount > 0 && (
                       <motion.p
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                         className="text-caption text-brand-gold font-bold mt-1"
                       >
                         +{rewardAmount}운 적립되었어요
                       </motion.p>
                     )}
-                    <Button fullWidth size="lg" onClick={onClose} className="mt-4">
-                      확인
-                    </Button>
+                    <Button fullWidth size="lg" onClick={handleClose} className="mt-4">확인</Button>
                   </div>
                 )}
               </div>

@@ -73,7 +73,7 @@ const DEV_MODE = false;
  * 사주 리포트 생성 — Claude Sonnet
  */
 export const generateReport = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -138,19 +138,25 @@ export const generateReport = onCall(
  * 오늘의 운세 — Gemini 2.5 Flash (무료)
  */
 export const generateDailyFortune = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { answers, timeSlot, sajuSummary } = request.data;
 
-    const { generateDailyFortuneAI } = await lazyGeminiFortune();
-    const result = await generateDailyFortuneAI(
-      GEMINI_KEY.value(),
-      answers || [],
-      timeSlot || 'morning',
-      sajuSummary,
-    );
-
-    return result;
+    try {
+      console.log('[generateDailyFortune] Starting Gemini call...');
+      const { generateDailyFortuneAI } = await lazyGeminiFortune();
+      const result = await generateDailyFortuneAI(
+        GEMINI_KEY.value(),
+        answers || [],
+        timeSlot || 'morning',
+        sajuSummary,
+      );
+      console.log('[generateDailyFortune] Success, keys:', Object.keys(result || {}));
+      return result;
+    } catch (error: any) {
+      console.error('[generateDailyFortune] FAILED:', error.message, error.stack);
+      throw new HttpsError('internal', `오늘의 운세 생성 실패: ${error.message || 'unknown'}`);
+    }
   }
 );
 
@@ -158,7 +164,7 @@ export const generateDailyFortune = onCall(
  * AI 대화 — Gemini 2.5 Pro
  */
 export const generateChatAnswer = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question) throw new HttpsError('invalid-argument', '질문이 없습니다');
@@ -180,20 +186,26 @@ export const generateChatAnswer = onCall(
  * 꿈해몽 — Gemini 2.5 Flash (무료)
  */
 export const generateDream = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { category, dreamText, sajuData } = request.data;
     if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');
 
-    const { generateDreamInterpretation } = await lazyGeminiDream();
-    const result = await generateDreamInterpretation(
-      GEMINI_KEY.value(),
-      category,
-      dreamText || '',
-      sajuData,
-    );
-
-    return result;
+    try {
+      console.log('[generateDream] Starting, category:', category, 'dreamText length:', (dreamText || '').length);
+      const { generateDreamInterpretation } = await lazyGeminiDream();
+      const result = await generateDreamInterpretation(
+        GEMINI_KEY.value(),
+        category,
+        dreamText || '',
+        sajuData,
+      );
+      console.log('[generateDream] Success, title:', result?.title);
+      return result;
+    } catch (error: any) {
+      console.error('[generateDream] FAILED:', error.message, error.stack);
+      throw new HttpsError('internal', `꿈해몽 생성 실패: ${error.message || 'unknown'}`);
+    }
   }
 );
 
@@ -245,7 +257,7 @@ export const grantPurchase = onCall(
  * 대운 해설 — Claude Sonnet 4.6
  */
 export const generateDaeun = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -288,7 +300,7 @@ export const generateDaeun = onCall(
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
 export const generateMonthly = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -331,7 +343,7 @@ export const generateMonthly = onCall(
  * 궁합 분석 — Claude Sonnet 4.6
  */
 export const generateCompatibility = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { sajuData1, sajuData2, relation } = request.data;
     if (!sajuData1 || !sajuData2) throw new HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
@@ -376,7 +388,7 @@ export const generateCompatibility = onCall(
  * 토정비결 — Gemini 2.5 Pro
  */
 export const generateTojung = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { sajuData } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -594,7 +606,7 @@ export const disconnectToss = onRequest(
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
  */
 export const generateTopicAnalysis = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { topicId, sajuData } = request.data;
     if (!topicId || !sajuData) throw new HttpsError('invalid-argument', 'topicId, sajuData 필요');

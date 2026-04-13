@@ -187,14 +187,40 @@ export function DailyFortunePage() {
   // 단일 프로필이면 자동 선택
   const recentReport = selectedProfile;
   const hasHistory = !!recentReport;
-  const ilgan = recentReport?.sajuData.pillars[2]?.천간;
+  const ilgan = recentReport?.sajuData?.pillars?.[2]?.천간;
   const ilganOheng = ilgan ? CHEONGAN_OHENG[ilgan] : undefined;
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
+  const [aiError, setAiError] = useState('');
 
   const localResult = useMemo(() => getFortuneResult(timeSlot, hasHistory, ilgan, ilganOheng, recentReport), [timeSlot, hasHistory, ilgan, ilganOheng, recentReport]);
-  const result = aiResult || localResult;
+
+  // AI 결과를 UI 형식으로 변환 (scores 객체→배열, grade 등)
+  const normalizedAiResult = useMemo(() => {
+    if (!aiResult) return null;
+    const gradeColor = aiResult.grade === 'S' ? '#C9A96E' : aiResult.grade === 'A' ? '#2D8A4E' : aiResult.grade === 'B' ? '#2D4470' : '#D32F2F';
+    return {
+      ...aiResult,
+      gradeColor,
+      scores: Array.isArray(aiResult.scores) ? aiResult.scores : [
+        { label: '연애운', score: aiResult.scores?.love ?? 70, color: '#C9A96E' },
+        { label: '직장운', score: aiResult.scores?.career ?? 70, color: '#2D4470' },
+        { label: '재물운', score: aiResult.scores?.wealth ?? 70, color: '#D4A843' },
+        { label: '건강운', score: aiResult.scores?.health ?? 70, color: '#2E7D32' },
+      ],
+      lucky: {
+        color: aiResult.lucky?.color ?? localResult.lucky.color,
+        colorHex: aiResult.lucky?.colorHex ?? localResult.lucky.colorHex,
+        number: aiResult.lucky?.number ?? localResult.lucky.number,
+        direction: aiResult.lucky?.direction ?? localResult.lucky.direction,
+        item: aiResult.lucky?.item ?? localResult.lucky.item,
+        food: aiResult.lucky?.food ?? localResult.lucky.food,
+      },
+    };
+  }, [aiResult, localResult]);
+
+  const result = normalizedAiResult || localResult;
   const isOtherPerson = recentReport && recentReport.input.relation && recentReport.input.relation !== '본인' && recentReport.input.relation !== 'self';
   const targetName = recentReport?.name || '';
 
@@ -240,8 +266,10 @@ export function DailyFortunePage() {
 
       const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary);
       if (aiData) setAiResult(aiData);
-    } catch (e) {
-      console.warn('[DailyFortune] AI 호출 실패, 로컬 결과 사용:', e);
+    } catch (e: any) {
+      console.error('[DailyFortune] AI 호출 실패:', e);
+      setAiError(e?.message || 'AI 서버 연결 실패');
+      toast.show('AI 분석에 실패했어요. 잠시 후 다시 시도해주세요.', 'warning');
     } finally {
       setAiLoading(false);
     }
@@ -263,7 +291,7 @@ export function DailyFortunePage() {
 
           <div className="space-y-2">
             {profiles.map((r) => {
-              const il = r.sajuData.pillars[2]?.천간 || '';
+              const il = r.sajuData?.pillars?.[2]?.천간 || '';
               const oh = il ? CHEONGAN_OHENG[il] : '';
               const rel = r.input.relation || '본인';
               return (
@@ -443,11 +471,34 @@ export function DailyFortunePage() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-4"
             >
-              {/* AI 로딩 표시 */}
+              {/* AI 로딩/에러 표시 */}
               {aiLoading && (
                 <div className="flex items-center justify-center gap-2 py-2">
                   <div className="w-4 h-4 rounded-full border-2 border-brand-gold border-t-transparent animate-spin" />
                   <span className="text-caption text-text-muted">AI가 맞춤 운세를 분석하고 있어요...</span>
+                </div>
+              )}
+              {!aiLoading && aiError && !aiResult && (
+                <div className="card py-3 px-4 flex items-center justify-between" style={{ background: 'rgba(211,47,47,0.04)', border: '1px solid rgba(211,47,47,0.12)' }}>
+                  <div>
+                    <p className="text-caption text-func-danger font-semibold">AI 맞춤 분석에 실패했어요</p>
+                    <p className="text-[10px] text-text-hint mt-0.5">기본 운세를 보여드리고 있어요</p>
+                  </div>
+                  <button onClick={async () => {
+                    setAiError('');
+                    setAiLoading(true);
+                    try {
+                      const concernIdx = CONCERN_CHIPS.findIndex(c => c.id === selectedConcern);
+                      const answersArr = [concernIdx >= 0 ? concernIdx : 5];
+                      const sajuSummary = selectedProfile?.sajuData ? { ilgan: selectedProfile.sajuData.pillars?.[2]?.천간 || '', oheng: ilganOheng || '', name: selectedProfile.name || '' } : undefined;
+                      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary);
+                      if (aiData) setAiResult(aiData);
+                    } catch (e: any) { setAiError(e?.message || '재시도 실패'); }
+                    finally { setAiLoading(false); }
+                  }}
+                    className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white" style={{ background: '#C9A96E' }}>
+                    재시도
+                  </button>
                 </div>
               )}
 
@@ -593,16 +644,24 @@ export function DailyFortunePage() {
                   onClick={async () => {
                     const shareData = {
                       title: '오늘의 운세 — 사주500',
-                      text: `${targetName || '내'}  운세 등급 ${result.grade}등급! 오늘 하루의 운세가 궁금하다면?`,
+                      text: `${targetName || '내'} 운세 등급 ${result.grade}등급! 오늘 하루의 운세가 궁금하다면?`,
                       url: `${window.location.origin}/daily`,
                     };
-                    if (navigator.share) {
-                      try { await navigator.share(shareData); } catch { /* 취소 */ }
-                    } else {
+                    try {
+                      if (navigator.share) {
+                        await navigator.share(shareData);
+                        toast.show('공유 완료!', 'success');
+                      } else {
+                        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+                        toast.show('링크가 복사됐어요!', 'success');
+                      }
+                    } catch {
                       try {
                         await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-                        // toast는 상위에서 쓸 수 없으니 alert 대체
-                      } catch { /* 무시 */ }
+                        toast.show('링크가 복사됐어요!', 'success');
+                      } catch {
+                        toast.show('공유에 실패했어요', 'warning');
+                      }
                     }
                   }}
                   className="w-full py-3 rounded-xl text-caption font-bold"

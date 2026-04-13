@@ -79,6 +79,20 @@ ${sajuSummary ? `이름: ${sajuSummary.name}, 일간: ${sajuSummary.ilgan}(${saj
 - lucky: 사주 오행의 부족한 기운을 보충하는 색/방향/아이템 추천
 - advice: ${timeSlot === 'latenight' ? '새벽의 고민을 다독여주는' : timeSlot === 'night' ? '밤의 직감을 살려주는' : '하루를 이끌어주는'} 한 줄 핵심 조언 (30자 이상)`;
 
-  const r = await model.generateContent(prompt);
-  return JSON.parse(r.response.text());
+  try {
+    const r = await model.generateContent(prompt);
+    const text = r.response.text();
+    console.log('[geminiFortune] Raw response length:', text.length);
+    return JSON.parse(text);
+  } catch (err: any) {
+    console.error('[geminiFortune] Gemini call failed:', err.message);
+    // 세부 에러 정보 포함
+    if (err.message?.includes('SAFETY')) {
+      throw new Error('안전 필터에 의해 차단됨');
+    }
+    if (err.message?.includes('quota') || err.message?.includes('429')) {
+      throw new Error('API 호출 한도 초과 — 잠시 후 다시 시도');
+    }
+    throw err;
+  }
 }

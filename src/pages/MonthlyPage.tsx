@@ -8,7 +8,7 @@ import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
 
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
+import { getReports, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
 import { generateMonthlyFortune2026 } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -39,6 +39,16 @@ export function MonthlyPage() {
 
   async function startAnalysis() {
     if (!selected) return;
+
+    // 캐시 확인
+    const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'monthly');
+    if (cached?.aiResult) {
+      setResult(cached.aiResult);
+      setPhase('result');
+      toast.show('이전 분석 결과를 불러왔어요', 'info');
+      return;
+    }
+
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '월별 운세에 1운이 필요해요' } });
@@ -52,7 +62,7 @@ export function MonthlyPage() {
     try {
       const res = await generateMonthlyFortune2026(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', createdAt: new Date().toISOString() });
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
       setPhase('result');
     } catch (e: any) {
       console.error('월별 운세 실패:', e);

@@ -28,6 +28,14 @@ export function StoragePage() {
   }, []);
 
   function openReport(report: LocalReport) {
+    // 꿈해몽/일일운세는 사주 결과페이지가 아니므로 해당 페이지로 이동
+    if (report.contentType === 'dream') { navigate('/dream'); return; }
+    if (report.contentType === 'daily') { navigate('/daily'); return; }
+    if (!report.sajuData?.pillars?.length) {
+      // sajuData 없으면 결과페이지 진입 불가
+      navigate('/input');
+      return;
+    }
     setInput(report.input);
     setSajuData(report.sajuData);
     navigate(`/result/${report.id}`);
@@ -67,7 +75,7 @@ export function StoragePage() {
   }, [reports, contentTab]);
 
   function getIlgan(r: LocalReport) {
-    const ilgan = r.sajuData.pillars[2]?.천간 || '';
+    const ilgan = r.sajuData?.pillars?.[2]?.천간 || '';
     const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
     return { ilgan, oheng };
   }
@@ -223,13 +231,14 @@ export function StoragePage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-h3 text-text-primary">{r.name}</p>
+                          <p className="text-h3 text-text-primary">{r.name || '기록'}</p>
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand-gold/10 text-brand-gold">
-                            {r.contentType === 'daily' ? '오늘운세' : r.contentType === 'dream' ? '꿈해몽' : r.contentType === 'compat' ? '궁합' : r.contentType === 'daeun' ? '대운' : r.contentType === 'monthly' ? '월별' : r.contentType === 'tojung' ? '토정비결' : r.contentType === 'topic' ? ((r.aiResult as any)?.topicId === 'love' ? '연애운' : (r.aiResult as any)?.topicId === 'wealth' ? '재물운' : (r.aiResult as any)?.topicId === 'career' ? '취업운' : '심층분석') : '상세 분석'}
+                            {r.contentType === 'daily' ? '오늘운세' : r.contentType === 'dream' ? '꿈해몽' : r.contentType === 'compat' ? '궁합' : r.contentType === 'daeun' ? '대운' : r.contentType === 'monthly' ? '월별' : r.contentType === 'tojung' ? '토정비결' : r.contentType === 'topic' ? ((r as any).aiResult?.topicId === 'love' ? '연애운' : (r as any).aiResult?.topicId === 'wealth' ? '재물운' : (r as any).aiResult?.topicId === 'career' ? '취업운' : '심층분석') : '상세 분석'}
                           </span>
                         </div>
                         <p className="text-caption text-text-muted truncate">
-                          {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')} · {ilgan}({oheng})
+                          {r.input?.birthYear ? `${r.input.birthYear}.${String(r.input.birthMonth).padStart(2,'0')}.${String(r.input.birthDay).padStart(2,'0')}` : new Date(r.createdAt).toLocaleDateString('ko-KR')}
+                          {ilgan ? ` · ${ilgan}(${oheng})` : ''}
                         </p>
                       </div>
                       <button

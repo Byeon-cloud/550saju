@@ -1,5 +1,6 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '@/services/auth/firebase';
+import { ensureAuth } from '@/services/auth/authService';
 import type { SajuData, Situation } from '@/types/saju';
 import type {
   AIReportResponse,
@@ -16,6 +17,14 @@ function aiCallable(name: string) {
   return httpsCallable(functions, name, { timeout: 300000 }); // 5분
 }
 
+/** 모든 Cloud Function 호출 전 인증 보장 */
+async function callWithAuth(name: string, data: any): Promise<any> {
+  await ensureAuth(); // 인증 완료까지 대기
+  const fn = aiCallable(name);
+  const result = await fn(data);
+  return result;
+}
+
 /**
  * AI 사주 리포트 생성 — Firebase Function → Claude Sonnet 4.6
  */
@@ -24,8 +33,7 @@ export async function generateReport(
   situation?: Situation,
   reportType: 'basic' | 'premium' = 'basic',
 ): Promise<{ reportId: string; content: AIReportResponse }> {
-  const fn = aiCallable('generateReport');
-  const result = await fn({ sajuData, situation, reportType });
+  const result = await callWithAuth('generateReport', { sajuData, situation, reportType });
   return result.data as { reportId: string; content: AIReportResponse };
 }
 
@@ -37,8 +45,7 @@ export async function generateDailyFortune(
   timeSlot: string,
   sajuSummary?: { ilgan: string; oheng: string; name: string },
 ): Promise<any> {
-  const fn = aiCallable('generateDailyFortune');
-  const result = await fn({ answers, timeSlot, sajuSummary });
+  const result = await callWithAuth('generateDailyFortune', { answers, timeSlot, sajuSummary });
   return result.data;
 }
 
@@ -53,8 +60,7 @@ export async function generateDream(
   dreamText: string,
   sajuData?: SajuData,
 ): Promise<{ title: string; interpretation: string; luckyAction: string; category: string }> {
-  const fn = aiCallable('generateDream');
-  const result = await fn({ category, dreamText, sajuData });
+  const result = await callWithAuth('generateDream', { category, dreamText, sajuData });
   return result.data as { title: string; interpretation: string; luckyAction: string; category: string };
 }
 
@@ -76,8 +82,7 @@ export async function generateChatAnswer(
   else if (h < 21) timeSlot = 'evening';
   else timeSlot = 'night';
 
-  const fn = aiCallable('generateChatAnswer');
-  const result = await fn({ question, sajuData, chatHistory, timeSlot });
+  const result = await callWithAuth('generateChatAnswer', { question, sajuData, chatHistory, timeSlot });
   return result.data as { answer: string; keywords?: string[]; todayCount: number; isPaid: boolean };
 }
 
@@ -87,8 +92,7 @@ export async function generateChatAnswer(
 export async function generateDaeunAnalysis(
   sajuData: SajuData,
 ): Promise<{ reportId: string; content: DaeunAnalysisResponse }> {
-  const fn = aiCallable('generateDaeun');
-  const result = await fn({ sajuData });
+  const result = await callWithAuth('generateDaeun', { sajuData });
   return result.data as { reportId: string; content: DaeunAnalysisResponse };
 }
 
@@ -98,8 +102,7 @@ export async function generateDaeunAnalysis(
 export async function generateMonthlyFortune2026(
   sajuData: SajuData,
 ): Promise<{ reportId: string; content: MonthlyDetailResponse }> {
-  const fn = aiCallable('generateMonthly');
-  const result = await fn({ sajuData });
+  const result = await callWithAuth('generateMonthly', { sajuData });
   return result.data as { reportId: string; content: MonthlyDetailResponse };
 }
 
@@ -111,8 +114,7 @@ export async function generateCompatibilityAnalysis(
   sajuData2: SajuData,
   relation: string,
 ): Promise<{ reportId: string; content: CompatibilityResponse }> {
-  const fn = aiCallable('generateCompatibility');
-  const result = await fn({ sajuData1, sajuData2, relation });
+  const result = await callWithAuth('generateCompatibility', { sajuData1, sajuData2, relation });
   return result.data as { reportId: string; content: CompatibilityResponse };
 }
 
@@ -123,8 +125,7 @@ export async function generateTopicAnalysis(
   topicId: string,
   sajuData: SajuData,
 ): Promise<{ reportId: string; content: any }> {
-  const fn = aiCallable('generateTopicAnalysis');
-  const result = await fn({ topicId, sajuData });
+  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData });
   return result.data as { reportId: string; content: any };
 }
 
@@ -134,7 +135,6 @@ export async function generateTopicAnalysis(
 export async function generateTojungBigyeol(
   sajuData: SajuData,
 ): Promise<{ reportId: string; content: TojungResponse }> {
-  const fn = aiCallable('generateTojung');
-  const result = await fn({ sajuData });
+  const result = await callWithAuth('generateTojung', { sajuData });
   return result.data as { reportId: string; content: TojungResponse };
 }

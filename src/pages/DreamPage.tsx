@@ -118,10 +118,11 @@ export function DreamPage() {
   }
 
   const [aiResult, setAiResult] = useState<{ title: string; interpretation: string; luckyAction: string; category: string } | null>(null);
+  const [apiError, setApiError] = useState('');
 
   async function analyze() {
-    // 꿈해몽 기본 해석은 무료 — 결과에서 "사주 연계 심층 해몽(1운)" 유도
     setIsLoading(true);
+    setApiError('');
     try {
       const { generateDream } = await import('@/services/ai/reportGenerator');
       const { getReports: fetchReports } = await import('@/services/storage/localStore');
@@ -135,23 +136,24 @@ export function DreamPage() {
         latestReport?.sajuData,
       );
       setAiResult(result);
-    } catch {
-      // API 실패 → 카테고리별 데모 데이터 폴백
+      // 보관함 저장
+      try {
+        const { saveReport, generateId, getReports: fetchRpts } = await import('@/services/storage/localStore');
+        const latestRpt = fetchRpts().find((r: any) => !r.input?.relation || r.input.relation === '본인') || null;
+        saveReport({ id: generateId(), name: latestRpt?.name || '꿈해몽', input: latestRpt?.input || {} as any, sajuData: latestRpt?.sajuData || {} as any, type: 'free', contentType: 'dream', createdAt: new Date().toISOString() });
+      } catch { /* 무시 */ }
+    } catch (e: any) {
+      console.error('[DreamPage] API 실패:', e);
+      setApiError(e?.message || 'AI 서버 연결에 실패했어요');
       setAiResult(null);
     } finally {
       setIsLoading(false);
       setPhase('result');
-      // 보관함 저장
-      try {
-        const { saveReport, generateId } = await import('@/services/storage/localStore');
-        const latestRpt = fetchReports().find((r: any) => !r.input?.relation || r.input.relation === '본인') || null;
-        saveReport({ id: generateId(), name: latestRpt?.name || '꿈해몽', input: latestRpt?.input || {} as any, sajuData: latestRpt?.sajuData || {} as any, type: 'free', contentType: 'dream', createdAt: new Date().toISOString() });
-      } catch { /* 무시 */ }
     }
   }
 
-  // 결과 데이터 — AI 응답 우선, 없으면 카테고리별 데모
-  const dreamResult = aiResult || getDreamResult(selectedCategory);
+  // AI 결과만 사용 — 실패 시 에러 표시 (가짜 데이터 안 보여줌)
+  const dreamResult = aiResult;
 
   function reset() {
     setPhase('category');
@@ -291,60 +293,128 @@ export function DreamPage() {
           )}
 
           {/* ====== Phase 3: 결과 ====== */}
-          {phase === 'result' && !isLoading && (
+          {phase === 'result' && !isLoading && !dreamResult && (
+            /* API 실패 → 에러 표시 + 재시도 */
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-5"
+            >
+              <div className="card-navy py-8 px-5 text-center">
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(211,47,47,0.15)' }}>
+                  <span style={{ fontSize: 28 }}>😔</span>
+                </div>
+                <p className="text-h2 text-white">해석에 실패했어요</p>
+                <p className="text-body-sm text-white/50 mt-2 leading-relaxed">
+                  AI 서버가 일시적으로 바빠요.{'\n'}잠시 후 다시 시도해주세요.
+                </p>
+                {apiError && (
+                  <p className="text-[10px] text-white/25 mt-3 font-mono">{apiError}</p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button fullWidth size="lg" variant="gold" onClick={() => { setPhase('detail'); setApiError(''); }}>
+                  다시 시도하기
+                </Button>
+                <button onClick={() => { setPhase('category'); setSelectedCategory(null); setDreamText(''); setApiError(''); }}
+                  className="flex-shrink-0 px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface">
+                  처음부터
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {phase === 'result' && !isLoading && dreamResult && (
             <motion.div
               key="result"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               className="space-y-5"
             >
+              {/* 헤더 + 판정 */}
               <FadeIn>
                 <div className="card-navy py-6 px-5">
                   <p className="text-label text-white/40">꿈해몽 결과</p>
                   <h2 className="text-h1 text-white mt-1">{dreamResult.title}</h2>
-                  <span className="badge-gold text-tiny mt-2 inline-block">{dreamResult.category}</span>
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="badge-gold text-tiny">{dreamResult.category}</span>
+                    {(dreamResult as any).relatedOheng && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white/70">
+                        {(dreamResult as any).relatedOheng} 기운
+                      </span>
+                    )}
+                  </div>
+                  {/* 판정 점수 */}
+                  {(dreamResult as any).verdict && (
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                      <p className="text-body-sm text-white/80 font-semibold">{(dreamResult as any).verdict}</p>
+                      {(dreamResult as any).verdictScore != null && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-24 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                            <div className="h-full rounded-full" style={{
+                              width: `${(dreamResult as any).verdictScore}%`,
+                              background: (dreamResult as any).verdictScore >= 70 ? '#C9A96E' : (dreamResult as any).verdictScore >= 40 ? '#A8B1C1' : '#FF6B6B',
+                            }} />
+                          </div>
+                          <span className="text-[11px] font-bold text-brand-gold-light">{(dreamResult as any).verdictScore}점</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </FadeIn>
 
-              <FadeIn delay={0.05}>
+              {/* 꿈 상징 분석 카드 */}
+              {(dreamResult as any).symbols?.length > 0 && (
+                <FadeIn delay={0.04}>
+                  <div className="card">
+                    <p className="text-h3 text-text-primary mb-3">꿈 속 핵심 상징</p>
+                    <div className="space-y-2">
+                      {(dreamResult as any).symbols.map((sym: any, i: number) => {
+                        const ohengIcon: Record<string, string> = { 목: '🌿', 화: '🔥', 토: '⛰️', 금: '✨', 수: '💧' };
+                        return (
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
+                            <span style={{ fontSize: 20 }}>{ohengIcon[sym.oheng] || '🔮'}</span>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-label font-bold text-text-primary">{sym.keyword}</span>
+                                <span className="text-[9px] text-text-hint px-1.5 py-0.5 rounded bg-bg-surface">{sym.oheng}</span>
+                              </div>
+                              <p className="text-caption text-text-secondary mt-0.5">{sym.meaning}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </FadeIn>
+              )}
+
+              {/* 해몽 해석 */}
+              <FadeIn delay={0.06}>
                 <div className="card">
-                  <p className="text-h3 text-text-primary mb-3">해몽 해석</p>
-                  <p className="text-body text-text-secondary leading-relaxed whitespace-pre-line">
+                  <p className="text-h3 text-text-primary mb-3">상세 해석</p>
+                  <p className="text-body-sm text-text-secondary leading-[1.8] whitespace-pre-line">
                     {dreamResult.interpretation}
                   </p>
                 </div>
               </FadeIn>
 
-              {/* 꿈의 핵심 키워드 */}
-              <FadeIn delay={0.08}>
-                <div className="card">
-                  <p className="text-h3 text-text-primary mb-3">꿈의 핵심 키워드</p>
-                  <div className="flex flex-wrap gap-2">
-                    {dreamResult.category.split('/').map((kw: string) => (
-                      <span key={kw} className="px-3 py-1.5 rounded-full text-caption font-semibold bg-brand-gold/10 text-brand-gold">
-                        {kw.trim()}
-                      </span>
-                    ))}
-                    {selectedCategory && DREAM_CATEGORIES.find(c => c.id === selectedCategory) && (
-                      <span className="px-3 py-1.5 rounded-full text-caption font-semibold bg-brand-navy/8 text-brand-navy">
-                        {DREAM_CATEGORIES.find(c => c.id === selectedCategory)!.label}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </FadeIn>
-
-              {/* 오늘의 조언 */}
+              {/* 오늘의 행동 조언 */}
               <FadeIn delay={0.1}>
                 <div className="card-gold">
-                  <p className="text-h3 text-text-primary mb-2">오늘의 행동 조언</p>
-                  <p className="text-body text-text-primary leading-relaxed font-medium">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{ fontSize: 18 }}>🍀</span>
+                    <p className="text-h3 text-text-primary">오늘의 행동 조언</p>
+                  </div>
+                  <p className="text-body-sm text-text-primary leading-relaxed font-medium">
                     {dreamResult.luckyAction}
                   </p>
                 </div>
               </FadeIn>
 
-              {/* 고민 입력했으면 연결 해석 */}
+              {/* 고민 연결 */}
               {concern && (
                 <FadeIn delay={0.12}>
                   <div className="card">
