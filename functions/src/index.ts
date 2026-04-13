@@ -601,15 +601,18 @@ export const generateTopicAnalysis = onCall(
 
     const uid = request.auth?.uid || 'anonymous';
 
-    // 잔액 차감
-    if (!DEV_MODE && request.auth) {
+    // 잔액 차감 — 실명 유저만 (익명 유저는 Firestore 문서 없음)
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
-      await db.runTransaction(async (tx) => {
-        const doc = await tx.get(userRef);
-        const bal = doc.data()?.balance ?? 0;
-        if (bal < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-        tx.update(userRef, { balance: admin.firestore.FieldValue.increment(-1), totalSpent: admin.firestore.FieldValue.increment(1) });
-      });
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const bal = doc.data()?.balance ?? 0;
+          if (bal < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, { balance: admin.firestore.FieldValue.increment(-1), totalSpent: admin.firestore.FieldValue.increment(1) });
+        });
+      }
     }
 
     try {
