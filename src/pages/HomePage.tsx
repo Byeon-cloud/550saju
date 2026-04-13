@@ -304,24 +304,28 @@ export function HomePage() {
               },
               {
                 title: '대운 해설',
-                desc: '10년 단위로 바뀌는 운의 흐름,\n지금이 어떤 시기인지 알려드립니다',
+                desc: '10년 단위 인생의 큰 흐름을 읽어드려요',
+                tag: '평생 운의 지도',
+                tagColor: '#1B2A4A',
                 cost: 1, price: '500원',
                 path: '/daeun',
-                iconBg: 'var(--bg-surface)',
+                iconBg: 'rgba(27,42,74,0.08)',
                 icon: (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4A5568" strokeWidth="1.3">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1B2A4A" strokeWidth="1.3">
                     <path d="M3 12h4l3-9 4 18 3-9h4" />
                   </svg>
                 ),
               },
               {
                 title: `${new Date().getFullYear()} 월별 운세`,
-                desc: '올해 12개월 중 좋은 달과 조심할 달,\n월별 점수와 조언을 한눈에',
+                desc: '올해 12개월, 좋은 달과 조심할 달을 한눈에',
+                tag: '사주 기반 월별 점수',
+                tagColor: '#2D8A4E',
                 cost: 1, price: '500원',
                 path: '/monthly',
-                iconBg: 'var(--bg-surface)',
+                iconBg: 'rgba(45,138,78,0.08)',
                 icon: (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4A5568" strokeWidth="1.3">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="1.3">
                     <rect x="3" y="4" width="18" height="18" rx="2" />
                     <line x1="3" y1="10" x2="21" y2="10" />
                     <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
@@ -330,7 +334,9 @@ export function HomePage() {
               },
               {
                 title: '토정비결',
-                desc: '주역 64괘로 풀어보는 올해의 운세\n전통 해석 + 현대어 풀이',
+                desc: '조선시대 전통 운세법으로 올해를 풀어봐요',
+                tag: '주역 64괘 전통 해석',
+                tagColor: '#C9A96E',
                 cost: 1, price: '500원',
                 path: '/tojung',
                 iconBg: 'rgba(201,169,110,0.08)',
@@ -357,6 +363,12 @@ export function HomePage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-h2 text-text-primary">{svc.title}</p>
                     <p className="text-caption text-text-muted mt-0.5 leading-relaxed whitespace-pre-line">{svc.desc}</p>
+                    {(svc as any).tag && (
+                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[9px] font-bold"
+                        style={{ background: `${(svc as any).tagColor}12`, color: (svc as any).tagColor }}>
+                        {(svc as any).tag}
+                      </span>
+                    )}
                   </div>
                   {/* 가격 — 오른쪽에 크고 명확하게 */}
                   <div className="flex-shrink-0 text-right pl-3">

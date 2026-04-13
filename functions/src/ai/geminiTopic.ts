@@ -77,11 +77,19 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - "혹시 이별 직전에 ~한 일이 있었나요?" 형태의 소름 포인트 2~3개 필수`,
   },
   study: {
-    label: '학업·시험운',
-    sections: ['학습 스타일 분석', '집중력 패턴', '시험 합격 운', '공부 최적 시간대', '올해 학업 전략'],
-    specificPrompt: `- 인성 강약 → 학습 스타일 (암기형 vs 이해형)
-- 시험 합격에 유리한 월/날짜
-- 과목별 적성`,
+    label: '합격·시험운',
+    sections: ['나의 학습 체질 분석', '합격 가능성과 시기', '시험 당일 최적 전략', '슬럼프 극복법', '올해 합격 로드맵'],
+    specificPrompt: `⭐ 시험/취업 준비생에게 "이거 보고 힘 얻었다" 반응이 나올 정도로 구체적으로.
+
+- 인성(정인/편인) 강약 → 학습 체질: 암기형/이해형/직관형/반복형 판별 + 구체적 공부법
+- 식상 → 시험장에서의 표현력: "서술형에 강한지, 객관식에 강한지"
+- 합격 가능성을 사주적 근거와 함께: "인성이 ~해서 합격 기운이 ~합니다"
+- 합격에 유리한 시기: 월 단위로 "양력 O~O월 시험이 가장 유리"
+- 시험 당일 전략: 유리한 시간대, 좌석 방향(오행 방위), 행운 색상/아이템
+- 집중력 패턴: "오전 vs 오후 vs 새벽 중 ~시간대가 사주적으로 최적"
+- 슬럼프 시기 예측: "O월에 슬럼프가 올 수 있는데, 이때는 ~하세요"
+- "혹시 시험 전날 잠을 못 자는 타입 아닌가요?" 같은 소름 포인트
+- 같이 공부하면 좋은 사람의 사주적 특성`,
   },
   social: {
     label: '대인관계운',
@@ -111,7 +119,7 @@ export async function generateTopicAnalysisAI(
   const prompt = buildPrompt(config, sajuData);
 
   // 연애/재회/취업은 Sonnet 4 (고퀄), 나머지는 Haiku (가성비)
-  const premiumTopics = ['love', 'reunion', 'career', 'marriage'];
+  const premiumTopics = ['love', 'reunion', 'career', 'marriage', 'study'];
   const model = premiumTopics.includes(topicId) ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5-20251001';
 
   const msg = await anthropic.messages.create({
