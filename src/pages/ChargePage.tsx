@@ -9,6 +9,7 @@ import { getBalance, addPaidBalance } from '@/services/storage/localStore';
 import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { getRemainingShareRewards, getMonthlyRewardRemaining } from '@/services/share/shareReward';
 
 
 export function ChargePage() {
@@ -252,7 +253,7 @@ export function ChargePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-h3 text-text-primary">친구에게 공유하면 1운 적립</p>
-                <p className="text-caption text-text-muted mt-0.5">새 친구에게 공유할 때마다 계속 받아요</p>
+                <p className="text-caption text-text-muted mt-0.5">오늘 {getRemainingShareRewards()}회 남음 · 월 {getMonthlyRewardRemaining()}운 남음</p>
               </div>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
