@@ -402,19 +402,11 @@ export const grantShareReward = onCall(
     if (!uid) throw new HttpsError('unauthenticated', '로그인 필요');
 
     const today = new Date().toISOString().split('T')[0];
-    const thisMonth = today.slice(0, 7); // YYYY-MM
 
-    // 일일 3회 제한
+    // 일일 3회 제한만 (월 제한 없음 — 바이럴 극대화)
     const dailyLogs = await db.collection(`users/${uid}/shareLogs`)
       .where('date', '==', today).get();
     if (dailyLogs.size >= 3) return { success: false, message: '오늘 공유 보상은 3회까지예요' };
-
-    // 월간 10운 제한
-    const monthlyLogs = await db.collection(`users/${uid}/shareLogs`)
-      .where('date', '>=', `${thisMonth}-01`)
-      .where('date', '<=', `${thisMonth}-31`).get();
-    const monthlyTotal = monthlyLogs.docs.reduce((sum, d) => sum + (d.data().reward || 0), 0);
-    if (monthlyTotal >= 10) return { success: false, message: '이번 달 공유 보상은 10운까지예요' };
 
     await db.runTransaction(async (tx) => {
       const userRef = db.collection('users').doc(uid);
@@ -428,7 +420,7 @@ export const grantShareReward = onCall(
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    return { success: true, reward: 1, dailyRemaining: 3 - dailyLogs.size - 1, monthlyRemaining: 10 - monthlyTotal - 1 };
+    return { success: true, reward: 1, dailyRemaining: 3 - dailyLogs.size - 1 };
   }
 );
 

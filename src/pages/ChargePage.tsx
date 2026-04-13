@@ -9,7 +9,7 @@ import { getBalance, addPaidBalance } from '@/services/storage/localStore';
 import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { getRemainingShareRewards, getMonthlyRewardRemaining, canEarnShareReward, getCooldownMinutes } from '@/services/share/shareReward';
+import { getRemainingShareRewards, canEarnShareReward } from '@/services/share/shareReward';
 
 
 export function ChargePage() {
@@ -254,9 +254,9 @@ export function ChargePage() {
               <div>
                 <p className="text-h3 text-text-primary">친구에게 공유하면 1운 적립</p>
                 <p className="text-caption text-text-muted mt-0.5">
-                  {!canEarnShareReward() && getCooldownMinutes() > 0
-                    ? `다음 공유까지 ${getCooldownMinutes()}분 남음`
-                    : `오늘 ${getRemainingShareRewards()}회 남음`}
+                  {canEarnShareReward()
+                    ? `오늘 ${getRemainingShareRewards()}회 남음`
+                    : '오늘 공유 보상을 모두 받았어요'}
                 </p>
               </div>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
