@@ -7,7 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { DaeunTimeline } from '@/components/saju/DaeunTimeline';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
+import { getReports, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
 import { generateDaeunAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -40,6 +40,15 @@ export function DaeunPage() {
   async function startAnalysis() {
     if (!selected) return;
 
+    // 캐시 확인
+    const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'daeun');
+    if (cached?.aiResult) {
+      setResult(cached.aiResult);
+      setPhase('result');
+      toast.show('이전 분석 결과를 불러왔어요', 'info');
+      return;
+    }
+
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '대운 해설에 1운이 필요해요' } });
@@ -57,11 +66,10 @@ export function DaeunPage() {
     try {
       const res = await generateDaeunAnalysis(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'daeun', createdAt: new Date().toISOString() });
+      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'daeun', aiResult: res.content, createdAt: new Date().toISOString() });
       setPhase('result');
     } catch (e: any) {
       console.error('대운 분석 실패:', e);
-      // API 실패 시 1운 환불
       const { addRewardBalance } = await import('@/services/storage/localStore');
       addRewardBalance(1);
       setError('분석에 실패했어요. 1운이 환불됐어요.');
@@ -140,6 +148,8 @@ export function DaeunPage() {
   // ─── 결과 ───
   if (!result) return null;
 
+  const periods = result.periods || [];
+
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--bg-page-gradient)' }}>
       <Header title="대운 해설" />
@@ -149,12 +159,12 @@ export function DaeunPage() {
         <FadeIn>
           <div className="card-navy py-6 px-5">
             <p className="text-h2 text-white mb-1">{selected?.name}님의 대운 흐름</p>
-            <p className="text-body-sm text-white/70 leading-relaxed whitespace-pre-line">{result.overview}</p>
+            <p className="text-body-sm text-white/70 leading-relaxed whitespace-pre-line">{result.overview || ''}</p>
           </div>
         </FadeIn>
 
         {/* 타임라인 */}
-        {selected?.sajuData.daeun && (
+        {selected?.sajuData?.daeun && (
           <FadeIn delay={0.05}>
             <div className="card">
               <p className="text-h3 text-text-primary mb-4">대운 타임라인</p>
@@ -164,18 +174,22 @@ export function DaeunPage() {
         )}
 
         {/* 현재 대운 하이라이트 */}
-        <FadeIn delay={0.1}>
-          <div className="card-gold py-6 px-5">
-            <p className="text-h2 text-text-primary mb-1">지금 이 시기는?</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.currentHighlight}</p>
-          </div>
-        </FadeIn>
+        {result.currentHighlight && (
+          <FadeIn delay={0.1}>
+            <div className="card-gold py-6 px-5">
+              <p className="text-h2 text-text-primary mb-1">지금 이 시기는?</p>
+              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.currentHighlight}</p>
+            </div>
+          </FadeIn>
+        )}
 
         {/* 기간별 상세 */}
-        <FadeIn delay={0.15}>
-          <p className="text-h2 text-text-primary">기간별 상세 분석</p>
-        </FadeIn>
-        {result.periods.map((period, i) => (
+        {periods.length > 0 && (
+          <FadeIn delay={0.15}>
+            <p className="text-h2 text-text-primary">기간별 상세 분석</p>
+          </FadeIn>
+        )}
+        {periods.map((period, i) => (
           <FadeIn key={period.간지} delay={0.2 + i * 0.03}>
             <PeriodCard period={period} />
           </FadeIn>

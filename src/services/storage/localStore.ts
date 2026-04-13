@@ -66,6 +66,22 @@ export function deleteReport(id: string): void {
   localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
 }
 
+/**
+ * 캐시된 분석 결과 조회 — 같은 사람 + 같은 콘텐츠 타입이면 기존 결과 반환
+ * 사주는 확정된 데이터이므로 같은 사람에 대한 분석은 항상 같은 결과여야 함
+ */
+export function getCachedResult(name: string, birthYear: number, birthMonth: number, birthDay: number, contentType: ContentType): LocalReport | null {
+  const reports = getReports();
+  return reports.find(r =>
+    r.contentType === contentType &&
+    r.aiResult && // AI 결과가 저장된 것만
+    r.name === name &&
+    r.input?.birthYear === birthYear &&
+    r.input?.birthMonth === birthMonth &&
+    r.input?.birthDay === birthDay
+  ) || null;
+}
+
 // ─── 내 프로필 (본인 사주 고정) ───
 
 /** 본인 프로필 조회 — pinned ID 우선, 없으면 relation '본인' 자동 탐색+고정 */

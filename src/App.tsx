@@ -119,6 +119,11 @@ function AnimatedRoutes() {
 export function App() {
   // 앱 시작 시 초기화
   useEffect(() => {
+    // 0. Firebase 익명 인증 — 모든 페이지에서 Cloud Functions 호출 가능하게
+    import('@/services/auth/authService').then(({ ensureAuth }) => {
+      ensureAuth();
+    });
+
     // 1. 미지급 IAP 주문 복구
     import('@/services/payment/iapService').then(({ restorePendingPurchases }) => {
       restorePendingPurchases();

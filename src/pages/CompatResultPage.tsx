@@ -74,8 +74,10 @@ export function CompatResultPage() {
       console.error('궁합 분석 실패:', e);
       const { addRewardBalance } = await import('@/services/storage/localStore');
       addRewardBalance(1);
-      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
-      navigate('/compat');
+      const errMsg = e?.message || '알 수 없는 오류';
+      toast.show(`분석 실패 — 1운 환불 (${errMsg})`, 'warning');
+      // 바로 돌려보내지 않고 3초 대기 (에러 메시지 확인할 시간)
+      setTimeout(() => navigate('/compat'), 3000);
     }).finally(() => clearInterval(interval));
   }, []);
 

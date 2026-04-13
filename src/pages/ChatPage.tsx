@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
-import { getMyProfile } from '@/services/storage/localStore';
+import { getMyProfile, getReports } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
 import { getChatCredits, useChatCredit, addChatCredits } from '@/services/storage/chatCredit';
-import { spendBalance } from '@/services/storage/localStore';
+import { spendBalance, getBalance } from '@/services/storage/localStore';
 import {
   getChatRooms, getChatRoom, createChatRoom, addChatMessage, completeChatRoom, updateRoomName,
   type ChatRoom, type ChatMessage,
@@ -129,21 +129,40 @@ export function ChatPage() {
    ============================================================ */
 function ChatRoomList() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [showChargeConfirm, setShowChargeConfirm] = useState(false);
+  const [showProfilePicker, setShowProfilePicker] = useState(false);
   const myProfile = useMemo(() => getMyProfile(), []);
   const hasProfile = !!myProfile;
   const userName = myProfile?.name || '';
-  const ilgan = myProfile?.sajuData.pillars[2]?.천간 || '';
+  const ilgan = myProfile?.sajuData?.pillars?.[2]?.천간 || '';
   const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
   const timeCtx = useMemo(() => getTimeGreeting(), []);
   const suggestedTopics = useMemo(() => getSuggestedTopics(hasProfile), [hasProfile]);
 
+  // 프로필 목록 (중복 제거)
+  const profiles = useMemo(() => {
+    const all = getReports();
+    const seen = new Map<string, any>();
+    for (const r of all) {
+      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
+      if (r.name?.includes('×') || r.name?.includes('x')) continue;
+      if (!r.input?.birthYear || !r.sajuData?.pillars?.length) continue;
+      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
+      if (!seen.has(key)) seen.set(key, r);
+    }
+    return Array.from(seen.values());
+  }, []);
+
   useEffect(() => { setRooms(getChatRooms()); }, []);
 
-  function startNewChat() {
-    const name = userName || new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+  function startNewChat(profileOverride?: any) {
+    const profile = profileOverride || myProfile;
+    const name = profile?.name || new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
     const room = createChatRoom(name);
-    navigate(`/chat/${room.id}`);
+    // 프로필 정보를 state로 전달 → ChatView에서 사용
+    navigate(`/chat/${room.id}`, { state: { profile } });
   }
 
   return (
@@ -169,7 +188,7 @@ function ChatRoomList() {
       <div className="px-5 pt-4 space-y-5">
         {/* 새 대화 시작 */}
         <FadeIn delay={0.03}>
-          <motion.button whileTap={{ scale: 0.98 }} onClick={startNewChat}
+          <motion.button whileTap={{ scale: 0.98 }} onClick={() => profiles.length > 1 ? setShowProfilePicker(true) : startNewChat()}
             className="w-full rounded-2xl py-5 px-5 text-left"
             style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)', boxShadow: '0 4px 16px rgba(201,169,110,0.3)' }}>
             <div className="flex items-center gap-4">
@@ -182,11 +201,56 @@ function ChatRoomList() {
               </div>
               <div>
                 <p className="text-[16px] font-bold text-white">새 대화 시작하기</p>
-                <p className="text-[11px] text-white/70 mt-0.5">편하게 아무거나 물어보세요</p>
+                <p className="text-[11px] text-white/70 mt-0.5">{profiles.length > 1 ? '누구의 사주로 상담할지 선택하세요' : '편하게 아무거나 물어보세요'}</p>
               </div>
             </div>
           </motion.button>
         </FadeIn>
+
+        {/* 프로필 선택 모달 */}
+        <AnimatePresence>
+          {showProfilePicker && (
+            <motion.div className="fixed inset-0 z-50 flex items-end justify-center"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="absolute inset-0 bg-black/40" onClick={() => setShowProfilePicker(false)} />
+              <motion.div className="relative w-full max-w-[520px] rounded-t-3xl overflow-hidden"
+                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                style={{ background: 'var(--bg-card)' }}>
+                <div className="px-5 pt-5 pb-2">
+                  <p className="text-h2 text-text-primary">누구의 사주로 상담할까요?</p>
+                  <p className="text-caption text-text-muted mt-1">선택한 사주 데이터를 기반으로 대화해요</p>
+                </div>
+                <div className="px-5 pb-6 space-y-2 max-h-[50vh] overflow-y-auto">
+                  {profiles.map((p: any) => {
+                    const pIlgan = p.sajuData?.pillars?.[2]?.천간 || '';
+                    const pOheng = pIlgan ? CHEONGAN_OHENG[pIlgan] : '';
+                    const isMe = !p.input?.relation || p.input.relation === '본인' || p.input.relation === 'self';
+                    return (
+                      <motion.button key={p.id} whileTap={{ scale: 0.97 }}
+                        onClick={() => { setShowProfilePicker(false); startNewChat(p); }}
+                        className={`w-full card text-left py-4 px-4 ${isMe ? 'border-l-4 border-l-brand-gold' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
+                            <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#C9A96E' }}>{p.name?.charAt(0)}</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-h3 text-text-primary">{p.name}</p>
+                              {isMe && <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-brand-navy text-white">나</span>}
+                            </div>
+                            <p className="text-caption text-text-muted">{pIlgan ? `${pIlgan}(${pOheng}) 일간` : '사주 정보'}</p>
+                          </div>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* 오늘 이런 거 물어보면 어때요? */}
         <FadeIn delay={0.06}>
@@ -260,12 +324,10 @@ function ChatRoomList() {
                       </p>
                     </div>
                   </div>
-                  <button onClick={() => navigate('/charge')}
+                  <button onClick={() => setShowChargeConfirm(true)}
                     className="px-4 py-2 rounded-xl text-[11px] font-bold"
-                    style={totalRemaining > 0
-                      ? { background: '#F5F0E8', color: '#8B7A5E' }
-                      : { background: 'linear-gradient(135deg, #C9A96E, #D4A843)', color: '#FFF' }}>
-                    {totalRemaining > 0 ? '충전' : '충전하기'}
+                    style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)', color: '#FFF' }}>
+                    충전하기
                   </button>
                 </div>
               </div>
@@ -273,6 +335,67 @@ function ChatRoomList() {
           })()}
         </FadeIn>
       </div>
+
+      {/* 대화권 충전 확인 팝업 */}
+      <AnimatePresence>
+        {showChargeConfirm && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowChargeConfirm(false)} />
+            <motion.div
+              className="relative w-full max-w-[320px] rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, scale: 0.92, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              style={{ background: 'var(--bg-card)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}
+            >
+              <div className="px-5 pt-6 pb-2 text-center">
+                <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.12), rgba(201,169,110,0.04))' }}>
+                  <span className="text-[24px] font-black text-brand-gold">運</span>
+                </div>
+                <p className="text-[16px] font-bold text-text-primary">대화권 충전</p>
+                <p className="text-[12px] text-text-muted mt-1">1운으로 대화 3회를 추가해요</p>
+              </div>
+              <div className="px-5 py-3">
+                <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(201,169,110,0.05)' }}>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-text-secondary">현재 잔액</span>
+                    <span className="font-bold text-brand-gold">{getBalance()}운</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] mt-1.5">
+                    <span className="text-text-secondary">차감</span>
+                    <span className="font-bold text-func-danger">-1운</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] mt-1.5 pt-1.5 border-t border-border-light">
+                    <span className="text-text-secondary">추가 대화</span>
+                    <span className="font-bold text-brand-gold">+3회</span>
+                  </div>
+                </div>
+              </div>
+              <div className="px-5 pb-5 flex gap-2">
+                <button onClick={() => setShowChargeConfirm(false)}
+                  className="flex-1 py-3 rounded-xl text-[12px] font-semibold text-text-muted bg-bg-surface border border-border-light">취소</button>
+                <button onClick={() => {
+                  if (spendBalance(1)) {
+                    addChatCredits(3);
+                    toast.show('대화권 3회가 추가됐어요!', 'success');
+                    setShowChargeConfirm(false);
+                  } else {
+                    toast.show('잔액이 부족해요', 'warning');
+                    setShowChargeConfirm(false);
+                    navigate('/charge', { state: { message: '사주대화에 1운이 필요해요' } });
+                  }
+                }}
+                  className="flex-1 py-3 rounded-xl text-[12px] font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>충전하기</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -282,6 +405,7 @@ function ChatRoomList() {
    ============================================================ */
 function ChatView({ roomId }: { roomId: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -294,11 +418,13 @@ function ChatView({ roomId }: { roomId: string }) {
   const toast = useToast();
   const timeCtx = useMemo(() => getTimeGreeting(), []);
 
-  const myProfile = useMemo(() => getMyProfile(), []);
+  // state로 전달된 프로필 우선, 없으면 내 프로필
+  const stateProfile = (location.state as any)?.profile;
+  const myProfile = useMemo(() => stateProfile || getMyProfile(), [stateProfile]);
   const sajuData: SajuData | undefined = myProfile?.sajuData;
   const hasProfile = !!myProfile;
   const userName = myProfile?.name || '';
-  const ilgan = myProfile?.sajuData.pillars[2]?.천간 || '';
+  const ilgan = myProfile?.sajuData?.pillars?.[2]?.천간 || '';
   const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
 
   // 대화방 로드
@@ -341,6 +467,21 @@ function ChatView({ roomId }: { roomId: string }) {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, isLoading]);
+
+  // AI 응답 대기 중 페이지 이탈 방지
+  useEffect(() => {
+    if (!isLoading) return;
+    const handleBeforeNav = (e: PopStateEvent) => {
+      // 뒤로가기 차단하고 안내
+      if (isLoading) {
+        window.history.pushState(null, '', window.location.href);
+        toast.show('답변을 기다리고 있어요. 잠시만요!', 'info');
+      }
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handleBeforeNav);
+    return () => window.removeEventListener('popstate', handleBeforeNav);
+  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function sendMessage(text: string) {
     if (!text.trim() || isLoading || isCompleted) return;
@@ -423,19 +564,19 @@ function ChatView({ roomId }: { roomId: string }) {
               <p className="text-[9px] text-white/35">{isCompleted ? '상담 완료' : hasProfile ? `${ilgan}(${oheng}) 일간` : '정통 명리학 기반'}</p>
             </div>
           </div>
-          {/* 잔여 대화권 */}
+          {/* 잔여 대화권 — 탭하면 충전 팝업 */}
           {!isCompleted && (() => {
             const hasFree = hasFreePass('chat');
             const credits = getChatCredits();
             const total = (hasFree ? 1 : 0) + credits;
             return (
-              <button onClick={() => total === 0 ? navigate('/charge') : undefined}
+              <button onClick={() => setShowBuyCredits(true)}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span className="text-[10px] font-bold" style={{ color: total > 0 ? '#E8D5A8' : '#FF6B6B' }}>
                   {total > 0 ? `${total}회` : '0회'}
                 </span>
-                {total === 0 && <span className="text-[9px] text-white/40">충전</span>}
+                <span className="text-[9px] text-white/40">충전</span>
               </button>
             );
           })()}
@@ -549,23 +690,44 @@ function ChatView({ roomId }: { roomId: string }) {
         )}
       </div>
 
-      {/* 대화권 구매 */}
-      {showBuyCredits && (
-        <div className="flex-shrink-0 px-4 pb-2">
-          <div className="rounded-2xl p-4" style={{ background: '#FFFCF5', border: '1px solid rgba(201,169,110,0.2)' }}>
-            <p className="text-[14px] font-bold text-text-primary">오늘의 대화가 도움이 됐다면</p>
-            <p className="text-[12px] text-text-muted mt-1">1운으로 3회 더 이야기할 수 있어요</p>
-            <div className="flex gap-2 mt-3">
-              <button onClick={() => {
-                if (spendBalance(1)) { addChatCredits(3); toast.show('대화권 3회 추가!', 'success'); setShowBuyCredits(false); }
-                else { toast.show('잔액이 부족해요', 'warning'); navigate('/charge'); }
-              }} className="flex-1 py-3 rounded-xl text-[12px] font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>1운으로 계속하기</button>
-              <button onClick={() => setShowBuyCredits(false)} className="px-4 py-3 rounded-xl text-[12px] text-text-muted bg-bg-surface">닫기</button>
+      {/* 대화권 구매 팝업 */}
+      <AnimatePresence>
+        {showBuyCredits && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="flex-shrink-0 px-4 pb-2"
+          >
+            <div className="rounded-2xl p-4" style={{ background: '#FFFCF5', border: '1px solid rgba(201,169,110,0.2)' }}>
+              <p className="text-[14px] font-bold text-text-primary">대화권 충전</p>
+              <p className="text-[12px] text-text-muted mt-1">1운으로 대화 3회를 추가할 수 있어요</p>
+              <div className="mt-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(201,169,110,0.06)' }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-text-secondary">현재 잔액</span>
+                  <span className="text-[11px] font-bold text-brand-gold">{getBalance()}운</span>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[11px] text-text-secondary">차감</span>
+                  <span className="text-[11px] font-bold text-func-danger">-1운</span>
+                </div>
+                <div className="flex items-center justify-between mt-1 pt-1 border-t border-border-light">
+                  <span className="text-[11px] text-text-secondary">추가 대화</span>
+                  <span className="text-[11px] font-bold text-brand-gold">+3회</span>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button onClick={() => {
+                  if (spendBalance(1)) { addChatCredits(3); toast.show('대화권 3회가 추가됐어요!', 'success'); setShowBuyCredits(false); }
+                  else { toast.show('잔액이 부족해요', 'warning'); navigate('/charge', { state: { message: '사주대화에 1운이 필요해요' } }); }
+                }} className="flex-1 py-3 rounded-xl text-[12px] font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>1운으로 충전하기</button>
+                <button onClick={() => setShowBuyCredits(false)} className="px-4 py-3 rounded-xl text-[12px] text-text-muted bg-bg-surface border border-border-light">취소</button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 입력 */}
       {!isCompleted && (
