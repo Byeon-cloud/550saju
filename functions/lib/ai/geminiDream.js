@@ -9,7 +9,7 @@ async function generateDreamInterpretation(apiKey, category, dreamText, sajuData
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-pro',
-        generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: {},
     });
     let sajuContext = '';
     if (sajuData?.pillars) {

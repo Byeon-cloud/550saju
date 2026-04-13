@@ -14,7 +14,7 @@ export async function generateChatAnswerAI(
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-pro',
-    generationConfig: { thinkingConfig: { thinkingBudget: 0 } } as any,
+    generationConfig: {} as any,
   });
 
   // 사주 데이터를 최대한 상세하게 전달

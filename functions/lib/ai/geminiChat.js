@@ -10,7 +10,7 @@ async function generateChatAnswerAI(apiKey, question, sajuData, chatHistory, tim
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-pro',
-        generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: {},
     });
     // 사주 데이터를 최대한 상세하게 전달
     let sajuContext = '사주 정보가 없습니다. 일반 명리학 상식으로 답변하세요.';

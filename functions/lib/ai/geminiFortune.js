@@ -29,7 +29,6 @@ async function generateDailyFortuneAI(apiKey, answers, timeSlot, sajuSummary) {
     const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 65536 },
-        thinkingConfig: { thinkingBudget: 0 },
     });
     const timeLabels = {
         latenight: '자시(子時) — 수(水)의 깊은 기운. 이 시간까지 깨어있다면 중요한 고민이 있음.',
