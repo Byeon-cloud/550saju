@@ -17,9 +17,11 @@ import { addRewardBalance } from '@/services/storage/localStore';
 
 const SHARE_LOG_KEY = 'saju500_share_log';
 const MONTHLY_LOG_KEY = 'saju500_share_monthly';
+const SHARE_TIMES_KEY = 'saju500_share_times'; // 공유 시각 기록 (쿨타임용)
 const MAX_DAILY_SHARES = 3;       // 하루 3회까지
 const MAX_MONTHLY_REWARD = 10;    // 월 10운까지 (= 5,000원 상당)
 const REWARD_PER_SHARE = 1;       // 공유 1회 = 1운
+const SHARE_COOLDOWN_MS = 60 * 60 * 1000; // 1시간 쿨타임 (같은 사람 연속 방지)
 
 interface ShareLog {
   date: string;
@@ -76,9 +78,42 @@ export function getRemainingShareRewards(): number {
   return Math.min(dailyRemain, Math.floor(monthlyRemain));
 }
 
+/** 마지막 공유 후 쿨타임 경과 여부 */
+function isCooldownPassed(): boolean {
+  try {
+    const raw = localStorage.getItem(SHARE_TIMES_KEY);
+    if (!raw) return true;
+    const times: number[] = JSON.parse(raw);
+    const lastTime = times[times.length - 1] || 0;
+    return Date.now() - lastTime >= SHARE_COOLDOWN_MS;
+  } catch { return true; }
+}
+
+function recordShareTime(): void {
+  try {
+    const raw = localStorage.getItem(SHARE_TIMES_KEY);
+    const times: number[] = raw ? JSON.parse(raw) : [];
+    times.push(Date.now());
+    // 최근 10개만 유지
+    localStorage.setItem(SHARE_TIMES_KEY, JSON.stringify(times.slice(-10)));
+  } catch { /* 무시 */ }
+}
+
 /** 공유 리워드 가능 여부 */
 export function canEarnShareReward(): boolean {
-  return getRemainingShareRewards() > 0;
+  return getRemainingShareRewards() > 0 && isCooldownPassed();
+}
+
+/** 쿨타임 남은 시간 (분) */
+export function getCooldownMinutes(): number {
+  try {
+    const raw = localStorage.getItem(SHARE_TIMES_KEY);
+    if (!raw) return 0;
+    const times: number[] = JSON.parse(raw);
+    const lastTime = times[times.length - 1] || 0;
+    const remaining = SHARE_COOLDOWN_MS - (Date.now() - lastTime);
+    return remaining > 0 ? Math.ceil(remaining / 60000) : 0;
+  } catch { return 0; }
 }
 
 /** 이번 달 남은 리워드 운 */
@@ -94,6 +129,9 @@ export function getMonthlyRewardRemaining(): number {
  */
 export function claimShareReward(): number {
   if (!canEarnShareReward()) return 0;
+
+  // 쿨타임 기록
+  recordShareTime();
 
   const today = getToday();
   const thisMonth = getThisMonth();
