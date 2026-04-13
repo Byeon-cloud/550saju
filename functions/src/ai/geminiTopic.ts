@@ -119,7 +119,7 @@ export async function generateTopicAnalysisAI(
   const prompt = buildPrompt(config, sajuData);
 
   // 연애/재회/취업은 Sonnet 4 (고퀄), 나머지는 Haiku (가성비)
-  const premiumTopics = ['love', 'reunion', 'career', 'marriage', 'study'];
+  const premiumTopics = ['reunion', 'study'];
   const model = premiumTopics.includes(topicId) ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5-20251001';
 
   const msg = await anthropic.messages.create({
