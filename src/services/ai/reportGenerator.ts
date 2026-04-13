@@ -44,8 +44,9 @@ export async function generateDailyFortune(
   answers: number[],
   timeSlot: string,
   sajuSummary?: { ilgan: string; oheng: string; name: string },
+  userConcern?: string,
 ): Promise<any> {
-  const result = await callWithAuth('generateDailyFortune', { answers, timeSlot, sajuSummary });
+  const result = await callWithAuth('generateDailyFortune', { answers, timeSlot, sajuSummary, userConcern });
   return result.data;
 }
 

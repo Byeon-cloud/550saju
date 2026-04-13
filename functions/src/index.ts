@@ -140,7 +140,7 @@ export const generateReport = onCall(
 export const generateDailyFortune = onCall(
   { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
-    const { answers, timeSlot, sajuSummary } = request.data;
+    const { answers, timeSlot, sajuSummary, userConcern } = request.data;
 
     try {
       console.log('[generateDailyFortune] Starting Gemini call...');
@@ -150,6 +150,7 @@ export const generateDailyFortune = onCall(
         answers || [],
         timeSlot || 'morning',
         sajuSummary,
+        userConcern || '',
       );
       console.log('[generateDailyFortune] Success, keys:', Object.keys(result || {}));
       return result;

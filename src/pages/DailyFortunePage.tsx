@@ -220,7 +220,8 @@ export function DailyFortunePage() {
     };
   }, [aiResult, localResult]);
 
-  const result = normalizedAiResult || localResult;
+  // AI 로딩 중이면 결과 안 보여줌 (로딩 화면이 대신 표시됨)
+  const result = aiLoading ? null : (normalizedAiResult || localResult);
   const isOtherPerson = recentReport && recentReport.input.relation && recentReport.input.relation !== '본인' && recentReport.input.relation !== 'self';
   const targetName = recentReport?.name || '';
 
@@ -263,7 +264,7 @@ export function DailyFortunePage() {
         name: selectedProfile.name || '',
       } : undefined;
 
-      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary);
+      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary, userConcern || undefined);
       if (aiData) setAiResult(aiData);
     } catch (e: any) {
       console.error('[DailyFortune] AI 호출 실패:', e);
@@ -486,7 +487,7 @@ export function DailyFortunePage() {
                 <p className="text-caption text-text-hint mt-1">보통 10~20초 소요돼요</p>
               </div>
             </motion.div>
-          ) : (
+          ) : result ? (
             <motion.div
               key="result"
               initial={{ opacity: 0, y: 20 }}
@@ -508,7 +509,7 @@ export function DailyFortunePage() {
                       const concernIdx = CONCERN_CHIPS.findIndex(c => c.id === selectedConcern);
                       const answersArr = [concernIdx >= 0 ? concernIdx : 5];
                       const sajuSummary = selectedProfile?.sajuData ? { ilgan: selectedProfile.sajuData.pillars?.[2]?.천간 || '', oheng: ilganOheng || '', name: selectedProfile.name || '' } : undefined;
-                      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary);
+                      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary, userConcern || undefined);
                       if (aiData) setAiResult(aiData);
                     } catch (e: any) { setAiError(e?.message || '재시도 실패'); }
                     finally { setAiLoading(false); }
@@ -690,7 +691,7 @@ export function DailyFortunePage() {
                 <BannerAdLazy className="mt-3" />
               </div>
             </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
       </div>
     </div>
