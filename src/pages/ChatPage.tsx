@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
-import { getMyProfile } from '@/services/storage/localStore';
+import { getMyProfile, getReports } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
@@ -132,20 +132,37 @@ function ChatRoomList() {
   const toast = useToast();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [showChargeConfirm, setShowChargeConfirm] = useState(false);
+  const [showProfilePicker, setShowProfilePicker] = useState(false);
   const myProfile = useMemo(() => getMyProfile(), []);
   const hasProfile = !!myProfile;
   const userName = myProfile?.name || '';
-  const ilgan = myProfile?.sajuData.pillars[2]?.천간 || '';
+  const ilgan = myProfile?.sajuData?.pillars?.[2]?.천간 || '';
   const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
   const timeCtx = useMemo(() => getTimeGreeting(), []);
   const suggestedTopics = useMemo(() => getSuggestedTopics(hasProfile), [hasProfile]);
 
+  // 프로필 목록 (중복 제거)
+  const profiles = useMemo(() => {
+    const all = getReports();
+    const seen = new Map<string, any>();
+    for (const r of all) {
+      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
+      if (r.name?.includes('×') || r.name?.includes('x')) continue;
+      if (!r.input?.birthYear || !r.sajuData?.pillars?.length) continue;
+      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
+      if (!seen.has(key)) seen.set(key, r);
+    }
+    return Array.from(seen.values());
+  }, []);
+
   useEffect(() => { setRooms(getChatRooms()); }, []);
 
-  function startNewChat() {
-    const name = userName || new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+  function startNewChat(profileOverride?: any) {
+    const profile = profileOverride || myProfile;
+    const name = profile?.name || new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
     const room = createChatRoom(name);
-    navigate(`/chat/${room.id}`);
+    // 프로필 정보를 state로 전달 → ChatView에서 사용
+    navigate(`/chat/${room.id}`, { state: { profile } });
   }
 
   return (
@@ -171,7 +188,7 @@ function ChatRoomList() {
       <div className="px-5 pt-4 space-y-5">
         {/* 새 대화 시작 */}
         <FadeIn delay={0.03}>
-          <motion.button whileTap={{ scale: 0.98 }} onClick={startNewChat}
+          <motion.button whileTap={{ scale: 0.98 }} onClick={() => profiles.length > 1 ? setShowProfilePicker(true) : startNewChat()}
             className="w-full rounded-2xl py-5 px-5 text-left"
             style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)', boxShadow: '0 4px 16px rgba(201,169,110,0.3)' }}>
             <div className="flex items-center gap-4">
@@ -184,11 +201,56 @@ function ChatRoomList() {
               </div>
               <div>
                 <p className="text-[16px] font-bold text-white">새 대화 시작하기</p>
-                <p className="text-[11px] text-white/70 mt-0.5">편하게 아무거나 물어보세요</p>
+                <p className="text-[11px] text-white/70 mt-0.5">{profiles.length > 1 ? '누구의 사주로 상담할지 선택하세요' : '편하게 아무거나 물어보세요'}</p>
               </div>
             </div>
           </motion.button>
         </FadeIn>
+
+        {/* 프로필 선택 모달 */}
+        <AnimatePresence>
+          {showProfilePicker && (
+            <motion.div className="fixed inset-0 z-50 flex items-end justify-center"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="absolute inset-0 bg-black/40" onClick={() => setShowProfilePicker(false)} />
+              <motion.div className="relative w-full max-w-[520px] rounded-t-3xl overflow-hidden"
+                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                style={{ background: 'var(--bg-card)' }}>
+                <div className="px-5 pt-5 pb-2">
+                  <p className="text-h2 text-text-primary">누구의 사주로 상담할까요?</p>
+                  <p className="text-caption text-text-muted mt-1">선택한 사주 데이터를 기반으로 대화해요</p>
+                </div>
+                <div className="px-5 pb-6 space-y-2 max-h-[50vh] overflow-y-auto">
+                  {profiles.map((p: any) => {
+                    const pIlgan = p.sajuData?.pillars?.[2]?.천간 || '';
+                    const pOheng = pIlgan ? CHEONGAN_OHENG[pIlgan] : '';
+                    const isMe = !p.input?.relation || p.input.relation === '본인' || p.input.relation === 'self';
+                    return (
+                      <motion.button key={p.id} whileTap={{ scale: 0.97 }}
+                        onClick={() => { setShowProfilePicker(false); startNewChat(p); }}
+                        className={`w-full card text-left py-4 px-4 ${isMe ? 'border-l-4 border-l-brand-gold' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
+                            <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#C9A96E' }}>{p.name?.charAt(0)}</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-h3 text-text-primary">{p.name}</p>
+                              {isMe && <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-brand-navy text-white">나</span>}
+                            </div>
+                            <p className="text-caption text-text-muted">{pIlgan ? `${pIlgan}(${pOheng}) 일간` : '사주 정보'}</p>
+                          </div>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* 오늘 이런 거 물어보면 어때요? */}
         <FadeIn delay={0.06}>
@@ -343,6 +405,7 @@ function ChatRoomList() {
    ============================================================ */
 function ChatView({ roomId }: { roomId: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -355,11 +418,13 @@ function ChatView({ roomId }: { roomId: string }) {
   const toast = useToast();
   const timeCtx = useMemo(() => getTimeGreeting(), []);
 
-  const myProfile = useMemo(() => getMyProfile(), []);
+  // state로 전달된 프로필 우선, 없으면 내 프로필
+  const stateProfile = (location.state as any)?.profile;
+  const myProfile = useMemo(() => stateProfile || getMyProfile(), [stateProfile]);
   const sajuData: SajuData | undefined = myProfile?.sajuData;
   const hasProfile = !!myProfile;
   const userName = myProfile?.name || '';
-  const ilgan = myProfile?.sajuData.pillars[2]?.천간 || '';
+  const ilgan = myProfile?.sajuData?.pillars?.[2]?.천간 || '';
   const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
 
   // 대화방 로드
