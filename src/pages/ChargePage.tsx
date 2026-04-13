@@ -198,60 +198,48 @@ export function ChargePage() {
               try {
                 const { isAppsInToss } = await import('@/services/payment/iapService');
                 if (isAppsInToss()) {
-                  // 앱인토스: contactsViral SDK로 공유 리워드
+                  // 앱인토스: contactsViral SDK — 앱인토스 공유 리워드 정책
                   const sdkName = '@apps-in-toss/' + 'web-framework';
                   const { contactsViral } = await import(/* @vite-ignore */ sdkName);
                   contactsViral({
                     options: { moduleId: 'a56725a6-4c52-40e5-b68b-2f752caf0a94' },
-                    onEvent: (event: any) => {
+                    onEvent: async (event: any) => {
                       if (event.type === 'sendViral') {
+                        // 앱인토스가 공유 확인 → 운 적립
+                        const { claimShareReward } = await import('@/services/share/shareReward');
+                        const earned = claimShareReward();
                         setBalanceDisplay(getBalance());
-                        toast.show('공유 완료! 리워드가 적립돼요', 'success');
+                        toast.show(earned > 0 ? `공유 완료! ${earned}운이 적립됐어요` : '공유 완료!', 'success');
                       }
                     },
                     onError: () => {
-                      toast.show('공유에 실패했어요', 'warning');
+                      toast.show('공유가 취소됐어요', 'info');
                     },
                   });
                 } else {
-                  // 웹: 공유 채널 선택
+                  // 웹: navigator.share → 실제 공유 시에만 리워드
                   const url = `${window.location.origin}/share/invite`;
                   const text = '나도 500원에 내 사주 볼 수 있대! 한번 해봐';
-                  let shared = false;
 
                   if (navigator.share) {
-                    // 모바일/최신 PC: 네이티브 공유 시트
                     try {
                       await navigator.share({ title: '사주500', text, url });
-                      shared = true;
-                    } catch { /* 취소 */ }
-                  } else {
-                    // PC: 카카오톡 공유 URL로 새 탭
-                    const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?app_key=javascript&url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-                    window.open(kakaoUrl, '_blank', 'width=480,height=640');
-                    shared = true; // 팝업 열렸으면 공유 시도한 것으로 간주
-                  }
-
-                  if (shared) {
-                    const { claimShareReward } = await import('@/services/share/shareReward');
-                    const earned = claimShareReward();
-                    if (earned > 0) {
-                      setBalanceDisplay(getBalance());
-                      toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-                    } else {
-                      toast.show('공유 완료!', 'success');
-                    }
-                    // 서버 기록 (로그인됐을 때만, 실패해도 무시)
-                    try {
-                      const { auth } = await import('@/services/auth/firebase');
-                      if (auth.currentUser) {
-                        const { getFunctions, httpsCallable } = await import('firebase/functions');
-                        const { app: fbApp } = await import('@/services/auth/firebase');
-                        await httpsCallable(getFunctions(fbApp, 'us-central1'), 'grantShareReward')({});
+                      // 공유 완료 확인 → 리워드
+                      const { claimShareReward } = await import('@/services/share/shareReward');
+                      const earned = claimShareReward();
+                      if (earned > 0) {
+                        setBalanceDisplay(getBalance());
+                        toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+                      } else {
+                        toast.show('공유 완료!', 'success');
                       }
-                    } catch { /* 무시 */ }
+                    } catch {
+                      toast.show('공유를 완료하면 1운이 적립돼요', 'info');
+                    }
                   } else {
-                    toast.show('공유를 완료하면 1운이 적립돼요', 'info');
+                    // PC 폴백: 링크 복사 (리워드 없음, 공유 확인 불가)
+                    try { await navigator.clipboard.writeText(url); } catch { /* 무시 */ }
+                    toast.show('링크가 복사됐어요! 친구에게 보내주세요', 'success');
                   }
                 }
               } catch (e) {
