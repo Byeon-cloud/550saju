@@ -9,7 +9,7 @@ async function generateTojungBigyeol(apiKey, sajuData) {
     const anthropic = new sdk_1.default({ apiKey });
     const prompt = buildPrompt(sajuData);
     const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-20250414',
         max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }],
     });

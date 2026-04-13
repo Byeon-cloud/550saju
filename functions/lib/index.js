@@ -115,18 +115,27 @@ exports.generateReport = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
         });
     }
     try {
-        const { generateSajuReport } = await lazyClaudeReport();
-        const result = await generateSajuReport(ANTHROPIC_KEY.value(), sajuData, situation, reportType || 'basic');
-        // Firestore에 리포트 저장
+        console.log('[generateReport] Starting Claude call...');
+        const mod = await lazyClaudeReport();
+        console.log('[generateReport] Module loaded, calling API...');
+        const result = await mod.generateSajuReport(ANTHROPIC_KEY.value(), sajuData, situation, reportType || 'basic');
+        console.log('[generateReport] Claude response received, keys:', Object.keys(result?.content || {}));
+        // Firestore에 리포트 저장 (content는 큰 JSON이라 별도 저장)
         const reportRef = db.collection('reports').doc();
-        await reportRef.set({
-            uid,
-            ...result,
-            type: reportType || 'basic',
-            aiModel: 'claude-sonnet-4-6',
-            generatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            shareEnabled: false,
-        });
+        try {
+            await reportRef.set({
+                uid,
+                type: reportType || 'basic',
+                aiModel: 'claude-sonnet-4-6',
+                generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                shareEnabled: false,
+            });
+            console.log('[generateReport] Firestore saved');
+        }
+        catch (fsErr) {
+            console.error('[generateReport] Firestore save failed:', fsErr.message);
+        }
+        console.log('[generateReport] Returning result');
         return { reportId: reportRef.id, ...result };
     }
     catch (error) {
