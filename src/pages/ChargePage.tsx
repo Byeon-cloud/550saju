@@ -214,39 +214,49 @@ export function ChargePage() {
                     },
                   });
                 } else {
-                  // 웹: navigator.share()로 실제 공유 (카톡, 인스타 등)
+                  // 웹: 공유 채널 선택
                   const url = `${window.location.origin}/share/invite`;
-                  const shareData = { title: '사주500 — 500원 AI 사주', text: '나도 500원에 내 사주 볼 수 있대! 한번 해봐', url };
+                  const text = '나도 500원에 내 사주 볼 수 있대! 한번 해봐';
+                  let shared = false;
 
                   if (navigator.share) {
+                    // 모바일/최신 PC: 네이티브 공유 시트
                     try {
-                      await navigator.share(shareData);
-                      // 실제 공유 완료 → 리워드 적립
-                      const { claimShareReward } = await import('@/services/share/shareReward');
-                      const earned = claimShareReward();
-                      if (earned > 0) {
-                        setBalanceDisplay(getBalance());
-                        toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-                        try {
-                          const { getFunctions, httpsCallable } = await import('firebase/functions');
-                          const { app: fbApp } = await import('@/services/auth/firebase');
-                          await httpsCallable(getFunctions(fbApp, 'us-central1'), 'grantShareReward')({});
-                        } catch { /* 서버 기록 실패 무시 */ }
-                      } else {
-                        toast.show('공유 완료!', 'success');
-                      }
-                    } catch {
-                      // 사용자가 공유 취소 → 리워드 없음
-                      toast.show('공유를 완료해야 1운이 적립돼요', 'info');
-                    }
+                      await navigator.share({ title: '사주500', text, url });
+                      shared = true;
+                    } catch { /* 취소 */ }
                   } else {
-                    // navigator.share 미지원 (구형 PC 브라우저)
-                    toast.show('모바일에서 공유하면 1운을 받을 수 있어요', 'info');
+                    // PC: 카카오톡 공유 URL로 새 탭
+                    const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?app_key=javascript&url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                    window.open(kakaoUrl, '_blank', 'width=480,height=640');
+                    shared = true; // 팝업 열렸으면 공유 시도한 것으로 간주
+                  }
+
+                  if (shared) {
+                    const { claimShareReward } = await import('@/services/share/shareReward');
+                    const earned = claimShareReward();
+                    if (earned > 0) {
+                      setBalanceDisplay(getBalance());
+                      toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+                    } else {
+                      toast.show('공유 완료!', 'success');
+                    }
+                    // 서버 기록 (로그인됐을 때만, 실패해도 무시)
+                    try {
+                      const { auth } = await import('@/services/auth/firebase');
+                      if (auth.currentUser) {
+                        const { getFunctions, httpsCallable } = await import('firebase/functions');
+                        const { app: fbApp } = await import('@/services/auth/firebase');
+                        await httpsCallable(getFunctions(fbApp, 'us-central1'), 'grantShareReward')({});
+                      }
+                    } catch { /* 무시 */ }
+                  } else {
+                    toast.show('공유를 완료하면 1운이 적립돼요', 'info');
                   }
                 }
               } catch (e) {
                 console.warn('[Share]', e);
-                toast.show('모바일에서 공유하면 1운을 받을 수 있어요', 'info');
+                toast.show('다시 시도해주세요', 'info');
               }
             }}
             className="w-full card-gold py-4 px-5 text-left"

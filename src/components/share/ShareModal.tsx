@@ -39,12 +39,15 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
       if (hasReward) {
         const earned = claimShareReward();
         setRewardAmount(earned);
+        // 서버 기록 (로그인됐을 때만)
         try {
-          const { getFunctions, httpsCallable } = await import('firebase/functions');
-          const { app } = await import('@/services/auth/firebase');
-          const fns = getFunctions(app, 'us-central1');
-          await httpsCallable(fns, 'grantShareReward')({});
-        } catch { /* 서버 기록 실패 무시 */ }
+          const { auth } = await import('@/services/auth/firebase');
+          if (auth.currentUser) {
+            const { getFunctions, httpsCallable } = await import('firebase/functions');
+            const { app } = await import('@/services/auth/firebase');
+            await httpsCallable(getFunctions(app, 'us-central1'), 'grantShareReward')({});
+          }
+        } catch { /* 무시 */ }
       }
       import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.SHARE_RESULT));
       setShared(true);
