@@ -214,31 +214,39 @@ export function ChargePage() {
                     },
                   });
                 } else {
-                  // 웹: Web Share API + 클립보드 폴백
-                  const { shareResult } = await import('@/utils/share');
-                  const { claimShareReward } = await import('@/services/share/shareReward');
+                  // 웹: navigator.share()로 실제 공유 (카톡, 인스타 등)
                   const url = `${window.location.origin}/share/invite`;
-                  let shared = await shareResult({ name: '사주500', reportId: 'invite' });
-                  if (!shared) {
-                    try { await navigator.clipboard.writeText(url); shared = true; } catch { /* 무시 */ }
-                  }
-                  if (shared) {
-                    const earned = claimShareReward();
-                    if (earned > 0) {
-                      setBalanceDisplay(getBalance());
-                      toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-                    } else {
-                      toast.show('공유 링크가 복사됐어요!', 'success');
+                  const shareData = { title: '사주500 — 500원 AI 사주', text: '나도 500원에 내 사주 볼 수 있대! 한번 해봐', url };
+
+                  if (navigator.share) {
+                    try {
+                      await navigator.share(shareData);
+                      // 실제 공유 완료 → 리워드 적립
+                      const { claimShareReward } = await import('@/services/share/shareReward');
+                      const earned = claimShareReward();
+                      if (earned > 0) {
+                        setBalanceDisplay(getBalance());
+                        toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+                        try {
+                          const { getFunctions, httpsCallable } = await import('firebase/functions');
+                          const { app: fbApp } = await import('@/services/auth/firebase');
+                          await httpsCallable(getFunctions(fbApp, 'us-central1'), 'grantShareReward')({});
+                        } catch { /* 서버 기록 실패 무시 */ }
+                      } else {
+                        toast.show('공유 완료!', 'success');
+                      }
+                    } catch {
+                      // 사용자가 공유 취소 → 리워드 없음
+                      toast.show('공유를 완료해야 1운이 적립돼요', 'info');
                     }
                   } else {
-                    // 모든 공유 방법 실패 → 수동 복사 안내
-                    toast.show(`초대 링크: ${url}`, 'info');
+                    // navigator.share 미지원 (구형 PC 브라우저)
+                    toast.show('모바일에서 공유하면 1운을 받을 수 있어요', 'info');
                   }
                 }
               } catch (e) {
-                console.warn('[Share] 공유 실패:', e);
-                // 마지막 폴백: URL 직접 표시
-                toast.show('공유 링크를 복사해주세요: saju500.web.app', 'info');
+                console.warn('[Share]', e);
+                toast.show('모바일에서 공유하면 1운을 받을 수 있어요', 'info');
               }
             }}
             className="w-full card-gold py-4 px-5 text-left"

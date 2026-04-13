@@ -32,16 +32,8 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
   const remaining = getRemainingShareRewards();
 
   async function handleShare() {
-    let success = await shareResult({ name, reportId, topScore });
-
-    // 공유 실패 시 클립보드 복사로 폴백
-    if (!success) {
-      try {
-        const url = `${window.location.origin}/share/${reportId}`;
-        await navigator.clipboard.writeText(url);
-        success = true;
-      } catch { /* 무시 */ }
-    }
+    // 실제 공유 (카톡, 인스타 등)만 리워드 대상
+    const success = await shareResult({ name, reportId, topScore });
 
     if (success) {
       if (hasReward) {
@@ -52,14 +44,12 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
           const { app } = await import('@/services/auth/firebase');
           const fns = getFunctions(app, 'us-central1');
           await httpsCallable(fns, 'grantShareReward')({});
-        } catch (e) {
-          console.warn('[ShareReward] 서버 기록 실패:', e);
-        }
+        } catch { /* 서버 기록 실패 무시 */ }
       }
-      // 프로모션 이벤트: 공유 완료
       import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.SHARE_RESULT));
       setShared(true);
     }
+    // 공유 취소/실패 → 아무것도 안 함 (모달 유지, 다시 시도 가능)
   }
 
   return (
