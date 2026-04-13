@@ -80,19 +80,22 @@ export const generateReport = onCall(
 
     const uid = request.auth?.uid || 'anonymous';
 
-    // 런칭 시 잔액 차감 활성화
-    if (!DEV_MODE && request.auth) {
+    // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const cost = reportType === 'premium' ? 10 : 1;
       const userRef = db.collection('users').doc(uid);
-      await db.runTransaction(async (tx) => {
-        const userDoc = await tx.get(userRef);
-        const balance = userDoc.data()?.balance ?? 0;
-        if (balance < cost) throw new HttpsError('failed-precondition', '운이 부족합니다');
-        tx.update(userRef, {
-          balance: admin.firestore.FieldValue.increment(-cost),
-          totalSpent: admin.firestore.FieldValue.increment(cost),
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const balance = doc.data()?.balance ?? 0;
+          if (balance < cost) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, {
+            balance: admin.firestore.FieldValue.increment(-cost),
+            totalSpent: admin.firestore.FieldValue.increment(cost),
+          });
         });
-      });
+      }
     }
 
     try {
@@ -248,17 +251,20 @@ export const generateDaeun = onCall(
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
-    if (!DEV_MODE && request.auth) {
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
-      await db.runTransaction(async (tx) => {
-        const userDoc = await tx.get(userRef);
-        const balance = userDoc.data()?.balance ?? 0;
-        if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-        tx.update(userRef, {
-          balance: admin.firestore.FieldValue.increment(-1),
-          totalSpent: admin.firestore.FieldValue.increment(1),
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const balance = doc.data()?.balance ?? 0;
+          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, {
+            balance: admin.firestore.FieldValue.increment(-1),
+            totalSpent: admin.firestore.FieldValue.increment(1),
+          });
         });
-      });
+      }
     }
 
     try {
@@ -288,17 +294,20 @@ export const generateMonthly = onCall(
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
-    if (!DEV_MODE && request.auth) {
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
-      await db.runTransaction(async (tx) => {
-        const userDoc = await tx.get(userRef);
-        const balance = userDoc.data()?.balance ?? 0;
-        if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-        tx.update(userRef, {
-          balance: admin.firestore.FieldValue.increment(-1),
-          totalSpent: admin.firestore.FieldValue.increment(1),
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const balance = doc.data()?.balance ?? 0;
+          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, {
+            balance: admin.firestore.FieldValue.increment(-1),
+            totalSpent: admin.firestore.FieldValue.increment(1),
+          });
         });
-      });
+      }
     }
 
     try {
@@ -328,17 +337,20 @@ export const generateCompatibility = onCall(
     if (!sajuData1 || !sajuData2) throw new HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
 
     const uid = request.auth?.uid || 'anonymous';
-    if (!DEV_MODE && request.auth) {
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
-      await db.runTransaction(async (tx) => {
-        const userDoc = await tx.get(userRef);
-        const balance = userDoc.data()?.balance ?? 0;
-        if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-        tx.update(userRef, {
-          balance: admin.firestore.FieldValue.increment(-1),
-          totalSpent: admin.firestore.FieldValue.increment(1),
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const balance = doc.data()?.balance ?? 0;
+          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, {
+            balance: admin.firestore.FieldValue.increment(-1),
+            totalSpent: admin.firestore.FieldValue.increment(1),
+          });
         });
-      });
+      }
     }
 
     try {
@@ -370,17 +382,20 @@ export const generateTojung = onCall(
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
-    if (!DEV_MODE && request.auth) {
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
-      await db.runTransaction(async (tx) => {
-        const userDoc = await tx.get(userRef);
-        const balance = userDoc.data()?.balance ?? 0;
-        if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-        tx.update(userRef, {
-          balance: admin.firestore.FieldValue.increment(-1),
-          totalSpent: admin.firestore.FieldValue.increment(1),
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const balance = doc.data()?.balance ?? 0;
+          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, {
+            balance: admin.firestore.FieldValue.increment(-1),
+            totalSpent: admin.firestore.FieldValue.increment(1),
+          });
         });
-      });
+      }
     }
 
     try {
