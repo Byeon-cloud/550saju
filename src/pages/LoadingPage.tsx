@@ -96,6 +96,8 @@ export function LoadingPage() {
           createdAt: new Date().toISOString(),
           aiResult: result.content,
         });
+        // 프로모션 이벤트: 첫 사주 분석 완료
+        import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
         navigate(`/result/${result.reportId}`, { replace: true });
       } catch (err) {
         console.warn('[LoadingPage] 서버 호출 실패, 로컬 fallback:', err);

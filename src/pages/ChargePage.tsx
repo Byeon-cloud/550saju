@@ -49,6 +49,8 @@ export function ChargePage() {
               addPaidBalance(result.paidUn, result.bonusUn || 0);
               setBalanceDisplay(getBalance());
               toast.show(result.message, 'success');
+              // 프로모션 이벤트: 충전 완료
+              import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { amount: String(amount) }));
             } else {
               toast.show(result.message || '결제 처리에 실패했어요', 'warning');
             }
@@ -280,6 +282,8 @@ export function ChargePage() {
             if (result.success) {
               setBalanceDisplay(getBalance());
               toast.show(result.message, 'success');
+              // 프로모션 이벤트: IAP 충전 완료
+              import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { package: selectedPkg.name }));
               setTimeout(() => navigate(-1), 1500);
             } else {
               toast.show(result.message, 'warning');

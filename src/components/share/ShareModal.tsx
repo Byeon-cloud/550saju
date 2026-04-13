@@ -56,6 +56,8 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
           console.warn('[ShareReward] 서버 기록 실패:', e);
         }
       }
+      // 프로모션 이벤트: 공유 완료
+      import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.SHARE_RESULT));
       setShared(true);
     }
   }

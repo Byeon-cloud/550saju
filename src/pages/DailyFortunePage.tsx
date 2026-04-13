@@ -215,6 +215,9 @@ export function DailyFortunePage() {
 
     setShowResult(true);
 
+    // 프로모션 이벤트: 일일 운세 확인
+    import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.DAILY_FORTUNE));
+
     // 보관함에 저장
     if (selectedProfile) {
       saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free', contentType: 'daily', createdAt: new Date().toISOString() });

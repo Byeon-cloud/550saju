@@ -356,6 +356,8 @@ function ChatView({ roomId }: { roomId: string }) {
     if (!roomNameSet) {
       updateRoomName(roomId, autoRoomName(text.trim()));
       setRoomNameSet(true);
+      // 프로모션 이벤트: 첫 대화 메시지
+      import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.CHAT_START));
     }
 
     const userMsg: ChatMessage = { id: Date.now().toString(36), role: 'user', content: text.trim(), timestamp: new Date().toISOString() };
