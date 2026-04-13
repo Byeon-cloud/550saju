@@ -73,7 +73,7 @@ const DEV_MODE = false;
  * 사주 리포트 생성 — Claude Sonnet
  */
 export const generateReport = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -138,7 +138,7 @@ export const generateReport = onCall(
  * 오늘의 운세 — Gemini 2.5 Flash (무료)
  */
 export const generateDailyFortune = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { answers, timeSlot, sajuSummary, userConcern } = request.data;
 
@@ -165,7 +165,7 @@ export const generateDailyFortune = onCall(
  * AI 대화 — Gemini 2.5 Pro
  */
 export const generateChatAnswer = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question) throw new HttpsError('invalid-argument', '질문이 없습니다');
@@ -187,7 +187,7 @@ export const generateChatAnswer = onCall(
  * 꿈해몽 — Gemini 2.5 Flash (무료)
  */
 export const generateDream = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
+  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { category, dreamText, sajuData } = request.data;
     if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');
