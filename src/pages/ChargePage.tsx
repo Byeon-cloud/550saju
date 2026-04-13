@@ -252,11 +252,15 @@ export function ChargePage() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-h3 text-text-primary">친구에게 공유하면 1운 적립</p>
+                <p className="text-h3 text-text-primary">
+                  {navigator.share ? '친구에게 공유하면 1운 적립' : '친구에게 알려주세요'}
+                </p>
                 <p className="text-caption text-text-muted mt-0.5">
-                  {canEarnShareReward()
-                    ? `오늘 ${getRemainingShareRewards()}회 남음`
-                    : '오늘 공유 보상을 모두 받았어요'}
+                  {!navigator.share
+                    ? '링크를 복사해서 보내주세요'
+                    : canEarnShareReward()
+                      ? `오늘 ${getRemainingShareRewards()}회 남음`
+                      : '오늘 공유 보상을 모두 받았어요'}
                 </p>
               </div>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
