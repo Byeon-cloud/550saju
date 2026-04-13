@@ -242,24 +242,23 @@ export function DailyFortunePage() {
       return;
     }
 
-    setShowResult(true);
+    // AI 로딩 시작 — 결과는 AI 완료 후에만 표시
+    setAiLoading(true);
+    setShowResult(true); // 로딩 화면 전환
 
-    // 프로모션 이벤트: 일일 운세 확인
-    import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.DAILY_FORTUNE));
+    // 프로모션 이벤트
+    import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.DAILY_FORTUNE)).catch(() => {});
 
     // 보관함에 저장
     if (selectedProfile) {
       saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free', contentType: 'daily', createdAt: new Date().toISOString() });
     }
 
-    // AI API 호출 (백그라운드) — 실패 시 로컬 결과 유지
-    // concern 칩 → index 배열로 변환
     const concernIdx = CONCERN_CHIPS.findIndex(c => c.id === selectedConcern);
     const answersArr = [concernIdx >= 0 ? concernIdx : 5];
     try {
-      setAiLoading(true);
       const sajuSummary = selectedProfile?.sajuData ? {
-        ilgan: selectedProfile.sajuData.pillars[2]?.천간 || '',
+        ilgan: selectedProfile.sajuData.pillars?.[2]?.천간 || '',
         oheng: ilganOheng || '',
         name: selectedProfile.name || '',
       } : undefined;
@@ -269,7 +268,6 @@ export function DailyFortunePage() {
     } catch (e: any) {
       console.error('[DailyFortune] AI 호출 실패:', e);
       setAiError(e?.message || 'AI 서버 연결 실패');
-      toast.show('AI 분석에 실패했어요. 잠시 후 다시 시도해주세요.', 'warning');
     } finally {
       setAiLoading(false);
     }
@@ -463,6 +461,31 @@ export function DailyFortunePage() {
               </div>
             </motion.div>
             )
+          ) : aiLoading ? (
+            /* ====== AI 분석 중 — 전용 로딩 화면 ====== */
+            <motion.div
+              key="ai-loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-20 space-y-6"
+            >
+              <div className="flex items-center gap-3">
+                {['命', '理', '運'].map((c, i) => (
+                  <motion.span key={i} className="text-3xl font-black" style={{ color: '#C9A96E' }}
+                    animate={{ opacity: [0.2, 1, 0.2] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}>
+                    {c}
+                  </motion.span>
+                ))}
+              </div>
+              <div className="text-center">
+                <p className="text-body-sm text-text-muted">
+                  {hasHistory ? `${recentReport!.name}님의 사주를 분석하고 있어요` : 'AI가 오늘의 운세를 분석하고 있어요'}
+                </p>
+                <p className="text-caption text-text-hint mt-1">보통 10~20초 소요돼요</p>
+              </div>
+            </motion.div>
           ) : (
             <motion.div
               key="result"
@@ -471,13 +494,7 @@ export function DailyFortunePage() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-4"
             >
-              {/* AI 로딩/에러 표시 */}
-              {aiLoading && (
-                <div className="flex items-center justify-center gap-2 py-2">
-                  <div className="w-4 h-4 rounded-full border-2 border-brand-gold border-t-transparent animate-spin" />
-                  <span className="text-caption text-text-muted">AI가 맞춤 운세를 분석하고 있어요...</span>
-                </div>
-              )}
+              {/* AI 에러 시 에러+폴백 표시 */}
               {!aiLoading && aiError && !aiResult && (
                 <div className="card py-3 px-4 flex items-center justify-between" style={{ background: 'rgba(211,47,47,0.04)', border: '1px solid rgba(211,47,47,0.12)' }}>
                   <div>
