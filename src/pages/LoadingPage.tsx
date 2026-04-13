@@ -100,8 +100,11 @@ export function LoadingPage() {
         import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
         navigate(`/result/${result.reportId}`, { replace: true });
       } catch (err) {
-        console.warn('[LoadingPage] 서버 호출 실패, 로컬 fallback:', err);
-        setError('분석 서버 연결 중... 잠시만 기다려주세요.');
+        console.warn('[LoadingPage] 서버 호출 실패:', err);
+        // 1운 환불
+        const { addRewardBalance } = await import('@/services/storage/localStore');
+        addRewardBalance(1);
+        setError('분석에 실패했어요. 1운이 환불됐어요.');
         setTimeout(() => {
           navigate('/result/local', { replace: true });
         }, 2000);
