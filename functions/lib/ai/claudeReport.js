@@ -13,7 +13,7 @@ async function generateSajuReport(apiKey, sajuData, situation, _reportType) {
     const anthropic = new sdk_1.default({ apiKey });
     const prompt = buildUserPrompt(sajuData, situation);
     const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-20250414',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }],
     });

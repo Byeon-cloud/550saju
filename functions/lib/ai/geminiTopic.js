@@ -89,7 +89,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData) {
     const anthropic = new sdk_1.default({ apiKey });
     const prompt = buildPrompt(config, sajuData);
     const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-20250414',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }],
     });
