@@ -89,7 +89,11 @@ const TOPIC_CONFIGS = {
       "interviewDay": "면접 유리 요일 (예: 화, 목)",
       "interviewTime": "면접 유리 시간대 (예: 오전 10~11시)",
       "salaryTiming": "연봉 협상 적기 (예: 4월, 9월)",
-      "bossCompat": "잘 맞는 상사 유형 20자"
+      "bossCompat": "잘 맞는 상사 유형 20자",
+      "statusAnalysis": "현재 상태(학생/구직/재직)에 대한 사주 한마디 35자 (상태 정보 없으면 null)",
+      "fieldFitScore": "관심 분야 사주 적합도 0-100 (분야 정보 없으면 null)",
+      "fieldFitAnalysis": "관심 분야가 사주에 얼마나 맞는지 분석 35자 (분야 정보 없으면 null)",
+      "jobChangeTiming": "이직 최적 시기 15자 (재직중일 때만, 아니면 null)"
     }`,
     },
     marriage: {
@@ -165,7 +169,11 @@ const TOPIC_CONFIGS = {
       "startupReadiness": 0-100 정수,
       "riskLevel": "높음/보통/낮음 중 하나",
       "bestPartnerOheng": "동업자 맞는 오행 (예: 금, 수)",
-      "bestStartMonth": "창업 최적 시기 (예: 3~5월)"
+      "bestStartMonth": "창업 최적 시기 (예: 3~5월)",
+      "currentBizPhase": "성장기/안정기/전환기/위기기 중 하나 (운영중일 때만, 아니면 null)",
+      "openingAnalysis": "개업 시점의 사주적 분석 40자 (개업 시기 있을 때만, 아니면 null)",
+      "bizHealthScore": "현재 사업 건강도 0-100 (운영중일 때만, 아니면 null)",
+      "nextPhaseAdvice": "다음 사업 단계 전략 조언 35자 (운영중일 때만, 아니면 null)"
     }`,
     },
     health: {
@@ -415,7 +423,11 @@ const TOPIC_CONFIGS = {
       "focusPeakHour": "집중력 피크 시간대 (예: 오전 6~9시)",
       "examLuckMonth": "시험운 최강 월 (예: 6월, 11월)",
       "seatDirection": "유리한 좌석 방향 (예: 남향, 동향)",
-      "studyPartnerType": "함께 공부하면 좋은 사람 유형 15자"
+      "studyPartnerType": "함께 공부하면 좋은 사람 유형 15자",
+      "examFitScore": "해당 시험의 사주 적합도 0-100 (시험명 있을 때만, 아니면 null)",
+      "examTimingVerdict": "시험 시기 판정: 최적/양호/주의 중 하나 (시험 예정일 있을 때만, 아니면 null)",
+      "examTimingAnalysis": "시험 예정 시기의 사주 분석 35자 (시험 예정일 있을 때만, 아니면 null)",
+      "examDayTips": "시험 당일 꿀팁 30자 (시험명 있을 때만, 아니면 null)"
     }`,
     },
     social: {
@@ -462,7 +474,11 @@ const TOPIC_CONFIGS = {
       "bestTiming": "최적 이동 시기 15자",
       "travelLuck": "해외운 수준: 높음/보통/낮음",
       "bestMoveMonth": "이사 최적 월 (예: 3~5월)",
-      "ohengDirectionMap": "오행별 방위: 목=동, 화=남, 토=중앙, 금=서, 수=북 중 본인에게 유리한 것과 이유 30자"
+      "ohengDirectionMap": "오행별 방위: 목=동, 화=남, 토=중앙, 금=서, 수=북 중 본인에게 유리한 것과 이유 30자",
+      "planDateVerdict": "예정 시기 판정: 좋음/보통/주의 중 하나 (예정 시기 있을 때만, 아니면 null)",
+      "planDateAnalysis": "예정 시기의 사주적 이동운 분석 40자 (예정 시기 있을 때만, 아니면 null)",
+      "betterAlternative": "더 좋은 시기 제안 25자 (예정 시기 있고 보통/주의일 때만, 아니면 null)",
+      "purposeAdvice": "이사 목적에 맞는 핵심 조언 35자 (목적 있을 때만, 아니면 null)"
     }`,
     },
 };

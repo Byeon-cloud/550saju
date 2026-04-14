@@ -366,6 +366,40 @@ function CareerViz({ data, color }: { data: any; color: string }) {
             </div>
           )}
         </div>
+        {/* 현재 상태 분석 + 관심 분야 적합도 (입력 시) */}
+        {(data.statusAnalysis || data.fieldFitScore != null) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">맞춤 분석</p>
+            {data.statusAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color }}>현재 상태 분석</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.statusAnalysis}</p>
+              </div>
+            )}
+            {data.fieldFitScore != null && (
+              <div className="rounded-xl p-3" style={{ background: 'rgba(0,0,0,0.015)' }}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] font-bold" style={{ color }}>관심 분야 적합도</p>
+                  <span className="text-[14px] font-black" style={{ color }}>{data.fieldFitScore}<span className="text-[10px]">점</span></span>
+                </div>
+                <div className="h-[8px] rounded-full overflow-hidden mb-1.5" style={{ background: `${color}12` }}>
+                  <motion.div className="h-full rounded-full" style={{ background: color }}
+                    initial={{ width: 0 }} animate={{ width: `${Math.min(data.fieldFitScore, 100)}%` }}
+                    transition={{ duration: 0.8, delay: 0.3 }} />
+                </div>
+                {data.fieldFitAnalysis && (
+                  <p className="text-[11px] text-text-secondary leading-snug">{data.fieldFitAnalysis}</p>
+                )}
+              </div>
+            )}
+            {data.jobChangeTiming && (
+              <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <p className="text-[10px] text-text-hint">이직 최적 시기: <strong className="text-[#2D8A4E]">{data.jobChangeTiming}</strong></p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 면접 + 연봉 전략 카드 */}
         <div className="card">
           <p className="text-h3 text-text-primary mb-3">면접 / 연봉 전략</p>
@@ -617,6 +651,39 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
             </div>
           )}
         </div>
+        {/* 현재 사업 진단 (운영중일 때) */}
+        {(data.currentBizPhase || data.bizHealthScore != null) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">현재 사업 진단</p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {data.currentBizPhase && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
+                  <p className="text-[9px] text-text-hint mb-0.5">사업 단계</p>
+                  <p className="text-[13px] font-black" style={{ color }}>{data.currentBizPhase}</p>
+                </div>
+              )}
+              {data.bizHealthScore != null && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
+                  <p className="text-[9px] text-text-hint mb-0.5">사업 건강도</p>
+                  <p className="text-[16px] font-black" style={{ color }}>{data.bizHealthScore}<span className="text-[10px]">점</span></p>
+                </div>
+              )}
+            </div>
+            {data.openingAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color }}>개업 시점 분석</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.openingAnalysis}</p>
+              </div>
+            )}
+            {data.nextPhaseAdvice && (
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <p className="text-[10px] font-bold text-[#2D8A4E] mb-0.5">다음 단계 전략</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.nextPhaseAdvice}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 창업 준비도 + 리스크 + 동업 */}
         <div className="card">
           <p className="text-h3 text-text-primary mb-3">사업 준비 현황</p>
@@ -1368,6 +1435,50 @@ function StudyViz({ data, color }: { data: any; color: string }) {
             )}
           </div>
         </div>
+        {/* 시험 맞춤 분석 (시험명/예정일 입력 시) */}
+        {(data.examFitScore != null || data.examTimingVerdict) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">시험 맞춤 분석</p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {data.examFitScore != null && (
+                <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
+                  <p className="text-[9px] text-text-hint mb-1">시험 적합도</p>
+                  <div className="flex items-end gap-1">
+                    <span className="text-[20px] font-black" style={{ color }}>{data.examFitScore}</span>
+                    <span className="text-[10px] text-text-muted mb-1">/ 100</span>
+                  </div>
+                  <div className="h-[6px] rounded-full overflow-hidden mt-1" style={{ background: `${color}12` }}>
+                    <motion.div className="h-full rounded-full" style={{ background: color }}
+                      initial={{ width: 0 }} animate={{ width: `${Math.min(data.examFitScore, 100)}%` }}
+                      transition={{ duration: 0.8, delay: 0.3 }} />
+                  </div>
+                </div>
+              )}
+              {data.examTimingVerdict && (
+                <div className="rounded-xl p-3" style={{
+                  background: data.examTimingVerdict === '최적' ? 'rgba(45,138,78,0.06)' : data.examTimingVerdict === '주의' ? 'rgba(211,47,47,0.05)' : `${color}06`
+                }}>
+                  <p className="text-[9px] text-text-hint mb-1">시험 시기 판정</p>
+                  <p className="text-[18px] font-black" style={{
+                    color: data.examTimingVerdict === '최적' ? '#2D8A4E' : data.examTimingVerdict === '주의' ? '#D32F2F' : color
+                  }}>{data.examTimingVerdict}</p>
+                </div>
+              )}
+            </div>
+            {data.examTimingAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[12px] text-text-primary leading-snug">{data.examTimingAnalysis}</p>
+              </div>
+            )}
+            {data.examDayTips && (
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <p className="text-[10px] font-bold text-[#2D8A4E] mb-0.5">시험 당일 꿀팁</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.examDayTips}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 시험 전략 카드 */}
         <div className="card">
           <p className="text-h3 text-text-primary mb-3">시험 전략 포인트</p>
@@ -1517,6 +1628,42 @@ function MovingViz({ data, color }: { data: any; color: string }) {
             )}
           </div>
         </div>
+        {/* 이사 예정 시기 분석 (입력 시) */}
+        {(data.planDateVerdict || data.purposeAdvice) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">이사 계획 분석</p>
+            {data.planDateVerdict && (
+              <div className="flex items-center gap-3 mb-2">
+                <div className="rounded-xl p-2.5 text-center flex-1" style={{
+                  background: data.planDateVerdict === '좋음' ? 'rgba(45,138,78,0.06)' : data.planDateVerdict === '주의' ? 'rgba(211,47,47,0.05)' : `${color}06`
+                }}>
+                  <p className="text-[9px] text-text-hint mb-0.5">예정 시기 판정</p>
+                  <p className="text-[16px] font-black" style={{
+                    color: data.planDateVerdict === '좋음' ? '#2D8A4E' : data.planDateVerdict === '주의' ? '#D32F2F' : color
+                  }}>{data.planDateVerdict}</p>
+                </div>
+                {data.betterAlternative && (
+                  <div className="rounded-xl p-2.5 text-center flex-1" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                    <p className="text-[9px] text-text-hint mb-0.5">더 좋은 시기</p>
+                    <p className="text-[12px] font-bold text-[#2D8A4E]">{data.betterAlternative}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {data.planDateAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[12px] text-text-primary leading-snug">{data.planDateAnalysis}</p>
+              </div>
+            )}
+            {data.purposeAdvice && (
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(21,101,192,0.05)' }}>
+                <p className="text-[10px] font-bold text-[#1565C0] mb-0.5">이사 목적 조언</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.purposeAdvice}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 오행 방위 매핑 */}
         {data.ohengDirectionMap && (
           <div className="card">
