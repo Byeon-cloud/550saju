@@ -707,6 +707,118 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
               <p className="text-[11px] text-text-muted mb-3 leading-snug">{pp.myVsPartner}</p>
             )}
 
+            {/* 사주 기둥(柱) 비교 시각화 */}
+            {pp.pillarComparison && (() => {
+              const pc = pp.pillarComparison;
+              const pillLabels = [
+                { key: 'year', label: '년주', hanja: '年柱' },
+                { key: 'month', label: '월주', hanja: '月柱' },
+                { key: 'day', label: '일주', hanja: '日柱' },
+              ];
+              const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
+              const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+              // interactions를 position별로 맵핑
+              const interMap: Record<string, { type: string; desc: string }> = {};
+              (pc.interactions || []).forEach((it: any) => {
+                if (it.position === '년주') interMap['year'] = it;
+                else if (it.position === '월주') interMap['month'] = it;
+                else if (it.position === '일주') interMap['day'] = it;
+              });
+              const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
+                '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+                '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+                '형': { icon: '刑', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+                '해': { icon: '害', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+                '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+                '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+              };
+              const getTypeStyle = (type: string) => {
+                for (const [k, v] of Object.entries(typeIcon)) {
+                  if (type?.includes(k)) return v;
+                }
+                return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' };
+              };
+              return (
+                <div className="mb-4">
+                  <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
+                  <div className="space-y-2">
+                    {pillLabels.map(({ key, label, hanja }) => {
+                      const myP = pc.myPillars?.[key];
+                      const ptP = pc.partnerPillars?.[key];
+                      const inter = interMap[key];
+                      const ts = inter ? getTypeStyle(inter.type) : null;
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[9px] text-text-hint font-medium">{label}</span>
+                            <span className="text-[8px] text-text-hint opacity-60">({hanja})</span>
+                            {ts && (
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto"
+                                style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {/* 나 */}
+                            {myP && (
+                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2"
+                                style={{ background: ohengBg[myP.oheng] || 'rgba(0,0,0,0.03)' }}>
+                                <div className="flex gap-1">
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
+                                    style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[myP.oheng] || '#3D3427' }}>
+                                    {myP.cheongan}
+                                  </span>
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
+                                    style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[myP.oheng] || '#3D3427' }}>
+                                    {myP.jiji}
+                                  </span>
+                                </div>
+                                <span className="text-[8px] font-semibold" style={{ color: ohengText[myP.oheng] || '#757575' }}>{myP.oheng}</span>
+                              </div>
+                            )}
+                            {/* 화살표 */}
+                            <div className="flex-shrink-0 w-6 flex items-center justify-center">
+                              {ts ? (
+                                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
+                                  style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span>
+                              ) : (
+                                <span className="text-[10px] text-text-hint">⇔</span>
+                              )}
+                            </div>
+                            {/* 상대 */}
+                            {ptP && (
+                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2 justify-end"
+                                style={{ background: ohengBg[ptP.oheng] || 'rgba(0,0,0,0.03)' }}>
+                                <span className="text-[8px] font-semibold" style={{ color: ohengText[ptP.oheng] || '#757575' }}>{ptP.oheng}</span>
+                                <div className="flex gap-1">
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
+                                    style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[ptP.oheng] || '#3D3427' }}>
+                                    {ptP.cheongan}
+                                  </span>
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
+                                    style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[ptP.oheng] || '#3D3427' }}>
+                                    {ptP.jiji}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {inter?.desc && (
+                            <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* 범례 */}
+                  <div className="flex items-center justify-center gap-3 mt-3 pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                    <span className="text-[9px] text-text-hint">나</span>
+                    <span className="text-[9px] text-text-hint">⇔</span>
+                    <span className="text-[9px] text-text-hint">상대</span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* 나 vs 상대 프로필 비교 */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               <div className="rounded-xl p-3 text-center" style={{ background: `${color}06` }}>
@@ -961,7 +1073,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
             {bd.phases?.length > 0 && (
               <div className="mb-3">
                 {/* 페이즈 프로그레스 바 */}
-                <div className="flex gap-1 mb-2">
+                <div className="flex gap-1 mb-3">
                   {bd.phases.map((_: any, i: number) => {
                     const isCurrent = i === (bd.currentPhaseIndex ?? 0);
                     const isPast = i < (bd.currentPhaseIndex ?? 0);
@@ -971,28 +1083,60 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                     );
                   })}
                 </div>
-                {/* 페이즈 상세 */}
-                <div className="space-y-1.5">
+                {/* 페이즈 상세 — 모든 단계 표시, 현재 단계 강조 */}
+                <div className="space-y-2">
                   {bd.phases.map((ph: any, i: number) => {
                     const isCurrent = i === (bd.currentPhaseIndex ?? 0);
+                    const isPast = i < (bd.currentPhaseIndex ?? 0);
+                    // 각 단계 아이콘 (SVG 인라인)
+                    const phaseIcons = [
+                      // 충격기: 깨진 하트
+                      <svg key="p0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 6l-2 4 3 2-4 6" /><path d="M19.5 13c0 4.5-7.5 9-7.5 9s-7.5-4.5-7.5-9a6 6 0 0112 0z" /></svg>,
+                      // 거부기: 화난 얼굴(번개)
+                      <svg key="p1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2"><path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" /></svg>,
+                      // 회복기: 새싹
+                      <svg key="p2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 22V10" /><path d="M6 12c0-3.3 2.7-6 6-6" /><path d="M18 12c0-3.3-2.7-6-6-6" /><circle cx="12" cy="22" r="1" fill="#2D8A4E" /></svg>,
+                      // 수용기: 균형
+                      <svg key="p3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>,
+                      // 장기 분리기: 나비(날개)
+                      <svg key="p4" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><path d="M12 12c-3-3-7-3-8 0s1 7 4 7c2 0 3-2 4-4" /><path d="M12 12c3-3 7-3 8 0s-1 7-4 7c-2 0-3-2-4-4" /><path d="M12 7v10" /></svg>,
+                    ];
                     return (
-                      <div key={i} className="rounded-xl p-2.5 transition-all"
-                        style={{ background: isCurrent ? `${color}08` : 'transparent', border: isCurrent ? `1px solid ${color}20` : '1px solid transparent' }}>
-                        <div className="flex items-center gap-2 mb-0.5">
+                      <div key={i} className="rounded-xl p-3 transition-all"
+                        style={{
+                          background: isCurrent ? `${color}08` : isPast ? 'rgba(0,0,0,0.015)' : 'rgba(0,0,0,0.01)',
+                          border: isCurrent ? `1.5px solid ${color}25` : '1px solid rgba(0,0,0,0.04)',
+                        }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">{phaseIcons[i] || phaseIcons[4]}</span>
                           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isCurrent ? 'animate-pulse' : ''}`}
-                            style={{ background: isCurrent ? color : i < (bd.currentPhaseIndex ?? 0) ? `${color}40` : `${color}15` }} />
-                          <p className={`text-[11px] ${isCurrent ? 'font-bold' : 'font-medium text-text-muted'}`}
+                            style={{ background: isCurrent ? color : isPast ? `${color}40` : `${color}15` }} />
+                          <p className={`text-[11px] flex-1 ${isCurrent ? 'font-bold' : isPast ? 'font-medium text-text-muted' : 'font-medium text-text-hint'}`}
                             style={isCurrent ? { color } : {}}>
-                            {ph.name} <span className="text-text-hint font-normal">({ph.period})</span>
+                            {ph.name} <span className={`font-normal ${isCurrent ? '' : 'text-text-hint'}`} style={isCurrent ? { color: `${color}90` } : {}}>({ph.period})</span>
                           </p>
                           {isCurrent && <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold text-white" style={{ background: color }}>현재</span>}
+                          {isPast && <span className="text-[8px] px-1.5 py-0.5 rounded-full font-medium text-text-hint" style={{ background: 'rgba(0,0,0,0.04)' }}>지남</span>}
                         </div>
-                        {isCurrent && (
-                          <div className="ml-4 mt-1 grid grid-cols-2 gap-2">
-                            <p className="text-[10px] text-text-secondary">나: <span className="font-semibold text-text-primary">{ph.myState}</span></p>
-                            <p className="text-[10px] text-text-secondary">상대: <span className="font-semibold text-text-primary">{ph.partnerState}</span></p>
-                          </div>
+                        {/* 단계 설명 — 모든 단계에 표시 */}
+                        {ph.desc && (
+                          <p className={`text-[10px] leading-snug ml-7 mb-1 ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                            {ph.desc}
+                          </p>
                         )}
+                        {/* 나/상대 상태 — 모든 단계에 표시 */}
+                        <div className="ml-7 grid grid-cols-2 gap-2">
+                          {ph.myState && (
+                            <p className={`text-[10px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                              나: <span className={`font-semibold ${isCurrent ? 'text-text-primary' : ''}`}>{ph.myState}</span>
+                            </p>
+                          )}
+                          {ph.partnerState && (
+                            <p className={`text-[10px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                              상대: <span className={`font-semibold ${isCurrent ? 'text-text-primary' : ''}`}>{ph.partnerState}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1371,6 +1515,7 @@ export function TopicAnalysisPage() {
   const [partnerInfo, setPartnerInfo] = useState({
     name: '', birthYear: 1995, birthMonth: 1, birthDay: 1, gender: 'male',
     breakupYear: new Date().getFullYear(), breakupMonth: 1,
+    birthHour: -1, // -1 = 미상
   });
   const [showPartner, setShowPartner] = useState(false);
 
@@ -1441,7 +1586,7 @@ export function TopicAnalysisPage() {
     try {
       // 재회운이고 상대방 정보가 있으면 전달
       const partner = (topicId === 'reunion' && showPartner && partnerInfo.name)
-        ? partnerInfo : undefined;
+        ? { ...partnerInfo, birthHour: partnerInfo.birthHour >= 0 ? partnerInfo.birthHour : undefined } : undefined;
 
       const res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner);
       setResult(res.content);
@@ -1644,6 +1789,26 @@ export function TopicAnalysisPage() {
                                   </div>
                                   <p className="text-[10px] text-text-hint mt-1">
                                     헤어진 기간에 따른 재회 에너지 변화를 분석해드려요
+                                  </p>
+                                </div>
+
+                                {/* 상대방 출생 시간 (선택) */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">
+                                    상대방 출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
+                                  </label>
+                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={partnerInfo.birthHour}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
+                                    <option value={-1}>모름</option>
+                                    {Array.from({ length: 24 }, (_, i) => i).map(h => (
+                                      <option key={h} value={h}>
+                                        {`${String(h).padStart(2, '0')}시 (${['자','축','축','인','인','묘','묘','진','진','사','사','오','오','미','미','신','신','유','유','술','술','해','해','자'][h]}시)`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <p className="text-[10px] text-text-hint mt-1">
+                                    알면 시주(時柱)까지 분석하여 더 정확한 결과를 드려요
                                   </p>
                                 </div>
                               </div>

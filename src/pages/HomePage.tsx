@@ -562,20 +562,20 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* 포인트 3개 — 하나의 카드에 압축 */}
-            <div className="card py-6 px-5 space-y-5">
+            {/* 포인트 3개 — 하나의 카드에 압축, 가독성 강화 */}
+            <div className="card py-7 px-5 space-y-6">
               {[
-                { num: '01', title: '어려운 한자 대신, 보면 바로 이해되는 그림', desc: '내 오행 흐름, 좋은 달, 맞는 직업 — 한눈에 보이는 도표로.\n사주를 처음 보는 사람도 바로 이해할 수 있어요.' },
-                { num: '02', title: '성격이 아니라, 행동 패턴까지 짚어줘요', desc: '밀당을 못하는 이유, 먼저 말하기 어려운 이유 —\n사주에 다 이유가 있어요. \'왜 그런지\'를 설명합니다.' },
+                { num: '01', title: '어려운 한자 대신,\n보면 바로 이해되는 그림', desc: '내 오행 흐름, 좋은 달, 맞는 직업 — 한눈에 보이는 도표로.\n사주를 처음 보는 사람도 바로 이해할 수 있어요.' },
+                { num: '02', title: '성격이 아니라,\n행동 패턴까지 짚어줘요', desc: '밀당을 못하는 이유, 먼저 말하기 어려운 이유 —\n사주에 다 이유가 있어요. \'왜 그런지\'를 설명합니다.' },
                 { num: '03', title: '500원이면 충분해요', desc: '자동결제·광고·추가과금 없이\n12가지 항목을 낱낱이 분석해드립니다.' },
               ].map((usp, i) => (
                 <div key={usp.num}>
-                  {i > 0 && <div className="h-px bg-border-light mb-5" />}
-                  <div className="flex items-start gap-3">
-                    <span className="text-[11px] font-black text-brand-gold mt-0.5">{usp.num}</span>
-                    <div>
-                      <p className="text-body-sm font-semibold text-text-primary leading-snug">{usp.title}</p>
-                      <p className="text-caption text-text-muted mt-1.5 leading-relaxed whitespace-pre-line">{usp.desc}</p>
+                  {i > 0 && <div className="h-px bg-border-light mb-6" />}
+                  <div className="flex items-start gap-4">
+                    <span className="text-[14px] font-black mt-1" style={{ color: '#A08B6A' }}>{usp.num}</span>
+                    <div className="flex-1">
+                      <p className="text-[16px] font-bold text-text-primary leading-snug whitespace-pre-line">{usp.title}</p>
+                      <p className="text-[13px] text-text-muted mt-2 leading-[1.7] whitespace-pre-line">{usp.desc}</p>
                     </div>
                   </div>
                 </div>

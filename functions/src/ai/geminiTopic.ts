@@ -285,7 +285,22 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
         "loveStyle": "상대 연애 스타일 10자",
         "myVsPartner": "두 사람의 사주 핵심 비교 요약 35자 (예: '목 일간의 유연함이 금 일간의 단호함을 감싸는 상생 구조')",
         "matchPoints": ["잘 맞는 점 + 사주 근거 30자", "잘 맞는 점2 + 근거 30자", "잘 맞는 점3 + 근거 30자"],
-        "clashPoints": ["안 맞는 점 + 사주 근거 30자", "안 맞는 점2 + 근거 30자"]
+        "clashPoints": ["안 맞는 점 + 사주 근거 30자", "안 맞는 점2 + 근거 30자"],
+        "pillarComparison": {
+          "myPillars": {
+            "year": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"},
+            "month": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"},
+            "day": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"}
+          },
+          "partnerPillars": {
+            "year": {"cheongan": "천간 한자 (추론)", "jiji": "지지 한자 (추론)", "oheng": "오행"},
+            "month": {"cheongan": "천간 한자 (추론)", "jiji": "지지 한자 (추론)", "oheng": "오행"},
+            "day": {"cheongan": "천간 한자 (추론)", "jiji": "지지 한자 (추론)", "oheng": "오행"}
+          },
+          "interactions": [
+            {"position": "년주/월주/일주 중 하나", "type": "합(合)/충(沖)/형(刑)/해(害)/상생/상극 중 하나", "desc": "이 관계가 의미하는 것 20자"}
+          ]
+        }
       },
       "compatAnalysis": {
         "totalScore": "0-100 정수 (궁합 종합 점수)",
@@ -329,18 +344,19 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "greenFlags": ["긍정 신호 25자", "긍정 신호2 25자", "긍정 신호3 25자"],
       "redFlags": ["경고 신호 25자", "경고 신호2 25자", "경고 신호3 25자"],
       "breakupDuration": {
-        "healingStage": "충격기/거부기/회복기/수용기 중 하나",
+        "healingStage": "충격기/거부기/회복기/수용기/장기분리기 중 하나",
         "stageDesc": "현재 단계에 대한 설명 30자 (예: '감정 정리는 됐지만 미련이 남아있는 시기')",
         "optimalWait": "최적 대기 기간 15자",
         "reunionImpact": "이 기간이 재회 확률에 미치는 구체적 영향 40자",
         "emotionNow": "현재 양쪽 감정 상태 요약 20자 (예: '나는 미련, 상대는 무관심')",
         "phases": [
-          {"name": "충격기", "period": "0~2개월", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
-          {"name": "거부기", "period": "2~6개월", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
-          {"name": "회복기", "period": "6~12개월", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
-          {"name": "수용기", "period": "12개월~", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"}
+          {"name": "충격기", "period": "0~2개월", "desc": "이별 직후 감정 혼란기. 현실 부정과 슬픔이 교차하는 시기", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
+          {"name": "거부기", "period": "2~6개월", "desc": "이별을 거부하며 연락 충동이 강한 시기. 분노와 그리움 반복", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
+          {"name": "회복기", "period": "6~12개월", "desc": "감정 정리가 시작되며 일상 회복이 진행되는 시기", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
+          {"name": "수용기", "period": "12~18개월", "desc": "이별을 받아들이고 객관적 시야가 생기는 시기. 재회 판단 가능", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
+          {"name": "장기 분리기", "period": "18개월~", "desc": "감정 완전 정리 후 새 관계 or 성숙한 재회가 가능한 시기", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"}
         ],
-        "currentPhaseIndex": "0~3 정수 (현재 해당 단계 인덱스)"
+        "currentPhaseIndex": "0~4 정수 (헤어진 기간 기준으로 정확히 매칭. 0=충격기 0~2개월, 1=거부기 2~6개월, 2=회복기 6~12개월, 3=수용기 12~18개월, 4=장기분리기 18개월+)"
       }
     }`,
   },
@@ -428,7 +444,7 @@ export async function generateTopicAnalysisAI(
   topicId: string,
   sajuData: any,
   baseScore?: number,
-  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string },
+  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number },
 ): Promise<any> {
   const config = TOPIC_CONFIGS[topicId];
   if (!config) throw new Error(`알 수 없는 주제: ${topicId}`);
@@ -459,7 +475,7 @@ function buildPrompt(
   topicId: string,
   d: any,
   baseScore?: number,
-  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number },
+  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number; birthHour?: number },
 ): string {
   const p = d.pillars || [];
   const labels = ['년주', '월주', '일주', '시주'];
@@ -477,16 +493,21 @@ function buildPrompt(
     const breakupInfo = (partnerInfo.breakupYear && partnerInfo.breakupMonth)
       ? `\n헤어진 시기: ${partnerInfo.breakupYear}년 ${partnerInfo.breakupMonth}월\n→ 현재까지 약 ${Math.max(0, (today.getFullYear() - partnerInfo.breakupYear) * 12 + (today.getMonth() + 1 - partnerInfo.breakupMonth))}개월 경과\n→ 헤어진 기간이 재회 가능성에 미치는 영향을 반드시 분석할 것. breakupDuration 필드에 반영.`
       : '';
+    const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
+      ? `\n출생시간: ${partnerInfo.birthHour}시 → 시주(時柱) 분석 가능. 상대방의 시주까지 포함하여 4주(四柱) 완전 교차 분석.`
+      : '\n출생시간: 미상 → 년주/월주/일주(3주)로 분석.';
     partnerSection = `
 ## 상대방 정보
 이름: ${partnerInfo.name || '미상'}
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
-성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${breakupInfo}
+성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}${breakupInfo}
 
-→ 상대방의 생년월일로 일간/오행 경향을 추론하고, 두 사람의 사주를 교차 분석해주세요.
+→ 상대방의 생년월일${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '시' : ''}로 사주 원국을 산출하고, 두 사람의 사주를 교차 분석해주세요.
 → 상대방 이름을 자연스럽게 포함시키세요.
+→ partnerProfile.pillarComparison에 나의 년주/월주/일주와 상대방의 년주/월주/일주(추론)를 채우고, interactions에 합/충/형/해/상생/상극 관계를 표시하세요.${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '\n→ 상대방 시주도 추론 가능하므로 시주 관계까지 분석하되, pillarComparison에는 년/월/일 3주만 표시.' : ''}
 → partnerProfile, compatAnalysis 필드에 상대방 분석 결과를 정확히 채우세요.
 → 두 사람의 천간합(天干合), 지지합(地支合), 원진(怨嗔) 관계를 분석하여 sinsal 필드에 반영하세요.
+→ breakupDuration.currentPhaseIndex는 경과 개월 수에 정확히 대응시키세요: 0~2개월=0(충격기), 2~6개월=1(거부기), 6~12개월=2(회복기), 12~18개월=3(수용기), 18개월+=4(장기분리기).
 `;
   }
 
