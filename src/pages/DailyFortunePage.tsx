@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
+import { AILoading } from '@/components/common/AILoading';
 import { Button } from '@/components/common/Button';
 import { BannerAd as BannerAdLazy } from '@/components/ads/BannerAd';
 import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
@@ -10,6 +11,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
 import { useToast } from '@/components/common/Toast';
 import { generateDailyFortune } from '@/services/ai/reportGenerator';
+import { stripMd } from '@/utils/format';
 
 // ─── 시간대 감지 (7단계) ───
 type TimeSlot = 'latenight' | 'dawn' | 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
@@ -341,9 +343,15 @@ export function DailyFortunePage() {
     );
   }
 
-  // 프로필 없으면 바로 진행 (사주 없이)
-  if (!profileSelected && profiles.length === 0 && !selectedProfile) {
-    setProfileSelected(true);
+  // AI 로딩 중 → 풀스크린 로딩 (early return)
+  if (aiLoading) {
+    return (
+      <AILoading
+        name={hasHistory ? recentReport!.name : ''}
+        type="오늘의 운세"
+        steps={['오행의 흐름을 읽고 있어요', '사주와 오늘 날의 관계를 분석하고 있어요', '맞춤 운세를 작성하고 있어요']}
+      />
+    );
   }
 
   return (
@@ -462,31 +470,6 @@ export function DailyFortunePage() {
               </div>
             </motion.div>
             )
-          ) : aiLoading ? (
-            /* ====== AI 분석 중 — 전용 로딩 화면 ====== */
-            <motion.div
-              key="ai-loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center py-20 space-y-6"
-            >
-              <div className="flex items-center gap-3">
-                {['命', '理', '運'].map((c, i) => (
-                  <motion.span key={i} className="text-3xl font-black" style={{ color: '#C9A96E' }}
-                    animate={{ opacity: [0.2, 1, 0.2] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}>
-                    {c}
-                  </motion.span>
-                ))}
-              </div>
-              <div className="text-center">
-                <p className="text-body-sm text-text-muted">
-                  {hasHistory ? `${recentReport!.name}님의 사주를 분석하고 있어요` : 'AI가 오늘의 운세를 분석하고 있어요'}
-                </p>
-                <p className="text-caption text-text-hint mt-1">보통 10~20초 소요돼요</p>
-              </div>
-            </motion.div>
           ) : result ? (
             <motion.div
               key="result"
@@ -538,7 +521,7 @@ export function DailyFortunePage() {
               {/* 요약 */}
               <div className="card">
                 <p className="text-body text-text-secondary leading-relaxed whitespace-pre-line">
-                  {result.summary}
+                  {stripMd(result.summary)}
                 </p>
               </div>
 
@@ -595,7 +578,7 @@ export function DailyFortunePage() {
               <div className="card-emphasis">
                 <p className="text-label text-brand-gold mb-2">{ctx.label}의 조언</p>
                 <p className="text-body text-text-primary leading-relaxed">
-                  {result.advice}
+                  {stripMd(result.advice)}
                 </p>
               </div>
 

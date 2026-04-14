@@ -37,7 +37,7 @@ function buildPrompt(d) {
     // 대운 periods를 사주 데이터에서 직접 구성
     const periodsTemplate = (d.daeun || []).map((du) => {
         const isCurrent = du.isCurrent || du.현재 || false;
-        return `{"간지":"${du.간지}","시작나이":${du.시작나이 || 0},"끝나이":${du.끝나이 || 0},"isCurrent":${isCurrent},"theme":"4글자 키워드","career":"80자 이상 직업운","love":"80자 이상 연애운","wealth":"80자 이상 재물운","health":"80자 이상 건강운","score":1~100,"advice":"50자 이상 조언"}`;
+        return `{"간지":"${du.간지}","시작나이":${du.시작나이 || 0},"끝나이":${du.끝나이 || 0},"isCurrent":${isCurrent},"theme":"4글자 키워드","career":"80자 이상 직업운","love":"80자 이상 연애운","wealth":"80자 이상 재물운","health":"80자 이상 건강운","score":1~100,"careerScore":0-100,"loveScore":0-100,"wealthScore":0-100,"healthScore":0-100,"advice":"50자 이상 조언"}`;
     }).join(',\n    ');
     return `명리학 40년 대가. "소름돋는" 대운 분석.
 
@@ -60,6 +60,7 @@ ${daeunList}
 ## 출력 (JSON만, 코드블록 없이)
 ⚠️ periods의 간지/시작나이/끝나이/isCurrent는 아래 값을 그대로 사용하세요.
 {
+  "keywords": ["#사주핵심키워드1","#키워드2","#키워드3"],
   "overview": "200자 이상. 전체 대운 흐름.",
   "periods": [
     ${periodsTemplate}
@@ -72,6 +73,8 @@ ${daeunList}
     {"phase":"전성기","daeun":"간지","theme":"키워드"},
     {"phase":"수확기","daeun":"간지","theme":"키워드"}
   ]
-}`;
+}
+
+⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
 }
 //# sourceMappingURL=claudeDaeun.js.map

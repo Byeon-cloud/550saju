@@ -184,18 +184,35 @@ export const generateChatAnswer = onCall(
 );
 
 /**
- * 꿈해몽 — Gemini 2.5 Flash (무료)
+ * 꿈해몽 — Gemini 2.5 Pro
+ * mode: 'deep' → 사주 연계 심층 해몽 (유료 1운), 기본 → 무료 해몽
  */
 export const generateDream = onCall(
   { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
-    const { category, dreamText, sajuData } = request.data;
+    const { category, dreamText, sajuData, mode } = request.data;
     if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');
 
     try {
+      const mod = await lazyGeminiDream();
+
+      // 유료 심층 해몽 — 사주 연계 프리미엄 분석
+      if (mode === 'deep') {
+        if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 필요합니다');
+        console.log('[generateDream:deep] Starting, category:', category);
+        const result = await mod.generateDeepDreamInterpretation(
+          GEMINI_KEY.value(),
+          category,
+          dreamText || '',
+          sajuData,
+        );
+        console.log('[generateDream:deep] Success, title:', result?.title, 'score:', result?.overallScore);
+        return result;
+      }
+
+      // 무료 기본 해몽
       console.log('[generateDream] Starting, category:', category, 'dreamText length:', (dreamText || '').length);
-      const { generateDreamInterpretation } = await lazyGeminiDream();
-      const result = await generateDreamInterpretation(
+      const result = await mod.generateDreamInterpretation(
         GEMINI_KEY.value(),
         category,
         dreamText || '',
@@ -609,7 +626,7 @@ export const disconnectToss = onRequest(
 export const generateTopicAnalysis = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
-    const { topicId, sajuData } = request.data;
+    const { topicId, sajuData, baseScore, partnerInfo } = request.data;
     if (!topicId || !sajuData) throw new HttpsError('invalid-argument', 'topicId, sajuData 필요');
 
     const uid = request.auth?.uid || 'anonymous';
@@ -630,7 +647,7 @@ export const generateTopicAnalysis = onCall(
 
     try {
       const { generateTopicAnalysisAI } = await lazyGeminiTopic();
-      const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData);
+      const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData, baseScore, partnerInfo);
 
       const reportRef = db.collection('reports').doc();
       await reportRef.set({

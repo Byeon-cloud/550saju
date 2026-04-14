@@ -98,12 +98,12 @@ function extractSipsung(ec: EightChar, hasBirthTime: boolean): SipSung[] {
 
 function extractJijanggan(ec: EightChar, hasBirthTime: boolean): JiJangGan[] {
   const result: JiJangGan[] = [
-    { 지지: ec.getYearZhi(), 지장간: ec.getYearHideGan(), 십성: [] },
-    { 지지: ec.getMonthZhi(), 지장간: ec.getMonthHideGan(), 십성: [] },
-    { 지지: ec.getDayZhi(), 지장간: ec.getDayHideGan(), 십성: [] },
+    { 지지: ec.getYearZhi(), 지장간: ec.getYearHideGan(), 십성: ec.getYearShiShenZhi() },
+    { 지지: ec.getMonthZhi(), 지장간: ec.getMonthHideGan(), 십성: ec.getMonthShiShenZhi() },
+    { 지지: ec.getDayZhi(), 지장간: ec.getDayHideGan(), 십성: ec.getDayShiShenZhi() },
   ];
   if (hasBirthTime) {
-    result.push({ 지지: ec.getTimeZhi(), 지장간: ec.getTimeHideGan(), 십성: [] });
+    result.push({ 지지: ec.getTimeZhi(), 지장간: ec.getTimeHideGan(), 십성: ec.getTimeShiShenZhi() });
   }
   return result;
 }

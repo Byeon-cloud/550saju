@@ -121,7 +121,7 @@ export function LoadingPage() {
   const currentTip = shuffledTips[tipIndex];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: 'var(--bg-page-gradient)' }}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6" style={{ background: 'var(--bg-page-gradient)' }}>
 
       {/* 태극 로고 회전 */}
       <motion.div

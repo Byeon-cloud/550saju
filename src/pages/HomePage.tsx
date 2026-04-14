@@ -68,15 +68,15 @@ function DreamCloudIcon({ size = 64 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
       {/* 큰 구름 */}
       <path d="M16 38c-3 0-6-2-6-5s2-5 5-5c0-5 4-9 9-9 4 0 7 2 8 5 1-1 3-1 4-1 4 0 7 3 7 7 0 0 0 1 0 1 2 1 3 3 3 5s-2 4-5 4H16z"
-        fill="#1B2A4A" fillOpacity="0.08" stroke="#1B2A4A" strokeWidth="0.8" strokeOpacity="0.2" />
+        fill="#7B1FA2" fillOpacity="0.06" stroke="#7B1FA2" strokeWidth="0.8" strokeOpacity="0.2" />
       {/* 작은 구름 */}
       <path d="M40 44c-2 0-3-1-3-3s1-3 3-3c0-3 2-5 5-5 2 0 4 1 5 3 0 0 1 0 2 0 2 0 3 1 3 3 0 2-1 3-3 3 0 1-1 2-2 2H40z"
         fill="#C9A96E" fillOpacity="0.1" stroke="#C9A96E" strokeWidth="0.6" strokeOpacity="0.3" />
       {/* 눈 (잠든 눈) */}
-      <path d="M22 30c2-2 5-2 7 0" stroke="#1B2A4A" strokeWidth="1.2" strokeLinecap="round" strokeOpacity="0.3" />
+      <path d="M22 30c2-2 5-2 7 0" stroke="#7B1FA2" strokeWidth="1.2" strokeLinecap="round" strokeOpacity="0.3" />
       {/* Z 기호 */}
-      <text x="48" y="22" fill="#C9A96E" fillOpacity="0.5" fontSize="10" fontWeight="bold" fontFamily="serif">Z</text>
-      <text x="52" y="16" fill="#C9A96E" fillOpacity="0.35" fontSize="7" fontWeight="bold" fontFamily="serif">z</text>
+      <text x="48" y="22" fill="#7B1FA2" fillOpacity="0.45" fontSize="10" fontWeight="bold" fontFamily="serif">Z</text>
+      <text x="52" y="16" fill="#7B1FA2" fillOpacity="0.3" fontSize="7" fontWeight="bold" fontFamily="serif">z</text>
       {/* 별 */}
       <circle cx="10" cy="16" r="1.2" fill="#C9A96E" opacity="0.4" />
       <circle cx="56" cy="28" r="1" fill="#C9A96E" opacity="0.3" />
@@ -89,7 +89,6 @@ export function HomePage() {
   const navigate = useNavigate();
   const today = new Date();
   const dateStr = today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
-
   const allReports = useMemo(() => getReports(), [today]);
   // 홈 히어로 = 본인 사주만 표시
   const myReport = useMemo(() =>
@@ -107,6 +106,50 @@ export function HomePage() {
     const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
     return { name: latestReport.name, ilgan, oheng };
   }, [latestReport]);
+
+  // 주제별 심층 분석 데이터
+  const allTopics = [
+    { id: 'love',     icon: '愛', label: '연애운',       color: '#E91E63', desc: '이상형, 인연 시기, 연애 패턴', badge: '인기' },
+    { id: 'reunion',  icon: '緣', label: '재회운',       color: '#7B1FA2', desc: '재회 가능성, 궁합, 실전 전략', badge: '인기' },
+    { id: 'wealth',   icon: '財', label: '재물운',       color: '#C9A96E', desc: '돈 흐름, 투자 적기, 지출 패턴', badge: '추천' },
+    { id: 'career',   icon: '事', label: '취업·이직운', color: '#1565C0', desc: '적성, 이직 타이밍, 맞는 직종', badge: '인기' },
+    { id: 'marriage', icon: '婚', label: '결혼운',       color: '#E91E63', desc: '결혼 적기, 배우자 성향' },
+    { id: 'business', icon: '商', label: '사업운',       color: '#2D8A4E', desc: '창업 시기, 맞는 업종, 동업' },
+    { id: 'health',   icon: '健', label: '건강운',       color: '#2E7D32', desc: '취약 장기, 주의 시기, 체질' },
+    { id: 'study',    icon: '學', label: '학업운',       color: '#0288D1', desc: '합격운, 학습 스타일, 시간대' },
+    { id: 'social',   icon: '人', label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수, 관계 패턴' },
+    { id: 'moving',   icon: '動', label: '이사운',       color: '#757575', desc: '이동 적기, 길방, 해외운' },
+  ];
+  // 서비스 카드 렌더 헬퍼
+  const renderServiceCard = (svc: { title: string; desc: string; tag?: string; tagColor?: string; cost: number; price: string; path: string; iconBg: string; icon: React.ReactNode }) => (
+    <motion.button
+      key={svc.title}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => navigate(svc.path)}
+      className="card w-full text-left py-5 px-5"
+    >
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{ background: svc.iconBg }}>
+          {svc.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-h2 text-text-primary">{svc.title}</p>
+          <p className="text-caption text-text-muted mt-0.5 leading-relaxed whitespace-pre-line">{svc.desc}</p>
+          {svc.tag && (
+            <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[9px] font-bold"
+              style={{ background: `${svc.tagColor}12`, color: svc.tagColor }}>
+              {svc.tag}
+            </span>
+          )}
+        </div>
+        <div className="flex-shrink-0 text-right pl-3">
+          <p className="text-h2 text-brand-gold font-bold">{svc.cost}운</p>
+          <p className="text-[10px] text-text-hint">{svc.price}</p>
+        </div>
+      </div>
+    </motion.button>
+  );
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
@@ -164,36 +207,43 @@ export function HomePage() {
         {/* ====== 무료 서비스 ====== */}
         {(
           <div className="space-y-4">
-            {/* 오늘의 운세 — 비로그인만 (로그인 유저는 히어로에 있음) */}
+            {/* 오늘의 운세 — 따뜻한 크림톤 (비로그인만, returning은 히어로에 포함) */}
             {!hasHistory && <FadeIn delay={0.06}>
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 whileHover={{ y: -2 }}
                 onClick={() => navigate('/daily')}
-                className="card-navy w-full text-left py-6 px-5 relative overflow-hidden"
+                className="w-full text-left relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, #FFF8ED 0%, #F5EDDF 100%)',
+                  borderRadius: 20,
+                  padding: '24px 20px',
+                  boxShadow: 'var(--shadow-card)',
+                  border: '1px solid rgba(201,169,110,0.15)',
+                }}
               >
                 {/* 배경 데코 — 금빛 원 */}
-                <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full opacity-[0.06]"
+                <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full opacity-[0.08]"
                   style={{ background: 'radial-gradient(circle, #C9A96E, transparent 70%)' }} />
 
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide"
-                        style={{ background: 'rgba(201,169,110,0.15)', color: '#E8D5A8' }}>
+                        style={{ background: 'rgba(201,169,110,0.15)', color: '#A08B6A' }}>
                         매일 무료
                       </span>
-                      <span className="text-[10px] text-white/30 font-medium">
+                      <span className="text-[10px] text-text-hint font-medium">
                         {getTimeGreeting().label}
                       </span>
                     </div>
-                    <p className="text-h2 text-white">오늘의 운세</p>
-                    <p className="text-body-sm text-white/50 mt-1.5 leading-relaxed">
+                    <p className="text-h2 text-text-primary">오늘의 운세</p>
+                    <p className="text-body-sm text-text-muted mt-1.5 leading-relaxed">
                       {getTimeGreeting().desc}
                     </p>
-                    <div className="flex items-center gap-1 mt-3 text-brand-gold-light">
+                    <div className="flex items-center gap-1 mt-3 text-brand-gold">
                       <span className="text-caption font-semibold">확인하기</span>
-                      <IconChevronRight size={14} color="#E8D5A8" />
+                      <IconChevronRight size={14} color="#C9A96E" />
                     </div>
                   </div>
                   <div className="flex-shrink-0 ml-3">
@@ -208,7 +258,7 @@ export function HomePage() {
               </motion.button>
             </FadeIn>}
 
-            {/* 꿈해몽 — 몽환적 카드 */}
+            {/* 꿈해몽 — 몽환적 라벤더 카드 */}
             <FadeIn delay={0.09}>
               <motion.button
                 whileTap={{ scale: 0.97 }}
@@ -216,23 +266,23 @@ export function HomePage() {
                 onClick={() => navigate('/dream')}
                 className="w-full text-left relative overflow-hidden"
                 style={{
-                  background: 'linear-gradient(135deg, #F8F9FB 0%, #F0F1F5 50%, #EEF0F6 100%)',
+                  background: 'linear-gradient(135deg, #F8F3FB 0%, #F0E8F5 50%, #EDE5F3 100%)',
                   borderRadius: 20,
                   padding: '24px 20px',
                   boxShadow: 'var(--shadow-card)',
-                  border: '1px solid rgba(27,42,74,0.06)',
+                  border: '1px solid rgba(123,31,162,0.08)',
                 }}
               >
                 {/* 배경 데코 — 연한 보라빛 */}
-                <div className="absolute -bottom-4 -left-4 w-24 h-24 rounded-full opacity-[0.04]"
+                <div className="absolute -bottom-4 -left-4 w-24 h-24 rounded-full opacity-[0.05]"
                   style={{ background: 'radial-gradient(circle, #7B1FA2, transparent 70%)' }} />
 
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide"
-                        style={{ background: 'rgba(201,169,110,0.12)', color: '#A08B6A' }}>
-                        매일 무료
+                        style={{ background: 'rgba(123,31,162,0.08)', color: '#7B1FA2' }}>
+                        매일 1회 무료
                       </span>
                     </div>
                     <p className="text-h2 text-text-primary">꿈해몽</p>
@@ -240,9 +290,9 @@ export function HomePage() {
                       간밤에 꾼 꿈, 무슨 의미일까요?<br />
                       꿈의 메시지를 명리학으로 풀어드립니다
                     </p>
-                    <div className="flex items-center gap-1 mt-3 text-brand-gold">
+                    <div className="flex items-center gap-1 mt-3" style={{ color: '#7B1FA2' }}>
                       <span className="text-caption font-semibold">해몽하기</span>
-                      <IconChevronRight size={14} color="#C9A96E" />
+                      <IconChevronRight size={14} color="#7B1FA2" />
                     </div>
                   </div>
                   <div className="flex-shrink-0 ml-3">
@@ -259,200 +309,179 @@ export function HomePage() {
           </div>
         )}
 
-        {/* 사주 상담 카드 — 서비스 목록에 통합됨, 별도 히어로 제거 */}
-
-        {/* ====== 서비스 카드 ====== */}
-        <FadeIn delay={0.12}>
+        {/* ====== 분석 서비스 (카테고리 구분) ====== */}
+        <FadeIn delay={0.1}>
           <div className="space-y-3">
 
-            {/* 서비스 카드 */}
-            {[
-              {
-                title: '사주 상담',
-                desc: '대화로 궁금한 점을 바로 물어보세요\n매일 1회 무료',
-                cost: 1, price: '추가 3회',
-                path: '/chat',
-                iconBg: 'rgba(27,42,74,0.08)',
-                icon: (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 12a9 9 0 01-9 9c-1.5 0-2.9-.4-4.1-1L3 21l1.1-4.1A9 9 0 1121 12z"
-                      stroke="#1B2A4A" strokeWidth="1.3" fill="#1B2A4A" fillOpacity="0.05" />
-                    <circle cx="8.5" cy="12" r="1" fill="#1B2A4A" /><circle cx="12" cy="12" r="1" fill="#1B2A4A" /><circle cx="15.5" cy="12" r="1" fill="#1B2A4A" />
-                  </svg>
-                ),
-              },
-              {
-                title: '내 사주 풀이',
-                desc: '성격, 직업, 연애, 재물, 건강까지\n12가지 항목을 그림과 함께 분석',
-                cost: 1, price: '500원',
-                path: '/input',
-                iconBg: 'rgba(27,42,74,0.06)',
-                icon: <IconTaegeuk size={28} />,
-              },
-              {
-                title: '궁합 분석',
-                desc: '두 사람의 사주를 비교해\n연애, 결혼, 직장 궁합을 점수로 확인',
-                cost: 1, price: '500원',
-                path: '/compat',
-                iconBg: 'rgba(201,169,110,0.08)',
-                icon: (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.3">
-                    <circle cx="8" cy="8" r="5" /><circle cx="16" cy="8" r="5" />
-                    <path d="M12 14c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" fill="#C9A96E" fillOpacity="0.08" />
-                  </svg>
-                ),
-              },
-              {
-                title: '대운 해설',
-                desc: '10년 단위 인생의 큰 흐름을 읽어드려요',
-                tag: '평생 운의 지도',
-                tagColor: '#1B2A4A',
-                cost: 1, price: '500원',
-                path: '/daeun',
-                iconBg: 'rgba(27,42,74,0.08)',
-                icon: (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1B2A4A" strokeWidth="1.3">
-                    <path d="M3 12h4l3-9 4 18 3-9h4" />
-                  </svg>
-                ),
-              },
-              {
-                title: `${new Date().getFullYear()} 월별 운세`,
-                desc: '올해 12개월, 좋은 달과 조심할 달을 한눈에',
-                tag: '사주 기반 월별 점수',
-                tagColor: '#2D8A4E',
-                cost: 1, price: '500원',
-                path: '/monthly',
-                iconBg: 'rgba(45,138,78,0.08)',
-                icon: (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="1.3">
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-                  </svg>
-                ),
-              },
-              {
-                title: '토정비결',
-                desc: '조선시대 전통 운세법으로 올해를 풀어봐요',
-                tag: '주역 64괘 전통 해석',
-                tagColor: '#C9A96E',
-                cost: 1, price: '500원',
-                path: '/tojung',
-                iconBg: 'rgba(201,169,110,0.08)',
-                icon: (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.3">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                    <line x1="9" y1="7" x2="17" y2="7" /><line x1="9" y1="11" x2="15" y2="11" />
-                  </svg>
-                ),
-              },
-            ].map((svc) => (
-              <motion.button
-                key={svc.title}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(svc.path)}
-                className="card w-full text-left py-5 px-5"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: svc.iconBg }}>
-                    {svc.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-h2 text-text-primary">{svc.title}</p>
-                    <p className="text-caption text-text-muted mt-0.5 leading-relaxed whitespace-pre-line">{svc.desc}</p>
-                    {(svc as any).tag && (
-                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[9px] font-bold"
-                        style={{ background: `${(svc as any).tagColor}12`, color: (svc as any).tagColor }}>
-                        {(svc as any).tag}
-                      </span>
-                    )}
-                  </div>
-                  {/* 가격 — 오른쪽에 크고 명확하게 */}
-                  <div className="flex-shrink-0 text-right pl-3">
-                    <p className="text-h2 text-brand-gold font-bold">{svc.cost}운</p>
-                    <p className="text-[10px] text-text-hint">{svc.price}</p>
-                  </div>
-                </div>
-              </motion.button>
-            ))}
-
-            {/* 프리미엄 예고 — 나중에 활성화 */}
-            {/*
+            {/* 내 사주 풀이 — 대표 콘텐츠 */}
             <motion.button
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/input?tier=premium')}
-              className="card-emphasis w-full text-left py-5 px-5"
+              onClick={() => navigate('/input')}
+              className="card-gold w-full text-left py-6 px-5 overflow-hidden relative"
+              style={{ border: '1.5px solid rgba(201,169,110,0.3)', boxShadow: '0 2px 12px rgba(201,169,110,0.12)' }}
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFF" strokeWidth="1.5">
-                    <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.8 5.6 21.2 8 14 2 9.2h7.6L12 2z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-h3 text-text-primary">프리미엄 심층 분석</p>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold text-white"
-                      style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
-                      PREMIUM
-                    </span>
+              <div className="absolute -top-3 -right-3 opacity-[0.06]">
+                <IconTaegeuk size={80} />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.2), rgba(201,169,110,0.08))' }}>
+                    <IconTaegeuk size={26} />
                   </div>
-                  <p className="text-caption text-text-muted mt-0.5 leading-relaxed">
-                    기본 12항목 + PDF 리포트 + 월운 상세 + 궁합 포함
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-h1 text-text-primary">내 사주 풀이</p>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold"
+                        style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)', color: '#fff' }}>대표</span>
+                    </div>
+                    <p className="text-body-sm text-text-secondary leading-relaxed">
+                      성격·직업·연애·건강 등 총 19개 세부 분류로{'\n'}당신의 사주를 심도 있게 해석합니다
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-shrink-0 text-right pl-3">
-                  <p className="text-h2 text-brand-gold font-bold">10운</p>
-                  <p className="text-[10px] text-text-hint">5,000원</p>
+                <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: '1px solid rgba(201,169,110,0.15)' }}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {['12항목 심층 리포트', '인포그래픽', 'AI 맞춤 분석'].map((t) => (
+                      <span key={t} className="px-2 py-0.5 rounded-full text-[9px] font-medium"
+                        style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A' }}>{t}</span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0 pl-3">
+                    <p className="text-h2 text-brand-gold font-bold">1운</p>
+                    <p className="text-[10px] text-text-hint">(500원)</p>
+                  </div>
                 </div>
               </div>
             </motion.button>
-            */}
 
-          </div>
-        </FadeIn>
+            {/* ── 시간의 흐름 ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-[10px] font-bold text-text-hint tracking-wide">시간의 흐름</span>
+              <div className="flex-1 h-px bg-border-light" />
+            </div>
 
-        {/* ====== 주제별 심층 분석 ====== */}
-        <FadeIn delay={0.15}>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-h2 text-text-primary">주제별 심층 분석</h2>
-              <span className="text-caption text-brand-gold font-semibold">각 1운</span>
+            {renderServiceCard({
+              title: '대운 해설',
+              desc: '10년 단위 인생의 큰 흐름, 지금이 어떤 시기인지',
+              tag: '인생 타임라인 · 사업/연애/재물/건강',
+              tagColor: '#1B2A4A',
+              cost: 1, price: '500원',
+              path: '/daeun',
+              iconBg: 'rgba(27,42,74,0.08)',
+              icon: (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1B2A4A" strokeWidth="1.3">
+                  <path d="M3 12h4l3-9 4 18 3-9h4" />
+                </svg>
+              ),
+            })}
+
+            {renderServiceCard({
+              title: `${new Date().getFullYear()} 월별 운세`,
+              desc: '올해 12개월 흐름, 좋은 달과 조심할 달',
+              tag: '월별 점수 그래프 · 베스트/워스트 월',
+              tagColor: '#2D8A4E',
+              cost: 1, price: '500원',
+              path: '/monthly',
+              iconBg: 'rgba(45,138,78,0.08)',
+              icon: (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="1.3">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                </svg>
+              ),
+            })}
+
+            {renderServiceCard({
+              title: '토정비결',
+              desc: '조선시대 이토정 선생의 전통 운세법',
+              tag: '주역 64괘 · 6대 카테고리 · 12개월 상세',
+              tagColor: '#C9A96E',
+              cost: 1, price: '500원',
+              path: '/tojung',
+              iconBg: 'rgba(201,169,110,0.08)',
+              icon: (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.3">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  <line x1="9" y1="7" x2="17" y2="7" /><line x1="9" y1="11" x2="15" y2="11" />
+                </svg>
+              ),
+            })}
+
+            {/* ── 관계와 상담 ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-[10px] font-bold text-text-hint tracking-wide">관계와 상담</span>
+              <div className="flex-1 h-px bg-border-light" />
+            </div>
+
+            {renderServiceCard({
+              title: '궁합 분석',
+              desc: '두 사람의 사주를 비교해\n연애, 결혼, 직장 궁합을 점수로 확인',
+              cost: 1, price: '500원',
+              path: '/compat',
+              iconBg: 'rgba(201,169,110,0.08)',
+              icon: (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.3">
+                  <circle cx="8" cy="8" r="5" /><circle cx="16" cy="8" r="5" />
+                  <path d="M12 14c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" fill="#C9A96E" fillOpacity="0.08" />
+                </svg>
+              ),
+            })}
+
+            {renderServiceCard({
+              title: '사주 상담',
+              desc: '대화로 궁금한 점을 바로 물어보세요\n매일 1회 무료',
+              cost: 1, price: '추가 3회',
+              path: '/chat',
+              iconBg: 'rgba(27,42,74,0.08)',
+              icon: (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 12a9 9 0 01-9 9c-1.5 0-2.9-.4-4.1-1L3 21l1.1-4.1A9 9 0 1121 12z"
+                    stroke="#1B2A4A" strokeWidth="1.3" fill="#1B2A4A" fillOpacity="0.05" />
+                  <circle cx="8.5" cy="12" r="1" fill="#1B2A4A" /><circle cx="12" cy="12" r="1" fill="#1B2A4A" /><circle cx="15.5" cy="12" r="1" fill="#1B2A4A" />
+                </svg>
+              ),
+            })}
+
+            {/* ── 주제별 심층분석 ── */}
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-[10px] font-bold text-text-hint tracking-wide">주제별 심층분석</span>
+              <div className="flex-1 h-px bg-border-light" />
+              <span className="text-[10px] text-brand-gold font-semibold">각 1운</span>
             </div>
             <p className="text-caption text-text-muted -mt-1">궁금한 운세만 골라서 깊이 있게</p>
             <div className="grid grid-cols-2 gap-2">
-              {[
-                { id: 'love',     icon: '愛', label: '연애운',       color: '#E91E63' },
-                { id: 'wealth',   icon: '財', label: '재물운',       color: '#C9A96E' },
-                { id: 'career',   icon: '事', label: '취업·이직운', color: '#1565C0' },
-                { id: 'marriage', icon: '婚', label: '결혼운',       color: '#E91E63' },
-                { id: 'business', icon: '商', label: '사업운',       color: '#2D8A4E' },
-                { id: 'health',   icon: '健', label: '건강운',       color: '#2E7D32' },
-                { id: 'reunion',  icon: '緣', label: '재회운',       color: '#7B1FA2' },
-                { id: 'study',    icon: '學', label: '학업운',       color: '#0288D1' },
-                { id: 'social',   icon: '人', label: '대인관계운',   color: '#F57F17' },
-                { id: 'moving',   icon: '動', label: '이사운',       color: '#757575' },
-              ].map((t) => (
-                <motion.button
-                  key={t.id}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(`/topic/${t.id}`)}
-                  className="card py-4 px-4 flex items-center gap-3"
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${t.color}12` }}>
-                    <span className="text-[17px] font-black" style={{ color: t.color }}>{t.icon}</span>
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-body-sm font-semibold text-text-primary">{t.label}</p>
-                  </div>
-                </motion.button>
-              ))}
+              {allTopics.map((t) => {
+                const badgeColors: Record<string, { bg: string; text: string }> = { '인기': { bg: '#D32F2F15', text: '#D32F2F' }, '추천': { bg: '#C9A96E18', text: '#C9A96E' } };
+                const bs = t.badge ? badgeColors[t.badge] : null;
+                return (
+                  <motion.button
+                    key={t.id}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate(`/topic/${t.id}`)}
+                    className="card py-3.5 px-3.5 text-left relative overflow-hidden"
+                  >
+                    {bs && t.badge && (
+                      <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded text-[8px] font-bold"
+                        style={{ background: bs.bg, color: bs.text }}>{t.badge}</span>
+                    )}
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: `${t.color}12` }}>
+                        <span className="text-[17px] font-black" style={{ color: t.color }}>{t.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-body-sm font-semibold text-text-primary">{t.label}</p>
+                        <p className="text-[10px] text-text-muted mt-0.5 line-clamp-1">{t.desc}</p>
+                      </div>
+                    </div>
+                  </motion.button>
+                );
+              })}
             </div>
+
           </div>
         </FadeIn>
 
@@ -492,14 +521,13 @@ export function HomePage() {
           </FadeIn>
         )}
 
-        {/* 구분선 */}
-        <div className="flex items-center gap-3 py-1">
+        {/* ====== ABOUT ====== */}
+        <div id="about-section" className="flex items-center gap-3 py-1 scroll-mt-16">
           <div className="flex-1 h-px bg-border-light" />
           <span className="text-[10px] text-text-disabled font-medium tracking-wider">ABOUT</span>
           <div className="flex-1 h-px bg-border-light" />
         </div>
 
-        {/* ====== 왜 사주500인가 ====== */}
         <FadeIn delay={0.15}>
           <div className="space-y-4">
 
@@ -510,7 +538,7 @@ export function HomePage() {
                 600년간 검증된{'\n'}해석법으로,{'\n'}누구나 쉽게 읽을 수 있게!
               </h3>
 
-              {/* 참고 원전 — 헤드라인 바로 아래 */}
+              {/* 참고 원전 */}
               <div className="mt-5 space-y-2.5">
                 <p className="text-[10px] text-text-hint font-semibold">참고 원전</p>
                 {[
@@ -534,53 +562,25 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* 포인트 3개 */}
-            <div className="card py-6 px-5 space-y-2">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] font-black text-brand-gold">01</span>
-                <div className="flex-1 h-px bg-border-light" />
-              </div>
-              <p className="text-h2 text-text-primary leading-snug">
-                "이걸 어떻게 알지?"{'\n'}소름 돋는 정확함
-              </p>
-              <p className="text-body-sm text-text-muted mt-2 leading-relaxed">
-                카톡 답장을 보내기 전에 세 번은 고민하는 성격,{'\n'}
-                새 프로젝트 앞에서 설레면서도 불안한 그 마음 —{'\n'}
-                당신의 일상이 결과지에 그대로 담겨 있습니다.
-              </p>
+            {/* 포인트 3개 — 하나의 카드에 압축 */}
+            <div className="card py-6 px-5 space-y-5">
+              {[
+                { num: '01', title: '어려운 한자 대신, 보면 바로 이해되는 그림', desc: '내 오행 흐름, 좋은 달, 맞는 직업 — 한눈에 보이는 도표로.\n사주를 처음 보는 사람도 바로 이해할 수 있어요.' },
+                { num: '02', title: '성격이 아니라, 행동 패턴까지 짚어줘요', desc: '밀당을 못하는 이유, 먼저 말하기 어려운 이유 —\n사주에 다 이유가 있어요. \'왜 그런지\'를 설명합니다.' },
+                { num: '03', title: '500원이면 충분해요', desc: '자동결제·광고·추가과금 없이\n12가지 항목을 낱낱이 분석해드립니다.' },
+              ].map((usp, i) => (
+                <div key={usp.num}>
+                  {i > 0 && <div className="h-px bg-border-light mb-5" />}
+                  <div className="flex items-start gap-3">
+                    <span className="text-[11px] font-black text-brand-gold mt-0.5">{usp.num}</span>
+                    <div>
+                      <p className="text-body-sm font-semibold text-text-primary leading-snug">{usp.title}</p>
+                      <p className="text-caption text-text-muted mt-1.5 leading-relaxed whitespace-pre-line">{usp.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-
-            <div className="card py-6 px-5 space-y-2">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] font-black text-brand-gold">02</span>
-                <div className="flex-1 h-px bg-border-light" />
-              </div>
-              <p className="text-h2 text-text-primary leading-snug">
-                어려운 한자 대신,{'\n'}보면 바로 이해되는 그림
-              </p>
-              <p className="text-body-sm text-text-muted mt-2 leading-relaxed">
-                내 오행이 어떻게 흐르는지, 올해 몇 월이 좋은지,{'\n'}
-                어떤 직업이 나와 맞는지 — 한눈에 보이는 도표로.{'\n'}
-                사주를 처음 보는 사람도 바로 이해할 수 있어요.
-              </p>
-            </div>
-
-            <div className="card py-6 px-5 space-y-2">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] font-black text-brand-gold">03</span>
-                <div className="flex-1 h-px bg-border-light" />
-              </div>
-              <p className="text-h2 text-text-primary leading-snug">
-                500원이면 충분해요
-              </p>
-              <p className="text-body-sm text-text-muted mt-2 leading-relaxed">
-                자동결제 없음. 광고 없음. 추가 과금 없음.{'\n'}
-                믹스커피 한 잔 가격으로 성격, 직업, 연애, 건강까지{'\n'}
-                12가지 항목을 낱낱이 분석해드립니다.
-              </p>
-            </div>
-
-            {/* (참고 원전은 위 헤드라인 카드에 통합) */}
           </div>
         </FadeIn>
 

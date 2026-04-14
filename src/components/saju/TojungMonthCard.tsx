@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { stripMd } from '@/utils/format';
 
 interface Props {
   month: number;
@@ -61,20 +62,20 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
           >
             <div className="mt-4 space-y-3">
               {/* 괘 의미 */}
-              <p className="text-caption text-text-muted italic">{괘의미}</p>
+              <p className="text-caption text-text-muted italic">{stripMd(괘의미)}</p>
 
               {/* 전통 해석 — 고풍스러운 스타일 */}
               <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(201,169,110,0.06)', borderLeft: '3px solid rgba(201,169,110,0.3)' }}>
                 <p className="text-caption text-text-hint mb-1">전통 풀이</p>
                 <p className="text-body-sm text-text-secondary leading-relaxed" style={{ fontStyle: 'italic' }}>
-                  {전통해석}
+                  {stripMd(전통해석)}
                 </p>
               </div>
 
               {/* 현대 해석 */}
               <div>
                 <p className="text-caption text-text-hint mb-1">현대어 풀이</p>
-                <p className="text-body-sm text-text-secondary leading-relaxed">{현대해석}</p>
+                <p className="text-body-sm text-text-secondary leading-relaxed">{stripMd(현대해석)}</p>
               </div>
             </div>
           </motion.div>

@@ -725,9 +725,9 @@ export default function App() {
           {/* 푸터 */}
           <div className="text-center" style={{ paddingTop: 28, paddingBottom: 12 }}>
             <div className="mx-auto" style={{ width: 48, height: 1, marginBottom: 12, background: "linear-gradient(90deg,transparent,#c9b99a,transparent)" }} />
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#c9b99a" }}>550사주</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#c9b99a" }}>사주500</p>
             <p style={{ fontSize: 10, color: "#c9bba8", marginTop: 4 }}>전통 명리학 데이터 기반 AI 사주 분석 리포트</p>
-            <p style={{ fontSize: 10, color: "#d4ccc0", marginTop: 2 }}>© 2026 550사주. 참고용이며 전문 상담을 대체하지 않습니다.</p>
+            <p style={{ fontSize: 10, color: "#d4ccc0", marginTop: 2 }}>© 2026 사주500. 참고용이며 전문 상담을 대체하지 않습니다.</p>
           </div>
         </div>
       </div>

@@ -11,13 +11,14 @@ import {
 import { useSajuContext } from '@/contexts/SajuContext';
 import { calculateSaju } from '@/services/saju/calculator';
 import { Header } from '@/components/layout/Header';
-import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
+import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG } from '@/constants/oheng';
 import { ErrorState } from '@/components/common/ErrorState';
 import { ShareModal } from '@/components/share/ShareModal';
 
 import { getReport, getReports, getMyProfile } from '@/services/storage/localStore';
 import { LuckyProfile } from '@/components/saju/LuckyProfile';
 import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
+import { stripMd } from '@/utils/format';
 import { RelationshipMap } from '@/components/saju/RelationshipMap';
 import { WealthFlow } from '@/components/saju/WealthFlow';
 import type { OhengType, Pillar, SajuData, DaeUn, SipSung, JiJangGan, UnYoung, NaPeum, SinSal, GongMang } from '@/types/saju';
@@ -261,9 +262,11 @@ function mapUnyoung12(unyoung: UnYoung[], pillars: Pillar[]): V4Unyoung[] {
   });
 }
 
-function mapDaeun(daeunList: DaeUn[]): V4Daeun[] {
+function mapDaeun(daeunList: DaeUn[], birthYear: number): V4Daeun[] {
   const labels = ['성장기', '학업기', '확립기', '안정기', '확립기', '수확기', '원숙기', '완성기', '지혜기', '관조기'];
-  return daeunList.slice(0, 8).map((d, i) => {
+  // 시작나이 > 끝나이인 비정상 항목(대운 전 소운) 필터
+  const valid = daeunList.filter(d => d.시작나이 <= d.끝나이);
+  return valid.slice(0, 8).map((d, i) => {
     const ganOheng = CHEONGAN_OHENG[d.천간];
     const elem = ganOheng ? OHENG_TO_ELEM[ganOheng] : 'earth';
     const ganKr = CHEONGAN_KO[d.천간] ?? d.천간;
@@ -276,7 +279,7 @@ function mapDaeun(daeunList: DaeUn[]): V4Daeun[] {
       kr: `${ganKr}${zhiKr}`,
       elem,
       label,
-      period: `${1998 + d.시작나이}~${1998 + d.끝나이}`,
+      period: `${birthYear + d.시작나이}~${birthYear + d.끝나이}`,
       current: d.isCurrent,
     };
   });
@@ -292,7 +295,6 @@ function getNapeumIcon(napeum: string): string {
 }
 
 function getNapeumDesc(napeum: string): string {
-  // Provide descriptive interpretation for common napeum values
   const descMap: Record<string, string> = {
     '城头土': '성벽 위의 흙 — 높은 곳에서 넓게 바라보는 시야',
     '城頭土': '성벽 위의 흙 — 높은 곳에서 넓게 바라보는 시야',
@@ -301,8 +303,95 @@ function getNapeumDesc(napeum: string): string {
     '大驛土': '역참의 넓은 땅 — 많은 사람이 오가며 인연이 풍부',
     '炉中火': '화로 안의 불 — 내면에 숨겨진 뜨거운 열정과 창작의 불꽃',
     '爐中火': '화로 안의 불 — 내면에 숨겨진 뜨거운 열정과 창작의 불꽃',
+    '山头火': '산꼭대기의 불 — 멀리서도 보이는 존재감과 리더십',
+    '山頭火': '산꼭대기의 불 — 멀리서도 보이는 존재감과 리더십',
+    '海中金': '바다 속의 금 — 숨겨진 가치가 있으며 깊이 파야 빛남',
+    '剑锋金': '칼날의 금 — 날카로운 판단력과 결단력',
+    '劍鋒金': '칼날의 금 — 날카로운 판단력과 결단력',
+    '白蜡金': '백랍의 금 — 섬세하고 정교한 손재주',
+    '白蠟金': '백랍의 금 — 섬세하고 정교한 손재주',
+    '沙中金': '모래 속의 금 — 인내 끝에 빛나는 실력',
+    '金箔金': '금박의 금 — 겉으로 빛나는 매력과 표현력',
+    '钗钏金': '비녀의 금 — 우아함과 세련된 감각',
+    '釵釧金': '비녀의 금 — 우아함과 세련된 감각',
+    '天河水': '은하수 — 상상력과 이상이 높음',
+    '涧下水': '계곡 아래 물 — 조용하지만 깊은 사고력',
+    '澗下水': '계곡 아래 물 — 조용하지만 깊은 사고력',
+    '长流水': '끊임없이 흐르는 물 — 꾸준함과 지속력',
+    '長流水': '끊임없이 흐르는 물 — 꾸준함과 지속력',
+    '泉中水': '샘물 — 내면에서 솟아나는 창의력',
+    '大海水': '대해의 물 — 포용력과 넓은 도량',
+    '霹雳火': '번개불 — 순간적 폭발력과 번뜩이는 아이디어',
+    '霹靂火': '번개불 — 순간적 폭발력과 번뜩이는 아이디어',
+    '天上火': '하늘의 불 — 밝고 따뜻한 에너지, 주변을 환하게 함',
+    '佛灯火': '부처의 등불 — 지혜의 빛, 깨달음과 통찰력',
+    '佛燈火': '부처의 등불 — 지혜의 빛, 깨달음과 통찰력',
+    '覆灯火': '등잔불 — 가까이에서 은은하게 비추는 따뜻함',
+    '覆燈火': '등잔불 — 가까이에서 은은하게 비추는 따뜻함',
+    '山下火': '산 아래 불 — 땅 속의 열정, 묵묵히 타오르는 의지',
+    '路旁土': '길가의 흙 — 누구나 밟고 지나가는 포용력',
+    '壁上土': '벽 위의 흙 — 든든한 울타리, 보호와 안정',
+    '沙中土': '모래 속의 흙 — 유연하고 적응력이 뛰어남',
+    '屋上土': '지붕 위의 흙 — 가정과 안식처를 중시',
+    '平地木': '평지의 나무 — 안정적 성장, 꾸준한 발전',
+    '桑柘木': '뽕나무 — 실용적이고 사람들에게 도움이 됨',
+    '桑柺木': '뽕나무 — 실용적이고 사람들에게 도움이 됨',
+    '松柏木': '소나무 — 사계절 변하지 않는 절개와 끈기',
+    '大林木': '큰 숲의 나무 — 리더십과 큰 그릇',
+    '杨柳木': '버드나무 — 유연함과 적응력, 예술적 감성',
+    '楊柳木': '버드나무 — 유연함과 적응력, 예술적 감성',
+    '石榴木': '석류나무 — 겉은 단단하고 속은 풍성한 다재다능',
   };
   return descMap[napeum] ?? `${napeum}의 근본 에너지`;
+}
+
+function getNapeumPracticalTip(napeum: string): string {
+  const tips: Record<string, string> = {
+    '城头土': '큰 그림을 보는 능력이 강해요. 전략적 사고, 기획, 관리에 유리하고 남들이 못 보는 기회를 포착하는 타입이에요.',
+    '城頭土': '큰 그림을 보는 능력이 강해요. 전략적 사고, 기획, 관리에 유리하고 남들이 못 보는 기회를 포착하는 타입이에요.',
+    '大溪水': '깊이 파고드는 능력이 뛰어나요. 한 분야를 오래 파면 전문가가 되고, 연구·분석·학습에 재능이 있어요.',
+    '大驿土': '사람들이 자연스럽게 모이는 체질이에요. 네트워킹·커뮤니티·서비스업에 강하고, 인맥이 재산이 되는 타입이에요.',
+    '大驛土': '사람들이 자연스럽게 모이는 체질이에요. 네트워킹·커뮤니티·서비스업에 강하고, 인맥이 재산이 되는 타입이에요.',
+    '炉中火': '겉으론 조용하지만 작업에 몰입하면 폭발적 집중력을 보여줘요. 창작·예술·개발에 강점이에요.',
+    '爐中火': '겉으론 조용하지만 작업에 몰입하면 폭발적 집중력을 보여줘요. 창작·예술·개발에 강점이에요.',
+    '山头火': '존재감이 강하고 리더십이 있어요. 사람들 앞에 서면 자연스럽게 주목받는 타입이에요.',
+    '山頭火': '존재감이 강하고 리더십이 있어요. 사람들 앞에 서면 자연스럽게 주목받는 타입이에요.',
+    '海中金': '겉으로 드러나지 않지만 내면의 실력이 탄탄해요. 꾸준히 실력을 쌓으면 때가 되어 빛나요.',
+    '剑锋金': '결단력과 분석력이 뛰어나요. 빠른 판단이 필요한 상황에서 강점을 보여요.',
+    '劍鋒金': '결단력과 분석력이 뛰어나요. 빠른 판단이 필요한 상황에서 강점을 보여요.',
+    '白蜡金': '섬세하고 정교한 작업에 재능이 있어요. 디자인, 공예, 정밀 작업에 유리해요.',
+    '白蠟金': '섬세하고 정교한 작업에 재능이 있어요. 디자인, 공예, 정밀 작업에 유리해요.',
+    '沙中金': '인내심이 강해요. 당장은 안 보여도 꾸준히 하면 반드시 결과가 나오는 타입이에요.',
+    '金箔金': '첫인상이 좋고 표현력이 뛰어나요. 영업, 프레젠테이션, 콘텐츠 제작에 유리해요.',
+    '天河水': '상상력과 이상이 높아요. 창의적 직업, 기획, 예술 분야에서 빛을 발해요.',
+    '涧下水': '조용하지만 깊은 사고력의 소유자예요. 혼자만의 시간에 최고의 아이디어가 나와요.',
+    '澗下水': '조용하지만 깊은 사고력의 소유자예요. 혼자만의 시간에 최고의 아이디어가 나와요.',
+    '长流水': '꾸준함이 최대 무기예요. 단기보다 장기 프로젝트에서 강점을 보이는 타입이에요.',
+    '長流水': '꾸준함이 최대 무기예요. 단기보다 장기 프로젝트에서 강점을 보이는 타입이에요.',
+    '泉中水': '내면에서 끊임없이 아이디어가 솟아나요. 창작, 기획, 문제 해결에 재능이 있어요.',
+    '大海水': '포용력이 크고 도량이 넓어요. 리더십과 팀 관리에 강점이 있는 타입이에요.',
+    '霹雳火': '순간적인 번뜩임이 강해요. 위기 상황에서 빠른 대처 능력이 뛰어나요.',
+    '霹靂火': '순간적인 번뜩임이 강해요. 위기 상황에서 빠른 대처 능력이 뛰어나요.',
+    '天上火': '밝고 따뜻한 에너지로 주변 사람들에게 긍정적 영향을 줘요. 대인관계가 자산이에요.',
+    '佛灯火': '통찰력과 지혜가 깊어요. 상담, 교육, 멘토링에 재능이 있어요.',
+    '佛燈火': '통찰력과 지혜가 깊어요. 상담, 교육, 멘토링에 재능이 있어요.',
+    '覆灯火': '가까운 사람들에게 따뜻한 영향을 주는 타입이에요. 소규모 팀에서 강점이 돋보여요.',
+    '覆燈火': '가까운 사람들에게 따뜻한 영향을 주는 타입이에요. 소규모 팀에서 강점이 돋보여요.',
+    '山下火': '묵묵히 타오르는 의지가 있어요. 남들이 포기할 때도 끝까지 밀어붙이는 끈기파예요.',
+    '路旁土': '누구와도 잘 어울리는 포용력이 있어요. 서비스, 상담, 교육 분야에 유리해요.',
+    '壁上土': '가정과 안정을 중시하고, 든든한 울타리 역할을 잘해요. 신뢰받는 타입이에요.',
+    '沙中土': '유연하고 적응력이 뛰어나요. 환경이 바뀌어도 빠르게 적응하는 강점이 있어요.',
+    '屋上土': '가정과 안식처를 중시하는 타입이에요. 부동산이나 공간 관련 분야와 인연이 있어요.',
+    '平地木': '꾸준히 성장하는 타입이에요. 급격한 변화보다 안정적으로 실력을 쌓는 게 유리해요.',
+    '桑柘木': '실용적이고 사람들에게 도움이 되는 일에 보람을 느껴요. 사회적 기여에 강점.',
+    '桑柺木': '실용적이고 사람들에게 도움이 되는 일에 보람을 느껴요. 사회적 기여에 강점.',
+    '松柏木': '끈기와 절개가 강해요. 어려운 상황에서도 흔들리지 않는 멘탈이 최대 무기예요.',
+    '大林木': '그릇이 크고 리더십이 있어요. 큰 조직이나 프로젝트를 이끄는 데 적합해요.',
+    '杨柳木': '유연하고 예술적 감성이 뛰어나요. 트렌드 파악과 감성적 콘텐츠 제작에 강해요.',
+    '楊柳木': '유연하고 예술적 감성이 뛰어나요. 트렌드 파악과 감성적 콘텐츠 제작에 강해요.',
+    '石榴木': '다재다능하고 겉과 속이 다른 풍성한 재능이 있어요. 여러 분야에서 성과를 낼 수 있어요.',
+  };
+  return tips[napeum] ?? '이 에너지의 성질이 당신의 기본 행동 패턴에 영향을 줘요.';
 }
 
 function mapNapeum(napeumList: NaPeum[]): V4Napeum[] {
@@ -378,6 +467,126 @@ function mapGongmang(list: GongMang[]): V4GongMang[] {
   });
 }
 
+// ─── 해석 가이드 헬퍼 ───
+
+function getUnyoungEnergyLevel(kr: string): number {
+  const scores: Record<string, number> = {
+    '제왕': 5, '장생': 5, '임관': 4, '관대': 4, '목욕': 3,
+    '양': 2, '태': 2, '쇠': 2, '묘': 1, '병': 1, '사': 1, '절': 0,
+  };
+  return scores[kr] ?? 2;
+}
+
+function getUnyoungPositionContext(pillar: string): string {
+  if (pillar.includes('년')) return '초년·사회';
+  if (pillar.includes('월')) return '직장·청년기';
+  if (pillar.includes('일')) return '나의 본질';
+  if (pillar.includes('시')) return '말년·결과';
+  return '';
+}
+
+function getUnyoungSummary(items: V4Unyoung[]): string {
+  const ilji = items.find(u => u.pillar.includes('일지'));
+  const iljiLevel = ilji ? getUnyoungEnergyLevel(ilji.kr) : 0;
+  const highCount = items.filter(u => getUnyoungEnergyLevel(u.kr) >= 4).length;
+  const lowCount = items.filter(u => getUnyoungEnergyLevel(u.kr) <= 1).length;
+  if (ilji && iljiLevel >= 4 && lowCount >= 2) {
+    return `겉으로는 조용해 보이지만, 본질(일지)에서 '${ilji.kr}'의 강렬한 에너지가 숨어있어요. 과시형이 아닌 실력파 — 속에서 끊임없이 새로운 것을 만들어내는 구조입니다.`;
+  }
+  if (ilji && iljiLevel >= 4) {
+    return `나의 본질(일지)에서 '${ilji.kr}'의 강한 에너지가 있어요. 내면의 생명력이 강하고, 스스로 성장하는 힘이 큽니다.`;
+  }
+  if (lowCount >= 3) {
+    return '전체적으로 에너지가 안으로 수렴되는 구조예요. 조용하지만 깊이있는 타입으로, 독서·사색·창작 등 내면을 채우는 활동에서 힘을 얻어요.';
+  }
+  if (highCount >= 3) {
+    return '전체적으로 에너지가 활발한 구조예요. 적극적으로 움직일수록 운이 트이는 타입이에요.';
+  }
+  const strongItem = items.find(u => getUnyoungEnergyLevel(u.kr) >= 4);
+  if (strongItem) {
+    return `'${getUnyoungPositionContext(strongItem.pillar)}' 영역에서 에너지가 가장 강해요. 이 영역에 집중하면 좋은 결과를 얻어요.`;
+  }
+  return '균형 잡힌 에너지 분포예요. 한쪽에 치우치지 않고, 상황에 따라 유연하게 대처하는 타입이에요.';
+}
+
+function getDaeunCurrentSummary(daeunList: V4Daeun[]): string {
+  const current = daeunList.find(d => d.current);
+  if (!current) return '';
+  const nextIdx = daeunList.findIndex(d => d.current) + 1;
+  const next = nextIdx < daeunList.length ? daeunList[nextIdx] : null;
+  const elemDesc: Record<ElemKey, string> = {
+    wood: '성장·확장의 시기예요. 새로운 시작, 배움, 도전이 자연스러운 시기입니다.',
+    fire: '열정·표현의 시기예요. 적극적으로 나서고, 자기 PR에 유리한 시기입니다.',
+    earth: '안정·축적의 시기예요. 기반을 다지고 내실을 챙기는 게 중요해요.',
+    metal: '결실·정리의 시기예요. 불필요한 것을 정리하고 핵심에 집중하세요.',
+    water: '지혜·유연함의 시기예요. 관찰하고 기다리며, 기회를 포착하세요.',
+  };
+  let text = `지금은 ${current.gz}(${current.kr}) 대운 — ${EKR[current.elem]} 에너지가 지배하는 ${current.age} 시기예요.\n${elemDesc[current.elem]}`;
+  if (next) {
+    text += `\n\n다음 대운(${next.gz})부터는 ${EKR[next.elem]} 에너지로 전환돼요.`;
+  }
+  return text;
+}
+
+function getNapeumSummary(items: V4Napeum[]): string {
+  const ilju = items.find(n => n.pillar === '일주');
+  if (!ilju) {
+    return items.length > 0 ? `${items[0].hanja}의 에너지가 기본 바탕이에요.` : '';
+  }
+  const practical = getNapeumPracticalTip(ilju.hanja);
+  return `당신의 근본 에너지는 '${ilju.hanja}'예요. ${ilju.desc}\n\n실생활에서는? ${practical}`;
+}
+
+function getNapeumPositionRole(pillar: string): string {
+  const roles: Record<string, string> = {
+    '년주': '조상에게서 물려받은 에너지',
+    '월주': '사회에서 발현되는 에너지',
+    '일주': '나의 가장 근본적인 에너지',
+    '시주': '말년에 나타나는 에너지',
+  };
+  return roles[pillar] ?? '';
+}
+
+function getGilsinActionTip(name: string): string {
+  const tips: Record<string, string> = {
+    '天恩': '어려울 때 주변에 도움을 요청하세요. 예상치 못한 귀인이 나타날 확률이 높아요',
+    '阴德': '남몰래 선행을 베풀면 더 큰 복으로 돌아와요. 기부·봉사 활동 추천',
+    '陰德': '남몰래 선행을 베풀면 더 큰 복으로 돌아와요. 기부·봉사 활동 추천',
+    '福生': '감사 일기를 쓰면 복의 체질이 더 강해져요. 긍정 에너지를 유지하세요',
+    '除神': '장애물을 만나도 쉽게 돌파하는 힘이 있어요. 어려운 프로젝트를 맡아보세요',
+    '鸣吠': '글쓰기·발표·SNS 등 표현 활동에 재능이 있어요. 적극적으로 의견을 내세요',
+    '鳴吠': '글쓰기·발표·SNS 등 표현 활동에 재능이 있어요. 적극적으로 의견을 내세요',
+    '天德': '큰 위기에서도 안전하게 넘기는 수호 에너지예요. 과감한 도전에 유리해요',
+    '月德': '매월 꾸준히 소소한 행운이 따라요. 복권보다 꾸준한 투자가 잘 맞아요',
+    '天喜': '경사스러운 기회가 잘 찾아와요. 모임이나 네트워킹에 적극 참여하세요',
+    '玉堂': '배움과 학문에서 귀인이 나타나요. 자격증·학위 취득에 유리한 운이에요',
+  };
+  return tips[name] ?? '이 길신의 에너지를 의식적으로 활용해보세요';
+}
+
+function getHyungsalActionTip(name: string): string {
+  const tips: Record<string, string> = {
+    '天吏': '계약서·문서는 하루 묵혔다 결정하세요. 급하게 사인하면 후회할 수 있어요',
+    '致死': '무리한 일정은 피하고 체력 관리에 신경 쓰세요. 과로가 가장 큰 적이에요',
+    '五虚': '체력이 바닥날 때가 있어요. 규칙적 운동과 충분한 수면이 최고의 보약이에요',
+    '五虛': '체력이 바닥날 때가 있어요. 규칙적 운동과 충분한 수면이 최고의 보약이에요',
+    '五离': '오해가 생기기 쉬운 체질이에요. 중요한 말은 카톡보다 직접 만나서 하세요',
+    '五離': '오해가 생기기 쉬운 체질이에요. 중요한 말은 카톡보다 직접 만나서 하세요',
+    '元武': '속마음을 감추는 편인데, 가까운 사람에겐 먼저 마음을 열어보세요. 관계가 깊어져요',
+    '白虎': '급한 결정은 피하고, 운전·운동 시 안전에 주의하세요. 침착함이 무기예요',
+    '朱雀': '한 번 더 생각하고 말하는 습관을 들이세요. 말실수가 큰 화를 부를 수 있어요',
+    '勾陈': '법적 문제·문서 작업은 전문가 도움을 받으세요. 혼자 처리하면 빠지기 쉬워요',
+    '勾陳': '법적 문제·문서 작업은 전문가 도움을 받으세요. 혼자 처리하면 빠지기 쉬워요',
+  };
+  return tips[name] ?? '이 부분을 의식적으로 주의하면 오히려 강점으로 바뀌어요';
+}
+
+function getGongmangActionTip(basis: string): string {
+  if (basis.includes('년')) return '사회적 인정이 늦어도 조급해하지 마세요. 꾸준히 쌓으면 때가 되었을 때 한꺼번에 돌아옵니다.';
+  if (basis.includes('일')) return '타인의 기대에 맞추려 하지 말고, 자기만의 길을 가세요. 자기 창작·자기 사업에서 인생이 풀리는 구조예요.';
+  return '비어있는 영역이지만, 집착을 내려놓으면 오히려 자유로운 영역이 돼요.';
+}
+
 // ─── Utility sub-components ───
 
 function useLocalInView(threshold = 0.15): [React.RefObject<HTMLDivElement | null>, boolean] {
@@ -440,7 +649,7 @@ function ScoreRing({ label, score, color, delay = 0, topicId }: {
   const navigate = useNavigate();
   return (
     <div ref={ref} className="flex flex-col items-center gap-1"
-      onClick={topicId ? () => navigate(`/topic/${topicId}`) : undefined}
+      onClick={topicId ? () => navigate(`/topic/${topicId}`, { state: { baseScore: score } }) : undefined}
       style={topicId ? { cursor: 'pointer' } : {}}>
       <div className="relative" style={{ width: 72, height: 72 }}>
         <svg viewBox="0 0 80 80" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
@@ -637,6 +846,18 @@ function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements; hasBir
           </div>
         )}
       </div>
+      {/* 쉽게 말하면 */}
+      <div className="mt-3 p-3 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: '#3949ab', marginBottom: 6 }}>쉽게 말하면?</p>
+        <div style={{ fontSize: 11, color: '#5c6bc0', lineHeight: 1.7 }}>
+          <p>• <b>상생(→생→)</b>: A가 B에게 에너지를 주는 관계예요. 자연스럽게 도움이 되는 흐름</p>
+          <p>• <b>상극(→극→)</b>: A가 B를 누르는 관계예요. 압박이 되지만, 성장의 원동력이기도 해요</p>
+          <p style={{ marginTop: 6, fontWeight: 600, color: '#3949ab' }}>
+            위에서 가장 강한 오행이 나(토)를 극하고 있으면 → 외부 압박·스트레스가 큰 구조예요.
+            해결책 영역의 오행이 중간에서 에너지를 전달해주면 이 압박이 풀려요!
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -644,172 +865,204 @@ function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements; hasBir
 function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
   jijanggan: JiJangGan[]; pillars: Pillar[]; hasBirthTime: boolean;
 }) {
-  // Build display data from jijanggan
-  interface JjDisplayItem {
-    hanja: string;
-    elemKey: ElemKey;
-    label: string;
-    entries: Array<{ hanja: string; kr: string; elemKey: ElemKey; sipsung: string; quote: string }>;
-    extraNote?: { text: string; bg: string; color: string };
+  // ─── 중국어→한국어 십성 변환 (lunar-javascript는 中文 반환) ───
+  const cnToKr: Record<string, string> = {
+    '比肩': '비견', '劫財': '겁재', '食神': '식신', '傷官': '상관',
+    '偏財': '편재', '正財': '정재', '偏官': '편관', '七殺': '편관',
+    '正官': '정관', '偏印': '편인', '正印': '정인', '日主': '일주',
+  };
+  function toKrSipsung(raw: string): string {
+    return cnToKr[raw] ?? raw;
   }
 
-  const sipMap: Record<string, string> = {
-    '정관': '"제대로 해야 해"',
-    '정인': '"더 배우고 싶어"',
-    '겁재': '"밀리면 안 돼"',
-    '편관': '"대충은 안 돼"',
-    '칠살': '"대충은 안 돼"',
-    '편인': '"직감을 믿어"',
-    '식신': '"만들고 표현하자"',
-    '상관': '"틀을 깨고 싶어"',
-    '편재': '"기회를 잡자"',
-    '정재': '"안정이 최고"',
-    '비견': '"같이 가자"',
-    '일주': '"나 자신"',
+  // ─── 캐시 데이터 십성 누락 시 일간 기준 직접 계산 ───
+  const SANGSAENG: Record<string, string> = { '목': '화', '화': '토', '토': '금', '금': '수', '수': '목' };
+  const SANGGEUK: Record<string, string> = { '목': '토', '토': '수', '수': '화', '화': '금', '금': '목' };
+  const dayGan = pillars[2]?.천간 ?? '';
+  const dayOheng = CHEONGAN_OHENG[dayGan] ?? '토';
+  const dayEumyang = CHEONGAN_EUMYANG[dayGan] ?? '양';
+
+  function calcSipsung(targetGan: string): string {
+    const tOheng = CHEONGAN_OHENG[targetGan];
+    const tEumyang = CHEONGAN_EUMYANG[targetGan];
+    if (!tOheng || !tEumyang) return '';
+    const samePolarity = dayEumyang === tEumyang;
+    if (dayOheng === tOheng) return samePolarity ? '비견' : '겁재';
+    if (SANGSAENG[dayOheng] === tOheng) return samePolarity ? '식신' : '상관';
+    if (SANGSAENG[tOheng] === dayOheng) return samePolarity ? '편인' : '정인';
+    if (SANGGEUK[dayOheng] === tOheng) return samePolarity ? '편재' : '정재';
+    if (SANGGEUK[tOheng] === dayOheng) return samePolarity ? '편관' : '정관';
+    return '';
+  }
+
+  // ─── 십성별 실생활 의미 ───
+  const sipMeaning: Record<string, { voice: string; trait: string; emoji: string }> = {
+    '정관': { voice: '"제대로 해야 해"', trait: '규칙, 책임감, 자기관리가 철저한 성향', emoji: '📏' },
+    '정인': { voice: '"더 배우고 싶어"', trait: '학습욕, 지적 호기심, 자격증·공부에 끌림', emoji: '📚' },
+    '겁재': { voice: '"밀리면 안 돼"', trait: '경쟁심, 승부욕, 내 것을 지키려는 에너지', emoji: '🔥' },
+    '편관': { voice: '"대충은 안 돼"', trait: '완벽주의, 추진력, 압박감 속에서 빛나는 타입', emoji: '⚡' },
+    '편인': { voice: '"직감을 믿어"', trait: '독창적 사고, 영감, 남들과 다른 시각', emoji: '💡' },
+    '식신': { voice: '"만들고 표현하자"', trait: '창작 욕구, 맛집·예술·취미에 진심', emoji: '🎨' },
+    '상관': { voice: '"틀을 깨고 싶어"', trait: '혁신, 반골기질, 기존 방식에 의문을 던짐', emoji: '🚀' },
+    '편재': { voice: '"기회를 잡자"', trait: '기회 포착, 투자감각, 유행에 민감', emoji: '🎯' },
+    '정재': { voice: '"안정이 최고"', trait: '저축, 계획적 소비, 꾸준한 축적형', emoji: '🏦' },
+    '비견': { voice: '"같이 가자"', trait: '동료의식, 협동심, 혼자보다 함께 하는 타입', emoji: '🤝' },
+    '일주': { voice: '"나 자신"', trait: '나의 본질 에너지, 모든 판단의 기준점', emoji: '👤' },
   };
 
-  const items: JjDisplayItem[] = [];
+  // ─── 포지션별 의미 ───
+  const posContext: Record<string, { role: string; desc: string }> = {
+    '년지': { role: '어린 시절의 나', desc: '부모·조상에게서 물려받은 기질' },
+    '년지+월지': { role: '성장기의 나', desc: '타고난 기질 + 사회적 성격' },
+    '월지': { role: '사회에서의 나', desc: '직장·대인관계에서 보이는 모습' },
+    '일지': { role: '진짜 나의 본질', desc: '가장 솔직한 내면, 배우자궁' },
+    '시지': { role: '말년의 나', desc: '나이 들수록 드러나는 성향, 자녀궁' },
+  };
 
-  // Year+Month combined if same jiji
-  const yearJj = jijanggan[0];
-  const monthJj = jijanggan[1];
-  const dayJj = jijanggan[2];
+  // ─── 데이터 빌드 ───
+  interface JjEntry { hanja: string; kr: string; elemKey: ElemKey; sipsung: string; meaning: { voice: string; trait: string; emoji: string } | null }
+  interface JjCard { hanja: string; elemKey: ElemKey; posKey: string; posLabel: string; role: string; roleDesc: string; entries: JjEntry[]; isCore?: boolean }
+
+  function buildEntries(jj: JiJangGan): JjEntry[] {
+    return jj.지장간.map((g, gi) => {
+      const gOheng = CHEONGAN_OHENG[g];
+      const gElem = gOheng ? OHENG_TO_ELEM[gOheng] : 'earth' as ElemKey;
+      const gKr = CHEONGAN_KO[g] ?? g;
+      const rawSip = jj.십성[gi] ?? '';
+      // 십성 데이터 없으면 일간 기준으로 직접 계산 (캐시된 구 데이터 대응)
+      const sip = rawSip ? toKrSipsung(rawSip) : calcSipsung(g);
+      return { hanja: g, kr: gKr, elemKey: gElem, sipsung: sip, meaning: sipMeaning[sip] ?? null };
+    });
+  }
+
+  const cards: JjCard[] = [];
+  const yearJj = jijanggan[0]; const monthJj = jijanggan[1]; const dayJj = jijanggan[2];
   const timeJj = hasBirthTime && jijanggan[3] ? jijanggan[3] : null;
 
-  const yearP = pillars[0];
-  const monthP = pillars[1];
-  const dayP = pillars[2];
-  const timeP = hasBirthTime ? pillars[3] : null;
-
-  // Year & Month often share same zhi (e.g., both 寅)
   if (yearJj && monthJj && yearJj.지지 === monthJj.지지) {
-    const zhiOheng = JIJI_OHENG[yearJj.지지];
-    const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth';
-    const kr = JIJI_KO[yearJj.지지] ?? yearJj.지지;
-    items.push({
-      hanja: yearJj.지지,
-      elemKey,
-      label: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']}) · 년지+월지`,
-      entries: yearJj.지장간.map((g, gi) => {
-        const gOheng = CHEONGAN_OHENG[g];
-        const gElem = gOheng ? OHENG_TO_ELEM[gOheng] : 'earth';
-        const gKr = CHEONGAN_KO[g] ?? g;
-        const sip = yearJj.십성[gi] ?? '';
-        return { hanja: g, kr: gKr, elemKey: gElem, sipsung: sip, quote: sipMap[sip] ?? '' };
-      }),
-    });
+    const zhiOheng = JIJI_OHENG[yearJj.지지]; const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth' as ElemKey;
+    const kr = JIJI_KO[yearJj.지지] ?? yearJj.지지; const pos = '년지+월지';
+    cards.push({ hanja: yearJj.지지, elemKey, posKey: pos, posLabel: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']})`, role: posContext[pos]?.role ?? pos, roleDesc: posContext[pos]?.desc ?? '', entries: buildEntries(yearJj) });
   } else {
-    // Separate year and month
-    if (yearJj && yearP) {
-      const zhiOheng = JIJI_OHENG[yearJj.지지];
-      const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth';
+    if (yearJj) {
+      const zhiOheng = JIJI_OHENG[yearJj.지지]; const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth' as ElemKey;
       const kr = JIJI_KO[yearJj.지지] ?? yearJj.지지;
-      items.push({
-        hanja: yearJj.지지,
-        elemKey,
-        label: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']}) · 년지`,
-        entries: yearJj.지장간.map((g, gi) => {
-          const gOheng = CHEONGAN_OHENG[g];
-          const gElem = gOheng ? OHENG_TO_ELEM[gOheng] : 'earth';
-          const gKr = CHEONGAN_KO[g] ?? g;
-          const sip = yearJj.십성[gi] ?? '';
-          return { hanja: g, kr: gKr, elemKey: gElem, sipsung: sip, quote: sipMap[sip] ?? '' };
-        }),
-      });
+      cards.push({ hanja: yearJj.지지, elemKey, posKey: '년지', posLabel: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']})`, role: posContext['년지'].role, roleDesc: posContext['년지'].desc, entries: buildEntries(yearJj) });
     }
-    if (monthJj && monthP) {
-      const zhiOheng = JIJI_OHENG[monthJj.지지];
-      const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth';
+    if (monthJj) {
+      const zhiOheng = JIJI_OHENG[monthJj.지지]; const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth' as ElemKey;
       const kr = JIJI_KO[monthJj.지지] ?? monthJj.지지;
-      items.push({
-        hanja: monthJj.지지,
-        elemKey,
-        label: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']}) · 월지`,
-        entries: monthJj.지장간.map((g, gi) => {
-          const gOheng = CHEONGAN_OHENG[g];
-          const gElem = gOheng ? OHENG_TO_ELEM[gOheng] : 'earth';
-          const gKr = CHEONGAN_KO[g] ?? g;
-          const sip = monthJj.십성[gi] ?? '';
-          return { hanja: g, kr: gKr, elemKey: gElem, sipsung: sip, quote: sipMap[sip] ?? '' };
-        }),
-      });
+      cards.push({ hanja: monthJj.지지, elemKey, posKey: '월지', posLabel: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']})`, role: posContext['월지'].role, roleDesc: posContext['월지'].desc, entries: buildEntries(monthJj) });
     }
   }
-
-  // Day
-  if (dayJj && dayP) {
-    const zhiOheng = JIJI_OHENG[dayJj.지지];
-    const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth';
+  if (dayJj) {
+    const zhiOheng = JIJI_OHENG[dayJj.지지]; const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth' as ElemKey;
     const kr = JIJI_KO[dayJj.지지] ?? dayJj.지지;
-    items.push({
-      hanja: dayJj.지지,
-      elemKey,
-      label: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']}) · 일지`,
-      entries: dayJj.지장간.map((g, gi) => {
-        const gOheng = CHEONGAN_OHENG[g];
-        const gElem = gOheng ? OHENG_TO_ELEM[gOheng] : 'earth';
-        const gKr = CHEONGAN_KO[g] ?? g;
-        const sip = dayJj.십성[gi] ?? '';
-        return { hanja: g, kr: gKr, elemKey: gElem, sipsung: sip, quote: sipMap[sip] ?? '' };
-      }),
-      extraNote: { text: `장생(長生) 에너지!`, bg: '#e8f5e9', color: '#2e7d32' },
-    });
+    cards.push({ hanja: dayJj.지지, elemKey, posKey: '일지', posLabel: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']})`, role: posContext['일지'].role, roleDesc: posContext['일지'].desc, entries: buildEntries(dayJj), isCore: true });
+  }
+  if (timeJj) {
+    const zhiOheng = JIJI_OHENG[timeJj.지지]; const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth' as ElemKey;
+    const kr = JIJI_KO[timeJj.지지] ?? timeJj.지지;
+    cards.push({ hanja: timeJj.지지, elemKey, posKey: '시지', posLabel: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']})`, role: posContext['시지'].role, roleDesc: posContext['시지'].desc, entries: buildEntries(timeJj) });
   }
 
-  // Time
-  if (timeJj && timeP) {
-    const zhiOheng = JIJI_OHENG[timeJj.지지];
-    const elemKey = zhiOheng ? OHENG_TO_ELEM[zhiOheng] : 'earth';
-    const kr = JIJI_KO[timeJj.지지] ?? timeJj.지지;
-    items.push({
-      hanja: timeJj.지지,
-      elemKey,
-      label: `${kr}(${OHENG_KR_LABEL[zhiOheng ?? '토']}) · 시지`,
-      entries: timeJj.지장간.map((g, gi) => {
-        const gOheng = CHEONGAN_OHENG[g];
-        const gElem = gOheng ? OHENG_TO_ELEM[gOheng] : 'earth';
-        const gKr = CHEONGAN_KO[g] ?? g;
-        const sip = timeJj.십성[gi] ?? '';
-        return { hanja: g, kr: gKr, elemKey: gElem, sipsung: sip, quote: sipMap[sip] ?? '' };
-      }),
-      extraNote: { text: '강한 추진력+압박', bg: '#fff3e0', color: '#e65100' },
-    });
-  }
+  // ─── 종합 해석 ───
+  const allSipsung = cards.flatMap(c => c.entries.map(e => e.sipsung)).filter(s => s && s !== '일주' && s !== '');
+  const sipsungCounts: Record<string, number> = {};
+  allSipsung.forEach(s => { sipsungCounts[s] = (sipsungCounts[s] || 0) + 1; });
+  const topSipsung = Object.entries(sipsungCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const summaryParts = topSipsung.map(([sip, count]) => {
+    const m = sipMeaning[sip];
+    return m ? `${m.emoji} ${m.voice} (${sip}${count >= 2 ? ' ×' + count + ', 특히 강함' : ''})` : null;
+  }).filter(Boolean);
+
+  // 일지의 핵심 목소리
+  const dayCard = cards.find(c => c.isCore);
+  const dayVoices = dayCard?.entries.filter(e => e.meaning).map(e => e.meaning!.voice).join(' + ') ?? '';
 
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 10 }}>
-        ▎지장간 — 겉과 속이 다른 내면의 목소리들
+      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 4 }}>
+        ▎지장간 — 내 안의 숨은 성격들
       </div>
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
-        {items.map((item, i) => {
-          const ec = EC[item.elemKey];
+      <p style={{ fontSize: 10, color: '#a0937f', marginBottom: 10, lineHeight: 1.6 }}>
+        각 기둥 속에 <b style={{ color: '#6b5b47' }}>2~3개의 숨은 성격</b>이 있어요. 겉으로 안 보이지만 내면에서 끊임없이 영향을 주는 목소리들이에요.
+      </p>
+
+      {/* 종합 해석 */}
+      {summaryParts.length > 0 && (
+        <div className="p-3 rounded-xl mb-3" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.25)' }}>
+          <p style={{ fontSize: 11, fontWeight: 800, color: '#a08b6a', marginBottom: 6 }}>나의 내면 요약</p>
+          <div className="space-y-1">
+            {summaryParts.map((part, i) => (
+              <p key={i} style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.6 }}>{part}</p>
+            ))}
+          </div>
+          {dayVoices && (
+            <p style={{ fontSize: 10, color: '#8b7e6f', marginTop: 6, lineHeight: 1.5 }}>
+              → 특히 <b style={{ color: '#6b5b47' }}>일지(본질)</b>에서 {dayVoices} 목소리가 가장 강하게 작동해요.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 카드 리스트 (세로) */}
+      <div className="space-y-3">
+        {cards.map((card, ci) => {
+          const ec = EC[card.elemKey];
           return (
-            <div key={i} className="p-3 rounded-xl text-center" style={{ background: ec.light, border: `1px solid ${ec.med}` }}>
-              <div style={{ fontSize: 20, fontWeight: 900, color: ec.dark }}>{item.hanja}</div>
-              <div style={{ fontSize: 10, color: ec.main, fontWeight: 600 }}>{item.label}</div>
-              <div className="mt-2 space-y-1">
-                {item.entries.map((e, ei) => {
+            <div key={ci} className="rounded-xl overflow-hidden" style={{ border: card.isCore ? '2px solid #C9A96E' : `1px solid ${ec.med}` }}>
+              {/* 카드 헤더 */}
+              <div className="flex items-center gap-3 px-3 py-2.5" style={{ background: card.isCore ? 'linear-gradient(135deg, #F5F0E8, #EDE5D5)' : ec.light }}>
+                <span style={{ fontSize: 22, fontWeight: 900, color: card.isCore ? '#C9A96E' : ec.dark }}>{card.hanja}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#6b5b47' }}>{card.posKey}</span>
+                    {card.isCore && <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', background: '#C9A96E', borderRadius: 4, padding: '1px 5px' }}>핵심</span>}
+                  </div>
+                  <p style={{ fontSize: 9, color: '#8b7e6f' }}>{card.role} — {card.roleDesc}</p>
+                </div>
+                <span style={{ fontSize: 10, color: ec.main, fontWeight: 600 }}>{card.posLabel}</span>
+              </div>
+              {/* 숨은 성격 목록 */}
+              <div className="px-3 py-2 space-y-2" style={{ background: '#fff' }}>
+                {card.entries.map((e, ei) => {
                   const eec = EC[e.elemKey];
                   return (
-                    <div key={ei} className="rounded-lg" style={{ background: '#fff', padding: '4px 6px', fontSize: 10, color: eec.dark }}>
-                      {e.hanja} {e.kr} · <b>{e.sipsung}</b>
-                      {e.quote && <><br /><span style={{ color: '#8b7e6f' }}>{e.quote}</span></>}
+                    <div key={ei} className="flex items-start gap-2.5 pb-2" style={ei < card.entries.length - 1 ? { borderBottom: '1px solid #f0ebe3' } : {}}>
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: eec.light, border: `1px solid ${eec.med}` }}>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: eec.dark }}>{e.hanja}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#6b5b47' }}>{e.kr}</span>
+                          {e.sipsung && <span style={{ fontSize: 9, fontWeight: 700, color: eec.main, background: eec.light, borderRadius: 4, padding: '1px 5px' }}>{e.sipsung}</span>}
+                        </div>
+                        {e.meaning ? (
+                          <div style={{ marginTop: 2 }}>
+                            <p style={{ fontSize: 10, color: '#C9A96E', fontWeight: 700 }}>{e.meaning.voice}</p>
+                            <p style={{ fontSize: 10, color: '#8b7e6f', lineHeight: 1.5 }}>{e.meaning.trait}</p>
+                          </div>
+                        ) : e.sipsung ? (
+                          <p style={{ fontSize: 10, color: '#8b7e6f', marginTop: 2 }}>{e.sipsung} 에너지</p>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}
               </div>
-              {item.extraNote && (
-                <div
-                  className="rounded-lg mt-2"
-                  style={{ background: item.extraNote.bg, padding: '3px 6px', fontSize: 10, color: item.extraNote.color, fontWeight: 700 }}
-                >
-                  {item.extraNote.text}
-                </div>
-              )}
             </div>
           );
         })}
+      </div>
+
+      {/* 해석 가이드 */}
+      <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#fff8e1', border: '1px solid #ffe082' }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: '#f57f17', marginBottom: 3 }}>이렇게 읽어요</p>
+        <p style={{ fontSize: 10, color: '#8b7e6f', lineHeight: 1.7 }}>
+          각 칸마다 2~3개의 숨은 성격이 있어요. 예를 들어 한 칸에 "제대로 해야 해" + "더 배우고 싶어"가 같이 있으면, <b style={{ color: '#6b5b47' }}>완벽주의와 학습욕이 동시에 작동</b>하는 성격이에요.
+          <br /><b style={{ color: '#6b5b47' }}>일지 = 진짜 나</b> (가장 중요), 년지 = 어릴 때 모습, 시지 = 나이 들수록 나타나는 모습이에요. 같은 십성이 여러 칸에 반복되면 그 성향이 특히 강해요.
+        </p>
       </div>
     </div>
   );
@@ -817,29 +1070,96 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
 
 function CareerFitVis() {
   const fits = [
-    { label: '개발·기술', score: 92, color: EC.metal.main },
-    { label: '디자인·창작', score: 88, color: EC.fire.main },
-    { label: '기획·전략', score: 80, color: EC.earth.main },
-    { label: '영업·대인', score: 45, color: EC.wood.main },
-    { label: '순수 관리직', score: 40, color: EC.water.main },
+    { label: '개발·기술', score: 92, color: EC.metal.main, icon: '💻',
+      why: '금(金) 기운이 강해 논리적 사고와 정밀한 분석력이 뛰어나요. 복잡한 문제를 체계적으로 풀어내는 능력이 타고났어요.',
+      jobs: 'SW개발, 데이터분석, 엔지니어, 연구직' },
+    { label: '디자인·창작', score: 88, color: EC.fire.main, icon: '🎨',
+      why: '화(火) 기운의 감각과 금(金)의 정교함이 만나 미적 감각 + 완성도가 높아요. 트렌드를 읽는 눈도 좋은 편이에요.',
+      jobs: 'UX/UI, 영상편집, 작가, 브랜딩' },
+    { label: '기획·전략', score: 80, color: EC.earth.main, icon: '📋',
+      why: '토(土) 기운이 중심을 잡아주고, 여러 요소를 통합하는 힘이 있어요. 큰 그림을 보면서 실행까지 연결하는 능력이에요.',
+      jobs: '서비스기획, 전략컨설팅, PM, 사업개발' },
+    { label: '영업·대인', score: 45, color: EC.wood.main, icon: '🤝',
+      why: '목(木) 기운이 약한 편이라 적극적 대인관계에 에너지 소모가 클 수 있어요. 소규모·깊은 관계에서 더 빛나는 타입이에요.',
+      jobs: '컨설턴트, 강사, 코칭, B2B영업' },
+    { label: '순수 관리직', score: 40, color: EC.water.main, icon: '📊',
+      why: '수(水) 기운은 있지만 창의적 에너지가 강해서 단순 반복 관리보다는 변화가 있는 환경이 더 맞아요.',
+      jobs: '프로젝트 매니저(변화 있는), 스타트업 운영' },
   ];
+
+  const topFit = fits[0];
+  const strongFields = fits.filter(f => f.score >= 75);
+  const weakFields = fits.filter(f => f.score < 50);
+
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 10 }}>▎직업 적성 매칭도</div>
-      <div className="space-y-2">
-        {fits.map((f, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <span className="text-right" style={{ width: 72, fontSize: 11, fontWeight: 600, color: '#6b5b47' }}>{f.label}</span>
-            <div className="flex-1 rounded-full overflow-hidden" style={{ height: 18, background: '#efe8db' }}>
-              <div
-                className="h-full rounded-full flex items-center justify-end pr-2"
-                style={{ width: `${f.score}%`, background: f.color + 'cc' }}
-              >
-                <span style={{ fontSize: 10, fontWeight: 800, color: '#fff' }}>{f.score}%</span>
+      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 4 }}>▎직업 적성 매칭도</div>
+      <p style={{ fontSize: 10, color: '#8b7e6f', marginBottom: 12, lineHeight: 1.5 }}>
+        사주 오행의 강약을 기반으로 어떤 분야에서 자연스럽게 능력을 발휘할 수 있는지 분석했어요
+      </p>
+
+      {/* 종합 해석 */}
+      <div className="mb-4 p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #f5f0e8, #ede5d5)', border: '1px solid rgba(201,169,110,0.25)' }}>
+        <p style={{ fontSize: 11, fontWeight: 800, color: '#a08b6a', marginBottom: 4 }}>나의 직업 성향 요약</p>
+        <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.7 }}>
+          <b>{topFit.label}</b> 분야와 궁합이 가장 좋아요 ({topFit.score}%).
+          {strongFields.length > 1 && <> <b>{strongFields.slice(1).map(f => f.label).join(', ')}</b> 분야도 잘 맞는 편이에요.</>}
+          {weakFields.length > 0 && <> 반면 <b>{weakFields.map(f => f.label).join(', ')}</b>은 에너지 소모가 클 수 있어요 — 못한다는 게 아니라 더 힘이 드는 방향이에요.</>}
+        </p>
+      </div>
+
+      {/* 바 차트 + 설명 카드 */}
+      <div className="space-y-3">
+        {fits.map((f, i) => {
+          const isStrong = f.score >= 75;
+          return (
+            <div key={i} className="p-3 rounded-xl" style={{ background: '#fff', border: `1px solid ${isStrong ? f.color + '30' : '#e8e0d4'}` }}>
+              {/* 바 */}
+              <div className="flex items-center gap-2 mb-2">
+                <span style={{ fontSize: 16 }}>{f.icon}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#6b5b47', flex: 1 }}>{f.label}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: f.color }}>{f.score}%</span>
               </div>
+              <div className="rounded-full overflow-hidden mb-2" style={{ height: 10, background: '#efe8db' }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${f.score}%`, background: `linear-gradient(90deg, ${f.color}99, ${f.color})` }}
+                />
+              </div>
+              {/* 왜 이 점수인지 */}
+              <p style={{ fontSize: 10, color: '#6b5b47', lineHeight: 1.6, marginBottom: 4 }}>
+                <b style={{ color: f.color }}>왜?</b> {f.why}
+              </p>
+              {/* 추천 직업 */}
+              <p style={{ fontSize: 10, color: '#8b7e6f', lineHeight: 1.5 }}>
+                <b>추천:</b> {f.jobs}
+              </p>
             </div>
+          );
+        })}
+      </div>
+
+      {/* 추천 근무 환경 */}
+      <div className="mt-4 p-3 rounded-xl" style={{ background: '#fff', border: '1px solid #e8e0d4' }}>
+        <p style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 6 }}>🏢 나에게 맞는 근무 환경</p>
+        <div className="space-y-2">
+          <div className="flex items-start gap-2">
+            <span style={{ fontSize: 10, color: '#2D8A4E', fontWeight: 800, minWidth: 50 }}>잘 맞음</span>
+            <span style={{ fontSize: 10, color: '#6b5b47', lineHeight: 1.6 }}>자율적인 시간 관리, 깊은 몰입이 가능한 환경, 소규모 팀, 실력으로 인정받는 문화</span>
           </div>
-        ))}
+          <div className="flex items-start gap-2">
+            <span style={{ fontSize: 10, color: '#e65100', fontWeight: 800, minWidth: 50 }}>주의</span>
+            <span style={{ fontSize: 10, color: '#6b5b47', lineHeight: 1.6 }}>지나친 회의·보고 문화, 성과보다 인맥이 중요한 환경, 창의성 없이 반복하는 업무</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 해석 가이드 */}
+      <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#fff8e1', border: '1px solid #ffe082' }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: '#f57f17', marginBottom: 3 }}>이렇게 읽어요</p>
+        <p style={{ fontSize: 10, color: '#8b7e6f', lineHeight: 1.6 }}>
+          높은 점수 = "타고난 적성이 잘 맞아서 적은 에너지로 좋은 성과를 낼 수 있는 분야"예요. 낮은 점수는 "못한다"가 아니라 <b style={{ color: '#6b5b47' }}>"더 많은 에너지가 든다"</b>는 뜻이에요. 80% 이상이면 천직 수준, 60~79%면 충분히 잘할 수 있는 범위, 50% 미만이면 다른 분야와 병행하면 좋아요.
+        </p>
       </div>
     </div>
   );
@@ -990,7 +1310,7 @@ function ReportSection({ section, index, elements, hasBirthTime, jijanggan, pill
             className="px-4 pb-4"
           >
             <div className="text-body-sm text-text-secondary whitespace-pre-line leading-relaxed">
-              {section.content}
+              {stripMd(section.content)}
             </div>
             {section.visual && (
               <div className="mt-4">
@@ -1197,7 +1517,7 @@ export function ResultPage() {
   const v4Pillars = mapPillars(sajuData.pillars, sajuData.sipsung);
   const v4Elements = mapElements(sajuData.elements);
   const v4Unyoung = mapUnyoung12(sajuData.unyoung12, sajuData.pillars);
-  const v4Daeun = mapDaeun(sajuData.daeun);
+  const v4Daeun = mapDaeun(sajuData.daeun, input.birthYear);
   const v4Napeum = mapNapeum(sajuData.napeum);
   const v4Gilsin = mapSinSal(sajuData.gilsin);
   const v4Hyungsal = mapSinSal(sajuData.hyungsal);
@@ -1413,25 +1733,62 @@ export function ResultPage() {
           {/* 12운성 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-3">12운성 — 에너지 상태</h2>
+              <h2 className="text-h3 text-text-primary mb-1">12운성 — 에너지 상태</h2>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12, lineHeight: 1.6 }}>
+                인생 각 영역의 에너지 강도를 보여줘요. <span style={{ color: '#27ae60', fontWeight: 700 }}>높을수록 활발</span>하고, <span style={{ color: '#e74c3c', fontWeight: 700 }}>낮을수록 내면에 집중</span>하는 에너지예요.
+              </p>
+
+              {/* 종합 해석 */}
+              <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#C9A96E', marginBottom: 4 }}>종합 해석</p>
+                <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7 }}>{getUnyoungSummary(v4Unyoung)}</p>
+              </div>
+
+              {/* 에너지 레벨 한눈에 */}
+              <div className="mb-4 p-3 rounded-xl" style={{ background: '#faf7f2' }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#8b7e6f', marginBottom: 8 }}>에너지 한눈에 보기</p>
+                <div className="space-y-2.5">
+                  {v4Unyoung.map((u, i) => {
+                    const level = getUnyoungEnergyLevel(u.kr);
+                    const posCtx = getUnyoungPositionContext(u.pillar);
+                    return (
+                      <div key={i} className="flex items-center gap-2">
+                        <span style={{ minWidth: 70, fontSize: 11, color: '#6b5b47', fontWeight: 600 }}>{posCtx}</span>
+                        <div className="flex gap-0.5 flex-1">
+                          {[1,2,3,4,5].map(n => (
+                            <div key={n} className="h-2.5 rounded-sm flex-1" style={{ background: n <= level ? u.color : '#e8e0d4', maxWidth: 28 }} />
+                          ))}
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: u.color, minWidth: 28 }}>{u.kr}</span>
+                        {u.pillar.includes('일지') && <span style={{ fontSize: 9, color: '#C9A96E', fontWeight: 800 }}>핵심</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 상세 카드 */}
               <div className="space-y-2">
                 {v4Unyoung.map((u, i) => {
-                  const bgColor = u.kr === '장생' ? '#e8f5e9' : u.kr === '병' ? '#fce4ec' : '#fff3e0';
-                  const borderColor = u.kr === '장생' ? '#a5d6a7' : u.kr === '병' ? '#f8bbd0' : '#ffe0b2';
+                  const level = getUnyoungEnergyLevel(u.kr);
+                  const bgColor = level >= 4 ? '#e8f5e9' : level <= 1 ? '#fce4ec' : '#fff3e0';
+                  const borderColor = level >= 4 ? '#a5d6a7' : level <= 1 ? '#f8bbd0' : '#ffe0b2';
+                  const posCtx = getUnyoungPositionContext(u.pillar);
                   return (
-                    <div
-                      key={i}
-                      className="flex items-start gap-3 p-3 rounded-xl"
-                      style={{ background: bgColor, border: `1px solid ${borderColor}` }}
-                    >
-                      <div className="text-center" style={{ minWidth: 44 }}>
-                        <div style={{ fontSize: 18, fontWeight: 900, color: u.color }}>{u.value}</div>
-                        <div style={{ fontSize: 10, color: u.color + '99' }}>{u.kr}</div>
+                    <div key={i} className="p-3 rounded-xl" style={{ background: bgColor, border: `1px solid ${borderColor}` }}>
+                      <div className="flex items-center gap-3 mb-1.5">
+                        <div className="text-center" style={{ minWidth: 44 }}>
+                          <div style={{ fontSize: 18, fontWeight: 900, color: u.color }}>{u.value}</div>
+                          <div style={{ fontSize: 10, color: u.color + '99' }}>{u.kr}</div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span style={{ fontSize: 12, fontWeight: 800, color: '#6b5b47' }}>{u.pillar}</span>
+                          </div>
+                          <span style={{ fontSize: 10, color: '#a0937f', fontWeight: 600 }}>{posCtx} 영역</span>
+                        </div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 2 }}>{u.pillar}</div>
-                        <div style={{ fontSize: 11, color: '#8b7e6f', lineHeight: 1.6 }}>{u.meaning}</div>
-                      </div>
+                      <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.7, paddingLeft: 2 }}>{u.meaning}</p>
                     </div>
                   );
                 })}
@@ -1480,6 +1837,15 @@ export function ResultPage() {
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-1">대운 흐름</h2>
               <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>10년 단위로 바뀌는 운의 큰 흐름이에요. <span style={{ fontWeight: 700, color: '#C9A96E' }}>현재 대운</span>이 강조되어 있어요.</p>
+
+              {/* 현재 대운 해석 */}
+              {getDaeunCurrentSummary(v4Daeun) && (
+                <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: '#C9A96E', marginBottom: 4 }}>지금 이 시기의 의미</p>
+                  <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{getDaeunCurrentSummary(v4Daeun)}</p>
+                </div>
+              )}
+
               <div className="space-y-2.5">
                 {v4Daeun.map((d, i) => {
                   const ec = EC[d.elem];
@@ -1522,6 +1888,13 @@ export function ResultPage() {
                   현재 丁巳(정사) 대운 + 2026 丙午(병오) 세운 = 화(火) 에너지 집중!
                 </p>
               </div>
+              {/* 이렇게 읽어요 */}
+              <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#3949ab', marginBottom: 3 }}>이렇게 읽어요</p>
+                <p style={{ fontSize: 10, color: '#5c6bc0', lineHeight: 1.6 }}>
+                  대운은 인생의 큰 계절이에요. 봄(목)→여름(화)→환절기(토)→가을(금)→겨울(수)처럼, 각 시기에 맞는 전략이 달라요. 현재 대운의 오행이 나에게 어떤 영향을 주는지가 핵심이에요.
+                </p>
+              </div>
             </div>
           </LocalFadeIn>
 
@@ -1529,26 +1902,52 @@ export function ResultPage() {
           <LocalFadeIn delay={80}>
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-1">납음 — 근본 에너지</h2>
-              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>사주의 가장 근본적인 기운이에요. 이 사람의 <span style={{ fontWeight: 700, color: '#6b5b47' }}>본질적 에너지 성질</span>을 나타내요.</p>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>
+                사주의 가장 깊은 곳에 있는 근본 에너지예요. 각 기둥마다 고유한 에너지가 있고, <span style={{ fontWeight: 700, color: '#C9A96E' }}>일주 납음이 가장 중요</span>해요.
+              </p>
+
+              {/* 종합 해석 */}
+              <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#C9A96E', marginBottom: 4 }}>종합 해석</p>
+                <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{getNapeumSummary(v4Napeum)}</p>
+              </div>
+
               <div className="space-y-2">
-                {v4Napeum.map((n, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
-                    <span style={{ fontSize: 24 }}>{n.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47' }}>{n.hanja}</span>
-                        <span style={{ fontSize: 11, color: '#a0937f', fontWeight: 600 }}>{n.kr}</span>
-                        <span
-                          className="rounded"
-                          style={{ padding: '2px 8px', background: '#C9A96E20', color: '#C9A96E', fontSize: 10, fontWeight: 700 }}
-                        >
-                          {n.pillar}
-                        </span>
+                {v4Napeum.map((n, i) => {
+                  const isIlju = n.pillar === '일주';
+                  return (
+                    <div key={i} className="p-3 rounded-xl" style={{
+                      background: isIlju ? '#FFF8E1' : '#faf7f2',
+                      border: isIlju ? '2px solid #C9A96E' : '1px solid #e8e0d4',
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <span style={{ fontSize: 24 }}>{n.icon}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47' }}>{n.hanja}</span>
+                            <span style={{ fontSize: 11, color: '#a0937f', fontWeight: 600 }}>{n.kr}</span>
+                            <span className="rounded" style={{ padding: '2px 8px', background: isIlju ? '#C9A96E' : '#C9A96E20', color: isIlju ? '#fff' : '#C9A96E', fontSize: 10, fontWeight: 700 }}>
+                              {n.pillar}{isIlju ? ' ← 핵심' : ''}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 10, color: '#a0937f', marginTop: 2 }}>{getNapeumPositionRole(n.pillar)}</div>
+                          <div style={{ fontSize: 12, color: '#6b5b47', marginTop: 4, fontWeight: 500, lineHeight: 1.5 }}>{n.desc}</div>
+                          <div style={{ fontSize: 11, color: isIlju ? '#8d6e00' : '#5c6bc0', marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${isIlju ? '#C9A96E80' : '#e0e0e0'}`, lineHeight: 1.6 }}>
+                            <span style={{ fontWeight: 700 }}>실생활:</span> {getNapeumPracticalTip(n.hanja)}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 12, color: '#6b5b47', marginTop: 4, fontWeight: 500, lineHeight: 1.5 }}>{n.desc}</div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
+
+              {/* 이렇게 읽어요 */}
+              <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#3949ab', marginBottom: 3 }}>이렇게 읽어요</p>
+                <p style={{ fontSize: 10, color: '#5c6bc0', lineHeight: 1.6 }}>
+                  납음은 당신의 '기본 성격 모드'예요. 일주 납음이 가장 중요 — 평소 자연스럽게 행동하는 방식이에요. 예를 들어 '역참의 넓은 땅'이면 사람을 모으고 연결하는 게 자연스러운 사람이에요. 이 성질을 살리는 방향으로 살면 인생이 편해져요.
+                </p>
               </div>
             </div>
           </LocalFadeIn>
@@ -1557,38 +1956,49 @@ export function ResultPage() {
           <LocalFadeIn delay={80}>
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-1">신살 — 타고난 별</h2>
-              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}><span style={{ color: '#2e7d32', fontWeight: 700 }}>길신</span>은 타고난 좋은 기운, <span style={{ color: '#e65100', fontWeight: 700 }}>흉살</span>은 주의하면 오히려 강점이 돼요.</p>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>
+                사주에 타고난 특별한 에너지예요. <span style={{ color: '#2e7d32', fontWeight: 700 }}>길신</span>은 타고난 재능과 행운, <span style={{ color: '#e65100', fontWeight: 700 }}>흉살</span>은 주의하면 오히려 강점으로 바뀌는 에너지예요.
+              </p>
               <div className="mb-4">
-                <div className="text-label text-func-success mb-2">길신</div>
-                <div className="space-y-1.5">
+                <div className="text-label text-func-success mb-2">길신 — 타고난 재능</div>
+                <div className="space-y-2">
                   {v4Gilsin.map((g, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-2 p-2 rounded-lg"
-                      style={{ background: '#e8f5e9', fontSize: 11 }}
-                    >
-                      <span style={{ fontWeight: 800, color: '#2e7d32', minWidth: 32 }}>{g.hanja}</span>
-                      <span style={{ fontWeight: 600, color: '#2e7d32', minWidth: 24 }}>{g.kr}</span>
-                      <span className="flex-1" style={{ color: '#4caf50' }}>{g.desc}</span>
+                    <div key={i} className="p-2.5 rounded-lg" style={{ background: '#e8f5e9', border: '1px solid #c8e6c9' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#2e7d32' }}>{g.hanja}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2e7d32' }}>{g.kr}</span>
+                        <span style={{ fontSize: 10, color: '#4caf50' }}>— {g.desc}</span>
+                      </div>
+                      <p style={{ fontSize: 10, color: '#1b5e20', lineHeight: 1.5, paddingLeft: 2 }}>
+                        {getGilsinActionTip(g.hanja)}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="text-label text-func-warning mb-2">흉살 (주의)</div>
-                <div className="space-y-1.5">
+                <div className="text-label text-func-warning mb-2">흉살 — 주의하면 강점</div>
+                <div className="space-y-2">
                   {v4Hyungsal.map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-2 p-2 rounded-lg"
-                      style={{ background: '#fff3e0', fontSize: 11 }}
-                    >
-                      <span style={{ fontWeight: 800, color: '#e65100', minWidth: 32 }}>{h.hanja}</span>
-                      <span style={{ fontWeight: 600, color: '#e65100', minWidth: 24 }}>{h.kr}</span>
-                      <span className="flex-1" style={{ color: '#f57c00' }}>{h.desc}</span>
+                    <div key={i} className="p-2.5 rounded-lg" style={{ background: '#fff3e0', border: '1px solid #ffe0b2' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span style={{ fontSize: 12, fontWeight: 800, color: '#e65100' }}>{h.hanja}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#e65100' }}>{h.kr}</span>
+                        <span style={{ fontSize: 10, color: '#f57c00' }}>— {h.desc}</span>
+                      </div>
+                      <p style={{ fontSize: 10, color: '#bf360c', lineHeight: 1.5, paddingLeft: 2 }}>
+                        {getHyungsalActionTip(h.hanja)}
+                      </p>
                     </div>
                   ))}
                 </div>
+              </div>
+              {/* 이렇게 읽어요 */}
+              <div className="mt-4 p-2.5 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#3949ab', marginBottom: 3 }}>이렇게 읽어요</p>
+                <p style={{ fontSize: 10, color: '#5c6bc0', lineHeight: 1.6 }}>
+                  길신이 많다 = 행운의 기회가 많다. 흉살이 있다 = 나쁜 게 아니라 '조심해야 할 포인트'예요. 흉살을 의식하고 대비하면 오히려 남들보다 강한 사람이 돼요. 신살은 바꿀 수 없지만, 활용 방법은 내가 선택할 수 있어요.
+                </p>
               </div>
             </div>
           </LocalFadeIn>
@@ -1597,23 +2007,32 @@ export function ResultPage() {
           <LocalFadeIn delay={80}>
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-1">공망 — 비어있는 에너지</h2>
-              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>비어있다고 나쁜 게 아니에요. 오히려 <span style={{ fontWeight: 700, color: '#6a1b9a' }}>집착을 내려놓으면 자유로운 영역</span>이에요.</p>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>
+                공망은 사주에서 '비어있는 자리'예요. 나쁜 게 아니라, <span style={{ fontWeight: 700, color: '#6a1b9a' }}>집착을 내려놓으면 오히려 자유롭고 창의적인 영역</span>이 돼요.
+              </p>
               <div className="space-y-2">
                 {v4Gongmang.map((g, i) => (
                   <div key={i} className="p-3 rounded-xl" style={{ background: '#f3e5f5', border: '1px solid #e1bee7' }}>
                     <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
                       <span style={{ fontSize: 13, fontWeight: 900, color: '#6a1b9a' }}>{g.value}</span>
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#8e24aa' }}>{g.kr}</span>
-                      <span
-                        className="rounded"
-                        style={{ padding: '1px 6px', background: '#e1bee7', color: '#6a1b9a', fontSize: 10 }}
-                      >
+                      <span className="rounded" style={{ padding: '1px 6px', background: '#e1bee7', color: '#6a1b9a', fontSize: 10 }}>
                         {g.basis}
                       </span>
                     </div>
-                    <div style={{ fontSize: 11, color: '#7b1fa2' }}>{g.meaning}</div>
+                    <div style={{ fontSize: 11, color: '#7b1fa2', marginBottom: 6, fontWeight: 600 }}>{g.meaning}</div>
+                    <div style={{ fontSize: 10, color: '#6a1b9a', lineHeight: 1.6, paddingTop: 6, borderTop: '1px dashed #ce93d8' }}>
+                      {getGongmangActionTip(g.basis)}
+                    </div>
                   </div>
                 ))}
+              </div>
+              {/* 이렇게 읽어요 */}
+              <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#3949ab', marginBottom: 3 }}>이렇게 읽어요</p>
+                <p style={{ fontSize: 10, color: '#5c6bc0', lineHeight: 1.6 }}>
+                  공망 = "비어있어서 자유로운 영역". 이 영역에서는 남들처럼 하려고 애쓰지 말고, 나만의 방식을 만드세요. 집착하면 허전하지만, 내려놓으면 예상치 못한 돌파구가 열려요.
+                </p>
               </div>
             </div>
           </LocalFadeIn>

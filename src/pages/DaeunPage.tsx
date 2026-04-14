@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -13,6 +13,8 @@ import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
 import type { DaeunAnalysisResponse } from '@/types/report';
+import { stripMd } from '@/utils/format';
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
 type Phase = 'select' | 'loading' | 'result';
 
@@ -27,11 +29,16 @@ const LOADING_STEPS = [
 export function DaeunPage() {
   usePageTitle('대운 해설');
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
-  const [phase, setPhase] = useState<Phase>('select');
-  const [selected, setSelected] = useState<LocalReport | null>(null);
-  const [result, setResult] = useState<DaeunAnalysisResponse | null>(null);
-  const [loadingStep, setLoadingStep] = useState(0);
+
+  // 보관함에서 저장된 결과를 넘겨받은 경우
+  const navState = location.state as { savedResult?: DaeunAnalysisResponse; savedReport?: LocalReport } | undefined;
+
+  const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
+  const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
+  const [result, setResult] = useState<DaeunAnalysisResponse | null>(navState?.savedResult || null);
+  const [, setLoadingStep] = useState(0);
   const [error, setError] = useState('');
   const [showShare, setShowShare] = useState(false);
 
@@ -100,10 +107,10 @@ export function DaeunPage() {
         <Header title="대운 해설" />
         <div className="px-5 pt-4 space-y-5">
           <FadeIn>
-            <div className="card-navy py-5 px-5 text-center">
-              <p className="text-h1 text-white">대운(大運) 해설</p>
-              <p className="text-body-sm text-white/60 mt-2">10년 단위로 바뀌는 운의 흐름을 읽어드려요</p>
-              <p className="text-caption text-white/40 mt-1">직업 · 연애 · 재물 · 건강 기간별 상세 분석</p>
+            <div className="card py-5 px-5 text-center" style={{ borderTop: '3px solid #C9A96E' }}>
+              <p className="text-h1 text-text-primary">대운(大運) 해설</p>
+              <p className="text-body-sm text-text-muted mt-2">10년 단위로 바뀌는 운의 흐름을 읽어드려요</p>
+              <p className="text-caption text-text-hint mt-1">직업 · 연애 · 재물 · 건강 기간별 상세 분석</p>
             </div>
           </FadeIn>
 
@@ -157,11 +164,47 @@ export function DaeunPage() {
 
         {/* 개요 */}
         <FadeIn>
-          <div className="card-navy py-6 px-5">
-            <p className="text-h2 text-white mb-1">{selected?.name}님의 대운 흐름</p>
-            <p className="text-body-sm text-white/70 leading-relaxed whitespace-pre-line">{result.overview || ''}</p>
+          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #C9A96E' }}>
+            <p className="text-h2 text-text-primary mb-2">{selected?.name}님의 대운 흐름</p>
+            {(result as any).keywords?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {(result as any).keywords.map((kw: string, i: number) => (
+                  <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                    {kw}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.overview)}</p>
           </div>
         </FadeIn>
+
+        {/* 대운 점수 흐름 차트 */}
+        {periods.length > 0 && (
+          <FadeIn delay={0.03}>
+            <div className="card">
+              <p className="text-h3 text-text-primary mb-1">대운별 점수 흐름</p>
+              <p className="text-[10px] text-text-hint mb-3">10년 단위 운의 흐름</p>
+              <div className="h-36 -mx-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={periods.map((p: any) => ({ name: `${p.시작나이}세`, 점수: p.score || 50 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="daeunGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#C9A96E" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
+                    <Area type="monotone" dataKey="점수" stroke="#C9A96E" strokeWidth={2}
+                      fill="url(#daeunGrad)" dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </FadeIn>
+        )}
 
         {/* 타임라인 */}
         {selected?.sajuData?.daeun && (
@@ -178,7 +221,7 @@ export function DaeunPage() {
           <FadeIn delay={0.1}>
             <div className="card-gold py-6 px-5">
               <p className="text-h2 text-text-primary mb-1">지금 이 시기는?</p>
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.currentHighlight}</p>
+              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.currentHighlight)}</p>
             </div>
           </FadeIn>
         )}
@@ -199,22 +242,41 @@ export function DaeunPage() {
         <FadeIn delay={0.3}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-2">대운 전환기 조언</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.transitionAdvice}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.transitionAdvice)}</p>
           </div>
         </FadeIn>
 
         {/* 인생 시기 맵 */}
         {result.lifePhaseMap?.length > 0 && (
           <FadeIn delay={0.35}>
-            <p className="text-h3 text-text-primary mb-3">인생 시기 맵</p>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5">
-              {result.lifePhaseMap.map((lp, i) => (
-                <div key={i} className="flex-shrink-0 card py-3 px-4 min-w-[120px] text-center">
-                  <p className="text-caption text-text-muted">{lp.phase}</p>
-                  <p className="text-h3 text-brand-gold mt-1">{lp.daeun}</p>
-                  <p className="text-caption text-text-secondary mt-0.5">{lp.theme}</p>
+            <div className="card">
+              <p className="text-h3 text-text-primary mb-4">인생 시기 맵</p>
+              <div className="relative">
+                {/* 연결선 */}
+                <div className="absolute left-[18px] top-4 bottom-4 w-[2px]" style={{ background: 'rgba(201,169,110,0.2)' }} />
+                <div className="space-y-4">
+                  {result.lifePhaseMap.map((lp, i) => {
+                    const currentDaeun = selected?.sajuData?.daeun?.find((x: any) => x.isCurrent || x.현재);
+                    const isCurrent = currentDaeun && lp.daeun === currentDaeun.간지;
+                    return (
+                      <div key={i} className="flex items-start gap-3 relative">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${isCurrent ? 'ring-2 ring-offset-2' : ''}`}
+                          style={{ background: isCurrent ? '#C9A96E' : 'rgba(201,169,110,0.1)', ringColor: '#C9A96E' }}>
+                          <span className={`text-[11px] font-black ${isCurrent ? 'text-white' : 'text-brand-gold'}`}>{lp.daeun.charAt(0)}</span>
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[13px] font-bold text-text-primary">{lp.phase}</p>
+                            <span className="text-[11px] text-brand-gold font-semibold">{lp.daeun}</span>
+                            {isCurrent && <span className="text-[9px] font-bold text-white bg-brand-gold rounded px-1.5 py-0.5">NOW</span>}
+                          </div>
+                          <p className="text-[11px] text-text-muted mt-0.5">{stripMd(lp.theme)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
             </div>
           </FadeIn>
         )}
@@ -261,7 +323,12 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-h3 font-bold" style={{ color: scoreColor }}>{period.score}</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-10 h-1.5 rounded-full bg-border-light overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${period.score}%`, background: scoreColor }} />
+            </div>
+            <span className="text-label font-bold" style={{ color: scoreColor }}>{period.score}</span>
+          </div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
             className={`text-text-hint transition-transform ${expanded ? 'rotate-180' : ''}`}>
             <path d="M6 9l6 6 6-6" />
@@ -274,12 +341,41 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }} className="overflow-hidden">
             <div className="mt-4 space-y-3 text-body-sm text-text-secondary leading-relaxed">
-              <div><p className="text-caption text-text-hint mb-0.5">직업/진로</p><p>{period.career}</p></div>
-              <div><p className="text-caption text-text-hint mb-0.5">연애/관계</p><p>{period.love}</p></div>
-              <div><p className="text-caption text-text-hint mb-0.5">재물</p><p>{period.wealth}</p></div>
-              <div><p className="text-caption text-text-hint mb-0.5">건강</p><p>{period.health}</p></div>
+              {/* 4분야 점수 바 */}
+              {(period as any).careerScore != null && (
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {[
+                    { label: '직업', score: (period as any).careerScore, color: '#1B2A4A' },
+                    { label: '연애', score: (period as any).loveScore, color: '#E91E63' },
+                    { label: '재물', score: (period as any).wealthScore, color: '#C9A96E' },
+                    { label: '건강', score: (period as any).healthScore, color: '#2D8A4E' },
+                  ].map(a => (
+                    <div key={a.label} className="text-center">
+                      <p className="text-[9px] text-text-hint mb-1">{a.label}</p>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: `${a.color}12` }}>
+                        <motion.div className="h-full rounded-full" style={{ background: a.color }}
+                          initial={{ width: 0 }} animate={{ width: `${Math.min(a.score || 0, 100)}%` }}
+                          transition={{ duration: 0.8 }} />
+                      </div>
+                      <p className="text-[10px] font-bold mt-0.5" style={{ color: a.color }}>{a.score}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {[
+                { label: '직업/진로', value: period.career, color: '#1B2A4A' },
+                { label: '연애/관계', value: period.love, color: '#E91E63' },
+                { label: '재물',     value: period.wealth, color: '#C9A96E' },
+                { label: '건강',     value: period.health, color: '#2D8A4E' },
+              ].map(area => (
+                <div key={area.label}>
+                  <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold mb-1"
+                    style={{ background: `${area.color}12`, color: area.color }}>{area.label}</span>
+                  <p>{stripMd(area.value)}</p>
+                </div>
+              ))}
               <div className="pt-2 border-t border-border-light">
-                <p className="text-caption text-brand-gold font-semibold">{period.advice}</p>
+                <p className="text-caption text-brand-gold font-semibold">{stripMd(period.advice)}</p>
               </div>
             </div>
           </motion.div>

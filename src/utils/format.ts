@@ -25,3 +25,13 @@ export function formatBirthDate(year: number, month: number, day: number): strin
 export function calculateAge(birthYear: number): number {
   return new Date().getFullYear() - birthYear;
 }
+
+/** AI 응답에 남아있을 수 있는 마크다운 서식을 strip */
+export function stripMd(text: string | undefined | null): string {
+  if (!text) return '';
+  return text
+    .replace(/\*\*/g, '')           // **bold**
+    .replace(/(?<!\w)\*(?!\*)/g, '') // *italic*
+    .replace(/^#+\s*/gm, '')        // # heading
+    .replace(/`/g, '');             // `code`
+}
