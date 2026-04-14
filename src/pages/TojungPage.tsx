@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
@@ -12,7 +12,9 @@ import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { TojungResponse } from '@/types/report';
+import { stripMd } from '@/utils/format';
 
 type Phase = 'select' | 'loading' | 'result';
 
@@ -24,17 +26,25 @@ const LOADING_STEPS = [
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
-  총운: '☰', 금전운: '💰', 건강운: '💪', 직장운: '💼', 애정운: '💕', 결혼운: '💍',
+  총운: '總', 금전운: '財', 건강운: '健', 직장운: '職', 애정운: '愛', 결혼운: '婚',
+};
+const CATEGORY_COLORS: Record<string, string> = {
+  총운: '#C9A96E', 금전운: '#F57F17', 건강운: '#2D8A4E', 직장운: '#1565C0', 애정운: '#E91E63', 결혼운: '#7B1FA2',
 };
 
 export function TojungPage() {
   usePageTitle('토정비결');
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
-  const [phase, setPhase] = useState<Phase>('select');
-  const [selected, setSelected] = useState<LocalReport | null>(null);
-  const [result, setResult] = useState<TojungResponse | null>(null);
-  const [loadingStep, setLoadingStep] = useState(0);
+
+  // 보관함에서 저장된 결과를 넘겨받은 경우
+  const navState = location.state as { savedResult?: TojungResponse; savedReport?: LocalReport } | undefined;
+
+  const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
+  const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
+  const [result, setResult] = useState<TojungResponse | null>(navState?.savedResult || null);
+  const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
 
   const reports = useMemo(() => getReports(), []);
@@ -149,24 +159,79 @@ export function TojungPage() {
           </div>
         </FadeIn>
 
+        {/* 키워드 태그 */}
+        {(result as any).keywords?.length > 0 && (
+          <FadeIn delay={0.03}>
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {(result as any).keywords.map((kw: string, i: number) => (
+                <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                  style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                  {kw}
+                </span>
+              ))}
+            </div>
+          </FadeIn>
+        )}
+
         {/* 6대 카테고리 그리드 */}
         <FadeIn delay={0.05}>
           <div className="grid grid-cols-2 gap-3">
-            {categories.map(([key, value], i) => (
-              <motion.div
-                key={key}
-                className="card py-4 px-4"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + i * 0.06, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">{CATEGORY_ICONS[key] || '☰'}</span>
-                  <p className="text-label text-text-primary font-bold">{key}</p>
-                </div>
-                <p className="text-caption text-text-secondary leading-relaxed">{value}</p>
-              </motion.div>
-            ))}
+            {categories.map(([key, value], i) => {
+              const catColor = CATEGORY_COLORS[key] || '#C9A96E';
+              const catScore = (result as any).categoryScores?.[key];
+              return (
+                <motion.div
+                  key={key}
+                  className="card py-4 px-4"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${catColor}12` }}>
+                      <span className="text-[12px] font-black" style={{ color: catColor }}>{CATEGORY_ICONS[key] || '總'}</span>
+                    </div>
+                    <p className="text-label text-text-primary font-bold flex-1">{key}</p>
+                    {catScore != null && (
+                      <span className="text-[12px] font-black" style={{ color: catColor }}>{catScore}</span>
+                    )}
+                  </div>
+                  {catScore != null && (
+                    <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ background: `${catColor}10` }}>
+                      <motion.div className="h-full rounded-full" style={{ background: catColor }}
+                        initial={{ width: 0 }} animate={{ width: `${Math.min(catScore, 100)}%` }}
+                        transition={{ duration: 0.8, delay: 0.2 + i * 0.1 }} />
+                    </div>
+                  )}
+                  <p className="text-caption text-text-secondary leading-relaxed">{stripMd(value)}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </FadeIn>
+
+        {/* 12개월 점수 흐름 */}
+        <FadeIn delay={0.25}>
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-1">월별 운세 흐름</p>
+            <p className="text-[10px] text-text-hint mb-3">12개월 점수 추이</p>
+            <div className="h-36 -mx-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={result.months.map((m: any) => ({ name: `${m.month}월`, 점수: m.score || 5 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="tojungGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#C9A96E" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
+                  <Area type="monotone" dataKey="점수" stroke="#C9A96E" strokeWidth={2}
+                    fill="url(#tojungGrad)"
+                    dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </FadeIn>
 
@@ -196,7 +261,7 @@ export function TojungPage() {
         <FadeIn delay={0.7}>
           <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.15)' }}>
             <p className="text-h3 text-text-primary mb-2">올해의 개운 조언</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.luckyAdvice}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.luckyAdvice)}</p>
           </div>
         </FadeIn>
 

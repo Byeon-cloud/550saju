@@ -6,6 +6,7 @@ import { FadeIn } from '@/components/common/FadeIn';
 import { getMyProfile, getReports } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
+import { stripMd } from '@/utils/format';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
 import { getChatCredits, useChatCredit, addChatCredits } from '@/services/storage/chatCredit';
 import { spendBalance, getBalance } from '@/services/storage/localStore';
@@ -136,8 +137,6 @@ function ChatRoomList() {
   const myProfile = useMemo(() => getMyProfile(), []);
   const hasProfile = !!myProfile;
   const userName = myProfile?.name || '';
-  const ilgan = myProfile?.sajuData?.pillars?.[2]?.천간 || '';
-  const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
   const timeCtx = useMemo(() => getTimeGreeting(), []);
   const suggestedTopics = useMemo(() => getSuggestedTopics(hasProfile), [hasProfile]);
 
@@ -471,7 +470,7 @@ function ChatView({ roomId }: { roomId: string }) {
   // AI 응답 대기 중 페이지 이탈 방지
   useEffect(() => {
     if (!isLoading) return;
-    const handleBeforeNav = (e: PopStateEvent) => {
+    const handleBeforeNav = (_e: PopStateEvent) => {
       // 뒤로가기 차단하고 안내
       if (isLoading) {
         window.history.pushState(null, '', window.location.href);
@@ -596,7 +595,7 @@ function ChatView({ roomId }: { roomId: string }) {
                   style={msg.role === 'user'
                     ? { background: '#C9A96E', color: '#FFFFFF', borderBottomRightRadius: 4 }
                     : { background: '#FFFFFF', color: '#1B2A4A', borderBottomLeftRadius: 4, border: '1px solid #E8E0D4', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
-                  <p className="whitespace-pre-line">{msg.content}</p>
+                  <p className="whitespace-pre-line">{stripMd(msg.content)}</p>
                 </div>
                 <p className={`text-[9px] mt-1 ${msg.role === 'user' ? 'text-right' : 'text-left'} text-text-disabled`}>
                   {new Date(msg.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}

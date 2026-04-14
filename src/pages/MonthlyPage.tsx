@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -13,7 +13,9 @@ import { generateMonthlyFortune2026 } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { MonthlyDetailResponse, MonthlyDetail } from '@/types/report';
+import { stripMd } from '@/utils/format';
 
 type Phase = 'select' | 'loading' | 'result';
 
@@ -27,11 +29,16 @@ const LOADING_STEPS = [
 export function MonthlyPage() {
   usePageTitle('2026 월별 운세');
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
-  const [phase, setPhase] = useState<Phase>('select');
-  const [selected, setSelected] = useState<LocalReport | null>(null);
-  const [result, setResult] = useState<MonthlyDetailResponse | null>(null);
-  const [loadingStep, setLoadingStep] = useState(0);
+
+  // 보관함에서 저장된 결과를 넘겨받은 경우
+  const navState = location.state as { savedResult?: MonthlyDetailResponse; savedReport?: LocalReport } | undefined;
+
+  const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
+  const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
+  const [result, setResult] = useState<MonthlyDetailResponse | null>(navState?.savedResult || null);
+  const [, setLoadingStep] = useState(0);
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showShare, setShowShare] = useState(false);
 
@@ -95,10 +102,10 @@ export function MonthlyPage() {
         <Header title="2026 월별 운세" />
         <div className="px-5 pt-4 space-y-5">
           <FadeIn>
-            <div className="card-navy py-5 px-5 text-center">
-              <p className="text-h1 text-white">2026 월별 운세</p>
-              <p className="text-body-sm text-white/60 mt-2">올해 12개월, 좋은 달과 조심할 달을 한눈에</p>
-              <p className="text-caption text-white/40 mt-1">매월 직업 · 연애 · 재물 운세 + 럭키 아이템</p>
+            <div className="card py-5 px-5 text-center" style={{ borderTop: '3px solid #C9A96E' }}>
+              <p className="text-h1 text-text-primary">2026 월별 운세</p>
+              <p className="text-body-sm text-text-muted mt-2">올해 12개월, 좋은 달과 조심할 달을 한눈에</p>
+              <p className="text-caption text-text-hint mt-1">매월 직업 · 연애 · 재물 운세 + 럭키 아이템</p>
             </div>
           </FadeIn>
           <FadeIn delay={0.05}>
@@ -141,16 +148,78 @@ export function MonthlyPage() {
 
         {/* 연간 개요 */}
         <FadeIn>
-          <div className="card-navy py-6 px-5">
-            <p className="text-h2 text-white mb-1">{selected?.name}님의 2026년</p>
-            <p className="text-body-sm text-white/70 leading-relaxed whitespace-pre-line">{result.yearOverview}</p>
+          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #C9A96E' }}>
+            <p className="text-h2 text-text-primary mb-2">{selected?.name}님의 2026년</p>
+            {(result as any).keywords?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {(result as any).keywords.map((kw: string, i: number) => (
+                  <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                    {kw}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.yearOverview)}</p>
+          </div>
+        </FadeIn>
+
+        {/* 12개월 한눈에 보기 — 도트 히트맵 */}
+        <FadeIn delay={0.03}>
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">한눈에 보는 12개월</p>
+            <div className="grid grid-cols-6 gap-2">
+              {result.months.map((m) => {
+                const dotColor = m.score >= 80 ? '#C9A96E' : m.score >= 60 ? '#2D8A4E' : m.score >= 40 ? '#A08B6A' : '#D32F2F';
+                const opacity = Math.max(0.3, m.score / 100);
+                const isBest = m.month === result.bestMonth;
+                const isWorst = m.month === result.worstMonth;
+                return (
+                  <div key={m.month} className="flex flex-col items-center gap-1">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isBest ? 'ring-2 ring-offset-1' : ''} ${isWorst ? 'ring-2 ring-offset-1 ring-func-danger' : ''}`}
+                      style={{ background: dotColor, opacity, ringColor: isBest ? '#C9A96E' : undefined }}>
+                      <span className="text-[10px] font-black text-white">{m.score}</span>
+                    </div>
+                    <span className="text-[9px] text-text-hint">{m.month}월</span>
+                    {isBest && <span className="text-[8px] text-brand-gold font-bold">BEST</span>}
+                    {isWorst && <span className="text-[8px] text-func-danger font-bold">주의</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* 흐름 차트 */}
+        <FadeIn delay={0.05}>
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-1">월별 운세 흐름</p>
+            <p className="text-[10px] text-text-hint mb-3">12개월 점수 추이</p>
+            <div className="h-36 -mx-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData.map(d => ({ name: `${d.month}월`, 점수: d.score }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="monthlyGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#C9A96E" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
+                  <Area type="monotone" dataKey="점수" stroke="#C9A96E" strokeWidth={2}
+                    fill="url(#monthlyGrad)"
+                    dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }}
+                    activeDot={{ r: 4, fill: '#C9A96E', stroke: '#fff', strokeWidth: 2 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </FadeIn>
 
         {/* 바 차트 */}
-        <FadeIn delay={0.05}>
+        <FadeIn delay={0.08}>
           <div className="card">
-            <p className="text-h3 text-text-primary mb-4">월별 운세 점수</p>
+            <p className="text-h3 text-text-primary mb-4">월별 점수 비교</p>
             <MonthlyFortune data={chartData} />
           </div>
         </FadeIn>
@@ -160,6 +229,12 @@ export function MonthlyPage() {
           <div className="grid grid-cols-2 gap-3">
             {bestMonth && (
               <div className="card-gold py-4 px-4 text-center">
+                <div className="w-8 h-8 rounded-full mx-auto mb-1.5 flex items-center justify-center"
+                  style={{ background: 'rgba(201,169,110,0.15)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#C9A96E" stroke="none">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z" />
+                  </svg>
+                </div>
                 <p className="text-caption text-text-muted">최고의 달</p>
                 <p className="text-display text-brand-gold">{bestMonth.month}월</p>
                 <p className="text-caption text-text-secondary mt-1">{bestMonth.theme}</p>
@@ -167,6 +242,12 @@ export function MonthlyPage() {
             )}
             {worstMonth && (
               <div className="card py-4 px-4 text-center border-2 border-func-danger/20">
+                <div className="w-8 h-8 rounded-full mx-auto mb-1.5 flex items-center justify-center"
+                  style={{ background: 'rgba(211,47,47,0.08)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2">
+                    <path d="M12 9v4m0 4h.01M12 2L2 22h20L12 2z" />
+                  </svg>
+                </div>
                 <p className="text-caption text-text-muted">조심할 달</p>
                 <p className="text-display text-func-danger">{worstMonth.month}월</p>
                 <p className="text-caption text-text-secondary mt-1">{worstMonth.theme}</p>
@@ -224,7 +305,27 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }} className="overflow-hidden">
             <div className="mt-4 space-y-3 text-body-sm text-text-secondary">
-              <p className="leading-relaxed">{m.advice}</p>
+              <p className="leading-relaxed">{stripMd(m.advice)}</p>
+              {/* 3분야 점수 바 */}
+              {(m as any).careerScore != null && (
+                <div className="grid grid-cols-3 gap-3 mb-1">
+                  {[
+                    { label: '직업운', score: (m as any).careerScore, color: '#1565C0' },
+                    { label: '애정운', score: (m as any).loveScore, color: '#E91E63' },
+                    { label: '재물운', score: (m as any).wealthScore, color: '#C9A96E' },
+                  ].map(a => (
+                    <div key={a.label} className="text-center">
+                      <p className="text-[9px] text-text-hint mb-1">{a.label}</p>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: `${a.color}12` }}>
+                        <motion.div className="h-full rounded-full" style={{ background: a.color }}
+                          initial={{ width: 0 }} animate={{ width: `${Math.min(a.score || 0, 100)}%` }}
+                          transition={{ duration: 0.6 }} />
+                      </div>
+                      <p className="text-[10px] font-bold mt-0.5" style={{ color: a.color }}>{a.score}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-center py-2 rounded-lg bg-bg-surface"><p className="text-caption text-text-hint">직업운</p><p className="text-caption font-semibold text-text-primary mt-0.5">{m.career}</p></div>
                 <div className="text-center py-2 rounded-lg bg-bg-surface"><p className="text-caption text-text-hint">애정운</p><p className="text-caption font-semibold text-text-primary mt-0.5">{m.love}</p></div>
@@ -242,7 +343,7 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
               </div>
               {m.caution && (
                 <div className="py-2 px-3 rounded-lg" style={{ background: 'rgba(211,47,47,0.05)' }}>
-                  <p className="text-caption text-func-danger font-semibold">{m.caution}</p>
+                  <p className="text-caption text-func-danger font-semibold">{stripMd(m.caution)}</p>
                 </div>
               )}
             </div>

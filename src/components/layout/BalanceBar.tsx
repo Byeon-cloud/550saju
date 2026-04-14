@@ -35,25 +35,35 @@ export function BalanceBar() {
           <span className="text-h3 text-brand-gold font-bold">500</span>
         </button>
 
-        {/* 잔액 + 충전 */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/charge')}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full min-h-[36px]"
-          style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.15)' }}
-        >
-          {/* 운 아이콘 */}
-          <div className="w-5 h-5 rounded-full flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
-            <span className="text-[9px] font-black text-white">運</span>
-          </div>
-          <span className="text-[13px] font-bold text-text-primary">{balance}</span>
-          {/* 플러스 */}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </motion.button>
+        {/* ? 버튼 (홈에서만) + 잔액 + 충전 */}
+        <div className="flex items-center gap-2">
+          {location.pathname === '/' && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => document.getElementById('about-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(27,42,74,0.06)' }}
+            >
+              <span className="text-[13px] font-bold text-text-muted">?</span>
+            </motion.button>
+          )}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/charge')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full min-h-[36px]"
+            style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.15)' }}
+          >
+            <div className="w-5 h-5 rounded-full flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+              <span className="text-[9px] font-black text-white">運</span>
+            </div>
+            <span className="text-[13px] font-bold text-text-primary">{balance}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </motion.button>
+        </div>
       </div>
     </div>
   );

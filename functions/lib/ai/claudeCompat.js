@@ -51,6 +51,8 @@ ${personDetail('사람 2', d2)}
 ## 출력 (JSON만, 코드블록 없이)
 {
   "overallScore": 0-100,
+  "relationshipType": "상호보완형/동지형/멘토형/열정형/안정형 중 하나",
+  "keywords": ["#궁합키워드1","#키워드2","#키워드3"],
   "summary": "200자 이상. 두 사람의 관계 본질.",
   "categories": [
     {"id": "personality", "name": "성격 궁합", "score": 0-100, "description": "150자 이상"},
@@ -67,6 +69,8 @@ ${personDetail('사람 2', d2)}
     "person1Element": "오행", "person2Element": "오행",
     "relation": "상생/상극/비화", "description": "100자 이상"
   }
-}`;
+}
+
+⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
 }
 //# sourceMappingURL=claudeCompat.js.map

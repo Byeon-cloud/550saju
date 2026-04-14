@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
@@ -11,7 +10,9 @@ import { generateCompatibilityAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import type { CompatibilityResponse } from '@/types/report';
+import { stripMd } from '@/utils/format';
 
 const LOADING_STEPS = [
   '두 사람의 오행을 비교하고 있어요...',
@@ -38,7 +39,7 @@ export function CompatResultPage() {
 
   const [phase, setPhase] = useState<'loading' | 'result'>('loading');
   const [result, setResult] = useState<CompatibilityResponse | null>(null);
-  const [loadingStep, setLoadingStep] = useState(0);
+  const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
   const called = useRef(false);
 
@@ -106,11 +107,29 @@ export function CompatResultPage() {
           />
         </FadeIn>
 
+        {/* 키워드 + 관계유형 */}
+        <FadeIn delay={0.03}>
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {(result as any).relationshipType && (
+              <span className="text-[11px] font-bold px-3 py-1.5 rounded-full text-white"
+                style={{ background: '#C9A96E' }}>
+                {(result as any).relationshipType}
+              </span>
+            )}
+            {(result as any).keywords?.map((kw: string, i: number) => (
+              <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                {kw}
+              </span>
+            ))}
+          </div>
+        </FadeIn>
+
         {/* 총평 */}
         <FadeIn delay={0.05}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-2">궁합 총평</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.summary}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.summary)}</p>
           </div>
         </FadeIn>
 
@@ -134,15 +153,33 @@ export function CompatResultPage() {
                 <p className="text-caption text-text-muted">{state.person2.name}</p>
               </div>
             </div>
-            <p className="text-body-sm text-text-secondary leading-relaxed">{result.ohengHarmony.description}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed">{stripMd(result.ohengHarmony.description)}</p>
           </div>
         </FadeIn>
 
-        {/* 카테고리별 점수 */}
+        {/* 카테고리별 점수 — 레이더 차트 + 상세 바 */}
         <FadeIn delay={0.15}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-4">카테고리별 궁합</p>
-            <div className="space-y-4">
+
+            {/* 레이더 차트 */}
+            <div className="h-52 -mx-2 mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={result.categories.map(cat => ({
+                  name: cat.name,
+                  점수: cat.score,
+                  fullMark: 100,
+                }))}>
+                  <PolarGrid strokeOpacity={0.15} />
+                  <PolarAngleAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                  <Radar dataKey="점수" stroke="#C9A96E" fill="#C9A96E" fillOpacity={0.2} strokeWidth={2}
+                    dot={{ r: 3, fill: '#C9A96E', strokeWidth: 0 }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 상세 바 */}
+            <div className="space-y-4 border-t border-border-light pt-4">
               {result.categories.map((cat, i) => (
                 <div key={cat.id}>
                   <CompatScoreBar
@@ -151,7 +188,7 @@ export function CompatResultPage() {
                     color={CATEGORY_COLORS[cat.id] || '#C9A96E'}
                     delay={i * 0.1}
                   />
-                  <p className="text-caption text-text-muted mt-1 ml-[76px] leading-relaxed">{cat.description}</p>
+                  <p className="text-caption text-text-muted mt-1 ml-[76px] leading-relaxed">{stripMd(cat.description)}</p>
                 </div>
               ))}
             </div>
@@ -166,7 +203,7 @@ export function CompatResultPage() {
               {result.strengths.map((s, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-brand-gold mt-0.5">●</span>
-                  <span className="text-body-sm text-text-secondary">{s}</span>
+                  <span className="text-body-sm text-text-secondary">{stripMd(s)}</span>
                 </li>
               ))}
             </ul>
@@ -181,7 +218,7 @@ export function CompatResultPage() {
               {result.challenges.map((c, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-func-danger mt-0.5">●</span>
-                  <span className="text-body-sm text-text-secondary">{c}</span>
+                  <span className="text-body-sm text-text-secondary">{stripMd(c)}</span>
                 </li>
               ))}
             </ul>
@@ -192,15 +229,15 @@ export function CompatResultPage() {
         <FadeIn delay={0.3}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-2">종합 조언</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.advice}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.advice)}</p>
           </div>
         </FadeIn>
 
         {/* 미래 전망 */}
         <FadeIn delay={0.35}>
-          <div className="card-navy py-5 px-5">
-            <p className="text-h3 text-white mb-2">미래 전망</p>
-            <p className="text-body-sm text-white/70 leading-relaxed whitespace-pre-line">{result.futureOutlook}</p>
+          <div className="card py-5 px-5" style={{ borderLeft: '4px solid #7B1FA2' }}>
+            <p className="text-h3 text-text-primary mb-2">미래 전망</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.futureOutlook)}</p>
           </div>
         </FadeIn>
 

@@ -54,7 +54,7 @@ export async function generateDailyFortune(
  * AI 대화 — Firebase Function → Gemini 2.5 Pro
  */
 /**
- * 꿈해몽 — Firebase Function → Gemini 2.5 Flash
+ * 꿈해몽 (무료) — Firebase Function → Gemini 2.5 Pro
  */
 export async function generateDream(
   category: string,
@@ -63,6 +63,19 @@ export async function generateDream(
 ): Promise<{ title: string; interpretation: string; luckyAction: string; category: string }> {
   const result = await callWithAuth('generateDream', { category, dreamText, sajuData });
   return result.data as { title: string; interpretation: string; luckyAction: string; category: string };
+}
+
+/**
+ * 사주 연계 심층 해몽 (유료 1운) — Firebase Function → Gemini 2.5 Pro
+ * 사주 원국과 꿈의 상징을 교차 분석, 5축 점수 + 오행 매핑 + 럭키 프로필
+ */
+export async function generateDeepDream(
+  category: string,
+  dreamText: string,
+  sajuData: SajuData,
+): Promise<any> {
+  const result = await callWithAuth('generateDream', { category, dreamText, sajuData, mode: 'deep' });
+  return result.data;
 }
 
 /**
@@ -125,8 +138,10 @@ export async function generateCompatibilityAnalysis(
 export async function generateTopicAnalysis(
   topicId: string,
   sajuData: SajuData,
+  baseScore?: number,
+  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number },
 ): Promise<{ reportId: string; content: any }> {
-  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData });
+  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData, baseScore, partnerInfo });
   return result.data as { reportId: string; content: any };
 }
 

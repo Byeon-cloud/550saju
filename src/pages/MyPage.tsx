@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
-import { LoginPrompt } from '@/components/common/LoginPrompt';
+// LoginPrompt available for future auth flow
 import { useAuth } from '@/hooks/useAuth';
 import { getBalance, getBalanceBreakdown, getReports } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';

@@ -31,8 +31,36 @@ export function StoragePage() {
     // 꿈해몽/일일운세는 사주 결과페이지가 아니므로 해당 페이지로 이동
     if (report.contentType === 'dream') { navigate('/dream'); return; }
     if (report.contentType === 'daily') { navigate('/daily'); return; }
+
+    // 주제별 심층분석 → 해당 토픽 페이지로 (저장된 결과 전달)
+    if (report.contentType === 'topic') {
+      const topicId = (report as any).aiResult?.topicId || 'love';
+      navigate(`/topic/${topicId}`, { state: { savedResult: (report as any).aiResult, savedReport: report } });
+      return;
+    }
+
+    // 대운/월별/토정비결 → 해당 페이지로 (저장된 결과 전달)
+    if (report.contentType === 'daeun') {
+      navigate('/daeun', { state: { savedResult: (report as any).aiResult, savedReport: report } });
+      return;
+    }
+    if (report.contentType === 'monthly') {
+      navigate('/monthly', { state: { savedResult: (report as any).aiResult, savedReport: report } });
+      return;
+    }
+    if (report.contentType === 'tojung') {
+      navigate('/tojung', { state: { savedResult: (report as any).aiResult, savedReport: report } });
+      return;
+    }
+
+    // 궁합 → 궁합 페이지 (결과 데이터 없으면 입력부터)
+    if (report.contentType === 'compat') {
+      navigate('/compat');
+      return;
+    }
+
+    // 기본 (사주 리포트) → 결과 페이지
     if (!report.sajuData?.pillars?.length) {
-      // sajuData 없으면 결과페이지 진입 불가
       navigate('/input');
       return;
     }

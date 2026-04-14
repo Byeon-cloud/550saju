@@ -98,6 +98,7 @@ function AnimatedRoutes() {
             <Route path="/daeun" element={<DaeunPage />} />
             <Route path="/monthly" element={<MonthlyPage />} />
             <Route path="/tojung" element={<TojungPage />} />
+            <Route path="/topic" element={<TopicAnalysisPage />} />
             <Route path="/topic/:topicId" element={<TopicAnalysisPage />} />
             <Route path="/storage" element={<StoragePage />} />
             <Route path="/charge" element={<ChargePage />} />

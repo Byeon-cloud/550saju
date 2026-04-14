@@ -222,7 +222,7 @@ export function ChargePage() {
                   const url = `${window.location.origin}/share/invite`;
                   const text = '나도 500원에 내 사주 볼 수 있대! 한번 해봐';
 
-                  if (navigator.share) {
+                  if (typeof navigator.share === 'function') {
                     try {
                       await navigator.share({ title: '사주500', text, url });
                       // 공유 완료 확인 → 리워드
@@ -253,10 +253,10 @@ export function ChargePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-h3 text-text-primary">
-                  {navigator.share ? '친구에게 공유하면 1운 적립' : '친구에게 알려주세요'}
+                  {typeof navigator.share === 'function' ? '친구에게 공유하면 1운 적립' : '친구에게 알려주세요'}
                 </p>
                 <p className="text-caption text-text-muted mt-0.5">
-                  {!navigator.share
+                  {typeof navigator.share !== 'function'
                     ? '링크를 복사해서 보내주세요'
                     : canEarnShareReward()
                       ? `오늘 ${getRemainingShareRewards()}회 남음`

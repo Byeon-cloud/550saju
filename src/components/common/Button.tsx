@@ -9,7 +9,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /**
- * 550사주 버튼 — Deep Navy + Gold
+ * 사주500 버튼 — Deep Navy + Gold
  * Primary: 골드 배경 (CTA)
  * Navy: 네이비 배경 (보조 CTA)
  * Secondary: 투명 + 골드 테두리

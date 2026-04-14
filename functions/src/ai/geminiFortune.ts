@@ -30,10 +30,13 @@ export async function generateDailyFortuneAI(
   userConcern?: string,
 ): Promise<any> {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-pro',
+  // Pro 우선 (퀄리티), 실패 시 Flash fallback
+  const modelNames = ['gemini-2.5-pro', 'gemini-2.5-flash'];
+  const getModel = (name: string) => genAI.getGenerativeModel({
+    model: name,
     generationConfig: { responseMimeType: 'application/json', responseSchema, maxOutputTokens: 65536 } as any,
   } as any);
+  const model = getModel(modelNames[0]);
 
   const timeLabels: Record<string, string> = {
     latenight: '자시(子時) — 수(水)의 깊은 기운. 이 시간까지 깨어있다면 중요한 고민이 있음.',
@@ -86,17 +89,28 @@ ${sajuSummary ? `이름: ${sajuSummary.name}, 일간: ${sajuSummary.ilgan}(${saj
 - summary: 200자 이상.${userConcern?.trim() ? ' 첫 문단에서 사용자 질문에 구체적으로 답변.' : ''} 시간대 톤 + 사주 맞춤 해석 + 소름 포인트 포함. 줄바꿈(\\n) 사용.
 - scores: 사주 오행에 기반한 구체적 점수 (무작위 금지)
 - lucky: 사주 오행의 부족한 기운을 보충하는 색/방향/아이템 추천
-- advice: ${userConcern?.trim() ? '사용자 질문에 대한 핵심 답변을 포함한' : timeSlot === 'night' ? '밤의 직감을 살려주는' : '하루를 이끌어주는'} 한 줄 핵심 조언 (30자 이상)`;
+- advice: ${userConcern?.trim() ? '사용자 질문에 대한 핵심 답변을 포함한' : timeSlot === 'night' ? '밤의 직감을 살려주는' : '하루를 이끌어주는'} 한 줄 핵심 조언 (30자 이상)
 
-  try {
-    const r = await model.generateContent(prompt);
-    const text = r.response.text();
-    console.log('[geminiFortune] Response length:', text.length);
-    return JSON.parse(text);
-  } catch (err: any) {
-    console.error('[geminiFortune] Failed:', err.message);
-    if (err.message?.includes('SAFETY')) throw new Error('안전 필터에 의해 차단됨');
-    if (err.message?.includes('quota') || err.message?.includes('429')) throw new Error('API 호출 한도 초과');
-    throw err;
+⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
+
+  // 1차: Flash, 실패 시 2차: Pro fallback
+  for (let i = 0; i < modelNames.length; i++) {
+    const m = i === 0 ? model : getModel(modelNames[i]);
+    try {
+      console.log(`[geminiFortune] Trying ${modelNames[i]}...`);
+      const r = await m.generateContent(prompt);
+      const text = r.response.text();
+      console.log(`[geminiFortune] ${modelNames[i]} Response length:`, text.length);
+      return JSON.parse(text);
+    } catch (err: any) {
+      console.error(`[geminiFortune] ${modelNames[i]} Failed:`, err.message);
+      if (err.message?.includes('SAFETY')) throw new Error('안전 필터에 의해 차단됨');
+      if (i === modelNames.length - 1) {
+        // 마지막 모델도 실패
+        if (err.message?.includes('quota') || err.message?.includes('429')) throw new Error('API 호출 한도 초과');
+        throw err;
+      }
+      console.log(`[geminiFortune] Falling back to ${modelNames[i + 1]}...`);
+    }
   }
 }

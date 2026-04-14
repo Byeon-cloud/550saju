@@ -26,7 +26,9 @@ export async function generateSajuReport(apiKey: string, sajuData: any, situatio
 function buildUserPrompt(sajuData: any, situation?: any): string {
   const p = sajuData.pillars || [];
   const today = new Date();
-  const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일`;
+  const month = today.getMonth() + 1;
+  const year = today.getFullYear();
+  const dateStr = `${year}년 ${month}월 ${today.getDate()}일`;
 
   let pillarsText = '';
   const labels = ['년주', '월주', '일주', '시주'];
@@ -77,7 +79,7 @@ ${situation?.concern ? `## 현재 고민\n${situation.concern}` : ''}
     {"id": "wealth", "title": "재물운", "content": "200자 이상. 재성 위치와 강약."},
     {"id": "love", "title": "애정운", "content": "200자 이상. 일지(배우자궁) 분석."},
     {"id": "health", "title": "건강운", "content": "200자 이상. 오행 과다/부족→취약 장기."},
-    {"id": "year2026", "title": "2026년 운세", "content": "200자 이상. 병오년과 사주의 상호작용."},
+    {"id": "year2026", "title": "${year}년 운세", "content": "200자 이상. 현재 ${month}월 기준: 1~${month-1}월은 이미 지나간 과거형으로, ${month}월은 현재형으로, ${month+1}~12월은 미래형으로 서술. 올해 간지와 사주의 상호작용."},
     {"id": "daeun", "title": "대운 흐름", "content": "200자 이상. 현재 대운의 의미와 다음 전환점."},
     {"id": "mission", "title": "인생 과제", "content": "200자 이상. 이 사주가 풀어야 할 숙제."},
     {"id": "luck", "title": "개운법", "content": "200자 이상. 오행 보충 방법 (색상/방향/음식/행동)."},
@@ -102,6 +104,11 @@ ${situation?.concern ? `## 현재 고민\n${situation.concern}` : ''}
     "saving": {"score": 0-100, "style": "모으기 스타일"}
   }
 }
+
+## ⚠️ 작성 규칙
+1. 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.
+2. 각 section의 content는 단락을 나눠 가독성 있게 작성. 한 문단이 3줄을 넘지 않도록.
+3. '${year}년 운세' 섹션은 현재 ${month}월 기준 시제를 엄격히 구분. "이미 상반기에 ~했을 가능성이 높아요" / "지금 ${month}월은 ~한 시기예요" / "하반기에는 ~할 거예요" 식으로.
 
 JSON만 출력하세요. 코드블록 없이.`;
 }
