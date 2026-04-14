@@ -479,6 +479,120 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
             <p className="text-[12px] text-text-primary leading-snug">{data.conflictPattern}</p>
           </div>
         )}
+
+        {/* 상대방 궁합 분석 (연애중일 때만) */}
+        {data.partnerCompat && (() => {
+          const pc = data.partnerCompat;
+          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
+          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+          const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
+            '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+            '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+            '형': { icon: '刑', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+            '해': { icon: '害', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+            '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+            '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+          };
+          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' }; };
+          const pComp = pc.pillarComparison;
+          const interMap: Record<string, any> = {};
+          (pComp?.interactions || []).forEach((it: any) => {
+            if (it.position === '년주') interMap['year'] = it;
+            else if (it.position === '월주') interMap['month'] = it;
+            else if (it.position === '일주') interMap['day'] = it;
+          });
+          return (
+            <div className="card">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-h3 text-text-primary">두 사람의 결혼 궁합</p>
+                {pc.compatScore != null && (
+                  <span className="text-[12px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${color}10`, color }}>{pc.compatScore}점</span>
+                )}
+              </div>
+              {pc.marriageChemistry && (
+                <p className="text-[11px] text-text-muted mb-3 leading-snug">{pc.marriageChemistry}</p>
+              )}
+
+              {/* 기둥 비교 */}
+              {pComp && (
+                <div className="mb-3">
+                  <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
+                  <div className="space-y-2">
+                    {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
+                      const myP = pComp.myPillars?.[key];
+                      const ptP = pComp.partnerPillars?.[key];
+                      const inter = interMap[key];
+                      const ts = inter ? getTS(inter.type) : null;
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[9px] text-text-hint font-medium">{label}</span>
+                            {ts && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {myP && (
+                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2" style={{ background: ohengBg[myP.oheng] || 'rgba(0,0,0,0.03)' }}>
+                                <div className="flex gap-1">
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[myP.oheng] || '#3D3427' }}>{myP.cheongan}</span>
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[myP.oheng] || '#3D3427' }}>{myP.jiji}</span>
+                                </div>
+                                <span className="text-[8px] font-semibold" style={{ color: ohengText[myP.oheng] || '#757575' }}>{myP.oheng}</span>
+                              </div>
+                            )}
+                            <div className="flex-shrink-0 w-6 flex items-center justify-center">
+                              {ts ? <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span> : <span className="text-[10px] text-text-hint">⇔</span>}
+                            </div>
+                            {ptP && (
+                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2 justify-end" style={{ background: ohengBg[ptP.oheng] || 'rgba(0,0,0,0.03)' }}>
+                                <span className="text-[8px] font-semibold" style={{ color: ohengText[ptP.oheng] || '#757575' }}>{ptP.oheng}</span>
+                                <div className="flex gap-1">
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[ptP.oheng] || '#3D3427' }}>{ptP.cheongan}</span>
+                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[ptP.oheng] || '#3D3427' }}>{ptP.jiji}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {inter?.desc && <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-center gap-3 mt-2 pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                    <span className="text-[9px] text-text-hint">나</span>
+                    <span className="text-[9px] text-text-hint">⇔</span>
+                    <span className="text-[9px] text-text-hint">상대</span>
+                  </div>
+                </div>
+              )}
+
+              {/* 잘 맞는 점 / 안 맞는 점 */}
+              {(pc.matchPoints?.length > 0 || pc.clashPoints?.length > 0) && (
+                <div className="space-y-2 mb-2">
+                  {pc.matchPoints?.map((m: string, i: number) => (
+                    <div key={`m${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(45,138,78,0.12)', color: '#2D8A4E' }}>合</span>
+                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(m)}</p>
+                    </div>
+                  ))}
+                  {pc.clashPoints?.map((c: string, i: number) => (
+                    <div key={`c${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(230,81,0,0.04)' }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(230,81,0,0.10)', color: '#E65100' }}>沖</span>
+                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(c)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 상대방 결혼관 */}
+              {pc.partnerMarriageStyle && (
+                <div className="rounded-xl py-2 px-3" style={{ background: `${color}05`, borderLeft: `3px solid ${color}30` }}>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color }}>상대방의 결혼관</p>
+                  <p className="text-[11px] text-text-primary leading-snug">{pc.partnerMarriageStyle}</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </FadeIn>
   );
@@ -1511,13 +1625,15 @@ export function TopicAnalysisPage() {
   const [result, setResult] = useState<any>(navState?.savedResult || null);
   const [, setLoadingMsg] = useState(0);
 
-  // 재회운 상대방 정보
+  // 재회운/결혼운 상대방 정보
   const [partnerInfo, setPartnerInfo] = useState({
     name: '', birthYear: 1995, birthMonth: 1, birthDay: 1, gender: 'male',
     breakupYear: new Date().getFullYear(), breakupMonth: 1,
     birthHour: -1, // -1 = 미상
   });
   const [showPartner, setShowPartner] = useState(false);
+  // 결혼운: 연애 상태
+  const [relationStatus, setRelationStatus] = useState<'solo' | 'dating'>('solo');
 
   // 프로필 목록
   const profiles = useMemo(() => {
@@ -1537,7 +1653,7 @@ export function TopicAnalysisPage() {
   const existingResult = useMemo(() => {
     if (!selected || !topicId) return null;
     if (navState?.savedResult) return null;
-    if (topicId === 'reunion') return null; // 재회운: 상대방 정보가 다를 수 있으므로 항상 입력 폼 표시
+    if (topicId === 'reunion' || topicId === 'marriage') return null; // 상대방 정보가 다를 수 있으므로 항상 입력 폼 표시
     const key = `topic_${topicId}_${selected.id}`;
     try {
       const raw = localStorage.getItem(key);
@@ -1584,15 +1700,18 @@ export function TopicAnalysisPage() {
     const interval = setInterval(() => setLoadingMsg(s => Math.min(s + 1, LOADING_MSGS.length - 1)), 3000);
 
     try {
-      // 재회운이고 상대방 정보가 있으면 전달
-      const partner = (topicId === 'reunion' && showPartner && partnerInfo.name)
+      // 재회운/결혼운(연애중)이고 상대방 정보가 있으면 전달
+      const needsPartner = (topicId === 'reunion' && showPartner && partnerInfo.name)
+        || (topicId === 'marriage' && relationStatus === 'dating' && partnerInfo.name);
+      const partner = needsPartner
         ? { ...partnerInfo, birthHour: partnerInfo.birthHour >= 0 ? partnerInfo.birthHour : undefined } : undefined;
 
       const res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner);
       setResult(res.content);
 
-      // localStorage 캐시 (재회운은 상대방 이름 포함)
-      const cacheKey = topicId === 'reunion' && partnerInfo.name
+      // localStorage 캐시 (재회운/결혼운은 상대방 이름 포함)
+      const hasPartnerName = (topicId === 'reunion' || topicId === 'marriage') && partnerInfo.name;
+      const cacheKey = hasPartnerName
         ? `topic_${topicId}_${selected.id}_${partnerInfo.name}`
         : `topic_${topicId}_${selected.id}`;
       localStorage.setItem(cacheKey, JSON.stringify(res.content));
@@ -1698,6 +1817,114 @@ export function TopicAnalysisPage() {
                       <p className="text-[10px] text-text-hint">새로운 생년월일시를 입력해요</p>
                     </div>
                   </button>
+
+                  {/* ─── 결혼운: 현재 상태 + 상대방 정보 ─── */}
+                  {topicId === 'marriage' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
+                          </svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">현재 연애 상태</p>
+                            <p className="text-[10px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                          </div>
+                        </div>
+
+                        {/* 솔로 / 연애중 토글 */}
+                        <div className="flex gap-2 mb-3">
+                          {[
+                            { v: 'solo' as const, l: '솔로', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 10-16 0" /></svg> },
+                            { v: 'dating' as const, l: '연애중', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4a4 4 0 11-3 6.5" /><path d="M8 4a4 4 0 103 6.5" /><path d="M22 21a8 8 0 00-6-7.75" /><path d="M2 21a8 8 0 016-7.75" /></svg> },
+                          ].map(s => (
+                            <button key={s.v}
+                              className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 ${relationStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                              style={relationStatus === s.v ? { background: topic.color } : {}}
+                              onClick={() => { setRelationStatus(s.v); if (s.v === 'solo') setShowPartner(false); else setShowPartner(true); }}>
+                              {s.icon} {s.l}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* 연애중 → 상대방 입력 */}
+                        <AnimatePresence>
+                          {relationStatus === 'dating' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pt-3 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                                <p className="text-[11px] text-text-muted">상대방 정보를 입력하면 실제 사주 궁합 기반 분석이 가능해요</p>
+
+                                {/* 이름 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">이름</label>
+                                  <input type="text" placeholder="상대방 이름"
+                                    className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                                    value={partnerInfo.name}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, name: e.target.value }))} />
+                                </div>
+
+                                {/* 생년월일 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <div className="flex gap-2">
+                                    <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthYear}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthYear: +e.target.value }))}>
+                                      {years.map(y => <option key={y} value={y}>{y}년</option>)}
+                                    </select>
+                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthMonth}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthMonth: +e.target.value }))}>
+                                      {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                                    </select>
+                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthDay}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
+                                      {days.map(d => <option key={d} value={d}>{d}일</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {/* 성별 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">성별</label>
+                                  <div className="flex gap-2">
+                                    {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
+                                      <button key={g.v}
+                                        className={`flex-1 h-10 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                        style={partnerInfo.gender === g.v ? { background: topic.color } : {}}
+                                        onClick={() => setPartnerInfo(p => ({ ...p, gender: g.v }))}>
+                                        {g.l}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* 출생 시간 (선택) */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">
+                                    출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
+                                  </label>
+                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={partnerInfo.birthHour}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
+                                    <option value={-1}>모름</option>
+                                    {Array.from({ length: 24 }, (_, i) => i).map(h => (
+                                      <option key={h} value={h}>
+                                        {`${String(h).padStart(2, '0')}시 (${['자','축','축','인','인','묘','묘','진','진','사','사','오','오','미','미','신','신','유','유','술','술','해','해','자'][h]}시)`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <p className="text-[10px] text-text-hint mt-1">알면 시주까지 분석하여 더 정확해요</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </FadeIn>
+                  )}
 
                   {/* ─── 재회운: 상대방 정보 입력 ─── */}
                   {topicId === 'reunion' && selected && (

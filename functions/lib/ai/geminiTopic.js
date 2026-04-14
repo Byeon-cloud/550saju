@@ -101,7 +101,11 @@ const TOPIC_CONFIGS = {
 - 결혼 적기: 연도+시즌까지 구체적으로
 - 배우자 성향: 직업, 성격, 나이 차이 경향
 - 결혼 후 갈등 패턴과 해결법
-- "혹시 ~한 사람과 교제 중이거나 관심 있는 사람이 있나요?" 소름 포인트`,
+- "혹시 ~한 사람과 교제 중이거나 관심 있는 사람이 있나요?" 소름 포인트
+
+## 연애 상태별 분석 분기
+- 상대방 정보가 제공된 경우(연애중): 실제 상대방의 사주를 추론하여 두 사람의 궁합을 교차 분석. spouseProfile 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
+- 상대방 정보가 없는 경우(솔로): 사주 원국에서 배우자상을 추론. partnerCompat은 null로.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"배우자복","value":"0-100 정수"},{"axis":"결혼시기","value":"0-100 정수"},{"axis":"가정안정","value":"0-100 정수"},{"axis":"시댁관계","value":"0-100 정수"},{"axis":"재물복","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
@@ -112,7 +116,32 @@ const TOPIC_CONFIGS = {
       "marriageAge": "결혼 적령기 (예: 29~32세)",
       "conflictPattern": "부부 핵심 갈등 패턴 20자",
       "inlawsCompat": "좋음/보통/주의 중 하나",
-      "weddingLuckMonth": "결혼식 유리 월 (예: 5월, 10월)"
+      "weddingLuckMonth": "결혼식 유리 월 (예: 5월, 10월)",
+      "partnerCompat": "상대방 정보가 있을 때만 채움. 없으면 null. 있으면 아래 구조:" 또는 null,
+      "partnerCompat(상대방 있을 때)": {
+        "partnerOheng": "상대방 추정 주 오행 (목/화/토/금/수)",
+        "partnerIlgan": "상대방 추정 일간 한자 (甲/乙/丙/丁 등)",
+        "compatScore": "0-100 정수 (궁합 종합 점수)",
+        "pillarComparison": {
+          "myPillars": {
+            "year": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"},
+            "month": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"},
+            "day": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"}
+          },
+          "partnerPillars": {
+            "year": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"},
+            "month": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"},
+            "day": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"}
+          },
+          "interactions": [
+            {"position": "년주/월주/일주", "type": "합/충/형/해/상생/상극", "desc": "의미 20자"}
+          ]
+        },
+        "matchPoints": ["잘 맞는 점 + 사주 근거 30자", "잘 맞는 점2 30자"],
+        "clashPoints": ["안 맞는 점 + 사주 근거 30자"],
+        "marriageChemistry": "두 사람의 결혼 궁합 핵심 한 줄 35자",
+        "partnerMarriageStyle": "상대방의 결혼관/가치관 요약 25자"
+      }
     }`,
     },
     business: {
@@ -471,7 +500,7 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo) {
     const currentDaeun = d.daeun?.find((x) => x.isCurrent || x.현재);
     const today = new Date();
     const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월`;
-    // 재회운: 상대방 정보 + 헤어진 시기 추가
+    // 재회운/결혼운: 상대방 정보 추가
     let partnerSection = '';
     if (topicId === 'reunion' && partnerInfo) {
         const breakupInfo = (partnerInfo.breakupYear && partnerInfo.breakupMonth)
@@ -492,6 +521,33 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo) {
 → partnerProfile, compatAnalysis 필드에 상대방 분석 결과를 정확히 채우세요.
 → 두 사람의 천간합(天干合), 지지합(地支合), 원진(怨嗔) 관계를 분석하여 sinsal 필드에 반영하세요.
 → breakupDuration.currentPhaseIndex는 경과 개월 수에 정확히 대응시키세요: 0~2개월=0(충격기), 2~6개월=1(거부기), 6~12개월=2(회복기), 12~18개월=3(수용기), 18개월+=4(장기분리기).
+`;
+    }
+    else if (topicId === 'marriage' && partnerInfo) {
+        const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
+            ? `\n출생시간: ${partnerInfo.birthHour}시 → 시주(時柱) 분석 가능.`
+            : '\n출생시간: 미상 → 년주/월주/일주(3주)로 분석.';
+        partnerSection = `
+## 현재 연애 상태: 연애 중
+## 교제 상대방 정보
+이름: ${partnerInfo.name || '미상'}
+생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
+성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}
+
+→ 이 사람은 현재 교제 중입니다. 상대방의 사주를 추론하여 두 사람의 결혼 궁합을 교차 분석하세요.
+→ "사주로 본 배우자상"은 이미 상대방이 있으므로, spouseProfile에 실제 상대방 특성을 반영하세요.
+→ partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, marriageChemistry.
+→ 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 결혼 궁합은..."
+→ 결혼 적기 분석에서 두 사람의 대운 교차 시점도 분석하세요.
+→ 시댁/처가 관계도 상대방 사주 기반으로 더 구체적으로 분석하세요.
+`;
+    }
+    else if (topicId === 'marriage' && !partnerInfo) {
+        partnerSection = `
+## 현재 연애 상태: 솔로
+→ 솔로 상태이므로 사주 원국에서 배우자상을 추론하세요.
+→ partnerCompat은 null로 설정하세요.
+→ "어떤 사람을 만나야 결혼이 잘 풀리는지" 관점에서 배우자 프로필을 구체적으로 채우세요.
 `;
     }
     return `명리학 40년 대가. "${config.label}" 심층 분석. "소름돋는" 수준.
