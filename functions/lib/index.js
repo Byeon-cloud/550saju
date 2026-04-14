@@ -551,7 +551,7 @@ exports.disconnectToss = (0, https_1.onRequest)({ secrets: [TOSS_DISCONNECT_AUTH
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
  */
 exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
-    const { topicId, sajuData, baseScore, partnerInfo } = request.data;
+    const { topicId, sajuData, baseScore, partnerInfo, extraInfo } = request.data;
     if (!topicId || !sajuData)
         throw new https_1.HttpsError('invalid-argument', 'topicId, sajuData 필요');
     const uid = request.auth?.uid || 'anonymous';
@@ -571,7 +571,7 @@ exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
     }
     try {
         const { generateTopicAnalysisAI } = await lazyGeminiTopic();
-        const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData, baseScore, partnerInfo);
+        const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData, baseScore, partnerInfo, extraInfo);
         const reportRef = db.collection('reports').doc();
         await reportRef.set({
             uid, topicId, ...result, type: 'topic',

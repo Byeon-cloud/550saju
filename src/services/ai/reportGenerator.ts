@@ -140,8 +140,9 @@ export async function generateTopicAnalysis(
   sajuData: SajuData,
   baseScore?: number,
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number; birthHour?: number },
+  extraInfo?: Record<string, any>,
 ): Promise<{ reportId: string; content: any }> {
-  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData, baseScore, partnerInfo });
+  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData, baseScore, partnerInfo, extraInfo });
   return result.data as { reportId: string; content: any };
 }
 

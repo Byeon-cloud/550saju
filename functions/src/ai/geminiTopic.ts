@@ -474,12 +474,13 @@ export async function generateTopicAnalysisAI(
   sajuData: any,
   baseScore?: number,
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number },
+  extraInfo?: Record<string, any>,
 ): Promise<any> {
   const config = TOPIC_CONFIGS[topicId];
   if (!config) throw new Error(`알 수 없는 주제: ${topicId}`);
 
   const anthropic = new Anthropic({ apiKey });
-  const prompt = buildPrompt(config, topicId, sajuData, baseScore, partnerInfo);
+  const prompt = buildPrompt(config, topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
   // 취업이직/재회/재물은 Sonnet 4 (고퀄), 나머지는 Haiku (가성비)
   const premiumTopics = ['career', 'reunion', 'wealth'];
@@ -505,6 +506,7 @@ function buildPrompt(
   d: any,
   baseScore?: number,
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number; birthHour?: number },
+  extraInfo?: Record<string, any>,
 ): string {
   const p = d.pillars || [];
   const labels = ['년주', '월주', '일주', '시주'];
@@ -565,6 +567,44 @@ function buildPrompt(
 `;
   }
 
+  // 주제별 추가 정보 섹션
+  let extraSection = '';
+  if (extraInfo) {
+    if (topicId === 'business' && extraInfo.bizStatus) {
+      const statusLabel = extraInfo.bizStatus === 'running' ? '현재 사업 운영중' : '창업 준비중';
+      const openInfo = extraInfo.bizStatus === 'running' && extraInfo.bizOpenYear
+        ? `\n개업 시기: ${extraInfo.bizOpenYear}년 ${extraInfo.bizOpenMonth}월\n→ 개업 시점의 대운/세운과 현재 흐름의 변화를 분석. 사업이 잘되고 있는지, 전환이 필요한 시기인지 진단.`
+        : '';
+      extraSection = `
+## 현재 상태: ${statusLabel}${openInfo}
+→ ${extraInfo.bizStatus === 'running' ? '이미 운영 중이므로 사업 확장/축소/전환 시기, 현재 사업의 사주적 맞춤도를 분석하세요.' : '아직 시작 전이므로 최적 창업 시기, 맞는 업종, 준비해야 할 것에 집중하세요.'}
+`;
+    } else if (topicId === 'career' && extraInfo.jobStatus) {
+      const statusMap: Record<string, string> = { student: '학생 (취업 준비)', jobseeking: '구직중', employed: '재직중 (이직 고민)' };
+      const fieldInfo = extraInfo.targetField ? `\n관심 분야/직종: ${extraInfo.targetField}` : '';
+      extraSection = `
+## 현재 상태: ${statusMap[extraInfo.jobStatus] || '미상'}${fieldInfo}
+→ ${extraInfo.jobStatus === 'employed' ? '이직 타이밍, 현 직장 적합도, 더 맞는 업종을 중점 분석하세요.' : extraInfo.jobStatus === 'student' ? '첫 취업 준비에 초점. 적성, 합격 시기, 유리한 산업을 분석하세요.' : '구직 성공 시기, 면접 유리 시점, 사주에 맞는 직종을 분석하세요.'}
+`;
+    } else if (topicId === 'moving' && extraInfo.movePurpose) {
+      const purposeMap: Record<string, string> = { house: '주거 이사', job: '직장 이동', study: '유학/학업', abroad: '해외 이주' };
+      const planInfo = extraInfo.movePlanYear ? `\n이사 예정 시기: ${extraInfo.movePlanYear}년 ${extraInfo.movePlanMonth}월` : '';
+      extraSection = `
+## 이사 목적: ${purposeMap[extraInfo.movePurpose] || '미상'}${planInfo}
+→ 예정 시기의 사주적 이동운을 분석하고, 더 좋은 시기가 있다면 제안하세요.
+→ 목적에 맞는 방위, 주의사항, 이사 전 준비사항을 구체적으로 안내하세요.
+`;
+    } else if (topicId === 'study' && extraInfo.examName) {
+      const examDate = extraInfo.examYear ? `\n시험 예정: ${extraInfo.examYear}년 ${extraInfo.examMonth}월` : '';
+      extraSection = `
+## 준비중인 시험: ${extraInfo.examName}${examDate}
+→ 해당 시험 시기의 사주적 시험운을 집중 분석하세요.
+→ 시험까지 남은 기간 동안의 학습 전략, 슬럼프 시기, 컨디션 관리법을 구체적으로 안내하세요.
+→ 시험 당일 유리한 시간대, 좌석 방향, 행운 아이템도 빠짐없이.
+`;
+    }
+  }
+
   return `명리학 40년 대가. "${config.label}" 심층 분석. "소름돋는" 수준.
 
 ⚠️ 현재 날짜: ${dateStr} — 반드시 이 기준으로 과거/현재/미래 구분.
@@ -578,7 +618,7 @@ ${Object.entries(el).filter(([,v]) => v === 0).map(([k]) => `→ ${k} 없음`).j
 ## 십성: ${sipsung || '미상'}
 ## 현재 대운: ${currentDaeun ? currentDaeun.간지 : '미상'}
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
-${partnerSection}
+${partnerSection}${extraSection}
 ## ${config.label} 분석 규칙
 ${config.specificPrompt}
 

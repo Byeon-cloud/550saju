@@ -1634,6 +1634,24 @@ export function TopicAnalysisPage() {
   const [showPartner, setShowPartner] = useState(false);
   // 결혼운: 연애 상태
   const [relationStatus, setRelationStatus] = useState<'solo' | 'dating'>('solo');
+  // 사업운/취업운/이사운/학업운: 추가 상태 정보
+  const [extraInfo, setExtraInfo] = useState({
+    // 사업운
+    bizStatus: '' as '' | 'preparing' | 'running',
+    bizOpenYear: new Date().getFullYear(),
+    bizOpenMonth: 1,
+    // 취업·이직운
+    jobStatus: '' as '' | 'student' | 'jobseeking' | 'employed',
+    targetField: '',
+    // 이사·이동운
+    movePurpose: '' as '' | 'house' | 'job' | 'study' | 'abroad',
+    movePlanYear: new Date().getFullYear(),
+    movePlanMonth: 6,
+    // 학업·시험운
+    examName: '',
+    examYear: new Date().getFullYear(),
+    examMonth: 6,
+  });
 
   // 프로필 목록
   const profiles = useMemo(() => {
@@ -1706,7 +1724,11 @@ export function TopicAnalysisPage() {
       const partner = needsPartner
         ? { ...partnerInfo, birthHour: partnerInfo.birthHour >= 0 ? partnerInfo.birthHour : undefined } : undefined;
 
-      const res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner);
+      // 주제별 추가 정보 (사업운/취업운/이사운/학업운)
+      const extra = (['business', 'career', 'moving', 'study'].includes(topicId!))
+        ? Object.fromEntries(Object.entries(extraInfo).filter(([, v]) => v !== '' && v != null)) : undefined;
+
+      const res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner, (extra && Object.keys(extra).length > 0) ? extra : undefined);
       setResult(res.content);
 
       // localStorage 캐시 (재회운/결혼운은 상대방 이름 포함)
@@ -1922,6 +1944,182 @@ export function TopicAnalysisPage() {
                             </motion.div>
                           )}
                         </AnimatePresence>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 사업운: 현재 상태 ─── */}
+                  {topicId === 'business' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">현재 사업 상태</p>
+                            <p className="text-[10px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mb-2">
+                          {[
+                            { v: 'preparing' as const, l: '창업 준비중' },
+                            { v: 'running' as const, l: '현재 운영중' },
+                          ].map(s => (
+                            <button key={s.v}
+                              className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all ${extraInfo.bizStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                              style={extraInfo.bizStatus === s.v ? { background: topic.color } : {}}
+                              onClick={() => setExtraInfo(p => ({ ...p, bizStatus: p.bizStatus === s.v ? '' : s.v }))}>
+                              {s.l}
+                            </button>
+                          ))}
+                        </div>
+                        <AnimatePresence>
+                          {extraInfo.bizStatus === 'running' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pt-3 space-y-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                                <label className="text-[11px] text-text-hint block">개업 시기</label>
+                                <div className="flex gap-2">
+                                  <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={extraInfo.bizOpenYear}
+                                    onChange={e => setExtraInfo(p => ({ ...p, bizOpenYear: +e.target.value }))}>
+                                    {Array.from({ length: 30 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}년</option>)}
+                                  </select>
+                                  <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={extraInfo.bizOpenMonth}
+                                    onChange={e => setExtraInfo(p => ({ ...p, bizOpenMonth: +e.target.value }))}>
+                                    {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                                  </select>
+                                </div>
+                                <p className="text-[10px] text-text-hint">개업 시점의 대운 흐름을 분석해드려요</p>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 취업·이직운: 현재 상태 ─── */}
+                  {topicId === 'career' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">현재 상태</p>
+                            <p className="text-[10px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mb-2 flex-wrap">
+                          {[
+                            { v: 'student' as const, l: '학생' },
+                            { v: 'jobseeking' as const, l: '구직중' },
+                            { v: 'employed' as const, l: '재직중' },
+                          ].map(s => (
+                            <button key={s.v}
+                              className={`flex-1 min-w-[80px] h-11 rounded-xl text-body-sm font-semibold transition-all ${extraInfo.jobStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                              style={extraInfo.jobStatus === s.v ? { background: topic.color } : {}}
+                              onClick={() => setExtraInfo(p => ({ ...p, jobStatus: p.jobStatus === s.v ? '' : s.v }))}>
+                              {s.l}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="pt-2">
+                          <label className="text-[11px] text-text-hint mb-1 block">관심 분야 / 희망 직종 <span className="text-[9px] opacity-60">(선택)</span></label>
+                          <input type="text" placeholder="예: IT개발, 디자인, 마케팅, 공무원..."
+                            className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                            value={extraInfo.targetField}
+                            onChange={e => setExtraInfo(p => ({ ...p, targetField: e.target.value }))} />
+                          <p className="text-[10px] text-text-hint mt-1">입력하면 해당 분야의 사주적 적합도를 분석해요</p>
+                        </div>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 이사·이동운: 이사 목적 + 예정 시기 ─── */}
+                  {topicId === 'moving' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">이사 계획</p>
+                            <p className="text-[10px] text-text-hint">목적과 시기에 맞는 분석을 해드려요</p>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-text-hint mb-1 block">이사 목적</label>
+                          <div className="flex gap-2 flex-wrap mb-3">
+                            {[
+                              { v: 'house' as const, l: '주거 이사' },
+                              { v: 'job' as const, l: '직장 이동' },
+                              { v: 'study' as const, l: '유학/학업' },
+                              { v: 'abroad' as const, l: '해외 이주' },
+                            ].map(s => (
+                              <button key={s.v}
+                                className={`flex-1 min-w-[70px] h-10 rounded-xl text-[12px] font-semibold transition-all ${extraInfo.movePurpose === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                style={extraInfo.movePurpose === s.v ? { background: topic.color } : {}}
+                                onClick={() => setExtraInfo(p => ({ ...p, movePurpose: p.movePurpose === s.v ? '' : s.v }))}>
+                                {s.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-text-hint mb-1 block">이사 예정 시기 <span className="text-[9px] opacity-60">(선택)</span></label>
+                          <div className="flex gap-2">
+                            <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                              value={extraInfo.movePlanYear}
+                              onChange={e => setExtraInfo(p => ({ ...p, movePlanYear: +e.target.value }))}>
+                              {Array.from({ length: 5 }, (_, i) => currentYear + i).map(y => <option key={y} value={y}>{y}년</option>)}
+                            </select>
+                            <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                              value={extraInfo.movePlanMonth}
+                              onChange={e => setExtraInfo(p => ({ ...p, movePlanMonth: +e.target.value }))}>
+                              {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                            </select>
+                          </div>
+                          <p className="text-[10px] text-text-hint mt-1">예정 시기의 이동운과 최적 방위를 분석해요</p>
+                        </div>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 학업·시험운: 시험 정보 ─── */}
+                  {topicId === 'study' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">시험 정보</p>
+                            <p className="text-[10px] text-text-hint">시험에 맞춘 정밀 분석을 해드려요</p>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-[11px] text-text-hint mb-1 block">준비중인 시험 <span className="text-[9px] opacity-60">(선택)</span></label>
+                            <input type="text" placeholder="예: 공무원, 수능, 토익, 자격증명..."
+                              className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                              value={extraInfo.examName}
+                              onChange={e => setExtraInfo(p => ({ ...p, examName: e.target.value }))} />
+                          </div>
+                          <div>
+                            <label className="text-[11px] text-text-hint mb-1 block">시험 예정 시기 <span className="text-[9px] opacity-60">(선택)</span></label>
+                            <div className="flex gap-2">
+                              <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                value={extraInfo.examYear}
+                                onChange={e => setExtraInfo(p => ({ ...p, examYear: +e.target.value }))}>
+                                {Array.from({ length: 3 }, (_, i) => currentYear + i).map(y => <option key={y} value={y}>{y}년</option>)}
+                              </select>
+                              <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                value={extraInfo.examMonth}
+                                onChange={e => setExtraInfo(p => ({ ...p, examMonth: +e.target.value }))}>
+                                {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                              </select>
+                            </div>
+                            <p className="text-[10px] text-text-hint mt-1">시험 시기에 맞춘 합격 전략을 세워드려요</p>
+                          </div>
+                        </div>
                       </div>
                     </FadeIn>
                   )}

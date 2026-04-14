@@ -626,7 +626,7 @@ export const disconnectToss = onRequest(
 export const generateTopicAnalysis = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
-    const { topicId, sajuData, baseScore, partnerInfo } = request.data;
+    const { topicId, sajuData, baseScore, partnerInfo, extraInfo } = request.data;
     if (!topicId || !sajuData) throw new HttpsError('invalid-argument', 'topicId, sajuData 필요');
 
     const uid = request.auth?.uid || 'anonymous';
@@ -647,7 +647,7 @@ export const generateTopicAnalysis = onCall(
 
     try {
       const { generateTopicAnalysisAI } = await lazyGeminiTopic();
-      const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData, baseScore, partnerInfo);
+      const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
