@@ -421,54 +421,134 @@ function LoveViz({ data, color }: { data: any; color: string }) {
 
 function WealthViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
+
+  // 월별 재물 점수에서 베스트/워스트 찾기
+  const monthly = data.monthlyWealth || [];
+  let bestMonth = '', worstMonth = '', bestScore = 0, worstScore = 100;
+  monthly.forEach((m: any) => {
+    const s = typeof m.score === 'number' ? m.score : parseInt(m.score) || 0;
+    if (s > bestScore) { bestScore = s; bestMonth = m.month; }
+    if (s < worstScore) { worstScore = s; worstMonth = m.month; }
+  });
+
   return (
     <FadeIn delay={0.1}>
       <div className="space-y-3">
-        {/* 재성 구조 + 전성기 */}
+
+        {/* 재물 역량 3축 게이지 */}
         <div className="card">
           <div className="flex items-center justify-between mb-3">
             <p className="text-h3 text-text-primary">재물 역량 분석</p>
             {data.wealthType && <TypeBadge label={data.wealthType} color={color} />}
           </div>
           <div className="space-y-2.5">
-            {data.earningPower != null && <HBar value={data.earningPower} label="수익력" color="#2D8A4E" />}
-            {data.savingPower != null && <HBar value={data.savingPower} label="저축력" color="#1565C0" />}
-            {data.spendingRisk != null && <HBar value={data.spendingRisk} label="지출위험" color="#D32F2F" />}
+            {data.earningPower != null && <HBar value={data.earningPower} label="수익력 — 돈 벌어오는 힘" color="#2D8A4E" />}
+            {data.savingPower != null && <HBar value={data.savingPower} label="저축력 — 돈 모으는 힘" color="#1565C0" />}
+            {data.spendingRisk != null && <HBar value={data.spendingRisk} label="지출위험 — 돈 새는 위험도" color="#D32F2F" suffix=" (높을수록 위험)" />}
           </div>
-          <div className="grid grid-cols-2 gap-2 mt-3">
+        </div>
+
+        {/* 재성 구조 + 핵심 수치 대시보드 */}
+        <div className="card">
+          <p className="text-h3 text-text-primary mb-3">재물 핵심 지표</p>
+          <div className="grid grid-cols-2 gap-2">
             {data.jaeseongType && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
-                <p className="text-[9px] text-text-hint mb-0.5">재성(財星) 구조</p>
-                <p className="text-[12px] font-bold" style={{ color }}>{data.jaeseongType}</p>
+              <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
+                <p className="text-[9px] text-text-hint mb-1">재성(財星) 구조</p>
+                <p className="text-[13px] font-black" style={{ color }}>{data.jaeseongType}</p>
+                {data.jaeseongDesc && <p className="text-[10px] text-text-muted mt-1 leading-snug">{data.jaeseongDesc}</p>}
               </div>
             )}
             {data.wealthPeakPeriod && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
-                <p className="text-[9px] text-text-hint mb-0.5">재물 전성기</p>
-                <p className="text-[12px] font-bold" style={{ color }}>{data.wealthPeakPeriod}</p>
+              <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
+                <p className="text-[9px] text-text-hint mb-1">재물 전성기</p>
+                <p className="text-[13px] font-black" style={{ color }}>{data.wealthPeakPeriod}</p>
+                <p className="text-[10px] text-text-muted mt-1">이 시기에 자산이 가장 크게 불어요</p>
               </div>
             )}
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-2">
             {data.investStyle && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,192,0.05)' }}>
-                <p className="text-[9px] text-text-hint mb-0.5">투자 성향</p>
-                <p className="text-[12px] font-bold text-[#1565C0]">{data.investStyle}</p>
+              <div className="rounded-xl p-3" style={{ background: 'rgba(21,101,192,0.05)' }}>
+                <p className="text-[9px] text-text-hint mb-1">투자 성향</p>
+                <p className="text-[13px] font-black text-[#1565C0]">{data.investStyle}</p>
               </div>
             )}
             {data.bestInvestMonth && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(45,138,78,0.05)' }}>
-                <p className="text-[9px] text-text-hint mb-0.5">투자 적기</p>
-                <p className="text-[12px] font-bold text-[#2D8A4E]">{data.bestInvestMonth}</p>
+              <div className="rounded-xl p-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <div className="flex items-center gap-1 mb-1">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
+                  <p className="text-[9px] text-text-hint">올해 투자 적기</p>
+                </div>
+                <p className="text-[13px] font-black text-[#2D8A4E]">{data.bestInvestMonth}</p>
               </div>
             )}
           </div>
+          {data.wealthFlow && (
+            <div className="mt-2 rounded-lg py-2 px-3 flex items-center gap-2" style={{ background: `${color}05` }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+              <p className="text-[11px] text-text-secondary">올해 재물 흐름: <strong style={{ color }}>{data.wealthFlow}</strong></p>
+            </div>
+          )}
         </div>
+
+        {/* 월별 재물 흐름 차트 */}
+        {monthly.length > 0 && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-h3 text-text-primary">월별 재물 흐름</p>
+              {data.dangerMonths && (
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(211,47,47,0.08)', color: '#D32F2F' }}>
+                  주의: {data.dangerMonths}
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-text-hint mb-3">올해 12개월 재물 에너지 추이</p>
+            <div className="h-[150px] -mx-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthly.map((m: any) => ({ ...m, score: typeof m.score === 'number' ? m.score : parseInt(m.score) || 0 }))} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
+                  <defs>
+                    <linearGradient id="wealthGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false}
+                    tickFormatter={(v: string) => v.replace('월', '')} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false} />
+                  <Area type="monotone" dataKey="score" stroke={color} fill="url(#wealthGrad)"
+                    strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            {/* 베스트/워스트 월 */}
+            {bestMonth && worstMonth && (
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <div className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
+                  <span className="text-[10px] text-text-muted">최고: <strong className="text-[#2D8A4E]">{bestMonth} ({bestScore}점)</strong></span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                  <span className="text-[10px] text-text-muted">주의: <strong className="text-[#D32F2F]">{worstMonth} ({worstScore}점)</strong></span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 돈 새는 함정 경고 */}
         {data.moneyLeakTrap && (
           <div className="card" style={{ borderLeft: '3px solid #E65100' }}>
-            <p className="text-[10px] font-bold text-[#E65100] mb-1">돈 새는 핵심 함정</p>
-            <p className="text-[12px] text-text-primary leading-snug">{data.moneyLeakTrap}</p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p className="text-[12px] font-bold text-[#E65100]">돈 새는 핵심 함정</p>
+            </div>
+            <p className="text-[13px] text-text-primary font-semibold leading-snug mb-1">{data.moneyLeakTrap}</p>
+            {data.moneyLeakDesc && (
+              <p className="text-[11px] text-text-secondary leading-relaxed">{data.moneyLeakDesc}</p>
+            )}
           </div>
         )}
       </div>

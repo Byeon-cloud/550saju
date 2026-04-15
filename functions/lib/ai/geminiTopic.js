@@ -91,9 +91,27 @@ const TOPIC_CONFIGS = {
       "spendingRisk": 0-100 정수,
       "investStyle": "투자 성향 20자",
       "jaeseongType": "정재형/편재형/식신생재형/겁재과다형 중 하나",
+      "jaeseongDesc": "재성 구조가 돈 버는 방식에 미치는 실질적 영향 40자",
       "wealthPeakPeriod": "재물 전성기 나이대 (예: 35~42세)",
       "bestInvestMonth": "올해 투자 적기 (예: 3~5월)",
-      "moneyLeakTrap": "돈 새는 핵심 함정 20자"
+      "dangerMonths": "지출 폭증/손실 주의 월 (예: 3월, 8월)",
+      "moneyLeakTrap": "돈 새는 핵심 함정 20자",
+      "moneyLeakDesc": "돈 새는 패턴의 구체적 설명 + 사주 근거 40자",
+      "wealthFlow": "상반기강세/하반기강세/꾸준형/변동형 중 하나",
+      "monthlyWealth": [
+        {"month": "1월", "score": "0-100 정수"},
+        {"month": "2월", "score": "0-100 정수"},
+        {"month": "3월", "score": "0-100 정수"},
+        {"month": "4월", "score": "0-100 정수"},
+        {"month": "5월", "score": "0-100 정수"},
+        {"month": "6월", "score": "0-100 정수"},
+        {"month": "7월", "score": "0-100 정수"},
+        {"month": "8월", "score": "0-100 정수"},
+        {"month": "9월", "score": "0-100 정수"},
+        {"month": "10월", "score": "0-100 정수"},
+        {"month": "11월", "score": "0-100 정수"},
+        {"month": "12월", "score": "0-100 정수"}
+      ]
     }`,
     },
     career: {
