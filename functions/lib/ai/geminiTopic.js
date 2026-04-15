@@ -393,12 +393,12 @@ const TOPIC_CONFIGS = {
         {"month": "12월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"}
       ],
       "sinsal": {
-        "doHwaSal": {"have": "true/false", "desc": "영향 설명 25자"},
-        "hongYeomSal": {"have": "true/false", "desc": "영향 설명 25자"},
-        "wonJinSal": {"have": "true/false", "desc": "영향 설명 25자"},
-        "cheonEulGuiin": {"have": "true/false", "desc": "영향 설명 25자"},
-        "samhap": {"have": "true/false", "desc": "영향 설명 25자"},
-        "yukhap": {"have": "true/false", "desc": "영향 설명 25자"}
+        "doHwaSal": {"have": "true/false", "desc": "사주 근거 간단히 15자 (예: 酉에 위치)", "meaning": "쉽게 말하면 이런 뜻이에요 — 사주 초보자가 바로 이해할 수 있는 설명 40자", "impact": "positive/negative/neutral", "advice": "이 사람에게 구체적으로 어떻게 작용하는지 + 어떻게 하면 좋은지 35자"},
+        "hongYeomSal": {"have": "true/false", "desc": "사주 근거 15자", "meaning": "쉬운 설명 40자", "impact": "positive/negative/neutral", "advice": "구체적 작용 + 조언 35자"},
+        "wonJinSal": {"have": "true/false", "desc": "사주 근거 15자", "meaning": "쉬운 설명 40자", "impact": "positive/negative/neutral", "advice": "구체적 작용 + 조언 35자"},
+        "cheonEulGuiin": {"have": "true/false", "desc": "사주 근거 15자", "meaning": "쉬운 설명 40자", "impact": "positive/negative/neutral", "advice": "구체적 작용 + 조언 35자"},
+        "samhap": {"have": "true/false", "desc": "사주 근거 15자", "meaning": "쉬운 설명 40자", "impact": "positive/negative/neutral", "advice": "구체적 작용 + 조언 35자"},
+        "yukhap": {"have": "true/false", "desc": "사주 근거 15자", "meaning": "쉬운 설명 40자", "impact": "positive/negative/neutral", "advice": "구체적 작용 + 조언 35자"}
       },
       "reunionFactors": [
         {"factor": "사주 변수 이름 (한자 병기) 예: 천간합(天干合)", "impact": "0-100 정수 (재회에 미치는 영향력)", "favorable": true또는false, "desc": "이 요인이 재회에 미치는 구체적 영향 30자"},
@@ -684,6 +684,8 @@ ${config.specificPrompt}
 2. overallScore 산출:${baseScore ? ` 이 사람의 사주 리포트에서 ${config.label} 점수가 ${baseScore}점으로 산출됨. overallScore는 반드시 ${baseScore}점으로 설정하라. 절대 다른 점수를 매기지 마.` : ' 오행 균형(과다/부족)과 십성 배치를 정량적으로 분석하여 일관되게 매겨라. 같은 사주에 같은 주제면 항상 같은 점수가 나와야 한다. 감정이 아닌 구조 기반.'}
 3. 각 section의 content는 단락을 나눠 가독성 있게 작성. 한 문단이 3줄을 넘지 않도록.
 4. topicData의 각 필드를 정확한 형식으로 채워라. 시각화에 사용되므로 빠뜨리지 마.
+   - pillarComparison의 cheongan/jiji는 반드시 한자 1글자만 (예: "甲", "寅"). "(추정)", "(추론)" 같은 주석을 절대 붙이지 마.
+   - oheng도 "목", "화" 등 1글자만. "(추정)" 등 괄호 주석 금지.
 5. subScores의 5개 축 value는 반드시 정수. overallScore와 논리적으로 일관되게.
 6. keywords는 #으로 시작. 사주 용어(도화살/정관/편재 등)를 1개 이상 포함.
 7. strengths/cautions는 구체적으로. "좋다/나쁘다"가 아니라 어떤 상황에서 어떻게인지.

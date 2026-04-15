@@ -29,6 +29,21 @@ const TOPICS: Record<string, { label: string; icon: string; color: string; desc:
 
 const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
 
+/** AI가 "(추정)", "(추론)" 등 괄호 주석을 붙여 보내는 경우 한자 1글자만 추출 */
+function cleanHanja(raw: string | undefined): string {
+  if (!raw) return '?';
+  // 괄호+내용 제거, 앞뒤 공백 제거 후 첫 글자만
+  const stripped = raw.replace(/\s*[\(（].*?[\)）]/g, '').trim();
+  return stripped.charAt(0) || '?';
+}
+/** 오행 텍스트 정리 — "(추정)" 제거 후 목/화/토/금/수만 추출 */
+function cleanOheng(raw: string | undefined): string {
+  if (!raw) return '';
+  const stripped = raw.replace(/\s*[\(（].*?[\)）]/g, '').trim();
+  const match = stripped.match(/[목화토금수]/);
+  return match ? match[0] : stripped.charAt(0) || '';
+}
+
 type Phase = 'select' | 'loading' | 'result';
 
 /** 점수 -> 한자 판정 (사주 전통 방식) */
@@ -320,56 +335,56 @@ function LoveViz({ data, color }: { data: any; color: string }) {
               )}
 
               {/* 기둥 비교 */}
-              {pComp && (
-                <div className="mb-3">
-                  <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
-                  <div className="space-y-2">
-                    {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
-                      const myP = pComp.myPillars?.[key];
-                      const ptP = pComp.partnerPillars?.[key];
-                      const inter = interMap[key];
-                      const ts = inter ? getTS(inter.type) : null;
-                      return (
-                        <div key={key}>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[9px] text-text-hint font-medium">{label}</span>
-                            {ts && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {myP && (
-                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2" style={{ background: ohengBg[myP.oheng] || 'rgba(0,0,0,0.03)' }}>
-                                <div className="flex gap-1">
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[myP.oheng] || '#3D3427' }}>{myP.cheongan}</span>
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[myP.oheng] || '#3D3427' }}>{myP.jiji}</span>
-                                </div>
-                                <span className="text-[8px] font-semibold" style={{ color: ohengText[myP.oheng] || '#757575' }}>{myP.oheng}</span>
-                              </div>
-                            )}
-                            <div className="flex-shrink-0 w-6 flex items-center justify-center">
-                              {ts ? <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span> : <span className="text-[10px] text-text-hint">&#8660;</span>}
+              {pComp && (() => {
+                const renderPillar = (p: any, side: 'left' | 'right') => {
+                  const oh = cleanOheng(p.oheng);
+                  const bg = ohengBg[oh] || 'rgba(0,0,0,0.03)';
+                  const fg = ohengText[oh] || '#3D3427';
+                  return (
+                    <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
+                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      <div className="flex gap-1">
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
+                      </div>
+                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    </div>
+                  );
+                };
+                return (
+                  <div className="mb-3">
+                    <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
+                    <div className="space-y-2">
+                      {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
+                        const myP = pComp.myPillars?.[key];
+                        const ptP = pComp.partnerPillars?.[key];
+                        const inter = interMap[key];
+                        const ts = inter ? getTS(inter.type) : null;
+                        return (
+                          <div key={key}>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-[9px] text-text-hint font-medium">{label}</span>
+                              {ts && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
                             </div>
-                            {ptP && (
-                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2 justify-end" style={{ background: ohengBg[ptP.oheng] || 'rgba(0,0,0,0.03)' }}>
-                                <span className="text-[8px] font-semibold" style={{ color: ohengText[ptP.oheng] || '#757575' }}>{ptP.oheng}</span>
-                                <div className="flex gap-1">
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[ptP.oheng] || '#3D3427' }}>{ptP.cheongan}</span>
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[ptP.oheng] || '#3D3427' }}>{ptP.jiji}</span>
-                                </div>
+                            <div className="flex items-center gap-2">
+                              {myP && renderPillar(myP, 'left')}
+                              <div className="flex-shrink-0 w-6 flex items-center justify-center">
+                                {ts ? <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span> : <span className="text-[10px] text-text-hint">vs</span>}
                               </div>
-                            )}
+                              {ptP && renderPillar(ptP, 'right')}
+                            </div>
+                            {inter?.desc && <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>}
                           </div>
-                          {inter?.desc && <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 px-1" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                      <span className="text-[9px] text-text-hint">나</span>
+                      <span className="text-[9px] text-text-hint">상대 (추론)</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-center gap-3 mt-2 pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                    <span className="text-[9px] text-text-hint">나</span>
-                    <span className="text-[9px] text-text-hint">&#8660;</span>
-                    <span className="text-[9px] text-text-hint">상대</span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* 잘 맞는 점 / 안 맞는 점 */}
               {(pc.matchPoints?.length > 0 || pc.clashPoints?.length > 0) && (
@@ -662,56 +677,56 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
               )}
 
               {/* 기둥 비교 */}
-              {pComp && (
-                <div className="mb-3">
-                  <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
-                  <div className="space-y-2">
-                    {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
-                      const myP = pComp.myPillars?.[key];
-                      const ptP = pComp.partnerPillars?.[key];
-                      const inter = interMap[key];
-                      const ts = inter ? getTS(inter.type) : null;
-                      return (
-                        <div key={key}>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[9px] text-text-hint font-medium">{label}</span>
-                            {ts && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {myP && (
-                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2" style={{ background: ohengBg[myP.oheng] || 'rgba(0,0,0,0.03)' }}>
-                                <div className="flex gap-1">
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[myP.oheng] || '#3D3427' }}>{myP.cheongan}</span>
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[myP.oheng] || '#3D3427' }}>{myP.jiji}</span>
-                                </div>
-                                <span className="text-[8px] font-semibold" style={{ color: ohengText[myP.oheng] || '#757575' }}>{myP.oheng}</span>
-                              </div>
-                            )}
-                            <div className="flex-shrink-0 w-6 flex items-center justify-center">
-                              {ts ? <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span> : <span className="text-[10px] text-text-hint">⇔</span>}
+              {pComp && (() => {
+                const renderPillar = (p: any, side: 'left' | 'right') => {
+                  const oh = cleanOheng(p.oheng);
+                  const bg = ohengBg[oh] || 'rgba(0,0,0,0.03)';
+                  const fg = ohengText[oh] || '#3D3427';
+                  return (
+                    <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
+                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      <div className="flex gap-1">
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
+                      </div>
+                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    </div>
+                  );
+                };
+                return (
+                  <div className="mb-3">
+                    <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
+                    <div className="space-y-2">
+                      {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
+                        const myP = pComp.myPillars?.[key];
+                        const ptP = pComp.partnerPillars?.[key];
+                        const inter = interMap[key];
+                        const ts = inter ? getTS(inter.type) : null;
+                        return (
+                          <div key={key}>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-[9px] text-text-hint font-medium">{label}</span>
+                              {ts && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
                             </div>
-                            {ptP && (
-                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2 justify-end" style={{ background: ohengBg[ptP.oheng] || 'rgba(0,0,0,0.03)' }}>
-                                <span className="text-[8px] font-semibold" style={{ color: ohengText[ptP.oheng] || '#757575' }}>{ptP.oheng}</span>
-                                <div className="flex gap-1">
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[ptP.oheng] || '#3D3427' }}>{ptP.cheongan}</span>
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[ptP.oheng] || '#3D3427' }}>{ptP.jiji}</span>
-                                </div>
+                            <div className="flex items-center gap-2">
+                              {myP && renderPillar(myP, 'left')}
+                              <div className="flex-shrink-0 w-6 flex items-center justify-center">
+                                {ts ? <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span> : <span className="text-[10px] text-text-hint">vs</span>}
                               </div>
-                            )}
+                              {ptP && renderPillar(ptP, 'right')}
+                            </div>
+                            {inter?.desc && <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>}
                           </div>
-                          {inter?.desc && <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 px-1" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                      <span className="text-[9px] text-text-hint">나</span>
+                      <span className="text-[9px] text-text-hint">상대 (추론)</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-center gap-3 mt-2 pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                    <span className="text-[9px] text-text-hint">나</span>
-                    <span className="text-[9px] text-text-hint">⇔</span>
-                    <span className="text-[9px] text-text-hint">상대</span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* 잘 맞는 점 / 안 맞는 점 */}
               {(pc.matchPoints?.length > 0 || pc.clashPoints?.length > 0) && (
@@ -1033,6 +1048,21 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                 }
                 return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' };
               };
+              const renderPillar = (p: any, side: 'left' | 'right') => {
+                const oh = cleanOheng(p.oheng);
+                const bg = ohengBg[oh] || 'rgba(0,0,0,0.03)';
+                const fg = ohengText[oh] || '#3D3427';
+                return (
+                  <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
+                    {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    <div className="flex gap-1">
+                      <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
+                      <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
+                    </div>
+                    {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                  </div>
+                );
+              };
               return (
                 <div className="mb-4">
                   <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
@@ -1053,49 +1083,16 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            {/* 나 */}
-                            {myP && (
-                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2"
-                                style={{ background: ohengBg[myP.oheng] || 'rgba(0,0,0,0.03)' }}>
-                                <div className="flex gap-1">
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
-                                    style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[myP.oheng] || '#3D3427' }}>
-                                    {myP.cheongan}
-                                  </span>
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
-                                    style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[myP.oheng] || '#3D3427' }}>
-                                    {myP.jiji}
-                                  </span>
-                                </div>
-                                <span className="text-[8px] font-semibold" style={{ color: ohengText[myP.oheng] || '#757575' }}>{myP.oheng}</span>
-                              </div>
-                            )}
-                            {/* 화살표 */}
+                            {myP && renderPillar(myP, 'left')}
                             <div className="flex-shrink-0 w-6 flex items-center justify-center">
                               {ts ? (
                                 <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
                                   style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span>
                               ) : (
-                                <span className="text-[10px] text-text-hint">⇔</span>
+                                <span className="text-[10px] text-text-hint">vs</span>
                               )}
                             </div>
-                            {/* 상대 */}
-                            {ptP && (
-                              <div className="flex-1 rounded-lg p-2 flex items-center gap-2 justify-end"
-                                style={{ background: ohengBg[ptP.oheng] || 'rgba(0,0,0,0.03)' }}>
-                                <span className="text-[8px] font-semibold" style={{ color: ohengText[ptP.oheng] || '#757575' }}>{ptP.oheng}</span>
-                                <div className="flex gap-1">
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
-                                    style={{ background: 'rgba(255,255,255,0.7)', color: ohengText[ptP.oheng] || '#3D3427' }}>
-                                    {ptP.cheongan}
-                                  </span>
-                                  <span className="w-7 h-8 rounded-md flex items-center justify-center text-[14px] font-black"
-                                    style={{ background: 'rgba(255,255,255,0.5)', color: ohengText[ptP.oheng] || '#3D3427' }}>
-                                    {ptP.jiji}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                            {ptP && renderPillar(ptP, 'right')}
                           </div>
                           {inter?.desc && (
                             <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>
@@ -1105,10 +1102,9 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                     })}
                   </div>
                   {/* 범례 */}
-                  <div className="flex items-center justify-center gap-3 mt-3 pt-2" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                  <div className="flex items-center justify-between mt-3 pt-2 px-1" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
                     <span className="text-[9px] text-text-hint">나</span>
-                    <span className="text-[9px] text-text-hint">⇔</span>
-                    <span className="text-[9px] text-text-hint">상대</span>
+                    <span className="text-[9px] text-text-hint">상대 (추론)</span>
                   </div>
                 </div>
               );
@@ -1204,34 +1200,69 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
         {/* ━━━ 5. 전통 연애 신살 분석 ━━━ */}
         {sinsalList && (
           <div className="card">
-            <p className="text-h3 text-text-primary mb-3">연애 신살(神殺) 분석</p>
-            <div className="space-y-2">
+            <p className="text-h3 text-text-primary mb-1">연애 신살(神殺) 분석</p>
+            <p className="text-[10px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
+            <div className="space-y-3">
               {[
-                { key: 'doHwaSal', name: '도화살(桃花殺)', desc: '매력 발산의 별', activeColor: '#E91E63' },
-                { key: 'hongYeomSal', name: '홍염살(紅艶殺)', desc: '강렬한 연애 에너지', activeColor: '#D32F2F' },
-                { key: 'wonJinSal', name: '원진살(怨嗔殺)', desc: '원망과 소원함의 구조', activeColor: '#E65100' },
-                { key: 'cheonEulGuiin', name: '천을귀인(天乙貴人)', desc: '귀인의 도움', activeColor: '#2D8A4E' },
-                { key: 'samhap', name: '삼합(三合)', desc: '세 지지의 조화', activeColor: '#1565C0' },
-                { key: 'yukhap', name: '육합(六合)', desc: '짝 지지의 결합', activeColor: '#7B1FA2' },
-              ].map(({ key, name, desc, activeColor }) => {
+                { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E91E63" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#E91E63' },
+                { key: 'hongYeomSal', name: '홍염살', hanja: '紅艶殺', summary: '강렬한 끌림',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 2c1 3 4 5.5 4 10a4 4 0 11-8 0c0-4.5 3-7 4-10z" /></svg>, activeColor: '#D32F2F' },
+                { key: 'wonJinSal', name: '원진살', hanja: '怨嗔殺', summary: '감정 어긋남',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M16 8l-8 8M8 8l8 8" /></svg>, activeColor: '#E65100' },
+                { key: 'cheonEulGuiin', name: '천을귀인', hanja: '天乙貴人', summary: '귀인의 도움',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>, activeColor: '#2D8A4E' },
+                { key: 'samhap', name: '삼합', hanja: '三合', summary: '세 기운의 조화',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><path d="M12 3l8.66 15H3.34z" /></svg>, activeColor: '#1565C0' },
+                { key: 'yukhap', name: '육합', hanja: '六合', summary: '짝궁 결합',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><circle cx="9" cy="12" r="5" /><circle cx="15" cy="12" r="5" /></svg>, activeColor: '#7B1FA2' },
+              ].map(({ key, name, hanja, summary, icon, activeColor }) => {
                 const s = sinsalList[key];
                 if (!s) return null;
                 const isActive = s.have === true || s.have === 'true';
+                const impactType = s.impact || (isActive ? 'positive' : 'neutral');
+                const impactLabel = impactType === 'positive' ? '좋은 영향' : impactType === 'negative' ? '주의 필요' : '해당 없음';
+                const impactColor = impactType === 'positive' ? '#2D8A4E' : impactType === 'negative' ? '#E65100' : '#999';
                 return (
-                  <div key={key} className="flex items-start gap-3 rounded-xl p-2.5"
-                    style={{ background: isActive ? `${activeColor}06` : 'rgba(0,0,0,0.02)' }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: isActive ? `${activeColor}15` : 'rgba(0,0,0,0.05)' }}>
-                      <span className="text-[10px] font-black" style={{ color: isActive ? activeColor : '#999' }}>
-                        {isActive ? '有' : '無'}
+                  <div key={key} className="rounded-2xl overflow-hidden"
+                    style={{ background: isActive ? `${activeColor}04` : 'rgba(0,0,0,0.015)', border: `1px solid ${isActive ? `${activeColor}15` : 'rgba(0,0,0,0.04)'}` }}>
+                    {/* 헤더 */}
+                    <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: isActive ? `${activeColor}12` : 'rgba(0,0,0,0.04)' }}>
+                        {icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[12px] font-bold text-text-primary">{name}</p>
+                          <span className="text-[9px] text-text-hint">({hanja})</span>
+                        </div>
+                        <p className="text-[10px] text-text-muted">{summary}</p>
+                      </div>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: isActive ? `${impactColor}12` : 'rgba(0,0,0,0.04)', color: isActive ? impactColor : '#bbb' }}>
+                        {isActive ? impactLabel : '없음'}
                       </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-[11px] font-bold text-text-primary">{name}</p>
-                        <span className="text-[9px] text-text-hint">{desc}</span>
-                      </div>
-                      {s.desc && <p className="text-[11px] text-text-secondary leading-snug">{s.desc}</p>}
+                    {/* 본문 — 쉬운 설명 */}
+                    <div className="px-3.5 pb-3 space-y-1.5">
+                      {s.meaning && (
+                        <div className="rounded-lg py-2 px-2.5" style={{ background: isActive ? `${activeColor}06` : 'rgba(0,0,0,0.02)' }}>
+                          <p className="text-[10px] font-semibold mb-0.5" style={{ color: isActive ? activeColor : '#999' }}>쉽게 말하면</p>
+                          <p className="text-[11px] text-text-primary leading-relaxed">{s.meaning}</p>
+                        </div>
+                      )}
+                      {s.advice && isActive && (
+                        <div className="flex items-start gap-1.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={activeColor} strokeWidth="2.5" className="mt-0.5 flex-shrink-0">
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                          <p className="text-[11px] text-text-secondary leading-snug">{s.advice}</p>
+                        </div>
+                      )}
+                      {s.desc && !s.meaning && (
+                        <p className="text-[11px] text-text-secondary leading-snug">{s.desc}</p>
+                      )}
                     </div>
                   </div>
                 );
