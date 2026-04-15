@@ -1204,19 +1204,19 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
             <p className="text-[10px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
             <div className="space-y-3">
               {[
-                { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력',
+                { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E91E63" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#E91E63' },
-                { key: 'hongYeomSal', name: '홍염살', hanja: '紅艶殺', summary: '강렬한 끌림',
+                { key: 'hongYeomSal', name: '홍염살', hanja: '紅艶殺', summary: '강렬한 끌림', subject: '나의 사주',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 2c1 3 4 5.5 4 10a4 4 0 11-8 0c0-4.5 3-7 4-10z" /></svg>, activeColor: '#D32F2F' },
-                { key: 'wonJinSal', name: '원진살', hanja: '怨嗔殺', summary: '감정 어긋남',
+                { key: 'wonJinSal', name: '원진살', hanja: '怨嗔殺', summary: '감정 어긋남', subject: '두 사람 사이',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M16 8l-8 8M8 8l8 8" /></svg>, activeColor: '#E65100' },
-                { key: 'cheonEulGuiin', name: '천을귀인', hanja: '天乙貴人', summary: '귀인의 도움',
+                { key: 'cheonEulGuiin', name: '천을귀인', hanja: '天乙貴人', summary: '귀인의 도움', subject: '나의 사주',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>, activeColor: '#2D8A4E' },
-                { key: 'samhap', name: '삼합', hanja: '三合', summary: '세 기운의 조화',
+                { key: 'samhap', name: '삼합', hanja: '三合', summary: '세 기운의 조화', subject: '두 사람 사이',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><path d="M12 3l8.66 15H3.34z" /></svg>, activeColor: '#1565C0' },
-                { key: 'yukhap', name: '육합', hanja: '六合', summary: '짝궁 결합',
+                { key: 'yukhap', name: '육합', hanja: '六合', summary: '짝궁 결합', subject: '두 사람 사이',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><circle cx="9" cy="12" r="5" /><circle cx="15" cy="12" r="5" /></svg>, activeColor: '#7B1FA2' },
-              ].map(({ key, name, hanja, summary, icon, activeColor }) => {
+              ].map(({ key, name, hanja, summary, subject, icon, activeColor }) => {
                 const s = sinsalList[key];
                 if (!s) return null;
                 const isActive = s.have === true || s.have === 'true';
@@ -1236,6 +1236,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                         <div className="flex items-center gap-1.5">
                           <p className="text-[12px] font-bold text-text-primary">{name}</p>
                           <span className="text-[9px] text-text-hint">({hanja})</span>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[rgba(0,0,0,0.04)] text-text-hint">{subject}</span>
                         </div>
                         <p className="text-[10px] text-text-muted">{summary}</p>
                       </div>
@@ -2678,7 +2679,7 @@ export function TopicAnalysisPage() {
               marriage: '배우자궁의 구조를 깊이 분석하고 있어요.|결혼 적기를 대운 흐름으로 계산하고 있어요.|사주로 배우자 성향을 추론하고 있어요.|결혼 후 생활 패턴까지 예측하고 있어요.',
               business: '사업 적성과 맞는 업종을 분석하고 있어요.|창업 최적 타이밍을 계산하고 있어요.|동업 궁합 구조를 확인하고 있어요.|편재와 식상으로 사업 구조를 읽고 있어요.',
               health: '오행 균형으로 체질을 정밀 분석하고 있어요.|취약 장기와 주의 시기를 확인하고 있어요.|사주에서 건강 리스크를 찾고 있어요.|맞춤 건강 보완법을 만들고 있어요.',
-              reunion: '두 사람의 사주를 교차 분석하고 있어요.|10개 섹션, 일반 분석보다 훨씬 깊어요.|더 정교한 결과를 위해 조금만 기다려주세요.|상대방의 숨은 마음까지 읽고 있어요.',
+              reunion: '두 사람의 사주를 교차 분석하고 있어요.|상대방의 숨은 마음까지 읽고 있어요.|궁합 구조와 신살을 정밀 분석 중이에요.|재회 전략까지 세우고 있어요.',
               study: '인성 구조로 학습 체질을 분석하고 있어요.|합격 운과 최적 시기를 계산하고 있어요.|집중력 피크 시간대를 찾고 있어요.|시험 당일 전략까지 세우고 있어요.',
               social: '비겁과 귀인 구조로 관계를 분석하고 있어요.|귀인운이 언제 오는지 확인하고 있어요.|구설수 주의 시기를 계산하고 있어요.|사주적 관계 패턴을 읽고 있어요.',
               moving: '역마살과 이동운을 분석하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
@@ -2698,7 +2699,7 @@ export function TopicAnalysisPage() {
                 type={`${topic.label} 심층분석`}
                 steps={topicId === 'reunion' ? reunionSteps : defaultSteps}
                 premiumNote={TOPIC_NOTES[topicId || '']}
-                estimatedSeconds={topicId === 'reunion' ? 40 : 20}
+                estimatedSeconds={topicId === 'reunion' ? 60 : 30}
               />
             );
           })()}

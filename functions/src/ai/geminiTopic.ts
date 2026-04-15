@@ -259,6 +259,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 상대방 사주를 생년월일 기반으로 추론하여 두 사주의 교차 분석 수행
 - "혹시 ~하지 않았나요?" 형태의 소름 포인트 매 섹션마다 1개 이상 필수
 - 사주 전문 용어(한자 병기)를 자연스럽게 포함하되, 쉽게 설명
+- ⚠️ 각 섹션의 content는 핵심만 간결하게. 한 섹션 150~250자. 불필요한 반복/서론 금지.
 
 ## 섹션별 지침
 
@@ -528,11 +529,11 @@ export async function generateTopicAnalysisAI(
   const anthropic = new Anthropic({ apiKey });
   const prompt = buildPrompt(config, topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
-  // 취업이직/재회/재물은 Sonnet 4 (고퀄), 나머지는 Haiku (가성비)
-  const premiumTopics = ['career', 'reunion', 'wealth'];
-  const model = premiumTopics.includes(topicId) ? 'claude-sonnet-4-20250514' : 'claude-haiku-4-5-20251001';
-  // 재회운은 10섹션 + 풍부한 topicData → 토큰 넉넉히
-  const maxTokens = topicId === 'reunion' ? 16384 : 8192;
+  // 전 주제 Haiku 4.5 통일 — 프롬프트가 충분히 정교하므로 퀄리티 유지, 속도 2~3배 향상
+  // Sonnet 4 ~50tok/s → Haiku 4.5 ~150tok/s (3배 빠름)
+  const model = 'claude-haiku-4-5-20251001';
+  // 재회운 10섹션 + 풍부한 topicData → 12000, 나머지 5섹션 → 6000
+  const maxTokens = topicId === 'reunion' ? 12000 : 6000;
 
   const msg = await anthropic.messages.create({
     model,
