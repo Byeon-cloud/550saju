@@ -23,7 +23,11 @@
 - **한 줄 정의**: 500원에 제공하는 극상 퀄리티 AI 사주 풀이 서비스
 - **플랫폼**: 웹 (반응형) + 토스 앱인토스 동시 (계정/서버 통합, 프론트만 분기)
 - **기술 스택**: React 18 + TypeScript + Vite + Tailwind CSS + Firebase + lunar-javascript
-- **AI**: Claude API (Opus 4.6 메인 / Sonnet 4.6 검증 / Haiku 4.5 보조)
+- **AI 모델 할당**:
+  - **Opus 4.6**: 유료 핵심 리포트 (`generateReport`, 10섹션)
+  - **Sonnet 4.6**: 유료 1운 전문 콘텐츠 (`generateDaeun`/`Monthly`/`Compatibility`/`Tojung`/`TopicAnalysis`)
+  - **Gemini 2.5 Pro**: 무료·맛보기 퍼널 (`generateDailyFortune`/`ChatAnswer`/`Dream` 무료·심층 둘 다)
+  - **Haiku 4.5**: 현재 미사용 (향후 경량 챗봇 용도 보류)
 - **만세력**: lunar-javascript (npm), ±30분 KR 진태양시 보정 커스텀 래퍼
 - **결제**: 토스페이먼츠 (웹) + 토스 IAP (앱인토스)
 - **앱인토스**: @apps-in-toss/web-framework + @toss/tds-mobile
@@ -321,7 +325,7 @@ users/{uid}/shareLogs/{logId}    - 공유 리워드 로그
 
 ---
 
-## 현재 상태 (2026-04-18)
+## 현재 상태 (2026-04-19)
 
 ### ✅ 완료
 - [x] 사주아이 등 경쟁사 벤치마킹 (한국 3사 + 일본 2사 + 중국 2사 + 서구 2사)
@@ -345,7 +349,6 @@ users/{uid}/shareLogs/{logId}    - 공유 리워드 로그
 - [x] 로고 PNG 600x600 2버전 (navy/cream)
 
 ### ⚠ 미승인 코드 변경 (반드시 준기 확인 후 적용)
-- `claudeReport.ts`: Opus→Sonnet 모델 변경 (A/B 비교 필요)
 - `claudeReport.ts`: 시스템/유저 프롬프트 분리 + JSON 파싱 개선
 - `InputPage.tsx`: 더블클릭 방지 로직
 - `InputPage.tsx`: 천간 성격 플래시 카드 (미승인)
