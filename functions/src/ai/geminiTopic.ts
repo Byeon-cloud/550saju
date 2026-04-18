@@ -547,11 +547,11 @@ export async function generateTopicAnalysisAI(
   const anthropic = new Anthropic({ apiKey });
   const prompt = buildPrompt(config, topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
-  // 전 주제 Haiku 4.5 통일 — 프롬프트가 충분히 정교하므로 퀄리티 유지, 속도 2~3배 향상
-  // Sonnet 4 ~50tok/s → Haiku 4.5 ~150tok/s (3배 빠름)
-  const model = 'claude-haiku-4-5-20251001';
-  // 재회운 10섹션 + 풍부한 topicData → 12000, 나머지 5섹션 → 6000
-  const maxTokens = topicId === 'reunion' ? 12000 : 6000;
+  // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (준기 정책).
+  // 속도는 로딩 UX/스트리밍으로 보완 예정.
+  const model = 'claude-sonnet-4-6';
+  // 재회운 10섹션 + 풍부한 topicData → 16000, 나머지 5섹션 → 8192
+  const maxTokens = topicId === 'reunion' ? 16000 : 8192;
 
   const msg = await anthropic.messages.create({
     model,

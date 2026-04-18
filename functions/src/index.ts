@@ -91,7 +91,7 @@ async function refundBalance(uid: string, deducted: number, reason: string): Pro
 }
 
 /**
- * 사주 리포트 생성 — Claude Sonnet
+ * 사주 리포트 생성 — Claude Opus 4.6 (env SAJU_REPORT_MODEL로 오버라이드 가능)
  */
 export const generateReport = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 1, cors: true, invoker: 'public' },
@@ -139,7 +139,7 @@ export const generateReport = onCall(
         await reportRef.set({
           uid,
           type: reportType || 'basic',
-          aiModel: 'claude-sonnet-4-6',
+          aiModel: 'claude-opus-4-6',
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
           shareEnabled: false,
         });
@@ -437,7 +437,7 @@ export const generateCompatibility = onCall(
 );
 
 /**
- * 토정비결 — Gemini 2.5 Pro
+ * 토정비결 — Claude Sonnet 4.6 (파일명 geminiTojung은 유산, 실제 공급자는 Anthropic)
  */
 export const generateTojung = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
@@ -470,7 +470,7 @@ export const generateTojung = onCall(
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, type: 'tojung', content: result,
-        aiModel: 'gemini-2.5-pro',
+        aiModel: 'claude-sonnet-4-6',
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: result };
@@ -657,8 +657,9 @@ export const disconnectToss = onRequest(
 );
 
 /**
- * 주제별 심층분석 — Gemini 2.5 Flash (1운)
+ * 주제별 심층분석 — Claude Sonnet 4.6 (1운)
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
+ * (파일명 geminiTopic은 유산, 실제 공급자는 Anthropic)
  */
 export const generateTopicAnalysis = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
@@ -691,7 +692,7 @@ export const generateTopicAnalysis = onCall(
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, topicId, ...result, type: 'topic',
-        aiModel: 'gemini-2.5-flash',
+        aiModel: 'claude-sonnet-4-6',
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 

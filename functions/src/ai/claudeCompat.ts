@@ -5,7 +5,7 @@ export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: a
   const prompt = buildPrompt(sajuData1, sajuData2, relation);
 
   const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
   });
