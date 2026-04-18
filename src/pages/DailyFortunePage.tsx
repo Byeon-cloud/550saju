@@ -12,6 +12,7 @@ import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
 import { useToast } from '@/components/common/Toast';
 import { generateDailyFortune } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
+import { Pictogram, type ConcernKey } from '@/components/brand/PictogramRegistry';
 
 // ─── 시간대 감지 (7단계) ───
 type TimeSlot = 'latenight' | 'dawn' | 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
@@ -72,14 +73,15 @@ const TIME_CONTEXT: Record<TimeSlot, { greeting: string; tone: string; label: st
   },
 };
 
-// ─── 고민 영역 칩 (1단계 선택 UI용) ───
-const CONCERN_CHIPS = [
-  { id: 'career',  label: '이직 · 진로',   icon: '事' },
-  { id: 'love',    label: '연애 · 관계',   icon: '愛' },
-  { id: 'wealth',  label: '재정 · 투자',   icon: '財' },
-  { id: 'health',  label: '체력 · 건강',   icon: '健' },
-  { id: 'people',  label: '인간관계',       icon: '人' },
-  { id: 'general', label: '전반적인 흐름',  icon: '運' },
+// ─── 고민 영역 칩 (1단계 선택 UI용) — 이모지 제거, 브랜드 픽토그램 사용
+//    id는 PictogramRegistry의 concern:* key와 1:1 매핑 (브랜드픽토그램_시스템.md)
+const CONCERN_CHIPS: Array<{ id: ConcernKey; label: string }> = [
+  { id: 'career',  label: '이직 · 진로'   },
+  { id: 'love',    label: '연애 · 관계'   },
+  { id: 'wealth',  label: '재정 · 투자'   },
+  { id: 'health',  label: '체력 · 건강'   },
+  { id: 'people',  label: '인간관계'       },
+  { id: 'general', label: '전반적인 흐름'  },
 ];
 
 // ─── 결과 데이터 (시간대+이전 데이터 반영) ───
@@ -440,7 +442,7 @@ export function DailyFortunePage() {
                         }`}
                         style={selectedConcern === chip.id ? { background: 'rgba(201,169,110,0.06)' } : {}}
                       >
-                        <span className="text-[17px] font-black text-brand-gold">{chip.icon}</span>
+                        <Pictogram k={`concern:${chip.id}`} size={20} color="#C9A96E" />
                         <p className="text-[11px] text-text-primary font-medium text-center leading-tight">{chip.label}</p>
                       </motion.button>
                     ))}

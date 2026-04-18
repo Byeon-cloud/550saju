@@ -11,21 +11,40 @@ import { spendBalance } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { stripMd } from '@/utils/format';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
+import { Pictogram, type DreamCategory, type PictogramKey } from '@/components/brand/PictogramRegistry';
 
-const DREAM_CATEGORIES = [
-  { id: 'animal', label: '동물이 나오는 꿈', icon: '獸', color: '#2D8A4E', examples: '뱀, 개, 고양이, 돼지, 호랑이', hot: true },
-  { id: 'water', label: '물과 관련된 꿈', icon: '水', color: '#1565C0', examples: '바다, 강, 비, 홍수, 수영', hot: true },
-  { id: 'death', label: '죽음 · 이별의 꿈', icon: '別', color: '#7B1FA2', examples: '누군가 죽는 꿈, 장례식, 이별' },
-  { id: 'flying', label: '하늘을 나는 꿈', icon: '飛', color: '#0288D1', examples: '날기, 떨어지기, 높은 곳' },
-  { id: 'money', label: '돈 · 재물의 꿈', icon: '財', color: '#C9A96E', examples: '돈 줍기, 복권, 금, 보석', hot: true },
-  { id: 'people', label: '사람이 나오는 꿈', icon: '人', color: '#E91E63', examples: '가족, 연인, 낯선 사람, 유명인' },
-  { id: 'chase', label: '쫓기는 꿈', icon: '逃', color: '#D32F2F', examples: '쫓기기, 도망, 숨기, 위험' },
-  { id: 'nature', label: '자연 · 날씨 꿈', icon: '山', color: '#F57F17', examples: '꽃, 산, 불, 지진, 눈' },
-  { id: 'other', label: '직접 적을게요', icon: '筆', color: '#4A5568', examples: '위 항목에 없는 꿈을 자유롭게' },
+/**
+ * 꿈 카테고리 — 이모지 제거, 브랜드 픽토그램으로 대체.
+ * id는 PictogramRegistry의 dream:* key와 1:1 매핑.
+ * 브랜드픽토그램_시스템.md 참조.
+ */
+const DREAM_CATEGORIES: Array<{
+  id: DreamCategory;
+  label: string;
+  color: string;
+  examples: string;
+  hot?: boolean;
+}> = [
+  { id: 'animal', label: '동물이 나오는 꿈', color: '#2D8A4E', examples: '뱀, 개, 고양이, 돼지, 호랑이', hot: true },
+  { id: 'water', label: '물과 관련된 꿈', color: '#1565C0', examples: '바다, 강, 비, 홍수, 수영', hot: true },
+  { id: 'death', label: '죽음 · 이별의 꿈', color: '#7B1FA2', examples: '누군가 죽는 꿈, 장례식, 이별' },
+  { id: 'flying', label: '하늘을 나는 꿈', color: '#0288D1', examples: '날기, 떨어지기, 높은 곳' },
+  { id: 'money', label: '돈 · 재물의 꿈', color: '#C9A96E', examples: '돈 줍기, 복권, 금, 보석', hot: true },
+  { id: 'people', label: '사람이 나오는 꿈', color: '#E91E63', examples: '가족, 연인, 낯선 사람, 유명인' },
+  { id: 'chase', label: '쫓기는 꿈', color: '#D32F2F', examples: '쫓기기, 도망, 숨기, 위험' },
+  { id: 'nature', label: '자연 · 날씨 꿈', color: '#F57F17', examples: '꽃, 산, 불, 지진, 눈' },
+  { id: 'other', label: '직접 적을게요', color: '#4A5568', examples: '위 항목에 없는 꿈을 자유롭게' },
 ];
 
 const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
-const OHENG_ICONS: Record<string, string> = { 목: '🌿', 화: '🔥', 토: '⛰️', 금: '✨', 수: '💧' };
+/** 한글 오행 → 픽토그램 key (음영/형태 일관성 유지) */
+const OHENG_PICTOGRAM_KEY: Record<string, PictogramKey> = {
+  목: 'oheng:wood',
+  화: 'oheng:fire',
+  토: 'oheng:earth',
+  금: 'oheng:metal',
+  수: 'oheng:water',
+};
 const GRADE_COLORS: Record<string, string> = { S: '#C9A96E', A: '#2D8A4E', B: '#1565C0', C: '#F57F17', D: '#D32F2F' };
 
 type Phase = 'category' | 'detail' | 'result' | 'deepLoading' | 'deepResult';
@@ -172,7 +191,7 @@ export function DreamPage() {
                     className={`card w-full text-left py-4 px-4 transition-all ${selectedCategory === cat.id ? 'border-2 border-brand-gold shadow-glow' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${cat.color}12` }}>
-                        <span className="text-[15px] font-black" style={{ color: cat.color }}>{cat.icon}</span>
+                        <Pictogram k={`dream:${cat.id}`} size={22} color={cat.color} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -197,7 +216,7 @@ export function DreamPage() {
                   return cat ? (
                     <div className="flex items-center gap-2 mb-4">
                       <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${cat.color}15` }}>
-                        <span className="text-[13px] font-black" style={{ color: cat.color }}>{cat.icon}</span>
+                        <Pictogram k={`dream:${cat.id}`} size={18} color={cat.color} />
                       </div>
                       <span className="text-caption font-semibold" style={{ color: cat.color }}>{cat.label}</span>
                       <button onClick={() => setPhase('category')} className="ml-auto text-caption text-text-hint">변경</button>
@@ -236,7 +255,7 @@ export function DreamPage() {
             <motion.div key="error" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
               <div className="card-navy py-8 px-5 text-center">
                 <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(211,47,47,0.15)' }}>
-                  <span style={{ fontSize: 28 }}>😔</span>
+                  <Pictogram k="dream:empty" size={32} color="#D32F2F" />
                 </div>
                 <p className="text-h2 text-white">해석에 실패했어요</p>
                 <p className="text-body-sm text-white/50 mt-2 leading-relaxed">AI 서버가 일시적으로 바빠요.{'\n'}잠시 후 다시 시도해주세요.</p>
@@ -288,7 +307,7 @@ export function DreamPage() {
                     <div className="space-y-2">
                       {(dreamResult as any).symbols.map((sym: any, i: number) => (
                         <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
-                          <span style={{ fontSize: 20 }}>{OHENG_ICONS[sym.oheng] || '🔮'}</span>
+                          <Pictogram k={OHENG_PICTOGRAM_KEY[sym.oheng] || 'ui:lucky'} size={22} color={OHENG_COLORS[sym.oheng] || '#C9A96E'} />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="text-label font-bold text-text-primary">{sym.keyword}</span>
@@ -315,7 +334,7 @@ export function DreamPage() {
               <FadeIn delay={0.1}>
                 <div className="card-gold">
                   <div className="flex items-center gap-2 mb-2">
-                    <span style={{ fontSize: 18 }}>🍀</span>
+                    <Pictogram k="ui:lucky" size={18} color="#C9A96E" />
                     <p className="text-h3 text-text-primary">오늘의 행동 조언</p>
                   </div>
                   <p className="text-body-sm text-text-primary leading-relaxed font-medium">{stripMd(dreamResult.luckyAction)}</p>
@@ -469,7 +488,7 @@ export function DreamPage() {
                           initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.06 }}>
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                             style={{ background: `${OHENG_COLORS[sym.oheng] || '#C9A96E'}15` }}>
-                            <span style={{ fontSize: 20 }}>{OHENG_ICONS[sym.oheng] || '🔮'}</span>
+                            <Pictogram k={OHENG_PICTOGRAM_KEY[sym.oheng] || 'ui:lucky'} size={22} color={OHENG_COLORS[sym.oheng] || '#C9A96E'} />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
@@ -554,7 +573,7 @@ export function DreamPage() {
                       {/* 방위 */}
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-surface">
                         <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(21,101,192,0.1)' }}>
-                          <span className="text-[14px]">🧭</span>
+                          <Pictogram k="ui:compass" size={16} color="#1565C0" />
                         </div>
                         <div>
                           <p className="text-[9px] text-text-hint">행운의 방위</p>
@@ -565,7 +584,7 @@ export function DreamPage() {
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-surface">
                         <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center"
                           style={{ background: `${OHENG_COLORS[deepResult.luckyProfile.element] || '#C9A96E'}15` }}>
-                          <span style={{ fontSize: 18 }}>{OHENG_ICONS[deepResult.luckyProfile.element] || '🔮'}</span>
+                          <Pictogram k={OHENG_PICTOGRAM_KEY[deepResult.luckyProfile.element] || 'ui:lucky'} size={20} color={OHENG_COLORS[deepResult.luckyProfile.element] || '#C9A96E'} />
                         </div>
                         <div>
                           <p className="text-[9px] text-text-hint">보충 오행</p>
@@ -581,7 +600,7 @@ export function DreamPage() {
               <FadeIn delay={0.3}>
                 <div className="card-gold">
                   <div className="flex items-center gap-2 mb-2">
-                    <span style={{ fontSize: 18 }}>🍀</span>
+                    <Pictogram k="ui:lucky" size={18} color="#C9A96E" />
                     <p className="text-h3 text-text-primary">사주 기반 행동 조언</p>
                   </div>
                   <p className="text-body-sm text-text-primary leading-relaxed font-medium">{stripMd(deepResult.luckyAction)}</p>

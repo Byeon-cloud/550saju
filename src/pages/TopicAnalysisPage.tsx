@@ -12,19 +12,22 @@ import { AILoading } from '@/components/common/AILoading';
 import { ScoreRing } from '@/components/saju/ScoreRing';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 import { stripMd } from '@/utils/format';
+import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
 
-/* ─── 주제 설정 ─── */
-const TOPICS: Record<string, { label: string; icon: string; color: string; desc: string }> = {
-  love:     { label: '연애운',       icon: '愛', color: '#E91E63', desc: '인연의 시작, 이상형, 연애 흐름' },
-  wealth:   { label: '재물운',       icon: '財', color: '#C9A96E', desc: '돈 흐름, 투자 적기, 새는 돈 패턴' },
-  career:   { label: '취업·이직운', icon: '事', color: '#1565C0', desc: '적성, 이직 타이밍, 맞는 직종' },
-  marriage: { label: '결혼운',       icon: '婚', color: '#E91E63', desc: '결혼 적기, 배우자 성향, 결혼 후 생활' },
-  business: { label: '사업운',       icon: '商', color: '#2D8A4E', desc: '창업 타이밍, 맞는 업종, 동업 궁합' },
-  health:   { label: '건강운',       icon: '健', color: '#2E7D32', desc: '취약 장기, 건강 주의 시기, 체질 분석' },
-  reunion:  { label: '재회운',       icon: '緣', color: '#7B1FA2', desc: '재회 가능성, 적기, 새 인연 비교' },
-  study:    { label: '학업·시험운', icon: '學', color: '#0288D1', desc: '학습 스타일, 합격 운, 공부 시간대' },
-  social:   { label: '대인관계운',   icon: '人', color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' },
-  moving:   { label: '이사·이동운', icon: '動', color: '#757575', desc: '이동 적기, 좋은 방향, 해외운' },
+/* ─── 주제 설정 — 이모지 제거, 브랜드 픽토그램 사용.
+ *    key가 PictogramRegistry의 topic:* 와 1:1 매핑. (브랜드픽토그램_시스템.md)
+ */
+const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> = {
+  love:     { label: '연애운',       color: '#E91E63', desc: '인연의 시작, 이상형, 연애 흐름' },
+  wealth:   { label: '재물운',       color: '#C9A96E', desc: '돈 흐름, 투자 적기, 새는 돈 패턴' },
+  career:   { label: '취업·이직운', color: '#1565C0', desc: '적성, 이직 타이밍, 맞는 직종' },
+  marriage: { label: '결혼운',       color: '#E91E63', desc: '결혼 적기, 배우자 성향, 결혼 후 생활' },
+  business: { label: '사업운',       color: '#2D8A4E', desc: '창업 타이밍, 맞는 업종, 동업 궁합' },
+  health:   { label: '건강운',       color: '#2E7D32', desc: '취약 장기, 건강 주의 시기, 체질 분석' },
+  reunion:  { label: '재회운',       color: '#7B1FA2', desc: '재회 가능성, 적기, 새 인연 비교' },
+  study:    { label: '학업·시험운', color: '#0288D1', desc: '학습 스타일, 합격 운, 공부 시간대' },
+  social:   { label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' },
+  moving:   { label: '이사·이동운', color: '#757575', desc: '이동 적기, 좋은 방향, 해외운' },
 };
 
 const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
@@ -1983,7 +1986,7 @@ function SectionBody({ content, color }: { content: string; color: string }) {
    ════════════════════════════════════════════════ */
 export function TopicAnalysisPage() {
   const { topicId } = useParams<{ topicId: string }>();
-  const topic = TOPICS[topicId || ''];
+  const topic = TOPICS[(topicId || 'love') as TopicKey];
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -2054,7 +2057,7 @@ export function TopicAnalysisPage() {
   // 단일 프로필이면 자동 선택
   useEffect(() => {
     if (profiles.length === 1 && !selected) {
-      setSelected(profiles[0]);
+      setSelected(profiles[0] as unknown as LocalReport);
     }
   }, [profiles, selected]);
 
@@ -2071,6 +2074,7 @@ export function TopicAnalysisPage() {
 
   async function analyze() {
     if (!selected) return;
+    // 더블클릭 가드 — 1운 중복 차감 차단
     if (isAnalyzingRef.current || phase === 'loading') return;
     isAnalyzingRef.current = true;
 
@@ -2150,7 +2154,7 @@ export function TopicAnalysisPage() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: `${topic.color}12` }}>
-                <span className="text-xl font-black" style={{ color: topic.color }}>{topic.icon}</span>
+                <Pictogram k={`topic:${(topicId || 'love') as TopicKey}`} size={22} color={topic.color} />
               </div>
               <div>
                 <h1 className="text-h2 text-text-primary">{topic.label} 심층분석</h1>
@@ -2174,7 +2178,7 @@ export function TopicAnalysisPage() {
                       const isSelected = selected?.id === r.id;
                       return (
                         <motion.button key={r.id} whileTap={{ scale: 0.98 }}
-                          onClick={() => setSelected(r)}
+                          onClick={() => setSelected(r as unknown as LocalReport)}
                           className={`card w-full text-left py-4 px-4 transition-all ${isSelected ? 'border-2 shadow-glow' : ''}`}
                           style={isSelected ? { borderColor: topic.color } : {}}>
                           <div className="flex items-center gap-3">
@@ -2614,7 +2618,7 @@ export function TopicAnalysisPage() {
                         <button className="w-full flex items-center justify-between"
                           onClick={() => setShowPartner(!showPartner)}>
                           <div className="flex items-center gap-2">
-                            <span className="text-[14px]">💌</span>
+                            <Pictogram k="topic:letter" size={16} color="#7B1FA2" />
                             <div className="text-left">
                               <p className="text-h3 text-text-primary">재회 상대방 정보</p>
                               <p className="text-[10px] text-text-hint">입력하면 더 정확한 분석이 가능해요</p>
@@ -2959,9 +2963,9 @@ export function TopicAnalysisPage() {
                 <p className="text-label text-text-hint text-center">다른 운세도 궁금하다면</p>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(TOPICS).filter(([id]) => id !== topicId).slice(0, 4).map(([id, t]) => (
-                    <button key={id} onClick={() => { navigate(`/topic/${id}`); setPhase('select'); setResult(null); setSelected(profiles[0] || null); }}
+                    <button key={id} onClick={() => { navigate(`/topic/${id}`); setPhase('select'); setResult(null); setSelected((profiles[0] as unknown as LocalReport) || null); }}
                       className="card py-3 px-3 flex items-center gap-2">
-                      <span className="text-[15px] font-black" style={{ color: t.color }}>{t.icon}</span>
+                      <Pictogram k={`topic:${id as TopicKey}`} size={18} color={t.color} />
                       <span className="text-caption font-semibold text-text-primary">{t.label}</span>
                     </button>
                   ))}
