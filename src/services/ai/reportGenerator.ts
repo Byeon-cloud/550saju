@@ -26,7 +26,10 @@ async function callWithAuth(name: string, data: any): Promise<any> {
 }
 
 /**
- * AI 사주 리포트 생성 — Firebase Function → Claude Sonnet 4.6
+ * AI 사주 리포트 생성 — Firebase Function → Claude Opus 4.6 (기본)
+ *
+ * 모델 정책: Opus 4.6 메인 / Sonnet 4.6 검증 / Haiku 4.5 보조.
+ * 서버측 SAJU_REPORT_MODEL 환경변수로 A/B 테스트 가능.
  */
 export async function generateReport(
   sajuData: SajuData,
