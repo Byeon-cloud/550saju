@@ -77,11 +77,10 @@ export function DaeunPage() {
       setPhase('result');
     } catch (e: any) {
       console.error('대운 분석 실패:', e);
-      const { addRewardBalance } = await import('@/services/storage/localStore');
-      addRewardBalance(1);
-      setError('분석에 실패했어요. 1운이 환불됐어요.');
+      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
+      setError('분석에 실패했어요. 잔액은 자동으로 복구돼요.');
       setPhase('select');
-      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
+      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
     } finally {
       clearInterval(interval);
     }

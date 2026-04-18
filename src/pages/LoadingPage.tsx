@@ -101,13 +101,12 @@ export function LoadingPage() {
         navigate(`/result/${result.reportId}`, { replace: true });
       } catch (err) {
         console.warn('[LoadingPage] 서버 호출 실패:', err);
-        // 1운 환불
-        const { addRewardBalance } = await import('@/services/storage/localStore');
-        addRewardBalance(1);
-        setError('분석에 실패했어요. 1운이 환불됐어요.');
+        // ⚠️ 환불은 서버(Cloud Function)에서 처리됨 — 클라이언트 직접 환불 금지 (보안)
+        // generateReport 실패 시 서버가 트랜잭션 롤백하므로 잔액 자동 복구
+        setError('분석에 실패했어요. 잔액은 자동으로 복구돼요.');
         setTimeout(() => {
           navigate('/result/local', { replace: true });
-        }, 2000);
+        }, 2500);
       }
     }
 

@@ -73,10 +73,9 @@ export function CompatResultPage() {
       setPhase('result');
     }).catch(async (e) => {
       console.error('궁합 분석 실패:', e);
-      const { addRewardBalance } = await import('@/services/storage/localStore');
-      addRewardBalance(1);
+      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
       const errMsg = e?.message || '알 수 없는 오류';
-      toast.show(`분석 실패 — 1운 환불 (${errMsg})`, 'warning');
+      toast.show(`분석에 실패했어요. 잔액은 자동으로 복구돼요 (${errMsg})`, 'warning');
       // 바로 돌려보내지 않고 3초 대기 (에러 메시지 확인할 시간)
       setTimeout(() => navigate('/compat'), 3000);
     }).finally(() => clearInterval(interval));

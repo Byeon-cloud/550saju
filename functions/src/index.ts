@@ -70,6 +70,27 @@ export const loginWithToss = onCall(
 const DEV_MODE = false;
 
 /**
+ * AI 실패 시 서버 환불 헬퍼 — 차감했던 운을 되돌려 줌.
+ * 악의적 환불 어뷰징을 막기 위해 반드시 "차감이 실제로 일어난 경우"에만 호출해야 함.
+ *  → 호출부에서 deducted > 0 조건으로 가드.
+ */
+async function refundBalance(uid: string, deducted: number, reason: string): Promise<void> {
+  if (!uid || deducted <= 0) return;
+  try {
+    await db.collection('users').doc(uid).update({
+      balance: admin.firestore.FieldValue.increment(deducted),
+      totalSpent: admin.firestore.FieldValue.increment(-deducted),
+      lastRefundAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastRefundReason: reason,
+    });
+    console.log(`[refundBalance] uid=${uid} amount=${deducted} reason=${reason}`);
+  } catch (refundErr: any) {
+    // 환불 실패해도 원래 오류는 그대로 던져야 하므로 로그만 남김
+    console.error(`[refundBalance] 환불 실패 uid=${uid} amount=${deducted}: ${refundErr?.message || refundErr}`);
+  }
+}
+
+/**
  * 사주 리포트 생성 — Claude Sonnet
  */
 export const generateReport = onCall(
@@ -79,6 +100,7 @@ export const generateReport = onCall(
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;  // 환불용 차감 기록
 
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
@@ -95,6 +117,7 @@ export const generateReport = onCall(
             totalSpent: admin.firestore.FieldValue.increment(cost),
           });
         });
+        deductedAmount = cost;
       }
     }
 
@@ -129,6 +152,8 @@ export const generateReport = onCall(
       return { reportId: reportRef.id, ...result };
     } catch (error: any) {
       console.error('generateReport error:', error);
+      // 서버 환불 — 차감한 잔액을 되돌려 줌 (AI/Firestore 실패 시)
+      await refundBalance(uid, deductedAmount, 'generateReport failed');
       throw new HttpsError('internal', `AI 분석 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -281,6 +306,7 @@ export const generateDaeun = onCall(
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
@@ -294,6 +320,7 @@ export const generateDaeun = onCall(
             totalSpent: admin.firestore.FieldValue.increment(1),
           });
         });
+        deductedAmount = 1;
       }
     }
 
@@ -309,6 +336,7 @@ export const generateDaeun = onCall(
       return { reportId: reportRef.id, content: result };
     } catch (error: any) {
       console.error('generateDaeun error:', error);
+      await refundBalance(uid, deductedAmount, 'generateDaeun failed');
       throw new HttpsError('internal', `대운 분석 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -324,6 +352,7 @@ export const generateMonthly = onCall(
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
@@ -337,6 +366,7 @@ export const generateMonthly = onCall(
             totalSpent: admin.firestore.FieldValue.increment(1),
           });
         });
+        deductedAmount = 1;
       }
     }
 
@@ -352,6 +382,7 @@ export const generateMonthly = onCall(
       return { reportId: reportRef.id, content: result };
     } catch (error: any) {
       console.error('generateMonthly error:', error);
+      await refundBalance(uid, deductedAmount, 'generateMonthly failed');
       throw new HttpsError('internal', `월별 운세 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -367,6 +398,7 @@ export const generateCompatibility = onCall(
     if (!sajuData1 || !sajuData2) throw new HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
 
     const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
@@ -380,6 +412,7 @@ export const generateCompatibility = onCall(
             totalSpent: admin.firestore.FieldValue.increment(1),
           });
         });
+        deductedAmount = 1;
       }
     }
 
@@ -397,6 +430,7 @@ export const generateCompatibility = onCall(
       return { reportId: reportRef.id, content: result };
     } catch (error: any) {
       console.error('generateCompatibility error:', error);
+      await refundBalance(uid, deductedAmount, 'generateCompatibility failed');
       throw new HttpsError('internal', `궁합 분석 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -412,6 +446,7 @@ export const generateTojung = onCall(
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
@@ -425,6 +460,7 @@ export const generateTojung = onCall(
             totalSpent: admin.firestore.FieldValue.increment(1),
           });
         });
+        deductedAmount = 1;
       }
     }
 
@@ -440,6 +476,7 @@ export const generateTojung = onCall(
       return { reportId: reportRef.id, content: result };
     } catch (error: any) {
       console.error('generateTojung error:', error);
+      await refundBalance(uid, deductedAmount, 'generateTojung failed');
       throw new HttpsError('internal', `토정비결 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -630,6 +667,7 @@ export const generateTopicAnalysis = onCall(
     if (!topicId || !sajuData) throw new HttpsError('invalid-argument', 'topicId, sajuData 필요');
 
     const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
 
     // 잔액 차감 — 실명 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
@@ -642,6 +680,7 @@ export const generateTopicAnalysis = onCall(
           if (bal < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, { balance: admin.firestore.FieldValue.increment(-1), totalSpent: admin.firestore.FieldValue.increment(1) });
         });
+        deductedAmount = 1;
       }
     }
 
@@ -659,6 +698,7 @@ export const generateTopicAnalysis = onCall(
       return { reportId: reportRef.id, content: result };
     } catch (error: any) {
       console.error('generateTopicAnalysis error:', error);
+      await refundBalance(uid, deductedAmount, 'generateTopicAnalysis failed');
       throw new HttpsError('internal', `분석 실패: ${error.message || 'unknown'}`);
     }
   }
