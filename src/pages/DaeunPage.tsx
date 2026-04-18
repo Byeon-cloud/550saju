@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -41,11 +41,14 @@ export function DaeunPage() {
   const [, setLoadingStep] = useState(0);
   const [error, setError] = useState('');
   const [showShare, setShowShare] = useState(false);
+  const isAnalyzingRef = useRef(false);
 
   const reports = useMemo(() => getReports(), []);
 
   async function startAnalysis() {
     if (!selected) return;
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    isAnalyzingRef.current = true;
 
     // 캐시 확인
     const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'daeun');
@@ -53,12 +56,14 @@ export function DaeunPage() {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');
+      isAnalyzingRef.current = false;
       return;
     }
 
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '대운 해설에 1운이 필요해요' } });
+      isAnalyzingRef.current = false;
       return;
     }
 
@@ -83,6 +88,7 @@ export function DaeunPage() {
       toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
     } finally {
       clearInterval(interval);
+      isAnalyzingRef.current = false;
     }
   }
 
@@ -259,8 +265,8 @@ export function DaeunPage() {
                     const isCurrent = currentDaeun && lp.daeun === currentDaeun.간지;
                     return (
                       <div key={i} className="flex items-start gap-3 relative">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${isCurrent ? 'ring-2 ring-offset-2' : ''}`}
-                          style={{ background: isCurrent ? '#C9A96E' : 'rgba(201,169,110,0.1)', ringColor: '#C9A96E' }}>
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${isCurrent ? 'ring-2 ring-offset-2 ring-brand-gold' : ''}`}
+                          style={{ background: isCurrent ? '#C9A96E' : 'rgba(201,169,110,0.1)' }}>
                           <span className={`text-[11px] font-black ${isCurrent ? 'text-white' : 'text-brand-gold'}`}>{lp.daeun.charAt(0)}</span>
                         </div>
                         <div className="flex-1 pt-1">

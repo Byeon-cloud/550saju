@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -200,7 +200,7 @@ function KeywordTags({ keywords, color }: { keywords: string[]; color: string })
 }
 
 /** 강점 / 주의점 비주얼 카드 */
-function StrengthsCautions({ strengths, cautions, color }: { strengths?: string[]; cautions?: string[]; color: string }) {
+function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; cautions?: string[]; color: string }) {
   if (!strengths?.length && !cautions?.length) return null;
   return (
     <FadeIn delay={0.12}>
@@ -1020,7 +1020,6 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
   const pp = data.partnerProfile;
   const ca = data.compatAnalysis;
   const sinsalList = data.sinsal;
-  const steps = data.reunionSteps;
   const bd = data.breakupDuration;
 
   return (
@@ -1997,6 +1996,8 @@ export function TopicAnalysisPage() {
   const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
   const [result, setResult] = useState<any>(navState?.savedResult || null);
   const [, setLoadingMsg] = useState(0);
+  // 더블클릭 가드 — 1운 중복 차감 차단 (InputPage 패턴)
+  const isAnalyzingRef = useRef(false);
 
   // 재회운/결혼운 상대방 정보
   const [partnerInfo, setPartnerInfo] = useState({
@@ -2081,11 +2082,14 @@ export function TopicAnalysisPage() {
 
   async function analyze() {
     if (!selected) return;
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    isAnalyzingRef.current = true;
 
     // 과금
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: `${topic.label} 분석에 1운이 필요해요` } });
+      isAnalyzingRef.current = false;
       return;
     }
 
@@ -2137,6 +2141,7 @@ export function TopicAnalysisPage() {
       setPhase('select');
     } finally {
       clearInterval(interval);
+      isAnalyzingRef.current = false;
     }
   }
 

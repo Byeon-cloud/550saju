@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BannerAd } from '@/components/ads/BannerAd';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,6 +43,9 @@ export function DreamPage() {
   const [aiResult, setAiResult] = useState<any>(null);
   const [deepResult, setDeepResult] = useState<any>(null);
   const [apiError, setApiError] = useState('');
+  // 더블클릭 가드 — 무료 해몽 + 심층 해몽 분리
+  const isAnalyzingRef = useRef(false);
+  const isDeepAnalyzingRef = useRef(false);
 
   function selectCategory(id: string) {
     setSelectedCategory(id);
@@ -51,6 +54,10 @@ export function DreamPage() {
 
   // 무료 해몽 분석
   async function analyze() {
+    // 더블클릭 가드 — 무료여도 토큰 리소스 보호
+    if (isAnalyzingRef.current || isLoading) return;
+    isAnalyzingRef.current = true;
+
     setIsLoading(true);
     setApiError('');
     try {
@@ -73,21 +80,28 @@ export function DreamPage() {
     } finally {
       setIsLoading(false);
       setPhase('result');
+      isAnalyzingRef.current = false;
     }
   }
 
   // 유료 심층 해몽 분석 (1운)
   async function startDeepAnalysis() {
+    // 더블클릭 가드 — 1운 중복 차감 차단
+    if (isDeepAnalyzingRef.current) return;
+    isDeepAnalyzingRef.current = true;
+
     const { getReports: fetchReports } = await import('@/services/storage/localStore');
     const myReport = fetchReports().find((r: any) => !r.input?.relation || r.input.relation === '본인');
     if (!myReport?.sajuData) {
       toast.show('먼저 사주를 분석해주세요', 'warning');
       navigate('/input');
+      isDeepAnalyzingRef.current = false;
       return;
     }
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '심층 해몽에 1운이 필요해요' } });
+      isDeepAnalyzingRef.current = false;
       return;
     }
     toast.show('1운이 차감됐어요', 'info');
@@ -110,6 +124,8 @@ export function DreamPage() {
       // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
       toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
       setPhase('result');
+    } finally {
+      isDeepAnalyzingRef.current = false;
     }
   }
 

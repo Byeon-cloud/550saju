@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -46,11 +46,14 @@ export function TojungPage() {
   const [result, setResult] = useState<TojungResponse | null>(navState?.savedResult || null);
   const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
+  const isAnalyzingRef = useRef(false);
 
   const reports = useMemo(() => getReports(), []);
 
   async function startAnalysis() {
     if (!selected) return;
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    isAnalyzingRef.current = true;
 
     // 캐시 확인 — 이전에 분석한 적 있으면 무료로 바로 보여줌
     const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'tojung');
@@ -58,12 +61,14 @@ export function TojungPage() {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');
+      isAnalyzingRef.current = false;
       return;
     }
 
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '토정비결에 1운이 필요해요' } });
+      isAnalyzingRef.current = false;
       return;
     }
     toast.show('1운이 차감됐어요', 'info');
@@ -84,6 +89,7 @@ export function TojungPage() {
       toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
     } finally {
       clearInterval(interval);
+      isAnalyzingRef.current = false;
     }
   }
 

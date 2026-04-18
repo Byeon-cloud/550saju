@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -24,6 +24,8 @@ export function CompatibilityPage() {
   const toast = useToast();
   const [showPicker, setShowPicker] = useState<1 | 2 | null>(null);
   const [customRelation, setCustomRelation] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   // InputPage에서 /compat으로 복귀 시 → 최신 리포트를 person2에 자동 선택
   useEffect(() => {
@@ -84,6 +86,26 @@ export function CompatibilityPage() {
 
   const canSubmit = person1 && person2 && relation && person1.id !== person2.id
     && (relation !== '기타' || customRelation.trim().length > 0);
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      if (!spendBalance(1)) {
+        toast.show('잔액이 부족해요', 'warning');
+        navigate('/charge', { state: { from: 'compat', message: '궁합 분석에 1운이 필요해요' } });
+        return;
+      }
+      toast.show('1운이 차감됐어요', 'info');
+      const rel = relation === '기타' ? customRelation || '기타' : relation;
+      navigate('/compat/result', { state: { person1, person2, relation: rel } });
+    } finally {
+      // 네비게이션 후 페이지 전환되므로 ref만 300ms 뒤 풀어줌 (뒤로 돌아올 때 재시도 가능)
+      setTimeout(() => { isSubmittingRef.current = false; setIsSubmitting(false); }, 300);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-bg-page">
@@ -175,13 +197,9 @@ export function CompatibilityPage() {
           fullWidth
           size="lg"
           variant={canSubmit ? 'gold' : 'secondary'}
-          onClick={() => {
-            if (!canSubmit) return;
-            if (!spendBalance(1)) { toast.show('잔액이 부족해요', 'warning'); navigate('/charge', { state: { from: 'compat', message: '궁합 분석에 1운이 필요해요' } }); return; }
-            toast.show('1운이 차감됐어요', 'info');
-            const rel = relation === '기타' ? customRelation || '기타' : relation;
-            navigate('/compat/result', { state: { person1, person2, relation: rel } });
-          }}
+          disabled={!canSubmit || isSubmitting}
+          loading={isSubmitting}
+          onClick={handleSubmit}
         >
           궁합 보기 (1운)
         </Button>

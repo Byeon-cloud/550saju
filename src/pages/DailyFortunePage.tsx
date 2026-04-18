@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -195,6 +195,8 @@ export function DailyFortunePage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
   const [aiError, setAiError] = useState('');
+  // 더블클릭 가드 — InputPage 패턴 (ref로 렌더 전 차단)
+  const isSubmittingRef = useRef(false);
 
   const localResult = useMemo(() => getFortuneResult(timeSlot, hasHistory, ilgan, ilganOheng, recentReport), [timeSlot, hasHistory, ilgan, ilganOheng, recentReport]);
 
@@ -234,6 +236,10 @@ export function DailyFortunePage() {
   }
 
   async function submitFortune() {
+    // 더블클릭 가드 — 연타 시 중복 과금 차단
+    if (isSubmittingRef.current || aiLoading) return;
+    isSubmittingRef.current = true;
+
     // 과금: 무료 1회 → 이후 1운
     if (hasFreePass('daily')) {
       useFreePass('daily');
@@ -242,6 +248,7 @@ export function DailyFortunePage() {
     } else {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '오늘의 운세에 1운이 필요해요' } });
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -273,6 +280,7 @@ export function DailyFortunePage() {
       setAiError(e?.message || 'AI 서버 연결 실패');
     } finally {
       setAiLoading(false);
+      isSubmittingRef.current = false;
     }
   }
 
@@ -403,8 +411,8 @@ export function DailyFortunePage() {
                 />
 
                 <div className="flex gap-2">
-                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune}>운세 보기</Button>
-                  <button onClick={submitFortune} className="flex-shrink-0 px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface">건너뛰기</button>
+                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune} disabled={aiLoading} loading={aiLoading}>운세 보기</Button>
+                  <button onClick={submitFortune} disabled={aiLoading} className="flex-shrink-0 px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface disabled:opacity-50">건너뛰기</button>
                 </div>
 
                 <div className="card-gold py-4 px-4">
@@ -464,8 +472,8 @@ export function DailyFortunePage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune}>운세 보기</Button>
-                  <button onClick={submitFortune} className="flex-shrink-0 px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface">건너뛰기</button>
+                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune} disabled={aiLoading} loading={aiLoading}>운세 보기</Button>
+                  <button onClick={submitFortune} disabled={aiLoading} className="flex-shrink-0 px-5 py-3.5 rounded-xl text-body-sm font-semibold text-text-muted bg-bg-surface disabled:opacity-50">건너뛰기</button>
                 </div>
               </div>
             </motion.div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -41,11 +41,14 @@ export function MonthlyPage() {
   const [, setLoadingStep] = useState(0);
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const isAnalyzingRef = useRef(false);
 
   const reports = useMemo(() => getReports(), []);
 
   async function startAnalysis() {
     if (!selected) return;
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    isAnalyzingRef.current = true;
 
     // 캐시 확인
     const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'monthly');
@@ -53,12 +56,14 @@ export function MonthlyPage() {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');
+      isAnalyzingRef.current = false;
       return;
     }
 
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '월별 운세에 1운이 필요해요' } });
+      isAnalyzingRef.current = false;
       return;
     }
     toast.show('1운이 차감됐어요', 'info');
@@ -78,6 +83,7 @@ export function MonthlyPage() {
       toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
     } finally {
       clearInterval(interval);
+      isAnalyzingRef.current = false;
     }
   }
 
@@ -175,8 +181,8 @@ export function MonthlyPage() {
                 const isWorst = m.month === result.worstMonth;
                 return (
                   <div key={m.month} className="flex flex-col items-center gap-1">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isBest ? 'ring-2 ring-offset-1' : ''} ${isWorst ? 'ring-2 ring-offset-1 ring-func-danger' : ''}`}
-                      style={{ background: dotColor, opacity, ringColor: isBest ? '#C9A96E' : undefined }}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isBest ? 'ring-2 ring-offset-1 ring-brand-gold' : ''} ${isWorst ? 'ring-2 ring-offset-1 ring-func-danger' : ''}`}
+                      style={{ background: dotColor, opacity }}>
                       <span className="text-[10px] font-black text-white">{m.score}</span>
                     </div>
                     <span className="text-[9px] text-text-hint">{m.month}월</span>
