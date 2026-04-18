@@ -4,3 +4,11 @@ dist
 .env.local
 *.log
 .DS_Store
+
+# Build artifacts
+.firebase/
+functions/lib/
+*.cache
+
+# Worktrees
+.claude/worktrees/
