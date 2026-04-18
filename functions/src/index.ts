@@ -6,11 +6,11 @@ const lazyClaudeReport = () => import('./ai/claudeReport');
 const lazyClaudeDaeun = () => import('./ai/claudeDaeun');
 const lazyClaudeMonthly = () => import('./ai/claudeMonthly');
 const lazyClaudeCompat = () => import('./ai/claudeCompat');
-const lazyGeminiTojung = () => import('./ai/geminiTojung');
+const lazyClaudeTojung = () => import('./ai/claudeTojung');
 const lazyGeminiFortune = () => import('./ai/geminiFortune');
 const lazyGeminiChat = () => import('./ai/geminiChat');
 const lazyGeminiDream = () => import('./ai/geminiDream');
-const lazyGeminiTopic = () => import('./ai/geminiTopic');
+const lazyClaudeTopic = () => import('./ai/claudeTopic');
 const lazyTossAuth = () => import('./auth/tossAuth');
 
 admin.initializeApp();
@@ -437,7 +437,7 @@ export const generateCompatibility = onCall(
 );
 
 /**
- * 토정비결 — Claude Sonnet 4.6 (파일명 geminiTojung은 유산, 실제 공급자는 Anthropic)
+ * 토정비결 — Claude Sonnet 4.6
  */
 export const generateTojung = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
@@ -465,7 +465,7 @@ export const generateTojung = onCall(
     }
 
     try {
-      const { generateTojungBigyeol } = await lazyGeminiTojung();
+      const { generateTojungBigyeol } = await lazyClaudeTojung();
       const result = await generateTojungBigyeol(ANTHROPIC_KEY.value(), sajuData);
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
@@ -659,7 +659,6 @@ export const disconnectToss = onRequest(
 /**
  * 주제별 심층분석 — Claude Sonnet 4.6 (1운)
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
- * (파일명 geminiTopic은 유산, 실제 공급자는 Anthropic)
  */
 export const generateTopicAnalysis = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
@@ -686,7 +685,7 @@ export const generateTopicAnalysis = onCall(
     }
 
     try {
-      const { generateTopicAnalysisAI } = await lazyGeminiTopic();
+      const { generateTopicAnalysisAI } = await lazyClaudeTopic();
       const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
       const reportRef = db.collection('reports').doc();
