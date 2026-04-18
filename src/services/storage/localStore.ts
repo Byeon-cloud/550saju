@@ -12,7 +12,7 @@
 
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
 
-export type ContentType = 'report' | 'daily' | 'dream' | 'daeun' | 'monthly' | 'compat' | 'tojung' | 'topic';
+export type ContentType = 'report' | 'daily' | 'dream' | 'deepDream' | 'daeun' | 'monthly' | 'compat' | 'tojung' | 'topic';
 
 export interface LocalReport {
   id: string;
@@ -29,6 +29,16 @@ export interface LocalReport {
   aiResult?: any;
 }
 
+/** 사주 프로필 — 리포트와 독립적으로 저장 (삭제해도 프로필 유지) */
+export interface SajuProfile {
+  id: string;
+  name: string;
+  input: SajuInput;
+  sajuData: SajuData;
+  relation?: string;
+  createdAt: string | number;
+}
+
 /** 운 잔액 유형별 구조 */
 export interface BalanceDetail {
   paid: number;    // 결제 운 (환불 가능)
@@ -40,6 +50,7 @@ const REPORTS_KEY = 'saju500_reports';
 const BALANCE_KEY = 'saju500_balance_v2';
 const BALANCE_LEGACY_KEY = 'saju500_balance';
 const MY_PROFILE_KEY = 'saju500_my_profile';
+const PROFILES_KEY = 'saju500_profiles';
 
 // ─── 리포트 ───
 
@@ -220,4 +231,59 @@ export function setBalance(balance: number): void {
 
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+// ─── 프로필 (리포트와 독립) ───
+
+/** 저장된 프로필 목록 조회 — 없으면 기존 리포트에서 마이그레이션 */
+export function getProfiles(): SajuProfile[] {
+  try {
+    const raw = localStorage.getItem(PROFILES_KEY);
+    if (raw) return JSON.parse(raw);
+    // 마이그레이션: 기존 리포트에서 프로필 추출 (중복 제거)
+    const reports = getReports();
+    const seen = new Map<string, SajuProfile>();
+    for (const r of reports) {
+      if (!r.input?.birthYear || !r.name) continue;
+      if (r.contentType === 'compat') continue;
+      if (r.name?.includes('\u00d7') || r.name?.includes('x')) continue;
+      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
+      if (!seen.has(key)) {
+        seen.set(key, {
+          id: r.id,
+          name: r.name,
+          input: r.input,
+          sajuData: r.sajuData,
+          relation: r.input?.relation,
+          createdAt: r.createdAt,
+        });
+      }
+    }
+    const profiles = Array.from(seen.values());
+    if (profiles.length > 0) {
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+    }
+    return profiles;
+  } catch { return []; }
+}
+
+/** 프로필 직접 저장 — 리포트 생성 없이 프로필만 저장/업데이트 */
+export function saveProfileDirect(profile: SajuProfile): void {
+  const profiles = getProfiles();
+  const key = `${profile.name}_${profile.input.birthYear}_${profile.input.birthMonth}_${profile.input.birthDay}`;
+  const idx = profiles.findIndex(p =>
+    `${p.name}_${p.input.birthYear}_${p.input.birthMonth}_${p.input.birthDay}` === key
+  );
+  if (idx >= 0) {
+    profiles[idx] = profile;
+  } else {
+    profiles.unshift(profile);
+  }
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
+
+/** 프로필 삭제 */
+export function deleteProfile(profileId: string): void {
+  const profiles = getProfiles().filter(p => p.id !== profileId);
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 }

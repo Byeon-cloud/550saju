@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
-import { getReports, getMyProfile, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, getMyProfile, type LocalReport } from '@/services/storage/localStore';
 import { spendBalance } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -15,10 +15,11 @@ const RELATIONS = ['연인', '배우자', '썸', '이별', '친구', '동료', '
 export function CompatibilityPage() {
   usePageTitle('궁합');
   const navigate = useNavigate();
-  // 매 렌더링마다 최신 리포트 조회 (InputPage에서 돌아왔을 때 갱신)
-  const [reports, setReports] = useState(() => getReports());
+  // 매 렌더링마다 최신 프로필 조회 (InputPage에서 돌아왔을 때 갱신)
+  const [profiles, setProfilesList] = useState(() => getProfiles());
 
-  const [person1, setPerson1] = useState<LocalReport | null>(getMyProfile() || reports[0] || null);
+  const myProfile = getMyProfile();
+  const [person1, setPerson1] = useState<LocalReport | null>(myProfile || (profiles[0] as any) || null);
   const [person2, setPerson2] = useState<LocalReport | null>(null);
   const [relation, setRelation] = useState<string | null>(null);
   const toast = useToast();
@@ -27,13 +28,13 @@ export function CompatibilityPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
-  // InputPage에서 /compat으로 복귀 시 → 최신 리포트를 person2에 자동 선택
+  // InputPage에서 /compat으로 복귀 시 → 최신 프로필을 person2에 자동 선택
   useEffect(() => {
-    const freshReports = getReports();
-    setReports(freshReports);
-    // person2가 비어있고, 방금 입력한 사주(reports[0])가 person1과 다르면 자동 선택
-    if (!person2 && freshReports.length >= 2) {
-      const latest = freshReports[0];
+    const freshProfiles = getProfiles();
+    setProfilesList(freshProfiles);
+    // person2가 비어있고, 방금 입력한 사주가 person1과 다르면 자동 선택
+    if (!person2 && freshProfiles.length >= 2) {
+      const latest = freshProfiles[0] as any;
       if (latest && person1 && latest.id !== person1.id) {
         setPerson2(latest);
       }
@@ -50,7 +51,7 @@ export function CompatibilityPage() {
     if (!person) {
       return (
         <button
-          onClick={() => reports.length > 0 ? setShowPicker(slot) : navigate('/input')}
+          onClick={() => profiles.length > 0 ? setShowPicker(slot) : navigate('/input')}
           className="flex-1 rounded-2xl border-2 border-dashed border-border py-6 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--bg-surface)' }}
         >
@@ -58,7 +59,7 @@ export function CompatibilityPage() {
             <span className="text-2xl text-text-hint">+</span>
           </div>
           <p className="text-caption text-text-muted">{slot === 1 ? '본인 선택' : '상대방 선택'}</p>
-          {reports.length === 0 && (
+          {profiles.length === 0 && (
             <p className="text-[10px] text-text-hint">사주 분석 먼저 필요</p>
           )}
         </button>
@@ -245,17 +246,17 @@ export function CompatibilityPage() {
                 {showPicker === 1 ? '본인' : '상대방'}을 선택하세요
               </p>
 
-              {reports.length > 0 ? (
+              {profiles.length > 0 ? (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {reports.map((r) => {
-                    const { ilgan, oheng } = getIlgan(r);
+                  {profiles.map((r) => {
+                    const { ilgan, oheng } = getIlgan(r as any);
                     const isSelected = (showPicker === 1 ? person1?.id : person2?.id) === r.id;
                     return (
                       <button
                         key={r.id}
                         onClick={() => {
-                          if (showPicker === 1) setPerson1(r);
-                          else setPerson2(r);
+                          if (showPicker === 1) setPerson1(r as any);
+                          else setPerson2(r as any);
                           setShowPicker(null);
                         }}
                         className={`w-full card text-left flex items-center gap-3 ${

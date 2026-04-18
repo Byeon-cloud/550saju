@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
-import { getReports, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/components/common/Toast';
@@ -2029,19 +2029,8 @@ export function TopicAnalysisPage() {
     examMonth: 6,
   });
 
-  // 프로필 목록
-  const profiles = useMemo(() => {
-    const all = getReports();
-    const seen = new Map<string, LocalReport>();
-    for (const r of all) {
-      if (!r.sajuData?.pillars?.length) continue;
-      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
-      if (r.name?.includes('\u00d7') || r.name?.includes('x')) continue;
-      const key = `${r.name}_${r.input?.birthYear}_${r.input?.birthMonth}_${r.input?.birthDay}`;
-      if (!seen.has(key)) seen.set(key, r);
-    }
-    return Array.from(seen.values());
-  }, []);
+  // 프로필 목록 (독립 저장소)
+  const profiles = useMemo(() => getProfiles(), []);
 
   // 이미 분석한 결과가 있는지 확인 (재회운은 상대방이 다를 수 있으므로 auto-load 하지 않음)
   const existingResult = useMemo(() => {

@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
@@ -8,7 +8,7 @@ import { useSajuContext } from '@/contexts/SajuContext';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import type { CalendarType, Gender, SajuInput, Pillar } from '@/types/saju';
 import type { Relation } from '@/types/user';
-import { saveReport, generateId, getReports, spendBalance, setMyProfile } from '@/services/storage/localStore';
+import { saveReport, generateId, getProfiles, saveProfileDirect, spendBalance, setMyProfile } from '@/services/storage/localStore';
 import type { LocalReport } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -44,37 +44,42 @@ const SHIJU_HOURS = SHIJU_OPTIONS.map(o => o.hour);
 export function InputPage() {
   usePageTitle('사주 입력');
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { setInput, setSajuData } = useSajuContext();
 
   // ?new=1 파라미터 있으면 Step 0 건너뛰고 바로 새 입력
   const isForceNew = window.location.search.includes('new=1');
 
-  const existingProfiles = useMemo(() => {
-    const all = getReports();
-    const seen = new Map<string, LocalReport>();
-    for (const r of all) {
-      // 궁합 결과 제외
-      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
-      if (r.name?.includes('×') || r.name?.includes('x')) continue;
-      if (!r.input?.birthYear) continue;
-      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
-      if (!seen.has(key)) seen.set(key, r);
+  // 보관함에서 프로필 선택하여 진입한 경우
+  const selectedProfile = (location.state as any)?.selectedProfile as LocalReport | undefined;
+
+  const existingProfiles = useMemo(() => getProfiles(), []);
+
+  const [step, setStep] = useState(
+    selectedProfile ? 5 : isForceNew ? 1 : existingProfiles.length > 0 ? 0 : 1
+  );
+
+  const [name, setName] = useState(selectedProfile?.name || '');
+  const [relation, setRelation] = useState<Relation>((selectedProfile?.input?.relation as Relation) || '본인');
+  const [birthYear, setBirthYear] = useState(selectedProfile ? String(selectedProfile.input.birthYear) : '');
+  const [birthMonth, setBirthMonth] = useState(selectedProfile ? String(selectedProfile.input.birthMonth) : '');
+  const [birthDay, setBirthDay] = useState(selectedProfile ? String(selectedProfile.input.birthDay) : '');
+  const [calendarType, setCalendarType] = useState<CalendarType>(selectedProfile?.input?.calendarType || 'solar');
+  const [gender, setGender] = useState<Gender | null>(selectedProfile?.input?.gender || null);
+  const [knowsTime, setKnowsTime] = useState<boolean | null>(() => {
+    if (selectedProfile) {
+      return selectedProfile.input.hasBirthTime ? true : false;
     }
-    return Array.from(seen.values());
-  }, []);
-
-  const [step, setStep] = useState(isForceNew ? 1 : existingProfiles.length > 0 ? 0 : 1);
-
-  const [name, setName] = useState('');
-  const [relation, setRelation] = useState<Relation>('본인');
-  const [birthYear, setBirthYear] = useState('');
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
-  const [calendarType, setCalendarType] = useState<CalendarType>('solar');
-  const [gender, setGender] = useState<Gender | null>(null);
-  const [knowsTime, setKnowsTime] = useState<boolean | null>(null);
-  const [timeIndex, setTimeIndex] = useState<number | null>(null);
+    return null;
+  });
+  const [timeIndex, setTimeIndex] = useState<number | null>(() => {
+    if (selectedProfile?.input?.hasBirthTime && selectedProfile.input.birthHour !== undefined) {
+      const idx = SHIJU_HOURS.indexOf(selectedProfile.input.birthHour);
+      return idx >= 0 ? idx : null;
+    }
+    return null;
+  });
   // Step6 제거됨 — 상황질문은 상세분석 시 선택적
 
   const canNext = (() => {
@@ -117,9 +122,20 @@ export function InputPage() {
     }
   }, [sajuInput, step]);
 
+  /** 더블클릭 방지 — 분석 시작 후 재클릭 차단 */
+  const isAnalyzingRef = useRef(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
   /** 상세 분석 시작 — 1운 차감 + 로딩 */
   function startAnalysis() {
+    // 더블클릭 방지: ref (즉시 차단) + state (UI 반영)
+    if (isAnalyzingRef.current) return;
+    isAnalyzingRef.current = true;
+    setIsAnalyzing(true);
+
     if (!spendBalance(1)) {
+      isAnalyzingRef.current = false;
+      setIsAnalyzing(false);
       toast.show('잔액이 부족해요. 충전이 필요해요', 'warning');
       navigate('/charge', { state: { from: 'input', message: '상세 분석에 1운이 필요해요' } });
       return;
@@ -131,6 +147,9 @@ export function InputPage() {
       setSajuData(sajuData);
       triggerPromotionEvent(PROMO_EVENTS.FIRST_SAJU);
       navigate('/loading');
+    } else {
+      isAnalyzingRef.current = false;
+      setIsAnalyzing(false);
     }
   }
 
@@ -144,8 +163,9 @@ export function InputPage() {
         const data = calculateSaju(sajuInput);
         setInput(sajuInput);
         setSajuData(data);
+        const reportId = generateId();
         const report: LocalReport = {
-          id: generateId(),
+          id: reportId,
           name: name || '이름 없음',
           input: sajuInput,
           sajuData: data,
@@ -153,6 +173,15 @@ export function InputPage() {
           type: 'free', // 무료 사주팔자 확인
         };
         saveReport(report);
+        // 프로필도 독립 저장 (리포트 삭제해도 프로필 유지)
+        saveProfileDirect({
+          id: reportId,
+          name: name || '이름 없음',
+          input: sajuInput,
+          sajuData: data,
+          relation: sajuInput.relation,
+          createdAt: new Date().toISOString(),
+        });
         // 본인 사주면 "내 프로필"로 고정
         if (!sajuInput.relation || sajuInput.relation === '본인') {
           setMyProfile(report.id);
@@ -311,8 +340,8 @@ export function InputPage() {
         ) : (
           /* Step 5: 사주팔자 결과 — 상세분석 + 공유 + 사진저장 */
           <div className="space-y-2">
-            <Button fullWidth size="lg" variant="gold" onClick={startAnalysis}>
-              상세 분석 받기 (1운)
+            <Button fullWidth size="lg" variant="gold" onClick={startAnalysis} disabled={isAnalyzing}>
+              {isAnalyzing ? '분석 준비 중...' : '상세 분석 받기 (1운)'}
             </Button>
             <p className="text-center text-[10px] text-text-hint">
               성격, 직업, 연애, 재물, 건강 등 12가지 심층 분석
@@ -561,15 +590,24 @@ function Step4({ knowsTime, setKnowsTime, timeIndex, setTimeIndex }: {
   );
 }
 
+const PILLAR_LABELS: Record<string, { ko: string; hanja: string }> = {
+  year: { ko: '년주', hanja: '年柱' },
+  month: { ko: '월주', hanja: '月柱' },
+  day: { ko: '일주', hanja: '日柱' },
+  time: { ko: '시주', hanja: '時柱' },
+};
+
 function MiniPillarCard({ pillar }: { pillar: Pillar }) {
   const oheng = CHEONGAN_OHENG[pillar.천간];
   const info = oheng ? OHENG_MAP[oheng] : null;
+  const label = PILLAR_LABELS[pillar.position] || { ko: '', hanja: '' };
+  const isDayPillar = pillar.position === 'day';
 
   if (!pillar.available) {
     return (
       <div className="flex-1 rounded-xl border-2 border-dashed border-border bg-bg-surface flex flex-col items-center justify-center py-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-bg-surface/60 flex flex-col items-center justify-center">
-          <span className="text-[13px] font-bold text-text-hint">時</span>
+          <span className="text-[10px] text-text-hint">{label.ko}</span>
           <span className="text-tiny text-text-muted mt-1">미입력</span>
         </div>
       </div>
@@ -577,7 +615,8 @@ function MiniPillarCard({ pillar }: { pillar: Pillar }) {
   }
 
   return (
-    <div className="flex-1 card-emphasis flex flex-col items-center py-3 gap-1">
+    <div className={`flex-1 card-emphasis flex flex-col items-center py-3 gap-1 ${isDayPillar ? 'ring-2 ring-brand-gold/40' : ''}`}>
+      <span className="text-[10px] font-bold text-text-hint">{label.ko}<span className="text-text-disabled ml-0.5">{label.hanja}</span></span>
       <span className="text-2xl font-black" style={{ color: info?.colorDark }}>{pillar.천간}</span>
       <span className="text-tiny font-bold" style={{ color: info?.color }}>{pillar.천간읽기} · {oheng}</span>
       <div className="w-full h-px bg-gradient-to-r from-transparent via-brand-secondary to-transparent my-1" />
@@ -586,6 +625,11 @@ function MiniPillarCard({ pillar }: { pillar: Pillar }) {
     </div>
   );
 }
+
+// 천간 성격 플래시카드 / 오행 인사이트 — 미승인 피쳐로 제거됨 (2026-04-18, 준기 결정)
+//   사유: 스펙에 없는 추가 기능. 무료 aha moment 가치는 인정하나,
+//         별도 PRD 없이 InputPage 내부에 임베드되어 있어 Brand voice/톤 검증 미통과.
+//         재도입 시 별도 PRD(브랜드 컴포넌트로 컴포넌트화 + 한자/카피 조화 적용) 필요.
 
 function Step5({ sajuData, name, input }: { sajuData: import('@/types/saju').SajuData; name: string; input: SajuInput }) {
   const yearStr = `${input.birthYear}.${String(input.birthMonth).padStart(2, '0')}.${String(input.birthDay).padStart(2, '0')}`;
@@ -620,10 +664,13 @@ function Step5({ sajuData, name, input }: { sajuData: import('@/types/saju').Saj
         </div>
       </div>
 
-      {/* 사주팔자 4기둥 */}
+      {/* 사주팔자 4기둥 — 전통 순서: 시일월년 */}
       <div className="flex gap-2 mb-4">
-        {sajuData.pillars.map((p, i) => <MiniPillarCard key={i} pillar={p} />)}
+        {[...sajuData.pillars].reverse().map((p, i) => <MiniPillarCard key={i} pillar={p} />)}
       </div>
+
+      {/* 천간 성격 플래시카드 블록은 미승인 피쳐로 제거됨 (2026-04-18).
+          필요 시 별도 PRD 후 재도입. */}
 
       {/* 오행 분포 — 한눈에 */}
       <div className="card">
@@ -634,8 +681,9 @@ function Step5({ sajuData, name, input }: { sajuData: import('@/types/saju').Saj
             if (!info) return null;
             return (
               <div key={key} className="flex items-center gap-2">
-                <div className="w-8 text-center">
+                <div className="w-10 text-center flex items-center justify-center gap-0.5">
                   <span className="text-caption font-black" style={{ color: info.color }}>{info.hanja}</span>
+                  <span className="text-[10px] text-text-hint">{key}</span>
                 </div>
                 <div className="flex-1 h-2 rounded-full overflow-hidden bg-border-light">
                   <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 3)}%`, background: info.color }} />

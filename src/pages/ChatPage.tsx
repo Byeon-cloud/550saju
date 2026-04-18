@@ -3,7 +3,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
-import { getMyProfile, getReports } from '@/services/storage/localStore';
+import { getMyProfile, getProfiles } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
@@ -140,19 +140,8 @@ function ChatRoomList() {
   const timeCtx = useMemo(() => getTimeGreeting(), []);
   const suggestedTopics = useMemo(() => getSuggestedTopics(hasProfile), [hasProfile]);
 
-  // 프로필 목록 (중복 제거)
-  const profiles = useMemo(() => {
-    const all = getReports();
-    const seen = new Map<string, any>();
-    for (const r of all) {
-      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
-      if (r.name?.includes('×') || r.name?.includes('x')) continue;
-      if (!r.input?.birthYear || !r.sajuData?.pillars?.length) continue;
-      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
-      if (!seen.has(key)) seen.set(key, r);
-    }
-    return Array.from(seen.values());
-  }, []);
+  // 프로필 목록 (독립 저장소)
+  const profiles = useMemo(() => getProfiles(), []);
 
   useEffect(() => { setRooms(getChatRooms()); }, []);
 

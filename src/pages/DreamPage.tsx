@@ -62,15 +62,15 @@ export function DreamPage() {
     setApiError('');
     try {
       const { generateDream } = await import('@/services/ai/reportGenerator');
-      const { getReports: fetchReports } = await import('@/services/storage/localStore');
-      const latestReport = fetchReports().find((r: any) => !r.input?.relation || r.input.relation === '본인') || null;
+      const { getProfiles } = await import('@/services/storage/localStore');
+      const latestReport = getProfiles().find((p: any) => !p.relation || p.relation === '본인') || null;
       const categoryLabel = DREAM_CATEGORIES.find(c => c.id === selectedCategory)?.label || '기타';
       const fullText = [dreamText, concern ? `\n현재 고민: ${concern}` : ''].filter(Boolean).join('');
       const result = await generateDream(categoryLabel, fullText, latestReport?.sajuData);
       setAiResult(result);
       try {
-        const { saveReport, generateId, getReports: fetchRpts } = await import('@/services/storage/localStore');
-        const latestRpt = fetchRpts().find((r: any) => !r.input?.relation || r.input.relation === '본인') || null;
+        const { saveReport, generateId, getProfiles: fetchProfiles } = await import('@/services/storage/localStore');
+        const latestRpt = fetchProfiles().find((p: any) => !p.relation || p.relation === '본인') || null;
         saveReport({ id: generateId(), name: latestRpt?.name || '꿈해몽', input: latestRpt?.input || {} as any, sajuData: latestRpt?.sajuData || {} as any, type: 'free', contentType: 'dream', createdAt: new Date().toISOString() });
       } catch { /* 무시 */ }
     } catch (e: any) {
@@ -90,8 +90,8 @@ export function DreamPage() {
     if (isDeepAnalyzingRef.current) return;
     isDeepAnalyzingRef.current = true;
 
-    const { getReports: fetchReports } = await import('@/services/storage/localStore');
-    const myReport = fetchReports().find((r: any) => !r.input?.relation || r.input.relation === '본인');
+    const { getProfiles } = await import('@/services/storage/localStore');
+    const myReport = getProfiles().find((p: any) => !p.relation || p.relation === '본인');
     if (!myReport?.sajuData) {
       toast.show('먼저 사주를 분석해주세요', 'warning');
       navigate('/input');

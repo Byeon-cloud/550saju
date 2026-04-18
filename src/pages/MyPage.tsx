@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 // LoginPrompt available for future auth flow
 import { useAuth } from '@/hooks/useAuth';
-import { getBalance, getBalanceBreakdown, getReports } from '@/services/storage/localStore';
+import { getBalance, getBalanceBreakdown, getReports, getProfiles } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 
 import { IconSaju } from '@/components/brand/Icons';
@@ -31,10 +31,11 @@ export function MyPage() {
   const location = useLocation();
   const allReports = useMemo(() => getReports(), [location.pathname]);
   const reports = allReports; // 전체 (보관함 카운트용)
-  // 내 정보 = "본인" 관계인 리포트만 (타인 분석은 내 정보에 안 나옴)
-  const myReport = useMemo(() =>
-    allReports.find(r => !r.input.relation || r.input.relation === '본인' || r.input.relation === 'self') || null
-  , [allReports]);
+  // 내 정보 = 프로필 저장소에서 "본인" 찾기 (리포트와 독립)
+  const myReport = useMemo(() => {
+    const profiles = getProfiles();
+    return profiles.find(p => !p.relation || p.relation === '본인' || p.relation === 'self') || null;
+  }, [location.pathname]);
   const latestReport = myReport;
 
   useEffect(() => {
@@ -120,9 +121,11 @@ export function MyPage() {
               </div>
             </div>
 
-            {/* 만세력 4기둥 */}
+            {/* 만세력 4기둥 — 전통 순서: 시일월년 */}
             <div className="flex gap-2 mb-3">
-              {sajuProfile.pillars.map((p: any, i: number) => {
+              {/* 전통 순서: 시→일→월→년 (왼쪽→오른쪽) */}
+              {[...sajuProfile.pillars].reverse().map((p: any, i: number) => {
+                const posLabels = ['시', '일', '월', '년']; // reverse 후 순서
                 if (p.available === false) {
                   return (
                     <div key={i} className="flex-1 rounded-xl border border-dashed border-border py-3 text-center bg-bg-surface">
@@ -133,11 +136,11 @@ export function MyPage() {
                 }
                 const ohengKey = CHEONGAN_OHENG[p.천간] as OhengType;
                 const info = ohengKey ? OHENG_MAP[ohengKey] : null;
-                const isMe = i === 2;
+                const isMe = i === 1; // reverse 후 일주는 index 1
                 return (
                   <div key={i} className={`flex-1 rounded-xl py-3 text-center ${isMe ? 'border-2 border-brand-gold' : 'border border-border-light'}`}
                     style={{ background: isMe ? 'rgba(201,169,110,0.06)' : 'var(--bg-card)' }}>
-                    <p className={`text-caption ${isMe ? 'text-brand-gold font-bold' : 'text-text-hint'}`}>{['년', '월', '일', '시'][i]}주</p>
+                    <p className={`text-caption ${isMe ? 'text-brand-gold font-bold' : 'text-text-hint'}`}>{posLabels[i]}주</p>
                     <p className={`text-h1 mt-1 ${isMe ? 'text-brand-gold' : 'text-text-primary'}`}>{p.천간}{p.지지}</p>
                     <p className="text-caption mt-0.5" style={{ color: info?.color || 'var(--text-muted)' }}>{p.천간읽기}{p.지지읽기}</p>
                   </div>

@@ -5,7 +5,7 @@ import { FadeIn } from '@/components/common/FadeIn';
 import { AILoading } from '@/components/common/AILoading';
 import { Button } from '@/components/common/Button';
 import { BannerAd as BannerAdLazy } from '@/components/ads/BannerAd';
-import { getReports, spendBalance, saveReport, generateId, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, saveReport, generateId, type SajuProfile } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
@@ -163,7 +163,7 @@ export function DailyFortunePage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [showResult, setShowResult] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<LocalReport | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<SajuProfile | null>(null);
   const [profileSelected, setProfileSelected] = useState(false);
   // 새 단순화 UX: 고민 영역 칩 선택 + 자유 입력
   const [selectedConcern, setSelectedConcern] = useState<string>('');
@@ -172,19 +172,8 @@ export function DailyFortunePage() {
   const timeSlot = useMemo(() => getTimeSlot(), []);
   const ctx = TIME_CONTEXT[timeSlot];
 
-  // 프로필 목록 (중복 제거)
-  const profiles = useMemo(() => {
-    const all = getReports();
-    const seen = new Map<string, LocalReport>();
-    for (const r of all) {
-      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
-      if (r.name?.includes('×') || r.name?.includes('x')) continue;
-      if (!r.input?.birthYear) continue;
-      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
-      if (!seen.has(key)) seen.set(key, r);
-    }
-    return Array.from(seen.values());
-  }, []);
+  // 프로필 목록 (독립 저장소)
+  const profiles = useMemo(() => getProfiles(), []);
 
   // 단일 프로필이면 자동 선택
   const recentReport = selectedProfile;

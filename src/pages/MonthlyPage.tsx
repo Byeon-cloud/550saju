@@ -8,7 +8,7 @@ import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
 
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
 import { generateMonthlyFortune2026 } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -43,7 +43,7 @@ export function MonthlyPage() {
   const [showShare, setShowShare] = useState(false);
   const isAnalyzingRef = useRef(false);
 
-  const reports = useMemo(() => getReports(), []);
+  const reports = useMemo(() => getProfiles(), []);
 
   async function startAnalysis() {
     if (!selected) return;
@@ -114,7 +114,7 @@ export function MonthlyPage() {
             </div>
           </FadeIn>
           <FadeIn delay={0.05}>
-            <ProfilePicker onSelect={r => setSelected(r)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
+            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
           </FadeIn>
           {selected && (
             <FadeIn delay={0.1}>

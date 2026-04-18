@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/common/Button';
 import { FadeIn } from '@/components/common/FadeIn';
-import { getReports, getBalance } from '@/services/storage/localStore';
+import { getReports, getProfiles, getBalance } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { IconChevronRight } from '@/components/brand/Icons';
 import { IconTaegeuk } from '@/components/brand/OhengIcons';
@@ -89,15 +89,16 @@ export function HomePage() {
   const navigate = useNavigate();
   const today = new Date();
   const dateStr = today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
-  const allReports = useMemo(() => getReports(), [today]);
-  // 홈 히어로 = 본인 사주만 표시
-  const myReport = useMemo(() =>
-    allReports.find(r => !r.input.relation || r.input.relation === '본인' || r.input.relation === 'self') || null
-  , [allReports]);
+  const allReports = useMemo(() => getReports(), []);
+  // 프로필 기반 — 리포트와 독립
+  const myProfile = useMemo(() => {
+    const profiles = getProfiles();
+    return profiles.find(p => !p.relation || p.relation === '본인' || p.relation === 'self') || null;
+  }, []);
   const recentReports = allReports.slice(0, 2);
-  const hasHistory = !!myReport;
-  const latestReport = myReport;
-  const balance = useMemo(() => getBalance(), [today]); // 페이지 리렌더 시 갱신
+  const hasHistory = !!myProfile;
+  const latestReport = myProfile;
+  const balance = useMemo(() => getBalance(), []); // 페이지 리렌더 시 갱신
 
   const sajuSummary = useMemo(() => {
     if (!latestReport) return null;

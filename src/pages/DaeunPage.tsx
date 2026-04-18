@@ -7,7 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { DaeunTimeline } from '@/components/saju/DaeunTimeline';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
 import { generateDaeunAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -43,7 +43,7 @@ export function DaeunPage() {
   const [showShare, setShowShare] = useState(false);
   const isAnalyzingRef = useRef(false);
 
-  const reports = useMemo(() => getReports(), []);
+  const reports = useMemo(() => getProfiles(), []);
 
   async function startAnalysis() {
     if (!selected) return;
@@ -121,7 +121,7 @@ export function DaeunPage() {
 
           <FadeIn delay={0.05}>
             <ProfilePicker
-              onSelect={(r) => setSelected(r)}
+              onSelect={(p) => setSelected(p as unknown as LocalReport)}
               onNew={() => navigate('/input?new=1')}
               title="누구의 대운을 볼까요?"
             />
