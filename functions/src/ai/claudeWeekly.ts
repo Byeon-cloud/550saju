@@ -4,6 +4,7 @@ import {
   WEEKLY_FORTUNE_USER_V3,
   SELF_REVIEW_V3,
   parseJsonResponse,
+  type ParseJsonMeta,
 } from './promptsV3';
 
 /**
@@ -31,15 +32,35 @@ export async function generateWeeklyFortuneAnalysis(
   const system = WEEKLY_FORTUNE_SYSTEM_V3;
   const user = WEEKLY_FORTUNE_USER_V3(args);
 
-  // 1차 생성
-  const first = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 16384,
-    system,
-    messages: [{ role: 'user', content: user }],
-  });
-  const firstText = (first.content[0] as { type: string; text: string }).text;
-  const firstJson = parseJsonResponse(firstText);
+  // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
+  let firstText: string;
+  let firstJson: unknown;
+  try {
+    const meta1: ParseJsonMeta = { repairUsed: false };
+    const first = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 16384,
+      temperature: 0.7,
+      system,
+      messages: [{ role: 'user', content: user }],
+    });
+    firstText = (first.content[0] as { type: string; text: string }).text;
+    firstJson = parseJsonResponse(firstText, meta1);
+    if (meta1.repairUsed) console.info('[claudeWeekly] 1차 jsonrepair 발동');
+  } catch (e1: any) {
+    console.warn('[claudeWeekly] 1차 실패 → 재시도:', e1?.message);
+    const meta2: ParseJsonMeta = { repairUsed: false };
+    const retry = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 16384,
+      temperature: 0.5,
+      system,
+      messages: [{ role: 'user', content: user }],
+    });
+    firstText = (retry.content[0] as { type: string; text: string }).text;
+    firstJson = parseJsonResponse(firstText, meta2);
+    console.info('[claudeWeekly] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
+  }
 
   // 2차 자기 리뷰
   const review = await anthropic.messages.create({

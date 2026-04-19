@@ -725,8 +725,19 @@ ${context.freeResult ? '- [ ] 무료 결과의 title·verdict 방향과 모순�
   단, 억지로 글자 수만 늘리는 건 Fail — 의미 있는 내용으로 채워야 함.
 `;
 
-/* ─── 공용 JSON 파서 (v4.1 — raw control char sanitize 포함) ─── */
-export function parseJsonResponse(text: string): unknown {
+/* ─── 공용 JSON 파서 (v4.2 — jsonrepair fallback 추가) ───
+ * 1차: control char sanitize + JSON.parse
+ * 2차: jsonrepair → JSON.parse (구조 오류 — missing/extra comma 등 복구)
+ * 실패 시 throw — 호출부에서 재시도 여부 결정.
+ */
+import { jsonrepair } from 'jsonrepair';
+
+/** parseJsonResponse 호출부에서 "jsonrepair 가 발동했는가" 관측용 플래그. */
+export interface ParseJsonMeta {
+  repairUsed: boolean;
+}
+
+export function parseJsonResponse(text: string, meta?: ParseJsonMeta): unknown {
   // 코드블록 제거
   const cleaned = text
     .replace(/^```json\s*/i, '')
@@ -772,11 +783,25 @@ export function parseJsonResponse(text: string): unknown {
     out += c;
   }
 
+  // 1차: 표준 JSON.parse
   try {
     return JSON.parse(out);
-  } catch (e: any) {
-    // 디버깅용: 처음 500자만 로그에 노출 (secret 없음)
-    console.warn('[parseJsonResponse] JSON.parse 실패:', e?.message, 'snippet:', out.slice(0, 500));
-    throw new Error(`JSON 파싱 실패: ${e?.message}`);
+  } catch (e1: any) {
+    // 2차: jsonrepair 로 구조 오류 복구 후 재시도
+    try {
+      const repaired = jsonrepair(out);
+      const result = JSON.parse(repaired);
+      if (meta) meta.repairUsed = true;
+      console.warn('[parseJsonResponse] jsonrepair 발동 — 원인:', e1?.message);
+      return result;
+    } catch (e2: any) {
+      console.warn(
+        '[parseJsonResponse] JSON.parse + jsonrepair 모두 실패:',
+        'parse=', e1?.message,
+        'repair=', e2?.message,
+        'snippet:', out.slice(0, 500),
+      );
+      throw new Error(`JSON 파싱 실패: ${e1?.message}`);
+    }
   }
 }

@@ -10,6 +10,7 @@ import {
   DREAM_DEEP_USER_V3,
   SELF_REVIEW_V3,
   parseJsonResponse,
+  type ParseJsonMeta,
 } from './promptsV3';
 
 /**
@@ -79,15 +80,35 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
         category: args.category,
       });
 
-  const msg = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 8192,
-    system,
-    messages: [{ role: 'user', content: user }],
-  });
-
-  const text = (msg.content[0] as { type: string; text: string }).text;
-  return parseJsonResponse(text);
+  // 1차 호출 (temperature 0.7)
+  const meta1: ParseJsonMeta = { repairUsed: false };
+  try {
+    const msg = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 8192,
+      temperature: 0.7,
+      system,
+      messages: [{ role: 'user', content: user }],
+    });
+    const text = (msg.content[0] as { type: string; text: string }).text;
+    const result = parseJsonResponse(text, meta1);
+    if (meta1.repairUsed) console.info('[claudeDreamFree] jsonrepair 1차 발동 — 복구 성공');
+    return result;
+  } catch (e1: any) {
+    console.warn('[claudeDreamFree] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
+    const meta2: ParseJsonMeta = { repairUsed: false };
+    const msg = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 8192,
+      temperature: 0.5,
+      system,
+      messages: [{ role: 'user', content: user }],
+    });
+    const text = (msg.content[0] as { type: string; text: string }).text;
+    const result = parseJsonResponse(text, meta2);
+    console.info('[claudeDreamFree] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
+    return result;
+  }
 }
 
 /** 심층 꿈해몽 (유료 1운) — 1차 생성 후 2차 자기 리뷰 */
@@ -102,15 +123,35 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
     freeResultSummary: args.freeResultSummary,
   });
 
-  // 1차 생성
-  const first = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 16384,
-    system,
-    messages: [{ role: 'user', content: user }],
-  });
-  const firstText = (first.content[0] as { type: string; text: string }).text;
-  const firstJson = parseJsonResponse(firstText);
+  // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
+  let firstText: string;
+  let firstJson: unknown;
+  try {
+    const meta1: ParseJsonMeta = { repairUsed: false };
+    const first = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 16384,
+      temperature: 0.7,
+      system,
+      messages: [{ role: 'user', content: user }],
+    });
+    firstText = (first.content[0] as { type: string; text: string }).text;
+    firstJson = parseJsonResponse(firstText, meta1);
+    if (meta1.repairUsed) console.info('[claudeDreamDeep] 1차 jsonrepair 발동');
+  } catch (e1: any) {
+    console.warn('[claudeDreamDeep] 1차 실패 → 재시도:', e1?.message);
+    const meta2: ParseJsonMeta = { repairUsed: false };
+    const retry = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 16384,
+      temperature: 0.5,
+      system,
+      messages: [{ role: 'user', content: user }],
+    });
+    firstText = (retry.content[0] as { type: string; text: string }).text;
+    firstJson = parseJsonResponse(firstText, meta2);
+    console.info('[claudeDreamDeep] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
+  }
 
   // 2차 자기 리뷰
   const review = await anthropic.messages.create({

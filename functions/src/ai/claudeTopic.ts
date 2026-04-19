@@ -2,7 +2,7 @@
 // See docs/prd/AI프롬프트_v3_Sonnet4.6.md
 
 import Anthropic from '@anthropic-ai/sdk';
-import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse } from './promptsV3';
+import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type ParseJsonMeta } from './promptsV3';
 
 interface TopicConfig {
   label: string;
@@ -558,15 +558,35 @@ export async function generateTopicAnalysisAI(
   // 재회운 10섹션 + 풍부한 topicData → 16000, 나머지 5섹션 → 8192
   const maxTokens = topicId === 'reunion' ? 16000 : 8192;
 
-  // 1차 생성
-  const first = await anthropic.messages.create({
-    model,
-    max_tokens: maxTokens,
-    system: TOPIC_ANALYSIS_SYSTEM_V3,
-    messages: [{ role: 'user', content: prompt }],
-  });
-  const firstText = (first.content[0] as { type: string; text: string }).text;
-  const firstJson = parseJsonResponse(firstText);
+  // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
+  let firstText: string;
+  let firstJson: any;
+  try {
+    const meta1: ParseJsonMeta = { repairUsed: false };
+    const first = await anthropic.messages.create({
+      model,
+      max_tokens: maxTokens,
+      temperature: 0.7,
+      system: TOPIC_ANALYSIS_SYSTEM_V3,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    firstText = (first.content[0] as { type: string; text: string }).text;
+    firstJson = parseJsonResponse(firstText, meta1);
+    if (meta1.repairUsed) console.info(`[claudeTopic:${topicId}] 1차 jsonrepair 발동`);
+  } catch (e1: any) {
+    console.warn(`[claudeTopic:${topicId}] 1차 실패 → 재시도:`, e1?.message);
+    const meta2: ParseJsonMeta = { repairUsed: false };
+    const retry = await anthropic.messages.create({
+      model,
+      max_tokens: maxTokens,
+      temperature: 0.5,
+      system: TOPIC_ANALYSIS_SYSTEM_V3,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    firstText = (retry.content[0] as { type: string; text: string }).text;
+    firstJson = parseJsonResponse(firstText, meta2);
+    console.info(`[claudeTopic:${topicId}] 2차 성공`, meta2.repairUsed ? '(jsonrepair 발동)' : '');
+  }
 
   // 2차 자기 리뷰 — 고가치 유료 상품이므로 품질 보정 (AI프롬프트_v3 §8).
   const review = await anthropic.messages.create({
