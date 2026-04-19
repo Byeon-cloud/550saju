@@ -26,7 +26,8 @@ interface ErrorStateProps {
  * 에러 화면 공용 컴포넌트 (v4.1 스펙).
  *   근거: docs/prd/오늘의운세_v4_CTA확장.md §10, docs/prd/꿈해몽_v4_재설계.md §10+
  *   - card-navy-v4 금지 → card-primary 중앙 정렬
- *   - 심플 아이콘 (인라인 SVG 알럿 삼각형 — ui:alert 픽토그램 미등록)
+ *   - 인라인 SVG 알럿 삼각형 — PictogramRegistry 의 ui:alert 와 동일 디자인.
+ *     (번들 경량화 위해 Pictogram import 안 함)
  *   - CTA: cta-gold (재시도) + cta-ghost (뒤로가기, 옵션)
  */
 export function ErrorState({

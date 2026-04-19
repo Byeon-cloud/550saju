@@ -731,7 +731,7 @@ function ResultView({
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(201,169,110,0.2)' }}
             >
-              <Pictogram k="ui:lucky" size={22} color="#E8D5A8" />
+              <Pictogram k="ui:saju" size={22} color="#E8D5A8" />
             </div>
             <div>
               <p className="sec-title" style={{ color: '#F5EFE0' }}>

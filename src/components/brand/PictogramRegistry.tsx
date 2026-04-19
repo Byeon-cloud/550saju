@@ -29,12 +29,76 @@ interface PictogramProps {
 }
 
 // ─────────────────────────────────────────────────────────────
-// UI 보조 픽토그램 (lucky/compass/letter 등 공통)
+// UI 보조 픽토그램 (lucky/compass/saju/alert/retry 등 공통)
 // ─────────────────────────────────────────────────────────────
+
+/**
+ * ui:saju — 사주 4기둥 단순 도식
+ *   D4 신규. card-navy-v4 상단 장식 등 "사주 입력 제안" 컨텍스트에서 ui:lucky 대신 사용.
+ *   스타일: 24x24 viewBox, 4칸 grid + 오행 점
+ */
+function IconUiSaju({ size = 24, color = 'currentColor', className }: PictogramProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      {/* 4기둥 그리드 — 시·일·월·년 */}
+      <rect x="3" y="6" width="4" height="12" rx="1"
+        fill={color} fillOpacity="0.12" stroke={color} strokeWidth="1.3" />
+      <rect x="8" y="6" width="4" height="12" rx="1"
+        fill={color} fillOpacity="0.18" stroke={color} strokeWidth="1.3" />
+      <rect x="13" y="6" width="4" height="12" rx="1"
+        fill={color} fillOpacity="0.12" stroke={color} strokeWidth="1.3" />
+      <rect x="18" y="6" width="3" height="12" rx="1"
+        fill={color} fillOpacity="0.08" stroke={color} strokeWidth="1.3" />
+      {/* 가운데 일주 강조 — 골드 도트 */}
+      <circle cx="10" cy="12" r="1.2" fill={color} />
+      {/* 상단 지지 점 — 3개 */}
+      <circle cx="5" cy="9" r="0.8" fill={color} fillOpacity="0.7" />
+      <circle cx="15" cy="9" r="0.8" fill={color} fillOpacity="0.7" />
+      <circle cx="19.5" cy="9" r="0.6" fill={color} fillOpacity="0.5" />
+    </svg>
+  );
+}
+
+/**
+ * ui:alert — 에러 화면용 삼각 경고 (ErrorState 내부 인라인 SVG 대체 가능)
+ */
+function IconUiAlert({ size = 24, color = 'currentColor', className }: PictogramProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path d="M12 3.5 22 20.5H2L12 3.5Z"
+        fill={color} fillOpacity="0.14" stroke={color} strokeWidth="1.6"
+        strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="12" y1="10" x2="12" y2="14.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="12" cy="17.2" r="0.8" fill={color} />
+    </svg>
+  );
+}
+
+/**
+ * ui:retry — 재시도 원형 화살표
+ */
+function IconUiRetry({ size = 24, color = 'currentColor', className }: PictogramProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path d="M4 12a8 8 0 0114.5-4.6"
+        stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+      <path d="M20 12a8 8 0 01-14.5 4.6"
+        stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+      {/* 화살촉 */}
+      <path d="M18.5 3.5 18.5 7.5 14.5 7.5"
+        stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M5.5 20.5 5.5 16.5 9.5 16.5"
+        stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
 
 const UI_ICONS = {
   lucky: IconLucky,
   compass: IconCompass,
+  saju: IconUiSaju,
+  alert: IconUiAlert,
+  retry: IconUiRetry,
 } as const;
 
 type UiKey = keyof typeof UI_ICONS;
