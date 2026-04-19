@@ -250,7 +250,9 @@ export const generateChatAnswer = onCall(
  *   Phase C 에서 클라이언트를 신규 엔드포인트(generateDreamFree/Deep)로 마이그레이션 후 이 통합 엔드포인트는 삭제 예정.
  */
 export const generateDream = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 180, memory: '1GiB', minInstances: 1, cors: true, invoker: 'public' },
+  // minInstances: 0 — Phase C 이후 client 호출 0건 (legacy dispatch, dead code).
+  // D7 백로그: wrapper + endpoint 자체 제거 예정. 영향 분석 후.
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 180, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { category, dreamText, sajuData, mode, saju, freeResultSummary, userConcern } = request.data || {};
     if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');
