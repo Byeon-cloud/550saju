@@ -2,6 +2,10 @@ node_modules
 dist
 .env
 .env.local
+
+# Firebase emulator secrets (local only — never commit)
+functions/.secret.local
+functions/.runtimeconfig.json
 *.log
 .DS_Store
 

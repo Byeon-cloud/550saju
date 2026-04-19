@@ -1,4 +1,4 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { app } from '@/services/auth/firebase';
 import { ensureAuth } from '@/services/auth/authService';
 import type { SajuData, Situation } from '@/types/saju';
@@ -11,6 +11,26 @@ import type {
 } from '@/types/report';
 
 const functions = getFunctions(app, 'us-central1');
+
+/**
+ * Dev 모드 + env 플래그 동시 만족 시 emulator 연결.
+ *   .env.local 에 `VITE_USE_FUNCTIONS_EMULATOR=true` 설정 시만 활성화.
+ *   prod 빌드에서는 절대 동작 안 함 (import.meta.env.DEV === false).
+ *   HMR 재연결 방지 위해 module-level 1회만 실행.
+ */
+if (
+  import.meta.env.DEV &&
+  import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true'
+) {
+  try {
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    // eslint-disable-next-line no-console
+    console.info('[emulator] Functions connected → localhost:5001');
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[emulator] connectFunctionsEmulator failed (already connected?):', e);
+  }
+}
 
 /** httpsCallable with extended timeout for AI calls */
 function aiCallable(name: string) {
