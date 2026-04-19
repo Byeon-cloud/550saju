@@ -167,7 +167,7 @@ export const generateReport = onCall(
  *   쿼터: 일 1회 캐시 (Firestore users/{uid}/dailyFortune/{YYYY-MM-DD}).
  */
 export const generateDailyFortune = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { name, sajuData, date, weekday, todayGanzi, jeolgi, dayJiShen, dayXiongSha } = request.data || {};
     if (!sajuData || !date || !todayGanzi) {
@@ -308,7 +308,7 @@ function buildLegacySajuContext(sajuData: any): any {
  *   쿼터: 일 1회 + 월 7회 상한 (Firestore users/{uid}/dreamQuota/{YYYY-MM}).
  */
 export const generateDreamFree = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 90, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { saju, dreamContent, category, userConcern } = request.data || {};
     if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');

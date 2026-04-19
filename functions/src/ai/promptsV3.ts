@@ -725,7 +725,7 @@ ${context.freeResult ? '- [ ] 무료 결과의 title·verdict 방향과 모순�
   단, 억지로 글자 수만 늘리는 건 Fail — 의미 있는 내용으로 채워야 함.
 `;
 
-/* ─── 공용 JSON 파서 ─── */
+/* ─── 공용 JSON 파서 (v4.1 — raw control char sanitize 포함) ─── */
 export function parseJsonResponse(text: string): unknown {
   // 코드블록 제거
   const cleaned = text
@@ -736,5 +736,47 @@ export function parseJsonResponse(text: string): unknown {
   // 가장 바깥쪽 { } 추출
   const m = cleaned.match(/\{[\s\S]*\}/);
   if (!m) throw new Error('JSON not found in response');
-  return JSON.parse(m[0]);
+
+  // Sonnet 이 문자열 필드 내부에 raw \n / \r / \t 를 넣는 경우가 있어 JSON.parse 가
+  // "Bad control character in string literal" 로 거절. 문자열 내부 control char 를
+  // 이스케이프된 형태로 치환 (JSON 구조 밖 whitespace 는 무시되므로 전구간 치환 OK).
+  const raw = m[0];
+  let out = '';
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if (escape) {
+      out += c;
+      escape = false;
+      continue;
+    }
+    if (c === '\\') {
+      out += c;
+      escape = true;
+      continue;
+    }
+    if (c === '"') {
+      inString = !inString;
+      out += c;
+      continue;
+    }
+    if (inString) {
+      if (c === '\n') { out += '\\n'; continue; }
+      if (c === '\r') { out += '\\r'; continue; }
+      if (c === '\t') { out += '\\t'; continue; }
+      // 그 외 0x00~0x1F 제어문자는 제거 (Sonnet 은 거의 안 넣지만 방어)
+      const code = c.charCodeAt(0);
+      if (code < 0x20) continue;
+    }
+    out += c;
+  }
+
+  try {
+    return JSON.parse(out);
+  } catch (e: any) {
+    // 디버깅용: 처음 500자만 로그에 노출 (secret 없음)
+    console.warn('[parseJsonResponse] JSON.parse 실패:', e?.message, 'snippet:', out.slice(0, 500));
+    throw new Error(`JSON 파싱 실패: ${e?.message}`);
+  }
 }
