@@ -2,10 +2,10 @@ import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
-import { Button } from '@/components/common/Button';
 import { FadeIn } from '@/components/common/FadeIn';
 import { AILoading } from '@/components/common/AILoading';
 import { LockedCard } from '@/components/common/LockedCard';
+import { ErrorState } from '@/components/common/ErrorState';
 import { TimelineSwipe, type TimelineStep } from '@/components/common/TimelineSwipe';
 import { SymbolDragMap, type SymbolItem } from '@/components/common/SymbolDragMap';
 import { Flippable } from '@/components/common/Flippable';
@@ -134,6 +134,12 @@ export function DreamPage() {
         category: categoryLabel,
         userConcern: concern || undefined,
       });
+
+      // 필수 필드 검증 — fallback 렌더 금지 (PRD §10.7)
+      if (!result || typeof result !== 'object' || !result.title) {
+        throw new Error('응답 데이터 형식이 올바르지 않아요');
+      }
+
       setAiResult(result);
 
       // 보관함 저장 (무료)
@@ -537,28 +543,31 @@ function DetailPhase({
 }
 
 /* ══════════════════════════════════════════════════════════════════
- * 오류 화면 (generateDreamFree 실패)
+ * 오류 화면 (generateDreamFree 실패) — v4.1 ErrorState 공용
  * ═════════════════════════════════════════════════════════════════ */
 function ErrorView({ apiError, onBack }: { apiError: string; onBack: () => void }) {
+  // 쿼터 소진은 운 차감 자체가 없으므로 refund 안내 불필요
+  const isQuotaExhausted =
+    apiError.includes('쿼터') || apiError.includes('resource-exhausted');
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
     >
-      <div className="card-navy-v4" style={{ padding: 32, textAlign: 'center' }}>
-        <div
-          className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-          style={{ background: 'rgba(211,47,47,0.15)' }}
-        >
-          <Pictogram k="dream:empty" size={32} color="#E55050" />
-        </div>
-        <p className="sec-title-lg" style={{ color: '#F5EFE0' }}>해석에 실패했어요</p>
-        <p className="text-body-sm" style={{ color: 'rgba(245,239,224,0.6)', marginTop: 8 }}>
-          {apiError || 'AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요.'}
-        </p>
-      </div>
-      <Button fullWidth size="lg" onClick={onBack}>다시 시도하기</Button>
+      <ErrorState
+        title={isQuotaExhausted ? '이번 달 무료 쿼터가 소진됐어요' : '해석을 가져오지 못했어요'}
+        subtitle={
+          isQuotaExhausted
+            ? '다음 달에 다시 만나요. 그동안은 사주 리포트로 더 깊은 분석도 가능해요.'
+            : apiError || '잠시 후 다시 시도해주세요'
+        }
+        onRetry={isQuotaExhausted ? undefined : onBack}
+        onBack={onBack}
+        retryLabel="다시 시도"
+        backLabel="꿈 다시 적기"
+        showRefundNote={!isQuotaExhausted}
+      />
     </motion.div>
   );
 }
@@ -592,6 +601,8 @@ function FreeResultView({
   const verdict: string = stripMd(String(result?.verdict ?? ''));
   const keywords: string[] = Array.isArray(result?.keywords) ? result.keywords.slice(0, 5) : [];
   const narrative: string = stripMd(String(result?.narrative ?? ''));
+  const sajuTone: string = stripMd(String(result?.sajuTone ?? '')); // v4.1 신규
+  const todayConnection: string = stripMd(String(result?.todayConnection ?? '')); // v4.1 신규
   const symbols: any[] = Array.isArray(result?.symbols) ? result.symbols.slice(0, 5) : [];
   const radarScores = result?.radarScores;
   const ohengComparison = result?.ohengComparison;
@@ -709,7 +720,42 @@ function FreeResultView({
         <FadeIn delay={0.08}>
           <section className="card-secondary">
             <p className="sec-meta" style={{ marginBottom: 6 }}>꿈을 다시 봅니다</p>
-            <p className="text-body-md" style={{ color: 'var(--text-primary)' }}>{narrative}</p>
+            <p
+              className="text-body-md"
+              style={{ color: 'var(--text-primary)', whiteSpace: 'pre-line' }}
+            >
+              {narrative}
+            </p>
+          </section>
+        </FadeIn>
+      )}
+
+      {/* S3.5: 사주 × 꿈 톤 (v4.1 신규 · 사주 있을 때만) */}
+      {hasSaju && sajuTone && (
+        <FadeIn delay={0.1}>
+          <section className="card-accent">
+            <p className="sec-meta" style={{ marginBottom: 6 }}>이 꿈의 톤</p>
+            <p
+              className="text-body-lg"
+              style={{ color: 'var(--text-primary)', whiteSpace: 'pre-line' }}
+            >
+              {sajuTone}
+            </p>
+          </section>
+        </FadeIn>
+      )}
+
+      {/* S3.6: 오늘과의 연결 (v4.1 신규 · 사주 있을 때만) */}
+      {hasSaju && todayConnection && (
+        <FadeIn delay={0.11}>
+          <section className="card-primary">
+            <p className="sec-title" style={{ marginBottom: 10 }}>꿈과 오늘의 기운 연결</p>
+            <p
+              className="text-body-lg"
+              style={{ color: 'var(--text-primary)', whiteSpace: 'pre-line' }}
+            >
+              {todayConnection}
+            </p>
           </section>
         </FadeIn>
       )}
@@ -802,32 +848,59 @@ function FreeResultView({
         </FadeIn>
       )}
 
-      {/* S8: 심층 해석 2~3단락 */}
+      {/* S8: 심층 해석 — v4.1 1500자+ 대응 레이아웃 (3단락 × 500자+) */}
       {interpretation && (
         <FadeIn delay={0.28}>
           <section className="card-primary">
-            <p className="sec-title" style={{ marginBottom: 14 }}>심층 해석</p>
-            <div className="space-y-4">
+            <p className="sec-title" style={{ marginBottom: 18 }}>심층 해석</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {interpretation?.psychological && (
                 <div>
-                  <p className="sec-meta" style={{ marginBottom: 4 }}>심리적 의미</p>
-                  <p className="text-body-lg" style={{ color: 'var(--text-primary)' }}>
+                  <p className="sec-meta" style={{ marginBottom: 6, color: 'var(--brand-gold)' }}>
+                    심리적 의미
+                  </p>
+                  <p
+                    className="text-body-lg"
+                    style={{
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'pre-line',
+                      lineHeight: 1.75,
+                    }}
+                  >
                     {stripMd(String(interpretation.psychological))}
                   </p>
                 </div>
               )}
               {interpretation?.lifestyle && (
                 <div>
-                  <p className="sec-meta" style={{ marginBottom: 4 }}>생활 조언</p>
-                  <p className="text-body-lg" style={{ color: 'var(--text-primary)' }}>
+                  <p className="sec-meta" style={{ marginBottom: 6, color: 'var(--brand-gold)' }}>
+                    생활 조언
+                  </p>
+                  <p
+                    className="text-body-lg"
+                    style={{
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'pre-line',
+                      lineHeight: 1.75,
+                    }}
+                  >
                     {stripMd(String(interpretation.lifestyle))}
                   </p>
                 </div>
               )}
               {hasSaju && interpretation?.future && (
                 <div>
-                  <p className="sec-meta" style={{ marginBottom: 4 }}>앞으로 며칠</p>
-                  <p className="text-body-lg" style={{ color: 'var(--text-primary)' }}>
+                  <p className="sec-meta" style={{ marginBottom: 6, color: 'var(--brand-gold)' }}>
+                    앞으로 며칠
+                  </p>
+                  <p
+                    className="text-body-lg"
+                    style={{
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'pre-line',
+                      lineHeight: 1.75,
+                    }}
+                  >
                     {stripMd(String(interpretation.future))}
                   </p>
                 </div>
