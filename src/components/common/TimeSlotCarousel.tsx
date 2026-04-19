@@ -43,8 +43,7 @@ export function TimeSlotCarousel({ slots, currentHour }: TimeSlotCarouselProps) 
   // 지나간 시간(탭 불가 아니고 시각적 dim)
   function isPast(i: number): boolean {
     if (currentHour == null) return false;
-    const slotToHour = [6, 12, 18, 22]; // 시작 시각
-    const slotEndHour = [12, 18, 22, 30]; // 다음 시작 (심야는 6 = 다음날 6시 = 30)
+    const slotEndHour = [12, 18, 22, 30]; // 구간 종료 (심야는 다음날 6시 = 30)
     const endHour = slotEndHour[i];
     const normalizedHour = currentHour < 6 && i === 3 ? currentHour + 24 : currentHour;
     return normalizedHour >= endHour;

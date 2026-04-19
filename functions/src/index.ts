@@ -7,9 +7,10 @@ const lazyClaudeDaeun = () => import('./ai/claudeDaeun');
 const lazyClaudeMonthly = () => import('./ai/claudeMonthly');
 const lazyClaudeCompat = () => import('./ai/claudeCompat');
 const lazyClaudeTojung = () => import('./ai/claudeTojung');
-const lazyGeminiFortune = () => import('./ai/geminiFortune');
+const lazyClaudeFortune = () => import('./ai/claudeFortune');
 const lazyGeminiChat = () => import('./ai/geminiChat');
-const lazyGeminiDream = () => import('./ai/geminiDream');
+const lazyClaudeDream = () => import('./ai/claudeDream');
+const lazyClaudeWeekly = () => import('./ai/claudeWeekly');
 const lazyClaudeTopic = () => import('./ai/claudeTopic');
 const lazyTossAuth = () => import('./auth/tossAuth');
 
@@ -160,24 +161,58 @@ export const generateReport = onCall(
 );
 
 /**
- * 오늘의 운세 — Gemini 2.5 Flash (무료)
+ * 오늘의 운세 — Claude Sonnet 4.6 (v3 스키마).
+ *   입력: { name, sajuData, date, weekday, todayGanzi, jeolgi?, dayJiShen?, dayXiongSha? }
+ *   출력: v3 DailyFortune JSON (AI프롬프트_v3 §5 참조).
+ *   쿼터: 일 1회 캐시 (Firestore users/{uid}/dailyFortune/{YYYY-MM-DD}).
  */
 export const generateDailyFortune = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
-    const { answers, timeSlot, sajuSummary, userConcern } = request.data;
+    const { name, sajuData, date, weekday, todayGanzi, jeolgi, dayJiShen, dayXiongSha } = request.data || {};
+    if (!sajuData || !date || !todayGanzi) {
+      throw new HttpsError('invalid-argument', '사주·날짜·오늘 간지가 필요합니다');
+    }
+
+    const uid = request.auth?.uid;
+
+    // 당일 캐시 확인 (실명 유저만)
+    if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+      const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(date);
+      const cached = await cacheRef.get();
+      if (cached.exists) {
+        const d = cached.data();
+        if (d?.content) {
+          console.log(`[generateDailyFortune] cache hit uid=${uid} date=${date}`);
+          return d.content;
+        }
+      }
+    }
 
     try {
-      console.log('[generateDailyFortune] Starting Gemini call...');
-      const { generateDailyFortuneAI } = await lazyGeminiFortune();
-      const result = await generateDailyFortuneAI(
-        GEMINI_KEY.value(),
-        answers || [],
-        timeSlot || 'morning',
-        sajuSummary,
-        userConcern || '',
-      );
-      console.log('[generateDailyFortune] Success, keys:', Object.keys(result || {}));
+      console.log('[generateDailyFortune] Starting Sonnet 4.6 call...');
+      const { generateDailyFortuneAnalysis } = await lazyClaudeFortune();
+      const result = await generateDailyFortuneAnalysis(ANTHROPIC_KEY.value(), {
+        name: name || '사용자',
+        sajuData,
+        date,
+        weekday: weekday || '',
+        todayGanzi,
+        jeolgi,
+        dayJiShen,
+        dayXiongSha,
+      });
+
+      // 캐싱 (실명 유저만)
+      if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+        const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(date);
+        await cacheRef.set({
+          content: result,
+          aiModel: 'claude-sonnet-4-6',
+          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+
       return result;
     } catch (error: any) {
       console.error('[generateDailyFortune] FAILED:', error.message, error.stack);
@@ -209,45 +244,214 @@ export const generateChatAnswer = onCall(
 );
 
 /**
- * 꿈해몽 — Gemini 2.5 Pro
- * mode: 'deep' → 사주 연계 심층 해몽 (유료 1운), 기본 → 무료 해몽
+ * 꿈해몽 (통합 레거시 엔드포인트) — Claude Sonnet 4.6.
+ *   mode: 'deep' → generateDreamDeep, 기본 → generateDreamFree.
+ *   Phase C 에서 클라이언트를 신규 엔드포인트(generateDreamFree/Deep)로 마이그레이션 후 이 통합 엔드포인트는 삭제 예정.
  */
 export const generateDream = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 180, memory: '1GiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
-    const { category, dreamText, sajuData, mode } = request.data;
+    const { category, dreamText, sajuData, mode, saju, freeResultSummary, userConcern } = request.data || {};
     if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');
 
     try {
-      const mod = await lazyGeminiDream();
+      const mod = await lazyClaudeDream();
 
-      // 유료 심층 해몽 — 사주 연계 프리미엄 분석
       if (mode === 'deep') {
-        if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 필요합니다');
-        console.log('[generateDream:deep] Starting, category:', category);
-        const result = await mod.generateDeepDreamInterpretation(
-          GEMINI_KEY.value(),
+        if (!sajuData && !saju) throw new HttpsError('invalid-argument', '사주 데이터가 필요합니다');
+        const deep = await mod.generateDreamDeep(ANTHROPIC_KEY.value(), {
+          saju: saju ?? buildLegacySajuContext(sajuData),
+          dreamContent: dreamText || '',
           category,
-          dreamText || '',
-          sajuData,
-        );
-        console.log('[generateDream:deep] Success, title:', result?.title, 'score:', result?.overallScore);
-        return result;
+          freeResultSummary: freeResultSummary ?? { title: '', verdict: '', symbols: [] },
+        });
+        return deep;
       }
 
-      // 무료 기본 해몽
-      console.log('[generateDream] Starting, category:', category, 'dreamText length:', (dreamText || '').length);
-      const result = await mod.generateDreamInterpretation(
-        GEMINI_KEY.value(),
+      const free = await mod.generateDreamFree(ANTHROPIC_KEY.value(), {
+        saju: saju ?? (sajuData ? buildLegacySajuContext(sajuData) : undefined),
+        dreamContent: dreamText || '',
         category,
-        dreamText || '',
-        sajuData,
-      );
-      console.log('[generateDream] Success, title:', result?.title);
-      return result;
+        userConcern,
+      });
+      return free;
     } catch (error: any) {
       console.error('[generateDream] FAILED:', error.message, error.stack);
       throw new HttpsError('internal', `꿈해몽 생성 실패: ${error.message || 'unknown'}`);
+    }
+  }
+);
+
+/** 레거시 sajuData 객체 → v3 DreamSajuContext 변환 (best-effort). */
+function buildLegacySajuContext(sajuData: any): any {
+  if (!sajuData) return undefined;
+  const pillars = sajuData?.pillars ?? [];
+  const dayPillar = pillars[2] ?? {};
+  const ohengDist = sajuData?.ohengDistribution ?? sajuData?.elements ?? {};
+  return {
+    name: sajuData?.name ?? '사용자',
+    yearGanzi: pillars[0]?.간지 ?? '',
+    monthGanzi: pillars[1]?.간지 ?? '',
+    dayGanzi: pillars[2]?.간지 ?? '',
+    timeGanzi: pillars[3]?.간지 ?? '',
+    ilgan: dayPillar?.천간 ?? '',
+    ilganOheng: dayPillar?.천간오행 ?? '',
+    ohengDistribution: ohengDist,
+    yongsin: sajuData?.yongsin,
+    currentDaeun: sajuData?.currentDaeun?.간지,
+    fullSajuData: sajuData,
+  };
+}
+
+/**
+ * 꿈해몽 무료 (신규 v3 엔드포인트) — Claude Sonnet 4.6.
+ *   쿼터: 일 1회 + 월 7회 상한 (Firestore users/{uid}/dreamQuota/{YYYY-MM}).
+ */
+export const generateDreamFree = onCall(
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 90, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
+  async (request) => {
+    const { saju, dreamContent, category, userConcern } = request.data || {};
+    if (!category) throw new HttpsError('invalid-argument', '카테고리가 없습니다');
+
+    const uid = request.auth?.uid;
+    if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+      // 쿼터 체크 — 월 7회 상한
+      const yyyymm = new Date().toISOString().slice(0, 7);
+      const quotaRef = db.collection('users').doc(uid).collection('dreamQuota').doc(yyyymm);
+      const today = new Date().toISOString().slice(0, 10);
+      await db.runTransaction(async (tx) => {
+        const q = await tx.get(quotaRef);
+        const data = q.data() || { monthCount: 0, lastDate: null };
+        if (data.monthCount >= 7) {
+          throw new HttpsError('resource-exhausted', '이번 달 꿈해몽 무료 쿼터가 소진됐어요');
+        }
+        const inc = data.lastDate === today ? 0 : 1;
+        tx.set(quotaRef, {
+          monthCount: data.monthCount + inc,
+          lastDate: today,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      });
+    }
+
+    try {
+      const { generateDreamFree: run } = await lazyClaudeDream();
+      const result = await run(ANTHROPIC_KEY.value(), {
+        saju,
+        dreamContent: dreamContent || '',
+        category,
+        userConcern,
+      });
+      return result;
+    } catch (error: any) {
+      console.error('[generateDreamFree] FAILED:', error.message);
+      throw new HttpsError('internal', `꿈해몽 무료 실패: ${error.message || 'unknown'}`);
+    }
+  }
+);
+
+/**
+ * 꿈해몽 심층 (신규 v3, 유료 1운) — Claude Sonnet 4.6 + 2차 자기 리뷰.
+ */
+export const generateDreamDeep = onCall(
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
+  async (request) => {
+    const { saju, dreamContent, category, freeResultSummary } = request.data || {};
+    if (!saju) throw new HttpsError('invalid-argument', '사주 데이터가 필요합니다');
+
+    const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
+    if (request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+      const userRef = db.collection('users').doc(uid);
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const balance = doc.data()?.balance ?? 0;
+          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, {
+            balance: admin.firestore.FieldValue.increment(-1),
+            totalSpent: admin.firestore.FieldValue.increment(1),
+          });
+        });
+        deductedAmount = 1;
+      }
+    }
+
+    try {
+      const { generateDreamDeep: run } = await lazyClaudeDream();
+      const result = await run(ANTHROPIC_KEY.value(), {
+        saju,
+        dreamContent: dreamContent || '',
+        category: category || '기타',
+        freeResultSummary: freeResultSummary ?? { title: '', verdict: '', symbols: [] },
+      });
+
+      const reportRef = db.collection('reports').doc();
+      await reportRef.set({
+        uid, type: 'deepDream', content: result,
+        aiModel: 'claude-sonnet-4-6',
+        generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { reportId: reportRef.id, content: result };
+    } catch (error: any) {
+      console.error('[generateDreamDeep] FAILED:', error.message);
+      await refundBalance(uid, deductedAmount, 'generateDreamDeep failed');
+      throw new HttpsError('internal', `꿈해몽 심층 실패: ${error.message || 'unknown'}`);
+    }
+  }
+);
+
+/**
+ * 주간 흐름 (신규 v3, 유료 1운) — Claude Sonnet 4.6 + 2차 자기 리뷰.
+ */
+export const generateWeeklyFortune = onCall(
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
+  async (request) => {
+    const { name, sajuData, monday, weekdays } = request.data || {};
+    if (!sajuData || !monday || !Array.isArray(weekdays) || weekdays.length !== 7) {
+      throw new HttpsError('invalid-argument', '사주·월요일·7일 요일 데이터가 필요합니다');
+    }
+
+    const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
+    if (request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+      const userRef = db.collection('users').doc(uid);
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const balance = doc.data()?.balance ?? 0;
+          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, {
+            balance: admin.firestore.FieldValue.increment(-1),
+            totalSpent: admin.firestore.FieldValue.increment(1),
+          });
+        });
+        deductedAmount = 1;
+      }
+    }
+
+    try {
+      const { generateWeeklyFortuneAnalysis } = await lazyClaudeWeekly();
+      const result = await generateWeeklyFortuneAnalysis(ANTHROPIC_KEY.value(), {
+        name: name || '사용자',
+        sajuData,
+        monday,
+        weekdays,
+      });
+
+      const reportRef = db.collection('reports').doc();
+      await reportRef.set({
+        uid, type: 'weekly', content: result,
+        aiModel: 'claude-sonnet-4-6',
+        generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { reportId: reportRef.id, content: result };
+    } catch (error: any) {
+      console.error('[generateWeeklyFortune] FAILED:', error.message);
+      await refundBalance(uid, deductedAmount, 'generateWeeklyFortune failed');
+      throw new HttpsError('internal', `주간 흐름 분석 실패: ${error.message || 'unknown'}`);
     }
   }
 );

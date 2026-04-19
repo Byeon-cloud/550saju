@@ -41,16 +41,63 @@ export async function generateReport(
 }
 
 /**
- * 오늘의 운세 — Firebase Function → Gemini 2.5 Flash
+ * 오늘의 운세 — Firebase Function → Claude Sonnet 4.6 (v3 스키마).
+ *
+ * Phase C 에서 DailyFortunePage 가 v4 입력(name, sajuData, date, todayGanzi 등)으로 전환.
+ * 당분간 레거시 위치 인자(answers[], timeSlot, sajuSummary, userConcern) 호출도 컴파일만 통과시킴.
+ * 서버는 v3 필수 필드가 없으면 invalid-argument 를 던지므로 런타임은 Phase C 후 정상.
  */
 export async function generateDailyFortune(
-  answers: number[],
-  timeSlot: string,
-  sajuSummary?: { ilgan: string; oheng: string; name: string },
-  userConcern?: string,
+  paramsOrAnswers?: any,
+  _timeSlot?: string,
+  _sajuSummary?: any,
+  _userConcern?: string,
 ): Promise<any> {
-  const result = await callWithAuth('generateDailyFortune', { answers, timeSlot, sajuSummary, userConcern });
+  // 레거시 positional 호출 (Array 로 들어옴) — 객체로 재포장 (서버에서 v3 필수 필드 없으면 400)
+  const payload = Array.isArray(paramsOrAnswers)
+    ? { answers: paramsOrAnswers, timeSlot: _timeSlot, sajuSummary: _sajuSummary, userConcern: _userConcern }
+    : paramsOrAnswers;
+  const result = await callWithAuth('generateDailyFortune', payload);
   return result.data;
+}
+
+/**
+ * 꿈해몽 무료 (v3 신규) — Firebase Function → Claude Sonnet 4.6.
+ */
+export async function generateDreamFree(args: {
+  saju?: any;
+  dreamContent: string;
+  category: string;
+  userConcern?: string;
+}): Promise<any> {
+  const result = await callWithAuth('generateDreamFree', args);
+  return result.data;
+}
+
+/**
+ * 꿈해몽 심층 (v3 신규, 유료 1운) — Firebase Function → Claude Sonnet 4.6 + 2차 리뷰.
+ */
+export async function generateDreamDeepV3(args: {
+  saju: any;
+  dreamContent: string;
+  category: string;
+  freeResultSummary: { title: string; verdict: string; symbols: string[] };
+}): Promise<{ reportId: string; content: any }> {
+  const result = await callWithAuth('generateDreamDeep', args);
+  return result.data as { reportId: string; content: any };
+}
+
+/**
+ * 주간 흐름 (v3 신규, 유료 1운) — Firebase Function → Claude Sonnet 4.6 + 2차 리뷰.
+ */
+export async function generateWeeklyFortune(args: {
+  name: string;
+  sajuData: SajuData;
+  monday: string;
+  weekdays: Array<{ date: string; weekday: string; ganzi: string }>;
+}): Promise<{ reportId: string; content: any }> {
+  const result = await callWithAuth('generateWeeklyFortune', args);
+  return result.data as { reportId: string; content: any };
 }
 
 /**
