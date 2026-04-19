@@ -1,4 +1,8 @@
+// Migrated from geminiTopic.ts on 2026-04-15 (commit a5f7473) + 2026-04-19 (promptsV3 통합).
+// See docs/prd/AI프롬프트_v3_Sonnet4.6.md
+
 import Anthropic from '@anthropic-ai/sdk';
+import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse } from './promptsV3';
 
 interface TopicConfig {
   label: string;
@@ -548,21 +552,40 @@ export async function generateTopicAnalysisAI(
   const prompt = buildPrompt(config, topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
   // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (준기 정책).
-  // 속도는 로딩 UX/스트리밍으로 보완 예정.
+  // system 프롬프트는 promptsV3.TOPIC_ANALYSIS_SYSTEM_V3 (V3_BASE + 금지어·어조 공통 블록 + 주제 특화 규칙).
+  // user 프롬프트는 이 파일의 buildPrompt 가 담당 (topicData 스키마·paritnerInfo·extraInfo 등 풍부한 주제별 특화 유지).
   const model = 'claude-sonnet-4-6';
   // 재회운 10섹션 + 풍부한 topicData → 16000, 나머지 5섹션 → 8192
   const maxTokens = topicId === 'reunion' ? 16000 : 8192;
 
-  const msg = await anthropic.messages.create({
+  // 1차 생성
+  const first = await anthropic.messages.create({
     model,
     max_tokens: maxTokens,
+    system: TOPIC_ANALYSIS_SYSTEM_V3,
     messages: [{ role: 'user', content: prompt }],
   });
+  const firstText = (first.content[0] as { type: string; text: string }).text;
+  const firstJson = parseJsonResponse(firstText);
 
-  const text = (msg.content[0] as any).text;
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('JSON 파싱 실패');
-  return JSON.parse(jsonMatch[0]);
+  // 2차 자기 리뷰 — 고가치 유료 상품이므로 품질 보정 (AI프롬프트_v3 §8).
+  const review = await anthropic.messages.create({
+    model,
+    max_tokens: maxTokens,
+    system: TOPIC_ANALYSIS_SYSTEM_V3,
+    messages: [
+      { role: 'user', content: prompt },
+      { role: 'assistant', content: firstText },
+      { role: 'user', content: SELF_REVIEW_V3({ original: firstJson, kind: 'topic' }) },
+    ],
+  });
+  const reviewText = (review.content[0] as { type: string; text: string }).text;
+  try {
+    return parseJsonResponse(reviewText);
+  } catch {
+    // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
+    return firstJson;
+  }
 }
 
 function buildPrompt(
@@ -736,6 +759,7 @@ ${config.specificPrompt}
   "title": "${d.input?.name||''}님의 ${config.label} 심층분석",
   "overallScore": ${baseScore ? baseScore : '"0-100 정수"'},
   "sajuBasis": "사주 근거 한 줄 (30~50자). 이 점수가 나온 사주적 이유를 십성/오행/신살 등으로 설명. 예: '재성(偏財)이 강하고 식신생재 구조로 재물 흐름이 원활한 사주입니다' / '관성이 약하고 비겁이 과다하여 조직 적응에 보완이 필요한 구조입니다'. 마크다운 금지.",
+  "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 중 최소 1곳 자연스러운 인용 필수. 형식 예시: '적천수에서 재성이 왕하면 관성으로 제압한다고 하였는데, 당신의 경우 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달. 마크다운 금지.",
   "summary": "200자 이상. 소름 포인트 포함. 마크다운 금지.",
   "sections": [${config.sections.map(s => `{"heading": "${s}", "content": "150자 이상. 마크다운 금지.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
   "timeline": [{"period": "시기", "score": 1-10, "description": "60자 이상"}, ...6~12개],

@@ -1,3 +1,6 @@
+// Migrated from geminiFortune.ts on 2026-04-19 (Sonnet 4.6 v3).
+// See commit 926ead2 + docs/prd/AI프롬프트_v3_Sonnet4.6.md
+
 import Anthropic from '@anthropic-ai/sdk';
 import {
   DAILY_FORTUNE_SYSTEM_V3,
