@@ -300,7 +300,7 @@ export function DreamPage() {
               hasSaju={hasSaju}
               onDeepAnalysis={startDeepAnalysis}
               onTopicTap={(tid) => navigate(`/topic/${tid}`)}
-              onFullReport={() => navigate('/result/latest')}
+              onFullReport={() => navigate('/storage')}
               onInputSaju={() => navigate('/input')}
               onReset={reset}
             />
