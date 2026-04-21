@@ -58,12 +58,12 @@ export function saveReport(report: LocalReport): void {
   const reports = getReports();
   reports.unshift(report);
   if (reports.length > 500) reports.pop(); // 유료 리포트 영구 보관 (localStorage ~2.5MB)
-  localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+  sessionStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
 }
 
 export function getReports(): LocalReport[] {
   try {
-    const raw = localStorage.getItem(REPORTS_KEY);
+    const raw = sessionStorage.getItem(REPORTS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
@@ -74,7 +74,7 @@ export function getReport(id: string): LocalReport | null {
 
 export function deleteReport(id: string): void {
   const reports = getReports().filter(r => r.id !== id);
-  localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+  sessionStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
 }
 
 /**
@@ -97,7 +97,7 @@ export function getCachedResult(name: string, birthYear: number, birthMonth: num
 
 /** 본인 프로필 조회 — pinned ID 우선, 없으면 relation '본인' 자동 탐색+고정 */
 export function getMyProfile(): LocalReport | null {
-  const myId = localStorage.getItem(MY_PROFILE_KEY);
+  const myId = sessionStorage.getItem(MY_PROFILE_KEY);
   if (myId) {
     const report = getReport(myId);
     if (report) return report;
@@ -107,13 +107,13 @@ export function getMyProfile(): LocalReport | null {
   const found = reports.find(r =>
     !r.input?.relation || r.input.relation === '본인' || r.input.relation === 'self'
   ) || null;
-  if (found) localStorage.setItem(MY_PROFILE_KEY, found.id);
+  if (found) sessionStorage.setItem(MY_PROFILE_KEY, found.id);
   return found;
 }
 
 /** 본인 프로필 고정 */
 export function setMyProfile(reportId: string): void {
-  localStorage.setItem(MY_PROFILE_KEY, reportId);
+  sessionStorage.setItem(MY_PROFILE_KEY, reportId);
 }
 
 // ─── 잔액 (유형별) ───
@@ -238,7 +238,7 @@ export function generateId(): string {
 /** 저장된 프로필 목록 조회 — 없으면 기존 리포트에서 마이그레이션 */
 export function getProfiles(): SajuProfile[] {
   try {
-    const raw = localStorage.getItem(PROFILES_KEY);
+    const raw = sessionStorage.getItem(PROFILES_KEY);
     if (raw) return JSON.parse(raw);
     // 마이그레이션: 기존 리포트에서 프로필 추출 (중복 제거)
     const reports = getReports();
@@ -261,7 +261,7 @@ export function getProfiles(): SajuProfile[] {
     }
     const profiles = Array.from(seen.values());
     if (profiles.length > 0) {
-      localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+      sessionStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
     }
     return profiles;
   } catch { return []; }
@@ -279,11 +279,11 @@ export function saveProfileDirect(profile: SajuProfile): void {
   } else {
     profiles.unshift(profile);
   }
-  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  sessionStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 }
 
 /** 프로필 삭제 */
 export function deleteProfile(profileId: string): void {
   const profiles = getProfiles().filter(p => p.id !== profileId);
-  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  sessionStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 }

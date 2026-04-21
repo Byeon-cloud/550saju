@@ -223,26 +223,153 @@ export const generateDailyFortune = onCall(
 );
 
 /**
- * AI 대화 — Gemini 2.5 Pro
+ * AI 대화 — Gemini 2.5 Pro + Safety Guard 이중 안전망 (P0-B · 2026-04-21)
+ *   근거: PC_PATCH_B_CHAT_SAFETY_GUARD.md + 앱인토스 검수 §1-1
+ *
+ *   **2-layer 방어:**
+ *   Layer 1: 키워드 1차 필터 (AI 호출 전, 확정 차단)
+ *     → 자살/마약/범죄/투기/의료법률 단정 표현 정규식 매칭 시 즉시 가드 응답
+ *   Layer 2: AI 응답 후 guarded 필드 + [GUARD] 토큰 검사
+ *     → Gemini responseSchema의 `guarded:true` 또는 answer 시작 `[GUARD]`
+ *
+ *   한쪽이 놓쳐도 다른 쪽이 잡는 구조. 특히 자살 카테고리 0% 미달 필수.
  */
+
+type GuardCategory = 'self_harm' | 'drugs' | 'crime' | 'investment' | 'medical_legal';
+
+/** 키워드 1차 필터 (Layer 1) — 사주 도메인 false positive 방지 위해 의도 결합형.
+ *  "단명" 단독은 사주 용어라 매칭 X, "단명.*편한|나아|좋|차라리|어차피" 같이 결합해야만 발동. */
+const GUARD_KEYWORDS: Array<{ re: RegExp; cat: GuardCategory }> = [
+  // 자살·자해
+  { re: /죽는\s*법|죽는\s*방법|자살|안\s*아프게\s*(죽|가)|목숨\s*끊|삶을\s*(끝|마)|살기\s*싫|단명.*(편한|나아|좋|차라리|어차피)|몇\s*살에\s*죽|언제\s*죽/, cat: 'self_harm' },
+  // 마약
+  { re: /필로폰|코카인|대마.*(제조|효과)|methamphetamine|cocaine|마약.*(구|만드)/i, cat: 'drugs' },
+  // 범죄
+  { re: /들키지\s*않고|보험금\s*사기|주민번호\s*도용|해킹|위조|사기.*(유리|성공)/, cat: 'crime' },
+  // 투자
+  { re: /로또.*번호|복권.*번호|주식.*(대박|급등|예측|찍어|뭐\s*사)|코인.*(대박|예측|찍)/, cat: 'investment' },
+  // 의료·법률 단정
+  { re: /암.*(확정|걸리는지)|이혼.*(100%|확실)|승소.*확실/, cat: 'medical_legal' },
+];
+
+/** 카테고리별 가드 응답 (핫라인 안내 포함). */
+const GUARD_RESPONSE: Record<GuardCategory, string> = {
+  self_harm: '사주는 결정된 운명을 알려주는 도구가 아닙니다. 지금 마음이 많이 힘드시면 자살예방상담전화 1393(24시간), 정신건강상담 1577-0199에 연락해 주세요. 사주 상담은 다음 기회에 다시 찾아주시면 좋겠습니다.',
+  drugs: '사주 상담은 약물 관련 정보를 제공하지 않습니다. 마약류중독상담 1342로 연결해 드립니다.',
+  crime: '타인에게 해를 끼치거나 법을 어기는 일에 대한 상담은 어렵습니다. 범죄신고 112 · 사이버범죄 118 로 문의해 주세요.',
+  investment: '사주는 특정 종목·번호를 예측하지 않습니다. 재물운의 흐름과 시기는 안내드릴 수 있습니다. 금융투자의 결과는 본인 책임이며, 전문가 자문을 권해드립니다.',
+  medical_legal: '의료·법률 단정은 사주의 영역이 아닙니다. 사주는 가능성과 흐름을 보는 도구입니다. 확정 진단은 해당 분야 전문가의 진단·자문을 권해드립니다.',
+};
+
+/** 키워드 1차 필터 — 매칭 시 카테고리 반환, 미매칭 시 null. */
+function detectByKeyword(question: string): GuardCategory | null {
+  for (const { re, cat } of GUARD_KEYWORDS) {
+    if (re.test(question)) return cat;
+  }
+  return null;
+}
+
+/** guard_hits 로깅 (실패해도 응답은 정상 반환). source=keyword|llm */
+async function logGuardHit(args: {
+  uid: string | null;
+  question: string;
+  category: string;
+  source: 'keyword' | 'llm';
+  modelResponse?: string;
+}): Promise<void> {
+  try {
+    await db.collection('guard_hits').add({
+      uid: args.uid,
+      category: args.category,
+      source: args.source,
+      rawInput: String(args.question).slice(0, 500),
+      modelResponse: (args.modelResponse ?? '').slice(0, 1000),
+      at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (e: any) {
+    console.warn('[generateChatAnswer] guard_hits 로깅 실패:', e?.message);
+  }
+}
+
 export const generateChatAnswer = onCall(
   { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question) throw new HttpsError('invalid-argument', '질문이 없습니다');
 
-    const { generateChatAnswerAI } = await lazyGeminiChat();
-    const result = await generateChatAnswerAI(
+    const uid = request.auth?.uid ?? null;
+    const q = String(question);
+
+    // ─── Layer 1: 키워드 1차 필터 (AI 호출 전) ───
+    const kwCat = detectByKeyword(q);
+    if (kwCat) {
+      const answer = GUARD_RESPONSE[kwCat];
+      await logGuardHit({ uid, question: q, category: kwCat, source: 'keyword', modelResponse: answer });
+      console.info(`[generateChatAnswer] Layer1 keyword GUARD — cat=${kwCat} uid=${uid ?? 'anon'}`);
+      return {
+        answer,
+        keywords: [] as string[],
+        consumed: 0,
+        guard: true,
+        guardCategory: kwCat,
+        guardSource: 'keyword' as const,
+      };
+    }
+
+    // ─── Layer 2: AI 호출 + guarded 필드 / [GUARD] 토큰 검사 ───
+    const { generateChatAnswerAI, GUARD_TOKEN } = await lazyGeminiChat();
+    const raw = await generateChatAnswerAI(
       GEMINI_KEY.value(),
-      question,
+      q,
       sajuData,
       chatHistory || [],
       timeSlot,
     );
 
-    return result;
+    const rawAnswer: string = raw?.answer ?? '';
+    const llmSaidGuarded = raw?.guarded === true;
+    const tokenGuarded = rawAnswer.trimStart().startsWith(GUARD_TOKEN);
+    const isGuarded = llmSaidGuarded || tokenGuarded;
+
+    if (isGuarded) {
+      const cleaned = rawAnswer.replace(GUARD_TOKEN, '').trim();
+      const cat: GuardCategory =
+        (raw?.guardCategory as GuardCategory) ??
+        (inferGuardCategoryFromText(cleaned) as GuardCategory) ??
+        'medical_legal';
+      const finalAnswer = cleaned || GUARD_RESPONSE[cat];
+
+      await logGuardHit({ uid, question: q, category: cat, source: 'llm', modelResponse: finalAnswer });
+      console.info(`[generateChatAnswer] Layer2 LLM GUARD — cat=${cat} uid=${uid ?? 'anon'}`);
+
+      return {
+        answer: finalAnswer,
+        keywords: raw.keywords ?? [],
+        consumed: 0,
+        guard: true,
+        guardCategory: cat,
+        guardSource: 'llm' as const,
+      };
+    }
+
+    return {
+      answer: rawAnswer,
+      keywords: raw.keywords ?? [],
+      consumed: 1,
+      guard: false,
+    };
   }
 );
+
+/** Layer 2 보조 — LLM이 guardCategory 안 채운 경우 응답 본문에서 카테고리 추론. */
+function inferGuardCategoryFromText(text: string): GuardCategory | null {
+  if (/1393|자살예방/.test(text)) return 'self_harm';
+  if (/1342|마약류/.test(text)) return 'drugs';
+  if (/112|118|범죄신고|사이버범죄/.test(text)) return 'crime';
+  if (/금융투자|종목|복권|로또/.test(text)) return 'investment';
+  if (/전문가.*(자문|진단)|의료|법률/.test(text)) return 'medical_legal';
+  return null;
+}
 
 /**
  * 꿈해몽 (통합 레거시 엔드포인트) — Claude Sonnet 4.6.

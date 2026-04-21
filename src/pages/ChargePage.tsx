@@ -10,6 +10,7 @@ import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getRemainingShareRewards, canEarnShareReward } from '@/services/share/shareReward';
+import { isAppintosBuild } from '@/lib/env';
 
 
 export function ChargePage() {
@@ -277,12 +278,16 @@ export function ChargePage() {
             <p className="text-caption text-text-hint">· 보너스 운과 리워드 운은 환불 대상에서 제외돼요</p>
             <p className="text-caption text-text-hint">· 유효기간 없어요. 충전한 운은 사라지지 않아요</p>
             <p className="text-caption text-text-hint">· 자동결제 없음. 한 번 충전으로 끝</p>
+            {/* P0-A · 토스페이 환불 정책 (2026-04-21 앱인토스 검수 §1-12) */}
+            <p className="text-caption text-text-hint">
+              · 환불은 토스페이 결제 취소 정책을 따르며, 결제 후 7일 이내 미사용 운에 한해 고객센터(info@juulabel.com)로 문의 시 심사 후 처리해요
+            </p>
           </div>
         </FadeIn>
       </div>
 
-      {/* 하단 CTA */}
-      <div className="sticky-cta-bottom">
+      {/* 하단 CTA (P0-A · .checkout 클래스로 safe-area 패딩 적용) */}
+      <div className="checkout sticky-cta-bottom">
         {message && (
           <p className={`text-center text-caption mb-2 ${message.includes('충전') ? 'text-func-success' : 'text-func-warning'}`}>
             {message}
@@ -311,7 +316,9 @@ export function ChargePage() {
           }}
         >
           {selectedPkg
-            ? `${selectedPkg.price.toLocaleString()}원 결제하기`
+            ? (isAppintosBuild
+                ? `${selectedPkg.price.toLocaleString()}원 토스페이로 결제`
+                : `${selectedPkg.price.toLocaleString()}원 결제하기`)
             : '패키지를 선택해주세요'}
         </Button>
       </div>

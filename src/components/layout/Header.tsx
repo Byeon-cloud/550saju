@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { IconBack } from '@/components/brand/Icons';
+import { isAppintosBuild } from '@/lib/env';
 
 interface HeaderProps {
   title?: string;
@@ -8,16 +9,16 @@ interface HeaderProps {
 }
 
 /**
- * 앱인토스 환경 감지:
- * - 앱인토스 WebView에서는 토스가 네이티브 네비바(뒤로가기)를 제공
- * - 웹 배포 시에는 자체 뒤로가기 표시
- * - user-agent에 'TossApp'이 포함되거나 intoss:// 스킴으로 진입하면 앱인토스
+ * 앱인토스 환경 감지 (2026-04-21 P0-C · env.ts 통합):
+ * - `isAppintosBuild` — VITE_BUILD_TARGET=appintos 또는 InTossApp UA
+ * - legacy: TossApp UA · intoss:// 스킴 · `<meta name="apps-in-toss">` 태그
+ * 셋 중 하나라도 true 면 네이티브 뒤로가기가 있다고 판단, showBack=false.
  */
-const IS_APPS_IN_TOSS = typeof navigator !== 'undefined' && (
+const IS_APPS_IN_TOSS = isAppintosBuild || (typeof navigator !== 'undefined' && (
   navigator.userAgent.includes('TossApp') ||
   window.location.href.includes('intoss://') ||
   !!document.querySelector('meta[name="apps-in-toss"]')
-);
+));
 
 export function Header({ title, showBack = !IS_APPS_IN_TOSS, right }: HeaderProps) {
   const navigate = useNavigate();

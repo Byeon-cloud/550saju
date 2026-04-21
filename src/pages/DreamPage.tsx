@@ -335,6 +335,16 @@ export function DreamPage() {
             />
           )}
         </AnimatePresence>
+
+        {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
+        <div className="mt-10 text-center space-y-1">
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            『적천수』·한국 명리학 문헌 기반
+          </p>
+          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
+            사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+          </p>
+        </div>
       </div>
     </div>
   );

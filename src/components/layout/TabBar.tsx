@@ -20,7 +20,7 @@ export function TabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-30 mx-auto max-w-mobile"
+      className="tabbar fixed bottom-0 inset-x-0 z-30 mx-auto max-w-mobile"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="mx-3 mb-2 rounded-2xl bg-white/95 backdrop-blur-xl shadow-lg border border-white/60">

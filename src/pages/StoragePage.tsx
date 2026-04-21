@@ -94,7 +94,7 @@ export function StoragePage() {
       }
       return true;
     });
-    localStorage.setItem('saju500_reports', JSON.stringify(remaining));
+    sessionStorage.setItem('saju500_reports', JSON.stringify(remaining));
     setReports(remaining);
     setDeleteTarget(null);
   }

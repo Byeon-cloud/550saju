@@ -20,7 +20,7 @@ export function BalanceBar() {
   if (!SHOW.some((p) => location.pathname === p)) return null;
 
   return (
-    <div className="sticky top-0 z-30 mx-auto max-w-mobile"
+    <div className="balance-bar sticky top-0 z-30 mx-auto max-w-mobile"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="flex items-center justify-between h-[48px] px-5 bg-white/95 backdrop-blur-xl border-b border-border-light">
         {/* 로고 */}
