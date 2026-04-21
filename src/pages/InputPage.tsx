@@ -541,21 +541,22 @@ function Step3({ gender, setGender, onAutoNext }: { gender: Gender | null; setGe
 function Step4({ knowsTime, setKnowsTime, timeIndex, setTimeIndex }: {
   knowsTime: boolean | null; setKnowsTime: (v: boolean) => void; timeIndex: number | null; setTimeIndex: (v: number | null) => void;
 }) {
+  const [tipOpen, setTipOpen] = useState(false);
   return (
     <>
-      <StepTitle stepNum={4} title="출생시간을 알고 계신가요?" sub="시간을 알면 8글자 정밀 분석, 모르면 6글자 기본 분석이 됩니다." />
+      <StepTitle stepNum={4} title="출생시간을 알고 계신가요?" sub="시간 모르면 하루의 큰 흐름까지는 정확히 풀립니다. 시(時)까지 있으면 개인별 미세 조율이 더해져요." />
       <div className="flex gap-3 mb-6">
         <button onClick={() => setKnowsTime(true)}
           className={`flex-1 select-card ${knowsTime === true ? 'select-card-active' : ''}`}>
           <span className="text-[14px] font-black text-brand-navy">時</span>
           <span className="text-h3 text-text-primary">알아요</span>
-          <span className="text-tiny text-text-muted">8글자 분석 (더 정밀)</span>
+          <span className="text-tiny text-text-muted">12섹션 · 개인 미세 조율</span>
         </button>
         <button onClick={() => { setKnowsTime(false); setTimeIndex(null); }}
           className={`flex-1 select-card ${knowsTime === false ? 'select-card-active' : ''}`}>
           <span className="text-[14px] font-bold text-text-hint">--</span>
           <span className="text-h3 text-text-primary">몰라요</span>
-          <span className="text-tiny text-text-muted">6글자 분석 (기본)</span>
+          <span className="text-tiny text-text-muted">10섹션 · 큰 흐름</span>
         </button>
       </div>
       {knowsTime && (
@@ -579,13 +580,48 @@ function Step4({ knowsTime, setKnowsTime, timeIndex, setTimeIndex }: {
             ))}
           </div>
           {timeIndex !== null && (
-            <p className="text-caption text-text-muted mt-3 text-center">
-              선택: <span className="font-semibold text-text-primary">{SHIJU_OPTIONS[timeIndex].label}</span>
-              <span className="text-text-hint ml-1">({SHIJU_OPTIONS[timeIndex].sub})</span>
-            </p>
+            <>
+              <p className="text-caption text-text-muted mt-3 text-center">
+                선택: <span className="font-semibold text-text-primary">{SHIJU_OPTIONS[timeIndex].label}</span>
+                <span className="text-text-hint ml-1">({SHIJU_OPTIONS[timeIndex].sub})</span>
+              </p>
+              {/* P1-8 · 한국 기준시 ±30분 보정 안내 배너 */}
+              <div className="mt-3 rounded-xl p-3 flex items-start gap-2"
+                style={{ background: 'rgba(184,150,90,0.10)', border: '1px solid rgba(184,150,90,0.25)' }}>
+                <span aria-hidden className="mt-0.5 text-[14px]" style={{ color: '#7F6B4E' }}>🕐</span>
+                <p className="text-[12px] leading-[1.6]" style={{ color: '#3D3D3D' }}>
+                  한국은 1961년부터 일본 표준시(UTC+9)를 사용해
+                  <strong> 실제 태양시와 약 ±30분 차이</strong>가 납니다.
+                  사주500은 이를 <strong>자동으로 보정</strong>해서 계산해요.
+                </p>
+              </div>
+            </>
           )}
         </motion.div>
       )}
+      {/* 팁 토글 — 왜 시간까지 필요한가 */}
+      <div className="mt-5 rounded-xl border border-border-light bg-white overflow-hidden">
+        <button type="button" onClick={() => setTipOpen((v) => !v)}
+          className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left">
+          <span className="w-6 h-6 rounded-full inline-flex items-center justify-center text-[14px] font-black"
+            style={{ background: 'rgba(184,150,90,0.18)', color: '#7F6B4E', fontFamily: "'Noto Serif KR', serif" }}>時</span>
+          <span className="flex-1 text-body-sm font-bold text-text-primary">왜 태어난 시간까지 필요한가요?</span>
+          <span className="text-text-hint" style={{ transform: tipOpen ? 'rotate(180deg)' : 'none', transition: '.2s' }}>▼</span>
+        </button>
+        {tipOpen && (
+          <div className="px-4 pb-4 pt-3 border-t border-border-light text-body-sm leading-[1.7] text-text-secondary space-y-2">
+            <p>
+              사주는 <strong>연·월·일·시</strong> 네 기둥으로 이루어집니다. 그중 <strong>시주(時柱)</strong>는 개인의{' '}
+              <strong>직업 성향·말년 운·잠재력</strong>을 읽는 축입니다. 시주가 없어도 하루의 큰 흐름은 정확히 풀리지만,
+              시주가 있으면 개인별 미세 결까지 읽어드립니다.
+            </p>
+            <p>
+              출생 시를 정확히 기억하지 못하시면 어머님께 여쭙거나, 출생증명서의 시각을 확인해 주세요.
+              대략 <strong>두 시간 범위 안</strong>만 알아도 시주 추정이 가능합니다.
+            </p>
+          </div>
+        )}
+      </div>
     </>
   );
 }

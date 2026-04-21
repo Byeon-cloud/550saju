@@ -94,14 +94,30 @@ export function ChargePage() {
           </div>
         </FadeIn>
 
-        {/* 운이 뭔지 설명 — 친절하게 */}
+        {/* P1-9 · HeroBar — 1운=500원 환율 명시 (사주500 전체에서 원화 노출 유일 지점) */}
+        <FadeIn delay={0.025}>
+          <div className="card py-4 px-5"
+            style={{ background: 'linear-gradient(135deg, #F0E8D9 0%, #F8F5EE 100%)', border: '1px solid rgba(184,150,90,0.25)' }}>
+            <p className="text-h2 text-text-primary" style={{ fontFamily: "'Noto Serif KR', serif" }}>
+              운(運)으로 사주를 봐요
+            </p>
+            <p className="mt-1.5 text-body-sm text-text-secondary">
+              <strong style={{ color: '#7F6B4E' }}>1운 = 500원</strong>으로 충전돼요
+            </p>
+            <p className="mt-1 text-caption text-text-muted">
+              콘텐츠는 모두 운 단위로 보여드려요
+            </p>
+          </div>
+        </FadeIn>
+
+        {/* 운이 뭔지 설명 — 친절하게 (P1-9 갭리포트: 사주 상담 5→3회) */}
         <FadeIn delay={0.03}>
           <div className="card py-4 px-5">
             <p className="text-h3 text-text-primary mb-3">운(運)으로 이런 걸 할 수 있어요</p>
             <div className="space-y-2.5">
               {[
                 { service: '내 사주 풀이', desc: '성격, 직업, 연애 등 12가지 분석', cost: '1운' },
-                { service: '사주 상담', desc: '대화로 주고받는 1:1 상담 5회', cost: '1운' },
+                { service: '사주 상담', desc: '대화로 주고받는 1:1 상담 3회', cost: '1운' },
                 { service: '궁합 분석', desc: '두 사람의 사주 비교', cost: '1운' },
                 { service: '대운 해설', desc: '10년 단위 운의 흐름', cost: '1운' },
                 { service: '월별 운세', desc: '올해 12개월 점수와 조언', cost: '1운' },

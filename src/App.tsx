@@ -27,6 +27,7 @@ const TojungPage = lazy(() => import('@/pages/TojungPage').then(m => ({ default:
 const TopicAnalysisPage = lazy(() => import('@/pages/TopicAnalysisPage').then(m => ({ default: m.TopicAnalysisPage })));
 const TermsPage = lazy(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
+const EventsPage = lazy(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
 
 /** 페이지 전환 애니메이션 — 토스 스타일 */
 const pageVariants = {
@@ -109,6 +110,7 @@ function AnimatedRoutes() {
             <Route path="/chat/:roomId" element={<ChatPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/events" element={<EventsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

@@ -2,15 +2,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { IconHome, IconSaju, IconChat, IconStorage, IconProfile } from '@/components/brand/Icons';
 
+// 2026-04-21 마스터 개정 — "사주분석" 탭 제거 → "이벤트" 탭 신설.
+// 사주 입력은 홈/보관함/콘텐츠 3지점에서 분산 진입.
 const TABS = [
   { path: '/', label: '홈', Icon: IconHome },
-  { path: '/input', label: '사주분석', Icon: IconSaju },
+  { path: '/events', label: '이벤트', Icon: IconSaju },
   { path: '/chat', label: '사주대화', Icon: IconChat, isCenter: true },
   { path: '/storage', label: '보관함', Icon: IconStorage },
   { path: '/my', label: '내 정보', Icon: IconProfile },
 ] as const;
 
-const HIDDEN = ['/loading', '/result', '/charge', '/compat', '/share', '/dream', '/input', '/terms', '/privacy', '/daeun', '/monthly', '/tojung'];
+const HIDDEN = ['/loading', '/result', '/charge', '/compat', '/share', '/dream', '/input', '/terms', '/privacy', '/daeun', '/monthly', '/tojung', '/daily'];
 
 export function TabBar() {
   const location = useLocation();

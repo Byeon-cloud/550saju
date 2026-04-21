@@ -621,12 +621,15 @@ function ChatView({ roomId }: { roomId: string }) {
             </motion.div>
           ))}
 
-          {/* 로딩 */}
+          {/* 로딩 — 목업 v1: "사주를 살피는 중" (AI 클리셰 "분석 중" 금지) */}
           {isLoading && (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start gap-2">
               <TaegukAvatar />
-              <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
+              <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5"
                 style={{ background: '#FFFFFF', border: '1px solid #E8E0D4' }}>
+                <span className="text-[11px] font-medium" style={{ color: '#8B7A5E', fontFamily: "'Noto Serif KR', serif" }}>
+                  사주를 살피는 중…
+                </span>
                 {['命', '理', '학'].map((c, i) => (
                   <motion.span key={i} className="text-[13px] font-bold" style={{ color: '#C9A96E' }}
                     animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.3 }}>{c}</motion.span>
