@@ -12,13 +12,12 @@
 
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
 import { claimStreakReward } from './claimStreakReward';
 import { claimWeeklyTossPoint } from './claimWeeklyTossPoint';
 
-const APPINTOS_MTLS_CERT = defineSecret('APPINTOS_MTLS_CERT');
-const APPINTOS_MTLS_KEY = defineSecret('APPINTOS_MTLS_KEY');
-const APPINTOS_PROMOTION_CODE = defineSecret('APPINTOS_PROMOTION_CODE');
+// APPINTOS_MTLS_CERT / KEY / PROMOTION_CODE 는 실제 LIVE 전환 시점에
+// `firebase functions:secrets:set` 으로 주입. 현재 STUB 모드 (환경변수 부재 시 자동 목업).
+// defineSecret 을 쓰면 미주입 상태 배포 실패하므로 runtime 단에서만 참조.
 
 /* ─── 날짜 유틸 (KST 기준) ─── */
 
@@ -47,7 +46,7 @@ function kstWeekKey(date: string): string {
 
 export const markAttendance = onCall(
   {
-    secrets: [APPINTOS_MTLS_CERT, APPINTOS_MTLS_KEY, APPINTOS_PROMOTION_CODE],
+    // STUB 모드: secrets 미선언. LIVE 전환 시 `secrets: [APPINTOS_MTLS_CERT, APPINTOS_MTLS_KEY, APPINTOS_PROMOTION_CODE]` 추가.
     timeoutSeconds: 30,
     memory: '256MiB',
     minInstances: 0,
