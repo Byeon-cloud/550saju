@@ -29,6 +29,30 @@ service cloud.firestore {
         allow read: if request.auth != null && request.auth.uid == uid;
         // write는 Cloud Function에서만 (서버 사이드)
       }
+
+      // ─── 이벤트 탭 v4.1 (2026-04-21) ───
+      // 모든 쓰기는 Cloud Functions admin SDK만. 클라이언트는 읽기 전용.
+      match /attendance/{date} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+      match /streakAttendance/{docId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+      match /inviteEvents/{date} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+      match /shareEvents/{date} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+      match /rewardClaims/{claimId} {
+        // 블록 5 "누적 운" 집계용 쿼리 허용 (where · orderBy · limit)
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false; // 서버 전용
+      }
     }
   }
 }

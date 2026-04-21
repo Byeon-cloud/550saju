@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -94,6 +95,7 @@ export function DreamPage() {
   usePageTitle('꿈해몽');
   const navigate = useNavigate();
   const toast = useToast();
+  const { mark } = useAttendanceOnResult();
   const [phase, setPhase] = useState<Phase>('category');
   const [selectedCategory, setSelectedCategory] = useState<DreamCategory | null>(null);
   const [dreamText, setDreamText] = useState('');
@@ -141,6 +143,9 @@ export function DreamPage() {
       }
 
       setAiResult(result);
+
+      // 이벤트 v4 · 출석 마커 (KST 당일 1회)
+      mark().catch(() => {/* non-blocking */});
 
       // 보관함 저장 (무료)
       try {

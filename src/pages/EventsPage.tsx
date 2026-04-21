@@ -1,205 +1,225 @@
-// EventsPage v3 MVP (2026-04-21 P1-11)
-// 사양: 사주500_UI개편_09_이벤트.md + 목업 사주500_UI개편_목업_이벤트_v3.html
-// MVP 범위:
-//   - 주간 출석 7칸 (월~일, 0시 리셋)
-//   - 4일 마일스톤 (1운) · 7일 마일스톤 (2운)
-//   - 단일 공유 버튼
-// 확률박스·토스포인트 UAC는 정책에 따라 스킵.
+// EventsPage v4.1 전면 재작성 (2026-04-21)
+// 스펙: 사주500_UI개편_09_이벤트_v4.md + 핸드오버 §1-C-7
+// 블록 구조:
+//   1. HeroBadge (출석 방법)
+//   2. StreakWidget (3일 연속 · 이동윈도우)
+//   3. Weekly 7칸 (7일 모두 → 토스포인트 100원)
+//   4. InviteBlock (하루 3회 · 초대당 운 1)
+//   5. CumulativeReceivedCard (지금까지 받은 운)
+// v3 하단 CTA(오늘의 운세/꿈해몽) 완전 제거.
 
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/services/auth/firebase';
+import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Header } from '@/components/layout/Header';
 import { useToast } from '@/components/common/Toast';
+import { HeroBadge } from '@/components/events/HeroBadge';
+import { StreakWidget } from '@/components/events/StreakWidget';
+import { CumulativeReceivedCard } from '@/components/events/CumulativeReceivedCard';
+import { TierAToast } from '@/components/events/TierAToast';
+import { TierBModal, type TierBKind } from '@/components/events/TierBModal';
+import { onInviteReceived } from '@/services/events/eventsClient';
 
 const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
-  inkMute: '#8A7F6E',
+  navy: '#1D2D4A',
+  muted: '#8A7F6E',
   gold: '#B8965A',
-  goldSoft: '#F0E8D9',
-  goldDeep: '#5C4A2E',
-  paper2: '#EFE9DA',
-  white: '#FFFFFF',
+  goldDark: '#9A7D47',
+  goldLight: '#F5EADB',
+  line: '#EDEAE0',
+  danger: '#C0392B',
 } as const;
-
 const SERIF = "'Noto Serif KR', serif";
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일'] as const;
-const ATTENDANCE_KEY = 'saju500_events_attendance';
-const SHARE_DONE_KEY = 'saju500_events_share_weekly';
 
-/** 이번 주 월요일 00:00의 타임스탬프 (출석·공유 리셋 기준) */
-function getWeekStart(): number {
-  const d = new Date();
-  const day = d.getDay(); // 0(일)~6(토)
-  const diff = (day === 0 ? -6 : 1 - day); // 월요일까지
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+/* 날짜 유틸 */
+function kstToday(): string {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().slice(0, 10);
 }
-
-function getTodayIndex(): number {
-  // 0(월)~6(일)
-  const d = new Date();
-  const day = d.getDay();
-  return day === 0 ? 6 : day - 1;
+function kstWeekKey(date: string): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
-
-interface Attendance {
-  weekStart: number;
-  days: boolean[]; // length 7
-  milestone4Claimed?: boolean;
-  milestone7Claimed?: boolean;
-}
-
-function loadAttendance(): Attendance {
-  const ws = getWeekStart();
-  try {
-    const raw = localStorage.getItem(ATTENDANCE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Attendance;
-      if (parsed.weekStart === ws && Array.isArray(parsed.days) && parsed.days.length === 7) {
-        return parsed;
-      }
-    }
-  } catch {/* ignore */}
-  return { weekStart: ws, days: [false, false, false, false, false, false, false] };
-}
-
-function saveAttendance(a: Attendance): void {
-  try { localStorage.setItem(ATTENDANCE_KEY, JSON.stringify(a)); } catch {/* ignore */}
-}
-
-function loadShareDone(): boolean {
-  const ws = getWeekStart();
-  try {
-    const raw = localStorage.getItem(SHARE_DONE_KEY);
-    if (raw) {
-      const { weekStart, done } = JSON.parse(raw);
-      return weekStart === ws && done === true;
-    }
-  } catch {/* ignore */}
-  return false;
-}
-
-function saveShareDone(): void {
-  try {
-    localStorage.setItem(SHARE_DONE_KEY, JSON.stringify({ weekStart: getWeekStart(), done: true }));
-  } catch {/* ignore */}
+function kstDayIndex(): number {
+  const d = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+  const g = d.getUTCDay(); // 0(일)~6(토)
+  return g === 0 ? 6 : g - 1; // 월=0
 }
 
 export function EventsPage() {
   usePageTitle('이벤트');
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const uid = user?.uid;
   const toast = useToast();
-  const [attendance, setAttendance] = useState<Attendance>(loadAttendance);
-  const [shareDone, setShareDone] = useState<boolean>(loadShareDone);
-  const todayIdx = useMemo(() => getTodayIndex(), []);
 
-  useEffect(() => {
-    // 페이지 진입 시 오늘 출석 자동 표시 (MVP — 추후 "콘텐츠 본 후" 조건으로 강화)
-    setAttendance((prev) => {
-      if (prev.days[todayIdx]) return prev;
-      const next: Attendance = { ...prev, days: [...prev.days] };
-      next.days[todayIdx] = true;
-      saveAttendance(next);
-      return next;
-    });
-  }, [todayIdx]);
+  const [streak, setStreak] = useState(0);
+  const [missedYesterday, setMissedYesterday] = useState(false);
+  const [streakPulsing, setStreakPulsing] = useState(false);
+  const [weekDoneDays, setWeekDoneDays] = useState<boolean[]>([false,false,false,false,false,false,false]);
+  const [inviteCount, setInviteCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const daysDone = attendance.days.filter(Boolean).length;
-  const progressPct = Math.min(100, (daysDone / 7) * 100);
-  const milestone4 = daysDone >= 4;
-  const milestone7 = daysDone >= 7;
+  const [tierAOpen, setTierAOpen] = useState(false);
+  const [tierAMsg, setTierAMsg] = useState<string | undefined>(undefined);
+  const [tierBOpen, setTierBOpen] = useState(false);
+  const [tierBKind, setTierBKind] = useState<TierBKind>('tosspoint');
 
-  const onShare = async () => {
-    if (shareDone) {
-      toast.show('이번 주 공유는 이미 완료했어요', 'info');
+  const today = useMemo(() => kstToday(), []);
+  const weekKey = useMemo(() => kstWeekKey(today), [today]);
+  const todayIdx = useMemo(() => kstDayIndex(), []);
+
+  /** Firestore 읽기 (streakAttendance · attendance · inviteEvents) */
+  const refresh = useCallback(async () => {
+    if (!uid) {
+      setLoading(false);
+      return;
+    }
+    try {
+      // 1. streak
+      const streakSnap = await getDoc(doc(db, `users/${uid}/streakAttendance/current`));
+      const sd = (streakSnap.exists() ? streakSnap.data() : {}) as any;
+      const cur = Number(sd?.currentStreak ?? 0);
+      const lastDate: string | null = sd?.lastAttendedDate ?? null;
+      setStreak(cur);
+      // 끊김 감지: 어제 날짜 이전에 lastAttended 가 있었는데 오늘 아님
+      const yesterday = new Date(new Date().getTime() + 9 * 60 * 60 * 1000 - 86400000)
+        .toISOString().slice(0, 10);
+      setMissedYesterday(Boolean(lastDate && lastDate < yesterday && cur >= 1));
+
+      // 2. 주간 7일 출석
+      const weekSnap = await getDocs(
+        query(collection(db, `users/${uid}/attendance`), where('weekKey', '==', weekKey)),
+      );
+      const done = [false, false, false, false, false, false, false];
+      weekSnap.forEach((d) => {
+        const dateKey = (d.data() as any)?.dateKey as string | undefined;
+        if (!dateKey) return;
+        const dayObj = new Date(`${dateKey}T00:00:00Z`);
+        const g = dayObj.getUTCDay();
+        const idx = g === 0 ? 6 : g - 1;
+        done[idx] = true;
+      });
+      setWeekDoneDays(done);
+
+      // 3. 오늘 초대 카운트
+      const inviteSnap = await getDoc(doc(db, `users/${uid}/inviteEvents/${today}`));
+      setInviteCount(Number((inviteSnap.exists() ? (inviteSnap.data() as any)?.dailyCount : 0) ?? 0));
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[EventsPage] refresh failed', e);
+    } finally {
+      setLoading(false);
+    }
+  }, [uid, today, weekKey]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const completedDays = weekDoneDays.filter(Boolean).length;
+  const weekPct = Math.min(100, (completedDays / 7) * 100);
+
+  /** 공유 버튼 핸들러 — navigator.share 사용 가능하면 공유, 불가하면 링크 복사 */
+  const onShareInvite = async () => {
+    if (inviteCount >= 3) {
+      toast.show('오늘 초대는 끝났어요 · 내일 다시 참여해주세요', 'info');
       return;
     }
     const text = '사주500 — 500원에 풀어보는 내 사주. 한 번 보면 멈출 수 없어요.';
+    const inviteId = `invite_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     try {
-      if (navigator.share) {
+      if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({ title: '사주500', text, url: window.location.origin });
-      } else {
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(`${text}\n${window.location.origin}`);
       }
-      saveShareDone();
-      setShareDone(true);
-      toast.show('공유 완료 · 0.5운이 곧 들어와요', 'success');
     } catch {
-      // 유저 취소는 무시
+      return; // 유저 취소
+    }
+    // 공유 성공 후 서버 콜백 (실 앱인토스 환경에서는 ShareReward 콜백이 이 경로를 트리거)
+    const res = await onInviteReceived({ inviteId });
+    if (res?.granted) {
+      setInviteCount(res.dailyCount ?? inviteCount + 1);
+      setTierAMsg('운 1 들어왔어요');
+      setTierAOpen(true);
+    } else if (res?.reason === 'daily_cap') {
+      toast.show('오늘 초대는 끝났어요 · 내일 다시 참여해주세요', 'info');
     }
   };
+
+  const weekStatusCopy = useMemo(() => {
+    if (completedDays === 0) return '이번 주 시작! 7일 모두 모으면 토스포인트 100원';
+    if (completedDays < 7) return `${completedDays}일째 · 남은 ${7 - completedDays}일 더 모으면 토스포인트 100원`;
+    return '이번 주 완성 · 토스포인트 100원 지급 완료';
+  }, [completedDays]);
+
+  // 3일 달성 펄스 (이 페이지 진입 시 표시 효과만) — markAttendance는 결과 페이지에서 호출됨
+  useEffect(() => {
+    if (streak === 3) {
+      setStreakPulsing(true);
+      const t = setTimeout(() => setStreakPulsing(false), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [streak]);
 
   return (
     <div style={{ background: C.paper, minHeight: '100vh', paddingBottom: 96 }}>
       <Header title="이벤트" />
 
       <div className="mx-auto" style={{ maxWidth: 460 }}>
-        {/* 런칭 프로모 배너 */}
-        <div className="mx-4 mt-3 rounded-2xl px-[18px] py-3.5 flex items-center gap-3"
-          style={{
-            background: 'linear-gradient(135deg, rgba(184,150,90,0.14) 0%, rgba(184,150,90,0.04) 100%)',
-            border: '1px solid rgba(184,150,90,0.22)',
-          }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-            stroke={C.gold} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M4 12l3-8h10l3 8" />
-            <path d="M2 12h20l-2 7H4z" />
-            <path d="M12 4v15" />
-          </svg>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold leading-[1.4]" style={{ color: C.ink }}>
-              런칭 첫 주 한정 · 7일 출석 시 2운 추가
-            </p>
-            <p className="text-[11px] mt-0.5" style={{ color: C.inkMute }}>
-              이번 주 월~일 모두 출석하면 자동 지급
-            </p>
-          </div>
-        </div>
+        {/* 블록 1 — HeroBadge */}
+        <HeroBadge />
 
-        {/* 출석 카드 */}
-        <section className="mx-4 mt-4 rounded-[20px] p-5"
-          style={{ background: C.white, border: '1px solid rgba(184,150,90,0.08)',
-            boxShadow: '0 1px 2px rgba(47,42,35,0.04), 0 8px 24px rgba(47,42,35,0.04)' }}>
-          <div className="flex items-center gap-2.5 mb-1">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        {/* 블록 2 — 3일 연속 streak 이동윈도우 */}
+        <StreakWidget streak={streak} missedYesterday={missedYesterday} pulsing={streakPulsing} />
+
+        {/* 블록 3 — 이번 주 출석 (7일 모두) */}
+        <section className="mx-4 mt-4 rounded-2xl px-[18px] py-[18px]"
+          style={{ background: '#FFFFFF', border: `1px solid ${C.line}`, boxShadow: '0 1px 2px rgba(47,42,35,0.04)' }}>
+          <header className="flex items-center gap-2.5 mb-1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
               stroke={C.gold} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="3" y="5" width="18" height="16" rx="2" />
               <path d="M3 9h18" />
               <path d="M8 3v4M16 3v4" />
-              <path d="M8 14h2M8 17h2M14 14h2M14 17h2" />
             </svg>
-            <h3 className="text-[17px] font-medium" style={{ color: C.ink, fontFamily: SERIF, letterSpacing: '0.02em' }}>
-              이번 주 출석
-            </h3>
-          </div>
-          <p className="text-[12px] leading-[1.55] mb-[18px]" style={{ color: C.inkMute }}>
-            콘텐츠 하나를 보면 오늘 출석이 올라갑니다. 매주 월요일 0시 다시 시작돼요.
+            <h3 className="text-[16px] font-bold" style={{ color: C.navy, fontFamily: SERIF }}>이번 주 출석</h3>
+          </header>
+          <p className="text-[12px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
+            월~일 모두 체크하면 토스포인트 100원
           </p>
 
-          {/* 주간 7칸 */}
-          <div className="grid grid-cols-7 gap-1.5 mb-4">
+          {/* 7칸 그리드 */}
+          <div className="grid grid-cols-7 gap-1.5 mb-3">
             {WEEKDAYS.map((w, i) => {
-              const done = attendance.days[i];
+              const done = weekDoneDays[i];
               const isToday = i === todayIdx;
-              const bg = done ? C.gold : isToday ? C.white : C.paper2;
               return (
-                <div key={w} className="flex flex-col items-center gap-1.5 py-1.5">
-                  <span className="text-[11px] font-medium"
-                    style={{ color: done ? C.ink : isToday ? C.goldDeep : C.inkMute,
+                <div key={w} className="flex flex-col items-center gap-1 py-1">
+                  <span className="text-[10px] font-medium"
+                    style={{ color: done ? C.ink : isToday ? C.goldDark : C.muted,
                       fontWeight: isToday ? 600 : 500 }}>
                     {w}
                   </span>
-                  <div className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
-                    style={{ background: bg, boxShadow: isToday && !done ? `inset 0 0 0 2px ${C.gold}` : 'none' }}>
-                    {done && (
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
-                        stroke={C.white} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <path d="M2 6.5l2.5 2.5L10 3.5" />
+                  <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center"
+                    style={{
+                      background: done ? C.gold : isToday ? C.goldLight : '#FFFFFF',
+                      border: done ? `2px solid ${C.goldDark}` : isToday ? `2px solid ${C.goldDark}` : `2px dashed ${C.line}`,
+                    }}>
+                    {done ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M5 13l4 4L19 7" />
                       </svg>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               );
@@ -207,111 +227,115 @@ export function EventsPage() {
           </div>
 
           {/* 진행바 */}
-          <div className="mb-4">
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: C.paper2 }}>
-              <div className="h-full rounded-full transition-all"
-                style={{ width: `${progressPct}%`, background: C.gold }} />
-            </div>
-            <div className="flex justify-between mt-1.5 text-[11px]" style={{ color: C.inkMute }}>
-              <span>0일</span>
-              <span style={{ marginLeft: '28%' }}>4일</span>
-              <span>7일</span>
-            </div>
-            <p className="text-[12px] mt-2" style={{ color: C.inkMute }}>
-              <strong style={{ color: C.ink }}>이번 주 {daysDone}일 출석</strong>
-              {daysDone < 4 && ` · 4일까지 ${4 - daysDone}일 남았어요`}
-              {daysDone >= 4 && daysDone < 7 && ` · 7일까지 ${7 - daysDone}일 남았어요`}
-              {daysDone >= 7 && ' · 완주 감사합니다'}
-            </p>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.line }}>
+            <div className="h-full transition-all" style={{ width: `${weekPct}%`, background: C.gold }} />
           </div>
-
-          {/* 마일스톤 */}
-          <div className="space-y-2.5">
-            <MilestoneRow active={milestone4} title="이번 주 4일 출석" meta="운 1을 드려요" />
-            <MilestoneRow active={milestone7} title="이번 주 7일 모두 출석" meta="운 2를 드려요" />
-          </div>
+          <p className="text-[12px] mt-2.5" style={{ color: C.muted }}>
+            <strong style={{ color: C.ink }}>{completedDays}/7</strong> · {weekStatusCopy}
+          </p>
         </section>
 
-        {/* 공유 카드 */}
-        <section className="mx-4 mt-4 rounded-[20px] p-5"
-          style={{ background: C.white, border: '1px solid rgba(184,150,90,0.08)',
-            boxShadow: '0 1px 2px rgba(47,42,35,0.04), 0 8px 24px rgba(47,42,35,0.04)' }}>
-          <div className="flex items-center gap-2.5 mb-1">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        {/* 블록 4 — 친구 초대 */}
+        <section className="mx-4 mt-4 rounded-2xl px-[18px] py-[18px]"
+          style={{ background: '#FFFFFF', border: `1px solid ${C.line}`, boxShadow: '0 1px 2px rgba(47,42,35,0.04)' }}>
+          <header className="flex items-center gap-2.5 mb-1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
               stroke={C.gold} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="6" cy="12" r="3" />
               <circle cx="18" cy="6" r="3" />
               <circle cx="18" cy="18" r="3" />
               <path d="M8.5 10.5l7-3.5M8.5 13.5l7 3.5" />
             </svg>
-            <h3 className="text-[17px] font-medium" style={{ color: C.ink, fontFamily: SERIF, letterSpacing: '0.02em' }}>
-              공유하고 운 받기
+            <h3 className="text-[16px] font-bold" style={{ color: C.navy, fontFamily: SERIF }}>
+              친구에게 사주 500 소개하기
             </h3>
-          </div>
-          <p className="text-[12px] leading-[1.55] mb-4" style={{ color: C.inkMute }}>
-            한 주에 한 번, 친구에게 사주500을 소개하면 0.5운을 드려요.
+          </header>
+          <p className="text-[12px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
+            하루 3회 · 초대당 운 1
           </p>
-          <button type="button" onClick={onShare}
+
+          <button type="button" onClick={onShareInvite}
+            disabled={inviteCount >= 3}
             className="w-full flex items-center justify-center gap-2.5 py-[18px] rounded-[14px] font-semibold text-[16px] transition"
             style={{
-              background: shareDone ? C.paper2 : C.gold,
-              color: shareDone ? C.inkMute : C.white,
-              boxShadow: shareDone ? 'none' : '0 2px 6px rgba(184,150,90,0.3)',
-              cursor: shareDone ? 'default' : 'pointer',
-            }}
-            disabled={shareDone}
-          >
+              background: inviteCount >= 3 ? '#EFE9DA' : C.gold,
+              color: inviteCount >= 3 ? C.muted : '#fff',
+              boxShadow: inviteCount >= 3 ? 'none' : '0 2px 6px rgba(184,150,90,0.3)',
+              cursor: inviteCount >= 3 ? 'default' : 'pointer',
+            }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke={shareDone ? C.inkMute : C.white} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              stroke={inviteCount >= 3 ? C.muted : '#fff'} strokeWidth="1.75"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
-            <span>{shareDone ? '이번 주 공유 완료' : '친구에게 공유하기'}</span>
+            <span>{inviteCount >= 3 ? '오늘 초대는 끝났어요' : '친구에게 공유하기'}</span>
           </button>
-          <p className="text-[12px] text-center mt-3 leading-[1.5]" style={{ color: C.inkMute }}>
-            이번 주 {shareDone ? '1' : '0'}/1회 진행 · 주 1회 제한
+          <p className="text-[12px] text-center mt-3" style={{ color: C.muted }}>
+            오늘 <strong style={{ color: C.ink }}>{inviteCount}/3</strong>회 · 일 3회 한도
           </p>
         </section>
 
-        {/* 바로가기 버튼 */}
-        <div className="mx-4 mt-5 grid grid-cols-2 gap-2.5">
-          <button onClick={() => navigate('/daily')} className="rounded-xl py-3 text-[13px] font-semibold"
-            style={{ background: C.paper2, color: C.ink }}>
-            오늘의 운세
-          </button>
-          <button onClick={() => navigate('/dream')} className="rounded-xl py-3 text-[13px] font-semibold"
-            style={{ background: C.paper2, color: C.ink }}>
-            꿈해몽
-          </button>
-        </div>
+        {/* 블록 5 — 누적 운 카드 (하단 CTA 교체) */}
+        <CumulativeReceivedCard />
       </div>
+
+      {/* Tier A 토스트 */}
+      <TierAToast
+        open={tierAOpen}
+        message={tierAMsg}
+        onClose={() => setTierAOpen(false)}
+      />
+
+      {/* Tier B 모달 */}
+      <TierBModal
+        open={tierBOpen}
+        kind={tierBKind}
+        onClose={() => setTierBOpen(false)}
+      />
+
+      {/* Loading state를 간단히 (UI 깜빡임 완화, 현재는 최소) */}
+      {loading && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0">
+          loading
+        </div>
+      )}
+
+      {/* 참고: 부모 컴포넌트가 markAttendance 결과에 따라 Tier A/B 오픈 트리거 가능 */}
+      {/* (결과 페이지 훅에서 sessionStorage 플래그 세팅 → 이 페이지 진입 시 open) */}
+      <TrampolineFromSession
+        onTierA={(msg) => { setTierAMsg(msg); setTierAOpen(true); }}
+        onTierB={(kind) => { setTierBKind(kind); setTierBOpen(true); }}
+      />
     </div>
   );
 }
 
-function MilestoneRow({ active, title, meta }: { active: boolean; title: string; meta: string }) {
-  return (
-    <div className="flex items-center gap-3 py-1">
-      <div className="w-6 h-6 rounded-full flex items-center justify-center"
-        style={{ background: active ? C.gold : C.paper2 }}>
-        {active ? (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
-            stroke={C.white} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M2 6.5l2.5 2.5L10 3.5" />
-          </svg>
-        ) : null}
-      </div>
-      <div className="flex-1">
-        <p className="text-[14px] font-medium" style={{ color: C.ink }}>{title}</p>
-        <p className="text-[12px] mt-0.5" style={{ color: C.inkMute }}>{meta}</p>
-      </div>
-      <span className="text-[11px] px-2.5 py-1 rounded-full"
-        style={{ background: active ? C.gold : C.paper2, color: active ? C.white : C.inkMute, fontWeight: 500 }}>
-        {active ? '달성' : '진행 중'}
-      </span>
-    </div>
-  );
+/**
+ * 결과 페이지 → markAttendance 호출 후 streak/week 달성되면 sessionStorage 플래그 저장.
+ * 이벤트 탭 이동 시 이 Trampoline 이 플래그 감지 → Tier A/B 오픈 트리거.
+ * sessionStorage 이므로 같은 세션 내 1회만 표시됨.
+ */
+function TrampolineFromSession({
+  onTierA, onTierB,
+}: { onTierA: (msg?: string) => void; onTierB: (kind: TierBKind) => void }) {
+  useEffect(() => {
+    try {
+      const tierA = sessionStorage.getItem('events_pending_tier_a');
+      if (tierA) {
+        sessionStorage.removeItem('events_pending_tier_a');
+        onTierA(tierA);
+      }
+      const tierB = sessionStorage.getItem('events_pending_tier_b');
+      if (tierB === 'tosspoint' || tierB === 'un_fallback') {
+        sessionStorage.removeItem('events_pending_tier_b');
+        onTierB(tierB as TierBKind);
+      }
+    } catch {/* noop */}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return null;
 }
 
 export default EventsPage;

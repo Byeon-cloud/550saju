@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import {
   RadarChart,
   PolarGrid,
@@ -2277,6 +2278,13 @@ function ReportSection({ section, index, elements, hasBirthTime, jijanggan, pill
 export function ResultPage() {
   const { sajuData: ctxData, input: ctxInput } = useSajuContext();
   const reportId = window.location.pathname.split('/').pop() || 'local';
+  const { mark: markAttendance } = useAttendanceOnResult();
+
+  // 이벤트 v4 · 결과 렌더링 1회 출석 마커
+  useEffect(() => {
+    markAttendance().catch(() => {/* non-blocking */});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sajuData = useMemo(() => {
     // 1. Context에 데이터 있으면 사용 (InputPage → Loading → Result 플로우)

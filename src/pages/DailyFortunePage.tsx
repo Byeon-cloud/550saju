@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { AILoading } from '@/components/common/AILoading';
 import { LockedCard } from '@/components/common/LockedCard';
+import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { ErrorState } from '@/components/common/ErrorState';
 import { ProfileSelector } from '@/components/common/ProfileSelector';
 import { TimeSlotCarousel, type TimeSlot as TSSlot } from '@/components/common/TimeSlotCarousel';
@@ -58,6 +59,7 @@ export function DailyFortunePage() {
   usePageTitle('오늘의 운세');
   const navigate = useNavigate();
   const toast = useToast();
+  const { mark } = useAttendanceOnResult();
 
   const profiles: SajuProfile[] = useMemo(() => getProfiles(), []);
   const hasAnyProfile = profiles.length > 0;
@@ -111,6 +113,9 @@ export function DailyFortunePage() {
 
       setResult(res);
       setPhase('result');
+
+      // 이벤트 v4 · 출석 마커 (KST 당일 1회)
+      mark().catch(() => {/* non-blocking */});
 
       try {
         saveReport({

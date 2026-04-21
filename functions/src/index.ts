@@ -1038,3 +1038,10 @@ export const generateTopicAnalysis = onCall(
     }
   }
 );
+
+/* ─── 이벤트 탭 v4.1 (2026-04-21) ───
+ * 근거: 사주500_UI개편_09_이벤트_v4.md + appintos_PC핸드오버_이벤트v4_GO_v1.md
+ * STUB 모드: APPINTOS_MTLS_CERT/KEY 미주입 시 자동 stub. 심사 후 Secrets 주입으로 LIVE 전환.
+ */
+export { markAttendance } from './attendance/markAttendance';
+export { onInviteReceived } from './invite/onInviteReceived';
