@@ -78,8 +78,8 @@ export function IconTaegeuk({ size = 24, className }: IconProps) {
     <svg width={size} height={size} viewBox="0 0 24 24" className={className}>
       <circle cx="12" cy="12" r="11" stroke="#1B2A4A" strokeWidth="1.2" fill="none" />
       <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#1B2A4A" />
-      <circle cx="12" cy="7" r="2" fill="#C9A96E" />
-      <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#C9A96E" strokeWidth="0.8" />
+      <circle cx="12" cy="7" r="2" fill="#B8965A" />
+      <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#B8965A" strokeWidth="0.8" />
     </svg>
   );
 }
@@ -95,7 +95,7 @@ export function IconHealth({ size = 24, color = '#2E7D32', className }: IconProp
 }
 
 /** 재물 아이콘 */
-export function IconWealth({ size = 24, color = '#C9A96E', className }: IconProps) {
+export function IconWealth({ size = 24, color = '#B8965A', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
@@ -116,7 +116,7 @@ export function IconCareer({ size = 24, color = '#1B2A4A', className }: IconProp
 }
 
 /** 연애 아이콘 */
-export function IconLove({ size = 24, color = '#C9A96E', className }: IconProps) {
+export function IconLove({ size = 24, color = '#B8965A', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"

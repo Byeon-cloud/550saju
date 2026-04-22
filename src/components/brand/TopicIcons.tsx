@@ -127,7 +127,9 @@ export function IconLetter({ size = 24, color = 'currentColor', className }: Pic
   );
 }
 
-/** 주제 분석 카테고리 ID → 컴포넌트 매핑 */
+/** 주제 분석 카테고리 ID → 컴포넌트 매핑.
+ *  2026-04-22 SSOT v1 정렬: 'exam' (합격·이직운) · 'move' alias 추가.
+ *  'moving' 은 legacy 호환용으로 유지 (구 URL 통과). 'social' 은 구 대인관계운 유지. */
 export const TOPIC_ICONS = {
   love: IconTopicLove,
   wealth: IconTopicWealth,
@@ -137,8 +139,10 @@ export const TOPIC_ICONS = {
   health: IconTopicHealth,
   reunion: IconTopicReunion,
   study: IconTopicStudy,
+  exam: IconTopicStudy,    // SSOT v1 신규 · 시험·이직 (進) — 전용 아이콘 준비 전 study 픽토그램 재사용
   social: IconTopicSocial,
-  moving: IconTopicMoving,
+  moving: IconTopicMoving, // legacy
+  move: IconTopicMoving,   // SSOT v1 canonical ID
 } as const;
 
 export type TopicKey = keyof typeof TOPIC_ICONS;

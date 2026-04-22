@@ -123,7 +123,7 @@ export function IconDreamEmpty({ size = 24, color = 'currentColor', className }:
 }
 
 /** 행운 — 매화(4엽) */
-export function IconLucky({ size = 24, color = '#C9A96E', className }: PictogramProps) {
+export function IconLucky({ size = 24, color = '#B8965A', className }: PictogramProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
       <circle cx="12" cy="6" r="3" fill={color} fillOpacity="0.18" stroke={color} strokeWidth="1.3" />
