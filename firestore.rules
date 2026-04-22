@@ -16,8 +16,13 @@ service cloud.firestore {
       match /reports/{rid} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
+      // ─── E13 결제 원자성 (2026-04-22) ───
+      // status: pending → confirmed | failed | needs_reconciliation 전이는 Cloud Functions 전용.
+      // 클라이언트 직접 write 차단 → 중복 지급 우회 공격 방지.
+      // 히스토리 조회는 본인 uid 에 한해 허용.
       match /payments/{payid} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
       }
       match /dailyFortune/{date} {
         allow read, write: if request.auth != null && request.auth.uid == uid;

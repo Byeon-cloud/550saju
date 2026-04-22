@@ -1,17 +1,19 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
+import { Modal } from '@/components/common/Modal';
 import { calculateSaju } from '@/services/saju/calculator';
 import { useSajuContext } from '@/contexts/SajuContext';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import type { CalendarType, Gender, SajuInput, Pillar } from '@/types/saju';
 import type { Relation } from '@/types/user';
-import { saveReport, generateId, getProfiles, saveProfileDirect, spendBalance, setMyProfile } from '@/services/storage/localStore';
+import { saveReport, generateId, getProfiles, saveProfileDirect, spendBalance, setMyProfile, deleteReport } from '@/services/storage/localStore';
 import type { LocalReport } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useInputDraft, type InputDraftSnapshot } from '@/hooks/useInputDraft';
 import { triggerPromotionEvent, PROMO_EVENTS } from '@/services/toss/tossPromotion';
 import { BannerAd as BannerAdStep5 } from '@/components/ads/BannerAd';
 
@@ -59,6 +61,14 @@ export function InputPage() {
   const [step, setStep] = useState(
     selectedProfile ? 5 : isForceNew ? 1 : existingProfiles.length > 0 ? 0 : 1
   );
+
+  /**
+   * P2-2 · /input 재진입 — 기존 프로필 "수정" 모드
+   *   근거: 인수인계 §7.P2-2 "덮어쓰기 vs 새 프로필 추가 명확하지 않음"
+   *   수정 진입 시 원래 reportId 를 기억 → Step5 진입 시 기존 report 삭제 후 새 ID 로 재저장
+   *   (saveProfileDirect 는 이름+생일 키로 dedup 내장, 자동 덮어쓰기)
+   */
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
 
   const [name, setName] = useState(selectedProfile?.name || '');
   const [relation, setRelation] = useState<Relation>((selectedProfile?.input?.relation as Relation) || '본인');
@@ -126,6 +136,53 @@ export function InputPage() {
   const isAnalyzingRef = useRef(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  /**
+   * E40 · 입력 임시저장 (draft)
+   *   근거: docs/prd/P2_Path_E_티켓_트래커.md E40
+   *   - selectedProfile / force new 경로는 draft 무관 → enabled=false
+   *   - 마운트 시 draft 있으면 "이어쓰기/새로 작성" Modal
+   */
+  const draftEnabled = !selectedProfile;
+  const draftSnapshot: InputDraftSnapshot = useMemo(
+    () => ({ name, relation, birthYear, birthMonth, birthDay, calendarType, gender, knowsTime, timeIndex, step }),
+    [name, relation, birthYear, birthMonth, birthDay, calendarType, gender, knowsTime, timeIndex, step],
+  );
+  const { hasInitialDraft, loadDraft, clearDraft } = useInputDraft({
+    enabled: draftEnabled,
+    snapshot: draftSnapshot,
+  });
+  const [draftModalOpen, setDraftModalOpen] = useState(false);
+  useEffect(() => {
+    // 마운트 시 draft 있고 selectedProfile 없을 때만 한 번 제시
+    if (hasInitialDraft && draftEnabled && !isForceNew) {
+      setDraftModalOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleDraftContinue() {
+    const d = loadDraft();
+    if (!d) { setDraftModalOpen(false); return; }
+    setName(d.name);
+    setRelation(d.relation);
+    setBirthYear(d.birthYear);
+    setBirthMonth(d.birthMonth);
+    setBirthDay(d.birthDay);
+    setCalendarType(d.calendarType);
+    setGender(d.gender);
+    setKnowsTime(d.knowsTime);
+    setTimeIndex(d.timeIndex);
+    // step 복원 — Step5 미도달 구간까지만 복원 (사주 계산은 필요 데이터 갖춘 시점에만 수행)
+    const restoreStep = Math.min(Math.max(d.step, 1), 4);
+    setStep(restoreStep);
+    setDraftModalOpen(false);
+  }
+
+  function handleDraftDiscard() {
+    clearDraft();
+    setDraftModalOpen(false);
+  }
+
   /** 상세 분석 시작 — 1운 차감 + 로딩 */
   function startAnalysis() {
     // 더블클릭 방지: ref (즉시 차단) + state (UI 반영)
@@ -163,6 +220,11 @@ export function InputPage() {
         const data = calculateSaju(sajuInput);
         setInput(sajuInput);
         setSajuData(data);
+        // P2-2 · 수정 모드면 기존 report 제거 후 새 ID 로 재저장
+        if (editingProfileId) {
+          deleteReport(editingProfileId);
+          setEditingProfileId(null);
+        }
         const reportId = generateId();
         const report: LocalReport = {
           id: reportId,
@@ -187,6 +249,9 @@ export function InputPage() {
           setMyProfile(report.id);
         }
 
+        // E40 · 입력 완결 → 임시저장 정리
+        clearDraft();
+
         // 궁합에서 왔으면 사주 저장 후 궁합으로 복귀
         const fromParam = new URLSearchParams(window.location.search).get('from');
         if (fromParam === 'compat') {
@@ -199,7 +264,11 @@ export function InputPage() {
 
   function handleBack() {
     if (step > 1) setStep(step - 1);
-    else if (step === 1 && existingProfiles.length > 0) setStep(0);
+    else if (step === 1 && existingProfiles.length > 0) {
+      // Step1 → Step0 복귀 시 수정 세션 종료 (P2-2)
+      setEditingProfileId(null);
+      setStep(0);
+    }
     else navigate(-1);
   }
 
@@ -207,11 +276,11 @@ export function InputPage() {
     <div className="min-h-screen flex flex-col bg-bg-page relative overflow-hidden">
       {/* 배경 장식 — 미묘한 태극 무늬 */}
       <div className="absolute top-20 -right-16 w-64 h-64 rounded-full opacity-[0.02] pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #C9A96E, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, #B8965A, transparent 70%)' }} />
       <div className="absolute bottom-40 -left-20 w-48 h-48 rounded-full opacity-[0.015] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #1B2A4A, transparent 70%)' }} />
 
-      <Header title="사주 입력" />
+      <Header title={editingProfileId ? '사주 수정' : '사주 입력'} />
 
       {/* Step Indicator — Figma 6바 */}
       <div className="flex items-center gap-1 px-4 py-2">
@@ -246,61 +315,110 @@ export function InputPage() {
                     const il = r.sajuData.pillars[2]?.천간 || '';
                     const oh = il ? CHEONGAN_OHENG[il] : '';
                     const rel = r.input.relation || '본인';
+
+                    /** 프로필 선택 — 기존 데이터 pre-fill 후 Step5 (사주팔자 확인) */
+                    const handleSelect = () => {
+                      setEditingProfileId(null); // 수정 세션 흔적 정리
+                      setName(r.name);
+                      setRelation(r.input.relation as any || '본인');
+                      setBirthYear(String(r.input.birthYear));
+                      setBirthMonth(String(r.input.birthMonth));
+                      setBirthDay(String(r.input.birthDay));
+                      setGender(r.input.gender);
+                      if (r.input.hasBirthTime && r.input.birthHour !== undefined) {
+                        setKnowsTime(true);
+                        const idx = SHIJU_HOURS.indexOf(r.input.birthHour);
+                        setTimeIndex(idx >= 0 ? idx : null);
+                      } else {
+                        setKnowsTime(false);
+                      }
+                      // 궁합에서 왔으면 사주 저장 후 궁합으로 복귀
+                      const fromParam = new URLSearchParams(window.location.search).get('from');
+                      if (fromParam === 'compat') {
+                        navigate('/compat', { replace: true });
+                        return;
+                      }
+                      setStep(5);
+                    };
+
+                    /**
+                     * P2-2 · 수정 — pre-fill 후 Step1 부터 재입력
+                     *   editingProfileId 설정 → Step5 진입 시 기존 report 교체
+                     */
+                    const handleEdit = () => {
+                      setName(r.name);
+                      setRelation(r.input.relation as any || '본인');
+                      setBirthYear(String(r.input.birthYear));
+                      setBirthMonth(String(r.input.birthMonth));
+                      setBirthDay(String(r.input.birthDay));
+                      setCalendarType(r.input.calendarType || 'solar');
+                      setGender(r.input.gender);
+                      if (r.input.hasBirthTime && r.input.birthHour !== undefined) {
+                        setKnowsTime(true);
+                        const idx = SHIJU_HOURS.indexOf(r.input.birthHour);
+                        setTimeIndex(idx >= 0 ? idx : null);
+                      } else {
+                        setKnowsTime(false);
+                        setTimeIndex(null);
+                      }
+                      setEditingProfileId(r.id);
+                      setStep(1);
+                    };
+
                     return (
-                      <motion.button
-                        key={r.id}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => {
-                          // 기존 프로필 선택 → 바로 Step5(사주팔자 확인)로
-                          setName(r.name);
-                          setRelation(r.input.relation as any || '본인');
-                          setBirthYear(String(r.input.birthYear));
-                          setBirthMonth(String(r.input.birthMonth));
-                          setBirthDay(String(r.input.birthDay));
-                          setGender(r.input.gender);
-                          if (r.input.hasBirthTime && r.input.birthHour !== undefined) {
-                            setKnowsTime(true);
-                            const idx = SHIJU_HOURS.indexOf(r.input.birthHour);
-                            setTimeIndex(idx >= 0 ? idx : null);
-                          } else {
-                            setKnowsTime(false);
-                          }
-                          // 궁합에서 왔으면 사주 저장 후 궁합으로 복귀
-                          const fromParam = new URLSearchParams(window.location.search).get('from');
-                          if (fromParam === 'compat') {
-                            navigate('/compat', { replace: true });
-                            return;
-                          }
-                          setStep(5);
-                        }}
-                        className="card w-full text-left py-4 px-4"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: rel === '본인' ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
-                            <span className="text-h2 font-bold" style={{ color: rel === '본인' ? '#1B2A4A' : '#C9A96E' }}>
-                              {r.name.charAt(0)}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-h2 text-text-primary">{r.name}</p>
-                              <span className="text-caption text-text-hint">{rel}</span>
+                      <div key={r.id} className="card w-full py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <motion.button
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleSelect}
+                            className="flex items-center gap-3 flex-1 text-left min-w-0"
+                          >
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                              style={{ background: rel === '본인' ? 'rgba(27,42,74,0.08)' : 'rgba(184,150,90,0.10)' }}>
+                              <span className="text-h2 font-bold" style={{ color: rel === '본인' ? '#1B2A4A' : '#B8965A' }}>
+                                {r.name.charAt(0)}
+                              </span>
                             </div>
-                            <p className="text-body-sm text-text-muted mt-0.5">
-                              {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')}
-                              {il ? ` · ${il}(${oh})` : ''}
-                            </p>
-                          </div>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-h2 text-text-primary truncate">{r.name}</p>
+                                <span className="text-caption text-text-hint flex-shrink-0">{rel}</span>
+                              </div>
+                              <p className="text-body-sm text-text-muted mt-0.5 truncate">
+                                {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')}
+                                {il ? ` · ${il}(${oh})` : ''}
+                              </p>
+                            </div>
+                          </motion.button>
+                          {/* P2-2 · 수정 entry point — 44x44 최소 터치 영역 (WCAG) */}
+                          <button
+                            type="button"
+                            onClick={handleEdit}
+                            aria-label={`${r.name} 프로필 수정`}
+                            className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+                            style={{ background: 'rgba(184,150,90,0.08)' }}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            </svg>
+                          </button>
                         </div>
-                      </motion.button>
+                      </div>
                     );
                   })}
                 </div>
 
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => {
+                    // 새 입력 진입 — 수정 세션 및 필드 초기화
+                    setEditingProfileId(null);
+                    setName('');
+                    setBirthYear(''); setBirthMonth(''); setBirthDay('');
+                    setGender(null);
+                    setKnowsTime(null); setTimeIndex(null);
+                    setStep(1);
+                  }}
                   className="w-full card text-center py-5 border-2 border-dashed border-border"
                 >
                   <p className="text-h3 text-text-primary">+ 새 사주 입력하기</p>
@@ -323,6 +441,23 @@ export function InputPage() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* E40 · 이어쓰기 Modal — 마운트 시 draft 존재하면 1회 제시 */}
+      <Modal isOpen={draftModalOpen} onClose={handleDraftDiscard} title="이어쓰기 하시겠어요?">
+        <div className="space-y-4">
+          <p className="text-body-sm text-text-muted leading-relaxed">
+            이전에 입력하던 내용이 있어요. 이어서 마저 작성할까요?
+          </p>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="lg" onClick={handleDraftDiscard} className="flex-1">
+              새로 작성
+            </Button>
+            <Button size="lg" onClick={handleDraftContinue} className="flex-1">
+              이어쓰기
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Bottom CTA — step 0(프로필 선택)에서는 숨김 */}
       {step > 0 && (
@@ -357,7 +492,7 @@ export function InputPage() {
                   }
                 }}
                 className="flex-1 py-3 rounded-xl text-caption font-bold text-white"
-                style={{ background: '#C9A96E' }}
+                style={{ background: '#B8965A' }}
               >
                 친구에게 공유하고 1운 받기
               </button>
@@ -525,8 +660,8 @@ function Step3({ gender, setGender, onAutoNext }: { gender: Gender | null; setGe
           <button key={val} onClick={() => { setGender(val as Gender); setTimeout(onAutoNext, 200); }}
             className={`flex-1 select-card ${gender === val ? 'select-card-active' : ''}`}>
             <div className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center"
-              style={{ background: val === 'male' ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.1)' }}>
-              <span className="text-[14px] font-black" style={{ color: val === 'male' ? '#1B2A4A' : '#C9A96E' }}>
+              style={{ background: val === 'male' ? 'rgba(27,42,74,0.08)' : 'rgba(184,150,90,0.1)' }}>
+              <span className="text-[14px] font-black" style={{ color: val === 'male' ? '#1B2A4A' : '#B8965A' }}>
                 {val === 'male' ? '乾' : '坤'}
               </span>
             </div>
@@ -588,7 +723,22 @@ function Step4({ knowsTime, setKnowsTime, timeIndex, setTimeIndex }: {
               {/* P1-8 · 한국 기준시 ±30분 보정 안내 배너 */}
               <div className="mt-3 rounded-xl p-3 flex items-start gap-2"
                 style={{ background: 'rgba(184,150,90,0.10)', border: '1px solid rgba(184,150,90,0.25)' }}>
-                <span aria-hidden className="mt-0.5 text-[14px]" style={{ color: '#7F6B4E' }}>🕐</span>
+                {/* 2026-04-22: 시계 이모지(🕐) → 한자 時 로 교체 (이모지 금지 원칙) */}
+                <span
+                  aria-hidden
+                  className="mt-0.5 inline-flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    background: 'rgba(184,150,90,0.20)',
+                    color: '#7F6B4E',
+                    fontSize: 11,
+                    fontWeight: 900,
+                    fontFamily: "'Noto Serif KR', serif",
+                    lineHeight: 1,
+                  }}
+                >時</span>
                 <p className="text-[12px] leading-[1.6]" style={{ color: '#3D3D3D' }}>
                   한국은 1961년부터 일본 표준시(UTC+9)를 사용해
                   <strong> 실제 태양시와 약 ±30분 차이</strong>가 납니다.

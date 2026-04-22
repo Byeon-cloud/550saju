@@ -24,8 +24,8 @@ export function SharePage() {
             <svg width="20" height="20" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="11" stroke="#1B2A4A" strokeWidth="1" fill="none" opacity="0.3" />
               <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#1B2A4A" />
-              <circle cx="12" cy="7" r="2" fill="#C9A96E" />
-              <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#C9A96E" strokeWidth="0.8" />
+              <circle cx="12" cy="7" r="2" fill="#B8965A" />
+              <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#B8965A" strokeWidth="0.8" />
             </svg>
             <span className="text-caption text-text-hint font-semibold">사주500</span>
           </div>
@@ -78,7 +78,7 @@ export function SharePage() {
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="w-10 h-10 rounded-xl bg-bg-surface flex items-center justify-center mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2" strokeLinecap="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2" strokeLinecap="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0110 0v4" />
                 </svg>

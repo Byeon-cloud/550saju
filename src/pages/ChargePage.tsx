@@ -58,7 +58,20 @@ export function ChargePage() {
             }
           })
           .catch((err) => {
-            toast.show('결제 확인 실패: ' + (err.message || '다시 시도해주세요'), 'warning');
+            // E13 · 서버 에러 유형별 분기
+            const raw = err?.message || '';
+            let userMsg: string;
+            if (raw.includes('고객센터')) {
+              // needs_reconciliation (Toss 승인 + DB 실패) — 자동 재시도 금지
+              userMsg = raw; // 서버가 전달한 메시지 그대로
+            } else if (raw.includes('이미 처리된')) {
+              userMsg = '이미 처리된 결제예요. 잔액을 확인해주세요.';
+            } else if (raw.includes('결제 승인 실패')) {
+              userMsg = '결제가 취소되었습니다. 다시 시도해주세요.';
+            } else {
+              userMsg = '결제 확인 중 오류가 발생했어요. 다시 시도해주세요.';
+            }
+            toast.show(userMsg, 'warning');
           })
           .finally(() => {
             setPurchasing(false);
@@ -77,7 +90,7 @@ export function ChargePage() {
         {/* 잔액 부족 안내 (다른 페이지에서 넘어온 경우) */}
         {fromMessage && (
           <FadeIn>
-            <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)' }}>
+            <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(184,150,90,0.1)', border: '1px solid rgba(184,150,90,0.2)' }}>
               <p className="text-caption text-brand-gold font-semibold text-center">{fromMessage}</p>
             </div>
           </FadeIn>
@@ -160,7 +173,7 @@ export function ChargePage() {
                   {/* 추천 배지 */}
                   {pkg.id === 'serious' && (
                     <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl"
-                      style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                      style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
                       <span className="text-[10px] font-bold text-white">추천</span>
                     </div>
                   )}
@@ -281,7 +294,7 @@ export function ChargePage() {
                 </p>
               </div>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
                 <span className="text-[10px] font-black text-white">運</span>
               </div>
             </div>

@@ -589,6 +589,14 @@ export const generateWeeklyFortune = onCall(
 
 /**
  * IAP 상품 지급 — 앱인토스 결제 후 서버 검증
+ *
+ * E13 · 결제 원자성 (2026-04-22)
+ * IAP 는 Toss SDK 가 이미 결제 승인을 완료한 후 호출되므로 외부 API 단계가 없음.
+ * status 전이: pending → confirmed | needs_reconciliation
+ *   - pending: 트랜잭션 직전 선기록 (DB 실패 시 감사 추적)
+ *   - confirmed: 잔액 증가 성공
+ *   - needs_reconciliation: SDK 는 결제 완료 응답했으나 DB 실패 → 수동 복구
+ * 중복 지급 방지: status === 'confirmed' 만 차단.
  */
 export const grantPurchase = onCall(
   { timeoutSeconds: 10, memory: '256MiB', cors: true },
@@ -604,28 +612,51 @@ export const grantPurchase = onCall(
     const effectiveUid = uid || 'anonymous';
     const paymentRef = db.collection(`users/${effectiveUid}/payments`).doc(orderId);
     const existing = await paymentRef.get();
-    if (existing.exists) return { success: true, message: '이미 지급됨' };
+    if (existing.exists) {
+      const s = existing.data()?.status;
+      if (s === 'confirmed' || s === 'completed') return { success: true, message: '이미 지급됨' };
+      if (s === 'needs_reconciliation') {
+        throw new HttpsError('failed-precondition', '결제가 완료됐지만 지급이 완료되지 않았어요. 고객센터로 문의해주세요.');
+      }
+      // pending 은 재시도 허용
+    }
 
     const totalUn = paidUn + (bonusUn || 0);
 
-    await db.runTransaction(async (tx) => {
-      const userRef = db.collection('users').doc(effectiveUid);
-      const userDoc = await tx.get(userRef);
-      const data = userDoc.data() || {};
-      // 유형별 잔액 관리
-      tx.update(userRef, {
-        'balance.paid': (data.balance?.paid ?? 0) + paidUn,
-        'balance.bonus': (data.balance?.bonus ?? 0) + (bonusUn || 0),
-        totalCharged: admin.firestore.FieldValue.increment(paidUn),
+    // E13 · pending 선기록
+    await paymentRef.set({
+      type: 'charge', orderId, sku,
+      paidUn, bonusUn: bonusUn || 0,
+      pgProvider: 'iap',
+      status: 'pending',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    try {
+      await db.runTransaction(async (tx) => {
+        const userRef = db.collection('users').doc(effectiveUid);
+        const userDoc = await tx.get(userRef);
+        const data = userDoc.data() || {};
+        tx.update(userRef, {
+          'balance.paid': (data.balance?.paid ?? 0) + paidUn,
+          'balance.bonus': (data.balance?.bonus ?? 0) + (bonusUn || 0),
+          totalCharged: admin.firestore.FieldValue.increment(paidUn),
+        });
+        tx.update(paymentRef, {
+          unChange: totalUn,
+          status: 'confirmed',
+          confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
       });
-      tx.set(paymentRef, {
-        type: 'charge', orderId, sku,
-        paidUn, bonusUn: bonusUn || 0,
-        unChange: totalUn,
-        pgProvider: 'iap', status: 'completed',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    } catch (err: any) {
+      console.error('[grantPurchase] needs_reconciliation (IAP 완료 + DB 실패):', err);
+      await paymentRef.update({
+        status: 'needs_reconciliation',
+        failReason: 'db_transaction_failed: ' + (err.message || 'unknown'),
       });
-    });
+      throw new HttpsError('internal', '결제는 완료됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
+    }
 
     return { success: true };
   }
@@ -851,6 +882,15 @@ export const grantShareReward = onCall(
 
 /**
  * 토스페이먼츠 결제 확인 — 웹 PG 결제 승인 + 잔액 지급
+ *
+ * E13 · 결제 원자성 (2026-04-22)
+ * status 전이: pending → confirmed | failed | needs_reconciliation
+ *   - pending: Toss 승인 API 호출 직전 기록 (감사 추적용 선기록)
+ *   - confirmed: Toss 승인 + Firestore 잔액 증가 모두 성공
+ *   - failed: Toss 승인 실패 (유저 취소/카드사 거절 등). 동일 orderId 재시도 가능
+ *   - needs_reconciliation: Toss 는 승인됐으나 DB 트랜잭션 실패 → 수동 복구 대상
+ * 중복 지급 방지: status === 'confirmed' 만 차단 (pending/failed 는 재시도 허용).
+ * 근거: docs/prd/P2_Path_E_티켓_트래커.md E13.
  */
 export const confirmPayment = onCall(
   { secrets: [TOSS_PAYMENTS_SECRET], timeoutSeconds: 15, memory: '256MiB', cors: true },
@@ -863,61 +903,112 @@ export const confirmPayment = onCall(
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', '로그인 필요');
 
-    // 1. 중복 지급 방지
+    // 1. E13 · 중복 지급 방지 — confirmed/needs_reconciliation 만 차단
+    // pending·failed 는 재시도 허용 (유저가 같은 orderId 로 돌아오는 경우)
     const paymentRef = db.collection(`users/${uid}/payments`).doc(orderId);
     const existing = await paymentRef.get();
-    if (existing.exists) return { success: true, message: '이미 처리된 결제예요' };
+    if (existing.exists) {
+      const s = existing.data()?.status;
+      if (s === 'confirmed') {
+        return { success: true, message: '이미 처리된 결제예요' };
+      }
+      if (s === 'needs_reconciliation') {
+        throw new HttpsError('failed-precondition', '결제가 승인됐지만 지급이 완료되지 않았어요. 고객센터로 문의해주세요.');
+      }
+      // status === 'pending' | 'failed' | undefined → 재시도 허용, 아래로 진행
+    }
 
     // 2. 금액 → 패키지 검증
     const pkg = PACKAGE_MAP[amount];
     if (!pkg) throw new HttpsError('invalid-argument', `유효하지 않은 금액: ${amount}`);
 
-    // 3. 토스페이먼츠 결제 승인 API
-    const secretKey = TOSS_PAYMENTS_SECRET.value();
-    const confirmRes = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${Buffer.from(secretKey + ':').toString('base64')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ paymentKey, orderId, amount }),
-    });
+    // 3. E13 · pending 레코드 선기록 — 감사 추적용 (Toss 승인 전)
+    await paymentRef.set({
+      type: 'charge', orderId, amount,
+      packageName: pkg.name,
+      paidUn: pkg.paidUn, bonusUn: pkg.bonusUn,
+      pgProvider: 'toss',
+      pgPaymentKey: paymentKey,
+      status: 'pending',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
 
-    if (!confirmRes.ok) {
-      const errBody = await confirmRes.json().catch(() => ({}));
-      console.error('[confirmPayment] 토스 승인 실패:', errBody);
-      throw new HttpsError('internal', `결제 승인 실패: ${errBody.message || confirmRes.status}`);
+    // 4. 토스페이먼츠 결제 승인 API
+    const secretKey = TOSS_PAYMENTS_SECRET.value();
+    let tossResult: any;
+    try {
+      const confirmRes = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${Buffer.from(secretKey + ':').toString('base64')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paymentKey, orderId, amount }),
+      });
+
+      if (!confirmRes.ok) {
+        const errBody = await confirmRes.json().catch(() => ({}));
+        console.error('[confirmPayment] 토스 승인 실패:', errBody);
+        // E13 · pending → failed 전이 (재시도 가능)
+        await paymentRef.update({
+          status: 'failed',
+          failReason: errBody.message || `http_${confirmRes.status}`,
+          failedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        throw new HttpsError('internal', `결제 승인 실패: ${errBody.message || confirmRes.status}`);
+      }
+      tossResult = await confirmRes.json();
+    } catch (err: any) {
+      if (err instanceof HttpsError) throw err;
+      // 네트워크/타임아웃
+      console.error('[confirmPayment] 네트워크 에러:', err);
+      await paymentRef.update({
+        status: 'failed',
+        failReason: 'network_error: ' + (err.message || 'unknown'),
+        failedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      throw new HttpsError('internal', `결제 승인 실패: ${err.message || '네트워크 오류'}`);
     }
 
-    const tossResult = await confirmRes.json();
-
-    // 4. Firestore 트랜잭션 — 잔액 지급 + 결제 기록
+    // 5. Firestore 트랜잭션 — 잔액 지급 + pending → confirmed 전이
     const totalUn = pkg.paidUn + pkg.bonusUn;
 
-    await db.runTransaction(async (tx) => {
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await tx.get(userRef);
-      const data = userDoc.data() || {};
+    try {
+      await db.runTransaction(async (tx) => {
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await tx.get(userRef);
+        const data = userDoc.data() || {};
 
-      tx.update(userRef, {
-        'balance.paid': (data.balance?.paid ?? 0) + pkg.paidUn,
-        'balance.bonus': (data.balance?.bonus ?? 0) + pkg.bonusUn,
-        totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
+        tx.update(userRef, {
+          'balance.paid': (data.balance?.paid ?? 0) + pkg.paidUn,
+          'balance.bonus': (data.balance?.bonus ?? 0) + pkg.bonusUn,
+          totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
+        });
+
+        tx.update(paymentRef, {
+          unChange: totalUn,
+          tossStatus: tossResult.status,
+          tossMethod: tossResult.method,
+          status: 'confirmed',
+          confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
       });
-
-      tx.set(paymentRef, {
-        type: 'charge', orderId, amount,
-        packageName: pkg.name,
-        paidUn: pkg.paidUn, bonusUn: pkg.bonusUn,
-        unChange: totalUn,
-        pgProvider: 'toss',
-        pgPaymentKey: paymentKey,
+    } catch (err: any) {
+      // E13 · Toss 는 승인됐는데 DB 트랜잭션 실패 — 수동 복구 필요
+      console.error('[confirmPayment] needs_reconciliation (토스 승인 + DB 실패):', err);
+      await paymentRef.update({
+        status: 'needs_reconciliation',
+        failReason: 'db_transaction_failed: ' + (err.message || 'unknown'),
         tossStatus: tossResult.status,
         tossMethod: tossResult.method,
-        status: 'completed',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        tossApprovedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-    });
+      throw new HttpsError(
+        'internal',
+        '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.'
+      );
+    }
 
     return { success: true, message: `${totalUn}운이 충전됐어요!`, totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
   }
@@ -1045,3 +1136,10 @@ export const generateTopicAnalysis = onCall(
  */
 export { markAttendance } from './attendance/markAttendance';
 export { onInviteReceived } from './invite/onInviteReceived';
+
+/* ─── E32 · 공유 비회원 OG SSR (2026-04-22) ───
+ * 근거: docs/prd/P2_Path_E_티켓_트래커.md E32 + 프리미엄_티저블러.md
+ * Firebase Hosting 설정: { source: "/share/**", function: "renderShareOg" } → 이 함수로 라우팅.
+ * 봇 UA 는 OG HTML, 사람 UA 는 index.html self-fetch 로 SPA 전달.
+ */
+export { renderShareOg } from './share/renderShareOg';
