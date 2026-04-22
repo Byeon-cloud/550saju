@@ -8,7 +8,7 @@ interface Props {
 }
 
 /** 궁합 카테고리별 수평 점수 바 */
-export function CompatScoreBar({ name, score, color = '#C9A96E', delay = 0 }: Props) {
+export function CompatScoreBar({ name, score, color = '#B8965A', delay = 0 }: Props) {
   return (
     <div className="flex items-center gap-3">
       <span className="text-body-sm text-text-secondary w-16 flex-shrink-0 font-semibold">{name}</span>
