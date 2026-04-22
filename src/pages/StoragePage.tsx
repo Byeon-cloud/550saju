@@ -1,3 +1,14 @@
+/**
+ * 보관함 페이지 — 이용기록(reports) 전용 뷰
+ *
+ * ⚠ 데이터 모델 분리 (project_storage_data_model.md SSOT):
+ *   - 사주 정보(SajuProfile)  ← MyPage / HomePage / InputPage 에서 관리
+ *   - 이용기록(LocalReport)   ← 본 페이지 + 결과 페이지에서 관리
+ *   두 테이블은 완전히 독립이며 cascade delete 금지.
+ *   - 보관함에서 분석 1건을 지워도 그 사람의 사주 프로필은 유지된다.
+ *   - 마이/홈에서 프로필을 지워도 과거에 결제한 분석 결과는 보관함에 그대로 남는다.
+ *   - 상호 참조는 name+birthYMD 키로만 (FK 없음).
+ */
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,6 +38,12 @@ export function StoragePage() {
     setChatRooms(getChatRooms());
   }, []);
 
+  /** 프로필 카드 클릭 → InputPage Step5 (사주팔자 확인) */
+  function openProfile(report: LocalReport) {
+    navigate('/input', { state: { selectedProfile: report } });
+  }
+
+  /** 콘텐츠 카드 클릭 → 해당 결과 페이지 */
   function openReport(report: LocalReport) {
     // 꿈해몽/일일운세는 사주 결과페이지가 아니므로 해당 페이지로 이동
     if (report.contentType === 'dream') { navigate('/dream'); return; }
@@ -69,9 +86,33 @@ export function StoragePage() {
     navigate(`/result/${report.id}`);
   }
 
+  /**
+   * 분석 1건 삭제 — NO-CASCADE.
+   * 이 호출은 LocalReport(이용기록) 단건만 지운다.
+   * 같은 인물의 SajuProfile(사주 정보)은 PROFILES_KEY 에 그대로 유지되므로
+   * 마이/홈/입력 흐름은 영향을 받지 않는다.
+   */
   function handleDelete(id: string) {
     deleteReport(id);
-    setReports(getReports());
+    setReports(prev => prev.filter(r => r.id !== id));
+    setDeleteTarget(null);
+  }
+
+  /** 프로필 삭제 — 해당 인물의 모든 리포트 일괄 삭제 */
+  function handleDeleteProfile(report: LocalReport) {
+    const { name, input } = report;
+    const all = getReports();
+    const remaining = all.filter(r => {
+      if (r.name === name &&
+          r.input?.birthYear === input?.birthYear &&
+          r.input?.birthMonth === input?.birthMonth &&
+          r.input?.birthDay === input?.birthDay) {
+        return false;
+      }
+      return true;
+    });
+    sessionStorage.setItem('saju500_reports', JSON.stringify(remaining));
+    setReports(remaining);
     setDeleteTarget(null);
   }
 
@@ -129,43 +170,45 @@ export function StoragePage() {
                   const relation = r.input.relation || '본인';
                   const isMe = relation === '본인' || relation === 'self';
                   return (
-                    <button
+                    <div
                       key={r.id}
-                      onClick={() => openReport(r)}
                       className={`card w-full text-left py-3.5 px-4 ${isMe ? 'border-l-4 border-l-brand-gold' : ''}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
-                          <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#C9A96E' }}>
-                            {r.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-h3 text-text-primary">{r.name}</p>
-                            {isMe && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-brand-navy text-white">나</span>
-                            )}
-                            {!isMe && (
-                              <span className="text-[10px] text-text-hint">{relation}</span>
-                            )}
-                          </div>
-                          <p className="text-caption text-text-muted">
-                            {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')}
-                            {ilgan ? ` · ${ilgan}(${oheng})` : ''}
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(r.id); }}
-                          className="w-8 h-8 flex items-center justify-center text-text-disabled hover:text-func-danger transition-colors rounded-lg flex-shrink-0"
+                        <div
+                          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => openProfile(r)}
+                          onKeyDown={(e) => e.key === 'Enter' && openProfile(r)}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </button>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(184,150,90,0.08)' }}>
+                            <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#B8965A' }}>
+                              {r.name.charAt(0)}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-h3 text-text-primary">{r.name}</p>
+                              {isMe && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-brand-navy text-white">나</span>
+                              )}
+                              {!isMe && (
+                                <span className="text-[10px] text-text-hint">{relation}</span>
+                              )}
+                            </div>
+                            <p className="text-caption text-text-muted">
+                              {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')}
+                              {ilgan ? ` · ${ilgan}(${oheng})` : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
                 {/* 새 사주 추가 */}
@@ -214,8 +257,8 @@ export function StoragePage() {
                   <button key={room.id} onClick={() => navigate(`/chat/${room.id}`)} className="card w-full text-left py-3.5 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(201,169,110,0.1)' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.5">
+                        style={{ background: 'rgba(184,150,90,0.1)' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="1.5">
                           <path d="M21 12a9 9 0 01-9 9c-1.5 0-2.9-.4-4.1-1L3 21l1.1-4.1A9 9 0 1121 12z" />
                         </svg>
                       </div>
@@ -248,39 +291,46 @@ export function StoragePage() {
               {contentReports.map((r) => {
                 const { ilgan, oheng } = getIlgan(r);
                 return (
-                  <motion.button
+                  <div
                     key={r.id}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => openReport(r)}
-                    className="card w-full text-left py-3.5 px-4"
+                    className="card w-full text-left py-3.5 px-4 cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'var(--bg-gold-solid)' }}>
-                        <span className="text-h3 text-brand-navy font-bold">{r.name.charAt(0)}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-h3 text-text-primary">{r.name || '기록'}</p>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand-gold/10 text-brand-gold">
-                            {r.contentType === 'daily' ? '오늘운세' : r.contentType === 'dream' ? '꿈해몽' : r.contentType === 'compat' ? '궁합' : r.contentType === 'daeun' ? '대운' : r.contentType === 'monthly' ? '월별' : r.contentType === 'tojung' ? '토정비결' : r.contentType === 'topic' ? ((r as any).aiResult?.topicId === 'love' ? '연애운' : (r as any).aiResult?.topicId === 'wealth' ? '재물운' : (r as any).aiResult?.topicId === 'career' ? '취업운' : '심층분석') : '상세 분석'}
-                          </span>
+                      <div
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openReport(r)}
+                        onKeyDown={(e) => e.key === 'Enter' && openReport(r)}
+                      >
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: 'var(--bg-gold-solid)' }}>
+                          <span className="text-h3 text-brand-navy font-bold">{r.name.charAt(0)}</span>
                         </div>
-                        <p className="text-caption text-text-muted truncate">
-                          {r.input?.birthYear ? `${r.input.birthYear}.${String(r.input.birthMonth).padStart(2,'0')}.${String(r.input.birthDay).padStart(2,'0')}` : new Date(r.createdAt).toLocaleDateString('ko-KR')}
-                          {ilgan ? ` · ${ilgan}(${oheng})` : ''}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-h3 text-text-primary">{r.name || '기록'}</p>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand-gold/10 text-brand-gold">
+                              {r.contentType === 'daily' ? '오늘운세' : r.contentType === 'dream' ? '꿈해몽' : r.contentType === 'compat' ? '궁합' : r.contentType === 'daeun' ? '대운' : r.contentType === 'monthly' ? '월별' : r.contentType === 'tojung' ? '토정비결' : r.contentType === 'topic' ? ({ love: '연애운', wealth: '재물운', career: '취업·이직운', marriage: '결혼운', business: '사업운', health: '건강운', reunion: '재회운', study: '학업·시험운', social: '대인관계운', moving: '이사·이동운' } as Record<string, string>)[(r as any).aiResult?.topicId] || '심층분석' : '상세 분석'}
+                            </span>
+                          </div>
+                          <p className="text-caption text-text-muted truncate">
+                            {r.input?.birthYear ? `${r.input.birthYear}.${String(r.input.birthMonth).padStart(2,'0')}.${String(r.input.birthDay).padStart(2,'0')}` : new Date(r.createdAt).toLocaleDateString('ko-KR')}
+                            {ilgan ? ` · ${ilgan}(${oheng})` : ''}
+                          </p>
+                        </div>
                       </div>
                       <button
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(r.id); }}
-                        className="w-8 h-8 flex items-center justify-center text-text-disabled hover:text-func-danger transition-colors rounded-lg flex-shrink-0"
+                        type="button"
+                        onClick={() => setDeleteTarget(r.id)}
+                        className="w-10 h-10 flex items-center justify-center text-text-disabled hover:text-func-danger transition-colors rounded-lg flex-shrink-0"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                       </button>
                     </div>
-                  </motion.button>
+                  </div>
                 );
               })}
             </div>
@@ -297,7 +347,7 @@ export function StoragePage() {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'love', icon: '愛', label: '연애운', color: '#E91E63' },
-                    { id: 'wealth', icon: '財', label: '재물운', color: '#C9A96E' },
+                    { id: 'wealth', icon: '財', label: '재물운', color: '#B8965A' },
                     { id: 'career', icon: '事', label: '취업운', color: '#1565C0' },
                     { id: 'health', icon: '健', label: '건강운', color: '#2E7D32' },
                   ].map((t) => (
@@ -325,26 +375,46 @@ export function StoragePage() {
 
       {/* 삭제 확인 모달 */}
       <AnimatePresence>
-        {deleteTarget && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center px-8"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          >
-            <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteTarget(null)} />
+        {deleteTarget && (() => {
+          const isProfileDelete = deleteTarget.startsWith('profile_');
+          const actualId = isProfileDelete ? deleteTarget.replace('profile_', '') : deleteTarget;
+          const targetReport = reports.find(r => r.id === actualId);
+          return (
             <motion.div
-              className="relative rounded-2xl px-6 py-5 max-w-[300px] w-full text-center"
-              style={{ background: 'var(--bg-card)', boxShadow: '0 16px 48px rgba(0,0,0,0.2)' }}
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-8"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
-              <p className="text-h3 text-text-primary mb-2">기록을 삭제할까요?</p>
-              <p className="text-caption text-text-muted mb-4">삭제하면 되돌릴 수 없어요.</p>
-              <div className="flex gap-2">
-                <button onClick={() => setDeleteTarget(null)} className="flex-1 py-3 rounded-xl text-caption font-semibold text-text-muted bg-bg-surface">취소</button>
-                <button onClick={() => handleDelete(deleteTarget)} className="flex-1 py-3 rounded-xl text-caption font-semibold text-white bg-func-danger">삭제</button>
-              </div>
+              <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteTarget(null)} />
+              <motion.div
+                className="relative rounded-2xl px-6 py-5 max-w-[300px] w-full text-center"
+                style={{ background: 'var(--bg-card)', boxShadow: '0 16px 48px rgba(0,0,0,0.2)' }}
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              >
+                {isProfileDelete ? (
+                  <>
+                    <p className="text-h3 text-text-primary mb-2">{targetReport?.name}님의 사주 정보를 삭제할까요?</p>
+                    <p className="text-caption text-text-muted mb-4">이 사람의 모든 분석 기록도 함께 삭제돼요.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-h3 text-text-primary mb-2">기록을 삭제할까요?</p>
+                    <p className="text-caption text-text-muted mb-4">삭제하면 되돌릴 수 없어요.</p>
+                  </>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => setDeleteTarget(null)} className="flex-1 py-3 rounded-xl text-caption font-semibold text-text-muted bg-bg-surface">취소</button>
+                  <button onClick={() => {
+                    if (isProfileDelete && targetReport) {
+                      handleDeleteProfile(targetReport);
+                    } else {
+                      handleDelete(actualId);
+                    }
+                  }} className="flex-1 py-3 rounded-xl text-caption font-semibold text-white bg-func-danger">삭제</button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

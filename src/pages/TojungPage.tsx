@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -7,11 +7,12 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { TojungMonthCard } from '@/components/saju/TojungMonthCard';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
 import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { FooterCTA } from '@/components/common/FooterCTA';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { TojungResponse } from '@/types/report';
 import { stripMd } from '@/utils/format';
@@ -29,7 +30,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   총운: '總', 금전운: '財', 건강운: '健', 직장운: '職', 애정운: '愛', 결혼운: '婚',
 };
 const CATEGORY_COLORS: Record<string, string> = {
-  총운: '#C9A96E', 금전운: '#F57F17', 건강운: '#2D8A4E', 직장운: '#1565C0', 애정운: '#E91E63', 결혼운: '#7B1FA2',
+  총운: '#B8965A', 금전운: '#F57F17', 건강운: '#2D8A4E', 직장운: '#1565C0', 애정운: '#E91E63', 결혼운: '#7B1FA2',
 };
 
 export function TojungPage() {
@@ -46,11 +47,14 @@ export function TojungPage() {
   const [result, setResult] = useState<TojungResponse | null>(navState?.savedResult || null);
   const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
+  const isAnalyzingRef = useRef(false);
 
-  const reports = useMemo(() => getReports(), []);
+  const reports = useMemo(() => getProfiles(), []);
 
   async function startAnalysis() {
     if (!selected) return;
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    isAnalyzingRef.current = true;
 
     // 캐시 확인 — 이전에 분석한 적 있으면 무료로 바로 보여줌
     const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'tojung');
@@ -58,12 +62,14 @@ export function TojungPage() {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');
+      isAnalyzingRef.current = false;
       return;
     }
 
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '토정비결에 1운이 필요해요' } });
+      isAnalyzingRef.current = false;
       return;
     }
     toast.show('1운이 차감됐어요', 'info');
@@ -79,12 +85,12 @@ export function TojungPage() {
       setPhase('result');
     } catch (e: any) {
       console.error('토정비결 실패:', e);
-      const { addRewardBalance } = await import('@/services/storage/localStore');
-      addRewardBalance(1);
+      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
       setPhase('select');
-      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
+      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
     } finally {
       clearInterval(interval);
+      isAnalyzingRef.current = false;
     }
   }
 
@@ -108,7 +114,7 @@ export function TojungPage() {
         <Header title="토정비결" />
         <div className="px-5 pt-4 space-y-5">
           <FadeIn>
-            <div className="py-6 px-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+            <div className="py-6 px-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.2)' }}>
               <p className="text-caption text-brand-gold font-semibold">조선시대 이토정 선생의 전통 운세법</p>
               <p className="text-display text-text-primary mt-1">2026년 토정비결</p>
               <p className="text-body-sm text-text-muted mt-2">주역 64괘로 올해 12개월의 운세를 풀어드려요</p>
@@ -116,7 +122,7 @@ export function TojungPage() {
             </div>
           </FadeIn>
           <FadeIn delay={0.05}>
-            <ProfilePicker onSelect={r => setSelected(r)} onNew={() => navigate('/input?new=1')} title="누구의 토정비결을 볼까요?" />
+            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 토정비결을 볼까요?" />
           </FadeIn>
           {selected && (
             <FadeIn delay={0.1}>
@@ -165,7 +171,7 @@ export function TojungPage() {
             <div className="flex flex-wrap gap-1.5 justify-center">
               {(result as any).keywords.map((kw: string, i: number) => (
                 <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                  style={{ background: 'rgba(184,150,90,0.1)', color: '#A08B6A', border: '1px solid rgba(184,150,90,0.2)' }}>
                   {kw}
                 </span>
               ))}
@@ -177,7 +183,7 @@ export function TojungPage() {
         <FadeIn delay={0.05}>
           <div className="grid grid-cols-2 gap-3">
             {categories.map(([key, value], i) => {
-              const catColor = CATEGORY_COLORS[key] || '#C9A96E';
+              const catColor = CATEGORY_COLORS[key] || '#B8965A';
               const catScore = (result as any).categoryScores?.[key];
               return (
                 <motion.div
@@ -220,15 +226,15 @@ export function TojungPage() {
                 <AreaChart data={result.months.map((m: any) => ({ name: `${m.month}월`, 점수: m.score || 5 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="tojungGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#C9A96E" stopOpacity={0.02} />
+                      <stop offset="5%" stopColor="#B8965A" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#B8965A" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
-                  <Area type="monotone" dataKey="점수" stroke="#C9A96E" strokeWidth={2}
+                  <Area type="monotone" dataKey="점수" stroke="#B8965A" strokeWidth={2}
                     fill="url(#tojungGrad)"
-                    dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }} />
+                    dot={{ r: 2.5, fill: '#B8965A', strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -259,7 +265,7 @@ export function TojungPage() {
 
         {/* 개운 조언 */}
         <FadeIn delay={0.7}>
-          <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.15)' }}>
+          <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(184,150,90,0.06)', border: '1px solid rgba(184,150,90,0.15)' }}>
             <p className="text-h3 text-text-primary mb-2">올해의 개운 조언</p>
             <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.luckyAdvice)}</p>
           </div>
@@ -268,6 +274,9 @@ export function TojungPage() {
         <FadeIn delay={0.75}>
           <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>결과 공유하기</Button>
         </FadeIn>
+
+        {/* 3-part Footer CTA (diff v3 §6) */}
+        <FooterCTA pageKey="tojung" backTo="/" />
       </div>
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId="tojung" />

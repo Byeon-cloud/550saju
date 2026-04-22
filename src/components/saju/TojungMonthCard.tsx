@@ -17,7 +17,7 @@ interface Props {
 export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해석, score, keyword, delay = 0 }: Props) {
   const [expanded, setExpanded] = useState(false);
 
-  const scoreColor = score >= 80 ? '#C9A96E' : score >= 60 ? '#2D8A4E' : score >= 40 ? '#2D4470' : '#D32F2F';
+  const scoreColor = score >= 80 ? '#B8965A' : score >= 60 ? '#2D8A4E' : score >= 40 ? '#2D4470' : '#D32F2F';
 
   return (
     <motion.button
@@ -65,7 +65,7 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
               <p className="text-caption text-text-muted italic">{stripMd(괘의미)}</p>
 
               {/* 전통 해석 — 고풍스러운 스타일 */}
-              <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(201,169,110,0.06)', borderLeft: '3px solid rgba(201,169,110,0.3)' }}>
+              <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(184,150,90,0.06)', borderLeft: '3px solid rgba(184,150,90,0.3)' }}>
                 <p className="text-caption text-text-hint mb-1">전통 풀이</p>
                 <p className="text-body-sm text-text-secondary leading-relaxed" style={{ fontStyle: 'italic' }}>
                   {stripMd(전통해석)}

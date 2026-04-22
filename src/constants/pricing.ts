@@ -73,8 +73,8 @@ export const ALL_SERVICES = [
   { id: 'daily', title: '오늘의 운세', desc: '매일 달라지는 나만의 운세', price: 0, label: '무료' },
   { id: 'dream', title: '꿈해몽', desc: '간밤에 꾼 꿈, 무슨 의미일까요', price: 0, label: '무료' },
   // 유료 (1운 = 500원)
-  { id: 'saju', title: '내 사주 풀이', desc: '성격, 직업, 연애, 재물, 건강 상세 분석', price: 1, label: '500원' },
-  { id: 'chat', title: '사주 상담', desc: '대화로 주고받는 1:1 맞춤 사주 상담', price: 1, label: '500원/5회' },
+  { id: 'saju', title: '내 사주 풀이', desc: '성격, 직업, 연애, 재물, 건강 상세 분석', price: 1, label: '1운' },
+  { id: 'chat', title: '사주 상담', desc: '대화로 주고받는 1:1 맞춤 사주 상담', price: 1, label: '1운 = 3회' },
   { id: 'compatibility', title: '궁합 분석', desc: '두 사람의 사주 비교 · 연애/결혼/직장', price: 1, label: '500원' },
   { id: 'daeun', title: '대운 해설', desc: '10년 단위 운의 흐름과 전환점', price: 1, label: '500원' },
   { id: 'monthly', title: '2026 월별 운세', desc: '올해 12개월, 좋은 달과 조심할 달', price: 1, label: '500원' },

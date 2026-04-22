@@ -36,8 +36,8 @@ export function CompatProfilePair({ person1, person2, overallScore, relation }: 
         transition={{ duration: 0.5, delay: side === 'left' ? 0.1 : 0.2 }}
       >
         <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-2"
-          style={{ background: info ? `${info.color}15` : 'rgba(201,169,110,0.1)' }}>
-          <span className="text-[32px] font-black" style={{ color: info?.color || '#C9A96E' }}>
+          style={{ background: info ? `${info.color}15` : 'rgba(184,150,90,0.1)' }}>
+          <span className="text-[32px] font-black" style={{ color: info?.color || '#B8965A' }}>
             {ilgan || '?'}
           </span>
         </div>
@@ -49,7 +49,7 @@ export function CompatProfilePair({ person1, person2, overallScore, relation }: 
     );
   };
 
-  const gradeColor = overallScore >= 85 ? '#C9A96E' : overallScore >= 70 ? '#2D8A4E' : overallScore >= 55 ? '#2D4470' : '#D32F2F';
+  const gradeColor = overallScore >= 85 ? '#B8965A' : overallScore >= 70 ? '#2D8A4E' : overallScore >= 55 ? '#2D4470' : '#D32F2F';
   const gradeLabel = overallScore >= 85 ? '천생연분' : overallScore >= 70 ? '좋은 궁합' : overallScore >= 55 ? '무난한 궁합' : '노력이 필요해요';
 
   return (

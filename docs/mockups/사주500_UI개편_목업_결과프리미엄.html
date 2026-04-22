@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사주500 — 프리미엄 결과 페이지 목업 (10운)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* =========================================================
+     사주500 — 프리미엄 결과 페이지 (10운, 변준기 샘플)
+     - 실 카피 기반 퀄리티 증명용 목업
+     - 7섹션: 원국 / 천간지지 / 십성 / 대운 / 연운 / 신살 / 실천
+     - 분량: 7섹션 깊이 풀이 (실 카피)
+     ========================================================= */
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+  html, body {
+    background: #0a0a0a;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1a1a1a;
+    letter-spacing: -0.01em;
+  }
+  .page-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    background: #faf8f3;
+    min-height: 100vh;
+    position: relative;
+    box-shadow: 0 0 80px rgba(0,0,0,.4);
+  }
+
+  /* ─── ResultHeader (상단 고정 헤더) ─────────────────────── */
+  .header {
+    position: sticky; top: 0; z-index: 50;
+    background: linear-gradient(180deg, #1a1a1a 0%, #2a2520 100%);
+    color: #fff;
+    padding: 14px 20px 12px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid rgba(212,175,55,.3);
+  }
+  .header .back { font-size: 22px; cursor: pointer; opacity: .8; }
+  .header .meta { flex: 1; }
+  .header .meta .title { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 600; letter-spacing: 0; }
+  .header .meta .sub { font-size: 11px; color: #d4af37; margin-top: 2px; letter-spacing: 0.05em; }
+  .header .badge {
+    background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+    color: #1a1a1a;
+    font-size: 10px; font-weight: 700;
+    padding: 4px 10px; border-radius: 100px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ─── Hero (인물 정보 카드) ──────────────────────────── */
+  .hero {
+    background: linear-gradient(180deg, #1a1a1a 0%, #1a1a1a 60%, #faf8f3 60%, #faf8f3 100%);
+    padding: 24px 20px 0;
+    position: relative;
+  }
+  .hero-card {
+    background: linear-gradient(135deg, #faf8f3 0%, #f0ebe0 100%);
+    border-radius: 16px;
+    padding: 24px 22px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.25), 0 0 0 1px rgba(212,175,55,.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: '命';
+    position: absolute;
+    right: -10px; bottom: -30px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 180px; font-weight: 900;
+    color: rgba(212,175,55,.08);
+    line-height: 1;
+  }
+  .hero-card .person {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 24px; font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+  .hero-card .birth {
+    font-size: 13px; color: #6a5d3f; margin-top: 6px;
+    font-feature-settings: 'tnum';
+  }
+  .hero-card .ilgan {
+    margin-top: 16px;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(46, 125, 50, 0.08);
+    border: 1px solid rgba(46, 125, 50, 0.2);
+    padding: 8px 14px; border-radius: 100px;
+  }
+  .hero-card .ilgan .hanja {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 18px; font-weight: 700;
+    color: #2e7d32;
+  }
+  .hero-card .ilgan .label {
+    font-size: 12px; color: #2e7d32; font-weight: 500;
+  }
+  .hero-card .meta {
+    margin-top: 14px;
+    display: flex; gap: 12px; font-size: 11px; color: #8a7d5f;
+    position: relative; z-index: 2;
+  }
+  .hero-card .meta span { display: inline-flex; align-items: center; gap: 4px; }
+
+  /* ─── 섹션 공통 ──────────────────────────────────── */
+  .content { padding: 0 20px 100px; background: #faf8f3; }
+  .section { margin-top: 32px; }
+  .section-num {
+    display: inline-block;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 11px; font-weight: 600;
+    color: #b8941f;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+  }
+  .section-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 21px; font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .section-title .hanja {
+    color: #b8941f; font-weight: 500;
+    margin-left: 6px; font-size: 17px;
+  }
+  .section-sub {
+    font-size: 12px; color: #8a7d5f;
+    margin-bottom: 18px;
+  }
+  .section p {
+    font-size: 14.5px; line-height: 1.85;
+    color: #2a2520;
+    margin-bottom: 14px;
+    word-break: keep-all;
+  }
+  .section p strong {
+    font-weight: 600; color: #1a1a1a;
+    background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%);
+    padding: 0 2px;
+  }
+  .section p .han {
+    font-family: 'Noto Serif KR', serif;
+    color: #6a5d3f;
+    font-size: 13px;
+    margin: 0 1px;
+  }
+
+  /* ─── 1. 원국 (사주 8글자 카드) ───────────────────────── */
+  .wongug {
+    background: linear-gradient(180deg, #fff 0%, #faf8f3 100%);
+    border-radius: 14px;
+    padding: 18px 14px;
+    border: 1px solid #ebe4d2;
+    margin: 16px 0 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.04);
+  }
+  .wongug-table {
+    display: grid;
+    grid-template-columns: 60px repeat(4, 1fr);
+    text-align: center;
+    gap: 6px;
+  }
+  .wongug-table .row-label {
+    font-size: 10px; color: #8a7d5f;
+    align-self: center;
+    text-align: right; padding-right: 4px;
+    font-weight: 500;
+  }
+  .wongug-table .col-header {
+    font-size: 10px; color: #b8941f;
+    padding: 4px 0;
+    font-weight: 600; letter-spacing: 0.1em;
+  }
+  .wongug-cell {
+    background: #fff;
+    border: 1px solid #ebe4d2;
+    border-radius: 8px;
+    padding: 14px 4px 10px;
+    position: relative;
+  }
+  .wongug-cell.ilju {
+    background: linear-gradient(180deg, rgba(46,125,50,.08) 0%, rgba(46,125,50,.04) 100%);
+    border-color: rgba(46,125,50,.3);
+  }
+  .wongug-cell .glyph {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 28px; font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .wongug-cell .glyph.mok { color: #2e7d32; }
+  .wongug-cell .glyph.hwa { color: #c62828; }
+  .wongug-cell .glyph.to  { color: #a47c2c; }
+  .wongug-cell .glyph.geum{ color: #757575; }
+  .wongug-cell .glyph.su  { color: #1565c0; }
+  .wongug-cell .yum {
+    font-size: 9px; color: #8a7d5f; margin-top: 2px;
+  }
+
+  /* ─── 오행 밸런스 차트 ─────────────────────────── */
+  .ohaeng-chart {
+    margin-top: 14px;
+    background: #faf8f3;
+    border-radius: 10px;
+    padding: 14px 12px;
+  }
+  .ohaeng-chart .title {
+    font-size: 11px; color: #6a5d3f;
+    margin-bottom: 8px; font-weight: 500;
+  }
+  .ohaeng-bar {
+    display: grid; grid-template-columns: 28px 1fr 30px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .ohaeng-bar .o-label {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 13px; font-weight: 600;
+  }
+  .ohaeng-bar .o-track {
+    background: #ebe4d2; height: 6px; border-radius: 100px; overflow: hidden;
+  }
+  .ohaeng-bar .o-fill {
+    height: 100%; border-radius: 100px;
+    transition: width .8s ease;
+  }
+  .ohaeng-bar .o-count {
+    text-align: right; color: #8a7d5f; font-feature-settings: 'tnum';
+  }
+  .o-mok  .o-label { color: #2e7d32; } .o-mok  .o-fill { background: #2e7d32; }
+  .o-hwa  .o-label { color: #c62828; } .o-hwa  .o-fill { background: #c62828; }
+  .o-to   .o-label { color: #a47c2c; } .o-to   .o-fill { background: #a47c2c; }
+  .o-geum .o-label { color: #757575; } .o-geum .o-fill { background: #757575; }
+  .o-su   .o-label { color: #1565c0; } .o-su   .o-fill { background: #1565c0; }
+
+  /* ─── 3. 십성 카드 그리드 ──────────────────────── */
+  .sipseong-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin: 14px 0;
+  }
+  .sip-card {
+    background: #fff;
+    border: 1px solid #ebe4d2;
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .sip-card .top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .sip-card .name {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px; font-weight: 600; color: #1a1a1a;
+  }
+  .sip-card .han { font-family: 'Noto Serif KR', serif; color: #b8941f; font-size: 12px; }
+  .sip-card .desc { font-size: 11.5px; color: #6a5d3f; line-height: 1.6; }
+
+  /* ─── 4. 대운 타임라인 ─────────────────────────── */
+  .daewoon-timeline {
+    background: linear-gradient(135deg, #fff 0%, #faf8f3 100%);
+    border-radius: 14px;
+    padding: 18px 14px;
+    border: 1px solid #ebe4d2;
+    margin: 14px 0;
+    overflow-x: auto;
+  }
+  .daewoon-row {
+    display: grid; grid-template-columns: repeat(8, 70px);
+    gap: 4px; min-width: 100%;
+  }
+  .dw-cell {
+    text-align: center;
+    background: #faf8f3;
+    border-radius: 8px;
+    padding: 8px 4px;
+    border: 1px solid transparent;
+    position: relative;
+  }
+  .dw-cell.now {
+    background: linear-gradient(180deg, rgba(212,175,55,.18) 0%, rgba(212,175,55,.08) 100%);
+    border-color: #d4af37;
+  }
+  .dw-cell .age { font-size: 9px; color: #8a7d5f; }
+  .dw-cell .gan { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; margin-top: 4px; line-height: 1; }
+  .dw-cell .ji  { font-family: 'Noto Serif KR', serif; font-size: 13px; color: #6a5d3f; line-height: 1.2; }
+  .dw-cell .label { font-size: 8px; color: #b8941f; margin-top: 4px; font-weight: 600; }
+
+  /* ─── 5. 연운 라인 차트 (점수 추이) ───────────── */
+  .yeonun-chart {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 14px;
+    border: 1px solid #ebe4d2;
+    margin: 14px 0;
+  }
+  .yeonun-chart .ttl {
+    font-size: 11px; color: #6a5d3f; margin-bottom: 10px; font-weight: 500;
+  }
+  .yeonun-svg { width: 100%; height: 120px; }
+
+  /* ─── 6. 신살 카드 리스트 ────────────────────── */
+  .shinsal-list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+  .shinsal-card {
+    background: #fff;
+    border-left: 3px solid #b8941f;
+    border-radius: 0 10px 10px 0;
+    padding: 12px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.03);
+  }
+  .shinsal-card .head {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .shinsal-card .nm {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px; font-weight: 700; color: #1a1a1a;
+  }
+  .shinsal-card .han { font-family: 'Noto Serif KR', serif; color: #b8941f; font-size: 12px; }
+  .shinsal-card .tag {
+    margin-left: auto;
+    background: rgba(184,148,31,.1); color: #b8941f;
+    font-size: 9.5px; padding: 2px 8px; border-radius: 100px; font-weight: 600;
+  }
+  .shinsal-card p { font-size: 12.5px; color: #2a2520; line-height: 1.7; margin: 0; }
+
+  /* ─── 7. 실천 액션 카드 ─────────────────────── */
+  .action-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .action-card {
+    background: linear-gradient(135deg, #fff 0%, #faf8f3 100%);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid #ebe4d2;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .action-card .num {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #d4af37, #b8941f);
+    color: #1a1a1a;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .action-card .body { flex: 1; }
+  .action-card .body .ttl { font-weight: 600; font-size: 14px; color: #1a1a1a; margin-bottom: 4px; }
+  .action-card .body .desc { font-size: 12.5px; color: #6a5d3f; line-height: 1.65; }
+
+  /* ─── Pull-quote (인용 강조 박스) ──────────────── */
+  .pullquote {
+    background: linear-gradient(135deg, rgba(46,125,50,.04) 0%, rgba(212,175,55,.04) 100%);
+    border-radius: 12px;
+    padding: 18px 18px 16px;
+    margin: 18px 0;
+    border-left: 3px solid #2e7d32;
+    position: relative;
+  }
+  .pullquote::before {
+    content: '"';
+    position: absolute;
+    top: -14px; left: 14px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 60px; color: rgba(46,125,50,.2);
+    line-height: 1;
+  }
+  .pullquote p {
+    font-family: 'Noto Serif KR', serif !important;
+    font-size: 15px !important;
+    line-height: 1.75 !important;
+    color: #1a1a1a !important;
+    margin: 0 !important;
+    font-weight: 500;
+  }
+
+  /* ─── Divider ──────────────────────────────── */
+  .divider {
+    display: flex; align-items: center;
+    margin: 28px 0;
+    color: #b8941f;
+    gap: 12px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, #d4af37, transparent);
+  }
+  .divider .han {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px; font-weight: 500;
+  }
+
+  /* ─── Upsell 카드 (사주대화 / 관련 주제) ──────── */
+  .upsell-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2520 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    margin: 32px 0 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .upsell-card::before {
+    content: '對';
+    position: absolute;
+    right: -10px; bottom: -30px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 140px; font-weight: 900;
+    color: rgba(212,175,55,.08);
+    line-height: 1;
+  }
+  .upsell-card .label {
+    font-size: 10px; color: #d4af37;
+    letter-spacing: 0.15em; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .upsell-card h3 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 17px; font-weight: 700;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .upsell-card p {
+    font-size: 12.5px; color: #c4baa0;
+    margin-bottom: 14px; line-height: 1.6;
+    position: relative;
+  }
+  .upsell-card .cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #d4af37, #b8941f);
+    color: #1a1a1a;
+    padding: 10px 18px; border-radius: 100px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; position: relative;
+  }
+
+  /* ─── Footer (메모/공유/저장) ──────────────── */
+  .result-footer {
+    margin-top: 28px;
+    padding: 18px 0;
+    border-top: 1px solid #ebe4d2;
+    display: flex; justify-content: space-around;
+    text-align: center;
+  }
+  .result-footer .btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: #6a5d3f; font-size: 11px; cursor: pointer;
+  }
+  .result-footer .btn svg { width: 22px; height: 22px; }
+
+  /* ─── 분량 & 메타 표시 (디버그용) ──────────── */
+  .word-count {
+    text-align: center;
+    font-size: 10.5px;
+    color: #8a7d5f;
+    margin: 24px 0 12px;
+    letter-spacing: 0.05em;
+  }
+  .word-count .han { font-family: 'Noto Serif KR', serif; color: #b8941f; }
+
+  /* ─── 좌측 인디케이터 (현 위치 섹션) ────────── */
+  .toc-side {
+    position: fixed;
+    left: max(8px, calc(50% - 270px));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .toc-side .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #d4af37; opacity: .25;
+  }
+  .toc-side .dot.active { opacity: 1; transform: scale(1.5); transition: .3s; }
+  @media (max-width: 540px) { .toc-side { display: none; } }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ═════════════ HEADER (Sticky) ═════════════ -->
+  <header class="header">
+    <div class="back">←</div>
+    <div class="meta">
+      <div class="title">변준기 님의 사주 풀이</div>
+      <div class="sub">PREMIUM · 7섹션 깊이 풀이</div>
+    </div>
+    <div class="badge">10운</div>
+  </header>
+
+  <!-- ═════════════ HERO 인물 카드 ═════════════ -->
+  <section class="hero">
+    <div class="hero-card">
+      <div class="person">변준기</div>
+      <div class="birth">1995년 5월 12일 (양력) · 묘시(05:30~07:30)</div>
+      <div class="ilgan">
+        <span class="hanja">甲</span>
+        <span class="label">일간 갑(甲) · 양목(陽木)</span>
+      </div>
+      <div class="meta">
+        <span>🌳 큰 나무의 기운</span>
+        <span>·</span>
+        <span>봄의 끝자락</span>
+        <span>·</span>
+        <span>2026.04.20 풀이</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="content">
+
+    <!-- ═════════════ 1. 원국 ═════════════ -->
+    <section class="section">
+      <div class="section-num">SECTION 01</div>
+      <div class="section-title">원국 <span class="hanja">原局</span></div>
+      <div class="section-sub">태어난 순간 하늘과 땅이 그려낸 여덟 글자</div>
+
+      <div class="wongug">
+        <div class="wongug-table">
+          <div></div>
+          <div class="col-header">시주</div>
+          <div class="col-header">일주</div>
+          <div class="col-header">월주</div>
+          <div class="col-header">연주</div>
+
+          <div class="row-label">천간</div>
+          <div class="wongug-cell">
+            <div class="glyph mok">己</div><div class="yum">기 / 음토</div>
+          </div>
+          <div class="wongug-cell ilju">
+            <div class="glyph mok">甲</div><div class="yum">갑 / 양목 (나)</div>
+          </div>
+          <div class="wongug-cell">
+            <div class="glyph mok">辛</div><div class="yum">신 / 음금</div>
+          </div>
+          <div class="wongug-cell">
+            <div class="glyph mok">乙</div><div class="yum">을 / 음목</div>
+          </div>
+
+          <div class="row-label">지지</div>
+          <div class="wongug-cell">
+            <div class="glyph mok">卯</div><div class="yum">묘 / 음목</div>
+          </div>
+          <div class="wongug-cell ilju">
+            <div class="glyph hwa">午</div><div class="yum">오 / 양화</div>
+          </div>
+          <div class="wongug-cell">
+            <div class="glyph hwa">巳</div><div class="yum">사 / 양화</div>
+          </div>
+          <div class="wongug-cell">
+            <div class="glyph mok">亥</div><div class="yum">해 / 양수</div>
+          </div>
+        </div>
+
+        <div class="ohaeng-chart">
+          <div class="title">오행 분포 (8글자 기준)</div>
+          <div class="ohaeng-bar o-mok">
+            <span class="o-label">木</span>
+            <div class="o-track"><div class="o-fill" style="width: 50%"></div></div>
+            <span class="o-count">4</span>
+          </div>
+          <div class="ohaeng-bar o-hwa">
+            <span class="o-label">火</span>
+            <div class="o-track"><div class="o-fill" style="width: 25%"></div></div>
+            <span class="o-count">2</span>
+          </div>
+          <div class="ohaeng-bar o-to">
+            <span class="o-label">土</span>
+            <div class="o-track"><div class="o-fill" style="width: 12.5%"></div></div>
+            <span class="o-count">1</span>
+          </div>
+          <div class="ohaeng-bar o-geum">
+            <span class="o-label">金</span>
+            <div class="o-track"><div class="o-fill" style="width: 12.5%"></div></div>
+            <span class="o-count">1</span>
+          </div>
+          <div class="ohaeng-bar o-su">
+            <span class="o-label">水</span>
+            <div class="o-track"><div class="o-fill" style="width: 12.5%"></div></div>
+            <span class="o-count">1</span>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        준기 님의 일간은 <strong>갑(甲)</strong>입니다. <span class="han">甲</span>은 봄 새벽에 곧게 뻗는 큰 나무, 흔들리지 않으려고 뿌리부터 다잡는 사람의 기운이에요. 굳이 큰 소리 내지 않아도 옆 사람이 "저 사람은 자기만의 결이 있구나" 하고 느끼게 만드는, 그런 결입니다.
+      </p>
+      <p>
+        태어난 달이 <strong>사월(巳月)</strong>이라 발아래는 한낮의 불기운이 밝아요. 나무가 봄에 잎을 펼치고 여름으로 성큼 들어가려는 시기. 그래서 준기 님 사주는 <strong>"성장하고 싶은데, 그걸 누가 알아주길 바라는"</strong> 마음이 강하게 흐릅니다. 묵묵히 일만 하는 타입이 아니라, 결과가 빛이 되어 돌아오기를 바라는 사람이에요.
+      </p>
+      <p>
+        다만 한 가지. 여덟 글자에 <strong>나무가 네 개나 들어 있어요</strong>. 같은 결의 사람들이 한 숲에 모여 있는 형국이라, 든든한 동시에 답답할 수 있습니다. <span class="han">水</span>가 한 글자(亥)뿐이라 뿌리에 주는 물이 부족하고, <span class="han">金</span>도 한 글자라 가지를 다듬어줄 도구가 약해요. 그래서 준기 님은 <strong>혼자 다 짊어지려는 경향</strong>이 자연스럽게 생깁니다. 이 부분은 뒤에서 다시 다룰게요.
+      </p>
+
+      <div class="pullquote">
+        <p>곧게 자란 나무 한 그루. 빛은 충분한데 물과 칼이 부족해, 키는 큰데 모양은 거칠게 자란다.</p>
+      </div>
+    </section>
+
+    <div class="divider"><span class="han">天 干 地 支</span></div>
+
+    <!-- ═════════════ 2. 천간지지 해석 ═════════════ -->
+    <section class="section">
+      <div class="section-num">SECTION 02</div>
+      <div class="section-title">천간지지 <span class="hanja">天干地支</span></div>
+      <div class="section-sub">위로 드러난 마음과 아래에 깔린 본능</div>
+
+      <p>
+        천간(天干)은 마음이고, 지지(地支)는 행동이에요. 사람들에게 보여지는 모습과, 실제로 하루를 굴리는 본능이 다른 자리에 있습니다.
+      </p>
+      <p>
+        준기 님 천간 줄을 보면 <strong>己 甲 辛 乙</strong> — 토·목·금·목입니다. 갑(甲)인 준기 님이 가운데 있고, 위로는 <strong>己(기)</strong>라는 작은 흙이 살짝 얹혀 있어요. 이건 명리에서 <strong>'갑기합(甲己合)'</strong>이라 부르는 자리. <span class="han">己</span>는 정재(正財), 즉 <strong>안정·약속·내 사람</strong>을 뜻하는 글자입니다. 천간에 짝이 가까이 와 있다는 건, 준기 님이 본능적으로 <strong>책임지고 싶은 대상</strong>을 곁에 두려 한다는 신호예요. 일이 됐든 사람이 됐든, "내가 끌고 가야지" 하고 손을 뻗는 사람입니다.
+      </p>
+      <p>
+        지지 줄은 <strong>卯 午 巳 亥</strong>. 발밑이 봄 늦은 시각의 들판이에요. <strong>巳午(사오)</strong>가 나란히 붙어 있어 한낮의 불이 강하게 타오르고, 시지의 <strong>卯(묘)</strong>가 그 불에 땔감을 계속 넣어주는 모양입니다. 행동력이 폭발적이지만, <strong>한 번 시작하면 멈추기 어려운 패턴</strong>이 여기서 나옵니다. 일주일을 몰아치고 주말에 무너지는 식의 리듬이 있다면, 그건 게으름이 아니라 사주 구조가 그렇게 만들어져 있어서예요.
+      </p>
+      <p>
+        연주의 <strong>亥(해)</strong>는 외로이 떨어져 있는 한 줌의 물. 어릴 때 환경에서 받은 <strong>물 한 컵</strong>이라고 보면 됩니다. 멀리 있어 평소엔 잊고 살지만, 진짜 지칠 때 본가·고향·오래된 친구 같은 곳에서 길어 마시는 한 모금이 되어줍니다. 이 글자가 사주에서 가장 약한 자리지만, 가장 귀한 자리이기도 해요.
+      </p>
+    </section>
+
+    <div class="divider"><span class="han">十 神</span></div>
+
+    <!-- ═════════════ 3. 십성 ═════════════ -->
+    <section class="section">
+      <div class="section-num">SECTION 03</div>
+      <div class="section-title">십성 <span class="hanja">十神</span></div>
+      <div class="section-sub">관계와 욕망을 그리는 열 개의 키</div>
+
+      <p>
+        십성(十神)은 사주가 사람의 욕망과 관계를 풀어내는 언어입니다. 준기 님 사주에서 또렷하게 도드라지는 글자는 다음 네 가지예요.
+      </p>
+
+      <div class="sipseong-grid">
+        <div class="sip-card">
+          <div class="top"><span class="name">비견</span><span class="han">比肩</span></div>
+          <div class="desc">갑(甲)과 같은 결의 동료. <strong>자기 결을 지키는 힘</strong>인데, 너무 많으면 고집이 되고 동업이 어려워집니다.</div>
+        </div>
+        <div class="sip-card">
+          <div class="top"><span class="name">상관</span><span class="han">傷官</span></div>
+          <div class="desc">사오(巳午) 불에서 나옴. <strong>창의·표현·말빨</strong>. 직장이나 위계 안에선 종종 잔소리처럼 들려 오해를 사기도.</div>
+        </div>
+        <div class="sip-card">
+          <div class="top"><span class="name">정재</span><span class="han">正財</span></div>
+          <div class="desc">천간의 기(己). <strong>꾸준한 수익·내 사람·약속</strong>. 가까이 있어 좋지만, 이걸 지키려고 무리하기 쉽습니다.</div>
+        </div>
+        <div class="sip-card">
+          <div class="top"><span class="name">정관</span><span class="han">正官</span></div>
+          <div class="desc">신(辛). 작지만 또렷한 <strong>규율·체면·평가</strong>. 준기 님은 남이 평가하는 자리에 약간 예민한 편이에요.</div>
+        </div>
+      </div>
+
+      <p>
+        이 네 글자가 한 사주 안에 같이 있다는 건, 준기 님이 <strong>"창의적으로 일하면서도 평가받고 싶고, 책임지고 싶으면서도 자기 결은 지키고 싶은"</strong> 사람이라는 뜻입니다. 한쪽으로 치우치지 않으니 다재다능해 보이지만, 본인 입장에선 <strong>매일 네 가지 욕망이 동시에 잡아당기는</strong> 피곤함이 있어요.
+      </p>
+      <p>
+        특히 <strong>상관과 정관이 같이 있는 구조</strong>는 명리에서 자주 다뤄지는 자리입니다. 옛 책에서는 "상관견관(傷官見官)" — 즉 표현하고 싶은 마음과 규율이 부딪히는 자리라 했어요. 준기 님이 직장 안에서 답답함을 자주 느낀다면, 능력 부족이 아니라 <strong>구조적으로 충돌이 짜여 있는</strong> 문제입니다. 이 글자가 도리어 본인의 사업이나 1인 프로젝트에선 가장 큰 무기가 됩니다.
+      </p>
+    </section>
+
+    <div class="divider"><span class="han">大 運</span></div>
+
+    <!-- ═════════════ 4. 대운 ═════════════ -->
+    <section class="section">
+      <div class="section-num">SECTION 04</div>
+      <div class="section-title">대운 <span class="hanja">大運</span></div>
+      <div class="section-sub">10년 단위로 흐르는 인생의 큰 강줄기</div>
+
+      <div class="daewoon-timeline">
+        <div class="daewoon-row">
+          <div class="dw-cell"><div class="age">1세</div><div class="gan">壬</div><div class="ji">午</div><div class="label">유년</div></div>
+          <div class="dw-cell"><div class="age">11세</div><div class="gan">癸</div><div class="ji">未</div><div class="label">학창</div></div>
+          <div class="dw-cell"><div class="age">21세</div><div class="gan">甲</div><div class="ji">申</div><div class="label">진출</div></div>
+          <div class="dw-cell now"><div class="age">31세</div><div class="gan">乙</div><div class="ji">酉</div><div class="label">현재</div></div>
+          <div class="dw-cell"><div class="age">41세</div><div class="gan">丙</div><div class="ji">戌</div><div class="label">전환</div></div>
+          <div class="dw-cell"><div class="age">51세</div><div class="gan">丁</div><div class="ji">亥</div><div class="label">결실</div></div>
+          <div class="dw-cell"><div class="age">61세</div><div class="gan">戊</div><div class="ji">子</div><div class="label">정리</div></div>
+          <div class="dw-cell"><div class="age">71세</div><div class="gan">己</div><div class="ji">丑</div><div class="label">관조</div></div>
+        </div>
+      </div>
+
+      <p>
+        준기 님은 지금 <strong>31세 을유(乙酉) 대운</strong>의 한가운데에 있어요. 천간의 <strong>乙</strong>은 갑(甲) 옆에 와서 같이 자라는 작은 나무 — <strong>비견(比肩)</strong>입니다. 그래서 이 시기엔 <strong>동료·파트너·자기 사람</strong>이라는 키워드가 강해집니다. 같이 일할 사람을 만나거나, 본인이 누군가를 끌어주는 자리에 자주 서요.
+      </p>
+      <p>
+        지지의 <strong>酉(유)</strong>는 다듬어주는 <strong>금(金)</strong>. 평생 부족했던 '나무를 다듬는 칼'이 이 10년에 들어와 있다는 뜻입니다. 작년부터 올해까지 어딘가 <strong>"내가 깎이는 느낌"</strong>이 든 적이 있다면, 그건 운이 나쁜 게 아니라 <strong>이 칼이 작동하는 중</strong>이에요. 모양이 잡히는 시기는 원래 아픕니다.
+      </p>
+      <p>
+        다음 대운인 <strong>41세 병술(丙戌)</strong>은 큰 전환점이에요. <strong>丙</strong>은 한낮의 태양, 갑(甲)에겐 <strong>식신(食神)</strong>으로 작용해 <strong>드러내는 자리·이름이 알려지는 자리</strong>가 활짝 열립니다. 30대에 깎인 모양이, 40대에 빛을 받습니다. 지금 무리해서 결과를 빨리 보려 하지 않아도 괜찮은 이유입니다.
+      </p>
+
+      <div class="pullquote">
+        <p>지금은 모양이 잡히는 10년. 결과를 보는 10년이 아니라, 결과를 받을 그릇을 굽는 10년이다.</p>
+      </div>
+    </section>
+
+    <div class="divider"><span class="han">年 運</span></div>
+
+    <!-- ═════════════ 5. 연운 ═════════════ -->
+    <section class="section">
+      <div class="section-num">SECTION 05</div>
+      <div class="section-title">연운 <span class="hanja">年運</span> <span style="font-size:13px; color:#8a7d5f; font-weight:400;">2026 병오(丙午)</span></div>
+      <div class="section-sub">올 한 해, 하늘이 보내는 손님</div>
+
+      <div class="yeonun-chart">
+        <div class="ttl">월별 흐름 (1~12월, 활력 지수)</div>
+        <svg class="yeonun-svg" viewBox="0 0 320 120" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#d4af37" stop-opacity=".4"/>
+              <stop offset="100%" stop-color="#d4af37" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- area -->
+          <path d="M0,80 L26,70 L53,50 L80,40 L106,55 L133,30 L160,25 L186,45 L213,60 L240,50 L266,65 L293,75 L320,60 L320,120 L0,120 Z" fill="url(#grad)"/>
+          <!-- line -->
+          <path d="M0,80 L26,70 L53,50 L80,40 L106,55 L133,30 L160,25 L186,45 L213,60 L240,50 L266,65 L293,75 L320,60" stroke="#b8941f" stroke-width="2" fill="none"/>
+          <!-- now marker (4월) -->
+          <circle cx="80" cy="40" r="5" fill="#fff" stroke="#b8941f" stroke-width="2"/>
+          <text x="80" y="22" text-anchor="middle" font-size="9" fill="#b8941f" font-weight="600">NOW</text>
+          <!-- peak marker (7월) -->
+          <circle cx="160" cy="25" r="3" fill="#2e7d32"/>
+          <!-- baseline labels -->
+          <text x="0" y="115" font-size="8" fill="#8a7d5f">1월</text>
+          <text x="80" y="115" font-size="8" fill="#8a7d5f">4월</text>
+          <text x="160" y="115" font-size="8" fill="#8a7d5f">7월</text>
+          <text x="240" y="115" font-size="8" fill="#8a7d5f">10월</text>
+          <text x="305" y="115" font-size="8" fill="#8a7d5f">12월</text>
+        </svg>
+      </div>
+
+      <p>
+        2026년은 <strong>병오(丙午)</strong> 해. 천간 <strong>丙</strong>은 갑(甲) 나무에게 가장 좋은 햇살이고, 지지 <strong>午</strong>는 한낮의 불입니다. 이 글자들이 준기 님 일주의 <strong>午</strong>를 만나 <strong>오오(午午) 자형(自刑)</strong>이라는 살짝 거친 자리를 만들어내요. 자형이라고 해서 무서운 건 아니에요. <strong>자기 자신을 자기가 들들 볶는 한 해</strong>로 풀이됩니다.
+      </p>
+      <p>
+        그래서 올해 준기 님의 키워드는 <strong>"보여주고 싶다, 그런데 마음대로 안 된다"</strong>예요. 시작은 잘되는데 마무리에서 자기 자신에게 너무 엄격해지는 일이 잦습니다. <strong>4~7월</strong>은 햇살이 가장 좋아 결과가 빠르게 나오는 시기이지만, <strong>8~9월</strong>에는 일을 너무 벌여놓고 정리에서 막히는 패턴이 보입니다.
+      </p>
+      <p>
+        재물 쪽은 <strong>3월·6월·11월</strong>이 좋은 자리예요. 특히 <strong>6월</strong>에 새로운 수익 채널 하나가 손에 잡힐 가능성이 높습니다. 사람 쪽은 <strong>5월에 만나는 사람</strong>이 1년 내내 갈 인연이 됩니다. 명함을 잘 챙기세요.
+      </p>
+      <p>
+        조심할 자리는 <strong>9월</strong>. 자기과신에서 비롯된 작은 사고나 말실수가 한 해의 흐름을 방해할 수 있어요. 9월에는 <strong>새로운 일 시작보다 쉬는 쪽</strong>으로 무게중심을 두세요.
+      </p>
+    </section>
+
+    <div class="divider"><span class="han">神 殺</span></div>
+
+    <!-- ═════════════ 6. 신살 ═════════════ -->
+    <section class="section">
+      <div class="section-num">SECTION 06</div>
+      <div class="section-title">신살 <span class="hanja">神殺</span></div>
+      <div class="section-sub">사주에 박힌 별자리들 — 조용히 작동하는 무늬</div>
+
+      <div class="shinsal-list">
+        <div class="shinsal-card">
+          <div class="head">
+            <span class="nm">천을귀인</span><span class="han">天乙貴人</span>
+            <span class="tag">길성 · 사람</span>
+          </div>
+          <p>준기 님 사주에 <strong>천을귀인</strong>이 있어요. 가장 귀한 길성. <strong>위기 때 손 내미는 사람</strong>이 늘 한 명은 나타난다는 뜻입니다. 본인이 자각 못 할 뿐, 지금까지 인생에서 결정적인 순간마다 누군가가 한 번씩 길을 열어줬을 거예요. 의심하지 말고 받으세요.</p>
+        </div>
+        <div class="shinsal-card">
+          <div class="head">
+            <span class="nm">문창귀인</span><span class="han">文昌貴人</span>
+            <span class="tag">길성 · 학문</span>
+          </div>
+          <p>일주 갑오(甲午) 옆에 자연스럽게 <strong>문창귀인</strong>이 깃드는 자리. <strong>글·말·기획·교육</strong>으로 풀어내는 일에 강합니다. 준기 님이 정리해서 설명하면 사람들이 잘 받아들이는 이유가 여기 있어요. 일 선택의 기준이 된다면 좋습니다.</p>
+        </div>
+        <div class="shinsal-card">
+          <div class="head">
+            <span class="nm">도화살</span><span class="han">桃花殺</span>
+            <span class="tag">매력 · 사람을 끄는 힘</span>
+          </div>
+          <p>지지의 <strong>卯</strong>가 도화살 자리. 흔히 오해하는 이성운이 아니라, <strong>사람을 끌어당기는 매력</strong>입니다. 준기 님은 가만히 있어도 사람이 모이는 결이 있어요. 이걸 사업·콘텐츠·브랜드에 쓰면 탁월합니다. 단, <strong>무리에 둘러싸여 자기 결을 잃기 쉬운 자리</strong>이기도 해요.</p>
+        </div>
+        <div class="shinsal-card">
+          <div class="head">
+            <span class="nm">화개살</span><span class="han">華蓋殺</span>
+            <span class="tag">고독 · 깊이</span>
+          </div>
+          <p><strong>화개살</strong>은 외롭게 자기 길을 가는 별. 사람들 사이에 있어도 어느 순간 <strong>혼자 깊이 들어가는 시간</strong>이 필요한 결입니다. 이 시간을 죄책감 없이 가질 수 있어야 준기 님의 진짜 작업이 나옵니다.</p>
+        </div>
+        <div class="shinsal-card">
+          <div class="head">
+            <span class="nm">역마살</span><span class="han">驛馬殺</span>
+            <span class="tag">이동 · 변화</span>
+          </div>
+          <p>연지 <strong>亥</strong>가 만들어내는 <strong>역마살</strong>. 한자리에 오래 있는 게 답답한 결입니다. 이사·이직·해외 등 변화가 많을 수 있고, 변화를 두려워하지 않을 때 더 빨리 자랍니다. 준기 님 사주는 <strong>안정형보다 이동형</strong>으로 살 때 더 잘 풀려요.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"><span class="han">實 踐</span></div>
+
+    <!-- ═════════════ 7. 실천 ═════════════ -->
+    <section class="section">
+      <div class="section-num">SECTION 07</div>
+      <div class="section-title">실천 <span class="hanja">實踐</span></div>
+      <div class="section-sub">사주를 안 다음, 오늘부터 바꿔볼 다섯 가지</div>
+
+      <p>
+        풀이가 길었어요. 하지만 사주는 <strong>'알았다'에서 끝나면 종이 한 장</strong>입니다. 준기 님 사주의 결을 가장 잘 살리는, 작지만 효과 큰 실천 다섯 가지를 정리합니다.
+      </p>
+
+      <div class="action-list">
+        <div class="action-card">
+          <div class="num">1</div>
+          <div class="body">
+            <div class="ttl">하루의 끝에 물 한 컵, 그리고 침묵</div>
+            <div class="desc">사주에 수(水)가 부족합니다. 물을 자주 마시는 습관도 좋지만, 더 중요한 건 <strong>하루 끝에 5분 침묵하는 시간</strong>이에요. 화(火)가 강한 사주는 끝까지 타다가 무너지기 쉽습니다. 침묵이 곧 내 안의 물을 길어 올리는 행위입니다.</div>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="num">2</div>
+          <div class="body">
+            <div class="ttl">'잘하는 사람'에게 깎이는 자리에 앉아라</div>
+            <div class="desc">올해 대운에 금(金)이 들어와 있어요. 이건 곧 <strong>나를 다듬어줄 사람</strong>이 들어왔다는 신호. 준기 님보다 한 수 위인 사람 옆에 의도적으로 자리를 만드세요. 사수, 멘토, 클라이언트 누구든. 깎이는 게 아프다고 도망가면 모양이 안 잡힙니다.</div>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="num">3</div>
+          <div class="body">
+            <div class="ttl">9월에 새 일을 벌이지 마라</div>
+            <div class="desc">2026년 9월은 자형(自刑)이 강하게 발동하는 시기. 새 프로젝트, 큰 계약, 이사 같은 큰 결정은 8월 말까지 마무리하거나 10월 이후로 미루세요. 9월은 <strong>정리하고 쉬는 한 달</strong>로 잡는 게 1년 전체의 점수를 올립니다.</div>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="num">4</div>
+          <div class="body">
+            <div class="ttl">'표현하는 일' 한 채널을 꾸준히 굴려라</div>
+            <div class="desc">상관(傷官)과 문창귀인이 같이 있는 사주는 <strong>표현으로 풀려나가는 결</strong>이에요. 글, 영상, 강의, SNS — 형식은 자유. 다만 <strong>한 채널을 1년 이상 끊김 없이</strong>. 이게 다음 대운에서 빛이 됩니다.</div>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="num">5</div>
+          <div class="body">
+            <div class="ttl">5월에 만난 사람 명함을 챙겨라</div>
+            <div class="desc">올해 연운에서 <strong>5월 인연</strong>이 1년 내내 갑니다. 식사 한 번 더, 메모 한 줄 더. 작은 정성이 다음 운의 다리가 됩니다. 사주는 사람을 통해 작동하는 무늬예요.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pullquote">
+        <p>같은 사주를 갖고 인생이 달라지는 건, 결국 어느 자리에 앉느냐의 차이다.</p>
+      </div>
+    </section>
+
+    <div class="word-count">
+      <span class="han">完</span> · 7섹션 풀이 완료
+    </div>
+
+    <!-- ═════════════ Upsell (사주대화) ═════════════ -->
+    <div class="upsell-card">
+      <div class="label">DEEPER · 더 들어가보기</div>
+      <h3>이 풀이를 두고 직접 물어보세요</h3>
+      <p>"올해 9월에 정확히 뭘 조심해야 해?", "파트너로 만난 사람이 어떤 사주인지 비교하고 싶어" — 풀이를 보며 떠오른 질문을, 사주를 살피며 답해드려요.</p>
+      <div class="cta">사주대화로 이어가기 →</div>
+    </div>
+
+    <!-- ═════════════ Footer (메모/공유/저장) ═════════════ -->
+    <div class="result-footer">
+      <div class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
+        메모
+      </div>
+      <div class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        공유
+      </div>
+      <div class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        보관함
+      </div>
+      <div class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        PDF
+      </div>
+    </div>
+
+  </div><!-- /.content -->
+</div><!-- /.page-wrap -->
+
+<!-- 좌측 인디케이터 -->
+<div class="toc-side">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot active"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+
+<script>
+  // 스크롤에 따라 좌측 인디케이터 활성화
+  const sections = document.querySelectorAll('.section');
+  const dots = document.querySelectorAll('.toc-side .dot');
+  window.addEventListener('scroll', () => {
+    let active = 0;
+    sections.forEach((s, i) => {
+      const top = s.getBoundingClientRect().top;
+      if (top < window.innerHeight / 2) active = i;
+    });
+    dots.forEach((d, i) => d.classList.toggle('active', i === active));
+  });
+</script>
+</body>
+</html>

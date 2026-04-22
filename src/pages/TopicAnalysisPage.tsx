@@ -1,39 +1,62 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
-import { getReports, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/components/common/Toast';
 import { generateTopicAnalysis } from '@/services/ai/reportGenerator';
 import { AILoading } from '@/components/common/AILoading';
+import { FooterCTA, type FooterCTAPageKey } from '@/components/common/FooterCTA';
 import { ScoreRing } from '@/components/saju/ScoreRing';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 import { stripMd } from '@/utils/format';
+import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
+import { normalizeTopicId } from '@/constants/topics';
 
-/* ─── 주제 설정 ─── */
-const TOPICS: Record<string, { label: string; icon: string; color: string; desc: string }> = {
-  love:     { label: '연애운',       icon: '愛', color: '#E91E63', desc: '인연의 시작, 이상형, 연애 흐름' },
-  wealth:   { label: '재물운',       icon: '財', color: '#C9A96E', desc: '돈 흐름, 투자 적기, 새는 돈 패턴' },
-  career:   { label: '취업·이직운', icon: '事', color: '#1565C0', desc: '적성, 이직 타이밍, 맞는 직종' },
-  marriage: { label: '결혼운',       icon: '婚', color: '#E91E63', desc: '결혼 적기, 배우자 성향, 결혼 후 생활' },
-  business: { label: '사업운',       icon: '商', color: '#2D8A4E', desc: '창업 타이밍, 맞는 업종, 동업 궁합' },
-  health:   { label: '건강운',       icon: '健', color: '#2E7D32', desc: '취약 장기, 건강 주의 시기, 체질 분석' },
-  reunion:  { label: '재회운',       icon: '緣', color: '#7B1FA2', desc: '재회 가능성, 적기, 새 인연 비교' },
-  study:    { label: '학업·시험운', icon: '學', color: '#0288D1', desc: '학습 스타일, 합격 운, 공부 시간대' },
-  social:   { label: '대인관계운',   icon: '人', color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' },
-  moving:   { label: '이사·이동운', icon: '動', color: '#757575', desc: '이동 적기, 좋은 방향, 해외운' },
+/* ─── 주제 설정 — 이모지 제거, 브랜드 픽토그램 사용.
+ *    key가 PictogramRegistry의 topic:* 와 1:1 매핑. (브랜드픽토그램_시스템.md)
+ */
+const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> = {
+  // SSOT v1 컬러 정렬 (2026-04-22 · @/constants/topics)
+  love:     { label: '연애운',       color: '#C88A95', desc: '만남·관계·인연 흐름' },
+  wealth:   { label: '재물운',       color: '#B8965A', desc: '돈·투자·현금흐름 변곡' },
+  career:   { label: '직업운',       color: '#5A7CA8', desc: '커리어·승진·평생 결' },
+  marriage: { label: '결혼운',       color: '#C97B95', desc: '인연 시기와 배우자 결' },
+  business: { label: '사업운',       color: '#A37A2E', desc: '창업·자영업 흐름과 시기' },
+  health:   { label: '건강운',       color: '#6FA08C', desc: '체질·기운·주의 시기' },
+  reunion:  { label: '재회운',       color: '#D89A8A', desc: '헤어진 사람과의 흐름' },
+  study:    { label: '학업운',       color: '#9C5A8A', desc: '집중력·지식 흡수·학습 패턴' },
+  exam:     { label: '합격·이직운', color: '#5A6FA8', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
+  move:     { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
+  social:   { label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
+  moving:   { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
 };
 
 const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+
+/** AI가 "(추정)", "(추론)" 등 괄호 주석을 붙여 보내는 경우 한자 1글자만 추출 */
+function cleanHanja(raw: string | undefined): string {
+  if (!raw) return '?';
+  // 괄호+내용 제거, 앞뒤 공백 제거 후 첫 글자만
+  const stripped = raw.replace(/\s*[\(（].*?[\)）]/g, '').trim();
+  return stripped.charAt(0) || '?';
+}
+/** 오행 텍스트 정리 — "(추정)" 제거 후 목/화/토/금/수만 추출 */
+function cleanOheng(raw: string | undefined): string {
+  if (!raw) return '';
+  const stripped = raw.replace(/\s*[\(（].*?[\)）]/g, '').trim();
+  const match = stripped.match(/[목화토금수]/);
+  return match ? match[0] : stripped.charAt(0) || '';
+}
 
 type Phase = 'select' | 'loading' | 'result';
 
 /** 점수 -> 한자 판정 (사주 전통 방식) */
 function getJudgment(score: number) {
-  if (score >= 85) return { hanja: '大吉', reading: '대길', desc: '매우 좋은 기운', color: '#C9A96E', bg: 'rgba(201,169,110,0.12)' };
+  if (score >= 85) return { hanja: '大吉', reading: '대길', desc: '매우 좋은 기운', color: '#B8965A', bg: 'rgba(184,150,90,0.12)' };
   if (score >= 70) return { hanja: '吉',   reading: '길',   desc: '좋은 기운의 흐름', color: '#2D8A4E', bg: 'rgba(45,138,78,0.10)' };
   if (score >= 55) return { hanja: '平',   reading: '평',   desc: '무난한 흐름',   color: '#1565C0', bg: 'rgba(21,101,192,0.10)' };
   if (score >= 40) return { hanja: '小注意', reading: '소주의', desc: '보완이 필요한 기운', color: '#E65100', bg: 'rgba(230,81,0,0.10)' };
@@ -66,7 +89,7 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   검정: '#424242', 검은색: '#424242', 흑색: '#424242', 블랙: '#424242',
   회색: '#757575', 회색빛: '#757575', 은색: '#9E9E9E', 실버: '#9E9E9E',
   // 금색 계열
-  금색: '#C9A96E', 골드: '#C9A96E', 금: '#C9A96E', 황토: '#BF8C3E', 황토색: '#BF8C3E',
+  금색: '#B8965A', 골드: '#B8965A', 금: '#B8965A', 황토: '#BF8C3E', 황토색: '#BF8C3E',
   갈색: '#795548', 브라운: '#795548', 갈: '#795548',
   베이지: '#D7CCC8', 아이보리: '#EFEBE9',
   // 보라 계열
@@ -92,7 +115,7 @@ function findLuckyColorHex(value: string): string | null {
 
 /** 등급 기준표 데이터 */
 const GRADE_SCALE = [
-  { hanja: '大吉', reading: '대길', range: '85~100', color: '#C9A96E' },
+  { hanja: '大吉', reading: '대길', range: '85~100', color: '#B8965A' },
   { hanja: '吉', reading: '길', range: '70~84', color: '#2D8A4E' },
   { hanja: '平', reading: '평', range: '55~69', color: '#1565C0' },
   { hanja: '小注意', reading: '소주의', range: '40~54', color: '#E65100' },
@@ -185,7 +208,7 @@ function KeywordTags({ keywords, color }: { keywords: string[]; color: string })
 }
 
 /** 강점 / 주의점 비주얼 카드 */
-function StrengthsCautions({ strengths, cautions, color }: { strengths?: string[]; cautions?: string[]; color: string }) {
+function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; cautions?: string[]; color: string }) {
   if (!strengths?.length && !cautions?.length) return null;
   return (
     <FadeIn delay={0.12}>
@@ -285,6 +308,120 @@ function LoveViz({ data, color }: { data: any; color: string }) {
             </div>
           </div>
         )}
+
+        {/* 상대방 궁합 분석 (썸/연애중일 때만) */}
+        {data.partnerCompat && (() => {
+          const pc = data.partnerCompat;
+          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
+          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+          const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
+            '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+            '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+            '형': { icon: '刑', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+            '해': { icon: '害', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+            '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+            '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+          };
+          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' }; };
+          const pComp = pc.pillarComparison;
+          const interMap: Record<string, any> = {};
+          (pComp?.interactions || []).forEach((it: any) => {
+            if (it.position === '년주') interMap['year'] = it;
+            else if (it.position === '월주') interMap['month'] = it;
+            else if (it.position === '일주') interMap['day'] = it;
+          });
+          return (
+            <div className="card">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-h3 text-text-primary">두 사람의 연애 궁합</p>
+                {pc.compatScore != null && (
+                  <span className="text-[12px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${color}10`, color }}>{pc.compatScore}점</span>
+                )}
+              </div>
+              {pc.loveChemistry && (
+                <p className="text-[11px] text-text-muted mb-3 leading-snug">{pc.loveChemistry}</p>
+              )}
+
+              {/* 기둥 비교 */}
+              {pComp && (() => {
+                const renderPillar = (p: any, side: 'left' | 'right') => {
+                  const oh = cleanOheng(p.oheng);
+                  const bg = ohengBg[oh] || 'rgba(0,0,0,0.03)';
+                  const fg = ohengText[oh] || '#3D3427';
+                  return (
+                    <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
+                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      <div className="flex gap-1">
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
+                      </div>
+                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    </div>
+                  );
+                };
+                return (
+                  <div className="mb-3">
+                    <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
+                    <div className="space-y-2">
+                      {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
+                        const myP = pComp.myPillars?.[key];
+                        const ptP = pComp.partnerPillars?.[key];
+                        const inter = interMap[key];
+                        const ts = inter ? getTS(inter.type) : null;
+                        return (
+                          <div key={key}>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-[9px] text-text-hint font-medium">{label}</span>
+                              {ts && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {myP && renderPillar(myP, 'left')}
+                              <div className="flex-shrink-0 w-6 flex items-center justify-center">
+                                {ts ? <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span> : <span className="text-[10px] text-text-hint">vs</span>}
+                              </div>
+                              {ptP && renderPillar(ptP, 'right')}
+                            </div>
+                            {inter?.desc && <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 px-1" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                      <span className="text-[9px] text-text-hint">나</span>
+                      <span className="text-[9px] text-text-hint">상대 (추론)</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 잘 맞는 점 / 안 맞는 점 */}
+              {(pc.matchPoints?.length > 0 || pc.clashPoints?.length > 0) && (
+                <div className="space-y-2 mb-2">
+                  {pc.matchPoints?.map((m: string, i: number) => (
+                    <div key={`m${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(45,138,78,0.12)', color: '#2D8A4E' }}>合</span>
+                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(m)}</p>
+                    </div>
+                  ))}
+                  {pc.clashPoints?.map((c: string, i: number) => (
+                    <div key={`c${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(230,81,0,0.04)' }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(230,81,0,0.10)', color: '#E65100' }}>沖</span>
+                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(c)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 상대방 연애 스타일 */}
+              {pc.partnerLoveStyle && (
+                <div className="rounded-xl py-2 px-3" style={{ background: `${color}05`, borderLeft: `3px solid ${color}30` }}>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color }}>상대방의 연애 스타일</p>
+                  <p className="text-[11px] text-text-primary leading-snug">{pc.partnerLoveStyle}</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </FadeIn>
   );
@@ -292,54 +429,134 @@ function LoveViz({ data, color }: { data: any; color: string }) {
 
 function WealthViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
+
+  // 월별 재물 점수에서 베스트/워스트 찾기
+  const monthly = data.monthlyWealth || [];
+  let bestMonth = '', worstMonth = '', bestScore = 0, worstScore = 100;
+  monthly.forEach((m: any) => {
+    const s = typeof m.score === 'number' ? m.score : parseInt(m.score) || 0;
+    if (s > bestScore) { bestScore = s; bestMonth = m.month; }
+    if (s < worstScore) { worstScore = s; worstMonth = m.month; }
+  });
+
   return (
     <FadeIn delay={0.1}>
       <div className="space-y-3">
-        {/* 재성 구조 + 전성기 */}
+
+        {/* 재물 역량 3축 게이지 */}
         <div className="card">
           <div className="flex items-center justify-between mb-3">
             <p className="text-h3 text-text-primary">재물 역량 분석</p>
             {data.wealthType && <TypeBadge label={data.wealthType} color={color} />}
           </div>
           <div className="space-y-2.5">
-            {data.earningPower != null && <HBar value={data.earningPower} label="수익력" color="#2D8A4E" />}
-            {data.savingPower != null && <HBar value={data.savingPower} label="저축력" color="#1565C0" />}
-            {data.spendingRisk != null && <HBar value={data.spendingRisk} label="지출위험" color="#D32F2F" />}
+            {data.earningPower != null && <HBar value={data.earningPower} label="수익력 — 돈 벌어오는 힘" color="#2D8A4E" />}
+            {data.savingPower != null && <HBar value={data.savingPower} label="저축력 — 돈 모으는 힘" color="#1565C0" />}
+            {data.spendingRisk != null && <HBar value={data.spendingRisk} label="지출위험 — 돈 새는 위험도" color="#D32F2F" suffix=" (높을수록 위험)" />}
           </div>
-          <div className="grid grid-cols-2 gap-2 mt-3">
+        </div>
+
+        {/* 재성 구조 + 핵심 수치 대시보드 */}
+        <div className="card">
+          <p className="text-h3 text-text-primary mb-3">재물 핵심 지표</p>
+          <div className="grid grid-cols-2 gap-2">
             {data.jaeseongType && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
-                <p className="text-[9px] text-text-hint mb-0.5">재성(財星) 구조</p>
-                <p className="text-[12px] font-bold" style={{ color }}>{data.jaeseongType}</p>
+              <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
+                <p className="text-[9px] text-text-hint mb-1">재성(財星) 구조</p>
+                <p className="text-[13px] font-black" style={{ color }}>{data.jaeseongType}</p>
+                {data.jaeseongDesc && <p className="text-[10px] text-text-muted mt-1 leading-snug">{data.jaeseongDesc}</p>}
               </div>
             )}
             {data.wealthPeakPeriod && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
-                <p className="text-[9px] text-text-hint mb-0.5">재물 전성기</p>
-                <p className="text-[12px] font-bold" style={{ color }}>{data.wealthPeakPeriod}</p>
+              <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
+                <p className="text-[9px] text-text-hint mb-1">재물 전성기</p>
+                <p className="text-[13px] font-black" style={{ color }}>{data.wealthPeakPeriod}</p>
+                <p className="text-[10px] text-text-muted mt-1">이 시기에 자산이 가장 크게 불어요</p>
               </div>
             )}
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-2">
             {data.investStyle && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,192,0.05)' }}>
-                <p className="text-[9px] text-text-hint mb-0.5">투자 성향</p>
-                <p className="text-[12px] font-bold text-[#1565C0]">{data.investStyle}</p>
+              <div className="rounded-xl p-3" style={{ background: 'rgba(21,101,192,0.05)' }}>
+                <p className="text-[9px] text-text-hint mb-1">투자 성향</p>
+                <p className="text-[13px] font-black text-[#1565C0]">{data.investStyle}</p>
               </div>
             )}
             {data.bestInvestMonth && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(45,138,78,0.05)' }}>
-                <p className="text-[9px] text-text-hint mb-0.5">투자 적기</p>
-                <p className="text-[12px] font-bold text-[#2D8A4E]">{data.bestInvestMonth}</p>
+              <div className="rounded-xl p-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <div className="flex items-center gap-1 mb-1">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
+                  <p className="text-[9px] text-text-hint">올해 투자 적기</p>
+                </div>
+                <p className="text-[13px] font-black text-[#2D8A4E]">{data.bestInvestMonth}</p>
               </div>
             )}
           </div>
+          {data.wealthFlow && (
+            <div className="mt-2 rounded-lg py-2 px-3 flex items-center gap-2" style={{ background: `${color}05` }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+              <p className="text-[11px] text-text-secondary">올해 재물 흐름: <strong style={{ color }}>{data.wealthFlow}</strong></p>
+            </div>
+          )}
         </div>
+
+        {/* 월별 재물 흐름 차트 */}
+        {monthly.length > 0 && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-h3 text-text-primary">월별 재물 흐름</p>
+              {data.dangerMonths && (
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(211,47,47,0.08)', color: '#D32F2F' }}>
+                  주의: {data.dangerMonths}
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-text-hint mb-3">올해 12개월 재물 에너지 추이</p>
+            <div className="h-[150px] -mx-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthly.map((m: any) => ({ ...m, score: typeof m.score === 'number' ? m.score : parseInt(m.score) || 0 }))} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
+                  <defs>
+                    <linearGradient id="wealthGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false}
+                    tickFormatter={(v: string) => v.replace('월', '')} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false} />
+                  <Area type="monotone" dataKey="score" stroke={color} fill="url(#wealthGrad)"
+                    strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            {/* 베스트/워스트 월 */}
+            {bestMonth && worstMonth && (
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <div className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
+                  <span className="text-[10px] text-text-muted">최고: <strong className="text-[#2D8A4E]">{bestMonth} ({bestScore}점)</strong></span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                  <span className="text-[10px] text-text-muted">주의: <strong className="text-[#D32F2F]">{worstMonth} ({worstScore}점)</strong></span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 돈 새는 함정 경고 */}
         {data.moneyLeakTrap && (
           <div className="card" style={{ borderLeft: '3px solid #E65100' }}>
-            <p className="text-[10px] font-bold text-[#E65100] mb-1">돈 새는 핵심 함정</p>
-            <p className="text-[12px] text-text-primary leading-snug">{data.moneyLeakTrap}</p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p className="text-[12px] font-bold text-[#E65100]">돈 새는 핵심 함정</p>
+            </div>
+            <p className="text-[13px] text-text-primary font-semibold leading-snug mb-1">{data.moneyLeakTrap}</p>
+            {data.moneyLeakDesc && (
+              <p className="text-[11px] text-text-secondary leading-relaxed">{data.moneyLeakDesc}</p>
+            )}
           </div>
         )}
       </div>
@@ -366,6 +583,40 @@ function CareerViz({ data, color }: { data: any; color: string }) {
             </div>
           )}
         </div>
+        {/* 현재 상태 분석 + 관심 분야 적합도 (입력 시) */}
+        {(data.statusAnalysis || data.fieldFitScore != null) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">맞춤 분석</p>
+            {data.statusAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color }}>현재 상태 분석</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.statusAnalysis}</p>
+              </div>
+            )}
+            {data.fieldFitScore != null && (
+              <div className="rounded-xl p-3" style={{ background: 'rgba(0,0,0,0.015)' }}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] font-bold" style={{ color }}>관심 분야 적합도</p>
+                  <span className="text-[14px] font-black" style={{ color }}>{data.fieldFitScore}<span className="text-[10px]">점</span></span>
+                </div>
+                <div className="h-[8px] rounded-full overflow-hidden mb-1.5" style={{ background: `${color}12` }}>
+                  <motion.div className="h-full rounded-full" style={{ background: color }}
+                    initial={{ width: 0 }} animate={{ width: `${Math.min(data.fieldFitScore, 100)}%` }}
+                    transition={{ duration: 0.8, delay: 0.3 }} />
+                </div>
+                {data.fieldFitAnalysis && (
+                  <p className="text-[11px] text-text-secondary leading-snug">{data.fieldFitAnalysis}</p>
+                )}
+              </div>
+            )}
+            {data.jobChangeTiming && (
+              <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <p className="text-[10px] text-text-hint">이직 최적 시기: <strong className="text-[#2D8A4E]">{data.jobChangeTiming}</strong></p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 면접 + 연봉 전략 카드 */}
         <div className="card">
           <p className="text-h3 text-text-primary mb-3">면접 / 연봉 전략</p>
@@ -479,6 +730,120 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
             <p className="text-[12px] text-text-primary leading-snug">{data.conflictPattern}</p>
           </div>
         )}
+
+        {/* 상대방 궁합 분석 (연애중일 때만) */}
+        {data.partnerCompat && (() => {
+          const pc = data.partnerCompat;
+          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
+          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+          const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
+            '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+            '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+            '형': { icon: '刑', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+            '해': { icon: '害', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+            '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+            '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+          };
+          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' }; };
+          const pComp = pc.pillarComparison;
+          const interMap: Record<string, any> = {};
+          (pComp?.interactions || []).forEach((it: any) => {
+            if (it.position === '년주') interMap['year'] = it;
+            else if (it.position === '월주') interMap['month'] = it;
+            else if (it.position === '일주') interMap['day'] = it;
+          });
+          return (
+            <div className="card">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-h3 text-text-primary">두 사람의 결혼 궁합</p>
+                {pc.compatScore != null && (
+                  <span className="text-[12px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${color}10`, color }}>{pc.compatScore}점</span>
+                )}
+              </div>
+              {pc.marriageChemistry && (
+                <p className="text-[11px] text-text-muted mb-3 leading-snug">{pc.marriageChemistry}</p>
+              )}
+
+              {/* 기둥 비교 */}
+              {pComp && (() => {
+                const renderPillar = (p: any, side: 'left' | 'right') => {
+                  const oh = cleanOheng(p.oheng);
+                  const bg = ohengBg[oh] || 'rgba(0,0,0,0.03)';
+                  const fg = ohengText[oh] || '#3D3427';
+                  return (
+                    <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
+                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      <div className="flex gap-1">
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
+                        <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
+                      </div>
+                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    </div>
+                  );
+                };
+                return (
+                  <div className="mb-3">
+                    <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
+                    <div className="space-y-2">
+                      {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
+                        const myP = pComp.myPillars?.[key];
+                        const ptP = pComp.partnerPillars?.[key];
+                        const inter = interMap[key];
+                        const ts = inter ? getTS(inter.type) : null;
+                        return (
+                          <div key={key}>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-[9px] text-text-hint font-medium">{label}</span>
+                              {ts && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {myP && renderPillar(myP, 'left')}
+                              <div className="flex-shrink-0 w-6 flex items-center justify-center">
+                                {ts ? <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span> : <span className="text-[10px] text-text-hint">vs</span>}
+                              </div>
+                              {ptP && renderPillar(ptP, 'right')}
+                            </div>
+                            {inter?.desc && <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 px-1" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                      <span className="text-[9px] text-text-hint">나</span>
+                      <span className="text-[9px] text-text-hint">상대 (추론)</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 잘 맞는 점 / 안 맞는 점 */}
+              {(pc.matchPoints?.length > 0 || pc.clashPoints?.length > 0) && (
+                <div className="space-y-2 mb-2">
+                  {pc.matchPoints?.map((m: string, i: number) => (
+                    <div key={`m${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(45,138,78,0.12)', color: '#2D8A4E' }}>合</span>
+                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(m)}</p>
+                    </div>
+                  ))}
+                  {pc.clashPoints?.map((c: string, i: number) => (
+                    <div key={`c${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(230,81,0,0.04)' }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(230,81,0,0.10)', color: '#E65100' }}>沖</span>
+                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(c)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 상대방 결혼관 */}
+              {pc.partnerMarriageStyle && (
+                <div className="rounded-xl py-2 px-3" style={{ background: `${color}05`, borderLeft: `3px solid ${color}30` }}>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color }}>상대방의 결혼관</p>
+                  <p className="text-[11px] text-text-primary leading-snug">{pc.partnerMarriageStyle}</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </FadeIn>
   );
@@ -503,6 +868,39 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
             </div>
           )}
         </div>
+        {/* 현재 사업 진단 (운영중일 때) */}
+        {(data.currentBizPhase || data.bizHealthScore != null) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">현재 사업 진단</p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {data.currentBizPhase && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
+                  <p className="text-[9px] text-text-hint mb-0.5">사업 단계</p>
+                  <p className="text-[13px] font-black" style={{ color }}>{data.currentBizPhase}</p>
+                </div>
+              )}
+              {data.bizHealthScore != null && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}06` }}>
+                  <p className="text-[9px] text-text-hint mb-0.5">사업 건강도</p>
+                  <p className="text-[16px] font-black" style={{ color }}>{data.bizHealthScore}<span className="text-[10px]">점</span></p>
+                </div>
+              )}
+            </div>
+            {data.openingAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color }}>개업 시점 분석</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.openingAnalysis}</p>
+              </div>
+            )}
+            {data.nextPhaseAdvice && (
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <p className="text-[10px] font-bold text-[#2D8A4E] mb-0.5">다음 단계 전략</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.nextPhaseAdvice}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 창업 준비도 + 리스크 + 동업 */}
         <div className="card">
           <p className="text-h3 text-text-primary mb-3">사업 준비 현황</p>
@@ -630,7 +1028,6 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
   const pp = data.partnerProfile;
   const ca = data.compatAnalysis;
   const sinsalList = data.sinsal;
-  const steps = data.reunionSteps;
   const bd = data.breakupDuration;
 
   return (
@@ -706,6 +1103,99 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
             {pp.myVsPartner && (
               <p className="text-[11px] text-text-muted mb-3 leading-snug">{pp.myVsPartner}</p>
             )}
+
+            {/* 사주 기둥(柱) 비교 시각화 */}
+            {pp.pillarComparison && (() => {
+              const pc = pp.pillarComparison;
+              const pillLabels = [
+                { key: 'year', label: '년주', hanja: '年柱' },
+                { key: 'month', label: '월주', hanja: '月柱' },
+                { key: 'day', label: '일주', hanja: '日柱' },
+              ];
+              const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
+              const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+              // interactions를 position별로 맵핑
+              const interMap: Record<string, { type: string; desc: string }> = {};
+              (pc.interactions || []).forEach((it: any) => {
+                if (it.position === '년주') interMap['year'] = it;
+                else if (it.position === '월주') interMap['month'] = it;
+                else if (it.position === '일주') interMap['day'] = it;
+              });
+              const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
+                '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+                '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+                '형': { icon: '刑', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+                '해': { icon: '害', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
+                '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
+                '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+              };
+              const getTypeStyle = (type: string) => {
+                for (const [k, v] of Object.entries(typeIcon)) {
+                  if (type?.includes(k)) return v;
+                }
+                return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' };
+              };
+              const renderPillar = (p: any, side: 'left' | 'right') => {
+                const oh = cleanOheng(p.oheng);
+                const bg = ohengBg[oh] || 'rgba(0,0,0,0.03)';
+                const fg = ohengText[oh] || '#3D3427';
+                return (
+                  <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
+                    {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    <div className="flex gap-1">
+                      <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
+                      <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
+                    </div>
+                    {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                  </div>
+                );
+              };
+              return (
+                <div className="mb-4">
+                  <p className="text-[10px] text-text-hint mb-2 font-semibold">사주 기둥(柱) 비교</p>
+                  <div className="space-y-2">
+                    {pillLabels.map(({ key, label, hanja }) => {
+                      const myP = pc.myPillars?.[key];
+                      const ptP = pc.partnerPillars?.[key];
+                      const inter = interMap[key];
+                      const ts = inter ? getTypeStyle(inter.type) : null;
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[9px] text-text-hint font-medium">{label}</span>
+                            <span className="text-[8px] text-text-hint opacity-60">({hanja})</span>
+                            {ts && (
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full ml-auto"
+                                style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {myP && renderPillar(myP, 'left')}
+                            <div className="flex-shrink-0 w-6 flex items-center justify-center">
+                              {ts ? (
+                                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
+                                  style={{ background: ts.bg, color: ts.color }}>{ts.icon}</span>
+                              ) : (
+                                <span className="text-[10px] text-text-hint">vs</span>
+                              )}
+                            </div>
+                            {ptP && renderPillar(ptP, 'right')}
+                          </div>
+                          {inter?.desc && (
+                            <p className="text-[10px] text-text-muted mt-1 ml-1 leading-snug">{inter.desc}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* 범례 */}
+                  <div className="flex items-center justify-between mt-3 pt-2 px-1" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                    <span className="text-[9px] text-text-hint">나</span>
+                    <span className="text-[9px] text-text-hint">상대 (추론)</span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* 나 vs 상대 프로필 비교 */}
             <div className="grid grid-cols-2 gap-2 mb-3">
@@ -797,34 +1287,70 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
         {/* ━━━ 5. 전통 연애 신살 분석 ━━━ */}
         {sinsalList && (
           <div className="card">
-            <p className="text-h3 text-text-primary mb-3">연애 신살(神殺) 분석</p>
-            <div className="space-y-2">
+            <p className="text-h3 text-text-primary mb-1">연애 신살(神殺) 분석</p>
+            <p className="text-[10px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
+            <div className="space-y-3">
               {[
-                { key: 'doHwaSal', name: '도화살(桃花殺)', desc: '매력 발산의 별', activeColor: '#E91E63' },
-                { key: 'hongYeomSal', name: '홍염살(紅艶殺)', desc: '강렬한 연애 에너지', activeColor: '#D32F2F' },
-                { key: 'wonJinSal', name: '원진살(怨嗔殺)', desc: '원망과 소원함의 구조', activeColor: '#E65100' },
-                { key: 'cheonEulGuiin', name: '천을귀인(天乙貴人)', desc: '귀인의 도움', activeColor: '#2D8A4E' },
-                { key: 'samhap', name: '삼합(三合)', desc: '세 지지의 조화', activeColor: '#1565C0' },
-                { key: 'yukhap', name: '육합(六合)', desc: '짝 지지의 결합', activeColor: '#7B1FA2' },
-              ].map(({ key, name, desc, activeColor }) => {
+                { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E91E63" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#E91E63' },
+                { key: 'hongYeomSal', name: '홍염살', hanja: '紅艶殺', summary: '강렬한 끌림', subject: '나의 사주',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 2c1 3 4 5.5 4 10a4 4 0 11-8 0c0-4.5 3-7 4-10z" /></svg>, activeColor: '#D32F2F' },
+                { key: 'wonJinSal', name: '원진살', hanja: '怨嗔殺', summary: '감정 어긋남', subject: '두 사람 사이',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M16 8l-8 8M8 8l8 8" /></svg>, activeColor: '#E65100' },
+                { key: 'cheonEulGuiin', name: '천을귀인', hanja: '天乙貴人', summary: '귀인의 도움', subject: '나의 사주',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>, activeColor: '#2D8A4E' },
+                { key: 'samhap', name: '삼합', hanja: '三合', summary: '세 기운의 조화', subject: '두 사람 사이',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><path d="M12 3l8.66 15H3.34z" /></svg>, activeColor: '#1565C0' },
+                { key: 'yukhap', name: '육합', hanja: '六合', summary: '짝궁 결합', subject: '두 사람 사이',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><circle cx="9" cy="12" r="5" /><circle cx="15" cy="12" r="5" /></svg>, activeColor: '#7B1FA2' },
+              ].map(({ key, name, hanja, summary, subject, icon, activeColor }) => {
                 const s = sinsalList[key];
                 if (!s) return null;
                 const isActive = s.have === true || s.have === 'true';
+                const impactType = s.impact || (isActive ? 'positive' : 'neutral');
+                const impactLabel = impactType === 'positive' ? '좋은 영향' : impactType === 'negative' ? '주의 필요' : '해당 없음';
+                const impactColor = impactType === 'positive' ? '#2D8A4E' : impactType === 'negative' ? '#E65100' : '#999';
                 return (
-                  <div key={key} className="flex items-start gap-3 rounded-xl p-2.5"
-                    style={{ background: isActive ? `${activeColor}06` : 'rgba(0,0,0,0.02)' }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: isActive ? `${activeColor}15` : 'rgba(0,0,0,0.05)' }}>
-                      <span className="text-[10px] font-black" style={{ color: isActive ? activeColor : '#999' }}>
-                        {isActive ? '有' : '無'}
+                  <div key={key} className="rounded-2xl overflow-hidden"
+                    style={{ background: isActive ? `${activeColor}04` : 'rgba(0,0,0,0.015)', border: `1px solid ${isActive ? `${activeColor}15` : 'rgba(0,0,0,0.04)'}` }}>
+                    {/* 헤더 */}
+                    <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: isActive ? `${activeColor}12` : 'rgba(0,0,0,0.04)' }}>
+                        {icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[12px] font-bold text-text-primary">{name}</p>
+                          <span className="text-[9px] text-text-hint">({hanja})</span>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[rgba(0,0,0,0.04)] text-text-hint">{subject}</span>
+                        </div>
+                        <p className="text-[10px] text-text-muted">{summary}</p>
+                      </div>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: isActive ? `${impactColor}12` : 'rgba(0,0,0,0.04)', color: isActive ? impactColor : '#bbb' }}>
+                        {isActive ? impactLabel : '없음'}
                       </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-[11px] font-bold text-text-primary">{name}</p>
-                        <span className="text-[9px] text-text-hint">{desc}</span>
-                      </div>
-                      {s.desc && <p className="text-[11px] text-text-secondary leading-snug">{s.desc}</p>}
+                    {/* 본문 — 쉬운 설명 */}
+                    <div className="px-3.5 pb-3 space-y-1.5">
+                      {s.meaning && (
+                        <div className="rounded-lg py-2 px-2.5" style={{ background: isActive ? `${activeColor}06` : 'rgba(0,0,0,0.02)' }}>
+                          <p className="text-[10px] font-semibold mb-0.5" style={{ color: isActive ? activeColor : '#999' }}>쉽게 말하면</p>
+                          <p className="text-[11px] text-text-primary leading-relaxed">{s.meaning}</p>
+                        </div>
+                      )}
+                      {s.advice && isActive && (
+                        <div className="flex items-start gap-1.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={activeColor} strokeWidth="2.5" className="mt-0.5 flex-shrink-0">
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                          <p className="text-[11px] text-text-secondary leading-snug">{s.advice}</p>
+                        </div>
+                      )}
+                      {s.desc && !s.meaning && (
+                        <p className="text-[11px] text-text-secondary leading-snug">{s.desc}</p>
+                      )}
                     </div>
                   </div>
                 );
@@ -961,7 +1487,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
             {bd.phases?.length > 0 && (
               <div className="mb-3">
                 {/* 페이즈 프로그레스 바 */}
-                <div className="flex gap-1 mb-2">
+                <div className="flex gap-1 mb-3">
                   {bd.phases.map((_: any, i: number) => {
                     const isCurrent = i === (bd.currentPhaseIndex ?? 0);
                     const isPast = i < (bd.currentPhaseIndex ?? 0);
@@ -971,28 +1497,60 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                     );
                   })}
                 </div>
-                {/* 페이즈 상세 */}
-                <div className="space-y-1.5">
+                {/* 페이즈 상세 — 모든 단계 표시, 현재 단계 강조 */}
+                <div className="space-y-2">
                   {bd.phases.map((ph: any, i: number) => {
                     const isCurrent = i === (bd.currentPhaseIndex ?? 0);
+                    const isPast = i < (bd.currentPhaseIndex ?? 0);
+                    // 각 단계 아이콘 (SVG 인라인)
+                    const phaseIcons = [
+                      // 충격기: 깨진 하트
+                      <svg key="p0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 6l-2 4 3 2-4 6" /><path d="M19.5 13c0 4.5-7.5 9-7.5 9s-7.5-4.5-7.5-9a6 6 0 0112 0z" /></svg>,
+                      // 거부기: 화난 얼굴(번개)
+                      <svg key="p1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2"><path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" /></svg>,
+                      // 회복기: 새싹
+                      <svg key="p2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 22V10" /><path d="M6 12c0-3.3 2.7-6 6-6" /><path d="M18 12c0-3.3-2.7-6-6-6" /><circle cx="12" cy="22" r="1" fill="#2D8A4E" /></svg>,
+                      // 수용기: 균형
+                      <svg key="p3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>,
+                      // 장기 분리기: 나비(날개)
+                      <svg key="p4" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><path d="M12 12c-3-3-7-3-8 0s1 7 4 7c2 0 3-2 4-4" /><path d="M12 12c3-3 7-3 8 0s-1 7-4 7c-2 0-3-2-4-4" /><path d="M12 7v10" /></svg>,
+                    ];
                     return (
-                      <div key={i} className="rounded-xl p-2.5 transition-all"
-                        style={{ background: isCurrent ? `${color}08` : 'transparent', border: isCurrent ? `1px solid ${color}20` : '1px solid transparent' }}>
-                        <div className="flex items-center gap-2 mb-0.5">
+                      <div key={i} className="rounded-xl p-3 transition-all"
+                        style={{
+                          background: isCurrent ? `${color}08` : isPast ? 'rgba(0,0,0,0.015)' : 'rgba(0,0,0,0.01)',
+                          border: isCurrent ? `1.5px solid ${color}25` : '1px solid rgba(0,0,0,0.04)',
+                        }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">{phaseIcons[i] || phaseIcons[4]}</span>
                           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isCurrent ? 'animate-pulse' : ''}`}
-                            style={{ background: isCurrent ? color : i < (bd.currentPhaseIndex ?? 0) ? `${color}40` : `${color}15` }} />
-                          <p className={`text-[11px] ${isCurrent ? 'font-bold' : 'font-medium text-text-muted'}`}
+                            style={{ background: isCurrent ? color : isPast ? `${color}40` : `${color}15` }} />
+                          <p className={`text-[11px] flex-1 ${isCurrent ? 'font-bold' : isPast ? 'font-medium text-text-muted' : 'font-medium text-text-hint'}`}
                             style={isCurrent ? { color } : {}}>
-                            {ph.name} <span className="text-text-hint font-normal">({ph.period})</span>
+                            {ph.name} <span className={`font-normal ${isCurrent ? '' : 'text-text-hint'}`} style={isCurrent ? { color: `${color}90` } : {}}>({ph.period})</span>
                           </p>
                           {isCurrent && <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold text-white" style={{ background: color }}>현재</span>}
+                          {isPast && <span className="text-[8px] px-1.5 py-0.5 rounded-full font-medium text-text-hint" style={{ background: 'rgba(0,0,0,0.04)' }}>지남</span>}
                         </div>
-                        {isCurrent && (
-                          <div className="ml-4 mt-1 grid grid-cols-2 gap-2">
-                            <p className="text-[10px] text-text-secondary">나: <span className="font-semibold text-text-primary">{ph.myState}</span></p>
-                            <p className="text-[10px] text-text-secondary">상대: <span className="font-semibold text-text-primary">{ph.partnerState}</span></p>
-                          </div>
+                        {/* 단계 설명 — 모든 단계에 표시 */}
+                        {ph.desc && (
+                          <p className={`text-[10px] leading-snug ml-7 mb-1 ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                            {ph.desc}
+                          </p>
                         )}
+                        {/* 나/상대 상태 — 모든 단계에 표시 */}
+                        <div className="ml-7 grid grid-cols-2 gap-2">
+                          {ph.myState && (
+                            <p className={`text-[10px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                              나: <span className={`font-semibold ${isCurrent ? 'text-text-primary' : ''}`}>{ph.myState}</span>
+                            </p>
+                          )}
+                          {ph.partnerState && (
+                            <p className={`text-[10px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                              상대: <span className={`font-semibold ${isCurrent ? 'text-text-primary' : ''}`}>{ph.partnerState}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1110,6 +1668,50 @@ function StudyViz({ data, color }: { data: any; color: string }) {
             )}
           </div>
         </div>
+        {/* 시험 맞춤 분석 (시험명/예정일 입력 시) */}
+        {(data.examFitScore != null || data.examTimingVerdict) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">시험 맞춤 분석</p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {data.examFitScore != null && (
+                <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
+                  <p className="text-[9px] text-text-hint mb-1">시험 적합도</p>
+                  <div className="flex items-end gap-1">
+                    <span className="text-[20px] font-black" style={{ color }}>{data.examFitScore}</span>
+                    <span className="text-[10px] text-text-muted mb-1">/ 100</span>
+                  </div>
+                  <div className="h-[6px] rounded-full overflow-hidden mt-1" style={{ background: `${color}12` }}>
+                    <motion.div className="h-full rounded-full" style={{ background: color }}
+                      initial={{ width: 0 }} animate={{ width: `${Math.min(data.examFitScore, 100)}%` }}
+                      transition={{ duration: 0.8, delay: 0.3 }} />
+                  </div>
+                </div>
+              )}
+              {data.examTimingVerdict && (
+                <div className="rounded-xl p-3" style={{
+                  background: data.examTimingVerdict === '최적' ? 'rgba(45,138,78,0.06)' : data.examTimingVerdict === '주의' ? 'rgba(211,47,47,0.05)' : `${color}06`
+                }}>
+                  <p className="text-[9px] text-text-hint mb-1">시험 시기 판정</p>
+                  <p className="text-[18px] font-black" style={{
+                    color: data.examTimingVerdict === '최적' ? '#2D8A4E' : data.examTimingVerdict === '주의' ? '#D32F2F' : color
+                  }}>{data.examTimingVerdict}</p>
+                </div>
+              )}
+            </div>
+            {data.examTimingAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[12px] text-text-primary leading-snug">{data.examTimingAnalysis}</p>
+              </div>
+            )}
+            {data.examDayTips && (
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <p className="text-[10px] font-bold text-[#2D8A4E] mb-0.5">시험 당일 꿀팁</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.examDayTips}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 시험 전략 카드 */}
         <div className="card">
           <p className="text-h3 text-text-primary mb-3">시험 전략 포인트</p>
@@ -1259,6 +1861,42 @@ function MovingViz({ data, color }: { data: any; color: string }) {
             )}
           </div>
         </div>
+        {/* 이사 예정 시기 분석 (입력 시) */}
+        {(data.planDateVerdict || data.purposeAdvice) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">이사 계획 분석</p>
+            {data.planDateVerdict && (
+              <div className="flex items-center gap-3 mb-2">
+                <div className="rounded-xl p-2.5 text-center flex-1" style={{
+                  background: data.planDateVerdict === '좋음' ? 'rgba(45,138,78,0.06)' : data.planDateVerdict === '주의' ? 'rgba(211,47,47,0.05)' : `${color}06`
+                }}>
+                  <p className="text-[9px] text-text-hint mb-0.5">예정 시기 판정</p>
+                  <p className="text-[16px] font-black" style={{
+                    color: data.planDateVerdict === '좋음' ? '#2D8A4E' : data.planDateVerdict === '주의' ? '#D32F2F' : color
+                  }}>{data.planDateVerdict}</p>
+                </div>
+                {data.betterAlternative && (
+                  <div className="rounded-xl p-2.5 text-center flex-1" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                    <p className="text-[9px] text-text-hint mb-0.5">더 좋은 시기</p>
+                    <p className="text-[12px] font-bold text-[#2D8A4E]">{data.betterAlternative}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {data.planDateAnalysis && (
+              <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
+                <p className="text-[12px] text-text-primary leading-snug">{data.planDateAnalysis}</p>
+              </div>
+            )}
+            {data.purposeAdvice && (
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(21,101,192,0.05)' }}>
+                <p className="text-[10px] font-bold text-[#1565C0] mb-0.5">이사 목적 조언</p>
+                <p className="text-[12px] text-text-primary leading-snug">{data.purposeAdvice}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 오행 방위 매핑 */}
         {data.ohengDirectionMap && (
           <div className="card">
@@ -1284,7 +1922,9 @@ function TopicViz({ topicId, data, color }: { topicId: string; data: any; color:
     case 'reunion': return <ReunionViz data={data} color={color} />;
     case 'study': return <StudyViz data={data} color={color} />;
     case 'social': return <SocialViz data={data} color={color} />;
+    case 'move':
     case 'moving': return <MovingViz data={data} color={color} />;
+    case 'exam': return <StudyViz data={data} color={color} />; // 합격·이직운 — study viz 재사용 (차후 ExamViz 전용 교체)
     default: return null;
   }
 }
@@ -1352,8 +1992,11 @@ function SectionBody({ content, color }: { content: string; color: string }) {
    메인 페이지 컴포넌트
    ════════════════════════════════════════════════ */
 export function TopicAnalysisPage() {
-  const { topicId } = useParams<{ topicId: string }>();
-  const topic = TOPICS[topicId || ''];
+  const { topicId: rawTopicId } = useParams<{ topicId: string }>();
+  // SSOT v1 정렬 (2026-04-22): legacy URL ('/topic/moving') 을 canonical ('move') 로 정규화.
+  // 잘못된 id 는 null 반환 — 이 경우 'love' 로 폴백 (구 기본값 유지).
+  const topicId = (normalizeTopicId(rawTopicId) || rawTopicId || 'love') as string;
+  const topic = TOPICS[(topicId || 'love') as TopicKey];
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -1366,33 +2009,47 @@ export function TopicAnalysisPage() {
   const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
   const [result, setResult] = useState<any>(navState?.savedResult || null);
   const [, setLoadingMsg] = useState(0);
+  // 더블클릭 가드 — 1운 중복 차감 차단 (InputPage 패턴)
+  const isAnalyzingRef = useRef(false);
 
-  // 재회운 상대방 정보
+  // 재회운/결혼운 상대방 정보
   const [partnerInfo, setPartnerInfo] = useState({
     name: '', birthYear: 1995, birthMonth: 1, birthDay: 1, gender: 'male',
     breakupYear: new Date().getFullYear(), breakupMonth: 1,
+    birthHour: -1, // -1 = 미상
   });
   const [showPartner, setShowPartner] = useState(false);
+  // 결혼운/연애운: 연애 상태
+  const [relationStatus, setRelationStatus] = useState<'solo' | 'dating'>('solo');
+  // 연애운: 솔로/썸/연애중
+  const [loveStatus, setLoveStatus] = useState<'solo' | 'some' | 'dating'>('solo');
+  // 사업운/취업운/이사운/학업운: 추가 상태 정보
+  const [extraInfo, setExtraInfo] = useState({
+    // 사업운
+    bizStatus: '' as '' | 'preparing' | 'running',
+    bizOpenYear: new Date().getFullYear(),
+    bizOpenMonth: 1,
+    // 취업·이직운
+    jobStatus: '' as '' | 'student' | 'jobseeking' | 'employed',
+    targetField: '',
+    // 이사·이동운
+    movePurpose: '' as '' | 'house' | 'job' | 'study' | 'abroad',
+    movePlanYear: new Date().getFullYear(),
+    movePlanMonth: 6,
+    // 학업·시험운
+    examName: '',
+    examYear: new Date().getFullYear(),
+    examMonth: 6,
+  });
 
-  // 프로필 목록
-  const profiles = useMemo(() => {
-    const all = getReports();
-    const seen = new Map<string, LocalReport>();
-    for (const r of all) {
-      if (!r.sajuData?.pillars?.length) continue;
-      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
-      if (r.name?.includes('\u00d7') || r.name?.includes('x')) continue;
-      const key = `${r.name}_${r.input?.birthYear}_${r.input?.birthMonth}_${r.input?.birthDay}`;
-      if (!seen.has(key)) seen.set(key, r);
-    }
-    return Array.from(seen.values());
-  }, []);
+  // 프로필 목록 (독립 저장소)
+  const profiles = useMemo(() => getProfiles(), []);
 
   // 이미 분석한 결과가 있는지 확인 (재회운은 상대방이 다를 수 있으므로 auto-load 하지 않음)
   const existingResult = useMemo(() => {
     if (!selected || !topicId) return null;
     if (navState?.savedResult) return null;
-    if (topicId === 'reunion') return null; // 재회운: 상대방 정보가 다를 수 있으므로 항상 입력 폼 표시
+    if (topicId === 'reunion' || topicId === 'marriage' || topicId === 'love') return null; // 상대방 정보가 다를 수 있으므로 항상 입력 폼 표시
     const key = `topic_${topicId}_${selected.id}`;
     try {
       const raw = localStorage.getItem(key);
@@ -1410,7 +2067,7 @@ export function TopicAnalysisPage() {
   // 단일 프로필이면 자동 선택
   useEffect(() => {
     if (profiles.length === 1 && !selected) {
-      setSelected(profiles[0]);
+      setSelected(profiles[0] as unknown as LocalReport);
     }
   }, [profiles, selected]);
 
@@ -1427,11 +2084,15 @@ export function TopicAnalysisPage() {
 
   async function analyze() {
     if (!selected) return;
+    // 더블클릭 가드 — 1운 중복 차감 차단
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    isAnalyzingRef.current = true;
 
     // 과금
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: `${topic.label} 분석에 1운이 필요해요` } });
+      isAnalyzingRef.current = false;
       return;
     }
 
@@ -1439,15 +2100,27 @@ export function TopicAnalysisPage() {
     const interval = setInterval(() => setLoadingMsg(s => Math.min(s + 1, LOADING_MSGS.length - 1)), 3000);
 
     try {
-      // 재회운이고 상대방 정보가 있으면 전달
-      const partner = (topicId === 'reunion' && showPartner && partnerInfo.name)
-        ? partnerInfo : undefined;
+      // 재회운/결혼운(연애중)/연애운(썸·연애중)이고 상대방 정보가 있으면 전달
+      const needsPartner = (topicId === 'reunion' && showPartner && partnerInfo.name)
+        || (topicId === 'marriage' && relationStatus === 'dating' && partnerInfo.name)
+        || (topicId === 'love' && loveStatus !== 'solo' && partnerInfo.name);
+      const partner = needsPartner
+        ? { ...partnerInfo, birthHour: partnerInfo.birthHour >= 0 ? partnerInfo.birthHour : undefined } : undefined;
 
-      const res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner);
+      // 주제별 추가 정보 (사업운/취업운/이사운/학업운/연애운)
+      const loveExtra = topicId === 'love' ? { loveStatus } : {};
+      // SSOT canonical: 'move' (legacy 'moving' 는 normalizeTopicId 로 이미 정규화됨)
+      const topicExtra = (['business', 'career', 'move', 'study'].includes(topicId!))
+        ? Object.fromEntries(Object.entries(extraInfo).filter(([, v]) => v !== '' && v != null)) : {};
+      const extra = { ...topicExtra, ...loveExtra };
+      const finalExtra = Object.keys(extra).length > 0 ? extra : undefined;
+
+      const res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner, finalExtra);
       setResult(res.content);
 
-      // localStorage 캐시 (재회운은 상대방 이름 포함)
-      const cacheKey = topicId === 'reunion' && partnerInfo.name
+      // localStorage 캐시 (재회운/결혼운/연애운은 상대방 이름 포함)
+      const hasPartnerName = (topicId === 'reunion' || topicId === 'marriage' || topicId === 'love') && partnerInfo.name;
+      const cacheKey = hasPartnerName
         ? `topic_${topicId}_${selected.id}_${partnerInfo.name}`
         : `topic_${topicId}_${selected.id}`;
       localStorage.setItem(cacheKey, JSON.stringify(res.content));
@@ -1467,12 +2140,12 @@ export function TopicAnalysisPage() {
       setPhase('result');
     } catch (e: any) {
       console.error('주제 분석 실패:', e);
-      const { addRewardBalance } = await import('@/services/storage/localStore');
-      addRewardBalance(1);
-      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
+      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
+      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
       setPhase('select');
     } finally {
       clearInterval(interval);
+      isAnalyzingRef.current = false;
     }
   }
 
@@ -1492,7 +2165,7 @@ export function TopicAnalysisPage() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: `${topic.color}12` }}>
-                <span className="text-xl font-black" style={{ color: topic.color }}>{topic.icon}</span>
+                <Pictogram k={`topic:${(topicId || 'love') as TopicKey}`} size={22} color={topic.color} />
               </div>
               <div>
                 <h1 className="text-h2 text-text-primary">{topic.label} 심층분석</h1>
@@ -1516,7 +2189,7 @@ export function TopicAnalysisPage() {
                       const isSelected = selected?.id === r.id;
                       return (
                         <motion.button key={r.id} whileTap={{ scale: 0.98 }}
-                          onClick={() => setSelected(r)}
+                          onClick={() => setSelected(r as unknown as LocalReport)}
                           className={`card w-full text-left py-4 px-4 transition-all ${isSelected ? 'border-2 shadow-glow' : ''}`}
                           style={isSelected ? { borderColor: topic.color } : {}}>
                           <div className="flex items-center gap-3">
@@ -1554,6 +2227,401 @@ export function TopicAnalysisPage() {
                     </div>
                   </button>
 
+                  {/* ─── 연애운: 현재 상태 + 상대방 정보 ─── */}
+                  {topicId === 'love' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
+                          </svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">현재 연애 상태</p>
+                            <p className="text-[10px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                          </div>
+                        </div>
+
+                        {/* 솔로 / 썸 / 연애중 토글 */}
+                        <div className="flex gap-2 mb-3">
+                          {[
+                            { v: 'solo' as const, l: '솔로', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 10-16 0" /></svg> },
+                            { v: 'some' as const, l: '썸', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" strokeDasharray="3 3" /></svg> },
+                            { v: 'dating' as const, l: '연애중', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4a4 4 0 11-3 6.5" /><path d="M8 4a4 4 0 103 6.5" /><path d="M22 21a8 8 0 00-6-7.75" /><path d="M2 21a8 8 0 016-7.75" /></svg> },
+                          ].map(s => (
+                            <button key={s.v}
+                              className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 ${loveStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                              style={loveStatus === s.v ? { background: topic.color } : {}}
+                              onClick={() => setLoveStatus(s.v)}>
+                              {s.icon} {s.l}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* 썸/연애중 → 상대방 입력 */}
+                        <AnimatePresence>
+                          {loveStatus !== 'solo' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pt-3 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                                <p className="text-[11px] text-text-muted">
+                                  {loveStatus === 'some' ? '관심 상대의 정보를 입력하면 궁합 분석이 가능해요' : '상대방 정보를 입력하면 실제 사주 궁합 기반 분석이 가능해요'}
+                                </p>
+
+                                {/* 이름 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">이름</label>
+                                  <input type="text" placeholder="상대방 이름"
+                                    className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                                    value={partnerInfo.name}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, name: e.target.value }))} />
+                                </div>
+
+                                {/* 생년월일 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <div className="flex gap-2">
+                                    <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthYear}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthYear: +e.target.value }))}>
+                                      {years.map(y => <option key={y} value={y}>{y}년</option>)}
+                                    </select>
+                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthMonth}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthMonth: +e.target.value }))}>
+                                      {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                                    </select>
+                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthDay}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
+                                      {days.map(d => <option key={d} value={d}>{d}일</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {/* 성별 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">성별</label>
+                                  <div className="flex gap-2">
+                                    {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
+                                      <button key={g.v}
+                                        className={`flex-1 h-10 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                        style={partnerInfo.gender === g.v ? { background: topic.color } : {}}
+                                        onClick={() => setPartnerInfo(p => ({ ...p, gender: g.v }))}>
+                                        {g.l}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* 출생 시간 (선택) */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">
+                                    출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
+                                  </label>
+                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={partnerInfo.birthHour}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
+                                    <option value={-1}>모름</option>
+                                    {Array.from({ length: 24 }, (_, i) => i).map(h => (
+                                      <option key={h} value={h}>
+                                        {`${String(h).padStart(2, '0')}시 (${['자','축','축','인','인','묘','묘','진','진','사','사','오','오','미','미','신','신','유','유','술','술','해','해','자'][h]}시)`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <p className="text-[10px] text-text-hint mt-1">알면 시주까지 분석하여 더 정확해요</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 결혼운: 현재 상태 + 상대방 정보 ─── */}
+                  {topicId === 'marriage' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
+                          </svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">현재 연애 상태</p>
+                            <p className="text-[10px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                          </div>
+                        </div>
+
+                        {/* 솔로 / 연애중 토글 */}
+                        <div className="flex gap-2 mb-3">
+                          {[
+                            { v: 'solo' as const, l: '솔로', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 10-16 0" /></svg> },
+                            { v: 'dating' as const, l: '연애중', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4a4 4 0 11-3 6.5" /><path d="M8 4a4 4 0 103 6.5" /><path d="M22 21a8 8 0 00-6-7.75" /><path d="M2 21a8 8 0 016-7.75" /></svg> },
+                          ].map(s => (
+                            <button key={s.v}
+                              className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 ${relationStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                              style={relationStatus === s.v ? { background: topic.color } : {}}
+                              onClick={() => { setRelationStatus(s.v); if (s.v === 'solo') setShowPartner(false); else setShowPartner(true); }}>
+                              {s.icon} {s.l}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* 연애중 → 상대방 입력 */}
+                        <AnimatePresence>
+                          {relationStatus === 'dating' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pt-3 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                                <p className="text-[11px] text-text-muted">상대방 정보를 입력하면 실제 사주 궁합 기반 분석이 가능해요</p>
+
+                                {/* 이름 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">이름</label>
+                                  <input type="text" placeholder="상대방 이름"
+                                    className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                                    value={partnerInfo.name}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, name: e.target.value }))} />
+                                </div>
+
+                                {/* 생년월일 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <div className="flex gap-2">
+                                    <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthYear}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthYear: +e.target.value }))}>
+                                      {years.map(y => <option key={y} value={y}>{y}년</option>)}
+                                    </select>
+                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthMonth}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthMonth: +e.target.value }))}>
+                                      {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                                    </select>
+                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                      value={partnerInfo.birthDay}
+                                      onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
+                                      {days.map(d => <option key={d} value={d}>{d}일</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {/* 성별 */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">성별</label>
+                                  <div className="flex gap-2">
+                                    {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
+                                      <button key={g.v}
+                                        className={`flex-1 h-10 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                        style={partnerInfo.gender === g.v ? { background: topic.color } : {}}
+                                        onClick={() => setPartnerInfo(p => ({ ...p, gender: g.v }))}>
+                                        {g.l}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* 출생 시간 (선택) */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">
+                                    출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
+                                  </label>
+                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={partnerInfo.birthHour}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
+                                    <option value={-1}>모름</option>
+                                    {Array.from({ length: 24 }, (_, i) => i).map(h => (
+                                      <option key={h} value={h}>
+                                        {`${String(h).padStart(2, '0')}시 (${['자','축','축','인','인','묘','묘','진','진','사','사','오','오','미','미','신','신','유','유','술','술','해','해','자'][h]}시)`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <p className="text-[10px] text-text-hint mt-1">알면 시주까지 분석하여 더 정확해요</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 사업운: 현재 상태 ─── */}
+                  {topicId === 'business' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">현재 사업 상태</p>
+                            <p className="text-[10px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mb-2">
+                          {[
+                            { v: 'preparing' as const, l: '창업 준비중' },
+                            { v: 'running' as const, l: '현재 운영중' },
+                          ].map(s => (
+                            <button key={s.v}
+                              className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all ${extraInfo.bizStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                              style={extraInfo.bizStatus === s.v ? { background: topic.color } : {}}
+                              onClick={() => setExtraInfo(p => ({ ...p, bizStatus: p.bizStatus === s.v ? '' : s.v }))}>
+                              {s.l}
+                            </button>
+                          ))}
+                        </div>
+                        <AnimatePresence>
+                          {extraInfo.bizStatus === 'running' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="pt-3 space-y-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                                <label className="text-[11px] text-text-hint block">개업 시기</label>
+                                <div className="flex gap-2">
+                                  <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={extraInfo.bizOpenYear}
+                                    onChange={e => setExtraInfo(p => ({ ...p, bizOpenYear: +e.target.value }))}>
+                                    {Array.from({ length: 30 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}년</option>)}
+                                  </select>
+                                  <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={extraInfo.bizOpenMonth}
+                                    onChange={e => setExtraInfo(p => ({ ...p, bizOpenMonth: +e.target.value }))}>
+                                    {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                                  </select>
+                                </div>
+                                <p className="text-[10px] text-text-hint">개업 시점의 대운 흐름을 분석해드려요</p>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 취업·이직운: 현재 상태 ─── */}
+                  {topicId === 'career' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">현재 상태</p>
+                            <p className="text-[10px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mb-2 flex-wrap">
+                          {[
+                            { v: 'student' as const, l: '학생' },
+                            { v: 'jobseeking' as const, l: '구직중' },
+                            { v: 'employed' as const, l: '재직중' },
+                          ].map(s => (
+                            <button key={s.v}
+                              className={`flex-1 min-w-[80px] h-11 rounded-xl text-body-sm font-semibold transition-all ${extraInfo.jobStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                              style={extraInfo.jobStatus === s.v ? { background: topic.color } : {}}
+                              onClick={() => setExtraInfo(p => ({ ...p, jobStatus: p.jobStatus === s.v ? '' : s.v }))}>
+                              {s.l}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="pt-2">
+                          <label className="text-[11px] text-text-hint mb-1 block">관심 분야 / 희망 직종 <span className="text-[9px] opacity-60">(선택)</span></label>
+                          <input type="text" placeholder="예: IT개발, 디자인, 마케팅, 공무원..."
+                            className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                            value={extraInfo.targetField}
+                            onChange={e => setExtraInfo(p => ({ ...p, targetField: e.target.value }))} />
+                          <p className="text-[10px] text-text-hint mt-1">입력하면 해당 분야의 사주적 적합도를 분석해요</p>
+                        </div>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 이사·이동운: 이사 목적 + 예정 시기 ─── */}
+                  {topicId === 'move' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">이사 계획</p>
+                            <p className="text-[10px] text-text-hint">목적과 시기에 맞는 분석을 해드려요</p>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-text-hint mb-1 block">이사 목적</label>
+                          <div className="flex gap-2 flex-wrap mb-3">
+                            {[
+                              { v: 'house' as const, l: '주거 이사' },
+                              { v: 'job' as const, l: '직장 이동' },
+                              { v: 'study' as const, l: '유학/학업' },
+                              { v: 'abroad' as const, l: '해외 이주' },
+                            ].map(s => (
+                              <button key={s.v}
+                                className={`flex-1 min-w-[70px] h-10 rounded-xl text-[12px] font-semibold transition-all ${extraInfo.movePurpose === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                style={extraInfo.movePurpose === s.v ? { background: topic.color } : {}}
+                                onClick={() => setExtraInfo(p => ({ ...p, movePurpose: p.movePurpose === s.v ? '' : s.v }))}>
+                                {s.l}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-text-hint mb-1 block">이사 예정 시기 <span className="text-[9px] opacity-60">(선택)</span></label>
+                          <div className="flex gap-2">
+                            <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                              value={extraInfo.movePlanYear}
+                              onChange={e => setExtraInfo(p => ({ ...p, movePlanYear: +e.target.value }))}>
+                              {Array.from({ length: 5 }, (_, i) => currentYear + i).map(y => <option key={y} value={y}>{y}년</option>)}
+                            </select>
+                            <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                              value={extraInfo.movePlanMonth}
+                              onChange={e => setExtraInfo(p => ({ ...p, movePlanMonth: +e.target.value }))}>
+                              {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                            </select>
+                          </div>
+                          <p className="text-[10px] text-text-hint mt-1">예정 시기의 이동운과 최적 방위를 분석해요</p>
+                        </div>
+                      </div>
+                    </FadeIn>
+                  )}
+
+                  {/* ─── 학업·시험운: 시험 정보 ─── */}
+                  {topicId === 'study' && selected && (
+                    <FadeIn delay={0.1}>
+                      <div className="card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg>
+                          <div>
+                            <p className="text-h3 text-text-primary">시험 정보</p>
+                            <p className="text-[10px] text-text-hint">시험에 맞춘 정밀 분석을 해드려요</p>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-[11px] text-text-hint mb-1 block">준비중인 시험 <span className="text-[9px] opacity-60">(선택)</span></label>
+                            <input type="text" placeholder="예: 공무원, 수능, 토익, 자격증명..."
+                              className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                              value={extraInfo.examName}
+                              onChange={e => setExtraInfo(p => ({ ...p, examName: e.target.value }))} />
+                          </div>
+                          <div>
+                            <label className="text-[11px] text-text-hint mb-1 block">시험 예정 시기 <span className="text-[9px] opacity-60">(선택)</span></label>
+                            <div className="flex gap-2">
+                              <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                value={extraInfo.examYear}
+                                onChange={e => setExtraInfo(p => ({ ...p, examYear: +e.target.value }))}>
+                                {Array.from({ length: 3 }, (_, i) => currentYear + i).map(y => <option key={y} value={y}>{y}년</option>)}
+                              </select>
+                              <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                value={extraInfo.examMonth}
+                                onChange={e => setExtraInfo(p => ({ ...p, examMonth: +e.target.value }))}>
+                                {months.map(m => <option key={m} value={m}>{m}월</option>)}
+                              </select>
+                            </div>
+                            <p className="text-[10px] text-text-hint mt-1">시험 시기에 맞춘 합격 전략을 세워드려요</p>
+                          </div>
+                        </div>
+                      </div>
+                    </FadeIn>
+                  )}
+
                   {/* ─── 재회운: 상대방 정보 입력 ─── */}
                   {topicId === 'reunion' && selected && (
                     <FadeIn delay={0.1}>
@@ -1561,7 +2629,7 @@ export function TopicAnalysisPage() {
                         <button className="w-full flex items-center justify-between"
                           onClick={() => setShowPartner(!showPartner)}>
                           <div className="flex items-center gap-2">
-                            <span className="text-[14px]">💌</span>
+                            <Pictogram k="topic:letter" size={16} color="#7B1FA2" />
                             <div className="text-left">
                               <p className="text-h3 text-text-primary">재회 상대방 정보</p>
                               <p className="text-[10px] text-text-hint">입력하면 더 정확한 분석이 가능해요</p>
@@ -1646,6 +2714,26 @@ export function TopicAnalysisPage() {
                                     헤어진 기간에 따른 재회 에너지 변화를 분석해드려요
                                   </p>
                                 </div>
+
+                                {/* 상대방 출생 시간 (선택) */}
+                                <div>
+                                  <label className="text-[11px] text-text-hint mb-1 block">
+                                    상대방 출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
+                                  </label>
+                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    value={partnerInfo.birthHour}
+                                    onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
+                                    <option value={-1}>모름</option>
+                                    {Array.from({ length: 24 }, (_, i) => i).map(h => (
+                                      <option key={h} value={h}>
+                                        {`${String(h).padStart(2, '0')}시 (${['자','축','축','인','인','묘','묘','진','진','사','사','오','오','미','미','신','신','유','유','술','술','해','해','자'][h]}시)`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <p className="text-[10px] text-text-hint mt-1">
+                                    알면 시주(時柱)까지 분석하여 더 정확한 결과를 드려요
+                                  </p>
+                                </div>
                               </div>
                             </motion.div>
                           )}
@@ -1679,7 +2767,7 @@ export function TopicAnalysisPage() {
               marriage: '배우자궁의 구조를 깊이 분석하고 있어요.|결혼 적기를 대운 흐름으로 계산하고 있어요.|사주로 배우자 성향을 추론하고 있어요.|결혼 후 생활 패턴까지 예측하고 있어요.',
               business: '사업 적성과 맞는 업종을 분석하고 있어요.|창업 최적 타이밍을 계산하고 있어요.|동업 궁합 구조를 확인하고 있어요.|편재와 식상으로 사업 구조를 읽고 있어요.',
               health: '오행 균형으로 체질을 정밀 분석하고 있어요.|취약 장기와 주의 시기를 확인하고 있어요.|사주에서 건강 리스크를 찾고 있어요.|맞춤 건강 보완법을 만들고 있어요.',
-              reunion: '두 사람의 사주를 교차 분석하고 있어요.|10개 섹션, 일반 분석보다 훨씬 깊어요.|더 정교한 결과를 위해 조금만 기다려주세요.|상대방의 숨은 마음까지 읽고 있어요.',
+              reunion: '두 사람의 사주를 교차 분석하고 있어요.|상대방의 숨은 마음까지 읽고 있어요.|궁합 구조와 신살을 정밀 분석 중이에요.|재회 전략까지 세우고 있어요.',
               study: '인성 구조로 학습 체질을 분석하고 있어요.|합격 운과 최적 시기를 계산하고 있어요.|집중력 피크 시간대를 찾고 있어요.|시험 당일 전략까지 세우고 있어요.',
               social: '비겁과 귀인 구조로 관계를 분석하고 있어요.|귀인운이 언제 오는지 확인하고 있어요.|구설수 주의 시기를 계산하고 있어요.|사주적 관계 패턴을 읽고 있어요.',
               moving: '역마살과 이동운을 분석하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
@@ -1699,7 +2787,7 @@ export function TopicAnalysisPage() {
                 type={`${topic.label} 심층분석`}
                 steps={topicId === 'reunion' ? reunionSteps : defaultSteps}
                 premiumNote={TOPIC_NOTES[topicId || '']}
-                estimatedSeconds={topicId === 'reunion' ? 40 : 20}
+                estimatedSeconds={topicId === 'reunion' ? 60 : 30}
               />
             );
           })()}
@@ -1841,11 +2929,11 @@ export function TopicAnalysisPage() {
                 const lp = result.luckyProfile;
                 const luckyHex = findLuckyColorHex(lp.color);
                 const items = [
-                  lp.color && { label: '행운 컬러', value: lp.color, icon: <div className="w-7 h-7 rounded-lg shadow-sm border border-white/60" style={{ background: luckyHex || '#C9A96E' }} /> },
-                  lp.direction && { label: '행운 방위', value: lp.direction, icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>方</span> },
-                  lp.number && { label: '행운 숫자', value: String(lp.number), icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>數</span> },
-                  lp.item && { label: '행운 아이템', value: lp.item, icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>福</span> },
-                  lp.bestMonth && { label: '최적 시기', value: lp.bestMonth, icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>時</span> },
+                  lp.color && { label: '행운 컬러', value: lp.color, icon: <div className="w-7 h-7 rounded-lg shadow-sm border border-white/60" style={{ background: luckyHex || '#B8965A' }} /> },
+                  lp.direction && { label: '행운 방위', value: lp.direction, icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>方</span> },
+                  lp.number && { label: '행운 숫자', value: String(lp.number), icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>數</span> },
+                  lp.item && { label: '행운 아이템', value: lp.item, icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>福</span> },
+                  lp.bestMonth && { label: '최적 시기', value: lp.bestMonth, icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>時</span> },
                 ].filter(Boolean) as { label: string; value: string; icon: any }[];
 
                 return (
@@ -1854,9 +2942,9 @@ export function TopicAnalysisPage() {
                       <p className="text-h3 text-text-primary mb-3">{topic.label} 행운 프로필</p>
                       <div className="space-y-0">
                         {items.map((item) => (
-                          <div key={item.label} className="flex items-center gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(201,169,110,0.12)' }}>
+                          <div key={item.label} className="flex items-center gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(184,150,90,0.12)' }}>
                             <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ background: 'rgba(201,169,110,0.1)' }}>
+                              style={{ background: 'rgba(184,150,90,0.1)' }}>
                               {item.icon}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1886,14 +2974,17 @@ export function TopicAnalysisPage() {
                 <p className="text-label text-text-hint text-center">다른 운세도 궁금하다면</p>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(TOPICS).filter(([id]) => id !== topicId).slice(0, 4).map(([id, t]) => (
-                    <button key={id} onClick={() => { navigate(`/topic/${id}`); setPhase('select'); setResult(null); setSelected(profiles[0] || null); }}
+                    <button key={id} onClick={() => { navigate(`/topic/${id}`); setPhase('select'); setResult(null); setSelected((profiles[0] as unknown as LocalReport) || null); }}
                       className="card py-3 px-3 flex items-center gap-2">
-                      <span className="text-[15px] font-black" style={{ color: t.color }}>{t.icon}</span>
+                      <Pictogram k={`topic:${id as TopicKey}`} size={18} color={t.color} />
                       <span className="text-caption font-semibold text-text-primary">{t.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* 3-part Footer CTA (diff v3 §6) */}
+              <FooterCTA pageKey={`topic:${topicId}` as FooterCTAPageKey} backTo="/" />
             </motion.div>
           )}
         </AnimatePresence>

@@ -42,7 +42,7 @@ const TIPS: { category: string; text: string }[] = [
   { category: '실생활 활용', text: '중요한 계약은 일진이 좋은 날을 고르세요. 천간이 내 일간과 상생하는 날이 유리해요.' },
 
   // 명리학 상식
-  { category: '명리학 상식', text: '적천수(滴天髓)는 "하늘의 정수가 한 방울씩 떨어진다"는 뜻이에요. 명리학의 바이블입니다.' },
+  { category: '명리학 상식', text: '"명리(命理)"에서 명은 하늘이 준 몫, 리는 그것이 흐르는 이치예요. 둘을 함께 살피는 학문입니다.' },
   { category: '명리학 상식', text: '음양오행은 2,500년 전부터 내려온 동양 자연철학이에요. 미신이 아닌 체계적 분석 도구입니다.' },
   { category: '명리학 상식', text: '격국(格局)은 사주의 "성격 유형"과 비슷해요. MBTI처럼, 사주에도 분류 체계가 있습니다.' },
   { category: '명리학 상식', text: '12운성은 에너지의 생로병사를 나타내요. "사(死)"는 실제 죽음이 아니라 에너지의 수렴 단계입니다.' },
@@ -144,11 +144,11 @@ export function AILoading({ name = '', type = '분석', steps, premiumNote, esti
         transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
       >
         <svg viewBox="0 0 80 80" fill="none">
-          <circle cx="40" cy="40" r="38" stroke="#C9A96E" strokeWidth="2" opacity="0.2" />
-          <circle cx="40" cy="40" r="38" stroke="#C9A96E" strokeWidth="2.5"
+          <circle cx="40" cy="40" r="38" stroke="#B8965A" strokeWidth="2" opacity="0.2" />
+          <circle cx="40" cy="40" r="38" stroke="#B8965A" strokeWidth="2.5"
             strokeDasharray="239" strokeDashoffset={239 - (239 * progress / 100)}
             strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease' }} />
-          <circle cx="40" cy="20" r="6" fill="#C9A96E" />
+          <circle cx="40" cy="20" r="6" fill="#B8965A" />
           <circle cx="40" cy="60" r="6" fill="#1B2A4A" />
         </svg>
       </motion.div>
@@ -170,7 +170,7 @@ export function AILoading({ name = '', type = '분석', steps, premiumNote, esti
       <div className="w-48 h-1.5 bg-border-light rounded-full overflow-hidden mb-8">
         <motion.div
           className="h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg, #C9A96E, #D4A843)' }}
+          style={{ background: 'linear-gradient(90deg, #B8965A, #8C6D3D)' }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 1, ease: 'easeOut' }}
         />
@@ -181,7 +181,7 @@ export function AILoading({ name = '', type = '분석', steps, premiumNote, esti
         <motion.div
           key={tipIndex}
           className="text-center px-6 py-4 rounded-2xl max-w-[300px]"
-          style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.1)' }}
+          style={{ background: 'rgba(184,150,90,0.06)', border: '1px solid rgba(184,150,90,0.1)' }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}

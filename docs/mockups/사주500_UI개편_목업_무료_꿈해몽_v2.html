@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사주500 — 무료 꿈해몽 v2 (문장 인용 해석 + 티저 잠금 + 경고 섹션)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+  html, body { background: #0a0a0a; font-family: 'Pretendard', sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+  .page { max-width: 480px; margin: 0 auto; background: #F8F5EE; min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); }
+
+  /* Header */
+  .hd {
+    background: linear-gradient(180deg, #1a1f3a 0%, #0e1428 70%, #050712 100%);
+    color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
+  }
+  .hd::before { content: '夢'; position: absolute; right: -20px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 220px; font-weight: 900; color: rgba(255,255,255,.05); line-height: 1; }
+  .hd::after { content: ''; position: absolute; top: 10px; right: 30px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(212,175,55,.3), transparent 70%); border-radius: 50%; }
+  .hd .top { display: flex; gap: 8px; font-size: 12px; opacity: .95; flex-wrap: wrap; }
+  .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
+  .hd .badge.free { background: rgba(212,175,55,.22); color: #f2d678; }
+  .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 23px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; }
+  .hd .date { font-size: 12px; opacity: .7; margin-top: 6px; font-feature-settings: 'tnum'; }
+
+  /* 3-part 입력 카드 */
+  .input-stack { margin: 16px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+  .ic { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 3px 10px rgba(0,0,0,.05); border-left: 3px solid transparent; }
+  .ic.topic { border-left-color: #B8965A; }
+  .ic.dream { border-left-color: #1a1f3a; }
+  .ic.worry { border-left-color: #5C4A2E; }
+  .ic .lb { font-size: 10px; color: #7F6B4E; letter-spacing: 0.18em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .ic.topic .lb { color: #B8965A; }
+  .ic.dream .lb { color: #1a1f3a; }
+  .ic .lb .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+  .ic .tx { font-size: 13px; line-height: 1.7; color: #2a2520; margin-top: 6px; word-break: keep-all; }
+  .ic.topic .tx { font-weight: 600; font-family: 'Noto Serif KR', serif; font-size: 14.5px; }
+  .ic.dream .tx { font-style: italic; }
+
+  .body { padding: 18px 20px 0; }
+  .section { margin-top: 24px; }
+  .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #5C4A2E; letter-spacing: 0.2em; margin-bottom: 4px; }
+  .sec-title { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
+  .sec-lead { font-size: 12px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
+  .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+  .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%); padding: 0 2px; color: #1a1a1a; }
+  .body p .han { font-family: 'Noto Serif KR', serif; color: #5C4A2E; font-size: 13px; }
+
+  /* 상징 카드 */
+  .symbol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 0; }
+  .sym { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 12px 12px; text-align: center; }
+  .sym .pic { width: 54px; height: 54px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #F0E8D9, #E5DFD0); border-radius: 50%; color: #1a1f3a; }
+  .sym .pic svg { width: 30px; height: 30px; }
+  .sym .pic.water { background: linear-gradient(135deg, #dbe7f4, #a8c5e6); color: #1565c0; }
+  .sym .pic.foot { background: linear-gradient(135deg, #F0E8D9, #d4c789); color: #5C4A2E; }
+  .sym .pic.ripple { background: linear-gradient(135deg, #dbe7f4, #bfd3ea); color: #1a1f3a; }
+  .sym .pic.shadow { background: linear-gradient(135deg, #2a2520, #1a1a1a); color: #E8D9B8; }
+  .sym .hd2 { display: flex; justify-content: center; align-items: baseline; gap: 6px; }
+  .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
+  .sym .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 12px; }
+  .sym .dc { font-size: 11.5px; color: #5C4A2E; line-height: 1.6; margin-top: 6px; text-align: left; }
+
+  /* 사용자 문장 인용 해석 카드 (NEW) */
+  .quote-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+  .qc {
+    background: #fff; border: 1px solid #E5DFD0; border-radius: 12px;
+    padding: 14px 14px 14px 40px; position: relative;
+  }
+  .qc::before {
+    content: '"'; position: absolute; left: 14px; top: 8px;
+    font-family: 'Noto Serif KR', serif; font-size: 42px; font-weight: 900; color: #1a1f3a;
+    line-height: 1;
+  }
+  .qc .src {
+    font-family: 'Noto Serif KR', serif; font-size: 13.5px; line-height: 1.6;
+    color: #1a1f3a; font-style: italic; font-weight: 500; word-break: keep-all;
+  }
+  .qc .src .hl { background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.35) 60%); padding: 0 2px; font-weight: 600; }
+  .qc .interp {
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5DFD0;
+    font-size: 12.5px; line-height: 1.7; color: #2a2520; word-break: keep-all;
+  }
+  .qc .interp .tag {
+    display: inline-block; font-size: 10px; letter-spacing: 0.1em; font-weight: 600;
+    color: #B8965A; background: rgba(184,148,31,.12); padding: 2px 7px; border-radius: 100px; margin-right: 6px;
+  }
+  .qc .interp strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.2) 60%); padding: 0 2px; }
+
+  /* 고민 연계 카드 */
+  .worry-link {
+    margin-top: 14px; background: linear-gradient(135deg, rgba(106,93,63,.06), rgba(26,31,58,.04));
+    border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 16px;
+  }
+  .worry-link .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .worry-link .h .lab { font-size: 10px; letter-spacing: 0.15em; color: #5C4A2E; font-weight: 600; }
+  .worry-link .h .arrow { color: #B8965A; font-size: 12px; }
+  .worry-link .h .lab.dream { color: #1a1f3a; }
+  .worry-link p { font-size: 13px; line-height: 1.75; color: #2a2520; margin: 0; word-break: keep-all; }
+  .worry-link p strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(26,31,58,.15) 60%); padding: 0 2px; }
+
+  .pullq { background: linear-gradient(135deg, rgba(26,31,58,.05), rgba(212,175,55,.05)); border-radius: 10px; padding: 14px 16px; margin: 16px 0 0; border-left: 3px solid #1a1f3a; font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.75; color: #1a1a1a; font-weight: 500; word-break: keep-all; }
+
+  /* 잠금 진입 헤더 */
+  .locked-header {
+    margin: 28px 20px 0; padding: 14px 16px;
+    background: linear-gradient(135deg, #1a1f3a 0%, #0e1428 100%);
+    color: #fff; border-radius: 12px 12px 0 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .locked-header svg { width: 18px; height: 18px; color: #E8D9B8; flex-shrink: 0; }
+  .locked-header .title-col { flex: 1; }
+  .locked-header .lab { font-size: 10px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; }
+  .locked-header .ttl { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 600; margin-top: 2px; }
+
+  /* 잠금 섹션 스택 */
+  .locked-stack { margin: 0 20px; background: #fff; border: 1px solid #E5DFD0; border-top: 0; border-radius: 0 0 12px 12px; overflow: hidden; position: relative; }
+  .locked-stack::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(250,248,243,.3) 80%, rgba(250,248,243,.85) 100%);
+    pointer-events: none;
+  }
+  .lk-sec { padding: 16px 18px; border-bottom: 1px solid #F0E8D9; position: relative; }
+  .lk-sec:last-child { border-bottom: 0; }
+  .lk-sec .sec-num { color: #7F6B4E; opacity: .8; }
+  .lk-sec .sec-title {
+    font-size: 16.5px; display: flex; align-items: center; gap: 8px;
+  }
+  .lk-sec .lock-icon { width: 14px; height: 14px; color: #B8965A; flex-shrink: 0; }
+
+  /* 티저 — clear 문장 / 블러 문장 */
+  .lk-body { margin-top: 10px; }
+  .lk-teaser {
+    font-size: 13.5px; line-height: 1.75; color: #2a2520; margin: 0;
+    word-break: keep-all; font-weight: 500;
+  }
+  .lk-teaser strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%); padding: 0 2px; }
+  .lk-blurred {
+    margin-top: 6px; filter: blur(4.5px); user-select: none; pointer-events: none;
+  }
+  .lk-blurred p { font-size: 13px; line-height: 1.7; color: #2a2520; margin: 0 0 6px; }
+
+  /* 블러없이 보이는 도식화 (티저) */
+  .lk-diag { margin-top: 10px; border-radius: 8px; background: #F8F5EE; padding: 12px; position: relative; }
+  .lk-diag.pie-teaser { display: grid; grid-template-columns: 80px 1fr; gap: 14px; align-items: center; }
+  .lk-diag.pie-teaser .pie {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: conic-gradient(from 0deg, #1565c0 0% 38%, #7F6B4E 38% 62%, #2e7d32 62% 78%, #c62828 78% 92%, #757575 92% 100%);
+    position: relative;
+  }
+  .lk-diag.pie-teaser .pie::after {
+    content: ''; position: absolute; inset: 18%;
+    background: #F8F5EE; border-radius: 50%;
+  }
+  .lk-diag.pie-teaser .pie-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1565c0;
+    z-index: 2;
+  }
+  .lk-diag.pie-teaser .legend { font-size: 10.5px; color: #5C4A2E; line-height: 1.6; }
+  .lk-diag.pie-teaser .legend .row { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+  .lk-diag.pie-teaser .legend .sw { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* 타임라인 티저 (3개월 grid) */
+  .lk-diag.timeline { padding: 10px 12px; }
+  .lk-diag.timeline .tl-months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
+  .lk-diag.timeline .tl-cell {
+    height: 22px; background: #E5DFD0; border-radius: 2px; position: relative;
+  }
+  .lk-diag.timeline .tl-cell.mark { background: #B8965A; }
+  .lk-diag.timeline .tl-cell.mark.strong { background: #c62828; }
+  .lk-diag.timeline .tl-lbls { display: flex; justify-content: space-between; font-size: 9px; color: #7F6B4E; margin-top: 4px; font-feature-settings: 'tnum'; }
+  .lk-diag.timeline .tl-cap { font-size: 10.5px; color: #5C4A2E; margin-top: 6px; }
+  .lk-diag.timeline .tl-cap strong { color: #c62828; font-weight: 600; }
+
+  /* 피해야 할 것 — 3 bullets, 첫 개만 clear */
+  .warn-list { list-style: none; padding: 0; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .warn-list li {
+    background: rgba(198,40,40,.04); border-left: 3px solid #c62828; border-radius: 6px;
+    padding: 10px 12px; font-size: 13px; line-height: 1.65; color: #2a2520; word-break: keep-all;
+  }
+  .warn-list li strong { color: #c62828; font-weight: 600; }
+  .warn-list li.locked {
+    filter: blur(4.5px); user-select: none; pointer-events: none; background: rgba(198,40,40,.04);
+  }
+
+  /* 해야 할 것 / 피할 것 블라인드 투컬럼 */
+  .dual-blind { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .db-col { background: #F8F5EE; border-radius: 8px; padding: 10px 12px; border: 1px solid #E5DFD0; }
+  .db-col.go { border-top: 2px solid #2e7d32; }
+  .db-col.no { border-top: 2px solid #c62828; }
+  .db-col .ch { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+  .db-col.go .ch { color: #2e7d32; }
+  .db-col.no .ch { color: #c62828; }
+  .db-col .lines { display: flex; flex-direction: column; gap: 6px; filter: blur(4.5px); }
+  .db-col .line { height: 8px; background: #E5DFD0; border-radius: 2px; }
+  .db-col .line.short { width: 65%; }
+  .db-col .line.mid { width: 82%; }
+
+  /* Big CTA */
+  .paid-cta {
+    margin: 0 20px; margin-top: -28px;
+    background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px;
+    padding: 22px 20px 20px; position: relative; overflow: hidden; z-index: 2;
+    box-shadow: 0 8px 30px rgba(26,31,58,.22);
+  }
+  .paid-cta::before { content: '解'; position: absolute; right: -10px; bottom: -30px; font-family: 'Noto Serif KR', serif; font-size: 140px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
+  .paid-cta .lab { font-size: 10px; color: #E8D9B8; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 6px; position: relative; }
+  .paid-cta h3 { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; position: relative; line-height: 1.45; }
+  .paid-cta .hook { font-size: 13px; color: #c4baa0; line-height: 1.7; position: relative; margin-bottom: 14px; word-break: keep-all; }
+  .paid-cta .hook strong { color: #f2d678; font-weight: 600; }
+  .paid-cta .cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 13px 18px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; position: relative; text-align: center; }
+  .paid-cta .cta-btn .cost { background: rgba(26,26,26,.12); padding: 3px 10px; border-radius: 100px; font-size: 11.5px; font-weight: 700; }
+  .paid-cta .sub { font-size: 11px; color: #7F6B4E; text-align: center; margin-top: 8px; position: relative; }
+
+  /* Ad */
+  .ad-slot { margin: 22px 20px 0; background: #F0E8D9; border: 1px dashed #B8965A; border-radius: 10px; padding: 22px 12px; text-align: center; font-size: 11px; color: #7F6B4E; }
+  .ad-slot .lbl { font-size: 9px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; }
+  .ad-slot .ph { margin-top: 6px; font-size: 13px; color: #5C4A2E; }
+
+  /* Actions */
+  /* 레퍼런스 패턴 통일: 박스형 grid 2열 + 아이콘/ti/sb stack (project_result_page_footer.md) */
+  .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid #E5DFD0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .actions .btn { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
+  .actions .btn:hover { border-color: #B8965A; }
+  .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
+  .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
+  .actions .btn .sb { font-size: 10px; color: #7F6B4E; }
+
+  .verify-tag { display: none; /* 목업 검증용 태그 — 프로덕션 노출 금지 */ }
+  .spacer { height: 80px; }
+
+  /* 서비스 이용 안내 (앱인토스 검수 §6-1 대응) */
+  .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed #E5DFD0; font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
+  .service-notice p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hd">
+    <div class="top">
+      <span class="badge">무료 · 꿈해몽</span>
+      <span class="badge free">오늘 1회 무료</span>
+      <span>변준기 님</span>
+    </div>
+    <h1>물 위를 걷는 꿈,<br>한 번 풀어드리겠습니다.</h1>
+    <div class="date">2026.04.20 · 甲木 일간</div>
+  </header>
+
+  <!-- 3-part 입력 -->
+  <div class="input-stack">
+    <div class="ic topic">
+      <div class="lb"><span class="dot"></span>꿈 주제</div>
+      <div class="tx">물·자연에 관한 꿈</div>
+    </div>
+    <div class="ic dream">
+      <div class="lb"><span class="dot"></span>꿈 내용</div>
+      <div class="tx">"넓은 호수 위를 맨발로 걷고 있었어요. 물은 생각보다 단단했고, 발 밑에서 잔물결이 동그랗게 퍼졌어요. 건너편 기슭에 누군가 서서 저를 기다리고 있었는데, 얼굴은 안 보였어요."</div>
+    </div>
+    <div class="ic worry">
+      <div class="lb"><span class="dot"></span>요새 고민</div>
+      <div class="tx">미뤄둔 대화 하나가 자꾸 마음에 걸립니다. 먼저 말을 꺼낼지, 그냥 두고 볼지 계속 저울질 중입니다.</div>
+    </div>
+  </div>
+
+  <main class="body">
+
+    <!-- SECTION 01 — 첫 인상 -->
+    <section class="section">
+      <div class="sec-num">SECTION 01</div>
+      <div class="sec-title">첫 인상 <span class="han">初相</span></div>
+      <p>
+        꿈에서 가장 세게 남은 이미지는 <strong>"물 위를 맨발로"</strong>와 <strong>"얼굴 없는 누군가"</strong>입니다. 두 장면이 한 꿈에 같이 나왔다는 건, 지금 준기 님 안에 <strong>두려운데 가보고 싶은 자리</strong>가 있다는 신호입니다.
+      </p>
+      <p>
+        물은 해몽에서 <strong>감정·무의식</strong>을 뜻합니다. 평소 가라앉혀두던 마음의 결이 올라오고 있습니다. 그런데 그 물이 <strong>단단했다</strong>는 점이 중요합니다. 가라앉지 않았다는 건, 그 감정을 <strong>감당할 준비가 되었다</strong>는 뜻입니다.
+      </p>
+    </section>
+
+    <!-- SECTION 02 — 꿈 속 상징 (SVG) -->
+    <section class="section">
+      <div class="sec-num">SECTION 02</div>
+      <div class="sec-title">꿈 속 상징 <span class="han">象徵</span></div>
+      <div class="symbol-grid">
+        <div class="sym">
+          <div class="pic water">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 12 Q8 8, 13 12 T23 12 T29 12"/>
+              <path d="M3 18 Q8 14, 13 18 T23 18 T29 18"/>
+              <path d="M3 24 Q8 20, 13 24 T23 24 T29 24"/>
+            </svg>
+          </div>
+          <div class="hd2"><span class="nm">물</span><span class="han">水</span></div>
+          <div class="dc">무의식·감정. 표면이 단단 = 감정을 정면으로 볼 준비가 됐다는 뜻.</div>
+        </div>
+        <div class="sym">
+          <div class="pic foot">
+            <svg viewBox="0 0 32 32" fill="currentColor">
+              <ellipse cx="16" cy="20" rx="7" ry="9"/>
+              <circle cx="10" cy="9" r="2"/>
+              <circle cx="14" cy="6" r="1.8"/>
+              <circle cx="18" cy="5" r="1.8"/>
+              <circle cx="22" cy="7" r="1.8"/>
+              <circle cx="25" cy="11" r="2"/>
+            </svg>
+          </div>
+          <div class="hd2"><span class="nm">맨발</span><span class="han">足</span></div>
+          <div class="dc">꾸미지 않은 본래 모습. 방어구 없이 나서는 자리를 뜻합니다.</div>
+        </div>
+        <div class="sym">
+          <div class="pic ripple">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="16" cy="16" r="3"/>
+              <circle cx="16" cy="16" r="7" opacity=".7"/>
+              <circle cx="16" cy="16" r="11" opacity=".4"/>
+              <circle cx="16" cy="16" r="14" opacity=".2"/>
+            </svg>
+          </div>
+          <div class="hd2"><span class="nm">잔물결</span><span class="han">漣</span></div>
+          <div class="dc">작은 행동이 만드는 큰 파장. 망설이고 있는 그 한 마디.</div>
+        </div>
+        <div class="sym">
+          <div class="pic shadow">
+            <svg viewBox="0 0 32 32" fill="currentColor">
+              <circle cx="16" cy="9" r="5"/>
+              <path d="M6 30 Q6 18, 16 18 Q26 18, 26 30 Z"/>
+              <circle cx="16" cy="9" r="2.5" fill="#1a1a1a"/>
+            </svg>
+          </div>
+          <div class="hd2"><span class="nm">얼굴 없는 사람</span><span class="han">影</span></div>
+          <div class="dc">아직 구체화되지 않은 대상. 사람일 수도, 결정일 수도 있습니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 03 — 준기 님이 쓴 문장 인용 해석 (NEW) -->
+    <section class="section">
+      <div class="sec-num">SECTION 03</div>
+      <div class="sec-title">준기 님 문장이 말하는 것 <span class="han">文解</span></div>
+      <p class="sec-lead">꿈을 적을 때 준기 님이 쓴 문장 안에 이미 해석이 반쯤 담겨 있습니다. 세 문장을 뽑아 풀이합니다.</p>
+
+      <div class="quote-stack">
+
+        <div class="qc">
+          <div class="src">물은 <span class="hl">생각보다 단단했고</span>,</div>
+          <div class="interp">
+            <span class="tag">준비됨</span>
+            "생각보다"라는 표현이 중요합니다. 준기 님은 마음 속으로 <strong>물이 나를 삼킬 것이라 예상</strong>했습니다. 그런데 막상 밟아보니 견고했습니다. 이는 지금 앞둔 대화·결정이 <strong>예상만큼 위험하지 않다</strong>는 꿈의 대답입니다.
+          </div>
+        </div>
+
+        <div class="qc">
+          <div class="src">발 밑에서 <span class="hl">잔물결이 동그랗게 퍼졌어요</span>.</div>
+          <div class="interp">
+            <span class="tag">파장</span>
+            잔물결은 <strong>작은 행동의 파장</strong>을 뜻합니다. 준기 님이 망설이고 있는 그 한 마디는, 꺼내는 순간 <strong>동심원처럼 멀리 번집니다</strong>. 좋게도, 염려스럽게도 번집니다. 그래서 두려운 것이지 그 자체가 잘못된 것은 아닙니다.
+          </div>
+        </div>
+
+        <div class="qc">
+          <div class="src">건너편 기슭에 누군가 서서 저를 기다리고 있었는데, <span class="hl">얼굴은 안 보였어요</span>.</div>
+          <div class="interp">
+            <span class="tag">집중</span>
+            얼굴이 안 보인 건 <strong>기억이 흐려서가 아니라 지금은 얼굴이 중요하지 않아서</strong>입니다. 꿈은 "누가 기다리는지"보다 <strong>"건너가는 일 자체"</strong>에 초점을 맞추라고 말합니다. 상대가 누구인지 확정하려 애쓰지 마시고, 먼저 한 걸음을 옮기십시오.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 04 — 요새 고민과 이 꿈의 만남 (NEW) -->
+    <section class="section">
+      <div class="sec-num">SECTION 04</div>
+      <div class="sec-title">요새 고민과 이 꿈 <span class="han">應夢</span></div>
+      <p class="sec-lead">적어주신 고민과 꿈의 장면이 어떻게 맞물리는지 짚습니다.</p>
+
+      <div class="worry-link">
+        <div class="h">
+          <span class="lab">요새 고민</span>
+          <span class="arrow">→</span>
+          <span class="lab dream">꿈 속 장면</span>
+        </div>
+        <p>
+          준기 님 고민의 핵심은 <strong>"먼저 말을 꺼낼지, 두고 볼지의 저울질"</strong>입니다. 꿈 속에서 <strong>"호수 위에서 멈춰 서지 않고 걸었다"</strong>는 장면이 그 저울질의 답입니다. 이미 움직이는 쪽으로 마음이 기울어 있다는 뜻입니다.
+        </p>
+      </div>
+
+      <p>
+        또한 <strong>"얼굴이 안 보이는 사람"</strong>은 고민 속의 상대가 맞습니다. 다만 꿈은 그 사람이 <strong>준기 님을 등 돌리지 않고 기다리고 있다</strong>고 말합니다. 고민이 만들어내는 최악의 시나리오 — 상대가 차가울지 모른다는 불안 — 은 꿈이 반박하고 있습니다.
+      </p>
+
+      <div class="pullq">
+        물 위에 이미 발을 디뎠다. 이제는 건널지 말지의 문제가 아니라, 어떤 속도로 건널지의 문제다.
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 잠금 진입 -->
+  <div class="locked-header">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    <div class="title-col">
+      <div class="lab">DEEPER · 사주 연동 심층 풀이</div>
+      <div class="ttl">이 아래는 준기 님 사주와 꿈을 함께 읽습니다</div>
+    </div>
+  </div>
+
+  <!-- 잠금 섹션들 — 각 섹션마다 티저(첫 한 문장·도식화 일부) + 나머지 블러 -->
+  <div class="locked-stack">
+
+    <!-- SECTION 05 — 일간 연동 (첫 문장 clear) -->
+    <div class="lk-sec">
+      <div class="sec-num">SECTION 05</div>
+      <div class="sec-title">
+        갑(甲) 일간으로 보는 이 꿈
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+      </div>
+      <div class="lk-body">
+        <p class="lk-teaser">갑목(甲)이 물 위를 걷는 꿈은 <strong>다른 9개 일간과 전혀 다른 의미</strong>를 갖습니다. 갑목은 수생목(水生木)으로 물을 받아먹는 쪽인데, 호수 위에 올라섰다는 건…</p>
+        <div class="lk-blurred">
+          <p>뿌리를 떼고 감정의 한가운데로 들어간 장면입니다. 갑목 특유의 고집이 이 장면에서 어떤 방식으로 드러나는지, 그리고 그것이 준기 님 연간·월간 배치와 어떻게 맞물려 지금의 머뭇거림을 만드는지 이어서 풀이합니다.</p>
+          <p>월간 신금(辛金)이 준기 님 갑목을 압박하는 자리에 있고, 이것이 꿈 속 "건너편 기슭"의 상징으로 치환되어 있습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 06 — 오행 흐름 (파이차트 visible, 해석 블러) -->
+    <div class="lk-sec">
+      <div class="sec-num">SECTION 06</div>
+      <div class="sec-title">
+        꿈이 드러낸 오행 흐름
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+      </div>
+      <div class="lk-body">
+        <!-- 파이차트 티저 — 숫자·레이블은 보이지만 해석 맥락 없이는 이해 불가 -->
+        <div class="lk-diag pie-teaser">
+          <div class="pie"></div>
+          <div class="legend">
+            <div class="row"><span class="sw" style="background:#1565c0;"></span>水 38% (강)</div>
+            <div class="row"><span class="sw" style="background:#7F6B4E;"></span>土 24%</div>
+            <div class="row"><span class="sw" style="background:#2e7d32;"></span>木 16%</div>
+            <div class="row"><span class="sw" style="background:#c62828;"></span>火 14%</div>
+            <div class="row"><span class="sw" style="background:#757575;"></span>金 8%</div>
+          </div>
+        </div>
+        <p class="lk-teaser" style="margin-top: 10px;">꿈 속에 <strong>수(水) 기운이 38%로 이례적으로 몰려 있습니다</strong>. 이 수가 어디에서 흘러온 것인지, 그리고 지금 준기 님 사주에 어떤 영향을…</p>
+        <div class="lk-blurred">
+          <p>주는지는 월운·일운을 함께 봐야 보입니다. 원국의 수(水)는 연지 해(亥) 한 글자뿐인데, 꿈 속 수가 이렇게 강하게 나왔다는 건 현재 월운에서 수가 보강되고 있다는 신호입니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 07 — 꿈이 경고하는 것 · 피해야 할 것 (NEW, 첫 bullet clear) -->
+    <div class="lk-sec">
+      <div class="sec-num">SECTION 07</div>
+      <div class="sec-title">
+        이 꿈이 경고하는 것 <span class="han">忌</span>
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+      </div>
+      <div class="lk-body">
+        <p class="lk-teaser">좋은 꿈도 <strong>꼭 피해야 할 행동</strong>이 같이 있습니다. 이 꿈은 준기 님에게 특히 세 가지를 조심하라고 말합니다.</p>
+        <ul class="warn-list">
+          <li>
+            <strong>01. 물가·강변에서의 감정 결정.</strong> 이번 한 주 안에 강·바다·한강뷰 카페에서 중요한 대화를 꺼내지 마십시오. 꿈 속 물은 강한 감정 증폭 장소를 가리키며, 이 장소에서 꺼낸 말은 원래 의도보다 크게 전달됩니다.
+          </li>
+          <li class="locked">
+            02. 이 시기에 피해야 할 특정 상대 유형 — 사주로 보면 정반대의 일간을 가진 상대와 이 대화를 나누면 꿈이 경고한 장면이 현실로 나타날 가능성이 높습니다.
+          </li>
+          <li class="locked">
+            03. 하루 중 피해야 할 시간대와 그 이유 — 꿈 속 "기슭"의 방향이 이 시간을 가리킵니다.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SECTION 08 — 예고 시기 (타임라인 visible, 해석 블러) -->
+    <div class="lk-sec">
+      <div class="sec-num">SECTION 08</div>
+      <div class="sec-title">
+        이 꿈이 예고하는 시기
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+      </div>
+      <div class="lk-body">
+        <!-- 12개월 타임라인 — 표시된 달은 보이나 이유는 블러 -->
+        <div class="lk-diag timeline">
+          <div class="tl-months">
+            <div class="tl-cell"></div>
+            <div class="tl-cell"></div>
+            <div class="tl-cell"></div>
+            <div class="tl-cell mark"></div>
+            <div class="tl-cell mark strong"></div>
+            <div class="tl-cell mark"></div>
+            <div class="tl-cell"></div>
+            <div class="tl-cell"></div>
+            <div class="tl-cell"></div>
+            <div class="tl-cell mark"></div>
+            <div class="tl-cell"></div>
+            <div class="tl-cell"></div>
+          </div>
+          <div class="tl-lbls"><span>1월</span><span>6월</span><span>12월</span></div>
+          <div class="tl-cap">표시된 달이 이 꿈이 예고하는 <strong>결정의 시기</strong>입니다.</div>
+        </div>
+        <p class="lk-teaser" style="margin-top: 10px;">꿈이 가리키는 <strong>"건너는 때"</strong>는 <strong>5월</strong>입니다. 다만 그 안에서 정확히 어느 주·어느 요일인지, 그리고…</p>
+        <div class="lk-blurred">
+          <p>이 시기가 준기 님 대운과 어떻게 맞물려 있는지를 이어서 풀이합니다. 타임라인의 붉은 칸은 "반드시 피해야 하는 날"이 아니라 "행동해야 하는 날"입니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 09 — 실천 처방 -->
+    <div class="lk-sec">
+      <div class="sec-num">SECTION 09</div>
+      <div class="sec-title">
+        구체 실천 처방 <span class="han">處方</span>
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+      </div>
+      <div class="lk-body">
+        <p class="lk-teaser">이 꿈을 받은 준기 님에게 <strong>해야 할 것 3가지</strong>와 <strong>피해야 할 것 3가지</strong>를 사주 기반으로 구체화합니다.</p>
+        <div class="dual-blind">
+          <div class="db-col go">
+            <div class="ch">✓ 해야 할 것 3</div>
+            <div class="lines">
+              <div class="line"></div>
+              <div class="line mid"></div>
+              <div class="line short"></div>
+            </div>
+          </div>
+          <div class="db-col no">
+            <div class="ch">✕ 피할 것 3</div>
+            <div class="lines">
+              <div class="line mid"></div>
+              <div class="line"></div>
+              <div class="line short"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 큰 유료 CTA -->
+  <div class="paid-cta">
+    <div class="lab">UNLOCK · 사주 연동 심층 풀이</div>
+    <h3>같은 꿈도 사주 일간에 따라<br>의미가 달라집니다.</h3>
+    <p class="hook">준기 님은 <strong>갑(甲) 나무</strong> 일간입니다. 위 다섯 섹션(일간 연동·오행 흐름·꿈의 경고·예고 시기·실천 처방)을 전부 열어드립니다.</p>
+    <div class="cta-btn">
+      내 사주 연동 심층 풀이 열기
+      <span class="cost">1운</span>
+    </div>
+    <div class="sub">풀이는 즉시 열립니다 · 결과는 보관함에 자동 저장</div>
+  </div>
+
+  <div class="ad-slot">
+    <div class="lbl">SPONSORED · 앱인토스 광고 슬롯</div>
+    <div class="ph">[ 320×100 배너 영역 — 화이트리스트 광고만 ]</div>
+  </div>
+
+  <!-- 2 액션 -->
+  <div class="actions">
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </div>
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <div class="ti">이 꿈으로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </div>
+  </div>
+
+  <!-- 서비스 이용 안내 (앱인토스 검수 §6-1 대응) -->
+  <div class="service-notice">
+    <p>꿈 풀이는 상징 해석에 기반한 참고 자료이며, 모든 결정은 본인의 몫입니다. 건강·정신건강 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+  </div>
+
+  <span class="verify-tag">v2 ✓ 무료 4섹션(문장인용·고민연계 추가) · 잠금 5섹션 티저패턴(첫문장 clear + 파이/타임라인 visible + 경고 1번 clear)</span>
+  <div class="spacer"></div>
+</div>
+</body>
+</html>

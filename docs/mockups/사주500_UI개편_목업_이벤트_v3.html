@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사주500 · 이벤트 탭 v3 목업</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&family=Pretendard+Variable:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold:       #B8965A;
+    --gold-deep:  #8A6F3E;
+    --gold-soft:  rgba(184,150,90,0.12);
+    --ink:        #2F2A23;
+    --ink-2:      #4E453A;
+    --ink-mute:   #8A7F6E;
+    --paper:      #F8F5EE;
+    --paper-2:    #EFE9DC;
+    --line:       #D0C9BD;
+    --bg:         #171310;
+    --white:      #FFFFFF;
+    --ok:         #5A8A4E;
+    --clover-dk:  #4B7A42;
+    --clover-lt:  #6B9A5C;
+  }
+  body {
+    background: var(--bg);
+    font-family: 'Pretendard Variable', -apple-system, sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 32px 16px 80px;
+    display: flex; flex-direction: column; align-items: center; gap: 32px;
+  }
+  h1.title { color: #EFE9DC; font-family: 'Noto Serif KR'; font-weight: 500; font-size: 20px; letter-spacing: 0.02em; }
+  .subtitle { color: #8A7F6E; font-size: 13px; margin-top: -24px; text-align: center; max-width: 680px; line-height: 1.6; }
+  .variants { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; }
+  .variant-label { color: #D0C9BD; font-size: 12px; text-align: center; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* ── 폰 프레임 ─────────────────────────────────── */
+  .phone {
+    width: 428px; max-width: 100%; height: 900px;
+    background: var(--paper);
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 8px #0a0a0a, 0 0 0 10px #1a1a1a;
+  }
+  .phone-screen {
+    width: 100%; height: 100%;
+    overflow-y: auto;
+    background: var(--paper);
+    position: relative;
+  }
+  .phone-screen::-webkit-scrollbar { width: 0; }
+
+  /* ── 앱 헤더 ───────────────────────────────────── */
+  .app-header {
+    padding: 56px 24px 16px; display: flex; justify-content: space-between; align-items: center;
+    background: var(--paper);
+    border-bottom: 1px solid rgba(184,150,90,0.12);
+  }
+  .app-title { font-family: 'Noto Serif KR'; font-weight: 500; font-size: 17px; color: var(--ink); letter-spacing: 0.02em; }
+  .un-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--gold-soft);
+    border: 1px solid rgba(184,150,90,0.24);
+    border-radius: 999px;
+    padding: 6px 12px 6px 10px;
+    font-size: 12px; color: var(--gold-deep); font-weight: 500;
+    text-decoration: none;
+  }
+  .un-pill .ico { width: 14px; height: 14px; stroke: var(--gold-deep); fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .un-pill .count { font-weight: 600; color: var(--ink); }
+
+  /* ── 카드 공통 ─────────────────────────────────── */
+  .card {
+    margin: 16px 16px 0;
+    background: var(--white);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(47,42,35,0.04), 0 8px 24px rgba(47,42,35,0.04);
+    border: 1px solid rgba(184,150,90,0.08);
+  }
+  .card-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 4px;
+  }
+  .card-head .ico {
+    width: 20px; height: 20px;
+    stroke: var(--gold); fill: none;
+    stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .card-head h3 {
+    font-family: 'Noto Serif KR';
+    font-weight: 500; font-size: 17px;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .card-sub {
+    font-size: 12px; color: var(--ink-mute);
+    line-height: 1.55;
+    margin-bottom: 18px;
+  }
+
+  /* ── 출석 주간 UI ──────────────────────────────── */
+  .week-row {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .day-cell {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 6px 0;
+    position: relative;
+  }
+  .day-label { font-size: 11px; color: var(--ink-mute); letter-spacing: 0.02em; font-weight: 500; }
+  .day-dot {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--paper-2);
+    transition: all 0.2s;
+  }
+  .day-dot .check {
+    width: 12px; height: 12px; stroke: var(--white); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    opacity: 0;
+  }
+  .day-cell.done .day-dot { background: var(--gold); }
+  .day-cell.done .day-dot .check { opacity: 1; }
+  .day-cell.done .day-label { color: var(--ink); }
+  .day-cell.today .day-dot {
+    background: var(--white);
+    box-shadow: inset 0 0 0 2px var(--gold);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .day-cell.today .day-label { color: var(--gold-deep); font-weight: 600; }
+  .day-cell.today-done .day-dot {
+    background: var(--gold);
+    box-shadow: 0 0 0 3px rgba(184,150,90,0.2);
+  }
+  .day-cell.today-done .day-dot .check { opacity: 1; }
+  .day-cell.today-done .day-label { color: var(--ink); font-weight: 600; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: inset 0 0 0 2px var(--gold), 0 0 0 0 rgba(184,150,90,0.3); }
+    50%      { box-shadow: inset 0 0 0 2px var(--gold), 0 0 0 6px rgba(184,150,90,0); }
+  }
+
+  /* ── 프로그레스 바 ─────────────────────────────── */
+  .progress-wrap {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .progress-bar {
+    height: 8px; border-radius: 4px;
+    background: var(--paper-2);
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold) 0%, #D4B87A 100%);
+    border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .progress-markers {
+    display: flex; justify-content: space-between;
+    margin-top: 8px;
+    font-size: 10px; color: var(--ink-mute);
+  }
+  .progress-markers span { position: relative; }
+  .progress-caption {
+    font-size: 13px; color: var(--ink-2);
+    margin-top: 10px; line-height: 1.5;
+  }
+  .progress-caption strong { color: var(--ink); font-weight: 600; }
+
+  /* ── 마일스톤 리스트 ──────────────────────────── */
+  .milestones { display: flex; flex-direction: column; gap: 10px; }
+  .milestone {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border-radius: 14px;
+    border: 1px solid rgba(184,150,90,0.12);
+  }
+  .milestone.done {
+    background: rgba(184,150,90,0.06);
+    border-color: rgba(184,150,90,0.28);
+  }
+  .milestone-mark {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+  }
+  .milestone.done .milestone-mark {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .milestone-mark .ico {
+    width: 12px; height: 12px;
+    stroke: var(--white); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    opacity: 0;
+  }
+  .milestone.done .milestone-mark .ico { opacity: 1; }
+  .milestone-body { flex: 1; }
+  .milestone-title { font-size: 14px; color: var(--ink); font-weight: 500; }
+  .milestone.done .milestone-title { color: var(--ink); }
+  .milestone-meta { font-size: 12px; color: var(--ink-mute); margin-top: 2px; }
+  .milestone-tag {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--paper-2);
+    color: var(--ink-mute);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .milestone.done .milestone-tag {
+    background: var(--gold);
+    color: var(--white);
+  }
+
+  /* ── 공유 카드 ─────────────────────────────────── */
+  .share-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    padding: 18px 20px;
+    background: var(--gold);
+    color: var(--white);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Pretendard Variable';
+    font-size: 16px; font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 6px rgba(184,150,90,0.3);
+  }
+  .share-btn:hover { background: var(--gold-deep); }
+  .share-btn .ico {
+    width: 20px; height: 20px;
+    stroke: var(--white); fill: none;
+    stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .share-btn .count { opacity: 0.8; font-weight: 500; margin-left: 4px; }
+  .share-btn.done {
+    background: var(--paper-2);
+    color: var(--ink-mute);
+    box-shadow: none;
+    cursor: default;
+  }
+  .share-btn.done .ico { stroke: var(--ink-mute); }
+  .share-meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    text-align: center;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  /* ── 런칭 프로모 배너 ──────────────────────────── */
+  .promo-banner {
+    margin: 16px 16px 0;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(184,150,90,0.14) 0%, rgba(184,150,90,0.04) 100%);
+    border: 1px solid rgba(184,150,90,0.22);
+    border-radius: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .promo-banner .ico {
+    width: 22px; height: 22px;
+    stroke: var(--gold); fill: none;
+    stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+  .promo-banner-body { flex: 1; }
+  .promo-banner-title { font-size: 13px; color: var(--ink); font-weight: 600; line-height: 1.4; }
+  .promo-banner-sub { font-size: 11px; color: var(--ink-mute); margin-top: 3px; line-height: 1.5; }
+
+  /* ── 탭바 ─────────────────────────────────────── */
+  .tabbar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    padding: 8px 0 24px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(184,150,90,0.12);
+    z-index: 10;
+  }
+  .tab-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px 0;
+    cursor: pointer;
+    position: relative;
+  }
+  .tab-item .tab-ico {
+    width: 24px; height: 24px;
+    stroke: var(--ink-mute); fill: none;
+    stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .tab-item .tab-label {
+    font-size: 10px; color: var(--ink-mute); letter-spacing: 0.02em;
+  }
+  .tab-item.active .tab-ico { stroke: var(--gold); }
+  .tab-item.active .tab-label { color: var(--gold); font-weight: 600; }
+  .tab-item .dot-badge {
+    position: absolute;
+    top: 6px; right: calc(50% - 18px);
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.94);
+  }
+
+  /* 중앙 orb 탭 (사주대화) */
+  .tab-item.center .tab-orb {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #EFE4CA 0%, var(--gold) 55%, var(--gold-deep) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(184,150,90,0.3);
+    margin-top: -12px;
+  }
+  .tab-item.center .tab-orb::after {
+    content: '';
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--white);
+    opacity: 0.9;
+  }
+  .tab-item.center .tab-label { margin-top: 2px; }
+
+  /* ── 프리뷰 컨테이너 ───────────────────────────── */
+  .reveal-preview {
+    width: 428px; max-width: 100%; height: 900px;
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 8px #0a0a0a, 0 0 0 10px #1a1a1a;
+  }
+  /* Tier A 토스트 (하단) */
+  .tier-a-bg {
+    width: 100%; height: 100%;
+    background: var(--paper);
+    position: relative;
+  }
+  .tier-a-mock-content {
+    padding: 80px 24px 32px;
+    color: var(--ink);
+    font-family: 'Noto Serif KR';
+    font-size: 16px; line-height: 1.7;
+    opacity: 0.35;
+  }
+  .toast {
+    position: absolute;
+    bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: rgba(31,27,22,0.96);
+    padding: 14px 20px 14px 16px;
+    border-radius: 999px;
+    display: flex; align-items: center; gap: 10px;
+    max-width: 320px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .toast-circle {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .toast-circle .ico {
+    width: 12px; height: 12px;
+    stroke: var(--paper); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .toast-text { color: var(--paper); font-size: 14px; font-weight: 500; }
+  .toast-text strong { color: var(--gold); font-weight: 600; }
+
+  /* Tier B 모달 (중앙) */
+  .tier-b-bg {
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.55);
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-card {
+    width: 320px;
+    background: var(--paper);
+    border-radius: 28px;
+    padding: 36px 28px 28px;
+    display: flex; flex-direction: column; align-items: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .modal-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(184,150,90,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(184,150,90,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .clover-wrap {
+    position: relative;
+    margin-bottom: 20px;
+    z-index: 1;
+  }
+  .clover-svg { display: block; }
+  .hanja-card {
+    width: 120px; height: 60px;
+    border: 1.5px solid var(--gold);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif KR';
+    font-weight: 500; font-size: 22px;
+    color: var(--ink);
+    letter-spacing: 0.15em;
+    background: rgba(255,255,255,0.5);
+    margin-bottom: 18px;
+    z-index: 1; position: relative;
+  }
+  .modal-title {
+    font-family: 'Noto Serif KR';
+    font-weight: 500; font-size: 16px;
+    color: var(--ink);
+    margin-bottom: 8px;
+    z-index: 1;
+  }
+  .modal-sub {
+    font-size: 13px; color: var(--ink-2);
+    line-height: 1.6; text-align: center;
+    margin-bottom: 24px;
+    z-index: 1;
+  }
+  .modal-cta {
+    width: 100%;
+    padding: 14px;
+    background: var(--gold);
+    color: var(--white);
+    border: none; border-radius: 12px;
+    font-family: 'Pretendard Variable';
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    z-index: 1;
+  }
+  .particle {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0.7;
+    z-index: 1;
+  }
+
+  .note {
+    color: #8A7F6E; font-size: 12px; text-align: center; max-width: 680px;
+    line-height: 1.7; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 8px;
+    border: 1px solid rgba(184,150,90,0.12);
+  }
+  .note strong { color: #D4B87A; }
+</style>
+</head>
+<body>
+
+<h1 class="title">사주500 이벤트 탭 · v3 목업</h1>
+<p class="subtitle">
+  v2 대비 변경: 이모지 0개 · 주간 누적 출석 · 단일 공유 버튼 · SVG 픽토그램 · 2티어 당첨 연출 · 토스포인트 제거(UAC 분리).<br>
+  폰 너비 428px · 브랜드 골드 #B8965A · Noto Serif KR + Pretendard Variable.
+</p>
+
+<div class="variants">
+
+  <!-- ─────────────────────────────────────────────────────────
+       메인 화면 — 이벤트 탭 본 화면
+       ───────────────────────────────────────────────────────── -->
+  <div>
+    <div class="variant-label">MAIN · 이벤트 탭 (수요일 · 이번 주 2일 출석 · 공유 1회 완료)</div>
+    <div class="phone">
+      <div class="phone-screen" style="padding-bottom: 100px;">
+        <div class="app-header">
+          <div class="app-title">이벤트</div>
+          <a href="#" class="un-pill">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+            내 운 <span class="count">3</span>
+          </a>
+        </div>
+
+        <!-- 런칭 프로모 배너 D+0~D+14 -->
+        <div class="promo-banner">
+          <svg class="ico" viewBox="0 0 24 24">
+            <path d="M4 12l3-8h10l3 8"/>
+            <path d="M2 12h20l-2 7H4z"/>
+            <path d="M12 4v15"/>
+          </svg>
+          <div class="promo-banner-body">
+            <div class="promo-banner-title">런칭 첫 주 한정 · 7일 출석 시 2운 추가</div>
+            <div class="promo-banner-sub">~ 2026-04-29까지 이번 주 월~일 모두 출석하면</div>
+          </div>
+        </div>
+
+        <!-- 출석 카드 -->
+        <div class="card">
+          <div class="card-head">
+            <svg class="ico" viewBox="0 0 24 24">
+              <rect x="3" y="5" width="18" height="16" rx="2"/>
+              <path d="M3 9h18"/>
+              <path d="M8 3v4M16 3v4"/>
+              <path d="M8 14h2M8 17h2M14 14h2M14 17h2"/>
+            </svg>
+            <h3>이번 주 출석</h3>
+          </div>
+          <div class="card-sub">콘텐츠 하나를 보면 오늘 출석이 올라갑니다. 매주 월요일 0시 다시 시작돼요.</div>
+
+          <div class="week-row">
+            <div class="day-cell done"><span class="day-label">월</span><div class="day-dot"><svg class="check" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div></div>
+            <div class="day-cell done"><span class="day-label">화</span><div class="day-dot"><svg class="check" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div></div>
+            <div class="day-cell today"><span class="day-label">수</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">목</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">금</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">토</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">일</span><div class="day-dot"></div></div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width: 28.5%"></div></div>
+            <div class="progress-markers">
+              <span>0일</span>
+              <span style="margin-left: 20%;">4일</span>
+              <span>7일</span>
+            </div>
+            <div class="progress-caption"><strong>이번 주 2일 출석</strong> · 4일까지 2일 남았어요</div>
+          </div>
+
+          <div class="milestones">
+            <div class="milestone">
+              <div class="milestone-mark"><svg class="ico" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div>
+              <div class="milestone-body">
+                <div class="milestone-title">이번 주 4일 출석</div>
+                <div class="milestone-meta">운 1을 드려요</div>
+              </div>
+              <div class="milestone-tag">진행 중</div>
+            </div>
+            <div class="milestone">
+              <div class="milestone-mark"><svg class="ico" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div>
+              <div class="milestone-body">
+                <div class="milestone-title">이번 주 7일 모두 출석</div>
+                <div class="milestone-meta">운 2를 드려요</div>
+              </div>
+              <div class="milestone-tag">진행 중</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 공유 카드 -->
+        <div class="card">
+          <div class="card-head">
+            <svg class="ico" viewBox="0 0 24 24">
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="6" r="3"/>
+              <circle cx="18" cy="18" r="3"/>
+              <path d="M8.5 10.5l7-3.5M8.5 13.5l7 3.5"/>
+            </svg>
+            <h3>공유하고 운 받기</h3>
+          </div>
+          <div class="card-sub">공유하기 버튼을 누르면 토스 앱 공유 화면으로 이어지고, 공유를 완료하면 운이 들어와요.</div>
+
+          <button class="share-btn">
+            <svg class="ico" viewBox="0 0 24 24">
+              <path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/>
+              <path d="M16 6l-4-4-4 4"/>
+              <path d="M12 2v14"/>
+            </svg>
+            친구에게 공유하기
+            <span class="count">(1/3)</span>
+          </button>
+          <div class="share-meta">오늘 남은 공유 2회 · 1회당 운 1</div>
+        </div>
+
+      </div>
+
+      <!-- 탭바 -->
+      <div class="tabbar">
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M4 11l8-6.5L20 11v9a1 1 0 01-1 1H5a1 1 0 01-1-1z"/>
+            <path d="M10 21v-6h4v6"/>
+          </svg>
+          <span class="tab-label">홈</span>
+        </div>
+        <div class="tab-item active">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M12 3c2 3 4 5 4 8a4 4 0 01-8 0c0-3 2-5 4-8z"/>
+            <path d="M12 11v10"/>
+            <path d="M8 21h8"/>
+          </svg>
+          <span class="tab-label">이벤트</span>
+          <div class="dot-badge"></div>
+        </div>
+        <div class="tab-item center">
+          <div class="tab-orb"></div>
+          <span class="tab-label">사주대화</span>
+        </div>
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M4 5a2 2 0 012-2h4v18H6a2 2 0 01-2-2z"/>
+            <path d="M14 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4z"/>
+            <path d="M6 7h2M6 11h2M16 7h2M16 11h2"/>
+          </svg>
+          <span class="tab-label">보관함</span>
+        </div>
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <circle cx="12" cy="9" r="4"/>
+            <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
+          </svg>
+          <span class="tab-label">내정보</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────
+       Tier A — 1운 토스트 (공유 완료 · 4일 달성)
+       ───────────────────────────────────────────────────────── -->
+  <div>
+    <div class="variant-label">TIER A · 1운 토스트 (공유 완료 직후 1.2초)</div>
+    <div class="reveal-preview">
+      <div class="tier-a-bg">
+        <div class="tier-a-mock-content">
+          이번 주 출석 · 공유하고 운 받기 · 런칭 이벤트 배너가 비쳐 보이는 배경 화면 위로<br><br>
+          하단에 토스트가 1.2초간 떠오릅니다.<br>
+          강한 모달 없이 조용하게 — 공유는 반복 행위이므로 피로도 관리.
+        </div>
+        <div class="toast">
+          <div class="toast-circle"><svg class="ico" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div>
+          <div class="toast-text">공유해 주셔서 감사합니다. <strong>운 1</strong>을 받았어요.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────
+       Tier B — 2운 모달 (주간 7일 달성)
+       ───────────────────────────────────────────────────────── -->
+  <div>
+    <div class="variant-label">TIER B · 2운 모달 (이번 주 7일 모두 출석)</div>
+    <div class="reveal-preview">
+      <div class="tier-b-bg">
+        <div class="modal-card">
+          <!-- 파티클 감각 장식 -->
+          <div class="particle" style="top: 30px; left: 40px;"></div>
+          <div class="particle" style="top: 60px; right: 50px; opacity: 0.5;"></div>
+          <div class="particle" style="top: 120px; left: 30px; opacity: 0.6;"></div>
+          <div class="particle" style="bottom: 120px; right: 35px; opacity: 0.5;"></div>
+          <div class="particle" style="bottom: 90px; left: 50px; opacity: 0.4;"></div>
+
+          <div class="clover-wrap">
+            <svg class="clover-svg" width="80" height="80" viewBox="0 0 80 80">
+              <defs>
+                <radialGradient id="leaf-grad-a" cx="50%" cy="35%" r="60%">
+                  <stop offset="0%" stop-color="#7BA56B"/>
+                  <stop offset="100%" stop-color="#4B7A42"/>
+                </radialGradient>
+              </defs>
+              <!-- 네 잎 -->
+              <g transform="translate(40,40)">
+                <g transform="rotate(-45)">
+                  <ellipse cx="0" cy="-18" rx="11" ry="16" fill="url(#leaf-grad-a)" stroke="#3D6A36" stroke-width="1.2"/>
+                </g>
+                <g transform="rotate(45)">
+                  <ellipse cx="0" cy="-18" rx="11" ry="16" fill="url(#leaf-grad-a)" stroke="#3D6A36" stroke-width="1.2"/>
+                </g>
+                <g transform="rotate(135)">
+                  <ellipse cx="0" cy="-18" rx="11" ry="16" fill="url(#leaf-grad-a)" stroke="#3D6A36" stroke-width="1.2"/>
+                </g>
+                <g transform="rotate(-135)">
+                  <ellipse cx="0" cy="-18" rx="11" ry="16" fill="url(#leaf-grad-a)" stroke="#3D6A36" stroke-width="1.2"/>
+                </g>
+                <!-- 줄기 -->
+                <path d="M0 8 Q2 20 4 26" stroke="#3D6A36" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                <!-- 중심 하이라이트 -->
+                <circle cx="0" cy="0" r="4" fill="#FCF6E8" opacity="0.9"/>
+                <circle cx="0" cy="0" r="2" fill="#B8965A"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="hanja-card">天乙貴人</div>
+          <div class="modal-title">이번 주 끝까지 달려주셨네요</div>
+          <div class="modal-sub">사주에 귀인이 비치는 한 주였습니다.<br>운 <strong style="color: var(--gold-deep); font-weight: 600;">2</strong>를 드려요.</div>
+          <button class="modal-cta">확인</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────
+       엣지 케이스 — 수요일·0일 출석 / 목요일·4일 달성 직후
+       ───────────────────────────────────────────────────────── -->
+  <div>
+    <div class="variant-label">EDGE 1 · 수요일 · 이번 주 0일 출석 (콘텐츠 아직 안 본 상태)</div>
+    <div class="phone">
+      <div class="phone-screen" style="padding-bottom: 100px;">
+        <div class="app-header">
+          <div class="app-title">이벤트</div>
+          <a href="#" class="un-pill">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+            내 운 <span class="count">0</span>
+          </a>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <svg class="ico" viewBox="0 0 24 24">
+              <rect x="3" y="5" width="18" height="16" rx="2"/>
+              <path d="M3 9h18"/>
+              <path d="M8 3v4M16 3v4"/>
+              <path d="M8 14h2M8 17h2M14 14h2M14 17h2"/>
+            </svg>
+            <h3>이번 주 출석</h3>
+          </div>
+          <div class="card-sub">이번 주 첫 출석이에요. 콘텐츠 하나만 봐도 시작됩니다.</div>
+
+          <div class="week-row">
+            <div class="day-cell"><span class="day-label">월</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">화</span><div class="day-dot"></div></div>
+            <div class="day-cell today"><span class="day-label">수</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">목</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">금</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">토</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">일</span><div class="day-dot"></div></div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            <div class="progress-markers">
+              <span>0일</span>
+              <span style="margin-left: 20%;">4일</span>
+              <span>7일</span>
+            </div>
+            <div class="progress-caption"><strong>이번 주 0일 출석</strong> · 콘텐츠 하나만 봐도 바로 1일이 시작돼요</div>
+          </div>
+
+          <div class="milestones">
+            <div class="milestone">
+              <div class="milestone-mark"></div>
+              <div class="milestone-body">
+                <div class="milestone-title">이번 주 4일 출석</div>
+                <div class="milestone-meta">운 1을 드려요</div>
+              </div>
+              <div class="milestone-tag">시작 전</div>
+            </div>
+            <div class="milestone">
+              <div class="milestone-mark"></div>
+              <div class="milestone-body">
+                <div class="milestone-title">이번 주 7일 모두 출석</div>
+                <div class="milestone-meta">운 2를 드려요</div>
+              </div>
+              <div class="milestone-tag">시작 전</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M4 11l8-6.5L20 11v9a1 1 0 01-1 1H5a1 1 0 01-1-1z"/>
+            <path d="M10 21v-6h4v6"/>
+          </svg>
+          <span class="tab-label">홈</span>
+        </div>
+        <div class="tab-item active">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M12 3c2 3 4 5 4 8a4 4 0 01-8 0c0-3 2-5 4-8z"/>
+            <path d="M12 11v10"/>
+            <path d="M8 21h8"/>
+          </svg>
+          <span class="tab-label">이벤트</span>
+        </div>
+        <div class="tab-item center">
+          <div class="tab-orb"></div>
+          <span class="tab-label">사주대화</span>
+        </div>
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M4 5a2 2 0 012-2h4v18H6a2 2 0 01-2-2z"/>
+            <path d="M14 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4z"/>
+            <path d="M6 7h2M6 11h2M16 7h2M16 11h2"/>
+          </svg>
+          <span class="tab-label">보관함</span>
+        </div>
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <circle cx="12" cy="9" r="4"/>
+            <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
+          </svg>
+          <span class="tab-label">내정보</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────
+       엣지 케이스 2 — 목요일 · 4일 달성 직후
+       ───────────────────────────────────────────────────────── -->
+  <div>
+    <div class="variant-label">EDGE 2 · 목요일 · 4일 달성 직후 (1운 수령 완료)</div>
+    <div class="phone">
+      <div class="phone-screen" style="padding-bottom: 100px;">
+        <div class="app-header">
+          <div class="app-title">이벤트</div>
+          <a href="#" class="un-pill">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+            내 운 <span class="count">1</span>
+          </a>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <svg class="ico" viewBox="0 0 24 24">
+              <rect x="3" y="5" width="18" height="16" rx="2"/>
+              <path d="M3 9h18"/>
+              <path d="M8 3v4M16 3v4"/>
+              <path d="M8 14h2M8 17h2M14 14h2M14 17h2"/>
+            </svg>
+            <h3>이번 주 출석</h3>
+          </div>
+          <div class="card-sub">4일 출석 보상을 받으셨어요. 7일까지 3일 남았습니다.</div>
+
+          <div class="week-row">
+            <div class="day-cell done"><span class="day-label">월</span><div class="day-dot"><svg class="check" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div></div>
+            <div class="day-cell done"><span class="day-label">화</span><div class="day-dot"><svg class="check" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div></div>
+            <div class="day-cell done"><span class="day-label">수</span><div class="day-dot"><svg class="check" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div></div>
+            <div class="day-cell today-done"><span class="day-label">목</span><div class="day-dot"><svg class="check" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div></div>
+            <div class="day-cell"><span class="day-label">금</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">토</span><div class="day-dot"></div></div>
+            <div class="day-cell"><span class="day-label">일</span><div class="day-dot"></div></div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width: 57.15%"></div></div>
+            <div class="progress-markers">
+              <span>0일</span>
+              <span style="margin-left: 20%;">4일</span>
+              <span>7일</span>
+            </div>
+            <div class="progress-caption"><strong>이번 주 4일 출석 · 운 1 받음</strong> · 7일까지 3일 남았어요</div>
+          </div>
+
+          <div class="milestones">
+            <div class="milestone done">
+              <div class="milestone-mark"><svg class="ico" viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></div>
+              <div class="milestone-body">
+                <div class="milestone-title">이번 주 4일 출석</div>
+                <div class="milestone-meta">운 1을 받았어요</div>
+              </div>
+              <div class="milestone-tag">받음</div>
+            </div>
+            <div class="milestone">
+              <div class="milestone-mark"></div>
+              <div class="milestone-body">
+                <div class="milestone-title">이번 주 7일 모두 출석</div>
+                <div class="milestone-meta">운 2를 드려요</div>
+              </div>
+              <div class="milestone-tag">진행 중</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M4 11l8-6.5L20 11v9a1 1 0 01-1 1H5a1 1 0 01-1-1z"/>
+            <path d="M10 21v-6h4v6"/>
+          </svg>
+          <span class="tab-label">홈</span>
+        </div>
+        <div class="tab-item active">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M12 3c2 3 4 5 4 8a4 4 0 01-8 0c0-3 2-5 4-8z"/>
+            <path d="M12 11v10"/>
+            <path d="M8 21h8"/>
+          </svg>
+          <span class="tab-label">이벤트</span>
+        </div>
+        <div class="tab-item center">
+          <div class="tab-orb"></div>
+          <span class="tab-label">사주대화</span>
+        </div>
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <path d="M4 5a2 2 0 012-2h4v18H6a2 2 0 01-2-2z"/>
+            <path d="M14 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4z"/>
+            <path d="M6 7h2M6 11h2M16 7h2M16 11h2"/>
+          </svg>
+          <span class="tab-label">보관함</span>
+        </div>
+        <div class="tab-item">
+          <svg class="tab-ico" viewBox="0 0 24 24">
+            <circle cx="12" cy="9" r="4"/>
+            <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
+          </svg>
+          <span class="tab-label">내정보</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <strong>v3 핵심 변경:</strong> ① 이모지 0개 → 인라인 SVG 픽토그램 11종<br>
+  ② 공유 3플랫폼 카드 제거 → 단일 버튼 + 앱인토스 `공유리워드` 페이지 위임<br>
+  ③ 연속 스트릭 → 주간 누적 (월~일 KST) → 끊김 스트레스 없음<br>
+  ④ 3티어 확률 박스 제거 → 2티어(Tier A 1운 토스트 · Tier B 2운 모달) · <strong>"랜덤·당첨·확률" 어휘 0건</strong><br>
+  ⑤ 토스포인트는 UAC 프로모션(신규 설치 1,000원 고정)으로 분리 · 이벤트 탭 경로에 없음
+</div>
+
+</body>
+</html>

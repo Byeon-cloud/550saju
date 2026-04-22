@@ -1,6 +1,10 @@
 /**
  * 사주500 AI 프롬프트 — 마스터 포맷 기반
  * 핵심: 역할 구체화 + 데이터 전부 삽입 + 근거 필수 + 소름 포인트
+ *
+ * ⚠️ v3 프롬프트 상수(DREAM_FREE_* 등)는 Cloud Functions 전용이라 여기에 두지 않습니다.
+ *    서버측 SSOT: `functions/src/ai/promptsV3.ts` (Single Source of Truth).
+ *    클라이언트에서 v3 프롬프트가 필요해지면 공용 패키지(`shared/`)로 분리해 중복 제거하세요.
  */
 
 export const SYSTEM_PROMPT = `## 역할

@@ -21,7 +21,7 @@ interface ShareCardData {
 }
 
 const NAVY = '#1B2A4A';
-const GOLD = '#C9A96E';
+const GOLD = '#B8965A';
 const BG = '#F4F5F8';
 const TEXT_SEC = '#4A5568';
 
@@ -72,7 +72,7 @@ export async function generateShareCard(data: ShareCardData): Promise<Blob> {
   const scoreItems = [
     { label: '직업운', score: data.scores.career, color: '#2D4470' },
     { label: '애정운', score: data.scores.love, color: GOLD },
-    { label: '재물운', score: data.scores.wealth, color: '#D4A843' },
+    { label: '재물운', score: data.scores.wealth, color: '#8C6D3D' },
     { label: '대인운', score: data.scores.social, color: '#7B1FA2' },
     { label: '건강운', score: data.scores.health, color: '#2E7D32' },
     { label: '잠재력', score: data.scores.potential, color: '#D32F2F' },

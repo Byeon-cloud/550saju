@@ -100,6 +100,37 @@ export interface GongMang {
 /** 오행 분포 */
 export type OhengDistribution = Record<OhengType, number>;
 
+/** 형충합 관계 */
+export interface HyungChungHap {
+  type: '충' | '합' | '형';
+  target: '천간' | '지지';
+  positions: [string, string];
+  chars: [string, string];
+  desc: string;
+}
+
+/** 십성 5분류 분포 */
+export interface SipSungDistribution {
+  비겁: number;
+  식상: number;
+  재성: number;
+  관성: number;
+  인성: number;
+}
+
+/** 명리학 구조 분석 */
+export interface MyeongriAnalysis {
+  일간: string;
+  일간오행: OhengType;
+  월령: string;
+  월령오행: OhengType;
+  득령: boolean;
+  십성분포: SipSungDistribution;
+  형충합: HyungChungHap[];
+  일간강약: '신강경향' | '신약경향' | '중화';
+  강약근거: string;
+}
+
 /** 사주 전체 데이터 */
 export interface SajuData {
   input: SajuInput;
@@ -116,6 +147,7 @@ export interface SajuData {
   currentDaeun?: DaeUn;
   yearlyUn?: { 천간: string; 지지: string; 간지: string };
   띠?: string;
+  myeongriAnalysis?: MyeongriAnalysis;
 }
 
 /** 상황 질문 */

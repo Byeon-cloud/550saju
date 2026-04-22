@@ -10,6 +10,7 @@ import { generateCompatibilityAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { FooterCTA } from '@/components/common/FooterCTA';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import type { CompatibilityResponse } from '@/types/report';
 import { stripMd } from '@/utils/format';
@@ -23,7 +24,7 @@ const LOADING_STEPS = [
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  personality: '#C9A96E',
+  personality: '#B8965A',
   values: '#2D8A4E',
   communication: '#1565C0',
   emotion: '#D32F2F',
@@ -73,10 +74,9 @@ export function CompatResultPage() {
       setPhase('result');
     }).catch(async (e) => {
       console.error('궁합 분석 실패:', e);
-      const { addRewardBalance } = await import('@/services/storage/localStore');
-      addRewardBalance(1);
+      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
       const errMsg = e?.message || '알 수 없는 오류';
-      toast.show(`분석 실패 — 1운 환불 (${errMsg})`, 'warning');
+      toast.show(`분석에 실패했어요. 잔액은 자동으로 복구돼요 (${errMsg})`, 'warning');
       // 바로 돌려보내지 않고 3초 대기 (에러 메시지 확인할 시간)
       setTimeout(() => navigate('/compat'), 3000);
     }).finally(() => clearInterval(interval));
@@ -112,13 +112,13 @@ export function CompatResultPage() {
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             {(result as any).relationshipType && (
               <span className="text-[11px] font-bold px-3 py-1.5 rounded-full text-white"
-                style={{ background: '#C9A96E' }}>
+                style={{ background: '#B8965A' }}>
                 {(result as any).relationshipType}
               </span>
             )}
             {(result as any).keywords?.map((kw: string, i: number) => (
               <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                style={{ background: 'rgba(184,150,90,0.1)', color: '#A08B6A', border: '1px solid rgba(184,150,90,0.2)' }}>
                 {kw}
               </span>
             ))}
@@ -172,8 +172,8 @@ export function CompatResultPage() {
                 }))}>
                   <PolarGrid strokeOpacity={0.15} />
                   <PolarAngleAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
-                  <Radar dataKey="점수" stroke="#C9A96E" fill="#C9A96E" fillOpacity={0.2} strokeWidth={2}
-                    dot={{ r: 3, fill: '#C9A96E', strokeWidth: 0 }} />
+                  <Radar dataKey="점수" stroke="#B8965A" fill="#B8965A" fillOpacity={0.2} strokeWidth={2}
+                    dot={{ r: 3, fill: '#B8965A', strokeWidth: 0 }} />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
@@ -185,7 +185,7 @@ export function CompatResultPage() {
                   <CompatScoreBar
                     name={cat.name}
                     score={cat.score}
-                    color={CATEGORY_COLORS[cat.id] || '#C9A96E'}
+                    color={CATEGORY_COLORS[cat.id] || '#B8965A'}
                     delay={i * 0.1}
                   />
                   <p className="text-caption text-text-muted mt-1 ml-[76px] leading-relaxed">{stripMd(cat.description)}</p>
@@ -252,6 +252,9 @@ export function CompatResultPage() {
             </Button>
           </div>
         </FadeIn>
+
+        {/* 3-part Footer CTA (diff v3 §6) */}
+        <FooterCTA pageKey="compat" backTo="/compat" />
       </div>
 
       <ShareModal

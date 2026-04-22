@@ -1,0 +1,28 @@
+/* P0-C · Safe Area 전역 대응 (2026-04-21 D-1)
+ * 근거: audit_responsive_360x640.md §5 + 앱인토스 검수 §2-1
+ * 대상: 노치·Dynamic Island·홈바가 있는 기기에서 sticky UI 영역 침범 방지.
+ *
+ * 적용 대상 클래스:
+ *   .balance-bar — 상단 고정 잔액 띠 (src/components/layout/BalanceBar.tsx)
+ *   .tabbar      — 하단 고정 5탭 (src/components/layout/TabBar.tsx)
+ *   .checkout    — 충전·결제 페이지 하단 고정 CTA
+ *   .phone, .frame — 목업 래퍼 (360 ~ 428 폭 대응)
+ */
+
+.balance-bar {
+  padding-top: calc(8px + env(safe-area-inset-top));
+}
+
+.tabbar {
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
+.checkout {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+/* 목업 래퍼 클래스 — 360 폭에서 가로 스크롤 방지 */
+.phone,
+.frame {
+  max-width: 100%;
+}

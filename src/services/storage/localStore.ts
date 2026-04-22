@@ -8,11 +8,16 @@
  *
  * 사용 순서: reward → bonus → paid (유저에게 유리하게)
  * 환불 시: paid만 환불 대상
+ *
+ * ⚠ 2026-04-22 storage 통일:
+ *   REPORTS / PROFILES / MY_PROFILE 모두 localStorage 사용 (이전엔 sessionStorage 였음).
+ *   탭/창 닫혀도 데이터 유지. "보관함 빈 채로 보이던 버그" 해소.
+ *   기존 sessionStorage 잔류 데이터는 첫 호출 시 1회 자동 마이그레이션 후 삭제.
  */
 
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
 
-export type ContentType = 'report' | 'daily' | 'dream' | 'daeun' | 'monthly' | 'compat' | 'tojung' | 'topic';
+export type ContentType = 'report' | 'daily' | 'dream' | 'deepDream' | 'daeun' | 'monthly' | 'compat' | 'tojung' | 'topic';
 
 export interface LocalReport {
   id: string;
@@ -29,6 +34,16 @@ export interface LocalReport {
   aiResult?: any;
 }
 
+/** 사주 프로필 — 리포트와 독립적으로 저장 (삭제해도 프로필 유지) */
+export interface SajuProfile {
+  id: string;
+  name: string;
+  input: SajuInput;
+  sajuData: SajuData;
+  relation?: string;
+  createdAt: string | number;
+}
+
 /** 운 잔액 유형별 구조 */
 export interface BalanceDetail {
   paid: number;    // 결제 운 (환불 가능)
@@ -40,6 +55,29 @@ const REPORTS_KEY = 'saju500_reports';
 const BALANCE_KEY = 'saju500_balance_v2';
 const BALANCE_LEGACY_KEY = 'saju500_balance';
 const MY_PROFILE_KEY = 'saju500_my_profile';
+const PROFILES_KEY = 'saju500_profiles';
+
+// ─── 1회 sessionStorage → localStorage 마이그레이션 ───
+// 2026-04-22 이전 버전 사용자 데이터 보존. 모듈 로드 시 1회 실행.
+let _migrated = false;
+function migrateSessionToLocal(): void {
+  if (_migrated) return;
+  _migrated = true;
+  if (typeof window === 'undefined') return;
+  try {
+    const keys = [REPORTS_KEY, MY_PROFILE_KEY, PROFILES_KEY];
+    for (const k of keys) {
+      const fromSession = sessionStorage.getItem(k);
+      if (fromSession && !localStorage.getItem(k)) {
+        localStorage.setItem(k, fromSession);
+      }
+      if (fromSession) sessionStorage.removeItem(k);
+    }
+  } catch {
+    // private mode 등 storage 불가 환경 — 조용히 무시
+  }
+}
+migrateSessionToLocal();
 
 // ─── 리포트 ───
 
@@ -61,6 +99,12 @@ export function getReport(id: string): LocalReport | null {
   return getReports().find(r => r.id === id) || null;
 }
 
+/**
+ * 리포트(이용기록) 삭제 — 프로필(사주정보)과 독립.
+ * ⚠ NO-CASCADE: 같은 사람의 프로필은 절대 함께 삭제하지 않는다.
+ *   (정책: project_storage_data_model.md — "사주 정보 vs 이용기록 별도 테이블. cascade delete 금지")
+ *   유저가 분석 1회를 지워도 본인 사주 자체는 마이/홈에 그대로 유지되어야 한다.
+ */
 export function deleteReport(id: string): void {
   const reports = getReports().filter(r => r.id !== id);
   localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
@@ -220,4 +264,64 @@ export function setBalance(balance: number): void {
 
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+// ─── 프로필 (리포트와 독립) ───
+
+/** 저장된 프로필 목록 조회 — 없으면 기존 리포트에서 마이그레이션 */
+export function getProfiles(): SajuProfile[] {
+  try {
+    const raw = localStorage.getItem(PROFILES_KEY);
+    if (raw) return JSON.parse(raw);
+    // 마이그레이션: 기존 리포트에서 프로필 추출 (중복 제거)
+    const reports = getReports();
+    const seen = new Map<string, SajuProfile>();
+    for (const r of reports) {
+      if (!r.input?.birthYear || !r.name) continue;
+      if (r.contentType === 'compat') continue;
+      if (r.name?.includes('\u00d7') || r.name?.includes('x')) continue;
+      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
+      if (!seen.has(key)) {
+        seen.set(key, {
+          id: r.id,
+          name: r.name,
+          input: r.input,
+          sajuData: r.sajuData,
+          relation: r.input?.relation,
+          createdAt: r.createdAt,
+        });
+      }
+    }
+    const profiles = Array.from(seen.values());
+    if (profiles.length > 0) {
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+    }
+    return profiles;
+  } catch { return []; }
+}
+
+/** 프로필 직접 저장 — 리포트 생성 없이 프로필만 저장/업데이트 */
+export function saveProfileDirect(profile: SajuProfile): void {
+  const profiles = getProfiles();
+  const key = `${profile.name}_${profile.input.birthYear}_${profile.input.birthMonth}_${profile.input.birthDay}`;
+  const idx = profiles.findIndex(p =>
+    `${p.name}_${p.input.birthYear}_${p.input.birthMonth}_${p.input.birthDay}` === key
+  );
+  if (idx >= 0) {
+    profiles[idx] = profile;
+  } else {
+    profiles.unshift(profile);
+  }
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
+
+/**
+ * 프로필(사주정보) 삭제 — 이용기록과 독립.
+ * ⚠ NO-CASCADE: 해당 인물의 과거 분석 리포트는 절대 함께 삭제하지 않는다.
+ *   (정책: project_storage_data_model.md — "사주 정보 vs 이용기록 별도 테이블. cascade delete 금지")
+ *   본인 프로필을 지우더라도 결제하여 받은 분석 결과는 보관함에 그대로 남는다.
+ */
+export function deleteProfile(profileId: string): void {
+  const profiles = getProfiles().filter(p => p.id !== profileId);
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 }

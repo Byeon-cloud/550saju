@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -8,11 +8,12 @@ import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
 
 import { ShareModal } from '@/components/share/ShareModal';
-import { getReports, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
 import { generateMonthlyFortune2026 } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { FooterCTA } from '@/components/common/FooterCTA';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { MonthlyDetailResponse, MonthlyDetail } from '@/types/report';
 import { stripMd } from '@/utils/format';
@@ -41,11 +42,14 @@ export function MonthlyPage() {
   const [, setLoadingStep] = useState(0);
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const isAnalyzingRef = useRef(false);
 
-  const reports = useMemo(() => getReports(), []);
+  const reports = useMemo(() => getProfiles(), []);
 
   async function startAnalysis() {
     if (!selected) return;
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    isAnalyzingRef.current = true;
 
     // 캐시 확인
     const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'monthly');
@@ -53,12 +57,14 @@ export function MonthlyPage() {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');
+      isAnalyzingRef.current = false;
       return;
     }
 
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '월별 운세에 1운이 필요해요' } });
+      isAnalyzingRef.current = false;
       return;
     }
     toast.show('1운이 차감됐어요', 'info');
@@ -73,12 +79,12 @@ export function MonthlyPage() {
       setPhase('result');
     } catch (e: any) {
       console.error('월별 운세 실패:', e);
-      const { addRewardBalance } = await import('@/services/storage/localStore');
-      addRewardBalance(1);
+      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
       setPhase('select');
-      toast.show('분석 실패 — 1운이 환불됐어요', 'warning');
+      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
     } finally {
       clearInterval(interval);
+      isAnalyzingRef.current = false;
     }
   }
 
@@ -102,14 +108,14 @@ export function MonthlyPage() {
         <Header title="2026 월별 운세" />
         <div className="px-5 pt-4 space-y-5">
           <FadeIn>
-            <div className="card py-5 px-5 text-center" style={{ borderTop: '3px solid #C9A96E' }}>
+            <div className="card py-5 px-5 text-center" style={{ borderTop: '3px solid #B8965A' }}>
               <p className="text-h1 text-text-primary">2026 월별 운세</p>
               <p className="text-body-sm text-text-muted mt-2">올해 12개월, 좋은 달과 조심할 달을 한눈에</p>
               <p className="text-caption text-text-hint mt-1">매월 직업 · 연애 · 재물 운세 + 럭키 아이템</p>
             </div>
           </FadeIn>
           <FadeIn delay={0.05}>
-            <ProfilePicker onSelect={r => setSelected(r)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
+            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
           </FadeIn>
           {selected && (
             <FadeIn delay={0.1}>
@@ -148,13 +154,13 @@ export function MonthlyPage() {
 
         {/* 연간 개요 */}
         <FadeIn>
-          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #C9A96E' }}>
+          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #B8965A' }}>
             <p className="text-h2 text-text-primary mb-2">{selected?.name}님의 2026년</p>
             {(result as any).keywords?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {(result as any).keywords.map((kw: string, i: number) => (
                   <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                    style={{ background: 'rgba(184,150,90,0.1)', color: '#A08B6A', border: '1px solid rgba(184,150,90,0.2)' }}>
                     {kw}
                   </span>
                 ))}
@@ -170,14 +176,14 @@ export function MonthlyPage() {
             <p className="text-h3 text-text-primary mb-3">한눈에 보는 12개월</p>
             <div className="grid grid-cols-6 gap-2">
               {result.months.map((m) => {
-                const dotColor = m.score >= 80 ? '#C9A96E' : m.score >= 60 ? '#2D8A4E' : m.score >= 40 ? '#A08B6A' : '#D32F2F';
+                const dotColor = m.score >= 80 ? '#B8965A' : m.score >= 60 ? '#2D8A4E' : m.score >= 40 ? '#A08B6A' : '#D32F2F';
                 const opacity = Math.max(0.3, m.score / 100);
                 const isBest = m.month === result.bestMonth;
                 const isWorst = m.month === result.worstMonth;
                 return (
                   <div key={m.month} className="flex flex-col items-center gap-1">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isBest ? 'ring-2 ring-offset-1' : ''} ${isWorst ? 'ring-2 ring-offset-1 ring-func-danger' : ''}`}
-                      style={{ background: dotColor, opacity, ringColor: isBest ? '#C9A96E' : undefined }}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isBest ? 'ring-2 ring-offset-1 ring-brand-gold' : ''} ${isWorst ? 'ring-2 ring-offset-1 ring-func-danger' : ''}`}
+                      style={{ background: dotColor, opacity }}>
                       <span className="text-[10px] font-black text-white">{m.score}</span>
                     </div>
                     <span className="text-[9px] text-text-hint">{m.month}월</span>
@@ -200,16 +206,16 @@ export function MonthlyPage() {
                 <AreaChart data={chartData.map(d => ({ name: `${d.month}월`, 점수: d.score }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="monthlyGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#C9A96E" stopOpacity={0.02} />
+                      <stop offset="5%" stopColor="#B8965A" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#B8965A" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
-                  <Area type="monotone" dataKey="점수" stroke="#C9A96E" strokeWidth={2}
+                  <Area type="monotone" dataKey="점수" stroke="#B8965A" strokeWidth={2}
                     fill="url(#monthlyGrad)"
-                    dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }}
-                    activeDot={{ r: 4, fill: '#C9A96E', stroke: '#fff', strokeWidth: 2 }} />
+                    dot={{ r: 2.5, fill: '#B8965A', strokeWidth: 0 }}
+                    activeDot={{ r: 4, fill: '#B8965A', stroke: '#fff', strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -230,8 +236,8 @@ export function MonthlyPage() {
             {bestMonth && (
               <div className="card-gold py-4 px-4 text-center">
                 <div className="w-8 h-8 rounded-full mx-auto mb-1.5 flex items-center justify-center"
-                  style={{ background: 'rgba(201,169,110,0.15)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#C9A96E" stroke="none">
+                  style={{ background: 'rgba(184,150,90,0.15)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8965A" stroke="none">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01z" />
                   </svg>
                 </div>
@@ -269,6 +275,9 @@ export function MonthlyPage() {
         <FadeIn delay={0.5}>
           <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>결과 공유하기</Button>
         </FadeIn>
+
+        {/* 3-part Footer CTA (diff v3 §6) */}
+        <FooterCTA pageKey="monthly" backTo="/" />
       </div>
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId="monthly" />
@@ -277,7 +286,7 @@ export function MonthlyPage() {
 }
 
 function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; expanded: boolean; onToggle: () => void }) {
-  const scoreColor = m.score >= 80 ? '#C9A96E' : m.score >= 60 ? '#2D8A4E' : m.score >= 40 ? '#2D4470' : '#D32F2F';
+  const scoreColor = m.score >= 80 ? '#B8965A' : m.score >= 60 ? '#2D8A4E' : m.score >= 40 ? '#2D4470' : '#D32F2F';
 
   return (
     <button onClick={onToggle} className="w-full text-left card transition-all">
@@ -312,7 +321,7 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
                   {[
                     { label: '직업운', score: (m as any).careerScore, color: '#1565C0' },
                     { label: '애정운', score: (m as any).loveScore, color: '#E91E63' },
-                    { label: '재물운', score: (m as any).wealthScore, color: '#C9A96E' },
+                    { label: '재물운', score: (m as any).wealthScore, color: '#B8965A' },
                   ].map(a => (
                     <div key={a.label} className="text-center">
                       <p className="text-[9px] text-text-hint mb-1">{a.label}</p>

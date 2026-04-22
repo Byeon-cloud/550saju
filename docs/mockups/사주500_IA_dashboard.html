@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>사주500 IA 대시보드 (2026-04-20)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Pretendard Variable', 'Pretendard', 'system-ui', 'sans-serif'],
+        },
+        colors: {
+          ink: '#1A1A1A',
+          paper: '#F8F5EE',
+          'gold-brown': '#A08B6A',
+          'gold-brown-dark': '#7F6B4E',
+          'gold-brown-soft': '#F0E8D9',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  body { font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 9999px; }
+  .grid-card { break-inside: avoid; }
+</style>
+</head>
+<body class="bg-paper text-ink antialiased">
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="sticky top-0 z-30 bg-ink text-paper px-5 py-3 shadow-md">
+  <div class="max-w-[960px] mx-auto flex items-center justify-between">
+    <div>
+      <div class="text-xs opacity-60">2026-04-20 · IA v2.5 응급</div>
+      <h1 class="text-lg font-bold">사주500 IA 대시보드</h1>
+    </div>
+    <div class="text-right text-[11px] opacity-80 leading-tight">
+      <div>라우트 <span class="text-base font-bold">22</span>개</div>
+      <div>TabBar <span class="font-bold">5</span>탭 · 홈 <span class="font-bold">8+1</span>섹션</div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[960px] mx-auto px-5 py-8 space-y-12">
+
+<!-- ═══════════ §0 이 문서는 뭐냐 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-3">이 문서가 뭐냐</h2>
+  <p class="text-sm text-gray-700 leading-relaxed">
+    준기가 "IA부터 가시적으로" 요구해서 만든 단일 HTML 대시보드. 기존 앱에 실제 등록된 라우트 22개, TabBar 5탭, 홈 8+1섹션을 한 화면에 깔고, <strong class="text-red-600">내가 아직 모르는 것</strong>과 <strong class="text-red-600">내가 빼먹었을 가능성</strong>을 체크리스트로 드러낸다. 이 단계에선 "깨끗한 IA"를 그리는 게 아니라 <strong>어디가 비었는지</strong>를 가시화하는 게 목적이다.
+  </p>
+  <div class="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-900">
+    <strong>솔직한 상태:</strong> 5페이지 전체 IA를 한 번에 완성할 정보는 없다. 홈만 부분 커버, 나머지 4페이지(입력·결제·결과·후기)는 PC 조사 보고 필요. §5에 정리.
+  </div>
+</section>
+
+<!-- ═══════════ §1 22 라우트 전체 맵 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-1">§1. 실제 등록 라우트 22개</h2>
+  <p class="text-sm text-gray-600 mb-4">PC 0단계 보고 기준. 색상 = 접근 경로 분류.</p>
+
+  <div class="flex flex-wrap gap-2 mb-4 text-xs">
+    <span class="chip bg-green-100 text-green-800"><span class="dot bg-green-600"></span>TabBar 5</span>
+    <span class="chip bg-amber-100 text-amber-800"><span class="dot bg-amber-600"></span>홈 섹션 9</span>
+    <span class="chip bg-blue-100 text-blue-800"><span class="dot bg-blue-600"></span>Flow 내부 4</span>
+    <span class="chip bg-gray-200 text-gray-700"><span class="dot bg-gray-500"></span>정책 2</span>
+    <span class="chip bg-red-100 text-red-800"><span class="dot bg-red-600"></span>미확인 2</span>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+    <!-- TabBar -->
+    <div class="grid-card p-3 rounded-lg bg-green-50 border border-green-200">
+      <div class="text-[11px] text-green-700 font-semibold">TabBar · 홈</div>
+      <div class="font-mono text-sm font-bold">/</div>
+      <div class="text-xs text-gray-600">HomePage</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-green-50 border border-green-200">
+      <div class="text-[11px] text-green-700 font-semibold">TabBar · 사주분석</div>
+      <div class="font-mono text-sm font-bold">/input</div>
+      <div class="text-xs text-gray-600">InputPage</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-green-50 border border-green-200">
+      <div class="text-[11px] text-green-700 font-semibold">TabBar · 사주대화</div>
+      <div class="font-mono text-sm font-bold">/chat · /chat/:id</div>
+      <div class="text-xs text-gray-600">ChatPage</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-green-50 border border-green-200">
+      <div class="text-[11px] text-green-700 font-semibold">TabBar · 보관함</div>
+      <div class="font-mono text-sm font-bold">/storage</div>
+      <div class="text-xs text-gray-600">StoragePage</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-green-50 border border-green-200">
+      <div class="text-[11px] text-green-700 font-semibold">TabBar · 내 정보</div>
+      <div class="font-mono text-sm font-bold">/my</div>
+      <div class="text-xs text-gray-600">MyPage</div>
+    </div>
+
+    <!-- 홈 섹션 도달 -->
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 2</div>
+      <div class="font-mono text-sm font-bold">/daily</div>
+      <div class="text-xs text-gray-600">DailyFortunePage (오늘 운세)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 3</div>
+      <div class="font-mono text-sm font-bold">/dream</div>
+      <div class="text-xs text-gray-600">DreamPage (꿈해몽)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 4.5 (방금 복구)</div>
+      <div class="font-mono text-sm font-bold">/daeun</div>
+      <div class="text-xs text-gray-600">DaeunPage (대운 흐름)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 4.5</div>
+      <div class="font-mono text-sm font-bold">/monthly</div>
+      <div class="text-xs text-gray-600">MonthlyPage (월운)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 4.5</div>
+      <div class="font-mono text-sm font-bold">/compat · /compat/result</div>
+      <div class="text-xs text-gray-600">CompatibilityPage (궁합)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 4.5</div>
+      <div class="font-mono text-sm font-bold">/tojung</div>
+      <div class="text-xs text-gray-600">TojungPage (토정비결)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 4.5</div>
+      <div class="font-mono text-sm font-bold">/topic · /topic/:id</div>
+      <div class="text-xs text-gray-600">TopicAnalysisPage (주제별)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[11px] text-amber-700 font-semibold">홈 섹션 5 (5000원)</div>
+      <div class="font-mono text-sm font-bold">/charge</div>
+      <div class="text-xs text-gray-600">ChargePage (10운 충전)</div>
+    </div>
+
+    <!-- Flow 내부 -->
+    <div class="grid-card p-3 rounded-lg bg-blue-50 border border-blue-200">
+      <div class="text-[11px] text-blue-700 font-semibold">Flow · 입력 직후</div>
+      <div class="font-mono text-sm font-bold">/loading</div>
+      <div class="text-xs text-gray-600">LoadingPage</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-blue-50 border border-blue-200">
+      <div class="text-[11px] text-blue-700 font-semibold">Flow · 풀이 결과</div>
+      <div class="font-mono text-sm font-bold">/result/:id</div>
+      <div class="text-xs text-gray-600">ResultPage</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-blue-50 border border-blue-200">
+      <div class="text-[11px] text-blue-700 font-semibold">Flow · 공유</div>
+      <div class="font-mono text-sm font-bold">/share/:id</div>
+      <div class="text-xs text-gray-600">SharePage</div>
+    </div>
+
+    <!-- 정책 -->
+    <div class="grid-card p-3 rounded-lg bg-gray-100 border border-gray-300">
+      <div class="text-[11px] text-gray-600 font-semibold">정책 · 미확인 경로</div>
+      <div class="font-mono text-sm font-bold">/terms</div>
+      <div class="text-xs text-gray-600">TermsPage</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-gray-100 border border-gray-300">
+      <div class="text-[11px] text-gray-600 font-semibold">정책 · 미확인 경로</div>
+      <div class="font-mono text-sm font-bold">/privacy</div>
+      <div class="text-xs text-gray-600">PrivacyPage</div>
+    </div>
+
+    <!-- 미확인 -->
+    <div class="grid-card p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-[11px] text-red-700 font-semibold">catch-all</div>
+      <div class="font-mono text-sm font-bold">/*</div>
+      <div class="text-xs text-gray-600">NotFoundPage (디자인·카피?)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ §2 TabBar 5탭 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-1">§2. TabBar 5탭</h2>
+  <p class="text-sm text-gray-600 mb-4">모든 페이지 하단에 고정. 중앙 "사주대화"는 원형 강조 버튼으로 위로 돌출.</p>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+      <thead class="bg-gold-brown-soft text-ink text-left">
+        <tr><th class="px-3 py-2">탭</th><th class="px-3 py-2">라우트</th><th class="px-3 py-2">현재 역할</th><th class="px-3 py-2">상태</th></tr>
+      </thead>
+      <tbody class="bg-white">
+        <tr class="border-t"><td class="px-3 py-2 font-semibold">홈</td><td class="px-3 py-2 font-mono text-xs">/</td><td class="px-3 py-2">모든 콘텐츠 진입점</td><td class="px-3 py-2 text-amber-700">재설계 중</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 font-semibold">사주분석</td><td class="px-3 py-2 font-mono text-xs">/input</td><td class="px-3 py-2">생년월일·시간 입력 → 풀이</td><td class="px-3 py-2 text-red-700">UI 미개편</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 font-semibold">사주대화</td><td class="px-3 py-2 font-mono text-xs">/chat</td><td class="px-3 py-2">?? (사주 기반 대화?)</td><td class="px-3 py-2 text-red-700">조사 필요</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 font-semibold">보관함</td><td class="px-3 py-2 font-mono text-xs">/storage</td><td class="px-3 py-2">?? (과거 풀이? 저장 프로필?)</td><td class="px-3 py-2 text-red-700">조사 필요</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 font-semibold">내 정보</td><td class="px-3 py-2 font-mono text-xs">/my</td><td class="px-3 py-2">?? (결제·알림·계정?)</td><td class="px-3 py-2 text-red-700">조사 필요</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ §3 홈 섹션 매핑 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-1">§3. 홈 9섹션 → 라우트 매핑</h2>
+  <p class="text-sm text-gray-600 mb-4">신규 HomePage.tsx 기준. 각 섹션이 어디로 보내는지 + 누락 여부.</p>
+
+  <div class="grid gap-2 md:grid-cols-2">
+    <div class="grid-card p-3 rounded-lg bg-white border border-gray-200">
+      <div class="text-xs text-gray-500 font-semibold">섹션 1 · 히어로</div>
+      <div class="text-sm">"내 사주, 500원에 제대로."</div>
+      <div class="text-xs mt-1">→ <span class="font-mono">/input</span> (PrimaryCTA) / Secondary = scroll-to §6</div>
+      <div class="text-xs mt-1 text-amber-600">⚠ Secondary 동작 확인 필요</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-white border border-gray-200">
+      <div class="text-xs text-gray-500 font-semibold">섹션 2 · 오늘의 운세</div>
+      <div class="text-sm">Warm 유저만 노출 · Cold는 CTA만</div>
+      <div class="text-xs mt-1">→ <span class="font-mono">/daily</span></div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-white border border-gray-200">
+      <div class="text-xs text-gray-500 font-semibold">섹션 3 · 꿈해몽</div>
+      <div class="text-sm">미리보기 카드 + CTA</div>
+      <div class="text-xs mt-1">→ <span class="font-mono">/dream</span></div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-white border border-gray-200">
+      <div class="text-xs text-gray-500 font-semibold">섹션 4 · 신살 한줄</div>
+      <div class="text-sm">전문성 증명 · 링크 없음</div>
+      <div class="text-xs mt-1 text-gray-400">(정보 전달만)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-amber-50 border border-amber-300">
+      <div class="text-xs text-amber-700 font-semibold">섹션 4.5 · 다른 풀이 (방금 추가)</div>
+      <div class="text-sm">대운·월운·궁합·토정·주제별 카드 5개</div>
+      <div class="text-xs mt-1">→ <span class="font-mono">/daeun</span>,<span class="font-mono">/monthly</span>,<span class="font-mono">/compat</span>,<span class="font-mono">/tojung</span>,<span class="font-mono">/topic</span></div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-white border border-gray-200">
+      <div class="text-xs text-gray-500 font-semibold">섹션 5 · 상품 매트릭스 3티어</div>
+      <div class="text-sm">무료 · 500원 · 5000원</div>
+      <div class="text-xs mt-1">→ 무료·500원 <span class="font-mono">/input</span> / 5000원 <span class="font-mono">/charge</span></div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-white border border-gray-200">
+      <div class="text-xs text-gray-500 font-semibold">섹션 6 · 후기 캐러셀</div>
+      <div class="text-sm">민지27·동현33·수빈29·재훈31·은정42</div>
+      <div class="text-xs mt-1 text-amber-600">⚠ 카드 클릭 시 액션? 확인 필요</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-white border border-gray-200">
+      <div class="text-xs text-gray-500 font-semibold">섹션 7 · 왜 사주500</div>
+      <div class="text-sm">한국 최저가·6대 원전·±30분 보정</div>
+      <div class="text-xs mt-1 text-gray-400">(정보 전달만)</div>
+    </div>
+    <div class="grid-card p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs text-red-700 font-semibold">섹션 8 · sticky CTA (제거됨)</div>
+      <div class="text-sm">TabBar와 중복 → Q5 결정으로 삭제</div>
+      <div class="text-xs mt-1 text-red-600">⚠ 대체 안내 카피 미구현</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ §4 Path × 섹션 매트릭스 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-1">§4. Path × 섹션 우선순위</h2>
+  <p class="text-sm text-gray-600 mb-4">4종 사용자 × 9섹션. 숫자 = 노출 우선순위 (1 = Pillar).</p>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+      <thead class="bg-ink text-paper text-left">
+        <tr>
+          <th class="px-3 py-2">섹션</th>
+          <th class="px-3 py-2 text-center">A. 신규 (Cold)</th>
+          <th class="px-3 py-2 text-center">B. 무료본 (Warm)</th>
+          <th class="px-3 py-2 text-center">C. 500원 (Hot)</th>
+          <th class="px-3 py-2 text-center">D. 프리미엄 (Loyal)</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white text-center">
+        <tr class="border-t"><td class="px-3 py-2 text-left">1. 히어로</td><td class="font-bold text-gold-brown-dark">1</td><td>3</td><td>5</td><td>6</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 text-left">2. 오늘의 운세</td><td>5 (CTA)</td><td class="font-bold text-gold-brown-dark">1</td><td class="font-bold text-gold-brown-dark">2</td><td>3</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 text-left">3. 꿈해몽</td><td>6</td><td>5</td><td>4</td><td>5</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 text-left">4. 신살</td><td class="font-bold text-gold-brown-dark">2</td><td>4</td><td>6</td><td>7</td></tr>
+        <tr class="border-t bg-amber-50"><td class="px-3 py-2 text-left">4.5. 다른 풀이</td><td>7</td><td>6</td><td class="font-bold text-gold-brown-dark">3</td><td class="font-bold text-gold-brown-dark">1</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 text-left">5. 상품 매트릭스</td><td class="font-bold text-gold-brown-dark">3</td><td class="font-bold text-gold-brown-dark">2</td><td>—</td><td>—</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 text-left">6. 후기</td><td class="font-bold text-gold-brown-dark">4</td><td>7</td><td>—</td><td>—</td></tr>
+        <tr class="border-t"><td class="px-3 py-2 text-left">7. 왜 사주500</td><td>8</td><td>8</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-xs text-gray-500 mt-2">※ Path C·D에선 상품·후기 섹션은 축소·숨김. D에선 sticky 대신 "대운 풀이" 카드가 1순위.</p>
+</section>
+
+<!-- ═══════════ §5 내가 모르는 것 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-1 text-red-600">§5. 내가 모르는 것 (PC 조사 필수)</h2>
+  <p class="text-sm text-gray-600 mb-4">이 항목들 답 없이는 다음 IA 안 나온다. PC에게 한 번에 조사 요청.</p>
+
+  <div class="space-y-2">
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-1 입력·결제·결과 flow</div>
+      <div class="text-sm text-gray-800">/input에서 사주 입력 → /loading → /result/:id. 중간에 결제 단계는 어디서 끼는지? /charge가 결제인지 단순 충전인지? 500원 = 10운 1개 차감 구조인지?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-2 /chat 첫 진입</div>
+      <div class="text-sm text-gray-800">사주 입력 안 한 신규 유저가 /chat 들어가면 어떻게 되나? 입력 유도? 일반 챗봇? 기능 자체는 어떤 모델 쓰나?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-3 /storage 보관 대상</div>
+      <div class="text-sm text-gray-800">과거 풀이 결과? 저장된 사주 프로필? 둘 다? 삭제·수정·내보내기 가능?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-4 /my 기능 목록</div>
+      <div class="text-sm text-gray-800">결제 이력? 운 잔액 상세? 알림 설정? 계정(로그인 방식)? 로그아웃/탈퇴?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-5 /compat 입력 flow</div>
+      <div class="text-sm text-gray-800">궁합은 2명 입력 필요. 이미 저장된 프로필 재활용? 즉석 입력?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-6 /daeun, /monthly, /tojung 입력·결과</div>
+      <div class="text-sm text-gray-800">각각 이미 저장된 사주 사용? 결제 필요? 결과 분량?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-7 /topic 주제 종류</div>
+      <div class="text-sm text-gray-800">topicId가 뭐뭐 있나? 연애·재물·직장? 고정 enum인지 동적인지?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-8 /terms, /privacy 접근 경로</div>
+      <div class="text-sm text-gray-800">현재 홈·/my·/input 어디서 링크가 있는지? 푸터 존재? 입력 페이지 동의 체크박스?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-9 /share/:id 생성 경로</div>
+      <div class="text-sm text-gray-800">어디에서 "공유하기" 버튼이 뜨나? /result에서? /daily에서? OG 카드 노출?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-10 /result 업셀·재방문 포인트</div>
+      <div class="text-sm text-gray-800">500원 풀이 결과 보는 중 5000원 업셀 어디서? 블러잠금 L1~L4 구조 위치?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-11 NotFoundPage 디자인</div>
+      <div class="text-sm text-gray-800">지금 디자인·카피 어떻게 생겼나? 홈으로 복귀 버튼만? (준기가 봤던 404 화면)</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+      <div class="text-xs font-bold text-red-700">Q-12 BalanceBar</div>
+      <div class="text-sm text-gray-800">App.tsx 상단에 고정된 BalanceBar는 모든 페이지에 노출? 어떤 데이터? 운 잔액 말고 뭐 더?</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ §6 내가 빼먹었을 가능성 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-1 text-red-600">§6. 내가 빼먹었을 가능성 (기획 갭)</h2>
+  <p class="text-sm text-gray-600 mb-4">이미 드러난 것 + 드러날 가능성이 높은 것. PC 조사 후 확정.</p>
+
+  <div class="space-y-2">
+    <div class="p-3 rounded-lg bg-amber-50 border border-amber-300">
+      <div class="text-xs font-bold text-amber-800">✓ 복구됨 · 섹션 4.5 대운·월운·궁합·토정·주제별 입구</div>
+      <div class="text-sm text-gray-700">방금 PC 2차 paste로 추가.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 정책 페이지 푸터 링크</div>
+      <div class="text-sm text-gray-700">홈 또는 /my 하단에 이용약관·개인정보처리방침 링크 유무 확인. 앱인토스 심사 체크리스트 필수.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 공유 CTA (/share/:id)</div>
+      <div class="text-sm text-gray-700">결과 페이지에서 공유 버튼 있는지, OG 카드 예쁜지. 바이럴 경로.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 5000원 upgrade 지점</div>
+      <div class="text-sm text-gray-700">결과 페이지 L4 블러잠금에서 5000원 업셀이 홈 섹션 5와 어떻게 연결되는지.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 알림·푸시 설정</div>
+      <div class="text-sm text-gray-700">"오늘의 운세 매일 알림" 옵션 있는지. /my 안에 있을 가능성.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 온보딩 (최초 진입)</div>
+      <div class="text-sm text-gray-700">앱 첫 실행 시 튜토리얼/인트로 있나? 아니면 바로 홈?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 프로필 다중 관리</div>
+      <div class="text-sm text-gray-700">본인 외 가족·지인 프로필 저장·조회·삭제 흐름. /storage 또는 /input 안에 있을 가능성.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 로그인·계정 연동</div>
+      <div class="text-sm text-gray-700">현재 익명? 카카오·구글 소셜 있나? 기기 간 동기화?</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 리워드·3원 적립 구조</div>
+      <div class="text-sm text-gray-700">메모리상 "블러잠금 후기·3원 리워드" 있음. UI 어디서 노출되는지 확인.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-50 border border-red-300">
+      <div class="text-xs font-bold text-red-700">? 에러 상태 (네트워크·결제 실패)</div>
+      <div class="text-sm text-gray-700">로딩 중 네트워크 끊김, 결제 실패 시 UX. 리트라이 흐름.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ §7 경쟁사 IA (필요 · 미작성) ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-1">§7. 경쟁사 IA (아직 안 그림)</h2>
+  <p class="text-sm text-gray-600 mb-4">이 섹션은 <strong class="text-red-600">placeholder</strong>. 준기 승인 후 경쟁사 앱별로 동일 포맷(라우트·TabBar·홈섹션)으로 그림.</p>
+
+  <div class="grid gap-2 md:grid-cols-2">
+    <div class="p-3 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300">
+      <div class="font-semibold">점신</div>
+      <div class="text-xs text-gray-600 mt-1">시간대 게이팅·일일 미션·박스. <br/>IA 그려야 함.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300">
+      <div class="font-semibold">포스텔러</div>
+      <div class="text-xs text-gray-600 mt-1">카드 캐러셀·AI 풀이. <br/>IA 그려야 함.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300">
+      <div class="font-semibold">만세력</div>
+      <div class="text-xs text-gray-600 mt-1">전문가용·한자 풍부. <br/>IA 그려야 함.</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300">
+      <div class="font-semibold">강호동의 수상한 친구 (또는 대체 1개)</div>
+      <div class="text-xs text-gray-600 mt-1">명사 브랜딩·엔터 결합. <br/>IA 그려야 함.</div>
+    </div>
+  </div>
+
+  <div class="mt-4 p-3 rounded-lg bg-gold-brown-soft border border-gold-brown/30 text-sm">
+    <strong>경쟁사 IA 조사 방법:</strong> 준기가 직접 앱 스토어에서 설치 → 주요 화면 스크린샷 5~10장씩 → 나한테 공유. 내가 각 앱별로 이 대시보드 포맷으로 재구성.
+  </div>
+</section>
+
+<!-- ═══════════ §8 다음 단계 ═══════════ -->
+<section>
+  <h2 class="text-2xl font-bold mb-3">§8. 다음 단계 (순서)</h2>
+  <ol class="space-y-3 text-sm">
+    <li class="p-3 rounded-lg bg-white border border-gray-200">
+      <div class="font-bold text-ink">Step 1 · 응급 핫픽스 마무리 (오늘 밤)</div>
+      <div class="text-gray-700 mt-1">PC_HOTFIX_REPLY_2.md paste → 섹션 4.5 추가 → 준기 시각 확인 스크린샷. <strong class="text-green-700">현재 진행 중.</strong></div>
+    </li>
+    <li class="p-3 rounded-lg bg-white border border-gray-200">
+      <div class="font-bold text-ink">Step 2 · PC 조사 보고 요청 (내일 오전)</div>
+      <div class="text-gray-700 mt-1">§5의 Q-1 ~ Q-12 한 번에 PC에 파일 기반 조사. 각 페이지 JSX·hook·라우트 기능 분석. 30분~1시간.</div>
+    </li>
+    <li class="p-3 rounded-lg bg-white border border-gray-200">
+      <div class="font-bold text-ink">Step 3 · 갭 확정 + IA v3 업데이트 (내일 오후)</div>
+      <div class="text-gray-700 mt-1">§5·§6의 answer를 대시보드에 반영. 확인된 것은 녹색, 미해결은 여전히 빨강.</div>
+    </li>
+    <li class="p-3 rounded-lg bg-white border border-gray-200">
+      <div class="font-bold text-ink">Step 4 · 경쟁사 IA 4종 (2일 차)</div>
+      <div class="text-gray-700 mt-1">준기가 스크린샷 공급 → 내가 동일 포맷으로 IA 그림. 갭 비교.</div>
+    </li>
+    <li class="p-3 rounded-lg bg-white border border-gray-200">
+      <div class="font-bold text-ink">Step 5 · 5페이지 HTML 모크업 (3일 차~)</div>
+      <div class="text-gray-700 mt-1">홈·입력·결제·결과·후기 각 페이지 단일 HTML 모크업 → 준기 폰 확인 → PC paste → 이식.</div>
+    </li>
+  </ol>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="pt-8 pb-12 text-center text-xs text-gray-500">
+  사주500 IA 대시보드 v2.5 · 2026-04-20 · Cowork 작성
+  <br/>이 파일은 PC 작업과 별개. 기획 단독 산출물.
+</footer>
+
+</main>
+</body>
+</html>

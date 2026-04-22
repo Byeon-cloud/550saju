@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { getReports, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, type SajuProfile } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 
 interface ProfilePickerProps {
-  /** 선택 완료 시 콜백 — 선택된 리포트 전달 */
-  onSelect: (report: LocalReport) => void;
+  /** 선택 완료 시 콜백 — 선택된 프로필 전달 */
+  onSelect: (profile: SajuProfile) => void;
   /** "새 사주 입력" 클릭 시 */
   onNew: () => void;
   /** 타이틀 */
@@ -14,22 +14,13 @@ interface ProfilePickerProps {
 
 /**
  * 프로필 선택 컴포넌트
- * 기존에 분석한 사주팔자가 있으면 목록에서 선택
+ * 저장된 프로필이 있으면 목록에서 선택
  * 없으면 새로 입력
  */
 export function ProfilePicker({ onSelect, onNew, title = '누구의 사주를 볼까요?' }: ProfilePickerProps) {
-  const reports = useMemo(() => {
-    // 중복 이름 제거 — 같은 이름이면 최신 것만
-    const all = getReports();
-    const seen = new Map<string, LocalReport>();
-    for (const r of all) {
-      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
-      if (!seen.has(key)) seen.set(key, r);
-    }
-    return Array.from(seen.values());
-  }, []);
+  const profiles = useMemo(() => getProfiles(), []);
 
-  if (reports.length === 0) {
+  if (profiles.length === 0) {
     // 분석한 사주가 없으면 바로 새 입력으로
     return null; // 부모에서 처리
   }
@@ -41,31 +32,31 @@ export function ProfilePicker({ onSelect, onNew, title = '누구의 사주를 �
 
       {/* 기존 프로필 목록 */}
       <div className="space-y-2">
-        {reports.map((r) => {
-          const ilgan = r.sajuData.pillars[2]?.천간 || '';
+        {profiles.map((p) => {
+          const ilgan = p.sajuData.pillars[2]?.천간 || '';
           const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
-          const relation = r.input.relation || '본인';
+          const relation = p.relation || p.input.relation || '본인';
           return (
             <motion.button
-              key={r.id}
+              key={p.id}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onSelect(r)}
+              onClick={() => onSelect(p)}
               className="card w-full text-left py-4 px-4"
             >
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: relation === '본인' ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
-                  <span className="text-h3 font-bold" style={{ color: relation === '본인' ? '#1B2A4A' : '#C9A96E' }}>
-                    {r.name.charAt(0)}
+                  style={{ background: relation === '본인' ? 'rgba(27,42,74,0.08)' : 'rgba(184,150,90,0.08)' }}>
+                  <span className="text-h3 font-bold" style={{ color: relation === '본인' ? '#1B2A4A' : '#B8965A' }}>
+                    {p.name.charAt(0)}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-h3 text-text-primary">{r.name}</p>
+                    <p className="text-h3 text-text-primary">{p.name}</p>
                     <span className="text-[10px] text-text-hint">{relation}</span>
                   </div>
                   <p className="text-caption text-text-muted">
-                    {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')}
+                    {p.input.birthYear}.{String(p.input.birthMonth).padStart(2,'0')}.{String(p.input.birthDay).padStart(2,'0')}
                     {ilgan ? ` · ${ilgan}(${oheng}) 일간` : ''}
                   </p>
                 </div>

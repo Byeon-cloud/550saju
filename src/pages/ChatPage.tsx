@@ -3,12 +3,12 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
-import { getMyProfile, getReports } from '@/services/storage/localStore';
+import { getMyProfile, getProfiles } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
 import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
-import { getChatCredits, useChatCredit, addChatCredits } from '@/services/storage/chatCredit';
+import { getChatCredits, useChatCredit, addChatCredits, convertChatCreditsToUn, CREDITS_PER_UN } from '@/services/storage/chatCredit';
 import { spendBalance, getBalance } from '@/services/storage/localStore';
 import {
   getChatRooms, getChatRoom, createChatRoom, addChatMessage, completeChatRoom, updateRoomName,
@@ -78,7 +78,7 @@ function getContentRecommendation(allUserTexts: string, msgCount: number): Conte
     return { type: 'topic', path: '/topic/love', title: '연애운 심층분석을 받아보시겠어요?', desc: '이상형, 인연 시기, 연애 패턴까지 깊이 있게', icon: '愛', color: '#E91E63' };
 
   if (/돈|재물|투자|재테크|사업/.test(allUserTexts))
-    return { type: 'topic', path: '/topic/wealth', title: '재물운 심층분석이 도움될 거예요', desc: '돈 흐름, 투자 적기, 새는 돈 패턴까지', icon: '財', color: '#C9A96E' };
+    return { type: 'topic', path: '/topic/wealth', title: '재물운 심층분석이 도움될 거예요', desc: '돈 흐름, 투자 적기, 새는 돈 패턴까지', icon: '財', color: '#B8965A' };
 
   if (/건강|피곤|아프/.test(allUserTexts))
     return { type: 'topic', path: '/topic/health', title: '건강운 심층분석을 추천합니다', desc: '오행별 취약 장기, 주의 시기, 체질 분석', icon: '健', color: '#2E7D32' };
@@ -87,7 +87,7 @@ function getContentRecommendation(allUserTexts: string, msgCount: number): Conte
     return { type: 'topic', path: '/topic/marriage', title: '결혼운 심층분석 보시겠어요?', desc: '결혼 적기, 배우자 성향, 결혼 후 생활까지', icon: '婚', color: '#E91E63' };
 
   if (/올해|내년|2026|대운/.test(allUserTexts))
-    return { type: 'tojung', path: '/tojung', title: '토정비결로 올해를 더 자세히 보시겠어요?', desc: '2026년 월별 운세 + 전통 해석', icon: '卜', color: '#C9A96E' };
+    return { type: 'tojung', path: '/tojung', title: '토정비결로 올해를 더 자세히 보시겠어요?', desc: '2026년 월별 운세 + 전통 해석', icon: '卜', color: '#B8965A' };
 
   if (/대운|10년|흐름|시기/.test(allUserTexts))
     return { type: 'daeun', path: '/daeun', title: '대운 해설을 받아보시는 건 어떨까요?', desc: '10년 단위 운의 흐름, 지금이 어떤 시기인지', icon: '運', color: '#1B2A4A' };
@@ -104,12 +104,12 @@ function TaegukAvatar({ size = 32 }: { size?: number }) {
   const s = size * 0.5;
   return (
     <div className="rounded-full flex items-center justify-center flex-shrink-0 mt-1"
-      style={{ width: size, height: size, background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.12)' }}>
+      style={{ width: size, height: size, background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.12)' }}>
       <svg width={s} height={s} viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="11" stroke="#C9A96E" strokeWidth="1" fill="none" opacity="0.4" />
-        <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#C9A96E" fillOpacity="0.5" />
-        <circle cx="12" cy="7" r="2" fill="#C9A96E" />
-        <circle cx="12" cy="17" r="2" fill="#C9A96E" fillOpacity="0.3" stroke="#C9A96E" strokeWidth="0.5" />
+        <circle cx="12" cy="12" r="11" stroke="#B8965A" strokeWidth="1" fill="none" opacity="0.4" />
+        <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#B8965A" fillOpacity="0.5" />
+        <circle cx="12" cy="7" r="2" fill="#B8965A" />
+        <circle cx="12" cy="17" r="2" fill="#B8965A" fillOpacity="0.3" stroke="#B8965A" strokeWidth="0.5" />
       </svg>
     </div>
   );
@@ -140,19 +140,8 @@ function ChatRoomList() {
   const timeCtx = useMemo(() => getTimeGreeting(), []);
   const suggestedTopics = useMemo(() => getSuggestedTopics(hasProfile), [hasProfile]);
 
-  // 프로필 목록 (중복 제거)
-  const profiles = useMemo(() => {
-    const all = getReports();
-    const seen = new Map<string, any>();
-    for (const r of all) {
-      if (r.contentType === 'compat' || r.input?.relation === 'compat') continue;
-      if (r.name?.includes('×') || r.name?.includes('x')) continue;
-      if (!r.input?.birthYear || !r.sajuData?.pillars?.length) continue;
-      const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
-      if (!seen.has(key)) seen.set(key, r);
-    }
-    return Array.from(seen.values());
-  }, []);
+  // 프로필 목록 (독립 저장소)
+  const profiles = useMemo(() => getProfiles(), []);
 
   useEffect(() => { setRooms(getChatRooms()); }, []);
 
@@ -169,7 +158,7 @@ function ChatRoomList() {
       {/* 분위기 헤더 */}
       <div className="px-5 pt-5 pb-6 relative overflow-hidden" style={{ background: `linear-gradient(180deg, ${timeCtx.headerBg} 0%, ${timeCtx.headerBg}E0 100%)` }}>
         <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-[0.04]"
-          style={{ background: 'radial-gradient(circle, #C9A96E, transparent 70%)' }} />
+          style={{ background: 'radial-gradient(circle, #B8965A, transparent 70%)' }} />
         <div className="flex items-center gap-3 mb-3">
           <TaegukAvatar size={40} />
           <div>
@@ -189,7 +178,7 @@ function ChatRoomList() {
         <FadeIn delay={0.03}>
           <motion.button whileTap={{ scale: 0.98 }} onClick={() => profiles.length > 1 ? setShowProfilePicker(true) : startNewChat()}
             className="w-full rounded-2xl py-5 px-5 text-left"
-            style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)', boxShadow: '0 4px 16px rgba(201,169,110,0.3)' }}>
+            style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)', boxShadow: '0 4px 16px rgba(184,150,90,0.3)' }}>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ background: 'rgba(255,255,255,0.2)' }}>
@@ -231,8 +220,8 @@ function ChatRoomList() {
                         className={`w-full card text-left py-4 px-4 ${isMe ? 'border-l-4 border-l-brand-gold' : ''}`}>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
-                            <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#C9A96E' }}>{p.name?.charAt(0)}</span>
+                            style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(184,150,90,0.08)' }}>
+                            <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#B8965A' }}>{p.name?.charAt(0)}</span>
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -309,8 +298,8 @@ function ChatRoomList() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                      style={{ background: totalRemaining > 0 ? 'rgba(201,169,110,0.1)' : 'rgba(211,47,47,0.08)' }}>
-                      <span className="text-[14px] font-black" style={{ color: totalRemaining > 0 ? '#C9A96E' : '#D32F2F' }}>
+                      style={{ background: totalRemaining > 0 ? 'rgba(184,150,90,0.1)' : 'rgba(211,47,47,0.08)' }}>
+                      <span className="text-[14px] font-black" style={{ color: totalRemaining > 0 ? '#B8965A' : '#D32F2F' }}>
                         {totalRemaining}
                       </span>
                     </div>
@@ -325,7 +314,7 @@ function ChatRoomList() {
                   </div>
                   <button onClick={() => setShowChargeConfirm(true)}
                     className="px-4 py-2 rounded-xl text-[11px] font-bold"
-                    style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)', color: '#FFF' }}>
+                    style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)', color: '#FFF' }}>
                     충전하기
                   </button>
                 </div>
@@ -352,14 +341,14 @@ function ChatRoomList() {
             >
               <div className="px-5 pt-6 pb-2 text-center">
                 <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.12), rgba(201,169,110,0.04))' }}>
+                  style={{ background: 'linear-gradient(135deg, rgba(184,150,90,0.12), rgba(184,150,90,0.04))' }}>
                   <span className="text-[24px] font-black text-brand-gold">運</span>
                 </div>
                 <p className="text-[16px] font-bold text-text-primary">대화권 충전</p>
                 <p className="text-[12px] text-text-muted mt-1">1운으로 대화 3회를 추가해요</p>
               </div>
               <div className="px-5 py-3">
-                <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(201,169,110,0.05)' }}>
+                <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(184,150,90,0.05)' }}>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-text-secondary">현재 잔액</span>
                     <span className="font-bold text-brand-gold">{getBalance()}운</span>
@@ -389,7 +378,7 @@ function ChatRoomList() {
                   }
                 }}
                   className="flex-1 py-3 rounded-xl text-[12px] font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>충전하기</button>
+                  style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>충전하기</button>
               </div>
             </motion.div>
           </motion.div>
@@ -411,6 +400,14 @@ function ChatView({ roomId }: { roomId: string }) {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showBuyCredits, setShowBuyCredits] = useState(false);
+  /**
+   * P2-4 · /chat 요금 정책
+   * quotaExceeded = true → 오늘 무료 한도를 다 쓴 뒤 모달이 열린 경우.
+   *   (무료 패스 사용 경험 있음 + 크레딧 0 + 다음 발화 시도)
+   * false → 충전 아이콘을 유저가 자발적으로 탭한 경우 등.
+   * 근거: 인수인계 §7.P2-4 · docs/prd/P2_Path_E_티켓_트래커.md P2-4
+   */
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [showWrapUp, setShowWrapUp] = useState(false);
   const [roomNameSet, setRoomNameSet] = useState(false);
@@ -490,7 +487,12 @@ function ChatView({ roomId }: { roomId: string }) {
       useFreePass('chat');
     } else {
       if (getChatCredits() > 0) { useChatCredit(); }
-      else { setShowBuyCredits(true); return; }
+      else {
+        // P2-4 · 무료 1일 1회 한도 초과. userMsgCount > 0 이면 이미 오늘 무료 패스를 사용한 맥락.
+        setQuotaExceeded(userMsgCount > 0);
+        setShowBuyCredits(true);
+        return;
+      }
     }
 
     if (!roomNameSet) {
@@ -569,7 +571,7 @@ function ChatView({ roomId }: { roomId: string }) {
             const credits = getChatCredits();
             const total = (hasFree ? 1 : 0) + credits;
             return (
-              <button onClick={() => setShowBuyCredits(true)}
+              <button onClick={() => { setQuotaExceeded(false); setShowBuyCredits(true); }}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span className="text-[10px] font-bold" style={{ color: total > 0 ? '#E8D5A8' : '#FF6B6B' }}>
@@ -593,7 +595,7 @@ function ChatView({ roomId }: { roomId: string }) {
               <div className={`max-w-[80%] ${msg.role === 'user' ? '' : 'flex-1'}`}>
                 <div className="rounded-2xl px-4 py-3 text-[14px] leading-[1.7]"
                   style={msg.role === 'user'
-                    ? { background: '#C9A96E', color: '#FFFFFF', borderBottomRightRadius: 4 }
+                    ? { background: '#B8965A', color: '#FFFFFF', borderBottomRightRadius: 4 }
                     : { background: '#FFFFFF', color: '#1B2A4A', borderBottomLeftRadius: 4, border: '1px solid #E8E0D4', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
                   <p className="whitespace-pre-line">{stripMd(msg.content)}</p>
                 </div>
@@ -621,7 +623,7 @@ function ChatView({ roomId }: { roomId: string }) {
                         </button>
                         <button onClick={wrapUp}
                           className="flex-1 py-2 rounded-xl text-[11px] font-bold text-white"
-                          style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                          style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
                           상담 마무리하기
                         </button>
                       </div>
@@ -632,14 +634,17 @@ function ChatView({ roomId }: { roomId: string }) {
             </motion.div>
           ))}
 
-          {/* 로딩 */}
+          {/* 로딩 — 목업 v1: "사주를 살피는 중" (AI 클리셰 "분석 중" 금지) */}
           {isLoading && (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start gap-2">
               <TaegukAvatar />
-              <div className="rounded-2xl px-4 py-3 flex items-center gap-2"
+              <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5"
                 style={{ background: '#FFFFFF', border: '1px solid #E8E0D4' }}>
+                <span className="text-[11px] font-medium" style={{ color: '#8B7A5E', fontFamily: "'Noto Serif KR', serif" }}>
+                  사주를 살피는 중…
+                </span>
                 {['命', '理', '학'].map((c, i) => (
-                  <motion.span key={i} className="text-[13px] font-bold" style={{ color: '#C9A96E' }}
+                  <motion.span key={i} className="text-[13px] font-bold" style={{ color: '#B8965A' }}
                     animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.3 }}>{c}</motion.span>
                 ))}
               </div>
@@ -652,7 +657,7 @@ function ChatView({ roomId }: { roomId: string }) {
           <FadeIn delay={0.3}>
             <button onClick={() => navigate(contentRec.path)}
               className="w-full rounded-2xl p-4 text-left flex items-center gap-3"
-              style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.06), rgba(201,169,110,0.02))', border: '1px solid rgba(201,169,110,0.18)' }}>
+              style={{ background: 'linear-gradient(135deg, rgba(184,150,90,0.06), rgba(184,150,90,0.02))', border: '1px solid rgba(184,150,90,0.18)' }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: `${contentRec.color}12` }}>
                 <span className="text-[15px] font-black" style={{ color: contentRec.color }}>{contentRec.icon}</span>
@@ -661,7 +666,7 @@ function ChatView({ roomId }: { roomId: string }) {
                 <p className="text-[12px] font-bold text-text-primary">{contentRec.title}</p>
                 <p className="text-[10px] text-text-muted mt-0.5">{contentRec.desc} · 1운</p>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
             </button>
           </FadeIn>
         )}
@@ -683,7 +688,7 @@ function ChatView({ roomId }: { roomId: string }) {
               <p className="text-[11px] text-text-hint">이 상담은 마무리됐어요</p>
               <button onClick={() => { const room = createChatRoom(userName || '새 대화'); navigate(`/chat/${room.id}`, { replace: true }); }}
                 className="px-6 py-2.5 rounded-xl text-[12px] font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>새 대화 시작하기</button>
+                style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>새 대화 시작하기</button>
             </div>
           </FadeIn>
         )}
@@ -698,10 +703,16 @@ function ChatView({ roomId }: { roomId: string }) {
             exit={{ opacity: 0, y: 20 }}
             className="flex-shrink-0 px-4 pb-2"
           >
-            <div className="rounded-2xl p-4" style={{ background: '#FFFCF5', border: '1px solid rgba(201,169,110,0.2)' }}>
-              <p className="text-[14px] font-bold text-text-primary">대화권 충전</p>
-              <p className="text-[12px] text-text-muted mt-1">1운으로 대화 3회를 추가할 수 있어요</p>
-              <div className="mt-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(201,169,110,0.06)' }}>
+            <div className="rounded-2xl p-4" style={{ background: '#FFFCF5', border: '1px solid rgba(184,150,90,0.25)' }}>
+              <p className="text-[14px] font-bold text-text-primary">
+                {quotaExceeded ? '오늘 무료 한도를 다 썼어요' : '대화권 충전'}
+              </p>
+              <p className="text-[12px] text-text-muted mt-1">
+                {quotaExceeded
+                  ? '1운으로 대화 3회를 이어갈 수 있어요. 아니면 내일 다시 만나요.'
+                  : '1운으로 대화 3회를 추가할 수 있어요'}
+              </p>
+              <div className="mt-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(184,150,90,0.06)' }}>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-text-secondary">현재 잔액</span>
                   <span className="text-[11px] font-bold text-brand-gold">{getBalance()}운</span>
@@ -717,12 +728,61 @@ function ChatView({ roomId }: { roomId: string }) {
               </div>
               <div className="flex gap-2 mt-3">
                 <button onClick={() => {
-                  if (spendBalance(1)) { addChatCredits(3); toast.show('대화권 3회가 추가됐어요!', 'success'); setShowBuyCredits(false); }
-                  else { toast.show('잔액이 부족해요', 'warning'); navigate('/charge', { state: { message: '사주대화에 1운이 필요해요' } }); }
+                  // TODO(E13): Phase 2 — spendBalance + addChatCredits 를 Cloud Function 트랜잭션으로 묶기
+                  if (spendBalance(1)) {
+                    addChatCredits(3);
+                    toast.show('대화권 3회가 추가됐어요!', 'success');
+                    setShowBuyCredits(false);
+                    setQuotaExceeded(false);
+                  } else {
+                    toast.show('잔액이 부족해요', 'warning');
+                    setShowBuyCredits(false);
+                    navigate('/charge', { state: { message: '사주대화에 1운이 필요해요' } });
+                  }
                 }} className="flex-1 py-3 rounded-xl text-[12px] font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>1운으로 충전하기</button>
-                <button onClick={() => setShowBuyCredits(false)} className="px-4 py-3 rounded-xl text-[12px] text-text-muted bg-bg-surface border border-border-light">취소</button>
+                  style={{ background: '#B8965A' }}>1운으로 충전하기</button>
+                <button onClick={() => { setShowBuyCredits(false); setQuotaExceeded(false); }}
+                  className="px-4 py-3 rounded-xl text-[12px] text-text-muted bg-bg-surface border border-border-light">
+                  {quotaExceeded ? '내일 다시 올게요' : '취소'}
+                </button>
               </div>
+              {/*
+                대화권 → 운 역변환 (2026-04-22 신규 · 양방향 변환)
+                - 3대화권 단위로만 환원 (잔여 대화권 유지)
+                - 환원된 운은 reward bucket (환불 불가, 어뷰징 방지)
+              */}
+              {(() => {
+                const credits = getChatCredits();
+                const blocks = Math.floor(credits / CREDITS_PER_UN);
+                if (blocks <= 0) return null;
+                return (
+                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(184,150,90,0.18)' }}>
+                    <button
+                      onClick={() => {
+                        const result = convertChatCreditsToUn();
+                        if (result) {
+                          toast.show(`대화권 ${result.credits}회를 ${result.un}운으로 바꿨어요`, 'success');
+                          setShowBuyCredits(false);
+                          setQuotaExceeded(false);
+                        } else {
+                          toast.show('환원할 대화권이 부족해요', 'warning');
+                        }
+                      }}
+                      className="w-full py-2.5 rounded-xl text-[11.5px] font-medium transition-colors"
+                      style={{
+                        color: '#7F6B4E',
+                        background: 'rgba(184,150,90,0.06)',
+                        border: '1px solid rgba(184,150,90,0.22)',
+                      }}
+                    >
+                      대화권 {blocks * CREDITS_PER_UN}회를 {blocks}운으로 바꾸기
+                    </button>
+                    <p className="mt-1.5 text-[10px] leading-[1.4] text-center" style={{ color: '#9C9387' }}>
+                      환원된 운은 결제 환불 대상이 아니에요
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           </motion.div>
         )}
@@ -741,7 +801,7 @@ function ChatView({ roomId }: { roomId: string }) {
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => sendMessage(inputText)}
               disabled={!inputText.trim() || isLoading}
               className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: inputText.trim() ? '#C9A96E' : '#E8E0D4', opacity: inputText.trim() ? 1 : 0.5 }}>
+              style={{ background: inputText.trim() ? '#B8965A' : '#E8E0D4', opacity: inputText.trim() ? 1 : 0.5 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M22 2L11 13" stroke={inputText.trim() ? '#FFF' : '#A8B1C1'} strokeWidth="2" strokeLinecap="round" />
                 <path d="M22 2L15 22l-4-9-9-4 20-7z" stroke={inputText.trim() ? '#FFF' : '#A8B1C1'} strokeWidth="2" strokeLinejoin="round" fill="none" />

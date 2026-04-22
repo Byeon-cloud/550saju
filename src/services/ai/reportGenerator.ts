@@ -1,6 +1,6 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/services/auth/firebase';
+import { httpsCallable } from 'firebase/functions';
 import { ensureAuth } from '@/services/auth/authService';
+import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import type { SajuData, Situation } from '@/types/saju';
 import type {
   AIReportResponse,
@@ -10,15 +10,17 @@ import type {
   TojungResponse,
 } from '@/types/report';
 
-const functions = getFunctions(app, 'us-central1');
+// Functions 엔드포인트(emulator vs prod) 는 functionsClient.ts 에서 ping 후 결정.
+// emulator 죽어 있으면 자동으로 prod fallback (2026-04-22 hardening).
 
 /** httpsCallable with extended timeout for AI calls */
 function aiCallable(name: string) {
   return httpsCallable(functions, name, { timeout: 300000 }); // 5분
 }
 
-/** 모든 Cloud Function 호출 전 인증 보장 */
+/** 모든 Cloud Function 호출 전 인증 + emulator/prod 타겟 보장 */
 async function callWithAuth(name: string, data: any): Promise<any> {
+  await ensureFunctionsTarget(); // emulator ping → prod fallback
   await ensureAuth(); // 인증 완료까지 대기
   const fn = aiCallable(name);
   const result = await fn(data);
@@ -26,7 +28,10 @@ async function callWithAuth(name: string, data: any): Promise<any> {
 }
 
 /**
- * AI 사주 리포트 생성 — Firebase Function → Claude Sonnet 4.6
+ * AI 사주 리포트 생성 — Firebase Function → Claude Opus 4.6 (기본)
+ *
+ * 모델 정책: Opus 4.6 메인 / Sonnet 4.6 검증 / Haiku 4.5 보조.
+ * 서버측 SAJU_REPORT_MODEL 환경변수로 A/B 테스트 가능.
  */
 export async function generateReport(
   sajuData: SajuData,
@@ -38,16 +43,63 @@ export async function generateReport(
 }
 
 /**
- * 오늘의 운세 — Firebase Function → Gemini 2.5 Flash
+ * 오늘의 운세 — Firebase Function → Claude Sonnet 4.6 (v3 스키마).
+ *
+ * Phase C 에서 DailyFortunePage 가 v4 입력(name, sajuData, date, todayGanzi 등)으로 전환.
+ * 당분간 레거시 위치 인자(answers[], timeSlot, sajuSummary, userConcern) 호출도 컴파일만 통과시킴.
+ * 서버는 v3 필수 필드가 없으면 invalid-argument 를 던지므로 런타임은 Phase C 후 정상.
  */
 export async function generateDailyFortune(
-  answers: number[],
-  timeSlot: string,
-  sajuSummary?: { ilgan: string; oheng: string; name: string },
-  userConcern?: string,
+  paramsOrAnswers?: any,
+  _timeSlot?: string,
+  _sajuSummary?: any,
+  _userConcern?: string,
 ): Promise<any> {
-  const result = await callWithAuth('generateDailyFortune', { answers, timeSlot, sajuSummary, userConcern });
+  // 레거시 positional 호출 (Array 로 들어옴) — 객체로 재포장 (서버에서 v3 필수 필드 없으면 400)
+  const payload = Array.isArray(paramsOrAnswers)
+    ? { answers: paramsOrAnswers, timeSlot: _timeSlot, sajuSummary: _sajuSummary, userConcern: _userConcern }
+    : paramsOrAnswers;
+  const result = await callWithAuth('generateDailyFortune', payload);
   return result.data;
+}
+
+/**
+ * 꿈해몽 무료 (v3 신규) — Firebase Function → Claude Sonnet 4.6.
+ */
+export async function generateDreamFree(args: {
+  saju?: any;
+  dreamContent: string;
+  category: string;
+  userConcern?: string;
+}): Promise<any> {
+  const result = await callWithAuth('generateDreamFree', args);
+  return result.data;
+}
+
+/**
+ * 꿈해몽 심층 (v3 신규, 유료 1운) — Firebase Function → Claude Sonnet 4.6 + 2차 리뷰.
+ */
+export async function generateDreamDeepV3(args: {
+  saju: any;
+  dreamContent: string;
+  category: string;
+  freeResultSummary: { title: string; verdict: string; symbols: string[] };
+}): Promise<{ reportId: string; content: any }> {
+  const result = await callWithAuth('generateDreamDeep', args);
+  return result.data as { reportId: string; content: any };
+}
+
+/**
+ * 주간 흐름 (v3 신규, 유료 1운) — Firebase Function → Claude Sonnet 4.6 + 2차 리뷰.
+ */
+export async function generateWeeklyFortune(args: {
+  name: string;
+  sajuData: SajuData;
+  monday: string;
+  weekdays: Array<{ date: string; weekday: string; ganzi: string }>;
+}): Promise<{ reportId: string; content: any }> {
+  const result = await callWithAuth('generateWeeklyFortune', args);
+  return result.data as { reportId: string; content: any };
 }
 
 /**
@@ -139,9 +191,10 @@ export async function generateTopicAnalysis(
   topicId: string,
   sajuData: SajuData,
   baseScore?: number,
-  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number },
+  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number; birthHour?: number },
+  extraInfo?: Record<string, any>,
 ): Promise<{ reportId: string; content: any }> {
-  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData, baseScore, partnerInfo });
+  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData, baseScore, partnerInfo, extraInfo });
   return result.data as { reportId: string; content: any };
 }
 

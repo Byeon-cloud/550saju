@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>사주500 플로우차트 + 유저 플로우 (v2 · 2026-04-20)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+  // Mermaid 즉시 초기화 — DOM 파싱 전에 선언
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    securityLevel: 'loose',
+    flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: false },
+    themeVariables: {
+      fontFamily: 'Pretendard Variable, Pretendard, system-ui, sans-serif',
+      fontSize: '14px',
+      primaryColor: '#F8F5EE',
+      primaryBorderColor: '#A08B6A',
+      primaryTextColor: '#1A1A1A',
+      lineColor: '#7F6B4E',
+      secondaryColor: '#F0E8D9'
+    }
+  });
+</script>
+<style>
+  body {
+    font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+    background: #F8F5EE;
+    color: #1A1A1A;
+    margin: 0; padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 1600px; margin: 0 auto; }
+  header { margin-bottom: 24px; }
+  h1 { font-size: 24px; font-weight: 800; margin: 0 0 6px; }
+  .sub { font-size: 13px; color: #6b6b6b; }
+  h2 {
+    font-size: 18px; font-weight: 800; margin: 36px 0 4px;
+    padding-top: 12px; border-top: 1px solid #e5dfd0;
+  }
+  h2 .num { color: #A08B6A; margin-right: 8px; }
+  .desc { font-size: 13px; color: #6b6b6b; margin: 0 0 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px; font-size: 12px; }
+  .legend .item {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: 999px; background: #fff;
+    border: 1px solid #e5e5e5;
+  }
+  .legend .dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  .chart-card {
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 12px;
+    padding: 0; overflow: hidden; position: relative;
+  }
+  .chart-body {
+    width: 100%; height: 85vh; min-height: 700px; overflow: hidden;
+    background: linear-gradient(#fafaf7, #fff);
+    position: relative;
+  }
+  .chart-body svg { width: 100%; height: 100%; cursor: grab; display: block; }
+  .chart-body svg:active { cursor: grabbing; }
+  .chart-toolbar {
+    position: absolute; top: 10px; right: 10px; z-index: 20;
+    display: flex; gap: 4px;
+    background: rgba(255,255,255,0.95); padding: 5px;
+    border-radius: 8px; border: 1px solid #d5d5d5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .chart-toolbar button {
+    width: 34px; height: 34px; border: none; background: #1A1A1A;
+    color: #fff; border-radius: 5px; cursor: pointer; font-weight: 700;
+    font-size: 16px;
+  }
+  .chart-toolbar button:hover { background: #7F6B4E; }
+  .chart-toolbar button.fit { width: auto; padding: 0 10px; font-size: 12px; }
+  .chart-hint {
+    position: absolute; bottom: 10px; left: 10px; z-index: 20;
+    font-size: 12px; color: #555; background: rgba(255,255,255,0.95);
+    padding: 5px 10px; border-radius: 6px; border: 1px solid #d5d5d5;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  pre.mermaid {
+    margin: 0; background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+  }
+  .chart-error {
+    padding: 20px; color: #c00; background: #fff0f0; border: 1px solid #fcc;
+    border-radius: 8px; margin: 10px; font-family: monospace; font-size: 12px;
+    white-space: pre-wrap;
+  }
+
+  .path-card { margin-top: 14px; }
+  .path-card .label {
+    display: inline-block; padding: 5px 12px; border-radius: 6px;
+    font-size: 13px; font-weight: 700; margin-bottom: 8px;
+  }
+  .lbl-A { background: #e0f2e9; color: #1c6b3a; }
+  .lbl-B { background: #fff3d6; color: #806012; }
+  .lbl-C { background: #ffe1cf; color: #8a3b13; }
+  .lbl-D { background: #e1d8ff; color: #4a2f9f; }
+  .lbl-E { background: #ffe1e1; color: #8a1f1f; }
+
+  .meta {
+    margin-top: 8px; padding: 12px 14px; background: #fff8ec;
+    border: 1px solid #e7d9a8; border-radius: 8px;
+    font-size: 12.5px; line-height: 1.75;
+  }
+  .meta strong { color: #7F6B4E; }
+  .ko-warn { color: #c00; font-weight: 600; }
+
+  .phase-table {
+    width: 100%; border-collapse: collapse; font-size: 12.5px;
+    margin-top: 8px;
+  }
+  .phase-table th, .phase-table td {
+    border: 1px solid #e5e5e5; padding: 6px 10px; text-align: left;
+    vertical-align: top;
+  }
+  .phase-table th { background: #F0E8D9; font-weight: 700; }
+  .phase-table td.step { width: 60px; font-weight: 700; color: #A08B6A; text-align: center; }
+  .phase-table td.risk { background: #ffecec; color: #8a1f1f; }
+
+  /* pre.mermaid duplicate removed — see above */
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header>
+  <h1>사주500 플로우차트 + 유저 플로우 (v2)</h1>
+  <div class="sub">2026-04-20 · 전체 사이트맵 + Path A/B/C/D/E 세밀 유저 플로우 · 각 차트 휠 줌·드래그 가능</div>
+</header>
+
+<!-- ═══════════ §1 전체 플로우차트 ═══════════ -->
+<h2><span class="num">§1.</span>전체 플로우차트</h2>
+<p class="desc">22개 라우트 + TabBar + 추정 연결. <strong>마우스 휠로 확대·드래그로 이동</strong>. 우측 상단 버튼으로 리셋.</p>
+
+<div class="legend">
+  <span class="item"><span class="dot" style="background:#A08B6A"></span>TabBar 5탭</span>
+  <span class="item"><span class="dot" style="background:#F0E8D9; border:1px solid #A08B6A"></span>홈 진입</span>
+  <span class="item"><span class="dot" style="background:#d6e7fb"></span>Flow 내부</span>
+  <span class="item"><span class="dot" style="background:#e5e5e5"></span>정책/에러</span>
+</div>
+
+<div class="chart-card">
+  <div class="chart-toolbar">
+    <button data-target="chart1" data-act="in">+</button>
+    <button data-target="chart1" data-act="out">−</button>
+    <button data-target="chart1" data-act="reset">⟲</button>
+  </div>
+  <div class="chart-hint">휠: 줌 · 드래그: 이동</div>
+  <div class="chart-body" id="chart1">
+<pre class="mermaid">
+flowchart TB
+
+subgraph TB_ALL["TabBar (모든 페이지 하단 고정)"]
+  direction LR
+  HOME["홈<br/>/"]
+  INPUT["사주분석<br/>/input"]
+  CHAT["사주대화<br/>/chat"]
+  STORAGE["보관함<br/>/storage"]
+  MY["내정보<br/>/my"]
+end
+
+subgraph HOME_OUT["홈에서 진입 (9 섹션)"]
+  DAILY["오늘의 운세<br/>/daily"]
+  DREAM["꿈해몽<br/>/dream"]
+  DAEUN["대운<br/>/daeun"]
+  MONTHLY["월운<br/>/monthly"]
+  COMPAT["궁합<br/>/compat"]
+  TOJUNG["토정비결<br/>/tojung"]
+  TOPIC["주제별<br/>/topic"]
+  CHARGE["10운 충전<br/>/charge"]
+end
+
+HOME -->|히어로 · 무료/500원| INPUT
+HOME --> DAILY
+HOME --> DREAM
+HOME -->|섹션 4.5| DAEUN
+HOME -->|섹션 4.5| MONTHLY
+HOME -->|섹션 4.5| COMPAT
+HOME -->|섹션 4.5| TOJUNG
+HOME -->|섹션 4.5| TOPIC
+HOME -->|상품 5000원| CHARGE
+
+subgraph FLOW["입력 → 결과"]
+  LOADING["로딩<br/>/loading"]
+  RESULT["풀이 결과<br/>/result/:id"]
+  SHARE["공유 카드<br/>/share/:id"]
+end
+
+INPUT -->|제출| LOADING
+LOADING --> RESULT
+RESULT -.공유?.-> SHARE
+RESULT -.업셀?.-> CHARGE
+
+COMPAT --> COMPAT_R["궁합 결과<br/>/compat/result"]
+TOPIC --> TOPIC_ID["주제 상세<br/>/topic/:id"]
+CHAT --> CHAT_ID["대화방<br/>/chat/:id"]
+
+subgraph POLICY["정책"]
+  TERMS["이용약관<br/>/terms"]
+  PRIVACY["개인정보<br/>/privacy"]
+end
+MY -.링크?.-> TERMS
+MY -.링크?.-> PRIVACY
+
+STORAGE -.재진입.-> RESULT
+
+NOTFOUND["404<br/>/*"]
+
+classDef tabbar fill:#A08B6A,stroke:#7F6B4E,color:#fff,font-weight:700
+classDef homeout fill:#F0E8D9,stroke:#A08B6A,color:#1A1A1A
+classDef flow fill:#d6e7fb,stroke:#5a89c7,color:#1A1A1A
+classDef policy fill:#e5e5e5,stroke:#999,color:#444
+
+class HOME,INPUT,CHAT,STORAGE,MY tabbar
+class DAILY,DREAM,DAEUN,MONTHLY,COMPAT,TOJUNG,TOPIC,CHARGE homeout
+class LOADING,RESULT,SHARE,COMPAT_R,TOPIC_ID,CHAT_ID flow
+class TERMS,PRIVACY,NOTFOUND policy
+</pre>
+  </div>
+</div>
+
+<!-- ═══════════ Path A ═══════════ -->
+<h2><span class="num">§2.</span>Path A · 신규 (Cold) — 세밀 유저 플로우</h2>
+<p class="desc">앱 첫 실행, 사주 미입력, 미결제. <strong>입력 → 결제 → 블러풀림</strong>까지 30개 스텝.</p>
+
+<div class="path-card">
+  <div class="label lbl-A">Path A · 앱 첫 실행 → 500원 결제 → 전체 풀이 → 저장</div>
+  <div class="chart-card">
+    <div class="chart-toolbar">
+      <button data-target="chartA" data-act="in">+</button>
+      <button data-target="chartA" data-act="out">−</button>
+      <button data-target="chartA" data-act="reset">⟲</button>
+    </div>
+    <div class="chart-hint">휠: 줌 · 드래그: 이동</div>
+    <div class="chart-body" id="chartA">
+<pre class="mermaid">
+flowchart TB
+  A1[앱 첫 실행<br/>스플래시 or 바로 홈?]:::start --> A2[홈 진입<br/>localStorage 빔]
+  A2 --> A3[BalanceBar 표시<br/>운 잔액 0]
+  A3 --> A4[섹션 1 히어로 노출<br/>내 사주 500원에 제대로]
+  A4 --> A5{"첫 액션 선택"}
+  A5 -->|히어로 Primary CTA| A10
+  A5 -->|히어로 Secondary<br/>후기 먼저 보기| A6
+  A5 -->|TabBar 사주분석| A10
+  A5 -->|스크롤 내려 다른 섹션| A7
+  A6[섹션 6 후기 캐러셀로<br/>자동 스크롤] --> A8[후기 5개 중 2-3개 읽음]
+  A8 --> A9{"후기 읽고 신뢰?"}
+  A9 -->|예| A10
+  A9 -->|아니오| A_EXIT1[이탈<br/>다음 재방문 가능성]:::risk
+  A7[섹션 2-7 스크롤] --> A10
+  A10["사주분석 탭 이동<br/>/input"] --> A11[입력 폼 도착]
+  A11 --> A12[생년월일 선택<br/>달력 UI]
+  A12 --> A13[출생 시간 선택<br/>±30분 보정 안내]
+  A13 --> A14{"시간 모름?"}
+  A14 -->|예 → 모름 체크| A16
+  A14 -->|아니오 → 정확| A15[시간 입력]
+  A15 --> A16[성별 선택]
+  A16 --> A17[이름 입력<br/>선택]
+  A17 --> A18{"개인정보 동의?"}
+  A18 -->|예| A19
+  A18 -->|아니오| A_EXIT2[이탈<br/>동의 미체크 경고]:::risk
+  A19[제출 버튼 클릭] --> A20["/loading 이동"]
+  A20 --> A21[AI 풀이 생성 중<br/>진행률 애니메이션]
+  A21 --> A22{"풀이 생성 성공?"}
+  A22 -->|실패| A_ERR1[에러 + 재시도 버튼]:::risk
+  A22 -->|성공| A23["/result/:id 이동"]
+  A23 --> A24[헤드라인 노출<br/>당신은 x일간]
+  A24 --> A25[L1 일간 설명<br/>500-800자 무료]
+  A25 --> A26[L2 오행 균형<br/>500-800자 무료]
+  A26 --> A27[L3 블러잠금<br/>신살·대운 힌트]
+  A27 --> A28[500원 결제 CTA 노출]
+  A28 --> A29{"500원 결제?"}
+  A29 -->|아니오 → 뒤로가기| A_EXIT3[이탈<br/>재방문 가능성 중]:::risk
+  A29 -->|아니오 → 공유만| A_SHR[공유 버튼<br/>블러 상태로 공유 가능?]:::unknown
+  A29 -->|예| A30[결제 모듈 진입<br/>토스페이먼츠 등]
+  A30 --> A31{"결제 성공?"}
+  A31 -->|실패| A_ERR2[결제 에러<br/>재시도 or 이탈]:::risk
+  A31 -->|성공| A32[블러 풀림 애니메이션]
+  A32 --> A33[L3 신살 풀이<br/>800-1200자]
+  A33 --> A34[L4 대운 힌트<br/>5000원 업셀]
+  A34 --> A35{"5000원 업그레이드?"}
+  A35 -->|아니오| A36["/storage 자동 저장"]:::endOk
+  A35 -->|예| A37["/charge 10운 충전"]
+  A37 --> A38[프리미엄 전체 풀이<br/>2800-3200자]:::endOk
+  A36 --> A39[TabBar 보관함에 뱃지]
+  A39 --> A40[재방문 시 Path C로]:::endOk
+
+  classDef start fill:#1A1A1A,color:#fff,font-weight:700,stroke:#000
+  classDef endOk fill:#A08B6A,color:#fff,font-weight:700,stroke:#7F6B4E
+  classDef risk fill:#ffe1e1,stroke:#c00,color:#c00
+  classDef unknown fill:#fff,stroke:#c00,stroke-dasharray:5 5,color:#c00
+</pre>
+    </div>
+  </div>
+
+  <div class="meta">
+    <strong>주요 이탈 지점 (위험):</strong> A9 후기 신뢰 실패 · A18 개인정보 동의 거부 · A29 500원 결제 망설임 · A31 결제 실패. <br/>
+    <strong>1순위 행동:</strong> A10~A19 입력 마찰 최소화 (생년월일 달력·시간 ±30분 보정·동의 체크박스 UX). <br/>
+    <strong>홈에서 보여줘야 할 것:</strong> 가치제안 (섹션 1), 전문성 증명 (섹션 4 신살), 가격 (섹션 5 상품), 사회적 증거 (섹션 6 후기). <span class="ko-warn">"오늘의 운세" (섹션 2)는 Path A에겐 의미 없음 — 섹션 순서 재조정 필요.</span><br/>
+    <strong>불확실 (PC 조사):</strong> 블러 상태에서 공유 가능 여부 (A_SHR) · 개인정보 동의 UI 위치 (A18) · 입력 중 뒤로가기 처리 · 결제 실패 복구 flow.
+  </div>
+
+  <table class="phase-table">
+    <thead><tr><th>단계</th><th>스텝</th><th>목적</th><th>리스크</th></tr></thead>
+    <tbody>
+      <tr><td class="step">Discovery</td><td>A1~A9</td><td>앱이 뭔지 이해 + 신뢰 구축</td><td class="risk">후기 2-3개 읽고도 신뢰 못하면 이탈</td></tr>
+      <tr><td class="step">Input</td><td>A10~A19</td><td>사주 데이터 입력</td><td class="risk">입력 필드 5개+동의 → 탈락률 30-40% 예상</td></tr>
+      <tr><td class="step">Wait</td><td>A20~A22</td><td>AI 풀이 생성 (10-30초)</td><td class="risk">로딩 길면 이탈. 완충 UX 필수</td></tr>
+      <tr><td class="step">Preview</td><td>A23~A27</td><td>무료 풀이 L1·L2 노출</td><td>가치가 약하면 결제 유인 실패</td></tr>
+      <tr><td class="step">Paywall</td><td>A28~A31</td><td>500원 결제 유도</td><td class="risk">결제 마찰 · 망설임 → 핵심 이탈</td></tr>
+      <tr><td class="step">Reveal</td><td>A32~A34</td><td>L3·L4 전체 풀이</td><td>분량·깊이가 기대보다 낮으면 환불·부정 후기</td></tr>
+      <tr><td class="step">Retain</td><td>A35~A40</td><td>보관·공유·업셀</td><td>재방문 장치 없으면 1회 결제로 끝</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════ Path B ═══════════ -->
+<h2><span class="num">§3.</span>Path B · 무료 본 유저 (Warm)</h2>
+<p class="desc">사주 입력 끝 (무료 L1·L2만 봄), 500원 미결제. 재방문해서 뭘 하는지.</p>
+
+<div class="path-card">
+  <div class="label lbl-B">Path B · 재방문 → 오늘의 운세 체크 → 결제 유도 대상</div>
+  <div class="chart-card">
+    <div class="chart-toolbar">
+      <button data-target="chartB" data-act="in">+</button>
+      <button data-target="chartB" data-act="out">−</button>
+      <button data-target="chartB" data-act="reset">⟲</button>
+    </div>
+    <div class="chart-hint">휠: 줌 · 드래그: 이동</div>
+    <div class="chart-body" id="chartB">
+<pre class="mermaid">
+flowchart TB
+  B1[앱 재실행<br/>하루 이상 경과]:::start --> B2[홈 재진입<br/>프로필 1건 있음]
+  B2 --> B3[BalanceBar 운 잔액 0]
+  B3 --> B4[섹션 2 오늘의 운세<br/>개인화 카피 변준기님]
+  B4 --> B5{"다음 액션"}
+  B5 -->|오늘 풀이 전체 보기| B10
+  B5 -->|섹션 3 꿈해몽| B6
+  B5 -->|섹션 4.5 다른 풀이| B20
+  B5 -->|상품 500원 카드| B30
+  B5 -->|보관함 탭| B_STG[과거 무료 풀이 열람]
+  B6["/dream 이동"] --> B7[꿈 입력 폼]
+  B7 --> B8[무료 꿈해몽 결과<br/>요약만 노출]
+  B8 --> B9[500원 전체 풀이 유도]
+  B9 --> B29
+  B10["/daily 이동"] --> B11[오늘의 운세 전체]
+  B11 --> B12{"내용 만족?"}
+  B12 -->|예 → 500원 가치 납득| B29
+  B12 -->|아니오 → 이탈| B_EXIT1[홈 복귀 or 앱 닫기]:::risk
+  B20["섹션 4.5 카드 클릭<br/>예 대운"] --> B21["/daeun 이동"]
+  B21 --> B22[대운 입력 또는<br/>기존 프로필 자동 사용?]:::unknown
+  B22 --> B23[무료 미리보기 or<br/>500원 결제 유도]:::unknown
+  B30[상품 매트릭스 500원] --> B31["/input?tier=paid 이동"]
+  B31 --> B32[사주 이미 있으므로<br/>재입력 없이 바로 결제?]:::unknown
+  B32 --> B29
+  B29{"500원 결제?"} -->|예| B40[결제 모듈]
+  B29 -->|아니오| B_EXIT2[홈 복귀]:::risk
+  B40 --> B41{"결제 성공?"}
+  B41 -->|예| B42[L3·L4 블러 풀림]:::endOk
+  B41 -->|아니오| B_ERR[에러 + 재시도]:::risk
+  B42 --> B43[공유·보관·재방문 Path C]
+
+  classDef start fill:#1A1A1A,color:#fff,font-weight:700
+  classDef endOk fill:#A08B6A,color:#fff,font-weight:700
+  classDef risk fill:#ffe1e1,stroke:#c00,color:#c00
+  classDef unknown fill:#fff,stroke:#c00,stroke-dasharray:5 5,color:#c00
+</pre>
+    </div>
+  </div>
+
+  <div class="meta">
+    <strong>주요 이탈 지점:</strong> B12 오늘의 운세 만족 실패 · B29 반복 망설임 (Path A에서 이미 한 번 거절한 사용자). <br/>
+    <strong>1순위 행동:</strong> 오늘의 운세 퀄리티가 500원 가치 증명 장치. 무료 L1·L2와 유료 L3·L4의 <strong>차이가 명확</strong>해야 결제 전환. <br/>
+    <strong>홈 IA 조정:</strong> Path B에선 섹션 2 (오늘의 운세) Pillar 유지, 섹션 5 상품 매트릭스 2순위. 섹션 4.5는 4순위. 섹션 6 후기는 중복이라 축소. <br/>
+    <strong>불확실 (PC 조사):</strong> B22 대운이 기존 프로필 자동 사용인지 · B32 재방문 시 /input에서 이미 입력한 사주 재사용 UX · 블러잠금 L3·L4 실제 분량.
+  </div>
+</div>
+
+<!-- ═══════════ Path C ═══════════ -->
+<h2><span class="num">§4.</span>Path C · 500원 결제 완료 (Hot)</h2>
+<p class="desc">500원 1회 이상 결제, 5000원 미구매. 재방문 시 뭘 하는지 + 업셀 전환.</p>
+
+<div class="path-card">
+  <div class="label lbl-C">Path C · 재방문 → 오늘의 운세 → 업셀 (5000원 또는 다른 카테고리)</div>
+  <div class="chart-card">
+    <div class="chart-toolbar">
+      <button data-target="chartC" data-act="in">+</button>
+      <button data-target="chartC" data-act="out">−</button>
+      <button data-target="chartC" data-act="reset">⟲</button>
+    </div>
+    <div class="chart-hint">휠: 줌 · 드래그: 이동</div>
+    <div class="chart-body" id="chartC">
+<pre class="mermaid">
+flowchart TB
+  C1[재방문<br/>결제 이력 있음]:::start --> C2[홈]
+  C2 --> C3[BalanceBar 운 잔액 X]
+  C3 --> C4[섹션 2 오늘의 운세<br/>Pillar로 노출]
+  C4 --> C5{"다음 액션"}
+  C5 -->|오늘 풀이| C10["/daily"]
+  C5 -->|섹션 4.5 다른 풀이| C20
+  C5 -->|5000원 상품| C30
+  C5 -->|보관함 탭| C40
+  C5 -->|사주대화 탭| C50
+  C10 --> C11[오늘의 운세 전체]
+  C11 --> C12[매일 방문 인센티브<br/>운 리워드 3원?]:::unknown
+  C12 --> C13{"재방문 루틴?"}
+  C20[섹션 4.5 카드 선택] --> C21{"어떤 카테고리?"}
+  C21 -->|대운| C22["/daeun"]
+  C21 -->|궁합| C23["/compat"]
+  C21 -->|월운| C24["/monthly"]
+  C21 -->|토정비결| C25["/tojung"]
+  C21 -->|주제별| C26["/topic"]
+  C22 --> C27[추가 결제 필요?<br/>500원 or 5000원?]:::unknown
+  C23 --> C28[상대방 사주 입력<br/>저장된 프로필 재활용?]:::unknown
+  C24 --> C27
+  C25 --> C27
+  C26 --> C27
+  C27 --> C29{"결제?"}
+  C29 -->|예| C_PAID[결제 → 풀이]:::endOk
+  C29 -->|아니오| C_EXIT1[이탈]:::risk
+  C30["상품 5000원 클릭 → /charge"] --> C31[10운 충전 결제]
+  C31 --> C32{"결제 성공?"}
+  C32 -->|예| C33[프리미엄 권한 활성]
+  C33 --> C34[프리미엄 풀이 2800-3200자]:::endOk
+  C32 -->|아니오| C_ERR[에러]:::risk
+  C40["/storage 이동"] --> C41[과거 풀이 리스트]
+  C41 --> C42[풀이 클릭 → /result/:id 재진입]:::endOk
+  C50["/chat 이동"] --> C51[AI 사주 챗봇<br/>질문 가능]:::unknown
+  C51 --> C52{"유료/무료?"}:::unknown
+
+  classDef start fill:#1A1A1A,color:#fff,font-weight:700
+  classDef endOk fill:#A08B6A,color:#fff,font-weight:700
+  classDef risk fill:#ffe1e1,stroke:#c00,color:#c00
+  classDef unknown fill:#fff,stroke:#c00,stroke-dasharray:5 5,color:#c00
+</pre>
+    </div>
+  </div>
+
+  <div class="meta">
+    <strong>주요 이탈 지점:</strong> C12 재방문 인센티브 없으면 이탈 · C27 추가 결제 마찰 · C51 챗봇 요금 정책 불명. <br/>
+    <strong>1순위 행동:</strong> 5000원 업셀 또는 다른 카테고리 추가 결제. <br/>
+    <strong>홈 IA 조정:</strong> 섹션 2 Pillar, 섹션 4.5 2순위 격상, 섹션 5 상품 매트릭스에서 5000원만 강조 · 무료·500원은 축소. 섹션 6 후기 제거 (이미 결제했으므로 중복). <br/>
+    <strong>불확실 (PC 조사):</strong> 500원·5000원 과금 구조 차이 · 각 카테고리 (대운·궁합 등) 개별 결제 vs 5000원 포함 · /chat 요금 · 데일리 리워드 3원 UI 위치.
+  </div>
+</div>
+
+<!-- ═══════════ Path D ═══════════ -->
+<h2><span class="num">§5.</span>Path D · 프리미엄 (Loyal)</h2>
+<p class="desc">5000원 결제 완료. 프리미엄 풀이 권한 보유. "다음에 뭘 풀까" 결정.</p>
+
+<div class="path-card">
+  <div class="label lbl-D">Path D · 재방문 → 다른 카테고리 탐색 → 반복 풀이 소비</div>
+  <div class="chart-card">
+    <div class="chart-toolbar">
+      <button data-target="chartD" data-act="in">+</button>
+      <button data-target="chartD" data-act="out">−</button>
+      <button data-target="chartD" data-act="reset">⟲</button>
+    </div>
+    <div class="chart-hint">휠: 줌 · 드래그: 이동</div>
+    <div class="chart-body" id="chartD">
+<pre class="mermaid">
+flowchart TB
+  D1[재방문<br/>프리미엄 권한 有]:::start --> D2[홈]
+  D2 --> D3[BalanceBar 운 잔액 多]
+  D3 --> D4[섹션 4.5 다른 풀이<br/>Pillar로 격상]
+  D4 --> D5{"다음 카테고리 선택"}
+  D5 -->|대운 10년| D10["/daeun"]
+  D5 -->|궁합| D20["/compat"]
+  D5 -->|월운| D30["/monthly"]
+  D5 -->|토정비결 신년| D40["/tojung"]
+  D5 -->|주제별 연애·재물·직장| D50["/topic"]
+  D5 -->|오늘의 운세| D60["/daily"]
+  D5 -->|사주대화| D70["/chat"]
+  D10 --> D11[기존 프로필 자동]
+  D11 --> D12[10년 흐름 풀이]:::endOk
+  D20 --> D21[본인 + 상대방 입력]
+  D21 --> D22{"상대 프로필 저장?"}
+  D22 -->|예 → /storage 저장| D23[궁합 결과]:::endOk
+  D22 -->|아니오 → 1회용| D23
+  D30 --> D31[이번 달 풀이]:::endOk
+  D40 --> D41[신년 풀이<br/>2026 토정]:::endOk
+  D50 --> D51{"주제 선택"}
+  D51 -->|연애| D52["/topic/love"]:::unknown
+  D51 -->|재물| D53["/topic/money"]:::unknown
+  D51 -->|직장| D54["/topic/career"]:::unknown
+  D52 --> D55[주제 집중 풀이]:::endOk
+  D53 --> D55
+  D54 --> D55
+  D60 --> D61[매일 체크]
+  D61 --> D62[반복 방문 루틴 형성]:::endOk
+  D70 --> D71[사주 기반 대화<br/>한계·요금 불명]:::unknown
+
+  classDef start fill:#1A1A1A,color:#fff,font-weight:700
+  classDef endOk fill:#A08B6A,color:#fff,font-weight:700
+  classDef unknown fill:#fff,stroke:#c00,stroke-dasharray:5 5,color:#c00
+</pre>
+    </div>
+  </div>
+
+  <div class="meta">
+    <strong>주요 이탈 지점:</strong> 한 번 다 풀고 나면 재방문 동기 약함. D71 챗봇 한계. <br/>
+    <strong>1순위 행동:</strong> 새 카테고리 발견 + 재방문 습관화. <br/>
+    <strong>홈 IA 조정:</strong> <strong>섹션 4.5를 섹션 2 바로 아래로 이동 (2순위 → 1순위 후보)</strong>. 섹션 5 상품 매트릭스·섹션 6 후기·섹션 7 왜 사주500 전부 fold-down. 섹션 4 신살도 축소. <br/>
+    <strong>불확실 (PC 조사):</strong> 각 카테고리 풀이가 5000원 포함인지 추가 결제인지 · topicId 실제 종류 · 궁합 상대 프로필 저장·삭제 UX · 재방문 리워드 구조.
+  </div>
+</div>
+
+<!-- ═══════════ Path E (예외) ═══════════ -->
+<h2><span class="num">§6.</span>Path E · 예외·엣지 케이스</h2>
+<p class="desc">결제 실패·네트워크 에러·딥링크·뒤로가기·404 등 정상 흐름 밖.</p>
+
+<div class="path-card">
+  <div class="label lbl-E">Path E · 예외 시나리오 6종</div>
+  <div class="chart-card">
+    <div class="chart-toolbar">
+      <button data-target="chartE" data-act="in">+</button>
+      <button data-target="chartE" data-act="out">−</button>
+      <button data-target="chartE" data-act="reset">⟲</button>
+    </div>
+    <div class="chart-hint">휠: 줌 · 드래그: 이동</div>
+    <div class="chart-body" id="chartE">
+<pre class="mermaid">
+flowchart TB
+  E0[예외 진입점]:::start --> E1
+  E0 --> E10
+  E0 --> E20
+  E0 --> E30
+  E0 --> E40
+  E0 --> E50
+
+  E1[잘못된 URL<br/>오타·링크 만료] --> E2["/* catch-all"]
+  E2 --> E3[NotFoundPage]:::unknown
+  E3 --> E4[홈 복귀 버튼]
+  E4 --> E5[홈 리다이렉트]:::endOk
+
+  E10[결제 진행 중<br/>네트워크 끊김] --> E11[토스페이먼츠 에러]
+  E11 --> E12{"환불 상태"}
+  E12 -->|결제 성공 but 풀이 미생성| E13[운 잔액은 충전됨<br/>다시 풀이 요청]:::risk
+  E12 -->|결제 실패| E14[재시도 버튼]
+  E14 --> E15[재시도 or 이탈]
+
+  E20[AI 풀이 생성 실패<br/>타임아웃 30초+] --> E21[에러 카피<br/>다시 시도해주세요]
+  E21 --> E22[재시도 버튼]
+  E22 --> E23{"재생성 성공?"}
+  E23 -->|아니오| E24[고객센터 안내]:::risk
+
+  E30[공유 링크로 직접 진입<br/>/share/:id]:::unknown --> E31[OG 카드 또는<br/>블러 상태 풀이]:::unknown
+  E31 --> E32[회원가입·로그인 유도?]:::unknown
+  E32 --> E33[홈 리다이렉트]
+
+  E40[입력 도중 뒤로가기] --> E41{"입력 데이터 저장?"}
+  E41 -->|예 임시저장| E42[다음 진입 시 이어서]:::endOk
+  E41 -->|아니오| E43[처음부터 재입력]:::risk
+
+  E50[앱 버전 오래됨] --> E51[강제 업데이트 배너?]:::unknown
+
+  classDef start fill:#1A1A1A,color:#fff,font-weight:700
+  classDef endOk fill:#A08B6A,color:#fff,font-weight:700
+  classDef risk fill:#ffe1e1,stroke:#c00,color:#c00
+  classDef unknown fill:#fff,stroke:#c00,stroke-dasharray:5 5,color:#c00
+</pre>
+    </div>
+  </div>
+
+  <div class="meta">
+    <strong>치명 리스크:</strong> E13 (결제 성공했는데 풀이 미생성) = 환불 클레임 · 앱인토스 심사 탈락 가능. E32 (공유링크로 비회원 진입) = OG 카드 가치 없음. <br/>
+    <strong>1순위 설계 필요:</strong> 결제·풀이 생성 <strong>원자적 보장</strong> · E40 입력 임시저장 · E3 NotFoundPage 브랜드 일관성. <br/>
+    <strong>불확실 (PC 조사):</strong> NotFoundPage 현재 디자인 · /share 비회원 접근 정책 · 강제 업데이트 로직 유무 · 결제 원자성 구현 상태.
+  </div>
+</div>
+
+<!-- ═══════════ §7 인사이트 요약 ═══════════ -->
+<h2><span class="num">§7.</span>5개 Path에서 드러난 홈 IA 재설계 포인트</h2>
+<div class="chart-card" style="padding:16px; background:#fff8ec; border-color:#e7d9a8;">
+  <ol style="margin:0; padding-left:20px; line-height:2; font-size:13.5px;">
+    <li>현재 홈은 <strong>Path A에 겨우 맞춘 상태</strong>. Path B·C·D엔 섹션 순서가 전혀 안 맞음 → <strong>Path별 섹션 순서 동적 분기</strong> 필요.</li>
+    <li>"오늘의 운세"가 Path A엔 의미 없는데 섹션 2 Pillar 자리 차지. Path A 진입 시 섹션 2는 <strong>hasSaju=false 분기로 완전 숨김</strong> 또는 교체.</li>
+    <li>섹션 4.5 (다른 풀이)는 Path D 1순위인데 현재 5번째 위치. Path D 진입 시 <strong>최상단 격상</strong>.</li>
+    <li>섹션 6 후기·섹션 7 왜 사주500은 Path C·D에겐 중복. <strong>Path C 이상에서 숨김</strong>.</li>
+    <li>Path E 예외 경로 4종 (결제 원자성·입력 임시저장·공유 접근·NotFound 디자인)은 <strong>앱인토스 심사 체크리스트</strong>에 직결. 우선순위 상.</li>
+    <li>3개 unknown 구간 (B22·C22·C52·D22·D71) 공통 = <strong>기존 프로필 재활용 로직</strong>. /input 재진입 시 이미 저장된 사주를 어떻게 쓰는지가 재방문 마찰의 핵심. PC 조사 필수.</li>
+  </ol>
+</div>
+
+</div>
+
+<script>
+  (async function() {
+    // 1. window.load + Mermaid 자동 렌더 대기
+    await new Promise(resolve => {
+      if (document.readyState === 'complete') resolve();
+      else window.addEventListener('load', resolve);
+    });
+    await new Promise(r => setTimeout(r, 800));
+
+    // 2. Mermaid 에러 노드 처리 (파싱 실패 시 텍스트로 표시)
+    document.querySelectorAll('.chart-body').forEach(body => {
+      const errEl = body.querySelector('div.error');
+      if (errEl) {
+        const div = document.createElement('div');
+        div.className = 'chart-error';
+        div.textContent = 'Mermaid parse error:\n' + (errEl.textContent || '').slice(0, 500);
+        body.appendChild(div);
+      }
+    });
+
+    // 3. 각 chart-body 안 SVG를 pan-zoom으로 감싸기
+    const instances = {};
+    document.querySelectorAll('.chart-body').forEach(body => {
+      const svg = body.querySelector('svg');
+      if (!svg) return;
+      // SVG 크기 강제 — Mermaid가 width/style로 max-width 200px 정도 박는 경우 있음
+      svg.removeAttribute('width');
+      svg.removeAttribute('height');
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      svg.style.maxWidth = 'none';
+      svg.style.maxHeight = 'none';
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+
+      const id = body.id;
+      try {
+        instances[id] = svgPanZoom(svg, {
+          zoomEnabled: true,
+          panEnabled: true,
+          controlIconsEnabled: false,
+          fit: true,           // 처음엔 전체 보이게
+          center: true,
+          minZoom: 0.2,
+          maxZoom: 8,
+          zoomScaleSensitivity: 0.4,
+          dblClickZoomEnabled: true,
+          mouseWheelZoomEnabled: true
+        });
+        // 초기에 1.3배로 확대 — fit만 하면 글자 너무 작음
+        instances[id].zoom(1.3);
+        instances[id].center();
+      } catch (e) {
+        console.error('pan-zoom init fail for', id, e);
+      }
+    });
+
+    // 4. 버튼 이벤트
+    document.querySelectorAll('.chart-toolbar button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.target;
+        const act = btn.dataset.act;
+        const inst = instances[id];
+        if (!inst) return;
+        if (act === 'in') inst.zoomIn();
+        else if (act === 'out') inst.zoomOut();
+        else if (act === 'reset') {
+          inst.resetZoom();
+          inst.fit();
+          inst.center();
+          inst.zoom(1.3);
+        }
+      });
+    });
+
+    // 5. 윈도우 리사이즈 시 다시 fit
+    window.addEventListener('resize', () => {
+      Object.values(instances).forEach(inst => {
+        try { inst.resize(); inst.fit(); inst.center(); inst.zoom(1.3); } catch(e) {}
+      });
+    });
+  })();
+</script>
+</body>
+</html>

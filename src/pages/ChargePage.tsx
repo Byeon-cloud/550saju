@@ -10,6 +10,7 @@ import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getRemainingShareRewards, canEarnShareReward } from '@/services/share/shareReward';
+import { isAppintosBuild } from '@/lib/env';
 
 
 export function ChargePage() {
@@ -57,7 +58,20 @@ export function ChargePage() {
             }
           })
           .catch((err) => {
-            toast.show('결제 확인 실패: ' + (err.message || '다시 시도해주세요'), 'warning');
+            // E13 · 서버 에러 유형별 분기
+            const raw = err?.message || '';
+            let userMsg: string;
+            if (raw.includes('고객센터')) {
+              // needs_reconciliation (Toss 승인 + DB 실패) — 자동 재시도 금지
+              userMsg = raw; // 서버가 전달한 메시지 그대로
+            } else if (raw.includes('이미 처리된')) {
+              userMsg = '이미 처리된 결제예요. 잔액을 확인해주세요.';
+            } else if (raw.includes('결제 승인 실패')) {
+              userMsg = '결제가 취소되었습니다. 다시 시도해주세요.';
+            } else {
+              userMsg = '결제 확인 중 오류가 발생했어요. 다시 시도해주세요.';
+            }
+            toast.show(userMsg, 'warning');
           })
           .finally(() => {
             setPurchasing(false);
@@ -76,7 +90,7 @@ export function ChargePage() {
         {/* 잔액 부족 안내 (다른 페이지에서 넘어온 경우) */}
         {fromMessage && (
           <FadeIn>
-            <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)' }}>
+            <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(184,150,90,0.1)', border: '1px solid rgba(184,150,90,0.2)' }}>
               <p className="text-caption text-brand-gold font-semibold text-center">{fromMessage}</p>
             </div>
           </FadeIn>
@@ -93,14 +107,30 @@ export function ChargePage() {
           </div>
         </FadeIn>
 
-        {/* 운이 뭔지 설명 — 친절하게 */}
+        {/* P1-9 · HeroBar — 1운=500원 환율 명시 (사주500 전체에서 원화 노출 유일 지점) */}
+        <FadeIn delay={0.025}>
+          <div className="card py-4 px-5"
+            style={{ background: 'linear-gradient(135deg, #F0E8D9 0%, #F8F5EE 100%)', border: '1px solid rgba(184,150,90,0.25)' }}>
+            <p className="text-h2 text-text-primary" style={{ fontFamily: "'Noto Serif KR', serif" }}>
+              운(運)으로 사주를 봐요
+            </p>
+            <p className="mt-1.5 text-body-sm text-text-secondary">
+              <strong style={{ color: '#7F6B4E' }}>1운 = 500원</strong>으로 충전돼요
+            </p>
+            <p className="mt-1 text-caption text-text-muted">
+              콘텐츠는 모두 운 단위로 보여드려요
+            </p>
+          </div>
+        </FadeIn>
+
+        {/* 운이 뭔지 설명 — 친절하게 (P1-9 갭리포트: 사주 상담 5→3회) */}
         <FadeIn delay={0.03}>
           <div className="card py-4 px-5">
             <p className="text-h3 text-text-primary mb-3">운(運)으로 이런 걸 할 수 있어요</p>
             <div className="space-y-2.5">
               {[
                 { service: '내 사주 풀이', desc: '성격, 직업, 연애 등 12가지 분석', cost: '1운' },
-                { service: '사주 상담', desc: '대화로 주고받는 1:1 상담 5회', cost: '1운' },
+                { service: '사주 상담', desc: '대화로 주고받는 1:1 상담 3회', cost: '1운' },
                 { service: '궁합 분석', desc: '두 사람의 사주 비교', cost: '1운' },
                 { service: '대운 해설', desc: '10년 단위 운의 흐름', cost: '1운' },
                 { service: '월별 운세', desc: '올해 12개월 점수와 조언', cost: '1운' },
@@ -143,7 +173,7 @@ export function ChargePage() {
                   {/* 추천 배지 */}
                   {pkg.id === 'serious' && (
                     <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl"
-                      style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                      style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
                       <span className="text-[10px] font-bold text-white">추천</span>
                     </div>
                   )}
@@ -264,7 +294,7 @@ export function ChargePage() {
                 </p>
               </div>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
                 <span className="text-[10px] font-black text-white">運</span>
               </div>
             </div>
@@ -277,12 +307,16 @@ export function ChargePage() {
             <p className="text-caption text-text-hint">· 보너스 운과 리워드 운은 환불 대상에서 제외돼요</p>
             <p className="text-caption text-text-hint">· 유효기간 없어요. 충전한 운은 사라지지 않아요</p>
             <p className="text-caption text-text-hint">· 자동결제 없음. 한 번 충전으로 끝</p>
+            {/* P0-A · 토스페이 환불 정책 (2026-04-21 앱인토스 검수 §1-12) */}
+            <p className="text-caption text-text-hint">
+              · 환불은 토스페이 결제 취소 정책을 따르며, 결제 후 7일 이내 미사용 운에 한해 고객센터(info@juulabel.com)로 문의 시 심사 후 처리해요
+            </p>
           </div>
         </FadeIn>
       </div>
 
-      {/* 하단 CTA */}
-      <div className="sticky-cta-bottom">
+      {/* 하단 CTA (P0-A · .checkout 클래스로 safe-area 패딩 적용) */}
+      <div className="checkout sticky-cta-bottom">
         {message && (
           <p className={`text-center text-caption mb-2 ${message.includes('충전') ? 'text-func-success' : 'text-func-warning'}`}>
             {message}
@@ -311,7 +345,9 @@ export function ChargePage() {
           }}
         >
           {selectedPkg
-            ? `${selectedPkg.price.toLocaleString()}원 결제하기`
+            ? (isAppintosBuild
+                ? `${selectedPkg.price.toLocaleString()}원 토스페이로 결제`
+                : `${selectedPkg.price.toLocaleString()}원 결제하기`)
             : '패키지를 선택해주세요'}
         </Button>
       </div>

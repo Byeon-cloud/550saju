@@ -20,7 +20,7 @@ export function BalanceBar() {
   if (!SHOW.some((p) => location.pathname === p)) return null;
 
   return (
-    <div className="sticky top-0 z-30 mx-auto max-w-mobile"
+    <div className="balance-bar sticky top-0 z-30 mx-auto max-w-mobile"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="flex items-center justify-between h-[48px] px-5 bg-white/95 backdrop-blur-xl border-b border-border-light">
         {/* 로고 */}
@@ -28,8 +28,8 @@ export function BalanceBar() {
           <svg width="22" height="22" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="11" stroke="#1B2A4A" strokeWidth="1" fill="none" opacity="0.3" />
             <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#1B2A4A" />
-            <circle cx="12" cy="7" r="2" fill="#C9A96E" />
-            <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#C9A96E" strokeWidth="0.8" />
+            <circle cx="12" cy="7" r="2" fill="#B8965A" />
+            <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#B8965A" strokeWidth="0.8" />
           </svg>
           <span className="text-h3 text-text-primary font-bold">사주</span>
           <span className="text-h3 text-brand-gold font-bold">500</span>
@@ -51,14 +51,14 @@ export function BalanceBar() {
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/charge')}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-full min-h-[36px]"
-            style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.15)' }}
+            style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.15)' }}
           >
             <div className="w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+              style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
               <span className="text-[9px] font-black text-white">運</span>
             </div>
             <span className="text-[13px] font-bold text-text-primary">{balance}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
