@@ -58,16 +58,21 @@
 
 - **키워드**: 신비 + 고급 + 깔끔 + 모던 (무속인/점집 느낌 **절대 아님**)
 - **캐릭터 없음**: 미니멀 심볼 로고 (태극)
-- **컬러** (Deep Navy + Gold 계열 + 크림 배경):
-  - Primary: #A08B6A (골드브라운)
-  - Background: #F5F0E8 (크림)
-  - Text: #3D3427 (다크브라운)
-  - Surface: #FFFFFF
-  - Border: #E8E0D4
+- **컬러 SSOT** — `PC_인수인계_2026_04_21_단일본.md` §5 (2026-04-22 기준 최신):
+  - `--gold` #B8965A (골드 · 프라이머리 CTA)
+  - `--gold-deep` #8C6D3D (호버/프레스)
+  - `--paper` #F8F5EE (크림 배경)
+  - `--ink` #1A1A1A (본문)
+  - `--mute` #7A7269 (부가 텍스트)
+  - **주제 5색** — 연애 #C88A95, 재물 #B8965A, 직업 #5A7CA8, 건강 #6FA08C, 공부 #9C5A8A
+  - **확장 4색** — 대운 #3B7A4B, 월운 #B5441F, 궁합 #9C5A8A, 토정비결 #2F4B7C
+  - **금지색** — 머스타드 #B8941F (구 브랜드 잔재)
 - **오행 컬러**: 목=#2D8A4E · 화=#D32F2F · 토=#F57F17 · 금=#757575 · 수=#1565C0
 - **폰트**: Pretendard
 
-상세: `docs/prd/디자인토큰.md` · `docs/prd/브랜드스토리텔링.md` · `docs/prd/컴포넌트_라이브러리.md`
+> ⚠ **디자인토큰 드리프트 주의**: 구버전 CLAUDE.md 는 Primary #A08B6A · Bg #F5F0E8 등 을 명시했으나, **2026-04-22 PC 인수인계 §5 가 SSOT** 입니다. 코드 기준(`src/pages/HomePage.tsx` 20행 `C.gold='#B8965A'`)도 인수인계와 일치. `docs/prd/디자인토큰.md` 는 추후 일괄 동기화 예정.
+
+상세: `docs/prd/PC_인수인계_2026_04_21_단일본.md` §5 (SSOT) · `docs/prd/디자인토큰.md` (갱신 대기) · `docs/prd/브랜드스토리텔링.md` · `docs/prd/컴포넌트_라이브러리.md`
 
 ---
 
@@ -309,12 +314,22 @@ users/{uid}/shareLogs/{logId}    - 공유 리워드 로그
 ### 🔴 필수 읽기 순서 (신규 세션 시)
 
 1. **이 CLAUDE.md** (전체 개요 + TL;DR)
-2. `docs/prd/용어집.md` (모든 용어 정렬)
-3. `docs/prd/명리학_백과사전.md` (지식 백본 — 지식 질문 시)
-4. `docs/prd/한자노출_정책.md` (모든 콘텐츠 작업 전)
-5. `docs/prd/콘텐츠퀄리티가이드.md` (퀄리티 바)
-6. `docs/prd/수용기준_체크리스트.md` (PR 체크용)
-7. 구현 대상 페이지 해당 PRD
+2. **`docs/prd/PC_인수인계_2026_04_21_단일본.md`** ⭐ (2026-04-22 SSOT — Path / 토큰 / P0~P2 / Path E)
+3. **`docs/prd/홈v5_Path분기_레이아웃diff.md`** (v3 완전체 — Path A~D 스택 + 14 render fn + 적천수 실측 + 5 결정)
+4. `docs/prd/용어집.md` (모든 용어 정렬)
+5. `docs/prd/명리학_백과사전.md` (지식 백본 — 지식 질문 시)
+6. `docs/prd/한자노출_정책.md` (모든 콘텐츠 작업 전)
+7. `docs/prd/콘텐츠퀄리티가이드.md` (퀄리티 바)
+8. `docs/prd/수용기준_체크리스트.md` (PR 체크용)
+9. 구현 대상 페이지 해당 PRD
+
+### 🆕 2026-04-22 추가 SSOT 문서 (홈 v5 관련)
+| 문서 | 내용 |
+|------|------|
+| `PC_인수인계_2026_04_21_단일본.md` ⭐ | 듀얼폴더 · Path 판별 · 토큰 · 우선순위 SSOT |
+| `홈v5_Path분기_레이아웃diff.md` (v3) | Path A~D 스택 + 구현 스케치 + 적천수 18건 + 5 결정 |
+| `9종mockup_meta태그_스니펫.md` (v3) | 9 mockup 파일 Path 주입 자동화 |
+| `_archive/홈v5_Path분기_9종mockup_라벨링_번들_20260421_PREHANDOFF.md` | 인수인계 이전 초안 (참조만) |
 
 ### 기존 설계서 (PRD 이전 세대 문서 — 참고만)
 - `docs/사주500_UIUX_상세설계서.md` — IA, 유저플로우 (핵심은 PRD로 분리 완료)
@@ -325,9 +340,73 @@ users/{uid}/shareLogs/{logId}    - 공유 리워드 로그
 
 ---
 
-## 현재 상태 (2026-04-19)
+## 현재 상태 (2026-04-22)
 
-### ✅ 완료
+### 🆕 2026-04-22 인수인계 이후 추가분
+
+- [x] **PC 인수인계 SSOT 등재** — `docs/prd/PC_인수인계_2026_04_21_단일본.md` (§1 듀얼폴더 / §3 Path 판별 / §4 Path별 스택 / §5 디자인토큰 / §7 P2 잔여 / §8 P0~P1 우선순위)
+- [x] **훅 SSOT 정렬** — `usePathVariant` → `useUserPath` 로 리네임 (`@deprecated` shim 유지, 구 import 호환). 
+  - 신규 타입: `UserPath = 'A'|'B'|'C'|'D'`, `UserPathState{ path, hasSaju, hasPaidAny, hasPaid5000, ready }`
+  - Path 판별: `!hasSaju → A`, `!hasPaidAny → B`, `!hasPaid5000 → C`, 그 외 `D`
+  - 500원급: `contentType ∈ {report, topic, deepDream}` + type='paid'
+  - 5000원급: `contentType ∈ {daeun, monthly, compat, tojung}` (프리미엄 확장)
+- [x] **Path 분기 설계서 v3 (완전체)** — `docs/prd/홈v5_Path분기_레이아웃diff.md` (§0 12 gap 교정표 / §2 Path A~D 스택 SSOT / §6 Footer CTA 3-part 패턴 / §7 구현 스케치 14 render fn / §8 적천수 파일 실측 18건 / §9 §7 P2 + Path E 4종 / §10 6 phase · 4.5h / §11 준기 결정 5건)
+- [x] **9종 mockup meta 스니펫 v3** — `docs/prd/9종mockup_meta태그_스니펫.md` (파일명 교정: 재물만 v2 / 나머지 v1, Path 값: 홈 v4=A, 5 topics=B·C, 3 확장=C·D, 토정비결=D)
+- [x] **Pre-handoff 번들 아카이브** — `docs/prd/_archive/홈v5_Path분기_9종mockup_라벨링_번들_20260421_PREHANDOFF.md`
+- [x] **디자인토큰 SSOT 일원화** — 인수인계 §5 기준. 구 `CLAUDE.md` Primary #A08B6A 는 스테일, 위 §톤앤매너 블록에 드리프트 경고 추가.
+- [x] **적천수 출처 A안 일괄 치환** — src 사용자 노출 4파일 (`AILoading.tsx` L45, `LoadingPage.tsx` L35, `DailyFortunePage.tsx` L270, `DreamPage.tsx` L346) 을 "출처 검토 중 · 한국 명리학 문헌 기반" 또는 "명리(命理)" 일반론으로 치환. `academicReferences.ts` · `prompts.ts` 는 내부 참고서·프롬프트라 유지. Cowork C:\ 6 mockup 은 준기 수동 영역.
+- [x] **Footer 3-part CTA 통일** — `src/components/common/FooterCTA.tsx` 신규 (emblem + 전체로 보기 + 10운으로 시작). 적용 6페이지: `ResultPage` (命) · `TopicAnalysisPage` (桃/財/官/壽/印/盟/業/緣/人/移 · topicId 동적) · `DaeunPage` (運) · `MonthlyPage` (月) · `CompatResultPage` (合) · `TojungPage` (歲).
+- [x] **HomePageV5 신규 + env flag 배포 체계** — `src/pages/HomePageV5.tsx` Path A/B/C/D 분기 13 블록 렌더 fn (useUserPath + stack useMemo). `App.tsx` 에 `VITE_HOME_V5_ENABLED` env flag 추가 (기본 OFF, 준기 승인 후 1% ramp). v4 HomePage 는 유지. 자체 결정 3건: env flag OFF / price-intro = 미니멀 텍스트 / Storage-Chat = inline card. 준기 override 대기.
+- [x] **P2 · Path E 티켓 트래커** — `docs/prd/P2_Path_E_티켓_트래커.md` (E13 결제 원자성 · E32 공유 OG · E3 NotFound · E40 입력 임시저장 + §7 P2 5건, 합 ~13.5h)
+- [x] **E3 · NotFound 보강 완료 (2026-04-22)** — `src/App.tsx` NotFoundPage `<a href>` → `useNavigate('/', {replace:true})` 전환 (SPA 이동 · 히스토리 오염 방지). SSOT 컬러 `#B8965A` 단색 통일 (구 `#C9A96E→#D4A843` gradient 제거). `ResultRouteGuard` 신규 — `/result/:id` base36 `[a-z0-9]{4,32}` 형식 검증 · invalid 시 `/` replace redirect. 근거: 인수인계 §7.3.
+- [x] **E40 · 입력 임시저장 완료 (2026-04-22)** — `src/hooks/useInputDraft.ts` 신규 (sessionStorage `saju500:input_draft:v1` · 500ms 디바운스 · 24h TTL · schemaVersion 1). `src/pages/InputPage.tsx` 이어쓰기/새로 작성 Modal 배선 + Step5 진입 시 `clearDraft()`. `selectedProfile` (보관함 진입) · `?new=1` (강제 새입력) 경로는 Modal 비활성. 근거: 인수인계 §7.4.
+- [x] **P2-2 · /input 재진입 플로우 완료 (2026-04-22)** — `src/pages/InputPage.tsx` 에 `editingProfileId` state 도입. Step 0 프로필 카드 구조 변경: motion.button → div wrapper + (선택 버튼 + 연필 아이콘 수정 버튼 44×44, aria-label="수정"). 수정 클릭 시 해당 프로필 pre-fill + Header 타이틀 "사주 수정" 으로 전환. Step 5 진입 시 `editingProfileId` 있으면 기존 report `deleteReport()` 후 새 reportId 생성. `saveProfileDirect` 의 name+birth 키 기반 자동 dedup 으로 동일 프로필 덮어쓰기 보장. `handleBack` (Step 1→0) · `handleSelect` · "+ 새 사주 입력하기" 에서 `editingProfileId` clear. 근거: 인수인계 §7.P2-2.
+- [x] **P2-5 · 데일리 리워드 UI 완료 (2026-04-22)** — `src/services/storage/dailyReward.ts` 신규 (Phase 1 localStorage 기반, 키 `saju500:daily_reward:last` / `saju500:daily_reward:month`, 월 자동 리셋). `getDailyRewardState()` / `claimDailyReward()` — 일 1회 + 월 30회 제한, 성공 시 `addRewardBalance(0.1)`. `src/components/common/DailyRewardBadge.tsx` 신규 — 3-state 배지 (미수령 CTA / 수령완료 / 월 한도 초과), SSOT `#B8965A` + rgba 배경, 44×44 터치 영역, aria-live/aria-label. `DailyFortunePage.tsx` Header 아래 배치 (`hasAnyProfile && <DailyRewardBadge />`). 수령 성공 시 Toast "+0.1운이 지갑에 들어왔어요 ✨". **단위 결정 (자체, 준기 override 가능)**: 인수인계 원문 "3원" 과 런칭 프로모 PRD "3원 KRW" 의 명칭 충돌 해소 — 데일리 배지는 "0.1운 (=50원 상당)" 로 구현, 런칭 3원 프로모는 별도 `launchReward` 모델로 분리. TODO(server): Phase 2 Cloud Functions 로 이관 (어뷰징 방어). 근거: 인수인계 §7.P2-5 · `런칭프로모_3원리워드.md`.
+- [x] **P2-4 · /chat 요금 정책 완료 (2026-04-22)** — `src/pages/ChatPage.tsx` ChatView 에 `quotaExceeded` state 추가. `sendMessage` 가 `userMsgCount > 0 && credits === 0` 조건에서 `setQuotaExceeded(true)` + `setShowBuyCredits(true)`. BuyCredits Modal 카피 분기 — 한도 초과 시 "오늘 무료 한도를 다 썼어요 · 1운으로 대화 3회를 이어갈 수 있어요. 아니면 내일 다시 만나요." / 자발적 탭 시 "대화권 충전". 취소 버튼 카피도 분기 ("내일 다시 올게요" / "취소"). 컬러 SSOT `#B8965A` 단색 적용. TODO(E13): `spendBalance(1) + addChatCredits(3)` 원자화 주석 삽입. 근거: 인수인계 §7.P2-4.
+- [x] **P2-3 · 궁합 상대방 저장 완료 (2026-04-22)** — `src/services/storage/compatRecents.ts` 신규 (Phase 1 localStorage, 키 `saju500:compat_recents:v1`, MRU 최대 3명). API: `getRecentPartnerIds(validIds?)` / `addRecentPartner(id)` / `removeRecentPartner(id)`. `validIds` 넘기면 삭제된 프로필 자동 필터 + 저장소 정리. CompatibilityPage `handleSubmit` 에 `addRecentPartner(person2.id)` 배선. 프로필 picker bottom sheet slot 2 전용 상단에 "최근 본 상대방" chips row 추가 (rgba `#B8965A` + 이름/일간/오행 미니 카드, person1 선택자는 제외). **스코프 판단**: `saveProfileDirect` 가 이미 상대방 입력 시 자동 저장하므로 체크박스 대신 재사용 접근성 (최근 3명) 해결이 실제 UX 병목. TODO: Phase 2 `users/{uid}/partners/{pid}` Firestore 이관. 근거: 인수인계 §7.P2-3.
+- [x] **P2-1 · 블러 공유 경계 완료 (2026-04-22)** — `src/utils/share.ts` `generateOgImage` 개선 — 블러 필드 위에 `drawLockIcon` 자물쇠 (좌상단) + 골드 CTA 배지 "잠금 해제하고 전체 보기 →" (중앙하단) 캔버스 네이티브 렌더. 컬러 SSOT `#C9A96E→#B8965A` 정렬. `shareResult` text 고정 "{이름}님의 사주 — 잠금 해제하고 전체 보기 →". `src/components/share/ShareModal.tsx` 프리뷰 카드에 동일한 자물쇠 SVG + CTA 오버레이. TODO: Phase 2 Cloud Function SSR OG (E32 와 묶음) · `shareResult(locked?: boolean)` 파라미터 추가해 paid 유저 분기 지원. 근거: 인수인계 §7.P2-1 · `프리미엄_티저블러.md`.
+- [x] **E13 · 결제 원자성 완료 (2026-04-22)** — `functions/src/index.ts` `confirmPayment` (웹 토스페이먼츠) + `grantPurchase` (IAP) 둘 다 재작성. `payments/{orderId}` 에 **status 전이** 도입: `pending → confirmed | failed | needs_reconciliation`. 핵심 플로우 — (1) pending 선기록 → (2) Toss 승인 API (confirmPayment 만) → (3) 성공 시 transaction 으로 balance 증가 + `status:'confirmed'` / Toss 승인 실패 시 `status:'failed'` (재시도 허용) / Toss 승인 + DB 실패 시 `status:'needs_reconciliation'` + `tossApprovedAt` (수동 복구 유도). 중복 지급 방지는 `status==='confirmed'` 만 차단 (pending/failed 는 재시도 허용). `src/pages/ChargePage.tsx` catch 분기 **유형별 토스트** — "결제 승인 실패" (유저 취소) / "이미 처리된 결제" / "고객센터 문의" (needs_reconciliation) / 범용 폴백. 런칭 전 수동 QA 4건 필요 (정상/실패/재시도/중복). 근거: 인수인계 §7.1 · E13 트래커.
+- [x] **E32 · 공유 비회원 OG SSR 완료 (2026-04-22)** — `functions/src/share/renderShareOg.ts` 신규 (113 lines, onRequest Gen 2). UA 분기: 봇 UA (facebookexternalhit, twitterbot, slackbot, kakaotalk, telegrambot, discordbot, whatsapp, linkedinbot, google, bing 등) → SSR OG HTML (og:title "사주 결과 — 잠금 해제하고 전체 보기 →" + og:description + og:image `/og-image.png` + 카카오톡·Twitter 확장 태그) / 사람 UA → `/index.html` self-fetch 후 SPA 전달. 리포트 ID regex `[A-Za-z0-9_-]{4,64}` 검증, 형식 불일치 404. 캐시 정책 — 봇 5분 CDN (public, max-age=300, s-maxage=600) · 사람 no-store. `firebase.json` rewrite `{ "source": "/share/**", "function": "renderShareOg" }` SPA 폴백보다 앞에 배치. `index.ts` `export { renderShareOg }` 배선. Phase 2 TODO: 리포트별 동적 OG PNG (Storage 캐싱) · `shareResult(locked?: boolean)` paid 유저 분기 · self-fetch ~200ms 최적화. 근거: 인수인계 §7.2 · `프리미엄_티저블러.md`.
+- [x] **컴파일 검증 (6회)** — `npx tsc --noEmit` (client + functions) 0 에러 (E3 + E40 + P2-2 + P2-5 + P2-4 + P2-3 + P2-1 + E13 + E32 누적). **Path E 4종 + §7 P2 5건 전건 완결**. 남은 건 준기 배포 승인 + 수동 QA (Facebook Sharing Debugger · Slack unfurl · 카카오톡 · DevTools offline throttle) + Firestore rules `status` 필드 쓰기 차단.
+
+### 🆕 2026-04-22 · UI/톤앤매너 통일 (오후 세션)
+
+> 준기 지시: "UI 통일·톤앤매너 통일 · 다 반영 → 내가 QA"
+
+- [x] **HomePage v4.1 포팅** — `src/pages/HomePage.tsx` (322→448L). 10-section IA: Profile→Daily(火)→Dream(夢)→Premium(命)→Extensions4→Topics5→Chat(問)→Philosophy→Reviews→Hashtags22→Footer. Premium 카피: "처음부터 끝까지 읽어드립니다" (가격액·"1만 4천 자" 제거). HASHTAGS 22개 (가격·AI 키워드 0). 구 v3 14 gap 일괄 해소.
+- [x] **reviews.ts UX 라이팅 정렬** — `src/constants/reviews.ts` "광고는 있지만…" 부정문 제거, 50/60대 맘카페 어투(`~^^`, "처음해. 봤는대요" 패턴) 추가.
+- [x] **SSOT 컬러 일괄 통일** — `src/styles/globals.css` 변수(`--brand-gold` `#C9A96E→#B8965A`, `--brand-gold-vivid` `#D4A843→#8C6D3D`) + `sed` 39 파일 하드코딩 골드 일괄 치환. 머스타드 #B8941F 잔재 0건. (deprecated 주석 의미 보존)
+- [x] **적천수 NOTE 정리 4파일** — `LoadingPage.tsx` L35, `AILoading.tsx` L45, `DreamPage.tsx` L344-352, `DailyFortunePage.tsx` L271-279. 임시 placeholder "출처 검토 중" → 정상 attribution "한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반".
+- [x] **MyPage 앱인토스 분기** — `src/pages/MyPage.tsx` `isAppsInToss()` 감지 + **MENU_ITEMS_AIT** (운충전·결제내역·이용약관·개인정보·고객문의 5개; 분석기록·로그아웃·회원탈퇴 제거) vs **MENU_ITEMS_WEB** 분기. 결제/사용 내역 항목 신규(`/charge?tab=history`). 정책: `project_appintos_webapp_split.md`.
+- [x] **StoragePage cascade NO-OP 명시** — `src/services/storage/localStore.ts` `deleteReport`/`deleteProfile` 양 함수 NO-CASCADE 주석 + `StoragePage.tsx` 헤더에 SajuProfile vs LocalReport 분리 모델 명시. "보관함에서 분석 1건을 지워도 사주 프로필은 유지" / "프로필 지워도 결제한 분석 결과는 보관함에 남는다" 명문화. 정책: `project_storage_data_model.md`.
+- [x] **LoadingPage v2 의식형 3-tier** — `src/pages/LoadingPage.tsx` (192→308L). PRD `로딩전략.md` §2.1 준수: ① 만세력 추출 카드(입력 시각 → 진태양시 보정), ② 사주 4기둥 즉시 노출(干/支 오행 컬러 분리, 일주 골드 강조), ③ `REPORT_SECTIONS` 12 섹션 스켈레톤(점진 채움). 단계 인디케이터 + 회전 카피 6 풀 + 팁 카드 17개. 스트리밍 미적용(서버 generateReport 단일 호출 한계).
+- [x] **10주제 SSOT 정렬 end-to-end (2026-04-22 PM)** — 홈→URL→페이지→라우터→서버 AI 프롬프트 5계층 일괄 정렬.
+  - **HomePage**: 인라인 TOPIC_COLORS / 10-topic 배열 제거 → `listTopics()` from `src/constants/topics.ts` SSOT 소비. 키만 바꿔도 홈 카드가 자동 반영되는 구조.
+  - **TopicAnalysisPage**: URL param `useParams` 직후 `normalizeTopicId()` 통과 (legacy `moving`/`reconciliation`/`job` 등 SSOT canonical 로 매핑). TOPICS map 에 `exam` 신규 + `move` canonical + `moving` legacy alias. TopicViz switch 분기 + topicExtra 배열 갱신.
+  - **FooterCTA**: SSOT v1 한자 정렬 — `topic:love` 桃→**緣**, `topic:study` 印→**學**, `topic:marriage` 盟→**婚**, `topic:reunion` 緣→**復**. `topic:exam` (進) + `topic:move` (移) 신규, `topic:moving` legacy alias 보존. emblemColor 도 SSOT 5색+확장 4색 기준.
+  - **TopicIcons**: `TOPIC_ICONS` 매핑에 `exam: IconTopicStudy` (전용 픽토그램 준비 전 study 재사용) + `move: IconTopicMoving` canonical 추가.
+  - **서버 claudeTopic.ts**: ① `moving` 키 → `move` 리네임 (canonical 일치) ② `exam` TopicConfig 신규 (5 sections + specificPrompt 정관·편관·문창·학당·태극귀인 길성 반영 + topicData schema: subScores·changeMode·bestChangeMonths·interviewTime·bestField 등) ③ `SERVER_TOPIC_ALIASES` (moving/reconciliation/job/company/marry/test/exam_job → canonical) + `normalizeTopicIdServer()` ④ `TOPIC_BOUNDARIES` 10주제 × {scope, excludes} 상수 + `boundaryBlock` 프롬프트 주입 ("같은 사주 → 10주제 결과 모순 절대 금지" 강제, 인접 주제 영역 한 줄도 언급 금지). reunion 16k tokens·기타 8k maxTokens 정책 유지.
+  - **SSOT v1 canonical**: 緣(love)·復(reunion)·婚(marriage)·財(wealth)·進(exam)·業(business)·壽(health)·移(move)·學(study)·官(career) 10한자.
+  - 효과: 같은 사주로 10주제 분석 시 cross-topic 모순 (연애에서 결혼 timing 단정·시험에서 직업 평생 적성 단정 등) 프롬프트 레벨에서 차단. 향후 주제 추가는 `topics.ts` + 서버 `TOPIC_CONFIGS`/`TOPIC_BOUNDARIES` 만 손대면 되도록 단일 진입점화.
+- [x] **컴파일 검증 (UI/톤 통일 + SSOT 10주제 정렬, 9회 누적)** — `npx tsc --noEmit -p tsconfig.json` (client) + `cd functions && npx tsc --noEmit` 양쪽 EXIT=0. 변경 0 에러.
+- [x] **DailyFortune·Dream Flippable 제거 v2 (2026-04-22 PM)** — 두 페이지의 `LuckyColorCard` / `LuckyStatCard` 정적화. 탭-숨김 패턴 폐기 (앞면=라벨/값 + 뒷면=이유 → 한 카드 안에 라벨+값+이유 인라인 노출).
+  - **이유**: 모바일에서 "탭해서 이유 보기" 발견율 낮음. 운세 콘텐츠는 "왜" 가 가장 신뢰감 주는 정보라 숨길 이유 없음. 양쪽 페이지 동일 컴포넌트 시그니처 유지 (`LuckyStatCard {title, value, reason}`) — 호출부 무수정.
+  - **DailyFortunePage.tsx**: `Flippable` import 제거 (주석 보존). `LuckyColorCard` (160→정적, height prop 옵셔널 유지하지만 미사용), `LuckyStatCard` (160→정적). `TimeSlotCarousel` 은 carousel 그대로 유지 (시간대 시각화 정당).
+  - **DreamPage.tsx**: 동일 패턴. `Flippable` import 제거. `LuckyColorCard` / `LuckyStatCard` 양쪽 정적화 + DailyFortunePage 와 톤 통일 (sec-meta `--brand-gold` · sec-title 15px · text-body-sm 12px `--text-secondary` line-height 1.5).
+  - **SajuMiniCard.tsx 의 Flippable 은 보존** — 4기둥 본정보(干支) 와 별도의 꿈·오늘 연결 해석을 두 layer 로 명확히 분리하는 의도된 인터랙션. LuckyCard 의 "단일 값+이유" 패턴과 성격이 다름.
+  - **Result premium v2/v3 는 #40 으로 분리** — ResultPage 에 premium/blur/잠금 코드 0건 (1운 전용, 5000원은 Daeun/Monthly/Compat/Tojung 별도 페이지). 이미 v4 수준 visualization 12+ 풍부 (3420L). "premium v2/v3" 의 페이지·디자인 스코프 모호 → 준기 결정 대기.
+  - **컴파일 검증 (10회 누적)** — client + functions tsc EXIT=0.
+- [x] **통일성 최종 sweep — SSOT·이모지·하드코딩 정렬 (2026-04-22 PM 종결)** — Task #41. Daily/Dream 페이지의 cross-page 모순 해소 + 유저 노출 이모지 잔재 박멸 + 가격 노출 정책 정렬.
+  - **DailyFortunePage·DreamPage 의 `DAILY_TOPIC_ITEMS` / `DREAM_TOPIC_ITEMS` → SSOT 소비 전환** — 두 페이지 모두 인라인 하드코딩 컬러 (`#E91E63` 핑크 · `#1565C0` 블루 · `#2D8A4E` 그린) 와 혼합 라벨 ("연애·결혼" 등) 을 갖고 있어, 같은 사주가 페이지마다 다른 색·다른 주제로 보이는 cross-page drift 발생. `import { TOPIC_REGISTRY } from '@/constants/topics';` 추가 후 `{id, title, desc, price, color}` 모두 `TOPIC_REGISTRY[id].label / .color` 에서 직접 소비. 이로써 SSOT v1 한자·SSOT 5색 단일 진입점 보장 → 홈/Daily/Dream/TopicAnalysis 4페이지가 같은 주제 = 같은 색 = 같은 한자.
+  - **가격 표기 "1운 (500원)" → "1운"** — `project_pricing_hide_amount.md` (UI엔 운 단위, 원화는 ChargePage 만) 정책 정렬. Daily/Dream 주제 카드 4종 모두 적용.
+  - **유저 노출 이모지 3건 박멸 (`feedback_no_emoji_strict.md` 재강조)**:
+    - `InputPage.tsx` L726 — 출생시간 안내 배지의 `🕐` → `時` 한자 원형 뱃지 (18×18 · `rgba(184,150,90,0.20)` 배경 · `#7F6B4E` 텍스트 · Noto Serif KR · 900 weight). 한자노출_정책에 부합하는 "상징·프레임" 사용.
+    - `DailyRewardBadge.tsx` — toast 카피 `+0.1운이 지갑에 들어왔어요 ✨` → `+0.1운이 지갑에 들어왔어요` (✨ 제거). 헤더 docstring 도 ✨/🎉 잔재 정리 + "이모지 절대 금지 (2026-04-22 준기 재확인 · SVG/한자/컬러칩만 허용)" 원칙 명문화.
+    - `App.tsx` L63 — NotFoundPage 주석 내 `🟧` → `P0` 텍스트.
+  - **`Flippable` 컴포넌트 자체는 유지** — `SajuMiniCard.tsx` 의 4기둥 본정보(干支) ↔ 꿈·오늘 연결 해석 2-layer 분리는 의도된 인터랙션이므로 보존. 단일 값+이유의 LuckyCard 패턴과 성격이 다름.
+  - **컴파일 검증 (11회 누적)** — `npx tsc --noEmit -p tsconfig.json` (client) + `cd functions && npx tsc --noEmit` 양쪽 EXIT=0.
+
+### ✅ 기존 완료
 - [x] 사주아이 등 경쟁사 벤치마킹 (한국 3사 + 일본 2사 + 중국 2사 + 서구 2사)
 - [x] 만세력 라이브러리 + KR 진태양시 보정 + 30 TC
 - [x] AI 프롬프트 v2.1 (6대 원전 기반 + 2차 자기 리뷰)
@@ -355,26 +434,37 @@ users/{uid}/shareLogs/{logId}    - 공유 리워드 로그
 - `DreamPage/TopicAnalysisPage/DailyFortunePage`: 한자→이모지 (미승인 — 이모지 넣지 말라고 함)
 - `LoadingPage.tsx`: 클라이언트 환불 로직 제거 (보안 수정, OK)
 
-### 🔜 다음 할 일 (우선순위)
+### 🔜 다음 할 일 (우선순위 — 2026-04-22 재정렬)
 
-**P0 — 런칭 전 필수**
-1. 전략기획서 v3.1 갱신 (29 PRD 반영 통합 문서)
-2. Opus vs Sonnet A/B 비교 테스트 (3개 사주 데이터)
-3. Firebase deploy + 실제 API 테스트
-4. 앱인토스 ait build + 테스트
-5. `수용기준_체크리스트` × 12페이지 전수 감사
-6. `런칭_체크리스트` T-30 시점 착수
+**P0 — 인수인계 직결 (런칭 경로)**
+1. **HomePage.tsx v5 Path 분기 구현** — `diff v3 §2/§7` 대로 A/B/C/D 스택 렌더. 준기 결정 3건 필요:
+   - (a) env flag `VITE_HOME_V5_ENABLED` 기본값 (on/off/1% ramp)
+   - (b) price-intro 블록 존재/디자인 (Path B·C 상단 배치)
+   - (c) Storage-Chat 강화 scope (Path D 사이드바 vs inline)
+2. **9 mockup → 프로덕션 페이지 5종(주제) + 4종(확장) 포팅** — `diff v3 §4/§5` SSOT
+3. **Result 페이지 Footer 3-part CTA 통일** — `[page_emblem] + [XX 전체로 보기] + [10운으로 시작]` (`diff v3 §6`)
+4. **적천수 출처 치환** — src 6파일 (AILoading, academicReferences, prompts.ts, DailyFortunePage:271, DreamPage:347, LoadingPage:35) + docs 6파일 (내부만) + Cowork 6 mockup (준기 수동). A안 "출처 검토 중" 일괄.
+5. **Path E 4종** — ~~E3 NotFound~~ ✅ · ~~E40 입력 임시저장~~ ✅ · ~~E13 결제 원자성~~ ✅ · ~~E32 공유 비회원 OG SSR~~ ✅ **전건 완결 (2026-04-22)**. 런칭 전 남은 건: (a) `firebase deploy --only functions,hosting` (b) Facebook Sharing Debugger · Slack unfurl · 카카오톡 링크공유 3종 E32 검증 (c) DevTools offline throttle 로 E13 결제 실패 시나리오 QA 4건 (정상/실패/재시도/중복) (d) Firestore rules 에서 `payments.status` 쓰기 차단 (Cloud Function only).
+6. **P2 §7 5건** — ~~/input 재진입~~ ✅ · ~~데일리 리워드~~ ✅ · ~~블러 공유 경계~~ ✅ · ~~궁합 상대방 저장~~ ✅ · ~~/chat 요금~~ ✅ **전건 완결 (2026-04-22)**.
+
+**P0 — 기존 런칭 전 필수**
+7. 전략기획서 v3.1 갱신 (29 PRD 반영 통합 문서)
+8. ~~Opus vs Sonnet A/B 비교 테스트~~ ✅ **close out (2026-04-22 준기 "Opus로 가자" 지시)** — 500원 리포트 Opus 4.6 확정, A/B skip. `project_model_decision_opus_confirmed.md` 참조.
+9. Firebase deploy + 실제 API 테스트 (준기 수동 — Firebase CLI 인증 필요)
+10. 앱인토스 ait build + 테스트 (준기 수동 — 토스 developer 승인 경로)
+11. `수용기준_체크리스트` × 12페이지 전수 감사 (Claude 자동 감사 가능 — 요청 시 착수)
+12. `런칭_체크리스트` T-30 시점 착수 (준기 트리거 대기)
 
 **P1 — 런칭 직후**
-7. 인스타/스레드 계정 + 콘텐츠 5개 선제작
-8. SEO 타겟 키워드 + 블로그 1편
-9. 3원 리워드 프로모션 캠페인
-10. 블러잠금 후기 수집 파이프라인
+13. 인스타/스레드 계정 + 콘텐츠 5개 선제작
+14. SEO 타겟 키워드 + 블로그 1편
+15. 3원 리워드 프로모션 캠페인
+16. 블러잠금 후기 수집 파이프라인
 
 **P2 — 성장**
-11. 인플루언서 3~5명 리스트업
-12. Phase 2: 전화번호 계정 통합
-13. 궁합/월운 프리미엄 10운 상품 전환
+17. 인플루언서 3~5명 리스트업
+18. Phase 2: 전화번호 계정 통합
+19. 궁합/월운 프리미엄 10운 상품 전환
 
 ### 산출물 파일
 - `사주500_전략기획서_v2.docx` — 경쟁사·차별화·마케팅·해외·로드맵 (v3.1 갱신 대기)

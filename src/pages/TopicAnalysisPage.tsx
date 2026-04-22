@@ -9,25 +9,30 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/components/common/Toast';
 import { generateTopicAnalysis } from '@/services/ai/reportGenerator';
 import { AILoading } from '@/components/common/AILoading';
+import { FooterCTA, type FooterCTAPageKey } from '@/components/common/FooterCTA';
 import { ScoreRing } from '@/components/saju/ScoreRing';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 import { stripMd } from '@/utils/format';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
+import { normalizeTopicId } from '@/constants/topics';
 
 /* ─── 주제 설정 — 이모지 제거, 브랜드 픽토그램 사용.
  *    key가 PictogramRegistry의 topic:* 와 1:1 매핑. (브랜드픽토그램_시스템.md)
  */
 const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> = {
-  love:     { label: '연애운',       color: '#E91E63', desc: '인연의 시작, 이상형, 연애 흐름' },
-  wealth:   { label: '재물운',       color: '#C9A96E', desc: '돈 흐름, 투자 적기, 새는 돈 패턴' },
-  career:   { label: '취업·이직운', color: '#1565C0', desc: '적성, 이직 타이밍, 맞는 직종' },
-  marriage: { label: '결혼운',       color: '#E91E63', desc: '결혼 적기, 배우자 성향, 결혼 후 생활' },
-  business: { label: '사업운',       color: '#2D8A4E', desc: '창업 타이밍, 맞는 업종, 동업 궁합' },
-  health:   { label: '건강운',       color: '#2E7D32', desc: '취약 장기, 건강 주의 시기, 체질 분석' },
-  reunion:  { label: '재회운',       color: '#7B1FA2', desc: '재회 가능성, 적기, 새 인연 비교' },
-  study:    { label: '학업·시험운', color: '#0288D1', desc: '학습 스타일, 합격 운, 공부 시간대' },
-  social:   { label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' },
-  moving:   { label: '이사·이동운', color: '#757575', desc: '이동 적기, 좋은 방향, 해외운' },
+  // SSOT v1 컬러 정렬 (2026-04-22 · @/constants/topics)
+  love:     { label: '연애운',       color: '#C88A95', desc: '만남·관계·인연 흐름' },
+  wealth:   { label: '재물운',       color: '#B8965A', desc: '돈·투자·현금흐름 변곡' },
+  career:   { label: '직업운',       color: '#5A7CA8', desc: '커리어·승진·평생 결' },
+  marriage: { label: '결혼운',       color: '#C97B95', desc: '인연 시기와 배우자 결' },
+  business: { label: '사업운',       color: '#A37A2E', desc: '창업·자영업 흐름과 시기' },
+  health:   { label: '건강운',       color: '#6FA08C', desc: '체질·기운·주의 시기' },
+  reunion:  { label: '재회운',       color: '#D89A8A', desc: '헤어진 사람과의 흐름' },
+  study:    { label: '학업운',       color: '#9C5A8A', desc: '집중력·지식 흡수·학습 패턴' },
+  exam:     { label: '합격·이직운', color: '#5A6FA8', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
+  move:     { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
+  social:   { label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
+  moving:   { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
 };
 
 const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
@@ -51,7 +56,7 @@ type Phase = 'select' | 'loading' | 'result';
 
 /** 점수 -> 한자 판정 (사주 전통 방식) */
 function getJudgment(score: number) {
-  if (score >= 85) return { hanja: '大吉', reading: '대길', desc: '매우 좋은 기운', color: '#C9A96E', bg: 'rgba(201,169,110,0.12)' };
+  if (score >= 85) return { hanja: '大吉', reading: '대길', desc: '매우 좋은 기운', color: '#B8965A', bg: 'rgba(184,150,90,0.12)' };
   if (score >= 70) return { hanja: '吉',   reading: '길',   desc: '좋은 기운의 흐름', color: '#2D8A4E', bg: 'rgba(45,138,78,0.10)' };
   if (score >= 55) return { hanja: '平',   reading: '평',   desc: '무난한 흐름',   color: '#1565C0', bg: 'rgba(21,101,192,0.10)' };
   if (score >= 40) return { hanja: '小注意', reading: '소주의', desc: '보완이 필요한 기운', color: '#E65100', bg: 'rgba(230,81,0,0.10)' };
@@ -84,7 +89,7 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   검정: '#424242', 검은색: '#424242', 흑색: '#424242', 블랙: '#424242',
   회색: '#757575', 회색빛: '#757575', 은색: '#9E9E9E', 실버: '#9E9E9E',
   // 금색 계열
-  금색: '#C9A96E', 골드: '#C9A96E', 금: '#C9A96E', 황토: '#BF8C3E', 황토색: '#BF8C3E',
+  금색: '#B8965A', 골드: '#B8965A', 금: '#B8965A', 황토: '#BF8C3E', 황토색: '#BF8C3E',
   갈색: '#795548', 브라운: '#795548', 갈: '#795548',
   베이지: '#D7CCC8', 아이보리: '#EFEBE9',
   // 보라 계열
@@ -110,7 +115,7 @@ function findLuckyColorHex(value: string): string | null {
 
 /** 등급 기준표 데이터 */
 const GRADE_SCALE = [
-  { hanja: '大吉', reading: '대길', range: '85~100', color: '#C9A96E' },
+  { hanja: '大吉', reading: '대길', range: '85~100', color: '#B8965A' },
   { hanja: '吉', reading: '길', range: '70~84', color: '#2D8A4E' },
   { hanja: '平', reading: '평', range: '55~69', color: '#1565C0' },
   { hanja: '小注意', reading: '소주의', range: '40~54', color: '#E65100' },
@@ -1917,7 +1922,9 @@ function TopicViz({ topicId, data, color }: { topicId: string; data: any; color:
     case 'reunion': return <ReunionViz data={data} color={color} />;
     case 'study': return <StudyViz data={data} color={color} />;
     case 'social': return <SocialViz data={data} color={color} />;
+    case 'move':
     case 'moving': return <MovingViz data={data} color={color} />;
+    case 'exam': return <StudyViz data={data} color={color} />; // 합격·이직운 — study viz 재사용 (차후 ExamViz 전용 교체)
     default: return null;
   }
 }
@@ -1985,7 +1992,10 @@ function SectionBody({ content, color }: { content: string; color: string }) {
    메인 페이지 컴포넌트
    ════════════════════════════════════════════════ */
 export function TopicAnalysisPage() {
-  const { topicId } = useParams<{ topicId: string }>();
+  const { topicId: rawTopicId } = useParams<{ topicId: string }>();
+  // SSOT v1 정렬 (2026-04-22): legacy URL ('/topic/moving') 을 canonical ('move') 로 정규화.
+  // 잘못된 id 는 null 반환 — 이 경우 'love' 로 폴백 (구 기본값 유지).
+  const topicId = (normalizeTopicId(rawTopicId) || rawTopicId || 'love') as string;
   const topic = TOPICS[(topicId || 'love') as TopicKey];
   const navigate = useNavigate();
   const location = useLocation();
@@ -2099,7 +2109,8 @@ export function TopicAnalysisPage() {
 
       // 주제별 추가 정보 (사업운/취업운/이사운/학업운/연애운)
       const loveExtra = topicId === 'love' ? { loveStatus } : {};
-      const topicExtra = (['business', 'career', 'moving', 'study'].includes(topicId!))
+      // SSOT canonical: 'move' (legacy 'moving' 는 normalizeTopicId 로 이미 정규화됨)
+      const topicExtra = (['business', 'career', 'move', 'study'].includes(topicId!))
         ? Object.fromEntries(Object.entries(extraInfo).filter(([, v]) => v !== '' && v != null)) : {};
       const extra = { ...topicExtra, ...loveExtra };
       const finalExtra = Object.keys(extra).length > 0 ? extra : undefined;
@@ -2523,7 +2534,7 @@ export function TopicAnalysisPage() {
                   )}
 
                   {/* ─── 이사·이동운: 이사 목적 + 예정 시기 ─── */}
-                  {topicId === 'moving' && selected && (
+                  {topicId === 'move' && selected && (
                     <FadeIn delay={0.1}>
                       <div className="card">
                         <div className="flex items-center gap-2 mb-3">
@@ -2918,11 +2929,11 @@ export function TopicAnalysisPage() {
                 const lp = result.luckyProfile;
                 const luckyHex = findLuckyColorHex(lp.color);
                 const items = [
-                  lp.color && { label: '행운 컬러', value: lp.color, icon: <div className="w-7 h-7 rounded-lg shadow-sm border border-white/60" style={{ background: luckyHex || '#C9A96E' }} /> },
-                  lp.direction && { label: '행운 방위', value: lp.direction, icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>方</span> },
-                  lp.number && { label: '행운 숫자', value: String(lp.number), icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>數</span> },
-                  lp.item && { label: '행운 아이템', value: lp.item, icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>福</span> },
-                  lp.bestMonth && { label: '최적 시기', value: lp.bestMonth, icon: <span className="text-[14px] font-black" style={{ color: '#C9A96E' }}>時</span> },
+                  lp.color && { label: '행운 컬러', value: lp.color, icon: <div className="w-7 h-7 rounded-lg shadow-sm border border-white/60" style={{ background: luckyHex || '#B8965A' }} /> },
+                  lp.direction && { label: '행운 방위', value: lp.direction, icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>方</span> },
+                  lp.number && { label: '행운 숫자', value: String(lp.number), icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>數</span> },
+                  lp.item && { label: '행운 아이템', value: lp.item, icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>福</span> },
+                  lp.bestMonth && { label: '최적 시기', value: lp.bestMonth, icon: <span className="text-[14px] font-black" style={{ color: '#B8965A' }}>時</span> },
                 ].filter(Boolean) as { label: string; value: string; icon: any }[];
 
                 return (
@@ -2931,9 +2942,9 @@ export function TopicAnalysisPage() {
                       <p className="text-h3 text-text-primary mb-3">{topic.label} 행운 프로필</p>
                       <div className="space-y-0">
                         {items.map((item) => (
-                          <div key={item.label} className="flex items-center gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(201,169,110,0.12)' }}>
+                          <div key={item.label} className="flex items-center gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(184,150,90,0.12)' }}>
                             <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ background: 'rgba(201,169,110,0.1)' }}>
+                              style={{ background: 'rgba(184,150,90,0.1)' }}>
                               {item.icon}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -2971,6 +2982,9 @@ export function TopicAnalysisPage() {
                   ))}
                 </div>
               </div>
+
+              {/* 3-part Footer CTA (diff v3 §6) */}
+              <FooterCTA pageKey={`topic:${topicId}` as FooterCTAPageKey} backTo="/" />
             </motion.div>
           )}
         </AnimatePresence>

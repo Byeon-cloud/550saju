@@ -73,7 +73,7 @@ export function ErrorState({
           width: 56,
           height: 56,
           borderRadius: 16,
-          background: 'rgba(201,169,110,0.14)',
+          background: 'rgba(184,150,90,0.14)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

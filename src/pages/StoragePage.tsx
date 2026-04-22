@@ -1,3 +1,14 @@
+/**
+ * 보관함 페이지 — 이용기록(reports) 전용 뷰
+ *
+ * ⚠ 데이터 모델 분리 (project_storage_data_model.md SSOT):
+ *   - 사주 정보(SajuProfile)  ← MyPage / HomePage / InputPage 에서 관리
+ *   - 이용기록(LocalReport)   ← 본 페이지 + 결과 페이지에서 관리
+ *   두 테이블은 완전히 독립이며 cascade delete 금지.
+ *   - 보관함에서 분석 1건을 지워도 그 사람의 사주 프로필은 유지된다.
+ *   - 마이/홈에서 프로필을 지워도 과거에 결제한 분석 결과는 보관함에 그대로 남는다.
+ *   - 상호 참조는 name+birthYMD 키로만 (FK 없음).
+ */
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -75,6 +86,12 @@ export function StoragePage() {
     navigate(`/result/${report.id}`);
   }
 
+  /**
+   * 분석 1건 삭제 — NO-CASCADE.
+   * 이 호출은 LocalReport(이용기록) 단건만 지운다.
+   * 같은 인물의 SajuProfile(사주 정보)은 PROFILES_KEY 에 그대로 유지되므로
+   * 마이/홈/입력 흐름은 영향을 받지 않는다.
+   */
   function handleDelete(id: string) {
     deleteReport(id);
     setReports(prev => prev.filter(r => r.id !== id));
@@ -166,8 +183,8 @@ export function StoragePage() {
                           onKeyDown={(e) => e.key === 'Enter' && openProfile(r)}
                         >
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
-                            <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#C9A96E' }}>
+                            style={{ background: isMe ? 'rgba(27,42,74,0.08)' : 'rgba(184,150,90,0.08)' }}>
+                            <span className="text-h3 font-bold" style={{ color: isMe ? '#1B2A4A' : '#B8965A' }}>
                               {r.name.charAt(0)}
                             </span>
                           </div>
@@ -240,8 +257,8 @@ export function StoragePage() {
                   <button key={room.id} onClick={() => navigate(`/chat/${room.id}`)} className="card w-full text-left py-3.5 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(201,169,110,0.1)' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.5">
+                        style={{ background: 'rgba(184,150,90,0.1)' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="1.5">
                           <path d="M21 12a9 9 0 01-9 9c-1.5 0-2.9-.4-4.1-1L3 21l1.1-4.1A9 9 0 1121 12z" />
                         </svg>
                       </div>
@@ -330,7 +347,7 @@ export function StoragePage() {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'love', icon: '愛', label: '연애운', color: '#E91E63' },
-                    { id: 'wealth', icon: '財', label: '재물운', color: '#C9A96E' },
+                    { id: 'wealth', icon: '財', label: '재물운', color: '#B8965A' },
                     { id: 'career', icon: '事', label: '취업운', color: '#1565C0' },
                     { id: 'health', icon: '健', label: '건강운', color: '#2E7D32' },
                   ].map((t) => (

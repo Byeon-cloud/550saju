@@ -12,6 +12,7 @@ import { generateDaeunAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { FooterCTA } from '@/components/common/FooterCTA';
 import type { DaeunAnalysisResponse } from '@/types/report';
 import { stripMd } from '@/utils/format';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
@@ -112,7 +113,7 @@ export function DaeunPage() {
         <Header title="대운 해설" />
         <div className="px-5 pt-4 space-y-5">
           <FadeIn>
-            <div className="card py-5 px-5 text-center" style={{ borderTop: '3px solid #C9A96E' }}>
+            <div className="card py-5 px-5 text-center" style={{ borderTop: '3px solid #B8965A' }}>
               <p className="text-h1 text-text-primary">대운(大運) 해설</p>
               <p className="text-body-sm text-text-muted mt-2">10년 단위로 바뀌는 운의 흐름을 읽어드려요</p>
               <p className="text-caption text-text-hint mt-1">직업 · 연애 · 재물 · 건강 기간별 상세 분석</p>
@@ -169,13 +170,13 @@ export function DaeunPage() {
 
         {/* 개요 */}
         <FadeIn>
-          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #C9A96E' }}>
+          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #B8965A' }}>
             <p className="text-h2 text-text-primary mb-2">{selected?.name}님의 대운 흐름</p>
             {(result as any).keywords?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {(result as any).keywords.map((kw: string, i: number) => (
                   <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                    style={{ background: 'rgba(184,150,90,0.1)', color: '#A08B6A', border: '1px solid rgba(184,150,90,0.2)' }}>
                     {kw}
                   </span>
                 ))}
@@ -196,14 +197,14 @@ export function DaeunPage() {
                   <AreaChart data={periods.map((p: any) => ({ name: `${p.시작나이}세`, 점수: p.score || 50 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="daeunGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#C9A96E" stopOpacity={0.02} />
+                        <stop offset="5%" stopColor="#B8965A" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#B8965A" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
-                    <Area type="monotone" dataKey="점수" stroke="#C9A96E" strokeWidth={2}
-                      fill="url(#daeunGrad)" dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }} />
+                    <Area type="monotone" dataKey="점수" stroke="#B8965A" strokeWidth={2}
+                      fill="url(#daeunGrad)" dot={{ r: 2.5, fill: '#B8965A', strokeWidth: 0 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -258,7 +259,7 @@ export function DaeunPage() {
               <p className="text-h3 text-text-primary mb-4">인생 시기 맵</p>
               <div className="relative">
                 {/* 연결선 */}
-                <div className="absolute left-[18px] top-4 bottom-4 w-[2px]" style={{ background: 'rgba(201,169,110,0.2)' }} />
+                <div className="absolute left-[18px] top-4 bottom-4 w-[2px]" style={{ background: 'rgba(184,150,90,0.2)' }} />
                 <div className="space-y-4">
                   {result.lifePhaseMap.map((lp, i) => {
                     const currentDaeun = selected?.sajuData?.daeun?.find((x: any) => x.isCurrent || x.현재);
@@ -266,7 +267,7 @@ export function DaeunPage() {
                     return (
                       <div key={i} className="flex items-start gap-3 relative">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${isCurrent ? 'ring-2 ring-offset-2 ring-brand-gold' : ''}`}
-                          style={{ background: isCurrent ? '#C9A96E' : 'rgba(201,169,110,0.1)' }}>
+                          style={{ background: isCurrent ? '#B8965A' : 'rgba(184,150,90,0.1)' }}>
                           <span className={`text-[11px] font-black ${isCurrent ? 'text-white' : 'text-brand-gold'}`}>{lp.daeun.charAt(0)}</span>
                         </div>
                         <div className="flex-1 pt-1">
@@ -292,6 +293,9 @@ export function DaeunPage() {
             결과 공유하기
           </Button>
         </FadeIn>
+
+        {/* 3-part Footer CTA (diff v3 §6) */}
+        <FooterCTA pageKey="daeun" backTo="/" />
       </div>
 
       <ShareModal
@@ -307,14 +311,14 @@ export function DaeunPage() {
 // ─── 기간별 카드 (접기/펼치기) ───
 function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] }) {
   const [expanded, setExpanded] = useState(period.isCurrent);
-  const scoreColor = period.score >= 75 ? '#C9A96E' : period.score >= 50 ? '#2D8A4E' : '#2D4470';
+  const scoreColor = period.score >= 75 ? '#B8965A' : period.score >= 50 ? '#2D8A4E' : '#2D4470';
 
   return (
     <button onClick={() => setExpanded(!expanded)} className={`w-full text-left card transition-all ${period.isCurrent ? 'ring-2 ring-brand-gold' : ''}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: period.isCurrent ? '#C9A96E' : `${scoreColor}15` }}>
+            style={{ background: period.isCurrent ? '#B8965A' : `${scoreColor}15` }}>
             <span className={`text-h3 font-bold ${period.isCurrent ? 'text-white' : ''}`} style={!period.isCurrent ? { color: scoreColor } : {}}>
               {period.간지.charAt(0)}
             </span>
@@ -352,7 +356,7 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                   {[
                     { label: '직업', score: (period as any).careerScore, color: '#1B2A4A' },
                     { label: '연애', score: (period as any).loveScore, color: '#E91E63' },
-                    { label: '재물', score: (period as any).wealthScore, color: '#C9A96E' },
+                    { label: '재물', score: (period as any).wealthScore, color: '#B8965A' },
                     { label: '건강', score: (period as any).healthScore, color: '#2D8A4E' },
                   ].map(a => (
                     <div key={a.label} className="text-center">
@@ -370,7 +374,7 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
               {[
                 { label: '직업/진로', value: period.career, color: '#1B2A4A' },
                 { label: '연애/관계', value: period.love, color: '#E91E63' },
-                { label: '재물',     value: period.wealth, color: '#C9A96E' },
+                { label: '재물',     value: period.wealth, color: '#B8965A' },
                 { label: '건강',     value: period.health, color: '#2D8A4E' },
               ].map(area => (
                 <div key={area.label}>

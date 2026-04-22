@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>사주500 충전 v2 — 운 충전 (원화 노출 유일 페이지)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#F8F5EE;
+    --ink:#1A1A1A;
+    --ink-soft:#3D3D3D;
+    --gray-500:#6B6B6B;
+    --gray-line:#E5DFD0;
+    --gold:#B8965A;
+    --gold-dark:#7F6B4E;
+    --gold-deep:#5C4A2E;
+    --gold-soft:#F0E8D9;
+    --gold-shimmer:#E8D9B8;
+    --success:#1C6B3A;
+    --warning:#806012;
+    --danger:#C00000;
+    --serif: 'Noto Serif KR', serif;
+    --sans: 'Pretendard Variable', Pretendard, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0;}
+  html,body{background:#1a1815; color:var(--ink); font-family:var(--sans); font-weight:500;}
+  body{min-height:100vh; padding:20px 16px 40px;}
+
+  .stage{display:flex; justify-content:center;}
+  .phone{
+    width:428px; max-width:100%; height:920px; background:var(--paper);
+    border-radius:44px; border:10px solid #0a0a0a; overflow:hidden;
+    position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.5);
+  }
+  .notch{position:absolute; top:10px; left:50%; transform:translateX(-50%); width:130px; height:34px; background:#0a0a0a; border-radius:0 0 22px 22px; z-index:50;}
+  .screen{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; padding-bottom:104px;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  /* 헤드 폰트 */
+  h1,h2,h3,.top-title,.hero h2,.card-un,.card-label,.share h3,.success-h,.sum-un,.notice-head{
+    font-family: var(--serif);
+  }
+
+  /* ─── TopBar (56) ─── */
+  .top-bar{
+    position:sticky; top:0; z-index:20; height:56px; background:var(--paper);
+    border-bottom:1px solid var(--gray-line);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 14px;
+  }
+  .top-back{width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:10px; cursor:pointer;}
+  .top-back svg{width:22px; height:22px; color:var(--ink);}
+  .top-title{font-size:18px; font-weight:700; color:var(--ink); letter-spacing:-0.01em;}
+  .top-balance{display:flex; align-items:center; gap:5px; background:var(--gold-soft); padding:5px 11px; border-radius:999px; border:1px solid rgba(184,150,90,0.3);}
+  .top-balance .dot{width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 2px rgba(184,150,90,0.2);}
+  .top-balance .num{font-size:13px; font-weight:700; color:var(--ink);}
+
+  /* ─── HeroBar (104) — 원화 환산 명시 ─── */
+  .hero{
+    position:relative; height:104px; background:var(--gold-soft);
+    padding:18px 22px; display:flex; align-items:center; justify-content:space-between;
+    overflow:hidden;
+    border-bottom:1px solid rgba(184,150,90,0.2);
+  }
+  .hero h2{font-size:19px; font-weight:800; color:var(--ink); letter-spacing:-0.01em; line-height:1.25;}
+  .hero .rate{margin-top:6px; font-size:13px; color:var(--ink-soft); font-weight:500;}
+  .hero .rate em{color:var(--gold-deep); font-style:normal; font-weight:800;}
+  .hero .note{margin-top:3px; font-size:11px; color:var(--gold-dark); font-weight:500;}
+  .hero .illust{
+    position:relative; width:64px; height:64px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .hero .illust .hanja{font-family:var(--serif); font-size:42px; font-weight:900; color:var(--gold-deep); line-height:1;}
+  .hero .illust .coin{position:absolute; top:-4px; right:-2px; width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,var(--gold-shimmer),var(--gold)); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(184,150,90,0.4);}
+  .hero .illust .coin svg{width:12px; height:12px; color:#fff;}
+
+  /* ─── RedirectHint (선택 노출) ─── */
+  .redirect-hint{
+    margin:14px 16px 0; padding:14px 16px; background:#FFFFFF;
+    border:1px solid var(--gray-line); border-radius:12px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .redirect-hint svg{width:18px; height:18px; color:var(--gold-dark); flex-shrink:0;}
+  .redirect-hint .txt{font-size:13px; color:var(--ink-soft); font-weight:500; line-height:1.45;}
+  .redirect-hint .txt em{color:var(--gold-deep); font-style:normal; font-weight:700;}
+
+  /* ─── ChargePackages (2열 그리드) ─── */
+  .pkg-head{margin:20px 16px 10px; font-size:14px; font-weight:700; color:var(--ink); letter-spacing:-0.01em;}
+  .pkg-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px;}
+  .pkg{
+    position:relative; min-height:128px; background:#FFFFFF;
+    border:1px solid var(--gray-line); border-radius:16px;
+    padding:14px 14px 13px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    cursor:pointer; transition:all 0.18s ease-out;
+  }
+  .pkg:hover{border-color:rgba(184,150,90,0.5);}
+  .pkg.selected{border:2px solid var(--gold); background:var(--gold-soft); padding:13px 13px 12px;}
+  .pkg .top-row{display:flex; justify-content:space-between; align-items:flex-start; min-height:18px;}
+  .pkg .label{font-size:10.5px; font-weight:700; color:var(--gold-deep); letter-spacing:0.02em;}
+  .pkg .bonus{background:var(--success); color:var(--paper); font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px;}
+  .pkg .check{width:18px; height:18px; border-radius:50%; background:var(--gold-deep); color:var(--paper); display:none; align-items:center; justify-content:center; font-size:10px; font-weight:800;}
+  .pkg.selected .check{display:inline-flex;}
+  .pkg .card-un{font-size:24px; font-weight:800; color:var(--ink); line-height:1; margin-top:8px;}
+  .pkg .card-krw{font-size:14px; font-weight:700; color:var(--gold-deep); margin-top:4px; font-family:var(--sans);}
+  .pkg .guide{font-size:11.5px; color:var(--ink-soft); line-height:1.4; font-weight:500;}
+  .pkg.full{grid-column:1 / -1; min-height:auto; padding:14px 16px;}
+  .pkg.full .inner{display:flex; align-items:center; justify-content:space-between; gap:14px;}
+  .pkg.full .inner .l{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .pkg.full .inner .card-un{margin-top:0; font-size:22px;}
+  .pkg.full .inner .card-krw{margin-top:0;}
+  .pkg.full .inner .guide{flex:1; text-align:right;}
+
+  /* ─── Divider "또는" ─── */
+  .divider{height:40px; margin:14px 16px 0; display:flex; align-items:center; gap:12px;}
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--gray-line);}
+  .divider span{font-size:12px; font-weight:500; color:var(--gray-500);}
+
+  /* ─── ShareRewardCard (140) ─── */
+  .share{
+    margin:4px 16px 0; padding:18px 20px; min-height:140px;
+    background:var(--paper); border:1px solid var(--gold); border-radius:16px;
+    display:flex; gap:14px; align-items:stretch;
+  }
+  .share .l{flex:1; display:flex; flex-direction:column; gap:6px;}
+  .share h3{font-size:16px; font-weight:800; color:var(--ink); letter-spacing:-0.01em; line-height:1.3;}
+  .share .desc{font-size:12px; color:var(--ink-soft); line-height:1.5; font-weight:500;}
+  .share .desc em{color:var(--gold-deep); font-style:normal; font-weight:700;}
+  .share .r{display:flex; flex-direction:column; align-items:flex-end; gap:8px; justify-content:center;}
+  .share .count{background:var(--gold-soft); color:var(--gold-deep); font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid rgba(184,150,90,0.25);}
+  .share .btn-share{height:40px; padding:0 16px; background:var(--ink); color:var(--paper); font-size:13px; font-weight:700; border-radius:999px; border:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer; letter-spacing:-0.01em;}
+  .share .btn-share svg{width:14px; height:14px;}
+
+  /* ─── Notice ─── */
+  .notice{margin:22px 16px 0; padding:18px 18px 16px; background:#FFFFFF; border:1px solid var(--gray-line); border-radius:14px;}
+  .notice-head{font-size:13px; font-weight:700; color:var(--ink); margin-bottom:10px;}
+  .notice ul{list-style:none; margin:0; padding:0;}
+  .notice li{position:relative; padding-left:12px; font-size:11.5px; color:var(--gray-500); line-height:1.75; font-weight:500; letter-spacing:-0.01em;}
+  .notice li::before{content:""; position:absolute; left:2px; top:10px; width:3px; height:3px; border-radius:50%; background:var(--gray-500);}
+  .notice .links{margin-top:12px; padding-top:10px; border-top:1px dashed var(--gray-line); display:flex; gap:14px;}
+  .notice .links a{font-size:12px; font-weight:700; color:var(--gold-deep); text-decoration:none; display:inline-flex; align-items:center; gap:3px;}
+  .notice .links a::after{content:"›"; color:var(--gold-dark); font-weight:500;}
+
+  /* ─── CheckoutBar (sticky 80) ─── */
+  .checkout{
+    position:absolute; left:0; right:0; bottom:0; z-index:30;
+    height:80px; background:var(--ink); color:var(--paper);
+    padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    transform:translateY(0); transition:transform 0.2s ease-out;
+    border-radius:0 0 34px 34px;
+  }
+  .checkout.hidden{transform:translateY(100%);}
+  .checkout .l{display:flex; flex-direction:column; gap:3px;}
+  .checkout .l .cap{font-size:12px; font-weight:600; color:rgba(248,245,238,0.72); letter-spacing:-0.01em;}
+  .checkout .l .sum-un{font-size:15px; font-weight:700; color:var(--paper); letter-spacing:-0.01em;}
+  .checkout .l .sum-un em{color:var(--gold-shimmer); font-style:normal;}
+  .checkout .btn-pay{height:48px; padding:0 20px; min-width:132px; background:var(--paper); color:var(--ink); font-size:14px; font-weight:800; border-radius:999px; border:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; letter-spacing:-0.01em;}
+  .checkout .btn-pay svg{width:14px; height:14px;}
+
+  /* ─── 참고 주석 블록 (목업 전용) ─── */
+  .dev-note{
+    max-width:428px; margin:14px auto 0; padding:12px 16px;
+    background:rgba(248,245,238,0.08); border:1px dashed rgba(248,245,238,0.25);
+    border-radius:12px; color:#d9d3c4; font-size:11px; line-height:1.6;
+  }
+  .dev-note b{color:var(--gold-shimmer);}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+
+      <!-- TopBar -->
+      <div class="top-bar">
+        <div class="top-back" aria-label="뒤로 가기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="top-title">운 충전</div>
+        <div class="top-balance">
+          <span class="dot"></span>
+          <span class="num">3운</span>
+        </div>
+      </div>
+
+      <!-- HeroBar — 원화 환산 명시 (이 페이지만 원화 노출 허용) -->
+      <div class="hero">
+        <div>
+          <h2>운으로 사주를 봐요</h2>
+          <div class="rate"><em>1운 = 500원</em>으로 충전됩니다</div>
+          <div class="note">콘텐츠는 모두 운 단위로 보여드려요</div>
+        </div>
+        <div class="illust">
+          <span class="hanja">運</span>
+          <span class="coin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <!-- RedirectHint (선택 노출 — 예시로 열어둠) -->
+      <div class="redirect-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <div class="txt"><em>10운</em>이 필요한 프리미엄 풀이로 돌아갑니다</div>
+      </div>
+
+      <!-- ChargePackages -->
+      <div class="pkg-head">충전 패키지</div>
+      <div class="pkg-grid">
+
+        <!-- p1 · 1운 -->
+        <div class="pkg" role="radio" aria-checked="false" aria-label="1운 패키지, 500원">
+          <div class="top-row"><span class="label">&nbsp;</span><span class="check">✓</span></div>
+          <div>
+            <div class="card-un">1운</div>
+            <div class="card-krw">500원</div>
+          </div>
+          <div class="guide">주제 하나 가볍게</div>
+        </div>
+
+        <!-- p5 · 5운 -->
+        <div class="pkg" role="radio" aria-checked="false" aria-label="5운 패키지, 2500원">
+          <div class="top-row"><span class="label">&nbsp;</span><span class="check">✓</span></div>
+          <div>
+            <div class="card-un">5운</div>
+            <div class="card-krw">2,500원</div>
+          </div>
+          <div class="guide">주제별 5번 해볼 수 있어요</div>
+        </div>
+
+        <!-- p10 · 10운 · 가장 인기 · selected -->
+        <div class="pkg selected" role="radio" aria-checked="true" aria-label="10운 패키지, 5000원, 가장 인기">
+          <div class="top-row"><span class="label">가장 인기</span><span class="check">✓</span></div>
+          <div>
+            <div class="card-un">10운</div>
+            <div class="card-krw">5,000원</div>
+          </div>
+          <div class="guide">프리미엄 1번 가능해요</div>
+        </div>
+
+        <!-- p30 · 30운 +1운 -->
+        <div class="pkg" role="radio" aria-checked="false" aria-label="30운 패키지, 14000원, 1운 보너스">
+          <div class="top-row"><span class="label">&nbsp;</span><span class="bonus">+1운</span></div>
+          <div>
+            <div class="card-un">30운</div>
+            <div class="card-krw">14,000원</div>
+          </div>
+          <div class="guide">넉넉하게, 부담 없이</div>
+        </div>
+
+        <!-- p50 · 50운 · 최대 혜택 · +3운 (full-width) -->
+        <div class="pkg full" role="radio" aria-checked="false" aria-label="50운 패키지, 22000원, 최대 혜택, 3운 보너스">
+          <div class="top-row"><span class="label">최대 혜택</span><span class="bonus">+3운</span></div>
+          <div class="inner">
+            <div class="l">
+              <span class="card-un">50운</span>
+              <span class="card-krw">22,000원</span>
+            </div>
+            <div class="guide">한 달은 풍족하게</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"><span>또는</span></div>
+
+      <!-- ShareRewardCard -->
+      <div class="share">
+        <div class="l">
+          <h3>친구에게 공유하고 1운 받기</h3>
+          <div class="desc">하루 <em>3번</em>까지, 총 <em>3운(=1,500원치)</em>까지 받을 수 있어요</div>
+          <div class="desc" style="color:var(--gray-500); font-size:11px;">카카오톡 · 링크 복사 · 이미지 저장</div>
+        </div>
+        <div class="r">
+          <span class="count">오늘 0/3회</span>
+          <button class="btn-share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            공유하기
+          </button>
+        </div>
+      </div>
+
+      <!-- Notice -->
+      <div class="notice">
+        <div class="notice-head">이용 정책</div>
+        <ul>
+          <li>구매한 운은 환불되지 않으며 계정 종료 시 소멸됩니다.</li>
+          <li>운은 사주500 앱 안에서만 사용할 수 있습니다.</li>
+          <li>비정상 공유가 감지되면 적립이 취소될 수 있습니다.</li>
+          <li>결제·세금 관련 안내는 이용약관·개인정보처리방침에서 확인해주세요.</li>
+        </ul>
+        <div class="links">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CheckoutBar (sticky, 선택됐을 때) -->
+    <div class="checkout">
+      <div class="l">
+        <div class="cap">선택한 패키지</div>
+        <div class="sum-un"><em>10운</em> · 5,000원</div>
+      </div>
+      <button class="btn-pay">
+        결제하기
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div class="dev-note">
+  <b>목업 메모 —</b>
+  TopBar 56 · HeroBar 104 · RedirectHint 선택 노출 · 패키지 2열×5종 (p50 full-width) · Divider "또는" · ShareRewardCard 140 · Notice · CheckoutBar sticky 80.
+  <br>
+  <b>원화 노출은 이 페이지에만.</b> HeroBar "1운 = 500원", 패키지 카드 결제액, CheckoutBar 요약, 결제 시트, Notice 법적 표기 외 전 페이지 금지.
+  <br>
+  TabBar 숨김 (모달 풀스크린). 광고 없음. 공유 리워드 ID · 로그인 필수 흐름 · 보너스 운 자동 적립은 PC 구현 스펙 참고.
+</div>
+
+<script>
+  // 패키지 선택 토글
+  document.querySelectorAll('.pkg').forEach(function(card){
+    card.addEventListener('click', function(){
+      document.querySelectorAll('.pkg').forEach(function(c){
+        c.classList.remove('selected');
+        c.setAttribute('aria-checked','false');
+      });
+      card.classList.add('selected');
+      card.setAttribute('aria-checked','true');
+
+      // CheckoutBar 요약 업데이트
+      var un = card.querySelector('.card-un').textContent;
+      var krw = card.querySelector('.card-krw').textContent;
+      var bonus = card.querySelector('.bonus');
+      var sumEl = document.querySelector('.checkout .sum-un');
+      var bonusTxt = bonus ? ' ' + bonus.textContent : '';
+      sumEl.innerHTML = '<em>' + un + bonusTxt + '</em> · ' + krw;
+    });
+  });
+</script>
+
+</body>
+</html>

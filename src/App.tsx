@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { SajuProvider } from '@/contexts/SajuContext';
@@ -7,6 +7,15 @@ import { TabBar } from '@/components/layout/TabBar';
 import { BalanceBar } from '@/components/layout/BalanceBar';
 import { ToastProvider } from '@/components/common/Toast';
 import { HomePage } from '@/pages/HomePage';
+
+/**
+ * Home v5 Path 분기 env flag (2026-04-22)
+ *   근거: docs/prd/홈v5_Path분기_레이아웃diff.md v3 §11 (a)
+ *   기본 OFF — QA 통과 후 1% ramp, 준기 승인 후 100%
+ *   `.env`: VITE_HOME_V5_ENABLED=1 로 ON
+ */
+const HOME_V5_ENABLED = import.meta.env.VITE_HOME_V5_ENABLED === '1';
+const HomePageV5 = lazy(() => import('@/pages/HomePageV5').then(m => ({ default: m.HomePageV5 })));
 
 // Lazy-loaded pages (코드 스플리팅)
 const InputPage = lazy(() => import('@/pages/InputPage').then(m => ({ default: m.InputPage })));
@@ -50,20 +59,48 @@ function PageFallback() {
   );
 }
 
+/**
+ * NotFound — E3 (앱인토스 심사 직결 · P0)
+ *   근거: docs/prd/PC_인수인계_2026_04_21_단일본.md §7.3
+ *   - a href 대신 useNavigate → SPA 이동 (앱인토스/웹 공통 안전)
+ *   - SSOT 컬러 (--gold #B8965A) — 구 gold gradient 제거
+ *   - replace: true — 잘못된 URL 을 히스토리에 남기지 않음
+ */
 function NotFoundPage() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center" style={{ background: 'var(--bg-page)' }}>
-      <div className="w-14 h-14 rounded-2xl bg-bg-surface flex items-center justify-center mb-4">
-        <span className="text-h1 text-brand-gold">?</span>
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+        style={{ background: 'rgba(184,150,90,0.10)' }}>
+        <span className="text-h1" style={{ color: '#B8965A' }}>?</span>
       </div>
       <h2 className="text-h2 text-text-primary mb-2">페이지를 찾을 수 없어요</h2>
       <p className="text-body-sm text-text-muted mb-6">주소가 잘못되었거나, 삭제된 페이지입니다.</p>
-      <a href="/" className="px-6 py-3 rounded-xl text-h3 text-white font-semibold"
-        style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+      <button
+        type="button"
+        onClick={() => navigate('/', { replace: true })}
+        className="px-6 py-3 rounded-xl text-h3 text-white font-semibold"
+        style={{ background: '#B8965A' }}
+      >
         홈으로 돌아가기
-      </a>
+      </button>
     </div>
   );
+}
+
+/**
+ * ResultRouteGuard — /result/:id id 형식 검증 (E3 잔여 2)
+ *   근거: docs/prd/PC_인수인계_2026_04_21_단일본.md §7.3 "라우팅 타입 보강: /result/:id id 형식 검증"
+ *   허용 형식: base36 영숫자 4~32자 (generateId = Date.now().toString(36) + random.toString(36).slice(2,8))
+ *   invalid 시 / 로 replace redirect.
+ */
+const RESULT_ID_RE = /^[a-z0-9]{4,32}$/i;
+function ResultRouteGuard() {
+  const { id } = useParams<{ id: string }>();
+  if (!id || !RESULT_ID_RE.test(id)) {
+    return <Navigate to="/" replace />;
+  }
+  return <ResultPage />;
 }
 
 /** 페이지 이동 시 스크롤 상단 복원 */
@@ -89,10 +126,10 @@ function AnimatedRoutes() {
       >
         <Suspense fallback={<PageFallback />}>
           <Routes location={location}>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={HOME_V5_ENABLED ? <HomePageV5 /> : <HomePage />} />
             <Route path="/input" element={<InputPage />} />
             <Route path="/loading" element={<LoadingPage />} />
-            <Route path="/result/:id" element={<ResultPage />} />
+            <Route path="/result/:id" element={<ResultRouteGuard />} />
             <Route path="/daily" element={<DailyFortunePage />} />
             <Route path="/compat" element={<CompatibilityPage />} />
             <Route path="/compat/result" element={<CompatResultPage />} />

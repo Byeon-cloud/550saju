@@ -1,5 +1,10 @@
 // Migrated from geminiTopic.ts on 2026-04-15 (commit a5f7473) + 2026-04-19 (promptsV3 통합).
 // See docs/prd/AI프롬프트_v3_Sonnet4.6.md
+// 2026-04-22 SSOT v1 정렬:
+//   - 키 rename 'moving' → 'move' (client src/constants/topics.ts 와 정렬)
+//   - 'exam' 신규 (합격·이직운 — client 가 이미 /topic/exam 로 호출 중)
+//   - TOPIC_BOUNDARIES 인접 주제 경계 프롬프트 주입 (모순 방지)
+//   - normalizeTopicIdServer() 로 legacy 호출 'moving'/'reconciliation'/'job' 등 호환
 
 import Anthropic from '@anthropic-ai/sdk';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type ParseJsonMeta } from './promptsV3';
@@ -9,6 +14,58 @@ interface TopicConfig {
   sections: string[];
   specificPrompt: string;
   topicDataSchema: string; // topic-specific structured data for visualization
+}
+
+/**
+ * 인접 주제 경계 (2026-04-22 SSOT v1)
+ *
+ * 근거: docs/prd/주제별심층_10종_일관성SSOT_v1.md §2
+ * 목적: 같은 사주 → 10주제 결과 모순 방지 (예: 합격이직이 창업 얘기를 하거나,
+ *       연애운이 결혼 timing 을 단정하는 drift 차단).
+ *
+ * 각 주제 프롬프트 끝에 "다루지 않는 것 + 다른 주제로 보낼 영역" 을 명시 주입.
+ */
+const TOPIC_BOUNDARIES: Record<string, { scope: string; excludes: string[] }> = {
+  love:     { scope: '일반 만남·관계 흐름·매력 발산·연애 패턴',
+              excludes: ['결혼 timing/배우자 결 단정 (→ 결혼운 영역)', '헤어진 특정인과의 재회 가능성 (→ 재회운 영역)'] },
+  reunion:  { scope: '헤어진 사람과의 재결합 가능성·timing·접촉 방향',
+              excludes: ['일반 새 만남 (→ 연애운)', '결혼 결정 (→ 결혼운)'] },
+  marriage: { scope: '결혼 timing·배우자 결·결혼 후 생활 패턴',
+              excludes: ['연애 일반/썸 (→ 연애운)', '재회 결정 (→ 재회운)'] },
+  wealth:   { scope: '돈의 결·투자·현금흐름·재물 timing',
+              excludes: ['사업 결정/창업 판단 (→ 사업운)', '직장 수입 구조/승진 (→ 직업운)'] },
+  exam:     { scope: '시험·자격증·이직·전직 변동의 timing 과 방향',
+              excludes: ['평생 직업 적성/정체성 (→ 직업운)', '창업·자영업 결정 (→ 사업운)'] },
+  business: { scope: '자영업·창업의 결·재무 리스크·사업 timing',
+              excludes: ['직장인 커리어/승진 (→ 직업운)', '단기 시험·이직 timing (→ 합격이직운)'] },
+  health:   { scope: '체질·기운·올해 주의 시기·생활 습관',
+              excludes: [] },
+  move:     { scope: '주거 이전·이동·여행 timing 과 방향',
+              excludes: ['직장 이직 (→ 합격이직운)'] },
+  study:    { scope: '학업·집중력·지식 흡수·학습 패턴',
+              excludes: ['시험 합격 timing 단정 (→ 합격이직운)', '평생 직업 결 (→ 직업운)'] },
+  career:   { scope: '평생의 일의 결·적성·승진 흐름·조직 내 패턴',
+              excludes: ['시험·이직 timing (→ 합격이직운)', '자영업·창업 (→ 사업운)'] },
+};
+
+/**
+ * 서버 topicId 정규화 — 클라이언트 SSOT 와 정렬.
+ * legacy alias 도 처리해 구 client 호출 (moving, job 등) 이 깨지지 않도록 유지.
+ */
+const SERVER_TOPIC_ALIASES: Record<string, string> = {
+  moving: 'move',
+  reconciliation: 'reunion',
+  job: 'career',
+  company: 'career',
+  marry: 'marriage',
+  test: 'exam',
+  exam_job: 'exam',
+};
+function normalizeTopicIdServer(raw: string): string {
+  const v = String(raw || '').toLowerCase().trim();
+  if (TOPIC_CONFIGS[v]) return v;
+  if (SERVER_TOPIC_ALIASES[v]) return SERVER_TOPIC_ALIASES[v];
+  return v; // 못 찾으면 원본 — generateTopicAnalysisAI 에서 throw
 }
 
 const TOPIC_CONFIGS: Record<string, TopicConfig> = {
@@ -507,7 +564,39 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "bestAllyType": "가장 잘 맞는 동료/친구 유형 15자"
     }`,
   },
-  moving: {
+  exam: {
+    label: '합격·이직운',
+    sections: ['변동의 timing — 올해 합격·이직 기운', '합격·이직 유리 방향과 분야', '면접·자격시험 결정 시기', '이직 후 3개월 적응 전망', '올해 변동 실전 전략'],
+    specificPrompt: `⭐ "이 시기에 움직여라/버텨라"를 사주 근거로 단정. 시험·자격증·이직·전직의 변동 timing 과 방향에 집중.
+평생 직업 적성이나 창업은 다루지 않음 (→ 직업운 / 사업운 영역).
+
+- 정관·편관 동향 → 조직 변동·직위 변동 에너지의 강약
+- 문창·학당·태극귀인 등 시험 길성 유무 → 합격 기운
+- 올해 세운·월운 + 현재 대운 교차 → 합격·이직 유리 월 (월 단위 구체 명시)
+- 이직 후 3개월 적응 전망 (이직 시 일간 환경 변화 분석)
+- 면접 유리 시간대·좌석 방향 (오행 방위 기반)
+- "혹시 최근에 이직 제안을 받았거나 고민 중이지 않나요?" 소름 포인트
+- ⚠️ 직업 정체성·평생 적성 (→ 직업운) 이나 창업 판단 (→ 사업운) 은 언급 금지. 이 섹션은 '변동 timing·방향'만.`,
+    topicDataSchema: `"topicData": {
+      "subScores": [{"axis":"합격운","value":"0-100 정수"},{"axis":"이직운","value":"0-100 정수"},{"axis":"변동 leverage","value":"0-100 정수"},{"axis":"면접운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
+      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "strengths": ["변동 강점 25자","변동 강점2 25자"],
+      "cautions": ["변동 주의점 25자","변동 주의점2 25자"],
+      "changeMode": "합격 우선/이직 우선/양방 중 하나",
+      "examLuckLevel": "상/중/하 중 하나",
+      "jobChangeLuckLevel": "상/중/하 중 하나",
+      "bestChangeMonths": "유리한 월 배열 (예: ['4월','9월','11월'])",
+      "avoidChangeMonths": "피할 월 배열 (예: ['2월','7월'])",
+      "interviewTime": "면접 유리 시간대 (예: 오전 10~11시)",
+      "interviewDirection": "면접장 좌석 유리 방향 (오행 방위, 예: 동향·남향)",
+      "bestField": "유리한 분야 키워드 2개 (오행 근거, 예: 기획/마케팅 + 목·화 기운)",
+      "changeDirection": "이직 방향 (동종업/이종업/프리랜서/공공/스타트업 중 하나 + 이유 20자)",
+      "decisionUrgency": "결정 긴급도 (즉시/금년내/내년 중 하나)",
+      "postChangeOutlook": "이직 후 3개월 적응 전망 35자",
+      "luckyItemForExam": "시험/면접 행운 아이템 15자"
+    }`,
+  },
+  move: {
     label: '이사·이동운',
     sections: ['이동 적기 분석', '좋은 방향', '이사/이직/유학 전망', '해외운', '올해 이동 전략'],
     specificPrompt: `⭐ 이사/이동을 고민하는 사람에게 구체적이고 실용적인 조언.
@@ -545,18 +634,21 @@ export async function generateTopicAnalysisAI(
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number },
   extraInfo?: Record<string, any>,
 ): Promise<any> {
-  const config = TOPIC_CONFIGS[topicId];
-  if (!config) throw new Error(`알 수 없는 주제: ${topicId}`);
+  // SSOT 정렬 (2026-04-22): client 는 'move'/'exam' 으로 호출. legacy 'moving'/'reconciliation' 등도 호환.
+  const normalizedId = normalizeTopicIdServer(topicId);
+  const config = TOPIC_CONFIGS[normalizedId];
+  if (!config) throw new Error(`알 수 없는 주제: ${topicId} (정규화: ${normalizedId})`);
+  if (normalizedId !== topicId) console.info(`[claudeTopic] topicId 정규화: ${topicId} → ${normalizedId}`);
 
   const anthropic = new Anthropic({ apiKey });
-  const prompt = buildPrompt(config, topicId, sajuData, baseScore, partnerInfo, extraInfo);
+  const prompt = buildPrompt(config, normalizedId, sajuData, baseScore, partnerInfo, extraInfo);
 
   // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (준기 정책).
   // system 프롬프트는 promptsV3.TOPIC_ANALYSIS_SYSTEM_V3 (V3_BASE + 금지어·어조 공통 블록 + 주제 특화 규칙).
   // user 프롬프트는 이 파일의 buildPrompt 가 담당 (topicData 스키마·paritnerInfo·extraInfo 등 풍부한 주제별 특화 유지).
   const model = 'claude-sonnet-4-6';
   // 재회운 10섹션 + 풍부한 topicData → 16000, 나머지 5섹션 → 8192
-  const maxTokens = topicId === 'reunion' ? 16000 : 8192;
+  const maxTokens = normalizedId === 'reunion' ? 16000 : 8192;
 
   // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
   let firstText: string;
@@ -718,7 +810,7 @@ function buildPrompt(
 ## 현재 상태: ${statusMap[extraInfo.jobStatus] || '미상'}${fieldInfo}
 → ${extraInfo.jobStatus === 'employed' ? '이직 타이밍, 현 직장 적합도, 더 맞는 업종을 중점 분석하세요.' : extraInfo.jobStatus === 'student' ? '첫 취업 준비에 초점. 적성, 합격 시기, 유리한 산업을 분석하세요.' : '구직 성공 시기, 면접 유리 시점, 사주에 맞는 직종을 분석하세요.'}
 `;
-    } else if (topicId === 'moving' && extraInfo.movePurpose) {
+    } else if (topicId === 'move' && extraInfo.movePurpose) {
       const purposeMap: Record<string, string> = { house: '주거 이사', job: '직장 이동', study: '유학/학업', abroad: '해외 이주' };
       const planInfo = extraInfo.movePlanYear ? `\n이사 예정 시기: ${extraInfo.movePlanYear}년 ${extraInfo.movePlanMonth}월` : '';
       extraSection = `
@@ -737,6 +829,16 @@ function buildPrompt(
     }
   }
 
+  // 인접 주제 경계 (2026-04-22 SSOT v1) — 모순 방지
+  const boundary = TOPIC_BOUNDARIES[topicId];
+  const boundaryBlock = boundary
+    ? `\n## ⚠ 주제 경계 (같은 사주 → 10주제 결과 모순 금지)
+이 섹션의 lens: ${boundary.scope}
+다음 영역은 다른 주제가 다루므로 이 분석에서 한 줄도 언급하지 말 것:
+${boundary.excludes.length ? boundary.excludes.map(x => `- ${x}`).join('\n') : '- (경계 없음 — 본 주제 단독 완결)'}
+→ 같은 사주로 다른 주제를 돌렸을 때 결론이 모순되면 안 됨. 사주 원국의 기본 결(용신·일간 강약·주요 십성 배치)에 뿌리를 둔 판단만 하고, 인접 주제 영역의 단정은 피할 것.\n`
+    : '';
+
   return `명리학 40년 대가. "${config.label}" 심층 분석. "소름돋는" 수준.
 
 ⚠️ 현재 날짜: ${dateStr} — 반드시 이 기준으로 과거/현재/미래 구분.
@@ -750,7 +852,7 @@ ${Object.entries(el).filter(([,v]) => v === 0).map(([k]) => `→ ${k} 없음`).j
 ## 십성: ${sipsung || '미상'}
 ## 현재 대운: ${currentDaeun ? currentDaeun.간지 : '미상'}
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
-${partnerSection}${extraSection}
+${partnerSection}${extraSection}${boundaryBlock}
 ## ${config.label} 분석 규칙
 ${config.specificPrompt}
 

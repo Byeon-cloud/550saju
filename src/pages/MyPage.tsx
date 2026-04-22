@@ -6,15 +6,31 @@ import { FadeIn } from '@/components/common/FadeIn';
 import { useAuth } from '@/hooks/useAuth';
 import { getBalance, getBalanceBreakdown, getReports, getProfiles } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
+import { isAppsInToss } from '@/services/payment/iapService';
 
 import { IconSaju } from '@/components/brand/Icons';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { OhengType } from '@/types/saju';
 
-const MENU_ITEMS = [
+/**
+ * 메뉴 정책 (project_appintos_webapp_split.md SSOT):
+ * - 앱인토스: 운 충전 · 결제/사용 내역 · 이용약관 · 개인정보처리방침 · 고객문의
+ *   ("분석 기록"은 하단 탭에 이미 있어 중복 → 제거 / 로그아웃·회원탈퇴 제거)
+ * - 웹앱: 분석 기록 + 위 항목 + 로그아웃·회원탈퇴 유지
+ */
+const MENU_ITEMS_WEB = [
   { label: '분석 기록', path: '/storage', desc: '' },
   { label: '운(運) 충전', path: '/charge', desc: '' },
+  { label: '결제/사용 내역', path: '/charge?tab=history', desc: '' },
+  { label: '이용약관', path: '/terms', desc: '' },
+  { label: '개인정보처리방침', path: '/privacy', desc: '' },
+  { label: '고객 문의', path: '', desc: 'saju500help@gmail.com' },
+];
+
+const MENU_ITEMS_AIT = [
+  { label: '운(運) 충전', path: '/charge', desc: '' },
+  { label: '결제/사용 내역', path: '/charge?tab=history', desc: '' },
   { label: '이용약관', path: '/terms', desc: '' },
   { label: '개인정보처리방침', path: '/privacy', desc: '' },
   { label: '고객 문의', path: '', desc: 'saju500help@gmail.com' },
@@ -27,6 +43,8 @@ export function MyPage() {
   const toast = useToast();
   const [balance, setBalanceState] = useState(0);
   const [reportCount, setReportCount] = useState(0);
+  const inAppsInToss = useMemo(() => isAppsInToss(), []);
+  const MENU_ITEMS = inAppsInToss ? MENU_ITEMS_AIT : MENU_ITEMS_WEB;
 
   const location = useLocation();
   const allReports = useMemo(() => getReports(), [location.pathname]);
@@ -88,8 +106,8 @@ export function MyPage() {
             >
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(201,169,110,0.15)' }}>
-                  <IconSaju size={28} color="#C9A96E" />
+                  style={{ background: 'rgba(184,150,90,0.15)' }}>
+                  <IconSaju size={28} color="#B8965A" />
                 </div>
                 <div className="flex-1">
                   <p className="text-h3 text-text-primary">아직 분석한 사주가 없어요</p>
@@ -97,7 +115,7 @@ export function MyPage() {
                     사주를 분석하면 만세력, 오행, 대운을 한눈에 볼 수 있어요
                   </p>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
               </div>
             </motion.button>
           </FadeIn>
@@ -139,7 +157,7 @@ export function MyPage() {
                 const isMe = i === 1; // reverse 후 일주는 index 1
                 return (
                   <div key={i} className={`flex-1 rounded-xl py-3 text-center ${isMe ? 'border-2 border-brand-gold' : 'border border-border-light'}`}
-                    style={{ background: isMe ? 'rgba(201,169,110,0.06)' : 'var(--bg-card)' }}>
+                    style={{ background: isMe ? 'rgba(184,150,90,0.06)' : 'var(--bg-card)' }}>
                     <p className={`text-caption ${isMe ? 'text-brand-gold font-bold' : 'text-text-hint'}`}>{posLabels[i]}주</p>
                     <p className={`text-h1 mt-1 ${isMe ? 'text-brand-gold' : 'text-text-primary'}`}>{p.천간}{p.지지}</p>
                     <p className="text-caption mt-0.5" style={{ color: info?.color || 'var(--text-muted)' }}>{p.천간읽기}{p.지지읽기}</p>
@@ -202,7 +220,7 @@ export function MyPage() {
                 </p>
               </div>
               <div className="flex-shrink-0 px-4 py-2.5 rounded-xl"
-                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
                 <span className="text-label text-white font-bold">충전</span>
               </div>
             </div>
@@ -238,30 +256,33 @@ export function MyPage() {
         </FadeIn>
 
         {/* ====== 로그인/로그아웃 ====== */}
-        <FadeIn delay={0.12}>
-          {isLoggedIn ? (
-            <div className="flex gap-4 justify-center pt-2">
-              <button onClick={() => toast.show('로그아웃 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-text-secondary transition-colors">
-                로그아웃
-              </button>
-              <span className="text-caption text-text-disabled">·</span>
-              <button onClick={() => toast.show('회원탈퇴 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-func-danger transition-colors">
-                회원탈퇴
-              </button>
-            </div>
-          ) : (
-            <div className="card text-center py-5 space-y-2">
-              <p className="text-body-sm text-text-muted">로그인하면 클라우드 동기화가 가능해요</p>
-              <button
-                onClick={() => devLogin()}
-                className="px-6 py-2.5 rounded-xl text-caption font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}
-              >
-                로그인
-              </button>
-            </div>
-          )}
-        </FadeIn>
+        {/* 앱인토스: 토스 SSO 자동 인증 → 로그아웃·회원탈퇴 메뉴 미노출 (정책: project_appintos_webapp_split.md) */}
+        {!inAppsInToss && (
+          <FadeIn delay={0.12}>
+            {isLoggedIn ? (
+              <div className="flex gap-4 justify-center pt-2">
+                <button onClick={() => toast.show('로그아웃 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-text-secondary transition-colors">
+                  로그아웃
+                </button>
+                <span className="text-caption text-text-disabled">·</span>
+                <button onClick={() => toast.show('회원탈퇴 기능은 준비 중입니다', 'info')} className="text-caption text-text-muted hover:text-func-danger transition-colors">
+                  회원탈퇴
+                </button>
+              </div>
+            ) : (
+              <div className="card text-center py-5 space-y-2">
+                <p className="text-body-sm text-text-muted">로그인하면 클라우드 동기화가 가능해요</p>
+                <button
+                  onClick={() => devLogin()}
+                  className="px-6 py-2.5 rounded-xl text-caption font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}
+                >
+                  로그인
+                </button>
+              </div>
+            )}
+          </FadeIn>
+        )}
       </div>
     </div>
   );

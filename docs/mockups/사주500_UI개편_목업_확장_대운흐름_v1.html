@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 확장 대운흐름 v1 (2운)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  html,body{background:#0a0a0a;font-family:'Pretendard Variable',Pretendard,sans-serif;color:#1a1a1a;letter-spacing:-0.01em;}
+  .page{max-width:480px;margin:0 auto;background:#F8F5EE;min-height:100vh;box-shadow:0 0 80px rgba(0,0,0,.4);}
+
+  .hd{background:linear-gradient(135deg,#5C8A6F 0%,#3B7A4B 60%,#2A5A36 100%);color:#fff;padding:18px 20px 28px;position:relative;overflow:hidden;}
+  .hd::before{content:'運';position:absolute;right:-18px;bottom:-40px;font-family:'Noto Serif KR',serif;font-size:220px;font-weight:900;color:rgba(255,255,255,.07);line-height:1;}
+  .hd .top{display:flex;gap:10px;font-size:12px;opacity:.92;flex-wrap:wrap;align-items:center;}
+  .hd .badge{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+  .hd .tier{background:rgba(255,255,255,.14);padding:3px 10px;border-radius:100px;font-size:10px;}
+  .hd h1{font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700;margin-top:14px;letter-spacing:-0.02em;line-height:1.4;}
+  .hd .sub{font-size:12px;opacity:.85;margin-top:4px;}
+
+  /* 대운 8칸 막대 */
+  .dw-card{margin:18px 20px 0;background:#fff;border-radius:14px;padding:16px 14px 18px;border:1px solid #E5DFD0;box-shadow:0 4px 12px rgba(0,0,0,.06);}
+  .dw-card .ttl{font-size:11px;color:#3B7A4B;letter-spacing:0.1em;font-weight:600;margin-bottom:14px;display:flex;justify-content:space-between;}
+  .dw-card .ttl .hint{color:#1a1a1a;font-weight:500;letter-spacing:0;}
+  .dw-bars{display:flex;align-items:flex-end;gap:5px;height:140px;padding:0 4px;}
+  .dw-bar{flex:1;display:flex;flex-direction:column;align-items:center;cursor:pointer;}
+  .dw-bar .fill{width:100%;background:linear-gradient(180deg,#A1C7AE,#5C8A6F);border-radius:4px 4px 0 0;position:relative;transition:.2s;}
+  .dw-bar.now .fill{background:linear-gradient(180deg,#E8866C,#B5441F);}
+  .dw-bar.peak .fill{background:linear-gradient(180deg,#A1C7AE,#3B7A4B);box-shadow:0 0 0 2px rgba(59,122,75,0.3);}
+  .dw-bar .fill .v{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-family:'Noto Serif KR',serif;font-size:11px;color:#3B7A4B;font-weight:700;}
+  .dw-bar.now .fill .v{color:#B5441F;}
+  .dw-bar .age{font-size:9.5px;color:#3B7A4B;margin-top:6px;font-feature-settings:'tnum';font-weight:600;}
+  .dw-bar .key{font-family:'Noto Serif KR',serif;font-size:11px;color:#1a1a1a;margin-top:1px;font-weight:700;}
+  .dw-now-tag{font-size:11px;color:#B5441F;text-align:center;margin-top:10px;font-weight:700;}
+
+  /* 대운 × 세운 히트맵 */
+  .heat-card{margin:14px 20px 0;background:#fff;border-radius:14px;padding:14px;border:1px solid #E5DFD0;}
+  .heat-card .ttl{font-size:11px;color:#3B7A4B;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;}
+  .heat-grid{display:grid;grid-template-columns:32px repeat(10,1fr);gap:2px;font-size:9px;}
+  .heat-grid .lb{color:#3B7A4B;font-weight:600;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-feature-settings:'tnum';}
+  .heat-cell{aspect-ratio:1;border-radius:2px;}
+  .h0{background:#E5DFD0;} .h1{background:#C8DBC8;} .h2{background:#A1C7AE;}
+  .h3{background:#7AAD8B;} .h4{background:#5C8A6F;} .h5{background:#3B7A4B;}
+  .h-now{outline:2px solid #B5441F;outline-offset:1px;}
+  .heat-card .ax{font-size:9px;color:#3B7A4B;margin-top:6px;text-align:center;font-feature-settings:'tnum';}
+  .heat-card .legend{font-size:10px;color:#1a1a1a;margin-top:8px;display:flex;align-items:center;gap:4px;}
+  .heat-card .legend .sw{width:12px;height:12px;display:inline-block;border-radius:2px;}
+
+  .body{padding:20px 20px 0;}
+  .section{margin-top:24px;}
+  .sec-num{display:inline-block;font-family:'Noto Serif KR',serif;font-size:11px;font-weight:600;color:#3B7A4B;letter-spacing:0.2em;margin-bottom:6px;}
+  .sec-title{font-family:'Noto Serif KR',serif;font-size:19px;font-weight:700;color:#1a1a1a;}
+  .sec-title .han{color:#3B7A4B;font-weight:500;margin-left:6px;font-size:14px;}
+  .sec-sub{font-size:12px;color:#3B7A4B;margin-top:4px;line-height:1.55;}
+  .body p{font-size:14.5px;line-height:1.85;color:#2a2520;margin:12px 0 0;word-break:keep-all;}
+  .body p strong{font-weight:600;background:linear-gradient(180deg,transparent 60%,rgba(59,122,75,.25) 60%);padding:0 2px;color:#1a1a1a;}
+  .body p .han{font-family:'Noto Serif KR',serif;color:#2A5A36;font-size:13px;}
+
+  /* 대운 카드 (8개 아코디언) */
+  .dw-list{display:flex;flex-direction:column;gap:10px;margin:14px 0 0;}
+  .dw-item{background:#fff;border:1px solid #E5DFD0;border-radius:12px;overflow:hidden;}
+  .dw-item.now{border-color:#B5441F;background:linear-gradient(135deg,rgba(181,68,31,0.04),#fff);}
+  .dw-item.peak{border-color:#3B7A4B;}
+  .dw-head{padding:14px 16px;display:flex;align-items:center;gap:10px;}
+  .dw-head .age-pill{background:#F8F5EE;color:#3B7A4B;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:100px;font-feature-settings:'tnum';}
+  .dw-item.now .age-pill{background:#B5441F;color:#fff;}
+  .dw-item.peak .age-pill{background:#3B7A4B;color:#fff;}
+  .dw-head .key{font-family:'Noto Serif KR',serif;font-size:15px;font-weight:700;color:#1a1a1a;flex:1;}
+  .dw-head .key .han{color:#3B7A4B;font-size:12.5px;font-weight:500;margin-left:4px;}
+  .dw-head .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;}
+  .dw-head .badge.now{background:#B5441F;color:#fff;} .dw-head .badge.peak{background:#3B7A4B;color:#fff;} .dw-head .badge.warn{background:#806012;color:#fff;}
+  .dw-body{padding:0 16px 14px;border-top:1px dashed #E5DFD0;font-size:13px;line-height:1.75;color:#2a2520;}
+  .dw-body p{margin-top:10px;word-break:keep-all;}
+  .dw-body p strong{font-weight:600;background:linear-gradient(180deg,transparent 60%,rgba(59,122,75,.2) 60%);padding:0 2px;}
+  .dw-tags{margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;}
+  .dw-tags .tg{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:100px;background:#F8F5EE;color:#3B7A4B;}
+
+  .lock-veil{position:relative;margin:14px 0 0;}
+  .lock-veil .blurred{filter:blur(6px);opacity:0.6;pointer-events:none;user-select:none;}
+  .lock-veil .lock-ovr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(248,245,238,0.4) 0%,rgba(248,245,238,0.95) 60%);border-radius:12px;}
+  .lock-veil .lock-ovr .ic{font-family:'Noto Serif KR',serif;font-size:32px;color:#3B7A4B;font-weight:900;}
+  .lock-veil .lock-ovr .lb{font-size:13px;color:#1a1a1a;font-weight:700;margin-top:6px;}
+  .lock-veil .lock-ovr .sb{font-size:11.5px;color:#2A5A36;margin-top:4px;text-align:center;line-height:1.5;max-width:280px;}
+
+  .pullq{background:linear-gradient(135deg,rgba(59,122,75,.08),rgba(161,199,174,.1));border-radius:10px;padding:16px 18px;margin:18px 0 0;border-left:3px solid #3B7A4B;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.75;color:#1a1a1a;font-weight:500;word-break:keep-all;}
+
+  .upsell{margin:28px 0 0;background:linear-gradient(135deg,#1a1a1a,#1f261f);color:#fff;border-radius:14px;padding:22px 20px;position:relative;overflow:hidden;}
+  .upsell::before{content:'命';position:absolute;right:-8px;bottom:-28px;font-family:'Noto Serif KR',serif;font-size:130px;font-weight:900;color:rgba(161,199,174,.08);line-height:1;}
+  .upsell .lab{font-size:10px;color:#A1C7AE;letter-spacing:0.15em;font-weight:600;margin-bottom:8px;}
+  .upsell h3{font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;margin-bottom:6px;line-height:1.45;}
+  .upsell p{font-size:12.5px;color:#a0bcb0;margin-bottom:14px;line-height:1.6;word-break:keep-all;}
+  .upsell .cta{display:inline-flex;gap:6px;background:linear-gradient(135deg,#A1C7AE,#3B7A4B);color:#fff;padding:10px 18px;border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;align-items:center;}
+  .upsell .cost{background:rgba(255,255,255,.08);padding:3px 10px;border-radius:100px;font-size:11px;color:#A1C7AE;margin-left:6px;font-weight:600;}
+
+  .actions{margin:22px 20px 0;padding:18px 0;border-top:1px solid #E5DFD0;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .actions .btn{background:#fff;border:1px solid #E5DFD0;border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#1a1a1a;cursor:pointer;}
+  .actions .btn .ic{font-family:'Noto Serif KR',serif;font-size:18px;color:#3B7A4B;font-weight:700;}
+  .actions .btn .lb{font-size:12px;font-weight:600;}
+  .actions .btn .sb{font-size:10.5px;color:#3B7A4B;}
+  .actions .btn.primary{background:linear-gradient(135deg,#3B7A4B,#2A5A36);color:#fff;border-color:#2A5A36;}
+  .actions .btn.primary .ic,.actions .btn.primary .sb{color:#fff;opacity:.9;}
+
+  .src{margin:14px 20px 0;padding:12px 14px;background:rgba(59,122,75,.05);border:1px solid rgba(59,122,75,.18);border-radius:10px;font-size:11px;color:#2A5A36;line-height:1.6;}
+  .src strong{color:#1a1a1a;font-weight:600;}
+  .footer-cap{padding:18px 20px 30px;text-align:center;font-size:10.5px;color:#3B7A4B;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hd">
+    <div class="top">
+      <span class="badge">대운 흐름</span>
+      <span class="tier">2운</span>
+      <span style="margin-left:auto;font-size:10.5px;opacity:.8;">大運 · 10년 단위 큰 흐름</span>
+    </div>
+    <h1>인생을 흐르는<br>10년 단위의 결</h1>
+    <div class="sub">기토(己土) 일간 · 1995년 7월 12일생 · 8개 대운</div>
+  </div>
+
+  <!-- 대운 막대 (8칸) -->
+  <div class="dw-card">
+    <div class="ttl"><span>대운 8칸 흐름</span><span class="hint">현재 임진(壬辰) · 35~44세</span></div>
+    <div class="dw-bars">
+      <div class="dw-bar"><div class="fill" style="height:35%"><div class="v">42</div></div><div class="age">5</div><div class="key">乙未</div></div>
+      <div class="dw-bar"><div class="fill" style="height:50%"><div class="v">58</div></div><div class="age">15</div><div class="key">甲午</div></div>
+      <div class="dw-bar"><div class="fill" style="height:55%"><div class="v">63</div></div><div class="age">25</div><div class="key">癸巳</div></div>
+      <div class="dw-bar now"><div class="fill" style="height:75%"><div class="v">78</div></div><div class="age">35</div><div class="key">壬辰</div></div>
+      <div class="dw-bar peak"><div class="fill" style="height:90%"><div class="v">86</div></div><div class="age">45</div><div class="key">辛卯</div></div>
+      <div class="dw-bar"><div class="fill" style="height:72%"><div class="v">74</div></div><div class="age">55</div><div class="key">庚寅</div></div>
+      <div class="dw-bar"><div class="fill" style="height:60%"><div class="v">66</div></div><div class="age">65</div><div class="key">己丑</div></div>
+      <div class="dw-bar"><div class="fill" style="height:48%"><div class="v">55</div></div><div class="age">75</div><div class="key">戊子</div></div>
+    </div>
+    <div class="dw-now-tag">● 현재 大運 · 신묘 대운(45~54)에서 인생 정점 · 이후 안정기</div>
+  </div>
+
+  <!-- 대운 × 세운 히트맵 -->
+  <div class="heat-card">
+    <div class="ttl">대운 × 세운 히트맵 · 2025~2034 (10년)</div>
+    <div class="heat-grid">
+      <div class="lb"></div>
+      <div class="ax">25</div><div class="ax">26</div><div class="ax">27</div><div class="ax">28</div><div class="ax">29</div>
+      <div class="ax">30</div><div class="ax">31</div><div class="ax">32</div><div class="ax">33</div><div class="ax">34</div>
+
+      <div class="lb">관성</div>
+      <div class="heat-cell h2"></div><div class="heat-cell h3 h-now"></div><div class="heat-cell h4"></div><div class="heat-cell h3"></div><div class="heat-cell h2"></div>
+      <div class="heat-cell h3"></div><div class="heat-cell h4"></div><div class="heat-cell h5"></div><div class="heat-cell h4"></div><div class="heat-cell h3"></div>
+
+      <div class="lb">재성</div>
+      <div class="heat-cell h3"></div><div class="heat-cell h4 h-now"></div><div class="heat-cell h3"></div><div class="heat-cell h2"></div><div class="heat-cell h3"></div>
+      <div class="heat-cell h4"></div><div class="heat-cell h5"></div><div class="heat-cell h4"></div><div class="heat-cell h3"></div><div class="heat-cell h2"></div>
+
+      <div class="lb">인성</div>
+      <div class="heat-cell h1"></div><div class="heat-cell h2 h-now"></div><div class="heat-cell h2"></div><div class="heat-cell h3"></div><div class="heat-cell h4"></div>
+      <div class="heat-cell h3"></div><div class="heat-cell h2"></div><div class="heat-cell h3"></div><div class="heat-cell h4"></div><div class="heat-cell h5"></div>
+
+      <div class="lb">식상</div>
+      <div class="heat-cell h2"></div><div class="heat-cell h2 h-now"></div><div class="heat-cell h3"></div><div class="heat-cell h4"></div><div class="heat-cell h3"></div>
+      <div class="heat-cell h2"></div><div class="heat-cell h3"></div><div class="heat-cell h4"></div><div class="heat-cell h5"></div><div class="heat-cell h4"></div>
+
+      <div class="lb">비겁</div>
+      <div class="heat-cell h4"></div><div class="heat-cell h3 h-now"></div><div class="heat-cell h2"></div><div class="heat-cell h2"></div><div class="heat-cell h3"></div>
+      <div class="heat-cell h2"></div><div class="heat-cell h3"></div><div class="heat-cell h2"></div><div class="heat-cell h2"></div><div class="heat-cell h3"></div>
+    </div>
+    <div class="legend">강도 <span class="sw" style="background:#E5DFD0;"></span><span class="sw" style="background:#A1C7AE;"></span><span class="sw" style="background:#5C8A6F;"></span><span class="sw" style="background:#3B7A4B;"></span> 약 → 강 · ◼ 박스: 올해</div>
+  </div>
+
+  <div class="body">
+  <div class="section">
+    <span class="sec-num">大運 序</span>
+    <div class="sec-title">대운이란 무엇인가<span class="han">·序</span></div>
+    <p>대운은 <strong>10년 단위로 바뀌는 인생의 큰 결</strong>입니다. 사주 8글자가 타고난 그릇이라면, 대운은 그 그릇이 어떤 물을 담는 시기에 들어와 있는지를 보여줍니다. 같은 사주라도 어느 대운에 어떤 일이 일어나는지가 달라지기 때문에, <span class="han">大運</span>의 흐름을 읽는 것은 사주를 시간 위에 놓고 보는 일입니다.</p>
+    <p>변준기님은 <strong>대운이 양력 5세부터 시작</strong>하며, 미토(未土)에서 출발해 자수(子水)까지 80년을 흐릅니다. 지금 들어와 있는 임진(壬辰) 대운은 인생의 한가운데이고, 다음 신묘(辛卯) 대운에서 가장 높은 자리가 만들어집니다.</p>
+  </div>
+
+  <!-- 대운 8개 아코디언 -->
+  <div class="section">
+    <span class="sec-num">大運 八節</span>
+    <div class="sec-title">8개 대운의 결<span class="han">·八節</span></div>
+    <p class="sec-sub">각 대운에서 어떤 일이 일어나고, 어떻게 보내는 게 좋은지</p>
+
+    <div class="dw-list">
+      <div class="dw-item">
+        <div class="dw-head"><span class="age-pill">5~14</span><span class="key">乙未<span class="han">을미</span></span></div>
+        <div class="dw-body">
+          <p>편관 + 미토 — <strong>학습과 외부 자극이 동시에 들어오는 어린 시절</strong>입니다. 부모·환경의 영향이 크고 자기 색이 늦게 잡히지만, 안에서는 천천히 자기 결을 다듬는 시기입니다.</p>
+          <div class="dw-tags"><span class="tg">학습</span><span class="tg">환경</span><span class="tg">잠복</span></div>
+        </div>
+      </div>
+
+      <div class="dw-item">
+        <div class="dw-head"><span class="age-pill">15~24</span><span class="key">甲午<span class="han">갑오</span></span></div>
+        <div class="dw-body">
+          <p>정관 + 오화 — <strong>방향이 잡히는 결</strong>입니다. 진로·전공·관계에서 기준이 만들어지고, 한 번은 방황의 순간이 옵니다. 그 방황이 곧 자기 길을 좁히는 작업입니다.</p>
+          <div class="dw-tags"><span class="tg">진로</span><span class="tg">정체성</span><span class="tg">시행착오</span></div>
+        </div>
+      </div>
+
+      <div class="dw-item">
+        <div class="dw-head"><span class="age-pill">25~34</span><span class="key">癸巳<span class="han">계사</span></span></div>
+        <div class="dw-body">
+          <p>편재 + 사화 — <strong>실력을 쌓고 시장에서 검증받는 시기</strong>입니다. 빠른 성공보다 묵묵히 쌓는 결입니다. 인연도 이 시기에 길게 갈 사람을 만납니다.</p>
+          <div class="dw-tags"><span class="tg">실력</span><span class="tg">검증</span><span class="tg">관계</span></div>
+        </div>
+      </div>
+
+      <div class="dw-item now">
+        <div class="dw-head"><span class="age-pill">35~44</span><span class="key">壬辰<span class="han">임진 · 현재</span></span><span class="badge now">NOW</span></div>
+        <div class="dw-body">
+          <p>정재 + 진토 — <strong>자리가 잡히고 결과물이 모이는 결</strong>입니다. 큰 도약보다 안정적 축적의 시기로, 이 10년에 쌓은 것이 50대 이후의 자리를 결정합니다. 무리한 확장보다 <strong>관계·재정·건강의 균형</strong>을 챙기는 게 핵심입니다.</p>
+          <div class="dw-tags"><span class="tg">축적</span><span class="tg">안정</span><span class="tg">균형</span></div>
+        </div>
+      </div>
+
+      <div class="dw-item peak">
+        <div class="dw-head"><span class="age-pill">45~54</span><span class="key">辛卯<span class="han">신묘 · 정점</span></span><span class="badge peak">PEAK</span></div>
+        <div class="dw-body">
+          <p>식신 + 묘목 — <strong>인생의 정점</strong>입니다. 표현이 풀리고 결과물이 밖으로 나가는 결로, 가르치거나 정리해서 전하는 일에서 자리가 만들어집니다. <strong>이름이 한 번 알려지는 시기</strong>이고, 30대까지 쌓은 모든 것이 이 자리에서 펼쳐집니다.</p>
+          <div class="dw-tags"><span class="tg">정점</span><span class="tg">표현</span><span class="tg">호명</span></div>
+        </div>
+      </div>
+
+      <div class="dw-item">
+        <div class="dw-head"><span class="age-pill">55~64</span><span class="key">庚寅<span class="han">경인</span></span></div>
+        <div class="dw-body">
+          <p>상관 + 인목 — <strong>방식의 전환기</strong>입니다. 그동안 하던 일을 새 방식으로 풀어내거나, 두 번째 자리로 옮기는 결입니다. 변화는 크지만 부담스럽지 않은 결입니다.</p>
+          <div class="dw-tags"><span class="tg">전환</span><span class="tg">두 번째 자리</span></div>
+        </div>
+      </div>
+
+      <div class="dw-item">
+        <div class="dw-head"><span class="age-pill">65~74</span><span class="key">己丑<span class="han">기축</span></span></div>
+        <div class="dw-body">
+          <p>비견 + 축토 — <strong>거두는 결</strong>입니다. 가족·후배·자녀와의 관계에서 정리가 일어나고, 자기 자리에 머무는 시간이 깊어집니다. 글·기록을 남기는 데 좋은 시기입니다.</p>
+          <div class="dw-tags"><span class="tg">정리</span><span class="tg">기록</span></div>
+        </div>
+      </div>
+
+      <div class="dw-item">
+        <div class="dw-head"><span class="age-pill">75~84</span><span class="key">戊子<span class="han">무자</span></span><span class="badge warn">注</span></div>
+        <div class="dw-body">
+          <p>겁재 + 자수 — <strong>건강의 결을 정돈하는 시기</strong>입니다. 활동량은 줄지만 마음의 자유가 깊어지는 결로, 가까운 사람과의 관계가 더 또렷해집니다.</p>
+          <div class="dw-tags"><span class="tg">건강</span><span class="tg">관계</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 인생 변곡점 잠금 -->
+  <div class="section">
+    <span class="sec-num">變曲</span>
+    <div class="sec-title">인생 변곡점 5개<span class="han">·變曲</span></div>
+    <p class="sec-sub">대운 사이의 전환점에서 일어나는 일</p>
+    <div class="lock-veil">
+      <div class="blurred">
+        <p>34→35 · 임진 대운 진입 — 자리 정착의 자리. <strong>이직·결혼·이사</strong> 중 하나는 일어남.<br>44→45 · 신묘 대운 진입 — 표현 폭발의 자리. <strong>호명·승진·창작</strong> 결과물이 나옴.<br>54→55 · 경인 대운 진입 — 방식 전환의 자리. 같은 일을 다른 결로…</p>
+      </div>
+      <div class="lock-ovr">
+        <div class="ic">命</div>
+        <div class="lb">변곡점 5개 + 시기별 디테일 · 프리미엄</div>
+        <div class="sb">대운 사이 전환에서 일어나는<br>5개의 변곡 사건과 대처법</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pullq">"대운(大運)은 운명을 정해주지 않습니다. 다만 어느 시기에 어떤 결의 일이 잘 풀리는지를 비춰주는 지도입니다. 지도를 읽고 길은 본인이 만듭니다."</div>
+
+  <div class="upsell">
+    <div class="lab">PREMIUM</div>
+    <h3>대운에 흐름을 더해 인생 전체를 풀어드립니다</h3>
+    <p>변곡점 5개의 사건 디테일, 결혼·이직·이사의 적기, 80년 흐름의 모든 계절. 사주 전체를 한 권으로 받아보세요.</p>
+    <span class="cta">10운으로 시작 → <span class="cost">10운</span></span>
+  </div>
+  </div>
+
+  <div class="src"><strong>풀이 근거</strong> · 자평진전(子平眞詮) 대운 편 · 적천수(滴天髓) 운기 항 · 궁통보감(窮通寶鑑) 미월 기토 항</div>
+
+  <div class="actions">
+    <div class="btn"><div class="ic">↗</div><div class="lb">공유하고 1운 받기</div><div class="sb">하루 3회까지</div></div>
+    <div class="btn primary"><div class="ic">命</div><div class="lb">사주 전체로 보기</div><div class="sb">10운으로 시작</div></div>
+  </div>
+
+  <div class="footer-cap">사주500 · 대운 풀이는 명리학 콘텐츠로 인생 결정을 대체하지 않습니다</div>
+</div>
+</body>
+</html>

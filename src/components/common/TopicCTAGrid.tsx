@@ -64,13 +64,13 @@ export function TopicCTAGrid({ topics, onTopicTap, meta, title }: TopicCTAGridPr
                 width: 32,
                 height: 32,
                 borderRadius: 8,
-                background: `${t.color || '#C9A96E'}14`,
+                background: `${t.color || '#B8965A'}14`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Pictogram k={`topic:${t.id}`} size={18} color={t.color || '#C9A96E'} />
+              <Pictogram k={`topic:${t.id}`} size={18} color={t.color || '#B8965A'} />
             </div>
             <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{t.title}</p>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{t.desc}</p>

@@ -1,6 +1,6 @@
-import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
-import { app } from '@/services/auth/firebase';
+import { httpsCallable } from 'firebase/functions';
 import { ensureAuth } from '@/services/auth/authService';
+import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import type { SajuData, Situation } from '@/types/saju';
 import type {
   AIReportResponse,
@@ -10,35 +10,17 @@ import type {
   TojungResponse,
 } from '@/types/report';
 
-const functions = getFunctions(app, 'us-central1');
-
-/**
- * Dev 모드 + env 플래그 동시 만족 시 emulator 연결.
- *   .env.local 에 `VITE_USE_FUNCTIONS_EMULATOR=true` 설정 시만 활성화.
- *   prod 빌드에서는 절대 동작 안 함 (import.meta.env.DEV === false).
- *   HMR 재연결 방지 위해 module-level 1회만 실행.
- */
-if (
-  import.meta.env.DEV &&
-  import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true'
-) {
-  try {
-    connectFunctionsEmulator(functions, 'localhost', 5001);
-    // eslint-disable-next-line no-console
-    console.info('[emulator] Functions connected → localhost:5001');
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('[emulator] connectFunctionsEmulator failed (already connected?):', e);
-  }
-}
+// Functions 엔드포인트(emulator vs prod) 는 functionsClient.ts 에서 ping 후 결정.
+// emulator 죽어 있으면 자동으로 prod fallback (2026-04-22 hardening).
 
 /** httpsCallable with extended timeout for AI calls */
 function aiCallable(name: string) {
   return httpsCallable(functions, name, { timeout: 300000 }); // 5분
 }
 
-/** 모든 Cloud Function 호출 전 인증 보장 */
+/** 모든 Cloud Function 호출 전 인증 + emulator/prod 타겟 보장 */
 async function callWithAuth(name: string, data: any): Promise<any> {
+  await ensureFunctionsTarget(); // emulator ping → prod fallback
   await ensureAuth(); // 인증 완료까지 대기
   const fn = aiCallable(name);
   const result = await fn(data);

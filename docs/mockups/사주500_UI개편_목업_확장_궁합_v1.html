@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>사주500 · 궁합보기 (3운)</title>
+<style>
+  :root{
+    --paper:#F8F5EE; --ink:#1A1A1A; --gold:#B8965A; --navy:#1D2D4A;
+    --rose:#9C5A8A; --rose-d:#5A2A4A;
+    --line:rgba(26,26,26,0.10); --mute:#6E665A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#EFE8DA;}
+  body{font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",sans-serif;color:var(--ink);}
+  .frame{max-width:430px;margin:0 auto;background:var(--paper);min-height:100vh;padding-bottom:96px;}
+  .hd{position:relative;padding:36px 22px 28px;color:#fff;
+      background:linear-gradient(155deg,#9C5A8A 0%,#5A2A4A 100%);overflow:hidden;}
+  .hd::before{content:"合";position:absolute;top:18px;right:22px;font-family:"Noto Serif KR",serif;
+              font-size:96px;color:rgba(255,255,255,0.10);line-height:1;}
+  .hd .crumb{font-size:12px;letter-spacing:0.2em;opacity:0.75;}
+  .hd h1{font-family:"Noto Serif KR",serif;font-size:28px;line-height:1.25;margin:8px 0 6px;font-weight:600;}
+  .hd .sub{font-size:13px;opacity:0.85;line-height:1.55;}
+  .hd .meta{margin-top:14px;display:flex;gap:10px;font-size:11px;}
+  .hd .meta span{padding:4px 10px;border:1px solid rgba(255,255,255,0.35);border-radius:99px;}
+  .seal{position:absolute;bottom:18px;right:22px;width:54px;height:54px;border:1.5px solid rgba(255,255,255,0.5);
+        display:flex;align-items:center;justify-content:center;font-family:"Noto Serif KR",serif;font-size:24px;
+        background:rgba(255,255,255,0.06);transform:rotate(-3deg);}
+
+  .pair{padding:18px 18px 0;display:grid;grid-template-columns:1fr 36px 1fr;gap:8px;align-items:stretch;}
+  .pcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center;}
+  .pcard .who{font-size:11px;color:var(--mute);letter-spacing:0.15em;}
+  .pcard .name{font-size:15px;font-weight:700;margin-top:2px;}
+  .pcard .ilgan{font-family:"Noto Serif KR",serif;font-size:36px;color:var(--rose-d);line-height:1;margin:8px 0 4px;}
+  .pcard .desc{font-size:11px;color:var(--mute);}
+  .pcard .pillars{margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;}
+  .pcard .pi{background:#FAF6EC;border-radius:5px;padding:4px 0;font-family:"Noto Serif KR",serif;font-size:10px;line-height:1.3;}
+  .pcard .pi b{display:block;font-size:13px;color:var(--rose-d);font-weight:600;}
+  .vs{display:flex;align-items:center;justify-content:center;font-family:"Noto Serif KR",serif;font-size:22px;color:var(--rose);}
+
+  .verdict{margin:18px;padding:18px;border:1px solid var(--rose);border-radius:14px;background:#FCF7FB;text-align:center;}
+  .verdict .lvl{font-family:"Noto Serif KR",serif;font-size:30px;color:var(--rose-d);font-weight:600;letter-spacing:0.05em;}
+  .verdict .star{margin:6px 0 4px;font-size:18px;color:var(--rose);letter-spacing:4px;}
+  .verdict .one{font-size:13px;color:var(--ink);line-height:1.55;margin-top:6px;}
+  .verdict .meta{margin-top:10px;font-size:11px;color:var(--mute);}
+
+  .sec{padding:0 18px;margin-top:22px;}
+  .sec h2{font-family:"Noto Serif KR",serif;font-size:17px;margin:0 0 4px;display:flex;align-items:baseline;gap:8px;}
+  .sec h2 .hz{font-size:13px;color:var(--rose);}
+  .sec .lead{font-size:12px;color:var(--mute);margin:0 0 10px;line-height:1.5;}
+
+  .dims{display:flex;flex-direction:column;gap:8px;}
+  .dim{display:grid;grid-template-columns:54px 1fr 70px;gap:10px;align-items:center;
+       background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .dim .lb{font-size:13px;font-weight:600;}
+  .dim .lb small{display:block;font-size:10px;color:var(--mute);font-weight:400;margin-top:2px;}
+  .dim .bar{height:6px;background:#EFE8DA;border-radius:99px;overflow:hidden;position:relative;}
+  .dim .bar i{display:block;height:100%;background:linear-gradient(90deg,#9C5A8A,#C88BB3);}
+  .dim .lvl{text-align:right;font-size:12px;color:var(--rose-d);font-weight:600;}
+
+  .body{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 14px 16px;line-height:1.7;font-size:13.5px;color:#1A1A1A;}
+  .body p{margin:0 0 10px;}
+  .body p:last-child{margin-bottom:0;}
+  .body .pull{font-family:"Noto Serif KR",serif;font-size:15px;color:var(--rose-d);
+              border-left:3px solid var(--rose);padding:6px 0 6px 12px;margin:12px 0;}
+  .quote{margin:14px 0 0;padding:12px 14px;background:#F4ECF1;border-radius:10px;font-size:12.5px;color:var(--rose-d);
+         font-family:"Noto Serif KR",serif;line-height:1.6;}
+  .quote em{font-style:normal;color:var(--mute);font-size:11px;display:block;margin-top:6px;font-family:"Pretendard",sans-serif;}
+
+  .pairgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .pcell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .pcell h3{font-size:12px;margin:0 0 4px;color:var(--rose-d);display:flex;justify-content:space-between;align-items:baseline;}
+  .pcell h3 small{font-family:"Noto Serif KR",serif;font-size:14px;color:var(--rose);}
+  .pcell .t{font-size:12px;color:var(--ink);line-height:1.5;}
+
+  .lock-veil{position:relative;border-radius:12px;overflow:hidden;}
+  .lock-veil .blurred{filter:blur(6px);opacity:0.55;pointer-events:none;}
+  .lock-veil .lock-ovr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+                       background:linear-gradient(180deg,rgba(248,245,238,0.4) 0%,rgba(248,245,238,0.95) 60%);text-align:center;padding:18px;}
+  .lock-veil .lk-ic{width:46px;height:46px;border:1.5px solid var(--rose);border-radius:50%;
+                    display:flex;align-items:center;justify-content:center;font-family:"Noto Serif KR",serif;font-size:22px;color:var(--rose-d);}
+  .lock-veil .lk-tt{margin-top:10px;font-size:14px;font-weight:600;color:var(--ink);}
+  .lock-veil .lk-sb{margin-top:4px;font-size:12px;color:var(--mute);max-width:260px;line-height:1.5;}
+  .lock-veil .lk-cta{margin-top:12px;padding:10px 18px;background:var(--ink);color:#fff;border-radius:99px;font-size:12.5px;font-weight:600;}
+
+  .timeline{display:flex;flex-direction:column;gap:6px;}
+  .tl{display:grid;grid-template-columns:54px 1fr 60px;gap:10px;align-items:center;background:#fff;
+      border:1px solid var(--line);border-radius:10px;padding:8px 12px;}
+  .tl .yr{font-family:"Noto Serif KR",serif;font-size:13px;color:var(--rose-d);}
+  .tl .ev{font-size:12px;line-height:1.45;}
+  .tl .lv{text-align:right;font-size:11px;color:var(--mute);}
+
+  .src{margin:14px 18px 0;padding:12px 14px;background:#F1ECE0;border-radius:10px;font-size:11px;color:var(--mute);line-height:1.55;}
+  .src b{color:var(--ink);}
+
+  .upsell{margin:18px;padding:16px 16px 18px;background:linear-gradient(160deg,#FCF7FB,#F4ECF1);
+          border:1px solid var(--rose);border-radius:14px;}
+  .upsell .h{font-family:"Noto Serif KR",serif;font-size:16px;color:var(--rose-d);}
+  .upsell .p{font-size:12px;color:var(--mute);margin-top:6px;line-height:1.55;}
+  .upsell .row{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .upsell .it{background:#fff;border-radius:10px;padding:10px;text-align:center;font-size:12px;}
+  .upsell .it b{display:block;font-family:"Noto Serif KR",serif;color:var(--rose-d);font-size:14px;}
+  .upsell .it span{color:var(--mute);font-size:11px;}
+
+  .actions{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:calc(100% - 32px);max-width:398px;
+           display:grid;grid-template-columns:1fr 1.4fr;gap:8px;z-index:9;}
+  .actions .btn{background:#fff;border:1px solid var(--ink);border-radius:14px;padding:12px;text-align:center;
+                box-shadow:0 4px 18px rgba(0,0,0,0.08);}
+  .actions .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .actions .btn .ic{font-family:"Noto Serif KR",serif;font-size:16px;}
+  .actions .btn .lb{font-size:13px;font-weight:600;margin-top:1px;}
+  .actions .btn .sb{font-size:10px;opacity:0.7;margin-top:1px;}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="hd">
+    <div class="crumb">사주 500 · 더 알아볼 주제 · 궁합</div>
+    <h1>두 사주의 결을 겹쳐<br/>읽어 드립니다</h1>
+    <div class="sub">생년월일·시 두 분의 자료로 다섯 결을 비교합니다. 점수 대신 결의 깊이로 말씀드립니다.</div>
+    <div class="meta"><span>3운 · 약 3,800자</span><span>2026·04·21 ·기준</span><span>전문가 감수</span></div>
+    <div class="seal">合</div>
+  </header>
+
+  <section class="pair">
+    <div class="pcard">
+      <div class="who">사용자</div>
+      <div class="name">준기 (己土)</div>
+      <div class="ilgan">己土</div>
+      <div class="desc">습한 텃밭의 흙</div>
+      <div class="pillars">
+        <div class="pi"><b>癸</b>년</div>
+        <div class="pi"><b>丙</b>월</div>
+        <div class="pi"><b>己</b>일</div>
+        <div class="pi"><b>戊</b>시</div>
+      </div>
+    </div>
+    <div class="vs">合</div>
+    <div class="pcard">
+      <div class="who">상대</div>
+      <div class="name">서연 (辛金)</div>
+      <div class="ilgan">辛金</div>
+      <div class="desc">잘 다듬어진 보석</div>
+      <div class="pillars">
+        <div class="pi"><b>甲</b>년</div>
+        <div class="pi"><b>戊</b>월</div>
+        <div class="pi"><b>辛</b>일</div>
+        <div class="pi"><b>癸</b>시</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:0 18px;margin-top:8px;">
+    <div class="verdict">
+      <div class="lvl">잘 맞음</div>
+      <div class="star">★★★★☆</div>
+      <div class="one">기토(己土)가 신금(辛金)을 길러 내는 결입니다. 흙이 보석을 품는 관계로, 다툼보다 다듬음의 결이 강하게 흐릅니다.</div>
+      <div class="meta">5단계 평가 · 매우 잘 맞음 / <b style="color:var(--rose-d)">잘 맞음</b> / 보통 / 다소 어긋남 / 많이 어긋남</div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>다섯 결로 본 궁합 <span class="hz">五合 / 5 dimensions</span></h2>
+    <p class="lead">성향·소통·재정·생활·미래 다섯 축을 점수가 아니라 결의 농도로 보여 드립니다.</p>
+    <div class="dims">
+      <div class="dim">
+        <div class="lb">성향<small>性</small></div>
+        <div class="bar"><i style="width:82%"></i></div>
+        <div class="lvl">잘 맞음</div>
+      </div>
+      <div class="dim">
+        <div class="lb">소통<small>言</small></div>
+        <div class="bar"><i style="width:74%"></i></div>
+        <div class="lvl">잘 맞음</div>
+      </div>
+      <div class="dim">
+        <div class="lb">재정<small>財</small></div>
+        <div class="bar"><i style="width:60%"></i></div>
+        <div class="lvl">보통</div>
+      </div>
+      <div class="dim">
+        <div class="lb">생활<small>家</small></div>
+        <div class="bar"><i style="width:78%"></i></div>
+        <div class="lvl">잘 맞음</div>
+      </div>
+      <div class="dim">
+        <div class="lb">미래<small>運</small></div>
+        <div class="bar"><i style="width:88%"></i></div>
+        <div class="lvl">매우 잘 맞음</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>총평 <span class="hz">總評</span></h2>
+    <div class="body">
+      <p>두 분의 일간은 기토(己土)와 신금(辛金)으로, 명리에서 토생금(土生金) 관계에 해당합니다. 흙이 시간을 들여 보석을 길러 내는 결입니다. 한 분이 끌어올리고 다른 한 분이 다듬는 흐름이 자연스럽습니다.</p>
+      <p>준기 님의 사주는 병화(丙火)의 빛을 받은 텃밭이고, 서연 님의 사주는 갑목(甲木)의 그늘 아래 다듬어진 보석입니다. 빛과 그늘이 한 자리에서 만나니, 처음에는 속도가 다른 것처럼 보여도 시간이 갈수록 결이 서로를 보완합니다.</p>
+      <div class="pull">"흙은 보석을 만들어 내고, 보석은 흙의 결을 빛으로 돌려준다."</div>
+      <p>특히 미래(運) 축이 매우 잘 맞는 점은 두 분의 다음 십 년이 같은 방향으로 흐른다는 신호입니다. 단기 갈등은 있을 수 있으나, 장기적으로 같은 곳을 바라보는 관계입니다.</p>
+    </div>
+    <div class="quote">
+      "二土相見 必生其金 — 두 흙이 만나면 반드시 그 안의 금을 길러 낸다."
+      <em>적천수 · 통변 편 · 인용 정책 검토 중</em>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>다섯 결의 풀이 <span class="hz">逐項解</span></h2>
+    <div class="pairgrid">
+      <div class="pcell">
+        <h3>성향 <small>性</small></h3>
+        <div class="t">기토의 포용과 신금의 정밀함이 짝을 이룹니다. 한 분이 품고 한 분이 다듬는 결입니다.</div>
+      </div>
+      <div class="pcell">
+        <h3>소통 <small>言</small></h3>
+        <div class="t">말의 속도가 다릅니다. 준기 님은 천천히, 서연 님은 단정하게. 서로의 박자를 인정하면 길게 갑니다.</div>
+      </div>
+      <div class="pcell">
+        <h3>재정 <small>財</small></h3>
+        <div class="t">관점이 다릅니다. 한 분은 모으고 한 분은 다듬는 쪽입니다. 공동 통장보다 역할 분담이 맞습니다.</div>
+      </div>
+      <div class="pcell">
+        <h3>생활 <small>家</small></h3>
+        <div class="t">루틴의 결이 비슷합니다. 늦은 오후~저녁 시간대에 함께 있을 때 가장 평온합니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>두 분이 함께 흘러갈 길 <span class="hz">同行</span></h2>
+    <div class="lock-veil">
+      <div class="blurred">
+        <div class="timeline">
+          <div class="tl"><div class="yr">2026</div><div class="ev">초입의 호흡 — 결정보다 관찰을 권합니다. 갑진년 흐름이 두 분의 박자를 같게 만듭니다.</div><div class="lv">★★★☆☆</div></div>
+          <div class="tl"><div class="yr">2027</div><div class="ev">합의의 해 — 큰 결정 한 번이 길게 남습니다. 거주·일·관계의 형식이 자리잡는 시기입니다.</div><div class="lv">★★★★☆</div></div>
+          <div class="tl"><div class="yr">2028</div><div class="ev">두 결이 한 결로 — 이름이 달라도 같은 방향을 보는 해입니다. 외부 신호에 흔들리지 마십시오.</div><div class="lv">★★★★★</div></div>
+          <div class="tl"><div class="yr">2029</div><div class="ev">시험기 — 작은 균열이 보일 수 있으나 본질을 흔들 정도는 아닙니다.</div><div class="lv">★★★☆☆</div></div>
+          <div class="tl"><div class="yr">2030</div><div class="ev">정착 — 함께 만들어 온 형식이 결실로 돌아옵니다.</div><div class="lv">★★★★☆</div></div>
+        </div>
+      </div>
+      <div class="lock-ovr">
+        <div class="lk-ic">合</div>
+        <div class="lk-tt">두 분이 함께 흘러갈 5년</div>
+        <div class="lk-sb">각 해의 흐름과 권장 행동을 사주 전체로 풀어 드립니다.</div>
+        <div class="lk-cta">10운으로 전체 보기</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>주의가 필요한 결 <span class="hz">注意</span></h2>
+    <div class="lock-veil">
+      <div class="blurred">
+        <div class="body">
+          <p><b>1. 화(火)의 어긋남</b> — 준기 님 사주에 병화가 있고 서연 님 사주에 정화가 약합니다. 봄·여름 환절기에 감정의 온도가 다를 수 있습니다.</p>
+          <p><b>2. 수(水)의 결핍</b> — 두 분 모두 수(水) 기운이 약합니다. 결정의 속도가 너무 빠를 수 있으니 한 박자 쉬는 습관이 도움이 됩니다.</p>
+          <p><b>3. 토(土)의 중첩</b> — 준기 님 사주에 토가 셋입니다. 서연 님 입장에서 답답함이 쌓일 수 있으니 분기마다 환기 시간이 필요합니다.</p>
+        </div>
+      </div>
+      <div class="lock-ovr">
+        <div class="lk-ic">注</div>
+        <div class="lk-tt">주의가 필요한 세 결</div>
+        <div class="lk-sb">관계가 길게 가기 위해 알아 둘 세 가지 결입니다.</div>
+        <div class="lk-cta">10운으로 전체 보기</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="src">
+    <b>출처 ·</b> 본 풀이는 명리정종(明理正宗)의 합화론(合化論)과 연해자평(淵海子平)의 부부합 항목을 기반으로 합니다. 인용된 적천수 구절은 검토 중이며, 정식 인용은 다음 버전에서 확정합니다.
+  </div>
+
+  <div class="upsell">
+    <div class="h">두 분의 사주 전체로 더 깊게</div>
+    <div class="p">10운으로 두 분의 5년 흐름·갈등 시기·권장 결정 시점을 모두 풀어 드립니다.</div>
+    <div class="row">
+      <div class="it"><b>5년 동행 흐름</b><span>해마다 권장 행동 포함</span></div>
+      <div class="it"><b>주의 결 3종</b><span>예방 가이드 포함</span></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <div class="btn"><div class="ic">↗</div><div class="lb">공유하고 1운 받기</div><div class="sb">하루 3회까지</div></div>
+    <div class="btn primary"><div class="ic">合</div><div class="lb">두 사주 전체로 보기</div><div class="sb">10운으로 시작</div></div>
+  </div>
+</div>
+</body>
+</html>

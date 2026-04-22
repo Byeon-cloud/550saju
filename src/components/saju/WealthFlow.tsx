@@ -14,7 +14,7 @@ interface ScoreBand {
 function getScoreBand(score: number): ScoreBand {
   if (score >= 80) return { label: '매우 강함', color: '#2D8A4E', bg: '#E8F5E9' };
   if (score >= 65) return { label: '양호', color: '#3B7DD8', bg: '#E3F0FF' };
-  if (score >= 50) return { label: '보통', color: '#C9A96E', bg: '#FFF8E1' };
+  if (score >= 50) return { label: '보통', color: '#B8965A', bg: '#FFF8E1' };
   if (score >= 35) return { label: '보완 필요', color: '#E08A3C', bg: '#FFF3E0' };
   return { label: '매우 약함', color: '#C75050', bg: '#FFEBEE' };
 }
@@ -259,7 +259,7 @@ function ComparisonBars({ data }: { data: WealthFlowType }) {
 
 /* ─── 스테이지 카드 ─── */
 const STAGE_META = {
-  earning: { label: '벌기', sub: '수입 에너지', themeColor: '#C9A96E' },
+  earning: { label: '벌기', sub: '수입 에너지', themeColor: '#B8965A' },
   spending: { label: '소비관리', sub: '지출 통제력', themeColor: '#7A8BA0' },
   saving: { label: '모으기', sub: '축적 에너지', themeColor: '#2D8A4E' },
 } as const;
@@ -378,8 +378,8 @@ export function WealthFlow({ data }: Props) {
 
       {/* ━━━ 재물 체질 타입 ━━━ */}
       <div style={{
-        background: 'linear-gradient(135deg, #C9A96E12, #C9A96E22)',
-        border: '1px solid #C9A96E30',
+        background: 'linear-gradient(135deg, #B8965A12, #B8965A22)',
+        border: '1px solid #B8965A30',
         borderRadius: 14,
         padding: '16px 18px',
       }}>
@@ -389,7 +389,7 @@ export function WealthFlow({ data }: Props) {
         }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #C9A96E, #a08b6a)',
+            background: 'linear-gradient(135deg, #B8965A, #a08b6a)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
@@ -416,7 +416,7 @@ export function WealthFlow({ data }: Props) {
           background: '#ffffff80',
           borderRadius: 10,
           padding: '10px 12px',
-          border: '1px solid #C9A96E18',
+          border: '1px solid #B8965A18',
         }}>
           <p style={{
             fontSize: 10, fontWeight: 700, color: '#a08b6a',
@@ -475,7 +475,7 @@ export function WealthFlow({ data }: Props) {
         }}>
           <div style={{
             width: 2, height: 16, borderRadius: 1,
-            background: 'linear-gradient(180deg, #C9A96E40, #7A8BA040)',
+            background: 'linear-gradient(180deg, #B8965A40, #7A8BA040)',
           }} />
         </div>
 

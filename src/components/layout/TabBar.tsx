@@ -45,7 +45,7 @@ export function TabBar() {
                   <motion.div
                     whileTap={{ scale: 0.9 }}
                     className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
-                    style={{ background: active ? '#C9A96E' : '#1B2A4A' }}
+                    style={{ background: active ? '#B8965A' : '#1B2A4A' }}
                   >
                     <Icon size={22} color="#FFFFFF" />
                   </motion.div>
@@ -65,7 +65,7 @@ export function TabBar() {
               >
                 <Icon
                   size={20}
-                  color={active ? '#C9A96E' : '#A8B1C1'}
+                  color={active ? '#B8965A' : '#A8B1C1'}
                 />
                 <span className={`text-[10px] font-semibold transition-colors duration-200 ${
                   active ? 'text-brand-gold' : 'text-text-hint'

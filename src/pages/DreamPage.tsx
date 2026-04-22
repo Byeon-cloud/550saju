@@ -9,7 +9,7 @@ import { LockedCard } from '@/components/common/LockedCard';
 import { ErrorState } from '@/components/common/ErrorState';
 import { TimelineSwipe, type TimelineStep } from '@/components/common/TimelineSwipe';
 import { SymbolDragMap, type SymbolItem } from '@/components/common/SymbolDragMap';
-import { Flippable } from '@/components/common/Flippable';
+// Flippable 제거 (2026-04-22): LuckyColor/StatCard 정적화 — DailyFortunePage 와 통일.
 import { TopicCTAGrid, type TopicItem } from '@/components/common/TopicCTAGrid';
 import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { OhengCompareBar } from '@/components/saju/OhengCompareBar';
@@ -33,6 +33,7 @@ import {
   generateDreamDeepV3,
 } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
+import { TOPIC_REGISTRY } from '@/constants/topics';
 import {
   RadarChart,
   PolarGrid,
@@ -65,7 +66,7 @@ const DREAM_CATEGORIES: Array<{
   { id: 'water', label: '물과 관련된 꿈', color: '#1565C0', examples: '바다, 강, 비, 홍수, 수영', hot: true },
   { id: 'death', label: '죽음 · 이별의 꿈', color: '#7B1FA2', examples: '누군가 죽는 꿈, 장례식, 이별' },
   { id: 'flying', label: '하늘을 나는 꿈', color: '#0288D1', examples: '날기, 떨어지기, 높은 곳' },
-  { id: 'money', label: '돈 · 재물의 꿈', color: '#C9A96E', examples: '돈 줍기, 복권, 금, 보석', hot: true },
+  { id: 'money', label: '돈 · 재물의 꿈', color: '#B8965A', examples: '돈 줍기, 복권, 금, 보석', hot: true },
   { id: 'people', label: '사람이 나오는 꿈', color: '#E91E63', examples: '가족, 연인, 낯선 사람, 유명인' },
   { id: 'chase', label: '쫓기는 꿈', color: '#D32F2F', examples: '쫓기기, 도망, 숨기, 위험' },
   { id: 'nature', label: '자연 · 날씨 꿈', color: '#F57F17', examples: '꽃, 산, 불, 지진, 눈' },
@@ -82,7 +83,7 @@ const OHENG_PICTOGRAM_KEY: Record<OhengType, PictogramKey> = {
 
 /** v4 등급 팔레트 (디자인시스템_v4 §3.3 — A 초록·D 빨강 금지) */
 const GRADE_V4: Record<string, string> = {
-  S: '#C9A96E',
+  S: '#B8965A',
   A: '#A08B6A',
   B: '#2D4470',
   C: '#8F6B4E',
@@ -344,7 +345,7 @@ export function DreamPage() {
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            『적천수』·한국 명리학 문헌 기반
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
             사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
@@ -383,7 +384,7 @@ function CategoryPhase({
               height: 128,
               borderRadius: 64,
               opacity: 0.05,
-              background: 'radial-gradient(circle, #C9A96E, transparent 70%)',
+              background: 'radial-gradient(circle, #B8965A, transparent 70%)',
             }}
           />
           <p className="sec-meta" style={{ color: 'rgba(245,239,224,0.5)' }}>꿈해몽</p>
@@ -710,7 +711,7 @@ function FreeResultView({
             <div className="flex items-start gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(201,169,110,0.2)' }}
+                style={{ background: 'rgba(184,150,90,0.2)' }}
               >
                 <Pictogram k="ui:saju" size={22} color="#E8D5A8" />
               </div>
@@ -828,11 +829,11 @@ function FreeResultView({
                   />
                   <Radar
                     dataKey="value"
-                    stroke="#C9A96E"
-                    fill="#C9A96E"
+                    stroke="#B8965A"
+                    fill="#B8965A"
                     fillOpacity={0.22}
                     strokeWidth={2}
-                    dot={{ fill: '#C9A96E', r: 3 }}
+                    dot={{ fill: '#B8965A', r: 3 }}
                   />
                 </RadarChart>
               </ResponsiveContainer>
@@ -950,7 +951,7 @@ function FreeResultView({
                   padding: 14,
                   borderRadius: 12,
                   background: 'var(--bg-cream)',
-                  border: '0.5px solid rgba(201,169,110,0.22)',
+                  border: '0.5px solid rgba(184,150,90,0.22)',
                 }}
               >
                 <p className="sec-meta" style={{ marginBottom: 4, color: 'var(--brand-gold)' }}>
@@ -1026,7 +1027,7 @@ function FreeResultView({
           <div className="flex items-start gap-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(201,169,110,0.2)' }}
+              style={{ background: 'rgba(184,150,90,0.2)' }}
             >
               <Pictogram k="ui:saju" size={22} color="#E8D5A8" />
             </div>
@@ -1262,69 +1263,56 @@ function ScoreDonut({ score, color }: { score: number; color: string }) {
   );
 }
 
-function LuckyColorCard({
-  color,
-  height,
-}: {
-  color: any;
-  height?: number;
-}) {
-  const hex = typeof color?.hex === 'string' ? color.hex : '#C9A96E';
+/**
+ * LuckyColorCard v2 (2026-04-22) — DreamPage.
+ * Flippable 제거. DailyFortunePage 와 동일한 정적 1면 카드로 통일.
+ * 근거: 탭-숨김 패턴이 모바일에서 발견율 낮고, "이유" 가 가장 신뢰감 주는 정보라 숨기지 않는다.
+ */
+function LuckyColorCard({ color }: { color: any; height?: number }) {
+  const hex = typeof color?.hex === 'string' ? color.hex : '#B8965A';
   const name = typeof color?.name === 'string' ? color.name : '골드';
   const reason = typeof color?.reason === 'string' ? stripMd(color.reason) : '';
   return (
-    <Flippable
-      height={height ?? 144}
-      ariaLabel={`행운의 색 — ${name}`}
-      front={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: '#FFFFFF',
-            border: '0.5px solid var(--border-default)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>행운의 색</p>
-          <div
-            style={{
-              width: '100%',
-              height: 44,
-              borderRadius: 8,
-              background: hex,
-              border: '0.5px solid rgba(27,42,74,0.1)',
-            }}
-          />
-          <p className="sec-title" style={{ fontSize: 15 }}>{name}</p>
-          <p className="sec-caption" style={{ fontSize: 10 }}>탭해서 이유 보기</p>
-        </div>
-      }
-      back={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: 'var(--bg-cream)',
-            border: '0.5px solid rgba(201,169,110,0.25)',
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)', marginBottom: 6 }}>
-            왜 이 색인가
-          </p>
-          <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-            {reason || '이 색은 오늘 당신의 흐름과 가장 공명하는 기운입니다.'}
-          </p>
-        </div>
-      }
-    />
+    <div
+      style={{
+        padding: 14,
+        borderRadius: 14,
+        background: '#FFFFFF',
+        border: '0.5px solid var(--border-default)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+      aria-label={`행운의 색 — ${name}`}
+    >
+      <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>행운의 색</p>
+      <div
+        style={{
+          width: '100%',
+          height: 44,
+          borderRadius: 8,
+          background: hex,
+          border: '0.5px solid rgba(27,42,74,0.1)',
+        }}
+        aria-hidden
+      />
+      <p className="sec-title" style={{ fontSize: 15, margin: 0 }}>{name}</p>
+      <p
+        className="text-body-sm"
+        style={{
+          fontSize: 12,
+          color: 'var(--text-secondary)',
+          lineHeight: 1.5,
+          margin: 0,
+        }}
+      >
+        {reason || '이 색은 오늘 당신의 흐름과 가장 공명하는 기운입니다.'}
+      </p>
+    </div>
   );
 }
 
+/** LuckyStatCard v2 — DreamPage. Flippable 제거 · DailyFortunePage 와 정렬. */
 function LuckyStatCard({
   title,
   value,
@@ -1335,50 +1323,43 @@ function LuckyStatCard({
   reason: string;
 }) {
   return (
-    <Flippable
-      height={144}
-      ariaLabel={`${title} — ${value}`}
-      front={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: '#FFFFFF',
-            border: '0.5px solid var(--border-default)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>{title}</p>
-          <p style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', marginTop: 4 }}>
-            {value}
-          </p>
-          <p className="sec-caption" style={{ fontSize: 10, marginTop: 'auto' }}>
-            탭해서 이유 보기
-          </p>
-        </div>
-      }
-      back={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: 'var(--bg-cream)',
-            border: '0.5px solid rgba(201,169,110,0.25)',
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)', marginBottom: 6 }}>
-            {title}의 이유
-          </p>
-          <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-            {reason || '사주와 오늘 흐름이 공명하는 지점입니다.'}
-          </p>
-        </div>
-      }
-    />
+    <div
+      style={{
+        padding: 14,
+        borderRadius: 14,
+        background: '#FFFFFF',
+        border: '0.5px solid var(--border-default)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+      }}
+      aria-label={`${title} — ${value}`}
+    >
+      <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>{title}</p>
+      <p
+        style={{
+          fontSize: 28,
+          fontWeight: 900,
+          color: 'var(--text-primary)',
+          marginTop: 2,
+          marginBottom: 4,
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </p>
+      <p
+        className="text-body-sm"
+        style={{
+          fontSize: 12,
+          color: 'var(--text-secondary)',
+          lineHeight: 1.5,
+          margin: 0,
+        }}
+      >
+        {reason || '사주와 오늘 흐름이 공명하는 지점입니다.'}
+      </p>
+    </div>
   );
 }
 
@@ -1499,12 +1480,40 @@ function buildSajuContext(profile: SajuProfile): any {
 }
 
 /* ══════════════════════════════════════════════════════════════════
- * 주제 CTA 4카드 (IX-5)
+ * 주제 CTA 4카드 (IX-5) — 2026-04-22 SSOT v1 정렬
+ * - SSOT: src/constants/topics.ts · TOPIC_REGISTRY
+ * - '연애·결혼' 혼합 라벨 → SSOT 단일 주제 (모순 방지 · love/marriage 별도 주제)
+ * - 하드코딩 컬러 (#E91E63·#1565C0·#2D8A4E) → TOPIC_REGISTRY SSOT 컬러
+ * - '1운 (500원)' → '1운' (원화 노출 ChargePage 로 집중)
  * ═════════════════════════════════════════════════════════════════ */
 const DREAM_TOPIC_ITEMS: TopicItem[] = [
-  { id: 'love', title: '연애·결혼', desc: '이 꿈이 애정운에 주는 신호', price: '1운 (500원)', color: '#E91E63' },
-  { id: 'wealth', title: '재물·투자', desc: '재물 흐름과 기회의 방향', price: '1운 (500원)', color: '#C9A96E' },
-  { id: 'career', title: '취업·커리어', desc: '일·성장의 리듬 분석', price: '1운 (500원)', color: '#1565C0' },
-  { id: 'health', title: '건강·활력', desc: '컨디션과 체력의 포인트', price: '1운 (500원)', color: '#2D8A4E' },
+  {
+    id: 'love',
+    title: TOPIC_REGISTRY.love.label,
+    desc: '이 꿈이 애정운에 주는 신호',
+    price: '1운',
+    color: TOPIC_REGISTRY.love.color,
+  },
+  {
+    id: 'wealth',
+    title: TOPIC_REGISTRY.wealth.label,
+    desc: '재물 흐름과 기회의 방향',
+    price: '1운',
+    color: TOPIC_REGISTRY.wealth.color,
+  },
+  {
+    id: 'career',
+    title: TOPIC_REGISTRY.career.label,
+    desc: '일·성장의 리듬 분석',
+    price: '1운',
+    color: TOPIC_REGISTRY.career.color,
+  },
+  {
+    id: 'health',
+    title: TOPIC_REGISTRY.health.label,
+    desc: '컨디션과 체력의 포인트',
+    price: '1운',
+    color: TOPIC_REGISTRY.health.color,
+  },
 ];
 

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사주500 — 무료 오늘의 운세 목업</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* 사주500 — 무료 오늘의 운세 (변준기 / 2026-04-20 / 일간 갑) */
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+  html, body { background: #0a0a0a; font-family: 'Pretendard', -apple-system, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+  .page { max-width: 480px; margin: 0 auto; background: #faf8f3; min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); }
+
+  /* Header — 오늘의 일간(2026-04-20=병진일=양화 → 火) */
+  .hd {
+    background: linear-gradient(135deg, #c62828 0%, #8b1a1a 60%, #5a0f0f 100%);
+    color: #fff; padding: 18px 20px 24px;
+    position: relative; overflow: hidden;
+  }
+  .hd::before {
+    content: '火'; position: absolute; right: -16px; bottom: -36px;
+    font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900;
+    color: rgba(255,255,255,.06); line-height: 1;
+  }
+  .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .9; }
+  .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
+  .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; }
+  .hd .date { font-size: 12px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
+
+  /* 일간 오행 카드 */
+  .ohaeng-today {
+    margin: 16px 20px 0; background: #fff;
+    border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.06);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .ohaeng-today .glyph {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #c62828, #8b1a1a);
+    color: #fff; font-family: 'Noto Serif KR', serif;
+    font-size: 24px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ohaeng-today .right .ttl { font-size: 12px; color: #8a7d5f; }
+  .ohaeng-today .right .body { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-top: 2px; }
+  .ohaeng-today .right .desc { font-size: 11.5px; color: #6a5d3f; margin-top: 2px; }
+
+  /* 본문 */
+  .body { padding: 22px 20px 0; }
+  .section { margin-top: 22px; }
+  .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #b8941f; letter-spacing: 0.2em; margin-bottom: 4px; }
+  .sec-title { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .sec-title .han { color: #b8941f; font-weight: 500; margin-left: 6px; font-size: 14px; }
+  .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+  .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%); padding: 0 2px; color: #1a1a1a; }
+  .body p .han { font-family: 'Noto Serif KR', serif; color: #6a5d3f; font-size: 13px; }
+
+  /* 점수 칩 (재물/연애/일/건강) */
+  .chip-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 0; }
+  .chip { background: #fff; border-radius: 10px; padding: 10px 6px; text-align: center; border: 1px solid #ebe4d2; }
+  .chip .ti { font-size: 10px; color: #8a7d5f; font-weight: 500; }
+  .chip .sc { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; margin-top: 4px; color: #c62828; }
+  .chip .sc.mid { color: #b8941f; } .chip .sc.low { color: #757575; }
+
+  /* 색·시간 가이드 */
+  .guide { background: #fff; border-radius: 12px; padding: 14px 16px; margin: 14px 0 0; border: 1px solid #ebe4d2; }
+  .guide .row { display: flex; gap: 10px; align-items: center; padding: 6px 0; font-size: 13px; color: #2a2520; }
+  .guide .row .lab { width: 60px; font-size: 11px; color: #8a7d5f; font-weight: 500; }
+  .guide .row .swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #ebe4d2; }
+
+  /* PullQuote */
+  .pullq {
+    background: linear-gradient(135deg, rgba(198,40,40,.05), rgba(212,175,55,.05));
+    border-radius: 10px; padding: 14px 16px; margin: 16px 0 0;
+    border-left: 3px solid #c62828;
+    font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.75; color: #1a1a1a; font-weight: 500;
+  }
+
+  /* AdBanner (무료만) */
+  .ad-slot {
+    margin: 22px 20px 0; background: #f0ebe0;
+    border: 1px dashed #b8941f;
+    border-radius: 10px; padding: 22px 12px;
+    text-align: center; font-size: 11px; color: #8a7d5f;
+  }
+  .ad-slot .lbl { font-size: 9px; color: #b8941f; letter-spacing: 0.15em; font-weight: 600; }
+  .ad-slot .ph { margin-top: 6px; font-size: 13px; color: #6a5d3f; }
+
+  /* Upsell — 프리미엄 10운 / 1운 깊이풀이 */
+  .upsell {
+    margin: 22px 20px 0;
+    background: linear-gradient(135deg, #1a1a1a, #2a2520);
+    color: #fff; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden;
+  }
+  .upsell::before { content: '深'; position: absolute; right: -8px; bottom: -28px; font-family: 'Noto Serif KR', serif; font-size: 130px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
+  .upsell .lab { font-size: 10px; color: #d4af37; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+  .upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; position: relative; }
+  .upsell p { font-size: 12.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; }
+  .upsell .cta { display: inline-flex; gap: 6px; background: linear-gradient(135deg, #d4af37, #b8941f); color: #1a1a1a; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; position: relative; }
+  .upsell .cost { background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #d4af37; margin-left: 6px; font-weight: 600; }
+
+  /* 푸터 액션 */
+  .actions { display: flex; justify-content: space-around; padding: 18px 20px; margin-top: 14px; border-top: 1px solid #ebe4d2; }
+  .actions .btn { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #6a5d3f; font-size: 11px; cursor: pointer; }
+  .actions .btn svg { width: 22px; height: 22px; }
+
+  /* 빈 자리 */
+  .spacer { height: 80px; }
+  /* 자체검증 라벨 */
+  .verify-tag { display: inline-block; font-size: 9px; color: #b8941f; background: rgba(184,148,31,.12); padding: 2px 8px; border-radius: 100px; margin: 18px 20px 0; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── HEADER ───────────────────────── -->
+  <header class="hd">
+    <div class="top">
+      <span class="badge">무료 · 오늘의 운세</span>
+      <span>변준기 님</span>
+    </div>
+    <h1>오늘은 한 박자 늦게.</h1>
+    <div class="date">2026년 4월 20일 월요일 · 병진일(丙辰)</div>
+  </header>
+
+  <!-- ── 일간 오행 카드 ─────────────────── -->
+  <div class="ohaeng-today">
+    <div class="glyph">火</div>
+    <div class="right">
+      <div class="ttl">오늘의 일간</div>
+      <div class="body">병(丙) · 양화(陽火)</div>
+      <div class="desc">한낮의 태양 같은 기운. 드러내고 싶은 마음이 강해지는 날.</div>
+    </div>
+  </div>
+
+  <!-- ── 본문 ───────────────────────── -->
+  <main class="body">
+
+    <section class="section">
+      <div class="sec-num">SECTION 01</div>
+      <div class="sec-title">오늘의 결 <span class="han">日柱</span></div>
+      <p>
+        준기 님의 일간 <strong>갑(甲)</strong>에 오늘의 <strong>병(丙)</strong>이 비춥니다. <span class="han">甲</span> 나무에 한낮의 햇살이 닿는 자리예요. 평소보다 <strong>표현하고 싶은 마음, 인정받고 싶은 마음</strong>이 강해지는 하루입니다. 안 하던 말이 입에서 술술 나올 수 있어요.
+      </p>
+      <p>
+        다만 햇살이 너무 환해서 그림자가 짧습니다. 평소엔 신중한 준기 님이 오늘은 <strong>속도가 한 박자 빨라집니다</strong>. 회의에서 결정을 너무 빨리 내리거나, 카톡을 다 읽기 전에 답하고 후회할 위험이 있어요. <strong>한 박자만 늦추는 것</strong>이 오늘의 무기입니다.
+      </p>
+    </section>
+
+    <div class="chip-row">
+      <div class="chip"><div class="ti">재물</div><div class="sc">7</div></div>
+      <div class="chip"><div class="ti">관계</div><div class="sc mid">5</div></div>
+      <div class="chip"><div class="ti">일</div><div class="sc">8</div></div>
+      <div class="chip"><div class="ti">건강</div><div class="sc mid">6</div></div>
+    </div>
+
+    <section class="section">
+      <div class="sec-num">SECTION 02</div>
+      <div class="sec-title">오늘 잘 풀릴 일</div>
+      <p>
+        오늘의 결은 <strong>일</strong> 쪽으로 강하게 흐릅니다. 미뤄두던 작업물 마무리, 결제·발주 같이 <strong>"끝내야 했던 것"</strong>을 하루 안에 정리하기 좋아요. 새로 벌이는 일보다 <strong>덮는 일</strong>에 점수가 큽니다.
+      </p>
+      <p>
+        재물 쪽은 <strong>오후 2시~5시</strong> 사이 한 번 움직임이 있습니다. 작은 입금, 환급, 잊고 있던 정산 같은 형태일 가능성이 높아요. 그 시간엔 알림을 한 번 더 확인해보세요.
+      </p>
+    </section>
+
+    <section class="section">
+      <div class="sec-num">SECTION 03</div>
+      <div class="sec-title">오늘 조심할 것</div>
+      <p>
+        관계 점수가 5예요. 햇살이 강한 만큼 <strong>그림자도 길어집니다</strong>. 평소 안 했던 강한 표현이 오늘은 쉽게 나오고, 받는 사람은 그게 평소 준기 님답지 않아 더 크게 느낍니다. 카톡·이메일은 보내기 전 한 번 더 읽고 보내세요.
+      </p>
+      <p>
+        건강은 <strong>눈과 두통</strong>. 화(火)가 강한 날엔 위로 기운이 몰립니다. 물을 평소보다 한 잔 더, 화면을 한 시간에 한 번씩 멀리 보세요.
+      </p>
+    </section>
+
+    <div class="guide">
+      <div class="row"><span class="lab">행운 색</span><span class="swatch" style="background:#1565c0;"></span><span>딥블루 — 위로 뜬 화 기운을 아래로 잡아줌</span></div>
+      <div class="row"><span class="lab">방향</span><span style="font-family: 'Noto Serif KR', serif; font-weight: 600; color: #1a1a1a;">북쪽</span></div>
+      <div class="row"><span class="lab">시간</span><span style="font-feature-settings: 'tnum';">14:00 — 17:00</span></div>
+      <div class="row"><span class="lab">한 줄</span><span style="font-family: 'Noto Serif KR', serif; color: #1a1a1a;">"한 박자 늦게 가도 도착은 같다."</span></div>
+    </div>
+
+    <div class="pullq">
+      햇살이 좋은 날일수록, 그림자에서 결정을 내리는 게 좋다.
+    </div>
+
+  </main>
+
+  <!-- ── AD (무료만) ───────────────── -->
+  <div class="ad-slot">
+    <div class="lbl">SPONSORED · 앱인토스 광고 슬롯</div>
+    <div class="ph">[ 320×100 배너 영역 — 화이트리스트 광고만 ]</div>
+  </div>
+
+  <!-- ── 업셀: 1운 깊이풀이 → 10운 프리미엄 ─── -->
+  <div class="upsell">
+    <div class="lab">DEEPER · 더 들어가보기</div>
+    <h3>오늘 이 결, 한 달 단위로 보면 어떻게 흐를까요?</h3>
+    <p>오늘 한 칸이 아니라 <strong>이번 달 30칸의 흐름</strong>을 한 번에. 좋은 날·조심할 날·기회의 날이 한눈에 들어오는 월운(月運) 풀이.</p>
+    <span class="cta">월운 풀이 보기 → <span class="cost">1운</span></span>
+  </div>
+
+  <!-- ── 액션 ───────────────── -->
+  <div class="actions">
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      보관함
+    </div>
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      공유
+    </div>
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      대화
+    </div>
+  </div>
+
+  <span class="verify-tag">✓ 자체감사: AI클리셰 0건 · 친근체 우세 · 한자 상징프레임만</span>
+  <div class="spacer"></div>
+</div>
+</body>
+</html>

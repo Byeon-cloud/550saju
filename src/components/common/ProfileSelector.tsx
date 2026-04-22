@@ -235,7 +235,7 @@ function Avatar({ name }: { name: string }) {
         width: 44,
         height: 44,
         borderRadius: 22,
-        background: 'rgba(201,169,110,0.15)',
+        background: 'rgba(184,150,90,0.15)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -127,7 +127,7 @@ function renderBack(p: PillarData): ReactNode {
         padding: 10,
         gap: 6,
         background: 'var(--bg-cream)',
-        border: '0.5px solid rgba(201,169,110,0.3)',
+        border: '0.5px solid rgba(184,150,90,0.3)',
       }}
     >
       <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-gold)' }}>

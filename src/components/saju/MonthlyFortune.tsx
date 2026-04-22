@@ -93,13 +93,13 @@ export function MonthlyFortune({ data }: Props) {
           <defs>
             {/* 에어리어 그라데이션 — 골드에서 투명으로 */}
             <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#C9A96E" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#C9A96E" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#B8965A" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#B8965A" stopOpacity={0.02} />
             </linearGradient>
             {/* 라인 그라데이션 */}
             <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#D4A843" />
-              <stop offset="50%" stopColor="#C9A96E" />
+              <stop offset="0%" stopColor="#8C6D3D" />
+              <stop offset="50%" stopColor="#B8965A" />
               <stop offset="100%" stopColor="#A08B6A" />
             </linearGradient>
           </defs>
@@ -127,7 +127,7 @@ export function MonthlyFortune({ data }: Props) {
               <g key={i}>
                 {/* 포인트 원 */}
                 <circle cx={p.x} cy={p.y} r={r}
-                  fill={isBest ? '#2e7d32' : isWorst ? '#e65100' : '#C9A96E'}
+                  fill={isBest ? '#2e7d32' : isWorst ? '#e65100' : '#B8965A'}
                   stroke="#fff" strokeWidth={isBest || isWorst ? 2 : 1}
                 />
                 {/* 고점/저점 라벨 */}
@@ -164,8 +164,8 @@ export function MonthlyFortune({ data }: Props) {
           <span style={{ fontSize: 10, color: '#e65100', fontWeight: 600 }}>최저점</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#C9A96E' }} />
-          <span style={{ fontSize: 10, color: '#C9A96E', fontWeight: 600 }}>운세 흐름</span>
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#B8965A' }} />
+          <span style={{ fontSize: 10, color: '#B8965A', fontWeight: 600 }}>운세 흐름</span>
         </div>
       </div>
     </div>

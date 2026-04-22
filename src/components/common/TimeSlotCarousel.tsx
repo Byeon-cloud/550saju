@@ -107,7 +107,7 @@ export function TimeSlotCarousel({ slots, currentHour }: TimeSlotCarouselProps) 
               width: i === index ? 20 : 6,
               height: 6,
               borderRadius: 3,
-              background: i === index ? 'var(--brand-gold)' : 'rgba(201,169,110,0.3)',
+              background: i === index ? 'var(--brand-gold)' : 'rgba(184,150,90,0.3)',
               border: 'none',
               padding: 0,
               cursor: 'pointer',

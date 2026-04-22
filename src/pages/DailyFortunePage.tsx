@@ -11,11 +11,12 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { ProfileSelector } from '@/components/common/ProfileSelector';
 import { TimeSlotCarousel, type TimeSlot as TSSlot } from '@/components/common/TimeSlotCarousel';
 import { CompassDrag } from '@/components/common/CompassDrag';
-import { Flippable } from '@/components/common/Flippable';
+// Flippable 제거 (2026-04-22): LuckyColor/StatCard 정적화 — 탭-숨김 패턴 폐기.
 import { TopicCTAGrid, type TopicItem } from '@/components/common/TopicCTAGrid';
 import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { OhengCompareBar } from '@/components/saju/OhengCompareBar';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
+import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/components/common/Toast';
 import {
@@ -31,6 +32,7 @@ import {
 } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
 import type { OhengType } from '@/types/saju';
+import { TOPIC_REGISTRY } from '@/constants/topics';
 
 /**
  * 오늘의 운세 v4.1 (2026-04-19)
@@ -44,7 +46,7 @@ import type { OhengType } from '@/types/saju';
 
 /** v4 등급 팔레트 */
 const GRADE_V4: Record<string, string> = {
-  S: '#C9A96E',
+  S: '#B8965A',
   A: '#A08B6A',
   B: '#2D4470',
   C: '#8F6B4E',
@@ -187,6 +189,8 @@ export function DailyFortunePage() {
     <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
       <Header title="오늘의 운세" />
       <div className="px-5 pt-4 pb-[120px] mx-auto" style={{ maxWidth: 520 }}>
+        {/* P2-5 · 데일리 리워드 배지 (하루 1회, 월 한도 30회) */}
+        {hasAnyProfile && <DailyRewardBadge className="mb-4" />}
         <AnimatePresence mode="wait">
           {/* 프로필 없음 → 입력 CTA */}
           {!hasAnyProfile && (
@@ -268,7 +272,7 @@ export function DailyFortunePage() {
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            『적천수』·한국 명리학 문헌 기반
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
             사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
@@ -592,7 +596,7 @@ function ResultView({
                   style={{
                     padding: 14,
                     borderRadius: 12,
-                    background: 'rgba(201,169,110,0.08)',
+                    background: 'rgba(184,150,90,0.08)',
                     borderLeft: '3px solid var(--brand-gold)',
                   }}
                 >
@@ -744,7 +748,7 @@ function ResultView({
           <div className="flex items-start gap-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(201,169,110,0.2)' }}
+              style={{ background: 'rgba(184,150,90,0.2)' }}
             >
               <Pictogram k="ui:saju" size={22} color="#E8D5A8" />
             </div>
@@ -899,61 +903,52 @@ function ScoreGrid({
   );
 }
 
-function LuckyColorCard({ color, height }: { color: any; height?: number }) {
-  const hex = typeof color?.hex === 'string' ? color.hex : '#C9A96E';
+/**
+ * LuckyColorCard v2 (2026-04-22) — Flippable 제거. 정적 1면 카드.
+ * 근거: 탭-숨김 패턴이 모바일에서 발견율 낮고, 운세 UI는 한눈에 다 보여야 신뢰감 ↑.
+ *      이유 텍스트를 같은 카드 하단에 인라인 배치.
+ */
+function LuckyColorCard({ color }: { color: any; height?: number }) {
+  const hex = typeof color?.hex === 'string' ? color.hex : '#B8965A';
   const name = typeof color?.name === 'string' ? color.name : '골드';
   const reason = typeof color?.reason === 'string' ? stripMd(color.reason) : '';
   return (
-    <Flippable
-      height={height ?? 160}
-      ariaLabel={`행운의 색 — ${name}`}
-      front={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: '#FFFFFF',
-            border: '0.5px solid var(--border-default)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>행운의 색</p>
-          <div
-            style={{
-              width: '100%',
-              height: 44,
-              borderRadius: 8,
-              background: hex,
-              border: '0.5px solid rgba(27,42,74,0.1)',
-            }}
-          />
-          <p className="sec-title" style={{ fontSize: 15 }}>{name}</p>
-          <p className="sec-caption" style={{ fontSize: 10 }}>탭해서 이유 보기</p>
-        </div>
-      }
-      back={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: 'var(--bg-cream)',
-            border: '0.5px solid rgba(201,169,110,0.25)',
-            overflowY: 'auto',
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)', marginBottom: 6 }}>
-            왜 이 색인가
-          </p>
-          <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-            {reason || '오늘 당신의 흐름과 가장 공명하는 색입니다.'}
-          </p>
-        </div>
-      }
-    />
+    <div
+      style={{
+        padding: 14,
+        borderRadius: 14,
+        background: '#FFFFFF',
+        border: '0.5px solid var(--border-default)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+      aria-label={`행운의 색 — ${name}`}
+    >
+      <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>행운의 색</p>
+      <div
+        style={{
+          width: '100%',
+          height: 44,
+          borderRadius: 8,
+          background: hex,
+          border: '0.5px solid rgba(27,42,74,0.1)',
+        }}
+        aria-hidden
+      />
+      <p className="sec-title" style={{ fontSize: 15, margin: 0 }}>{name}</p>
+      <p
+        className="text-body-sm"
+        style={{
+          fontSize: 12,
+          color: 'var(--text-secondary)',
+          lineHeight: 1.5,
+          margin: 0,
+        }}
+      >
+        {reason || '오늘 당신의 흐름과 가장 공명하는 색입니다.'}
+      </p>
+    </div>
   );
 }
 
@@ -967,69 +962,82 @@ function LuckyStatCard({
   reason: string;
 }) {
   return (
-    <Flippable
-      height={160}
-      ariaLabel={`${title} — ${value}`}
-      front={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: '#FFFFFF',
-            border: '0.5px solid var(--border-default)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>{title}</p>
-          <p
-            style={{
-              fontSize: 28,
-              fontWeight: 900,
-              color: 'var(--text-primary)',
-              marginTop: 4,
-            }}
-          >
-            {value}
-          </p>
-          <p className="sec-caption" style={{ fontSize: 10, marginTop: 'auto' }}>
-            탭해서 이유 보기
-          </p>
-        </div>
-      }
-      back={
-        <div
-          style={{
-            height: '100%',
-            padding: 14,
-            borderRadius: 14,
-            background: 'var(--bg-cream)',
-            border: '0.5px solid rgba(201,169,110,0.25)',
-            overflowY: 'auto',
-          }}
-        >
-          <p className="sec-meta" style={{ color: 'var(--brand-gold)', marginBottom: 6 }}>
-            {title}의 이유
-          </p>
-          <p className="text-body-sm" style={{ color: 'var(--text-primary)' }}>
-            {reason || '사주와 오늘 흐름이 공명하는 지점입니다.'}
-          </p>
-        </div>
-      }
-    />
+    <div
+      style={{
+        padding: 14,
+        borderRadius: 14,
+        background: '#FFFFFF',
+        border: '0.5px solid var(--border-default)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+      }}
+      aria-label={`${title} — ${value}`}
+    >
+      <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>{title}</p>
+      <p
+        style={{
+          fontSize: 28,
+          fontWeight: 900,
+          color: 'var(--text-primary)',
+          marginTop: 2,
+          marginBottom: 4,
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </p>
+      <p
+        className="text-body-sm"
+        style={{
+          fontSize: 12,
+          color: 'var(--text-secondary)',
+          lineHeight: 1.5,
+          margin: 0,
+        }}
+      >
+        {reason || '사주와 오늘 흐름이 공명하는 지점입니다.'}
+      </p>
+    </div>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════
- * TopicCTAGrid 아이템 (무변경)
+ * TopicCTAGrid 아이템 (2026-04-22 SSOT v1 정렬)
+ * - SSOT: src/constants/topics.ts · TOPIC_REGISTRY
+ * - 기존 '연애·결혼' (love+marriage 혼합) → SSOT 분리 원칙(모순 방지) 따라 단일 주제 라벨
+ * - 기존 하드코딩 컬러 (#E91E63/#1565C0/#2D8A4E) → TOPIC_REGISTRY SSOT 컬러
+ * - 가격 "1운 (500원)" → "1운" (UI 원화 노출 최소화 · ChargePage 외 예외 영역)
  * ═════════════════════════════════════════════════════════════════ */
 const DAILY_TOPIC_ITEMS: TopicItem[] = [
-  { id: 'love', title: '연애·결혼', desc: '만남·고백 타이밍', price: '1운 (500원)', color: '#E91E63' },
-  { id: 'wealth', title: '재물·투자', desc: '돈 움직이는 날', price: '1운 (500원)', color: '#C9A96E' },
-  { id: 'career', title: '취업·커리어', desc: '승진·이직 흐름', price: '1운 (500원)', color: '#1565C0' },
-  { id: 'health', title: '건강·활력', desc: '컨디션 포인트', price: '1운 (500원)', color: '#2D8A4E' },
+  {
+    id: 'love',
+    title: TOPIC_REGISTRY.love.label,
+    desc: '만남·고백 타이밍',
+    price: '1운',
+    color: TOPIC_REGISTRY.love.color,
+  },
+  {
+    id: 'wealth',
+    title: TOPIC_REGISTRY.wealth.label,
+    desc: '돈 움직이는 날',
+    price: '1운',
+    color: TOPIC_REGISTRY.wealth.color,
+  },
+  {
+    id: 'career',
+    title: TOPIC_REGISTRY.career.label,
+    desc: '승진·이직 흐름',
+    price: '1운',
+    color: TOPIC_REGISTRY.career.color,
+  },
+  {
+    id: 'health',
+    title: TOPIC_REGISTRY.health.label,
+    desc: '컨디션 포인트',
+    price: '1운',
+    color: TOPIC_REGISTRY.health.color,
+  },
 ];
 
 /* ══════════════════════════════════════════════════════════════════

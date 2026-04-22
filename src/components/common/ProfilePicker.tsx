@@ -45,8 +45,8 @@ export function ProfilePicker({ onSelect, onNew, title = '누구의 사주를 �
             >
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: relation === '본인' ? 'rgba(27,42,74,0.08)' : 'rgba(201,169,110,0.08)' }}>
-                  <span className="text-h3 font-bold" style={{ color: relation === '본인' ? '#1B2A4A' : '#C9A96E' }}>
+                  style={{ background: relation === '본인' ? 'rgba(27,42,74,0.08)' : 'rgba(184,150,90,0.08)' }}>
+                  <span className="text-h3 font-bold" style={{ color: relation === '본인' ? '#1B2A4A' : '#B8965A' }}>
                     {p.name.charAt(0)}
                   </span>
                 </div>

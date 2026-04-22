@@ -12,6 +12,7 @@ import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
+import { FooterCTA } from '@/components/common/FooterCTA';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { TojungResponse } from '@/types/report';
 import { stripMd } from '@/utils/format';
@@ -29,7 +30,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   총운: '總', 금전운: '財', 건강운: '健', 직장운: '職', 애정운: '愛', 결혼운: '婚',
 };
 const CATEGORY_COLORS: Record<string, string> = {
-  총운: '#C9A96E', 금전운: '#F57F17', 건강운: '#2D8A4E', 직장운: '#1565C0', 애정운: '#E91E63', 결혼운: '#7B1FA2',
+  총운: '#B8965A', 금전운: '#F57F17', 건강운: '#2D8A4E', 직장운: '#1565C0', 애정운: '#E91E63', 결혼운: '#7B1FA2',
 };
 
 export function TojungPage() {
@@ -113,7 +114,7 @@ export function TojungPage() {
         <Header title="토정비결" />
         <div className="px-5 pt-4 space-y-5">
           <FadeIn>
-            <div className="py-6 px-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+            <div className="py-6 px-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.2)' }}>
               <p className="text-caption text-brand-gold font-semibold">조선시대 이토정 선생의 전통 운세법</p>
               <p className="text-display text-text-primary mt-1">2026년 토정비결</p>
               <p className="text-body-sm text-text-muted mt-2">주역 64괘로 올해 12개월의 운세를 풀어드려요</p>
@@ -170,7 +171,7 @@ export function TojungPage() {
             <div className="flex flex-wrap gap-1.5 justify-center">
               {(result as any).keywords.map((kw: string, i: number) => (
                 <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: 'rgba(201,169,110,0.1)', color: '#A08B6A', border: '1px solid rgba(201,169,110,0.2)' }}>
+                  style={{ background: 'rgba(184,150,90,0.1)', color: '#A08B6A', border: '1px solid rgba(184,150,90,0.2)' }}>
                   {kw}
                 </span>
               ))}
@@ -182,7 +183,7 @@ export function TojungPage() {
         <FadeIn delay={0.05}>
           <div className="grid grid-cols-2 gap-3">
             {categories.map(([key, value], i) => {
-              const catColor = CATEGORY_COLORS[key] || '#C9A96E';
+              const catColor = CATEGORY_COLORS[key] || '#B8965A';
               const catScore = (result as any).categoryScores?.[key];
               return (
                 <motion.div
@@ -225,15 +226,15 @@ export function TojungPage() {
                 <AreaChart data={result.months.map((m: any) => ({ name: `${m.month}월`, 점수: m.score || 5 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="tojungGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#C9A96E" stopOpacity={0.02} />
+                      <stop offset="5%" stopColor="#B8965A" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#B8965A" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
-                  <Area type="monotone" dataKey="점수" stroke="#C9A96E" strokeWidth={2}
+                  <Area type="monotone" dataKey="점수" stroke="#B8965A" strokeWidth={2}
                     fill="url(#tojungGrad)"
-                    dot={{ r: 2.5, fill: '#C9A96E', strokeWidth: 0 }} />
+                    dot={{ r: 2.5, fill: '#B8965A', strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -264,7 +265,7 @@ export function TojungPage() {
 
         {/* 개운 조언 */}
         <FadeIn delay={0.7}>
-          <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.15)' }}>
+          <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(184,150,90,0.06)', border: '1px solid rgba(184,150,90,0.15)' }}>
             <p className="text-h3 text-text-primary mb-2">올해의 개운 조언</p>
             <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.luckyAdvice)}</p>
           </div>
@@ -273,6 +274,9 @@ export function TojungPage() {
         <FadeIn delay={0.75}>
           <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>결과 공유하기</Button>
         </FadeIn>
+
+        {/* 3-part Footer CTA (diff v3 §6) */}
+        <FooterCTA pageKey="tojung" backTo="/" />
       </div>
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId="tojung" />

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 1운 주제별 건강운 v1</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  html,body{background:#0a0a0a;font-family:'Pretendard Variable',Pretendard,sans-serif;color:#1a1a1a;letter-spacing:-0.01em;}
+  .page{max-width:480px;margin:0 auto;background:#F8F5EE;min-height:100vh;box-shadow:0 0 80px rgba(0,0,0,.4);}
+
+  .hd{background:linear-gradient(135deg,#6FA08C 0%,#487565 60%,#2E5546 100%);color:#fff;padding:18px 20px 28px;position:relative;overflow:hidden;}
+  .hd::before{content:'壽';position:absolute;right:-18px;bottom:-40px;font-family:'Noto Serif KR',serif;font-size:220px;font-weight:900;color:rgba(255,255,255,.07);line-height:1;}
+  .hd .top{display:flex;gap:10px;font-size:12px;opacity:.92;flex-wrap:wrap;align-items:center;}
+  .hd .badge{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+  .hd .tier{background:rgba(255,255,255,.14);padding:3px 10px;border-radius:100px;font-size:10px;}
+  .hd h1{font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700;margin-top:14px;letter-spacing:-0.02em;line-height:1.4;}
+  .hd .sub{font-size:12px;opacity:.85;margin-top:4px;}
+
+  .saju-mini{margin:16px 20px 0;background:#fff;border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,.06);border:1px solid #E5DFD0;}
+  .saju-mini .ttl{font-size:10px;color:#487565;letter-spacing:0.15em;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;}
+  .saju-mini .ttl .hint{color:#2E5546;font-weight:500;letter-spacing:0;}
+  .saju-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center;}
+  .saju-cell{background:#F8F5EE;border-radius:6px;padding:8px 2px;border:1px solid transparent;position:relative;}
+  .saju-cell.ilju{background:linear-gradient(180deg,rgba(46,125,50,.1),rgba(46,125,50,.04));border-color:rgba(46,125,50,.4);}
+  .saju-cell.weak::after{content:'弱';position:absolute;top:-6px;right:-2px;background:#c62828;color:#fff;font-family:'Noto Serif KR',serif;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .saju-cell .lab{font-size:8.5px;color:#5C7A6E;}
+  .saju-cell .gan{font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;line-height:1.1;margin-top:2px;}
+  .saju-cell .ji{font-family:'Noto Serif KR',serif;font-size:14px;font-weight:600;color:#2E5546;line-height:1.1;margin-top:2px;}
+  .saju-cell .ten{font-size:8.5px;color:#487565;margin-top:2px;font-weight:600;}
+  .gan.mok,.ji.mok{color:#2e7d32;} .gan.hwa,.ji.hwa{color:#c62828;}
+  .gan.to,.ji.to{color:#7F6B4E;} .gan.geum,.ji.geum{color:#757575;} .gan.su,.ji.su{color:#1565c0;}
+
+  .score-card{margin:12px 20px 0;background:#fff;border-radius:14px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.06);display:grid;grid-template-columns:100px 1fr;gap:16px;align-items:center;}
+  .score-card .ring{width:100px;height:100px;border-radius:50%;background:conic-gradient(#487565 0 68%,#E5DFD0 68% 100%);display:flex;align-items:center;justify-content:center;position:relative;}
+  .score-card .ring::after{content:'';position:absolute;inset:8px;border-radius:50%;background:#fff;}
+  .score-card .ring .num{position:relative;z-index:1;font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;color:#487565;}
+  .score-card .ring .num small{font-size:12px;color:#2E5546;font-weight:400;margin-left:2px;}
+  .score-card .txt .ttl{font-size:11px;color:#487565;letter-spacing:0.1em;font-weight:600;}
+  .score-card .txt .body{font-size:14px;font-weight:600;color:#1a1a1a;margin-top:4px;line-height:1.5;}
+  .score-card .txt .note{font-size:11.5px;color:#2E5546;margin-top:6px;line-height:1.55;}
+
+  .link-card{margin:12px 20px 0;background:linear-gradient(135deg,rgba(72,117,101,.08),rgba(46,125,50,.04));border:1px solid rgba(72,117,101,.25);border-radius:12px;padding:14px;}
+  .link-card .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11.5px;color:#2E5546;line-height:1.5;}
+  .link-card .pill{background:#fff;border:1px solid #E5DFD0;border-radius:100px;padding:4px 10px;font-weight:600;font-family:'Noto Serif KR',serif;}
+  .link-card .pill.gan{color:#2e7d32;} .link-card .pill.ten{color:#487565;} .link-card .pill.score{color:#487565;font-size:13px;}
+  .link-card .arrow{color:#487565;font-size:12px;}
+  .link-card .desc{font-size:12px;color:#2a2520;margin-top:8px;line-height:1.65;word-break:keep-all;}
+  .link-card .desc strong{color:#1a1a1a;font-weight:600;}
+
+  .body{padding:20px 20px 0;}
+  .section{margin-top:28px;}
+  .sec-num{display:inline-block;font-family:'Noto Serif KR',serif;font-size:11px;font-weight:600;color:#487565;letter-spacing:0.2em;margin-bottom:6px;}
+  .sec-title{font-family:'Noto Serif KR',serif;font-size:19px;font-weight:700;color:#1a1a1a;}
+  .sec-title .han{color:#487565;font-weight:500;margin-left:6px;font-size:14px;}
+  .sec-sub{font-size:12px;color:#487565;margin-top:4px;line-height:1.55;}
+  .body p{font-size:14.5px;line-height:1.85;color:#2a2520;margin:12px 0 0;word-break:keep-all;}
+  .body p strong{font-weight:600;background:linear-gradient(180deg,transparent 60%,rgba(72,117,101,.25) 60%);padding:0 2px;color:#1a1a1a;}
+  .body p .han{font-family:'Noto Serif KR',serif;color:#2E5546;font-size:13px;}
+
+  /* 오행 5각 균형 */
+  .ohaeng-card{background:#fff;border-radius:12px;padding:14px;border:1px solid #E5DFD0;margin:14px 0 0;}
+  .ohaeng-card .ttl{font-size:11px;color:#487565;margin-bottom:12px;font-weight:600;letter-spacing:0.1em;}
+  .ohaeng-bars{display:flex;align-items:flex-end;gap:8px;height:110px;padding:0 4px;}
+  .ohaeng-bar{flex:1;display:flex;flex-direction:column;align-items:center;}
+  .ohaeng-bar .fill{width:100%;border-radius:4px 4px 0 0;}
+  .ohaeng-bar.mok .fill{background:linear-gradient(180deg,#9CC9A0,#2e7d32);}
+  .ohaeng-bar.hwa .fill{background:linear-gradient(180deg,#F0A4A4,#c62828);}
+  .ohaeng-bar.to .fill{background:linear-gradient(180deg,#D4BC9A,#7F6B4E);}
+  .ohaeng-bar.geum .fill{background:linear-gradient(180deg,#C0C0C0,#757575);}
+  .ohaeng-bar.su .fill{background:linear-gradient(180deg,#7DB1D6,#1565c0);}
+  .ohaeng-bar .han{font-family:'Noto Serif KR',serif;font-size:14px;color:#1a1a1a;font-weight:700;margin-top:6px;}
+  .ohaeng-bar .nm{font-size:10px;color:#5C7A6E;margin-top:2px;}
+  .ohaeng-bar .vl{font-feature-settings:'tnum';font-size:10px;color:#487565;font-weight:700;}
+  .ohaeng-card .legend{font-size:11px;color:#2E5546;margin-top:10px;line-height:1.5;}
+  .ohaeng-card .legend strong{color:#c62828;font-weight:700;}
+
+  /* 12개월 컨디션 */
+  .month-tl{background:#fff;border-radius:12px;padding:14px;border:1px solid #E5DFD0;margin:14px 0 0;}
+  .month-tl .ttl{font-size:11px;color:#487565;margin-bottom:10px;font-weight:600;letter-spacing:0.1em;}
+  .mg{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;}
+  .mc{aspect-ratio:1;background:#E5DFD0;border-radius:4px;position:relative;}
+  .mc .m{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#487565;font-weight:600;}
+  .mc.high{background:#487565;} .mc.high .m{color:#fff;}
+  .mc.mid{background:#A9CFC0;opacity:.8;}
+  .mc.low{background:rgba(198,40,40,.18);}
+  .mc.low .m{color:#c62828;}
+  .mc.now{outline:2px solid #1a1a1a;outline-offset:2px;}
+  .month-tl .legend{font-size:10px;color:#2E5546;margin-top:8px;display:flex;gap:10px;}
+  .month-tl .legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block;vertical-align:middle;margin-right:4px;}
+
+  /* 부위별 주의 */
+  .organ-card{margin:14px 0 0;background:#fff;border-radius:12px;padding:14px;border:1px solid #E5DFD0;}
+  .organ-card .ttl{font-size:11px;color:#487565;margin-bottom:12px;font-weight:600;letter-spacing:0.1em;}
+  .organ-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  .organ-cell{padding:10px 12px;background:#F8F5EE;border-radius:8px;border-left:3px solid #6FA08C;}
+  .organ-cell .lab{font-family:'Noto Serif KR',serif;font-size:11.5px;color:#487565;font-weight:700;margin-bottom:3px;}
+  .organ-cell .vl{font-size:12px;color:#2a2520;line-height:1.5;font-weight:500;}
+  .organ-cell.warn{border-left-color:#c62828;background:rgba(198,40,40,.06);}
+  .organ-cell.warn .lab{color:#c62828;}
+
+  .lock-veil{position:relative;margin:14px 0 0;}
+  .lock-veil .blurred{filter:blur(6px);opacity:0.6;pointer-events:none;user-select:none;}
+  .lock-veil .lock-ovr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(248,245,238,0.4) 0%,rgba(248,245,238,0.95) 60%);border-radius:12px;}
+  .lock-veil .lock-ovr .ic{font-family:'Noto Serif KR',serif;font-size:32px;color:#487565;font-weight:900;}
+  .lock-veil .lock-ovr .lb{font-size:13px;color:#1a1a1a;font-weight:700;margin-top:6px;}
+  .lock-veil .lock-ovr .sb{font-size:11.5px;color:#2E5546;margin-top:4px;text-align:center;line-height:1.5;max-width:280px;}
+
+  .pullq{background:linear-gradient(135deg,rgba(72,117,101,.08),rgba(169,207,192,.1));border-radius:10px;padding:16px 18px;margin:18px 0 0;border-left:3px solid #487565;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.75;color:#1a1a1a;font-weight:500;word-break:keep-all;}
+
+  .action-list{display:flex;flex-direction:column;gap:10px;margin:14px 0 0;}
+  .a-card{background:#fff;border:1px solid #E5DFD0;border-radius:10px;padding:14px;display:flex;gap:12px;align-items:flex-start;}
+  .a-card .num{width:26px;height:26px;background:linear-gradient(135deg,#A9CFC0,#487565);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;flex-shrink:0;}
+  .a-card .bd .ti{font-weight:600;font-size:13.5px;color:#1a1a1a;margin-bottom:3px;}
+  .a-card .bd .dc{font-size:12px;color:#2E5546;line-height:1.65;}
+  .a-card .bd .dc strong{color:#1a1a1a;font-weight:600;}
+
+  .upsell{margin:28px 0 0;background:linear-gradient(135deg,#1a1a1a,#1f2a25);color:#fff;border-radius:14px;padding:22px 20px;position:relative;overflow:hidden;}
+  .upsell::before{content:'命';position:absolute;right:-8px;bottom:-28px;font-family:'Noto Serif KR',serif;font-size:130px;font-weight:900;color:rgba(169,207,192,.08);line-height:1;}
+  .upsell .lab{font-size:10px;color:#A9CFC0;letter-spacing:0.15em;font-weight:600;margin-bottom:8px;}
+  .upsell h3{font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;margin-bottom:6px;line-height:1.45;}
+  .upsell p{font-size:12.5px;color:#a0bcb0;margin-bottom:14px;line-height:1.6;word-break:keep-all;}
+  .upsell .cta{display:inline-flex;gap:6px;background:linear-gradient(135deg,#A9CFC0,#487565);color:#fff;padding:10px 18px;border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;align-items:center;}
+  .upsell .cost{background:rgba(255,255,255,.08);padding:3px 10px;border-radius:100px;font-size:11px;color:#A9CFC0;margin-left:6px;font-weight:600;}
+
+  .actions{margin:22px 20px 0;padding:18px 0;border-top:1px solid #E5DFD0;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .actions .btn{background:#fff;border:1px solid #E5DFD0;border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#1a1a1a;cursor:pointer;}
+  .actions .btn .ic{font-family:'Noto Serif KR',serif;font-size:18px;color:#487565;font-weight:700;}
+  .actions .btn .lb{font-size:12px;font-weight:600;}
+  .actions .btn .sb{font-size:10.5px;color:#487565;}
+  .actions .btn.primary{background:linear-gradient(135deg,#487565,#2E5546);color:#fff;border-color:#2E5546;}
+  .actions .btn.primary .ic,.actions .btn.primary .sb{color:#fff;opacity:.9;}
+
+  .src{margin:14px 20px 0;padding:12px 14px;background:rgba(72,117,101,.05);border:1px solid rgba(72,117,101,.18);border-radius:10px;font-size:11px;color:#2E5546;line-height:1.6;}
+  .src strong{color:#1a1a1a;font-weight:600;}
+  .footer-cap{padding:18px 20px 30px;text-align:center;font-size:10.5px;color:#487565;line-height:1.6;}
+  .disc{margin:14px 20px 0;padding:10px 12px;background:rgba(198,40,40,.06);border:1px solid rgba(198,40,40,.18);border-radius:8px;font-size:10.5px;color:#7a2a2a;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hd">
+    <div class="top">
+      <span class="badge">건강운</span>
+      <span class="tier">1운</span>
+      <span style="margin-left:auto;font-size:10.5px;opacity:.8;">壽 · 기운의 결</span>
+    </div>
+    <h1>기운의 균형과<br>몸이 보내는 신호</h1>
+    <div class="sub">기토(己土) · 양력 1995년 7월 12일 · 진시</div>
+  </div>
+
+  <div class="saju-mini">
+    <div class="ttl"><span>내 사주 8글자</span><span class="hint">弱 = 부족한 오행</span></div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan to">戊</div><div class="ji to">辰</div><div class="ten">겁재</div></div>
+      <div class="saju-cell ilju"><div class="lab">일</div><div class="gan to">己</div><div class="ji geum">酉</div><div class="ten">일간</div></div>
+      <div class="saju-cell"><div class="lab">월</div><div class="gan geum">癸</div><div class="ji hwa">未</div><div class="ten">편재</div></div>
+      <div class="saju-cell weak"><div class="lab">년</div><div class="gan mok">乙</div><div class="ji mok">亥</div><div class="ten">편관</div></div>
+    </div>
+  </div>
+
+  <div class="score-card">
+    <div class="ring"><div class="num">68<small>점</small></div></div>
+    <div class="txt">
+      <div class="ttl">건강 지수</div>
+      <div class="body">기본은 단단하나, 한쪽이 자주 무너지는 결</div>
+      <div class="note">토(土)가 두 자리에 강해 위·소화 기능은 안정적이나, 수(水)가 약해 신장·체액 순환 흐름이 자주 흔들립니다.</div>
+    </div>
+  </div>
+
+  <div class="link-card">
+    <div class="row">
+      <span class="pill gan">己土</span>
+      <span class="arrow">+</span>
+      <span class="pill" style="color:#7F6B4E;">土 강</span>
+      <span class="arrow">·</span>
+      <span class="pill" style="color:#1565c0;">水 弱</span>
+      <span class="arrow">→</span>
+      <span class="pill score">68</span>
+    </div>
+    <div class="desc">기토 일간은 <strong>토 기운이 두텁고 수가 부족한 결</strong>입니다. 잘 먹고 잘 견디는 몸인데, 수분 흐름이 막히면 한 번에 무너집니다. 잠과 물이 1순위입니다.</div>
+  </div>
+
+  <div class="body">
+  <!-- L1 -->
+  <div class="section">
+    <span class="sec-num">L1 · 지금</span>
+    <div class="sec-title">한 줄로 말하면<span class="han">·一語</span></div>
+    <p>지금은 <strong>큰 병이 아니라 작은 신호가 쌓이는 시기</strong>입니다. 잠이 평소보다 얕아지거나, 점심 후 무력감이 길어지면 그게 첫 신호입니다. 4월 말까지 무리하지 말고, 5월 초에 한 번은 멈춰서 정리하세요.</p>
+    <p>기토 일간은 <span class="han">토(土) 기운이 두텁기</span> 때문에 한 번 무너지면 회복이 느립니다. 무너지기 전에 거리를 두는 게 핵심입니다.</p>
+  </div>
+
+  <!-- L2 -->
+  <div class="section">
+    <span class="sec-num">L2 · 가까운 흐름</span>
+    <div class="sec-title">앞으로 3개월<span class="han">·三月</span></div>
+    <p class="sec-sub">4월·5월·6월 — 컨디션과 회복의 결</p>
+    <p><strong>4월</strong>은 일이 많아지면서 컨디션이 처지는 달입니다. 어깨·목 결림이 평소보다 자주 옵니다. 짧은 산책과 따뜻한 물 한 잔으로 막을 수 있는 신호입니다.</p>
+    <p><strong>5월</strong>은 풀어지는 달입니다. 기운이 돌아오면서 활동량이 늘어나는데, 늘어난 활동만큼 <strong>수면을 30분 더</strong> 잡으세요. 다른 보충보다 잠이 큽니다.</p>
+    <p><strong>6월</strong>은 잘 회복되는 달인데, 한 번은 작게 다칠 수 있습니다. 손목·발목 — 무리한 운동은 두 번째 주 이후로 미루세요.</p>
+
+    <div class="month-tl">
+      <div class="ttl">3개월 컨디션 흐름</div>
+      <div class="mg">
+        <div class="mc"><div class="m">1</div></div>
+        <div class="mc"><div class="m">2</div></div>
+        <div class="mc"><div class="m">3</div></div>
+        <div class="mc low now"><div class="m">4</div></div>
+        <div class="mc mid"><div class="m">5</div></div>
+        <div class="mc high"><div class="m">6</div></div>
+        <div class="mc"><div class="m">7</div></div>
+        <div class="mc"><div class="m">8</div></div>
+        <div class="mc"><div class="m">9</div></div>
+        <div class="mc"><div class="m">10</div></div>
+        <div class="mc"><div class="m">11</div></div>
+        <div class="mc"><div class="m">12</div></div>
+      </div>
+      <div class="legend"><span><span class="sw" style="background:#487565;"></span>회복 강세</span><span><span class="sw" style="background:#A9CFC0;"></span>안정</span><span><span class="sw" style="background:rgba(198,40,40,.18);"></span>주의</span></div>
+    </div>
+  </div>
+
+  <!-- L3 잠금 -->
+  <div class="section">
+    <span class="sec-num">L3 · 더 깊이</span>
+    <div class="sec-title">올해 1년 컨디션 흐름<span class="han">·一年</span></div>
+    <p class="sec-sub">오행 균형 + 부위별 주의 시기까지</p>
+
+    <div class="lock-veil">
+      <div class="blurred">
+        <div class="ohaeng-card">
+          <div class="ttl">오행 5각 균형</div>
+          <div class="ohaeng-bars">
+            <div class="ohaeng-bar mok"><div class="fill" style="height:35%"></div><div class="vl">2</div><div class="han">木</div><div class="nm">간·근육</div></div>
+            <div class="ohaeng-bar hwa"><div class="fill" style="height:50%"></div><div class="vl">3</div><div class="han">火</div><div class="nm">심장·혈</div></div>
+            <div class="ohaeng-bar to"><div class="fill" style="height:88%"></div><div class="vl">5</div><div class="han">土</div><div class="nm">위·소화</div></div>
+            <div class="ohaeng-bar geum"><div class="fill" style="height:40%"></div><div class="vl">2</div><div class="han">金</div><div class="nm">폐·피부</div></div>
+            <div class="ohaeng-bar su"><div class="fill" style="height:25%"></div><div class="vl">1</div><div class="han">水</div><div class="nm">신·체액</div></div>
+          </div>
+          <div class="legend"><strong>水 부족</strong> — 수면·수분·하체 순환이 1순위 케어 포인트입니다.</div>
+        </div>
+
+        <div class="organ-card">
+          <div class="ttl">부위별 주의 신호 · 6면</div>
+          <div class="organ-grid">
+            <div class="organ-cell warn"><div class="lab">신장·체액</div><div class="vl">물 부족·붓기 자주</div></div>
+            <div class="organ-cell warn"><div class="lab">하체 순환</div><div class="vl">밤잠 다리 무거움</div></div>
+            <div class="organ-cell"><div class="lab">위·소화</div><div class="vl">기본 단단 · 과식만 주의</div></div>
+            <div class="organ-cell"><div class="lab">목·어깨</div><div class="vl">긴장 누적 · 스트레칭</div></div>
+            <div class="organ-cell"><div class="lab">수면 깊이</div><div class="vl">얕음 · 11시 전 입면</div></div>
+            <div class="organ-cell"><div class="lab">감정·번아웃</div><div class="vl">참다 한 번에 무너짐</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="lock-ovr">
+        <div class="ic">壽</div>
+        <div class="lb">올해 컨디션 흐름 · 잠금</div>
+        <div class="sb">오행 5각 + 부위별 주의 6면까지<br>1운으로 열어보세요</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- L4 잠금 -->
+  <div class="section">
+    <span class="sec-num">L4 · 인생 큰 흐름</span>
+    <div class="sec-title">대운별 건강 변곡점<span class="han">·終身</span></div>
+    <p class="sec-sub">10년 단위 컨디션 변화와 가장 단단한 시기·주의 시기</p>
+    <div class="lock-veil">
+      <div class="blurred">
+        <p>현재 <strong>임진(壬辰) 대운 35~44세</strong>는 부족한 수(水)가 들어오는 자리로, <strong>전체 대운 중 가장 단단한 흐름</strong>입니다. 다음 대운 <strong>신묘(辛卯) 45~54세</strong>는 금이 강해지면서 폐·피부 쪽에 작은 신호가 자주…</p>
+      </div>
+      <div class="lock-ovr">
+        <div class="ic">命</div>
+        <div class="lb">대운별 건강 변곡점 · 프리미엄</div>
+        <div class="sb">10년 단위 컨디션 흐름과<br>주의해야 할 대운을 풀어드립니다</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pullq">"기운(氣)은 쌓이기 전에 흩어집니다. 기토 일간이 가장 강한 회복은 약이나 운동이 아니라 잠과 물에서 옵니다."</div>
+
+  <div class="section">
+    <span class="sec-num">지금 할 수 있는 일</span>
+    <div class="sec-title">3가지 실천<span class="han">·三行</span></div>
+    <div class="action-list">
+      <div class="a-card">
+        <div class="num">1</div>
+        <div class="bd">
+          <div class="ti">11시 전에 잠자리에 드세요</div>
+          <div class="dc">기토 일간은 <strong>자시(子時, 23~01시)에 회복</strong>이 가장 큽니다. 한 시간만 당겨도 4월 말 컨디션 차이가 큽니다.</div>
+        </div>
+      </div>
+      <div class="a-card">
+        <div class="num">2</div>
+        <div class="bd">
+          <div class="ti">물을 평소의 1.3배로</div>
+          <div class="dc">수(水)가 부족한 사주는 <strong>의식적으로 물을 늘리는 것만으로</strong> 붓기·피로가 줄어듭니다. 카페인은 한 잔만 유지하세요.</div>
+        </div>
+      </div>
+      <div class="a-card">
+        <div class="num">3</div>
+        <div class="bd">
+          <div class="ti">6월 둘째 주까지는 무리한 운동 X</div>
+          <div class="dc">새 운동 시작은 6월 셋째 주 이후가 좋습니다. 그 전에는 <strong>걷기 30분</strong>만 유지해도 충분합니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="upsell">
+    <div class="lab">PREMIUM</div>
+    <h3>몸의 결을 평생 흐름으로 풀어드립니다</h3>
+    <p>대운별 건강 변곡점, 부위별 약한 시기, 가장 단단한 10년까지. 사주 전체에서 몸의 자리를 모두 읽어냅니다.</p>
+    <span class="cta">10운으로 시작 → <span class="cost">10운</span></span>
+  </div>
+  </div>
+
+  <div class="src"><strong>풀이 근거</strong> · 적천수(滴天髓) 오행 균형 항 · 궁통보감(窮通寶鑑) 미월 기토 항 · 황제내경(黃帝內經) 오장 음양 편</div>
+
+  <div class="disc"><strong>안내</strong> — 이 풀이는 명리학 기반 콘텐츠로, 의학적 진단이나 처방을 대체하지 않습니다. 몸의 신호가 지속되면 의료진의 진료를 받으세요.</div>
+
+  <div class="actions">
+    <div class="btn"><div class="ic">↗</div><div class="lb">공유하고 1운 받기</div><div class="sb">하루 3회까지</div></div>
+    <div class="btn primary"><div class="ic">命</div><div class="lb">사주 전체로 보기</div><div class="sb">10운으로 시작</div></div>
+  </div>
+
+  <div class="footer-cap">사주500 · 풀이는 콘텐츠이며 의학적 조언을 대체하지 않습니다</div>
+</div>
+</body>
+</html>

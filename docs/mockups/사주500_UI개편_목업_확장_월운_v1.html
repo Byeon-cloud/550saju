@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 확장 월운 이번 달 v1 (1운)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  html,body{background:#0a0a0a;font-family:'Pretendard Variable',Pretendard,sans-serif;color:#1a1a1a;letter-spacing:-0.01em;}
+  .page{max-width:480px;margin:0 auto;background:#F8F5EE;min-height:100vh;box-shadow:0 0 80px rgba(0,0,0,.4);}
+
+  .hd{background:linear-gradient(135deg,#D17555 0%,#B5441F 60%,#7B2E15 100%);color:#fff;padding:18px 20px 28px;position:relative;overflow:hidden;}
+  .hd::before{content:'月';position:absolute;right:-18px;bottom:-40px;font-family:'Noto Serif KR',serif;font-size:220px;font-weight:900;color:rgba(255,255,255,.07);line-height:1;}
+  .hd .top{display:flex;gap:10px;font-size:12px;opacity:.92;flex-wrap:wrap;align-items:center;}
+  .hd .badge{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+  .hd .tier{background:rgba(255,255,255,.14);padding:3px 10px;border-radius:100px;font-size:10px;}
+  .hd h1{font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700;margin-top:14px;letter-spacing:-0.02em;line-height:1.4;}
+  .hd .sub{font-size:12px;opacity:.85;margin-top:4px;}
+
+  /* 4월 통합 카드 */
+  .month-hero{margin:18px 20px 0;background:#fff;border-radius:14px;padding:18px;border:1px solid #E5DFD0;box-shadow:0 4px 12px rgba(0,0,0,.06);}
+  .month-hero .top{display:flex;align-items:baseline;justify-content:space-between;}
+  .month-hero .top .lab{font-family:'Noto Serif KR',serif;font-size:11px;color:#B5441F;letter-spacing:0.15em;font-weight:700;}
+  .month-hero .top .month{font-family:'Noto Serif KR',serif;font-size:32px;font-weight:900;color:#1a1a1a;}
+  .month-hero .top .month small{font-size:14px;color:#7B2E15;font-weight:600;margin-left:4px;}
+  .month-hero .top .pillar{font-family:'Noto Serif KR',serif;font-size:13px;color:#7B2E15;font-weight:700;}
+  .month-hero .ttl{font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;color:#1a1a1a;margin-top:10px;line-height:1.4;}
+  .month-hero .desc{font-size:13.5px;color:#2a2520;line-height:1.7;margin-top:8px;word-break:keep-all;}
+  .month-hero .desc strong{font-weight:600;background:linear-gradient(180deg,transparent 60%,rgba(181,68,31,.2) 60%);padding:0 2px;}
+
+  /* 4면 게이지 */
+  .four-card{margin:14px 20px 0;background:#fff;border-radius:14px;padding:14px;border:1px solid #E5DFD0;}
+  .four-card .ttl{font-size:11px;color:#B5441F;letter-spacing:0.1em;font-weight:600;margin-bottom:12px;}
+  .four-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .four-cell{padding:12px 8px;background:#F8F5EE;border-radius:8px;text-align:center;}
+  .four-cell .lab{font-family:'Noto Serif KR',serif;font-size:11px;color:#B5441F;font-weight:700;margin-bottom:6px;}
+  .four-cell .ring{width:48px;height:48px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;color:#fff;}
+  .four-cell.r1 .ring{background:#7B2E15;} .four-cell.r2 .ring{background:#B5441F;}
+  .four-cell.r3 .ring{background:#D17555;} .four-cell.r4 .ring{background:#E89C7E;}
+
+  /* 캘린더 */
+  .cal-card{margin:14px 20px 0;background:#fff;border-radius:14px;padding:14px;border:1px solid #E5DFD0;}
+  .cal-card .ttl{font-size:11px;color:#B5441F;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;}
+  .cal-card .ttl .hint{color:#1a1a1a;font-weight:500;letter-spacing:0;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-grid .dow{font-size:10px;color:#7B2E15;text-align:center;font-weight:700;padding-bottom:4px;}
+  .cal-grid .dow.sun{color:#c62828;} .cal-grid .dow.sat{color:#1565c0;}
+  .cal-cell{aspect-ratio:1;background:#F8F5EE;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:#1a1a1a;font-weight:600;position:relative;}
+  .cal-cell.empty{background:transparent;}
+  .cal-cell .d{font-family:'Noto Serif KR',serif;font-size:11px;font-weight:700;}
+  .cal-cell .ic{font-family:'Noto Serif KR',serif;font-size:9px;color:#B5441F;margin-top:1px;}
+  .cal-cell.high{background:#B5441F;color:#fff;} .cal-cell.high .ic{color:#fff;opacity:.8;}
+  .cal-cell.mid{background:#E89C7E;}
+  .cal-cell.low{background:rgba(96,96,96,.18);color:#606060;}
+  .cal-cell.now{outline:2px solid #1a1a1a;outline-offset:1px;}
+  .cal-card .legend{font-size:10px;color:#1a1a1a;margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;}
+  .cal-card .legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block;vertical-align:middle;margin-right:4px;}
+
+  .body{padding:20px 20px 0;}
+  .section{margin-top:24px;}
+  .sec-num{display:inline-block;font-family:'Noto Serif KR',serif;font-size:11px;font-weight:600;color:#B5441F;letter-spacing:0.2em;margin-bottom:6px;}
+  .sec-title{font-family:'Noto Serif KR',serif;font-size:19px;font-weight:700;color:#1a1a1a;}
+  .sec-title .han{color:#B5441F;font-weight:500;margin-left:6px;font-size:14px;}
+  .sec-sub{font-size:12px;color:#B5441F;margin-top:4px;line-height:1.55;}
+  .body p{font-size:14.5px;line-height:1.85;color:#2a2520;margin:12px 0 0;word-break:keep-all;}
+  .body p strong{font-weight:600;background:linear-gradient(180deg,transparent 60%,rgba(181,68,31,.25) 60%);padding:0 2px;color:#1a1a1a;}
+  .body p .han{font-family:'Noto Serif KR',serif;color:#7B2E15;font-size:13px;}
+
+  /* 주차별 카드 4개 */
+  .wk-list{display:flex;flex-direction:column;gap:8px;margin:14px 0 0;}
+  .wk{background:#fff;border:1px solid #E5DFD0;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:50px 1fr;gap:10px;align-items:center;}
+  .wk.now{border-color:#B5441F;background:linear-gradient(135deg,rgba(181,68,31,0.04),#fff);}
+  .wk .nm{font-family:'Noto Serif KR',serif;font-size:14px;font-weight:700;color:#B5441F;text-align:center;border-right:1px solid #E5DFD0;padding-right:10px;}
+  .wk.now .nm{color:#7B2E15;}
+  .wk .bd .ti{font-weight:700;font-size:13px;color:#1a1a1a;margin-bottom:3px;}
+  .wk .bd .dc{font-size:11.5px;color:#5C2E15;line-height:1.55;}
+
+  /* 주의일·기회일 */
+  .day-card{margin:14px 0 0;background:#fff;border-radius:12px;padding:14px;border:1px solid #E5DFD0;}
+  .day-card .ttl{font-size:11px;color:#B5441F;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;}
+  .day-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .day-col{padding:10px;border-radius:8px;}
+  .day-col.opp{background:rgba(181,68,31,0.08);}
+  .day-col.warn{background:rgba(96,96,96,0.08);}
+  .day-col .h{font-family:'Noto Serif KR',serif;font-size:12px;font-weight:700;margin-bottom:6px;}
+  .day-col.opp .h{color:#B5441F;} .day-col.warn .h{color:#606060;}
+  .day-col ul{list-style:none;font-size:11.5px;color:#1a1a1a;line-height:1.7;}
+  .day-col ul li{display:flex;justify-content:space-between;font-feature-settings:'tnum';}
+  .day-col ul li span{font-family:'Noto Serif KR',serif;font-weight:700;}
+
+  .pullq{background:linear-gradient(135deg,rgba(181,68,31,.08),rgba(232,156,126,.1));border-radius:10px;padding:16px 18px;margin:18px 0 0;border-left:3px solid #B5441F;font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.75;color:#1a1a1a;font-weight:500;word-break:keep-all;}
+
+  .upsell{margin:28px 0 0;background:linear-gradient(135deg,#1a1a1a,#2a1f1f);color:#fff;border-radius:14px;padding:22px 20px;position:relative;overflow:hidden;}
+  .upsell::before{content:'命';position:absolute;right:-8px;bottom:-28px;font-family:'Noto Serif KR',serif;font-size:130px;font-weight:900;color:rgba(232,156,126,.08);line-height:1;}
+  .upsell .lab{font-size:10px;color:#E89C7E;letter-spacing:0.15em;font-weight:600;margin-bottom:8px;}
+  .upsell h3{font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;margin-bottom:6px;line-height:1.45;}
+  .upsell p{font-size:12.5px;color:#c4a39a;margin-bottom:14px;line-height:1.6;word-break:keep-all;}
+  .upsell .cta{display:inline-flex;gap:6px;background:linear-gradient(135deg,#E89C7E,#B5441F);color:#fff;padding:10px 18px;border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;align-items:center;}
+  .upsell .cost{background:rgba(255,255,255,.08);padding:3px 10px;border-radius:100px;font-size:11px;color:#E89C7E;margin-left:6px;font-weight:600;}
+
+  .actions{margin:22px 20px 0;padding:18px 0;border-top:1px solid #E5DFD0;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .actions .btn{background:#fff;border:1px solid #E5DFD0;border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#1a1a1a;cursor:pointer;}
+  .actions .btn .ic{font-family:'Noto Serif KR',serif;font-size:18px;color:#B5441F;font-weight:700;}
+  .actions .btn .lb{font-size:12px;font-weight:600;}
+  .actions .btn .sb{font-size:10.5px;color:#B5441F;}
+  .actions .btn.primary{background:linear-gradient(135deg,#B5441F,#7B2E15);color:#fff;border-color:#7B2E15;}
+  .actions .btn.primary .ic,.actions .btn.primary .sb{color:#fff;opacity:.9;}
+
+  .src{margin:14px 20px 0;padding:12px 14px;background:rgba(181,68,31,.05);border:1px solid rgba(181,68,31,.18);border-radius:10px;font-size:11px;color:#7B2E15;line-height:1.6;}
+  .src strong{color:#1a1a1a;font-weight:600;}
+  .footer-cap{padding:18px 20px 30px;text-align:center;font-size:10.5px;color:#B5441F;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hd">
+    <div class="top">
+      <span class="badge">월운 · 이번 달</span>
+      <span class="tier">1운</span>
+      <span style="margin-left:auto;font-size:10.5px;opacity:.8;">月運 · 2026.04</span>
+    </div>
+    <h1>4월 한 달의<br>흐름과 자리</h1>
+    <div class="sub">기토(己土) 일간 · 임진(壬辰) 대운 · 4월(壬辰月)</div>
+  </div>
+
+  <!-- 4월 통합 -->
+  <div class="month-hero">
+    <div class="top">
+      <div>
+        <div class="lab">2026 APRIL</div>
+        <div class="month">4<small>월</small></div>
+      </div>
+      <div class="pillar">壬辰 月柱</div>
+    </div>
+    <div class="ttl">자리는 정리, 사람은 가까이</div>
+    <div class="desc">4월은 <strong>새 일을 받기보다 묵은 일을 마무리하는 결</strong>입니다. 일은 늘어 보여도, 끝낸 일이 곧 5월 평가의 근거가 됩니다. 사람 자리에서는 가까운 한 사람과 거리가 좁혀지는 흐름이 강합니다.</div>
+  </div>
+
+  <!-- 4면 게이지 -->
+  <div class="four-card">
+    <div class="ttl">4월 4면 강도 · 일·사람·돈·몸</div>
+    <div class="four-grid">
+      <div class="four-cell r2"><div class="lab">일</div><div class="ring">71</div></div>
+      <div class="four-cell r1"><div class="lab">사람</div><div class="ring">82</div></div>
+      <div class="four-cell r3"><div class="lab">돈</div><div class="ring">58</div></div>
+      <div class="four-cell r4"><div class="lab">몸</div><div class="ring">62</div></div>
+    </div>
+  </div>
+
+  <!-- 캘린더 -->
+  <div class="cal-card">
+    <div class="ttl"><span>4월 캘린더 · 일별 강도</span><span class="hint">오늘 21일</span></div>
+    <div class="cal-grid">
+      <div class="dow sun">일</div><div class="dow">월</div><div class="dow">화</div><div class="dow">수</div><div class="dow">목</div><div class="dow">금</div><div class="dow sat">토</div>
+      <!-- 1주차: 4/1(수) 시작 -->
+      <div class="cal-cell empty"></div><div class="cal-cell empty"></div><div class="cal-cell empty"></div>
+      <div class="cal-cell"><div class="d">1</div></div>
+      <div class="cal-cell mid"><div class="d">2</div><div class="ic">機</div></div>
+      <div class="cal-cell"><div class="d">3</div></div>
+      <div class="cal-cell low"><div class="d">4</div><div class="ic">休</div></div>
+      <!-- 2주차 -->
+      <div class="cal-cell low"><div class="d">5</div></div>
+      <div class="cal-cell"><div class="d">6</div></div>
+      <div class="cal-cell mid"><div class="d">7</div><div class="ic">人</div></div>
+      <div class="cal-cell"><div class="d">8</div></div>
+      <div class="cal-cell"><div class="d">9</div></div>
+      <div class="cal-cell high"><div class="d">10</div><div class="ic">機</div></div>
+      <div class="cal-cell"><div class="d">11</div></div>
+      <!-- 3주차 -->
+      <div class="cal-cell"><div class="d">12</div></div>
+      <div class="cal-cell"><div class="d">13</div></div>
+      <div class="cal-cell mid"><div class="d">14</div></div>
+      <div class="cal-cell low"><div class="d">15</div><div class="ic">注</div></div>
+      <div class="cal-cell"><div class="d">16</div></div>
+      <div class="cal-cell"><div class="d">17</div></div>
+      <div class="cal-cell mid"><div class="d">18</div></div>
+      <!-- 4주차 -->
+      <div class="cal-cell"><div class="d">19</div></div>
+      <div class="cal-cell"><div class="d">20</div></div>
+      <div class="cal-cell now mid"><div class="d">21</div><div class="ic">人</div></div>
+      <div class="cal-cell high"><div class="d">22</div><div class="ic">機</div></div>
+      <div class="cal-cell"><div class="d">23</div></div>
+      <div class="cal-cell"><div class="d">24</div></div>
+      <div class="cal-cell"><div class="d">25</div></div>
+      <!-- 5주차 -->
+      <div class="cal-cell"><div class="d">26</div></div>
+      <div class="cal-cell mid"><div class="d">27</div></div>
+      <div class="cal-cell"><div class="d">28</div></div>
+      <div class="cal-cell low"><div class="d">29</div><div class="ic">注</div></div>
+      <div class="cal-cell high"><div class="d">30</div><div class="ic">締</div></div>
+      <div class="cal-cell empty"></div><div class="cal-cell empty"></div>
+    </div>
+    <div class="legend">
+      <span><span class="sw" style="background:#B5441F;"></span>기회·결정</span>
+      <span><span class="sw" style="background:#E89C7E;"></span>사람·관계</span>
+      <span><span class="sw" style="background:rgba(96,96,96,.18);"></span>휴식·정리</span>
+      <span style="color:#7B2E15;">機 기회 · 人 사람 · 注 주의 · 締 마감 · 休 휴식</span>
+    </div>
+  </div>
+
+  <div class="body">
+  <!-- 한 달 통문 풀이 -->
+  <div class="section">
+    <span class="sec-num">月 序</span>
+    <div class="sec-title">4월의 결<span class="han">·壬辰月</span></div>
+    <p>4월은 <strong>임진(壬辰) 월주</strong>가 들어오는 시기입니다. 임수가 정재의 자리에서 사주 본기와 만나, 변준기님에게 <strong>자리를 정돈하고 사람을 가까이 두는 결</strong>을 만들어줍니다. 새 일·새 사람보다 이미 시작된 일·이미 알던 사람이 깊어지는 한 달입니다.</p>
+    <p>월간 임수가 <span class="han">日干 己土</span>를 부드럽게 적셔주기 때문에, <strong>흥분하지 않고 차분히 결정</strong>하면 결과가 길게 갑니다. 반면 빠른 답을 강요받는 자리는 4월에는 <strong>일주일만 미루고 답</strong>해도 결과가 더 좋습니다.</p>
+  </div>
+
+  <!-- 주차별 카드 -->
+  <div class="section">
+    <span class="sec-num">週次</span>
+    <div class="sec-title">주차별 흐름<span class="han">·四週</span></div>
+    <div class="wk-list">
+      <div class="wk">
+        <div class="nm">1주차<br><small style="font-size:10px;color:#7B2E15;font-weight:500;">4/1~5</small></div>
+        <div class="bd"><div class="ti">정리·관망</div><div class="dc">묵은 일 마무리. 큰 결정은 미루세요. 4/2(목)에 작은 기회 한 건.</div></div>
+      </div>
+      <div class="wk">
+        <div class="nm">2주차<br><small style="font-size:10px;color:#7B2E15;font-weight:500;">4/6~12</small></div>
+        <div class="bd"><div class="ti">사람 자리 강세</div><div class="dc">소개·약속이 늘어남. 4/7(화)·4/10(금)에 의미 있는 만남이 들어옴.</div></div>
+      </div>
+      <div class="wk">
+        <div class="nm">3주차<br><small style="font-size:10px;color:#7B2E15;font-weight:500;">4/13~19</small></div>
+        <div class="bd"><div class="ti">중간 정점·주의 1일</div><div class="dc">집중력 정점. 4/15(수)는 작은 사고·실수 주의 — 차분히 처리하세요.</div></div>
+      </div>
+      <div class="wk now">
+        <div class="nm">4주차<br><small style="font-size:10px;color:#7B2E15;font-weight:500;">4/20~26 · 현재</small></div>
+        <div class="bd"><div class="ti">결정의 자리</div><div class="dc">4/22(수)에 한 번의 큰 기회. 4월 안에 결단하면 5월 흐름이 가벼워짐.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기회일·주의일 -->
+  <div class="section">
+    <span class="sec-num">擇日</span>
+    <div class="sec-title">기회일 · 주의일<span class="han">·擇日</span></div>
+    <div class="day-card">
+      <div class="ttl">고를 만한 날 · 미루는 게 좋은 날</div>
+      <div class="day-grid">
+        <div class="day-col opp">
+          <div class="h">기회일 · 機</div>
+          <ul>
+            <li>4/2 목 <span>壬寅</span></li>
+            <li>4/10 금 <span>庚戌</span></li>
+            <li>4/22 수 <span>壬戌</span></li>
+            <li>4/30 목 <span>庚午</span></li>
+          </ul>
+        </div>
+        <div class="day-col warn">
+          <div class="h">주의일 · 注</div>
+          <ul>
+            <li>4/4 토 <span>甲辰</span></li>
+            <li>4/15 수 <span>乙卯</span></li>
+            <li>4/29 수 <span>己巳</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pullq">"한 달은 1년의 축약입니다. 4월에 정돈한 자리는 9월에 결과로 돌아옵니다. 지금의 정리가 가을의 수확이 됩니다."</div>
+
+  <div class="upsell">
+    <div class="lab">PREMIUM</div>
+    <h3>매달의 결을 1년 흐름으로 풀어드립니다</h3>
+    <p>월별 운 + 기회일·주의일 + 4면 강도 + 변곡점까지. 1년 12달을 한 권으로 받아보세요.</p>
+    <span class="cta">10운으로 시작 → <span class="cost">10운</span></span>
+  </div>
+  </div>
+
+  <div class="src"><strong>풀이 근거</strong> · 자평진전(子平眞詮) 월령용신 편 · 적천수(滴天髓) 천간지지 항 · 만세력 일진 기준</div>
+
+  <div class="actions">
+    <div class="btn"><div class="ic">↗</div><div class="lb">공유하고 1운 받기</div><div class="sb">하루 3회까지</div></div>
+    <div class="btn primary"><div class="ic">命</div><div class="lb">사주 전체로 보기</div><div class="sb">10운으로 시작</div></div>
+  </div>
+
+  <div class="footer-cap">사주500 · 월운은 매달 자동 갱신됩니다 · 콘텐츠 풀이</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>사주500 · 토정비결 (2운)</title>
+<style>
+  :root{
+    --paper:#F8F5EE; --ink:#1A1A1A; --gold:#B8965A;
+    --navy:#2F4B7C; --navy-d:#152540;
+    --line:rgba(26,26,26,0.10); --mute:#6E665A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#EFE8DA;}
+  body{font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",sans-serif;color:var(--ink);}
+  .frame{max-width:430px;margin:0 auto;background:var(--paper);min-height:100vh;padding-bottom:96px;}
+
+  .hd{position:relative;padding:36px 22px 28px;color:#fff;
+      background:linear-gradient(160deg,#2F4B7C 0%,#152540 100%);overflow:hidden;}
+  .hd::before{content:"歲";position:absolute;top:18px;right:22px;font-family:"Noto Serif KR",serif;
+              font-size:96px;color:rgba(255,255,255,0.10);line-height:1;}
+  .hd .crumb{font-size:12px;letter-spacing:0.2em;opacity:0.75;}
+  .hd h1{font-family:"Noto Serif KR",serif;font-size:28px;line-height:1.25;margin:8px 0 6px;font-weight:600;}
+  .hd .sub{font-size:13px;opacity:0.85;line-height:1.55;}
+  .hd .meta{margin-top:14px;display:flex;gap:10px;font-size:11px;}
+  .hd .meta span{padding:4px 10px;border:1px solid rgba(255,255,255,0.35);border-radius:99px;}
+  .seal{position:absolute;bottom:18px;right:22px;width:54px;height:54px;border:1.5px solid rgba(255,255,255,0.5);
+        display:flex;align-items:center;justify-content:center;font-family:"Noto Serif KR",serif;font-size:24px;
+        background:rgba(255,255,255,0.06);transform:rotate(-3deg);}
+
+  .hex{margin:18px;padding:18px 16px;background:#fff;border:1px solid var(--line);border-radius:14px;text-align:center;}
+  .hex .yr{font-size:11px;color:var(--mute);letter-spacing:0.2em;}
+  .hex .glyph{font-family:"Noto Serif KR",serif;font-size:48px;color:var(--navy);margin:8px 0 4px;line-height:1;letter-spacing:0.05em;}
+  .hex .name{font-family:"Noto Serif KR",serif;font-size:16px;color:var(--navy-d);}
+  .hex .one{margin-top:10px;font-size:13.5px;line-height:1.6;color:var(--ink);}
+  .hex .pull{margin-top:10px;padding:8px 12px;background:#EEF2F8;border-radius:8px;font-family:"Noto Serif KR",serif;font-size:13px;color:var(--navy-d);}
+
+  .four{margin:0 18px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  .fc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;}
+  .fc .h{font-size:11px;color:var(--mute);letter-spacing:0.2em;}
+  .fc .v{font-family:"Noto Serif KR",serif;font-size:18px;color:var(--navy-d);margin-top:4px;}
+  .fc .d{font-size:11px;color:var(--mute);margin-top:2px;}
+
+  .sec{padding:0 18px;margin-top:22px;}
+  .sec h2{font-family:"Noto Serif KR",serif;font-size:17px;margin:0 0 4px;display:flex;align-items:baseline;gap:8px;}
+  .sec h2 .hz{font-size:13px;color:var(--navy);}
+  .sec .lead{font-size:12px;color:var(--mute);margin:0 0 10px;line-height:1.5;}
+
+  .body{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 14px 16px;line-height:1.7;font-size:13.5px;}
+  .body p{margin:0 0 10px;}
+  .body p:last-child{margin-bottom:0;}
+  .body .pull{font-family:"Noto Serif KR",serif;font-size:15px;color:var(--navy-d);
+              border-left:3px solid var(--navy);padding:6px 0 6px 12px;margin:12px 0;}
+
+  .months{display:flex;flex-direction:column;gap:6px;}
+  .mo{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .mo summary{list-style:none;padding:12px 14px;display:grid;grid-template-columns:38px 1fr 22px;gap:10px;align-items:center;cursor:pointer;}
+  .mo summary::-webkit-details-marker{display:none;}
+  .mo .num{width:34px;height:34px;border-radius:50%;background:#EEF2F8;color:var(--navy-d);font-family:"Noto Serif KR",serif;
+           font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .mo .now .num{background:var(--navy);color:#fff;}
+  .mo .ti{display:flex;flex-direction:column;}
+  .mo .ti b{font-size:13.5px;font-weight:600;}
+  .mo .ti span{font-size:11px;color:var(--mute);margin-top:2px;}
+  .mo .ar{font-size:14px;color:var(--mute);text-align:right;}
+  .mo[open] .ar{transform:rotate(180deg);}
+  .mo .det{padding:0 14px 14px;font-size:13px;line-height:1.65;color:#1A1A1A;}
+  .mo .det .pq{margin-top:8px;padding:8px 12px;background:#F4F1E9;border-left:3px solid var(--gold);font-size:12.5px;color:#1A1A1A;}
+  .mo .badge{display:inline-block;padding:2px 8px;border-radius:99px;background:#EEF2F8;color:var(--navy-d);font-size:10px;margin-right:4px;}
+  .mo .badge.warn{background:#FBEEE6;color:#7A3A12;}
+
+  .lock-veil{position:relative;border-radius:12px;overflow:hidden;}
+  .lock-veil .blurred{filter:blur(6px);opacity:0.55;pointer-events:none;}
+  .lock-veil .lock-ovr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+                       background:linear-gradient(180deg,rgba(248,245,238,0.4) 0%,rgba(248,245,238,0.95) 60%);text-align:center;padding:18px;}
+  .lock-veil .lk-ic{width:46px;height:46px;border:1.5px solid var(--navy);border-radius:50%;
+                    display:flex;align-items:center;justify-content:center;font-family:"Noto Serif KR",serif;font-size:22px;color:var(--navy-d);}
+  .lock-veil .lk-tt{margin-top:10px;font-size:14px;font-weight:600;}
+  .lock-veil .lk-sb{margin-top:4px;font-size:12px;color:var(--mute);max-width:260px;line-height:1.5;}
+  .lock-veil .lk-cta{margin-top:12px;padding:10px 18px;background:var(--ink);color:#fff;border-radius:99px;font-size:12.5px;font-weight:600;}
+
+  .src{margin:14px 18px 0;padding:12px 14px;background:#F1ECE0;border-radius:10px;font-size:11px;color:var(--mute);line-height:1.55;}
+  .src b{color:var(--ink);}
+
+  .upsell{margin:18px;padding:16px;background:linear-gradient(160deg,#EEF2F8,#DCE4F0);
+          border:1px solid var(--navy);border-radius:14px;}
+  .upsell .h{font-family:"Noto Serif KR",serif;font-size:16px;color:var(--navy-d);}
+  .upsell .p{font-size:12px;color:var(--mute);margin-top:6px;line-height:1.55;}
+  .upsell .row{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .upsell .it{background:#fff;border-radius:10px;padding:10px;text-align:center;font-size:12px;}
+  .upsell .it b{display:block;font-family:"Noto Serif KR",serif;color:var(--navy-d);font-size:14px;}
+  .upsell .it span{color:var(--mute);font-size:11px;}
+
+  .actions{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:calc(100% - 32px);max-width:398px;
+           display:grid;grid-template-columns:1fr 1.4fr;gap:8px;z-index:9;}
+  .actions .btn{background:#fff;border:1px solid var(--ink);border-radius:14px;padding:12px;text-align:center;
+                box-shadow:0 4px 18px rgba(0,0,0,0.08);}
+  .actions .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .actions .btn .ic{font-family:"Noto Serif KR",serif;font-size:16px;}
+  .actions .btn .lb{font-size:13px;font-weight:600;margin-top:1px;}
+  .actions .btn .sb{font-size:10px;opacity:0.7;margin-top:1px;}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="hd">
+    <div class="crumb">사주 500 · 더 알아볼 주제 · 토정비결</div>
+    <h1>2026년 한 해의<br/>열두 결을 짚어 드립니다</h1>
+    <div class="sub">토정 이지함 선생의 풀이법을 따라, 한 해를 열두 달로 나눠 결과 흐름을 읽어 드립니다.</div>
+    <div class="meta"><span>2운 · 약 6,000자</span><span>병오년 · 2026</span><span>월별 12장</span></div>
+    <div class="seal">歲</div>
+  </header>
+
+  <section class="hex">
+    <div class="yr">2026 병오년 · 본괘</div>
+    <div class="glyph">水山蹇</div>
+    <div class="name">수산건(水山蹇) · 멈춤 속의 단단함</div>
+    <div class="one">서두르면 미끄러지고, 멈춰서 살피면 길이 보이는 해입니다.</div>
+    <div class="pull">"君子以反身修德 — 군자는 이를 보아 자신을 돌이켜 덕을 닦는다."</div>
+  </section>
+
+  <section class="four">
+    <div class="fc"><div class="h">상반기</div><div class="v">수습</div><div class="d">정리·복기</div></div>
+    <div class="fc"><div class="h">하반기</div><div class="v">전환</div><div class="d">방향 재설계</div></div>
+    <div class="fc"><div class="h">길월</div><div class="v">7·9·11월</div><div class="d">결정·계약</div></div>
+    <div class="fc"><div class="h">주의월</div><div class="v">2·6·10월</div><div class="d">속도 줄이기</div></div>
+  </section>
+
+  <section class="sec">
+    <h2>한 해의 결 <span class="hz">總論</span></h2>
+    <div class="body">
+      <p>2026년 병오년은 화(火)의 해입니다. 준기 님의 일간이 기토(己土)이므로, 화생토(火生土) 흐름을 받습니다. 외부에서 빛이 들어오는 결이지만, 그 빛을 어떻게 받느냐가 한 해의 색을 결정합니다.</p>
+      <p>본괘 수산건(水山蹇)은 산 위에 물이 있는 형상입니다. 흐르려는 마음과 멈춰야 하는 자리가 한 자리에서 만납니다. 결정을 서두르면 미끄러지고, 한 박자 멈춰서 살피면 길이 열립니다.</p>
+      <div class="pull">"멈춤은 나아가지 못함이 아니라, 더 멀리 가기 위한 자세입니다."</div>
+      <p>특히 상반기는 작년의 결을 정리하는 시기, 하반기는 다음 십 년을 준비하는 시기입니다. 7월·9월·11월에 굵직한 결정 한두 번이 한 해의 색을 정합니다.</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>열두 달의 결 <span class="hz">十二月運</span></h2>
+    <p class="lead">각 달을 펼쳐 보세요. 한 줄 풀이와 권장 행동을 함께 보여 드립니다.</p>
+    <div class="months">
+
+      <details class="mo">
+        <summary><div class="num">1</div><div class="ti"><b>1월 · 경인월</b><span>새 결의 시작 — 천천히</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          새해의 결이 잡히는 달입니다. <span class="badge">시작</span> 큰 결정보다 작은 습관 하나를 정해 두는 편이 한 해를 길게 받쳐 줍니다.
+          <div class="pq">"始之以小, 終之以大 — 작은 것으로 시작하니 큰 것으로 마친다."</div>
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">2</div><div class="ti"><b>2월 · 신묘월</b><span>속도를 줄여야 하는 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          속도를 줄이지 않으면 다칩니다. <span class="badge warn">주의</span> 운전·계약·말의 속도 모두 한 박자 늦추십시오. 큰 결정은 다음 달로 미루는 편이 좋습니다.
+          <div class="pq">"急行則蹶 — 급히 가면 넘어진다."</div>
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">3</div><div class="ti"><b>3월 · 임진월</b><span>인연이 다가오는 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          오랜 인연 또는 새 인연이 다가옵니다. <span class="badge">人</span> 만남의 자리를 거절하지 마십시오. 조용한 자리일수록 결이 깊습니다.
+        </div>
+      </details>
+
+      <details class="mo" open>
+        <summary class="now"><div class="num">4</div><div class="ti"><b>4월 · 임진월 · 지금</b><span>방향을 정하는 달 · NOW</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          큰 그림이 보이기 시작합니다. <span class="badge">방향</span> 한 가지로 결을 모으면 하반기 흐름이 단단해집니다. 두세 가지를 동시에 시도하면 결이 흩어집니다.
+          <div class="pq">"一念定, 萬事正 — 한 마음이 정해지면 만 가지 일이 바르게 선다."</div>
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">5</div><div class="ti"><b>5월 · 계사월</b><span>결과가 모이는 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          상반기 노력의 결이 모입니다. <span class="badge">財</span> 작은 입금·계약이 이어집니다. 다만 큰 지출은 다음 달로 미루십시오.
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">6</div><div class="ti"><b>6월 · 갑오월</b><span>몸을 돌볼 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          여름 화기가 강합니다. <span class="badge warn">注</span> 위장·수분·수면 세 가지를 챙기십시오. 결정보다 휴식을 권하는 달입니다.
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">7</div><div class="ti"><b>7월 · 을미월</b><span>길월 — 결정의 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          한 해의 첫 길월입니다. <span class="badge">機</span> 미뤄 두었던 결정 하나를 정리하십시오. 계약·발표·이사의 결이 좋습니다.
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">8</div><div class="ti"><b>8월 · 병신월</b><span>이름이 알려지는 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          외부 신호가 늘어납니다. <span class="badge">名</span> 들어오는 제안은 듣고, 답은 9월에 하는 편이 좋습니다.
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">9</div><div class="ti"><b>9월 · 정유월</b><span>길월 — 결과의 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          한 해의 두 번째 길월입니다. <span class="badge">機</span> 7월 결정의 결과가 이 달에 보입니다. 큰 변화도 이 달에 감당할 수 있습니다.
+        </div>
+      </details>
+
+      <details class="mo">
+        <summary><div class="num">10</div><div class="ti"><b>10월 · 무술월</b><span>주의가 필요한 달</span></div><div class="ar">▾</div></summary>
+        <div class="det">
+          토(土)가 중첩되어 답답함이 쌓입니다. <span class="badge warn">注</span> 사람 관계의 작은 균열에 주의하십시오. 분기별 환기 시간을 갖는 편이 좋습니다.
+        </div>
+      </details>
+    </div>
+
+    <div class="lock-veil" style="margin-top:10px;">
+      <div class="blurred">
+        <div class="months">
+          <div class="mo" style="padding:12px 14px;">
+            <div style="display:grid;grid-template-columns:38px 1fr;gap:10px;">
+              <div class="num">11</div>
+              <div class="ti"><b>11월 · 기해월</b><span>길월 — 한 해의 마침을 정리</span></div>
+            </div>
+          </div>
+          <div class="mo" style="padding:12px 14px;">
+            <div style="display:grid;grid-template-columns:38px 1fr;gap:10px;">
+              <div class="num">12</div>
+              <div class="ti"><b>12월 · 경자월</b><span>다음 해를 여는 결</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lock-ovr">
+        <div class="lk-ic">歲</div>
+        <div class="lk-tt">11월·12월의 결</div>
+        <div class="lk-sb">한 해를 마치는 두 달의 흐름은 사주 전체와 함께 풀어야 정확합니다.</div>
+        <div class="lk-cta">10운으로 전체 보기</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>꼭 챙겨야 할 세 가지 <span class="hz">三要</span></h2>
+    <div class="body">
+      <p><b>1. 결정의 달은 7월과 9월</b> — 큰 결정은 이 두 달로 모으십시오. 3월·5월·11월도 보조 길월입니다.</p>
+      <p><b>2. 주의의 달은 2월과 6월과 10월</b> — 속도와 몸과 관계 세 결이 약해지는 달입니다.</p>
+      <p><b>3. 한 해의 키워드는 "멈춤"</b> — 멈춤은 나아가지 못함이 아니라 결을 정리하는 자세입니다.</p>
+    </div>
+  </section>
+
+  <div class="src">
+    <b>출처 ·</b> 토정비결 원문(이지함, 16세기) 144괘 체계와 동국세시기(東國歲時記)의 풀이를 기반으로 합니다. 본 풀이는 토정비결 단독 해석이 아니라 사주 일주(己土)와 세운(병오년)을 함께 본 결과입니다. 인용된 한문 구절은 검토 중이며, 정식 인용은 다음 버전에서 확정합니다.
+  </div>
+
+  <div class="upsell">
+    <div class="h">한 해를 사주 전체와 함께</div>
+    <div class="p">10운으로 풀면 토정비결 12개월 + 세운·대운 + 주제별 흐름이 한 곳에 모입니다.</div>
+    <div class="row">
+      <div class="it"><b>12개월 전체</b><span>11·12월 포함</span></div>
+      <div class="it"><b>세운+대운</b><span>2026~2030 함께</span></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <div class="btn"><div class="ic">↗</div><div class="lb">공유하고 1운 받기</div><div class="sb">하루 3회까지</div></div>
+    <div class="btn primary"><div class="ic">歲</div><div class="lb">사주 전체로 보기</div><div class="sb">10운으로 시작</div></div>
+  </div>
+</div>
+</body>
+</html>
