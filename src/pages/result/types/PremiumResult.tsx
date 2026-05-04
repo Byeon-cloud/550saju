@@ -5998,29 +5998,35 @@ function useMemoLite<T>(factory: () => T, _deps: any[]): T {
 function DaewoonScores({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: OhengType }) {
   if (!v4Daeun || v4Daeun.length === 0) return null;
   // 2026-05-04 명리학 fallback (AI score 없을 때) — 일간 vs 대운 천간 관계 기반
-  // 인성(나를 생함)=82 / 비겁(같음)=72 / 식상(내가 생함)=76 / 재성(내가 극함)=68 / 관성(나를 극함)=58
-  // 대운 지지도 ±5 가중치 (생/극 관계)
+  // 자연수 사용 (5의 배수 금지) + 8 대운 모두 다른 값 강제
   const ELEM_TO_OHENG: Record<string, OhengType> = { wood: '목', fire: '화', earth: '토', metal: '금', water: '수' };
   const SS_LOCAL: Record<OhengType, OhengType> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
   const SG_LOCAL: Record<OhengType, OhengType> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
   function calcDaeunScore(daeunOheng: OhengType): number {
-    if (daeunOheng === dayOheng) return 72;             // 비겁
-    if (SS_LOCAL[dayOheng] === daeunOheng) return 76;   // 식상 (내가 생함)
-    if (SG_LOCAL[dayOheng] === daeunOheng) return 68;   // 재성 (내가 극함)
-    if (SG_LOCAL[daeunOheng] === dayOheng) return 58;   // 관성 (나를 극함)
-    if (SS_LOCAL[daeunOheng] === dayOheng) return 82;   // 인성 (나를 생함)
-    return 65;
+    if (daeunOheng === dayOheng) return 71;             // 비겁
+    if (SS_LOCAL[dayOheng] === daeunOheng) return 77;   // 식상 (내가 생함)
+    if (SG_LOCAL[dayOheng] === daeunOheng) return 67;   // 재성 (내가 극함)
+    if (SG_LOCAL[daeunOheng] === dayOheng) return 56;   // 관성 (나를 극함)
+    if (SS_LOCAL[daeunOheng] === dayOheng) return 83;   // 인성 (나를 생함)
+    return 64;
   }
+  const usedScores = new Set<number>();
   const items = v4Daeun.slice(0, 8).map((d, idx) => {
     const aiScore = (d as any).score;
     if (typeof aiScore === 'number' && aiScore >= 0 && aiScore <= 100) {
       return { ...d, score: aiScore };
     }
-    // fallback — 명리학 기반 + 약간의 자연 분산 (대운별 지지도 반영)
+    // fallback — 명리학 base + idx 별 자연 분산 (8개 모두 다른 자연수)
     const ganOheng = ELEM_TO_OHENG[String(d.elem)] || '토';
     let score = calcDaeunScore(ganOheng);
-    // 대운 순서별 자연 변동 (인생 곡선 단조 X)
-    score += [(idx % 3) - 1, idx === 2 ? 4 : 0, idx === 5 ? -3 : 0].reduce((a, b) => a + b, 0);
+    // idx 별 미세 변동 — 인생 곡선 단조 X
+    const microShifts = [-2, +1, +4, -1, +3, -3, +2, 0];
+    score += microShifts[idx] ?? 0;
+    // 5의 배수 회피
+    if (score % 5 === 0) score += (idx % 2 === 0) ? 1 : -1;
+    // 중복 점수 회피 — ±1 씩 조정
+    while (usedScores.has(score)) score += 1;
+    usedScores.add(score);
     return { ...d, score: Math.min(100, Math.max(40, score)) };
   });
   const peak = Math.max(...items.map((d) => d.score));

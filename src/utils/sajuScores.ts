@@ -225,27 +225,32 @@ function computeRaw(sajuData: SajuData): Record<TopicKey, number> {
  *  · 단조성 유지 — raw 순서대로 spread 적용
  */
 function applySpread(raw: Record<TopicKey, number>): Record<TopicKey, number> {
+  // 2026-05-04 자연수 강제 — 5의 배수 회피 (준기 결단 "75/65 같이 fake X")
   const entries = (Object.entries(raw) as Array<[TopicKey, number]>);
-  // raw 점수 내림차순 정렬
   entries.sort((a, b) => b[1] - a[1]);
   const RANK_RANGES: Array<[number, number]> = [
-    [78, 88],  // 1등 — 강점이지만 100점 만점이 아닌 현실 점수
+    [78, 88],  // 1등
     [70, 80],  // 2등
     [62, 72],  // 3등
     [55, 65],  // 4등
     [50, 60],  // 5등
-    [45, 55],  // 6등 — 약점이지만 절망적이지 않게
+    [45, 55],  // 6등
   ];
   const out: Record<TopicKey, number> = { career: 0, love: 0, wealth: 0, social: 0, health: 0, potential: 0 };
-  // 같은 raw 점수 인접한 그룹은 같은 ranking
   for (let i = 0; i < entries.length; i++) {
     const [key, rawScore] = entries[i];
     const [lo, hi] = RANK_RANGES[i] || [38, 48];
-    // raw 비율 (해당 range 안에서 rawScore 비례) — raw 가 60이면 mid, 80이면 high
-    // 단순 균등: 등급 중앙값 ± (raw-50)/10
     const midRange = (lo + hi) / 2;
+    // raw 점수 + key 해시로 미세 분산 (deterministic · 5의 배수 회피)
+    const keyHash = key.charCodeAt(0) + key.charCodeAt(1);
+    const microShift = ((rawScore + keyHash) % 7) - 3; // -3 ~ +3
     const offset = Math.max(-5, Math.min(5, (rawScore - 50) / 5));
-    out[key] = Math.max(lo, Math.min(hi, Math.round(midRange + offset)));
+    let s = Math.round(midRange + offset + microShift);
+    // 5의 배수 회피 — ±1 보정
+    if (s % 5 === 0) s += (keyHash % 2 === 0) ? 1 : -1;
+    // 같은 점수 회피 — 이미 사용된 점수면 ±1
+    while (Object.values(out).includes(s)) s = s === hi ? s - 1 : s + 1;
+    out[key] = Math.max(lo, Math.min(hi, s));
   }
   return out;
 }

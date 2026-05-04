@@ -205,7 +205,8 @@ export function MonthlyPage() {
         // (이전: ±11/-13/-9 고정 오프셋 → 모든 사용자 같은 분포)
         const sajuPillars = selected?.sajuData?.pillars || [];
         const sipsung = (selected?.sajuData as any)?.sipsung || [];
-        const baseScore = clamp100(thisMonth.score ?? 70);
+        // 2026-05-04 자연수 — 5의 배수 회피 (70 → 71)
+        const baseScore = clamp100(thisMonth.score ?? 71);
         // 십성 카운트로 4 영역 가중치 산출 (사주별 다름)
         const sipDist = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
         for (const s of sipsung) {
