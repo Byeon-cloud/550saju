@@ -80,6 +80,10 @@ export interface V4Daeun {
   label: string;
   period: string;
   current?: boolean;
+  /** 2026-05-04: AI 또는 명리학적 계산으로 산출된 점수 (0-100). 없으면 클라이언트 fallback. */
+  score?: number;
+  /** AI 가 보낸 한 줄 풀이 (대운 추이 차트 캡션용) */
+  scoreReason?: string;
 }
 
 export interface V4Napeum {
@@ -247,7 +251,21 @@ export function mapUnyoung12(unyoung: UnYoung[], pillars: Pillar[]): V4Unyoung[]
   });
 }
 
-export function mapDaeun(daeunList: DaeUn[], birthYear: number): V4Daeun[] {
+/**
+ * AI daeunPeriods 응답 형식 (선택 · 없으면 fallback 사용):
+ * [{ age: '9~18세', score: 65, reason: '한 줄 풀이' }, ...]
+ */
+export interface AiDaeunPeriod {
+  age?: string;
+  score?: number;
+  reason?: string;
+}
+
+export function mapDaeun(
+  daeunList: DaeUn[],
+  birthYear: number,
+  aiPeriods?: AiDaeunPeriod[],
+): V4Daeun[] {
   const labels = ['학업기', '확립기', '안정기', '확립기', '수확기', '원숙기', '완성기', '지혜기', '관조기', '회고기'];
   // 비정상 항목 + 간지 없는 소운 기간 필터
   const valid = daeunList.filter(d => d.시작나이 <= d.끝나이 && d.간지 && d.간지.trim().length > 0);
@@ -258,14 +276,21 @@ export function mapDaeun(daeunList: DaeUn[], birthYear: number): V4Daeun[] {
     const zhiKr = JIJI_KO[d.지지] ?? d.지지;
     let label = labels[i] ?? `${i + 1}기`;
     if (d.isCurrent) label = '현재';
+    const ageStr = `${d.시작나이}~${d.끝나이}세`;
+    // AI score 매칭 — age 문자열 기준
+    const aiMatch = aiPeriods?.find((p) => p.age && p.age.replace(/\s/g, '') === ageStr.replace(/\s/g, ''));
     return {
-      age: `${d.시작나이}~${d.끝나이}세`,
+      age: ageStr,
       gz: d.간지,
       kr: `${ganKr}${zhiKr}`,
       elem,
       label,
       period: `${birthYear + d.시작나이}~${birthYear + d.끝나이}`,
       current: d.isCurrent,
+      score: typeof aiMatch?.score === 'number' && aiMatch.score >= 0 && aiMatch.score <= 100
+        ? aiMatch.score
+        : undefined,
+      scoreReason: aiMatch?.reason,
     };
   });
 }

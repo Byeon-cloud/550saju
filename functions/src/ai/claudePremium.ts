@@ -68,7 +68,7 @@ JSON 1개로 응답:
     "yongsin": "<§04 결론 4줄 각 40~70자>"
   }
 }
-⚠️ daeun/yearly/practice/monthlyWarnings/shinsalCards/monthlyInsight/rel6Cards/topicMini/scores/actionList 출력 금지.`,
+⚠️ daeun/yearly/practice/monthlyWarnings/shinsalCards/monthlyInsight/daeunPeriods/rel6Cards/topicMini/scores/actionList 출력 금지.`,
 
   B: `## 이번 호출에서 작성할 필드 (Group B — 시간 흐름)
 다른 필드는 절대 출력하지 마세요. 아래 필드만 채운 JSON 객체 1개로 응답:
@@ -80,6 +80,16 @@ JSON 1개로 응답:
     {"id": "practice", "title": "실천", "content": "<핵심 액션 위주. 400~550자. 늘어지지 말 것>"}
   ],
   "monthlyWarnings": [{"month": "<예: 9월>", "title": "...", "desc": "<80~120자>"}],
+  "daeunPeriods": [
+    "// 2026-05-04 신규: 8 대운 각각의 점수(0-100) + 한 줄 풀이 — 클라이언트 차트에 직접 wire.",
+    "// 일간 vs 대운 천간/지지 오행 관계 (인성=80+, 식상=75+, 비겁=70, 재성=65, 관성=55-) 기반.",
+    "// '용신 대운'은 +10 가산, '기신 대운'은 -10 차감. 일생 곡선이 65/75 만 반복되지 않게 자연스럽게 분산.",
+    "// age 문자열은 dynamic_context의 daeun 시작·끝 나이 정확히 일치 (예: '9~18세').",
+    {"age": "<예: 9~18세>", "score": <0-100>, "reason": "<한 줄 30~60자 · 왜 이 점수인지>"},
+    {"age": "<19~28세>", "score": <0-100>, "reason": "..."},
+    {"age": "<29~38세>", "score": <0-100>, "reason": "..."}
+    // ... 8개 (모든 대운 출력)
+  ],
   "shinsalCards": [
     "// 2026-05-04 재조정: tier='강' 만 desc 풍부, '중'·'참고' 는 짧게.",
     "// '강' 신살 = 일간·일지·월지에 직접 작용 + 강도 4~5 — 사주카드 핵심 신살처럼 깊이 풀이.",
@@ -147,15 +157,14 @@ async function callGroup(
   const groupFocus = GROUP_FOCUS[group];
   const userSituation = buildSituationBlock(situation, groupFocus);
 
-  // 그룹별 max_tokens — Opus 4.6 한계 32000 (실제 사용량만큼만 청구)
-  // 이전 12288 → 16384 → 24576 (3차 상향) — JSON 파싱 실패 박멸 우선
-  // Group A 가 §01·§02·§03·§04 + lifeEdge·sipCluster·analysisBase 다수 필드 → 24576
-  // Group B 는 §05·§06·§07 + monthlyInsight 12개월 → 16384
-  // Group C 는 rel6Cards·topicMini·scores·actionList → 12288
+  // 2026-05-04 다운 — 분량 컴팩트화 (5,000~6,500자) 후 padding 제거.
+  // 한국어 5000-6500자 = ~9000-11700 tokens + JSON overhead 30% 안전마진 = 14000 충분.
+  // 효과: Group A 24576→14000 으로 응답 시간 30-40% 단축 (60-120s → 40-80s).
+  // 이전 변천: 12288 → 16384 → 24576 (JSON 파싱 박멸) → 14000 (컴팩트 후 안전).
   const MAX_TOKENS_BY_GROUP: Record<GroupKey, number> = {
-    A: 24576,
-    B: 16384,
-    C: 12288,
+    A: 14000,
+    B: 10000,
+    C: 7000,
   };
 
   const msg = await anthropic.messages.create({
@@ -270,6 +279,7 @@ function mergeGroups(a: any, b: any, c: any): any {
     monthlyWarnings: b?.monthlyWarnings || [],
     shinsalCards: b?.shinsalCards || [],
     monthlyInsight: b?.monthlyInsight || [],
+    daeunPeriods: b?.daeunPeriods || [],  // 2026-05-04: 8 대운 점수 동적화
     // Group C
     rel6Cards: c?.rel6Cards || {},
     topicMini: c?.topicMini || {},

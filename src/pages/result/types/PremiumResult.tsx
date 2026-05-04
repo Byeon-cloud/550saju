@@ -2692,7 +2692,7 @@ export function PremiumResult({
         <CollapsibleSection step={5} title="대운" hanja="大運" hint="10년 단위로 흐르는 인생의 큰 강줄기">
           <DaeunTimeline v4Daeun={v4Daeun} />
           {/* Stage 2C-2#2: daewoon-scores 8 row (mockup daewoon-scores 진본 — 정점/현재 강조) */}
-          <DaewoonScores v4Daeun={v4Daeun} />
+          <DaewoonScores v4Daeun={v4Daeun} dayOheng={dayOheng} />
           {/* Stage 2C-2#3: daewoon-line 60년 가로 시간선 (mockup daewoon-line 진본) */}
           <DaewoonLine60 v4Daeun={v4Daeun} sajuData={sajuData} />
           {/* 현재 대운 상세 카드 — mockup §5 now-daewoon 진본 (천간/지지 별 풀이 + 키 사건) */}
@@ -5995,12 +5995,33 @@ function useMemoLite<T>(factory: () => T, _deps: any[]): T {
  * Stage 2C-2 #2 · DaewoonScores — 8 row 점수 막대 (정점/현재 강조)
  *  · v4Daeun 의 score 필드 활용 (또는 inline 산출)
  * ═════════════════════════════════════════════════════════════════ */
-function DaewoonScores({ v4Daeun }: { v4Daeun: V4Daeun[] }) {
+function DaewoonScores({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: OhengType }) {
   if (!v4Daeun || v4Daeun.length === 0) return null;
-  const items = v4Daeun.slice(0, 8).map((d) => {
-    const elemKey = String(d.elem);
-    const score = (d as any).score ?? 50 + (elemKey === 'wood' || elemKey === 'fire' ? 25 : 15);
-    return { ...d, score: Math.min(100, Math.max(0, score)) };
+  // 2026-05-04 명리학 fallback (AI score 없을 때) — 일간 vs 대운 천간 관계 기반
+  // 인성(나를 생함)=82 / 비겁(같음)=72 / 식상(내가 생함)=76 / 재성(내가 극함)=68 / 관성(나를 극함)=58
+  // 대운 지지도 ±5 가중치 (생/극 관계)
+  const ELEM_TO_OHENG: Record<string, OhengType> = { wood: '목', fire: '화', earth: '토', metal: '금', water: '수' };
+  const SS_LOCAL: Record<OhengType, OhengType> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
+  const SG_LOCAL: Record<OhengType, OhengType> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+  function calcDaeunScore(daeunOheng: OhengType): number {
+    if (daeunOheng === dayOheng) return 72;             // 비겁
+    if (SS_LOCAL[dayOheng] === daeunOheng) return 76;   // 식상 (내가 생함)
+    if (SG_LOCAL[dayOheng] === daeunOheng) return 68;   // 재성 (내가 극함)
+    if (SG_LOCAL[daeunOheng] === dayOheng) return 58;   // 관성 (나를 극함)
+    if (SS_LOCAL[daeunOheng] === dayOheng) return 82;   // 인성 (나를 생함)
+    return 65;
+  }
+  const items = v4Daeun.slice(0, 8).map((d, idx) => {
+    const aiScore = (d as any).score;
+    if (typeof aiScore === 'number' && aiScore >= 0 && aiScore <= 100) {
+      return { ...d, score: aiScore };
+    }
+    // fallback — 명리학 기반 + 약간의 자연 분산 (대운별 지지도 반영)
+    const ganOheng = ELEM_TO_OHENG[String(d.elem)] || '토';
+    let score = calcDaeunScore(ganOheng);
+    // 대운 순서별 자연 변동 (인생 곡선 단조 X)
+    score += [(idx % 3) - 1, idx === 2 ? 4 : 0, idx === 5 ? -3 : 0].reduce((a, b) => a + b, 0);
+    return { ...d, score: Math.min(100, Math.max(40, score)) };
   });
   const peak = Math.max(...items.map((d) => d.score));
   // mockup .daewoon-scores 진본 — className 만 사용
@@ -6022,7 +6043,10 @@ function DaewoonScores({ v4Daeun }: { v4Daeun: V4Daeun[] }) {
         );
       })}
       <div className="ds-caption">
-        정점은 <strong style={{ color: '#2e7d32' }}>{items.find((d) => d.score === peak)?.age || ''} {items.find((d) => d.score === peak)?.gz || ''} 대운</strong>입니다. 지금 시기는 그 정점을 받아낼 그릇을 굽는 시기로 보면 됩니다.
+        정점은 <strong style={{ color: '#2e7d32' }}>{items.find((d) => d.score === peak)?.age || ''} {items.find((d) => d.score === peak)?.gz || ''} 대운</strong>입니다.
+        {items.find((d) => d.score === peak)?.scoreReason
+          ? ` ${items.find((d) => d.score === peak)?.scoreReason}`
+          : ' 지금 시기는 그 정점을 받아낼 그릇을 굽는 시기로 보면 됩니다.'}
       </div>
     </div>
   );

@@ -285,20 +285,23 @@ export function ResultPage(props: ResultPageProps = {}) {
   const dateStr = `${input.birthYear}년 ${input.birthMonth}월 ${input.birthDay}일`;
   const genderStr = input.gender === 'male' ? '남' : '여';
 
+  // AI 결과 로드 — 저장된 리포트에서 aiResult 추출 (mapDaeun 등 v4 매핑이 참조)
+  const aiResult = storedReport?.aiResult;
+
   // Map data to v4 formats
   // 전통 명리학 순서: 시주→일주→월주→년주 (왼쪽→오른쪽)
   const v4Pillars = mapPillars([...sajuData.pillars].reverse(), sajuData.sipsung);
   const v4Elements = mapElements(sajuData.elements);
   const v4Unyoung = mapUnyoung12(sajuData.unyoung12, sajuData.pillars);
-  const v4Daeun = mapDaeun(sajuData.daeun, input.birthYear);
+  // 2026-05-04 동적화 — AI 응답의 daeunPeriods (8 대운별 score+reason) 전달.
+  // AI 가 안 보내거나 일부만 보내도 mapDaeun 내부에서 매칭 안 되는 항목은 score=undefined → 클라이언트 fallback.
+  const aiDaeunPeriods = (aiResult as any)?.daeunPeriods;
+  const v4Daeun = mapDaeun(sajuData.daeun, input.birthYear, aiDaeunPeriods);
   const v4Napeum = mapNapeum(sajuData.napeum);
   const v4Gilsin = mapSinSal(sajuData.gilsin);
   const v4Hyungsal = mapSinSal(sajuData.hyungsal);
   const dayOhengForGM = sajuData.pillars[2]?.천간오행 ?? '토' as OhengType;
   const v4Gongmang = mapGongmang(sajuData.gongmang, dayOhengForGM);
-
-  // AI 결과 로드 — 저장된 리포트에서 aiResult 추출
-  const aiResult = storedReport?.aiResult;
 
   // 점수: AI 결과 우선, 없으면 오행 기반 추정
   // 통일된 명리학 가중치 점수 — sajuScores.ts (모든 페이지 공유)
