@@ -3,6 +3,7 @@
 // 스펙: docs/mockups/사주500_UI개편_03_결과.md §4 §6 §7 §14 §3-5 §12
 
 import { useState, useEffect, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShareModal } from '@/components/share/ShareModal';
 import { isAppintosBuild } from '@/lib/env';
@@ -239,10 +240,12 @@ export interface UpsellCardProps {
 
 export function UpsellCard({ contentType, onTap }: UpsellCardProps) {
   const copy = UPSELL_COPY[contentType];
+  const navigate = useNavigate();
 
   function handleTap() {
     if (onTap) onTap();
-    else if (typeof window !== 'undefined') window.location.href = copy.path;
+    // 2026-05-04 앱인토스 정책 — window.location.href → SPA navigate
+    else navigate(copy.path);
   }
 
   return (

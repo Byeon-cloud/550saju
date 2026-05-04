@@ -60,7 +60,7 @@ export function ProfileSelector({
         className="card-primary"
         style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14 }}
       >
-        <Avatar name={p.name} />
+        <Avatar profile={p} name={p.name} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>
             {p.relation === '본인' || !p.relation ? '내 사주' : p.relation}
@@ -113,7 +113,7 @@ export function ProfileSelector({
           cursor: 'pointer',
         }}
       >
-        {selected ? <Avatar name={selected.name} /> : <Avatar name="?" />}
+        {selected ? <Avatar profile={selected} name={selected.name} /> : <Avatar name="?" />}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>
             {selected
@@ -175,7 +175,7 @@ export function ProfileSelector({
                     }}
                     aria-label={`${p.name}${isSelected ? ' 선택됨' : ' 선택하기'}`}
                   >
-                    <Avatar name={p.name} />
+                    <Avatar profile={p} name={p.name} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>
                         {p.relation === '본인' || !p.relation ? '내 사주' : p.relation}
@@ -228,23 +228,85 @@ export function ProfileSelector({
   );
 }
 
-function Avatar({ name }: { name: string }) {
+/** 2026-05-04 통일 — 한글 첫글자 원형 → 일주 심볼 (천간 한자 + 오행 컬러) */
+const OHENG_BOX_AVATAR: Record<string, { bg: string; fg: string; outline: string }> = {
+  목: { bg: '#2D8A4E', fg: '#FFFFFF', outline: '#1B5E2C' },
+  화: { bg: '#D32F2F', fg: '#FFFFFF', outline: '#9B1B1B' },
+  토: { bg: '#E8B82A', fg: '#FFFFFF', outline: '#C9A030' },
+  금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C' },
+  수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D' },
+};
+const OHENG_HAN_AVATAR: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
+
+function Avatar({ profile, name }: { profile?: SajuProfile; name?: string }) {
+  // 일주 천간/오행 추출
+  const day = profile?.sajuData?.pillars?.[2];
+  const ilgan = day?.천간 || '';
+  const ohengKr = (day?.천간오행 || '') as string;
+  const box = ohengKr ? OHENG_BOX_AVATAR[ohengKr] : null;
+
+  // 일주 데이터 없으면 fallback (구 디자인 유지 — '?' 표시 등)
+  if (!ilgan || !box) {
+    return (
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          background: 'rgba(184,150,90,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+        aria-hidden="true"
+      >
+        <span style={{ fontSize: 17, fontWeight: 900, color: 'var(--brand-gold)' }}>
+          {(name?.charAt(0) ?? '?').slice(0, 1)}
+        </span>
+      </div>
+    );
+  }
+  // 일주 심볼 — 오행 컬러 박스 + 흰 한자 + 우상단 오행 뱃지 (StoragePage ProfileCard 톤)
   return (
     <div
       style={{
         width: 44,
         height: 44,
-        borderRadius: 22,
-        background: 'rgba(184,150,90,0.15)',
+        flexShrink: 0,
+        borderRadius: 10,
+        background: box.bg,
+        color: box.fg,
+        border: `1.5px solid ${box.outline}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        flexShrink: 0,
+        fontFamily: "'Noto Serif KR', serif",
+        fontSize: 20,
+        fontWeight: 900,
+        position: 'relative',
+        boxShadow: `0 2px 6px rgba(0,0,0,0.10)`,
       }}
       aria-hidden="true"
     >
-      <span style={{ fontSize: 17, fontWeight: 900, color: 'var(--brand-gold)' }}>
-        {(name?.charAt(0) ?? '?').slice(0, 1)}
+      {ilgan}
+      <span
+        style={{
+          position: 'absolute',
+          top: -5,
+          right: -4,
+          fontSize: 8.5,
+          fontWeight: 800,
+          padding: '1px 4px',
+          borderRadius: 999,
+          background: '#FFFFFF',
+          color: box.bg === '#FFFFFF' ? box.outline : box.bg === '#1A1A1A' ? '#1A1A1A' : box.bg,
+          border: `1.2px solid ${box.bg === '#FFFFFF' ? box.outline : box.bg === '#1A1A1A' ? '#1A1A1A' : box.bg}`,
+          lineHeight: 1.2,
+          letterSpacing: '0.04em',
+        }}
+      >
+        {OHENG_HAN_AVATAR[ohengKr]}
       </span>
     </div>
   );
