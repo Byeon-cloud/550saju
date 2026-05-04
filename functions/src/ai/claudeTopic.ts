@@ -658,7 +658,7 @@ export async function generateTopicAnalysisAI(
     const first = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
-      temperature: 0.7,
+      temperature: 0.1,
       system: TOPIC_ANALYSIS_SYSTEM_V3,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -671,7 +671,7 @@ export async function generateTopicAnalysisAI(
     const retry = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
-      temperature: 0.5,
+      temperature: 0.05,
       system: TOPIC_ANALYSIS_SYSTEM_V3,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -684,6 +684,7 @@ export async function generateTopicAnalysisAI(
   const review = await anthropic.messages.create({
     model,
     max_tokens: maxTokens,
+    temperature: 0.1, // 결정론적
     system: TOPIC_ANALYSIS_SYSTEM_V3,
     messages: [
       { role: 'user', content: prompt },

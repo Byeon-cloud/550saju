@@ -8,7 +8,9 @@ const lazyClaudeMonthly = () => import('./ai/claudeMonthly');
 const lazyClaudeCompat = () => import('./ai/claudeCompat');
 const lazyClaudeTojung = () => import('./ai/claudeTojung');
 const lazyClaudeFortune = () => import('./ai/claudeFortune');
-const lazyGeminiChat = () => import('./ai/geminiChat');
+// 사주대화 — 2026-04-21 모델 재할당: Gemini 2.5 Pro → Claude Sonnet 4.6
+//   geminiChat.ts 는 grace 보존 (feedback_dead_code_removal_pattern.md 준수)
+const lazyClaudeChat = () => import('./ai/claudeChat');
 const lazyClaudeDream = () => import('./ai/claudeDream');
 const lazyClaudeWeekly = () => import('./ai/claudeWeekly');
 const lazyClaudeTopic = () => import('./ai/claudeTopic');
@@ -92,6 +94,191 @@ async function refundBalance(uid: string, deducted: number, reason: string): Pro
 }
 
 /**
+ * T4 · Pre-warming · generateReport 인스턴스 깨우기
+ *  · InputPage 의 폼이 valid 가 되는 순간 백그라운드로 ping → 인스턴스 warm 상태 확보
+ *  · 콜드스타트 1~3s 완전 제거
+ *  · idempotent · auth 불필요 · 단순 200 응답만
+ *  · 같은 generateReport 함수와 동일 region/메모리 → instance affinity 활용
+ */
+export const warmupGenerateReport = onCall(
+  { timeoutSeconds: 10, memory: '256MiB', minInstances: 1, cors: true, invoker: 'public' },
+  async () => {
+    return { ok: true, ts: Date.now() };
+  }
+);
+
+/**
+ * T1 · Streaming SSE · 프리미엄 리포트 그룹 단위 점진 송출
+ *  · onRequest (HTTP) — SSE 응답 (text/event-stream)
+ *  · 각 그룹 (A/B/C) 완료 시점에 즉시 송출 → 클라이언트가 progressive 렌더
+ *  · 첫 그룹 ~25-30s 도착, 전체 ~30-35s 완료 (T2 병렬 결합)
+ *  · Opus 4.6 단일 모델 — 퀄리티·통일성 보장
+ *  · 인증: Authorization: Bearer <Firebase ID Token>
+ *  · 잔액 차감 + 환불 + Firestore 저장은 generateReport 와 동일 패턴
+ */
+export const generatePremiumReportStream = onRequest(
+  {
+    secrets: [ANTHROPIC_KEY],
+    timeoutSeconds: 540, // SSE 장기 연결 — 9분 (Cloud Run 최대)
+    memory: '1GiB',
+    minInstances: 1,
+    cors: true,
+    invoker: 'public',
+  },
+  async (req, res) => {
+    // CORS preflight
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Max-Age', '3600');
+      res.status(204).send('');
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      res.status(405).send('Method not allowed');
+      return;
+    }
+
+    // SSE 헤더
+    res.set({
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no', // Cloud Run buffer 비활성
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.flushHeaders?.();
+
+    const sendEvent = (event: string, data: any) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // 인증 — Firebase ID Token 검증
+    let uid = 'anonymous';
+    let isAnonymous = true;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        const decoded = await admin.auth().verifyIdToken(token);
+        uid = decoded.uid;
+        isAnonymous = decoded.firebase?.sign_in_provider === 'anonymous';
+      } catch {
+        // 토큰 invalid — anonymous 처리
+      }
+    }
+
+    const { sajuData, situation } = req.body || {};
+    if (!sajuData) {
+      sendEvent('error', { message: '사주 데이터가 없습니다' });
+      res.end();
+      return;
+    }
+
+    // 잔액 차감 (premium = 10운) — 실명 로그인만
+    let deductedAmount = 0;
+    if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
+      const cost = 10;
+      const userRef = db.collection('users').doc(uid);
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        try {
+          await db.runTransaction(async (tx) => {
+            const doc = await tx.get(userRef);
+            const balance = doc.data()?.balance ?? 0;
+            if (balance < cost) {
+              throw new Error('운이 부족합니다');
+            }
+            tx.update(userRef, {
+              balance: admin.firestore.FieldValue.increment(-cost),
+              totalSpent: admin.firestore.FieldValue.increment(cost),
+            });
+          });
+          deductedAmount = cost;
+        } catch (e: any) {
+          sendEvent('error', { message: e.message || '잔액 차감 실패' });
+          res.end();
+          return;
+        }
+      }
+    }
+
+    // T1 · 3 그룹 병렬 + 각 그룹 완료 시점에 SSE 송출
+    sendEvent('start', { ts: Date.now() });
+    const groups: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
+    const results: Record<string, any> = {};
+
+    try {
+      const mod = await import('./ai/claudePremium');
+      const apiKey = ANTHROPIC_KEY.value();
+
+      // 각 그룹 병렬 호출 — Promise.all 대신 개별 then 으로 도착 즉시 송출
+      const groupPromises = groups.map(async (g) => {
+        const t0 = Date.now();
+        try {
+          const result = await mod.generateGroup(apiKey, sajuData, g, situation);
+          results[g] = result;
+          sendEvent('group', {
+            group: g,
+            data: result,
+            elapsedMs: Date.now() - t0,
+          });
+        } catch (e: any) {
+          sendEvent('groupError', { group: g, message: e.message || 'unknown' });
+          throw e;
+        }
+      });
+
+      await Promise.all(groupPromises);
+
+      // 모든 그룹 완료 → merge + Firestore 저장
+      const merged = {
+        tier: 'premium' as const,
+        ...results.A,
+        ...results.B,
+        ...results.C,
+        sections: [
+          ...(results.A?.sections || []),
+          ...(results.B?.sections || []),
+        ],
+        sectionConclusions: {
+          ...(results.A?.sectionConclusions || {}),
+          ...(results.B?.sectionConclusions || {}),
+          ...(results.C?.sectionConclusions || {}),
+        },
+      };
+
+      // Firestore 저장 (best-effort)
+      const reportRef = db.collection('reports').doc();
+      try {
+        await reportRef.set({
+          uid,
+          type: 'premium',
+          aiModel: 'claude-opus-4-6',
+          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          shareEnabled: false,
+        });
+      } catch {
+        // silent — 저장 실패해도 사용자에겐 결과 전달
+      }
+
+      sendEvent('done', { reportId: reportRef.id, content: merged });
+      res.end();
+    } catch (error: any) {
+      console.error('generatePremiumReportStream error:', error);
+      // 환불
+      if (deductedAmount > 0) {
+        await refundBalance(uid, deductedAmount, 'generatePremiumReportStream failed');
+      }
+      sendEvent('error', { message: error?.message || 'AI 분석 실패' });
+      res.end();
+    }
+  }
+);
+
+/**
  * 사주 리포트 생성 — Claude Opus 4.6 (env SAJU_REPORT_MODEL로 오버라이드 가능)
  */
 export const generateReport = onCall(
@@ -123,15 +310,28 @@ export const generateReport = onCall(
     }
 
     try {
-      console.log('[generateReport] Starting Claude call...');
-      const mod = await lazyClaudeReport();
-      console.log('[generateReport] Module loaded, calling API...');
-      const result = await mod.generateSajuReport(
-        ANTHROPIC_KEY.value(),
-        sajuData,
-        situation,
-        reportType || 'basic',
-      );
+      console.log(`[generateReport] Starting Claude call... reportType=${reportType}`);
+      // ✅ 핵심 수정 (2026-05) — reportType 별 정확한 분기
+      //   premium → generatePremiumReport (T2 병렬 + lifeEdge/sipCluster/shinsalCards/rel6Cards/topicMini/monthlyInsight 풀 schema)
+      //   basic   → generateSajuReport    (1운 기본 schema)
+      // 이전 버그: 무조건 generateSajuReport 호출 → premium 결제 시에도 basic schema 반환 → 클라 PremiumResult 렌더 깨짐
+      let result: any;
+      if (reportType === 'premium') {
+        const premMod = await import('./ai/claudePremium');
+        result = await premMod.generatePremiumReport(
+          ANTHROPIC_KEY.value(),
+          sajuData,
+          situation,
+        );
+      } else {
+        const mod = await lazyClaudeReport();
+        result = await mod.generateSajuReport(
+          ANTHROPIC_KEY.value(),
+          sajuData,
+          situation,
+          reportType || 'basic',
+        );
+      }
       console.log('[generateReport] Claude response received, keys:', Object.keys(result?.content || {}));
 
       // Firestore에 리포트 저장 (content는 큰 JSON이라 별도 저장)
@@ -292,7 +492,8 @@ async function logGuardHit(args: {
 }
 
 export const generateChatAnswer = onCall(
-  { secrets: [GEMINI_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
+  // 2026-04-21 사주대화 Sonnet 4.6 전환 → secrets 키도 ANTHROPIC_KEY 로 교체
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
   async (request) => {
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question) throw new HttpsError('invalid-argument', '질문이 없습니다');
@@ -317,9 +518,10 @@ export const generateChatAnswer = onCall(
     }
 
     // ─── Layer 2: AI 호출 + guarded 필드 / [GUARD] 토큰 검사 ───
-    const { generateChatAnswerAI, GUARD_TOKEN } = await lazyGeminiChat();
+    //   2026-04-21 모델 재할당: Gemini 2.5 Pro → Claude Sonnet 4.6
+    const { generateChatAnswerAI, GUARD_TOKEN } = await lazyClaudeChat();
     const raw = await generateChatAnswerAI(
-      GEMINI_KEY.value(),
+      ANTHROPIC_KEY.value(),
       q,
       sajuData,
       chatHistory || [],
@@ -1143,3 +1345,47 @@ export { onInviteReceived } from './invite/onInviteReceived';
  * 봇 UA 는 OG HTML, 사람 UA 는 index.html self-fetch 로 SPA 전달.
  */
 export { renderShareOg } from './share/renderShareOg';
+
+/* ─── #saju-card-share Stage 4 · 사주 카드 OG SSR (2026-04-27) ───
+ * 만세력 카드 카톡 공유 시 미리보기 이미지 노출. E32 패턴 응용.
+ *  - renderSajuCardOg: /saju-card/:profileId 봇 UA 시 SSR OG 메타 HTML
+ *  - renderSajuCardOgImage: /api/saju-card-og.png?n=&i= 동적 1200×630 PNG (puppeteer + Noto Serif KR)
+ *
+ * Firebase Hosting 설정 필요 (firebase.json rewrites — 순서 중요):
+ *   { source: "/api/saju-card-og.png", function: "renderSajuCardOgImage" }
+ *   { source: "/saju-card/**",         function: "renderSajuCardOg" }
+ *   { source: "/share/**",             function: "renderShareOg" }
+ *   { source: "**",                    destination: "/index.html" }
+ */
+export { renderSajuCardOg } from './share/renderSajuCardOg';
+export { renderSajuCardOgImage } from './share/renderSajuCardOgImage';
+
+/* ─── #61 · 프리미엄 PDF 다운로드 (2026-04-27) ───
+ * 5,000원(10운) 결제 후 PremiumResult 7섹션을 A4 PDF 로 다운로드.
+ *  - puppeteer-core + @sparticuz/chromium · Noto Serif KR Google Fonts CDN
+ *  - 검증: auth.uid + (reportId.uid 일치) + payments confirmed 5000원 1건 이상
+ *  - Storage 업로드 + 24h Signed URL 반환
+ */
+const lazyPremiumPdf = () => import('./pdf/generatePremiumPdf');
+
+// region 미지정 = us-central1 (다른 함수와 일치)
+// asia-northeast3 는 client functionsClient.ts 가 us-central1 고정이라 미사용 — 추후 멀티리전 분리 시 검토
+export const generatePremiumPdf = onCall(
+  {
+    timeoutSeconds: 120,
+    memory: '1GiB',
+    minInstances: 0,
+    cors: true,
+    invoker: 'public',
+  },
+  async (request) => {
+    try {
+      const { handleGeneratePremiumPdf } = await lazyPremiumPdf();
+      return await handleGeneratePremiumPdf(request as any, db);
+    } catch (err: any) {
+      if (err?.code) throw err; // HttpsError 통과
+      console.error('[generatePremiumPdf] 예외:', err);
+      throw new HttpsError('internal', `PDF 생성 실패: ${err?.message || 'unknown'}`);
+    }
+  },
+);

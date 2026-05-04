@@ -34,3 +34,9 @@ smoke-*.json
 
 # 루트 투자/전략 문서 (repo 외부 보관)
 /*.docx
+
+# 마케팅 번들 (PRD 사본 zip · repo 외부 배포 채널)
+marketing_bundle/
+marketing_bundle.zip
+사주500_마케팅번들*.zip
+saju500.ait.zip

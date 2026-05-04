@@ -1,13 +1,30 @@
 import { Solar, type EightChar, type Lunar } from 'lunar-javascript';
 import type { SajuInput, SajuData, Pillar, OhengDistribution, SipSung, JiJangGan, UnYoung, DaeUn, NaPeum, SinSal, GongMang, HyungChungHap, SipSungDistribution, MyeongriAnalysis, OhengType } from '@/types/saju';
 import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG, JIJI_EUMYANG } from '@/constants/oheng';
+import { correctKoreanSolarTime } from './timeCorrection';
 
 /**
  * lunar-javascript를 사용하여 사주 전체 데이터를 계산합니다.
+ *
+ * ⚠️ 진태양시 보정 (2026-05) — 한국 출생자 시주 정확도 보장
+ *  · 한국 표준시(KST) - 32분 = 서울 진태양시
+ *  · 서머타임 기간(1948-51, 55-60) 추가 -60분
+ *  · 출생시간 미입력 시 보정 X (시주 자체 미산출)
  */
 export function calculateSaju(input: SajuInput): SajuData {
   const solar = input.hasBirthTime
-    ? Solar.fromYmdHms(input.birthYear, input.birthMonth, input.birthDay, input.birthHour!, input.birthMinute!, 0)
+    ? (() => {
+        // 한국 진태양시 보정 적용 (입력 KST → 진태양시)
+        const [y, mo, d, h, mi, s] = correctKoreanSolarTime(
+          input.birthYear,
+          input.birthMonth,
+          input.birthDay,
+          input.birthHour!,
+          input.birthMinute!,
+          0,
+        );
+        return Solar.fromYmdHms(y, mo, d, h, mi, s);
+      })()
     : Solar.fromYmd(input.birthYear, input.birthMonth, input.birthDay);
 
   const lunar = solar.getLunar();
@@ -294,17 +311,61 @@ function detectHyungChungHap(pillars: Pillar[], hasBirthTime: boolean): HyungChu
 }
 
 /** 일간 강약 경향 추정 */
+/**
+ * 일간 강약 판정 (자평진전 정통 3단계)
+ *
+ * 정통 명리 자평진전 / 적천수 분석법:
+ *  · 득령(得令): 월지가 일간을 생(生)하거나 비조(比助) → +3
+ *  · 득지(得地): 일지가 일간을 부조 (비겁/인성 오행) → +2
+ *  · 득세(得勢): 천간 통근 (지지에 같은 오행 뿌리) → +2 per 통근
+ *  · 비겁/인성 → 일간 보강 (+)
+ *  · 식상/재성/관성 → 일간 소모 (-)
+ *
+ * 등급: 매우신강 / 신강경향 / 중화 / 신약경향 / 매우신약
+ */
 function estimateStrength(
-  _ilganOheng: OhengType,
+  ilganOheng: OhengType,
   deukryeong: boolean,
   dist: SipSungDistribution,
+  pillars?: Pillar[],
 ): { gangYak: MyeongriAnalysis['일간강약']; reason: string } {
   let score = 0;
   const reasons: string[] = [];
 
-  // 득령 (가장 중요, 배점 3)
+  // 1단계: 득령 (월령 — 가장 중요)
   if (deukryeong) { score += 3; reasons.push('득령(+3)'); }
   else { score -= 2; reasons.push('실령(-2)'); }
+
+  // 2단계: 득지 (일지가 일간 부조 — 비겁 또는 인성 오행)
+  if (pillars) {
+    const dayJiOheng = pillars[2]?.지지오행 as OhengType | undefined;
+    const ilganOhengTyped = ilganOheng as OhengType;
+    if (dayJiOheng) {
+      const SS_REV: Record<OhengType, OhengType> = {
+        목: '수', 화: '목', 토: '화', 금: '토', 수: '금',
+      };
+      // 일지가 일간과 같은 오행 (비겁) 또는 일간을 생하는 오행 (인성)
+      const isDeukJi = dayJiOheng === ilganOhengTyped || SS_REV[ilganOhengTyped] === dayJiOheng;
+      if (isDeukJi) { score += 2; reasons.push('득지(+2)'); }
+      else { reasons.push('실지'); }
+    }
+
+    // 3단계: 득세 (천간 통근 — 천간이 지지에 뿌리 가짐)
+    // 일간이 지지 어딘가 같은 오행 또는 자기를 생하는 오행에 뿌리내리면 통근
+    let tonggeun = 0;
+    for (const p of pillars) {
+      if (p?.available === false) continue;
+      const jiOheng = p.지지오행 as OhengType | undefined;
+      if (!jiOheng) continue;
+      // 일지는 이미 득지에서 처리 — 년/월/시 지만
+      if (p === pillars[2]) continue;
+      const SS_REV: Record<OhengType, OhengType> = { 목: '수', 화: '목', 토: '화', 금: '토', 수: '금' };
+      if (jiOheng === ilganOhengTyped || SS_REV[ilganOhengTyped] === jiOheng) {
+        tonggeun++;
+      }
+    }
+    if (tonggeun > 0) { score += tonggeun * 2; reasons.push(`득세(통근×${tonggeun})(+${tonggeun * 2})`); }
+  }
 
   // 비겁 — 동일 오행, 일간 돕기
   if (dist.비겁 > 0) { score += dist.비겁; reasons.push(`비겁${dist.비겁}(+${dist.비겁})`); }
@@ -322,7 +383,10 @@ function estimateStrength(
   if (dist.관성 > 0) { score -= Math.round(dist.관성 * 1.5); reasons.push(`관성${dist.관성}(-${Math.round(dist.관성 * 1.5)})`); }
 
   const reason = reasons.join(', ');
+  // 등급 세분 (매우신강·신강경향·중화·신약경향·매우신약)
+  if (score >= 6) return { gangYak: '신강경향', reason: '매우신강 · ' + reason };
   if (score >= 2) return { gangYak: '신강경향', reason };
+  if (score <= -6) return { gangYak: '신약경향', reason: '매우신약 · ' + reason };
   if (score <= -2) return { gangYak: '신약경향', reason };
   return { gangYak: '중화', reason };
 }
@@ -337,7 +401,7 @@ function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: bo
   const deukryeong = checkDeukryeong(ilganOheng, woljiOheng);
   const sipsungDist = countSipsung(sipsung);
   const hyungchunghap = detectHyungChungHap(pillars, hasBirthTime);
-  const { gangYak, reason } = estimateStrength(ilganOheng, deukryeong, sipsungDist);
+  const { gangYak, reason } = estimateStrength(ilganOheng, deukryeong, sipsungDist, pillars);
 
   return {
     일간: ilgan,

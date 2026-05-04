@@ -53,7 +53,8 @@ export async function generateDailyFortuneAnalysis(
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 8192,
-      temperature: 0.7,
+      // temperature 0.1 — 같은 사주 = 같은 결과 (결정론적, 신뢰성)
+      temperature: 0.1,
       system,
       messages: [{ role: 'user', content: user }],
     });
@@ -62,13 +63,13 @@ export async function generateDailyFortuneAnalysis(
     if (meta1.repairUsed) console.info('[claudeFortune] jsonrepair 1차 발동 — 복구 성공');
     return result;
   } catch (e1: any) {
-    console.warn('[claudeFortune] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
-    // 2차 호출 — temperature 만 낮춰 sampling 변동성 감소
+    console.warn('[claudeFortune] 1차 실패 → temperature 0.05 로 재시도:', e1?.message);
+    // 2차 호출 — 더 낮은 temperature
     const meta2: ParseJsonMeta = { repairUsed: false };
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 8192,
-      temperature: 0.5,
+      temperature: 0.05,
       system,
       messages: [{ role: 'user', content: user }],
     });

@@ -27,6 +27,8 @@ export async function generateSajuReport(apiKey: string, sajuData: any, situatio
   const msg = await anthropic.messages.create({
     model,
     max_tokens: 16384,
+    // temperature 0.1 — 같은 사주 = 같은 결과 (결정론적, 신뢰성 보장)
+    temperature: 0.1,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
   });
@@ -71,7 +73,7 @@ function buildSystemPrompt(sajuData: any): string {
   const month = new Date().getMonth() + 1;
 
   return `당신은 명리학(命理學) 40년 대가입니다.
-"자평진전", "적천수", "궁통보감", "연해자평", "명리정종", "삼명통회" 6대 원전에 정통한 전문가로서,
+"자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전에 정통한 전문가로서,
 정통 명리학 분석 프레임워크에 따라 체계적으로 사주를 해석합니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

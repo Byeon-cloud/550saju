@@ -7,6 +7,7 @@ export async function generateTojungBigyeol(apiKey: string, sajuData: any): Prom
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 8192,
+    temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
     messages: [{ role: 'user', content: prompt }],
   });
 

@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import {
   RadarChart,
   PolarGrid,
@@ -14,7 +13,6 @@ import { calculateSaju } from '@/services/saju/calculator';
 import { Header } from '@/components/layout/Header';
 import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG } from '@/constants/oheng';
 import { ErrorState } from '@/components/common/ErrorState';
-import { FooterCTA } from '@/components/common/FooterCTA';
 import { ShareModal } from '@/components/share/ShareModal';
 
 import { getReport, getReports, getMyProfile } from '@/services/storage/localStore';
@@ -863,8 +861,8 @@ function PillarCard({ p, index, total }: { p: V4Pillar; index: number; total: nu
       style={{
         animation: `cardReveal 0.8s ease ${index * 180}ms both`,
         background: p.isMe ? 'linear-gradient(180deg, #1B2A4A, #243656)' : '#FFFFFF',
-        border: p.isMe ? '2px solid #B8965A' : '1px solid #E2E5EC',
-        boxShadow: p.isMe ? '0 4px 20px rgba(184,150,90,0.2)' : '0 2px 8px rgba(0,0,0,0.04)',
+        border: p.isMe ? '2px solid #C9A96E' : '1px solid #E2E5EC',
+        boxShadow: p.isMe ? '0 4px 20px rgba(201,169,110,0.2)' : '0 2px 8px rgba(0,0,0,0.04)',
       }}
     >
       {/* 오행 색상 띠 (나 제외) — 직관적 오행 구분 */}
@@ -874,14 +872,14 @@ function PillarCard({ p, index, total }: { p: V4Pillar; index: number; total: nu
 
       {/* 기둥 라벨 */}
       <div className="w-full pt-3 pb-1 px-2 text-center"
-        style={{ background: p.isMe ? 'rgba(184,150,90,0.15)' : '#F8F9FB' }}>
+        style={{ background: p.isMe ? 'rgba(201,169,110,0.15)' : '#F8F9FB' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: p.isMe ? '#E8D5A8' : '#8892A4' }}>
           {p.label} {p.sub}
         </div>
         <div style={{ fontSize: 9, color: p.isMe ? 'rgba(255,255,255,0.4)' : '#A8B1C1' }}>{p.desc}</div>
         {p.isMe && (
           <div className="inline-block rounded-full mt-1 px-2 py-0.5"
-            style={{ background: '#B8965A', fontSize: 9, fontWeight: 800, color: '#fff' }}>
+            style={{ background: '#C9A96E', fontSize: 9, fontWeight: 800, color: '#fff' }}>
             나
           </div>
         )}
@@ -903,7 +901,7 @@ function PillarCard({ p, index, total }: { p: V4Pillar; index: number; total: nu
       </div>
 
       {/* 구분선 */}
-      <div className="w-10 h-px mx-auto" style={{ background: p.isMe ? 'rgba(184,150,90,0.3)' : '#E2E5EC' }} />
+      <div className="w-10 h-px mx-auto" style={{ background: p.isMe ? 'rgba(201,169,110,0.3)' : '#E2E5EC' }} />
 
       {/* 지지 */}
       <div className="w-full py-3 px-2 text-center">
@@ -1206,7 +1204,7 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
       {/* Section header */}
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center gap-2 mb-1">
-          <div style={{ width: 3, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #B8965A, #a08b6a)' }} />
+          <div style={{ width: 3, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #C9A96E, #a08b6a)' }} />
           <span style={{ fontSize: 13, fontWeight: 800, color: '#3D3427', letterSpacing: '-0.3px' }}>지장간 — 내 안의 숨은 성격들</span>
         </div>
         <p style={{ fontSize: 11, color: '#a0937f', lineHeight: 1.7, marginLeft: 11 }}>
@@ -1249,7 +1247,7 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
 
       {/* 나의 내면 요약 */}
       {summaryParts.length > 0 && (
-        <div className="mx-4 mb-3 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(184,150,90,0.2)' }}>
+        <div className="mx-4 mb-3 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(201,169,110,0.2)' }}>
           <div className="px-4 py-2.5" style={{ background: 'linear-gradient(135deg, #F5F0E8 0%, #EDE5D5 100%)' }}>
             <p style={{ fontSize: 12, fontWeight: 800, color: '#a08b6a', letterSpacing: '-0.2px' }}>나의 내면 요약</p>
           </div>
@@ -1259,9 +1257,9 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
             ))}
             {dayVoices && (
               <div className="flex items-start gap-2 mt-1 pt-2.5" style={{ borderTop: '1px dashed #e0d8cc' }}>
-                <div style={{ width: 3, minHeight: 20, borderRadius: 2, background: '#B8965A', marginTop: 2, flexShrink: 0 }} />
+                <div style={{ width: 3, minHeight: 20, borderRadius: 2, background: '#C9A96E', marginTop: 2, flexShrink: 0 }} />
                 <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.65 }}>
-                  특히 <b style={{ color: '#B8965A' }}>일지(본질)</b>에서 {dayVoices} 목소리가 가장 강하게 작동해요.
+                  특히 <b style={{ color: '#C9A96E' }}>일지(본질)</b>에서 {dayVoices} 목소리가 가장 강하게 작동해요.
                 </p>
               </div>
             )}
@@ -1275,8 +1273,8 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
           const ec = EC[card.elemKey];
           return (
             <div key={ci} className="rounded-xl overflow-hidden" style={{
-              border: card.isCore ? '2px solid #B8965A' : `1px solid ${ec.med}`,
-              boxShadow: card.isCore ? '0 2px 12px rgba(184,150,90,0.15)' : '0 1px 4px rgba(0,0,0,0.04)',
+              border: card.isCore ? '2px solid #C9A96E' : `1px solid ${ec.med}`,
+              boxShadow: card.isCore ? '0 2px 12px rgba(201,169,110,0.15)' : '0 1px 4px rgba(0,0,0,0.04)',
             }}>
               {/* 카드 헤더 */}
               <div className="flex items-center gap-3 px-3.5 py-3" style={{
@@ -1286,8 +1284,8 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
               }}>
                 <div className="flex-shrink-0 flex items-center justify-center" style={{
                   width: 38, height: 38, borderRadius: 10,
-                  background: card.isCore ? 'linear-gradient(135deg, #B8965A, #b8965a)' : `linear-gradient(135deg, ${ec.main}, ${ec.dark})`,
-                  boxShadow: card.isCore ? '0 2px 8px rgba(184,150,90,0.3)' : `0 2px 6px ${ec.main}33`,
+                  background: card.isCore ? 'linear-gradient(135deg, #C9A96E, #b8965a)' : `linear-gradient(135deg, ${ec.main}, ${ec.dark})`,
+                  boxShadow: card.isCore ? '0 2px 8px rgba(201,169,110,0.3)' : `0 2px 6px ${ec.main}33`,
                 }}>
                   <span style={{ fontSize: 20, fontWeight: 900, color: '#fff' }}>{card.hanja}</span>
                 </div>
@@ -1297,19 +1295,19 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
                     {card.isCore && (
                       <span style={{
                         fontSize: 9, fontWeight: 800, color: '#fff', letterSpacing: '0.5px',
-                        background: 'linear-gradient(135deg, #B8965A, #b8965a)',
+                        background: 'linear-gradient(135deg, #C9A96E, #b8965a)',
                         borderRadius: 6, padding: '2px 8px',
-                        boxShadow: '0 1px 4px rgba(184,150,90,0.3)',
+                        boxShadow: '0 1px 4px rgba(201,169,110,0.3)',
                       }}>핵심</span>
                     )}
                   </div>
                   <p style={{ fontSize: 10, color: '#8b7e6f', marginTop: 1 }}>{card.role} — {card.roleDesc}</p>
                 </div>
                 <span style={{
-                  fontSize: 10, fontWeight: 700, color: card.isCore ? '#B8965A' : ec.main,
-                  background: card.isCore ? 'rgba(184,150,90,0.1)' : `${ec.light}`,
+                  fontSize: 10, fontWeight: 700, color: card.isCore ? '#C9A96E' : ec.main,
+                  background: card.isCore ? 'rgba(201,169,110,0.1)' : `${ec.light}`,
                   borderRadius: 6, padding: '2px 7px',
-                  border: card.isCore ? '1px solid rgba(184,150,90,0.25)' : `1px solid ${ec.med}`,
+                  border: card.isCore ? '1px solid rgba(201,169,110,0.25)' : `1px solid ${ec.med}`,
                 }}>{card.posLabel}</span>
               </div>
               {/* 숨은 성격 목록 */}
@@ -1344,8 +1342,8 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
                         {e.meaning ? (
                           <div style={{ marginTop: 4 }}>
                             <div className="flex items-start gap-0" style={{ marginBottom: 3 }}>
-                              <div style={{ width: 2, minHeight: 14, borderRadius: 1, background: '#B8965A', marginTop: 3, marginRight: 6, flexShrink: 0 }} />
-                              <p style={{ fontSize: 11, color: '#B8965A', fontWeight: 700, lineHeight: 1.5, fontStyle: 'italic' }}>{e.meaning.voice}</p>
+                              <div style={{ width: 2, minHeight: 14, borderRadius: 1, background: '#C9A96E', marginTop: 3, marginRight: 6, flexShrink: 0 }} />
+                              <p style={{ fontSize: 11, color: '#C9A96E', fontWeight: 700, lineHeight: 1.5, fontStyle: 'italic' }}>{e.meaning.voice}</p>
                             </div>
                             <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.65 }}>{e.meaning.trait}</p>
                           </div>
@@ -1365,7 +1363,7 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
       {/* 해석 가이드 */}
       <div className="mx-4 mt-3 mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid #e8e0d4' }}>
         <div className="flex items-center gap-2 px-3 py-2" style={{ background: 'linear-gradient(135deg, #faf5eb, #f3eadb)', borderBottom: '1px solid #e8e0d4' }}>
-          <div style={{ width: 18, height: 18, borderRadius: 5, background: 'linear-gradient(135deg, #B8965A, #b8965a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 18, height: 18, borderRadius: 5, background: 'linear-gradient(135deg, #C9A96E, #b8965a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: 10, color: '#fff', fontWeight: 800 }}>?</span>
           </div>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#a08b6a' }}>이렇게 읽어요</span>
@@ -1375,9 +1373,9 @@ function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
             각 칸마다 2~3개의 숨은 성격이 있어요. 예를 들어 한 칸에 "제대로 해야 해" + "더 배우고 싶어"가 같이 있으면, <b style={{ color: '#3D3427' }}>완벽주의와 학습욕이 동시에 작동</b>하는 성격이에요.
           </p>
           <div className="flex items-start gap-2 pt-1" style={{ borderTop: '1px dashed #e8e0d4' }}>
-            <div style={{ width: 3, minHeight: 28, borderRadius: 2, background: '#B8965A', marginTop: 2, flexShrink: 0 }} />
+            <div style={{ width: 3, minHeight: 28, borderRadius: 2, background: '#C9A96E', marginTop: 2, flexShrink: 0 }} />
             <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.75 }}>
-              <b style={{ color: '#B8965A' }}>일지 = 진짜 나</b> (가장 중요), 년지 = 어릴 때 모습, 시지 = 나이 들수록 나타나는 모습이에요. 같은 십성이 여러 칸에 반복되면 그 성향이 특히 강해요.
+              <b style={{ color: '#C9A96E' }}>일지 = 진짜 나</b> (가장 중요), 년지 = 어릴 때 모습, 시지 = 나이 들수록 나타나는 모습이에요. 같은 십성이 여러 칸에 반복되면 그 성향이 특히 강해요.
             </p>
           </div>
         </div>
@@ -1524,7 +1522,7 @@ function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
 
   if (fits.length === 0) return null;
 
-  const SCORE_COLORS = ['#B8965A', '#2D8A4E', '#1565C0', '#F57F17', '#757575'];
+  const SCORE_COLORS = ['#C9A96E', '#2D8A4E', '#1565C0', '#F57F17', '#757575'];
   const topFit = fits[0];
   const strongFields = fits.filter(f => f.score >= 75);
   const weakFields = fits.filter(f => f.score < 55);
@@ -1537,7 +1535,7 @@ function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
       </p>
 
       {/* 종합 해석 */}
-      <div className="mb-4 p-3.5 rounded-xl" style={{ background: 'linear-gradient(135deg, #f5f0e8, #ede5d5)', border: '1px solid rgba(184,150,90,0.25)' }}>
+      <div className="mb-4 p-3.5 rounded-xl" style={{ background: 'linear-gradient(135deg, #f5f0e8, #ede5d5)', border: '1px solid rgba(201,169,110,0.25)' }}>
         <p style={{ fontSize: 11, fontWeight: 800, color: '#a08b6a', marginBottom: 4 }}>나의 직업 성향 요약</p>
         <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7 }}>
           <b>{topFit.label}</b> 분야와 궁합이 가장 좋아요 ({topFit.score}%).
@@ -1704,7 +1702,7 @@ function HealthVis({ elements, dayOheng, pillars: _pillars }: {
       </p>
 
       {/* 종합 진단 */}
-      <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.25)' }}>
+      <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.25)' }}>
         <p style={{ fontSize: 11, fontWeight: 800, color: '#a08b6a', marginBottom: 4 }}>종합 건강 진단</p>
         <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7 }}>
           가장 주의할 장기는 <b style={{ color: '#c62828' }}>{weakest.organ}</b>({EHAN[weakest.elem]}, {weakest.status})이에요.
@@ -1893,18 +1891,21 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
         coreQ: '안정을 지키면서도 어떻게 앞으로 나아갈 수 있을까?',
         summary: '토(土) 일간의 인생 과제는 "안정 추구와 변화 수용의 균형"입니다. 대지는 든든하지만, 움직이지 않으면 새싹도 못 틔워요.',
         themes: [
+          // 축 A — 전체 에너지 안정성 (내 중심 에너지 vs 외부 에너지)
           { labelA: '안정', labelB: '변화',
             sideA: ['비겁', '인성'], sideB: ['식상', '재성', '관성'],
             tip: '3개월에 1번은 새로운 것을 시도하세요. 새 취미, 새 모임, 새 루트',
             vH: '안정 지향 사주예요. 익숙한 환경에 머물려는 본능이 강하지만, 의식적으로 작은 변화를 시도해야 성장해요.',
             vL: '변화를 잘 수용하는 사주예요. 하지만 기본 토대를 더 단단히 다져두세요. 뿌리 없는 변화는 표류예요.' },
+          // 축 B — 대인관계 거리감 (받아들임 vs 선긋기)
           { labelA: '포용', labelB: '경계',
-            sideA: ['비겁', '인성'], sideB: ['관성', '재성', '식상'],
+            sideA: ['인성', '식상'], sideB: ['관성', '재성'],
             tip: '부탁받으면 바로 대답하지 말고 "생각해볼게"라고 하세요',
             vH: '모두를 품으려는 사주예요. 정작 나를 잃기 쉬우니, NO라고 말하는 것도 사랑이에요.',
             vL: '적절한 경계가 있는 사주예요. 하지만 마음의 벽을 조금 낮춰도 괜찮아요. 신뢰는 열어야 시작돼요.' },
+          // 축 C — 결정 속도 (숙고·규율 vs 실행·행동)
           { labelA: '신중', labelB: '결단',
-            sideA: ['비겁', '인성'], sideB: ['식상', '관성', '재성'],
+            sideA: ['인성', '관성'], sideB: ['식상', '재성'],
             tip: '작은 결정(메뉴, 옷)부터 5초 안에 고르는 연습을 하세요. 결단 근육이 커져요',
             vH: '신중하지만 결정이 느린 사주예요. 70% 확신이면 움직이세요. 기회는 기다려주지 않아요.',
             vL: '결단력이 있는 사주예요. 하지만 중요한 결정은 하루 더 생각해도 늦지 않아요. 신중함도 무기예요.' },
@@ -1920,7 +1921,7 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
             vH: '완벽을 추구하는 사주예요. 80%면 일단 내보내세요. Done is better than perfect. 완벽은 적의 이름이에요.',
             vL: '유연한 사주지만, 디테일에 좀 더 신경쓰면 결과물의 질이 크게 달라져요. 마무리 한 끗이 중요해요.' },
           { labelA: '이성', labelB: '감성',
-            sideA: ['비겁', '관성'], sideB: ['식상', '인성', '재성'],
+            sideA: ['관성', '재성'], sideB: ['식상', '인성'],
             tip: '하루 1번, 가까운 사람에게 감정을 표현하는 연습을 하세요',
             vH: '이성적 판단이 강한 사주예요. 옳은 말보다 따뜻한 말이 필요한 순간을 놓치지 마세요. 관계는 논리가 아니에요.',
             vL: '감성적인 면이 있는 사주예요. 중요한 순간엔 감정보다 이성적 판단을 믿으세요. 냉정함이 때로는 친절이에요.' },
@@ -1981,7 +1982,7 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
         </div>
 
         {/* 종합 요약 */}
-        <div className="p-3.5 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.25)' }}>
+        <div className="p-3.5 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.25)' }}>
           <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.75, fontWeight: 500 }}>{data.summary}</p>
         </div>
 
@@ -1998,18 +1999,18 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
             return (
               <div key={i} className="rounded-xl overflow-hidden" style={{ border: '1px solid #e8e0d4', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
                 {/* 과제 헤더 */}
-                <div className="flex items-center gap-3 px-4 py-3" style={{ background: i === 0 ? 'linear-gradient(135deg, rgba(184,150,90,0.1), rgba(140,109,61,0.15))' : '#faf7f2' }}>
+                <div className="flex items-center gap-3 px-4 py-3" style={{ background: i === 0 ? 'linear-gradient(135deg, rgba(201,169,110,0.1), rgba(212,168,67,0.15))' : '#faf7f2' }}>
                   <div style={{
                     width: 32, height: 32, borderRadius: 10,
-                    background: i === 0 ? 'linear-gradient(135deg, #B8965A, #b8965a)' : 'rgba(184,150,90,0.15)',
+                    background: i === 0 ? 'linear-gradient(135deg, #C9A96E, #b8965a)' : 'rgba(201,169,110,0.15)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: i === 0 ? '0 2px 6px rgba(184,150,90,0.3)' : 'none',
+                    boxShadow: i === 0 ? '0 2px 6px rgba(201,169,110,0.3)' : 'none',
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: 900, color: i === 0 ? '#fff' : '#B8965A' }}>{i + 1}</span>
+                    <span style={{ fontSize: 13, fontWeight: 900, color: i === 0 ? '#fff' : '#C9A96E' }}>{i + 1}</span>
                   </div>
                   <span style={{ fontSize: 14, fontWeight: 800, color: '#3D3427', flex: 1 }}>{t.labelA} vs {t.labelB}</span>
                   {i === 0 && (
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#B8965A', background: 'rgba(184,150,90,0.12)', borderRadius: 6, padding: '2px 8px' }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A96E', background: 'rgba(201,169,110,0.12)', borderRadius: 6, padding: '2px 8px' }}>
                       핵심 과제
                     </span>
                   )}
@@ -2031,7 +2032,7 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
                         width: `${pctA}%`,
                         background: aWins
                           ? `linear-gradient(90deg, ${ecC.main}, ${ecC.main}CC)`
-                          : !bWins ? `linear-gradient(90deg, #B8965A, #B8965AAA)` : '#d4cbb8',
+                          : !bWins ? `linear-gradient(90deg, #C9A96E, #C9A96EAA)` : '#d4cbb8',
                         transition: 'width 0.8s ease',
                         borderRight: '2px solid #fff',
                       }} />
@@ -2039,7 +2040,7 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
                         width: `${pctB}%`,
                         background: bWins
                           ? `linear-gradient(90deg, ${ecC.main}CC, ${ecC.main})`
-                          : !aWins ? `linear-gradient(90deg, #B8965AAA, #B8965A)` : '#d4cbb8',
+                          : !aWins ? `linear-gradient(90deg, #C9A96EAA, #C9A96E)` : '#d4cbb8',
                         transition: 'width 0.8s ease',
                       }} />
                     </div>
@@ -2054,8 +2055,8 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#B8965A' }} />
-                          <span style={{ fontSize: 10, color: '#B8965A', fontWeight: 700 }}>양쪽 균형형 사주</span>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#C9A96E' }} />
+                          <span style={{ fontSize: 10, color: '#C9A96E', fontWeight: 700 }}>양쪽 균형형 사주</span>
                         </div>
                       )}
                     </div>
@@ -2158,7 +2159,7 @@ function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, aiResult
 
         <div className="p-4 space-y-3" style={{ background: '#faf7f2' }}>
           {/* 핵심 해석 */}
-          <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.25)' }}>
+          <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.25)' }}>
             <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.75 }}>{guide.now}</p>
             <p style={{ fontSize: 11, color: '#a08b6a', marginTop: 6, lineHeight: 1.6 }}>{guide.tip}</p>
           </div>
@@ -2227,7 +2228,7 @@ function ReportSection({ section, index, elements, hasBirthTime, jijanggan, pill
           }`}
         >
           <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'rgba(184,150,90,0.1)' }}>
+            style={{ background: 'rgba(201,169,110,0.1)' }}>
             <div className="w-2 h-2 rounded-full bg-brand-gold" />
           </div>
           <span className="flex-1 text-h3 text-text-primary">{section.title}</span>
@@ -2245,8 +2246,8 @@ function ReportSection({ section, index, elements, hasBirthTime, jijanggan, pill
             {/* 소름 포인트 — keyInsight 골드 하이라이트 */}
             {section.keyInsight && (
               <div className="mb-4 p-3.5 rounded-xl relative overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, rgba(184,150,90,0.08), rgba(140,109,61,0.12))' }}>
-                <div className="absolute top-0 left-0 w-1 h-full rounded-r" style={{ background: 'linear-gradient(180deg, #B8965A, #8C6D3D)' }} />
+                style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.08), rgba(212,168,67,0.12))' }}>
+                <div className="absolute top-0 left-0 w-1 h-full rounded-r" style={{ background: 'linear-gradient(180deg, #C9A96E, #D4A843)' }} />
                 <p className="text-body-sm font-semibold leading-relaxed pl-2.5" style={{ color: '#8B7355' }}>
                   ✦ {section.keyInsight}
                 </p>
@@ -2279,13 +2280,6 @@ function ReportSection({ section, index, elements, hasBirthTime, jijanggan, pill
 export function ResultPage() {
   const { sajuData: ctxData, input: ctxInput } = useSajuContext();
   const reportId = window.location.pathname.split('/').pop() || 'local';
-  const { mark: markAttendance } = useAttendanceOnResult();
-
-  // 이벤트 v4 · 결과 렌더링 1회 출석 마커
-  useEffect(() => {
-    markAttendance().catch(() => {/* non-blocking */});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const sajuData = useMemo(() => {
     // 1. Context에 데이터 있으면 사용 (InputPage → Loading → Result 플로우)
@@ -2393,9 +2387,29 @@ export function ResultPage() {
   }, [aiResult]);
 
   const zodiac = sajuData.띠 ? `${sajuData.띠}띠` : '';
-  const birthTimeStr = hasBirthTime && input.birthHour !== undefined
-    ? `${input.birthHour}시`
-    : null;
+  // 출생시간 표시: birthHour는 시주 범위의 시작값(예: 유시=17). 정확한 시 숫자가 아니라
+  // 시주 범위 전체와 시주명(자/축/인/묘/진/사/오/미/신/유/술/해)을 함께 노출하여 정확히 전달.
+  const birthTimeStr = (() => {
+    if (!hasBirthTime || input.birthHour === undefined) return null;
+    const h = input.birthHour;
+    const SHIJU_RANGE: Record<number, { label: string; name: string }> = {
+      23: { label: '밤 11시 ~ 새벽 1시', name: '자시' },
+      0:  { label: '밤 11시 ~ 새벽 1시', name: '자시' },
+      1:  { label: '새벽 1시 ~ 3시', name: '축시' },
+      3:  { label: '새벽 3시 ~ 5시', name: '인시' },
+      5:  { label: '아침 5시 ~ 7시', name: '묘시' },
+      7:  { label: '아침 7시 ~ 9시', name: '진시' },
+      9:  { label: '오전 9시 ~ 11시', name: '사시' },
+      11: { label: '낮 11시 ~ 오후 1시', name: '오시' },
+      13: { label: '오후 1시 ~ 3시', name: '미시' },
+      15: { label: '오후 3시 ~ 5시', name: '신시' },
+      17: { label: '저녁 5시 ~ 7시', name: '유시' },
+      19: { label: '저녁 7시 ~ 9시', name: '술시' },
+      21: { label: '밤 9시 ~ 11시', name: '해시' },
+    };
+    const r = SHIJU_RANGE[h];
+    return r ? `${r.label} (${r.name})` : `${h}시`;
+  })();
 
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -2501,7 +2515,7 @@ export function ResultPage() {
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="text-h3 text-white">만세력 원국</h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  style={{ background: 'rgba(184,150,90,0.2)', color: '#E8D5A8' }}>
+                  style={{ background: 'rgba(201,169,110,0.2)', color: '#E8D5A8' }}>
                   {hasBirthTime ? '4기둥 8글자' : '3기둥 6글자'}
                 </span>
               </div>
@@ -2763,25 +2777,25 @@ export function ResultPage() {
                 </div>
 
                 {/* ────── 3. 용신 ────── */}
-                <div className="rounded-xl overflow-hidden mb-3" style={{ border: '2px solid rgba(184,150,90,0.3)', boxShadow: '0 2px 12px rgba(184,150,90,0.1)' }}>
-                  <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, rgba(184,150,90,0.1), rgba(140,109,61,0.15))' }}>
+                <div className="rounded-xl overflow-hidden mb-3" style={{ border: '2px solid rgba(201,169,110,0.3)', boxShadow: '0 2px 12px rgba(201,169,110,0.1)' }}>
+                  <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, rgba(201,169,110,0.1), rgba(212,168,67,0.15))' }}>
                     <div>
                       <p style={{ fontSize: 10, color: '#a08b6a', fontWeight: 600 }}>용신 — 사주 균형의 열쇠</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <p style={{ fontSize: 22, fontWeight: 900, color: yongOheng?.color || '#B8965A' }}>{analysisBase.용신}</p>
+                        <p style={{ fontSize: 22, fontWeight: 900, color: yongOheng?.color || '#C9A96E' }}>{analysisBase.용신}</p>
                         {yongOheng && <span style={{ fontSize: 11, color: '#8b7e6f' }}>{yongOheng.nature}</span>}
                       </div>
                     </div>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #B8965A, #b8965a)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(184,150,90,0.3)' }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #C9A96E, #b8965a)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(201,169,110,0.3)' }}>
                       <span style={{ fontSize: 18, color: '#fff', fontWeight: 800 }}>神</span>
                     </div>
                   </div>
                   <div className="px-4 py-3 space-y-3" style={{ background: '#fff' }}>
                     {/* 용신 = 뭐가 좋다는 거야? 해석 */}
-                    <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #f5f0e8, #ede5d5)', border: '1px solid rgba(184,150,90,0.2)' }}>
+                    <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #f5f0e8, #ede5d5)', border: '1px solid rgba(201,169,110,0.2)' }}>
                       <p style={{ fontSize: 11, fontWeight: 700, color: '#a08b6a', marginBottom: 4 }}>이게 뭔 뜻이에요?</p>
                       <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.75 }}>
-                        당신의 사주에는 <b style={{ color: yongOheng?.color || '#B8965A' }}>{analysisBase.용신}({yongOheng?.name || analysisBase.용신})</b> 에너지가 가장 필요해요.
+                        당신의 사주에는 <b style={{ color: yongOheng?.color || '#C9A96E' }}>{analysisBase.용신}({yongOheng?.name || analysisBase.용신})</b> 에너지가 가장 필요해요.
                         {analysisBase.일간강약 === '신강'
                           ? ` ${analysisBase.일간강약}(에너지 과잉) 사주이기 때문에, ${analysisBase.용신} 에너지로 넘치는 힘을 적절히 분산시켜야 균형이 잡혀요.`
                           : analysisBase.일간강약 === '신약'
@@ -2896,8 +2910,8 @@ export function ResultPage() {
               </p>
 
               {/* 종합 해석 */}
-              <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.2)' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#B8965A', marginBottom: 4 }}>종합 해석</p>
+              <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#C9A96E', marginBottom: 4 }}>종합 해석</p>
                 <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7 }}>{getUnyoungSummary(v4Unyoung)}</p>
               </div>
 
@@ -2917,7 +2931,7 @@ export function ResultPage() {
                           ))}
                         </div>
                         <span style={{ fontSize: 11, fontWeight: 700, color: u.color, minWidth: 28 }}>{u.kr}</span>
-                        {u.pillar.includes('일지') && <span style={{ fontSize: 9, color: '#B8965A', fontWeight: 800 }}>핵심</span>}
+                        {u.pillar.includes('일지') && <span style={{ fontSize: 9, color: '#C9A96E', fontWeight: 800 }}>핵심</span>}
                       </div>
                     );
                   })}
@@ -2993,12 +3007,12 @@ export function ResultPage() {
           <LocalFadeIn delay={80}>
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-1">대운 흐름</h2>
-              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>10년 단위로 바뀌는 운의 큰 흐름이에요. <span style={{ fontWeight: 700, color: '#B8965A' }}>현재 대운</span>이 강조되어 있어요.</p>
+              <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>10년 단위로 바뀌는 운의 큰 흐름이에요. <span style={{ fontWeight: 700, color: '#C9A96E' }}>현재 대운</span>이 강조되어 있어요.</p>
 
               {/* 현재 대운 해석 */}
               {getDaeunCurrentSummary(v4Daeun) && (
-                <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.2)' }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#B8965A', marginBottom: 4 }}>지금 이 시기의 의미</p>
+                <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: '#C9A96E', marginBottom: 4 }}>지금 이 시기의 의미</p>
                   <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{getDaeunCurrentSummary(v4Daeun)}</p>
                 </div>
               )}
@@ -3151,12 +3165,12 @@ export function ResultPage() {
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-1">납음 — 근본 에너지</h2>
               <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12 }}>
-                사주의 가장 깊은 곳에 있는 근본 에너지예요. 각 기둥마다 고유한 에너지가 있고, <span style={{ fontWeight: 700, color: '#B8965A' }}>일주 납음이 가장 중요</span>해요.
+                사주의 가장 깊은 곳에 있는 근본 에너지예요. 각 기둥마다 고유한 에너지가 있고, <span style={{ fontWeight: 700, color: '#C9A96E' }}>일주 납음이 가장 중요</span>해요.
               </p>
 
               {/* 종합 해석 */}
-              <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.2)' }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#B8965A', marginBottom: 4 }}>종합 해석</p>
+              <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(201,169,110,0.2)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#C9A96E', marginBottom: 4 }}>종합 해석</p>
                 <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{getNapeumSummary(v4Napeum)}</p>
               </div>
 
@@ -3166,7 +3180,7 @@ export function ResultPage() {
                   return (
                     <div key={i} className="p-3 rounded-xl" style={{
                       background: isIlju ? '#FFF8E1' : '#faf7f2',
-                      border: isIlju ? '2px solid #B8965A' : '1px solid #e8e0d4',
+                      border: isIlju ? '2px solid #C9A96E' : '1px solid #e8e0d4',
                     }}>
                       <div className="flex items-center gap-3">
                         <span style={{ fontSize: 24 }}>{n.icon}</span>
@@ -3174,13 +3188,13 @@ export function ResultPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47' }}>{n.hanja}</span>
                             <span style={{ fontSize: 11, color: '#a0937f', fontWeight: 600 }}>{n.kr}</span>
-                            <span className="rounded" style={{ padding: '2px 8px', background: isIlju ? '#B8965A' : '#B8965A20', color: isIlju ? '#fff' : '#B8965A', fontSize: 10, fontWeight: 700 }}>
+                            <span className="rounded" style={{ padding: '2px 8px', background: isIlju ? '#C9A96E' : '#C9A96E20', color: isIlju ? '#fff' : '#C9A96E', fontSize: 10, fontWeight: 700 }}>
                               {n.pillar}{isIlju ? ' ← 핵심' : ''}
                             </span>
                           </div>
                           <div style={{ fontSize: 10, color: '#a0937f', marginTop: 2 }}>{getNapeumPositionRole(n.pillar)}</div>
                           <div style={{ fontSize: 12, color: '#6b5b47', marginTop: 4, fontWeight: 500, lineHeight: 1.5 }}>{n.desc}</div>
-                          <div style={{ fontSize: 11, color: isIlju ? '#8d6e00' : '#5c6bc0', marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${isIlju ? '#B8965A80' : '#e0e0e0'}`, lineHeight: 1.6 }}>
+                          <div style={{ fontSize: 11, color: isIlju ? '#8d6e00' : '#5c6bc0', marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${isIlju ? '#C9A96E80' : '#e0e0e0'}`, lineHeight: 1.6 }}>
                             <span style={{ fontWeight: 700 }}>실생활:</span> {getNapeumPracticalTip(n.hanja)}
                           </div>
                         </div>
@@ -3390,7 +3404,7 @@ export function ResultPage() {
                   <p className="text-caption text-text-muted mt-0.5">공유받은 친구도 사주를 볼 수 있어요</p>
                 </div>
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
+                  style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFF" strokeWidth="2" strokeLinecap="round">
                     <path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7" />
                     <polyline points="16 6 12 2 8 6" />
@@ -3400,9 +3414,6 @@ export function ResultPage() {
               </div>
             </button>
           </LocalFadeIn>
-
-          {/* 3-part Footer CTA (diff v3 §6) */}
-          <FooterCTA pageKey="report" backTo="/storage" marginTop={24} />
 
           {/* Footer */}
           <div className="text-center pt-8 pb-4">
