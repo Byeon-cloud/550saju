@@ -1349,6 +1349,8 @@ function buildPillars(
     ji: String(p?.지지 ?? ''),
     ohengGan: (p?.천간오행 ?? '토') as OhengType,
     ohengJi: (p?.지지오행 ?? '토') as OhengType,
+    ganRead: p?.천간읽기 ? String(p.천간읽기) : undefined,
+    jiRead: p?.지지읽기 ? String(p.지지읽기) : undefined,
     shipsin: p?.십성 ?? undefined,
     connection: pillarMessages?.[messageKeys[i]]
       ? stripMd(String(pillarMessages[messageKeys[i]]))

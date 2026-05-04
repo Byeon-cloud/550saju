@@ -137,10 +137,11 @@ export function MyPage() {
         {/* ── AppMeta (§8) ── */}
         <AppMeta toast={toast} />
 
-        {/* Stage 7e-4: 이용약관/개인정보처리방침 — footer 영역 작은 링크 (잘 안보이게) */}
+        {/* 2026-05-04 가독성 보강: opacity 0.65 (실효 7~8px) → 1.0 + 12px (60대+ 가독)
+         *  법적 링크는 WCAG AA 준수. 본문보다 작되 명확히 보이게. */}
         <div
           className="flex items-center justify-center gap-3 mt-3"
-          style={{ fontSize: 11, color: C.mute, opacity: 0.65 }}
+          style={{ fontSize: 12, color: C.mute, opacity: 0.85 }}
         >
           <button
             type="button"

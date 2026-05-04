@@ -83,10 +83,11 @@ export function HomePage() {
   const reviewDoubled = useMemo(() => [...HOME_REVIEWS, ...HOME_REVIEWS], []);
 
   /**
-   * 실시간 Best Top 5 (2026-05-04 준기 결단)
-   *  - 초반 트래픽 적어 실 데이터 부족 → 1위 = 종합사주(10운, 가장 비싼 상품) 고정
-   *  - 2~5위 = 풀에서 매 마운트마다 랜덤 셔플 (다양성 + 살아있는 느낌)
-   *  - 트래픽 충분히 쌓이면 Cloud Function 실시간 집계로 교체 예정 (Sprint 2 §11 D3)
+   * 지금 인기 Top 5 (2026-05-04 + UX 보강)
+   *  - 1위 = 종합사주(10운, 가장 비싼 상품) 고정
+   *  - 2~5위 = 날짜 시드 기반 셔플 (같은 날엔 같은 순서 · 새로고침해도 동일 → 거짓 들통 방지)
+   *  - 매일 자정 시드 변경 → 새로운 순위처럼 보임
+   *  - 트래픽 쌓이면 Cloud Function 실시간 집계로 교체 (Sprint 2 §11 D3)
    */
   const liveBestTop5 = useMemo(() => {
     type LiveBestItem = { rank: number; label: string; sub: string; path: string; heat: 'HOT' | 'NEW' | '' };
@@ -103,10 +104,17 @@ export function HomePage() {
       { label: '월별 운세',      sub: '12개월 좋은 달·조심할 달', path: '/monthly',     heat: '' },
       { label: '토정비결',       sub: '주역 64괘로 한 해',     path: '/tojung',         heat: '' },
     ];
-    // Fisher-Yates 셔플 (마운트마다 새 셔플)
+    // 날짜 기반 시드 셔플 — 같은 날 새로고침 시 동일 순서 보장 (거짓 들통 방지)
+    const today = new Date().toISOString().slice(0, 10);
+    let seed = 0;
+    for (let i = 0; i < today.length; i++) seed = (seed * 31 + today.charCodeAt(i)) % 2147483647;
+    const rng = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
     const shuffled = [...POOL];
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rng() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     const rest: LiveBestItem[] = shuffled.slice(0, 4).map((p, i) => ({ ...p, rank: i + 2 }));
@@ -131,7 +139,7 @@ export function HomePage() {
         aria-label={hasProfile ? '프로필 전환' : '사주 입력하기'}
       >
         <span className="text-[11.5px] font-medium" style={{ color: C.inkSoft }}>
-          {hasProfile ? '지금 보는 사주 →' : '사주 없음 →'}
+          {hasProfile ? '지금 보는 사주 →' : '처음 시작하기 →'}
         </span>
         <span className="flex-1 text-left text-sm font-bold truncate" style={{ color: C.ink }}>
           {hasProfile ? displayName : '사주를 입력하고 시작하세요'}
@@ -465,7 +473,7 @@ export function HomePage() {
               style={{ color: C.ink, fontFamily: SERIF }}>
               어려운 한자 No
             </h4>
-            <p className="mt-1 text-[10.5px] leading-[1.45]" style={{ color: C.gray500 }}>
+            <p className="mt-1 text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>
               쉬운 한국어로<br />풀어드려요
             </p>
           </div>
@@ -501,7 +509,7 @@ export function HomePage() {
               style={{ color: C.ink, fontFamily: SERIF }}>
               6대 원전 기반
             </h4>
-            <p className="mt-1 text-[10.5px] leading-[1.45]" style={{ color: C.gray500 }}>
+            <p className="mt-1 text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>
               전통 명리학<br />그대로
             </p>
           </div>
@@ -523,8 +531,8 @@ export function HomePage() {
               style={{ color: C.ink, fontFamily: SERIF }}>
               단 500원의 깊이
             </h4>
-            <p className="mt-1 text-[10.5px] leading-[1.45]" style={{ color: C.gray500 }}>
-              점집 50,000원<br />급 풀이를
+            <p className="mt-1 text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>
+              점집 50,000원<br />그 깊이 그대로
             </p>
           </div>
         </div>
@@ -537,11 +545,11 @@ export function HomePage() {
           <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
           <span className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: '#D32F2F' }}>
             <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#D32F2F', boxShadow: '0 0 0 2px rgba(211,47,47,0.18)' }} />
-            실시간
+            오늘
           </span>
         </div>
         <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          지금 가장 많이 보는 <span style={{ color: C.goldHi }}>Top 5</span>
+          오늘 가장 많이 보는 <span style={{ color: C.goldHi }}>Top 5</span>
         </h2>
         <div className="mt-2 flex flex-col gap-2">
           {liveBestTop5.map((item) => (

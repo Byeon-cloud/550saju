@@ -64,15 +64,17 @@ const DREAM_CATEGORIES: Array<{
   examples: string;
   hot?: boolean;
 }> = [
+  // 2026-05-04 SSOT 정렬 — 5오행 컬러 (목/화/토/금/수) + brand-gold 만 사용. 자유 hex 제거.
+  // 木=#2D8A4E 火=#D32F2F 土=#E8B82A 金=#4A4A4A 水=#1565E0 brand-gold=#B8965A
   { id: 'animal', label: '동물이 나오는 꿈', color: '#2D8A4E', examples: '뱀, 개, 고양이, 돼지, 호랑이', hot: true },
   { id: 'water', label: '물과 관련된 꿈', color: '#1565E0', examples: '바다, 강, 비, 홍수, 수영', hot: true },
-  { id: 'death', label: '죽음 · 이별의 꿈', color: '#7B1FA2', examples: '누군가 죽는 꿈, 장례식, 이별' },
-  { id: 'flying', label: '하늘을 나는 꿈', color: '#0288D1', examples: '날기, 떨어지기, 높은 곳' },
+  { id: 'death', label: '죽음 · 이별의 꿈', color: '#4A4A4A', examples: '누군가 죽는 꿈, 장례식, 이별' },
+  { id: 'flying', label: '하늘을 나는 꿈', color: '#1565E0', examples: '날기, 떨어지기, 높은 곳' },
   { id: 'money', label: '돈 · 재물의 꿈', color: '#B8965A', examples: '돈 줍기, 복권, 금, 보석', hot: true },
-  { id: 'people', label: '사람이 나오는 꿈', color: '#E91E63', examples: '가족, 연인, 낯선 사람, 유명인' },
+  { id: 'people', label: '사람이 나오는 꿈', color: '#D32F2F', examples: '가족, 연인, 낯선 사람, 유명인' },
   { id: 'chase', label: '쫓기는 꿈', color: '#D32F2F', examples: '쫓기기, 도망, 숨기, 위험' },
   { id: 'nature', label: '자연 · 날씨 꿈', color: '#E8B82A', examples: '꽃, 산, 불, 지진, 눈' },
-  { id: 'other', label: '직접 적을게요', color: '#4A5568', examples: '위 항목에 없는 꿈을 자유롭게' },
+  { id: 'other', label: '직접 적을게요', color: '#7A7269', examples: '위 항목에 없는 꿈을 자유롭게' },
 ];
 
 const OHENG_PICTOGRAM_KEY: Record<OhengType, PictogramKey> = {
@@ -1367,6 +1369,8 @@ function buildPillars(profile: SajuProfile): PillarData[] {
     ji: String(p?.지지 ?? ''),
     ohengGan: (p?.천간오행 ?? '토') as OhengType,
     ohengJi: (p?.지지오행 ?? '토') as OhengType,
+    ganRead: p?.천간읽기 ? String(p.천간읽기) : undefined,
+    jiRead: p?.지지읽기 ? String(p.지지읽기) : undefined,
     shipsin: p?.십성 ?? undefined,
     unavailable: p?.available === false,
   }));
