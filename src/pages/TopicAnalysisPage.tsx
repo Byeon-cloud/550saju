@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
 import { getProfiles, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
-import { CHEONGAN_OHENG } from '@/constants/oheng';
+import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/components/common/Toast';
 import { generateTopicAnalysis } from '@/services/ai/reportGenerator';
@@ -59,6 +59,24 @@ const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> =
 };
 
 const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
+
+/** 토픽 hex 컬러 → ExtensionHero 패턴 3-stop gradient (lighten + base + darken) */
+function shadeHex(hex: string, amount: number): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const adj = (v: number) => Math.max(0, Math.min(255, Math.round(v + amount * 255)));
+  return `#${[adj(r), adj(g), adj(b)].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+function topicHeroGrad(color: string): string {
+  return `linear-gradient(135deg, ${shadeHex(color, 0.10)} 0%, ${color} 60%, ${shadeHex(color, -0.18)} 100%)`;
+}
+/** 토픽 한자 (ExtensionHero seal/워터마크) — SSOT v1 정렬 */
+const TOPIC_HANJA: Record<string, string> = {
+  love: '緣', wealth: '財', career: '官', marriage: '婚', business: '業',
+  health: '壽', reunion: '復', study: '學', exam: '進', move: '移', moving: '移', social: '人',
+};
 
 /** AI가 "(추정)", "(추론)" 등 괄호 주석을 붙여 보내는 경우 한자 1글자만 추출 */
 function cleanHanja(raw: string | undefined): string {
@@ -2684,20 +2702,108 @@ export function TopicAnalysisPage() {
     <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
       <div className="px-5 pt-4 pb-8 space-y-5">
 
-        {/* 헤더 */}
+        {/* 헤더 — ExtensionHero 패턴 통일 (gradient + 한자 워터마크 + seal + crumb + tier) */}
         <FadeIn>
-          <div className="card py-5 px-5" style={{ borderLeft: `4px solid ${topic.color}` }}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: `${topic.color}12` }}>
-                <Pictogram k={`topic:${(topicId || 'love') as TopicKey}`} size={22} color={topic.color} />
-              </div>
-              <div>
-                <h1 className="text-h2 text-text-primary">{topic.label} 심층분석</h1>
-                <p className="text-caption text-text-muted">{topic.desc}</p>
-              </div>
+          <header
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+              padding: '18px 20px 28px',
+              color: '#FFFFFF',
+              background: topicHeroGrad(topic.color),
+              borderRadius: 16,
+              marginLeft: -20,
+              marginRight: -20,
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                right: -18,
+                bottom: -40,
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 220,
+                fontWeight: 900,
+                color: 'rgba(255,255,255,0.07)',
+                lineHeight: 1,
+                pointerEvents: 'none',
+                letterSpacing: '-0.05em',
+              }}
+            >
+              {TOPIC_HANJA[topicId || 'love'] || '吉'}
+            </span>
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                right: 18,
+                top: 18,
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                background: 'rgba(255,255,255,0.18)',
+                border: '1px solid rgba(255,255,255,0.30)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 22,
+                fontWeight: 800,
+                color: '#FFFFFF',
+              }}
+            >
+              {TOPIC_HANJA[topicId || 'love'] || '吉'}
             </div>
-          </div>
+            <div
+              style={{
+                fontSize: 11,
+                opacity: 0.78,
+                marginBottom: 8,
+                position: 'relative',
+                letterSpacing: '0.02em',
+              }}
+            >
+              사주 500 · 더 알아볼 주제 · {topic.label}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                fontSize: 12,
+                opacity: 0.92,
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                position: 'relative',
+              }}
+            >
+              <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>
+                {topic.label}
+              </span>
+              <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 10 }}>
+                1운
+              </span>
+              <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 10 }}>
+                심층분석
+              </span>
+            </div>
+            <h1
+              style={{
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 22,
+                fontWeight: 700,
+                marginTop: 14,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.4,
+                position: 'relative',
+              }}
+            >
+              {topic.label} 심층분석
+            </h1>
+            <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4, position: 'relative' }}>
+              {topic.desc}
+            </div>
+          </header>
         </FadeIn>
 
         <AnimatePresence mode="wait">
@@ -2707,31 +2813,112 @@ export function TopicAnalysisPage() {
               {profiles.length > 0 ? (
                 <>
                   <p className="text-h3 text-text-primary">누구의 {topic.label}을 분석할까요?</p>
-                  <div className="space-y-2">
+                  {/* 2026-05-04 사주카드 패턴 통일 — StoragePage ProfileCard 와 동일 일주 심볼 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {profiles.map((r) => {
                       const il = r.sajuData.pillars[2]?.천간 || '';
+                      const ji = r.sajuData.pillars[2]?.지지 || '';
                       const oh = il ? CHEONGAN_OHENG[il] : '';
+                      const ohengColor = (oh && OHENG_MAP[oh]?.color) || '#8C6D3D';
+                      const ohengHanja = (oh && OHENG_MAP[oh]?.hanja) || ' ';
+                      const relation = (r as any).relation || '본인';
+                      const isMe = relation === '본인' || relation === 'self';
                       const isSelected = selected?.id === r.id;
                       return (
-                        <motion.button key={r.id} whileTap={{ scale: 0.98 }}
+                        <motion.button
+                          key={r.id}
+                          whileTap={{ scale: 0.99 }}
                           onClick={() => setSelected(r as unknown as LocalReport)}
-                          className={`card w-full text-left py-4 px-4 transition-all ${isSelected ? 'border-2 shadow-glow' : ''}`}
-                          style={isSelected ? { borderColor: topic.color } : {}}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                              style={{ background: `${topic.color}12` }}>
-                              <span className="text-h3 font-bold" style={{ color: topic.color }}>{r.name.charAt(0)}</span>
+                          aria-label={`${r.name} 선택`}
+                          style={{
+                            position: 'relative',
+                            height: 116,
+                            background: '#FFFFFF',
+                            border: isSelected ? `2px solid ${topic.color}` : `1px solid ${isMe ? '#B8965A' : '#E5DFD0'}`,
+                            borderRadius: 16,
+                            padding: 16,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 14,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            boxShadow: isSelected ? `0 4px 14px ${topic.color}33` : 'none',
+                          }}
+                        >
+                          {/* 좌 일주 심볼 — 오행 컬러 + 천간/지지 + 우상단 오행 뱃지 */}
+                          <div
+                            aria-hidden
+                            style={{
+                              width: 56,
+                              height: 56,
+                              flexShrink: 0,
+                              borderRadius: 12,
+                              background: il ? ohengColor : 'rgba(140,109,61,0.13)',
+                              border: `2px solid ${il ? ohengColor : 'rgba(184,150,90,0.40)'}`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontFamily: "'Noto Serif KR', serif",
+                              color: il ? '#FFFFFF' : '#8C6D3D',
+                              lineHeight: 0.96,
+                              boxShadow: `0 4px 10px ${ohengColor}33`,
+                              position: 'relative',
+                            }}
+                          >
+                            {il ? (
+                              <>
+                                <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: '0.02em' }}>{il}</span>
+                                <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '0.02em', marginTop: 1 }}>{ji}</span>
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    top: -6,
+                                    right: -4,
+                                    fontSize: 9,
+                                    fontWeight: 800,
+                                    padding: '1px 5px',
+                                    borderRadius: 999,
+                                    background: '#FFFFFF',
+                                    color: ohengColor,
+                                    border: `1.5px solid ${ohengColor}`,
+                                    lineHeight: 1.2,
+                                    letterSpacing: '0.04em',
+                                  }}
+                                >
+                                  {ohengHanja}
+                                </span>
+                              </>
+                            ) : (
+                              <span style={{ fontSize: 22, fontWeight: 700 }}>{ohengHanja || '命'}</span>
+                            )}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                              <span style={{ fontSize: 17, fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.01em' }}>{r.name}</span>
+                              {isMe ? (
+                                <span style={{ padding: '2px 7px', borderRadius: 999, fontSize: 10, fontWeight: 800, background: '#8C6D3D', color: '#F8F5EE', letterSpacing: '0.04em' }}>본인</span>
+                              ) : (
+                                <span style={{ fontSize: 10.5, color: '#8C6D3D', fontWeight: 700, padding: '1px 7px', background: 'rgba(184,150,90,0.14)', borderRadius: 999 }}>{relation}</span>
+                              )}
                             </div>
-                            <div className="flex-1">
-                              <p className="text-h3 text-text-primary">{r.name}</p>
-                              <p className="text-caption text-text-muted">{il ? `${il}(${oh}) 일간` : '사주 정보'}</p>
-                            </div>
-                            {isSelected && (
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: topic.color }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
+                            {il && (
+                              <div style={{ fontSize: 12, fontWeight: 700, color: '#8C6D3D', letterSpacing: '0.02em' }}>
+                                일간 {il} · {oh}
                               </div>
                             )}
                           </div>
+
+                          {isSelected ? (
+                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: topic.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
+                            </div>
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }} aria-hidden>
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          )}
                         </motion.button>
                       );
                     })}

@@ -121,15 +121,15 @@ export function TojungPage() {
     return (
       <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
         <Header title="토정비결" />
-        <div className="px-5 pt-4 space-y-5">
-          <FadeIn>
-            <div className="py-6 px-5 rounded-2xl text-center" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.2)' }}>
-              <p className="text-caption text-brand-gold font-semibold">조선시대 이토정 선생의 전통 운세법</p>
-              <p className="text-display text-text-primary mt-1">2026년 토정비결</p>
-              <p className="text-body-sm text-text-muted mt-2">주역 64괘로 올해 12개월의 운세를 풀어드려요</p>
-              <p className="text-caption text-text-hint mt-1">총운 · 금전 · 건강 · 직장 · 애정 · 결혼</p>
-            </div>
-          </FadeIn>
+        {/* 2026-05-04 ExtensionHero 통일 (select phase 부터 적용) */}
+        <FadeIn>
+          <ExtensionHero
+            theme={EXTENSION_THEME.tojung}
+            sub="조선시대 이토정 선생의 전통 운세법 · 주역 64괘로 12개월"
+            rightLabel="歲 · 한 해의 결"
+          />
+        </FadeIn>
+        <div className="px-5 pt-5 space-y-5">
           <FadeIn delay={0.05}>
             <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 토정비결을 볼까요?" />
           </FadeIn>

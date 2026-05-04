@@ -3793,8 +3793,15 @@ function SectionConclusion({
   );
 }
 
-/* mockup .pullquote 진본 — className 만 사용 */
+/* mockup .pullquote 진본 — string 일 때 <strong> 살리도록 sanitize + dangerouslySetInnerHTML */
 function PremiumPullQuote({ children }: { children: ReactNode }) {
+  if (typeof children === 'string') {
+    return (
+      <div className="pullquote">
+        <p dangerouslySetInnerHTML={{ __html: sanitizeAiText(children) }} />
+      </div>
+    );
+  }
   return (
     <div className="pullquote">
       <p>{children}</p>

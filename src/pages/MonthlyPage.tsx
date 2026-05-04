@@ -125,14 +125,15 @@ export function MonthlyPage() {
     return (
       <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
         <Header title="2026 월별 운세" />
-        <div className="px-5 pt-4 space-y-5">
-          <FadeIn>
-            <div className="card py-5 px-5 text-center" style={{ borderTop: '3px solid #B8965A' }}>
-              <p className="text-h1 text-text-primary">2026 월별 운세</p>
-              <p className="text-body-sm text-text-muted mt-2">올해 12개월, 좋은 달과 조심할 달을 한눈에</p>
-              <p className="text-caption text-text-hint mt-1">매월 직업 · 연애 · 재물 운세 + 럭키 아이템</p>
-            </div>
-          </FadeIn>
+        {/* 2026-05-04 ExtensionHero 통일 (select phase 부터 적용) */}
+        <FadeIn>
+          <ExtensionHero
+            theme={EXTENSION_THEME.monthly}
+            sub="올해 12개월 · 좋은 달과 조심할 달을 한눈에"
+            rightLabel="月運 · 매월 결의 흐름"
+          />
+        </FadeIn>
+        <div className="px-5 pt-5 space-y-5">
           <FadeIn delay={0.05}>
             <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
           </FadeIn>
