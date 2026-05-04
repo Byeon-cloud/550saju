@@ -80,16 +80,15 @@ const LAST_INPUT_KEY = 'saju500.lastInput';
 /* ══════════════════════════════════════════════════════════════════
  * 필터 칩 (스펙 §3-2: 4개)
  * ═════════════════════════════════════════════════════════════════ */
-// Stage 7e-5: 이용 기록 탭 확장 (4 → 6) — 주제 세분화
-type FilterKey = 'all' | 'fortune' | 'reading' | 'compat' | 'dream' | 'chat';
+// 2026-05-04 UX agent 권고: 6 탭 → 4 탭 (60대 가독 / 모바일 360px 폭 여유).
+// "운세 vs 풀이" 차이 모호 → "사주" 로 통합. "꿈/대화" 도 보조라 "기타" 로 묶음.
+type FilterKey = 'all' | 'saju' | 'compat' | 'misc';
 
 const FILTER_TABS: { key: FilterKey; label: string }[] = [
-  { key: 'all',     label: '전체' },
-  { key: 'fortune', label: '운세' },
-  { key: 'reading', label: '풀이' },
-  { key: 'compat',  label: '궁합' },
-  { key: 'dream',   label: '꿈' },
-  { key: 'chat',    label: '대화' },
+  { key: 'all',    label: '전체' },
+  { key: 'saju',   label: '사주' },     // fortune (daily/daeun/monthly/tojung) + reading (report/topic) 통합
+  { key: 'compat', label: '궁합' },
+  { key: 'misc',   label: '기타' },     // dream + chat 통합
 ];
 
 /** Stage 7e-5: 운세(시간 흐름) 카테고리 — daily/daeun/monthly/tojung */
@@ -177,33 +176,31 @@ export function StoragePage() {
     return copy;
   }, [reports, sortDesc]);
 
-  // 필터 적용 (chat은 별도 데이터셋) — Stage 7e-5: 6 탭 분기
+  // 2026-05-04 4 탭 분기 (전체·사주·궁합·기타)
   const visibleReports = useMemo(() => {
-    if (filterTab === 'chat') return [];
     if (filterTab === 'all') return sortedReports;
-    if (filterTab === 'dream') {
-      return sortedReports.filter(
-        (r) => r.contentType === 'dream' || r.contentType === 'deepDream',
-      );
-    }
-    if (filterTab === 'fortune') {
-      return sortedReports.filter((r) =>
-        FORTUNE_TYPES.includes((r.contentType ?? 'daily') as ContentType),
-      );
-    }
-    if (filterTab === 'reading') {
-      return sortedReports.filter((r) =>
-        ANALYSIS_TYPES.includes((r.contentType ?? 'report') as ContentType),
-      );
+    if (filterTab === 'saju') {
+      // 운세 + 풀이 통합: daily/daeun/monthly/tojung + report/topic
+      return sortedReports.filter((r) => {
+        const ct = (r.contentType ?? 'daily') as ContentType;
+        return FORTUNE_TYPES.includes(ct) || ANALYSIS_TYPES.includes(ct);
+      });
     }
     if (filterTab === 'compat') {
       return sortedReports.filter((r) => (r.contentType ?? '') === 'compat');
+    }
+    if (filterTab === 'misc') {
+      // dream + chat (chat은 별도 데이터셋이라 reports 안엔 dream 만 잡힘)
+      return sortedReports.filter(
+        (r) => r.contentType === 'dream' || r.contentType === 'deepDream',
+      );
     }
     return sortedReports;
   }, [sortedReports, filterTab]);
 
   const visibleChatRooms = useMemo(() => {
-    if (filterTab !== 'chat' && filterTab !== 'all') return [];
+    // 전체 + 기타 탭에서 chat 표시
+    if (filterTab !== 'misc' && filterTab !== 'all') return [];
     if (filterTab === 'all') return chatRooms;
     const copy = [...chatRooms];
     copy.sort((a, b) =>
@@ -334,20 +331,17 @@ export function StoragePage() {
   }
   function selectAllVisible() {
     const ids = new Set<string>();
-    if (filterTab === 'chat') {
+    for (const r of visibleReports) ids.add(r.id);
+    // 전체·기타 탭은 chat 도 포함
+    if (filterTab === 'all' || filterTab === 'misc') {
       for (const cr of visibleChatRooms) ids.add(cr.id);
-    } else {
-      for (const r of visibleReports) ids.add(r.id);
-      if (filterTab === 'all') for (const cr of visibleChatRooms) ids.add(cr.id);
     }
     setSelectedIds(ids);
   }
 
   function bulkSelectionStats() {
     const totalVisible =
-      filterTab === 'chat'
-        ? visibleChatRooms.length
-        : filterTab === 'all'
+      filterTab === 'all' || filterTab === 'misc'
         ? visibleReports.length + visibleChatRooms.length
         : visibleReports.length;
     return { selected: selectedIds.size, total: totalVisible };
@@ -1461,30 +1455,23 @@ function ContentIcon({ contentType }: { contentType: ContentType | 'chat' }) {
 }
 
 function HistoryEmpty({ filterKey }: { filterKey: FilterKey }) {
+  // 2026-05-04 4 탭 매핑 (전체·사주·궁합·기타)
   const messages: Record<FilterKey, { title: string; sub: string }> = {
     all: {
       title: '아직 풀이가 없어요',
       sub: '오늘의 운세부터 가볍게 시작해보세요',
     },
-    reading: {
-      title: '풀이 기록이 없어요',
-      sub: '주제별 심층 분석을 해볼까요?',
-    },
-    fortune: {
-      title: '운세 기록이 없어요',
-      sub: '오늘의 운세부터 가볍게 시작해보세요',
+    saju: {
+      title: '사주 풀이 기록이 없어요',
+      sub: '오늘의 운세나 종합 사주를 시작해보세요',
     },
     compat: {
       title: '궁합 기록이 없어요',
       sub: '관심 있는 사람과의 궁합을 봐볼까요?',
     },
-    dream: {
-      title: '꿈해몽 기록이 없어요',
-      sub: '간밤에 꾼 꿈을 풀어보세요',
-    },
-    chat: {
-      title: '아직 대화가 없어요',
-      sub: '사주대화에서 1:1 상담을 시작해보세요',
+    misc: {
+      title: '꿈해몽·대화 기록이 없어요',
+      sub: '간밤에 꾼 꿈을 풀거나 사주 상담을 시작해보세요',
     },
   };
   const m = messages[filterKey];

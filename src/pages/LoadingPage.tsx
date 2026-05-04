@@ -68,9 +68,11 @@ const TIPS = [
   { category: '명리학 상식', text: '격국(格局)은 사주의 "성격 유형"과 비슷해요. MBTI처럼, 사주에도 분류 체계가 있습니다.' },
 ];
 
-// Stage 7e-6: 페이싱 개선 — 1-2-3이 너무 빨리 끝나고 stage 3 에서 멈춰 stuck 체감
-//   기존 2.2s + 2.8s + ∞ → 4.5s + 6.0s + ∞ (체감 분배 균등)
-const STAGE_DURATIONS = [4500, 6000, 0];
+// 2026-05-04 reportType 분기 — premium 60-120s vs basic 15-30s 페이싱 차이
+//   basic (15-30s):   2.5s + 4.0s + ∞ → 빠른 페이싱 (stage 3 에서 5-10s 정도 머묾)
+//   premium (60-120s): 6.0s + 9.0s + ∞ → 느린 페이싱 (stage 3 에서 45-100s · "멈춘 듯" 체감 완화)
+const STAGE_DURATIONS_BASIC = [2500, 4000, 0];
+const STAGE_DURATIONS_PREMIUM = [6000, 9000, 0];
 
 export function LoadingPage() {
   const navigate = useNavigate();
@@ -119,6 +121,8 @@ export function LoadingPage() {
       import.meta.env.VITE_USE_PREMIUM_STREAM === 'true';
 
     // ─ 단계 1 → 2 → 3 자동 전환 (SSE 모드는 onStart/onGroup 으로 stage 직접 push)
+    // 2026-05-04 reportType 별 페이싱 분기 — premium 은 stage 3에서 1-2분 머무므로 단계 길이 ↑
+    const STAGE_DURATIONS = reportType === 'premium' ? STAGE_DURATIONS_PREMIUM : STAGE_DURATIONS_BASIC;
     const t1 = !useStreamRef.current ? setTimeout(() => setStage(2), STAGE_DURATIONS[0]) : null;
     const t2 = !useStreamRef.current ? setTimeout(() => setStage(3), STAGE_DURATIONS[0] + STAGE_DURATIONS[1]) : null;
 

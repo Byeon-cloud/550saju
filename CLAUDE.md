@@ -421,7 +421,63 @@ users/{uid}/shareLogs/{logId}    - 공유 리워드 로그
 
 ---
 
-## 현재 상태 (2026-04-22)
+## 현재 상태 (2026-05-04)
+
+### 🚀 2026-05-04 launch-final · 22 commit (출시 직전)
+
+**점수**: 가독성 8.0 / UX 8.5 / 60대+ 친화 7.5 / 브랜드 9.0 / AI같지 않음 8.0 → 종합 **8.2/10** (출시 가능)
+
+**SSE Phase 1 완료 + Phase 2 보류**: AILoading 사주 미니카드 즉시 노출 (mockup A 진본). 결과 페이지 partial render 는 다음 sprint.
+
+#### 명리학 정확도·결정론 (3 commit)
+- `3d2d8ec` 진태양시 보정 + 십성 10분류 + 득지·득세 + 궁합 cross-relations + temperature 0.1 통일
+- `efb2d2f` max_tokens 30~43% 다운 (24576→14000 등) — 응답 시간 60-120s → 40-80s
+- `5144a46` + `1311f72` + `fe339a2` 5의 배수 점수 박멸 (전 7 AI + WEALTH) → 자연수 강제 ('절대 금지' → '반복 금지' 완화)
+
+#### 결과 페이지 (Premium) (5 commit)
+- `f4cb205` UI 통일 + HTML 안전 + 명리학 용어 풀이 강제
+- `5fea258` `<strong>` raw text 4곳 수정 + 분량 컴팩트화 (8000~10000자 → 5000~6500자)
+- `e7f7a9a` `<strong>` 위계 전면 재정의 — 한자 X, **유저 일상 결론** O
+- `efb2d2f` 대운 점수 동적화 (3-layer: AI schema + client wire + 명리학 fallback)
+
+#### UI 통일 (3 commit)
+- `b30a57c` 만세력·운세 6 페이지 ExtensionHero 통일 + ProfileCard 일주 심볼 + PR#4 close
+- `9927a40` 4주 8자 명확 분리 (천간 박스 + 지지 박스 둘로)
+- `6b326be` 한글 음 항상 표시 + 한자→한글 자동 매핑 fallback
+
+#### HomePage UX (2 commit)
+- `9354162` UX 라이팅 + Top 5 종합사주 1위 + DEEP DIVE↔VOICES swap + ? 버튼 → VOICES 스크롤
+- `b96bd70` 강조색 #A37A2E 통일 + 본문 strong 형광펜 + 사주대화 anchor 강화
+
+#### 로딩 UX (2 commit)
+- `1d58ff3` AILoading 사주 미니카드 즉시 노출 (mockup A 진본 · 7 페이지 자동 반영)
+- `9695fe7` DEEP DIVE 우측 화살표 + 로딩 시간 정직 표기 (premium 60-120s)
+
+#### QA + Dead Code (2 commit)
+- `231d295` ProfileSelector 일주 심볼 + UpsellCard SPA navigate
+- `788acc9` dead code 25 파일 제거 + UX P0 5건 (HomePage 줄바꿈·Top5 거짓·MyPage opacity·DreamPage SSOT)
+- `e551e0f` UX P1 카피 8건 (LoadingPage TIPS 학술화 + ChargePage·InputPage·CompatibilityPage 일상어)
+
+#### 본 commit (출시 직전 마무리)
+- 2단계 dead code: prompts.ts + promptBuilder.ts 제거 (총 27 파일 정리)
+- StoragePage 6 탭 → 4 탭 (전체·사주·궁합·기타) — 60대 가독
+- DaeunPage·MonthlyPage·TojungPage 빈 상태 from 컨텍스트 (`from=home_body_*`) 추가
+- HomePage HASHTAGS 22 dead code + @ts-expect-error 정리
+- LoadingPage STAGE_DURATIONS reportType 분기 (basic 2.5+4 vs premium 6+9)
+
+### 🟡 출시 전 너 (준기) 가 마무리할 P0 (수동)
+1. 앱인토스 빌드 (`ait build`) + 토스 심사 제출
+2. 결제 4 시나리오 수동 QA (정상/실패/재시도/중복 · DevTools offline)
+3. 공유 OG 검증 (Facebook Sharing Debugger / 카톡 / Slack / Twitter)
+4. Firestore Rules — `payments.{status, amount}` 클라이언트 write 차단
+5. 실 디바이스 QA (iOS·Android 토스앱 / 카톡 인앱 / Safari·Chrome PC)
+
+### 🔵 출시 후 다음 sprint
+- **Phase 2 SSE partial render** — 결과 페이지 Group A 도착 시 §01-04 fade-in (체감 0초)
+- **Top 5 실시간 정식** — Cloud Function 24h aggregation + uid+topicId 24h 쿨다운
+- **CompatibilityPage·DaeunPage·MonthlyPage·TojungPage 결과 페이지 헤더 ExtensionHero 추가 정렬** (이미 적용)
+
+---
 
 ### 🆕 2026-04-22 인수인계 이후 추가분
 

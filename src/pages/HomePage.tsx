@@ -51,14 +51,7 @@ const EXT_COLORS = {
   tojung:  '#2F4B7C', // 토정비결 歲
 } as const;
 
-/* 해시태그 클라우드 22개 (AI·가격·광고 언급 0) — 보존용, 실시간 Best 로 대체 */
-// @ts-expect-error -- 보존용 (실시간 Best Top 5 로 대체됨, grace)
-const HASHTAGS = [
-  '#사주500', '#오늘의운세', '#꿈해몽', '#대운', '#월운', '#궁합', '#토정비결',
-  '#연애운', '#재물운', '#직업운', '#건강운', '#공부운',
-  '#사주풀이', '#명리학', '#천간지지', '#십성', '#용신', '#신살',
-  '#사주입문', '#모바일사주', '#사주대화', '#1운',
-] as const;
+// 2026-05-04 dead code 제거 — HASHTAGS 22개 + @ts-expect-error 함께 정리 (Top 5 로 완전 대체됨).
 
 function getTodayStr(): string {
   const d = new Date();

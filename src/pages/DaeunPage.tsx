@@ -110,7 +110,7 @@ export function DaeunPage() {
           <div className="px-5 pt-8 text-center space-y-4">
             <p className="text-h2 text-text-primary">먼저 사주를 분석해주세요</p>
             <p className="text-body-sm text-text-muted">사주 데이터가 있어야 대운 해설을 볼 수 있어요.</p>
-            <Button onClick={() => navigate('/input')} variant="gold" size="lg" fullWidth>사주 분석하러 가기</Button>
+            <Button onClick={() => navigate('/input?from=home_body_daewoon')} variant="gold" size="lg" fullWidth>사주 분석하러 가기</Button>
           </div>
         </div>
       );
