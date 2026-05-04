@@ -40,7 +40,8 @@ export function BalanceBar() {
           {location.pathname === '/' && (
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => document.getElementById('about-section')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById('voices-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              aria-label="후기 섹션으로 이동"
               className="w-8 h-8 rounded-full flex items-center justify-center"
               style={{ background: 'rgba(27,42,74,0.06)' }}
             >

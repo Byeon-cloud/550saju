@@ -74,6 +74,37 @@ export function HomePage() {
   const todayStr = useMemo(() => getTodayStr(), []);
   const reviewDoubled = useMemo(() => [...HOME_REVIEWS, ...HOME_REVIEWS], []);
 
+  /**
+   * 실시간 Best Top 5 (2026-05-04 준기 결단)
+   *  - 초반 트래픽 적어 실 데이터 부족 → 1위 = 종합사주(10운, 가장 비싼 상품) 고정
+   *  - 2~5위 = 풀에서 매 마운트마다 랜덤 셔플 (다양성 + 살아있는 느낌)
+   *  - 트래픽 충분히 쌓이면 Cloud Function 실시간 집계로 교체 예정 (Sprint 2 §11 D3)
+   */
+  const liveBestTop5 = useMemo(() => {
+    type LiveBestItem = { rank: number; label: string; sub: string; path: string; heat: 'HOT' | 'NEW' | '' };
+    const FIXED_TOP1: LiveBestItem = { rank: 1, label: '종합 사주', sub: '10섹션 깊이 풀이 · 10운', path: '/premium', heat: 'HOT' };
+    const POOL: Omit<LiveBestItem, 'rank'>[] = [
+      { label: '오늘의 운세',   sub: '매일 1회 무료',         path: '/daily',          heat: 'HOT' },
+      { label: '재물운',         sub: '돈·실리·재물 흐름',     path: '/topic/wealth',   heat: 'HOT' },
+      { label: '연애운',         sub: '만남·관계·인연 흐름',   path: '/topic/love',     heat: '' },
+      { label: '대운 흐름',      sub: '60년 인생 큰 강줄기',   path: '/daeun',          heat: 'NEW' },
+      { label: '꿈 해몽',        sub: '오늘 꾼 꿈의 의미',     path: '/dream',          heat: '' },
+      { label: '결혼운',         sub: '인연 시기와 배우자 결', path: '/topic/marriage', heat: '' },
+      { label: '직업운',         sub: '커리어·승진·평생 결',   path: '/topic/career',   heat: '' },
+      { label: '재회운',         sub: '헤어진 사람과의 흐름',   path: '/topic/reunion',  heat: 'NEW' },
+      { label: '월별 운세',      sub: '12개월 좋은 달·조심할 달', path: '/monthly',     heat: '' },
+      { label: '토정비결',       sub: '주역 64괘로 한 해',     path: '/tojung',         heat: '' },
+    ];
+    // Fisher-Yates 셔플 (마운트마다 새 셔플)
+    const shuffled = [...POOL];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const rest: LiveBestItem[] = shuffled.slice(0, 4).map((p, i) => ({ ...p, rank: i + 2 }));
+    return [FIXED_TOP1, ...rest];
+  }, []);
+
   const go = (path: string) => () => navigate(path);
   // 프리미엄 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
   const goPremium = () => {
@@ -255,52 +286,7 @@ export function HomePage() {
         ))}
       </div>
 
-      {/* ─── [07] Reviews 16 (우→좌 자동 캐러셀) · #49 위치 이동: 확장4 직후 ─── */}
-      <div className="mx-4 mt-9">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>VOICES</span>
-          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
-        </div>
-        <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          이미 받아본 사람들이<br />
-          <span style={{ color: C.goldDark }}>"진짜다"</span>라고 말합니다
-        </h2>
-      </div>
-      <div className="mt-3 overflow-hidden pb-2"
-        style={{ maskImage: 'linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%)' }}>
-        <div className="flex gap-3 px-4 review-scroll">
-          {reviewDoubled.map((r, i) => (
-            <div key={i} className="min-w-[280px] max-w-[280px] h-[116px] rounded-2xl p-4"
-              style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
-              <div className="text-[11.5px] font-semibold mb-1.5" style={{ color: C.goldDark }}>
-                {r.age} {r.gender}
-              </div>
-              <div className="text-[13px] leading-[1.6] font-medium line-clamp-3" style={{ color: C.ink }}>
-                {r.text}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── [06inline 이동] 사주대화 anchor — VOICES ↔ DEEP DIVE 사이 (PM 결정) ─── */}
-      <div className="mx-4 mt-6 text-center">
-        <button
-          type="button"
-          onClick={go('/chat')}
-          className="text-[12.5px] font-medium tracking-[-0.005em] inline-flex items-center gap-1 px-3 py-2 rounded-full transition-colors"
-          style={{ color: C.gray500 }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = C.gold; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = C.gray500; }}
-        >
-          심층적인 상담이 필요한 날엔?
-          <span className="font-bold" style={{ color: C.goldDark }}>
-            사주 상담하러 가기 →
-          </span>
-        </button>
-      </div>
-
-      {/* ─── [04] 궁금한 주제 하나, 깊게 · 주제 10종 가로 스크롤 (PM 결정 #5) ─── */}
+      {/* ─── [04] 궁금한 주제 하나, 깊게 · 주제 10종 가로 스크롤 (2026-05-04 swap: DEEP DIVE 위로) ─── */}
       <div className="mx-4 mt-9">
         <div className="flex items-baseline gap-2">
           <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>DEEP DIVE</span>
@@ -308,8 +294,7 @@ export function HomePage() {
           <span className="text-[10.5px] font-bold" style={{ color: C.gray500 }}>10주제 · 1운씩</span>
         </div>
         <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          진짜 궁금한 한 가지,<br />
-          <span style={{ color: C.goldDark }}>깊게 파보세요</span>
+          진짜 궁금한 한 가지, <span style={{ color: C.goldDark }}>깊게 파보세요</span>
         </h2>
       </div>
       <p className="mx-4 mt-2 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>
@@ -371,6 +356,50 @@ export function HomePage() {
         </div>
       </div>
 
+      {/* ─── [06inline] 사주대화 anchor (2026-05-04: DEEP DIVE 와 VOICES 사이 유지) ─── */}
+      <div className="mx-4 mt-6 text-center">
+        <button
+          type="button"
+          onClick={go('/chat')}
+          className="text-[12.5px] font-medium tracking-[-0.005em] inline-flex items-center gap-1 px-3 py-2 rounded-full transition-colors"
+          style={{ color: C.gray500 }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = C.gold; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = C.gray500; }}
+        >
+          심층적인 상담이 필요한 날엔?
+          <span className="font-bold" style={{ color: C.goldDark }}>
+            사주 상담하러 가기 →
+          </span>
+        </button>
+      </div>
+
+      {/* ─── [07] Reviews 16 (우→좌 자동 캐러셀) · 2026-05-04 swap: DEEP DIVE 다음 ─── */}
+      <div id="voices-section" className="mx-4 mt-9 scroll-mt-24">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>VOICES</span>
+          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
+        </div>
+        <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
+          먼저 받아본 분들이 <span style={{ color: C.goldDark }}>남긴 한 줄</span>
+        </h2>
+      </div>
+      <div className="mt-3 overflow-hidden pb-2"
+        style={{ maskImage: 'linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%)' }}>
+        <div className="flex gap-3 px-4 review-scroll">
+          {reviewDoubled.map((r, i) => (
+            <div key={i} className="min-w-[280px] max-w-[280px] h-[116px] rounded-2xl p-4"
+              style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
+              <div className="text-[11.5px] font-semibold mb-1.5" style={{ color: C.goldDark }}>
+                {r.age} {r.gender}
+              </div>
+              <div className="text-[13px] leading-[1.6] font-medium line-clamp-3" style={{ color: C.ink }}>
+                {r.text}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ─── [08] 3 차별성 인포그래픽 (PM 결정 #7 · 사주대화 카드 제거 + 철학 → 차별성 도식화) ─── */}
       {/*  멘트 던지지 말고 도식화. 이모지 X. SVG 아이콘 + 한자 + 컬러 칩만 사용.  */}
       <div className="mx-4 mt-9 w-[calc(100%-32px)]">
@@ -380,8 +409,7 @@ export function HomePage() {
         </div>
         <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]"
           style={{ color: C.ink, fontFamily: SERIF }}>
-          왜 사주500을<br />
-          <span style={{ color: C.goldDark }}>고르게 됐나요</span>
+          사주500이 <span style={{ color: C.goldDark }}>남다른 세 가지</span>
         </h2>
         <div className="grid grid-cols-3 gap-2">
           {/* Card 1 — 어려운 한자 No (한자 X 도식) */}
@@ -478,13 +506,7 @@ export function HomePage() {
           지금 가장 많이 보는 <span style={{ color: C.goldDark }}>Top 5</span>
         </h2>
         <div className="mt-2 flex flex-col gap-2">
-          {[
-            { rank: 1, label: '오늘의 운세', sub: '매일 1회 무료', path: '/daily', heat: 'HOT' },
-            { rank: 2, label: '재물운', sub: '돈·실리·재물 흐름', path: '/topic/wealth', heat: 'HOT' },
-            { rank: 3, label: '연애운', sub: '인연·궁합·결혼', path: '/topic/love', heat: '' },
-            { rank: 4, label: '대운 흐름', sub: '60년 인생 큰 강줄기', path: '/daeun', heat: 'NEW' },
-            { rank: 5, label: '꿈 해몽', sum: '오늘 꾼 꿈의 의미', sub: '오늘 꾼 꿈의 의미', path: '/dream', heat: '' },
-          ].map((item) => (
+          {liveBestTop5.map((item) => (
             <button
               key={item.rank}
               type="button"
