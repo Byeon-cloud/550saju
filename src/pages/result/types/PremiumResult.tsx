@@ -3794,28 +3794,53 @@ function PremiumPullQuote({ children }: { children: ReactNode }) {
  * ═════════════════════════════════════════════════════════════════ */
 
 /**
- * sipDist + dayOheng 기반 §08 fallback 키워드 생성
- *  - AI 응답에 lifeKeyword/strengths/cautions 가 없는 기존 리포트도 §08 의미있게 표시
- *  - 가장 강한 십성 + 일간 오행 결합으로 "당신 사주의 결" 한 줄 도출
+ * sipDist 기반 §08 fallback 키워드 생성 v2 (2026-05-05 준기 재지시)
+ *  - 의미 있는 한 줄: top sipsung 高 × bot sipsung 低 tension 패턴
+ *  - §01 (일간·계절 풀이) 와 절대 안 겹치게 → 사주 전체 동역학(결·흐름)을 메타 레벨에서 한 줄로
+ *  - "겨울에 태어난 따뜻한 사람" 류 §01 dup 금지
+ *  - 20 tension 패턴 매트릭스 (5 top × 4 bot · 같은 십성 자기조합 제외)
  */
-function deriveLifeKeyword(sipDist?: SipDist, dayOheng?: OhengType): string {
-  if (!sipDist || !dayOheng) return '깊이 안에 모았다가 천천히 결로 펼쳐내는 사주';
+function deriveLifeKeyword(sipDist?: SipDist, _dayOheng?: OhengType): string {
+  if (!sipDist) return '<strong>안에 깊이 모았다가 천천히 결로 펼쳐내는 사주</strong>입니다.';
   const entries = Object.entries(sipDist) as Array<[keyof SipDist, number]>;
   const sorted = [...entries].sort((a, b) => b[1] - a[1]);
   const top = sorted[0]?.[0];
-  const ohengAdj: Record<OhengType, string> = {
-    목: '뻗어나가는', 화: '환히 비추는', 토: '품어 안는', 금: '단단히 다듬는', 수: '깊이 모으는',
+  const bot = sorted[sorted.length - 1]?.[0];
+  if (!top || !bot || top === bot) {
+    return '<strong>균형 잡힌 결</strong>로, 어느 한쪽으로 치우치지 않고 상황에 맞춰 풀어가는 사주입니다.';
+  }
+
+  // top × bot 20 tension 매트릭스 — §01 일간·계절 풀이와 다른 메타 레벨 동역학
+  const key = `${top}-${bot}`;
+  const matrix: Record<string, string> = {
+    // 비겁 강 (자아·추진력) + 약점
+    '비겁-식상': '<strong>자기 결은 또렷한데 표현이 안 나오는 사람</strong>이에요. 안에서 결단은 빠른데 밖으로 풀어내는 데 시간이 걸리는 사주입니다.',
+    '비겁-재성': '<strong>의지는 강한데 결과까지 챙기는 손길은 약한 결</strong>입니다. 시작은 빠른데 마무리에서 한 번씩 흘려보내요.',
+    '비겁-관성': '<strong>자기 길을 끝까지 가는 추진력</strong>은 또렷하지만, 규범·책임의 무게가 부담스러운 결입니다.',
+    '비겁-인성': '<strong>본능적으로 움직이는 결단의 사람</strong>이에요. 다만 한 박자 멈춰 안에 모으는 시간이 부족합니다.',
+    // 식상 강 (표현·창의) + 약점
+    '식상-비겁': '<strong>표현은 풍부한데 자기 중심이 흔들리는 결</strong>입니다. 남에게 맞추다가 본인 자리를 잃기 쉬워요.',
+    '식상-재성': '<strong>창의는 또렷한데 돈·결과로 옮기는 다리가 약한 결</strong>입니다. 좋은 아이디어가 손에 잡히는 형태로 안 떨어져요.',
+    '식상-관성': '<strong>자유롭게 흐르는 결</strong>이라, 규칙·체계 안에서는 답답함을 느끼는 사주입니다.',
+    '식상-인성': '<strong>밖으로 빠르게 풀어내는 결</strong>이에요. 깊이 모으는 시간이 부족해 가끔 가벼워 보일 수 있습니다.',
+    // 재성 강 (현실·실리) + 약점
+    '재성-비겁': '<strong>현실 감각은 또렷한데 자기 결단이 흔들리는 사람</strong>입니다. 결과는 잘 보이는데 누가 옆에서 흔들면 휘둘려요.',
+    '재성-식상': '<strong>실리는 챙기는데 본인 색을 풀어내는 표현이 부족한 결</strong>입니다. 결과는 있지만 "이 사람 색깔"이 안 보일 수 있어요.',
+    '재성-관성': '<strong>현실에 강한 만큼 책임·체계의 무게가 큰 결</strong>입니다. 결과를 챙기다 자리·관계를 놓칠 수 있어요.',
+    '재성-인성': '<strong>실리 위주로 빠르게 움직이는 결</strong>이라, 깊이 모으고 배우는 시간이 부족합니다.',
+    // 관성 강 (책임·규범) + 약점
+    '관성-비겁': '<strong>책임은 다 짊어지는데 자기 의지는 흐려지는 결</strong>입니다. 남이 시키는 대로 잘 해내지만 본인이 뭘 원하는지 헷갈려요.',
+    '관성-식상': '<strong>맡은 일은 끝까지 가는데 자기 표현이 안 나오는 결</strong>이에요. 위에서 시킨 대로 잘 하지만 본인 색이 묻혀요.',
+    '관성-재성': '<strong>책임·체계는 또렷한데 결과·실리에서 한 발 늦는 결</strong>입니다. 일은 잘하는데 손에 들어오는 게 적을 수 있어요.',
+    '관성-인성': '<strong>책임에 끌려가는 결</strong>입니다. 안에 모으고 배우는 시간이 부족해 같은 패턴에 갇히기 쉬워요.',
+    // 인성 강 (학습·내성) + 약점
+    '인성-비겁': '<strong>안에 깊이 모으는데 결단·실행이 느린 결</strong>입니다. 다 알면서도 움직이는 데 시간이 걸려요.',
+    '인성-식상': '<strong>안에는 풍부한데 밖으로 풀어내는 표현이 막힌 결</strong>입니다. 머리는 차 있는데 입·손으로 안 나와요.',
+    '인성-재성': '<strong>배우고 모으는 데 강하지만 결과·실리로 옮기는 다리가 약한 결</strong>입니다. 공부는 잘 하는데 돈·결과가 안 따라와요.',
+    '인성-관성': '<strong>안에 모은 통찰은 또렷한데 책임·자리로 옮기는 데 시간이 걸리는 결</strong>입니다. 준비는 다 됐는데 자리에 안 앉아요.',
   };
-  const sipResult: Record<keyof SipDist, string> = {
-    비겁: '자기 결대로 끝까지 가는 사주',
-    식상: '자기만의 색을 꾸준히 풀어내는 사주',
-    재성: '결과로 증명하며 실리를 쌓는 사주',
-    관성: '책임을 맡으면 끝을 보는 사주',
-    인성: '안에 깊이 모은 뒤 천천히 펼치는 사주',
-  };
-  const adj = ohengAdj[dayOheng] ?? '깊이 있는';
-  const tail = top ? sipResult[top] : '결을 천천히 다지는 사주';
-  return `${adj}, ${tail}`;
+
+  return matrix[key] || '<strong>안에 깊이 모았다가 천천히 결로 펼쳐내는 사주</strong>입니다.';
 }
 
 function LifeKeywordHero({
@@ -3830,13 +3855,10 @@ function LifeKeywordHero({
   dayOheng?: OhengType;
 }) {
   const keyword = typeof aiResult?.lifeKeyword === 'string' ? sanitizeAiText(aiResult.lifeKeyword) : '';
-  // fallback 1 — sectionConclusions 의 wongug 한 줄
-  const wongugLead = typeof aiResult?.sectionConclusions?.wongug === 'string'
-    ? sanitizeAiText(aiResult.sectionConclusions.wongug).split(/[.!?]/)[0] + '.'
-    : '';
-  // fallback 2 — sipDist + dayOheng 동적 도출 (기존 리포트도 §08 표시 보장)
+  // 🚨 wongug fallback 제거 (2026-05-05 준기) — §01 첫 문장 그대로 가져오면 §08 의미 X
+  // sipDist 기반 동적 도출 (top × bot tension 패턴)
   const derived = deriveLifeKeyword(sipDist, dayOheng);
-  const text = keyword || wongugLead || derived || `${userName} 님 사주가 그리는 인생 한 줄을 풀어드릴게요.`;
+  const text = keyword || derived || `${userName} 님의 사주는 <strong>안에 결을 모았다가 천천히 펼쳐내는 사주</strong>입니다.`;
   return (
     <div
       style={{
