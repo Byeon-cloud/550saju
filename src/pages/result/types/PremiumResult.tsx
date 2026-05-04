@@ -4216,12 +4216,13 @@ function YearlyForecast({
 
   const baseText =
     typeof aiYearly === 'string' && aiYearly.length > 0
-      ? stripMd(aiYearly)
+      ? sanitizeAiText(aiYearly)
       : `올해 ${thisYear}년은 ${yearKr}(${yearGz}) 해입니다. ${EHAN[OHENG_TO_ELEM[dayOheng]]}(${EKR[OHENG_TO_ELEM[dayOheng]]}) 일간을 기준으로 한 흐름이 12개월에 걸쳐 어떻게 작동하는지 아래에서 한 달씩 따라가세요.`;
   void dayOheng;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
+      {/* 2026-05-04 fix: AI 가 보낸 <strong> 태그 raw text 노출 → dangerouslySetInnerHTML 통일 */}
       <p
         style={{
           fontSize: 14,
@@ -4231,9 +4232,8 @@ function YearlyForecast({
           whiteSpace: 'pre-line',
           wordBreak: 'keep-all',
         }}
-      >
-        {baseText}
-      </p>
+        dangerouslySetInnerHTML={{ __html: baseText }}
+      />
     </div>
   );
 }
@@ -4561,7 +4561,8 @@ function PracticeChecklist({
               {a.title}
               {i === 0 && <span style={{ marginLeft: 6, fontSize: 9.5, fontWeight: 800, color: '#B8965A', background: 'rgba(184,150,90,0.14)', padding: '2px 6px', borderRadius: 4, verticalAlign: 'middle' }}>1순위</span>}
             </div>
-            <div className="desc">{a.desc}</div>
+            {/* 2026-05-04 fix: <strong> raw text → dangerouslySetInnerHTML */}
+            <div className="desc" dangerouslySetInnerHTML={{ __html: sanitizeAiText(a.desc) }} />
           </div>
         </div>
       ))}
@@ -5634,7 +5635,8 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
         </div>
         <div className="adv">
           <span className="adv-icon">!</span>
-          <span className="adv-text"><strong>실천:</strong> {action}</span>
+          {/* 2026-05-04 fix: action 안의 <strong> raw text → dangerouslySetInnerHTML */}
+          <span className="adv-text" dangerouslySetInnerHTML={{ __html: `<strong>실천:</strong> ${sanitizeAiText(action)}` }} />
         </div>
       </div>
     );
@@ -5787,10 +5789,10 @@ function RelationSixCards({ sipDist, aiCards }: { sipDist: any; aiCards?: AiRel6
     <div className="rel6-list">
       {sixBase.map((r) => {
         const ai = aiCards?.[r.relKey];
-        // AI 응답이 짧으면 (< 30 글자) fallback 사용 — "본가 자주 방문" 같은 부실 응답 방지
-        const aiSummary = ai?.summary?.trim() || '';
-        const aiSave = ai?.save?.trim() || '';
-        const aiAvoid = ai?.avoid?.trim() || '';
+        // 2026-05-04 sanitize: AI <strong>·HTML 태그 raw text 노출 차단
+        const aiSummary = sanitizeAiText(ai?.summary);
+        const aiSave = sanitizeAiText(ai?.save);
+        const aiAvoid = sanitizeAiText(ai?.avoid);
         const summary = aiSummary.length >= 30 ? aiSummary : summaries[r.relKey];
         const save = aiSave.length >= 25 ? aiSave : r.save;
         const careful = aiAvoid.length >= 25 ? aiAvoid : r.careful;
@@ -6457,15 +6459,17 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
           ...(isPeak ? { border: '2px solid #2e7d32', boxShadow: '0 4px 14px rgba(46,125,50,0.14)' } : {}),
           ...(isLow ? { border: '2px solid #c62828', boxShadow: '0 4px 14px rgba(198,40,40,0.14)' } : {}),
         };
+        // 2026-05-04 social(가족·관계) 은 SSOT 10주제에 없음 → 클릭 라우팅 비활성화 (점수+풀이만 표시)
+        const isClickable = t.key !== 'social';
         return (
           <div
             key={t.key}
             className={`topic-mini${t.isFull ? ' full' : ''}`}
-            role="link"
-            tabIndex={0}
-            onClick={() => navigate(t.route)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(t.route); } }}
-            style={cardStyle}
+            role={isClickable ? 'link' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            onClick={isClickable ? () => navigate(t.route) : undefined}
+            onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(t.route); } } : undefined}
+            style={{ ...cardStyle, cursor: isClickable ? 'pointer' : 'default' }}
           >
             <div className="tm-head">
               <span className="tm-ttl" style={isPeak ? { color: '#2e7d32' } : isLow ? { color: '#c62828' } : undefined}>
@@ -6487,19 +6491,21 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
                 }}
               />
             </div>
-            {/* AI 풀이 한 줄 (있으면) */}
-            {t.desc && <div className="tm-desc">{t.desc}</div>}
+            {/* AI 풀이 한 줄 — <strong> raw text 차단 (2026-05-04) */}
+            {t.desc && <div className="tm-desc" dangerouslySetInnerHTML={{ __html: sanitizeAiText(t.desc) }} />}
             {/* 호기심 카피 — 점수별 분기 (CTA 효율 ↑) */}
             <div className="tm-hook">
               <span className="tm-hook-label">1운으로 보면</span>
               {t.hook}
             </div>
-            <div
-              className="tm-link"
-              style={isPeak ? { color: '#2e7d32', fontWeight: 700 } : isLow ? { color: '#c62828', fontWeight: 700 } : undefined}
-            >
-              {getCtaLine(t.label, t.score)}
-            </div>
+            {isClickable && (
+              <div
+                className="tm-link"
+                style={isPeak ? { color: '#2e7d32', fontWeight: 700 } : isLow ? { color: '#c62828', fontWeight: 700 } : undefined}
+              >
+                {getCtaLine(t.label, t.score)}
+              </div>
+            )}
           </div>
         );
       })}
