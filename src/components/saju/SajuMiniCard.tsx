@@ -106,10 +106,12 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
       </div>
     );
   }
-  // 2026-05-04 v2: StoragePage ProfileCard 일주 심볼 패턴 — 한 박스 안에 천간/지지 둘 다 흰 한자.
-  // 박스 컬러는 천간 오행. 우상단 오행 한자 뱃지.
+  // 2026-05-04 v3 (준기 지적): "4주 8자" 가 명확히 분리되도록 천간 박스 + 지지 박스 둘로 나눔.
+  // 천간 = 진한 오행 컬러 (보여지는 마음), 지지 = 옅은 오행 컬러 (내면 본능) — 시각적 위계.
   const ganBox = OHENG_BOX[p.ohengGan];
-  const badgeColor = ganBox.bg === '#FFFFFF' ? ganBox.outline : ganBox.bg;
+  const jiBox = OHENG_BOX[p.ohengJi];
+  const ganBadgeColor = ganBox.bg === '#FFFFFF' ? ganBox.outline : ganBox.bg;
+  const jiBadgeColor = jiBox.bg === '#FFFFFF' ? jiBox.outline : jiBox.bg;
 
   return (
     <div
@@ -118,7 +120,7 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 8,
+        gap: 6,
         padding: '4px 0',
         position: 'relative',
         transform: isDay ? 'scale(1.04)' : 'none',
@@ -139,63 +141,116 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
         {p.label}
       </span>
 
-      {/* 일주 심볼 박스 — 오행 컬러 배경 + 천간/지지 둘 다 흰 한자 (StoragePage ProfileCard 패턴) */}
+      {/* 일주 강조 — 골드 outline 컨테이너 (천간/지지 두 박스를 골드로 감쌈) */}
       <div
         style={{
-          width: 60,
-          height: 60,
-          background: ganBox.bg,
-          color: ganBox.fg,
-          border: isDay ? `2.5px solid ${C_GOLD}` : `2px solid ${ganBox.outline}`,
-          borderRadius: 12,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: SERIF,
-          lineHeight: 0.96,
+          gap: 3,
+          padding: isDay ? 4 : 0,
+          borderRadius: isDay ? 14 : 0,
+          background: isDay ? 'rgba(184,150,90,0.10)' : 'transparent',
+          border: isDay ? `2px solid ${C_GOLD}` : 'none',
+          boxShadow: isDay ? `0 0 0 3px rgba(184,150,90,0.14), 0 4px 14px ${C_GOLD}33` : 'none',
           position: 'relative',
-          boxShadow: isDay
-            ? `0 0 0 3px rgba(184,150,90,0.18), 0 6px 16px ${C_GOLD}55`
-            : '0 3px 8px rgba(0,0,0,0.10)',
         }}
       >
-        <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: '0.02em' }}>
-          {p.gan}
-        </span>
-        <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '0.02em', marginTop: 2 }}>
-          {p.ji}
-        </span>
-
-        {/* 우상단 오행 한자 뱃지 */}
-        <span
-          aria-hidden
+        {/* 천간 박스 — 진한 오행 컬러 + 흰 한자 + 우상단 오행 뱃지 */}
+        <div
           style={{
-            position: 'absolute',
-            top: -6,
-            right: -5,
-            fontSize: 9,
-            fontWeight: 800,
-            padding: '1px 5px',
-            borderRadius: 999,
-            background: '#FFFFFF',
-            color: badgeColor,
-            border: `1.5px solid ${badgeColor}`,
-            lineHeight: 1.2,
-            letterSpacing: '0.04em',
+            width: 52,
+            height: 50,
+            background: ganBox.bg,
+            color: ganBox.fg,
+            border: `1.5px solid ${ganBox.outline}`,
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: SERIF,
+            fontSize: 22,
+            fontWeight: 900,
+            lineHeight: 1,
+            position: 'relative',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.10)',
           }}
         >
-          {OHENG_HAN[p.ohengGan]}
-        </span>
+          {p.gan}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              top: -5,
+              right: -4,
+              fontSize: 8.5,
+              fontWeight: 800,
+              padding: '1px 4px',
+              borderRadius: 999,
+              background: '#FFFFFF',
+              color: ganBadgeColor,
+              border: `1.2px solid ${ganBadgeColor}`,
+              lineHeight: 1.2,
+              letterSpacing: '0.04em',
+            }}
+          >
+            {OHENG_HAN[p.ohengGan]}
+          </span>
+        </div>
 
-        {/* 일주 강조 — "나" 뱃지 (좌상단) */}
+        {/* 지지 박스 — 옅은 오행 컬러 (alpha) + 진한 한자 + 우하단 오행 뱃지 */}
+        <div
+          style={{
+            width: 52,
+            height: 46,
+            background: jiBox.bg === '#FFFFFF'
+              ? '#F8F5EE'  // 금: 베이지
+              : jiBox.bg === '#1A1A1A'
+                ? 'rgba(26,26,26,0.10)'  // 수: 검정 옅게
+                : `${jiBox.bg}26`,  // 그 외: 컬러 alpha 0.15
+            color: jiBox.bg === '#1A1A1A' ? '#1A1A1A' : jiBox.bg === '#FFFFFF' ? '#1A1A1A' : jiBox.bg,
+            border: `1.5px solid ${jiBox.outline}55`,
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: SERIF,
+            fontSize: 19,
+            fontWeight: 900,
+            lineHeight: 1,
+            position: 'relative',
+          }}
+        >
+          {p.ji}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              bottom: -5,
+              right: -4,
+              fontSize: 8,
+              fontWeight: 800,
+              padding: '1px 4px',
+              borderRadius: 999,
+              background: '#FFFFFF',
+              color: jiBadgeColor,
+              border: `1.2px solid ${jiBadgeColor}`,
+              lineHeight: 1.2,
+              letterSpacing: '0.04em',
+            }}
+          >
+            {OHENG_HAN[p.ohengJi]}
+          </span>
+        </div>
+
+        {/* 일주 "나" 뱃지 (좌상단) */}
         {isDay && (
           <span
             aria-hidden
             style={{
               position: 'absolute',
-              top: -8,
-              left: -8,
+              top: -10,
+              left: -10,
               width: 20,
               height: 20,
               borderRadius: '50%',
@@ -209,6 +264,7 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
               boxShadow: '0 2px 6px rgba(0,0,0,0.20)',
               border: `1.5px solid ${C_PAPER}`,
               fontFamily: SERIF,
+              zIndex: 3,
             }}
           >
             나
