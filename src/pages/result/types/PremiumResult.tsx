@@ -2758,8 +2758,8 @@ export function PremiumResult({
           - AI schema 신규: lifeKeyword (한 줄) + strengths[3] + cautions[3] */}
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={8} title="내 사주의 결" hanja="本質" hint="당신만의 인생 키워드 + 통합 강점·함정">
-          <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} />
-          <StrengthsCautionsCards aiResult={aiResult} />
+          <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} />
+          <StrengthsCautionsCards aiResult={aiResult} sipDist={sipDist} dayOheng={dayOheng} />
         </CollapsibleSection>
       </LocalFadeIn>
 
@@ -3793,13 +3793,50 @@ function PremiumPullQuote({ children }: { children: ReactNode }) {
  *  · AI schema: lifeKeyword (한 줄) + strengths[3] + cautions[3]
  * ═════════════════════════════════════════════════════════════════ */
 
-function LifeKeywordHero({ aiResult, userName }: { aiResult: any; userName: string }) {
+/**
+ * sipDist + dayOheng 기반 §08 fallback 키워드 생성
+ *  - AI 응답에 lifeKeyword/strengths/cautions 가 없는 기존 리포트도 §08 의미있게 표시
+ *  - 가장 강한 십성 + 일간 오행 결합으로 "당신 사주의 결" 한 줄 도출
+ */
+function deriveLifeKeyword(sipDist?: SipDist, dayOheng?: OhengType): string {
+  if (!sipDist || !dayOheng) return '깊이 안에 모았다가 천천히 결로 펼쳐내는 사주';
+  const entries = Object.entries(sipDist) as Array<[keyof SipDist, number]>;
+  const sorted = [...entries].sort((a, b) => b[1] - a[1]);
+  const top = sorted[0]?.[0];
+  const ohengAdj: Record<OhengType, string> = {
+    목: '뻗어나가는', 화: '환히 비추는', 토: '품어 안는', 금: '단단히 다듬는', 수: '깊이 모으는',
+  };
+  const sipResult: Record<keyof SipDist, string> = {
+    비겁: '자기 결대로 끝까지 가는 사주',
+    식상: '자기만의 색을 꾸준히 풀어내는 사주',
+    재성: '결과로 증명하며 실리를 쌓는 사주',
+    관성: '책임을 맡으면 끝을 보는 사주',
+    인성: '안에 깊이 모은 뒤 천천히 펼치는 사주',
+  };
+  const adj = ohengAdj[dayOheng] ?? '깊이 있는';
+  const tail = top ? sipResult[top] : '결을 천천히 다지는 사주';
+  return `${adj}, ${tail}`;
+}
+
+function LifeKeywordHero({
+  aiResult,
+  userName,
+  sipDist,
+  dayOheng,
+}: {
+  aiResult: any;
+  userName: string;
+  sipDist?: SipDist;
+  dayOheng?: OhengType;
+}) {
   const keyword = typeof aiResult?.lifeKeyword === 'string' ? sanitizeAiText(aiResult.lifeKeyword) : '';
-  // fallback — AI 응답 없을 때 sectionConclusions 의 wongug 한 줄 추출
-  const fallback = typeof aiResult?.sectionConclusions?.wongug === 'string'
+  // fallback 1 — sectionConclusions 의 wongug 한 줄
+  const wongugLead = typeof aiResult?.sectionConclusions?.wongug === 'string'
     ? sanitizeAiText(aiResult.sectionConclusions.wongug).split(/[.!?]/)[0] + '.'
     : '';
-  const text = keyword || fallback || `${userName} 님 사주가 그리는 인생 한 줄을 풀어드릴게요.`;
+  // fallback 2 — sipDist + dayOheng 동적 도출 (기존 리포트도 §08 표시 보장)
+  const derived = deriveLifeKeyword(sipDist, dayOheng);
+  const text = keyword || wongugLead || derived || `${userName} 님 사주가 그리는 인생 한 줄을 풀어드릴게요.`;
   return (
     <div
       style={{
@@ -3863,13 +3900,85 @@ function LifeKeywordHero({ aiResult, userName }: { aiResult: any; userName: stri
 
 interface StrengthCautionItem { title?: string; desc?: string }
 
-function StrengthsCautionsCards({ aiResult }: { aiResult: any }) {
-  const strengths: StrengthCautionItem[] = Array.isArray(aiResult?.strengths)
+/**
+ * sipDist 기반 §08 강점·함정 fallback (3+3)
+ *  - 가장 강한 십성 2개 + 일간 오행 → 강점 3
+ *  - 가장 약한 십성 2개 + 강점 과잉 1개 → 함정 3
+ *  - AI 응답이 없는 기존 리포트도 §08 카드 표시 보장
+ */
+function deriveStrengthsCautions(
+  sipDist?: SipDist,
+  dayOheng?: OhengType,
+): { strengths: StrengthCautionItem[]; cautions: StrengthCautionItem[] } {
+  if (!sipDist) return { strengths: [], cautions: [] };
+  const entries = Object.entries(sipDist) as Array<[keyof SipDist, number]>;
+  const sorted = [...entries].sort((a, b) => b[1] - a[1]);
+  const top1 = sorted[0]?.[0];
+  const top2 = sorted[1]?.[0];
+  const bot1 = sorted[sorted.length - 1]?.[0];
+  const bot2 = sorted[sorted.length - 2]?.[0];
+
+  const strengthMap: Record<keyof SipDist, StrengthCautionItem> = {
+    비겁: { title: '결단력', desc: '한번 마음먹으면 <strong>끝까지 가는 추진력</strong>이 있어요. 주변 사람도 당신을 따라옵니다.' },
+    식상: { title: '표현·창의', desc: '머리 속의 결을 <strong>말과 행동으로 풀어내는 재능</strong>이 또렷합니다. 같은 일도 당신 식대로 풀어내요.' },
+    재성: { title: '현실 감각', desc: '결과까지 챙기는 <strong>실리 감각</strong>이 있어요. 큰 그림보다 손에 잡히는 결과로 증명합니다.' },
+    관성: { title: '책임감', desc: '맡은 일은 <strong>끝까지 가져가는 결</strong>입니다. 사람들이 어려운 일을 자연스럽게 당신에게 맡깁니다.' },
+    인성: { title: '깊이 있는 통찰', desc: '안에 모았다가 풀어내는 <strong>긴 호흡의 사고</strong>가 있어요. 빠른 답보다 깊은 답을 내는 사람입니다.' },
+  };
+  const cautionMap: Record<keyof SipDist, StrengthCautionItem> = {
+    비겁: { title: '독불장군', desc: '자기 결이 너무 분명해 <strong>주변 의견을 흘려듣는 순간</strong>이 있어요. 한 번씩 멈춰 되묻는 습관이 필요합니다.' },
+    식상: { title: '말 앞서기', desc: '생각보다 표현이 빨라 <strong>말이 앞서가는 순간</strong>이 있습니다. 중요한 자리는 한 박자 늦춰 말하세요.' },
+    재성: { title: '결과 조급', desc: '결과를 빨리 보려다 <strong>과정을 깎아먹는 패턴</strong>이 있어요. 천천히 쌓는 시기를 의식적으로 두세요.' },
+    관성: { title: '과부하', desc: '책임을 다 떠안다 <strong>혼자 무너지는 순간</strong>이 옵니다. 거절하는 연습이 필요해요.' },
+    인성: { title: '실행 지연', desc: '깊이 모으느라 <strong>실행이 늦어지는 패턴</strong>이 반복됩니다. 70% 준비되면 일단 시작하세요.' },
+  };
+
+  const strengths: StrengthCautionItem[] = [];
+  if (top1) strengths.push(strengthMap[top1]);
+  if (top2 && top2 !== top1) strengths.push(strengthMap[top2]);
+  // 일간 오행 기반 3번째 강점
+  const ohengStrength: Record<OhengType, StrengthCautionItem> = {
+    목: { title: '성장 의지', desc: '뻗어나가려는 <strong>본능적 추진력</strong>이 있어요. 한 자리에 머무는 것보다 새 자리를 여는 결입니다.' },
+    화: { title: '밝은 에너지', desc: '주변을 <strong>환하게 만드는 에너지</strong>가 또렷해요. 사람들이 당신 옆에서 기운을 얻습니다.' },
+    토: { title: '안정감', desc: '주변에 <strong>믿고 기댈 수 있는 결</strong>을 만듭니다. 흔들리는 사람들에게 중심이 되는 사람이에요.' },
+    금: { title: '정돈된 결', desc: '겉모습부터 일처리까지 <strong>깔끔하고 또렷한 결</strong>이 있어요. 디테일에서 신뢰를 얻습니다.' },
+    수: { title: '깊은 사고', desc: '겉보다 <strong>안에서 흘러가는 깊이</strong>가 있어요. 한 번 판단한 것은 쉽게 흔들리지 않습니다.' },
+  };
+  if (dayOheng && strengths.length < 3) strengths.push(ohengStrength[dayOheng]);
+
+  const cautions: StrengthCautionItem[] = [];
+  if (bot1) cautions.push(cautionMap[bot1]);
+  if (bot2 && bot2 !== bot1) cautions.push(cautionMap[bot2]);
+  // 강점 과잉 함정 — 가장 강한 십성의 그림자
+  if (top1 && cautions.length < 3) cautions.push(cautionMap[top1]);
+
+  return {
+    strengths: strengths.slice(0, 3),
+    cautions: cautions.slice(0, 3),
+  };
+}
+
+function StrengthsCautionsCards({
+  aiResult,
+  sipDist,
+  dayOheng,
+}: {
+  aiResult: any;
+  sipDist?: SipDist;
+  dayOheng?: OhengType;
+}) {
+  const aiStrengths: StrengthCautionItem[] = Array.isArray(aiResult?.strengths)
     ? aiResult.strengths.slice(0, 3).filter((s: any) => s?.title && s?.desc)
     : [];
-  const cautions: StrengthCautionItem[] = Array.isArray(aiResult?.cautions)
+  const aiCautions: StrengthCautionItem[] = Array.isArray(aiResult?.cautions)
     ? aiResult.cautions.slice(0, 3).filter((s: any) => s?.title && s?.desc)
     : [];
+  // AI 응답 없으면 sipDist + dayOheng 기반 fallback (기존 리포트도 §08 표시 보장)
+  const fallback = (aiStrengths.length === 0 && aiCautions.length === 0)
+    ? deriveStrengthsCautions(sipDist, dayOheng)
+    : { strengths: [] as StrengthCautionItem[], cautions: [] as StrengthCautionItem[] };
+  const strengths = aiStrengths.length > 0 ? aiStrengths : fallback.strengths;
+  const cautions = aiCautions.length > 0 ? aiCautions : fallback.cautions;
   if (strengths.length === 0 && cautions.length === 0) return null;
 
   return (
