@@ -358,26 +358,122 @@ function SelectView({
         />
       </FadeIn>
 
+      {/* Hero — ExtensionHero 패턴 통일 (gradient + 한자 워터마크 + seal + crumb + tier) */}
       <FadeIn delay={0.05}>
-        <section className="card-primary" style={{ padding: 24 }}>
-          <p className="sec-meta">{dateInfo.label}</p>
-          <h2 className="sec-title-lg" style={{ marginTop: 8 }}>
-            {profile?.name ?? '당신'}님의<br />오늘 운세를 풀어드릴게요
-          </h2>
-          <p
-            className="text-body-md"
-            style={{ color: 'var(--text-muted)', marginTop: 10 }}
+        <header
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            padding: '18px 20px 28px',
+            color: '#FFFFFF',
+            background: 'linear-gradient(135deg,#7A6347 0%,#54422E 60%,#332618 100%)',
+            borderRadius: 16,
+          }}
+        >
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              right: -18,
+              bottom: -40,
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 220,
+              fontWeight: 900,
+              color: 'rgba(255,255,255,0.07)',
+              lineHeight: 1,
+              pointerEvents: 'none',
+              letterSpacing: '-0.05em',
+            }}
           >
+            日
+          </span>
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              right: 18,
+              top: 18,
+              width: 44,
+              height: 44,
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.18)',
+              border: '1px solid rgba(255,255,255,0.30)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 22,
+              fontWeight: 800,
+              color: '#FFFFFF',
+            }}
+          >
+            日
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              opacity: 0.78,
+              marginBottom: 8,
+              letterSpacing: '0.02em',
+              position: 'relative',
+            }}
+          >
+            사주 500 · 오늘의 운세 · {dateInfo.label}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              fontSize: 12,
+              opacity: 0.92,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              position: 'relative',
+            }}
+          >
+            <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>
+              일진 운세
+            </span>
+            <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 10 }}>
+              무료 · 1일 1회
+            </span>
+          </div>
+          <h2
+            style={{
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 22,
+              fontWeight: 700,
+              marginTop: 14,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.4,
+              position: 'relative',
+            }}
+          >
+            {profile?.name ?? '당신'}님의<br />
+            오늘 운세를 풀어드릴게요
+          </h2>
+          <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4, position: 'relative' }}>
             일주와 오늘 간지의 작용, 용신·대운 흐름까지 함께 살펴볼게요.
-          </p>
-        </section>
+          </div>
+        </header>
       </FadeIn>
 
-      {/* 사주 원국 미리보기 — 정적 SajuMiniCard (Flippable 정적화 #39 보존) */}
+      {/* 만세력 미리보기 — 라벨 "내 만세력" + 부제 萬歲曆 (사주카드 톤 통일) */}
       {hasSajuData && (
         <FadeIn delay={0.1}>
           <section className="card-secondary">
-            <p className="sec-title" style={{ marginBottom: 12 }}>내 사주 원국</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
+              <p className="sec-title" style={{ margin: 0 }}>내 만세력</p>
+              <span style={{
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--brand-gold)',
+                letterSpacing: '0.06em',
+              }}>
+                萬歲曆
+              </span>
+            </div>
             <SajuMiniCard pillars={pillars} />
           </section>
         </FadeIn>

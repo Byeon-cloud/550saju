@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import type { LocalReport } from '@/services/storage/localStore';
 import type { OhengType, SajuData } from '@/types/saju';
-import { stripMd } from '@/utils/format';
+import { stripMd, sanitizeAiText } from '@/utils/format';
 import { LocalFadeIn } from '../_atoms';
 import { PREMIUM_MOCKUP_CSS } from './_premiumMockupStyle';
 import {
@@ -5011,8 +5011,9 @@ function LifeEdgeList({
       },
     },
     토: {
-      glyph: '土', name: '흙 — 재물 · 자리잡는 힘', color: '#E8B82A', cls: 'to',
-      bg: 'rgba(232,184,42,0.07)', border: '#E8B82A',
+      // 가독성 보강 (2026-05-04): #E8B82A (어두운 황토) → #F4D166 (밝은 금) — LifeEdgeList strong 텍스트 가독성
+      glyph: '土', name: '흙 — 재물 · 자리잡는 힘', color: '#F4D166', cls: 'to',
+      bg: 'rgba(244,209,102,0.10)', border: '#F4D166',
       head: {
         strong: `${u} 님은 "쌓고 머무는 힘"이 강합니다. 한 자리에 진득하게 앉아 자산·관계·신뢰를 천천히 쌓아 올리는 결.`,
         mid: `${u} 님은 안정과 확장의 균형이 잡힌 결입니다. 무리하게 벌이지 않으면서도 흐름은 놓치지 않는 사람.`,
@@ -5083,9 +5084,10 @@ function LifeEdgeList({
           ? `(${u} 님 사주의 ${card.glyph} 글자: ${userChars.join('·')})`
           : `(${u} 님 사주에 ${card.glyph} 글자가 비어있는 자리)`;
         // AI head 가 너무 짧으면 (50자 미만) mockup 진본 fallback 사용 — 풍부도 보장
-        const aiHead = ai?.head?.trim();
-        const aiSave = ai?.save?.trim();
-        const aiAvoid = ai?.avoid?.trim();
+        // 2026-05-04 sanitize: AI 응답에 <strong>/<b> 등 HTML 태그가 섞여 raw text 로 노출되는 버그 차단
+        const aiHead = sanitizeAiText(ai?.head);
+        const aiSave = sanitizeAiText(ai?.save);
+        const aiAvoid = sanitizeAiText(ai?.avoid);
         const headText = aiHead && aiHead.length >= 50 ? aiHead : `${card.head[tier]} ${charsHint}`;
         const saveText = aiSave && aiSave.length >= 25 ? aiSave : card.save[tier];
         const avoidText = aiAvoid && aiAvoid.length >= 25 ? aiAvoid : card.avoid[tier];
@@ -5100,16 +5102,25 @@ function LifeEdgeList({
               <span className={`le-tag ${t.tag}`.trim()}>{t.label} · {c}자</span>
             </div>
             <div className="le-desc">
-              <strong style={{ color: card.color, fontSize: 13 }}>{headFirstSentence}</strong>
-              {headRest && <span> {headRest}</span>}
+              {/* 첫 문장 색강조 + 본문은 HTML 통과 (다른 41개 컴포넌트와 동일 패턴) */}
+              <span
+                style={{ color: card.color, fontSize: 13, fontWeight: 700 }}
+                dangerouslySetInnerHTML={{ __html: headFirstSentence }}
+              />
+              {headRest && (
+                <span
+                  style={{ color: '#2a2520' }}
+                  dangerouslySetInnerHTML={{ __html: ` ${headRest}` }}
+                />
+              )}
               <br /><br />
               <div style={{ marginBottom: 6 }}>
                 <strong style={{ color: '#1b5e20', display: 'inline-block', minWidth: 56, fontSize: 11, padding: '2px 6px', background: 'rgba(46,125,50,0.10)', borderRadius: 4, marginRight: 6 }}>살릴 것</strong>
-                <span style={{ color: '#2a2520' }}>{saveText}</span>
+                <span style={{ color: '#2a2520' }} dangerouslySetInnerHTML={{ __html: saveText }} />
               </div>
               <div>
                 <strong style={{ color: '#8b1a1a', display: 'inline-block', minWidth: 56, fontSize: 11, padding: '2px 6px', background: 'rgba(198,40,40,0.10)', borderRadius: 4, marginRight: 6 }}>조심할 것</strong>
-                <span style={{ color: '#2a2520' }}>{avoidText}</span>
+                <span style={{ color: '#2a2520' }} dangerouslySetInnerHTML={{ __html: avoidText }} />
               </div>
             </div>
           </div>

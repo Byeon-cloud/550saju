@@ -2,7 +2,7 @@
 // 흐름:
 //   /premium → ProfilePicker → CTA → spendBalance(10) → /loading?type=premium → /result/{id}
 //   ✓ 잔액 ≥ 10: 차감 후 결과 페이지
-//   ✗ 잔액 < 10: 충전 페이지로 이동
+//   ✗ 잔액 < 10: 부족 안내 (충전 직접 유도 UI 는 토스 정책 회피로 제거)
 
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,9 @@ import {
 import { useSajuContext } from '@/contexts/SajuContext';
 import { calculateSaju } from '@/services/saju/calculator';
 
+/** 종합 사주 hero 톤 — ExtensionHero 와 동일한 디자인 패턴 (gradient + 한자 워터마크 + seal + crumb + tier) */
+const PREMIUM_HERO_GRAD = 'linear-gradient(135deg,#C9A968 0%,#A8804A 60%,#7A5C30 100%)';
+
 export function PremiumSelectPage() {
   usePageTitle('종합 사주 풀이');
   const navigate = useNavigate();
@@ -29,7 +32,6 @@ export function PremiumSelectPage() {
 
   const profiles = useMemo(() => getProfiles(), []);
   const [selected, setSelected] = useState<SajuProfile | null>(null);
-  // 잔액 표시 (차감은 spendBalance 후 페이지 navigate 로 갱신)
   const [balance] = useState<number>(getBalance());
 
   function startPremium() {
@@ -37,25 +39,19 @@ export function PremiumSelectPage() {
       toast.show('사주를 먼저 선택해주세요', 'info');
       return;
     }
-
-    // 사주 데이터 확보
     const sajuData =
       (selected as any).sajuData || calculateSaju(selected.input as any);
     if (!sajuData) {
       toast.show('사주 계산 실패. 다시 시도해주세요', 'warning');
       return;
     }
-
-    // 잔액 차감 — 실패 시 차단 + 충전 페이지로 유도 (런칭 모드)
     const spent = spendBalance(10);
     if (!spent) {
-      toast.show(`잔액 부족 — 충전 페이지로 이동합니다`, 'warning');
+      toast.show('잔액이 부족해요', 'warning');
       navigate('/charge?need=10');
       return;
     }
     toast.show(`10운 차감 (잔액 ${getBalance()}운) — 종합 사주 시작`, 'success');
-
-    // SajuContext set 후 LoadingPage 로 (실제 AI 생성)
     sajuCtx.setInput(selected.input as any);
     sajuCtx.setSajuData(sajuData);
     navigate('/loading?type=premium');
@@ -64,10 +60,7 @@ export function PremiumSelectPage() {
   // 등록된 사주 0건 → 입력 페이지로 유도
   if (profiles.length === 0) {
     return (
-      <div
-        className="min-h-screen pb-tab-safe"
-        style={{ background: 'var(--bg-page-gradient)' }}
-      >
+      <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
         <Header title="종합 사주" />
         <div className="px-5 pt-8 text-center space-y-4">
           <p className="text-h2 text-text-primary">먼저 사주를 입력해주세요</p>
@@ -90,78 +83,153 @@ export function PremiumSelectPage() {
   const enough = balance >= 10;
 
   return (
-    <div
-      className="min-h-screen pb-tab-safe"
-      style={{ background: 'var(--bg-page-gradient)' }}
-    >
+    <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
       <Header title="종합 사주" />
-      <div className="px-5 pt-4 space-y-5">
-        {/* 인트로 */}
-        <FadeIn>
-          <div
-            className="py-6 px-5 rounded-2xl text-center"
+
+      {/* Hero — ExtensionHero 패턴 통일 (gradient + 한자 워터마크 + seal + crumb + tier 칩) */}
+      <FadeIn>
+        <header
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            padding: '18px 20px 28px',
+            color: '#FFFFFF',
+            background: PREMIUM_HERO_GRAD,
+          }}
+        >
+          <span
+            aria-hidden
             style={{
-              background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)',
-              border: '1px solid rgba(184,150,90,0.2)',
+              position: 'absolute',
+              right: -18,
+              bottom: -40,
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 220,
+              fontWeight: 900,
+              color: 'rgba(255,255,255,0.07)',
+              lineHeight: 1,
+              pointerEvents: 'none',
+              letterSpacing: '-0.05em',
             }}
           >
-            <p className="text-caption text-brand-gold font-semibold">
-              한국 명리학 6대 원전 기반
-            </p>
-            <p className="text-display text-text-primary mt-1">
-              종합 사주 풀이
-            </p>
-            <p className="text-body-sm text-text-muted mt-2">
-              원국·천간지지·십성·용신·대운·연운·신살·관계·주제·실천 — 10섹션
-              깊이 풀이
-            </p>
-            <p className="text-caption text-text-hint mt-1">10운 / 1회</p>
+            命
+          </span>
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              right: 18,
+              top: 18,
+              width: 44,
+              height: 44,
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.18)',
+              border: '1px solid rgba(255,255,255,0.30)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 22,
+              fontWeight: 800,
+              color: '#FFFFFF',
+            }}
+          >
+            命
           </div>
-        </FadeIn>
+          <div
+            style={{
+              fontSize: 11,
+              opacity: 0.78,
+              marginBottom: 8,
+              position: 'relative',
+              letterSpacing: '0.02em',
+            }}
+          >
+            사주 500 · 종합 사주
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 10,
+              fontSize: 12,
+              opacity: 0.92,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              position: 'relative',
+            }}
+          >
+            <span
+              style={{
+                background: 'rgba(255,255,255,0.22)',
+                padding: '3px 10px',
+                borderRadius: 100,
+                fontSize: 11,
+                fontWeight: 600,
+              }}
+            >
+              종합 사주
+            </span>
+            <span
+              style={{
+                background: 'rgba(255,255,255,0.14)',
+                padding: '3px 10px',
+                borderRadius: 100,
+                fontSize: 10,
+              }}
+            >
+              10운
+            </span>
+            <span
+              style={{
+                background: 'rgba(255,255,255,0.14)',
+                padding: '3px 10px',
+                borderRadius: 100,
+                fontSize: 10,
+              }}
+            >
+              한국 명리학 6대 원전 기반
+            </span>
+          </div>
+          <h1
+            style={{
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 24,
+              fontWeight: 700,
+              marginTop: 14,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.4,
+              position: 'relative',
+            }}
+          >
+            한 사주의 결을<br />처음부터 끝까지 풀어드립니다
+          </h1>
+          <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4, position: 'relative' }}>
+            원국·천간지지·십성·용신·대운·연운·신살·관계·주제·실천 — 10 섹션 깊이 풀이.
+          </div>
+        </header>
+      </FadeIn>
 
-        {/* 잔액 표시 — 큼지막하게 */}
+      <div className="px-5 pt-5 space-y-5">
+        {/* 잔액 — 표시만 (충전 직접 유도 버튼 제거: 토스 정책 회피) */}
         <FadeIn delay={0.03}>
           <div
-            className="py-4 px-5 rounded-xl"
+            className="py-3 px-4 rounded-xl flex items-center justify-between"
             style={{
-              background: enough ? 'rgba(46,125,50,0.08)' : 'rgba(198,40,40,0.08)',
-              border: `1px solid ${enough ? 'rgba(46,125,50,0.25)' : 'rgba(198,40,40,0.25)'}`,
+              background: enough ? 'rgba(46,125,50,0.06)' : 'rgba(198,40,40,0.06)',
+              border: `1px solid ${enough ? 'rgba(46,125,50,0.20)' : 'rgba(198,40,40,0.20)'}`,
             }}
           >
-            <div className="flex items-center justify-between">
-              <p className="text-caption text-text-muted">내 잔액</p>
-              <p
-                style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: enough ? '#2e7d32' : '#c62828',
-                  fontFeatureSettings: "'tnum'",
-                }}
-              >
-                {balance}운
-              </p>
-            </div>
-            {!enough && (
-              <p
-                className="mt-2 text-caption"
-                style={{ color: '#c62828', fontWeight: 600 }}
-              >
-                10운 필요 · 부족 {10 - balance}운
-              </p>
-            )}
-            <div className="mt-3">
-              <button
-                onClick={() => navigate('/charge?need=10')}
-                className="w-full py-2 rounded-lg text-caption font-semibold"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(184,150,90,0.4)',
-                  color: '#B8965A',
-                }}
-              >
-                충전 페이지로
-              </button>
-            </div>
+            <p className="text-caption text-text-muted">내 잔액</p>
+            <p
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: enough ? '#2e7d32' : '#c62828',
+                fontFeatureSettings: "'tnum'",
+              }}
+            >
+              {balance}운
+            </p>
           </div>
         </FadeIn>
 
@@ -192,7 +260,7 @@ export function PremiumSelectPage() {
         )}
       </div>
 
-      {/* 하단 sticky CTA */}
+      {/* 하단 sticky CTA — 부족 시에만 충전 안내 (직접 충전 페이지 버튼은 제거) */}
       {selected && (
         <div className="sticky-cta-bottom">
           <Button
@@ -201,9 +269,7 @@ export function PremiumSelectPage() {
             size="lg"
             fullWidth
           >
-            {enough
-              ? '종합 사주 시작 (10운)'
-              : `잔액 부족 — 충전 페이지로 (${balance}/10운)`}
+            {enough ? '종합 사주 시작 (10운)' : `잔액 부족 (${balance}/10운)`}
           </Button>
         </div>
       )}

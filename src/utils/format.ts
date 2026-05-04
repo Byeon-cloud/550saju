@@ -35,3 +35,29 @@ export function stripMd(text: string | undefined | null): string {
     .replace(/^#+\s*/gm, '')        // # heading
     .replace(/`/g, '');             // `code`
 }
+
+/**
+ * AI 응답 텍스트 sanitize (2026-05-04)
+ *  - 안전 태그(`<strong>`, `<b>`, `<em>`, `<i>`, `<u>`, `<br>`)만 보존, 나머지 HTML 태그는 strip
+ *    (LifeEdgeList 등에서 AI 가 보낸 `<strong>축토(丑土)</strong>` raw text 노출 버그 차단)
+ *  - markdown bold/italic strip
+ *  - 양끝 공백 trim
+ *
+ * dangerouslySetInnerHTML 로 렌더할 때 사용하면 안전 — XSS 위험이 있는 `<script>`, `<iframe>`,
+ * `<style>`, `on*` 핸들러 등은 모두 제거.
+ */
+export function sanitizeAiText(text: string | undefined | null): string {
+  if (!text) return '';
+  const ALLOWED = /^(strong|b|em|i|u|br)$/i;
+  return String(text)
+    // 1) 안전 태그 화이트리스트만 통과 — 그 외 모든 HTML 태그 strip
+    .replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^<>]*>/g, (full, tagName) => {
+      return ALLOWED.test(tagName) ? full.replace(/\s[^<>]*/g, '') : '';
+    })
+    // 2) markdown bold/italic
+    .replace(/\*\*/g, '')
+    .replace(/(?<!\w)\*(?!\*)/g, '')
+    .replace(/^#+\s*/gm, '')
+    .replace(/`/g, '')
+    .trim();
+}
