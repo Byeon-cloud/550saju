@@ -14,7 +14,7 @@
 //  - "오늘의 운세" 이름 강조 과잉 제거 / "처음부터 끝까지 읽어드립니다" / "가족·지인 재조회"
 //  - "AI 같지 않은" 카피 제거 / "광고는 있지만" 후기 치환
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -71,6 +71,12 @@ export function HomePage() {
   const navigate = useNavigate();
   const { name, hasProfile } = useActiveProfile();
   const todayHint = useTodayHeadline();
+
+  /** DEEP DIVE 10주제 가로 스크롤 ref — 우측 화살표 버튼이 살짝 밀어줌 (60대+ 가로스크롤 affordance) */
+  const deepDiveScrollRef = useRef<HTMLDivElement>(null);
+  const scrollDeepDiveRight = () => {
+    deepDiveScrollRef.current?.scrollBy({ left: 158, behavior: 'smooth' });
+  };
 
   const displayName = name || '사용자';
   const todayStr = useMemo(() => getTodayStr(), []);
@@ -302,8 +308,13 @@ export function HomePage() {
       <p className="mx-4 mt-2 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>
         연애·재회·결혼·재물·합격이직·사업·건강·이사·학업·직업 — <strong style={{ color: C.ink }}>한 주제만 1운</strong>으로 끝까지 풀어드려요.
       </p>
-      <div className="mt-3 overflow-x-auto pb-2 no-scrollbar"
-        style={{ scrollSnapType: 'x mandatory' }}>
+      {/* 2026-05-04 우측 화살표 button — 60대+ 가로 스크롤 affordance */}
+      <div className="relative mt-3">
+        <div
+          ref={deepDiveScrollRef}
+          className="overflow-x-auto pb-2 no-scrollbar"
+          style={{ scrollSnapType: 'x mandatory' }}
+        >
         <div className="flex gap-2.5 px-4" style={{ width: 'max-content' }}>
           {/* 10주제 SSOT 소비 — @/constants/topics (순서/한자/컬러/딱지/subCopy/path 모두 SSOT) */}
           {listTopics().map((t) => (
@@ -356,6 +367,28 @@ export function HomePage() {
           ))}
           <div className="min-w-[16px]" />
         </div>
+        </div>
+        {/* 우측 화살표 버튼 — 60대+ 가로 스크롤 affordance · 카드 1개 분량(158px) 부드럽게 이동 */}
+        <button
+          type="button"
+          aria-label="다른 주제 더 보기"
+          onClick={scrollDeepDiveRight}
+          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.96)',
+            border: `1px solid ${C.grayLine}`,
+            boxShadow: `0 4px 12px rgba(184,150,90,0.20), 0 0 0 4px rgba(255,255,255,0.45)`,
+            zIndex: 2,
+            cursor: 'pointer',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.goldHi} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
       </div>
 
       {/* ─── [07] Reviews 16 (우→좌 자동 캐러셀) · 2026-05-04 swap: DEEP DIVE 다음 ─── */}

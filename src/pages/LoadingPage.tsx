@@ -529,7 +529,13 @@ export function LoadingPage() {
         </AnimatePresence>
       </div>
 
-      <p className="text-[10px] text-text-disabled mt-5">약 15~20초 소요</p>
+      {/* 2026-05-04 정직화: 표기 vs 실제 mismatch 수정 — premium 은 Opus + 16-24k tokens 라 60-120초.
+       *  유저를 속이지 않게 reportType 분기 표기. */}
+      <p className="text-[10px] text-text-disabled mt-5">
+        {reportType === 'premium'
+          ? '약 60~120초 소요 · 10섹션 깊이 풀이'
+          : '약 15~30초 소요'}
+      </p>
     </div>
   );
 }
