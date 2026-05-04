@@ -16,7 +16,7 @@ import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA } from '@/components/common/FooterCTA';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { MonthlyDetailResponse, MonthlyDetail } from '@/types/report';
-import { stripMd } from '@/utils/format';
+import { stripMd, sanitizeAiText } from '@/utils/format';
 // Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
 import {
   EXTENSION_THEME,
@@ -290,7 +290,7 @@ export function MonthlyPage() {
                 ))}
               </div>
             )}
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.yearOverview)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.yearOverview) }} />
           </div>
         </FadeIn>
 
@@ -459,7 +459,7 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }} className="overflow-hidden">
             <div className="mt-4 space-y-3 text-body-sm text-text-secondary">
-              <p className="leading-relaxed">{stripMd(m.advice)}</p>
+              <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(m.advice) }} />
               {/* 3분야 점수 바 */}
               {(m as any).careerScore != null && (
                 <div className="grid grid-cols-3 gap-3 mb-1">
@@ -497,7 +497,7 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
               </div>
               {m.caution && (
                 <div className="py-2 px-3 rounded-lg" style={{ background: 'rgba(211,47,47,0.05)' }}>
-                  <p className="text-caption text-func-danger font-semibold">{stripMd(m.caution)}</p>
+                  <p className="text-caption text-func-danger font-semibold" dangerouslySetInnerHTML={{ __html: sanitizeAiText(m.caution) }} />
                 </div>
               )}
             </div>

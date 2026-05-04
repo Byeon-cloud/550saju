@@ -12,7 +12,7 @@ import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA, type FooterCTAPageKey } from '@/components/common/FooterCTA';
 import { ScoreRing } from '@/components/saju/ScoreRing';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
-import { stripMd } from '@/utils/format';
+import { stripMd, sanitizeAiText } from '@/utils/format';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
 import { normalizeTopicId } from '@/constants/topics';
 // Phase 2 Stage 2A — 공통 MonthTimeline 컴포넌트 (5 분기 wiring 시작)
@@ -441,13 +441,13 @@ function LoveViz({ data, color }: { data: any; color: string }) {
                   {pc.matchPoints?.map((m: string, i: number) => (
                     <div key={`m${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(45,138,78,0.05)' }}>
                       <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(45,138,78,0.12)', color: '#2D8A4E' }}>合</span>
-                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(m)}</p>
+                      <p className="text-[11px] text-text-secondary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(m) }} />
                     </div>
                   ))}
                   {pc.clashPoints?.map((c: string, i: number) => (
                     <div key={`c${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(230,81,0,0.04)' }}>
                       <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(230,81,0,0.10)', color: '#E65100' }}>沖</span>
-                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(c)}</p>
+                      <p className="text-[11px] text-text-secondary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
                     </div>
                   ))}
                 </div>
@@ -1365,13 +1365,13 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
                   {pc.matchPoints?.map((m: string, i: number) => (
                     <div key={`m${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(45,138,78,0.05)' }}>
                       <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(45,138,78,0.12)', color: '#2D8A4E' }}>合</span>
-                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(m)}</p>
+                      <p className="text-[11px] text-text-secondary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(m) }} />
                     </div>
                   ))}
                   {pc.clashPoints?.map((c: string, i: number) => (
                     <div key={`c${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(230,81,0,0.04)' }}>
                       <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5" style={{ background: 'rgba(230,81,0,0.10)', color: '#E65100' }}>沖</span>
-                      <p className="text-[11px] text-text-secondary leading-snug">{stripMd(c)}</p>
+                      <p className="text-[11px] text-text-secondary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
                     </div>
                   ))}
                 </div>
@@ -1782,14 +1782,14 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                   <div key={`m${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(45,138,78,0.05)' }}>
                     <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5"
                       style={{ background: 'rgba(45,138,78,0.12)', color: '#2D8A4E' }}>合</span>
-                    <p className="text-[11px] text-text-secondary leading-snug">{stripMd(m)}</p>
+                    <p className="text-[11px] text-text-secondary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(m) }} />
                   </div>
                 ))}
                 {pp.clashPoints?.map((c: string, i: number) => (
                   <div key={`c${i}`} className="flex items-start gap-2 rounded-lg p-2" style={{ background: 'rgba(230,81,0,0.04)' }}>
                     <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-black mt-0.5"
                       style={{ background: 'rgba(230,81,0,0.10)', color: '#E65100' }}>沖</span>
-                    <p className="text-[11px] text-text-secondary leading-snug">{stripMd(c)}</p>
+                    <p className="text-[11px] text-text-secondary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
                   </div>
                 ))}
               </div>
@@ -3629,11 +3629,11 @@ export function TopicAnalysisPage() {
                       style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
                       <p className="text-[10px] text-text-hint mb-1">사주 근거</p>
-                      <p className="text-[12px] text-text-secondary leading-relaxed">{stripMd(result.sajuBasis)}</p>
+                      <p className="text-[12px] text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.sajuBasis) }} />
                     </motion.div>
                   )}
                   {!result.sajuBasis && result.gradeLabel && (
-                    <p className="text-body-sm text-text-muted mt-3 text-center">{stripMd(result.gradeLabel)}</p>
+                    <p className="text-body-sm text-text-muted mt-3 text-center" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.gradeLabel) }} />
                   )}
 
                   {/* 등급 기준표 */}
@@ -3684,7 +3684,7 @@ export function TopicAnalysisPage() {
 
               {/* ── 요약 ── */}
               <div className="card">
-                <p className="text-body text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.summary)}</p>
+                <p className="text-body text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.summary) }} />
               </div>
 
               {/* ── 세부 역량 레이더 ── */}
@@ -3730,7 +3730,7 @@ export function TopicAnalysisPage() {
                         </div>
                         {sec.highlight && (
                           <div className="mb-3 rounded-xl py-2.5 px-3" style={{ background: `${topic.color}08` }}>
-                            <p className="text-[12px] font-semibold leading-snug" style={{ color: topic.color }}>{stripMd(sec.highlight)}</p>
+                            <p className="text-[12px] font-semibold leading-snug" style={{ color: topic.color }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(sec.highlight) }} />
                           </div>
                         )}
                         <SectionBody content={sec.content} color={topic.color} />
@@ -3767,7 +3767,7 @@ export function TopicAnalysisPage() {
                         <div key={i} className="flex items-start gap-2">
                           <span className="text-[10px] font-bold mt-0.5 w-14 flex-shrink-0 text-right" style={{ color: topic.color }}>{t.period}</span>
                           <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: topic.color }} />
-                          <p className="text-[11px] text-text-muted flex-1">{stripMd(t.description)}</p>
+                          <p className="text-[11px] text-text-muted flex-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(t.description) }} />
                         </div>
                       ))}
                     </div>
@@ -3819,7 +3819,7 @@ export function TopicAnalysisPage() {
                 <FadeIn delay={0.2}>
                   <div className="card-emphasis">
                     <p className="text-label mb-2" style={{ color: topic.color }}>지금 바로 할 수 있는 것</p>
-                    <p className="text-body text-text-primary leading-relaxed">{stripMd(result.actionAdvice)}</p>
+                    <p className="text-body text-text-primary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.actionAdvice) }} />
                   </div>
                 </FadeIn>
               ) : null}

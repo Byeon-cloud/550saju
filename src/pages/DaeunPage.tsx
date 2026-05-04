@@ -14,7 +14,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA } from '@/components/common/FooterCTA';
 import type { DaeunAnalysisResponse } from '@/types/report';
-import { stripMd } from '@/utils/format';
+import { sanitizeAiText } from '@/utils/format';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 // Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
 import {
@@ -215,7 +215,7 @@ export function DaeunPage() {
                 ))}
               </div>
             )}
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.overview)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.overview) }} />
           </div>
         </FadeIn>
 
@@ -260,7 +260,7 @@ export function DaeunPage() {
           <FadeIn delay={0.1}>
             <div className="card-gold py-6 px-5">
               <p className="text-h2 text-text-primary mb-1">지금 이 시기는?</p>
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.currentHighlight)}</p>
+              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.currentHighlight) }} />
             </div>
           </FadeIn>
         )}
@@ -281,7 +281,7 @@ export function DaeunPage() {
         <FadeIn delay={0.3}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-2">대운 전환기 조언</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.transitionAdvice)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.transitionAdvice) }} />
           </div>
         </FadeIn>
 
@@ -309,7 +309,7 @@ export function DaeunPage() {
                             <span className="text-[11px] text-brand-gold font-semibold">{lp.daeun}</span>
                             {isCurrent && <span className="text-[9px] font-bold text-white bg-brand-gold rounded px-1.5 py-0.5">NOW</span>}
                           </div>
-                          <p className="text-[11px] text-text-muted mt-0.5">{stripMd(lp.theme)}</p>
+                          <p className="text-[11px] text-text-muted mt-0.5" dangerouslySetInnerHTML={{ __html: sanitizeAiText(lp.theme) }} />
                         </div>
                       </div>
                     );
@@ -443,11 +443,11 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                 <div key={area.label}>
                   <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold mb-1"
                     style={{ background: `${area.color}12`, color: area.color }}>{area.label}</span>
-                  <p>{stripMd(area.value)}</p>
+                  <p dangerouslySetInnerHTML={{ __html: sanitizeAiText(area.value) }} />
                 </div>
               ))}
               <div className="pt-2 border-t border-border-light">
-                <p className="text-caption text-brand-gold font-semibold">{stripMd(period.advice)}</p>
+                <p className="text-caption text-brand-gold font-semibold" dangerouslySetInnerHTML={{ __html: sanitizeAiText(period.advice) }} />
               </div>
             </div>
           </motion.div>

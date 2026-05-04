@@ -15,7 +15,7 @@ import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA } from '@/components/common/FooterCTA';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { TojungResponse } from '@/types/report';
-import { stripMd } from '@/utils/format';
+import { stripMd, sanitizeAiText } from '@/utils/format';
 // Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
 import {
   EXTENSION_THEME,
@@ -256,7 +256,7 @@ export function TojungPage() {
                         transition={{ duration: 0.8, delay: 0.2 + i * 0.1 }} />
                     </div>
                   )}
-                  <p className="text-caption text-text-secondary leading-relaxed">{stripMd(value)}</p>
+                  <p className="text-caption text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(value) }} />
                 </motion.div>
               );
             })}
@@ -314,7 +314,7 @@ export function TojungPage() {
         <FadeIn delay={0.7}>
           <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(184,150,90,0.06)', border: '1px solid rgba(184,150,90,0.15)' }}>
             <p className="text-h3 text-text-primary mb-2">올해의 개운 조언</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.luckyAdvice)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.luckyAdvice) }} />
           </div>
         </FadeIn>
 

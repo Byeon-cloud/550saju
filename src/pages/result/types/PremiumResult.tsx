@@ -5640,7 +5640,8 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
           {fromText && <span className="han" style={{ fontSize: 10, color: '#7F6B4E' }}>· {fromText}</span>}
           <span className="tag">{isFull ? '강 · 핵심' : '중 · 작동'}</span>
         </div>
-        <p>{desc}</p>
+        {/* 2026-05-05: <strong> raw text 차단 */}
+        <p dangerouslySetInnerHTML={{ __html: sanitizeAiText(desc) }} />
         <div className="shinsal-meta">
           <div className="sm-pulse" title="작동 강도">
             {[0, 1, 2, 3, 4].map((i) => (
@@ -5680,7 +5681,8 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
       >
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 800, color: '#1A1A1A', minWidth: 36 }}>{krLabel}</span>
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 12, color: '#7F6B4E', minWidth: 28 }}>{s.hanja}</span>
-        <span style={{ flex: 1, fontSize: 12.5, color: '#3D3D3D', lineHeight: 1.5 }}>{desc}</span>
+        {/* 2026-05-05: <strong> raw text 차단 */}
+        <span style={{ flex: 1, fontSize: 12.5, color: '#3D3D3D', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(desc) }} />
         <span style={{
           flexShrink: 0,
           fontSize: 10,

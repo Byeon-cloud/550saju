@@ -13,7 +13,7 @@ import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA } from '@/components/common/FooterCTA';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import type { CompatibilityResponse } from '@/types/report';
-import { stripMd } from '@/utils/format';
+import { sanitizeAiText } from '@/utils/format';
 // Phase D'-4 Bundle 2 후속 (#54) — mockup 진본 시각 정렬 (CompatResultPage)
 import {
   EXTENSION_THEME,
@@ -154,7 +154,7 @@ export function CompatResultPage() {
         <FadeIn delay={0.05}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-2">궁합 총평</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.summary)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.summary) }} />
           </div>
         </FadeIn>
 
@@ -178,7 +178,7 @@ export function CompatResultPage() {
                 <p className="text-caption text-text-muted">{state.person2.name}</p>
               </div>
             </div>
-            <p className="text-body-sm text-text-secondary leading-relaxed">{stripMd(result.ohengHarmony.description)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.ohengHarmony.description) }} />
           </div>
         </FadeIn>
 
@@ -214,7 +214,7 @@ export function CompatResultPage() {
                     delay={i * 0.1}
                   />
                   {/* 2026-05-04 ml-[76px] 제거 — 모바일에서 한 줄당 12-15자 좁아 가독성 손상 */}
-                  <p className="text-caption text-text-muted mt-1 leading-relaxed">{stripMd(cat.description)}</p>
+                  <p className="text-caption text-text-muted mt-1 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(cat.description) }} />
                 </div>
               ))}
             </div>
@@ -229,7 +229,7 @@ export function CompatResultPage() {
               {result.strengths.map((s, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-brand-gold mt-0.5">●</span>
-                  <span className="text-body-sm text-text-secondary">{stripMd(s)}</span>
+                  <span className="text-body-sm text-text-secondary" dangerouslySetInnerHTML={{ __html: sanitizeAiText(s) }} />
                 </li>
               ))}
             </ul>
@@ -244,7 +244,7 @@ export function CompatResultPage() {
               {result.challenges.map((c, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-func-danger mt-0.5">●</span>
-                  <span className="text-body-sm text-text-secondary">{stripMd(c)}</span>
+                  <span className="text-body-sm text-text-secondary" dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
                 </li>
               ))}
             </ul>
@@ -255,7 +255,7 @@ export function CompatResultPage() {
         <FadeIn delay={0.3}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-2">종합 조언</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.advice)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.advice) }} />
           </div>
         </FadeIn>
 
@@ -263,7 +263,7 @@ export function CompatResultPage() {
         <FadeIn delay={0.35}>
           <div className="card py-5 px-5" style={{ borderLeft: '4px solid #7B1FA2' }}>
             <p className="text-h3 text-text-primary mb-2">미래 전망</p>
-            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line">{stripMd(result.futureOutlook)}</p>
+            <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.futureOutlook) }} />
           </div>
         </FadeIn>
 
