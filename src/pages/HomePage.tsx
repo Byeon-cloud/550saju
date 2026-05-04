@@ -245,7 +245,7 @@ export function HomePage() {
           천간·지지·대운·십성·신살 — 한 권의 깊이로 {hasProfile ? `${displayName}님` : '당신'}의 삶을 정리해드립니다.
         </p>
         <div className="mt-3.5 flex gap-1.5 flex-wrap relative">
-          {['10개 섹션 완전 분석', '가족·지인 재조회', 'PDF로 보관'].map((f) => (
+          {['10개 섹션 완전 분석', '가족·지인 사주도 함께', 'PDF로 보관'].map((f) => (
             <span key={f} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
               style={{ border: '1px solid rgba(232,217,184,0.28)', color: C.goldShimmer, background: 'rgba(232,217,184,0.06)' }}>
               {f}
@@ -255,7 +255,7 @@ export function HomePage() {
         <div className="mt-4 pt-3.5 flex items-center justify-between relative"
           style={{ borderTop: '1px solid rgba(232,217,184,0.18)' }}>
           <span className="text-[12px]" style={{ color: 'rgba(248,245,238,0.7)' }}>
-            한 번 열면 언제든 꺼내볼 수 있어요
+            한 번 결제하면 보관함에서 언제든 다시 보기
           </span>
           <span className="inline-flex items-center gap-1 text-[13px] font-bold px-4 py-2 rounded-full"
             style={{ background: C.goldShimmer, color: C.ink }}>

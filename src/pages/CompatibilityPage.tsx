@@ -136,7 +136,7 @@ export function CompatibilityPage() {
             두 사람의 사주로{'\n'}궁합을 확인해보세요
           </h1>
           <p className="text-body-sm text-text-muted mt-2">
-            사주 원국의 오행 조합과 십성 관계를 분석해요
+            두 사람의 결이 얼마나 잘 맞는지 살펴봐요
           </p>
         </FadeIn>
 

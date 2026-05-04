@@ -801,7 +801,7 @@ function IntentHintBlock({ hint }: { hint: string }) {
           {hint}
         </p>
         <p style={{ fontSize: 11, color: C.inkSoft, margin: '2px 0 0' }}>
-          3분이면 끝나요
+          잠깐이면 끝나요
         </p>
       </div>
     </div>
@@ -1264,7 +1264,7 @@ function BirthHourField({
             fontWeight: 500,
           }}
         >
-          시주 없이도 풀이는 가능하지만, 일부 해석이 간소화돼요 (약 20% 분량 ↓)
+          시주(시간 기둥) 부분만 빼고 풀이해드려요. 그 외엔 모두 분석돼요.
         </p>
       )}
 

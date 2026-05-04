@@ -307,7 +307,7 @@ export function ChargePage() {
             <strong style={{ color: C.goldDeep, fontWeight: 700 }}>1운 = 500원</strong>으로 충전돼요
           </div>
           <div style={{ marginTop: 2, fontSize: 11.5, color: C.mute }}>
-            콘텐츠는 모두 운 단위로 보여드려요
+            사주 풀이는 모두 운(運)으로 결제해요
           </div>
         </div>
         {/* "運" SVG 64×64 */}

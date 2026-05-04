@@ -213,7 +213,8 @@ export function CompatResultPage() {
                     color={CATEGORY_COLORS[cat.id] || '#B8965A'}
                     delay={i * 0.1}
                   />
-                  <p className="text-caption text-text-muted mt-1 ml-[76px] leading-relaxed">{stripMd(cat.description)}</p>
+                  {/* 2026-05-04 ml-[76px] 제거 — 모바일에서 한 줄당 12-15자 좁아 가독성 손상 */}
+                  <p className="text-caption text-text-muted mt-1 leading-relaxed">{stripMd(cat.description)}</p>
                 </div>
               ))}
             </div>
