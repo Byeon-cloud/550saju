@@ -397,6 +397,21 @@ function ShinsalSummary({
     return '본인 결';
   }
 
+  // 2026-05-05 유저 친화 종평 (준기 지적 — "본인 결"·"건강 주의" 단편 텍스트로는 의미 X)
+  // 강 신살의 tag 모아서 "지금까지 ~한 패턴 + 앞으로 ~하면 좋아요" 형태로
+  const strongOnes = list.filter((s) => s.tier.includes('강'));
+  const tags = [...new Set(strongOnes.map((s) => s.tag))].filter((t) => t !== '본인 결');
+
+  // 종평 텍스트 (강 신살 tag 기반)
+  let summary: string;
+  if (tags.length === 0) {
+    summary = `${userName} 님 사주는 특별히 강한 신살이 두드러지지 않습니다. 즉 <strong>한쪽으로 치우치지 않은 균형 잡힌 결</strong>이라 어느 자리에서도 적응이 좋다는 뜻이에요. 위 카드의 실천을 의식적으로 따르면 사주의 결이 더 또렷하게 살아납니다.`;
+  } else if (tags.length === 1) {
+    summary = `${userName} 님 사주에서 가장 또렷이 작동하는 결은 <strong>${tags[0]}</strong>입니다. 지금까지 살아오면서 이 결과 관련된 일이 자주 있었을 거예요. 위 카드의 실천을 의식적으로 따르면 강점으로, 모르고 두면 약점으로 작동합니다.`;
+  } else {
+    summary = `${userName} 님 사주에서 또렷이 작동하는 결은 <strong>${tags.slice(0, 2).join('·')}</strong>입니다. 지금까지 살아오면서 이 결들이 인생 곳곳에 영향을 줬을 거예요. 위 카드의 실천을 의식적으로 따르면 <strong>강점으로 살아나고</strong>, 모르고 두면 약점으로 작동합니다.`;
+  }
+
   return (
     <div
       style={{
@@ -404,7 +419,7 @@ function ShinsalSummary({
         background: 'linear-gradient(135deg, #fff 0%, rgba(212,175,55,0.04) 100%)',
         border: `1px solid ${C.line}`,
         borderRadius: 12,
-        padding: '14px 14px',
+        padding: '16px 16px',
       }}
     >
       <div
@@ -414,56 +429,21 @@ function ShinsalSummary({
           fontWeight: 700,
           color: C.goldDeep,
           letterSpacing: '0.04em',
-          marginBottom: 8,
+          marginBottom: 10,
         }}
       >
-        신살 한눈에 정리 · 神殺 一覽
+        ◇ 종합 — 그래서 어떻게 살아가면 될까요?
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {list.slice(0, 8).map((s, i) => {
-          const tierColor =
-            s.tier.includes('강') ? '#2e7d32' :
-            s.tier.includes('중') ? '#B8965A' :
-            '#7F6B4E';
-          return (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: 8,
-                padding: '6px 10px',
-                background: '#fff',
-                border: `1px solid ${C.line}`,
-                borderRadius: 8,
-                fontSize: 11.5,
-                lineHeight: 1.55,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 9.5,
-                  fontWeight: 800,
-                  color: '#fff',
-                  background: tierColor,
-                  padding: '1px 5px',
-                  borderRadius: 4,
-                  minWidth: 22,
-                  textAlign: 'center',
-                }}
-              >
-                {s.tier}
-              </span>
-              <span style={{ fontWeight: 700, color: C.ink, minWidth: 56 }}>{s.kr}</span>
-              {s.hanja && <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 10.5, color: C.goldDeep, minWidth: 36 }}>{s.hanja}</span>}
-              <span style={{ color: C.inkSoft, flex: 1 }}>{s.tag}</span>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ fontSize: 10.5, color: C.mute, marginTop: 8, lineHeight: 1.55 }}>
-        ※ {userName} 님 사주에 자리한 신살은 위 카드의 <strong style={{ color: C.goldDeep }}>실천</strong>을 의식적으로 따르면 강점으로, 모르고 두면 약점으로 작동합니다.
-      </div>
+      <p
+        style={{
+          fontSize: 13,
+          color: C.ink,
+          lineHeight: 1.75,
+          margin: 0,
+          wordBreak: 'keep-all',
+        }}
+        dangerouslySetInnerHTML={{ __html: sanitizeAiText(summary) }}
+      />
     </div>
   );
 }
@@ -1067,35 +1047,33 @@ function Section3Conclusion({
 }: {
   userName: string; sipDist: SipDist; aiText: string;
 }) {
+  // 2026-05-05 통일성 — 모든 §결론은 SectionConclusion 컴포넌트 통과 (다른 §과 동일 톤·강조 색상)
   if (aiText && aiText.length >= 30) {
     return <SectionConclusion label={`이 섹션의 결론 — 한 줄로 ${userName} 님은`}>{aiText}</SectionConclusion>;
   }
+  // fallback — sipDist 기반 동적 한 줄 (① ② ③ 패턴으로 SectionConclusion 에 위임)
   const sorted = (Object.entries(sipDist) as [keyof SipDist, number][]).sort((a, b) => b[1] - a[1]);
   const top = sorted[0][0];
   const total = sorted.reduce((a, b) => a + b[1], 0) || 1;
   const pct = (k: keyof SipDist) => Math.round((sipDist[k] / total) * 100);
   const ONE_LINE: Record<keyof SipDist, string> = {
-    비겁: `<strong>"자기 길을 개척하는 사람"</strong>`,
-    식상: `<strong>"만들고 드러내는 사람"</strong>`,
-    재성: `<strong>"실리·자원을 다루는 사람"</strong>`,
-    관성: `<strong>"책임·평가를 받쳐주는 사람"</strong>`,
-    인성: `<strong>"받아들이고 익히는 사람"</strong>`,
+    비겁: '"자기 길을 개척하는 사람"',
+    식상: '"만들고 드러내는 사람"',
+    재성: '"실리·자원을 다루는 사람"',
+    관성: '"책임·평가를 받쳐주는 사람"',
+    인성: '"받아들이고 익히는 사람"',
   };
-  const html =
-    `<p style="font-size:14px; font-weight:500; line-height:1.65;">"${ONE_LINE[top]}"</p>` +
-    `<p>→ 본인이 <strong>${top}(${pct(top)}%)이 가장 두꺼운 결</strong>. 이 결을 살리는 자리에 가야 본인이 살아납니다.</p>` +
-    (sipDist.식상 >= 2 && sipDist.관성 >= 1
-      ? `<p>→ 직장 안에서 답답한 건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>1인 프로젝트·사업</strong> 쪽이 사주에 더 맞습니다.</p>`
-      : `<p>→ ${userName} 님 사주는 한쪽으로 치우치지 않은 <strong>균형 잡힌 결</strong>. 어느 자리에서도 적응하는 강점이 있되, 본인 결정 권한을 의식적으로 잡아두세요.</p>`) +
-    (sipDist.비겁 >= 2 && sipDist.재성 >= 1
-      ? `<p>→ 돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong>. 동업·지인 투자는 통계가 아니라 <strong>사주에 박힌 취약점</strong>입니다.</p>`
-      : '');
-  return (
-    <div className="section-conclusion">
-      <div className="sc-label">이 섹션의 결론 — 한 줄로 {userName} 님은</div>
-      <div dangerouslySetInnerHTML={{ __html: html }} />
-    </div>
-  );
+  // ① ② ③ 패턴으로 묶음 → SectionConclusion 의 numSplit 분기에서 동일 디자인 렌더
+  const text = [
+    `① <strong>${ONE_LINE[top]}</strong> — 본인이 <strong>${top}(${pct(top)}%)이 가장 두꺼운 결</strong>. 이 결을 살리는 자리에 가야 본인이 살아납니다.`,
+    sipDist.식상 >= 2 && sipDist.관성 >= 1
+      ? `② 직장 안에서 답답하다면 — 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>1인 프로젝트·사업</strong> 쪽이 사주에 더 맞아요.`
+      : `② ${userName} 님 사주는 한쪽으로 치우치지 않은 <strong>균형 잡힌 결</strong>. 어느 자리에서도 적응하지만 본인 결정 권한을 의식적으로 잡아두세요.`,
+    sipDist.비겁 >= 2 && sipDist.재성 >= 1
+      ? `③ 돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong> — 동업·지인 투자는 사주에 박힌 취약점입니다.`
+      : ''
+  ].filter(Boolean).join('\n');
+  return <SectionConclusion label={`이 섹션의 결론 — 한 줄로 ${userName} 님은`}>{text}</SectionConclusion>;
 }
 
 function Section4Conclusion({
@@ -1146,7 +1124,10 @@ function Section5Conclusion({
 /**
  * Section8Conclusion — mockup §8 결론 형식 (관계 한 줄 정리) — sipDist 기반 동적
  */
-function Section8Conclusion({
+// 2026-05-05 dead code (준기 결단 · 다음 sprint 재도입 가능)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-expect-error preserved
+function _Section8Conclusion({
   userName,
   sipDist,
   dayOheng,
@@ -2673,12 +2654,8 @@ export function PremiumResult({
           <Section4Avoid sajuData={sajuData} dayOheng={dayOheng} aiText={typeof aiResult.yongsinAvoid === 'string' ? aiResult.yongsinAvoid : ''} />
           {/* mockup §4 일상 적용 8행 진본 — 색·방위·계절·시간대·음식·물건·취미·사람 */}
           <YongsinLifeTable primary={yongsin.primary} lifestyle={lifestyle} />
-          {/* AI yongsin 본문 또는 fallback 생활 처방 */}
-          <LifestyleAdvice
-            aiResult={aiResult}
-            primary={yongsin.primary}
-            lifestyle={lifestyle}
-          />
+          {/* 2026-05-05 LifestyleAdvice 제거 (준기 지적) — YongsinLifeTable 8 카드와 중복.
+              레이아웃 통일성 깨짐 + 같은 정보 두 번 노출 → 카드만 유지. */}
           <Section4Conclusion
             userName={report.name || '회원'}
             primary={yongsin.primary}
@@ -2772,30 +2749,10 @@ export function PremiumResult({
         </CollapsibleSection>
       </LocalFadeIn>
 
-      <SectionDivider label="六 親" />
-
-      {/* ═════════════ 08 관계의 결 (六親) — 부모·형제·배우자·자녀·친구·상사 ═════════════ */}
-      <LocalFadeIn delay={50}>
-        <CollapsibleSection step={8} title="관계의 결" hanja="六親" hint="사주가 그려놓은 부모·형제·배우자·자녀·친구·동료의 자리">
-          {/* 2026-05-04 안내 추가 — 형제·자녀 없는 사람도 사주에 그려진 결을 가짐 (인연의 결) */}
-          <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0 6px', wordBreak: 'keep-all' }}>
-            사주는 본인뿐 아니라 가까운 사람들과의 결까지 함께 새겨놓습니다.
-            아래 6 카드는 <strong>부모·형제·배우자·자녀·친구·동료</strong>의 <strong>핵심 본질 + 살릴 것 + 조심할 것</strong>을 보여줍니다.
-          </p>
-          <p style={{ fontSize: 12, color: '#7A7269', lineHeight: 1.6, margin: '0 0 10px', fontStyle: 'italic' }}>
-            ※ 형제·자녀가 없는 분이라도 — 사주가 그리는 건 <strong>그 자리의 결</strong>입니다.
-            형제 자리가 가벼우면 동료·친구로, 자녀 자리가 비면 후배·반려동물·창작물로 채워지는 결로 읽어주세요.
-          </p>
-          {/* Stage 2C-#5: 관계의 결 6 카드 (mockup rel6-list 진본) */}
-          <RelationSixCards sipDist={sipDist} aiCards={aiResult.rel6Cards} />
-          {/* §08 결론 — AI 가 채우면 그 본문, 없으면 sipDist 기반 동적 한 줄 */}
-          {conclusionAt(7) ? (
-            <SectionConclusion label="이 섹션의 결론 — 관계 한 줄 정리">{conclusionAt(7)}</SectionConclusion>
-          ) : (
-            <Section8Conclusion userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} />
-          )}
-        </CollapsibleSection>
-      </LocalFadeIn>
+      {/* 2026-05-05 §08 관계의 결 통째 제거 (준기 결단) —
+          이유: 형제·자녀·배우자가 없는 사람도 있는데 모든 관계 잘된다는 식 부적절.
+          유저가 궁금하면 주제별 사주 (10주제) 에서 별도 분석 가능. 여기서 보여줄 필요 X.
+          관련 컴포넌트(RelationSixCards, Section8Conclusion) 는 dead code (보존). */}
 
       <SectionDivider label="主 題" />
 
@@ -3300,7 +3257,10 @@ function YongsinChip({
 
 
 /** 생활 행동 처방 — AI yongsin/lifestyle 응답 또는 fallback */
-function LifestyleAdvice({
+// 2026-05-05 dead code (준기 결단 · 다음 sprint 재도입 가능)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-expect-error preserved
+function _LifestyleAdvice({
   aiResult,
   primary,
   lifestyle,
@@ -5738,7 +5698,10 @@ interface AiRel6Cards {
   parent?: AiRel6Card; sibling?: AiRel6Card; spouse?: AiRel6Card;
   child?: AiRel6Card; friend?: AiRel6Card; boss?: AiRel6Card;
 }
-function RelationSixCards({ sipDist, aiCards }: { sipDist: any; aiCards?: AiRel6Cards }) {
+// 2026-05-05 dead code (준기 결단 · 다음 sprint 재도입 가능)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-expect-error preserved
+function _RelationSixCards({ sipDist, aiCards }: { sipDist: any; aiCards?: AiRel6Cards }) {
   type RelKey = 'parent' | 'sibling' | 'spouse' | 'child' | 'friend' | 'boss';
   // 사주별 동적 — 십성 카운트별 summary 생성 함수
   const sip = {
