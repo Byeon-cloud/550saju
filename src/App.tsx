@@ -20,7 +20,7 @@ const HomePageV5 = lazy(() => import('@/pages/HomePageV5').then(m => ({ default:
 // Lazy-loaded pages (코드 스플리팅)
 const InputPage = lazy(() => import('@/pages/InputPage').then(m => ({ default: m.InputPage })));
 const LoadingPage = lazy(() => import('@/pages/LoadingPage').then(m => ({ default: m.LoadingPage })));
-const ResultPage = lazy(() => import('@/pages/ResultPage').then(m => ({ default: m.ResultPage })));
+const ResultPage = lazy(() => import('@/pages/result/ResultPage').then(m => ({ default: m.ResultPage })));
 const DailyFortunePage = lazy(() => import('@/pages/DailyFortunePage').then(m => ({ default: m.DailyFortunePage })));
 const CompatibilityPage = lazy(() => import('@/pages/CompatibilityPage').then(m => ({ default: m.CompatibilityPage })));
 const StoragePage = lazy(() => import('@/pages/StoragePage').then(m => ({ default: m.StoragePage })));
@@ -28,15 +28,23 @@ const ChargePage = lazy(() => import('@/pages/ChargePage').then(m => ({ default:
 const MyPage = lazy(() => import('@/pages/MyPage').then(m => ({ default: m.MyPage })));
 const SharePage = lazy(() => import('@/pages/SharePage').then(m => ({ default: m.SharePage })));
 const DreamPage = lazy(() => import('@/pages/DreamPage').then(m => ({ default: m.DreamPage })));
-const ChatPage = lazy(() => import('@/pages/ChatPage').then(m => ({ default: m.ChatPage })));
+// #51 Sprint 2 — ChatPage 3-route 분리
+const ChatListPage = lazy(() => import('@/pages/chat/ChatListPage').then(m => ({ default: m.ChatListPage })));
+const ChatNewPage = lazy(() => import('@/pages/chat/ChatNewPage').then(m => ({ default: m.ChatNewPage })));
+const ChatSessionPage = lazy(() => import('@/pages/chat/ChatSessionPage').then(m => ({ default: m.ChatSessionPage })));
 const DaeunPage = lazy(() => import('@/pages/DaeunPage').then(m => ({ default: m.DaeunPage })));
 const MonthlyPage = lazy(() => import('@/pages/MonthlyPage').then(m => ({ default: m.MonthlyPage })));
 const CompatResultPage = lazy(() => import('@/pages/CompatResultPage').then(m => ({ default: m.CompatResultPage })));
 const TojungPage = lazy(() => import('@/pages/TojungPage').then(m => ({ default: m.TojungPage })));
+const PremiumSelectPage = lazy(() => import('@/pages/PremiumSelectPage').then(m => ({ default: m.PremiumSelectPage })));
+// 폐기됨 (iframe srcDoc + regex 패턴) — _archive_/ 로 이동. 진본은 PremiumResult.tsx
+const ChatPagePerfect = lazy(() => import('@/pages/ChatPagePerfect').then(m => ({ default: m.ChatPagePerfect })));
 const TopicAnalysisPage = lazy(() => import('@/pages/TopicAnalysisPage').then(m => ({ default: m.TopicAnalysisPage })));
 const TermsPage = lazy(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const EventsPage = lazy(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
+// #saju-card-share Stage 2 — 만세력 카드 페이지 (lazy)
+const SajuCardPage = lazy(() => import('@/pages/saju-card/SajuCardPage').then(m => ({ default: m.SajuCardPage })));
 
 /** 페이지 전환 애니메이션 — 토스 스타일 */
 const pageVariants = {
@@ -136,6 +144,8 @@ function AnimatedRoutes() {
             <Route path="/daeun" element={<DaeunPage />} />
             <Route path="/monthly" element={<MonthlyPage />} />
             <Route path="/tojung" element={<TojungPage />} />
+            <Route path="/premium" element={<PremiumSelectPage />} />
+            <Route path="/chat-perfect" element={<ChatPagePerfect />} />
             <Route path="/topic" element={<TopicAnalysisPage />} />
             <Route path="/topic/:topicId" element={<TopicAnalysisPage />} />
             <Route path="/storage" element={<StoragePage />} />
@@ -143,11 +153,15 @@ function AnimatedRoutes() {
             <Route path="/my" element={<MyPage />} />
             <Route path="/share/:id" element={<SharePage />} />
             <Route path="/dream" element={<DreamPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/chat/:roomId" element={<ChatPage />} />
+            {/* #51 Sprint 2 — /chat 3-route 분리 (new 라우트가 :sessionId보다 먼저) */}
+            <Route path="/chat" element={<ChatListPage />} />
+            <Route path="/chat/new" element={<ChatNewPage />} />
+            <Route path="/chat/:sessionId" element={<ChatSessionPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/events" element={<EventsPage />} />
+            {/* #saju-card-share — 만세력 카드 (프로필 단위) */}
+            <Route path="/saju-card/:profileId" element={<SajuCardPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
@@ -183,7 +197,8 @@ export function App() {
         });
         mod.tdsEvent?.addEventListener?.('navigationAccessoryEvent', {
           onEvent: ({ id }: { id: string }) => {
-            if (id === 'charge') window.location.href = '/charge';
+            // SDK 이벤트 콜백 (Hook 사용 불가) — assign 으로 SPA navigation 강등 (앱인토스 웹뷰 안전)
+            if (id === 'charge') window.location.assign('/charge');
           },
         });
 
@@ -218,9 +233,9 @@ export function App() {
               mod.closeView?.();
               return;
             }
-            // 결과 페이지면 홈으로
+            // 결과 페이지면 홈으로 (SDK 콜백, Hook 사용 불가 — assign 사용)
             if (path.startsWith('/result')) {
-              window.location.href = '/';
+              window.location.assign('/');
               return;
             }
             // 그 외 → 브라우저 뒤로가기

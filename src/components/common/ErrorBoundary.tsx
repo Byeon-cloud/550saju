@@ -41,7 +41,8 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
           <h2 className="text-h2 text-text-primary mb-2">오류가 발생했습니다</h2>
           <p className="text-body-sm text-text-muted mb-6">잠시 후 다시 시도해주세요</p>
-          <Button onClick={() => window.location.href = '/'}>홈으로 돌아가기</Button>
+          {/* ErrorBoundary 는 클래스 컴포넌트 (Hook 불가) — React state corrupt 가능성 → 의도적 풀 리로드 */}
+          <Button onClick={() => window.location.assign('/')}>홈으로 돌아가기</Button>
         </div>
       );
     }
