@@ -134,8 +134,10 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .section p strong,
   .premium-mockup .section-body p strong {
     font-weight: 800;
-    color: #8C6D3D;  /* 황금 deep — 텍스트 자체도 골드 톤 */
-    background: linear-gradient(180deg, transparent 62%, rgba(184,150,90,0.32) 62%);
+    /* 2026-05-04 준기 결단: 본문 줄글 strong 색 가독성 보강 (#8C6D3D → #A37A2E)
+     * + 다크박스 안 #f4d166 톤과 어울리도록 형광펜 더 진하게 (alpha 0.32 → 0.55) */
+    color: #A37A2E;
+    background: linear-gradient(180deg, transparent 60%, rgba(244,209,102,0.55) 60%);
     padding: 0 2px;
     border-radius: 1px;
     letter-spacing: 0.005em;
@@ -155,14 +157,14 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     text-underline-offset: 2px;
     color: inherit;
   }
-  /* 한자(漢字) 강조 변형 — <strong> 안에 한자가 있으면 골드 텍스트 색 더 deep */
+  /* 한자(漢字) 강조 변형 — 2026-05-04 가독성 보강: #5C4A2E → #8C6D3D */
   .premium-mockup .section p strong:has(span.han),
   .premium-mockup .section-body p strong:has(span.han) {
-    color: #5C4A2E;
+    color: #8C6D3D;
   }
   .premium-mockup .section p .han {
     font-family: 'Noto Serif KR', serif;
-    color: #5C4A2E;
+    color: #8C6D3D;
     font-size: 13px;
     margin: 0 1px;
   }/* ─── 1. 원국 (사주 8글자 카드) ───────────────────────── */

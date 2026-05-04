@@ -32,6 +32,8 @@ const C = {
   grayLine: '#E5DFD0',
   gold: '#B8965A',
   goldDark: '#8C6D3D',           // SSOT gold-deep — D1 fix (2026-04-23)
+  /** 2026-05-04 신규: h2 헤드라인 강조 색 (PremiumResult 본문 strong 과 통일 · 가독성 ↑) */
+  goldHi: '#A37A2E',
   goldSoft: 'rgba(184,150,90,0.14)', // SSOT soft gold — D1 fix (2026-04-23)
   goldShimmer: '#E8D9B8',
 } as const;
@@ -294,7 +296,7 @@ export function HomePage() {
           <span className="text-[10.5px] font-bold" style={{ color: C.gray500 }}>10주제 · 1운씩</span>
         </div>
         <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          진짜 궁금한 한 가지, <span style={{ color: C.goldDark }}>깊게 파보세요</span>
+          진짜 궁금한 한 가지, <span style={{ color: C.goldHi }}>깊게 파보세요</span>
         </h2>
       </div>
       <p className="mx-4 mt-2 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>
@@ -356,23 +358,6 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* ─── [06inline] 사주대화 anchor (2026-05-04: DEEP DIVE 와 VOICES 사이 유지) ─── */}
-      <div className="mx-4 mt-6 text-center">
-        <button
-          type="button"
-          onClick={go('/chat')}
-          className="text-[12.5px] font-medium tracking-[-0.005em] inline-flex items-center gap-1 px-3 py-2 rounded-full transition-colors"
-          style={{ color: C.gray500 }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = C.gold; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = C.gray500; }}
-        >
-          심층적인 상담이 필요한 날엔?
-          <span className="font-bold" style={{ color: C.goldDark }}>
-            사주 상담하러 가기 →
-          </span>
-        </button>
-      </div>
-
       {/* ─── [07] Reviews 16 (우→좌 자동 캐러셀) · 2026-05-04 swap: DEEP DIVE 다음 ─── */}
       <div id="voices-section" className="mx-4 mt-9 scroll-mt-24">
         <div className="flex items-baseline gap-2">
@@ -380,7 +365,7 @@ export function HomePage() {
           <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
         </div>
         <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          먼저 받아본 분들이 <span style={{ color: C.goldDark }}>남긴 한 줄</span>
+          먼저 받아본 분들이 <span style={{ color: C.goldHi }}>남긴 한 줄</span>
         </h2>
       </div>
       <div className="mt-3 overflow-hidden pb-2"
@@ -400,6 +385,26 @@ export function HomePage() {
         </div>
       </div>
 
+      {/* ─── [06inline] 사주대화 anchor (2026-05-04: VOICES 밑으로 이동 + 키움 + 줄바꿈) ─── */}
+      <div className="mx-4 mt-7 text-center">
+        <button
+          type="button"
+          onClick={go('/chat')}
+          className="inline-flex flex-col items-center gap-1.5 px-5 py-3.5 rounded-2xl transition-colors"
+          style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.gold; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.grayLine; }}
+        >
+          <span className="text-[14px] font-medium" style={{ color: C.gray500 }}>
+            심층적인 상담이 필요한 날엔?
+          </span>
+          <span className="text-[17px] font-extrabold tracking-[-0.01em]"
+            style={{ color: C.goldHi, fontFamily: SERIF }}>
+            사주 상담하러 가기 →
+          </span>
+        </button>
+      </div>
+
       {/* ─── [08] 3 차별성 인포그래픽 (PM 결정 #7 · 사주대화 카드 제거 + 철학 → 차별성 도식화) ─── */}
       {/*  멘트 던지지 말고 도식화. 이모지 X. SVG 아이콘 + 한자 + 컬러 칩만 사용.  */}
       <div className="mx-4 mt-9 w-[calc(100%-32px)]">
@@ -409,7 +414,7 @@ export function HomePage() {
         </div>
         <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]"
           style={{ color: C.ink, fontFamily: SERIF }}>
-          사주500이 <span style={{ color: C.goldDark }}>남다른 세 가지</span>
+          사주500이 <span style={{ color: C.goldHi }}>남다른 세 가지</span>
         </h2>
         <div className="grid grid-cols-3 gap-2">
           {/* Card 1 — 어려운 한자 No (한자 X 도식) */}
@@ -503,7 +508,7 @@ export function HomePage() {
           </span>
         </div>
         <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          지금 가장 많이 보는 <span style={{ color: C.goldDark }}>Top 5</span>
+          지금 가장 많이 보는 <span style={{ color: C.goldHi }}>Top 5</span>
         </h2>
         <div className="mt-2 flex flex-col gap-2">
           {liveBestTop5.map((item) => (
