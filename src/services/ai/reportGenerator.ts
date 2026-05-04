@@ -43,6 +43,114 @@ export async function generateReport(
 }
 
 /**
+ * T1 · 프리미엄 리포트 — SSE 스트리밍 (그룹 단위 점진 도착)
+ *  · 서버 generatePremiumReportStream 호출 → 3 그룹 (A/B/C) 병렬 + 도착 즉시 송출
+ *  · onGroup 콜백: 각 그룹 완료 시 partial 결과 (A/B/C 순서 무관)
+ *  · onDone 콜백: 모든 그룹 merged + Firestore reportId
+ *  · onError 콜백: 그룹 실패 또는 잔액 차감 실패 시
+ *  · Opus 4.6 단일 모델 (퀄리티 보장)
+ */
+export interface PremiumStreamCallbacks {
+  onStart?: () => void;
+  onGroup?: (group: 'A' | 'B' | 'C', data: any, elapsedMs: number) => void;
+  onDone: (result: { reportId: string; content: AIReportResponse }) => void;
+  onError: (message: string) => void;
+}
+
+export async function generatePremiumReportStream(
+  sajuData: SajuData,
+  situation: Situation | undefined,
+  callbacks: PremiumStreamCallbacks,
+): Promise<void> {
+  await ensureFunctionsTarget();
+  await ensureAuth();
+
+  // Firebase ID Token 가져오기
+  const { getAuth } = await import('firebase/auth');
+  const auth = getAuth();
+  const idToken = await auth.currentUser?.getIdToken();
+  if (!idToken) {
+    callbacks.onError('인증 토큰을 가져올 수 없습니다');
+    return;
+  }
+
+  // Functions endpoint URL — region 'us-central1' 기준
+  const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
+  if (!projectId) {
+    callbacks.onError('Firebase 프로젝트 설정 오류');
+    return;
+  }
+  const useEmulator =
+    import.meta.env.DEV &&
+    import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
+  const url = useEmulator
+    ? `http://localhost:5001/${projectId}/us-central1/generatePremiumReportStream`
+    : `https://us-central1-${projectId}.cloudfunctions.net/generatePremiumReportStream`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ sajuData, situation }),
+    });
+
+    if (!res.ok || !res.body) {
+      callbacks.onError(`서버 오류 ${res.status}`);
+      return;
+    }
+
+    // SSE 파서 — line-buffered
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE event: 한 이벤트 = `event: X\ndata: Y\n\n`
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || ''; // 마지막은 incomplete 일 수 있음
+
+      for (const ev of events) {
+        if (!ev.trim()) continue;
+        const lines = ev.split('\n');
+        let eventName = 'message';
+        let dataLine = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          else if (line.startsWith('data: ')) dataLine = line.slice(6);
+        }
+        if (!dataLine) continue;
+        let payload: any = null;
+        try { payload = JSON.parse(dataLine); } catch { continue; }
+
+        if (eventName === 'start') {
+          callbacks.onStart?.();
+        } else if (eventName === 'group') {
+          callbacks.onGroup?.(payload.group, payload.data, payload.elapsedMs);
+        } else if (eventName === 'done') {
+          callbacks.onDone({
+            reportId: payload.reportId,
+            content: payload.content as AIReportResponse,
+          });
+          return;
+        } else if (eventName === 'error' || eventName === 'groupError') {
+          callbacks.onError(payload.message || '알 수 없는 오류');
+          return;
+        }
+      }
+    }
+  } catch (e: any) {
+    callbacks.onError(e?.message || '네트워크 오류');
+  }
+}
+
+/**
  * 오늘의 운세 — Firebase Function → Claude Sonnet 4.6 (v3 스키마).
  *
  * Phase C 에서 DailyFortunePage 가 v4 입력(name, sajuData, date, todayGanzi 등)으로 전환.
@@ -89,18 +197,8 @@ export async function generateDreamDeepV3(args: {
   return result.data as { reportId: string; content: any };
 }
 
-/**
- * 주간 흐름 (v3 신규, 유료 1운) — Firebase Function → Claude Sonnet 4.6 + 2차 리뷰.
- */
-export async function generateWeeklyFortune(args: {
-  name: string;
-  sajuData: SajuData;
-  monday: string;
-  weekdays: Array<{ date: string; weekday: string; ganzi: string }>;
-}): Promise<{ reportId: string; content: any }> {
-  const result = await callWithAuth('generateWeeklyFortune', args);
-  return result.data as { reportId: string; content: any };
-}
+// Stage 7e-7: generateWeeklyFortune 폐지 (사용자 결정 — 주간운세 서비스 미제공)
+// 서버측 claudeWeekly.ts 는 유지 (legacy 호환), 클라이언트 export 제거.
 
 /**
  * AI 대화 — Firebase Function → Gemini 2.5 Pro

@@ -1,871 +1,1262 @@
-import { useState, useMemo, useRef } from 'react';
+// DailyFortunePage — #57 Sprint 2 UI 개편 (2026-04-24)
+// 스펙: docs/mockups/사주500_UI개편_03_결과.md §10 (오늘운세 고유 레이아웃) · §6 (UpsellCard) · §7 (AdBanner)
+// 핸드오프: §2-10
+//
+// 결과 구조 (§10):
+//   - 상단 day-tile 96px 풀폭 · 좌 "M/D" Display 40 · 우 일주(60갑자) 한자
+//   - L1 요약 (한자 32px + 점수 + 3~5문장)
+//   - L2 본문 (오늘의 톤 + 시간대 흐름 압축)
+//   - L3 심층 [축소] 1문단 (4영역 mini grid + reason)
+//   - L4 "오늘 해볼 3가지" 고정 (체크리스트 3개 + 한 줄)
+//   - AdBanner — build === 'appintos' && tier === 'free' 만
+//   - UpsellCard 프리미엄 10운 (§6 단일, 과잉 금지)
+//
+// 보존 (절대 삭제 금지):
+//   - DailyRewardBadge (P2-5)
+//   - SSOT 토큰 (#41 sweep + D1 fix)
+//   - Flippable 정적화 (#39) — 결과 phase에서 SajuMiniCard 제거 (day-tile로 대체) · 재플립 추가 금지
+
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Solar } from 'lunar-javascript';
+import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { AILoading } from '@/components/common/AILoading';
-import { Button } from '@/components/common/Button';
-import { BannerAd as BannerAdLazy } from '@/components/ads/BannerAd';
-import { getProfiles, spendBalance, saveReport, generateId, type SajuProfile } from '@/services/storage/localStore';
-import { CHEONGAN_OHENG } from '@/constants/oheng';
+import { ErrorState } from '@/components/common/ErrorState';
+import { ProfileSelector } from '@/components/common/ProfileSelector';
+import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
+import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
+import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
 import { useToast } from '@/components/common/Toast';
+import {
+  getProfiles,
+  saveReport,
+  generateId,
+  type SajuProfile,
+} from '@/services/storage/localStore';
 import { generateDailyFortune } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
-import { Pictogram, type ConcernKey } from '@/components/brand/PictogramRegistry';
+import type { OhengType } from '@/types/saju';
+// Phase D'-3 Bundle 2 (#54) — mockup 진본 시각 정렬
+import {
+  TodayRelationCard,
+  TodayOhengRow,
+  TodayTopicGrid,
+  TodayMeetStack,
+  FreeUpsellCard,
+  type OhengItem,
+  type TodayTopicCard,
+  type TodayMeetItem,
+} from './free/_chrome';
+import { TOPIC_REGISTRY } from '@/constants/topics';
+import { isAppintosBuild } from '@/lib/env';
+import { AD_BANNER_GROUP_ID } from '@/constants/config';
+import { AdSlot } from '@/components/ads/AdSlot';
 
-// ─── 시간대 감지 (7단계) ───
-type TimeSlot = 'latenight' | 'dawn' | 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
+/* ══════════════════════════════════════════════════════════════════
+ * 토큰 / 매핑
+ * ═════════════════════════════════════════════════════════════════ */
 
-function getTimeSlot(): TimeSlot {
-  const h = new Date().getHours();
-  if (h >= 0 && h < 5) return 'latenight';
-  if (h >= 5 && h < 7) return 'dawn';
-  if (h >= 7 && h < 12) return 'morning';
-  if (h >= 12 && h < 14) return 'noon';
-  if (h >= 14 && h < 18) return 'afternoon';
-  if (h >= 18 && h < 21) return 'evening';
-  return 'night';
-}
-
-const TIME_CONTEXT: Record<TimeSlot, { greeting: string; tone: string; label: string; sub: string }> = {
-  latenight: {
-    greeting: '이 늦은 밤, 마음에 무언가 남았군요',
-    tone: '이 시간까지 고민하고 계신다면, 꽤 중요한 문제인 것 같아요. 차분히 풀어볼게요.',
-    label: '자시(子時)',
-    sub: '수(水)의 기운이 가장 깊은 시간',
-  },
-  dawn: {
-    greeting: '이른 아침이에요. 하루의 시작을 함께할게요',
-    tone: '동이 트기 전, 차분한 에너지가 흐르고 있어요. 오늘의 방향을 잡아볼게요.',
-    label: '인시(寅時)',
-    sub: '목(木)의 기운이 움트는 시간',
-  },
-  morning: {
-    greeting: '좋은 아침이에요!',
-    tone: '하루를 시작하는 양(陽)의 기운이 가장 좋은 시간이에요.',
-    label: '오전',
-    sub: '새로운 시작에 유리한 시간대',
-  },
-  noon: {
-    greeting: '점심시간이네요. 잠깐 쉬면서 봐요',
-    tone: '정오의 화(火) 기운이 가장 강한 시간. 직감이 또렷해져요.',
-    label: '오시(午時)',
-    sub: '화(火)의 기운이 절정인 시간',
-  },
-  afternoon: {
-    greeting: '오후의 기운을 읽어볼게요',
-    tone: '하루의 후반부, 남은 시간을 어떻게 쓸지 함께 봐요.',
-    label: '오후',
-    sub: '금(金)의 수렴 기운으로 판단력이 좋아지는 시간',
-  },
-  evening: {
-    greeting: '오늘 하루 수고하셨어요',
-    tone: '하루를 마무리하는 시간이에요. 내일을 위한 기운도 함께 볼게요.',
-    label: '저녁',
-    sub: '하루를 돌아보기에 좋은 시간',
-  },
-  night: {
-    greeting: '고요한 밤이에요. 편안하게 봐요',
-    tone: '밤에 보는 운세는 더 솔직해져요. 마음 깊은 곳의 이야기를 해볼까요.',
-    label: '해시(亥時)',
-    sub: '수(水)의 기운이 시작되는 시간',
-  },
+/** v4 등급 팔레트 — D1 fix: A를 SSOT gold(#B8965A), C를 SSOT gold-deep(#8C6D3D)로 정렬 */
+const GRADE_V4: Record<string, string> = {
+  S: '#B8965A',
+  A: '#B8965A', // (D1 fix 2026-04-24: was #A08B6A)
+  B: '#2D4470',
+  C: '#8C6D3D', // (D1 fix 2026-04-24: was #8F6B4E)
+  D: '#8F1F1C',
 };
 
-// ─── 고민 영역 칩 (1단계 선택 UI용) — 이모지 제거, 브랜드 픽토그램 사용
-//    id는 PictogramRegistry의 concern:* key와 1:1 매핑 (브랜드픽토그램_시스템.md)
-const CONCERN_CHIPS: Array<{ id: ConcernKey; label: string }> = [
-  { id: 'career',  label: '이직 · 진로'   },
-  { id: 'love',    label: '연애 · 관계'   },
-  { id: 'wealth',  label: '재정 · 투자'   },
-  { id: 'health',  label: '체력 · 건강'   },
-  { id: 'people',  label: '인간관계'       },
-  { id: 'general', label: '전반적인 흐름'  },
-];
+const WEEKDAY_KR = ['일', '월', '화', '수', '목', '금', '토'];
 
-// ─── 결과 데이터 (시간대+이전 데이터 반영) ───
-function getFortuneResult(slot: TimeSlot, hasHistory: boolean, ilgan?: string, ilganOheng?: string, recentReport?: any) {
-  const timeAdvice: Record<TimeSlot, string> = {
-    latenight: '이 시간까지 깨어 계신 당신에게 — 지금 떠오르는 생각을 메모해두세요. 새벽의 직감이 가장 정확해요.',
-    dawn: '이른 아침의 기운이 맑습니다. 오늘 가장 중요한 일을 오전에 배치하세요.',
-    morning: '오전 중으로 가장 중요한 결정을 내리세요. 오늘은 직감이 논리보다 정확한 날입니다.',
-    noon: '점심 후에는 급한 결정을 피하세요. 오후 3시 이후에 중요한 대화를 나누면 좋습니다.',
-    afternoon: '오후에는 사람과의 소통에서 기회가 옵니다. 미뤄둔 연락이 있다면 지금 하세요.',
-    evening: '오늘의 에너지를 내일로 연결하세요. 저녁에 계획을 세우면 내일 실행력이 2배가 됩니다.',
-    night: '밤의 직감을 믿으세요. 지금 떠오르는 아이디어를 적어두면 내일 빛을 발해요.',
-  };
+/** 천간(10간) → 오행 */
+const STEM_TO_OHENG: Record<string, OhengType> = {
+  甲: '목', 乙: '목',
+  丙: '화', 丁: '화',
+  戊: '토', 己: '토',
+  庚: '금', 辛: '금',
+  壬: '수', 癸: '수',
+};
 
-  // 날짜 + 사주 데이터 기반 맞춤 점수
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 86400000);
-  const ilganSeed = ilgan ? ilgan.charCodeAt(0) : 0;
-  const seed = (n: number) => ((dayOfYear * 7919 + n * 104729 + ilganSeed * 31) % 100);
-  const s = (n: number, min: number, max: number) => min + (seed(n) % (max - min + 1));
+/** 오행 → day-tile 그라디언트 배경 (옅은 톤, paper 위에 자연스럽게) */
+const OHENG_GRAD_BG: Record<OhengType, string> = {
+  목: 'linear-gradient(135deg, #EDF6EF 0%, #C8E0CE 100%)',
+  화: 'linear-gradient(135deg, #FBE9E9 0%, #F0C8C8 100%)',
+  토: 'linear-gradient(135deg, #FBEFD9 0%, #F0DAB0 100%)',
+  금: 'linear-gradient(135deg, #ECECEC 0%, #D6D6D6 100%)',
+  수: 'linear-gradient(135deg, #E0EAF4 0%, #B8CDE3 100%)',
+};
 
-  // 사주 오행 기반 보정 — 해당 오행이 강하면 관련 운세 점수 UP
-  const elements = recentReport?.sajuData?.elements;
-  const ohengBonus = (key: string) => elements ? Math.min(10, (elements[key as keyof typeof elements] || 0) * 2) : 0;
+/** 오행 → 한자 강조 색 (day-tile 우측 일주 한자, L1 한자 심볼) */
+const OHENG_INK: Record<OhengType, string> = {
+  목: '#1F6638',
+  화: '#9C2424',
+  토: '#A55F11',
+  금: '#4A4A4A',
+  수: '#0E4582',
+};
 
-  const loveScore = Math.min(98, s(1, 55, 90) + ohengBonus('화'));
-  const careerScore = Math.min(98, s(2, 50, 88) + ohengBonus('금') + ohengBonus('토'));
-  const wealthScore = Math.min(98, s(3, 45, 85) + ohengBonus('토'));
-  const healthScore = Math.min(98, s(4, 55, 90) - (elements ? Object.values(elements).filter(v => v === 0).length * 5 : 0));
-  const avgScore = Math.round((loveScore + careerScore + wealthScore + healthScore) / 4);
+type Phase = 'select' | 'loading' | 'result' | 'error';
 
-  const grade = avgScore >= 85 ? 'S' : avgScore >= 75 ? 'A' : avgScore >= 65 ? 'B' : 'C';
-  const gradeLabels: Record<string, Record<string, string>> = {
-    S: { default: '최고의 하루', latenight: '새벽의 축복', night: '밤의 기적' },
-    A: { default: '좋은 하루', latenight: '새벽의 선물', night: '밤의 지혜' },
-    B: { default: '무난한 하루', latenight: '차분한 새벽', night: '고요한 밤' },
-    C: { default: '조심할 하루', latenight: '신중한 새벽', night: '돌아보는 밤' },
-  };
-  const gradeLabel = gradeLabels[grade]?.[slot] || gradeLabels[grade]?.default || '오늘의 운세';
-  // 브랜드 컬러 — Deep Navy + Gold (오행 초록/빨강 금지)
-  const gradeColor = grade === 'S' ? '#C9A96E' : grade === 'A' ? '#A08B6A' : grade === 'B' ? '#2D4470' : '#8F6B4E';
-
-  const personalTouch = ilgan
-    ? `${ilgan} 일간인 당신에게 오늘은 특히 ${s(5, 0, 1) ? '행동력' : '판단력'}이 빛나는 날이에요.`
-    : '';
-
-  const summaries = [
-    '소통과 관계에서 기회가 오는 날입니다. 중요한 연락은 오전에 먼저 하세요.',
-    '새로운 시작의 기운이 강한 날입니다. 미루던 일을 시작하기 좋아요.',
-    '재물의 흐름이 좋은 날입니다. 소비보다 투자에 눈을 돌려보세요.',
-    '건강 에너지가 충만한 날입니다. 운동이나 야외활동을 추천해요.',
-    '직관이 또렷한 날입니다. 고민하던 문제의 답이 떠오를 수 있어요.',
-    '인간관계에서 뜻밖의 도움이 올 수 있는 날이에요.',
-  ];
-
-  return {
-    grade,
-    gradeLabel,
-    gradeColor,
-    summary: hasHistory
-      ? `${TIME_CONTEXT[slot].tone}\n\n${ilganOheng ? `${ilgan}(${ilganOheng}) 일간인 ${recentReport!.name}님에게 ` : ''}${summaries[dayOfYear % summaries.length]}\n\n${personalTouch}${elements ? `\n\n오행 흐름: 오늘은 ${['목', '화', '토', '금', '수'][dayOfYear % 5]}(${['木', '火', '土', '金', '水'][dayOfYear % 5]})의 기운이 강한 날이에요. ${(elements as Record<string, number>)[['목', '화', '토', '금', '수'][dayOfYear % 5]] > 2 ? '사주와 공명하는 날이라 평소보다 에너지가 좋습니다.' : '사주에 부족한 기운을 보충하기 좋은 날이에요.'}` : ''}`
-      : `${TIME_CONTEXT[slot].tone}\n\n${summaries[dayOfYear % summaries.length]}\n\n사주를 등록하면 오행의 흐름에 맞춘 더 정확한 맞춤 운세를 받을 수 있어요.`,
-    scores: [
-      { label: '연애운', score: loveScore, color: '#C9A96E' },
-      { label: '직장운', score: careerScore, color: '#2D4470' },
-      { label: '재물운', score: wealthScore, color: '#A08B6A' },
-      { label: '건강운', score: healthScore, color: '#6B8E4E' },
-    ],
-    lucky: {
-      color: ['파란색', '초록색', '흰색', '노란색', '검은색', '보라색', '분홍색'][dayOfYear % 7],
-      colorHex: ['#1565C0', '#2D8A4E', '#FFFFFF', '#F57F17', '#212121', '#7B1FA2', '#E91E63'][dayOfYear % 7],
-      number: s(6, 1, 9),
-      direction: ['동쪽', '서쪽', '남쪽', '북쪽'][dayOfYear % 4],
-      item: ['은 액세서리', '가죽 소품', '나무 재질 물건', '물병', '수정 장식'][dayOfYear % 5],
-      food: ['해산물', '닭고기', '콩나물국', '녹차', '견과류', '검은깨죽'][dayOfYear % 6],
-    },
-    advice: timeAdvice[slot],
-  };
+interface DateInfo {
+  date: string;
+  weekday: string;
+  ganzi: string;
+  label: string;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+ * Page
+ * ═════════════════════════════════════════════════════════════════ */
 export function DailyFortunePage() {
   usePageTitle('오늘의 운세');
   const navigate = useNavigate();
   const toast = useToast();
-  const [showResult, setShowResult] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<SajuProfile | null>(null);
-  const [profileSelected, setProfileSelected] = useState(false);
-  // 새 단순화 UX: 고민 영역 칩 선택 + 자유 입력
-  const [selectedConcern, setSelectedConcern] = useState<string>('');
-  const [userConcern, setUserConcern] = useState('');
+  const { mark } = useAttendanceOnResult();
 
-  const timeSlot = useMemo(() => getTimeSlot(), []);
-  const ctx = TIME_CONTEXT[timeSlot];
+  const profiles: SajuProfile[] = useMemo(() => getProfiles(), []);
+  const hasAnyProfile = profiles.length > 0;
 
-  // 프로필 목록 (독립 저장소)
-  const profiles = useMemo(() => getProfiles(), []);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(() => {
+    const self = profiles.find((p) => !p.relation || p.relation === '본인');
+    return (self ?? profiles[0])?.id ?? null;
+  });
+  const selectedProfile = useMemo(
+    () => profiles.find((p) => p.id === selectedProfileId) ?? null,
+    [profiles, selectedProfileId],
+  );
 
-  // 단일 프로필이면 자동 선택
-  const recentReport = selectedProfile;
-  const hasHistory = !!recentReport;
-  const ilgan = recentReport?.sajuData?.pillars?.[2]?.천간;
-  const ilganOheng = ilgan ? CHEONGAN_OHENG[ilgan] : undefined;
+  const [phase, setPhase] = useState<Phase>('select');
+  const [result, setResult] = useState<any>(null);
+  const [apiError, setApiError] = useState('');
+  const isAnalyzingRef = useRef(false);
 
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<any>(null);
-  const [aiError, setAiError] = useState('');
-  // 더블클릭 가드 — InputPage 패턴 (ref로 렌더 전 차단)
-  const isSubmittingRef = useRef(false);
+  // 프로필 전환 시 결과 초기화
+  useEffect(() => {
+    setResult(null);
+    setPhase('select');
+    setApiError('');
+  }, [selectedProfileId]);
 
-  const localResult = useMemo(() => getFortuneResult(timeSlot, hasHistory, ilgan, ilganOheng, recentReport), [timeSlot, hasHistory, ilgan, ilganOheng, recentReport]);
+  const today = useMemo(() => new Date(), []);
+  const dateInfo = useMemo(() => buildTodayGanzi(today), [today]);
 
-  // AI 결과를 UI 형식으로 변환 (scores 객체→배열, grade 등)
-  const normalizedAiResult = useMemo(() => {
-    if (!aiResult) return null;
-    const gradeColor = aiResult.grade === 'S' ? '#C9A96E' : aiResult.grade === 'A' ? '#A08B6A' : aiResult.grade === 'B' ? '#2D4470' : '#8F6B4E';
-    return {
-      ...aiResult,
-      gradeColor,
-      scores: Array.isArray(aiResult.scores) ? aiResult.scores : [
-        { label: '연애운', score: aiResult.scores?.love ?? 70, color: '#C9A96E' },
-        { label: '직장운', score: aiResult.scores?.career ?? 70, color: '#2D4470' },
-        { label: '재물운', score: aiResult.scores?.wealth ?? 70, color: '#A08B6A' },
-        { label: '건강운', score: aiResult.scores?.health ?? 70, color: '#6B8E4E' },
-      ],
-      lucky: {
-        color: aiResult.lucky?.color ?? localResult.lucky.color,
-        colorHex: aiResult.lucky?.colorHex ?? localResult.lucky.colorHex,
-        number: aiResult.lucky?.number ?? localResult.lucky.number,
-        direction: aiResult.lucky?.direction ?? localResult.lucky.direction,
-        item: aiResult.lucky?.item ?? localResult.lucky.item,
-        food: aiResult.lucky?.food ?? localResult.lucky.food,
-      },
-    };
-  }, [aiResult, localResult]);
+  /* ─── 오늘의 운세 호출 ─── */
+  async function analyze() {
+    if (!selectedProfile?.sajuData) return;
+    if (isAnalyzingRef.current) return;
+    isAnalyzingRef.current = true;
+    setPhase('loading');
+    setApiError('');
 
-  // AI 로딩 중이면 결과 안 보여줌 (로딩 화면이 대신 표시됨)
-  const result = aiLoading ? null : (normalizedAiResult || localResult);
-  const isOtherPerson = recentReport && recentReport.input.relation && recentReport.input.relation !== '본인' && recentReport.input.relation !== 'self';
-  const targetName = recentReport?.name || '';
-
-  // 단일 프로필 자동 선택
-  if (!profileSelected && profiles.length === 1) {
-    setSelectedProfile(profiles[0]);
-    setProfileSelected(true);
-  }
-
-  async function submitFortune() {
-    // 더블클릭 가드 — 연타 시 중복 과금 차단
-    if (isSubmittingRef.current || aiLoading) return;
-    isSubmittingRef.current = true;
-
-    // 과금: 무료 1회 → 이후 1운
-    if (hasFreePass('daily')) {
-      useFreePass('daily');
-    } else if (spendBalance(1)) {
-      toast.show('1운이 차감됐어요', 'info');
-    } else {
-      toast.show('잔액이 부족해요', 'warning');
-      navigate('/charge', { state: { message: '오늘의 운세에 1운이 필요해요' } });
-      isSubmittingRef.current = false;
-      return;
-    }
-
-    // AI 로딩 시작 — 결과는 AI 완료 후에만 표시
-    setAiLoading(true);
-    setShowResult(true); // 로딩 화면 전환
-
-    // 프로모션 이벤트
-    import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.DAILY_FORTUNE)).catch(() => {});
-
-    // 보관함에 저장
-    if (selectedProfile) {
-      saveReport({ id: generateId(), name: selectedProfile.name, input: selectedProfile.input, sajuData: selectedProfile.sajuData, type: 'free', contentType: 'daily', createdAt: new Date().toISOString() });
-    }
-
-    const concernIdx = CONCERN_CHIPS.findIndex(c => c.id === selectedConcern);
-    const answersArr = [concernIdx >= 0 ? concernIdx : 5];
     try {
-      const sajuSummary = selectedProfile?.sajuData ? {
-        ilgan: selectedProfile.sajuData.pillars?.[2]?.천간 || '',
-        oheng: ilganOheng || '',
-        name: selectedProfile.name || '',
-      } : undefined;
+      // Stage 7e-8: Anthropic API 일시 500 에러 대비 — 1초 대기 후 1회 재시도
+      let res;
+      try {
+        res = await generateDailyFortune({
+          name: selectedProfile.name || '당신',
+          sajuData: selectedProfile.sajuData,
+          date: dateInfo.date,
+          weekday: dateInfo.weekday,
+          todayGanzi: dateInfo.ganzi,
+        });
+      } catch (retryErr: any) {
+        const msg = String(retryErr?.message || '');
+        const is500 = msg.includes('500') || msg.includes('Internal server error') || msg.includes('api_error');
+        if (is500) {
+          console.warn('[DailyFortune] Anthropic 일시 500 → 1초 후 재시도');
+          await new Promise((r) => setTimeout(r, 1000));
+          res = await generateDailyFortune({
+            name: selectedProfile.name || '당신',
+            sajuData: selectedProfile.sajuData,
+            date: dateInfo.date,
+            weekday: dateInfo.weekday,
+            todayGanzi: dateInfo.ganzi,
+          });
+        } else {
+          throw retryErr;
+        }
+      }
 
-      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary, userConcern || undefined);
-      if (aiData) setAiResult(aiData);
+      // PRD §11.1 — 0점/B등급 fallback 금지 (필수 필드 누락 시 에러)
+      if (
+        !res ||
+        typeof res !== 'object' ||
+        (!('overallScore' in res) && !('score' in res))
+      ) {
+        throw new Error('응답 데이터 형식이 올바르지 않아요');
+      }
+
+      setResult(res);
+      setPhase('result');
+
+      // 이벤트 v4 출석 마커 (KST 당일 1회) — 보존
+      mark().catch(() => {/* non-blocking */});
+
+      try {
+        saveReport({
+          id: generateId(),
+          name: selectedProfile.name,
+          input: selectedProfile.input,
+          sajuData: selectedProfile.sajuData,
+          type: 'free',
+          contentType: 'daily',
+          aiResult: res,
+          createdAt: new Date().toISOString(),
+        });
+      } catch {
+        /* 무시 */
+      }
     } catch (e: any) {
-      console.error('[DailyFortune] AI 호출 실패:', e);
-      setAiError(e?.message || 'AI 서버 연결 실패');
+      console.error('[DailyFortune] 실패:', e);
+      setApiError(e?.message || 'AI 서버 연결에 실패했어요');
+      setPhase('error');
     } finally {
-      setAiLoading(false);
-      isSubmittingRef.current = false;
+      isAnalyzingRef.current = false;
     }
-  }
-
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-  const timeStr = today.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-
-  // 프로필 미선택 → 선택 화면
-  if (!profileSelected && profiles.length > 0) {
-    return (
-      <div className="min-h-screen pb-tab-safe bg-hanji">
-        <div className="px-5 pt-8 space-y-6 relative">
-          <FadeIn>
-            <p className="text-editorial-caption" style={{ color: 'var(--brand-gold)' }}>
-              오늘의 운세
-            </p>
-            <h1 className="text-editorial-display mt-2" style={{ color: 'var(--ink-black)' }}>
-              누구의 운을<br/>살펴볼까요
-            </h1>
-            <div className="gold-hairline !my-4">
-              <span className="gold-hairline-symbol">◈</span>
-            </div>
-            <p className="text-body-sm" style={{ color: 'var(--ink-muted)' }}>
-              이전에 입력한 사주를 선택하거나, 사주 없이도 볼 수 있어요.
-            </p>
-          </FadeIn>
-
-          <div className="space-y-2.5">
-            {profiles.map((r) => {
-              const il = r.sajuData?.pillars?.[2]?.천간 || '';
-              const oh = il ? CHEONGAN_OHENG[il] : '';
-              const rel = r.input.relation || '본인';
-              return (
-                <motion.button
-                  key={r.id}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => { setSelectedProfile(r); setProfileSelected(true); }}
-                  className="card-editorial w-full text-left !py-4 !px-4 transition-all hover:shadow-lg"
-                >
-                  <div className="flex items-center gap-3 relative z-10">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 font-serif-ko"
-                      style={{
-                        background: rel === '본인'
-                          ? 'linear-gradient(135deg, #2E2A25 0%, #1A1A1F 100%)'
-                          : 'linear-gradient(135deg, #C9A96E 0%, #A08B6A 100%)',
-                        boxShadow: '0 2px 6px rgba(27,22,15,0.15)'
-                      }}>
-                      <span className="text-[20px] font-bold text-white">
-                        {r.name.charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-editorial-h2" style={{ color: 'var(--ink-black)' }}>{r.name}</p>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm font-serif-ko"
-                          style={{ background: 'rgba(201,169,110,0.12)', color: 'var(--brand-gold)' }}>
-                          {rel}
-                        </span>
-                      </div>
-                      <p className="text-caption font-serif-ko mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                        {il ? `${il}(${oh}) 일간` : '사주 정보'}
-                      </p>
-                    </div>
-                    <span className="font-serif-ko text-[18px]" style={{ color: 'var(--brand-gold)' }}>›</span>
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => { setSelectedProfile(null); setProfileSelected(true); }}
-            className="w-full text-center py-5 relative"
-            style={{
-              background: 'transparent',
-              border: '1.5px dashed rgba(165,155,141,0.4)',
-              borderRadius: '4px'
-            }}
-          >
-            <p className="text-editorial-h2" style={{ color: 'var(--ink-muted)' }}>사주 없이 일반 운세 보기</p>
-          </button>
-
-          <button
-            onClick={() => navigate('/input?new=1')}
-            className="w-full text-center font-serif-ko font-semibold py-2"
-            style={{ color: 'var(--brand-gold)', fontSize: 13, letterSpacing: '0.05em' }}
-          >
-            + 새 사주 입력하기
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // AI 로딩 중 → 풀스크린 로딩 (early return)
-  if (aiLoading) {
-    return (
-      <AILoading
-        name={hasHistory ? recentReport!.name : ''}
-        type="오늘의 운세"
-        steps={['오행의 흐름을 읽고 있어요', '사주와 오늘 날의 관계를 분석하고 있어요', '맞춤 운세를 작성하고 있어요']}
-      />
-    );
   }
 
   return (
-    <div className="min-h-screen pb-tab-safe bg-hanji">
-      <div className="px-5 pt-6 space-y-6 relative">
-
-        {/* 시간대별 인사 — 편집자적 헤더 (한자 걷어냄) */}
-        <FadeIn>
-          <p className="text-editorial-caption" style={{ color: 'var(--brand-gold)' }}>
-            {ctx.label} · 오늘의 운
-          </p>
-          <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-faint)' }}>
-            {dateStr} · {timeStr}
-          </p>
-
-          <h1 className="text-editorial-display mt-4" style={{ color: 'var(--ink-black)' }}>
-            {ctx.greeting}
-          </h1>
-
-          <div className="gold-hairline !mt-4 !mb-2">
-            <span className="gold-hairline-symbol">◇</span>
-          </div>
-
-          <p className="font-serif-ko text-[14px]" style={{ color: 'var(--ink-soft)', letterSpacing: '0.01em' }}>
-            {ctx.sub}
-          </p>
-
-          {hasHistory && (
-            <div className="mt-3 px-4 py-2.5 rounded-sm flex items-center gap-2"
-              style={{
-                background: 'rgba(201,169,110,0.08)',
-                borderLeft: '2px solid var(--brand-gold)'
-              }}>
-              <p className="text-caption font-serif-ko" style={{ color: 'var(--ink-soft)' }}>
-                <b style={{ color: 'var(--ink-black)' }}>{recentReport!.name}</b>님의 {ilgan}({ilganOheng}) 일간 기반 맞춤 풀이
-              </p>
-            </div>
-          )}
-        </FadeIn>
+    <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
+      <Header title="오늘의 운세" />
+      <div className="px-5 pt-4 pb-[120px] mx-auto" style={{ maxWidth: 520 }}>
+        {/* P2-5 · 데일리 리워드 배지 (보존) */}
+        {hasAnyProfile && <DailyRewardBadge className="mb-4" />}
 
         <AnimatePresence mode="wait">
-          {!showResult ? (
-            isOtherPerson ? (
-            /* ====== 타인 → 서술형 1페이지 ====== */
-            <motion.div key="other-input" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}>
-              <div className="space-y-5">
-                <div className="card-editorial !py-6 !px-6">
-                  <p className="text-editorial-caption" style={{ color: 'var(--brand-gold)' }}>
-                    다른 사람의 오늘
-                  </p>
-                  <h2 className="text-editorial-display mt-2" style={{ color: 'var(--ink-black)', fontSize: 26 }}>
-                    {targetName}님의<br/>요즘을 알려주세요
-                  </h2>
-                  <div className="mt-3 h-px" style={{ background: 'linear-gradient(90deg, rgba(201,169,110,0.4), transparent)' }} />
-                  <p className="font-serif-ko text-[13px] mt-3" style={{ color: 'var(--ink-muted)' }}>
-                    {targetName}님이 요즘 무엇을 고민하시는지 알고 있는 범위에서.
-                  </p>
-                </div>
-
-                <textarea
-                  value={userConcern}
-                  onChange={(e) => setUserConcern(e.target.value)}
-                  placeholder={`예: ${targetName}님이 이직을 고민하고 있어요 / 연애 문제로 힘들어해요...`}
-                  maxLength={300}
-                  rows={5}
-                  className="w-full font-serif-ko resize-none text-[14px] leading-[1.85]"
-                  style={{
-                    padding: '16px',
-                    minHeight: 150,
-                    background: 'var(--hanji-cream-soft)',
-                    border: '1px solid rgba(165,155,141,0.25)',
-                    borderRadius: '4px',
-                    color: 'var(--ink-soft)',
-                    outline: 'none'
-                  }}
-                />
-
-                <div className="flex gap-2">
-                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune} disabled={aiLoading} loading={aiLoading}>운세 보기</Button>
-                  <button onClick={submitFortune} disabled={aiLoading}
-                    className="flex-shrink-0 px-5 py-3.5 font-serif-ko text-[13px] font-semibold disabled:opacity-50"
-                    style={{ color: 'var(--ink-muted)', background: 'rgba(165,155,141,0.08)', borderRadius: '4px' }}>
-                    건너뛰기
-                  </button>
-                </div>
-
-                <div className="card-editorial !py-4 !px-5">
-                  <p className="font-serif-ko text-[14px] font-semibold" style={{ color: 'var(--ink-black)' }}>
-                    더 정확한 풀이는 {targetName}님 본인이 직접.
-                  </p>
-                  <p className="text-caption mt-1" style={{ color: 'var(--ink-muted)' }}>
-                    사주500을 공유하면 {targetName}님도 직접 운세를 볼 수 있어요
-                  </p>
-                  <button onClick={async () => { const { shareResult } = await import('@/utils/share'); shareResult({ name: targetName, reportId: 'daily' }); }}
-                    className="mt-2 font-serif-ko text-caption font-bold" style={{ color: 'var(--brand-gold)' }}>
-                    {targetName}님에게 공유하기 →
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-            ) : (
-            /* ====== 본인 → 단순화된 단일 화면 (고민 영역 + 자유 입력) ====== */
-            <motion.div key="concern-input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-              <div className="space-y-5">
-
-                {/* 시간대 톤 카드 — 명조체 pull-quote */}
-                <div className="relative py-6 px-6"
-                  style={{
-                    background: 'var(--hanji-cream-soft)',
-                    borderLeft: '3px solid var(--brand-gold)',
-                    borderRadius: '2px',
-                    boxShadow: '0 2px 10px rgba(27,22,15,0.05)'
-                  }}>
-                  <p className="text-editorial-caption" style={{ color: 'var(--brand-gold)' }}>
-                    {ctx.label}
-                  </p>
-                  <h2 className="font-serif-ko text-[18px] leading-[1.6] font-semibold mt-2"
-                    style={{ color: 'var(--ink-black)', letterSpacing: '-0.01em' }}>
-                    {ctx.tone}
-                  </h2>
-                </div>
-
-                {/* 고민 영역 칩 — 편집자적 */}
-                <div>
-                  <div className="gold-hairline !mt-0 !mb-4">
-                    <span className="gold-hairline-symbol">요즘 가장 신경 쓰이는 영역</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {CONCERN_CHIPS.map((chip, i) => {
-                      const active = selectedConcern === chip.id;
-                      return (
-                        <motion.button
-                          key={chip.id}
-                          whileTap={{ scale: 0.93 }}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          onClick={() => setSelectedConcern(prev => prev === chip.id ? '' : chip.id)}
-                          className="py-4 px-2 flex flex-col items-center gap-1.5 transition-all relative"
-                          style={{
-                            background: active ? 'var(--hanji-cream-deep)' : 'var(--hanji-cream-soft)',
-                            border: active ? '1.5px solid var(--brand-gold)' : '1px solid rgba(165,155,141,0.2)',
-                            borderRadius: '4px',
-                            boxShadow: active ? '0 2px 8px rgba(201,169,110,0.2)' : 'none'
-                          }}
-                        >
-                          <Pictogram k={`concern:${chip.id}`} size={22} color={active ? '#B8322D' : '#C9A96E'} />
-                          <p className="font-serif-ko text-[11px] font-medium text-center leading-tight"
-                            style={{ color: active ? 'var(--ink-black)' : 'var(--ink-soft)' }}>
-                            {chip.label}
-                          </p>
-                          {active && (
-                            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
-                              style={{ background: 'var(--seal-red)' }} />
-                          )}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 자유 입력 */}
-                <div>
-                  <div className="gold-hairline !mt-0 !mb-3">
-                    <span className="gold-hairline-symbol">구체적으로 궁금한 것 <span className="font-normal opacity-70">(선택)</span></span>
-                  </div>
-                  <textarea
-                    value={userConcern}
-                    onChange={(e) => setUserConcern(e.target.value)}
-                    placeholder="예: 오늘 면접이 있는데 잘 될까요?&#10;이번 달 재테크 타이밍이 궁금해요..."
-                    maxLength={300} rows={3}
-                    className="w-full font-serif-ko resize-none text-[14px] leading-[1.85]"
-                    style={{
-                      padding: '14px 16px',
-                      minHeight: 96,
-                      background: 'var(--hanji-cream-soft)',
-                      border: '1px solid rgba(165,155,141,0.25)',
-                      borderRadius: '4px',
-                      color: 'var(--ink-soft)',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button fullWidth size="lg" variant="gold" onClick={submitFortune} disabled={aiLoading} loading={aiLoading}>운세 보기</Button>
-                  <button onClick={submitFortune} disabled={aiLoading}
-                    className="flex-shrink-0 px-5 py-3.5 font-serif-ko text-[13px] font-semibold disabled:opacity-50"
-                    style={{ color: 'var(--ink-muted)', background: 'rgba(165,155,141,0.08)', borderRadius: '4px' }}>
-                    건너뛰기
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-            )
-          ) : result ? (
+          {!hasAnyProfile && (
             <motion.div
-              key="result"
-              initial={{ opacity: 0, y: 20 }}
+              key="no-profile"
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-4"
             >
-              {/* AI 에러 시 에러+폴백 표시 */}
-              {!aiLoading && aiError && !aiResult && (
-                <div className="py-3 px-4 flex items-center justify-between"
-                  style={{ background: 'rgba(184,50,45,0.06)', border: '1px solid rgba(184,50,45,0.2)', borderRadius: '4px' }}>
-                  <div>
-                    <p className="text-caption font-serif-ko font-semibold" style={{ color: 'var(--seal-red)' }}>AI 맞춤 분석에 실패했어요</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-faint)' }}>기본 운세를 보여드리고 있어요</p>
-                  </div>
-                  <button onClick={async () => {
-                    setAiError('');
-                    setAiLoading(true);
-                    try {
-                      const concernIdx = CONCERN_CHIPS.findIndex(c => c.id === selectedConcern);
-                      const answersArr = [concernIdx >= 0 ? concernIdx : 5];
-                      const sajuSummary = selectedProfile?.sajuData ? { ilgan: selectedProfile.sajuData.pillars?.[2]?.천간 || '', oheng: ilganOheng || '', name: selectedProfile.name || '' } : undefined;
-                      const aiData = await generateDailyFortune(answersArr, timeSlot, sajuSummary, userConcern || undefined);
-                      if (aiData) setAiResult(aiData);
-                    } catch (e: any) { setAiError(e?.message || '재시도 실패'); }
-                    finally { setAiLoading(false); }
-                  }}
-                    className="px-3 py-1.5 text-[11px] font-bold text-white font-serif-ko"
-                    style={{ background: 'var(--brand-gold)', borderRadius: '3px' }}>
-                    재시도
-                  </button>
-                </div>
-              )}
-
-              {/* ===== 등급 카드 — 밝은 크림 + 골드 ===== */}
-              <div className="card-editorial text-center !py-10 relative">
-                <p className="text-editorial-caption" style={{ color: 'var(--brand-gold)' }}>
-                  오늘의 운
-                </p>
-
-                <motion.div
-                  className="relative w-32 h-32 mx-auto mt-4 flex items-center justify-center"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                >
-                  <svg viewBox="0 0 140 140" className="absolute inset-0 w-full h-full" style={{ opacity: 0.5 }}>
-                    <circle cx="70" cy="70" r="66" fill="none" stroke={result.gradeColor} strokeWidth="0.5" strokeDasharray="2 4" />
-                    <circle cx="70" cy="70" r="58" fill="none" stroke={result.gradeColor} strokeWidth="1" />
-                  </svg>
-                  <span className="font-serif-ko font-black leading-none"
-                    style={{
-                      fontSize: 88,
-                      color: result.gradeColor,
-                      textShadow: `0 2px 18px ${result.gradeColor}40`,
-                      letterSpacing: '-0.02em'
-                    }}>
-                    {result.grade}
-                  </span>
-                </motion.div>
-
-                <p className="font-serif-ko text-[22px] mt-3 font-semibold"
-                  style={{ color: 'var(--ink-black)', letterSpacing: '-0.01em' }}>
-                  {result.gradeLabel}
-                </p>
-                <p className="text-[10px] mt-2 font-serif-ko" style={{ color: 'var(--ink-faint)', letterSpacing: '0.08em' }}>
-                  {dateStr}
-                </p>
-              </div>
-
-              {/* ===== 요약 — 편집자적 명조체 본문 ===== */}
-              <div className="card-editorial relative">
-                <div className="gold-hairline !mt-0 !mb-4">
-                  <span className="gold-hairline-symbol">풀이</span>
-                </div>
-                <p className="text-editorial-quote drop-cap whitespace-pre-line" style={{ color: 'var(--ink-soft)' }}>
-                  {stripMd(result.summary)}
-                </p>
-                {/* 하단 서명 */}
-                <div className="flex items-center justify-end mt-4 pt-3"
-                  style={{ borderTop: '0.5px solid rgba(201,169,110,0.2)' }}>
-                  <span className="font-serif-ko text-[10px]" style={{ color: 'var(--ink-faint)', letterSpacing: '0.18em' }}>
-                    사주500
-                  </span>
-                </div>
-              </div>
-
-              {/* ===== 점수 — 편집자적 막대 차트 ===== */}
-              <div className="card-editorial">
-                <div className="gold-hairline !mt-0 !mb-5">
-                  <span className="gold-hairline-symbol">점수</span>
-                </div>
-                <div className="space-y-4">
-                  {result.scores.map((s: any, i: number) => (
-                    <motion.div
-                      key={s.label}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + i * 0.08 }}
-                      className="relative"
-                    >
-                      <div className="flex items-baseline justify-between mb-1.5">
-                        <span className="font-serif-ko text-[14px] font-semibold" style={{ color: 'var(--ink-black)' }}>
-                          {s.label}
-                        </span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="font-serif-ko text-[20px] font-bold" style={{ color: s.color }}>
-                            {s.score}
-                          </span>
-                          <span className="text-[10px] font-serif-ko" style={{ color: 'var(--ink-faint)' }}>/100</span>
-                        </div>
-                      </div>
-                      <div className="relative h-[3px] w-full overflow-hidden"
-                        style={{ background: 'rgba(165,155,141,0.18)', borderRadius: '2px' }}>
-                        <motion.div
-                          className="absolute top-0 left-0 h-full"
-                          style={{ background: `linear-gradient(90deg, ${s.color}, ${s.color}CC)`, borderRadius: '2px' }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${s.score}%` }}
-                          transition={{ delay: 0.5 + i * 0.1, duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                        />
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ===== 행운 — 편집자적 그리드 ===== */}
-              <div className="card-editorial relative">
-                <div className="gold-hairline !mt-0 !mb-5">
-                  <span className="gold-hairline-symbol">오늘의 행운</span>
-                </div>
-                <div className="grid grid-cols-3 gap-y-5 gap-x-2">
-                  {[
-                    { label: '컬러', value: result.lucky.color, hex: result.lucky.colorHex },
-                    { label: '숫자', value: String(result.lucky.number) },
-                    { label: '방위', value: result.lucky.direction },
-                    { label: '아이템', value: result.lucky.item },
-                    { label: '음식', value: result.lucky.food },
-                  ].map((item) => (
-                    <div key={item.label} className="text-center">
-                      {item.hex ? (
-                        <div className="w-10 h-10 mx-auto mb-2 relative"
-                          style={{ background: item.hex, borderRadius: '2px', boxShadow: `0 2px 10px ${item.hex}30, inset 0 1px 0 rgba(255,255,255,0.3)` }}>
-                          <div className="absolute inset-1 border border-white/20" style={{ borderRadius: '1px' }} />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 mx-auto mb-2 flex items-center justify-center"
-                          style={{
-                            background: 'var(--hanji-cream-deep)',
-                            borderRadius: '50%',
-                            border: '0.5px solid rgba(201,169,110,0.3)'
-                          }}>
-                          <span className="w-2 h-2 rounded-full" style={{ background: 'var(--brand-gold)' }} />
-                        </div>
-                      )}
-                      <p className="font-serif-ko text-[14px] font-semibold" style={{ color: 'var(--ink-black)' }}>
-                        {item.value}
-                      </p>
-                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--ink-faint)', letterSpacing: '0.08em' }}>
-                        {item.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ===== 시간대별 조언 — 명조체 인용 ===== */}
-              <div className="relative py-6 px-6"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(201,169,110,0.08) 0%, rgba(253,248,238,0.6) 100%)',
-                  borderLeft: '3px solid var(--brand-gold)',
-                  borderRadius: '2px'
-                }}>
-                <span className="absolute -top-2 left-4 font-serif-ko text-[34px] leading-none"
-                  style={{ color: 'var(--brand-gold)', opacity: 0.5 }}>"</span>
-                <p className="text-editorial-caption" style={{ color: 'var(--brand-gold)' }}>
-                  {ctx.label}의 조언
-                </p>
-                <p className="font-serif-ko text-[15px] leading-[1.85] mt-2 italic" style={{ color: 'var(--ink-black)' }}>
-                  {stripMd(result.advice)}
-                </p>
-              </div>
-
-              {/* ===== 사주 연계 — 편집자적 ===== */}
-              {hasHistory && (
-                <div className="card-editorial">
-                  <div className="gold-hairline !mt-0 !mb-4">
-                    <span className="gold-hairline-symbol">내 사주와 오늘</span>
-                  </div>
-                  <div className="space-y-3 relative">
-                    <p className="font-serif-ko text-[14px] leading-[1.85]" style={{ color: 'var(--ink-soft)' }}>
-                      <b style={{ color: 'var(--ink-black)' }}>{ilgan}({ilganOheng}) 일간</b>인 {recentReport!.name}님에게 오늘은
-                      {result.scores[0].score > 75 ? ' 연애운이 특히 좋은 날이에요.' : result.scores[1].score > 75 ? ' 직장에서 좋은 소식이 있을 수 있어요.' : ' 안정적인 하루가 될 거예요.'}
-                    </p>
-                    <div className="h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,169,110,0.3), transparent)' }} />
-                    <p className="font-serif-ko text-[14px] leading-[1.85]" style={{ color: 'var(--ink-soft)' }}>
-                      오늘은 <b style={{ color: 'var(--ink-black)' }}>{['목', '화', '토', '금', '수'][new Date().getDay() % 5]}</b> 기운이 강한 날.
-                      {recentReport!.sajuData.elements ? (() => {
-                        const todayOheng = ['목', '화', '토', '금', '수'][new Date().getDay() % 5] as string;
-                        const myVal = (recentReport!.sajuData.elements as any)[todayOheng] || 0;
-                        return myVal >= 2
-                          ? ' 사주와 공명하는 날이라 에너지가 좋아요.'
-                          : ' 평소 부족한 기운을 보충하기 좋은 날이에요.';
-                      })() : ''}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* ===== 오늘의 시간대별 흐름 ===== */}
-              <div className="card-editorial">
-                <div className="gold-hairline !mt-0 !mb-5">
-                  <span className="gold-hairline-symbol">시간대별 흐름</span>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { time: '오전', desc: '새로운 시작에 유리한 양(陽)의 에너지', score: Math.min(98, result.scores[1].score + 5) },
-                    { time: '오후', desc: '판단력과 결정력이 또렷해지는 시간', score: result.scores[2].score },
-                    { time: '저녁', desc: '내면 성찰과 휴식에 적합한 시간', score: Math.min(98, result.scores[3].score + 3) },
-                  ].map((slot) => (
-                    <div key={slot.time} className="flex items-start gap-3">
-                      <span className="font-serif-ko text-[13px] font-semibold flex-shrink-0 w-10 pt-0.5" style={{ color: 'var(--ink-black)' }}>{slot.time}</span>
-                      <div className="flex-1">
-                        <div className="h-[3px] overflow-hidden mb-1.5"
-                          style={{ background: 'rgba(165,155,141,0.18)', borderRadius: '2px' }}>
-                          <motion.div className="h-full"
-                            style={{ background: 'linear-gradient(90deg, var(--brand-gold), var(--brand-gold-light))', borderRadius: '2px' }}
-                            initial={{ width: 0 }} animate={{ width: `${slot.score}%` }} transition={{ duration: 1 }} />
-                        </div>
-                        <p className="text-caption" style={{ color: 'var(--ink-muted)' }}>{slot.desc}</p>
-                      </div>
-                      <span className="font-serif-ko text-[14px] font-bold w-8 text-right flex-shrink-0" style={{ color: 'var(--brand-gold)' }}>
-                        {slot.score}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ===== CTA ===== */}
-              <div className="space-y-3">
-                <div className="gold-hairline">
-                  <span className="gold-hairline-symbol">◈</span>
-                </div>
-                <Button variant="gold" fullWidth size="lg" onClick={() => navigate('/input')}>
-                  {hasHistory ? '더 깊은 분석 보러 가기' : '내 사주도 분석해보기'}
-                </Button>
-                <p className="text-center text-[11px] font-serif-ko" style={{ color: 'var(--ink-faint)', letterSpacing: '0.08em' }}>
-                  1운(500원) · 12가지 심층 분석
-                </p>
-
-                <button
-                  onClick={async () => {
-                    const shareData = {
-                      title: '오늘의 운세 — 사주500',
-                      text: `${targetName || '내'} 운세 등급 ${result.grade}등급! 오늘 하루의 운세가 궁금하다면?`,
-                      url: `${window.location.origin}/daily`,
-                    };
-                    try {
-                      if (navigator.share) {
-                        await navigator.share(shareData);
-                        toast.show('공유 완료!', 'success');
-                      } else {
-                        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-                        toast.show('링크가 복사됐어요!', 'success');
-                      }
-                    } catch {
-                      try {
-                        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-                        toast.show('링크가 복사됐어요!', 'success');
-                      } catch {
-                        toast.show('공유에 실패했어요', 'warning');
-                      }
-                    }
-                  }}
-                  className="w-full py-3 font-serif-ko text-[12px] font-bold"
-                  style={{
-                    background: 'rgba(201,169,110,0.1)',
-                    color: 'var(--brand-gold)',
-                    border: '0.5px solid rgba(201,169,110,0.3)',
-                    borderRadius: '3px',
-                    letterSpacing: '0.08em'
-                  }}
-                >
-                  친구에게 공유하기
-                </button>
-                {/* 배너 광고 — 앱인토스에서만 */}
-                <BannerAdLazy className="mt-3" />
-              </div>
+              <ProfileSelector
+                profiles={profiles}
+                selectedId={selectedProfileId}
+                onChange={setSelectedProfileId}
+                onCreateNew={() => navigate('/input')}
+              />
+              <p
+                className="text-body-sm"
+                style={{ color: 'var(--text-muted)', textAlign: 'center' }}
+              >
+                오늘의 운세는 사주 기반이에요. 생년월일만 입력하면 1분.
+              </p>
             </motion.div>
-          ) : null}
+          )}
+
+          {hasAnyProfile && phase === 'select' && (
+            <SelectView
+              key="select"
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              onProfileChange={setSelectedProfileId}
+              onCreateNew={() => navigate('/input?new=1')}
+              profile={selectedProfile}
+              dateInfo={dateInfo}
+              onAnalyze={analyze}
+            />
+          )}
+
+          {hasAnyProfile && phase === 'loading' && (
+            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <AILoading
+                name={selectedProfile?.name ?? '당신'}
+                type="오늘의 운세"
+                steps={[
+                  '오늘 간지와 사주를 교차하고 있어요',
+                  '4영역 점수를 계산하고 있어요',
+                  '시간대별 흐름을 정리하고 있어요',
+                ]}
+              />
+            </motion.div>
+          )}
+
+          {hasAnyProfile && phase === 'error' && (
+            <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <ErrorState
+                title="해석을 가져오지 못했어요"
+                subtitle={apiError || '잠시 후 다시 시도해주세요'}
+                onRetry={analyze}
+                onBack={() => setPhase('select')}
+                showRefundNote={true}
+              />
+            </motion.div>
+          )}
+
+          {hasAnyProfile && phase === 'result' && result && selectedProfile && (
+            <ResultView
+              key="result"
+              result={result}
+              profile={selectedProfile}
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              onProfileChange={setSelectedProfileId}
+              onCreateNew={() => navigate('/input?new=1')}
+              dateInfo={dateInfo}
+              onPremiumUpsell={() => {
+                // 프리미엄 10운 — 2026-04-27 4 패키지 정정 (10본 + 5보너스 = 5,000원)
+                toast.show('종합 사주를 위해 10운 충전 페이지로 이동해요', 'info');
+                navigate('/charge?need=10');
+              }}
+              onRetry={analyze}
+            />
+          )}
         </AnimatePresence>
+
+        {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
+        <div className="mt-10 text-center space-y-1">
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+          </p>
+          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
+            사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+          </p>
+        </div>
       </div>
     </div>
   );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * SelectView — 진입 화면 (프로필 선택 + 분석 시작)
+ * ═════════════════════════════════════════════════════════════════ */
+function SelectView({
+  profiles,
+  selectedProfileId,
+  onProfileChange,
+  onCreateNew,
+  profile,
+  dateInfo,
+  onAnalyze,
+}: {
+  profiles: SajuProfile[];
+  selectedProfileId: string | null;
+  onProfileChange: (id: string) => void;
+  onCreateNew: () => void;
+  profile: SajuProfile | null;
+  dateInfo: DateInfo;
+  onAnalyze: () => void;
+}) {
+  const pillars = useMemo(() => (profile ? buildPillars(profile) : []), [profile]);
+  const hasSajuData = pillars.length === 4 && !!profile?.sajuData;
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="space-y-4"
+    >
+      <FadeIn>
+        <ProfileSelector
+          profiles={profiles}
+          selectedId={selectedProfileId}
+          onChange={onProfileChange}
+          onCreateNew={onCreateNew}
+        />
+      </FadeIn>
+
+      <FadeIn delay={0.05}>
+        <section className="card-primary" style={{ padding: 24 }}>
+          <p className="sec-meta">{dateInfo.label}</p>
+          <h2 className="sec-title-lg" style={{ marginTop: 8 }}>
+            {profile?.name ?? '당신'}님의<br />오늘 운세를 풀어드릴게요
+          </h2>
+          <p
+            className="text-body-md"
+            style={{ color: 'var(--text-muted)', marginTop: 10 }}
+          >
+            일주와 오늘 간지의 작용, 용신·대운 흐름까지 함께 살펴볼게요.
+          </p>
+        </section>
+      </FadeIn>
+
+      {/* 사주 원국 미리보기 — 정적 SajuMiniCard (Flippable 정적화 #39 보존) */}
+      {hasSajuData && (
+        <FadeIn delay={0.1}>
+          <section className="card-secondary">
+            <p className="sec-title" style={{ marginBottom: 12 }}>내 사주 원국</p>
+            <SajuMiniCard pillars={pillars} />
+          </section>
+        </FadeIn>
+      )}
+
+      <div className="sticky-cta-bottom">
+        <button className="cta-gold" onClick={onAnalyze} disabled={!hasSajuData}>
+          오늘의 운세 보기 (무료)
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * ResultView — 새 §10 레이아웃 (day-tile + L1~L4 축소형 + Ad + Upsell)
+ * ═════════════════════════════════════════════════════════════════ */
+function ResultView({
+  result,
+  profile,
+  profiles,
+  selectedProfileId,
+  onProfileChange,
+  onCreateNew,
+  dateInfo,
+  onPremiumUpsell,
+  onRetry,
+}: {
+  result: any;
+  profile: SajuProfile;
+  profiles: SajuProfile[];
+  selectedProfileId: string | null;
+  onProfileChange: (id: string) => void;
+  onCreateNew: () => void;
+  dateInfo: DateInfo;
+  onPremiumUpsell: () => void;
+  onRetry: () => void;
+}) {
+  const navigate = useNavigate();
+  // ── 스키마 파싱 (v4.1 + 레거시 호환)
+  const score = clampScore(result?.overallScore ?? result?.score);
+  const grade = String(result?.grade ?? 'B').toUpperCase();
+  const gradeColor = GRADE_V4[grade] ?? '#B8965A';
+  const title = stripMd(String(result?.title ?? result?.headline ?? '오늘의 운세'));
+  const todayNarrative = stripMd(String(result?.todayNarrative ?? result?.summary ?? ''));
+  const keywords: string[] = Array.isArray(result?.keywords) ? result.keywords.slice(0, 5) : [];
+  const sajuTone = stripMd(String(result?.sajuTone ?? ''));
+  const subScores = result?.subScores ?? result?.scores;
+  const subScoreReasons = result?.subScoreReasons;
+  const timeSlots: any[] = Array.isArray(result?.timeSlots) ? result.timeSlots : [];
+  const doList: string[] = Array.isArray(result?.doList) ? result.doList.slice(0, 3) : [];
+  const oneLiner = stripMd(String(result?.oneLiner ?? result?.dailyMessage ?? ''));
+
+  // ── day-tile 색상 (오늘 일간 오행)
+  const dayOheng: OhengType = useMemo(
+    () => getDayOheng(dateInfo.ganzi),
+    [dateInfo.ganzi],
+  );
+
+  // ── L1 한자 심볼 = 오늘 일간 (예: 癸亥 → 癸)
+  const dayStem = dateInfo.ganzi?.[0] ?? '';
+
+  // ── Phase D'-3 Bundle 2 · 내 일간 vs 오늘 일진 관계 (TodayRelationCard용)
+  const myGan = profile?.sajuData?.pillars?.[2]?.천간 || '';
+  const myGanReading = profile?.sajuData?.pillars?.[2]?.천간읽기 || '';
+  const myOhengKr = profile?.sajuData?.pillars?.[2]?.천간오행 || '';
+  const todayGanReading = useMemo(() => {
+    // 천간 한자 → 한글 읽기 (한자→한글)
+    const map: Record<string, string> = {
+      甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무',
+      己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계',
+    };
+    return map[dayStem] || '';
+  }, [dayStem]);
+  const todayOhengKr: OhengType = dayOheng;
+  // 관계 라벨 (생/극 매핑)
+  const relationLabel = useMemo(() => {
+    if (!myOhengKr || !todayOhengKr) return '오행 만남';
+    const sangsaeng: Record<string, string> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
+    const sanggeuk: Record<string, string> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+    if (myOhengKr === todayOhengKr) return `${myOhengKr}·${todayOhengKr} 비화`;
+    if (sangsaeng[myOhengKr] === todayOhengKr) return `${myOhengKr}생${todayOhengKr}`;
+    if (sangsaeng[todayOhengKr] === myOhengKr) return `${todayOhengKr}생${myOhengKr}`;
+    if (sanggeuk[myOhengKr] === todayOhengKr) return `${myOhengKr}극${todayOhengKr}`;
+    if (sanggeuk[todayOhengKr] === myOhengKr) return `${todayOhengKr}극${myOhengKr}`;
+    return `${myOhengKr}·${todayOhengKr} 만남`;
+  }, [myOhengKr, todayOhengKr]);
+
+  // ── Phase D'-3 Bundle 2 · 5오행 분포 (TodayOhengRow용)
+  const ohengItems: OhengItem[] = useMemo(() => {
+    const elems = profile?.sajuData?.elements ?? {};
+    const order: Array<'목' | '화' | '토' | '금' | '수'> = ['목', '화', '토', '금', '수'];
+    return order.map((k) => {
+      const qty = Number(elems[k] ?? 0);
+      const todayBonus = k === todayOhengKr ? '+1' : undefined;
+      return {
+        oheng: k,
+        qty,
+        todayBonus,
+        lack: qty === 0,
+      };
+    });
+  }, [profile, todayOhengKr]);
+
+  // ── Phase D'-3 Bundle 2 · 끌어주는/부딪히는 사람 (AI result.meet 있을 때만)
+  const meetItems: TodayMeetItem[] | null = useMemo(() => {
+    const aiMeet = result?.meet;
+    if (!aiMeet || !Array.isArray(aiMeet) || aiMeet.length === 0) return null;
+    return aiMeet.slice(0, 2).map((m: any) => ({
+      variant: m.variant === 'clash' ? 'clash' : 'boost',
+      ganChars: String(m.ganChars || m.gan || ''),
+      title: stripMd(String(m.title || '')),
+      tag: String(m.tag || (m.variant === 'clash' ? '− 충돌' : '+ 보완')),
+      body: stripMd(String(m.body || m.desc || '')),
+    }));
+  }, [result]);
+
+  // ── L2 시간대 grid + 현재 슬롯 tip
+  const currentHour = useMemo(() => new Date().getHours(), []);
+  const slotsCompact = useMemo(
+    () =>
+      timeSlots.slice(0, 4).map((s) => ({
+        slot: String(s?.slot ?? '오전'),
+        range: String(s?.range ?? ''),
+        score: clampScore(s?.score),
+        tip: stripMd(String(s?.message ?? s?.tip ?? '')),
+      })),
+    [timeSlots],
+  );
+  const currentSlotIdx = useMemo(() => {
+    if (currentHour < 6) return 3; // 새벽 → 밤 슬롯에 매핑 (24h wrap)
+    if (currentHour < 12) return 0;
+    if (currentHour < 18) return 1;
+    if (currentHour < 22) return 2;
+    return 3;
+  }, [currentHour]);
+  const currentSlot = slotsCompact[currentSlotIdx];
+
+  // ── L3 1문단 (subScoreReasons 중 최고점 reason 또는 첫 비어있지 않은 값)
+  const l3Paragraph = useMemo(
+    () => pickL3Paragraph(subScores, subScoreReasons),
+    [subScores, subScoreReasons],
+  );
+
+  // ── 광고 노출 조건 (스펙 §7) — /daily는 항상 free, blur 없음
+  const showAd = isAppintosBuild;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
+      {/* S0 프로필 선택 (보존) */}
+      <FadeIn>
+        <ProfileSelector
+          profiles={profiles}
+          selectedId={selectedProfileId}
+          onChange={onProfileChange}
+          onCreateNew={onCreateNew}
+        />
+      </FadeIn>
+
+      {/* ─── §10. day-tile (96px 풀폭 · M/D + 일주 한자) ─── */}
+      <FadeIn delay={0.04}>
+        <DayTile
+          dateInfo={dateInfo}
+          profileName={profile.name || '당신'}
+          dayOheng={dayOheng}
+        />
+      </FadeIn>
+
+      {/* ─── L1 — 요약 (Hook · 한자 심볼 + 점수 + 3-5문장) ─── */}
+      <FadeIn delay={0.08}>
+        <section className="card-primary" style={{ padding: 20 }}>
+          {/* 한자 심볼 32px (오늘 일간) */}
+          {dayStem && (
+            <div
+              style={{
+                fontSize: 32,
+                fontWeight: 700,
+                color: OHENG_INK[dayOheng],
+                fontFamily: "'Noto Serif KR', serif",
+                lineHeight: 1,
+                marginBottom: 12,
+                letterSpacing: '0.02em',
+              }}
+              aria-label={`오늘의 일간 ${dayStem} (${dayOheng})`}
+            >
+              {dayStem}
+            </div>
+          )}
+          <div className="flex items-center gap-4">
+            <ScoreDonut score={score} color={gradeColor} />
+            <div className="flex-1 min-w-0">
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                  background: `${gradeColor}18`,
+                  color: gradeColor,
+                  fontSize: 12,
+                  fontWeight: 800,
+                }}
+              >
+                오늘 · {grade}등급
+              </div>
+              <p className="sec-title-lg" style={{ marginTop: 6 }}>{title}</p>
+            </div>
+          </div>
+
+          {todayNarrative && (
+            <p
+              className="text-body-md"
+              style={{
+                marginTop: 14,
+                lineHeight: 1.75,
+                color: 'var(--text-primary)',
+                whiteSpace: 'pre-line',
+              }}
+            >
+              {/* 3~5문장: 320자 + 자연 문장 끊기 */}
+              {truncate(todayNarrative, 320)}
+            </p>
+          )}
+
+          {keywords.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
+              {keywords.map((kw, i) => (
+                <span key={i} className="chip-v4">{kw}</span>
+              ))}
+            </div>
+          )}
+        </section>
+      </FadeIn>
+
+      {/* ─── L2 — 본문 (Expansion · 오늘의 톤 + 시간대 흐름) ─── */}
+      {sajuTone && (
+        <FadeIn delay={0.12}>
+          <section className="card-primary">
+            <p className="sec-meta" style={{ marginBottom: 8, color: '#8C6D3D' }}>
+              오늘의 톤
+            </p>
+            <p
+              className="text-body-md"
+              style={{
+                whiteSpace: 'pre-line',
+                lineHeight: 1.75,
+                color: 'var(--text-primary)',
+              }}
+            >
+              {sajuTone}
+            </p>
+          </section>
+        </FadeIn>
+      )}
+
+      {slotsCompact.length === 4 && (
+        <FadeIn delay={0.16}>
+          <section className="card-primary">
+            <p className="sec-meta" style={{ marginBottom: 10, color: '#8C6D3D' }}>
+              시간대별 흐름
+            </p>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: 8,
+              }}
+            >
+              {slotsCompact.map((s, i) => {
+                const active = i === currentSlotIdx;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      padding: '10px 6px',
+                      textAlign: 'center',
+                      background: active ? 'rgba(184,150,90,0.14)' : '#F8F5EE',
+                      borderRadius: 10,
+                      border: active
+                        ? '2px solid #B8965A'
+                        : '1px solid var(--border-light)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: active ? '#8C6D3D' : 'var(--text-muted)',
+                      }}
+                    >
+                      {s.slot}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 900,
+                        color: active ? '#8C6D3D' : '#1A1A1A',
+                        marginTop: 4,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      {s.score}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {currentSlot?.tip && (
+              <p
+                className="text-body-sm"
+                style={{
+                  marginTop: 12,
+                  padding: '10px 12px',
+                  background: 'rgba(184,150,90,0.08)',
+                  borderRadius: 10,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.6,
+                }}
+              >
+                <strong style={{ color: '#8C6D3D', marginRight: 4 }}>
+                  지금 ({currentSlot.slot})
+                </strong>
+                {currentSlot.tip}
+              </p>
+            )}
+          </section>
+        </FadeIn>
+      )}
+
+      {/* ─── Phase D'-3 Bundle 2 · TodayRelationCard (내 일간 vs 오늘 일진) ─── */}
+      {myGan && dayStem && (
+        <FadeIn delay={0.18}>
+          <div style={{ margin: '0 -20px' }}>
+            <TodayRelationCard
+              myGan={myGan}
+              myGanName={`${myGanReading}(${myGan}) · ${myOhengKr}`}
+              todayGan={dayStem}
+              todayGanName={`${todayGanReading}(${dayStem}) · ${todayOhengKr}`}
+              relationLabel={relationLabel}
+              explain={(() => {
+                // AI 응답 우선 → 없을 때 사주 일간 글자 직접 호명한 동적 풀이
+                const aiExplain = String((result as any)?.relationExplain ?? '').trim();
+                if (aiExplain.length >= 12) return stripMd(aiExplain);
+                // 사주별 차별화 — 일간 한자 + 오늘 일진 한자 직접 호명
+                const myLabel = `${myGan}(${myGanReading})`;
+                const todayLabel = `${dayStem}(${todayGanReading})`;
+                if (myOhengKr === todayOhengKr) {
+                  return `오늘 ${todayLabel} 와 내 일간 ${myLabel} 이 같은 ${myOhengKr}(${myOhengKr === '목' ? '木' : myOhengKr === '화' ? '火' : myOhengKr === '토' ? '土' : myOhengKr === '금' ? '金' : '水'}) 결로 만나는 자리. 익숙한 결을 더 진하게 쓰는 하루 — 결정·실행은 빠르되, 의견은 한 결로 쏠릴 위험.`;
+                }
+                if (relationLabel.includes('생')) {
+                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 을 살려주는 흐름. 평소보다 받치는 결이 또렷한 하루 — 도움 청하기·학습·정비에 좋습니다.`;
+                }
+                if (relationLabel.includes('극')) {
+                  return `오늘 ${todayLabel}(${todayOhengKr}) 와 내 일간 ${myLabel}(${myOhengKr}) 이 부딪히는 자리. 한 박자 늦추는 하루 — 큰 결정·민감한 대화·계약은 다음 날로 미루는 편이 안전.`;
+                }
+                if (relationLabel.includes('재') || relationLabel.includes('관')) {
+                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 실리·책임의 결이 따라오는 하루 — 받을 것 받고, 정리할 것 정리하기 좋습니다.`;
+                }
+                if (relationLabel.includes('식') || relationLabel.includes('상')) {
+                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 표현·창작의 결이 살아나는 하루 — 발표·콘텐츠·소통이 잘 풀립니다.`;
+                }
+                return `오늘 ${todayLabel}(${todayOhengKr}) 와 내 일간 ${myLabel}(${myOhengKr}) — ${relationLabel} 의 자리. 결의 방향을 살펴보는 하루.`;
+              })()}
+            />
+          </div>
+        </FadeIn>
+      )}
+
+      {/* ─── Phase D'-3 Bundle 2 · TodayOhengRow (5오행 분포 + 오늘 보충) ─── */}
+      {ohengItems.length === 5 && (
+        <FadeIn delay={0.19}>
+          <div style={{ margin: '0 -20px' }}>
+            <TodayOhengRow items={ohengItems} />
+          </div>
+        </FadeIn>
+      )}
+
+      {/* ─── L3 — 심층 [축소: 1문단] · 4영역 mini grid + reason ─── */}
+      {(subScores || l3Paragraph) && (
+        <FadeIn delay={0.2}>
+          <section className="card-primary">
+            <p className="sec-title" style={{ marginBottom: 10 }}>오늘의 결</p>
+            {subScores && (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: 6,
+                  marginBottom: l3Paragraph ? 12 : 0,
+                }}
+              >
+                {[
+                  { k: '재물운', label: '재물' },
+                  { k: '애정운', label: '애정' },
+                  { k: '건강운', label: '건강' },
+                  { k: '성장운', label: '성장' },
+                ].map(({ k, label }) => {
+                  const v = subScores?.[k];
+                  const sc =
+                    typeof v === 'number' ? clampScore(v) : clampScore(v?.score);
+                  return (
+                    <div
+                      key={k}
+                      style={{
+                        textAlign: 'center',
+                        padding: '10px 4px',
+                        background: '#F8F5EE',
+                        borderRadius: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--text-muted)',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 900,
+                          color: '#B8965A',
+                          marginTop: 3,
+                          letterSpacing: '-0.02em',
+                        }}
+                      >
+                        {sc}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {l3Paragraph && (
+              <p
+                className="text-body-md"
+                style={{
+                  lineHeight: 1.75,
+                  color: 'var(--text-primary)',
+                  whiteSpace: 'pre-line',
+                }}
+              >
+                {l3Paragraph}
+              </p>
+            )}
+          </section>
+        </FadeIn>
+      )}
+
+      {/* ─── L4 — "오늘 해볼 3가지" 고정 ─── */}
+      <FadeIn delay={0.24}>
+        <section className="card-primary">
+          <p className="sec-title" style={{ marginBottom: 12 }}>
+            오늘 해볼 3가지
+          </p>
+          <ul
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              margin: 0,
+              padding: 0,
+              listStyle: 'none',
+            }}
+          >
+            {Array.from({ length: 3 }).map((_, i) => {
+              const item = doList[i];
+              return (
+                <li
+                  key={i}
+                  className="text-body-md flex items-start gap-3"
+                  style={{ lineHeight: 1.6 }}
+                >
+                  <span
+                    style={{
+                      width: 22,
+                      height: 22,
+                      flexShrink: 0,
+                      background: 'rgba(184,150,90,0.14)',
+                      borderRadius: 999,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#8C6D3D',
+                      fontWeight: 800,
+                      fontSize: 12,
+                      marginTop: 2,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span style={{ color: item ? '#1A1A1A' : 'var(--text-muted)' }}>
+                    {item ? stripMd(item) : '—'}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {oneLiner && (
+            <div
+              style={{
+                marginTop: 16,
+                paddingTop: 12,
+                borderTop: '1px solid var(--border-light)',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 13,
+                  fontStyle: 'italic',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.6,
+                  paddingLeft: 12,
+                  borderLeft: '2px solid #B8965A',
+                  margin: 0,
+                }}
+              >
+                {oneLiner}
+              </p>
+            </div>
+          )}
+        </section>
+      </FadeIn>
+
+      {/* ─── Phase D'-3 Bundle 2 · TodayMeetStack (AI result.meet 있을 때만) ─── */}
+      {meetItems && meetItems.length > 0 && (
+        <FadeIn delay={0.26}>
+          <section className="card-primary">
+            <p className="sec-title" style={{ marginBottom: 12 }}>오늘 만나는 사람</p>
+            <TodayMeetStack items={meetItems} />
+          </section>
+        </FadeIn>
+      )}
+
+      {/* ─── Phase D'-3 Bundle 2 · TodayTopicGrid (4 토픽 cross-discover · TOPIC_REGISTRY consume) ─── */}
+      <FadeIn delay={0.27}>
+        <section className="card-primary">
+          <p className="sec-title" style={{ marginBottom: 12 }}>주제별로 더 깊게</p>
+          <TodayTopicGrid
+            cards={(() => {
+              // 사주별 동적 oneLiner — 점수 + AI 응답의 topicHints 우선, 없으면 점수 분기
+              // (이전: 4 카드 모두 모든 사용자에게 동일한 정적 카피 박혀있었음)
+              const aiHints = (result as any)?.topicHints || {};
+              function dynLine(key: 'wealth' | 'love' | 'career' | 'health', score: number): string {
+                // AI 응답 우선
+                const aiH = String(aiHints?.[key] ?? '').trim();
+                if (aiH.length >= 8) return stripMd(aiH);
+                // 점수 분기 — 사주별 점수가 다르므로 카피도 자연 분화
+                const s = Number(score) || 0;
+                const lines: Record<typeof key, [string, string, string]> = {
+                  wealth: ['오늘은 돈의 흐름이 걷히는 자리.', '들어올 돈은 잡고, 새는 자리는 막을 하루.', '큰 돈 결정은 미루고 받을 돈 챙기는 하루.'],
+                  love:   ['오늘은 인연이 또렷해지는 자리.', '있는 관계 한 번 더 챙기면 결이 깊어집니다.', '먼저 다가가지 말고 거리 두는 하루.'],
+                  career: ['오늘은 자리·이름이 자라는 결.', '쌓아온 결을 보여줄 한 자리가 생깁니다.', '결과보다 과정에 무게를 두는 하루.'],
+                  health: ['오늘은 몸의 결이 또렷한 자리.', '평소보다 한 박자 천천히 — 회복이 본업.', '무리하지 말고 기본기로 돌아가는 하루.'],
+                };
+                const [strong, mid, weak] = lines[key];
+                if (s >= 7) return strong;
+                if (s >= 5) return mid;
+                return weak;
+              }
+              const wealthScore = clampScore(subScores?.['재물운']?.score ?? subScores?.['재물운'] ?? 0) / 10;
+              const loveScore = clampScore(subScores?.['애정운']?.score ?? subScores?.['애정운'] ?? 0) / 10;
+              const careerScore = clampScore(subScores?.['성장운']?.score ?? subScores?.['성장운'] ?? 0) / 10;
+              const healthScore = clampScore(subScores?.['건강운']?.score ?? subScores?.['건강운'] ?? 0) / 10;
+              return [
+                {
+                  key: 'money',
+                  label: TOPIC_REGISTRY.wealth.label,
+                  hanja: TOPIC_REGISTRY.wealth.kanji,
+                  score: wealthScore,
+                  oneLiner: dynLine('wealth', wealthScore),
+                  ctaText: '재물운 한 달치 더 보기',
+                  onTap: () => navigate('/topic/wealth'),
+                },
+                {
+                  key: 'rel',
+                  label: TOPIC_REGISTRY.love.label,
+                  hanja: TOPIC_REGISTRY.love.kanji,
+                  score: loveScore,
+                  oneLiner: dynLine('love', loveScore),
+                  ctaText: '관계·연애운 깊이 보기',
+                  onTap: () => navigate('/topic/love'),
+                },
+                {
+                  key: 'work',
+                  label: TOPIC_REGISTRY.career.label,
+                  hanja: TOPIC_REGISTRY.career.kanji,
+                  score: careerScore,
+                  oneLiner: dynLine('career', careerScore),
+                  ctaText: '직업·진로운 깊이 보기',
+                  onTap: () => navigate('/topic/career'),
+                },
+                {
+                  key: 'health',
+                  label: TOPIC_REGISTRY.health.label,
+                  hanja: TOPIC_REGISTRY.health.kanji,
+                  score: healthScore,
+                  oneLiner: dynLine('health', healthScore),
+                  ctaText: '건강·체질운 깊이 보기',
+                  onTap: () => navigate('/topic/health'),
+                },
+              ] as TodayTopicCard[];
+            })()}
+          />
+        </section>
+      </FadeIn>
+
+      {/* ─── §7. AdBanner — L4 바로 아래 (build === 'appintos' && tier === 'free' 만)
+              #ad-sdk-wire: AdSlot (TossAds SDK) 정식 연결 — 실패 시 silent fallback ─── */}
+      {showAd && (
+        <FadeIn delay={0.28}>
+          <AdSlot unit={AD_BANNER_GROUP_ID} minHeight={90} />
+        </FadeIn>
+      )}
+
+      {/* ─── §6. UpsellCard — Phase D'-3 Bundle 2 정렬: FreeUpsellCard (단일 CTA) ─── */}
+      <FadeIn delay={0.32}>
+        <FreeUpsellCard
+          title="사주 전체로 더 깊이 풀어드릴까요"
+          desc="대운별 흐름·평생의 결·관계·재물·건강까지. 사주 전체에서 한 번에 풀어냅니다."
+          onTap={onPremiumUpsell}
+        />
+      </FadeIn>
+
+      {/* 다시 분석하기 */}
+      <button
+        className="cta-ghost"
+        onClick={onRetry}
+        style={{ marginTop: 6 }}
+      >
+        다시 분석하기
+      </button>
+    </motion.div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * DayTile — 96px 풀폭 · M/D + 일주 한자 + 일간 오행 그라디언트
+ * ═════════════════════════════════════════════════════════════════ */
+function DayTile({
+  dateInfo,
+  profileName,
+  dayOheng,
+}: {
+  dateInfo: DateInfo;
+  profileName: string;
+  dayOheng: OhengType;
+}) {
+  // dateInfo.label = "M월 D일 요일요일" 형식 → "M/D" 추출
+  const m = dateInfo.label.match(/(\d+)월\s*(\d+)일/);
+  const md = m ? `${m[1]}/${m[2]}` : '-/-';
+  const ganzi = dateInfo.ganzi || '——';
+  const accent = OHENG_INK[dayOheng];
+  return (
+    <div
+      role="banner"
+      aria-label={`${md} ${dateInfo.weekday}요일 · 일주 ${ganzi}`}
+      style={{
+        width: '100%',
+        height: 96,
+        background: OHENG_GRAD_BG[dayOheng],
+        borderRadius: 16,
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        border: `1px solid ${accent}28`,
+        boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset',
+      }}
+    >
+      {/* 좌: M/D Display 40 + 부속 캡션 */}
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div
+          style={{
+            fontSize: 40,
+            fontWeight: 800,
+            lineHeight: 1,
+            color: '#1A1A1A',
+            letterSpacing: '-0.04em',
+          }}
+        >
+          {md}
+        </div>
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 11.5,
+            fontWeight: 600,
+            color: accent,
+            letterSpacing: '0.02em',
+          }}
+        >
+          {dateInfo.weekday}요일 · {profileName}님의 오늘
+        </div>
+      </div>
+      {/* 우: 일주(60갑자) 한자 — Noto Serif */}
+      <div
+        style={{
+          fontSize: 30,
+          fontWeight: 700,
+          color: accent,
+          fontFamily: "'Noto Serif KR', serif",
+          letterSpacing: '0.06em',
+          flexShrink: 0,
+        }}
+        aria-hidden
+      >
+        {ganzi}
+      </div>
+    </div>
+  );
+}
+
+/* Phase D'-3 Bundle 2 — UpsellCard 인라인 정의 제거. FreeUpsellCard (free/_chrome.tsx) 로 통합. */
+/* Phase 4 #ad-sdk-wire — AdBannerPlaceholder 인라인 정의 제거. AdSlot (components/ads/AdSlot.tsx) 로 통합. */
+
+/* ══════════════════════════════════════════════════════════════════
+ * ScoreDonut
+ * ═════════════════════════════════════════════════════════════════ */
+function ScoreDonut({ score, color }: { score: number; color: string }) {
+  const size = 88;
+  const strokeWidth = 8;
+  const r = size / 2 - strokeWidth;
+  const c = 2 * Math.PI * r;
+  const dash = (score / 100) * c;
+  return (
+    <div
+      style={{ width: size, height: size, position: 'relative', flexShrink: 0 }}
+    >
+      <svg width={size} height={size}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="rgba(27,42,74,0.06)"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          initial={{ strokeDashoffset: c }}
+          animate={{ strokeDashoffset: c - dash }}
+          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 24,
+            fontWeight: 900,
+            color,
+            letterSpacing: '-0.03em',
+          }}
+        >
+          {score}
+        </span>
+        <span className="sec-caption" style={{ fontSize: 10 }}>점</span>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 헬퍼
+ * ═════════════════════════════════════════════════════════════════ */
+
+function clampScore(v: any): number {
+  const n = Number(v ?? 0);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function buildTodayGanzi(d: Date): DateInfo {
+  const date = formatDate(d);
+  const weekday = WEEKDAY_KR[d.getDay()] ?? '';
+  let ganzi = '';
+  try {
+    const solar = Solar.fromYmd(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    const ec = solar.getLunar().getEightChar();
+    ganzi = `${ec.getDayGan()}${ec.getDayZhi()}`;
+  } catch {
+    ganzi = '';
+  }
+  const label = `${d.getMonth() + 1}월 ${d.getDate()}일 ${weekday}요일`;
+  return { date, weekday, ganzi, label };
+}
+
+function getDayOheng(ganzi: string): OhengType {
+  const stem = ganzi?.[0] ?? '';
+  return STEM_TO_OHENG[stem] ?? '토';
+}
+
+/** L1 narrative 자연 문장 끊기 truncate */
+function truncate(s: string, max: number): string {
+  if (!s) return '';
+  if (s.length <= max) return s;
+  const tail = s.slice(0, max);
+  const candidates = [
+    tail.lastIndexOf('. '),
+    tail.lastIndexOf('.\n'),
+    tail.lastIndexOf('。'),
+    tail.lastIndexOf('? '),
+    tail.lastIndexOf('! '),
+  ];
+  const cut = Math.max(...candidates);
+  if (cut > max * 0.5) return s.slice(0, cut + 1).trim();
+  return s.slice(0, max).trim() + '…';
+}
+
+/** L3 1문단 — 최고점 영역 reason 우선, 없으면 첫 비어있지 않은 reason */
+function pickL3Paragraph(subScores: any, reasons: any): string {
+  if (!reasons || typeof reasons !== 'object') return '';
+  if (subScores && typeof subScores === 'object') {
+    const entries = Object.entries(subScores)
+      .map(([k, v]: any) => {
+        const sc = typeof v === 'number' ? v : v?.score ?? 0;
+        return [k, Number(sc) || 0] as [string, number];
+      })
+      .sort((a, b) => b[1] - a[1]);
+    const topKey = entries[0]?.[0];
+    if (topKey && reasons[topKey]) {
+      return stripMd(String(reasons[topKey]));
+    }
+  }
+  const firstReason = Object.values(reasons).find(
+    (r) => r && typeof r === 'string',
+  );
+  return firstReason ? stripMd(String(firstReason)) : '';
+}
+
+function buildPillars(
+  profile: SajuProfile,
+  pillarMessages?: Record<string, string | null>,
+): PillarData[] {
+  const raw = profile.sajuData?.pillars ?? [];
+  const labels: Array<'년' | '월' | '일' | '시'> = ['년', '월', '일', '시'];
+  const messageKeys = ['year', 'month', 'day', 'hour'];
+  const ordered: PillarData[] = raw.map((p: any, i: number) => ({
+    label: labels[i] ?? '년',
+    gan: String(p?.천간 ?? ''),
+    ji: String(p?.지지 ?? ''),
+    ohengGan: (p?.천간오행 ?? '토') as OhengType,
+    ohengJi: (p?.지지오행 ?? '토') as OhengType,
+    shipsin: p?.십성 ?? undefined,
+    connection: pillarMessages?.[messageKeys[i]]
+      ? stripMd(String(pillarMessages[messageKeys[i]]))
+      : undefined,
+    unavailable: p?.available === false,
+  }));
+  return [...ordered].reverse();
 }

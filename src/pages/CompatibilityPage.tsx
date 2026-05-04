@@ -10,6 +10,8 @@ import { addRecentPartner, getRecentPartnerIds } from '@/services/storage/compat
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
+// Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
+import { EXTENSION_THEME, ExtensionHero } from './extension/_chrome';
 
 const RELATIONS = ['연인', '배우자', '썸', '이별', '친구', '동료', '부모-자녀', '형제·자매', '기타'] as const;
 
@@ -111,12 +113,25 @@ export function CompatibilityPage() {
     }
   }
 
+  const compatTheme = EXTENSION_THEME.compat;
+
   return (
     <div className="min-h-screen bg-bg-page">
       <Header title="궁합" />
+
+      {/* Phase D'-4 Bundle 2 — ExtensionHero (合 인장 + 자주 그라디언트) */}
+      <FadeIn>
+        <ExtensionHero
+          theme={compatTheme}
+          crumb="사주 500 · 더 알아볼 주제 · 궁합"
+          sub="생년월일·시 두 분의 자료로 다섯 결을 비교합니다."
+          seal="合"
+        />
+      </FadeIn>
+
       <div className="px-5 pt-4 pb-[120px] space-y-6">
 
-        <FadeIn>
+        <FadeIn delay={0.04}>
           <h1 className="text-display text-text-primary leading-snug">
             두 사람의 사주로{'\n'}궁합을 확인해보세요
           </h1>
@@ -195,12 +210,26 @@ export function CompatibilityPage() {
         </FadeIn>
       </div>
 
-      {/* 하단 CTA */}
+      {/* P0-D · 출처 + 디스클레이머 — 하단 sticky 위가 아닌 본문 끝에 배치 (sticky bar 가 콘텐츠 가리는 문제 해결) */}
+      <div className="px-5 pt-4 pb-[120px] mt-6">
+        <div className="text-center space-y-1">
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+          </p>
+          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+            <br />
+            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+          </p>
+        </div>
+      </div>
+
+      {/* 하단 CTA — 다른 1운 페이지(대운/월운/토정비결)와 동일 구조 */}
       <div className="sticky-cta-bottom">
         <Button
           fullWidth
           size="lg"
-          variant={canSubmit ? 'gold' : 'secondary'}
+          variant="gold"
           disabled={!canSubmit || isSubmitting}
           loading={isSubmitting}
           onClick={handleSubmit}

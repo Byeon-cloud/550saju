@@ -68,11 +68,20 @@ const TIPS = [
   { category: '명리학 상식', text: '격국(格局)은 사주의 "성격 유형"과 비슷해요. MBTI처럼, 사주에도 분류 체계가 있습니다.' },
 ];
 
-const STAGE_DURATIONS = [2200, 2800, 0]; // ms — stage 1, 2, 3은 AI 응답까지 대기
+// Stage 7e-6: 페이싱 개선 — 1-2-3이 너무 빨리 끝나고 stage 3 에서 멈춰 stuck 체감
+//   기존 2.2s + 2.8s + ∞ → 4.5s + 6.0s + ∞ (체감 분배 균등)
+const STAGE_DURATIONS = [4500, 6000, 0];
 
 export function LoadingPage() {
   const navigate = useNavigate();
   const { sajuData, situation } = useSajuContext();
+  // Stage 7e-9: URL query ?type=premium 받으면 종합 사주 (10운 차감은 호출자가 수행)
+  const reportType: 'basic' | 'premium' = (() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('type') === 'premium' ? 'premium' : 'basic';
+    } catch { return 'basic'; }
+  })();
   const [stage, setStage] = useState<1 | 2 | 3>(1);
   const [copyIdx, setCopyIdx] = useState(0);
   const [tipIdx, setTipIdx] = useState(0);
@@ -96,15 +105,22 @@ export function LoadingPage() {
     return [...sajuData.pillars].reverse();
   }, [sajuData]);
 
+  // SSE 모드 여부 — 활성화 시 artificial timer 끄고 실제 그룹 도착에 맞춰 진행도 push
+  const useStreamRef = useRef(false);
   useEffect(() => {
     if (!sajuData) {
       navigate('/', { replace: true });
       return;
     }
 
-    // ─ 단계 1 → 2 → 3 자동 전환
-    const t1 = setTimeout(() => setStage(2), STAGE_DURATIONS[0]);
-    const t2 = setTimeout(() => setStage(3), STAGE_DURATIONS[0] + STAGE_DURATIONS[1]);
+    // SSE 모드 결정 — 한 번만
+    useStreamRef.current =
+      reportType === 'premium' &&
+      import.meta.env.VITE_USE_PREMIUM_STREAM === 'true';
+
+    // ─ 단계 1 → 2 → 3 자동 전환 (SSE 모드는 onStart/onGroup 으로 stage 직접 push)
+    const t1 = !useStreamRef.current ? setTimeout(() => setStage(2), STAGE_DURATIONS[0]) : null;
+    const t2 = !useStreamRef.current ? setTimeout(() => setStage(3), STAGE_DURATIONS[0] + STAGE_DURATIONS[1]) : null;
 
     // ─ 회전 카피 — 3.5s 간격
     const copyTimer = setInterval(() => setCopyIdx(p => p + 1), 3500);
@@ -112,10 +128,14 @@ export function LoadingPage() {
     // ─ 팁 회전 — 5s 간격
     const tipTimer = setInterval(() => setTipIdx(p => (p + 1) % shuffledTips.length), 5000);
 
-    // ─ 단계 3 진입 후 섹션 스켈레톤 점진적 채움 (체감 속도 연출, 실제 진행 ≠ 표시)
-    const sectionTimer = setInterval(() => {
-      setSectionDoneCount(prev => Math.min(prev + 1, REPORT_SECTIONS.length - 2));
-    }, 2400);
+    // ─ 단계 3 진입 후 섹션 스켈레톤 점진적 채움
+    //  · SSE 모드: artificial timer X — 실제 SSE group 도착에 맞춰 sectionDoneCount push
+    //  · callable 모드: 30s 정도 걸리므로 12 sections × 2.5s = 30s 매핑
+    const sectionTimer = !useStreamRef.current
+      ? setInterval(() => {
+          setSectionDoneCount(prev => Math.min(prev + 1, REPORT_SECTIONS.length - 2));
+        }, 2400)
+      : null;
 
     if (!called.current) {
       called.current = true;
@@ -123,8 +143,72 @@ export function LoadingPage() {
     }
 
     async function callGenerateReport() {
+      // T1+T2 SSE — env flag 활성 시 그룹별 실제 진행도 매칭
+      // 실패 시 자동으로 기존 callable 폴백 (배포 순서 무관 안전)
+      const useStream = useStreamRef.current;
+
+      if (useStream) {
+        try {
+          const { generatePremiumReportStream } = await import('@/services/ai/reportGenerator');
+          let streamSucceeded = false;
+          // 실제 그룹 도착에 맞춘 진행도 매핑 (12 섹션 기준)
+          // Group A (§01-§04) → 4 sections done
+          // Group B (§05-§07) → 8 sections done (cumulative)
+          // Group C (§08-§10) → 12 sections done (전체)
+          const groupArrivals: Record<string, boolean> = { A: false, B: false, C: false };
+          const updateProgress = () => {
+            let count = 0;
+            if (groupArrivals.A) count = 4;
+            if (groupArrivals.B) count = Math.max(count, 8);
+            if (groupArrivals.C) count = REPORT_SECTIONS.length;
+            // 도착 순서 무관 — 가장 큰 인덱스로 push (역행 방지)
+            setSectionDoneCount(prev => Math.max(prev, count));
+          };
+          await new Promise<void>((resolve, reject) => {
+            generatePremiumReportStream(sajuData!, situation || undefined, {
+              onStart: () => {
+                setStage(2);
+                // 시작 즉시 1~2 섹션은 채움 (만세력·시각화)
+                setSectionDoneCount(prev => Math.max(prev, 2));
+              },
+              onGroup: (group, _data, elapsedMs) => {
+                console.log(`[LoadingPage] Group ${group} arrived in ${elapsedMs}ms`);
+                groupArrivals[group] = true;
+                updateProgress();
+                setStage(3);
+              },
+              onDone: (result) => {
+                saveReport({
+                  id: result.reportId || generateId(),
+                  name: sajuData!.input?.name || '나',
+                  input: sajuData!.input as any,
+                  sajuData: sajuData!,
+                  type: 'paid',
+                  contentType: 'report',
+                  createdAt: new Date().toISOString(),
+                  aiResult: { ...(result.content as any), tier: 'premium' as const },
+                });
+                import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
+                navigate(`/result/${result.reportId}`, { replace: true });
+                streamSucceeded = true;
+                resolve();
+              },
+              onError: (msg) => {
+                console.warn('[LoadingPage] SSE 실패 → callable 폴백:', msg);
+                reject(new Error(msg));
+              },
+            }).catch(reject);
+          });
+          if (streamSucceeded) return;
+        } catch (sseErr) {
+          console.warn('[LoadingPage] SSE 처리 중 예외 → callable 폴백:', sseErr);
+          // → 아래 callable 폴백 진행
+        }
+      }
+
+      // 기본 경로 — callable generateReport (basic + premium 모두)
       try {
-        const result = await generateReport(sajuData!, situation || undefined);
+        const result = await generateReport(sajuData!, situation || undefined, reportType);
         saveReport({
           id: result.reportId || generateId(),
           name: sajuData!.input?.name || '나',
@@ -133,26 +217,30 @@ export function LoadingPage() {
           type: 'paid',
           contentType: 'report',
           createdAt: new Date().toISOString(),
-          aiResult: result.content,
+          // premium 표식 보존 (ResultPage 의 isPremiumLayout 판단)
+          aiResult: reportType === 'premium'
+            ? { ...(result.content as any), tier: 'premium' as const }
+            : result.content,
         });
         import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
         navigate(`/result/${result.reportId}`, { replace: true });
       } catch (err) {
         console.warn('[LoadingPage] 서버 호출 실패:', err);
         // ⚠️ 환불은 서버(Cloud Function)에서 처리됨 — 클라이언트 직접 환불 금지 (보안)
-        setError('분석에 실패했어요. 잔액은 자동으로 복구돼요.');
-        setTimeout(() => navigate('/result/local', { replace: true }), 2500);
+        // ⚠️ /result/local 폴백 절대 X — 옛날 legacy layout 노출 방지 (사용자 강력 요청)
+        // 에러 메시지만 표시 → 사용자가 직접 홈/입력으로 이동
+        setError('분석에 실패했어요. 잔액은 자동으로 복구돼요. 잠시 후 다시 시도해주세요.');
       }
     }
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      if (t1) clearTimeout(t1);
+      if (t2) clearTimeout(t2);
       clearInterval(copyTimer);
       clearInterval(tipTimer);
-      clearInterval(sectionTimer);
+      if (sectionTimer) clearInterval(sectionTimer);
     };
-  }, [navigate, sajuData, situation, shuffledTips]);
+  }, [navigate, sajuData, situation, shuffledTips, reportType]);
 
   if (!sajuData) return null;
 
@@ -160,7 +248,10 @@ export function LoadingPage() {
   const currentCopyPool = ROTATING_COPY[stage] || [];
   const currentCopy = currentCopyPool[copyIdx % currentCopyPool.length];
   const currentTip = shuffledTips[tipIdx];
-  const progress = stageMeta.target;
+  // Stage 7e-6: stage 3 에서 sectionDoneCount 따라 progress 점진 증가 (66→95%)
+  const progress = stage < 3
+    ? stageMeta.target
+    : Math.min(95, 66 + Math.round((sectionDoneCount / Math.max(1, REPORT_SECTIONS.length - 2)) * 29));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center px-5 pt-12 pb-8 overflow-y-auto"
@@ -279,11 +370,28 @@ export function LoadingPage() {
                   return (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: i * 0.12 }}
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        // Stage 7e-9: Tier C 보강 — 한자 호흡 효과 (각 기둥 다른 phase)
+                        scale: [1, 1.04, 1],
+                      }}
+                      transition={{
+                        duration: 0.5,
+                        delay: i * 0.12,
+                        scale: {
+                          duration: 3.2,
+                          repeat: Infinity,
+                          ease: 'easeInOut',
+                          delay: i * 0.4 + 0.5,
+                        },
+                      }}
                       className={`flex-1 rounded-lg py-3 text-center ${isMe ? 'border-2 border-brand-gold' : 'border border-border-light'}`}
-                      style={{ background: isMe ? 'rgba(184,150,90,0.06)' : 'transparent' }}
+                      style={{
+                        background: isMe ? 'rgba(184,150,90,0.06)' : 'transparent',
+                        boxShadow: isMe ? '0 4px 14px rgba(184,150,90,0.18)' : 'none',
+                      }}
                     >
                       <p className={`text-[10px] ${isMe ? 'text-brand-gold font-bold' : 'text-text-hint'}`}>
                         {posLabels[i]}주
@@ -308,7 +416,8 @@ export function LoadingPage() {
         </AnimatePresence>
       </div>
 
-      {/* ===== 단계 3 — 12 섹션 스켈레톤 ===== */}
+      {/* Stage 7e-7-rev: 사용자 지시 — 프리미엄(10운) 형태 유지. 10 섹션 스켈레톤 복원.
+          (LoadingPage 는 프리미엄/일반 사주풀이 흐름에만 진입 — 오늘운세/주제 등은 AILoading 사용) */}
       <AnimatePresence>
         {stage === 3 && (
           <motion.div
@@ -352,7 +461,52 @@ export function LoadingPage() {
       </div>
 
       {error && (
-        <p className="text-caption text-func-warning mt-4 text-center">{error}</p>
+        <div className="mt-6 mx-auto max-w-[340px] px-5">
+          <div
+            className="rounded-2xl px-5 py-5 text-center"
+            style={{
+              background: 'rgba(198,40,40,0.05)',
+              border: '1px solid rgba(198,40,40,0.30)',
+            }}
+          >
+            <div
+              className="mx-auto mb-3"
+              style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'rgba(198,40,40,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 18, fontWeight: 900, color: '#c62828',
+              }}
+            >
+              !
+            </div>
+            <p className="text-body-sm font-bold mb-1" style={{ color: '#c62828' }}>분석에 실패했어요</p>
+            <p className="text-caption mb-4" style={{ color: '#7A7269', lineHeight: 1.6 }}>
+              잠시 후 다시 시도해 주세요.<br />
+              차감된 운은 자동으로 복구됩니다.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/', { replace: true })}
+                className="flex-1 h-11 rounded-xl text-caption font-semibold"
+                style={{ background: '#FFFFFF', border: '1px solid #E5DFD0', color: '#1A1A1A' }}
+              >
+                홈으로
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="flex-1 h-11 rounded-xl text-caption font-semibold"
+                style={{
+                  background: 'linear-gradient(135deg, #B8965A, #8C6D3D)',
+                  color: '#fff',
+                }}
+              >
+                다시 시도
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ===== 사주 꿀팁 카드 ===== */}

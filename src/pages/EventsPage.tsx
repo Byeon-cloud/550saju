@@ -26,10 +26,10 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   navy: '#1D2D4A',
-  muted: '#8A7F6E',
+  muted: '#7A7269',              // SSOT --mute — D1 fix (2026-04-23)
   gold: '#B8965A',
-  goldDark: '#9A7D47',
-  goldLight: '#F5EADB',
+  goldDark: '#8C6D3D',          // SSOT --gold-deep — D1 fix (2026-04-23)
+  goldLight: 'rgba(184,150,90,0.14)', // SSOT soft gold — D1 fix (2026-04-23)
   line: '#EDEAE0',
   danger: '#C0392B',
 } as const;

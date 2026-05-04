@@ -96,7 +96,7 @@ export function TierBModal({ open, kind, onClose, autoCloseMs = 3000 }: TierBMod
                   style={{ color: '#1A1A1A', fontFamily: "'Noto Serif KR', serif" }}>
                   100
                 </div>
-                <div className="mt-1 text-[14px] font-semibold" style={{ color: '#7F6B4E' }}>
+                <div className="mt-1 text-[14px] font-semibold" style={{ color: '#8C6D3D' }}>{/* SSOT gold-deep — D1 fix (2026-04-23) */}
                   원 토스포인트
                 </div>
               </>

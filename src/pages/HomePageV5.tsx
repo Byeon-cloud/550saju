@@ -24,6 +24,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { useUserPath, type UserPath } from '@/hooks/useUserPath';
 import { HOME_REVIEWS } from '@/constants/reviews';
+// 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
 
 /* ────────────────────────────────────────────────────────────
  * 디자인 토큰 (PC 인수인계 §5 SSOT)
@@ -36,7 +37,7 @@ const C = {
   grayLine: '#E5DFD0',
   gold: '#B8965A',
   goldDark: '#8C6D3D',
-  goldSoft: '#F0E8D9',
+  goldSoft: '#F8F5EE',
   goldShimmer: '#E8D9B8',
   mute: '#7A7269',
 } as const;
@@ -92,7 +93,7 @@ function PriceIntro() {
     <div className="mx-4 mt-4 w-[calc(100%-32px)] rounded-xl px-4 py-3.5" style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
       <p className="text-[12px] font-bold" style={{ color: C.goldDark, fontFamily: SERIF }}>가격 안내</p>
       <p className="text-[12.5px] mt-1 leading-[1.55]" style={{ color: C.inkSoft }}>
-        1운 = 500원, 10운 번들 5,000원. 필요한 만큼만 결제합니다.
+        풀이는 운(運) 단위로 사용합니다. 종합 사주 = 10운. 필요한 만큼만 충전.
       </p>
       <p className="text-[11.5px] mt-1.5" style={{ color: C.mute }}>
         무료 일일 패스: 오늘 운세 · 꿈해몽 · 대화 1회.
@@ -230,12 +231,18 @@ function Premium10un({ displayName, hasProfile, onClick }: { displayName: string
 }
 
 function Topic5({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
+  // Stage 7e-7: 5 → 10 카테고리 확장 (전체 SSOT 노출)
   const TOPICS = [
-    { id: 'love',   label: '연애', color: '#C88A95' },
-    { id: 'wealth', label: '재물', color: '#B8965A' },
-    { id: 'career', label: '직업', color: '#5A7CA8' },
-    { id: 'health', label: '건강', color: '#6FA08C' },
-    { id: 'study',  label: '공부', color: '#9C5A8A' },
+    { id: 'love',     label: '연애',     color: '#C88A95' },
+    { id: 'reunion',  label: '재회',     color: '#D89A8A' },
+    { id: 'marriage', label: '결혼',     color: '#C97B95' },
+    { id: 'wealth',   label: '재물',     color: '#B8965A' },
+    { id: 'exam',     label: '합격·이직', color: '#5A6FA8' },
+    { id: 'business', label: '사업',     color: '#A37A2E' },
+    { id: 'health',   label: '건강',     color: '#6FA08C' },
+    { id: 'move',     label: '이사·이동', color: '#4F8A8B' },
+    { id: 'study',    label: '학업',     color: '#9C5A8A' },
+    { id: 'career',   label: '직업',     color: '#5A7CA8' },
   ];
   return (
     <div className="mx-4 mt-4 w-[calc(100%-32px)]">
@@ -246,8 +253,8 @@ function Topic5({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
             className="h-[76px] rounded-xl flex flex-col items-center justify-center"
             style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
             <span className="w-2 h-2 rounded-full mb-1" style={{ background: t.color }} />
-            <span className="text-[12px] font-bold" style={{ color: C.ink }}>{t.label}</span>
-            <span className="text-[10px] mt-0.5" style={{ color: C.mute }}>1운</span>
+            <span className="text-[11px] font-bold text-center px-1 leading-tight" style={{ color: C.ink }}>{t.label}</span>
+            <span className="text-[9.5px] mt-0.5" style={{ color: C.mute }}>1운</span>
           </button>
         ))}
       </div>
@@ -436,7 +443,11 @@ export function HomePageV5() {
   const goProfile = () => (hasProfile ? navigate('/storage') : navigate('/input'));
   const goDaily = () => navigate('/daily');
   const goDream = () => navigate('/dream');
-  const go10un = () => navigate('/storage');
+  // 프리미엄 10운 카드 클릭 — 다른 콘텐츠 (오늘운세 / 주제별 / 토정비결) 와 동일 패턴
+  //   /premium 페이지에서 ProfilePicker → 10운 차감 → /loading?type=premium
+  const go10un = () => {
+    navigate('/premium');
+  };
 
   // ready=false 는 skeleton 대신 Path A 로 렌더 (useUserPath 반환 규약)
   // 판별 완료 후 stack 합성

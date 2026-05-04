@@ -8,7 +8,7 @@ export const AD_BANNER_GROUP_ID = 'ait.v2.live.e64deec6a7444898';
 export const AD_REWARDED_GROUP_ID = 'ait.v2.live.3ce03ae6e7f441c2';
 
 // ─── 공유 리워드 ───
-export const SHARE_REWARD_MODULE_ID = 'a56725a6-4c52-40e5-b68b-2f752caf0a94';
+export const SHARE_REWARD_MODULE_ID = '0a21ea14-951b-4abb-8484-aaf61b0123b8';
 
 // ─── 프로모션 ───
 export const PROMOTION_CODE_LIVE = '01KN9V82GYJZ5C1S3KP4HQA6AY';

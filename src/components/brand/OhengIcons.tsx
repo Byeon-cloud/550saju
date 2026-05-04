@@ -31,7 +31,7 @@ export function IconFire({ size = 24, color = '#D32F2F', className }: IconProps)
 }
 
 /** 토(土) — 산/땅 */
-export function IconEarth({ size = 24, color = '#F57F17', className }: IconProps) {
+export function IconEarth({ size = 24, color = '#E8B82A', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M2 20h20L17 8l-5 7-4-4-6 9z" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
@@ -40,7 +40,7 @@ export function IconEarth({ size = 24, color = '#F57F17', className }: IconProps
 }
 
 /** 금(金) — 다이아몬드/보석 */
-export function IconMetal({ size = 24, color = '#757575', className }: IconProps) {
+export function IconMetal({ size = 24, color = '#4A4A4A', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M6 4h12l4 7-10 11L2 11l4-7z" fill={color} fillOpacity="0.1" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
@@ -50,7 +50,7 @@ export function IconMetal({ size = 24, color = '#757575', className }: IconProps
 }
 
 /** 수(水) — 물방울 */
-export function IconWater({ size = 24, color = '#1565C0', className }: IconProps) {
+export function IconWater({ size = 24, color = '#1565E0', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M12 2C8 8 5 12 5 16a7 7 0 0014 0c0-4-3-8-7-14z" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="1.5" />

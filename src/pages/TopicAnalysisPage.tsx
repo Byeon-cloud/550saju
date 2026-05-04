@@ -15,6 +15,29 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGr
 import { stripMd } from '@/utils/format';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
 import { normalizeTopicId } from '@/constants/topics';
+// Phase 2 Stage 2A — 공통 MonthTimeline 컴포넌트 (5 분기 wiring 시작)
+import {
+  MonthTimeline,
+  MONTH_TIMELINE_THEMES,
+  buildMonthCells,
+} from './topic/_month_timeline';
+// Phase D'-2 Bundle 2 (#54) — mockup 진본 시각 정렬
+import {
+  TOPIC_CHROME,
+  TopicHero,
+  TopicSajuMini,
+  TopicScoreCard,
+  TopicLinkCard,
+  TopicSection,
+  PullQuote,
+  TopicActionList,
+  TopicUpsellCard,
+  TopicSourceCite,
+  type TopicChromeKey,
+  type TopicSajuMiniCell,
+  type TopicLinkPill,
+  type TopicActionItem,
+} from './topic/_chrome';
 
 /* ─── 주제 설정 — 이모지 제거, 브랜드 픽토그램 사용.
  *    key가 PictogramRegistry의 topic:* 와 1:1 매핑. (브랜드픽토그램_시스템.md)
@@ -31,11 +54,11 @@ const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> =
   study:    { label: '학업운',       color: '#9C5A8A', desc: '집중력·지식 흡수·학습 패턴' },
   exam:     { label: '합격·이직운', color: '#5A6FA8', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
   move:     { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
-  social:   { label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
+  social:   { label: '대인관계운',   color: '#E8B82A', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
   moving:   { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
 };
 
-const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
 
 /** AI가 "(추정)", "(추론)" 등 괄호 주석을 붙여 보내는 경우 한자 1글자만 추출 */
 function cleanHanja(raw: string | undefined): string {
@@ -58,7 +81,7 @@ type Phase = 'select' | 'loading' | 'result';
 function getJudgment(score: number) {
   if (score >= 85) return { hanja: '大吉', reading: '대길', desc: '매우 좋은 기운', color: '#B8965A', bg: 'rgba(184,150,90,0.12)' };
   if (score >= 70) return { hanja: '吉',   reading: '길',   desc: '좋은 기운의 흐름', color: '#2D8A4E', bg: 'rgba(45,138,78,0.10)' };
-  if (score >= 55) return { hanja: '平',   reading: '평',   desc: '무난한 흐름',   color: '#1565C0', bg: 'rgba(21,101,192,0.10)' };
+  if (score >= 55) return { hanja: '平',   reading: '평',   desc: '무난한 흐름',   color: '#1565E0', bg: 'rgba(21,101,224,0.10)' };
   if (score >= 40) return { hanja: '小注意', reading: '소주의', desc: '보완이 필요한 기운', color: '#E65100', bg: 'rgba(230,81,0,0.10)' };
   return               { hanja: '要注意', reading: '요주의', desc: '적극 보완 필요', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' };
 }
@@ -68,7 +91,7 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   빨강: '#D32F2F', 빨간색: '#D32F2F', 붉은색: '#D32F2F', 적색: '#D32F2F', 레드: '#D32F2F',
   진빨강: '#B71C1C', 와인: '#880E4F', 와인색: '#880E4F',
   // 파랑 계열
-  파랑: '#1565C0', 파란색: '#1565C0', 청색: '#1565C0', 블루: '#1565C0',
+  파랑: '#1565E0', 파란색: '#1565E0', 청색: '#1565E0', 블루: '#1565E0',
   진파랑: '#0D47A1', 남색: '#1A237E', 남청색: '#1A237E', 감색: '#1A237E',
   하늘: '#42A5F5', 하늘색: '#42A5F5', 연파랑: '#42A5F5', 스카이: '#42A5F5',
   진청색: '#0D47A1', 진청: '#0D47A1',
@@ -87,7 +110,7 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   // 흰색/검정 계열
   흰색: '#BDBDBD', 백색: '#BDBDBD', 하양: '#BDBDBD', 하얀색: '#BDBDBD', 화이트: '#BDBDBD',
   검정: '#424242', 검은색: '#424242', 흑색: '#424242', 블랙: '#424242',
-  회색: '#757575', 회색빛: '#757575', 은색: '#9E9E9E', 실버: '#9E9E9E',
+  회색: '#4A4A4A', 회색빛: '#4A4A4A', 은색: '#9E9E9E', 실버: '#9E9E9E',
   // 금색 계열
   금색: '#B8965A', 골드: '#B8965A', 금: '#B8965A', 황토: '#BF8C3E', 황토색: '#BF8C3E',
   갈색: '#795548', 브라운: '#795548', 갈: '#795548',
@@ -117,7 +140,7 @@ function findLuckyColorHex(value: string): string | null {
 const GRADE_SCALE = [
   { hanja: '大吉', reading: '대길', range: '85~100', color: '#B8965A' },
   { hanja: '吉', reading: '길', range: '70~84', color: '#2D8A4E' },
-  { hanja: '平', reading: '평', range: '55~69', color: '#1565C0' },
+  { hanja: '平', reading: '평', range: '55~69', color: '#1565E0' },
   { hanja: '小注意', reading: '소주의', range: '40~54', color: '#E65100' },
   { hanja: '要注意', reading: '요주의', range: '~39', color: '#D32F2F' },
 ];
@@ -312,8 +335,8 @@ function LoveViz({ data, color }: { data: any; color: string }) {
         {/* 상대방 궁합 분석 (썸/연애중일 때만) */}
         {data.partnerCompat && (() => {
           const pc = data.partnerCompat;
-          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
-          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
+          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
           const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
             '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
             '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
@@ -322,7 +345,7 @@ function LoveViz({ data, color }: { data: any; color: string }) {
             '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
             '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
           };
-          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' }; };
+          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#4A4A4A', bg: 'rgba(0,0,0,0.06)' }; };
           const pComp = pc.pillarComparison;
           const interMap: Record<string, any> = {};
           (pComp?.interactions || []).forEach((it: any) => {
@@ -350,12 +373,12 @@ function LoveViz({ data, color }: { data: any; color: string }) {
                   const fg = ohengText[oh] || '#3D3427';
                   return (
                     <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
-                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#4A4A4A' }}>{oh}</span>}
                       <div className="flex gap-1">
                         <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
                         <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
                       </div>
-                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#4A4A4A' }}>{oh}</span>}
                     </div>
                   );
                 };
@@ -427,7 +450,7 @@ function LoveViz({ data, color }: { data: any; color: string }) {
   );
 }
 
-function WealthViz({ data, color }: { data: any; color: string }) {
+function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: string; sajuData?: any; birthYear?: number }) {
   if (!data) return null;
 
   // 월별 재물 점수에서 베스트/워스트 찾기
@@ -438,6 +461,53 @@ function WealthViz({ data, color }: { data: any; color: string }) {
     if (s > bestScore) { bestScore = s; bestMonth = m.month; }
     if (s < worstScore) { worstScore = s; worstMonth = m.month; }
   });
+
+  // Stage 2B-1: MonthTimeline 12 셀 cells 빌드 (mockup month-tl 진본 패턴)
+  const monthTimelineCells = useMemo(() => {
+    if (!monthly.length) return [];
+    const scores = Array.from({ length: 12 }, (_, i) => {
+      const found = monthly.find((m: any) => {
+        const mNum = typeof m.month === 'string' ? parseInt(m.month) : m.month;
+        return mNum === i + 1;
+      });
+      if (!found) return 50; // plain 기본
+      return typeof found.score === 'number' ? found.score : parseInt(found.score) || 50;
+    });
+    return buildMonthCells(scores, {
+      currentMonth: new Date().getMonth() + 1,
+    });
+  }, [monthly]);
+
+  // Stage 2B-1: Donut 4분면 재물 분포 — wealthType 기반 inference (data 0 변경 정책)
+  const incomeDistribution = useMemo(() => {
+    // 서버 응답에 incomeSources 직접 있으면 사용 (forward-compat)
+    if (data.incomeSources && typeof data.incomeSources === 'object') {
+      // ?? 만 사용 (|| 마스킹 제거) — AI 가 0 반환 시 0 보존, undefined 만 0 으로 fallback
+      // (이전: `?? 0 || 50` 이중 fallback 으로 0 → 50 마스킹 발생)
+      const s = data.incomeSources;
+      return [
+        { key: 'main',    label: '본업',    hanja: '本業', value: Number(s.main ?? 0),    color: '#B8965A' },
+        { key: 'invest',  label: '투자',    hanja: '投資', value: Number(s.invest ?? 0),  color: '#1565E0' },
+        { key: 'side',    label: '사이드',   hanja: '副業', value: Number(s.side ?? 0),    color: '#2D8A4E' },
+        { key: 'inherit', label: '상속·기타', hanja: '其他', value: Number(s.inherit ?? 0), color: '#9C5A8A' },
+      ];
+    }
+    // wealthType 기반 inference (서버 response 누락 시 안전 fallback)
+    const t = String(data.wealthType ?? '').trim();
+    let dist: Record<string, number>;
+    if (t.includes('정규직')) dist = { main: 70, invest: 10, side: 10, inherit: 10 };
+    else if (t.includes('사업'))  dist = { main: 30, invest: 20, side: 40, inherit: 10 };
+    else if (t.includes('투자'))  dist = { main: 30, invest: 60, side:  5, inherit:  5 };
+    else if (t.includes('재테크')) dist = { main: 50, invest: 35, side: 10, inherit:  5 };
+    else dist = { main: 50, invest: 20, side: 20, inherit: 10 };
+    return [
+      { key: 'main',    label: '본업',    hanja: '本業', value: dist.main,    color: '#B8965A' },
+      { key: 'invest',  label: '투자',    hanja: '投資', value: dist.invest,  color: '#1565E0' },
+      { key: 'side',    label: '사이드',   hanja: '副業', value: dist.side,    color: '#2D8A4E' },
+      { key: 'inherit', label: '상속·기타', hanja: '其他', value: dist.inherit, color: '#9C5A8A' },
+    ];
+  }, [data.incomeSources, data.wealthType]);
+  const isInferredDist = !data.incomeSources;
 
   return (
     <FadeIn delay={0.1}>
@@ -475,7 +545,7 @@ function WealthViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.investStyle && (
-              <div className="rounded-xl p-3" style={{ background: 'rgba(21,101,192,0.05)' }}>
+              <div className="rounded-xl p-3" style={{ background: 'rgba(21,101,224,0.05)' }}>
                 <p className="text-[9px] text-text-hint mb-1">투자 성향</p>
                 <p className="text-[13px] font-black text-[#1565C0]">{data.investStyle}</p>
               </div>
@@ -543,6 +613,75 @@ function WealthViz({ data, color }: { data: any; color: string }) {
           </div>
         )}
 
+        {/* Stage 2B-1: MonthTimeline — mockup `month-tl` 진본 12 셀 grid (재물 강도 4-tier) */}
+        {monthTimelineCells.length > 0 && (
+          <MonthTimeline
+            cells={monthTimelineCells}
+            title="월별 재물 지수"
+            hanjaSuffix="年運"
+            subtitle={
+              data.wealthFlow
+                ? `${data.wealthFlow} · 강(70+) · 중(50~) · 평이(30~) · 주의(<30)`
+                : '강 / 중 / 평이 / 주의 — 4-tier 재물 강도'
+            }
+            theme={MONTH_TIMELINE_THEMES.wealth}
+            legendLabels={{ high: '강', mid: '중', low: '주의', plain: '평이' }}
+          />
+        )}
+
+        {/* Stage 2B-1: Donut 4분면 재물 분포 — mockup `donut` 패턴 (자체 SVG, recharts 회피) */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-h3 text-text-primary">돈이 들어오는 통로</p>
+            {isInferredDist && (
+              <span
+                className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(122,114,105,0.10)', color: '#7A7269' }}
+                title="서버 응답에 incomeSources 누락 — wealthType 기반 추정값"
+              >
+                추정
+              </span>
+            )}
+          </div>
+          <p className="text-[10px] text-text-hint mb-3">
+            본업·투자·사이드·기타 — 4 통로의 비중
+          </p>
+          <IncomeDonut segments={incomeDistribution} accentColor={color} />
+        </div>
+
+        {/* Stage 2B-2: 평생 재물 흐름 — 8 대운 60년 timeline */}
+        {sajuData?.daeun && Array.isArray(sajuData.daeun) && sajuData.daeun.length > 0 && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-h3 text-text-primary">평생 재물 흐름</p>
+              <span className="text-[9px] text-text-hint">大運 · 10년 단위</span>
+            </div>
+            <p className="text-[10px] text-text-hint mb-3">
+              8 대운 60년 — 재물 강세 시기 한눈에
+            </p>
+            <DaewoonWealthRail
+              daeun={sajuData.daeun}
+              ilgan={sajuData.pillars?.[2]?.천간 ?? ''}
+              birthYear={birthYear ?? new Date().getFullYear() - 30}
+              accentColor={color}
+            />
+          </div>
+        )}
+
+        {/* Stage 2B-2: 돈을 움직이는 인맥 — 십성 분포 기반 3 카드 */}
+        {sajuData?.sipsung && Array.isArray(sajuData.sipsung) && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-h3 text-text-primary">돈을 움직이는 인맥</p>
+              <span className="text-[9px] text-text-hint">人脈</span>
+            </div>
+            <p className="text-[10px] text-text-hint mb-3">
+              사주 십성에서 도출 — 도와주는 사람 / 부딪히는 사람 / 평온한 사람
+            </p>
+            <RelflowCards sipsung={sajuData.sipsung} />
+          </div>
+        )}
+
         {/* 돈 새는 함정 경고 */}
         {data.moneyLeakTrap && (
           <div className="card" style={{ borderLeft: '3px solid #E65100' }}>
@@ -561,6 +700,391 @@ function WealthViz({ data, color }: { data: any; color: string }) {
         )}
       </div>
     </FadeIn>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * Stage 2B-1 · IncomeDonut — 4분면 재물 분포 도넛 (자체 SVG, ~80줄)
+ *  · 본업·투자·사이드·상속(기타) 4 segment
+ *  · mockup `donut + legend` 진본 패턴 정렬
+ *  · recharts 회피 (번들 영향 0)
+ *  · 좌측 도넛 + 우측 범례 + 비중 % + 한자 라벨
+ * ═════════════════════════════════════════════════════════════════ */
+function IncomeDonut({
+  segments,
+  accentColor: _accentColor,
+}: {
+  segments: Array<{ key: string; label: string; hanja: string; value: number; color: string }>;
+  accentColor: string;
+}) {
+  const total = segments.reduce((a, s) => a + s.value, 0) || 1;
+  const size = 160;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size * 0.36;
+  const stroke = size * 0.18;
+
+  // 호 path 빌더 — 시계 방향 12시 시작
+  let acc = 0;
+  const arcs = segments
+    .filter((s) => s.value > 0)
+    .map((s) => {
+      const startAngle = (acc / total) * 2 * Math.PI - Math.PI / 2;
+      acc += s.value;
+      const endAngle = (acc / total) * 2 * Math.PI - Math.PI / 2;
+      const x1 = cx + Math.cos(startAngle) * r;
+      const y1 = cy + Math.sin(startAngle) * r;
+      const x2 = cx + Math.cos(endAngle) * r;
+      const y2 = cy + Math.sin(endAngle) * r;
+      const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+      const path = `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${largeArc} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+      const pct = Math.round((s.value / total) * 100);
+      return { ...s, path, pct };
+    });
+
+  // 가장 큰 segment (강조)
+  const dominant = arcs.reduce((max, s) => (s.value > max.value ? s : max), arcs[0]);
+
+  return (
+    <div className="flex items-center gap-4">
+      {/* 좌측 도넛 SVG */}
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="재물 통로 4분면 도넛" style={{ flexShrink: 0 }}>
+        {/* 배경 ring */}
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(184,150,90,0.10)" strokeWidth={stroke} />
+        {/* 데이터 호 */}
+        {arcs.map((s) => (
+          <path
+            key={s.key}
+            d={s.path}
+            fill="none"
+            stroke={s.color}
+            strokeWidth={stroke}
+            strokeLinecap="butt"
+          />
+        ))}
+        {/* 중앙 — dominant segment */}
+        {dominant && (
+          <>
+            <text
+              x={cx} y={cy - 8}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={11}
+              fontWeight={700}
+              fill={dominant.color}
+              fontFamily="'Noto Serif KR', serif"
+              letterSpacing="0.02em"
+            >
+              {dominant.label}
+            </text>
+            <text
+              x={cx} y={cy + 10}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={20}
+              fontWeight={800}
+              fill="#1A1A1A"
+              fontFamily="'Noto Serif KR', serif"
+            >
+              {dominant.pct}%
+            </text>
+            <text
+              x={cx} y={cy + 26}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={8}
+              fill="#7A7269"
+              letterSpacing="0.05em"
+            >
+              주력 통로
+            </text>
+          </>
+        )}
+      </svg>
+
+      {/* 우측 범례 */}
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-col gap-1.5">
+          {arcs.map((s) => (
+            <div key={s.key} className="flex items-center gap-2 text-[11px]">
+              <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: s.color, flexShrink: 0 }} />
+              <span style={{ fontWeight: 700, color: '#1A1A1A', minWidth: 40 }}>{s.label}</span>
+              <span style={{ fontSize: 9.5, color: '#7A7269', fontFamily: "'Noto Serif KR', serif" }}>{s.hanja}</span>
+              <span style={{ marginLeft: 'auto', fontWeight: 800, color: s.color, fontFeatureSettings: '"tnum"' }}>
+                {s.pct}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * Stage 2B-2 · DaewoonWealthRail — 8 대운 60년 가로 timeline (재물 강도)
+ *  · sajuData.daeun 직접 활용 (calculator.ts 결과 그대로)
+ *  · 각 대운 천간 → 일간 십성 → 재물 강도 자동 도출 (재성·식상=강 / 비겁·관성=약)
+ *  · 현재 대운 ring 강조 + 정점 대운 별표
+ * ═════════════════════════════════════════════════════════════════ */
+
+const WEALTH_SIPSUNG_INTENSITY: Record<string, number> = {
+  // 재성 (돈 자체) — 가장 강
+  정재: 90, 편재: 95,
+  // 식상 (돈 만드는 힘)
+  식신: 75, 상관: 70,
+  // 인성 (돈 굴리는 보조)
+  정인: 55, 편인: 50,
+  // 비겁 (돈 다투는 — 약)
+  비견: 35, 겁재: 25,
+  // 관성 (압박 — 중간)
+  정관: 45, 편관: 40,
+};
+
+const OHENG_SAENG_LOCAL: Record<string, string> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
+const OHENG_KEUK_LOCAL: Record<string, string> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+const CHEONGAN_OHENG_LOCAL: Record<string, string> = {
+  甲: '목', 乙: '목', 丙: '화', 丁: '화', 戊: '토', 己: '토', 庚: '금', 辛: '금', 壬: '수', 癸: '수',
+};
+const CHEONGAN_YINYANG_LOCAL: Record<string, '양' | '음'> = {
+  甲: '양', 丙: '양', 戊: '양', 庚: '양', 壬: '양',
+  乙: '음', 丁: '음', 己: '음', 辛: '음', 癸: '음',
+};
+
+function deriveSipsungLocal(ilgan: string, target: string): string {
+  if (!ilgan || !target) return '';
+  const xOh = CHEONGAN_OHENG_LOCAL[ilgan];
+  const xYY = CHEONGAN_YINYANG_LOCAL[ilgan];
+  const yOh = CHEONGAN_OHENG_LOCAL[target];
+  const yYY = CHEONGAN_YINYANG_LOCAL[target];
+  if (!xOh || !yOh) return '';
+  const same = xYY === yYY;
+  if (xOh === yOh) return same ? '비견' : '겁재';
+  if (OHENG_SAENG_LOCAL[xOh] === yOh) return same ? '식신' : '상관';
+  if (OHENG_KEUK_LOCAL[xOh] === yOh) return same ? '편재' : '정재';
+  if (OHENG_KEUK_LOCAL[yOh] === xOh) return same ? '편관' : '정관';
+  if (OHENG_SAENG_LOCAL[yOh] === xOh) return same ? '편인' : '정인';
+  return '';
+}
+
+function DaewoonWealthRail({
+  daeun,
+  ilgan,
+  birthYear,
+  accentColor,
+}: {
+  daeun: any[];
+  ilgan: string;
+  birthYear: number;
+  accentColor: string;
+}) {
+  const currentAge = new Date().getFullYear() - birthYear;
+  const cells = (daeun || []).slice(0, 8).map((d: any) => {
+    const gan = String(d.간지 ?? '').charAt(0);
+    const sipsung = deriveSipsungLocal(ilgan, gan);
+    const intensity = WEALTH_SIPSUNG_INTENSITY[sipsung] ?? 50;
+    const isCurrent =
+      d.isCurrent === true || (currentAge >= d.시작나이 && currentAge <= d.끝나이);
+    return {
+      startAge: d.시작나이,
+      endAge: d.끝나이,
+      ganji: d.간지,
+      sipsung,
+      intensity,
+      isCurrent,
+    };
+  });
+
+  if (cells.length === 0) return null;
+  const peakIntensity = Math.max(...cells.map((c) => c.intensity));
+
+  return (
+    <div className="flex gap-1.5 overflow-x-auto pb-2">
+      {cells.map((c, i) => {
+        const isPeak = c.intensity === peakIntensity && c.intensity >= 70;
+        const tone =
+          c.intensity >= 70 ? accentColor
+          : c.intensity >= 50 ? '#E8D9B8'
+          : c.intensity >= 35 ? '#E5DFD0'
+          : 'rgba(198,40,40,0.18)';
+        const fg = c.intensity >= 70 || c.intensity < 35 ? '#FFFFFF' : '#1A1A1A';
+        return (
+          <div
+            key={i}
+            style={{
+              flex: '0 0 auto',
+              minWidth: 64,
+              padding: '8px 4px',
+              background: c.isCurrent ? 'rgba(184,150,90,0.10)' : '#FFFFFF',
+              border: c.isCurrent ? '2px solid #B8965A' : '1px solid rgba(184,150,90,0.18)',
+              borderRadius: 8,
+              textAlign: 'center',
+              boxShadow: c.isCurrent ? '0 2px 8px rgba(184,150,90,0.20)' : 'none',
+              position: 'relative',
+            }}
+            title={`${c.startAge}~${c.endAge}세 · ${c.ganji} · ${c.sipsung || '—'} (재물 ${c.intensity})`}
+          >
+            {isPeak && (
+              <span aria-hidden style={{ position: 'absolute', top: -6, right: -2, fontSize: 11, color: accentColor }}>
+                ★
+              </span>
+            )}
+            <div style={{ fontSize: 9, fontWeight: 700, color: c.isCurrent ? '#8C6D3D' : '#7A7269', marginBottom: 4 }}>
+              {c.startAge}~{c.endAge}세
+            </div>
+            <div
+              style={{
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#1A1A1A',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {c.ganji}
+            </div>
+            {c.sipsung && (
+              <div
+                style={{
+                  display: 'inline-block',
+                  marginTop: 4,
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  background: tone,
+                  color: fg,
+                  fontSize: 8.5,
+                  fontWeight: 700,
+                }}
+              >
+                {c.sipsung}
+              </div>
+            )}
+            {/* 재물 강도 mini bar */}
+            <div style={{ height: 3, marginTop: 6, background: '#F0ECE1', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${c.intensity}%`, background: tone === 'rgba(198,40,40,0.18)' ? '#D32F2F' : (c.intensity >= 70 ? accentColor : '#8C6D3D') }} />
+            </div>
+            {c.isCurrent && (
+              <div style={{ fontSize: 7, fontWeight: 800, color: '#8C6D3D', marginTop: 3, letterSpacing: '0.05em' }}>
+                NOW
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * Stage 2B-2 · RelflowCards — 사주 십성 분포 기반 인맥 매핑 (3 카드)
+ *  · 도와주는 사람 (인성·식상) / 부딪히는 사람 (비겁) / 평온한 사람 (재성·관성)
+ *  · 십성 카운트 → 우세 십성 + 한 줄 풀이
+ * ═════════════════════════════════════════════════════════════════ */
+
+const RELFLOW_CATEGORIES = [
+  {
+    key: 'helper',
+    label: '도와주는 사람',
+    hanja: '助',
+    color: '#2D8A4E',
+    bg: 'rgba(45,138,78,0.06)',
+    border: 'rgba(45,138,78,0.30)',
+    sipsungs: ['정인', '편인', '식신', '상관'] as const,
+    desc: '인성·식상 — 돈 굴리는 지혜와 재능을 주는 사람',
+  },
+  {
+    key: 'rival',
+    label: '부딪히는 사람',
+    hanja: '爭',
+    color: '#D32F2F',
+    bg: 'rgba(211,47,47,0.06)',
+    border: 'rgba(211,47,47,0.30)',
+    sipsungs: ['비견', '겁재'] as const,
+    desc: '비겁 — 같은 자리를 노리는 경쟁자, 돈 다투는 결',
+  },
+  {
+    key: 'peace',
+    label: '평온한 사람',
+    hanja: '安',
+    color: '#1565E0',
+    bg: 'rgba(21,101,224,0.06)',
+    border: 'rgba(21,101,224,0.30)',
+    sipsungs: ['정관', '편관', '정재', '편재'] as const,
+    desc: '관성·재성 — 책임과 실리를 함께 나누는 자리',
+  },
+];
+
+function RelflowCards({ sipsung }: { sipsung: any[] }) {
+  // 십성 카운트
+  const counts: Record<string, number> = {};
+  for (const s of sipsung || []) {
+    if (!s.십성 || s.십성 === '일주' || s.십성 === '日主') continue;
+    const parts = String(s.십성).split('/');
+    for (const p of parts) {
+      const trimmed = p.trim();
+      if (trimmed) counts[trimmed] = (counts[trimmed] ?? 0) + 1;
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {RELFLOW_CATEGORIES.map((cat) => {
+        const total = cat.sipsungs.reduce((sum, s) => sum + (counts[s] ?? 0), 0);
+        const dominant = cat.sipsungs.reduce(
+          (max, s) => ((counts[s] ?? 0) > (counts[max] ?? 0) ? s : max),
+          cat.sipsungs[0],
+        );
+        return (
+          <div
+            key={cat.key}
+            style={{
+              background: cat.bg,
+              border: `1px solid ${cat.border}`,
+              borderRadius: 10,
+              padding: '10px 8px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 18,
+                fontWeight: 800,
+                color: cat.color,
+                lineHeight: 1,
+                marginBottom: 4,
+              }}
+            >
+              {cat.hanja}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>
+              {cat.label}
+            </div>
+            <div style={{ fontSize: 9, color: '#7A7269', lineHeight: 1.4, marginBottom: 6 }}>
+              {cat.desc}
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4 }}>
+              <span
+                style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color: cat.color,
+                  fontFeatureSettings: '"tnum"',
+                }}
+              >
+                {total}
+              </span>
+              <span style={{ fontSize: 9, color: '#7A7269' }}>개</span>
+            </div>
+            {total > 0 && (
+              <div style={{ fontSize: 9, color: cat.color, fontWeight: 700, marginTop: 2 }}>
+                주력 · {dominant}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -640,7 +1164,7 @@ function CareerViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.bossCompat && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,192,0.05)' }}>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,224,0.05)' }}>
                 <p className="text-[9px] text-text-hint mb-0.5">맞는 상사 유형</p>
                 <p className="text-[12px] font-bold text-[#1565C0]">{data.bossCompat}</p>
               </div>
@@ -734,8 +1258,8 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
         {/* 상대방 궁합 분석 (연애중일 때만) */}
         {data.partnerCompat && (() => {
           const pc = data.partnerCompat;
-          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
-          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
+          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
           const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
             '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
             '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
@@ -744,7 +1268,7 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
             '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
             '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
           };
-          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' }; };
+          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#4A4A4A', bg: 'rgba(0,0,0,0.06)' }; };
           const pComp = pc.pillarComparison;
           const interMap: Record<string, any> = {};
           (pComp?.interactions || []).forEach((it: any) => {
@@ -772,12 +1296,12 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
                   const fg = ohengText[oh] || '#3D3427';
                   return (
                     <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
-                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#4A4A4A' }}>{oh}</span>}
                       <div className="flex gap-1">
                         <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
                         <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
                       </div>
-                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                      {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#4A4A4A' }}>{oh}</span>}
                     </div>
                   );
                 };
@@ -994,7 +1518,7 @@ function HealthViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.bestSleepTime && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,192,0.05)' }}>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,224,0.05)' }}>
                 <p className="text-[9px] text-text-hint mb-0.5">최적 수면 시간</p>
                 <p className="text-[12px] font-bold text-[#1565C0]">{data.bestSleepTime}</p>
               </div>
@@ -1021,10 +1545,10 @@ function HealthViz({ data, color }: { data: any; color: string }) {
 function ReunionViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
   const prob = data.reunionProb ?? 50;
-  const verdictColor = data.verdict === '재회 추천' ? '#2D8A4E' : data.verdict === '새 인연 추천' ? '#1565C0' : '#E65100';
-  const contactColor: Record<string, string> = { '지금 연락하기': '#2D8A4E', '기다리기': '#F57F17', '새출발': '#1565C0' };
-  const cycleColor: Record<string, string> = { '상승기': '#2D8A4E', '하강기': '#D32F2F', '정체기': '#757575' };
-  const ohengColor: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+  const verdictColor = data.verdict === '재회 추천' ? '#2D8A4E' : data.verdict === '새 인연 추천' ? '#1565E0' : '#E65100';
+  const contactColor: Record<string, string> = { '지금 연락하기': '#2D8A4E', '기다리기': '#E8B82A', '새출발': '#1565E0' };
+  const cycleColor: Record<string, string> = { '상승기': '#2D8A4E', '하강기': '#D32F2F', '정체기': '#4A4A4A' };
+  const ohengColor: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
   const pp = data.partnerProfile;
   const ca = data.compatAnalysis;
   const sinsalList = data.sinsal;
@@ -1082,7 +1606,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {ca?.totalScore != null && (
-              <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(21,101,192,0.05)' }}>
+              <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(21,101,224,0.05)' }}>
                 <p className="text-[9px] text-text-hint mb-1">궁합 점수</p>
                 <p className="text-[13px] font-bold text-[#1565C0]">{ca.totalScore}점</p>
               </div>
@@ -1112,8 +1636,8 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                 { key: 'month', label: '월주', hanja: '月柱' },
                 { key: 'day', label: '일주', hanja: '日柱' },
               ];
-              const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(245,127,23,0.10)', 금: 'rgba(117,117,117,0.10)', 수: 'rgba(21,101,192,0.10)' };
-              const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0' };
+              const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
+              const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
               // interactions를 position별로 맵핑
               const interMap: Record<string, { type: string; desc: string }> = {};
               (pc.interactions || []).forEach((it: any) => {
@@ -1133,7 +1657,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                 for (const [k, v] of Object.entries(typeIcon)) {
                   if (type?.includes(k)) return v;
                 }
-                return { icon: '?', color: '#757575', bg: 'rgba(0,0,0,0.06)' };
+                return { icon: '?', color: '#4A4A4A', bg: 'rgba(0,0,0,0.06)' };
               };
               const renderPillar = (p: any, side: 'left' | 'right') => {
                 const oh = cleanOheng(p.oheng);
@@ -1141,12 +1665,12 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                 const fg = ohengText[oh] || '#3D3427';
                 return (
                   <div className={`flex-1 rounded-lg p-2 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg }}>
-                    {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    {side === 'right' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#4A4A4A' }}>{oh}</span>}
                     <div className="flex gap-1">
                       <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.7)', color: fg }}>{cleanHanja(p.cheongan)}</span>
                       <span className="w-8 h-9 rounded-md flex items-center justify-center text-[15px] font-black" style={{ background: 'rgba(255,255,255,0.5)', color: fg }}>{cleanHanja(p.jiji)}</span>
                     </div>
-                    {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#757575' }}>{oh}</span>}
+                    {side === 'left' && <span className="text-[8px] font-semibold" style={{ color: ohengText[oh] || '#4A4A4A' }}>{oh}</span>}
                   </div>
                 );
               };
@@ -1300,7 +1824,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                 { key: 'cheonEulGuiin', name: '천을귀인', hanja: '天乙貴人', summary: '귀인의 도움', subject: '나의 사주',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>, activeColor: '#2D8A4E' },
                 { key: 'samhap', name: '삼합', hanja: '三合', summary: '세 기운의 조화', subject: '두 사람 사이',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><path d="M12 3l8.66 15H3.34z" /></svg>, activeColor: '#1565C0' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><path d="M12 3l8.66 15H3.34z" /></svg>, activeColor: '#1565E0' },
                 { key: 'yukhap', name: '육합', hanja: '六合', summary: '짝궁 결합', subject: '두 사람 사이',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><circle cx="9" cy="12" r="5" /><circle cx="15" cy="12" r="5" /></svg>, activeColor: '#7B1FA2' },
               ].map(({ key, name, hanja, summary, subject, icon, activeColor }) => {
@@ -1606,10 +2130,10 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                   </p>
                 ))}
               </div>
-              <div className="rounded-xl p-3" style={{ background: 'rgba(21,101,192,0.05)' }}>
+              <div className="rounded-xl p-3" style={{ background: 'rgba(21,101,224,0.05)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: '#1565C0' }}>N</span>
+                    style={{ background: '#1565E0' }}>N</span>
                   <p className="text-[11px] font-bold text-[#1565C0]">새 인연</p>
                 </div>
                 {data.comparison.newLovePros?.map((p: string, i: number) => (
@@ -1634,7 +2158,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
 
 function StudyViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
-  const rateColor: Record<string, string> = { '높음': '#2D8A4E', '보통': '#F57F17', '보완필요': '#D32F2F' };
+  const rateColor: Record<string, string> = { '높음': '#2D8A4E', '보통': '#E8B82A', '보완필요': '#D32F2F' };
   return (
     <FadeIn delay={0.1}>
       <div className="space-y-3">
@@ -1729,7 +2253,7 @@ function StudyViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.seatDirection && (
-              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,192,0.05)' }}>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'rgba(21,101,224,0.05)' }}>
                 <p className="text-[9px] text-text-hint mb-0.5">유리한 좌석 방향</p>
                 <p className="text-[12px] font-bold text-[#1565C0]">{data.seatDirection}</p>
               </div>
@@ -1889,7 +2413,7 @@ function MovingViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.purposeAdvice && (
-              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(21,101,192,0.05)' }}>
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(21,101,224,0.05)' }}>
                 <p className="text-[10px] font-bold text-[#1565C0] mb-0.5">이사 목적 조언</p>
                 <p className="text-[12px] text-text-primary leading-snug">{data.purposeAdvice}</p>
               </div>
@@ -1910,11 +2434,12 @@ function MovingViz({ data, color }: { data: any; color: string }) {
 }
 
 /** 주제별 시각화 라우터 */
-function TopicViz({ topicId, data, color }: { topicId: string; data: any; color: string }) {
+function TopicViz({ topicId, data, color, sajuData, birthYear }: { topicId: string; data: any; color: string; sajuData?: any; birthYear?: number }) {
   if (!data) return null;
   switch (topicId) {
     case 'love': return <LoveViz data={data} color={color} />;
-    case 'wealth': return <WealthViz data={data} color={color} />;
+    // Phase 2 Stage 2B: WealthViz 에 sajuData + birthYear 추가 — daewoon-card / relflow 사용
+    case 'wealth': return <WealthViz data={data} color={color} sajuData={sajuData} birthYear={birthYear} />;
     case 'career': return <CareerViz data={data} color={color} />;
     case 'marriage': return <MarriageViz data={data} color={color} />;
     case 'business': return <BusinessViz data={data} color={color} />;
@@ -1933,7 +2458,7 @@ function TopicViz({ topicId, data, color }: { topicId: string; data: any; color:
 function InsightCards({ cards, color }: { cards?: { label: string; value: string; type: string }[]; color: string }) {
   if (!cards?.length) return null;
   const styles: Record<string, { bg: string; border: string; labelColor: string }> = {
-    info:    { bg: 'rgba(21,101,192,0.06)',  border: 'rgba(21,101,192,0.15)', labelColor: '#1565C0' },
+    info:    { bg: 'rgba(21,101,224,0.06)',  border: 'rgba(21,101,224,0.15)', labelColor: '#1565E0' },
     accent:  { bg: `${color}08`,             border: `${color}20`,            labelColor: color },
     warning: { bg: 'rgba(230,81,0,0.06)',    border: 'rgba(230,81,0,0.15)',   labelColor: '#E65100' },
   };
@@ -2793,61 +3318,177 @@ export function TopicAnalysisPage() {
           })()}
 
           {/* ====== 결과 ====== */}
-          {phase === 'result' && result && (
+          {phase === 'result' && result && (() => {
+            // Phase D'-2 Bundle 2 — chrome theme 매핑 (5 주제만, 그 외 기존 디자인 유지)
+            const chromeKey = (
+              ['love', 'wealth', 'career', 'health', 'study'].includes(topicId || '')
+                ? topicId
+                : null
+            ) as TopicChromeKey | null;
+            const theme = chromeKey ? TOPIC_CHROME[chromeKey] : null;
+
+            // 사주 8글자 mini cells (시→일→월→년)
+            const sajuCells: TopicSajuMiniCell[] | null = (() => {
+              if (!selected?.sajuData?.pillars?.length) return null;
+              const labels = ['시', '일', '월', '년'];
+              const pillars = [...selected.sajuData.pillars].reverse(); // 시→일→월→년
+              return pillars.map((p: any, i: number) => ({
+                label: labels[i] || '',
+                gan: p.천간 || '',
+                ji: p.지지 || '',
+                ganOheng: p.천간오행,
+                jiOheng: p.지지오행,
+                ten: i === 1 ? '일간' : (p.십성 || ''),
+                ilju: i === 1,
+                key: false, // 핵심 신살 dot — 향후 신살 매칭으로 활성화
+              }));
+            })();
+
+            // 사주→주제 link card pill chain (theme 있을 때만)
+            const linkPills: TopicLinkPill[] | null = theme && selected?.sajuData?.pillars?.[2] ? (() => {
+              const ilgan = selected.sajuData.pillars[2].천간 || '';
+              const ilganOheng = selected.sajuData.pillars[2].천간오행 || '';
+              // ?? (nullish) 사용 — AI 가 정상적으로 0 점 반환할 때 75 마스킹 방지
+            // 0 점은 명리학적으로 유효한 값이므로 보존
+            const score = (typeof result.overallScore === 'number' && !isNaN(result.overallScore))
+              ? result.overallScore
+              : 75;
+              return [
+                { text: ilgan ? `${ilgan}${ilganOheng ? '·' + ilganOheng : ''}` : '일간', variant: 'gan' },
+                { text: result.topicData?.tenshin || theme.label, variant: 'ten' },
+                { text: theme.hanja, variant: 'sinsal' },
+                { text: String(score), variant: 'score' },
+              ] as TopicLinkPill[];
+            })() : null;
+
+            // 액션 카드 (3개) — actionAdvice 가 줄바꿈/번호로 구분되면 분리, 아니면 단일 PullQuote
+            const actionItems: TopicActionItem[] | null = (() => {
+              if (!Array.isArray(result.actionItems) || result.actionItems.length === 0) return null;
+              return result.actionItems.slice(0, 3).map((a: any) => ({
+                title: stripMd(String(a.title || a.heading || '')),
+                desc: stripMd(String(a.desc || a.description || a.content || '')),
+              }));
+            })();
+
+            // ?? (nullish) 사용 — AI 가 정상적으로 0 점 반환할 때 75 마스킹 방지
+            // 0 점은 명리학적으로 유효한 값이므로 보존
+            const score = (typeof result.overallScore === 'number' && !isNaN(result.overallScore))
+              ? result.overallScore
+              : 75;
+            const j = getJudgment(score);
+
+            return (
             <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
 
-              {/* ── 종합 점수 ── */}
-              {(() => {
-                const score = result.overallScore || 75;
-                const j = getJudgment(score);
-                return (
-                  <div className="card py-6 px-5">
-                    {/* 점수 링 */}
-                    <div className="flex justify-center mb-4">
-                      <ScoreRing label={topic.label} score={score} color={topic.color} delay={0.2} />
-                    </div>
+              {/* ─── Phase D'-2 Bundle 2 · TopicHero (5 주제 한정) ─── */}
+              {theme && (
+                <div style={{ margin: '0 -20px 0' }}>
+                  <TopicHero
+                    theme={theme}
+                    ilganLabel={
+                      selected?.sajuData?.pillars?.[2]?.천간
+                        ? `${selected.sajuData.pillars[2].천간}${
+                            selected.sajuData.pillars[2].천간오행 ? `(${selected.sajuData.pillars[2].천간오행})` : ''
+                          }`
+                        : undefined
+                    }
+                    birthLabel={
+                      selected?.input
+                        ? `${selected.input.calendarType === 'lunar' ? '음력 ' : '양력 '}${selected.input.birthYear}년 ${selected.input.birthMonth}월 ${selected.input.birthDay}일`
+                        : undefined
+                    }
+                    tierLabel="1운"
+                  />
+                </div>
+              )}
 
-                    {/* 한자 판정 */}
-                    <motion.div className="text-center mb-1"
-                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                      <span className="text-3xl font-black" style={{ color: j.color }}>{j.hanja}</span>
-                    </motion.div>
-                    <p className="text-[12px] text-center" style={{ color: j.color }}>{j.reading} · {j.desc}</p>
+              {/* ─── Phase D'-2 Bundle 2 · TopicSajuMini (8글자 4-cell) ─── */}
+              {theme && sajuCells && sajuCells.length === 4 && (
+                <div style={{ margin: '0 -20px' }}>
+                  <TopicSajuMini theme={theme} cells={sajuCells} />
+                </div>
+              )}
 
-                    {/* 사주 근거 */}
-                    {result.sajuBasis && (
-                      <motion.div className="mt-4 pt-3 text-center"
-                        style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-                        <p className="text-[10px] text-text-hint mb-1">사주 근거</p>
-                        <p className="text-[12px] text-text-secondary leading-relaxed">{stripMd(result.sajuBasis)}</p>
-                      </motion.div>
-                    )}
-                    {!result.sajuBasis && result.gradeLabel && (
-                      <p className="text-body-sm text-text-muted mt-3 text-center">{stripMd(result.gradeLabel)}</p>
-                    )}
-
-                    {/* 등급 기준표 */}
-                    <motion.div className="mt-4 pt-3"
-                      style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
-                      <p className="text-[9px] text-text-hint text-center mb-2">등급 기준</p>
-                      <div className="flex justify-between px-1">
-                        {GRADE_SCALE.map(g => {
-                          const isActive = g.hanja === j.hanja;
-                          return (
-                            <div key={g.hanja} className="flex flex-col items-center gap-0.5 px-1 py-1 rounded-lg transition-all"
-                              style={isActive ? { background: `${g.color}10`, outline: `1.5px solid ${g.color}30` } : {}}>
-                              <span className="text-[13px] font-black" style={{ color: g.color, opacity: isActive ? 1 : 0.4 }}>{g.hanja}</span>
-                              <span className="text-[8px]" style={{ color: isActive ? g.color : 'var(--text-disabled)' }}>{g.range}점</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
+              {/* ─── 종합 점수 — 5 주제는 TopicScoreCard, 그 외는 기존 ScoreRing 카드 ─── */}
+              {theme ? (
+                <div style={{ margin: '0 -20px' }}>
+                  <TopicScoreCard
+                    theme={theme}
+                    score={score}
+                    title={`${topic.label} 지수`}
+                    body={`${j.reading} · ${j.desc}`}
+                    note={result.sajuBasis ? stripMd(result.sajuBasis) : undefined}
+                  />
+                </div>
+              ) : (
+                <div className="card py-6 px-5">
+                  {/* 점수 링 */}
+                  <div className="flex justify-center mb-4">
+                    <ScoreRing label={topic.label} score={score} color={topic.color} delay={0.2} />
                   </div>
-                );
-              })()}
+
+                  {/* 한자 판정 */}
+                  <motion.div className="text-center mb-1"
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                    <span className="text-3xl font-black" style={{ color: j.color }}>{j.hanja}</span>
+                  </motion.div>
+                  <p className="text-[12px] text-center" style={{ color: j.color }}>{j.reading} · {j.desc}</p>
+
+                  {/* 사주 근거 */}
+                  {result.sajuBasis && (
+                    <motion.div className="mt-4 pt-3 text-center"
+                      style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+                      <p className="text-[10px] text-text-hint mb-1">사주 근거</p>
+                      <p className="text-[12px] text-text-secondary leading-relaxed">{stripMd(result.sajuBasis)}</p>
+                    </motion.div>
+                  )}
+                  {!result.sajuBasis && result.gradeLabel && (
+                    <p className="text-body-sm text-text-muted mt-3 text-center">{stripMd(result.gradeLabel)}</p>
+                  )}
+
+                  {/* 등급 기준표 */}
+                  <motion.div className="mt-4 pt-3"
+                    style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
+                    <p className="text-[9px] text-text-hint text-center mb-2">등급 기준</p>
+                    <div className="flex justify-between px-1">
+                      {GRADE_SCALE.map(g => {
+                        const isActive = g.hanja === j.hanja;
+                        return (
+                          <div key={g.hanja} className="flex flex-col items-center gap-0.5 px-1 py-1 rounded-lg transition-all"
+                            style={isActive ? { background: `${g.color}10`, outline: `1.5px solid ${g.color}30` } : {}}>
+                            <span className="text-[13px] font-black" style={{ color: g.color, opacity: isActive ? 1 : 0.4 }}>{g.hanja}</span>
+                            <span className="text-[8px]" style={{ color: isActive ? g.color : 'var(--text-disabled)' }}>{g.range}점</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
+              {/* ─── Phase D'-2 Bundle 2 · TopicLinkCard (사주→주제 chain) ─── */}
+              {theme && linkPills && (
+                <div style={{ margin: '0 -20px' }}>
+                  <TopicLinkCard
+                    theme={theme}
+                    pills={linkPills}
+                    desc={
+                      <>
+                        {result.sajuBasis ? (
+                          stripMd(result.sajuBasis)
+                        ) : (
+                          <>
+                            일간과 {topic.label.replace('운', '')} 영역의 연결이{' '}
+                            <strong>{j.reading}</strong>의 결을 만듭니다.
+                          </>
+                        )}
+                      </>
+                    }
+                  />
+                </div>
+              )}
 
               {/* ── 핵심 키워드 ── */}
               <KeywordTags keywords={result.topicData?.keywords} color={topic.color} />
@@ -2864,29 +3505,50 @@ export function TopicAnalysisPage() {
               <StrengthsCautions strengths={result.topicData?.strengths} cautions={result.topicData?.cautions} color={topic.color} />
 
               {/* ── 주제별 시각화 카드 ── */}
-              <TopicViz topicId={topicId || ''} data={result.topicData} color={topic.color} />
+              <TopicViz topicId={topicId || ''} data={result.topicData} color={topic.color} sajuData={selected?.sajuData} birthYear={selected?.input?.birthYear} />
 
-              {/* ── 섹션들 — 인사이트 카드 + 단락 시각화 ── */}
-              {result.sections?.map((sec: any, i: number) => (
-                <FadeIn key={i} delay={0.05 * i}>
-                  <div className="card">
-                    <div className="flex items-center gap-2.5 mb-2.5">
-                      <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0"
-                        style={{ background: topic.color }}>
-                        {i + 1}
-                      </span>
-                      <p className="text-h3 text-text-primary">{sec.heading}</p>
-                    </div>
-                    {sec.highlight && (
-                      <div className="mb-3 rounded-xl py-2.5 px-3" style={{ background: `${topic.color}08` }}>
-                        <p className="text-[12px] font-semibold leading-snug" style={{ color: topic.color }}>{stripMd(sec.highlight)}</p>
+              {/* ── 섹션들 — 5 주제는 TopicSection 래핑, 그 외는 기존 디자인 ── */}
+              {theme
+                ? result.sections?.map((sec: any, i: number) => (
+                    <FadeIn key={i} delay={0.05 * i}>
+                      <div className="card">
+                        <TopicSection
+                          theme={theme}
+                          num={`L${i + 1} · ${
+                            i === 0 ? '지금' : i === 1 ? '가까운 흐름' : i === 2 ? '더 깊이' : '인생 큰 흐름'
+                          }`}
+                          title={sec.heading}
+                          hanjaSuffix={
+                            i === 0 ? '·一語' : i === 1 ? '·三月' : i === 2 ? '·一年' : '·終身'
+                          }
+                          sub={sec.highlight ? stripMd(sec.highlight) : undefined}
+                        >
+                          <SectionBody content={sec.content} color={topic.color} />
+                          <InsightCards cards={sec.insightCards} color={topic.color} />
+                        </TopicSection>
                       </div>
-                    )}
-                    <SectionBody content={sec.content} color={topic.color} />
-                    <InsightCards cards={sec.insightCards} color={topic.color} />
-                  </div>
-                </FadeIn>
-              ))}
+                    </FadeIn>
+                  ))
+                : result.sections?.map((sec: any, i: number) => (
+                    <FadeIn key={i} delay={0.05 * i}>
+                      <div className="card">
+                        <div className="flex items-center gap-2.5 mb-2.5">
+                          <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0"
+                            style={{ background: topic.color }}>
+                            {i + 1}
+                          </span>
+                          <p className="text-h3 text-text-primary">{sec.heading}</p>
+                        </div>
+                        {sec.highlight && (
+                          <div className="mb-3 rounded-xl py-2.5 px-3" style={{ background: `${topic.color}08` }}>
+                            <p className="text-[12px] font-semibold leading-snug" style={{ color: topic.color }}>{stripMd(sec.highlight)}</p>
+                          </div>
+                        )}
+                        <SectionBody content={sec.content} color={topic.color} />
+                        <InsightCards cards={sec.insightCards} color={topic.color} />
+                      </div>
+                    </FadeIn>
+                  ))}
 
               {/* ── 타임라인 — AreaChart + 설명 ── */}
               {result.timeline?.length > 0 && (
@@ -2959,14 +3621,50 @@ export function TopicAnalysisPage() {
                 );
               })()}
 
-              {/* ── 핵심 조언 ── */}
-              {result.actionAdvice && (
+              {/* ── 핵심 조언 / 액션 — 5 주제는 PullQuote + ActionList, 그 외는 기존 ── */}
+              {theme && result.actionAdvice ? (
+                <FadeIn delay={0.2}>
+                  <PullQuote theme={theme}>{stripMd(result.actionAdvice)}</PullQuote>
+                </FadeIn>
+              ) : result.actionAdvice ? (
                 <FadeIn delay={0.2}>
                   <div className="card-emphasis">
                     <p className="text-label mb-2" style={{ color: topic.color }}>지금 바로 할 수 있는 것</p>
                     <p className="text-body text-text-primary leading-relaxed">{stripMd(result.actionAdvice)}</p>
                   </div>
                 </FadeIn>
+              ) : null}
+
+              {/* ── 5 주제 한정 · 3 numbered 액션 카드 (actionItems 있을 때만) ── */}
+              {theme && actionItems && actionItems.length > 0 && (
+                <FadeIn delay={0.22}>
+                  <TopicSection
+                    theme={theme}
+                    num="지금 할 수 있는 일"
+                    title="3가지 실천"
+                    hanjaSuffix="·三行"
+                  >
+                    <TopicActionList theme={theme} items={actionItems} />
+                  </TopicSection>
+                </FadeIn>
+              )}
+
+              {/* ── 5 주제 한정 · TopicUpsellCard (10운 프리미엄, 단일 CTA) ── */}
+              {theme && (
+                <FadeIn delay={0.25}>
+                  <TopicUpsellCard
+                    title={`${topic.label.replace('운', '')} 전체를 한 편으로 풀어드립니다`}
+                    desc="대운별 흐름, 사주 전체에서 이 영역의 자리, 평생의 결까지. 한 번에 풀어냅니다."
+                    onTap={() => navigate('/charge?need=10')}
+                  />
+                </FadeIn>
+              )}
+
+              {/* ── 5 주제 한정 · TopicSourceCite (풀이 근거 출처) ── */}
+              {theme && result.citation && (
+                <div style={{ margin: '0 -20px' }}>
+                  <TopicSourceCite theme={theme} citation={stripMd(String(result.citation))} />
+                </div>
               )}
 
               {/* ── 다른 주제 CTA ── */}
@@ -2983,10 +3681,23 @@ export function TopicAnalysisPage() {
                 </div>
               </div>
 
+              {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — DailyFortune/Dream 통일 패턴 */}
+              <div className="mt-8 text-center space-y-1">
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                  한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+                </p>
+                <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+                  사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+                  <br />
+                  의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+                </p>
+              </div>
+
               {/* 3-part Footer CTA (diff v3 §6) */}
               <FooterCTA pageKey={`topic:${topicId}` as FooterCTAPageKey} backTo="/" />
             </motion.div>
-          )}
+            );
+          })()}
         </AnimatePresence>
       </div>
     </div>

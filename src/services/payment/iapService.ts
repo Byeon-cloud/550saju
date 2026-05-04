@@ -21,15 +21,27 @@ export function isAppsInToss(): boolean {
 }
 
 /**
- * IAP 상품 SKU 매핑
- * 앱인토스 개발자센터에서 등록한 상품 ID와 일치해야 합니다
- * 공급가 기준 (VAT 별도 → 소비자가는 +10%)
+ * IAP 상품 SKU 매핑 — #55 정정 (2026-04-27, 4 패키지 진본)
+ *
+ * 토스 콘솔 진본 4 패키지 (1/4/7/15운) 정렬:
+ *  - p1   1운  / 500원   — paidUn=1,  bonusUn=0
+ *  - p4   4운  / 1500원  — paidUn=3,  bonusUn=1
+ *  - p7   7운  / 2500원  — paidUn=5,  bonusUn=2
+ *  - p15  15운 / 5000원  — paidUn=10, bonusUn=5  ★ 프리미엄 라인 (가장 인기)
+ *
+ * 토스 콘솔 표기 "14운(10+5)" 은 typo — 실제 SKU 명에 "15운" 명시 (10+5=15).
+ *
+ * **Superseded (2026-04-24 5 패키지 결정 무효)**:
+ *  - 구 p5/p10/p30/p50 SKU 매핑 제거 — `pricing.ts LEGACY_PACKAGE_ALIASES` 로 자동 변환.
+ *  - p7 = 구 p5 SKU 재사용 (가격 2500원 동일, 보너스만 추가)
+ *  - p15 = 구 p10 SKU 재사용 (가격 5000원 동일, 보너스만 추가)
+ *  - p4 = 신규 SKU (1500원 가격대 신설)
  */
 const IAP_PRODUCT_MAP: Record<string, { sku: string; paidUn: number; bonusUn: number }> = {
-  once:    { sku: 'ait.0000025955.8f74931d.d3f5a2a979.5185316383',  paidUn: 1,  bonusUn: 0 },
-  more:    { sku: 'ait.0000025955.5d5bec27.6ee0778e2a.5185547787',  paidUn: 3,  bonusUn: 1 },
-  serious: { sku: 'ait.0000025955.79d2ae48.26de419a84.5185590911',  paidUn: 5,  bonusUn: 2 },
-  yearly:  { sku: 'ait.0000025955.304b4aa7.cabbd01e5e.5185730660',  paidUn: 10, bonusUn: 5 },
+  p1:  { sku: 'ait.0000025955.8f74931d.d3f5a2a979.5185316383', paidUn: 1,  bonusUn: 0 },
+  p4:  { sku: 'ait.0000025955.5d5bec27.6ee0778e2a.5185547787', paidUn: 3,  bonusUn: 1 },
+  p7:  { sku: 'ait.0000025955.79d2ae48.26de419a84.5185590911', paidUn: 5,  bonusUn: 2 },
+  p15: { sku: 'ait.0000025955.304b4aa7.cabbd01e5e.5185730660', paidUn: 10, bonusUn: 5 },
 };
 
 /**
@@ -47,7 +59,10 @@ export async function purchasePackage(pkg: ChargePackage): Promise<{ success: bo
  * SDK 1.1.3+ 필수 — processProductGrant 콜백 포함
  */
 async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; message: string }> {
-  const product = IAP_PRODUCT_MAP[pkg.id];
+  // legacy 패키지 ID 대비 — pricing.ts LEGACY_PACKAGE_ALIASES 와 동일 매핑
+  const { LEGACY_PACKAGE_ALIASES } = await import('@/constants/pricing');
+  const resolvedId = LEGACY_PACKAGE_ALIASES[pkg.id] ?? pkg.id;
+  const product = IAP_PRODUCT_MAP[resolvedId];
   if (!product) return { success: false, message: '상품 정보를 찾을 수 없습니다' };
 
   return new Promise((resolve) => {

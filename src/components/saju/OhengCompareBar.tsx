@@ -17,9 +17,9 @@ interface OhengCompareBarProps {
 const OHENG_COLORS: Record<OhengType, string> = {
   목: '#2D8A4E',
   화: '#D32F2F',
-  토: '#F57F17',
-  금: '#757575',
-  수: '#1565C0',
+  토: '#E8B82A',
+  금: '#4A4A4A',
+  수: '#1565E0',
 };
 
 const OHENG_LIST: OhengType[] = ['목', '화', '토', '금', '수'];

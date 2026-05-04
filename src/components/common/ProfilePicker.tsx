@@ -33,7 +33,8 @@ export function ProfilePicker({ onSelect, onNew, title = '누구의 사주를 �
       {/* 기존 프로필 목록 */}
       <div className="space-y-2">
         {profiles.map((p) => {
-          const ilgan = p.sajuData.pillars[2]?.천간 || '';
+          // Stage 7e-7: sajuData 없는 프로필도 안전 (lazy 계산 안 하고 단순 fallback)
+          const ilgan = p.sajuData?.pillars?.[2]?.천간 || '';
           const oheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
           const relation = p.relation || p.input.relation || '본인';
           return (

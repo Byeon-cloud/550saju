@@ -59,7 +59,10 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
   love: {
     id: 'love',
     label: '연애운',
-    kanji: '緣',
+    // 2026-04-26 Phase D'-2 Bundle 2: 緣(인연) → 桃(도화) — mockup 진본 우선.
+    //   사유: 桃 = 사주 직접 한자(도화살), 緣 = 일반 인연 (재회 復와 인접 — UX 헷갈림).
+    //   D∞ 원칙: mockup 진본 디자인 우선.
+    kanji: '桃',
     color: '#C88A95',
     badge: '인기',
     subCopy: '만남·관계·인연 흐름',

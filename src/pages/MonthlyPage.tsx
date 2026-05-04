@@ -17,8 +17,27 @@ import { FooterCTA } from '@/components/common/FooterCTA';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { MonthlyDetailResponse, MonthlyDetail } from '@/types/report';
 import { stripMd } from '@/utils/format';
+// Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
+import {
+  EXTENSION_THEME,
+  ExtensionHero,
+  ExtensionUpsellCard,
+  MonthHero,
+  FourCard,
+  type FourCardItem,
+} from './extension/_chrome';
 
 type Phase = 'select' | 'loading' | 'result';
+
+// Phase D'-4 Bundle 2 헬퍼
+function clamp100(n: any): number {
+  const v = Number(n) || 0;
+  return Math.max(0, Math.min(100, Math.round(v <= 10 ? v * 10 : v)));
+}
+const MONTH_EN = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+function monthLabelEn(m: number): string {
+  return MONTH_EN[Math.max(0, Math.min(11, m - 1))] ?? '';
+}
 
 const LOADING_STEPS = [
   '2026년 세운을 분석하고 있어요...',
@@ -147,9 +166,112 @@ export function MonthlyPage() {
   const worstMonth = result.months.find(m => m.month === result.worstMonth);
   const chartData = result.months.map(m => ({ month: m.month, score: m.score }));
 
+  // Phase D'-4 Bundle 2 — chrome theme + 이번 달 강조 + 4면 강도
+  const monthlyTheme = EXTENSION_THEME.monthly;
+  const ilganLabel =
+    selected?.sajuData?.pillars?.[2]?.천간
+      ? `${selected.sajuData.pillars[2].천간읽기 ?? ''}(${selected.sajuData.pillars[2].천간}) 일간`
+      : undefined;
+  const currentMonth = new Date().getMonth() + 1;
+  const thisMonth = result.months.find((m) => m.month === currentMonth) || result.months[0];
+  // FourCard fallback — AI 응답에 fourCard 있으면 사용
+  // 없으면 사주별 4 영역 점수 (사주 8글자 기반 동적 — 모든 사용자 동일 ±오프셋 절대 X)
+  // 1) AI 응답의 thisMonth.career/love/wealth/health 점수가 있으면 그대로 사용
+  // 2) 없으면 사주의 십성 분포로 4 영역 점수 derive (모든 사용자 다른 결과)
+  const fourCardItems: FourCardItem[] = Array.isArray((result as any)?.fourCard)
+    ? ((result as any).fourCard as FourCardItem[])
+    : (() => {
+        if (!thisMonth) return [];
+        // AI 가 thisMonth 안에 careerScore/loveScore/wealthScore/healthScore 를 반환하면 우선
+        const career = clamp100(Number((thisMonth as any).careerScore ?? (thisMonth as any).career?.score ?? NaN));
+        const love = clamp100(Number((thisMonth as any).loveScore ?? (thisMonth as any).love?.score ?? NaN));
+        const wealth = clamp100(Number((thisMonth as any).wealthScore ?? (thisMonth as any).wealth?.score ?? NaN));
+        const health = clamp100(Number((thisMonth as any).healthScore ?? (thisMonth as any).health?.score ?? NaN));
+        const allValid = [career, love, wealth, health].every((v) => v > 0);
+        if (allValid) {
+          // 점수 내림차순 → rank 부여
+          const items = [
+            { label: '일', score: career },
+            { label: '사람', score: love },
+            { label: '돈', score: wealth },
+            { label: '몸', score: health },
+          ].sort((a, b) => b.score - a.score)
+            .map((it, i) => ({ ...it, rank: (i + 1) as 1 | 2 | 3 | 4 }))
+            .sort((a, b) => ['일', '사람', '돈', '몸'].indexOf(a.label) - ['일', '사람', '돈', '몸'].indexOf(b.label));
+          return items as FourCardItem[];
+        }
+        // AI 4 점수 누락 — 사주 8글자 + 일간/십성 분포로 동적 derive
+        // (이전: ±11/-13/-9 고정 오프셋 → 모든 사용자 같은 분포)
+        const sajuPillars = selected?.sajuData?.pillars || [];
+        const sipsung = (selected?.sajuData as any)?.sipsung || [];
+        const baseScore = clamp100(thisMonth.score ?? 70);
+        // 십성 카운트로 4 영역 가중치 산출 (사주별 다름)
+        const sipDist = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
+        for (const s of sipsung) {
+          const name = String(s?.십성 ?? '');
+          if (name.includes('비견') || name.includes('겁재')) sipDist.비겁++;
+          else if (name.includes('식신') || name.includes('상관')) sipDist.식상++;
+          else if (name.includes('정재') || name.includes('편재')) sipDist.재성++;
+          else if (name.includes('정관') || name.includes('편관')) sipDist.관성++;
+          else if (name.includes('정인') || name.includes('편인')) sipDist.인성++;
+        }
+        // 일주 한자 sum (사주별 hash) — 같은 사주 내에서도 미세 분기 용
+        const dayHan = sajuPillars[2]?.천간 || '';
+        const dayHash = dayHan.charCodeAt(0) % 7; // 0~6
+        // 4 영역 점수 — 십성 분포 기반 (재성 → 돈, 관성 → 일, 인성+비겁 → 사람, 식상 → 몸 표현 + 균형)
+        const careerD = clamp100(baseScore + sipDist.관성 * 4 + sipDist.인성 * 2 - 8 + dayHash);
+        const loveD = clamp100(baseScore + sipDist.재성 * 3 + sipDist.비겁 * 2 - 5 + ((dayHash * 2) % 5));
+        const wealthD = clamp100(baseScore + sipDist.재성 * 5 + sipDist.식상 * 2 - 12 + ((dayHash * 3) % 7));
+        const healthD = clamp100(baseScore + sipDist.인성 * 3 - sipDist.관성 * 2 - 6 + ((dayHash * 5) % 9));
+        const items = [
+          { label: '일', score: careerD },
+          { label: '사람', score: loveD },
+          { label: '돈', score: wealthD },
+          { label: '몸', score: healthD },
+        ];
+        const sorted = [...items].sort((a, b) => b.score - a.score);
+        return items.map((it) => ({
+          ...it,
+          rank: (sorted.findIndex((s) => s.label === it.label) + 1) as 1 | 2 | 3 | 4,
+        })) as FourCardItem[];
+      })();
+
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--bg-page-gradient)' }}>
       <Header title="2026 월별 운세" />
+
+      {/* Phase D'-4 Bundle 2 — ExtensionHero (월운 그라디언트 + 月運 워터마크) */}
+      <FadeIn>
+        <ExtensionHero
+          theme={monthlyTheme}
+          sub={`${ilganLabel ?? ''}${thisMonth ? ' · ' + ((thisMonth as any).pillar ?? thisMonth.month + '월') : ''}`}
+          rightLabel="月運 · 이번 달의 결"
+        />
+      </FadeIn>
+
+      {/* Phase D'-4 Bundle 2 — MonthHero (큰 숫자 + pillar) */}
+      {thisMonth && (
+        <FadeIn delay={0.04}>
+          <MonthHero
+            yearLabel={`2026 ${monthLabelEn(thisMonth.month)}`}
+            month={thisMonth.month}
+            pillar={(thisMonth as any).pillar ?? `${thisMonth.month}月柱`}
+            title={stripMd(String((thisMonth as any).title ?? thisMonth.theme ?? '이번 달의 결'))}
+            desc={stripMd(String((thisMonth as any).summary ?? (thisMonth as any).description ?? thisMonth.theme ?? ''))}
+          />
+        </FadeIn>
+      )}
+
+      {/* Phase D'-4 Bundle 2 — FourCard (4면 강도: 일·사람·돈·몸) */}
+      {fourCardItems.length === 4 && (
+        <FadeIn delay={0.06}>
+          <FourCard
+            items={fourCardItems}
+            title={`${currentMonth}월 4면 강도 · 일·사람·돈·몸`}
+          />
+        </FadeIn>
+      )}
+
       <div className="px-5 pt-4 space-y-5">
 
         {/* 연간 개요 */}
@@ -160,7 +282,7 @@ export function MonthlyPage() {
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {(result as any).keywords.map((kw: string, i: number) => (
                   <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: 'rgba(184,150,90,0.1)', color: '#A08B6A', border: '1px solid rgba(184,150,90,0.2)' }}>
+                    style={{ background: 'rgba(184,150,90,0.1)', color: '#8C6D3D', border: '1px solid rgba(184,150,90,0.2)' }}>
                     {kw}
                   </span>
                 ))}
@@ -176,7 +298,7 @@ export function MonthlyPage() {
             <p className="text-h3 text-text-primary mb-3">한눈에 보는 12개월</p>
             <div className="grid grid-cols-6 gap-2">
               {result.months.map((m) => {
-                const dotColor = m.score >= 80 ? '#B8965A' : m.score >= 60 ? '#2D8A4E' : m.score >= 40 ? '#A08B6A' : '#D32F2F';
+                const dotColor = m.score >= 80 ? '#B8965A' : m.score >= 60 ? '#2D8A4E' : m.score >= 40 ? '#8C6D3D' : '#D32F2F';
                 const opacity = Math.max(0.3, m.score / 100);
                 const isBest = m.month === result.bestMonth;
                 const isWorst = m.month === result.worstMonth;
@@ -276,6 +398,27 @@ export function MonthlyPage() {
           <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>결과 공유하기</Button>
         </FadeIn>
 
+        {/* Phase D'-4 Bundle 2 — ExtensionUpsellCard (단일 CTA) */}
+        <FadeIn delay={0.52}>
+          <ExtensionUpsellCard
+            title="이번 달의 결을 사주 전체에서 풀어드립니다"
+            desc="12개월 흐름이 사주 원국의 어느 자리에서 비롯되는지, 평생의 결까지 한 번에."
+            onTap={() => navigate('/charge?need=10')}
+          />
+        </FadeIn>
+
+        {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
+        <div className="mt-8 text-center space-y-1">
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+          </p>
+          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+            <br />
+            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+          </p>
+        </div>
+
         {/* 3-part Footer CTA (diff v3 §6) */}
         <FooterCTA pageKey="monthly" backTo="/" />
       </div>
@@ -319,7 +462,7 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
               {(m as any).careerScore != null && (
                 <div className="grid grid-cols-3 gap-3 mb-1">
                   {[
-                    { label: '직업운', score: (m as any).careerScore, color: '#1565C0' },
+                    { label: '직업운', score: (m as any).careerScore, color: '#1565E0' },
                     { label: '애정운', score: (m as any).loveScore, color: '#E91E63' },
                     { label: '재물운', score: (m as any).wealthScore, color: '#B8965A' },
                   ].map(a => (

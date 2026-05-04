@@ -45,7 +45,7 @@ export function TierAToast({
             className="inline-flex items-center gap-2 px-4 py-3 rounded-full shadow-lg pointer-events-auto"
             style={{
               background: '#1A1A1A',
-              color: '#F0E8D9',
+              color: '#F8F5EE',  // SSOT paper — D1 fix (2026-04-23)
               border: '1px solid rgba(184,150,90,0.4)',
             }}
           >

@@ -2,7 +2,88 @@
 
 > 이 문서는 Claude Code가 프로젝트를 이해하기 위한 **진입점**입니다.
 > 웹 채팅(claude.ai)에서 설계한 내용을 여기서 이어서 개발합니다.
-> **최종 업데이트: 2026-04-18** (Category A+B PRD 29종 반영)
+> **최종 업데이트: 2026-04-23 PM** (Sprint 2 핸드오프 v2 + 준기 결정 4건 D1/D2/D3/D∞ 반영)
+
+---
+
+## 🛡️ 프리미엄 결과페이지 architecture 결정 (2026-05-03)
+
+**진본**: `src/pages/result/types/PremiumResult.tsx` (props 기반 React JSX, 3,984+ 줄)
+- `<style dangerouslySetInnerHTML={{ __html: PREMIUM_MOCKUP_CSS }} />` 로 mockup CSS 만 분리
+- 모든 데이터(이름·8글자·오행·십성·신살·대운·6관계·실천 등)는 props 기반 동적 렌더
+- AI 응답 신규 8 필드 wired: `lifeEdge`, `sipCluster`, `shinsalCards`, `rel6Cards`, `actionList`, `monthlyInsight`, `sectionConclusions`, `topicMini`
+
+**폐기**: `src/pages/result/_archive_/ResultPagePremiumV2.tsx` (4,765 줄)
+- 패턴: iframe `srcDoc` + 거대 `MOCKUP_HTML` template literal + `personalize()` regex string-replace + 7개 `buildXxxFallback`
+- 함정: regex 매칭 영역과 mockup 정적 영역이 충돌 → fallback 추가할수록 도식화 div 잘림
+
+**회귀 금지** (다음 5가지 패턴 다시 도입 X):
+1. iframe `srcDoc` 으로 mockup HTML 전체 embed
+2. regex string replacement 로 부분 치환
+3. 거대 `MOCKUP_HTML` template literal
+4. 클라이언트 `buildXxxFallback` 류 (AI 응답 빌 때 채우는 함수)
+5. mockup HTML 하드코딩 (특정 이름·연도·간지 등)
+
+**보존 자산**:
+- `functions/src/ai/claudePremium.ts` 신규 8 필드 schema + "사주 글자 직접 호명" mandate 프롬프트
+- `src/pages/result/_data.ts` SINSAL_KR 27개 매핑 (12신살·귀인·흉살)
+
+**컴포넌트 매핑**: §01 LifeEdgeList ← lifeEdge / §03 SipClusterDetails ← sipCluster / §06 MonthlyInsightList ← monthlyInsight / §07 SinsalDist ← shinsalCards / §08 RelationSixCards ← rel6Cards / §09 TopicMiniGrid ← topicMini / §10 PracticeChecklist ← actionList / 전체 sectionConclusions ← sectionConclusions{}
+
+---
+
+## ⚡ 2026-04-23 Sprint 2 진입 시 첫 명령 (Claude Code 시작용)
+
+> **Cowork ↔ Claude Code 동기화 정책**: Cowork (`/sessions/busy-compassionate-knuth/mnt/550saju/`) 와 Claude Code (`D:\550saju\`) 는 **같은 디렉터리**. 코드 · `docs/` · `CLAUDE.md` 모두 공유. 단 Cowork 의 `.auto-memory/` 와 태스크 시스템은 Cowork 전용 → **모든 결정은 이 CLAUDE.md + `docs/handoff/` 에 미러링**.
+
+**Sprint 2 시작 시 Claude Code 가 정독해야 할 문서 (순서대로):**
+
+1. **이 CLAUDE.md** (지금 읽고 있는 문서) — 아래 §Sprint 2 결정 4건 (D1/D2/D3/D∞) + §최상위 원칙 5가지
+2. **`docs/handoff/2026-04-23_Sprint2_UI개편_핸드오프.md`** ⭐ (Sprint 2 SSOT · 12 티켓 + Phase 분할 + 회귀 방지 계약 + 17 서약)
+3. `docs/prd/PC_인수인계_2026_04_21_단일본.md` (디자인 토큰 SSOT)
+4. 작업 대상 mockup (`docs/mockups/사주500_UI개편_NN_xxx.md`)
+
+**Sprint 2 Phase 1 부터 진행** (실행 순서는 핸드오프 §13 참조).
+
+---
+
+## 🚨 Sprint 2 준기 결정 4건 (2026-04-23 · 출시 직전 모드)
+
+핸드오프 문서 §최상단의 D1/D2/D3/D∞ 와 동일. **충돌 시 이 결정이 모든 PRD/mockup 보다 우선**.
+
+### D1 — 목업 토큰 SSOT 일괄 치환 (유효)
+> 준기: "옛날건 다 새롭게 개편한걸로 통일하고싶네"
+
+mockup/코드의 구 토큰 → 현 SSOT 일괄 치환:
+- `#A08B6A` / `#F5F0E8` / `#F0E8D9` / `#7F6B4E` / `#C9A96E` / `#D4A843` / `#B8941F`(머스타드) → `#B8965A` / `#F8F5EE` / `#1A1A1A` / `#7A7269` / `#8C6D3D`
+- mockup 의 토큰 이름(`gold-brown-soft` 등) 은 유지하되 **값만** SSOT 로.
+- 머스타드 `#B8941F` 는 전 페이지 0건 유지.
+
+### D2 — ~~Tier C 5층 한자 레이어 풀스펙~~ → **철회 (2026-04-23 PM)**
+> 오전: "간소화는 없어. 다 제대로 해."
+> 오후 재결정: "로딩화면은 그대로 나둬도될듯. 각 섹션 항목마다 시간 지나면서 현 진행상황을 유저가 객관적으로 딱 알수있게 '아 이번에는 이거작업하는구나' 느낄 수 있겠더라 그거 좋더라."
+
+- **현행 LoadingPage v2** (REPORT_SECTIONS 12섹션 progressive 인디케이터 + 회전 카피 + 팁 카드 17) **유지**.
+- L0~L5 6레이어 한자 mandala/halo/particles 신규 구현 **보류**.
+- 작업 범위: D1 SSOT 토큰 sweep 만.
+- 향후 트래픽·체감속도 데이터 기반 재논의 가능.
+
+### D3 — Top 5 실시간 랭킹 정식 구현 (유효)
+> 준기: "임시구현같은건 없어 제대로 확실하게 구현해. 바로 출시해야하니까."
+
+- Phase 1 localStorage 스튜브 **금지**. 첫 배포부터 정식 구현.
+- Cloud Functions Scheduled Function 1시간 주기 + Firestore `topicViewCounts/{topicId}` 24h aggregation + `cache/topicTop5` 캐시 + uid+topicId 24h 쿨다운 어뷰징 방어.
+- 상세: 핸드오프 §2-11.
+
+### D∞ — 기본 규칙 (유효 · 모든 티켓 공통)
+> 준기: "다시는 누락된거없어야하고 웬만하면 다 이미 만들어져있고 작업됐던것들인데. 최대한 다 구현해보고 참고해보되, 정말 없잖아? 그럼 너가 중요도가 높은것들은 알아서 만들어버려."
+
+1. 스펙·목업 우선 탐색 — 작업 전 반드시 `docs/mockups/` + `docs/prd/` 전수 grep. "이미 만들어져 있다" 가정.
+2. 없을 때만 자체 제작 — 중요도 높은 기능은 자체 판단 OK. 단 핸드오프 §7 "자체 결정" 항목에 근거 명시.
+3. 누락·임시·간소화 3금 — "Phase 1 localStorage", "MVP 버전", "일단 이 정도만" 류 제안 금지.
+4. **D∞ 적용 사례** (Sprint 2 핸드오프에 반영됨):
+   - `docs/mockups/사주500_UI개편_09_PDF서버엔드포인트.md` 스펙 발견 → `generatePremiumPdf` 코드 0 hit → **#61 신규 티켓 자체 신설**
+   - `docs/mockups/사주500_UI개편_09_이벤트_v4.md` → 이미 구현 완료 확인 → **#62 QA-only 티켓**
 
 ---
 

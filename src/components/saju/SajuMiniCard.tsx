@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Flippable } from '@/components/common/Flippable';
+// Flippable import 제거 — #48 flip 애니메이션 제거 (2026-04-23)
+// Flippable.tsx 자체는 dead-code grace 2주 후 별도 검토
 import type { OhengType } from '@/types/saju';
 
 export interface PillarData {
@@ -32,16 +33,17 @@ interface SajuMiniCardProps {
 const OHENG_COLORS: Record<OhengType, string> = {
   목: '#2D8A4E',
   화: '#D32F2F',
-  토: '#F57F17',
-  금: '#757575',
-  수: '#1565C0',
+  토: '#E8B82A',
+  금: '#4A4A4A',
+  수: '#1565E0',
 };
 
 /**
- * 4기둥 미니 카드 (IX-1 플립).
- * 시·일·월·년 전통 순서로 4열 그리드. 각 칸 탭 시 rotateY 플립 → 뒷면에 연결 해석.
+ * 4기둥 미니 카드 (static, #48).
+ * 시·일·월·년 전통 순서로 4열 그리드. 탭 플립 애니메이션 제거 — 앞면 고정 렌더.
+ * onFlip prop 은 API 호환성 유지 (호출부 변경 없음).
  */
-export function SajuMiniCard({ pillars, onFlip, highlightDay = true }: SajuMiniCardProps) {
+export function SajuMiniCard({ pillars, onFlip: _onFlip, highlightDay = true }: SajuMiniCardProps) {
   return (
     <div
       style={{
@@ -53,19 +55,15 @@ export function SajuMiniCard({ pillars, onFlip, highlightDay = true }: SajuMiniC
       {pillars.map((p, i) => {
         const isDay = p.label === '일';
         return (
-          <Flippable
+          <div
             key={`${p.label}-${i}`}
-            height={120}
-            ariaLabel={`${p.label}주 · ${p.unavailable ? '미입력' : `${p.gan}${p.ji}`}`}
-            front={renderFront(p, isDay && highlightDay)}
-            back={renderBack(p)}
-            flipOnTap={!p.unavailable}
-            locked={false}
-          />
+            style={{ height: 120 }}
+            aria-label={`${p.label}주 · ${p.unavailable ? '미입력' : `${p.gan}${p.ji}`}`}
+          >
+            {renderFront(p, isDay && highlightDay)}
+          </div>
         );
       })}
-      {/* onFlip callback — Flippable 에서 직접 이벤트 전달은 생략, 필요 시 확장 */}
-      {onFlip && null}
     </div>
   );
 }
@@ -116,26 +114,4 @@ function renderFront(p: PillarData, highlight: boolean): ReactNode {
   );
 }
 
-function renderBack(p: PillarData): ReactNode {
-  return (
-    <div
-      className="pillar-mini-cell"
-      style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 10,
-        gap: 6,
-        background: 'var(--bg-cream)',
-        border: '0.5px solid rgba(184,150,90,0.3)',
-      }}
-    >
-      <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-gold)' }}>
-        {p.label}주 · {p.shipsin ?? '—'}
-      </p>
-      <p style={{ fontSize: 11, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-        {p.connection ?? '탭하면 꿈·오늘과의 연결이 보입니다.'}
-      </p>
-    </div>
-  );
-}
+// renderBack 제거 — #48 flip 제거로 뒷면 불필요 (2026-04-23)

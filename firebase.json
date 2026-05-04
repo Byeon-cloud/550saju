@@ -19,6 +19,8 @@
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
+      { "source": "/api/saju-card-og.png", "function": "renderSajuCardOgImage" },
+      { "source": "/saju-card/**", "function": "renderSajuCardOg" },
       { "source": "/share/**", "function": "renderShareOg" },
       { "source": "**", "destination": "/index.html" }
     ],

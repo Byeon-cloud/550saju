@@ -1,7 +1,8 @@
 // HomePage v4.2 (2026-04-22 PM) — v4.1 + 통일 개편 (준기 8 결정 반영)
 // 사양: docs/mockups/사주500_UI개편_목업_홈_v4.html + Cowork 세션 14 교정 + PM 8 결정
 // 순서: ProfileSwitcher → [01]오늘운세 → [02]꿈해몽 → [03]프리미엄 → [05]확장4
-//       → [04]주제10 → [08]3차별성 → [07]후기16 → [09]해시태그22 → [06inline]상담anchor → [10]Footer
+//       → [07]후기16 → [04]주제10 → [08]3차별성 → [09]해시태그22 → [06inline]상담anchor → [10]Footer
+// #49 (2026-04-23): 후기16 위치 이동 — 확장4 직후, 주제10 앞
 // PM 변경 포인트 (2026-04-22 준기 결정):
 //  - 주제 5 → 10 (연애·재회·결혼·재물·합격이직·사업·건강·이사이동·학업·직업)
 //    + 인기 딱지 (연애·재회·합격이직), 추천 딱지 (사업·재물)
@@ -20,6 +21,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { HOME_REVIEWS } from '@/constants/reviews';
 import { listTopics } from '@/constants/topics'; // 10주제 SSOT (id/한자/컬러/딱지/path)
+// 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
 
 /* SSOT 디자인 토큰 — PC_인수인계 §5 기준 (2026-04-22) */
 const C = {
@@ -29,8 +31,8 @@ const C = {
   gray500: '#6B6B6B',
   grayLine: '#E5DFD0',
   gold: '#B8965A',
-  goldDark: '#7F6B4E',
-  goldSoft: '#F0E8D9',
+  goldDark: '#8C6D3D',           // SSOT gold-deep — D1 fix (2026-04-23)
+  goldSoft: 'rgba(184,150,90,0.14)', // SSOT soft gold — D1 fix (2026-04-23)
   goldShimmer: '#E8D9B8',
 } as const;
 
@@ -47,7 +49,8 @@ const EXT_COLORS = {
   tojung:  '#2F4B7C', // 토정비결 歲
 } as const;
 
-/* 해시태그 클라우드 22개 (AI·가격·광고 언급 0) */
+/* 해시태그 클라우드 22개 (AI·가격·광고 언급 0) — 보존용, 실시간 Best 로 대체 */
+// @ts-expect-error -- 보존용 (실시간 Best Top 5 로 대체됨, grace)
 const HASHTAGS = [
   '#사주500', '#오늘의운세', '#꿈해몽', '#대운', '#월운', '#궁합', '#토정비결',
   '#연애운', '#재물운', '#직업운', '#건강운', '#공부운',
@@ -72,6 +75,10 @@ export function HomePage() {
   const reviewDoubled = useMemo(() => [...HOME_REVIEWS, ...HOME_REVIEWS], []);
 
   const go = (path: string) => () => navigate(path);
+  // 프리미엄 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
+  const goPremium = () => {
+    navigate('/premium');
+  };
 
   return (
     <div style={{ background: C.paper, minHeight: '100vh', paddingBottom: 32 }}>
@@ -156,11 +163,11 @@ export function HomePage() {
           style={{ opacity: 0.08, color: C.goldShimmer, fontFamily: SERIF }}>夢</span>
       </motion.button>
 
-      {/* ─── [03] 프리미엄 10운 (비즈니스 메인) ─── */}
+      {/* ─── [03] 프리미엄 15운 (비즈니스 메인 — 2026-04-27 4 패키지 정정: 10본+5보너스) ─── */}
       <motion.button
         type="button"
         whileTap={{ scale: 0.99 }}
-        onClick={go('/storage')}
+        onClick={goPremium}
         className="relative mx-4 mt-6 w-[calc(100%-32px)] rounded-[18px] px-[22px] pt-[22px] pb-5 text-left overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2520 60%, #1a1a1a 100%)',
@@ -248,17 +255,65 @@ export function HomePage() {
         ))}
       </div>
 
-      {/* ─── [04] 궁금한 주제 하나, 깊게 · 주제 10종 가로 스크롤 (PM 결정 #5) ─── */}
-      <div className="mx-4 mt-6 flex items-baseline justify-between">
-        <h3 className="text-[17px] font-bold tracking-[-0.01em]" style={{ color: C.ink, fontFamily: SERIF }}>
-          궁금한 주제 하나, 깊게
-        </h3>
-        <span className="text-[11.5px]" style={{ color: C.gray500 }}>
-          10개 주제
-        </span>
+      {/* ─── [07] Reviews 16 (우→좌 자동 캐러셀) · #49 위치 이동: 확장4 직후 ─── */}
+      <div className="mx-4 mt-9">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>VOICES</span>
+          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
+        </div>
+        <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
+          이미 받아본 사람들이<br />
+          <span style={{ color: C.goldDark }}>"진짜다"</span>라고 말합니다
+        </h2>
       </div>
-      <p className="mx-4 mt-1 text-[13px] leading-[1.55]" style={{ color: C.inkSoft }}>
-        연애·재회·결혼·재물·합격이직·사업·건강·이사·학업·직업 — 하나를 골라 깊게 풀어드려요
+      <div className="mt-3 overflow-hidden pb-2"
+        style={{ maskImage: 'linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%)' }}>
+        <div className="flex gap-3 px-4 review-scroll">
+          {reviewDoubled.map((r, i) => (
+            <div key={i} className="min-w-[280px] max-w-[280px] h-[116px] rounded-2xl p-4"
+              style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
+              <div className="text-[11.5px] font-semibold mb-1.5" style={{ color: C.goldDark }}>
+                {r.age} {r.gender}
+              </div>
+              <div className="text-[13px] leading-[1.6] font-medium line-clamp-3" style={{ color: C.ink }}>
+                {r.text}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ─── [06inline 이동] 사주대화 anchor — VOICES ↔ DEEP DIVE 사이 (PM 결정) ─── */}
+      <div className="mx-4 mt-6 text-center">
+        <button
+          type="button"
+          onClick={go('/chat')}
+          className="text-[12.5px] font-medium tracking-[-0.005em] inline-flex items-center gap-1 px-3 py-2 rounded-full transition-colors"
+          style={{ color: C.gray500 }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = C.gold; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = C.gray500; }}
+        >
+          심층적인 상담이 필요한 날엔?
+          <span className="font-bold" style={{ color: C.goldDark }}>
+            사주 상담하러 가기 →
+          </span>
+        </button>
+      </div>
+
+      {/* ─── [04] 궁금한 주제 하나, 깊게 · 주제 10종 가로 스크롤 (PM 결정 #5) ─── */}
+      <div className="mx-4 mt-9">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>DEEP DIVE</span>
+          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
+          <span className="text-[10.5px] font-bold" style={{ color: C.gray500 }}>10주제 · 1운씩</span>
+        </div>
+        <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
+          진짜 궁금한 한 가지,<br />
+          <span style={{ color: C.goldDark }}>깊게 파보세요</span>
+        </h2>
+      </div>
+      <p className="mx-4 mt-2 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>
+        연애·재회·결혼·재물·합격이직·사업·건강·이사·학업·직업 — <strong style={{ color: C.ink }}>한 주제만 1운</strong>으로 끝까지 풀어드려요.
       </p>
       <div className="mt-3 overflow-x-auto pb-2 no-scrollbar"
         style={{ scrollSnapType: 'x mandatory' }}>
@@ -318,14 +373,16 @@ export function HomePage() {
 
       {/* ─── [08] 3 차별성 인포그래픽 (PM 결정 #7 · 사주대화 카드 제거 + 철학 → 차별성 도식화) ─── */}
       {/*  멘트 던지지 말고 도식화. 이모지 X. SVG 아이콘 + 한자 + 컬러 칩만 사용.  */}
-      <div className="mx-4 mt-7 w-[calc(100%-32px)]">
-        <div className="flex items-baseline justify-between mb-3">
-          <h3 className="text-[17px] font-bold tracking-[-0.01em]"
-            style={{ color: C.ink, fontFamily: SERIF }}>
-            당신을 정확히 설명해드립니다
-          </h3>
-          <span className="text-[11.5px]" style={{ color: C.gray500 }}>왜 사주500인가</span>
+      <div className="mx-4 mt-9 w-[calc(100%-32px)]">
+        <div className="flex items-baseline gap-2 mb-1.5">
+          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>WHY 500</span>
+          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
         </div>
+        <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]"
+          style={{ color: C.ink, fontFamily: SERIF }}>
+          왜 사주500을<br />
+          <span style={{ color: C.goldDark }}>고르게 됐나요</span>
+        </h2>
         <div className="grid grid-cols-3 gap-2">
           {/* Card 1 — 어려운 한자 No (한자 X 도식) */}
           <div className="relative rounded-[14px] p-3.5 text-center overflow-hidden"
@@ -383,85 +440,90 @@ export function HomePage() {
             </p>
           </div>
 
-          {/* Card 3 — 모순 없는 풀이 (정렬된 동심원 + 체크) */}
+          {/* Card 3 — 단 500원, 깊이는 만 원짜리 */}
           <div className="relative rounded-[14px] p-3.5 text-center overflow-hidden"
             style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
             <div className="relative h-[52px] flex items-center justify-center mb-2">
               <svg viewBox="0 0 56 52" width="56" height="52" aria-hidden="true">
-                <circle cx="28" cy="26" r="22" fill="none" stroke={C.gold} strokeWidth="1.2" opacity="0.35" />
-                <circle cx="28" cy="26" r="14" fill="none" stroke={C.gold} strokeWidth="1.2" opacity="0.55" />
-                <circle cx="28" cy="26" r="7"  fill={C.gold} opacity="0.85" />
-                <path d="M22 27 L26.5 31.5 L34 23" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                {/* 동전 stack — 가성비 상징 */}
+                <ellipse cx="28" cy="40" rx="18" ry="4" fill={C.gold} opacity="0.25" />
+                <ellipse cx="28" cy="34" rx="18" ry="4" fill={C.gold} opacity="0.45" />
+                <ellipse cx="28" cy="28" rx="18" ry="4" fill={C.gold} opacity="0.65" />
+                <ellipse cx="28" cy="22" rx="18" ry="4" fill={C.gold} opacity="0.85" />
+                <text x="28" y="25" textAnchor="middle" fontSize="11" fontWeight="800" fill="#FFFFFF" fontFamily={SERIF}>500</text>
               </svg>
             </div>
             <h4 className="text-[12.5px] font-extrabold leading-[1.3]"
               style={{ color: C.ink, fontFamily: SERIF }}>
-              모순 없는 풀이
+              단 500원의 깊이
             </h4>
             <p className="mt-1 text-[10.5px] leading-[1.45]" style={{ color: C.gray500 }}>
-              주제별 결과가<br />서로 일치해요
+              점집 50,000원<br />급 풀이를
             </p>
           </div>
         </div>
       </div>
 
-      {/* ─── [07] Reviews 16 (우→좌 자동 캐러셀) ─── */}
-      <div className="mx-4 mt-7 text-[17px] font-bold tracking-[-0.01em]" style={{ color: C.ink, fontFamily: SERIF }}>
-        먼저 써본 분들의 말
-      </div>
-      <div className="mt-3 overflow-hidden pb-2"
-        style={{ maskImage: 'linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%)' }}>
-        <div className="flex gap-3 px-4 review-scroll">
-          {reviewDoubled.map((r, i) => (
-            <div key={i} className="min-w-[280px] max-w-[280px] h-[116px] rounded-2xl p-4"
-              style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
-              <div className="text-[11.5px] font-semibold mb-1.5" style={{ color: C.goldDark }}>
-                {r.age} {r.gender}
-              </div>
-              <div className="text-[13px] leading-[1.6] font-medium line-clamp-3" style={{ color: C.ink }}>
-                {r.text}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── [09] Hashtag Cloud 22개 ─── */}
-      <div className="mx-4 mt-7">
-        <h3 className="text-[15px] font-bold tracking-[-0.01em]" style={{ color: C.ink, fontFamily: SERIF }}>
-          지금 많이 본 태그
-        </h3>
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {HASHTAGS.map((tag, i) => (
-            <span key={tag}
-              className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full"
-              style={{
-                background: i % 3 === 0 ? C.goldSoft : '#FFFFFF',
-                color: i % 3 === 0 ? C.goldDark : C.inkSoft,
-                border: i % 3 === 0 ? 'none' : `1px solid ${C.grayLine}`,
-              }}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── [06inline] 사주대화 인라인 anchor (PM 결정 #6) ─── */}
-      {/*  사주대화 카드 제거 후 푸터 직전에 1줄 anchor 로 대체. 하단 네비 가운데 메인 보조.  */}
-      <div className="mx-4 mt-7 text-center">
-        <button
-          type="button"
-          onClick={go('/chat')}
-          className="text-[12.5px] font-medium tracking-[-0.005em] inline-flex items-center gap-1 px-3 py-2 rounded-full transition-colors"
-          style={{ color: C.gray500 }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = C.gold; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = C.gray500; }}
-        >
-          심층적인 상담이 필요한 날엔?
-          <span className="font-bold" style={{ color: C.goldDark }}>
-            사주 상담하러 가기 →
+      {/* ─── [09] 실시간 Best Top 5 — CTA 직접 연결 ─── */}
+      <div className="mx-4 mt-9">
+        <div className="flex items-baseline gap-2 mb-1.5">
+          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>LIVE BEST</span>
+          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
+          <span className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: '#D32F2F' }}>
+            <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#D32F2F', boxShadow: '0 0 0 2px rgba(211,47,47,0.18)' }} />
+            실시간
           </span>
-        </button>
+        </div>
+        <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
+          지금 가장 많이 보는 <span style={{ color: C.goldDark }}>Top 5</span>
+        </h2>
+        <div className="mt-2 flex flex-col gap-2">
+          {[
+            { rank: 1, label: '오늘의 운세', sub: '매일 1회 무료', path: '/daily', heat: 'HOT' },
+            { rank: 2, label: '재물운', sub: '돈·실리·재물 흐름', path: '/topic/wealth', heat: 'HOT' },
+            { rank: 3, label: '연애운', sub: '인연·궁합·결혼', path: '/topic/love', heat: '' },
+            { rank: 4, label: '대운 흐름', sub: '60년 인생 큰 강줄기', path: '/daeun', heat: 'NEW' },
+            { rank: 5, label: '꿈 해몽', sum: '오늘 꾼 꿈의 의미', sub: '오늘 꾼 꿈의 의미', path: '/dream', heat: '' },
+          ].map((item) => (
+            <button
+              key={item.rank}
+              type="button"
+              onClick={go(item.path)}
+              className="flex items-center gap-3 px-3 py-3 rounded-[12px] text-left transition-colors"
+              style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.gold; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.grayLine; }}
+            >
+              <span
+                className="flex items-center justify-center font-extrabold"
+                style={{
+                  width: 26, height: 26, borderRadius: 6,
+                  fontSize: 13, fontFamily: SERIF,
+                  background: item.rank <= 3
+                    ? `linear-gradient(135deg, #E8D9B8, ${C.goldDark})`
+                    : C.goldSoft,
+                  color: item.rank <= 3 ? '#1a1a1a' : C.goldDark,
+                  flexShrink: 0,
+                }}
+              >
+                {item.rank}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[14px] font-bold" style={{ color: C.ink, fontFamily: SERIF }}>{item.label}</span>
+                  {item.heat === 'HOT' && (
+                    <span className="text-[9px] font-extrabold px-1.5 rounded" style={{ background: '#D32F2F', color: '#fff' }}>HOT</span>
+                  )}
+                  {item.heat === 'NEW' && (
+                    <span className="text-[9px] font-extrabold px-1.5 rounded" style={{ background: '#2D8A4E', color: '#fff' }}>NEW</span>
+                  )}
+                </div>
+                <div className="text-[11.5px] mt-0.5" style={{ color: C.inkSoft }}>{item.sub}</div>
+              </div>
+              <span className="text-[14px] font-bold" style={{ color: C.goldDark, flexShrink: 0 }}>→</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ─── [10] Footer ─── */}

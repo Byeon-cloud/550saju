@@ -5,6 +5,15 @@
       "name": "Vite Dev (Frontend)",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
+      "cwd": "D:/550saju",
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "Vite Dev (Main Repo)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "D:/550saju",
       "port": 3000,
       "autoPort": true
     },

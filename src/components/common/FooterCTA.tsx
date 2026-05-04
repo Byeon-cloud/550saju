@@ -47,7 +47,7 @@ interface FooterCTAConfig {
 /** 페이지별 emblem + 회귀 경로 SSOT (diff v3 §6 + 주제별SSOT_v1 정렬 2026-04-22) */
 const CONFIG: Record<FooterCTAPageKey, FooterCTAConfig> = {
   report:           { emblem: '命', emblemColor: '#B8965A', overviewLabel: '사주 전체로',     overviewTo: '/storage' },
-  'topic:love':     { emblem: '緣', emblemColor: '#C88A95', overviewLabel: '연애 전체로',     overviewTo: '/' }, // SSOT v1
+  'topic:love':     { emblem: '桃', emblemColor: '#C88A95', overviewLabel: '연애 전체로',     overviewTo: '/' }, // 2026-04-26: 緣 → 桃 (mockup 진본, 도화살 직접 한자)
   'topic:wealth':   { emblem: '財', emblemColor: '#B8965A', overviewLabel: '재물 전체로',     overviewTo: '/' },
   'topic:career':   { emblem: '官', emblemColor: '#5A7CA8', overviewLabel: '직업 전체로',     overviewTo: '/' },
   'topic:health':   { emblem: '壽', emblemColor: '#6FA08C', overviewLabel: '건강 전체로',     overviewTo: '/' },
@@ -70,7 +70,7 @@ interface FooterCTAProps {
   pageKey: FooterCTAPageKey;
   /** 기본 회귀 경로 override (선택) */
   backTo?: string;
-  /** 10운 CTA 클릭 시 경로 (기본: /storage — 10운 번들 진입점) */
+  /** 15운 CTA 클릭 시 경로 (기본: /storage — 2026-04-27 4 패키지 정정: 10운 → 15운 번들 진입점) */
   primaryTo?: string;
   /** 하단 여백 (기본 32px) */
   marginTop?: number;
@@ -128,7 +128,7 @@ export function FooterCTA({ pageKey, backTo, primaryTo = '/storage', marginTop =
           background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
           border: '1px solid #B8965A',
         }}
-        aria-label="10운으로 시작 — 프리미엄 전체 리포트"
+        aria-label="10운으로 시작 — 프리미엄 전체 리포트 (10본 + 5보너스)"
       >
         10운으로 시작 →
       </button>

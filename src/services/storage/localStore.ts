@@ -32,6 +32,14 @@ export interface LocalReport {
   contentType?: ContentType;
   /** AI 결과 원문 (ResultPage 등에서 사용) */
   aiResult?: any;
+  /**
+   * 종합 사주 schema 버전 — claudePremium.ts 의 응답 구조 변경 추적용.
+   *  v1: 기존 (sections, summary, sectionConclusions[] 배열)
+   *  v2: 2026-04 신규 8 필드 (lifeEdge, sipCluster, shinsalCards, rel6Cards,
+   *      actionList, monthlyInsight, sectionConclusions{} 객체, topicMini)
+   * 표식만 — 자동 재호출은 안 함. UI 에서 "새 풀이 받기" 안내용.
+   */
+  schemaVersion?: 'v1' | 'v2';
 }
 
 /** 사주 프로필 — 리포트와 독립적으로 저장 (삭제해도 프로필 유지) */

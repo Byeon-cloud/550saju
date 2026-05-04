@@ -16,6 +16,14 @@ import { FooterCTA } from '@/components/common/FooterCTA';
 import type { DaeunAnalysisResponse } from '@/types/report';
 import { stripMd } from '@/utils/format';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+// Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
+import {
+  EXTENSION_THEME,
+  ExtensionHero,
+  ExtensionUpsellCard,
+  DaeunHeatGrid,
+  type DaeunHeatRow,
+} from './extension/_chrome';
 
 type Phase = 'select' | 'loading' | 'result';
 
@@ -163,9 +171,33 @@ export function DaeunPage() {
 
   const periods = result.periods || [];
 
+  // Phase D'-4 Bundle 2 — chrome theme + AI heatGrid (over-fit 방지: 응답 있을 때만)
+  const daeunTheme = EXTENSION_THEME.daeun;
+  const aiHeatGrid: DaeunHeatRow[] | null = Array.isArray((result as any)?.heatGrid)
+    ? ((result as any).heatGrid as DaeunHeatRow[])
+    : null;
+  const aiHeatYearStart = Number((result as any)?.heatYearStart ?? new Date().getFullYear());
+  const ilganLabel =
+    selected?.sajuData?.pillars?.[2]?.천간
+      ? `${selected.sajuData.pillars[2].천간읽기 ?? ''}(${selected.sajuData.pillars[2].천간}) 일간`
+      : undefined;
+  const birthLabel = selected?.input
+    ? `${selected.input.birthYear}년 ${selected.input.birthMonth}월 ${selected.input.birthDay}일`
+    : '';
+
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--bg-page-gradient)' }}>
       <Header title="대운 해설" />
+
+      {/* Phase D'-4 Bundle 2 — ExtensionHero (외부 Header와 공존) */}
+      <FadeIn>
+        <ExtensionHero
+          theme={daeunTheme}
+          sub={`${ilganLabel ?? ''}${birthLabel ? ' · ' + birthLabel : ''}`}
+          rightLabel="大運 · 10년 단위 큰 흐름"
+        />
+      </FadeIn>
+
       <div className="px-5 pt-4 space-y-5">
 
         {/* 개요 */}
@@ -176,7 +208,7 @@ export function DaeunPage() {
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {(result as any).keywords.map((kw: string, i: number) => (
                   <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: 'rgba(184,150,90,0.1)', color: '#A08B6A', border: '1px solid rgba(184,150,90,0.2)' }}>
+                    style={{ background: 'rgba(184,150,90,0.1)', color: '#8C6D3D', border: '1px solid rgba(184,150,90,0.2)' }}>
                     {kw}
                   </span>
                 ))}
@@ -287,12 +319,42 @@ export function DaeunPage() {
           </FadeIn>
         )}
 
+        {/* Phase D'-4 Bundle 2 — DaeunHeatGrid (AI 응답 있을 때만, over-fit 방지) */}
+        {aiHeatGrid && aiHeatGrid.length > 0 && (
+          <FadeIn delay={0.38}>
+            <div style={{ margin: '0 -20px' }}>
+              <DaeunHeatGrid rows={aiHeatGrid} yearStart={aiHeatYearStart} />
+            </div>
+          </FadeIn>
+        )}
+
         {/* 공유 */}
         <FadeIn delay={0.4}>
           <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>
             결과 공유하기
           </Button>
         </FadeIn>
+
+        {/* Phase D'-4 Bundle 2 — ExtensionUpsellCard (단일 CTA, 작업 0 정렬) */}
+        <FadeIn delay={0.42}>
+          <ExtensionUpsellCard
+            title="사주 전체에서 대운 흐름의 의미를 풀어드립니다"
+            desc="대운 8칸이 사주 원국과 어떻게 맞물리는지, 평생의 결까지 한 번에."
+            onTap={() => navigate('/charge?need=10')}
+          />
+        </FadeIn>
+
+        {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
+        <div className="mt-8 text-center space-y-1">
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+          </p>
+          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+            <br />
+            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+          </p>
+        </div>
 
         {/* 3-part Footer CTA (diff v3 §6) */}
         <FooterCTA pageKey="daeun" backTo="/" />

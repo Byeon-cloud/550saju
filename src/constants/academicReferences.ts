@@ -119,7 +119,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
   },
   {
     id: 'mingli-zhengzong',
-    titleKo: '명리정종 / 신봉통고',
+    titleKo: '명리약언 / 신봉통고',
     titleHanja: '命理正宗 / 神峰通考',
     titlePinyin: 'Mìng Lǐ Zhèng Zōng / Shén Fēng Tōng Kǎo',
     author: '장남(장신봉)',
@@ -337,7 +337,7 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     description: '천간이 12지지를 만나 거치는 12단계 에너지 순환 과정을 분석하는 이론',
     detail:
       '장생·목욕·관대·건록·제왕·쇠·병·사·묘·절·태·양의 12단계로 에너지 상태를 파악합니다. 이것은 생물학적 "죽음"이 아니라 에너지의 순환과 변화를 상징합니다. 제왕은 에너지의 정점, 절은 새로운 시작 직전의 준비 단계입니다.',
-    sourceTexts: ['연해자평(淵海子平)', '삼명통회(三命通會)', '명리정종(命理正宗)'],
+    sourceTexts: ['연해자평(淵海子平)', '삼명통회(三命通會)', '명리약언(命理正宗)'],
     applicationInApp: '에너지 상태 표시, 현재 인생 단계 해석',
   },
   {
@@ -440,7 +440,7 @@ export const HISTORICAL_SCHOLARS: HistoricalScholar[] = [
     era: '명(明)나라',
     yearApprox: '약 1500년대 후반',
     contribution: '12운성의 실전 적용법과 격국 판단 기준을 정립',
-    majorWorks: ['명리정종(命理正宗)', '신봉통고(神峰通考)'],
+    majorWorks: ['명리약언(命理正宗)', '신봉통고(神峰通考)'],
   },
   {
     id: 'chen-suoan',
