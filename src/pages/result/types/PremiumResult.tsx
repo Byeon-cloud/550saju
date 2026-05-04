@@ -474,7 +474,10 @@ function ShinsalSummary({
  *  · 12단계: 장생·목욕·관대·건록·제왕·쇠·병·사·묘·절·태·양
  *  · 강도 색상 (제왕/건록 강·관대/장생 양·쇠/병/사/묘 약·절/태/양/목욕 변화)
  */
-function Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
+// 2026-05-04 12운성 컴포넌트 호출 제거 (준기 결단). 함수 정의는 보존 (Phase 2 재도입 가능성).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-expect-error preserved for future
+function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
   // sajuData.unyoung12 → 일간 vs 각 지지(년·월·일·시) 의 12운성 단계
   const data = sajuData.unyoung12 || [];
   if (!Array.isArray(data) || data.length === 0) return null;
@@ -1232,7 +1235,10 @@ function Section4Avoid({
  *  · 2: 상관견관 등 특수 구조 (식상+관성)
  *  · 3: 겁재 강한 사주 — 형제·친구·동업자 손실 패턴
  */
-function Section3Body({
+// 2026-05-04 §03 십성 중복 버그 수정 (준기 결단) — SipsungStory 와 통합. 정의는 보존.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-expect-error preserved
+function _Section3Body({
   sajuData: _sajuData,
   userName,
   sipDist,
@@ -1588,7 +1594,8 @@ function Section10Intro({
     opener = `${HAN[dayOheng]}(${KR[dayOheng]}) 일간을 중심으로 ${HAN[weakest]}(${KR[weakest]})이 가장 얇은 결`;
   }
 
-  const text = `${userName} 님은 <strong>${opener}</strong>입니다. 풀이는 길었지만, <strong>'알았다'에서 끝나면 종이 한 장</strong>이지요. 아래 7건은 ${userName} 님 사주 분포(${HAN.목}${counts[0][1]}·${HAN.화}${counts[1][1]}·${HAN.토}${counts[2][1]}·${HAN.금}${counts[3][1]}·${HAN.수}${counts[4][1]})에 맞춰 짠, 작지만 효과가 큰 실천입니다.`;
+  // 2026-05-04 컴팩트 — 7건 → 5건 / 사주 분포 텍스트 너무 길어 제거
+  const text = `${userName} 님은 <strong>${opener}</strong>입니다. <strong>'알았다'에서 끝나면 종이 한 장</strong>이지요. 아래 5건은 ${userName} 님 사주에 맞춰 짠, 작지만 효과가 큰 실천입니다.`;
 
   return (
     <p
@@ -2546,30 +2553,7 @@ export function PremiumResult({
             aiPullQuote={typeof aiResult.summarySection1Quote === 'string' ? aiResult.summarySection1Quote : undefined}
           />
 
-          {/* LifeEdgeList — 오행별 인생의 결 5카드 (mockup §1 life-edge 진본) */}
-          <h4
-            style={{
-              fontFamily: "'Noto Serif KR', serif",
-              fontSize: 14,
-              color: '#1a1a1a',
-              fontWeight: 700,
-              margin: '22px 0 4px',
-              letterSpacing: '0.02em',
-            }}
-          >
-            오행별 인생의 결 — 나에게 뭐가 있고 뭐가 비는가
-          </h4>
-          <p style={{ fontSize: 11.5, color: '#5C4A2E', margin: '0 0 10px', lineHeight: 1.55 }}>
-            각 오행이 어떻게 작동하는지 · <strong style={{ color: '#1b5e20' }}>살릴 것</strong> /{' '}
-            <strong style={{ color: '#8b1a1a' }}>조심할 것</strong>로 못 박아둡니다
-          </p>
-          <LifeEdgeList
-            elements={sajuData.elements}
-            userName={report.name || ''}
-            ilganOheng={ilganOheng}
-            aiCards={aiResult.lifeEdge}
-            pillars={sajuData.pillars}
-          />
+          {/* 2026-05-04 LifeEdgeList §01 → §02 이동 (준기 결단). 여기엔 §01 결론만 남김 */}
 
           <Section1Conclusion
             userName={report.name || '회원'}
@@ -2601,9 +2585,33 @@ export function PremiumResult({
             aiStructure={typeof aiResult.structure === 'string' && aiResult.structure.length > 50 ? aiResult.structure : (aiResult.sections?.find?.((s: any) => s.id === 'structure')?.content || '')}
           />
           <PillarMessages aiResult={aiResult} v4Pillars={v4Pillars} />
-          {/* 12운성 4 pillar grid — 일간이 각 자리를 만났을 때 인생 사이클 단계 (장생·목욕·관대·건록·제왕·쇠·병·사·묘·절·태·양)
-              §02 천간지지 안에 배치 — 12운성은 4기둥별 지지 + 일간 관계로 산출되므로 의미상 천간지지의 일부 */}
-          <Unyoung12Grid sajuData={sajuData} />
+
+          {/* 2026-05-04 §01 → §02 이동 — 오행별 인생의 결 (LifeEdgeList) */}
+          <h4
+            style={{
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 14,
+              color: '#1a1a1a',
+              fontWeight: 700,
+              margin: '22px 0 4px',
+              letterSpacing: '0.02em',
+            }}
+          >
+            오행별 인생의 결 — 나에게 뭐가 있고 뭐가 비는가
+          </h4>
+          <p style={{ fontSize: 11.5, color: '#5C4A2E', margin: '0 0 10px', lineHeight: 1.55 }}>
+            각 오행이 어떻게 작동하는지 · <strong style={{ color: '#1b5e20' }}>살릴 것</strong> /{' '}
+            <strong style={{ color: '#8b1a1a' }}>조심할 것</strong>로 못 박아둡니다
+          </p>
+          <LifeEdgeList
+            elements={sajuData.elements}
+            userName={report.name || ''}
+            ilganOheng={ilganOheng}
+            aiCards={aiResult.lifeEdge}
+            pillars={sajuData.pillars}
+          />
+
+          {/* 2026-05-04 12운성 제거 (준기 결단 — "12단계 사이클이 뭐에요" 같은 의문 차단) */}
           <Section2Conclusion
             userName={report.name || '회원'}
             sajuData={sajuData}
@@ -2629,13 +2637,8 @@ export function PremiumResult({
           <SipsungBars sipDist={sipDist} dayOheng={dayOheng} />
           {/* AI sipCluster — 5 클러스터별 head 본문 + 카드 (사주 specific) — AI 없으면 사주에서 직접 도출 */}
           <SipClusterDetails aiCluster={aiResult.sipCluster} sajuData={sajuData} />
-          {/* §03 본문 3 paragraphs (mockup 진본 형식) */}
-          <Section3Body
-            sajuData={sajuData}
-            userName={report.name || '회원'}
-            sipDist={sipDist}
-            aiSipsung={typeof aiResult.sipsung === 'string' && aiResult.sipsung.length > 50 ? aiResult.sipsung : (aiResult.sections?.find?.((s: any) => s.id === 'sipsung')?.content || '')}
-          />
+          {/* 2026-05-04 critical: Section3Body 와 SipsungStory 가 같은 본문 두 번 렌더하던 중복 버그 →
+              SipsungStory 만 유지 (AI fallback + top 십성 처리 둘 다 됨). */}
           <SipsungStory aiResult={aiResult} sipDist={sipDist} />
           <Section3Conclusion
             userName={report.name || '회원'}
@@ -2774,9 +2777,14 @@ export function PremiumResult({
       {/* ═════════════ 08 관계의 결 (六親) — 부모·형제·배우자·자녀·친구·상사 ═════════════ */}
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={8} title="관계의 결" hanja="六親" hint="사주가 그려놓은 부모·형제·배우자·자녀·친구·동료의 자리">
-          {/* mockup §8 도입 paragraph */}
-          <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
-            한 사람의 사주는 그 사람만 그리는 것이 아닙니다. <strong>부모·형제·배우자·자녀·친구·동료</strong>까지 — 가까운 관계가 어떤 결로 짜여 있는지 함께 새겨져 있습니다. 아래 6 카드는 각 관계의 <strong>핵심 본질 + 살릴 것 + 조심할 것</strong>을 보여줍니다.
+          {/* 2026-05-04 안내 추가 — 형제·자녀 없는 사람도 사주에 그려진 결을 가짐 (인연의 결) */}
+          <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0 6px', wordBreak: 'keep-all' }}>
+            사주는 본인뿐 아니라 가까운 사람들과의 결까지 함께 새겨놓습니다.
+            아래 6 카드는 <strong>부모·형제·배우자·자녀·친구·동료</strong>의 <strong>핵심 본질 + 살릴 것 + 조심할 것</strong>을 보여줍니다.
+          </p>
+          <p style={{ fontSize: 12, color: '#7A7269', lineHeight: 1.6, margin: '0 0 10px', fontStyle: 'italic' }}>
+            ※ 형제·자녀가 없는 분이라도 — 사주가 그리는 건 <strong>그 자리의 결</strong>입니다.
+            형제 자리가 가벼우면 동료·친구로, 자녀 자리가 비면 후배·반려동물·창작물로 채워지는 결로 읽어주세요.
           </p>
           {/* Stage 2C-#5: 관계의 결 6 카드 (mockup rel6-list 진본) */}
           <RelationSixCards sipDist={sipDist} aiCards={aiResult.rel6Cards} />
@@ -3308,6 +3316,7 @@ function LifestyleAdvice({
     aiResult?.sections?.find((s: any) => s.id === 'yongsin' || s.id === 'lifestyle')
       ?.content;
   if (typeof aiLifestyle === 'string' && aiLifestyle.length > 0) {
+    // 2026-05-04 critical fix: stripMd 만 통과 + raw 텍스트 노출 → sanitizeAiText + dangerouslySetInnerHTML
     return (
       <p
         style={{
@@ -3317,9 +3326,8 @@ function LifestyleAdvice({
           margin: 0,
           whiteSpace: 'pre-line',
         }}
-      >
-        {stripMd(aiLifestyle)}
-      </p>
+        dangerouslySetInnerHTML={{ __html: sanitizeAiText(aiLifestyle) }}
+      />
     );
   }
   return (
@@ -4509,8 +4517,9 @@ function PracticeChecklist({
     ? aiResult.actionList
     : (Array.isArray(aiResult?.actions) ? aiResult.actions : null);
   if (aiActionsRaw && aiActionsRaw.length > 0) {
+    // 2026-05-04 컴팩트 — 7~9 → 5건만 (강조 디자인 + 핵심만)
     actions = aiActionsRaw
-      .slice(0, 9)
+      .slice(0, 5)
       .map((a: any) => ({
         title: stripMd(String(a?.ttl ?? a?.title ?? '')),
         desc: stripMd(String(a?.desc ?? a?.body ?? '')),
@@ -5649,25 +5658,67 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
     );
   }
 
+  // 2026-05-04 갈아엎기 (준기 결단) — 핵심('강') 신살만 깊이 카드, 중·참고는 한 줄 칩.
+  // 중·참고 신살 한 줄 카드 (이름 + 한자 + 한 줄 의미 + 작동 시기 만)
+  function renderMiniRow(s: V4SinSal, when: '상시' | '특정 시기') {
+    const ai = aiMap[s.hanja] || aiMap[s.kr];
+    const desc = (ai?.desc?.trim() && ai.desc.length <= 70) ? ai.desc : (s.desc.length <= 70 ? s.desc : s.desc.slice(0, 60) + '…');
+    const krLabel = s.kr && s.kr !== s.hanja && /[가-힣]/.test(s.kr) ? s.kr : '신살';
+    return (
+      <div
+        key={`${s.kr}-mini`}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '10px 12px',
+          background: '#FFFFFF',
+          border: '1px solid #E5DFD0',
+          borderRadius: 8,
+          marginBottom: 6,
+        }}
+      >
+        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 800, color: '#1A1A1A', minWidth: 36 }}>{krLabel}</span>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 12, color: '#7F6B4E', minWidth: 28 }}>{s.hanja}</span>
+        <span style={{ flex: 1, fontSize: 12.5, color: '#3D3D3D', lineHeight: 1.5 }}>{desc}</span>
+        <span style={{
+          flexShrink: 0,
+          fontSize: 10,
+          fontWeight: 700,
+          padding: '2px 8px',
+          borderRadius: 999,
+          background: when === '상시' ? 'rgba(46,125,50,0.10)' : 'rgba(184,150,90,0.14)',
+          color: when === '상시' ? '#1B5E20' : '#8C6D3D',
+          letterSpacing: '0.04em',
+        }}>{when}</span>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* 강 — 큰 카드 (mockup .shinsal-list 진본) */}
+      {/* 강 (핵심) — 큰 카드 (깊이 풀이 + 실천) */}
       {strong.length > 0 && (
-        <div className="shinsal-list">
-          {strong.map((s) => renderCard(s, 5, '상시 작동', true, 'always'))}
-        </div>
+        <>
+          <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13, color: '#1A1A1A', fontWeight: 800, margin: '4px 0 8px', letterSpacing: '0.02em' }}>
+            핵심 신살 <span style={{ fontSize: 10.5, color: '#8C6D3D', fontWeight: 700, marginLeft: 4 }}>· 본인 결의 중심</span>
+          </h4>
+          <div className="shinsal-list">
+            {strong.map((s) => renderCard(s, 5, '상시 작동', true, 'always'))}
+          </div>
+        </>
       )}
-      {/* 중 — 중간 카드 */}
-      {mid.length > 0 && (
-        <div className="shinsal-list" style={{ marginTop: 12 }}>
-          {mid.map((s) => renderCard(s, 4, '상시 작동', false, 'always'))}
-        </div>
-      )}
-      {/* 참고 — 작은 카드 */}
-      {ref.length > 0 && (
-        <div className="shinsal-list" style={{ marginTop: 12 }}>
-          {ref.map((s) => renderCard(s, 3, '특정 시기 활성', false, 'year'))}
-        </div>
+      {/* 중 + 참고 — 한 줄 카드 (이름·한자·한 줄·작동 시기) */}
+      {(mid.length > 0 || ref.length > 0) && (
+        <>
+          <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 12.5, color: '#7A7269', fontWeight: 700, margin: '18px 0 8px', letterSpacing: '0.02em' }}>
+            그 외 신살 <span style={{ fontSize: 10, color: '#A8A097', fontWeight: 600, marginLeft: 4 }}>· 부수적·시기별 작동</span>
+          </h4>
+          <div>
+            {mid.map((s) => renderMiniRow(s, '상시'))}
+            {ref.map((s) => renderMiniRow(s, '특정 시기'))}
+          </div>
+        </>
       )}
     </>
   );
@@ -6447,10 +6498,8 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
       hookLow: '약한 부위·예방의 결',
       hookMid: '체력 관리의 결',
       hookHigh: '지치지 않는 결·회복 리듬' },
-    { key: 'social', label: '가족·관계', route: '/topic/social', topicId: 'social',
-      hookLow: '관계가 얇은 이유·깊게 갈 사람',
-      hookMid: '관계의 결·거리감 조정',
-      hookHigh: '내 결을 살리는 사람 vs 소모하는 사람' },
+    // 2026-05-04 social(가족·관계) 카드 제거 — SSOT 10주제에 없고 클릭 라우팅 X.
+    // §08 관계의 결 섹션이 별도로 6관계 깊이 풀이를 담당하므로 여기 중복 X.
   ];
 
   // mockup full = 마지막 가족·관계 카드 (전체 너비)
