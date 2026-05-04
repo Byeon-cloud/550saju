@@ -57,7 +57,7 @@ ${daeunList}
 - 미래 대운: "~세 무렵에 변화가"
 
 ## 출력 (JSON만, 코드블록 없이)
-⚠️ **점수 필드 룰 (2026-05-04 준기 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수 절대 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
+⚠️ **점수 필드 룰 (2026-05-04 준기 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
 
 ⚠️ periods의 간지/시작나이/끝나이/isCurrent는 아래 값을 그대로 사용하세요.
 {
