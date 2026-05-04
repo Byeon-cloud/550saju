@@ -157,7 +157,7 @@ export function MonthlyPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="월별 운세" steps={['2026년 세운을 분석하고 있어요', '월별 운세 점수를 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} />;
+    return <AILoading name={selected?.name} type="월별 운세" sajuData={selected?.sajuData} steps={['2026년 세운을 분석하고 있어요', '월별 운세 점수를 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} />;
   }
 
   // ─── 결과 ───

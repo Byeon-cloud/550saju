@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { SajuData } from '@/types/saju';
 
 const TIPS: { category: string; text: string }[] = [
   { category: '오행 꿀팁', text: '목(木)이 강한 사람은 아침형 인간이 많아요. 새벽에 일찍 일어나는 습관이 잘 맞습니다.' },
@@ -38,6 +39,13 @@ const TIPS: { category: string; text: string }[] = [
   { category: '사주500 가이드', text: '대운은 10년 단위로 바뀌는 큰 흐름이에요. 지금 내가 어떤 대운에 있는지 꼭 확인해보세요.' },
 ];
 
+/** 2026-05-04 mockup A "사주 미니카드" 진본 패턴 — 진입 즉시 사주 8자 노출 (데이터는 도착·AI 가 풀이 추가 중) */
+export interface AILoadingPillar {
+  label: '시' | '일' | '월' | '년';
+  gan: string;
+  ji: string;
+}
+
 interface Props {
   name?: string;
   type?: string;
@@ -45,6 +53,12 @@ interface Props {
   steps?: string[];
   premiumNote?: string;
   estimatedSeconds?: number;
+  /**
+   * 사주 데이터 (선택) — 전달되면 mockup A 다크 베이지 미니카드를 진입 즉시 표시
+   * "내 사주 데이터는 이미 도착했고, AI 가 풀이를 더하는 중" 시각적 약속
+   * 호출처는 selected.sajuData 그대로 넘기면 됨 (내부에서 [시,일,월,년] 변환)
+   */
+  sajuData?: SajuData;
 }
 
 const C = {
@@ -67,7 +81,33 @@ export function AILoading({
   steps,
   premiumNote,
   estimatedSeconds = 12,
+  sajuData,
 }: Props) {
+  // SajuData (year·month·day·time) → mockup 표기 순서 (시·일·월·년) 변환
+  const pillars: AILoadingPillar[] | null = useMemo(() => {
+    if (!sajuData?.pillars || sajuData.pillars.length < 4) return null;
+    const [y, m, d, t] = sajuData.pillars;
+    if (!t?.available) {
+      // 시주 미입력 — 시 자리는 "?"
+      return [
+        { label: '시', gan: '?', ji: '?' },
+        { label: '일', gan: d.천간, ji: d.지지 },
+        { label: '월', gan: m.천간, ji: m.지지 },
+        { label: '년', gan: y.천간, ji: y.지지 },
+      ];
+    }
+    return [
+      { label: '시', gan: t.천간, ji: t.지지 },
+      { label: '일', gan: d.천간, ji: d.지지 },
+      { label: '월', gan: m.천간, ji: m.지지 },
+      { label: '년', gan: y.천간, ji: y.지지 },
+    ];
+  }, [sajuData]);
+  const iljuLabel = useMemo(() => {
+    if (!sajuData?.pillars?.[2]) return undefined;
+    const day = sajuData.pillars[2];
+    return `${day.천간읽기 ?? ''}${day.지지읽기 ?? ''}(${day.천간}${day.지지}) 일주`;
+  }, [sajuData]);
   const [tipIndex, setTipIndex] = useState(0);
   const [doneCount, setDoneCount] = useState(0); // 완료된 섹션 수
   const [elapsed, setElapsed] = useState(0);
@@ -129,6 +169,99 @@ export function AILoading({
           <span style={{ color: C.goldDeep }}>{type}</span> 준비 중
         </p>
       </div>
+
+      {/* mockup A "사주 미니카드" 진본 — 진입 즉시 사주 8자 노출 (데이터 도착 시각적 약속) */}
+      {pillars && pillars.length === 4 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-[340px] mb-5 rounded-2xl"
+          style={{
+            background: 'linear-gradient(180deg, #1a1f3a 0%, #0e1428 100%)',
+            color: '#F8F5EE',
+            padding: '14px 16px',
+          }}
+        >
+          {iljuLabel && (
+            <>
+              <div
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.1em',
+                  color: 'rgba(248,245,238,0.55)',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {name ? `${name} 님 사주` : '내 사주'}
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Noto Serif KR', serif",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  marginTop: 4,
+                }}
+              >
+                {iljuLabel}
+              </div>
+            </>
+          )}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 6,
+              marginTop: iljuLabel ? 10 : 0,
+            }}
+          >
+            {pillars.map((p) => (
+              <div
+                key={p.label}
+                style={{
+                  background: 'rgba(248,245,238,0.06)',
+                  borderRadius: 10,
+                  padding: '8px 4px',
+                  textAlign: 'center',
+                  border: '1px solid rgba(232,217,184,0.18)',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: 'rgba(248,245,238,0.55)',
+                    fontWeight: 700,
+                  }}
+                >
+                  {p.label}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'Noto Serif KR', serif",
+                    fontSize: 20,
+                    fontWeight: 900,
+                    color: '#E8D9B8',
+                    margin: '2px 0',
+                  }}
+                >
+                  {p.gan}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'Noto Serif KR', serif",
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: '#c9bda0',
+                  }}
+                >
+                  {p.ji}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* 태극 원형 — 진행 progress */}
       <motion.div

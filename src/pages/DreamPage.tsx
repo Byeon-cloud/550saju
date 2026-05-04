@@ -293,6 +293,7 @@ export function DreamPage() {
               <AILoading
                 name={profile?.name ?? '당신'}
                 type="꿈해몽"
+                sajuData={profile?.sajuData}
                 steps={[
                   '꿈 속 상징을 추출하고 있어요',
                   '오행 관계를 분석하고 있어요',
@@ -325,6 +326,7 @@ export function DreamPage() {
               <AILoading
                 name={profile?.name ?? '당신'}
                 type="심층 해몽"
+                sajuData={profile?.sajuData}
                 steps={[
                   '대운·세운을 교차하고 있어요',
                   '오행 메시지를 풀고 있어요',

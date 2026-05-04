@@ -3497,6 +3497,7 @@ export function TopicAnalysisPage() {
               <AILoading
                 name={selected?.name}
                 type={`${topic.label} 심층분석`}
+                sajuData={selected?.sajuData}
                 steps={topicId === 'reunion' ? reunionSteps : defaultSteps}
                 premiumNote={TOPIC_NOTES[topicId || '']}
                 estimatedSeconds={topicId === 'reunion' ? 60 : 30}

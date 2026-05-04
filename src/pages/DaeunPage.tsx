@@ -164,7 +164,7 @@ export function DaeunPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="대운 해설" steps={['대운 주기를 계산하고 있어요', '각 대운의 오행 관계를 분석하고 있어요', '맞춤 해석을 작성하고 있어요']} />;
+    return <AILoading name={selected?.name} type="대운 해설" sajuData={selected?.sajuData} steps={['대운 주기를 계산하고 있어요', '각 대운의 오행 관계를 분석하고 있어요', '맞춤 해석을 작성하고 있어요']} />;
   }
 
   // ─── 결과 ───

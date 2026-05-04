@@ -265,6 +265,7 @@ export function DailyFortunePage() {
               <AILoading
                 name={selectedProfile?.name ?? '당신'}
                 type="오늘의 운세"
+                sajuData={selectedProfile?.sajuData}
                 steps={[
                   '오늘 간지와 사주를 교차하고 있어요',
                   '4영역 점수를 계산하고 있어요',

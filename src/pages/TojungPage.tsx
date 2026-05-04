@@ -153,7 +153,7 @@ export function TojungPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="토정비결" steps={['올해의 괘를 뽑고 있어요', '월별 괘를 배치하고 있어요', '전통 해석을 현대어로 풀고 있어요']} />;
+    return <AILoading name={selected?.name} type="토정비결" sajuData={selected?.sajuData} steps={['올해의 괘를 뽑고 있어요', '월별 괘를 배치하고 있어요', '전통 해석을 현대어로 풀고 있어요']} />;
   }
 
   // ─── 결과 ───
