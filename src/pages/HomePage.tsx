@@ -65,18 +65,15 @@ export function HomePage() {
   const { name, hasProfile } = useActiveProfile();
   const todayHint = useTodayHeadline();
 
-  /** DEEP DIVE 10주제 가로 스크롤 ref — 좌우 버튼이 살짝 밀어줌 (60대+ 가로스크롤 affordance)
-   *  2026-05-05: 좌우 버튼 둘 다 + 손가락 스와이프 가능 (`overflow-x-auto`) */
+  /** DEEP DIVE 10주제 가로 스크롤 ref — 우측 버튼만 (60대+ 가로스크롤 affordance · 좌측은 손가락 스와이프)
+   *  2026-05-05: 좌측 버튼 제거 (카드 가림 문제) · 우측 끝 도달 시 우측 버튼 자동 숨김 */
   const deepDiveScrollRef = useRef<HTMLDivElement>(null);
   const [deepDiveScrollPos, setDeepDiveScrollPos] = useState(0);
   const [deepDiveMaxScroll, setDeepDiveMaxScroll] = useState(0);
   const scrollDeepDiveRight = () => {
     deepDiveScrollRef.current?.scrollBy({ left: 158, behavior: 'smooth' });
   };
-  const scrollDeepDiveLeft = () => {
-    deepDiveScrollRef.current?.scrollBy({ left: -158, behavior: 'smooth' });
-  };
-  // 스크롤 위치 추적 — 좌우 버튼 표시 분기
+  // 스크롤 위치 추적 — 우측 끝 도달 시 우측 버튼 숨김
   useEffect(() => {
     const el = deepDiveScrollRef.current;
     if (!el) return;
@@ -88,7 +85,6 @@ export function HomePage() {
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, []);
-  const showLeftBtn = deepDiveScrollPos > 8;
   const showRightBtn = deepDiveScrollPos < deepDiveMaxScroll - 8;
 
   const displayName = name || '사용자';
@@ -329,19 +325,30 @@ export function HomePage() {
       <p className="mx-4 mt-2 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>
         연애·재회·결혼·재물·합격이직·사업·건강·이사·학업·직업 — <strong style={{ color: C.ink }}>한 주제만 1운</strong>으로 끝까지 풀어드려요.
       </p>
-      {/* 2026-05-04 우측 화살표 button — 60대+ 가로 스크롤 affordance */}
+      {/* 2026-05-04 우측 화살표 button — 60대+ 가로 스크롤 affordance
+          2026-05-05 fix: 좌측 버튼 제거 (카드 가림 문제) · 우측 버튼만 유지 (initial affordance) + 우측 끝 도달 시 fade gradient 로 알림 */}
       <div className="relative mt-3">
         <div
           ref={deepDiveScrollRef}
           className="overflow-x-auto pb-2 no-scrollbar"
-          style={{ scrollSnapType: 'x mandatory' }}
+          style={{
+            scrollSnapType: 'x mandatory',
+            // 우측 끝까지 안 갔으면 우측 fade — 더 있다는 신호 (좌측은 fade X · 한국 LTR 환경)
+            WebkitMaskImage: showRightBtn
+              ? 'linear-gradient(90deg, black 0, black calc(100% - 56px), transparent 100%)'
+              : 'none',
+            maskImage: showRightBtn
+              ? 'linear-gradient(90deg, black 0, black calc(100% - 56px), transparent 100%)'
+              : 'none',
+            transition: 'mask-image 0.2s, -webkit-mask-image 0.2s',
+          }}
         >
         <div
           className="flex gap-2.5"
           style={{
             width: 'max-content',
-            paddingLeft: showLeftBtn ? 60 : 16,
-            paddingRight: showRightBtn ? 60 : 16,
+            paddingLeft: 16,
+            paddingRight: showRightBtn ? 60 : 16, // 우측 버튼 있을 때만 카드 buffer
             transition: 'padding 0.2s',
           }}
         >
@@ -397,30 +404,7 @@ export function HomePage() {
           <div className="min-w-[16px]" />
         </div>
         </div>
-        {/* 좌측 화살표 버튼 — 2026-05-05 추가 (60대+ 친화 · 좌우 양끝) */}
-        {showLeftBtn && (
-          <button
-            type="button"
-            aria-label="이전 주제 보기"
-            onClick={scrollDeepDiveLeft}
-            className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.96)',
-              border: `1px solid ${C.grayLine}`,
-              boxShadow: `0 4px 12px rgba(184,150,90,0.20), 0 0 0 4px rgba(255,255,255,0.45)`,
-              zIndex: 2,
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.goldHi} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
-          </button>
-        )}
+        {/* 좌측 버튼 제거 (2026-05-05) — 카드 가림 문제 + 60대 affordance 는 우측 1개로 충분 (Netflix·유튜브 패턴 · 손가락 스와이프로 좌측 이동) */}
         {/* 우측 화살표 버튼 — 60대+ 가로 스크롤 affordance · 카드 1개 분량(158px) 부드럽게 이동 */}
         {showRightBtn && (
           <button
