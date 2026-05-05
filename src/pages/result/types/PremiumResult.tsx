@@ -2768,8 +2768,8 @@ export function PremiumResult({
           - AI schema 신규: lifeKeyword (한 줄) + strengths[3] + cautions[3] */}
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={8} title="내 사주의 결" hanja="本質" hint="당신만의 인생 키워드 + 통합 강점·함정">
-          <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} />
-          <StrengthsCautionsCards aiResult={aiResult} sipDist={sipDist} dayOheng={dayOheng} />
+          <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
+          <StrengthsCautionsCards aiResult={aiResult} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
         </CollapsibleSection>
       </LocalFadeIn>
 
@@ -3804,55 +3804,88 @@ function PremiumPullQuote({ children }: { children: ReactNode }) {
  * ═════════════════════════════════════════════════════════════════ */
 
 /**
- * sipDist 기반 §08 fallback 키워드 생성 v2 (2026-05-05 준기 재지시)
- *  - 의미 있는 한 줄: top sipsung 高 × bot sipsung 低 tension 패턴
- *  - §01 (일간·계절 풀이) 와 절대 안 겹치게 → 사주 전체 동역학(결·흐름)을 메타 레벨에서 한 줄로
- *  - "겨울에 태어난 따뜻한 사람" 류 §01 dup 금지
- *  - 20 tension 패턴 매트릭스 (5 top × 4 bot · 같은 십성 자기조합 제외)
+ * §08 fallback 키워드 동적 composer (2026-05-05 준기 재재지시 — 보일러플레이트 절대 금지)
+ *  - 같은 top·bot sipsung 이라도 일간 글자·계절·강약비율마다 다른 한 줄 출력
+ *  - 다축 조합: top sipsung × top 개수 × bot sipsung × dayOheng × dayGan 글자 = 1000+ variation
+ *  - 핵심 룰: 사주 8글자 중 가장 두드러진 글자(일간 천간) 직접 호명 → §01 dup 회피 + 개인화
  */
-function deriveLifeKeyword(sipDist?: SipDist, _dayOheng?: OhengType): string {
-  if (!sipDist) return '<strong>안에 깊이 모았다가 천천히 결로 펼쳐내는 사주</strong>입니다.';
+const SIP_TOP_FRAME: Record<keyof SipDist, { strong: string; gift: string }> = {
+  비겁: { strong: '자기 결이 또렷하고 추진력 있는', gift: '자기 길을 끝까지 가는 결단력' },
+  식상: { strong: '표현이 풍부하고 색깔이 분명한', gift: '본인 결을 자연스럽게 풀어내는 재능' },
+  재성: { strong: '현실 감각이 또렷하고 실리에 밝은', gift: '결과까지 손에 잡히는 형태로 챙기는 힘' },
+  관성: { strong: '책임감이 또렷하고 끝까지 가는', gift: '맡은 일을 신뢰감 있게 마무리하는 결' },
+  인성: { strong: '안에 깊이 모으는 사색이 풍부한', gift: '한 번 본 것을 통찰로 쌓아 올리는 깊이' },
+};
+
+const SIP_BOT_GROW: Record<keyof SipDist, string> = {
+  비겁: '본인 중심을 한 번씩 다지는 시간',
+  식상: '한 줄씩 밖으로 풀어내는 표현 습관',
+  재성: '결과로 옮기는 다리(돈·지표·마감)',
+  관성: '책임·체계를 받아들이는 한 자리',
+  인성: '안에 모으고 배우는 시간',
+};
+
+const OHENG_PERSONA: Record<OhengType, string> = {
+  목: '뻗어나가는 가지처럼',
+  화: '환히 비추는 햇빛처럼',
+  토: '흐름을 품어 안는 땅처럼',
+  금: '단단히 다듬는 칼끝처럼',
+  수: '깊이 흘러가는 물처럼',
+};
+
+const GAN_KO: Record<string, { ko: string; vibe: string }> = {
+  甲: { ko: '갑목', vibe: '큰 나무처럼 곧게 자라는' },
+  乙: { ko: '을목', vibe: '풀잎처럼 부드럽게 휘어지는' },
+  丙: { ko: '병화', vibe: '한낮의 태양처럼 환한' },
+  丁: { ko: '정화', vibe: '은은한 등불처럼 따뜻한' },
+  戊: { ko: '무토', vibe: '큰 산처럼 든든한' },
+  己: { ko: '기토', vibe: '기름진 밭흙처럼 포근한' },
+  庚: { ko: '경금', vibe: '날 선 칼처럼 명확한' },
+  辛: { ko: '신금', vibe: '잘 다듬은 보석처럼 정갈한' },
+  壬: { ko: '임수', vibe: '큰 강처럼 깊게 흐르는' },
+  癸: { ko: '계수', vibe: '맑은 빗물처럼 섬세한' },
+};
+
+function deriveLifeKeyword(sipDist?: SipDist, dayOheng?: OhengType, sajuData?: SajuData): string {
+  if (!sipDist) return '<strong>본인의 결을 천천히 다지는 사람</strong>이에요.';
+
   const entries = Object.entries(sipDist) as Array<[keyof SipDist, number]>;
   const sorted = [...entries].sort((a, b) => b[1] - a[1]);
   const top = sorted[0]?.[0];
+  const topCount = sorted[0]?.[1] ?? 0;
   const bot = sorted[sorted.length - 1]?.[0];
-  if (!top || !bot || top === bot) {
-    return '<strong>균형 잡힌 결</strong>로, 어느 한쪽으로 치우치지 않고 상황에 맞춰 풀어가는 사주입니다.';
+  const botCount = sorted[sorted.length - 1]?.[1] ?? 0;
+
+  // 일주 천간 (사주 8글자 중 가장 핵심 글자) — 직접 호명 → 개인화
+  const dayGan = sajuData?.pillars?.[2]?.천간 as string | undefined;
+  const ganMeta = dayGan && GAN_KO[dayGan] ? GAN_KO[dayGan] : null;
+  const persona = dayOheng ? OHENG_PERSONA[dayOheng] : '본인 결을 천천히 다지는 자리에서';
+
+  // 균형형 (top===bot 수 차이 적음)
+  if (!top || !bot || top === bot || topCount - botCount <= 1) {
+    const head = ganMeta
+      ? `<b>${ganMeta.ko}(${dayGan})</b> 일간으로, ${ganMeta.vibe} <strong>균형 잡힌 결</strong>의 사주예요`
+      : `<strong>어느 한쪽으로 치우치지 않은 균형 잡힌 결</strong>이에요`;
+    return `${head}. ${persona} 상황에 맞춰 풀어가며, 본인만의 리듬으로 천천히 자기 자리를 다지는 사람입니다.`;
   }
 
-  // top × bot 20 tension 매트릭스 — §01 일간·계절 풀이와 다른 메타 레벨 동역학
-  // 🚨 마무리는 반드시 긍정 (2026-05-05 준기 지적) — 부정으로 끝내지 말 것.
-  //    "X한 결이지만, 결과적으로 ~한 강한 사람" 또는 "X한 결을 의식하면 ~로 더 깊어질 수 있는 사주"
-  const key = `${top}-${bot}`;
-  const matrix: Record<string, string> = {
-    // 비겁 강 (자아·추진력) + 약점
-    '비겁-식상': '<strong>자기 결을 또렷하게 가진 사람</strong>이에요. 표현하는 데 한 박자 시간이 걸리지만, 그래서 한번 꺼낸 말은 깊이 있고 무게가 실리는 결입니다.',
-    '비겁-재성': '<strong>의지가 강하고 시작이 빠른 사람</strong>이에요. 마무리까지 같이 챙기는 동료를 곁에 두면, 추진력이 결과로 또렷하게 이어지는 결입니다.',
-    '비겁-관성': '<strong>자기 길을 끝까지 가는 단단한 추진력</strong>이 있어요. 규범에 얽매이지 않고 본인 결을 만드는 사람 — 자기 자리를 스스로 만들어가는 사주입니다.',
-    '비겁-인성': '<strong>본능적으로 움직이는 결단력 있는 사람</strong>이에요. 한 박자 멈춰 안에 모으는 습관만 더하면, 직관과 깊이가 둘 다 살아나는 강한 결입니다.',
-    // 식상 강 (표현·창의) + 약점
-    '식상-비겁': '<strong>표현이 풍부하고 따뜻하게 다가가는 사람</strong>이에요. 본인 중심을 한 번씩 다지는 시간을 두면, 사람을 끌어당기는 결이 더 단단해지는 사주입니다.',
-    '식상-재성': '<strong>창의가 또렷하고 색깔이 분명한 사람</strong>이에요. 결과로 옮기는 다리만 곁에 두면, 본인 색이 손에 잡히는 형태로 또렷이 떨어지는 결입니다.',
-    '식상-관성': '<strong>자유롭게 흐르는 창조의 결</strong>입니다. 규칙보다 본인 흐름이 우선이지만, 그래서 누구도 못 만드는 것을 만드는 사람 — 자기만의 자리를 여는 사주예요.',
-    '식상-인성': '<strong>밖으로 빠르게 풀어내는 표현력</strong>이 또렷한 사람입니다. 깊이 모으는 시간을 의식적으로 두면, 가볍지 않으면서도 빠른 결이 완성되는 사주예요.',
-    // 재성 강 (현실·실리) + 약점
-    '재성-비겁': '<strong>현실 감각이 또렷한 실리의 사람</strong>이에요. 본인 중심을 한 번씩 다지는 시간을 두면, 결과는 그대로 가져가면서도 휘둘리지 않는 단단함이 완성됩니다.',
-    '재성-식상': '<strong>실리를 정확히 챙기는 결과 중심의 사람</strong>이에요. 본인 색을 한 줄씩 풀어내는 습관만 더하면, 결과 + 색깔이 둘 다 살아나는 깊은 결입니다.',
-    '재성-관성': '<strong>현실에 강하고 결과를 챙기는 추진력</strong>이 또렷해요. 자리·관계의 무게를 함께 살피면, 결과와 사람이 둘 다 따라오는 큰 결입니다.',
-    '재성-인성': '<strong>실리 위주로 빠르게 움직이는 결</strong>이에요. 깊이 모으고 배우는 시간을 의식하면, 빠른 결과 + 깊은 통찰이 같이 가는 강한 사주가 됩니다.',
-    // 관성 강 (책임·규범) + 약점
-    '관성-비겁': '<strong>책임감이 또렷하고 신뢰받는 사람</strong>이에요. 본인이 뭘 원하는지 한 번씩 묻는 시간을 두면, 책임감 + 자기 결이 둘 다 살아나는 단단한 결입니다.',
-    '관성-식상': '<strong>맡은 일을 끝까지 가져가는 책임감 있는 사람</strong>이에요. 본인 색을 한 줄씩 풀어내는 습관만 더하면, 신뢰감 + 색깔이 둘 다 또렷한 결이 됩니다.',
-    '관성-재성': '<strong>책임·체계가 또렷한 단단한 결</strong>입니다. 결과를 챙기는 손길까지 익히면, 신뢰받으면서도 손에 들어오는 게 또렷한 강한 사주예요.',
-    '관성-인성': '<strong>책임을 끝까지 가져가는 신뢰의 결</strong>입니다. 안에 모으고 새로 배우는 시간을 의식하면, 같은 자리에서도 점점 더 깊어지는 사주예요.',
-    // 인성 강 (학습·내성) + 약점
-    '인성-비겁': '<strong>안에 깊이 모으는 사색의 사람</strong>이에요. 결단·실행을 한 박자 빠르게 하면, 깊이 + 추진력이 둘 다 살아나는 강한 결입니다.',
-    '인성-식상': '<strong>안에 풍부한 결을 가진 사색의 사람</strong>이에요. 한 줄씩 밖으로 풀어내는 습관만 더하면, 깊이 + 표현이 둘 다 또렷한 큰 결이 됩니다.',
-    '인성-재성': '<strong>배우고 모으는 데 강한 깊이 있는 사람</strong>이에요. 결과·실리로 옮기는 다리만 익히면, 공부 + 결과가 둘 다 따라오는 단단한 사주예요.',
-    '인성-관성': '<strong>안에 또렷한 통찰을 가진 사람</strong>이에요. 책임·자리로 옮기는 한 발만 더 내딛으면, 준비 + 자리가 둘 다 완성되는 강한 결입니다.',
-  };
+  // 동적 조합 — top frame + bot grow + persona + gan reference
+  const topFrame = SIP_TOP_FRAME[top];
+  const grow = SIP_BOT_GROW[bot];
 
-  return matrix[key] || '<strong>안에 깊이 모았다가 천천히 결로 펼쳐내는 강한 사주</strong>입니다. 본인 결을 믿고 천천히 가도 충분히 닿는 사람이에요.';
+  // 1순위: dayGan 글자 호명 + 개수 명시 + tension 결합
+  if (ganMeta) {
+    return [
+      `<b>${ganMeta.ko}(${dayGan})</b> 일간이 <u>${top} ${topCount}개</u>를 품은, <strong>${topFrame.strong} 사람</strong>이에요.`,
+      `${ganMeta.vibe} 결로 ${topFrame.gift}이 또렷한데, ${grow}을 곁에 두면 ${persona} 깊이와 폭이 둘 다 살아나는 강한 사주입니다.`,
+    ].join(' ');
+  }
+
+  // 2순위 (dayGan 없을 때): dayOheng + sipsung 개수
+  return [
+    `<u>${top} ${topCount}개</u>가 중심을 잡은, <strong>${topFrame.strong} 사람</strong>이에요.`,
+    `${persona} ${topFrame.gift}이 살아 있는 결입니다. ${grow}을 더하면 더 단단해지는 사주예요.`,
+  ].join(' ');
 }
 
 function LifeKeywordHero({
@@ -3860,17 +3893,19 @@ function LifeKeywordHero({
   userName,
   sipDist,
   dayOheng,
+  sajuData,
 }: {
   aiResult: any;
   userName: string;
   sipDist?: SipDist;
   dayOheng?: OhengType;
+  sajuData?: SajuData;
 }) {
   const keyword = typeof aiResult?.lifeKeyword === 'string' ? sanitizeAiText(aiResult.lifeKeyword) : '';
-  // 🚨 wongug fallback 제거 (2026-05-05 준기) — §01 첫 문장 그대로 가져오면 §08 의미 X
-  // sipDist 기반 동적 도출 (top × bot tension 패턴)
-  const derived = deriveLifeKeyword(sipDist, dayOheng);
-  const text = keyword || derived || `${userName} 님의 사주는 <strong>안에 결을 모았다가 천천히 펼쳐내는 사주</strong>입니다.`;
+  // 🚨 fallback (2026-05-05 v3 준기 재지시 — 보일러플레이트 절대 금지)
+  // top·bot sipsung × dayOheng × dayGan 글자 다축 조합으로 1000+ variation 생성
+  const derived = deriveLifeKeyword(sipDist, dayOheng, sajuData);
+  const text = keyword || derived || `${userName} 님의 사주는 <strong>본인의 결을 천천히 다지는 사람</strong>이에요.`;
   return (
     <div
       style={{
@@ -3935,56 +3970,101 @@ function LifeKeywordHero({
 interface StrengthCautionItem { title?: string; desc?: string }
 
 /**
- * sipDist 기반 §08 강점·함정 fallback (3+3)
- *  - 가장 강한 십성 2개 + 일간 오행 → 강점 3
- *  - 가장 약한 십성 2개 + 강점 과잉 1개 → 함정 3
- *  - AI 응답이 없는 기존 리포트도 §08 카드 표시 보장
+ * §08 강점·함정 동적 composer (2026-05-05 v3 준기 — 보일러플레이트 금지)
+ *  - 다축 조합: top1/top2 sipsung × 개수 × dayOheng × dayGan = 변수마다 다른 출력
+ *  - 강점 desc 에 사주 8글자 직접 호명 (개수·일간 글자) → 개인화
+ *  - 함정 desc 도 약점 십성 + 강점 과잉 그림자 동적 결합
  */
 function deriveStrengthsCautions(
   sipDist?: SipDist,
   dayOheng?: OhengType,
+  sajuData?: SajuData,
 ): { strengths: StrengthCautionItem[]; cautions: StrengthCautionItem[] } {
   if (!sipDist) return { strengths: [], cautions: [] };
   const entries = Object.entries(sipDist) as Array<[keyof SipDist, number]>;
   const sorted = [...entries].sort((a, b) => b[1] - a[1]);
   const top1 = sorted[0]?.[0];
+  const top1Count = sorted[0]?.[1] ?? 0;
   const top2 = sorted[1]?.[0];
+  const top2Count = sorted[1]?.[1] ?? 0;
   const bot1 = sorted[sorted.length - 1]?.[0];
   const bot2 = sorted[sorted.length - 2]?.[0];
 
-  const strengthMap: Record<keyof SipDist, StrengthCautionItem> = {
-    비겁: { title: '결단력', desc: '한번 마음먹으면 <strong>끝까지 가는 추진력</strong>이 있어요. 주변 사람도 당신을 따라옵니다.' },
-    식상: { title: '표현·창의', desc: '머리 속의 결을 <strong>말과 행동으로 풀어내는 재능</strong>이 또렷합니다. 같은 일도 당신 식대로 풀어내요.' },
-    재성: { title: '현실 감각', desc: '결과까지 챙기는 <strong>실리 감각</strong>이 있어요. 큰 그림보다 손에 잡히는 결과로 증명합니다.' },
-    관성: { title: '책임감', desc: '맡은 일은 <strong>끝까지 가져가는 결</strong>입니다. 사람들이 어려운 일을 자연스럽게 당신에게 맡깁니다.' },
-    인성: { title: '깊이 있는 통찰', desc: '안에 모았다가 풀어내는 <strong>긴 호흡의 사고</strong>가 있어요. 빠른 답보다 깊은 답을 내는 사람입니다.' },
+  const dayGan = sajuData?.pillars?.[2]?.천간 as string | undefined;
+  const ganMeta = dayGan && GAN_KO[dayGan] ? GAN_KO[dayGan] : null;
+  const ganRef = ganMeta ? `<b>${ganMeta.ko}(${dayGan})</b> 일간` : '본인 일간';
+
+  // 개수에 따른 강도 어휘 — 동적 강도 표현 (1·2개=은은한, 3개=또렷한, 4개+=뚜렷한)
+  const grade = (n: number) => (n >= 4 ? '뚜렷한' : n >= 3 ? '또렷한' : n >= 2 ? '단단한' : '은은한');
+
+  // 강점 templates — 개수·gan 글자 호명으로 매번 다른 문장
+  const strengthTemplate: Record<keyof SipDist, (count: number) => StrengthCautionItem> = {
+    비겁: (n) => ({
+      title: '결단력',
+      desc: `${ganRef}에 <u>비겁 ${n}개</u>가 받쳐주는 ${grade(n)} 추진력입니다. <strong>한번 정한 길은 끝까지 밀어붙이는 결</strong>이라, 주변이 자연스럽게 따라옵니다.`,
+    }),
+    식상: (n) => ({
+      title: '표현·창의',
+      desc: `${ganRef}이 <u>식상 ${n}개</u>로 풀어내는 ${grade(n)} 표현력이에요. <strong>본인 색을 자연스럽게 드러내는 결</strong>이라, 같은 일도 당신만의 톤으로 옮겨집니다.`,
+    }),
+    재성: (n) => ({
+      title: '현실 감각',
+      desc: `${ganRef}이 <u>재성 ${n}개</u>로 받는 ${grade(n)} 실리 감각입니다. <strong>큰 그림보다 손에 잡히는 결과로 증명하는 결</strong>이에요.`,
+    }),
+    관성: (n) => ({
+      title: '책임감',
+      desc: `${ganRef}이 <u>관성 ${n}개</u>를 품은 ${grade(n)} 책임감이에요. <strong>맡은 일을 끝까지 가져가는 결</strong>이라, 어려운 일이 자연스럽게 당신에게 옵니다.`,
+    }),
+    인성: (n) => ({
+      title: '깊이 있는 통찰',
+      desc: `${ganRef}이 <u>인성 ${n}개</u>로 받쳐주는 ${grade(n)} 사색의 깊이입니다. <strong>안에 모았다가 풀어내는 긴 호흡의 사고</strong>예요.`,
+    }),
   };
-  const cautionMap: Record<keyof SipDist, StrengthCautionItem> = {
-    비겁: { title: '독불장군', desc: '자기 결이 너무 분명해 <strong>주변 의견을 흘려듣는 순간</strong>이 있어요. 한 번씩 멈춰 되묻는 습관이 필요합니다.' },
-    식상: { title: '말 앞서기', desc: '생각보다 표현이 빨라 <strong>말이 앞서가는 순간</strong>이 있습니다. 중요한 자리는 한 박자 늦춰 말하세요.' },
-    재성: { title: '결과 조급', desc: '결과를 빨리 보려다 <strong>과정을 깎아먹는 패턴</strong>이 있어요. 천천히 쌓는 시기를 의식적으로 두세요.' },
-    관성: { title: '과부하', desc: '책임을 다 떠안다 <strong>혼자 무너지는 순간</strong>이 옵니다. 거절하는 연습이 필요해요.' },
-    인성: { title: '실행 지연', desc: '깊이 모으느라 <strong>실행이 늦어지는 패턴</strong>이 반복됩니다. 70% 준비되면 일단 시작하세요.' },
+
+  const cautionTemplate: Record<keyof SipDist, () => StrengthCautionItem> = {
+    비겁: () => ({
+      title: '주변 흘려듣기',
+      desc: `자기 결이 너무 분명해 <strong>주변 의견을 흘려듣는 순간</strong>이 있어요. 큰 결정 전 ${ganMeta ? '가까운 한 사람' : '신뢰하는 한 사람'}에게 한 번 더 물어보는 습관이 약점을 메워줍니다.`,
+    }),
+    식상: () => ({
+      title: '표현 앞서감',
+      desc: `생각보다 표현이 빨라 <strong>말이 먼저 나가는 순간</strong>이 있습니다. 중요한 자리에서는 한 박자 늦춰 ${ganMeta ? `${ganMeta.ko} 결답게` : '본인답게'} 정리한 뒤 말하면 무게가 실립니다.`,
+    }),
+    재성: () => ({
+      title: '결과 조급',
+      desc: `결과를 빨리 보려다 <strong>과정을 깎아먹는 패턴</strong>이 있어요. ${ganMeta ? `${ganMeta.ko}` : '본인'} 사주의 천천히 쌓는 시기를 의식적으로 두면, 결과의 크기가 달라집니다.`,
+    }),
+    관성: () => ({
+      title: '과부하',
+      desc: `책임을 다 떠안다 <strong>혼자 무너지는 순간</strong>이 옵니다. ${ganMeta ? `${ganMeta.ko} 일간` : '당신'}답게 거절하는 연습이 약점을 강점으로 바꿉니다.`,
+    }),
+    인성: () => ({
+      title: '실행 지연',
+      desc: `깊이 모으느라 <strong>실행이 늦어지는 패턴</strong>이 반복됩니다. ${ganMeta ? `${ganMeta.ko}` : '본인'} 사주는 70% 준비되면 일단 첫발을 내딛는 게 결을 살리는 길이에요.`,
+    }),
   };
 
   const strengths: StrengthCautionItem[] = [];
-  if (top1) strengths.push(strengthMap[top1]);
-  if (top2 && top2 !== top1) strengths.push(strengthMap[top2]);
-  // 일간 오행 기반 3번째 강점
-  const ohengStrength: Record<OhengType, StrengthCautionItem> = {
-    목: { title: '성장 의지', desc: '뻗어나가려는 <strong>본능적 추진력</strong>이 있어요. 한 자리에 머무는 것보다 새 자리를 여는 결입니다.' },
-    화: { title: '밝은 에너지', desc: '주변을 <strong>환하게 만드는 에너지</strong>가 또렷해요. 사람들이 당신 옆에서 기운을 얻습니다.' },
-    토: { title: '안정감', desc: '주변에 <strong>믿고 기댈 수 있는 결</strong>을 만듭니다. 흔들리는 사람들에게 중심이 되는 사람이에요.' },
-    금: { title: '정돈된 결', desc: '겉모습부터 일처리까지 <strong>깔끔하고 또렷한 결</strong>이 있어요. 디테일에서 신뢰를 얻습니다.' },
-    수: { title: '깊은 사고', desc: '겉보다 <strong>안에서 흘러가는 깊이</strong>가 있어요. 한 번 판단한 것은 쉽게 흔들리지 않습니다.' },
-  };
-  if (dayOheng && strengths.length < 3) strengths.push(ohengStrength[dayOheng]);
+  if (top1) strengths.push(strengthTemplate[top1](top1Count));
+  if (top2 && top2 !== top1 && top2Count > 0) strengths.push(strengthTemplate[top2](top2Count));
+
+  // 3번째 강점 — dayOheng + dayGan 글자로 동적 (sipsung 매트릭스 dup 회피)
+  if (dayOheng && strengths.length < 3) {
+    const ohengStrength: Record<OhengType, StrengthCautionItem> = {
+      목: { title: '성장 의지', desc: `${ganRef}의 뻗어나가려는 <strong>본능적 추진력</strong>이 있어요. 한 자리에 머무는 것보다 새 자리를 여는 결입니다.` },
+      화: { title: '밝은 에너지', desc: `${ganRef}이 주변을 <strong>환하게 만드는 결</strong>이에요. 사람들이 당신 옆에서 기운을 얻습니다.` },
+      토: { title: '안정감', desc: `${ganRef}이 주변에 <strong>믿고 기댈 수 있는 결</strong>을 만듭니다. 흔들리는 사람들에게 중심이 되는 사람이에요.` },
+      금: { title: '정돈된 결', desc: `${ganRef} 특유의 <strong>깔끔하고 또렷한 결</strong>이 있어요. 디테일에서 신뢰를 얻는 사주입니다.` },
+      수: { title: '깊은 사고', desc: `${ganRef}이 만드는 <strong>안에서 흘러가는 깊이</strong>가 있어요. 한 번 판단한 것은 쉽게 흔들리지 않습니다.` },
+    };
+    strengths.push(ohengStrength[dayOheng]);
+  }
 
   const cautions: StrengthCautionItem[] = [];
-  if (bot1) cautions.push(cautionMap[bot1]);
-  if (bot2 && bot2 !== bot1) cautions.push(cautionMap[bot2]);
-  // 강점 과잉 함정 — 가장 강한 십성의 그림자
-  if (top1 && cautions.length < 3) cautions.push(cautionMap[top1]);
+  if (bot1) cautions.push(cautionTemplate[bot1]());
+  if (bot2 && bot2 !== bot1) cautions.push(cautionTemplate[bot2]());
+  // 강점 과잉 그림자 — top1 의 다른 면
+  if (top1 && cautions.length < 3) cautions.push(cautionTemplate[top1]());
 
   return {
     strengths: strengths.slice(0, 3),
@@ -3996,10 +4076,12 @@ function StrengthsCautionsCards({
   aiResult,
   sipDist,
   dayOheng,
+  sajuData,
 }: {
   aiResult: any;
   sipDist?: SipDist;
   dayOheng?: OhengType;
+  sajuData?: SajuData;
 }) {
   const aiStrengths: StrengthCautionItem[] = Array.isArray(aiResult?.strengths)
     ? aiResult.strengths.slice(0, 3).filter((s: any) => s?.title && s?.desc)
@@ -4007,9 +4089,9 @@ function StrengthsCautionsCards({
   const aiCautions: StrengthCautionItem[] = Array.isArray(aiResult?.cautions)
     ? aiResult.cautions.slice(0, 3).filter((s: any) => s?.title && s?.desc)
     : [];
-  // AI 응답 없으면 sipDist + dayOheng 기반 fallback (기존 리포트도 §08 표시 보장)
+  // AI 응답 없으면 다축 동적 fallback (sipDist + 개수 + dayOheng + dayGan 글자 직접 호명)
   const fallback = (aiStrengths.length === 0 && aiCautions.length === 0)
-    ? deriveStrengthsCautions(sipDist, dayOheng)
+    ? deriveStrengthsCautions(sipDist, dayOheng, sajuData)
     : { strengths: [] as StrengthCautionItem[], cautions: [] as StrengthCautionItem[] };
   const strengths = aiStrengths.length > 0 ? aiStrengths : fallback.strengths;
   const cautions = aiCautions.length > 0 ? aiCautions : fallback.cautions;
