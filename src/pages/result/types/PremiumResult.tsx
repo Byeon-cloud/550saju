@@ -192,13 +192,14 @@ function deriveYongsin(
       const [c1, c2] = COMPLEMENT[dayOheng];
       secondary = c1 !== primary ? c1 : c2;
     }
-    return {
-      primary,
-      secondary,
-      reason: analysisBase.용신근거 || '사주의 균형을 맞춰주는 가장 필요한 오행입니다.',
-    };
+    // reason 도 dayOheng·primary·secondary 글자 인용으로 동적화
+    const KR: Record<OhengType, string> = { 목: '나무', 화: '불', 토: '흙', 금: '쇠', 수: '물' };
+    const HAN: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
+    const reason = analysisBase.용신근거
+      || `${HAN[dayOheng]}(${KR[dayOheng]}) 일간을 ${HAN[primary]}(${KR[primary]})이 가장 필요로 하는 결. ${secondary ? `${HAN[secondary]}(${KR[secondary]})이 보조로 받쳐줍니다.` : ''}`;
+    return { primary, secondary, reason };
   }
-  // fallback: 일간 오행 → 보완 오행 자동 추정
+  // fallback: 일간 오행 → 보완 오행 자동 추정 (이미 dayOheng 인용)
   const [p, s, reason] = COMPLEMENT[dayOheng];
   return { primary: p, secondary: s, reason };
 }
@@ -363,11 +364,15 @@ function ShinsalSummary({
   gilsin,
   hyungsal,
   aiCards,
+  sajuData,
+  dayOheng,
 }: {
   userName: string;
   gilsin: V4SinSal[];
   hyungsal: V4SinSal[];
   aiCards?: AiShinsalCard[];
+  sajuData?: SajuData;
+  dayOheng?: OhengType;
 }) {
   // AI shinsalCards 우선
   const list: Array<{ kr: string; hanja: string; tier: string; tag: string }> = [];
@@ -407,19 +412,40 @@ function ShinsalSummary({
     return '본인 결';
   }
 
-  // 2026-05-05 유저 친화 종평 (준기 지적 — "본인 결"·"건강 주의" 단편 텍스트로는 의미 X)
-  // 강 신살의 tag 모아서 "지금까지 ~한 패턴 + 앞으로 ~하면 좋아요" 형태로
+  // 2026-05-05 v3 동적 개인화 (준기 "보일러플레이트 절대 금지")
+  // 강 신살의 실제 이름·hanja·dayGan 글자 직접 호명 → 사주 8글자 specific 출력
   const strongOnes = list.filter((s) => s.tier.includes('강'));
   const tags = [...new Set(strongOnes.map((s) => s.tag))].filter((t) => t !== '본인 결');
 
-  // 종평 텍스트 (강 신살 tag 기반)
+  // dayGan ref + 신살 이름 풀 (개수도 호명)
+  const dayGan = sajuData?.pillars?.[2]?.천간 as string | undefined;
+  const ganMeta = dayGan && GAN_KO[dayGan] ? GAN_KO[dayGan] : null;
+  const ganRef = ganMeta ? `<b>${ganMeta.ko}(${dayGan})</b> 일간` : `${userName} 님`;
+  const strongCount = strongOnes.length;
+  const strongNames = strongOnes
+    .slice(0, 3)
+    .map((s) => `<b>${s.kr}${s.hanja ? `(${s.hanja})` : ''}</b>`)
+    .join(' · ');
+  // dayOheng 별 마무리 격려 (5 가지 다른 결)
+  const ohengEnding: Record<OhengType, string> = {
+    목: '뻗어나가는 결을 살려주는 자리',
+    화: '환히 비추는 결을 살려주는 자리',
+    토: '품어 안는 결을 살려주는 자리',
+    금: '단단히 다듬는 결을 살려주는 자리',
+    수: '깊이 흘러가는 결을 살려주는 자리',
+  };
+  const closingPhrase = dayOheng
+    ? `${ganRef}의 ${ohengEnding[dayOheng]}로 작동하면 강점이 또렷해집니다`
+    : '의식적으로 살리면 강점이 또렷해집니다';
+
+  // 종평 텍스트 — 신살 이름 + 개수 + dayGan 직접 호명 (변수 4축으로 매번 다른 출력)
   let summary: string;
   if (tags.length === 0) {
-    summary = `${userName} 님 사주는 특별히 강한 신살이 두드러지지 않습니다. 즉 <strong>한쪽으로 치우치지 않은 균형 잡힌 결</strong>이라 어느 자리에서도 적응이 좋다는 뜻이에요. 위 카드의 실천을 의식적으로 따르면 사주의 결이 더 또렷하게 살아납니다.`;
+    summary = `${ganRef} 사주는 <u>강한 신살이 두드러지지 않은</u> 결이에요. <strong>한쪽으로 치우치지 않은 균형 잡힌 사주</strong>라 어느 자리에서도 적응이 좋다는 뜻이고, 위 카드의 실천을 의식적으로 따르면 사주의 결이 더 또렷하게 살아납니다.`;
   } else if (tags.length === 1) {
-    summary = `${userName} 님 사주에서 가장 또렷이 작동하는 결은 <strong>${tags[0]}</strong>입니다. 지금까지 살아오면서 이 결과 관련된 일이 자주 있었을 거예요. 위 카드의 실천을 의식적으로 따르면 강점으로, 모르고 두면 약점으로 작동합니다.`;
+    summary = `${ganRef}에 또렷이 작동하는 신살은 ${strongNames} <u>${strongCount}개</u> — <strong>${tags[0]} 결</strong>이에요. 지금까지 살아오면서 이 결과 관련된 일이 자주 있었을 거예요. ${closingPhrase}.`;
   } else {
-    summary = `${userName} 님 사주에서 또렷이 작동하는 결은 <strong>${tags.slice(0, 2).join('·')}</strong>입니다. 지금까지 살아오면서 이 결들이 인생 곳곳에 영향을 줬을 거예요. 위 카드의 실천을 의식적으로 따르면 <strong>강점으로 살아나고</strong>, 모르고 두면 약점으로 작동합니다.`;
+    summary = `${ganRef}에 또렷이 작동하는 신살은 ${strongNames} <u>${strongCount}개</u> — <strong>${tags.slice(0, 2).join('·')} 결</strong>이에요. 지금까지 인생 곳곳에 영향을 줬을 결들이고, ${closingPhrase}.`;
   }
 
   return (
@@ -2750,7 +2776,7 @@ export function PremiumResult({
               AI shinsalCards 우선 + V4SinSal fallback */}
           <SinsalThreeTier gilsin={v4Gilsin} hyungsal={v4Hyungsal} aiCards={aiResult.shinsalCards} />
           {/* 신살 정리 — 가독성 위해 강·중·참고 한 줄 요약 */}
-          <ShinsalSummary userName={report.name || '회원'} gilsin={v4Gilsin} hyungsal={v4Hyungsal} aiCards={aiResult.shinsalCards} />
+          <ShinsalSummary userName={report.name || '회원'} gilsin={v4Gilsin} hyungsal={v4Hyungsal} aiCards={aiResult.shinsalCards} sajuData={sajuData} dayOheng={dayOheng} />
           {/* 끝 fine-print — 미발현 신살 동적 안내 (mockup §7 ※ 라인 진본) */}
           <ShinsalFinePrint userName={report.name || '회원'} gilsin={v4Gilsin} hyungsal={v4Hyungsal} aiCards={aiResult.shinsalCards} />
           {conclusionAt(6) && (
@@ -2767,7 +2793,7 @@ export function PremiumResult({
           - 이후: 본인 사주 통합 메타 (한 줄 키워드 + 강점·함정) — 모든 사람에게 의미 있음
           - AI schema 신규: lifeKeyword (한 줄) + strengths[3] + cautions[3] */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={8} title="내 사주의 결" hanja="本質" hint="당신만의 인생 키워드 + 통합 강점·함정">
+        <CollapsibleSection step={8} title="내 사주의 결" hanja="本質" hint="사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3 · 함정 3">
           <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
           <StrengthsCautionsCards aiResult={aiResult} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
         </CollapsibleSection>
@@ -2775,10 +2801,12 @@ export function PremiumResult({
 
       <SectionDivider label="主 題" />
 
-      {/* ═════════════ 09 주제별 한눈에 (主題) — 연애·재물·취업·공부·인간관계 ═════════════ */}
+      {/* ═════════════ 09 여섯 영역 한눈에 (主題) — 재물·사랑·직업·건강·인간관계·잠재력 6 카드
+          2026-05-05 6 카드 복원 (잠재력·인간관계 추가) → 제목 "주제별 한눈에" → "여섯 영역 한눈에"
+          ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={9} title="주제별 한눈에" hanja="主題" hint="다섯 갈래로 본 강·약 점수 + 키워드">
-          {/* Stage 2C-2#6: 주제별 한눈에 topic-mini grid (mockup topic-mini 진본) */}
+        <CollapsibleSection step={9} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·잠재력 — 강·약 점수와 1운 깊이 보기">
+          {/* Stage 2C-2#6: 여섯 영역 점수 topic-mini grid (mockup topic-mini 진본) */}
           <TopicMiniGrid scores={scores} aiTopics={aiResult.topicMini} />
           {conclusionAt(8) && (
             <SectionConclusion>{conclusionAt(8)}</SectionConclusion>
