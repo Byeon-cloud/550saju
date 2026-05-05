@@ -403,8 +403,8 @@ export function MonthlyPage() {
         {/* Phase D'-4 Bundle 2 — ExtensionUpsellCard (단일 CTA) */}
         <FadeIn delay={0.52}>
           <ExtensionUpsellCard
-            title="이번 달의 결을 사주 전체에서 풀어드립니다"
-            desc="12개월 흐름이 사주 원국의 어느 자리에서 비롯되는지, 평생의 결까지 한 번에."
+            title="이번 달의 흐름을 사주 전체에서 풀어드립니다"
+            desc="12개월 흐름이 사주 원국의 어느 자리에서 비롯되는지, 평생의 운까지 한 번에."
             onTap={() => navigate('/charge?need=10')}
           />
         </FadeIn>

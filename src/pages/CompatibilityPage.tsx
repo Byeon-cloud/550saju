@@ -1,37 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
-import { getReports, getMyProfile, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, getMyProfile, type LocalReport } from '@/services/storage/localStore';
 import { spendBalance } from '@/services/storage/localStore';
+import { addRecentPartner, getRecentPartnerIds } from '@/services/storage/compatRecents';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
+// Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
+import { EXTENSION_THEME, ExtensionHero } from './extension/_chrome';
 
 const RELATIONS = ['연인', '배우자', '썸', '이별', '친구', '동료', '부모-자녀', '형제·자매', '기타'] as const;
 
 export function CompatibilityPage() {
   usePageTitle('궁합');
   const navigate = useNavigate();
-  // 매 렌더링마다 최신 리포트 조회 (InputPage에서 돌아왔을 때 갱신)
-  const [reports, setReports] = useState(() => getReports());
+  // 매 렌더링마다 최신 프로필 조회 (InputPage에서 돌아왔을 때 갱신)
+  const [profiles, setProfilesList] = useState(() => getProfiles());
 
-  const [person1, setPerson1] = useState<LocalReport | null>(getMyProfile() || reports[0] || null);
+  const myProfile = getMyProfile();
+  const [person1, setPerson1] = useState<LocalReport | null>(myProfile || (profiles[0] as any) || null);
   const [person2, setPerson2] = useState<LocalReport | null>(null);
   const [relation, setRelation] = useState<string | null>(null);
   const toast = useToast();
   const [showPicker, setShowPicker] = useState<1 | 2 | null>(null);
   const [customRelation, setCustomRelation] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
-  // InputPage에서 /compat으로 복귀 시 → 최신 리포트를 person2에 자동 선택
+  // InputPage에서 /compat으로 복귀 시 → 최신 프로필을 person2에 자동 선택
   useEffect(() => {
-    const freshReports = getReports();
-    setReports(freshReports);
-    // person2가 비어있고, 방금 입력한 사주(reports[0])가 person1과 다르면 자동 선택
-    if (!person2 && freshReports.length >= 2) {
-      const latest = freshReports[0];
+    const freshProfiles = getProfiles();
+    setProfilesList(freshProfiles);
+    // person2가 비어있고, 방금 입력한 사주가 person1과 다르면 자동 선택
+    if (!person2 && freshProfiles.length >= 2) {
+      const latest = freshProfiles[0] as any;
       if (latest && person1 && latest.id !== person1.id) {
         setPerson2(latest);
       }
@@ -48,7 +54,7 @@ export function CompatibilityPage() {
     if (!person) {
       return (
         <button
-          onClick={() => reports.length > 0 ? setShowPicker(slot) : navigate('/input')}
+          onClick={() => profiles.length > 0 ? setShowPicker(slot) : navigate('/input')}
           className="flex-1 rounded-2xl border-2 border-dashed border-border py-6 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--bg-surface)' }}
         >
@@ -56,7 +62,7 @@ export function CompatibilityPage() {
             <span className="text-2xl text-text-hint">+</span>
           </div>
           <p className="text-caption text-text-muted">{slot === 1 ? '본인 선택' : '상대방 선택'}</p>
-          {reports.length === 0 && (
+          {profiles.length === 0 && (
             <p className="text-[10px] text-text-hint">사주 분석 먼저 필요</p>
           )}
         </button>
@@ -85,17 +91,52 @@ export function CompatibilityPage() {
   const canSubmit = person1 && person2 && relation && person1.id !== person2.id
     && (relation !== '기타' || customRelation.trim().length > 0);
 
+  function handleSubmit() {
+    if (!canSubmit) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      if (!spendBalance(1)) {
+        toast.show('잔액이 부족해요', 'warning');
+        navigate('/charge', { state: { from: 'compat', message: '궁합 분석에 1운이 필요해요' } });
+        return;
+      }
+      toast.show('1운이 차감됐어요', 'info');
+      const rel = relation === '기타' ? customRelation || '기타' : relation;
+      // P2-3 · 궁합 상대방 최근 목록 기록 (person2 = 상대방). MRU 최상단.
+      if (person2?.id) addRecentPartner(person2.id);
+      navigate('/compat/result', { state: { person1, person2, relation: rel } });
+    } finally {
+      // 네비게이션 후 페이지 전환되므로 ref만 300ms 뒤 풀어줌 (뒤로 돌아올 때 재시도 가능)
+      setTimeout(() => { isSubmittingRef.current = false; setIsSubmitting(false); }, 300);
+    }
+  }
+
+  const compatTheme = EXTENSION_THEME.compat;
+
   return (
     <div className="min-h-screen bg-bg-page">
       <Header title="궁합" />
+
+      {/* Phase D'-4 Bundle 2 — ExtensionHero (合 인장 + 자주 그라디언트) */}
+      <FadeIn>
+        <ExtensionHero
+          theme={compatTheme}
+          crumb="사주 500 · 더 알아볼 주제 · 궁합"
+          sub="생년월일·시 두 분의 자료를 5가지 관점에서 비교합니다."
+          seal="合"
+        />
+      </FadeIn>
+
       <div className="px-5 pt-4 pb-[120px] space-y-6">
 
-        <FadeIn>
+        <FadeIn delay={0.04}>
           <h1 className="text-display text-text-primary leading-snug">
             두 사람의 사주로{'\n'}궁합을 확인해보세요
           </h1>
           <p className="text-body-sm text-text-muted mt-2">
-            사주 원국의 오행 조합과 십성 관계를 분석해요
+            두 사람의 결이 얼마나 잘 맞는지 살펴봐요
           </p>
         </FadeIn>
 
@@ -107,7 +148,7 @@ export function CompatibilityPage() {
             <div className="flex-shrink-0">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                  fill="#C9A96E" fillOpacity="0.2" stroke="#C9A96E" strokeWidth="1.2" />
+                  fill="#B8965A" fillOpacity="0.2" stroke="#B8965A" strokeWidth="1.2" />
               </svg>
             </div>
 
@@ -169,19 +210,29 @@ export function CompatibilityPage() {
         </FadeIn>
       </div>
 
-      {/* 하단 CTA */}
+      {/* P0-D · 출처 + 디스클레이머 — 하단 sticky 위가 아닌 본문 끝에 배치 (sticky bar 가 콘텐츠 가리는 문제 해결) */}
+      <div className="px-5 pt-4 pb-[120px] mt-6">
+        <div className="text-center space-y-1">
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+          </p>
+          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+            <br />
+            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+          </p>
+        </div>
+      </div>
+
+      {/* 하단 CTA — 다른 1운 페이지(대운/월운/토정비결)와 동일 구조 */}
       <div className="sticky-cta-bottom">
         <Button
           fullWidth
           size="lg"
-          variant={canSubmit ? 'gold' : 'secondary'}
-          onClick={() => {
-            if (!canSubmit) return;
-            if (!spendBalance(1)) { toast.show('잔액이 부족해요', 'warning'); navigate('/charge', { state: { from: 'compat', message: '궁합 분석에 1운이 필요해요' } }); return; }
-            toast.show('1운이 차감됐어요', 'info');
-            const rel = relation === '기타' ? customRelation || '기타' : relation;
-            navigate('/compat/result', { state: { person1, person2, relation: rel } });
-          }}
+          variant="gold"
+          disabled={!canSubmit || isSubmitting}
+          loading={isSubmitting}
+          onClick={handleSubmit}
         >
           궁합 보기 (1운)
         </Button>
@@ -227,17 +278,69 @@ export function CompatibilityPage() {
                 {showPicker === 1 ? '본인' : '상대방'}을 선택하세요
               </p>
 
-              {reports.length > 0 ? (
+              {/* P2-3 · 최근 궁합 상대방 quick-pick (slot 2 전용) */}
+              {showPicker === 2 && (() => {
+                const validIds = new Set(profiles.map((p) => p.id));
+                const recentIds = getRecentPartnerIds(validIds);
+                // 본인(slot 1)으로 선택된 프로필은 제외 — 동일인 궁합 방지
+                const filtered = recentIds.filter((id) => id !== person1?.id);
+                if (filtered.length === 0) return null;
+                return (
+                  <div className="mb-4">
+                    <p className="text-label text-text-hint mb-2">최근 본 상대방</p>
+                    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                      {filtered.map((id) => {
+                        const p = profiles.find((pr) => pr.id === id) as LocalReport | undefined;
+                        if (!p) return null;
+                        const { ilgan, oheng } = getIlgan(p);
+                        return (
+                          <button
+                            key={id}
+                            onClick={() => {
+                              setPerson2(p);
+                              setShowPicker(null);
+                            }}
+                            className="flex-shrink-0 rounded-xl px-3 py-2 flex items-center gap-2"
+                            style={{
+                              background: 'rgba(184,150,90,0.08)',
+                              border: '1px solid rgba(184,150,90,0.25)',
+                            }}
+                          >
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ background: 'rgba(184,150,90,0.15)' }}
+                            >
+                              <span className="text-label font-bold" style={{ color: '#8C6D3D' }}>
+                                {p.name.charAt(0)}
+                              </span>
+                            </div>
+                            <div className="text-left min-w-0">
+                              <p className="text-caption font-bold text-text-primary leading-tight">
+                                {p.name}
+                              </p>
+                              <p className="text-[10px] text-text-muted leading-tight">
+                                {ilgan}({oheng})
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {profiles.length > 0 ? (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {reports.map((r) => {
-                    const { ilgan, oheng } = getIlgan(r);
+                  {profiles.map((r) => {
+                    const { ilgan, oheng } = getIlgan(r as any);
                     const isSelected = (showPicker === 1 ? person1?.id : person2?.id) === r.id;
                     return (
                       <button
                         key={r.id}
                         onClick={() => {
-                          if (showPicker === 1) setPerson1(r);
-                          else setPerson2(r);
+                          if (showPicker === 1) setPerson1(r as any);
+                          else setPerson2(r as any);
                           setShowPicker(null);
                         }}
                         className={`w-full card text-left flex items-center gap-3 ${

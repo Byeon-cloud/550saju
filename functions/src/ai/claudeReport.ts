@@ -8,7 +8,7 @@ import Anthropic from '@anthropic-ai/sdk';
  *   - 검증: claude-sonnet-4-6 (A/B 비교, 선택적 2차 자기 리뷰)
  *   - 보조: claude-haiku-4-5-20251001 (일일운세·꿈해몽 등 경량)
  *
- * ⚠️ 준기 지시: 퀄리티 다운그레이드 절대 불가.
+ * ⚠️ PD 결단: 퀄리티 다운그레이드 절대 불가.
  *   Sonnet 전환은 반드시 A/B 비교 후 품질 벤치 통과 시에만.
  *   환경변수 SAJU_REPORT_MODEL 로 런타임 오버라이드 가능 (A/B 테스트용).
  *

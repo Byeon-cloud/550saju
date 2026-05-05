@@ -20,13 +20,13 @@ import type { SajuData } from '@/types/saju';
 /* ─── 시간대 인사 ─── */
 function getTimeGreeting() {
   const h = new Date().getHours();
-  if (h < 5) return { label: '고요한 새벽', greeting: '이 늦은 밤, 마음에 무언가 담긴 게 있으시군요.\n편하게 이야기해주세요.', headerBg: '#0F1D35' };
+  if (h < 5) return { label: '고요한 새벽', greeting: '이 늦은 시간, 잠 못 드는 고민이 있으세요?\n편하게 이야기해주세요.', headerBg: '#0F1D35' };
   if (h < 7) return { label: '이른 아침', greeting: '이른 아침이네요.\n오늘 하루의 기운을 미리 확인해볼까요?', headerBg: '#1B2A4A' };
   if (h < 12) return { label: '좋은 아침', greeting: '좋은 아침이에요!\n오늘 궁금한 점이 있으시면 편하게 물어보세요.', headerBg: '#1B2A4A' };
   if (h < 14) return { label: '점심시간', greeting: '점심시간, 잠깐의 여유를 내셨군요.\n편하게 이야기해주세요.', headerBg: '#1B2A4A' };
   if (h < 18) return { label: '오후의 여유', greeting: '오후의 여유로운 시간이에요.\n궁금한 점이 있으시면 물어보세요.', headerBg: '#1B2A4A' };
   if (h < 21) return { label: '저녁 시간', greeting: '하루가 저물어가네요.\n오늘 하루를 돌아보며 이야기 나눠볼까요.', headerBg: '#1B2A4A' };
-  return { label: '고요한 밤', greeting: '고요한 밤이에요.\n밤의 직감은 낮보다 예리하니, 편하게 이야기해주세요.', headerBg: '#0F1D35' };
+  return { label: '고요한 밤', greeting: '고요한 밤이에요.\n오늘 하루를 정리하면서 편하게 물어보세요.', headerBg: '#0F1D35' };
 }
 
 /* 추천 주제 — 시간대+프로필에 따라 */
@@ -446,7 +446,7 @@ function ChatView({ roomId }: { roomId: string }) {
       : `${timeCtx.greeting}\n\n사주를 등록하면 더 정확한 맞춤 상담을 받을 수 있어요.`;
 
     const defaultQuestions = hasProfile
-      ? ['올해 나에게 가장 좋은 달은?', '내 사주에서 강한 기운은?', '요즘 고민이 있어요']
+      ? ['올해 나에게 가장 좋은 달은?', '내 사주의 가장 강한 오행은?', '요즘 고민이 있어요']
       : ['내 연애 스타일이 궁금해요', '올해 운세가 궁금해요', '사주로 뭘 알 수 있나요?'];
 
     const welcomeMsg: ChatMessage = {

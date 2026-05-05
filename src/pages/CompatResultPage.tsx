@@ -14,6 +14,7 @@ import { FooterCTA } from '@/components/common/FooterCTA';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import type { CompatibilityResponse } from '@/types/report';
 import { sanitizeAiText } from '@/utils/format';
+import { OHENG_MAP } from '@/constants/oheng';
 // Phase D'-4 Bundle 2 후속 (#54) — mockup 진본 시각 정렬 (CompatResultPage)
 import {
   EXTENSION_THEME,
@@ -31,10 +32,11 @@ const LOADING_STEPS = [
   '맞춤 조언을 작성하고 있어요...',
 ];
 
+// 2026-05-05 SSOT — 수오행 컬러는 OHENG_MAP['수'].color (constants/oheng.ts) 에서 직접 호출
 const CATEGORY_COLORS: Record<string, string> = {
   personality: '#B8965A',
   values: '#2D8A4E',
-  communication: '#1565E0',
+  communication: OHENG_MAP['수'].color,
   emotion: '#D32F2F',
   future: '#7B1FA2',
 };
