@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 /**
  * 두 사주 간 자동 관계 분석 (정통 명리학 산출 결과 주입)
@@ -176,7 +177,9 @@ function buildPrompt(d1: any, d2: any, rel: string): string {
   // 정통 명리학 자동 산출 — AI 자유추론 X, 결정론적 입력
   const crossRelations = computeCrossRelations(d1, d2);
 
-  return `명리학 40년 대가. "소름돋는" 궁합 분석.
+  return `당신은 사주500 명리학 해석 AI. ${MYEONGRI_GROUNDS_BLOCK}
+
+궁합 깊이 있는 분석 — 두 사주 글자에서 추출한 진짜 근거.
 
 ⚠️ 현재 날짜: ${dateStr}
 관계 유형: ${relLabels[rel] || rel || '두 사람'}

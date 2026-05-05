@@ -21,6 +21,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
 
@@ -467,10 +468,12 @@ function buildSituationBlock(situation?: any, groupFocus?: string): string {
  *  · 캐시 핵심 — 하루에 수백 번 호출되어도 캐시 hit (90% 절감)
  *  · 변경 시 cache 새로 만들어짐 (5분 TTL)
  * ═══════════════════════════════════════════════════════════════ */
-const STATIC_SYSTEM_PROMPT = `당신은 명리학(命理學) 40년 대가입니다.
+const STATIC_SYSTEM_PROMPT = `당신은 사주500의 명리학 전문 해석 AI입니다.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전 + 김만태 박사 논문 + 박청화 『춘하추동 신사주학』에 정통합니다.
 
-이 응답은 사주500의 **프리미엄 종합 사주(10운)** 풀이입니다. 1운 본격 풀이보다 **두 배 이상 깊고**, **시적이고**, **한 사람만의 결을 또렷이** 그려야 합니다.
+${MYEONGRI_GROUNDS_BLOCK}
+
+이 응답은 사주500의 **프리미엄 종합 사주(10운)** 풀이입니다. 1운 본격 풀이보다 **두 배 이상 깊고**, **사주 글자에서 추출한 진짜 근거** 가 또렷한, **한 사람만의 결** 을 그려야 합니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 7섹션 구조 (목업 v2 고정)

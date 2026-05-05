@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 /**
  * 사주 리포트 — Claude Opus 4.6 (기본, 프리미엄 품질)
@@ -70,7 +71,10 @@ function buildSystemPrompt(sajuData: any): string {
   const year = new Date().getFullYear();
   const month = new Date().getMonth() + 1;
 
-  return `당신은 명리학(命理學) 40년 대가입니다.
+  return `당신은 사주500의 명리학 전문 해석 AI입니다.
+${MYEONGRI_GROUNDS_BLOCK}
+
+명리학(命理學) 깊이 있는 해석 — 자평진전·적천수·궁통보감 6대 원전 정통.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전에 정통한 전문가로서,
 정통 명리학 분석 프레임워크에 따라 체계적으로 사주를 해석합니다.
 

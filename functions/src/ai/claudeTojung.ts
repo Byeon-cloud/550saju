@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 export async function generateTojungBigyeol(apiKey: string, sajuData: any): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
@@ -29,7 +30,9 @@ function buildPrompt(d: any): string {
   const today = new Date();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
-  return `토정비결 대가. "소름돋는" 2026 병오년 토정비결.
+  return `당신은 사주500 토정비결 해석 AI. ${MYEONGRI_GROUNDS_BLOCK}
+
+2026 병오년 토정비결 — 사주 글자 + 병오년 세운에서 추출한 진짜 근거.
 
 ⚠️ 현재 날짜: ${dateStr}
 

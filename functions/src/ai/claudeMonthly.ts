@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 export async function generateMonthlyFortune(apiKey: string, sajuData: any): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
@@ -31,7 +32,9 @@ function buildPrompt(d: any): string {
   const today = new Date();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
-  return `당신은 명리학 40년 대가입니다. "소름돋는" 2026년 월별 운세.
+  return `당신은 사주500 명리학 해석 AI. ${MYEONGRI_GROUNDS_BLOCK}
+
+2026년 월별 운세 — 사주 글자에서 추출한 진짜 근거.
 
 ⚠️ 현재 날짜: ${dateStr}
 - 1~${now-1}월: 과거형 ("~했을 거예요")
