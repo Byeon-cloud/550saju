@@ -144,7 +144,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   wealth: {
     label: '재물운',
     sections: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '새는 돈 패턴', '올해 재물 전략'],
-    specificPrompt: `⭐ 돈에 대한 "소름돋는" 통찰. 읽는 사람이 "맞아, 나 그래..." 할 정도로.
+    specificPrompt: `⭐ 돈에 대한 깊이 있는 자기 인식이 가능한 통찰. 사주 8글자 근거 기반.
 
 - 재성(正財/偏財) 위치와 강약으로 "정규직형 vs 사업형 vs 투자형" 판별
 - 식신생재 구조 여부 → 재능으로 돈 버는 구조인지
@@ -277,7 +277,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   marriage: {
     label: '결혼운',
     sections: ['결혼 적기 분석', '배우자 성향', '결혼 후 생활 패턴', '시댁/처가 관계', '결혼 준비 조언'],
-    specificPrompt: `⭐ 결혼을 고민하는 사람에게 "소름돋는" 수준의 구체적 조언.
+    specificPrompt: `⭐ 결혼을 고민하는 사람에게 사주 specific 깊이 있는 분석의 구체적 조언.
 
 - 일지+월지 관계로 시댁/처가 관계 예측: "~한 분위기의 가정"
 - 결혼 적기: 연도+시즌까지 구체적으로
@@ -398,7 +398,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       '새 인연 vs 재회 — 냉정한 비교',
       '재회 성공을 위한 개운법',
     ],
-    specificPrompt: `⭐ 이 분석은 "울컥할 정도로 소름돋는" 최고 퀄리티여야 합니다.
+    specificPrompt: `⭐ 이 분석은 깊이 있는 자기 인식이 가능한 최고 퀄리티여야 합니다.
 다른 주제 분석과 확연히 차이가 나는 깊이와 정교함이 필요합니다.
 
 ## 분석 원칙
@@ -966,7 +966,7 @@ ${boundary.excludes.length ? boundary.excludes.map(x => `- ${x}`).join('\n') : '
 → 같은 사주로 다른 주제를 돌렸을 때 결론이 모순되면 안 됨. 사주 원국의 기본 결(용신·일간 강약·주요 십성 배치)에 뿌리를 둔 판단만 하고, 인접 주제 영역의 단정은 피할 것.\n`
     : '';
 
-  return `명리학 40년 대가. "${config.label}" 심층 분석. "소름돋는" 수준.
+  return `사주500 명리학 해석 AI. "${config.label}" 심층 분석. 사주 specific 깊이 있는 분석.
 
 ⚠️ 현재 날짜: ${dateStr} — 반드시 이 기준으로 과거/현재/미래 구분.
 

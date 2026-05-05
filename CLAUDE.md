@@ -2,7 +2,44 @@
 
 > 이 문서는 Claude Code가 프로젝트를 이해하기 위한 **진입점**입니다.
 > 웹 채팅(claude.ai)에서 설계한 내용을 여기서 이어서 개발합니다.
-> **최종 업데이트: 2026-05-05 PM** (보일러플레이트 박멸 + prompt 실명 제거 + 4축 audit 완료)
+> **최종 업데이트: 2026-05-05 EVE** (명리학 정통성 정책 + dead code (주간운세) 정리)
+
+---
+
+## 🚨 명리학 정통성 + 출력 분리 정책 (2026-05-05) — 회귀 절대 금지
+
+PD 핵심 결단 인용:
+> "AI 가 지멋대로 씨부리지 말고 진짜 명리학적 근거"
+> "고서나 정통 이론서에서 가져왔다고 해서 어려운말 남발하지 말고, 결국 유저는 편하게 읽히고 쉬운 단어로 접하게"
+
+### 정통 명리학 이론 (AI 내부 분석 가이드)
+**`promptsV3.ts` 의 `MYEONGRI_GROUNDS_BLOCK`** 에 7대 이론 정통화:
+1. **통근(通根)·투간(透干)** — 자평진전·적천수 진짜 강약 판정
+2. **십이운성** 12단계 — 일간 강약 1차 신호
+3. **조후(調候)** — 궁통보감 계절별 절대 보완
+4. **60일주 정통 해석** — 자평진전 일주론
+5. **학파별 차이** — 자평진전파 1차 / 적천수파 / 궁통보감파 / 명리정종 / 신파
+6. **한국 현대 학자** — 김만태(서울교대) · 박청화(춘하추동 신사주학) · 정대붕 · 홍성민 (내부 참고만)
+7. **출력 톤 분리** — 깊이 있는 이론 + 쉬운 일상어 동시
+
+### 🚨 출력 = 일상어 (출처 mention 0건)
+- ❌ 출력 본문에 "자평진전 §10 ~" / "적천수에서 ~" / "박청화 기준 ~" / "고서에 따르면 ~" 일체 금지
+- ✅ "이런 사주는 ~한 결로 풀어낼 수 있어요" 같은 일상어
+- ✅ 한자 등장 시 괄호 풀이: "병화(丙火, 밝고 활달한 성격)"
+- 학술 출처는 결과 페이지·홈 footer 에 별도 표시 (본문은 깨끗하게)
+
+### 적용 범위 (모든 유료 콘텐츠)
+- 종합사주 10운 (`claudePremium.ts`)
+- 1운 종합 리포트 (`claudeReport.ts`)
+- 대운 / 월운 / 궁합 / 토정비결 (`claudeDaeun·Monthly·Compat·Tojung.ts`)
+- 10주제 분석 (`claudeTopic.ts` + `MYEONGRI_GROUNDS_BLOCK` 통합)
+- 사주대화 (`claudeChat.ts`)
+
+### Dead Code 정리 (2026-05-05)
+- `claudeWeekly.ts` 삭제 (클라이언트 폐지된 주간운세 — 서버만 살아있던 잔재)
+- `generateWeeklyFortune` Cloud Function 삭제 (`firebase functions:delete`)
+- `WEEKLY_FORTUNE_SYSTEM_V3` / `WEEKLY_FORTUNE_USER_V3` export 제거
+- 기 제거: academicReferences·prompts.ts·promptBuilder·gemini{Chat,Dream,Fortune,Tojung,Topic}
 
 ---
 
