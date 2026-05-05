@@ -3,10 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
-import { getProfiles, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
+import { Modal } from '@/components/common/Modal';
+import { getProfiles, saveReport, generateId, spendBalance, getBalance, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useToast } from '@/components/common/Toast';
 import { generateTopicAnalysis } from '@/services/ai/reportGenerator';
 import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA, type FooterCTAPageKey } from '@/components/common/FooterCTA';
@@ -2543,7 +2543,7 @@ export function TopicAnalysisPage() {
   const topic = TOPICS[(topicId || 'love') as TopicKey];
   const navigate = useNavigate();
   const location = useLocation();
-  const toast = useToast();
+  // toast 제거 — F5 (AI 실패 inline error 카드) 로 대체. 향후 다른 알림 필요 시 useToast 재추가.
   usePageTitle(topic?.label || '심층분석');
 
   // 보관함에서 저장된 결과 또는 사주리포트에서 baseScore를 넘겨받은 경우
@@ -2557,7 +2557,11 @@ export function TopicAnalysisPage() {
   const isAnalyzingRef = useRef(false);
   // F3 · 상대방 입력 명시 펼침 (sessionStorage 복원에 사용)
   const [, setPartnerExpanded] = useState(false);
-  // TODO(audit 3 P0): E1 결제 confirm Modal · E2 잔액부족 inline · F5 AI 실패 inline 다음 sprint
+  // audit 3 P0 E1·E2·F5 — 결제 confirm Modal / 잔액 부족 inline / AI 실패 inline
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showInsufficient, setShowInsufficient] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const balance = getBalance();
   // E2 · sessionStorage 키 (충전 후 복귀 시 입력값 복원)
   const PENDING_KEY = `saju500:topic_pending:${topicId}`;
 
@@ -2652,16 +2656,31 @@ export function TopicAnalysisPage() {
     );
   }
 
+  // E1 · 결제 직전 confirm — 1운 무방비 차감 방지
+  function requestAnalyze() {
+    if (!selected) return;
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    setAnalyzeError(null);
+    setShowConfirm(true);
+  }
+
   async function analyze() {
     if (!selected) return;
     // 더블클릭 가드 — 1운 중복 차감 차단
     if (isAnalyzingRef.current || phase === 'loading') return;
     isAnalyzingRef.current = true;
+    setShowConfirm(false);
 
-    // 과금
+    // E2 · 잔액 부족 시 입력값 보존 + inline 모달 (toast 만 X · 강제 navigate X)
     if (!spendBalance(1)) {
-      toast.show('잔액이 부족해요', 'warning');
-      navigate('/charge', { state: { message: `${topic.label} 분석에 1운이 필요해요` } });
+      // 입력값 sessionStorage 보존
+      try {
+        sessionStorage.setItem(PENDING_KEY, JSON.stringify({
+          partnerInfo, loveStatus, relationStatus, showPartner, extraInfo,
+          selectedId: selected.id,
+        }));
+      } catch { /* noop */ }
+      setShowInsufficient(true);
       isAnalyzingRef.current = false;
       return;
     }
@@ -2710,8 +2729,9 @@ export function TopicAnalysisPage() {
       setPhase('result');
     } catch (e: any) {
       console.error('주제 분석 실패:', e);
+      // F5 · AI 실패 inline error (toast 만 X — 사용자 인지 보장)
       // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
-      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
+      setAnalyzeError(e?.message || '분석에 실패했어요. 잔액 1운은 자동으로 돌려드렸어요.');
       setPhase('select');
     } finally {
       clearInterval(interval);
@@ -3481,8 +3501,40 @@ export function TopicAnalysisPage() {
                     </FadeIn>
                   )}
 
+                  {/* F5 · AI 실패 inline error 카드 */}
+                  {analyzeError && (
+                    <div
+                      role="alert"
+                      style={{
+                        background: '#FFF7F5',
+                        border: '1px solid #F0BFB6',
+                        borderRadius: 12,
+                        padding: '14px 16px',
+                        marginBottom: 12,
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#8B1A1A', marginBottom: 6 }}>
+                        분석에 실패했어요
+                      </div>
+                      <div style={{ fontSize: 12.5, color: '#3D3D3D', lineHeight: 1.6, marginBottom: 10 }}>
+                        {analyzeError}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setAnalyzeError(null); requestAnalyze(); }}
+                        style={{
+                          fontSize: 12.5, fontWeight: 700, color: '#1A1A1A',
+                          background: '#F8F5EE', border: '1px solid #B8965A',
+                          borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+                        }}
+                      >
+                        다시 시도
+                      </button>
+                    </div>
+                  )}
+
                   {selected && (
-                    <Button fullWidth size="lg" variant="gold" onClick={analyze}>
+                    <Button fullWidth size="lg" variant="gold" onClick={requestAnalyze}>
                       {topic.label} 분석하기 (1운)
                     </Button>
                   )}
@@ -3491,7 +3543,8 @@ export function TopicAnalysisPage() {
                 <div className="card text-center py-10 space-y-3">
                   <p className="text-h2 text-text-primary">사주를 먼저 입력해주세요</p>
                   <p className="text-body-sm text-text-muted">생년월일시를 입력하면 {topic.label} 심층분석을 받을 수 있어요</p>
-                  <Button variant="gold" onClick={() => navigate('/input')}>사주 입력하기</Button>
+                  {/* E3 · returnTo state — 입력 후 자동 복귀 동선 */}
+                  <Button variant="gold" onClick={() => navigate('/input', { state: { returnTo: `/topic/${topicId}` } })}>사주 입력하기</Button>
                 </div>
               )}
             </motion.div>
@@ -3915,6 +3968,55 @@ export function TopicAnalysisPage() {
           })()}
         </AnimatePresence>
       </div>
+
+      {/* audit 3 P0 E1 · 결제 직전 confirm Modal */}
+      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title={`${topic.label} 분석을 시작할까요?`}>
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: '#3D3D3D', lineHeight: 1.65, marginBottom: 8 }}>
+            {selected?.name || '회원'} 님 사주로 <strong style={{ color: '#A37A2E' }}>{topic.label}</strong> 심층분석을 시작합니다.
+          </p>
+          <ul style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.7, paddingLeft: 0, listStyle: 'none' }}>
+            <li>· 1운이 차감돼요 (잔액 {balance}운)</li>
+            <li>· 보통 30초~1분 정도 걸려요</li>
+            <li>· 결과는 보관함에 자동 저장돼요</li>
+          </ul>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="ghost" fullWidth onClick={() => { setShowConfirm(false); isAnalyzingRef.current = false; }}>
+            취소
+          </Button>
+          <Button variant="gold" fullWidth onClick={analyze}>
+            시작하기
+          </Button>
+        </div>
+      </Modal>
+
+      {/* audit 3 P0 E2 · 잔액 부족 inline Modal (입력값은 sessionStorage 보존됨) */}
+      <Modal isOpen={showInsufficient} onClose={() => setShowInsufficient(false)} title="1운이 부족해요">
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: '#3D3D3D', lineHeight: 1.65, marginBottom: 8 }}>
+            <strong style={{ color: '#A37A2E' }}>{topic.label}</strong> 분석에는 1운이 필요해요.
+          </p>
+          <p style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.6 }}>
+            지금까지 입력한 내용은 그대로 저장돼 있어요. 충전 후 돌아오면 이어서 분석할 수 있습니다.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button variant="ghost" fullWidth onClick={() => setShowInsufficient(false)}>
+            나중에
+          </Button>
+          <Button
+            variant="gold"
+            fullWidth
+            onClick={() => {
+              setShowInsufficient(false);
+              navigate('/charge', { state: { message: `${topic.label} 분석에 1운이 필요해요`, returnTo: `/topic/${topicId}` } });
+            }}
+          >
+            충전하러 가기
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
