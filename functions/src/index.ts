@@ -12,7 +12,6 @@ const lazyClaudeFortune = () => import('./ai/claudeFortune');
 //   gemini* 파일 5종 (Chat·Dream·Fortune·Tojung·Topic) 2026-05-05 dead code 제거
 const lazyClaudeChat = () => import('./ai/claudeChat');
 const lazyClaudeDream = () => import('./ai/claudeDream');
-const lazyClaudeWeekly = () => import('./ai/claudeWeekly');
 const lazyClaudeTopic = () => import('./ai/claudeTopic');
 const lazyTossAuth = () => import('./auth/tossAuth');
 
@@ -735,59 +734,8 @@ export const generateDreamDeep = onCall(
   }
 );
 
-/**
- * 주간 흐름 (신규 v3, 유료 1운) — Claude Sonnet 4.6 + 2차 자기 리뷰.
- */
-export const generateWeeklyFortune = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
-  async (request) => {
-    const { name, sajuData, monday, weekdays } = request.data || {};
-    if (!sajuData || !monday || !Array.isArray(weekdays) || weekdays.length !== 7) {
-      throw new HttpsError('invalid-argument', '사주·월요일·7일 요일 데이터가 필요합니다');
-    }
-
-    const uid = request.auth?.uid || 'anonymous';
-    let deductedAmount = 0;
-    if (request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        await db.runTransaction(async (tx) => {
-          const doc = await tx.get(userRef);
-          const balance = doc.data()?.balance ?? 0;
-          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(-1),
-            totalSpent: admin.firestore.FieldValue.increment(1),
-          });
-        });
-        deductedAmount = 1;
-      }
-    }
-
-    try {
-      const { generateWeeklyFortuneAnalysis } = await lazyClaudeWeekly();
-      const result = await generateWeeklyFortuneAnalysis(ANTHROPIC_KEY.value(), {
-        name: name || '사용자',
-        sajuData,
-        monday,
-        weekdays,
-      });
-
-      const reportRef = db.collection('reports').doc();
-      await reportRef.set({
-        uid, type: 'weekly', content: result,
-        aiModel: 'claude-sonnet-4-6',
-        generatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      return { reportId: reportRef.id, content: result };
-    } catch (error: any) {
-      console.error('[generateWeeklyFortune] FAILED:', error.message);
-      await refundBalance(uid, deductedAmount, 'generateWeeklyFortune failed');
-      throw new HttpsError('internal', `주간 흐름 분석 실패: ${error.message || 'unknown'}`);
-    }
-  }
-);
+// 2026-05-05 주간운세 (generateWeeklyFortune) 제거 — 클라이언트 폐지 결정 (reportGenerator.ts:200 주석)
+// 서버 함수만 살아있던 dead code → Cloud Function 비용 절감 + 명리학 mandate 일관성
 
 /**
  * IAP 상품 지급 — 앱인토스 결제 후 서버 검증
