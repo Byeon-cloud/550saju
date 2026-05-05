@@ -3,7 +3,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
-import { Modal } from '@/components/common/Modal';
 import { getProfiles, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -2556,12 +2555,9 @@ export function TopicAnalysisPage() {
   const [, setLoadingMsg] = useState(0);
   // 더블클릭 가드 — 1운 중복 차감 차단 (InputPage 패턴)
   const isAnalyzingRef = useRef(false);
-  // E1 · 결제 직전 confirm + E2 · 잔액 부족 inline + F5 · AI 실패 inline error
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showInsufficient, setShowInsufficient] = useState(false);
-  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
-  // F3 · 상대방 입력 명시 펼침
-  const [partnerExpanded, setPartnerExpanded] = useState(false);
+  // F3 · 상대방 입력 명시 펼침 (sessionStorage 복원에 사용)
+  const [, setPartnerExpanded] = useState(false);
+  // TODO(audit 3 P0): E1 결제 confirm Modal · E2 잔액부족 inline · F5 AI 실패 inline 다음 sprint
   // E2 · sessionStorage 키 (충전 후 복귀 시 입력값 복원)
   const PENDING_KEY = `saju500:topic_pending:${topicId}`;
 
