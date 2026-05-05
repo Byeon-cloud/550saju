@@ -1197,6 +1197,81 @@ function CareerViz({ data, color }: { data: any; color: string }) {
             </div>
           )}
         </div>
+
+        {/* audit 4 P0 #5 — CareerViz 깊이 보강 (ReunionViz 14 vs CareerViz 3 비대칭 해소)
+            추가 3 카드: 직업 핵심 결 (관성·식상 비중) + 승진·이직 좋은 달 12-cell + 직장 단계 timeline */}
+
+        {/* 카드 4 — 직업 핵심 결 (관성·식상·인성 등 직업 관련 십성 비중 mini-bar) */}
+        {(data.sipsungBalance || data.coreStrength || data.officeAdaptType) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">직업 핵심 결</p>
+            <div className="space-y-2">
+              {data.coreStrength && (
+                <div className="rounded-xl py-2 px-3" style={{ background: `${color}08`, borderLeft: `3px solid ${color}` }}>
+                  <p className="text-[10px] font-bold mb-0.5" style={{ color }}>타고난 직업 강점</p>
+                  <p className="text-[12.5px] text-text-primary leading-snug">{stripMd(String(data.coreStrength))}</p>
+                </div>
+              )}
+              {data.officeAdaptType && (
+                <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                  <p className="text-[10px] font-bold mb-0.5" style={{ color: '#5C4A2E' }}>직장 적응 타입</p>
+                  <p className="text-[12.5px] text-text-primary leading-snug">{stripMd(String(data.officeAdaptType))}</p>
+                </div>
+              )}
+              {data.sipsungBalance && (
+                <div className="space-y-1.5">
+                  {Object.entries(data.sipsungBalance as Record<string, number>).map(([k, v]) => (
+                    <HBar key={k} value={Number(v)} label={k} color={color} suffix="%" />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 카드 5 — 월별 승진·이직 좋은 달 12-cell (data.monthlyCareer 있으면) */}
+        {Array.isArray(data.monthlyCareer) && data.monthlyCareer.length > 0 && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">올해 직업 운 12개월</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {data.monthlyCareer.slice(0, 12).map((m: any, i: number) => {
+                const mScore = Number(m.score || 0);
+                const tone = mScore >= 75 ? '#2D8A4E' : mScore >= 50 ? color : '#7A7269';
+                return (
+                  <div key={i} className="rounded-xl py-2 px-1 text-center"
+                    style={{ background: `${tone}10`, border: `1px solid ${tone}30` }}>
+                    <p className="text-[9.5px] font-bold" style={{ color: tone }}>{m.month || `${i + 1}월`}</p>
+                    <p className="text-[14px] font-black" style={{ color: tone }}>{mScore}</p>
+                    {m.label && <p className="text-[9px] text-text-hint mt-0.5 truncate">{m.label}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 카드 6 — 직장 단계 timeline (현재·다음 도약·정체기) */}
+        {Array.isArray(data.careerPhases) && data.careerPhases.length > 0 && (
+          <div className="card" style={{ background: `linear-gradient(135deg, ${color}08, ${color}03)` }}>
+            <p className="text-h3 text-text-primary mb-3">직업 흐름 — 단계별</p>
+            <div className="space-y-2">
+              {data.careerPhases.map((p: any, i: number) => (
+                <div key={i} className="rounded-xl py-2.5 px-3 bg-white" style={{ borderLeft: `3px solid ${p.isCurrent ? color : '#E5DFD0'}` }}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <p className="text-[11px] font-bold" style={{ color: p.isCurrent ? color : '#5C4A2E' }}>
+                      {p.label || p.age || `단계 ${i + 1}`}
+                      {p.isCurrent && <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: color, color: '#fff' }}>NOW</span>}
+                    </p>
+                    {p.score != null && <span className="text-[12px] font-black" style={{ color: p.isCurrent ? color : '#7A7269' }}>{p.score}</span>}
+                  </div>
+                  {p.description && (
+                    <p className="text-[12px] text-text-primary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(String(p.description)) }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </FadeIn>
   );

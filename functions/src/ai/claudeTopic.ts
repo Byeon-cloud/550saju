@@ -216,7 +216,13 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "statusAnalysis": "현재 상태(학생/구직/재직)에 대한 사주 한마디 35자 (상태 정보 없으면 null)",
       "fieldFitScore": "관심 분야 사주 적합도 0-100 (분야 정보 없으면 null)",
       "fieldFitAnalysis": "관심 분야가 사주에 얼마나 맞는지 분석 35자 (분야 정보 없으면 null)",
-      "jobChangeTiming": "이직 최적 시기 15자 (재직중일 때만, 아니면 null)"
+      "jobChangeTiming": "이직 최적 시기 15자 (재직중일 때만, 아니면 null)",
+      "// audit 4 P0 #5 — CareerViz 깊이 보강 신규 필드 (사주 specific 호명 mandatory)": "",
+      "coreStrength": "타고난 직업 강점 한 줄 50자 · 격국·관성·식상 등 직접 호명 (예: '정관격이라 책임 지는 자리에서 빛납니다')",
+      "officeAdaptType": "직장 적응 타입 한 줄 40자 · 일간 + 십성 호명 (예: '병화 일간 + 식상 강 — 자유로운 분위기에 강함')",
+      "sipsungBalance": {"// 직업 관련 십성 비중 0-100 (4축, 100 합계 X · 사주 비중 그대로)": "", "관성": "0-100", "식상": "0-100", "재성": "0-100", "인성": "0-100"},
+      "monthlyCareer": [{"month": "1월", "score": "0-100 자연수, 5의 배수 반복 X", "label": "한 줄 라벨 8자 이내 (예: '도약', '신중', '안정')"}],
+      "careerPhases": [{"label": "20대 후반", "age": "27-32세", "score": "0-100", "isCurrent": true, "description": "한 줄 50자 · 사주 specific (대운 간지 호명 권장)"}]
     }`,
   },
   marriage: {
