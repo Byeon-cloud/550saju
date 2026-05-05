@@ -1822,43 +1822,92 @@ function ShinsalFinePrint({
 }
 
 /**
+ * deriveTopicHook — 6 주제 hook 동적 composer (2026-05-05 audit P0 #1·#2 fix)
+ *  - 보일러플레이트 박멸: 같은 점수대도 사주 8글자별로 다른 hook
+ *  - 입력: topicKey, score, sipDist, dayGan
+ *  - 출력: 사주 specific 한 줄 (십성 카운트·일간 글자 호명)
+ */
+function deriveTopicHook(
+  topicKey: string,
+  score: number,
+  sipDist?: SipDist,
+  dayGan?: string,
+): string {
+  const ganKo = dayGan && GAN_KO[dayGan] ? GAN_KO[dayGan].ko : '';
+  const ganRef = ganKo ? `${ganKo}` : '본인';
+  const sip = sipDist || ({ 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 } as SipDist);
+  const tier = score >= 85 ? 'high' : score >= 65 ? 'mid' : 'low';
+
+  // 주제별 specific 십성 매핑 → 카운트 호명
+  switch (topicKey) {
+    case 'career': {
+      const n = sip.관성;
+      if (tier === 'high') return `${ganRef} 일간에 관성 ${n}개 — 어디서 빛나는지·언제 자리잡는지`;
+      if (tier === 'mid')  return `관성 ${n}개의 활용 시기와 자리 선택`;
+      return `관성 ${n}개 — 자리잡기 어려운 이유와 보강법`;
+    }
+    case 'love': {
+      const n = sip.재성 + sip.관성;
+      if (tier === 'high') return `${ganRef}이 끌어당기는 인연의 결과 시기`;
+      if (tier === 'mid')  return `결혼 적정기 + 만남의 결 (관·재 ${n}자리)`;
+      return `인연이 얕은 이유 + 결을 채우는 법`;
+    }
+    case 'wealth': {
+      const n = sip.재성;
+      if (tier === 'high') return `재성 ${n}개 — 큰 돈 들어오는 시기와 결정의 결`;
+      if (tier === 'mid')  return `재성 ${n}개의 재산 형성 결과 시기`;
+      return `재성 ${n}개 — 돈이 머물지 않는 이유와 잡는 법`;
+    }
+    case 'social': {
+      const n = sip.비겁;
+      if (tier === 'high') return `비겁 ${n}개 — 결을 살리는 사람·소모하는 사람`;
+      if (tier === 'mid')  return `비겁 ${n}개의 관계 결과 거리감 조정`;
+      return `비겁 ${n}개 — 관계가 얕은 이유와 깊이 가는 법`;
+    }
+    case 'health': {
+      const n = sip.인성;
+      if (tier === 'high') return `${ganRef} 일간의 지치지 않는 결과 회복 리듬`;
+      if (tier === 'mid')  return `인성 ${n}개의 체력 관리 결`;
+      return `${ganRef} 일간 — 약한 부위와 예방의 결`;
+    }
+    case 'potential': {
+      const n = sip.인성;
+      if (tier === 'high') return `인성 ${n}개 — 평생 흐름의 결과 도약 시점`;
+      if (tier === 'mid')  return `${ganRef} 일간의 대운 흐름과 자리잡기`;
+      return `${ganRef} 일간 — 늦게 피는 결의 시기`;
+    }
+    default:
+      return '1운에서 깊이 보기';
+  }
+}
+
+/**
  * TopicTopRecommend — 사용자 점수 가장 높은 3 영역 동적 추천
  *  · scores 에서 top-3 추출 → 해당 1운 페이지로 CTA
  *  · 점수가 높을수록 "더 알아보고 싶어진다" 심리 유도 (CTA 효율 ↑)
+ *  · 2026-05-05 hook 동적화 (sipDist + dayGan 호명)
  */
-function TopicTopRecommend({ scores }: { scores: Record<string, number> }) {
+function TopicTopRecommend({
+  scores,
+  sipDist,
+  dayGan,
+}: {
+  scores: Record<string, number>;
+  sipDist?: SipDist;
+  dayGan?: string;
+}) {
   // 이모지 사용 X — 한자 + 컬러 칩만 (사주500 톤앤매너)
   const navigate = useNavigate();
+  // 2026-05-05 정적 hook 제거 — deriveTopicHook 으로 동적화 (사주 8글자 호명)
   const TOPIC_META: Record<string, {
     label: string; route: string; hanja: string; color: string;
-    hookLine: string; // 점수 최강 시 호기심 유도 카피
-    midLine: string;  // 중간 점수
-    lowLine: string;  // 약함 — "보강법" 유도
   }> = {
-    career:    { label: '직업운',  route: '/topic/career', hanja: '官', color: '#5A7CA8',
-      hookLine: '어디서 가장 빛나는지·언제 자리를 잡는지',
-      midLine: '활용 시기와 자리 선택',
-      lowLine: '왜 자리잡기 어려운지·어떻게 보강할지' },
-    love:      { label: '연애운',  route: '/topic/love',   hanja: '緣', color: '#C88A95',
-      hookLine: '어떤 결의 사람과 깊게 이어지는지',
-      midLine: '결혼 적정기와 만남의 결',
-      lowLine: '왜 인연이 얕은지·어떻게 채울지' },
-    wealth:    { label: '재물운',  route: '/topic/wealth', hanja: '財', color: '#B8965A',
-      hookLine: '큰 돈이 들어오는 시기와 결정의 결',
-      midLine: '재산 형성의 결과 시기',
-      lowLine: '왜 돈이 머물지 않는지·어떻게 잡을지' },
-    social:    { label: '인간관계', route: '/topic/social', hanja: '人', color: '#5C9A6F',
-      hookLine: '내 결을 살리는 사람·소모하는 사람',
-      midLine: '관계의 결과 거리감 조정',
-      lowLine: '왜 관계가 얇은지·어디부터 깊게 갈지' },
-    health:    { label: '건강운',  route: '/topic/health', hanja: '壽', color: '#6FA08C',
-      hookLine: '지치지 않는 결과 회복 리듬',
-      midLine: '체력 관리의 결',
-      lowLine: '어디부터 약해지는지·예방의 결' },
-    potential: { label: '잠재력',  route: '/daeun',         hanja: '運', color: '#8E5C95',
-      hookLine: '평생 흐름의 결과 도약 시점',
-      midLine: '대운 흐름과 자리잡기',
-      lowLine: '늦게 피는 결의 시기' },
+    career:    { label: '직업운',  route: '/topic/career', hanja: '官', color: '#5A7CA8' },
+    love:      { label: '연애운',  route: '/topic/love',   hanja: '緣', color: '#C88A95' },
+    wealth:    { label: '재물운',  route: '/topic/wealth', hanja: '財', color: '#B8965A' },
+    social:    { label: '인간관계', route: '/topic/social', hanja: '人', color: '#5C9A6F' },
+    health:    { label: '건강운',  route: '/topic/health', hanja: '壽', color: '#6FA08C' },
+    potential: { label: '잠재력',  route: '/daeun',         hanja: '運', color: '#8E5C95' },
   };
   // top-3 점수 (점수 내림차순)
   const top3 = (Object.entries(scores) as Array<[string, number]>)
@@ -1869,10 +1918,8 @@ function TopicTopRecommend({ scores }: { scores: Record<string, number> }) {
   const topScore = top3[0][1];
   const topMeta = TOPIC_META[top3[0][0]];
 
-  function getHook(score: number, meta: typeof TOPIC_META[string]): string {
-    if (score >= 85) return meta.hookLine;
-    if (score >= 65) return meta.midLine;
-    return meta.lowLine;
+  function getHook(score: number, key: string): string {
+    return deriveTopicHook(key, score, sipDist, dayGan);
   }
   function getRank(score: number): { label: string; bg: string; color: string } {
     if (score >= 88) return { label: '최강', bg: 'rgba(46,125,50,0.14)', color: '#1b5e20' };
@@ -1957,7 +2004,7 @@ function TopicTopRecommend({ scores }: { scores: Record<string, number> }) {
           const meta = TOPIC_META[key];
           const isFirst = idx === 0;
           const rank = getRank(score);
-          const hook = getHook(score, meta);
+          const hook = getHook(score, key);
           return (
             <button
               key={key}
@@ -2714,7 +2761,7 @@ export function PremiumResult({
           {/* 현재 대운 상세 카드 — mockup §5 now-daewoon 진본 (천간/지지 별 풀이 + 키 사건) */}
           <NowDaewoonCard v4Daeun={v4Daeun} dayOheng={dayOheng} />
           {/* Stage 2C-#6: 인생 단계 3 카드 (mockup life-stage-grid 진본 — 지난/지금/다음 10년) */}
-          <LifeStageGrid v4Daeun={v4Daeun} />
+          <LifeStageGrid v4Daeun={v4Daeun} dayOheng={dayOheng} />
           {/* §05 본문 4 paragraphs (mockup 진본 형식 — 현재 대운 / 지지 결 / 다음 대운 / 그 다음) */}
           <Section5Body
             userName={report.name || '회원'}
@@ -2807,7 +2854,7 @@ export function PremiumResult({
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={9} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·잠재력 — 강·약 점수와 1운 깊이 보기">
           {/* Stage 2C-2#6: 여섯 영역 점수 topic-mini grid (mockup topic-mini 진본) */}
-          <TopicMiniGrid scores={scores} aiTopics={aiResult.topicMini} />
+          <TopicMiniGrid scores={scores} aiTopics={aiResult.topicMini} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} />
           {conclusionAt(8) && (
             <SectionConclusion>{conclusionAt(8)}</SectionConclusion>
           )}
@@ -2839,7 +2886,7 @@ export function PremiumResult({
 
       {/* "더 알아보기" 3 동적 카드 — 점수 가장 높은 3 영역으로 CTA */}
       <LocalFadeIn delay={50}>
-        <TopicTopRecommend scores={scores} />
+        <TopicTopRecommend scores={scores} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} />
       </LocalFadeIn>
 
       {/* ═════════════ Upsell — 사주대화 진입 CTA (목업 .upsell-card 진본) ═════════════ */}
@@ -5718,16 +5765,70 @@ function YongsinLifeTable({ primary, lifestyle }: { primary: OhengType; lifestyl
   // Stage 7e-7: lifestyle undefined 가드
   if (!lifestyle) return null;
   // mockup §4 진본 8행 — OHENG_LIFESTYLE 의 8 필드 모두 (사주별 동적)
-  // 한자 라벨 + 한 줄 도움말 추가
+  // 2026-05-05 hint 도 primary(용신 오행) 별 분기 — 보일러플레이트 박멸
+  // 같은 색·방위 라벨도 용신이 목·화·토·금·수 마다 다른 의미
+  const HINTS: Record<OhengType, Record<string, string>> = {
+    목: {
+      color: '초록·연두 옷·소품이 본인의 시작 결을 살립니다.',
+      direction: '동쪽이 본인 결을 키우는 방향 — 책상·침대를 돌리세요.',
+      season: '봄철에 일이 풀리는 결 — 큰 결정은 이 시기로.',
+      time: '아침 5~7시(寅時)가 가장 또렷한 결입니다.',
+      food: '잎채소·견과·곡물이 결을 채워줍니다.',
+      item: '식물·나무 소재 가구·연필이 결을 살립니다.',
+      hobby: '등산·정원·식물 가꾸기가 갈증을 풀어줍니다.',
+      people: '시작 의지가 또렷한 사람이 결을 채워줍니다.',
+    },
+    화: {
+      color: '빨강·주황·핑크가 본인의 표현 결을 살립니다.',
+      direction: '남쪽이 결을 키우는 방향 — 햇빛 쪽으로.',
+      season: '여름에 일이 풀리는 결 — 큰 결정은 이 시기로.',
+      time: '오전 11~13시(午時)가 가장 또렷한 결입니다.',
+      food: '매운맛·따뜻한 음식·생강이 결을 채워줍니다.',
+      item: '캔들·조명·붉은 소품이 결을 살립니다.',
+      hobby: '운동·댄스·요가가 갈증을 풀어줍니다.',
+      people: '밝고 에너지 있는 사람이 결을 채워줍니다.',
+    },
+    토: {
+      color: '노랑·베이지·황토색이 본인의 안정 결을 살립니다.',
+      direction: '중앙·정중앙이 결을 키우는 자리.',
+      season: '환절기(특히 늦여름)에 일이 풀립니다.',
+      time: '오전 9~11시(辰時)가 가장 또렷한 결입니다.',
+      food: '단맛·곡물·뿌리채소가 결을 채워줍니다.',
+      item: '도자기·테라코타·황토 소품이 결을 살립니다.',
+      hobby: '도예·정원·산책이 갈증을 풀어줍니다.',
+      people: '신뢰감 있고 안정적인 사람이 결을 채워줍니다.',
+    },
+    금: {
+      color: '흰색·은색이 본인의 단정한 결을 살립니다.',
+      direction: '서쪽이 결을 키우는 방향.',
+      season: '가을에 일이 풀리는 결 — 큰 결정은 이 시기로.',
+      time: '오후 5~7시(酉時)가 가장 또렷한 결입니다.',
+      food: '매운맛·견과·하얀 음식이 결을 채워줍니다.',
+      item: '금속 시계·미니멀 정리가 결을 살립니다.',
+      hobby: '서예·미니멀·정리가 갈증을 풀어줍니다.',
+      people: '결단력 있고 정갈한 사람이 결을 채워줍니다.',
+    },
+    수: {
+      color: '검정·짙은 남색이 본인의 사색 결을 살립니다.',
+      direction: '북쪽이 결을 키우는 방향.',
+      season: '겨울에 일이 풀리는 결 — 큰 결정은 이 시기로.',
+      time: '밤 11~1시(子時)가 가장 또렷한 결입니다.',
+      food: '짠맛·해산물·검은 음식이 결을 채워줍니다.',
+      item: '유리·수정·반신욕이 결을 살립니다.',
+      hobby: '수영·낚시·독서가 갈증을 풀어줍니다.',
+      people: '깊이 있고 차분한 사람이 결을 채워줍니다.',
+    },
+  };
+  const h = HINTS[primary];
   const rows: Array<{ kr: string; han: string; val: string; hint: string }> = [
-    { kr: '색',     han: '色', val: lifestyle.color || '',     hint: '옷·가방·시계·노트북에 의도적으로 두면 결이 차분해집니다.' },
-    { kr: '방위',   han: '方', val: lifestyle.direction || '', hint: '책상·침대 방향을 이쪽으로 두면 집중력이 올라갑니다.' },
-    { kr: '계절',   han: '季', val: lifestyle.season || '',    hint: '큰 결정·계약·발표는 이 시기로 몰아두면 흐름을 탑니다.' },
-    { kr: '시간대', han: '時', val: lifestyle.time || '',      hint: '집중·결정·집필·복기는 이 시간대가 가장 또렷합니다.' },
-    { kr: '음식',   han: '食', val: lifestyle.food || '',      hint: '매일 식단의 한쪽에 두면 결을 채워줍니다.' },
-    { kr: '물건',   han: '物', val: lifestyle.item || '',      hint: '매일 손에 닿는 물건 한두 개를 이 결로 두세요.' },
-    { kr: '취미',   han: '好', val: lifestyle.hobby || '',     hint: '이 결의 활동이 쌓이면 갈증이 자연스럽게 풀립니다.' },
-    { kr: '사람',   han: '人', val: lifestyle.people || '',    hint: '곁에 두면 결을 채워주는 인연의 결입니다.' },
+    { kr: '색',     han: '色', val: lifestyle.color || '',     hint: h.color },
+    { kr: '방위',   han: '方', val: lifestyle.direction || '', hint: h.direction },
+    { kr: '계절',   han: '季', val: lifestyle.season || '',    hint: h.season },
+    { kr: '시간대', han: '時', val: lifestyle.time || '',      hint: h.time },
+    { kr: '음식',   han: '食', val: lifestyle.food || '',      hint: h.food },
+    { kr: '물건',   han: '物', val: lifestyle.item || '',      hint: h.item },
+    { kr: '취미',   han: '好', val: lifestyle.hobby || '',     hint: h.hobby },
+    { kr: '사람',   han: '人', val: lifestyle.people || '',    hint: h.people },
   ].filter((r) => Boolean(r.val));
 
   const ohengHex: Record<OhengType, string> = {
@@ -5972,16 +6073,39 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
   );
 }
 
-function LifeStageGrid({ v4Daeun }: { v4Daeun: V4Daeun[] }) {
+function LifeStageGrid({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng?: OhengType }) {
   const currentIdx = v4Daeun.findIndex((d) => d.current);
   if (currentIdx < 0) return null;
   const past = currentIdx > 0 ? v4Daeun[currentIdx - 1] : null;
   const now = v4Daeun[currentIdx];
   const next = currentIdx + 1 < v4Daeun.length ? v4Daeun[currentIdx + 1] : null;
+
+  // 2026-05-05 audit P0 #5 — sub 동적화
+  // 대운 천간 오행 vs 일간 오행 관계 → 십성 분류 → 자리 의미 동적
+  function ohengToSip(daeunOheng: OhengType | undefined, dGen: OhengType | undefined): string {
+    if (!daeunOheng || !dGen) return '결을 다지는 자리';
+    if (daeunOheng === dGen) return '자기 결을 굳히는 자리';
+    if (SANGSAENG[dGen] === daeunOheng) return '본인을 풀어내는 자리';
+    if (SANGGEUK[dGen] === daeunOheng) return '실리를 챙기는 자리';
+    if (SANGGEUK[daeunOheng] === dGen) return '책임을 받는 자리';
+    if (SANGSAENG[daeunOheng] === dGen) return '받쳐 배우는 자리';
+    return '결을 다지는 자리';
+  }
+  // V4Daeun 의 천간 오행 추출 (gz 첫 글자 → 오행)
+  const ganOhMap: Record<string, OhengType> = {
+    甲: '목', 乙: '목', 丙: '화', 丁: '화', 戊: '토', 己: '토',
+    庚: '금', 辛: '금', 壬: '수', 癸: '수',
+  };
+  const sub = (d: V4Daeun | null): string => {
+    if (!d) return '—';
+    const ganHan = d.gz?.charAt(0);
+    const ohType = ganHan ? ganOhMap[ganHan] : undefined;
+    return ohengToSip(ohType, dayOheng);
+  };
   const stages: Array<{ label: string; data: V4Daeun | null; isNow: boolean; sub: string }> = [
-    { label: '지난 10년', data: past, isNow: false, sub: '되돌아봐야 할 자리' },
-    { label: '지금', data: now, isNow: true, sub: '집중해야 할 자리' },
-    { label: '다음 10년', data: next, isNow: false, sub: '준비해야 할 자리' },
+    { label: '지난 10년', data: past, isNow: false, sub: past ? `되돌아본 ${sub(past)}` : '—' },
+    { label: '지금', data: now, isNow: true, sub: `지금의 ${sub(now)}` },
+    { label: '다음 10년', data: next, isNow: false, sub: next ? `다가오는 ${sub(next)}` : '—' },
   ];
   // mockup .life-stage-grid .life-stage-card 진본 — className 만 사용
   return (
@@ -6069,20 +6193,29 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
       if (c?.kr) aiMap[c.kr] = c;
     }
   }
-  // 한글 매핑이 없는 신살에 대한 일반 액션 — 신살 카테고리별로 다양화
+  // 한글 매핑이 없는 신살에 대한 일반 액션 — 신살 카테고리 + source 기준 동적
   function getDefaultAction(s: V4SinSal): string {
     const k = s.kr || s.hanja;
-    if (/살|殺|煞/.test(s.hanja)) return '강한 결이라 의식적으로 거리를 둘 자리. 큰 결정은 24시간 보류 룰을 두세요.';
-    if (/귀인|貴人|덕|德|희|喜/.test(s.hanja)) return '도와줄 인연이 들어오는 결. 평소 인연을 가벼이 보지 마세요.';
-    if (/공망|空亡/.test(s.hanja)) return '해당 글자가 들어오는 해엔 새 일보다 학습·자격·관계 정비에 시간을 투자하세요.';
-    if (/사|死/.test(s.hanja)) return '활기가 약해지는 자리. 충분한 휴식과 회복 루틴이 필요합니다.';
-    if (/효|孝|모|母/.test(s.hanja)) return '돌봄·양육·후배 멘토링 자리에서 결이 살아납니다.';
-    return `${k} — 본인 결과 가까운 자리. 강점은 살리고 약점은 의식적으로 다루세요.`;
+    const fromLabel = s.source ? `${s.source} 기준의 ` : '';
+    if (/살|殺|煞/.test(s.hanja)) return `${fromLabel}강한 결이라 의식적으로 거리를 둘 자리. 큰 결정은 24시간 보류 룰을 두세요.`;
+    if (/귀인|貴人|덕|德|희|喜/.test(s.hanja)) return `${fromLabel}도와줄 인연이 들어오는 결. 평소 인연을 가벼이 보지 마세요.`;
+    if (/공망|空亡/.test(s.hanja)) return `${fromLabel}해당 글자가 들어오는 해엔 새 일보다 학습·자격·관계 정비에 시간을 투자하세요.`;
+    if (/사|死/.test(s.hanja)) return `${fromLabel}활기가 약해지는 자리. 충분한 휴식과 회복 루틴이 필요합니다.`;
+    if (/효|孝|모|母/.test(s.hanja)) return `${fromLabel}돌봄·양육·후배 멘토링 자리에서 결이 살아납니다.`;
+    return `${fromLabel}${k} — 본인 결과 가까운 자리. 강점은 살리고 약점은 의식적으로 다루세요.`;
+  }
+
+  // source 기준 prefix — 같은 신살이라도 일주/월주 기준마다 다른 작용
+  function withFromPrefix(s: V4SinSal, baseAction: string): string {
+    if (!s.source) return baseAction;
+    return `${s.source} 기준 — ${baseAction}`;
   }
 
   function renderCard(s: V4SinSal, dots: number, when: string, isFull: boolean, whenClass: 'always' | 'dae' | 'year') {
     const ai = aiMap[s.hanja] || aiMap[s.kr];
-    const action = ai?.action?.trim() || ACTION_TIP[s.kr] || getDefaultAction(s);
+    // AI action 우선 → ACTION_TIP[s.kr] (with from prefix) → getDefaultAction
+    const baseAction = ai?.action?.trim() || (ACTION_TIP[s.kr] && withFromPrefix(s, ACTION_TIP[s.kr])) || getDefaultAction(s);
+    const action = baseAction;
     const desc = ai?.desc?.trim() || s.desc;
     const fromText = ai?.from?.trim();
     const krLabel = s.kr && s.kr !== s.hanja && /[가-힣]/.test(s.kr) ? s.kr : '신살';
@@ -6927,47 +7060,29 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
  *  · 5 주제 + 점수 + 막대 + 키워드
  * ═════════════════════════════════════════════════════════════════ */
 interface AiTopicMini { desc?: string; meaning?: string; keyword?: string; line?: string }
-function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; aiTopics?: Record<string, AiTopicMini> }) {
+function TopicMiniGrid({
+  scores,
+  aiTopics,
+  sipDist,
+  dayGan,
+}: {
+  scores: Record<string, number>;
+  aiTopics?: Record<string, AiTopicMini>;
+  sipDist?: SipDist;
+  dayGan?: string;
+}) {
   const navigate = useNavigate();
-  // mockup §9 진본 순서: 재물·사랑·직업·건강·가족·관계 (가족·관계가 마지막 .full 카드)
-  // 점수별 다른 호기심 유도 카피 — CTA 효율 ↑ (가장 중요한 섹션)
-  type TopicMeta = {
-    key: string;
-    label: string;
-    route: string;
-    topicId: string;
-    hookLow: string;   // 약 (≤55) — "왜 약하고 어떻게 보강할지"
-    hookMid: string;   // 중 (56~84)
-    hookHigh: string;  // 강 (85+)
-  };
-  // 2026-05-05 준기 지시 — 6 카드 복원 (잠재력·인간관계 추가) + 1운 라우팅
-  // social → /topic/social (TopicTopRecommend 와 동일 · TopicAnalysisPage 에서 SocialViz 처리)
-  // potential → /daeun (대운 = 인생 흐름 = 잠재력 발현 시기 · TopicTopRecommend 와 동일)
+  // 2026-05-05 hook 정적 → deriveTopicHook 동적화 (사주 8글자 호명)
+  // 2026-05-05 6 카드 복원 (잠재력·인간관계) + 1운 라우팅
+  // social → /topic/social, potential → /daeun
+  type TopicMeta = { key: string; label: string; route: string; topicId: string };
   const topics: TopicMeta[] = [
-    { key: 'wealth', label: '재물', route: '/topic/wealth', topicId: 'wealth',
-      hookLow: '돈이 새는 자리·지키는 법·언제 모이는지',
-      hookMid: '큰 돈 들어오는 시기·결정의 결',
-      hookHigh: '재산 형성 정점 시기·한계까지' },
-    { key: 'love',   label: '사랑', route: '/topic/love',   topicId: 'love',
-      hookLow: '인연이 얕은 이유·결을 채우는 법',
-      hookMid: '결혼 적정기·만남의 결',
-      hookHigh: '깊게 이어지는 사람의 결·시기' },
-    { key: 'career', label: '직업', route: '/topic/career', topicId: 'career',
-      hookLow: '왜 자리잡기 어려운지·맞는 분야',
-      hookMid: '활용 시기·자리 선택',
-      hookHigh: '어디서 빛나는지·언제 자리잡는지' },
-    { key: 'health', label: '건강', route: '/topic/health', topicId: 'health',
-      hookLow: '약한 부위·예방의 결',
-      hookMid: '체력 관리의 결',
-      hookHigh: '지치지 않는 결·회복 리듬' },
-    { key: 'social', label: '인간관계', route: '/topic/social', topicId: 'social',
-      hookLow: '왜 관계가 얇은지·어디부터 깊게 갈지',
-      hookMid: '관계의 결과 거리감 조정',
-      hookHigh: '내 결을 살리는 사람·소모하는 사람' },
-    { key: 'potential', label: '잠재력', route: '/daeun', topicId: 'potential',
-      hookLow: '늦게 피는 결의 시기',
-      hookMid: '대운 흐름과 자리잡기',
-      hookHigh: '평생 흐름의 결과 도약 시점' },
+    { key: 'wealth',    label: '재물',     route: '/topic/wealth', topicId: 'wealth' },
+    { key: 'love',      label: '사랑',     route: '/topic/love',   topicId: 'love' },
+    { key: 'career',    label: '직업',     route: '/topic/career', topicId: 'career' },
+    { key: 'health',    label: '건강',     route: '/topic/health', topicId: 'health' },
+    { key: 'social',    label: '인간관계', route: '/topic/social', topicId: 'social' },
+    { key: 'potential', label: '잠재력',   route: '/daeun',         topicId: 'potential' },
   ];
 
   // 2026-05-05 6 카드 → 2-col grid 균일 (마지막 .full 카드 제거)
@@ -6976,7 +7091,8 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
       const ai = aiTopics?.[t.key];
       const aiDesc = ai?.desc?.trim() || ai?.line?.trim() || ai?.meaning?.trim();
       const score = Number(scores?.[t.key] ?? 0);
-      const hook = score >= 85 ? t.hookHigh : score >= 56 ? t.hookMid : t.hookLow;
+      // 동적 hook — sipDist + dayGan 호명
+      const hook = deriveTopicHook(t.key, score, sipDist, dayGan);
       return {
         ...t,
         score,
