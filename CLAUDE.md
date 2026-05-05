@@ -2,7 +2,91 @@
 
 > 이 문서는 Claude Code가 프로젝트를 이해하기 위한 **진입점**입니다.
 > 웹 채팅(claude.ai)에서 설계한 내용을 여기서 이어서 개발합니다.
-> **최종 업데이트: 2026-05-05 EVE** (명리학 정통성 정책 + dead code (주간운세) 정리)
+> **최종 업데이트: 2026-05-05 NIGHT** (sprint 25 commit 종합 — UX 라이팅 균형 + 카드 3-tier + 폰트 11px floor + StoragePage 10탭)
+
+---
+
+## 📋 2026-05-05 sprint 종합 — 25 commit 핵심 정리
+
+이번 sprint 누적: `9f84cfb` → `16e6adb` (25 commit). 핵심 변경:
+
+### 1) 명리학 정통성 (P0) — 별도 §아래 상세
+- 7대 이론 정통화 (`MYEONGRI_GROUNDS_BLOCK`)
+- 6 prompt 파일 일괄 적용 (claudePremium·Report·Daeun·Monthly·Compat·Tojung)
+- 출력 = 일상어 (출처 mention 0건)
+- AI 자유서술 차단
+
+### 2) 보일러플레이트 박멸 (P0) — 별도 §아래 상세
+- prompt 실명 49건 제거 (이혜지·준기·변준기)
+- 1운 ResultPage 동적화 (WealthFlow·HealthVis·categoryMeanings·GaewoonVis·LuckyCard)
+- 5 핵심 주제 깊이 보강 (격국 매트릭스·길성 매핑·일지 4-step)
+
+### 3) UX 라이팅 균형 (PD 정정 2026-05-05 EVE)
+- "AI" 사용자 노출 단어 sweep (SymbolDragMap "AI 해석 보기" → "해석 보기" / DreamPage "AI가 분석 중" → "꿈을 살피는 중")
+- AI self-reference 8 prompt 파일 sweep (`사주500 명리학 해석 AI` → `사주500 명리학 해석가`)
+- "결" 남발 제한 (한 섹션 3회+ 금지) — 대안: 흐름·리듬·패턴·특징·성향·스타일
+- 자극 톤 균형 ("죽는다·망한다·재앙" X / "큰 변화·주의·위험·함정·전환점" 적절히 OK)
+- 외래어 적절히 OK ("DNA"·"패턴"·"타입" 임팩트 도움 시 사용)
+
+### 4) 강조 위계 3-tier (P1 audit 4)
+- `<strong>` 황금 형광펜 — 일상 결론 (한 문단 1~2회)
+- `<b>` 검정 볼드 — 한자 첫 등장
+- `<u>` 황금 밑줄 — 시기·숫자·색·방위·시간대 (한 문단 0~2회)
+- prompt mandate 명시 (sections·timeline·actionAdvice·insightCards 모두 적용)
+
+### 5) StoragePage 10탭 분류 (PD 정정 2026-05-05)
+이전 4탭 (전체·사주·궁합·기타) → 실제 contentType 9종 + chat = 10탭:
+- 전체·종합사주·주제별·궁합·대운·월운·토정비결·오늘운세·꿈해몽·사주대화
+- 가로 스크롤 (overflow-x-auto)
+- 빈 상태 메시지 10개 신규
+
+### 6) ContactSheet 업데이트
+- `CONTACT_EMAIL`: `info@juulabel.com`
+- `KAKAO_CHANNEL_URL`: `https://open.kakao.com/o/pa01C1ri` (오픈채팅방)
+- "메일 주소 복사" 버튼 제거 (불필요)
+- "카카오 채널 (준비 중)" → "카카오 오픈채팅" (활성)
+
+### 7) 카드 radius 3-tier 통일 (P1 audit 4 #2)
+- `rounded-2xl` (16px) — 대형 카드
+- `rounded-xl` (12px) — 중형 미니카드
+- `rounded-lg` (8px) — 소형 chip/pill
+- `rounded-full` — 원형 chip
+- `rounded-md` (6px) 8건 sweep → `rounded-lg`
+
+### 8) 폰트 11px floor (P1 audit 4 #6 · 60대 가독)
+- `text-[10px]` 94회 → `text-[11px]`
+- `text-[9px]` 88회 → `text-[11px]`
+- `text-[8px]` 15회 → `text-[11px]` (의도된 단일-glyph 3건 보존: w-5/w-4 rounded-full 안 + ! 글리프)
+- 결과: `text-[11px]` 266회 (기존 68 + 신규 198) — 60대 가독 floor
+
+### 9) 앱인토스 정책 검증 (MyPage)
+- `MENU_ITEMS_AIT` (운충전·결제내역) vs `MENU_ITEMS_WEB` (분석기록 추가) 분기 OK
+- 로그아웃·회원탈퇴 = `!inAppsInToss && isLoggedIn` (앱인토스 비노출)
+- 이용약관·개인정보·고객문의 = 양쪽 노출 (정책 필수)
+
+### 10) 결제·UX P0 (audit 3)
+- 결제 직전 confirm Modal (`TopicAnalysisPage`) — 1운 차감 직전 사용자 명시 동의
+- 잔액 부족 inline Modal + sessionStorage 입력값 보존 + returnTo state
+- AI 실패 inline Error 카드 (toast 대신 — 사용자 인지 보장)
+- cross-topic 다른 주제 CTA → 5 핵심 주제만 (love·reunion·exam·wealth·career) + race condition fix
+
+### 11) ExamViz 신규 + CareerViz 깊이 보강 (audit 4 P0)
+- ExamViz: 합격 운 강도·면접 시간·이직 시기·합격 길성 chip
+- CareerViz 3 → 6 카드 (직업 핵심 결·12개월 grid·단계별 timeline)
+- AI schema 신규: coreStrength·officeAdaptType·sipsungBalance·monthlyCareer·careerPhases
+
+### 12) Dead code 정리 (총 11 파일)
+- `academicReferences.ts` (655줄)
+- `src/constants/prompts.ts` + `promptBuilder.ts` (legacy)
+- `gemini{Chat,Dream,Fortune,Tojung,Topic}.ts` (5 파일)
+- `claudeWeekly.ts` + `WEEKLY_FORTUNE_SYSTEM_V3` (주간운세 폐지)
+- `generateWeeklyFortune` Cloud Function 삭제 (`firebase functions:delete`)
+- `CareerFitVis.tsx` 31줄 (사용처 0)
+
+### 13) #5 inline SVG → Pictogram (deferred)
+- 인벤토리: ~33 inline SVG, ~15 unique 모양
+- 회귀 위험 大 판단 → 다음 sprint
+- TODO 주석: PictogramRegistry 신규 키 (`ui:star`·`ui:bolt`·`ui:heart`·`ui:check`·`ui:plus`·`ui:alert-tri`·`concern:home`·`concern:exam`·`concern:business`·`concern:study` 등)
 
 ---
 
