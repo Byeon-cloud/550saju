@@ -541,7 +541,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <div className="space-y-2.5">
             {data.earningPower != null && <HBar value={data.earningPower} label="수익력 — 돈 벌어오는 힘" color="#2D8A4E" />}
             {data.savingPower != null && <HBar value={data.savingPower} label="저축력 — 돈 모으는 힘" color="#1565C0" />}
-            {data.spendingRisk != null && <HBar value={data.spendingRisk} label="지출 압력 — 돈 새는 위험도" color="#D32F2F" suffix=" (높을수록 위험)" />}
+            {data.spendingRisk != null && <HBar value={data.spendingRisk} label="지출 위험도 — 돈 새는 정도" color="#D32F2F" suffix=" (높을수록 새는 돈 큼)" />}
           </div>
         </div>
 
@@ -709,7 +709,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <p className="text-[12px] font-bold text-[#E65100]">조심하면 좋을 지출 패턴</p>
+              <p className="text-[12px] font-bold text-[#E65100]">돈이 새는 자리 — 미리 챙기면 막을 수 있어요</p>
             </div>
             <p className="text-[13px] text-text-primary font-semibold leading-snug mb-1">{data.moneyLeakTrap}</p>
             {data.moneyLeakDesc && (
@@ -1907,7 +1907,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
         {sinsalList && (
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">타고난 6 가지 연애 특질</p>
-            <p className="text-[10px] text-text-hint mb-3">사주에 숨겨진 연애의 결를 하나씩 짚어봤어요</p>
+            <p className="text-[10px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
             <div className="space-y-3">
               {[
                 { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',

@@ -71,7 +71,7 @@ function buildSystemPrompt(sajuData: any): string {
   const year = new Date().getFullYear();
   const month = new Date().getMonth() + 1;
 
-  return `당신은 사주500의 명리학 전문 해석 AI입니다.
+  return `당신은 사주500 명리학 해석가입니다.
 ${MYEONGRI_GROUNDS_BLOCK}
 
 명리학(命理學) 깊이 있는 해석 — 자평진전·적천수·궁통보감 6대 원전 정통.

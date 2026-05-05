@@ -39,7 +39,7 @@ function buildPrompt(d: any): string {
     return `{"간지":"${du.간지}","시작나이":${du.시작나이||0},"끝나이":${du.끝나이||0},"isCurrent":${isCurrent},"theme":"4글자 키워드","career":"80자 이상 직업운","love":"80자 이상 연애운","wealth":"80자 이상 재물운","health":"80자 이상 건강운","score":1~100,"careerScore":0-100,"loveScore":0-100,"wealthScore":0-100,"healthScore":0-100,"advice":"50자 이상 조언"}`;
   }).join(',\n    ');
 
-  return `당신은 사주500 명리학 해석 AI. ${MYEONGRI_GROUNDS_BLOCK}
+  return `당신은 사주500 명리학 해석가. ${MYEONGRI_GROUNDS_BLOCK}
 
 대운 깊이 있는 분석 — 사주 글자에서 추출한 진짜 근거.
 

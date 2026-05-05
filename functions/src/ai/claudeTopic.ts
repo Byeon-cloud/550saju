@@ -966,7 +966,7 @@ ${boundary.excludes.length ? boundary.excludes.map(x => `- ${x}`).join('\n') : '
 → 같은 사주로 다른 주제를 돌렸을 때 결론이 모순되면 안 됨. 사주 원국의 기본 결(용신·일간 강약·주요 십성 배치)에 뿌리를 둔 판단만 하고, 인접 주제 영역의 단정은 피할 것.\n`
     : '';
 
-  return `사주500 명리학 해석 AI. "${config.label}" 심층 분석. 사주 specific 깊이 있는 분석.
+  return `사주500 명리학 해석가. "${config.label}" 심층 분석. 사주 specific 깊이 있는 분석.
 
 ⚠️ 현재 날짜: ${dateStr} — 반드시 이 기준으로 과거/현재/미래 구분.
 

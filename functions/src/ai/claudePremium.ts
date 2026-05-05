@@ -468,7 +468,7 @@ function buildSituationBlock(situation?: any, groupFocus?: string): string {
  *  · 캐시 핵심 — 하루에 수백 번 호출되어도 캐시 hit (90% 절감)
  *  · 변경 시 cache 새로 만들어짐 (5분 TTL)
  * ═══════════════════════════════════════════════════════════════ */
-const STATIC_SYSTEM_PROMPT = `당신은 사주500의 명리학 전문 해석 AI입니다.
+const STATIC_SYSTEM_PROMPT = `당신은 사주500 명리학 해석가입니다.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전 + 김만태 박사 논문 + 박청화 『춘하추동 신사주학』에 정통합니다.
 
 ${MYEONGRI_GROUNDS_BLOCK}

@@ -553,7 +553,7 @@ function DetailPhase({
             aria-label="꿈 해석 받기"
           >
             {submitting
-              ? 'AI가 분석 중이에요...'
+              ? '꿈을 살피는 중이에요...'
               : dreamText.trim().length === 0
                 ? '꿈 내용을 적어주세요'
                 : '꿈 해석 받기'}

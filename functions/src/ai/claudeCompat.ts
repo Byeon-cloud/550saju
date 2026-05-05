@@ -177,7 +177,7 @@ function buildPrompt(d1: any, d2: any, rel: string): string {
   // 정통 명리학 자동 산출 — AI 자유추론 X, 결정론적 입력
   const crossRelations = computeCrossRelations(d1, d2);
 
-  return `당신은 사주500 명리학 해석 AI. ${MYEONGRI_GROUNDS_BLOCK}
+  return `당신은 사주500 명리학 해석가. ${MYEONGRI_GROUNDS_BLOCK}
 
 궁합 깊이 있는 분석 — 두 사주 글자에서 추출한 진짜 근거.
 
