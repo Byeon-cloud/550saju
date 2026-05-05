@@ -184,9 +184,16 @@ function buildSystemPrompt(sajuData: any): string {
     "lover": {"score": 0-100, "keyword": "한마디"}
   },
   "wealthFlow": {
-    "earning": {"score": 0-100, "style": "벌기 스타일"},
-    "spending": {"score": 0-100, "style": "쓰기 스타일"},
-    "saving": {"score": 0-100, "style": "모으기 스타일"}
+    "earning": {"score": 0-100, "style": "벌기 스타일", "interpretation": "이 점수의 의미 — 일간·재성 카운트 등 사주 specific 인용 60~80자", "action": "실천 조언 — 일간 호명 포함 50~70자"},
+    "spending": {"score": 0-100, "style": "쓰기 스타일", "interpretation": "이 점수의 의미 — 일간·비겁 카운트 등 사주 specific 인용 60~80자", "action": "실천 조언 — 일간 호명 포함 50~70자"},
+    "saving": {"score": 0-100, "style": "모으기 스타일", "interpretation": "이 점수의 의미 — 일간·식상 카운트 등 사주 specific 인용 60~80자", "action": "실천 조언 — 일간 호명 포함 50~70자"}
+  },
+  "health": {
+    "wood": {"detail": "간·담·눈·근육 — 일간(예: 갑(甲)) 호명 + 목 N자 인용 60~80자"},
+    "fire": {"detail": "심장·소장·혈관 — 일간 호명 + 화 N자 인용 60~80자"},
+    "earth": {"detail": "비장·위·소화 — 일간 호명 + 토 N자 인용 60~80자"},
+    "metal": {"detail": "폐·대장·피부 — 일간 호명 + 금 N자 인용 60~80자"},
+    "water": {"detail": "신장·방광·뼈 — 일간 호명 + 수 N자 인용 60~80자"}
   }
 }
 
@@ -198,6 +205,7 @@ function buildSystemPrompt(sajuData: any): string {
 5. analysisBase는 반드시 채우세요 — 프론트엔드에서 격국/용신 배지로 표시합니다.
 6. luckyProfile의 모든 항목은 용신 오행에서 파생되어야 합니다. 용신이 목이면 색상=초록, 방위=동, 음식=신맛 등.
 7. careerFit의 reason에 사주 근거를 한 줄로 적으세요.
+8. wealthFlow의 interpretation/action 과 health.{wood,fire,earth,metal,water}.detail 은 반드시 사주 8글자를 직접 호명하세요. 예: "갑(甲) 일간이 재성 2개로 받쳐주는 안정적 수입 구조" / "을(乙) 일간이 화 0자라 심장·혈관에 부담이 갈 수 있어요". 같은 점수라도 일간 오행·십성 카운트가 다르면 문장이 달라야 합니다 — 일반론 금지.
 
 JSON만 출력하세요. 코드블록 없이.`;
 }

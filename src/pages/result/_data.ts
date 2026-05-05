@@ -19,9 +19,9 @@ export interface ElemColor {
 export const EC: Record<ElemKey, ElemColor> = {
   wood: { main: '#2d8a4e', light: '#e8f5e9', med: '#a5d6a7', dark: '#1b5e20', grad: 'linear-gradient(135deg,#e8f5e9,#c8e6c9)' },
   fire: { main: '#d32f2f', light: '#ffebee', med: '#ef9a9a', dark: '#b71c1c', grad: 'linear-gradient(135deg,#ffebee,#ffcdd2)' },
-  earth: { main: '#f57f17', light: '#fff8e1', med: '#ffe082', dark: '#e65100', grad: 'linear-gradient(135deg,#fff8e1,#ffecb3)' },
-  metal: { main: '#757575', light: '#f5f5f5', med: '#e0e0e0', dark: '#424242', grad: 'linear-gradient(135deg,#f5f5f5,#e0e0e0)' },
-  water: { main: '#1565c0', light: '#e3f2fd', med: '#90caf9', dark: '#0d47a1', grad: 'linear-gradient(135deg,#e3f2fd,#bbdefb)' },
+  earth: { main: '#E8B82A', light: '#fff8e1', med: '#ffe082', dark: '#e65100', grad: 'linear-gradient(135deg,#fff8e1,#ffecb3)' },
+  metal: { main: '#4A4A4A', light: '#f5f5f5', med: '#e0e0e0', dark: '#424242', grad: 'linear-gradient(135deg,#f5f5f5,#e0e0e0)' },
+  water: { main: '#1565E0', light: '#e3f2fd', med: '#90caf9', dark: '#0d47a1', grad: 'linear-gradient(135deg,#e3f2fd,#bbdefb)' },
 };
 export const EKR: Record<ElemKey, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
 export const EHAN: Record<ElemKey, string> = { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' };
@@ -80,6 +80,10 @@ export interface V4Daeun {
   label: string;
   period: string;
   current?: boolean;
+  /** 2026-05-04: AI 또는 명리학적 계산으로 산출된 점수 (0-100). 없으면 클라이언트 fallback. */
+  score?: number;
+  /** AI 가 보낸 한 줄 풀이 (대운 추이 차트 캡션용) */
+  scoreReason?: string;
 }
 
 export interface V4Napeum {
@@ -247,7 +251,21 @@ export function mapUnyoung12(unyoung: UnYoung[], pillars: Pillar[]): V4Unyoung[]
   });
 }
 
-export function mapDaeun(daeunList: DaeUn[], birthYear: number): V4Daeun[] {
+/**
+ * AI daeunPeriods 응답 형식 (선택 · 없으면 fallback 사용):
+ * [{ age: '9~18세', score: 65, reason: '한 줄 풀이' }, ...]
+ */
+export interface AiDaeunPeriod {
+  age?: string;
+  score?: number;
+  reason?: string;
+}
+
+export function mapDaeun(
+  daeunList: DaeUn[],
+  birthYear: number,
+  aiPeriods?: AiDaeunPeriod[],
+): V4Daeun[] {
   const labels = ['학업기', '확립기', '안정기', '확립기', '수확기', '원숙기', '완성기', '지혜기', '관조기', '회고기'];
   // 비정상 항목 + 간지 없는 소운 기간 필터
   const valid = daeunList.filter(d => d.시작나이 <= d.끝나이 && d.간지 && d.간지.trim().length > 0);
@@ -258,14 +276,21 @@ export function mapDaeun(daeunList: DaeUn[], birthYear: number): V4Daeun[] {
     const zhiKr = JIJI_KO[d.지지] ?? d.지지;
     let label = labels[i] ?? `${i + 1}기`;
     if (d.isCurrent) label = '현재';
+    const ageStr = `${d.시작나이}~${d.끝나이}세`;
+    // AI score 매칭 — age 문자열 기준
+    const aiMatch = aiPeriods?.find((p) => p.age && p.age.replace(/\s/g, '') === ageStr.replace(/\s/g, ''));
     return {
-      age: `${d.시작나이}~${d.끝나이}세`,
+      age: ageStr,
       gz: d.간지,
       kr: `${ganKr}${zhiKr}`,
       elem,
       label,
       period: `${birthYear + d.시작나이}~${birthYear + d.끝나이}`,
       current: d.isCurrent,
+      score: typeof aiMatch?.score === 'number' && aiMatch.score >= 0 && aiMatch.score <= 100
+        ? aiMatch.score
+        : undefined,
+      scoreReason: aiMatch?.reason,
     };
   });
 }
@@ -419,6 +444,26 @@ export const SINSAL_KR: Record<string, string> = {
   桃花殺: '도화살', 桃花: '도화', 紅艶殺: '홍염살', 紅艷殺: '홍염살', 紅艶: '홍염', 紅艷: '홍염',
   華蓋殺: '화개살', 華蓋: '화개', 空亡: '공망', 將星: '장성', 攀鞍: '반안', 歲驛: '세역',
   亡神: '망신', 月空: '월공', 驛馬殺: '역마살',
+  // 일진 길흉신 추가
+  相日: '상일', 死神: '사신', 死氣: '사기', 死气: '사기',
+  時陰: '시음', 时阴: '시음', 陰錯: '음착', 阴错: '음착',
+  陽錯: '양착', 阳错: '양착', 母倉日: '모창일', 母仓日: '모창일',
+  天后: '천후', 玄武: '현무', 大時: '대시', 大时: '대시',
+  小耗: '소모', 小時: '소시', 小时: '소시', 月害神: '월해신',
+  月厭日: '월염일', 月厭神: '월염신',
+  孤辰: '고진', 寡宿: '과숙', 紅鸞: '홍란', 红鸾: '홍란',
+  天喜星: '천희성',
+  // 일진 추가 (lunar-javascript 결과에서 자주 등장하는 한자만)
+  王日: '왕일', 宝光: '보광', 寶光: '보광', 月建: '월건', 月恩: '월은',
+  天醫日: '천의일', 天医日: '천의일', 福生日: '복생일', 旺日: '왕일',
+  四相: '사상', 平日: '평일', 收日: '수일', 開日: '개일', 开日: '개일',
+  滿日: '만일', 满日: '만일', 成日: '성일', 除日: '제일',
+  建日: '건일', 閉日: '폐일', 闭日: '폐일',
+  天牢: '천뢰', 司命: '사명', 玄武日: '현무일', 黑道: '흑도',
+  黄道: '황도', 黃道: '황도', 黑黄道: '흑황도', 黑黃道: '흑황도',
+  亥日: '해일', 子日: '자일', 寅日: '인일', 卯日: '묘일',
+  辰日: '진일', 巳日: '사일', 午日: '오일', 未日: '미일',
+  申日: '신일', 酉日: '유일', 戌日: '술일', 丑日: '축일',
   // 귀인계
   天乙貴人: '천을귀인', 天乙贵人: '천을귀인', 文昌貴人: '문창귀인', 文昌贵人: '문창귀인',
   學堂貴人: '학당귀인', 学堂贵人: '학당귀인', 月德貴人: '월덕귀인', 月德贵人: '월덕귀인',
@@ -463,6 +508,46 @@ export const SINSAL_DESC: Record<string, string> = {
   要安: '안정의 기운. 혼란 속에서도 중심을 잡는 능력',
   不將: '조용히 실력을 쌓는 타입. 겉으로 드러나지 않지만 실속이 있음', 不将: '조용히 실력을 쌓는 타입. 겉으로 드러나지 않지만 실속이 있음',
   普護: '두루 보호받는 기운. 위험한 상황에서도 안전한 편', 普护: '두루 보호받는 기운. 위험한 상황에서도 안전한 편',
+  // 일진 길흉신 의미 보강 (lunar-javascript 자주 등장)
+  王日: '왕성한 기운이 도는 자리. 큰 결정·발표·승부수에 유리한 시기',
+  寶光: '귀한 인연·자산이 들어오는 자리. 모임·축하·소개에 적극',
+  宝光: '귀한 인연·자산이 들어오는 자리. 모임·축하·소개에 적극',
+  月建: '한 달의 기준이 되는 자리. 월초 계획·체크리스트가 흐름을 좌우',
+  月恩: '주변의 도움이 들어오는 자리. 어려운 일은 혼자 끌고가지 마세요',
+  四相: '사방에서 작용하는 자리. 균형 감각이 핵심',
+  平日: '평탄·안정의 자리. 큰 변화보다 일상 정돈에 좋은 시기',
+  收日: '거두는 자리. 미뤄둔 마무리·정산에 적합',
+  開日: '열림의 자리. 새 만남·새 기회에 문이 열림',
+  开日: '열림의 자리. 새 만남·새 기회에 문이 열림',
+  滿日: '가득 차는 자리. 결과물 확인·발표에 유리',
+  满日: '가득 차는 자리. 결과물 확인·발표에 유리',
+  成日: '이루어지는 자리. 계약·결정·성사에 흐름이 맞음',
+  除日: '비우고 정리하는 자리. 불필요한 것 끊기에 좋음',
+  建日: '시작·기초를 세우는 자리. 새 일·이사·계약에 길함',
+  閉日: '닫는 자리. 새 일보다 마무리·휴식이 흐름',
+  闭日: '닫는 자리. 새 일보다 마무리·휴식이 흐름',
+  天牢: '갇히는 결. 큰 약속·법적 일은 하루 묵혔다 결정',
+  司命: '운명을 주관하는 자리. 큰 결정 전 한 박자 늦추는 연습',
+  黃道: '길한 기운이 도는 자리. 적극적 행동에 흐름이 받쳐줌',
+  黄道: '길한 기운이 도는 자리. 적극적 행동에 흐름이 받쳐줌',
+  黑道: '주의가 필요한 자리. 큰 결정·여행은 다음 시기로',
+  // 일진 길흉신 의미 보강 (lunar-javascript 자주 등장)
+  相日: '서로 도움을 주고받는 자리. 협업·중재·소개에 유리한 기운',
+  死神: '의식적으로 거리를 두면 강점. 무리한 일정·과로를 가장 경계할 자리',
+  死氣: '활기가 떨어지는 자리. 충분한 휴식과 회복 루틴이 필요한 결',
+  死气: '활기가 떨어지는 자리. 충분한 휴식과 회복 루틴이 필요한 결',
+  時陰: '겉으로 드러내지 않는 결. 안에서 다듬는 일·연구·기록에 강점',
+  时阴: '겉으로 드러내지 않는 결. 안에서 다듬는 일·연구·기록에 강점',
+  孤辰: '혼자 있는 시간이 자산이 되는 결. 사색·창작·집중 시간을 의식적으로',
+  寡宿: '관계의 결이 얇아 깊은 한두 명의 인연이 평생 자산이 되는 자리',
+  紅鸞: '인연·결혼·만남의 자리. 좋은 인연이 들어오기 쉬운 시기',
+  红鸾: '인연·결혼·만남의 자리. 좋은 인연이 들어오기 쉬운 시기',
+  陰錯: '의도와 결과가 어긋나기 쉬운 자리. 큰 결정 전 한 번 더 검토 필요',
+  阴错: '의도와 결과가 어긋나기 쉬운 자리. 큰 결정 전 한 번 더 검토 필요',
+  陽錯: '겉으로는 풀린 듯 보이나 본질이 흔들리는 결. 형식보다 내용 우선',
+  阳错: '겉으로는 풀린 듯 보이나 본질이 흔들리는 결. 형식보다 내용 우선',
+  小耗: '작은 누수가 쌓여 큰 손실이 되는 자리. 고정비·소액 지출 점검',
+  天喜星: '경사·인연이 들어오는 자리. 모임·소개·축하 자리에 적극',
   // 흉살 — 구체적 설명
   月破: '계획이 중간에 깨지기 쉬움. 중요한 일은 백업 플랜 필수',
   大耗: '예상 밖 지출이 발생하기 쉬움. 재정 관리에 각별히 주의',
@@ -562,10 +647,18 @@ export function mapSinSal(list: SinSal[]): V4SinSal[] {
   });
 }
 
-export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[] {
+export function mapGongmang(list: GongMang[], dayOheng: OhengType, dayGan?: string): V4GongMang[] {
   // 오행 상생상극 관계로 십성 카테고리 결정
   const SANGSAENG_MAP: Record<OhengType, OhengType> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
   const SANGGEUK_MAP: Record<OhengType, OhengType> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+
+  // 일간 한자 → 한글 음
+  const GAN_TO_KR_LOCAL: Record<string, string> = {
+    甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무',
+    己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계',
+  };
+  const ganKr = dayGan ? (GAN_TO_KR_LOCAL[dayGan] || dayGan) : '';
+  const ganRef = dayGan ? `${ganKr}(${dayGan}) 일간` : '';
 
   function getSipsungCategory(targetOheng: OhengType): string {
     if (targetOheng === dayOheng) return '비겁';
@@ -576,28 +669,48 @@ export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[]
     return '';
   }
 
-  const categoryMeanings: Record<string, { desc: string; tip: string }> = {
-    비겁: {
-      desc: '동료·형제·자아 영역이 비어 있는 구조 — 남에게 기대기보다 스스로 서는 힘이 강해요',
-      tip: '혼자서도 잘하는 타입이에요. 동료 관계에서 기대를 줄이고 독립적으로 성취하면 오히려 큰 결과를 얻어요',
-    },
-    식상: {
-      desc: '표현·창작·소통 영역이 비어 있는 구조 — 남들처럼 표현하려 하면 답답하지만, 나만의 방식을 찾으면 차별화됨',
-      tip: '남들의 표현법을 따라하지 마세요. 자기만의 독특한 방식으로 표현할 때 오히려 강력한 개성이 돼요',
-    },
-    재성: {
-      desc: '재물·실리 영역이 비어 있는 구조 — 돈에 집착하면 오히려 새어나가고, 자유롭게 접근할 때 뜻밖의 경로로 들어옴',
-      tip: '재물에 대한 집착을 내려놓으세요. 하고 싶은 일에 몰입하면 돈은 자연스럽게 따라오는 구조예요',
-    },
-    관성: {
-      desc: '직장·사회적 지위 영역이 비어 있는 구조 — 조직에서 인정받으려 애쓰기보다, 자기 브랜드를 키우면 더 빛남',
-      tip: '대기업·공무원 같은 안정적 경로보다, 프리랜서·창업·자기 사업이 더 잘 맞을 수 있어요. 틀에 얽매이지 마세요',
-    },
-    인성: {
-      desc: '학문·배움·어머니 영역이 비어 있는 구조 — 정규 교육보다 독학·실전 경험이 더 빛나는 체질',
-      tip: '정석적인 공부법에 답답함을 느낄 수 있어요. 실전에서 몸으로 배우는 방식이 훨씬 효율적이에요',
-    },
-  };
+  // 공망 자리(年/月/日/時) 컨텍스트 매핑
+  function getPositionContext(기준: string): { positionKr: string; nuance: string } {
+    if (기준.includes('년')) return { positionKr: '年(초년·뿌리)', nuance: '초년·가문·사회 출발' };
+    if (기준.includes('월')) return { positionKr: '月(직장·청년기)', nuance: '직장·청년기·형제 인연' };
+    if (기준.includes('일')) return { positionKr: '日(나·배우자궁)', nuance: '나의 본질·배우자 자리' };
+    if (기준.includes('시')) return { positionKr: '時(말년·자녀)', nuance: '말년·결과·자녀' };
+    return { positionKr: '', nuance: '' };
+  }
+
+  function buildDesc(category: string, posCtx: { positionKr: string; nuance: string }): { desc: string; tip: string } {
+    const subjPrefix = ganRef ? `${ganRef}이 ` : '';
+    const posPrefix = posCtx.positionKr ? `${posCtx.positionKr} 자리에 ` : '';
+    switch (category) {
+      case '비겁':
+        return {
+          desc: `${subjPrefix}${posPrefix}비겁 공망 — 동료·형제·자아 영역이 비어 있어 남에게 기대기보다 스스로 서는 힘이 강해요${posCtx.nuance ? ` (${posCtx.nuance})` : ''}.`,
+          tip: '혼자서도 잘하는 타입이에요. 동료 관계에서 기대를 줄이고 독립적으로 성취하면 오히려 큰 결과를 얻어요',
+        };
+      case '식상':
+        return {
+          desc: `${subjPrefix}${posPrefix}식상 공망 — 표현·창작·소통 영역이 비어 있어 남들처럼 표현하면 답답하지만, 나만의 방식을 찾으면 차별화됩니다.`,
+          tip: '남들의 표현법을 따라하지 마세요. 자기만의 독특한 방식으로 표현할 때 오히려 강력한 개성이 돼요',
+        };
+      case '재성':
+        return {
+          desc: `${subjPrefix}${posPrefix}재성 공망 — 재물·실리 영역이 비어 있어 돈에 집착하면 오히려 새어나가고, 자유롭게 접근할 때 뜻밖의 경로로 들어옵니다.`,
+          tip: '재물에 대한 집착을 내려놓으세요. 하고 싶은 일에 몰입하면 돈은 자연스럽게 따라오는 구조예요',
+        };
+      case '관성':
+        return {
+          desc: `${subjPrefix}${posPrefix}관성 공망 — 직장·사회적 지위 영역이 비어 있어 조직에서 인정받으려 애쓰기보다, 자기 브랜드를 키우면 더 빛납니다.`,
+          tip: '대기업·공무원 같은 안정적 경로보다, 프리랜서·창업·자기 사업이 더 잘 맞을 수 있어요. 틀에 얽매이지 마세요',
+        };
+      case '인성':
+        return {
+          desc: `${subjPrefix}${posPrefix}인성 공망 — 학문·배움·어머니 영역이 비어 있어 정규 교육보다 독학·실전 경험이 더 빛나는 체질이에요.`,
+          tip: '정석적인 공부법에 답답함을 느낄 수 있어요. 실전에서 몸으로 배우는 방식이 훨씬 효율적이에요',
+        };
+      default:
+        return { desc: '', tip: '' };
+    }
+  }
 
   return list.map(g => {
     const chars = g.공망.split('');
@@ -612,11 +725,12 @@ export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[]
     const ohengSet = [...new Set(chars.map(c => JIJI_OHENG[c]).filter(Boolean))] as OhengType[];
     const categories = [...new Set(ohengSet.map(oh => getSipsungCategory(oh)))].filter(Boolean);
     const primaryCategory = categories[0] || '';
-    const catInfo = categoryMeanings[primaryCategory];
+    const posCtx = getPositionContext(g.기준 || '');
+    const built = primaryCategory ? buildDesc(primaryCategory, posCtx) : { desc: '', tip: '' };
 
-    const personalMeaning = catInfo
-      ? catInfo.desc
-      : g.의미 || '비어있는 에너지 — 의식적 보완이 필요합니다';
+    const personalMeaning = built.desc
+      || g.의미
+      || '비어있는 에너지 — 의식적 보완이 필요합니다';
 
     return {
       basis: `${g.기준} 공망`,
@@ -624,7 +738,7 @@ export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[]
       kr: `${krParts}${elemStr}`,
       meaning: personalMeaning,
       category: primaryCategory, // 추가 필드
-      tip: catInfo?.tip || '비어있는 영역이지만, 집착을 내려놓으면 오히려 자유로운 영역이 돼요.',
+      tip: built.tip || '비어있는 영역이지만, 집착을 내려놓으면 오히려 자유로운 영역이 돼요.',
     };
   });
 }
