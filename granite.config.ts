@@ -4,7 +4,7 @@ export default defineConfig({
   appName: 'saju-500',
   brand: {
     displayName: '사주500',
-    primaryColor: '#C9A96E',
+    primaryColor: '#B8965A',
     icon: 'https://appintoss-saju.web.app/logo.png',
   },
   web: {

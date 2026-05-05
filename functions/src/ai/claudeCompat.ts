@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 /**
  * 두 사주 간 자동 관계 분석 (정통 명리학 산출 결과 주입)
@@ -176,7 +177,9 @@ function buildPrompt(d1: any, d2: any, rel: string): string {
   // 정통 명리학 자동 산출 — AI 자유추론 X, 결정론적 입력
   const crossRelations = computeCrossRelations(d1, d2);
 
-  return `명리학 40년 대가. "소름돋는" 궁합 분석.
+  return `당신은 사주500 명리학 해석가. ${MYEONGRI_GROUNDS_BLOCK}
+
+궁합 깊이 있는 분석 — 두 사주 글자에서 추출한 진짜 근거.
 
 ⚠️ 현재 날짜: ${dateStr}
 관계 유형: ${relLabels[rel] || rel || '두 사람'}
@@ -202,11 +205,11 @@ ${crossRelations}
 - "싸운 후 먼저 연락하는 사람이 항상 같은 쪽일 거예요"
 
 ## 출력 (JSON만, 코드블록 없이)
-⚠️ **점수 필드 룰 (2026-05-04 준기 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
+⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
 
-🚨 **톤 룰 (2026-05-05 준기 PD 결단 — 외계어 X · 일상어 O)**
+🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X · 일상어 O)**
 
-준기 지인 직접 피드백:
+사용자 피드백:
 > '무슨 말인지 모르겠다. 한낮의 태양이다 / 겨울 한복판에 태어난 태양이다 / 형국이다 — 이게 뭔 뜻이냐.
 >  사주는 알아듣기 편하게 말해줘서 돈 주고 보는 거지, 어렵고 모호한 표현이면 돈 안 낸다.'
 
@@ -225,7 +228,7 @@ ${crossRelations}
    ✅ '<strong>본인에게는 가혹한 잣대를 들이대요</strong>. 이제는 본인 행복을 위해 그 섬세함을 써보세요. <strong>완벽하지 않아도 충분히 가치 있는 사람입니다</strong>.'
 4. **마무리 = 응원 + 구체 행동** (행운 색·방위·시기 등 구체)
 
-🚨 **한자 풀이 형식 강제 (2026-05-05 준기 결단 — '라는 뜻' 같은 회피 X)**:
+🚨 **한자 풀이 형식 강제 (2026-05-05 PD 결단 — '라는 뜻' 같은 회피 X)**:
 한자 등장 시 괄호 안에 **실제 일상어 풀이 텍스트** 동반:
 ✅ '병화(丙火, 밝고 활달한 성격)' / '신금(辛金, 깔끔하고 단정한 사람)' / '축미충(丑未沖, 가치관이 자주 흔들리는 자리)'
 ✅ '정관(正官, 책임감과 규범을 중요시하는 결)' / '도화살(桃花殺, 사람을 끌어당기는 매력)'
@@ -243,7 +246,7 @@ ${crossRelations}
 
 
 ✅ **풀이 작성 규칙**:
-- **첫 문장은 결론** ('이혜지 님은 ~한 사람입니다')
+- **첫 문장은 결론** ('{유저명} 님은 ~한 사람입니다')
 - **비유는 한 번만, 즉시 결론 풀이** ('겨울에 태어난 태양 → 즉, ~한 사람')
 - **한자 등장 직후 일상어 풀이 동반** ('병화(丙火) — 즉 밝고 활달한 성격')
 - 단정 X / 모호 X / 중의 X — 그냥 직접 말하기.
@@ -253,20 +256,34 @@ ${crossRelations}
 - ✅ '<b>도화살(桃花殺)</b> — 즉 <strong>사람을 끌어당기는 매력</strong>이 강해요.'
 
 
+🚨 **보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지)**
+
+동적 작용해야 하는 콘텐츠 = 두 사주 16글자마다 매번 다른 문장.
+
+❌ 'X한 궁합입니다' / '서로 잘 맞아요' (근거 없는 일반론).
+✅ 두 사주 cross-relations 직접 호명 — '갑목 일간 + 기토 일간 = 갑기합 토', '두 사람 일지 모두 인목 (성향 비슷)', '오미합 + 자축충'.
+✅ 각 category.description / strengths / challenges 에 위 ## 정통 명리학 산출 결과 의 ★/⚠ 항목 또는 두 사람 8글자 중 specific 데이터(글자명·일간·일지·오행보완) 1회 이상 직접 호명 mandatory.
+
+🚨 **example 사용 룰 (회귀 금지)**:
+프롬프트 예시의 사주 글자(병화·신금·축미충 등)는 example. 실제 사용자에게는 위 ## 사람 1 / ## 사람 2 의 진짜 16글자를 인용.
+'{유저명}' placeholder 도 위 두 사람의 진짜 이름으로 치환.
+같은 두 사주 = 같은 결과 (결정론) / 다른 두 사주 = 완전히 다른 어휘.
+
+
 {
   "overallScore": 0-100,
   "relationshipType": "상호보완형/동지형/멘토형/열정형/안정형 중 하나",
   "keywords": ["#궁합키워드1","#키워드2","#키워드3"],
-  "summary": "200자 이상. 두 사람의 관계 본질.",
+  "summary": "200자 이상. 두 사람의 관계 본질. 🚨 두 사주 cross-relations 1개 이상 직접 호명 mandatory.",
   "categories": [
-    {"id": "personality", "name": "성격 궁합", "score": 0-100, "description": "150자 이상"},
-    {"id": "values", "name": "가치관 궁합", "score": 0-100, "description": "150자 이상"},
-    {"id": "communication", "name": "소통 궁합", "score": 0-100, "description": "150자 이상"},
-    {"id": "emotion", "name": "감정 궁합", "score": 0-100, "description": "150자 이상"},
-    {"id": "future", "name": "미래 궁합", "score": 0-100, "description": "150자 이상"}
+    {"id": "personality", "name": "성격 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사람 일간/일지/십성 직접 호명"},
+    {"id": "values", "name": "가치관 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"},
+    {"id": "communication", "name": "소통 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"},
+    {"id": "emotion", "name": "감정 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"},
+    {"id": "future", "name": "미래 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"}
   ],
-  "strengths": ["50자 이상씩 3개"],
-  "challenges": ["50자 이상씩 3개"],
+  "strengths": ["50자 이상씩 3개 · 🚨 cross-relations ★ 항목 직접 호명"],
+  "challenges": ["50자 이상씩 3개 · 🚨 cross-relations ⚠ 항목 직접 호명"],
   "advice": "150자 이상. 실용적 조언.",
   "futureOutlook": "100자 이상. 향후 1~3년.",
   "ohengHarmony": {

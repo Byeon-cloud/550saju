@@ -658,6 +658,100 @@ export function PullQuote({
 }
 
 /* ══════════════════════════════════════════════════════════════════
+ * 6.5 TopicConclusionDark — 다크 결론박스 (audit 4 P1 D2 신규)
+ *  · 종합사주 PremiumResult 의 다크 결론박스 시각 시그니처를 5 주제 결과에도 적용
+ *  · 흰 텍스트 + 한자 워터마크 + 좌측 6px accent border
+ *  · UpsellCard 와 시각 분리: 결론박스 = 좌측 border / UpsellCard = 우측 → CTA 화살표
+ * ═════════════════════════════════════════════════════════════════ */
+export function TopicConclusionDark({
+  theme,
+  conclusion,
+  sajuRef,
+}: {
+  theme: TopicChromeTheme;
+  conclusion: string;
+  sajuRef?: string;
+}) {
+  return (
+    <div
+      style={{
+        background: `linear-gradient(135deg, #1A1A1A 0%, ${theme.accentDark}25 100%)`,
+        borderRadius: 14,
+        padding: '20px 18px 22px 22px',
+        margin: '14px 0 18px',
+        borderLeft: `6px solid ${theme.accent}`,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 4px 16px rgba(20,15,8,0.18)',
+      }}
+    >
+      {/* 한자 워터마크 — 우하단 220px 7% opacity */}
+      <span
+        aria-hidden
+        style={{
+          position: 'absolute',
+          right: -10,
+          bottom: -40,
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 220,
+          fontWeight: 900,
+          color: theme.accent,
+          opacity: 0.07,
+          lineHeight: 1,
+          pointerEvents: 'none',
+          letterSpacing: '-0.05em',
+        }}
+      >
+        {theme.hanja}
+      </span>
+      {/* 라벨 */}
+      <div
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 11,
+          fontWeight: 700,
+          color: theme.accent,
+          letterSpacing: '0.12em',
+          marginBottom: 8,
+          position: 'relative',
+        }}
+      >
+        ◇ 한 줄 결론
+      </div>
+      {/* 본문 */}
+      <p
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 16,
+          fontWeight: 700,
+          color: '#F8F5EE',
+          lineHeight: 1.65,
+          margin: 0,
+          position: 'relative',
+          wordBreak: 'keep-all',
+        }}
+        dangerouslySetInnerHTML={{ __html: conclusion }}
+      />
+      {/* 사주 근거 (있을 때만) */}
+      {sajuRef && (
+        <p
+          style={{
+            fontSize: 12,
+            color: 'rgba(248,245,238,0.65)',
+            lineHeight: 1.55,
+            margin: '10px 0 0',
+            position: 'relative',
+            wordBreak: 'keep-all',
+          }}
+        >
+          — {sajuRef}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
  * 7. TopicActionList — 3 numbered 액션 카드
  * ═════════════════════════════════════════════════════════════════ */
 export interface TopicActionItem {

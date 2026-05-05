@@ -593,6 +593,14 @@ export function InputPage() {
       // E40 · draft 정리
       clearDraft();
 
+      // audit 3 P0 E3 — returnTo state 처리 (TopicAnalysisPage 빈상태 → /input → 자동 복귀)
+      const returnTo = (location.state as any)?.returnTo as string | undefined;
+      if (returnTo) {
+        toast.show('사주가 등록됐어요', 'success');
+        navigate(returnTo, { replace: true });
+        return;
+      }
+
       // 진입 경로별 라우팅 (스펙 §10-3)
       // 종합 사주 (10운) 특별 분기: routeAfterSave='/loading?type=premium' 일 때 잔액 검사 + 차감
       if (fromRaw === 'home_body_premium') {

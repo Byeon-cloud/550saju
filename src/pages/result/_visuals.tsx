@@ -710,9 +710,21 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
   );
 }
 
-export function HealthVis({ elements, dayOheng, pillars: _pillars }: {
+export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pillars }: {
   elements: V4Elements; dayOheng: OhengType; pillars: Pillar[];
+  /** 일간 한자 (예: '甲'·'乙'). 사주 specific 인용에 사용 */
+  dayGan?: string;
+  /** AI 응답의 health 필드 — 있으면 detail 우선 사용 */
+  aiHealth?: { wood?: { detail?: string }; fire?: { detail?: string }; earth?: { detail?: string }; metal?: { detail?: string }; water?: { detail?: string } };
 }) {
+  // 일간 한자 → 한글 음 매핑
+  const GAN_TO_KR_LOCAL: Record<string, string> = {
+    甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무',
+    己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계',
+  };
+  const ganKr = dayGan ? (GAN_TO_KR_LOCAL[dayGan] || dayGan) : '';
+  const ganRef = dayGan ? `${ganKr}(${dayGan}) 일간` : `${dayOheng} 일간`;
+
   // 오행<->장기 매핑 (동의보감 기준)
   const HEALTH_MAP: Record<ElemKey, { organ: string; detail: string; strong: string; weak: string; fix: string }> = {
     wood: {
@@ -761,16 +773,32 @@ export function HealthVis({ elements, dayOheng, pillars: _pillars }: {
     let advice: string;
     let level: number; // 0~4
 
+    // AI 응답에 detail 이 있으면 모든 분기에서 우선 사용
+    const aiDetail = aiHealth?.[elem]?.detail?.trim();
+    // 사주 specific 접두 — "{ganRef}이 ${oheng} ${val}자라"
+    const ohengKr = ({ wood: '목', fire: '화', earth: '토', metal: '금', water: '수' } as const)[elem];
+    const ganPrefix = dayGan ? `${ganRef}이 ${ohengKr} ${val}자 — ` : '';
+
     if (val === 0) {
-      status = '없음'; statusColor = '#c62828'; advice = info.weak; level = 0;
+      status = '없음'; statusColor = '#c62828';
+      advice = aiDetail || `${ganPrefix}${info.weak}`;
+      level = 0;
     } else if (val <= 10) {
-      status = '약함'; statusColor = '#e65100'; advice = info.weak; level = 1;
+      status = '약함'; statusColor = '#e65100';
+      advice = aiDetail || `${ganPrefix}${info.weak}`;
+      level = 1;
     } else if (val <= 25) {
-      status = '양호'; statusColor = '#2e7d32'; advice = `균형 잡힌 상태예요. ${info.fix.split(',')[0]}으로 유지하세요`; level = 3;
+      status = '양호'; statusColor = '#2e7d32';
+      advice = aiDetail || `${ganPrefix}균형 잡힌 상태예요. ${info.fix.split(',')[0]}으로 유지하세요`;
+      level = 3;
     } else if (val <= 35) {
-      status = '강함'; statusColor = '#1565E0'; advice = `에너지가 충분해요. 다만 과하면 ${info.organ.split('·')[0]}에 부담이 갈 수 있으니 적당히 조절하세요`; level = 4;
+      status = '강함'; statusColor = '#1565E0';
+      advice = aiDetail || `${ganPrefix}에너지가 충분해요. 다만 과하면 ${info.organ.split('·')[0]}에 부담이 갈 수 있으니 적당히 조절하세요`;
+      level = 4;
     } else {
-      status = '과다'; statusColor = '#c62828'; advice = info.strong; level = 4;
+      status = '과다'; statusColor = '#c62828';
+      advice = aiDetail || `${ganPrefix}${info.strong}`;
+      level = 4;
     }
 
     return { elem, organ: info.organ, detail: info.detail, status, statusColor, advice, fix: info.fix, level, val };
@@ -854,16 +882,75 @@ export function HealthVis({ elements, dayOheng, pillars: _pillars }: {
   );
 }
 
-export function GaewoonVis() {
+/**
+ * GaewoonVis — 2026-05-05 동적화 (audit 1 P1)
+ *  - 이전: 하드코딩 "수·금" 모든 유저 동일 출력
+ *  - 이후: elements (오행 카운트) 기반 가장 약한 오행 1·2위 자동 도출 → 5 case 분기
+ */
+export function GaewoonVis({ elements }: { elements?: V4Elements }) {
+  // 약한 오행 top-2 추출 (props 없으면 fallback "수·금" 유지)
+  type OhengKey = '목' | '화' | '토' | '금' | '수';
+  const KO_TO_EN: Record<OhengKey, keyof V4Elements> = {
+    목: 'wood', 화: 'fire', 토: 'earth', 금: 'metal', 수: 'water',
+  };
+  const orderedWeak: OhengKey[] = (() => {
+    if (!elements) return ['수', '금'];
+    const counts: Array<[OhengKey, number]> = (['목', '화', '토', '금', '수'] as OhengKey[]).map(
+      (k) => [k, Number(elements[KO_TO_EN[k]] ?? 0)],
+    );
+    counts.sort((a, b) => a[1] - b[1]);
+    return [counts[0][0], counts[1][0]];
+  })();
+  const w1 = orderedWeak[0];
+  const w2 = orderedWeak[1];
+
+  // 오행별 개운법 매핑 — 5 × 4 카테고리
+  const PROFILE: Record<OhengKey, { color: string; direction: string; food: string; exercise: string }> = {
+    목: {
+      color: '초록·연두',
+      direction: '동쪽',
+      food: '잎채소·견과·곡물',
+      exercise: '등산·정원 가꾸기·산책',
+    },
+    화: {
+      color: '빨강·주황',
+      direction: '남쪽',
+      food: '매운맛·따뜻한 음식·생강',
+      exercise: '댄스·요가·유산소 운동',
+    },
+    토: {
+      color: '노랑·베이지',
+      direction: '중앙',
+      food: '단맛·곡물·뿌리채소',
+      exercise: '도예·정원·산책',
+    },
+    금: {
+      color: '흰색·은색',
+      direction: '서쪽',
+      food: '매운맛·견과·하얀 음식',
+      exercise: '서예·미니멀 정리·홈트',
+    },
+    수: {
+      color: '검정·남색',
+      direction: '북쪽',
+      food: '해산물·검은깨·짠맛',
+      exercise: '수영·반신욕·낚시',
+    },
+  };
+  const p1 = PROFILE[w1];
+  const p2 = PROFILE[w2];
+
   const items: Array<{ id: 'color' | 'direction' | 'food' | 'exercise'; label: string; desc: string }> = [
-    { id: 'color', label: '색상', desc: '검정·남색(수) + 흰색·은색(금)' },
-    { id: 'direction', label: '방위', desc: '북(수)·서(금) 방향으로 책상 배치' },
-    { id: 'food', label: '음식', desc: '해산물·검은깨(수) + 배·닭고기(금)' },
-    { id: 'exercise', label: '운동', desc: '수영 최고! 요가·등산도 추천' },
+    { id: 'color', label: '색상', desc: `${p1.color}(${w1}) + ${p2.color}(${w2})` },
+    { id: 'direction', label: '방위', desc: `${p1.direction}(${w1})·${p2.direction}(${w2}) 방향에 자리잡기` },
+    { id: 'food', label: '음식', desc: `${p1.food}(${w1}) + ${p2.food}(${w2})` },
+    { id: 'exercise', label: '운동', desc: `${p1.exercise}(${w1}) 우선, ${p2.exercise}(${w2}) 보조` },
   ];
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 10 }}>▎개운법 한눈에</div>
+      <div style={{ fontSize: 11, fontWeight: 800, color: '#6b5b47', marginBottom: 10 }}>
+        ▎개운법 한눈에 — 약한 결 {w1}·{w2} 보강
+      </div>
       <div className="grid grid-cols-2 gap-2">
         {items.map((it) => (
           <div key={it.id} className="p-3 rounded-xl" style={{ background: '#fff', border: '1px solid #e8e0d4' }}>
@@ -899,14 +986,26 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
   }
   if (type === 'health_oheng') {
     const dOheng = (pillars[2]?.천간오행 ?? '토') as OhengType;
-    return <HealthVis elements={elements} dayOheng={dOheng} pillars={pillars} />;
+    const dGan = pillars[2]?.천간 ?? '';
+    return <HealthVis elements={elements} dayOheng={dOheng} dayGan={dGan} aiHealth={(aiResult as any)?.health} pillars={pillars} />;
   }
-  if (type === 'gaewoon') return <GaewoonVis />;
+  if (type === 'gaewoon') return <GaewoonVis elements={elements} />;
   // PRD v2 신규 시각화 — AI 결과가 있을 때만 표시
   if (type === 'luckyProfile') return aiResult?.luckyProfile ? <LuckyProfile data={aiResult.luckyProfile} /> : null;
   if (type === 'monthlyFortune') return aiResult?.monthlyFortune ? <MonthlyFortune data={aiResult.monthlyFortune} /> : null;
   if (type === 'relationshipMap') return aiResult?.relationshipMap ? <RelationshipMap data={aiResult.relationshipMap} /> : null;
-  if (type === 'wealthFlow') return aiResult?.wealthFlow ? <WealthFlow data={aiResult.wealthFlow} /> : null;
+  if (type === 'wealthFlow') {
+    if (!aiResult?.wealthFlow) return null;
+    const dayGanWF = pillars[2]?.천간 ?? '';
+    const sipDistWF = (aiResult as any)?.analysisBase?.십성분포;
+    return <WealthFlow
+      data={aiResult.wealthFlow}
+      dayGan={dayGanWF}
+      jaeCount={sipDistWF?.재성}
+      sikCount={sipDistWF?.식상}
+      biCount={sipDistWF?.비겁}
+    />;
+  }
   if (type === 'challenge_vis') {
     // 인생과제 — VS 비율 분석 (실제 사주 오행 분포 기반 십성 비율)
     const dOheng = (pillars[2]?.천간오행 ?? '토') as OhengType;

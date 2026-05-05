@@ -86,7 +86,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 8192,
-      temperature: 0.1,
+      temperature: 0.7,
       system,
       messages: [{ role: 'user', content: user }],
     });
@@ -100,7 +100,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 8192,
-      temperature: 0.05,
+      temperature: 0.5,
       system,
       messages: [{ role: 'user', content: user }],
     });
@@ -131,7 +131,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
     const first = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 16384,
-      temperature: 0.1,
+      temperature: 0.7,
       system,
       messages: [{ role: 'user', content: user }],
     });
@@ -144,7 +144,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
     const retry = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 16384,
-      temperature: 0.05,
+      temperature: 0.5,
       system,
       messages: [{ role: 'user', content: user }],
     });
@@ -157,7 +157,6 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
   const review = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 16384,
-    temperature: 0.1, // 결정론적
     system,
     messages: [
       { role: 'user', content: user },

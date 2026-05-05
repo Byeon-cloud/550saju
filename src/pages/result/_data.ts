@@ -647,10 +647,18 @@ export function mapSinSal(list: SinSal[]): V4SinSal[] {
   });
 }
 
-export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[] {
+export function mapGongmang(list: GongMang[], dayOheng: OhengType, dayGan?: string): V4GongMang[] {
   // 오행 상생상극 관계로 십성 카테고리 결정
   const SANGSAENG_MAP: Record<OhengType, OhengType> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
   const SANGGEUK_MAP: Record<OhengType, OhengType> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+
+  // 일간 한자 → 한글 음
+  const GAN_TO_KR_LOCAL: Record<string, string> = {
+    甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무',
+    己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계',
+  };
+  const ganKr = dayGan ? (GAN_TO_KR_LOCAL[dayGan] || dayGan) : '';
+  const ganRef = dayGan ? `${ganKr}(${dayGan}) 일간` : '';
 
   function getSipsungCategory(targetOheng: OhengType): string {
     if (targetOheng === dayOheng) return '비겁';
@@ -661,28 +669,48 @@ export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[]
     return '';
   }
 
-  const categoryMeanings: Record<string, { desc: string; tip: string }> = {
-    비겁: {
-      desc: '동료·형제·자아 영역이 비어 있는 구조 — 남에게 기대기보다 스스로 서는 힘이 강해요',
-      tip: '혼자서도 잘하는 타입이에요. 동료 관계에서 기대를 줄이고 독립적으로 성취하면 오히려 큰 결과를 얻어요',
-    },
-    식상: {
-      desc: '표현·창작·소통 영역이 비어 있는 구조 — 남들처럼 표현하려 하면 답답하지만, 나만의 방식을 찾으면 차별화됨',
-      tip: '남들의 표현법을 따라하지 마세요. 자기만의 독특한 방식으로 표현할 때 오히려 강력한 개성이 돼요',
-    },
-    재성: {
-      desc: '재물·실리 영역이 비어 있는 구조 — 돈에 집착하면 오히려 새어나가고, 자유롭게 접근할 때 뜻밖의 경로로 들어옴',
-      tip: '재물에 대한 집착을 내려놓으세요. 하고 싶은 일에 몰입하면 돈은 자연스럽게 따라오는 구조예요',
-    },
-    관성: {
-      desc: '직장·사회적 지위 영역이 비어 있는 구조 — 조직에서 인정받으려 애쓰기보다, 자기 브랜드를 키우면 더 빛남',
-      tip: '대기업·공무원 같은 안정적 경로보다, 프리랜서·창업·자기 사업이 더 잘 맞을 수 있어요. 틀에 얽매이지 마세요',
-    },
-    인성: {
-      desc: '학문·배움·어머니 영역이 비어 있는 구조 — 정규 교육보다 독학·실전 경험이 더 빛나는 체질',
-      tip: '정석적인 공부법에 답답함을 느낄 수 있어요. 실전에서 몸으로 배우는 방식이 훨씬 효율적이에요',
-    },
-  };
+  // 공망 자리(年/月/日/時) 컨텍스트 매핑
+  function getPositionContext(기준: string): { positionKr: string; nuance: string } {
+    if (기준.includes('년')) return { positionKr: '年(초년·뿌리)', nuance: '초년·가문·사회 출발' };
+    if (기준.includes('월')) return { positionKr: '月(직장·청년기)', nuance: '직장·청년기·형제 인연' };
+    if (기준.includes('일')) return { positionKr: '日(나·배우자궁)', nuance: '나의 본질·배우자 자리' };
+    if (기준.includes('시')) return { positionKr: '時(말년·자녀)', nuance: '말년·결과·자녀' };
+    return { positionKr: '', nuance: '' };
+  }
+
+  function buildDesc(category: string, posCtx: { positionKr: string; nuance: string }): { desc: string; tip: string } {
+    const subjPrefix = ganRef ? `${ganRef}이 ` : '';
+    const posPrefix = posCtx.positionKr ? `${posCtx.positionKr} 자리에 ` : '';
+    switch (category) {
+      case '비겁':
+        return {
+          desc: `${subjPrefix}${posPrefix}비겁 공망 — 동료·형제·자아 영역이 비어 있어 남에게 기대기보다 스스로 서는 힘이 강해요${posCtx.nuance ? ` (${posCtx.nuance})` : ''}.`,
+          tip: '혼자서도 잘하는 타입이에요. 동료 관계에서 기대를 줄이고 독립적으로 성취하면 오히려 큰 결과를 얻어요',
+        };
+      case '식상':
+        return {
+          desc: `${subjPrefix}${posPrefix}식상 공망 — 표현·창작·소통 영역이 비어 있어 남들처럼 표현하면 답답하지만, 나만의 방식을 찾으면 차별화됩니다.`,
+          tip: '남들의 표현법을 따라하지 마세요. 자기만의 독특한 방식으로 표현할 때 오히려 강력한 개성이 돼요',
+        };
+      case '재성':
+        return {
+          desc: `${subjPrefix}${posPrefix}재성 공망 — 재물·실리 영역이 비어 있어 돈에 집착하면 오히려 새어나가고, 자유롭게 접근할 때 뜻밖의 경로로 들어옵니다.`,
+          tip: '재물에 대한 집착을 내려놓으세요. 하고 싶은 일에 몰입하면 돈은 자연스럽게 따라오는 구조예요',
+        };
+      case '관성':
+        return {
+          desc: `${subjPrefix}${posPrefix}관성 공망 — 직장·사회적 지위 영역이 비어 있어 조직에서 인정받으려 애쓰기보다, 자기 브랜드를 키우면 더 빛납니다.`,
+          tip: '대기업·공무원 같은 안정적 경로보다, 프리랜서·창업·자기 사업이 더 잘 맞을 수 있어요. 틀에 얽매이지 마세요',
+        };
+      case '인성':
+        return {
+          desc: `${subjPrefix}${posPrefix}인성 공망 — 학문·배움·어머니 영역이 비어 있어 정규 교육보다 독학·실전 경험이 더 빛나는 체질이에요.`,
+          tip: '정석적인 공부법에 답답함을 느낄 수 있어요. 실전에서 몸으로 배우는 방식이 훨씬 효율적이에요',
+        };
+      default:
+        return { desc: '', tip: '' };
+    }
+  }
 
   return list.map(g => {
     const chars = g.공망.split('');
@@ -697,11 +725,12 @@ export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[]
     const ohengSet = [...new Set(chars.map(c => JIJI_OHENG[c]).filter(Boolean))] as OhengType[];
     const categories = [...new Set(ohengSet.map(oh => getSipsungCategory(oh)))].filter(Boolean);
     const primaryCategory = categories[0] || '';
-    const catInfo = categoryMeanings[primaryCategory];
+    const posCtx = getPositionContext(g.기준 || '');
+    const built = primaryCategory ? buildDesc(primaryCategory, posCtx) : { desc: '', tip: '' };
 
-    const personalMeaning = catInfo
-      ? catInfo.desc
-      : g.의미 || '비어있는 에너지 — 의식적 보완이 필요합니다';
+    const personalMeaning = built.desc
+      || g.의미
+      || '비어있는 에너지 — 의식적 보완이 필요합니다';
 
     return {
       basis: `${g.기준} 공망`,
@@ -709,7 +738,7 @@ export function mapGongmang(list: GongMang[], dayOheng: OhengType): V4GongMang[]
       kr: `${krParts}${elemStr}`,
       meaning: personalMeaning,
       category: primaryCategory, // 추가 필드
-      tip: catInfo?.tip || '비어있는 영역이지만, 집착을 내려놓으면 오히려 자유로운 영역이 돼요.',
+      tip: built.tip || '비어있는 영역이지만, 집착을 내려놓으면 오히려 자유로운 영역이 돼요.',
     };
   });
 }

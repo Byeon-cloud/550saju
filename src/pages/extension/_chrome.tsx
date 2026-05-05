@@ -1266,7 +1266,7 @@ export function CalGrid({
             style={{
               textAlign: 'center',
               fontSize: 9.5,
-              color: i === 0 ? '#C62828' : i === 6 ? '#1565E0' : C.mute,
+              color: i === 0 ? '#C62828' : i === 6 ? '#1565C0' : C.mute,
               fontWeight: 700,
               padding: '4px 0',
             }}
@@ -1296,7 +1296,7 @@ export function CalGrid({
                   : c.weekday === 'sun'
                   ? '#C62828'
                   : c.weekday === 'sat'
-                  ? '#1565E0'
+                  ? '#1565C0'
                   : C.ink,
               fontWeight: c.isToday ? 800 : 500,
             }}

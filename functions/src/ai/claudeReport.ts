@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 /**
  * 사주 리포트 — Claude Opus 4.6 (기본, 프리미엄 품질)
@@ -8,7 +9,7 @@ import Anthropic from '@anthropic-ai/sdk';
  *   - 검증: claude-sonnet-4-6 (A/B 비교, 선택적 2차 자기 리뷰)
  *   - 보조: claude-haiku-4-5-20251001 (일일운세·꿈해몽 등 경량)
  *
- * ⚠️ 준기 지시: 퀄리티 다운그레이드 절대 불가.
+ * ⚠️ PD 결단: 퀄리티 다운그레이드 절대 불가.
  *   Sonnet 전환은 반드시 A/B 비교 후 품질 벤치 통과 시에만.
  *   환경변수 SAJU_REPORT_MODEL 로 런타임 오버라이드 가능 (A/B 테스트용).
  *
@@ -27,8 +28,6 @@ export async function generateSajuReport(apiKey: string, sajuData: any, situatio
   const msg = await anthropic.messages.create({
     model,
     max_tokens: 16384,
-    // temperature 0.1 — 같은 사주 = 같은 결과 (결정론적, 신뢰성 보장)
-    temperature: 0.1,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
   });
@@ -72,7 +71,10 @@ function buildSystemPrompt(sajuData: any): string {
   const year = new Date().getFullYear();
   const month = new Date().getMonth() + 1;
 
-  return `당신은 명리학(命理學) 40년 대가입니다.
+  return `당신은 사주500 명리학 해석가입니다.
+${MYEONGRI_GROUNDS_BLOCK}
+
+명리학(命理學) 깊이 있는 해석 — 자평진전·적천수·궁통보감 6대 원전 정통.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전에 정통한 전문가로서,
 정통 명리학 분석 프레임워크에 따라 체계적으로 사주를 해석합니다.
 
@@ -120,11 +122,38 @@ function buildSystemPrompt(sajuData: any): string {
 ✓ "돈을 벌어도 모으기가 어렵다고 느끼실 거예요 — 재성은 있는데 겁재가 옆에서 다 빼가는 구조..."
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## 🚨 보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+동적 작용해야 하는 콘텐츠 = 사주 8글자마다 매번 다른 문장.
+
+❌ 'X한 사람이에요' 류 일반론 — 같은 십성 분포면 누구나 똑같은 결과 나오는 문장 금지.
+❌ '리더십이 강합니다' / '재물 흐름이 좋습니다' (근거 없는 일반론).
+✅ 사주 글자 직접 호명 — '신금 두 개', '병화 일간', '축미충', '인성 3개', '겁재 두 개' 등.
+✅ 개수·자리·신살 등 8글자에서 도출되는 specific 데이터를 반드시 1회 이상 인용.
+
+각 section.content 의 첫 1~2문장에 사주 8글자 중 specific 데이터(글자명·개수·자리·신살명) 1회 이상 직접 호명 mandatory.
+
+## 톤 룰
+- 외계어 X · 일상어 O · 결론 직접 말하기.
+- 한자 등장 시 괄호 풀이 강제: "병화(丙火, 밝고 활달한 성격)".
+- ❌ "병화(丙火)" 단독 (사주 모르는 사람 멈춤).
+- ❌ "병화(丙火, 라는 뜻)" (추상적 회피).
+- 첫 문장은 결론 (비유로 시작 X).
+- strong 강조는 일상 결론 한 줄에만 (한자 X).
+- 마무리는 긍정·격려.
+
+## 🚨 example 사용 룰 (회귀 금지)
+프롬프트 안의 예시 사주 글자(甲木·壬水·정관·축미충 등)는 example 입니다.
+실제 사용자에게는 그 사람의 실제 8글자를 인용하세요.
+같은 사주가 두 번 분석되면 같은 결과여야 하지만 (결정론), 다른 사주는 완전히 다른 어휘로 출력.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 출력 형식 (JSON)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {
   "sections": [
-    {"id": "summary", "title": "종합 진단", "keyInsight": "이 사주를 관통하는 핵심 한 줄. 읽는 사람이 '어 이거 나인데?' 하고 소름 돋을 문장.", "content": "500자 이상. 격국+용신+핵심 특징 명확히. '이 사주는 O격에 신강/신약하며, 용신은 O입니다' 로 시작하되, 교과서가 아니라 이 사람만의 이야기처럼 풀어줘."},
+    {"id": "summary", "title": "종합 진단", "keyInsight": "이 사주를 관통하는 핵심 한 줄. 읽는 사람이 '어 이거 나인데?' 하고 소름 돋을 문장. 🚨 보일러플레이트 금지 — 사주 8글자 specific 호명 1회 이상.", "content": "500자 이상. 격국+용신+핵심 특징 명확히. '이 사주는 O격에 신강/신약하며, 용신은 O입니다' 로 시작하되, 교과서가 아니라 이 사람만의 이야기처럼 풀어줘. 🚨 사주 specific 데이터 (예: '재성 N개', '도화살', '인성 3개') 직접 호명 mandatory."},
     {"id": "structure", "title": "격국과 일간 분석", "keyInsight": "이 사주의 구조적 핵심을 비유로 한 줄 표현", "content": "500자 이상. STEP1~3의 분석 과정을 쉬운 비유로 풀어 설명. '당신의 사주는 마치 ~와 같다' 식의 비유 적극 활용. 전문용어(득령/투간/통근)를 쓰되 괄호 안에 쉬운 설명 병기."},
     {"id": "personality", "title": "성격과 기질", "keyInsight": "이 사람의 성격 본질을 꿰뚫는 한 줄 — 소름 돋게", "content": "400자 이상. 일간+격국 기반 성격. 소름포인트 필수: 구체적 일상 행동 묘사 → 사주 근거 연결."},
     {"id": "social", "title": "대인관계", "keyInsight": "이 사람의 관계 패턴을 한 줄로 정의", "content": "400자 이상. 비겁/관성/식상 구조에서 파생되는 관계 패턴. 어떤 타입과 충돌하고, 어떤 타입에게 끌리는지 사주 근거로."},
@@ -159,9 +188,16 @@ function buildSystemPrompt(sajuData: any): string {
     "lover": {"score": 0-100, "keyword": "한마디"}
   },
   "wealthFlow": {
-    "earning": {"score": 0-100, "style": "벌기 스타일"},
-    "spending": {"score": 0-100, "style": "쓰기 스타일"},
-    "saving": {"score": 0-100, "style": "모으기 스타일"}
+    "earning": {"score": 0-100, "style": "벌기 스타일", "interpretation": "이 점수의 의미 — 일간·재성 카운트 등 사주 specific 인용 60~80자", "action": "실천 조언 — 일간 호명 포함 50~70자"},
+    "spending": {"score": 0-100, "style": "쓰기 스타일", "interpretation": "이 점수의 의미 — 일간·비겁 카운트 등 사주 specific 인용 60~80자", "action": "실천 조언 — 일간 호명 포함 50~70자"},
+    "saving": {"score": 0-100, "style": "모으기 스타일", "interpretation": "이 점수의 의미 — 일간·식상 카운트 등 사주 specific 인용 60~80자", "action": "실천 조언 — 일간 호명 포함 50~70자"}
+  },
+  "health": {
+    "wood": {"detail": "간·담·눈·근육 — 일간(예: 갑(甲)) 호명 + 목 N자 인용 60~80자"},
+    "fire": {"detail": "심장·소장·혈관 — 일간 호명 + 화 N자 인용 60~80자"},
+    "earth": {"detail": "비장·위·소화 — 일간 호명 + 토 N자 인용 60~80자"},
+    "metal": {"detail": "폐·대장·피부 — 일간 호명 + 금 N자 인용 60~80자"},
+    "water": {"detail": "신장·방광·뼈 — 일간 호명 + 수 N자 인용 60~80자"}
   }
 }
 
@@ -173,6 +209,7 @@ function buildSystemPrompt(sajuData: any): string {
 5. analysisBase는 반드시 채우세요 — 프론트엔드에서 격국/용신 배지로 표시합니다.
 6. luckyProfile의 모든 항목은 용신 오행에서 파생되어야 합니다. 용신이 목이면 색상=초록, 방위=동, 음식=신맛 등.
 7. careerFit의 reason에 사주 근거를 한 줄로 적으세요.
+8. wealthFlow의 interpretation/action 과 health.{wood,fire,earth,metal,water}.detail 은 반드시 사주 8글자를 직접 호명하세요. 예: "갑(甲) 일간이 재성 2개로 받쳐주는 안정적 수입 구조" / "을(乙) 일간이 화 0자라 심장·혈관에 부담이 갈 수 있어요". 같은 점수라도 일간 오행·십성 카운트가 다르면 문장이 달라야 합니다 — 일반론 금지.
 
 JSON만 출력하세요. 코드블록 없이.`;
 }

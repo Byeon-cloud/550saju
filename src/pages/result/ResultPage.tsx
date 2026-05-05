@@ -301,7 +301,8 @@ export function ResultPage(props: ResultPageProps = {}) {
   const v4Gilsin = mapSinSal(sajuData.gilsin);
   const v4Hyungsal = mapSinSal(sajuData.hyungsal);
   const dayOhengForGM = sajuData.pillars[2]?.천간오행 ?? '토' as OhengType;
-  const v4Gongmang = mapGongmang(sajuData.gongmang, dayOhengForGM);
+  const dayGanForGM = sajuData.pillars[2]?.천간 ?? '';
+  const v4Gongmang = mapGongmang(sajuData.gongmang, dayOhengForGM, dayGanForGM);
 
   // 점수: AI 결과 우선, 없으면 오행 기반 추정
   // 통일된 명리학 가중치 점수 — sajuScores.ts (모든 페이지 공유)

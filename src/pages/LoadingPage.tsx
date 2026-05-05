@@ -16,6 +16,7 @@ import { generateReport } from '@/services/ai/reportGenerator';
 import { saveReport, generateId } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, JIJI_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { REPORT_SECTIONS } from '@/constants/pricing';
+import { LOADING_TIPS } from '@/constants/loadingTips';
 import type { OhengType } from '@/types/saju';
 
 /** 단계 정의 — PRD §2.1 */
@@ -28,14 +29,14 @@ const STAGES = [
 /** 단계별 회전 카피 — PRD §4.1 */
 const ROTATING_COPY: Record<number, string[]> = {
   1: [
-    '잠시만요. 우주의 배열을 맞추는 중이에요.',
+    '잠시만요. 60갑자(태어난 해·달·일·시)를 맞추고 있어요.',
     '시간을 되돌려 당신이 태어난 순간을 보고 있어요.',
     '한국 진태양시(127.5°)로 보정하고 있어요.',
   ],
   2: [
-    '천간과 지지가 만나는 자리를 보고 있어요.',
-    '오행의 균형을 재고 있어요.',
-    '십성의 자리를 확인 중이에요.',
+    '천간과 지지(태어난 8글자)가 만나는 자리를 보고 있어요.',
+    '오행(목·화·토·금·수)의 균형을 재고 있어요.',
+    '십성(나의 사회적 역할)의 자리를 확인 중이에요.',
   ],
   3: [
     '당신의 기질을 헤아리는 중…',
@@ -47,26 +48,8 @@ const ROTATING_COPY: Record<number, string[]> = {
   ],
 };
 
-/** 사주 꿀팁 — 3단계 동안 회전 (PRD §2.2.3 보조) */
-const TIPS = [
-  { category: '알쓸사잡', text: '사주의 "사(四)"는 네 기둥, "주(柱)"는 기둥이라는 뜻이에요. 태어난 년·월·일·시를 각각 하나의 기둥으로 봅니다.' },
-  { category: '알쓸사잡', text: '천간(天干)은 하늘의 기운, 지지(地支)는 땅의 기운. 이 둘이 만나 하나의 기둥을 이루어요.' },
-  { category: '알쓸사잡', text: '일간(日干)은 "나 자신"을 뜻해요. 나머지 7글자는 나를 둘러싼 환경과 관계입니다.' },
-  { category: '오행 꿀팁', text: '목(木)이 강한 사람은 아침형 인간이 많아요. 새벽에 일찍 일어나는 습관이 잘 맞습니다.' },
-  { category: '오행 꿀팁', text: '화(火)가 부족하면 적극성이 떨어질 수 있어요. 빨간 소품을 가까이 두면 기운 보충에 도움이 됩니다.' },
-  { category: '오행 꿀팁', text: '토(土)는 안정과 중재의 에너지예요. 토가 강한 사람은 중재자 역할에 타고난 능력이 있어요.' },
-  { category: '오행 꿀팁', text: '금(金)이 강하면 결단력이 뛰어나지만, 너무 강하면 고집으로 나타날 수 있어요.' },
-  { category: '오행 꿀팁', text: '수(水)는 지혜와 유연함. 부족하면 물을 많이 마시고 수영을 하는 것만으로도 보충이 됩니다.' },
-  { category: '실생활 활용', text: '중요한 면접이나 미팅은 오전에 잡으세요. 양(陽)의 기운이 강한 시간대가 발표력을 높여줍니다.' },
-  { category: '실생활 활용', text: '잠이 잘 안 올 때는 북쪽 머리를 두고 자 보세요. 수(水) 기운의 방위라 안정에 도움이 됩니다.' },
-  { category: '실생활 활용', text: '새 프로젝트는 월초보다 월중에 시작하는 게 유리해요. 기운이 안정된 시기이기 때문이에요.' },
-  { category: '사주500 가이드', text: '결과 리포트의 점수는 절대값이 아니에요. 내 사주 구조 안에서의 상대적 강약을 보여줍니다.' },
-  { category: '사주500 가이드', text: '시간을 모를 때는 6글자로 분석하지만, 시간을 알면 8글자 분석이 가능해서 훨씬 정밀해져요.' },
-  { category: '사주500 가이드', text: '같은 날 태어나도 시간에 따라 사주가 완전히 달라져요. 출생 시간이 그만큼 중요합니다.' },
-  { category: '사주500 가이드', text: '대운은 10년 단위로 바뀌는 큰 흐름이에요. 지금 내가 어떤 대운에 있는지 꼭 확인해보세요.' },
-  { category: '명리학 상식', text: '음양오행은 2,500년 전부터 내려온 동양 자연철학이에요. 미신이 아닌 체계적 분석 도구입니다.' },
-  { category: '명리학 상식', text: '격국(格局)은 사주의 "성격 유형"과 비슷해요. MBTI처럼, 사주에도 분류 체계가 있습니다.' },
-];
+/** 사주 꿀팁 — 3단계 동안 회전 (PRD §2.2.3 보조 · SSOT: src/constants/loadingTips.ts) */
+const TIPS = LOADING_TIPS;
 
 // 2026-05-04 reportType 분기 — premium 60-120s vs basic 15-30s 페이싱 차이
 //   basic (15-30s):   2.5s + 4.0s + ∞ → 빠른 페이싱 (stage 3 에서 5-10s 정도 머묾)

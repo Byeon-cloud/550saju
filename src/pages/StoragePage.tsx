@@ -78,23 +78,36 @@ const SWIPE_THRESHOLD = 80; // px
 const LAST_INPUT_KEY = 'saju500.lastInput';
 
 /* ══════════════════════════════════════════════════════════════════
- * 필터 칩 (스펙 §3-2: 4개)
+ * 필터 칩 (2026-05-05 PD 정정 — 실제 contentType 분류 그대로 노출)
+ *  · 이전 4 탭 통합 (사주·궁합·기타) 은 분류 모호 → 사용자가 본 콘텐츠 정확히 못 찾음
+ *  · 10 탭으로 확장 + 가로 스크롤 (overflow-x-auto 이미 적용)
  * ═════════════════════════════════════════════════════════════════ */
-// 2026-05-04 UX agent 권고: 6 탭 → 4 탭 (60대 가독 / 모바일 360px 폭 여유).
-// "운세 vs 풀이" 차이 모호 → "사주" 로 통합. "꿈/대화" 도 보조라 "기타" 로 묶음.
-type FilterKey = 'all' | 'saju' | 'compat' | 'misc';
+type FilterKey = 'all' | 'report' | 'topic' | 'compat' | 'daeun' | 'monthly' | 'tojung' | 'daily' | 'dream' | 'chat';
 
 const FILTER_TABS: { key: FilterKey; label: string }[] = [
-  { key: 'all',    label: '전체' },
-  { key: 'saju',   label: '사주' },     // fortune (daily/daeun/monthly/tojung) + reading (report/topic) 통합
-  { key: 'compat', label: '궁합' },
-  { key: 'misc',   label: '기타' },     // dream + chat 통합
+  { key: 'all',     label: '전체' },
+  { key: 'report',  label: '종합사주' },   // report (1운 + 10운)
+  { key: 'topic',   label: '주제별' },     // topic (10주제)
+  { key: 'compat',  label: '궁합' },        // compat
+  { key: 'daeun',   label: '대운' },        // daeun
+  { key: 'monthly', label: '월운' },        // monthly
+  { key: 'tojung',  label: '토정비결' },   // tojung
+  { key: 'daily',   label: '오늘운세' },   // daily
+  { key: 'dream',   label: '꿈해몽' },     // dream + deepDream 합침
+  { key: 'chat',    label: '사주대화' },   // chatRooms
 ];
 
-/** Stage 7e-5: 운세(시간 흐름) 카테고리 — daily/daeun/monthly/tojung */
-const FORTUNE_TYPES: ContentType[] = ['daily', 'daeun', 'monthly', 'tojung'];
-/** Stage 7e-5: 풀이(분석) 카테고리 — report/topic */
-const ANALYSIS_TYPES: ContentType[] = ['report', 'topic'];
+/** 분류 그룹 매핑 — filterTab → contentType[] (chat 은 chatRooms 별도) */
+const TAB_TO_CONTENT_TYPES: Record<Exclude<FilterKey, 'all' | 'chat'>, ContentType[]> = {
+  report:  ['report'],
+  topic:   ['topic'],
+  compat:  ['compat'],
+  daeun:   ['daeun'],
+  monthly: ['monthly'],
+  tojung:  ['tojung'],
+  daily:   ['daily'],
+  dream:   ['dream', 'deepDream'],
+};
 
 const CONTENT_LABEL: Record<string, string> = {
   report: '종합 사주',           // 1운 또는 10운(프리미엄) — tier로 분기
@@ -176,31 +189,21 @@ export function StoragePage() {
     return copy;
   }, [reports, sortDesc]);
 
-  // 2026-05-04 4 탭 분기 (전체·사주·궁합·기타)
+  // 2026-05-05 10 탭 분기 (실제 contentType 그대로 노출)
   const visibleReports = useMemo(() => {
     if (filterTab === 'all') return sortedReports;
-    if (filterTab === 'saju') {
-      // 운세 + 풀이 통합: daily/daeun/monthly/tojung + report/topic
-      return sortedReports.filter((r) => {
-        const ct = (r.contentType ?? 'daily') as ContentType;
-        return FORTUNE_TYPES.includes(ct) || ANALYSIS_TYPES.includes(ct);
-      });
-    }
-    if (filterTab === 'compat') {
-      return sortedReports.filter((r) => (r.contentType ?? '') === 'compat');
-    }
-    if (filterTab === 'misc') {
-      // dream + chat (chat은 별도 데이터셋이라 reports 안엔 dream 만 잡힘)
-      return sortedReports.filter(
-        (r) => r.contentType === 'dream' || r.contentType === 'deepDream',
-      );
-    }
-    return sortedReports;
+    if (filterTab === 'chat') return []; // chat 은 reports 가 아니라 chatRooms 별도
+    const allowedTypes = TAB_TO_CONTENT_TYPES[filterTab as Exclude<FilterKey, 'all' | 'chat'>];
+    if (!allowedTypes) return sortedReports;
+    return sortedReports.filter((r) => {
+      const ct = (r.contentType ?? '') as ContentType;
+      return allowedTypes.includes(ct);
+    });
   }, [sortedReports, filterTab]);
 
   const visibleChatRooms = useMemo(() => {
-    // 전체 + 기타 탭에서 chat 표시
-    if (filterTab !== 'misc' && filterTab !== 'all') return [];
+    // 전체 + 사주대화 탭에서 chat 표시
+    if (filterTab !== 'chat' && filterTab !== 'all') return [];
     if (filterTab === 'all') return chatRooms;
     const copy = [...chatRooms];
     copy.sort((a, b) =>
@@ -332,8 +335,8 @@ export function StoragePage() {
   function selectAllVisible() {
     const ids = new Set<string>();
     for (const r of visibleReports) ids.add(r.id);
-    // 전체·기타 탭은 chat 도 포함
-    if (filterTab === 'all' || filterTab === 'misc') {
+    // 전체·사주대화 탭은 chat 도 포함
+    if (filterTab === 'all' || filterTab === 'chat') {
       for (const cr of visibleChatRooms) ids.add(cr.id);
     }
     setSelectedIds(ids);
@@ -341,7 +344,7 @@ export function StoragePage() {
 
   function bulkSelectionStats() {
     const totalVisible =
-      filterTab === 'all' || filterTab === 'misc'
+      filterTab === 'all' || filterTab === 'chat'
         ? visibleReports.length + visibleChatRooms.length
         : visibleReports.length;
     return { selected: selectedIds.size, total: totalVisible };
@@ -1457,22 +1460,16 @@ function ContentIcon({ contentType }: { contentType: ContentType | 'chat' }) {
 function HistoryEmpty({ filterKey }: { filterKey: FilterKey }) {
   // 2026-05-04 4 탭 매핑 (전체·사주·궁합·기타)
   const messages: Record<FilterKey, { title: string; sub: string }> = {
-    all: {
-      title: '아직 풀이가 없어요',
-      sub: '오늘의 운세부터 가볍게 시작해보세요',
-    },
-    saju: {
-      title: '사주 풀이 기록이 없어요',
-      sub: '오늘의 운세나 종합 사주를 시작해보세요',
-    },
-    compat: {
-      title: '궁합 기록이 없어요',
-      sub: '관심 있는 사람과의 궁합을 봐볼까요?',
-    },
-    misc: {
-      title: '꿈해몽·대화 기록이 없어요',
-      sub: '간밤에 꾼 꿈을 풀거나 사주 상담을 시작해보세요',
-    },
+    all:     { title: '아직 풀이가 없어요',         sub: '오늘의 운세부터 가볍게 시작해보세요' },
+    report:  { title: '종합사주 기록이 없어요',     sub: '500원 1운으로 본격 사주 풀이를 받아보세요' },
+    topic:   { title: '주제별 분석 기록이 없어요', sub: '연애·재물·직업 등 궁금한 한 주제를 깊이 보세요' },
+    compat:  { title: '궁합 기록이 없어요',         sub: '관심 있는 사람과의 궁합을 봐볼까요?' },
+    daeun:   { title: '대운 기록이 없어요',         sub: '10년 단위 인생의 큰 흐름을 확인해보세요' },
+    monthly: { title: '월운 기록이 없어요',         sub: '12개월 흐름을 사주에서 풀어드려요' },
+    tojung:  { title: '토정비결 기록이 없어요',     sub: '한 해의 흐름을 사주 전체에서 풀어드려요' },
+    daily:   { title: '오늘운세 기록이 없어요',     sub: '오늘 하루를 사주로 가볍게 살펴보세요' },
+    dream:   { title: '꿈해몽 기록이 없어요',       sub: '간밤에 꾼 꿈을 풀어보세요 (무료)' },
+    chat:    { title: '사주대화 기록이 없어요',     sub: '사주에 대한 궁금증을 자유롭게 물어보세요' },
   };
   const m = messages[filterKey];
   return (

@@ -236,7 +236,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
             className="cta-gold"
             style={{ width: '100%', marginTop: 16 }}
           >
-            AI 해석 보기
+            해석 보기
           </motion.button>
         )}
       </AnimatePresence>

@@ -552,7 +552,8 @@ function ResultView({
   const todayOhengKr: OhengType = dayOheng;
   // 관계 라벨 (생/극 매핑)
   const relationLabel = useMemo(() => {
-    if (!myOhengKr || !todayOhengKr) return '오행 만남';
+    // 2026-05-05 동적화 (audit P1) — 일간 한자 호명 fallback
+    if (!myOhengKr || !todayOhengKr) return myGanReading ? `${myGanReading} 일간 만남` : '오행 만남';
     const sangsaeng: Record<string, string> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
     const sanggeuk: Record<string, string> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
     if (myOhengKr === todayOhengKr) return `${myOhengKr}·${todayOhengKr} 비화`;
@@ -826,21 +827,21 @@ function ResultView({
                 const myLabel = `${myGan}(${myGanReading})`;
                 const todayLabel = `${dayStem}(${todayGanReading})`;
                 if (myOhengKr === todayOhengKr) {
-                  return `오늘 ${todayLabel} 와 내 일간 ${myLabel} 이 같은 ${myOhengKr}(${myOhengKr === '목' ? '木' : myOhengKr === '화' ? '火' : myOhengKr === '토' ? '土' : myOhengKr === '금' ? '金' : '水'}) 결로 만나는 자리. 익숙한 결을 더 진하게 쓰는 하루 — 결정·실행은 빠르되, 의견은 한 결로 쏠릴 위험.`;
+                  return `오늘 ${todayLabel} 와 내 일간 ${myLabel} 이 같은 ${myOhengKr}(${myOhengKr === '목' ? '木' : myOhengKr === '화' ? '火' : myOhengKr === '토' ? '土' : myOhengKr === '금' ? '金' : '水'}) 흐름으로 만나는 자리. 익숙한 리듬을 더 진하게 쓰는 하루 — 결정·실행은 빠르되, 의견은 한쪽으로 쏠릴 위험.`;
                 }
                 if (relationLabel.includes('생')) {
-                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 을 살려주는 흐름. 평소보다 받치는 결이 또렷한 하루 — 도움 청하기·학습·정비에 좋습니다.`;
+                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 을 살려주는 흐름. 평소보다 받치는 기운이 또렷한 하루 — 도움 청하기·학습·정비에 좋습니다.`;
                 }
                 if (relationLabel.includes('극')) {
                   return `오늘 ${todayLabel}(${todayOhengKr}) 와 내 일간 ${myLabel}(${myOhengKr}) 이 부딪히는 자리. 한 박자 늦추는 하루 — 큰 결정·민감한 대화·계약은 다음 날로 미루는 편이 안전.`;
                 }
                 if (relationLabel.includes('재') || relationLabel.includes('관')) {
-                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 실리·책임의 결이 따라오는 하루 — 받을 것 받고, 정리할 것 정리하기 좋습니다.`;
+                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 실리·책임의 무게가 따라오는 하루 — 받을 것 받고, 정리할 것 정리하기 좋습니다.`;
                 }
                 if (relationLabel.includes('식') || relationLabel.includes('상')) {
-                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 표현·창작의 결이 살아나는 하루 — 발표·콘텐츠·소통이 잘 풀립니다.`;
+                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 표현·창작의 흐름이 살아나는 하루 — 발표·콘텐츠·소통이 잘 풀립니다.`;
                 }
-                return `오늘 ${todayLabel}(${todayOhengKr}) 와 내 일간 ${myLabel}(${myOhengKr}) — ${relationLabel} 의 자리. 결의 방향을 살펴보는 하루.`;
+                return `오늘 ${todayLabel}(${todayOhengKr}) 와 내 일간 ${myLabel}(${myOhengKr}) — ${relationLabel} 의 자리. 흐름의 방향을 살펴보는 하루.`;
               })()}
             />
           </div>

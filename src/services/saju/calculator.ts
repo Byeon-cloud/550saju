@@ -391,6 +391,90 @@ function estimateStrength(
   return { gangYak: '중화', reason };
 }
 
+/**
+ * 격국 판정 (자평진전 §10 기반 · audit 1 P0-3)
+ *  · 월지의 십성을 1차 격국 후보로 사용 (월령 십성)
+ *  · 천간에 투간(透干) 했는지 확인 (있으면 정격, 없으면 변격 검토)
+ *  · 변격: 종격 (특정 십성 ≥ 4) · 양인격 (비겁 강 + 양일간) · 건록격 (월지가 일간과 동일 오행)
+ *  · 정격 8종: 식신·상관·편재·정재·정관·칠살·정인·편인
+ */
+function analyzeGyeokguk(
+  pillars: Pillar[],
+  sipsung: SipSung[],
+  sipsungDist: SipSungDistribution,
+  ilgan: string,
+  ilganOheng: OhengType,
+  woljiOheng: OhengType,
+): { 격국: string; 격국근거: string } {
+  // 월지에 해당하는 십성 추출
+  const woljiSipsung = sipsung.find((s) => s.position === '월지')?.십성 || '';
+
+  // 1) 종격 판정 (특정 십성 4 이상 + 일간 강약 극단)
+  const SIP_KEYS: Array<keyof SipSungDistribution> = ['비겁', '식상', '재성', '관성', '인성'];
+  for (const k of SIP_KEYS) {
+    const v = sipsungDist[k] || 0;
+    if (v >= 4) {
+      const variantMap: Record<string, string> = {
+        비겁: '종왕격',
+        식상: '종아격(從兒格)',
+        재성: '종재격(從財格)',
+        관성: '종관격(從官格)',
+        인성: '종강격',
+      };
+      return { 격국: variantMap[k] || '종격', 격국근거: `${k} ${v}자로 한쪽으로 무게가 또렷한 종격 구조` };
+    }
+  }
+
+  // 2) 양인격: 일간이 양일간(甲丙戊庚壬) + 월지가 양인 자리
+  const yangIlgan = ['甲', '丙', '戊', '庚', '壬'].includes(ilgan);
+  const yangInJi: Record<string, string> = { 甲: '卯', 丙: '午', 戊: '午', 庚: '酉', 壬: '子' };
+  const wolji = pillars[1]?.지지 || '';
+  if (yangIlgan && yangInJi[ilgan] === wolji) {
+    return { 격국: '양인격(羊刃格)', 격국근거: `${ilgan} 일간 + 월지 ${wolji} (양인 자리) — 추진력·전문성 강한 변격` };
+  }
+
+  // 3) 건록격: 월지 = 일간 본기 (일간과 같은 오행, 같은 음양)
+  const lookgokJi: Record<string, string> = {
+    甲: '寅', 乙: '卯', 丙: '巳', 丁: '午', 戊: '巳',
+    己: '午', 庚: '申', 辛: '酉', 壬: '亥', 癸: '子',
+  };
+  if (lookgokJi[ilgan] === wolji) {
+    return { 격국: '건록격(建祿格)', 격국근거: `월지 ${wolji} 가 ${ilgan} 일간의 본기 자리 — 자기 결로 사는 변격` };
+  }
+
+  // 4) 정격 8종 (월지 십성 → 격국명)
+  const formalMap: Record<string, string> = {
+    비견: '비겁격',
+    겁재: '비겁격',
+    식신: '식신격',
+    상관: '상관격',
+    편재: '편재격',
+    정재: '정재격',
+    편관: '편관격(칠살격)',
+    정관: '정관격',
+    편인: '편인격',
+    정인: '정인격',
+  };
+  const formal = formalMap[woljiSipsung];
+  if (formal) {
+    // 천간 투간 확인 — 월지 본기 십성이 천간에 같은 십성으로 투간했는지
+    const tugan = sipsung.some((s) =>
+      ['년간', '월간', '시간'].includes(s.position) && s.십성 === woljiSipsung
+    );
+    return {
+      격국: formal,
+      격국근거: tugan
+        ? `월지 ${wolji} 본기 ${woljiSipsung} 천간 투간 — 정격 ${formal}`
+        : `월지 ${wolji} 본기 ${woljiSipsung} 기반 (천간 투간 X) — ${formal} 경향`,
+    };
+  }
+
+  // fallback (월지 십성 매핑 실패)
+  void ilganOheng;
+  void woljiOheng;
+  return { 격국: '판정 보류', 격국근거: '월지 십성이 명확하지 않아 격국 판정 보류' };
+}
+
 /** 종합 명리학 분석 */
 function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: boolean): MyeongriAnalysis {
   const ilgan = pillars[2]?.천간 || '';
@@ -402,6 +486,8 @@ function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: bo
   const sipsungDist = countSipsung(sipsung);
   const hyungchunghap = detectHyungChungHap(pillars, hasBirthTime);
   const { gangYak, reason } = estimateStrength(ilganOheng, deukryeong, sipsungDist, pillars);
+  const { 격국, 격국근거 } = analyzeGyeokguk(pillars, sipsung, sipsungDist, ilgan, ilganOheng, woljiOheng);
+  void wolji;
 
   return {
     일간: ilgan,
@@ -413,5 +499,7 @@ function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: bo
     형충합: hyungchunghap,
     일간강약: gangYak,
     강약근거: reason,
+    격국,
+    격국근거,
   };
 }

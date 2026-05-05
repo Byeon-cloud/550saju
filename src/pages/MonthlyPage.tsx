@@ -130,7 +130,7 @@ export function MonthlyPage() {
           <ExtensionHero
             theme={EXTENSION_THEME.monthly}
             sub="올해 12개월 · 좋은 달과 조심할 달을 한눈에"
-            rightLabel="月運 · 매월 결의 흐름"
+            rightLabel="月運 · 매월의 흐름"
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
@@ -247,7 +247,7 @@ export function MonthlyPage() {
         <ExtensionHero
           theme={monthlyTheme}
           sub={`${ilganLabel ?? ''}${thisMonth ? ' · ' + ((thisMonth as any).pillar ?? thisMonth.month + '월') : ''}`}
-          rightLabel="月運 · 이번 달의 결"
+          rightLabel="月運 · 이번 달의 운"
         />
       </FadeIn>
 
@@ -258,7 +258,7 @@ export function MonthlyPage() {
             yearLabel={`2026 ${monthLabelEn(thisMonth.month)}`}
             month={thisMonth.month}
             pillar={(thisMonth as any).pillar ?? `${thisMonth.month}月柱`}
-            title={stripMd(String((thisMonth as any).title ?? thisMonth.theme ?? '이번 달의 결'))}
+            title={stripMd(String((thisMonth as any).title ?? thisMonth.theme ?? '이번 달의 운세'))}
             desc={stripMd(String((thisMonth as any).summary ?? (thisMonth as any).description ?? thisMonth.theme ?? ''))}
           />
         </FadeIn>
@@ -403,8 +403,8 @@ export function MonthlyPage() {
         {/* Phase D'-4 Bundle 2 — ExtensionUpsellCard (단일 CTA) */}
         <FadeIn delay={0.52}>
           <ExtensionUpsellCard
-            title="이번 달의 결을 사주 전체에서 풀어드립니다"
-            desc="12개월 흐름이 사주 원국의 어느 자리에서 비롯되는지, 평생의 결까지 한 번에."
+            title="이번 달의 흐름을 사주 전체에서 풀어드립니다"
+            desc="12개월 흐름이 사주 원국의 어느 자리에서 비롯되는지, 평생의 운까지 한 번에."
             onTap={() => navigate('/charge?need=10')}
           />
         </FadeIn>
@@ -464,8 +464,8 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
               {(m as any).careerScore != null && (
                 <div className="grid grid-cols-3 gap-3 mb-1">
                   {[
-                    { label: '직업운', score: (m as any).careerScore, color: '#1565E0' },
-                    { label: '애정운', score: (m as any).loveScore, color: '#E91E63' },
+                    { label: '직업운', score: (m as any).careerScore, color: '#5A7CA8' },
+                    { label: '애정운', score: (m as any).loveScore, color: '#C88A95' },
                     { label: '재물운', score: (m as any).wealthScore, color: '#B8965A' },
                   ].map(a => (
                     <div key={a.label} className="text-center">

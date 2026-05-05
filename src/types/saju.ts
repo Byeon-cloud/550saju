@@ -129,6 +129,9 @@ export interface MyeongriAnalysis {
   형충합: HyungChungHap[];
   일간강약: '신강경향' | '신약경향' | '중화';
   강약근거: string;
+  /** 격국(자평진전 §10) — 정격 8종 + 변격 4종 (audit 1 P0-3) */
+  격국?: string;
+  격국근거?: string;
 }
 
 /** 사주 전체 데이터 */

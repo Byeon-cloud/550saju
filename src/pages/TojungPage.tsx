@@ -325,7 +325,7 @@ export function TojungPage() {
         {/* Phase D'-4 Bundle 2 — ExtensionUpsellCard (단일 CTA) */}
         <FadeIn delay={0.78}>
           <ExtensionUpsellCard
-            title="한 해의 결을 사주 전체에서 풀어드립니다"
+            title="한 해의 흐름을 사주 전체에서 풀어드립니다"
             desc="토정비결 12절이 사주 원국과 어떻게 맞물리는지, 평생의 결까지 한 번에."
             onTap={() => navigate('/charge?need=10')}
           />

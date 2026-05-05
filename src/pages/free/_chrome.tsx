@@ -49,9 +49,9 @@ const C = {
 export const OHENG_COLOR_FREE: Record<string, string> = {
   목: '#2E7D32',
   화: '#C62828',
-  토: '#E8B82A',
+  토: '#F57F17',
   금: '#4A4A4A',
-  수: '#1565E0',
+  수: '#1565C0',
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -839,7 +839,7 @@ export function TodayMeetStack({ items }: { items: TodayMeetItem[] }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {items.map((it, i) => {
         const isBoost = it.variant === 'boost';
-        const accent = isBoost ? '#1565E0' : '#4A4A4A';
+        const accent = isBoost ? '#1565C0' : '#4A4A4A';
         const bg = isBoost ? 'rgba(21,101,224,0.06)' : 'rgba(74,74,74,0.06)';
         return (
           <div

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
 
 export async function generateMonthlyFortune(apiKey: string, sajuData: any): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
@@ -31,7 +32,9 @@ function buildPrompt(d: any): string {
   const today = new Date();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
-  return `당신은 명리학 40년 대가입니다. "소름돋는" 2026년 월별 운세.
+  return `당신은 사주500 명리학 해석가. ${MYEONGRI_GROUNDS_BLOCK}
+
+2026년 월별 운세 — 사주 글자에서 추출한 진짜 근거.
 
 ⚠️ 현재 날짜: ${dateStr}
 - 1~${now-1}월: 과거형 ("~했을 거예요")
@@ -47,11 +50,11 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ## 이름: ${d.input?.name||'미상'}, 성별: ${d.input?.gender==='male'?'남':'여'}
 
 ## 출력 (JSON만, 코드블록 없이)
-⚠️ **점수 필드 룰 (2026-05-04 준기 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
+⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
 
-🚨 **톤 룰 (2026-05-05 준기 PD 결단 — 외계어 X · 일상어 O)**
+🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X · 일상어 O)**
 
-준기 지인 직접 피드백:
+사용자 피드백:
 > '무슨 말인지 모르겠다. 한낮의 태양이다 / 겨울 한복판에 태어난 태양이다 / 형국이다 — 이게 뭔 뜻이냐.
 >  사주는 알아듣기 편하게 말해줘서 돈 주고 보는 거지, 어렵고 모호한 표현이면 돈 안 낸다.'
 
@@ -70,7 +73,7 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
    ✅ '<strong>본인에게는 가혹한 잣대를 들이대요</strong>. 이제는 본인 행복을 위해 그 섬세함을 써보세요. <strong>완벽하지 않아도 충분히 가치 있는 사람입니다</strong>.'
 4. **마무리 = 응원 + 구체 행동** (행운 색·방위·시기 등 구체)
 
-🚨 **한자 풀이 형식 강제 (2026-05-05 준기 결단 — '라는 뜻' 같은 회피 X)**:
+🚨 **한자 풀이 형식 강제 (2026-05-05 PD 결단 — '라는 뜻' 같은 회피 X)**:
 한자 등장 시 괄호 안에 **실제 일상어 풀이 텍스트** 동반:
 ✅ '병화(丙火, 밝고 활달한 성격)' / '신금(辛金, 깔끔하고 단정한 사람)' / '축미충(丑未沖, 가치관이 자주 흔들리는 자리)'
 ✅ '정관(正官, 책임감과 규범을 중요시하는 결)' / '도화살(桃花殺, 사람을 끌어당기는 매력)'
@@ -88,7 +91,7 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 
 
 ✅ **풀이 작성 규칙**:
-- **첫 문장은 결론** ('이혜지 님은 ~한 사람입니다')
+- **첫 문장은 결론** ('{유저명} 님은 ~한 사람입니다')
 - **비유는 한 번만, 즉시 결론 풀이** ('겨울에 태어난 태양 → 즉, ~한 사람')
 - **한자 등장 직후 일상어 풀이 동반** ('병화(丙火) — 즉 밝고 활달한 성격')
 - 단정 X / 모호 X / 중의 X — 그냥 직접 말하기.
@@ -98,14 +101,28 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 - ✅ '<b>도화살(桃花殺)</b> — 즉 <strong>사람을 끌어당기는 매력</strong>이 강해요.'
 
 
+🚨 **보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지)**
+
+동적 작용해야 하는 콘텐츠 = 사주 8글자마다 매번 다른 문장.
+
+❌ 'X한 달이 됩니다' / '재물운이 좋습니다' (근거 없는 일반론).
+✅ 사주 글자 + 월간지 충돌·합 직접 호명 — '병오월 + 일간 신금 (불금 갈등)', '갑인월 식상 발동', '축월에 일지 미와 충돌'.
+✅ 각 month 의 advice·career·love·wealth 에 사주 8글자 중 specific 데이터(개수·자리·충형·신살) 또는 해당 월간지 1회 이상 직접 호명 mandatory.
+
+🚨 **example 사용 룰 (회귀 금지)**:
+프롬프트 예시의 사주 글자(병화·신금·축미충 등)는 example. 실제 사용자에게는 위 ## 사주 원국 의 진짜 8글자를 인용.
+'{유저명}' placeholder 도 위 ## 이름 의 진짜 이름으로 치환.
+같은 사주 = 같은 결과 (결정론) / 다른 사주 = 완전히 다른 어휘.
+
+
 {
   "keywords": ["#사주핵심키워드1","#키워드2","#키워드3"],
-  "yearOverview": "200자 이상. 2026 병오년 전체 흐름.",
+  "yearOverview": "200자 이상. 2026 병오년 전체 흐름. 🚨 사주 8글자 specific 데이터 + 병오년 충돌·합 직접 호명 mandatory (보일러플레이트 금지).",
   "bestMonth": 숫자,
   "worstMonth": 숫자,
   "months": [
-    {"month": 1, "score": 1-100, "theme": "4~6글자", "advice": "100자 이상",
-     "career": "80자 이상", "love": "80자 이상", "wealth": "80자 이상",
+    {"month": 1, "score": 1-100, "theme": "4~6글자", "advice": "100자 이상 · 🚨 월간지 + 원국 글자 충돌·합 직접 호명",
+     "career": "80자 이상 · 🚨 사주 specific 호명", "love": "80자 이상 · 🚨 사주 specific 호명", "wealth": "80자 이상 · 🚨 사주 specific 호명",
      "careerScore": 0-100, "loveScore": 0-100, "wealthScore": 0-100,
      "luckyDay": "날짜 범위", "luckyItem": "아이템", "caution": "주의점"}, ...12개월
   ]

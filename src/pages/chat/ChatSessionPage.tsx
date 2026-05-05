@@ -229,7 +229,7 @@ export function ChatSessionPage() {
     const defaultQuestions = hasProfile
       ? [
           '올해 나에게 가장 좋은 달은?',
-          '내 사주에서 강한 기운은?',
+          '내 사주의 가장 강한 오행은?',
           '요즘 고민이 있어요',
         ]
       : [

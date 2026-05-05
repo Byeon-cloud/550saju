@@ -2,7 +2,172 @@
 
 > 이 문서는 Claude Code가 프로젝트를 이해하기 위한 **진입점**입니다.
 > 웹 채팅(claude.ai)에서 설계한 내용을 여기서 이어서 개발합니다.
+<<<<<<< HEAD
 > **최종 업데이트: 2026-04-23 PM** (Sprint 2 핸드오프 v2 + 준기 결정 4건 D1/D2/D3/D∞ 반영)
+=======
+> **최종 업데이트: 2026-05-05 NIGHT** (sprint 25 commit 종합 — UX 라이팅 균형 + 카드 3-tier + 폰트 11px floor + StoragePage 10탭)
+
+---
+
+## 📋 2026-05-05 sprint 종합 — 25 commit 핵심 정리
+
+이번 sprint 누적: `9f84cfb` → `16e6adb` (25 commit). 핵심 변경:
+
+### 1) 명리학 정통성 (P0) — 별도 §아래 상세
+- 7대 이론 정통화 (`MYEONGRI_GROUNDS_BLOCK`)
+- 6 prompt 파일 일괄 적용 (claudePremium·Report·Daeun·Monthly·Compat·Tojung)
+- 출력 = 일상어 (출처 mention 0건)
+- AI 자유서술 차단
+
+### 2) 보일러플레이트 박멸 (P0) — 별도 §아래 상세
+- prompt 실명 49건 제거 (이혜지·준기·변준기)
+- 1운 ResultPage 동적화 (WealthFlow·HealthVis·categoryMeanings·GaewoonVis·LuckyCard)
+- 5 핵심 주제 깊이 보강 (격국 매트릭스·길성 매핑·일지 4-step)
+
+### 3) UX 라이팅 균형 (PD 정정 2026-05-05 EVE)
+- "AI" 사용자 노출 단어 sweep (SymbolDragMap "AI 해석 보기" → "해석 보기" / DreamPage "AI가 분석 중" → "꿈을 살피는 중")
+- AI self-reference 8 prompt 파일 sweep (`사주500 명리학 해석 AI` → `사주500 명리학 해석가`)
+- "결" 남발 제한 (한 섹션 3회+ 금지) — 대안: 흐름·리듬·패턴·특징·성향·스타일
+- 자극 톤 균형 ("죽는다·망한다·재앙" X / "큰 변화·주의·위험·함정·전환점" 적절히 OK)
+- 외래어 적절히 OK ("DNA"·"패턴"·"타입" 임팩트 도움 시 사용)
+
+### 4) 강조 위계 3-tier (P1 audit 4)
+- `<strong>` 황금 형광펜 — 일상 결론 (한 문단 1~2회)
+- `<b>` 검정 볼드 — 한자 첫 등장
+- `<u>` 황금 밑줄 — 시기·숫자·색·방위·시간대 (한 문단 0~2회)
+- prompt mandate 명시 (sections·timeline·actionAdvice·insightCards 모두 적용)
+
+### 5) StoragePage 10탭 분류 (PD 정정 2026-05-05)
+이전 4탭 (전체·사주·궁합·기타) → 실제 contentType 9종 + chat = 10탭:
+- 전체·종합사주·주제별·궁합·대운·월운·토정비결·오늘운세·꿈해몽·사주대화
+- 가로 스크롤 (overflow-x-auto)
+- 빈 상태 메시지 10개 신규
+
+### 6) ContactSheet 업데이트
+- `CONTACT_EMAIL`: `info@juulabel.com`
+- `KAKAO_CHANNEL_URL`: `https://open.kakao.com/o/pa01C1ri` (오픈채팅방)
+- "메일 주소 복사" 버튼 제거 (불필요)
+- "카카오 채널 (준비 중)" → "카카오 오픈채팅" (활성)
+
+### 7) 카드 radius 3-tier 통일 (P1 audit 4 #2)
+- `rounded-2xl` (16px) — 대형 카드
+- `rounded-xl` (12px) — 중형 미니카드
+- `rounded-lg` (8px) — 소형 chip/pill
+- `rounded-full` — 원형 chip
+- `rounded-md` (6px) 8건 sweep → `rounded-lg`
+
+### 8) 폰트 11px floor (P1 audit 4 #6 · 60대 가독)
+- `text-[10px]` 94회 → `text-[11px]`
+- `text-[9px]` 88회 → `text-[11px]`
+- `text-[8px]` 15회 → `text-[11px]` (의도된 단일-glyph 3건 보존: w-5/w-4 rounded-full 안 + ! 글리프)
+- 결과: `text-[11px]` 266회 (기존 68 + 신규 198) — 60대 가독 floor
+
+### 9) 앱인토스 정책 검증 (MyPage)
+- `MENU_ITEMS_AIT` (운충전·결제내역) vs `MENU_ITEMS_WEB` (분석기록 추가) 분기 OK
+- 로그아웃·회원탈퇴 = `!inAppsInToss && isLoggedIn` (앱인토스 비노출)
+- 이용약관·개인정보·고객문의 = 양쪽 노출 (정책 필수)
+
+### 10) 결제·UX P0 (audit 3)
+- 결제 직전 confirm Modal (`TopicAnalysisPage`) — 1운 차감 직전 사용자 명시 동의
+- 잔액 부족 inline Modal + sessionStorage 입력값 보존 + returnTo state
+- AI 실패 inline Error 카드 (toast 대신 — 사용자 인지 보장)
+- cross-topic 다른 주제 CTA → 5 핵심 주제만 (love·reunion·exam·wealth·career) + race condition fix
+
+### 11) ExamViz 신규 + CareerViz 깊이 보강 (audit 4 P0)
+- ExamViz: 합격 운 강도·면접 시간·이직 시기·합격 길성 chip
+- CareerViz 3 → 6 카드 (직업 핵심 결·12개월 grid·단계별 timeline)
+- AI schema 신규: coreStrength·officeAdaptType·sipsungBalance·monthlyCareer·careerPhases
+
+### 12) Dead code 정리 (총 11 파일)
+- `academicReferences.ts` (655줄)
+- `src/constants/prompts.ts` + `promptBuilder.ts` (legacy)
+- `gemini{Chat,Dream,Fortune,Tojung,Topic}.ts` (5 파일)
+- `claudeWeekly.ts` + `WEEKLY_FORTUNE_SYSTEM_V3` (주간운세 폐지)
+- `generateWeeklyFortune` Cloud Function 삭제 (`firebase functions:delete`)
+- `CareerFitVis.tsx` 31줄 (사용처 0)
+
+### 13) #5 inline SVG → Pictogram (deferred)
+- 인벤토리: ~33 inline SVG, ~15 unique 모양
+- 회귀 위험 大 판단 → 다음 sprint
+- TODO 주석: PictogramRegistry 신규 키 (`ui:star`·`ui:bolt`·`ui:heart`·`ui:check`·`ui:plus`·`ui:alert-tri`·`concern:home`·`concern:exam`·`concern:business`·`concern:study` 등)
+
+---
+
+## 🚨 명리학 정통성 + 출력 분리 정책 (2026-05-05) — 회귀 절대 금지
+
+PD 핵심 결단 인용:
+> "AI 가 지멋대로 씨부리지 말고 진짜 명리학적 근거"
+> "고서나 정통 이론서에서 가져왔다고 해서 어려운말 남발하지 말고, 결국 유저는 편하게 읽히고 쉬운 단어로 접하게"
+
+### 정통 명리학 이론 (AI 내부 분석 가이드)
+**`promptsV3.ts` 의 `MYEONGRI_GROUNDS_BLOCK`** 에 7대 이론 정통화:
+1. **통근(通根)·투간(透干)** — 자평진전·적천수 진짜 강약 판정
+2. **십이운성** 12단계 — 일간 강약 1차 신호
+3. **조후(調候)** — 궁통보감 계절별 절대 보완
+4. **60일주 정통 해석** — 자평진전 일주론
+5. **학파별 차이** — 자평진전파 1차 / 적천수파 / 궁통보감파 / 명리정종 / 신파
+6. **한국 현대 학자** — 김만태(서울교대) · 박청화(춘하추동 신사주학) · 정대붕 · 홍성민 (내부 참고만)
+7. **출력 톤 분리** — 깊이 있는 이론 + 쉬운 일상어 동시
+
+### 🚨 출력 = 일상어 (출처 mention 0건)
+- ❌ 출력 본문에 "자평진전 §10 ~" / "적천수에서 ~" / "박청화 기준 ~" / "고서에 따르면 ~" 일체 금지
+- ✅ "이런 사주는 ~한 결로 풀어낼 수 있어요" 같은 일상어
+- ✅ 한자 등장 시 괄호 풀이: "병화(丙火, 밝고 활달한 성격)"
+- 학술 출처는 결과 페이지·홈 footer 에 별도 표시 (본문은 깨끗하게)
+
+### 적용 범위 (모든 유료 콘텐츠)
+- 종합사주 10운 (`claudePremium.ts`)
+- 1운 종합 리포트 (`claudeReport.ts`)
+- 대운 / 월운 / 궁합 / 토정비결 (`claudeDaeun·Monthly·Compat·Tojung.ts`)
+- 10주제 분석 (`claudeTopic.ts` + `MYEONGRI_GROUNDS_BLOCK` 통합)
+- 사주대화 (`claudeChat.ts`)
+
+### Dead Code 정리 (2026-05-05)
+- `claudeWeekly.ts` 삭제 (클라이언트 폐지된 주간운세 — 서버만 살아있던 잔재)
+- `generateWeeklyFortune` Cloud Function 삭제 (`firebase functions:delete`)
+- `WEEKLY_FORTUNE_SYSTEM_V3` / `WEEKLY_FORTUNE_USER_V3` export 제거
+- 기 제거: academicReferences·prompts.ts·promptBuilder·gemini{Chat,Dream,Fortune,Tojung,Topic}
+
+---
+
+## 🚨 보일러플레이트 박멸 정책 (2026-05-05) — 회귀 절대 금지
+
+**4축 audit + 일괄 fix 완료** (`9f84cfb` · `66efb0f` · `9717684` · `3a3b46b`):
+
+### 핵심 원칙
+1. **동적 작용해야 하는 콘텐츠는 동적으로** — 사주 8글자마다 매번 다른 출력
+2. **prompt 안에 사람 이름 절대 금지** — AI carry-over 위험, 발견 즉시 갈아엎기
+3. **사주 specific 호명 mandatory** — '병화 일간', '재성 N개', '축미충' 등 1회 이상
+4. **포맷+동적 하이브리드 OK** — 라벨/구조 정적 + 본문 동적 (예: "1순위 · 용신")
+
+### 동적화 패턴 (3-layer)
+1. AI 응답 우선 (schema mandate 강화)
+2. 사주 specific fallback (dayGan 글자 + 십성 카운트 인용)
+3. score-band lookup (최후)
+
+### 처리 완료
+- **Premium audit P0 8건** — TopicMiniGrid·TopicTopRecommend hook + YongsinLifeTable hint + ShinsalSummary + LifeStageGrid 동적화
+- **prompt 실명 49건 제거** — 이혜지·준기·변준기 → placeholder/익명화 (8 파일)
+- **1운 ResultPage 박멸** — WealthFlow + HealthVis + categoryMeanings + GaewoonVis + LuckyCard 동적화
+- **AI prompt mandate** — 7 파일 (Topic·Monthly·Daeun·Compat·Tojung·Report·Chat) 보일러플레이트 금지 룰 + example 룰 인라인
+- **DaeunPage fallback** — result null 시 sajuData 기반 자동 생성
+- **AILoading TIPS SSOT** — `src/constants/loadingTips.ts` 단일화 + 처방형 미신 박멸
+- **Dead code 8 파일** — academicReferences·prompts.ts·promptBuilder + gemini{Chat,Dream,Fortune,Tojung,Topic} 제거
+- **audit 4 UX 라이팅** — ChatPage 인사 톤 + suggestedTopics + 헤더 "결" 분산 + LoadingPage "우주의 배열" → "60갑자"
+
+### 보존 (CATEGORY A·B — 의도된 정적)
+- 명리학 SSOT 사전 (OHENG_MAP, GAN_KO, SIP_TOP_FRAME 등) — 동적 함수의 부품
+- derive 함수 다축 composer (deriveLifeKeyword·StrengthsCautions·TopicHook)
+- 섹션 제목·한자 라벨·UI 라벨
+- AILoading TIPS 27개 (학술 일반론 — 로딩 팁 의도)
+
+### 색상 시스템 (가독성 의도 — 박멸 X · 머스타드는 박멸 O)
+- `<strong>` 본문: #A37A2E + 형광펜 #F4D166 (alpha 0.55)
+- `<u>`: #B8965A SSOT 골드 밑줄 2px
+- `<b>` 한자: #1A1A1A 검정
+- 결론박스 `<strong>`: #F4D166 (다크 배경 가독성)
+- ❌ 금지: 머스타드 #B8941F · 구 골드 #C9A96E · 구 머스타드 그라디언트 #D4A843
+>>>>>>> claude/hardcore-tesla-3a84c9
 
 ---
 

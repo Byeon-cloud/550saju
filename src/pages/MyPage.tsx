@@ -33,7 +33,8 @@ const C = {
 const SERIF = "'Noto Serif KR', serif";
 const APP_VERSION = '1.0.0';
 const BUILD_DATE = '20260423';
-const CONTACT_EMAIL = 'saju500help@gmail.com';
+const CONTACT_EMAIL = 'info@juulabel.com';
+const KAKAO_CHANNEL_URL = 'https://open.kakao.com/o/pa01C1ri';
 
 /* ─ 메뉴 정의 (Sprint 1 보존 — 분기 로직 삭제 금지) ─
    앱인토스: 5개 (운충전·결제내역·고객문의·이용약관·개인정보)
@@ -779,7 +780,7 @@ function LoginModal({ open, onClose, toast, onLogin }: {
 /* ══════════════════════════════════════════
    ContactSheet — §4-4 (고객문의 바텀 시트)
 ══════════════════════════════════════════ */
-function ContactSheet({ open, onClose, userId, toast }: {
+function ContactSheet({ open, onClose, userId, toast: _toast }: {
   open: boolean;
   onClose: () => void;
   userId?: string;
@@ -797,13 +798,8 @@ function ContactSheet({ open, onClose, userId, toast }: {
     onClose();
   };
 
-  const onCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(CONTACT_EMAIL);
-      toast.show('복사됐어요', 'success');
-    } catch {
-      toast.show('복사에 실패했어요. 직접 입력해 주세요.', 'warning');
-    }
+  const onKakao = () => {
+    window.open(KAKAO_CHANNEL_URL, '_blank', 'noopener,noreferrer');
     onClose();
   };
 
@@ -848,26 +844,15 @@ function ContactSheet({ open, onClose, userId, toast }: {
                 <span className="text-[15px] font-semibold" style={{ color: C.ink }}>메일 보내기</span>
               </button>
 
-              <button type="button" onClick={onCopy}
+              {/* 카카오 오픈채팅 — 즉시 상담 */}
+              <button type="button" onClick={onKakao}
                 className="w-full flex items-center gap-3 px-5 rounded-xl"
                 style={{ height: 56, background: '#FFFFFF', border: `1px solid ${C.line}` }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke={C.mute} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                <span className="text-[15px] font-semibold" style={{ color: C.ink }}>메일 주소 복사</span>
-              </button>
-
-              {/* 카카오채널 — 향후 (§4-4 자리 비움) */}
-              <button type="button" disabled
-                className="w-full flex items-center gap-3 px-5 rounded-xl"
-                style={{ height: 56, background: '#FFFFFF', border: `1px solid ${C.line}`, opacity: 0.45 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke={C.mute} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  stroke={C.gold} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                <span className="text-[15px] font-semibold" style={{ color: C.mute }}>카카오 채널 (준비 중)</span>
+                <span className="text-[15px] font-semibold" style={{ color: C.ink }}>카카오 오픈채팅</span>
               </button>
             </div>
           </motion.div>
