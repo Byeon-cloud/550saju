@@ -27,6 +27,7 @@ import {
   TopicHero,
   TopicSajuMini,
   TopicScoreCard,
+  TopicConclusionDark,
   TopicLinkCard,
   TopicSection,
   PullQuote,
@@ -2295,6 +2296,84 @@ function StudyViz({ data, color }: { data: any; color: string }) {
   );
 }
 
+/**
+ * ExamViz — 합격·이직운 전용 (audit 4 P0 #1 신규)
+ *  · StudyViz 재사용 + exam-specific 카드 추가
+ *  · 합격 신살 (문창·학당·태극귀인) 활성화 상태
+ *  · 시험·면접·이직 3축 인디케이터
+ *  · 보라계 컬러 (#9C5A8A)
+ */
+function ExamViz({ data, color }: { data: any; color: string }) {
+  if (!data) return null;
+  // exam-specific 데이터 (있으면 노출, 없어도 안 깨짐)
+  const examLuckLevel = data.examLuckLevel || data.passProbability;
+  const luckSinsal = data.luckSinsal || data.gilseong || data.examGilseong;
+  const bestExamMonth = data.bestExamMonth || data.examPeakMonth;
+  const interviewTime = data.interviewTime || data.bestInterviewTime;
+  const jobChangeTiming = data.jobChangeTiming;
+
+  return (
+    <FadeIn delay={0.1}>
+      <div className="space-y-3">
+        {/* exam-specific top — 합격 운 + 시기 + 면접 시간대 (있는 데이터만) */}
+        {(examLuckLevel || bestExamMonth || interviewTime || jobChangeTiming) && (
+          <div className="card">
+            <p className="text-h3 text-text-primary mb-3">합격·이직 핵심 지표</p>
+            <div className="grid grid-cols-2 gap-2">
+              {examLuckLevel && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}10`, border: `1px solid ${color}30` }}>
+                  <p className="text-[10px] text-text-hint mb-0.5">합격 운 강도</p>
+                  <p className="text-[13px] font-bold" style={{ color }}>{stripMd(String(examLuckLevel))}</p>
+                </div>
+              )}
+              {bestExamMonth && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: '#2D8A4E10', border: '1px solid #2D8A4E30' }}>
+                  <p className="text-[10px] text-text-hint mb-0.5">최적 시기</p>
+                  <p className="text-[13px] font-bold" style={{ color: '#2D8A4E' }}>{stripMd(String(bestExamMonth))}</p>
+                </div>
+              )}
+              {interviewTime && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: `${color}10`, border: `1px solid ${color}30` }}>
+                  <p className="text-[10px] text-text-hint mb-0.5">면접 유리 시간</p>
+                  <p className="text-[12.5px] font-bold" style={{ color }}>{stripMd(String(interviewTime))}</p>
+                </div>
+              )}
+              {jobChangeTiming && (
+                <div className="rounded-xl p-2.5 text-center" style={{ background: '#5A7CA810', border: '1px solid #5A7CA830' }}>
+                  <p className="text-[10px] text-text-hint mb-0.5">이직 좋은 시기</p>
+                  <p className="text-[12.5px] font-bold" style={{ color: '#5A7CA8' }}>{stripMd(String(jobChangeTiming))}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 합격 신살 (문창·학당·태극) 활성화 상태 */}
+        {luckSinsal && (Array.isArray(luckSinsal) ? luckSinsal.length > 0 : true) && (
+          <div className="card" style={{ background: `linear-gradient(135deg, ${color}08, ${color}03)` }}>
+            <p className="text-[12px] font-bold mb-2" style={{ color }}>★ 합격 길성 (합격에 도움 주는 별)</p>
+            {Array.isArray(luckSinsal) ? (
+              <div className="flex flex-wrap gap-2">
+                {luckSinsal.map((s: any, i: number) => (
+                  <span key={i} className="px-3 py-1 rounded-full text-[12px] font-semibold"
+                    style={{ background: `${color}15`, color, border: `1px solid ${color}40` }}>
+                    {typeof s === 'string' ? s : s.name || s.label || ''}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-text-primary">{stripMd(String(luckSinsal))}</p>
+            )}
+          </div>
+        )}
+
+        {/* StudyViz 의 학습 프로필·과목별 적성·집중력 시간대 등 재활용 */}
+        <StudyViz data={data} color={color} />
+      </div>
+    </FadeIn>
+  );
+}
+
 function SocialViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
   const guiinOhengColor = data.guiinProfile?.oheng ? (OHENG_COLORS[data.guiinProfile.oheng] || color) : color;
@@ -2468,7 +2547,7 @@ function TopicViz({ topicId, data, color, sajuData, birthYear }: { topicId: stri
     case 'social': return <SocialViz data={data} color={color} />;
     case 'move':
     case 'moving': return <MovingViz data={data} color={color} />;
-    case 'exam': return <StudyViz data={data} color={color} />; // 합격·이직운 — study viz 재사용 (차후 ExamViz 전용 교체)
+    case 'exam': return <ExamViz data={data} color={color} />; // audit 4 P0 #1 — 합격·이직운 전용 ExamViz (StudyViz 재사용 + exam-specific 카드)
     default: return null;
   }
 }
@@ -3682,15 +3761,27 @@ export function TopicAnalysisPage() {
 
               {/* ─── 종합 점수 — 5 주제는 TopicScoreCard, 그 외는 기존 ScoreRing 카드 ─── */}
               {theme ? (
-                <div style={{ margin: '0 -20px' }}>
-                  <TopicScoreCard
-                    theme={theme}
-                    score={score}
-                    title={`${topic.label} 지수`}
-                    body={`${j.reading} · ${j.desc}`}
-                    note={result.sajuBasis ? stripMd(result.sajuBasis) : undefined}
-                  />
-                </div>
+                <>
+                  <div style={{ margin: '0 -20px' }}>
+                    <TopicScoreCard
+                      theme={theme}
+                      score={score}
+                      title={`${topic.label} 지수`}
+                      body={`${j.reading} · ${j.desc}`}
+                      note={result.sajuBasis ? stripMd(result.sajuBasis) : undefined}
+                    />
+                  </div>
+                  {/* audit 4 P1 D2 — 다크 결론박스 (5 주제 한정 · summary 첫 문장 한 줄) */}
+                  {result.summary && (
+                    <FadeIn delay={0.15}>
+                      <TopicConclusionDark
+                        theme={theme}
+                        conclusion={sanitizeAiText(stripMd(String(result.summary)).split(/[.!?。]/)[0] + '.')}
+                        sajuRef={result.sajuBasis ? stripMd(String(result.sajuBasis)).slice(0, 60) + (String(result.sajuBasis).length > 60 ? '…' : '') : undefined}
+                      />
+                    </FadeIn>
+                  )}
+                </>
               ) : (
                 <div className="card py-6 px-5">
                   {/* 점수 링 */}

@@ -96,8 +96,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"매력발산","value":"0-100 정수"},{"axis":"소통능력","value":"0-100 정수"},{"axis":"감성깊이","value":"0-100 정수"},{"axis":"안정감","value":"0-100 정수"},{"axis":"인연운","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["연애 강점 25자","연애 강점2 25자"],
-      "cautions": ["연애 주의점 25자","연애 주의점2 25자"],
+      "strengths": ["연애 강점 35~50자 · 사주 글자 호명 1회","연애 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["연애 주의점 35~50자 · 위기→기회 패턴","연애 주의점2 35~50자 · 위기→기회 패턴"],
       "idealType": {"personality": "궁합 좋은 성격 경향 + 사주 근거 한마디 (35자)", "job": "궁합 좋은 직업군 경향 + 오행 근거 (25자)", "ageGap": "나이차 경향 — 반드시 양쪽 가능성 언급 (25자)", "meetPlace": "만남 장소 경향 15자", "appearance": "외모/분위기 경향 20자"},
       "charmPoint": "나의 사주적 매력 포인트 — 사주 근거 포함 (40자)",
       "loveStyle": "연애 스타일 명칭 10자 (올인형/신중형/자유형 등)",
@@ -127,7 +127,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
         "matchPoints": ["잘 맞는 점 + 사주 근거 30자", "잘 맞는 점2 30자"],
         "clashPoints": ["안 맞는 점 + 사주 근거 30자"],
         "loveChemistry": "두 사람의 연애 궁합 핵심 한 줄 35자",
-        "partnerLoveStyle": "상대방의 연애 스타일/가치관 요약 25자"
+        "partnerLoveStyle": "상대방의 연애 스타일/가치관 요약 30~45자"
       }
     }`,
   },
@@ -158,8 +158,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"수익력","value":"0-100 정수"},{"axis":"저축력","value":"0-100 정수"},{"axis":"투자감각","value":"0-100 정수"},{"axis":"사업운","value":"0-100 정수"},{"axis":"횡재운","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["재물 강점 25자","재물 강점2 25자"],
-      "cautions": ["재물 주의점 25자","재물 주의점2 25자"],
+      "strengths": ["재물 강점 35~50자 · 사주 글자 호명 1회","재물 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["재물 주의점 35~50자 · 위기→기회 패턴","재물 주의점2 35~50자 · 위기→기회 패턴"],
       "wealthType": "정규직형/사업형/투자형/재테크형 중 하나",
       "earningPower": 0-100 정수,
       "savingPower": 0-100 정수,
@@ -204,8 +204,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"직무적성","value":"0-100 정수"},{"axis":"대인관계","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"타이밍","value":"0-100 정수"},{"axis":"면접력","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["커리어 강점 25자","커리어 강점2 25자"],
-      "cautions": ["커리어 주의점 25자","커리어 주의점2 25자"],
+      "strengths": ["커리어 강점 35~50자 · 사주 글자 호명 1회","커리어 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["커리어 주의점 35~50자 · 위기→기회 패턴","커리어 주의점2 35~50자 · 위기→기회 패턴"],
       "workStyle": "안정형/도전형/프리랜서형/창업형 중 하나",
       "careerFit": [{"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}],
       "interviewTip": "면접 팁 30자",
@@ -236,8 +236,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"배우자복","value":"0-100 정수"},{"axis":"결혼시기","value":"0-100 정수"},{"axis":"가정안정","value":"0-100 정수"},{"axis":"시댁관계","value":"0-100 정수"},{"axis":"재물복","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["결혼 강점 25자","결혼 강점2 25자"],
-      "cautions": ["결혼 주의점 25자","결혼 주의점2 25자"],
+      "strengths": ["결혼 강점 35~50자 · 사주 글자 호명 1회","결혼 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["결혼 주의점 35~50자 · 위기→기회 패턴","결혼 주의점2 35~50자 · 위기→기회 패턴"],
       "spouseProfile": {"personality": "성격 20자", "job": "직업군 15자", "ageGap": "나이차 10자", "meetStyle": "만남경로 10자"},
       "timing": {"bestPeriod": "최적시기 15자", "urgency": "높음/보통/여유 중 하나"},
       "marriageAge": "결혼 적령기 (예: 29~32세)",
@@ -267,7 +267,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
         "matchPoints": ["잘 맞는 점 + 사주 근거 30자", "잘 맞는 점2 30자"],
         "clashPoints": ["안 맞는 점 + 사주 근거 30자"],
         "marriageChemistry": "두 사람의 결혼 궁합 핵심 한 줄 35자",
-        "partnerMarriageStyle": "상대방의 결혼관/가치관 요약 25자"
+        "partnerMarriageStyle": "상대방의 결혼관/가치관 요약 30~45자"
       }
     }`,
   },
@@ -284,8 +284,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"사업감각","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"자금운용","value":"0-100 정수"},{"axis":"네트워크","value":"0-100 정수"},{"axis":"위기대응","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["사업 강점 25자","사업 강점2 25자"],
-      "cautions": ["사업 주의점 25자","사업 주의점2 25자"],
+      "strengths": ["사업 강점 35~50자 · 사주 글자 호명 1회","사업 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["사업 주의점 35~50자 · 위기→기회 패턴","사업 주의점2 35~50자 · 위기→기회 패턴"],
       "businessType": "독립창업/프랜차이즈/동업/투자형 중 하나",
       "fitIndustries": [{"name": "업종명", "fitPercent": 0-100}, {"name": "업종명", "fitPercent": 0-100}, {"name": "업종명", "fitPercent": 0-100}, {"name": "업종명", "fitPercent": 0-100}, {"name": "업종명", "fitPercent": 0-100}],
       "partnerAdvice": "동업 조언 30자",
@@ -312,8 +312,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"체력","value":"0-100 정수"},{"axis":"정신건강","value":"0-100 정수"},{"axis":"면역력","value":"0-100 정수"},{"axis":"회복력","value":"0-100 정수"},{"axis":"장수운","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["건강 강점 25자","건강 강점2 25자"],
-      "cautions": ["건강 주의점 25자","건강 주의점2 25자"],
+      "strengths": ["건강 강점 35~50자 · 사주 글자 호명 1회","건강 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["건강 주의점 35~50자 · 위기→기회 패턴","건강 주의점2 35~50자 · 위기→기회 패턴"],
       "organStatus": [
         {"element": "목", "organ": "간/담", "status": "양호/주의/경고 중 하나", "risk": 0-100},
         {"element": "화", "organ": "심장/소장", "status": "양호/주의/경고 중 하나", "risk": 0-100},
@@ -427,8 +427,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"재회가능성","value":"0-100 정수"},{"axis":"상대마음","value":"0-100 정수"},{"axis":"궁합구조","value":"0-100 정수"},{"axis":"타이밍","value":"0-100 정수"},{"axis":"관계성장","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4","#키워드5"],
-      "strengths": ["재회 긍정 요인 25자","긍정 요인2 25자","긍정 요인3 25자"],
-      "cautions": ["재회 주의점 25자","주의점2 25자","주의점3 25자"],
+      "strengths": ["재회 긍정 요인 35~50자 · 사주 호명","긍정 요인2 35~50자","긍정 요인3 35~50자"],
+      "cautions": ["재회 주의점 35~50자 · 위기→기회 패턴","주의점2 35~50자 · 위기→기회 패턴","주의점3 35~50자 · 위기→기회"],
       "reunionProb": "0-100 정수",
       "partnerFeeling": "상대 현재 감정 추론 30자",
       "bestTiming": "재회 적기 15자 (예: 7~9월)",
@@ -445,7 +445,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "breakupCause": "이별의 사주적 핵심 원인 30자",
       "partnerProfile": {
         "dominantOheng": "목/화/토/금/수 중 하나 (상대방 추정 주 오행)",
-        "personality": "상대방 연애 성향 요약 25자",
+        "personality": "상대방 연애 성향 요약 30~45자",
         "currentEmotion": "현재 감정 상태 15자",
         "reunionDesire": "0-100 정수 (상대방의 재회 욕구 추정)",
         "loveStyle": "상대 연애 스타일 10자",
@@ -507,8 +507,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
         {"factor": "네번째 변수", "impact": "0-100", "favorable": true또는false, "desc": "30자"},
         {"factor": "다섯번째 변수", "impact": "0-100", "favorable": true또는false, "desc": "30자"}
       ],
-      "greenFlags": ["긍정 신호 25자", "긍정 신호2 25자", "긍정 신호3 25자"],
-      "redFlags": ["경고 신호 25자", "경고 신호2 25자", "경고 신호3 25자"],
+      "greenFlags": ["긍정 신호 35~50자 · 사주 호명", "긍정 신호2 35~50자", "긍정 신호3 35~50자"],
+      "redFlags": ["경고 신호 35~50자 · 위기→기회", "경고 신호2 35~50자", "경고 신호3 35~50자"],
       "breakupDuration": {
         "healingStage": "충격기/거부기/회복기/수용기/장기분리기 중 하나",
         "stageDesc": "현재 단계에 대한 설명 30자 (예: '감정 정리는 됐지만 미련이 남아있는 시기')",
@@ -543,8 +543,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"집중력","value":"0-100 정수"},{"axis":"이해력","value":"0-100 정수"},{"axis":"암기력","value":"0-100 정수"},{"axis":"시험운","value":"0-100 정수"},{"axis":"끈기","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["학업 강점 25자","학업 강점2 25자"],
-      "cautions": ["학업 주의점 25자","학업 주의점2 25자"],
+      "strengths": ["학업 강점 35~50자 · 사주 글자 호명 1회","학업 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["학업 주의점 35~50자 · 위기→기회 패턴","학업 주의점2 35~50자 · 위기→기회 패턴"],
       "studyType": "암기형/이해형/직관형/반복형 중 하나",
       "bestStudyTime": "최적 공부 시간대 15자",
       "examStrength": "서술형/객관식/실기 중 강한 유형",
@@ -573,8 +573,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"사교력","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"신뢰도","value":"0-100 정수"},{"axis":"인맥운","value":"0-100 정수"},{"axis":"귀인운","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["대인관계 강점 25자","대인관계 강점2 25자"],
-      "cautions": ["대인관계 주의점 25자","주의점2 25자"],
+      "strengths": ["대인관계 강점 35~50자 · 사주 글자 호명 1회","대인관계 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["대인관계 주의점 35~50자 · 위기→기회 패턴","주의점2 35~50자 · 위기→기회 패턴"],
       "socialStyle": "관계 스타일명 15자",
       "guiinProfile": {"traits": "귀인 특성 20자", "when": "만남 시기 10자", "oheng": "귀인 오행 (목/화/토/금/수)"},
       "warningPeriod": "구설수 주의 시기 15자",
@@ -599,8 +599,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"합격운","value":"0-100 정수"},{"axis":"이직운","value":"0-100 정수"},{"axis":"변동 leverage","value":"0-100 정수"},{"axis":"면접운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["변동 강점 25자","변동 강점2 25자"],
-      "cautions": ["변동 주의점 25자","변동 주의점2 25자"],
+      "strengths": ["변동 강점 35~50자 · 사주 글자 호명 1회","변동 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["변동 주의점 35~50자 · 위기→기회 패턴","변동 주의점2 35~50자 · 위기→기회 패턴"],
       "changeMode": "합격 우선/이직 우선/양방 중 하나",
       "examLuckLevel": "상/중/하 중 하나",
       "jobChangeLuckLevel": "상/중/하 중 하나",
@@ -627,8 +627,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"이동운","value":"0-100 정수"},{"axis":"방향운","value":"0-100 정수"},{"axis":"해외운","value":"0-100 정수"},{"axis":"정착운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
-      "strengths": ["이동 강점 25자","이동 강점2 25자"],
-      "cautions": ["이동 주의점 25자","이동 주의점2 25자"],
+      "strengths": ["이동 강점 35~50자 · 사주 글자 호명 1회","이동 강점2 35~50자 · 사주 글자 호명 1회"],
+      "cautions": ["이동 주의점 35~50자 · 위기→기회 패턴","이동 주의점2 35~50자 · 위기→기회 패턴"],
       "hasYeokmasal": true 또는 false,
       "bestDirection": "좋은 방위와 이유 20자",
       "avoidDirection": "피할 방위와 이유 20자",
