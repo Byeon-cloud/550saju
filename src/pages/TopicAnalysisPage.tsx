@@ -308,7 +308,7 @@ function LoveViz({ data, color }: { data: any; color: string }) {
           <div className="grid grid-cols-2 gap-2">
             {data.doHwaSal != null && (
               <div className="rounded-xl p-3 text-center" style={{ background: data.doHwaSal ? 'rgba(233,30,99,0.06)' : 'rgba(0,0,0,0.03)' }}>
-                <p className="text-[9px] text-text-hint mb-1">도화살(桃花殺)</p>
+                <p className="text-[9px] text-text-hint mb-1">매력의 별 · 도화살</p>
                 <p className="text-[14px] font-black" style={{ color: data.doHwaSal ? '#C88A95' : 'var(--text-muted)' }}>
                   {data.doHwaSal ? '있음' : '없음'}
                 </p>
@@ -550,7 +550,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <div className="grid grid-cols-2 gap-2">
             {data.jaeseongType && (
               <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
-                <p className="text-[9px] text-text-hint mb-1">재성(財星) 구조</p>
+                <p className="text-[9px] text-text-hint mb-1">돈 부르는 결 · 재성</p>
                 <p className="text-[13px] font-black" style={{ color }}>{data.jaeseongType}</p>
                 {data.jaeseongDesc && <p className="text-[10px] text-text-muted mt-1 leading-snug">{data.jaeseongDesc}</p>}
               </div>
@@ -1830,7 +1830,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
         {/* ━━━ 5. 전통 연애 신살 분석 ━━━ */}
         {sinsalList && (
           <div className="card">
-            <p className="text-h3 text-text-primary mb-1">연애 신살(神殺) 분석</p>
+            <p className="text-h3 text-text-primary mb-1">타고난 6 가지 연애 특질</p>
             <p className="text-[10px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
             <div className="space-y-3">
               {[
@@ -3030,7 +3030,7 @@ export function TopicAnalysisPage() {
                                 <div>
                                   <label className="text-[11px] text-text-hint mb-1 block">이름</label>
                                   <input type="text" placeholder="상대방 이름"
-                                    className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                                    className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                                     value={partnerInfo.name}
                                     onChange={e => setPartnerInfo(p => ({ ...p, name: e.target.value }))} />
                                 </div>
@@ -3039,17 +3039,17 @@ export function TopicAnalysisPage() {
                                 <div>
                                   <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
                                   <div className="flex gap-2">
-                                    <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthYear: +e.target.value }))}>
                                       {years.map(y => <option key={y} value={y}>{y}년</option>)}
                                     </select>
-                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthMonth}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthMonth: +e.target.value }))}>
                                       {months.map(m => <option key={m} value={m}>{m}월</option>)}
                                     </select>
-                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthDay}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
                                       {days.map(d => <option key={d} value={d}>{d}일</option>)}
@@ -3063,7 +3063,7 @@ export function TopicAnalysisPage() {
                                   <div className="flex gap-2">
                                     {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
                                       <button key={g.v}
-                                        className={`flex-1 h-10 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                        className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
                                         style={partnerInfo.gender === g.v ? { background: topic.color } : {}}
                                         onClick={() => setPartnerInfo(p => ({ ...p, gender: g.v }))}>
                                         {g.l}
@@ -3077,7 +3077,7 @@ export function TopicAnalysisPage() {
                                   <label className="text-[11px] text-text-hint mb-1 block">
                                     출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
                                   </label>
-                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                  <select className="w-full h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                     value={partnerInfo.birthHour}
                                     onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
                                     <option value={-1}>모름</option>
@@ -3138,7 +3138,7 @@ export function TopicAnalysisPage() {
                                 <div>
                                   <label className="text-[11px] text-text-hint mb-1 block">이름</label>
                                   <input type="text" placeholder="상대방 이름"
-                                    className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                                    className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                                     value={partnerInfo.name}
                                     onChange={e => setPartnerInfo(p => ({ ...p, name: e.target.value }))} />
                                 </div>
@@ -3147,17 +3147,17 @@ export function TopicAnalysisPage() {
                                 <div>
                                   <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
                                   <div className="flex gap-2">
-                                    <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthYear: +e.target.value }))}>
                                       {years.map(y => <option key={y} value={y}>{y}년</option>)}
                                     </select>
-                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthMonth}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthMonth: +e.target.value }))}>
                                       {months.map(m => <option key={m} value={m}>{m}월</option>)}
                                     </select>
-                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthDay}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
                                       {days.map(d => <option key={d} value={d}>{d}일</option>)}
@@ -3171,7 +3171,7 @@ export function TopicAnalysisPage() {
                                   <div className="flex gap-2">
                                     {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
                                       <button key={g.v}
-                                        className={`flex-1 h-10 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                        className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
                                         style={partnerInfo.gender === g.v ? { background: topic.color } : {}}
                                         onClick={() => setPartnerInfo(p => ({ ...p, gender: g.v }))}>
                                         {g.l}
@@ -3185,7 +3185,7 @@ export function TopicAnalysisPage() {
                                   <label className="text-[11px] text-text-hint mb-1 block">
                                     출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
                                   </label>
-                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                  <select className="w-full h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                     value={partnerInfo.birthHour}
                                     onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
                                     <option value={-1}>모름</option>
@@ -3235,12 +3235,12 @@ export function TopicAnalysisPage() {
                               <div className="pt-3 space-y-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                                 <label className="text-[11px] text-text-hint block">개업 시기</label>
                                 <div className="flex gap-2">
-                                  <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                  <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                     value={extraInfo.bizOpenYear}
                                     onChange={e => setExtraInfo(p => ({ ...p, bizOpenYear: +e.target.value }))}>
                                     {Array.from({ length: 30 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}년</option>)}
                                   </select>
-                                  <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                  <select className="w-24 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                     value={extraInfo.bizOpenMonth}
                                     onChange={e => setExtraInfo(p => ({ ...p, bizOpenMonth: +e.target.value }))}>
                                     {months.map(m => <option key={m} value={m}>{m}월</option>)}
@@ -3283,7 +3283,7 @@ export function TopicAnalysisPage() {
                         <div className="pt-2">
                           <label className="text-[11px] text-text-hint mb-1 block">관심 분야 / 희망 직종 <span className="text-[9px] opacity-60">(선택)</span></label>
                           <input type="text" placeholder="예: IT개발, 디자인, 마케팅, 공무원..."
-                            className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                            className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                             value={extraInfo.targetField}
                             onChange={e => setExtraInfo(p => ({ ...p, targetField: e.target.value }))} />
                           <p className="text-[10px] text-text-hint mt-1">입력하면 해당 분야의 사주적 적합도를 분석해요</p>
@@ -3313,7 +3313,7 @@ export function TopicAnalysisPage() {
                               { v: 'abroad' as const, l: '해외 이주' },
                             ].map(s => (
                               <button key={s.v}
-                                className={`flex-1 min-w-[70px] h-10 rounded-xl text-[12px] font-semibold transition-all ${extraInfo.movePurpose === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                className={`flex-1 min-w-[70px] h-11 rounded-xl text-[12px] font-semibold transition-all ${extraInfo.movePurpose === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
                                 style={extraInfo.movePurpose === s.v ? { background: topic.color } : {}}
                                 onClick={() => setExtraInfo(p => ({ ...p, movePurpose: p.movePurpose === s.v ? '' : s.v }))}>
                                 {s.l}
@@ -3324,12 +3324,12 @@ export function TopicAnalysisPage() {
                         <div>
                           <label className="text-[11px] text-text-hint mb-1 block">이사 예정 시기 <span className="text-[9px] opacity-60">(선택)</span></label>
                           <div className="flex gap-2">
-                            <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                            <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                               value={extraInfo.movePlanYear}
                               onChange={e => setExtraInfo(p => ({ ...p, movePlanYear: +e.target.value }))}>
                               {Array.from({ length: 5 }, (_, i) => currentYear + i).map(y => <option key={y} value={y}>{y}년</option>)}
                             </select>
-                            <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                            <select className="w-24 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                               value={extraInfo.movePlanMonth}
                               onChange={e => setExtraInfo(p => ({ ...p, movePlanMonth: +e.target.value }))}>
                               {months.map(m => <option key={m} value={m}>{m}월</option>)}
@@ -3356,19 +3356,19 @@ export function TopicAnalysisPage() {
                           <div>
                             <label className="text-[11px] text-text-hint mb-1 block">준비중인 시험 <span className="text-[9px] opacity-60">(선택)</span></label>
                             <input type="text" placeholder="예: 공무원, 수능, 토익, 자격증명..."
-                              className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                              className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                               value={extraInfo.examName}
                               onChange={e => setExtraInfo(p => ({ ...p, examName: e.target.value }))} />
                           </div>
                           <div>
                             <label className="text-[11px] text-text-hint mb-1 block">시험 예정 시기 <span className="text-[9px] opacity-60">(선택)</span></label>
                             <div className="flex gap-2">
-                              <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                              <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                 value={extraInfo.examYear}
                                 onChange={e => setExtraInfo(p => ({ ...p, examYear: +e.target.value }))}>
                                 {Array.from({ length: 3 }, (_, i) => currentYear + i).map(y => <option key={y} value={y}>{y}년</option>)}
                               </select>
-                              <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                              <select className="w-24 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                 value={extraInfo.examMonth}
                                 onChange={e => setExtraInfo(p => ({ ...p, examMonth: +e.target.value }))}>
                                 {months.map(m => <option key={m} value={m}>{m}월</option>)}
@@ -3411,7 +3411,7 @@ export function TopicAnalysisPage() {
                                 <div>
                                   <label className="text-[11px] text-text-hint mb-1 block">이름</label>
                                   <input type="text" placeholder="상대방 이름"
-                                    className="w-full h-10 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+                                    className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                                     style={{ '--tw-ring-color': topic.color } as any}
                                     value={partnerInfo.name}
                                     onChange={e => setPartnerInfo(p => ({ ...p, name: e.target.value }))} />
@@ -3421,17 +3421,17 @@ export function TopicAnalysisPage() {
                                 <div>
                                   <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
                                   <div className="flex gap-2">
-                                    <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthYear: +e.target.value }))}>
                                       {years.map(y => <option key={y} value={y}>{y}년</option>)}
                                     </select>
-                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthMonth}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthMonth: +e.target.value }))}>
                                       {months.map(m => <option key={m} value={m}>{m}월</option>)}
                                     </select>
-                                    <select className="w-20 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthDay}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
                                       {days.map(d => <option key={d} value={d}>{d}일</option>)}
@@ -3445,7 +3445,7 @@ export function TopicAnalysisPage() {
                                   <div className="flex gap-2">
                                     {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
                                       <button key={g.v}
-                                        className={`flex-1 h-10 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                        className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all ${partnerInfo.gender === g.v ? 'text-white' : 'bg-bg-page border border-border-light text-text-muted'}`}
                                         style={partnerInfo.gender === g.v ? { background: topic.color } : {}}
                                         onClick={() => setPartnerInfo(p => ({ ...p, gender: g.v }))}>
                                         {g.l}
@@ -3458,12 +3458,12 @@ export function TopicAnalysisPage() {
                                 <div>
                                   <label className="text-[11px] text-text-hint mb-1 block">헤어진 시기</label>
                                   <div className="flex gap-2">
-                                    <select className="flex-1 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.breakupYear}
                                       onChange={e => setPartnerInfo(p => ({ ...p, breakupYear: +e.target.value }))}>
                                       {Array.from({ length: 10 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}년</option>)}
                                     </select>
-                                    <select className="w-24 h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                    <select className="w-24 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.breakupMonth}
                                       onChange={e => setPartnerInfo(p => ({ ...p, breakupMonth: +e.target.value }))}>
                                       {months.map(m => <option key={m} value={m}>{m}월</option>)}
@@ -3479,7 +3479,7 @@ export function TopicAnalysisPage() {
                                   <label className="text-[11px] text-text-hint mb-1 block">
                                     상대방 출생 시간 <span className="text-[9px] opacity-60">(선택사항)</span>
                                   </label>
-                                  <select className="w-full h-10 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
+                                  <select className="w-full h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                     value={partnerInfo.birthHour}
                                     onChange={e => setPartnerInfo(p => ({ ...p, birthHour: +e.target.value }))}>
                                     <option value={-1}>모름</option>
@@ -3561,6 +3561,9 @@ export function TopicAnalysisPage() {
               health: '오행 균형으로 체질을 정밀 분석하고 있어요.|취약 장기와 주의 시기를 확인하고 있어요.|사주에서 건강 리스크를 찾고 있어요.|맞춤 건강 보완법을 만들고 있어요.',
               reunion: '두 사람의 사주를 교차 분석하고 있어요.|상대방의 숨은 마음까지 읽고 있어요.|궁합 구조와 신살을 정밀 분석 중이에요.|재회 전략까지 세우고 있어요.',
               study: '인성 구조로 학습 체질을 분석하고 있어요.|합격 운과 최적 시기를 계산하고 있어요.|집중력 피크 시간대를 찾고 있어요.|시험 당일 전략까지 세우고 있어요.',
+              // audit 2 P1 B1 — exam 키 신규 추가 (TOPICS 에 등록됐지만 NOTES 누락이었음)
+              exam: '합격·이직 좋은 달을 사주에서 찾고 있어요.|면접 유리한 시간대를 보고 있어요.|변동 운이 강한 시기를 짚고 있어요.|합격 신살(문창·학당·태극)을 확인하고 있어요.',
+              move: '이동·변화의 글자를 확인하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
               social: '도와줄 인연이 있는 자리를 보고 있어요.|귀인운이 언제 오는지 확인하고 있어요.|구설수 주의 시기를 계산하고 있어요.|사주적 관계 패턴을 읽고 있어요.',
               moving: '이동·변화의 글자를 확인하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
             };
@@ -3935,17 +3938,33 @@ export function TopicAnalysisPage() {
                 </div>
               )}
 
-              {/* ── 다른 주제 CTA ── */}
+              {/* ── 다른 주제 CTA — audit 3 P0 E4 ──
+                  fix:
+                  1) 5 핵심 주제만 노출 (love·reunion·exam·wealth·career) — legacy social/moving 차단
+                  2) navigate 만 호출 (race condition 제거 — setPhase/setResult/setSelected 제거)
+                     라우터 변경 시 컴포넌트 자동 재마운트 → 모든 state 자동 초기화
+                  3) min-height 56px (audit 4 P1 D6) */}
               <div className="space-y-2 pt-2">
                 <p className="text-label text-text-hint text-center">다른 운세도 궁금하다면</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(TOPICS).filter(([id]) => id !== topicId).slice(0, 4).map(([id, t]) => (
-                    <button key={id} onClick={() => { navigate(`/topic/${id}`); setPhase('select'); setResult(null); setSelected((profiles[0] as unknown as LocalReport) || null); }}
-                      className="card py-3 px-3 flex items-center gap-2">
-                      <Pictogram k={`topic:${id as TopicKey}`} size={18} color={t.color} />
-                      <span className="text-caption font-semibold text-text-primary">{t.label}</span>
-                    </button>
-                  ))}
+                  {(['love', 'reunion', 'exam', 'wealth', 'career'] as const)
+                    .filter((id) => id !== topicId)
+                    .slice(0, 4)
+                    .map((id) => {
+                      const t = TOPICS[id as TopicKey];
+                      if (!t) return null;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => navigate(`/topic/${id}`)}
+                          className="card py-3 px-3 flex items-center gap-2"
+                          style={{ minHeight: 56 }}
+                        >
+                          <Pictogram k={`topic:${id as TopicKey}`} size={20} color={t.color} />
+                          <span className="text-[14px] font-semibold text-text-primary">{t.label}</span>
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
 
