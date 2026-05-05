@@ -489,7 +489,7 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {[
                     { label: '직업', score: (period as any).careerScore, color: '#1B2A4A' },
-                    { label: '연애', score: (period as any).loveScore, color: '#E91E63' },
+                    { label: '연애', score: (period as any).loveScore, color: '#C88A95' },
                     { label: '재물', score: (period as any).wealthScore, color: '#B8965A' },
                     { label: '건강', score: (period as any).healthScore, color: '#2D8A4E' },
                   ].map(a => (
@@ -507,7 +507,7 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
               )}
               {[
                 { label: '직업/진로', value: period.career, color: '#1B2A4A' },
-                { label: '연애/관계', value: period.love, color: '#E91E63' },
+                { label: '연애/관계', value: period.love, color: '#C88A95' },
                 { label: '재물',     value: period.wealth, color: '#B8965A' },
                 { label: '건강',     value: period.health, color: '#2D8A4E' },
               ].map(area => (

@@ -1,0 +1,1825 @@
+// extension/_chrome.tsx — Phase D'-4 Bundle 1 (#54) 확장 4종 mockup 시각 패턴 추출
+// 진본:
+//   - 확장_대운흐름_v1 (287L)  → DaeunPage  (2운, 大運, #3B7A4B)
+//   - 확장_월운_v1 (285L)      → MonthlyPage (1운, 月運, #B5441F)
+//   - 확장_궁합_v1 (289L)      → CompatibilityPage (3운, 合, #9C5A8A)
+//   - 확장_토정비결_v1 (272L)  → TojungPage (2운, 歲, #2F4B7C)
+//
+// 핵심 패턴:
+//   공통(4):   ExtensionHero / ExtensionSection / ExtensionUpsellCard / ExtensionLockVeil
+//   Daeun(3):  DaeunBars (8칸 막대 + NOW/PEAK) / DaeunHeatGrid (5십성×10년) / DaeunAccordion (dw-head + body + tags)
+//   Monthly(3): MonthHero (월 큰숫자 + pillar) / FourCard (일·사람·돈·몸 ring) / CalGrid (일별 강도)
+//   Compat(2): CompatPair (좌·우 pcard + 중앙 合) / CompatTimeline (관계 타임라인)
+//   Tojung(3): TojungHexagramCard (本卦 + glyph + pull) / TojungFourBox (4 fc) / TojungMonthGrid (12절)
+//
+// 원칙:
+//   - mockup 진본 디자인 그대로 (badge·tier·sub·meta·seal·sec-num·han·pullq·src 등)
+//   - SSOT 토큰만 (banned 회피)
+//   - 4 페이지 색 SSOT v1 (#3B7A4B / #B5441F / #9C5A8A / #2F4B7C)
+//   - D∞ 단일 CTA (작업 0)
+//   - mount는 Bundle 2
+
+import type { ReactNode } from 'react';
+
+/* ══════════════════════════════════════════════════════════════════
+ * 공용 토큰
+ * ═════════════════════════════════════════════════════════════════ */
+const C = {
+  paper: '#F8F5EE',
+  ink: '#1A1A1A',
+  inkSoft: '#3D3D3D',
+  mute: '#7A7269',
+  gold: '#B8965A',
+  goldDeep: '#8C6D3D',
+  goldSoft: 'rgba(184,150,90,0.14)',
+  goldLine: 'rgba(184,150,90,0.40)',
+  line: '#E5DFD0',
+  surface: '#FFFFFF',
+} as const;
+
+/* ══════════════════════════════════════════════════════════════════
+ * 4 페이지 디자인 매핑
+ * ═════════════════════════════════════════════════════════════════ */
+export type ExtensionPageKey = 'daeun' | 'monthly' | 'compat' | 'tojung';
+
+export interface ExtensionTheme {
+  heroGrad: string;
+  hanja: string;
+  accent: string;
+  accentDark: string;
+  accentSoft: string;
+  hint: string;
+  label: string;
+  /** Hero h1 메인 카피 (mockup 진본) */
+  heroH1: { line1: string; line2: string };
+  /** 운 비용 (페이지별) */
+  cost: '1운' | '2운' | '3운';
+}
+
+export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
+  daeun: {
+    heroGrad: 'linear-gradient(135deg,#5C9A6F 0%,#3B7A4B 60%,#1F5A30 100%)',
+    hanja: '大運',
+    accent: '#5C9A6F',
+    accentDark: '#3B7A4B',
+    accentSoft: 'rgba(59,122,75,0.10)',
+    hint: '#1F4A2A',
+    label: '대운 흐름',
+    heroH1: { line1: '인생을 흐르는', line2: '10년 단위의 결' },
+    cost: '2운',
+  },
+  monthly: {
+    heroGrad: 'linear-gradient(135deg,#D86A45 0%,#B5441F 60%,#8E3017 100%)',
+    hanja: '月運',
+    accent: '#D86A45',
+    accentDark: '#B5441F',
+    accentSoft: 'rgba(181,68,31,0.10)',
+    hint: '#5A2010',
+    label: '월운 · 이번 달',
+    heroH1: { line1: '이번 달의 결과', line2: '시기를 살핍니다' },
+    cost: '1운',
+  },
+  compat: {
+    heroGrad: 'linear-gradient(135deg,#B57FA0 0%,#9C5A8A 60%,#7C4570 100%)',
+    hanja: '合',
+    accent: '#B57FA0',
+    accentDark: '#9C5A8A',
+    accentSoft: 'rgba(156,90,138,0.10)',
+    hint: '#4C2C44',
+    label: '궁합',
+    heroH1: { line1: '두 사주의 결을 겹쳐', line2: '읽어 드립니다' },
+    cost: '3운',
+  },
+  tojung: {
+    heroGrad: 'linear-gradient(135deg,#5A7CA8 0%,#2F4B7C 60%,#1A3158 100%)',
+    hanja: '歲',
+    accent: '#5A7CA8',
+    accentDark: '#2F4B7C',
+    accentSoft: 'rgba(47,75,124,0.10)',
+    hint: '#1A3158',
+    label: '토정비결',
+    heroH1: { line1: '한 해의 결을', line2: '열두 달로 풀어 드립니다' },
+    cost: '2운',
+  },
+};
+
+/* ══════════════════════════════════════════════════════════════════
+ * 1. ExtensionHero — 공통 헤더 (gradient + badge·tier·sub·meta·seal·한자 워터마크)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface ExtensionHeroProps {
+  theme: ExtensionTheme;
+  /** crumb — 예: "사주 500 · 더 알아볼 주제 · 궁합" (compat/tojung 만 사용) */
+  crumb?: string;
+  /** sub — 일간/생년/대운 정보 또는 자유 문구 */
+  sub?: string;
+  /** meta chips — 예: ["3운 · 약 3,800자", "2026·04·21 ·기준", "전문가 감수"] */
+  meta?: string[];
+  /** seal — 우상단 한자 인장 (예: "合" / "歲") — compat/tojung */
+  seal?: string;
+  /** 우측 작은 한자 라벨 (daeun/monthly용 — 예: "大運 · 10년 단위 큰 흐름") */
+  rightLabel?: string;
+}
+
+export function ExtensionHero({
+  theme,
+  crumb,
+  sub,
+  meta,
+  seal,
+  rightLabel,
+}: ExtensionHeroProps) {
+  return (
+    <header
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '18px 20px 28px',
+        color: '#FFFFFF',
+        background: theme.heroGrad,
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          position: 'absolute',
+          right: -18,
+          bottom: -40,
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 220,
+          fontWeight: 900,
+          color: 'rgba(255,255,255,0.07)',
+          lineHeight: 1,
+          pointerEvents: 'none',
+          letterSpacing: '-0.05em',
+        }}
+      >
+        {theme.hanja}
+      </span>
+      {seal && (
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            right: 18,
+            top: 18,
+            width: 44,
+            height: 44,
+            borderRadius: 8,
+            background: 'rgba(255,255,255,0.18)',
+            border: '1px solid rgba(255,255,255,0.30)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'Noto Serif KR', serif",
+            fontSize: 22,
+            fontWeight: 800,
+            color: '#FFFFFF',
+            letterSpacing: 0,
+          }}
+        >
+          {seal}
+        </div>
+      )}
+      {crumb && (
+        <div
+          style={{
+            fontSize: 11,
+            opacity: 0.75,
+            marginBottom: 8,
+            position: 'relative',
+            letterSpacing: '0.02em',
+          }}
+        >
+          {crumb}
+        </div>
+      )}
+      <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          fontSize: 12,
+          opacity: 0.92,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          position: 'relative',
+        }}
+      >
+        <span
+          style={{
+            background: 'rgba(255,255,255,0.22)',
+            padding: '3px 10px',
+            borderRadius: 100,
+            fontSize: 11,
+            fontWeight: 600,
+          }}
+        >
+          {theme.label}
+        </span>
+        <span
+          style={{
+            background: 'rgba(255,255,255,0.14)',
+            padding: '3px 10px',
+            borderRadius: 100,
+            fontSize: 10,
+          }}
+        >
+          {theme.cost}
+        </span>
+        {rightLabel && (
+          <span style={{ marginLeft: 'auto', fontSize: 10.5, opacity: 0.8 }}>
+            {rightLabel}
+          </span>
+        )}
+      </div>
+      <h1
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 24,
+          fontWeight: 700,
+          marginTop: 14,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.4,
+          position: 'relative',
+        }}
+      >
+        {theme.heroH1.line1}
+        <br />
+        {theme.heroH1.line2}
+      </h1>
+      {sub && (
+        <div
+          style={{
+            fontSize: 12,
+            opacity: 0.85,
+            marginTop: 4,
+            position: 'relative',
+          }}
+        >
+          {sub}
+        </div>
+      )}
+      {meta && meta.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            marginTop: 10,
+            fontSize: 10.5,
+            opacity: 0.8,
+            flexWrap: 'wrap',
+            position: 'relative',
+          }}
+        >
+          {meta.map((m, i) => (
+            <span key={i}>· {m}</span>
+          ))}
+        </div>
+      )}
+    </header>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 2. ExtensionSection — sec-num + sec-title + han + sec-sub
+ * ═════════════════════════════════════════════════════════════════ */
+export function ExtensionSection({
+  theme,
+  num,
+  title,
+  hanjaSuffix,
+  sub,
+  children,
+}: {
+  theme: ExtensionTheme;
+  num: string;
+  title: string;
+  hanjaSuffix?: string;
+  sub?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section style={{ marginTop: 28 }}>
+      <div
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 11,
+          fontWeight: 600,
+          color: theme.accentDark,
+          letterSpacing: '0.2em',
+          marginBottom: 6,
+        }}
+      >
+        {num}
+      </div>
+      <div
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 19,
+          fontWeight: 700,
+          color: C.ink,
+        }}
+      >
+        {title}
+        {hanjaSuffix && (
+          <span
+            style={{
+              color: theme.accentDark,
+              fontWeight: 500,
+              marginLeft: 6,
+              fontSize: 14,
+            }}
+          >
+            {hanjaSuffix}
+          </span>
+        )}
+      </div>
+      {sub && (
+        <div
+          style={{
+            fontSize: 12,
+            color: theme.hint,
+            marginTop: 4,
+            lineHeight: 1.55,
+          }}
+        >
+          {sub}
+        </div>
+      )}
+      <div style={{ marginTop: 12 }}>{children}</div>
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 3. ExtensionUpsellCard — 다크 박스 + 命 워터마크 + 단일 CTA
+ *  Phase D' 작업 0: 단일 Primary 만 (1운 추가 결제 옵션 0)
+ * ═════════════════════════════════════════════════════════════════ */
+export function ExtensionUpsellCard({
+  title,
+  desc,
+  ctaLabel = '사주 전체로',
+  costLabel = '10운', // 2026-04-27 4 패키지 정정: 10운 → 15운 (p15 = 10본+5보너스 / 5,000원)
+  onTap,
+}: {
+  title: string;
+  desc: string;
+  ctaLabel?: string;
+  costLabel?: string;
+  onTap?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      style={{
+        margin: '28px 0 0',
+        background: 'linear-gradient(135deg, #1A1A1A, #2A2520)',
+        color: '#FFFFFF',
+        borderRadius: 14,
+        padding: '22px 20px',
+        position: 'relative',
+        overflow: 'hidden',
+        textAlign: 'left',
+        border: 'none',
+        cursor: onTap ? 'pointer' : 'default',
+        width: '100%',
+      }}
+      aria-label={`${title} (${costLabel})`}
+    >
+      <span
+        aria-hidden
+        style={{
+          position: 'absolute',
+          right: -8,
+          bottom: -28,
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 130,
+          fontWeight: 900,
+          color: 'rgba(232,217,184,0.08)',
+          lineHeight: 1,
+          pointerEvents: 'none',
+        }}
+      >
+        命
+      </span>
+      <div
+        style={{
+          fontSize: 10,
+          color: '#E8D9B8',
+          letterSpacing: '0.15em',
+          fontWeight: 600,
+          marginBottom: 8,
+          position: 'relative',
+        }}
+      >
+        PREMIUM
+      </div>
+      <h3
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 17,
+          fontWeight: 700,
+          marginBottom: 6,
+          position: 'relative',
+          lineHeight: 1.45,
+          color: '#FFFFFF',
+        }}
+      >
+        {title}
+      </h3>
+      <p
+        style={{
+          fontSize: 12.5,
+          color: '#C4B69A',
+          marginBottom: 14,
+          lineHeight: 1.6,
+          position: 'relative',
+          wordBreak: 'keep-all',
+        }}
+      >
+        {desc}
+      </p>
+      <span
+        style={{
+          display: 'inline-flex',
+          gap: 6,
+          background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
+          color: '#1A1A1A',
+          padding: '10px 18px',
+          borderRadius: 100,
+          fontSize: 13,
+          fontWeight: 700,
+          position: 'relative',
+          alignItems: 'center',
+        }}
+      >
+        {ctaLabel} →
+        <span
+          style={{
+            background: 'rgba(255,255,255,0.10)',
+            padding: '3px 10px',
+            borderRadius: 100,
+            fontSize: 11,
+            color: '#5C4A2E',
+            marginLeft: 6,
+            fontWeight: 600,
+          }}
+        >
+          {costLabel}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 4. ExtensionLockVeil — 잠금 영역 (mockup의 lock-veil)
+ * ═════════════════════════════════════════════════════════════════ */
+export function ExtensionLockVeil({
+  theme,
+  hanjaIcon = '命',
+  primaryLabel,
+  subLabel,
+  onUnlock,
+  children,
+}: {
+  theme: ExtensionTheme;
+  hanjaIcon?: string;
+  primaryLabel: string;
+  subLabel?: string;
+  onUnlock?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div style={{ position: 'relative', margin: '14px 0 0' }}>
+      <div
+        style={{
+          filter: 'blur(6px)',
+          opacity: 0.6,
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+        aria-hidden
+      >
+        {children}
+      </div>
+      <button
+        type="button"
+        onClick={onUnlock}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background:
+            'linear-gradient(180deg, rgba(248,245,238,0.4) 0%, rgba(248,245,238,0.95) 60%)',
+          borderRadius: 12,
+          border: 'none',
+          cursor: onUnlock ? 'pointer' : 'default',
+          padding: 0,
+        }}
+        aria-label={primaryLabel}
+      >
+        <div
+          style={{
+            fontFamily: "'Noto Serif KR', serif",
+            fontSize: 32,
+            color: theme.accentDark,
+            fontWeight: 900,
+          }}
+        >
+          {hanjaIcon}
+        </div>
+        <div
+          style={{
+            fontSize: 13,
+            color: C.ink,
+            fontWeight: 700,
+            marginTop: 6,
+          }}
+        >
+          {primaryLabel}
+        </div>
+        {subLabel && (
+          <div
+            style={{
+              fontSize: 11.5,
+              color: theme.hint,
+              marginTop: 4,
+              textAlign: 'center',
+              lineHeight: 1.5,
+              maxWidth: 280,
+              padding: '0 16px',
+            }}
+          >
+            {subLabel}
+          </div>
+        )}
+      </button>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 5. DaeunBars — 8칸 막대 그래프 (NOW + PEAK 강조)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface DaeunBar {
+  age: number; // 시작 나이
+  key: string; // 간지 (예: "壬辰")
+  /** 0~100 강도 (mockup의 height 비율) */
+  strength: number;
+  /** 라벨 — 예: 78 */
+  value: number;
+  variant?: 'normal' | 'now' | 'peak';
+}
+
+export function DaeunBars({
+  bars,
+  hint,
+}: {
+  bars: DaeunBar[];
+  hint?: string;
+}) {
+  return (
+    <div
+      style={{
+        margin: '12px 20px 0',
+        background: '#FFFFFF',
+        borderRadius: 14,
+        padding: '14px 16px',
+        border: `1px solid ${C.line}`,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          fontSize: 11,
+          color: C.goldDeep,
+          letterSpacing: '0.15em',
+          fontWeight: 700,
+          marginBottom: 12,
+        }}
+      >
+        <span>대운 8칸 흐름</span>
+        {hint && (
+          <span
+            style={{
+              fontSize: 10.5,
+              color: C.mute,
+              fontWeight: 500,
+              letterSpacing: 0,
+            }}
+          >
+            {hint}
+          </span>
+        )}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${bars.length}, 1fr)`,
+          gap: 4,
+          alignItems: 'flex-end',
+          height: 120,
+        }}
+      >
+        {bars.map((b, i) => {
+          const isNow = b.variant === 'now';
+          const isPeak = b.variant === 'peak';
+          const fillBg = isPeak
+            ? 'linear-gradient(180deg, #B5441F, #8E3017)'
+            : isNow
+            ? 'linear-gradient(180deg, #3B7A4B, #1F5A30)'
+            : 'linear-gradient(180deg, #C9D5BD, #A1B8A6)';
+          const numColor = isNow || isPeak ? '#FFFFFF' : '#3B7A4B';
+          return (
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: `${Math.max(20, Math.min(100, b.strength))}%`,
+                  background: fillBg,
+                  borderRadius: 6,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  paddingTop: 4,
+                  position: 'relative',
+                  border: isNow
+                    ? '2px solid #1F5A30'
+                    : isPeak
+                    ? '2px solid #8E3017'
+                    : 'none',
+                  boxShadow: isPeak
+                    ? '0 2px 8px rgba(181,68,31,0.30)'
+                    : isNow
+                    ? '0 2px 8px rgba(59,122,75,0.30)'
+                    : 'none',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: numColor,
+                  }}
+                >
+                  {b.value}
+                </span>
+              </div>
+              <span style={{ fontSize: 9, color: C.mute, fontWeight: 600 }}>
+                {b.age}
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Noto Serif KR', serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: isNow
+                    ? '#1F5A30'
+                    : isPeak
+                    ? '#8E3017'
+                    : C.ink,
+                }}
+              >
+                {b.key}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 6. DaeunHeatGrid — 5십성 × 10년 히트맵 (h1~h5 강도)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface DaeunHeatRow {
+  /** 십성 라벨 — 예: "관성" */
+  label: string;
+  /** 10년치 강도 (1~5) */
+  cells: Array<{ strength: 1 | 2 | 3 | 4 | 5; isNow?: boolean }>;
+}
+
+const HEAT_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: '#E5DFD0',
+  2: '#C9D5BD',
+  3: '#A1C7AE',
+  4: '#5C8A6F',
+  5: '#3B7A4B',
+};
+
+export function DaeunHeatGrid({
+  rows,
+  yearStart,
+  title = '대운 × 세운 히트맵',
+}: {
+  rows: DaeunHeatRow[];
+  yearStart: number;
+  title?: string;
+}) {
+  const yearCount = rows[0]?.cells.length ?? 10;
+  const years = Array.from({ length: yearCount }, (_, i) => yearStart + i);
+  return (
+    <div
+      style={{
+        margin: '12px 20px 0',
+        background: '#FFFFFF',
+        borderRadius: 14,
+        padding: '14px 16px',
+        border: `1px solid ${C.line}`,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          color: C.goldDeep,
+          letterSpacing: '0.15em',
+          fontWeight: 700,
+          marginBottom: 10,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `48px repeat(${yearCount}, 1fr)`,
+          gap: 3,
+          fontSize: 9,
+        }}
+      >
+        <div></div>
+        {years.map((y) => (
+          <div
+            key={y}
+            style={{ textAlign: 'center', color: C.mute, fontWeight: 600 }}
+          >
+            {String(y).slice(-2)}
+          </div>
+        ))}
+        {rows.map((r, ri) => (
+          <>
+            <div
+              key={`l-${ri}`}
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: C.ink,
+                alignSelf: 'center',
+              }}
+            >
+              {r.label}
+            </div>
+            {r.cells.map((c, ci) => (
+              <div
+                key={`${ri}-${ci}`}
+                style={{
+                  aspectRatio: '1 / 1',
+                  background: HEAT_COLORS[c.strength],
+                  borderRadius: 4,
+                  border: c.isNow
+                    ? '2px solid #1A1A1A'
+                    : '1px solid transparent',
+                }}
+              />
+            ))}
+          </>
+        ))}
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          fontSize: 9.5,
+          color: C.mute,
+          display: 'flex',
+          gap: 4,
+          alignItems: 'center',
+        }}
+      >
+        강도{' '}
+        {([1, 2, 3, 4, 5] as const).map((n) => (
+          <span
+            key={n}
+            style={{
+              width: 12,
+              height: 12,
+              background: HEAT_COLORS[n],
+              borderRadius: 2,
+              display: 'inline-block',
+            }}
+          />
+        ))}{' '}
+        약 → 강 · ◼ 박스: 올해
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 7. DaeunAccordion — 8개 대운 카드 (dw-head + body + tags)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface DaeunCard {
+  ageRange: string; // 예: "35~44"
+  key: string; // 간지 한자
+  reading: string; // 한글 읽기 (예: "임진")
+  tag?: string; // 우상단 — "현재" / "정점"
+  badge?: 'now' | 'peak' | 'warn';
+  body: ReactNode;
+  tags?: string[]; // dw-tags
+}
+
+export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {cards.map((c, i) => {
+        const accent =
+          c.badge === 'now'
+            ? '#3B7A4B'
+            : c.badge === 'peak'
+            ? '#B5441F'
+            : c.badge === 'warn'
+            ? '#8C6D3D'
+            : C.line;
+        const bg =
+          c.badge === 'now'
+            ? 'rgba(59,122,75,0.06)'
+            : c.badge === 'peak'
+            ? 'rgba(181,68,31,0.06)'
+            : c.badge === 'warn'
+            ? 'rgba(140,109,61,0.06)'
+            : '#FFFFFF';
+        return (
+          <div
+            key={i}
+            style={{
+              background: bg,
+              border: `1px solid ${accent}40`,
+              borderLeft: c.badge ? `3px solid ${accent}` : `1px solid ${C.line}`,
+              borderRadius: 10,
+              padding: '12px 14px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 8,
+                flexWrap: 'wrap',
+              }}
+            >
+              <span
+                style={{
+                  background: C.goldSoft,
+                  color: C.goldDeep,
+                  padding: '2px 8px',
+                  borderRadius: 100,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                }}
+              >
+                {c.ageRange}
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Noto Serif KR', serif",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: c.badge ? accent : C.ink,
+                }}
+              >
+                {c.key}
+              </span>
+              <span style={{ fontSize: 11, color: C.mute }}>
+                {c.reading}
+                {c.tag ? ` · ${c.tag}` : ''}
+              </span>
+              {c.badge && (
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    color: '#FFFFFF',
+                    background: accent,
+                    padding: '2px 7px',
+                    borderRadius: 4,
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {c.badge === 'now'
+                    ? 'NOW'
+                    : c.badge === 'peak'
+                    ? 'PEAK'
+                    : '注'}
+                </span>
+              )}
+            </div>
+            <div
+              style={{
+                fontSize: 12.5,
+                color: C.inkSoft,
+                lineHeight: 1.7,
+                wordBreak: 'keep-all',
+              }}
+            >
+              {c.body}
+            </div>
+            {c.tags && c.tags.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 6,
+                  marginTop: 10,
+                  flexWrap: 'wrap',
+                }}
+              >
+                {c.tags.map((t, ti) => (
+                  <span
+                    key={ti}
+                    style={{
+                      background: '#F5F0E8',
+                      color: C.inkSoft,
+                      padding: '2px 8px',
+                      borderRadius: 100,
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 8. MonthHero — 월 큰숫자 + pillar + 한 줄 결 + desc
+ * ═════════════════════════════════════════════════════════════════ */
+export function MonthHero({
+  yearLabel,
+  month,
+  pillar,
+  title,
+  desc,
+}: {
+  yearLabel: string; // 예: "2026 APRIL"
+  month: number;
+  pillar: string; // 예: "壬辰 月柱"
+  title: string;
+  desc: ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        margin: '12px 20px 0',
+        background: '#FFFFFF',
+        borderRadius: 14,
+        padding: '18px 20px',
+        border: `1px solid ${C.line}`,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 10,
+              color: '#B5441F',
+              letterSpacing: '0.2em',
+              fontWeight: 700,
+            }}
+          >
+            {yearLabel}
+          </div>
+          <div
+            style={{
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 56,
+              fontWeight: 800,
+              color: '#B5441F',
+              lineHeight: 1,
+              marginTop: 4,
+            }}
+          >
+            {month}
+            <small
+              style={{
+                fontSize: 18,
+                color: '#8E3017',
+                fontWeight: 600,
+                marginLeft: 4,
+              }}
+            >
+              월
+            </small>
+          </div>
+        </div>
+        <div
+          style={{
+            background: 'rgba(181,68,31,0.10)',
+            color: '#8E3017',
+            padding: '4px 10px',
+            borderRadius: 100,
+            fontFamily: "'Noto Serif KR', serif",
+            fontSize: 12,
+            fontWeight: 700,
+          }}
+        >
+          {pillar}
+        </div>
+      </div>
+      <div
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 17,
+          fontWeight: 700,
+          color: C.ink,
+          marginBottom: 6,
+          lineHeight: 1.4,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          fontSize: 13,
+          color: C.inkSoft,
+          lineHeight: 1.7,
+          wordBreak: 'keep-all',
+        }}
+      >
+        {desc}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 9. FourCard — 4면 강도 (일·사람·돈·몸 ring)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface FourCardItem {
+  label: string;
+  score: number; // 0~100
+  /** rank 1~4 — 색 분기 */
+  rank?: 1 | 2 | 3 | 4;
+}
+
+const FOURCARD_COLORS: Record<1 | 2 | 3 | 4, string> = {
+  1: '#3B7A4B', // 가장 강
+  2: '#5A7CA8',
+  3: '#B5441F', // 약함 (주의)
+  4: '#9C5A8A',
+};
+
+export function FourCard({ items, title }: { items: FourCardItem[]; title?: string }) {
+  return (
+    <div
+      style={{
+        margin: '12px 20px 0',
+        background: '#FFFFFF',
+        borderRadius: 14,
+        padding: '14px 16px',
+        border: `1px solid ${C.line}`,
+      }}
+    >
+      {title && (
+        <div
+          style={{
+            fontSize: 11,
+            color: C.goldDeep,
+            letterSpacing: '0.15em',
+            fontWeight: 700,
+            marginBottom: 10,
+          }}
+        >
+          {title}
+        </div>
+      )}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 8,
+        }}
+      >
+        {items.map((it, i) => {
+          const color = FOURCARD_COLORS[it.rank ?? 2];
+          return (
+            <div
+              key={i}
+              style={{
+                textAlign: 'center',
+                padding: '10px 4px',
+                background: `${color}10`,
+                border: `1px solid ${color}26`,
+                borderRadius: 10,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  color,
+                  fontWeight: 700,
+                  marginBottom: 4,
+                }}
+              >
+                {it.label}
+              </div>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  margin: '0 auto',
+                  borderRadius: '50%',
+                  background: `conic-gradient(${color} 0 ${it.score}%, ${color}1A ${it.score}% 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    inset: 4,
+                    borderRadius: '50%',
+                    background: '#FFFFFF',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'relative',
+                    zIndex: 1,
+                    fontFamily: "'Noto Serif KR', serif",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color,
+                  }}
+                >
+                  {it.score}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 10. CalGrid — 월간 캘린더 일별 강도 (0~3 단계)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface CalDay {
+  /** 1~31 */
+  day: number;
+  /** 0=비활성/공백, 1~3 강도 */
+  strength: 0 | 1 | 2 | 3;
+  /** 오늘 강조 */
+  isToday?: boolean;
+  /** 일요일·토요일 색 */
+  weekday?: 'sun' | 'sat' | null;
+}
+
+const CAL_INTENSITY: Record<0 | 1 | 2 | 3, string> = {
+  0: 'transparent',
+  1: 'rgba(181,68,31,0.10)',
+  2: 'rgba(181,68,31,0.30)',
+  3: 'rgba(181,68,31,0.55)',
+};
+
+export function CalGrid({
+  days,
+  hint,
+  monthLabel,
+}: {
+  /** 35칸(5주) 또는 42칸(6주) — 빈 칸은 day=0 */
+  days: CalDay[];
+  hint?: string;
+  monthLabel?: string;
+}) {
+  return (
+    <div
+      style={{
+        margin: '12px 20px 0',
+        background: '#FFFFFF',
+        borderRadius: 14,
+        padding: '14px 16px',
+        border: `1px solid ${C.line}`,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 10,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 11,
+            color: '#B5441F',
+            letterSpacing: '0.15em',
+            fontWeight: 700,
+          }}
+        >
+          {monthLabel ?? '캘린더 · 일별 강도'}
+        </div>
+        {hint && (
+          <div style={{ fontSize: 10.5, color: C.mute }}>{hint}</div>
+        )}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+        {(['일', '월', '화', '수', '목', '금', '토'] as const).map((d, i) => (
+          <div
+            key={d}
+            style={{
+              textAlign: 'center',
+              fontSize: 9.5,
+              color: i === 0 ? '#C62828' : i === 6 ? '#1565C0' : C.mute,
+              fontWeight: 700,
+              padding: '4px 0',
+            }}
+          >
+            {d}
+          </div>
+        ))}
+        {days.map((c, i) => (
+          <div
+            key={i}
+            style={{
+              aspectRatio: '1 / 1',
+              background: c.day === 0 ? 'transparent' : CAL_INTENSITY[c.strength],
+              border: c.isToday
+                ? '2px solid #1A1A1A'
+                : c.day === 0
+                ? 'none'
+                : `1px solid ${C.line}`,
+              borderRadius: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 11,
+              color:
+                c.day === 0
+                  ? 'transparent'
+                  : c.weekday === 'sun'
+                  ? '#C62828'
+                  : c.weekday === 'sat'
+                  ? '#1565C0'
+                  : C.ink,
+              fontWeight: c.isToday ? 800 : 500,
+            }}
+          >
+            {c.day || ''}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 11. CompatPair — 좌·우 pcard + 중앙 合 인장
+ * ═════════════════════════════════════════════════════════════════ */
+export interface CompatPersonCard {
+  who: string; // "사용자" / "상대"
+  name: string;
+  ilgan: string; // "己土"
+  desc: string; // "습한 텃밭의 흙"
+  pillars: Array<{ label: string; gan: string }>; // 4기둥
+}
+
+export function CompatPair({
+  left,
+  right,
+  centerHanja = '合',
+}: {
+  left: CompatPersonCard;
+  right: CompatPersonCard;
+  centerHanja?: string;
+}) {
+  return (
+    <section
+      style={{
+        margin: '12px 20px 0',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
+        gap: 8,
+        alignItems: 'stretch',
+      }}
+    >
+      <CompatPCard card={left} />
+      <div
+        aria-hidden
+        style={{
+          alignSelf: 'center',
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 28,
+          fontWeight: 800,
+          color: '#9C5A8A',
+          background: 'rgba(156,90,138,0.10)',
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(156,90,138,0.30)',
+        }}
+      >
+        {centerHanja}
+      </div>
+      <CompatPCard card={right} />
+    </section>
+  );
+}
+
+function CompatPCard({ card }: { card: CompatPersonCard }) {
+  return (
+    <div
+      style={{
+        background: '#FFFFFF',
+        border: `1px solid ${C.line}`,
+        borderRadius: 12,
+        padding: '12px 14px',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          color: '#9C5A8A',
+          letterSpacing: '0.15em',
+          fontWeight: 700,
+          marginBottom: 4,
+        }}
+      >
+        {card.who}
+      </div>
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 700,
+          color: C.ink,
+          marginBottom: 6,
+        }}
+      >
+        {card.name}
+      </div>
+      <div
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 22,
+          fontWeight: 700,
+          color: '#9C5A8A',
+          lineHeight: 1,
+          marginBottom: 4,
+        }}
+      >
+        {card.ilgan}
+      </div>
+      <div
+        style={{
+          fontSize: 11,
+          color: C.inkSoft,
+          marginBottom: 8,
+          lineHeight: 1.5,
+        }}
+      >
+        {card.desc}
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          gap: 4,
+          flexWrap: 'wrap',
+        }}
+      >
+        {card.pillars.map((p, i) => (
+          <span
+            key={i}
+            style={{
+              background: 'rgba(156,90,138,0.06)',
+              border: '1px solid rgba(156,90,138,0.20)',
+              padding: '3px 7px',
+              borderRadius: 6,
+              fontSize: 10,
+              color: '#7C4570',
+            }}
+          >
+            <b
+              style={{
+                fontFamily: "'Noto Serif KR', serif",
+                fontWeight: 700,
+              }}
+            >
+              {p.gan}
+            </b>
+            {p.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 12. CompatTimeline — 관계 타임라인 (만남 → 결정 → 안정)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface CompatTimelineStep {
+  label: string; // 시기 — 예: "1~3개월"
+  title: string;
+  desc: ReactNode;
+  highlight?: boolean;
+}
+
+export function CompatTimeline({ steps }: { steps: CompatTimelineStep[] }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        paddingLeft: 20,
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: 6,
+          top: 6,
+          bottom: 6,
+          width: 1.5,
+          background: 'rgba(156,90,138,0.30)',
+        }}
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{ position: 'relative' }}>
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: -20,
+                top: 4,
+                width: 13,
+                height: 13,
+                borderRadius: '50%',
+                background: s.highlight ? '#9C5A8A' : '#FFFFFF',
+                border: '2px solid #9C5A8A',
+              }}
+            />
+            <div
+              style={{
+                fontSize: 10,
+                color: '#9C5A8A',
+                fontWeight: 700,
+                marginBottom: 3,
+                letterSpacing: '0.04em',
+              }}
+            >
+              {s.label}
+            </div>
+            <div
+              style={{
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 14,
+                fontWeight: 700,
+                color: C.ink,
+                marginBottom: 4,
+              }}
+            >
+              {s.title}
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: C.inkSoft,
+                lineHeight: 1.65,
+                wordBreak: 'keep-all',
+              }}
+            >
+              {s.desc}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 13. TojungHexagramCard — 本卦 + glyph + name + one + pull
+ * ═════════════════════════════════════════════════════════════════ */
+export function TojungHexagramCard({
+  yearLabel,
+  glyph,
+  name,
+  oneLine,
+  pullQuote,
+}: {
+  yearLabel: string; // "2026 병오년 · 본괘"
+  glyph: string; // "水山蹇"
+  name: string; // "수산건(水山蹇) · 멈춤 속의 단단함"
+  oneLine: string;
+  pullQuote?: string;
+}) {
+  return (
+    <section
+      style={{
+        margin: '12px 20px 0',
+        background: 'linear-gradient(135deg, #FFFFFF, rgba(47,75,124,0.04))',
+        border: '1px solid rgba(47,75,124,0.30)',
+        borderRadius: 14,
+        padding: '20px 22px',
+        textAlign: 'center',
+        boxShadow: '0 4px 16px rgba(47,75,124,0.06)',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          color: '#2F4B7C',
+          letterSpacing: '0.2em',
+          fontWeight: 700,
+          marginBottom: 12,
+        }}
+      >
+        {yearLabel}
+      </div>
+      <div
+        style={{
+          fontFamily: "'Noto Serif KR', serif",
+          fontSize: 36,
+          fontWeight: 800,
+          color: '#2F4B7C',
+          letterSpacing: '0.05em',
+          marginBottom: 8,
+          lineHeight: 1.1,
+        }}
+      >
+        {glyph}
+      </div>
+      <div
+        style={{
+          fontSize: 14,
+          color: C.ink,
+          fontWeight: 700,
+          marginBottom: 8,
+        }}
+      >
+        {name}
+      </div>
+      <div
+        style={{
+          fontSize: 12.5,
+          color: C.inkSoft,
+          lineHeight: 1.7,
+          marginBottom: pullQuote ? 16 : 0,
+          wordBreak: 'keep-all',
+        }}
+      >
+        {oneLine}
+      </div>
+      {pullQuote && (
+        <div
+          style={{
+            fontFamily: "'Noto Serif KR', serif",
+            fontSize: 12.5,
+            fontStyle: 'italic',
+            color: '#2F4B7C',
+            background: 'rgba(47,75,124,0.06)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            lineHeight: 1.65,
+            wordBreak: 'keep-all',
+          }}
+        >
+          {pullQuote}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 14. TojungFourBox — 4 fc (상반기/하반기/길월/주의월)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface TojungFourItem {
+  head: string; // "상반기" / "길월"
+  value: string; // "수습" / "7·9·11월"
+  desc: string; // "정리·복기"
+}
+
+export function TojungFourBox({ items }: { items: TojungFourItem[] }) {
+  return (
+    <div
+      style={{
+        margin: '12px 20px 0',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: 8,
+      }}
+    >
+      {items.map((it, i) => (
+        <div
+          key={i}
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid rgba(47,75,124,0.20)',
+            borderRadius: 10,
+            padding: '12px 14px',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              color: '#2F4B7C',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              marginBottom: 6,
+            }}
+          >
+            {it.head}
+          </div>
+          <div
+            style={{
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 16,
+              fontWeight: 700,
+              color: C.ink,
+              marginBottom: 4,
+            }}
+          >
+            {it.value}
+          </div>
+          <div style={{ fontSize: 11, color: C.mute, lineHeight: 1.5 }}>
+            {it.desc}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 15. TojungMonthGrid — 12절 grid (1~12월 카드)
+ * ═════════════════════════════════════════════════════════════════ */
+export interface TojungMonthItem {
+  month: number;
+  /** 한 줄 풀이 */
+  oneLiner: string;
+  /** 권장 행동 */
+  action?: string;
+  /** 강조 — 길월/주의월 */
+  variant?: 'good' | 'caution';
+}
+
+export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
+  return (
+    <div
+      style={{
+        margin: '12px 20px 0',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: 8,
+      }}
+    >
+      {months.map((m) => {
+        const accent =
+          m.variant === 'good'
+            ? '#3B7A4B'
+            : m.variant === 'caution'
+            ? '#B5441F'
+            : '#2F4B7C';
+        const bg =
+          m.variant === 'good'
+            ? 'rgba(59,122,75,0.06)'
+            : m.variant === 'caution'
+            ? 'rgba(181,68,31,0.06)'
+            : '#FFFFFF';
+        return (
+          <div
+            key={m.month}
+            style={{
+              background: bg,
+              border: `1px solid ${accent}33`,
+              borderLeft: `3px solid ${accent}`,
+              borderRadius: 10,
+              padding: '12px 14px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 6,
+                marginBottom: 6,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Noto Serif KR', serif",
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: accent,
+                  lineHeight: 1,
+                }}
+              >
+                {m.month}
+              </span>
+              <span style={{ fontSize: 10, color: C.mute, fontWeight: 600 }}>
+                월
+              </span>
+              {m.variant === 'good' && (
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    background: '#3B7A4B',
+                    padding: '1px 6px',
+                    borderRadius: 100,
+                  }}
+                >
+                  吉
+                </span>
+              )}
+              {m.variant === 'caution' && (
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    background: '#B5441F',
+                    padding: '1px 6px',
+                    borderRadius: 100,
+                  }}
+                >
+                  注
+                </span>
+              )}
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: C.ink,
+                lineHeight: 1.6,
+                marginBottom: m.action ? 6 : 0,
+                wordBreak: 'keep-all',
+                fontWeight: 500,
+              }}
+            >
+              {m.oneLiner}
+            </div>
+            {m.action && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: accent,
+                  fontWeight: 600,
+                  paddingTop: 6,
+                  borderTop: `1px dashed ${accent}30`,
+                }}
+              >
+                → {m.action}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

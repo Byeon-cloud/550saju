@@ -464,8 +464,8 @@ function MonthCard({ month: m, expanded, onToggle }: { month: MonthlyDetail; exp
               {(m as any).careerScore != null && (
                 <div className="grid grid-cols-3 gap-3 mb-1">
                   {[
-                    { label: '직업운', score: (m as any).careerScore, color: '#1565E0' },
-                    { label: '애정운', score: (m as any).loveScore, color: '#E91E63' },
+                    { label: '직업운', score: (m as any).careerScore, color: '#5A7CA8' },
+                    { label: '애정운', score: (m as any).loveScore, color: '#C88A95' },
                     { label: '재물운', score: (m as any).wealthScore, color: '#B8965A' },
                   ].map(a => (
                     <div key={a.label} className="text-center">
