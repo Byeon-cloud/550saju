@@ -174,14 +174,7 @@ function deriveYongsin(
   analysisBase: any,
   dayOheng: OhengType,
 ): { primary: OhengType; secondary?: OhengType; reason: string } {
-  if (analysisBase?.용신) {
-    return {
-      primary: normalizeOheng(analysisBase.용신, dayOheng),
-      secondary: analysisBase.희신 ? normalizeOheng(analysisBase.희신, dayOheng) : undefined,
-      reason: analysisBase.용신근거 || '사주의 균형을 맞춰주는 가장 필요한 오행입니다.',
-    };
-  }
-  // fallback: 일간 오행 → 보완 오행 자동 추정
+  // 일간 오행별 보완 매핑 (fallback 및 secondary dup 가드용)
   const COMPLEMENT: Record<OhengType, [OhengType, OhengType, string]> = {
     목: ['수', '금', '木 일간을 길러주는 水와 가다듬는 金의 결'],
     화: ['목', '수', '火 일간을 살려주는 木과 식혀주는 水의 결'],
@@ -189,6 +182,23 @@ function deriveYongsin(
     금: ['토', '수', '金 일간을 만드는 土와 다듬어주는 水의 결'],
     수: ['금', '목', '水 일간을 흐르게 하는 金과 끌어주는 木의 결'],
   };
+  if (analysisBase?.용신) {
+    const primary = normalizeOheng(analysisBase.용신, dayOheng);
+    let secondary = analysisBase.희신 ? normalizeOheng(analysisBase.희신, dayOheng) : undefined;
+    // 🚨 2026-05-05 dup 가드 (준기 지적) — primary === secondary 면 명리학적 의미 없음
+    // AI 가 용신·희신 같은 오행으로 응답하는 경우 (이혜지 케이스: 둘 다 화) 발생
+    // → 보완 매핑의 두 후보 중 primary 와 다른 것으로 자동 보정
+    if (secondary === primary || !secondary) {
+      const [c1, c2] = COMPLEMENT[dayOheng];
+      secondary = c1 !== primary ? c1 : c2;
+    }
+    return {
+      primary,
+      secondary,
+      reason: analysisBase.용신근거 || '사주의 균형을 맞춰주는 가장 필요한 오행입니다.',
+    };
+  }
+  // fallback: 일간 오행 → 보완 오행 자동 추정
   const [p, s, reason] = COMPLEMENT[dayOheng];
   return { primary: p, secondary: s, reason };
 }
@@ -3811,36 +3821,38 @@ function deriveLifeKeyword(sipDist?: SipDist, _dayOheng?: OhengType): string {
   }
 
   // top × bot 20 tension 매트릭스 — §01 일간·계절 풀이와 다른 메타 레벨 동역학
+  // 🚨 마무리는 반드시 긍정 (2026-05-05 준기 지적) — 부정으로 끝내지 말 것.
+  //    "X한 결이지만, 결과적으로 ~한 강한 사람" 또는 "X한 결을 의식하면 ~로 더 깊어질 수 있는 사주"
   const key = `${top}-${bot}`;
   const matrix: Record<string, string> = {
     // 비겁 강 (자아·추진력) + 약점
-    '비겁-식상': '<strong>자기 결은 또렷한데 표현이 안 나오는 사람</strong>이에요. 안에서 결단은 빠른데 밖으로 풀어내는 데 시간이 걸리는 사주입니다.',
-    '비겁-재성': '<strong>의지는 강한데 결과까지 챙기는 손길은 약한 결</strong>입니다. 시작은 빠른데 마무리에서 한 번씩 흘려보내요.',
-    '비겁-관성': '<strong>자기 길을 끝까지 가는 추진력</strong>은 또렷하지만, 규범·책임의 무게가 부담스러운 결입니다.',
-    '비겁-인성': '<strong>본능적으로 움직이는 결단의 사람</strong>이에요. 다만 한 박자 멈춰 안에 모으는 시간이 부족합니다.',
+    '비겁-식상': '<strong>자기 결을 또렷하게 가진 사람</strong>이에요. 표현하는 데 한 박자 시간이 걸리지만, 그래서 한번 꺼낸 말은 깊이 있고 무게가 실리는 결입니다.',
+    '비겁-재성': '<strong>의지가 강하고 시작이 빠른 사람</strong>이에요. 마무리까지 같이 챙기는 동료를 곁에 두면, 추진력이 결과로 또렷하게 이어지는 결입니다.',
+    '비겁-관성': '<strong>자기 길을 끝까지 가는 단단한 추진력</strong>이 있어요. 규범에 얽매이지 않고 본인 결을 만드는 사람 — 자기 자리를 스스로 만들어가는 사주입니다.',
+    '비겁-인성': '<strong>본능적으로 움직이는 결단력 있는 사람</strong>이에요. 한 박자 멈춰 안에 모으는 습관만 더하면, 직관과 깊이가 둘 다 살아나는 강한 결입니다.',
     // 식상 강 (표현·창의) + 약점
-    '식상-비겁': '<strong>표현은 풍부한데 자기 중심이 흔들리는 결</strong>입니다. 남에게 맞추다가 본인 자리를 잃기 쉬워요.',
-    '식상-재성': '<strong>창의는 또렷한데 돈·결과로 옮기는 다리가 약한 결</strong>입니다. 좋은 아이디어가 손에 잡히는 형태로 안 떨어져요.',
-    '식상-관성': '<strong>자유롭게 흐르는 결</strong>이라, 규칙·체계 안에서는 답답함을 느끼는 사주입니다.',
-    '식상-인성': '<strong>밖으로 빠르게 풀어내는 결</strong>이에요. 깊이 모으는 시간이 부족해 가끔 가벼워 보일 수 있습니다.',
+    '식상-비겁': '<strong>표현이 풍부하고 따뜻하게 다가가는 사람</strong>이에요. 본인 중심을 한 번씩 다지는 시간을 두면, 사람을 끌어당기는 결이 더 단단해지는 사주입니다.',
+    '식상-재성': '<strong>창의가 또렷하고 색깔이 분명한 사람</strong>이에요. 결과로 옮기는 다리만 곁에 두면, 본인 색이 손에 잡히는 형태로 또렷이 떨어지는 결입니다.',
+    '식상-관성': '<strong>자유롭게 흐르는 창조의 결</strong>입니다. 규칙보다 본인 흐름이 우선이지만, 그래서 누구도 못 만드는 것을 만드는 사람 — 자기만의 자리를 여는 사주예요.',
+    '식상-인성': '<strong>밖으로 빠르게 풀어내는 표현력</strong>이 또렷한 사람입니다. 깊이 모으는 시간을 의식적으로 두면, 가볍지 않으면서도 빠른 결이 완성되는 사주예요.',
     // 재성 강 (현실·실리) + 약점
-    '재성-비겁': '<strong>현실 감각은 또렷한데 자기 결단이 흔들리는 사람</strong>입니다. 결과는 잘 보이는데 누가 옆에서 흔들면 휘둘려요.',
-    '재성-식상': '<strong>실리는 챙기는데 본인 색을 풀어내는 표현이 부족한 결</strong>입니다. 결과는 있지만 "이 사람 색깔"이 안 보일 수 있어요.',
-    '재성-관성': '<strong>현실에 강한 만큼 책임·체계의 무게가 큰 결</strong>입니다. 결과를 챙기다 자리·관계를 놓칠 수 있어요.',
-    '재성-인성': '<strong>실리 위주로 빠르게 움직이는 결</strong>이라, 깊이 모으고 배우는 시간이 부족합니다.',
+    '재성-비겁': '<strong>현실 감각이 또렷한 실리의 사람</strong>이에요. 본인 중심을 한 번씩 다지는 시간을 두면, 결과는 그대로 가져가면서도 휘둘리지 않는 단단함이 완성됩니다.',
+    '재성-식상': '<strong>실리를 정확히 챙기는 결과 중심의 사람</strong>이에요. 본인 색을 한 줄씩 풀어내는 습관만 더하면, 결과 + 색깔이 둘 다 살아나는 깊은 결입니다.',
+    '재성-관성': '<strong>현실에 강하고 결과를 챙기는 추진력</strong>이 또렷해요. 자리·관계의 무게를 함께 살피면, 결과와 사람이 둘 다 따라오는 큰 결입니다.',
+    '재성-인성': '<strong>실리 위주로 빠르게 움직이는 결</strong>이에요. 깊이 모으고 배우는 시간을 의식하면, 빠른 결과 + 깊은 통찰이 같이 가는 강한 사주가 됩니다.',
     // 관성 강 (책임·규범) + 약점
-    '관성-비겁': '<strong>책임은 다 짊어지는데 자기 의지는 흐려지는 결</strong>입니다. 남이 시키는 대로 잘 해내지만 본인이 뭘 원하는지 헷갈려요.',
-    '관성-식상': '<strong>맡은 일은 끝까지 가는데 자기 표현이 안 나오는 결</strong>이에요. 위에서 시킨 대로 잘 하지만 본인 색이 묻혀요.',
-    '관성-재성': '<strong>책임·체계는 또렷한데 결과·실리에서 한 발 늦는 결</strong>입니다. 일은 잘하는데 손에 들어오는 게 적을 수 있어요.',
-    '관성-인성': '<strong>책임에 끌려가는 결</strong>입니다. 안에 모으고 배우는 시간이 부족해 같은 패턴에 갇히기 쉬워요.',
+    '관성-비겁': '<strong>책임감이 또렷하고 신뢰받는 사람</strong>이에요. 본인이 뭘 원하는지 한 번씩 묻는 시간을 두면, 책임감 + 자기 결이 둘 다 살아나는 단단한 결입니다.',
+    '관성-식상': '<strong>맡은 일을 끝까지 가져가는 책임감 있는 사람</strong>이에요. 본인 색을 한 줄씩 풀어내는 습관만 더하면, 신뢰감 + 색깔이 둘 다 또렷한 결이 됩니다.',
+    '관성-재성': '<strong>책임·체계가 또렷한 단단한 결</strong>입니다. 결과를 챙기는 손길까지 익히면, 신뢰받으면서도 손에 들어오는 게 또렷한 강한 사주예요.',
+    '관성-인성': '<strong>책임을 끝까지 가져가는 신뢰의 결</strong>입니다. 안에 모으고 새로 배우는 시간을 의식하면, 같은 자리에서도 점점 더 깊어지는 사주예요.',
     // 인성 강 (학습·내성) + 약점
-    '인성-비겁': '<strong>안에 깊이 모으는데 결단·실행이 느린 결</strong>입니다. 다 알면서도 움직이는 데 시간이 걸려요.',
-    '인성-식상': '<strong>안에는 풍부한데 밖으로 풀어내는 표현이 막힌 결</strong>입니다. 머리는 차 있는데 입·손으로 안 나와요.',
-    '인성-재성': '<strong>배우고 모으는 데 강하지만 결과·실리로 옮기는 다리가 약한 결</strong>입니다. 공부는 잘 하는데 돈·결과가 안 따라와요.',
-    '인성-관성': '<strong>안에 모은 통찰은 또렷한데 책임·자리로 옮기는 데 시간이 걸리는 결</strong>입니다. 준비는 다 됐는데 자리에 안 앉아요.',
+    '인성-비겁': '<strong>안에 깊이 모으는 사색의 사람</strong>이에요. 결단·실행을 한 박자 빠르게 하면, 깊이 + 추진력이 둘 다 살아나는 강한 결입니다.',
+    '인성-식상': '<strong>안에 풍부한 결을 가진 사색의 사람</strong>이에요. 한 줄씩 밖으로 풀어내는 습관만 더하면, 깊이 + 표현이 둘 다 또렷한 큰 결이 됩니다.',
+    '인성-재성': '<strong>배우고 모으는 데 강한 깊이 있는 사람</strong>이에요. 결과·실리로 옮기는 다리만 익히면, 공부 + 결과가 둘 다 따라오는 단단한 사주예요.',
+    '인성-관성': '<strong>안에 또렷한 통찰을 가진 사람</strong>이에요. 책임·자리로 옮기는 한 발만 더 내딛으면, 준비 + 자리가 둘 다 완성되는 강한 결입니다.',
   };
 
-  return matrix[key] || '<strong>안에 깊이 모았다가 천천히 결로 펼쳐내는 사주</strong>입니다.';
+  return matrix[key] || '<strong>안에 깊이 모았다가 천천히 결로 펼쳐내는 강한 사주</strong>입니다. 본인 결을 믿고 천천히 가도 충분히 닿는 사람이에요.';
 }
 
 function LifeKeywordHero({
@@ -6818,6 +6830,9 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
     hookMid: string;   // 중 (56~84)
     hookHigh: string;  // 강 (85+)
   };
+  // 2026-05-05 준기 지시 — 6 카드 복원 (잠재력·인간관계 추가) + 1운 라우팅
+  // social → /topic/social (TopicTopRecommend 와 동일 · TopicAnalysisPage 에서 SocialViz 처리)
+  // potential → /daeun (대운 = 인생 흐름 = 잠재력 발현 시기 · TopicTopRecommend 와 동일)
   const topics: TopicMeta[] = [
     { key: 'wealth', label: '재물', route: '/topic/wealth', topicId: 'wealth',
       hookLow: '돈이 새는 자리·지키는 법·언제 모이는지',
@@ -6835,13 +6850,19 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
       hookLow: '약한 부위·예방의 결',
       hookMid: '체력 관리의 결',
       hookHigh: '지치지 않는 결·회복 리듬' },
-    // 2026-05-04 social(가족·관계) 카드 제거 — SSOT 10주제에 없고 클릭 라우팅 X.
-    // §08 관계의 결 섹션이 별도로 6관계 깊이 풀이를 담당하므로 여기 중복 X.
+    { key: 'social', label: '인간관계', route: '/topic/social', topicId: 'social',
+      hookLow: '왜 관계가 얇은지·어디부터 깊게 갈지',
+      hookMid: '관계의 결과 거리감 조정',
+      hookHigh: '내 결을 살리는 사람·소모하는 사람' },
+    { key: 'potential', label: '잠재력', route: '/daeun', topicId: 'potential',
+      hookLow: '늦게 피는 결의 시기',
+      hookMid: '대운 흐름과 자리잡기',
+      hookHigh: '평생 흐름의 결과 도약 시점' },
   ];
 
-  // mockup full = 마지막 가족·관계 카드 (전체 너비)
+  // 2026-05-05 6 카드 → 2-col grid 균일 (마지막 .full 카드 제거)
   const items = topics
-    .map((t, i) => {
+    .map((t) => {
       const ai = aiTopics?.[t.key];
       const aiDesc = ai?.desc?.trim() || ai?.line?.trim() || ai?.meaning?.trim();
       const score = Number(scores?.[t.key] ?? 0);
@@ -6851,7 +6872,7 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
         score,
         desc: aiDesc,
         hook,
-        isFull: i === 4,
+        isFull: false,
       };
     })
     .filter((t) => t.score > 0);
@@ -6882,8 +6903,8 @@ function TopicMiniGrid({ scores, aiTopics }: { scores: Record<string, number>; a
           ...(isPeak ? { border: '2px solid #2e7d32', boxShadow: '0 4px 14px rgba(46,125,50,0.14)' } : {}),
           ...(isLow ? { border: '2px solid #c62828', boxShadow: '0 4px 14px rgba(198,40,40,0.14)' } : {}),
         };
-        // 2026-05-04 social(가족·관계) 은 SSOT 10주제에 없음 → 클릭 라우팅 비활성화 (점수+풀이만 표시)
-        const isClickable = t.key !== 'social';
+        // 2026-05-05 6 카드 복원 — 모든 카드 클릭 가능 (social, potential 포함 1운 과금 라우팅)
+        const isClickable = true;
         return (
           <div
             key={t.key}
