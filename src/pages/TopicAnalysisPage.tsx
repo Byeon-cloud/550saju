@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
+import { Modal } from '@/components/common/Modal';
 import { getProfiles, saveReport, generateId, spendBalance, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -54,11 +55,11 @@ const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> =
   study:    { label: '학업운',       color: '#9C5A8A', desc: '집중력·지식 흡수·학습 패턴' },
   exam:     { label: '합격·이직운', color: '#5A6FA8', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
   move:     { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
-  social:   { label: '대인관계운',   color: '#E8B82A', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
+  social:   { label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
   moving:   { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
 };
 
-const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
+const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
 
 /** 토픽 hex 컬러 → ExtensionHero 패턴 3-stop gradient (lighten + base + darken) */
 function shadeHex(hex: string, amount: number): string {
@@ -138,7 +139,7 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   연보라: '#BA68C8', 라벤더: '#BA68C8',
   진보라: '#4A148C', 자주: '#AD1457', 자주색: '#AD1457',
   // 분홍 계열
-  분홍: '#E91E63', 분홍색: '#E91E63', 핑크: '#E91E63',
+  분홍: '#C88A95', 분홍색: '#C88A95', 핑크: '#C88A95',
   연분홍: '#F48FB1', 로즈: '#C62828', 장미: '#C62828',
   // 주황 계열
   주황: '#E65100', 주황색: '#E65100', 오렌지: '#E65100',
@@ -309,7 +310,7 @@ function LoveViz({ data, color }: { data: any; color: string }) {
             {data.doHwaSal != null && (
               <div className="rounded-xl p-3 text-center" style={{ background: data.doHwaSal ? 'rgba(233,30,99,0.06)' : 'rgba(0,0,0,0.03)' }}>
                 <p className="text-[9px] text-text-hint mb-1">도화살(桃花殺)</p>
-                <p className="text-[14px] font-black" style={{ color: data.doHwaSal ? '#E91E63' : 'var(--text-muted)' }}>
+                <p className="text-[14px] font-black" style={{ color: data.doHwaSal ? '#C88A95' : 'var(--text-muted)' }}>
                   {data.doHwaSal ? '있음' : '없음'}
                 </p>
               </div>
@@ -354,7 +355,7 @@ function LoveViz({ data, color }: { data: any; color: string }) {
         {data.partnerCompat && (() => {
           const pc = data.partnerCompat;
           const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
-          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
+          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
           const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
             '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
             '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
@@ -1278,7 +1279,7 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
         {data.partnerCompat && (() => {
           const pc = data.partnerCompat;
           const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
-          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
+          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
           const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
             '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
             '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
@@ -1565,9 +1566,9 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
   const prob = data.reunionProb ?? 50;
   const verdictColor = data.verdict === '재회 추천' ? '#2D8A4E' : data.verdict === '새 인연 추천' ? '#1565E0' : '#E65100';
-  const contactColor: Record<string, string> = { '지금 연락하기': '#2D8A4E', '기다리기': '#E8B82A', '새출발': '#1565E0' };
+  const contactColor: Record<string, string> = { '지금 연락하기': '#2D8A4E', '기다리기': '#F57F17', '새출발': '#1565E0' };
   const cycleColor: Record<string, string> = { '상승기': '#2D8A4E', '하강기': '#D32F2F', '정체기': '#4A4A4A' };
-  const ohengColor: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
+  const ohengColor: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
   const pp = data.partnerProfile;
   const ca = data.compatAnalysis;
   const sinsalList = data.sinsal;
@@ -1656,7 +1657,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                 { key: 'day', label: '일주', hanja: '日柱' },
               ];
               const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
-              const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0' };
+              const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
               // interactions를 position별로 맵핑
               const interMap: Record<string, { type: string; desc: string }> = {};
               (pc.interactions || []).forEach((it: any) => {
@@ -1835,7 +1836,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
             <div className="space-y-3">
               {[
                 { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E91E63" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#E91E63' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C88A95" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#C88A95' },
                 { key: 'hongYeomSal', name: '홍염살', hanja: '紅艶殺', summary: '강렬한 끌림', subject: '나의 사주',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 2c1 3 4 5.5 4 10a4 4 0 11-8 0c0-4.5 3-7 4-10z" /></svg>, activeColor: '#D32F2F' },
                 { key: 'wonJinSal', name: '원진살', hanja: '怨嗔殺', summary: '감정 어긋남', subject: '두 사람 사이',
@@ -1916,8 +1917,8 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                       <stop offset="100%" stopColor={color} stopOpacity={0.02} />
                     </linearGradient>
                     <linearGradient id="myEnergyGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#E91E63" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="#E91E63" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor="#C88A95" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#C88A95" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false}
@@ -1925,7 +1926,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                   <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false} />
                   <Area type="monotone" dataKey="reunionChance" stroke={color} fill="url(#reunionGrad)"
                     strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
-                  <Area type="monotone" dataKey="myEnergy" stroke="#E91E63" fill="url(#myEnergyGrad)"
+                  <Area type="monotone" dataKey="myEnergy" stroke="#C88A95" fill="url(#myEnergyGrad)"
                     strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1936,7 +1937,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                 <span className="text-[9px] text-text-hint">재회 확률</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-[2px] rounded-full" style={{ background: '#E91E63', opacity: 0.6 }} />
+                <div className="w-3 h-[2px] rounded-full" style={{ background: '#C88A95', opacity: 0.6 }} />
                 <span className="text-[9px] text-text-hint">나의 에너지</span>
               </div>
             </div>
@@ -2177,7 +2178,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
 
 function StudyViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
-  const rateColor: Record<string, string> = { '높음': '#2D8A4E', '보통': '#E8B82A', '보완필요': '#D32F2F' };
+  const rateColor: Record<string, string> = { '높음': '#2D8A4E', '보통': '#F57F17', '보완필요': '#D32F2F' };
   return (
     <FadeIn delay={0.1}>
       <div className="space-y-3">
@@ -2555,6 +2556,14 @@ export function TopicAnalysisPage() {
   const [, setLoadingMsg] = useState(0);
   // 더블클릭 가드 — 1운 중복 차감 차단 (InputPage 패턴)
   const isAnalyzingRef = useRef(false);
+  // E1 · 결제 직전 confirm + E2 · 잔액 부족 inline + F5 · AI 실패 inline error
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showInsufficient, setShowInsufficient] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  // F3 · 상대방 입력 명시 펼침
+  const [partnerExpanded, setPartnerExpanded] = useState(false);
+  // E2 · sessionStorage 키 (충전 후 복귀 시 입력값 복원)
+  const PENDING_KEY = `saju500:topic_pending:${topicId}`;
 
   // 재회운/결혼운 상대방 정보
   const [partnerInfo, setPartnerInfo] = useState({
@@ -2614,6 +2623,27 @@ export function TopicAnalysisPage() {
       setSelected(profiles[0] as unknown as LocalReport);
     }
   }, [profiles, selected]);
+
+  // E2 · 충전 후 복귀 시 sessionStorage 에서 입력값 복원
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data?.partnerInfo) setPartnerInfo(data.partnerInfo);
+      if (data?.loveStatus) setLoveStatus(data.loveStatus);
+      if (data?.relationStatus) setRelationStatus(data.relationStatus);
+      if (data?.showPartner !== undefined) setShowPartner(data.showPartner);
+      if (data?.partnerExpanded !== undefined) setPartnerExpanded(data.partnerExpanded);
+      if (data?.extraInfo) setExtraInfo(data.extraInfo);
+      if (data?.selectedId) {
+        const found = profiles.find((p) => p.id === data.selectedId);
+        if (found) setSelected(found as unknown as LocalReport);
+      }
+      sessionStorage.removeItem(PENDING_KEY);
+    } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicId]);
 
   if (!topic) {
     return (

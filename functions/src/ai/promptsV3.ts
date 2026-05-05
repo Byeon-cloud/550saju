@@ -169,6 +169,37 @@ SELF_REVIEW_V3 에서 reject → 사주 인용 보강 후 재출력.
 - 재작성 비용이 실존하므로 1회차에 **floor + 여유 20% 를 목표**로 작성하세요.
 - 공백 제외가 아닌 **전체 글자수** 기준 (한국어 문자 1자 = 1자).
 
+### 9. 위기→기회 변환 mandate (audit 1 P0-2 · 공포 마케팅 박멸)
+
+부정 정보(주의·리스크·갈등·손실·실패) 다룰 때 **반드시 3-step 패턴**으로 마무리:
+1. **사실** (사주 근거): "X월에 비겁이 강해 군겁쟁재 위험"
+2. **전환**: "단, 이 시기는 ~"
+3. **행동/희망**: "오히려 ~할 적기 — 이 시기를 잘 활용하면 ~"
+
+❌ **단독 부정 종결 금지**:
+- "조심하세요." (단독 종결)
+- "위험합니다."
+- "주의 필요합니다."
+- "큰 손실이 있을 수 있습니다."
+- "관계가 끝날 수 있습니다."
+
+✅ **권장 종결 패턴**:
+- "~하면 도약점이 됩니다."
+- "~을 점검할 기회예요."
+- "~로 전환 가능합니다."
+- "이 시기를 잘 다스리면 오히려 ~"
+- "단단히 준비해두면 ~의 발판이 됩니다."
+
+**적용 필드 (모든 부정 필드 마지막 = 희망/행동 한 줄 강제)**:
+cautions · redFlags · dangerMonths · avoidChangeMonths · moneyLeakTrap · moneyLeakDesc ·
+conflictTrigger · slumpPeriod · warningPeriod · gossipMonth · clashPoints · breakReasons ·
+warning · warnings 등.
+
+**공포 마케팅 톤 잔재 0건** ("큰일 난다", "반드시 손해 본다", "재앙", "끝장", "망한다" 등) —
+이런 표현 발견 시 즉시 위 3-step 으로 재작성.
+
+검증법: 부정 필드 마지막 문장만 빼서 읽었을 때, "그래서 어떻게 해야 하나?" 답이 보여야 함.
+
 ## 2차 자기 리뷰 (필수)
 생성 후 다음 체크:
 1. 한자 과다 여부 (섹션당 ≤ 3)
@@ -868,6 +899,26 @@ ${context.freeResult ? '- [ ] 무료 결과의 title·verdict 방향과 모순�
 - [ ] "AI가 작성한 느낌" 문장 0건:
       "꿈은 무의식의 ...", "변화의 시작을 알리는 ...",
       "자신을 돌아보는 계기가 ..." 류 → 더 구체적·개인적 표현으로 교체
+
+### 위기→기회 변환 (audit 1 P0-2 강제)
+- [ ] **부정 종결 0건**: cautions / redFlags / dangerMonths / avoidChangeMonths /
+      moneyLeakTrap / conflictTrigger / slumpPeriod / warningPeriod / gossipMonth /
+      clashPoints / breakReasons / warning(s) 등 부정 필드의 **마지막 문장이
+      "조심하세요·위험합니다·주의 필요" 단독 종결**이면 reject.
+      → 반드시 위기→기회 3-step (사실 + 전환 + 희망/행동) 패턴으로 마무리.
+      예: ❌ "8월은 군겁쟁재 위험. 큰 손실 가능."
+          ✅ "8월은 군겁쟁재 신호. 단, 이 시기에 가족 명의 분산이나
+             공동 투자 정리를 해두면 오히려 도약 발판이 됩니다."
+- [ ] 공포 마케팅 톤 단어 0건: "큰일 난다·반드시 손해·재앙·끝장·망한다"
+${context.kind === 'topic' ? `
+
+### 사주 specific 호명 강제 (topic 전용 · audit 1 P0-4)
+- [ ] sections[].content 각각에 입력 사주 8글자 中 1글자 이상 직접 인용?
+- [ ] sections[].highlight 에 사주 글자 / 신살명 / 격국명 1개 이상?
+- [ ] timeline[].description 에 해당 시기 대운/세운 간지 인용?
+- [ ] insightCards[].label 에 사주 전문용어(漢字) 포함?
+- [ ] actionAdvice 에 사주 specific (약한 오행/기신/일간) 1개 이상?
+미달 시 그 필드만 사주 글자로 보강 후 완전 JSON 재출력.` : ''}
 
 ## 출력 (v4.2 정책 — 재작성 1회 한정)
 - **문제 없으면**: 원본 JSON 그대로 출력.

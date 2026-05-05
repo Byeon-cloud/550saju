@@ -141,7 +141,20 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 겁재 유무 → 돈 새는 패턴: "~에 충동적으로 돈을 쓰는 경향"
 - 월별 재물 점수 + "이 달에 큰 지출이 있을 수 있어요"
 - 투자 적기와 위험 시기 구체적으로
-- "혹시 ~에 큰 돈을 쓴 적 있지 않나요?" 소름 포인트`,
+- "혹시 ~에 큰 돈을 쓴 적 있지 않나요?" 소름 포인트
+
+🔥 **재물 구조 깊이 분석 (audit 1 P0-6 — 6대 원전 정통 룰)**:
+- **재성 강약 × 일간 강약 4분면 분석** (필수 적용):
+  · 신강 + 재성왕 = 재물 활용 능숙형 (가장 좋음 — 돈을 부리는 사람)
+  · 신강 + 재성약 = 재성 보강 필요 (대운 재성 시기 기다림 — 큰 돈은 후반)
+  · 신약 + 재성왕 = 재다신약(財多身弱) (돈에 짓눌림 — 인성 보강으로 일간 키워야)
+  · 신약 + 재성약 = 그릇 작은 구조 (식상생재 보완 — 재능·기술로 점진 축적)
+- **군겁쟁재(群劫爭財)**: 비겁 ≥ 3 + 재성 ≤ 1 이면 명시 → "재물을 동업·가족·친구와 나누게 되는 패턴. 단, 공동 사업·분산 명의로 전환하면 오히려 시너지 구조."
+- **식신생재(食神生財)**: 식신/상관 + 재성 인접 시 → "재능·아이디어로 돈 버는 가장 좋은 구조 — 본업 외 부업·콘텐츠·강의 등 식상 발휘 채널이 핵심."
+- **정재 vs 편재 구분**: 정재형(안정 수익·봉급·임대) vs 편재형(변동 수익·사업·투자·중개) — 어느 쪽이 더 큰지 명시.
+- **조후용신**: 출생 월령(겨울/여름)별 재물 운용에 필요한 오행 명시 (한·습 사주는 火·土 가 재고용신 / 조·열 사주는 水·金 이 재고용신).
+- **인용 — 적천수**: "재성왕(財星旺)이면 식신을 좋아하고 비겁을 꺼린다(財旺喜食神 忌比劫)" 자연스럽게 1회 인용 권장.
+- **인용 — 자평진전**: "재격(財格)은 신강을 가장 좋아한다(財格最喜身強)" 등 1회 가능.`,
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"수익력","value":"0-100 정수"},{"axis":"저축력","value":"0-100 정수"},{"axis":"투자감각","value":"0-100 정수"},{"axis":"사업운","value":"0-100 정수"},{"axis":"횡재운","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
@@ -369,6 +382,12 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 천을귀인(天乙貴人): 귀인의 도움으로 재회 가능성이 있는지
 - 삼합(三合)/육합(六合): 지지 조합에서 화합 구조가 있는지
 - 각 신살의 유무 + 구체적 영향 설명 (단순히 있다/없다가 아닌 관계에 미치는 영향)
+
+🔥 **자리 호명 mandate (audit 1 P0-5)**:
+- 각 신살이 "당신 사주 자리(년/월/일/시지)" + "상대방 사주 자리" 어느 글자 조합에서 성립하는지 명시.
+- 예: "당신 일지 卯 + 상대 일지 酉 → 卯酉沖. 두 사람 핵심 갈등은 ~"
+- 예: "당신 월지 子 + 상대 일지 卯 → 子卯刑. 감정 소모 패턴은 ~"
+- 단순 "도화살이 있다" 가 아니라 "당신 일지 午 도화 + 상대 년지 戌 → 도화 작동 자리" 식 자리 명시.
 
 5. "재회 가능성과 적기"
 - 재회 가능성을 % 수치 + 3가지 이상 사주 근거
@@ -719,6 +738,19 @@ function buildPrompt(
   const today = new Date();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
+  // 🔥 P0-1 (audit 1) — 사주 데이터 underutilization 해소: myeongriAnalysis·jijanggan·gilsin·hyungsal·gongmang·yearlyUn 모두 prompt 에 주입
+  const myeongri = d.myeongriAnalysis || {};
+  const jijangganText = (d.jijanggan || []).map((j: any) => `${j.지지}(${(j.지장간 || []).join('·')})`).join(', ');
+  const gilsinText = (d.gilsin || []).map((g: any) => g.이름 || g.name).filter(Boolean).join(', ');
+  const hyungsalText = (d.hyungsal || []).map((h: any) => h.이름 || h.name).filter(Boolean).join(', ');
+  const gongmangText = (d.gongmang || []).map((g: any) => `${g.기준 || ''}기준 공망: ${g.공망 || ''}`).filter((s: string) => s.trim() !== '기준 공망:').join(', ');
+  const hyungchunghapText = (myeongri.형충합 || []).map((x: any) => x.desc).filter(Boolean).join(', ');
+  const sipsungDist = myeongri.십성분포 || {};
+  const yearlyUn = d.yearlyUn?.간지 || '';
+  const gyeokguk = myeongri.격국 || '';     // P0-3 — calculator analyzeGyeokguk 결과
+  const gyeokgukReason = myeongri.격국근거 || '';
+  const yongsin = myeongri.용신 || d.yongsin || '';  // 조후/억부용신 (있으면)
+
   // 재회운/결혼운: 상대방 정보 추가
   let partnerSection = '';
   if (topicId === 'reunion' && partnerInfo) {
@@ -740,6 +772,11 @@ function buildPrompt(
 → partnerProfile, compatAnalysis 필드에 상대방 분석 결과를 정확히 채우세요.
 → 두 사람의 천간합(天干合), 지지합(地支合), 원진(怨嗔) 관계를 분석하여 sinsal 필드에 반영하세요.
 → breakupDuration.currentPhaseIndex는 경과 개월 수에 정확히 대응시키세요: 0~2개월=0(충격기), 2~6개월=1(거부기), 6~12개월=2(회복기), 12~18개월=3(수용기), 18개월+=4(장기분리기).
+
+🇰🇷 **상대방 사주 산출 — KR 진태양시 보정 mandate (audit 1 P0-5)**:
+→ 상대방 사주 산출 시 한국 진태양시 보정을 고려하라 (출생시간 미상이면 시주 생략, 일주는 통상 KST 기준 사용).
+→ 일주(일간)는 추론 시 ±1일 변동 가능성을 인지하고 가장 합리적인 1개로 확정 (불확정 표기 금지 — "甲(추정)" / "乙 또는 丙" 같은 표기 절대 X).
+→ 출생시간 미상 시 시주를 강제로 추론하여 단정 X (시주 칸은 null 또는 생략).
 `;
   } else if (topicId === 'marriage' && partnerInfo) {
     const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
@@ -853,6 +890,22 @@ ${Object.entries(el).filter(([,v]) => v === 0).map(([k]) => `→ ${k} 없음`).j
 ## 십성: ${sipsung || '미상'}
 ## 현재 대운: ${currentDaeun ? currentDaeun.간지 : '미상'}
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
+
+## 🔥 명리학 구조 분석 (audit 1 P0-1 — 반드시 해석에 활용)
+## 일간 강약: ${myeongri.일간강약 || '미산출'}${myeongri.강약근거 ? ` (${myeongri.강약근거})` : ''}
+## 득령(月令): ${myeongri.득령 === true ? '득령(O)' : myeongri.득령 === false ? '실령(X)' : '미산출'}
+## 십성 분포: 비겁${sipsungDist.비겁 || 0}·식상${sipsungDist.식상 || 0}·재성${sipsungDist.재성 || 0}·관성${sipsungDist.관성 || 0}·인성${sipsungDist.인성 || 0}
+## 격국(格局): ${gyeokguk || '판정 보류'}${gyeokgukReason ? ` — ${gyeokgukReason}` : ''}
+## 용신(用神): ${yongsin || '본 분석에서 추론 권장'}
+## 형충합(刑沖合): ${hyungchunghapText || '없음'}
+## 지장간: ${jijangganText || '없음'}
+## 일주 길신(吉神): ${gilsinText || '없음'}
+## 일주 흉살(凶殺): ${hyungsalText || '없음'}
+## 공망(空亡): ${gongmangText || '없음'}
+## 올해 세운(歲運): ${yearlyUn || `${today.getFullYear()}년`}
+
+→ 위 18종 데이터(원국·오행·십성·강약·격국·용신·형충합·지장간·길신·흉살·공망·세운·대운 등) 중 **최소 5종**을 본문(sections·timeline·actionAdvice·sajuConnection·insightCards) 에 직접 호명. 단순 나열 금지, 해석의 근거로 활용.
+
 ${partnerSection}${extraSection}${boundaryBlock}
 ## ${config.label} 분석 규칙
 ${config.specificPrompt}
@@ -879,6 +932,17 @@ ${config.specificPrompt}
 
 ## 출력 (JSON만, 코드블록 없이)
 ⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
+
+🚨 **결정론 점수 산출 룰 (audit 1 P0-9 — 같은 사주 = 같은 점수)**:
+- subScores 5축 산출 시 base 룰을 적용:
+  · 매력발산/도화 관련 = 도화살 유무 + 식상 비중×0.5 + 일지 도화 십성 가중
+  · 안정감/관성 관련 = 관성 비중 + 인성 가중 + 일간 강약 보정
+  · 재물 관련 = 재성 비중 + 식상생재 구조 가중 - 비겁 견제(군겁쟁재 시 -)
+  · 변동/이동 관련 = 역마살 + 충(沖) 발생 + 대운 변동 강도
+  · 합격/시험 관련 = 정관 + 문창·학당·태극귀인 길성 + 인성 가중
+- monthlyXxx 12배열 산출 시: 각 월 간지의 일간 십성 관계 + 원국 충/합 발생 여부 → 50점 base 에 +/-15 보정
+- 같은 사주 두 번 분석 시 같은 점수 (±2 이내). 자유로운 점수 매김 절대 금지.
+- 6개 영역 subScores 가 모두 다른 값 (균일분포 X · 사주 구조 반영).
 
 🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X · 일상어 O)**
 
