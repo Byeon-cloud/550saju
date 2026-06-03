@@ -45,8 +45,20 @@ export function TermsPage() {
               <p className="text-label text-text-primary font-bold mb-1">제8조 (저작권)</p>
               <p>서비스의 분석 결과물에 대한 저작권은 사주500에 있어요. 개인 용도의 공유는 허용되지만, 상업적 이용은 금지돼요.</p>
             </div>
+            <div>
+              <p className="text-label text-text-primary font-bold mb-1">제9조 (결제 및 결제대행)</p>
+              <p>운(運) 충전 결제는 토스페이먼츠(주)의 전자결제 대행 서비스를 통해 처리돼요. 결제 과정에서 필요한 정보는 결제대행사에 전달되며, 결제 승인·취소는 결제대행사의 정책을 따라요. 앱(토스) 내 결제는 토스 인앱결제(IAP) 정책을 따라요.</p>
+            </div>
+            <div>
+              <p className="text-label text-text-primary font-bold mb-1">제10조 (이용 자격)</p>
+              <p>본 서비스는 만 14세 이상만 가입·이용할 수 있어요. 만 14세 미만은 가입할 수 없어요.</p>
+            </div>
+            <div>
+              <p className="text-label text-text-primary font-bold mb-1">제11조 (준거법 및 관할)</p>
+              <p>이 약관은 대한민국 법령에 따라 해석되며, 서비스 이용과 관련한 분쟁에 대한 소송의 관할법원은 「민사소송법」에 따른 관할법원으로 해요.</p>
+            </div>
           </div>
-          <p className="text-caption text-text-hint mt-6">시행일: 2026년 4월 1일</p>
+          <p className="text-caption text-text-hint mt-6">시행일: 2026년 6월 3일 (개정)</p>
         </div>
       </div>
     </div>

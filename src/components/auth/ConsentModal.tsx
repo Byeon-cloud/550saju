@@ -197,7 +197,8 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
                     · 목적: 사주 분석 서비스 제공·운 잔액 관리·결제 처리<br />
                     · 항목: 이름, 생년월일시, 결제정보<br />
                     · 보유기간: 계정 유지 동안 (결제 기록은 전자상거래법에 따라 5년)<br />
-                    · 동의를 거부할 수 있으며, 거부 시 서비스 이용이 제한됩니다.
+                    · AI 분석을 위해 일부 정보가 국외(미국, Anthropic·Google)로 이전·처리됩니다. (처리 후 즉시 파기)<br />
+                    · 만 14세 이상만 가입할 수 있으며, 동의를 거부할 수 있으나 거부 시 서비스 이용이 제한됩니다.
                   </span>
                 </span>
               </button>
@@ -212,6 +213,9 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
                 <CheckBox checked={marketing} />
                 <span className="flex-1" style={{ fontSize: 14, color: C.inkSoft }}>
                   <span style={{ color: C.mute, fontWeight: 700 }}>[선택]</span> 마케팅 정보 수신 동의
+                  <span className="block" style={{ fontSize: 11.5, color: C.mute, fontWeight: 400, marginTop: 2 }}>
+                    이벤트·혜택 소식을 이메일로 받아요. 미동의해도 서비스 이용에 제한이 없어요.
+                  </span>
                 </span>
               </button>
             </div>

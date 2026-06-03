@@ -1,5 +1,6 @@
 import { Header } from '@/components/layout/Header';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { BUSINESS_INFO } from '@/constants/businessInfo';
 
 export function PrivacyPage() {
   usePageTitle('개인정보처리방침');
@@ -14,8 +15,8 @@ export function PrivacyPage() {
               <p className="text-label text-text-primary font-bold mb-1">1. 수집하는 개인정보</p>
               <p>서비스 이용을 위해 다음 정보를 수집해요:</p>
               <p className="mt-1">· 필수: 이름, 생년월일, 성별, 출생시간(선택)</p>
-              <p>· 자동 수집: 서비스 이용 기록, 결제 기록</p>
-              <p>· 토스 로그인 시: 토스 계정 식별자</p>
+              <p>· 자동 수집: 서비스 이용 기록, 결제 기록, 접속 로그·쿠키·Google Analytics(GA4) 분석 데이터</p>
+              <p>· 로그인 시: 소셜 계정(구글·카카오·네이버·애플) 또는 토스 계정 식별자·이메일</p>
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">2. 수집 목적</p>
@@ -42,6 +43,17 @@ export function PrivacyPage() {
               <p>수집된 개인정보는 원칙적으로 제3자에게 제공하지 않아요. 다만 법령에 따른 요청이 있는 경우 예외적으로 제공할 수 있어요.</p>
             </div>
             <div>
+              <p className="text-label text-text-primary font-bold mb-1">4-1. 처리위탁 및 국외 이전</p>
+              <p>서비스 제공을 위해 아래와 같이 개인정보 처리를 위탁하며, 일부는 국외(미국)로 이전·처리돼요. 이용자는 이에 동의하지 않을 수 있으나, 동의하지 않을 경우 AI 분석 서비스 이용이 제한돼요.</p>
+              <p className="mt-1">· Anthropic, PBC (미국): 사주 데이터 기반 AI 해석 생성 — 이전 항목: 이름·생년월일·출생시간·성별, 보유: 처리 후 즉시 파기(모델 학습 미사용).</p>
+              <p>· Google LLC (미국): AI 해석 생성(Gemini) 및 클라우드 인프라(Firebase) — 이전 항목: 위와 동일, 보유: 계정 생존 기간.</p>
+              <p>· 토스페이먼츠(주): 결제 처리 대행 — 이전 항목: 결제 정보.</p>
+            </div>
+            <div>
+              <p className="text-label text-text-primary font-bold mb-1">4-2. 만 14세 미만 가입 제한</p>
+              <p>본 서비스는 만 14세 이상만 가입·이용할 수 있어요. 만 14세 미만 아동의 개인정보는 수집하지 않아요.</p>
+            </div>
+            <div>
               <p className="text-label text-text-primary font-bold mb-1">5. 이용자의 권리</p>
               <p>이용자는 언제든지 개인정보의 열람, 수정, 삭제를 요청할 수 있어요. 아래 연락처로 문의해주세요.</p>
             </div>
@@ -54,10 +66,11 @@ export function PrivacyPage() {
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">7. 개인정보 보호책임자</p>
-              <p>· 이메일: info@juulabel.com</p>
+              <p>· 개인정보 보호책임자: {BUSINESS_INFO.ceoName} ({BUSINESS_INFO.companyName})</p>
+              <p>· 이메일: {BUSINESS_INFO.email}</p>
             </div>
           </div>
-          <p className="text-caption text-text-hint mt-6">시행일: 2026년 4월 1일</p>
+          <p className="text-caption text-text-hint mt-6">시행일: 2026년 6월 3일 (개정)</p>
         </div>
       </div>
     </div>
