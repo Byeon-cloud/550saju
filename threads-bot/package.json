@@ -1,0 +1,14 @@
+{
+  "name": "threads-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "moon.dal_note + saju500_official Threads 자동 발행 시스템 (Supabase Edge Functions)",
+  "scripts": {
+    "sb": "supabase",
+    "deploy": "supabase functions deploy --project-ref qxejfgbrszcnejkrgiwu"
+  },
+  "devDependencies": {
+    "supabase": "^2.102.0"
+  }
+}
