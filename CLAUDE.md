@@ -2,7 +2,20 @@
 
 > 이 문서는 Claude Code가 프로젝트를 이해하기 위한 **진입점**입니다.
 > 웹 채팅(claude.ai)에서 설계한 내용을 여기서 이어서 개발합니다.
-> **최종 업데이트: 2026-05-19** (꿈해몽 블러잠금 SSOT 정석화 + 1운 리포트 3그룹 병렬 + 종합사주 SSE 배포대기 + 토스 제출 준비)
+> **최종 업데이트: 2026-06-03** (worktree 분산 작업 단일 master 통합 + 주제운 StatTile 리디자인 + v1.1.1 + 웹출시 준비 착수)
+
+---
+
+## 🧭 단일 코드베이스 · 2 빌드타깃 (불변 원칙)
+
+- **웹 ↔ 앱인토스는 폴더로 안 나눈다. 코드베이스는 하나(`D:\550saju`).** 빌드 명령으로만 분기.
+  - 웹: `npm run build` → `firebase deploy --only hosting`
+  - 앱인토스: `npx ait build` → 토스 콘솔 업로드 (⚠️ **hosting 배포 뒤에** ait build — dist/ 덮어쓰기 함정)
+- 차이는 `isAppsInToss()` + `--mode ait` 13개 seam에서만 분기. 기능/UI/AI/가격/Firestore = 100% 공유.
+- 📄 **`docs/배포_가이드.md`** (명령·순서·버전) · **`docs/플랫폼_분기_매트릭스.md`** (seam 13곳 + 웹출시 P0/P1 조사) · **`docs/웹출시_계획.md`** (네이버+구글 노출 단계).
+- 🔴 웹 출시 P0: 로그아웃·회원탈퇴 **웹 복원**(법적 필수) + Firebase Auth 도메인/토스페이먼츠 콘솔 설정. (매트릭스 §2)
+
+> ⚠️ git: 2026-06-03 worktree 분산 작업을 단일 master로 통합 완료. 백업: `backup/master-premerge`·`backup/worktree-dfd2b9f`·`stash@{0}`(폐기한 05-08 옛 사본). 라이브엔 병합 완전체 미배포(QA 후 배포 권장).
 
 ---
 
