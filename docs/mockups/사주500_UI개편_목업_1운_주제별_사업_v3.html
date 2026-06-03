@@ -21,7 +21,7 @@
      §C 동업 vs 단독 트라이앵글 — 사업 고유
      §D 12개월 사업 변곡 strip — 4-grid (area chart X · 통일 패턴)
      §E 결단 + 한 줄 + 처방
-   액센트: 業 깊은 버건디 #6B2737 (결단·도전·생존감)
+   액센트: 業 깊은 버건디 #A37A2E (결단·도전·생존감)
 */
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
@@ -34,13 +34,13 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
   --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
   --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
   /* 사업 액센트 = 깊은 버건디 (결단·도전·생존) */
-  --c-topic: #6B2737; --c-topic-dark: #4A1622; --c-topic-soft: rgba(107,39,55,0.10);
+  --c-topic: #A37A2E; --c-topic-dark: #7A5A1E; --c-topic-soft: rgba(163,122,46,0.10);
 }
 .page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
 .hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #2A1820 50%, #1F1018 100%); border-top: 3px solid var(--c-topic); }
 .hd::before { content: '業'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.18; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
 .hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
-.hd .badge { background: rgba(107,39,55,0.35); border: 1px solid rgba(107,39,55,0.60); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #E8A4B5; letter-spacing: 0.02em; }
+.hd .badge { background: rgba(163,122,46,0.35); border: 1px solid rgba(163,122,46,0.60); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #E8A4B5; letter-spacing: 0.02em; }
 .hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
 .hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #D6B0BA; }
 .hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
@@ -54,14 +54,14 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; }
 .saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
-.saju-cell.pyeonjae { border-color: var(--c-topic); border-width: 1.5px; box-shadow: 0 0 0 2px rgba(107,39,55,0.10); }
+.saju-cell.pyeonjae { border-color: var(--c-topic); border-width: 1.5px; box-shadow: 0 0 0 2px rgba(163,122,46,0.10); }
 .saju-cell.pyeonjae::after {
   content: '業'; position: absolute; top: -7px; right: -5px;
   background: var(--c-topic); color: #FFF;
   font-family: 'Noto Serif KR', serif; font-size: 9.5px; font-weight: 800;
   width: 16px; height: 16px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 1px 4px rgba(107,39,55,0.40);
+  box-shadow: 0 1px 4px rgba(163,122,46,0.40);
 }
 .saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
 .gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
@@ -77,23 +77,23 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
 
 /* 결론박스 */
-.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #FAF1F3 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(107,39,55,0.10); }
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #FAF1F3 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(163,122,46,0.10); }
 .conclusion::after { content: '業'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
 .conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
 .conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
-.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(107,39,55,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
-.conclusion .ref { font-size: 12px; color: #4A1622; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(163,122,46,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .ref { font-size: 12px; color: #7A5A1E; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
 
 /* 사업 archetype 뱃지 */
 .archetype-card { margin: 14px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .archetype-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 12px; }
-.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(107,39,55,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
-.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(107,39,55,0.30); flex-shrink: 0; }
+.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(163,122,46,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
+.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(163,122,46,0.30); flex-shrink: 0; }
 .ar-glyph .han { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 900; color: #FFFEF8; line-height: 1; }
 .ar-body .ar-name { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
 .ar-body .ar-tag { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; }
 .ar-body .ar-desc { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; margin-top: 8px; word-break: keep-all; }
-.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(107,39,55,0.22) 60%); padding: 0 2px; }
+.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(163,122,46,0.22) 60%); padding: 0 2px; }
 .ar-others-lb { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
 .ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ar-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 100px; font-size: 11.5px; color: var(--c-ink-soft); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
@@ -116,7 +116,7 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .section.open > .sec-lead:first-of-type { padding-top: 14px; }
 .sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
-.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(107,39,55,0.22) 55%); padding: 0 3px; border-radius: 2px; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(163,122,46,0.22) 55%); padding: 0 3px; border-radius: 2px; }
 .body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-topic); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
 
 /* §A 사업 적성 점수 + 십성 5축 */
@@ -159,7 +159,7 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .stage-cube-row { display: grid; grid-template-columns: 1fr 16px 1fr 16px 1fr; gap: 4px; align-items: stretch; margin-bottom: 16px; }
 .stage-cube { background: var(--c-surface); border: 1.5px solid var(--c-card-line); border-radius: 10px; padding: 12px 10px; text-align: center; position: relative; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .stage-cube.passed { background: rgba(122,114,105,0.05); border-color: var(--c-line); opacity: 0.55; filter: grayscale(0.4); }
-.stage-cube.active { background: linear-gradient(135deg, var(--c-topic-soft), rgba(107,39,55,0.04)); border-color: var(--c-topic); border-width: 2px; box-shadow: 0 4px 16px rgba(107,39,55,0.20); }
+.stage-cube.active { background: linear-gradient(135deg, var(--c-topic-soft), rgba(163,122,46,0.04)); border-color: var(--c-topic); border-width: 2px; box-shadow: 0 4px 16px rgba(163,122,46,0.20); }
 .stage-cube .han { font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 900; line-height: 1; }
 .stage-cube.passed .han { color: var(--c-mute); }
 .stage-cube.active .han { color: var(--c-topic-dark); }
@@ -167,7 +167,7 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .stage-cube .step-lb { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-ink); margin-top: 4px; }
 .stage-cube .when { font-size: 10px; color: var(--c-mute); font-weight: 600; }
 .stage-cube.active .when { color: var(--c-topic-dark); font-weight: 700; }
-.stage-cube .badge-now { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--c-topic); color: #FFFEF8; font-family: 'Noto Serif KR', serif; font-size: 9.5px; font-weight: 800; padding: 2px 9px; border-radius: 100px; white-space: nowrap; box-shadow: 0 2px 6px rgba(107,39,55,0.40); }
+.stage-cube .badge-now { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--c-topic); color: #FFFEF8; font-family: 'Noto Serif KR', serif; font-size: 9.5px; font-weight: 800; padding: 2px 9px; border-radius: 100px; white-space: nowrap; box-shadow: 0 2px 6px rgba(163,122,46,0.40); }
 .stage-arrow { display: flex; align-items: center; justify-content: center; color: var(--c-mute); font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 600; }
 
 .stage-detail { display: flex; flex-direction: column; gap: 10px; }
@@ -184,8 +184,8 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .tri-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
 .tri-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; text-align: center; }
 .tri-svg { display: block; margin: 0 auto; width: 280px; height: 240px; }
-.tri-svg .tri-base { fill: rgba(107,39,55,0.05); stroke: var(--c-topic); stroke-width: 1.5; }
-.tri-svg .tri-shape { fill: rgba(107,39,55,0.30); stroke: var(--c-topic-dark); stroke-width: 2.5; stroke-linejoin: round; }
+.tri-svg .tri-base { fill: rgba(163,122,46,0.05); stroke: var(--c-topic); stroke-width: 1.5; }
+.tri-svg .tri-shape { fill: rgba(163,122,46,0.30); stroke: var(--c-topic-dark); stroke-width: 2.5; stroke-linejoin: round; }
 .tri-svg .tri-axis { stroke: var(--c-card-line); stroke-width: 1; stroke-dasharray: 2 3; }
 .tri-svg .tri-dot { fill: var(--c-topic-dark); stroke: #FFF; stroke-width: 2; }
 .tri-svg .tri-lbl { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; fill: var(--c-ink); }
@@ -205,7 +205,7 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .month-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 12px; }
 .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .month-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; padding: 10px 6px; text-align: center; position: relative; }
-.month-cell.expand { background: linear-gradient(135deg, var(--c-topic-soft), rgba(107,39,55,0.04)); border-color: var(--c-topic); }
+.month-cell.expand { background: linear-gradient(135deg, var(--c-topic-soft), rgba(163,122,46,0.04)); border-color: var(--c-topic); }
 .month-cell.stable { background: rgba(184,150,90,0.06); border-color: var(--c-gold-line); }
 .month-cell.warn { background: rgba(201,169,110,0.10); border-color: #C9A96E; }
 .month-cell .m-num { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; color: var(--c-ink); line-height: 1; }
@@ -237,8 +237,8 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .verdict-card .ds { font-size: 13px; color: #C8A8AE; line-height: 1.7; word-break: keep-all; position: relative; }
 .verdict-card .ds strong { color: #E8A4B5; font-weight: 700; }
 
-.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(107,39,55,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
-.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(107,39,55,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(163,122,46,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(163,122,46,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
 
 /* Upsell + Actions (사업은 cross-topic 없음 — 종합사주 upsell 만) */
 .upsell { margin: 16px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
@@ -321,8 +321,8 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
           <svg viewBox="0 0 120 120">
             <defs>
               <linearGradient id="bizGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#6B2737"/>
-                <stop offset="100%" stop-color="#4A1622"/>
+                <stop offset="0%" stop-color="#A37A2E"/>
+                <stop offset="100%" stop-color="#7A5A1E"/>
               </linearGradient>
             </defs>
             <circle class="ring-bg" cx="60" cy="60" r="50"/>

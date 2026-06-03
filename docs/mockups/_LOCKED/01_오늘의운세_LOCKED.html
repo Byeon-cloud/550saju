@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사주500 — 무료 오늘의 운세 v2 (확장: 7섹션 · 톤 일관)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+  html, body { background: #0a0a0a; font-family: 'Pretendard', sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+  .page { max-width: 480px; margin: 0 auto; background: #F8F5EE; min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); }
+
+  /* Header */
+  .hd {
+    background: linear-gradient(135deg, #c62828 0%, #8b1a1a 60%, #5a0f0f 100%);
+    color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
+  }
+  .hd::before { content: '火'; position: absolute; right: -16px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.06); line-height: 1; }
+  .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .9; flex-wrap: wrap; }
+  .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
+  .hd .free-tag { background: rgba(212,175,55,.25); color: #fff8e1; padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 600; margin-left: auto; }
+  .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; }
+  .hd .date { font-size: 12px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
+
+  /* 내 사주팔자 미니 카드 */
+  .my-saju { margin: 16px 20px 0; background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.06); border: 1px solid #E5DFD0; }
+  .my-saju .ttl { font-size: 10px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+  .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+  .saju-cell { background: #F8F5EE; border-radius: 6px; padding: 8px 2px; border: 1px solid transparent; }
+  .saju-cell.ilju { background: linear-gradient(180deg, rgba(46,125,50,.1), rgba(46,125,50,.04)); border-color: rgba(46,125,50,.4); }
+  .saju-cell .lab { font-size: 8.5px; color: #7F6B4E; }
+  .saju-cell .gan { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; line-height: 1.1; margin-top: 2px; }
+  .saju-cell .ji { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; color: #5C4A2E; line-height: 1.1; margin-top: 2px; }
+  .gan.mok, .ji.mok { color: #2e7d32; }
+  .gan.hwa, .ji.hwa { color: #c62828; }
+  .gan.to,  .ji.to  { color: #7F6B4E; }
+  .gan.geum,.ji.geum{ color: #757575; }
+  .gan.su,  .ji.su  { color: #1565c0; }
+
+  /* 오늘 vs 내 일간 관계 */
+  .relation-card { margin: 12px 20px 0; background: #fff; border-radius: 14px; padding: 16px 14px; border: 1px solid #E5DFD0; }
+  .relation-card .ttl { font-size: 10px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 12px; }
+  .rel-flex { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 10px; align-items: center; }
+  .rel-orb { width: 70px; height: 70px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 700; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+  .rel-orb.me { background: radial-gradient(circle at 35% 30%, #4caf50, #2e7d32 70%); }
+  .rel-orb.today { background: radial-gradient(circle at 35% 30%, #ef5350, #c62828 70%); }
+  .rel-orb-block { text-align: center; }
+  .rel-orb-block .lb { font-size: 10px; color: #7F6B4E; margin-top: 6px; font-weight: 500; }
+  .rel-orb-block .nm { font-size: 11px; color: #1a1a1a; font-weight: 600; margin-top: 2px; }
+  .rel-arrow { text-align: center; }
+  .rel-arrow svg { width: 100%; height: 30px; }
+  .rel-arrow .label { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #B8965A; background: #F8F5EE; padding: 1px 6px; border-radius: 100px; }
+  .rel-explain { margin-top: 12px; font-size: 12px; color: #5C4A2E; line-height: 1.65; text-align: center; }
+  .rel-explain strong { color: #1a1a1a; }
+
+  /* 오행 균형 */
+  .ohaeng-row { margin: 12px 20px 0; background: #fff; border-radius: 14px; padding: 14px; border: 1px solid #E5DFD0; }
+  .ohaeng-row .ttl { font-size: 10px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+  .ohaeng-bal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; }
+  .ob-item .glyph { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; }
+  .ob-item.mok .glyph { color: #2e7d32; }
+  .ob-item.hwa .glyph { color: #c62828; }
+  .ob-item.to .glyph { color: #7F6B4E; }
+  .ob-item.geum .glyph { color: #757575; }
+  .ob-item.su .glyph { color: #1565c0; }
+  .ob-item .dot { width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 2px; }
+  .ob-item.mok .dot { background: #2e7d32; }
+  .ob-item.hwa .dot { background: #c62828; }
+  .ob-item.to .dot { background: #7F6B4E; }
+  .ob-item.geum .dot { background: #757575; }
+  .ob-item.su .dot { background: #1565c0; }
+  .ob-item .qty { font-size: 10px; color: #7F6B4E; font-feature-settings: 'tnum'; }
+  .ob-item.lack { opacity: .6; position: relative; }
+  .ob-item.lack::after { content: '부족'; font-size: 8px; color: #c62828; display: block; font-weight: 600; }
+
+  /* 본문 */
+  .body { padding: 22px 20px 0; }
+  .section { margin-top: 28px; }
+  .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #B8965A; letter-spacing: 0.2em; margin-bottom: 4px; }
+  .sec-title { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; color: #1a1a1a; }
+  .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
+  .sec-lead { font-size: 12px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
+  .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+  .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%); padding: 0 2px; color: #1a1a1a; }
+  .body p .han { font-family: 'Noto Serif KR', serif; color: #5C4A2E; font-size: 13px; }
+
+  /* 4영역 점수 카드 */
+  .topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 0; }
+  .topic-card { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px; position: relative; overflow: hidden; cursor: pointer; transition: all .2s; }
+  .topic-card:hover { border-color: #B8965A; transform: translateY(-1px); }
+  .topic-card .strip { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .topic-card.t-money .strip { background: #B8965A; }
+  .topic-card.t-rel   .strip { background: #c62828; }
+  .topic-card.t-work  .strip { background: #1565c0; }
+  .topic-card.t-health .strip { background: #2e7d32; }
+  .topic-card .head { display: flex; justify-content: space-between; align-items: baseline; }
+  .topic-card .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
+  .topic-card .han { font-family: 'Noto Serif KR', serif; font-size: 13px; color: #B8965A; }
+  .topic-card .score-row { display: flex; align-items: baseline; gap: 4px; margin-top: 6px; }
+  .topic-card .score { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; }
+  .topic-card .score-max { font-size: 11px; color: #7F6B4E; }
+  .topic-card .one-liner { font-size: 11.5px; color: #5C4A2E; margin-top: 6px; line-height: 1.55; word-break: keep-all; }
+  .topic-card.t-money .score { color: #B8965A; }
+  .topic-card.t-rel   .score { color: #c62828; }
+  .topic-card.t-work  .score { color: #1565c0; }
+  .topic-card.t-health .score { color: #2e7d32; }
+  .topic-card .cta-text { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #E5DFD0; font-size: 11px; color: #B8965A; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
+  .topic-card .cost-pill { background: rgba(184,148,31,.1); color: #B8965A; padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 600; }
+
+  /* 시간대 그래프 */
+  .hour-chart { margin: 14px 0 0; background: #fff; border-radius: 12px; padding: 14px; border: 1px solid #E5DFD0; }
+  .hour-chart .ttl { font-size: 10px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 10px; }
+  .hour-svg { width: 100%; height: 120px; }
+  .hour-legend { display: flex; gap: 10px; font-size: 10px; color: #5C4A2E; margin-top: 6px; align-items: center; }
+  .hour-legend .sw { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* 인연 카드 (SECTION 04) */
+  .meet-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .meet {
+    background: #fff; border: 1px solid #E5DFD0; border-radius: 12px;
+    padding: 14px; display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center;
+  }
+  .meet .badge-orb {
+    width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; color: #fff;
+    text-align: center; line-height: 1.05;
+  }
+  .meet.boost .badge-orb { background: radial-gradient(circle at 35% 30%, #42a5f5, #1565c0 75%); }
+  .meet.clash .badge-orb { background: radial-gradient(circle at 35% 30%, #bdbdbd, #757575 75%); }
+  .meet.calm  .badge-orb { background: radial-gradient(circle at 35% 30%, #d7b97e, #7F6B4E 75%); }
+  .meet .ti-row { display: flex; gap: 8px; align-items: baseline; }
+  .meet .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
+  .meet .tag { font-size: 9.5px; padding: 2px 8px; border-radius: 100px; font-weight: 600; letter-spacing: .03em; }
+  .meet.boost .tag { background: rgba(21,101,192,.12); color: #1565c0; }
+  .meet.clash .tag { background: rgba(117,117,117,.18); color: #555; }
+  .meet.calm  .tag { background: rgba(164,124,44,.14); color: #7F6B4E; }
+  .meet .ds { font-size: 11.5px; color: #5C4A2E; line-height: 1.6; margin-top: 4px; }
+  .meet .ds strong { color: #1a1a1a; font-weight: 600; }
+
+  /* 행동 처방 (SECTION 05) — 해야 할 것 / 피할 것 */
+  .do-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .do-col { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 12px; }
+  .do-col.go { border-top: 3px solid #2e7d32; }
+  .do-col.no { border-top: 3px solid #c62828; }
+  .do-col .ch { display: flex; align-items: center; gap: 6px; font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; }
+  .do-col.go .ch { color: #2e7d32; }
+  .do-col.no .ch { color: #c62828; }
+  .do-col .ch svg { width: 14px; height: 14px; }
+  .do-list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 10px; }
+  .do-list li { font-size: 12px; line-height: 1.6; color: #2a2520; padding-left: 18px; position: relative; word-break: keep-all; }
+  .do-list li::before {
+    content: ''; position: absolute; left: 0; top: 7px; width: 8px; height: 8px; border-radius: 50%;
+  }
+  .do-col.go .do-list li::before { background: #2e7d32; }
+  .do-col.no .do-list li::before { background: #c62828; }
+  .do-list li strong { color: #1a1a1a; font-weight: 600; }
+  .do-list li .when { display: block; font-size: 10.5px; color: #7F6B4E; margin-top: 2px; }
+
+  /* 럭키 6 그리드 (SECTION 06) */
+  .lucky-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .lucky { background: #fff; border: 1px solid #E5DFD0; border-radius: 10px; padding: 12px 8px; text-align: center; }
+  .lucky .lab { font-size: 9.5px; color: #7F6B4E; letter-spacing: 0.1em; font-weight: 600; }
+  .lucky .vl { font-size: 13px; color: #1a1a1a; font-weight: 700; margin-top: 4px; line-height: 1.3; }
+  .lucky .vl.han { font-family: 'Noto Serif KR', serif; }
+  .lucky .swatch { display: inline-block; width: 18px; height: 18px; border-radius: 50%; vertical-align: middle; margin-bottom: 2px; border: 1px solid #E5DFD0; }
+  .lucky .ico { font-size: 18px; line-height: 1; margin-bottom: 2px; color: #B8965A; }
+
+  /* PullQuote */
+  .pullq { background: linear-gradient(135deg, rgba(198,40,40,.05), rgba(212,175,55,.05)); border-radius: 10px; padding: 14px 16px; margin: 16px 0 0; border-left: 3px solid #c62828; font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.75; color: #1a1a1a; font-weight: 500; word-break: keep-all; }
+
+  /* 내일 미리보기 카드 */
+  .tomorrow {
+    margin: 14px 0 0; background: #fff; border: 1px solid #E5DFD0; border-radius: 12px;
+    padding: 12px 14px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+  }
+  .tomorrow .arrow-ic { width: 28px; height: 28px; border-radius: 50%; background: #F8F5EE; display: flex; align-items: center; justify-content: center; color: #B8965A; }
+  .tomorrow .arrow-ic svg { width: 14px; height: 14px; }
+  .tomorrow .info { font-size: 12px; color: #5C4A2E; line-height: 1.5; }
+  .tomorrow .info strong { color: #1a1a1a; font-weight: 600; }
+  .tomorrow .lab { font-size: 9.5px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; }
+  .tomorrow .score-mini { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; color: #c62828; }
+
+  /* AdBanner */
+  .ad-slot { margin: 22px 20px 0; background: #F0E8D9; border: 1px dashed #B8965A; border-radius: 10px; padding: 22px 12px; text-align: center; font-size: 11px; color: #7F6B4E; }
+  .ad-slot .lbl { font-size: 9px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; }
+  .ad-slot .ph { margin-top: 6px; font-size: 13px; color: #5C4A2E; }
+
+  /* 월운 업셀 */
+  .upsell { margin: 22px 20px 0; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; }
+  .upsell::before { content: '月'; position: absolute; right: -8px; bottom: -28px; font-family: 'Noto Serif KR', serif; font-size: 130px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
+  .upsell .lab { font-size: 10px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+  .upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; position: relative; line-height: 1.45; }
+  .upsell p { font-size: 12.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; word-break: keep-all; }
+  .upsell .cta { display: inline-flex; gap: 6px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; position: relative; align-items: center; }
+  .upsell .cost { background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #E8D9B8; margin-left: 6px; font-weight: 600; }
+
+  /* 액션 */
+  .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid #E5DFD0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .actions .btn { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
+  .actions .btn:hover { border-color: #B8965A; }
+  .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
+  .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
+  .actions .btn .sb { font-size: 10px; color: #7F6B4E; }
+
+  .verify-tag { display: none; /* 목업 검증용 태그 — 프로덕션 노출 금지 */ }
+  .spacer { height: 80px; }
+
+  /* 서비스 이용 안내 (앱인토스 검수 §6-1 대응) */
+  .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed #E5DFD0; font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
+  .service-notice p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hd">
+    <div class="top">
+      <span class="badge">오늘의 운세</span>
+      <span>변준기 님</span>
+      <span class="free-tag">오늘 1회 무료</span>
+    </div>
+    <h1>나무에 햇살이 닿는 날.</h1>
+    <div class="date">2026년 4월 20일 월요일 · 병진일(丙辰)</div>
+  </header>
+
+  <!-- 내 사주팔자 미니 카드 -->
+  <div class="my-saju">
+    <div class="ttl">내 사주 — 변준기</div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan to">己</div><div class="ji mok">卯</div></div>
+      <div class="saju-cell ilju"><div class="lab">일 (나)</div><div class="gan mok">甲</div><div class="ji hwa">午</div></div>
+      <div class="saju-cell"><div class="lab">월</div><div class="gan geum">辛</div><div class="ji hwa">巳</div></div>
+      <div class="saju-cell"><div class="lab">연</div><div class="gan mok">乙</div><div class="ji su">亥</div></div>
+    </div>
+  </div>
+
+  <!-- 오늘 vs 내 일간 관계 -->
+  <div class="relation-card">
+    <div class="ttl">오늘 일간과 내 일간의 만남</div>
+    <div class="rel-flex">
+      <div class="rel-orb-block">
+        <div class="rel-orb me">甲</div>
+        <div class="lb">내 일간</div>
+        <div class="nm">갑(甲) · 양목</div>
+      </div>
+      <div class="rel-arrow">
+        <svg viewBox="0 0 60 30" fill="none">
+          <path d="M5 15 L55 15" stroke="#B8965A" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <path d="M50 10 L55 15 L50 20" stroke="#B8965A" stroke-width="1.5" fill="none"/>
+        </svg>
+        <div class="label">목생화</div>
+      </div>
+      <div class="rel-orb-block">
+        <div class="rel-orb today">丙</div>
+        <div class="lb">오늘 일간</div>
+        <div class="nm">병(丙) · 양화</div>
+      </div>
+    </div>
+    <div class="rel-explain">
+      나무가 햇살을 만나 <strong>잎을 활짝 펼치는 자리</strong>입니다. 오늘은 표현·드러냄의 운이 강하게 들어옵니다.
+    </div>
+  </div>
+
+  <!-- 오행 균형 -->
+  <div class="ohaeng-row">
+    <div class="ttl">내 사주 오행 + 오늘의 보충</div>
+    <div class="ohaeng-bal">
+      <div class="ob-item mok"><div class="glyph">木</div><div class="dot"></div><div class="qty">4</div></div>
+      <div class="ob-item hwa"><div class="glyph">火</div><div class="dot"></div><div class="qty">2 +1</div></div>
+      <div class="ob-item to"><div class="glyph">土</div><div class="dot"></div><div class="qty">1</div></div>
+      <div class="ob-item geum"><div class="glyph">金</div><div class="dot"></div><div class="qty">1</div></div>
+      <div class="ob-item su lack"><div class="glyph">水</div><div class="dot"></div><div class="qty">1</div></div>
+    </div>
+  </div>
+
+  <main class="body">
+
+    <!-- SECTION 01 — 오늘의 결 -->
+    <section class="section">
+      <div class="sec-num">SECTION 01</div>
+      <div class="sec-title">오늘의 결 <span class="han">日柱</span></div>
+      <p>
+        준기 님 일간 <strong>갑(甲)</strong>은 큰 나무이고, 오늘 들어오는 <strong>병(丙)</strong>은 한낮의 태양입니다. 명리에서는 이 만남을 <strong>"갑목희병화(甲木喜丙火)"</strong>라고 부릅니다. 나무가 가장 좋아하는 햇살이 정확히 오늘 들어왔다는 뜻입니다.
+      </p>
+      <p>
+        준기 님 사주 원국에는 이미 <span class="han">巳</span>·<span class="han">午</span> 두 글자가 있어 평소에도 화기(火氣)가 강한 편이었습니다. 거기에 오늘 한 칸이 더 얹히면서 <strong>표현하고 싶다, 드러내고 싶다는 마음</strong>이 평소의 1.5배로 올라옵니다. 안 하던 말이 입에서 술술 나오고, 평소 망설였던 시도를 오늘은 망설임 없이 하게 됩니다.
+      </p>
+      <p>
+        다만 햇살이 너무 환해서 그림자가 짧아집니다. 평소 신중한 결정 패턴이 오늘은 한 박자 빨라집니다. 회의에서 결정을 너무 빨리 내리거나, 카톡을 끝까지 안 읽고 답하고 후회할 위험이 있습니다. <strong>"한 박자만 늦추는 것"</strong>, 이것이 오늘 하루의 무기입니다.
+      </p>
+      <p>
+        부족한 글자는 <strong>水(수)</strong>입니다. 사주 원국에 <span class="han">亥</span> 한 글자만 있고, 오늘도 추가 보충이 들어오지 않습니다. 강한 화기를 식힐 수(水)가 없으니 <strong>오후로 갈수록 머리가 뜨거워지고 결정이 거칠어질 가능성</strong>이 있습니다. 의식적으로 물 한 잔, 5분 침묵을 끼워 넣어 균형을 맞춰주십시오.
+      </p>
+    </section>
+
+    <!-- SECTION 02 — 4영역 점수 -->
+    <section class="section">
+      <div class="sec-num">SECTION 02</div>
+      <div class="sec-title">오늘 4개의 결 <span class="han">四運</span></div>
+      <p class="sec-lead">각 영역마다 한 달치를 더 깊이 보고 싶다면 카드를 누르십시오.</p>
+
+      <div class="topic-grid">
+        <div class="topic-card t-money">
+          <div class="strip"></div>
+          <div class="head"><span class="nm">재물</span><span class="han">財</span></div>
+          <div class="score-row"><span class="score">7</span><span class="score-max">/10</span></div>
+          <div class="one-liner">정재(正財) 자리가 오늘의 화(火)와 맞물려 <strong>오후 2~5시</strong>에 작은 입금·정산이 들어옵니다.</div>
+          <div class="cta-text"><span>재물운 한 달치 더 보기</span><span class="cost-pill">1운</span></div>
+        </div>
+
+        <div class="topic-card t-rel">
+          <div class="strip"></div>
+          <div class="head"><span class="nm">관계</span><span class="han">緣</span></div>
+          <div class="score-row"><span class="score">5</span><span class="score-max">/10</span></div>
+          <div class="one-liner">표현이 강해지는 날입니다. 평소답지 않은 한 마디가 <strong>상대에게 더 크게 닿습니다</strong>. 메시지는 한 번 더 읽고 보내십시오.</div>
+          <div class="cta-text"><span>관계·연애운 깊이 보기</span><span class="cost-pill">1운</span></div>
+        </div>
+
+        <div class="topic-card t-work">
+          <div class="strip"></div>
+          <div class="head"><span class="nm">일</span><span class="han">業</span></div>
+          <div class="score-row"><span class="score">8</span><span class="score-max">/10</span></div>
+          <div class="one-liner">상관(傷官)이 강해져 <strong>창의·기획 작업</strong>에서 평소보다 한 걸음 멀리 갑니다. 새 일 시작보다 <strong>덮는 일</strong>이 우선입니다.</div>
+          <div class="cta-text"><span>직업·진로운 깊이 보기</span><span class="cost-pill">1운</span></div>
+        </div>
+
+        <div class="topic-card t-health">
+          <div class="strip"></div>
+          <div class="head"><span class="nm">건강</span><span class="han">身</span></div>
+          <div class="score-row"><span class="score">6</span><span class="score-max">/10</span></div>
+          <div class="one-liner">화기가 위로 몰리는 자리입니다. <strong>눈·두통·열감</strong>을 주의하십시오. 화면 1시간마다 멀리 보고 물을 자주 드십시오.</div>
+          <div class="cta-text"><span>건강·체질운 깊이 보기</span><span class="cost-pill">1운</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 03 — 시간대 흐름 -->
+    <section class="section">
+      <div class="sec-num">SECTION 03</div>
+      <div class="sec-title">오늘의 시간 흐름 <span class="han">時運</span></div>
+      <p class="sec-lead">하루 24시간 중 어느 시간대가 가장 운이 강하고, 어느 시간대를 조심해야 하는지 한눈에.</p>
+
+      <div class="hour-chart">
+        <div class="ttl">시간대별 활력 지수</div>
+        <svg class="hour-svg" viewBox="0 0 320 120" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#c62828" stop-opacity=".4"/>
+              <stop offset="100%" stop-color="#c62828" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,90 L40,75 L80,55 L120,40 L160,30 L200,28 L240,45 L280,65 L320,80 L320,120 L0,120 Z" fill="url(#grad)"/>
+          <path d="M0,90 L40,75 L80,55 L120,40 L160,30 L200,28 L240,45 L280,65 L320,80" stroke="#c62828" stroke-width="2" fill="none"/>
+          <circle cx="180" cy="29" r="5" fill="#fff" stroke="#c62828" stroke-width="2"/>
+          <text x="180" y="18" text-anchor="middle" font-size="9" fill="#c62828" font-weight="600">PEAK</text>
+          <circle cx="280" cy="65" r="4" fill="#7F6B4E"/>
+          <text x="0" y="115" font-size="8" fill="#7F6B4E">06시</text>
+          <text x="80" y="115" font-size="8" fill="#7F6B4E">10시</text>
+          <text x="160" y="115" font-size="8" fill="#7F6B4E">14시</text>
+          <text x="240" y="115" font-size="8" fill="#7F6B4E">18시</text>
+          <text x="305" y="115" font-size="8" fill="#7F6B4E">22시</text>
+        </svg>
+        <div class="hour-legend">
+          <span class="sw" style="background:#c62828;"></span><span>피크 14~17시</span>
+          <span class="sw" style="background:#7F6B4E;"></span><span>주의 19시 이후</span>
+        </div>
+      </div>
+
+      <p>
+        하루 중 가장 강한 시간대는 <strong>오후 2시~5시</strong>입니다. 이 시간에 결정·계약·발송·미팅을 몰아서 처리하면 평소보다 매끄럽게 풀립니다. 반대로 <strong>저녁 7시 이후</strong>는 화기가 식으면서 피로가 빠르게 옵니다. 이 시간에는 새로운 시작 대신 정리·휴식 모드로 가는 편이 안전합니다.
+      </p>
+    </section>
+
+    <!-- SECTION 04 — 오늘 만나는 사람 (NEW) -->
+    <section class="section">
+      <div class="sec-num">SECTION 04</div>
+      <div class="sec-title">오늘 만나는 사람 <span class="han">人緣</span></div>
+      <p class="sec-lead">오행으로 본 오늘의 인연 결. 일간이 무엇인지 모르더라도 행동·분위기로 가늠할 수 있습니다.</p>
+
+      <div class="meet-stack">
+
+        <!-- 끌어주는 사람 -->
+        <div class="meet boost">
+          <div class="badge-orb">壬<br><span style="font-size:13px;">癸</span></div>
+          <div>
+            <div class="ti-row">
+              <span class="ti">끌어주는 사람</span>
+              <span class="tag">+ 보완</span>
+            </div>
+            <div class="ds">
+              <strong>임(壬)·계(癸) 일간</strong>의 사람. 오늘 부족한 <strong>수(水)</strong>를 채워주는 인연입니다. 행동으로 보면 <strong>차분하고 분석적인 사람, 검은 옷·짙은 색을 즐겨 입는 사람</strong>입니다. 결정을 잠시 미뤄두고 그 사람의 한 마디를 듣는 편이 좋습니다.
+            </div>
+          </div>
+        </div>
+
+        <!-- 부딪히는 사람 -->
+        <div class="meet clash">
+          <div class="badge-orb">庚<br><span style="font-size:13px;">辛</span></div>
+          <div>
+            <div class="ti-row">
+              <span class="ti">부딪힐 수 있는 사람</span>
+              <span class="tag">⚠ 주의</span>
+            </div>
+            <div class="ds">
+              <strong>경(庚)·신(辛) 일간</strong>의 사람. 금극목(金克木) 결로, 갑목인 준기 님에게 압박을 주는 자리입니다. 회의·협상에서 부딪히기 쉬운 자리입니다. <strong>"맞다·아니다"의 단정 표현</strong>을 한 번 거두고, "그렇게 보일 수도 있겠습니다"의 완충어로 한 박자 늦추십시오.
+            </div>
+          </div>
+        </div>
+
+        <!-- 평행한 사람 -->
+        <div class="meet calm">
+          <div class="badge-orb">戊<br><span style="font-size:13px;">己</span></div>
+          <div>
+            <div class="ti-row">
+              <span class="ti">편안한 사람</span>
+              <span class="tag">≈ 평행</span>
+            </div>
+            <div class="ds">
+              <strong>무(戊)·기(己) 일간</strong>의 토(土) 사주. 오늘 준기 님의 결에 안정감을 주는 자리입니다. 잡담·식사·짧은 산책의 상대로 적합합니다. 깊은 결정은 이 사람과 나누지 않아도 좋습니다.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 05 — 행동 처방 (NEW) -->
+    <section class="section">
+      <div class="sec-num">SECTION 05</div>
+      <div class="sec-title">오늘의 행동 처방 <span class="han">處方</span></div>
+      <p class="sec-lead">오늘 결에 맞춰 행동 단위로 정리한 처방. 가볍게 한 가지만 실천해도 흐름이 바뀝니다.</p>
+
+      <div class="do-grid">
+
+        <div class="do-col go">
+          <div class="ch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            해야 할 것 3
+          </div>
+          <ul class="do-list">
+            <li>
+              <strong>미뤄둔 카톡 답장</strong>
+              <span class="when">표현운이 강한 날, 오전 10~12시</span>
+            </li>
+            <li>
+              <strong>큰 결정은 한 박자 늦추기</strong>
+              <span class="when">오후 2~5시 안에 마무리</span>
+            </li>
+            <li>
+              <strong>물 8잔 + 5분 침묵</strong>
+              <span class="when">화기 식히기, 종일</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="do-col no">
+          <div class="ch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="6" y1="6" x2="18" y2="18"/>
+              <line x1="6" y1="18" x2="18" y2="6"/>
+            </svg>
+            피할 것 3
+          </div>
+          <ul class="do-list">
+            <li>
+              <strong>새 회의·새 약속 잡기</strong>
+              <span class="when">저녁 7시 이후</span>
+            </li>
+            <li>
+              <strong>카톡 즉답</strong>
+              <span class="when">한 번 호흡 후 답장</span>
+            </li>
+            <li>
+              <strong>매운 음식·자극적 음식</strong>
+              <span class="when">눈·두통 악화 가능</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 06 — 럭키 6 그리드 -->
+    <section class="section">
+      <div class="sec-num">SECTION 06</div>
+      <div class="sec-title">오늘의 럭키 <span class="han">吉物</span></div>
+      <p class="sec-lead">부족한 수(水)를 보충해주는 결로 골랐습니다. 한 가지만 곁에 둬도 흐름이 부드러워집니다.</p>
+
+      <div class="lucky-grid">
+        <div class="lucky">
+          <span class="swatch" style="background:#1565c0;"></span>
+          <div class="lab">행운 색</div>
+          <div class="vl">딥 블루</div>
+        </div>
+        <div class="lucky">
+          <div class="ico">↑</div>
+          <div class="lab">행운 방향</div>
+          <div class="vl">북쪽</div>
+        </div>
+        <div class="lucky">
+          <div class="ico">⏱</div>
+          <div class="lab">행운 시간</div>
+          <div class="vl" style="font-feature-settings:'tnum';">14~17시</div>
+        </div>
+        <div class="lucky">
+          <div class="ico">◉</div>
+          <div class="lab">행운 숫자</div>
+          <div class="vl">1 · 6</div>
+        </div>
+        <div class="lucky">
+          <div class="ico">☕</div>
+          <div class="lab">행운 음식</div>
+          <div class="vl">국·차·물</div>
+        </div>
+        <div class="lucky">
+          <div class="ico" style="color:#1565c0;">水</div>
+          <div class="lab">행운 글자</div>
+          <div class="vl han" style="color:#1565c0;">壬·癸·亥</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 07 — 한 문장 + 내일 미리보기 -->
+    <section class="section">
+      <div class="sec-num">SECTION 07</div>
+      <div class="sec-title">오늘의 한 문장 <span class="han">日箴</span></div>
+
+      <div class="pullq">
+        햇살이 좋은 날일수록, 그림자에서 결정을 내려라. 빛은 오래 가지만, 그 빛 속에서 내린 결정은 자주 흔들린다.
+      </div>
+
+      <div class="tomorrow">
+        <div class="arrow-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="lab">TOMORROW</div>
+          <div class="info">4월 21일 화 · <strong>정사일(丁巳)</strong> · 표현운 유지, <strong>조용한 결정의 날</strong></div>
+        </div>
+        <div class="score-mini">7</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- AD -->
+  <div class="ad-slot">
+    <div class="lbl">SPONSORED · 앱인토스 광고 슬롯</div>
+    <div class="ph">[ 320×100 배너 영역 — 화이트리스트 광고만 ]</div>
+  </div>
+
+  <!-- 월운 업셀 -->
+  <div class="upsell">
+    <div class="lab">DEEPER · 한 달 단위로 보기</div>
+    <h3>오늘 이 결, 30일 흐름으로 보면<br>어떻게 흘러갈까요?</h3>
+    <p>오늘 한 칸이 아니라 <strong>이번 달 30칸의 흐름</strong>을 한 번에. 좋은 날·조심할 날·기회의 날을 달력에 표시한 월운(月運) 풀이입니다.</p>
+    <span class="cta">월운 풀이 보기 → <span class="cost">1운</span></span>
+  </div>
+
+  <!-- 액션 -->
+  <div class="actions">
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </div>
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </div>
+  </div>
+
+  <!-- 서비스 이용 안내 (앱인토스 검수 §6-1 대응) -->
+  <div class="service-notice">
+    <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+  </div>
+
+  <span class="verify-tag">v2 ✓ 7섹션 · 톤일관(격식체우세+친근체보조) · 사주연계심화 · 도식화8개 · 시간/인연/처방/럭키 풀세트</span>
+  <div class="spacer"></div>
+</div>
+</body>
+</html>

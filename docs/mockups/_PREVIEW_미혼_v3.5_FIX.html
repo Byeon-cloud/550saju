@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 결혼운 [미혼] v3.5 (변준기 · DEMO · visual 차별)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* 사주500 — 결혼 [미혼] v3.5 (2026-05-08 — 연애와 visual 시그니처 차별)
+   6 파트:
+     §A 결혼 적합도 (chip 그리드 + 일지 배우자궁 통합) — 게이지 ❌
+     §B 평생 결혼 path (vertical 5단계 timeline) — 메인 시그니처
+     §C 어울리는 배우자 오행 다이얼 (원형 NEW · 5-row ❌)
+     §D 결혼 후 변하는 내 결 (NEW)
+     §E 이상형 vs 어울리는 짝 (slim · 카드 작게)
+     §F 한 문장
+*/
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+:root {
+  --c-paper: #F8F5EE; --c-surface: #FFFFFF; --c-ink: #1A1A1A; --c-ink-soft: #3D3D3D;
+  --c-mute: #7A7269; --c-line: #E5DFD0;
+  --c-gold: #B8965A; --c-gold-deep: #8C6D3D;
+  --c-gold-soft: rgba(184,150,90,0.10); --c-gold-line: rgba(184,150,90,0.40);
+  --c-card-line: rgba(184,150,90,0.18);
+  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
+  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
+  --c-topic: #C97B95; --c-topic-dark: #9C4F6D; --c-topic-soft: rgba(201,123,149,0.10);
+}
+.page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
+.hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #2A2520 50%, #1D1812 100%); border-top: 3px solid var(--c-topic); }
+.hd::before { content: '婚'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.10; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
+.hd .badge { background: rgba(184,150,90,0.20); border: 1px solid rgba(184,150,90,0.40); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #F4D166; letter-spacing: 0.02em; }
+.hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
+.hd .status { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; font-weight: 600; opacity: 0.85; }
+.hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #E8DAB8; }
+.hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
+.hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 16px; letter-spacing: -0.02em; line-height: 1.4; position: relative; color: #FFFEF8; }
+.hd .meta { font-size: 12px; opacity: 0.75; margin-top: 6px; position: relative; color: #E8DAB8; font-feature-settings: 'tnum'; }
+
+/* 사주 SSOT */
+.my-saju { margin: 16px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.my-saju .ttl { font-size: 10.5px; color: var(--c-topic); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
+.saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+.saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
+.saju-cell.ilji-mark::after { content: '配'; position: absolute; top: -7px; right: -4px; background: var(--c-topic-dark); color: #FFF; font-family: 'Noto Serif KR', serif; font-size: 9px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; line-height: 1; z-index: 1; }
+.saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
+.gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
+.gan-block .han { font-size: 24px; font-weight: 800; line-height: 1; }
+.ji-block .han { font-size: 20px; font-weight: 800; line-height: 1; }
+.gan-block .read, .ji-block .read { font-size: 9px; font-weight: 700; opacity: 0.85; letter-spacing: 0.05em; font-family: 'Pretendard Variable', sans-serif; }
+.gan-block.o-mok, .ji-block.o-mok { background: var(--c-mok); color: #FFF; border-color: var(--c-mok); }
+.gan-block.o-hwa, .ji-block.o-hwa { background: var(--c-hwa); color: #FFF; border-color: var(--c-hwa); }
+.gan-block.o-to, .ji-block.o-to { background: var(--c-to); color: #FFF; border-color: var(--c-to); }
+.gan-block.o-geum, .ji-block.o-geum { background: #FFF; color: var(--c-geum); border-color: var(--c-card-line); }
+.gan-block.o-su, .ji-block.o-su { background: var(--c-ink); color: #FFF; border-color: var(--c-ink); }
+.meaning { font-size: 9.5px; color: var(--c-mute); font-weight: 600; text-align: center; line-height: 1.2; font-family: 'Pretendard Variable', sans-serif; }
+.ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
+
+/* 결론 */
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #FAF6EC 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(184,150,90,0.10); }
+.conclusion::after { content: '婚'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
+.conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,0.40) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .ref { font-size: 12px; color: #5C4220; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
+
+/* Section common */
+.body { padding: 22px 16px 0; }
+.section { margin-top: 14px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; overflow: hidden; }
+.section:first-of-type { margin-top: 0; }
+.section-header { display: flex; align-items: center; gap: 10px; padding: 16px 18px; cursor: pointer; background: var(--c-surface); border: none; width: 100%; text-align: left; appearance: none; font: inherit; }
+.section-header:hover { background: var(--c-paper); }
+.section-header .sec-num { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold); letter-spacing: 0.18em; margin-right: 6px; }
+.section-header .sec-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); flex: 1; }
+.section-header .sec-title .han { color: var(--c-gold); font-weight: 500; margin-left: 6px; font-size: 13px; }
+.section-header .chevron { width: 20px; height: 20px; color: var(--c-mute); transition: transform 0.25s; flex-shrink: 0; }
+.section.open .section-header .chevron { transform: rotate(180deg); color: var(--c-gold); }
+.section.open .section-header { border-bottom: 1px dashed var(--c-card-line); }
+.section:not(.open) > *:not(.section-header) { display: none !important; }
+.section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
+.section.open > *:last-child { padding-bottom: 18px; }
+.section.open > .sec-lead:first-of-type { padding-top: 14px; }
+.sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,0.32) 55%); padding: 0 3px; border-radius: 2px; }
+.body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
+.body p b, .body b { font-weight: 700; color: var(--c-ink); font-family: 'Noto Serif KR', serif; }
+
+/* §A 결혼 적합도 chip + 일지 배우자궁 통합 (게이지 X) */
+.fit-chips { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fit-chip { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px 14px; }
+.fit-chip.peak { border-color: var(--c-topic); background: var(--c-topic-soft); }
+.fit-chip .key { font-size: 10.5px; color: var(--c-gold-deep); letter-spacing: 0.1em; font-weight: 700; font-family: 'Noto Serif KR', serif; margin-bottom: 4px; }
+.fit-chip .val { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 800; color: var(--c-ink); line-height: 1.3; margin-bottom: 4px; }
+.fit-chip .rs { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.fit-chip.peak .key { color: var(--c-topic-dark); }
+
+.ilji-spotlight { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), var(--c-gold-soft)); border-radius: 14px; padding: 18px 16px; border: 1px solid var(--c-topic); position: relative; overflow: hidden; }
+.ilji-spotlight .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 12px; }
+.ilji-spotlight .grid { display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: center; }
+.ilji-spotlight .big-cell { background: var(--c-surface); border-radius: 12px; padding: 14px 8px; text-align: center; border: 2px solid var(--c-topic); box-shadow: 0 4px 12px rgba(201,123,149,0.20); }
+.ilji-spotlight .big-cell .ji-big { font-family: 'Noto Serif KR', serif; font-size: 38px; font-weight: 900; line-height: 1; color: var(--c-geum); }
+.ilji-spotlight .big-cell .ji-read { font-size: 12px; color: var(--c-mute); margin-top: 4px; font-weight: 600; }
+.ilji-spotlight .big-cell .ji-meaning { font-size: 11px; color: var(--c-ink-soft); margin-top: 6px; font-weight: 500; }
+.ilji-spotlight .big-cell .tag { display: inline-block; margin-top: 8px; font-size: 10.5px; padding: 3px 8px; border-radius: 100px; background: var(--c-topic); color: #FFF; font-weight: 700; font-family: 'Noto Serif KR', serif; }
+.ilji-spotlight .desc { font-size: 13px; color: var(--c-ink); line-height: 1.7; word-break: keep-all; }
+.ilji-spotlight .desc strong { color: var(--c-topic-dark); font-weight: 700; }
+
+/* §B 평생 결혼 path — vertical 5단계 (메인 시그니처) */
+.life-path { margin: 14px 0 0; position: relative; padding-left: 6px; }
+.life-path::before { content: ''; position: absolute; left: 22px; top: 18px; bottom: 18px; width: 3px; background: linear-gradient(180deg, var(--c-gold-line), var(--c-topic), var(--c-gold-line)); border-radius: 100px; }
+.path-stage { position: relative; padding: 0 0 22px 56px; }
+.path-stage:last-child { padding-bottom: 0; }
+.path-stage .marker { position: absolute; left: 6px; top: 4px; width: 36px; height: 36px; border-radius: 50%; background: var(--c-surface); border: 3px solid var(--c-gold); display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; color: var(--c-gold-deep); z-index: 2; }
+.path-stage.peak .marker { background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); border-color: var(--c-topic-dark); color: #FFF; box-shadow: 0 4px 12px rgba(201,123,149,0.30); }
+.path-stage .body-card { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px 16px; }
+.path-stage.peak .body-card { background: var(--c-topic-soft); border-color: var(--c-topic); }
+.path-stage .when-row { display: flex; gap: 8px; align-items: baseline; margin-bottom: 6px; flex-wrap: wrap; }
+.path-stage .when { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; color: var(--c-topic-dark); }
+.path-stage .age { font-size: 11px; color: var(--c-mute); font-weight: 600; }
+.path-stage .ti { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 700; color: var(--c-ink); margin-bottom: 6px; line-height: 1.35; }
+.path-stage .ds { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.7; word-break: keep-all; }
+.path-stage .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+.path-stage .ds u { color: var(--c-ink); text-decoration: underline; text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 2px; font-weight: 600; }
+
+/* §C 어울리는 배우자 오행 다이얼 — 원형 5축 (NEW) */
+.oheng-radial-card { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 18px 14px; }
+.oheng-radial-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 10px; text-align: center; }
+.oheng-radial-svg { width: 100%; max-width: 360px; height: 360px; display: block; margin: 0 auto; }
+.oheng-radial-svg .pentagon-bg { fill: var(--c-surface); stroke: var(--c-card-line); stroke-width: 1; }
+.oheng-radial-svg .grid-line { fill: none; stroke: var(--c-card-line); stroke-width: 0.8; stroke-dasharray: 2 3; }
+.oheng-radial-svg .data-area { fill: rgba(201,123,149,0.20); stroke: var(--c-topic-dark); stroke-width: 2; }
+.oheng-radial-svg .axis-line { stroke: var(--c-card-line); stroke-width: 1; }
+.oheng-radial-svg .point { fill: var(--c-topic-dark); stroke: #FFF; stroke-width: 2; }
+.oheng-radial-svg .point.peak { fill: var(--c-topic); r: 7; }
+.oheng-radial-svg .label-han { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 900; }
+.oheng-radial-svg .label-han.mok { fill: var(--c-mok); }
+.oheng-radial-svg .label-han.hwa { fill: var(--c-hwa); }
+.oheng-radial-svg .label-han.to { fill: var(--c-to); }
+.oheng-radial-svg .label-han.geum { fill: var(--c-geum); }
+.oheng-radial-svg .label-han.su { fill: var(--c-su); }
+.oheng-radial-svg .label-score { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; fill: var(--c-ink); }
+.oheng-radial-svg .label-name { font-size: 9.5px; fill: var(--c-mute); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
+
+.peak-pick { margin-top: 12px; padding: 12px 14px; background: var(--c-topic-soft); border: 1px solid var(--c-topic); border-radius: 10px; }
+.peak-pick .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); margin-bottom: 6px; letter-spacing: 0.1em; }
+.peak-pick .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 800; color: var(--c-ink); margin-bottom: 4px; }
+.peak-pick .ds { font-size: 12px; color: var(--c-ink-soft); line-height: 1.65; word-break: keep-all; }
+.peak-pick .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+/* §D 결혼 후 변하는 내 결 (NEW) */
+.change-list { margin: 14px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.change-card { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px; display: grid; grid-template-columns: 50px 1fr; gap: 14px; align-items: center; }
+.change-card.up { border-left: 3px solid var(--c-mok); }
+.change-card.watch { border-left: 3px solid var(--c-hwa); }
+.change-card .icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; }
+.change-card.up .icon { background: var(--c-mok-soft); color: var(--c-mok); }
+.change-card.watch .icon { background: var(--c-hwa-soft); color: var(--c-hwa); }
+.change-card .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: var(--c-ink); margin-bottom: 4px; }
+.change-card .ti .delta { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 100px; }
+.change-card.up .ti .delta { background: var(--c-mok-soft); color: var(--c-mok); }
+.change-card.watch .ti .delta { background: var(--c-hwa-soft); color: var(--c-hwa); }
+.change-card .ds { font-size: 12px; color: var(--c-ink-soft); line-height: 1.65; word-break: keep-all; }
+.change-card .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+
+/* §E 이상형 vs 어울리는 짝 (slim) */
+.ideal-fit-grid { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.if-card { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px; }
+.if-card.ideal { border-left: 3px solid var(--c-hwa); }
+.if-card.fit { border-left: 3px solid var(--c-mok); }
+.if-card .lb { font-family: 'Noto Serif KR', serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 6px; }
+.if-card.ideal .lb { color: var(--c-hwa); }
+.if-card.fit .lb { color: var(--c-mok); }
+.if-card .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; color: var(--c-ink); margin-bottom: 6px; line-height: 1.3; }
+.if-card .traits { display: flex; flex-direction: column; gap: 3px; }
+.if-card .trait { font-size: 11px; color: var(--c-ink-soft); line-height: 1.45; padding-left: 10px; position: relative; word-break: keep-all; }
+.if-card .trait::before { content: '·'; position: absolute; left: 0; font-weight: 700; color: var(--c-mute); }
+.if-summary { margin-top: 10px; padding: 10px 12px; background: var(--c-gold-soft); border-radius: 8px; border-left: 3px solid var(--c-gold); font-size: 12px; line-height: 1.6; color: var(--c-ink-soft); word-break: keep-all; }
+.if-summary strong { color: var(--c-gold-deep); font-weight: 700; }
+
+/* §F pullquote */
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-gold-soft), var(--c-topic-soft)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,0.40) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+
+/* Upsell + Actions SSOT */
+.upsell { margin: 16px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
+.upsell::after { content: '命'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 180px; font-weight: 900; color: rgba(184,150,90,0.08); line-height: 1; pointer-events: none; }
+.upsell .lb { font-size: 11px; color: #F4D166; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; position: relative; }
+.upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.5; color: #FFFEF8; position: relative; }
+.upsell p { font-size: 12.5px; color: #C9B89E; margin-bottom: 14px; line-height: 1.65; position: relative; word-break: keep-all; }
+.upsell .cta { display: inline-flex; gap: 6px; align-items: center; background: linear-gradient(135deg, var(--c-gold), var(--c-gold-deep)); color: #1A1A1A; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; position: relative; }
+.upsell .cta .cost { background: rgba(255,255,255,0.10); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #FFFEF8; margin-left: 6px; font-weight: 600; }
+.actions { margin: 16px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .btn { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px 12px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+.actions .btn:hover { background: var(--c-paper); border-color: var(--c-gold-line); }
+.actions .btn svg { width: 22px; height: 22px; color: var(--c-gold-deep); stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.actions .btn .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); text-align: center; line-height: 1.35; word-break: keep-all; }
+.actions .btn .sb { font-size: 11px; color: var(--c-gold-deep); font-weight: 700; padding: 2px 8px; border-radius: 100px; background: var(--c-gold-soft); }
+.disclaimer { margin: 16px 16px 0; padding: 14px; background: var(--c-paper); border-radius: 8px; font-size: 11px; line-height: 1.65; color: var(--c-mute); text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hd">
+    <div class="top">
+      <span class="badge">결혼운</span>
+      <span class="tier">1운</span>
+      <span class="status">미혼</span>
+      <span class="name">변준기 님</span>
+      <span class="demo">DEMO</span>
+    </div>
+    <h1>평생 동반자의 결,<br>결혼이 닿는 단계</h1>
+    <div class="meta">기토(己土) 일간 · 일지 유금(酉金, 배우자궁) · 정관 1 · 인성 2</div>
+  </header>
+
+  <div class="my-saju">
+    <div class="ttl">내 사주 8글자</div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan-block o-su"><span class="han">壬</span><span class="read">임</span></div><div class="meaning">큰 강</div><div class="ji-block o-geum"><span class="han">申</span><span class="read">신</span></div><div class="meaning">원숭이</div></div>
+      <div class="saju-cell ilju ilji-mark"><div class="lab">일</div><div class="gan-block o-to"><span class="han">己</span><span class="read">기</span></div><div class="meaning">밭</div><div class="ji-block o-geum"><span class="han">酉</span><span class="read">유</span></div><div class="meaning">닭 · 배우자궁</div><div class="ilgan-tag">일간</div></div>
+      <div class="saju-cell"><div class="lab">월</div><div class="gan-block o-mok"><span class="han">甲</span><span class="read">갑</span></div><div class="meaning">큰 나무</div><div class="ji-block o-mok"><span class="han">寅</span><span class="read">인</span></div><div class="meaning">호랑이</div></div>
+      <div class="saju-cell"><div class="lab">년</div><div class="gan-block o-to"><span class="han">戊</span><span class="read">무</span></div><div class="meaning">큰 산</div><div class="ji-block o-mok"><span class="han">寅</span><span class="read">인</span></div><div class="meaning">호랑이</div></div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="lb">◇ 한 줄 결론</div>
+    <p class="body">기토 일간 + 유금 배우자궁 + 정관 1·인성 2가 받쳐주는 사주, <strong>평생 안정 결혼이 강한 결</strong>이에요. 가장 강한 자리는 35세 무렵.</p>
+    <p class="ref">— 정관·인성·일지·식상 4축 종합 · 평생 path 5단계 · 신혼→자녀기→중년→은퇴→노년</p>
+  </div>
+
+  <main class="body">
+
+    <!-- §A 결혼 적합도 chip + 일지 배우자궁 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION A</span>
+        <span class="sec-title">결혼 적합도<span class="han">婚適</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주 4축 + 일지 배우자궁이 보여주는 결혼 그릇</div>
+
+      <div class="fit-chips">
+        <div class="fit-chip">
+          <div class="key">정관 (안정·책임)</div>
+          <div class="val">×1 보통</div>
+          <div class="rs">한 사람에게 정착하는 본능</div>
+        </div>
+        <div class="fit-chip peak">
+          <div class="key">인성 (가족·울타리)</div>
+          <div class="val">×2 강함</div>
+          <div class="rs">가족·가정 지키는 본능 또렷</div>
+        </div>
+        <div class="fit-chip peak">
+          <div class="key">일지 배우자궁</div>
+          <div class="val">유금·식신</div>
+          <div class="rs">잘 다듬어진 사람 알아봄</div>
+        </div>
+        <div class="fit-chip">
+          <div class="key">식상 (소통)</div>
+          <div class="val">×1 보통</div>
+          <div class="rs">표현·소통 약함, 결혼 후 보강 필요</div>
+        </div>
+      </div>
+
+      <div class="ilji-spotlight">
+        <div class="lb">◇ 일지 유금 — 배우자궁이 가리키는 짝</div>
+        <div class="grid">
+          <div class="big-cell">
+            <div class="ji-big">酉</div>
+            <div class="ji-read">유 · 닭</div>
+            <div class="ji-meaning">금 · 식신</div>
+            <div class="tag">배우자궁</div>
+          </div>
+          <div class="desc">
+            <strong>유금(酉金, 정교한 보석)</strong> 일지는 외양보다 <strong>내실 있는 사람</strong>을 알아보는 결. 차분하고 자기 일이 또렷한 짝이 어울려요. 식신 자리라 표현 정돈된 사람한테 끌리는 본능.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §B 평생 결혼 path (vertical 5단계 — 메인 시그니처) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION B</span>
+        <span class="sec-title">평생 결혼 path<span class="han">段</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">결혼 후 평생을 5단계로 미리 보기</div>
+
+      <div class="life-path">
+        <div class="path-stage">
+          <div class="marker">1</div>
+          <div class="body-card">
+            <div class="when-row"><span class="when">신혼기</span><span class="age">32~37세</span></div>
+            <div class="ti">정관 대운 진입 — 안정 결혼 시작</div>
+            <div class="ds">정관이 활성되어 <strong>가정·직장 동시 안정</strong>. 결혼 1년차 lap 통과 후 진짜 결이 풀리는 시기. 부부 둘만의 추억 만드는 자리.</div>
+          </div>
+        </div>
+
+        <div class="path-stage peak">
+          <div class="marker">2</div>
+          <div class="body-card">
+            <div class="when-row"><span class="when">자녀기</span><span class="age">37~42세</span></div>
+            <div class="ti">식상 활성 — 자녀가 들어오는 자리</div>
+            <div class="ds">식신·식상이 활성되어 <strong>자녀가 자연스럽게 들어오는 시기</strong>. 변준기 님은 이 시기에 첫·둘째 자녀 자리. 부부 결합력 한 단계 깊어집니다.</div>
+          </div>
+        </div>
+
+        <div class="path-stage">
+          <div class="marker">3</div>
+          <div class="body-card">
+            <div class="when-row"><span class="when">중년기</span><span class="age">42~50세</span></div>
+            <div class="ti">정인 활성 — 가족 안정·자녀 학습</div>
+            <div class="ds">정인이 받쳐주어 <strong>가족·자녀 교육에 집중하는 자리</strong>. 부부 사이는 친구 같은 결로 변하고, 자녀 진로가 가장 큰 화두.</div>
+          </div>
+        </div>
+
+        <div class="path-stage">
+          <div class="marker">4</div>
+          <div class="body-card">
+            <div class="when-row"><span class="when">은퇴기</span><span class="age">50~60세</span></div>
+            <div class="ti">비겁 활성 — 부부 동반자화</div>
+            <div class="ds">자녀 독립 후 <strong>부부 둘만의 자리로 돌아오는 시기</strong>. 함께 취미·여행 즐기는 결. 평생 처음으로 둘이 가장 친한 친구가 되는 자리.</div>
+          </div>
+        </div>
+
+        <div class="path-stage">
+          <div class="marker">5</div>
+          <div class="body-card">
+            <div class="when-row"><span class="when">노년기</span><span class="age">60세~</span></div>
+            <div class="ti">인성 안정 — 평생 결합 완성</div>
+            <div class="ds">노년 인성 자리는 <strong>평생 함께 가는 결혼 자리</strong>의 완성. 변준기 님 사주는 노년에 가장 안정적인 결혼 흐름이 또렷합니다.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §C 어울리는 배우자 오행 다이얼 (원형 NEW) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION C</span>
+        <span class="sec-title">어울리는 배우자 오행<span class="han">配</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">기토 일간이 평생 함께 갈 5오행 — 적합도 다이얼</div>
+
+      <div class="oheng-radial-card">
+        <div class="lb">◇ 평생 결혼 적합도 (5축)</div>
+        <svg class="oheng-radial-svg" viewBox="0 0 360 360" preserveAspectRatio="xMidYMid meet">
+          <!-- 중심 (180, 180), 반경 120. 시계방향 0°=top
+               x = cx + r*sin(θ), y = cy - r*cos(θ)
+               화 0°: (180, 60)
+               토 72°: (294.12, 142.92)
+               금 144°: (250.56, 277.08)
+               수 216°: (109.44, 277.08)
+               목 288°: (65.88, 142.92) -->
+
+          <!-- 외곽 펜타곤 100% -->
+          <polygon class="pentagon-bg" points="180,60 294.12,142.92 250.56,277.08 109.44,277.08 65.88,142.92"/>
+
+          <!-- 75% (r=90) -->
+          <polygon class="grid-line" points="180,90 265.59,152.19 232.92,252.81 127.08,252.81 94.41,152.19"/>
+          <!-- 50% (r=60) -->
+          <polygon class="grid-line" points="180,120 237.06,161.46 215.28,228.54 144.72,228.54 122.94,161.46"/>
+          <!-- 25% (r=30) -->
+          <polygon class="grid-line" points="180,150 208.53,170.73 197.64,204.27 162.36,204.27 151.47,170.73"/>
+
+          <!-- 축 라인 -->
+          <line class="axis-line" x1="180" y1="180" x2="180" y2="60"/>
+          <line class="axis-line" x1="180" y1="180" x2="294.12" y2="142.92"/>
+          <line class="axis-line" x1="180" y1="180" x2="250.56" y2="277.08"/>
+          <line class="axis-line" x1="180" y1="180" x2="109.44" y2="277.08"/>
+          <line class="axis-line" x1="180" y1="180" x2="65.88" y2="142.92"/>
+
+          <!-- 데이터 영역 (화 92, 토 68, 금 52, 수 36, 목 60)
+               화 92: r=110.4 → (180, 69.6)
+               토 68: r=81.6 → (257.60, 154.79)
+               금 52: r=62.4 → (216.69, 230.48)
+               수 36: r=43.2 → (154.60, 214.95)
+               목 60: r=72 → (111.53, 157.75) -->
+          <polygon class="data-area" points="180,69.6 257.60,154.79 216.69,230.48 154.60,214.95 111.53,157.75"/>
+
+          <!-- 점 -->
+          <circle class="point peak" cx="180" cy="69.6" r="7"/>
+          <circle class="point" cx="257.60" cy="154.79" r="5"/>
+          <circle class="point" cx="216.69" cy="230.48" r="5"/>
+          <circle class="point" cx="154.60" cy="214.95" r="5"/>
+          <circle class="point" cx="111.53" cy="157.75" r="5"/>
+
+          <!-- 한자 라벨 (외곽 점 외곽 +25px 방향) -->
+          <!-- 화 (top): 외곽 (180,60) 위로 -->
+          <text class="label-han hwa" x="180" y="42" text-anchor="middle">火</text>
+          <text class="label-name" x="180" y="26" text-anchor="middle">화 · 92</text>
+
+          <!-- 토 (우상): 외곽 (294,143) 우상으로 -->
+          <text class="label-han to" x="318" y="135" text-anchor="middle">土</text>
+          <text class="label-name" x="318" y="120" text-anchor="middle">토 · 68</text>
+
+          <!-- 금 (우하): 외곽 (251,277) 우하로 -->
+          <text class="label-han geum" x="278" y="298" text-anchor="middle">金</text>
+          <text class="label-name" x="278" y="313" text-anchor="middle">금 · 52</text>
+
+          <!-- 수 (좌하): 외곽 (109,277) 좌하로 -->
+          <text class="label-han su" x="82" y="298" text-anchor="middle">水</text>
+          <text class="label-name" x="82" y="313" text-anchor="middle">수 · 36</text>
+
+          <!-- 목 (좌상): 외곽 (66,143) 좌상으로 -->
+          <text class="label-han mok" x="42" y="135" text-anchor="middle">木</text>
+          <text class="label-name" x="42" y="120" text-anchor="middle">목 · 60</text>
+
+          <!-- 중심 라벨 -->
+          <text x="180" y="178" text-anchor="middle" font-family="Noto Serif KR, serif" font-size="11" font-weight="700" fill="#7A7269">기토</text>
+          <text x="180" y="192" text-anchor="middle" font-family="Noto Serif KR, serif" font-size="9" fill="#7A7269">己土</text>
+        </svg>
+      </div>
+
+      <div class="peak-pick">
+        <div class="lb">◇ 가장 어울리는 짝</div>
+        <div class="ti">화(火) 일간 — 92점</div>
+        <div class="ds">병화·정화 일간이 기토를 따뜻하게 데워주고 식신을 살려주는 결. <strong>평생 안정 결혼에 가장 강한 자리</strong>예요. 표현 솔직·따뜻한 사람.</div>
+      </div>
+    </section>
+
+    <!-- §D 결혼 후 변하는 내 결 (NEW) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION D</span>
+        <span class="sec-title">결혼 후 변하는 내 결<span class="han">化</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">결혼하면 사주가 어떻게 변하는지 — 미혼만 볼 수 있는 풀이</div>
+
+      <div class="change-list">
+        <div class="change-card up">
+          <div class="icon">↑</div>
+          <div>
+            <div class="ti">안정감 강화 <span class="delta">+18</span></div>
+            <div class="ds">정관·인성이 결혼으로 활성. 변준기 님 본성의 묵직함이 <strong>가정에서 진가 발휘되는 결</strong>. 일·돈에서도 단단해집니다.</div>
+          </div>
+        </div>
+
+        <div class="change-card up">
+          <div class="icon">↑</div>
+          <div>
+            <div class="ti">표현력 향상 <span class="delta">+15</span></div>
+            <div class="ds">미혼 때 식상 부족이 어색했다면, 결혼 후 일상 대화로 <strong>표현 근육이 자연스럽게 자라는 자리</strong>. 화 일간 배우자한테 배우는 결.</div>
+          </div>
+        </div>
+
+        <div class="change-card up">
+          <div class="icon">↑</div>
+          <div>
+            <div class="ti">책임감·재정 흐름 <span class="delta">+12</span></div>
+            <div class="ds">결혼은 정관 자리 강화 → <strong>커리어·재정 결정에 자신감</strong>. 미혼 때보다 결정 빨라지고, 가족 위해 움직이는 동력이 또렷해집니다.</div>
+          </div>
+        </div>
+
+        <div class="change-card watch">
+          <div class="icon">!</div>
+          <div>
+            <div class="ti">충돌기 표현 어색 <span class="delta">조심</span></div>
+            <div class="ds">결혼 후에도 <strong>식상 부족 패턴은 남는 결</strong>. 부부 충돌기에 침묵으로 가는 본능이 그대로라, 의식적 표현 노력이 평생 보완책.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §E 이상형 vs 어울리는 짝 (slim) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION E</span>
+        <span class="sec-title">이상형 vs 어울리는 짝<span class="han">慾·適</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 끌리는 타입 ≠ 평생 함께 갈 타입</div>
+
+      <div class="ideal-fit-grid">
+        <div class="if-card ideal">
+          <div class="lb">◇ 끌림</div>
+          <div class="ti">목(木) — 활발·리더</div>
+          <div class="traits">
+            <div class="trait">추진력·열정</div>
+            <div class="trait">키 크고 마른 체형</div>
+            <div class="trait">대화 주도</div>
+          </div>
+        </div>
+        <div class="if-card fit">
+          <div class="lb">◇ 평생</div>
+          <div class="ti">화(火) — 따뜻·표현</div>
+          <div class="traits">
+            <div class="trait">감정 솔직</div>
+            <div class="trait">중간 키·따뜻 인상</div>
+            <div class="trait">먼저 다가옴</div>
+          </div>
+        </div>
+      </div>
+      <div class="if-summary">
+        <strong>목 기운에 끌리지만 화 기운과 평생 갈 사주</strong>예요. 끌림으로만 결혼 결정하면 결혼 후 부딪침이 누적됩니다. <strong>화 기운 사람</strong>한테 한 번 더 눈길 주세요.
+      </div>
+    </section>
+
+    <!-- §F 한 문장 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION F</span>
+        <span class="sec-title">한 문장으로<span class="han">一語</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="pullquote">기토 일간 + 유금 배우자궁 + 정관·인성 받쳐주는 사주, <strong>결혼 후 진짜 단단해지는 결</strong>이에요. 신혼 → 자녀 → 중년 → 은퇴 → 노년 5단계가 점점 깊어지는 path.</div>
+    </section>
+  </main>
+
+  <button class="upsell">
+    <div class="lb">PREMIUM</div>
+    <h3>평생의 결혼 흐름과 가족운을 사주 전체로</h3>
+    <p>10가지 결을 한 번에 — 종합사주로 결혼·자녀·노년까지 평생 흐름 펼쳐 봅니다.</p>
+    <span class="cta">종합사주로 보기 →<span class="cost">10운</span></span>
+  </button>
+
+  <div class="actions">
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </button>
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </button>
+  </div>
+
+  <div class="disclaimer">사주 풀이는 삶의 결을 살피는 참고 자료입니다.<br>모든 결정은 본인의 몫입니다.</div>
+</div>
+</body>
+</html>

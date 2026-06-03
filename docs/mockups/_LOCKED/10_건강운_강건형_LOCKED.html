@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 건강운 v3 (정현우 · DEMO · 강건형 + 수 부족 archetype)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* 사주500 — 건강 [壽] v3 (2026-05-08 신규)
+   타겟: 직장인 운동 부족·과로·야근형 (따뜻한 경고 톤)
+   영역 SSOT (단독 주제):
+     건강은 cross-topic 절연 (재물 매트릭스 v17 #8 결단)
+     다른 주제에서 건강 언급 X (윤리 — 의료 권유 X)
+   금지 룰:
+     자극어 ("죽는다·망한다·재앙·암") 절대 X
+     의료 진단 X · 주의·전환점·따뜻한 경고만
+   5 파트:
+     §A 일간 강약 + 조후 보충 — 부족한 오행 chip
+     §B 5장기 다이얼 — 간·심·비·폐·신 인체 매핑 (건강 고유 핵심)
+     §C 12개월 health timeline — 4-grid 통일 패턴
+     §D 보충 처방 — 음식·운동·시간대·색
+     §E 한 줄 결단
+   액센트: 壽 깊은 그린 #6FA08C (생명·균형·자연)
+*/
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+:root {
+  --c-paper: #F8F5EE; --c-surface: #FFFFFF; --c-ink: #1A1A1A; --c-ink-soft: #3D3D3D;
+  --c-mute: #7A7269; --c-line: #E5DFD0;
+  --c-gold: #B8965A; --c-gold-deep: #8C6D3D;
+  --c-gold-soft: rgba(184,150,90,0.10); --c-gold-line: rgba(184,150,90,0.40);
+  --c-card-line: rgba(184,150,90,0.18);
+  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
+  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
+  /* 건강 액센트 = 깊은 그린 (생명·균형·자연) */
+  --c-topic: #6FA08C; --c-topic-dark: #487567; --c-topic-soft: rgba(111,160,140,0.12);
+}
+.page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
+.hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #1F2C26 50%, #14201A 100%); border-top: 3px solid var(--c-topic); }
+.hd::before { content: '壽'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.18; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
+.hd .badge { background: rgba(111,160,140,0.30); border: 1px solid rgba(111,160,140,0.55); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #B0DCC8; letter-spacing: 0.02em; }
+.hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
+.hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #BCD4C8; }
+.hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
+.hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 16px; letter-spacing: -0.02em; line-height: 1.4; position: relative; color: #FFFEF8; }
+.hd .meta { font-size: 12px; opacity: 0.78; margin-top: 6px; position: relative; color: #BCD4C8; font-feature-settings: 'tnum'; }
+
+/* 사주 SSOT */
+.my-saju { margin: 16px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.my-saju .ttl { font-size: 10.5px; color: var(--c-topic-dark); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.my-saju .ttl .hint { color: var(--c-mute); font-weight: 500; letter-spacing: 0; font-size: 10px; }
+.saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+.saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
+.saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
+.gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
+.gan-block .han { font-size: 24px; font-weight: 800; line-height: 1; }
+.ji-block .han { font-size: 20px; font-weight: 800; line-height: 1; }
+.gan-block .read, .ji-block .read { font-size: 9px; font-weight: 700; opacity: 0.85; letter-spacing: 0.05em; font-family: 'Pretendard Variable', sans-serif; }
+.gan-block.o-mok, .ji-block.o-mok { background: var(--c-mok); color: #FFF; border-color: var(--c-mok); }
+.gan-block.o-hwa, .ji-block.o-hwa { background: var(--c-hwa); color: #FFF; border-color: var(--c-hwa); }
+.gan-block.o-to, .ji-block.o-to { background: var(--c-to); color: #FFF; border-color: var(--c-to); }
+.gan-block.o-geum, .ji-block.o-geum { background: #FFF; color: var(--c-geum); border-color: var(--c-card-line); }
+.gan-block.o-su, .ji-block.o-su { background: var(--c-ink); color: #FFF; border-color: var(--c-ink); }
+.meaning { font-size: 9.5px; color: var(--c-mute); font-weight: 600; text-align: center; line-height: 1.2; font-family: 'Pretendard Variable', sans-serif; }
+.ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
+
+/* 결론박스 */
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #F2F8F5 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(111,160,140,0.10); }
+.conclusion::after { content: '壽'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
+.conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(111,160,140,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .ref { font-size: 12px; color: #2A4F40; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
+
+/* 건강 archetype 뱃지 */
+.archetype-card { margin: 14px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.archetype-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 12px; }
+.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(111,160,140,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
+.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(111,160,140,0.30); flex-shrink: 0; }
+.ar-glyph .han { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 900; color: #FFFEF8; line-height: 1; }
+.ar-body .ar-name { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
+.ar-body .ar-tag { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; }
+.ar-body .ar-desc { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; margin-top: 8px; word-break: keep-all; }
+.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(111,160,140,0.22) 60%); padding: 0 2px; }
+.ar-others-lb { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
+.ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ar-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 100px; font-size: 11.5px; color: var(--c-ink-soft); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
+.ar-chip .han { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-topic-dark); }
+
+.body { padding: 22px 16px 0; }
+.section { margin-top: 14px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; overflow: hidden; }
+.section:first-of-type { margin-top: 0; }
+.section-header { display: flex; align-items: center; gap: 10px; padding: 16px 18px; cursor: pointer; background: var(--c-surface); border: none; width: 100%; text-align: left; appearance: none; font: inherit; }
+.section-header:hover { background: var(--c-paper); }
+.section-header .sec-num { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold); letter-spacing: 0.18em; margin-right: 6px; }
+.section-header .sec-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); flex: 1; }
+.section-header .sec-title .han { color: var(--c-topic); font-weight: 500; margin-left: 6px; font-size: 13px; }
+.section-header .chevron { width: 20px; height: 20px; color: var(--c-mute); transition: transform 0.25s; flex-shrink: 0; }
+.section.open .section-header .chevron { transform: rotate(180deg); color: var(--c-topic); }
+.section.open .section-header { border-bottom: 1px dashed var(--c-card-line); }
+.section:not(.open) > *:not(.section-header) { display: none !important; }
+.section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
+.section.open > *:last-child { padding-bottom: 18px; }
+.section.open > .sec-lead:first-of-type { padding-top: 14px; }
+.sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(111,160,140,0.22) 55%); padding: 0 3px; border-radius: 2px; }
+.body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-topic); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
+
+/* §A 일간 강약 + 조후 (부족한 오행 chip) */
+.balance-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.balance-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; text-align: center; }
+.ilgan-gauge { display: flex; flex-direction: column; align-items: center; }
+.ilgan-gauge svg { width: 220px; height: 130px; }
+.ilgan-gauge .gauge-bg { fill: none; stroke: var(--c-line); stroke-width: 16; }
+.ilgan-gauge .gauge-fill { fill: none; stroke: url(#hpGrad); stroke-width: 16; stroke-linecap: round; }
+.ilgan-gauge .num { font-family: 'Noto Serif KR', serif; font-size: 38px; font-weight: 900; fill: var(--c-ink); }
+.ilgan-gauge .num small { font-size: 16px; fill: var(--c-mute); font-weight: 600; }
+.ilgan-gauge .verdict { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 800; color: var(--c-topic-dark); margin-top: 6px; }
+.ilgan-gauge .desc { font-size: 12.5px; color: var(--c-ink-soft); margin-top: 8px; line-height: 1.65; word-break: keep-all; text-align: center; }
+
+.oheng-row { margin-top: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.oheng-cell { background: var(--c-surface); border: 1.5px solid var(--c-card-line); border-radius: 8px; padding: 10px 4px; text-align: center; position: relative; }
+.oheng-cell.over { border-color: var(--c-hwa); border-width: 2px; box-shadow: 0 0 0 2px rgba(211,47,47,0.10); }
+.oheng-cell.lack { border-color: #C9A96E; border-width: 2px; border-style: dashed; }
+.oheng-cell .han { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 900; line-height: 1; }
+.oheng-cell.o-mok .han { color: var(--c-mok); }
+.oheng-cell.o-hwa .han { color: var(--c-hwa); }
+.oheng-cell.o-to .han { color: #C68A0E; }
+.oheng-cell.o-geum .han { color: var(--c-geum); }
+.oheng-cell.o-su .han { color: var(--c-su); }
+.oheng-cell .ko { font-size: 9.5px; color: var(--c-mute); font-weight: 600; margin-top: 3px; }
+.oheng-cell .num { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-ink); margin-top: 4px; font-feature-settings: 'tnum'; }
+.oheng-cell .status { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 100px; margin-top: 4px; display: inline-block; font-family: 'Noto Serif KR', serif; }
+.oheng-cell.over .status { background: rgba(211,47,47,0.15); color: var(--c-hwa); }
+.oheng-cell.lack .status { background: rgba(201,169,110,0.20); color: #8C6D3D; }
+
+/* §B 5장기 다이얼 — 인체 매핑 (건강 고유 핵심) */
+.body-card { margin: 14px 0 0; padding: 16px 12px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.body-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; text-align: center; }
+.body-row { display: grid; grid-template-columns: 200px 1fr; gap: 10px; align-items: center; }
+.body-svg { width: 200px; height: 280px; display: block; margin: 0 auto; }
+.body-svg .body-outline { fill: rgba(111,160,140,0.06); stroke: var(--c-topic); stroke-width: 1.5; }
+.body-svg .organ-circle { stroke-width: 2.5; }
+.body-svg .organ-circle.strong { fill-opacity: 0.55; }
+.body-svg .organ-circle.normal { fill-opacity: 0.30; }
+.body-svg .organ-circle.weak { fill-opacity: 0.12; stroke-dasharray: 4 3; }
+.body-svg .organ-han { font-family: 'Noto Serif KR', serif; font-weight: 900; }
+.body-svg .organ-num { font-family: 'Noto Serif KR', serif; font-size: 9px; font-weight: 800; fill: var(--c-ink); }
+
+.organ-legend { display: flex; flex-direction: column; gap: 6px; }
+.organ-row { display: grid; grid-template-columns: 28px 1fr 60px; gap: 8px; align-items: center; padding: 7px 10px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 7px; font-size: 11.5px; }
+.organ-row.strong { border-left: 3px solid var(--c-hwa); }
+.organ-row.normal { border-left: 3px solid var(--c-topic); }
+.organ-row.weak { border-left: 3px solid #C9A96E; }
+.organ-row .han { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; text-align: center; line-height: 1; }
+.organ-row .han.o-mok { color: var(--c-mok); }
+.organ-row .han.o-hwa { color: var(--c-hwa); }
+.organ-row .han.o-to { color: #C68A0E; }
+.organ-row .han.o-geum { color: var(--c-geum); }
+.organ-row .han.o-su { color: var(--c-su); }
+.organ-row .nm { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 700; color: var(--c-ink); }
+.organ-row .nm small { font-size: 9.5px; color: var(--c-mute); font-weight: 500; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.organ-row .vl { font-family: 'Noto Serif KR', serif; font-weight: 800; text-align: right; font-size: 11px; }
+.organ-row.strong .vl { color: var(--c-hwa); }
+.organ-row.normal .vl { color: var(--c-topic-dark); }
+.organ-row.weak .vl { color: #8C6D3D; }
+.organ-row .vl span { font-size: 13px; }
+
+/* §C 12개월 health timeline — 4-grid */
+.month-card { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px; }
+.month-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 12px; }
+.month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.month-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; padding: 10px 6px; text-align: center; position: relative; }
+.month-cell.stable { background: linear-gradient(135deg, var(--c-topic-soft), rgba(111,160,140,0.04)); border-color: var(--c-topic); }
+.month-cell.warn { background: rgba(201,169,110,0.10); border-color: #C9A96E; }
+.month-cell.risk { background: rgba(211,47,47,0.06); border-color: rgba(211,47,47,0.40); }
+.month-cell .m-num { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; color: var(--c-ink); line-height: 1; }
+.month-cell .m-tag { font-size: 9.5px; font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; font-family: 'Noto Serif KR', serif; }
+.month-cell.stable .m-tag { color: var(--c-topic-dark); }
+.month-cell.warn .m-tag { color: #8C6D3D; }
+.month-cell.risk .m-tag { color: var(--c-hwa); }
+.month-cell .m-tag-default { color: var(--c-mute); font-weight: 600; }
+
+.qtr-action { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.qtr-row { display: grid; grid-template-columns: 56px 1fr; gap: 10px; padding: 9px 12px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; align-items: center; }
+.qtr-row .qtr { font-family: 'Noto Serif KR', serif; font-size: 11.5px; font-weight: 800; color: var(--c-topic-dark); text-align: center; }
+.qtr-row .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.qtr-row .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+/* §D 보충 처방 — 4 카테고리 */
+.rx-grid { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rx-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 14px 12px; }
+.rx-cell .glyph { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 900; color: var(--c-topic-dark); line-height: 1; margin-bottom: 6px; }
+.rx-cell .lb-mini { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-ink); margin-bottom: 4px; }
+.rx-cell .ds { font-size: 11px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.rx-cell .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+.verdict-card { margin: 14px 0 0; background: linear-gradient(135deg, #1A1A1A, #1F2C26); color: #F8F5EE; border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+.verdict-card::after { content: '壽'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 160px; font-weight: 900; color: var(--c-topic); opacity: 0.22; line-height: 1; pointer-events: none; }
+.verdict-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: #B0DCC8; letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.verdict-card .ti { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: #FFFEF8; line-height: 1.5; margin-bottom: 8px; word-break: keep-all; position: relative; }
+.verdict-card .ti strong { background: linear-gradient(180deg, transparent 60%, rgba(176,220,200,0.40) 60%); padding: 0 3px; color: #FFFEF8; font-weight: 900; }
+.verdict-card .ds { font-size: 13px; color: #B5C8C0; line-height: 1.7; word-break: keep-all; position: relative; }
+.verdict-card .ds strong { color: #B0DCC8; font-weight: 700; }
+
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(111,160,140,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(111,160,140,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+
+.disclaimer-card { margin: 14px 0 0; padding: 12px 14px; background: rgba(248,245,238,0.6); border-left: 3px solid var(--c-mute); border-radius: 6px; font-size: 11.5px; line-height: 1.65; color: var(--c-mute); word-break: keep-all; }
+.disclaimer-card strong { color: var(--c-ink-soft); font-weight: 700; }
+
+/* Upsell + Actions (건강 = cross-topic 절연 — 종합사주 upsell 만) */
+.upsell { margin: 16px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
+.upsell::after { content: '命'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 180px; font-weight: 900; color: rgba(184,150,90,0.08); line-height: 1; pointer-events: none; }
+.upsell .lb { font-size: 11px; color: #F4D166; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; position: relative; }
+.upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.5; color: #FFFEF8; position: relative; }
+.upsell p { font-size: 12.5px; color: #C9B89E; margin-bottom: 14px; line-height: 1.65; position: relative; word-break: keep-all; }
+.upsell .cta { display: inline-flex; gap: 6px; align-items: center; background: linear-gradient(135deg, var(--c-gold), var(--c-gold-deep)); color: #1A1A1A; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; position: relative; }
+.upsell .cta .cost { background: rgba(255,255,255,0.10); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #FFFEF8; margin-left: 6px; font-weight: 600; }
+.actions { margin: 16px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .btn { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px 12px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+.actions .btn:hover { background: var(--c-paper); border-color: var(--c-gold-line); }
+.actions .btn svg { width: 22px; height: 22px; color: var(--c-topic-dark); stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.actions .btn .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); text-align: center; line-height: 1.35; word-break: keep-all; }
+.actions .btn .sb { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; padding: 2px 8px; border-radius: 100px; background: var(--c-topic-soft); }
+.disclaimer { margin: 16px 16px 0; padding: 14px; background: var(--c-paper); border-radius: 8px; font-size: 11px; line-height: 1.65; color: var(--c-mute); text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hd">
+    <div class="top">
+      <span class="badge">건강운</span>
+      <span class="tier">1운</span>
+      <span class="name">정현우</span>
+      <span class="demo">DEMO</span>
+    </div>
+    <h1>오래 가는 흐름,<br>균형이 받쳐주는 결</h1>
+    <div class="meta">경금(큰 쇠) 일간 · 화 太過 · 수 결핍 · 강건형 + 보충 필요</div>
+  </header>
+
+  <div class="my-saju">
+    <div class="ttl">내 사주 8글자<span class="hint">壽 = 5장기 균형의 자리</span></div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan-block o-hwa"><span class="han">丁</span><span class="read">정</span></div><div class="meaning">촛불</div><div class="ji-block o-hwa"><span class="han">巳</span><span class="read">사</span></div><div class="meaning">뱀</div></div>
+      <div class="saju-cell ilju"><div class="lab">일</div><div class="gan-block o-geum"><span class="han">庚</span><span class="read">경</span></div><div class="meaning">큰 쇠</div><div class="ji-block o-to"><span class="han">戌</span><span class="read">술</span></div><div class="meaning">개</div><div class="ilgan-tag">일간</div></div>
+      <div class="saju-cell"><div class="lab">월</div><div class="gan-block o-hwa"><span class="han">丙</span><span class="read">병</span></div><div class="meaning">햇빛</div><div class="ji-block o-hwa"><span class="han">午</span><span class="read">오</span></div><div class="meaning">말</div></div>
+      <div class="saju-cell"><div class="lab">년</div><div class="gan-block o-geum"><span class="han">辛</span><span class="read">신</span></div><div class="meaning">보석</div><div class="ji-block o-to"><span class="han">未</span><span class="read">미</span></div><div class="meaning">양</div></div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="lb">◇ 한 줄 결론</div>
+    <p class="body">사주에 <strong>불 기운(火)이 너무 많고 물 기운(水)이 거의 없어요</strong>. 단단해 보이지만 안에서 균형이 흔들리기 쉬운 결 — <strong>물 보충</strong>이 평생 건강의 핵심입니다.</p>
+    <p class="ref">— 일간 강도 65점 · 강건형 + 수 결핍 · 5·6월 · 11·12월 주의 시기</p>
+  </div>
+
+  <!-- 건강 archetype 뱃지 -->
+  <div class="archetype-card">
+    <div class="lb">◇ 당신의 건강 결</div>
+    <div class="archetype-hero">
+      <div class="ar-glyph"><span class="han">强</span></div>
+      <div class="ar-body">
+        <div class="ar-name">강건형 · 수 결핍</div>
+        <div class="ar-tag">일간 강함 + 화 太過 + 수 결핍 (조후 핵심)</div>
+        <div class="ar-desc">겉은 단단해 보이지만 <strong>안에서 열이 많고 균형이 흔들리는 결</strong>이에요. 무리해도 잘 견디는 듯하지만 누적되면 한 번에 흔들리는 패턴 — <u>물·휴식·수면</u>이 가장 큰 약입니다.</div>
+      </div>
+    </div>
+    <div class="ar-others-lb">사주마다 건강 결이 다릅니다 — 3가지 다른 archetype</div>
+    <div class="ar-chips">
+      <span class="ar-chip"><span class="han">衡</span>균형형 (5오행 균형)</span>
+      <span class="ar-chip"><span class="han">弱</span>섬세형 (일간 약·회복 느림)</span>
+      <span class="ar-chip"><span class="han">偏</span>편중형 (특정 부위 강·약 큼)</span>
+    </div>
+  </div>
+
+  <main class="body">
+
+    <!-- §A 일간 강약 + 조후 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION A</span>
+        <span class="sec-title">일간 강약 + 조후 보충<span class="han">强弱</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">본인 사주가 강한지 약한지 + 어떤 오행을 보충해야 하는지</div>
+
+      <div class="balance-card">
+        <div class="lb">◇ 일간 강도 게이지</div>
+        <div class="ilgan-gauge">
+          <svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="hpGrad" x1="0" x2="1">
+                <stop offset="0%" stop-color="#6FA08C"/>
+                <stop offset="100%" stop-color="#487567"/>
+              </linearGradient>
+            </defs>
+            <path class="gauge-bg" d="M 22 110 A 88 88 0 0 1 198 110"/>
+            <path class="gauge-fill" d="M 22 110 A 88 88 0 0 1 198 110" stroke-dasharray="276.46" stroke-dashoffset="96.76"/>
+            <text class="num" x="110" y="92" text-anchor="middle">65<tspan>/100</tspan></text>
+          </svg>
+          <div class="verdict">강건형 — 다만 균형이 흔들린 결</div>
+          <div class="desc">일간(경금)은 적당히 강하지만 <strong>주변 화 기운에 둘러싸인 사주</strong>예요. 단단해 보이는 외형 안쪽이 메마르는 결 — <u>오행 균형 회복</u>이 핵심입니다.</div>
+        </div>
+      </div>
+
+      <div class="oheng-row">
+        <div class="oheng-cell o-mok lack">
+          <div class="han">木</div>
+          <div class="ko">간담</div>
+          <div class="num">8%</div>
+          <div class="status">결핍</div>
+        </div>
+        <div class="oheng-cell o-hwa over">
+          <div class="han">火</div>
+          <div class="ko">심소장</div>
+          <div class="num">52%</div>
+          <div class="status">太過</div>
+        </div>
+        <div class="oheng-cell o-to">
+          <div class="han">土</div>
+          <div class="ko">비위</div>
+          <div class="num">22%</div>
+        </div>
+        <div class="oheng-cell o-geum">
+          <div class="han">金</div>
+          <div class="ko">폐대장</div>
+          <div class="num">15%</div>
+        </div>
+        <div class="oheng-cell o-su lack">
+          <div class="han">水</div>
+          <div class="ko">신방광</div>
+          <div class="num">3%</div>
+          <div class="status">결핍</div>
+        </div>
+      </div>
+
+      <p>5오행 분포가 <strong>화 52% / 수 3%로 극단적으로 한쪽으로 기울어진 사주</strong>예요. 화는 심장·소장·혈액 영역, 수는 신장·방광·뼈·뇌 영역. <u>화가 너무 많고 수가 거의 없으니 — 머리는 뜨겁고 몸은 메마르는 흐름</u>이에요.</p>
+
+      <p>여름 태생(병오월)에 일간이 화에 둘러싸여 있어 <strong>조후(계절 균형) 차원에서 수 보충이 평생의 약</strong>입니다. 명리학에서 가장 중요한 처방은 본인 사주가 부족한 오행을 채우는 것 — 본인의 경우엔 <u>물·차가운 것·검은색·북쪽·저녁·겨울 활동</u>이 모두 약이 됩니다.</p>
+    </section>
+
+    <!-- §B 5장기 다이얼 — 인체 매핑 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION B</span>
+        <span class="sec-title">5장기 부위별 강약<span class="han">五臟</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">5오행 → 5장기 매핑 · 어느 부위가 강하고 약한지</div>
+
+      <div class="body-card">
+        <div class="lb">◇ 인체 5장기 다이얼</div>
+        <svg class="body-svg" viewBox="0 0 200 280">
+          <!-- Body outline (간략한 인체 실루엣) -->
+          <path class="body-outline" d="M100,18 Q88,18 86,32 Q70,40 70,62 Q66,68 66,82 Q66,100 72,118 L72,150 Q66,170 70,205 L75,260 L88,265 L100,262 L112,265 L125,260 L130,205 Q134,170 128,150 L128,118 Q134,100 134,82 Q134,68 130,62 Q130,40 114,32 Q112,18 100,18 Z"/>
+
+          <!-- 폐 (金) — 가슴 양쪽, 보통 -->
+          <circle class="organ-circle normal" cx="86" cy="98" r="13" fill="rgba(74,74,74,0.30)" stroke="#4A4A4A"/>
+          <circle class="organ-circle normal" cx="114" cy="98" r="13" fill="rgba(74,74,74,0.30)" stroke="#4A4A4A"/>
+          <text class="organ-han" x="100" y="102" text-anchor="middle" font-size="11" fill="#4A4A4A">肺</text>
+          <text class="organ-num" x="100" y="83" text-anchor="middle">15</text>
+
+          <!-- 심 (火) — 가슴 가운데, 太過 -->
+          <circle class="organ-circle strong" cx="100" cy="128" r="20" fill="rgba(211,47,47,0.55)" stroke="#D32F2F"/>
+          <text class="organ-han" x="100" y="134" text-anchor="middle" font-size="14" fill="#FFFEF8">心</text>
+          <text class="organ-num" x="100" y="156" text-anchor="middle">52</text>
+
+          <!-- 간 (木) — 우측 위, 약 -->
+          <circle class="organ-circle weak" cx="80" cy="155" r="11" fill="rgba(45,138,78,0.12)" stroke="#2D8A4E"/>
+          <text class="organ-han" x="80" y="160" text-anchor="middle" font-size="11" fill="#2D8A4E">肝</text>
+          <text class="organ-num" x="80" y="178" text-anchor="middle">8</text>
+
+          <!-- 비 (土) — 좌측, 보통 -->
+          <circle class="organ-circle normal" cx="120" cy="160" r="13" fill="rgba(232,184,42,0.30)" stroke="#C68A0E"/>
+          <text class="organ-han" x="120" y="165" text-anchor="middle" font-size="11" fill="#C68A0E">脾</text>
+          <text class="organ-num" x="120" y="183" text-anchor="middle">22</text>
+
+          <!-- 신 (水) — 하단 양쪽, 결핍 -->
+          <circle class="organ-circle weak" cx="86" cy="200" r="10" fill="rgba(21,101,224,0.10)" stroke="#1565E0"/>
+          <circle class="organ-circle weak" cx="114" cy="200" r="10" fill="rgba(21,101,224,0.10)" stroke="#1565E0"/>
+          <text class="organ-han" x="100" y="205" text-anchor="middle" font-size="11" fill="#1565E0">腎</text>
+          <text class="organ-num" x="100" y="221" text-anchor="middle">3</text>
+        </svg>
+
+        <div class="organ-legend">
+          <div class="organ-row strong">
+            <div class="han o-hwa">心</div>
+            <div class="nm">심·소장 (火)<small>혈액·심장·열·집중력</small></div>
+            <div class="vl">52 <span>太過</span></div>
+          </div>
+          <div class="organ-row normal">
+            <div class="han o-to">脾</div>
+            <div class="nm">비·위 (土)<small>소화·식욕·근육</small></div>
+            <div class="vl">22 보통</div>
+          </div>
+          <div class="organ-row normal">
+            <div class="han o-geum">肺</div>
+            <div class="nm">폐·대장 (金)<small>호흡·면역·피부</small></div>
+            <div class="vl">15 보통</div>
+          </div>
+          <div class="organ-row weak">
+            <div class="han o-mok">肝</div>
+            <div class="nm">간·담 (木)<small>해독·분노·근육 회복</small></div>
+            <div class="vl">8 <span>약함</span></div>
+          </div>
+          <div class="organ-row weak">
+            <div class="han o-su">腎</div>
+            <div class="nm">신·방광 (水)<small>면역·뼈·뇌·생식</small></div>
+            <div class="vl">3 <span>가장 약함</span></div>
+          </div>
+        </div>
+      </div>
+
+      <p>심장·소장(52)이 太過예요. <strong>혈액 순환이 빠르고 뇌가 늘 활성된 결</strong> — 잠들기 어렵거나 집중을 멈추기 힘든 사주. 야근·과로 누적되면 가슴 답답·두근거림·불면 가능성. 평생 가장 신경 쓸 부위입니다.</p>
+
+      <p>가장 약한 곳은 신·방광(3)이에요. 신장은 <strong>면역·뼈·뇌·생식의 뿌리</strong> — 약하면 피로 회복 느리고 머리 무거움이 자주 와요. 30대 후반부터는 <u>충분한 수면 + 짠 음식 줄이기 + 따뜻한 물 자주 마시기</u>가 누적될수록 큰 차이를 만듭니다.</p>
+
+      <p>간(8)도 약한 편이라 — 술·기름진 음식·스트레스 누적이 본인에겐 더 큰 부담이에요. 이건 <strong>본인 잘못이 아니라 사주에 박힌 결</strong>입니다. 미리 알고 챙기면 나이 들어 큰 차이로 돌아옵니다.</p>
+    </section>
+
+    <!-- §C 12개월 health timeline -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION C</span>
+        <span class="sec-title">12개월 건강 흐름<span class="han">月運</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">올해 어느 시기에 무리하면 안 되는지 · 어느 시기가 회복 자리인지</div>
+
+      <div class="month-card">
+        <div class="lb">◇ 2026년 건강 흐름 — 4분기 grid</div>
+        <div class="month-grid">
+          <div class="month-cell stable">
+            <div class="m-num">1</div>
+            <div class="m-tag">회복</div>
+          </div>
+          <div class="month-cell stable">
+            <div class="m-num">2</div>
+            <div class="m-tag">회복</div>
+          </div>
+          <div class="month-cell">
+            <div class="m-num">3</div>
+            <div class="m-tag-default">유지</div>
+          </div>
+          <div class="month-cell warn">
+            <div class="m-num">4</div>
+            <div class="m-tag">주의</div>
+          </div>
+          <div class="month-cell risk">
+            <div class="m-num">5</div>
+            <div class="m-tag">주의 강함</div>
+          </div>
+          <div class="month-cell risk">
+            <div class="m-num">6</div>
+            <div class="m-tag">주의 강함</div>
+          </div>
+          <div class="month-cell warn">
+            <div class="m-num">7</div>
+            <div class="m-tag">주의</div>
+          </div>
+          <div class="month-cell">
+            <div class="m-num">8</div>
+            <div class="m-tag-default">유지</div>
+          </div>
+          <div class="month-cell stable">
+            <div class="m-num">9</div>
+            <div class="m-tag">회복</div>
+          </div>
+          <div class="month-cell">
+            <div class="m-num">10</div>
+            <div class="m-tag-default">유지</div>
+          </div>
+          <div class="month-cell warn">
+            <div class="m-num">11</div>
+            <div class="m-tag">주의</div>
+          </div>
+          <div class="month-cell warn">
+            <div class="m-num">12</div>
+            <div class="m-tag">주의</div>
+          </div>
+        </div>
+
+        <div class="qtr-action">
+          <div class="qtr-row">
+            <div class="qtr">1Q</div>
+            <div class="ds"><strong>1~2월 회복 시기</strong>. 겨울은 본인 사주에 가장 좋은 자리 (수 활성). 운동 시작·검진 받기 좋은 시기.</div>
+          </div>
+          <div class="qtr-row">
+            <div class="qtr">2Q</div>
+            <div class="ds"><strong>5~6월 주의 강함</strong>. 여름이 시작되면서 화 기운이 더해져 太過 강해지는 시기 — 수면 부족·과로 누적 시 가장 흔들리는 자리. <u>야근·음주 줄이고 수분 늘리기</u>.</div>
+          </div>
+          <div class="qtr-row">
+            <div class="qtr">3Q</div>
+            <div class="ds"><strong>9월 회복 시기</strong>. 가을 시작 — 금이 활성되며 화가 자연 가라앉는 자리. 여름 누적 피로 정리하기 좋은 시기.</div>
+          </div>
+          <div class="qtr-row">
+            <div class="qtr">4Q</div>
+            <div class="ds"><strong>11~12월 주의</strong>. 연말 회식·과로·수면 부족 누적. 본인에겐 화 누적이 더 위험 — 일찍 자기·물 자주 마시기 필수.</div>
+          </div>
+        </div>
+      </div>
+
+      <p>5~6월이 <strong>본인 사주의 1년 중 가장 흔들리는 시기</strong>예요. 이미 화 太過 사주에 여름 화가 더해지면서 — 가슴 답답·두근거림·불면·집중력 흔들림이 한꺼번에 올 수 있어요. <u>이 시기엔 큰 결정·새 운동 시작·과음을 모두 미루는 게</u> 안전합니다.</p>
+
+      <p>1~2월·9월은 본인에게 <strong>회복의 자리</strong>예요. 이 시기에 검진 받고·운동 시작하고·식습관 점검하는 게 효율적. 사주가 받쳐주는 시기에 본인을 챙기면 다음 흔들리는 시기가 훨씬 가벼워집니다.</p>
+    </section>
+
+    <!-- §D 보충 처방 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION D</span>
+        <span class="sec-title">보충 처방 — 음식·운동·시간·색<span class="han">處方</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 가리키는 4가지 보충 처방 (수 보충 + 화 가라앉히기)</div>
+
+      <div class="rx-grid">
+        <div class="rx-cell">
+          <div class="glyph">水</div>
+          <div class="lb-mini">수 보충 음식</div>
+          <div class="ds">검정콩·다시마·미역·녹두·돼지고기·해산물. <strong>짠 것 X 검은 것 O</strong> — 검정 식재료가 약입니다.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">泳</div>
+          <div class="lb-mini">물에서 운동</div>
+          <div class="ds">수영·아쿠아로빅·반신욕이 가장 잘 맞아요. <strong>땀 많이 빼는 운동(사우나·고강도)은 X</strong> — 수기를 더 빼앗깁니다.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">夜</div>
+          <div class="lb-mini">23시 전 수면</div>
+          <div class="ds">화 太過 사주는 <strong>11시 이전 잠</strong>이 가장 큰 약. 늦게 잘수록 화가 누적돼요. 7시간 이상 필수.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">北</div>
+          <div class="lb-mini">검정·북쪽·겨울</div>
+          <div class="ds">색 — 검정·진한 파랑. 방향 — 북쪽. 시기 — 겨울 활동 강화. <strong>휴가는 바다·북쪽</strong>으로.</div>
+        </div>
+      </div>
+
+      <div class="verdict-card">
+        <div class="lb">◇ 결단 한 줄</div>
+        <div class="ti">본인 사주는 <strong>강해 보이지만 안에서 메마르는 결</strong>이에요. 5~6월 무리만 피하고 11시 전 잠·물 자주 마시기 — 이 두 가지가 평생 건강의 80%입니다.</div>
+        <div class="ds">사주는 <strong>안 무너지는 길</strong>을 가리킬 수는 있어도 <u>건강을 보장하지는 않아요</u>. 본인 사주에 박힌 약점(수 결핍·화 太過)을 미리 알고 보충해두면 — 30·40대보다 50대·60대에 큰 차이로 돌아옵니다.</div>
+      </div>
+
+      <div class="pullquote">건강은 사주가 정해주는 게 아니라 <strong>본인이 매일 쌓는 것</strong>이에요. 강건형 + 수 결핍 사주는 — 보충 + 휴식 + 균형. 매일의 작은 챙김이 누적되어 <strong>30년 후의 본인</strong>을 만듭니다.</div>
+
+      <div class="disclaimer-card">
+        <strong>의료 진단 X</strong> — 본 분석은 사주 명리학 기반의 일반적 균형 가이드입니다. 구체적인 증상·질환은 반드시 의료 전문가와 상담하세요. 사주는 참고 자료일 뿐 의학적 진단·처방을 대체하지 않습니다.
+      </div>
+    </section>
+  </main>
+
+  <button class="upsell">
+    <div class="lb">PREMIUM</div>
+    <h3>건강 + 9개 결 한 번에 보는 종합사주</h3>
+    <p>건강 균형과 함께 평생 흐름·재물·직업·인연까지 — 10가지 결을 종합사주에서 한 자리에 펼쳐 봅니다.</p>
+    <span class="cta">종합사주로 보기 →<span class="cost">10운</span></span>
+  </button>
+
+  <div class="actions">
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </button>
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </button>
+  </div>
+
+  <div class="disclaimer">사주 풀이는 삶의 결을 살피는 참고 자료입니다.<br>모든 결정은 본인의 몫입니다.</div>
+</div>
+</body>
+</html>

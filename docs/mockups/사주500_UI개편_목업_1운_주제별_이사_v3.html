@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사주500 — 이사운 v3 (한지민 · DEMO · 정착형 + 토 강 archetype)</title>
+<title>사주500 — 이사·이동운 v3.2 (한지민 · DEMO · 정착형 + 토 강 archetype)</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
@@ -19,7 +19,7 @@
      §B 12개월 이사 적기 — 4-grid
      §C 8방위 컴퍼스 다이얼 — 이사 고유 핵심 시그니처 ★
      §D 한 줄 결단 + 처방
-   액센트: 移 슬레이트 블루그레이 #3D5A6E (안정·이동·방향)
+   액센트: 移 슬레이트 블루그레이 #4F8A8B (안정·이동·방향)
 */
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
@@ -32,13 +32,13 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
   --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
   --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
   /* 이사 액센트 = 슬레이트 블루그레이 (안정·방향) */
-  --c-topic: #3D5A6E; --c-topic-dark: #243F52; --c-topic-soft: rgba(61,90,110,0.12);
+  --c-topic: #4F8A8B; --c-topic-dark: #356062; --c-topic-soft: rgba(79,138,139,0.12);
 }
 .page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
 .hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #1F2A35 50%, #14202A 100%); border-top: 3px solid var(--c-topic); }
 .hd::before { content: '移'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.20; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
 .hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
-.hd .badge { background: rgba(61,90,110,0.40); border: 1px solid rgba(61,90,110,0.65); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #A0BCD0; letter-spacing: 0.02em; }
+.hd .badge { background: rgba(79,138,139,0.40); border: 1px solid rgba(79,138,139,0.65); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #A0BCD0; letter-spacing: 0.02em; }
 .hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
 .hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #B0C4D4; }
 .hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
@@ -66,23 +66,23 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
 
 /* 결론박스 */
-.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #F2F5F8 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(61,90,110,0.10); }
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #F2F5F8 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(79,138,139,0.10); }
 .conclusion::after { content: '移'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
 .conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
 .conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
-.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(61,90,110,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(79,138,139,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
 .conclusion .ref { font-size: 12px; color: #1A3043; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
 
 /* 이사 archetype 뱃지 */
 .archetype-card { margin: 14px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .archetype-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 12px; }
-.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(61,90,110,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
-.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(61,90,110,0.30); flex-shrink: 0; }
+.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(79,138,139,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
+.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(79,138,139,0.30); flex-shrink: 0; }
 .ar-glyph .han { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 900; color: #FFFEF8; line-height: 1; }
 .ar-body .ar-name { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
 .ar-body .ar-tag { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; }
 .ar-body .ar-desc { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; margin-top: 8px; word-break: keep-all; }
-.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(61,90,110,0.22) 60%); padding: 0 2px; }
+.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(79,138,139,0.22) 60%); padding: 0 2px; }
 .ar-others-lb { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
 .ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ar-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 100px; font-size: 11.5px; color: var(--c-ink-soft); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
@@ -105,7 +105,7 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .section.open > .sec-lead:first-of-type { padding-top: 14px; }
 .sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
-.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(61,90,110,0.22) 55%); padding: 0 3px; border-radius: 2px; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(79,138,139,0.22) 55%); padding: 0 3px; border-radius: 2px; }
 .body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-topic); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
 
 /* §A 역마살 + 대운 변곡 */
@@ -125,13 +125,13 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .daeun-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 .daeun-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; padding: 8px 4px; text-align: center; position: relative; }
 .daeun-cell.now { background: linear-gradient(135deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
-.daeun-cell.peak { background: linear-gradient(135deg, var(--c-topic-soft), rgba(61,90,110,0.04)); border-color: var(--c-topic); }
+.daeun-cell.peak { background: linear-gradient(135deg, var(--c-topic-soft), rgba(79,138,139,0.04)); border-color: var(--c-topic); }
 .daeun-cell .age { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-ink); line-height: 1; font-feature-settings: 'tnum'; }
 .daeun-cell .tag { font-size: 9.5px; font-weight: 700; margin-top: 4px; }
 .daeun-cell.now .tag { color: var(--c-gold-deep); }
 .daeun-cell.peak .tag { color: var(--c-topic-dark); }
 .daeun-cell .tag-default { color: var(--c-mute); font-weight: 600; }
-.daeun-cell .badge { position: absolute; top: -7px; right: -3px; background: var(--c-topic); color: #FFFEF8; font-family: 'Noto Serif KR', serif; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 100px; box-shadow: 0 2px 4px rgba(61,90,110,0.30); white-space: nowrap; }
+.daeun-cell .badge { position: absolute; top: -7px; right: -3px; background: var(--c-topic); color: #FFFEF8; font-family: 'Noto Serif KR', serif; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 100px; box-shadow: 0 2px 4px rgba(79,138,139,0.30); white-space: nowrap; }
 
 /* §B 위험 신호 카드 — 4 layer indicator (자연재해·흉살·풍수·시점) */
 .risk-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
@@ -164,9 +164,9 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .month-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px 6px 10px; text-align: center; position: relative; overflow: hidden; transition: all 0.2s; }
 .month-cell.peak {
-  background: linear-gradient(180deg, rgba(61,90,110,0.16) 0%, rgba(61,90,110,0.04) 100%);
+  background: linear-gradient(180deg, rgba(79,138,139,0.16) 0%, rgba(79,138,139,0.04) 100%);
   border: 1.5px solid var(--c-topic);
-  box-shadow: 0 2px 8px rgba(61,90,110,0.15);
+  box-shadow: 0 2px 8px rgba(79,138,139,0.15);
 }
 .month-cell.peak::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -253,8 +253,8 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .verdict-card .ds { font-size: 13px; color: #B0BFD0; line-height: 1.7; word-break: keep-all; position: relative; }
 .verdict-card .ds strong { color: #A0BCD0; font-weight: 700; }
 
-.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(61,90,110,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
-.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(61,90,110,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(79,138,139,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(79,138,139,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
 
 /* Upsell + Actions (이사 = cross-topic 절연 — 종합사주 upsell 만) */
 .upsell { margin: 16px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
@@ -277,13 +277,13 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 <div class="page">
   <header class="hd">
     <div class="top">
-      <span class="badge">이사운</span>
+      <span class="badge">이사·이동운</span>
       <span class="tier">1운</span>
       <span class="name">한지민</span>
       <span class="demo">DEMO</span>
     </div>
     <h1>머무를 자리,<br>방향을 잡는 결</h1>
-    <div class="meta">정화(촛불) 일간 · 토 강·역마 약 · 정착형 · 동·동남 자리 적합</div>
+    <div class="meta">정화(촛불) 일간 · 정착형 · 주거 이사 · 동·동남 자리 적합</div>
   </header>
 
   <div class="my-saju">
@@ -342,8 +342,8 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
           <svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="yeokmaGrad" x1="0" x2="1">
-                <stop offset="0%" stop-color="#3D5A6E"/>
-                <stop offset="100%" stop-color="#243F52"/>
+                <stop offset="0%" stop-color="#4F8A8B"/>
+                <stop offset="100%" stop-color="#356062"/>
               </linearGradient>
             </defs>
             <path class="gauge-bg" d="M 22 110 A 88 88 0 0 1 198 110"/>
@@ -476,7 +476,7 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
           <path class="c-sector good" d="M 160,160 L 7.4,102.7 A 150,150 0 0,1 102.7,7.4 Z"/>
 
           <!-- 가운데 흰 원 (중앙 라벨용) -->
-          <circle cx="160" cy="160" r="36" fill="#FFFFFF" stroke="#3D5A6E" stroke-width="1.5"/>
+          <circle cx="160" cy="160" r="36" fill="#FFFFFF" stroke="#4F8A8B" stroke-width="1.5"/>
           <text class="c-center-han" x="160" y="160" text-anchor="middle" dominant-baseline="middle">移</text>
           <text class="c-center-lb" x="160" y="180" text-anchor="middle">8방위</text>
 

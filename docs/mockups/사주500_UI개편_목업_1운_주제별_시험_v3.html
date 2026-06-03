@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사주500 — 시험운 v3 (박지수 · DEMO · 공시 준비 · 합격형 + 길성 활성)</title>
+<title>사주500 — 합격·이직운 v3.1 (박지수 · DEMO · 공시 준비 · 합격형 + 길성 활성)</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
@@ -21,7 +21,7 @@
      §C 시험 적기 timeline — 사용자 입력 일정 + 점수
      §D 시험 유형별 강약 — 자격증·입시·공시·이직시험 4축 막대
      §E 처방 + 한 줄 결단
-   액센트: 進 깊은 청록 #1A5F6B
+   액센트: 進 딥 인디고 #5A6FA8
 */
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
@@ -34,13 +34,13 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
   --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
   --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
   /* 시험 액센트 = 깊은 청록 (학문·집중·합격 안정감) */
-  --c-topic: #1A5F6B; --c-topic-dark: #0E4550; --c-topic-soft: rgba(26,95,107,0.12);
+  --c-topic: #5A6FA8; --c-topic-dark: #3F548C; --c-topic-soft: rgba(90,111,168,0.12);
 }
 .page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
 .hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #1F2A2D 50%, #142025 100%); border-top: 3px solid var(--c-topic); }
 .hd::before { content: '進'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.14; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
 .hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
-.hd .badge { background: rgba(26,95,107,0.30); border: 1px solid rgba(26,95,107,0.55); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #8DD4E0; letter-spacing: 0.02em; }
+.hd .badge { background: rgba(90,111,168,0.30); border: 1px solid rgba(90,111,168,0.55); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #8DD4E0; letter-spacing: 0.02em; }
 .hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
 .hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #C7D8DC; }
 .hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
@@ -59,14 +59,14 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; }
 .saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
-.saju-cell.gwanseong { border-color: var(--c-topic); border-width: 1.5px; box-shadow: 0 0 0 2px rgba(26,95,107,0.10); }
+.saju-cell.gwanseong { border-color: var(--c-topic); border-width: 1.5px; box-shadow: 0 0 0 2px rgba(90,111,168,0.10); }
 .saju-cell.gwanseong::after {
   content: '官'; position: absolute; top: -7px; right: -5px;
   background: var(--c-topic); color: #FFF;
   font-family: 'Noto Serif KR', serif; font-size: 9.5px; font-weight: 800;
   width: 16px; height: 16px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 1px 4px rgba(26,95,107,0.40);
+  box-shadow: 0 1px 4px rgba(90,111,168,0.40);
 }
 .saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
 .gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
@@ -82,23 +82,23 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
 
 /* 결론박스 */
-.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #F2F8F9 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(26,95,107,0.10); }
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #F2F8F9 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(90,111,168,0.10); }
 .conclusion::after { content: '進'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
 .conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
 .conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
-.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(26,95,107,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(90,111,168,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
 .conclusion .ref { font-size: 12px; color: #2A4F58; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
 
 /* 시험 archetype 뱃지 */
 .archetype-card { margin: 14px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .archetype-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 12px; }
-.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(26,95,107,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
-.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(26,95,107,0.30); flex-shrink: 0; }
+.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(90,111,168,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
+.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(90,111,168,0.30); flex-shrink: 0; }
 .ar-glyph .han { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 900; color: #FFFEF8; line-height: 1; }
 .ar-body .ar-name { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
 .ar-body .ar-tag { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; }
 .ar-body .ar-desc { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; margin-top: 8px; word-break: keep-all; }
-.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(26,95,107,0.25) 60%); padding: 0 2px; }
+.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(90,111,168,0.25) 60%); padding: 0 2px; }
 .ar-others-lb { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
 .ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ar-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 100px; font-size: 11.5px; color: var(--c-ink-soft); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
@@ -121,13 +121,13 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .section.open > .sec-lead:first-of-type { padding-top: 14px; }
 .sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
-.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(26,95,107,0.22) 55%); padding: 0 3px; border-radius: 2px; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(90,111,168,0.22) 55%); padding: 0 3px; border-radius: 2px; }
 .body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-topic); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
 
 /* §A 길성 4 슬롯 */
 .gilseong-grid { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .gilseong-cell { background: var(--c-paper); border: 1.5px solid var(--c-card-line); border-radius: 10px; padding: 14px 12px; position: relative; overflow: hidden; }
-.gilseong-cell.active { border-color: var(--c-topic); background: linear-gradient(135deg, var(--c-topic-soft), rgba(26,95,107,0.04)); box-shadow: 0 2px 8px rgba(26,95,107,0.10); }
+.gilseong-cell.active { border-color: var(--c-topic); background: linear-gradient(135deg, var(--c-topic-soft), rgba(90,111,168,0.04)); box-shadow: 0 2px 8px rgba(90,111,168,0.10); }
 .gilseong-cell.weak { opacity: 0.6; }
 .gilseong-cell .top-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .gilseong-cell .glyph { width: 32px; height: 32px; border-radius: 50%; font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -202,8 +202,8 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 .verdict-card .ds { font-size: 13px; color: #B5C8CC; line-height: 1.7; word-break: keep-all; position: relative; }
 .verdict-card .ds strong { color: #8DD4E0; font-weight: 700; }
 
-.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(26,95,107,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
-.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(26,95,107,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(90,111,168,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(90,111,168,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
 
 /* Cross-topic CTA — 시험 → 공부 (학습 효율) + 시험 → 직업 (이직시험 한정) */
 .cross-cta { margin: 16px 16px 0; background: linear-gradient(135deg, #FFFEF8, #F2F8F9); border: 1px solid var(--c-card-line); border-left: 4px solid #9C5A8A; border-radius: 14px; padding: 16px 18px; cursor: pointer; appearance: none; font: inherit; text-align: left; width: calc(100% - 32px); display: grid; grid-template-columns: 44px 1fr 16px; gap: 12px; align-items: center; }
@@ -233,7 +233,7 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
 <div class="page">
   <header class="hd">
     <div class="top">
-      <span class="badge">시험운</span>
+      <span class="badge">합격·이직운</span>
       <span class="tier">1운</span>
       <span class="name">박지수</span>
       <span class="demo">DEMO</span>
@@ -343,8 +343,8 @@ html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard
           <svg viewBox="0 0 240 140" preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="passGrad" x1="0" x2="1">
-                <stop offset="0%" stop-color="#1A5F6B"/>
-                <stop offset="100%" stop-color="#0E4550"/>
+                <stop offset="0%" stop-color="#5A6FA8"/>
+                <stop offset="100%" stop-color="#3F548C"/>
               </linearGradient>
             </defs>
             <path class="gauge-bg" d="M 22 120 A 98 98 0 0 1 218 120"/>

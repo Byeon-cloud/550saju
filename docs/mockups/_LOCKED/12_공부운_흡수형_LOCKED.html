@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 학업운 v3.1 (김도윤 · DEMO · 직장인 자격증 · 印 흡수형 archetype)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* 사주500 — 공부 [學] v3 (2026-05-08 신규 · 마지막 주제)
+   타겟: 학생·직장인·성인 자기계발 (응원·집중 톤)
+   영역 SSOT (시험 [進] 과 분리 — 매트릭스 v17 #5):
+     공부 = 과정 (인성·식신·24h 집중 곡선·학기 phase)
+     시험 = 결과 (정관·문창귀인·D-day 카운트다운)
+     문창귀인 양쪽 인용 OK — 다른 맥락:
+       시험 문창 = "시험장 머리 빛남"
+       공부 문창 = "글이 잘 풀리는·학습 흡수력"
+   5 파트 (이사 v3.1 패턴 적용 — 위험 카드 layer 추가):
+     §A 학습 길성 + 적성 점수 (인성·식신·문창)
+     §B 24h 집중 곡선 SVG — 공부 고유 시그니처 ★
+     §C 학습 시즌 timeline (직장인 분기별 4 phase)
+     §D 학습 약점 분석 (NEW — 4 카드 status)
+     §E 처방 + 한 줄 결단
+   액센트: 學 깊은 퍼플 #9C5A8A (지혜·집중·학문)
+*/
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+:root {
+  --c-paper: #F8F5EE; --c-surface: #FFFFFF; --c-ink: #1A1A1A; --c-ink-soft: #3D3D3D;
+  --c-mute: #7A7269; --c-line: #E5DFD0;
+  --c-gold: #B8965A; --c-gold-deep: #8C6D3D;
+  --c-gold-soft: rgba(184,150,90,0.10); --c-gold-line: rgba(184,150,90,0.40);
+  --c-card-line: rgba(184,150,90,0.18);
+  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
+  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
+  /* 공부 액센트 = 깊은 퍼플 (지혜·집중·학문) */
+  --c-topic: #9C5A8A; --c-topic-dark: #6B3D5F; --c-topic-soft: rgba(156,90,138,0.12);
+}
+.page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
+.hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #2A1F2A 50%, #1F1420 100%); border-top: 3px solid var(--c-topic); }
+.hd::before { content: '學'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.18; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
+.hd .badge { background: rgba(156,90,138,0.30); border: 1px solid rgba(156,90,138,0.55); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #DCAACE; letter-spacing: 0.02em; }
+.hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
+.hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #C8B0C0; }
+.hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
+.hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 16px; letter-spacing: -0.02em; line-height: 1.4; position: relative; color: #FFFEF8; }
+.hd .meta { font-size: 12px; opacity: 0.78; margin-top: 6px; position: relative; color: #C8B0C0; font-feature-settings: 'tnum'; }
+
+/* 사주 SSOT */
+.my-saju { margin: 16px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.my-saju .ttl { font-size: 10.5px; color: var(--c-topic-dark); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.my-saju .ttl .hint { color: var(--c-mute); font-weight: 500; letter-spacing: 0; font-size: 10px; }
+.saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+.saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
+.saju-cell.insung { border-color: var(--c-topic); border-width: 1.5px; box-shadow: 0 0 0 2px rgba(156,90,138,0.10); }
+.saju-cell.insung::after {
+  content: '印'; position: absolute; top: -7px; right: -5px;
+  background: var(--c-topic); color: #FFF;
+  font-family: 'Noto Serif KR', serif; font-size: 9.5px; font-weight: 800;
+  width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(156,90,138,0.40);
+}
+.saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
+.gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
+.gan-block .han { font-size: 24px; font-weight: 800; line-height: 1; }
+.ji-block .han { font-size: 20px; font-weight: 800; line-height: 1; }
+.gan-block .read, .ji-block .read { font-size: 9px; font-weight: 700; opacity: 0.85; letter-spacing: 0.05em; font-family: 'Pretendard Variable', sans-serif; }
+.gan-block.o-mok, .ji-block.o-mok { background: var(--c-mok); color: #FFF; border-color: var(--c-mok); }
+.gan-block.o-hwa, .ji-block.o-hwa { background: var(--c-hwa); color: #FFF; border-color: var(--c-hwa); }
+.gan-block.o-to, .ji-block.o-to { background: var(--c-to); color: #FFF; border-color: var(--c-to); }
+.gan-block.o-geum, .ji-block.o-geum { background: #FFF; color: var(--c-geum); border-color: var(--c-card-line); }
+.gan-block.o-su, .ji-block.o-su { background: var(--c-ink); color: #FFF; border-color: var(--c-ink); }
+.meaning { font-size: 9.5px; color: var(--c-mute); font-weight: 600; text-align: center; line-height: 1.2; font-family: 'Pretendard Variable', sans-serif; }
+.ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
+
+/* 결론박스 */
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #F7F2F5 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(156,90,138,0.10); }
+.conclusion::after { content: '學'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
+.conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(156,90,138,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .ref { font-size: 12px; color: #4A2A40; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
+
+/* 공부 archetype 뱃지 — 4 layer × 8 archetype */
+.archetype-card { margin: 14px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.archetype-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 12px; }
+.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(156,90,138,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
+.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(156,90,138,0.30); flex-shrink: 0; }
+.ar-glyph .han { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 900; color: #FFFEF8; line-height: 1; }
+.ar-body .ar-name { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
+.ar-body .ar-tag { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; }
+.ar-body .ar-desc { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; margin-top: 8px; word-break: keep-all; }
+.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(156,90,138,0.22) 60%); padding: 0 2px; }
+.ar-others-lb { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
+.ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ar-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 100px; font-size: 11.5px; color: var(--c-ink-soft); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
+.ar-chip .han { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-topic-dark); }
+
+.body { padding: 22px 16px 0; }
+.section { margin-top: 14px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; overflow: hidden; }
+.section:first-of-type { margin-top: 0; }
+.section-header { display: flex; align-items: center; gap: 10px; padding: 16px 18px; cursor: pointer; background: var(--c-surface); border: none; width: 100%; text-align: left; appearance: none; font: inherit; }
+.section-header:hover { background: var(--c-paper); }
+.section-header .sec-num { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold); letter-spacing: 0.18em; margin-right: 6px; }
+.section-header .sec-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); flex: 1; }
+.section-header .sec-title .han { color: var(--c-topic); font-weight: 500; margin-left: 6px; font-size: 13px; }
+.section-header .chevron { width: 20px; height: 20px; color: var(--c-mute); transition: transform 0.25s; flex-shrink: 0; }
+.section.open .section-header .chevron { transform: rotate(180deg); color: var(--c-topic); }
+.section.open .section-header { border-bottom: 1px dashed var(--c-card-line); }
+.section:not(.open) > *:not(.section-header) { display: none !important; }
+.section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
+.section.open > *:last-child { padding-bottom: 18px; }
+.section.open > .sec-lead:first-of-type { padding-top: 14px; }
+.sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(156,90,138,0.22) 55%); padding: 0 3px; border-radius: 2px; }
+.body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-topic); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
+
+/* §A 학습 길성 + 학습 적성 점수 */
+.score-row { margin: 14px 0 0; display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; }
+.score-ring { width: 110px; height: 110px; position: relative; }
+.score-ring svg { width: 100%; height: 100%; }
+.score-ring .ring-bg { fill: none; stroke: var(--c-line); stroke-width: 10; }
+.score-ring .ring-fill { fill: none; stroke: url(#studyGrad); stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+.score-ring .num-c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-ring .num-c .num { font-family: 'Noto Serif KR', serif; font-size: 30px; font-weight: 900; color: var(--c-topic-dark); line-height: 1; }
+.score-ring .num-c .num small { font-size: 13px; color: var(--c-mute); font-weight: 600; }
+.score-ring .num-c .lb { font-size: 10px; color: var(--c-mute); font-weight: 700; margin-top: 4px; letter-spacing: 0.05em; }
+.score-txt .grade { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
+.score-txt .desc { font-size: 12.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.6; word-break: keep-all; }
+.score-txt .desc strong { color: var(--c-topic-dark); font-weight: 700; }
+
+.gilseong-grid { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gilseong-cell { background: var(--c-paper); border: 1.5px solid var(--c-card-line); border-radius: 10px; padding: 14px 12px; position: relative; overflow: hidden; }
+.gilseong-cell.active { border-color: var(--c-topic); background: linear-gradient(135deg, var(--c-topic-soft), rgba(156,90,138,0.04)); box-shadow: 0 2px 8px rgba(156,90,138,0.10); }
+.gilseong-cell.weak { opacity: 0.6; }
+.gilseong-cell .top-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.gilseong-cell .glyph { width: 32px; height: 32px; border-radius: 50%; font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.gilseong-cell.active .glyph { background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); color: #FFFEF8; }
+.gilseong-cell.weak .glyph { background: var(--c-line); color: var(--c-mute); }
+.gilseong-cell .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; color: var(--c-ink); line-height: 1.25; flex: 1; }
+.gilseong-cell .ti small { font-size: 9.5px; color: var(--c-mute); font-weight: 500; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.gilseong-cell .status { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 100px; font-family: 'Noto Serif KR', serif; }
+.gilseong-cell.active .status { background: var(--c-topic); color: #FFFEF8; }
+.gilseong-cell.weak .status { background: var(--c-line); color: var(--c-mute); }
+.gilseong-cell .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.gilseong-cell .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+/* §B 24h 집중 곡선 SVG — 공부 고유 핵심 ★ */
+.focus-card { margin: 14px 0 0; padding: 16px 12px 14px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.focus-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; padding: 0 4px; }
+.focus-svg { width: 100%; height: 200px; display: block; }
+.focus-svg .f-area { fill: url(#focusGrad); }
+.focus-svg .f-line { fill: none; stroke: var(--c-topic-dark); stroke-width: 2.5; stroke-linejoin: round; }
+.focus-svg .f-axis { stroke: var(--c-card-line); stroke-width: 1; stroke-dasharray: 2 3; }
+.focus-svg .f-dot { fill: var(--c-topic); stroke: #FFF; stroke-width: 2; }
+.focus-svg .f-dot.peak { fill: var(--c-topic-dark); }
+.focus-svg .f-dot.low { fill: #C9A96E; }
+.focus-svg .f-marker { font-size: 9.5px; fill: var(--c-ink); font-weight: 700; font-family: 'Noto Serif KR', serif; }
+.focus-svg .f-time { font-size: 8.5px; fill: var(--c-mute); font-family: 'Pretendard Variable', sans-serif; font-weight: 600; }
+.hour-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; margin-top: 10px; padding: 0 2px; }
+.hour-strip .h { text-align: center; font-size: 9.5px; color: var(--c-mute); font-weight: 600; padding: 4px 0; border-radius: 4px; }
+.hour-strip .h.peak { color: var(--c-topic-dark); font-weight: 800; background: var(--c-topic-soft); }
+.hour-strip .h.low { color: #8C6D3D; font-weight: 800; background: rgba(201,169,110,0.15); }
+
+.peak-call { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.pc-row { display: grid; grid-template-columns: 80px 1fr; gap: 10px; padding: 10px 12px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; align-items: center; }
+.pc-row.peak { border-left: 3px solid var(--c-topic); }
+.pc-row.low { border-left: 3px solid #C9A96E; }
+.pc-row .when { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; }
+.pc-row.peak .when { color: var(--c-topic-dark); }
+.pc-row.low .when { color: #8C6D3D; }
+.pc-row .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.pc-row .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+/* §C 학습 시즌 timeline — 4 phase */
+.season-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.season-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; }
+.season-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.season-cell { background: var(--c-surface); border: 1.5px solid var(--c-card-line); border-radius: 10px; padding: 14px 12px; position: relative; overflow: hidden; }
+.season-cell.now { border-color: var(--c-topic); background: linear-gradient(180deg, var(--c-topic-soft) 0%, rgba(156,90,138,0.04) 100%); box-shadow: 0 2px 8px rgba(156,90,138,0.15); }
+.season-cell.peak::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--c-topic), var(--c-topic-dark)); }
+.season-cell .badge-now { position: absolute; top: -7px; right: 8px; background: var(--c-topic); color: #FFFEF8; font-family: 'Noto Serif KR', serif; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 100px; box-shadow: 0 2px 4px rgba(156,90,138,0.30); }
+.season-cell .qtr { font-family: 'Noto Serif KR', serif; font-size: 11.5px; font-weight: 800; color: var(--c-topic-dark); margin-bottom: 4px; letter-spacing: 0.04em; }
+.season-cell .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; color: var(--c-ink); line-height: 1.3; margin-bottom: 6px; }
+.season-cell .ds { font-size: 11px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.season-cell .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+/* §D 학습 약점 분석 카드 (NEW · 4 status indicator) */
+.weak-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.weak-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; }
+.weak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.weak-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px; position: relative; overflow: hidden; }
+.weak-cell.safe { border-left: 3px solid var(--c-mok); }
+.weak-cell.caution { border-left: 3px solid #C9A96E; background: rgba(201,169,110,0.05); }
+.weak-cell.high { border-left: 3px solid #C4522E; background: rgba(196,82,46,0.05); }
+.weak-cell .top { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.weak-cell .glyph { width: 28px; height: 28px; border-radius: 50%; font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 900; color: #FFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.weak-cell.safe .glyph { background: linear-gradient(135deg, var(--c-mok), #1F6638); }
+.weak-cell.caution .glyph { background: linear-gradient(135deg, #C9A96E, #8C6D3D); }
+.weak-cell.high .glyph { background: linear-gradient(135deg, #C4522E, #8E3818); }
+.weak-cell .ti { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 800; color: var(--c-ink); flex: 1; line-height: 1.25; }
+.weak-cell .ti small { font-size: 9.5px; color: var(--c-mute); font-weight: 500; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.weak-cell .status-tag { font-size: 9.5px; font-weight: 800; padding: 2px 8px; border-radius: 100px; font-family: 'Noto Serif KR', serif; }
+.weak-cell.safe .status-tag { background: rgba(45,138,78,0.15); color: #1F6638; }
+.weak-cell.caution .status-tag { background: rgba(201,169,110,0.20); color: #8C6D3D; }
+.weak-cell.high .status-tag { background: rgba(196,82,46,0.15); color: #8E3818; }
+.weak-cell .ds { font-size: 11px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.weak-cell .ds strong { font-weight: 700; }
+.weak-cell.safe .ds strong { color: #1F6638; }
+.weak-cell.caution .ds strong { color: #8C6D3D; }
+.weak-cell.high .ds strong { color: #8E3818; }
+
+/* §E 처방 + 결단 */
+.prescription-grid { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rx-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 14px 12px; }
+.rx-cell .glyph { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 900; color: var(--c-topic-dark); line-height: 1; margin-bottom: 6px; }
+.rx-cell .lb-mini { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-ink); margin-bottom: 4px; }
+.rx-cell .ds { font-size: 11px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.rx-cell .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+.verdict-card { margin: 14px 0 0; background: linear-gradient(135deg, #1A1A1A, #2A1F2A); color: #F8F5EE; border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+.verdict-card::after { content: '學'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 160px; font-weight: 900; color: var(--c-topic); opacity: 0.22; line-height: 1; pointer-events: none; }
+.verdict-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: #DCAACE; letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.verdict-card .ti { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: #FFFEF8; line-height: 1.5; margin-bottom: 8px; word-break: keep-all; position: relative; }
+.verdict-card .ti strong { background: linear-gradient(180deg, transparent 60%, rgba(220,170,206,0.40) 60%); padding: 0 3px; color: #FFFEF8; font-weight: 900; }
+.verdict-card .ds { font-size: 13px; color: #C8B0C0; line-height: 1.7; word-break: keep-all; position: relative; }
+.verdict-card .ds strong { color: #DCAACE; font-weight: 700; }
+
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(156,90,138,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(156,90,138,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+
+/* Cross-topic CTA — 공부 → 시험 (자연 페어) */
+.cross-cta { margin: 16px 16px 0; background: linear-gradient(135deg, #FFFEF8, #F2F8F9); border: 1px solid var(--c-card-line); border-left: 4px solid #1A5F6B; border-radius: 14px; padding: 16px 18px; cursor: pointer; appearance: none; font: inherit; text-align: left; width: calc(100% - 32px); display: grid; grid-template-columns: 44px 1fr 16px; gap: 12px; align-items: center; }
+.cross-cta .icn { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #1A5F6B, #0E4550); color: #FFF; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cross-cta .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: var(--c-ink); margin-bottom: 3px; }
+.cross-cta .sb { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.5; word-break: keep-all; }
+.cross-cta .arrow { color: var(--c-topic-dark); font-size: 20px; font-weight: 700; }
+
+/* Upsell + Actions */
+.upsell { margin: 12px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
+.upsell::after { content: '命'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 180px; font-weight: 900; color: rgba(184,150,90,0.08); line-height: 1; pointer-events: none; }
+.upsell .lb { font-size: 11px; color: #F4D166; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; position: relative; }
+.upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.5; color: #FFFEF8; position: relative; }
+.upsell p { font-size: 12.5px; color: #C9B89E; margin-bottom: 14px; line-height: 1.65; position: relative; word-break: keep-all; }
+.upsell .cta { display: inline-flex; gap: 6px; align-items: center; background: linear-gradient(135deg, var(--c-gold), var(--c-gold-deep)); color: #1A1A1A; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; position: relative; }
+.upsell .cta .cost { background: rgba(255,255,255,0.10); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #FFFEF8; margin-left: 6px; font-weight: 600; }
+.actions { margin: 16px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .btn { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px 12px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+.actions .btn:hover { background: var(--c-paper); border-color: var(--c-gold-line); }
+.actions .btn svg { width: 22px; height: 22px; color: var(--c-topic-dark); stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.actions .btn .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); text-align: center; line-height: 1.35; word-break: keep-all; }
+.actions .btn .sb { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; padding: 2px 8px; border-radius: 100px; background: var(--c-topic-soft); }
+.disclaimer { margin: 16px 16px 0; padding: 14px; background: var(--c-paper); border-radius: 8px; font-size: 11px; line-height: 1.65; color: var(--c-mute); text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hd">
+    <div class="top">
+      <span class="badge">학업운</span>
+      <span class="tier">1운</span>
+      <span class="name">김도윤</span>
+      <span class="demo">DEMO</span>
+    </div>
+    <h1>집중이 흐르는 시간,<br>깊이 있게 흡수하는 결</h1>
+    <div class="meta">갑목(큰 나무) 일간 · 인성 강 · 직장인 자격증 공부 · 인성 받쳐주는 사주</div>
+  </header>
+
+  <div class="my-saju">
+    <div class="ttl">내 사주 8글자<span class="hint">印 표시 = 학습·인성 자리</span></div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan-block o-to"><span class="han">戊</span><span class="read">무</span></div><div class="meaning">큰 산</div><div class="ji-block o-to"><span class="han">辰</span><span class="read">진</span></div><div class="meaning">용</div></div>
+      <div class="saju-cell ilju"><div class="lab">일</div><div class="gan-block o-mok"><span class="han">甲</span><span class="read">갑</span></div><div class="meaning">큰 나무</div><div class="ji-block o-hwa"><span class="han">午</span><span class="read">오</span></div><div class="meaning">말</div><div class="ilgan-tag">일간</div></div>
+      <div class="saju-cell insung"><div class="lab">월</div><div class="gan-block o-su"><span class="han">癸</span><span class="read">계</span></div><div class="meaning">이슬</div><div class="ji-block o-hwa"><span class="han">巳</span><span class="read">사</span></div><div class="meaning">뱀</div></div>
+      <div class="saju-cell"><div class="lab">년</div><div class="gan-block o-geum"><span class="han">庚</span><span class="read">경</span></div><div class="meaning">큰 쇠</div><div class="ji-block o-su"><span class="han">子</span><span class="read">자</span></div><div class="meaning">쥐</div></div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="lb">◇ 한 줄 결론</div>
+    <p class="body">학습을 받쳐주는 자리(인성)가 <strong>사주 가운데에</strong> 자리 잡았어요. 단기 암기형보다 <strong>장기 흡수형</strong> — 천천히 깊게 가는 사람의 사주입니다.</p>
+    <p class="ref">— 학습 적성 80점 · 印 흡수형 · 새벽 4-6시 + 저녁 9-11시 골든 타임</p>
+  </div>
+
+  <!-- 공부 archetype 뱃지 (4 layer × 8 archetype) -->
+  <div class="archetype-card">
+    <div class="lb">◇ 당신의 공부 결</div>
+    <div class="archetype-hero">
+      <div class="ar-glyph"><span class="han">印</span></div>
+      <div class="ar-body">
+        <div class="ar-name">印 흡수형 · 천천히 깊게</div>
+        <div class="ar-tag">정인 강 + 식신 보통 — 받아들이는 결이 본인 사주</div>
+        <div class="ar-desc">한 번 들어온 지식이 <strong>오래 남는 사주</strong>예요. 단기 벼락치기보다 <u>매일 조금씩 1년 이상 길게 가는 길</u>이 본인 결. 자격증·언어·전문 분야 공부에 가장 잘 맞습니다.</div>
+      </div>
+    </div>
+    <div class="ar-others-lb">사주마다 공부 결이 다릅니다 — 4 layer × 7 다른 archetype</div>
+    <div class="ar-chips">
+      <span class="ar-chip"><span class="han">食</span>표현형 (식신 강·정리)</span>
+      <span class="ar-chip"><span class="han">文</span>문창형 (문창귀인 강)</span>
+      <span class="ar-chip"><span class="han">雜</span>산만 주의 (인성 약)</span>
+      <span class="ar-chip"><span class="han">偏</span>편중 주의 (한 과목)</span>
+      <span class="ar-chip"><span class="han">急</span>급집중기 (시즌 적기)</span>
+      <span class="ar-chip"><span class="han">待</span>기다림형 (다음 시즌)</span>
+      <span class="ar-chip"><span class="han">靜</span>정적 학습형 (조용 필수)</span>
+    </div>
+  </div>
+
+  <main class="body">
+
+    <!-- §A 학습 길성 + 학습 적성 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION A</span>
+        <span class="sec-title">학습 길성 — 인성·식신·문창<span class="han">印食</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">학습을 받쳐주는 사주 4 자리 — 인성·식신·문창귀인·학당귀인</div>
+
+      <div class="score-row">
+        <div class="score-ring">
+          <svg viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="studyGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#9C5A8A"/>
+                <stop offset="100%" stop-color="#6B3D5F"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="62.83"/>
+          </svg>
+          <div class="num-c">
+            <div class="num">80<small>/100</small></div>
+            <div class="lb">학습 적성</div>
+          </div>
+        </div>
+        <div class="score-txt">
+          <div class="grade">印 흡수형 — 인성 강</div>
+          <div class="desc">정인이 사주 가운데에 강하게 자리 잡아 <strong>받아들이는 결이 좋은 사주</strong>예요. <u>천천히 쌓는 학습</u>에 가장 잘 받쳐주는 흐름.</div>
+        </div>
+      </div>
+
+      <div class="gilseong-grid">
+        <div class="gilseong-cell active">
+          <div class="top-row">
+            <div class="glyph">印</div>
+            <div class="ti">정인<small>받아들이는 힘·이해</small></div>
+            <div class="status">강</div>
+          </div>
+          <div class="ds">정인이 월주에 자리 잡아 — <strong>한 번 이해한 내용이 오래 남는 사주</strong>예요. 학습의 핵심 자질이 본인 안에 박혀 있습니다.</div>
+        </div>
+        <div class="gilseong-cell active">
+          <div class="top-row">
+            <div class="glyph">學</div>
+            <div class="ti">학당귀인<small>학습 흡수력</small></div>
+            <div class="status">활성</div>
+          </div>
+          <div class="ds">계수(癸水)가 <strong>장기 학습을 받쳐주는 자리</strong>에 위치 — 매일 조금씩 쌓는 방식이 본인에게 가장 효율적이에요.</div>
+        </div>
+        <div class="gilseong-cell weak">
+          <div class="top-row">
+            <div class="glyph">食</div>
+            <div class="ti">식신<small>표현·정리·요약</small></div>
+            <div class="status">보통</div>
+          </div>
+          <div class="ds">식신이 약한 편 — <strong>이해는 빠르지만 정리·요약은 노력 필요</strong>. 학습 후 노트 정리하는 시간 따로 잡으세요.</div>
+        </div>
+        <div class="gilseong-cell active">
+          <div class="top-row">
+            <div class="glyph">文</div>
+            <div class="ti">문창귀인<small>글·논술·이해</small></div>
+            <div class="status">활성</div>
+          </div>
+          <div class="ds">문창이 활성 — <strong>글로 된 학습이 가장 잘 들어오는 결</strong>이에요. 동영상보다 책·문서 중심 학습이 효율적.</div>
+        </div>
+      </div>
+
+      <p>4개 길성 中 <strong>3개 활성 + 1개 보통</strong> — 학습 사주에서 <u>균형 잡힌 흐름</u>이에요. 정인 + 학당 + 문창 콤보는 <strong>전문 자격·언어·연구</strong> 분야에 가장 적합한 결. 자격증 공부는 본인 사주가 받쳐주는 길입니다.</p>
+
+      <p>식신이 보통이라는 건 — <strong>이해는 잘 하는데 그것을 다른 사람에게 설명하거나 정리하는 건 따로 연습 필요</strong>하다는 뜻이에요. 시험 답안 작성·발표 준비 시 <u>실전 연습 시간</u>을 따로 잡아두세요. 단기 약점이 아니라 본인 사주 패턴이에요.</p>
+    </section>
+
+    <!-- §B 24h 집중 곡선 SVG — 공부 고유 핵심 ★ -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION B</span>
+        <span class="sec-title">24시간 집중 곡선 — 본인 골든 타임<span class="han">時刻</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">하루 중 어느 시간이 본인의 학습 적기인지</div>
+
+      <div class="focus-card">
+        <div class="lb">◇ 24h 집중 곡선 (인성 활성 시간대 highlight)</div>
+        <svg class="focus-svg" viewBox="0 0 360 200" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="focusGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#9C5A8A" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#9C5A8A" stop-opacity="0.05"/>
+            </linearGradient>
+          </defs>
+          <!-- 평균선 -->
+          <line class="f-axis" x1="0" y1="100" x2="360" y2="100"/>
+          <!-- 24h focus curve: 김도윤 (인성 강) — 새벽 4-6시 peak, 오전 9-11시 mid, 오후 2-4시 low, 저녁 7-9시 mid, 밤 10-11시 peak2 -->
+          <path class="f-area" d="M 15 130 L 45 70 L 75 50 L 105 80 L 135 90 L 165 110 L 195 145 L 225 155 L 255 130 L 285 100 L 315 60 L 345 80 L 345 200 L 15 200 Z"/>
+          <path class="f-line" d="M 15 130 L 45 70 L 75 50 L 105 80 L 135 90 L 165 110 L 195 145 L 225 155 L 255 130 L 285 100 L 315 60 L 345 80"/>
+          <!-- dots: 0,3,6,9,12,15,18,21,24 (8개 + 시작) -->
+          <circle class="f-dot" cx="15" cy="130" r="3.5"/>
+          <circle class="f-dot peak" cx="45" cy="70" r="4.5"/>
+          <circle class="f-dot peak" cx="75" cy="50" r="5"/>
+          <circle class="f-dot" cx="105" cy="80" r="3.5"/>
+          <circle class="f-dot" cx="135" cy="90" r="3.5"/>
+          <circle class="f-dot" cx="165" cy="110" r="3.5"/>
+          <circle class="f-dot low" cx="195" cy="145" r="4.5"/>
+          <circle class="f-dot low" cx="225" cy="155" r="4.5"/>
+          <circle class="f-dot" cx="255" cy="130" r="3.5"/>
+          <circle class="f-dot" cx="285" cy="100" r="3.5"/>
+          <circle class="f-dot peak" cx="315" cy="60" r="5"/>
+          <circle class="f-dot" cx="345" cy="80" r="3.5"/>
+          <!-- markers -->
+          <text class="f-marker" x="75" y="38" text-anchor="middle">새벽 ★★</text>
+          <text class="f-marker" x="225" y="175" text-anchor="middle">오후 ▼</text>
+          <text class="f-marker" x="315" y="48" text-anchor="middle">저녁 ★</text>
+          <!-- time axis -->
+          <text class="f-time" x="15" y="195" text-anchor="middle">0</text>
+          <text class="f-time" x="105" y="195" text-anchor="middle">6</text>
+          <text class="f-time" x="195" y="195" text-anchor="middle">12</text>
+          <text class="f-time" x="285" y="195" text-anchor="middle">18</text>
+          <text class="f-time" x="345" y="195" text-anchor="middle">24</text>
+        </svg>
+        <div class="hour-strip">
+          <div class="h">0</div>
+          <div class="h peak">3</div>
+          <div class="h peak">6</div>
+          <div class="h">9</div>
+          <div class="h low">12</div>
+          <div class="h low">15</div>
+          <div class="h peak">18</div>
+          <div class="h">21</div>
+        </div>
+      </div>
+
+      <div class="peak-call">
+        <div class="pc-row peak">
+          <div class="when">새벽 4-6시</div>
+          <div class="ds"><strong>최고 집중 자리 ★★</strong>. 정인 활성 + 자수(子水) 시간대. 본인 사주의 골든 타임 — <u>가장 어려운 과목</u>은 이 시간에.</div>
+        </div>
+        <div class="pc-row peak">
+          <div class="when">저녁 9-11시</div>
+          <div class="ds"><strong>두 번째 집중 자리 ★</strong>. 하루 정리·복습에 가장 좋은 시간. 새 내용보다 <u>오늘 배운 것 다지기</u>에 활용하세요.</div>
+        </div>
+        <div class="pc-row low">
+          <div class="when">오후 2-4시</div>
+          <div class="ds"><strong>최저 집중 시기 ▼</strong>. 본인 사주의 슬럼프 시간대. 무리해서 공부하지 말고 — <u>가벼운 운동·산책·정리 작업</u>으로.</div>
+        </div>
+      </div>
+
+      <p>본인의 골든 타임은 <strong>새벽 4-6시</strong>예요. 직장인이라 어렵겠지만 — 일주일에 2~3일이라도 새벽 학습 잡으면 평소의 2배 효율. 정인이 가장 활성되는 시간대라 <u>이해도가 다른 시간대 대비 훨씬 깊어집니다</u>.</p>
+
+      <p>오후 2-4시 슬럼프는 본인 사주의 자연 패턴이에요. <strong>이 시간에 어려운 자료 보면 안 들어옴</strong> — 본인 잘못 X. 직장 점심 후 회의 시간이 이 자리에 걸리면 메모·정리 위주로 가벼운 일만, 새 학습은 미루세요.</p>
+    </section>
+
+    <!-- §C 학습 시즌 timeline — 4 phase -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION C</span>
+        <span class="sec-title">학습 시즌 — 분기별 4 phase<span class="han">學期</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">올해 어느 분기가 학습 적기인지 (직장인 시즌제)</div>
+
+      <div class="season-card">
+        <div class="lb">◇ 2026년 학습 4 phase</div>
+        <div class="season-grid">
+          <div class="season-cell now peak">
+            <span class="badge-now">NOW</span>
+            <div class="qtr">1Q · 1~3월</div>
+            <div class="ti">동기 부여 시기 ★</div>
+            <div class="ds">새 학습 시작·계획 세우기 가장 좋은 자리. <strong>인성 봄 활성 시기</strong> — 새 분야 진입에 부담 적어요.</div>
+          </div>
+          <div class="season-cell">
+            <div class="qtr">2Q · 4~6월</div>
+            <div class="ti">집중 학습기</div>
+            <div class="ds">1Q 시작한 학습 <strong>본격 깊이 들어가는 시기</strong>. 매일 패턴 잡는 자리. 6월 후반 살짝 흔들릴 수 있음.</div>
+          </div>
+          <div class="season-cell">
+            <div class="qtr">3Q · 7~9월</div>
+            <div class="ti">슬럼프 가능 ⚠</div>
+            <div class="ds">여름 화 太過 — <strong>집중력 흔들리는 시기</strong>. 무리하지 말고 정리·복습 중심으로. 9월 중반부터 회복.</div>
+          </div>
+          <div class="season-cell peak">
+            <div class="qtr">4Q · 10~12월</div>
+            <div class="ti">결과 정리 ★</div>
+            <div class="ds">금 활성 가을 — <strong>학습 결과물 정리·시험 응시·자격 획득</strong>에 가장 좋은 자리. 한 해의 결실 시기.</div>
+          </div>
+        </div>
+      </div>
+
+      <p>본인 사주는 <strong>봄(1Q)에 새로 시작하고 가을(4Q)에 결실 맺는 결</strong>이에요. 직장인 자격증 시험 응시는 <u>10~11월에 잡으면 가장 자연스러운 흐름</u>입니다. 1Q에 시작 → 4Q에 시험이 본인 사주의 1년 사이클.</p>
+
+      <p>3Q 슬럼프 (7~9월 초)는 미리 알면 위기가 아니에요. <strong>이 시기 무리하면 다 까먹는 결</strong>이라 — 새 내용 학습보다 <u>지금까지 배운 것 정리</u>가 효율적. 9월 중후반부터 가을 시작과 함께 다시 풀립니다.</p>
+    </section>
+
+    <!-- §D 학습 약점 분석 카드 (NEW · 4 status indicator) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION D</span>
+        <span class="sec-title">학습 약점 분석<span class="han">弱</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주에 박힌 학습 약점 4가지 — 미리 알고 보완</div>
+
+      <div class="weak-card">
+        <div class="lb">◇ 본인 사주 학습 약점 (4 status)</div>
+        <div class="weak-grid">
+          <div class="weak-cell safe">
+            <div class="top">
+              <div class="glyph">雜</div>
+              <div class="ti">산만 위험<small>인성 약 체크</small></div>
+              <span class="status-tag">안전</span>
+            </div>
+            <div class="ds">정인 강한 사주라 — <strong>한 번 잡은 학습 흐름 잘 유지</strong>해요. 산만함 위험 거의 없음.</div>
+          </div>
+          <div class="weak-cell caution">
+            <div class="top">
+              <div class="glyph">偏</div>
+              <div class="ti">편중 주의<small>관심 분야 쏠림</small></div>
+              <span class="status-tag">주의</span>
+            </div>
+            <div class="ds">인성 강한 사주는 <strong>관심 분야 깊이 파는 결</strong>이라 — 한 과목만 파고 다른 과목 소홀할 수 있음. <u>주 1회 약한 과목 점검</u>.</div>
+          </div>
+          <div class="weak-cell caution">
+            <div class="top">
+              <div class="glyph">體</div>
+              <div class="ti">체력 부족<small>장시간 학습 시</small></div>
+              <span class="status-tag">주의</span>
+            </div>
+            <div class="ds">갑목 일간이 화·토에 둘러싸여 — <strong>장시간 앉아 있으면 피로 빠르게 옴</strong>. 50분 학습 + 10분 산책 패턴 권장.</div>
+          </div>
+          <div class="weak-cell high">
+            <div class="top">
+              <div class="glyph">環</div>
+              <div class="ti">환경 의존 ★<small>조용한 공간 필수</small></div>
+              <span class="status-tag">강함</span>
+            </div>
+            <div class="ds">정인 사주는 <strong>외부 자극에 매우 민감</strong>해요. 카페·공유 공간보다 <u>완전히 조용한 공간</u>에서만 깊이 들어갑니다. 환경 1순위.</div>
+          </div>
+        </div>
+      </div>
+
+      <p>본인 사주의 가장 큰 약점은 <strong>환경 의존도</strong>예요. 정인이 강할수록 <u>외부 소음·시각 자극에 흐름이 깨지기 쉬운 결</u>. 직장인이라 시간 부족하니 — 짧게라도 완전히 조용한 공간(독서실·집 서재·도서관)에서의 시간이 카페 2시간보다 효율적입니다.</p>
+
+      <p>편중·체력은 의식하면 보완되는 자리예요. <strong>주 1회 약한 과목 강제 점검 + 50분 학습 + 10분 산책</strong> — 두 가지 습관만 잡으면 본인 사주는 평생 학습형으로 이어집니다.</p>
+    </section>
+
+    <!-- §E 처방 + 결단 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION E</span>
+        <span class="sec-title">학습 처방 + 결단<span class="han">處方</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 가리키는 학습 처방 4가지</div>
+
+      <div class="prescription-grid">
+        <div class="rx-cell">
+          <div class="glyph">朝</div>
+          <div class="lb-mini">새벽 30분</div>
+          <div class="ds">정인 활성 시간 — <strong>새벽 4-6시 30분</strong>이 평소 1시간보다 효율. 주 2~3회만이라도.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">沈</div>
+          <div class="lb-mini">깊이 파기</div>
+          <div class="ds">인성 강점 살리기 — <strong>한 주제 1주일 깊게</strong>. 여러 과목 섞기 X · 한 번에 한 영역.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">換</div>
+          <div class="lb-mini">주 1회 점검</div>
+          <div class="ds">편중 방지 — <strong>금요일</strong>에 약한 과목·소홀했던 영역 점검. 30분이라도.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">靜</div>
+          <div class="lb-mini">완전 조용</div>
+          <div class="ds">환경 1순위 — <strong>독서실·집 서재·도서관</strong>. 카페 X (정인 사주는 외부 자극 민감).</div>
+        </div>
+      </div>
+
+      <div class="verdict-card">
+        <div class="lb">◇ 결단 한 줄</div>
+        <div class="ti">본인은 <strong>천천히 깊게 가는 사주</strong>예요. 새벽 30분 + 조용한 환경 + 1주제 1주일 — 이 세 가지만 잡으면 1년 후 본인이 달라져 있습니다.</div>
+        <div class="ds">정인 강한 사주는 단기 벼락치기가 본인 결이 아니에요. 한 번 들어온 지식이 오래 남는 만큼 — <strong>꾸준히 1년 이상</strong> 가는 학습이 본인 사주의 진짜 강점이에요. 자격증·언어·전문 분야는 본인의 길.</div>
+      </div>
+
+      <div class="pullquote">공부는 사주가 시켜주는 게 아니라 <strong>본인이 매일 만드는 것</strong>이에요. 정인 강한 사주는 — 천천히 + 깊게 + 조용히. 짧은 시간이라도 본인 골든 타임에, 본인 환경에서, 한 주제씩 — <strong>1년 후의 본인</strong>이 지금 한 시간의 결과입니다.</div>
+    </section>
+  </main>
+
+  <!-- Cross-topic CTA: 공부 → 시험 (자격·합격 자연 페어) -->
+  <button type="button" class="cross-cta">
+    <div class="icn">進</div>
+    <div>
+      <div class="ti">시험운으로 더 깊이 — 자격·합격 가능성</div>
+      <div class="sb">공부 = 학습 과정 / 시험 = 합격 결과. 시험일 D-day·합격 가능성 게이지·길성 활성 시기까지 시험운에서 정밀 분석.</div>
+    </div>
+    <div class="arrow">→</div>
+  </button>
+
+  <button class="upsell">
+    <div class="lb">PREMIUM</div>
+    <h3>공부 + 9개 결 한 번에 보는 종합사주</h3>
+    <p>학습 흐름과 함께 평생 진로·재물·인연까지 — 10가지 결을 종합사주에서 한 자리에 펼쳐 봅니다.</p>
+    <span class="cta">종합사주로 보기 →<span class="cost">10운</span></span>
+  </button>
+
+  <div class="actions">
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </button>
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </button>
+  </div>
+
+  <div class="disclaimer">사주 풀이는 삶의 결을 살피는 참고 자료입니다.<br>모든 결정은 본인의 몫입니다.</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 재회운 v3.6 (변준기 × 김지은 · DEMO · 공감·흐름 톤)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* 사주500 — 재회 [復] v3.6 (2026-05-08 톤 보정 · 공감·흐름)
+   타겟: 재회 간절한 사람 (여성 비중 높음). 환상 X · 결정론 X · 공감·흐름 + 희망.
+   원칙: 사주는 답을 정하지 않고 흐름만 보여준다. 결정은 본인의 몫.
+   5 파트 (v3.5 §E 상대의 마음 흐름 통째 제거 · 윤리·UX 위험):
+     §A 우리 둘 사주의 결 (한 줄 결론)
+     §B 종합 궁합 3축 — 연애·결혼·재회 (다각 평가)
+     §C 헤어진 시기 분석 (입력 활용 · 회복의 자리)
+     §D 합·충 변곡 + 재회 가능성 (게이지 + 3-stage)
+     §E 흐름 결단 + 한 문장 + 희망 메시지
+   액센트: 復 살구색 #D89A8A
+*/
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+:root {
+  --c-paper: #F8F5EE; --c-surface: #FFFFFF; --c-ink: #1A1A1A; --c-ink-soft: #3D3D3D;
+  --c-mute: #7A7269; --c-line: #E5DFD0;
+  --c-gold: #B8965A; --c-gold-deep: #8C6D3D;
+  --c-gold-soft: rgba(184,150,90,0.10); --c-gold-line: rgba(184,150,90,0.40);
+  --c-card-line: rgba(184,150,90,0.18);
+  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
+  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
+  --c-topic: #D89A8A; --c-topic-dark: #A8685A; --c-topic-soft: rgba(216,154,138,0.12);
+}
+.page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
+.hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #2A2520 50%, #1D1812 100%); border-top: 3px solid var(--c-topic); }
+.hd::before { content: '復'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.10; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
+.hd .badge { background: rgba(184,150,90,0.20); border: 1px solid rgba(184,150,90,0.40); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #F4D166; letter-spacing: 0.02em; }
+.hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
+.hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #E8DAB8; }
+.hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
+.hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 16px; letter-spacing: -0.02em; line-height: 1.4; position: relative; color: #FFFEF8; }
+.hd .meta { font-size: 12px; opacity: 0.75; margin-top: 6px; position: relative; color: #E8DAB8; font-feature-settings: 'tnum'; }
+
+/* 사주 SSOT */
+.my-saju { margin: 16px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.my-saju .ttl { font-size: 10.5px; color: var(--c-topic-dark); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
+.saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+.saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
+.saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
+.gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
+.gan-block .han { font-size: 24px; font-weight: 800; line-height: 1; }
+.ji-block .han { font-size: 20px; font-weight: 800; line-height: 1; }
+.gan-block .read, .ji-block .read { font-size: 9px; font-weight: 700; opacity: 0.85; letter-spacing: 0.05em; font-family: 'Pretendard Variable', sans-serif; }
+.gan-block.o-mok, .ji-block.o-mok { background: var(--c-mok); color: #FFF; border-color: var(--c-mok); }
+.gan-block.o-hwa, .ji-block.o-hwa { background: var(--c-hwa); color: #FFF; border-color: var(--c-hwa); }
+.gan-block.o-to, .ji-block.o-to { background: var(--c-to); color: #FFF; border-color: var(--c-to); }
+.gan-block.o-geum, .ji-block.o-geum { background: #FFF; color: var(--c-geum); border-color: var(--c-card-line); }
+.gan-block.o-su, .ji-block.o-su { background: var(--c-ink); color: #FFF; border-color: var(--c-ink); }
+.meaning { font-size: 9.5px; color: var(--c-mute); font-weight: 600; text-align: center; line-height: 1.2; font-family: 'Pretendard Variable', sans-serif; }
+.ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
+
+/* 결론박스 */
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #FAF6EC 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(184,150,90,0.10); }
+.conclusion::after { content: '復'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
+.conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,0.40) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .ref { font-size: 12px; color: #5C4220; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
+
+.body { padding: 22px 16px 0; }
+.section { margin-top: 14px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; overflow: hidden; }
+.section:first-of-type { margin-top: 0; }
+.section-header { display: flex; align-items: center; gap: 10px; padding: 16px 18px; cursor: pointer; background: var(--c-surface); border: none; width: 100%; text-align: left; appearance: none; font: inherit; }
+.section-header:hover { background: var(--c-paper); }
+.section-header .sec-num { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold); letter-spacing: 0.18em; margin-right: 6px; }
+.section-header .sec-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); flex: 1; }
+.section-header .sec-title .han { color: var(--c-gold); font-weight: 500; margin-left: 6px; font-size: 13px; }
+.section-header .chevron { width: 20px; height: 20px; color: var(--c-mute); transition: transform 0.25s; flex-shrink: 0; }
+.section.open .section-header .chevron { transform: rotate(180deg); color: var(--c-gold); }
+.section.open .section-header { border-bottom: 1px dashed var(--c-card-line); }
+.section:not(.open) > *:not(.section-header) { display: none !important; }
+.section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
+.section.open > *:last-child { padding-bottom: 18px; }
+.section.open > .sec-lead:first-of-type { padding-top: 14px; }
+.sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,0.32) 55%); padding: 0 3px; border-radius: 2px; }
+.body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
+
+/* §A 둘 사주 + 한 줄 */
+.dual-saju { margin: 14px 0 0; }
+.dual-saju .pair-head { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+.dual-saju .pair-head .who { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); text-align: center; }
+.dual-saju .pair-head .who small { display: block; font-size: 10.5px; color: var(--c-mute); margin-top: 3px; font-weight: 500; font-family: 'Pretendard Variable', sans-serif; }
+.dual-saju .pair-head .vs { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; color: var(--c-topic-dark); }
+.dual-saju .pair-head .vs small { display: block; font-size: 9px; color: var(--c-topic-dark); font-family: 'Pretendard Variable', sans-serif; font-weight: 600; margin-top: 2px; letter-spacing: 0.05em; }
+.dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dual-side { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 10px; }
+.dual-side.partner { border-color: var(--c-topic); }
+.dual-side .mini-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.dual-side .mini-cell { background: #FFF; border-radius: 6px; padding: 5px 2px; text-align: center; border: 1px solid var(--c-card-line); }
+.dual-side .mini-cell.ilju { background: var(--c-gold-soft); border-color: var(--c-gold-line); }
+.dual-side .mini-cell .lab { font-size: 8.5px; color: var(--c-mute); font-weight: 700; }
+.dual-side .mini-block { font-family: 'Noto Serif KR', serif; border-radius: 5px; margin-top: 2px; padding: 3px 0; }
+.dual-side .mini-block .han { font-size: 14px; font-weight: 800; line-height: 1; display: block; }
+.dual-side .mini-block .read { font-size: 7.5px; opacity: 0.85; font-weight: 700; }
+.dual-side .mini-block.o-mok { background: var(--c-mok); color: #FFF; }
+.dual-side .mini-block.o-hwa { background: var(--c-hwa); color: #FFF; }
+.dual-side .mini-block.o-to { background: var(--c-to); color: #FFF; }
+.dual-side .mini-block.o-geum { background: #FFF; color: var(--c-geum); border: 1px solid var(--c-card-line); }
+.dual-side .mini-block.o-su { background: var(--c-ink); color: #FFF; }
+
+/* §B 종합 궁합 3축 (NEW · 솔직한 다각 평가) */
+.trio-score { margin: 14px 0 0; }
+.trio-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.trio-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px 10px; text-align: center; position: relative; }
+.trio-cell.high { border-color: var(--c-mok); border-top: 3px solid var(--c-mok); }
+.trio-cell.mid { border-color: var(--c-gold); border-top: 3px solid var(--c-gold); }
+.trio-cell.low { border-color: var(--c-hwa); border-top: 3px solid var(--c-hwa); }
+.trio-cell .glyph { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; line-height: 1; margin-bottom: 6px; }
+.trio-cell.high .glyph { color: var(--c-mok); }
+.trio-cell.mid .glyph { color: var(--c-gold-deep); }
+.trio-cell.low .glyph { color: var(--c-hwa); }
+.trio-cell .lb { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 700; color: var(--c-ink); margin-bottom: 5px; }
+.trio-cell .num-big { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 900; line-height: 1; }
+.trio-cell.high .num-big { color: var(--c-mok); }
+.trio-cell.mid .num-big { color: var(--c-gold-deep); }
+.trio-cell.low .num-big { color: var(--c-hwa); }
+.trio-cell .num-big small { font-size: 11px; color: var(--c-mute); font-weight: 600; }
+.trio-cell .verdict-mini { font-size: 10.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.4; word-break: keep-all; font-weight: 600; }
+.trio-summary { margin-top: 12px; padding: 12px 14px; background: var(--c-gold-soft); border-radius: 8px; border-left: 3px solid var(--c-gold); font-size: 12.5px; line-height: 1.7; color: var(--c-ink-soft); word-break: keep-all; }
+.trio-summary strong { color: var(--c-gold-deep); font-weight: 700; }
+
+/* §C 헤어진 시기 분석 (NEW · 사용자 입력 활용) */
+.breakup-context { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), var(--c-gold-soft)); border: 1px solid var(--c-topic); border-radius: 12px; padding: 14px 16px; }
+.breakup-context .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 8px; }
+.breakup-context .when-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.breakup-context .when-cell { background: var(--c-surface); border-radius: 8px; padding: 10px 12px; border: 1px solid var(--c-card-line); }
+.breakup-context .when-cell .key { font-size: 10.5px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.05em; }
+.breakup-context .when-cell .val { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 800; color: var(--c-ink); margin-top: 2px; }
+
+.breakup-stages { margin-top: 14px; }
+.breakup-stages .head { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 700; color: var(--c-gold-deep); margin-bottom: 10px; }
+.stage-line { display: grid; grid-template-columns: 100px 1fr; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--c-paper); margin-bottom: 6px; border: 1px solid var(--c-card-line); }
+.stage-line.now { background: var(--c-topic-soft); border-color: var(--c-topic); border-left: 3px solid var(--c-topic-dark); }
+.stage-line .when { font-family: 'Noto Serif KR', serif; font-size: 11.5px; font-weight: 800; color: var(--c-gold-deep); }
+.stage-line.now .when { color: var(--c-topic-dark); }
+.stage-line .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.stage-line .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+
+/* §D 합·충 변곡 + 게이지 */
+.bending-list { margin: 14px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.bend-row { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: 60px 1fr 60px; gap: 12px; align-items: center; }
+.bend-row.hap { border-left: 3px solid var(--c-mok); }
+.bend-row.chung { border-left: 3px solid var(--c-hwa); }
+.bend-row .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; color: var(--c-ink); }
+.bend-row .ds { font-size: 12px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.bend-row .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+.bend-row .tag { font-size: 11px; padding: 4px 9px; border-radius: 100px; font-weight: 700; text-align: center; font-family: 'Noto Serif KR', serif; }
+.bend-row.hap .tag { background: var(--c-mok-soft); color: var(--c-mok); }
+.bend-row.chung .tag { background: var(--c-hwa-soft); color: var(--c-hwa); }
+
+.reunion-gauge { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 18px 16px; text-align: center; }
+.reunion-gauge .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 12px; }
+.reunion-gauge svg { width: 220px; height: 130px; }
+.reunion-gauge .gauge-bg { fill: none; stroke: var(--c-line); stroke-width: 16; }
+.reunion-gauge .gauge-fill { fill: none; stroke: url(#reunGrad); stroke-width: 16; stroke-linecap: round; }
+.reunion-gauge .num { font-family: 'Noto Serif KR', serif; font-size: 38px; font-weight: 900; fill: var(--c-ink); }
+.reunion-gauge .num small { font-size: 16px; fill: var(--c-mute); font-weight: 600; }
+.reunion-gauge .verdict { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-topic-dark); margin-top: 6px; }
+.reunion-gauge .desc { font-size: 13px; color: var(--c-ink-soft); margin-top: 8px; line-height: 1.6; word-break: keep-all; }
+
+.bend-timeline { margin: 14px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.bend-stage { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px 14px; border-left: 3px solid var(--c-gold); }
+.bend-stage.warn { background: rgba(211,47,47,0.04); border-color: rgba(211,47,47,0.30); border-left-color: var(--c-hwa); }
+.bend-stage.peak { background: var(--c-topic-soft); border-color: var(--c-topic); border-left-color: var(--c-topic-dark); }
+.bend-stage .when-row { display: flex; gap: 8px; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap; }
+.bend-stage .when { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 800; color: var(--c-topic-dark); }
+.bend-stage.warn .when { color: var(--c-hwa); }
+.bend-stage .duration { font-size: 11px; color: var(--c-mute); font-weight: 600; }
+.bend-stage .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: var(--c-ink); margin-bottom: 5px; line-height: 1.35; }
+.bend-stage .ds { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; word-break: keep-all; }
+.bend-stage .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+.bend-stage .ds u { color: var(--c-ink); text-decoration: underline; text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 2px; font-weight: 600; }
+
+/* §E 상대의 마음 흐름 (NEW · 사주 객관 분석) */
+.partner-mind { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
+.partner-mind::after { content: '心'; position: absolute; right: -10px; bottom: -28px; font-family: 'Noto Serif KR', serif; font-size: 130px; font-weight: 900; color: var(--c-topic); opacity: 0.05; line-height: 1; pointer-events: none; }
+.partner-mind .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 10px; position: relative; }
+.partner-mind .disclaimer { font-size: 11px; color: var(--c-mute); padding: 8px 10px; background: var(--c-paper); border-radius: 6px; margin-bottom: 12px; line-height: 1.5; word-break: keep-all; position: relative; }
+.partner-mind .signal-list { display: flex; flex-direction: column; gap: 8px; position: relative; }
+.partner-signal { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 10px 12px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; align-items: flex-start; }
+.partner-signal.positive { border-left: 3px solid var(--c-mok); }
+.partner-signal.neutral { border-left: 3px solid var(--c-gold); }
+.partner-signal.negative { border-left: 3px solid var(--c-hwa); }
+.partner-signal .ic { width: 28px; height: 28px; border-radius: 50%; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 800; color: #FFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.partner-signal.positive .ic { background: var(--c-mok); }
+.partner-signal.neutral .ic { background: var(--c-gold); }
+.partner-signal.negative .ic { background: var(--c-hwa); }
+.partner-signal .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); margin-bottom: 3px; }
+.partner-signal .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.partner-signal .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+
+/* §F 결단 + 한 문장 (양극 게이지 — 침묵 권장) */
+.decision-bipolar { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 18px 16px; }
+.decision-bipolar .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 14px; text-align: center; }
+.bipolar-bar { position: relative; height: 36px; background: linear-gradient(90deg, rgba(45,138,78,0.20) 0%, var(--c-paper) 50%, rgba(211,47,47,0.20) 100%); border-radius: 100px; border: 1px solid var(--c-card-line); margin-top: 38px; }
+.bipolar-bar .marker { position: absolute; top: -4px; width: 5px; height: 44px; background: var(--c-topic-dark); border-radius: 100px; box-shadow: 0 2px 6px rgba(0,0,0,0.20); }
+.bipolar-bar .marker::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: #FFF; color: var(--c-topic-dark);
+  font-size: 11.5px; font-weight: 700;
+  font-family: 'Noto Serif KR', serif;
+  padding: 5px 12px; border-radius: 100px;
+  border: 1.5px solid var(--c-topic);
+  box-shadow: 0 3px 10px rgba(216,154,138,0.30);
+  white-space: nowrap; letter-spacing: 0.02em;
+}
+.bipolar-bar .marker::before {
+  content: ''; position: absolute;
+  bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%) rotate(45deg);
+  width: 6px; height: 6px; background: #FFF;
+  border-right: 1.5px solid var(--c-topic);
+  border-bottom: 1.5px solid var(--c-topic); z-index: 1;
+}
+.bipolar-labels { display: flex; justify-content: space-between; margin-top: 12px; font-size: 12px; font-weight: 700; font-family: 'Noto Serif KR', serif; }
+.bipolar-labels .left { color: var(--c-mok); }
+.bipolar-labels .right { color: var(--c-hwa); }
+
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), var(--c-gold-soft)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,0.40) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+
+/* Upsell + Actions */
+.upsell { margin: 16px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
+.upsell::after { content: '命'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 180px; font-weight: 900; color: rgba(184,150,90,0.08); line-height: 1; pointer-events: none; }
+.upsell .lb { font-size: 11px; color: #F4D166; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; position: relative; }
+.upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.5; color: #FFFEF8; position: relative; }
+.upsell p { font-size: 12.5px; color: #C9B89E; margin-bottom: 14px; line-height: 1.65; position: relative; word-break: keep-all; }
+.upsell .cta { display: inline-flex; gap: 6px; align-items: center; background: linear-gradient(135deg, var(--c-gold), var(--c-gold-deep)); color: #1A1A1A; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; position: relative; }
+.upsell .cta .cost { background: rgba(255,255,255,0.10); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #FFFEF8; margin-left: 6px; font-weight: 600; }
+.actions { margin: 16px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .btn { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px 12px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+.actions .btn:hover { background: var(--c-paper); border-color: var(--c-gold-line); }
+.actions .btn svg { width: 22px; height: 22px; color: var(--c-gold-deep); stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.actions .btn .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); text-align: center; line-height: 1.35; word-break: keep-all; }
+.actions .btn .sb { font-size: 11px; color: var(--c-gold-deep); font-weight: 700; padding: 2px 8px; border-radius: 100px; background: var(--c-gold-soft); }
+.disclaimer { margin: 16px 16px 0; padding: 14px; background: var(--c-paper); border-radius: 8px; font-size: 11px; line-height: 1.65; color: var(--c-mute); text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hd">
+    <div class="top">
+      <span class="badge">재회운</span>
+      <span class="tier">1운</span>
+      <span class="name">변준기 × 김지은</span>
+      <span class="demo">DEMO</span>
+    </div>
+    <h1>다시 닿을까,<br>사주가 함께 봐드리는 자리</h1>
+    <div class="meta">기토(흙) × 병화(불) · 헤어진 지 6개월 · 흐름은 열려 있어요</div>
+  </header>
+
+  <div class="my-saju">
+    <div class="ttl">내 사주 8글자</div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan-block o-su"><span class="han">壬</span><span class="read">임</span></div><div class="meaning">큰 강</div><div class="ji-block o-geum"><span class="han">申</span><span class="read">신</span></div><div class="meaning">원숭이</div></div>
+      <div class="saju-cell ilju"><div class="lab">일</div><div class="gan-block o-to"><span class="han">己</span><span class="read">기</span></div><div class="meaning">밭</div><div class="ji-block o-geum"><span class="han">酉</span><span class="read">유</span></div><div class="meaning">닭</div><div class="ilgan-tag">일간</div></div>
+      <div class="saju-cell"><div class="lab">월</div><div class="gan-block o-mok"><span class="han">甲</span><span class="read">갑</span></div><div class="meaning">큰 나무</div><div class="ji-block o-mok"><span class="han">寅</span><span class="read">인</span></div><div class="meaning">호랑이</div></div>
+      <div class="saju-cell"><div class="lab">년</div><div class="gan-block o-to"><span class="han">戊</span><span class="read">무</span></div><div class="meaning">큰 산</div><div class="ji-block o-mok"><span class="han">寅</span><span class="read">인</span></div><div class="meaning">호랑이</div></div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="lb">◇ 사주가 함께 봐드리는 자리</div>
+    <p class="body">지금 많이 무거우신 마음, 천천히 함께 봐드릴게요. 두 사주에는 <strong>끌리는 결과 풀어야 할 결이 함께</strong> 있어요. 답을 정해드리진 못하지만 흐름은 보여드릴 수 있어요.</p>
+    <p class="ref">— 재회 가능성 58점 · 헤어진 후 6개월 (회복 자리) · 9월 자연 신호 시기</p>
+  </div>
+
+  <main class="body">
+
+    <!-- §A 우리 둘 사주 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION A</span>
+        <span class="sec-title">우리 둘 사주의 결<span class="han">緣</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">두 사주가 만나서 만든 결을 먼저 봐요</div>
+
+      <div class="dual-saju">
+        <div class="pair-head">
+          <div class="who">변준기<small>己 일간 · 흙</small></div>
+          <div class="vs">復<small>다시</small></div>
+          <div class="who">김지은<small>丙 일간 · 불</small></div>
+        </div>
+        <div class="dual-grid">
+          <div class="dual-side">
+            <div class="mini-row">
+              <div class="mini-cell"><div class="lab">시</div><div class="mini-block o-su"><span class="han">壬</span><span class="read">임</span></div></div>
+              <div class="mini-cell ilju"><div class="lab">일</div><div class="mini-block o-to"><span class="han">己</span><span class="read">기</span></div></div>
+              <div class="mini-cell"><div class="lab">월</div><div class="mini-block o-mok"><span class="han">甲</span><span class="read">갑</span></div></div>
+              <div class="mini-cell"><div class="lab">년</div><div class="mini-block o-to"><span class="han">戊</span><span class="read">무</span></div></div>
+            </div>
+            <div class="mini-row" style="margin-top:4px">
+              <div class="mini-cell"><div class="mini-block o-geum"><span class="han">申</span><span class="read">신</span></div></div>
+              <div class="mini-cell ilju"><div class="mini-block o-geum"><span class="han">酉</span><span class="read">유</span></div></div>
+              <div class="mini-cell"><div class="mini-block o-mok"><span class="han">寅</span><span class="read">인</span></div></div>
+              <div class="mini-cell"><div class="mini-block o-mok"><span class="han">寅</span><span class="read">인</span></div></div>
+            </div>
+          </div>
+          <div class="dual-side partner">
+            <div class="mini-row">
+              <div class="mini-cell"><div class="lab">시</div><div class="mini-block o-geum"><span class="han">庚</span><span class="read">경</span></div></div>
+              <div class="mini-cell ilju"><div class="lab">일</div><div class="mini-block o-hwa"><span class="han">丙</span><span class="read">병</span></div></div>
+              <div class="mini-cell"><div class="lab">월</div><div class="mini-block o-su"><span class="han">癸</span><span class="read">계</span></div></div>
+              <div class="mini-cell"><div class="lab">년</div><div class="mini-block o-hwa"><span class="han">丙</span><span class="read">병</span></div></div>
+            </div>
+            <div class="mini-row" style="margin-top:4px">
+              <div class="mini-cell"><div class="mini-block o-geum"><span class="han">申</span><span class="read">신</span></div></div>
+              <div class="mini-cell ilju"><div class="mini-block o-hwa"><span class="han">午</span><span class="read">오</span></div></div>
+              <div class="mini-cell"><div class="mini-block o-hwa"><span class="han">巳</span><span class="read">사</span></div></div>
+              <div class="mini-cell"><div class="mini-block o-su"><span class="han">子</span><span class="read">자</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p>흙(기토) 본성과 불(병화) 본성이 만난 인연이에요. <strong>본능적으로 끌리는 자리</strong>는 분명합니다 — 무계 합으로 천간이 끌어당기고, 인오 반합으로 지지도 어울려요. 다만 <u>인신 충</u>이 함께 있어 가치관·생활 패턴에서 부딪치는 결도 같이 있습니다.</p>
+
+      <p>헤어졌던 그 시간 — 두 분이 함께 풀지 못한 부분이 있었을 거예요. 그게 사주에도 흐름으로 보입니다. <strong>다만 사주는 답을 정하지 않아요</strong>. 두 분이 어떻게 풀어내느냐에 따라 결은 바뀝니다.</p>
+    </section>
+
+    <!-- §B 종합 궁합 3축 (NEW) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION B</span>
+        <span class="sec-title">종합 궁합 — 연애·결혼·재회<span class="han">三度</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">재회만 보지 말고 — 둘이 어떤 인연인지 3축으로 솔직히</div>
+
+      <div class="trio-score">
+        <div class="trio-grid">
+          <div class="trio-cell high">
+            <div class="glyph">緣</div>
+            <div class="lb">연애운</div>
+            <div class="num-big">70<small>/100</small></div>
+            <div class="verdict-mini">단기 끌림 강함</div>
+          </div>
+          <div class="trio-cell mid">
+            <div class="glyph">婚</div>
+            <div class="lb">결혼운</div>
+            <div class="num-big">65<small>/100</small></div>
+            <div class="verdict-mini">평생 보면 보통</div>
+          </div>
+          <div class="trio-cell low">
+            <div class="glyph">復</div>
+            <div class="lb">재회운</div>
+            <div class="num-big">58<small>/100</small></div>
+            <div class="verdict-mini">가능 단, 위험 동반</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trio-summary">
+        솔직히 — <strong>두 분은 단기 끌림이 더 강한 인연으로 보여요</strong>. 무계 합·인오 반합이 받쳐주지만 인신 충이 함께 있어 같은 갈등이 다시 만나질 수도 있어요. 평생을 함께 갈지는 사주가 정하는 게 아니라, <u>두 분이 어떻게 만들어가느냐</u>에 달렸습니다.
+      </div>
+
+      <p>이 점수가 결말을 정하지 않아요. 사주는 출발선만 보여주고, 그 인연을 어떻게 가꾸느냐는 두 분의 시간과 노력이에요. 단기 끌림 70 vs 평생 65 — 차이가 있다는 건 두 분이 풀어야 할 부분이 있다는 신호일 수 있어요.</p>
+    </section>
+
+    <!-- §C 헤어진 시기 분석 (NEW) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION C</span>
+        <span class="sec-title">헤어진 시기 분석<span class="han">時</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">헤어진 후 6개월 — 사주가 어떻게 변했는지</div>
+
+      <div class="breakup-context">
+        <div class="lb">◇ 입력 정보</div>
+        <div class="when-grid">
+          <div class="when-cell">
+            <div class="key">헤어진 시기</div>
+            <div class="val">2025년 11월</div>
+          </div>
+          <div class="when-cell">
+            <div class="key">경과 시간</div>
+            <div class="val">약 6개월</div>
+          </div>
+        </div>
+        <p style="font-size:12.5px; color:var(--c-ink); line-height:1.7; margin:0; word-break:keep-all;">
+          헤어진 후 <strong>6개월</strong>은 사주적으로 <strong>회복이 시작되는 자리</strong>예요. 미련이 다 정리되지 않아도 괜찮아요. 본인의 결을 천천히 다독이는 시기입니다.
+        </p>
+      </div>
+
+      <div class="breakup-stages">
+        <div class="head">◇ 헤어진 후 사주 흐름 단계</div>
+        <div class="stage-line">
+          <div class="when">~ 1주</div>
+          <div class="ds">충돌 직후 — 감정 격해서 회복 시도하면 또 부서지는 자리.</div>
+        </div>
+        <div class="stage-line">
+          <div class="when">~ 1개월</div>
+          <div class="ds">감정 정리 시작 — 미련이 가장 깊은 시기.</div>
+        </div>
+        <div class="stage-line">
+          <div class="when">~ 3개월</div>
+          <div class="ds">사주 흐름 변화 시작 — 새 인연 자리가 살짝 들어옴.</div>
+        </div>
+        <div class="stage-line now">
+          <div class="when">~ 6개월 (현재)</div>
+          <div class="ds"><strong>회복 시작 자리</strong> — 감정 정리가 시작되는 시기. 본인 결을 천천히 다독이는 자리예요. 무리해서 행동하기보다 본인을 돌보는 게 더 의미 있어요.</div>
+        </div>
+        <div class="stage-line">
+          <div class="when">1년+</div>
+          <div class="ds">본인의 결이 단단해지면서 자연스러운 흐름이 시작되는 자리.</div>
+        </div>
+      </div>
+
+      <p>변준기 님은 헤어진 후 <strong>6개월</strong>이 지난 자리. 미련이 다 사라지지 않아도 괜찮아요. <strong>지금은 본인을 돌보는 시기</strong>예요. 먼저 행동하기보다 마음이 정리되기를 천천히 기다려보세요. 사주가 흐름을 자연스럽게 풀어줄 거예요.</p>
+    </section>
+
+    <!-- §D 합·충 변곡 + 재회 가능성 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION D</span>
+        <span class="sec-title">재회 가능성·시기<span class="han">可能</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">합·충 분포 + 가능성 게이지 + 변곡 시기</div>
+
+      <div class="bending-list">
+        <div class="bend-row hap">
+          <div class="ti">끌어당김</div>
+          <div class="ds">무계(戊癸) 천간합 — <strong>본능적으로 끌리는 결</strong>이 사주에 있어요. 미련이 남는 게 자연스러운 결.</div>
+          <div class="tag">합</div>
+        </div>
+        <div class="bend-row chung">
+          <div class="ti">풀어야 할 결</div>
+          <div class="ds">인신(寅申) 충 — 헤어졌을 때 부딪쳤던 부분이 사주에 보여요. 다시 만난다면 <strong>이 부분을 어떻게 풀지</strong>가 핵심이에요.</div>
+          <div class="tag">충</div>
+        </div>
+      </div>
+
+      <div class="reunion-gauge">
+        <div class="lb">◇ 재회 가능성</div>
+        <svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="reunGrad" x1="0" x2="1">
+              <stop offset="0%" stop-color="#D89A8A"/>
+              <stop offset="100%" stop-color="#A8685A"/>
+            </linearGradient>
+          </defs>
+          <path class="gauge-bg" d="M 22 110 A 88 88 0 0 1 198 110"/>
+          <path class="gauge-fill" d="M 22 110 A 88 88 0 0 1 198 110" stroke-dasharray="276.46" stroke-dashoffset="116.11"/>
+          <text class="num" x="110" y="92" text-anchor="middle">58<tspan>/100</tspan></text>
+        </svg>
+        <div class="verdict">가능 — 다만 풀어야 할 결도 함께</div>
+        <div class="desc">두 분에게 끌림과 풀어야 할 갈등이 함께 있어요. 가능성은 있지만 같은 부분을 다시 만나게 됩니다. <strong>무리해서 잡기보다 자연스러운 흐름을 기다리는 게 두 분 모두에게 따뜻한 결</strong>이에요.</div>
+      </div>
+
+      <div class="bend-timeline">
+        <div class="bend-stage warn">
+          <div class="when-row"><span class="when">현재 — 7~8월</span><span class="duration">충돌 시기</span></div>
+          <div class="ti">한 호흡 두는 시기</div>
+          <div class="ds">충이 짙어지는 자리예요. 지금 연락하면 <strong>헤어졌을 때의 마음이 그대로 살아날 가능성</strong>이 커요. 본인도 상대도 정리할 시간이 더 필요한 시기.</div>
+        </div>
+        <div class="bend-stage peak">
+          <div class="when-row"><span class="when">9월 초</span><span class="duration">자연 변곡</span></div>
+          <div class="ti">자연스러운 신호의 자리</div>
+          <div class="ds">무계 합 활성. <strong>이 시기에 자연스러운 신호가 올 수도 있어요</strong>. 만약 오면 그때 진짜 마음을 솔직히 바라보세요. 안 와도 괜찮아요 — 본인의 시간이 의미 있는 자리니까.</div>
+        </div>
+        <div class="bend-stage">
+          <div class="when-row"><span class="when">12월+</span><span class="duration">회복 완성</span></div>
+          <div class="ti">본인 결이 단단해지는 시기</div>
+          <div class="ds">어떤 결말로 가든, <strong>이 회복의 시간이 다음을 위한 단단한 바닥</strong>을 만들어줍니다. 당신의 결은 분명 더 깊어져 있을 거예요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §E 흐름 결단 + 한 문장 + 희망 메시지 (v3.5 §F 톤 보정) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION E</span>
+        <span class="sec-title">지금의 흐름과 당신의 결<span class="han">行止</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 보여주는 흐름 — 결정은 당신의 몫</div>
+
+      <div class="decision-bipolar">
+        <div class="lb">◇ 지금 사주 흐름</div>
+        <div class="bipolar-bar">
+          <div class="marker" style="left: 22%" data-label="지금은 회복의 시간"></div>
+        </div>
+        <div class="bipolar-labels">
+          <span class="left">머무름</span>
+          <span class="right">움직임</span>
+        </div>
+      </div>
+
+      <p>변준기 님 사주는 지금 <strong>본인의 결을 천천히 다독이는 자리</strong>예요. 재회를 간절히 원하시는 그 마음 — 사주에도 <u>끌림이 살아있다는 신호</u>가 분명히 있어요. 다만 지금 곧바로 행동하기보다, 본인 마음이 더 단단해질 때까지 한 호흡 두는 게 두 분 모두에게 따뜻한 결이에요.</p>
+
+      <p>9월 즈음 자연스러운 신호가 올 수도 있어요. 만약 오면 그때 진짜 마음을 솔직히 들여다보세요. 안 와도 괜찮습니다 — 그건 끝이 아니라 <strong>당신에게 더 잘 맞는 결을 사주가 천천히 풀어주고 있다는 뜻</strong>일 수 있어요. 사주는 잡으라 하지도, 놓으라 하지도 않아요. 그저 <u>흐름을 보여줄 뿐</u>입니다.</p>
+
+      <div class="pullquote">두 분에게 끌림과 풀어야 할 결이 함께 있어요. 어떤 결말로 가든 — <strong>이 시간이 당신의 결을 분명히 단단하게 만들어줄 거예요</strong>. 사주는 답을 정하지 않습니다. 결정은 당신의 몫이고, 어떤 결정이든 사주는 당신을 지지해드릴 거예요.</div>
+    </section>
+  </main>
+
+  <button class="upsell">
+    <div class="lb">PREMIUM</div>
+    <h3>새 인연이 들어오는 시기까지 사주 전체로</h3>
+    <p>10가지 결을 한 번에 — 종합사주로 평생 인연 흐름과 다음 짝의 결을 펼쳐 봅니다.</p>
+    <span class="cta">종합사주로 보기 →<span class="cost">10운</span></span>
+  </button>
+
+  <div class="actions">
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </button>
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </button>
+  </div>
+
+  <div class="disclaimer">사주 풀이는 삶의 결을 살피는 참고 자료입니다.<br>모든 결정은 본인의 몫입니다.</div>
+</div>
+</body>
+</html>
