@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 이사운 v3 (한지민 · DEMO · 정착형 + 토 강 archetype)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* 사주500 — 이사 [移] v3 (2026-05-08 신규)
+   타겟: 신혼·자취·이직·내 집 마련 고민자 (결단·방향 톤)
+   영역 SSOT (재물 [財] 와 분리 — 매트릭스 v17 #7 결단):
+     이사 §C 8방위 컴퍼스 다이얼 = 이사 전용
+     재물 §E "자리" = 추상 자리 (8방위 X)
+   Cross-topic 절연 (재물 매트릭스 #10 결단):
+     이사는 단발성 결정 → 종합사주 upsell 만
+   4 파트:
+     §A 역마살 + 대운 변곡 — 게이지 + strip (이동 본능 강도)
+     §B 12개월 이사 적기 — 4-grid
+     §C 8방위 컴퍼스 다이얼 — 이사 고유 핵심 시그니처 ★
+     §D 한 줄 결단 + 처방
+   액센트: 移 슬레이트 블루그레이 #3D5A6E (안정·이동·방향)
+*/
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+:root {
+  --c-paper: #F8F5EE; --c-surface: #FFFFFF; --c-ink: #1A1A1A; --c-ink-soft: #3D3D3D;
+  --c-mute: #7A7269; --c-line: #E5DFD0;
+  --c-gold: #B8965A; --c-gold-deep: #8C6D3D;
+  --c-gold-soft: rgba(184,150,90,0.10); --c-gold-line: rgba(184,150,90,0.40);
+  --c-card-line: rgba(184,150,90,0.18);
+  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
+  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
+  /* 이사 액센트 = 슬레이트 블루그레이 (안정·방향) */
+  --c-topic: #3D5A6E; --c-topic-dark: #243F52; --c-topic-soft: rgba(61,90,110,0.12);
+}
+.page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
+.hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #1F2A35 50%, #14202A 100%); border-top: 3px solid var(--c-topic); }
+.hd::before { content: '移'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.20; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
+.hd .badge { background: rgba(61,90,110,0.40); border: 1px solid rgba(61,90,110,0.65); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #A0BCD0; letter-spacing: 0.02em; }
+.hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
+.hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #B0C4D4; }
+.hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
+.hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 16px; letter-spacing: -0.02em; line-height: 1.4; position: relative; color: #FFFEF8; }
+.hd .meta { font-size: 12px; opacity: 0.78; margin-top: 6px; position: relative; color: #B0C4D4; font-feature-settings: 'tnum'; }
+
+/* 사주 SSOT */
+.my-saju { margin: 16px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.my-saju .ttl { font-size: 10.5px; color: var(--c-topic-dark); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.my-saju .ttl .hint { color: var(--c-mute); font-weight: 500; letter-spacing: 0; font-size: 10px; }
+.saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+.saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
+.saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
+.gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
+.gan-block .han { font-size: 24px; font-weight: 800; line-height: 1; }
+.ji-block .han { font-size: 20px; font-weight: 800; line-height: 1; }
+.gan-block .read, .ji-block .read { font-size: 9px; font-weight: 700; opacity: 0.85; letter-spacing: 0.05em; font-family: 'Pretendard Variable', sans-serif; }
+.gan-block.o-mok, .ji-block.o-mok { background: var(--c-mok); color: #FFF; border-color: var(--c-mok); }
+.gan-block.o-hwa, .ji-block.o-hwa { background: var(--c-hwa); color: #FFF; border-color: var(--c-hwa); }
+.gan-block.o-to, .ji-block.o-to { background: var(--c-to); color: #FFF; border-color: var(--c-to); }
+.gan-block.o-geum, .ji-block.o-geum { background: #FFF; color: var(--c-geum); border-color: var(--c-card-line); }
+.gan-block.o-su, .ji-block.o-su { background: var(--c-ink); color: #FFF; border-color: var(--c-ink); }
+.meaning { font-size: 9.5px; color: var(--c-mute); font-weight: 600; text-align: center; line-height: 1.2; font-family: 'Pretendard Variable', sans-serif; }
+.ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
+
+/* 결론박스 */
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #F2F5F8 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(61,90,110,0.10); }
+.conclusion::after { content: '移'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
+.conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(61,90,110,0.30) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .ref { font-size: 12px; color: #1A3043; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
+
+/* 이사 archetype 뱃지 */
+.archetype-card { margin: 14px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.archetype-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.14em; margin-bottom: 12px; }
+.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), rgba(61,90,110,0.04)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
+.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(61,90,110,0.30); flex-shrink: 0; }
+.ar-glyph .han { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 900; color: #FFFEF8; line-height: 1; }
+.ar-body .ar-name { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
+.ar-body .ar-tag { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; }
+.ar-body .ar-desc { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; margin-top: 8px; word-break: keep-all; }
+.ar-body .ar-desc strong { color: var(--c-topic-dark); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(61,90,110,0.22) 60%); padding: 0 2px; }
+.ar-others-lb { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
+.ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ar-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 100px; font-size: 11.5px; color: var(--c-ink-soft); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
+.ar-chip .han { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-topic-dark); }
+
+.body { padding: 22px 16px 0; }
+.section { margin-top: 14px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; overflow: hidden; }
+.section:first-of-type { margin-top: 0; }
+.section-header { display: flex; align-items: center; gap: 10px; padding: 16px 18px; cursor: pointer; background: var(--c-surface); border: none; width: 100%; text-align: left; appearance: none; font: inherit; }
+.section-header:hover { background: var(--c-paper); }
+.section-header .sec-num { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold); letter-spacing: 0.18em; margin-right: 6px; }
+.section-header .sec-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); flex: 1; }
+.section-header .sec-title .han { color: var(--c-topic); font-weight: 500; margin-left: 6px; font-size: 13px; }
+.section-header .chevron { width: 20px; height: 20px; color: var(--c-mute); transition: transform 0.25s; flex-shrink: 0; }
+.section.open .section-header .chevron { transform: rotate(180deg); color: var(--c-topic); }
+.section.open .section-header { border-bottom: 1px dashed var(--c-card-line); }
+.section:not(.open) > *:not(.section-header) { display: none !important; }
+.section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
+.section.open > *:last-child { padding-bottom: 18px; }
+.section.open > .sec-lead:first-of-type { padding-top: 14px; }
+.sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-topic-dark); background: linear-gradient(180deg, transparent 55%, rgba(61,90,110,0.22) 55%); padding: 0 3px; border-radius: 2px; }
+.body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-topic); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
+
+/* §A 역마살 + 대운 변곡 */
+.yeokma-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.yeokma-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; text-align: center; }
+.yeokma-gauge { display: flex; flex-direction: column; align-items: center; }
+.yeokma-gauge svg { width: 220px; height: 130px; }
+.yeokma-gauge .gauge-bg { fill: none; stroke: var(--c-line); stroke-width: 16; }
+.yeokma-gauge .gauge-fill { fill: none; stroke: url(#yeokmaGrad); stroke-width: 16; stroke-linecap: round; }
+.yeokma-gauge .num { font-family: 'Noto Serif KR', serif; font-size: 38px; font-weight: 900; fill: var(--c-ink); }
+.yeokma-gauge .num small { font-size: 16px; fill: var(--c-mute); font-weight: 600; }
+.yeokma-gauge .verdict { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 800; color: var(--c-topic-dark); margin-top: 6px; }
+.yeokma-gauge .desc { font-size: 12.5px; color: var(--c-ink-soft); margin-top: 8px; line-height: 1.65; word-break: keep-all; text-align: center; }
+
+.daeun-strip { margin-top: 16px; }
+.daeun-strip .ttl-mini { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; font-family: 'Pretendard Variable', sans-serif; }
+.daeun-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.daeun-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; padding: 8px 4px; text-align: center; position: relative; }
+.daeun-cell.now { background: linear-gradient(135deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
+.daeun-cell.peak { background: linear-gradient(135deg, var(--c-topic-soft), rgba(61,90,110,0.04)); border-color: var(--c-topic); }
+.daeun-cell .age { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-ink); line-height: 1; font-feature-settings: 'tnum'; }
+.daeun-cell .tag { font-size: 9.5px; font-weight: 700; margin-top: 4px; }
+.daeun-cell.now .tag { color: var(--c-gold-deep); }
+.daeun-cell.peak .tag { color: var(--c-topic-dark); }
+.daeun-cell .tag-default { color: var(--c-mute); font-weight: 600; }
+.daeun-cell .badge { position: absolute; top: -7px; right: -3px; background: var(--c-topic); color: #FFFEF8; font-family: 'Noto Serif KR', serif; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 100px; box-shadow: 0 2px 4px rgba(61,90,110,0.30); white-space: nowrap; }
+
+/* §B 위험 신호 카드 — 4 layer indicator (자연재해·흉살·풍수·시점) */
+.risk-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.risk-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; }
+.risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.risk-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px; position: relative; overflow: hidden; }
+.risk-cell.safe { border-left: 3px solid var(--c-mok); }
+.risk-cell.caution { border-left: 3px solid #C9A96E; background: rgba(201,169,110,0.05); }
+.risk-cell.high { border-left: 3px solid #C4522E; background: rgba(196,82,46,0.05); }
+.risk-cell .top { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.risk-cell .glyph { width: 28px; height: 28px; border-radius: 50%; font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 900; color: #FFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.risk-cell.safe .glyph { background: linear-gradient(135deg, var(--c-mok), #1F6638); }
+.risk-cell.caution .glyph { background: linear-gradient(135deg, #C9A96E, #8C6D3D); }
+.risk-cell.high .glyph { background: linear-gradient(135deg, #C4522E, #8E3818); }
+.risk-cell .ti { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 800; color: var(--c-ink); flex: 1; line-height: 1.25; }
+.risk-cell .ti small { font-size: 9.5px; color: var(--c-mute); font-weight: 500; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.risk-cell .status-tag { font-size: 9.5px; font-weight: 800; padding: 2px 8px; border-radius: 100px; font-family: 'Noto Serif KR', serif; }
+.risk-cell.safe .status-tag { background: rgba(45,138,78,0.15); color: #1F6638; }
+.risk-cell.caution .status-tag { background: rgba(201,169,110,0.20); color: #8C6D3D; }
+.risk-cell.high .status-tag { background: rgba(196,82,46,0.15); color: #8E3818; }
+.risk-cell .ds { font-size: 11px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.risk-cell .ds strong { font-weight: 700; }
+.risk-cell.safe .ds strong { color: #1F6638; }
+.risk-cell.caution .ds strong { color: #8C6D3D; }
+.risk-cell.high .ds strong { color: #8E3818; }
+
+/* §C 12개월 이사 적기 — 4-grid */
+.month-card { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px; }
+.month-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 12px; }
+.month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.month-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px 6px 10px; text-align: center; position: relative; overflow: hidden; transition: all 0.2s; }
+.month-cell.peak {
+  background: linear-gradient(180deg, rgba(61,90,110,0.16) 0%, rgba(61,90,110,0.04) 100%);
+  border: 1.5px solid var(--c-topic);
+  box-shadow: 0 2px 8px rgba(61,90,110,0.15);
+}
+.month-cell.peak::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--c-topic), var(--c-topic-dark));
+}
+.month-cell.stable {
+  background: linear-gradient(180deg, rgba(184,150,90,0.10) 0%, rgba(184,150,90,0.02) 100%);
+  border-color: var(--c-gold-line);
+}
+.month-cell.warn {
+  background: linear-gradient(180deg, rgba(196,82,46,0.12) 0%, rgba(196,82,46,0.03) 100%);
+  border: 1.5px solid #C4522E;
+}
+.month-cell.warn::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #C4522E, #8E3818);
+}
+.month-cell .m-num { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 900; color: var(--c-ink); line-height: 1; margin-top: 2px; }
+.month-cell .m-tag { font-size: 10px; font-weight: 800; margin-top: 5px; letter-spacing: 0.02em; font-family: 'Noto Serif KR', serif; }
+.month-cell.peak .m-tag { color: var(--c-topic-dark); }
+.month-cell.peak .m-tag .star { color: #B8965A; font-size: 11px; margin-left: 1px; }
+.month-cell.stable .m-tag { color: var(--c-gold-deep); }
+.month-cell.warn .m-tag { color: #8E3818; }
+.month-cell.warn .m-tag .arr { color: #C4522E; font-size: 11px; margin-left: 1px; }
+.month-cell .m-tag-default { color: var(--c-mute); font-weight: 600; }
+
+.month-call { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.mc-row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 10px 12px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; align-items: center; }
+.mc-row.peak { border-left: 3px solid var(--c-topic); }
+.mc-row.warn { border-left: 3px solid #C9A96E; }
+.mc-row .when { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; }
+.mc-row.peak .when { color: var(--c-topic-dark); }
+.mc-row.warn .when { color: #8C6D3D; }
+.mc-row .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.mc-row .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+/* §C 8방위 컴퍼스 다이얼 — 이사 고유 핵심 ★ */
+.compass-card { margin: 14px 0 0; padding: 16px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; }
+.compass-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-topic-dark); letter-spacing: 0.12em; margin-bottom: 14px; text-align: center; }
+.compass-svg { display: block; margin: 0 auto; width: 320px; height: 320px; max-width: 100%; }
+.compass-svg .c-bg { fill: var(--c-surface); stroke: var(--c-card-line); stroke-width: 1; }
+.compass-svg .c-ring { fill: none; stroke: var(--c-card-line); stroke-width: 1; stroke-dasharray: 2 3; }
+.compass-svg .c-axis { stroke: var(--c-card-line); stroke-width: 0.8; }
+.compass-svg .c-sector { fill-opacity: 0.20; stroke-width: 1.5; cursor: default; }
+.compass-svg .c-sector.best { fill: var(--c-topic); stroke: var(--c-topic-dark); fill-opacity: 0.45; }
+.compass-svg .c-sector.good { fill: var(--c-topic); stroke: var(--c-topic); fill-opacity: 0.30; }
+.compass-svg .c-sector.mid { fill: var(--c-gold); stroke: var(--c-gold); fill-opacity: 0.20; }
+.compass-svg .c-sector.low { fill: var(--c-mute); stroke: var(--c-mute); fill-opacity: 0.10; }
+.compass-svg .c-han { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; fill: var(--c-ink); }
+.compass-svg .c-han.best { fill: var(--c-topic-dark); }
+.compass-svg .c-num { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 800; }
+.compass-svg .c-num.best { fill: var(--c-topic-dark); }
+.compass-svg .c-num.mid { fill: var(--c-gold-deep); }
+.compass-svg .c-num.low { fill: var(--c-mute); }
+.compass-svg .c-center-han { font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 900; fill: var(--c-topic-dark); }
+.compass-svg .c-center-lb { font-family: 'Pretendard Variable', sans-serif; font-size: 9px; font-weight: 700; fill: var(--c-mute); }
+
+.compass-legend { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.compass-row { display: grid; grid-template-columns: 36px 1fr 36px; gap: 10px; align-items: center; padding: 8px 12px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; }
+.compass-row.best { border-left: 3px solid var(--c-topic); border-color: var(--c-topic); }
+.compass-row.good { border-left: 3px solid var(--c-topic); }
+.compass-row.mid { border-left: 3px solid var(--c-gold); }
+.compass-row.low { border-left: 3px solid var(--c-mute); opacity: 0.85; }
+.compass-row .han { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 900; color: var(--c-topic-dark); text-align: center; line-height: 1; }
+.compass-row .nm { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 700; color: var(--c-ink); }
+.compass-row .nm small { font-size: 10.5px; color: var(--c-mute); font-weight: 500; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.compass-row .vl { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; color: var(--c-topic-dark); text-align: right; font-feature-settings: 'tnum'; }
+.compass-row.low .vl { color: var(--c-mute); }
+.compass-row.mid .vl { color: var(--c-gold-deep); }
+
+/* §D 처방 + 결단 */
+.prescription-grid { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rx-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 14px 12px; }
+.rx-cell .glyph { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 900; color: var(--c-topic-dark); line-height: 1; margin-bottom: 6px; }
+.rx-cell .lb-mini { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-ink); margin-bottom: 4px; }
+.rx-cell .ds { font-size: 11px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.rx-cell .ds strong { color: var(--c-topic-dark); font-weight: 700; }
+
+.verdict-card { margin: 14px 0 0; background: linear-gradient(135deg, #1A1A1A, #1F2A35); color: #F8F5EE; border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+.verdict-card::after { content: '移'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 160px; font-weight: 900; color: var(--c-topic); opacity: 0.25; line-height: 1; pointer-events: none; }
+.verdict-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: #A0BCD0; letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.verdict-card .ti { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: #FFFEF8; line-height: 1.5; margin-bottom: 8px; word-break: keep-all; position: relative; }
+.verdict-card .ti strong { background: linear-gradient(180deg, transparent 60%, rgba(160,188,208,0.40) 60%); padding: 0 3px; color: #FFFEF8; font-weight: 900; }
+.verdict-card .ds { font-size: 13px; color: #B0BFD0; line-height: 1.7; word-break: keep-all; position: relative; }
+.verdict-card .ds strong { color: #A0BCD0; font-weight: 700; }
+
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), rgba(61,90,110,0.04)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(61,90,110,0.30) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+
+/* Upsell + Actions (이사 = cross-topic 절연 — 종합사주 upsell 만) */
+.upsell { margin: 16px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
+.upsell::after { content: '命'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 180px; font-weight: 900; color: rgba(184,150,90,0.08); line-height: 1; pointer-events: none; }
+.upsell .lb { font-size: 11px; color: #F4D166; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; position: relative; }
+.upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.5; color: #FFFEF8; position: relative; }
+.upsell p { font-size: 12.5px; color: #C9B89E; margin-bottom: 14px; line-height: 1.65; position: relative; word-break: keep-all; }
+.upsell .cta { display: inline-flex; gap: 6px; align-items: center; background: linear-gradient(135deg, var(--c-gold), var(--c-gold-deep)); color: #1A1A1A; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; position: relative; }
+.upsell .cta .cost { background: rgba(255,255,255,0.10); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #FFFEF8; margin-left: 6px; font-weight: 600; }
+.actions { margin: 16px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .btn { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px 12px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+.actions .btn:hover { background: var(--c-paper); border-color: var(--c-gold-line); }
+.actions .btn svg { width: 22px; height: 22px; color: var(--c-topic-dark); stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.actions .btn .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); text-align: center; line-height: 1.35; word-break: keep-all; }
+.actions .btn .sb { font-size: 11px; color: var(--c-topic-dark); font-weight: 700; padding: 2px 8px; border-radius: 100px; background: var(--c-topic-soft); }
+.disclaimer { margin: 16px 16px 0; padding: 14px; background: var(--c-paper); border-radius: 8px; font-size: 11px; line-height: 1.65; color: var(--c-mute); text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hd">
+    <div class="top">
+      <span class="badge">이사운</span>
+      <span class="tier">1운</span>
+      <span class="name">한지민</span>
+      <span class="demo">DEMO</span>
+    </div>
+    <h1>머무를 자리,<br>방향을 잡는 결</h1>
+    <div class="meta">정화(촛불) 일간 · 토 강·역마 약 · 정착형 · 동·동남 자리 적합</div>
+  </header>
+
+  <div class="my-saju">
+    <div class="ttl">내 사주 8글자<span class="hint">移 = 이동·머무름의 자리</span></div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan-block o-geum"><span class="han">庚</span><span class="read">경</span></div><div class="meaning">큰 쇠</div><div class="ji-block o-to"><span class="han">戌</span><span class="read">술</span></div><div class="meaning">개</div></div>
+      <div class="saju-cell ilju"><div class="lab">일</div><div class="gan-block o-hwa"><span class="han">丁</span><span class="read">정</span></div><div class="meaning">촛불</div><div class="ji-block o-to"><span class="han">丑</span><span class="read">축</span></div><div class="meaning">소</div><div class="ilgan-tag">일간</div></div>
+      <div class="saju-cell"><div class="lab">월</div><div class="gan-block o-to"><span class="han">戊</span><span class="read">무</span></div><div class="meaning">큰 산</div><div class="ji-block o-to"><span class="han">辰</span><span class="read">진</span></div><div class="meaning">용</div></div>
+      <div class="saju-cell"><div class="lab">년</div><div class="gan-block o-to"><span class="han">己</span><span class="read">기</span></div><div class="meaning">밭</div><div class="ji-block o-to"><span class="han">未</span><span class="read">미</span></div><div class="meaning">양</div></div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="lb">◇ 한 줄 결론</div>
+    <p class="body">사주에 <strong>흙(土) 기운이 매우 강하고 역마 자리가 약해요</strong>. 자주 옮기기보다 <strong>한 자리에 머무는 결</strong>. 다음 큰 이동 시기는 35세, 그 전엔 동·동남 방향이 가장 잘 맞습니다.</p>
+    <p class="ref">— 역마 활성도 35점 · 정착형 · 다음 큰 이동 35세 · 동(80)·동남(78) 최적</p>
+  </div>
+
+  <!-- 이사 archetype 뱃지 -->
+  <div class="archetype-card">
+    <div class="lb">◇ 당신의 이사 결</div>
+    <div class="archetype-hero">
+      <div class="ar-glyph"><span class="han">守</span></div>
+      <div class="ar-body">
+        <div class="ar-name">정착형 · 鬱 답답 주의</div>
+        <div class="ar-tag">토 강 + 역마 약 — 한 자리에 뿌리 내리는 결 / 환기 신경</div>
+        <div class="ar-desc">자주 옮기기보다 <strong>한 자리에 오래 머무는 사주</strong>예요. 다만 <u>토 기운이 너무 강해서 답답·습기·곰팡이 위험</u>이 같이 있어요 — 환기 잘 되는 집·통풍 좋은 자리가 필수.</div>
+      </div>
+    </div>
+    <div class="ar-others-lb">사주마다 이사 결이 다릅니다 — 4 layer × 8 archetype</div>
+    <div class="ar-chips">
+      <span class="ar-chip"><span class="han">動</span>이동형 (역마 多)</span>
+      <span class="ar-chip"><span class="han">變</span>변동형 (대운 변곡)</span>
+      <span class="ar-chip"><span class="han">浸</span>침수 주의 (수 太過)</span>
+      <span class="ar-chip"><span class="han">焰</span>화재 주의 (화 太過)</span>
+      <span class="ar-chip"><span class="han">崩</span>사고 주의 (금·충)</span>
+      <span class="ar-chip"><span class="han">沖</span>분쟁 주의 (충·형)</span>
+      <span class="ar-chip"><span class="han">急</span>급이동형 (지금 적기)</span>
+    </div>
+  </div>
+
+  <main class="body">
+
+    <!-- §A 역마살 + 대운 변곡 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION A</span>
+        <span class="sec-title">역마살 + 대운 변곡<span class="han">驛馬</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">이동 본능 강도 + 평생 이사 변곡 시기</div>
+
+      <div class="yeokma-card">
+        <div class="lb">◇ 역마 활성도</div>
+        <div class="yeokma-gauge">
+          <svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="yeokmaGrad" x1="0" x2="1">
+                <stop offset="0%" stop-color="#3D5A6E"/>
+                <stop offset="100%" stop-color="#243F52"/>
+              </linearGradient>
+            </defs>
+            <path class="gauge-bg" d="M 22 110 A 88 88 0 0 1 198 110"/>
+            <path class="gauge-fill" d="M 22 110 A 88 88 0 0 1 198 110" stroke-dasharray="276.46" stroke-dashoffset="179.70"/>
+            <text class="num" x="110" y="92" text-anchor="middle">35<tspan>/100</tspan></text>
+          </svg>
+          <div class="verdict">정착형 — 한 자리에 오래</div>
+          <div class="desc">역마(이동 본능)가 <strong>약한 편</strong>이에요. 사주에 흙 기운이 매우 강해 — 옮기는 것보다 한 자리에서 깊게 가는 결. 정착형 사주는 <u>평생 2~3번 이사 정도가 자연스러워요</u>.</div>
+        </div>
+
+        <div class="daeun-strip">
+          <div class="ttl-mini">◇ 평생 이사 변곡 (대운 단위)</div>
+          <div class="daeun-row">
+            <div class="daeun-cell now">
+              <span class="badge">NOW</span>
+              <div class="age">25~34</div>
+              <div class="tag">정착</div>
+            </div>
+            <div class="daeun-cell peak">
+              <div class="age">35~44</div>
+              <div class="tag">큰 이동 ★</div>
+            </div>
+            <div class="daeun-cell">
+              <div class="age">45~54</div>
+              <div class="tag tag-default">유지</div>
+            </div>
+            <div class="daeun-cell">
+              <div class="age">55~64</div>
+              <div class="tag tag-default">유지</div>
+            </div>
+            <div class="daeun-cell peak">
+              <div class="age">65~74</div>
+              <div class="tag">은퇴 이동</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p>현재(25~34세)는 <strong>정착의 시기</strong>예요. 사주가 가리키는 — 지금은 옮기기보다 한 자리에 뿌리 내리는 결이 자연스러워요. 신혼집 결정도 <u>5~10년 길게 살 수 있는 자리</u>로 잡는 게 가장 잘 맞습니다.</p>
+
+      <p>다음 큰 이동 시기는 <strong>35세 (4년 후)</strong>예요. 대운이 바뀌면서 자녀·직장 변화와 맞물려 자연스러운 이사 자리. 그 사이엔 작은 이동(전세 갱신·집 사이즈 변경) 정도가 알맞아요. 65세 즈음 은퇴 이동이 평생의 마지막 큰 이사가 될 수 있습니다.</p>
+    </section>
+
+    <!-- §B 위험 신호 카드 (NEW · 4 layer indicator) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION B</span>
+        <span class="sec-title">이사 위험 신호<span class="han">兆</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">자연재해·하자·흉살 — 본인 사주 specific 위험 신호 4가지</div>
+
+      <div class="risk-card">
+        <div class="lb">◇ 본인 사주 위험 분석 (4 layer)</div>
+        <div class="risk-grid">
+          <div class="risk-cell safe">
+            <div class="top">
+              <div class="glyph">浸</div>
+              <div class="ti">침수·습기 위험<small>수 太過 체크</small></div>
+              <span class="status-tag">안전</span>
+            </div>
+            <div class="ds">사주에 수 기운 0% — <strong>침수·누수 위험 없음</strong>. 저층·반지하 가능, 다만 토 강하니 환기 조건은 따로 챙기세요.</div>
+          </div>
+          <div class="risk-cell safe">
+            <div class="top">
+              <div class="glyph">焰</div>
+              <div class="ti">화재·과열 위험<small>화 太過 체크</small></div>
+              <span class="status-tag">안전</span>
+            </div>
+            <div class="ds">화 기운 1% — <strong>화재·전기 사고 위험 낮음</strong>. 가스레인지·난방 일반 주의 수준이면 충분합니다.</div>
+          </div>
+          <div class="risk-cell high">
+            <div class="top">
+              <div class="glyph">鬱</div>
+              <div class="ti">답답·환기 위험<small>토 太過 체크 ★</small></div>
+              <span class="status-tag">주의</span>
+            </div>
+            <div class="ds">토 53% 太過 — <strong>답답함·습기·곰팡이 위험 가장 높음</strong>. 통풍 잘 되는 집·창 큰 자리·환기 시스템 좋은 곳 1순위.</div>
+          </div>
+          <div class="risk-cell caution">
+            <div class="top">
+              <div class="glyph">沖</div>
+              <div class="ti">분쟁·하자 시기<small>충 활성 月</small></div>
+              <span class="status-tag">시기 주의</span>
+            </div>
+            <div class="ds"><strong>6·7·12월 충 시기</strong>는 계약 분쟁·이웃 트러블·하자 발견 가능성 높은 자리. 큰 결정은 다른 달로.</div>
+          </div>
+        </div>
+      </div>
+
+      <p>본인 사주는 <strong>자연재해 위험은 낮고 (수·화 결핍) — 답답·환기 문제가 가장 큰 위험</strong>이에요. 토 기운이 매우 강해 통풍 안 되는 집에서 살면 평소보다 훨씬 더 답답함·곰팡이·습기 문제로 고생합니다. <u>창문 크기·환기·통풍 구조</u>가 본인에겐 다른 어떤 조건보다 우선해요.</p>
+
+      <p>또 하나 — 본인 사주는 <strong>금속 사고·도난 위험은 보통</strong>이에요. 시주에 경금이 있어 금기가 받쳐주지만 충돌 자리는 약함. 보안·열쇠 분실 정도만 일반 주의하면 됩니다.</p>
+    </section>
+
+    <!-- §C 8방위 컴퍼스 (시그니처 ★) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION C</span>
+        <span class="sec-title">8방위 컴퍼스 — 어느 방향이 본인 자리<span class="han">八方</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">현 거주지 기준 — 8방위별 본인 사주 적합도</div>
+
+      <div class="compass-card">
+        <div class="lb">◇ 8방위 컴퍼스 다이얼</div>
+        <svg class="compass-svg" viewBox="0 0 320 320">
+          <!-- 배경 원 -->
+          <circle class="c-bg" cx="160" cy="160" r="150"/>
+          <circle class="c-ring" cx="160" cy="160" r="115"/>
+          <circle class="c-ring" cx="160" cy="160" r="80"/>
+          <!-- 8 방위 sector (각 sector = 45° = π/4 rad)
+               시작각: 북=337.5° → 22.5°, 동북=22.5°→67.5°, 동=67.5°→112.5° ...
+               중심 (160,160), 반지름 150 -->
+          <!-- 북 75 (good) -->
+          <path class="c-sector good" d="M 160,160 L 102.7,7.4 A 150,150 0 0,1 217.3,7.4 Z"/>
+          <!-- 동북 45 (mid) -->
+          <path class="c-sector mid" d="M 160,160 L 217.3,7.4 A 150,150 0 0,1 312.6,102.7 Z"/>
+          <!-- 동 80 (best) -->
+          <path class="c-sector best" d="M 160,160 L 312.6,102.7 A 150,150 0 0,1 312.6,217.3 Z"/>
+          <!-- 동남 78 (best) -->
+          <path class="c-sector best" d="M 160,160 L 312.6,217.3 A 150,150 0 0,1 217.3,312.6 Z"/>
+          <!-- 남 55 (mid) -->
+          <path class="c-sector mid" d="M 160,160 L 217.3,312.6 A 150,150 0 0,1 102.7,312.6 Z"/>
+          <!-- 서남 40 (low) -->
+          <path class="c-sector low" d="M 160,160 L 102.7,312.6 A 150,150 0 0,1 7.4,217.3 Z"/>
+          <!-- 서 60 (mid) -->
+          <path class="c-sector mid" d="M 160,160 L 7.4,217.3 A 150,150 0 0,1 7.4,102.7 Z"/>
+          <!-- 서북 65 (good) -->
+          <path class="c-sector good" d="M 160,160 L 7.4,102.7 A 150,150 0 0,1 102.7,7.4 Z"/>
+
+          <!-- 가운데 흰 원 (중앙 라벨용) -->
+          <circle cx="160" cy="160" r="36" fill="#FFFFFF" stroke="#3D5A6E" stroke-width="1.5"/>
+          <text class="c-center-han" x="160" y="160" text-anchor="middle" dominant-baseline="middle">移</text>
+          <text class="c-center-lb" x="160" y="180" text-anchor="middle">8방위</text>
+
+          <!-- 한자 라벨 (각 방위 중간 위치) -->
+          <text class="c-han" x="160" y="42" text-anchor="middle">北</text>
+          <text class="c-num good" x="160" y="62" text-anchor="middle">75</text>
+
+          <text class="c-han" x="265" y="65" text-anchor="middle">東北</text>
+          <text class="c-num mid" x="262" y="84" text-anchor="middle">45</text>
+
+          <text class="c-han best" x="295" y="166" text-anchor="middle">東</text>
+          <text class="c-num best" x="295" y="186" text-anchor="middle">80</text>
+
+          <text class="c-han best" x="262" y="265" text-anchor="middle">東南</text>
+          <text class="c-num best" x="265" y="284" text-anchor="middle">78</text>
+
+          <text class="c-han" x="160" y="295" text-anchor="middle">南</text>
+          <text class="c-num mid" x="160" y="280" text-anchor="middle">55</text>
+
+          <text class="c-han" x="55" y="265" text-anchor="middle">西南</text>
+          <text class="c-num low" x="55" y="284" text-anchor="middle">40</text>
+
+          <text class="c-han" x="25" y="166" text-anchor="middle">西</text>
+          <text class="c-num mid" x="25" y="186" text-anchor="middle">60</text>
+
+          <text class="c-han" x="55" y="65" text-anchor="middle">西北</text>
+          <text class="c-num good" x="58" y="84" text-anchor="middle">65</text>
+        </svg>
+
+        <div class="compass-legend">
+          <div class="compass-row best">
+            <div class="han">東</div>
+            <div class="nm">동쪽<small>해 뜨는 방향 — 정화 일간에 목 기운 받쳐주는 자리</small></div>
+            <div class="vl">80</div>
+          </div>
+          <div class="compass-row best">
+            <div class="han">東南</div>
+            <div class="nm">동남쪽<small>새 출발의 자리 — 본인 사주에 봄 기운 활성</small></div>
+            <div class="vl">78</div>
+          </div>
+          <div class="compass-row good">
+            <div class="han">北</div>
+            <div class="nm">북쪽<small>물 기운 자리 — 부족한 수 보충 (조후 차원)</small></div>
+            <div class="vl">75</div>
+          </div>
+          <div class="compass-row good">
+            <div class="han">西北</div>
+            <div class="nm">서북쪽<small>금 기운 자리 — 시주 경금과 호응</small></div>
+            <div class="vl">65</div>
+          </div>
+          <div class="compass-row mid">
+            <div class="han">西</div>
+            <div class="nm">서쪽<small>금 기운 — 보통 적합도</small></div>
+            <div class="vl">60</div>
+          </div>
+          <div class="compass-row mid">
+            <div class="han">南</div>
+            <div class="nm">남쪽<small>화 기운 — 이미 화 있어 추가 X (과열 위험)</small></div>
+            <div class="vl">55</div>
+          </div>
+          <div class="compass-row mid">
+            <div class="han">東北</div>
+            <div class="nm">동북쪽<small>토 기운 — 사주에 토가 너무 많아 추가 X</small></div>
+            <div class="vl">45</div>
+          </div>
+          <div class="compass-row low">
+            <div class="han">西南</div>
+            <div class="nm">서남쪽<small>토 기운 강 — 본인에게 가장 적합 X</small></div>
+            <div class="vl">40</div>
+          </div>
+        </div>
+      </div>
+
+      <p>본인 사주에 가장 잘 맞는 방위는 <strong>동(80) · 동남(78)</strong>이에요. 정화(촛불) 일간에 목 기운이 받쳐줘 — 새 집에 자리 잡으면 자연스럽게 마음이 안정되는 결. 신혼집 결정 시 이 방향 우선 보세요.</p>
+
+      <p><strong>북쪽(75)도 좋은 자리</strong>예요. 사주에 부족한 수(水) 기운을 보충해주는 방향. 조후(계절 균형) 차원에서 추천 — 다만 본인이 추위에 약하다면 동·동남이 더 자연스러워요.</p>
+
+      <p>피해야 할 자리는 <strong>서남쪽(40) · 동북쪽(45)</strong>이에요. 본인 사주에 이미 토 기운이 매우 강한데 — 토 방향(서남·동북)으로 가면 더 더해져 답답함이 커질 수 있어요. 같은 단지 안에서도 동향 호수가 가장 맞습니다.</p>
+    </section>
+
+    <!-- §D 12개월 이사 적기 — 4-grid (8방위 다음) -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION D</span>
+        <span class="sec-title">12개월 이사 적기<span class="han">月運</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">올해 어느 달이 이사 적기인지</div>
+
+      <div class="month-card">
+        <div class="lb">◇ 2026년 이사 흐름 — 4분기 grid</div>
+        <div class="month-grid">
+          <div class="month-cell">
+            <div class="m-num">1</div>
+            <div class="m-tag-default">정리</div>
+          </div>
+          <div class="month-cell stable">
+            <div class="m-num">2</div>
+            <div class="m-tag">알아보기</div>
+          </div>
+          <div class="month-cell peak">
+            <div class="m-num">3</div>
+            <div class="m-tag">적기 ★</div>
+          </div>
+          <div class="month-cell peak">
+            <div class="m-num">4</div>
+            <div class="m-tag">적기 ★</div>
+          </div>
+          <div class="month-cell">
+            <div class="m-num">5</div>
+            <div class="m-tag-default">유지</div>
+          </div>
+          <div class="month-cell warn">
+            <div class="m-num">6</div>
+            <div class="m-tag">충 시기</div>
+          </div>
+          <div class="month-cell warn">
+            <div class="m-num">7</div>
+            <div class="m-tag">충 시기</div>
+          </div>
+          <div class="month-cell">
+            <div class="m-num">8</div>
+            <div class="m-tag-default">유지</div>
+          </div>
+          <div class="month-cell peak">
+            <div class="m-num">9</div>
+            <div class="m-tag">적기 ★</div>
+          </div>
+          <div class="month-cell stable">
+            <div class="m-num">10</div>
+            <div class="m-tag">정리</div>
+          </div>
+          <div class="month-cell">
+            <div class="m-num">11</div>
+            <div class="m-tag-default">유지</div>
+          </div>
+          <div class="month-cell warn">
+            <div class="m-num">12</div>
+            <div class="m-tag">충 시기</div>
+          </div>
+        </div>
+
+        <div class="month-call">
+          <div class="mc-row peak">
+            <div class="when">3·4·9월</div>
+            <div class="ds"><strong>이사 적기</strong>. 본인 사주에 가장 잘 받쳐주는 시기. 계약·이삿짐·입주 모두 이 시기에 잡으면 잡음 없이 자연스럽게 풀립니다.</div>
+          </div>
+          <div class="mc-row warn">
+            <div class="when">6·7·12월</div>
+            <div class="ds"><strong>충 시기 — 미루세요</strong>. 본인 사주와 부딪치는 시기예요. 계약 분쟁·하자·이웃 트러블이 평소보다 더 자주 일어날 수 있는 자리. 큰 결정 다음 달로.</div>
+          </div>
+        </div>
+      </div>
+
+      <p>3~4월은 <strong>본인 사주의 이사 골든 타임</strong>이에요. 봄 시작 + 정화 일간 활성 시기 — 새 자리에 적응이 가장 빠른 결. 만약 올해 이사 가능성이 있다면 이 시기 노리세요.</p>
+
+      <p>6~7월·12월은 솔직히 — <u>이사 결정도 미루는 게 안전</u>해요. 계약 단계의 자잘한 문제가 평소보다 더 자주 생기는 시기. 사주가 받쳐주지 않을 때 무리하면 새 집에서도 마음 정착이 늦어집니다.</p>
+    </section>
+
+    <!-- §E 처방 + 결단 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION E</span>
+        <span class="sec-title">이사 처방 + 결단<span class="han">處方</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 가리키는 이사 처방 4가지</div>
+
+      <div class="prescription-grid">
+        <div class="rx-cell">
+          <div class="glyph">東</div>
+          <div class="lb-mini">동·동남 우선</div>
+          <div class="ds">신혼집 후보 우선순위 — <strong>동·동남 방향</strong> 호수가 본인 사주에 가장 잘 맞습니다.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">春</div>
+          <div class="lb-mini">3·4·9월 적기</div>
+          <div class="ds">계약·이삿짐 모두 <strong>3~4월·9월</strong>에 잡으세요. 6·7·12월은 미루기.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">久</div>
+          <div class="lb-mini">길게 보고 결정</div>
+          <div class="ds">정착형 사주 — <strong>5~10년 살 수 있는 자리</strong>로 잡으세요. 잦은 이동 X.</div>
+        </div>
+        <div class="rx-cell">
+          <div class="glyph">水</div>
+          <div class="lb-mini">물 가까운 자리</div>
+          <div class="ds">조후 차원 — <strong>강·하천·바다</strong>가 가까운 자리가 부족한 수 기운 보충.</div>
+        </div>
+      </div>
+
+      <div class="verdict-card">
+        <div class="lb">◇ 결단 한 줄</div>
+        <div class="ti">사주는 <strong>한 자리에 오래 머무는 결</strong>이에요. 동·동남 방향에 5~10년 살 수 있는 자리 + 3~4월 계약 — 이 두 가지만 잡으면 신혼집은 본인 결을 받쳐줍니다.</div>
+        <div class="ds">정착형 사주는 잦은 이사가 흐름을 깨뜨려요. 이번 이사를 가볍게 보지 마시고 <strong>한 번 결정해서 길게 가는 자리</strong>로 — 그게 사주가 가리키는 길입니다.</div>
+      </div>
+
+      <div class="pullquote">이사는 사주가 정해주는 게 아니라 <strong>본인이 머무는 자리</strong>예요. 정착형 + 토 강 사주는 — 동·동남 방향 + 길게 살 자리 + 봄·가을 계약. 좋은 자리에 한 번 깊게 뿌리 내리면 — <strong>그 자리가 평생의 결</strong>이 됩니다.</div>
+    </section>
+  </main>
+
+  <button class="upsell">
+    <div class="lb">PREMIUM</div>
+    <h3>이사 + 9개 결 한 번에 보는 종합사주</h3>
+    <p>이사 방향과 함께 평생 흐름·재물·직업·인연까지 — 10가지 결을 종합사주에서 한 자리에 펼쳐 봅니다.</p>
+    <span class="cta">종합사주로 보기 →<span class="cost">10운</span></span>
+  </button>
+
+  <div class="actions">
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </button>
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </button>
+  </div>
+
+  <div class="disclaimer">사주 풀이는 삶의 결을 살피는 참고 자료입니다.<br>모든 결정은 본인의 몫입니다.</div>
+</div>
+</body>
+</html>

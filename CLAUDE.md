@@ -2,7 +2,49 @@
 
 > 이 문서는 Claude Code가 프로젝트를 이해하기 위한 **진입점**입니다.
 > 웹 채팅(claude.ai)에서 설계한 내용을 여기서 이어서 개발합니다.
-> **최종 업데이트: 2026-05-05 NIGHT** (sprint 25 commit 종합 — UX 라이팅 균형 + 카드 3-tier + 폰트 11px floor + StoragePage 10탭)
+> **최종 업데이트: 2026-05-19** (꿈해몽 블러잠금 SSOT 정석화 + 1운 리포트 3그룹 병렬 + 종합사주 SSE 배포대기 + 토스 제출 준비)
+
+---
+
+## 🚀 2026-05-19 sprint — 유료 콘텐츠 지연 해소 + 꿈해몽 버그 fix (worktree: hardcore-tesla-3a84c9)
+
+> 전 유료 콘텐츠 "오늘의 운세 빼고 다 느리다" 전수 분석 + 꿈해몽 무료→유료 잠금 버그 수정.
+> ⚠️ 본 sprint 변경은 worktree 에만 있음 → **준기 `firebase deploy --only functions` + ait 재업로드 필요**.
+
+### 1) 꿈해몽 무료→유료 블러잠금 버그 fix (P0 · 회귀 금지)
+- **버그**: 무료 호출이 잠금 섹션 "제목만" 생성 → 결제 시 AI 처음부터 재호출(이상한 로딩) → 완전히 다른 디자인 페이지(DeepResultView)로 이동. 블러잠금 SSOT 위반.
+- **수정 (재호출 0 · 페이지 전환 0)**:
+  - `promptsV3.ts` DREAM_FREE 스키마(사주有/無 + SYSTEM 룰 + 최종검사): 잠금 5섹션을 `teaser`(맛보기) + `full`(≥400~450자) 구조로 — 무료 1콜이 잠금 본문까지 전부 생성
+  - `claudeDream.ts` `generateDreamFree` max_tokens 8K→14K (1·2차 재시도 둘 다)
+  - `DreamMockupView.tsx` `unlocked` prop 추가 — 블러만 제거 + full 렌더 + do/dont 리스트 + 헤더 그린 + CTA 숨김 (같은 컴포넌트·같은 화면)
+  - `DreamPage.tsx` `startDeepAnalysis`→`unlockDeep`: `spendBalance(1)`→`setUnlocked(true)` (AI 재호출/페이지전환 제거). 보관함 동일 레코드 `__unlocked` 플래그 갱신(중복 레코드 방지·재진입 유지). 레거시 `deepDream` 저장본은 하위호환 DeepResultView 복원 유지
+  - 효과: 비용 ~40K→~14K (65%↓) + "이상한 로딩"·"처음 보는 페이지" 제거
+- **회귀 금지**: 꿈해몽 결제는 절대 AI 재호출/페이지 전환 X. `unlocked` state 로 같은 화면 블러만 제거.
+
+### 2) 1운 리포트 3그룹 병렬 분할 (종합사주와 동일 패턴)
+- `claudeReport.ts` 재구조화: 단일 Opus 16384 콜(~60-90s) → **3그룹 병렬** Opus 7000 (~25-35s)
+  - A=정체성·구조(summary/structure/personality/social+analysisBase)
+  - B=현실(career/wealth/love/health+scores/careerFit/relationshipMap/wealthFlow)
+  - C=시간·실천(올해/대운/과제/개운법+luckyProfile/monthlyFortune/health)
+- `buildSystemPrompt(sajuData, group)` — 분석 프레임워크(STEP1~5) 공유 + 그룹별 출력 스키마(`groupSchema`). 각 그룹이 독립적으로 풀 분석 수행 → 머지(정통 순서, year 동적 id 포함)
+- 응답 계약 `{reportId, content}` 그대로 → **클라이언트·SSE·배포설정 변경 0** (기존 callable 경로가 그대로 빨라짐)
+- 퀄리티 다운그레이드 0 (동일 모델·동일 프레임워크)
+
+### 3) 종합사주(프리미엄 10운) SSE — 코드/플래그 완료 · 배포만 대기
+- 서버 `generatePremiumReportStream`(onRequest SSE) + 클라 `generatePremiumReportStream` + `LoadingPage` 점진 렌더 + callable 폴백 **전부 기구현**. `.env` `VITE_USE_PREMIUM_STREAM=true` ON.
+- 남은 건 `firebase deploy --only functions` 뿐. 배포 시 그룹 A/B/C 도착마다 §01~10 점진 노출 (체감 "빈 60초" → "25초부터 술술").
+
+### 4) 주제분석 — 현행 유지 결정 (출시 후 재논의)
+- 분석 결론: 주제분석은 "한 주제 5섹션이 단일 서사" → 리포트처럼 병렬 분할 시 서사 토막남(퀄리티 회귀). 지연 주범 2차 자기리뷰는 준기 보류 결정한 퀄리티 레버. SSE 토큰 스트리밍도 단일 검수 JSON이라 체감 효과 미미.
+- **결정**: 출시까지 현행 유지. 2차리뷰 비동기화는 출시 후 실트래픽 데이터로 판단.
+
+### 5) 2차 자기리뷰란 (용어 정리 — 준기 질의 응답)
+- AI가 1차 생성 후 같은 답을 자신에게 다시 보내 SELF_REVIEW_V3 체크리스트(첫문장 사주 호명·면피체 0·일반론 0·글자수 floor·금지어)로 자가 보정하는 **2번째 풀 콜**. 시간 정확히 2배. "AI같지 않은 퀄리티"(최상위원칙 #4) 핵심 장치 → 함부로 제거 X.
+
+### 준기 수동 액션 (배포 — Claude 권한 밖)
+1. `firebase deploy --only functions` → 우선순위 2·3 실제 적용
+2. `D:\550saju\saju-500.ait` 재업로드 (꿈해몽 fix + 토스 SDK 제거 + 이름 "사주 500" 매칭 + 프로모 재작성 포함)
+3. 출시 전 QA: 결제 4시나리오 / 프로모 `?_promotest=7day`·`?_promotest=launch` / 꿈해몽 무료→1운 잠금해제 동작
 
 ---
 
@@ -34,11 +76,12 @@
 - `<u>` 황금 밑줄 — 시기·숫자·색·방위·시간대 (한 문단 0~2회)
 - prompt mandate 명시 (sections·timeline·actionAdvice·insightCards 모두 적용)
 
-### 5) StoragePage 10탭 분류 (PD 정정 2026-05-05)
-이전 4탭 (전체·사주·궁합·기타) → 실제 contentType 9종 + chat = 10탭:
-- 전체·종합사주·주제별·궁합·대운·월운·토정비결·오늘운세·꿈해몽·사주대화
+### 5) StoragePage 6탭 분류 (출시 정책 — 2026-05-28 정정)
+출시 lockdown 4종 (compat/daeun/monthly/tojung) 비노출 → 실제 노출 6탭:
+- 전체·종합사주·주제별·오늘운세·꿈해몽·사주대화
 - 가로 스크롤 (overflow-x-auto)
-- 빈 상태 메시지 10개 신규
+- 출시 후 4종 공개 시 자동 노출 복귀 (StoragePage.tsx:81-93 주석 해제)
+- routeForReport (StoragePage.tsx:2094) 가 lockdown 4종은 null 반환 → openReport 가 안내 toast "출시 후에 다시 열어볼 수 있어요"
 
 ### 6) ContactSheet 업데이트
 - `CONTACT_EMAIL`: `info@juulabel.com`

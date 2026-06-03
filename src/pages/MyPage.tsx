@@ -2,21 +2,25 @@
 // 스펙: docs/mockups/사주500_UI개편_04_내정보.md §0~§14
 // 변경: ProfileHeader(140px+"命" 워터마크) + LoginModal(80vh 시트) + ContactSheet + AppMeta(5탭 디버그)
 // 보존: MENU_ITEMS_AIT/WEB 분기 로직 (Sprint 1 — 삭제 금지)
-// 광고 없음 (탐색 페이지 블랙리스트 §0-8)
+// 광고: 페이지 맨 아래 1개 (AdSlot · 앱인토스 빌드 한정 · 2026-05-05 정책 변경 — 준기 결정)
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { getBalance } from '@/services/storage/localStore';
+import { getBalance, addPaidBalance } from '@/services/storage/localStore';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { getHourBranch } from '@/utils/saju-format';
 import { Header } from '@/components/layout/Header';
 // Stage 7e-5: ProfileHeader 만세력 요약 통합
 import { calculateSaju } from '@/services/saju/calculator';
+import { analyzeSinsal } from '@/services/saju/sinsal';
 import { getIljuMeaning } from '@/constants/iljuMeaning';
 import type { OhengType } from '@/types/saju';
+import { AdSlot } from '@/components/ads/AdSlot';
+import { AD_BANNER_GROUP_ID } from '@/constants/config';
 
 /* ─ SSOT 토큰 — PC_인수인계 §5 (2026-04-23) ─ */
 const C = {
@@ -31,8 +35,13 @@ const C = {
   danger:   '#C0392B',
 } as const;
 const SERIF = "'Noto Serif KR', serif";
-const APP_VERSION = '1.0.0';
-const BUILD_DATE = '20260423';
+// 2026-05-29 — 버전 SSOT = package.json (vite define 주입). 하드코딩 드리프트 박멸.
+declare const __APP_VERSION__: string;
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+// vite define 으로 빌드마다 실제 시각 자동 주입 (디버그 시트에서 새 코드 적용 확인용)
+declare const __APP_BUILD_ID__: string;
+const BUILD_DATE =
+  typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : 'dev';
 const CONTACT_EMAIL = 'info@juulabel.com';
 const KAKAO_CHANNEL_URL = 'https://open.kakao.com/o/pa01C1ri';
 
@@ -140,8 +149,34 @@ export function MyPage() {
 
         {/* 2026-05-04 가독성 보강: opacity 0.65 (실효 7~8px) → 1.0 + 12px (60대+ 가독)
          *  법적 링크는 WCAG AA 준수. 본문보다 작되 명확히 보이게. */}
+        {/* 2026-06-02 — 고객문의 prominent 승격 (준기 "눈에 확 띄게").
+            작은 법적 링크 행에서 분리 → 독립 골드 버튼. */}
+        <button
+          type="button"
+          onClick={() => setShowContact(true)}
+          className="w-full flex items-center justify-center gap-2 mt-5"
+          style={{
+            padding: '15px 16px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, rgba(184,150,90,0.14) 0%, rgba(184,150,90,0.07) 100%)',
+            border: `1.5px solid ${C.gold}`,
+            color: C.goldDeep,
+            fontSize: 16,
+            fontWeight: 800,
+            fontFamily: SERIF,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(184,150,90,0.12)',
+          }}
+          aria-label="고객문의 — 궁금한 점이나 문제를 알려주세요"
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+          고객문의
+        </button>
+
         <div
-          className="flex items-center justify-center gap-3 mt-3"
+          className="flex items-center justify-center gap-3 mt-4"
           style={{ fontSize: 12, color: C.mute, opacity: 0.85 }}
         >
           <button
@@ -159,32 +194,15 @@ export function MyPage() {
           >
             개인정보처리방침
           </button>
-          <span style={{ opacity: 0.4 }}>·</span>
-          <button
-            type="button"
-            onClick={() => setShowContact(true)}
-            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}
-          >
-            고객문의
-          </button>
         </div>
 
-        {/* ── 웹앱 전용 — 로그아웃·회원탈퇴 (앱인토스 비노출, §4-3) ── */}
-        {!inAppsInToss && isLoggedIn && (
-          <div className="flex items-center justify-center gap-5 py-2 mt-1">
-            <button type="button"
-              onClick={() => toast.show('로그아웃 기능은 준비 중입니다', 'info')}
-              className="text-[12px]" style={{ color: C.mute, opacity: 0.7 }}>
-              로그아웃
-            </button>
-            <span style={{ color: C.line, fontSize: 11 }}>|</span>
-            <button type="button"
-              onClick={() => toast.show('회원탈퇴 기능은 준비 중입니다', 'info')}
-              className="text-[12px]" style={{ color: C.mute, opacity: 0.7 }}>
-              회원탈퇴
-            </button>
-          </div>
-        )}
+        {/* 2026-05-28 PM — 로그아웃·회원탈퇴 제거 (앱인토스 런칭 정책).
+            웹용 도 동일하게 hide. 향후 web settings 페이지 신설 시 분리 복원 예정. */}
+
+        {/* ── 배너광고 — 페이지 맨 아래 (앱인토스 빌드 한정 · silent fallback) ── */}
+        <div className="mt-4">
+          <AdSlot unit={AD_BANNER_GROUP_ID} minHeight={90} />
+        </div>
       </div>
 
       {/* ── LoginModal (§2-2) ── */}
@@ -270,8 +288,11 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
       const i = myProfile.input as any;
       const birthYMD = `${i.birthYear}.${String(i.birthMonth).padStart(2, '0')}.${String(i.birthDay).padStart(2, '0')}`;
       const calLabel = i.calendarType === 'lunar' || i.calendarType === 'lunar_leap' ? '음력' : '양력';
+      // 2026-06-02 — 밴드 입력(분 X)이라 "11시" 대신 시(時) 이름만. 분 있으면 정확 시각 병기.
       const hourLabel = i.hasBirthTime
-        ? `${i.birthHour}시${(i.birthMinute ?? 0) > 0 ? `${i.birthMinute}분` : ''}`
+        ? ((i.birthMinute ?? 0) > 0
+            ? `${i.birthHour}시 ${i.birthMinute}분 · ${getHourBranch(i.birthHour, i.birthMinute)?.ko ?? ''}`.trim()
+            : (getHourBranch(i.birthHour, 0)?.ko ?? `${i.birthHour}시`))
         : '시간 모름';
       const GAN_KO: Record<string, string> = {
         甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무',
@@ -283,14 +304,160 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
       };
       const ilganKo = GAN_KO[ilgan] || '';
       const iljiKo = ZHI_KO[ilji] || '';
-      const academicLabel = ilganKo && iljiKo ? `${ilganKo}(${ilgan}) 일간 · ${iljiKo}(${ilji}) 일지` : '';
+      // 2026-05-28 PM v5 — 일주명 정확화 (user 지적: 일간·일지·일주 헷갈림 박멸).
+      //   일주(日柱) = 일간 + 일지 한쌍. "병자(丙子) 일주" 가 정확한 표기.
+      //   "병(丙) 일간 · 자(子) 일지" 보다 일주명 우선 노출 → 사용자 정체성 = 일주명.
+      const iljuNameKo = ilganKo && iljiKo ? `${ilganKo}${iljiKo}` : ''; // "병자"
+      const academicLabel = iljuNameKo ? `${iljuNameKo}(${ilgan}${ilji}) 일주` : '';
+
+      // 2026-05-28 PM v2 — viral 카드 업그레이드: 8글자 + 오행 + 십성 + 격국 + 신살 + 공망 + 현재 대운/세운
+      //   참고: 사람들이 인스타·X·스레드에 자기 사주 캡쳐 공유 → 명리학 좀 아는 사람도 알아볼 수 있는 정보 풍부 카드
+      const pillarsRaw = data?.pillars || [];
+      // 2026-05-28 PM v7 — 십성 한자(번·간체 혼용 from lunar-javascript) → 한국어 매핑.
+      //   lunar-javascript 가 偏印/劫财/正官/正财/伤官/比肩 등 간체+번체 혼용 반환 → 한국어 정통명 통일.
+      const SIPSUNG_KO: Record<string, string> = {
+        比肩: '비견',
+        劫财: '겁재', 劫財: '겁재',
+        食神: '식신',
+        伤官: '상관', 傷官: '상관',
+        偏财: '편재', 偏財: '편재',
+        正财: '정재', 正財: '정재',
+        七杀: '편관', 七殺: '편관', 偏官: '편관',
+        正官: '정관',
+        偏印: '편인', 枭神: '편인', 梟神: '편인',
+        正印: '정인',
+      };
+      function toSipsungKo(raw: string): string {
+        if (!raw) return '';
+        // "편관/정관" 처럼 / 로 multiple 일 때 첫 번째 매핑
+        const first = raw.split('/')[0].trim();
+        return SIPSUNG_KO[first] || first;
+      }
+      // 2026-05-28 PM v4 — 십성 데이터는 별도 sipsung 배열에 position 형식으로 저장됨.
+      //   position: '년간/월간/일간/시간' (천간) · '년지/월지/일지/시지' (지지).
+      //   idx 0=년주, 1=월주, 2=일주, 3=시주.
+      const sipsungArr = ((data as any)?.sipsung as Array<{ position: string; 십성: string }>) || [];
+      const POSITION_PREFIX = ['년', '월', '일', '시'];
+      function getSipsungLabel(idx: number, slot: '천간' | '지지'): string {
+        const prefix = POSITION_PREFIX[idx];
+        if (!prefix) return '';
+        const target = `${prefix}${slot === '천간' ? '간' : '지'}`;
+        const found = sipsungArr.find(s => s.position === target);
+        if (!found?.십성) return '';
+        // 일주(idx=2)·천간(slot='천간') 은 '나' 라벨로 노출 (sipsung 값 = '일주')
+        if (idx === 2 && slot === '천간') return '일간';
+        // 한자(간체/번체) → 한국어 정통명 (편인·정관·겁재·식신 등)
+        return toSipsungKo(found.십성);
+      }
+
+      const ohengCount: Record<'목' | '화' | '토' | '금' | '수', number> = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+      for (const p of pillarsRaw) {
+        if (p?.천간오행) ohengCount[p.천간오행 as keyof typeof ohengCount]++;
+        if (p?.지지오행) ohengCount[p.지지오행 as keyof typeof ohengCount]++;
+      }
+
+      // 격국 — '판정 보류' 등 fallback 은 hide. 실제 격국명만 노출.
+      const gyeokgukRaw = (data as any)?.myeongriAnalysis?.격국 || '';
+      const gyeokguk = /판정\s*보류|미정|없음|unknown/i.test(gyeokgukRaw) ? '' : gyeokgukRaw;
+      // 일간 강약 (신강/신약/중화) — 친근한 한국어
+      const ganGangYak = (data as any)?.myeongriAnalysis?.일간강약 || '';
+
+      // 2026-05-28 PM v6 — 지장간(支藏干) + 12운성(運星) derive (만세력 reference 수준).
+      const jijangganArr = ((data as any)?.jijanggan as Array<{ 지지: string; 지장간: string[] }>) || [];
+      const unyoung12Arr = ((data as any)?.unyoung12 as Array<{ position: string; 운성: string }>) || [];
+      function getJijanggan(idx: number): string {
+        const p = pillarsRaw[idx];
+        if (!p?.지지) return '';
+        const found = jijangganArr.find(j => j.지지 === p.지지);
+        return found?.지장간 ? found.지장간.join('') : '';
+      }
+      // 12운성 한자 → 한글 매핑 (lunar-javascript 가 간체/번체 혼용 반환 → 둘 다 처리)
+      //   12 stages: 長生→沐浴→冠帶→臨官(=建祿)→帝旺→衰→病→死→墓→絕→胎→養
+      const UNYOUNG_KO: Record<string, string> = {
+        // 번체
+        長生: '장생', 沐浴: '목욕', 冠帶: '관대', 建祿: '건록', 臨官: '건록',
+        帝旺: '제왕', 衰: '쇠', 病: '병', 死: '사', 墓: '묘', 絕: '절', 胎: '태', 養: '양',
+        // 간체 (lunar-javascript 실제 반환값 — 临官·养·绝 등)
+        长生: '장생', 冠带: '관대', 建禄: '건록', 临官: '건록',
+        绝: '절', 养: '양',
+      };
+      function getUnyoung(idx: number): string {
+        // calculator 의 position 은 '년지/월지/일지/시지' 형식
+        const POS_KO = ['년지', '월지', '일지', '시지'];
+        const target = POS_KO[idx];
+        const found = unyoung12Arr.find(u => u.position === target);
+        const raw = found?.운성 || '';
+        return UNYOUNG_KO[raw] || raw; // 한자면 한글로, 매핑 없으면 raw
+      }
+
+      // 2026-05-28 PM v4 — 신살 길성 우선 정렬 + 살 후순위 (사용자가 "흉살만" 보고 걱정 X).
+      //   sinsal.ts 의 analyzeSinsal: gilsongGwiin (천을귀인 등) · shipiSinsal (12신살) · bojo (홍염·괴강 등).
+      //   정렬: (1) gilsongGwiin (천을·문창·월덕·천덕·태극·금여) (2) 12신살 중 길성 (도화·장성·반안·화개)
+      //        (3) bojo (홍염 등) (4) 12신살 중 살 (겁살·재살·천살·망신·월살·육해)
+      let knownSinsal: Array<{ name: string; hanja: string; category: string }> = [];
+      try {
+        const sinsalResult = analyzeSinsal(pillarsRaw);
+        const gilSorted: typeof sinsalResult.gilsongGwiin = [];
+        const neuSorted: typeof sinsalResult.gilsongGwiin = [];
+        const hyungSorted: typeof sinsalResult.gilsongGwiin = [];
+        // Priority order
+        for (const h of sinsalResult.gilsongGwiin) gilSorted.push(h);
+        for (const h of sinsalResult.shipiSinsal) {
+          if (h.category === 'gilsin') gilSorted.push(h);
+          else if (h.category === 'neutral') neuSorted.push(h);
+          else hyungSorted.push(h);
+        }
+        for (const h of sinsalResult.bojo) {
+          if (h.category === 'gilsin') gilSorted.push(h);
+          else hyungSorted.push(h);
+        }
+        const seen = new Set<string>();
+        for (const h of [...gilSorted, ...neuSorted, ...hyungSorted]) {
+          if (!h?.name || seen.has(h.name)) continue;
+          seen.add(h.name);
+          knownSinsal.push({ name: h.name, hanja: h.hanja || '', category: h.category });
+          if (knownSinsal.length >= 4) break;
+        }
+      } catch { /* noop */ }
+
+      // 공망 (일주 기준) — 한글 reading 병기
+      const gongmangArr = ((data as any)?.gongmang as Array<{ 기준: string; 공망: string }>) || [];
+      const ilGongmangRaw = gongmangArr.find(g => g.기준 === '일주' || g.기준 === '日柱') || gongmangArr[0];
+      // hanja → hangul reading helper (ZHI_KO 매핑 활용)
+      function gongmangHangul(hanja: string): string {
+        return hanja.split('').map(c => ZHI_KO[c] || c).join('');
+      }
+      const ilGongmang = ilGongmangRaw ? {
+        공망: ilGongmangRaw.공망,
+        hangul: gongmangHangul(ilGongmangRaw.공망),
+      } : null;
+      // 현재 대운
+      const currentDaeun = (data as any)?.currentDaeun as { 시작나이: number; 끝나이: number; 간지: string; 천간: string; 지지: string } | undefined;
+      // 현재 세운 (올해 운)
+      const yearlyUn = (data as any)?.yearlyUn as { 천간: string; 지지: string; 간지: string } | undefined;
+      const currentYear = new Date().getFullYear();
+      // 대운 천간 → 십성 (대략적 — 일간 기준)
+      // 일간이 ilgan, 대운 천간이 currentDaeun.천간 → 십성 계산 (간단 매핑 X · 그대로 표시)
+
       return {
         ilgan, ilji, ilju, dayOheng,
         identity: meaning?.identity || '',
         personality: meaning?.personality || '',
-        pillars: data?.pillars || [],
+        pillars: pillarsRaw,
         birthLine: `${calLabel} ${birthYMD} · ${hourLabel}`,
         academicLabel,
+        ohengCount,
+        getSipsungLabel,
+        getJijanggan,
+        getUnyoung,
+        // viral 신규 필드
+        gyeokguk,
+        ganGangYak,
+        knownSinsal,
+        ilGongmang,
+        currentDaeun,
+        yearlyUn,
+        currentYear,
       };
     } catch { return null; }
   }, [myProfile]);
@@ -415,7 +582,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
         <div
           className="relative"
           style={{
-            fontSize: 11,
+            fontSize: 12.5,
             color: C.mute,
             fontWeight: 600,
             letterSpacing: '0.02em',
@@ -432,18 +599,18 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
         <div className="flex flex-col items-center" style={{ flexShrink: 0 }}>
           <div
             style={{
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: 800,
               color: accentColor,
-              letterSpacing: '0.18em',
+              letterSpacing: '0.14em',
               marginBottom: 6,
-              padding: '2px 8px',
+              padding: '3px 10px',
               border: `1.2px solid ${accentColor}77`,
               borderRadius: 999,
               background: '#FFFFFF',
             }}
           >
-            日柱 · 나
+            일주 · 나
           </div>
           <div
             style={{
@@ -506,7 +673,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
             <div
               style={{
                 display: 'inline-block',
-                fontSize: 10.5,
+                fontSize: 12,
                 color: accentColor,
                 fontWeight: 800,
                 letterSpacing: '0.02em',
@@ -520,67 +687,323 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
               {sajuSummary.personality}
             </div>
           )}
-          {/* 4주 오행 미니 — 더 큰 박스 */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 5,
-              maxWidth: 200,
-            }}
-          >
-            {[3, 2, 1, 0].map((idx) => {
-              const p = sajuSummary.pillars[idx];
-              const labelKo = ['년', '월', '일', '시'][idx];
-              const isDay = idx === 2;
-              if (!p?.available) {
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      height: 36,
-                      border: `1px dashed ${C.line}`,
-                      borderRadius: 6,
-                      background: 'rgba(255,255,255,0.6)',
-                      fontSize: 9,
-                      color: C.mute,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {labelKo}
-                  </div>
-                );
-              }
-              const ohengType = p.천간오행 as OhengType;
-              const pBox = OHENG_BOX_MY[ohengType];
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    height: 36,
-                    background: pBox.bg,
-                    color: pBox.fg,
-                    border: isDay ? `2px solid ${C.gold}` : `1.2px solid ${pBox.outline}`,
-                    borderRadius: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: SERIF,
-                    fontSize: 18,
-                    fontWeight: 900,
-                    lineHeight: 1,
-                    boxShadow: isDay ? `0 2px 8px ${C.gold}55` : '0 1px 2px rgba(0,0,0,0.05)',
-                  }}
-                >
-                  {p.천간}
-                </div>
-              );
-            })}
-          </div>
+          {/* 2026-05-28 PM viral 업그레이드: 4기둥 8글자 + 십성 + 오행 분포.
+              user: "사람들이 사주 캡쳐해서 자랑함, 정보 풍부해야 viral". */}
         </div>
       </div>
+
+      {/* 4기둥 (8글자) — 시·일·월·년 columns + 천간(top) + 지지(bottom) + 십성 라벨 */}
+      <div
+        className="relative"
+        style={{
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: `1px dotted rgba(184,150,90,0.40)`,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 6,
+        }}
+      >
+        {[3, 2, 1, 0].map((idx) => {
+          const p = sajuSummary.pillars[idx];
+          const labelKo = ['년주', '월주', '일주', '시주'][idx];
+          const isDay = idx === 2;
+          if (!p?.available) {
+            return (
+              <div key={idx} style={{ textAlign: 'center', opacity: 0.4 }}>
+                <div style={{ fontSize: 9, color: C.mute, marginBottom: 4 }}>{labelKo}</div>
+                <div style={{ height: 60, border: `1px dashed ${C.line}`, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.mute }}>—</div>
+              </div>
+            );
+          }
+          const ganOheng = p.천간오행 as OhengType;
+          const jiOheng = p.지지오행 as OhengType;
+          const ganBox = OHENG_BOX_MY[ganOheng];
+          const jiBox = OHENG_BOX_MY[jiOheng];
+          const ganSip = sajuSummary.getSipsungLabel(idx, '천간');
+          const jiSip = sajuSummary.getSipsungLabel(idx, '지지');
+          return (
+            <div key={idx} style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                color: isDay ? C.goldDeep : C.mute, marginBottom: 4,
+              }}>
+                {labelKo}{isDay ? ' · 나' : ''}
+              </div>
+              {/* 천간 십성 */}
+              {ganSip && (
+                <div style={{ fontSize: 11, color: ganBox.outline, fontWeight: 700, marginBottom: 3, opacity: 0.92 }}>
+                  {ganSip}
+                </div>
+              )}
+              {/* 천간 박스 */}
+              <div style={{
+                height: 36,
+                background: ganBox.bg, color: ganBox.fg,
+                border: isDay ? `1.8px solid ${C.gold}` : `1.2px solid ${ganBox.outline}`,
+                borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: SERIF, fontSize: 22, fontWeight: 900, lineHeight: 1,
+                boxShadow: isDay ? `0 2px 6px ${C.gold}44` : '0 1px 2px rgba(0,0,0,0.05)',
+                marginBottom: 4,
+              }}>
+                {p.천간}
+              </div>
+              {/* 지지 박스 */}
+              <div style={{
+                height: 36,
+                background: jiBox.bg, color: jiBox.fg,
+                border: isDay ? `1.8px solid ${C.gold}` : `1.2px solid ${jiBox.outline}`,
+                borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: SERIF, fontSize: 22, fontWeight: 900, lineHeight: 1,
+                boxShadow: isDay ? `0 2px 6px ${C.gold}44` : '0 1px 2px rgba(0,0,0,0.05)',
+              }}>
+                {p.지지}
+              </div>
+              {/* 지지 십성 */}
+              {jiSip && (
+                <div style={{ fontSize: 11, color: jiBox.outline, fontWeight: 700, marginTop: 3, opacity: 0.92 }}>
+                  {jiSip}
+                </div>
+              )}
+              {/* 2026-05-28 PM v6 — 지장간 (지지 안에 숨은 천간 3개) */}
+              {(() => {
+                const jjg = sajuSummary.getJijanggan(idx);
+                return jjg ? (
+                  <div style={{
+                    marginTop: 4,
+                    fontFamily: SERIF,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#5C4A2E',
+                    letterSpacing: '0.02em',
+                  }}>{jjg}</div>
+                ) : null;
+              })()}
+              {/* 2026-05-28 PM v6 — 12운성 (지지 운기 단계: 장생/제왕/묘 등) */}
+              {(() => {
+                const uy = sajuSummary.getUnyoung(idx);
+                return uy ? (
+                  <div style={{
+                    marginTop: 3,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: C.mute,
+                    background: 'rgba(184,150,90,0.10)',
+                    borderRadius: 4,
+                    padding: '2px 6px',
+                    display: 'inline-block',
+                  }}>{uy}</div>
+                ) : null;
+              })()}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 오행 분포 — 5 badges */}
+      <div
+        className="relative"
+        style={{
+          marginTop: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 4,
+        }}
+      >
+        {(['목', '화', '토', '금', '수'] as const).map((oh) => {
+          const count = sajuSummary.ohengCount[oh];
+          const box = OHENG_BOX_MY[oh];
+          const isStrong = count >= 3;
+          const isMissing = count === 0;
+          const hanja = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' }[oh];
+          return (
+            <div
+              key={oh}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                padding: '4px 6px',
+                background: '#FFFFFF',
+                border: `1.5px solid ${isStrong ? box.outline : isMissing ? C.line : `${box.outline}55`}`,
+                borderRadius: 100,
+                opacity: isMissing ? 0.5 : 1,
+              }}
+            >
+              <span style={{
+                fontFamily: SERIF, fontSize: 13, fontWeight: 900, color: box.outline,
+                lineHeight: 1,
+              }}>{hanja}</span>
+              <span style={{
+                fontSize: 12, fontWeight: 800, color: '#1A1A1A',
+                fontFeatureSettings: '"tnum"',
+              }}>{count}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 2026-05-28 PM viral v2 — 명리학적 깊이 (격국 + 신살 + 공망) */}
+      {(sajuSummary.gyeokguk || sajuSummary.knownSinsal.length > 0 || sajuSummary.ilGongmang) && (
+        <div
+          className="relative"
+          style={{
+            marginTop: 14,
+            paddingTop: 12,
+            borderTop: `1px dotted rgba(184,150,90,0.40)`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <div style={{ fontSize: 11.5, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.12em' }}>
+            명리학적 결
+          </div>
+          {/* 2026-05-28 PM v5 — 정확한 명리학 용어: 일주 / 일간 / 일지 / 일간 강약 구분 */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: C.mute, fontWeight: 700, minWidth: 44 }}>일주</span>
+            <span style={{
+              fontSize: 14, fontWeight: 800, color: '#1A1A1A',
+              background: `${accentColor}15`, padding: '3px 9px', borderRadius: 100,
+              border: `1px solid ${accentColor}50`,
+            }}>
+              {sajuSummary.ilgan && sajuSummary.ilji ? `${({ 甲:'갑', 乙:'을', 丙:'병', 丁:'정', 戊:'무', 己:'기', 庚:'경', 辛:'신', 壬:'임', 癸:'계' } as any)[sajuSummary.ilgan] || ''}${({ 子:'자', 丑:'축', 寅:'인', 卯:'묘', 辰:'진', 巳:'사', 午:'오', 未:'미', 申:'신', 酉:'유', 戌:'술', 亥:'해' } as any)[sajuSummary.ilji] || ''}` : ''}
+              <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 12, fontWeight: 600, opacity: 0.72 }}>
+                ({sajuSummary.ilgan}{sajuSummary.ilji})
+              </span>
+            </span>
+          </div>
+          {sajuSummary.gyeokguk && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: C.mute, fontWeight: 700, minWidth: 44 }}>격국</span>
+              <span style={{
+                fontSize: 14, fontWeight: 800, color: '#1A1A1A',
+              }}>{sajuSummary.gyeokguk}</span>
+            </div>
+          )}
+          {sajuSummary.ganGangYak && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: C.mute, fontWeight: 700, minWidth: 44 }}>일간 강약</span>
+              <span style={{
+                fontSize: 14, fontWeight: 700, color: '#1A1A1A',
+              }}>{sajuSummary.ganGangYak}</span>
+            </div>
+          )}
+          {sajuSummary.knownSinsal.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: C.mute, fontWeight: 700, minWidth: 44 }}>신살</span>
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', flex: 1 }}>
+                {sajuSummary.knownSinsal.slice(0, 4).map((s, i) => {
+                  // 길성 = 녹색 / neutral = 골드 / 살 = 갈색-주황 (너무 빨갛지 않게)
+                  const isGil = s.category === 'gilsin';
+                  const isHyung = s.category === 'hyungsal';
+                  const styling = isGil
+                    ? { color: '#1B5E2C', border: 'rgba(45,138,78,0.45)', bg: 'rgba(45,138,78,0.08)' }
+                    : isHyung
+                      ? { color: '#A14A14', border: 'rgba(180,80,30,0.40)', bg: 'rgba(180,80,30,0.06)' }
+                      : { color: C.goldDeep, border: `${C.gold}55`, bg: '#FFFFFF' };
+                  return (
+                    <span key={i} style={{
+                      fontSize: 12.5, fontWeight: 700,
+                      color: styling.color,
+                      background: styling.bg,
+                      padding: '3px 10px', borderRadius: 100,
+                      border: `1px solid ${styling.border}`,
+                    }}>
+                      {s.name}
+                      {s.hanja && s.hanja !== s.name && (
+                        <span style={{ marginLeft: 3, fontSize: 11, opacity: 0.72, fontWeight: 600 }}>({s.hanja})</span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {sajuSummary.ilGongmang && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontSize: 12, color: C.mute, fontWeight: 700, minWidth: 44 }}>공망</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>
+                {sajuSummary.ilGongmang.hangul}
+                <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 12, fontWeight: 600, color: '#7A7269' }}>
+                  ({sajuSummary.ilGongmang.공망})
+                </span>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* viral v2 — 현재 흐름 (대운 + 세운) */}
+      {(sajuSummary.currentDaeun || sajuSummary.yearlyUn) && (
+        <div
+          className="relative"
+          style={{
+            marginTop: 12,
+            paddingTop: 10,
+            borderTop: `1px dotted rgba(184,150,90,0.40)`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <div style={{ fontSize: 11.5, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.12em' }}>
+            지금 흐르는 결
+          </div>
+          {(() => {
+            // 한자 간지 → 한글 reading
+            const GAN_KO_local: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계' };
+            const ZHI_KO_local: Record<string, string> = { 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
+            const toHangulGanji = (gan: string, ji: string) => `${GAN_KO_local[gan] || ''}${ZHI_KO_local[ji] || ''}`;
+            return (
+              <>
+                {sajuSummary.currentDaeun && (
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, color: C.mute, fontWeight: 700, minWidth: 44 }}>대운</span>
+                    <span style={{ fontSize: 12.5, color: '#3D3427', fontWeight: 600 }}>
+                      {sajuSummary.currentDaeun.시작나이}~{sajuSummary.currentDaeun.끝나이}세
+                    </span>
+                    <span style={{
+                      fontSize: 14, fontWeight: 800, color: '#1A1A1A',
+                      background: '#FFFFFF', padding: '2px 10px', borderRadius: 100,
+                      border: `1.5px solid ${C.gold}`,
+                      boxShadow: `0 1px 3px ${C.gold}33`,
+                    }}>
+                      {toHangulGanji(sajuSummary.currentDaeun.천간, sajuSummary.currentDaeun.지지)}
+                      <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 12, opacity: 0.72, fontWeight: 600 }}>
+                        ({sajuSummary.currentDaeun.간지})
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {sajuSummary.yearlyUn && (
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, color: C.mute, fontWeight: 700, minWidth: 44 }}>세운</span>
+                    <span style={{ fontSize: 12.5, color: '#3D3427', fontWeight: 600 }}>
+                      {sajuSummary.currentYear}년
+                    </span>
+                    <span style={{
+                      fontSize: 14, fontWeight: 800, color: '#1A1A1A',
+                      background: '#FFFFFF', padding: '2px 10px', borderRadius: 100,
+                      border: `1.5px solid ${C.gold}77`,
+                    }}>
+                      {toHangulGanji(sajuSummary.yearlyUn.천간, sajuSummary.yearlyUn.지지)}
+                      <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 12, opacity: 0.72, fontWeight: 600 }}>
+                        ({sajuSummary.yearlyUn.간지})
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {/* 푸터: 진입 CTA */}
       <div
@@ -868,6 +1291,37 @@ function ContactSheet({ open, onClose, userId, toast: _toast }: {
 function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
   const [tapCount, setTapCount] = useState(0);
   const [showDebug, setShowDebug] = useState(false);
+  const [promoBusy, setPromoBusy] = useState(false);
+
+  // 출시 전 프로모션 TEST 호출 — 토스 콘솔 "시작하기" 활성화용.
+  // 디버그 시트(버전 5탭) 안에서만 노출 = 일반 유저 비노출. VITE_PROMO_LIVE=1 이면 실코드.
+  const runPromoTest = async (kind: '7day' | 'launch') => {
+    if (promoBusy) return;
+    setPromoBusy(true);
+    try {
+      if (kind === '7day') {
+        const m = await import('@/services/storage/dailyReward');
+        const r = await m.simulate7DayCompletion();
+        _toast.show(
+          r.ok ? '7일 완주 프로모 TEST 호출 성공'
+               : `7일 완주 실패: ${r.reason || '알 수 없음'}`,
+          r.ok ? 'success' : 'warning',
+        );
+      } else {
+        const m = await import('@/services/toss/tossPromotion');
+        const r = await m.grantLaunchPromotion();
+        _toast.show(
+          r.ok ? '출시 프로모 TEST 호출 성공'
+               : `출시 프로모 실패: ${r.reason || '알 수 없음'}`,
+          r.ok ? 'success' : 'warning',
+        );
+      }
+    } catch (e: any) {
+      _toast.show(`예외: ${e?.message || 'unknown'}`, 'warning');
+    } finally {
+      setPromoBusy(false);
+    }
+  };
 
   const onTap = () => {
     const next = tapCount + 1;
@@ -919,8 +1373,37 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
               ].map((line, i) => (
                 <p key={i} className="text-[11px] mb-1" style={{ color: 'rgba(248,245,238,0.65)' }}>{line}</p>
               ))}
+              <p className="text-[12px] font-bold mt-5 mb-2" style={{ color: C.gold }}>테스트 운 충전 (QA 전용)</p>
+              <p className="text-[10px] mb-2" style={{ color: 'rgba(248,245,238,0.5)' }}>
+                현재 {getBalance()}운 · 누를 때마다 +100운 (로컬). 출시 후 일반 유저 비노출.
+              </p>
+              <button type="button"
+                onClick={() => { addPaidBalance(100, 0); _toast.show(`+100운 충전 (현재 ${getBalance()}운)`, 'success'); }}
+                className="w-full py-3 rounded-xl text-[13px] font-bold mb-4"
+                style={{ background: C.gold, color: C.ink }}>
+                테스트 운 +100
+              </button>
+
+              <p className="text-[12px] font-bold mt-2 mb-2" style={{ color: C.gold }}>프로모션 TEST 호출 (출시 전)</p>
+              <p className="text-[10px] mb-3" style={{ color: 'rgba(248,245,238,0.5)' }}>
+                토스 콘솔 "시작하기" 활성화용. 각 1회 호출 → 콘솔에서 활성화 확인 후 출시.
+              </p>
+              <div className="flex gap-2 mb-3">
+                <button type="button" disabled={promoBusy}
+                  onClick={() => runPromoTest('7day')}
+                  className="flex-1 py-3 rounded-xl text-[13px] font-bold"
+                  style={{ background: C.gold, color: C.ink, opacity: promoBusy ? 0.5 : 1 }}>
+                  7일 출석 완주
+                </button>
+                <button type="button" disabled={promoBusy}
+                  onClick={() => runPromoTest('launch')}
+                  className="flex-1 py-3 rounded-xl text-[13px] font-bold"
+                  style={{ background: C.gold, color: C.ink, opacity: promoBusy ? 0.5 : 1 }}>
+                  출시 프로모
+                </button>
+              </div>
               <button type="button" onClick={() => setShowDebug(false)}
-                className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold"
+                className="mt-1 w-full py-3 rounded-xl text-[14px] font-bold"
                 style={{ background: 'rgba(255,255,255,0.1)', color: C.paper }}>
                 닫기
               </button>

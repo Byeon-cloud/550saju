@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -7,7 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { DaeunTimeline } from '@/components/saju/DaeunTimeline';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getProfiles, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, type LocalReport } from '@/services/storage/localStore';
 import { generateDaeunAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -42,7 +42,17 @@ export function DaeunPage() {
   const toast = useToast();
 
   // 보관함에서 저장된 결과를 넘겨받은 경우
-  const navState = location.state as { savedResult?: DaeunAnalysisResponse; savedReport?: LocalReport } | undefined;
+  const rawNavState = location.state as { savedResult?: DaeunAnalysisResponse; savedReport?: LocalReport } | undefined;
+  // 2026-05-28 — URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
+  const [searchParams] = useSearchParams();
+  const reportIdFromUrl = searchParams.get('reportId');
+  const reportFromUrl = useMemo(() => {
+    if (!reportIdFromUrl) return null;
+    try { return getReport(reportIdFromUrl); } catch { return null; }
+  }, [reportIdFromUrl]);
+  const navState = rawNavState?.savedReport
+    ? rawNavState
+    : (reportFromUrl ? { savedResult: reportFromUrl.aiResult as DaeunAnalysisResponse, savedReport: reportFromUrl } : undefined);
 
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
   const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
@@ -50,6 +60,8 @@ export function DaeunPage() {
   const [, setLoadingStep] = useState(0);
   const [error, setError] = useState('');
   const [showShare, setShowShare] = useState(false);
+  // 2026-05-07 fix — 동적 reportId (이전엔 모든 사용자가 /share/daeun 으로 같은 URL)
+  const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
 
   const reports = useMemo(() => getProfiles(), []);
@@ -87,14 +99,17 @@ export function DaeunPage() {
     try {
       const res = await generateDaeunAnalysis(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'daeun', aiResult: res.content, createdAt: new Date().toISOString() });
+      const rid = res.reportId || generateId();
+      saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'daeun', aiResult: res.content, createdAt: new Date().toISOString() });
+      setShareReportId(rid);
       setPhase('result');
     } catch (e: any) {
       console.error('대운 분석 실패:', e);
-      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
-      setError('분석에 실패했어요. 잔액은 자동으로 복구돼요.');
+      // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불 (이전엔 환불 거짓말)
+      refundBalance(1);
+      setError('분석에 실패해서 1운을 돌려드렸어요. 잠시 후 다시 시도해주세요.');
       setPhase('select');
-      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
+      toast.show('분석에 실패해서 1운을 돌려드렸어요', 'warning');
     } finally {
       clearInterval(interval);
       isAnalyzingRef.current = false;
@@ -274,7 +289,8 @@ export function DaeunPage() {
 
         {/* 개요 */}
         <FadeIn>
-          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #B8965A' }}>
+          {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). */}
+          <div className="card py-6 px-5">
             <p className="text-h2 text-text-primary mb-2">{selected?.name}님의 대운 흐름</p>
             {(effectiveResult as any).keywords?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
@@ -436,7 +452,7 @@ export function DaeunPage() {
         isOpen={showShare}
         onClose={() => setShowShare(false)}
         name={selected?.name || ''}
-        reportId="daeun"
+        reportId={shareReportId || 'daeun'}
       />
     </div>
   );

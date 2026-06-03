@@ -14,7 +14,7 @@
 import { doc, getDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/services/auth/firebase';
 import { getReports, saveReport, type LocalReport } from './localStore';
-import { getBalanceBreakdown, type BalanceDetail } from './localStore';
+import { type BalanceDetail } from './localStore';
 
 /**
  * 로컬 → 클라우드 동기화
@@ -24,22 +24,21 @@ export async function syncToCloud(uid: string): Promise<void> {
   try {
     const batch = writeBatch(db);
 
-    // 1. 잔액 동기화
-    const balance = getBalanceBreakdown();
+    // 1. 유저 문서 동기화 (잔액 제외)
+    // 2026-05-29 보안 — 기존: 신규 유저 시 localStorage 잔액(조작 가능)을 Firestore 에 그대로 업로드 →
+    //   콘솔로 부풀린 잔액이 서버에 박히는 구멍. 수정: 클라이언트는 금전 필드(balance/total*)를 절대 안 씀.
+    //   서버 잔액은 결제(confirmPayment/grantPurchase, Admin SDK)만 기록 = 단일 진실원천.
+    //   (firestore.rules 도 금전 필드 클라 write 차단 — 이중 방어)
     const userRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userRef);
 
     if (!userDoc.exists()) {
-      // 신규 유저 — 로컬 데이터를 그대로 업로드
+      // 신규 유저 — 비금전 필드만 생성 (잔액은 서버가 결제 시 Admin SDK 로 기록)
       batch.set(userRef, {
-        balance,
-        totalCharged: 0,
-        totalSpent: 0,
         createdAt: new Date(),
         lastActiveAt: new Date(),
       });
     } else {
-      // 기존 유저 — 클라우드 잔액이 우선 (서버가 진실의 원천)
       batch.update(userRef, { lastActiveAt: new Date() });
     }
 
@@ -90,12 +89,36 @@ export async function syncFromCloud(uid: string): Promise<void> {
       }
     });
 
-    // 2. 클라우드 잔액 → 로컬에 반영 (서버가 진실의 원천)
+    // 2. 클라우드 잔액 → 로컬에 반영
+    // 2026-05-28 — 무조건 덮어쓰기 제거. 어뷰징 방지 (로컬에서 차감 후 sync 시 복원되는 무한충전 차단).
+    //   정책: 클라우드 잔액이 로컬보다 많을 때만 (= 다른 디바이스 충전 흔적) 차이만큼 보강.
+    //   로컬보다 적으면 무시 (= 이미 차감했는데 서버는 미반영된 경우 — 클라가 진실).
+    //   숫자 schema(legacy)는 객체로 변환해서 비교.
     const userDoc = await getDoc(doc(db, 'users', uid));
     if (userDoc.exists()) {
-      const cloudBalance = userDoc.data().balance as BalanceDetail | undefined;
+      const cloudBalanceRaw = userDoc.data().balance as BalanceDetail | number | undefined;
+      const cloudBalance: BalanceDetail | null = (() => {
+        if (cloudBalanceRaw == null) return null;
+        if (typeof cloudBalanceRaw === 'number') return { paid: cloudBalanceRaw, bonus: 0, reward: 0 };
+        return cloudBalanceRaw;
+      })();
       if (cloudBalance) {
-        localStorage.setItem('saju500_balance_v2', JSON.stringify(cloudBalance));
+        try {
+          const localRaw = localStorage.getItem('saju500_balance_v2');
+          const local: BalanceDetail = localRaw ? JSON.parse(localRaw) : { paid: 0, bonus: 0, reward: 0 };
+          const cloudTotal = (cloudBalance.paid || 0) + (cloudBalance.bonus || 0) + (cloudBalance.reward || 0);
+          const localTotal = (local.paid || 0) + (local.bonus || 0) + (local.reward || 0);
+          // 클라우드가 더 많으면 다른 디바이스 충전분 → 차이만큼 paid 에 보강
+          if (cloudTotal > localTotal) {
+            const diff = cloudTotal - localTotal;
+            local.paid = (local.paid || 0) + diff;
+            localStorage.setItem('saju500_balance_v2', JSON.stringify(local));
+          }
+          // 로컬이 더 많으면 (클라가 차감, 서버 미반영) — 무시. 다음 차감 시 서버에도 반영됨.
+        } catch (parseErr) {
+          // 파싱 실패 시 안전하게 클라우드 잔액으로 초기화
+          localStorage.setItem('saju500_balance_v2', JSON.stringify(cloudBalance));
+        }
       }
     }
   } catch (err) {

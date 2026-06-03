@@ -1,23 +1,58 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 공유 리포트 — shareEnabled=true인 리포트는 누구나 읽기 가능
-    match /reports/{rid} {
-      allow read: if resource.data.shareEnabled == true;
+    // 2026-05-29 어드민 — 오너 uid 만 집계 데이터 접근. src/services/admin/adminConfig.ts 와 동일하게 유지.
+    //   ⚠️ /admin 에서 본인 uid 확인 후 아래 목록 + adminConfig.ts 둘 다에 추가 + 재배포.
+    function isOwner() {
+      return request.auth != null && request.auth.uid in [
+        '6C4MSgYY5UMLBpsth0ehx3Pyj0K3', // 준기 · quswnsrl202@naver.com (구글 웹)
+        '8Nda5XA4GwQfyjOLJk54i0ADdTb2'  // 준기 · PC 웹 익명 세션 (편의)
+      ];
     }
 
-    // 유저 본인 데이터만 접근
+    // 이벤트 로그 (어드민 대시보드 소스) — 로그인 유저면 append, 읽기는 오너만.
+    match /analytics/{eventId} {
+      allow create: if request.auth != null;
+      allow read: if isOwner();
+    }
+
+    // LIVE BEST 실시간 집계 (2026-06-02 D3) — 캐시는 공개 읽기, 쓰기/카운트/쿨다운은 Cloud Functions(admin) 전용.
+    match /liveBestCache/{doc} {
+      allow read: if true;       // HomePage 공개 읽기
+      allow write: if false;     // 서버(admin SDK)만 — recordTopicView/aggregateTopicTop5
+    }
+    match /liveBestCounts/{doc} {
+      allow read, write: if false; // 서버 전용 (어뷰징 방어 — 클라 직접 증가 차단)
+    }
+    match /liveBestCooldown/{doc} {
+      allow read, write: if false; // 서버 전용
+    }
+
+    // 어드민 전역 집계 (collectionGroup) — 유저 카운트 + 결제 + 리포트
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow list: if isOwner(); // 어드민 유저 수 집계
+      // 2026-05-29 잔액 보안 (Phase 1) — 금전 필드(balance/totalCharged/totalSpent/bonusBalance/unBalance)는
+      //   Cloud Function(Admin SDK)만 기록. 클라이언트 콘솔에서 balance 무한충전하던 구멍 차단.
+      //   create: 금전 필드 없이만 생성 / update: 금전 필드 변경 시 거부. (서버 Admin SDK 는 rules 우회)
+      allow create: if request.auth != null && request.auth.uid == uid
+        && !request.resource.data.keys().hasAny(['balance', 'totalCharged', 'totalSpent', 'bonusBalance', 'unBalance']);
+      allow update: if request.auth != null && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['balance', 'totalCharged', 'totalSpent', 'bonusBalance', 'unBalance']);
 
       match /profiles/{pid} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
       match /reports/{rid} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read: if (request.auth != null && request.auth.uid == uid) || isOwner();
+        allow write: if request.auth != null && request.auth.uid == uid;
       }
       match /payments/{payid} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        // 2026-05-28 PM CRITICAL — 클라이언트 write 차단 (결제 어뷰징 방지).
+        //   payments 는 서버 (Cloud Function: confirmPayment / grantPurchase) 만 작성 권한.
+        //   2026-05-29 — 오너는 전체 결제 집계 read 가능 (어드민 매출 대시보드).
+        allow read: if (request.auth != null && request.auth.uid == uid) || isOwner();
       }
       match /dailyFortune/{date} {
         allow read, write: if request.auth != null && request.auth.uid == uid;

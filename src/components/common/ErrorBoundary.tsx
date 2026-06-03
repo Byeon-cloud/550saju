@@ -40,8 +40,15 @@ export class ErrorBoundary extends Component<Props, State> {
             </svg>
           </div>
           <h2 className="text-h2 text-text-primary mb-2">오류가 발생했습니다</h2>
-          <p className="text-body-sm text-text-muted mb-6">잠시 후 다시 시도해주세요</p>
-          <Button onClick={() => window.location.href = '/'}>홈으로 돌아가기</Button>
+          <p className="text-body-sm text-text-muted mb-2">잠시 후 다시 시도해주세요</p>
+          {/* 2026-05-07 — 디버그용 에러 메시지 노출 (출시 후 제거) */}
+          {this.state.error?.message && (
+            <p className="text-tiny text-text-hint mb-6 max-w-[300px] break-all" style={{ fontFamily: 'monospace', fontSize: 10 }}>
+              {String(this.state.error.message).slice(0, 200)}
+            </p>
+          )}
+          {!this.state.error?.message && <div className="mb-6" />}
+          <Button onClick={() => window.location.assign('/')}>홈으로 돌아가기</Button>
         </div>
       );
     }

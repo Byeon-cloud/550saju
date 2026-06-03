@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { getReport } from '@/services/storage/localStore';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
@@ -46,15 +47,47 @@ export function CompatResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const state = location.state as { person1: any; person2: any; relation: string } | undefined;
 
-  const [phase, setPhase] = useState<'loading' | 'result'>('loading');
-  const [result, setResult] = useState<CompatibilityResponse | null>(null);
+  // 2026-05-07 — 진입 경로 2가지:
+  //  (1) /compat 에서 입력 후: { person1, person2, relation }
+  //  (2) /storage 에서 클릭 시 (재열람): { savedResult, savedReport }
+  const rawLocationState = location.state as
+    | { person1: any; person2: any; relation: string }
+    | { savedResult: CompatibilityResponse; savedReport: any }
+    | undefined;
+  // 2026-05-28 — URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
+  const [searchParams] = useSearchParams();
+  const reportIdFromUrl = searchParams.get('reportId');
+  const reportFromUrl = useMemo(() => {
+    if (!reportIdFromUrl) return null;
+    try { return getReport(reportIdFromUrl); } catch { return null; }
+  }, [reportIdFromUrl]);
+  const rawState = rawLocationState
+    ? rawLocationState
+    : (reportFromUrl ? { savedResult: reportFromUrl.aiResult as CompatibilityResponse, savedReport: reportFromUrl as any } : undefined);
+  const isReplay = !!rawState && 'savedResult' in rawState && 'savedReport' in rawState;
+  const replayReport = isReplay ? (rawState as any).savedReport : null;
+  const replayPartner = replayReport?.partner; // saveReport 시 보존한 partner 정보
+  const state = isReplay
+    ? {
+        person1: { name: replayReport?.name?.split(' × ')?.[0] || '나', sajuData: replayReport?.sajuData, input: replayReport?.input },
+        person2: replayPartner || { name: replayReport?.name?.split(' × ')?.[1] || '상대', sajuData: replayReport?.sajuData, input: replayReport?.input },
+        relation: replayReport?.relation || '연인',
+      }
+    : (rawState as { person1: any; person2: any; relation: string } | undefined);
+
+  const [phase, setPhase] = useState<'loading' | 'result'>(isReplay ? 'result' : 'loading');
+  const [result, setResult] = useState<CompatibilityResponse | null>(
+    isReplay ? ((rawState as any).savedResult as CompatibilityResponse) : null,
+  );
   const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
-  const called = useRef(false);
+  // 2026-05-07 fix — 동적 reportId
+  const [shareReportId, setShareReportId] = useState<string>(replayReport?.id || '');
+  const called = useRef(isReplay);
 
   useEffect(() => {
+    if (isReplay) return; // 재열람은 AI 호출 skip
     if (!state?.person1 || !state?.person2) {
       navigate('/compat');
       return;
@@ -71,23 +104,27 @@ export function CompatResultPage() {
     ).then(async (res) => {
       setResult(res.content);
       const { saveReport, generateId } = await import('@/services/storage/localStore');
-      // 궁합 결과를 보관함에 저장 (relation 필드로 궁합임을 표시 — 프로필 목록에서 제외됨)
+      const rid = res.reportId || generateId();
       saveReport({
-        id: res.reportId || generateId(),
+        id: rid,
         name: `${state!.person1.name} × ${state!.person2.name}`,
         input: { ...state!.person1.input, relation: 'compat' } as any,
         sajuData: state!.person1.sajuData,
         type: 'paid',
         contentType: 'compat',
+        aiResult: res.content,
+        ...({ partner: { name: state!.person2.name, sajuData: state!.person2.sajuData, input: state!.person2.input }, relation: state!.relation } as any),
         createdAt: new Date().toISOString(),
       });
+      setShareReportId(rid);
       setPhase('result');
     }).catch(async (e) => {
       console.error('궁합 분석 실패:', e);
-      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
+      // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
+      const { refundBalance } = await import('@/services/storage/localStore');
+      refundBalance(1);
       const errMsg = e?.message || '알 수 없는 오류';
-      toast.show(`분석에 실패했어요. 잔액은 자동으로 복구돼요 (${errMsg})`, 'warning');
-      // 바로 돌려보내지 않고 3초 대기 (에러 메시지 확인할 시간)
+      toast.show(`분석에 실패해서 1운을 돌려드렸어요 (${errMsg})`, 'warning');
       setTimeout(() => navigate('/compat'), 3000);
     }).finally(() => clearInterval(interval));
   }, []);
@@ -240,7 +277,8 @@ export function CompatResultPage() {
 
         {/* 주의할 점 */}
         <FadeIn delay={0.25}>
-          <div className="card" style={{ borderLeft: '4px solid #D32F2F20' }}>
+          {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). */}
+          <div className="card">
             <p className="text-h3 text-text-primary mb-3">주의할 점</p>
             <ul className="space-y-2">
               {result.challenges.map((c, i) => (
@@ -263,7 +301,8 @@ export function CompatResultPage() {
 
         {/* 미래 전망 */}
         <FadeIn delay={0.35}>
-          <div className="card py-5 px-5" style={{ borderLeft: '4px solid #7B1FA2' }}>
+          {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). */}
+          <div className="card py-5 px-5">
             <p className="text-h3 text-text-primary mb-2">미래 전망</p>
             <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.futureOutlook) }} />
           </div>
@@ -320,7 +359,7 @@ export function CompatResultPage() {
         isOpen={showShare}
         onClose={() => setShowShare(false)}
         name={`${state.person1.name} × ${state.person2.name}`}
-        reportId="compat"
+        reportId={shareReportId || 'compat'}
         topScore={{ label: '궁합 점수', score: result.overallScore }}
       />
     </div>

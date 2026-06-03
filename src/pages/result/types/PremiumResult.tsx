@@ -25,6 +25,9 @@ import { CHEONGAN_OHENG } from '@/constants/oheng';
 import type { LocalReport } from '@/services/storage/localStore';
 import type { OhengType, SajuData } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
+// 2026-05-29 — AI 가 강조 태그를 빠뜨려도 강조 보장 (본문 자동 강조). sanitizeAiText 와 함께 사용.
+import { autoEmphasize } from '@/utils/emphasis';
+import { getHourBranch } from '@/utils/saju-format';
 import { LocalFadeIn } from '../_atoms';
 import { PREMIUM_MOCKUP_CSS } from './_premiumMockupStyle';
 import {
@@ -52,9 +55,11 @@ function formatBirthDate(input?: SajuInput): string | undefined {
 }
 function formatBirthTime(input?: SajuInput): string | undefined {
   if (!input?.hasBirthTime) return undefined;
-  const h = String(input.birthHour ?? 0).padStart(2, '0');
-  const min = String(input.birthMinute ?? 0).padStart(2, '0');
-  return `${h}:${min}`;
+  // 2026-06-02 — 밴드 입력(분 X)이라 "12:00" 대신 시(時) 이름. 분 있으면 정확 시각.
+  const hh = input.birthHour ?? 0;
+  const mm = input.birthMinute ?? 0;
+  if (mm > 0) return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  return getHourBranch(hh, 0)?.ko ?? `${hh}시`;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -284,7 +289,7 @@ function Section5Body({
     return (
       <div style={{ marginTop: 14 }}>
         {paras.map((p, i) => (
-          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: stripMd(p) }} />
+          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
         ))}
       </div>
     );
@@ -478,7 +483,7 @@ function ShinsalSummary({
           margin: 0,
           wordBreak: 'keep-all',
         }}
-        dangerouslySetInnerHTML={{ __html: sanitizeAiText(summary) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(summary)) }}
       />
     </div>
   );
@@ -865,10 +870,10 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
       {strongest && strongest.meta && (
         <div
           style={{
+            // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). border ring + 라벨 chip 컬러로 톤 표현.
             marginTop: 14,
             background: '#FFFFFF',
             border: '1px solid #E5DFD0',
-            borderLeft: `3px solid ${colorOf(strongest.meta.kind).c}`,
             borderRadius: 8,
             padding: '11px 13px',
             fontSize: 12,
@@ -903,10 +908,10 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
       {weakest && weakest.meta && weakest !== strongest && (
         <div
           style={{
+            // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). border ring + 라벨 chip 컬러로 톤 표현.
             marginTop: 8,
             background: '#FFFFFF',
             border: '1px solid #E5DFD0',
-            borderLeft: `3px solid ${colorOf(weakest.meta.kind).c}`,
             borderRadius: 8,
             padding: '11px 13px',
             fontSize: 12,
@@ -975,12 +980,12 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
+                    // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 한자 컬러로 톤 표현.
                     gap: 8,
                     fontSize: 11,
                     padding: '6px 8px',
                     background: i % 2 === 0 ? 'rgba(184,150,90,0.04)' : '#fff',
                     borderRadius: 5,
-                    borderLeft: `2px solid ${c.c}40`,
                   }}
                 >
                   <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 900, color: c.c, minWidth: 20, textAlign: 'center', flexShrink: 0 }}>
@@ -1219,7 +1224,7 @@ function Section4Avoid({
 }) {
   if (aiText && aiText.length >= 50) {
     return (
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: stripMd(aiText) }} />
+      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(aiText)) }} />
     );
   }
   const e = sajuData.elements as Record<OhengType, number>;
@@ -1271,7 +1276,7 @@ function _Section3Body({
     return (
       <div style={{ marginTop: 14 }}>
         {paras.map((p, i) => (
-          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: stripMd(p) }} />
+          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
         ))}
       </div>
     );
@@ -1354,7 +1359,7 @@ function Section2Body({
     return (
       <div style={{ marginTop: 14 }}>
         {paras.map((p, i) => (
-          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: stripMd(p) }} />
+          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
         ))}
       </div>
     );
@@ -1458,7 +1463,7 @@ function Section1Body({
           <p
             key={i}
             style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }}
-            dangerouslySetInnerHTML={{ __html: stripMd(p) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }}
           />
         ))}
       </div>
@@ -1902,12 +1907,12 @@ function TopicTopRecommend({
   const TOPIC_META: Record<string, {
     label: string; route: string; hanja: string; color: string;
   }> = {
+    // 2026-05-28 — SSOT 10주제 정렬. social(대인관계운) 제거 (SSOT 밖 legacy — love/career 에 흡수).
     career:    { label: '직업운',  route: '/topic/career', hanja: '官', color: '#5A7CA8' },
-    love:      { label: '연애운',  route: '/topic/love',   hanja: '緣', color: '#C88A95' },
+    love:      { label: '연애운',  route: '/topic/love',   hanja: '桃', color: '#C88A95' }, // 2026-05-28 SSOT 정렬 (緣→桃, topics.ts:65)
     wealth:    { label: '재물운',  route: '/topic/wealth', hanja: '財', color: '#B8965A' },
-    social:    { label: '인간관계', route: '/topic/social', hanja: '人', color: '#5C9A6F' },
     health:    { label: '건강운',  route: '/topic/health', hanja: '壽', color: '#6FA08C' },
-    potential: { label: '잠재력',  route: '/daeun',         hanja: '運', color: '#8E5C95' },
+    potential: { label: '학업운',  route: '/topic/study',  hanja: '學', color: '#9C5A8A' },
   };
   // top-3 점수 (점수 내림차순)
   const top3 = (Object.entries(scores) as Array<[string, number]>)
@@ -2240,8 +2245,21 @@ function PremiumResultFooter({
           className="btn"
           role="button"
           tabIndex={0}
-          onClick={() => setShareOpen(true)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShareOpen(true); } }}
+          onClick={async () => {
+            // 2026-05-28 PM 정책: 결과 페이지 공유 = OG 바이럴 (보상 X). type='premium'.
+            const { shareResult } = await import('@/utils/share');
+            await shareResult({
+              type: 'premium',
+              name: report?.name || '나',
+              reportId: reportId || 'premium',
+            });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setShareOpen(true); // 키보드 접근성: 모달 fallback 유지
+            }
+          }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
             <circle cx={18} cy={5} r={3} />
@@ -2250,8 +2268,8 @@ function PremiumResultFooter({
             <line x1={8.59} y1={13.51} x2={15.42} y2={17.49} />
             <line x1={15.41} y1={6.51} x2={8.59} y2={10.49} />
           </svg>
-          <div className="ti">친구에게 공유하고 운 받기</div>
-          <div className="sb">+1운</div>
+          <div className="ti">친구에게 공유하기</div>
+          <div className="sb">결과 카드 송출</div>
         </div>
         <div
           className="btn"
@@ -2520,7 +2538,9 @@ export function PremiumResult({
       ? '음력'
       : '양력';
   const hourBranchText = report.input?.hasBirthTime
-    ? `${String(report.input.birthHour ?? 0).padStart(2, '0')}:${String(report.input.birthMinute ?? 0).padStart(2, '0')}`
+    ? ((report.input.birthMinute ?? 0) > 0
+        ? `${String(report.input.birthHour ?? 0).padStart(2, '0')}:${String(report.input.birthMinute ?? 0).padStart(2, '0')}`
+        : (getHourBranch(report.input.birthHour ?? 0, 0)?.ko ?? `${report.input.birthHour ?? 0}시`))
     : '시간 미입력';
 
   // 일간 오행 → hero-card .ilgan 박스 컬러 (목업: 양목=녹색, 양화=빨강 등)
@@ -2812,12 +2832,15 @@ export function PremiumResult({
         <CollapsibleSection step={7} title="신살" hanja="神殺" hint={(() => {
               const total = (v4Gilsin?.length ?? 0) + (v4Hyungsal?.length ?? 0);
               if (total === 0) return '강하게 발현된 신살이 없는 균형 잡힌 결';
-              const strong = Math.min(2, total);
-              const mid = Math.min(2, Math.max(0, total - 2));
-              const ref = Math.max(0, total - 4);
               const aiCount = Array.isArray(aiResult.shinsalCards) ? aiResult.shinsalCards.length : 0;
+              // 2026-06-02 fix — 헤드라인 개수와 (강·중·참고) 브레이크다운을 동일 n 에서 파생.
+              //   기존: 헤드라인=aiCount(7) / 브레이크다운=total(10) → "7개 (강2·중2·참고6=10)" 불일치.
+              const n = aiCount > 0 ? aiCount : total;
+              const strong = Math.min(2, n);
+              const mid = Math.min(2, Math.max(0, n - 2));
+              const ref = Math.max(0, n - 4);
               const name = report.name || '회원';
-              return `사주마다 0~10개까지 다릅니다 · ${name} 님께는 ${aiCount > 0 ? aiCount : total}개가 자리합니다 (강 ${strong} · 중 ${mid} · 참고 ${ref})`;
+              return `사주마다 0~10개까지 다릅니다 · ${name} 님께는 ${n}개가 자리합니다 (강 ${strong} · 중 ${mid} · 참고 ${ref})`;
             })()}>
           {/* Stage 2C-#4: 신살 3 tier (강·중·참고) — mockup shinsal-3tier 진본
               AI shinsalCards 우선 + V4SinSal fallback */}
@@ -2921,7 +2944,7 @@ export function PremiumResult({
  *  · mockup .upsell-card 진본 (다크 그라디언트 + 對 워터마크 + 골드 cta)
  * ═════════════════════════════════════════════════════════════════ */
 function PremiumUpsellCard({
-  reportId: _reportId,
+  reportId,
   sajuData,
   scores,
   userName,
@@ -2931,12 +2954,30 @@ function PremiumUpsellCard({
   scores?: Record<string, number>;
   userName?: string;
 }) {
+  const navigate = useNavigate();
+  // 2026-05-29 H3 fix — 기존 <a href="/chat/new"> = 풀 페이지 리로드(앱인토스 정책 위반) + 컨텍스트 0.
+  //   → SPA navigate + contentContext(type:'premium') 전달. buildContextPrompt 에 premium 분기 이미 존재.
+  const handleChat = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const [{ getReport }, { createChatRoom }] = await Promise.all([
+        import('@/services/storage/localStore'),
+        import('@/services/storage/chatStore'),
+      ]);
+      const rep = getReport(reportId);
+      const ctx = { type: 'premium' as const, label: '종합사주', fullResult: rep?.aiResult };
+      const room = createChatRoom(userName || '나', 'free', ctx);
+      navigate(`/chat/${room.id}`, { state: { contentContext: ctx } });
+    } catch {
+      navigate('/chat/new');
+    }
+  };
   // 사주별 동적 질문 예시 — 점수 worst topic + 가까운 대운 변곡점 호명
   // (이전: "올해 9월" 하드코딩 → 자형(自刑) 9월 없는 사주에도 거짓 노출)
   function buildExamples(): { q1: string; q2: string } {
-    // worst topic — 점수 가장 낮은 영역
+    // worst topic — 점수 가장 낮은 영역 (2026-05-28 social 제거 — SSOT 정렬)
     const TOPIC_KR: Record<string, string> = {
-      career: '직업', love: '사랑', wealth: '재물', social: '관계',
+      career: '직업', love: '사랑', wealth: '재물',
       health: '건강', potential: '잠재력',
     };
     let worstKey = '';
@@ -2990,7 +3031,7 @@ function PremiumUpsellCard({
       <div className="label">DEEPER · 더 들어가보기</div>
       <h3>이 풀이를 두고 직접 물어보세요</h3>
       <p>{q1}, {q2} — 풀이를 보며 떠오른 질문을, 사주를 살피며 답해드려요.</p>
-      <a href="/chat/new" className="cta" style={{ textDecoration: 'none' }}>
+      <a href="/chat/new" onClick={handleChat} className="cta" style={{ textDecoration: 'none' }}>
         사주대화로 이어가기 →
       </a>
     </div>
@@ -3180,12 +3221,12 @@ function YongsinBox({
         {/* reason — 한문 처방서 스타일 인용 박스 */}
         <div
           style={{
+            // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). border ring으로 톤 표현.
             position: 'relative',
             background: '#FFFFFF',
             border: `1px solid ${C.line}`,
-            borderLeft: `3px solid ${primaryEc.dark}`,
             borderRadius: 8,
-            padding: '12px 14px 12px 16px',
+            padding: '12px 14px',
           }}
         >
           <div
@@ -4210,11 +4251,11 @@ function StrengthsCautionsCards({
               <div
                 key={`s-${i}`}
                 style={{
+                  // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 그린 톤 배경만 유지.
                   background: 'linear-gradient(135deg, #FFFFFF 0%, #F0F8F2 100%)',
                   border: '1px solid rgba(46,125,50,0.30)',
                   borderRadius: 10,
                   padding: '12px 14px',
-                  borderLeft: '4px solid #2D8A4E',
                 }}
               >
                 <div
@@ -4281,11 +4322,11 @@ function StrengthsCautionsCards({
               <div
                 key={`c-${i}`}
                 style={{
+                  // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 레드 톤 배경만 유지.
                   background: 'linear-gradient(135deg, #FFFFFF 0%, #FCF3F3 100%)',
                   border: '1px solid rgba(198,40,40,0.25)',
                   borderRadius: 10,
                   padding: '12px 14px',
-                  borderLeft: '4px solid #C62828',
                 }}
               >
                 <div
@@ -4337,9 +4378,9 @@ function PillarMessages({
           <div
             key={i}
             style={{
+              // 2026-05-28 — 좌측 strip 제거 (균일 list 안 AI 손톱 디자인 티). 골드 톤 배경만 유지.
               padding: '10px 14px',
               background: C.goldSoft,
-              borderLeft: `3px solid ${C.gold}`,
               borderRadius: 8,
             }}
           >
@@ -4641,7 +4682,7 @@ function SipsungStory({
           margin: 0,
           whiteSpace: 'pre-line',
         }}
-        dangerouslySetInnerHTML={{ __html: stripMd(aiStory) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(aiStory)) }}
       />
     );
   }
@@ -6031,9 +6072,9 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
   return (
     <div
       style={{
-        background: 'linear-gradient(135deg, #fff 0%, rgba(212,175,55,.05) 100%)',
+        // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 골드 톤 배경만 유지.
+        background: 'linear-gradient(135deg, #fff 0%, rgba(212,175,55,.07) 100%)',
         border: '1px solid #E5DFD0',
-        borderLeft: '3px solid #B8965A',
         borderRadius: 10,
         padding: '14px 14px',
         margin: '14px 0',
@@ -7084,16 +7125,16 @@ function TopicMiniGrid({
 }) {
   const navigate = useNavigate();
   // 2026-05-05 hook 정적 → deriveTopicHook 동적화 (사주 8글자 호명)
-  // 2026-05-05 6 카드 복원 (잠재력·인간관계) + 1운 라우팅
-  // social → /topic/social, potential → /daeun
+  // 2026-05-07: '잠재력 → /daeun' 출시 후 공개 — 학업으로 임시 대체 (코드 보존)
   type TopicMeta = { key: string; label: string; route: string; topicId: string };
+  // 2026-05-28 — SSOT 10주제 정렬. social(대인관계운) 제거 (SSOT 밖 legacy — love/career 에 흡수).
   const topics: TopicMeta[] = [
     { key: 'wealth',    label: '재물',     route: '/topic/wealth', topicId: 'wealth' },
     { key: 'love',      label: '사랑',     route: '/topic/love',   topicId: 'love' },
     { key: 'career',    label: '직업',     route: '/topic/career', topicId: 'career' },
     { key: 'health',    label: '건강',     route: '/topic/health', topicId: 'health' },
-    { key: 'social',    label: '인간관계', route: '/topic/social', topicId: 'social' },
-    { key: 'potential', label: '잠재력',   route: '/daeun',         topicId: 'potential' },
+    { key: 'study',     label: '학업',     route: '/topic/study',  topicId: 'study' },
+    { key: 'business',  label: '사업',     route: '/topic/business', topicId: 'business' },
   ];
 
   // 2026-05-05 6 카드 → 2-col grid 균일 (마지막 .full 카드 제거)

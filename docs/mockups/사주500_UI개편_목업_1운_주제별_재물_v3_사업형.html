@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 재물운 v3 [사업형 variant] (김민지 · DEMO · 편재 우세 · IA flex 검증)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* 사주500 — 재물 [財] v3 (2026-05-08 신규 · 락 진본 SSOT 정렬)
+   타겟: 30~40대 여성 직장인 (수입·소비·저축 고민). 자극 X · 기회·시기 톤.
+   영역 SSOT (사업 [業] 과 분리):
+     재물 = 수입 자체 (정재+편재) · 직장인+자영업 공통
+     사업 = 사업체 운영 결단 (편재+식신, 동업, 단계)
+   영역 SSOT (이사 [移] 와 분리):
+     재물 §E "자리" = 추상 표현 (해 뜨는 자리·물 흐르는 자리)
+     이사 §C 8방위 다이얼 X (이사 전용)
+   6 파트:
+     §A 재성 분포 — 정재 vs 편재 (재물 고유 핵심)
+     §B 돈 출처 4분면 — 본업·사이드·관계·투자 도넛
+     §C 12개월 재성 흐름 — area chart (재물 전용 · 사업은 X)
+     §D 소비 패턴 + 지출 함정 — 카테고리 분포 + 함정월
+     §E 투자 적기 + 자리 — 시기 timeline + 추상 자리
+     §F 한 문장 + 결단
+   액센트: 財 골드 #B8965A
+*/
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+html, body { background: #0a0a0a; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+:root {
+  --c-paper: #F8F5EE; --c-surface: #FFFFFF; --c-ink: #1A1A1A; --c-ink-soft: #3D3D3D;
+  --c-mute: #7A7269; --c-line: #E5DFD0;
+  --c-gold: #B8965A; --c-gold-deep: #8C6D3D;
+  --c-gold-soft: rgba(184,150,90,0.10); --c-gold-line: rgba(184,150,90,0.40);
+  --c-card-line: rgba(184,150,90,0.18);
+  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
+  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
+  /* 재물 액센트 = 골드 자체 */
+  --c-topic: #B8965A; --c-topic-dark: #8C6D3D; --c-topic-soft: rgba(184,150,90,0.12);
+}
+.page { max-width: 480px; margin: 0 auto; background: var(--c-paper); min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); padding-bottom: 40px; }
+.hd { position: relative; overflow: hidden; padding: 20px 22px 32px; color: #FFFEF8; background: linear-gradient(135deg, #1A1A1A 0%, #2A2520 50%, #1D1812 100%); border-top: 3px solid var(--c-topic); }
+.hd::before { content: '財'; position: absolute; right: -22px; bottom: -52px; font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900; color: var(--c-topic); opacity: 0.10; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.hd .top { display: flex; align-items: center; gap: 8px; font-size: 11px; flex-wrap: wrap; position: relative; }
+.hd .badge { background: rgba(184,150,90,0.20); border: 1px solid rgba(184,150,90,0.40); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; color: #F4D166; letter-spacing: 0.02em; }
+.hd .tier { background: rgba(248,245,238,0.10); padding: 4px 10px; border-radius: 100px; font-size: 11px; color: #F8F5EE; opacity: 0.85; }
+.hd .name { margin-left: auto; font-size: 11px; opacity: 0.7; color: #E8DAB8; }
+.hd .demo { background: #FF6B35; color: #FFF; font-size: 10px; padding: 2px 7px; border-radius: 100px; font-weight: 700; letter-spacing: 0.05em; }
+.hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 16px; letter-spacing: -0.02em; line-height: 1.4; position: relative; color: #FFFEF8; }
+.hd .meta { font-size: 12px; opacity: 0.75; margin-top: 6px; position: relative; color: #E8DAB8; font-feature-settings: 'tnum'; }
+
+/* 사주 SSOT */
+.my-saju { margin: 16px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.my-saju .ttl { font-size: 10.5px; color: var(--c-topic-dark); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.my-saju .ttl .hint { color: var(--c-mute); font-weight: 500; letter-spacing: 0; font-size: 10px; }
+.saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.saju-cell { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+.saju-cell.ilju { background: linear-gradient(180deg, var(--c-gold-soft), rgba(184,150,90,0.04)); border-color: var(--c-gold-line); }
+.saju-cell.jaeseong { border-color: var(--c-topic); border-width: 1.5px; box-shadow: 0 0 0 2px rgba(184,150,90,0.10); }
+.saju-cell.jaeseong::after {
+  content: '財'; position: absolute; top: -7px; right: -5px;
+  background: var(--c-topic); color: #FFF;
+  font-family: 'Noto Serif KR', serif; font-size: 9.5px; font-weight: 800;
+  width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(184,150,90,0.40);
+}
+.saju-cell .lab { font-size: 9.5px; font-weight: 700; color: var(--c-mute); text-align: center; margin-bottom: 2px; }
+.gan-block, .ji-block { font-family: 'Noto Serif KR', serif; border-radius: 8px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid transparent; }
+.gan-block .han { font-size: 24px; font-weight: 800; line-height: 1; }
+.ji-block .han { font-size: 20px; font-weight: 800; line-height: 1; }
+.gan-block .read, .ji-block .read { font-size: 9px; font-weight: 700; opacity: 0.85; letter-spacing: 0.05em; font-family: 'Pretendard Variable', sans-serif; }
+.gan-block.o-mok, .ji-block.o-mok { background: var(--c-mok); color: #FFF; border-color: var(--c-mok); }
+.gan-block.o-hwa, .ji-block.o-hwa { background: var(--c-hwa); color: #FFF; border-color: var(--c-hwa); }
+.gan-block.o-to, .ji-block.o-to { background: var(--c-to); color: #FFF; border-color: var(--c-to); }
+.gan-block.o-geum, .ji-block.o-geum { background: #FFF; color: var(--c-geum); border-color: var(--c-card-line); }
+.gan-block.o-su, .ji-block.o-su { background: var(--c-ink); color: #FFF; border-color: var(--c-ink); }
+.meaning { font-size: 9.5px; color: var(--c-mute); font-weight: 600; text-align: center; line-height: 1.2; font-family: 'Pretendard Variable', sans-serif; }
+.ilgan-tag { font-size: 9.5px; color: var(--c-mute); font-weight: 700; text-align: center; margin-top: 2px; }
+
+/* 결론박스 */
+.conclusion { margin: 14px 16px 0; background: linear-gradient(135deg, #FFFEF8 0%, #FAF6EC 100%); border-radius: 14px; padding: 20px 20px 22px; border: 1px solid var(--c-card-line); border-left: 5px solid var(--c-topic); position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(184,150,90,0.10); }
+.conclusion::after { content: '財'; position: absolute; right: -12px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: var(--c-topic); opacity: 0.06; line-height: 1; pointer-events: none; }
+.conclusion .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.conclusion .body { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); line-height: 1.7; margin: 0; position: relative; word-break: keep-all; letter-spacing: -0.01em; }
+.conclusion .body strong { background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,0.40) 60%); padding: 0 3px; color: var(--c-ink); font-weight: 800; }
+.conclusion .ref { font-size: 12px; color: #5C4220; line-height: 1.65; margin: 12px 0 0; position: relative; word-break: keep-all; padding-top: 10px; border-top: 1px solid var(--c-card-line); font-family: 'Noto Serif KR', serif; }
+
+/* 재물 archetype 뱃지 카드 — 8 archetype 중 본인 강조 + 다른 7 chip */
+.archetype-card { margin: 14px 16px 0; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.archetype-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.14em; margin-bottom: 12px; }
+.archetype-hero { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: flex-start; padding: 14px; background: linear-gradient(135deg, var(--c-topic-soft), var(--c-gold-soft)); border: 1px solid var(--c-topic); border-left: 4px solid var(--c-topic-dark); border-radius: 10px; margin-bottom: 14px; }
+.ar-glyph { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(184,150,90,0.30); flex-shrink: 0; }
+.ar-glyph .han { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 900; color: #FFFEF8; line-height: 1; }
+.ar-body .ar-name { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
+.ar-body .ar-tag { font-size: 11px; color: var(--c-gold-deep); font-weight: 700; margin-top: 4px; letter-spacing: 0.02em; }
+.ar-body .ar-desc { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; margin-top: 8px; word-break: keep-all; }
+.ar-body .ar-desc strong { color: var(--c-gold-deep); font-weight: 700; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,0.32) 60%); padding: 0 2px; }
+.ar-others-lb { font-size: 11px; color: var(--c-mute); font-weight: 700; letter-spacing: 0.04em; margin-bottom: 8px; }
+.ar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ar-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 100px; font-size: 11.5px; color: var(--c-ink-soft); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; }
+.ar-chip .han { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; color: var(--c-gold-deep); }
+
+.body { padding: 22px 16px 0; }
+.section { margin-top: 14px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 14px; overflow: hidden; }
+.section:first-of-type { margin-top: 0; }
+.section-header { display: flex; align-items: center; gap: 10px; padding: 16px 18px; cursor: pointer; background: var(--c-surface); border: none; width: 100%; text-align: left; appearance: none; font: inherit; }
+.section-header:hover { background: var(--c-paper); }
+.section-header .sec-num { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold); letter-spacing: 0.18em; margin-right: 6px; }
+.section-header .sec-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--c-ink); flex: 1; }
+.section-header .sec-title .han { color: var(--c-gold); font-weight: 500; margin-left: 6px; font-size: 13px; }
+.section-header .chevron { width: 20px; height: 20px; color: var(--c-mute); transition: transform 0.25s; flex-shrink: 0; }
+.section.open .section-header .chevron { transform: rotate(180deg); color: var(--c-gold); }
+.section.open .section-header { border-bottom: 1px dashed var(--c-card-line); }
+.section:not(.open) > *:not(.section-header) { display: none !important; }
+.section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
+.section.open > *:last-child { padding-bottom: 18px; }
+.section.open > .sec-lead:first-of-type { padding-top: 14px; }
+.sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+.body p strong, .body strong:not(.no-emph) { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,0.32) 55%); padding: 0 3px; border-radius: 2px; }
+.body p u, .body u { text-decoration: underline; text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
+
+/* §A 재물 점수 + 재성 분포 */
+.score-row { margin: 14px 0 0; display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; }
+.score-ring { width: 110px; height: 110px; position: relative; }
+.score-ring svg { width: 100%; height: 100%; }
+.score-ring .ring-bg { fill: none; stroke: var(--c-line); stroke-width: 10; }
+.score-ring .ring-fill { fill: none; stroke: url(#wealthGrad); stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+.score-ring .num-c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-ring .num-c .num { font-family: 'Noto Serif KR', serif; font-size: 30px; font-weight: 900; color: var(--c-topic-dark); line-height: 1; }
+.score-ring .num-c .num small { font-size: 13px; color: var(--c-mute); font-weight: 600; }
+.score-ring .num-c .lb { font-size: 10px; color: var(--c-mute); font-weight: 700; margin-top: 4px; letter-spacing: 0.05em; }
+.score-txt .grade { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: var(--c-ink); line-height: 1.3; }
+.score-txt .desc { font-size: 12.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.6; word-break: keep-all; }
+.score-txt .desc strong { color: var(--c-gold-deep); font-weight: 700; }
+
+.jaeseong-bars { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px; }
+.jaeseong-bars .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 12px; }
+.jb-row { display: grid; grid-template-columns: 86px 1fr 32px; gap: 10px; align-items: center; margin-bottom: 9px; font-size: 12px; }
+.jb-row:last-child { margin-bottom: 0; }
+.jb-row .nm { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 700; }
+.jb-row .nm.jeong { color: var(--c-topic-dark); }
+.jb-row .nm.pyeon { color: var(--c-mok); }
+.jb-row .nm.sik { color: var(--c-hwa); }
+.jb-row .nm.bi { color: var(--c-geum); }
+.jb-row .nm.in { color: var(--c-su); }
+.jb-row .nm small { font-size: 9px; color: var(--c-mute); font-weight: 600; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.jb-row .trk { background: var(--c-line); height: 8px; border-radius: 100px; overflow: hidden; }
+.jb-row .fi { height: 100%; border-radius: 100px; }
+.jb-row .fi.jeong { background: linear-gradient(90deg, var(--c-topic), var(--c-topic-dark)); }
+.jb-row .fi.pyeon { background: linear-gradient(90deg, var(--c-mok), #1F6638); }
+.jb-row .fi.sik { background: linear-gradient(90deg, var(--c-hwa), #A41F1F); }
+.jb-row .fi.bi { background: linear-gradient(90deg, #909090, var(--c-geum)); }
+.jb-row .fi.in { background: linear-gradient(90deg, var(--c-su), #0E459C); }
+.jb-row .vl { text-align: right; color: var(--c-ink); font-weight: 700; font-feature-settings: 'tnum'; font-size: 11.5px; }
+
+/* §B 돈 출처 4분면 — 가로 막대 (모바일 가독성 우선) */
+.source-card { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px; }
+.source-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 14px; }
+.source-bars { display: flex; flex-direction: column; gap: 12px; }
+.source-bar { display: grid; grid-template-rows: auto auto; gap: 6px; }
+.source-bar .top-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; }
+.source-bar .ic { width: 28px; height: 28px; border-radius: 50%; font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 900; color: #FFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.source-bar.b-main .ic { background: linear-gradient(135deg, var(--c-topic), var(--c-topic-dark)); }
+.source-bar.b-side .ic { background: linear-gradient(135deg, var(--c-mok), #1F6638); }
+.source-bar.b-rel .ic { background: linear-gradient(135deg, #C88A95, #A8685A); }
+.source-bar.b-inv .ic { background: linear-gradient(135deg, var(--c-su), #0E459C); }
+.source-bar .nm { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 800; color: var(--c-ink); line-height: 1.2; }
+.source-bar .nm small { font-size: 10px; color: var(--c-mute); font-weight: 500; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.source-bar .pct { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 900; color: var(--c-ink); line-height: 1; font-feature-settings: 'tnum'; }
+.source-bar .pct small { font-size: 10px; color: var(--c-mute); font-weight: 600; }
+.source-bar .trk { background: var(--c-line); height: 9px; border-radius: 100px; overflow: hidden; margin-left: 38px; }
+.source-bar .fi { height: 100%; border-radius: 100px; }
+.source-bar.b-main .fi { background: linear-gradient(90deg, var(--c-topic), var(--c-topic-dark)); }
+.source-bar.b-side .fi { background: linear-gradient(90deg, var(--c-mok), #1F6638); }
+.source-bar.b-rel .fi { background: linear-gradient(90deg, #C88A95, #A8685A); }
+.source-bar.b-inv .fi { background: linear-gradient(90deg, var(--c-su), #0E459C); }
+
+/* §C 12개월 재성 area chart */
+.area-chart { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px 12px 14px; }
+.area-chart .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 14px; padding: 0 4px; }
+.area-chart svg { width: 100%; height: 130px; display: block; }
+.area-chart .area-bg { fill: url(#areaGrad); }
+.area-chart .area-line { fill: none; stroke: var(--c-topic-dark); stroke-width: 2; }
+.area-chart .area-dot { fill: var(--c-topic); stroke: #FFF; stroke-width: 2; }
+.area-chart .area-dot.peak { fill: var(--c-mok); }
+.area-chart .area-dot.warn { fill: var(--c-hwa); }
+.area-chart .area-axis { stroke: var(--c-line); stroke-width: 1; stroke-dasharray: 2 3; }
+.area-chart .area-lbl { font-size: 8.5px; fill: var(--c-mute); font-family: 'Pretendard Variable', sans-serif; font-weight: 600; }
+.area-chart .area-marker { font-size: 9px; fill: var(--c-ink); font-weight: 700; font-family: 'Noto Serif KR', serif; }
+.month-strip { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; margin-top: 10px; padding: 0 2px; }
+.month-strip .m { text-align: center; font-size: 9px; color: var(--c-mute); font-weight: 600; padding: 4px 0; border-radius: 4px; }
+.month-strip .m.peak { color: var(--c-mok); font-weight: 800; background: var(--c-mok-soft); }
+.month-strip .m.warn { color: var(--c-hwa); font-weight: 800; background: var(--c-hwa-soft); }
+
+.month-call { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.month-call .mc-row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 10px 12px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; align-items: center; }
+.month-call .mc-row.peak { border-left: 3px solid var(--c-mok); }
+.month-call .mc-row.warn { border-left: 3px solid var(--c-hwa); }
+.month-call .mc-row .when { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 800; }
+.month-call .mc-row.peak .when { color: var(--c-mok); }
+.month-call .mc-row.warn .when { color: var(--c-hwa); }
+.month-call .mc-row .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.month-call .mc-row .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+
+/* §D 소비 패턴 + 지출 함정 */
+.spend-grid { margin: 14px 0 0; display: grid; grid-template-columns: 1fr; gap: 12px; }
+.spend-card { background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px; }
+.spend-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 12px; }
+.spend-row { display: grid; grid-template-columns: 78px 1fr 36px; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 12px; }
+.spend-row:last-child { margin-bottom: 0; }
+.spend-row .nm { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 700; color: var(--c-ink); }
+.spend-row .nm small { font-size: 9px; color: var(--c-mute); font-weight: 500; font-family: 'Pretendard Variable', sans-serif; display: block; margin-top: 1px; letter-spacing: 0; }
+.spend-row .trk { background: var(--c-line); height: 6px; border-radius: 100px; overflow: hidden; }
+.spend-row .fi { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--c-topic), var(--c-topic-dark)); }
+.spend-row .fi.warn { background: linear-gradient(90deg, var(--c-hwa), #A41F1F); }
+.spend-row .vl { text-align: right; color: var(--c-ink); font-weight: 700; font-feature-settings: 'tnum'; font-size: 11.5px; }
+
+.trap-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.trap-row { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 10px 12px; background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 8px; align-items: flex-start; border-left: 3px solid var(--c-hwa); }
+.trap-row .ic { width: 28px; height: 28px; border-radius: 50%; background: var(--c-hwa); color: #FFF; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.trap-row .ti { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 700; color: var(--c-ink); margin-bottom: 3px; }
+.trap-row .ds { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.55; word-break: keep-all; }
+.trap-row .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+
+/* §E 투자 적기 + 자리 (방위 X · 추상 자리) */
+.timing-card { margin: 14px 0 0; background: var(--c-paper); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px 16px; }
+.timing-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: var(--c-gold-deep); letter-spacing: 0.12em; margin-bottom: 12px; }
+.timing-stages { display: flex; flex-direction: column; gap: 10px; }
+.timing-stage { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px 14px; border-left: 3px solid var(--c-gold); }
+.timing-stage.peak { border-left-color: var(--c-topic); background: var(--c-topic-soft); }
+.timing-stage .when-row { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 5px; }
+.timing-stage .when { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 800; color: var(--c-topic-dark); }
+.timing-stage .duration { font-size: 11px; color: var(--c-mute); font-weight: 600; }
+.timing-stage .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: var(--c-ink); margin-bottom: 5px; line-height: 1.35; }
+.timing-stage .ds { font-size: 12.5px; color: var(--c-ink-soft); line-height: 1.65; word-break: keep-all; }
+.timing-stage .ds strong { color: var(--c-gold-deep); font-weight: 700; }
+
+.spot-grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.spot-cell { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 10px; padding: 12px 12px 14px; text-align: center; position: relative; overflow: hidden; }
+.spot-cell::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--c-topic), var(--c-topic-dark)); }
+.spot-cell .glyph { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; color: var(--c-topic-dark); line-height: 1; margin-top: 6px; }
+.spot-cell .lb { font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 700; color: var(--c-ink); margin-top: 8px; letter-spacing: 0; }
+.spot-cell .ds { font-size: 10.5px; color: var(--c-ink-soft); margin-top: 5px; line-height: 1.5; word-break: keep-all; }
+
+/* §F 결단 + pullquote */
+.verdict-card { margin: 14px 0 0; background: linear-gradient(135deg, #1A1A1A, #2A2520); color: #F8F5EE; border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+.verdict-card::after { content: '財'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 160px; font-weight: 900; color: var(--c-topic); opacity: 0.10; line-height: 1; pointer-events: none; }
+.verdict-card .lb { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700; color: #F4D166; letter-spacing: 0.14em; margin-bottom: 10px; position: relative; }
+.verdict-card .ti { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 800; color: #FFFEF8; line-height: 1.5; margin-bottom: 8px; word-break: keep-all; position: relative; }
+.verdict-card .ti strong { background: linear-gradient(180deg, transparent 60%, rgba(244,209,102,0.45) 60%); padding: 0 3px; color: #FFFEF8; font-weight: 900; }
+.verdict-card .ds { font-size: 13px; color: #C9B89E; line-height: 1.7; word-break: keep-all; position: relative; }
+.verdict-card .ds strong { color: #F4D166; font-weight: 700; }
+
+.pullquote { margin: 14px 0 0; background: linear-gradient(135deg, var(--c-topic-soft), var(--c-gold-soft)); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--c-topic-dark); font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.85; color: var(--c-ink); font-weight: 500; word-break: keep-all; }
+.pullquote strong { background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,0.40) 55%); padding: 0 3px; color: var(--c-ink); font-weight: 700; }
+
+/* Cross-topic CTA — 재물 → 사업 자연 페어 */
+.cross-cta { margin: 16px 16px 0; background: linear-gradient(135deg, #FFFEF8, #FAF6EC); border: 1px solid var(--c-card-line); border-left: 4px solid var(--c-mok); border-radius: 14px; padding: 16px 18px; cursor: pointer; appearance: none; font: inherit; text-align: left; width: calc(100% - 32px); display: grid; grid-template-columns: 44px 1fr 16px; gap: 12px; align-items: center; }
+.cross-cta .icn { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--c-mok), #1F6638); color: #FFF; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cross-cta .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: var(--c-ink); margin-bottom: 3px; }
+.cross-cta .sb { font-size: 11.5px; color: var(--c-ink-soft); line-height: 1.5; word-break: keep-all; }
+.cross-cta .arrow { color: var(--c-gold-deep); font-size: 20px; font-weight: 700; }
+
+/* Upsell + Actions */
+.upsell { margin: 12px 16px 0; background: linear-gradient(135deg, #1A1A1A, #2A2018); color: #FFF; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; cursor: pointer; border: none; text-align: left; width: calc(100% - 32px); font: inherit; }
+.upsell::after { content: '命'; position: absolute; right: -12px; bottom: -32px; font-family: 'Noto Serif KR', serif; font-size: 180px; font-weight: 900; color: rgba(184,150,90,0.08); line-height: 1; pointer-events: none; }
+.upsell .lb { font-size: 11px; color: #F4D166; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; position: relative; }
+.upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.5; color: #FFFEF8; position: relative; }
+.upsell p { font-size: 12.5px; color: #C9B89E; margin-bottom: 14px; line-height: 1.65; position: relative; word-break: keep-all; }
+.upsell .cta { display: inline-flex; gap: 6px; align-items: center; background: linear-gradient(135deg, var(--c-gold), var(--c-gold-deep)); color: #1A1A1A; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; position: relative; }
+.upsell .cta .cost { background: rgba(255,255,255,0.10); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #FFFEF8; margin-left: 6px; font-weight: 600; }
+.actions { margin: 16px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .btn { background: var(--c-surface); border: 1px solid var(--c-card-line); border-radius: 12px; padding: 16px 12px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+.actions .btn:hover { background: var(--c-paper); border-color: var(--c-gold-line); }
+.actions .btn svg { width: 22px; height: 22px; color: var(--c-gold-deep); stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.actions .btn .ti { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; color: var(--c-ink); text-align: center; line-height: 1.35; word-break: keep-all; }
+.actions .btn .sb { font-size: 11px; color: var(--c-gold-deep); font-weight: 700; padding: 2px 8px; border-radius: 100px; background: var(--c-gold-soft); }
+.disclaimer { margin: 16px 16px 0; padding: 14px; background: var(--c-paper); border-radius: 8px; font-size: 11px; line-height: 1.65; color: var(--c-mute); text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hd">
+    <div class="top">
+      <span class="badge">재물운</span>
+      <span class="tier">1운</span>
+      <span class="name">김민지</span>
+      <span class="demo">DEMO</span>
+    </div>
+    <h1>변동의 결,<br>흐름을 잡는 사주</h1>
+    <div class="meta">갑목(큰 나무) 일간 · 편재 우세 · 큰 변동·사업형 · 두 번의 큰 사이클</div>
+  </header>
+
+  <div class="my-saju">
+    <div class="ttl">내 사주 8글자<span class="hint">財 표시 = 재물이 모이는 자리</span></div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan-block o-geum"><span class="han">庚</span><span class="read">경</span></div><div class="meaning">큰 쇠</div><div class="ji-block o-hwa"><span class="han">午</span><span class="read">오</span></div><div class="meaning">말</div></div>
+      <div class="saju-cell ilju"><div class="lab">일</div><div class="gan-block o-mok"><span class="han">甲</span><span class="read">갑</span></div><div class="meaning">큰 나무</div><div class="ji-block o-mok"><span class="han">寅</span><span class="read">인</span></div><div class="meaning">호랑이</div><div class="ilgan-tag">일간</div></div>
+      <div class="saju-cell"><div class="lab">월</div><div class="gan-block o-hwa"><span class="han">丙</span><span class="read">병</span></div><div class="meaning">햇빛</div><div class="ji-block o-hwa"><span class="han">午</span><span class="read">오</span></div><div class="meaning">말</div></div>
+      <div class="saju-cell jaeseong"><div class="lab">년</div><div class="gan-block o-to"><span class="han">戊</span><span class="read">무</span></div><div class="meaning">큰 산</div><div class="ji-block o-to"><span class="han">辰</span><span class="read">진</span></div><div class="meaning">용</div></div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="lb">◇ 한 줄 결론</div>
+    <p class="body">큰 변동이 사주의 <strong>본질적인 결</strong>이에요. 안정 추구하면 답답하고, <strong>흐름을 타면 풀립니다</strong>. 한 해 안에 들어왔다 나갔다 폭이 큰 사주.</p>
+    <p class="ref">— 재물 점수 78점 · 사업형 (편재 우세) · 평생 두 번의 큰 사이클</p>
+  </div>
+
+  <!-- 재물 archetype 뱃지 (8 archetype 中 본인 강조 = 사업형) -->
+  <div class="archetype-card">
+    <div class="lb">◇ 당신의 재물 결</div>
+    <div class="archetype-hero">
+      <div class="ar-glyph"><span class="han">業</span></div>
+      <div class="ar-body">
+        <div class="ar-name">사업형 · 식신생재</div>
+        <div class="ar-tag">편재 우세 + 식신 강 — 만들어서 돈 만드는 결</div>
+        <div class="ar-desc">변동성 큰 사주예요. 직장에 매여 있으면 답답하고 <strong>본인이 만들어 굴리는 자리</strong>에서 풀립니다. 큰 사이클 두 번이 평생 흐름.</div>
+      </div>
+    </div>
+    <div class="ar-others-lb">사주마다 결이 다릅니다 — 7가지 다른 archetype</div>
+    <div class="ar-chips">
+      <span class="ar-chip"><span class="han">安</span>안정형</span>
+      <span class="ar-chip"><span class="han">急</span>재다신약</span>
+      <span class="ar-chip"><span class="han">弱</span>벌이 약형</span>
+      <span class="ar-chip"><span class="han">早</span>초년부</span>
+      <span class="ar-chip"><span class="han">兩</span>양다리형</span>
+      <span class="ar-chip"><span class="han">劫</span>비겁누수</span>
+      <span class="ar-chip"><span class="han">藝</span>창작·식상생재</span>
+    </div>
+  </div>
+
+  <main class="body">
+
+    <!-- §A 재물 점수 + 재성 분포 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION A</span>
+        <span class="sec-title">재성 분포 — 정재 vs 편재<span class="han">財星</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">정재(안정 수입) vs 편재(변동 수입) 어느 쪽이 더 강한지</div>
+
+      <div class="score-row">
+        <div class="score-ring">
+          <svg viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="wealthGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#B8965A"/>
+                <stop offset="100%" stop-color="#8C6D3D"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="60" cy="60" r="50"/>
+            <circle class="ring-fill" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="69.12"/>
+          </svg>
+          <div class="num-c">
+            <div class="num">78<small>/100</small></div>
+            <div class="lb">재물 점수</div>
+          </div>
+        </div>
+        <div class="score-txt">
+          <div class="grade">편재 우세 — 변동·사업형</div>
+          <div class="desc">변동 수입(편재)이 안정 수입(정재)보다 <strong>5배 강한 결</strong>이에요. 흐름 타면 큰돈 들어오지만, 안정 추구하면 <u>오히려 답답</u>한 사주입니다.</div>
+        </div>
+      </div>
+
+      <div class="jaeseong-bars">
+        <div class="lb">◇ 십성 분포 (재성 + 식상 + 비겁 + 인성)</div>
+        <div class="jb-row">
+          <div class="nm jeong">정재<small>안정 수입</small></div>
+          <div class="trk"><div class="fi jeong" style="width:8%"></div></div>
+          <div class="vl">8%</div>
+        </div>
+        <div class="jb-row">
+          <div class="nm pyeon">편재<small>변동 수입</small></div>
+          <div class="trk"><div class="fi pyeon" style="width:42%"></div></div>
+          <div class="vl">42%</div>
+        </div>
+        <div class="jb-row">
+          <div class="nm sik">식상<small>생산력</small></div>
+          <div class="trk"><div class="fi sik" style="width:25%"></div></div>
+          <div class="vl">25%</div>
+        </div>
+        <div class="jb-row">
+          <div class="nm bi">비겁<small>경쟁자</small></div>
+          <div class="trk"><div class="fi bi" style="width:15%"></div></div>
+          <div class="vl">15%</div>
+        </div>
+        <div class="jb-row">
+          <div class="nm in">인성<small>도움·자원</small></div>
+          <div class="trk"><div class="fi in" style="width:10%"></div></div>
+          <div class="vl">10%</div>
+        </div>
+      </div>
+
+      <p>큰 나무(갑목) 일간 + <strong>편재 + 식신이 함께 강한 사주</strong>예요. "식신생재" — 본인이 만들어서(식신) 돈 만드는(편재) 결. 갑목은 자라는 결이라 <u>한 자리에 머물면 답답</u>하고 흐름·확장 자리에서 풀립니다.</p>
+
+      <p>경쟁자(비겁) 15%에 도움·자원(인성)이 10%로 약한 편이에요. <strong>혼자 헤쳐가야 하는 사주</strong>라는 뜻 — 도와주는 사람 기대보다 본인 흐름·생산력으로 풀어내는 결입니다.</p>
+    </section>
+
+    <!-- §B 돈 출처 4분면 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION B</span>
+        <span class="sec-title">돈은 어디에서 들어오는가<span class="han">來源</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 보여주는 4가지 돈 출처 비중</div>
+
+      <div class="source-card">
+        <div class="lb">◇ 돈 출처 4분면</div>
+        <div class="source-bars">
+          <div class="source-bar b-side">
+            <div class="top-row">
+              <div class="ic">副</div>
+              <div class="nm">사이드<small>본인 사업·콘텐츠·납품</small></div>
+              <div class="pct">50<small>%</small></div>
+            </div>
+            <div class="trk"><div class="fi" style="width:50%"></div></div>
+          </div>
+          <div class="source-bar b-main">
+            <div class="top-row">
+              <div class="ic">本</div>
+              <div class="nm">본업<small>고정 매장·기본 매출</small></div>
+              <div class="pct">25<small>%</small></div>
+            </div>
+            <div class="trk"><div class="fi" style="width:25%"></div></div>
+          </div>
+          <div class="source-bar b-rel">
+            <div class="top-row">
+              <div class="ic">緣</div>
+              <div class="nm">관계<small>단골·VIP·소개</small></div>
+              <div class="pct">15<small>%</small></div>
+            </div>
+            <div class="trk"><div class="fi" style="width:15%"></div></div>
+          </div>
+          <div class="source-bar b-inv">
+            <div class="top-row">
+              <div class="ic">投</div>
+              <div class="nm">투자<small>자본·재투자</small></div>
+              <div class="pct">10<small>%</small></div>
+            </div>
+            <div class="trk"><div class="fi" style="width:10%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <p><strong>사이드(본인 사업)가 50%</strong>로 가장 큰 비중이에요. 안정형 사주는 본업이 60%인데, 사업형은 정반대 — 본업은 25%만, <u>본인이 만든 자리</u>에서 절반이 풀립니다. 카페·납품·콘텐츠·온라인 등 <strong>본인이 굴리는 영역</strong>이 메인.</p>
+
+      <p>관계(단골·VIP) 15%는 사업형의 핵심 자산이에요. 단골 1명 = 신규 5명 가치 — 사업형 사주는 <strong>관계가 곧 매출</strong>입니다. 다만 VIP 접대 누수도 같이 큰 시기가 있어요 (§D 참조).</p>
+    </section>
+
+    <!-- §C 12개월 재성 흐름 area chart -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION C</span>
+        <span class="sec-title">12개월 재성 흐름<span class="han">月運</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">언제 들어오고 언제 누수되는지 한 해 흐름</div>
+
+      <div class="area-chart">
+        <div class="lb">◇ 2026년 재성 곡선 (큰 변동 사주 — 진폭 ±50)</div>
+        <svg viewBox="0 0 360 130" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#B8965A" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#B8965A" stop-opacity="0.05"/>
+            </linearGradient>
+          </defs>
+          <!-- 평균선 -->
+          <line class="area-axis" x1="0" y1="65" x2="360" y2="65"/>
+          <!-- 사업형 큰 변동 곡선: 1·3·8월 peak / 6·11월 warn (진폭 큼) -->
+          <path class="area-bg" d="M 15 90 L 45 30 L 75 50 L 105 25 L 135 75 L 165 95 L 195 110 L 225 65 L 255 30 L 285 80 L 315 105 L 345 70 L 345 130 L 15 130 Z"/>
+          <path class="area-line" d="M 15 90 L 45 30 L 75 50 L 105 25 L 135 75 L 165 95 L 195 110 L 225 65 L 255 30 L 285 80 L 315 105 L 345 70"/>
+          <circle class="area-dot" cx="15" cy="90" r="3.5"/>
+          <circle class="area-dot peak" cx="45" cy="30" r="4.5"/>
+          <circle class="area-dot" cx="75" cy="50" r="3.5"/>
+          <circle class="area-dot peak" cx="105" cy="25" r="4.5"/>
+          <circle class="area-dot" cx="135" cy="75" r="3.5"/>
+          <circle class="area-dot" cx="165" cy="95" r="3.5"/>
+          <circle class="area-dot warn" cx="195" cy="110" r="4.5"/>
+          <circle class="area-dot" cx="225" cy="65" r="3.5"/>
+          <circle class="area-dot peak" cx="255" cy="30" r="4.5"/>
+          <circle class="area-dot" cx="285" cy="80" r="3.5"/>
+          <circle class="area-dot warn" cx="315" cy="105" r="4.5"/>
+          <circle class="area-dot" cx="345" cy="70" r="3.5"/>
+          <text class="area-marker" x="45" y="20" text-anchor="middle">2월 ★</text>
+          <text class="area-marker" x="105" y="15" text-anchor="middle">4월 ★★</text>
+          <text class="area-marker" x="195" y="125" text-anchor="middle">7월 ▼</text>
+          <text class="area-marker" x="255" y="20" text-anchor="middle">9월 ★</text>
+          <text class="area-marker" x="315" y="120" text-anchor="middle">11월 ▼</text>
+        </svg>
+        <div class="month-strip">
+          <div class="m">1</div>
+          <div class="m peak">2</div>
+          <div class="m">3</div>
+          <div class="m peak">4</div>
+          <div class="m">5</div>
+          <div class="m">6</div>
+          <div class="m warn">7</div>
+          <div class="m">8</div>
+          <div class="m peak">9</div>
+          <div class="m">10</div>
+          <div class="m warn">11</div>
+          <div class="m">12</div>
+        </div>
+      </div>
+
+      <div class="month-call">
+        <div class="mc-row peak">
+          <div class="when">2 · 4 · 9월</div>
+          <div class="ds"><strong>큰 매출 시기</strong>. 본인이 만든 자리에서 돈이 크게 들어오는 흐름. <u>사업 확장·신규 라인·큰 계약</u>은 이 시기에 추진하세요.</div>
+        </div>
+        <div class="mc-row warn">
+          <div class="when">7월 · 11월</div>
+          <div class="ds"><strong>역방향 시기</strong>. 매출 떨어지면서 동시에 큰 지출(임대료·세금·인건비) 겹쳐요. 7월은 단기 자금 부족 위험 — 미리 현금 확보 필수.</div>
+        </div>
+      </div>
+
+      <p>4월(가장 큰 peak)은 <strong>식신·편재가 동시 활성</strong>되는 시기 — 만들어서 파는 흐름이 가장 풀리는 자리예요. 안정형 사주가 한 해 ±20 진폭이라면 사업형은 ±50 진폭. <u>같은 해 안에 매출 차이 2배 이상</u> 날 수 있습니다.</p>
+
+      <p>7월·11월 누수는 사업형 사주의 <strong>근본 패턴</strong>이에요. 한 해 두 번 — 미리 알고 현금 확보해두면 위기가 기회로 바뀝니다. 11월 누수 후 12월 회복은 다음 해 시작의 발판.</p>
+    </section>
+
+    <!-- §D 소비 패턴 + 지출 함정 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION D</span>
+        <span class="sec-title">소비 패턴 + 지출 함정<span class="han">消費</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 가리키는 소비 결 + 누수 시기</div>
+
+      <div class="spend-grid">
+        <div class="spend-card">
+          <div class="lb">◇ 소비 카테고리 분포 (사주 기반 추정)</div>
+          <div class="spend-row">
+            <div class="nm">사업 운영<small>임대·인건·재료</small></div>
+            <div class="trk"><div class="fi" style="width:42%"></div></div>
+            <div class="vl">42%</div>
+          </div>
+          <div class="spend-row">
+            <div class="nm">필수<small>주거·식·교통</small></div>
+            <div class="trk"><div class="fi" style="width:25%"></div></div>
+            <div class="vl">25%</div>
+          </div>
+          <div class="spend-row">
+            <div class="nm">VIP·관계<small>접대·선물·소개</small></div>
+            <div class="trk"><div class="fi warn" style="width:18%"></div></div>
+            <div class="vl">18%</div>
+          </div>
+          <div class="spend-row">
+            <div class="nm">재투자<small>확장·자기계발</small></div>
+            <div class="trk"><div class="fi" style="width:15%"></div></div>
+            <div class="vl">15%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trap-list">
+        <div class="trap-row">
+          <div class="ic">!</div>
+          <div>
+            <div class="ti">사업 확장 욕심 — 사업형 1순위 함정</div>
+            <div class="ds">갑목 일간 + 편재 강은 <strong>한 번에 너무 키우는 결</strong>이에요. 매출 좋을 때 신규 매장·라인업 늘리다 다음 시기 매출 빠지면 자금 경색 — <u>한 단계만 늘리고 멈추는 습관</u>이 생존 핵심.</div>
+          </div>
+        </div>
+        <div class="trap-row">
+          <div class="ic">!</div>
+          <div>
+            <div class="ti">VIP 접대 18% — 관계 누수</div>
+            <div class="ds">단골이 매출 핵심이지만 <strong>접대·선물 비용이 매출보다 크게 새는 시기</strong>가 있어요. 사업형은 "받을 사람"보다 "베풀 사람"이 더 많은 결 — 월별 예산 정해두기.</div>
+          </div>
+        </div>
+        <div class="trap-row">
+          <div class="ic">!</div>
+          <div>
+            <div class="ti">신용·외상 — 받지 못한 매출</div>
+            <div class="ds">사업형 사주는 매출이 커도 <strong>실제 현금이 늦게 들어오는 결</strong>이에요. 외상·후불·미수금 누적되면 7월·11월 누수 시기 자금 경색 직격탄. <u>현금 위주 거래 비중을 60% 이상 유지</u>하세요.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §E 투자 적기 + 자리 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION E</span>
+        <span class="sec-title">투자 적기와 자리<span class="han">適期</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">언제 · 어떤 자리에서 돈이 머무는지</div>
+
+      <div class="timing-card">
+        <div class="lb">◇ 평생 재물 흐름 — 3단계</div>
+        <div class="timing-stages">
+          <div class="timing-stage peak">
+            <div class="when-row"><span class="when">20대 후반 ~ 30대 초반</span><span class="duration">1차 사이클 ★</span></div>
+            <div class="ti">시작·확장의 첫 풀림</div>
+            <div class="ds">사업형 사주의 <strong>첫 큰 풀림</strong>이에요. 매출 빠르게 올라가는 시기 — 다만 너무 일찍 큰 사업 벌이면 30대 중반 변곡 때 직격탄. <u>한 단계만 키우고 자본 비축</u>이 생존 핵심.</div>
+          </div>
+          <div class="timing-stage">
+            <div class="when-row"><span class="when">30대 중반 ~ 40대 초반</span><span class="duration">변곡 시기</span></div>
+            <div class="ti">큰 결정 + 첫 위기 시기</div>
+            <div class="ds">사업형 사주가 <strong>한 번 흔들리는 시기</strong>예요. 무너지면 다시 시작하는 패턴 — 사주에 박힌 결이라 부끄러워할 일 X. 이 시기를 버티면 다음 사이클이 더 큽니다.</div>
+          </div>
+          <div class="timing-stage peak">
+            <div class="when-row"><span class="when">40대 후반 ~ 50대 중반</span><span class="duration">2차 사이클 ★★</span></div>
+            <div class="ti">두 번째 풀림 — 진짜 적기</div>
+            <div class="ds">사업형 사주의 <strong>진짜 큰 풀림</strong>이에요. 1차 사이클 경험 + 변곡 학습이 합쳐져 첫 사이클의 2~3배 규모. 이 시기에 만든 자산이 평생 흐름의 결실.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spot-grid">
+        <div class="spot-cell">
+          <div class="glyph">火</div>
+          <div class="lb">불이 타오르는 자리</div>
+          <div class="ds">열정·확장·사람 모이는 영역에서 풀리는 흐름</div>
+        </div>
+        <div class="spot-cell">
+          <div class="glyph">風</div>
+          <div class="lb">바람이 부는 자리</div>
+          <div class="ds">트렌드·유행·새 흐름 빠르게 잡는 영역</div>
+        </div>
+        <div class="spot-cell">
+          <div class="glyph">商</div>
+          <div class="lb">장사하는 자리</div>
+          <div class="ds">사람과 사람을 잇고 가치를 파는 영역</div>
+        </div>
+        <div class="spot-cell">
+          <div class="glyph">動</div>
+          <div class="lb">움직이는 자리</div>
+          <div class="ds">한곳에 머물지 않고 확장·이동·연결되는 영역</div>
+        </div>
+      </div>
+
+      <p>네 자리 모두 <strong>"움직임·열정·연결·확장"</strong>을 가리켜요. 사주는 <u>한 자리 안정형</u>이 아니라 흐름을 타고 굴리는 결을 보여줍니다. 1차 사이클부터 2차까지 — <strong>변곡을 두려워하지 마세요</strong>. 그게 사주에 박힌 본인 길입니다.</p>
+    </section>
+
+    <!-- §F 결단 + 한 문장 -->
+    <section class="section open">
+      <button class="section-header" aria-expanded="true">
+        <span class="sec-num">SECTION F</span>
+        <span class="sec-title">한 줄 결단<span class="han">一語</span></span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sec-lead">사주가 가리키는 재물 결단</div>
+
+      <div class="verdict-card">
+        <div class="lb">◇ 결단 한 줄</div>
+        <div class="ti">흐름을 <strong>두려워 마세요</strong>. 안정형 사주가 아닙니다 — 한 해 ±50 진폭이 본인의 결. 1차 사이클은 학습, <strong>2차 사이클이 진짜 적기</strong>입니다.</div>
+        <div class="ds">사주는 본인을 직장에 매어두라 가리키지 않아요. 그 길은 본인의 흐름이 아닙니다. <strong>본인의 자리</strong>는 만들어서 굴리고 흐름 타는 결 — 변곡을 받아들이면 두 번째 사이클이 평생의 결실이 됩니다.</div>
+      </div>
+
+      <div class="pullquote">재물은 사주가 정해주는 게 아니라 <strong>본인 흐름을 따라 모이는 것</strong>이에요. 본인 사주의 결은 — 만들어서 + 흐름 타고 + 변곡 견디기. 한 자리에 안주하지 마세요. <strong>두 번의 큰 사이클</strong>이 평생의 결실 — 첫 사이클의 변곡을 견디면 두 번째가 옵니다.</div>
+    </section>
+  </main>
+
+  <!-- Cross-topic CTA: 재물 → 사업 (사업형 사주는 자연 페어 강력) -->
+  <button type="button" class="cross-cta">
+    <div class="icn">業</div>
+    <div>
+      <div class="ti">사업운으로 더 깊이 — 두 사이클 전략</div>
+      <div class="sb">사업형 사주에 가장 필요한 결 — 1차 사이클 확장 시기·변곡 회피법·2차 사이클 폭발 시점·동업 적성까지 사업운에서 정밀 분석.</div>
+    </div>
+    <div class="arrow">→</div>
+  </button>
+
+  <button class="upsell">
+    <div class="lb">PREMIUM</div>
+    <h3>재물 + 9개 결 한 번에 보는 종합사주</h3>
+    <p>10가지 결을 한 자리에 — 재물·직업·건강·연애·결혼 등 평생 흐름과 변곡을 펼쳐 봅니다.</p>
+    <span class="cta">종합사주로 보기 →<span class="cost">10운</span></span>
+  </button>
+
+  <div class="actions">
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </button>
+    <button type="button" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </button>
+  </div>
+
+  <div class="disclaimer">사주 풀이는 삶의 결을 살피는 참고 자료입니다.<br>모든 결정은 본인의 몫입니다.</div>
+</div>
+</body>
+</html>

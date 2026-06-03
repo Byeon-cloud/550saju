@@ -1,0 +1,155 @@
+{
+  "$schema": "https://design-tokens.org/schema/2024",
+  "$description": "JDS (Joon Design System) — 사주500 디자인 토큰 SSOT (2026-05-07)",
+  "$version": "1.0.0",
+  "$import_method": "Figma → Tokens Studio plugin → Import → JSON file",
+
+  "color": {
+    "$description": "브랜드·중립·오행·주제·확장 5계열 SSOT",
+
+    "brand": {
+      "gold": { "$value": "#B8965A", "$type": "color", "$description": "프라이머리 CTA · 골드" },
+      "gold-deep": { "$value": "#8C6D3D", "$type": "color", "$description": "호버/프레스" },
+      "gold-soft": { "$value": "#B8965A1A", "$type": "color", "$description": "alpha 0.10 배경" },
+      "gold-line": { "$value": "#B8965A47", "$type": "color", "$description": "alpha 0.28 라인" },
+      "highlight": { "$value": "#F4D166", "$type": "color", "$description": "strong 형광펜 (alpha 0.55 적용)" }
+    },
+
+    "neutral": {
+      "paper": { "$value": "#F8F5EE", "$type": "color", "$description": "크림 배경" },
+      "ink": { "$value": "#1A1A1A", "$type": "color", "$description": "본문 텍스트" },
+      "ink-soft": { "$value": "#3D3D3D", "$type": "color" },
+      "mute": { "$value": "#7A7269", "$type": "color", "$description": "부가 텍스트" },
+      "border": { "$value": "#E5DFD0", "$type": "color" },
+      "border-light": { "$value": "#E8E1D4", "$type": "color" },
+      "white": { "$value": "#FFFFFF", "$type": "color" }
+    },
+
+    "oheng": {
+      "$description": "오행 5색 — 사주 시각화 전용",
+      "wood": { "$value": "#2D8A4E", "$type": "color", "$description": "목 (木)" },
+      "fire": { "$value": "#D32F2F", "$type": "color", "$description": "화 (火)" },
+      "earth": { "$value": "#F57F17", "$type": "color", "$description": "토 (土)" },
+      "metal": { "$value": "#757575", "$type": "color", "$description": "금 (金)" },
+      "water": { "$value": "#1565C0", "$type": "color", "$description": "수 (水)" }
+    },
+
+    "topic": {
+      "$description": "10주제 SSOT 컬러 — 각 주제 페이지 hero·accent",
+      "love": { "$value": "#C88A95", "$type": "color", "$description": "緣 연애" },
+      "reunion": { "$value": "#D89A8A", "$type": "color", "$description": "復 재회" },
+      "marriage": { "$value": "#C97B95", "$type": "color", "$description": "婚 결혼" },
+      "wealth": { "$value": "#B8965A", "$type": "color", "$description": "財 재물" },
+      "exam": { "$value": "#5A6FA8", "$type": "color", "$description": "進 시험" },
+      "business": { "$value": "#A37A2E", "$type": "color", "$description": "業 사업" },
+      "career": { "$value": "#5A7CA8", "$type": "color", "$description": "官 직업" },
+      "health": { "$value": "#6FA08C", "$type": "color", "$description": "壽 건강" },
+      "move": { "$value": "#4F8A8B", "$type": "color", "$description": "移 이사" },
+      "study": { "$value": "#9C5A8A", "$type": "color", "$description": "學 공부" }
+    },
+
+    "extension": {
+      "$description": "5,000원 확장 콘텐츠 4종",
+      "daeun": { "$value": "#3B7A4B", "$type": "color", "$description": "대운" },
+      "monthly": { "$value": "#B5441F", "$type": "color", "$description": "월운" },
+      "compat": { "$value": "#9C5A8A", "$type": "color", "$description": "궁합" },
+      "tojung": { "$value": "#2F4B7C", "$type": "color", "$description": "토정비결" }
+    },
+
+    "semantic": {
+      "success": { "$value": "#2E7D32", "$type": "color" },
+      "warning": { "$value": "#B5441F", "$type": "color" },
+      "error": { "$value": "#D32F2F", "$type": "color" },
+      "info": { "$value": "#1565C0", "$type": "color" }
+    },
+
+    "deprecated": {
+      "$description": "🚫 사용 금지 (회귀 방지)",
+      "mustard-old": { "$value": "#B8941F", "$type": "color", "$description": "❌ 금지 — 구 머스타드" },
+      "gold-old": { "$value": "#C9A96E", "$type": "color", "$description": "❌ 금지 — 구 골드" },
+      "gold-vivid-old": { "$value": "#D4A843", "$type": "color", "$description": "❌ 금지 — 구 비비드" }
+    }
+  },
+
+  "typography": {
+    "$description": "Pretendard + Noto Serif KR (한자 전용)",
+    "font-family": {
+      "sans": { "$value": "Pretendard", "$type": "fontFamily" },
+      "serif": { "$value": "Noto Serif KR", "$type": "fontFamily", "$description": "한자 표기 전용" },
+      "mono": { "$value": "Menlo, Monaco, monospace", "$type": "fontFamily" }
+    },
+    "size": {
+      "$description": "60대 가독 floor: 11px 미만 금지",
+      "display": { "$value": "32px", "$type": "dimension" },
+      "h1": { "$value": "24px", "$type": "dimension" },
+      "h2": { "$value": "20px", "$type": "dimension" },
+      "h3": { "$value": "17px", "$type": "dimension" },
+      "body": { "$value": "15px", "$type": "dimension" },
+      "body-sm": { "$value": "13px", "$type": "dimension" },
+      "label": { "$value": "12px", "$type": "dimension" },
+      "caption": { "$value": "11px", "$type": "dimension", "$description": "최소 폰트 (floor)" }
+    },
+    "weight": {
+      "regular": { "$value": "400", "$type": "fontWeight" },
+      "medium": { "$value": "500", "$type": "fontWeight" },
+      "semibold": { "$value": "600", "$type": "fontWeight" },
+      "bold": { "$value": "700", "$type": "fontWeight" },
+      "extrabold": { "$value": "800", "$type": "fontWeight" }
+    },
+    "letter-spacing": {
+      "tight": { "$value": "-0.02em", "$type": "dimension" },
+      "normal": { "$value": "-0.01em", "$type": "dimension" },
+      "wide": { "$value": "0.05em", "$type": "dimension" }
+    }
+  },
+
+  "radius": {
+    "$description": "3-tier — 모든 카드는 이 4가지만",
+    "lg": { "$value": "8px", "$type": "dimension", "$description": "소형 chip / pill / button" },
+    "xl": { "$value": "12px", "$type": "dimension", "$description": "중형 미니카드" },
+    "2xl": { "$value": "16px", "$type": "dimension", "$description": "대형 카드 / hero" },
+    "full": { "$value": "9999px", "$type": "dimension", "$description": "원형 chip / 잔액 뱃지" }
+  },
+
+  "spacing": {
+    "0": { "$value": "0px", "$type": "dimension" },
+    "1": { "$value": "4px", "$type": "dimension" },
+    "2": { "$value": "8px", "$type": "dimension" },
+    "3": { "$value": "12px", "$type": "dimension" },
+    "4": { "$value": "16px", "$type": "dimension" },
+    "5": { "$value": "20px", "$type": "dimension" },
+    "6": { "$value": "24px", "$type": "dimension" },
+    "8": { "$value": "32px", "$type": "dimension" },
+    "10": { "$value": "40px", "$type": "dimension" },
+    "12": { "$value": "48px", "$type": "dimension" }
+  },
+
+  "container": {
+    "mobile-max": { "$value": "520px", "$type": "dimension", "$description": "모바일 퍼스트 max-width" },
+    "touch-target": { "$value": "44px", "$type": "dimension", "$description": "WCAG 2.1 AA 최소 터치" }
+  },
+
+  "shadow": {
+    "card": { "$value": "0 1px 3px rgba(0,0,0,0.03)", "$type": "shadow" },
+    "modal": { "$value": "0 0 80px rgba(0,0,0,.4)", "$type": "shadow" },
+    "ring": { "$value": "0 0 0 2px #B8965A", "$type": "shadow", "$description": "포커스 골드 링" }
+  },
+
+  "emphasis": {
+    "$description": "본문 강조 위계 3-tier (보일러플레이트 박멸 + 명리학 톤)",
+    "strong": {
+      "$description": "<strong> — 일상 결론 (한 문단 1~2회)",
+      "color": { "$value": "#A37A2E", "$type": "color" },
+      "highlight": { "$value": "rgba(244,209,102,0.55)", "$type": "color" }
+    },
+    "underline": {
+      "$description": "<u> — 시기·숫자·색·방위 (한 문단 0~2회)",
+      "color": { "$value": "#B8965A", "$type": "color" },
+      "thickness": { "$value": "2px", "$type": "dimension" }
+    },
+    "bold": {
+      "$description": "<b> — 한자 첫 등장",
+      "color": { "$value": "#1A1A1A", "$type": "color" }
+    }
+  }
+}

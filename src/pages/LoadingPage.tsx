@@ -13,9 +13,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSajuContext } from '@/contexts/SajuContext';
 import { generateReport } from '@/services/ai/reportGenerator';
-import { saveReport, generateId } from '@/services/storage/localStore';
+import { saveReport, generateId, refundBalance } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, JIJI_OHENG, OHENG_MAP } from '@/constants/oheng';
-import { REPORT_SECTIONS } from '@/constants/pricing';
+import { getHourBranch } from '@/utils/saju-format';
+import { REPORT_SECTIONS, getPremiumPrice } from '@/constants/pricing';
 import { LOADING_TIPS } from '@/constants/loadingTips';
 import type { OhengType } from '@/types/saju';
 
@@ -40,7 +41,7 @@ const ROTATING_COPY: Record<number, string[]> = {
   ],
   3: [
     '당신의 기질을 헤아리는 중…',
-    '대인관계의 결을 보고 있어요…',
+    '직업과 적성의 결을 보고 있어요…',
     '재물의 흐름을 추적 중…',
     '애정의 파동을 읽고 있어요…',
     '올해의 운을 가늠 중이에요…',
@@ -165,8 +166,10 @@ export function LoadingPage() {
                 setStage(3);
               },
               onDone: (result) => {
+                // ⚠️ 저장 id 와 이동 id 를 반드시 동일하게 (불일치 시 결과 못 찾고 home 이탈).
+                const rid = (result.reportId && String(result.reportId).trim()) || generateId();
                 saveReport({
-                  id: result.reportId || generateId(),
+                  id: rid,
                   name: sajuData!.input?.name || '나',
                   input: sajuData!.input as any,
                   sajuData: sajuData!,
@@ -176,7 +179,7 @@ export function LoadingPage() {
                   aiResult: { ...(result.content as any), tier: 'premium' as const },
                 });
                 import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
-                navigate(`/result/${result.reportId}`, { replace: true });
+                navigate(`/result/${rid}`, { replace: true });
                 streamSucceeded = true;
                 resolve();
               },
@@ -196,8 +199,10 @@ export function LoadingPage() {
       // 기본 경로 — callable generateReport (basic + premium 모두)
       try {
         const result = await generateReport(sajuData!, situation || undefined, reportType);
+        // ⚠️ 저장 id 와 이동 id 를 반드시 동일하게 (불일치 시 결과 못 찾고 home 이탈).
+        const rid = (result.reportId && String(result.reportId).trim()) || generateId();
         saveReport({
-          id: result.reportId || generateId(),
+          id: rid,
           name: sajuData!.input?.name || '나',
           input: sajuData!.input as any,
           sajuData: sajuData!,
@@ -210,13 +215,15 @@ export function LoadingPage() {
             : result.content,
         });
         import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
-        navigate(`/result/${result.reportId}`, { replace: true });
+        navigate(`/result/${rid}`, { replace: true });
       } catch (err) {
         console.warn('[LoadingPage] 서버 호출 실패:', err);
-        // ⚠️ 환불은 서버(Cloud Function)에서 처리됨 — 클라이언트 직접 환불 금지 (보안)
+        // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
+        // 2026-05-29 fix — 프리미엄 환불액 10 하드코딩 → SSOT 세일가(actualPrice). 세일 중 차감 5운인데 10운 환불되던 과지급 버그.
         // ⚠️ /result/local 폴백 절대 X — 옛날 legacy layout 노출 방지 (사용자 강력 요청)
-        // 에러 메시지만 표시 → 사용자가 직접 홈/입력으로 이동
-        setError('분석에 실패했어요. 잔액은 자동으로 복구돼요. 잠시 후 다시 시도해주세요.');
+        const refundAmount = reportType === 'premium' ? getPremiumPrice().actualPrice : 1;
+        refundBalance(refundAmount);
+        setError(`분석에 실패해서 ${refundAmount}운을 돌려드렸어요. 잠시 후 다시 시도해주세요.`);
       }
     }
 
@@ -315,7 +322,11 @@ export function LoadingPage() {
               <p className="text-caption text-text-hint mb-2">입력 시각</p>
               <p className="text-body text-text-secondary">
                 {sajuData.input.birthYear}년 {sajuData.input.birthMonth}월 {sajuData.input.birthDay}일
-                {sajuData.input.hasBirthTime ? ` ${sajuData.input.birthHour}시` : ''}
+                {sajuData.input.hasBirthTime
+                  ? ` ${(sajuData.input.birthMinute ?? 0) > 0
+                      ? `${sajuData.input.birthHour}시 ${sajuData.input.birthMinute}분`
+                      : (getHourBranch(sajuData.input.birthHour ?? 0, 0)?.ko ?? `${sajuData.input.birthHour}시`)}`
+                  : ''}
               </p>
               <div className="my-3 flex items-center justify-center gap-2">
                 <motion.div

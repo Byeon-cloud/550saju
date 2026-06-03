@@ -28,6 +28,8 @@
 //   - 디스클레이머·DailyRewardBadge·Flippable 정적화는 호출처 보존
 
 import type { ReactNode } from 'react';
+// 2026-05-29 H1 fix — 업셀 "10운" 하드코딩 → SSOT 세일가 (런칭세일 중 5운).
+import { getPremiumPrice } from '@/constants/pricing';
 
 /* ══════════════════════════════════════════════════════════════════
  * 공용 토큰
@@ -270,7 +272,7 @@ export function FreeUpsellCard({
   title,
   desc,
   ctaLabel = '사주 전체로',
-  costLabel = '10운',
+  costLabel,
   onTap,
 }: {
   title: string;
@@ -279,6 +281,13 @@ export function FreeUpsellCard({
   costLabel?: string;
   onTap?: () => void;
 }) {
+  // costLabel 미지정 시 SSOT 종합사주 가격(세일 반영). 세일 중: "10운 → 5운".
+  if (!costLabel) {
+    const pp = getPremiumPrice();
+    costLabel = pp.isOnSale && pp.salePrice != null
+      ? `${pp.regularPrice}운 → ${pp.salePrice}운`
+      : `${pp.regularPrice}운`;
+  }
   return (
     <button
       type="button"

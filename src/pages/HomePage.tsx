@@ -21,6 +21,9 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { HOME_REVIEWS } from '@/constants/reviews';
 import { listTopics } from '@/constants/topics'; // 10주제 SSOT (id/한자/컬러/딱지/path)
+import { getTopicPrice, getPremiumPrice } from '@/constants/pricing'; // 가격 SSOT (세일 자동 반영)
+import { hasFreePass } from '@/services/storage/dailyFreePass'; // 일일 무료 패스 (사용 후 1운 차감)
+import { getTopicTop5, type TopicTop5Cache } from '@/services/liveBest'; // LIVE BEST 실시간 집계 캐시
 // 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
 
 /* SSOT 디자인 토큰 — PC_인수인계 §5 기준 (2026-04-22) */
@@ -89,38 +92,67 @@ export function HomePage() {
 
   const displayName = name || '사용자';
   const todayStr = useMemo(() => getTodayStr(), []);
+  // 2026-05-28 PM — 일일 무료 패스 상태 (사용 후 "1운" 으로 전환)
+  const dailyFreeAvailable = useMemo(() => hasFreePass('daily'), []);
+  const dreamFreeAvailable = useMemo(() => hasFreePass('dream'), []);
   const reviewDoubled = useMemo(() => [...HOME_REVIEWS, ...HOME_REVIEWS], []);
 
+  // 2026-06-02 D3 — LIVE BEST 실시간 집계 캐시 (liveBestCache/top5). 데이터 충분하면 실랭킹, 아니면 폴백.
+  const [liveCache, setLiveCache] = useState<TopicTop5Cache | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getTopicTop5(1).then((c) => { if (alive) setLiveCache(c); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
   /**
-   * 지금 인기 Top 5 (2026-05-04 + UX 보강)
-   *  - 1위 = 종합사주(10운, 가장 비싼 상품) 고정
-   *  - 2~5위 = 날짜 시드 기반 셔플 (같은 날엔 같은 순서 · 새로고침해도 동일 → 거짓 들통 방지)
-   *  - 매일 자정 시드 변경 → 새로운 순위처럼 보임
-   *  - 트래픽 쌓이면 Cloud Function 실시간 집계로 교체 (Sprint 2 §11 D3)
+   * 지금 인기 Top 5
+   *  - 실데이터(liveBestCache) 있으면 → 실제 24h 조회수 랭킹 (정식 구현 · D3)
+   *  - 없거나 데이터 빈약하면 → 종합사주 1위 고정 + 날짜 시드 셔플 (폴백 · 거짓 들통 방지)
    */
   const liveBestTop5 = useMemo(() => {
     type LiveBestItem = { rank: number; label: string; sub: string; path: string; heat: 'HOT' | 'NEW' | '' };
-    const FIXED_TOP1: LiveBestItem = { rank: 1, label: '종합 사주', sub: '10섹션 깊이 풀이 · 10운', path: '/premium', heat: 'HOT' };
+    const premiumPriceInfo = getPremiumPrice();
+    const priceSubText = premiumPriceInfo.isOnSale && premiumPriceInfo.salePrice != null
+      ? `10섹션 깊이 풀이 · ${premiumPriceInfo.salePrice}운 (${premiumPriceInfo.saleBadge})`
+      : `10섹션 깊이 풀이 · ${premiumPriceInfo.regularPrice}운`;
+
+    // id → 표시 정보 (서버 랭킹 id 와 1:1 매핑 · recordTopicView 화이트리스트와 동일 키)
+    const REGISTRY: Record<string, Omit<LiveBestItem, 'rank'>> = {
+      premium:  { label: '종합 사주',    sub: priceSubText,                path: '/premium',          heat: 'HOT' },
+      daily:    { label: '오늘의 운세',   sub: '매일 1회 무료',            path: '/daily',            heat: 'HOT' },
+      wealth:   { label: '재물운',        sub: '돈·실리·재물 흐름',        path: '/topic/wealth',     heat: 'HOT' },
+      love:     { label: '연애운',        sub: '만남·관계·인연 흐름',      path: '/topic/love',       heat: '' },
+      dream:    { label: '꿈 해몽',       sub: '오늘 꾼 꿈의 의미',        path: '/dream',            heat: '' },
+      marriage: { label: '결혼운',        sub: '인연 시기와 배우자 결',    path: '/topic/marriage',   heat: '' },
+      career:   { label: '직업운',        sub: '커리어·승진·평생 결',      path: '/topic/career',     heat: '' },
+      reunion:  { label: '재회운',        sub: '헤어진 사람과의 흐름',      path: '/topic/reunion',    heat: 'NEW' },
+      health:   { label: '건강운',        sub: '몸·마음 흐름과 주의 시기',  path: '/topic/health',     heat: '' },
+      study:    { label: '학업운',        sub: '집중·시험·합격 흐름',      path: '/topic/study',      heat: '' },
+      exam:     { label: '합격·이직운',   sub: '시험·이직 결정 시기',      path: '/topic/exam',       heat: 'HOT' },
+      business: { label: '사업운',        sub: '창업·자영업 흐름과 시기',  path: '/topic/business',   heat: '' },
+      move:     { label: '이사·이동운',   sub: '이사·이동 길흉 방향',      path: '/topic/move',       heat: '' },
+    };
+
+    // ── 실데이터 랭킹 (조회수 ≥3 주제 확보 시) ──
+    if (liveCache && Array.isArray(liveCache.ids)) {
+      const realIds = liveCache.ids.filter((id) => REGISTRY[id]).slice(0, 5);
+      if (realIds.length >= 3) {
+        return realIds.map((id, i) => ({ rank: i + 1, ...REGISTRY[id] }));
+      }
+    }
+
+    // ── 폴백: 종합사주 1위 고정 + 날짜 시드 셔플 ──
+    const FIXED_TOP1: LiveBestItem = { rank: 1, ...REGISTRY.premium };
     const POOL: Omit<LiveBestItem, 'rank'>[] = [
-      { label: '오늘의 운세',   sub: '매일 1회 무료',         path: '/daily',          heat: 'HOT' },
-      { label: '재물운',         sub: '돈·실리·재물 흐름',     path: '/topic/wealth',   heat: 'HOT' },
-      { label: '연애운',         sub: '만남·관계·인연 흐름',   path: '/topic/love',     heat: '' },
-      { label: '대운 흐름',      sub: '60년 인생 큰 강줄기',   path: '/daeun',          heat: 'NEW' },
-      { label: '꿈 해몽',        sub: '오늘 꾼 꿈의 의미',     path: '/dream',          heat: '' },
-      { label: '결혼운',         sub: '인연 시기와 배우자 결', path: '/topic/marriage', heat: '' },
-      { label: '직업운',         sub: '커리어·승진·평생 결',   path: '/topic/career',   heat: '' },
-      { label: '재회운',         sub: '헤어진 사람과의 흐름',   path: '/topic/reunion',  heat: 'NEW' },
-      { label: '월별 운세',      sub: '12개월 좋은 달·조심할 달', path: '/monthly',     heat: '' },
-      { label: '토정비결',       sub: '주역 64괘로 한 해',     path: '/tojung',         heat: '' },
+      REGISTRY.daily, REGISTRY.wealth, REGISTRY.love, REGISTRY.dream, REGISTRY.marriage,
+      REGISTRY.career, REGISTRY.reunion, REGISTRY.health, REGISTRY.study, REGISTRY.exam,
+      REGISTRY.business, REGISTRY.move,
     ];
-    // 날짜 기반 시드 셔플 — 같은 날 새로고침 시 동일 순서 보장 (거짓 들통 방지)
     const today = new Date().toISOString().slice(0, 10);
     let seed = 0;
     for (let i = 0; i < today.length; i++) seed = (seed * 31 + today.charCodeAt(i)) % 2147483647;
-    const rng = () => {
-      seed = (seed * 9301 + 49297) % 233280;
-      return seed / 233280;
-    };
+    const rng = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
     const shuffled = [...POOL];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
@@ -128,7 +160,7 @@ export function HomePage() {
     }
     const rest: LiveBestItem[] = shuffled.slice(0, 4).map((p, i) => ({ ...p, rank: i + 2 }));
     return [FIXED_TOP1, ...rest];
-  }, []);
+  }, [liveCache]);
 
   const go = (path: string) => () => navigate(path);
   // 프리미엄 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
@@ -139,24 +171,8 @@ export function HomePage() {
   return (
     <div style={{ background: C.paper, minHeight: '100vh', paddingBottom: 32 }}>
 
-      {/* ─── [00] ProfileSwitcher ─── */}
-      <button
-        type="button"
-        onClick={() => hasProfile ? navigate('/storage') : navigate('/input')}
-        className="mx-4 mt-3 w-[calc(100%-32px)] flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl"
-        style={{ background: C.goldSoft }}
-        aria-label={hasProfile ? '프로필 전환' : '사주 입력하기'}
-      >
-        <span className="text-[11.5px] font-medium" style={{ color: C.inkSoft }}>
-          {hasProfile ? '지금 보는 사주 →' : '처음 시작하기 →'}
-        </span>
-        <span className="flex-1 text-left text-sm font-bold truncate" style={{ color: C.ink }}>
-          {hasProfile ? displayName : '사주를 입력하고 시작하세요'}
-        </span>
-        <span className="text-xs" style={{ color: C.goldDark }}>▼</span>
-      </button>
-
       {/* ─── [01] Pillar 1 · 오늘의 운세 ─── */}
+      {/* 2026-05-28 PM — 상단 ProfileSwitcher 제거 (준기 지시). 각 콘텐츠 랜딩에서 프로필 선택 가능하므로 중복 UI. */}
       <motion.button
         type="button"
         whileTap={{ scale: 0.99 }}
@@ -171,7 +187,7 @@ export function HomePage() {
         <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
           style={{ background: 'rgba(248,245,238,0.18)', color: C.paper, backdropFilter: 'blur(8px)' }}>
           <span className="w-1 h-1 rounded-full" style={{ background: C.goldShimmer, boxShadow: '0 0 0 2px rgba(232,217,184,0.25)' }} />
-          오늘 1회 무료
+          {dailyFreeAvailable ? '오늘 1회 무료' : '1운'}
         </div>
         <div className="text-[12px] font-medium" style={{ opacity: 0.85 }}>{todayStr}</div>
         <div className="mt-3">
@@ -207,7 +223,7 @@ export function HomePage() {
         <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
           style={{ background: 'rgba(248,245,238,0.18)', color: C.paper, backdropFilter: 'blur(8px)' }}>
           <span className="w-1 h-1 rounded-full" style={{ background: C.goldShimmer }} />
-          오늘 1회 무료
+          {dreamFreeAvailable ? '오늘 1회 무료' : '1운'}
         </div>
         <h2 className="mt-7 text-[26px] font-extrabold leading-[1.28] tracking-[-0.02em]" style={{ fontFamily: SERIF }}>
           어젯밤 꿈,<br />내 사주로 풀어드려요
@@ -235,16 +251,39 @@ export function HomePage() {
           background: `radial-gradient(ellipse at 85% 30%, rgba(232,217,184,0.22) 0%, transparent 55%),
                        radial-gradient(ellipse at 10% 90%, rgba(184,150,90,0.18) 0%, transparent 55%)`,
         }} />
-        <div className="flex items-center gap-1.5 relative z-10">
+        {(() => {
+          const premium = getPremiumPrice();
+          return (
+        <div className="flex items-center gap-1.5 relative z-10 flex-wrap">
           <span className="text-[10.5px] font-extrabold px-2.5 py-1 rounded-full tracking-[0.05em]"
             style={{ background: `linear-gradient(135deg, ${C.goldShimmer}, ${C.gold})`, color: C.ink }}>
             PREMIUM
           </span>
-          <span className="text-[11px] font-bold px-2 py-1 rounded-full"
-            style={{ color: C.goldShimmer, border: '1px solid rgba(232,217,184,0.4)' }}>
-            10운
-          </span>
+          {/* 2026-05-28 PM — 종합사주 10→5운 런칭 세일 (~2026-06-15) */}
+          {premium.isOnSale && premium.salePrice != null ? (
+            <>
+              <span className="text-[11px] font-bold px-2 py-1 rounded-full"
+                style={{ color: 'rgba(248,245,238,0.55)', border: '1px solid rgba(232,217,184,0.25)', textDecoration: 'line-through' }}>
+                {premium.regularPrice}운
+              </span>
+              <span className="text-[12px] font-extrabold px-2.5 py-1 rounded-full"
+                style={{ color: C.ink, background: C.goldShimmer }}>
+                {premium.salePrice}운
+              </span>
+              <span className="text-[10px] font-extrabold px-2 py-1 rounded-full"
+                style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', letterSpacing: '0.04em' }}>
+                {premium.saleBadge} · 6월 15일까지
+              </span>
+            </>
+          ) : (
+            <span className="text-[11px] font-bold px-2 py-1 rounded-full"
+              style={{ color: C.goldShimmer, border: '1px solid rgba(232,217,184,0.4)' }}>
+              {premium.regularPrice}운
+            </span>
+          )}
         </div>
+          );
+        })()}
         <span className="absolute right-[-8px] top-[14px] text-[148px] font-black leading-none pointer-events-none"
           style={{ color: C.gold, opacity: 0.12, fontFamily: SERIF }}>命</span>
         <h2 className="mt-6 text-[24px] font-extrabold leading-[1.3] tracking-[-0.01em] relative" style={{ fontFamily: SERIF }}>
@@ -268,12 +307,17 @@ export function HomePage() {
           </span>
           <span className="inline-flex items-center gap-1 text-[13px] font-bold px-4 py-2 rounded-full"
             style={{ background: C.goldShimmer, color: C.ink }}>
-            10운으로 시작 →
+            {(() => {
+              const p = getPremiumPrice();
+              return `${p.actualPrice}운으로 시작 →`;
+            })()}
           </span>
         </div>
       </motion.button>
 
-      {/* ─── [05] 더 알아볼 주제 · 확장 4종 ─── */}
+      {/* ─── [05] 더 알아볼 주제 · 확장 4종 (대운/월운/궁합/토정) — 2026-05-07 출시 후 공개 예정 (현재 숨김, 코드 보존) ─── */}
+      {false && (
+      <>
       <div className="mx-4 mt-6 flex items-baseline justify-between">
         <h3 className="text-[17px] font-bold tracking-[-0.01em]" style={{ color: C.ink, fontFamily: SERIF }}>
           더 알아볼 주제
@@ -310,20 +354,23 @@ export function HomePage() {
           </motion.button>
         ))}
       </div>
+      </>
+      )}
 
       {/* ─── [04] 궁금한 주제 하나, 깊게 · 주제 10종 가로 스크롤 (2026-05-04 swap: DEEP DIVE 위로) ─── */}
       <div className="mx-4 mt-9">
         <div className="flex items-baseline gap-2">
           <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>DEEP DIVE</span>
           <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
-          <span className="text-[10.5px] font-bold" style={{ color: C.gray500 }}>10주제 · 1운씩</span>
+          {/* 2026-05-28 PM — 가격 안내 (1운 / 재회운만 3운→1운 세일) */}
+          <span className="text-[10.5px] font-bold" style={{ color: C.goldDark }}>주제당 1운</span>
         </div>
         <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
           진짜 궁금한 한 가지, <span style={{ color: C.goldHi }}>깊게 파보세요</span>
         </h2>
       </div>
       <p className="mx-4 mt-2 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>
-        연애·재회·결혼·재물·합격이직·사업·건강·이사·학업·직업 — <strong style={{ color: C.ink }}>한 주제만 1운</strong>으로 끝까지 풀어드려요.
+        연애·재회·결혼·재물·합격이직·사업·건강·이사·학업·직업 — <strong style={{ color: C.ink }}>궁금한 한 가지</strong>를 끝까지 풀어드려요.
       </p>
       {/* 2026-05-04 우측 화살표 button — 60대+ 가로 스크롤 affordance
           2026-05-05 fix: 좌측 버튼 제거 (카드 가림 문제) · 우측 버튼만 유지 (initial affordance) + 우측 끝 도달 시 fade gradient 로 알림 */}
@@ -353,13 +400,15 @@ export function HomePage() {
           }}
         >
           {/* 10주제 SSOT 소비 — @/constants/topics (순서/한자/컬러/딱지/subCopy/path 모두 SSOT) */}
-          {listTopics().map((t) => (
+          {listTopics().map((t) => {
+            const pricing = getTopicPrice(t.id);
+            return (
             <motion.button
               key={t.id}
               type="button"
               whileTap={{ scale: 0.97 }}
               onClick={go(t.path)}
-              className="relative min-w-[148px] h-[168px] rounded-[16px] px-4 py-4 text-left overflow-hidden"
+              className="relative min-w-[148px] h-[180px] rounded-[16px] px-4 py-4 text-left overflow-hidden"
               style={{
                 background: '#FFFFFF',
                 border: `1px solid ${C.grayLine}`,
@@ -395,12 +444,36 @@ export function HomePage() {
                   {t.subCopy}
                 </p>
               </div>
-              <span className="absolute bottom-3 left-4 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
-                style={{ color: C.goldDark, background: C.goldSoft }}>
-                1운
-              </span>
+              {/* 2026-05-28 PM — 가격 chip (좌하단). 세일 토픽은 strike + sale badge */}
+              <div className="absolute left-3 bottom-3 right-3 flex items-center gap-1.5">
+                {pricing.isOnSale && pricing.salePrice != null ? (
+                  <>
+                    <span className="text-[10px]" style={{ color: C.gray500, textDecoration: 'line-through' }}>
+                      {pricing.regularPrice}운
+                    </span>
+                    <span className="text-[12px] font-extrabold" style={{ color: t.color }}>
+                      {pricing.salePrice}운
+                    </span>
+                    <span
+                      className="text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-[4px]"
+                      style={{
+                        background: 'rgba(244,209,102,0.40)',
+                        color: '#8C6D3D',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {pricing.saleBadge}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[12px] font-extrabold" style={{ color: t.color }}>
+                    {pricing.regularPrice}운
+                  </span>
+                )}
+              </div>
             </motion.button>
-          ))}
+            );
+          })}
           <div className="min-w-[16px]" />
         </div>
         </div>
@@ -633,7 +706,7 @@ export function HomePage() {
           사주500
         </div>
         <div className="mt-1 text-[11.5px]" style={{ color: C.gray500 }}>
-          무료로 시작 · 필요한 만큼 1운
+          무료로 시작 · 필요한 만큼만
         </div>
         <div className="mt-3 flex items-center justify-center gap-3 text-[11px]"
           style={{ color: C.gray500 }}>

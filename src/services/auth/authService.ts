@@ -35,7 +35,14 @@ const kakaoProvider = new OAuthProvider('oidc.kakao');
 // 네이버 — Firebase OpenID Connect (프로바이더 ID: oidc.naver)
 const naverProvider = new OAuthProvider('oidc.naver');
 
-export type WebLoginProvider = 'google' | 'kakao' | 'naver';
+// Apple — Firebase OAuth (프로바이더 ID: apple.com)
+// Service ID 미설정 시 Firebase Console 에러 → catch 단에서 친절 메시지 노출
+const appleProvider = new OAuthProvider('apple.com');
+appleProvider.addScope('email');
+appleProvider.addScope('name');
+appleProvider.setCustomParameters({ locale: 'ko_KR' });
+
+export type WebLoginProvider = 'google' | 'kakao' | 'naver' | 'apple';
 
 /**
  * 로그인 — 플랫폼 자동 분기
@@ -55,6 +62,7 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
     google: googleProvider,
     kakao: kakaoProvider,
     naver: naverProvider,
+    apple: appleProvider,
   };
 
   try {
@@ -90,8 +98,7 @@ export async function checkRedirectResult(): Promise<User | null> {
 /** 앱인토스 토스 로그인 */
 async function signInWithToss(): Promise<User> {
   try {
-    const sdkName = '@apps-in-toss/' + 'web-framework';
-    const { appLogin } = await import(/* @vite-ignore */ sdkName);
+    const { appLogin } = await import('@apps-in-toss/web-framework');
 
     const { authorizationCode } = await appLogin();
 

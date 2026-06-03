@@ -206,10 +206,13 @@ const OHENG_SAENG: Record<string, OhengType> = {
 
 /** 십성 → 5분류 매핑 (중국어/한국어 모두 지원) */
 const SIPSUNG_CATEGORY: Record<string, keyof SipSungDistribution> = {
-  '比肩': '비겁', '劫財': '비겁', '비견': '비겁', '겁재': '비겁',
-  '食神': '식상', '傷官': '식상', '식신': '식상', '상관': '식상',
-  '正財': '재성', '偏財': '재성', '정재': '재성', '편재': '재성',
-  '正官': '관성', '七殺': '관성', '偏官': '관성', '정관': '관성', '편관': '관성', '칠살': '관성',
+  // 2026-06-02 fix — lunar-javascript 가 간체자 십성(七杀·劫财·正财·偏财·伤官) 출력하는데
+  //   기존엔 번체(七殺·劫財·正財·偏財·傷官)만 있어 미매칭→미카운트 → 십성분포·강약·격국 오류.
+  //   간체 변형 전부 추가 (운성 간체 버그와 동일 클래스).
+  '比肩': '비겁', '劫財': '비겁', '劫财': '비겁', '비견': '비겁', '겁재': '비겁',
+  '食神': '식상', '傷官': '식상', '伤官': '식상', '식신': '식상', '상관': '식상',
+  '正財': '재성', '偏財': '재성', '正财': '재성', '偏财': '재성', '정재': '재성', '편재': '재성',
+  '正官': '관성', '七殺': '관성', '七杀': '관성', '偏官': '관성', '정관': '관성', '편관': '관성', '칠살': '관성',
   '正印': '인성', '偏印': '인성', '정인': '인성', '편인': '인성',
 };
 
@@ -256,6 +259,32 @@ function countSipsung(sipsung: SipSung[]): SipSungDistribution {
       const cat = SIPSUNG_CATEGORY[part.trim()];
       if (cat) dist[cat]++;
     }
+  }
+  return dist;
+}
+
+/**
+ * 2026-06-02 — 강약·격국 판정 전용 가중 십성 카운트 (준기 결정: 지장간 할인).
+ *  · 천간 + 지지 본기(지장간 배열 [0]) = 1.0 (힘 있음 · 투출/본기)
+ *  · 지지 여기·중기(지장간 배열 [1],[2]) = 0.3 (숨은 글자 · 힘 약함)
+ *  근거: 정통 명리학(자평진전·적천수)은 통근/투출을 본기·여기로 차등. 기존엔 지장간을
+ *        투출과 동일 가중(+1)해 인성/비겁이 부풀어 종격·신강으로 오판(예: 여름 庚 신강 오판).
+ *  ⚠️ 표시용 countSipsung(전부 1) 은 유지 — 사용자 노출 십성분포는 "보유 개수" 의미라 그대로.
+ */
+const HIDDEN_QI_WEIGHT = 0.3;
+function countSipsungWeighted(sipsung: SipSung[]): SipSungDistribution {
+  const dist: SipSungDistribution = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
+  for (const s of sipsung) {
+    if (s.십성 === '일주' || s.십성 === '日主') continue;
+    const isJiji = typeof s.position === 'string' && s.position.endsWith('지'); // 년지/월지/일지/시지
+    const parts = s.십성.split('/');
+    parts.forEach((part, idx) => {
+      const cat = SIPSUNG_CATEGORY[part.trim()];
+      if (!cat) return;
+      // 천간(단일) 또는 지지 본기([0]) → 1.0 / 지지 여기·중기 → 할인
+      const w = (!isJiji || idx === 0) ? 1.0 : HIDDEN_QI_WEIGHT;
+      dist[cat] += w;
+    });
   }
   return dist;
 }
@@ -328,7 +357,7 @@ function estimateStrength(
   deukryeong: boolean,
   dist: SipSungDistribution,
   pillars?: Pillar[],
-): { gangYak: MyeongriAnalysis['일간강약']; reason: string } {
+): { gangYak: MyeongriAnalysis['일간강약']; reason: string; score: number } {
   let score = 0;
   const reasons: string[] = [];
 
@@ -384,11 +413,11 @@ function estimateStrength(
 
   const reason = reasons.join(', ');
   // 등급 세분 (매우신강·신강경향·중화·신약경향·매우신약)
-  if (score >= 6) return { gangYak: '신강경향', reason: '매우신강 · ' + reason };
-  if (score >= 2) return { gangYak: '신강경향', reason };
-  if (score <= -6) return { gangYak: '신약경향', reason: '매우신약 · ' + reason };
-  if (score <= -2) return { gangYak: '신약경향', reason };
-  return { gangYak: '중화', reason };
+  if (score >= 6) return { gangYak: '신강경향', reason: '매우신강 · ' + reason, score };
+  if (score >= 2) return { gangYak: '신강경향', reason, score };
+  if (score <= -6) return { gangYak: '신약경향', reason: '매우신약 · ' + reason, score };
+  if (score <= -2) return { gangYak: '신약경향', reason, score };
+  return { gangYak: '중화', reason, score };
 }
 
 /**
@@ -405,15 +434,27 @@ function analyzeGyeokguk(
   ilgan: string,
   ilganOheng: OhengType,
   woljiOheng: OhengType,
+  strengthScore = 0,
 ): { 격국: string; 격국근거: string } {
-  // 월지에 해당하는 십성 추출
-  const woljiSipsung = sipsung.find((s) => s.position === '월지')?.십성 || '';
+  // 월지 본기 십성 추출 (지지 십성은 "본기/여기/중기" 형태 → 첫 글자=본기. 2026-06-02 fix: 통째 조회 시 formalMap 매칭 실패).
+  const woljiSipsungRaw = sipsung.find((s) => s.position === '월지')?.십성 || '';
+  const woljiSipsung = woljiSipsungRaw.split('/')[0].trim();
+  // 간체→번체 정규화 (formalMap 키 정합)
+  const SIP_S2T: Record<string, string> = { '七杀': '七殺', '劫财': '劫財', '正财': '正財', '偏财': '偏財', '伤官': '傷官' };
+  const woljiSipsungNorm = SIP_S2T[woljiSipsung] || woljiSipsung;
 
-  // 1) 종격 판정 (특정 십성 4 이상 + 일간 강약 극단)
+  // 1) 종격 판정 (2026-06-02 미세조정 · 준기 지시)
+  //   종격 = 일간이 한쪽으로 완전히 쏠려 거스를 수 없는 극단 구조. 단순 "십성 ≥4" 만으론 부족(정격 오판).
+  //   조건: 십성 가중 ≥4 + **일간강약이 극단**(점수로 확인)일 때만.
+  //     · 비겁/인성 dominant → 일간 극강(score ≥ +6, 매우신강) 이어야 종왕격/종강격.
+  //     · 식상/재성/관성 dominant → 일간 극약(score ≤ -6, 매우신약) 이어야 종아/종재/종관격.
   const SIP_KEYS: Array<keyof SipSungDistribution> = ['비겁', '식상', '재성', '관성', '인성'];
   for (const k of SIP_KEYS) {
     const v = sipsungDist[k] || 0;
     if (v >= 4) {
+      const isStrongSide = (k === '비겁' || k === '인성');
+      const extremeOk = isStrongSide ? strengthScore >= 6 : strengthScore <= -6;
+      if (!extremeOk) continue; // 극단 아니면 종격 X → 일반격(아래)으로
       const variantMap: Record<string, string> = {
         비겁: '종왕격',
         식상: '종아격(從兒格)',
@@ -421,7 +462,7 @@ function analyzeGyeokguk(
         관성: '종관격(從官格)',
         인성: '종강격',
       };
-      return { 격국: variantMap[k] || '종격', 격국근거: `${k} ${v}자로 한쪽으로 무게가 또렷한 종격 구조` };
+      return { 격국: variantMap[k] || '종격', 격국근거: `${k} ${v}자 + 일간 극단(${isStrongSide ? '매우신강' : '매우신약'}) — 한쪽으로 완전히 쏠린 종격` };
     }
   }
 
@@ -455,17 +496,25 @@ function analyzeGyeokguk(
     편인: '편인격',
     정인: '정인격',
   };
-  const formal = formalMap[woljiSipsung];
+  // 십성 中(번체)→韓 변환 (formalMap 키 정합). 2026-06-02 fix.
+  const SIP_C2K: Record<string, string> = {
+    '比肩': '비견', '劫財': '겁재', '食神': '식신', '傷官': '상관',
+    '正財': '정재', '偏財': '편재', '正官': '정관', '七殺': '편관', '偏官': '편관',
+    '正印': '정인', '偏印': '편인',
+  };
+  const woljiKorean = SIP_C2K[woljiSipsungNorm] || woljiSipsungNorm;
+  const formal = formalMap[woljiKorean];
   if (formal) {
-    // 천간 투간 확인 — 월지 본기 십성이 천간에 같은 십성으로 투간했는지
+    // 천간 투간 확인 — 월지 본기 십성이 천간에 같은 십성으로 투간했는지 (간체 정규화 후 비교)
+    const normSip = (x: string) => SIP_S2T[(x || '').trim()] || (x || '').trim();
     const tugan = sipsung.some((s) =>
-      ['년간', '월간', '시간'].includes(s.position) && s.십성 === woljiSipsung
+      ['년간', '월간', '시간'].includes(s.position) && normSip(s.십성) === woljiSipsungNorm
     );
     return {
       격국: formal,
       격국근거: tugan
-        ? `월지 ${wolji} 본기 ${woljiSipsung} 천간 투간 — 정격 ${formal}`
-        : `월지 ${wolji} 본기 ${woljiSipsung} 기반 (천간 투간 X) — ${formal} 경향`,
+        ? `월지 ${wolji} 본기 ${woljiKorean} 천간 투간 — 정격 ${formal}`
+        : `월지 ${wolji} 본기 ${woljiKorean} 기반 (천간 투간 X) — ${formal} 경향`,
     };
   }
 
@@ -483,10 +532,12 @@ function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: bo
   const woljiOheng = pillars[1]?.지지오행 || '토';
 
   const deukryeong = checkDeukryeong(ilganOheng, woljiOheng);
-  const sipsungDist = countSipsung(sipsung);
+  const sipsungDist = countSipsung(sipsung);                  // 표시용 (지장간 전부 1)
+  const sipsungWeighted = countSipsungWeighted(sipsung);      // 강약·격국 판정용 (지장간 할인)
   const hyungchunghap = detectHyungChungHap(pillars, hasBirthTime);
-  const { gangYak, reason } = estimateStrength(ilganOheng, deukryeong, sipsungDist, pillars);
-  const { 격국, 격국근거 } = analyzeGyeokguk(pillars, sipsung, sipsungDist, ilgan, ilganOheng, woljiOheng);
+  // 2026-06-02 — 강약·격국은 지장간 할인 가중치로 판정 (종격/신강 오판 fix).
+  const { gangYak, reason, score: strengthScore } = estimateStrength(ilganOheng, deukryeong, sipsungWeighted, pillars);
+  const { 격국, 격국근거 } = analyzeGyeokguk(pillars, sipsung, sipsungWeighted, ilgan, ilganOheng, woljiOheng, strengthScore);
   void wolji;
 
   return {

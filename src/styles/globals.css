@@ -1,4 +1,6 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&display=swap');
+@import './_safe-area.css';
 
 @tailwind base;
 @tailwind components;
@@ -6,20 +8,25 @@
 
 @layer base {
   :root {
+    /* 라이트모드 고정 — 앱인토스·다크모드 자동전환 방지 (AC 0.6·0.7, 2026-04-23) */
+    color-scheme: light;
     /* ============================================
        사주500 Design System v3
        "밤하늘 아래 금빛 운명"
        Deep Navy + Gold Accent
        ============================================ */
 
-    /* === 브랜드 — 딥 네이비 + 골드 === */
+    /* === 브랜드 — 딥 네이비 + 골드 ===
+       2026-04-22 SSOT (PC_인수인계 §5):
+       --gold #B8965A · --gold-deep #8C6D3D · --paper #F8F5EE · --ink #1A1A1A
+       구버전(#B8965A·#8C6D3D)은 deprecated — 2026-04-22 sed 일괄 치환. */
     --brand-navy: #1B2A4A;
     --brand-navy-light: #2D4470;
     --brand-navy-deep: #0F1D35;
-    --brand-gold: #C9A96E;
-    --brand-gold-light: #E8D5A8;
-    --brand-gold-vivid: #D4A843;
-    --brand-gold-glow: rgba(201,169,110,0.15);
+    --brand-gold: #B8965A;
+    --brand-gold-light: #E8D9B8;
+    --brand-gold-vivid: #8C6D3D;
+    --brand-gold-glow: rgba(184,150,90,0.15);
 
     /* === 배경 — 쿨 톤 기반 (미세하게 네이비 틴트) === */
     --bg-page: #F4F5F8;
@@ -50,9 +57,9 @@
     --shadow-md: 0 4px 12px rgba(27,42,74,0.07), 0 1px 3px rgba(27,42,74,0.04);
     --shadow-lg: 0 8px 24px rgba(27,42,74,0.09), 0 2px 8px rgba(27,42,74,0.04);
     --shadow-xl: 0 16px 48px rgba(27,42,74,0.12), 0 4px 12px rgba(27,42,74,0.06);
-    --shadow-glow: 0 4px 20px rgba(201,169,110,0.2), 0 0 0 1px rgba(201,169,110,0.1);
+    --shadow-glow: 0 4px 20px rgba(184,150,90,0.2), 0 0 0 1px rgba(184,150,90,0.1);
     --shadow-card: 0 2px 8px rgba(27,42,74,0.05), 0 0 0 1px rgba(226,229,236,0.6);
-    --shadow-card-hover: 0 8px 24px rgba(27,42,74,0.1), 0 0 0 1px rgba(201,169,110,0.15);
+    --shadow-card-hover: 0 8px 24px rgba(27,42,74,0.1), 0 0 0 1px rgba(184,150,90,0.15);
     --shadow-navy: 0 4px 16px rgba(27,42,74,0.25);
 
     /* === 오행 5색 (인포그래픽 전용) === */
@@ -60,11 +67,11 @@
     --oheng-mok-light: #E8F5E9;
     --oheng-hwa: #D32F2F;
     --oheng-hwa-light: #FFEBEE;
-    --oheng-to: #F57F17;
+    --oheng-to: #E8B82A;
     --oheng-to-light: #FFF8E1;
-    --oheng-geum: #757575;
+    --oheng-geum: #4A4A4A;
     --oheng-geum-light: #F5F5F5;
-    --oheng-su: #1565C0;
+    --oheng-su: #1565E0;
     --oheng-su-light: #E3F2FD;
 
     /* === 기능 === */
@@ -123,7 +130,7 @@
   }
 
   ::selection {
-    background: rgba(201,169,110,0.25);
+    background: rgba(184,150,90,0.25);
     color: var(--text-primary);
   }
 
@@ -148,8 +155,8 @@
     50% { transform: translateY(-6px); }
   }
   @keyframes glow-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(201,169,110,0); }
-    50% { box-shadow: 0 0 0 8px rgba(201,169,110,0.12); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(184,150,90,0); }
+    50% { box-shadow: 0 0 0 8px rgba(184,150,90,0.12); }
   }
   @keyframes gold-shimmer {
     0% { background-position: -200% center; }
@@ -205,20 +212,14 @@
     position: relative;
     overflow: hidden;
   }
-  .card-emphasis::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--brand-gold), var(--brand-gold-light), var(--brand-gold));
-  }
+  /* 2026-05-28 — .card-emphasis 상단 골드 strip 제거 (AI 손톱 디자인). 골드 ring border(2px)만으로 강조. */
 
   .card-gold {
     background: var(--bg-gold);
     border-radius: 20px;
     padding: 20px;
     box-shadow: var(--shadow-glow);
-    border: 1px solid rgba(201,169,110,0.2);
+    border: 1px solid rgba(184,150,90,0.2);
     position: relative;
     overflow: hidden;
     transition: all 0.25s var(--ease-out);
@@ -228,11 +229,11 @@
     position: absolute;
     top: -50%; right: -30%;
     width: 80%; height: 80%;
-    background: radial-gradient(circle, rgba(201,169,110,0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(184,150,90,0.08) 0%, transparent 70%);
     pointer-events: none;
   }
   .card-gold:hover {
-    box-shadow: 0 8px 32px rgba(201,169,110,0.25);
+    box-shadow: 0 8px 32px rgba(184,150,90,0.25);
     transform: translateY(-2px);
   }
 
@@ -268,37 +269,37 @@
     position: absolute;
     top: -40%; right: -20%;
     width: 60%; height: 60%;
-    background: radial-gradient(circle, rgba(201,169,110,0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(184,150,90,0.1) 0%, transparent 70%);
     pointer-events: none;
   }
 
-  /* === Alert cards === */
+  /* === Alert cards (2026-05-28 — 좌측 strip 제거. 배경 그라데이션 + border 톤으로 표현) === */
   .card-alert-success {
     background: linear-gradient(135deg, #F0F9F0, #E8F5E9);
     border-radius: 14px;
     padding: 14px;
-    border-left: 4px solid var(--func-success);
+    border: 1px solid rgba(46,125,50,0.20);
     box-shadow: var(--shadow-sm);
   }
   .card-alert-warning {
     background: linear-gradient(135deg, #FFF8F0, #FFF3E0);
     border-radius: 14px;
     padding: 14px;
-    border-left: 4px solid var(--func-warning);
+    border: 1px solid rgba(230,124,0,0.22);
     box-shadow: var(--shadow-sm);
   }
   .card-alert-danger {
     background: linear-gradient(135deg, #FFF0F0, #FFEBEE);
     border-radius: 14px;
     padding: 14px;
-    border-left: 4px solid var(--func-danger);
+    border: 1px solid rgba(198,40,40,0.22);
     box-shadow: var(--shadow-sm);
   }
   .card-alert-info {
     background: linear-gradient(135deg, #F0F5FF, #E3F2FD);
     border-radius: 14px;
     padding: 14px;
-    border-left: 4px solid var(--func-info);
+    border: 1px solid rgba(21,101,224,0.20);
     box-shadow: var(--shadow-sm);
   }
 
@@ -324,7 +325,7 @@
   .badge-gold {
     background: linear-gradient(135deg, #FDF8EE, #F5E8C8);
     color: #9A7B3C;
-    border: 1px solid rgba(201,169,110,0.2);
+    border: 1px solid rgba(184,150,90,0.2);
   }
   .badge-success {
     background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
@@ -347,7 +348,7 @@
   .input-field::placeholder { color: var(--text-hint); }
   .input-field:focus {
     border-color: var(--brand-gold);
-    box-shadow: 0 0 0 3px rgba(201,169,110,0.15);
+    box-shadow: 0 0 0 3px rgba(184,150,90,0.15);
     background: var(--bg-card);
   }
 
@@ -443,3 +444,437 @@
   .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
   .floating { animation: float 3s ease-in-out infinite; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ * v4 design system — `docs/prd/디자인시스템_v4.md` §3~9 구현
+ *   - 레거시(card-editorial·seal-stamp·font-serif-ko·bg-hanji·drop-cap 등)는
+ *     §10 금지 목록이라 추가하지 않음 (Phase C 범위 밖)
+ *   - :root 변수는 기존 정의 재사용. 누락분(--bg-cream, --bg-cream-deep)만 보강.
+ * ══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* v4 신규 — 기존 변수와 공존 */
+  --bg-cream: #FAF6EC;
+  --bg-cream-deep: #F2EAD6;
+}
+
+@layer components {
+  /* ─── 타이포 (§4) ────────────────────────────────────────────── */
+  .text-body-lg {
+    font-size: 16px;
+    line-height: 1.7;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+  }
+  .text-body-md {
+    font-size: 15px;
+    line-height: 1.7;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+  }
+  .text-body-sm {
+    font-size: 13px;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+  .text-label {
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  /* ─── 섹션 타이포 (§4) ─────────────────────────────────────── */
+  .sec-title-lg {
+    font-size: 22px;
+    line-height: 1.3;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
+  }
+  .sec-title {
+    font-size: 18px;
+    line-height: 1.35;
+    font-weight: 800;
+    letter-spacing: -0.022em;
+    color: var(--text-primary);
+  }
+  .sec-caption {
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--text-muted);
+  }
+  .sec-meta {
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--brand-gold);
+  }
+
+  /* ─── 카드 위계 3단 + 네이비 (§5) ──────────────────────────── */
+  .card-primary {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow:
+      0 1px 3px rgba(27, 42, 74, 0.05),
+      0 0 0 0.5px rgba(27, 42, 74, 0.04);
+  }
+  .card-secondary {
+    background: var(--bg-cream);
+    border-radius: 16px;
+    padding: 18px;
+    border: 0.5px solid rgba(184, 150, 90, 0.18);
+  }
+  /* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 골드 ring border 균일 톤 */
+  .card-accent {
+    background: linear-gradient(180deg, #FDFAF2 0%, #FBF6E8 100%);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(184, 150, 90, 0.30);
+  }
+  .card-navy-v4 {
+    background: linear-gradient(180deg, #2D4470 0%, #1B2A4A 100%);
+    color: #F5EFE0;
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  /* ─── 블러 잠금 카드 (§6) ──────────────────────────────────── */
+  .card-locked {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #FFFFFF;
+    box-shadow:
+      0 1px 3px rgba(27, 42, 74, 0.05),
+      0 0 0 0.5px rgba(27, 42, 74, 0.04);
+    transition: transform 0.15s ease;
+  }
+  .card-locked:active {
+    transform: scale(0.99);
+  }
+  .card-locked:hover {
+    box-shadow:
+      0 4px 12px rgba(27, 42, 74, 0.1),
+      0 0 0 0.5px rgba(184, 150, 90, 0.3);
+  }
+  .card-locked-blur {
+    filter: blur(7px) saturate(1.1);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .card-locked-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 20px;
+    background: linear-gradient(
+      180deg,
+      rgba(253, 250, 242, 0.82) 0%,
+      rgba(253, 250, 242, 0.92) 50%,
+      rgba(253, 250, 242, 0.96) 100%
+    );
+  }
+  .card-locked-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(184, 150, 90, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-gold);
+    margin-bottom: 2px;
+  }
+  .card-locked-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.015em;
+  }
+  .card-locked-sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: -0.005em;
+  }
+  .card-locked-cta {
+    margin-top: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--brand-gold);
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  /* ─── CTA 3종 (§7) ─────────────────────────────────────────── */
+  .cta-gold {
+    width: 100%;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #C9B08A 0%, #B8965A 100%);
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 6px rgba(184, 150, 90, 0.3);
+  }
+  .cta-gold:hover:not(:disabled) {
+    box-shadow: 0 4px 10px rgba(184, 150, 90, 0.4);
+  }
+  .cta-gold:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .cta-gold:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .cta-navy {
+    width: 100%;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-navy);
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.2s ease;
+  }
+  .cta-navy:hover:not(:disabled) {
+    background: var(--brand-navy-light);
+  }
+  .cta-navy:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .cta-navy:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .cta-ghost {
+    width: 100%;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    border: 1.5px solid var(--border-default);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .cta-ghost:hover:not(:disabled) {
+    background: var(--bg-surface);
+    border-color: var(--text-hint);
+  }
+  .cta-ghost:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .cta-ghost:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* ─── 4기둥 미니 카드 (§8.1) ──────────────────────────────── */
+  .pillar-mini {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .pillar-mini-cell {
+    border-radius: 12px;
+    padding: 10px 6px;
+    background: #FFFFFF;
+    border: 0.5px solid var(--border-default);
+    text-align: center;
+  }
+  .pillar-mini-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .pillar-mini-gan {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text-primary);
+    margin-top: 4px;
+  }
+  .pillar-mini-ji {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* ─── 오행 가로 바 (§8.2) ─────────────────────────────────── */
+  .oheng-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 36px;
+    align-items: center;
+    gap: 8px;
+  }
+  .oheng-row-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+  }
+  .oheng-row-track {
+    position: relative;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(27, 42, 74, 0.06);
+    overflow: hidden;
+  }
+  .oheng-row-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .oheng-row-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: right;
+    letter-spacing: -0.005em;
+  }
+
+  /* ─── 주제 CTA 카드 (§8 + 꿈해몽 §12 / 오늘운세 §4.1) ─────── */
+  .topic-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    padding: 16px;
+    border: 0.5px solid var(--border-default);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+  }
+  .topic-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(27, 42, 74, 0.08);
+  }
+
+  /* ─── 키워드 칩 v4 (§4 보조) ──────────────────────────────── */
+  .chip-v4 {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(184, 150, 90, 0.1);
+    color: var(--brand-gold);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    border: 0.5px solid rgba(184, 150, 90, 0.22);
+  }
+
+  /* ─── 구분선 v4 ──────────────────────────────────────────── */
+  .hr-v4 {
+    height: 1px;
+    border: 0;
+    background: var(--border-light);
+    margin: 20px 0;
+  }
+
+  /* ─── 2026-05-28 PM QA — 10주제 sweep 발견: TopicAnalysisPage 의 모든 .card 가 cream bg 통일 ─── */
+  .topic-analysis-page .card,
+  .topic-analysis-page .card-emphasis {
+    background: #F8F5EE;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .topic-analysis-page .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transform: none;
+  }
+
+  /* ─── 2026-05-28 PM — 본문 강조 위계 V2 (user 피드백: "강약 더 확실히") ─── */
+  /* <strong> — 가장 강한 강조: 진한 형광펜 (golden marker) + 진한 잉크 */
+  .narrative-body strong,
+  .topic-section-body strong {
+    font-weight: 800;
+    background: linear-gradient(180deg, transparent 50%, rgba(244, 209, 102, 0.75) 50%);
+    padding: 0 3px;
+    color: #1a1a1a;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  /* <b> — 한자 강조: 검은 볼드 (배경 X) */
+  .narrative-body b,
+  .topic-section-body b {
+    font-weight: 700;
+    color: #1A1A1A;
+  }
+  /* <u> — 시기/숫자 강조: 황금 밑줄 + 진한 골드 텍스트 (두꺼운 밑줄로 명확화) */
+  .narrative-body u,
+  .topic-section-body u {
+    text-decoration: underline;
+    text-decoration-color: #B8965A;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+    color: #8C6D3D;
+    font-weight: 800;
+  }
+  /* <em> (narrative — 프리미엄 리포트) — 부드러운 강조 */
+  .narrative-body em {
+    font-style: italic;
+    color: #5C4A2E;
+    font-weight: 600;
+  }
+  /* <em> (주제 본문) — 주의·경고 번트오렌지 (2026-05-29). 황금 형광펜과 대비. font-style normal (한글 가독). */
+  .topic-section-body em {
+    font-style: normal;
+    font-weight: 700;
+    color: #B5441F;
+    background: linear-gradient(180deg, transparent 56%, rgba(181, 68, 31, 0.15) 56%);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+}
+
+/* 2026-05-29 — 스켈레톤 shimmer 전역 정의 (TopicAnalysisPage 스캐폴드).
+   기존엔 컴포넌트 inline <style> 에만 있어 non-theme 브랜치에서 스타일 누락 위험 → 전역화. */
+@keyframes topic-skel-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.topic-skel-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(184,150,90,0.08) 0%, rgba(184,150,90,0.18) 50%, rgba(184,150,90,0.08) 100%);
+  background-size: 200% 100%;
+  animation: topic-skel-shimmer 1.4s ease-in-out infinite;
+}
+

@@ -1,0 +1,134 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateTojungBigyeol = generateTojungBigyeol;
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const promptsV3_1 = require("./promptsV3");
+async function generateTojungBigyeol(apiKey, sajuData) {
+    const anthropic = new sdk_1.default({ apiKey });
+    const prompt = buildPrompt(sajuData);
+    const msg = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8192,
+        temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
+        messages: [{ role: 'user', content: prompt }],
+    });
+    const text = msg.content[0].text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch)
+        throw new Error('JSON 파싱 실패');
+    return JSON.parse(jsonMatch[0]);
+}
+function buildPrompt(d) {
+    const p = d.pillars || [];
+    const labels = ['년주', '월주', '일주', '시주'];
+    let pillarsText = '';
+    p.forEach((x, i) => { if (x.available !== false)
+        pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`; });
+    const el = d.elements || {};
+    const sipsung = d.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+    const currentDaeun = d.daeun?.find((x) => x.isCurrent || x.현재);
+    const now = new Date().getMonth() + 1;
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월`;
+    return `당신은 사주500 토정비결 해석가. ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
+
+2026 병오년 토정비결 — 사주 글자 + 병오년 세운에서 추출한 진짜 근거.
+
+⚠️ 현재 날짜: ${dateStr}
+
+## 사주 원국
+${pillarsText}일간: ${p[2]?.천간 || '미상'}
+
+## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
+## 십성: ${sipsung || '미상'}
+## 현재 대운: ${currentDaeun ? currentDaeun.간지 : '미상'}
+## 이름: ${d.input?.name || '미상'}, ${d.input?.gender === 'male' ? '남' : '여'}, ${d.input?.birthYear || ''}년생${d.띠 ? `, ${d.띠}띠` : ''}
+
+## 출력 (JSON만, 코드블록 없이)
+⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
+
+🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X · 일상어 O)**
+
+사용자 피드백:
+> '무슨 말인지 모르겠다. 한낮의 태양이다 / 겨울 한복판에 태어난 태양이다 / 형국이다 — 이게 뭔 뜻이냐.
+>  사주는 알아듣기 편하게 말해줘서 돈 주고 보는 거지, 어렵고 모호한 표현이면 돈 안 낸다.'
+
+❌ **절대 금지 패턴**:
+1. 시적 비유 폭격: '한낮의 태양' '차가운 밤 호수' '장작을 대주는 자리' '~의 형국' — 비유가 풀이를 대체 X.
+2. 문어체 단어 남발: '결' '자리' '형국' 한 문단 2회 이내.
+3. 중의적·모호한 표현: '흐름이 풀리는 자리' → '30대 중반에 일이 잘 풀립니다'
+   '준비된 결이 또렷' → '준비는 잘 되어 있어요' / '의식의 자리에 두십시오' → '꼭 신경 쓰세요'
+4. 한자 폭격: 한자(丙火·신금·축미충 등) 첫 등장 1번만, 이후는 한글 또는 일상어.
+
+📚 **"사주아이" 톤 레퍼 (참고 · 모방 X · 우리 특색 살림)**:
+1. **각 섹션 시작 = 일상어 결론 한 줄** (제목 후크 톤)
+   ✅ '겉으로는 차분해 보이지만 속에는 따뜻함을 찾는 마음이 늘 움직이는 분입니다'
+2. **사주 근거는 두 번째 문장부터, 한자는 1회만** + 즉시 일상어 풀이
+3. **공감 + 위로 + 행동 처방** (가장 강력)
+   ✅ '<strong>본인에게는 가혹한 잣대를 들이대요</strong>. 이제는 본인 행복을 위해 그 섬세함을 써보세요. <strong>완벽하지 않아도 충분히 가치 있는 사람입니다</strong>.'
+4. **마무리 = 응원 + 구체 행동** (행운 색·방위·시기 등 구체)
+
+🚨 **한자 풀이 형식 강제 (2026-05-05 PD 결단 — '라는 뜻' 같은 회피 X)**:
+한자 등장 시 괄호 안에 **실제 일상어 풀이 텍스트** 동반:
+✅ '병화(丙火, 밝고 활달한 성격)' / '신금(辛金, 깔끔하고 단정한 사람)' / '축미충(丑未沖, 가치관이 자주 흔들리는 자리)'
+✅ '정관(正官, 책임감과 규범을 중요시하는 결)' / '도화살(桃花殺, 사람을 끌어당기는 매력)'
+❌ '병화(丙火)' 단독 — 풀이 X
+❌ '병화(丙火, 라는 뜻)' / '병화(丙火, 한자 그대로)' — 추상적 회피 X. 진짜 풀이 텍스트.
+검증법: 한자 (괄호) 부분만 빼고 일상어만 읽었을 때 자연스러운 한국어 문장이 되어야 함.
+
+
+✨ **우리만의 차별화**:
+- 6대 원전 학술 인용 1회 자연스럽게
+- 결정론 (같은 사주 = 같은 결과)
+- 한자 1회 등장 시 즉시 일상어 풀이 동반
+- strong 강조는 유저 일상 결론에만
+- 숫자·시기 또렷이 ('30대 후반' '9월~2월')
+
+
+✅ **풀이 작성 규칙**:
+- **첫 문장은 결론** ('{유저명} 님은 ~한 사람입니다')
+- **비유는 한 번만, 즉시 결론 풀이** ('겨울에 태어난 태양 → 즉, ~한 사람')
+- **한자 등장 직후 일상어 풀이 동반** ('병화(丙火) — 즉 밝고 활달한 성격')
+- 단정 X / 모호 X / 중의 X — 그냥 직접 말하기.
+
+✅ **변환 예시**:
+- ❌ '도화살(桃花殺)이 강하게 작용합니다.'
+- ✅ '<b>도화살(桃花殺)</b> — 즉 <strong>사람을 끌어당기는 매력</strong>이 강해요.'
+
+
+🚨 **보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지)**
+
+동적 작용해야 하는 콘텐츠 = 사주 8글자마다 매번 다른 문장.
+
+❌ 'X한 해입니다' / '평탄한 한 해' (근거 없는 일반론) — 같은 띠/같은 출생연도면 누구나 동일한 결과 금지.
+✅ 사주 글자 + 병오년 충돌·합 직접 호명 — '병오년 + 일간 신금 (불금 갈등)', '병오년 도화살 발동', '오미합 + 일지 자수와 자오충'.
+✅ 각 yearOverview 6운 / months 12개의 현대해석 에 사주 8글자 specific 데이터 또는 해당 월간지·병오년과의 충돌·합 1회 이상 직접 호명 mandatory.
+
+🚨 **example 사용 룰 (회귀 금지)**:
+프롬프트 예시의 사주 글자(병화·신금·축미충 등)는 example. 실제 사용자에게는 위 ## 사주 원국 의 진짜 8글자를 인용.
+'{유저명}' placeholder 도 위 ## 이름 의 진짜 이름으로 치환.
+같은 사주 = 같은 결과 (결정론) / 다른 사주 = 완전히 다른 어휘.
+
+
+{
+  "keywords": ["#사주핵심키워드1","#키워드2","#키워드3"],
+  "categoryScores": {"총운": "0-100 정수", "금전운": "0-100 정수", "건강운": "0-100 정수", "직장운": "0-100 정수", "애정운": "0-100 정수", "결혼운": "0-100 정수"},
+  "yearOverview": {
+    "총운": "150자 이상 · 🚨 사주 specific + 병오년 호명", "금전운": "150자 이상 · 🚨 재성/식상 직접 호명", "건강운": "150자 이상 · 🚨 약한 오행 직접 호명",
+    "직장운": "150자 이상 · 🚨 관성 직접 호명", "애정운": "150자 이상 · 🚨 도화살/배우자궁 직접 호명", "결혼운": "150자 이상 · 🚨 일지/관성 직접 호명"
+  },
+  "months": [
+    {"month": 1, "괘": "주역 64괘 중 하나 (예: 地天泰)", "괘의미": "괘의 뜻 한 줄 (예: 하늘과 땅이 교류하여 모든 것이 형통함)",
+     "전통해석": "80자 이상. 토정비결 전통 시적 표현 (고풍스럽게, 4자 성어 활용)",
+     "현대해석": "80자 이상. 현대어로 구체적 상황 묘사 (직장, 연애, 금전 등) · 🚨 사주 specific 또는 월간지 호명 mandatory",
+     "score": 1-100, "keyword": "4~6글자"}, ...12개월
+  ],
+  "luckyAdvice": "100자 이상. 올해 개운법."
+}
+
+⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
+}
+//# sourceMappingURL=claudeTojung.js.map

@@ -214,21 +214,32 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
         {"month": "10월", "score": "0-100 정수"},
         {"month": "11월", "score": "0-100 정수"},
         {"month": "12월", "score": "0-100 정수"}
-      ]
+      ],
+      "archetype": {
+        "primary": "8 archetype 中 1개 — '安' (안정형) | '業' (사업형) | '急' (재다신약) | '弱' (벌이약) | '末' (말년부) | '早' (초년부) | '兩' (양다리) | '劫' (비겁누수)",
+        "modifier": "보조 archetype 0~1개 (Layer B/C/D)",
+        "name": "예: '안정형 · 말년부' / '사업형 · 식신생재'",
+        "tag": "사주 신호 한 줄 (정재 우세 + 노년 자리 재물 강함)"
+      }
     }`,
   },
   career: {
-    label: '취업·이직운',
-    sections: ['타고난 직업 적성', '딱 맞는 직종 TOP 5', '이직/취업 최적 타이밍', '직장 내 인간관계 패턴', '올해 커리어 핵심 전략'],
-    specificPrompt: `⭐ 구체적이고 실용적으로. "당장 내일부터 써먹을 수 있는" 조언.
+    // 2026-05-28 PM 재정의 — 직업운 = "평생 적성·왜 이 직업이 맞는지" 중심
+    //   user: "직업운 = 어떤 직업이 잘 맞는지 + 왜 명리학적으로 그런지가 핵심".
+    //   면접/이직/연봉/면접요일 등 시기성 정보는 exam (합격·이직운) 으로 완전 이전.
+    label: '직업운',
+    sections: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '직장 내 인간관계 패턴'],
+    specificPrompt: `⭐ 핵심 = "왜 이 사주에 이 직업이 잘 맞는지" 명리학적 근거 + 평생 적성. 시기성(이직 적기·면접 요일 등)은 다루지 마 — 그건 합격·이직운 영역.
 
-- 관성(정관/편관) 강약 → 안정형 vs 도전형 vs 프리랜서형 판별 근거
-- 식상 → 표현력/창의력 → 딱 맞는 직종 5개 (구체적 직무명까지: "UX 디자이너", "데이터 분석가" 등)
-- 현재 대운이 이직에 유리한지 → 구체적 시기: "양력 O~O월 이직 시도가 가장 유리"
-- 면접 유리한 요일/시간대: "화요일 오전, 목요일 오후가 사주적으로 유리"
+- 일간 오행 → 기본 성향 (예: "병화 일간 — 밝고 활달, 사람 앞에 서는 자리에 강함")
+- 관성(정관/편관) 강약 → 조직 적응형 vs 권위 도전형 vs 자유 프리랜서형 판별 근거
+- 식상 → 표현력/창의력 → 딱 맞는 직종 5개 (구체적 직무명: "UX 디자이너", "데이터 분석가" 등)
+- 재성 → 돈 다루는 방식 (정재 안정·편재 변동)
+- 인성 → 학습/지식 깊이 → 학자·연구·전문직 적합 여부
+- 격국별 직종 매트릭스 활용 (아래 표 참조)
 - 직장 상사와의 관계 패턴: "~한 상사와 잘 맞고, ~한 타입과 충돌"
-- 연봉 협상 적기 + 전략
 - "혹시 이전 직장에서 ~한 경험이 있었나요?" 소름 포인트
+- ❌ 시기 정보 금지: "양력 4~6월 이직", "화요일 오전 면접" 등은 사용 X — 합격·이직운 페이지로 안내
 
 🚨 **격국별 직종 매트릭스 (P1 자평진전 §10 기반 — 반드시 격국 맞춰서)**:
 사주 ## 격국 데이터 확인 후 **그 격국의 표준 직종군**을 careerFit TOP 5 에 우선 노출:
@@ -250,36 +261,35 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 상관견관(傷官見官) → 상관 + 정관 → 위계 조직 부적합 → 1인 프로젝트·창업·프리랜서 권장
 
 ⚠ 인용 가능: 자평진전 "관격(官格)은 인성(印星)을 좋아한다" / "재격은 식신을 좋아한다"`,
+    // 2026-05-28 PM — career 스키마에서 면접/이직/연봉 시기 필드 제거 (exam 으로 이전).
+    // subScores 도 "면접력/타이밍" 제거 → "직무적성/대인관계/리더십/지속력/성장운" 평생 적성 중심.
     topicDataSchema: `"topicData": {
-      "subScores": [{"axis":"직무적성","value":"0-100 정수"},{"axis":"대인관계","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"타이밍","value":"0-100 정수"},{"axis":"면접력","value":"0-100 정수"}],
+      "subScores": [{"axis":"직무적성","value":"0-100 정수"},{"axis":"대인관계","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"지속력","value":"0-100 정수"},{"axis":"성장운","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
       "strengths": ["커리어 강점 35~50자 · 사주 글자 호명 1회","커리어 강점2 35~50자 · 사주 글자 호명 1회"],
       "cautions": ["커리어 주의점 35~50자 · 위기→기회 패턴","커리어 주의점2 35~50자 · 위기→기회 패턴"],
       "workStyle": "안정형/도전형/프리랜서형/창업형 중 하나",
-      "careerFit": [{"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}, {"job": "직종명", "fitPercent": 0-100}],
-      "interviewTip": "면접 팁 30자",
-      "interviewDay": "면접 유리 요일 (예: 화, 목)",
-      "interviewTime": "면접 유리 시간대 (예: 오전 10~11시)",
-      "salaryTiming": "연봉 협상 적기 (예: 4월, 9월)",
-      "bossCompat": "잘 맞는 상사 유형 20자",
-      "statusAnalysis": "현재 상태(학생/구직/재직)에 대한 사주 한마디 35자 (상태 정보 없으면 null)",
-      "fieldFitScore": "관심 분야 사주 적합도 0-100 (분야 정보 없으면 null)",
-      "fieldFitAnalysis": "관심 분야가 사주에 얼마나 맞는지 분석 35자 (분야 정보 없으면 null)",
-      "jobChangeTiming": "이직 최적 시기 15자 (재직중일 때만, 아니면 null)",
+      "careerFit": [{"job": "직종명", "fitPercent": 0-100, "reason": "왜 이 직업이 맞는지 25~40자 · 십성/오행 호명"}, {"job": "직종명", "fitPercent": 0-100, "reason": "..."}, {"job": "직종명", "fitPercent": 0-100, "reason": "..."}, {"job": "직종명", "fitPercent": 0-100, "reason": "..."}, {"job": "직종명", "fitPercent": 0-100, "reason": "..."}],
       "// audit 4 P0 #5 — CareerViz 깊이 보강 신규 필드 (사주 specific 호명 mandatory)": "",
       "coreStrength": "타고난 직업 강점 한 줄 50자 · 격국·관성·식상 등 직접 호명 (예: '정관격이라 책임 지는 자리에서 빛납니다')",
       "officeAdaptType": "직장 적응 타입 한 줄 40자 · 일간 + 십성 호명 (예: '병화 일간 + 식상 강 — 자유로운 분위기에 강함')",
+      "myeongriBasis": "명리학적 직업 근거 60~100자 · 일간 오행 + 격국 + 주요 십성 종합 설명 (예: '병화 일간이 식상 통해 표현·창의에 강하고, 정관이 안정 자리를 받쳐줘 사람 앞에 서는 조직 내 전문가 자리가 평생 잘 어울려요')",
       "sipsungBalance": {"// 직업 관련 십성 비중 0-100 (4축, 100 합계 X · 사주 비중 그대로)": "", "관성": "0-100", "식상": "0-100", "재성": "0-100", "인성": "0-100"},
-      "monthlyCareer": [{"month": "1월", "score": "0-100 자연수, 5의 배수 반복 X", "label": "한 줄 라벨 8자 이내 (예: '도약', '신중', '안정')"}],
       "careerPhases": [{"label": "20대 후반", "age": "27-32세", "score": "0-100", "isCurrent": true, "description": "한 줄 50자 · 사주 specific (대운 간지 호명 권장)"}]
     }`,
   },
   marriage: {
     label: '결혼운',
-    sections: ['결혼 적기 분석', '배우자 성향', '결혼 후 생활 패턴', '시댁/처가 관계', '결혼 준비 조언'],
-    specificPrompt: `⭐ 결혼을 고민하는 사람에게 사주 specific 깊이 있는 분석의 구체적 조언.
+    sections: ['결혼 적기 분석', '배우자 성향', '결혼 후 생활 패턴', '배우자 가족 관계', '결혼 준비 조언'],
+    specificPrompt: `결혼을 고민하는 사람에게 사주 specific 깊이 있는 분석의 구체적 조언.
 
-- 일지+월지 관계로 시댁/처가 관계 예측: "~한 분위기의 가정"
+## 🚨 성별 인지 강제 (2026-05-28)
+- 남성 사주: '처가' 용어만 사용 (장인·장모·처남·처제)
+- 여성 사주: '시댁' 용어만 사용 (시부모·시어머니·시아버지·시누이)
+- 성별 불명: '배우자 가족' 중립어
+- 잘못된 예: 남성 사주에 "시댁이 보수적이다" ❌ → "처가가 보수적이다" ✅
+
+- 일지+월지 관계로 배우자 가족 관계 예측: "~한 분위기의 가정"
 - 결혼 적기: 연도+시즌까지 구체적으로
 - 배우자 성향: 직업, 성격, 나이 차이 경향
 - 결혼 후 갈등 패턴과 해결법
@@ -289,7 +299,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 상대방 정보가 제공된 경우(연애중): 실제 상대방의 사주를 추론하여 두 사람의 궁합을 교차 분석. spouseProfile 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
 - 상대방 정보가 없는 경우(솔로): 사주 원국에서 배우자상을 추론. partnerCompat은 null로.`,
     topicDataSchema: `"topicData": {
-      "subScores": [{"axis":"배우자복","value":"0-100 정수"},{"axis":"결혼시기","value":"0-100 정수"},{"axis":"가정안정","value":"0-100 정수"},{"axis":"시댁관계","value":"0-100 정수"},{"axis":"재물복","value":"0-100 정수"}],
+      "subScores": [{"axis":"배우자복","value":"0-100 정수"},{"axis":"결혼시기","value":"0-100 정수"},{"axis":"가정안정","value":"0-100 정수"},{"axis":"양가관계","value":"0-100 정수"},{"axis":"재물복","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
       "strengths": ["결혼 강점 35~50자 · 사주 글자 호명 1회","결혼 강점2 35~50자 · 사주 글자 호명 1회"],
       "cautions": ["결혼 주의점 35~50자 · 위기→기회 패턴","결혼 주의점2 35~50자 · 위기→기회 패턴"],
@@ -329,13 +339,31 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   business: {
     label: '사업운',
     sections: ['사업가 기질 분석', '맞는 업종', '창업 타이밍', '동업 궁합', '사업 리스크 관리'],
-    specificPrompt: `⭐ 사업을 꿈꾸는 사람에게 현실적이고 구체적인 조언.
+    specificPrompt: `사업을 꿈꾸는 사람에게 현실적이고 구체적인 조언. 사주 8글자 + 격국·용신 직접 호명 mandate.
 
-- 비겁 강약 → 독립 vs 프랜차이즈 vs 동업 판별
-- 맞는 업종 5개 (구체적 업종명)
-- 창업 자금 운용 패턴
-- 동업 시 주의할 사주적 궁합
-- 실패 리스크와 대비 전략`,
+## 격국·용신 기반 사업가 결 (자평진전 §10 적용)
+- 비겁(比劫) 多 → 독립창업 / 1인 사업 / 프리랜서가 사주가 밀어주는 자리
+- 식상(食傷) 多 → 콘텐츠·서비스·교육·자영업이 표현력과 맞물림
+- 재성(財星) 多 → 유통·금융·투자·사업확장이 흐름과 맞음
+- 관성(官星) 多 → 대형 조직·법인·정부사업·B2B 가 안정적
+- 인성(印星) 多 → 기획·컨설팅·디자인·R&D 가 두뇌 가치 발휘
+
+## 일간 × 격국 매트릭스 — 사업가 유형 분류
+- 갑·을(목) 일간: 성장 산업·교육·콘텐츠
+- 병·정(화) 일간: 마케팅·미디어·요식·뷰티
+- 무·기(토) 일간: 부동산·중개·전통산업
+- 경·신(금) 일간: 제조·금속·금융·법률
+- 임·계(수) 일간: 유통·물류·해외·IT
+
+## 동업 궁합 (合·沖·刑·害 기반)
+- 본인 일간과 합(合) 관계 → 안정적 동업 (재성·관성 보완)
+- 충(沖) 관계 → 단기 시너지 가능하나 3년 내 결렬 위험
+- 형(刑)·해(害) → 동업 절대 금지
+
+## archetype 8종 (반드시 명시)
+起(시작형) / 守(안정형) / 急(공격형) / 同(동업형) / 跳(전환형) / 投(투자형) / 退(축소형) / 危(위기형)
+
+→ 사주 8글자 정확히 호명. 면피체 금지. 일반론 금지. 첫 문장에 일간+비겁/재성 카운트.`,
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"사업감각","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"자금운용","value":"0-100 정수"},{"axis":"네트워크","value":"0-100 정수"},{"axis":"위기대응","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
@@ -357,13 +385,36 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   health: {
     label: '건강운',
     sections: ['오행별 취약 장기', '체질 분석', '올해 건강 주의 시기', '정신 건강 패턴', '건강 개선 전략'],
-    specificPrompt: `⭐ 오행 분석을 통해 취약 장기를 구체적으로 매핑. "이거 진짜 맞아..." 반응.
+    specificPrompt: `오행·12운성·신살 기반 건강 결을 깊이 분석. 사주 8글자 + 격국 직접 호명 mandate.
 
-- 오행 과다/부족 → 취약 장기 매핑 (목=간/담, 화=심장/소장, 토=위/비장, 금=폐/대장, 수=신장/방광)
-- 각 장기별 위험도를 0-100 수치로 평가
-- 맞는 운동/식단/수면 패턴
-- 정신 건강: 스트레스 패턴 + 해소법
-- "혹시 ~에 통증이나 불편함을 느끼지 않나요?" 소름 포인트`,
+## 오행-장기 매핑 (정통 명리학)
+- 목(木) → 간·담·신경·근육·시력 (스트레스로 약해지는 첫 자리)
+- 화(火) → 심장·소장·혈관·정신 (조급함이 가장 큰 약점)
+- 토(土) → 위·비장·소화·근육 (식습관과 직결)
+- 금(金) → 폐·대장·기관지·피부 (호흡과 면역)
+- 수(水) → 신장·방광·생식기·뼈 (수면과 회복)
+
+## 일간 강약 × 격국에 따른 건강 archetype
+- 强(강) — 신왕 사주: 과로 위험. 운동 과다 주의. 휴식이 약
+- 衡(균형) — 식상생재: 안정형. 생활 패턴만 지키면 장수
+- 弱(약) — 신약 사주: 면역력 낮음. 식단·수면·인성(印星) 영역 보강
+- 偏(편향) — 오행 한쪽 극단: 그 오행 장기 + 극(克)당하는 장기 동시 주의
+
+## 12운성 기반 건강 사이클
+- 생(生)·욕(浴) — 회복기, 건강검진 적기
+- 대(帶)·관(冠) — 활력기, 운동 효과 大
+- 록(祿)·왕(旺) — 절정기, 과로 위험
+- 쇠(衰)·병(病) — 면역 저하기, 보양
+- 사(死)·묘(墓)·절(絶)·태(胎) — 컨디션 저하, 무리 금지
+
+## 신살 보조 (의도 명시)
+- 화개살 — 정신·내면 회복 필요
+- 역마살 — 활동량 多, 관절 주의
+- 도화살 — 호르몬·생식 영역
+- 공망 — 해당 자리 장기 약점
+
+→ 사주 8글자 정확 호명. 일반론 금지 ("스트레스 관리하세요" 류 X). 면피체 금지.
+→ "혹시 ~에 통증이나 불편함이 있지 않나요?" 식 사주 specific 소름 포인트 1개 필수.`,
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"체력","value":"0-100 정수"},{"axis":"정신건강","value":"0-100 정수"},{"axis":"면역력","value":"0-100 정수"},{"axis":"회복력","value":"0-100 정수"},{"axis":"장수운","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
@@ -582,7 +633,9 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     }`,
   },
   study: {
-    label: '학업·시험운',
+    // 2026-05-08 SSOT sync: '학업·시험운' → '학업운' (topics.ts SSOT 일치)
+    // 시험 합격 timing 은 exam (합격·이직운) 영역. study 는 학업·집중력·학습 패턴.
+    label: '학업운',
     sections: ['나의 학습 체질 분석', '합격 가능성과 시기', '시험 당일 최적 전략', '슬럼프 극복법', '올해 합격 로드맵'],
     specificPrompt: `⭐ 시험/취업 준비생에게 "이거 보고 힘 얻었다" 반응이 나올 정도로 구체적으로.
 
@@ -698,12 +751,34 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
   move: {
     label: '이사·이동운',
     sections: ['이동 적기 분석', '좋은 방향', '이사/이직/유학 전망', '해외운', '올해 이동 전략'],
-    specificPrompt: `⭐ 이사/이동을 고민하는 사람에게 구체적이고 실용적인 조언.
+    specificPrompt: `이사·이동의 사주적 길흉을 정통 명리학 기반으로 분석. 사주 8글자 + 신살 직접 호명 mandate.
 
-- 역마살 유무 → 이동 에너지가 강한 사주인지
-- 방향: 오행 기반 좋은 방위 (동/서/남/북/중앙)
-- 이사/유학/해외취업 각각의 적기와 유불리
-- 현재 거주지와 이동 방향의 사주적 궁합`,
+## 신살 기반 이동 결 (핵심 분석축)
+- 역마살(驛馬殺) — 이동·여행·해외 활성. 본인 일지·시지에 寅·申·巳·亥 있나 확인
+- 화개살(華蓋殺) — 정착·은둔 vs 이동의 갈등. 辰·戌·丑·未
+- 공망(空亡) — 해당 방향 무력화. 본인 일주 기준 공망 글자 매핑
+- 천을귀인(天乙貴人) — 도움 받는 방향
+- 충(沖) — 자리가 흔들리는 자리. 일지 충이 강하면 이동 압력 大
+
+## 오행-방위 매핑 (정통)
+- 목(木) — 동쪽 / 봄 / 새 시작
+- 화(火) — 남쪽 / 여름 / 확장
+- 토(土) — 중앙 / 안정
+- 금(金) — 서쪽 / 가을 / 정리
+- 수(水) — 북쪽 / 겨울 / 회복
+
+본인 일간 오행과 합(合)되는 방향이 길. 극(克)당하는 방향은 피해야 함.
+
+## 12운성 사이클로 이동 timing
+- 생(生)·욕(浴) — 새 환경 적응 최적기
+- 록(祿)·왕(旺) — 정착 안정기, 이동 손실 大
+- 쇠(衰)·병(病) — 환경 변화 필요 신호
+- 묘(墓)·절(絶) — 이동 적기 (재시작)
+
+## archetype 8종 (분기 명시)
+動(이동적기) / 守(정착유지) / 變(변화신호) / 浸(서서히) / 焰(급변) / 崩(피해야할시기) / 鬱(답답함해소) / 沖(자리흔들림)
+
+→ 8글자 정확 호명. 면피체("~수도 있어요") 0건. 일반론 금지.`,
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"이동운","value":"0-100 정수"},{"axis":"방향운","value":"0-100 정수"},{"axis":"해외운","value":"0-100 정수"},{"axis":"정착운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
@@ -725,6 +800,28 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
   },
 };
 
+/**
+ * 토픽 호출 파라미터 빌드 (system·user·model·maxTokens).
+ * 스트리밍 SSE 엔드포인트(generateTopicAnalysisStream)와 callable 이 동일 파라미터 공유 —
+ * 프롬프트·모델·출력 100% 동일, 전송 방식만 다름 (콘텐츠 변경 위험 0).
+ */
+export function buildTopicCall(
+  topicId: string,
+  sajuData: any,
+  baseScore?: number,
+  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number },
+  extraInfo?: Record<string, any>,
+): { system: string; prompt: string; model: string; maxTokens: number; normalizedId: string } {
+  const normalizedId = normalizeTopicIdServer(topicId);
+  const config = TOPIC_CONFIGS[normalizedId];
+  if (!config) throw new Error(`알 수 없는 주제: ${topicId} (정규화: ${normalizedId})`);
+  if (normalizedId !== topicId) console.info(`[claudeTopic] topicId 정규화: ${topicId} → ${normalizedId}`);
+  const prompt = buildPrompt(config, normalizedId, sajuData, baseScore, partnerInfo, extraInfo);
+  const model = 'claude-sonnet-4-6';
+  const maxTokens = normalizedId === 'reunion' ? 16000 : 8192;
+  return { system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId };
+}
+
 export async function generateTopicAnalysisAI(
   apiKey: string,
   topicId: string,
@@ -733,21 +830,10 @@ export async function generateTopicAnalysisAI(
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number },
   extraInfo?: Record<string, any>,
 ): Promise<any> {
-  // SSOT 정렬 (2026-04-22): client 는 'move'/'exam' 으로 호출. legacy 'moving'/'reconciliation' 등도 호환.
-  const normalizedId = normalizeTopicIdServer(topicId);
-  const config = TOPIC_CONFIGS[normalizedId];
-  if (!config) throw new Error(`알 수 없는 주제: ${topicId} (정규화: ${normalizedId})`);
-  if (normalizedId !== topicId) console.info(`[claudeTopic] topicId 정규화: ${topicId} → ${normalizedId}`);
-
   const anthropic = new Anthropic({ apiKey });
-  const prompt = buildPrompt(config, normalizedId, sajuData, baseScore, partnerInfo, extraInfo);
-
   // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (운영 결정).
-  // system 프롬프트는 promptsV3.TOPIC_ANALYSIS_SYSTEM_V3 (V3_BASE + 금지어·어조 공통 블록 + 주제 특화 규칙).
-  // user 프롬프트는 이 파일의 buildPrompt 가 담당 (topicData 스키마·paritnerInfo·extraInfo 등 풍부한 주제별 특화 유지).
-  const model = 'claude-sonnet-4-6';
-  // 재회운 10섹션 + 풍부한 topicData → 16000, 나머지 5섹션 → 8192
-  const maxTokens = normalizedId === 'reunion' ? 16000 : 8192;
+  const { prompt, model, maxTokens, normalizedId } =
+    buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
   // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
   let firstText: string;
@@ -758,7 +844,7 @@ export async function generateTopicAnalysisAI(
       model,
       max_tokens: maxTokens,
       temperature: 0.1,
-      system: TOPIC_ANALYSIS_SYSTEM_V3,
+      system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
     firstText = (first.content[0] as { type: string; text: string }).text;
@@ -771,7 +857,7 @@ export async function generateTopicAnalysisAI(
       model,
       max_tokens: maxTokens,
       temperature: 0.05,
-      system: TOPIC_ANALYSIS_SYSTEM_V3,
+      system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
     firstText = (retry.content[0] as { type: string; text: string }).text;
@@ -779,7 +865,16 @@ export async function generateTopicAnalysisAI(
     console.info(`[claudeTopic:${topicId}] 2차 성공`, meta2.repairUsed ? '(jsonrepair 발동)' : '');
   }
 
-  // 2차 자기 리뷰 — 고가치 유료 상품이므로 품질 보정 (AI프롬프트_v3 §8).
+  // 2차 자기 리뷰 — 고가치 유료 상품 품질 보정 (AI프롬프트_v3 §8).
+  // ⚠️ 2차 리뷰는 1차와 동일 분량을 한 번 더 생성 → 응답시간 ~2배 (주제분석 1분+ 주범).
+  //   출시 속도 우선: 기본 OFF (1차 결과 직반환 — 1차도 system 에 self-check 내장됨).
+  //   품질 최대화 필요 시 env `TOPIC_SELF_REVIEW=1` 로 재활성 (재배포 필요).
+  //   ⚠️ 프롬프트 구조 무변경 — 2차 skip 은 검증된 1차 JSON 직반환이라 콘텐츠 누락 위험 0.
+  const SELF_REVIEW_ON = process.env.TOPIC_SELF_REVIEW === '1';
+  if (!SELF_REVIEW_ON) {
+    console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선 · TOPIC_SELF_REVIEW!=1)`);
+    return firstJson;
+  }
   const review = await anthropic.messages.create({
     model,
     max_tokens: maxTokens,
@@ -820,7 +915,15 @@ function buildPrompt(
 
   // 🔥 P0-1 (audit 1) — 사주 데이터 underutilization 해소: myeongriAnalysis·jijanggan·gilsin·hyungsal·gongmang·yearlyUn 모두 prompt 에 주입
   const myeongri = d.myeongriAnalysis || {};
-  const jijangganText = (d.jijanggan || []).map((j: any) => `${j.지지}(${(j.지장간 || []).join('·')})`).join(', ');
+  // 2026-06-02 fix — 지장간에 computed 십성 라벨 동반 주입 (claudeReport 와 동일).
+  //   기존: "辰(乙·癸·戊)" 만 줘서 AI 가 십성을 추측 → 乙을 편재로 오기재(정재가 정답) → 종합사주와 모순.
+  //   수정: "辰: 乙(정재)·癸(상관)·戊(편인)" → AI 가 정확한 십성 사용. 콘텐츠 간 모순 방지.
+  const jijangganText = (d.jijanggan || []).map((j: any) => {
+    const chars: string[] = j.지장간 || [];
+    const sips: string[] = j.십성 || [];
+    const paired = chars.map((c, i) => (sips[i] ? `${c}(${sips[i]})` : c)).join('·');
+    return `${j.지지}: ${paired}`;
+  }).join(' / ');
   const gilsinText = (d.gilsin || []).map((g: any) => g.이름 || g.name).filter(Boolean).join(', ');
   const hyungsalText = (d.hyungsal || []).map((h: any) => h.이름 || h.name).filter(Boolean).join(', ');
   const gongmangText = (d.gongmang || []).map((g: any) => `${g.기준 || ''}기준 공망: ${g.공망 || ''}`).filter((s: string) => s.trim() !== '기준 공망:').join(', ');
@@ -893,10 +996,22 @@ function buildPrompt(
 → "어떤 사람을 만나야 결혼이 잘 풀리는지" 관점에서 배우자 프로필을 구체적으로 채우세요.
 `;
   } else if (topicId === 'love' && partnerInfo) {
+    // 2026-05-28 — 썸 vs 연애중 schema·내용 차별화 강화 (이전엔 1줄만 다름)
     const loveStatus = extraInfo?.loveStatus === 'some' ? '썸' : '연애중';
     const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
       ? `\n출생시간: ${partnerInfo.birthHour}시 → 시주(時柱) 분석 가능.`
       : '\n출생시간: 미상 → 년주/월주/일주(3주)로 분석.';
+    const statusBlock = loveStatus === '썸'
+      ? `→ 썸 단계 핵심: 사주적으로 '관심도 신호'를 읽어내세요.
+   • confessionTiming: 사주에 좋은 고백 시기 (월 단위 1-3개) + 그 근거 (도화 활성·합/충 패턴)
+   • interestLevel: 상대방의 사주가 본인을 향한 호감 강도 (0-100% + 근거 2-3줄)
+   • approachStrategy: 상대 일간 성향에 맞는 접근법 (직진 vs 천천히 vs 친구로 시작)
+   • signalReading: "지금 상대가 나에게 어떤 마음인가" 사주 신호 3가지 (말투·연락 패턴·만남 요청)`
+      : `→ 연애중 핵심: '관계의 흐름과 안정성'을 짚으세요.
+   • stabilityPhase: 현재 관계 단계 (밀월/안정/권태/위기 4단계 중 어디 + 사주 근거)
+   • longTermOutlook: 장기 전망 (앞으로 6/12개월 흐름 곡선 + 결혼 가능성 timing)
+   • riskMonth: 다툼/위기 주의 월 (12개월 중 2-3개)
+   • deepenTip: 본인 일간 × 상대 일간 조합에 맞는 깊어지는 방법 (가치관 공유법)`;
     partnerSection = `
 ## 현재 연애 상태: ${loveStatus}
 ## ${loveStatus === '썸' ? '관심 상대' : '교제 상대'} 정보
@@ -907,14 +1022,17 @@ function buildPrompt(
 → 상대방의 사주를 추론하여 두 사람의 연애 궁합을 교차 분석하세요.
 → partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, loveChemistry.
 → 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 연애 궁합은..."
-→ idealType은 실제 상대방 특성 기반으로 서술하세요.${loveStatus === '썸' ? '\n→ 아직 썸 단계이므로 "고백 적기", "상대방의 관심도를 사주적으로 분석" 내용을 포함하세요.' : '\n→ 연애 중이므로 "관계 안정기/위기기 시기", "장기적 전망" 내용을 포함하세요.'}
+→ idealType은 실제 상대방 특성 기반으로 서술하세요.
+${statusBlock}
 `;
   } else if (topicId === 'love' && !partnerInfo) {
     partnerSection = `
 ## 현재 연애 상태: 솔로
-→ 솔로 상태이므로 사주 원국에서 궁합이 좋은 이성을 추론하세요.
+→ 솔로 상태 핵심: '새 인연 만나는 자리와 시기' 에 집중.
+   • newEncounterMonth: 새 인연 가능성 높은 월 2-3개 (도화 활성·합 패턴 근거)
+   • encounterPlace: 사주에 맞는 만남 장소 (오행+생활 영역) 3가지
+   • selfPreparation: 본인 사주가 누군가를 만나기 전 다듬어야 할 결 (예: 식상 강하면 표현 다듬기)
 → partnerCompat은 null로 설정하세요.
-→ 새 인연의 시작 시기와 만남 장소에 집중하세요.
 `;
   }
 
@@ -931,19 +1049,34 @@ function buildPrompt(
 → ${extraInfo.bizStatus === 'running' ? '이미 운영 중이므로 사업 확장/축소/전환 시기, 현재 사업의 사주적 맞춤도를 분석하세요.' : '아직 시작 전이므로 최적 창업 시기, 맞는 업종, 준비해야 할 것에 집중하세요.'}
 `;
     } else if (topicId === 'career' && extraInfo.jobStatus) {
+      // 2026-05-28 — student/jobseeking/employed 차별화 강화. 이전엔 1줄만 다름.
       const statusMap: Record<string, string> = { student: '학생 (취업 준비)', jobseeking: '구직중', employed: '재직중 (이직 고민)' };
       const fieldInfo = extraInfo.targetField ? `\n관심 분야/직종: ${extraInfo.targetField}` : '';
+      const statusSpecific: Record<string, string> = {
+        student: `→ 첫 직장 진입 시점 — 격국 + 관성(직업 기둥) + 인성(학업·면접 임팩트). 졸업 직후 3년 사주적 흐름. 전공·관심분야 적합도 매칭. 첫 회사 규모(대기업/스타트업/공공) 어느 쪽 사주가 잘 풀리는지. 첫 직장 오래 다닐 vs 빨리 이직할 사주인지 명시.`,
+        jobseeking: `→ 구직 활동 중 — 합격운 활성 월(올해 12개월 중 3-4개월 표시). 면접에서 본인이 강한 시간대(오전/오후). 자소서·서류 통과 잘 되는 사주 키워드. 한 번에 합격 vs 여러 번 도전 후 합격 사주인지. 사주에 맞는 직종 3종 우선순위.`,
+        employed: `→ 재직 중 (이직 검토) — 현 직장 적합도 점수 + 이직 timing 사주적 적기. 현 직장 오래 vs 빨리 떠날 사주인지. 사주에 맞는 다음 직장 타입. 이직 후 안정기 진입 시기.`,
+      };
       extraSection = `
 ## 현재 상태: ${statusMap[extraInfo.jobStatus] || '미상'}${fieldInfo}
-→ ${extraInfo.jobStatus === 'employed' ? '이직 타이밍, 현 직장 적합도, 더 맞는 업종을 중점 분석하세요.' : extraInfo.jobStatus === 'student' ? '첫 취업 준비에 초점. 적성, 합격 시기, 유리한 산업을 분석하세요.' : '구직 성공 시기, 면접 유리 시점, 사주에 맞는 직종을 분석하세요.'}
+${statusSpecific[extraInfo.jobStatus] || '→ 사주 원국 기반 직업운 분석.'}
+${extraInfo.targetField ? `→ "${extraInfo.targetField}" 분야의 사주적 적합도(0-100%)와 그 근거를 명시. 더 맞는 대안 직종 2-3개도 제시.` : ''}
 `;
     } else if (topicId === 'move' && extraInfo.movePurpose) {
+      // 2026-05-28 — 4-purpose 차별화. 이전엔 라벨만 치환 + 본문 동일 → 결과 모순 위험.
       const purposeMap: Record<string, string> = { house: '주거 이사', job: '직장 이동', study: '유학/학업', abroad: '해외 이주' };
       const planInfo = extraInfo.movePlanYear ? `\n이사 예정 시기: ${extraInfo.movePlanYear}년 ${extraInfo.movePlanMonth}월` : '';
+      const purposeSpecific: Record<string, string> = {
+        house: `→ 주거 이사 — 일지(나의 자리) 충/합과 월지(가정환경) 변화 분석. 새 집 풍수와 본인 일간의 오행 매칭. 가구 배치·침실 방위·현관 길흉. 가족 화합에 미치는 영향.`,
+        job: `→ 직장 이동 — 역마살 활성도와 관성(직업운) 흐름 교차. 새 사무실 방향이 본인 천간과 맞는지. 출근 동선의 길흉. (구체적 이직 timing 은 합격·이직운에서 별도 분석)`,
+        study: `→ 유학·학업 — 인성(학업운) + 문창귀인·학당귀인 활성도. 해당 국가/지역 방향이 본인 일간 길성과 맞는지. 학습 환경의 사주적 조건. 부모와의 거리감 영향.`,
+        abroad: `→ 해외 이주 — 역마살 + 천을귀인 외국 방향 + 화개살. 장기 거주 시 본인 오행이 그 지역 기운과 어울리는지. 향수병/적응 시기를 사주로 예측. 귀국 시점도 함께.`,
+      };
       extraSection = `
 ## 이사 목적: ${purposeMap[extraInfo.movePurpose] || '미상'}${planInfo}
-→ 예정 시기의 사주적 이동운을 분석하고, 더 좋은 시기가 있다면 제안하세요.
-→ 목적에 맞는 방위, 주의사항, 이사 전 준비사항을 구체적으로 안내하세요.
+${purposeSpecific[extraInfo.movePurpose] || '→ 사주 원국 기반 이동운 분석.'}
+→ 예정 시기의 대운/세운 흐름 짚고, 더 좋은 시기가 있으면 구체적 월 단위로 제안.
+→ 방위(8방위 중 ${purposeMap[extraInfo.movePurpose]} 에 최적), 이사 당일 시간대, 챙겨야 할 아이템까지 구체화.
 `;
     } else if (topicId === 'study' && extraInfo.examName) {
       const examDate = extraInfo.examYear ? `\n시험 예정: ${extraInfo.examYear}년 ${extraInfo.examMonth}월` : '';
@@ -952,6 +1085,23 @@ function buildPrompt(
 → 해당 시험 시기의 사주적 시험운을 집중 분석하세요.
 → 시험까지 남은 기간 동안의 학습 전략, 슬럼프 시기, 컨디션 관리법을 구체적으로 안내하세요.
 → 시험 당일 유리한 시간대, 좌석 방향, 행운 아이템도 빠짐없이.
+`;
+    } else if (topicId === 'exam' && (extraInfo.examName || extraInfo.changeType)) {
+      // 2026-05-28 — exam 입력 분기 신설 (이전엔 UI 입력 폼 부재 + extra 분기 누락)
+      const examDate = extraInfo.examYear ? `\n예정 시기: ${extraInfo.examYear}년 ${extraInfo.examMonth}월` : '';
+      const changeTypeMap: Record<string, string> = {
+        exam: '시험·자격증',
+        jobchange: '이직',
+        career_pivot: '직무 전환',
+      };
+      const targetLabel = extraInfo.examName || (extraInfo.changeType ? changeTypeMap[extraInfo.changeType] || '변동' : '변동');
+      extraSection = `
+## 변동 목표: ${targetLabel}${examDate}
+→ 정관·편관(관성) 활성도 + 문창·학당·태극·천을 4길성 매핑.
+→ 예정 시기의 대운/세운/월운 흐름을 합격운·변동운 관점으로 교차 분석.
+→ 사주에 더 좋은 timing 이 있으면 월 단위로 제안 (예: "6월보다 9월이 정관 활성").
+→ 면접·실전 시 본인 강한 시간대(子/午/卯/酉 등 일간별), 좌석 방향, 옷 컬러까지 구체.
+→ 한 번에 합격 vs 여러 번 도전 후 합격 사주인지 명시.
 `;
     }
   }
@@ -984,8 +1134,15 @@ ${Object.entries(el).filter(([,v]) => v === 0).map(([k]) => `→ ${k} 없음`).j
 ## 일간 강약: ${myeongri.일간강약 || '미산출'}${myeongri.강약근거 ? ` (${myeongri.강약근거})` : ''}
 ## 득령(月令): ${myeongri.득령 === true ? '득령(O)' : myeongri.득령 === false ? '실령(X)' : '미산출'}
 ## 십성 분포: 비겁${sipsungDist.비겁 || 0}·식상${sipsungDist.식상 || 0}·재성${sipsungDist.재성 || 0}·관성${sipsungDist.관성 || 0}·인성${sipsungDist.인성 || 0}
+##   ⚠️ 위 개수는 천간+지지+지장간 전부 합산. 지장간(숨은 글자)은 힘이 약함. 개수만 보고 강약 판단 금지 — 일간강약(아래)이 통근·투간까지 본 최종 판정.
 ## 격국(格局): ${gyeokguk || '판정 보류'}${gyeokgukReason ? ` — ${gyeokgukReason}` : ''}
 ## 용신(用神): ${yongsin || '본 분석에서 추론 권장'}
+
+## 🚨🚨 격국·일간강약·용신 = 확정값 (재판정 절대 금지 · 2026-06-02 모순 fix)
+위 '## 일간 강약' '## 격국' '## 용신' 은 6대 원전 기준 **정밀 산출된 확정값**입니다. 종합사주·다른 주제와 **동일 소스**라, AI 가 임의로 다시 판정하면 같은 사주가 콘텐츠마다 다른 격국으로 나와 **모순**이 생깁니다.
+- ❌ 절대 금지: 위 '## 격국' '## 일간 강약' 과 다른 값으로 재판정/재명명. 본문에 격국명·강약을 쓸 땐 반드시 위 값(격국=${gyeokguk || '판정 보류'} · 강약=${myeongri.일간강약 || '미산출'})과 100% 일치.
+- 종합사주·다른 주제와 동일 소스이므로, 위 값만 그대로 전제로 깔고 그 안에서 해석하세요. (강약/격국을 직접 다시 계산하지 말 것.)
+- ✅ 반드시: 위 격국(${gyeokguk || '판정 보류'}) + 일간강약(${myeongri.일간강약 || '미산출'}) + 용신(${yongsin || '추론'}) 을 **그대로 전제**로 깔고 해석. 격국명·강약·용신을 본문에 쓸 때 위 값과 100% 일치해야 함.
 ## 형충합(刑沖合): ${hyungchunghapText || '없음'}
 ## 지장간: ${jijangganText || '없음'}
 ## 일주 길신(吉神): ${gilsinText || '없음'}
@@ -1006,10 +1163,50 @@ ${partnerSection}${extraSection}${boundaryBlock}
 ## ${config.label} 분석 규칙
 ${config.specificPrompt}
 
+## 🎯 Archetype 분류 mandate (2026-05-08 — 14 mockup SSOT 정렬)
+사주 8글자 + 십성 분포 + 격국 + 오행 太過/缺 → **archetype 자동 분류** 후 topicData.archetype 필드에 출력.
+
+### 4 layer 분류 룰 (mockup 진본 매트릭스 v17·v18 SSOT)
+- **Layer A — 본래 패턴**: 사주 자체의 주제별 본능 (정착형·이동형·안정형·사업형 등)
+- **Layer B — 위험·약점**: 오행 太過/缺 → 자연재해·하자·체질 위험 (수太過 침수, 화太過 화재, 토太過 답답 등)
+- **Layer C — 흉살·시기**: 충·형·해 활성 시기 (분쟁·법적 위험)
+- **Layer D — 시점·환경**: 대운 변곡·환경 의존 (急이동/待기다림/靜정적 등)
+
+### 출력 형식 (topicData 안에 추가)
+\`\`\`json
+"archetype": {
+  "primary": "Layer A 한자 1자 (예: 安·業·急·弱·末·早·兩·劫·動·守·變·浸·焰·崩·鬱·沖·印·食·文·雜·偏·靜·合·衝·平·多·少·親·獨)",
+  "modifier": "Layer B/C/D 보조 한자 (없으면 null)",
+  "name": "한국어 이름 (예: '안정형 · 말년부' / '사업형 · 식신생재' / '정착형 · 답답 주의')",
+  "tag": "사주 신호 한 줄 (예: '정재 우세 + 노년 자리 재물 강함' / '편재 우세 + 식신 강')",
+  "description": "사주 specific 결단 1문장 (50~80자, 사주 글자 직접 호명)"
+}
+\`\`\`
+
+### 주제별 archetype 매핑
+- **wealth**: 8 archetype (Layer A: 安·業·急·弱·末·早·兩·劫)
+- **exam**: 4 archetype (合·勞·勝·面)
+- **business**: 4 archetype (起·守·急·同)
+- **career**: 4 archetype (官·印·食·動)
+- **health**: 4 archetype (强·衡·弱·偏)
+- **move**: 8 archetype (4 layer: 動·守·變 / 浸·焰·崩·鬱 / 沖 / 急·待)
+- **study**: 8 archetype (4 layer: 印·食·文 / 雜·偏 / 急·待 / 靜)
+- **marriage**: 6~7 archetype (미혼/기혼 분기 — 미혼: 早·晩·平·衝·桃·急·待 / 기혼: 合·衝·平·多·少·親·獨)
+- **love·reunion**: archetype 없음 (null)
+
+❌ 단정·일반론 금지: "안정형이 좋다" → ✅ "정재 35% + 시주 임수 → 안정형 + 말년부 archetype"
+
 ## ⚠️ 작성 규칙 (반드시 준수)
-1. 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.
+1. **마크다운 금지 / HTML 강조 태그 필수** (2026-05-28 룰 강화).
+   ❌ 마크다운 (**볼드**, *이탤릭*, # 헤딩) 절대 금지.
+   ✅ **HTML 강조 태그 적극 사용** — 줄글로만 쓰지 말고 핵심 부분을 강조해야 함:
+      • <strong>핵심 결론·일상어 일상결론</strong> — 황금 형광펜 (한 문단에 1~2회)
+      • <u>시기·숫자·월·기간</u> — 황금 밑줄 ('3월', '40대 중반', '하반기', '5~8월' 등)
+      • <b>한자 첫 등장 (괄호 풀이 포함)</b> — 검은 볼드 ('<b>정관(正官, 책임감 있는 인연)</b>' 식)
+   → 각 단락마다 <strong> 1회 + <u> 1~2회 + <b> 한자 등장 시 매번 필수.
+   → 줄글만 보내면 사용자가 "어디가 핵심인지 모름" → 가독성 실패.
 2. overallScore 산출:${baseScore ? ` 이 사람의 사주 리포트에서 ${config.label} 점수가 ${baseScore}점으로 산출됨. overallScore는 반드시 ${baseScore}점으로 설정하라. 절대 다른 점수를 매기지 마.` : ' 오행 균형(과다/부족)과 십성 배치를 정량적으로 분석하여 일관되게 매겨라. 같은 사주에 같은 주제면 항상 같은 점수가 나와야 한다. 감정이 아닌 구조 기반.'}
-3. 각 section의 content는 단락을 나눠 가독성 있게 작성. 한 문단이 3줄을 넘지 않도록.
+3. 각 section의 content는 단락을 나눠 가독성 있게 작성. 한 문단이 3줄을 넘지 않도록. **단락마다 핵심 1구절에 <strong> 강조 mandatory.**
 4. topicData의 각 필드를 정확한 형식으로 채워라. 시각화에 사용되므로 빠뜨리지 마.
    - pillarComparison의 cheongan/jiji는 반드시 한자 1글자만 (예: "甲", "寅"). "(추정)", "(추론)" 같은 주석을 절대 붙이지 마.
    - oheng도 "목", "화" 등 1글자만. "(추정)" 등 괄호 주석 금지.
@@ -1028,6 +1225,15 @@ ${config.specificPrompt}
 
 ## 출력 (JSON만, 코드블록 없이)
 ⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
+
+🚨 **점수 분포 가이드 (2026-05-28 PM 준기 결단)** — "후하지도 짜지도 않게":
+- **0~49 (큰 주의)**: 사주에서 해당 영역이 구조적으로 약함 + 충/형 강함 + 용신 무력 — 드물지만 명확한 케이스에만
+- **50~59 (주의)**: 부족한 오행 + 충 발생 + 보강 필요 — 사주의 15% 정도가 여기
+- **60~69 (보통)**: 평균. 큰 강점도 큰 약점도 없는 잔잔한 흐름 — 사주의 35% 정도가 여기
+- **70~79 (안정)**: 해당 영역 십성·오행이 부드럽게 받쳐줌 + 합·귀인 1~2개 — 사주의 30% 정도가 여기
+- **80~89 (좋음)**: 길성 3+ + 용신 활성 + 충돌 없음 — 사주의 15% 정도가 여기
+- **90~100 (매우 좋음)**: 길성·삼합·록·귀인 다중 충돌 — 드물게 (5% 이내)
+**중심값은 65 부근**. 80+ 가 흔하면 신뢰도 떨어짐. 50 이하도 신중하게 (사용자가 충격받음). 같은 점수만 반복하면 차별성 없음 — 사주 구조 차이를 점수에 정직하게 반영.
 
 🚨 **결정론 점수 산출 룰 (audit 1 P0-9 — 같은 사주 = 같은 점수)**:
 - subScores 5축 산출 시 base 룰을 적용:
@@ -1108,10 +1314,10 @@ ${config.specificPrompt}
 {
   "title": "${d.input?.name||''}님의 ${config.label} 심층분석",
   "overallScore": ${baseScore ? baseScore : '"0-100 정수"'},
-  "sajuBasis": "사주 근거 한 줄 (30~50자). 이 점수가 나온 사주적 이유를 십성/오행/신살 등으로 설명. 예: '재성(偏財)이 강하고 식신생재 구조로 재물 흐름이 원활한 사주입니다' / '관성이 약하고 비겁이 과다하여 조직 적응에 보완이 필요한 구조입니다'. 마크다운 금지.",
+  "sajuBasis": "사주 근거 한 줄 (40~60자). 2026-05-28 두괄식+일상어 강제. 형식: '[일상어 결론 한 마디] — [한자(풀이) 사주 근거]'. ✅ 좋은 예: '결혼 인연은 분명하나 시기가 늦어져요 — 정관(正官, 책임감 있는 인연)이 합으로 묶여있어요.' / '돈은 잘 들어오는데 빠르게 빠져요 — 재성(財星, 돈 자리)이 식상(食傷, 활동 에너지)에 밀려요.' ❌ 나쁜 예: '일지 자수(子水)에 정관이 자리하고 축자합(丑子合)으로 관성이 묶이는 구조' (한자 폭격·풀이 X·두괄식 X). 한자 첫 등장 시 반드시 괄호 안 일상어 풀이. 마크다운 금지.",
   "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 중 최소 1곳 자연스러운 인용 필수. 형식 예시: '적천수에서 재성이 왕하면 관성으로 제압한다고 하였는데, 당신의 경우 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달. 마크다운 금지.",
   "summary": "200자 이상. 소름 포인트 포함. 🚨 사주 8글자 specific 데이터 1회 이상 직접 호명 mandatory (보일러플레이트 금지). 마크다운 금지.",
-  "sections": [${config.sections.map(s => `{"heading": "${s}", "content": "150자 이상. 🚨 사주 specific 호명 (개수·자리·신살) 1회 이상. 마크다운 금지.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내 · 🚨 사주 글자 1개 이상 호명 권장", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자 · 🚨 사주 specific 데이터", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
+  "sections": [${config.sections.map(s => `{"heading": "${s}", "content": "150자 이상. 🚨 사주 specific 호명 (개수·자리·신살) 1회 이상. 마크다운 금지. **HTML 강조 mandatory**: 각 단락에 <strong>일상어 결론 1구절</strong> 1회 + <u>시기·숫자·월</u> 1~2회 + <b>한자(풀이)</b> 첫 등장 시 필수. 줄글만 X.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내 · 🚨 사주 글자 1개 이상 호명 권장", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자 · 🚨 사주 specific 데이터", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
   "timeline": [{"period": "시기", "score": 1-10, "description": "60자 이상 · 🚨 해당 시기 대운/세운 간지 + 원국 글자 충돌·합 직접 호명"}, ...6~12개],
   "luckyProfile": {"color": "색상", "direction": "방위", "number": "숫자", "item": "아이템", "bestMonth": "최적월"},
   "actionAdvice": "100자 이상. 지금 당장 할 수 있는 행동. 🚨 사주 specific 데이터(약한 오행·기신·일간 등) 1개 이상 직접 호명 mandatory. 마크다운 금지.",

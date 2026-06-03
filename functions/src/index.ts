@@ -79,11 +79,24 @@ const DEV_MODE = false;
 async function refundBalance(uid: string, deducted: number, reason: string): Promise<void> {
   if (!uid || deducted <= 0) return;
   try {
-    await db.collection('users').doc(uid).update({
-      balance: admin.firestore.FieldValue.increment(deducted),
-      totalSpent: admin.firestore.FieldValue.increment(-deducted),
-      lastRefundAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastRefundReason: reason,
+    // 2026-05-28 — balance schema 통일. 객체(paid/bonus/reward) 가 있으면 paid 에 환불, 숫자면 통합 환불.
+    //   결제분만 환불 가능 (paid 우선) — 무료 보너스 환불은 어뷰징 위험.
+    const userRef = db.collection('users').doc(uid);
+    await db.runTransaction(async (tx) => {
+      const doc = await tx.get(userRef);
+      const data = doc.data() || {};
+      const bal = data.balance;
+      const updates: Record<string, any> = {
+        totalSpent: admin.firestore.FieldValue.increment(-deducted),
+        lastRefundAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastRefundReason: reason,
+      };
+      if (typeof bal === 'object' && bal !== null) {
+        updates['balance.paid'] = admin.firestore.FieldValue.increment(deducted);
+      } else {
+        updates.balance = admin.firestore.FieldValue.increment(deducted);
+      }
+      tx.update(userRef, updates);
     });
     console.log(`[refundBalance] uid=${uid} amount=${deducted} reason=${reason}`);
   } catch (refundErr: any) {
@@ -93,14 +106,55 @@ async function refundBalance(uid: string, deducted: number, reason: string): Pro
 }
 
 /**
+ * 2026-05-28 — balance schema 통일 헬퍼.
+ * 클라이언트 충전(confirmPayment/grantPurchase)은 `balance.paid` `balance.bonus` 객체 schema 사용.
+ * 그러나 기존 generate* 함수들은 `balance` 가 숫자라고 가정 → 첫 결제 후 분석 시 schema 충돌.
+ * 이 헬퍼가 양쪽 schema 안전 처리:
+ *   - 객체면 paid+bonus+reward 합으로 비교 + reward→bonus→paid 순 차감 (localStore SSOT 일치)
+ *   - 숫자면 그대로 비교 + 통합 차감 (legacy 데이터 호환)
+ */
+function computeBalanceDeduction(data: any, cost: number): { totalBefore: number; updates: Record<string, any> } | null {
+  const bal = data?.balance;
+  if (typeof bal === 'object' && bal !== null) {
+    const reward = Number(bal.reward) || 0;
+    const bonus = Number(bal.bonus) || 0;
+    const paid = Number(bal.paid) || 0;
+    const total = reward + bonus + paid;
+    if (total < cost) return null;
+    let rem = cost;
+    const dr = Math.min(rem, reward); rem -= dr;
+    const db_ = Math.min(rem, bonus); rem -= db_;
+    const dp = rem;
+    const updates: Record<string, any> = {
+      totalSpent: admin.firestore.FieldValue.increment(cost),
+    };
+    if (dr > 0) updates['balance.reward'] = admin.firestore.FieldValue.increment(-dr);
+    if (db_ > 0) updates['balance.bonus'] = admin.firestore.FieldValue.increment(-db_);
+    if (dp > 0) updates['balance.paid'] = admin.firestore.FieldValue.increment(-dp);
+    return { totalBefore: total, updates };
+  }
+  const num = typeof bal === 'number' ? bal : 0;
+  if (num < cost) return null;
+  return {
+    totalBefore: num,
+    updates: {
+      balance: admin.firestore.FieldValue.increment(-cost),
+      totalSpent: admin.firestore.FieldValue.increment(cost),
+    },
+  };
+}
+
+/**
  * T4 · Pre-warming · generateReport 인스턴스 깨우기
  *  · InputPage 의 폼이 valid 가 되는 순간 백그라운드로 ping → 인스턴스 warm 상태 확보
- *  · 콜드스타트 1~3s 완전 제거
  *  · idempotent · auth 불필요 · 단순 200 응답만
- *  · 같은 generateReport 함수와 동일 region/메모리 → instance affinity 활용
+ *
+ * 2026-05-29 PM 비용 fix — minInstances: 1→0.
+ *   기존: 항상 256MiB 컨테이너 24h idle (월 ₩5K~).
+ *   런칭 전 트래픽 0 인 상태에서 warm 의미 없음. 호출 시 cold start (1~3s) 흡수.
  */
 export const warmupGenerateReport = onCall(
-  { timeoutSeconds: 10, memory: '256MiB', minInstances: 1, cors: true, invoker: 'public' },
+  { timeoutSeconds: 10, memory: '256MiB', minInstances: 0, cors: true, invoker: 'public' },
   async () => {
     return { ok: true, ts: Date.now() };
   }
@@ -120,7 +174,7 @@ export const generatePremiumReportStream = onRequest(
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 540, // SSE 장기 연결 — 9분 (Cloud Run 최대)
     memory: '1GiB',
-    minInstances: 1,
+    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
     cors: true,
     invoker: 'public',
   },
@@ -184,16 +238,12 @@ export const generatePremiumReportStream = onRequest(
       const userDoc = await userRef.get();
       if (userDoc.exists) {
         try {
+          // 2026-05-28 — schema 통일 helper (객체/숫자 양쪽 지원)
           await db.runTransaction(async (tx) => {
             const doc = await tx.get(userRef);
-            const balance = doc.data()?.balance ?? 0;
-            if (balance < cost) {
-              throw new Error('운이 부족합니다');
-            }
-            tx.update(userRef, {
-              balance: admin.firestore.FieldValue.increment(-cost),
-              totalSpent: admin.firestore.FieldValue.increment(cost),
-            });
+            const result = computeBalanceDeduction(doc.data(), cost);
+            if (!result) throw new Error('운이 부족합니다');
+            tx.update(userRef, result.updates);
           });
           deductedAmount = cost;
         } catch (e: any) {
@@ -277,11 +327,145 @@ export const generatePremiumReportStream = onRequest(
   }
 );
 
+/* ══════════════════════════════════════════════════════════════════
+ * generateReportStream — 1운 리포트 SSE 스트리밍 (Phase 1 · 2026-05-27)
+ *
+ * 종합사주 SSE 와 동일 패턴: 3 그룹(A·B·C) 병렬 호출 + 도착 즉시 송출.
+ * callable generateReport 와 프롬프트·모델·머지 100% 동일 (전송만 SSE).
+ * 클라가 첫 그룹 도착(~25-30s) 시 결과 페이지 진입 → 점진 렌더 가능.
+ *
+ * 잔액 차감 1운 (premium 의 10운 과 차이) · 환불·Firestore 저장은 callable 과 동일.
+ * ═════════════════════════════════════════════════════════════════ */
+export const generateReportStream = onRequest(
+  {
+    secrets: [ANTHROPIC_KEY],
+    timeoutSeconds: 540,
+    memory: '1GiB',
+    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    cors: true,
+    invoker: 'public',
+  },
+  async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Max-Age', '3600');
+      res.status(204).send('');
+      return;
+    }
+    if (req.method !== 'POST') { res.status(405).send('Method not allowed'); return; }
+
+    res.set({
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.flushHeaders?.();
+    const sendEvent = (event: string, data: any) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    let uid = 'anonymous';
+    let isAnonymous = true;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        const decoded = await admin.auth().verifyIdToken(token);
+        uid = decoded.uid;
+        isAnonymous = decoded.firebase?.sign_in_provider === 'anonymous';
+      } catch { /* anonymous */ }
+    }
+
+    const { sajuData, situation } = req.body || {};
+    if (!sajuData) {
+      sendEvent('error', { message: '사주 데이터가 없습니다' });
+      res.end();
+      return;
+    }
+
+    // 잔액 차감 (1운 · basic 1운 리포트)
+    let deductedAmount = 0;
+    if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
+      const cost = 1;
+      const userRef = db.collection('users').doc(uid);
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        try {
+          // 2026-05-28 — schema 통일 helper
+          await db.runTransaction(async (tx) => {
+            const doc = await tx.get(userRef);
+            const result = computeBalanceDeduction(doc.data(), cost);
+            if (!result) throw new Error('운이 부족합니다');
+            tx.update(userRef, result.updates);
+          });
+          deductedAmount = cost;
+        } catch (e: any) {
+          sendEvent('error', { message: e.message || '잔액 차감 실패' });
+          res.end();
+          return;
+        }
+      }
+    }
+
+    sendEvent('start', { ts: Date.now() });
+    const groups: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
+    const results: Record<string, any> = {};
+
+    try {
+      const mod = await import('./ai/claudeReport');
+      const apiKey = ANTHROPIC_KEY.value();
+
+      // 그룹별 병렬 — 도착 즉시 송출 (Promise.all 대신 then 패턴)
+      const groupPromises = groups.map(async (g) => {
+        const t0 = Date.now();
+        try {
+          const result = await mod.generateReportGroup(apiKey, sajuData, situation, g);
+          results[g] = result;
+          sendEvent('group', { group: g, data: result, elapsedMs: Date.now() - t0 });
+        } catch (e: any) {
+          sendEvent('groupError', { group: g, message: e.message || 'unknown' });
+          throw e;
+        }
+      });
+      await Promise.all(groupPromises);
+
+      const merged = mod.mergeReportGroups(results.A, results.B, results.C);
+
+      // Firestore 저장 (callable 과 동일 패턴)
+      const reportRef = db.collection('reports').doc();
+      try {
+        await reportRef.set({
+          uid,
+          type: 'basic',
+          aiModel: 'claude-opus-4-6',
+          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          shareEnabled: false,
+        });
+      } catch { /* silent */ }
+
+      sendEvent('done', { reportId: reportRef.id, content: merged });
+      res.end();
+    } catch (error: any) {
+      console.error('generateReportStream error:', error);
+      if (deductedAmount > 0) {
+        await refundBalance(uid, deductedAmount, 'generateReportStream failed');
+      }
+      sendEvent('error', { message: error?.message || 'AI 분석 실패' });
+      res.end();
+    }
+  }
+);
+
 /**
  * 사주 리포트 생성 — Claude Opus 4.6 (env SAJU_REPORT_MODEL로 오버라이드 가능)
  */
 export const generateReport = onCall(
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 1, cors: true, invoker: 'public' },
+  // 2026-05-29 PM 비용 fix — minInstances: 1→0. 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -295,14 +479,12 @@ export const generateReport = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const balance = doc.data()?.balance ?? 0;
-          if (balance < cost) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(-cost),
-            totalSpent: admin.firestore.FieldValue.increment(cost),
-          });
+          const result = computeBalanceDeduction(doc.data(), cost);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
         });
         deductedAmount = cost;
       }
@@ -490,9 +672,331 @@ async function logGuardHit(args: {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════
+ * generateDailyFortuneStream — SSE 무료 오늘운세 v6 (2026-05-06)
+ *
+ * 4-stack 최적화:
+ *   L1 · Shared Cache by (사주 8글자 + 날짜) — uid 무관
+ *        쌍둥이/같은 사주 패턴/재방문 모두 cache hit. pre-gen 노쇼 비용 0.
+ *        first-paint <1s · full <1s 모두 cache hit 시.
+ *   L2 · Parallel Group A/B — 같은 SYSTEM 공유 (caching) + 두 USER 병렬 호출
+ *        Group A (priority): §01 본문 + §02 점수 → 첫 paint 5~8s
+ *        Group B (rest):     §03~§07 행동/럭키/내일
+ *        max(A,B) ≈ 15~25s · 단일 호출 30~60s 대비 40~60% 단축
+ *   L4 · Streaming chunks — Group A 진행 중에도 partial JSON 노출 (Progressive Render)
+ *
+ * 흐름:
+ *   1. 인증 (Bearer optional)
+ *   2. shared cache hit by (8글자_날짜) → 즉시 'done'
+ *   3. cache miss → Group A·B 병렬 호출 시작
+ *   4. 각 group chunk 마다 'chunk' (group:'A'|'B' 표식) — Progressive Render
+ *   5. 각 group 완료 시 'group' 이벤트 (early phase transition trigger)
+ *   6. 둘 다 완료 → merge → shared cache 저장 → 'done'
+ * ═════════════════════════════════════════════════════════════════ */
+
+/** 사주 8글자 키 추출 — pillars 0~3 의 천간/지지 합. 시간 미입력은 'XX'. */
+function buildSajuKey(sajuData: any): string {
+  try {
+    const p = sajuData?.pillars || [];
+    const ch = (i: number) => {
+      const pillar = p[i];
+      if (!pillar || pillar.available === false) return 'XX';
+      return `${pillar.천간 || 'X'}${pillar.지지 || 'X'}`;
+    };
+    return `${ch(0)}${ch(1)}${ch(2)}${ch(3)}`;
+  } catch {
+    return 'XXXXXXXX';
+  }
+}
+
+export const generateDailyFortuneStream = onRequest(
+  {
+    secrets: [ANTHROPIC_KEY],
+    timeoutSeconds: 300,
+    memory: '1GiB',
+    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    cors: true,
+    invoker: 'public',
+  },
+  async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Max-Age', '3600');
+      res.status(204).send('');
+      return;
+    }
+    if (req.method !== 'POST') {
+      res.status(405).send('Method not allowed');
+      return;
+    }
+
+    res.set({
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.flushHeaders?.();
+
+    const sendEvent = (event: string, data: any) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // 인증 (optional — anonymous 도 통과)
+    let uid = 'anonymous';
+    let isAnonymous = true;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        const decoded = await admin.auth().verifyIdToken(token);
+        uid = decoded.uid;
+        isAnonymous = decoded.firebase?.sign_in_provider === 'anonymous';
+      } catch { /* anonymous */ }
+    }
+
+    const {
+      name, sajuData, date, weekday, todayGanzi, jeolgi, dayJiShen, dayXiongSha,
+      baseScores100, tomorrowGanzi, tomorrowDate,
+    } = req.body || {};
+
+    if (!sajuData || !date || !todayGanzi) {
+      sendEvent('error', { message: '사주·날짜·오늘 간지가 필요합니다' });
+      res.end();
+      return;
+    }
+
+    sendEvent('start', { ts: Date.now() });
+
+    // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
+    const SCHEMA_VERSION = 'v6';
+    const sajuKey = buildSajuKey(sajuData);
+    const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
+    const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);
+
+    try {
+      const cached = await sharedCacheRef.get();
+      if (cached.exists) {
+        const d = cached.data();
+        const content = d?.content;
+        // v6 검증 — Group A·B 둘 다 머지된 풀 결과
+        const isV6 = content && content.todayNarrative && content.subScores
+          && Array.isArray(content.meetPeople) && content.luckyProfile;
+        if (content && isV6) {
+          console.log(`[dailyFortuneStream] L1 SHARED HIT key=${sharedCacheKey}`);
+          sendEvent('done', { result: content, cached: true, cacheLevel: 'shared' });
+          res.end();
+          return;
+        }
+      }
+    } catch (e: any) {
+      console.warn('[dailyFortuneStream] shared cache check failed:', e?.message);
+    }
+
+    // ── L2 · Haiku 3-way 병렬 + 강력 sanity check + Sonnet fallback (v6.5) ──
+    // 실측: Haiku 단일 = 60s (출력 8800자 / ~100 tok/s)
+    // 3-way 병렬: max(A1=5s, A2=18s, B=18s) ≈ 18s
+    // 각 그룹 sanity check (글자수 + 핵심 필드) → 누락 시 Sonnet 단일 fallback
+    try {
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
+      const {
+        DAILY_FORTUNE_SYSTEM_V3,
+        DAILY_FORTUNE_USER_V3,
+        DAILY_FORTUNE_USER_V3_GROUP_A1,
+        DAILY_FORTUNE_USER_V3_GROUP_A2,
+        DAILY_FORTUNE_USER_V3_GROUP_B,
+        parseJsonResponse,
+      } = await import('./ai/promptsV3');
+      const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
+      const system = DAILY_FORTUNE_SYSTEM_V3;
+
+      const userA1 = DAILY_FORTUNE_USER_V3_GROUP_A1({
+        name: name || '사용자', sajuData, date, weekday: weekday || '',
+        todayGanzi, jeolgi, baseScores100,
+      });
+      const userA2 = DAILY_FORTUNE_USER_V3_GROUP_A2({
+        name: name || '사용자', sajuData, date, weekday: weekday || '',
+        todayGanzi, jeolgi, dayJiShen, dayXiongSha, baseScores100,
+      });
+      const userB = DAILY_FORTUNE_USER_V3_GROUP_B({
+        name: name || '사용자', sajuData, date, weekday: weekday || '',
+        todayGanzi, jeolgi, dayJiShen, dayXiongSha, tomorrowGanzi, tomorrowDate,
+      });
+
+      const t0 = Date.now();
+
+      const runGroup = async (groupId: 'A1' | 'A2' | 'B', userPrompt: string, maxTokens: number) => {
+        const tg0 = Date.now();
+        let accumulated = '';
+        let chunkCount = 0;
+
+        const stream = anthropic.messages.stream({
+          model: 'claude-haiku-4-5', // Haiku 4.5 — 그룹별 병렬
+          max_tokens: maxTokens,
+          temperature: 0.4,
+          system: [{
+            type: 'text',
+            text: system,
+            cache_control: { type: 'ephemeral', ttl: '1h' } as any,
+          }],
+          messages: [{ role: 'user', content: userPrompt }],
+        });
+
+        for await (const event of stream as any) {
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            accumulated += event.delta.text;
+            chunkCount++;
+            sendEvent('chunk', {
+              group: groupId,
+              delta: event.delta.text,
+              totalChars: accumulated.length,
+              chunkIdx: chunkCount,
+            });
+          }
+        }
+
+        const elapsedMs = Date.now() - tg0;
+        console.log(`[dailyFortuneStream] Group ${groupId} complete`, {
+          chunks: chunkCount,
+          chars: accumulated.length,
+          elapsedMs,
+        });
+
+        let parsed: any = {};
+        try {
+          parsed = parseJsonResponse(accumulated, { repairUsed: false }) || {};
+        } catch (parseErr: any) {
+          console.error(`[dailyFortuneStream] Group ${groupId} parse FAILED:`, parseErr?.message);
+          parsed = {};
+        }
+        const keyCount = parsed && typeof parsed === 'object' ? Object.keys(parsed).length : 0;
+        console.log(`[dailyFortuneStream] Group ${groupId} → ${keyCount} keys: [${Object.keys(parsed || {}).join(', ')}]`);
+
+        sendEvent('group', { group: groupId, data: parsed, elapsedMs });
+        return parsed;
+      };
+
+      // 3-way 병렬 실행
+      const [resA1, resA2, resB] = await Promise.all([
+        runGroup('A1', userA1, 1500),
+        runGroup('A2', userA2, 5000),
+        runGroup('B',  userB, 5000),
+      ]);
+
+      const a1: any = (resA1 && typeof resA1 === 'object') ? resA1 : {};
+      const a2: any = (resA2 && typeof resA2 === 'object') ? resA2 : {};
+      const b: any = (resB && typeof resB === 'object') ? resB : {};
+
+      // 강력한 sanity check (글자수 + 핵심 필드)
+      const a1OK = !!(a1.title && a1.subScores && a1.subScoreOneLines &&
+                       Object.keys(a1.subScoreOneLines).length >= 4);
+      const a2OK = !!(a2.todayNarrative && a2.todayNarrative.length >= 600 &&
+                       a2.pillarMessages && a2.subScoreReasons);
+      const bOK = !!(Array.isArray(b.timeSlots) && b.timeSlots.length >= 3 &&
+                      Array.isArray(b.doList) && b.doList.length >= 2 &&
+                      b.luckyProfile && Object.keys(b.luckyProfile).length >= 4);
+      console.log(`[dailyFortuneStream] sanity: A1=${a1OK} A2=${a2OK} B=${bOK}`);
+
+      let merged: any = { ...a1, ...a2, ...b };
+
+      // 한 그룹이라도 누락 → Sonnet 단일-호출 fallback
+      if (!a1OK || !a2OK || !bOK) {
+        console.warn('[dailyFortuneStream] missing fields → Sonnet 단일 fallback');
+        const fbUser = DAILY_FORTUNE_USER_V3({
+          name: name || '사용자', sajuData, date, weekday: weekday || '',
+          todayGanzi, jeolgi, dayJiShen, dayXiongSha,
+          baseScores100, tomorrowGanzi, tomorrowDate,
+        });
+        const tFb = Date.now();
+        let fbAcc = '';
+        const fbStream = anthropic.messages.stream({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 8000,
+          temperature: 0.4,
+          system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral', ttl: '1h' } as any }],
+          messages: [{ role: 'user', content: fbUser }],
+        });
+        for await (const event of fbStream as any) {
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            fbAcc += event.delta.text;
+            sendEvent('chunk', { group: 'fallback', delta: event.delta.text, totalChars: fbAcc.length });
+          }
+        }
+        try {
+          const fbParsed: any = parseJsonResponse(fbAcc, { repairUsed: false }) || {};
+          // 정상 그룹은 유지, 누락된 부분만 Sonnet 결과로 채움
+          merged = {
+            ...fbParsed,
+            ...(a1OK ? a1 : {}),
+            ...(a2OK ? a2 : {}),
+            ...(bOK ? b : {}),
+          };
+          console.log(`[dailyFortuneStream] Sonnet fallback complete (${Date.now() - tFb}ms) → ${Object.keys(fbParsed).length} keys`);
+        } catch (e: any) {
+          console.error('[dailyFortuneStream] Sonnet fallback parse failed:', e?.message);
+        }
+      }
+
+      console.log('[dailyFortuneStream] complete', {
+        totalElapsedMs: Date.now() - t0,
+        sajuKey,
+        finalKeys: Object.keys(merged).length,
+        model: 'claude-haiku-4-5 + sonnet-fallback',
+      });
+
+      // ── L1 · Shared Cache 저장 (uid 무관) ──
+      try {
+        await sharedCacheRef.set({
+          content: merged,
+          aiModel: 'claude-haiku-4-5',
+          schemaVersion: SCHEMA_VERSION,
+          sajuKey,
+          date,
+          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        console.log(`[dailyFortuneStream] shared cache saved key=${sharedCacheKey}`);
+      } catch (e: any) {
+        console.warn('[dailyFortuneStream] shared cache save failed:', e?.message);
+      }
+
+      // 유저별 캐시 (legacy v5 호환 — 기존 구독/저장 로직 유지)
+      if (uid !== 'anonymous' && !isAnonymous) {
+        try {
+          const userCacheRef = db.doc(`users/${uid}/dailyFortune/${date}_${SCHEMA_VERSION}`);
+          await userCacheRef.set({
+            content: merged,
+            aiModel: 'claude-haiku-4-5',
+            schemaVersion: SCHEMA_VERSION,
+            sharedKey: sharedCacheKey,
+            generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        } catch (e: any) {
+          console.warn('[dailyFortuneStream] user cache save failed:', e?.message);
+        }
+      }
+
+      sendEvent('done', {
+        result: merged,
+        cached: false,
+        cacheLevel: 'miss',
+        elapsedMs: Date.now() - t0,
+      });
+    } catch (e: any) {
+      console.error('[dailyFortuneStream] FAILED:', e?.message, e);
+      sendEvent('error', { message: e?.message || '오늘의 운세 생성 실패' });
+    }
+
+    res.end();
+  },
+);
+
 export const generateChatAnswer = onCall(
   // 2026-04-21 사주대화 Sonnet 4.6 전환 → secrets 키도 ANTHROPIC_KEY 로 교체
-  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 1, cors: true, invoker: 'public' },
+  // 2026-05-29 PM 비용 fix — minInstances: 1→0. 512MiB 상시대기 (월 ₩7K) → 0. cold start UX 로 흡수.
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question) throw new HttpsError('invalid-argument', '질문이 없습니다');
@@ -682,6 +1186,193 @@ export const generateDreamFree = onCall(
   }
 );
 
+/* ══════════════════════════════════════════════════════════════════
+ * generateDreamFreeStream — SSE 스트리밍 (오늘의 운세 패턴)
+ *
+ * callable generateDreamFree 와 프롬프트·모델·출력 100% 동일 (전송만 SSE).
+ * 쿼터(월 7회) 체크도 동일. 무료라 잔액 차감 없음.
+ * 클라가 partial-json 점진 렌더 → 첫 글자 빠르게, 내용 차오름 (저퀄·깨짐 0).
+ * ⚠️ 쪼개기 X (구 2그룹 분할 회귀 교훈) — 단일 호출 그대로 스트리밍만.
+ * ═════════════════════════════════════════════════════════════════ */
+export const generateDreamFreeStream = onRequest(
+  {
+    secrets: [ANTHROPIC_KEY],
+    timeoutSeconds: 300,
+    memory: '1GiB',
+    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    cors: true,
+    invoker: 'public',
+  },
+  async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Max-Age', '3600');
+      res.status(204).send('');
+      return;
+    }
+    if (req.method !== 'POST') { res.status(405).send('Method not allowed'); return; }
+
+    res.set({
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.flushHeaders?.();
+    const sendEvent = (event: string, data: any) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    let uid: string | undefined;
+    let isAnon = true;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      try {
+        const decoded = await admin.auth().verifyIdToken(authHeader.slice(7));
+        uid = decoded.uid;
+        isAnon = decoded.firebase?.sign_in_provider === 'anonymous';
+      } catch { /* anonymous */ }
+    }
+
+    const { saju, dreamContent, category, userConcern } = req.body || {};
+    if (!category) { sendEvent('error', { message: '카테고리가 없습니다' }); res.end(); return; }
+
+    // 쿼터 체크 (월 7회) — callable 과 동일
+    if (uid && !isAnon) {
+      try {
+        const yyyymm = new Date().toISOString().slice(0, 7);
+        const quotaRef = db.collection('users').doc(uid).collection('dreamQuota').doc(yyyymm);
+        const today = new Date().toISOString().slice(0, 10);
+        await db.runTransaction(async (tx) => {
+          const q = await tx.get(quotaRef);
+          const data = q.data() || { monthCount: 0, lastDate: null };
+          if (data.monthCount >= 7) {
+            throw new Error('이번 달 꿈해몽 무료 쿼터가 소진됐어요');
+          }
+          const inc = data.lastDate === today ? 0 : 1;
+          tx.set(quotaRef, {
+            monthCount: data.monthCount + inc,
+            lastDate: today,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        });
+      } catch (qErr: any) {
+        sendEvent('error', { message: qErr?.message || '쿼터 확인 실패', code: 'quota' });
+        res.end();
+        return;
+      }
+    }
+
+    sendEvent('start', { ts: Date.now() });
+
+    try {
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
+      const { buildDreamFreeCall, buildDreamFreeGroupCall } = await lazyClaudeDream();
+      const { parseJsonResponse } = await import('./ai/promptsV3');
+      const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
+      const t0 = Date.now();
+
+      // 2026-05-27 v8 — 2-그룹 병렬 (사주 있을 때만, 없으면 단일 호출)
+      const hasSaju = !!saju;
+      if (hasSaju) {
+        console.log('[dreamFreeStream] 2-group parallel mode');
+
+        const runGroup = async (group: 'A' | 'B'): Promise<{ group: 'A' | 'B'; parsed: any; elapsedMs: number }> => {
+          const tg0 = Date.now();
+          const { system, user, model, maxTokens } = buildDreamFreeGroupCall(
+            { saju, dreamContent: dreamContent || '', category, userConcern },
+            group,
+          );
+          const runStream = async (temperature: number): Promise<string> => {
+            let acc = '';
+            let idx = 0;
+            const stream = anthropic.messages.stream({
+              model, max_tokens: maxTokens, temperature, system,
+              messages: [{ role: 'user', content: user }],
+            });
+            for await (const event of stream as any) {
+              if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+                acc += event.delta.text;
+                idx++;
+                // 그룹 식별자 포함해서 emit (client 가 머지)
+                sendEvent('chunk', { group, delta: event.delta.text, totalChars: acc.length, chunkIdx: idx });
+              }
+            }
+            return acc;
+          };
+          let text = await runStream(0.7);
+          let parsed: any;
+          try {
+            parsed = parseJsonResponse(text, { repairUsed: false });
+          } catch (e1: any) {
+            console.warn(`[dreamFreeStream:${group}] 1차 파싱 실패 → temp 0.5 재시도:`, e1?.message);
+            sendEvent('retry', { group, reason: 'parse_fail' });
+            text = await runStream(0.5);
+            parsed = parseJsonResponse(text, { repairUsed: false });
+          }
+          const elapsedMs = Date.now() - tg0;
+          console.log(`[dreamFreeStream:${group}] done in ${elapsedMs}ms`);
+          // 그룹 완료 즉시 emit (client 가 빠르게 도착하는 그룹부터 머지)
+          sendEvent('group', { group, data: parsed, elapsedMs });
+          return { group, parsed, elapsedMs };
+        };
+
+        // 병렬 실행 — Promise.all (둘 다 완료될 때까지 대기)
+        const [groupA, groupB] = await Promise.all([runGroup('A'), runGroup('B')]);
+        // 머지 — A + B 통합 결과
+        const merged = { ...groupA.parsed, ...groupB.parsed };
+        const totalMs = Date.now() - t0;
+        console.log(`[dreamFreeStream] both groups done in ${totalMs}ms (A=${groupA.elapsedMs}ms, B=${groupB.elapsedMs}ms)`);
+        sendEvent('done', { content: merged, elapsedMs: totalMs, mode: '2-group-parallel' });
+        res.end();
+        return;
+      }
+
+      // 사주 없음 → 단일 호출 fallback (callable 과 동일)
+      console.log('[dreamFreeStream] no saju → single-call mode');
+      const { system, user, model, maxTokens } = buildDreamFreeCall({
+        saju, dreamContent: dreamContent || '', category, userConcern,
+      });
+      const runStream = async (temperature: number): Promise<string> => {
+        let acc = '';
+        let idx = 0;
+        const stream = anthropic.messages.stream({
+          model, max_tokens: maxTokens, temperature, system,
+          messages: [{ role: 'user', content: user }],
+        });
+        for await (const event of stream as any) {
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            acc += event.delta.text;
+            idx++;
+            sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx: idx });
+          }
+        }
+        return acc;
+      };
+      let text = await runStream(0.7);
+      let parsed: any;
+      try {
+        parsed = parseJsonResponse(text, { repairUsed: false });
+      } catch (e1: any) {
+        console.warn('[dreamFreeStream] 1차 파싱 실패 → temp 0.5 재시도:', e1?.message);
+        sendEvent('retry', { reason: 'parse_fail' });
+        text = await runStream(0.5);
+        parsed = parseJsonResponse(text, { repairUsed: false });
+      }
+      console.log(`[dreamFreeStream] single-call done in ${Date.now() - t0}ms`);
+      sendEvent('done', { content: parsed, elapsedMs: Date.now() - t0, mode: 'single-call' });
+      res.end();
+    } catch (error: any) {
+      console.error('generateDreamFreeStream error:', error);
+      sendEvent('error', { message: error?.message || '꿈해몽 생성 실패' });
+      res.end();
+    }
+  }
+);
+
 /**
  * 꿈해몽 심층 (신규 v3, 유료 1운) — Claude Sonnet 4.6 + 2차 자기 리뷰.
  */
@@ -697,14 +1388,12 @@ export const generateDreamDeep = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const balance = doc.data()?.balance ?? 0;
-          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(-1),
-            totalSpent: admin.firestore.FieldValue.increment(1),
-          });
+          const result = computeBalanceDeduction(doc.data(), 1);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
         });
         deductedAmount = 1;
       }
@@ -827,14 +1516,12 @@ export const generateDaeun = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const balance = doc.data()?.balance ?? 0;
-          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(-1),
-            totalSpent: admin.firestore.FieldValue.increment(1),
-          });
+          const result = computeBalanceDeduction(doc.data(), 1);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
         });
         deductedAmount = 1;
       }
@@ -873,14 +1560,12 @@ export const generateMonthly = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const balance = doc.data()?.balance ?? 0;
-          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(-1),
-            totalSpent: admin.firestore.FieldValue.increment(1),
-          });
+          const result = computeBalanceDeduction(doc.data(), 1);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
         });
         deductedAmount = 1;
       }
@@ -919,14 +1604,12 @@ export const generateCompatibility = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const balance = doc.data()?.balance ?? 0;
-          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(-1),
-            totalSpent: admin.firestore.FieldValue.increment(1),
-          });
+          const result = computeBalanceDeduction(doc.data(), 1);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
         });
         deductedAmount = 1;
       }
@@ -967,14 +1650,12 @@ export const generateTojung = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const balance = doc.data()?.balance ?? 0;
-          if (balance < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, {
-            balance: admin.firestore.FieldValue.increment(-1),
-            totalSpent: admin.firestore.FieldValue.increment(1),
-          });
+          const result = computeBalanceDeduction(doc.data(), 1);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
         });
         deductedAmount = 1;
       }
@@ -1014,11 +1695,16 @@ export const grantShareReward = onCall(
       .where('date', '==', today).get();
     if (dailyLogs.size >= 3) return { success: false, message: '오늘 공유 보상은 3회까지예요' };
 
+    // 2026-05-28 — schema 통일. 객체면 reward bucket, 숫자면 통합 증액.
     await db.runTransaction(async (tx) => {
       const userRef = db.collection('users').doc(uid);
-      tx.update(userRef, {
-        balance: admin.firestore.FieldValue.increment(1),
-      });
+      const doc = await tx.get(userRef);
+      const bal = doc.data()?.balance;
+      if (typeof bal === 'object' && bal !== null) {
+        tx.update(userRef, { 'balance.reward': admin.firestore.FieldValue.increment(1) });
+      } else {
+        tx.update(userRef, { balance: admin.firestore.FieldValue.increment(1) });
+      }
     });
 
     await db.collection(`users/${uid}/shareLogs`).add({
@@ -1250,11 +1936,12 @@ export const generateTopicAnalysis = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const bal = doc.data()?.balance ?? 0;
-          if (bal < 1) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, { balance: admin.firestore.FieldValue.increment(-1), totalSpent: admin.firestore.FieldValue.increment(1) });
+          const result = computeBalanceDeduction(doc.data(), 1);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
         });
         deductedAmount = 1;
       }
@@ -1280,12 +1967,168 @@ export const generateTopicAnalysis = onCall(
   }
 );
 
+/* ══════════════════════════════════════════════════════════════════
+ * generateTopicAnalysisStream — SSE 스트리밍 (오늘의 운세 패턴 적용)
+ *
+ * callable generateTopicAnalysis 와 프롬프트·모델·출력 100% 동일.
+ * 차이는 전송 방식만: await → messages.stream() → chunk 이벤트 점진 송출.
+ * 클라가 partial-json 으로 점진 렌더 → 첫 글자 ~5-10s, 내용 차오름 (저퀄·깨짐 0).
+ * 잔액 차감/환불/Firestore 저장은 callable 과 동일 로직.
+ * 2차 자기리뷰는 stream 경로 미적용 (TOPIC_SELF_REVIEW 기본 OFF 정책 일치).
+ * ═════════════════════════════════════════════════════════════════ */
+export const generateTopicAnalysisStream = onRequest(
+  {
+    secrets: [ANTHROPIC_KEY],
+    timeoutSeconds: 300,
+    memory: '1GiB',
+    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    cors: true,
+    invoker: 'public',
+  },
+  async (req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Max-Age', '3600');
+      res.status(204).send('');
+      return;
+    }
+    if (req.method !== 'POST') { res.status(405).send('Method not allowed'); return; }
+
+    res.set({
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.flushHeaders?.();
+    const sendEvent = (event: string, data: any) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // 인증 (Bearer optional — 익명도 통과)
+    let uid = 'anonymous';
+    let isAnonymous = true;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      try {
+        const decoded = await admin.auth().verifyIdToken(authHeader.slice(7));
+        uid = decoded.uid;
+        isAnonymous = decoded.firebase?.sign_in_provider === 'anonymous';
+      } catch { /* anonymous */ }
+    }
+
+    const { topicId, sajuData, baseScore, partnerInfo, extraInfo } = req.body || {};
+    if (!topicId || !sajuData) {
+      sendEvent('error', { message: 'topicId·sajuData 필요' });
+      res.end();
+      return;
+    }
+
+    // 잔액 차감 (1운) — callable 과 동일 (실명 유저만)
+    let deductedAmount = 0;
+    if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
+      const userRef = db.collection('users').doc(uid);
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        try {
+          // 2026-05-28 — schema 통일 helper
+          await db.runTransaction(async (tx) => {
+            const doc = await tx.get(userRef);
+            const result = computeBalanceDeduction(doc.data(), 1);
+            if (!result) throw new Error('운이 부족합니다');
+            tx.update(userRef, result.updates);
+          });
+          deductedAmount = 1;
+        } catch (e: any) {
+          sendEvent('error', { message: e.message || '잔액 차감 실패' });
+          res.end();
+          return;
+        }
+      }
+    }
+
+    sendEvent('start', { ts: Date.now() });
+
+    try {
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
+      const { buildTopicCall } = await lazyClaudeTopic();
+      const { parseJsonResponse } = await import('./ai/promptsV3');
+      const { system, prompt, model, maxTokens } =
+        buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+
+      const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
+      const t0 = Date.now();
+
+      const runStream = async (temperature: number): Promise<string> => {
+        let acc = '';
+        let chunkIdx = 0;
+        const stream = anthropic.messages.stream({
+          model,
+          max_tokens: maxTokens,
+          temperature,
+          system,
+          messages: [{ role: 'user', content: prompt }],
+        });
+        for await (const event of stream as any) {
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            acc += event.delta.text;
+            chunkIdx++;
+            sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx });
+          }
+        }
+        return acc;
+      };
+
+      // 1차 스트리밍 (파싱 실패 시 temp 낮춰 1회 재시도 — callable 과 동일)
+      let firstText = await runStream(0.1);
+      let parsed: any;
+      try {
+        parsed = parseJsonResponse(firstText, { repairUsed: false });
+      } catch (e1: any) {
+        console.warn(`[topicStream:${topicId}] 1차 파싱 실패 → 재시도:`, e1?.message);
+        sendEvent('retry', { reason: 'parse_fail' });
+        firstText = await runStream(0.05);
+        parsed = parseJsonResponse(firstText, { repairUsed: false });
+      }
+
+      // Firestore 저장 (callable 과 동일 구조)
+      const reportRef = db.collection('reports').doc();
+      try {
+        await reportRef.set({
+          uid, topicId, ...parsed, type: 'topic',
+          aiModel: 'claude-sonnet-4-6',
+          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch (fsErr: any) {
+        console.warn(`[topicStream:${topicId}] Firestore 저장 실패:`, fsErr?.message);
+      }
+
+      console.log(`[topicStream:${topicId}] done in ${Date.now() - t0}ms`);
+      sendEvent('done', { reportId: reportRef.id, content: parsed, elapsedMs: Date.now() - t0 });
+      res.end();
+    } catch (error: any) {
+      console.error('generateTopicAnalysisStream error:', error);
+      if (deductedAmount > 0) {
+        await refundBalance(uid, deductedAmount, 'generateTopicAnalysisStream failed');
+      }
+      sendEvent('error', { message: error?.message || '분석 실패' });
+      res.end();
+    }
+  }
+);
+
 /* ─── 이벤트 탭 v4.1 (2026-04-21) ───
  * 근거: 사주500_UI개편_09_이벤트_v4.md + appintos_PC핸드오버_이벤트v4_GO_v1.md
  * STUB 모드: APPINTOS_MTLS_CERT/KEY 미주입 시 자동 stub. 심사 후 Secrets 주입으로 LIVE 전환.
  */
 export { markAttendance } from './attendance/markAttendance';
 export { onInviteReceived } from './invite/onInviteReceived';
+
+/* ─── LIVE BEST 실시간 집계 (2026-06-02 · D3 정식 구현) ─── */
+export { recordTopicView, aggregateTopicTop5 } from './livebest/topicViews';
 
 /* ─── E32 · 공유 비회원 OG SSR (2026-04-22) ───
  * 근거: docs/prd/P2_Path_E_티켓_트래커.md E32 + 프리미엄_티저블러.md

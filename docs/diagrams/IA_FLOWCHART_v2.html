@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>사주500 — IA & Flowchart v2 (피그마 이전 작업용)</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --gold: #B8965A;
+    --gold-deep: #8C6D3D;
+    --gold-soft: rgba(184,150,90,0.10);
+    --gold-line: rgba(184,150,90,0.28);
+    --paper: #F8F5EE;
+    --ink: #1A1A1A;
+    --mute: #7A7269;
+    --border: #E8E1D4;
+    --love: #C88A95;
+    --reunion: #D89A8A;
+    --marriage: #C97B95;
+    --wealth: #B8965A;
+    --business: #A37A2E;
+    --career: #5A7CA8;
+    --exam: #5A6FA8;
+    --health: #6FA08C;
+    --move: #4F8A8B;
+    --study: #9C5A8A;
+    --daeun: #3B7A4B;
+    --monthly: #B5441F;
+    --compat: #9C5A8A;
+    --tojung: #2F4B7C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.55; font-size: 14px; }
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside.sidebar { background: white; border-right: 1px solid var(--border); padding: 20px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  aside h2 { font-size: 14px; margin: 0 0 12px; color: var(--gold-deep); letter-spacing: 0.05em; text-transform: uppercase; }
+  aside .nav { list-style: none; padding: 0; margin: 0 0 20px; }
+  aside .nav li a { display: block; color: var(--ink); text-decoration: none; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+  aside .nav li a:hover { background: var(--gold-soft); color: var(--gold-deep); }
+  aside .nav li.indent a { padding-left: 22px; font-size: 12px; color: var(--mute); }
+  aside .footer { font-size: 11px; color: var(--mute); padding: 12px 10px; border-top: 1px solid var(--border); }
+  main { padding: 32px 40px 80px; max-width: 1280px; }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h1 small { font-size: 14px; color: var(--mute); font-weight: 500; margin-left: 12px; }
+  .meta { color: var(--mute); font-size: 13px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px solid var(--gold); }
+  section { margin-bottom: 48px; scroll-margin-top: 16px; }
+  section h2.title { font-size: 22px; font-weight: 700; margin: 0 0 6px; color: var(--ink); display: flex; align-items: center; gap: 12px; }
+  section h2 .badge { background: var(--gold); color: white; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  section h3 { font-size: 17px; margin: 24px 0 10px; color: var(--gold-deep); }
+  section h4 { font-size: 14px; margin: 16px 0 8px; color: var(--ink); }
+  .lead { color: var(--mute); margin: 0 0 18px; }
+  /* tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; background: white; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  th { background: var(--gold-soft); color: var(--gold-deep); text-align: left; padding: 9px 11px; font-weight: 700; font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; border-bottom: 2px solid var(--gold-line); }
+  td { padding: 9px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gold-soft); }
+  code { background: var(--gold-soft); color: var(--gold-deep); padding: 1px 5px; border-radius: 3px; font-size: 11.5px;
+    font-family: 'Menlo', 'Monaco', monospace; }
+  /* mermaid wrap */
+  .mermaid-wrap { background: #FAFAF7; border: 1px solid var(--border); border-radius: 10px; padding: 14px; overflow-x: auto; margin: 12px 0; }
+  .mermaid { text-align: center; }
+  /* legend pills */
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 16px; }
+  .legend span { font-size: 11px; padding: 3px 9px; border-radius: 4px; font-weight: 600; }
+  .legend .free { background: #E8F5E9; color: #2D8A4E; }
+  .legend .p500 { background: #FFF4E5; color: #B5441F; }
+  .legend .p5000 { background: var(--gold-soft); color: var(--gold-deep); }
+  .legend .auth { background: #E3F2FD; color: #1565C0; }
+  .legend .static { background: #F5F5F5; color: #555; }
+  .legend .modal { background: #F3E5F5; color: #6A1B9A; }
+  /* page card grid */
+  .page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; margin-top: 16px; }
+  .page-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .page-card h4 { margin: 0 0 6px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .page-card .route { font-family: 'Menlo', monospace; font-size: 11px; color: var(--gold-deep); background: var(--gold-soft); padding: 2px 6px; border-radius: 3px; }
+  .page-card ul { margin: 6px 0 0; padding-left: 16px; font-size: 12px; color: var(--mute); }
+  .page-card ul li { margin: 2px 0; }
+  .page-card .phases { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
+  .page-card .phases span { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: #FFF4E5; color: #B5441F; font-weight: 600; }
+  /* topic colors */
+  .topic-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0; }
+  .topic-grid .swatch { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
+  .topic-grid .swatch .dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 6px; }
+  .topic-grid .swatch .name { font-size: 12px; font-weight: 600; }
+  .topic-grid .swatch .han { font-family: 'Noto Serif KR', serif; font-size: 10px; color: var(--mute); }
+  /* arrow flow */
+  .flow { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 12.5px; line-height: 1.8; font-family: 'Menlo', monospace; white-space: pre; overflow-x: auto; }
+  .flow .arr { color: var(--gold); font-weight: bold; }
+  /* warn / ok / info */
+  .warn { background: #FFF3E0; border-left: 4px solid var(--monthly); padding: 10px 14px; border-radius: 6px; margin: 12px 0; font-size: 12.5px; }
+  .ok { background: #E8F5E9; border-left: 4px solid #2D8A4E; padding: 10px 14px; border-radius: 6px; margin: 12px 0; font-size: 12.5px; }
+  .info { background: #E3F2FD; border-left: 4px solid #1565C0; padding: 10px 14px; border-radius: 6px; margin: 12px 0; font-size: 12.5px; }
+  .pill { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 600; margin-right: 4px; }
+  .pill-opus { background: #FFEBEE; color: #C62828; }
+  .pill-sonnet { background: #E3F2FD; color: #1565C0; }
+  .pill-haiku { background: #E8F5E9; color: #2D8A4E; }
+  .pill-modal { background: #F3E5F5; color: #6A1B9A; }
+  .pill-cf { background: #E0F7FA; color: #00838F; }
+  .pill-ls { background: #FFF8E1; color: #F57F17; }
+  .pill-fs { background: #F1F8E9; color: #558B2F; }
+  /* tab bar visual */
+  .tabbar-vis { display: grid; grid-template-columns: repeat(5, 1fr); background: white; border-radius: 10px; border: 1px solid var(--border); padding: 8px 0; margin: 10px 0; }
+  .tabbar-vis .tab { text-align: center; padding: 8px 4px; font-size: 11px; }
+  .tabbar-vis .tab .icon { font-size: 18px; display: block; margin-bottom: 3px; }
+  .tabbar-vis .tab.center { color: var(--gold-deep); font-weight: 700; }
+  /* token swatches */
+  .tokens { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 10px 0; }
+  .token { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 11px; }
+  .token .swatch { width: 100%; height: 32px; border-radius: 4px; margin-bottom: 5px; border: 1px solid var(--border); }
+  .token .name { font-weight: 600; font-size: 11px; }
+  .token .hex { font-family: 'Menlo', monospace; color: var(--mute); font-size: 10px; }
+  /* component inventory */
+  .comp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; margin: 8px 0; }
+  .comp-list span { background: white; border: 1px solid var(--border); padding: 5px 8px; border-radius: 5px; font-size: 11.5px; font-family: 'Menlo', monospace; }
+  /* anchor pulse */
+  :target { animation: pulse 1.2s ease-out; }
+  @keyframes pulse { 0%, 100% { background: transparent; } 50% { background: var(--gold-soft); } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar">
+  <h2>사주500 v2</h2>
+  <p style="font-size:11px; color:var(--mute); margin:0 0 16px;">피그마 이전 작업용 · 2026-05-07</p>
+
+  <h2>Navigation</h2>
+  <ul class="nav">
+    <li><a href="#sec-overview">0. 개요 & SSOT</a></li>
+    <li><a href="#sec-tokens">1. 디자인 토큰</a></li>
+    <li><a href="#sec-shell">2. 앱 셸 (TabBar/BalanceBar)</a></li>
+    <li><a href="#sec-modals">3. 글로벌 모달 인벤토리</a></li>
+    <li><a href="#sec-components">4. 컴포넌트 인벤토리</a></li>
+  </ul>
+
+  <h2>Pages — 25 routes</h2>
+  <ul class="nav">
+    <li><a href="#p-home">🏠 / Home</a></li>
+    <li><a href="#p-input">📥 /input</a></li>
+    <li><a href="#p-loading">⏳ /loading</a></li>
+    <li><a href="#p-result">💎 /result/:id</a></li>
+    <li><a href="#p-daily">☀ /daily</a></li>
+    <li><a href="#p-dream">🌙 /dream</a></li>
+    <li><a href="#p-topic">🎯 /topic/:topicId</a></li>
+    <li><a href="#p-premium">💠 /premium</a></li>
+    <li><a href="#p-daeun">📈 /daeun</a></li>
+    <li><a href="#p-monthly">📅 /monthly</a></li>
+    <li><a href="#p-compat">💕 /compat</a></li>
+    <li><a href="#p-compat-result">💕 /compat/result</a></li>
+    <li><a href="#p-tojung">📜 /tojung</a></li>
+    <li><a href="#p-chat">💬 /chat (3-route)</a></li>
+    <li><a href="#p-storage">📦 /storage</a></li>
+    <li><a href="#p-charge">💰 /charge</a></li>
+    <li><a href="#p-my">👤 /my</a></li>
+    <li><a href="#p-share">🔗 /share/:id</a></li>
+    <li><a href="#p-saju-card">🃏 /saju-card/:profileId</a></li>
+    <li><a href="#p-events">🎁 /events</a></li>
+    <li><a href="#p-static">📄 /terms · /privacy</a></li>
+  </ul>
+
+  <h2>System</h2>
+  <ul class="nav">
+    <li><a href="#sec-balance">5. 잔액 3-bucket</a></li>
+    <li><a href="#sec-payment">6. 결제 원자성</a></li>
+    <li><a href="#sec-ai">7. AI 모델 라우팅</a></li>
+    <li><a href="#sec-cache">8. 캐시 3-tier</a></li>
+    <li><a href="#sec-cross">9. Cross-link 매트릭스</a></li>
+    <li><a href="#sec-policy">10. 정책 SSOT</a></li>
+    <li><a href="#sec-recent">11. 최근 P0 수정</a></li>
+  </ul>
+
+  <div class="footer">v2 — 코드 실측 (App.tsx 25 routes · 19 CFs · 70+ components)</div>
+</aside>
+
+<!-- ========== MAIN ========== -->
+<main>
+
+<h1>사주500 — IA & Flowchart v2 <small>피그마 이전 작업용</small></h1>
+<div class="meta">25 routes · 19 Cloud Functions · 70+ 컴포넌트 · 9 콘텐츠 타입 · 모든 페이지·phase·modal 인벤토리</div>
+
+<!-- ============== 0. 개요 ============== -->
+<section id="sec-overview">
+  <h2 class="title"><span class="badge">0</span> 개요 & SSOT</h2>
+  <p class="lead">사주500은 5,000원 종합사주 + 500원 1운 콘텐츠 8종 + 무료 콘텐츠 3종 + 계정·결제·이벤트로 구성. 모든 cross-link은 코드 grep 실측 기반.</p>
+  <div class="legend">
+    <span class="free">무료</span>
+    <span class="p500">1운 (500원)</span>
+    <span class="p5000">10운 (5,000원)</span>
+    <span class="auth">계정·결제</span>
+    <span class="static">정적</span>
+    <span class="modal">모달</span>
+  </div>
+  <h3>5층 가격 구조</h3>
+  <table>
+    <thead><tr><th>층</th><th>가격</th><th>상품</th><th>목적</th></tr></thead>
+    <tbody>
+      <tr><td>무료</td><td>0원</td><td>오늘 운세 · 꿈해몽 라이트 · 사주대화 1턴</td><td>획득·체험</td></tr>
+      <tr><td>1운</td><td>500원</td><td>종합 1운 · 주제 분석 10종 · 대운 · 월운 · 궁합 · 토정 · 꿈 심층</td><td>본격 전환</td></tr>
+      <tr><td>10운</td><td>5,000원</td><td>종합사주 10섹션 + 인포그래픽 12+ + PDF</td><td>LTV 핵심</td></tr>
+    </tbody>
+  </table>
+
+  <h3>10주제 SSOT (canonical)</h3>
+  <div class="topic-grid">
+    <div class="swatch"><div class="dot" style="background:var(--love)"></div><div class="name">love 緣</div><div class="han">연애</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--reunion)"></div><div class="name">reunion 復</div><div class="han">재회</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--marriage)"></div><div class="name">marriage 婚</div><div class="han">결혼</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--wealth)"></div><div class="name">wealth 財</div><div class="han">재물</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--exam)"></div><div class="name">exam 進</div><div class="han">시험</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--business)"></div><div class="name">business 業</div><div class="han">사업</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--career)"></div><div class="name">career 官</div><div class="han">직업</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--health)"></div><div class="name">health 壽</div><div class="han">건강</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--move)"></div><div class="name">move 移</div><div class="han">이사</div></div>
+    <div class="swatch"><div class="dot" style="background:var(--study)"></div><div class="name">study 學</div><div class="han">공부</div></div>
+  </div>
+</section>
+
+<!-- ============== 1. 디자인 토큰 ============== -->
+<section id="sec-tokens">
+  <h2 class="title"><span class="badge">1</span> 디자인 토큰 (SSOT 2026-04-22)</h2>
+  <h3>브랜드 컬러</h3>
+  <div class="tokens">
+    <div class="token"><div class="swatch" style="background:#B8965A"></div><div class="name">--gold</div><div class="hex">#B8965A · 프라이머리 CTA</div></div>
+    <div class="token"><div class="swatch" style="background:#8C6D3D"></div><div class="name">--gold-deep</div><div class="hex">#8C6D3D · 호버/프레스</div></div>
+    <div class="token"><div class="swatch" style="background:#F8F5EE"></div><div class="name">--paper</div><div class="hex">#F8F5EE · 크림 배경</div></div>
+    <div class="token"><div class="swatch" style="background:#1A1A1A"></div><div class="name">--ink</div><div class="hex">#1A1A1A · 본문</div></div>
+    <div class="token"><div class="swatch" style="background:#7A7269"></div><div class="name">--mute</div><div class="hex">#7A7269 · 부가</div></div>
+    <div class="token"><div class="swatch" style="background:#F4D166"></div><div class="name">strong-highlighter</div><div class="hex">#F4D166 · 형광펜 (alpha 0.55)</div></div>
+  </div>
+  <h3>오행 5색</h3>
+  <div class="tokens">
+    <div class="token"><div class="swatch" style="background:#2D8A4E"></div><div class="name">목 (木)</div><div class="hex">#2D8A4E · Wood</div></div>
+    <div class="token"><div class="swatch" style="background:#D32F2F"></div><div class="name">화 (火)</div><div class="hex">#D32F2F · Fire</div></div>
+    <div class="token"><div class="swatch" style="background:#F57F17"></div><div class="name">토 (土)</div><div class="hex">#F57F17 · Earth</div></div>
+    <div class="token"><div class="swatch" style="background:#757575"></div><div class="name">금 (金)</div><div class="hex">#757575 · Metal</div></div>
+    <div class="token"><div class="swatch" style="background:#1565C0"></div><div class="name">수 (水)</div><div class="hex">#1565C0 · Water</div></div>
+  </div>
+  <h3>radius 3-tier</h3>
+  <table>
+    <thead><tr><th>토큰</th><th>값</th><th>용도</th></tr></thead>
+    <tbody>
+      <tr><td><code>rounded-2xl</code></td><td>16px</td><td>대형 카드, hero</td></tr>
+      <tr><td><code>rounded-xl</code></td><td>12px</td><td>중형 미니카드</td></tr>
+      <tr><td><code>rounded-lg</code></td><td>8px</td><td>소형 chip / button / pill</td></tr>
+      <tr><td><code>rounded-full</code></td><td>9999px</td><td>원형 chip / 잔액 뱃지</td></tr>
+    </tbody>
+  </table>
+  <h3>타이포 floor</h3>
+  <p>최소 폰트 <code>text-[11px]</code> (60대 가독). <code>text-[10px]</code> 미만 금지.</p>
+  <h3>강조 위계 3-tier (본문)</h3>
+  <ul>
+    <li><code>&lt;strong&gt;</code> 황금 형광펜 — 일상 결론 (한 문단 1~2회)</li>
+    <li><code>&lt;b&gt;</code> 검정 볼드 — 한자 첫 등장</li>
+    <li><code>&lt;u&gt;</code> 황금 밑줄 — 시기·숫자·색·방위·시간대 (한 문단 0~2회)</li>
+  </ul>
+</section>
+
+<!-- ============== 2. 앱 셸 ============== -->
+<section id="sec-shell">
+  <h2 class="title"><span class="badge">2</span> 앱 셸 — TabBar / BalanceBar / Header</h2>
+  <p class="lead">모든 페이지 공통. App.tsx의 <code>&lt;BalanceBar/&gt;</code> 위 + <code>&lt;TabBar/&gt;</code> 아래는 라우트 변경 무관 항상 노출.</p>
+
+  <h3>TabBar 5탭 (하단 고정)</h3>
+  <div class="tabbar-vis">
+    <div class="tab"><span class="icon">🏠</span>홈<br/><code>/</code></div>
+    <div class="tab"><span class="icon">🎁</span>이벤트<br/><code>/events</code></div>
+    <div class="tab center"><span class="icon">💬</span>사주대화<br/><code>/chat</code></div>
+    <div class="tab"><span class="icon">📦</span>보관함<br/><code>/storage</code></div>
+    <div class="tab"><span class="icon">👤</span>내 정보<br/><code>/my</code></div>
+  </div>
+  <p style="font-size:12px; color:var(--mute);">중앙(사주대화) 탭은 시각적 강조. 모든 25 페이지에서 5탭 ↔ 자유 이동.</p>
+
+  <h3>BalanceBar (상단 고정)</h3>
+  <p>잔액 표시 + 클릭 시 <code>/charge</code> 진입. 모든 페이지 상단 노출.</p>
+
+  <h3>App.tsx 초기화 순서</h3>
+  <div class="flow">app start
+  <span class="arr">↓</span>
+1. ensureAuth()                    Firebase 익명 로그인
+  <span class="arr">↓</span>
+2. restorePendingPurchases()       미지급 IAP 복구
+  <span class="arr">↓</span>
+3. isAppsInToss() 분기              ─┐
+                                  │
+   웹 ──→ 일반 라우팅              │
+   앱인토스 ──→ 추가 init:           │
+     · partner.addAccessoryButton (충전)
+     · navigationAccessoryEvent (충전 클릭)
+     · registerBackHandler (뒤로가기 분기)</div>
+</section>
+
+<!-- ============== 3. 글로벌 모달 ============== -->
+<section id="sec-modals">
+  <h2 class="title"><span class="badge">3</span> 글로벌 모달 인벤토리</h2>
+  <p class="lead">모든 페이지에서 떠오를 수 있는 모달 컴포넌트. 피그마에서 별도 frame으로 디자인.</p>
+  <table>
+    <thead><tr><th>모달</th><th>트리거</th><th>버튼</th><th>사용처</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill pill-modal">잔액 부족</span></td><td>spendBalance() false 반환</td><td>"충전하기" / "취소"</td><td>Topic·Daeun·Monthly·Tojung·Compat·Dream·Chat (7곳)</td></tr>
+      <tr><td><span class="pill pill-modal">1운 차감 확인</span></td><td>유료 콘텐츠 시작 직전</td><td>"확인 (1운 차감)" / "취소"</td><td>TopicAnalysisPage</td></tr>
+      <tr><td><span class="pill pill-modal">10운 차감 확인</span></td><td>종합사주 결제 직전</td><td>"확인 (10운 차감)" / "취소"</td><td>InputPage Step 5</td></tr>
+      <tr><td><span class="pill pill-modal">ShareModal</span></td><td>결과 페이지 공유 버튼</td><td>"카톡 / 링크 / 다운"</td><td>Result·Daeun·Monthly·Tojung·Compat (5곳)</td></tr>
+      <tr><td><span class="pill pill-modal">프로필 삭제 확인</span></td><td>StoragePage 휴지통</td><td>"삭제" / "취소"</td><td>StoragePage</td></tr>
+      <tr><td><span class="pill pill-modal">리포트 삭제 확인</span></td><td>StoragePage 휴지통</td><td>"삭제" / "취소"</td><td>StoragePage</td></tr>
+      <tr><td><span class="pill pill-modal">이어쓰기 / 새로작성</span></td><td>InputPage 진입 + draft 있음</td><td>"이어쓰기" / "새로 작성"</td><td>InputPage</td></tr>
+      <tr><td><span class="pill pill-modal">로그인 프롬프트</span></td><td>로그인 필요 액션</td><td>"카카오 / 구글 / 네이버" 또는 "토스"</td><td>웹 전역</td></tr>
+      <tr><td><span class="pill pill-modal">대화권 구매 (BuyCredits)</span></td><td>chat 무료 한도 초과</td><td>"1운 = 3회"</td><td>ChatSessionPage</td></tr>
+      <tr><td><span class="pill pill-modal">TierBModal (이벤트)</span></td><td>출석 streak / 토스 포인트</td><td>"받기"</td><td>EventsPage / 홈 인터셉트</td></tr>
+      <tr><td><span class="pill pill-modal">에러 inline 카드</span></td><td>AI 실패 + 환불</td><td>"다시 시도"</td><td>모든 paid 콘텐츠 페이지</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============== 4. 컴포넌트 인벤토리 ============== -->
+<section id="sec-components">
+  <h2 class="title"><span class="badge">4</span> 컴포넌트 인벤토리 (70+)</h2>
+  <p class="lead">피그마에서 컴포넌트 라이브러리 만들 때 1:1 매핑.</p>
+
+  <h3>Layout</h3>
+  <div class="comp-list">
+    <span>Header</span><span>TabBar</span><span>BalanceBar</span>
+  </div>
+
+  <h3>Common (Atoms / Molecules)</h3>
+  <div class="comp-list">
+    <span>Button</span><span>Modal</span><span>Toast</span><span>FadeIn</span>
+    <span>Loading</span><span>LockedCard</span><span>EmptyState</span><span>ErrorState</span>
+    <span>Flippable</span><span>FooterCTA</span><span>LoginPrompt</span>
+    <span>DailyRewardBadge</span><span>TopicCTAGrid</span><span>SymbolDragMap</span>
+    <span>CompassDrag</span><span>TimelineSwipe</span><span>TimeSlotCarousel</span>
+    <span>AILoading</span><span>ProfilePicker</span><span>ProfileSelector</span>
+  </div>
+
+  <h3>Saju (사주 시각화)</h3>
+  <div class="comp-list">
+    <span>PillarCard</span><span>SajuMiniCard</span><span>ScoreRing</span>
+    <span>ElementBar</span><span>OhengFlow</span><span>OhengCompareBar</span>
+    <span>JijangganVis</span><span>DaeunTimeline</span><span>MonthlyFortune</span>
+    <span>TojungMonthCard</span><span>WealthFlow</span><span>HealthVis</span>
+    <span>GaewoonVis</span><span>SinsalCard</span><span>RelationshipMap</span>
+    <span>LuckyProfile</span><span>ReportSection</span>
+    <span>CompatProfilePair</span><span>CompatScoreBar</span>
+  </div>
+
+  <h3>Brand</h3>
+  <div class="comp-list">
+    <span>Logo</span><span>Icons</span><span>OhengIcons</span><span>TopicIcons</span>
+    <span>DreamIcons</span><span>GaewoonIcons</span><span>ConcernIcons</span>
+    <span>PictogramRegistry</span>
+  </div>
+
+  <h3>UI primitives</h3>
+  <div class="comp-list">
+    <span>CTABlock</span><span>EmptyState</span><span>Heading</span><span>KPICell</span>
+    <span>LoadingSkeleton</span><span>AIProgressLoader</span><span>ProductCard</span>
+    <span>ReasonRow</span><span>ReviewCard</span><span>SinsalRow</span><span>Toast</span>
+  </div>
+
+  <h3>Result types (PremiumResult organisms)</h3>
+  <div class="comp-list">
+    <span>LifeEdgeList</span><span>SipClusterDetails</span><span>MonthlyInsightList</span>
+    <span>SinsalDist</span><span>RelationSixCards</span><span>TopicMiniGrid</span>
+    <span>PracticeChecklist</span><span>PdfDownloadButton</span>
+    <span>PremiumUpsellCard</span><span>ExtensionHero</span><span>ExtensionUpsellCard</span>
+  </div>
+
+  <h3>Share / Events / Ads</h3>
+  <div class="comp-list">
+    <span>ShareModal</span><span>SajuCardExport</span>
+    <span>StreakWidget</span><span>TierBModal</span><span>HeroBadge</span>
+    <span>CumulativeReceivedCard</span><span>TierAToast</span>
+    <span>AdSlot</span><span>BannerAd</span>
+  </div>
+</section>
+
+<!-- ============== 페이지별 카드 ============== -->
+<section>
+  <h2 class="title"><span class="badge">P</span> 페이지별 상세 (25 routes)</h2>
+  <p class="lead">각 페이지의 phase / 모달 / 사용 컴포넌트 / 진입로 / 출구. 피그마 frame 1:1 대응.</p>
+
+  <div class="page-grid">
+
+    <!-- HOME -->
+    <div class="page-card" id="p-home">
+      <h4>🏠 HomePage <span class="route">/</span></h4>
+      <div class="phases"><span>Path A 체험</span><span>Path B 가격</span><span>Path C 업셀</span><span>Path D 리텐션</span></div>
+      <p style="font-size:12px;"><b>useUserPath() 4-way 분기.</b> v4 / v5 env flag.</p>
+      <ul>
+        <li>섹션: ProfileCard → Daily Hero → Dream Hero → Premium Hero → Extensions4 → Topics5 → Chat Hero → Reviews → Hashtags22 → Footer</li>
+        <li>진입: 앱 시작 / TabBar 홈 / 모든 곳에서 닫기</li>
+        <li>출구: 모든 페이지 (홈은 hub)</li>
+      </ul>
+    </div>
+
+    <!-- INPUT -->
+    <div class="page-card" id="p-input">
+      <h4>📥 InputPage <span class="route">/input</span></h4>
+      <div class="phases"><span>step 0 프로필</span><span>step 1 이름</span><span>step 2 생년월일</span><span>step 3 시간</span><span>step 4 성별</span><span>step 5 결제확인</span></div>
+      <ul>
+        <li>Query: <code>?profileId=</code> · <code>?edit=1</code> · <code>?new=1</code> · <code>?from=storage|chat|compat|home_body_premium|my</code></li>
+        <li>Modal: 이어쓰기/새로작성 (24h TTL draft)</li>
+        <li>Step 5 → 잔액≥10 → /loading?type=premium / 부족 → /charge?need=10</li>
+        <li>출구: /loading · /charge · 뒤로</li>
+      </ul>
+    </div>
+
+    <!-- LOADING -->
+    <div class="page-card" id="p-loading">
+      <h4>⏳ LoadingPage <span class="route">/loading</span></h4>
+      <div class="phases"><span>stage 1 만세력</span><span>stage 2 원국</span><span>stage 3 AI 해석</span></div>
+      <ul>
+        <li>SajuContext에서 sajuData/situation 받음</li>
+        <li>AI: <span class="pill pill-cf">generateReport</span> <span class="pill pill-opus">Opus 4.6</span> max 16,384</li>
+        <li>실패 시: refundBalance(1 또는 10) <b>(2026-05-07 fix)</b></li>
+        <li>성공 시: saveReport + navigate(`/result/{id}`, replace)</li>
+      </ul>
+    </div>
+
+    <!-- RESULT -->
+    <div class="page-card" id="p-result">
+      <h4>💎 ResultPage <span class="route">/result/:id</span></h4>
+      <div class="phases"><span>basic (1운)</span><span>premium (10운)</span></div>
+      <ul>
+        <li>ResultRouteGuard: id regex <code>[a-z0-9]{4,32}</code></li>
+        <li>Premium: 10섹션 + 12+ 인포그래픽 + PDF 버튼</li>
+        <li>Basic: blur 잠금 영역 + 잠금 해제 CTA</li>
+        <li>Footer 3-part CTA: 命 emblem + 전체로 보기 + 10운 시작</li>
+        <li>cross-sell: 궁합/대운/공유 액션 그리드</li>
+      </ul>
+    </div>
+
+    <!-- DAILY -->
+    <div class="page-card" id="p-daily">
+      <h4>☀ DailyFortunePage <span class="route">/daily</span></h4>
+      <div class="phases"><span>select</span><span>loading</span><span>error</span><span>result</span></div>
+      <ul>
+        <li>navState.savedResult <b>(2026-05-07 fix)</b> → 보관함 진입 시 즉시 result phase</li>
+        <li>AI: <span class="pill pill-cf">generateDailyFortune</span> <span class="pill pill-sonnet">Sonnet 4.6</span></li>
+        <li>cache: <code>sharedCache/{8글자+date}</code> (글로벌)</li>
+        <li>sub-picker: 관계→love · 일→career · 건강→health · 재물→wealth</li>
+        <li>DailyRewardBadge (P2-5) 헤더 아래</li>
+      </ul>
+    </div>
+
+    <!-- DREAM -->
+    <div class="page-card" id="p-dream">
+      <h4>🌙 DreamPage <span class="route">/dream</span></h4>
+      <div class="phases"><span>category</span><span>detail</span><span>result (라이트)</span><span>deepLoading</span><span>deepResult (1운)</span></div>
+      <ul>
+        <li>navState.savedResult <b>(2026-05-07 fix)</b> · contentType==='deepDream' → deepResult phase</li>
+        <li>라이트: <span class="pill pill-cf">generateDreamFree</span></li>
+        <li>심층: <span class="pill pill-cf">generateDreamDeep</span> 1운</li>
+        <li>SymbolDragMap 인터랙션</li>
+      </ul>
+    </div>
+
+    <!-- TOPIC -->
+    <div class="page-card" id="p-topic">
+      <h4>🎯 TopicAnalysisPage <span class="route">/topic/:topicId</span></h4>
+      <div class="phases"><span>select</span><span>partner-info</span><span>confirm-modal</span><span>insufficient-modal</span><span>loading</span><span>result</span></div>
+      <ul>
+        <li>10주제: love · marriage · reunion · wealth · business · career · exam · health · move · study</li>
+        <li>normalizeTopicId (legacy alias 정규화)</li>
+        <li>partner 입력: love(연애중)·marriage(연애중)·reunion 만</li>
+        <li>extra: business·career·move·study 주제별 추가 정보</li>
+        <li>실패 시: refundBalance(1) <b>(2026-05-07 fix)</b></li>
+        <li>cross-topic 모순 차단 (서버 boundaryBlock)</li>
+      </ul>
+    </div>
+
+    <!-- PREMIUM SELECT -->
+    <div class="page-card" id="p-premium">
+      <h4>💠 PremiumSelectPage <span class="route">/premium</span></h4>
+      <div class="phases"><span>profile-pick</span><span>preview</span></div>
+      <ul>
+        <li>Path C 업셀 진입 / SajuCardPage CTA / MyPage</li>
+        <li>잔액 ≥ 10 확인 후 /input?from=home_body_premium</li>
+        <li>잔액 부족 → /charge?need=10</li>
+      </ul>
+    </div>
+
+    <!-- DAEUN -->
+    <div class="page-card" id="p-daeun">
+      <h4>📈 DaeunPage <span class="route">/daeun</span></h4>
+      <div class="phases"><span>select</span><span>loading</span><span>result</span></div>
+      <ul>
+        <li>navState.savedResult/savedReport → 보관함 재열람 OK</li>
+        <li>AI: <span class="pill pill-cf">generateDaeun</span> <span class="pill pill-sonnet">Sonnet 4.6</span></li>
+        <li>실패 시: refundBalance(1) <b>(2026-05-07 fix)</b></li>
+        <li>shareReportId 동적 <b>(2026-05-07 fix)</b></li>
+        <li>DaeunHeatGrid + DaeunTimeline + AreaChart</li>
+      </ul>
+    </div>
+
+    <!-- MONTHLY -->
+    <div class="page-card" id="p-monthly">
+      <h4>📅 MonthlyPage <span class="route">/monthly</span></h4>
+      <div class="phases"><span>select</span><span>loading</span><span>result</span></div>
+      <ul>
+        <li>navState.savedResult → 보관함 재열람</li>
+        <li>AI: <span class="pill pill-cf">generateMonthly</span> 12개월 grid</li>
+        <li>실패 시: refundBalance(1) · 동적 reportId <b>(fix)</b></li>
+      </ul>
+    </div>
+
+    <!-- COMPAT -->
+    <div class="page-card" id="p-compat">
+      <h4>💕 CompatibilityPage <span class="route">/compat</span></h4>
+      <div class="phases"><span>profile-pick</span><span>relation-pick</span></div>
+      <ul>
+        <li>2 슬롯 ProfilePicker</li>
+        <li>최근 상대 MRU 3명 chips (compat_recents:v1)</li>
+        <li>relation: 연인/배우자/친구/가족/직장/짝사랑</li>
+        <li>출구: /compat/result with state {person1, person2, relation}</li>
+      </ul>
+    </div>
+
+    <!-- COMPAT RESULT -->
+    <div class="page-card" id="p-compat-result">
+      <h4>💕 CompatResultPage <span class="route">/compat/result</span></h4>
+      <div class="phases"><span>loading</span><span>result</span></div>
+      <ul>
+        <li><b>2026-05-07</b> 두 진입 경로 분기:</li>
+        <li>① /compat 입력 후 → AI 호출</li>
+        <li>② /storage 클릭 → savedResult/savedReport 로 즉시 result</li>
+        <li>실패 시: refundBalance(1) · 동적 reportId · partner 정보 보존 <b>(fix)</b></li>
+      </ul>
+    </div>
+
+    <!-- TOJUNG -->
+    <div class="page-card" id="p-tojung">
+      <h4>📜 TojungPage <span class="route">/tojung</span></h4>
+      <div class="phases"><span>select</span><span>loading</span><span>result</span></div>
+      <ul>
+        <li>토정비결 12개월 카드</li>
+        <li>실패 시: refundBalance(1) · 동적 reportId <b>(fix)</b></li>
+      </ul>
+    </div>
+
+    <!-- CHAT -->
+    <div class="page-card" id="p-chat">
+      <h4>💬 Chat 3-route (Sprint 2 분리)</h4>
+      <p style="font-size:12px;"><b>/chat</b> ChatListPage · <b>/chat/new</b> ChatNewPage · <b>/chat/:sessionId</b> ChatSessionPage</p>
+      <div class="phases"><span>list</span><span>new (프로필 선택)</span><span>session (대화)</span></div>
+      <ul>
+        <li>1일 1턴 무료 (dailyFreePass) + 1운=3회</li>
+        <li>BuyCredits Modal (한도 초과 시 분기 카피)</li>
+        <li>chat_credit localStorage</li>
+        <li>AI: <span class="pill pill-cf">generateChatAnswer</span> <span class="pill pill-sonnet">Sonnet</span> max 2,048</li>
+      </ul>
+    </div>
+
+    <!-- STORAGE -->
+    <div class="page-card" id="p-storage">
+      <h4>📦 StoragePage <span class="route">/storage</span></h4>
+      <div class="phases"><span>10탭 가로스크롤</span><span>bulk 모드</span></div>
+      <ul>
+        <li>탭: 전체·종합사주·주제별·궁합·대운·월운·토정비결·오늘운세·꿈해몽·사주대화</li>
+        <li>routeForReport <b>(2026-05-07 fix)</b>: daeun/monthly/tojung/compat 정상 라우팅</li>
+        <li>openReport 시 navState로 savedResult/savedReport 전달</li>
+        <li>프로필 카드: 클릭 → 최근 결과 / 연필 → 수정 / 휴지통 → 삭제</li>
+        <li>NO-CASCADE: 프로필 삭제해도 리포트 유지 / 리포트 삭제해도 프로필 유지</li>
+      </ul>
+    </div>
+
+    <!-- CHARGE -->
+    <div class="page-card" id="p-charge">
+      <h4>💰 ChargePage <span class="route">/charge</span></h4>
+      <div class="phases"><span>패키지 선택</span><span>결제 진행</span><span>완료/실패</span></div>
+      <ul>
+        <li>4 패키지: 1운(500) · 4운(1500) · 7운(2500) · 14운(5000)</li>
+        <li>Query <code>?need=N</code> · <code>?redirect=</code></li>
+        <li><b>2026-05-07 fix</b>: state.returnTo 도 redirect로 인식</li>
+        <li>웹: <span class="pill pill-cf">confirmPayment</span> 토스페이먼츠</li>
+        <li>앱인토스: <span class="pill pill-cf">grantPurchase</span> IAP</li>
+        <li>3 결과 카피 분기: 정상/실패/needs_reconciliation</li>
+        <li>ShareRewardCard (3회/일)</li>
+      </ul>
+    </div>
+
+    <!-- MY -->
+    <div class="page-card" id="p-my">
+      <h4>👤 MyPage <span class="route">/my</span></h4>
+      <div class="phases"><span>WEB 메뉴</span><span>AIT 메뉴</span></div>
+      <ul>
+        <li>웹: 분석기록 + 운충전 + 결제내역 + 약관 + 개인정보 + 고객문의 + 로그아웃 + 회원탈퇴</li>
+        <li>앱인토스: 운충전 + 결제내역 + 약관 + 개인정보 + 고객문의 (정책상 로그아웃·탈퇴 제거)</li>
+        <li>사주 카드 → /saju-card/:profileId</li>
+      </ul>
+    </div>
+
+    <!-- SHARE -->
+    <div class="page-card" id="p-share">
+      <h4>🔗 SharePage <span class="route">/share/:id</span></h4>
+      <div class="phases"><span>동적 (localStorage 매치)</span><span>generic</span></div>
+      <ul>
+        <li><b>2026-05-07 fix</b>: 보일러플레이트 박멸 + 동적화</li>
+        <li>시도 1: getReport(shareId) 로컬 매치 → 사주 owner 호명 + 일간 표시</li>
+        <li>시도 2: 미래 — Firestore publicReports SSR (별도 sprint)</li>
+        <li>fallback: generic CTA (정적 더미 텍스트 X)</li>
+        <li>SSR: <span class="pill pill-cf">renderShareOg</span> onRequest (봇 UA 분기)</li>
+      </ul>
+    </div>
+
+    <!-- SAJU CARD -->
+    <div class="page-card" id="p-saju-card">
+      <h4>🃏 SajuCardPage <span class="route">/saju-card/:profileId</span></h4>
+      <ul>
+        <li>만세력 카드 (프로필 단위)</li>
+        <li>OG 이미지 동적 SSR: <span class="pill pill-cf">renderSajuCardOgImage</span></li>
+        <li>CTA → /premium (10운 시작)</li>
+      </ul>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="page-card" id="p-events">
+      <h4>🎁 EventsPage <span class="route">/events</span></h4>
+      <p style="font-size:12px;">TabBar 2번째 — 동적 reward 허브</p>
+      <ul>
+        <li>출석 체크 (markAttendance)</li>
+        <li>연속출석 (claimStreakReward) 7/14/30일</li>
+        <li>주간 토스 포인트 (claimWeeklyTossPoint)</li>
+        <li>친구 초대 (onInviteReceived 트리거)</li>
+        <li>StreakWidget · TierBModal · CumulativeReceivedCard · HeroBadge</li>
+      </ul>
+    </div>
+
+    <!-- STATIC -->
+    <div class="page-card" id="p-static">
+      <h4>📄 정적 페이지</h4>
+      <ul>
+        <li><code>/terms</code> 이용약관 — TermsPage</li>
+        <li><code>/privacy</code> 개인정보 — PrivacyPage</li>
+        <li>NotFoundPage — 잘못된 URL → 홈 replace</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============== 5. 잔액 ============== -->
+<section id="sec-balance">
+  <h2 class="title"><span class="badge">5</span> 잔액 3-bucket 시스템</h2>
+  <p class="lead">localStorage 키 <code>saju500_balance_v2</code>. <span class="pill pill-ls">localStorage</span> Tier 1 (마스터) · <span class="pill pill-fs">Firestore</span> Tier 2 (백업).</p>
+  <table>
+    <thead><tr><th>버킷</th><th>충전 경로</th><th>환불 가능</th><th>소비 우선순위</th></tr></thead>
+    <tbody>
+      <tr><td><b>paid</b></td><td>토스결제 / IAP (확정 금액)</td><td>O (전자상거래법)</td><td>3순위</td></tr>
+      <tr><td><b>bonus</b></td><td>충전 보너스 (1500원→4운 +0)</td><td>X</td><td>2순위</td></tr>
+      <tr><td><b>reward</b></td><td>공유·출석·3원·streak·초대</td><td>X</td><td>1순위 (최우선 소비)</td></tr>
+    </tbody>
+  </table>
+  <h3>spendBalance(amount) 알고리즘</h3>
+  <div class="flow">total = paid + bonus + reward
+if total &lt; amount → return false (잔액 부족)
+
+remaining = amount
+1. fromReward = min(reward, remaining); reward -= fromReward; remaining -= fromReward
+2. if remaining &gt; 0: fromBonus = min(bonus, remaining); bonus -= fromBonus; remaining -= fromBonus
+3. if remaining &gt; 0: paid -= remaining
+return true</div>
+  <h3>refundBalance(amount) — paid에서만 차감 복원</h3>
+  <p>2026-05-07 이전엔 7개 페이지에서 import 안 되어 있었음. <b>이제 모든 paid 콘텐츠 페이지에서 AI 실패 시 호출.</b></p>
+</section>
+
+<!-- ============== 6. 결제 원자성 ============== -->
+<section id="sec-payment">
+  <h2 class="title"><span class="badge">6</span> 결제 원자성 (E13)</h2>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+sequenceDiagram
+    participant U as 유저
+    participant C as 클라이언트
+    participant FN as Cloud Function
+    participant T as Toss API
+    participant FS as Firestore
+
+    U->>C: 패키지 선택 후 결제
+    C->>FN: confirmPayment(orderId, amount)
+    FN->>FS: payments/orderId status pending
+    FN->>T: POST v1 payments confirm
+    alt Toss 승인 성공
+        T-->>FN: 200 OK
+        FN->>FS: TRANSACTION balance += un, status confirmed
+        FN-->>C: success true
+        C->>C: localStorage 동기화
+    else Toss 승인 실패
+        T-->>FN: 4xx
+        FN->>FS: status failed
+        FN-->>C: error PAYMENT_FAILED
+        C->>U: 결제 승인 실패 토스트
+    else Toss OK + DB 실패
+        FN->>FS: status needs_reconciliation
+        FN-->>C: error NEEDS_RECON
+        C->>U: 고객센터 문의 토스트
+    end
+    </pre>
+  </div>
+  <p class="info">Firestore rules: <code>payments</code> 클라이언트 write 차단. <code>balanceService.spendUn()</code> deprecated (2026-05-15 삭제 예정).</p>
+</section>
+
+<!-- ============== 7. AI 모델 ============== -->
+<section id="sec-ai">
+  <h2 class="title"><span class="badge">7</span> AI 모델 라우팅 + 1회 비용</h2>
+  <table>
+    <thead><tr><th>엔드포인트</th><th>모델</th><th>max_tokens</th><th>1회 원가</th><th>판매</th><th>마진</th></tr></thead>
+    <tbody>
+      <tr><td><code>generatePremiumReportStream</code> (10섹션·SSE)</td><td><span class="pill pill-opus">Opus 4.6</span></td><td>14k+10k+7k</td><td>~$0.57</td><td>5,000원</td><td><b>84%</b></td></tr>
+      <tr><td><code>generateReport</code></td><td><span class="pill pill-opus">Opus 4.6</span></td><td>16,384</td><td>~$0.34</td><td>500원</td><td>⚠ 6%</td></tr>
+      <tr><td><code>generateDream</code> (deep)</td><td><span class="pill pill-sonnet">Sonnet</span></td><td>16,384</td><td>~$0.16</td><td>500원</td><td>69%</td></tr>
+      <tr><td><code>generateTopicAnalysis</code> (reunion)</td><td><span class="pill pill-sonnet">Sonnet</span></td><td>16,000</td><td>~$0.20</td><td>500원</td><td>61%</td></tr>
+      <tr><td><code>generateTopicAnalysis</code> (외 9)</td><td><span class="pill pill-sonnet">Sonnet</span></td><td>8,192</td><td>~$0.10</td><td>500원</td><td>72%</td></tr>
+      <tr><td><code>generateDaeun/Monthly/Compat/Tojung</code></td><td><span class="pill pill-sonnet">Sonnet</span></td><td>8,192</td><td>~$0.10</td><td>500원</td><td>72%</td></tr>
+      <tr><td><code>generateDailyFortune</code></td><td><span class="pill pill-sonnet">Sonnet</span></td><td>8,192</td><td>~$0.085</td><td>무료</td><td>퍼널</td></tr>
+      <tr><td><code>generateChatAnswer</code></td><td><span class="pill pill-sonnet">Sonnet</span></td><td>2,048</td><td>~$0.033</td><td>무료 1턴</td><td>퍼널</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px; color:var(--mute);">단가: Opus $5/$25 · Sonnet $3/$15 · Haiku $1/$5 (per 1M tokens). prompt cache 1h 적용 시 입력 비용 ~1/10.</p>
+</section>
+
+<!-- ============== 8. 캐시 ============== -->
+<section id="sec-cache">
+  <h2 class="title"><span class="badge">8</span> 캐시 3-tier</h2>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TD
+    subgraph T1["Tier 1 — 클라이언트 localStorage"]
+        K1["saju500_balance_v2 — 3-bucket"]
+        K2["saju500_reports_v1 — LocalReport 배열"]
+        K3["saju500_profiles_v1"]
+        K4["input_draft v1 — 24h TTL"]
+        K5["compat_recents v1 — MRU 3"]
+        K6["daily_reward last·month"]
+        K7["daily_free_pass"]
+        K8["chat_credit"]
+    end
+
+    subgraph T2["Tier 2 — Firestore (uid)"]
+        F1["users uid"]
+        F2["profiles pid"]
+        F3["reports rid — contentType 9종"]
+        F4["payments payid — server only"]
+        F5["dailyFortune date"]
+        F6["chats chatId"]
+        F7["shareLogs"]
+        F8["attendance date"]
+    end
+
+    subgraph T3["Tier 3 — 글로벌 공유 캐시"]
+        G1["sharedCache 8글자+date"]
+        G2["cache topicTop5 — 1h"]
+    end
+
+    T1 -->|firestoreSync| T2
+    T2 -->|miss| T3
+    T3 -.->|첫 호출| AI["AI"]
+    AI -.->|write| T2
+    AI -.->|write| T3
+    </pre>
+  </div>
+  <h3>DailyFortune 캐시 룩업 우선순위</h3>
+  <ol>
+    <li><code>users/{uid}/dailyFortune/{date}</code> 개인 캐시 (즉시)</li>
+    <li><code>sharedCache/{8글자+date}</code> 글로벌 (첫 사용자 외 0원)</li>
+    <li>AI 호출 → 양쪽 write</li>
+  </ol>
+</section>
+
+<!-- ============== 9. Cross-link ============== -->
+<section id="sec-cross">
+  <h2 class="title"><span class="badge">9</span> Cross-link 매트릭스</h2>
+  <p class="lead">"홈 외 다른 페이지에서도 같은 콘텐츠 진입 가능" 패턴 전수.</p>
+  <table>
+    <thead><tr><th>콘텐츠</th><th>모든 진입 경로</th></tr></thead>
+    <tbody>
+      <tr><td><b>종합사주</b><br/><code>/result/:id</code></td><td>① 홈 PremiumHero ② 홈 ProfileCard → Storage ③ <b>SajuCardPage</b> CTA → /premium ④ MyPage 사주카드 ⑤ Storage 결과 클릭 (재열람) ⑥ ChatSession "내 결과 보기" ⑦ Share 비회원 (CTA → /input)</td></tr>
+      <tr><td><b>10섹션 종합 (5,000)</b><br/><code>/premium</code></td><td>① 홈 Premium 카드 ② SajuCardPage 2곳 ③ MyPage 메뉴 ④ Path D 사이드바 ⑤ ResultPage Footer "10운 시작"</td></tr>
+      <tr><td><b>일일운세</b><br/><code>/daily</code></td><td>① 홈 DailyHero ② DailyRewardBadge 자동 ③ Storage "오늘운세" 탭 (재열람 fix) ④ Dream 추천 토픽</td></tr>
+      <tr><td><b>주제 분석</b><br/><code>/topic/:id</code></td><td>① 홈 Topics5 ② DailyFortunePage sub-picker (관계/일/건강/재물) ③ DreamPage onTopicTap ④ ResultPage TopicMini score ⑤ TopicAnalysisPage cross-sell</td></tr>
+      <tr><td><b>대운/월운/궁합/토정</b></td><td>① 홈 Extensions4 ② Path C 업셀 ③ ResultPage 추천 액션 ④ Storage 탭 (fix 후 정상 재열람) ⑤ FooterCTA</td></tr>
+      <tr><td><b>사주대화</b><br/><code>/chat</code></td><td>① 홈 ChatHero ② <b>TabBar 중앙 (모든 페이지)</b> ③ Storage "사주대화" 탭 ④ TopicAnalysisPage "더 깊이 대화" ⑤ ChatNewPage 프로필 선택 후</td></tr>
+      <tr><td><b>꿈해몽</b><br/><code>/dream</code></td><td>① 홈 DreamHero ② Storage "꿈" 탭 (fix 후 재열람)</td></tr>
+      <tr><td><b>충전</b><br/><code>/charge</code></td><td>① BalanceBar (모든 페이지 상단) ② 앱인토스 네비바 액세서리 ③ MyPage ④ <b>잔액 부족 모달 (8 페이지)</b>: chat·compat·daeun·monthly·tojung·dream·topic·input ⑤ 결제 후 returnTo 자동 복귀 (fix)</td></tr>
+      <tr><td><b>입력</b><br/><code>/input</code></td><td>9가지 query 패턴: <code>?profileId=&edit=1</code> · <code>?new=1&from=storage</code> · <code>?from=compat</code> · <code>?from=chat</code> · <code>?from=home_body_*</code> · <code>?from=my</code> · <code>?need=10</code> · state.returnTo</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============== 10. 정책 ============== -->
+<section id="sec-policy">
+  <h2 class="title"><span class="badge">10</span> 정책 SSOT — 회귀 방지 계약</h2>
+  <ol>
+    <li><b>Result Premium 5 안티패턴 금지</b> — iframe srcDoc / regex string-replace / buildXxxFallback / mockup HTML 하드코딩 / 거대 template literal</li>
+    <li><b>명리학 출력 톤</b> — 출처 mention 0건 (자평진전 §10~ 등 본문 금지)</li>
+    <li><b>보일러플레이트 박멸</b> — prompt 안 사람 실명 0건, 사주 specific 호명 mandatory</li>
+    <li><b>컬러 SSOT</b> — 머스타드 #B8941F 0건, 모든 골드 #B8965A</li>
+    <li><b>이모지</b> — 유저 노출 UI 0건 (한자/SVG/컬러칩만)</li>
+    <li><b>폰트 floor</b> — text-[10px] 미만 금지</li>
+    <li><b>결제 원자성</b> — payments/{orderId} 클라이언트 write 차단</li>
+    <li><b>데이터 보관</b> — 유료 영구 / 일일 30일 / 채팅 90일 / 결제 5년</li>
+    <li><b>radius 3-tier</b> — rounded-2xl / xl / lg / full</li>
+    <li><b>NO-CASCADE 삭제</b> — 프로필 삭제해도 리포트 유지, 역도 동일</li>
+    <li><b>모든 콘텐츠 보관함 영구</b> — 9 contentType 모두 saveReport + Storage 10탭 매핑 + 재열람 가능</li>
+    <li><b>AI 실패 시 클라이언트 환불</b> — refundBalance(N) 즉시 호출 (환불 거짓말 금지)</li>
+    <li><b>동적 reportId</b> — 정적 reportId="daeun" 같은 패턴 금지 (URL 충돌)</li>
+  </ol>
+</section>
+
+<!-- ============== 11. 최근 P0 수정 ============== -->
+<section id="sec-recent">
+  <h2 class="title"><span class="badge">11</span> 2026-05-07 P0 수정 요약</h2>
+  <table>
+    <thead><tr><th>#</th><th>파일</th><th>수정 내용</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>StoragePage.tsx</code></td><td>routeForReport — daeun→/daeun (이전: /topic/daeun 잘못된 라우트)</td></tr>
+      <tr><td>2</td><td><code>StoragePage.tsx</code></td><td>openReport — navState.savedResult/savedReport 전달 (보관함 재열람)</td></tr>
+      <tr><td>3</td><td><code>CompatResultPage.tsx</code></td><td>saveReport에 aiResult + partner 정보 추가 + 재열람 분기</td></tr>
+      <tr><td>4</td><td><code>DaeunPage / MonthlyPage / TojungPage / DreamPage / TopicAnalysisPage / LoadingPage / CompatResultPage</code></td><td>refundBalance() AI 실패 시 호출 (환불 거짓말 박멸)</td></tr>
+      <tr><td>5</td><td><code>DaeunPage / MonthlyPage / TojungPage / CompatResultPage</code></td><td>shareReportId 동적화 (정적 "daeun" 등 → 실제 reportId)</td></tr>
+      <tr><td>6</td><td><code>ChargePage.tsx</code></td><td>state.returnTo 인식 (결제 후 원래 페이지 자동 복귀)</td></tr>
+      <tr><td>7</td><td><code>SharePage.tsx</code></td><td>정적 더미 텍스트 박멸 → 동적 (localStorage 매치 또는 generic CTA)</td></tr>
+      <tr><td>8</td><td><code>DailyFortunePage.tsx</code></td><td>navState hydrate (보관함 재열람 시 즉시 result phase)</td></tr>
+      <tr><td>9</td><td><code>DreamPage.tsx</code></td><td>navState hydrate (deepDream까지 분기)</td></tr>
+      <tr><td>10</td><td>Dead code 삭제</td><td>ResultPage.tsx (3,524줄) + ChatPage.tsx (755줄) + ChatPagePerfect.tsx (194줄) + /chat-perfect 라우트</td></tr>
+    </tbody>
+  </table>
+  <div class="ok">총 4,473줄 dead code 제거 + 11개 회귀/UX 사고 수정. TypeScript 컴파일 0 에러 통과.</div>
+</section>
+
+</main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    themeVariables: {
+      primaryColor: '#B8965A',
+      primaryTextColor: '#1A1A1A',
+      primaryBorderColor: '#8C6D3D',
+      lineColor: '#7A7269',
+      secondaryColor: '#F8F5EE',
+      fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, sans-serif'
+    },
+    flowchart: { curve: 'basis', padding: 16 },
+    sequence: { actorMargin: 60 }
+  });
+</script>
+</body>
+</html>

@@ -6,6 +6,8 @@ import {
   DREAM_FREE_SYSTEM_V3,
   DREAM_FREE_USER_WITH_SAJU_V3,
   DREAM_FREE_USER_NO_SAJU_V3,
+  DREAM_FREE_USER_GROUP_A_V3,
+  DREAM_FREE_USER_GROUP_B_V3,
   DREAM_DEEP_SYSTEM_V3,
   DREAM_DEEP_USER_V3,
   SELF_REVIEW_V3,
@@ -54,9 +56,61 @@ export interface DreamDeepArgs {
 
 const MODEL = 'claude-sonnet-4-6';
 
-/** 무료 꿈해몽 — 사주 있으면 withSaju, 없으면 noSaju */
-export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Promise<unknown> {
-  const anthropic = new Anthropic({ apiKey });
+/**
+ * 2026-05-27 v8 — 2-그룹 병렬용 빌더.
+ *   GROUP A = 무료 4섹션 (§01~§04), GROUP B = 잠금 5섹션 (§05~§09).
+ *   각자 ~5000 토큰 → 병렬 max(A, B) ≈ 30-45초 (단일 60-90초 → 50% 단축).
+ *   사주 없으면 GROUP B 생략 (잠금은 사주 기반이라).
+ */
+export type DreamFreeGroupId = 'A' | 'B';
+
+export function buildDreamFreeGroupCall(args: DreamFreeArgs, group: DreamFreeGroupId): {
+  system: string; user: string; model: string; maxTokens: number;
+} {
+  const system = DREAM_FREE_SYSTEM_V3;
+  if (!args.saju) {
+    // 사주 없으면 단일 callable fallback 사용 (Group B 없음)
+    const user = DREAM_FREE_USER_NO_SAJU_V3({
+      dreamContent: args.dreamContent,
+      userConcern: args.userConcern,
+      category: args.category,
+    });
+    return { system, user, model: MODEL, maxTokens: 14000 };
+  }
+  const headerData = {
+    name: args.saju.name,
+    yearGanzi: args.saju.yearGanzi,
+    monthGanzi: args.saju.monthGanzi,
+    dayGanzi: args.saju.dayGanzi,
+    timeGanzi: args.saju.timeGanzi,
+    ilgan: args.saju.ilgan,
+    ilganOheng: args.saju.ilganOheng,
+    ohengDistribution: args.saju.ohengDistribution,
+    yongsin: args.saju.yongsin,
+    currentDaeun: args.saju.currentDaeun,
+    dreamContent: args.dreamContent,
+    userConcern: args.userConcern,
+    category: args.category,
+  };
+  const user = group === 'A'
+    ? DREAM_FREE_USER_GROUP_A_V3(headerData)
+    : DREAM_FREE_USER_GROUP_B_V3(headerData);
+  // 그룹별 토큰 분할 (2026-05-27 v10 — 안전 복원):
+  //   v9 의 5500/5000 은 AI 가 JSON 못 끝내고 잘림 → 파싱 실패 → callable 폴백 → 1분 대기 회귀.
+  //   A=7500 (무료 4섹션 + 충분한 안전 마진) · B=7000 (잠금 5섹션 + 안전 마진).
+  //   문의 길이는 prompt 의 글자수 제한으로 잡고, maxTokens 는 safety net 으로.
+  const maxTokens = group === 'A' ? 7500 : 7000;
+  return { system, user, model: MODEL, maxTokens };
+}
+
+/**
+ * 무료 꿈해몽 호출 파라미터 빌드 (system·user·model·maxTokens).
+ * 스트리밍 SSE(generateDreamFreeStream)와 callable 이 동일 파라미터 공유 —
+ * 프롬프트·모델·출력 100% 동일, 전송 방식만 다름 (콘텐츠 변경 위험 0).
+ */
+export function buildDreamFreeCall(args: DreamFreeArgs): {
+  system: string; user: string; model: string; maxTokens: number;
+} {
   const system = DREAM_FREE_SYSTEM_V3;
   const user = args.saju
     ? DREAM_FREE_USER_WITH_SAJU_V3({
@@ -79,15 +133,24 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
         userConcern: args.userConcern,
         category: args.category,
       });
+  return { system, user, model: MODEL, maxTokens: 14000 };
+}
 
-  // 1차 호출 (temperature 0.7)
+/** 무료 꿈해몽 — 사주 있으면 withSaju, 없으면 noSaju */
+export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Promise<unknown> {
+  const anthropic = new Anthropic({ apiKey });
+  const { system, user } = buildDreamFreeCall(args);
+
+  // ── 단일 호출 (작동 검증본 — 2그룹 분할은 무료 콘텐츠 누락 회귀로 롤백) ──
+  // max_tokens 14000: 잠금 본문(lockedXxx.full)까지 무료 호출에서 전부 생성.
+  // 블러잠금 SSOT — 결제 시 재호출 0, 블러만 제거. 느려도 콘텐츠 정확성 우선.
   const meta1: ParseJsonMeta = { repairUsed: false };
   try {
     const msg = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 8192,
+      max_tokens: 14000,
       temperature: 0.7,
-      system,
+      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user }],
     });
     const text = (msg.content[0] as { type: string; text: string }).text;
@@ -99,9 +162,9 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const meta2: ParseJsonMeta = { repairUsed: false };
     const msg = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 8192,
+      max_tokens: 14000,
       temperature: 0.5,
-      system,
+      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user }],
     });
     const text = (msg.content[0] as { type: string; text: string }).text;
@@ -132,7 +195,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
       model: MODEL,
       max_tokens: 16384,
       temperature: 0.7,
-      system,
+      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user }],
     });
     firstText = (first.content[0] as { type: string; text: string }).text;
@@ -145,7 +208,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
       model: MODEL,
       max_tokens: 16384,
       temperature: 0.5,
-      system,
+      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user }],
     });
     firstText = (retry.content[0] as { type: string; text: string }).text;

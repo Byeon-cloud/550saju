@@ -2,7 +2,7 @@
 // Phase C (#54) — props 시그니처 + L1~L4 블러 분기 + 블러 해제 애니메이션 + 4 chrome mount
 // Main component only — types/atoms/visuals/chrome extracted to siblings
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
@@ -14,10 +14,13 @@ import { Header } from '@/components/layout/Header';
 import { ErrorState } from '@/components/common/ErrorState';
 import { FooterCTA } from '@/components/common/FooterCTA';
 import { useToast } from '@/components/common/Toast';
+import { AILoading } from '@/components/common/AILoading';
 import {
-  getReport, getReports, getMyProfile,
+  getReport, getReports, getMyProfile, saveReport, refundBalance,
   type LocalReport,
 } from '@/services/storage/localStore';
+// 2026-05-29 C1 fix — 프리미엄 SSE 실패 시 환불 금액 산정 (세일 반영).
+import { getPremiumPrice } from '@/constants/pricing';
 import type { OhengType } from '@/types/saju';
 import {
   getDemoData,
@@ -186,6 +189,11 @@ export function ResultPage(props: ResultPageProps = {}) {
   // 이벤트 v4 · 결과 렌더링 1회 출석 마커
   useEffect(() => {
     markAttendance().catch(() => {/* non-blocking */});
+    // 2026-05-29 — 출시 프로모션 3원: 결과 페이지 도달 시 자동 지급 (코드 단위 dedupe · 앱인토스 only).
+    //   LoadingPage 경유뿐 아니라 보관함 재진입 등 모든 결과 도달을 커버.
+    import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
+      // 2026-06-02 — 출석 적립 + 일일/연속 보상 자동 지급 (콘텐츠 이용 시, 클라 잔액 적립)
+      import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -229,7 +237,116 @@ export function ResultPage(props: ResultPageProps = {}) {
   }
 
   // 이름/입력: context → localStorage → 사주데이터 내장 → 기본값
-  const storedReport = reportId ? getReport(reportId) : null;
+  const loadedReport = reportId ? getReport(reportId) : null;
+
+  /* ── Phase 3 (2026-05-27) · Fresh SSE 모드 — 오늘의 운세 패턴
+   *   결제 직진 진입(`/result/:id?fresh=1&type=premium|basic`) 시 ResultPage 가
+   *   직접 SSE 구동 → 그룹 도착마다 점진 렌더. PremiumResult 가 partial-safe
+   *   (`aiResult ?? {}` + 모든 sub-component 방어) 라 빈 객체로 시작해도 안전. */
+  const _qs = window.location.search;
+  const isFreshMode = /[?&]fresh=1\b/.test(_qs);
+  const freshType: 'premium' | 'basic' = /[?&]type=premium\b/.test(_qs) ? 'premium' : 'basic';
+  const [streamingAiResult, setStreamingAiResult] = useState<any>(isFreshMode ? {} : null);
+  // 2026-06-02 QA — 그룹 도착 추적 (A/B/C). 미도착 그룹 자리에 포맷 스켈레톤 렌더 → "툭 튀어나옴" 제거.
+  const [arrivedGroups, setArrivedGroups] = useState<Record<'A' | 'B' | 'C', boolean>>({ A: false, B: false, C: false });
+  // 2026-05-29 C1 fix — SSE 실패 시 환불 + 에러 카드. (기존: onError 가 __error 만 set → 환불 0 + AILoading 영구 멈춤)
+  const [streamError, setStreamError] = useState<string | null>(null);
+  const refundedRef = useRef(false);
+  const streamStartedRef = useRef(false);
+  // streamingAiResult 최신값을 effect 의 async 클로저에서 안전하게 읽기 위한 ref 미러
+  const streamingAiResultRef = useRef<any>(streamingAiResult);
+  useEffect(() => { streamingAiResultRef.current = streamingAiResult; }, [streamingAiResult]);
+
+  // 차감액 산정: premium = 세일 반영 actualPrice, basic = 1운. 1회만 환불 (refundedRef 가드).
+  const handleStreamFailure = useCallback((_msg: string) => {
+    if (refundedRef.current) return;
+    refundedRef.current = true;
+    const refundAmount = freshType === 'premium' ? getPremiumPrice().actualPrice : 1;
+    try { refundBalance(refundAmount); } catch { /* noop */ }
+    setStreamError(`분석에 실패해서 ${refundAmount}운을 돌려드렸어요. 잠시 후 다시 시도해주세요.`);
+  }, [freshType]);
+
+  useEffect(() => {
+    if (!isFreshMode || loadedReport || streamStartedRef.current || !sajuData) return;
+    streamStartedRef.current = true;
+    (async () => {
+      try {
+        const mod = await import('@/services/ai/reportGenerator');
+        const fn = freshType === 'premium' ? mod.generatePremiumReportStream : mod.generateReportStream;
+        await fn(sajuData as any, undefined, {
+          onGroup: (_g: 'A' | 'B' | 'C', data: any) => {
+            // 그룹 단위 머지 (필드 누적). tier='premium' 표식은 final 에서 박음
+            setStreamingAiResult((prev: any) => ({ ...(prev || {}), ...(data || {}) }));
+            setArrivedGroups((prev) => (prev[_g] ? prev : { ...prev, [_g]: true }));
+          },
+          onDone: ({ content }: { reportId: string; content: any }) => {
+            const finalAi = freshType === 'premium'
+              ? { ...(content as any), tier: 'premium' as const }
+              : content;
+            setStreamingAiResult(finalAi);
+            setArrivedGroups({ A: true, B: true, C: true });
+            // localStorage 영속 (URL reportId 와 동일 id 로 저장 → 새로고침 시 그대로 복원)
+            try {
+              saveReport({
+                id: reportId,
+                name: (sajuData as any).input?.name || '나',
+                input: (sajuData as any).input,
+                sajuData: sajuData as any,
+                type: 'paid',
+                contentType: 'report',
+                createdAt: new Date().toISOString(),
+                aiResult: finalAi as any,
+              });
+            } catch { /* noop — UI 는 streamingAiResult 로 이미 렌더됨 */ }
+            // URL 정리 (fresh 쿼리 제거 — 새로고침 시 재SSE 방지)
+            navigate(window.location.pathname, { replace: true });
+          },
+          onError: (msg: string) => {
+            console.warn('[ResultPage:fresh SSE] 실패:', msg);
+            // 첫 그룹도 못 받았으면(빈 상태) 환불 + 에러 카드. 이미 일부 그룹 도착했으면 부분 결과 유지.
+            const hasPartial = Object.keys(streamingAiResultRef.current || {}).length > 0;
+            if (!hasPartial) handleStreamFailure(msg);
+            else setStreamingAiResult((prev: any) => ({ ...(prev || {}), __error: msg }));
+          },
+        });
+      } catch (e: any) {
+        console.error('[ResultPage:fresh SSE] 예외:', e?.message);
+        const hasPartial = Object.keys(streamingAiResultRef.current || {}).length > 0;
+        if (!hasPartial) handleStreamFailure(e?.message || 'stream exception');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFreshMode, freshType, sajuData, reportId]);
+
+  // 2026-05-28 v3 — Fresh SSE 모드 정책 재정의:
+  //   v1: 첫 필드 도착까지 AILoading (60-90초 답답)
+  //   v2: 5초 후 강제 결과 진입 (빈 페이지 + 1분 빈 스켈레톤 — 더 안 좋음)
+  //   v3: AILoading 유지 (첫 그룹 도착까지) → 결과 페이지 진입 시점엔 이미 첫 그룹(A) 데이터 있음
+  //       AILoading 자체가 충분히 풍성 (사주 미니카드 + 5단계 인디케이터 + 명리학 팁) — user 읽을거리 충분.
+  //       첫 group 도착 시 (Opus 14K ≈ 40-60초) 결과 페이지로 자연스럽게 전환.
+  const streamingFieldCount = Object.keys(streamingAiResult || {}).length;
+  const isPremiumStreaming =
+    isFreshMode && freshType === 'premium' && !loadedReport;
+  // 2026-06-02 QA — fresh 스트리밍(premium+basic 공통) 빈-상태 게이트.
+  //   기존: premium 만 AILoading 게이트 → basic(1운) fresh 는 빈 데이터로 렌더 시작 → "흰 화면 → 섹션 툭" 발생.
+  //   수정: premium·basic 모두 첫 그룹 도착 전엔 AILoading 풀스크린 → 절대 빈 페이지 안 보임.
+  const isFreshStreaming = isFreshMode && !loadedReport;
+  const isFreshStreamingEmpty = isFreshStreaming && streamingFieldCount === 0;
+  // premium 스트리밍 진행 중(전 그룹 도착 전) — 상단 배너 게이트용
+  const isPremiumStreamingIncomplete =
+    isPremiumStreaming && !(arrivedGroups.A && arrivedGroups.B && arrivedGroups.C);
+
+  // effective storedReport — 저장된 게 우선, 없고 fresh 모드면 streaming 합성
+  const storedReport: LocalReport | null = loadedReport ?? (streamingAiResult ? ({
+    id: reportId,
+    name: (sajuData as any)?.input?.name || '나',
+    input: (sajuData as any)?.input,
+    sajuData: sajuData as any,
+    type: 'paid',
+    contentType: 'report',
+    createdAt: new Date().toISOString(),
+    aiResult: streamingAiResult,
+  } as unknown as LocalReport) : null);
 
   // ── Phase C · 결과 게이트 도출 (서버 응답 기준)
   const gate = useMemo(() => deriveResultGate(storedReport), [storedReport]);
@@ -273,17 +390,47 @@ export function ResultPage(props: ResultPageProps = {}) {
   //   aiResult 는 line ~202 에서 도출 — isPremiumLayout 도출은 그 시점 이후
   //   여기서는 인라인 도출만 (storedReport 직접 참조)
   const _premAi: any = storedReport?.aiResult;
+  // 2026-05-27 — Fresh SSE 모드(premium)면 강제 true: streaming 중엔 sections 미완(<7)·tier 미세팅
+  //   이라 false 로 떨어져 PremiumResult 가 렌더 0 → 흰 페이지. PremiumResult 자체가
+  //   partial-safe(aiResult ?? {} + 모든 sub-component 방어) 라 빈 데이터로도 안전.
   const isPremiumLayout =
     tier === 'paid' &&
     !locked &&
     (storedReport?.contentType ?? 'report') === 'report' &&
-    (_premAi?.tier === 'premium' || (_premAi?.sections?.length ?? 0) >= 7);
+    (
+      (isFreshMode && freshType === 'premium') ||
+      _premAi?.tier === 'premium' ||
+      (_premAi?.sections?.length ?? 0) >= 7
+    );
+
+  // 2026-06-02 LIVE BEST — 종합사주(premium) 결과 도달 시 조회 1회 기록 (24h 디듀프).
+  useEffect(() => {
+    if (isPremiumLayout) {
+      import('@/services/liveBest').then((m) => m.recordTopicView('premium')).catch(() => {});
+    }
+  }, [isPremiumLayout]);
+
+  // 2026-05-07 fix — 1운 결과 페이지 컨셉 제거 (출시 모델: 종합사주는 10운 premium만).
+  // basic tier (옛 1운 결과) 진입 시 홈으로 redirect — 디자인 자체 노출 X.
+  // ⚠️ Fresh SSE 모드(2026-05-27): 스트리밍 중엔 부분 데이터(sections<7)라 isPremiumLayout=false
+  //    일 수 있음 → 그 시점 redirect 하면 결과 페이지가 home 으로 튕김. fresh 모드 가드.
+  const shouldRedirectLegacy =
+    !isFreshMode &&
+    tier === 'paid' && !locked && !isPremiumLayout &&
+    (storedReport?.contentType ?? 'report') === 'report';
+  useEffect(() => {
+    if (shouldRedirectLegacy) {
+      navigate('/', { replace: true });
+    }
+  }, [shouldRedirectLegacy, navigate]);
 
   const name = ctxInput?.name || storedReport?.name || sajuData.input?.name || '사용자';
   const input = ctxInput || storedReport?.input || sajuData.input;
   const hasBirthTime = input.hasBirthTime;
-  const dateStr = `${input.birthYear}년 ${input.birthMonth}월 ${input.birthDay}일`;
-  const genderStr = input.gender === 'male' ? '남' : '여';
+  // 2026-05-07: dateStr/genderStr/zodiac/birthTimeStr — basic UI 삭제로 미사용 (PremiumResult가 자체 처리)
+  const _dateStr = `${input.birthYear}년 ${input.birthMonth}월 ${input.birthDay}일`;
+  const _genderStr = input.gender === 'male' ? '남' : '여';
+  void _dateStr; void _genderStr;
 
   // AI 결과 로드 — 저장된 리포트에서 aiResult 추출 (mapDaeun 등 v4 매핑이 참조)
   const aiResult = storedReport?.aiResult;
@@ -327,9 +474,10 @@ export function ResultPage(props: ResultPageProps = {}) {
   // 섹션: AI 결과에서만 가져옴 (더미 데이터 없음)
   const sections: SectionData[] = useMemo(() => {
     if (aiResult?.sections?.length > 0) {
+      // 2026-05-28 — social(대인관계) 매핑 제거 (SSOT 10주제 정렬). AI sections 에서 social 안 보냄.
       const SECTION_VISUALS: Record<string, string> = {
         summary: 'oheng_structure', structure: '', personality: 'jijanggan',
-        social: 'relationshipMap', career: 'career_fit', wealth: 'wealthFlow',
+        career: 'career_fit', wealth: 'wealthFlow',
         health: 'health_oheng', luck: 'luckyProfile',
         challenge: 'challenge_vis', mission: 'challenge_vis', gaewoon: 'gaewoon',
         daeun: 'daeun_vis', daeun_flow: 'daeun_vis',
@@ -348,20 +496,67 @@ export function ResultPage(props: ResultPageProps = {}) {
     return [];
   }, [aiResult]);
 
-  const zodiac = sajuData.띠 ? `${sajuData.띠}띠` : '';
-  const birthTimeStr = hasBirthTime && input.birthHour !== undefined
+  // 2026-05-07: zodiac / birthTimeStr — basic UI 삭제로 미사용
+  const _zodiac = sajuData?.띠 ? `${sajuData.띠}띠` : '';
+  const _birthTimeStr = hasBirthTime && input.birthHour !== undefined
     ? `${input.birthHour}시`
     : null;
+  void _zodiac; void _birthTimeStr;
 
   const [showShareModal, setShowShareModal] = useState(false);
 
   // 최고 점수 항목 (공유 카드에 표시)
   const topScoreEntry = Object.entries(scores).reduce((a, b) => a[1] > b[1] ? a : b);
-  const topScoreLabel = { career: '직업운', love: '애정운', wealth: '재물운', social: '대인운', health: '건강운', potential: '잠재력' }[topScoreEntry[0]] || '';
+  const topScoreLabel = { career: '직업운', love: '애정운', wealth: '재물운', health: '건강운', potential: '잠재력' }[topScoreEntry[0]] || '';
 
   // Premium 결과는 line 1197 의 <PremiumResult /> 가 담당 (props 기반 React JSX 진본)
   // 폐기 이력: ResultPagePremiumV2.tsx (iframe srcDoc + regex string-replace) → _archive_/ 로 이동
   // 회귀 금지: iframe srcDoc, regex string replacement, mockup HTML embed, buildXxxFallback 류
+
+  // 2026-05-28 v3 — Premium fresh SSE 첫 그룹 도착 전 → AILoading 풀스크린 (user 피드백:
+  //   "로딩페이지에서 어느정도 시간 끌고 결과페이지 받았을때 읽을거리가 그래도 많게").
+  //   첫 그룹(Opus 14K) ≈ 40-60초. AILoading 동안 사주 미니카드 + 5단계 + 팁 충분히 노출.
+  //   첫 group 도착 시 자동으로 결과 페이지로 전환 → 그 시점엔 §01~§04 데이터 있음.
+  // 2026-05-29 C1 fix — SSE 실패 시 AILoading 무한 멈춤 대신 환불 안내 + 재시도/홈 카드.
+  if (streamError) {
+    return (
+      <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
+        <Header title="사주 리포트" />
+        <ErrorState
+          title="분석에 실패했어요"
+          description={streamError}
+          onRetry={() => navigate('/', { replace: true })}
+          retryLabel="홈으로"
+        />
+      </div>
+    );
+  }
+
+  if (isFreshStreamingEmpty) {
+    const isPrem = freshType === 'premium';
+    return (
+      <AILoading
+        name={name}
+        type={isPrem ? '종합 사주 분석' : '사주 리포트 분석'}
+        sajuData={sajuData}
+        estimatedSeconds={isPrem ? 60 : 40}
+        steps={isPrem ? [
+          '사주 8자 구조를 분석하고 있어요',
+          '용신과 격국을 도출하고 있어요',
+          '오행 균형을 보고 있어요',
+          '대운·세운 흐름을 짚고 있어요',
+          '10주제 점수를 계산하고 있어요',
+          '10섹션 본문을 작성하고 있어요',
+        ] : [
+          '사주 8자 구조를 분석하고 있어요',
+          '용신과 격국을 도출하고 있어요',
+          '성격과 기질을 읽고 있어요',
+          '올해 흐름을 짚고 있어요',
+          '리포트 본문을 작성하고 있어요',
+        ]}
+      />
+    );
+  }
 
   return (
     <div
@@ -370,28 +565,8 @@ export function ResultPage(props: ResultPageProps = {}) {
         background: 'var(--bg-page-gradient)',
       }}
     >
-      {/* Header — Basic: 라이트 톤 / Premium: 다크 그라디언트 (HeroCard 와 자연스러운 연결) */}
-      {!isPremiumLayout && (
-        <Header
-          title="사주 리포트"
-          right={
-            <button
-              className="w-10 h-10 flex items-center justify-center"
-              aria-label="공유"
-              onClick={() => setShowShareModal(true)}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7" />
-                <polyline points="16 6 12 2 8 6" />
-                <line x1="12" y1="2" x2="12" y2="15" />
-              </svg>
-            </button>
-          }
-        />
-      )}
-      {isPremiumLayout && (
-        <PremiumDarkHeader name={name} onShareTap={() => setShowShareModal(true)} />
-      )}
+      {/* 2026-05-07 — Premium 전용. Basic Header 제거 */}
+      <PremiumDarkHeader name={name} onShareTap={() => setShowShareModal(true)} />
 
       {/* 공유 시트 (Phase B ShareSheet wrapper — Sprint 1 ShareModal forward, P2-1 블러 OG 보존) */}
       <ShareSheet
@@ -402,23 +577,8 @@ export function ResultPage(props: ResultPageProps = {}) {
         topScore={{ label: topScoreLabel, score: topScoreEntry[1] }}
       />
 
-      {/* Hero — 네이비 카드 (Basic 모드 전용 — Premium 은 자체 HeroCard 보유) */}
-      {!isPremiumLayout && (
-        <div className="px-5 pt-4 pb-2">
-          <div className="card-navy text-center py-6">
-            <span className="badge-gold text-tiny mb-3 inline-block">사주명리 분석 리포트</span>
-            <h1 className="text-display text-white mt-2">{name}님의 사주</h1>
-            <div className="flex flex-wrap justify-center gap-1.5 mt-2 text-label text-white/50">
-              <span>{dateStr}</span><span>·</span><span>{genderStr}</span>
-              {zodiac && <><span>·</span><span>{zodiac}</span></>}
-              {birthTimeStr && <><span>·</span><span>{birthTimeStr}</span></>}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className={isPremiumLayout ? 'max-w-mobile mx-auto pb-24' : 'max-w-mobile mx-auto px-5 pb-24'}>
-        <div className={isPremiumLayout ? '' : 'space-y-5'}>
+      <div className="max-w-mobile mx-auto pb-24">
+        <div>
 
           {/* Time missing banner — Basic 모드 전용 (Premium 은 HeroCard 안에서 처리) */}
           {!isPremiumLayout && !hasBirthTime && (
@@ -432,10 +592,8 @@ export function ResultPage(props: ResultPageProps = {}) {
             </LocalFadeIn>
           )}
 
-          {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-          {/* Basic 모드 전용 카드 섹션 (Premium 은 PremiumResult 가 전부 담당) */}
-          {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-          {!isPremiumLayout && (
+          {/* 2026-05-07 — 1운 basic 카드 섹션 통째 삭제 (출시 모델: 종합사주 10운 premium 만) */}
+          {false && (
           <>
           {/* 사주팔자 구조 해설 */}
           <LocalFadeIn>
@@ -493,7 +651,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               </div>
               <div className="text-center mt-3 text-caption text-white/50">
                 일간 <span className="text-h2 text-brand-gold-light">
-                  {sajuData.pillars[2].천간}({sajuData.pillars[2].천간읽기})
+                  {sajuData!.pillars[2].천간}({sajuData!.pillars[2].천간읽기})
                 </span> = 나 자신
               </div>
             </div>
@@ -510,7 +668,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b5b47', fontSize: 11, fontWeight: 600 }} />
                     <Radar
                       dataKey="value" stroke="#c9b99a" fill="#c9b99a" fillOpacity={0.2}
-                      strokeWidth={2} dot={{ r: 3, fill: '#a08b6a', stroke: '#fff', strokeWidth: 2 }}
+                      strokeWidth={2} dot={{ r: 3, fill: '#B8965A', stroke: '#fff', strokeWidth: 2 }}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -737,7 +895,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                       </div>
                     </div>
                     <div className="p-2.5 rounded-lg" style={{ background: '#f5f0e8', border: '1px dashed #d4cbb8' }}>
-                      <p style={{ fontSize: 10, fontWeight: 700, color: '#a08b6a', marginBottom: 2 }}>대응 전략</p>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: '#B8965A', marginBottom: 2 }}>대응 전략</p>
                       <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.6 }}>{gangYak.strategy}</p>
                     </div>
                   </div>
@@ -747,7 +905,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 <div className="rounded-xl overflow-hidden mb-3" style={{ border: '2px solid rgba(184,150,90,0.3)', boxShadow: '0 2px 12px rgba(184,150,90,0.1)' }}>
                   <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, rgba(184,150,90,0.1), rgba(140,109,61,0.15))' }}>
                     <div>
-                      <p style={{ fontSize: 10, color: '#a08b6a', fontWeight: 600 }}>용신 — 사주 균형의 열쇠</p>
+                      <p style={{ fontSize: 10, color: '#B8965A', fontWeight: 600 }}>용신 — 사주 균형의 열쇠</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p style={{ fontSize: 22, fontWeight: 900, color: yongOheng?.color || '#B8965A' }}>{analysisBase.용신}</p>
                         {yongOheng && <span style={{ fontSize: 11, color: '#8b7e6f' }}>{yongOheng.nature}</span>}
@@ -760,7 +918,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                   <div className="px-4 py-3 space-y-3" style={{ background: '#fff' }}>
                     {/* 용신 = 뭐가 좋다는 거야? 해석 */}
                     <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #f5f0e8, #ede5d5)', border: '1px solid rgba(184,150,90,0.2)' }}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: '#a08b6a', marginBottom: 4 }}>이게 뭔 뜻이에요?</p>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: '#B8965A', marginBottom: 4 }}>이게 뭔 뜻이에요?</p>
                       <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.75 }}>
                         당신의 사주에는 <b style={{ color: yongOheng?.color || '#B8965A' }}>{analysisBase.용신}({yongOheng?.name || analysisBase.용신})</b> 에너지가 가장 필요해요.
                         {analysisBase.일간강약 === '신강'
@@ -775,7 +933,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                     {/* 용신근거 */}
                     {analysisBase.용신근거 && (
                       <div className="p-2.5 rounded-lg" style={{ background: '#faf7f2', border: '1px dashed #d4cbb8' }}>
-                        <p style={{ fontSize: 10, fontWeight: 700, color: '#a08b6a', marginBottom: 2 }}>산출 근거</p>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: '#B8965A', marginBottom: 2 }}>산출 근거</p>
                         <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.7 }}>{analysisBase.용신근거}</p>
                       </div>
                     )}
@@ -820,7 +978,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                           <p style={{ fontSize: 9, fontWeight: 700, color: '#2e7d32' }}>희신 — 용신을 돕는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span style={{ fontSize: 18, fontWeight: 900, color: huiOheng?.color || '#2D8A4E' }}>{analysisBase.희신}</span>
-                            {huiOheng && <span style={{ fontSize: 9, color: '#4caf50' }}>{huiOheng.nature}</span>}
+                            {huiOheng && <span style={{ fontSize: 9, color: '#4caf50' }}>{(huiOheng as any).nature}</span>}
                           </div>
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>
@@ -836,7 +994,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                           <p style={{ fontSize: 9, fontWeight: 700, color: '#c62828' }}>기신 — 균형을 깨는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span style={{ fontSize: 18, fontWeight: 900, color: giOheng?.color || '#D32F2F' }}>{analysisBase.기신}</span>
-                            {giOheng && <span style={{ fontSize: 9, color: '#ef5350' }}>{giOheng.nature}</span>}
+                            {giOheng && <span style={{ fontSize: 9, color: '#ef5350' }}>{(giOheng as any).nature}</span>}
                           </div>
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>
@@ -938,20 +1096,20 @@ export function ResultPage(props: ResultPageProps = {}) {
           <LocalFadeIn delay={80}>
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-3">운세 종합 점수</h2>
-              <div className="grid grid-cols-3 gap-2">
+              {/* 2026-05-28 — SSOT 정렬. 대인운(social) 제거 → 5개 카드 grid-cols-5 (균일 1행). */}
+              <div className="grid grid-cols-5 gap-2">
                 <ScoreRing label="직업운" score={scores.career} color="#2563eb" topicId="career" />
                 <ScoreRing label="애정운" score={scores.love} color="#db2777" delay={100} topicId="love" />
                 <ScoreRing label="재물운" score={scores.wealth} color="#d97706" delay={200} topicId="wealth" />
-                <ScoreRing label="대인운" score={scores.social} color="#7c3aed" delay={300} topicId="social" />
-                <ScoreRing label="건강운" score={scores.health} color="#059669" delay={400} topicId="health" />
-                <ScoreRing label="잠재력" score={scores.potential} color="#ea580c" delay={500} />
+                <ScoreRing label="건강운" score={scores.health} color="#059669" delay={300} topicId="health" />
+                <ScoreRing label="잠재력" score={scores.potential} color="#ea580c" delay={400} />
               </div>
               {/* 점수 해석 가이드 */}
               <div className="mt-4 pt-3 border-t border-border-light">
                 {(() => {
                   const best = Object.entries(scores).reduce((a, b) => a[1] > b[1] ? a : b);
                   const worst = Object.entries(scores).reduce((a, b) => a[1] < b[1] ? a : b);
-                  const labels: Record<string, string> = { career: '직업운', love: '애정운', wealth: '재물운', social: '대인운', health: '건강운', potential: '잠재력' };
+                  const labels: Record<string, string> = { career: '직업운', love: '애정운', wealth: '재물운', health: '건강운', potential: '잠재력' };
                   return (
                     <div className="space-y-1.5">
                       <p style={{ fontSize: 12, color: '#2E7D32', fontWeight: 600 }}>
@@ -1103,16 +1261,16 @@ export function ResultPage(props: ResultPageProps = {}) {
                 })}
               </div>
               {(() => {
-                const cur = v4Daeun.find(d => d.current);
+                const cur: any = v4Daeun.find(d => d.current);
                 if (!cur) return null;
-                const curEc = EC[cur.elem];
+                const curEc = (EC as any)[cur.elem];
                 return (
                   <div className="mt-3 p-3 rounded-xl" style={{ background: `${curEc.main}08`, border: `1px solid ${curEc.main}30` }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: curEc.dark }}>
-                      현재 {cur.gz}({cur.kr}) 대운 — {EKR[cur.elem]} 에너지 시기
+                      현재 {cur.gz}({cur.kr}) 대운 — {(EKR as any)[cur.elem]} 에너지 시기
                     </p>
                     <p style={{ fontSize: 10, color: '#8b7e6f', marginTop: 2 }}>
-                      {cur.label} ({cur.period})에 해당하는 시기로, {EKR[cur.elem]} 오행의 영향을 크게 받고 있어요.
+                      {cur.label} ({cur.period})에 해당하는 시기로, {(EKR as any)[cur.elem]} 오행의 영향을 크게 받고 있어요.
                     </p>
                   </div>
                 );
@@ -1187,6 +1345,40 @@ export function ResultPage(props: ResultPageProps = {}) {
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
 
           {/* ─── Phase D'-2 · 프리미엄 10섹션 (목업 v2 진본) ─── */}
+          {/* 2026-05-28 — Streaming 진행 banner: fresh SSE 모드에서 그룹 미완료 시 sticky 상단 표시.
+             user 피드백: "다른 콘텐츠처럼 어느정도는 안된 section은 스켈레톤으로". 풀스크린 AILoading 5초 후 결과
+             페이지로 진입 → PremiumResult 가 partial-safe 라 빈 sections 자리는 자체 fallback. 사용자에게 진행
+             중임을 알리는 정보성 banner 로 보완. */}
+          {isPremiumLayout && isPremiumStreamingIncomplete && (
+            <div style={{
+              position: 'sticky', top: 56, zIndex: 40,
+              margin: '0 16px 14px',
+              background: 'linear-gradient(135deg, #FFFBF0 0%, #FFF6E0 100%)',
+              border: '1px solid rgba(184,150,90,0.35)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              display: 'flex', alignItems: 'center', gap: 10,
+              boxShadow: '0 2px 8px rgba(184,150,90,0.12)',
+            }}>
+              <div style={{
+                width: 18, height: 18, flexShrink: 0,
+                border: '2px solid rgba(184,150,90,0.25)',
+                borderTopColor: '#B8965A',
+                borderRadius: '50%',
+                animation: 'premium-spin 0.9s linear infinite',
+              }} />
+              <style>{`@keyframes premium-spin { to { transform: rotate(360deg); } }`}</style>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#5C4A2E', marginBottom: 2 }}>
+                  사주를 깊게 풀어내는 중이에요
+                </div>
+                <div style={{ fontSize: 11, color: '#8C6D3D', lineHeight: 1.5 }}>
+                  분량이 많아 1~2분 정도 걸려요. 도착한 섹션부터 채워집니다.
+                </div>
+              </div>
+            </div>
+          )}
+
           {isPremiumLayout && (
             <PremiumResult
               report={storedReport!}
@@ -1201,7 +1393,7 @@ export function ResultPage(props: ResultPageProps = {}) {
 
           {/* ─── Phase C · L3·L4 블러 영역 시작 (신살 + 공망 + 상세 풀이 12섹션) ─── */}
           {/* Phase D' 작업 0: 단일 Primary CTA만 (1운 추가 결제 옵션 제거) */}
-          {!isPremiumLayout && (
+          {false && !isPremiumLayout && (
           <BlurredSection
             locked={locked}
             onUnlock={handleUnlock}
@@ -1332,7 +1524,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
                 <p style={{ fontSize: 10, fontWeight: 700, color: '#3949ab', marginBottom: 3 }}>이렇게 읽어요</p>
                 <p style={{ fontSize: 10, color: '#5c6bc0', lineHeight: 1.6 }}>
-                  공망의 영역은 사주의 일간({sajuData.pillars[2]?.천간읽기} 일간)과 공망 지지의 오행 관계로 결정돼요. 예를 들어 재성 공망이면 '돈에 집착할수록 도망감', 관성 공망이면 '조직보다 자유로운 경로가 유리' — 비어있는 영역이기에 오히려 남들과 다른 강점이 돼요.
+                  공망의 영역은 사주의 일간({sajuData?.pillars?.[2]?.천간읽기} 일간)과 공망 지지의 오행 관계로 결정돼요. 예를 들어 재성 공망이면 '돈에 집착할수록 도망감', 관성 공망이면 '조직보다 자유로운 경로가 유리' — 비어있는 영역이기에 오히려 남들과 다른 강점이 돼요.
                 </p>
               </div>
             </div>
@@ -1355,8 +1547,8 @@ export function ResultPage(props: ResultPageProps = {}) {
                   index={i}
                   elements={v4Elements}
                   hasBirthTime={hasBirthTime}
-                  jijanggan={sajuData.jijanggan}
-                  pillars={sajuData.pillars}
+                  jijanggan={sajuData!.jijanggan}
+                  pillars={sajuData!.pillars}
                   aiResult={aiResult}
                 />
               ))}
@@ -1367,29 +1559,25 @@ export function ResultPage(props: ResultPageProps = {}) {
           </BlurredSection>
           )}
 
-          {/* §7 AdBanner — L4 직후 (build='appintos' && tier='free' 자체 분기) */}
-          {adEligible && (
-            <LocalFadeIn delay={80}>
-              <AdBanner tier={tier} locked={locked} />
-            </LocalFadeIn>
-          )}
-
           {/* §6 UpsellCard — Premium 모드에서는 PremiumResult 의 PremiumUpsellCard 가 담당 (중복 방지) */}
-          {!locked && tier === 'paid' && !isPremiumLayout && (
+          {false && !locked && tier === 'paid' && !isPremiumLayout && (
             <LocalFadeIn delay={80}>
               <UpsellCard contentType={upsellType} />
             </LocalFadeIn>
           )}
 
           {/* 크로스셀 "더 알아보기" — Premium 은 PremiumResult 의 TopicTopRecommend 가 담당 (점수 기반 동적 3 카드) */}
-          {!isPremiumLayout && (
+          {false && !isPremiumLayout && (
             <LocalFadeIn delay={80}>
               <div className="card space-y-3">
                 <h3 className="text-h3 text-text-primary">더 알아보기</h3>
                 <div className="grid grid-cols-3 gap-2">
+                  {/* 2026-05-07: '궁합/대운' 1차 출시 후 공개 — 코드 보존, 공유만 노출 */}
                   {[
-                    { title: '궁합 분석', desc: '1운', action: () => navigate('/compat') },
-                    { title: '대운 상세', desc: '1운', action: () => navigate('/daeun') },
+                    // { title: '궁합 분석', desc: '1운', action: () => navigate('/compat') },
+                    // { title: '대운 상세', desc: '1운', action: () => navigate('/daeun') },
+                    { title: '연애운 보기', desc: '1운', action: () => navigate('/topic/love') },
+                    { title: '재물운 보기', desc: '1운', action: () => navigate('/topic/wealth') },
                     { title: '공유하기', desc: '+1운', action: () => setShowShareModal(true) },
                   ].map((item) => (
                     <button key={item.title} onClick={item.action} className="card text-center py-3 space-y-1 hover-lift">
@@ -1407,7 +1595,7 @@ export function ResultPage(props: ResultPageProps = {}) {
 
 
           {/* 공유 리워드 배너 — Premium 은 PremiumResult 의 result-footer 가 담당 (중복 방지) */}
-          {!isPremiumLayout && (
+          {false && !isPremiumLayout && (
             <LocalFadeIn delay={80}>
               <button
                 onClick={() => setShowShareModal(true)}
@@ -1431,8 +1619,17 @@ export function ResultPage(props: ResultPageProps = {}) {
             </LocalFadeIn>
           )}
 
+          {/* §7 AdBanner — 페이지 하단(footer 위) · build='appintos' && tier='free' 자체 분기 */}
+          {adEligible && (
+            <LocalFadeIn delay={80}>
+              <div className="mt-2">
+                <AdBanner tier={tier} locked={locked} />
+              </div>
+            </LocalFadeIn>
+          )}
+
           {/* 출처 + 디스클레이머 — Premium 은 PremiumResult 의 ReportSources 가 담당 (중복 방지) */}
-          {!isPremiumLayout && (
+          {false && !isPremiumLayout && (
             <div className="mt-8 text-center space-y-1">
               <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                 한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
@@ -1446,7 +1643,7 @@ export function ResultPage(props: ResultPageProps = {}) {
           )}
 
           {/* 3-part Footer CTA — Premium 은 자체 footer 가 있어 중복 방지 */}
-          {!isPremiumLayout && (
+          {false && !isPremiumLayout && (
             <FooterCTA pageKey="report" backTo="/storage" marginTop={24} />
           )}
 
@@ -1459,7 +1656,7 @@ export function ResultPage(props: ResultPageProps = {}) {
           />
 
           {/* Footer — 프리미엄 레이아웃에서는 PremiumResultFooter 가 자체 마무리하므로 숨김 */}
-          {!isPremiumLayout && (
+          {false && !isPremiumLayout && (
             <div className="text-center pt-8 pb-4">
               <div className="divider mb-4" />
               <p className="text-caption text-brand-gold font-bold">사주500</p>

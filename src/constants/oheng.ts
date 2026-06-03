@@ -35,7 +35,7 @@ export const OHENG_MAP: Record<OhengType, OhengInfo> = {
   토: {
     name: '토',
     hanja: '土',
-    color: '#F57F17',
+    color: '#E8B82A',
     colorLight: '#FFF8E1',
     colorDark: '#E65100',
     organ: '비장/위장',
@@ -45,7 +45,7 @@ export const OHENG_MAP: Record<OhengType, OhengInfo> = {
   금: {
     name: '금',
     hanja: '金',
-    color: '#757575',
+    color: '#4A4A4A',
     colorLight: '#F5F5F5',
     colorDark: '#424242',
     organ: '폐/대장',
@@ -55,7 +55,7 @@ export const OHENG_MAP: Record<OhengType, OhengInfo> = {
   수: {
     name: '수',
     hanja: '水',
-    color: '#1565C0',
+    color: '#1565E0',
     colorLight: '#E3F2FD',
     colorDark: '#0D47A1',
     organ: '신장/방광',

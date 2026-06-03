@@ -31,6 +31,13 @@ export function PrivacyPage() {
               <p>· 계정 삭제 시: 5일 이내 파기</p>
             </div>
             <div>
+              <p className="text-label text-text-primary font-bold mb-1">3-1. 저장 방식 · 암호화</p>
+              <p>· 사주 데이터(이름·생년월일·시간)는 Google Cloud Firestore의 관리형 암호화(AES-256-GCM, Google 관리 키)로 저장돼요.</p>
+              <p>· 브라우저 캐시는 세션 단위(sessionStorage)로만 보관되어 브라우저 종료 시 즉시 삭제돼요.</p>
+              <p>· localStorage에는 운 잔액·이용 기록 등 민감정보 외 운영 데이터만 저장해요.</p>
+              <p>· 모든 API 통신은 HTTPS(TLS 1.2 이상)로 암호화돼요.</p>
+            </div>
+            <div>
               <p className="text-label text-text-primary font-bold mb-1">4. 제3자 제공</p>
               <p>수집된 개인정보는 원칙적으로 제3자에게 제공하지 않아요. 다만 법령에 따른 요청이 있는 경우 예외적으로 제공할 수 있어요.</p>
             </div>

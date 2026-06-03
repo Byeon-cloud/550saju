@@ -13,8 +13,7 @@ import { isAppsInToss } from '@/services/payment/iapService';
 export async function setItem(key: string, value: string): Promise<void> {
   if (isAppsInToss()) {
     try {
-      const sdkName = '@apps-in-toss/' + 'web-framework';
-      const { Storage } = await import(/* @vite-ignore */ sdkName);
+      const { Storage } = await import('@apps-in-toss/web-framework');
       await Storage.setItem(key, value);
       return;
     } catch { /* fallback to localStorage */ }
@@ -25,8 +24,7 @@ export async function setItem(key: string, value: string): Promise<void> {
 export async function getItem(key: string): Promise<string | null> {
   if (isAppsInToss()) {
     try {
-      const sdkName = '@apps-in-toss/' + 'web-framework';
-      const { Storage } = await import(/* @vite-ignore */ sdkName);
+      const { Storage } = await import('@apps-in-toss/web-framework');
       return await Storage.getItem(key);
     } catch { /* fallback */ }
   }
@@ -36,8 +34,7 @@ export async function getItem(key: string): Promise<string | null> {
 export async function removeItem(key: string): Promise<void> {
   if (isAppsInToss()) {
     try {
-      const sdkName = '@apps-in-toss/' + 'web-framework';
-      const { Storage } = await import(/* @vite-ignore */ sdkName);
+      const { Storage } = await import('@apps-in-toss/web-framework');
       await Storage.removeItem(key);
       return;
     } catch { /* fallback */ }

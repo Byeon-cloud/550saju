@@ -75,6 +75,65 @@ export function claimShareReward(): number {
   return REWARD_PER_SHARE;
 }
 
+/**
+ * 앱인토스 "공유 리워드" moduleId — 토스 콘솔 미니앱 > 공유 리워드 메뉴의 UUID.
+ * ⚠️ 콘솔 값과 반드시 일치해야 contactsViral 화면이 정상 노출됨.
+ */
+export const TOSS_VIRAL_MODULE_ID = '0a21ea14-951b-4abb-8484-aaf61b0123b8';
+
+/**
+ * 🔗 통합 공유 — 앱 전체의 모든 공유 진입점은 이 함수 하나만 호출.
+ *
+ *   앱인토스: contactsViral (토스 공식 "공유 리워드" 화면 — 친구 목록 + 운받기).
+ *             sendViral(친구 공유 실제 완료) 이벤트 시에만 일 3회 한도로 적립.
+ *   웹:       navigator.share 폴백 — 완료 시 일 3회 한도로 적립.
+ *
+ *   2026-05-21 — 준기 지시로 전 앱 공유를 토스 SDK contactsViral 로 통일.
+ *   (웹 런칭 시 웹 분기 별도 보강 필요 — 현재는 토스 우선.)
+ */
+export async function inviteFriendsViaToss(opts?: {
+  onReward?: (earned: number) => void; // 리워드 적립 (earned 운)
+  onShared?: () => void;               // 공유 완료했으나 한도 초과 등 미적립
+  onCancel?: () => void;               // 취소·실패
+}): Promise<void> {
+  const { isAppsInToss } = await import('@/services/payment/iapService');
+  if (isAppsInToss()) {
+    try {
+      const { contactsViral } = await import('@apps-in-toss/web-framework');
+      contactsViral({
+        options: { moduleId: TOSS_VIRAL_MODULE_ID },
+        onEvent: (event: any) => {
+          if (event?.type === 'sendViral') {
+            const earned = claimShareReward(); // 일 3회 한도 (claimShareReward 내장)
+            if (earned > 0) opts?.onReward?.(earned);
+            else opts?.onShared?.();
+          }
+        },
+        onError: () => opts?.onCancel?.(),
+      });
+    } catch {
+      opts?.onCancel?.();
+    }
+    return;
+  }
+  // ── 웹 폴백 ──
+  const url = `${window.location.origin}/share/invite`;
+  const text = '나도 500원에 내 사주 볼 수 있대! 한번 해봐';
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    try {
+      await navigator.share({ title: '사주500', text, url });
+      const earned = claimShareReward();
+      if (earned > 0) opts?.onReward?.(earned);
+      else opts?.onShared?.();
+    } catch {
+      opts?.onCancel?.();
+    }
+  } else {
+    try { await navigator.clipboard.writeText(`${text}\n${url}`); } catch { /* noop */ }
+    opts?.onShared?.();
+  }
+}
+
 /** 공유 URL 생성 */
 export function generateShareUrl(reportId: string, referrerCode?: string): string {
   const base = `${window.location.origin}/share/${reportId}`;

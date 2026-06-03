@@ -24,12 +24,13 @@
 //   - 디스클레이머 / topic.color 5색 / SSOT v1 한자 5종 모두 보존
 //   - SSOT 토큰만 사용 (banned: #A08B6A/#F0E8D9/#7F6B4E/#B8965A/#8C6D3D)
 
-import type { ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 
 /* ══════════════════════════════════════════════════════════════════
  * 5 주제 디자인 매핑 (mockup 진본 색 추출)
  * ═════════════════════════════════════════════════════════════════ */
-export type TopicChromeKey = 'love' | 'wealth' | 'career' | 'health' | 'study';
+// 2026-05-28 — SSOT 10주제 chrome 확장 (reunion/marriage/exam/business/move 추가 — 5 일반 주제 디자인 격차 해소)
+export type TopicChromeKey = 'love' | 'wealth' | 'career' | 'health' | 'study' | 'reunion' | 'marriage' | 'exam' | 'business' | 'move';
 
 export interface TopicChromeTheme {
   /** Hero gradient — `linear-gradient(135deg, ...)` 진본 */
@@ -52,6 +53,8 @@ export interface TopicChromeTheme {
   label: string;
   /** Hero 메인 카피 (mockup h1 진본) */
   heroH1: { line1: string; line2: string };
+  /** 2026-05-28 PM — 헤더 하단 info pill (DailyMockupView 통일) */
+  heroHint?: string;
 }
 
 export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
@@ -66,6 +69,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#A1606C',
     label: '연애운',
     heroH1: { line1: '관계의 흐름과', line2: '인연이 닿는 자리' },
+    heroHint: '천천히 읽어보세요 · 인연의 결은 한 번에 들어오지 않아요',
   },
   wealth: {
     heroGrad: 'linear-gradient(135deg,#D4B07F 0%,#B8965A 55%,#8C6D3D 100%)',
@@ -78,6 +82,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#8C6D3D',
     label: '재물운',
     heroH1: { line1: '돈이 들어오고', line2: '머무는 자리' },
+    heroHint: '천천히 읽어보세요 · 돈의 결은 한 줄로 풀리지 않아요',
   },
   career: {
     heroGrad: 'linear-gradient(135deg,#7B9BC4 0%,#5A7CA8 55%,#3F5A7C 100%)',
@@ -90,6 +95,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#3F5A7C',
     label: '직업운',
     heroH1: { line1: '쌓아올리는 자리와', line2: '커리어의 결' },
+    heroHint: '천천히 읽어보세요 · 일의 결은 시간이 만들어가요',
   },
   health: {
     heroGrad: 'linear-gradient(135deg,#8FB8A8 0%,#6FA08C 55%,#4A8071 100%)',
@@ -102,6 +108,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#4A8071',
     label: '건강운',
     heroH1: { line1: '몸의 결과', line2: '오래 가는 흐름' },
+    heroHint: '천천히 읽어보세요 · 몸의 신호는 작은 데서 시작돼요',
   },
   study: {
     heroGrad: 'linear-gradient(135deg,#B57FA0 0%,#9C5A8A 55%,#7C4570 100%)',
@@ -114,6 +121,73 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7C4570',
     label: '학업운',
     heroH1: { line1: '집중이 흐르는', line2: '시간과 자리' },
+    heroHint: '천천히 읽어보세요 · 공부의 결은 리듬에서 나와요',
+  },
+  // 2026-05-28 — SSOT 10주제 chrome 확장. TOPIC_REGISTRY 색상 기반 (topics.ts) — 디자인 양극화 해소.
+  reunion: {
+    heroGrad: 'linear-gradient(135deg,#E0AC9C 0%,#D89A8A 55%,#A6705F 100%)',
+    hanja: '復',
+    accent: '#D89A8A',
+    accentDark: '#A6705F',
+    accentSoft: 'rgba(216,154,138,0.10)',
+    hint: '#5E3326',
+    badgeOn: '#FFFFFF',
+    quoteBorder: '#A6705F',
+    label: '재회운',
+    heroH1: { line1: '헤어진 사람과의', line2: '회복 가능성' },
+    heroHint: '천천히 읽어보세요 · 끝난 결도 다시 흐를 수 있어요',
+  },
+  marriage: {
+    heroGrad: 'linear-gradient(135deg,#D5A0B0 0%,#C97B95 55%,#9A5470 100%)',
+    hanja: '婚',
+    accent: '#C97B95',
+    accentDark: '#9A5470',
+    accentSoft: 'rgba(201,123,149,0.10)',
+    hint: '#56263A',
+    badgeOn: '#FFFFFF',
+    quoteBorder: '#9A5470',
+    label: '결혼운',
+    heroH1: { line1: '인연이 닿는 시기와', line2: '배우자의 결' },
+    heroHint: '천천히 읽어보세요 · 평생 함께할 결을 살펴봐요',
+  },
+  exam: {
+    heroGrad: 'linear-gradient(135deg,#8B9CC9 0%,#5A6FA8 55%,#3E4F7C 100%)',
+    hanja: '進',
+    accent: '#5A6FA8',
+    accentDark: '#3E4F7C',
+    accentSoft: 'rgba(90,111,168,0.10)',
+    hint: '#22315C',
+    badgeOn: '#FFFFFF',
+    quoteBorder: '#3E4F7C',
+    label: '합격·이직운',
+    heroH1: { line1: '시험·이직이', line2: '풀리는 시기' },
+    heroHint: '천천히 읽어보세요 · 도약의 결은 미리 와요',
+  },
+  business: {
+    heroGrad: 'linear-gradient(135deg,#C49B5C 0%,#A37A2E 55%,#7A5820 100%)',
+    hanja: '業',
+    accent: '#A37A2E',
+    accentDark: '#7A5820',
+    accentSoft: 'rgba(163,122,46,0.10)',
+    hint: '#3F2D10',
+    badgeOn: '#FFFFFF',
+    quoteBorder: '#7A5820',
+    label: '사업운',
+    heroH1: { line1: '창업·자영업', line2: '흐름과 시기' },
+    heroHint: '천천히 읽어보세요 · 사업의 결은 타이밍에서 갈려요',
+  },
+  move: {
+    heroGrad: 'linear-gradient(135deg,#7AA5A6 0%,#4F8A8B 55%,#356465 100%)',
+    hanja: '移',
+    accent: '#4F8A8B',
+    accentDark: '#356465',
+    accentSoft: 'rgba(79,138,139,0.10)',
+    hint: '#1C3D3E',
+    badgeOn: '#FFFFFF',
+    quoteBorder: '#356465',
+    label: '이사·이동운',
+    heroH1: { line1: '이사·이동의', line2: '길흉과 방향' },
+    heroHint: '천천히 읽어보세요 · 이동의 결은 방향에서 시작돼요',
   },
 };
 
@@ -126,6 +200,8 @@ export function TopicHero({
   birthLabel,
   tierLabel = '1운',
   sinsalLabel,
+  personName,
+  bottomHint,
 }: {
   theme: TopicChromeTheme;
   /** 예: "기토(己土)" */
@@ -135,80 +211,121 @@ export function TopicHero({
   tierLabel?: string;
   /** 우상단 신살 표기 (옵션) — 예: "桃花 · 도화" */
   sinsalLabel?: string;
+  /** 2026-05-28 PM — DailyMockupView 통일: 사람 이름 chip (예: "이혜지 님") */
+  personName?: string;
+  /** 2026-05-28 PM — 헤더 카드 하단 info pill (예: "주말에 보고 가세요 · 한 주의 흐름을 짚어보세요") */
+  bottomHint?: string;
 }) {
+  // 2026-05-28 PM — DailyMockupView SSOT 통일: 토픽-컬러 그라데이션 (다크 네이비 폐기).
+  //   준기 결정: "Daily 디자인+포맷이 전체 앱에 더 잘 맞아". heroGrad 는 각 토픽 컬러로 정의됨 (TOPIC_CHROME §59-179).
+  //   예: 재물 #B8965A 골드, 연애 #C88A95 핑크, 건강 #6FA08C 그린.
   return (
     <div
       style={{
         position: 'relative',
         overflow: 'hidden',
-        padding: '18px 20px 28px',
+        padding: '20px 22px 30px',
         color: '#FFFFFF',
         background: theme.heroGrad,
+        borderTop: `3px solid ${theme.accentDark}`,
       }}
     >
+      {/* 한자 워터마크 — Daily 패턴 (흰색 + opacity) */}
       <span
         aria-hidden
         style={{
           position: 'absolute',
-          right: -18,
-          bottom: -40,
+          right: -20,
+          bottom: -50,
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 220,
+          fontSize: 240,
           fontWeight: 900,
-          color: 'rgba(255,255,255,0.07)',
+          color: '#FFFFFF',
+          opacity: 0.12,
           lineHeight: 1,
           pointerEvents: 'none',
+          letterSpacing: '-0.05em',
         }}
       >
         {theme.hanja}
       </span>
+      {/* badge row — 골드 톤 */}
       <div
         style={{
           display: 'flex',
-          gap: 10,
-          fontSize: 12,
-          opacity: 0.92,
+          gap: 8,
+          fontSize: 11,
           flexWrap: 'wrap',
           alignItems: 'center',
           position: 'relative',
         }}
       >
+        {/* 2026-05-28 PM — Daily 패턴: 흰 배경 chip + 토픽 컬러 텍스트 (역상). 가독성 우선. */}
         <span
           style={{
-            background: 'rgba(255,255,255,0.22)',
-            padding: '3px 10px',
+            background: 'rgba(255,255,255,0.95)',
+            padding: '4px 12px',
             borderRadius: 100,
             fontSize: 11,
-            fontWeight: 600,
+            fontWeight: 700,
+            color: theme.accentDark,
+            letterSpacing: '0.02em',
           }}
         >
           {theme.label}
         </span>
+        {personName && (
+          <span
+            style={{
+              background: 'rgba(255,255,255,0.20)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              padding: '4px 10px',
+              borderRadius: 100,
+              fontSize: 11,
+              fontWeight: 600,
+              color: '#FFFFFF',
+            }}
+          >
+            {personName}
+          </span>
+        )}
         <span
           style={{
-            background: 'rgba(255,255,255,0.14)',
-            padding: '3px 10px',
+            background: 'rgba(255,255,255,0.15)',
+            padding: '4px 10px',
             borderRadius: 100,
             fontSize: 10,
+            color: '#FFFFFF',
+            opacity: 0.92,
           }}
         >
           {tierLabel}
         </span>
         {sinsalLabel && (
-          <span style={{ marginLeft: 'auto', fontSize: 10.5, opacity: 0.8 }}>
+          <span
+            style={{
+              marginLeft: 'auto',
+              fontSize: 10.5,
+              opacity: 0.7,
+              fontFamily: "'Noto Serif KR', serif",
+              color: theme.accent,
+            }}
+          >
             {sinsalLabel}
           </span>
         )}
       </div>
+      {/* H1 — Daily 패턴: 흰색 굵은 serif */}
       <h1
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 24,
+          fontSize: 26,
           fontWeight: 700,
-          marginTop: 14,
+          marginTop: 16,
           letterSpacing: '-0.02em',
           lineHeight: 1.4,
           position: 'relative',
+          color: '#FFFFFF',
         }}
       >
         {theme.heroH1.line1}
@@ -219,15 +336,38 @@ export function TopicHero({
         <div
           style={{
             fontSize: 12,
-            opacity: 0.85,
-            marginTop: 4,
+            opacity: 0.92,
+            marginTop: 6,
             position: 'relative',
             fontFeatureSettings: '"tnum"',
+            color: '#FFFFFF',
           }}
         >
           {ilganLabel}
           {ilganLabel && birthLabel ? ' · ' : ''}
           {birthLabel}
+        </div>
+      )}
+      {/* 2026-05-28 PM — DailyMockupView 패턴 통일: 하단 info pill. 토픽 페이지 호흡 가이드 */}
+      {bottomHint && (
+        <div
+          style={{
+            marginTop: 14,
+            background: 'rgba(0,0,0,0.18)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: 100,
+            padding: '7px 14px',
+            fontSize: 11.5,
+            color: '#FFFFFF',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            position: 'relative',
+            opacity: 0.98,
+          }}
+        >
+          <span aria-hidden style={{ fontSize: 11, opacity: 0.9 }}>◉</span>
+          {bottomHint}
         </div>
       )}
     </div>
@@ -237,6 +377,46 @@ export function TopicHero({
 /* ══════════════════════════════════════════════════════════════════
  * 2. TopicScoreCard — conic-gradient ring + 점수 + 한 줄 결론
  * ═════════════════════════════════════════════════════════════════ */
+/**
+ * 2026-05-28 PM v4 — 점수 UX 부드럽게 (user: "점수 낮으면 기분 나빠함, 그래도 점수는 받고 싶어함").
+ *  · 5-band (주의/보통/안정/상승/좋음) → 3-band (보강기/안정기/상승기) — 부정적 단어 박멸
+ *  · 점수 아래 disclaimer: "사주의 한 면 · 인생 전체의 값이 아니에요"
+ *  · 50 이하 점수일 때 안심 메시지 ("약점을 알면 보완할 수 있어요")
+ *  · 점수 자체는 유지 (사람은 점수를 받고 싶어함)
+ */
+
+// 점수 구간 → 토픽-구체 rich phrase. "주의" 같은 부정 단어 박멸 → "보강 구간" 같이 발전 가능성 강조.
+function getRichScoreLabel(theme: TopicChromeTheme, score: number): { grade: string; phrase: string; band: string; reassurance?: string } {
+  const topicLabel = theme.label.replace('운', '');
+  if (score >= 85) return {
+    grade: '상승기',
+    phrase: `${topicLabel} 기운이 또렷하게 살아나는 시기예요`,
+    band: '상승기',
+  };
+  if (score >= 70) return {
+    grade: '안정기',
+    phrase: `${topicLabel} 흐름이 부드럽게 받쳐주는 시기예요`,
+    band: '안정기',
+  };
+  if (score >= 55) return {
+    grade: '안정기',
+    phrase: `${topicLabel} 흐름이 잔잔하게 유지되는 시기예요`,
+    band: '안정기',
+  };
+  if (score >= 40) return {
+    grade: '보강기',
+    phrase: `${topicLabel} 결을 조금 보강하면 흐름이 살아나요`,
+    band: '보강기',
+    reassurance: '약점을 알면 보완할 수 있어요. 아래에서 방법을 살펴보세요.',
+  };
+  return {
+    grade: '보강기',
+    phrase: `${topicLabel} 결이 잠시 약해진 시기예요`,
+    band: '보강기',
+    reassurance: '점수가 인생 전체를 말하지 않아요. 보강 포인트만 짚어도 흐름은 바뀌어요.',
+  };
+}
+
 export function TopicScoreCard({
   theme,
   score,
@@ -248,105 +428,139 @@ export function TopicScoreCard({
   score: number;
   /** 예: "연애 지수" */
   title: string;
-  /** 예: "인연이 잔잔히 들어오는 자리" */
+  /** 예: "인연이 잔잔히 들어오는 자리" — AI 가 보낸 두괄식 결론. body 우선 사용, 없으면 자동 phrase */
   body: string;
   /** 보조 설명 (사주 근거) */
   note?: string;
 }) {
   const pct = Math.max(0, Math.min(100, score));
+  // body 가 "길 · 좋은 기운의 흐름" generic 인지 체크 → generic 이면 rich phrase 로 대체
+  const isGeneric = /^(길|평|주의|흉)\s*·\s*(좋은|무난한|흔들리는|큰)/.test(body);
+  const rich = getRichScoreLabel(theme, pct);
+  const headline = isGeneric || !body ? rich.phrase : body.split('·').slice(-1)[0].trim();
+
   return (
     <div
       style={{
-        margin: '12px 20px 0',
-        background: '#FFFFFF',
+        margin: '10px 20px 0',
+        background: '#F8F5EE',
         borderRadius: 14,
-        padding: 16,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-        display: 'grid',
-        gridTemplateColumns: '100px 1fr',
-        gap: 16,
-        alignItems: 'center',
+        padding: '16px 16px 14px',
+        border: '1px solid #E5DFD0',
       }}
     >
-      <div
-        style={{
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: `conic-gradient(${theme.accentDark} 0 ${pct}%, #E5DFD0 ${pct}% 100%)`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-        }}
-      >
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            inset: 8,
-            borderRadius: '50%',
-            background: '#FFFFFF',
-          }}
-        />
-        <span
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            fontFamily: "'Noto Serif KR', serif",
-            fontSize: 28,
-            fontWeight: 700,
-            color: theme.accentDark,
-          }}
-        >
-          {pct}
-          <small
-            style={{
-              fontSize: 12,
-              color: theme.hint,
-              fontWeight: 400,
-              marginLeft: 2,
-            }}
-          >
-            점
-          </small>
-        </span>
-      </div>
-      <div>
-        <div
-          style={{
-            fontSize: 11,
-            color: theme.hint,
-            letterSpacing: '0.1em',
-            fontWeight: 600,
-          }}
-        >
+      {/* 1행 — 라벨 + 큰 점수 */}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ fontSize: 11.5, color: theme.accentDark, letterSpacing: '0.08em', fontWeight: 700 }}>
           {title}
         </div>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: '#1A1A1A',
-            marginTop: 4,
-            lineHeight: 1.5,
-          }}
-        >
-          {body}
-        </div>
-        {note && (
-          <div
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          <span
             style={{
-              fontSize: 11.5,
-              color: theme.hint,
-              marginTop: 6,
-              lineHeight: 1.55,
+              fontFamily: "'Noto Serif KR', serif",
+              fontSize: 32,
+              fontWeight: 800,
+              color: theme.accentDark,
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
             }}
           >
-            {note}
-          </div>
-        )}
+            {pct}
+          </span>
+          <span style={{ fontSize: 12, color: theme.hint, fontWeight: 600 }}>/ 100</span>
+          <span
+            style={{
+              marginLeft: 6,
+              fontSize: 10.5,
+              fontWeight: 800,
+              padding: '3px 8px',
+              borderRadius: 100,
+              background: `${theme.accent}24`,
+              color: theme.accentDark,
+              letterSpacing: '0.02em',
+            }}
+          >
+            {rich.grade}
+          </span>
+        </div>
       </div>
+
+      {/* 2행 — gradient bar with marker */}
+      <div style={{ position: 'relative', height: 8, borderRadius: 100, background: '#E5DFD0', overflow: 'visible', marginBottom: 8 }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            height: '100%',
+            width: `${pct}%`,
+            borderRadius: 100,
+            background: `linear-gradient(90deg, ${theme.accent} 0%, ${theme.accentDark} 100%)`,
+            transition: 'width 0.6s ease',
+          }}
+        />
+        {/* marker dot at current score */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: `${pct}%`,
+            transform: 'translate(-50%, -50%)',
+            width: 14,
+            height: 14,
+            borderRadius: '50%',
+            background: '#FFFFFF',
+            border: `3px solid ${theme.accentDark}`,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+          }}
+        />
+      </div>
+
+      {/* 3행 — scale labels 3-band (보강기/안정기/상승기) — 부정 단어 박멸 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: theme.hint, fontWeight: 600, marginBottom: 12, paddingLeft: 2, paddingRight: 2 }}>
+        <span>보강기</span>
+        <span style={{ marginLeft: '15%' }}>안정기</span>
+        <span>상승기</span>
+      </div>
+
+      {/* 4행 — 토픽-구체 한 줄 (generic 박멸) */}
+      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1A1A1A', lineHeight: 1.5, wordBreak: 'keep-all' }}>
+        {headline}
+      </div>
+
+      {/* 5행 — 안심 메시지 (40 이하 점수 시만) */}
+      {rich.reassurance && (
+        <div style={{
+          marginTop: 8,
+          padding: '8px 12px',
+          background: 'rgba(184,150,90,0.08)',
+          borderRadius: 10,
+          borderLeft: `3px solid ${theme.accent}`,
+          fontSize: 11.5,
+          color: '#3D3427',
+          lineHeight: 1.5,
+        }}>
+          {rich.reassurance}
+        </div>
+      )}
+
+      {/* 6행 — disclaimer (작은 글, 항상 노출) */}
+      <div style={{
+        marginTop: 8,
+        fontSize: 10.5,
+        color: theme.hint,
+        lineHeight: 1.5,
+        opacity: 0.85,
+        fontStyle: 'italic',
+      }}>
+        * 점수는 사주의 한 면을 본 것 — 인생 전체의 값이 아니에요
+      </div>
+
+      {note && (
+        <div style={{ fontSize: 11.5, color: theme.hint, marginTop: 4, lineHeight: 1.55 }}>
+          {note}
+        </div>
+      )}
     </div>
   );
 }
@@ -470,18 +684,44 @@ export function TopicSection({
   hanjaSuffix,
   sub,
   children,
+  collapsible = false,
+  defaultOpen = false,
+  isLoading = false,
 }: {
   theme: TopicChromeTheme;
-  /** 예: "L1 · 지금" */
+  /** 예: "SECTION 01" */
   num: string;
   title: string;
   /** 우측 한자 (·一語 · ·三月 등) */
   hanjaSuffix?: string;
   sub?: string;
   children: ReactNode;
+  /** true = 헤더 클릭으로 접기/펼치기 (긴 주제 분석 가독성) */
+  collapsible?: boolean;
+  /** collapsible 일 때 초기 펼침 여부 (기본 접힘) */
+  defaultOpen?: boolean;
+  /** 2026-05-28 — true 일 때 body 위치에 shimmer skeleton 표시 (sections heading 은 즉시 노출) */
+  isLoading?: boolean;
 }) {
-  return (
-    <div style={{ marginTop: 28 }}>
+  const [open, setOpen] = useState(defaultOpen);
+  const expanded = !collapsible || open;
+  // 2026-05-28 — 펼칠 때마다 짧은 skeleton 표시. user 피드백: "접히기 되어있는걸 폈을때 스켈레톤이 돌아가야지"
+  const [openingSkeleton, setOpeningSkeleton] = useState(false);
+  const prevOpenRef = useRef(open);
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      // 닫혀있다가 펼쳐짐 → 600ms skeleton
+      setOpeningSkeleton(true);
+      const t = setTimeout(() => setOpeningSkeleton(false), 600);
+      prevOpenRef.current = open;
+      return () => clearTimeout(t);
+    }
+    prevOpenRef.current = open;
+  }, [open]);
+  const showSkeleton = isLoading || openingSkeleton;
+
+  const header = (
+    <>
       <span
         style={{
           display: 'inline-block',
@@ -497,23 +737,42 @@ export function TopicSection({
       </span>
       <div
         style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
           fontFamily: "'Noto Serif KR', serif",
           fontSize: 19,
           fontWeight: 700,
           color: '#1A1A1A',
         }}
       >
-        {title}
-        {hanjaSuffix && (
+        <span style={{ flex: 1, textAlign: 'left' }}>
+          {title}
+          {hanjaSuffix && (
+            <span
+              style={{
+                color: theme.accentDark,
+                fontWeight: 500,
+                marginLeft: 6,
+                fontSize: 14,
+              }}
+            >
+              {hanjaSuffix}
+            </span>
+          )}
+        </span>
+        {collapsible && (
           <span
+            aria-hidden="true"
             style={{
+              flexShrink: 0,
+              fontSize: 13,
               color: theme.accentDark,
-              fontWeight: 500,
-              marginLeft: 6,
-              fontSize: 14,
+              transform: open ? 'rotate(180deg)' : 'none',
+              transition: 'transform 0.2s ease',
             }}
           >
-            {hanjaSuffix}
+            ▾
           </span>
         )}
       </div>
@@ -524,12 +783,64 @@ export function TopicSection({
             color: theme.hint,
             marginTop: 4,
             lineHeight: 1.55,
+            textAlign: 'left',
           }}
         >
           {sub}
         </div>
       )}
-      <div style={{ marginTop: 12 }}>{children}</div>
+    </>
+  );
+
+  return (
+    <div style={{ marginTop: 28 }}>
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          style={{
+            display: 'block',
+            width: '100%',
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+          }}
+        >
+          {header}
+        </button>
+      ) : (
+        header
+      )}
+      {expanded && (
+        <div style={{ marginTop: 12 }}>
+          {showSkeleton ? (
+            // 2026-05-28 — body skeleton (shimmer). sections heading 은 즉시 노출, 펼칠 때마다 600ms shimmer 후 본문 교체.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="topic-skel-line" style={{ width: '92%' }} />
+              <div className="topic-skel-line" style={{ width: '78%' }} />
+              <div className="topic-skel-line" style={{ width: '88%' }} />
+              <div className="topic-skel-line" style={{ width: '65%' }} />
+              <style>{`
+                @keyframes topic-skel-shimmer {
+                  0% { background-position: -200% 0; }
+                  100% { background-position: 200% 0; }
+                }
+                .topic-skel-line {
+                  height: 12px;
+                  border-radius: 6px;
+                  background: linear-gradient(90deg, rgba(184,150,90,0.08) 0%, rgba(184,150,90,0.18) 50%, rgba(184,150,90,0.08) 100%);
+                  background-size: 200% 100%;
+                  animation: topic-skel-shimmer 1.4s ease-in-out infinite;
+                }
+              `}</style>
+            </div>
+          ) : (
+            children
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -672,31 +983,35 @@ export function TopicConclusionDark({
   conclusion: string;
   sajuRef?: string;
 }) {
+  // 2026-05-07 — 종합사주(/result) 톤앤매너 통일: paper 베이스 + 검정 글자 + 골드 액센트
+  // 이전: 검정 + 분홍 그라데이션 + 흰 글자 (가독성 ↓ + 톤 X)
   return (
     <div
       style={{
-        background: `linear-gradient(135deg, #1A1A1A 0%, ${theme.accentDark}25 100%)`,
+        background: 'linear-gradient(135deg, #FFFEF8 0%, #FAF6EC 100%)',
         borderRadius: 14,
-        padding: '20px 18px 22px 22px',
+        padding: '22px 22px 24px',
         margin: '14px 0 18px',
-        borderLeft: `6px solid ${theme.accent}`,
+        borderLeft: `5px solid ${theme.accent}`,
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(20,15,8,0.18)',
+        boxShadow: '0 4px 16px rgba(184,150,90,0.10)',
+        border: '1px solid rgba(184,150,90,0.18)',
+        borderLeftWidth: 5,
       }}
     >
-      {/* 한자 워터마크 — 우하단 220px 7% opacity */}
+      {/* 한자 워터마크 — 우하단 큰 글자 (paper 톤이라 alpha 낮춤) */}
       <span
         aria-hidden
         style={{
           position: 'absolute',
-          right: -10,
-          bottom: -40,
+          right: -12,
+          bottom: -36,
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 220,
+          fontSize: 200,
           fontWeight: 900,
           color: theme.accent,
-          opacity: 0.07,
+          opacity: 0.06,
           lineHeight: 1,
           pointerEvents: 'none',
           letterSpacing: '-0.05em',
@@ -710,38 +1025,41 @@ export function TopicConclusionDark({
           fontFamily: "'Noto Serif KR', serif",
           fontSize: 11,
           fontWeight: 700,
-          color: theme.accent,
-          letterSpacing: '0.12em',
-          marginBottom: 8,
+          color: '#8C6D3D',
+          letterSpacing: '0.14em',
+          marginBottom: 10,
           position: 'relative',
         }}
       >
         ◇ 한 줄 결론
       </div>
-      {/* 본문 */}
+      {/* 본문 — 검정 글자, 큰 폰트 */}
       <p
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: 700,
-          color: '#F8F5EE',
+          color: '#1A1A1A',
           lineHeight: 1.65,
           margin: 0,
           position: 'relative',
           wordBreak: 'keep-all',
+          letterSpacing: '-0.01em',
         }}
         dangerouslySetInnerHTML={{ __html: conclusion }}
       />
-      {/* 사주 근거 (있을 때만) */}
+      {/* 사주 근거 (있을 때만) — 골드 톤 회색 */}
       {sajuRef && (
         <p
           style={{
-            fontSize: 12,
-            color: 'rgba(248,245,238,0.65)',
-            lineHeight: 1.55,
-            margin: '10px 0 0',
+            fontSize: 12.5,
+            color: '#5C4220',
+            lineHeight: 1.6,
+            margin: '12px 0 0',
             position: 'relative',
             wordBreak: 'keep-all',
+            paddingTop: 10,
+            borderTop: '1px solid rgba(184,150,90,0.18)',
           }}
         >
           — {sajuRef}
@@ -995,6 +1313,12 @@ export interface TopicSajuMiniCell {
   ji: string;
   ganOheng?: '목' | '화' | '토' | '금' | '수';
   jiOheng?: '목' | '화' | '토' | '금' | '수';
+  /** 천간 음양·오행 텍스트 — 예: "갑 / 양목" (종합사주 yum SSOT) */
+  ganYum?: string;
+  /** 지지 음양·오행 텍스트 — 예: "인 / 양목" */
+  jiYum?: string;
+  /** 천간 십성 — 예: "인성" / "일간" / "관성" (종합사주 sip-tag SSOT) */
+  ganSip?: string;
   /** 십성 — 예: "겁재" / "일간" / "편재" / "편관" */
   ten?: string;
   /** ilju 강조 (일주만) */
@@ -1003,14 +1327,58 @@ export interface TopicSajuMiniCell {
   key?: boolean;
 }
 
-// SSOT 5오행 색 (#41 D1 fix 정렬) — banned 토큰 회피
-const OHENG_COLOR: Record<string, string> = {
-  목: '#2E7D32',
-  화: '#C62828',
-  토: '#E8B82A', // SSOT (mockup의 #7F6B4E 는 banned, D1 fix 정책 우선)
-  금: '#4A4A4A',
-  수: '#1565E0',
+// 2026-05-28 — 종합사주(PremiumResult wongug-cell) SSOT 정렬 — 오행 박스 컬러 매핑
+//   천간/지지 글자를 컬러 박스 안에 흰 글씨로 (금만 흰 배경 + 검은 글씨)
+const OHENG_BOX: Record<string, { bg: string; color: string; border: string }> = {
+  목: { bg: '#2D8A4E', color: '#fff', border: '#1B5E2C' },
+  화: { bg: '#D32F2F', color: '#fff', border: '#9B1B1B' },
+  토: { bg: '#E8B82A', color: '#fff', border: '#C9A030' },
+  금: { bg: '#FFFFFF', color: '#1A1A1A', border: '#9C9C9C' },
+  수: { bg: '#1A1A1A', color: '#fff', border: '#3D3D3D' },
 };
+
+// 2026-05-28 PM — DailyMockupView 패턴 통일: 친근 hangul 별칭. 10간 12지 SSOT.
+//   user 결정: "Daily 디자인+포맷이 전체 앱에 더 잘 맞아". 학술 라벨(갑/양목) 은 c.ganYum 으로 작게 보존.
+//   "큰나무·대양·보석" 같은 친근 noun 으로 60대 가독 + 따뜻한 톤.
+const GAN_FRIENDLY: Record<string, string> = {
+  甲: '큰나무', 갑: '큰나무',
+  乙: '풀꽃', 을: '풀꽃',
+  丙: '대양', 병: '대양',
+  丁: '촛불', 정: '촛불',
+  戊: '큰산', 무: '큰산',
+  己: '옥토', 기: '옥토',
+  庚: '도끼', 경: '도끼',
+  辛: '보석', 신: '보석',
+  壬: '바다', 임: '바다',
+  癸: '이슬', 계: '이슬',
+};
+const JI_FRIENDLY: Record<string, string> = {
+  子: '쥐', 자: '쥐',
+  丑: '소', 축: '소',
+  寅: '호랑이', 인: '호랑이',
+  卯: '토끼', 묘: '토끼',
+  辰: '용', 진: '용',
+  巳: '뱀', 사: '뱀',
+  午: '말', 오: '말',
+  未: '양', 미: '양',
+  申: '원숭이', 신_ji: '원숭이',
+  酉: '닭', 유: '닭',
+  戌: '개', 술: '개',
+  亥: '돼지', 해: '돼지',
+};
+// 신 (申, 원숭이) 와 신 (辛, 보석) 동음이의 — hanja 우선 매핑. hangul-only 입력 시 ji_FRIENDLY 의 '신' 은 천간 매핑으로 가서 falsy 반환 → 그때만 jiYum 보고 추정.
+function ganFriendly(gan: string | undefined): string | undefined {
+  if (!gan) return undefined;
+  return GAN_FRIENDLY[gan];
+}
+function jiFriendly(ji: string | undefined): string | undefined {
+  if (!ji) return undefined;
+  // hanja 매핑 우선
+  if (JI_FRIENDLY[ji]) return JI_FRIENDLY[ji];
+  // hangul-only 인 경우 '신' 이면 '원숭이' (지지)
+  if (ji === '신') return '원숭이';
+  return undefined;
+}
 
 export function TopicSajuMini({
   theme,
@@ -1066,22 +1434,29 @@ export function TopicSajuMini({
           textAlign: 'center',
         }}
       >
+        {/* 2026-05-28 — 종합사주(PremiumResult wongug-cell) SSOT 디자인 적용.
+            천간/지지 글자를 오행 컬러 박스 안에 흰 글씨로 (금만 흰 배경 + 검은 글씨).
+            일주 셀: 골드 외곽 + 그라데이션 배경 + "일간" 라벨. */}
         {cells.map((c, i) => {
-          const ganColor = c.ganOheng ? OHENG_COLOR[c.ganOheng] : '#1A1A1A';
-          const jiColor = c.jiOheng ? OHENG_COLOR[c.jiOheng] : '#1A1A1A';
+          const ganBox = c.ganOheng ? OHENG_BOX[c.ganOheng] : { bg: '#F8F5EE', color: '#1A1A1A', border: '#E5DFD0' };
+          const jiBox = c.jiOheng ? OHENG_BOX[c.jiOheng] : { bg: '#F8F5EE', color: '#1A1A1A', border: '#E5DFD0' };
           return (
             <div
               key={i}
               style={{
                 background: c.ilju
-                  ? 'linear-gradient(180deg, rgba(46,125,50,0.10), rgba(46,125,50,0.04))'
-                  : '#F8F5EE',
-                borderRadius: 6,
-                padding: '8px 2px',
+                  ? 'linear-gradient(180deg, rgba(184,150,90,0.18) 0%, rgba(184,150,90,0.08) 100%)'
+                  : '#fff',
+                borderRadius: 10,
+                padding: '10px 4px 8px',
                 border: c.ilju
-                  ? '1px solid rgba(46,125,50,0.4)'
-                  : '1px solid transparent',
+                  ? '2px solid #B8965A'
+                  : '1.5px solid #E5DFD0',
                 position: 'relative',
+                overflow: 'visible',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
               }}
             >
               {c.key && (
@@ -1107,46 +1482,245 @@ export function TopicSajuMini({
                   {theme.hanja}
                 </span>
               )}
-              <div style={{ fontSize: 8.5, color: theme.hint }}>{c.label}</div>
+              {/* 시/일/월/년 col-header */}
+              <div style={{ fontSize: 10, color: '#B8965A', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>
+                {c.label}
+              </div>
+              {/* 십성 sip-tag (인성/관성/재성/일간 등) — 종합사주 SSOT */}
+              {c.ganSip && (
+                <div style={{ fontSize: 9, color: c.ilju ? '#8C6D3D' : theme.accentDark, fontWeight: 600, marginBottom: 4, letterSpacing: '0.02em' }}>
+                  {c.ganSip}
+                </div>
+              )}
+              {/* 천간 오행 박스 */}
               <div
                 style={{
                   fontFamily: "'Noto Serif KR', serif",
                   fontSize: 18,
-                  fontWeight: 700,
-                  lineHeight: 1.1,
-                  marginTop: 2,
-                  color: ganColor,
+                  fontWeight: 800,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: ganBox.bg,
+                  color: ganBox.color,
+                  border: `1.5px solid ${ganBox.border}`,
+                  textShadow: ganBox.color === '#fff' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none',
                 }}
               >
                 {c.gan}
               </div>
+              {/* 2026-05-28 PM — Daily 친근 hangul (큰나무/대양/보석) + 작은 학술 (갑/양목) 하이브리드 */}
+              {ganFriendly(c.gan) && (
+                <div style={{ fontSize: 12, color: '#1A1A1A', marginTop: 4, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                  {ganFriendly(c.gan)}
+                </div>
+              )}
+              {c.ganYum && (
+                <div style={{ fontSize: 9, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
+                  {c.ganYum}
+                </div>
+              )}
+              {/* 지지 오행 박스 */}
               <div
                 style={{
                   fontFamily: "'Noto Serif KR', serif",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  lineHeight: 1.1,
-                  marginTop: 2,
-                  color: jiColor,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  marginTop: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: jiBox.bg,
+                  color: jiBox.color,
+                  border: `1.5px solid ${jiBox.border}`,
+                  textShadow: jiBox.color === '#fff' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none',
                 }}
               >
                 {c.ji}
               </div>
-              {c.ten && (
-                <div
-                  style={{
-                    fontSize: 8.5,
-                    color: theme.accentDark,
-                    marginTop: 2,
-                    fontWeight: 600,
-                  }}
-                >
+              {/* 2026-05-28 PM — Daily 친근 hangul (말/쥐/소) + 작은 학술 (오/양화) 하이브리드 */}
+              {jiFriendly(c.ji) && (
+                <div style={{ fontSize: 12, color: '#1A1A1A', marginTop: 4, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                  {jiFriendly(c.ji)}
+                </div>
+              )}
+              {c.jiYum && (
+                <div style={{ fontSize: 9, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
+                  {c.jiYum}
+                </div>
+              )}
+              {/* 일주 라벨 또는 십성 (ganSip 없는 경우 fallback) */}
+              {c.ilju && !c.ganSip ? (
+                <div style={{ fontSize: 9, color: '#8C6D3D', marginTop: 4, fontWeight: 700 }}>
+                  일간
+                </div>
+              ) : c.ten && !c.ganSip ? (
+                <div style={{ fontSize: 9, color: theme.accentDark, marginTop: 4, fontWeight: 600 }}>
                   {c.ten}
                 </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 11. TopicOhengBalance — 5-badge oheng + 토픽 핵심 오행 augment
+ *   DailyMockupView "내 사주 오행 + 오늘의 보충" 패턴 통일 (2026-05-28 PM).
+ *   Daily=오늘 일진 +1 / Topic=주제 핵심 오행 강조 (예: 재물=재성, 연애=배우자성)
+ * ═════════════════════════════════════════════════════════════════ */
+
+// 토픽별 핵심 오행 키 매핑 (참고용 — UX 카피로만 노출, 점수는 사주 본래 카운트)
+const TOPIC_KEY_OHENG_LABEL: Record<TopicChromeKey, string> = {
+  love:      '재성·관성',     // 배우자성
+  wealth:    '재성',          // 정재·편재
+  career:    '관성',          // 정관·편관
+  health:    '인성',          // 정인·편인
+  study:     '인성·식상',     // 인성+식상관
+  reunion:   '재성·관성',
+  marriage:  '재성·관성',
+  exam:      '관성·인성',
+  business:  '재성·식상',
+  move:      '관성·재성',
+};
+
+// 오행 컬러 (badge inner) — 종합사주 SSOT
+const OHENG_BADGE: Record<string, { color: string; bg: string }> = {
+  목: { color: '#2D8A4E', bg: 'rgba(45,138,78,0.10)' },
+  화: { color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+  토: { color: '#E8B82A', bg: 'rgba(232,184,42,0.12)' },
+  금: { color: '#7A6A52', bg: 'rgba(156,156,156,0.14)' },
+  수: { color: '#1A1A1A', bg: 'rgba(26,26,26,0.08)' },
+};
+const OHENG_HANJA: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
+const OHENG_ORDER = ['목', '화', '토', '금', '수'] as const;
+
+export function TopicOhengBalance({
+  theme,
+  topicKey,
+  counts,
+  augmentNote,
+}: {
+  theme: TopicChromeTheme;
+  topicKey: TopicChromeKey;
+  /** 오행 카운트 {목:1,화:3,토:1,금:2,수:1} — TopicAnalysisPage 에서 derive */
+  counts: Record<'목' | '화' | '토' | '금' | '수', number>;
+  /** 보충 caption — 미지정 시 자동 생성 */
+  augmentNote?: string;
+}) {
+  const total = OHENG_ORDER.reduce((s, k) => s + (counts[k] ?? 0), 0);
+  const dominant = OHENG_ORDER.reduce((max, k) => ((counts[k] ?? 0) > (counts[max] ?? 0) ? k : max), '화');
+  const missing = OHENG_ORDER.filter((k) => (counts[k] ?? 0) === 0);
+  const keyLabel = TOPIC_KEY_OHENG_LABEL[topicKey];
+  const note =
+    augmentNote ||
+    (missing.length === 0
+      ? `5기운 모두 갖춘 균형 사주 · ${theme.label} 핵심은 ${keyLabel} 기운입니다.`
+      : missing.length === 1
+        ? `${OHENG_HANJA[missing[0]]}(${missing[0]}) 기운이 비어있어 ${theme.label} 핵심 ${keyLabel} 보강이 필요해요.`
+        : `${missing.map((m) => OHENG_HANJA[m]).join('·')} 기운이 부족 — ${theme.label} 분석은 ${OHENG_HANJA[dominant]}(${dominant}) 중심으로 풀려요.`);
+
+  return (
+    <div
+      style={{
+        margin: '14px 20px 0',
+        background: '#F8F5EE',
+        borderRadius: 14,
+        padding: '14px 16px 16px',
+        border: '1px solid #E5DFD0',
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>
+        내 사주 오행 + {theme.label} 핵심
+      </div>
+      <div style={{ fontSize: 11, color: '#7A7269', marginBottom: 12 }}>
+        사주 5기운 균형 + {theme.label} 분석 핵심 기운
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: 12,
+          flexWrap: 'wrap',
+        }}
+      >
+        {OHENG_ORDER.map((k) => {
+          const count = counts[k] ?? 0;
+          const isDominant = k === dominant;
+          const isMissing = count === 0;
+          const palette = OHENG_BADGE[k];
+          return (
+            <div
+              key={k}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px 6px 10px',
+                background: palette.bg,
+                border: `2px solid ${isDominant ? palette.color : 'transparent'}`,
+                borderRadius: 100,
+                opacity: isMissing ? 0.42 : 1,
+                position: 'relative',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  fontFamily: "'Noto Serif KR', serif",
+                  fontSize: 15,
+                  fontWeight: 800,
+                  color: palette.color,
+                  lineHeight: 1,
+                }}
+              >
+                {OHENG_HANJA[k]}
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Noto Serif KR', serif",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: '#1A1A1A',
+                  fontFeatureSettings: '"tnum"',
+                }}
+              >
+                {count}
+              </span>
+              {isDominant && total > 0 && (
+                <span
+                  aria-hidden
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 800,
+                    color: '#FFFFFF',
+                    background: theme.accentDark,
+                    padding: '2px 5px',
+                    borderRadius: 100,
+                    letterSpacing: '0.05em',
+                    marginLeft: 1,
+                  }}
+                >
+                  주력
+                </span>
               )}
             </div>
           );
         })}
+      </div>
+      <div style={{ fontSize: 12, color: '#1A1A1A', lineHeight: 1.55 }}>
+        {note}
       </div>
     </div>
   );

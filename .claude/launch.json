@@ -2,18 +2,25 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "Preview Production",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview:prod"],
+      "port": 3000,
+      "autoPort": false
+    },
+    {
       "name": "Vite Dev (Frontend)",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
-      "autoPort": true
+      "autoPort": false
     },
     {
       "name": "Vite Preview (Built)",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview"],
       "port": 4173,
-      "autoPort": true
+      "autoPort": false
     },
     {
       "name": "Firebase Emulators (Functions)",
@@ -21,7 +28,15 @@
       "runtimeArgs": ["run", "serve"],
       "cwd": "functions",
       "port": 5001,
-      "autoPort": true
+      "autoPort": false
+    },
+    {
+      "name": "Mockup Static Server",
+      "runtimeExecutable": "C:\\Users\\quswn\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "8765"],
+      "cwd": "docs/mockups",
+      "port": 8765,
+      "autoPort": false
     }
   ]
 }

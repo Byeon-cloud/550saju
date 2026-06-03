@@ -34,14 +34,175 @@ import {
   createChatRoom,
   type ChatMessage,
 } from '@/services/storage/chatStore';
-import { hasFreePass, useFreePass } from '@/services/storage/dailyFreePass';
+import { hasFreePass, useFreePass, restoreFreePass } from '@/services/storage/dailyFreePass';
 import {
   getChatCredits,
   useChatCredit,
+  addChatCredits,
 } from '@/services/storage/chatCredit';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
+
+/** 결과 컨텍스트 배너 — 사용자가 어떤 풀이를 보고 왔는지 시각 확인 (AI 가 진짜 컨텍스트 받았다는 증명) */
+function ResultContextBanner({ ctx }: { ctx: any }) {
+  if (!ctx || !ctx.type) return null;
+  const HAN: Record<string, string> = {
+    dream: '夢', daily: '日', topic: '題', premium: '命',
+    compat: '合', daeun: '運', monthly: '月', tojung: '歲',
+  };
+  const COLORS: Record<string, string> = {
+    dream: '#1a1f3a', daily: '#B5441F', topic: '#B8965A', premium: '#8C6D3D',
+    compat: '#9C5A8A', daeun: '#3B7A4B', monthly: '#B5441F', tojung: '#2F4B7C',
+  };
+  const han = HAN[ctx.type] || '解';
+  const color = COLORS[ctx.type] || '#B8965A';
+  // type 별 요약 텍스트
+  let summary: ReactNode = null;
+  if (ctx.type === 'dream') {
+    summary = (
+      <>
+        {ctx.category && <div style={{ fontSize: 11, color: 'rgba(248,245,238,0.6)', marginTop: 6 }}>꿈 주제 · {ctx.category}</div>}
+        {ctx.dreamText && <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 4, fontStyle: 'italic' }}>"{ctx.dreamText}"</div>}
+        {ctx.concern && <div style={{ fontSize: 12, color: 'rgba(248,245,238,0.75)', marginTop: 4 }}>요새 고민 · {ctx.concern}</div>}
+      </>
+    );
+  } else if (ctx.fullResult?.title) {
+    summary = <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 6, fontFamily: "'Noto Serif KR', serif", fontWeight: 600 }}>{stripMd(String(ctx.fullResult.title))}</div>;
+  }
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
+      color: '#F5EFE0', borderRadius: 14, padding: '14px 16px', marginBottom: 8,
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', right: -8, bottom: -18, fontSize: 80, fontWeight: 900,
+        fontFamily: "'Noto Serif KR', serif", color: 'rgba(248,245,238,0.08)', lineHeight: 1,
+      }} aria-hidden>{han}</div>
+      <div style={{ position: 'relative' }}>
+        <div style={{ fontSize: 10, letterSpacing: '0.15em', fontWeight: 700, color: 'rgba(248,245,238,0.75)' }}>
+          이 풀이를 보고 오셨어요
+        </div>
+        <div style={{ fontSize: 14, fontFamily: "'Noto Serif KR', serif", fontWeight: 700, marginTop: 4 }}>
+          {ctx.label || ctx.type}
+        </div>
+        {summary}
+      </div>
+    </div>
+  );
+}
+
+/** 결과 페이지 → 채팅 컨텍스트 prompt 빌더 (AI 가 사용자가 본 결과를 알고 답변).
+ *  각 콘텐츠 type 별 핵심 필드를 자연어로 묶어 system-like message 로 prepend. */
+function buildContextPrompt(ctx: any, userName: string): string {
+  if (!ctx || typeof ctx !== 'object') return '';
+  const { type, label, dreamText, concern, category, fullResult } = ctx;
+  const lines: string[] = [`[CONTENT_CONTEXT] ${userName}님은 방금 "${label || type}" 풀이를 보고 채팅에 들어왔습니다.`];
+  if (type === 'dream') {
+    if (category) lines.push(`꿈 주제: ${category}`);
+    if (dreamText) lines.push(`꿈 내용: "${dreamText}"`);
+    if (concern) lines.push(`요새 고민: ${concern}`);
+    if (fullResult?.title) lines.push(`풀이 제목: ${stripMd(String(fullResult.title))}`);
+    if (fullResult?.verdict) lines.push(`판정: ${stripMd(String(fullResult.verdict))}`);
+    if (fullResult?.narrative) lines.push(`첫 인상: ${stripMd(String(fullResult.narrative)).slice(0, 300)}`);
+    if (fullResult?.sajuTone) lines.push(`사주 톤: ${stripMd(String(fullResult.sajuTone)).slice(0, 300)}`);
+    if (fullResult?.todayConnection) lines.push(`고민 연결: ${stripMd(String(fullResult.todayConnection)).slice(0, 300)}`);
+  } else if (type === 'daily') {
+    if (fullResult?.title) lines.push(`오늘 제목: ${stripMd(String(fullResult.title))}`);
+    if (fullResult?.todayNarrative) lines.push(`오늘 풀이: ${stripMd(String(fullResult.todayNarrative)).slice(0, 400)}`);
+    if (fullResult?.scoreHeadline) lines.push(`헤드라인: ${stripMd(String(fullResult.scoreHeadline))}`);
+  } else if (type === 'topic') {
+    // 2026-05-28 PM 완전 재작성 — user: "결과페이지 점수도 모름" 사건.
+    //   AI 가 결과를 충분히 알고 대화 가능하도록 풀-컨텍스트 주입.
+    if (label) lines.push(`주제: ${label}`);
+    if (fullResult?.overallScore != null) lines.push(`전체 점수: ${fullResult.overallScore}점 / 100`);
+    if (fullResult?.gradeLabel) lines.push(`등급: ${stripMd(String(fullResult.gradeLabel))}`);
+    if (fullResult?.oneLineSummary) lines.push(`한 줄 결론: ${stripMd(String(fullResult.oneLineSummary))}`);
+    if (fullResult?.summary) lines.push(`요약: ${stripMd(String(fullResult.summary)).slice(0, 400)}`);
+    if (fullResult?.sajuBasis) lines.push(`사주 근거: ${stripMd(String(fullResult.sajuBasis)).slice(0, 300)}`);
+    // subScores 5축 (직무적성/대인관계/리더십/지속력/성장운 등)
+    if (Array.isArray(fullResult?.topicData?.subScores)) {
+      const subStr = fullResult.topicData.subScores
+        .map((s: any) => `${s.axis} ${s.value}점`)
+        .join(' · ');
+      if (subStr) lines.push(`세부 5축: ${subStr}`);
+    }
+    // keywords
+    if (Array.isArray(fullResult?.topicData?.keywords) && fullResult.topicData.keywords.length > 0) {
+      lines.push(`핵심 키워드: ${fullResult.topicData.keywords.slice(0, 5).join(' ')}`);
+    }
+    // strengths / cautions
+    if (Array.isArray(fullResult?.topicData?.strengths) && fullResult.topicData.strengths.length > 0) {
+      lines.push(`강점: ${fullResult.topicData.strengths.slice(0, 3).map((s: any) => stripMd(String(s))).join(' / ')}`);
+    }
+    if (Array.isArray(fullResult?.topicData?.cautions) && fullResult.topicData.cautions.length > 0) {
+      lines.push(`주의: ${fullResult.topicData.cautions.slice(0, 3).map((s: any) => stripMd(String(s))).join(' / ')}`);
+    }
+    // 5 sections — 제목 + 첫 200자 본문
+    if (Array.isArray(fullResult?.sections)) {
+      fullResult.sections.slice(0, 5).forEach((sec: any, i: number) => {
+        if (sec?.heading || sec?.content) {
+          const h = sec?.heading ? stripMd(String(sec.heading)) : `섹션 ${i + 1}`;
+          const c = sec?.content ? stripMd(String(sec.content)).slice(0, 220) : '';
+          lines.push(`[${h}] ${c}`);
+        }
+      });
+    }
+    // 행운 프로필 (있을 때)
+    if (fullResult?.luckyProfile) {
+      const lp = fullResult.luckyProfile;
+      const lpParts = [];
+      if (lp.color) lpParts.push(`색: ${lp.color}`);
+      if (lp.direction) lpParts.push(`방위: ${lp.direction}`);
+      if (lp.number) lpParts.push(`숫자: ${lp.number}`);
+      if (lp.bestMonth) lpParts.push(`시기: ${lp.bestMonth}`);
+      if (lpParts.length > 0) lines.push(`행운 프로필: ${lpParts.join(' · ')}`);
+    }
+    // 주요 topic-specific 필드 — 토픽별 핵심 데이터
+    const td = fullResult?.topicData || {};
+    const extraFields: string[] = [];
+    // career
+    if (td.workStyle) extraFields.push(`스타일: ${td.workStyle}`);
+    if (td.coreStrength) extraFields.push(`핵심 강점: ${stripMd(String(td.coreStrength)).slice(0, 80)}`);
+    if (Array.isArray(td.careerFit) && td.careerFit.length > 0) {
+      extraFields.push(`적합 직종: ${td.careerFit.slice(0, 3).map((c: any) => c.job).filter(Boolean).join(', ')}`);
+    }
+    // marriage
+    if (td.marriageAge) extraFields.push(`결혼 적령기: ${td.marriageAge}`);
+    if (td.timing?.bestPeriod) extraFields.push(`결혼 적기: ${td.timing.bestPeriod}`);
+    // wealth
+    if (td.wealthType) extraFields.push(`재물 유형: ${td.wealthType}`);
+    if (td.peakAge) extraFields.push(`재물 전성기: ${td.peakAge}`);
+    // exam
+    if (td.examLuckLevel) extraFields.push(`합격 운: ${td.examLuckLevel}`);
+    if (td.bestExamMonth) extraFields.push(`최적 시기: ${td.bestExamMonth}`);
+    // love / reunion
+    if (td.reunionProbability != null) extraFields.push(`재회 가능성: ${td.reunionProbability}%`);
+    if (td.newEncounterMonth) extraFields.push(`새 인연 월: ${td.newEncounterMonth}`);
+    if (extraFields.length > 0) lines.push(`추가 데이터: ${extraFields.join(' · ')}`);
+  } else if (type === 'premium') {
+    if (fullResult?.overallScore != null) lines.push(`전체 점수: ${fullResult.overallScore}점 / 100`);
+    if (fullResult?.summary) lines.push(`종합 요약: ${stripMd(String(fullResult.summary)).slice(0, 400)}`);
+    if (Array.isArray(fullResult?.sections)) {
+      // 10섹션 각자 제목 + 첫 150자
+      fullResult.sections.slice(0, 10).forEach((s: any, i: number) => {
+        if (s?.title || s?.content) {
+          lines.push(`[${s.title || `섹션 ${i + 1}`}] ${s.content ? stripMd(String(s.content)).slice(0, 150) : ''}`);
+        }
+      });
+    }
+  }
+  // 2026-05-28 — compat/daeun/monthly/tojung 4종 미출시. 활성화 시 동일 패턴으로 추가.
+  lines.push('');
+  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  lines.push('⚠️ 중요: 위 데이터는 사용자가 방금 본 결과 페이지의 실제 콘텐츠입니다.');
+  lines.push('- 점수·등급·키워드·강점·주의·섹션·행운 프로필 등 위 데이터를 그대로 참조해 답변하세요.');
+  lines.push('- "확인이 어렵다", "결과 페이지를 보세요" 같은 답변 금지. 위 데이터가 곧 결과 페이지입니다.');
+  lines.push('- 새로 분석하지 말고 이미 본 풀이의 "깊이"를 늘려주는 답변을 하세요.');
+  lines.push('- 사용자가 점수를 물으면 "위 데이터의 전체 점수"를 직접 인용하세요.');
+  return lines.join('\n');
+}
 import type { SajuData } from '@/types/saju';
 import {
   C,
@@ -65,15 +226,16 @@ function pickRecommendation(
   allUserText: string,
   alreadyShown: Set<string>,
 ): ContentRec | null {
+  // 2026-05-07: '궁합' 출시 후 공개 — 연애운으로 대체 (코드 보존)
   if (/궁합|상대방|남자친구|여자친구|배우자|커플/.test(allUserText)) {
-    if (!alreadyShown.has('compat'))
+    if (!alreadyShown.has('love'))
       return {
-        path: '/compat',
-        title: '두 사주의 궁합도 풀어드릴까요?',
-        desc: '성격·소통·감정 결을 두 사주로 비교',
-        hanja: '合',
-        color: '#9C2424',
-        topicKey: 'compat',
+        path: '/topic/love',
+        title: '두 사람의 연애운 결을 풀어드릴까요?',
+        desc: '만남·관계·인연 흐름을 사주로',
+        hanja: '緣',
+        color: '#C88A95',
+        topicKey: 'love',
       };
   }
   if (/이직|취업|직장|직업|승진|적성/.test(allUserText)) {
@@ -207,6 +369,37 @@ export function ChatSessionPage() {
   // 충전 후 잔액 갱신 트리거
   const [refreshTick, setRefreshTick] = useState(0);
 
+  // 2026-05-28 — 결과 페이지에서 넘어온 컨텍스트 (꿈/오늘운세/주제분석/종합사주 등)
+  //   AI 가 사용자가 무엇을 봤는지 알고 답변하도록 시스템 프롬프트에 주입.
+  //   복원 우선순위: 1) location.state 2) chatStore room.contentContext (영구) 3) sessionStorage 폴백
+  //   2026-05-28 PM — chatStore 영구 저장 추가 (sessionStorage 휘발성 해소).
+  const contentContext = useMemo(() => {
+    const ctx = (location.state as any)?.contentContext;
+    if (ctx && typeof ctx === 'object' && typeof ctx.type === 'string') return ctx;
+    // 1순위 폴백 — chatStore 영구 저장 (며칠 후 재진입에도 보존)
+    if (sessionId) {
+      try {
+        const room = getChatRoom(sessionId);
+        if (room?.contentContext && typeof room.contentContext.type === 'string') {
+          return room.contentContext;
+        }
+      } catch { /* noop */ }
+    }
+    // 2순위 폴백 — sessionStorage (현 탭만)
+    try {
+      const raw = sessionStorage.getItem(`chat:contentCtx:${sessionId}`);
+      if (raw) return JSON.parse(raw);
+    } catch { /* noop */ }
+    return null;
+  }, [location.state, sessionId]);
+  // 첫 진입 시 sessionStorage 에 저장 (새로고침·재진입 시 보존 — chatStore 와 dual-write)
+  useEffect(() => {
+    if (contentContext && sessionId) {
+      try { sessionStorage.setItem(`chat:contentCtx:${sessionId}`, JSON.stringify(contentContext)); }
+      catch { /* noop */ }
+    }
+  }, [contentContext, sessionId]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ── 대화방 로드
@@ -222,21 +415,53 @@ export function ChatSessionPage() {
         return;
       }
     }
-    // 빈 방 → 인사 (UX 라이팅 §15: AI 언급 없이 사주풀이 화자)
-    const greeting = hasProfile
-      ? `${userName}님 사주로 풀이해드릴게요. 편하게 물어보세요.`
-      : '편하게 물어보세요. 사주를 등록하면 더 정확한 맞춤 풀이가 가능해요.';
-    const defaultQuestions = hasProfile
-      ? [
-          '올해 나에게 가장 좋은 달은?',
-          '내 사주의 가장 강한 오행은?',
-          '요즘 고민이 있어요',
-        ]
-      : [
-          '내 연애 스타일이 궁금해요',
-          '올해 운세가 궁금해요',
-          '사주로 뭘 알 수 있나요?',
-        ];
+    // 주제별 운세 결과 → "이 주제로 상담 이어가기" 진입 시 주제 컨텍스트.
+    const fromTopicLabel = (location.state as any)?.topicLabel as string | undefined;
+    // 2026-05-28 — contentContext 기반 인사 + 기본 질문 (꿈/오늘운세/종합사주 등 통합)
+    const ctxType = contentContext?.type as string | undefined;
+    const ctxLabel = contentContext?.label as string | undefined;
+
+    // 빈 방 → 인사 (콘텐츠별 맞춤 인사 + 결과 요약 동적 포함)
+    let greeting: string;
+    let defaultQuestions: string[];
+    if (ctxType === 'dream') {
+      // 꿈 내용 + 고민 직접 인용 → "X 꿈을 꾸고 오셨군요. Y 라는 고민과 함께 풀어드릴게요"
+      const dt = contentContext?.dreamText ? String(contentContext.dreamText).trim() : '';
+      const cn = contentContext?.concern ? String(contentContext.concern).trim() : '';
+      const dtShort = dt.length > 30 ? `${dt.slice(0, 30)}…` : dt;
+      const dreamPhrase = dt ? `"${dtShort}" 꿈을 꾸고 오셨군요.` : '꿈해몽 풀이를 보고 오셨네요.';
+      const concernPhrase = cn ? ` ${cn.length > 25 ? cn.slice(0, 25) + '…' : cn}라는 고민과 함께 풀어드릴게요.` : ' 꿈과 사주를 종합해 풀어드릴게요.';
+      greeting = `${userName}님, ${dreamPhrase}${concernPhrase} 편하게 물어보세요.`;
+      defaultQuestions = ['이 꿈이 예고하는 시기는?', '꿈이 가리키는 사람은 누구인가요?', '꿈 속 상징을 더 자세히 풀어주세요'];
+    } else if (ctxType === 'daily') {
+      const title = contentContext?.fullResult?.title ? String(contentContext.fullResult.title).trim() : '';
+      const titlePhrase = title ? `"${title}" 풀이를 보고 오셨네요.` : '오늘의 운세 풀이를 보고 오셨네요.';
+      greeting = `${userName}님, ${titlePhrase} 오늘 하루를 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
+      defaultQuestions = ['오늘 가장 조심할 시간대는?', '오늘의 행운 색·방위는?', '내일 운세도 미리 알려주세요'];
+    } else if (ctxType === 'topic' && ctxLabel) {
+      const oneLine = contentContext?.fullResult?.oneLineSummary ? String(contentContext.fullResult.oneLineSummary).trim() : '';
+      const oneLineShort = oneLine.length > 50 ? `${oneLine.slice(0, 50)}…` : oneLine;
+      const summaryPhrase = oneLineShort ? ` "${oneLineShort}" 라는 풀이를 본 김에 ` : ' ';
+      greeting = `${userName}님,${summaryPhrase}${ctxLabel}에 대해 더 깊이 궁금한 점 편하게 물어보세요.`;
+      defaultQuestions = [`${ctxLabel}이 가장 좋아지는 시기는?`, `${ctxLabel}에서 제가 조심할 점은?`, `${ctxLabel} 결과를 더 자세히 풀어주세요`];
+    } else if (ctxType === 'premium') {
+      const title = contentContext?.fullResult?.title ? String(contentContext.fullResult.title).trim() : '';
+      greeting = title
+        ? `${userName}님, "${title}" 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`
+        : `${userName}님 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`;
+      defaultQuestions = ['내 사주의 가장 강한 오행은?', '올해 가장 큰 변곡점은 언제?', '직업·재물·연애 중 어느 운세가 가장 좋아요?'];
+    // 2026-05-28 — compat/daeun/monthly/tojung 4종 미출시 → ctxType 분기 제거 (도달 불가능 dead code)
+    } else if (fromTopicLabel) {
+      // legacy fallback (Topic 페이지가 contentContext 보다 topicLabel 만 전달했을 때)
+      greeting = `${userName}님의 ${fromTopicLabel} 풀이를 보고 오셨네요. ${fromTopicLabel}에 대해 더 깊이 궁금한 점을 편하게 물어보세요.`;
+      defaultQuestions = [`${fromTopicLabel}이 가장 좋아지는 시기는?`, `${fromTopicLabel}에서 제가 조심할 점은?`, `${fromTopicLabel} 결과를 더 자세히 풀어주세요`];
+    } else if (hasProfile) {
+      greeting = `${userName}님 사주로 풀이해드릴게요. 편하게 물어보세요.`;
+      defaultQuestions = ['올해 나에게 가장 좋은 달은?', '내 사주의 가장 강한 오행은?', '요즘 고민이 있어요'];
+    } else {
+      greeting = '편하게 물어보세요. 사주를 등록하면 더 정확한 맞춤 풀이가 가능해요.';
+      defaultQuestions = ['내 연애 스타일이 궁금해요', '올해 운세가 궁금해요', '사주로 뭘 알 수 있나요?'];
+    }
     const welcome: ChatMessage = {
       id: 'welcome',
       role: 'assistant',
@@ -298,11 +523,14 @@ export function ChatSessionPage() {
 
     const userMsgCount = messages.filter((m) => m.role === 'user').length;
 
-    // 무료 패스 → 결제 크레딧 → 부족
+    // 무료 패스 → 결제 크레딧 → 부족. 2026-05-29 — 소비 종류 추적(실패 시 복구용).
+    let consumed: 'freepass' | 'credit' | null = null;
     if (userMsgCount === 0 && hasFreePass('chat')) {
       useFreePass('chat');
+      consumed = 'freepass';
     } else if (getChatCredits() > 0) {
       useChatCredit();
+      consumed = 'credit';
     } else {
       // P2-4 보존: userMsgCount > 0 이면 이미 오늘 무료 사용 → 한도 소진 카피
       setConvertMode(userMsgCount > 0 ? 'quota_exceeded' : 'default');
@@ -333,7 +561,11 @@ export function ChatSessionPage() {
       const history = messages
         .filter((m) => m.id !== 'welcome')
         .map((m) => ({ role: m.role, content: m.content }));
-      const result = await generateChatAnswer(text.trim(), sajuData, history);
+      // 2026-05-28 — contentContext 가 있으면 첫 번째 history 로 prepend (AI 가 결과를 알고 답변)
+      const augmentedHistory = contentContext
+        ? [{ role: 'user' as const, content: buildContextPrompt(contentContext, userName) }, ...history]
+        : history;
+      const result = await generateChatAnswer(text.trim(), sajuData, augmentedHistory);
       const aiMsg: ChatMessage = {
         id: Date.now().toString(36) + '_ai',
         role: 'assistant',
@@ -346,11 +578,17 @@ export function ChatSessionPage() {
       if (userMsgCount + 1 >= 5) setShowWrapUp(true);
       setRefreshTick((t) => t + 1);
     } catch {
-      // 실패 시 대화권 환원 안내 (스펙 §13-4 — 재시도 공짜)
+      // 2026-05-29 — 실패 시 소비한 대화권/무료패스 실제 복구 (스펙 §13-4 "재시도 공짜" 구현).
+      //   기존: 안내 문구만 있고 복구 코드 없어 유료 대화권/무료 1회가 답변 없이 소진되던 버그.
+      if (consumed === 'credit') {
+        addChatCredits(1);
+      } else if (consumed === 'freepass') {
+        restoreFreePass('chat');
+      }
       const aiMsg: ChatMessage = {
         id: Date.now().toString(36) + '_ai',
         role: 'assistant',
-        content: '잠시 풀이가 막혔어요. 다시 한번 물어봐주세요.',
+        content: '잠시 풀이가 막혔어요. 다시 한번 물어봐주세요. (대화권은 차감되지 않았어요)',
         keywords: ['다시 질문할게'],
         timestamp: new Date().toISOString(),
       };
@@ -367,10 +605,13 @@ export function ChatSessionPage() {
       const history = messages
         .filter((m) => m.id !== 'welcome')
         .map((m) => ({ role: m.role, content: m.content }));
+      const augmentedHistory = contentContext
+        ? [{ role: 'user' as const, content: buildContextPrompt(contentContext, userName) }, ...history]
+        : history;
       const result = await generateChatAnswer(
         '[WRAP_UP] 지금까지의 대화를 마무리해주세요.',
         sajuData,
-        history,
+        augmentedHistory,
       );
       const wrapMsg: ChatMessage = {
         id: 'wrap_' + Date.now().toString(36),
@@ -500,6 +741,11 @@ export function ChatSessionPage() {
           gap: 10,
         }}
       >
+        {/* 2026-05-28 — 결과 페이지 컨텍스트 배너 (사용자가 무엇을 보고 왔는지 시각 확인) */}
+        {contentContext && messages.length <= 1 && (
+          <ResultContextBanner ctx={contentContext} />
+        )}
+
         <AnimatePresence initial={false}>
           {messages.map((msg, idx) => {
             // 목업 .ts 진본 — 가운데 정렬 시간 스탬프

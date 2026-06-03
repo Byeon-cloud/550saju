@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -7,7 +7,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { TojungMonthCard } from '@/components/saju/TojungMonthCard';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getProfiles, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, type LocalReport } from '@/services/storage/localStore';
 import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -49,13 +49,25 @@ export function TojungPage() {
   const toast = useToast();
 
   // 보관함에서 저장된 결과를 넘겨받은 경우
-  const navState = location.state as { savedResult?: TojungResponse; savedReport?: LocalReport } | undefined;
+  const rawNavState = location.state as { savedResult?: TojungResponse; savedReport?: LocalReport } | undefined;
+  // 2026-05-28 — URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
+  const [searchParams] = useSearchParams();
+  const reportIdFromUrl = searchParams.get('reportId');
+  const reportFromUrl = useMemo(() => {
+    if (!reportIdFromUrl) return null;
+    try { return getReport(reportIdFromUrl); } catch { return null; }
+  }, [reportIdFromUrl]);
+  const navState = rawNavState?.savedReport
+    ? rawNavState
+    : (reportFromUrl ? { savedResult: reportFromUrl.aiResult as TojungResponse, savedReport: reportFromUrl } : undefined);
 
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
   const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
   const [result, setResult] = useState<TojungResponse | null>(navState?.savedResult || null);
   const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
+  // 2026-05-07 fix — 동적 reportId
+  const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
 
   const reports = useMemo(() => getProfiles(), []);
@@ -89,14 +101,16 @@ export function TojungPage() {
     try {
       const res = await generateTojungBigyeol(selected.sajuData);
       setResult(res.content);
-      // aiResult에 결과 저장 → 같은 사람이면 다음에 캐시로 반환
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', aiResult: res.content, createdAt: new Date().toISOString() });
+      const rid = res.reportId || generateId();
+      saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', aiResult: res.content, createdAt: new Date().toISOString() });
+      setShareReportId(rid);
       setPhase('result');
     } catch (e: any) {
       console.error('토정비결 실패:', e);
-      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
+      // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
+      refundBalance(1);
       setPhase('select');
-      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
+      toast.show('분석에 실패해서 1운을 돌려드렸어요', 'warning');
     } finally {
       clearInterval(interval);
       isAnalyzingRef.current = false;
@@ -347,7 +361,7 @@ export function TojungPage() {
         <FooterCTA pageKey="tojung" backTo="/" />
       </div>
 
-      <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId="tojung" />
+      <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'tojung'} />
     </div>
   );
 }

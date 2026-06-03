@@ -1,6 +1,6 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/services/auth/firebase';
+import { httpsCallable } from 'firebase/functions';
 import { ensureAuth } from '@/services/auth/authService';
+import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import type { SajuData, Situation } from '@/types/saju';
 import type {
   AIReportResponse,
@@ -10,15 +10,17 @@ import type {
   TojungResponse,
 } from '@/types/report';
 
-const functions = getFunctions(app, 'us-central1');
+// Functions 엔드포인트(emulator vs prod) 는 functionsClient.ts 에서 ping 후 결정.
+// emulator 죽어 있으면 자동으로 prod fallback (2026-04-22 hardening).
 
 /** httpsCallable with extended timeout for AI calls */
 function aiCallable(name: string) {
   return httpsCallable(functions, name, { timeout: 300000 }); // 5분
 }
 
-/** 모든 Cloud Function 호출 전 인증 보장 */
+/** 모든 Cloud Function 호출 전 인증 + emulator/prod 타겟 보장 */
 async function callWithAuth(name: string, data: any): Promise<any> {
+  await ensureFunctionsTarget(); // emulator ping → prod fallback
   await ensureAuth(); // 인증 완료까지 대기
   const fn = aiCallable(name);
   const result = await fn(data);
@@ -26,7 +28,10 @@ async function callWithAuth(name: string, data: any): Promise<any> {
 }
 
 /**
- * AI 사주 리포트 생성 — Firebase Function → Claude Sonnet 4.6
+ * AI 사주 리포트 생성 — Firebase Function → Claude Opus 4.6 (기본)
+ *
+ * 모델 정책: Opus 4.6 메인 / Sonnet 4.6 검증 / Haiku 4.5 보조.
+ * 서버측 SAJU_REPORT_MODEL 환경변수로 A/B 테스트 가능.
  */
 export async function generateReport(
   sajuData: SajuData,
@@ -38,17 +43,720 @@ export async function generateReport(
 }
 
 /**
- * 오늘의 운세 — Firebase Function → Gemini 2.5 Flash
+ * T1 · 프리미엄 리포트 — SSE 스트리밍 (그룹 단위 점진 도착)
+ *  · 서버 generatePremiumReportStream 호출 → 3 그룹 (A/B/C) 병렬 + 도착 즉시 송출
+ *  · onGroup 콜백: 각 그룹 완료 시 partial 결과 (A/B/C 순서 무관)
+ *  · onDone 콜백: 모든 그룹 merged + Firestore reportId
+ *  · onError 콜백: 그룹 실패 또는 잔액 차감 실패 시
+ *  · Opus 4.6 단일 모델 (퀄리티 보장)
+ */
+export interface PremiumStreamCallbacks {
+  onStart?: () => void;
+  onGroup?: (group: 'A' | 'B' | 'C', data: any, elapsedMs: number) => void;
+  onDone: (result: { reportId: string; content: AIReportResponse }) => void;
+  onError: (message: string) => void;
+}
+
+export async function generatePremiumReportStream(
+  sajuData: SajuData,
+  situation: Situation | undefined,
+  callbacks: PremiumStreamCallbacks,
+): Promise<void> {
+  await ensureFunctionsTarget();
+  await ensureAuth();
+
+  // Firebase ID Token 가져오기
+  const { getAuth } = await import('firebase/auth');
+  const auth = getAuth();
+  const idToken = await auth.currentUser?.getIdToken();
+  if (!idToken) {
+    callbacks.onError('인증 토큰을 가져올 수 없습니다');
+    return;
+  }
+
+  // Functions endpoint URL — region 'us-central1' 기준
+  const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
+  if (!projectId) {
+    callbacks.onError('Firebase 프로젝트 설정 오류');
+    return;
+  }
+  const useEmulator =
+    import.meta.env.DEV &&
+    import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
+  const url = useEmulator
+    ? `http://localhost:5001/${projectId}/us-central1/generatePremiumReportStream`
+    : `https://us-central1-${projectId}.cloudfunctions.net/generatePremiumReportStream`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ sajuData, situation }),
+    });
+
+    if (!res.ok || !res.body) {
+      callbacks.onError(`서버 오류 ${res.status}`);
+      return;
+    }
+
+    // SSE 파서 — line-buffered
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE event: 한 이벤트 = `event: X\ndata: Y\n\n`
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || ''; // 마지막은 incomplete 일 수 있음
+
+      for (const ev of events) {
+        if (!ev.trim()) continue;
+        const lines = ev.split('\n');
+        let eventName = 'message';
+        let dataLine = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          else if (line.startsWith('data: ')) dataLine = line.slice(6);
+        }
+        if (!dataLine) continue;
+        let payload: any = null;
+        try { payload = JSON.parse(dataLine); } catch { continue; }
+
+        if (eventName === 'start') {
+          callbacks.onStart?.();
+        } else if (eventName === 'group') {
+          callbacks.onGroup?.(payload.group, payload.data, payload.elapsedMs);
+        } else if (eventName === 'done') {
+          callbacks.onDone({
+            reportId: payload.reportId,
+            content: payload.content as AIReportResponse,
+          });
+          return;
+        } else if (eventName === 'error' || eventName === 'groupError') {
+          callbacks.onError(payload.message || '알 수 없는 오류');
+          return;
+        }
+      }
+    }
+  } catch (e: any) {
+    callbacks.onError(e?.message || '네트워크 오류');
+  }
+}
+
+/**
+ * Phase 1 (2026-05-27) · 1운 리포트 SSE 스트리밍 — generatePremiumReportStream 패턴 미러링.
+ *   서버: generateReportStream (onRequest SSE · 3 그룹 병렬 · 1운 차감)
+ *   onGroup: 그룹 A/B/C 도착 (각각 ~25-30s)
+ *   onDone: 머지된 최종 content + reportId
+ *   결과 페이지가 첫 그룹 도착 시 즉시 진입 → 점진 렌더 (오늘의 운세 패턴).
+ */
+export interface ReportStreamCallbacks {
+  onStart?: () => void;
+  onGroup?: (group: 'A' | 'B' | 'C', data: any, elapsedMs: number) => void;
+  onDone: (result: { reportId: string; content: AIReportResponse }) => void;
+  onError: (message: string) => void;
+}
+
+export async function generateReportStream(
+  sajuData: SajuData,
+  situation: Situation | undefined,
+  callbacks: ReportStreamCallbacks,
+): Promise<void> {
+  await ensureFunctionsTarget();
+  await ensureAuth();
+
+  const { getAuth } = await import('firebase/auth');
+  const idToken = await getAuth().currentUser?.getIdToken();
+  if (!idToken) {
+    callbacks.onError('인증 토큰을 가져올 수 없습니다');
+    return;
+  }
+
+  const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
+  if (!projectId) { callbacks.onError('Firebase 프로젝트 설정 오류'); return; }
+  const useEmulator =
+    import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
+  const url = useEmulator
+    ? `http://localhost:5001/${projectId}/us-central1/generateReportStream`
+    : `https://us-central1-${projectId}.cloudfunctions.net/generateReportStream`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ sajuData, situation }),
+    });
+    if (!res.ok || !res.body) { callbacks.onError(`서버 오류 ${res.status}`); return; }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+      for (const ev of events) {
+        if (!ev.trim()) continue;
+        let eventName = 'message';
+        let dataLine = '';
+        for (const line of ev.split('\n')) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          else if (line.startsWith('data: ')) dataLine = line.slice(6);
+        }
+        if (!dataLine) continue;
+        let payload: any = null;
+        try { payload = JSON.parse(dataLine); } catch { continue; }
+
+        if (eventName === 'start') callbacks.onStart?.();
+        else if (eventName === 'group') callbacks.onGroup?.(payload.group, payload.data, payload.elapsedMs);
+        else if (eventName === 'done') {
+          callbacks.onDone({ reportId: payload.reportId, content: payload.content as AIReportResponse });
+          return;
+        } else if (eventName === 'error' || eventName === 'groupError') {
+          callbacks.onError(payload.message || '알 수 없는 오류');
+          return;
+        }
+      }
+    }
+  } catch (e: any) {
+    callbacks.onError(e?.message || '네트워크 오류');
+  }
+}
+
+/**
+ * 오늘의 운세 — Firebase Function → Claude Sonnet 4.6 (v3 스키마).
+ *
+ * Phase C 에서 DailyFortunePage 가 v4 입력(name, sajuData, date, todayGanzi 등)으로 전환.
+ * 당분간 레거시 위치 인자(answers[], timeSlot, sajuSummary, userConcern) 호출도 컴파일만 통과시킴.
+ * 서버는 v3 필수 필드가 없으면 invalid-argument 를 던지므로 런타임은 Phase C 후 정상.
  */
 export async function generateDailyFortune(
-  answers: number[],
-  timeSlot: string,
-  sajuSummary?: { ilgan: string; oheng: string; name: string },
-  userConcern?: string,
+  paramsOrAnswers?: any,
+  _timeSlot?: string,
+  _sajuSummary?: any,
+  _userConcern?: string,
 ): Promise<any> {
-  const result = await callWithAuth('generateDailyFortune', { answers, timeSlot, sajuSummary, userConcern });
+  // 레거시 positional 호출 (Array 로 들어옴) — 객체로 재포장 (서버에서 v3 필수 필드 없으면 400)
+  const payload = Array.isArray(paramsOrAnswers)
+    ? { answers: paramsOrAnswers, timeSlot: _timeSlot, sajuSummary: _sajuSummary, userConcern: _userConcern }
+    : paramsOrAnswers;
+  const result = await callWithAuth('generateDailyFortune', payload);
   return result.data;
 }
+
+/**
+ * 오늘의 운세 SSE Streaming v6.1 (2026-05-06) — Parallel 3-way (A1·A2·B) + Shared Cache
+ *   서버: generateDailyFortuneStream (onRequest SSE · 3-way 병렬)
+ *   사용처: DailyFortunePage analyze() — Group A1 도착 시 즉시 결과 페이지 전이 (~6s)
+ *
+ *   이벤트 흐름:
+ *     start → chunk(group:'A1'|'A2'|'B') × N → group(A1) ~6s → group(A2/B) ~25s → done
+ *     (3 그룹 순서 무관, A1 이 가장 작아서 첫 도달)
+ */
+export type DailyFortuneGroupId = 'A1' | 'A2' | 'B' | 'A'; // 'A' 는 v6 legacy
+
+export interface DailyFortuneStreamCallbacks {
+  onStart?: () => void;
+  onProgress?: (info: { chunks: number; chars: number; elapsedMs: number }) => void;
+  /**
+   * Partial JSON 도착 시 — Group A1/A2/B 의 누적 partial 을 머지한 결과.
+   * 첫 valid object (title 등) 도달 시 클라이언트가 즉시 결과 페이지 전이.
+   */
+  onPartial?: (info: { partial: any; totalChars: number; group?: DailyFortuneGroupId }) => void;
+  /**
+   * Group 완료 시 — early phase transition 트리거.
+   * Group A1 도착 시점 (~6s) 이 첫 paint 핵심.
+   */
+  onGroup?: (info: { group: DailyFortuneGroupId; data: any; elapsedMs: number }) => void;
+  onDone: (info: { result: any | null; cached?: boolean; elapsedMs?: number }) => void;
+  onError: (message: string) => void;
+}
+
+export async function generateDailyFortuneStream(
+  args: {
+    name: string;
+    sajuData: any;
+    date: string;
+    weekday: string;
+    todayGanzi: string;
+    jeolgi?: string;
+    dayJiShen?: string[];
+    dayXiongSha?: string[];
+    baseScores100?: { wealth: number; love: number; career: number; health: number };
+    tomorrowGanzi?: string;
+    tomorrowDate?: string;
+  },
+  callbacks: DailyFortuneStreamCallbacks,
+): Promise<void> {
+  await ensureFunctionsTarget();
+  await ensureAuth();
+
+  const { getAuth } = await import('firebase/auth');
+  const auth = getAuth();
+  const idToken = await auth.currentUser?.getIdToken();
+  // anonymous 도 허용 — idToken 없어도 호출 가능 (서버에서 anonymous 처리)
+
+  const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
+  if (!projectId) {
+    callbacks.onError('Firebase 프로젝트 설정 오류');
+    return;
+  }
+  const useEmulator =
+    import.meta.env.DEV &&
+    import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
+  const url = useEmulator
+    ? `http://localhost:5001/${projectId}/us-central1/generateDailyFortuneStream`
+    : `https://us-central1-${projectId}.cloudfunctions.net/generateDailyFortuneStream`;
+
+  console.log('[generateDailyFortuneStream] starting', { url, hasToken: !!idToken });
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+    const t0 = Date.now();
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(args),
+    });
+    console.log('[generateDailyFortuneStream] response', {
+      status: res.status,
+      hasBody: !!res.body,
+      elapsedMs: Date.now() - t0,
+    });
+
+    if (!res.ok || !res.body) {
+      callbacks.onError(`서버 오류 ${res.status}`);
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    // Progressive Render v6.1 — Group A1/A2/B 별도 누적
+    type GKey = 'A1' | 'A2' | 'B';
+    const accumulated: Record<GKey, string> = { A1: '', A2: '', B: '' };
+    const groupResults: Record<GKey, any> = { A1: null, A2: null, B: null };
+    let lastPartialSig = '';
+    // partial-json lazy import (실패해도 streaming 자체는 작동)
+    let partialParse: any = null;
+    let AllowAll: any = null;
+    try {
+      const mod: any = await import('partial-json');
+      partialParse = mod.parse;
+      AllowAll = mod.Allow?.ALL ?? mod.ALLOW_ALL ?? undefined;
+    } catch (e) {
+      console.warn('[generateDailyFortuneStream] partial-json 로드 실패 — progressive render 비활성:', e);
+    }
+
+    /** 한 그룹의 partial 파싱 (group 완료 시는 그대로 반환)
+     *  2026-05-27 — Dream/Topic 과 통일: '{' prefix 부터 substring 파싱 (AI 가 prelude 붙여도 안전) */
+    const parseGroupPartial = (key: GKey): any => {
+      if (groupResults[key]) return groupResults[key];
+      const acc = accumulated[key];
+      if (acc.length < 40 || !partialParse) return null;
+      const startIdx = acc.indexOf('{');
+      if (startIdx === -1) return null;
+      const jsonStr = startIdx === 0 ? acc : acc.slice(startIdx);
+      if (jsonStr.length < 20) return null;
+      try {
+        return AllowAll !== undefined ? partialParse(jsonStr, AllowAll) : partialParse(jsonStr);
+      } catch { return null; }
+    };
+
+    /** Group A1·A2·B partial 머지 + onPartial 호출 (signature 변경 시만) */
+    const tryEmitPartial = (currentGroup: DailyFortuneGroupId) => {
+      if (!callbacks.onPartial) return;
+      const merged: any = {};
+      const a1 = parseGroupPartial('A1');
+      const a2 = parseGroupPartial('A2');
+      const b = parseGroupPartial('B');
+      if (a1 && typeof a1 === 'object') Object.assign(merged, a1);
+      if (a2 && typeof a2 === 'object') Object.assign(merged, a2);
+      if (b && typeof b === 'object') Object.assign(merged, b);
+      const sig = Object.keys(merged).sort().join(',');
+      const totalChars = accumulated.A1.length + accumulated.A2.length + accumulated.B.length;
+      if (sig && (sig !== lastPartialSig || totalChars % 500 === 0)) {
+        lastPartialSig = sig;
+        try {
+          callbacks.onPartial({ partial: merged, totalChars, group: currentGroup });
+        } catch (err) {
+          console.warn('[generateDailyFortuneStream] onPartial threw:', err);
+        }
+      }
+    };
+
+    /** 서버 group 식별자 → 클라이언트 키 정규화 (v6 legacy 'A' 도 호환) */
+    const normalizeGroup = (g: any): GKey => {
+      if (g === 'A1') return 'A1';
+      if (g === 'A2') return 'A2';
+      if (g === 'B') return 'B';
+      return 'A1'; // legacy 'A' fallback → A1 으로 매핑
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+
+      for (const ev of events) {
+        if (!ev.trim()) continue;
+        const lines = ev.split('\n');
+        let eventName = 'message';
+        let dataLine = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          else if (line.startsWith('data: ')) dataLine = line.slice(6);
+        }
+        if (!dataLine) continue;
+        let payload: any = null;
+        try { payload = JSON.parse(dataLine); } catch { continue; }
+
+        if (eventName === 'start') {
+          callbacks.onStart?.();
+        } else if (eventName === 'chunk') {
+          const g = normalizeGroup(payload.group);
+          accumulated[g] += String(payload.delta || '');
+          tryEmitPartial(g);
+        } else if (eventName === 'group') {
+          const g = normalizeGroup(payload.group);
+          groupResults[g] = payload.data;
+          callbacks.onGroup?.({ group: g, data: payload.data, elapsedMs: payload.elapsedMs });
+          tryEmitPartial(g);
+        } else if (eventName === 'progress') {
+          callbacks.onProgress?.(payload);
+        } else if (eventName === 'done') {
+          callbacks.onDone({ result: payload.result, cached: payload.cached, elapsedMs: payload.elapsedMs });
+        } else if (eventName === 'error') {
+          callbacks.onError(payload.message || '알 수 없는 오류');
+        }
+      }
+    }
+  } catch (e: any) {
+    console.error('[generateDailyFortuneStream] fetch failed:', e?.message, e);
+    callbacks.onError(e?.message || '네트워크 오류');
+  }
+}
+
+/**
+ * 주제분석 SSE 스트리밍 — 오늘의 운세 패턴 (단일 호출 스트림 + partial-json 점진 렌더).
+ *   서버: generateTopicAnalysisStream (onRequest SSE). 프롬프트·모델 callable 과 동일.
+ *   onPartial: 누적 텍스트 partial-json 파싱 결과 (첫 minimal key 도달 시 클라 phase 전이)
+ *   onDone: 최종 parsed content + reportId  /  onError: 실패 (호출부에서 callable 폴백)
+ */
+export interface TopicStreamCallbacks {
+  onStart?: () => void;
+  onPartial?: (info: { partial: any; totalChars: number }) => void;
+  onDone: (info: { reportId: string; content: any }) => void;
+  onError: (message: string) => void;
+}
+
+export async function generateTopicAnalysisStream(
+  args: { topicId: string; sajuData: any; baseScore?: number; partnerInfo?: any; extraInfo?: any },
+  callbacks: TopicStreamCallbacks,
+): Promise<void> {
+  await ensureFunctionsTarget();
+  await ensureAuth();
+
+  const { getAuth } = await import('firebase/auth');
+  const idToken = await getAuth().currentUser?.getIdToken();
+
+  const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
+  if (!projectId) { callbacks.onError('Firebase 프로젝트 설정 오류'); return; }
+  const useEmulator =
+    import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
+  const url = useEmulator
+    ? `http://localhost:5001/${projectId}/us-central1/generateTopicAnalysisStream`
+    : `https://us-central1-${projectId}.cloudfunctions.net/generateTopicAnalysisStream`;
+
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(args) });
+    if (!res.ok || !res.body) { callbacks.onError(`서버 오류 ${res.status}`); return; }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let accumulated = '';
+    let lastSig = '';
+
+    // partial-json lazy import (실패해도 스트리밍 자체는 작동 — done 에서 최종 파싱)
+    let partialParse: any = null;
+    let AllowAll: any = null;
+    try {
+      const mod: any = await import('partial-json');
+      partialParse = mod.parse;
+      AllowAll = mod.Allow?.ALL ?? mod.ALLOW_ALL ?? undefined;
+    } catch (e) {
+      console.warn('[generateTopicAnalysisStream] partial-json 로드 실패 — progressive render 비활성:', e);
+    }
+
+    // 2026-05-27 — Dream 과 통일: threshold 80→40, prefix '{' 부터 substring 파싱, throttle delta 기반
+    let lastEmitLen = 0;
+    const tryEmitPartial = () => {
+      if (!callbacks.onPartial || !partialParse || accumulated.length < 40) return;
+      const startIdx = accumulated.indexOf('{');
+      if (startIdx === -1) return;
+      const jsonStr = startIdx === 0 ? accumulated : accumulated.slice(startIdx);
+      if (jsonStr.length < 20) return;
+      let obj: any = null;
+      try { obj = AllowAll !== undefined ? partialParse(jsonStr, AllowAll) : partialParse(jsonStr); }
+      catch { return; }
+      if (!obj || typeof obj !== 'object') return;
+      const sig = Object.keys(obj).sort().join(',');
+      if (sig && (sig !== lastSig || accumulated.length - lastEmitLen >= 400)) {
+        lastSig = sig;
+        lastEmitLen = accumulated.length;
+        try { callbacks.onPartial({ partial: obj, totalChars: accumulated.length }); }
+        catch (err) { console.warn('[topicStream] onPartial threw:', err); }
+      }
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+      for (const ev of events) {
+        if (!ev.trim()) continue;
+        let eventName = 'message';
+        let dataLine = '';
+        for (const line of ev.split('\n')) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          else if (line.startsWith('data: ')) dataLine = line.slice(6);
+        }
+        if (!dataLine) continue;
+        let payload: any = null;
+        try { payload = JSON.parse(dataLine); } catch { continue; }
+
+        if (eventName === 'start') {
+          callbacks.onStart?.();
+        } else if (eventName === 'chunk') {
+          accumulated += String(payload.delta || '');
+          tryEmitPartial();
+        } else if (eventName === 'done') {
+          callbacks.onDone({ reportId: payload.reportId, content: payload.content });
+          return;
+        } else if (eventName === 'error') {
+          callbacks.onError(payload.message || '알 수 없는 오류');
+          return;
+        }
+      }
+    }
+  } catch (e: any) {
+    console.error('[generateTopicAnalysisStream] fetch failed:', e?.message);
+    callbacks.onError(e?.message || '네트워크 오류');
+  }
+}
+
+/**
+ * 꿈해몽 무료 SSE 스트리밍 — 오늘의 운세 패턴 (단일 호출 스트림 + partial-json 점진).
+ *   서버: generateDreamFreeStream (onRequest SSE). 프롬프트·모델 callable 과 동일.
+ *   onPartial: 누적 partial-json  /  onDone: 최종 content  /  onError: 폴백 트리거
+ */
+export interface DreamFreeStreamCallbacks {
+  onStart?: () => void;
+  /** partial-json 누적 머지 결과 (Group A·B 합쳐진 상태) */
+  onPartial?: (info: { partial: any; totalChars: number; group?: 'A' | 'B' }) => void;
+  /** 그룹 완료 (parsed JSON · 2-그룹 병렬 모드) */
+  onGroup?: (info: { group: 'A' | 'B'; data: any; elapsedMs: number }) => void;
+  onDone: (info: { content: any }) => void;
+  onError: (message: string, code?: string) => void;
+}
+
+export async function generateDreamFreeStream(
+  args: { saju?: any; dreamContent: string; category: string; userConcern?: string },
+  callbacks: DreamFreeStreamCallbacks,
+): Promise<void> {
+  await ensureFunctionsTarget();
+  await ensureAuth();
+
+  const { getAuth } = await import('firebase/auth');
+  const idToken = await getAuth().currentUser?.getIdToken();
+
+  const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
+  if (!projectId) { callbacks.onError('Firebase 프로젝트 설정 오류'); return; }
+  const useEmulator =
+    import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
+  const url = useEmulator
+    ? `http://localhost:5001/${projectId}/us-central1/generateDreamFreeStream`
+    : `https://us-central1-${projectId}.cloudfunctions.net/generateDreamFreeStream`;
+
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(args) });
+    if (!res.ok || !res.body) { callbacks.onError(`서버 오류 ${res.status}`); return; }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    // 2026-05-27 v8 — 2-그룹 병렬 지원: A/B 별도 누적, A/B group 완료 시 머지.
+    const accGroup: Record<'A' | 'B', string> = { A: '', B: '' };
+    const groupResults: Record<'A' | 'B', any> = { A: null, B: null };
+    let accumulated = ''; // legacy single-call fallback (사주 없을 때)
+    let lastSig = '';
+    let partialParse: any = null;
+    let AllowAll: any = null;
+    try {
+      const mod: any = await import('partial-json');
+      partialParse = mod.parse;
+      AllowAll = mod.Allow?.ALL ?? mod.ALLOW_ALL ?? undefined;
+    } catch (e) {
+      console.warn('[generateDreamFreeStream] partial-json 로드 실패 — progressive render 비활성:', e);
+    }
+
+    /** 한 그룹 partial 파싱 — 2026-05-27 v10: 임계값 40→15, 매우 공격적 점진 파싱 */
+    const parseGroupPartial = (g: 'A' | 'B'): any => {
+      if (groupResults[g]) return groupResults[g];
+      const acc = accGroup[g];
+      if (acc.length < 15 || !partialParse) return null;
+      const startIdx = acc.indexOf('{');
+      if (startIdx === -1) return null;
+      const jsonStr = startIdx === 0 ? acc : acc.slice(startIdx);
+      if (jsonStr.length < 10) return null;
+      try { return AllowAll !== undefined ? partialParse(jsonStr, AllowAll) : partialParse(jsonStr); }
+      catch { return null; }
+    };
+
+    let lastEmitLen = 0;
+    /** 2-그룹 머지 partial → onPartial emit (throttle 400→200) */
+    const tryEmitGroupPartial = (currentGroup: 'A' | 'B') => {
+      if (!callbacks.onPartial) return;
+      const a = parseGroupPartial('A');
+      const b = parseGroupPartial('B');
+      if (!a && !b) return;
+      const merged: any = { ...(a || {}), ...(b || {}) };
+      const sig = Object.keys(merged).sort().join(',');
+      const totalChars = accGroup.A.length + accGroup.B.length;
+      if (sig && (sig !== lastSig || totalChars - lastEmitLen >= 200)) {
+        lastSig = sig;
+        lastEmitLen = totalChars;
+        try { callbacks.onPartial({ partial: merged, totalChars, group: currentGroup }); }
+        catch (err) { console.warn('[dreamFreeStream] onPartial threw:', err); }
+      }
+    };
+
+    /** Single-call fallback partial (사주 없을 때) */
+    const tryEmitSinglePartial = () => {
+      if (!callbacks.onPartial || !partialParse || accumulated.length < 40) return;
+      const startIdx = accumulated.indexOf('{');
+      if (startIdx === -1) return;
+      const jsonStr = startIdx === 0 ? accumulated : accumulated.slice(startIdx);
+      if (jsonStr.length < 20) return;
+      let obj: any = null;
+      try { obj = AllowAll !== undefined ? partialParse(jsonStr, AllowAll) : partialParse(jsonStr); }
+      catch { return; }
+      if (!obj || typeof obj !== 'object') return;
+      const sig = Object.keys(obj).sort().join(',');
+      if (sig && (sig !== lastSig || accumulated.length - lastEmitLen >= 400)) {
+        lastSig = sig;
+        lastEmitLen = accumulated.length;
+        try { callbacks.onPartial({ partial: obj, totalChars: accumulated.length }); }
+        catch (err) { console.warn('[dreamFreeStream] onPartial threw:', err); }
+      }
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+      for (const ev of events) {
+        if (!ev.trim()) continue;
+        let eventName = 'message';
+        let dataLine = '';
+        for (const line of ev.split('\n')) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          else if (line.startsWith('data: ')) dataLine = line.slice(6);
+        }
+        if (!dataLine) continue;
+        let payload: any = null;
+        try { payload = JSON.parse(dataLine); } catch { continue; }
+
+        if (eventName === 'start') {
+          callbacks.onStart?.();
+        } else if (eventName === 'chunk') {
+          // 2-그룹 모드면 group 필드 존재. 단일 모드면 없음.
+          const g = payload.group as ('A' | 'B' | undefined);
+          if (g === 'A' || g === 'B') {
+            accGroup[g] += String(payload.delta || '');
+            tryEmitGroupPartial(g);
+          } else {
+            accumulated += String(payload.delta || '');
+            tryEmitSinglePartial();
+          }
+        } else if (eventName === 'group') {
+          // 한 그룹 완전 완료 (parsed JSON) — 머지 갱신
+          const g = payload.group as 'A' | 'B';
+          if (g === 'A' || g === 'B') {
+            groupResults[g] = payload.data;
+            callbacks.onGroup?.({ group: g, data: payload.data, elapsedMs: payload.elapsedMs });
+            // 머지 즉시 갱신
+            const merged: any = { ...(groupResults.A || {}), ...(groupResults.B || {}) };
+            try { callbacks.onPartial?.({ partial: merged, totalChars: accGroup.A.length + accGroup.B.length, group: g }); }
+            catch { /* noop */ }
+          }
+        } else if (eventName === 'done') {
+          callbacks.onDone({ content: payload.content });
+          return;
+        } else if (eventName === 'error') {
+          callbacks.onError(payload.message || '알 수 없는 오류', payload.code);
+          return;
+        }
+      }
+    }
+  } catch (e: any) {
+    console.error('[generateDreamFreeStream] fetch failed:', e?.message);
+    callbacks.onError(e?.message || '네트워크 오류');
+  }
+}
+
+/**
+ * 꿈해몽 무료 (v3 신규) — Firebase Function → Claude Sonnet 4.6.
+ */
+export async function generateDreamFree(args: {
+  saju?: any;
+  dreamContent: string;
+  category: string;
+  userConcern?: string;
+}): Promise<any> {
+  const result = await callWithAuth('generateDreamFree', args);
+  return result.data;
+}
+
+/**
+ * 꿈해몽 심층 (v3 신규, 유료 1운) — Firebase Function → Claude Sonnet 4.6 + 2차 리뷰.
+ */
+export async function generateDreamDeepV3(args: {
+  saju: any;
+  dreamContent: string;
+  category: string;
+  freeResultSummary: { title: string; verdict: string; symbols: string[] };
+}): Promise<{ reportId: string; content: any }> {
+  const result = await callWithAuth('generateDreamDeep', args);
+  return result.data as { reportId: string; content: any };
+}
+
+// Stage 7e-7: generateWeeklyFortune 폐지 (사용자 결정 — 주간운세 서비스 미제공)
+// 서버측 claudeWeekly.ts 는 유지 (legacy 호환), 클라이언트 export 제거.
 
 /**
  * AI 대화 — Firebase Function → Gemini 2.5 Pro
@@ -139,9 +847,10 @@ export async function generateTopicAnalysis(
   topicId: string,
   sajuData: SajuData,
   baseScore?: number,
-  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number },
+  partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number; birthHour?: number },
+  extraInfo?: Record<string, any>,
 ): Promise<{ reportId: string; content: any }> {
-  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData, baseScore, partnerInfo });
+  const result = await callWithAuth('generateTopicAnalysis', { topicId, sajuData, baseScore, partnerInfo, extraInfo });
   return result.data as { reportId: string; content: any };
 }
 

@@ -20,6 +20,8 @@
 //   - mount는 Bundle 2
 
 import type { ReactNode } from 'react';
+// 2026-05-29 H1 fix — 업셀 "10운" 하드코딩 → SSOT 세일가.
+import { getPremiumPrice } from '@/constants/pricing';
 
 /* ══════════════════════════════════════════════════════════════════
  * 공용 토큰
@@ -358,7 +360,7 @@ export function ExtensionUpsellCard({
   title,
   desc,
   ctaLabel = '사주 전체로',
-  costLabel = '10운', // 2026-04-27 4 패키지 정정: 10운 → 15운 (p15 = 10본+5보너스 / 5,000원)
+  costLabel,
   onTap,
 }: {
   title: string;
@@ -367,6 +369,13 @@ export function ExtensionUpsellCard({
   costLabel?: string;
   onTap?: () => void;
 }) {
+  // 2026-05-29 H1 — costLabel 미지정 시 SSOT 종합사주 세일가 ("10운 → 5운").
+  if (!costLabel) {
+    const pp = getPremiumPrice();
+    costLabel = pp.isOnSale && pp.salePrice != null
+      ? `${pp.regularPrice}운 → ${pp.salePrice}운`
+      : `${pp.regularPrice}운`;
+  }
   return (
     <button
       type="button"

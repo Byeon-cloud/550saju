@@ -40,6 +40,14 @@ export interface ChatRoom {
   messages: ChatMessage[];
   completed?: boolean;
   completedAt?: string;
+  /** 2026-05-28 PM — 결과 페이지 컨텍스트 영구 저장 (sessionStorage 휘발성 보강).
+   *  type/label/fullResult 포함 — AI 가 며칠 후 재진입에도 점수·섹션 등 결과 데이터 참조 가능. */
+  contentContext?: {
+    type: string;
+    label?: string;
+    fullResult?: any;
+    [k: string]: any;
+  };
 }
 
 function getRooms(): ChatRoom[] {
@@ -69,8 +77,12 @@ export function getChatRoom(id: string): ChatRoom | null {
   return getRooms().find(r => r.id === id) || null;
 }
 
-/** 새 채팅방 생성 */
-export function createChatRoom(name: string, category?: ChatCategory): ChatRoom {
+/** 새 채팅방 생성. 2026-05-28 PM — contentContext 영구 저장 옵션 추가 */
+export function createChatRoom(
+  name: string,
+  category?: ChatCategory,
+  contentContext?: ChatRoom['contentContext'],
+): ChatRoom {
   const room: ChatRoom = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     name,
@@ -78,6 +90,7 @@ export function createChatRoom(name: string, category?: ChatCategory): ChatRoom 
     lastMessage: '',
     updatedAt: new Date().toISOString(),
     messages: [],
+    ...(contentContext ? { contentContext } : {}),
   };
   const rooms = getRooms();
   rooms.unshift(room);

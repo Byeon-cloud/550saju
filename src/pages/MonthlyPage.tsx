@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -8,7 +8,7 @@ import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
 
 import { ShareModal } from '@/components/share/ShareModal';
-import { getProfiles, spendBalance, saveReport, generateId, getCachedResult, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, type LocalReport } from '@/services/storage/localStore';
 import { generateMonthlyFortune2026 } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -53,7 +53,17 @@ export function MonthlyPage() {
   const toast = useToast();
 
   // 보관함에서 저장된 결과를 넘겨받은 경우
-  const navState = location.state as { savedResult?: MonthlyDetailResponse; savedReport?: LocalReport } | undefined;
+  const rawNavState = location.state as { savedResult?: MonthlyDetailResponse; savedReport?: LocalReport } | undefined;
+  // 2026-05-28 — URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
+  const [searchParams] = useSearchParams();
+  const reportIdFromUrl = searchParams.get('reportId');
+  const reportFromUrl = useMemo(() => {
+    if (!reportIdFromUrl) return null;
+    try { return getReport(reportIdFromUrl); } catch { return null; }
+  }, [reportIdFromUrl]);
+  const navState = rawNavState?.savedReport
+    ? rawNavState
+    : (reportFromUrl ? { savedResult: reportFromUrl.aiResult as MonthlyDetailResponse, savedReport: reportFromUrl } : undefined);
 
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
   const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
@@ -61,6 +71,8 @@ export function MonthlyPage() {
   const [, setLoadingStep] = useState(0);
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showShare, setShowShare] = useState(false);
+  // 2026-05-07 fix — 동적 reportId
+  const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
 
   const reports = useMemo(() => getProfiles(), []);
@@ -94,13 +106,16 @@ export function MonthlyPage() {
     try {
       const res = await generateMonthlyFortune2026(selected.sajuData);
       setResult(res.content);
-      saveReport({ id: res.reportId || generateId(), name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
+      const rid = res.reportId || generateId();
+      saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
+      setShareReportId(rid);
       setPhase('result');
     } catch (e: any) {
       console.error('월별 운세 실패:', e);
-      // 환불은 서버(Cloud Function) 트랜잭션 롤백에 위임 — 클라이언트 직접 환불 금지 (보안)
+      // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
+      refundBalance(1);
       setPhase('select');
-      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
+      toast.show('분석에 실패해서 1운을 돌려드렸어요', 'warning');
     } finally {
       clearInterval(interval);
       isAnalyzingRef.current = false;
@@ -278,7 +293,8 @@ export function MonthlyPage() {
 
         {/* 연간 개요 */}
         <FadeIn>
-          <div className="card py-6 px-5" style={{ borderLeft: '4px solid #B8965A' }}>
+          {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). */}
+          <div className="card py-6 px-5">
             <p className="text-h2 text-text-primary mb-2">{selected?.name}님의 2026년</p>
             {(result as any).keywords?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
@@ -425,7 +441,7 @@ export function MonthlyPage() {
         <FooterCTA pageKey="monthly" backTo="/" />
       </div>
 
-      <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId="monthly" />
+      <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'monthly'} />
     </div>
   );
 }

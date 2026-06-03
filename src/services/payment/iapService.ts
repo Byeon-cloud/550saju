@@ -21,15 +21,27 @@ export function isAppsInToss(): boolean {
 }
 
 /**
- * IAP 상품 SKU 매핑
- * 앱인토스 개발자센터에서 등록한 상품 ID와 일치해야 합니다
- * 공급가 기준 (VAT 별도 → 소비자가는 +10%)
+ * IAP 상품 SKU 매핑 — #55 정정 (2026-04-27, 4 패키지 진본)
+ *
+ * 토스 콘솔 진본 4 패키지 (1/4/7/15운) 정렬:
+ *  - p1   1운  / 500원   — paidUn=1,  bonusUn=0
+ *  - p4   4운  / 1500원  — paidUn=3,  bonusUn=1
+ *  - p7   7운  / 2500원  — paidUn=5,  bonusUn=2
+ *  - p15  15운 / 5000원  — paidUn=10, bonusUn=5  ★ 프리미엄 라인 (가장 인기)
+ *
+ * 토스 콘솔 표기 "14운(10+5)" 은 typo — 실제 SKU 명에 "15운" 명시 (10+5=15).
+ *
+ * **Superseded (2026-04-24 5 패키지 결정 무효)**:
+ *  - 구 p5/p10/p30/p50 SKU 매핑 제거 — `pricing.ts LEGACY_PACKAGE_ALIASES` 로 자동 변환.
+ *  - p7 = 구 p5 SKU 재사용 (가격 2500원 동일, 보너스만 추가)
+ *  - p15 = 구 p10 SKU 재사용 (가격 5000원 동일, 보너스만 추가)
+ *  - p4 = 신규 SKU (1500원 가격대 신설)
  */
 const IAP_PRODUCT_MAP: Record<string, { sku: string; paidUn: number; bonusUn: number }> = {
-  once:    { sku: 'ait.0000025955.8f74931d.d3f5a2a979.5185316383',  paidUn: 1,  bonusUn: 0 },
-  more:    { sku: 'ait.0000025955.5d5bec27.6ee0778e2a.5185547787',  paidUn: 3,  bonusUn: 1 },
-  serious: { sku: 'ait.0000025955.79d2ae48.26de419a84.5185590911',  paidUn: 5,  bonusUn: 2 },
-  yearly:  { sku: 'ait.0000025955.304b4aa7.cabbd01e5e.5185730660',  paidUn: 10, bonusUn: 5 },
+  p1:  { sku: 'ait.0000025955.8f74931d.d3f5a2a979.5185316383', paidUn: 1,  bonusUn: 0 },
+  p4:  { sku: 'ait.0000025955.5d5bec27.6ee0778e2a.5185547787', paidUn: 3,  bonusUn: 1 },
+  p7:  { sku: 'ait.0000025955.79d2ae48.26de419a84.5185590911', paidUn: 5,  bonusUn: 2 },
+  p15: { sku: 'ait.0000025955.304b4aa7.cabbd01e5e.5185730660', paidUn: 10, bonusUn: 5 },
 };
 
 /**
@@ -47,14 +59,16 @@ export async function purchasePackage(pkg: ChargePackage): Promise<{ success: bo
  * SDK 1.1.3+ 필수 — processProductGrant 콜백 포함
  */
 async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; message: string }> {
-  const product = IAP_PRODUCT_MAP[pkg.id];
+  // legacy 패키지 ID 대비 — pricing.ts LEGACY_PACKAGE_ALIASES 와 동일 매핑
+  const { LEGACY_PACKAGE_ALIASES } = await import('@/constants/pricing');
+  const resolvedId = LEGACY_PACKAGE_ALIASES[pkg.id] ?? pkg.id;
+  const product = IAP_PRODUCT_MAP[resolvedId];
   if (!product) return { success: false, message: '상품 정보를 찾을 수 없습니다' };
 
   return new Promise((resolve) => {
     try {
       // 동적 import — 런타임에만 로드 (Vite 정적분석 우회)
-      const sdkName = '@apps-in-toss/' + 'web-framework';
-      import(/* @vite-ignore */ sdkName).then((mod: any) => {
+      import('@apps-in-toss/web-framework').then((mod: any) => {
         const IAP = mod.IAP;
         IAP.createOneTimePurchaseOrder({
           options: {
@@ -66,7 +80,8 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
                 // 1. 로컬 즉시 적립 (UX 빠르게)
                 addPaidBalance(product.paidUn, product.bonusUn);
 
-                // 2. 서버에 비동기 기록 (실패해도 return true)
+                // 2. 서버에 비동기 기록 (실패해도 return true — restorePendingPurchases 가 복구)
+                // 2026-05-28 — silent fail 보강: 실패 시 console.error + pending orderId 로컬 큐 적재
                 import('firebase/functions').then(({ getFunctions, httpsCallable }) => {
                   const fns = getFunctions(undefined, 'us-central1');
                   httpsCallable(fns, 'grantPurchase')({
@@ -74,7 +89,15 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
                     sku: product.sku,
                     paidUn: product.paidUn,
                     bonusUn: product.bonusUn,
-                  }).catch(() => {});
+                  }).catch((err) => {
+                    console.error('[IAP] grantPurchase 실패 (restorePendingPurchases 가 복구):', orderId, err);
+                    try {
+                      const key = 'saju500:iap_pending_grants:v1';
+                      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                      existing.push({ orderId, sku: product.sku, paidUn: product.paidUn, bonusUn: product.bonusUn, ts: Date.now() });
+                      localStorage.setItem(key, JSON.stringify(existing));
+                    } catch { /* noop */ }
+                  });
                 });
 
                 return true; // 30초 제한 내에 즉시 반환
@@ -115,17 +138,41 @@ export async function restorePendingPurchases(): Promise<void> {
   if (!isAppsInToss()) return;
 
   try {
-    const sdkName = '@apps-in-toss/' + 'web-framework';
-    const { IAP } = await import(/* @vite-ignore */ sdkName);
+    const { IAP } = await import('@apps-in-toss/web-framework');
     const result = await IAP.getPendingOrders();
     if (!result || result.orders.length === 0) return;
+
+    // 2026-05-28 — idempotency: orderId 기반 처리 추적. SDK 재호출 시 중복 적립 차단.
+    const PROCESSED_KEY = 'saju500:iap_processed_orders:v1';
+    let processed: string[] = [];
+    try { processed = JSON.parse(localStorage.getItem(PROCESSED_KEY) || '[]'); } catch { /* noop */ }
+    const processedSet = new Set(processed);
 
     for (const order of result.orders) {
       const product = Object.values(IAP_PRODUCT_MAP).find(p => p.sku === order.sku);
       if (!product) continue;
+      // 이미 처리한 orderId 면 SDK completeProductGrant 만 호출 (잔액 재적립 X)
+      if (processedSet.has(order.orderId)) {
+        try { await IAP.completeProductGrant({ params: { orderId: order.orderId } }); } catch { /* noop */ }
+        continue;
+      }
 
       try {
         addPaidBalance(product.paidUn, product.bonusUn);
+        // 서버에도 재기록 시도 (pending 큐 fallback)
+        try {
+          const { getFunctions, httpsCallable } = await import('firebase/functions');
+          const fns = getFunctions(undefined, 'us-central1');
+          await httpsCallable(fns, 'grantPurchase')({
+            orderId: order.orderId, sku: order.sku,
+            paidUn: product.paidUn, bonusUn: product.bonusUn,
+          });
+        } catch (serverErr) {
+          console.error('[IAP] 복구 시 서버 기록 실패:', order.orderId, serverErr);
+        }
+        // orderId 처리 완료 표시
+        processedSet.add(order.orderId);
+        try { localStorage.setItem(PROCESSED_KEY, JSON.stringify([...processedSet])); } catch { /* noop */ }
 
         // 지급 완료 처리
         await IAP.completeProductGrant({ params: { orderId: order.orderId } });

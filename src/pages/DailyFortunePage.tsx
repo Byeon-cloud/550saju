@@ -17,10 +17,12 @@
 //   - Flippable 정적화 (#39) — 결과 phase에서 SajuMiniCard 제거 (day-tile로 대체) · 재플립 추가 금지
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Solar } from 'lunar-javascript';
 import { Header } from '@/components/layout/Header';
+import { AdSlot } from '@/components/ads/AdSlot';
+import { DarkHeader } from '@/components/layout/DarkHeader';
 import { FadeIn } from '@/components/common/FadeIn';
 import { AILoading } from '@/components/common/AILoading';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -29,44 +31,25 @@ import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useToast } from '@/components/common/Toast';
+import { useToast } from '@/components/common/Toast'; // 2026-05-27 — 공유 리워드 토스트용 재추가
 import {
   getProfiles,
+  getReport,
   saveReport,
   generateId,
   type SajuProfile,
 } from '@/services/storage/localStore';
-import { generateDailyFortune } from '@/services/ai/reportGenerator';
+import { generateDailyFortune, generateDailyFortuneStream } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
 import type { OhengType } from '@/types/saju';
-// Phase D'-3 Bundle 2 (#54) — mockup 진본 시각 정렬
-import {
-  TodayRelationCard,
-  TodayOhengRow,
-  TodayTopicGrid,
-  TodayMeetStack,
-  FreeUpsellCard,
-  type OhengItem,
-  type TodayTopicCard,
-  type TodayMeetItem,
-} from './free/_chrome';
-import { TOPIC_REGISTRY } from '@/constants/topics';
-import { isAppintosBuild } from '@/lib/env';
-import { AD_BANNER_GROUP_ID } from '@/constants/config';
-import { AdSlot } from '@/components/ads/AdSlot';
+// 점수 SSOT + AI 프롬프트 baseScores100 전달
+import { computeDailyBase100 } from '@/utils/sajuScores';
+// DailyMockupView 단일 호출 (legacy chrome 폐기 · 2026-05-06)
+import { DailyMockupView } from './daily/DailyMockupView';
 
 /* ══════════════════════════════════════════════════════════════════
  * 토큰 / 매핑
  * ═════════════════════════════════════════════════════════════════ */
-
-/** v4 등급 팔레트 — D1 fix: A를 SSOT gold(#B8965A), C를 SSOT gold-deep(#8C6D3D)로 정렬 */
-const GRADE_V4: Record<string, string> = {
-  S: '#B8965A',
-  A: '#B8965A', // (D1 fix 2026-04-24: was #A08B6A)
-  B: '#2D4470',
-  C: '#8C6D3D', // (D1 fix 2026-04-24: was #8F6B4E)
-  D: '#8F1F1C',
-};
 
 const WEEKDAY_KR = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -77,24 +60,6 @@ const STEM_TO_OHENG: Record<string, OhengType> = {
   戊: '토', 己: '토',
   庚: '금', 辛: '금',
   壬: '수', 癸: '수',
-};
-
-/** 오행 → day-tile 그라디언트 배경 (옅은 톤, paper 위에 자연스럽게) */
-const OHENG_GRAD_BG: Record<OhengType, string> = {
-  목: 'linear-gradient(135deg, #EDF6EF 0%, #C8E0CE 100%)',
-  화: 'linear-gradient(135deg, #FBE9E9 0%, #F0C8C8 100%)',
-  토: 'linear-gradient(135deg, #FBEFD9 0%, #F0DAB0 100%)',
-  금: 'linear-gradient(135deg, #ECECEC 0%, #D6D6D6 100%)',
-  수: 'linear-gradient(135deg, #E0EAF4 0%, #B8CDE3 100%)',
-};
-
-/** 오행 → 한자 강조 색 (day-tile 우측 일주 한자, L1 한자 심볼) */
-const OHENG_INK: Record<OhengType, string> = {
-  목: '#1F6638',
-  화: '#9C2424',
-  토: '#A55F11',
-  금: '#4A4A4A',
-  수: '#0E4582',
 };
 
 type Phase = 'select' | 'loading' | 'result' | 'error';
@@ -112,13 +77,28 @@ interface DateInfo {
 export function DailyFortunePage() {
   usePageTitle('오늘의 운세');
   const navigate = useNavigate();
-  const toast = useToast();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { mark } = useAttendanceOnResult();
+
+  // 2026-05-07 fix — 보관함 → /daily 진입 시 location.state 로 savedResult/savedReport 전달
+  // (Daeun/Monthly/Tojung/Compat 와 동일 패턴. 이전엔 ?reportId query 만 봐서 입력화면 떨어졌음)
+  const navState = location.state as { savedResult?: any; savedReport?: any } | undefined;
 
   const profiles: SajuProfile[] = useMemo(() => getProfiles(), []);
   const hasAnyProfile = profiles.length > 0;
 
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(() => {
+    // navState 의 savedReport 가 있으면 그 input 으로 매칭되는 프로필 우선
+    if (navState?.savedReport?.input) {
+      const r = navState.savedReport.input;
+      const matched = profiles.find(
+        (p) => p.input?.birthYear === r.birthYear &&
+               p.input?.birthMonth === r.birthMonth &&
+               p.input?.birthDay === r.birthDay,
+      );
+      if (matched) return matched.id;
+    }
     const self = profiles.find((p) => !p.relation || p.relation === '본인');
     return (self ?? profiles[0])?.id ?? null;
   });
@@ -127,20 +107,72 @@ export function DailyFortunePage() {
     [profiles, selectedProfileId],
   );
 
-  const [phase, setPhase] = useState<Phase>('select');
-  const [result, setResult] = useState<any>(null);
+  // savedReport 가 있으면 (aiResult 비어도) result phase 강제 — 입력 화면 회귀 절대 차단
+  const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : 'select');
+  const [result, setResult] = useState<any>(navState?.savedResult ?? null);
   const [apiError, setApiError] = useState('');
+  // 2026-05-29 — 출시 프로모션 3원: 무료 오늘운세 결과 도달도 첫 콘텐츠로 인정 (코드 단위 dedupe · 앱인토스 only).
+  useEffect(() => {
+    if (phase === 'result') {
+      import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
+      // 2026-06-02 — 출석 적립 + 일일/연속 보상 자동 지급 (콘텐츠 이용 시, 클라 잔액 적립)
+      import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
+      // LIVE BEST 조회 기록 (24h 디듀프)
+      import('@/services/liveBest').then(m => m.recordTopicView('daily')).catch(() => {});
+    }
+  }, [phase]);
+  const [streamProgress, setStreamProgress] = useState<{ chunks: number; chars: number; elapsedMs: number } | null>(null);
   const isAnalyzingRef = useRef(false);
 
-  // 프로필 전환 시 결과 초기화
+  // 프로필 전환 시 결과 초기화 (단, ?reportId 또는 navState.savedResult 진입 직후엔 복원 결과 보존)
+  const reportIdFromUrl = searchParams.get('reportId');
+  // 2026-05-07 fix — navState.savedReport 가 있으면 mount 시 cleanup 차단 (보관함 진입 보호)
+  const restoreFromNavStateRef = useRef(!!navState?.savedReport);
   useEffect(() => {
+    // ?reportId 가 있으면 이 effect 가 cleanup 하지 않음 (복원 effect 가 result 세팅)
+    if (reportIdFromUrl) return;
+    // navState.savedResult 로 mount 한 직후 (1회 limit) cleanup skip
+    if (restoreFromNavStateRef.current) {
+      restoreFromNavStateRef.current = false;
+      return;
+    }
     setResult(null);
     setPhase('select');
     setApiError('');
-  }, [selectedProfileId]);
+  }, [selectedProfileId, reportIdFromUrl]);
+
+  /* P0 fix (2026-05-06 회귀 차단 #2) — 보관함 → 오늘의 운세 결과 복원
+   * 변경: deps [reportIdFromUrl] (race condition 차단) + restoreOnceRef (1회 가드)
+   * + r.aiResult 비어도 phase='result' 강제 (입력 페이지 회귀 절대 차단) */
+  const restoreOnceRef = useRef(false);
+  useEffect(() => {
+    if (restoreOnceRef.current) return;
+    if (!reportIdFromUrl) return;
+    restoreOnceRef.current = true;
+    try {
+      const r = getReport(reportIdFromUrl);
+      console.log('[DailyFortunePage] reportId 복원 시도:', reportIdFromUrl, '→', !!r, '/aiResult:', !!r?.aiResult);
+      if (!r) return;
+      // aiResult 비어도 phase 전이 (회귀 차단 — 입력 페이지로 절대 떨어지지 않게)
+      if (r.aiResult) setResult(r.aiResult);
+      setPhase('result');
+      // 해당 리포트의 프로필로 selectedProfileId 도 정렬 (없으면 무시)
+      const matchingProfile = profiles.find(
+        (p) => p.input?.birthYear === r.input?.birthYear &&
+               p.input?.birthMonth === r.input?.birthMonth &&
+               p.input?.birthDay === r.input?.birthDay,
+      );
+      if (matchingProfile && matchingProfile.id !== selectedProfileId) {
+        setSelectedProfileId(matchingProfile.id);
+      }
+    } catch (e) {
+      console.error('[DailyFortunePage] reportId 복원 실패:', e);
+    }
+  }, [reportIdFromUrl]);
 
   const today = useMemo(() => new Date(), []);
   const dateInfo = useMemo(() => buildTodayGanzi(today), [today]);
+  const tomorrowInfo = useMemo(() => buildTomorrowGanzi(today), [today]);
 
   /* ─── 오늘의 운세 호출 ─── */
   async function analyze() {
@@ -151,41 +183,159 @@ export function DailyFortunePage() {
     setApiError('');
 
     try {
-      // Stage 7e-8: Anthropic API 일시 500 에러 대비 — 1초 대기 후 1회 재시도
-      let res;
-      try {
-        res = await generateDailyFortune({
-          name: selectedProfile.name || '당신',
-          sajuData: selectedProfile.sajuData,
-          date: dateInfo.date,
-          weekday: dateInfo.weekday,
-          todayGanzi: dateInfo.ganzi,
+      // STEP 2A — 종합사주 base 점수 (subScores ±2 한도 강제용)
+      const baseScores100 = computeDailyBase100(selectedProfile.sajuData);
+      const callPayload = {
+        name: selectedProfile.name || '당신',
+        sajuData: selectedProfile.sajuData,
+        date: dateInfo.date,
+        weekday: dateInfo.weekday,
+        todayGanzi: dateInfo.ganzi,
+        baseScores100,
+        tomorrowGanzi: tomorrowInfo.ganzi,
+        tomorrowDate: tomorrowInfo.date,
+      };
+
+      // 2026-05-06 v2 — Streaming SSE + timeout 강제 + 자세한 로그
+      // P0 fix: 로딩만 되고 결과 안 옴 → SSE Promise hang 시 90초 timeout + callable 폴백
+      let res: any;
+      let streamingDone = false;
+      setStreamProgress(null);
+      const sseStartedAt = Date.now();
+
+      console.log('[DailyFortune] analyze() 시작');
+
+      await new Promise<void>((resolve) => {
+        let resolved = false;
+        const finish = (reason: string) => {
+          if (resolved) return;
+          resolved = true;
+          console.log(`[DailyFortune] SSE finish: ${reason} (${Date.now() - sseStartedAt}ms)`);
+          resolve();
+        };
+        // 90초 timeout — SSE 가 결과 못 주면 강제 callable 폴백
+        const timeoutId = setTimeout(() => {
+          console.warn('[DailyFortune] SSE 90s timeout → callable 폴백');
+          finish('timeout');
+        }, 90_000);
+        // 첫 chunk 30초 timeout — 첫 chunk 안 오면 streaming 안 작동 가정
+        const firstChunkTimeoutId = setTimeout(() => {
+          if (!resolved) {
+            console.warn('[DailyFortune] SSE 30s 첫 chunk 미도달 → callable 폴백');
+            finish('first-chunk-timeout');
+          }
+        }, 30_000);
+
+        let phaseTransitioned = false;
+        // v6.1 · 3 그룹 (A1/A2/B) 누적 머지 — A1 도착 시 첫 paint (~6s)
+        const groupBuffer: Record<string, any> = { A1: null, A2: null, B: null, A: null };
+        generateDailyFortuneStream(callPayload, {
+          onStart: () => console.log('[DailyFortune] SSE start'),
+          onPartial: ({ partial, totalChars, group }) => {
+            // ⭐ Progressive Render — 3 그룹 머지된 partial 갱신
+            try {
+              clearTimeout(firstChunkTimeoutId);
+              if (!partial || typeof partial !== 'object') return;
+              setResult(partial);
+              // Group A1 의 핵심 키 (title·subScores) 도달 시 즉시 전이
+              const hasMinKeys =
+                partial.title || partial.headline ||
+                partial.scoreHeadline || partial.todayNarrative ||
+                partial.subScores;
+              if (!phaseTransitioned && hasMinKeys) {
+                phaseTransitioned = true;
+                setPhase('result');
+                console.log('[DailyFortune] 첫 partial → phase=result 전이', { group, chars: totalChars });
+              }
+            } catch (err) {
+              console.error('[DailyFortune] onPartial throw (가드됨):', err);
+            }
+          },
+          onGroup: ({ group, data, elapsedMs }) => {
+            // Group 완료 — partial 보다 정확한 fully-parsed 데이터.
+            // A1·A2·B 어떤 순서로 도착해도 머지.
+            try {
+              clearTimeout(firstChunkTimeoutId);
+              groupBuffer[group] = data;
+              const merged: any = {
+                ...(groupBuffer.A1 || {}),
+                ...(groupBuffer.A2 || {}),
+                ...(groupBuffer.B || {}),
+                ...(groupBuffer.A || {}), // legacy fallback
+              };
+              setResult(merged);
+              if (!phaseTransitioned) {
+                phaseTransitioned = true;
+                setPhase('result');
+              }
+              console.log(`[DailyFortune] Group ${group} 완료 (${elapsedMs}ms) → 머지 갱신`);
+            } catch (err) {
+              console.error('[DailyFortune] onGroup throw (가드됨):', err);
+            }
+          },
+          onProgress: (info) => {
+            clearTimeout(firstChunkTimeoutId);
+            setStreamProgress(info);
+          },
+          onDone: ({ result: streamResult, cached }) => {
+            console.log('[DailyFortune] SSE done', { cached, hasResult: !!streamResult });
+            clearTimeout(timeoutId);
+            clearTimeout(firstChunkTimeoutId);
+            if (streamResult) {
+              res = streamResult;
+              streamingDone = true;
+              // 완전한 결과로 갱신 (partial/group → final)
+              setResult(streamResult);
+              if (!phaseTransitioned) setPhase('result');
+            }
+            finish('done');
+          },
+          onError: (msg) => {
+            console.warn('[DailyFortune] SSE error → callable 폴백:', msg);
+            clearTimeout(timeoutId);
+            clearTimeout(firstChunkTimeoutId);
+            finish('sse-error');
+          },
+        }).catch((e) => {
+          console.warn('[DailyFortune] SSE throw → callable 폴백:', e?.message);
+          clearTimeout(timeoutId);
+          clearTimeout(firstChunkTimeoutId);
+          finish('sse-throw');
         });
-      } catch (retryErr: any) {
-        const msg = String(retryErr?.message || '');
-        const is500 = msg.includes('500') || msg.includes('Internal server error') || msg.includes('api_error');
-        if (is500) {
-          console.warn('[DailyFortune] Anthropic 일시 500 → 1초 후 재시도');
-          await new Promise((r) => setTimeout(r, 1000));
-          res = await generateDailyFortune({
-            name: selectedProfile.name || '당신',
-            sajuData: selectedProfile.sajuData,
-            date: dateInfo.date,
-            weekday: dateInfo.weekday,
-            todayGanzi: dateInfo.ganzi,
-          });
-        } else {
-          throw retryErr;
+      });
+
+      // SSE 실패 시 callable 폴백
+      if (!streamingDone) {
+        console.log('[DailyFortune] callable 폴백 시작');
+        try {
+          res = await generateDailyFortune(callPayload);
+          console.log('[DailyFortune] callable 응답 도달', { hasResult: !!res });
+        } catch (retryErr: any) {
+          const msg = String(retryErr?.message || '');
+          const is500 = msg.includes('500') || msg.includes('Internal server error') || msg.includes('api_error');
+          if (is500) {
+            console.warn('[DailyFortune] callable 일시 500 → 1초 후 재시도');
+            await new Promise((r) => setTimeout(r, 1000));
+            res = await generateDailyFortune(callPayload);
+          } else {
+            throw retryErr;
+          }
         }
       }
+      console.log('[DailyFortune] analyze() 응답 확보', { hasResult: !!res, keys: res ? Object.keys(res).slice(0, 5) : [] });
 
-      // PRD §11.1 — 0점/B등급 fallback 금지 (필수 필드 누락 시 에러)
-      if (
-        !res ||
-        typeof res !== 'object' ||
-        (!('overallScore' in res) && !('score' in res))
-      ) {
-        throw new Error('응답 데이터 형식이 올바르지 않아요');
+      // 응답 검증 완화 (2026-05-06) — title 또는 todayNarrative 또는 subScores 중 하나라도 있으면 OK
+      // 이전: overallScore/score 강제 → 누락 시 throw → "로딩만 됨" 버그 원인
+      if (!res || typeof res !== 'object') {
+        throw new Error('응답 데이터를 받지 못했어요');
+      }
+      const hasMinContent =
+        ('title' in res) || ('headline' in res) ||
+        ('todayNarrative' in res) || ('subScores' in res) ||
+        ('overallScore' in res) || ('score' in res);
+      if (!hasMinContent) {
+        console.error('[DailyFortune] 응답 형식 미달:', Object.keys(res));
+        throw new Error('응답 데이터가 비어있어요. 다시 시도해주세요.');
       }
 
       setResult(res);
@@ -210,19 +360,37 @@ export function DailyFortunePage() {
       }
     } catch (e: any) {
       console.error('[DailyFortune] 실패:', e);
-      setApiError(e?.message || 'AI 서버 연결에 실패했어요');
+      // 2026-05-29 — e.message(영문 기술오류) 노출 금지. 항상 친절 카피.
+      setApiError('오늘의 운세를 살피는 데 잠시 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
       setPhase('error');
     } finally {
       isAnalyzingRef.current = false;
     }
   }
 
+  // 결과 phase 일 때 DarkHeader (PremiumResult 패턴 통일), 그 외 기본 Header
+  const isResultPhase = phase === 'result' && !!selectedProfile;
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
-      <Header title="오늘의 운세" />
-      <div className="px-5 pt-4 pb-[120px] mx-auto" style={{ maxWidth: 520 }}>
-        {/* P2-5 · 데일리 리워드 배지 (보존) */}
-        {hasAnyProfile && <DailyRewardBadge className="mb-4" />}
+      {isResultPhase ? (
+        <DarkHeader
+          title={`${selectedProfile?.name || '내'} 님의 오늘의 운세`}
+          subtitle="FREE · 7섹션 일일 풀이"
+          chip="무료"
+          chipVariant="free"
+        />
+      ) : (
+        <Header title="오늘의 운세" />
+      )}
+      {/* result phase = 풀 width (daily-mockup 자체 padding 사용 · 종합사주 패턴) */}
+      <div
+        className={isResultPhase ? 'pb-[120px] mx-auto' : 'px-5 pt-4 pb-[120px] mx-auto'}
+        style={{ maxWidth: 520 }}
+      >
+        {/* P2-5 · 데일리 리워드 배지 — result phase 에서는 숨김 (2026-05-06)
+            DarkHeader 아래 중복 정보 제거. select phase 에서만 노출. */}
+        {hasAnyProfile && !isResultPhase && <DailyRewardBadge className="mb-4" />}
 
         <AnimatePresence mode="wait">
           {!hasAnyProfile && (
@@ -271,6 +439,7 @@ export function DailyFortunePage() {
                   '4영역 점수를 계산하고 있어요',
                   '시간대별 흐름을 정리하고 있어요',
                 ]}
+                streamProgress={streamProgress}
               />
             </motion.div>
           )}
@@ -298,9 +467,7 @@ export function DailyFortunePage() {
               onCreateNew={() => navigate('/input?new=1')}
               dateInfo={dateInfo}
               onPremiumUpsell={() => {
-                // 프리미엄 10운 — 2026-04-27 4 패키지 정정 (10본 + 5보너스 = 5,000원)
-                toast.show('종합 사주를 위해 10운 충전 페이지로 이동해요', 'info');
-                navigate('/charge?need=10');
+                // 2026-05-28 — 월운 미출시 → CTA 제거됨. 핸들러는 호출되지 않음 (dead code, prop 호환만 유지)
               }}
               onRetry={analyze}
             />
@@ -492,16 +659,23 @@ function SelectView({
 /* ══════════════════════════════════════════════════════════════════
  * ResultView — 새 §10 레이아웃 (day-tile + L1~L4 축소형 + Ad + Upsell)
  * ═════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+ * ResultView (v5 2026-05-06) — mockup HTML 진본 픽셀-퍼펙트 카피.
+ *   ProfileSelector 만 보존 (다른 프로필 전환), 나머지는 DailyMockupView 단일 호출.
+ *   legacy 카드/필드 (sajuTone·todayConnection·oneLiner·radarScores·ohengComparison·
+ *   sajuConnection·interpretation·timeline·actionAdvice) 전수 삭제.
+ * ═════════════════════════════════════════════════════════════════ */
 function ResultView({
   result,
   profile,
-  profiles,
-  selectedProfileId,
-  onProfileChange,
-  onCreateNew,
+  // ProfileSelector 제거 (2026-05-06) — 이하 props 미사용 (호출부 호환 위해 시그니처 유지)
+  profiles: _profiles,
+  selectedProfileId: _selectedProfileId,
+  onProfileChange: _onProfileChange,
+  onCreateNew: _onCreateNew,
   dateInfo,
   onPremiumUpsell,
-  onRetry,
+  onRetry: _onRetry,
 }: {
   result: any;
   profile: SajuProfile;
@@ -514,763 +688,223 @@ function ResultView({
   onRetry: () => void;
 }) {
   const navigate = useNavigate();
-  // ── 스키마 파싱 (v4.1 + 레거시 호환)
-  const score = clampScore(result?.overallScore ?? result?.score);
-  const grade = String(result?.grade ?? 'B').toUpperCase();
-  const gradeColor = GRADE_V4[grade] ?? '#B8965A';
-  const title = stripMd(String(result?.title ?? result?.headline ?? '오늘의 운세'));
-  const todayNarrative = stripMd(String(result?.todayNarrative ?? result?.summary ?? ''));
-  const keywords: string[] = Array.isArray(result?.keywords) ? result.keywords.slice(0, 5) : [];
-  const sajuTone = stripMd(String(result?.sajuTone ?? ''));
-  const subScores = result?.subScores ?? result?.scores;
-  const subScoreReasons = result?.subScoreReasons;
-  const timeSlots: any[] = Array.isArray(result?.timeSlots) ? result.timeSlots : [];
-  const doList: string[] = Array.isArray(result?.doList) ? result.doList.slice(0, 3) : [];
-  const oneLiner = stripMd(String(result?.oneLiner ?? result?.dailyMessage ?? ''));
+  // 2026-05-28 PM — toast 미사용 (공유는 shareResult 직접 호출 · 알림 자체 처리). useToast 호출 자체 보존 위해 void.
+  void useToast;
 
-  // ── day-tile 색상 (오늘 일간 오행)
-  const dayOheng: OhengType = useMemo(
-    () => getDayOheng(dateInfo.ganzi),
-    [dateInfo.ganzi],
-  );
-
-  // ── L1 한자 심볼 = 오늘 일간 (예: 癸亥 → 癸)
+  // 오늘 일진 → 한글 읽기 + 오행
   const dayStem = dateInfo.ganzi?.[0] ?? '';
-
-  // ── Phase D'-3 Bundle 2 · 내 일간 vs 오늘 일진 관계 (TodayRelationCard용)
-  const myGan = profile?.sajuData?.pillars?.[2]?.천간 || '';
-  const myGanReading = profile?.sajuData?.pillars?.[2]?.천간읽기 || '';
-  const myOhengKr = profile?.sajuData?.pillars?.[2]?.천간오행 || '';
+  const todayOheng: OhengType = useMemo(() => getDayOheng(dateInfo.ganzi), [dateInfo.ganzi]);
   const todayGanReading = useMemo(() => {
-    // 천간 한자 → 한글 읽기 (한자→한글)
     const map: Record<string, string> = {
       甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무',
       己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계',
     };
     return map[dayStem] || '';
   }, [dayStem]);
-  const todayOhengKr: OhengType = dayOheng;
-  // 관계 라벨 (생/극 매핑)
-  const relationLabel = useMemo(() => {
-    // 2026-05-05 동적화 (audit P1) — 일간 한자 호명 fallback
-    if (!myOhengKr || !todayOhengKr) return myGanReading ? `${myGanReading} 일간 만남` : '오행 만남';
-    const sangsaeng: Record<string, string> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
-    const sanggeuk: Record<string, string> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
-    if (myOhengKr === todayOhengKr) return `${myOhengKr}·${todayOhengKr} 비화`;
-    if (sangsaeng[myOhengKr] === todayOhengKr) return `${myOhengKr}생${todayOhengKr}`;
-    if (sangsaeng[todayOhengKr] === myOhengKr) return `${todayOhengKr}생${myOhengKr}`;
-    if (sanggeuk[myOhengKr] === todayOhengKr) return `${myOhengKr}극${todayOhengKr}`;
-    if (sanggeuk[todayOhengKr] === myOhengKr) return `${todayOhengKr}극${myOhengKr}`;
-    return `${myOhengKr}·${todayOhengKr} 만남`;
-  }, [myOhengKr, todayOhengKr]);
 
-  // ── Phase D'-3 Bundle 2 · 5오행 분포 (TodayOhengRow용)
-  const ohengItems: OhengItem[] = useMemo(() => {
-    const elems = profile?.sajuData?.elements ?? {};
-    const order: Array<'목' | '화' | '토' | '금' | '수'> = ['목', '화', '토', '금', '수'];
-    return order.map((k) => {
-      const qty = Number(elems[k] ?? 0);
-      const todayBonus = k === todayOhengKr ? '+1' : undefined;
-      return {
-        oheng: k,
-        qty,
-        todayBonus,
-        lack: qty === 0,
-      };
+  // 내 일간
+  const myGan = profile?.sajuData?.pillars?.[2]?.천간 || '';
+  const myGanReading = profile?.sajuData?.pillars?.[2]?.천간읽기 || '';
+  const myOheng: OhengType = (profile?.sajuData?.pillars?.[2]?.천간오행 as OhengType) || '토';
+
+  // relationLabel 폐기 (2026-05-07) — DailyMockupView 가 getOhengRelation() 으로 직접 일상어 라벨 생성
+
+  // 헤더 날짜 라벨 (예: "2026년 5월 6일 화요일 · 병진일(丙辰)")
+  const dateLabel = useMemo(() => {
+    try {
+      const d = new Date((dateInfo?.date || '') + 'T00:00:00');
+      if (isNaN(d.getTime())) return dateInfo?.label || '';
+      const yy = d.getFullYear();
+      const mm = d.getMonth() + 1;
+      const dd = d.getDate();
+      const ganziLabel = dateInfo?.ganzi ? ` · ${todayGanReading}일(${dateInfo.ganzi})` : '';
+      return `${yy}년 ${mm}월 ${dd}일 ${dateInfo?.weekday || ''}요일${ganziLabel}`;
+    } catch {
+      return dateInfo?.label || '';
+    }
+  }, [dateInfo, todayGanReading]);
+
+  // 공유 핸들러 — 결과 페이지 공유 = OG 바이럴 (앱 홍보용 · 보상 X).
+  //   2026-05-28 PM 정책 분리: 결과 페이지 공유는 shareResult (OG 이미지 송출).
+  //   공유 리워드 (1운 보상) 는 이벤트/보관함/충전 페이지 surface 만 사용 (inviteFriendsViaToss).
+  const handleShare = async () => {
+    const { shareResult } = await import('@/utils/share');
+    await shareResult({
+      type: 'daily',
+      name: profile?.name || '나',
+      reportId: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
     });
-  }, [profile, todayOhengKr]);
+  };
 
-  // ── Phase D'-3 Bundle 2 · 끌어주는/부딪히는 사람 (AI result.meet 있을 때만)
-  const meetItems: TodayMeetItem[] | null = useMemo(() => {
-    const aiMeet = result?.meet;
-    if (!aiMeet || !Array.isArray(aiMeet) || aiMeet.length === 0) return null;
-    return aiMeet.slice(0, 2).map((m: any) => ({
-      variant: m.variant === 'clash' ? 'clash' : 'boost',
-      ganChars: String(m.ganChars || m.gan || ''),
-      title: stripMd(String(m.title || '')),
-      tag: String(m.tag || (m.variant === 'clash' ? '− 충돌' : '+ 보완')),
-      body: stripMd(String(m.body || m.desc || '')),
-    }));
-  }, [result]);
-
-  // ── L2 시간대 grid + 현재 슬롯 tip
-  const currentHour = useMemo(() => new Date().getHours(), []);
-  const slotsCompact = useMemo(
-    () =>
-      timeSlots.slice(0, 4).map((s) => ({
-        slot: String(s?.slot ?? '오전'),
-        range: String(s?.range ?? ''),
-        score: clampScore(s?.score),
-        tip: stripMd(String(s?.message ?? s?.tip ?? '')),
-      })),
-    [timeSlots],
-  );
-  const currentSlotIdx = useMemo(() => {
-    if (currentHour < 6) return 3; // 새벽 → 밤 슬롯에 매핑 (24h wrap)
-    if (currentHour < 12) return 0;
-    if (currentHour < 18) return 1;
-    if (currentHour < 22) return 2;
-    return 3;
-  }, [currentHour]);
-  const currentSlot = slotsCompact[currentSlotIdx];
-
-  // ── L3 1문단 (subScoreReasons 중 최고점 reason 또는 첫 비어있지 않은 값)
-  const l3Paragraph = useMemo(
-    () => pickL3Paragraph(subScores, subScoreReasons),
-    [subScores, subScoreReasons],
-  );
-
-  // ── 광고 노출 조건 (스펙 §7) — /daily는 항상 free, blur 없음
-  const showAd = isAppintosBuild;
+  // §07 4영역 카드 클릭 → 관계/일/건강 sub-picker bottom sheet (2026-05-07)
+  const [topicPicker, setTopicPicker] = useState<'love' | 'career' | 'health' | null>(null);
+  const closePicker = () => setTopicPicker(null);
+  const SUB_TOPICS: Record<string, Array<{ id: string; label: string; desc: string }>> = {
+    love: [
+      { id: 'love', label: '연애운', desc: '지금 만나는 사람·새 인연·짝사랑' },
+      { id: 'marriage', label: '결혼운', desc: '결혼 적기·배우자상' },
+      { id: 'reunion', label: '재회운', desc: '헤어진 인연 재회 가능성' },
+    ],
+    career: [
+      { id: 'career', label: '직업·진로운', desc: '커리어 방향·이직' },
+      { id: 'exam', label: '시험·합격운', desc: '시험·면접·자격증' },
+      { id: 'business', label: '사업운', desc: '창업·사업 확장' },
+      // 2026-05-28 — 10주제 SSOT 누락 보강: 학업운(study) 추가.
+      { id: 'study', label: '학업운', desc: '공부·집중력·지식 흡수' },
+    ],
+    health: [
+      { id: 'health', label: '건강·체질운', desc: '체질·약한 자리·관리' },
+      { id: 'move', label: '이사·환경운', desc: '이사·공간 변경' },
+    ],
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
     >
-      {/* S0 프로필 선택 (보존) */}
-      <FadeIn>
-        <ProfileSelector
-          profiles={profiles}
-          selectedId={selectedProfileId}
-          onChange={onProfileChange}
-          onCreateNew={onCreateNew}
-        />
-      </FadeIn>
+      {/* ProfileSelector 제거 (2026-05-06) — DarkHeader 에 이미 "이혜찌 님" 표시,
+          result phase 에서 프로필 전환 불필요 (전환은 home 으로 돌아가서). */}
 
-      {/* ─── §10. day-tile (96px 풀폭 · M/D + 일주 한자) ─── */}
-      <FadeIn delay={0.04}>
-        <DayTile
-          dateInfo={dateInfo}
-          profileName={profile.name || '당신'}
-          dayOheng={dayOheng}
-        />
-      </FadeIn>
-
-      {/* ─── L1 — 요약 (Hook · 한자 심볼 + 점수 + 3-5문장) ─── */}
-      <FadeIn delay={0.08}>
-        <section className="card-primary" style={{ padding: 20 }}>
-          {/* 한자 심볼 32px (오늘 일간) */}
-          {dayStem && (
-            <div
+      {/* §07 4영역 sub-picker bottom sheet */}
+      <AnimatePresence>
+        {topicPicker && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closePicker}
               style={{
-                fontSize: 32,
-                fontWeight: 700,
-                color: OHENG_INK[dayOheng],
-                fontFamily: "'Noto Serif KR', serif",
-                lineHeight: 1,
-                marginBottom: 12,
-                letterSpacing: '0.02em',
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+                zIndex: 1000,
               }}
-              aria-label={`오늘의 일간 ${dayStem} (${dayOheng})`}
-            >
-              {dayStem}
-            </div>
-          )}
-          <div className="flex items-center gap-4">
-            <ScoreDonut score={score} color={gradeColor} />
-            <div className="flex-1 min-w-0">
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '3px 10px',
-                  borderRadius: 999,
-                  background: `${gradeColor}18`,
-                  color: gradeColor,
-                  fontSize: 12,
-                  fontWeight: 800,
-                }}
-              >
-                오늘 · {grade}등급
-              </div>
-              <p className="sec-title-lg" style={{ marginTop: 6 }}>{title}</p>
-            </div>
-          </div>
-
-          {todayNarrative && (
-            <p
-              className="text-body-md"
-              style={{
-                marginTop: 14,
-                lineHeight: 1.75,
-                color: 'var(--text-primary)',
-                whiteSpace: 'pre-line',
-              }}
-            >
-              {/* 3~5문장: 320자 + 자연 문장 끊기 */}
-              {truncate(todayNarrative, 320)}
-            </p>
-          )}
-
-          {keywords.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
-              {keywords.map((kw, i) => (
-                <span key={i} className="chip-v4">{kw}</span>
-              ))}
-            </div>
-          )}
-        </section>
-      </FadeIn>
-
-      {/* ─── L2 — 본문 (Expansion · 오늘의 톤 + 시간대 흐름) ─── */}
-      {sajuTone && (
-        <FadeIn delay={0.12}>
-          <section className="card-primary">
-            <p className="sec-meta" style={{ marginBottom: 8, color: '#8C6D3D' }}>
-              오늘의 톤
-            </p>
-            <p
-              className="text-body-md"
-              style={{
-                whiteSpace: 'pre-line',
-                lineHeight: 1.75,
-                color: 'var(--text-primary)',
-              }}
-            >
-              {sajuTone}
-            </p>
-          </section>
-        </FadeIn>
-      )}
-
-      {slotsCompact.length === 4 && (
-        <FadeIn delay={0.16}>
-          <section className="card-primary">
-            <p className="sec-meta" style={{ marginBottom: 10, color: '#8C6D3D' }}>
-              시간대별 흐름
-            </p>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 8,
-              }}
-            >
-              {slotsCompact.map((s, i) => {
-                const active = i === currentSlotIdx;
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      padding: '10px 6px',
-                      textAlign: 'center',
-                      background: active ? 'rgba(184,150,90,0.14)' : '#F8F5EE',
-                      borderRadius: 10,
-                      border: active
-                        ? '2px solid #B8965A'
-                        : '1px solid var(--border-light)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: active ? '#8C6D3D' : 'var(--text-muted)',
-                      }}
-                    >
-                      {s.slot}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 18,
-                        fontWeight: 900,
-                        color: active ? '#8C6D3D' : '#1A1A1A',
-                        marginTop: 4,
-                        letterSpacing: '-0.02em',
-                      }}
-                    >
-                      {s.score}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {currentSlot?.tip && (
-              <p
-                className="text-body-sm"
-                style={{
-                  marginTop: 12,
-                  padding: '10px 12px',
-                  background: 'rgba(184,150,90,0.08)',
-                  borderRadius: 10,
-                  color: 'var(--text-primary)',
-                  lineHeight: 1.6,
-                }}
-              >
-                <strong style={{ color: '#8C6D3D', marginRight: 4 }}>
-                  지금 ({currentSlot.slot})
-                </strong>
-                {currentSlot.tip}
-              </p>
-            )}
-          </section>
-        </FadeIn>
-      )}
-
-      {/* ─── Phase D'-3 Bundle 2 · TodayRelationCard (내 일간 vs 오늘 일진) ─── */}
-      {myGan && dayStem && (
-        <FadeIn delay={0.18}>
-          <div style={{ margin: '0 -20px' }}>
-            <TodayRelationCard
-              myGan={myGan}
-              myGanName={`${myGanReading}(${myGan}) · ${myOhengKr}`}
-              todayGan={dayStem}
-              todayGanName={`${todayGanReading}(${dayStem}) · ${todayOhengKr}`}
-              relationLabel={relationLabel}
-              explain={(() => {
-                // AI 응답 우선 → 없을 때 사주 일간 글자 직접 호명한 동적 풀이
-                const aiExplain = String((result as any)?.relationExplain ?? '').trim();
-                if (aiExplain.length >= 12) return stripMd(aiExplain);
-                // 사주별 차별화 — 일간 한자 + 오늘 일진 한자 직접 호명
-                const myLabel = `${myGan}(${myGanReading})`;
-                const todayLabel = `${dayStem}(${todayGanReading})`;
-                if (myOhengKr === todayOhengKr) {
-                  return `오늘 ${todayLabel} 와 내 일간 ${myLabel} 이 같은 ${myOhengKr}(${myOhengKr === '목' ? '木' : myOhengKr === '화' ? '火' : myOhengKr === '토' ? '土' : myOhengKr === '금' ? '金' : '水'}) 흐름으로 만나는 자리. 익숙한 리듬을 더 진하게 쓰는 하루 — 결정·실행은 빠르되, 의견은 한쪽으로 쏠릴 위험.`;
-                }
-                if (relationLabel.includes('생')) {
-                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 을 살려주는 흐름. 평소보다 받치는 기운이 또렷한 하루 — 도움 청하기·학습·정비에 좋습니다.`;
-                }
-                if (relationLabel.includes('극')) {
-                  return `오늘 ${todayLabel}(${todayOhengKr}) 와 내 일간 ${myLabel}(${myOhengKr}) 이 부딪히는 자리. 한 박자 늦추는 하루 — 큰 결정·민감한 대화·계약은 다음 날로 미루는 편이 안전.`;
-                }
-                if (relationLabel.includes('재') || relationLabel.includes('관')) {
-                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 실리·책임의 무게가 따라오는 하루 — 받을 것 받고, 정리할 것 정리하기 좋습니다.`;
-                }
-                if (relationLabel.includes('식') || relationLabel.includes('상')) {
-                  return `오늘 ${todayLabel}(${todayOhengKr}) 가 내 일간 ${myLabel}(${myOhengKr}) 에 ${relationLabel} 으로 작동. 표현·창작의 흐름이 살아나는 하루 — 발표·콘텐츠·소통이 잘 풀립니다.`;
-                }
-                return `오늘 ${todayLabel}(${todayOhengKr}) 와 내 일간 ${myLabel}(${myOhengKr}) — ${relationLabel} 의 자리. 흐름의 방향을 살펴보는 하루.`;
-              })()}
             />
-          </div>
-        </FadeIn>
-      )}
-
-      {/* ─── Phase D'-3 Bundle 2 · TodayOhengRow (5오행 분포 + 오늘 보충) ─── */}
-      {ohengItems.length === 5 && (
-        <FadeIn delay={0.19}>
-          <div style={{ margin: '0 -20px' }}>
-            <TodayOhengRow items={ohengItems} />
-          </div>
-        </FadeIn>
-      )}
-
-      {/* ─── L3 — 심층 [축소: 1문단] · 4영역 mini grid + reason ─── */}
-      {(subScores || l3Paragraph) && (
-        <FadeIn delay={0.2}>
-          <section className="card-primary">
-            <p className="sec-title" style={{ marginBottom: 10 }}>오늘의 결</p>
-            {subScores && (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: 6,
-                  marginBottom: l3Paragraph ? 12 : 0,
-                }}
-              >
-                {[
-                  { k: '재물운', label: '재물' },
-                  { k: '애정운', label: '애정' },
-                  { k: '건강운', label: '건강' },
-                  { k: '성장운', label: '성장' },
-                ].map(({ k, label }) => {
-                  const v = subScores?.[k];
-                  const sc =
-                    typeof v === 'number' ? clampScore(v) : clampScore(v?.score);
-                  return (
-                    <div
-                      key={k}
-                      style={{
-                        textAlign: 'center',
-                        padding: '10px 4px',
-                        background: '#F8F5EE',
-                        borderRadius: 10,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: 'var(--text-muted)',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {label}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 20,
-                          fontWeight: 900,
-                          color: '#B8965A',
-                          marginTop: 3,
-                          letterSpacing: '-0.02em',
-                        }}
-                      >
-                        {sc}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {l3Paragraph && (
-              <p
-                className="text-body-md"
-                style={{
-                  lineHeight: 1.75,
-                  color: 'var(--text-primary)',
-                  whiteSpace: 'pre-line',
-                }}
-              >
-                {l3Paragraph}
-              </p>
-            )}
-          </section>
-        </FadeIn>
-      )}
-
-      {/* ─── L4 — "오늘 해볼 3가지" 고정 ─── */}
-      <FadeIn delay={0.24}>
-        <section className="card-primary">
-          <p className="sec-title" style={{ marginBottom: 12 }}>
-            오늘 해볼 3가지
-          </p>
-          <ul
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
-              margin: 0,
-              padding: 0,
-              listStyle: 'none',
-            }}
-          >
-            {Array.from({ length: 3 }).map((_, i) => {
-              const item = doList[i];
-              return (
-                <li
-                  key={i}
-                  className="text-body-md flex items-start gap-3"
-                  style={{ lineHeight: 1.6 }}
-                >
-                  <span
-                    style={{
-                      width: 22,
-                      height: 22,
-                      flexShrink: 0,
-                      background: 'rgba(184,150,90,0.14)',
-                      borderRadius: 999,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#8C6D3D',
-                      fontWeight: 800,
-                      fontSize: 12,
-                      marginTop: 2,
-                    }}
-                  >
-                    {i + 1}
-                  </span>
-                  <span style={{ color: item ? '#1A1A1A' : 'var(--text-muted)' }}>
-                    {item ? stripMd(item) : '—'}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          {oneLiner && (
-            <div
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               style={{
-                marginTop: 16,
-                paddingTop: 12,
-                borderTop: '1px solid var(--border-light)',
+                position: 'fixed', left: 0, right: 0, bottom: 0,
+                background: '#fff',
+                borderRadius: '20px 20px 0 0',
+                padding: '20px 20px calc(28px + env(safe-area-inset-bottom))',
+                zIndex: 1001,
+                maxWidth: 520, margin: '0 auto',
+                boxShadow: '0 -8px 24px rgba(0,0,0,0.12)',
               }}
             >
-              <p
+              <div style={{
+                width: 36, height: 4, borderRadius: 2,
+                background: '#E5DFD0', margin: '0 auto 16px',
+              }} />
+              <h3 style={{
+                fontFamily: "'Noto Serif KR', serif",
+                fontSize: 17, fontWeight: 700, color: '#1A1A1A',
+                marginBottom: 4,
+              }}>
+                {topicPicker === 'love' ? '관계 — 어떤 부분이 궁금하세요?'
+                  : topicPicker === 'career' ? '일 — 어떤 부분이 궁금하세요?'
+                  : '건강 — 어떤 부분이 궁금하세요?'}
+              </h3>
+              <p style={{ fontSize: 12.5, color: '#7A7269', marginBottom: 16 }}>
+                선택하신 주제로 1운 깊이 분석을 시작합니다.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {SUB_TOPICS[topicPicker]?.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => { closePicker(); navigate(`/topic/${t.id}`); }}
+                    style={{
+                      background: '#FAF7EE',
+                      border: '1px solid rgba(184,150,90,0.18)',
+                      borderRadius: 12, padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      cursor: 'pointer', font: 'inherit', textAlign: 'left',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <div>
+                      <div style={{
+                        fontFamily: "'Noto Serif KR', serif",
+                        fontSize: 15, fontWeight: 700, color: '#1A1A1A',
+                      }}>{t.label}</div>
+                      <div style={{ fontSize: 12, color: '#7A7269', marginTop: 2 }}>{t.desc}</div>
+                    </div>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, color: '#B8965A',
+                      background: 'rgba(184,150,90,0.12)',
+                      padding: '4px 10px', borderRadius: 100,
+                    }}>1운</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={closePicker}
                 style={{
-                  fontSize: 13,
-                  fontStyle: 'italic',
-                  color: 'var(--text-secondary)',
-                  lineHeight: 1.6,
-                  paddingLeft: 12,
-                  borderLeft: '2px solid #B8965A',
-                  margin: 0,
+                  marginTop: 12, width: '100%',
+                  background: 'transparent', border: 'none',
+                  fontSize: 13, color: '#7A7269', padding: 12,
+                  cursor: 'pointer',
                 }}
               >
-                {oneLiner}
-              </p>
-            </div>
-          )}
-        </section>
-      </FadeIn>
+                취소
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-      {/* ─── Phase D'-3 Bundle 2 · TodayMeetStack (AI result.meet 있을 때만) ─── */}
-      {meetItems && meetItems.length > 0 && (
-        <FadeIn delay={0.26}>
-          <section className="card-primary">
-            <p className="sec-title" style={{ marginBottom: 12 }}>오늘 만나는 사람</p>
-            <TodayMeetStack items={meetItems} />
-          </section>
-        </FadeIn>
-      )}
-
-      {/* ─── Phase D'-3 Bundle 2 · TodayTopicGrid (4 토픽 cross-discover · TOPIC_REGISTRY consume) ─── */}
-      <FadeIn delay={0.27}>
-        <section className="card-primary">
-          <p className="sec-title" style={{ marginBottom: 12 }}>주제별로 더 깊게</p>
-          <TodayTopicGrid
-            cards={(() => {
-              // 사주별 동적 oneLiner — 점수 + AI 응답의 topicHints 우선, 없으면 점수 분기
-              // (이전: 4 카드 모두 모든 사용자에게 동일한 정적 카피 박혀있었음)
-              const aiHints = (result as any)?.topicHints || {};
-              function dynLine(key: 'wealth' | 'love' | 'career' | 'health', score: number): string {
-                // AI 응답 우선
-                const aiH = String(aiHints?.[key] ?? '').trim();
-                if (aiH.length >= 8) return stripMd(aiH);
-                // 점수 분기 — 사주별 점수가 다르므로 카피도 자연 분화
-                const s = Number(score) || 0;
-                const lines: Record<typeof key, [string, string, string]> = {
-                  wealth: ['오늘은 돈의 흐름이 걷히는 자리.', '들어올 돈은 잡고, 새는 자리는 막을 하루.', '큰 돈 결정은 미루고 받을 돈 챙기는 하루.'],
-                  love:   ['오늘은 인연이 또렷해지는 자리.', '있는 관계 한 번 더 챙기면 결이 깊어집니다.', '먼저 다가가지 말고 거리 두는 하루.'],
-                  career: ['오늘은 자리·이름이 자라는 결.', '쌓아온 결을 보여줄 한 자리가 생깁니다.', '결과보다 과정에 무게를 두는 하루.'],
-                  health: ['오늘은 몸의 결이 또렷한 자리.', '평소보다 한 박자 천천히 — 회복이 본업.', '무리하지 말고 기본기로 돌아가는 하루.'],
-                };
-                const [strong, mid, weak] = lines[key];
-                if (s >= 7) return strong;
-                if (s >= 5) return mid;
-                return weak;
-              }
-              const wealthScore = clampScore(subScores?.['재물운']?.score ?? subScores?.['재물운'] ?? 0) / 10;
-              const loveScore = clampScore(subScores?.['애정운']?.score ?? subScores?.['애정운'] ?? 0) / 10;
-              const careerScore = clampScore(subScores?.['성장운']?.score ?? subScores?.['성장운'] ?? 0) / 10;
-              const healthScore = clampScore(subScores?.['건강운']?.score ?? subScores?.['건강운'] ?? 0) / 10;
-              return [
-                {
-                  key: 'money',
-                  label: TOPIC_REGISTRY.wealth.label,
-                  hanja: TOPIC_REGISTRY.wealth.kanji,
-                  score: wealthScore,
-                  oneLiner: dynLine('wealth', wealthScore),
-                  ctaText: '재물운 한 달치 더 보기',
-                  onTap: () => navigate('/topic/wealth'),
-                },
-                {
-                  key: 'rel',
-                  label: TOPIC_REGISTRY.love.label,
-                  hanja: TOPIC_REGISTRY.love.kanji,
-                  score: loveScore,
-                  oneLiner: dynLine('love', loveScore),
-                  ctaText: '관계·연애운 깊이 보기',
-                  onTap: () => navigate('/topic/love'),
-                },
-                {
-                  key: 'work',
-                  label: TOPIC_REGISTRY.career.label,
-                  hanja: TOPIC_REGISTRY.career.kanji,
-                  score: careerScore,
-                  oneLiner: dynLine('career', careerScore),
-                  ctaText: '직업·진로운 깊이 보기',
-                  onTap: () => navigate('/topic/career'),
-                },
-                {
-                  key: 'health',
-                  label: TOPIC_REGISTRY.health.label,
-                  hanja: TOPIC_REGISTRY.health.kanji,
-                  score: healthScore,
-                  oneLiner: dynLine('health', healthScore),
-                  ctaText: '건강·체질운 깊이 보기',
-                  onTap: () => navigate('/topic/health'),
-                },
-              ] as TodayTopicCard[];
-            })()}
-          />
-        </section>
-      </FadeIn>
-
-      {/* ─── §7. AdBanner — L4 바로 아래 (build === 'appintos' && tier === 'free' 만)
-              #ad-sdk-wire: AdSlot (TossAds SDK) 정식 연결 — 실패 시 silent fallback ─── */}
-      {showAd && (
-        <FadeIn delay={0.28}>
-          <AdSlot unit={AD_BANNER_GROUP_ID} minHeight={90} />
-        </FadeIn>
-      )}
-
-      {/* ─── §6. UpsellCard — Phase D'-3 Bundle 2 정렬: FreeUpsellCard (단일 CTA) ─── */}
-      <FadeIn delay={0.32}>
-        <FreeUpsellCard
-          title="사주 전체로 더 깊이 풀어드릴까요"
-          desc="대운별 흐름·평생의 결·관계·재물·건강까지. 사주 전체에서 한 번에 풀어냅니다."
-          onTap={onPremiumUpsell}
-        />
-      </FadeIn>
-
-      {/* 다시 분석하기 */}
-      <button
-        className="cta-ghost"
-        onClick={onRetry}
-        style={{ marginTop: 6 }}
-      >
-        다시 분석하기
-      </button>
+      {/* mockup 진본 픽셀-퍼펙트 카피 (DailyMockupView 단일 호출) */}
+      <DailyMockupView
+        result={result}
+        profile={profile}
+        dateLabel={dateLabel}
+        todayGanzi={dateInfo.ganzi || ''}
+        todayGanReading={todayGanReading}
+        todayOheng={todayOheng}
+        myGan={myGan}
+        myGanReading={myGanReading}
+        myOheng={myOheng}
+        onUpsell={onPremiumUpsell}
+        onShare={handleShare}
+        onChat={async () => {
+          // 2026-05-28 PM — contentContext 영구 저장 (보관함 재진입에도 복원)
+          const { createChatRoom } = await import('@/services/storage/chatStore');
+          const ctx = {
+            type: 'daily' as const,
+            label: '오늘의 운세',
+            fullResult: result,
+          };
+          const room = createChatRoom(profile?.name || '나', 'free', ctx);
+          navigate(`/chat/${room.id}`, {
+            state: {
+              profile,
+              contentContext: ctx,
+            },
+          });
+        }}
+        onTopicClick={(topicId) => {
+          // 4영역 클릭 → sub-picker (관계/일/건강) 또는 직접 (재물)
+          // wealth: 직접 / love(관계): 연애·결혼·재회·궁합 / career(일): 직업·시험·사업 / health(건강): 체질·이사
+          if (topicId === 'wealth') {
+            navigate('/topic/wealth');
+            return;
+          }
+          setTopicPicker(topicId);
+        }}
+      />
+      {/* 2026-05-28 — 무료 콘텐츠 결과 페이지 하단 광고 (앱인토스 빌드 + tier='free' 자동 게이트) */}
+      <div style={{ padding: '0 16px 24px' }}>
+        <AdSlot />
+      </div>
     </motion.div>
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════
- * DayTile — 96px 풀폭 · M/D + 일주 한자 + 일간 오행 그라디언트
- * ═════════════════════════════════════════════════════════════════ */
-function DayTile({
-  dateInfo,
-  profileName,
-  dayOheng,
-}: {
-  dateInfo: DateInfo;
-  profileName: string;
-  dayOheng: OhengType;
-}) {
-  // dateInfo.label = "M월 D일 요일요일" 형식 → "M/D" 추출
-  const m = dateInfo.label.match(/(\d+)월\s*(\d+)일/);
-  const md = m ? `${m[1]}/${m[2]}` : '-/-';
-  const ganzi = dateInfo.ganzi || '——';
-  const accent = OHENG_INK[dayOheng];
-  return (
-    <div
-      role="banner"
-      aria-label={`${md} ${dateInfo.weekday}요일 · 일주 ${ganzi}`}
-      style={{
-        width: '100%',
-        height: 96,
-        background: OHENG_GRAD_BG[dayOheng],
-        borderRadius: 16,
-        padding: '14px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        border: `1px solid ${accent}28`,
-        boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset',
-      }}
-    >
-      {/* 좌: M/D Display 40 + 부속 캡션 */}
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div
-          style={{
-            fontSize: 40,
-            fontWeight: 800,
-            lineHeight: 1,
-            color: '#1A1A1A',
-            letterSpacing: '-0.04em',
-          }}
-        >
-          {md}
-        </div>
-        <div
-          style={{
-            marginTop: 8,
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: accent,
-            letterSpacing: '0.02em',
-          }}
-        >
-          {dateInfo.weekday}요일 · {profileName}님의 오늘
-        </div>
-      </div>
-      {/* 우: 일주(60갑자) 한자 — Noto Serif */}
-      <div
-        style={{
-          fontSize: 30,
-          fontWeight: 700,
-          color: accent,
-          fontFamily: "'Noto Serif KR', serif",
-          letterSpacing: '0.06em',
-          flexShrink: 0,
-        }}
-        aria-hidden
-      >
-        {ganzi}
-      </div>
-    </div>
-  );
-}
-
-/* Phase D'-3 Bundle 2 — UpsellCard 인라인 정의 제거. FreeUpsellCard (free/_chrome.tsx) 로 통합. */
-/* Phase 4 #ad-sdk-wire — AdBannerPlaceholder 인라인 정의 제거. AdSlot (components/ads/AdSlot.tsx) 로 통합. */
-
-/* ══════════════════════════════════════════════════════════════════
- * ScoreDonut
- * ═════════════════════════════════════════════════════════════════ */
-function ScoreDonut({ score, color }: { score: number; color: string }) {
-  const size = 88;
-  const strokeWidth = 8;
-  const r = size / 2 - strokeWidth;
-  const c = 2 * Math.PI * r;
-  const dash = (score / 100) * c;
-  return (
-    <div
-      style={{ width: size, height: size, position: 'relative', flexShrink: 0 }}
-    >
-      <svg width={size} height={size}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke="rgba(27,42,74,0.06)"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          initial={{ strokeDashoffset: c }}
-          animate={{ strokeDashoffset: c - dash }}
-          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </svg>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-        }}
-      >
-        <span
-          style={{
-            fontSize: 24,
-            fontWeight: 900,
-            color,
-            letterSpacing: '-0.03em',
-          }}
-        >
-          {score}
-        </span>
-        <span className="sec-caption" style={{ fontSize: 10 }}>점</span>
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════
- * 헬퍼
- * ═════════════════════════════════════════════════════════════════ */
-
-function clampScore(v: any): number {
-  const n = Number(v ?? 0);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, Math.round(n)));
-}
 
 function formatDate(d: Date): string {
   const y = d.getFullYear();
@@ -1294,47 +928,24 @@ function buildTodayGanzi(d: Date): DateInfo {
   return { date, weekday, ganzi, label };
 }
 
+/** STEP 2A — 내일 일진 (mockup §07 tomorrow 카드용) */
+function buildTomorrowGanzi(today: Date): { date: string; ganzi: string } {
+  const tmr = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  const date = formatDate(tmr);
+  let ganzi = '';
+  try {
+    const solar = Solar.fromYmd(tmr.getFullYear(), tmr.getMonth() + 1, tmr.getDate());
+    const ec = solar.getLunar().getEightChar();
+    ganzi = `${ec.getDayGan()}${ec.getDayZhi()}`;
+  } catch {
+    ganzi = '';
+  }
+  return { date, ganzi };
+}
+
 function getDayOheng(ganzi: string): OhengType {
   const stem = ganzi?.[0] ?? '';
   return STEM_TO_OHENG[stem] ?? '토';
-}
-
-/** L1 narrative 자연 문장 끊기 truncate */
-function truncate(s: string, max: number): string {
-  if (!s) return '';
-  if (s.length <= max) return s;
-  const tail = s.slice(0, max);
-  const candidates = [
-    tail.lastIndexOf('. '),
-    tail.lastIndexOf('.\n'),
-    tail.lastIndexOf('。'),
-    tail.lastIndexOf('? '),
-    tail.lastIndexOf('! '),
-  ];
-  const cut = Math.max(...candidates);
-  if (cut > max * 0.5) return s.slice(0, cut + 1).trim();
-  return s.slice(0, max).trim() + '…';
-}
-
-/** L3 1문단 — 최고점 영역 reason 우선, 없으면 첫 비어있지 않은 reason */
-function pickL3Paragraph(subScores: any, reasons: any): string {
-  if (!reasons || typeof reasons !== 'object') return '';
-  if (subScores && typeof subScores === 'object') {
-    const entries = Object.entries(subScores)
-      .map(([k, v]: any) => {
-        const sc = typeof v === 'number' ? v : v?.score ?? 0;
-        return [k, Number(sc) || 0] as [string, number];
-      })
-      .sort((a, b) => b[1] - a[1]);
-    const topKey = entries[0]?.[0];
-    if (topKey && reasons[topKey]) {
-      return stripMd(String(reasons[topKey]));
-    }
-  }
-  const firstReason = Object.values(reasons).find(
-    (r) => r && typeof r === 'string',
-  );
-  return firstReason ? stripMd(String(firstReason)) : '';
 }
 
 function buildPillars(

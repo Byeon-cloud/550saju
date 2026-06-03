@@ -20,7 +20,7 @@
  * - 무료 패스가 있으면 운 차감 안 함
  * - 무료 패스 소진 후 추가 이용하려면 운 필요
  * - 오늘의 운세, 꿈해몽은 무료 패스 소진 후에도 무료 (기존 정책 유지)
- * - 사주대화는 무료 패스 소진 후 1운(5회) 필요
+ * - 사주대화는 무료 패스 소진 후 1운(3회) 필요 (2026-04-21 갭리포트 §2-2)
  */
 
 const PASS_KEY = 'saju500_daily_passes';
@@ -75,6 +75,18 @@ export function useFreePass(type: PassType): boolean {
   passes.used[type] = true;
   savePasses(passes);
   return true;
+}
+
+/**
+ * 무료 이용권 복구 (사용 후 AI 실패 등으로 결과를 못 받았을 때 되돌림).
+ * 2026-05-29 — 채팅/콘텐츠 실패 시 무료 1회를 날리지 않도록 rollback 용.
+ */
+export function restoreFreePass(type: PassType): void {
+  const passes = getPasses();
+  if (passes.used[type]) {
+    delete passes.used[type];
+    savePasses(passes);
+  }
 }
 
 /**

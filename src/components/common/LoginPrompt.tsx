@@ -44,7 +44,7 @@ export function LoginPrompt({
           {/* 태극 아이콘 */}
           <motion.div
             className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-5"
-            style={{ background: 'rgba(201,169,110,0.1)' }}
+            style={{ background: 'rgba(184,150,90,0.1)' }}
             initial={{ scale: 0.7 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1, type: 'spring', stiffness: 350 }}
@@ -52,8 +52,8 @@ export function LoginPrompt({
             <svg width="28" height="28" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="11" stroke="#1B2A4A" strokeWidth="1.2" fill="none" />
               <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#1B2A4A" />
-              <circle cx="12" cy="7" r="2" fill="#C9A96E" />
-              <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#C9A96E" strokeWidth="0.8" />
+              <circle cx="12" cy="7" r="2" fill="#B8965A" />
+              <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#B8965A" strokeWidth="0.8" />
             </svg>
           </motion.div>
 

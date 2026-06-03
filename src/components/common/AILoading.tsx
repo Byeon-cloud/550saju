@@ -34,10 +34,15 @@ interface Props {
   estimatedSeconds?: number;
   /**
    * 사주 데이터 (선택) — 전달되면 mockup A 다크 베이지 미니카드를 진입 즉시 표시
-   * "내 사주 데이터는 이미 도착했고, AI 가 풀이를 더하는 중" 시각적 약속
+   * "내 사주 데이터는 이미 도착했고, 풀이가 추가되는 중" 시각적 약속
    * 호출처는 selected.sajuData 그대로 넘기면 됨 (내부에서 [시,일,월,년] 변환)
    */
   sajuData?: SajuData;
+  /**
+   * Streaming progress (2026-05-06) — 서버 SSE chunk 도달 시 정직한 progress.
+   * 전달되면 timer 기반 단계 진행 X, chunk 기반 동적 progress 사용.
+   */
+  streamProgress?: { chunks: number; chars: number; elapsedMs: number } | null;
 }
 
 const C = {
@@ -61,6 +66,7 @@ export function AILoading({
   premiumNote,
   estimatedSeconds = 12,
   sajuData,
+  streamProgress,
 }: Props) {
   // SajuData (year·month·day·time) → mockup 표기 순서 (시·일·월·년) 변환
   const pillars: AILoadingPillar[] | null = useMemo(() => {
@@ -106,24 +112,40 @@ export function AILoading({
   }, []);
 
   useEffect(() => {
-    // Stage 7e-9: 섹션 점진 ✓ — 분석 시간대 균등 분배
-    //   예상 시간 12s / 섹션 4개 = 3s per section, 마지막은 도착 직전 ~80% 유지
-    const sectionInterval = Math.max(1500, (estimatedSeconds * 1000) / Math.max(1, sections.length));
     const tipTimer = setInterval(() => setTipIndex(i => (i + 1) % shuffledTips.length), 4000);
+    const clockTimer = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => {
+      clearInterval(tipTimer);
+      clearInterval(clockTimer);
+    };
+  }, [shuffledTips.length]);
+
+  // Streaming progress 기반 단계 진행 (2026-05-06)
+  // streamProgress 있으면 chunk 기반 정직한 흐름, 없으면 timer 기반 fallback
+  useEffect(() => {
+    if (streamProgress) {
+      // chunk 기반 — chars 가 일정 비율 도달 시 단계 완료
+      // 7000 max_tokens 기준 평균 4000자 응답 추정 → chars 가 (sections.length+1) 단계로 분배
+      const expectedChars = 4000;
+      const ratio = Math.min(1, streamProgress.chars / expectedChars);
+      const newDone = Math.min(sections.length - 1, Math.floor(ratio * sections.length));
+      setDoneCount(newDone);
+      return;
+    }
+    // streamProgress 없을 때 — timer 기반 fallback (callable 호출 등)
+    const sectionInterval = Math.max(1500, (estimatedSeconds * 1000) / Math.max(1, sections.length));
     const sectionTimer = setInterval(
       () => setDoneCount(d => Math.min(d + 1, sections.length - 1)),
       sectionInterval,
     );
-    const clockTimer = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => {
-      clearInterval(tipTimer);
-      clearInterval(sectionTimer);
-      clearInterval(clockTimer);
-    };
-  }, [estimatedSeconds, sections.length, shuffledTips.length]);
+    return () => clearInterval(sectionTimer);
+  }, [estimatedSeconds, sections.length, streamProgress]);
 
   const currentTip = shuffledTips[tipIndex];
-  const overallProgress = Math.min(95, (doneCount / sections.length) * 100 + 15);
+  // overallProgress — streaming 일 땐 chars 비율 직접 사용, 아니면 doneCount 기반
+  const overallProgress = streamProgress
+    ? Math.min(95, (streamProgress.chars / 4000) * 80 + 15)
+    : Math.min(95, (doneCount / sections.length) * 100 + 15);
 
   return (
     <div
@@ -133,7 +155,7 @@ export function AILoading({
       {/* 헤더 — name + type */}
       <div className="text-center mb-5">
         <p style={{ fontSize: 11, color: C.mute, letterSpacing: '0.16em', marginBottom: 4 }}>
-          AI ANALYZING
+          ANALYZING
         </p>
         <p
           style={{
@@ -451,11 +473,12 @@ export function AILoading({
           letterSpacing: '0.04em',
         }}
       >
-        {elapsed > estimatedSeconds + 5
-          ? '거의 다 됐어요. 조금만 더 기다려주세요'
-          : elapsed > estimatedSeconds * 0.7
-            ? '꼼꼼히 풀이하고 있어요'
-            : `약 ${estimatedSeconds}초 소요`}
+        {/* 시간 약속 워딩 제거 (2026-05-06) — 못 지키면 안 좋아. 대신 진행 상태 텍스트 */}
+        {elapsed > 30
+          ? '꼼꼼히 풀이하고 있어요'
+          : elapsed > 10
+            ? '사주를 깊게 살펴보고 있어요'
+            : '잠시만 기다려주세요'}
       </p>
     </div>
   );

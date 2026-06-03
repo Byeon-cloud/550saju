@@ -13,6 +13,7 @@ export type ReportType =
 export interface ReportSection {
   id: string;
   title: string;
+  keyInsight?: string;
   content: string;
 }
 
@@ -41,6 +42,7 @@ export interface LuckyProfile {
 export interface CareerFit {
   job: string;
   score: number;
+  reason?: string;  // 사주 근거 (용신 기반)
 }
 
 /** 월별 운세 */
@@ -63,6 +65,16 @@ export interface WealthFlow {
   saving: { score: number; style: string };
 }
 
+/** 격국/용신 분석 기반 */
+export interface AnalysisBase {
+  격국: string;
+  일간강약: string;
+  용신: string;
+  용신근거: string;
+  희신?: string;
+  기신?: string;
+}
+
 /** AI 응답 전체 구조 */
 export interface AIReportResponse {
   sections: ReportSection[];
@@ -72,6 +84,7 @@ export interface AIReportResponse {
   monthlyFortune: MonthlyFortune[];
   relationshipMap: RelationshipMap;
   wealthFlow: WealthFlow;
+  analysisBase?: AnalysisBase;
 }
 
 /** Firestore 저장용 리포트 */

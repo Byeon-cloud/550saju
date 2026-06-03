@@ -366,7 +366,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
           borderBottom: '1px solid #f0ebe3',
         }}>
           <p style={{
-            fontSize: 10, fontWeight: 700, color: '#a08b6a',
+            fontSize: 10, fontWeight: 700, color: '#B8965A',
             marginBottom: 3, letterSpacing: 0.3,
           }}>
             사주 분석
@@ -383,7 +383,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
         borderBottom: '1px solid #f0ebe3',
       }}>
         <p style={{
-          fontSize: 10, fontWeight: 700, color: '#a08b6a',
+          fontSize: 10, fontWeight: 700, color: '#B8965A',
           marginBottom: 3, letterSpacing: 0.3,
         }}>
           이 점수의 의미
@@ -441,7 +441,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
         }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #B8965A, #a08b6a)',
+            background: 'linear-gradient(135deg, #B8965A, #B8965A)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
@@ -451,7 +451,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
           </div>
           <div>
             <p style={{
-              fontSize: 10, color: '#a08b6a', fontWeight: 600,
+              fontSize: 10, color: '#B8965A', fontWeight: 600,
               marginBottom: 1,
             }}>
               나의 재물 체질
@@ -471,7 +471,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
           border: '1px solid #B8965A18',
         }}>
           <p style={{
-            fontSize: 10, fontWeight: 700, color: '#a08b6a',
+            fontSize: 10, fontWeight: 700, color: '#B8965A',
             marginBottom: 3,
           }}>
             핵심 전략
@@ -506,7 +506,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
         padding: '14px 16px',
       }}>
         <p style={{
-          fontSize: 11, fontWeight: 700, color: '#a08b6a',
+          fontSize: 11, fontWeight: 700, color: '#B8965A',
           marginBottom: 6,
         }}>
           세 영역의 관계 분석

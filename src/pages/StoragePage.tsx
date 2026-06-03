@@ -29,6 +29,7 @@ import { FadeIn } from '@/components/common/FadeIn';
 import { useAuth } from '@/hooks/useAuth';
 import { useSajuContext } from '@/contexts/SajuContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { getHourBranch } from '@/utils/saju-format';
 import { useToast } from '@/components/common/Toast';
 import {
   getProfiles,
@@ -45,13 +46,7 @@ import {
   deleteChatRoom,
   type ChatRoom,
 } from '@/services/storage/chatStore';
-import {
-  getRemainingShareRewards,
-  canEarnShareReward,
-  claimShareReward,
-  claimShareRewardUnlimited,
-} from '@/services/share/shareReward';
-import { isAppsInToss } from '@/services/payment/iapService';
+import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 // Stage 7e-5: 보관함 카드에서 sajuData 즉시 계산 (모든 프로필 일주/오행 컬러 보장)
 import { calculateSaju } from '@/services/saju/calculator';
@@ -88,10 +83,11 @@ const FILTER_TABS: { key: FilterKey; label: string }[] = [
   { key: 'all',     label: '전체' },
   { key: 'report',  label: '종합사주' },   // report (1운 + 10운)
   { key: 'topic',   label: '주제별' },     // topic (10주제)
-  { key: 'compat',  label: '궁합' },        // compat
-  { key: 'daeun',   label: '대운' },        // daeun
-  { key: 'monthly', label: '월운' },        // monthly
-  { key: 'tojung',  label: '토정비결' },   // tojung
+  // 2026-05-07: '대운/월운/궁합/토정' 출시 후 공개 (코드 보존)
+  // { key: 'compat',  label: '궁합' },
+  // { key: 'daeun',   label: '대운' },
+  // { key: 'monthly', label: '월운' },
+  // { key: 'tojung',  label: '토정비결' },
   { key: 'daily',   label: '오늘운세' },   // daily
   { key: 'dream',   label: '꿈해몽' },     // dream + deepDream 합침
   { key: 'chat',    label: '사주대화' },   // chatRooms
@@ -178,16 +174,34 @@ export function StoragePage() {
     reloadAll();
   }, []);
 
+  // 2026-05-07 fix — 보관함 필터:
+  //   (1) 사주 등록만 한 placeholder (type=free + contentType=report + aiResult 없음)
+  //   (2) 옛 1운 basic 종합사주 결과 (출시 모델에 1운 결과 페이지 컨셉 X — 종합사주는 10운 premium만)
+  const cleanedReports = useMemo(() => {
+    return reports.filter((r) => {
+      const isAutoFreeReport =
+        r.type === 'free' &&
+        (!r.contentType || r.contentType === 'report') &&
+        !r.aiResult;
+      const isLegacyBasicReport =
+        r.type === 'paid' &&
+        (r.contentType ?? 'report') === 'report' &&
+        !!r.aiResult &&
+        ((r.aiResult as any)?.tier ?? 'basic') !== 'premium';
+      return !isAutoFreeReport && !isLegacyBasicReport;
+    });
+  }, [reports]);
+
   // 정렬된 reports
   const sortedReports = useMemo(() => {
-    const copy = [...reports];
+    const copy = [...cleanedReports];
     copy.sort((a, b) => {
       const at = +new Date(a.createdAt);
       const bt = +new Date(b.createdAt);
       return sortDesc ? bt - at : at - bt;
     });
     return copy;
-  }, [reports, sortDesc]);
+  }, [cleanedReports, sortDesc]);
 
   // 2026-05-05 10 탭 분기 (실제 contentType 그대로 노출)
   const visibleReports = useMemo(() => {
@@ -294,7 +308,16 @@ export function StoragePage() {
       setSajuData(r.sajuData);
     }
     const route = routeForReport(r);
-    if (route) navigate(route);
+    if (route) {
+      // 2026-05-28 — state + URL query 동시 전달. state 가 strict mode 등에서 손실되면 URL 폴백.
+      //   Daily/Dream/Daeun/Monthly/Tojung/Compat 모두 ?reportId 로도 복원 가능 (페이지 자체 useEffect).
+      const separator = route.includes('?') ? '&' : '?';
+      const routeWithId = `${route}${separator}reportId=${encodeURIComponent(r.id)}`;
+      navigate(routeWithId, { state: { savedResult: r.aiResult, savedReport: r } });
+    } else if (LOCKDOWN_CONTENT.has(r.contentType as string)) {
+      // 2026-05-28 — 출시 lockdown 4종은 페이지가 홈으로 redirect 됨. 안내 toast.
+      toast.show('출시 후에 다시 열어볼 수 있어요', 'info');
+    }
   }
 
   function confirmDeleteReport() {
@@ -380,54 +403,20 @@ export function StoragePage() {
     reloadAll();
   }
 
-  /* ─── 공유 리워드 ─── */
+  /* ─── 공유 리워드 — 전 앱 통합 (inviteFriendsViaToss SSOT) ─── */
   async function handleShare() {
-    try {
-      if (isAppsInToss()) {
-        const sdkName = '@apps-in-toss/' + 'web-framework';
-        const mod: any = await import(/* @vite-ignore */ sdkName);
-        mod.contactsViral({
-          options: { moduleId: '0a21ea14-951b-4abb-8484-aaf61b0123b8' },
-          onEvent: async (event: any) => {
-            if (event.type === 'sendViral') {
-              const earned = claimShareRewardUnlimited();
-              setRemainingShares(getRemainingShareRewards());
-              toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-            }
-          },
-          onError: () => toast.show('공유가 취소됐어요', 'info'),
-        });
-        return;
-      }
-      const url = `${window.location.origin}/share/invite`;
-      const text = '나도 500원에 내 사주 볼 수 있대! 한번 해봐';
-      if (typeof navigator.share === 'function') {
-        try {
-          await navigator.share({ title: '사주500', text, url });
-          if (canEarnShareReward()) {
-            const earned = claimShareReward();
-            if (earned > 0) {
-              setRemainingShares(getRemainingShareRewards());
-              toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-              return;
-            }
-          }
-          toast.show('공유 완료! (오늘 보상 한도 초과)', 'info');
-        } catch {
-          toast.show('공유를 완료하면 1운이 적립돼요', 'info');
-        }
-      } else {
-        try {
-          await navigator.clipboard.writeText(url);
-        } catch {
-          /* 무시 */
-        }
-        toast.show('링크가 복사됐어요! 친구에게 보내주세요', 'success');
-      }
-    } catch (e) {
-      console.warn('[Share]', e);
-      toast.show('다시 시도해주세요', 'info');
-    }
+    const { inviteFriendsViaToss } = await import('@/services/share/shareReward');
+    await inviteFriendsViaToss({
+      onReward: (earned) => {
+        setRemainingShares(getRemainingShareRewards());
+        toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+      },
+      onShared: () => {
+        setRemainingShares(getRemainingShareRewards());
+        toast.show('오늘 공유 보상은 다 받았어요 (하루 3회)', 'info');
+      },
+      onCancel: () => toast.show('공유가 취소됐어요', 'info'),
+    });
   }
 
   return (
@@ -742,11 +731,11 @@ function ProfileCard({
     if (!hasTime) return '시간 모름';
     const h = profile.input.birthHour ?? 0;
     const m = profile.input.birthMinute ?? 0;
-    const timeStr = m > 0
-      ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-      : `${h}시`;
     const branch = formatHourCode(h);
-    return `${timeStr} · ${branch}`;
+    // 2026-06-02 — 분 입력이 없으면 대표시각("11시") 숨기고 시(時)만 (밴드 입력이라 분은 오해 소지).
+    return m > 0
+      ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} · ${branch}`
+      : branch;
   })();
 
   // 스와이프 (drag x → 음수 방향)
@@ -1201,7 +1190,7 @@ function HistoryCard({
     health: '건강운',
     reunion: '재회운',
     study: '학업운',
-    social: '대인관계운',
+    social: '대인관계운', // 2026-05-28 — legacy 보존 (이미 결제한 user 보관함 라벨용 — 진입은 X)
     moving: '이사운',
     exam: '시험운',
     move: '이사운',
@@ -2089,32 +2078,22 @@ function profileKey(p: SajuProfile): string {
 }
 
 function formatHourCode(hour: number): string {
-  const map: Record<number, string> = {
-    0: '자시',
-    1: '축시',
-    3: '인시',
-    5: '묘시',
-    7: '진시',
-    9: '사시',
-    11: '오시',
-    13: '미시',
-    15: '신시',
-    17: '유시',
-    19: '술시',
-    21: '해시',
-  };
-  return map[hour] ?? `${hour}시`;
+  // 2026-06-02 — range 기반 getHourBranch 사용 (구 band-start 11 / 신 중앙 12 모두 정확 매핑).
+  const b = getHourBranch(hour, 0);
+  return b ? b.ko : `${hour}시`;
 }
+
+/** 출시 lockdown 콘텐츠 — 라우트는 살아있으나 페이지가 홈으로 redirect 됨 (App.tsx:145-149) */
+const LOCKDOWN_CONTENT = new Set(['compat', 'daeun', 'monthly', 'tojung']);
 
 /** 콘텐츠 유형별 결과 페이지 라우트 (스펙 §3-3 탭 시 결과 이동) */
 function routeForReport(r: LocalReport): string | null {
   const ct = r.contentType;
   if (ct === 'dream' || ct === 'deepDream') return '/dream';
   if (ct === 'daily') return '/daily';
-  if (ct === 'compat') return '/compat';
-  if (ct === 'daeun') return '/topic/daeun';
-  if (ct === 'monthly') return '/topic/wolun';
-  if (ct === 'tojung') return '/topic/tojeong';
+  // 2026-05-28 — 출시 lockdown 4종 (compat/daeun/monthly/tojung) 은 페이지가 홈으로 redirect 됨.
+  //   보관함에서 클릭 시 무한 redirect 사이클 방지 위해 null 반환. openReport 에서 안내 toast.
+  if (LOCKDOWN_CONTENT.has(ct as string)) return null;
   if (ct === 'topic') {
     const topicId = (r as any).aiResult?.topicId || 'love';
     return `/topic/${topicId}`;

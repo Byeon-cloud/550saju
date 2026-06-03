@@ -5,19 +5,14 @@
 // SSOT 토큰 적용 · 광고 없음 · 원화 노출 허용 유일 페이지
 
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CHARGE_PACKAGES } from '@/constants/pricing';
 import { getBalance, addPaidBalance } from '@/services/storage/localStore';
-import { purchasePackage, isAppsInToss } from '@/services/payment/iapService';
+import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import {
-  getRemainingShareRewards,
-  canEarnShareReward,
-  claimShareReward,
-  claimShareRewardUnlimited,
-} from '@/services/share/shareReward';
+import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { isAppintosBuild } from '@/lib/env';
 
 // ── SSOT 토큰 (D1 fix 2026-04-23 / #55)
@@ -75,12 +70,18 @@ function InfoIcon({ color }: { color: string }) {
 export function ChargePage() {
   usePageTitle('운(運) 충전');
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
 
-  const redirectTo = searchParams.get('redirect');
+  // 2026-05-07 fix — 다른 페이지가 보낸 returnTo state 도 redirect 로 인식
+  // (잔액 부족 모달 → 충전 → 원래 페이지 자동 복귀 UX 일관성)
+  const stateReturnTo = (location.state as any)?.returnTo as string | undefined;
+  const redirectTo = searchParams.get('redirect') || stateReturnTo || null;
   const needRaw = searchParams.get('need');
   const needUn = needRaw && !Number.isNaN(Number(needRaw)) ? Number(needRaw) : null;
+  // 2026-05-29 — 잔액부족 모달 등이 보낸 안내 메시지 (왜 충전 화면에 왔는지). 기존엔 어디서도 표시 안 됨.
+  const stateMessage = (location.state as any)?.message as string | undefined;
 
   /**
    * 기본 선택 — `?need=N` 있으면 N 이상 충전되는 가장 작은 패키지 자동 선택,
@@ -131,6 +132,8 @@ export function ChargePage() {
               addPaidBalance(result.paidUn, result.bonusUn || 0);
               setBalanceDisplay(getBalance());
               toast.show(result.message, 'success');
+              // 2026-05-29 — 어드민 매출 퍼널: 충전 완료 이벤트
+              import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: Number(amount) || 0 }));
               import('@/services/toss/tossPromotion').then(m =>
                 m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { amount: String(amount) })
               );
@@ -185,52 +188,22 @@ export function ChargePage() {
     }
   };
 
-  // ── 공유 핸들러 (앱인토스 contactsViral / 웹 navigator.share)
+  // ── 공유 핸들러 — 전 앱 통합 (inviteFriendsViaToss SSOT)
   const handleShare = async () => {
     try {
-      if (isAppsInToss()) {
-        const sdkName = '@apps-in-toss/' + 'web-framework';
-        const mod: any = await import(/* @vite-ignore */ sdkName);
-        mod.contactsViral({
-          options: { moduleId: '0a21ea14-951b-4abb-8484-aaf61b0123b8' },
-          onEvent: async (event: any) => {
-            if (event.type === 'sendViral') {
-              const earned = claimShareRewardUnlimited();
-              setBalanceDisplay(getBalance());
-              setRemainingShares(getRemainingShareRewards());
-              toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-            }
-          },
-          onError: () => toast.show('공유가 취소됐어요', 'info'),
-        });
-        return;
-      }
-
-      // 웹: 일일 한도 체크 후 공유
-      const url = `${window.location.origin}/share/invite`;
-      const text = '나도 500원에 내 사주 볼 수 있대! 한번 해봐';
-
-      if (typeof navigator.share === 'function') {
-        try {
-          await navigator.share({ title: '사주500', text, url });
-          if (canEarnShareReward()) {
-            const earned = claimShareReward();
-            if (earned > 0) {
-              setBalanceDisplay(getBalance());
-              setRemainingShares(getRemainingShareRewards());
-              toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
-              return;
-            }
-          }
-          toast.show('공유 완료! (오늘 보상 한도를 모두 받았어요)', 'info');
-        } catch {
-          toast.show('공유를 완료하면 1운이 적립돼요', 'info');
-        }
-      } else {
-        // PC 폴백: 링크 복사
-        try { await navigator.clipboard.writeText(url); } catch { /* 무시 */ }
-        toast.show('링크가 복사됐어요! 친구에게 보내주세요', 'success');
-      }
+      const { inviteFriendsViaToss } = await import('@/services/share/shareReward');
+      await inviteFriendsViaToss({
+        onReward: (earned) => {
+          setBalanceDisplay(getBalance());
+          setRemainingShares(getRemainingShareRewards());
+          toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+        },
+        onShared: () => {
+          setRemainingShares(getRemainingShareRewards());
+          toast.show('오늘 공유 보상은 다 받았어요 (하루 3회)', 'info');
+        },
+        onCancel: () => toast.show('공유가 취소됐어요', 'info'),
+      });
     } catch (e) {
       console.warn('[Share]', e);
       toast.show('다시 시도해주세요', 'info');
@@ -323,21 +296,23 @@ export function ChargePage() {
         </svg>
       </div>
 
-      {/* ─── §4. RedirectHint (URL ?need=N 일 때만) ─── */}
-      {needUn !== null && needUn > 0 && (
+      {/* ─── §4. RedirectHint (URL ?need=N 또는 state.message — 왜 충전 화면에 왔는지 안내) ─── */}
+      {(needUn !== null && needUn > 0) || stateMessage ? (
         <div style={{
           margin: '12px 16px 0',
-          height: 60, background: '#FFFFFF',
+          minHeight: 60, background: '#FFFFFF',
           border: `1px solid ${C.line}`, borderRadius: 12,
           display: 'flex', alignItems: 'center',
-          padding: '0 16px', gap: 10,
+          padding: '12px 16px', gap: 10,
         }}>
           <InfoIcon color={C.goldDeep} />
-          <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 500 }}>
-            <strong style={{ color: C.goldDeep, fontWeight: 700 }}>{needUn}운</strong>이 필요한 풀이로 돌아가요
+          <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 500, lineHeight: 1.45 }}>
+            {stateMessage
+              ? stateMessage
+              : <><strong style={{ color: C.goldDeep, fontWeight: 700 }}>{needUn}운</strong>이 필요한 풀이로 돌아가요</>}
           </span>
         </div>
-      )}
+      ) : null}
 
       {/* ─── §5. ChargePackages (2열 그리드 · 카드 128px) ─── */}
       <div style={{ padding: '20px 16px 0' }}>

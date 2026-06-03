@@ -1,8 +1,9 @@
-import { useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
+import { AdSlot } from '@/components/ads/AdSlot';
 import { FadeIn } from '@/components/common/FadeIn';
 import { AILoading } from '@/components/common/AILoading';
 import { LockedCard } from '@/components/common/LockedCard';
@@ -25,14 +26,17 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/components/common/Toast';
 import {
   spendBalance,
+  getBalance,
   getProfiles,
+  getReport,
   saveReport,
   generateId,
   type SajuProfile,
 } from '@/services/storage/localStore';
 import {
   generateDreamFree,
-  generateDreamDeepV3,
+  // generateDreamDeepV3 — 2026-05-27 블러잠금 SSOT 정석화로 사용 제거 (AI 재호출 0). legacy import 보존.
+  generateDreamDeepV3 as _generateDreamDeepV3,
 } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
 import { TOPIC_REGISTRY } from '@/constants/topics';
@@ -44,6 +48,45 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { OhengType } from '@/types/saju';
+// v5 mockup (잠금 5섹션 + 아코디언 + 도식화 + 블러잠금 SSOT) — 2026-05-27 복원
+import { DreamMockupView } from './dream/DreamMockupView';
+
+/**
+ * AI V3 schema → DreamMockupView v5 schema 어댑터 (2026-05-27).
+ *   V3 prompt 가 출력하는 narrative / sajuTone / todayConnection / verdict / symbols[].meaningWithSaju
+ *   를 v5 mockup 이 읽는 firstImpression / worryConnection / quoteInterpretations / dreamQuote /
+ *   symbols[].meaning 로 매핑. lockedXxx 는 양쪽 schema 가 동일하라 그대로 사용.
+ */
+function adaptDreamResult(raw: any): any {
+  if (!raw || typeof raw !== 'object') return raw;
+  const r: any = { ...raw };
+  if (!r.firstImpression && typeof r.narrative === 'string' && r.narrative.length > 0) {
+    r.firstImpression = { narrative: r.narrative, strongImages: r.keywords || [] };
+  }
+  if (!r.worryConnection && typeof r.todayConnection === 'string' && r.todayConnection.length > 0) {
+    r.worryConnection = { narrative: r.todayConnection };
+  }
+  if (!r.dreamQuote && typeof r.verdict === 'string' && r.verdict.length > 0) {
+    r.dreamQuote = r.verdict;
+  }
+  if (!Array.isArray(r.quoteInterpretations) && typeof r.sajuTone === 'string' && r.sajuTone.length > 50) {
+    r.quoteInterpretations = [{
+      quote: r.title || '꿈',
+      highlight: '',
+      tag: '사주 관점',
+      interp: r.sajuTone,
+    }];
+  }
+  if (Array.isArray(r.symbols)) {
+    const ohengKanji: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
+    r.symbols = r.symbols.map((s: any) => ({
+      ...s,
+      meaning: s?.meaning || s?.meaningWithSaju || '',
+      kanji: s?.kanji || (s?.oheng ? ohengKanji[s.oheng] : ''),
+    }));
+  }
+  return r;
+}
 
 /**
  * 꿈해몽 v4 (2026-04-19)
@@ -99,18 +142,58 @@ type Phase = 'category' | 'detail' | 'result' | 'deepLoading' | 'deepResult';
 export function DreamPage() {
   usePageTitle('꿈해몽');
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const toast = useToast();
   const { mark } = useAttendanceOnResult();
-  const [phase, setPhase] = useState<Phase>('category');
-  const [selectedCategory, setSelectedCategory] = useState<DreamCategory | null>(null);
-  const [dreamText, setDreamText] = useState('');
-  const [concern, setConcern] = useState('');
+  // 2026-05-28 — 보관함에서 진입 시 savedResult/savedReport 받아 result phase 즉시 복원.
+  //   state 는 React Router strict mode 등에서 끊길 수 있어 ?reportId URL 폴백도 지원.
+  const stateNav = location.state as { savedResult?: any; savedReport?: any } | undefined;
+  const reportIdFromUrl = searchParams.get('reportId');
+  // URL reportId 있으면 localStorage 에서 보고서 직접 로드 (state 손실 대비 폴백)
+  const reportFromUrl = useMemo(() => {
+    if (!reportIdFromUrl) return null;
+    try { return getReport(reportIdFromUrl); } catch { return null; }
+  }, [reportIdFromUrl]);
+  const navState = stateNav?.savedReport
+    ? stateNav
+    : (reportFromUrl ? { savedResult: reportFromUrl.aiResult, savedReport: reportFromUrl } : undefined);
+  const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : 'category');
+  // 2026-05-29 — 출시 프로모션 3원: 무료 꿈해몽 결과 도달도 첫 콘텐츠 인정 (코드 단위 dedupe · 앱인토스 only).
+  useEffect(() => {
+    if (phase === 'result' || phase === 'deepResult') {
+      import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
+      // 2026-06-02 — 출석 적립 + 일일/연속 보상 자동 지급 (콘텐츠 이용 시, 클라 잔액 적립)
+      import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
+      // LIVE BEST 조회 기록 (24h 디듀프)
+      import('@/services/liveBest').then(m => m.recordTopicView('dream')).catch(() => {});
+    }
+  }, [phase]);
+  // 보관함 복원 시 user input 도 함께 (aiResult.__userInput) 복원
+  const _restoredInput = navState?.savedReport?.aiResult?.__userInput as { dreamText?: string; concern?: string; category?: string } | undefined;
+  // category 라벨 → id 역추적 (예: "물과 관련된 꿈" → "water")
+  const _restoredCategoryId = _restoredInput?.category
+    ? (DREAM_CATEGORIES.find((c) => c.label === _restoredInput.category)?.id ?? null)
+    : null;
+  const [selectedCategory, setSelectedCategory] = useState<DreamCategory | null>(_restoredCategoryId);
+  const [dreamText, setDreamText] = useState(_restoredInput?.dreamText ?? '');
+  const [concern, setConcern] = useState(_restoredInput?.concern ?? '');
   const [isLoading, setIsLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<any>(null);
-  const [deepResult, setDeepResult] = useState<any>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(navState?.savedResult ?? null);
+  // 보관함 진입 시: type='paid' OR aiResult.__unlocked 면 잠금 해제 상태로 복원
+  const [unlocked, setUnlocked] = useState(() => {
+    const r = navState?.savedReport;
+    if (!r) return false;
+    return r.type === 'paid' || !!(r.aiResult?.__unlocked);
+  }); // 블러잠금 해제 state (AI 재호출 0)
+  const [showUnlockConfirm, setShowUnlockConfirm] = useState(false); // 1운 차감 확인 모달
+  const [unlockBurst, setUnlockBurst] = useState(false); // 잠금 해제 시각 효과 (사라랄)
   const [apiError, setApiError] = useState('');
   const isAnalyzingRef = useRef(false);
   const isDeepAnalyzingRef = useRef(false);
+  // 보관함 진입 시 기존 rid 를 보관 (1운 결제 시 동일 레코드 갱신)
+  const currentReportIdRef = useRef<string | null>(navState?.savedReport?.id ?? null);
 
   const profile: SajuProfile | null = useMemo(
     () => getProfiles().find((p) => !p.relation || p.relation === '본인') || null,
@@ -128,19 +211,96 @@ export function DreamPage() {
     if (isAnalyzingRef.current || isLoading) return;
     isAnalyzingRef.current = true;
     setIsLoading(true);
+    setIsStreaming(true);
     setApiError('');
+    // 2026-05-27 v10 — aiResult 를 빈 객체로 미리 초기화 → DreamMockupView 가 isLoading=false 즉시
+    //   렌더 가능 (skeleton 시각). 이전엔 aiResult=null 이면 null && DreamMockupView = 미렌더.
+    setAiResult({});
+    setPhase('result');
 
     try {
       const categoryLabel = DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타';
       const fullText = [dreamText, concern ? `\n현재 고민: ${concern}` : ''].filter(Boolean).join('');
       const saju = profile?.sajuData ? buildSajuContext(profile) : undefined;
 
-      const result = await generateDreamFree({
-        saju,
-        dreamContent: fullText,
-        category: categoryLabel,
-        userConcern: concern || undefined,
-      });
+      // 2026-05-27 — SSE 스트리밍 (오늘의 운세 패턴): partial 도달 시 isLoading=false → 결과 페이지 즉시 노출.
+      //   HEAD 디자인 그대로 (result.narrative/symbols/lockedXxx 직접 읽기). 단지 전송 방식만 SSE.
+      //   substantive content (narrative ≥100자) 도착 시 로딩 → 결과 전이.
+      //   SSE 실패 시 callable 폴백 (프롬프트·모델 100% 동일).
+      let result: any;
+      try {
+        const { generateDreamFreeStream } = await import('@/services/ai/reportGenerator');
+        let firstPaintDone = false;
+        let latestPartial: any = null; // 2026-06-02 — 타임아웃 시 저장용 최신 partial
+        const t0 = Date.now();
+        result = await new Promise<any>((resolve, reject) => {
+          // 2026-06-02 fix — 기존: 타임아웃이 setIsLoading(false) 만 하고 Promise 를 끝내지 않아,
+          //   iOS 백그라운드 등으로 SSE 가 죽으면 await 영구 hang → setAiResult/saveReport 미실행
+          //   → 스켈레톤 무한 + 보관함 저장 0. 수정: 받은 partial 있으면 resolve(저장 진입), 없으면 reject(→ callable 폴백).
+          const safetyId = setTimeout(() => {
+            if (!firstPaintDone) { firstPaintDone = true; setIsLoading(false); }
+            if (latestPartial && latestPartial.title) resolve(latestPartial);
+            else reject(new Error('dream stream timeout'));
+          }, 60_000);
+          generateDreamFreeStream(
+            { saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined },
+            {
+              onStart: () => console.log('[dream SSE] start'),
+              onPartial: ({ partial, totalChars }) => {
+                try {
+                  if (!partial || typeof partial !== 'object') return;
+                  setAiResult({ ...partial });
+                  latestPartial = partial; // 타임아웃 시 저장용 보존
+                  // 2026-05-27 v10 — 첫 paint 매우 공격적:
+                  //   narrative 50자 OR title+verdict 둘 다 도착 OR 10초 timeout.
+                  //   결과창 진입 후 skeleton 으로 미도착 섹션 채워줌.
+                  const narLen = typeof partial.narrative === 'string' ? partial.narrative.length : 0;
+                  const verdictLen = typeof partial.verdict === 'string' ? partial.verdict.length : 0;
+                  const hasTitle = typeof partial.title === 'string' && partial.title.length > 5;
+                  const elapsed = Date.now() - t0;
+                  const ready = narLen >= 50 || (hasTitle && verdictLen >= 30) || elapsed >= 10_000;
+                  if (!firstPaintDone && ready) {
+                    firstPaintDone = true;
+                    clearTimeout(safetyId);
+                    console.log(`[dream] 첫 paint (${elapsed}ms, ${totalChars}자, narLen=${narLen}, title=${hasTitle})`);
+                    setIsLoading(false);
+                  }
+                } catch (err) { console.warn('[dream onPartial guard]', err); }
+              },
+              onGroup: ({ group, data, elapsedMs }) => {
+                // 그룹 완전 도착 — 머지된 데이터로 즉시 갱신 (partial 보다 정확)
+                console.log(`[dream] Group ${group} 완료 (${elapsedMs}ms)`);
+                if (!firstPaintDone && group === 'A') {
+                  firstPaintDone = true;
+                  clearTimeout(safetyId);
+                  console.log(`[dream] 첫 paint (Group A done · ${Date.now() - t0}ms)`);
+                  setIsLoading(false);
+                }
+                // 그룹 완료 데이터로 갱신 (partial-json 보다 정확한 fully-parsed JSON)
+                setAiResult((prev: any) => ({ ...(prev || {}), ...(data || {}) }));
+                latestPartial = { ...(latestPartial || {}), ...(data || {}) };
+              },
+              onDone: ({ content }) => {
+                clearTimeout(safetyId);
+                console.log(`[dream SSE] done (${Date.now() - t0}ms)`);
+                resolve(content);
+              },
+              onError: (msg, code) => {
+                clearTimeout(safetyId);
+                reject(Object.assign(new Error(msg), { code }));
+              },
+            },
+          ).catch((e) => { clearTimeout(safetyId); reject(e); });
+        });
+      } catch (streamErr: any) {
+        if (streamErr?.code === 'quota' || String(streamErr?.message).includes('쿼터')) {
+          throw streamErr;
+        }
+        console.warn('[dream] SSE 실패 → callable 폴백:', streamErr?.message);
+        result = await generateDreamFree({
+          saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined,
+        });
+      }
 
       // 필수 필드 검증 — fallback 렌더 금지 (PRD §10.7)
       if (!result || typeof result !== 'object' || !result.title) {
@@ -152,17 +312,21 @@ export function DreamPage() {
       // 이벤트 v4 · 출석 마커 (KST 당일 1회)
       mark().catch(() => {/* non-blocking */});
 
-      // 보관함 저장 (무료)
+      // 보관함 저장 (무료) — 잠금 해제 시 같은 레코드를 갱신하도록 id 보관
       try {
+        const rid = generateId();
+        currentReportIdRef.current = rid;
+        // 2026-05-28 — user input (꿈주제·꿈내용·고민) 도 함께 저장 → 보관함 재진입 시 입력 echo 복원
+        const categoryLabelForSave = DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타';
         saveReport({
-          id: generateId(),
+          id: rid,
           name: profile?.name || '꿈해몽',
           input: (profile?.input ?? {}) as any,
           sajuData: (profile?.sajuData ?? {}) as any,
           type: 'free',
           contentType: 'dream',
           createdAt: new Date().toISOString(),
-          aiResult: result,
+          aiResult: { ...result, __userInput: { dreamText, concern, category: categoryLabelForSave } },
         });
       } catch {
         /* 보관함 실패는 무시 */
@@ -173,19 +337,23 @@ export function DreamPage() {
       if (e?.code === 'resource-exhausted' || String(e?.message).includes('쿼터')) {
         setApiError('이번 달 꿈해몽 무료 쿼터가 소진됐어요. 다음 달에 다시 만나요.');
       } else {
-        setApiError(e?.message || 'AI 서버 연결에 실패했어요');
+        // 2026-05-29 — e.message(영문 기술오류) 노출 금지. 항상 친절 카피.
+        setApiError('꿈을 살피는 데 잠시 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
       }
       setAiResult(null);
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
       setPhase('result');
       isAnalyzingRef.current = false;
     }
   }
 
-  /* ─── 심층 해몽 (generateDreamDeep · Sonnet 4.6 v3 + 2차 리뷰) ─── */
+  /* ─── 잠금 해제 (블러잠금 SSOT — AI 재호출 0, 페이지 전환 0) ───
+   *   CLAUDE.md 정책: "spendBalance(1) → setUnlocked(true). AI 재호출/페이지전환 제거"
+   *   2026-05-27 v11: 확인 모달 + 잠금 해제 애니메이션 (사라랄 효과) 추가. */
   async function startDeepAnalysis() {
-    if (isDeepAnalyzingRef.current) return;
+    if (isDeepAnalyzingRef.current || unlocked) return;
     if (!profile?.sajuData) {
       toast.show('먼저 사주를 분석해주세요', 'warning');
       navigate('/input');
@@ -195,72 +363,103 @@ export function DreamPage() {
       toast.show('무료 해석을 먼저 진행해주세요', 'warning');
       return;
     }
-    isDeepAnalyzingRef.current = true;
+    // 잔액 사전 체크 — 부족하면 충전 페이지로
+    const currentBalance = getBalance();
+    if (currentBalance < 1) {
+      toast.show('잔액이 부족해요', 'warning');
+      navigate('/charge', { state: { message: '심층 해몽에 1운이 필요해요' } });
+      return;
+    }
+    // 확인 모달 (앱인토스 정책: window.confirm 금지 → 커스텀 modal state)
+    setShowUnlockConfirm(true);
+  }
 
+  /** 확인 모달 OK 시 실제 차감 + 잠금 해제 */
+  async function confirmDeepUnlock() {
+    setShowUnlockConfirm(false);
+    if (isDeepAnalyzingRef.current || unlocked) return;
+    if (!profile?.sajuData || !aiResult) return;
+    isDeepAnalyzingRef.current = true;
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: '심층 해몽에 1운이 필요해요' } });
       isDeepAnalyzingRef.current = false;
       return;
     }
-    toast.show('1운이 차감됐어요', 'info');
-    setPhase('deepLoading');
-
+    // 잠금 해제 시각 효과 (사라랄) — body 에 일시 클래스 추가 → CSS 애니메이션
+    setUnlockBurst(true);
+    setTimeout(() => setUnlockBurst(false), 1500);
+    toast.show('잠금이 풀렸어요 · 1운 차감', 'success');
+    setUnlocked(true);
+    // 보관함 동일 레코드 갱신 (__unlocked 플래그 + type='paid' 로 전환) — 재진입 시 잠금 해제 상태 유지
     try {
-      const categoryLabel = DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타';
-      const fullText = [dreamText, concern ? `\n현재 고민: ${concern}` : ''].filter(Boolean).join('');
-      const saju = buildSajuContext(profile);
-
-      const freeSummary = {
-        title: aiResult?.title ?? '',
-        verdict: aiResult?.verdict ?? '',
-        symbols: Array.isArray(aiResult?.symbols)
-          ? aiResult.symbols.slice(0, 5).map((s: any) => s?.keyword ?? '')
-          : [],
-      };
-
-      const { reportId, content } = await generateDreamDeepV3({
-        saju,
-        dreamContent: fullText,
-        category: categoryLabel,
-        freeResultSummary: freeSummary,
-      });
-
-      setDeepResult(content);
-
-      try {
+      const rid = currentReportIdRef.current;
+      if (rid) {
         saveReport({
-          id: reportId ?? generateId(),
-          name: profile.name || '심층 해몽',
+          id: rid,
+          name: profile.name || '꿈해몽',
           input: profile.input,
           sajuData: profile.sajuData,
           type: 'paid',
-          contentType: 'deepDream',
-          aiResult: content,
+          contentType: 'dream',
+          aiResult: { ...aiResult, __unlocked: true, __userInput: aiResult?.__userInput || { dreamText, concern, category: DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타' } },
           createdAt: new Date().toISOString(),
         });
-      } catch {
-        /* 보관함 실패는 무시 */
       }
-      setPhase('deepResult');
-    } catch (e: any) {
-      console.error('[DreamPage:deep] API 실패:', e);
-      // 환불은 서버 트랜잭션 롤백에 위임
-      toast.show('분석에 실패했어요. 잔액은 자동으로 복구돼요.', 'warning');
-      setPhase('result');
-    } finally {
-      isDeepAnalyzingRef.current = false;
-    }
+    } catch { /* noop */ }
+    isDeepAnalyzingRef.current = false;
   }
 
+  // @ts-expect-error legacy — DeepResultView 와 함께 dead code (블러잠금 SSOT 후)
   function reset() {
     setPhase('category');
     setSelectedCategory(null);
     setDreamText('');
     setConcern('');
     setAiResult(null);
-    setDeepResult(null);
+    setUnlocked(false);
+    currentReportIdRef.current = null;
     setApiError('');
+  }
+
+  // 2026-05-27 — 사주 없으면 꿈해몽 진입 차단. AI 가 사주와 꿈을 교차 해석하는 게 핵심이라
+  //   사주 없는 상태로 일반 꿈풀이만 보여주는 건 PD 정책 위배 (유료 결제 유도 unlocked 5섹션도 사주 기반).
+  if (!hasSaju) {
+    return (
+      <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
+        <Header title="꿈해몽" />
+        <div className="px-5 pt-12 pb-[120px] mx-auto text-center" style={{ maxWidth: 520 }}>
+          <div style={{
+            display: 'inline-flex', width: 72, height: 72, borderRadius: '50%',
+            background: 'rgba(184,150,90,0.12)', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 20,
+          }}>
+            <span aria-hidden style={{
+              fontFamily: "'Noto Serif KR', serif", fontSize: 36, fontWeight: 900,
+              color: '#B8965A', lineHeight: 1,
+            }}>夢</span>
+          </div>
+          <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 20, fontWeight: 700, color: '#1a1a1a', marginBottom: 10 }}>
+            먼저 사주를 입력해주세요
+          </h2>
+          <p style={{ fontSize: 13.5, lineHeight: 1.7, color: '#5C4A2E', marginBottom: 28, wordBreak: 'keep-all' }}>
+            꿈해몽은 <strong style={{ color: '#1a1a1a' }}>사주와 꿈을 교차해 해석</strong>합니다.<br />
+            일간·오행·대운이 있어야 깊이 있는 풀이가 가능해요.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/input?from=dream')}
+            style={{
+              background: '#B8965A', color: '#F8F5EE', border: 'none',
+              borderRadius: 999, padding: '14px 28px', fontSize: 14, fontWeight: 800,
+              cursor: 'pointer', minHeight: 44,
+            }}
+          >
+            사주 입력하러 가기 →
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -310,43 +509,143 @@ export function DreamPage() {
           )}
 
           {phase === 'result' && !isLoading && aiResult && (
-            <FreeResultView
-              key="result"
-              result={aiResult}
-              profile={profile}
-              hasSaju={hasSaju}
-              onDeepAnalysis={startDeepAnalysis}
-              onTopicTap={(tid) => navigate(`/topic/${tid}`)}
-              onFullReport={() => navigate('/storage')}
-              onInputSaju={() => navigate('/input')}
-              onReset={reset}
-            />
-          )}
-
-          {phase === 'deepLoading' && (
-            <motion.div key="deepLoading" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <AILoading
-                name={profile?.name ?? '당신'}
-                type="심층 해몽"
-                sajuData={profile?.sajuData}
-                steps={[
-                  '대운·세운을 교차하고 있어요',
-                  '오행 메시지를 풀고 있어요',
-                  '2차 자기 리뷰로 다듬고 있어요',
-                ]}
+            <motion.div key="result" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <DreamMockupView
+                result={adaptDreamResult(aiResult)}
+                profile={profile}
+                hasSaju={hasSaju}
+                category={DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타'}
+                dreamText={dreamText}
+                concern={concern}
+                unlocked={unlocked}
+                isStreaming={isStreaming}
+                onUnlock={startDeepAnalysis}
+                onShare={async () => {
+                  // 2026-05-28 PM — 결과 페이지 공유 = OG 바이럴 (보상 X). shareResult 사용.
+                  const { shareResult } = await import('@/utils/share');
+                  await shareResult({
+                    type: 'dream',
+                    name: profile?.name || '나',
+                    reportId: new Date().toISOString().slice(0, 10),
+                  });
+                }}
+                onChat={async () => {
+                  // 새 채팅방 생성 후 /chat/{id} 진입 — ChatSessionPage 가 contentContext 받음
+                  // 2026-05-28 PM — contentContext 영구 저장 (보관함 재진입에도 복원)
+                  const { createChatRoom } = await import('@/services/storage/chatStore');
+                  const ctx = {
+                    type: 'dream' as const,
+                    label: '꿈해몽',
+                    category: DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타',
+                    dreamText,
+                    concern,
+                    fullResult: aiResult,
+                  };
+                  const room = createChatRoom(profile?.name || '나', 'free', ctx);
+                  navigate(`/chat/${room.id}`, {
+                    state: {
+                      profile,
+                      contentContext: ctx,
+                    },
+                  });
+                }}
               />
+              {/* 2026-05-28 — 무료 꿈해몽 결과 하단 광고. 1운 결제로 unlock 시 자동 숨김. */}
+              {!unlocked && (
+                <div style={{ padding: '0 16px 24px' }}>
+                  <AdSlot />
+                </div>
+              )}
             </motion.div>
           )}
 
-          {phase === 'deepResult' && deepResult && (
-            <DeepResultView
-              key="deep"
-              result={deepResult}
-              profile={profile}
-              onReset={reset}
-            />
-          )}
+          {/* 2026-05-27 — deepLoading/deepResult phase 제거 (블러잠금 SSOT).
+              결제 = 같은 result phase 에서 unlocked=true 로 블러만 해제. 페이지 전환 0. */}
         </AnimatePresence>
+
+        {/* 1운 차감 확인 모달 (앱인토스 정책: window.confirm 금지) */}
+        {showUnlockConfirm && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            style={{
+              position: 'fixed', inset: 0, zIndex: 100,
+              background: 'rgba(10, 12, 22, 0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '20px', animation: 'fadeIn .2s ease both',
+            }}
+            onClick={() => setShowUnlockConfirm(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#fff', borderRadius: 16, maxWidth: 380, width: '100%',
+                padding: '24px 22px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+                animation: 'modalPop .25s cubic-bezier(.34,1.56,.64,1) both',
+              }}
+            >
+              <div style={{
+                fontFamily: "'Noto Serif KR', serif", fontSize: 17, fontWeight: 700,
+                color: '#1a1a1a', marginBottom: 8, letterSpacing: '-0.01em',
+              }}>
+                1운으로 잠금을 풀까요?
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: '#5C4A2E', marginBottom: 18, wordBreak: 'keep-all' }}>
+                일간 연동·오행 흐름·꿈의 경고·예고 시기·실천 처방
+                <strong style={{ color: '#1a1a1a' }}> 다섯 섹션</strong>이 즉시 열려요.<br />
+                현재 잔액 <b style={{ color: '#B8965A' }}>{getBalance()}운</b> → 차감 후 <b>{getBalance() - 1}운</b>
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowUnlockConfirm(false)}
+                  style={{
+                    flex: 1, height: 48, border: '1px solid #E5DFD0', background: '#fff',
+                    borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#5C4A2E', cursor: 'pointer',
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeepUnlock}
+                  style={{
+                    flex: 1.5, height: 48, border: 'none',
+                    background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
+                    color: '#1a1a1a', borderRadius: 100, fontSize: 14, fontWeight: 800,
+                    cursor: 'pointer', boxShadow: '0 4px 12px rgba(184,150,90,0.35)',
+                  }}
+                >
+                  1운으로 풀기
+                </button>
+              </div>
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes modalPop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+              `}} />
+            </div>
+          </div>
+        )}
+
+        {/* 잠금 해제 시각 효과 (사라랄) — 1.5초간 골드 burst overlay */}
+        {unlockBurst && (
+          <div
+            aria-hidden
+            style={{
+              position: 'fixed', inset: 0, zIndex: 99, pointerEvents: 'none',
+              background: 'radial-gradient(circle at center, rgba(232,217,184,0.25), transparent 70%)',
+              animation: 'burstFlash 1.5s ease-out both',
+            }}
+          >
+            <style dangerouslySetInnerHTML={{ __html: `
+              @keyframes burstFlash {
+                0% { opacity: 0; transform: scale(.8); }
+                30% { opacity: 1; transform: scale(1.05); }
+                100% { opacity: 0; transform: scale(1.2); }
+              }
+            `}} />
+          </div>
+        )}
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">
@@ -597,7 +896,8 @@ function ErrorView({ apiError, onBack }: { apiError: string; onBack: () => void 
 /* ══════════════════════════════════════════════════════════════════
  * 무료 결과 — 사주연동 12섹션 / 무연동 9섹션
  * ═════════════════════════════════════════════════════════════════ */
-function FreeResultView({
+// @ts-expect-error 2026-05-27 — DreamMockupView 로 대체 (legacy 보존, 향후 dead code sweep 대상)
+function _FreeResultView_legacy({
   result,
   profile,
   hasSaju,
@@ -1031,7 +1331,7 @@ function FreeResultView({
           title="꿈 패턴의 뿌리, 사주로 더 깊게"
           desc="오늘 꿈의 결을 사주 전체에서 풀어드립니다. 성격·대인·직업·재물·애정·건강까지."
           ctaLabel="사주 전체로"
-          costLabel="10운"
+          /* 2026-05-29 H1 — costLabel 제거 → FreeUpsellCard SSOT 기본값(세일가) 사용 */
           onTap={onFullReport}
         />
       </FadeIn>
@@ -1047,6 +1347,7 @@ function FreeResultView({
 /* ══════════════════════════════════════════════════════════════════
  * 심층 결과 (유료 1운 · Sonnet + 2차 리뷰)
  * ═════════════════════════════════════════════════════════════════ */
+// @ts-expect-error 블러잠금 SSOT 후 dead code (legacy 보존)
 function DeepResultView({
   result,
   profile,

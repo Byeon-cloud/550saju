@@ -11,7 +11,12 @@
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }],
+    "rewrites": [
+      { "source": "/api/saju-card-og.png", "function": "renderSajuCardOgImage" },
+      { "source": "/saju-card/**",         "function": "renderSajuCardOg" },
+      { "source": "/share/**",             "function": "renderShareOg" },
+      { "source": "**", "destination": "/index.html" }
+    ],
     "headers": [
       {
         "source": "index.html",

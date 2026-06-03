@@ -52,7 +52,7 @@ export async function generateDailyFortuneAnalysis(
   try {
     const msg = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 8192,
+      max_tokens: 5000,
       temperature: 0.7,
       system,
       messages: [{ role: 'user', content: user }],
@@ -67,7 +67,7 @@ export async function generateDailyFortuneAnalysis(
     const meta2: ParseJsonMeta = { repairUsed: false };
     const msg = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 8192,
+      max_tokens: 5000,
       temperature: 0.5,
       system,
       messages: [{ role: 'user', content: user }],

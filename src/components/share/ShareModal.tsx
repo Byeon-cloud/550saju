@@ -112,22 +112,29 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                   <p className="text-h1 text-white">{name}님의 사주</p>
                   {topScore && (
                     <div className="flex items-center justify-center gap-2 mt-3">
-                      <div className="px-3 py-1 rounded-full" style={{ background: 'rgba(201,169,110,0.15)' }}>
+                      <div className="px-3 py-1 rounded-full" style={{ background: 'rgba(184,150,90,0.15)' }}>
                         <span className="text-caption text-brand-gold-light font-bold">
                           {topScore.label} {topScore.score}점
                         </span>
                       </div>
                     </div>
                   )}
-                  <div className="mt-4 px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  {/* P2-1 · 블러 티저 프리뷰 — 자물쇠 + "잠금 해제 → 전체 보기" CTA */}
+                  <div className="mt-4 px-4 py-3 rounded-xl relative" style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <div className="space-y-1.5" style={{ filter: 'blur(4px)' }}>
                       <div className="h-2.5 w-3/4 mx-auto rounded bg-white/15" />
                       <div className="h-2.5 w-full rounded bg-white/10" />
                       <div className="h-2.5 w-2/3 mx-auto rounded bg-white/12" />
                     </div>
-                    <p className="text-[10px] text-white/40 mt-2" style={{ filter: 'none' }}>
-                      전체 결과는 사주500에서 확인하세요
-                    </p>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5" style={{ filter: 'none' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8D5A8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="4" y="11" width="16" height="10" rx="2" />
+                        <path d="M8 11V7a4 4 0 018 0v4" />
+                      </svg>
+                      <p className="text-[10px] font-bold" style={{ color: '#E8D5A8' }}>
+                        잠금 해제하고 전체 보기 →
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -139,9 +146,9 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                     {/* 앱인토스에서만 리워드 안내 */}
                     {inToss && canEarnShareReward() && (
                       <div className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl"
-                        style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.12)' }}>
+                        style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.12)' }}>
                         <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: 'linear-gradient(135deg, #C9A96E, #D4A843)' }}>
+                          style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
                           <span className="text-[8px] font-black text-white">運</span>
                         </div>
                         <p className="text-caption text-text-primary">
@@ -175,9 +182,9 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                       initial={{ scale: 0 }} animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                       className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                      style={{ background: 'rgba(201,169,110,0.1)' }}
+                      style={{ background: 'rgba(184,150,90,0.1)' }}
                     >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2.5" strokeLinecap="round">
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     </motion.div>

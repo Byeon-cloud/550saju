@@ -29,14 +29,17 @@ import { calculateSaju } from '@/services/saju/calculator';
 import { useSajuContext } from '@/contexts/SajuContext';
 import type { CalendarType, Gender, SajuInput } from '@/types/saju';
 import type { Relation } from '@/types/user';
+import { getPremiumPrice } from '@/constants/pricing';
 import {
-  saveReport,
   generateId,
   getProfiles,
   saveProfileDirect,
   spendBalance,
   setMyProfile,
   deleteReport,
+  findExistingOwnerProfile,
+  updateProfileRelation,
+  deleteProfile,
   type LocalReport,
 } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
@@ -84,18 +87,21 @@ const HOUR_OPTIONS: Array<{
   range: string;
   hour: number;
 }> = [
+  // 2026-06-02 시주 fix — hour = 각 시(時)의 '중앙' 클럭값. 진태양시 -32분 보정 후에도
+  //   선택한 시 안에 안착하도록 (예: 午 12:00 → 보정 11:28 → 午). 기존엔 시작값(午=11)이라
+  //   보정 시 직전 시(巳)로 밀려 "午 선택 → 巳 계산" 모순 발생. 子(=0)는 이미 중앙(자정)이라 유지.
   { code: '자', hanja: '子', range: '23:30 ~ 01:30', hour: 0 },
-  { code: '축', hanja: '丑', range: '01:30 ~ 03:30', hour: 1 },
-  { code: '인', hanja: '寅', range: '03:30 ~ 05:30', hour: 3 },
-  { code: '묘', hanja: '卯', range: '05:30 ~ 07:30', hour: 5 },
-  { code: '진', hanja: '辰', range: '07:30 ~ 09:30', hour: 7 },
-  { code: '사', hanja: '巳', range: '09:30 ~ 11:30', hour: 9 },
-  { code: '오', hanja: '午', range: '11:30 ~ 13:30', hour: 11 },
-  { code: '미', hanja: '未', range: '13:30 ~ 15:30', hour: 13 },
-  { code: '신', hanja: '申', range: '15:30 ~ 17:30', hour: 15 },
-  { code: '유', hanja: '酉', range: '17:30 ~ 19:30', hour: 17 },
-  { code: '술', hanja: '戌', range: '19:30 ~ 21:30', hour: 19 },
-  { code: '해', hanja: '亥', range: '21:30 ~ 23:30', hour: 21 },
+  { code: '축', hanja: '丑', range: '01:30 ~ 03:30', hour: 2 },
+  { code: '인', hanja: '寅', range: '03:30 ~ 05:30', hour: 4 },
+  { code: '묘', hanja: '卯', range: '05:30 ~ 07:30', hour: 6 },
+  { code: '진', hanja: '辰', range: '07:30 ~ 09:30', hour: 8 },
+  { code: '사', hanja: '巳', range: '09:30 ~ 11:30', hour: 10 },
+  { code: '오', hanja: '午', range: '11:30 ~ 13:30', hour: 12 },
+  { code: '미', hanja: '未', range: '13:30 ~ 15:30', hour: 14 },
+  { code: '신', hanja: '申', range: '15:30 ~ 17:30', hour: 16 },
+  { code: '유', hanja: '酉', range: '17:30 ~ 19:30', hour: 18 },
+  { code: '술', hanja: '戌', range: '19:30 ~ 21:30', hour: 20 },
+  { code: '해', hanja: '亥', range: '21:30 ~ 23:30', hour: 22 },
 ];
 
 const SHIJU_HOURS = HOUR_OPTIONS.map((o) => o.hour);
@@ -149,9 +155,9 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   home_body_premium: {
     hint: '종합 사주를 위해 정보를 입력해주세요',
     submitLabel: '종합 사주 시작하기 (10운)',
-    // 잔액 확인은 handleSubmit 의 별도 로직에서 처리 (10운 ≥ → /loading?type=premium, 부족 → /charge?need=10)
-    // routeAfterSave 는 handleSubmit 에서 사용하지 않고 SajuContext set 후 분기
-    routeAfterSave: () => '/loading?type=premium',
+    // 잔액 확인은 handleSubmit 의 별도 로직에서 처리. home_body_premium 분기가 먼저 처리하므로 이 경로는 실사용 X.
+    // 안전 fallback: Phase 4 (2026-05-27) 결과 페이지 직진 패턴 유지.
+    routeAfterSave: (id) => `/result/${id}?fresh=1&type=premium`,
   },
   home_body_topic: {
     hint: '주제별 심층 풀이에 필요한 사주 정보예요',
@@ -280,6 +286,14 @@ export function InputPage() {
       ? ((initialProfile!.input.relation as Relation) || '본인')
       : '본인',
   );
+  // 2026-05-28 — '기타' 선택 시 직접 입력 받기 (CompatibilityPage 패턴 동일)
+  const [customRelation, setCustomRelation] = useState<string>(() => {
+    if (!initFromProfile) return '';
+    const r = initialProfile!.input.relation;
+    // 저장된 relation 이 표준 5종 외 string 이면 customRelation 으로 복원
+    const STANDARD: Relation[] = ['본인', '친구', '가족', '연인', '기타'];
+    return (r && !STANDARD.includes(r as Relation)) ? r : '';
+  });
   const [gender, setGender] = useState<Gender | null>(
     initFromProfile ? initialProfile!.input.gender : null,
   );
@@ -305,7 +319,9 @@ export function InputPage() {
     if (!initFromProfile) return '';
     const i = initialProfile!.input;
     if (!i.hasBirthTime || i.birthHour === undefined) return 'unknown';
-    const o = HOUR_OPTIONS.find((o) => o.hour === i.birthHour);
+    // 2026-06-02 시주 fix 호환 — 신규는 짝수 시각 정확 매치, 구 프로필(홀수 시작값, 예 午=11)은 +1 로 매핑.
+    const o = HOUR_OPTIONS.find((x) => x.hour === i.birthHour)
+      ?? HOUR_OPTIONS.find((x) => x.hour === (i.birthHour as number) + 1);
     return o ? o.code : 'unknown';
   });
 
@@ -504,6 +520,10 @@ export function InputPage() {
   // ── 제출
   const isSubmittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 2026-05-28 PM — 본인 중복 modal state
+  const [ownerDupModal, setOwnerDupModal] = useState<null | { existingName: string; existingId: string }>(null);
+  // 본인 중복 처리 후 실제 저장 재진입 hook (resolveAction 호출 시 실행)
+  const pendingSaveRef = useRef<null | (() => Promise<void>)>(null);
 
   function buildSajuInput(): SajuInput | null {
     const m = birthDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
@@ -513,9 +533,13 @@ export function InputPage() {
     const bd = Number(m[3]);
     const calType: CalendarType =
       calendarSimple === 'lunar' && isLeapMonth ? 'lunar_leap' : calendarSimple;
+    // 2026-05-28 — '기타' 선택 + customRelation 입력 시 사용자 입력값 우선 저장
+    const effectiveRelation = (relation === '기타' && customRelation.trim().length > 0)
+      ? (customRelation.trim() as Relation)
+      : relation;
     const input: SajuInput = {
       name: name.trim(),
-      relation,
+      relation: effectiveRelation,
       birthYear: by,
       birthMonth: bm,
       birthDay: bd,
@@ -543,6 +567,33 @@ export function InputPage() {
     });
     if (!isValid) return;
 
+    // 2026-05-28 PM — 본인 중복 가드. relation === '본인' 이고 기존 본인이 있고, 수정 모드 X 일 때만.
+    //   확인: 기존 본인 != 현재 입력자 (이름+생일 일치는 같은 사람으로 본다 → 그냥 진행).
+    const tentativeInput = buildSajuInput();
+    const isOwnerNew = tentativeInput && (!tentativeInput.relation || tentativeInput.relation === '본인');
+    if (isOwnerNew && !editingProfileId) {
+      const existing = findExistingOwnerProfile();
+      const sameKey =
+        existing &&
+        tentativeInput &&
+        existing.name === tentativeInput.name &&
+        existing.input.birthYear === tentativeInput.birthYear &&
+        existing.input.birthMonth === tentativeInput.birthMonth &&
+        existing.input.birthDay === tentativeInput.birthDay;
+      if (existing && !sameKey) {
+        // Modal 띄움 + pendingSaveRef 에 실제 save 로직 보관
+        pendingSaveRef.current = () => doSave({ replaceOwnerId: null });
+        setOwnerDupModal({ existingName: existing.name, existingId: existing.id });
+        return;
+      }
+    }
+
+    await doSave({ replaceOwnerId: null });
+  }
+
+  /** 실제 사주 저장 + 라우팅 — handleSubmit 의 본문을 추출.
+   *  options.replaceOwnerId: 기존 본인 사주를 삭제하고 새 사주로 교체할 때 사용. */
+  async function doSave(options: { replaceOwnerId: string | null }) {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
@@ -550,6 +601,13 @@ export function InputPage() {
       const sajuInput = buildSajuInput();
       if (!sajuInput) throw new Error('입력 변환 실패');
       const data = calculateSaju(sajuInput);
+
+      // 본인 중복 교체 옵션 — 기존 본인 프로필 삭제
+      if (options.replaceOwnerId) {
+        try {
+          deleteProfile(options.replaceOwnerId);
+        } catch { /* noop */ }
+      }
       setInput(sajuInput);
       setSajuData(data);
 
@@ -559,23 +617,16 @@ export function InputPage() {
         setEditingProfileId(null);
       }
 
+      // 2026-05-07 fix — 사주 등록만으로 보관함에 "종합사주 무료" 항목이 자동 생성되던 문제 수정.
+      // 등록은 프로필만 저장 (saveProfileDirect). reports 는 실제 분석/결제 시점에만 추가.
       const reportId = generateId();
-      const report: LocalReport = {
+      saveProfileDirect({
         id: reportId,
         name: sajuInput.name || '이름 없음',
         input: sajuInput,
         sajuData: data,
-        createdAt: new Date().toISOString(),
-        type: 'free',
-      };
-      saveReport(report);
-      saveProfileDirect({
-        id: reportId,
-        name: report.name,
-        input: sajuInput,
-        sajuData: data,
         relation: sajuInput.relation,
-        createdAt: report.createdAt,
+        createdAt: new Date().toISOString(),
       });
 
       // 본인 사주면 myProfile 갱신
@@ -602,18 +653,25 @@ export function InputPage() {
       }
 
       // 진입 경로별 라우팅 (스펙 §10-3)
-      // 종합 사주 (10운) 특별 분기: routeAfterSave='/loading?type=premium' 일 때 잔액 검사 + 차감
+      // 종합 사주 (10운) 특별 분기: 잔액 검사 + 차감 + 결과 페이지 직진 (Phase 4 · 2026-05-27)
+      // 구: /loading?type=premium (별도 로딩화면 30-60s 대기 후 결과로 이동)
+      // 신: /result/{newId}?fresh=1&type=premium → ResultPage 가 직접 SSE 구동 + 점진 렌더
+      //     (오늘의 운세 패턴 — 결과 페이지가 곧 로딩화면이고, 콘텐츠가 차오름)
       if (fromRaw === 'home_body_premium') {
-        if (!spendBalance(10)) {
-          toast.show('10운이 부족해요. 충전 페이지로 이동합니다', 'warning');
-          navigate('/charge?need=10', {
-            state: { from: 'input', message: '종합 사주에 10운이 필요해요' },
+        // 2026-05-28 PM — SSOT 가격 (10운 정가, 5운 세일 ~2026-06-15)
+        const premiumPricing = getPremiumPrice();
+        const premiumCost = premiumPricing.actualPrice;
+        if (!spendBalance(premiumCost)) {
+          toast.show(`${premiumCost}운이 부족해요. 충전 페이지로 이동합니다`, 'warning');
+          navigate(`/charge?need=${premiumCost}`, {
+            state: { from: 'input', message: `종합 사주에 ${premiumCost}운이 필요해요` },
           });
           return;
         }
         triggerPromotionEvent(PROMO_EVENTS.FIRST_SAJU);
-        toast.show('10운 차감 — 종합 사주 시작', 'success');
-        navigate('/loading?type=premium');
+        toast.show(`${premiumCost}운 차감 — 종합 사주 시작`, 'success');
+        const newId = generateId();
+        navigate(`/result/${newId}?fresh=1&type=premium`, { replace: true });
         return;
       }
 
@@ -624,16 +682,11 @@ export function InputPage() {
         return;
       }
 
-      // 기본 / result_other → 1운 차감 + /loading
-      if (!spendBalance(1)) {
-        toast.show('잔액이 부족해요. 충전이 필요해요', 'warning');
-        navigate('/charge?need=1', {
-          state: { from: 'input', message: '종합 사주에 1운이 필요해요' },
-        });
-        return;
-      }
-      triggerPromotionEvent(PROMO_EVENTS.FIRST_SAJU);
-      navigate('/loading');
+      // 2026-05-07 fix — 1운 결과 페이지 컨셉이 처음부터 기획에 없었음.
+      // 출시 모델: 무료 (오늘운세/꿈) + 10운 종합사주 + 10주제(각 1운) + 꿈 심층(1운).
+      // 사주 등록만 한 경우 → 사주 카드(만세력)로 (결제 없이).
+      toast.show('사주가 저장됐어요', 'success');
+      navigate(`/saju-card/${reportId}`, { replace: false });
     } catch (e: any) {
       console.error('[InputPage submit]', e);
       toast.show('저장에 실패했어요. 다시 시도해주세요', 'warning');
@@ -676,6 +729,8 @@ export function InputPage() {
           onBlur={() => setTouched((t) => ({ ...t, name: true }))}
           relation={relation}
           onRelationChange={setRelation}
+          customRelation={customRelation}
+          onCustomRelationChange={setCustomRelation}
           error={touched.name ? errors.name : undefined}
         />
 
@@ -771,6 +826,62 @@ export function InputPage() {
           </div>
         </div>
       </Modal>
+
+      {/* 2026-05-28 PM — 본인 사주 중복 가드 Modal.
+          user 이슈: 같은 사람이 본인 사주를 여러 개 등록할 수 있어 운 잔액·결제 내역이 헷갈림.
+          해결: 명시적 confirm 으로 [교체] / [다른 관계로 변경] / [취소] 선택 강제. */}
+      <Modal
+        isOpen={!!ownerDupModal}
+        onClose={() => { setOwnerDupModal(null); pendingSaveRef.current = null; }}
+        title="본인 사주를 바꾸시는 건가요?"
+      >
+        {ownerDupModal && (
+          <div className="space-y-4">
+            <p className="text-body-sm text-text-muted leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+              이미 본인 사주로 <strong style={{ color: '#1A1A1A' }}>{ownerDupModal.existingName}</strong> 님이 저장되어 있어요.
+              <br />
+              본인 사주는 한 명만 가질 수 있습니다. <strong style={{ color: '#1A1A1A' }}>운 잔액·결제 내역은 그대로 유지</strong>됩니다.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button
+                size="lg"
+                variant="gold"
+                fullWidth
+                onClick={async () => {
+                  const existingId = ownerDupModal.existingId;
+                  setOwnerDupModal(null);
+                  await doSave({ replaceOwnerId: existingId });
+                  pendingSaveRef.current = null;
+                }}
+              >
+                기존 {ownerDupModal.existingName} 사주 교체
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                fullWidth
+                onClick={async () => {
+                  const existingId = ownerDupModal.existingId;
+                  try { updateProfileRelation(existingId, '가족'); } catch { /* noop */ }
+                  setOwnerDupModal(null);
+                  await doSave({ replaceOwnerId: null });
+                  pendingSaveRef.current = null;
+                }}
+              >
+                {ownerDupModal.existingName} 님을 가족으로 옮기기
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                fullWidth
+                onClick={() => { setOwnerDupModal(null); pendingSaveRef.current = null; }}
+              >
+                취소
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -825,6 +936,8 @@ function NameField({
   onBlur,
   relation,
   onRelationChange,
+  customRelation,
+  onCustomRelationChange,
   error,
 }: {
   value: string;
@@ -832,6 +945,8 @@ function NameField({
   onBlur: () => void;
   relation: Relation;
   onRelationChange: (r: Relation) => void;
+  customRelation?: string;
+  onCustomRelationChange?: (v: string) => void;
   error?: string;
 }) {
   return (
@@ -923,6 +1038,29 @@ function NameField({
           );
         })}
       </div>
+      {/* 2026-05-28 — '기타/직접입력' 선택 시 자유 입력 칸 노출 (CompatibilityPage 패턴 동일) */}
+      {relation === '기타' && onCustomRelationChange && (
+        <input
+          type="text"
+          value={customRelation || ''}
+          onChange={(e) => onCustomRelationChange(e.target.value)}
+          placeholder="예: 동료, 선배, 지인…"
+          maxLength={20}
+          autoComplete="off"
+          style={{
+            width: '100%',
+            marginTop: 10,
+            height: 44,
+            background: C.surface,
+            border: `1px solid ${C.line}`,
+            borderRadius: 10,
+            padding: '0 14px',
+            fontSize: 14,
+            color: C.ink,
+            outline: 'none',
+          }}
+        />
+      )}
     </div>
   );
 }

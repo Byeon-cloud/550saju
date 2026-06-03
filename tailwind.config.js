@@ -6,14 +6,15 @@ export default {
       colors: {
         // === Deep Navy + Gold Brand ===
         brand: {
-          primary: '#C9A96E',      // 골드 (CTA, 악센트)
+          // 2026-06-02 QA — SSOT 정렬 (globals.css 와 동기화). 구 #C9A96E/#D4A843/#B8963F 머스타드 금지색 박멸.
+          primary: '#B8965A',      // 골드 (CTA, 악센트) — SSOT --gold
           navy: '#1B2A4A',         // 딥 네이비 (주 배경/텍스트)
           'navy-light': '#2D4470', // 라이트 네이비
           'navy-deep': '#0F1D35',  // 딥퍼 네이비
-          gold: '#C9A96E',         // 메인 골드
-          'gold-light': '#E8D5A8', // 라이트 골드
-          'gold-vivid': '#D4A843', // 선명 골드
-          hover: '#B8963F',        // 골드 호버
+          gold: '#B8965A',         // 메인 골드 — SSOT --gold
+          'gold-light': '#E8D9B8', // 라이트 골드 — SSOT --brand-gold-light
+          'gold-vivid': '#8C6D3D', // 딥 골드 (호버/프레스) — SSOT --gold-deep
+          hover: '#8C6D3D',        // 골드 호버 — SSOT --gold-deep
           muted: '#A8B1C1',        // 뮤트
         },
         bg: {
@@ -31,7 +32,7 @@ export default {
         border: {
           DEFAULT: '#E2E5EC',
           light: '#EEF0F4',
-          focus: '#C9A96E',
+          focus: '#B8965A',
         },
         func: {
           success: '#2E7D32',
@@ -49,7 +50,7 @@ export default {
         },
         gold: {
           bg: '#FDF8EE',
-          card: '#C9A96E',
+          card: '#B8965A',
         },
       },
       fontFamily: {
