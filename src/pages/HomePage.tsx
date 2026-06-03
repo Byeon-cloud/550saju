@@ -18,6 +18,8 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
+import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { HOME_REVIEWS } from '@/constants/reviews';
 import { listTopics } from '@/constants/topics'; // 10주제 SSOT (id/한자/컬러/딱지/path)
@@ -64,6 +66,10 @@ function getTodayStr(): string {
 
 export function HomePage() {
   usePageTitle('사주500 · 무료로 시작');
+  useSeoMeta({
+    description:
+      '600년 명리학 6대 원전 기반 AI 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세·꿈해몽 무료, 10가지 주제별 분석과 종합사주·궁합.',
+  });
   const navigate = useNavigate();
   const { name, hasProfile } = useActiveProfile();
   const todayHint = useTodayHeadline();
@@ -720,6 +726,9 @@ export function HomePage() {
           © 2026 사주500
         </div>
       </div>
+
+      {/* 사업자 신원정보 — 전자상거래법 §10 초기화면 표시 (앱인토스 시 LegalFooter 내부에서 null) */}
+      <LegalFooter />
 
       {/* Review scroll + 가로 스크롤바 숨김 (prefers-reduced-motion 존중) */}
       <style>{`

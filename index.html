@@ -2,17 +2,25 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="사주 500 — 600년 명리학 원전 기반, 500원으로 만나는 깊이 있는 사주 풀이" />
+    <meta name="keywords" content="사주, AI 사주, 무료 사주, 사주 풀이, 무료 운세, 오늘의 운세, 꿈해몽, 궁합, 사주팔자, 명리학" />
+    <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#F4F5F8" />
     <!-- 라이트모드 고정 — 앱인토스·다크모드 자동전환 방지 (AC 0.6·0.7) -->
     <meta name="color-scheme" content="light only" />
     <meta name="supported-color-schemes" content="light" />
 
+    <!-- 정규 URL -->
+    <!-- TODO(준기): 새 도메인으로 교체 -->
+    <link rel="canonical" href="https://appintoss-saju.web.app/" />
+
     <!-- Open Graph -->
     <meta property="og:title" content="사주 500 — 정통 명리학 사주 풀이" />
     <meta property="og:description" content="500원에 12가지 심층 분석. 적천수, 자평진전 등 정통 원전 기반." />
     <meta property="og:type" content="website" />
+    <!-- TODO(준기): 새 도메인으로 교체 -->
+    <meta property="og:url" content="https://appintoss-saju.web.app/" />
     <meta property="og:image" content="https://appintoss-saju.web.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="600" />
@@ -25,9 +33,82 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet" />
     <title>사주 500 — 정통 명리학 사주 풀이, 500원</title>
+
+    <!-- 구조화 데이터 (JSON-LD) — 검색엔진 색인용 -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "주라벨 주식회사",
+      "url": "https://appintoss-saju.web.app/",
+      "logo": "https://appintoss-saju.web.app/logo.png",
+      "email": "info@juulabel.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "하신중앙로 324",
+        "addressLocality": "사하구",
+        "addressRegion": "부산광역시",
+        "addressCountry": "KR"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "사주500",
+      "url": "https://appintoss-saju.web.app/",
+      "description": "600년 명리학 6대 원전 기반 AI 사주 풀이 서비스. 500원으로 만나는 깊이 있는 사주, 오늘의 운세·꿈해몽 무료, 10가지 주제별 심층 분석과 종합사주·궁합.",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "ko",
+      "offers": {
+        "@type": "Offer",
+        "price": "500",
+        "priceCurrency": "KRW"
+      }
+    }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      #root 안의 정적 SEO 콘텐츠 — 크롤러(특히 네이버)가 JS 실행 없이 읽는 fallback.
+      React(createRoot)가 마운트되면 #root 자식을 통째로 교체하므로 실제 유저에게는 보이지 않음.
+      (hydrate 아님 → 하이드레이션 충돌 없음.) 앱 UI/동작에는 영향 0.
+    -->
+    <div id="root">
+      <div style="max-width:520px;margin:0 auto;padding:24px 16px;font-family:Pretendard,sans-serif;color:#1A1A1A;line-height:1.7;">
+        <h1 style="font-size:22px;font-weight:800;color:#1A1A1A;">사주 500 — AI 사주 풀이</h1>
+        <p>
+          사주 500은 600년 전통의 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회)을 기반으로 한
+          AI 사주 풀이 서비스입니다. <strong style="color:#B8965A;">500원</strong>으로 깊이 있는 사주 풀이를 만나보세요.
+          오늘의 운세와 꿈해몽은 무료이며, 연애·재물·직업 등 10가지 주제별 심층 분석, 종합사주, 궁합까지 한 곳에서 제공합니다.
+        </p>
+        <h2 style="font-size:17px;font-weight:700;margin-top:20px;">주요 기능</h2>
+        <ul style="padding-left:18px;">
+          <li>무료 오늘의 운세 — 매일 보는 나의 운세</li>
+          <li>무료 꿈해몽 — 꿈의 의미를 명리학으로 풀이</li>
+          <li>500원 사주 리포트 — 성격·대인·직업·재물·애정·건강 10섹션</li>
+          <li>10가지 주제별 심층 분석 — 연애·재회·결혼·재물·합격이직·사업·건강·이사이동·학업·직업</li>
+          <li>종합사주(프리미엄) — 10개 운으로 보는 인생 전체 풀이</li>
+          <li>궁합 — 두 사람의 사주를 정통 명리학으로 비교</li>
+        </ul>
+        <h2 style="font-size:17px;font-weight:700;margin-top:20px;">바로가기</h2>
+        <ul style="padding-left:18px;">
+          <li><a href="/daily" style="color:#8C6D3D;">오늘의 운세</a></li>
+          <li><a href="/dream" style="color:#8C6D3D;">꿈해몽</a></li>
+          <li><a href="/premium" style="color:#8C6D3D;">종합사주</a></li>
+          <li><a href="/input" style="color:#8C6D3D;">사주 입력하고 풀이 받기</a></li>
+          <li><a href="/topic/love" style="color:#8C6D3D;">연애운</a></li>
+          <li><a href="/topic/wealth" style="color:#8C6D3D;">재물운</a></li>
+          <li><a href="/topic/career" style="color:#8C6D3D;">직업운</a></li>
+          <li><a href="/topic/exam" style="color:#8C6D3D;">합격·이직운</a></li>
+        </ul>
+        <p style="font-size:11px;color:#7A7269;margin-top:24px;">
+          주라벨 주식회사 · 대표 변준기 · 사업자등록번호 228-88-03113
+        </p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

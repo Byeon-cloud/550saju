@@ -23,6 +23,7 @@ import {
   type TopicKey,
 } from '@/components/brand/PictogramRegistry';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { useToast } from '@/components/common/Toast';
 import {
   spendBalance,
@@ -141,6 +142,9 @@ type Phase = 'category' | 'detail' | 'result' | 'deepLoading' | 'deepResult';
 
 export function DreamPage() {
   usePageTitle('꿈해몽');
+  useSeoMeta({
+    description: '꿈의 의미를 명리학으로 무료로 풀이해드려요. 길몽·흉몽 해석부터 오늘의 조언까지, 사주 500 꿈해몽.',
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();

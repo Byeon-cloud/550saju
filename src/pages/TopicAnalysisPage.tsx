@@ -7,6 +7,7 @@ import { Modal } from '@/components/common/Modal';
 import { getProfiles, saveReport, generateId, spendBalance, refundBalance, getBalance, getReport, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG, JIJI_EUMYANG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 // 2026-05-29 — 주제분석 결과도 출석 이벤트(3일 연속·이번주) 카운트에 포함 (기존 누락 fix).
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { generateTopicAnalysis } from '@/services/ai/reportGenerator';
@@ -3158,6 +3159,9 @@ export function TopicAnalysisPage() {
   const location = useLocation();
   // toast 제거 — F5 (AI 실패 inline error 카드) 로 대체. 향후 다른 알림 필요 시 useToast 재추가.
   usePageTitle(topic?.label || '심층분석');
+  useSeoMeta({
+    description: `${topic?.label || '주제별'} 사주 심층 분석 — 정통 명리학으로 풀어내는 나의 ${topic?.label || '운세'}. 사주 500 주제별 분석.`,
+  });
 
   // 보관함에서 저장된 결과 또는 사주리포트에서 baseScore를 넘겨받은 경우
   const rawNavState = location.state as { savedResult?: any; savedReport?: LocalReport; baseScore?: number } | undefined;

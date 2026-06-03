@@ -31,6 +31,7 @@ import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { useToast } from '@/components/common/Toast'; // 2026-05-27 — 공유 리워드 토스트용 재추가
 import {
   getProfiles,
@@ -76,6 +77,9 @@ interface DateInfo {
  * ═════════════════════════════════════════════════════════════════ */
 export function DailyFortunePage() {
   usePageTitle('오늘의 운세');
+  useSeoMeta({
+    description: '오늘의 운세를 명리학으로 무료로 풀이해드려요. 매일 보는 나의 운세, 사주 500.',
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
