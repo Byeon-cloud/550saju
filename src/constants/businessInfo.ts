@@ -29,20 +29,14 @@ export interface BusinessInfo {
 }
 
 export const BUSINESS_INFO: BusinessInfo = {
-  // TODO(준기): 통신판매업 신고 후 실제 값 입력
-  companyName: '(주)○○○',
-  // TODO(준기): 통신판매업 신고 후 실제 값 입력
-  ceoName: '○○○',
-  // TODO(준기): 통신판매업 신고 후 실제 값 입력
-  businessRegistrationNumber: '000-00-00000',
-  // TODO(준기): 통신판매업 신고 후 실제 값 입력
-  mailOrderSalesNumber: '제0000-지역-00000호',
-  // TODO(준기): 통신판매업 신고 후 실제 값 입력
-  address: '○○도 ○○시 ○○로 000, 0층',
-  // TODO(준기): 통신판매업 신고 후 실제 값 입력
-  phone: '000-0000-0000',
+  companyName: '주라벨 주식회사',
+  ceoName: '변준기',
+  businessRegistrationNumber: '228-88-03113',
+  // TODO(준기): 통신판매업 신고 완료 후 발급된 신고번호로 교체
+  mailOrderSalesNumber: '신고 준비 중',
+  address: '부산광역시 사하구 하신중앙로 324, 2층 6호실',
+  phone: '010-6427-9803',
   // 기존 운영 메일 (MyPage CONTACT_EMAIL 과 동일 SSOT)
   email: 'info@juulabel.com',
-  // TODO(준기): 통신판매업 신고 후 실제 값 입력 (예: Google Firebase Hosting)
   hostingProvider: 'Google Firebase Hosting (Google LLC)',
 };
