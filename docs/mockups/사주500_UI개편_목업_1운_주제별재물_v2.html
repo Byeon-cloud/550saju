@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사주500 — 1운 주제별 재물운 v2 (사주연계+출처+소비+말년)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+  html, body { background: #0a0a0a; font-family: 'Pretendard', sans-serif; color: #1a1a1a; letter-spacing: -0.01em; }
+  .page { max-width: 480px; margin: 0 auto; background: #F8F5EE; min-height: 100vh; box-shadow: 0 0 80px rgba(0,0,0,.4); }
+
+  /* Header */
+  .hd { background: linear-gradient(135deg, #B8965A 0%, #7F6B4E 60%, #5C4A2E 100%); color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden; }
+  .hd::before { content: '財'; position: absolute; right: -18px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 220px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
+  .hd .top { display: flex; gap: 10px; font-size: 12px; opacity: .9; flex-wrap: wrap; }
+  .hd .badge { background: rgba(255,255,255,.2); padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .hd .tier { background: rgba(255,255,255,.12); padding: 3px 10px; border-radius: 100px; font-size: 10px; }
+  .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; }
+  .hd .sub { font-size: 12px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
+
+  /* 내 사주팔자 미니 카드 — 8글자 per-오행 색 (재물 키 글자 강조) */
+  .saju-mini { margin: 16px 20px 0; background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.06); border: 1px solid #E5DFD0; }
+  .saju-mini .ttl { font-size: 10px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .saju-mini .ttl .hint { color: #5C4A2E; font-weight: 500; letter-spacing: 0; }
+  .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+  .saju-cell { background: #F8F5EE; border-radius: 6px; padding: 8px 2px; border: 1px solid transparent; position: relative; }
+  .saju-cell.ilju { background: linear-gradient(180deg, rgba(46,125,50,.1), rgba(46,125,50,.04)); border-color: rgba(46,125,50,.4); }
+  .saju-cell.jaeseong::after {
+    content: '財'; position: absolute; top: -6px; right: -2px;
+    background: #B8965A; color: #fff;
+    font-family: 'Noto Serif KR', serif; font-size: 9px; font-weight: 700;
+    width: 14px; height: 14px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .saju-cell .lab { font-size: 8.5px; color: #7F6B4E; }
+  .saju-cell .gan { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; line-height: 1.1; margin-top: 2px; }
+  .saju-cell .ji { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 600; color: #5C4A2E; line-height: 1.1; margin-top: 2px; }
+  .saju-cell .ten { font-size: 8.5px; color: #B8965A; margin-top: 2px; font-weight: 600; }
+  .gan.mok, .ji.mok { color: #2e7d32; }
+  .gan.hwa, .ji.hwa { color: #c62828; }
+  .gan.to,  .ji.to  { color: #7F6B4E; }
+  .gan.geum,.ji.geum{ color: #757575; }
+  .gan.su,  .ji.su  { color: #1565c0; }
+
+  /* 재물 지수 카드 */
+  .score-card { margin: 12px 20px 0; background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,.06); display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: center; }
+  .score-card .ring { width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(#B8965A 0 72%, #E5DFD0 72% 100%); display: flex; align-items: center; justify-content: center; position: relative; }
+  .score-card .ring::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: #fff; }
+  .score-card .ring .num { position: relative; z-index: 1; font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 700; color: #B8965A; }
+  .score-card .ring .num small { font-size: 12px; color: #7F6B4E; font-weight: 400; margin-left: 2px; }
+  .score-card .txt .ttl { font-size: 11px; color: #7F6B4E; letter-spacing: 0.1em; font-weight: 600; }
+  .score-card .txt .body { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-top: 4px; line-height: 1.5; }
+  .score-card .txt .note { font-size: 11.5px; color: #5C4A2E; margin-top: 6px; line-height: 1.55; }
+
+  /* 사주→재물지수 연계 카드 (NEW) */
+  .link-card {
+    margin: 12px 20px 0; background: linear-gradient(135deg, rgba(184,148,31,.07), rgba(46,125,50,.04));
+    border: 1px solid rgba(184,148,31,.25); border-radius: 12px; padding: 14px;
+  }
+  .link-card .row { display: grid; grid-template-columns: auto auto auto auto auto; gap: 8px; align-items: center; font-size: 11.5px; color: #5C4A2E; line-height: 1.5; }
+  .link-card .pill { background: #fff; border: 1px solid #E5DFD0; border-radius: 100px; padding: 4px 10px; font-weight: 600; font-family: 'Noto Serif KR', serif; }
+  .link-card .pill.gan { color: #2e7d32; }
+  .link-card .pill.ten { color: #B8965A; }
+  .link-card .pill.score { color: #B8965A; font-size: 13px; }
+  .link-card .arrow { color: #B8965A; font-size: 12px; }
+  .link-card .desc { font-size: 12px; color: #2a2520; margin-top: 8px; line-height: 1.65; word-break: keep-all; }
+  .link-card .desc strong { color: #1a1a1a; font-weight: 600; }
+
+  .body { padding: 20px 20px 0; }
+  .section { margin-top: 28px; }
+  .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #B8965A; letter-spacing: 0.2em; margin-bottom: 6px; }
+  .sec-title { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; color: #1a1a1a; }
+  .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
+  .sec-sub { font-size: 12px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
+  .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 12px 0 0; word-break: keep-all; }
+  .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.3) 60%); padding: 0 2px; color: #1a1a1a; }
+  .body p .han { font-family: 'Noto Serif KR', serif; color: #5C4A2E; font-size: 13px; }
+
+  /* 재성 분포 차트 */
+  .chart-card { background: #fff; border-radius: 12px; padding: 14px; border: 1px solid #E5DFD0; margin: 14px 0 0; }
+  .chart-card .ttl { font-size: 11px; color: #7F6B4E; margin-bottom: 10px; font-weight: 600; letter-spacing: 0.1em; }
+  .jb-row { display: grid; grid-template-columns: 80px 1fr 28px; gap: 10px; margin-bottom: 8px; align-items: center; font-size: 12px; }
+  .jb-row .nm { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 600; }
+  .jb-row .nm.a { color: #B8965A; } .jb-row .nm.b { color: #7F6B4E; }
+  .jb-row .trk { background: #E5DFD0; height: 7px; border-radius: 100px; }
+  .jb-row .fi  { height: 100%; border-radius: 100px; }
+  .jb-row .fi.a { background: #B8965A; } .jb-row .fi.b { background: #7F6B4E; }
+  .jb-row .vl { text-align: right; color: #7F6B4E; font-feature-settings: 'tnum'; }
+
+  /* 돈 출처 4분면 도넛 (NEW) */
+  .source-grid { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; margin-top: 14px; }
+  .source-grid .donut {
+    width: 110px; height: 110px; border-radius: 50%;
+    background: conic-gradient(
+      #B8965A 0% 50%,    /* 본업 */
+      #E8D9B8 50% 75%,   /* 사이드 */
+      #5C4A2E 75% 90%,   /* 관계 */
+      #E5DFD0 90% 100%   /* 투자 */
+    );
+    position: relative;
+  }
+  .source-grid .donut::after {
+    content: '돈\A 출처'; white-space: pre;
+    position: absolute; inset: 22%; background: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; color: #5C4A2E; font-weight: 600; text-align: center; line-height: 1.3;
+  }
+  .source-legend { display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: #2a2520; }
+  .source-legend .li { display: flex; align-items: center; gap: 6px; }
+  .source-legend .sw { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
+  .source-legend .nm { font-family: 'Noto Serif KR', serif; font-weight: 600; }
+  .source-legend .pct { color: #7F6B4E; font-feature-settings: 'tnum'; margin-left: auto; font-weight: 600; }
+
+  /* 소비력 게이지 (NEW) */
+  .spend-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;
+  }
+  .gauge-card {
+    background: #fff; border-radius: 12px; border: 1px solid #E5DFD0;
+    padding: 14px 12px; text-align: center;
+  }
+  .gauge-card .lab { font-size: 10.5px; color: #7F6B4E; letter-spacing: 0.08em; font-weight: 600; }
+  .gauge-card .gauge { width: 100%; height: 50px; margin-top: 10px; position: relative; }
+  .gauge-card .gauge svg { width: 100%; height: 100%; }
+  .gauge-card .lvl { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: #1a1a1a; margin-top: 8px; }
+  .gauge-card .lvl.high { color: #c62828; }
+  .gauge-card .lvl.mid { color: #B8965A; }
+  .gauge-card .lvl.low { color: #2e7d32; }
+  .gauge-card .ds { font-size: 11px; color: #5C4A2E; margin-top: 4px; line-height: 1.5; }
+
+  /* 12개월 타임라인 */
+  .month-tl { background: #fff; border-radius: 12px; padding: 14px; border: 1px solid #E5DFD0; margin: 14px 0 0; }
+  .month-tl .ttl { font-size: 11px; color: #7F6B4E; margin-bottom: 10px; font-weight: 600; letter-spacing: 0.1em; }
+  .mg { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; }
+  .mc { aspect-ratio: 1; background: #E5DFD0; border-radius: 4px; position: relative; }
+  .mc .m { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #7F6B4E; font-weight: 600; }
+  .mc.high { background: #B8965A; } .mc.high .m { color: #fff; }
+  .mc.mid { background: #E8D9B8; opacity: .7; }
+  .mc.low { background: rgba(198,40,40,.18); }
+  .mc.low .m { color: #c62828; }
+  .mc.now { outline: 2px solid #1a1a1a; outline-offset: 2px; }
+  .month-tl .legend { font-size: 10px; color: #5C4A2E; margin-top: 8px; display: flex; gap: 10px; }
+  .month-tl .legend .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+
+  /* 대운 60년 막대 (NEW) */
+  .daewoon-card { background: #fff; border-radius: 12px; padding: 14px; border: 1px solid #E5DFD0; margin: 14px 0 0; }
+  .daewoon-card .ttl { font-size: 11px; color: #7F6B4E; margin-bottom: 12px; font-weight: 600; letter-spacing: 0.1em; }
+  .dw-bars { display: flex; align-items: flex-end; gap: 6px; height: 110px; padding: 0 4px; }
+  .dw-bar { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .dw-bar .fill {
+    width: 100%; background: linear-gradient(180deg, #E8D9B8, #B8965A); border-radius: 4px 4px 0 0;
+    position: relative;
+  }
+  .dw-bar.now .fill { background: linear-gradient(180deg, #c62828, #8b1a1a); }
+  .dw-bar.peak .fill { background: linear-gradient(180deg, #E8D9B8, #7F6B4E); }
+  .dw-bar .fill .v {
+    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    font-family: 'Noto Serif KR', serif; font-size: 11px; color: #B8965A; font-weight: 700;
+  }
+  .dw-bar.now .fill .v { color: #c62828; }
+  .dw-bar .age { font-size: 9.5px; color: #5C4A2E; margin-top: 6px; font-feature-settings: 'tnum'; font-weight: 600; }
+  .dw-bar .key { font-family: 'Noto Serif KR', serif; font-size: 9.5px; color: #7F6B4E; margin-top: 1px; }
+  .dw-now-tag { font-size: 10px; color: #c62828; text-align: center; margin-top: 6px; font-weight: 600; }
+
+  /* 사람·관계 다이어그램 (NEW) */
+  .relflow {
+    background: #fff; border-radius: 12px; padding: 14px; border: 1px solid #E5DFD0; margin: 14px 0 0;
+    display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr; gap: 6px; align-items: center;
+  }
+  .relflow .node { text-align: center; }
+  .relflow .node .ic { width: 38px; height: 38px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; }
+  .relflow .node.me .ic { background: rgba(46,125,50,.12); color: #2e7d32; }
+  .relflow .node.via .ic { background: rgba(184,148,31,.18); color: #B8965A; }
+  .relflow .node.money .ic { background: rgba(198,40,40,.12); color: #c62828; }
+  .relflow .node .nm { font-size: 11px; color: #1a1a1a; font-weight: 600; margin-top: 4px; }
+  .relflow .node .sb { font-size: 9.5px; color: #7F6B4E; }
+  .relflow .ar svg { width: 100%; height: 18px; }
+
+  .pullq { background: linear-gradient(135deg, rgba(184,148,31,.06), rgba(212,175,55,.06)); border-radius: 10px; padding: 16px 18px; margin: 18px 0 0; border-left: 3px solid #B8965A; font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.75; color: #1a1a1a; font-weight: 500; word-break: keep-all; }
+
+  /* 실천 카드 */
+  .action-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 0; }
+  .a-card { background: #fff; border: 1px solid #E5DFD0; border-radius: 10px; padding: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .a-card .num { width: 26px; height: 26px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .a-card .bd .ti { font-weight: 600; font-size: 13.5px; color: #1a1a1a; margin-bottom: 3px; }
+  .a-card .bd .dc { font-size: 12px; color: #5C4A2E; line-height: 1.65; }
+  .a-card .bd .dc strong { color: #1a1a1a; font-weight: 600; }
+
+  /* Upsell */
+  .upsell { margin: 28px 0 0; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; }
+  .upsell::before { content: '命'; position: absolute; right: -8px; bottom: -28px; font-family: 'Noto Serif KR', serif; font-size: 130px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
+  .upsell .lab { font-size: 10px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+  .upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; position: relative; line-height: 1.45; }
+  .upsell p { font-size: 12.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; word-break: keep-all; }
+  .upsell .cta { display: inline-flex; gap: 6px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; position: relative; align-items: center; }
+  .upsell .cost { background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #E8D9B8; margin-left: 6px; font-weight: 600; }
+
+  /* 액션 — 레퍼런스(오늘의운세 v2) 패턴 정확 동일 */
+  .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid #E5DFD0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .actions .btn { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
+  .actions .btn:hover { border-color: #B8965A; }
+  .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
+  .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
+  .actions .btn .sb { font-size: 10px; color: #7F6B4E; }
+
+  .verify-tag { display: none; /* 목업 검증용 태그 — 프로덕션 노출 금지 */ }
+  .spacer { height: 80px; }
+
+  /* 서비스 이용 안내 (앱인토스 검수 §6-1 대응) */
+  .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed #E5DFD0; font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
+  .service-notice p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hd">
+    <div class="top">
+      <span class="badge">1운 · 주제별</span>
+      <span class="tier">재물운</span>
+      <span style="margin-left:auto; font-size:11px; opacity:.85;">변준기 님</span>
+    </div>
+    <h1>재물운,<br>준기 님의 사주로 보면</h1>
+    <div class="sub">2026.04.20 · 갑(甲) 일간 기준 · 한 달치 풀이</div>
+  </header>
+
+  <!-- 내 사주팔자 미니 — 재성 글자 강조 -->
+  <div class="saju-mini">
+    <div class="ttl"><span>내 사주 — 재물 키 글자</span><span class="hint">財 표시 = 재성</span></div>
+    <div class="saju-grid">
+      <div class="saju-cell"><div class="lab">시</div><div class="gan to">己</div><div class="ji mok">卯</div><div class="ten">정인</div></div>
+      <div class="saju-cell ilju"><div class="lab">일 (나)</div><div class="gan mok">甲</div><div class="ji hwa">午</div><div class="ten">상관</div></div>
+      <div class="saju-cell jaeseong"><div class="lab">월</div><div class="gan geum">辛</div><div class="ji hwa">巳</div><div class="ten">정관</div></div>
+      <div class="saju-cell jaeseong"><div class="lab">연</div><div class="gan mok">乙</div><div class="ji su">亥</div><div class="ten">편인</div></div>
+    </div>
+  </div>
+
+  <!-- 재물 지수 -->
+  <div class="score-card">
+    <div class="ring"><div class="num">72<small>/100</small></div></div>
+    <div class="txt">
+      <div class="ttl">재물 지수</div>
+      <div class="body">꾸준히 들어오는 결,<br>한 방은 약한 편.</div>
+      <div class="note">정재(正財)가 천간에 앉아 안정 수익. 다만 편재(偏財)가 약해 투기·일확천금 자리는 아닙니다.</div>
+    </div>
+  </div>
+
+  <!-- 사주→재물지수 연계 카드 (NEW) -->
+  <div class="link-card">
+    <div class="row">
+      <span class="pill gan">甲</span>
+      <span class="arrow">→</span>
+      <span class="pill ten">정관·정인 균형</span>
+      <span class="arrow">→</span>
+      <span class="pill score">72점</span>
+    </div>
+    <div class="desc">
+      준기 님 일간 <strong>갑목(甲)</strong>은 <strong>월간 신금(辛)의 정관</strong>과 <strong>시간 기토(己)의 정재</strong>를 양옆에 두고 있습니다. 이 배치는 <strong>"정해진 자리에서 정해진 보상을 받는 결"</strong>이며, 그래서 점수가 70점대로 안정적입니다. 80점대 이상은 편재까지 강한 사주에서 나오는데, 그쪽은 변동성이 큽니다.
+    </div>
+  </div>
+
+  <main class="body">
+
+    <!-- SECTION 01 — 재성 분포 -->
+    <section class="section">
+      <div class="sec-num">SECTION 01</div>
+      <div class="sec-title">재물의 모양 <span class="han">財星</span></div>
+      <div class="sec-sub">정재·편재가 어떻게 배치되어 있는지부터 짚습니다.</div>
+
+      <div class="chart-card">
+        <div class="ttl">재성 분포</div>
+        <div class="jb-row">
+          <span class="nm a">정재 正財</span>
+          <div class="trk"><div class="fi a" style="width: 80%"></div></div>
+          <span class="vl">강</span>
+        </div>
+        <div class="jb-row">
+          <span class="nm b">편재 偏財</span>
+          <div class="trk"><div class="fi b" style="width: 22%"></div></div>
+          <span class="vl">약</span>
+        </div>
+      </div>
+
+      <p>
+        정재(正財)는 <strong>매달 같은 날 들어오는 월급, 고정 거래처, 장기 계약</strong>의 자리입니다. 숫자가 미리 예측되는 돈입니다. 준기 님 사주에는 이 정재가 천간에 또렷이 올라와 있어 평생 마르지 않는 결을 갖습니다.
+      </p>
+      <p>
+        편재(偏財)는 <strong>투자·부업·갑작스런 기회</strong>의 자리이며, 이 사주에서는 약하게 비친 정도입니다. 단점이 아니라 <strong>한 방을 노릴 결이 아니라는 뜻</strong>입니다. 편재가 강한 사람이 부딪히는 큰 손실 위험이 준기 님에게는 거의 없습니다.
+      </p>
+      <p>
+        결론은 명확합니다. 준기 님에게 맞는 돈의 모양은 <strong>"예측 가능한 현금흐름을 여러 개 겹쳐놓는 구조"</strong>입니다. 큰 한 건이 아니라 중간 크기의 <span class="han">財</span>를 3~4개 나란히 세우는 쪽이 이 사주의 정답입니다.
+      </p>
+    </section>
+
+    <!-- SECTION 02 — 돈은 어디서 들어오는가 (NEW) -->
+    <section class="section">
+      <div class="sec-num">SECTION 02</div>
+      <div class="sec-title">돈은 어디서 들어오는가 <span class="han">財源</span></div>
+      <div class="sec-sub">사주 구조로 본 돈의 4가지 통로 비중입니다.</div>
+
+      <div class="chart-card">
+        <div class="ttl">돈 출처 비중</div>
+        <div class="source-grid">
+          <div class="donut"></div>
+          <div class="source-legend">
+            <div class="li"><span class="sw" style="background:#B8965A;"></span><span class="nm">본업·내 이름</span><span class="pct">50%</span></div>
+            <div class="li"><span class="sw" style="background:#E8D9B8;"></span><span class="nm">사이드·창작</span><span class="pct">25%</span></div>
+            <div class="li"><span class="sw" style="background:#5C4A2E;"></span><span class="nm">관계·소개</span><span class="pct">15%</span></div>
+            <div class="li"><span class="sw" style="background:#E5DFD0;"></span><span class="nm">투자·기타</span><span class="pct">10%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        준기 님 돈의 <strong>절반은 본업, 즉 "내 이름이 적힌 자리"</strong>에서 들어옵니다. 일간 갑목(甲)이 정관을 만나는 구조 때문에, <strong>책임을 지고 결과를 책임지는 자리</strong>일수록 이 50% 통로가 크게 열립니다.
+      </p>
+      <p>
+        두 번째 통로는 <strong>사이드·창작</strong>(25%)입니다. 일지 오화(午)에 자리한 <strong>상관(傷官)</strong> 때문입니다. 상관은 표현·설명·창작의 글자입니다. 글, 영상, 강의, 컨설팅 — 본업과 별개로 굴리는 작은 채널 하나가 매년 본업의 절반 가까이를 만들어냅니다.
+      </p>
+      <p>
+        <strong>관계·소개</strong>(15%)는 무시할 수 없는 비중입니다. 정인(正印)이 시간에 자리해 <strong>"믿고 맡기는 사람들의 추천"</strong>으로 일이 들어옵니다. 광고·콜드아웃리치보다 <strong>지인 추천 한 명</strong>이 이 사주에서는 더 큰 매출을 만듭니다.
+      </p>
+      <p>
+        <strong>투자·기타</strong>(10%)는 의도적으로 작게 가져가야 합니다. 편재가 약하기 때문에 직접 투자는 손실 폭이 큽니다. 안정형 적립·인덱스 같은 자동화된 형태로만 두십시오.
+      </p>
+    </section>
+
+    <!-- SECTION 03 — 소비력·돈을 지키는 힘 (NEW) -->
+    <section class="section">
+      <div class="sec-num">SECTION 03</div>
+      <div class="sec-title">돈을 쓰고 지키는 힘 <span class="han">消費</span></div>
+      <div class="sec-sub">버는 만큼 중요한 것이 새는 자리입니다. 사주 구조로 본 소비 성향입니다.</div>
+
+      <div class="spend-row">
+        <div class="gauge-card">
+          <div class="lab">충동 지출</div>
+          <div class="gauge">
+            <svg viewBox="0 0 100 50">
+              <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="#E5DFD0" stroke-width="6" stroke-linecap="round"/>
+              <path d="M10,45 A40,40 0 0,1 36,15" fill="none" stroke="#2e7d32" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="36" cy="15" r="4" fill="#2e7d32"/>
+            </svg>
+          </div>
+          <div class="lvl low">낮음</div>
+          <div class="ds">비겁(比劫)이 약해 충동 구매가 적은 편</div>
+        </div>
+
+        <div class="gauge-card">
+          <div class="lab">고정 지출</div>
+          <div class="gauge">
+            <svg viewBox="0 0 100 50">
+              <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="#E5DFD0" stroke-width="6" stroke-linecap="round"/>
+              <path d="M10,45 A40,40 0 0,1 80,28" fill="none" stroke="#c62828" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="80" cy="28" r="4" fill="#c62828"/>
+            </svg>
+          </div>
+          <div class="lvl high">높음</div>
+          <div class="ds">월 고정비 비율이 평균보다 큰 결</div>
+        </div>
+
+        <div class="gauge-card">
+          <div class="lab">자기투자</div>
+          <div class="gauge">
+            <svg viewBox="0 0 100 50">
+              <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="#E5DFD0" stroke-width="6" stroke-linecap="round"/>
+              <path d="M10,45 A40,40 0 0,1 70,20" fill="none" stroke="#B8965A" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="70" cy="20" r="4" fill="#B8965A"/>
+            </svg>
+          </div>
+          <div class="lvl mid">중상</div>
+          <div class="ds">상관(傷官) 발현. 책·강의·툴 지출이 많음</div>
+        </div>
+
+        <div class="gauge-card">
+          <div class="lab">저축·보존력</div>
+          <div class="gauge">
+            <svg viewBox="0 0 100 50">
+              <path d="M10,45 A40,40 0 0,1 90,45" fill="none" stroke="#E5DFD0" stroke-width="6" stroke-linecap="round"/>
+              <path d="M10,45 A40,40 0 0,1 75,24" fill="none" stroke="#B8965A" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="75" cy="24" r="4" fill="#B8965A"/>
+            </svg>
+          </div>
+          <div class="lvl mid">중상</div>
+          <div class="ds">정관 구조라 모으는 힘은 강함</div>
+        </div>
+      </div>
+
+      <p>
+        준기 님 사주에서 돈이 새는 단 한 곳은 <strong>고정 지출의 비중</strong>입니다. 충동 구매는 거의 없고 저축은 잘 하지만, <strong>매달 자동결제로 빠지는 구독·렌트·보험·툴 비용</strong>이 평균 이상입니다. 책·강의·툴이 자기투자로 분류되어 죄책감 없이 늘어나는 점이 원인입니다.
+      </p>
+      <p>
+        대안은 <strong>분기 1회 구독 점검 루틴</strong>입니다. 안 쓰는 자기투자형 구독을 분기마다 정리하면, 이 사주에서 가장 빠르게 재물 지수를 끌어올릴 수 있는 한 가지 행동이 됩니다.
+      </p>
+    </section>
+
+    <!-- SECTION 04 — 12개월 흐름 -->
+    <section class="section">
+      <div class="sec-num">SECTION 04</div>
+      <div class="sec-title">2026년, 돈이 움직이는 달 <span class="han">年運</span></div>
+      <div class="sec-sub">올해 12개월 중 재물 창이 열리는 구간과 닫히는 구간입니다.</div>
+
+      <div class="month-tl">
+        <div class="ttl">월별 재물 지수</div>
+        <div class="mg">
+          <div class="mc mid"><div class="m">1</div></div>
+          <div class="mc"><div class="m">2</div></div>
+          <div class="mc high"><div class="m">3</div></div>
+          <div class="mc now mid"><div class="m">4</div></div>
+          <div class="mc mid"><div class="m">5</div></div>
+          <div class="mc high"><div class="m">6</div></div>
+          <div class="mc low"><div class="m">7</div></div>
+          <div class="mc low"><div class="m">8</div></div>
+          <div class="mc low"><div class="m">9</div></div>
+          <div class="mc mid"><div class="m">10</div></div>
+          <div class="mc high"><div class="m">11</div></div>
+          <div class="mc mid"><div class="m">12</div></div>
+        </div>
+        <div class="legend">
+          <span><span class="sw" style="background:#B8965A;"></span>강</span>
+          <span><span class="sw" style="background:#E8D9B8; opacity:.7;"></span>중</span>
+          <span><span class="sw" style="background:rgba(198,40,40,.18);"></span>주의</span>
+          <span><span class="sw" style="background:#E5DFD0;"></span>평이</span>
+        </div>
+      </div>
+
+      <p>
+        올해 재물이 가장 강하게 움직이는 달은 <strong>3월·6월·11월</strong>입니다. 세 달의 성격이 모두 다릅니다.
+      </p>
+      <p>
+        <strong>3월</strong>은 작년 끝부터 끌고 온 정산·미수금이 풀리는 달입니다. 이미 벌어놓은 돈이 손에 들어오는 자리입니다. <strong>6월</strong>은 새로운 수익 경로가 하나 열리는 달입니다. 부업이든 본업 안의 새 프로젝트든, 지금까지 없던 현금 흐름 하나가 추가됩니다. <strong>11월</strong>은 올해 번 것을 굴려 키우는 자리입니다. 투자·이사·큰 구매 결정은 11월에 모아서 처리하는 것이 한 해 통틀어 가장 효율적입니다.
+      </p>
+      <p>
+        반대로 <strong>7~9월</strong>은 재물 창이 닫혀 있습니다. 큰 지출·계약은 이 시기를 피하십시오. 이 규칙 하나만 지켜도 한 해 재물 지수가 +10 이상 올라갑니다.
+      </p>
+    </section>
+
+    <!-- SECTION 05 — 사람·관계 통로 -->
+    <section class="section">
+      <div class="sec-num">SECTION 05</div>
+      <div class="sec-title">돈을 쥐어주는 사람 <span class="han">人脈</span></div>
+      <div class="sec-sub">재물은 사람을 타고 옵니다. 사주에서 돈을 움직이는 글자는 재성 자체가 아니라 그 옆의 글자입니다.</div>
+
+      <div class="relflow">
+        <div class="node me">
+          <div class="ic">甲</div>
+          <div class="nm">준기</div>
+          <div class="sb">상관·정관</div>
+        </div>
+        <div class="ar">
+          <svg viewBox="0 0 30 18" fill="none">
+            <path d="M2 9 L26 9" stroke="#B8965A" stroke-width="1.4"/>
+            <path d="M22 5 L26 9 L22 13" stroke="#B8965A" stroke-width="1.4" fill="none"/>
+          </svg>
+        </div>
+        <div class="node via">
+          <div class="ic">人</div>
+          <div class="nm">전문가 인맥</div>
+          <div class="sb">정관 매개</div>
+        </div>
+        <div class="ar">
+          <svg viewBox="0 0 30 18" fill="none">
+            <path d="M2 9 L26 9" stroke="#B8965A" stroke-width="1.4"/>
+            <path d="M22 5 L26 9 L22 13" stroke="#B8965A" stroke-width="1.4" fill="none"/>
+          </svg>
+        </div>
+        <div class="node money">
+          <div class="ic">財</div>
+          <div class="nm">정재 입금</div>
+          <div class="sb">월급·계약</div>
+        </div>
+      </div>
+
+      <p>
+        준기 님 사주는 <strong>상관(傷官)과 정관(正官)이 같이 있는 특이한 구조</strong>입니다. 상관은 창작·표현·말의 글자이며, 정관은 책임·신뢰의 자리입니다. 둘이 만나면 <strong>"내가 직접 만들고, 내 이름을 걸고 판다"</strong>는 모양이 만들어집니다.
+      </p>
+      <p>
+        반대로 남의 시스템에 들어가 월급만 받는 구조는 이 사주에 답답한 자리입니다. 직장을 다녀도 <strong>본인 이름의 포트폴리오·채널·사이드 프로젝트</strong>가 병행되어야 재물이 제 모양으로 들어옵니다. 1인 브랜드·전문가 계약·프리랜서·강의·콘텐츠가 준기 님 재물의 본 모양입니다.
+      </p>
+    </section>
+
+    <!-- SECTION 06 — 대운 60년 (NEW) -->
+    <section class="section">
+      <div class="sec-num">SECTION 06</div>
+      <div class="sec-title">대운으로 본 평생 재물 흐름 <span class="han">大運</span></div>
+      <div class="sec-sub">청년·중년·말년에 재물이 어떻게 변하는지를 10년 단위 6구간으로 봅니다.</div>
+
+      <div class="daewoon-card">
+        <div class="ttl">10년 단위 재물 지수 (60세까지)</div>
+        <div class="dw-bars">
+          <div class="dw-bar">
+            <div class="fill" style="height: 35%;"><div class="v">52</div></div>
+            <div class="age">10~19</div>
+            <div class="key">壬子</div>
+          </div>
+          <div class="dw-bar">
+            <div class="fill" style="height: 50%;"><div class="v">61</div></div>
+            <div class="age">20~29</div>
+            <div class="key">癸丑</div>
+          </div>
+          <div class="dw-bar now">
+            <div class="fill" style="height: 65%;"><div class="v">72</div></div>
+            <div class="age">30~39</div>
+            <div class="key">甲寅</div>
+          </div>
+          <div class="dw-bar peak">
+            <div class="fill" style="height: 92%;"><div class="v">88</div></div>
+            <div class="age">40~49</div>
+            <div class="key">乙卯</div>
+          </div>
+          <div class="dw-bar peak">
+            <div class="fill" style="height: 85%;"><div class="v">85</div></div>
+            <div class="age">50~59</div>
+            <div class="key">丙辰</div>
+          </div>
+          <div class="dw-bar">
+            <div class="fill" style="height: 70%;"><div class="v">76</div></div>
+            <div class="age">60~69</div>
+            <div class="key">丁巳</div>
+          </div>
+        </div>
+        <div class="dw-now-tag">● 현재 31세 · 갑인(甲寅) 대운</div>
+      </div>
+
+      <p>
+        준기 님의 평생 재물 그래프는 <strong>40~50대에 정점</strong>을 찍는 모양입니다. 지금 30대는 <strong>"기반을 쌓는 자리"</strong>이며, 본격적인 재물의 추수는 <strong>40대 을묘(乙卯) 대운</strong>에 들어옵니다. 이 시기에 일간 갑목과 같은 목 기운이 한 번 더 강하게 들어와 본업·창작이 모두 폭발합니다.
+      </p>
+      <p>
+        <strong>말년 재물</strong>은 60대 정사(丁巳) 대운에서도 76점으로 꺾이지 않습니다. 정관(丁火)이 일간 갑목을 데워주는 결입니다. 이는 <strong>"노후에 별도 사업 없이도 정기 수익이 유지되는 사주"</strong>를 뜻합니다. 보통 60대에는 재물 점수가 큰 폭으로 떨어지는데, 준기 님은 그 폭이 작습니다.
+      </p>
+      <p>
+        다만 <strong>40대 정점 자리에서 무리한 확장은 50대 이후를 깎습니다</strong>. 40대는 키우는 자리가 아니라 <strong>고정 자산을 정리하고 노후 구조를 설계하는 시기</strong>로 활용해야 60대까지 평탄합니다.
+      </p>
+
+      <div class="pullq">
+        준기 님의 재물은 30대에 씨를 뿌리고, 40대에 거두고, 60대에도 고요히 흐른다.
+      </div>
+    </section>
+
+    <!-- SECTION 07 — 실천 처방 -->
+    <section class="section">
+      <div class="sec-num">SECTION 07</div>
+      <div class="sec-title">오늘부터 바꿀 다섯 가지 <span class="han">實踐</span></div>
+      <div class="sec-sub">사주 구조에 맞춘 재물 루틴입니다. 한 가지부터 시작하셔도 좋습니다.</div>
+
+      <div class="action-list">
+        <div class="a-card">
+          <div class="num">1</div>
+          <div class="bd">
+            <div class="ti">내 이름으로 파는 채널 하나를 키웁니다</div>
+            <div class="dc">직장이든 사업이든, <strong>"준기"라는 이름이 팔리는 트랙</strong>이 하나는 있어야 정관·상관 구조가 정답을 냅니다. 글·영상·강의·컨설팅 중 한 채널을 고정 운영하십시오.</div>
+          </div>
+        </div>
+        <div class="a-card">
+          <div class="num">2</div>
+          <div class="bd">
+            <div class="ti">7~9월에는 큰돈을 쓰지 않습니다</div>
+            <div class="dc">2026년 재물 창이 닫히는 여름 석 달입니다. 이사·투자·큰 계약은 <strong>6월 안에 끝내거나 10월 이후로</strong> 미루십시오. 이 한 가지로 한 해 재물 지수가 +10~15 올라갑니다.</div>
+          </div>
+        </div>
+        <div class="a-card">
+          <div class="num">3</div>
+          <div class="bd">
+            <div class="ti">"작게 여러 개"를 늘립니다</div>
+            <div class="dc">편재가 약한 사주는 한 방을 노리지 마십시오. <strong>월 10만 원 수익 파이프 5개</strong>가 월 50만 원 투자처 1개보다 이 사주에 맞습니다.</div>
+          </div>
+        </div>
+        <div class="a-card">
+          <div class="num">4</div>
+          <div class="bd">
+            <div class="ti">분기마다 자동결제 구독을 점검합니다</div>
+            <div class="dc">고정 지출 게이지가 높습니다. 안 쓰는 자기투자형 구독(책·툴·강의)을 <strong>3개월에 한 번 정리</strong>하면, 재물 지수가 가장 빠르게 올라갑니다.</div>
+          </div>
+        </div>
+        <div class="a-card">
+          <div class="num">5</div>
+          <div class="bd">
+            <div class="ti">40대 진입 전에 노후 구조를 설계합니다</div>
+            <div class="dc">대운 그래프의 정점인 40대를 <strong>"확장이 아니라 정리"</strong>로 쓰면 60대까지 평탄합니다. 30대 후반에 노후 자산 비중·고정 자산 정리 계획을 한 번 짜두십시오.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upsell -->
+    <div class="upsell">
+      <div class="lab">DEEPER · 7섹션 종합</div>
+      <h3>재물은 사주의 한 조각.<br>관계·일·건강까지 함께 보고 싶다면</h3>
+      <p>재물 뒤에는 <strong>대운 10년의 큰 흐름</strong>이 있습니다. 위 6번에서 본 대운 그래프가 관계·직업·건강에서는 어떻게 다른 모양이 되는지, 7섹션 프리미엄 풀이에서 한 번에 볼 수 있습니다.</p>
+      <span class="cta">프리미엄 종합 풀이 → <span class="cost">10운</span></span>
+    </div>
+
+  </main>
+
+  <!-- 액션 — 보관함 제거, 친구공유+1운 / 사주대화 -->
+  <div class="actions">
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <div class="ti">친구에게 공유하고 운 받기</div>
+      <div class="sb">+1운</div>
+    </div>
+    <div class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <div class="ti">이 주제로 상담 이어가기</div>
+      <div class="sb">사주대화</div>
+    </div>
+  </div>
+
+  <!-- 서비스 이용 안내 (앱인토스 검수 §6-1 대응) -->
+  <div class="service-notice">
+    <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+  </div>
+
+  <span class="verify-tag">v2 ✓ 7섹션 · 도식화 10종(사주미니/연계카드/지수링/재성바/돈출처도넛/소비4게이지/12개월/관계다이어그램/대운60년/실천5)</span>
+  <div class="spacer"></div>
+</div>
+</body>
+</html>

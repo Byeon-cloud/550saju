@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>사주 500 · 이벤트 v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#B8965A; --gold-dark:#9A7D47; --gold-light:#F5EADB;
+  --navy:#1D2D4A; --navy-soft:#2B3D5E;
+  --beige:#F8F5EE; --beige-dark:#EFE9DB;
+  --text:#1D2D4A; --muted:#6B7280; --line:#E5E5E0;
+  --ok:#1E8449; --warn:#F39C12; --danger:#C0392B;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--beige);font-family:'Noto Sans KR',sans-serif;color:var(--text);min-height:100vh}
+.phone{max-width:430px;min-height:100vh;margin:0 auto;background:var(--beige);position:relative;padding-bottom:96px}
+.topbar{position:sticky;top:0;z-index:10;background:var(--beige);padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
+.back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.title{font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;color:var(--navy)}
+.content{padding:16px 16px 20px}
+
+/* Block 1: Hero Badge */
+.hero{background:linear-gradient(135deg,var(--beige) 0%,var(--gold-light) 100%);
+  border:1px solid var(--gold-light);border-radius:16px;padding:18px 18px;display:flex;gap:14px;align-items:center;margin-bottom:20px;
+  box-shadow:0 2px 8px rgba(184,150,90,0.08)}
+.hero-icon{flex:0 0 52px;height:52px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--gold);color:var(--gold)}
+.hero-text{flex:1;min-width:0}
+.hero-h{font-family:'Noto Serif KR',serif;font-size:15px;font-weight:700;color:var(--navy);line-height:1.4;margin-bottom:4px}
+.hero-s{font-size:12px;color:var(--muted);line-height:1.45}
+
+/* Section Card */
+.card{background:#fff;border-radius:16px;padding:18px 18px;margin-bottom:16px;border:1px solid var(--line);
+  box-shadow:0 1px 4px rgba(29,45,74,0.04)}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.card-icon{width:22px;height:22px;color:var(--gold)}
+.card-title{font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:var(--navy)}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+
+/* Block 2: Streak (3일 연속 · 이동윈도우) */
+.streak-dots{display:flex;gap:10px;margin-bottom:14px;justify-content:center}
+.sdot{flex:1;max-width:84px;height:60px;border-radius:12px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;transition:all .25s}
+.sdot.on{border:2px solid var(--gold);background:var(--gold-light)}
+.sdot.today{border:2px solid var(--gold-dark);background:var(--gold);color:#fff;transform:translateY(-1px);box-shadow:0 2px 6px rgba(184,150,90,0.2)}
+.sdot.on.today{border:2px solid var(--gold-dark);background:var(--gold);color:#fff}
+.sdot.missed{border:2px solid var(--danger);opacity:.55;background:#fff}
+.sdot-label{font-size:10px;color:var(--muted);font-weight:500}
+.sdot.on .sdot-label{color:var(--navy)}
+.sdot.today .sdot-label{color:#fff}
+.sdot-check{width:16px;height:16px}
+.sdot-dot{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.sdot.on .sdot-dot{background:var(--gold)}
+.sdot.today .sdot-dot{background:#fff}
+.sdot.missed .sdot-dot{background:var(--danger)}
+.streak-status{font-size:13px;color:var(--gold-dark);text-align:center;font-weight:500;line-height:1.5;margin-bottom:4px}
+.streak-reward{font-size:12px;color:var(--muted);text-align:center}
+
+/* Block 3: Weekly (7일 모두) */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
+.day{aspect-ratio:1/1;border-radius:50%;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;position:relative}
+.day.on{border:2px solid var(--gold);background:var(--gold);color:#fff}
+.day.today{border:2px solid var(--gold-dark);background:var(--gold-light)}
+.day.on.today{border:2px solid var(--gold-dark);background:var(--gold);color:#fff}
+.week-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px;padding-top:4px}
+.week-labels span{text-align:center;font-size:11px;color:var(--muted);font-weight:500}
+.week-progress{height:6px;background:var(--beige-dark);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.week-bar{height:100%;background:var(--gold);border-radius:3px;transition:width .3s}
+.week-status{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.week-status .left{color:var(--navy);font-weight:500}
+.week-status .right{color:var(--gold-dark);font-weight:600}
+
+/* Block 4: Invite */
+.invite-btn{width:100%;padding:16px;background:var(--gold);color:#fff;border:none;border-radius:14px;font-family:'Noto Sans KR';font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin:14px 0 10px;box-shadow:0 2px 6px rgba(184,150,90,0.25)}
+.invite-btn:active{background:var(--gold-dark);transform:translateY(1px)}
+.invite-counter{text-align:center;font-size:12px;color:var(--muted)}
+.invite-counter b{color:var(--navy);font-weight:600}
+
+/* Block 5: Cumulative received (신설) */
+.cum-card{background:linear-gradient(180deg,#fff 0%,var(--beige) 100%);
+  border:1px solid var(--gold-light);border-radius:18px;padding:24px 22px;margin-bottom:12px;
+  box-shadow:0 2px 10px rgba(184,150,90,0.08)}
+.cum-label{font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px;letter-spacing:0.3px}
+.cum-number{font-family:'Noto Serif KR',serif;font-size:48px;font-weight:700;color:var(--gold);text-align:center;line-height:1.1}
+.cum-unit{font-size:16px;color:var(--navy);text-align:center;margin-top:2px;margin-bottom:18px;font-weight:500}
+.cum-divider{height:1px;background:var(--line);margin:16px 0 14px}
+.cum-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+.cum-row .lbl{color:var(--muted)}
+.cum-row .val{color:var(--navy);font-weight:600;font-family:'Noto Serif KR',serif;display:flex;align-items:center;gap:6px}
+.cum-row .info{width:14px;height:14px;color:var(--muted);cursor:pointer;opacity:.6}
+.cum-row .info:hover{opacity:1}
+.cum-toss{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gold-light);border-radius:10px;margin-top:4px;font-size:13px}
+.cum-toss .lbl{color:var(--navy);font-weight:500;display:flex;align-items:center;gap:6px}
+.cum-toss .val{color:var(--gold-dark);font-weight:700;font-family:'Noto Serif KR',serif}
+.cum-toss svg{width:14px;height:14px;color:var(--gold-dark)}
+
+/* Tab bar */
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:8px 0 16px;z-index:20}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:10px;font-weight:500}
+.tab.active{color:var(--gold-dark)}
+.tab svg{width:22px;height:22px}
+
+/* Frame label */
+.frame-label{font-family:'Noto Serif KR',serif;font-size:13px;color:var(--gold-dark);font-weight:600;margin:24px 16px 8px;padding-top:12px;border-top:1px dashed var(--line)}
+
+/* Tier A toast */
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:24px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);opacity:0;animation:toastShow 3s ease forwards}
+@keyframes toastShow{0%{opacity:0;transform:translate(-50%,10px)}10%{opacity:1;transform:translate(-50%,0)}90%{opacity:1}100%{opacity:0}}
+
+/* Streak states comparison strip */
+.states-strip{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.states-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 14px;display:flex;align-items:center;gap:14px}
+.states-meta{flex:0 0 90px}
+.states-meta .tag{display:inline-block;padding:2px 8px;background:var(--gold-light);color:var(--gold-dark);border-radius:8px;font-size:11px;font-weight:600;margin-bottom:4px}
+.states-meta .desc{font-size:11px;color:var(--muted);line-height:1.4}
+.states-dots{flex:1;display:flex;gap:6px;justify-content:flex-end}
+.states-dots .sdot{max-width:56px;height:44px;padding:0}
+.states-dots .sdot-label{font-size:9px}
+.states-copy{flex:0 0 100%;font-size:11px;color:var(--navy);margin-top:8px;line-height:1.4}
+</style>
+</head>
+<body>
+
+<!-- ============ FRAME 1: 이벤트 탭 메인 (v4) ============ -->
+<div class="phone">
+<div class="topbar">
+  <div class="back">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D2D4A" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </div>
+  <div class="title">이벤트</div>
+</div>
+
+<div class="content">
+
+  <!-- Block 1: Hero Badge -->
+  <div class="hero">
+    <div class="hero-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6a2 2 0 0 1 2-2h10l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z"/>
+        <path d="M8 13l2.5 2.5L16 10"/>
+      </svg>
+    </div>
+    <div class="hero-text">
+      <div class="hero-h">콘텐츠 하나만 봐도 오늘 출석 +1</div>
+      <div class="hero-s">오늘의 운세·꿈해몽·1운 해석 등 결과 1개만 보면 충분해요</div>
+    </div>
+  </div>
+
+  <!-- Block 2: 3일 연속 (streak · Day 2 예시) -->
+  <div class="card">
+    <div class="card-head">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+        <path d="M12 2l2.39 7.36h7.74l-6.26 4.55 2.39 7.36L12 16.72l-6.26 4.55 2.39-7.36L1.87 9.36h7.74z"/>
+      </svg>
+      <div class="card-title">3일 연속 출석</div>
+    </div>
+    <div class="card-sub">끊기지 않고 3일이면 운 1 · 바로 이어서 다시 시작돼요</div>
+
+    <!-- Day 2 상태: [어제✓ / 오늘✓ / 내일○] -->
+    <div class="streak-dots">
+      <div class="sdot on"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#B8965A" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">어제</div></div>
+      <div class="sdot today"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">오늘</div></div>
+      <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">내일</div></div>
+    </div>
+
+    <div class="streak-status">내일까지 이어지면 운 1 받아요</div>
+    <div class="streak-reward">달성 즉시 운 1 지급 · 이후 다시 이어가면 또 받을 수 있어요</div>
+  </div>
+
+  <!-- Block 3: 7일 모두 (cumulative · 토스포인트 100원) -->
+  <div class="card">
+    <div class="card-head">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+        <rect x="3" y="5" width="18" height="16" rx="2"/>
+        <path d="M16 3v4M8 3v4M3 10h18"/>
+      </svg>
+      <div class="card-title">이번 주 출석</div>
+    </div>
+    <div class="card-sub">월~일 모두 체크하면 <b style="color:var(--gold-dark)">토스포인트 100원</b> · 매주 월요일 0시 리셋</div>
+
+    <div class="week-grid">
+      <div class="day on"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg></div>
+      <div class="day on today"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg></div>
+      <div class="day"></div>
+      <div class="day"></div>
+      <div class="day"></div>
+      <div class="day"></div>
+      <div class="day"></div>
+    </div>
+    <div class="week-labels"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+
+    <div class="week-progress"><div class="week-bar" style="width:28.5%"></div></div>
+    <div class="week-status">
+      <div class="left">2일째 체크 · 5일 남았어요</div>
+      <div class="right">보상 · 토스포인트 100원</div>
+    </div>
+  </div>
+
+  <!-- Block 4: 친구 초대 -->
+  <div class="card">
+    <div class="card-head">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+        <path d="M16 6a4 4 0 1 0-8 0 4 4 0 0 0 8 0z"/>
+        <path d="M20 19c0-3.3-3.58-6-8-6s-8 2.7-8 6"/>
+        <path d="M19 4v4M21 6h-4"/>
+      </svg>
+      <div class="card-title">친구에게 사주 500 소개하기</div>
+    </div>
+    <div class="card-sub">하루 3회까지 · 초대당 운 1 (오늘 최대 운 3)</div>
+
+    <button class="invite-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
+      친구에게 공유하기
+    </button>
+    <div class="invite-counter">오늘 <b>0/3회</b> · 일 3회 한도</div>
+  </div>
+
+  <!-- Block 5: 지금까지 받은 운 누적 (v4 신설) -->
+  <div class="cum-card">
+    <div class="cum-label">지금까지 받은 운</div>
+    <div class="cum-number">147</div>
+    <div class="cum-unit">운</div>
+
+    <div class="cum-divider"></div>
+
+    <div class="cum-row">
+      <div class="lbl">출석 3일 연속</div>
+      <div class="val">
+        23
+        <svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+    </div>
+    <div class="cum-row">
+      <div class="lbl">친구 초대</div>
+      <div class="val">
+        34
+        <svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+    </div>
+    <div class="cum-row">
+      <div class="lbl">공유</div>
+      <div class="val">
+        85
+        <svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+    </div>
+    <div class="cum-row">
+      <div class="lbl">기타</div>
+      <div class="val">
+        5
+        <svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+    </div>
+
+    <div class="cum-toss">
+      <div class="lbl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M6 12h12"/></svg>
+        토스포인트 (주7일 완주)
+      </div>
+      <div class="val">100원</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tab bar -->
+<nav class="tabbar">
+  <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>홈</span></div>
+  <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/></svg><span>이벤트</span></div>
+  <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg><span>사주대화</span></div>
+  <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V5z"/><path d="M8 3v18"/></svg><span>보관함</span></div>
+  <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 22c0-4 3.58-7 8-7s8 3 8 7"/></svg><span>내정보</span></div>
+</nav>
+</div>
+
+<!-- ============ FRAME 2: streak 이동윈도우 4상태 ============ -->
+<div class="frame-label">▼ Streak 이동윈도우 — Day 0/1/2/3 상태별 라벨 전환</div>
+<div class="phone" style="min-height:auto;padding-bottom:12px">
+  <div class="topbar"><div class="title">3일 연속 상태 전환</div></div>
+  <div class="content">
+    <div class="states-strip">
+
+      <!-- Day 0 -->
+      <div class="states-row">
+        <div class="states-meta">
+          <div class="tag">Day 0</div>
+          <div class="desc">리셋 직후 · 오늘 미체크</div>
+        </div>
+        <div class="states-dots">
+          <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">오늘</div></div>
+          <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">내일</div></div>
+          <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">모레</div></div>
+        </div>
+        <div class="states-copy">"오늘 결과 하나 보면 시작돼요"</div>
+      </div>
+
+      <!-- Day 1 -->
+      <div class="states-row">
+        <div class="states-meta">
+          <div class="tag">Day 1</div>
+          <div class="desc">오늘 체크 완료</div>
+        </div>
+        <div class="states-dots">
+          <div class="sdot today"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">오늘</div></div>
+          <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">내일</div></div>
+          <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">모레</div></div>
+        </div>
+        <div class="states-copy">"이틀만 더 이어지면 운 1"</div>
+      </div>
+
+      <!-- Day 2 -->
+      <div class="states-row">
+        <div class="states-meta">
+          <div class="tag">Day 2</div>
+          <div class="desc">어제+오늘 체크</div>
+        </div>
+        <div class="states-dots">
+          <div class="sdot on"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#B8965A" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">어제</div></div>
+          <div class="sdot today"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">오늘</div></div>
+          <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">내일</div></div>
+        </div>
+        <div class="states-copy">"내일까지 이어지면 운 1 받아요"</div>
+      </div>
+
+      <!-- Day 3 -->
+      <div class="states-row" style="background:linear-gradient(180deg,#fff 0%,var(--gold-light) 100%);border-color:var(--gold)">
+        <div class="states-meta">
+          <div class="tag" style="background:var(--gold);color:#fff">Day 3 달성</div>
+          <div class="desc">그제·어제·오늘 모두 체크</div>
+        </div>
+        <div class="states-dots">
+          <div class="sdot on"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#B8965A" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">그제</div></div>
+          <div class="sdot on"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#B8965A" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">어제</div></div>
+          <div class="sdot today"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">오늘</div></div>
+        </div>
+        <div class="states-copy" style="color:var(--gold-dark);font-weight:600">"운 1 들어왔어요 · 다시 이어가봐요"</div>
+      </div>
+
+      <!-- Day streak 끊김 -->
+      <div class="states-row">
+        <div class="states-meta">
+          <div class="tag" style="background:#FDE2DD;color:var(--danger)">끊김</div>
+          <div class="desc">어제 하루 빠짐</div>
+        </div>
+        <div class="states-dots">
+          <div class="sdot"><div class="sdot-dot"></div><div class="sdot-label">그제</div></div>
+          <div class="sdot missed"><div class="sdot-dot"></div><div class="sdot-label">어제</div></div>
+          <div class="sdot today"><svg class="sdot-check" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M3 8l3.5 3.5L13 5"/></svg><div class="sdot-label">오늘</div></div>
+        </div>
+        <div class="states-copy">"어제는 빠졌어요 · 오늘부터 다시 시작"</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ FRAME 3: Tier A 토스트 (1운 지급, streak 3일/invite) ============ -->
+<div class="frame-label">▼ Tier A — 토스트 연출 (1운 지급 · streak 3일 달성 / 친구 초대 성공)</div>
+<div class="phone" style="min-height:200px;padding-bottom:0">
+  <div class="topbar"><div class="title" style="text-align:center;width:100%">Tier A 예시</div></div>
+  <div class="content" style="position:relative;min-height:140px">
+    <div class="toast" style="position:static;opacity:1;animation:none;margin:40px auto;max-width:320px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8965A" stroke-width="2" stroke-linecap="round"><path d="M12 2l2.39 7.36h7.74l-6.26 4.55 2.39 7.36L12 16.72l-6.26 4.55 2.39-7.36L1.87 9.36h7.74z"/></svg>
+      3일 연속 출석 완성 · 운 1 들어왔어요
+    </div>
+  </div>
+</div>
+
+<!-- ============ FRAME 4: Tier B 모달 (토스포인트 100원 지급, 7일 모두) ============ -->
+<div class="frame-label">▼ Tier B — 모달 연출 (토스포인트 100원 지급 · 7일 모두 출석)</div>
+<div class="phone" style="min-height:480px;padding-bottom:0;background:rgba(29,45,74,0.5)">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:480px;padding:20px">
+    <div style="background:#fff;border-radius:20px;padding:32px 26px;text-align:center;max-width:340px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,0.15)">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#B8965A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 12px;display:block">
+        <path d="M32 10c-4 0-8 4-8 8 0 4 4 8 8 8M32 10c4 0 8 4 8 8 0 4-4 8-8 8"/>
+        <path d="M10 32c0-4 4-8 8-8 4 0 8 4 8 8M10 32c0 4 4 8 8 8 4 0 8-4 8-8"/>
+        <path d="M32 54c-4 0-8-4-8-8 0-4 4-8 8-8M32 54c4 0 8-4 8-8 0-4-4-8-8-8"/>
+        <path d="M54 32c0-4-4-8-8-8-4 0-8 4-8 8M54 32c0 4-4 8-8 8-4 0-8-4-8-8"/>
+        <circle cx="32" cy="32" r="3" fill="#B8965A"/>
+      </svg>
+      <div style="display:inline-block;padding:6px 14px;border:1px solid #B8965A;border-radius:24px;font-family:'Noto Serif KR',serif;font-size:16px;color:#1D2D4A;font-weight:700;margin-bottom:14px">天乙貴人</div>
+      <div style="font-family:'Noto Serif KR',serif;font-size:19px;font-weight:700;color:#1D2D4A;margin-bottom:10px">이번 주 7일 모두 완성</div>
+      <div style="font-family:'Noto Serif KR',serif;font-size:44px;font-weight:700;color:#B8965A;line-height:1.1;margin-bottom:4px">100</div>
+      <div style="font-size:14px;color:#1D2D4A;margin-bottom:18px;font-weight:500">원 · 토스포인트</div>
+      <div style="font-size:13px;color:#6B7280;margin-bottom:22px;line-height:1.5">귀인의 기운이 머무르는 한 주였습니다<br>토스 앱에서 확인해주세요</div>
+      <button style="padding:12px 32px;background:#B8965A;color:#fff;border:none;border-radius:12px;font-weight:600;font-size:14px;font-family:'Noto Sans KR';cursor:pointer">확인</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -188,11 +188,13 @@ exports.renderShareOg = (0, https_1.onRequest)({ timeoutSeconds: 10, memory: '25
         // 봇: SSR OG HTML
         if (BOT_UA_RE.test(ua)) {
             res.set('Content-Type', 'text/html; charset=utf-8');
-            res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
+            res.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // 5분 CDN 캐시
             res.status(200).send(buildBotHtml({ origin, parsed }));
             return;
         }
         // 사람: SPA index.html self-fetch
+        // (firebase.json `/share/**` rewrite 때문에 직접 /share/:id 는 SPA 로 안 떨어짐.
+        //  따라서 /index.html 을 명시적으로 가져와서 그대로 전달.)
         try {
             const indexRes = await fetch(`${origin}/index.html`, {
                 headers: { 'User-Agent': 'renderShareOg/1.0 (self-fetch)' },
@@ -204,6 +206,7 @@ exports.renderShareOg = (0, https_1.onRequest)({ timeoutSeconds: 10, memory: '25
         }
         catch (err) {
             console.error('[renderShareOg] index.html self-fetch 실패:', err);
+            // 최후 폴백: SPA 홈으로 이동
             res.redirect(302, `${origin}/?_shareFallback=${parsed.reportId}`);
         }
     }

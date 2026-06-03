@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>사주500 · 사주 정보 입력 v1</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#F8F5EE;
+    --paper-2:#FCFAF3;
+    --ink:#1A1A1A;
+    --ink-soft:#3D3D3D;
+    --gray-500:#6B6B6B;
+    --gray-400:#9A9080;
+    --gray-line:#E5DFD0;
+    --gray-line-soft:#EEE8D8;
+    --gold:#B8965A;
+    --gold-dark:#7F6B4E;
+    --gold-deep:#5C4A2E;
+    --gold-soft:#F0E8D9;
+    --gold-shimmer:#E8D9B8;
+    --warn-soft:#FBF3E0;
+    --warn-ink:#6B531A;
+    --serif: 'Noto Serif KR', serif;
+    --sans: 'Pretendard Variable', Pretendard, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0;}
+  html,body{background:#1a1815; color:var(--ink); font-family:var(--sans); font-weight:500;}
+  body{min-height:100vh; padding:20px 16px 40px;}
+
+  .stage{display:flex; justify-content:center;}
+  .phone{
+    width:428px; max-width:100%; height:920px; background:var(--paper);
+    border-radius:44px; border:10px solid #0a0a0a; overflow:hidden;
+    position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.5);
+  }
+  .notch{position:absolute; top:10px; left:50%; transform:translateX(-50%); width:130px; height:34px; background:#0a0a0a; border-radius:0 0 22px 22px; z-index:50;}
+  .screen{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; padding-bottom:110px;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  h1,h2,h3,.logo,.intro h2,.tip-title{font-family:var(--serif);}
+
+  /* ── 상단 앱바 ── */
+  .appbar{
+    position:sticky; top:0; z-index:20; height:52px; background:var(--paper);
+    border-bottom:1px solid var(--gray-line);
+    display:flex; align-items:center; padding:4px 14px 0;
+  }
+  .appbar .back{width:36px; height:36px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;}
+  .appbar .back svg{width:22px; height:22px; stroke:var(--ink);}
+  .appbar .ttl{font-size:15px; font-weight:700; flex:1; text-align:center; padding-right:36px; color:var(--ink);}
+
+  /* ── Intro 블록 ── */
+  .intro{margin:18px 20px 4px;}
+  .intro h2{font-size:22px; font-weight:800; line-height:1.32; letter-spacing:-0.02em; color:var(--ink);}
+  .intro .sub{margin-top:6px; font-size:13.5px; color:var(--ink-soft); line-height:1.55;}
+
+  /* ── 폼 ── */
+  form{padding:0 20px;}
+  .field{margin-top:18px;}
+  .field > label{
+    display:block; font-size:12px; font-weight:700; color:var(--gold-dark);
+    letter-spacing:0.02em; margin-bottom:8px;
+  }
+
+  .input-row{display:flex; align-items:center; gap:0; background:#fff;
+    border:1.4px solid var(--gray-line); border-radius:12px;
+    padding:0 14px; height:54px;
+  }
+  .input-row input{
+    flex:1; border:0; outline:0; background:transparent;
+    font-family:inherit; font-size:16px; font-weight:600; color:var(--ink);
+  }
+  .input-row input::placeholder{color:var(--gray-400); font-weight:500;}
+
+  .seg{display:grid; grid-template-columns:1fr 1fr; gap:0; background:var(--gold-soft); border-radius:12px; padding:4px;}
+  .seg .opt{
+    text-align:center; padding:11px 0; font-size:15px; font-weight:700;
+    color:var(--ink-soft); border-radius:9px; cursor:pointer;
+  }
+  .seg .opt.active{background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(92,74,46,0.12);}
+
+  .date-row{display:grid; grid-template-columns:60px 1fr 1fr 1fr; gap:6px; align-items:stretch;}
+  .cal-chip{
+    display:flex; align-items:center; justify-content:center;
+    height:54px; background:var(--gold-soft); color:var(--gold-dark);
+    font-size:13px; font-weight:700; border-radius:12px; cursor:pointer;
+    border:1px solid rgba(184,150,90,0.3);
+  }
+  .date-unit{
+    height:54px; display:flex; align-items:center; justify-content:center; gap:2px;
+    background:#fff; border:1.4px solid var(--gray-line); border-radius:12px;
+    font-size:16px; font-weight:700; color:var(--ink);
+  }
+  .date-unit .u{font-size:12px; color:var(--gray-500); font-weight:500; margin-left:1px;}
+
+  /* ── 시간 필드 (핵심) ── */
+  .time-wrap{background:#fff; border:1.4px solid var(--gray-line); border-radius:12px; overflow:hidden;}
+  .time-top{display:flex; align-items:center; height:54px; padding:0 14px; gap:10px;}
+  .time-top input{
+    flex:1; border:0; outline:0; background:transparent;
+    font-family:inherit; font-size:16px; font-weight:700; color:var(--ink);
+    letter-spacing:0.02em;
+  }
+  .time-sep{color:var(--gray-400); font-weight:700;}
+  .time-hint{
+    background:var(--warn-soft); padding:10px 14px;
+    font-size:12px; color:var(--warn-ink); line-height:1.55; display:flex; align-items:center; gap:8px;
+    border-top:1px solid var(--gray-line-soft);
+  }
+  .time-hint svg{width:14px; height:14px; flex-shrink:0; stroke:var(--warn-ink);}
+  .time-hint strong{font-weight:700;}
+
+  /* 모름 체크박스 */
+  .check-row{display:flex; align-items:center; gap:10px; margin-top:10px; cursor:pointer; padding:8px 2px;}
+  .check-row .box{
+    width:22px; height:22px; border:1.6px solid var(--gray-line); border-radius:6px;
+    display:inline-flex; align-items:center; justify-content:center; background:#fff; flex-shrink:0;
+  }
+  .check-row.on .box{background:var(--ink); border-color:var(--ink);}
+  .check-row .box svg{width:14px; height:14px; stroke:#fff; display:none;}
+  .check-row.on .box svg{display:block;}
+  .check-row .lbl{font-size:14px; color:var(--ink-soft); font-weight:500;}
+  .check-row .lbl em{color:var(--gold-dark); font-style:normal; font-weight:600;}
+
+  /* 정밀 보정 토글 */
+  .adv-toggle{
+    margin-top:10px; padding:10px 14px;
+    background:var(--paper-2); border:1px dashed var(--gray-line);
+    border-radius:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer;
+  }
+  .adv-toggle .lbl{font-size:12.5px; color:var(--ink-soft); font-weight:500;}
+  .adv-toggle .lbl em{color:var(--gold-dark); font-weight:600; font-style:normal;}
+  .adv-toggle .sw{
+    width:36px; height:22px; background:var(--gray-line); border-radius:999px; position:relative; flex-shrink:0;
+  }
+  .adv-toggle .sw::after{
+    content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.15); transition:.16s;
+  }
+  .adv-toggle.on .sw{background:var(--gold);}
+  .adv-toggle.on .sw::after{left:16px;}
+
+  /* ── 팁 토글 ── */
+  .tip{margin:22px 20px 0;
+    border:1px solid var(--gray-line); border-radius:14px; background:#fff; overflow:hidden;
+  }
+  .tip-head{
+    display:flex; align-items:center; padding:14px 16px; cursor:pointer; gap:10px;
+  }
+  .tip-head .ico{
+    width:24px; height:24px; border-radius:50%; background:var(--gold-soft);
+    display:inline-flex; align-items:center; justify-content:center; color:var(--gold-dark);
+    font-family:var(--serif); font-weight:900; font-size:14px; flex-shrink:0;
+  }
+  .tip-title{flex:1; font-size:14px; font-weight:700; color:var(--ink); letter-spacing:-0.01em;}
+  .tip-chev{color:var(--gray-400); transition:.2s;}
+  .tip.on .tip-chev{transform:rotate(180deg);}
+  .tip-body{
+    display:none; padding:0 16px 16px; color:var(--ink-soft);
+    font-size:13px; line-height:1.7; border-top:1px solid var(--gray-line-soft);
+  }
+  .tip.on .tip-body{display:block; padding-top:14px;}
+  .tip-body p + p{margin-top:8px;}
+  .tip-body .kw{color:var(--ink); font-weight:700;}
+
+  /* ── CTA ── */
+  .cta-wrap{
+    position:absolute; left:0; right:0; bottom:0; padding:16px 20px 24px;
+    background:linear-gradient(to top, var(--paper) 78%, rgba(248,245,238,0) 100%);
+    z-index:15;
+  }
+  .cta-btn{
+    width:100%; height:58px; border-radius:16px;
+    background:linear-gradient(135deg,#1a1f3a 0%,#0e1428 100%);
+    color:var(--paper); font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    cursor:pointer; letter-spacing:-0.01em;
+    box-shadow:0 6px 16px rgba(14,20,40,0.28);
+  }
+  .cta-note{
+    margin-top:8px; text-align:center; font-size:11.5px; color:var(--gray-500); line-height:1.55;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+
+      <!-- 앱바 -->
+      <div class="appbar">
+        <div class="back">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="ttl">사주 정보 입력</div>
+      </div>
+
+      <!-- Intro -->
+      <div class="intro">
+        <h2>사주의 뿌리가 되는<br>네 가지만 알려주세요</h2>
+        <p class="sub">한 번만 입력하면 프로필에 보관되어, 앞으로 열 모든 풀이가 이 위에 쌓입니다.</p>
+      </div>
+
+      <form onsubmit="return false;">
+
+        <!-- 이름 -->
+        <div class="field">
+          <label>이름</label>
+          <div class="input-row">
+            <input type="text" placeholder="변준기" value="변준기" />
+          </div>
+        </div>
+
+        <!-- 성별 -->
+        <div class="field">
+          <label>성별</label>
+          <div class="seg" id="segGender">
+            <div class="opt" data-val="M">남성</div>
+            <div class="opt active" data-val="F">여성</div>
+          </div>
+        </div>
+
+        <!-- 생년월일 -->
+        <div class="field">
+          <label>생년월일</label>
+          <div class="date-row">
+            <div class="cal-chip" id="calChip">양력</div>
+            <div class="date-unit">1995<span class="u">년</span></div>
+            <div class="date-unit">05<span class="u">월</span></div>
+            <div class="date-unit">12<span class="u">일</span></div>
+          </div>
+        </div>
+
+        <!-- 태어난 시간 -->
+        <div class="field">
+          <label>태어난 시간</label>
+          <div class="time-wrap">
+            <div class="time-top">
+              <input type="text" id="hhInput" value="07" maxlength="2" inputmode="numeric" style="text-align:right; max-width:56px; flex:none;" />
+              <span class="time-sep">:</span>
+              <input type="text" id="mmInput" value="35" maxlength="2" inputmode="numeric" style="text-align:left; max-width:56px; flex:none;" />
+              <span style="flex:1"></span>
+              <span style="font-size:12.5px; color:var(--gray-500); font-weight:500;">24시간제</span>
+            </div>
+            <div class="time-hint">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              <span>한국 기준시에 맞춰 <strong>자동 −30분 보정</strong>이 적용됩니다 (보정 후 <strong>07:05</strong>)</span>
+            </div>
+          </div>
+
+          <!-- 모름 체크 -->
+          <div class="check-row" id="chkUnknown">
+            <span class="box">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span class="lbl">태어난 시를 <em>정확히 모릅니다</em> — 시주 없이 세 기둥만으로 풀이</span>
+          </div>
+
+          <!-- 정밀 보정 토글 -->
+          <div class="adv-toggle" id="advTgl">
+            <div class="lbl">보정 없이 <em>입력한 시간 그대로</em> 사용 · 해외 출생자용</div>
+            <div class="sw"></div>
+          </div>
+        </div>
+
+        <!-- 팁 토글: 왜 생시가 중요한가 -->
+        <div class="tip" id="tip">
+          <div class="tip-head" onclick="document.getElementById('tip').classList.toggle('on')">
+            <span class="ico">時</span>
+            <span class="tip-title">왜 태어난 시간까지 필요한가요?</span>
+            <svg class="tip-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="tip-body">
+            <p>사주는 <span class="kw">연·월·일·시</span> 네 기둥으로 이루어집니다. 그중 <span class="kw">시주(時柱)</span>는 개인의 <span class="kw">직업 성향·말년 운·잠재력</span>을 읽는 축입니다. 시주가 없어도 <span class="kw">하루의 큰 흐름</span>은 정확히 풀리지만, 시주가 있으면 <span class="kw">개인별 미세 결</span>까지 읽어드립니다.</p>
+            <p>출생 시를 정확히 기억하지 못하시면 어머님께 여쭙거나, 출생증명서의 시각을 확인해 주세요. 대략 <span class="kw">두 시간 범위 안</span>만 알아도 시주 추정이 가능합니다.</p>
+            <p>대한민국은 1961년부터 일본 표준시(UTC+9)를 사용해 왔기 때문에 <span class="kw">실제 태양시와 약 30분의 차이</span>가 납니다. 사주500은 이를 <span class="kw">자동으로 보정</span>하여 계산합니다.</p>
+          </div>
+        </div>
+
+        <div style="height:20px"></div>
+
+      </form>
+
+    </div>
+
+    <!-- 하단 CTA (absolute) -->
+    <div class="cta-wrap">
+      <button class="cta-btn">사주 풀이 시작하기</button>
+      <div class="cta-note">입력하신 정보는 변준기님의 프로필로만 사용됩니다</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 성별 세그먼트
+  document.querySelectorAll('#segGender .opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      document.querySelectorAll('#segGender .opt').forEach(o=>o.classList.remove('active'));
+      opt.classList.add('active');
+    });
+  });
+
+  // 양/음력 칩
+  const calChip = document.getElementById('calChip');
+  calChip.addEventListener('click', ()=>{
+    calChip.textContent = calChip.textContent === '양력' ? '음력' : '양력';
+  });
+
+  // 모름 체크
+  document.getElementById('chkUnknown').addEventListener('click', e=>{
+    e.currentTarget.classList.toggle('on');
+  });
+
+  // 정밀 보정 토글
+  document.getElementById('advTgl').addEventListener('click', e=>{
+    e.currentTarget.classList.toggle('on');
+    // 힌트 텍스트 동기화
+    const hint = document.querySelector('.time-hint span');
+    const isManual = e.currentTarget.classList.contains('on');
+    hint.innerHTML = isManual
+      ? '보정을 끕니다 — <strong>입력한 시간 그대로</strong> 사주 기둥을 계산합니다'
+      : '한국 기준시에 맞춰 <strong>자동 −30분 보정</strong>이 적용됩니다 (보정 후 <strong>07:05</strong>)';
+  });
+</script>
+</body>
+</html>

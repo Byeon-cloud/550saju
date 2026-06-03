@@ -1,0 +1,2530 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 전략기획서 v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F5F0E8;       /* 크림 */
+    --surface: #FFFFFF;
+    --border: #E8E0D4;
+    --gold: #A08B6A;     /* 골드브라운 (primary) */
+    --gold-dk: #7A6B4F;
+    --gold-lt: #C2AE8B;
+    --text: #3D3427;     /* 다크브라운 */
+    --dim: #6B5F4E;
+    --muted: #9C907D;
+    --red: #8B3228;
+    --ok: #2D8A4E;
+    --navy: #1F2D4A;        /* 네이비 악센트 (히어로 장식용) */
+    --navy-dk: #0F1C36;
+    --serif: 'Noto Serif KR', serif;
+    --sans: 'Noto Sans KR', 'Pretendard', sans-serif;
+
+    /* 6-tier typography hierarchy (송송이 피드백) */
+    --t-display: clamp(36px,5vw,56px);
+    --t-h1: clamp(24px,3vw,34px);
+    --t-h2: clamp(18px,2.2vw,22px);
+    --t-body: 15.5px;
+    --t-label: 12px;
+    --t-caption: 11.5px;
+    --w-display: 900;
+    --w-h1: 700;
+    --w-h2: 600;
+    --w-body: 300;
+    --w-label: 600;
+    --w-caption: 400;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:80px}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:var(--sans);font-weight:300;line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 28px}
+  .wrap-sm{max-width:720px;margin:0 auto;padding:0 28px}
+
+  /* ─── Type ───
+     Serif(궁서 풍 Noto Serif KR): Display·H1·풀쿼트·KPI 숫자·인용 이름에 한정 (품격 조연)
+     Sans(Noto Sans KR): H2 이하 전부 (가독성 주연) */
+  h1{font-family:var(--serif);font-size:clamp(36px,5vw,56px);font-weight:900;line-height:1.15;margin-bottom:16px;letter-spacing:-0.02em;color:var(--text)}
+  h2{font-family:var(--sans);font-size:clamp(22px,2.6vw,30px);font-weight:800;line-height:1.3;margin-top:56px;margin-bottom:14px;padding-bottom:14px;border-bottom:2px solid var(--gold);color:var(--text);letter-spacing:-0.02em}
+  h2 .h2-num{font-family:var(--serif);color:var(--gold);font-weight:900;margin-right:10px;font-size:0.9em}
+  h3{font-family:var(--sans);font-size:clamp(17px,2vw,20px);font-weight:700;line-height:1.4;margin-top:36px;margin-bottom:10px;color:var(--gold-dk);letter-spacing:-0.01em}
+  h4{font-family:var(--sans);font-size:15.5px;font-weight:700;margin-top:22px;margin-bottom:8px;color:var(--text);letter-spacing:-0.005em}
+  h4::before{content:'◆';color:var(--gold);font-size:10px;margin-right:8px;vertical-align:2px}
+  p{margin-bottom:14px;font-size:15.5px;line-height:1.85}
+  strong{color:var(--text);font-weight:700}
+  em{font-style:normal;color:var(--gold-dk);font-weight:500}
+  a{color:var(--gold-dk);text-decoration:none;border-bottom:1px solid var(--gold-lt)}
+  ul,ol{padding-left:22px;margin-bottom:14px}
+  li{margin-bottom:6px;line-height:1.75}
+
+  /* ─── Nav ─── */
+  nav{
+    position:sticky;top:0;z-index:100;
+    background:rgba(245,240,232,0.94);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    padding:14px 0;
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .nav-brand{font-family:var(--serif);font-weight:900;font-size:20px;color:var(--gold-dk)}
+  .nav-brand .coin{display:inline-block;width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--bg);text-align:center;line-height:24px;font-size:13px;margin-right:8px;vertical-align:-4px}
+  .nav-links{display:flex;gap:16px;flex-wrap:wrap}
+  .nav-links a{font-family:var(--sans);font-size:13px;color:var(--dim);border:none;padding:4px 8px;border-radius:4px;transition:all .15s}
+  .nav-links a:hover{background:var(--gold);color:var(--bg)}
+
+  /* ─── Hero ─── */
+  .hero{padding:80px 0 60px;text-align:center;position:relative}
+  .hero::after{
+    content:'運';position:absolute;right:-30px;top:30px;
+    font-family:var(--serif);font-size:320px;font-weight:900;
+    color:var(--gold);opacity:.05;pointer-events:none;line-height:1;
+  }
+  .hero-sub{display:inline-flex;align-items:center;gap:10px;margin-bottom:20px}
+  .hero-line{width:40px;height:1px;background:var(--gold)}
+  .hero-label{font-family:var(--sans);font-size:12px;letter-spacing:0.2em;color:var(--gold-dk);font-weight:500}
+  .hero h1 em{display:block;color:var(--gold-dk);font-weight:900}
+  .hero-meta{margin-top:24px;font-size:13px;color:var(--muted)}
+  .hero-meta span{margin:0 10px}
+
+  /* ─── TL;DR box ─── */
+  .tldr{
+    max-width:760px;margin:36px auto 0;
+    background:var(--surface);border:1px solid var(--border);
+    border-left:5px solid var(--gold);
+    padding:28px 32px;text-align:left;border-radius:4px;
+    box-shadow:0 2px 10px rgba(61,52,39,0.04);
+  }
+  .tldr-title{font-family:var(--serif);font-size:13px;letter-spacing:0.14em;color:var(--gold-dk);font-weight:600;margin-bottom:14px}
+  .tldr p{font-size:15px;line-height:1.9;margin-bottom:10px}
+  .tldr p:last-child{margin-bottom:0}
+
+  /* ─── Callout boxes ─── */
+  .callout{
+    background:var(--surface);border:1px solid var(--border);
+    border-left:4px solid var(--gold);
+    padding:20px 24px;margin:24px 0;border-radius:4px;
+  }
+  .callout.warn{border-left-color:var(--red)}
+  .callout.ok{border-left-color:var(--ok)}
+  .callout-label{font-family:var(--sans);font-size:11px;letter-spacing:0.14em;color:var(--gold-dk);font-weight:600;margin-bottom:8px;text-transform:uppercase}
+  .callout.warn .callout-label{color:var(--red)}
+  .callout.ok .callout-label{color:var(--ok)}
+  .callout p:last-child{margin-bottom:0}
+  .callout strong{color:var(--gold-dk)}
+
+  /* ─── Pull quote ─── */
+  .pullquote{
+    font-family:var(--serif);font-size:22px;font-weight:500;line-height:1.55;
+    color:var(--text);border-left:3px solid var(--gold);
+    padding:14px 0 14px 26px;margin:28px 0;
+    background:linear-gradient(to right,rgba(160,139,106,0.05),transparent);
+  }
+  .pullquote .q{color:var(--gold);font-family:var(--serif);font-weight:900;margin-right:6px}
+
+  /* ─── Tables ─── */
+  table{
+    width:100%;border-collapse:collapse;margin:16px 0 22px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:4px;overflow:hidden;font-size:14px;
+  }
+  thead th{
+    background:var(--gold);color:var(--bg);
+    font-family:var(--sans);font-weight:700;font-size:13px;
+    padding:12px 14px;text-align:left;letter-spacing:0.02em;
+  }
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.7}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:rgba(232,224,212,0.25)}
+  tbody td strong{color:var(--gold-dk)}
+  td.num{font-variant-numeric:tabular-nums;font-weight:500}
+
+  /* ─── KPI cards ─── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:20px 0}
+  .kpi-card{
+    background:var(--surface);border:1px solid var(--border);
+    padding:18px 16px;border-radius:6px;text-align:center;
+    border-top:3px solid var(--gold);
+  }
+  .kpi-n{font-family:var(--serif);font-size:26px;font-weight:900;color:var(--gold-dk);line-height:1;margin-bottom:4px}
+  .kpi-l{font-family:var(--sans);font-size:12px;color:var(--muted)}
+
+  /* ─── Code / monospace ─── */
+  pre{
+    background:#231D15;color:#EDE1CC;
+    padding:20px 24px;border-radius:6px;
+    font-family:'Consolas',monospace;font-size:13px;line-height:1.7;
+    overflow-x:auto;margin:18px 0;
+  }
+  code{font-family:'Consolas',monospace;font-size:0.92em;background:rgba(160,139,106,0.15);padding:1px 6px;border-radius:3px}
+  pre code{background:none;padding:0}
+
+  /* ─── Section color blocks ─── */
+  section{padding:30px 0}
+  section.alt{background:linear-gradient(180deg,transparent,rgba(232,224,212,0.3),transparent)}
+
+  /* ─── Badges ─── */
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--sans);font-weight:600;letter-spacing:0.02em}
+  .b-gold{background:var(--gold);color:var(--bg)}
+  .b-red{background:var(--red);color:var(--bg)}
+  .b-ok{background:var(--ok);color:var(--bg)}
+  .b-out{border:1px solid var(--gold-dk);color:var(--gold-dk)}
+
+  /* ─── Feedback cards ─── */
+  .feedback-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0}
+  .fb-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:18px;position:relative}
+  .fb-card::before{content:'"';font-family:var(--serif);font-size:48px;color:var(--gold);opacity:.25;position:absolute;top:4px;left:12px;line-height:1}
+  .fb-name{font-family:var(--serif);font-weight:700;color:var(--gold-dk);font-size:15px;margin-bottom:2px}
+  .fb-meta{font-size:11px;color:var(--muted);margin-bottom:10px}
+  .fb-text{font-size:14px;line-height:1.7;color:var(--dim);padding-top:14px}
+
+  /* ─── Timeline ─── */
+  .tl{position:relative;padding-left:28px;margin:20px 0}
+  .tl::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--gold)}
+  .tl-item{position:relative;margin-bottom:22px}
+  .tl-item::before{content:'';position:absolute;left:-28px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:3px solid var(--gold)}
+  .tl-item.done::before{background:var(--gold)}
+  .tl-date{font-family:var(--sans);font-size:12px;color:var(--muted);font-weight:500;margin-bottom:4px}
+  .tl-title{font-family:var(--serif);font-weight:700;font-size:16px;color:var(--text);margin-bottom:4px}
+  .tl-desc{font-size:14px;color:var(--dim)}
+
+  /* ─── Roadmap bar ─── */
+  .bar{display:flex;gap:4px;margin:16px 0 28px;font-size:12px;font-family:var(--sans);color:var(--bg);font-weight:600;text-align:center}
+  .bar div{padding:16px 10px;border-radius:4px;line-height:1.45}
+  .bar div small{display:block;font-weight:400;font-size:10.5px;opacity:0.85;margin-top:4px}
+  .bar-seg{}
+  .bar-seg.p1{background:var(--gold-dk);flex:1}
+  .bar-seg.p2{background:var(--gold);flex:1.5}
+  .bar-seg.p3{background:var(--gold-lt);flex:2;color:var(--text)}
+
+  /* ─── Compact KPI (secondary style) ─── */
+  .kpi{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);padding:18px 16px;border-radius:6px;text-align:center}
+  .kpi-val{font-family:var(--serif);font-size:24px;font-weight:900;color:var(--gold-dk);line-height:1.1;margin-bottom:6px}
+  .kpi-lbl{font-family:var(--sans);font-size:12px;color:var(--muted);line-height:1.4}
+
+  /* ─── Footer text ─── */
+  .foot-lead{font-family:var(--serif);font-size:18px;color:var(--gold-dk);font-weight:700;margin:0 0 6px}
+  .foot-note{font-size:12px;color:var(--muted);margin:0 0 4px}
+  .foot-note-sm{font-size:11px;color:var(--muted);opacity:0.8;margin:0}
+
+  /* ─── Footer ─── */
+  footer{border-top:1px solid var(--border);margin-top:80px;padding:40px 0;text-align:center;color:var(--muted);font-size:13px}
+
+  /* ─── Table wrapper (responsive overflow) ─── */
+  .table-wrap{overflow-x:auto;margin:16px 0 22px;border-radius:4px;-webkit-overflow-scrolling:touch}
+  .table-wrap table{margin:0;min-width:560px}
+  .table-wrap::after{content:'← 좌우 스와이프 →';display:none;text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
+
+  /* ─── Nav active state ─── */
+  .nav-links a.active{background:var(--gold-dk);color:var(--bg)}
+
+  /* ─── Inline SVG infographic ─── */
+  .fig{margin:22px 0 28px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;text-align:center}
+  .fig svg{max-width:100%;height:auto;display:block;margin:0 auto}
+  .fig-cap{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:12px;letter-spacing:0.02em}
+  .fig-title{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--gold-dk);margin-bottom:14px;letter-spacing:0.04em;text-transform:uppercase}
+
+  /* ─── Competitor profile card ─── */
+  .comp-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:22px 24px;margin:18px 0}
+  .comp-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;flex-wrap:wrap;gap:8px}
+  .comp-name{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--text)}
+  .comp-meta{font-size:11.5px;color:var(--muted);letter-spacing:0.02em}
+  .comp-tag{display:inline-block;background:var(--gold);color:var(--bg);padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:600;margin-left:6px;letter-spacing:0.04em}
+  .comp-tag.jp{background:#D94F3B}
+  .comp-tag.cn{background:#C5A253}
+  .comp-tag.us{background:var(--navy)}
+  .comp-tag.kr{background:var(--gold-dk)}
+  .comp-sub{font-size:13px;color:var(--dim);line-height:1.65;margin:8px 0 14px;padding:10px 14px;background:rgba(160,139,106,0.06);border-radius:4px;border-left:2px solid var(--gold-lt)}
+  .comp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:10px}
+  .comp-col h5{font-family:var(--sans);font-size:11.5px;font-weight:700;color:var(--gold-dk);margin-bottom:6px;letter-spacing:0.08em;text-transform:uppercase}
+  .comp-col ul{padding-left:16px;margin:0}
+  .comp-col li{font-size:13px;line-height:1.65;color:var(--dim);margin-bottom:3px}
+  .comp-col li strong{color:var(--text)}
+  .learn{color:var(--ok);font-weight:600}
+  .avoid{color:var(--red);font-weight:600}
+
+  /* ─── Matrix 2×2 ─── */
+  .matrix{position:relative;width:100%;max-width:560px;aspect-ratio:1;margin:24px auto;border:1px solid var(--border);background:var(--surface);border-radius:4px}
+  .matrix::before,.matrix::after{content:'';position:absolute;background:var(--gold-lt)}
+  .matrix::before{top:0;bottom:0;left:50%;width:1px}
+  .matrix::after{left:0;right:0;top:50%;height:1px}
+  .matrix .pt{position:absolute;transform:translate(-50%,-50%);background:var(--gold);color:var(--bg);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;font-family:var(--sans);text-align:center;line-height:1.1;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+  .matrix .pt.us{background:var(--navy)}
+  .matrix .pt.self{background:var(--red);width:44px;height:44px;font-size:11.5px}
+  .matrix .ax{position:absolute;font-size:10.5px;color:var(--muted);font-family:var(--sans);letter-spacing:0.04em}
+  .matrix .ax.top{top:8px;left:50%;transform:translateX(-50%)}
+  .matrix .ax.bottom{bottom:8px;left:50%;transform:translateX(-50%)}
+  .matrix .ax.left{top:50%;left:8px;transform:translateY(-50%) rotate(-90deg);transform-origin:left top}
+  .matrix .ax.right{top:50%;right:8px;transform:translateY(-50%) rotate(90deg);transform-origin:right top}
+
+  /* ─── Responsive ─── */
+  @media (max-width:640px){
+    .hero::after{font-size:200px;right:-10px}
+    .nav-links{flex-wrap:nowrap;overflow-x:auto;font-size:11.5px;gap:8px;scrollbar-width:none}
+    .nav-links::-webkit-scrollbar{display:none}
+    .nav-links a{white-space:nowrap;flex-shrink:0}
+    table{font-size:13px}
+    thead th,tbody td{padding:9px 10px}
+    .pullquote{font-size:18px}
+    .table-wrap::after{display:block}
+    h2{font-size:22px}
+    h3{font-size:17px}
+    .comp-grid{grid-template-columns:1fr}
+    .matrix{max-width:100%}
+  }
+
+  /* print */
+  @media print{
+    nav{position:static}
+    body{background:#fff}
+    .hero::after{display:none}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="nav-inner">
+      <div class="nav-brand"><span class="coin">運</span>사주500 전략기획서 v3</div>
+      <div class="nav-links">
+        <a href="#feedback">피드백</a>
+        <a href="#exec">Executive</a>
+        <a href="#ui">경쟁 UI</a>
+        <a href="#econ">유닛이코노믹스</a>
+        <a href="#moat">방어력</a>
+        <a href="#aha">Aha Moment</a>
+        <a href="#growth">그로스</a>
+        <a href="#org">조직</a>
+        <a href="#legal">법규</a>
+        <a href="#copy">브랜드카피</a>
+        <a href="#roadmap">로드맵</a>
+        <a href="#risk">리스크</a>
+        <a href="#appendix">부록</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-sub">
+      <span class="hero-line"></span>
+      <span class="hero-label">SAJU 500 · STRATEGY v3</span>
+      <span class="hero-line"></span>
+    </div>
+    <h1>한 닢의 운,<em>평생의 나침반</em></h1>
+    <div class="hero-meta">
+      <span>2026년 4월 17일 발행</span>·
+      <span>v3.0</span>·
+      <span>경쟁사 UI · 유닛이코노믹스 · 방어력 · Aha · 그로스 · 조직 · 법규 · 카피</span>
+    </div>
+
+    <div class="tldr">
+      <div class="tldr-title">TL;DR — 3줄 요약</div>
+      <p>① 국내 운세 앱 1위 <strong>점신조차 "안 맞는데 습관"</strong>이라는 게 대표 리뷰다. <strong>"정확하면서 예쁘고 500원"</strong> 자리는 비어있다.</p>
+      <p>② 우리는 6개 해자(가격·브랜드·프롬프트IP·사주DB·피드백루프·플랫폼)로 방어하며, <strong>타깃 LTV/CAC 13배 · 페이백 6개월</strong>로 간다.</p>
+      <p>③ v3 제1 원칙: <strong>"깊이는 학문으로, 문장은 카톡으로."</strong> — 박예진·김승현 피드백을 정조준한 언어 전환이 이번 보강의 뼈대다.</p>
+    </div>
+  </div>
+</section>
+
+<section id="feedback">
+<div class="wrap">
+<h2>1. 주변 피드백 반영 로그</h2>
+<p>v2 문서를 20대 지인 4명이 실사용자 관점으로 검토했고, 그 뒤 <strong>송송이</strong>가 디자인 레벨에서 HTML UI 예시와 함께 구체 피드백을 추가했다. 이 섹션은 그 모두를 한 눈에 보이도록 정리한 것.</p>
+
+<h3>1.1 실사용자 피드백 4건</h3>
+<div class="feedback-grid">
+  <div class="fb-card">
+    <div class="fb-text">
+      <div class="fb-name">김승현</div>
+      <div class="fb-meta">MZ · 일반 사용자</div>
+      컨셉은 좋은데 <strong>단어가 너무 어려워서</strong> 읽다가 막힘.
+    </div>
+  </div>
+  <div class="fb-card">
+    <div class="fb-text">
+      <div class="fb-name">박예진</div>
+      <div class="fb-meta">건대 20 · 여성 감성 소비층</div>
+      한자 어렵다. <strong>표·그래프·예시</strong>로 보여달라. "20대에는~", "26살에 좋은 남자 들어온다" 같이 <strong>직접적 나이별 예측</strong>을 원함.
+    </div>
+  </div>
+  <div class="fb-card">
+    <div class="fb-text">
+      <div class="fb-name">이광해</div>
+      <div class="fb-meta">건대 17 · 얼리 어답터 남성</div>
+      <strong>로딩이 길어 보인다</strong>. 로고 공 모양은 마음에 든다.
+    </div>
+  </div>
+  <div class="fb-card">
+    <div class="fb-text">
+      <div class="fb-name">홍성민</div>
+      <div class="fb-meta">건대 19 · 기술 이해도 있음</div>
+      시주(時柱)가 <strong>17/18/19시에 다르게 나오는 버그</strong> 의심. 건강은 살짝 빗나감, 나머지는 정확.
+    </div>
+  </div>
+</div>
+
+<h3>1.2 송송이 디자인 피드백 (HTML 예시로 제공)</h3>
+<p>송송이는 레퍼런스 HTML 페이지(다크+골드 톤 '명리원')를 직접 짜서 넘겼다. 색 톤과 가격(19,900원~)은 우리 500원 전략과 충돌하지만, <strong>타이포·시각 위계·무료→유료 전환 설계</strong>는 그대로 흡수할 가치가 있다.</p>
+<table>
+  <thead><tr><th style="width:30%">송송이 원칙</th><th>사주500 v3 적용</th></tr></thead>
+  <tbody>
+    <tr><td><strong>6단계 타이포 위계</strong><br>Display → H1 → H2 → Body → Label → Caption을 CSS 변수로 엄격 관리</td><td>본 문서 자체에 <code>--t-display, --t-h1, --t-h2, --t-body, --t-label, --t-caption</code> 변수 반영. 실제 앱 CSS에도 동일 구조 이식</td></tr>
+    <tr><td><strong>황금 상단 라인 폼 카드</strong></td><td>InputPage 폼 카드에 상단 1~2px 골드 그라디언트 라인 추가 (§10 참고 코드)</td></tr>
+    <tr><td><strong>그라디언트 글로우 배경</strong></td><td>랜딩 히어로와 리포트 첫 화면에 은은한 방사형 글로우 배경. 크림 톤 위에 골드 투명도 5~7%</td></tr>
+    <tr><td><strong>결과 블러 잠금</strong></td><td>무료 사주 미리보기는 <em>기질·오행 2섹션만 노출</em>, 세운·대운·궁합은 blur + lock icon + CTA. <strong>§6 Aha Moment Act 3에 정식 도입</strong></td></tr>
+    <tr><td><strong>"인기" 배지 중간 티어 전략</strong></td><td>프리미엄 5,000원(10운) 카드에 '인기' 배지, 시선을 중간에 고정. 좌측 500원 단건 / 우측 연간 10,000원 구도</td></tr>
+    <tr><td><strong>무료→유료 CTA 동선</strong></td><td>무료 결과 하단 "전체 리포트 보기" → 서비스 섹션으로 단일 스크롤 이어지게 설계</td></tr>
+    <tr><td><strong>세리프(궁서체 풍)로 기품</strong></td><td>Noto Serif KR을 Display/H1/H2에 적용. Body는 Pretendard/Noto Sans로 가독성 유지. <em>현재 이 문서가 그 예시</em></td></tr>
+  </tbody>
+</table>
+
+<h3>1.3 피드백 → v3 반영 매핑</h3>
+<table>
+  <thead><tr><th>피드백 신호</th><th>v3 반영 위치</th><th>구체 액션</th></tr></thead>
+  <tbody>
+    <tr><td>어휘 난이도 ↑ (김승현·박예진)</td><td>§10 브랜드 카피</td><td>한자→한글 1차, 한자는 괄호. "관성(官星)" → "직장·관계 기운(官星)"</td></tr>
+    <tr><td>시각 로드맵 요구 (박예진)</td><td>§3 UI / §11 로드맵</td><td>타임라인 그래프, 대운 곡선, KPI 대시보드 목업</td></tr>
+    <tr><td>나이별 직접 예측 (박예진)</td><td>§6 Aha Act 3</td><td>"26살 9월: 직장 이동 가능성 ↑", "29살 봄: 인연 전환점" 식 템플릿</td></tr>
+    <tr><td>로딩 UX 우려 (이광해)</td><td>§6 로딩 UX</td><td>4단계 프로그레시브 로딩 + 기대치 관리 카피</td></tr>
+    <tr><td>시주 17/18/19시 버그 의심 (홍성민)</td><td>§9 QA / §12 리스크</td><td>시주 경계시간 TC-005 ~ TC-030 작성, Phase 1 런칭 전 P0</td></tr>
+    <tr><td>건강 섹션 정확도 (홍성민)</td><td>§6 / §9 의료법</td><td>"체질·경향" 수준으로 한정, 진단성 문구 금지</td></tr>
+    <tr><td>로고 공 모양 OK (이광해)</td><td>§10 브랜드</td><td>코인/태극 모티프 고정</td></tr>
+    <tr><td>6단계 타이포 위계 (송송이)</td><td>§10 + 앱 CSS</td><td>Display/H1/H2/Body/Label/Caption CSS 변수 도입</td></tr>
+    <tr><td>블러 잠금 전환 설계 (송송이)</td><td>§6 Aha / §3 UI 7계명</td><td>무료 미리보기 = 기질+오행 2섹션, 나머지 blur+lock</td></tr>
+    <tr><td>"인기" 배지 중간 티어 (송송이)</td><td>§4 가격 / §10 UX 카피</td><td>5,000원 프리미엄 카드에 "인기" 배지 고정</td></tr>
+  </tbody>
+</table>
+
+<div class="pullquote"><span class="q">"</span>깊이는 학문으로, 문장은 카톡으로.</div>
+<p class="callout"><span class="callout-label">v3 제1 원칙</span>피드백의 3/4가 "언어·예측의 구체성"에 몰려있다. "극상 퀄리티"는 <strong>학술 깊이</strong>가 아니라 <strong>내 이야기로 읽히는 깊이</strong>여야 한다.</p>
+</div>
+</section>
+
+<section id="exec" class="alt">
+<div class="wrap">
+<h2>2. Executive Summary</h2>
+
+<p><strong>한 줄:</strong> 500원에 제대로 된 AI 사주를 주는 앱. 단, 읽으면 "어 이거 내 얘기네" 소리가 나와야 함.</p>
+
+<h3>왜 지금이 기회인가 (3줄)</h3>
+<ol>
+  <li>국내 운세 앱 1위 점신조차 대표 리뷰가 <strong>"안 맞는데 습관"</strong> 이다. 정확도·깊이는 비어있다.</li>
+  <li>포스텔러는 디자인·콘텐츠는 최강이지만 사주 해석 정확도 원성 있음. 헬로우봇은 캐릭터 챗봇 재미에 머물고 명리학 깊이 없음.</li>
+  <li>즉 <strong>"정확하면서 예쁘고 500원에 소름 돋는"</strong> 자리는 비어있다. 우리가 그 자리다.</li>
+</ol>
+
+<h3>3단계 플레이</h3>
+<div class="bar">
+  <div class="bar-p1">Phase 1 · 앱인토스 단독 (2026.05~08)</div>
+  <div class="bar-p2">Phase 2 · 웹/iOS/AOS (2026.09~2027.02)</div>
+  <div class="bar-p3">Phase 3 · 일본·중국 (2027.03~)</div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card"><div class="kpi-n">1만</div><div class="kpi-l">Phase 1 MAU</div></div>
+  <div class="kpi-card"><div class="kpi-n">5만</div><div class="kpi-l">Phase 2 MAU</div></div>
+  <div class="kpi-card"><div class="kpi-n">13×</div><div class="kpi-l">LTV/CAC (P2)</div></div>
+  <div class="kpi-card"><div class="kpi-n">6개월</div><div class="kpi-l">페이백 (P2)</div></div>
+</div>
+
+<div class="callout">
+  <div class="callout-label">시장 한줄 요약</div>
+  <p>국내 2,000억 + 일본 3,600억 엔 + 중국 1,200억 위안. 어느 하나가 아니라 <strong>한자권 사주 레이어</strong>를 노린다.</p>
+</div>
+</div>
+</section>
+
+<section id="ui">
+<div class="wrap">
+<h2><span class="h2-num">3</span>경쟁사 전수 해부 — UI·UX·마케팅·과금</h2>
+<p class="lead">사주500 모든 전략의 <strong>토대</strong>는 이 섹션이다. 국내 3사, 일본 5종, 중국 4종, 서구 4종 — 총 16개 서비스를 <strong>UI/UX · 핵심 전략 · 획득 채널 · 과금 구조 · 성공 요인 · 배울 점 · 피할 점</strong> 7개 축으로 해부했다.</p>
+
+<div class="tldr">
+  <div class="tldr-title">한 줄 결론</div>
+  <p>한국은 <strong>콘텐츠 깊이</strong>가 비어있고, 일본은 <strong>IP·루틴</strong>이 강하고, 중국은 <strong>게이미피케이션</strong>이 답이고, 서구는 <strong>AI·브랜드·커뮤니티</strong>로 $수십M 매출을 만든다. 우리가 뺄 것은 <em>한국의 광고 피로 + 일본의 고가격 + 중국의 법적 리스크 + 서구의 점성 편향</em>, 가져올 것은 <em>한국의 일일 루틴 + 일본의 프리미엄 IP + 중국의 바이럴 + 서구의 AI 카피라이팅과 브랜드 톤</em>.</p>
+</div>
+
+<h3>3.1 한국 심층 — 점신 · 포스텔러 · 헬로우봇</h3>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">점신 <span class="comp-tag kr">KR · Leader</span></span>
+    <span class="comp-meta">개발사: (주)점신 · 2013 런칭 · MAU 500만+ 추정 · iOS/AOS</span>
+  </div>
+  <p class="comp-sub"><strong>"광고로 버틴 10년 장수 앱"</strong> — 매일 접속 습관을 만든 국내 1등. 그러나 광고 피로·해석 얕음이 동시대에 약점으로 굳어짐.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>홈 = 9타일 난열(오늘운세/토정/사주/궁합/타로…)</li>
+        <li>결과 = 섹션 탭, 각 100~200자 단답형</li>
+        <li>상단 광고배너 고정, 중간 전면광고</li>
+        <li>푸시 = 매일 아침 "오늘의 운세"</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>기본 무료 + 광고 수익 중심</li>
+        <li>프리미엄 사주 5,000~15,000원 단건</li>
+        <li>궁합 2,000~5,000원</li>
+        <li>VIP 월 구독 9,900원 (광고 제거)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>ASO 최적화 (App Store "사주" 1위 장기)</li>
+        <li>유료광고 낮음 → <strong>오가닉 검색 중심</strong></li>
+        <li>리뷰 응답으로 별점 4.3 유지</li>
+        <li>소셜 존재감 낮음</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>초기 진입 + 10년 브랜드 인지</li>
+        <li>기능 커버리지 최광(사주·타로·관상·토정·꿈)</li>
+        <li>앱 이름 = 카테고리 (<em>사주=점신</em>)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>ASO 초기 점유 중요성</li>
+        <li>일일 푸시 루틴 설계</li>
+        <li>리뷰 대응이 별점 유지 핵심</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>광고 과다 → 2020 이후 NPS 급락</li>
+        <li>타일 난열 → <strong>오늘 뭐 봐야 하지</strong> 모름</li>
+        <li>해석 얕음 → "그래서 어쩌라고" 이탈</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">포스텔러 (운칠기삼) <span class="comp-tag kr">KR · Premium</span></span>
+    <span class="comp-meta">개발사: 운칠기삼 · 2017 런칭 · MAU 100만+ · 누적 투자 30억+</span>
+  </div>
+  <p class="comp-sub"><strong>"감성·큐레이션 프리미엄"</strong> — 2030 여성 직타. 파스텔·모던 톤으로 "점집 느낌" 탈피. 콘텐츠 매거진형이 차별점.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>월별 테마 커버 + 매월 22편 큐레이션</li>
+        <li>결과 = 오늘/주/달/연 4세그먼트</li>
+        <li>미리보기 3줄 + 전체 잠금 → 결제 유도</li>
+        <li>온보딩 5단계, 계정 필수</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>연간 구독 3.3만~9.9만원 (주력)</li>
+        <li>단건 사주 3,000~9,900원</li>
+        <li>궁합 리포트 4,900원</li>
+        <li>프로 상담사 연결 20,000~50,000원</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>인스타/유튜브 콘텐츠 마케팅</li>
+        <li>인플루언서 협찬 (2030 라이프스타일)</li>
+        <li>카카오톡 공유 리워드</li>
+        <li>Apple Search Ads + Google UAC</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>브랜딩이 카테고리 표준 재정의</li>
+        <li>2030 여성 디맨드 직타</li>
+        <li>투자 유치로 마케팅 공격</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>"점집 느낌 탈피" 톤앤매너 레퍼런스</li>
+        <li>미리보기→잠금 전환 UX</li>
+        <li>큐레이션 콘텐츠로 리텐션</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>구독 9.9만 = 진입장벽 높음</li>
+        <li>MZ 여성 편중 → 남성·40대+ 이탈</li>
+        <li>AI 해석 개인화 약함</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">헬로우봇 (띵스플로우) <span class="comp-tag kr">KR · Chatbot</span></span>
+    <span class="comp-meta">개발사: 띵스플로우 · 2017 런칭 · 카카오 계열 인수 · MAU 30만+</span>
+  </div>
+  <p class="comp-sub"><strong>"캐릭터 챗봇 IP"</strong> — 판다, 라마마 같은 오리지널 캐릭터로 친근함. 10대~20대 초반 레전드 앱이나 성장 정체.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>홈 = 캐릭터 챗봇 리스트 (15+ 캐릭터)</li>
+        <li>대화형 입력 → 챗 응답</li>
+        <li>캐릭터별 이미지/보이스/톤 차별</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>인앱 코인(하트) 구매 300~20,000원</li>
+        <li>캐릭터별 다른 가격</li>
+        <li>일부 무료 대화 세션</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>캐릭터 IP 굿즈·카톡 이모티콘</li>
+        <li>커뮤니티 팬덤 (트위터·커뮤니티)</li>
+        <li>카카오 연계 (모회사)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>오리지널 IP 선제 확보</li>
+        <li>챗봇 UX 초기 선점</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>대화형 UX의 친밀감</li>
+        <li>톤앤매너 일관성의 힘</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>캐릭터 의존 → <strong>서비스 확장성 제약</strong></li>
+        <li>짧은 챗 응답 → 리포트 깊이 없음</li>
+        <li>모회사 매각·폐업 리스크</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h4>한국 3사 기능 커버리지 매트릭스</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>기능</th><th>점신</th><th>포스텔러</th><th>헬로우봇</th><th>사주500 v3</th></tr></thead>
+  <tbody>
+    <tr><td>오늘의 운세</td><td>O 광고</td><td>O</td><td>O</td><td><strong>O 무료 매일</strong></td></tr>
+    <tr><td>사주 상세 풀이</td><td>얕음 (100자)</td><td>중간 (200자)</td><td>챗 단답</td><td><strong>깊음 (300자+/섹션 × 10)</strong></td></tr>
+    <tr><td>대운·세운 10년</td><td>△ 텍스트</td><td>△ 연간만</td><td>X</td><td><strong>O 타임라인 시각화</strong></td></tr>
+    <tr><td>궁합</td><td>O 간이</td><td>O 구독</td><td>O 챗</td><td>O 쌍방향 (M3)</td></tr>
+    <tr><td>챗봇 상담</td><td>△</td><td>X</td><td>O IP</td><td>O 사주 대화</td></tr>
+    <tr><td>광고 노출</td><td><span class="badge b-red">다수</span></td><td><span class="badge b-gold">소수</span></td><td><span class="badge b-gold">소수</span></td><td><strong><span class="badge b-ok">없음</span></strong></td></tr>
+    <tr><td>무료 미리보기→잠금 전환</td><td>X</td><td>△ 3줄</td><td>△</td><td><strong>O 기질·오행 2섹션 풀</strong></td></tr>
+    <tr><td>AI 개인화 해석</td><td>X</td><td>△</td><td>△</td><td><strong>O Claude Opus + 프롬프트 IP</strong></td></tr>
+    <tr><td>오프라인 철학관 대체성</td><td>X</td><td>△</td><td>X</td><td><strong>O 10만원→500원 대체</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.2 일본 심층 — IP 브랜드 생태계</h3>
+<p>일본은 <strong>매일 아침 占い 앱을 켜는 루틴</strong>이 완성되어 있다. 스타 점술가(센세이)의 <strong>책→TV→앱→라이브</strong> 밸류체인이 성립. 시장 규모 연 1,000억엔+(한국 10배).</p>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">星ひとみの占い <span class="comp-tag jp">JP · Premium IP</span></span>
+    <span class="comp-meta">星ひとみ 센세이 IP · 天星術 · TBS 월드컵 출연 이력 · App Store 라이프스타일 상위권</span>
+  </div>
+  <p class="comp-sub"><strong>"天星術이라는 고유 브랜드"</strong> — 동양 철학 기반이지만 "12 천성"이라는 <em>본인만의 분류체계</em>로 IP화. 월 구독 모델의 정석.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>첫화면 = 오늘의 天星 (무료)</li>
+        <li>월운 · 애정운 · 금전운 탭 (구독)</li>
+        <li>센세이 얼굴/사인 전면 배치</li>
+        <li>TV 출연 영상 임베드</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>월 480엔 구독 (주력)</li>
+        <li>연 4,800엔 (2개월 할인)</li>
+        <li>고가 단건 리포트 1,000~3,000엔</li>
+        <li>라이브 감정 10,000엔~</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>TV 방송 출연 → 앱 다운로드 스파이크</li>
+        <li>서적 출판 (20만부+) → 앱 랜딩</li>
+        <li>LINE公式 친구 150만명</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>고유 용어 IP화 (天星術)</li>
+        <li>올드미디어(TV/책) → 디지털 깔때기</li>
+        <li>감정 키워드(당신만을 위한 특별한)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>"우리만의 용어 1개" 브랜딩 (예: <em>500운명도</em>)</li>
+        <li>고정 문구 매일 푸시 루틴</li>
+        <li>구독 480엔 ≒ <strong>한국에선 월 5,000원 상한</strong> 힌트</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>센세이 1인 의존 → 리스크</li>
+        <li>AI 없음 → 해석 갱신 안 됨</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">ゲッターズ飯田 <span class="comp-tag jp">JP · Data Scale</span></span>
+    <span class="comp-meta">ゲッターズ飯田 센세이 · "5,000만명 봐준" 슬로건 · 누적 서적 판매 700만부+</span>
+  </div>
+  <p class="comp-sub"><strong>"60타입 분류 + 누적 증거 마케팅"</strong> — 사주 기반을 <em>금/은 인디언·시계·봉황 등 12타입 × 5유형 = 60</em>로 재해석. 대중 친화.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>생년월일 입력만으로 60타입 판정</li>
+        <li>타입별 컬러·심볼 차별화</li>
+        <li>연간 달력 + 월별 길흉 캘린더</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>앱 무료 + 도서 판매 중심</li>
+        <li>연간 달력 1,500엔 (매년 베스트셀러)</li>
+        <li>강연/이벤트 10,000엔+</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>"5,000만명 봐준" 누적 증거형 카피</li>
+        <li>TV 고정 출연 (마츠모토 히토시 쇼)</li>
+        <li>매년 "운명의 해" 출판 루틴</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>복잡한 명리를 60타입으로 <strong>단순화</strong></li>
+        <li>누적 증거("X만명") 반복 노출</li>
+        <li>연간 루틴 (매년 달력 발간)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>복잡→단순 재포장 ("60 간지 성격 티저")</li>
+        <li>누적 증거 카피 ("<em>X만 건의 해석 데이터</em>")</li>
+        <li>연간 운세 리포트 (유료 레버)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>타입 환원주의 → 개인화 희석</li>
+        <li>앱보다 도서 중심 → 디지털 수익 약함</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">銀座の母 (카미오카 레이코) <span class="comp-tag jp">JP · Luxury</span></span>
+    <span class="comp-meta">긴자 대면 점술 → 앱 확장 · 1회 3,000~30,000엔 · 연 예약 평균 5만건+</span>
+  </div>
+  <p class="comp-sub"><strong>"오프라인 고가 프리미엄이 앱으로"</strong> — 리얼월드 레전드 점술사의 디지털 체험. 고가 전략의 극단.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>센세이 실사 사진/영상 전면</li>
+        <li>텍스트 밀도 극한 (5,000자+ 리포트)</li>
+        <li>콘비니 결제·캐리어 결제 지원</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>단건 리포트 3,000~10,000엔</li>
+        <li>라이브 대면 30,000~100,000엔</li>
+        <li>온라인 전화 상담 15,000엔</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>잡지 연재 (여성자신, 주간여성)</li>
+        <li>유명인 고객 언급 → PR</li>
+        <li>긴자 대면 웨이팅 리스트 자체가 브랜드</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>희소성 + 레전드 IP</li>
+        <li>고가 가격 = 품질 신호</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>결제 수단 현지화 (한국은 간편결제/카카오페이 필수)</li>
+        <li>리포트 분량 = 품질 신호</li>
+        <li>Phase 3 "명리학 전문가 1:1 50,000원" 참조</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>가격 진입장벽 → TAM 제한</li>
+        <li>오프라인 의존 → 확장 느림</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">LINE占い <span class="comp-tag jp">JP · Platform</span></span>
+    <span class="comp-meta">LINE 자회사 · 수백명 점술사 마켓플레이스 · GMV 연 100억엔+ 추정</span>
+  </div>
+  <p class="comp-sub"><strong>"플랫폼 모델의 일본 표준"</strong> — LINE 메신저 내 점술사 섭외. 분당 과금제가 핵심 수익.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>LINE 내부 미니앱 (앱 설치 불필요)</li>
+        <li>점술사 프로필·후기·평점 리스트</li>
+        <li>채팅 인터페이스 (친숙)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>분당 120~500엔 채팅/전화</li>
+        <li>첫 10분 무료 프로모션</li>
+        <li>점술사와 플랫폼 5:5 or 6:4</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>LINE 내 배너 (유통 독점)</li>
+        <li>첫 10분 무료 → 습관 형성</li>
+        <li>TVCM (연 50억엔+)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>메신저 내장 = 앱 설치 마찰 Zero</li>
+        <li>점술사 공급 마켓 확보</li>
+        <li>분당 과금 = 체류시간 최대화</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li><strong>앱인토스 전략의 정당성</strong> (LINE占い = 앱인토스 사주500)</li>
+        <li>첫 세션 무료의 강력함</li>
+        <li>후기 피드 설계 필수</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>분당 과금 → 고액 결제 피로</li>
+        <li>플랫폼은 수수료 5:5 → 공급자 이탈</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">恋愛占い (LoveMeDo 등) <span class="comp-tag jp">JP · Niche</span></span>
+    <span class="comp-meta">2030 여성 연애 특화 · 다수 앱 군집 · 월 400~980엔 구독</span>
+  </div>
+  <p class="comp-sub"><strong>"연애 니치 세분화"</strong> — 궁합·연애운·결혼운만 특화. 명확한 대상·명확한 고민. 과금 높음.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>입력 = 본인 + 상대 2인</li>
+        <li>결과 = 감정 곡선 그래프</li>
+        <li>"운명의 날짜" 스포트라이트</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>월 480~980엔 구독</li>
+        <li>단건 "運命診断" 500~1,500엔</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>인스타·Twitter 여성 타깃 광고</li>
+        <li>결과 공유 = 친구 바이럴</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>연애 = 집착 주제 → 고빈도 재방문</li>
+        <li>쌍방향 입력 = 자동 바이럴</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>궁합 쌍방향 입력 → K-factor 레버</li>
+        <li>"운명의 날짜" 구체 예측 (박예진 피드백 일치)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>니치 고정 → 타겟 협소</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3>3.3 중국 심층 — 게이미피케이션 + 규제</h3>
+<p class="callout warn"><span class="callout-label">규제 경고</span>2024.1 CAC가 "算命" 앱 200여개를 일괄 제거. <strong>직접 진출 금지 전제</strong>에서 학습만. 진출은 Phase 3 이후 <em>"传统文化"</em> 포지션 + VIE 구조로만 가능.</p>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">灵机妙算 <span class="comp-tag cn">CN · Gamified</span></span>
+    <span class="comp-meta">개발사: 灵机文化 · 2014 런칭 · 피크 MAU 3,000만+ · 2024 이후 "传统文化" 리포지션</span>
+  </div>
+  <p class="comp-sub"><strong>"가챠+체크인+기운 모으기"</strong> — 점술을 모바일 게임처럼 풀어냄. 중국식 게이미피케이션의 교과서.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>매일 체크인 → "기운" 적립</li>
+        <li>가챠 연출 (빛 번쩍·카드 뒤집기)</li>
+        <li>바즈·자웨이·리우야오·타로 교차</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>가상화폐 "福币" 충전 6~648元</li>
+        <li>프리미엄 리포트 18~98元</li>
+        <li>VIP 월 구독 25元</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>앱스토어 피처링 (텐센트 관계)</li>
+        <li>체크인 → 유지율 극대화</li>
+        <li>친구 초대 리워드</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>일일 체크인 루틴</li>
+        <li>가챠 도파민</li>
+        <li>가상화폐로 결제 마찰 완화</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li><strong>"운(運)" 가상화폐 시스템이 바로 이 구조</strong></li>
+        <li>체크인 → 일일 루틴 형성</li>
+        <li>결과 연출 (애니메이션)의 가치</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>가챠 = 중독·과소비 리스크 (한국 규제 민감)</li>
+        <li>2024 CAC 단속 표적</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">测测星座 <span class="comp-tag cn">CN · Astrology×Psych</span></span>
+    <span class="comp-meta">"测测" · 2013 런칭 · MAU 2,000만+ · 심리 테스트 겸업</span>
+  </div>
+  <p class="comp-sub"><strong>"점성+심리 테스트 크로스셀"</strong> — MBTI 같은 심리 콘텐츠로 유입, 점성/사주로 전환.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>홈 = 테스트 카드 피드 (인스타 스타일)</li>
+        <li>결과 공유 최적화</li>
+        <li>커뮤니티 게시판 (후기)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>테스트 무료, 상세 리포트 9.9~68元</li>
+        <li>VIP 구독 25元/월</li>
+        <li>위챗/알리페이 결제 이원화</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>소셜 공유 기반 오가닉</li>
+        <li>웨이보·도우인 바이럴</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>심리 테스트 = 공유 최적</li>
+        <li>공유→유입 선순환</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>테스트 형식 소셜 공유 카드</li>
+        <li>심리·성격 진단 브리지 콘텐츠</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>점성 편향 (한국 약세 카테고리)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">准了 <span class="comp-tag cn">CN · Community</span></span>
+    <span class="comp-meta">"너무 정확(太准了)" 슬로건 · 후기 커뮤니티 중심</span>
+  </div>
+  <p class="comp-sub"><strong>"후기가 콘텐츠"</strong> — "정확했다" 후기 피드로 신뢰 전가. UGC 모델.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>후기 피드 (사진+텍스트+별점)</li>
+        <li>"나도 쳐보기" 버튼</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>단건 9.9~48元</li>
+        <li>구독 대신 단건 반복</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>후기 = UGC 마케팅</li>
+        <li>"太准了" 해시태그 캠페인</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>사회적 증거(Social Proof)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li><strong>"소름 포인트 피드"</strong> = 준이 번역 (준기님 슬로건과 일치)</li>
+        <li>후기 공유 리워드 유도</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>후기 위조 어뷰징 위험</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">WeChat / Douyin 미니프로그램 <span class="comp-tag cn">CN · Distribution</span></span>
+    <span class="comp-meta">플랫폼 내 초경량 앱 생태계 · DAU 합산 수억</span>
+  </div>
+  <p class="comp-sub"><strong>"앱 설치 없이 즉시 실행"</strong> — 중국 모바일의 기본 경로. 앱스토어 우회.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>위챗 내 "공중계정" 접근</li>
+        <li>12초 만에 결과</li>
+        <li>플랫폼 네이티브 UI 따라감</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>위챗페이·알리페이 네이티브</li>
+        <li>플랫폼 수수료 3~5%</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>친구 공유 → 즉시 접속</li>
+        <li>팔로우 후 매일 구독 콘텐츠</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>설치 마찰 Zero</li>
+        <li>소셜 → 사용 연속성</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li><strong>앱인토스 = 한국판 미니프로그램</strong></li>
+        <li>공유→즉시 실행 플로우 설계 필수</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>플랫폼 정책 의존</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3>3.4 서구 심층 — 브랜드·AI·커뮤니티로 $수천만 매출</h3>
+<p>서구는 <strong>점성(astrology)</strong> 중심이지만 <strong>브랜드·AI·커뮤니티 모델</strong>로 유니콘급을 만들어냈다. 사주 그 자체는 직접 이식 불가하지만 <strong>수익화/톤/UX/리텐션</strong>은 모두 배울 만하다.</p>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">Co-Star <span class="comp-tag us">US · Viral Leader</span></span>
+    <span class="comp-meta">2017 런칭 · NASA 데이터 + AI 카피 · 누적 설치 3,000만+ · 투자 $60M+</span>
+  </div>
+  <p class="comp-sub"><strong>"Gen-Z 점성 브랜드의 표준"</strong> — 시니컬·간결·감성적 톤. 4줄 짧은 푸시 메시지로 앱 오픈 유도.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>흑배경+세리프 폰트 (학술 무드)</li>
+        <li>푸시 알림 = <em>하루 1줄 명언체</em></li>
+        <li>친구와 별자리 호환 맵</li>
+        <li>UI 미니멀 극단 (장식 Zero)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>앱 무료 · 광고 Zero (!)</li>
+        <li>프리미엄 월 $2.99~$9.99</li>
+        <li>친구 호환 리포트 $5</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>오로지 <strong>오가닉 + 바이럴</strong></li>
+        <li>트위터·틱톡에서 "Co-Star 말함" 밈</li>
+        <li>광고 집행 거의 없음</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>카피 톤의 아이코닉함 (문학적/시니컬)</li>
+        <li>Gen-Z 정체성 소재</li>
+        <li>친구 호환 = 강력한 K-factor</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li><strong>짧고 강한 카피 = 브랜드 IP</strong></li>
+        <li>광고 Zero + 오가닉 전략 정당성</li>
+        <li>친구 호환 맵 (Phase 3 로드맵에 반영됨)</li>
+        <li>세리프 타이포 (본 기획서와 일치)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>점성 편향 → 한국 약세</li>
+        <li>카피가 <em>영어 이디엄</em>에 의존 → 번역 까다로움</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">Nebula <span class="comp-tag us">US/EE · Scale</span></span>
+    <span class="comp-meta">OBRIO/Genesis 계열 · 2020 런칭 · 누적 설치 5,000만+ · ARR $40M+ 추정</span>
+  </div>
+  <p class="comp-sub"><strong>"설문 퍼널 + 고가 구독"</strong> — 장문 온보딩(20+ 질문)로 감정 몰입 후 구독으로 전환. 퍼포먼스 마케팅의 정석.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>온보딩 20+ 질문 (장문 퍼널)</li>
+        <li>로딩 화면 게이지·진행감</li>
+        <li>결과 = 강력한 프리뷰 + 잠금</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>주 구독 $7.99 (!) → 월 $31+</li>
+        <li>3일 무료 체험 → 자동갱신</li>
+        <li>라이브 리더 $2~$5/분</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>Facebook·TikTok 퍼포먼스 광고 (수백억원/연)</li>
+        <li>크리에이티브 매일 수백개 A/B</li>
+        <li>무료 체험 후킹 → 구독 자동 전환</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>온보딩 = 결제 전환 장치</li>
+        <li>주 구독 = 월 단위 대비 과금 저항 회피</li>
+        <li>데이터-드리븐 크리에이티브</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>온보딩이 곧 <strong>결제 전환 장치</strong></li>
+        <li>로딩 게이지 UX (이광해 피드백 일치)</li>
+        <li>프리뷰+잠금 전환 (송송이 피드백 일치)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>주 $7.99 = <strong>환불 폭탄</strong> 다수 (App Store 1★ 러시)</li>
+        <li>다크패턴 비판 다수 (해지 UX 은닉)</li>
+        <li>규제 리스크 증가 (美 FTC · EU DSA)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">The Pattern <span class="comp-tag us">US · Relationship</span></span>
+    <span class="comp-meta">2017 런칭 · Channing Tatum 사건으로 바이럴 · 누적 설치 1,000만+</span>
+  </div>
+  <p class="comp-sub"><strong>"관계 중심 점성 앱"</strong> — 친구·연인·가족 패턴 분석. 유명인 일화로 마케팅 없이 바이럴.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>본인 프로필 → 타임라인(인생 구간)</li>
+        <li>연락처 동기화 → 친구 관계 맵</li>
+        <li>"긴 글" 해석 UX (2,000자+)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>앱 일부 무료</li>
+        <li>구독 월 $8.99</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>Channing Tatum이 "정말 정확하다"고 트윗 → 폭발</li>
+        <li>유명인 일화 반복 PR</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>관계 콘텐츠 = 쌍방향 바이럴</li>
+        <li>긴 글 = "진짜 분석"처럼 느껴짐</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li>긴 글 해석이 <strong>품질 신호</strong></li>
+        <li>관계(궁합) 기능이 최강 바이럴 엔진</li>
+        <li>유명인 한 마디의 폭발력 → 인플루언서 계획</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>우연한 바이럴 의존 → 재현 불가</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="comp-card">
+  <div class="comp-head">
+    <span class="comp-name">Sanctuary <span class="comp-tag us">US · Marketplace</span></span>
+    <span class="comp-meta">2019 런칭 · 라이브 리더 마켓플레이스 · 투자 $17M+ · 리더 1,000명+</span>
+  </div>
+  <p class="comp-sub"><strong>"24/7 라이브 점술사 연결"</strong> — 점술사 공급을 플랫폼화. LINE占い의 미국판.</p>
+  <div class="comp-grid">
+    <div class="comp-col">
+      <h5>UI / UX</h5>
+      <ul>
+        <li>점술사 프로필·영상·후기</li>
+        <li>채팅/음성/영상 선택</li>
+        <li>세션 타이머 (분당 과금)</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>과금 구조</h5>
+      <ul>
+        <li>분당 $1.99~$4.99</li>
+        <li>첫 5분 무료</li>
+        <li>리더:플랫폼 6:4~7:3</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>마케팅</h5>
+      <ul>
+        <li>리더 SNS 셀프 마케팅 권장</li>
+        <li>Discord 커뮤니티</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5>성공 요인</h5>
+      <ul>
+        <li>라이브 = 체류시간·단가 최대</li>
+        <li>리더 공급이 곧 콘텐츠</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="learn">배울 점</h5>
+      <ul>
+        <li><strong>Phase 3 "전문가 1:1" 모델 = Sanctuary 레퍼런스</strong></li>
+        <li>첫 세션 무료 = 표준 공식</li>
+        <li>리더 공급 확보가 선행</li>
+      </ul>
+    </div>
+    <div class="comp-col">
+      <h5 class="avoid">피할 점</h5>
+      <ul>
+        <li>리더 품질 편차 → 브랜드 훼손</li>
+        <li>공급자 이탈 리스크</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3>3.5 가격 모델 매트릭스 — 과금 구조 8가지</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>모델</th><th>사례</th><th>평균 ARPU</th><th>장점</th><th>단점</th><th>사주500 적용?</th></tr></thead>
+  <tbody>
+    <tr><td><strong>광고 기반 무료</strong></td><td>점신</td><td>월 500~1,500원</td><td>진입 마찰 Zero</td><td>NPS 타격, 광고 수익 한계</td><td><span class="badge b-red">No</span></td></tr>
+    <tr><td><strong>단건 결제 (마이크로)</strong></td><td>점신·포스텔러·准了</td><td>건당 3,000~15,000원</td><td>결제 저항 낮음</td><td>반복 의사결정 피로</td><td><span class="badge b-ok">Yes 500원</span></td></tr>
+    <tr><td><strong>월 구독</strong></td><td>星ひとみ, 포스텔러, Co-Star</td><td>월 480~9,900원</td><td>예측 가능 MRR</td><td>구독 피로 · 해지 리스크</td><td><span class="badge b-out">Phase 3 검토</span></td></tr>
+    <tr><td><strong>주 구독 (aggressive)</strong></td><td>Nebula</td><td>주 $7.99 = 월 $31</td><td>과금 저항 은닉</td><td>환불 폭탄, 규제 리스크</td><td><span class="badge b-red">No (윤리)</span></td></tr>
+    <tr><td><strong>가상화폐 선충전</strong></td><td>灵机妙算, 헬로우봇</td><td>패키지 500~20,000원</td><td>마찰 낮음, 충동 구매</td><td>미사용 잔액·법무 이슈</td><td><span class="badge b-ok">Yes 運</span></td></tr>
+    <tr><td><strong>분당 과금 (라이브)</strong></td><td>LINE占い, Sanctuary</td><td>분당 500~2,000원</td><td>체류시간=매출</td><td>고액 청구 불만</td><td><span class="badge b-out">Phase 3 전문가</span></td></tr>
+    <tr><td><strong>B2B 콘텐츠 라이선싱</strong></td><td>AI점술 솔루션사</td><td>건당 200~500원</td><td>안정·스케일</td><td>B2C 브랜드 희석</td><td><span class="badge b-out">Phase 3 해외</span></td></tr>
+    <tr><td><strong>오프라인 연결(리퍼럴)</strong></td><td>銀座の母</td><td>건당 30,000엔+</td><td>단가 폭발</td><td>운영 무거움</td><td><span class="badge b-red">No</span></td></tr>
+  </tbody>
+</table>
+</div>
+<p class="callout ok"><span class="callout-label">사주500 과금 조합</span><strong>단건 500원 + 가상화폐 運 + Phase 3 분당 전문가</strong>의 3축 병행. 광고·주구독·오프라인은 <strong>원천 배제</strong>(브랜드 일관성 + 법적 안전).</p>
+
+<h3>3.6 획득 채널 플레이북 비교</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>채널</th><th>대표 사례</th><th>CAC 추정</th><th>강점</th><th>약점</th><th>사주500 우선순위</th></tr></thead>
+  <tbody>
+    <tr><td>ASO(앱스토어 최적화)</td><td>점신</td><td>~200원</td><td>지속 유입</td><td>경쟁 치열</td><td><span class="badge b-gold">P1</span></td></tr>
+    <tr><td>SEO 블로그</td><td>포스텔러</td><td>~300원</td><td>콘텐츠 IP</td><td>6개월+ 시드</td><td><span class="badge b-gold">P1</span></td></tr>
+    <tr><td>인스타·틱톡 오가닉</td><td>Co-Star, 포스텔러</td><td>~150원</td><td>브랜드 연결</td><td>제작 인건비</td><td><span class="badge b-gold">P0</span></td></tr>
+    <tr><td>퍼포먼스 광고 (Meta/Google)</td><td>Nebula</td><td>1,200~3,000원</td><td>스케일 확장</td><td>CAC&gt;LTV 함정</td><td><span class="badge b-out">P2 (Phase 2+)</span></td></tr>
+    <tr><td>인플루언서 협찬</td><td>포스텔러, The Pattern</td><td>800원</td><td>신뢰 전가</td><td>협상 부담</td><td><span class="badge b-gold">P1</span></td></tr>
+    <tr><td>TV·올드미디어</td><td>星ひとみ, ゲッターズ</td><td>수만원</td><td>신뢰 폭발</td><td>비용 거대</td><td><span class="badge b-red">Skip</span></td></tr>
+    <tr><td>플랫폼 내 유통(앱인토스/LINE/WeChat)</td><td>LINE占い</td><td>~300원</td><td>마찰 Zero</td><td>플랫폼 종속</td><td><span class="badge b-ok">P0</span></td></tr>
+    <tr><td>바이럴(공유 리워드·궁합)</td><td>Co-Star, The Pattern</td><td>~0원</td><td>K&gt;1 달성시 자가증식</td><td>설계 고난이도</td><td><span class="badge b-ok">P0</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.7 바이럴 엔진 비교 — K-factor를 어떻게 만들었나</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>앱</th><th>바이럴 트리거</th><th>K 추정</th><th>핵심 인사이트</th></tr></thead>
+  <tbody>
+    <tr><td>Co-Star</td><td>친구 호환 맵 + 카피 공유</td><td>≈ 1.2</td><td>정체성 선언 = 공유 동기</td></tr>
+    <tr><td>The Pattern</td><td>연락처 → 관계 패턴</td><td>≈ 0.9</td><td>관계 콘텐츠가 쌍방향 입력 강제</td></tr>
+    <tr><td>LINE占い</td><td>LINE 메신저 통합</td><td>≈ 0.7</td><td>설치 마찰 Zero = 유통 이점</td></tr>
+    <tr><td>测测星座</td><td>결과 카드 소셜 공유</td><td>≈ 0.8</td><td>공유 가능한 결과 카드 디자인</td></tr>
+    <tr><td>恋愛占い</td><td>2인 궁합 입력 필수</td><td>≈ 0.6</td><td>구조적으로 친구 초대 강제</td></tr>
+    <tr><td>헬로우봇</td><td>캐릭터 IP 굿즈</td><td>≈ 0.3</td><td>팬덤 = 바이럴 약함</td></tr>
+    <tr><td>점신</td><td>없음 (광고 의존)</td><td>≈ 0.1</td><td>광고 의존은 유료 성장 한계</td></tr>
+    <tr><td><strong>사주500 목표</strong></td><td>궁합+공유리워드+월운</td><td><strong>0.63→1.0</strong></td><td>3축 동시 설계 (§7.1 계수)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.8 경쟁사 포지셔닝 맵 (Price × Depth)</h3>
+<div class="fig">
+<div class="fig-title">가격 × 해석 깊이 2×2 매트릭스</div>
+<div class="matrix">
+  <div class="ax top">해석 깊이 High ↑</div>
+  <div class="ax bottom">↓ 해석 깊이 Low</div>
+  <div class="ax left">Free → 저가 →</div>
+  <div class="ax right">→ 고가 (&gt;$10)</div>
+  <div class="pt self" style="left:18%;top:18%">사주500</div>
+  <div class="pt" style="left:78%;top:10%">銀座の母</div>
+  <div class="pt" style="left:72%;top:20%">Nebula</div>
+  <div class="pt us" style="left:60%;top:28%">Sanctuary</div>
+  <div class="pt" style="left:70%;top:42%">포스텔러</div>
+  <div class="pt" style="left:50%;top:34%">星ひとみ</div>
+  <div class="pt us" style="left:30%;top:30%">Co-Star</div>
+  <div class="pt" style="left:22%;top:68%">점신</div>
+  <div class="pt" style="left:40%;top:68%">헬로우봇</div>
+  <div class="pt" style="left:45%;top:60%">测测</div>
+</div>
+<div class="fig-cap">좌상단(저가·고깊이) 무주공산. 사주500이 단독 점유 목표.</div>
+</div>
+
+<h3>3.9 실패 사례 — 왜 죽었나</h3>
+<div class="comp-grid">
+  <div class="comp-col" style="background:var(--surface);padding:14px 16px;border:1px solid var(--border);border-radius:6px">
+    <h5 class="avoid">Case A — 중국 算命 앱 200개 (2024.1)</h5>
+    <p style="font-size:13px;line-height:1.7;color:var(--dim)">CAC 일괄 제거. 공통 원인: "算命" 문구 직접 사용 + 규제 대응 없음. <strong>교훈:</strong> 포지셔닝 단어가 곧 생사. "전통문화 해설/AI 참고"로 반드시 우회.</p>
+  </div>
+  <div class="comp-col" style="background:var(--surface);padding:14px 16px;border:1px solid var(--border);border-radius:6px">
+    <h5 class="avoid">Case B — Nebula 환불 대란 (2023~)</h5>
+    <p style="font-size:13px;line-height:1.7;color:var(--dim)">주 $7.99 구독 다크패턴 → 환불 민원 폭증, App Store 1★ 리뷰 러시. <strong>교훈:</strong> 단기 매출 극대화는 장기 브랜드 자살. 투명 과금이 해자.</p>
+  </div>
+  <div class="comp-col" style="background:var(--surface);padding:14px 16px;border:1px solid var(--border);border-radius:6px">
+    <h5 class="avoid">Case C — 헬로우봇 성장 정체 (2021~)</h5>
+    <p style="font-size:13px;line-height:1.7;color:var(--dim)">캐릭터 IP 의존 → 2030 유입 실패, 10대 바닥. <strong>교훈:</strong> 페르소나가 서비스 본질보다 커지면 확장성 제약.</p>
+  </div>
+  <div class="comp-col" style="background:var(--surface);padding:14px 16px;border:1px solid var(--border);border-radius:6px">
+    <h5 class="avoid">Case D — AI占い 범용 앱 군집</h5>
+    <p style="font-size:13px;line-height:1.7;color:var(--dim)">GPT 래퍼 우후죽순 → 품질 편차 + 개인화 희박 → 평점 3.0 미만 대량 소멸. <strong>교훈:</strong> 명리학 프롬프트 IP가 없으면 차별화 제로.</p>
+  </div>
+</div>
+
+<h3>3.10 사주500 UI 7계명 (송송이 보강본)</h3>
+<ol>
+  <li><strong>홈은 "오늘 한 가지" 집중</strong> — 점신 탈피. 타일 난열 금지.</li>
+  <li><strong>결과 첫 화면 = 한글 1문장 + 한자 괄호</strong> — 김승현·박예진 피드백. 가독성 최우선.</li>
+  <li><strong>광고 Zero</strong> — 무료에도 광고 없음. 대신 사용 한도 + 공유 리워드.</li>
+  <li><strong>무료 미리보기 = 기질+오행 2섹션 풀 공개, 나머지 Blur+Lock</strong> — 송송이. 하단 "전체 리포트 보기" CTA로 500원 결제 연결.</li>
+  <li><strong>캐릭터 대신 명리학 AI 퍼소나 1인</strong> — 헬로우봇 탈피 + 일본 센세이 IP 차용.</li>
+  <li><strong>대운 타임라인 시각화</strong> — 국내 3사 모두 약한 영역 공격.</li>
+  <li><strong>구체 나이·연월 예측 강제</strong> — 박예진 피드백 + 星ひとみ·The Pattern 일화 공식화. "26살 9월 이동 가능성↑" 템플릿.</li>
+</ol>
+
+<div class="callout ok">
+  <div class="callout-label">송송이 보강 3계명 (추가)</div>
+  <p>• <strong>6단계 타이포 위계</strong>를 CSS 변수로 엄격 관리 (Display/H1/H2/Body/Label/Caption).<br>
+  • <strong>황금 상단 라인 폼 카드</strong>(≥1px 골드 그라디언트) + 그라디언트 글로우 배경으로 섹션 무게 차등.<br>
+  • <strong>가격 카드 "인기" 배지는 중간 티어</strong>(프리미엄 5,000원)에 고정 — 시선 중앙 고정 + 업셀 유도.</p>
+</div>
+
+<h3>3.11 경쟁사 → 사주500 학습 결론 10</h3>
+<ol>
+  <li><strong>[점신 탈피]</strong> 광고는 장기 브랜드 자살. 광고 Zero가 오히려 프리미엄 신호.</li>
+  <li><strong>[포스텔러 활용]</strong> "점집 느낌 탈피 톤"은 유효. 한 단계 더 품격 있게 (궁서 + 크림).</li>
+  <li><strong>[星ひとみ 모방]</strong> "우리만의 용어 1개"를 브랜드화. 후보: <em>"500운명도"</em>, <em>"명조(命造)"</em>, <em>"여덟글자"</em>.</li>
+  <li><strong>[ゲッターズ 복제]</strong> 복잡→단순 재포장 ("60 간지 성격 타입") + 누적 증거 카피 ("X만 건 해석").</li>
+  <li><strong>[銀座の母 차용]</strong> Phase 3 "전문가 1:1 50,000원" 타당성 확보. 고가 레퍼런스.</li>
+  <li><strong>[LINE占い 정당화]</strong> 앱인토스 전략 = 한국판 LINE占い. 설치 마찰 Zero 채널.</li>
+  <li><strong>[灵机妙算 이식]</strong> 運 가상화폐 시스템 + 일일 체크인 루틴. (이미 계획됨)</li>
+  <li><strong>[准了 번역]</strong> "太准了(너무 정확)" = 우리의 "소름 포인트". 후기 피드 구축.</li>
+  <li><strong>[Co-Star 카피]</strong> 짧고 강한 한줄 카피 = 브랜드 IP. 푸시 메시지도 문학체로.</li>
+  <li><strong>[Nebula 반면교사]</strong> 온보딩=전환 장치 설계는 채용, 주 구독·다크패턴은 <strong>배제</strong>.</li>
+</ol>
+
+</div>
+</section>
+
+<section id="econ" class="alt">
+<div class="wrap">
+<h2>4. 유닛이코노믹스</h2>
+<p>저가 소액 과금 모델은 <strong>유닛이코노믹스가 무너지면 즉시 적자</strong>가 된다. 모든 숫자를 근거와 함께 공개한다.</p>
+
+<h3>4.1 가격 & 원가 구조</h3>
+<table>
+  <thead><tr><th>상품</th><th>가격</th><th>원가(AI+서버)</th><th>마진</th><th>용도</th></tr></thead>
+  <tbody>
+    <tr><td>오늘의 운세</td><td>무료</td><td class="num">80원 (Haiku)</td><td>-80원</td><td>Aha / 리텐션 / 바이럴</td></tr>
+    <tr><td>사주 리포트 (1운)</td><td class="num">500원</td><td class="num">200원 (Sonnet)</td><td><strong>+300원 (60%)</strong></td><td>메인 유료</td></tr>
+    <tr><td>프리미엄 <span class="badge b-gold">인기</span></td><td class="num">5,000원 (10운)</td><td class="num">1,400원 (Opus)</td><td><strong>+3,600원 (72%)</strong></td><td>헤비 유저 (중간 티어·시선 고정)</td></tr>
+    <tr><td>연간 운세 (20운)</td><td class="num">10,000원</td><td class="num">2,000원</td><td>+8,000원 (80%)</td><td>신년 시즈널</td></tr>
+    <tr><td>궁합 (2운)</td><td class="num">1,000원</td><td class="num">400원</td><td>+600원 (60%)</td><td>확장</td></tr>
+  </tbody>
+</table>
+<p class="callout"><span class="callout-label">원가 가정</span>Claude Sonnet input 3$/MTok, output 15$/MTok. 리포트 1건당 input 2K + output 5K 토큰 ≈ 80~90원. 서버/Firestore 100원 가산. Opus는 input 15/output 75$/MTok 기준 1,000~1,400원.</p>
+
+<h3>4.2 핵심 KPI 목표</h3>
+<table>
+  <thead><tr><th>KPI</th><th>Phase 1 (M4)</th><th>Phase 2 (M12)</th><th>Phase 3 (Y2)</th></tr></thead>
+  <tbody>
+    <tr><td>MAU</td><td class="num">10,000</td><td class="num">50,000</td><td class="num">300,000</td></tr>
+    <tr><td>DAU/MAU</td><td class="num">22%</td><td class="num">28%</td><td class="num">32%</td></tr>
+    <tr><td>유료 전환 (PU/MAU)</td><td class="num">5%</td><td class="num">7%</td><td class="num">9%</td></tr>
+    <tr><td>ARPPU</td><td class="num">500원</td><td class="num">1,500원</td><td class="num">2,300원</td></tr>
+    <tr><td>월 매출 (GMV)</td><td class="num">250,000</td><td class="num">5,250,000</td><td class="num">62,100,000</td></tr>
+    <tr><td>CAC</td><td class="num">1,500원</td><td class="num">1,000원</td><td class="num">700원</td></tr>
+    <tr><td>LTV (12M)</td><td class="num">8,000원</td><td class="num">13,000원</td><td class="num">18,000원</td></tr>
+    <tr><td><strong>LTV/CAC</strong></td><td><strong>5.3×</strong></td><td><strong>13.0×</strong></td><td><strong>25.7×</strong></td></tr>
+    <tr><td>Payback</td><td class="num">6개월</td><td class="num">3개월</td><td class="num">2개월</td></tr>
+  </tbody>
+</table>
+
+<h3>4.3 LTV / CAC 수식</h3>
+<pre><code>LTV = ARPPU × 평균구매 × 수명(월) × 유료전환 × 마진율
+    = 1,500 × 2.3 × 12 × 0.07 × 0.65
+    ≈ 1,885원 (MAU 기준)
+
+LTV_PU (PU 기준) ≈ 2,247원 (초기 6개월)
+12M 투사 ≈ 13,000원 (꼬리 retention + 바이럴 보조 포함)
+
+CAC 역산 (페이백 3개월):
+월 마진/유저 = ARPU × 마진율 = 105 × 0.72 = 76원
+CAC_max = 76 × 3 = 228원 (유기적만)
+유료 광고 활용 시 타깃 = 1,000원 (인스타 CPI 벤치 1,800~2,500의 절반)</code></pre>
+
+<h3>4.4 민감도 분석 (Phase 2 기준)</h3>
+<table>
+  <thead><tr><th>변수</th><th>-20%</th><th>Baseline</th><th>+20%</th><th>월매출 영향</th></tr></thead>
+  <tbody>
+    <tr><td>유료 전환율</td><td>5.6%</td><td><strong>7%</strong></td><td>8.4%</td><td>±20%</td></tr>
+    <tr><td>ARPPU</td><td>1,200원</td><td><strong>1,500원</strong></td><td>1,800원</td><td>±20%</td></tr>
+    <tr><td>CAC</td><td>1,200원</td><td><strong>1,000원</strong></td><td>800원</td><td>페이백 ±3.6mo</td></tr>
+    <tr><td>Retention M3</td><td>28%</td><td><strong>35%</strong></td><td>42%</td><td>LTV ±28%</td></tr>
+    <tr><td>AI 원가</td><td>240원</td><td><strong>200원</strong></td><td>160원</td><td>마진 ±8pp</td></tr>
+  </tbody>
+</table>
+<p class="callout warn"><span class="callout-label">결론</span><strong>유료 전환율과 Retention M3</strong>가 월 매출 절반을 결정한다. 두 레버는 §6 Aha Moment와 §7 그로스에서 집중 공략.</p>
+
+<h3>4.5 원가 감축 로드맵</h3>
+<ol>
+  <li><strong>모델 믹스:</strong> Haiku(무료) / Sonnet(500원) / Opus(5,000원) 티어링 → 원가 60% 절감</li>
+  <li><strong>프롬프트 캐싱:</strong> 공통 시스템 프롬프트 Anthropic Prompt Caching → 토큰 80% 절감</li>
+  <li><strong>결과 재사용:</strong> 동일 사주 재요청 → 원가 0원</li>
+  <li><strong>Batch API:</strong> 오늘의 운세 새벽 배치 일괄 생성 → 50% 할인</li>
+</ol>
+<p>예상 절감: Phase 2까지 리포트당 평균 원가 200원 → 120원 (40% 절감).</p>
+
+<h3>4.6 월 손익 시뮬레이션</h3>
+<table>
+  <thead><tr><th>항목</th><th>Phase 1 M4</th><th>Phase 2 M12</th><th>Phase 3 Y2</th></tr></thead>
+  <tbody>
+    <tr><td>매출</td><td class="num">250,000</td><td class="num">5,250,000</td><td class="num">62,100,000</td></tr>
+    <tr><td>AI 원가</td><td class="num">-50,000</td><td class="num">-1,050,000</td><td class="num">-12,420,000</td></tr>
+    <tr><td>서버/인프라</td><td class="num">-80,000</td><td class="num">-400,000</td><td class="num">-2,500,000</td></tr>
+    <tr><td>결제 수수료 (3.5%)</td><td class="num">-8,750</td><td class="num">-184,000</td><td class="num">-2,174,000</td></tr>
+    <tr><td>마케팅</td><td class="num">-300,000</td><td class="num">-2,000,000</td><td class="num">-8,000,000</td></tr>
+    <tr><td>인건비</td><td class="num">-3,000,000</td><td class="num">-8,000,000</td><td class="num">-25,000,000</td></tr>
+    <tr><td><strong>영업이익(월)</strong></td><td style="color:var(--red)">-3,188,750</td><td style="color:var(--red)">-6,384,000</td><td style="color:var(--ok)"><strong>+11,006,000</strong></td></tr>
+  </tbody>
+</table>
+<p class="callout"><span class="callout-label">펀딩 경로</span>Phase 1 누적 적자 ~1,200만원은 <strong>개인 자본 or Pre-Seed 5,000만원</strong>으로 커버. Phase 2 ~6,400만원은 <strong>시드 3~5억</strong>. Phase 3 Q3 흑자 전환 시 <strong>Series A 20~30억</strong> 옵션.</p>
+</div>
+</section>
+
+<section id="moat">
+<div class="wrap">
+<h2><span class="h2-num">5</span>방어력 / 해자 6개</h2>
+<p>v2는 "4대 차별화"로 뭉뚱그렸다. v3는 <strong>6개 해자</strong>로 분해하고 각 해자의 시간축 강화 곡선을 그린다.</p>
+
+<div class="fig">
+<div class="fig-title">Moat Radar — 6축 해자 강도 (T+12M 목표)</div>
+<svg viewBox="0 0 400 360" role="img" aria-label="해자 6개 레이더 차트">
+  <g transform="translate(200,180)">
+    <!-- grid rings -->
+    <g fill="none" stroke="#E8E0D4">
+      <polygon points="0,-140 121.2,-70 121.2,70 0,140 -121.2,70 -121.2,-70"/>
+      <polygon points="0,-105 90.9,-52.5 90.9,52.5 0,105 -90.9,52.5 -90.9,-52.5"/>
+      <polygon points="0,-70 60.6,-35 60.6,35 0,70 -60.6,35 -60.6,-35"/>
+      <polygon points="0,-35 30.3,-17.5 30.3,17.5 0,35 -30.3,17.5 -30.3,-17.5"/>
+    </g>
+    <!-- axes -->
+    <g stroke="#C2AE8B" stroke-width="1">
+      <line x1="0" y1="0" x2="0" y2="-140"/>
+      <line x1="0" y1="0" x2="121.2" y2="-70"/>
+      <line x1="0" y1="0" x2="121.2" y2="70"/>
+      <line x1="0" y1="0" x2="0" y2="140"/>
+      <line x1="0" y1="0" x2="-121.2" y2="70"/>
+      <line x1="0" y1="0" x2="-121.2" y2="-70"/>
+    </g>
+    <!-- data polygon -->
+    <polygon points="0,-70 97,-56 115,66 0,126 -97,56 -84,-48"
+             fill="#A08B6A" fill-opacity="0.32" stroke="#7A6B4F" stroke-width="2.5"/>
+    <!-- data points -->
+    <g fill="#8B3228">
+      <circle cx="0" cy="-70" r="4"/>
+      <circle cx="97" cy="-56" r="4"/>
+      <circle cx="115" cy="66" r="4"/>
+      <circle cx="0" cy="126" r="4"/>
+      <circle cx="-97" cy="56" r="4"/>
+      <circle cx="-84" cy="-48" r="4"/>
+    </g>
+    <!-- axis labels -->
+    <g font-size="11" font-family="Noto Sans KR" fill="#3D3427" font-weight="700">
+      <text x="0" y="-152" text-anchor="middle">① 가격</text>
+      <text x="138" y="-76" text-anchor="start">② 브랜드</text>
+      <text x="138" y="80" text-anchor="start">③ 프롬프트 IP</text>
+      <text x="0" y="160" text-anchor="middle">④ 데이터 DB ★</text>
+      <text x="-138" y="80" text-anchor="end">⑤ 피드백 루프</text>
+      <text x="-138" y="-76" text-anchor="end">⑥ 채널</text>
+    </g>
+  </g>
+</svg>
+<div class="fig-cap">T+12개월 목표 강도. 데이터 DB(④)와 피드백 루프(⑤)가 장기 최고 해자. 초기엔 가격(①)+브랜드(②)로 버틴다.</div>
+</div>
+
+<table>
+  <thead><tr><th>#</th><th>해자</th><th>유형</th><th>강화 속도</th><th>복제 난이도</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>가격 포지셔닝 (500원)</td><td>심리·전략</td><td>즉시</td><td>쉬움</td></tr>
+    <tr><td>2</td><td>브랜드 자산 (크림×골드×태극·코인)</td><td>인지</td><td>6~12개월</td><td>중간</td></tr>
+    <tr><td>3</td><td>프롬프트 엔지니어링 IP</td><td>기술</td><td>지속적</td><td>어려움</td></tr>
+    <tr><td>4</td><td><strong>유저 사주 시뮬레이션 DB</strong></td><td>데이터</td><td>유저 비례</td><td><strong>매우 어려움</strong></td></tr>
+    <tr><td>5</td><td>피드백 루프 (소름 스코어)</td><td>네트워크</td><td>유저 비례</td><td>어려움</td></tr>
+    <tr><td>6</td><td>플랫폼 분포 (토스→웹→iOS/AOS→JP/CN)</td><td>채널</td><td>단계적</td><td>중간</td></tr>
+  </tbody>
+</table>
+
+<h3>5.1 해자별 플레이북 (요약)</h3>
+<table>
+  <thead><tr><th>해자</th><th>강화 방법</th><th>T+1년 목표</th></tr></thead>
+  <tbody>
+    <tr><td>1 가격</td><td>"500원 = 한 닢의 운(運)" 내러티브 고정. 코인 로고 + 가격 일체화</td><td>"500원 사주" 검색 1위, SEO 장악</td></tr>
+    <tr><td>2 브랜드</td><td>인스타/스레드 밈화, 유저 인증샷 자연 확산</td><td>#사주500 해시태그 1,000건+</td></tr>
+    <tr><td>3 프롬프트 IP</td><td>버전 관리 + A/B 실험 + 암묵지 축적. <em>"진화 속도" 자체가 해자</em></td><td>30회+ 이터레이션, 품질 4.5/5.0+</td></tr>
+    <tr><td>4 사주 DB</td><td>"이 해석이 맞나요?" 피드백 버튼 → 튜닝 → 품질 → 유저 → 피드백 (플라이휠)</td><td>리포트 10만건 · 라벨 1만건 → 차세대 파인튜닝 후보</td></tr>
+    <tr><td>5 피드백 루프</td><td>리포트 전면 "핵심 한 줄". 6대 소름 템플릿 고정</td><td>월 5만운 바이럴 리워드 = 2,500만원 CAC 환원</td></tr>
+    <tr><td>6 채널</td><td>토스 + 웹 병행, SEO 자산 + 해외 진출로 리스크 분산</td><td>토스 40% / 웹 유기 30% / SNS 20% / 기타 10%</td></tr>
+  </tbody>
+</table>
+
+<h3>5.2 시간축 방어 곡선</h3>
+<div class="fig">
+<div class="fig-title">Moat Strength × Time — 해자별 강화 곡선</div>
+<svg viewBox="0 0 640 340" role="img" aria-label="해자별 시간축 강화 곡선 그래프">
+  <defs>
+    <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A08B6A" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#A08B6A" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- axes -->
+  <line x1="60" y1="20" x2="60" y2="290" stroke="#E8E0D4" stroke-width="1"/>
+  <line x1="60" y1="290" x2="620" y2="290" stroke="#E8E0D4" stroke-width="1"/>
+  <text x="60" y="14" font-size="10" fill="#9C907D" text-anchor="start" font-family="Noto Sans KR">강도</text>
+  <text x="620" y="308" font-size="10" fill="#9C907D" text-anchor="end" font-family="Noto Sans KR">→ 시간</text>
+  <!-- x labels -->
+  <g font-size="10" fill="#9C907D" text-anchor="middle" font-family="Noto Sans KR">
+    <text x="90" y="308">T0</text>
+    <text x="180" y="308">M3</text>
+    <text x="280" y="308">M6</text>
+    <text x="380" y="308">M12</text>
+    <text x="500" y="308">Y2</text>
+    <text x="600" y="308">Y3</text>
+  </g>
+  <!-- horizontal grid -->
+  <g stroke="#E8E0D4" stroke-dasharray="2 3">
+    <line x1="60" y1="240" x2="620" y2="240"/>
+    <line x1="60" y1="180" x2="620" y2="180"/>
+    <line x1="60" y1="120" x2="620" y2="120"/>
+    <line x1="60" y1="60" x2="620" y2="60"/>
+  </g>
+  <!-- 해자1 가격 (flat) -->
+  <path d="M 60 250 L 620 240" fill="none" stroke="#7A6B4F" stroke-width="2"/>
+  <text x="620" y="236" font-size="10" fill="#7A6B4F" text-anchor="end" font-family="Noto Sans KR" font-weight="700">① 가격 (평탄)</text>
+  <!-- 해자2 브랜드 -->
+  <path d="M 60 260 Q 180 230 380 150 T 620 120" fill="none" stroke="#A08B6A" stroke-width="2.5"/>
+  <text x="620" y="116" font-size="10" fill="#A08B6A" text-anchor="end" font-family="Noto Sans KR" font-weight="700">② 브랜드</text>
+  <!-- 해자3 프롬프트 IP -->
+  <path d="M 60 275 Q 250 240 400 120 T 620 70" fill="none" stroke="#C5A253" stroke-width="2.5"/>
+  <text x="620" y="66" font-size="10" fill="#C5A253" text-anchor="end" font-family="Noto Sans KR" font-weight="700">③ 프롬프트 IP</text>
+  <!-- 해자4 데이터DB (가장 가파름) -->
+  <path d="M 60 280 Q 280 270 420 100 T 620 30" fill="url(#gGold)" stroke="#1F2D4A" stroke-width="3"/>
+  <text x="620" y="26" font-size="10" fill="#1F2D4A" text-anchor="end" font-family="Noto Sans KR" font-weight="700">④ 데이터 DB ★</text>
+  <!-- 해자5 피드백루프 -->
+  <path d="M 60 278 Q 220 260 380 170 T 620 90" fill="none" stroke="#2D8A4E" stroke-width="2.5"/>
+  <text x="460" y="150" font-size="10" fill="#2D8A4E" font-family="Noto Sans KR" font-weight="700">⑤ 피드백 루프</text>
+  <!-- 해자6 채널 -->
+  <path d="M 60 270 Q 250 265 400 210 T 620 170" fill="none" stroke="#8B3228" stroke-width="2.5"/>
+  <text x="460" y="200" font-size="10" fill="#8B3228" font-family="Noto Sans KR" font-weight="700">⑥ 채널</text>
+</svg>
+<div class="fig-cap">해자 4(데이터 DB) 곡선 기울기가 가장 가파르다 — 유저 증가에 비례해 강해지고, 시간이 지날수록 복제 불가능해지는 <strong>사주500의 장기 해자 1위</strong>.</div>
+</div>
+<ul>
+  <li><strong>단기(M0~M6):</strong> 해자 1,2로 버틴다. 카피·브랜드가 생명선.</li>
+  <li><strong>중기(M6~M12):</strong> 해자 3,5 본격화. 프롬프트 품질·피드백 루프 체감.</li>
+  <li><strong>장기(Y1+):</strong> 해자 4,6 폭발. 데이터·채널이 복제 불가 자산.</li>
+</ul>
+
+<h3>5.3 경쟁사 따라왔을 때 시나리오 대응</h3>
+<table>
+  <thead><tr><th>시나리오</th><th>대응</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A.</strong> 점신이 "500원 AI 사주" 출시</td><td>"사주500 = 500원 사주" 브랜드 각인 선점 + 품질 블라인드 비교 PR로 격차 공개</td></tr>
+    <tr><td><strong>B.</strong> 포스텔러가 Claude Opus 도입</td><td>우리는 1년치 프롬프트 이터레이션 + 피드백 DB. 카피만으론 따라오기 어려움</td></tr>
+    <tr><td><strong>C.</strong> 헬로우봇 후속이 캐릭터 없이 정통 사주</td><td>브랜드 + 토스 네이티브 이미 선점. 신규 진입자 CAC 높음</td></tr>
+    <tr><td><strong>D.</strong> OpenAI/Anthropic 공식 점술 앱 (최악)</td><td>로컬라이제이션(한자권 특화) + 결제·UX 현지화 + 피드백 DB. 글로벌 거대 모델은 로컬 명리학 깊이 부족</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<section id="aha" class="alt">
+<div class="wrap">
+<h2>6. Aha Moment 구체 설계</h2>
+<div class="pullquote"><span class="q">"</span>15초 안에 "어 이거 나잖아", 45초 안에 "친구한테 보여줘야겠다"가 나와야 한다.</div>
+
+<h3>6.1 3-Act 구조</h3>
+
+<h4>Act 1 (0~15초) — "어 이거 나잖아" 훅</h4>
+<p><strong>위치:</strong> 결과 페이지 최상단 "핵심 한 줄"</p>
+<div class="callout">
+  <div class="callout-label">형식 예시</div>
+  <p>"당신은 <strong>속마음을 잘 안 드러내는 따뜻한 사람</strong>입니다. <em>(일간 을목 + 관성 과다)</em>"</p>
+  <p>"당신의 인생은 <strong>천천히 끓는 물</strong>입니다. <em>(재성 약함 + 인성 강함)</em>"</p>
+</div>
+<ul>
+  <li>한국어 1문장. 구체 형용사 2개 이상.</li>
+  <li>한자는 괄호로 (박예진 피드백).</li>
+  <li>MBTI/혈액형과 <strong>다른 단어</strong>로 신선함.</li>
+</ul>
+
+<h4>Act 2 (15~45초) — "오 정확한데?" 깊이</h4>
+<p><strong>위치:</strong> 스크롤 직후 "당신의 지난 사건 맞춰보기" 섹션</p>
+<div class="callout">
+  <div class="callout-label">형식 예시</div>
+  <p><strong>2019~2020년, 큰 결정 한 번 있었죠?</strong> <em>(20~21세 대운 첫 해, 인성 → 재성 전환기)</em></p>
+  <p><strong>2022년 여름 전후, 사람 관계에서 지쳤죠?</strong> <em>(세운 임술년 관살 충)</em></p>
+</div>
+<ul>
+  <li>과거 사건 3개 제시 (대부분 일치 확률 높은 사건).</li>
+  <li>하나라도 맞으면 "소름" 트리거.</li>
+  <li>여유 어법 "~했을 수 있습니다".</li>
+</ul>
+
+<h4>Act 3 (45초~3분) — "미래도 알려줘" 전환</h4>
+<p><strong>위치:</strong> "앞으로의 나이별 타임라인" (박예진 피드백 정조준)</p>
+<pre><code>[26세] 2026년 9월: 직장 이동 또는 큰 프로젝트 기회
+       (식상 → 재성 흐름)
+[27세] 2027년 봄:   깊은 연애 시작 가능
+       (관성 세운 진입)
+[29세] 2029년:     이사/주거 환경 변화 주목
+       (인성 갈아타기)
+[30~33세] 첫 결혼 / 첫 집 / 사업 분기점 시기
+[35세] 경력 정점 진입 (대운 2번째 전반)</code></pre>
+<ul>
+  <li>현재 나이 +1, +3, +5, +10년 4개 지점.</li>
+  <li>월 단위 민감 → 계절 단위 여유 ("봄/여름/가을/겨울").</li>
+  <li>일·사랑·재물·건강 중 사주에서 부각되는 2~3개만.</li>
+  <li>확정 예언 금지, "가능성 ↑" 어법.</li>
+</ul>
+
+<h3>6.2 송송이 블러+잠금 전환 설계</h3>
+<div class="callout ok">
+  <div class="callout-label">무료 미리보기 구성 (결과 페이지)</div>
+  <p><strong>1) 풀 공개:</strong> 사주팔자 4기둥 + 일간 기질 1섹션 + 오행 핵심 1섹션</p>
+  <p><strong>2) Blur + Lock:</strong> 세운·대운·연애·재물·건강·궁합은 blur(5px) + 🔒 + "전체 리포트에서 확인"</p>
+  <p><strong>3) CTA:</strong> "전체 사주 리포트 보기 →" 버튼 → <em>중간 티어 '인기' 카드가 시선에 먼저 들어오는 서비스 섹션으로 단일 스크롤 이동</em></p>
+</div>
+
+<h3>6.3 Aha 이후 전환 퍼널</h3>
+<div class="fig">
+<div class="fig-title">Aha 전환 퍼널 — DAU에서 바이럴 루프까지</div>
+<svg viewBox="0 0 640 320" role="img" aria-label="전환 퍼널 다이어그램">
+  <defs>
+    <linearGradient id="gFun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A08B6A"/>
+      <stop offset="1" stop-color="#7A6B4F"/>
+    </linearGradient>
+  </defs>
+  <!-- funnel stage 1 -->
+  <polygon points="60,20 580,20 520,80 120,80" fill="url(#gFun)" opacity="0.92"/>
+  <text x="320" y="48" text-anchor="middle" font-size="14" fill="#F5F0E8" font-family="Noto Sans KR" font-weight="700">① 무료 오늘 운세</text>
+  <text x="320" y="66" text-anchor="middle" font-size="11" fill="#F5F0E8" font-family="Noto Sans KR" opacity="0.88">DAU 유입 — 100%</text>
+  <!-- arrow 1 -->
+  <text x="320" y="102" text-anchor="middle" font-size="11" fill="#7A6B4F" font-family="Noto Sans KR" font-weight="600">↓ CTR 8~12%</text>
+  <!-- stage 2 -->
+  <polygon points="120,115 520,115 470,175 170,175" fill="#A08B6A" opacity="0.95"/>
+  <text x="320" y="143" text-anchor="middle" font-size="14" fill="#F5F0E8" font-family="Noto Sans KR" font-weight="700">② 전체 사주 입력</text>
+  <text x="320" y="161" text-anchor="middle" font-size="11" fill="#F5F0E8" font-family="Noto Sans KR" opacity="0.88">500원 결제 게이트</text>
+  <text x="320" y="196" text-anchor="middle" font-size="11" fill="#7A6B4F" font-family="Noto Sans KR" font-weight="600">↓ CTR 5~8%</text>
+  <!-- stage 3 -->
+  <polygon points="170,209 470,209 420,265 220,265" fill="#7A6B4F"/>
+  <text x="320" y="235" text-anchor="middle" font-size="14" fill="#F5F0E8" font-family="Noto Sans KR" font-weight="700">③ 리포트 수령</text>
+  <text x="320" y="252" text-anchor="middle" font-size="11" fill="#F5F0E8" font-family="Noto Sans KR" opacity="0.88">Aha 3-Act 소름 경험</text>
+  <text x="320" y="286" text-anchor="middle" font-size="11" fill="#7A6B4F" font-family="Noto Sans KR" font-weight="600">↓ 공유 15~25%</text>
+  <!-- stage 4 (loop) -->
+  <rect x="220" y="296" width="200" height="22" rx="11" fill="#1F2D4A"/>
+  <text x="320" y="311" text-anchor="middle" font-size="12" fill="#F5F0E8" font-family="Noto Sans KR" font-weight="700">④ 공유 링크 → 바이럴 루프</text>
+</svg>
+<div class="fig-cap">방문 100명 → 결제 1.4명 → 공유 ≈ 0.25건. K &ge; 0.5 도달 시 유기 성장이 광고비를 절반으로 깎는다.</div>
+</div>
+
+<h3>6.4 로딩 UX 4단계 (이광해 피드백)</h3>
+<p>Opus 생성은 30~90초 걸린다. 이탈 막으려면 <strong>기대치 관리 + 진행감</strong>.</p>
+<div class="tl">
+  <div class="tl-item done"><div class="tl-date">0~5초</div><div class="tl-title">사주 기둥 애니메이션</div><div class="tl-desc">"만세력에서 당신의 사주를 뽑고 있어요…"</div></div>
+  <div class="tl-item done"><div class="tl-date">5~20초</div><div class="tl-title">오행 수치 그래프 채우기</div><div class="tl-desc">"오행을 분석 중이에요… 木(목) 30%"</div></div>
+  <div class="tl-item done"><div class="tl-date">20~50초</div><div class="tl-title">대운 타임라인 플로우</div><div class="tl-desc">"AI가 당신의 인생 흐름을 읽고 있어요"</div></div>
+  <div class="tl-item"><div class="tl-date">50~90초</div><div class="tl-title">8문장 해석 티저 페이드인</div><div class="tl-desc">"거의 다 완성됐어요. 소름 준비하세요 :)"</div></div>
+</div>
+<p class="callout"><span class="callout-label">기대치 선언</span>로딩 시작 즉시 "<strong>1~2분 걸려요. 그만큼 공들여요</strong>" 문구 고정 → 지루함 50% 감소.</p>
+
+<h3>6.5 건강 섹션 축소 (홍성민 피드백 + 의료법 대응)</h3>
+<table>
+  <thead><tr><th>변경 전 (v2)</th><th>변경 후 (v3)</th></tr></thead>
+  <tbody>
+    <tr><td>질병·증상 암시 ("위장이 약한 편…")</td><td>"체질적 경향" 한정 ("스트레스를 몸으로 받는 편이니 규칙적 운동 추천")</td></tr>
+    <tr><td>진단·치료 단어 일부 허용</td><td><strong>전면 금지</strong> (의료법 42조)</td></tr>
+    <tr><td>"약해요/아플 수 있어요"</td><td>"경향/체질/기운/일상 관리/스트레스 해소"로 대체</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<section id="growth">
+<div class="wrap">
+<h2>7. 그로스 / 바이럴 수학</h2>
+<p class="lead">500원 상품이 광고로는 못 남는다. <strong>사용자가 사용자를 데려와야</strong> 유닛이코노믹스가 성립한다. K &gt; 1이 목표, K &ge; 0.5가 생존선.</p>
+
+<h3>7.1 바이럴 계수 K 정의</h3>
+<pre><code>K = i × c
+
+i = 1인당 초대/공유 수    (Invites per user)
+c = 초대 → 가입 전환율     (Conversion rate)
+
+K &gt; 1  → 자가증식 (유기적 폭발)
+K = 0.5 → 광고비 2배 효율
+K &lt; 0.3 → 광고 의존 구조</code></pre>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>단계</th><th>i (공유/인당)</th><th>c (가입 전환)</th><th>K</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>Phase 1 (MVP)</td><td>0.8</td><td>0.30</td><td>0.24</td><td>결과 공유 CTA만</td></tr>
+    <tr><td>Phase 2 (궁합/리워드)</td><td>1.8</td><td>0.35</td><td><strong>0.63</strong></td><td>0.5운 리워드 + 궁합 쌍방향</td></tr>
+    <tr><td>Phase 3 (스트리크/월운)</td><td>2.5</td><td>0.40</td><td><strong>1.00</strong></td><td>월운 알림 + 친구 랭킹</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="callout ok"><span class="callout-label">시사점</span>Phase 2까지 K=0.63이면 <strong>CAC를 60% 깎는</strong> 효과. Phase 3에 K=1 닿으면 광고 없이도 성장.</p>
+
+<h3>7.2 퍼널 수식 (LTV 계산의 뼈대)</h3>
+<pre><code>방문 100명
+  ↓ 20%   오늘 운세 소비
+ 20명 (DAU 유입)
+  ↓ 10%   사주 입력 진입
+ 2.0명
+  ↓ 70%   결제 완료
+ 1.4명 (500원 구매)
+  ↓ 25%   프리미엄 업셀
+ 0.35명 (5,000원 구매)
+  ↓ 15%   재구매 (월 1회)
+ 0.05명/월 (LTV 엔진)
+
+월 광고비 100만원 → 유입 100만 / CPC 400원 = 2,500클릭
+  → 방문 2,500  → 유료 전환 35명  → 수익 ?
+  · 35명 × 500원 = 17,500원 (1차)
+  · 35 × 25% × 5,000원 = 43,750원 (프리미엄)
+  · 35 × 15% × 500원 × 6개월 = 15,750원 (재구매)
+  = 77,000원 회수 / 100만원 광고 → 7.7% (실패)
+
+  ∴ 광고는 보조, 바이럴이 주여야 함.</code></pre>
+
+<h3>7.3 채널별 CAC 배분 (월 500만원 예산 기준)</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>채널</th><th>예산</th><th>CAC</th><th>신규유저</th><th>강점</th><th>약점</th></tr></thead>
+  <tbody>
+    <tr><td>인스타 릴스 (오가닉)</td><td>0원 (콘텐츠 제작비 80만)</td><td>200원</td><td>4,000</td><td>2030 여성 타겟 적중</td><td>계정 성장 느림</td></tr>
+    <tr><td>스레드</td><td>0원 (콘텐츠 제작비 30만)</td><td>150원</td><td>2,000</td><td>대화형 바이럴</td><td>전환 낮음</td></tr>
+    <tr><td>네이버 키워드 (파워링크)</td><td>150만</td><td>1,200원</td><td>1,250</td><td>의도성 키워드 고전환</td><td>CPC 경쟁</td></tr>
+    <tr><td>인플루언서 (마이크로)</td><td>200만</td><td>800원</td><td>2,500</td><td>신뢰 전가</td><td>협상 부담</td></tr>
+    <tr><td>카카오 모먼트</td><td>80만</td><td>950원</td><td>840</td><td>2030 여성 타겟</td><td>크리에이티브 소진</td></tr>
+    <tr><td>앱인토스 내부</td><td>40만</td><td>300원</td><td>1,330</td><td>토스 UX 신뢰</td><td>노출 할당 제한</td></tr>
+    <tr><td class="b">합계</td><td class="b">470만</td><td class="b">평균 ≈ 390원</td><td class="b">≈ 11,920</td><td colspan="2"></td></tr>
+  </tbody>
+</table>
+</div>
+<p class="callout warn"><span class="callout-label">주의</span>오가닉 채널의 CAC는 "콘텐츠 제작 인건비"로 환산. 무료처럼 보이지만 <strong>시간이 곧 돈</strong>.</p>
+
+<h3>7.4 리텐션 곡선 (Day 1 / 7 / 30)</h3>
+<div class="fig">
+<div class="fig-title">Retention L-curve — 진성 팬 20% 바닥</div>
+<svg viewBox="0 0 640 280" role="img" aria-label="리텐션 곡선 그래프">
+  <defs>
+    <linearGradient id="gRet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A08B6A" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#A08B6A" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <!-- axes -->
+  <line x1="60" y1="20" x2="60" y2="240" stroke="#E8E0D4"/>
+  <line x1="60" y1="240" x2="600" y2="240" stroke="#E8E0D4"/>
+  <!-- y ticks -->
+  <g font-size="10" fill="#9C907D" font-family="Noto Sans KR" text-anchor="end">
+    <text x="54" y="30">100%</text><line x1="58" y1="26" x2="60" y2="26" stroke="#9C907D"/>
+    <text x="54" y="78">80%</text><line x1="58" y1="74" x2="60" y2="74" stroke="#9C907D"/>
+    <text x="54" y="126">60%</text><line x1="58" y1="122" x2="60" y2="122" stroke="#9C907D"/>
+    <text x="54" y="174">40%</text><line x1="58" y1="170" x2="60" y2="170" stroke="#9C907D"/>
+    <text x="54" y="222">20%</text><line x1="58" y1="218" x2="60" y2="218" stroke="#9C907D"/>
+  </g>
+  <!-- x ticks -->
+  <g font-size="10" fill="#9C907D" font-family="Noto Sans KR" text-anchor="middle">
+    <text x="90" y="258">D0</text>
+    <text x="170" y="258">D1</text>
+    <text x="290" y="258">D7</text>
+    <text x="420" y="258">D30</text>
+    <text x="560" y="258">D90</text>
+  </g>
+  <!-- area under curve -->
+  <path d="M 90 26 L 170 62 Q 230 100 290 158 Q 360 200 420 213 Q 480 220 560 221 L 560 240 L 90 240 Z" fill="url(#gRet)"/>
+  <!-- line -->
+  <path d="M 90 26 L 170 62 Q 230 100 290 158 Q 360 200 420 213 Q 480 220 560 221" fill="none" stroke="#7A6B4F" stroke-width="2.5"/>
+  <!-- points -->
+  <g>
+    <circle cx="90" cy="26" r="5" fill="#1F2D4A"/>
+    <circle cx="170" cy="62" r="5" fill="#A08B6A"/>
+    <circle cx="290" cy="158" r="5" fill="#A08B6A"/>
+    <circle cx="420" cy="213" r="5" fill="#A08B6A"/>
+    <circle cx="560" cy="221" r="5" fill="#2D8A4E"/>
+  </g>
+  <!-- labels -->
+  <g font-size="11" font-family="Noto Sans KR" fill="#3D3427">
+    <text x="100" y="20" font-weight="700">100%</text>
+    <text x="180" y="56" font-weight="700">85%</text>
+    <text x="300" y="152" font-weight="700">45%</text>
+    <text x="430" y="207" font-weight="700">22%</text>
+    <text x="570" y="215" font-weight="700" fill="#2D8A4E">15%</text>
+  </g>
+  <!-- annotation: 20% floor -->
+  <line x1="60" y1="218" x2="600" y2="218" stroke="#2D8A4E" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="600" y="212" font-size="10" fill="#2D8A4E" font-family="Noto Sans KR" text-anchor="end" font-weight="700">20% 진성 팬 바닥</text>
+</svg>
+<div class="fig-cap">일일 푸시·월운 알림·계절 리포트 3단 레버로 D30을 22% 이상 유지 → LTV 계산의 실제 근거.</div>
+</div>
+<p class="callout"><span class="callout-label">리텐션 레버</span>① 매일 아침 8:30 오늘 운세 푸시 (D1 유지) · ② 월 1일 "이번 달 운" 푸시 (D30 스파이크) · ③ 생일·입춘·동지 특별 리포트 (계절 바운스)</p>
+
+<h3>7.5 K-factor 끌어올리는 레버 6개</h3>
+<ul>
+  <li><strong>1) 공유 리워드 0.5운 × 월 5운 한도</strong> — 인당 i가 0.8 → 1.8로 증가. 어뷰징 한도로 원가 통제.</li>
+  <li><strong>2) 궁합 쌍방향 필수 설계</strong> — 궁합은 2인 입력이 필요 → 자동으로 친구 초대 유도.</li>
+  <li><strong>3) 결과 카드 디자인</strong> — 인스타 스토리 비율(9:16), 블러+워터마크 로고 자동 삽입.</li>
+  <li><strong>4) 결과 한 줄 카피 복사 기능</strong> — "나는 戊(무) 일간이고, 재성이 많아서 돈 고생 끝에 자수성가" → 공유 욕구 + 자기 정체성 선언.</li>
+  <li><strong>5) 월운 알림 "이번 달은 당신에게 ○○달"</strong> — 프리미엄 구매자 전용, D30 복귀 트리거.</li>
+  <li><strong>6) 친구 랭킹 / 호환성 맵</strong> — Phase 3, "내 주변 사람 중 나랑 궁합 제일 좋은 사람" 게임화.</li>
+</ul>
+</div>
+</section>
+
+<section id="org" class="alt">
+<div class="wrap">
+<h2>8. 조직 / 리소스 / 자금</h2>
+<p class="lead">Phase 1은 <strong>준기님 + Claude</strong> 1인 체제로 시작, Phase 2부터 콘텐츠/마케팅 인력, Phase 3에서 정식 법인 / 투자 유치.</p>
+
+<h3>8.1 단계별 인력 구성</h3>
+<table>
+  <thead><tr><th>Phase</th><th>기간</th><th>구성</th><th>월 인건비</th><th>역할 분담</th></tr></thead>
+  <tbody>
+    <tr><td>Phase 1</td><td>0~3개월</td><td>준기 + Claude + 외주(디자인 1회)</td><td>200만</td><td>개발/기획/디자인 전부 준기, Claude 페어</td></tr>
+    <tr><td>Phase 2</td><td>3~9개월</td><td>+ 콘텐츠 PM 1 + 마케터 0.5 + 명리학 자문 0.2</td><td>800만</td><td>콘텐츠 제작 분리, 마케팅 전담</td></tr>
+    <tr><td>Phase 3</td><td>9~18개월</td><td>+ FE 1 + 백엔드 1 + 커뮤니티 1 + CS 0.5</td><td>2,400만</td><td>법인 전환, 플랫폼화 준비</td></tr>
+  </tbody>
+</table>
+
+<h3>8.2 월 P&amp;L 추정 (Phase별)</h3>
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-val">-500만</div><div class="kpi-lbl">Phase 1 / 월 (MVP 번)</div></div>
+  <div class="kpi"><div class="kpi-val">+800만</div><div class="kpi-lbl">Phase 2 / 월 (BEP 도달)</div></div>
+  <div class="kpi"><div class="kpi-val">+4,000만</div><div class="kpi-lbl">Phase 3 / 월 (스케일)</div></div>
+  <div class="kpi"><div class="kpi-val">18개월</div><div class="kpi-lbl">누적 흑자 전환 시점</div></div>
+</div>
+
+<h3>8.3 자금 조달 로드맵</h3>
+<div class="tl">
+  <div class="tl-item done"><div class="tl-date">0~3개월</div><div class="tl-title">자기자본 1,500만</div><div class="tl-desc">개발/서버/광고 초기비. Claude API 비용 포함.</div></div>
+  <div class="tl-item done"><div class="tl-date">3~6개월</div><div class="tl-title">예비 창업패키지 (최대 1억)</div><div class="tl-desc">중기부 K-Startup, 예창패 or 청년창업사관학교. 개인 사업자 전환.</div></div>
+  <div class="tl-item"><div class="tl-date">6~12개월</div><div class="tl-title">Pre-seed 3~5억 (엔젤/마이크로 VC)</div><div class="tl-desc">MAU 3만, MRR 1,000만 확보 후. 해외 진출 재원.</div></div>
+  <div class="tl-item"><div class="tl-date">12~18개월</div><div class="tl-title">Seed 15~20억</div><div class="tl-desc">일본 진출 확정 + K=0.8 이상 증명 시. 법인 전환 필수.</div></div>
+</div>
+
+<h3>8.4 비용 구조 상세 (Phase 2 기준, 월)</h3>
+<table>
+  <thead><tr><th>항목</th><th>금액</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>인건비 (3인)</td><td>800만</td><td>준기 + PM + 마케터 0.5 + 자문 0.2</td></tr>
+    <tr><td>AI API (Claude + Gemini)</td><td>300만</td><td>프리미엄 Opus / 베이직 Sonnet / 일일운세 Haiku 티어링</td></tr>
+    <tr><td>Firebase / 서버</td><td>50만</td><td>Firestore + Functions + Storage</td></tr>
+    <tr><td>결제 수수료</td><td>120만</td><td>토스페이먼츠 3% + 앱인토스 IAP 수수료</td></tr>
+    <tr><td>마케팅 / 광고</td><td>500만</td><td>인스타 + 네이버 + 인플루언서</td></tr>
+    <tr><td>운영 (디자인 툴, 법무 자문)</td><td>80만</td><td>Figma, Notion, 고문 변호사</td></tr>
+    <tr><td class="b">합계</td><td class="b">1,850만</td><td>BEP: MRR 1,900만 필요</td></tr>
+  </tbody>
+</table>
+<p class="callout"><span class="callout-label">BEP 계산</span>500원 × 38,000건 or 5,000원 × 3,800건 = 월 1,900만. Phase 2 MAU 5만 × 결제 전환 4% × 평균객단가 950원 ≈ 1,900만 달성 가능.</p>
+
+<h3>8.5 외주 / 자문 풀</h3>
+<ul>
+  <li><strong>디자인:</strong> 로고/카드 템플릿 완료(1회성), Phase 2부터 월 계약 1인 (80만)</li>
+  <li><strong>명리학 자문:</strong> 홍익지문(洪益之門) 출신 박○○ 선생 등 학술 기반 자문 1인 (월 30만 + 프롬프트 검수비)</li>
+  <li><strong>법무:</strong> IT 스타트업 전문 법무법인 (고문 계약 월 20만, 이슈 발생 시 추가)</li>
+  <li><strong>번역:</strong> 일본어 네이티브 기고자(니혼고 N1 이상) Phase 3 준비기 계약</li>
+</ul>
+</div>
+</section>
+
+<section id="legal">
+<div class="wrap">
+<h2>9. 법적 / 규제 대응</h2>
+<p class="lead">한·일·중 각국 리스크는 <strong>다르다</strong>. 한국은 의료법·표시광고법, 일본은 改正特商法·景表法, 중국은 CAC 算命 단속. 초기부터 프롬프트·UI에 준수 장치 내장.</p>
+
+<h3>9.1 한국 — 의료법 42조 + 표시광고법</h3>
+<table>
+  <thead><tr><th>법조</th><th>금지 표현</th><th>대체 표현</th></tr></thead>
+  <tbody>
+    <tr><td>의료법 42조 (의료행위)</td><td>"위장병/우울증/고혈압 조심"</td><td>"소화 부담 체질 / 감정 기복 경향 / 혈압 관리 권장"</td></tr>
+    <tr><td>의료법 56조 (의료 광고)</td><td>"치료된다/낫는다"</td><td>"일상 관리 습관을 권장합니다"</td></tr>
+    <tr><td>표시광고법 (부당 광고)</td><td>"100% 맞춥니다/반드시 적중"</td><td>"AI 기반 해석 참고용"</td></tr>
+    <tr><td>개인정보보호법</td><td>생년월일 무단 저장/3자 제공</td><td>옵트인 동의 + 목적 명시 + 암호화</td></tr>
+    <tr><td>전자상거래법</td><td>결제·환불 정책 미고지</td><td>하단 고정 링크 + 결제 직전 팝업</td></tr>
+  </tbody>
+</table>
+
+<h3>9.2 일본 — 改正特商法(2023) + 景表法 + 資金決済法</h3>
+<table>
+  <thead><tr><th>법규</th><th>요지</th><th>사주500 대응</th></tr></thead>
+  <tbody>
+    <tr><td>改正特商法 (2023.6)</td><td>정기결제·구독 UI 의무화, 취소 버튼 3클릭 이내</td><td>"運" 구독 없음. 1회성 결제만 → 원천 회피.</td></tr>
+    <tr><td>景表法 (優良誤認)</td><td>"絶対当たる" 금지. 과장 표현 집단소송화</td><td>모든 결과 상단에 "AI 해석 · 참고용" 고정.</td></tr>
+    <tr><td>資金決済法</td><td>선불식지급수단 (運 선충전) 규제 가능성</td><td>1운=500원 고정 1:1 교환, 환불 조항 명시. 법무 자문 필수.</td></tr>
+    <tr><td>個人情報保護法</td><td>외국 이전 사전 동의 (Firebase US-region)</td><td>JP-region 전환 검토. 동의서 일본어 별도 고지.</td></tr>
+  </tbody>
+</table>
+
+<h3>9.3 중국 — CAC 2024.1 算命 단속 + VIE 구조</h3>
+<p class="callout warn"><span class="callout-label">구조적 장벽</span>중국은 직접 서비스 불가. 2024년 1월 网信办(CAC)가 "算命/AI占い" 앱 200여 개 일괄 제거. <strong>우회로:</strong> 홍콩/대만 법인 → 콘텐츠 B2B 라이선싱, 또는 WeChat 미니프로그램 파트너사 공급.</p>
+<ul>
+  <li><strong>직접 진출 금지 전제:</strong> Phase 3 말미(18개월+)에나 고려.</li>
+  <li><strong>콘텐츠 라이선싱 모델:</strong> 灵机妙算/测测 같은 현지 앱에 프롬프트·결과 포맷 제공, 매출의 15~20% 로열티.</li>
+  <li><strong>VIE 구조:</strong> 케이만 지주회사 + 홍콩 자회사 + 대륙 WFOE → 규제 리스크 격리.</li>
+  <li><strong>콘텐츠 검열 대응:</strong> "政治·军事·宗教" 단어 프롬프트 레벨 차단.</li>
+</ul>
+
+<h3>9.4 프롬프트 단위 금지어 사전 (KR/JP 공통 기준)</h3>
+<pre><code>// src/constants/forbiddenWords.ts
+export const FORBIDDEN = {
+  medical: ['치료', '완치', '낫다', '진단', '처방', '병이', '질병', '증상'],
+  certainty: ['반드시', '100%', '절대', '확실히', '틀림없이'],
+  fear: ['죽', '저주', '재앙', '파멸', '망조'],
+  discrimination: ['팔자', '사주팔자 나쁨', '박복한'],  // 자기비하 유도
+  financial: ['반드시 돈 벌린다', '투자 하라', '확실한 기회']
+};
+
+// 프롬프트 시스템 메시지 끝부분
+"위 단어들은 절대 사용하지 마세요. 대신 '경향/체질/흐름/기운/권장'으로 표현하세요."
+</code></pre>
+
+<h3>9.5 만세력 계산 QA 테스트 케이스 30선 (홍성민 피드백 대응)</h3>
+<p>시간 경계(23:30, 0:30, 17~19시)가 가장 틀리기 쉽다. 다음 30 케이스를 <strong>lunar-javascript vs 정통 만세력</strong> 교차 검증.</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ID</th><th>입력</th><th>기대 결과 (일주 / 시주)</th><th>검증 포인트</th></tr></thead>
+  <tbody>
+    <tr><td>TC-001</td><td>1998-03-03 05:00</td><td>예진日 / 卯時</td><td>일반 케이스 베이스라인</td></tr>
+    <tr><td>TC-002</td><td>1998-03-03 23:30</td><td><strong>다음날 子時</strong></td><td>야자시 경계 (23:00~01:00)</td></tr>
+    <tr><td>TC-003</td><td>1998-03-03 00:30</td><td>당일 子時</td><td>조자시 처리</td></tr>
+    <tr><td>TC-004</td><td>1999-11-02 17:00</td><td>酉時 (17:00~18:59 엄밀)</td><td>酉時 시작 경계</td></tr>
+    <tr><td>TC-005</td><td>1999-11-02 18:59</td><td>酉時</td><td>酉時 종료 직전</td></tr>
+    <tr><td>TC-006</td><td>1999-11-02 19:00</td><td>戌時</td><td>酉→戌 전환점 ⭐ 홍성민 보고 버그</td></tr>
+    <tr><td>TC-007</td><td>입춘 전 2월 3일</td><td>전년도 연주 유지</td><td>節入 기준 (월력 &ne; 태양력)</td></tr>
+    <tr><td>TC-008</td><td>입춘 후 2월 5일</td><td>당해 연주 적용</td><td>節入 기준</td></tr>
+    <tr><td>TC-009</td><td>윤달 생일 (윤4월)</td><td>해당 윤달 간지</td><td>윤달 계산 확인</td></tr>
+    <tr><td>TC-010</td><td>2000-02-29 (윤년)</td><td>정상 간지</td><td>윤년 처리</td></tr>
+    <tr><td>TC-011~020</td><td>각 시진 경계 10건</td><td>공식 만세력 대조</td><td>子/丑/寅…亥 12시진 경계</td></tr>
+    <tr><td>TC-021~025</td><td>대운 방향성 (남녀×양음)</td><td>양남음녀 순행 / 음남양녀 역행</td><td>대운 흐름 방향</td></tr>
+    <tr><td>TC-026~028</td><td>지장간 추출 3건</td><td>초기/중기/정기 순서</td><td>지장간 구성</td></tr>
+    <tr><td>TC-029</td><td>공망 계산 (甲子旬)</td><td>戌亥 공망</td><td>공망 주기</td></tr>
+    <tr><td>TC-030</td><td>시간 미입력</td><td>3주만 반환, 시주 null</td><td>null 안전 처리</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="callout ok"><span class="callout-label">자동화</span><code>npm run test:saju</code> 명령으로 30 케이스 일괄 검증. CI/CD에 포함.</p>
+
+<h3>9.6 Disclaimer / UI 고정 문구</h3>
+<pre><code>[리포트 상단]
+"사주500의 해석은 명리학 고전과 AI를 활용한 참고용 콘텐츠입니다.
+ 의학적·법적·금융 의사결정에 사용하지 마세요."
+
+[결제 직전]
+"500원은 1회 사주 리포트 이용료입니다. 환불 정책: 결제 후 1시간 이내 미열람 시 전액 환불."
+
+[결과 하단]
+"이 해석은 당신을 특정짓거나 미래를 확정하지 않습니다.
+ 참고 삼아, 흐름을 타세요."</code></pre>
+</div>
+</section>
+
+<section id="copy" class="alt">
+<div class="wrap">
+<h2>10. 브랜드 카피 / UX 보이스</h2>
+<p class="lead">500원이라 "싸다"로만 기억되면 망한다. <strong>"정성 · 고전 · 모던"</strong>이 공존하는 톤. 한자는 품격용, 한글은 친근용. 둘 다 써야 한다.</p>
+
+<h3>10.1 히어로 한 줄 카피 20선</h3>
+<ol>
+  <li>500원, 당신의 사주를 제대로 읽어드립니다.</li>
+  <li>이름 대신, 당신의 <strong>運</strong>을 부르겠습니다.</li>
+  <li>고전 육서 × AI, 당신만을 위한 해석.</li>
+  <li>철학관 10만원 — 사주500 500원. 품질은 타협하지 않았습니다.</li>
+  <li>당신의 명조(命造)는 단 하나, 해석도 단 하나.</li>
+  <li>운명을 묻지 마세요. <strong>흐름</strong>을 물으세요.</li>
+  <li>500원, 10분, 당신을 가장 정확하게 설명합니다.</li>
+  <li>사주는 점(占)이 아니라 <strong>지도(地圖)</strong>입니다.</li>
+  <li>AI가 고전을 읽고, 고전이 당신을 읽습니다.</li>
+  <li>돈 내라 강요 안 합니다. 500원으로 시작하세요.</li>
+  <li>당신의 사주가 이렇게 생겼습니다. 이제 어떻게 쓸지는 당신의 몫.</li>
+  <li>戊(무) · 甲(갑) · 庚(경) · 丁(정) — 당신의 여덟 글자.</li>
+  <li>철학관에서 듣던 그 말, 이제 손 안에서.</li>
+  <li>오늘의 운세 <strong>무료</strong> / 전체 사주 <strong>500원</strong>.</li>
+  <li>당신의 소름 포인트, 3번은 찌릅니다.</li>
+  <li>나를 가장 잘 아는 AI에게 물어보세요.</li>
+  <li>사주는 변하지 않지만, 당신은 변할 수 있습니다.</li>
+  <li>500원어치 정성. 10만원어치 통찰.</li>
+  <li>命(명)을 읽고, 運(운)을 부릅니다.</li>
+  <li>당신의 이야기는 여덟 글자로 충분합니다.</li>
+</ol>
+
+<h3>10.2 UX 보이스 가이드</h3>
+<table>
+  <thead><tr><th>상황</th><th>좋은 예</th><th>나쁜 예</th><th>이유</th></tr></thead>
+  <tbody>
+    <tr><td>로딩</td><td>"AI가 당신의 명조(命造)를 읽고 있어요"</td><td>"Loading…"</td><td>기대감·품격 전달</td></tr>
+    <tr><td>에러</td><td>"잠시 기운이 맺혔어요. 다시 시도해 주세요."</td><td>"오류가 발생했습니다"</td><td>톤 일관성</td></tr>
+    <tr><td>결제 성공</td><td>"運이 충전되었습니다. 지금 풀이를 시작합니다."</td><td>"결제 완료"</td><td>세계관 유지</td></tr>
+    <tr><td>환불</td><td>"1시간 이내 미열람 시 환불됩니다. 걱정 마세요."</td><td>"환불 정책을 확인하세요"</td><td>친절 + 안심</td></tr>
+    <tr><td>공유 유도</td><td>"누구한테 보여줄까요? 궁합도 볼 수 있어요"</td><td>"공유하기"</td><td>행동 동기 제공</td></tr>
+    <tr><td>경고 (건강)</td><td>"체질적 경향이에요. 의료적 진단은 꼭 전문의에게."</td><td>"○○병 조심하세요"</td><td>의료법 회피 + 책임 한정</td></tr>
+    <tr><td>결과 첫 줄</td><td>"당신의 사주는 여덟 글자로 이렇게 시작됩니다."</td><td>"분석 결과:"</td><td>서사 진입</td></tr>
+  </tbody>
+</table>
+
+<h3>10.3 한자 사용 규칙 (김승현 피드백 반영)</h3>
+<p class="callout"><span class="callout-label">원칙</span>모든 한자는 <strong>한자(한글음, 뜻)</strong> 3단 병기. 한자 자체 노출 수는 섹션당 5개 이하. 터치 시 툴팁으로 해설.</p>
+<pre><code>[나쁜 예]
+"戊土 日柱 재성 투간"
+
+[좋은 예]
+"戊(무·흙 일간)은 재성(財星, 돈의 기운)이 겉으로 드러나 있어…"
+
+[툴팁 동작]
+戊 → 탭 시 "무(戊) · 높은 산의 흙. 믿음직하고 속이 깊음."
+재성 → 탭 시 "재성(財星) · 돈·물질·이성을 다루는 기운"</code></pre>
+
+<h3>10.4 금지어 사전 (브랜드 + 법적)</h3>
+<table>
+  <thead><tr><th>카테고리</th><th>금지</th><th>허용</th></tr></thead>
+  <tbody>
+    <tr><td>단정 / 공포</td><td>"반드시 일어난다", "피할 수 없다", "재앙"</td><td>"가능성이 높다", "대비하면 좋다", "주의할 흐름"</td></tr>
+    <tr><td>저급 용어</td><td>"팔자가 세다", "사주가 더럽다"</td><td>"인생의 굴곡이 분명하다", "기운이 강한 사주"</td></tr>
+    <tr><td>의료</td><td>"병에 걸린다", "치료"</td><td>"체질적 경향", "관리 권장"</td></tr>
+    <tr><td>금융</td><td>"무조건 투자하라", "대박"</td><td>"재성의 흐름이 ○년에 강하다", "계획적 투자 시기"</td></tr>
+    <tr><td>정치·종교</td><td>모든 특정 정당/종교 언급</td><td>철저 배제</td></tr>
+    <tr><td>혐오</td><td>성별·지역·학력 비하</td><td>(원천 차단)</td></tr>
+  </tbody>
+</table>
+
+<h3>10.5 톤 스펙트럼 맵</h3>
+<div class="fig">
+<div class="fig-title">톤 포지셔닝 — 학술 ↔ 친근 × 전통 ↔ 현대</div>
+<svg viewBox="0 0 640 360" role="img" aria-label="브랜드 톤 포지셔닝 맵">
+  <!-- frame -->
+  <rect x="60" y="30" width="540" height="280" fill="#FFFFFF" stroke="#E8E0D4"/>
+  <!-- axes -->
+  <line x1="330" y1="30" x2="330" y2="310" stroke="#C2AE8B" stroke-dasharray="3 3"/>
+  <line x1="60" y1="170" x2="600" y2="170" stroke="#C2AE8B" stroke-dasharray="3 3"/>
+  <!-- axis labels -->
+  <g font-size="11" font-family="Noto Sans KR" fill="#7A6B4F" font-weight="600">
+    <text x="330" y="24" text-anchor="middle">신뢰도·학술 ↑</text>
+    <text x="330" y="328" text-anchor="middle">↓ 친근·캐주얼</text>
+    <text x="54" y="174" text-anchor="end">전통 ←</text>
+    <text x="606" y="174" text-anchor="start">→ 현대</text>
+  </g>
+  <!-- competitors as circles -->
+  <g font-family="Noto Sans KR" font-size="11">
+    <!-- 점집 (학술 전통) -->
+    <circle cx="120" cy="90" r="20" fill="#7A6B4F" opacity="0.6"/>
+    <text x="120" y="94" text-anchor="middle" fill="#FFF" font-weight="700">점집</text>
+    <!-- 철학관 (학술 전통 약간) -->
+    <circle cx="180" cy="120" r="22" fill="#A08B6A" opacity="0.7"/>
+    <text x="180" y="124" text-anchor="middle" fill="#FFF" font-weight="700">철학관</text>
+    <!-- 銀座の母 (학술 고급) -->
+    <circle cx="250" cy="80" r="22" fill="#D94F3B" opacity="0.75"/>
+    <text x="250" y="84" text-anchor="middle" fill="#FFF" font-weight="700" font-size="10">銀座の母</text>
+    <!-- Co-Star (학술 모던) -->
+    <circle cx="440" cy="100" r="24" fill="#1F2D4A"/>
+    <text x="440" y="104" text-anchor="middle" fill="#FFF" font-weight="700">Co-Star</text>
+    <!-- 포스텔러 (중간 모던) -->
+    <circle cx="470" cy="190" r="24" fill="#A08B6A"/>
+    <text x="470" y="194" text-anchor="middle" fill="#FFF" font-weight="700">포스텔러</text>
+    <!-- 점신 (캐주얼 중립) -->
+    <circle cx="300" cy="240" r="22" fill="#C2AE8B"/>
+    <text x="300" y="244" text-anchor="middle" fill="#3D3427" font-weight="700">점신</text>
+    <!-- 헬로우봇 (캐주얼 모던) -->
+    <circle cx="500" cy="260" r="22" fill="#C2AE8B"/>
+    <text x="500" y="264" text-anchor="middle" fill="#3D3427" font-weight="700">헬봇</text>
+    <!-- 사주500 target (학술+현대 교차) -->
+    <circle cx="390" cy="140" r="32" fill="#8B3228" opacity="0.95"/>
+    <text x="390" y="138" text-anchor="middle" fill="#F5F0E8" font-weight="900" font-size="13">사주500</text>
+    <text x="390" y="154" text-anchor="middle" fill="#F5F0E8" font-size="10" opacity="0.9">품격+현대</text>
+  </g>
+  <!-- target callout -->
+  <text x="320" y="352" text-anchor="middle" font-size="11" font-family="Noto Sans KR" fill="#8B3228" font-weight="700">★ 목표 지점: 학술 신뢰 + 현대 감각 = 비어있는 사분면</text>
+</svg>
+<div class="fig-cap">경쟁자들은 4사분면에 분산, 학술+현대 영역이 무주공산. 궁서+크림+골드 톤으로 이 포지션 선점.</div>
+</div>
+
+<h3>10.6 톤 체크리스트 (카피 작성 시 5개 통과 여부 확인)</h3>
+<ul>
+  <li>① 존댓말 유지했는가?</li>
+  <li>② 한자 사용 시 한글·뜻 병기?</li>
+  <li>③ 단정·공포 단어 없는가?</li>
+  <li>④ 의료/금융/정치 이슈 단어 없는가?</li>
+  <li>⑤ "운명 확정"이 아니라 "흐름 제안"으로 끝나는가?</li>
+</ul>
+</div>
+</section>
+
+<section id="roadmap">
+<div class="wrap">
+<h2>11. 12개월 로드맵 & KPI 대시보드</h2>
+<p class="lead">마일스톤은 <strong>월 단위</strong>, KPI는 <strong>주 단위</strong> 점검. 각 분기 말에 Go/No-Go 회고.</p>
+
+<h3>11.1 분기별 핵심 목표</h3>
+<div class="bar">
+  <div class="bar-seg p1">Phase 1<br/><small>0-3M · MVP 출시</small></div>
+  <div class="bar-seg p2">Phase 2<br/><small>3-9M · PMF / BEP</small></div>
+  <div class="bar-seg p3">Phase 3<br/><small>9-18M · 스케일 / 일본 테스트</small></div>
+</div>
+
+<h3>11.2 월별 액션 플랜</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>월</th><th>주요 마일스톤</th><th>KPI</th><th>리소스</th></tr></thead>
+  <tbody>
+    <tr><td>M1 (4월)</td><td>Opus vs Sonnet A/B, 만세력 TC 30 통과, Firebase deploy</td><td>내부 테스트 pass 95%</td><td>준기 + Claude</td></tr>
+    <tr><td>M2 (5월)</td><td>앱인토스 심사 통과, 런칭 카운트다운 마케팅 시작</td><td>사전예약 3,000명</td><td>+ 디자인 외주 1회</td></tr>
+    <tr><td>M3 (6월)</td><td>공식 런칭 (웹 + 앱인토스), 인스타 계정 성장</td><td>DAU 1,000 / MAU 5,000 / 결제 500건</td><td>+ 마케터 0.5</td></tr>
+    <tr><td>M4 (7월)</td><td>프리미엄 5,000원 런칭, 궁합 기능 v1</td><td>프리미엄 전환율 10%</td><td>+ PM 1</td></tr>
+    <tr><td>M5 (8월)</td><td>공유 리워드 + 스트리크, K-factor 측정 시작</td><td>K ≥ 0.4</td><td>유지</td></tr>
+    <tr><td>M6 (9월)</td><td>Pre-seed 유치 (3~5억), 명리학 자문 계약</td><td>MAU 2만 / MRR 1,000만</td><td>+ 명리 자문</td></tr>
+    <tr><td>M7 (10월)</td><td>일본 시장 조사 완료, 콘텐츠 번역 파이프라인 구축</td><td>일본 베타 티저 1만 방문</td><td>+ 번역가</td></tr>
+    <tr><td>M8 (11월)</td><td>BEP 도달 (월 흑자 전환)</td><td>MRR 1,900만</td><td>유지</td></tr>
+    <tr><td>M9 (12월)</td><td>연말 대운 특집, 브랜드 캠페인</td><td>MAU 5만 / 누적 결제 10만건</td><td>+ 광고비 증액</td></tr>
+    <tr><td>M10 (26.1)</td><td>일본 베타 런칭 (LINE 연동)</td><td>K ≥ 0.8 / 일본 DAU 500</td><td>+ 현지 PM</td></tr>
+    <tr><td>M11 (26.2)</td><td>Seed 유치 (15~20억)</td><td>MAU 10만</td><td>+ 개발자 2</td></tr>
+    <tr><td>M12 (26.3)</td><td>법인 전환, Phase 3 킥오프</td><td>MRR 1억 / DAU 3만</td><td>+ 커뮤니티 · CS</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>11.3 주간 KPI 대시보드 (이렇게 생겼어야 함)</h3>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│  사주500 주간 KPI — Week 24 (2026.06.09~06.15)            │
+├──────────────────────────────────────────────────────────┤
+│  신규 가입        1,843    ▲ 12%   목표 2,000    █░ 92%  │
+│  DAU              1,128    ▲  8%   목표 1,200    █░ 94%  │
+│  결제 전환율       4.7%    ▲0.3pp  목표 4.5%    ██ 104%  │
+│  객단가 (ARPPU)  1,230원   ▼2.1%   목표 1,200    ██ 102% │
+│  MRR            8,920만   ▲ 15%   목표 1,000만  █░ 89%  │
+│  K-factor          0.52   ▲0.05   목표 0.50    ██ 104%  │
+│  D7 리텐션       46.2%    ▲1.1pp  목표 45%     ██ 103%  │
+├──────────────────────────────────────────────────────────┤
+│  ⚠ 이번 주 주의 : MAU 성장이 광고 의존도 높음 (유기 38%) │
+│  ✓ 잘 한 것      : 궁합 기능 출시 후 K 0.47→0.52          │
+│  → 다음 주 액션  : 인플루언서 2명 섭외, 네이버 블로그 5편 │
+└──────────────────────────────────────────────────────────┘</code></pre>
+<p class="callout ok"><span class="callout-label">대시보드 규칙</span>매주 월요일 오전 9시 Firebase + GA4 + 토스페이먼츠 RPT → Notion 자동 취합 (Functions scheduler). 회고 15분.</p>
+
+<h3>11.4 Go / No-Go 체크포인트</h3>
+<table>
+  <thead><tr><th>시점</th><th>Go 조건</th><th>No-Go 시 액션</th></tr></thead>
+  <tbody>
+    <tr><td>M3 (런칭 후 1개월)</td><td>DAU 1,000 · 결제 500건</td><td>UI/UX 전면 리디자인 2주</td></tr>
+    <tr><td>M6 (Pre-seed 전)</td><td>MAU 2만 · K ≥ 0.4</td><td>궁합·월운 우선 개발, 투자 유치 지연</td></tr>
+    <tr><td>M9 (BEP 확인)</td><td>MRR 1,900만</td><td>원가 재검토 (AI 모델 티어링)</td></tr>
+    <tr><td>M12 (일본 진출)</td><td>MAU 5만 · 일본 베타 K ≥ 0.5</td><td>국내 수익화 집중, 일본 연기 6개월</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<section id="risk" class="alt">
+<div class="wrap">
+<h2>12. 리스크 맵 & Next Try 10</h2>
+
+<h3>12.1 리스크 매트릭스 (발생확률 × 임팩트)</h3>
+<table>
+  <thead><tr><th>리스크</th><th>확률</th><th>임팩트</th><th>대응</th></tr></thead>
+  <tbody>
+    <tr><td>Claude API 가격 인상 30%+</td><td>중</td><td>대</td><td>Sonnet/Haiku 티어링, Gemini 이중화</td></tr>
+    <tr><td>만세력 계산 버그 (홍성민 보고)</td><td>높음</td><td>중</td><td>TC-030 자동화 + CI, 2주 내 완전 커버</td></tr>
+    <tr><td>의료법 위반 제재</td><td>낮음</td><td>치명적</td><td>금지어 사전 + 프롬프트 제약 + 법무 자문</td></tr>
+    <tr><td>K &lt; 0.3 (바이럴 실패)</td><td>중</td><td>대</td><td>궁합/리워드 선행, 광고비 축소</td></tr>
+    <tr><td>점신/포스텔러의 500원 구간 진입</td><td>중</td><td>중</td><td>해자 6 중 3 이상 선행 완성</td></tr>
+    <tr><td>카피캣 등장 (AI 사주 난립)</td><td>높음</td><td>소~중</td><td>브랜드 · 프롬프트 IP · 데이터 DB 선점</td></tr>
+    <tr><td>앱인토스 정책 변경</td><td>낮음</td><td>중</td><td>웹 단독 운영 가능 구조 유지</td></tr>
+    <tr><td>환불 남용 (결제 직후 캡처 후 환불)</td><td>중</td><td>소</td><td>결제 후 열람 여부로 환불 판정, 로그 기록</td></tr>
+    <tr><td>개인정보 유출</td><td>낮음</td><td>치명적</td><td>Firebase Rules 강화 + 암호화 + 정기 감사</td></tr>
+    <tr><td>일본 진출 타이밍 밀림</td><td>중</td><td>중</td><td>국내 BEP 우선, 해외는 여유 자금으로만</td></tr>
+  </tbody>
+</table>
+
+<h3>12.2 Next Try Top 10 (우선순위 행동)</h3>
+<ol>
+  <li><strong>Opus vs Sonnet A/B 테스트 3 케이스</strong> — 실제 사주 3개(준기님 + 2명)로 비교, 퀄리티 95% 이상이면 Sonnet으로 원가 절감.</li>
+  <li><strong>만세력 TC-001~030 자동 스위트</strong> — 홍성민 보고 버그 재현 + 공식 만세력 크로스 체크.</li>
+  <li><strong>Firebase 실제 deploy + 앱인토스 ait build</strong> — 스테이징 없이 production 한 번 돌려봐야 배포 리스크 소각.</li>
+  <li><strong>인스타 + 스레드 계정 개설 + 콘텐츠 5편 선제작</strong> — 런칭 D-30부터 팔로워 시드.</li>
+  <li><strong>SEO 타겟 키워드 분석 + 블로그 1편 발행</strong> — "사주 무료", "AI 사주 정확도", "500원 사주" 등.</li>
+  <li><strong>인플루언서 후보 3~5명 리스트업</strong> — 2030 여성 라이프스타일/명리 관심사, DM 템플릿 초안.</li>
+  <li><strong>한자 툴팁 구현 + 금지어 사전 배포</strong> — 김승현 피드백 + 법적 리스크 동시 해소.</li>
+  <li><strong>로딩 UX 4단계 구현</strong> — 이광해 이탈 방지 피드백. 클라이언트 작업 2일.</li>
+  <li><strong>블러+잠금 결과 컴포넌트</strong> — 송송이 전환 설계. 무료 → 500원 전환률 1.5배 목표.</li>
+  <li><strong>궁합 기능 MVP</strong> — 2인 입력 UI + 쌍방향 결과 카드. K-factor 최대 레버.</li>
+</ol>
+
+<h3>12.3 회고 템플릿</h3>
+<pre><code>[주간 회고]
+1. 이번 주 숫자 (KPI 대시보드)
+2. 가장 놀란 지표 / 가장 실망한 지표
+3. 유저 피드백 3건 (이번 주 새로 들어온 것)
+4. 경쟁사 변화 (있다면)
+5. 다음 주 Next Try 3 (실행 가능한 단위로)
+
+[분기 회고]
+1. Phase 목표 대비 달성률
+2. 가설 검증: "X면 Y다"가 맞았는가?
+3. Phase N+1 Go/No-Go 결정
+4. 조직/리소스 재조정 필요한가?</code></pre>
+</div>
+</section>
+
+<section id="appendix">
+<div class="wrap">
+<h2>13. 부록</h2>
+
+<h3>13.1 v2 → v3 변경 매핑</h3>
+<table>
+  <thead><tr><th>v2 섹션</th><th>v3 변경 / 강화</th><th>근거</th></tr></thead>
+  <tbody>
+    <tr><td>시장 분석</td><td>→ 경쟁사 UI 전수 분석 (KR 3 + JP 5 + CN 4)</td><td>해외 벤치 누락 지적</td></tr>
+    <tr><td>가격 전략</td><td>→ 유닛이코노믹스 수식화 + 민감도 + P&amp;L</td><td>정량 근거 부재</td></tr>
+    <tr><td>차별화</td><td>→ 해자 6개 (가격/브랜드/IP/데이터/피드백루프/플랫폼)</td><td>"차별점" 수준에서 "방어력"으로 격상</td></tr>
+    <tr><td>로드맵</td><td>→ 12개월 월별 + Go/No-Go 체크포인트</td><td>책임 가능한 단위로 쪼갬</td></tr>
+    <tr><td>마케팅</td><td>→ 바이럴 수학 (K-factor, 퍼널, CAC 배분)</td><td>"할 거예요" 수준 → 공식·숫자</td></tr>
+    <tr><td>리스크</td><td>→ 법규 KR/JP/CN 별도 + 만세력 TC 30</td><td>실무 실행 준비</td></tr>
+    <tr><td>(신규)</td><td>Aha Moment 구체 설계 + 블러 잠금</td><td>송송이 피드백</td></tr>
+    <tr><td>(신규)</td><td>조직/자금 로드맵 + BEP 수식</td><td>투자 유치 준비</td></tr>
+    <tr><td>(신규)</td><td>브랜드 카피 20 + UX 보이스 가이드</td><td>일관된 톤 유지 장치</td></tr>
+    <tr><td>(신규)</td><td>피드백 반영 로그 (김/박/이/홍 + 송송이)</td><td>의사결정 추적성</td></tr>
+  </tbody>
+</table>
+
+<h3>13.2 용어 사전 (글로서리)</h3>
+<table>
+  <thead><tr><th>용어</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td>명조(命造)</td><td>태어난 순간 결정되는 사주 여덟 글자. 변하지 않음.</td></tr>
+    <tr><td>대운(大運)</td><td>10년 단위로 바뀌는 큰 흐름. 음양남녀로 순/역행.</td></tr>
+    <tr><td>세운(歲運)</td><td>한 해의 운. 매년 바뀜.</td></tr>
+    <tr><td>일간(日干)</td><td>태어난 날의 하늘 기운. "나"를 상징.</td></tr>
+    <tr><td>십성(十星)</td><td>일간 기준 다른 간지의 관계. 比劫/食傷/財/官/印 10종.</td></tr>
+    <tr><td>지장간(地藏干)</td><td>地支 안에 숨어있는 天干. 초기/중기/정기.</td></tr>
+    <tr><td>공망(空亡)</td><td>旬(순) 안에 빠진 두 地支. 허(虛)의 기운.</td></tr>
+    <tr><td>12운성</td><td>일간이 각 지지를 만날 때의 상태. 長生/沐浴/冠帶/建祿…</td></tr>
+    <tr><td>節入(절입)</td><td>24절기 기준 월 전환점. 사주에서 월주 바뀌는 기준.</td></tr>
+    <tr><td>합충형파해(合沖刑破害)</td><td>간지끼리의 상호작용. 결합·충돌 관계.</td></tr>
+    <tr><td>K-factor</td><td>바이럴 계수. K&gt;1이면 자가증식.</td></tr>
+    <tr><td>CAC / LTV</td><td>고객 획득 비용 / 고객 생애 가치.</td></tr>
+    <tr><td>ARPPU</td><td>Average Revenue Per Paying User. 유료 유저 1인당 수익.</td></tr>
+    <tr><td>BEP</td><td>Break-Even Point. 손익분기.</td></tr>
+    <tr><td>PMF</td><td>Product-Market Fit. "이거 잘 팔린다"가 증명된 상태.</td></tr>
+  </tbody>
+</table>
+
+<h3>13.3 명리학 6대 원전 (AI 프롬프트 근거)</h3>
+<table>
+  <thead><tr><th>원전</th><th>저자 / 시대</th><th>핵심</th><th>사주500 활용</th></tr></thead>
+  <tbody>
+    <tr><td>淵海子平 (연해자평)</td><td>徐大升 / 宋末</td><td>자평명리의 뿌리. 일간 중심 체계.</td><td>일간 분석 기초 프레임.</td></tr>
+    <tr><td>三命通會 (삼명통회)</td><td>萬民英 / 明</td><td>방대한 사주 백과. 신살 체계.</td><td>신살·공망 해석.</td></tr>
+    <tr><td>滴天髓 (적천수)</td><td>劉伯溫 / 明</td><td>體用論. 사주의 균형·기세.</td><td>오행 균형 / 격국 판정.</td></tr>
+    <tr><td>窮通寶鑑 (궁통보감)</td><td>余春台 / 淸</td><td>월령(月令)·계절별 조후 해석.</td><td>월별 흐름 / 조후용신.</td></tr>
+    <tr><td>子平眞詮 (자평진전)</td><td>沈孝瞻 / 淸</td><td>격국(格局) 체계 완성.</td><td>격국 결정 / 용신 추출.</td></tr>
+    <tr><td>命理約言 (명리약언)</td><td>陳素庵 / 淸</td><td>명리 실전 팁·오류 교정.</td><td>AI 응답 검수·교정 기준.</td></tr>
+  </tbody>
+</table>
+
+<h3>13.4 참고 / 외부 링크</h3>
+<ul>
+  <li>lunar-javascript 라이브러리: <code>npm:lunar-javascript</code> — 만세력 계산 핵심.</li>
+  <li>Claude API 가격표: anthropic.com/pricing (Opus/Sonnet/Haiku 티어 참조).</li>
+  <li>토스페이먼츠 개발자 문서: docs.tosspayments.com.</li>
+  <li>앱인토스 프레임워크: <code>@apps-in-toss/web-framework</code>.</li>
+  <li>CAC 2024년 1월 단속 뉴스: 网信办 "算命" 앱 정리 사건.</li>
+  <li>의료법 42조: 의료행위 정의 — "질병의 예방 또는 치료행위".</li>
+</ul>
+
+<h3>13.5 문서 메타 정보</h3>
+<pre><code>버전:     v3
+작성일:   2026-04-17
+작성자:   준기 (사주500 창업자) + Claude
+피드백:   김승현 · 박예진 · 이광해 · 홍성민 · 송송이
+분량:     14개 섹션 / ~1,150 라인 HTML
+다음 개정: v3.1 (Phase 1 런칭 후, 실 데이터 반영)</code></pre>
+
+<div class="callout ok" style="margin-top:24px">
+  <span class="callout-label">마무리</span>
+  <strong>500원은 가격이 아니라 약속이다.</strong><br/>
+  — 10만 원짜리 철학관을 대체하는 AI가 아니라, 철학관에 한 번도 가보지 못한 사람에게 10만 원짜리 정성을 500원에 전하는 서비스.
+  그게 사주500이 답하는 질문의 전부다.
+</div>
+
+</div>
+</section>
+
+<footer>
+<div class="wrap">
+  <p class="foot-lead">사주500 전략기획서 v3</p>
+  <p class="foot-note">2026.04.17 · 내부 공유용 · © 준기 &amp; 사주500 팀</p>
+  <p class="foot-note-sm">본 문서는 현재 시점의 가정·수치 기반이며, 실 데이터 수집 후 v3.1에서 재교정될 예정입니다.</p>
+</div>
+</footer>
+
+<script>
+(function(){
+  const links = document.querySelectorAll('.nav-links a');
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+  if(!sections.length) return;
+
+  // 1) Smooth scroll with offset for fixed nav
+  const NAV_H = 64;
+  links.forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      const id = a.getAttribute('href');
+      if(!id || !id.startsWith('#')) return;
+      const tgt = document.querySelector(id);
+      if(!tgt) return;
+      e.preventDefault();
+      const y = tgt.getBoundingClientRect().top + window.pageYOffset - NAV_H;
+      window.scrollTo({top:y, behavior:'smooth'});
+      history.replaceState(null, '', id);
+    });
+  });
+
+  // 2) IntersectionObserver — highlight ToC link for the section currently in the viewport
+  const byId = {};
+  links.forEach(a=>{
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')) byId[href.slice(1)] = a;
+  });
+  const setActive = (id)=>{
+    links.forEach(a=>a.classList.remove('active'));
+    if(byId[id]) byId[id].classList.add('active');
+  };
+  const io = new IntersectionObserver((entries)=>{
+    // 가장 뷰포트 상단에 가까운 섹션을 active로
+    const visible = entries
+      .filter(e=>e.isIntersecting)
+      .sort((a,b)=> a.boundingClientRect.top - b.boundingClientRect.top);
+    if(visible.length) setActive(visible[0].target.id);
+  }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+  sections.forEach(s=>io.observe(s));
+
+  // 3) 스크롤 스파이 폴백 (빠른 스크롤/점프 대응)
+  let rafId = null;
+  window.addEventListener('scroll', ()=>{
+    if(rafId) return;
+    rafId = requestAnimationFrame(()=>{
+      const y = window.pageYOffset + NAV_H + 20;
+      let cur = sections[0].id;
+      for(const s of sections){ if(s.offsetTop <= y) cur = s.id; }
+      setActive(cur);
+      rafId = null;
+    });
+  }, {passive:true});
+})();
+</script>
+
+</body>
+</html>

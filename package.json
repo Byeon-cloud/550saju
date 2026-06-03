@@ -12,7 +12,8 @@
     "deploy:all": "npm run build && firebase deploy",
     "deploy:functions": "firebase deploy --only functions",
     "preview:prod": "node scripts/preview-prod-local.mjs",
-    "preview:prod-redirect": "node scripts/preview-prod.mjs"
+    "preview:prod-redirect": "node scripts/preview-prod.mjs",
+    "ab-test": "tsx scripts/ab-test/run.ts"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
@@ -36,5 +37,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.3",
     "recharts": "^2.15.4"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.60.2"
   }
 }

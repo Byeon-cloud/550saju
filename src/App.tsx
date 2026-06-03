@@ -41,6 +41,8 @@ const CompatResultPage = lazy(() => import('@/pages/CompatResultPage').then(m =>
 const TojungPage = lazy(() => import('@/pages/TojungPage').then(m => ({ default: m.TojungPage })));
 void DaeunPage; void MonthlyPage; void CompatResultPage; void TojungPage;
 const PremiumSelectPage = lazy(() => import('@/pages/PremiumSelectPage').then(m => ({ default: m.PremiumSelectPage })));
+// 폐기됨 (iframe srcDoc + regex 패턴) — _archive_/ 로 이동. 진본은 PremiumResult.tsx
+const ChatPagePerfect = lazy(() => import('@/pages/ChatPagePerfect').then(m => ({ default: m.ChatPagePerfect })));
 const TopicAnalysisPage = lazy(() => import('@/pages/TopicAnalysisPage').then(m => ({ default: m.TopicAnalysisPage })));
 const TermsPage = lazy(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
@@ -157,6 +159,7 @@ function AnimatedRoutes() {
             <Route path="/tojung" element={<TojungPage />} />
             */}
             <Route path="/premium" element={<PremiumSelectPage />} />
+            <Route path="/chat-perfect" element={<ChatPagePerfect />} />
             <Route path="/topic" element={<TopicAnalysisPage />} />
             <Route path="/topic/:topicId" element={<TopicAnalysisPage />} />
             <Route path="/storage" element={<StoragePage />} />

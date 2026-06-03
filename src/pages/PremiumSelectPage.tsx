@@ -1,7 +1,7 @@
 // PremiumSelectPage — 종합 사주 시작 페이지 (정가 10운, 2026-06-15 까지 런칭 세일 5운)
 // 흐름:
-//   /premium → ProfilePicker → CTA → spendBalance(actualPrice) → /loading?type=premium → /result/{id}
-//   ✓ 잔액 충분: 차감 후 결과 페이지
+//   /premium → ProfilePicker → CTA → spendBalance(actualPrice) → /result/{id}?fresh=1&type=premium
+//   ✓ 잔액 충분: 차감 후 결과 페이지 (fresh SSE)
 //   ✗ 잔액 부족: 부족 안내 (충전 직접 유도 UI 는 토스 정책 회피로 제거)
 
 import { useState, useMemo } from 'react';

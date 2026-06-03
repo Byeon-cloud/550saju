@@ -2,5 +2,41 @@ node_modules
 dist
 .env
 .env.local
+
+# Firebase emulator secrets (local only — never commit)
+functions/.secret.local
+functions/.runtimeconfig.json
 *.log
 .DS_Store
+
+# Build artifacts
+.firebase/
+functions/lib/
+*.cache
+
+# Worktrees
+.claude/worktrees/
+
+# Mockup 편집기 잡파일 (LibreOffice/에디터 백업·락)
+*.bak
+.~lock.*
+
+# Build verification output (dist 복제본)
+dist-verify/
+
+# 임시 출력/로그 파일
+*.tmp
+prod-*.tmp
+
+# 로컬 스모크 테스트 스크립트 (배포 대상 아님)
+smoke-*.sh
+smoke-*.json
+
+# 루트 투자/전략 문서 (repo 외부 보관)
+/*.docx
+
+# 마케팅 번들 (PRD 사본 zip · repo 외부 배포 채널)
+marketing_bundle/
+marketing_bundle.zip
+사주500_마케팅번들*.zip
+saju500.ait.zip

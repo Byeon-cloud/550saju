@@ -52,6 +52,21 @@ export default {
           bg: '#FDF8EE',
           card: '#B8965A',
         },
+        // === v4.1 통합 토큰 (2026-04-20 · design_system_v4_consolidated.md) ===
+        // 주 컬러: gold-brown 계열 (기존 brand.primary #C9A96E와 다른 값)
+        'gold-brown': {
+          DEFAULT: '#A08B6A',
+          dark: '#7A6648',
+          soft: '#D4C4A8',
+        },
+        // 중립: ink(먹빛) / paper(한지 아이보리)
+        ink: '#1A1A1A',
+        paper: '#F8F5EE',
+        // 시스템 색 (기존 func.* 과 병행, v4.1은 더 묵직한 톤)
+        success: '#5E8C5A',
+        warning: '#B08950',
+        error: '#8B4A3A',
+        info: '#5A7A8C',
       },
       fontFamily: {
         sans: ['Pretendard Variable', 'Pretendard', '-apple-system', 'system-ui', 'sans-serif'],
@@ -66,6 +81,9 @@ export default {
         'caption': ['12px', { lineHeight: '1.5', fontWeight: '400' }],
         'label':   ['12px', { lineHeight: '1.4', fontWeight: '600' }],
         'tiny':    ['11px', { lineHeight: '1.4', fontWeight: '500' }],
+        // === v4.1 추가 ===
+        'hero':    ['40px', { lineHeight: '1.2',  fontWeight: '700', letterSpacing: '-0.01em' }],
+        'pillar':  ['36px', { lineHeight: '1',    fontWeight: '600' }],
       },
       maxWidth: { mobile: '520px' },
       spacing: {

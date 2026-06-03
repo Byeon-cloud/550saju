@@ -15,10 +15,12 @@ import { AD_BANNER_GROUP_ID } from '@/constants/config';
  *  - 앱인토스 빌드(isAppintosBuild)에서만 (웹/PC 는 렌더 0)
  *  - 무료 콘텐츠 페이지에서만 호출자가 마운트 (자체 게이트 X — 호출자 책임)
  *  - 광고 없음(no-fill)/실패 시 → silent hide (placeholder 노출 X)
+ *  - unit prop 미지정 시 기본 그룹ID = `AD_BANNER_GROUP_ID` (ait.v2.live.e64deec6a7444898)
  */
 interface AdSlotProps {
   unit?: string;
   className?: string;
+  /** 컨테이너 최소 높이 (SDK 로드 전 layout shift 완화용, default 90) */
   minHeight?: number;
 }
 
@@ -94,6 +96,7 @@ export function AdSlot({
     };
   }, [unit]);
 
+  // 비-앱인토스 빌드는 렌더 0
   if (!isAppintosBuild) return null;
   if (hidden) return null;
 
