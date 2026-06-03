@@ -47,6 +47,8 @@ const TopicAnalysisPage = lazy(() => import('@/pages/TopicAnalysisPage').then(m 
 const TermsPage = lazy(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const EventsPage = lazy(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
+// 웹 단독 출시 — 사업자정보 공개페이지 (전자상거래법 제10조 · 앱인토스 진입 시 홈 redirect)
+const BusinessInfoPage = lazy(() => import('@/pages/BusinessInfoPage').then(m => ({ default: m.BusinessInfoPage })));
 // #saju-card-share Stage 2 — 만세력 카드 페이지 (lazy)
 const SajuCardPage = lazy(() => import('@/pages/saju-card/SajuCardPage').then(m => ({ default: m.SajuCardPage })));
 // 2026-05-29 — 오너 전용 어드민 대시보드 (lazy · uid 게이트)
@@ -181,6 +183,8 @@ function AnimatedRoutes() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/events" element={<EventsPage />} />
+            {/* 웹 단독 출시 — 사업자정보 공개페이지 (BusinessInfoPage 내부에서 앱인토스 시 홈 redirect) */}
+            <Route path="/business" element={<BusinessInfoPage />} />
             {/* #saju-card-share — 만세력 카드 (프로필 단위) */}
             <Route path="/saju-card/:profileId" element={<SajuCardPage />} />
             <Route path="*" element={<NotFoundPage />} />

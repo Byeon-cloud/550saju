@@ -2127,6 +2127,12 @@ export const generateTopicAnalysisStream = onRequest(
 export { markAttendance } from './attendance/markAttendance';
 export { onInviteReceived } from './invite/onInviteReceived';
 
+/* ─── 웹 단독 출시 — 회원탈퇴 (2026-06-03) ───
+ * 근거: docs/법적요건_웹출시.md §4 (개인정보보호법 제21조·제36조).
+ * Firestore 유저 개인정보 삭제 + Auth 계정 삭제. payments 는 전자상거래법 5년 보존.
+ */
+export { deleteAccount } from './auth/deleteAccount';
+
 /* ─── LIVE BEST 실시간 집계 (2026-06-02 · D3 정식 구현) ─── */
 export { recordTopicView, aggregateTopicTop5 } from './livebest/topicViews';
 

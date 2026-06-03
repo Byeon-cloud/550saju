@@ -21,6 +21,13 @@ import { getIljuMeaning } from '@/constants/iljuMeaning';
 import type { OhengType } from '@/types/saju';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { AD_BANNER_GROUP_ID } from '@/constants/config';
+// 웹 단독 출시 법적 컴플라이언스 (앱인토스 비노출)
+import { LegalFooter } from '@/components/layout/LegalFooter';
+import { ConsentModal, type ConsentResult } from '@/components/auth/ConsentModal';
+import { hasConsentRecord, saveConsent } from '@/services/auth/consent';
+import { signOut } from '@/services/auth/authService';
+import { Modal } from '@/components/common/Modal';
+import { callDeleteAccount } from '@/services/auth/deleteAccount';
 
 /* ─ SSOT 토큰 — PC_인수인계 §5 (2026-04-23) ─ */
 const C = {
@@ -76,11 +83,56 @@ export function MyPage() {
   const [balance, setBalance] = useState(0);
   const [showContact, setShowContact] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  // 웹 단독 출시 — 개인정보 동의 모달 + 회원탈퇴 (앱인토스 비노출)
+  const [showConsent, setShowConsent] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   /* 잔액 동기화 */
   useEffect(() => {
     setBalance(getBalance());
   }, [location.pathname]);
+
+  /* 웹 전용 — 로그인 직후 동의 이력 없으면 동의 모달 노출 (앱인토스는 토스 동의 우산) */
+  useEffect(() => {
+    if (inAppsInToss) return;
+    if (loading || !isLoggedIn || !user?.uid) { setShowConsent(false); return; }
+    let cancelled = false;
+    hasConsentRecord(user.uid).then((has) => {
+      if (!cancelled && !has) setShowConsent(true);
+    });
+    return () => { cancelled = true; };
+  }, [inAppsInToss, loading, isLoggedIn, user?.uid]);
+
+  const onConsentAgree = async (result: ConsentResult) => {
+    if (user?.uid) await saveConsent(user.uid, result);
+    setShowConsent(false);
+  };
+
+  const onLogout = async () => {
+    try {
+      await signOut();
+      toast.show('로그아웃 됐어요', 'info');
+    } catch {
+      toast.show('로그아웃에 실패했어요. 다시 시도해 주세요.', 'warning');
+    }
+  };
+
+  const onWithdraw = async () => {
+    if (withdrawing) return;
+    setWithdrawing(true);
+    try {
+      await callDeleteAccount();
+      await signOut();
+      setShowWithdraw(false);
+      toast.show('회원탈퇴가 완료됐어요', 'info');
+      navigate('/', { replace: true });
+    } catch (e: any) {
+      toast.show('회원탈퇴에 실패했어요. 잠시 후 다시 시도해 주세요.', 'warning');
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   /* 비로그인 → 로그인 모달 즉시 노출 (§2-1) */
   useEffect(() => {
@@ -196,13 +248,35 @@ export function MyPage() {
           </button>
         </div>
 
-        {/* 2026-05-28 PM — 로그아웃·회원탈퇴 제거 (앱인토스 런칭 정책).
-            웹용 도 동일하게 hide. 향후 web settings 페이지 신설 시 분리 복원 예정. */}
+        {/* 2026-06-03 웹 단독 출시 — 로그아웃 + 회원탈퇴 복원 (웹 전용, 앱인토스 비노출).
+            근거: docs/법적요건_웹출시.md §4 (개인정보보호법 제21조 회원탈퇴 경로 필수). */}
+        {!inAppsInToss && isLoggedIn && (
+          <div className="flex items-center justify-center gap-3 mt-5">
+            <button
+              type="button"
+              onClick={onLogout}
+              style={{ background: 'transparent', border: 'none', color: C.mute, fontSize: 12, cursor: 'pointer' }}
+            >
+              로그아웃
+            </button>
+            <span style={{ color: C.line }}>|</span>
+            <button
+              type="button"
+              onClick={() => setShowWithdraw(true)}
+              style={{ background: 'transparent', border: 'none', color: C.danger, fontSize: 12, cursor: 'pointer' }}
+            >
+              회원탈퇴
+            </button>
+          </div>
+        )}
 
         {/* ── 배너광고 — 페이지 맨 아래 (앱인토스 빌드 한정 · silent fallback) ── */}
         <div className="mt-4">
           <AdSlot unit={AD_BANNER_GROUP_ID} minHeight={90} />
         </div>
+
+        {/* ── 웹 단독 출시 사업자 신원정보 푸터 (앱인토스 비노출) ── */}
+        <LegalFooter />
       </div>
 
       {/* ── LoginModal (§2-2) ── */}
@@ -220,6 +294,39 @@ export function MyPage() {
         userId={user?.uid}
         toast={toast}
       />
+
+      {/* ── 웹 전용 개인정보 동의 모달 (첫 로그인 · 앱인토스 비노출) ── */}
+      <ConsentModal open={showConsent} onAgree={onConsentAgree} />
+
+      {/* ── 회원탈퇴 확인 Modal (되돌릴 수 없음) ── */}
+      <Modal isOpen={showWithdraw} onClose={() => !withdrawing && setShowWithdraw(false)} title="회원탈퇴">
+        <p className="text-body-sm text-text-secondary leading-relaxed mb-2">
+          탈퇴하면 사주 분석 기록·프로필·대화 기록이 모두 삭제되며 되돌릴 수 없어요.
+        </p>
+        <p className="text-caption text-text-muted leading-relaxed mb-5">
+          단, 전자상거래법에 따라 결제 기록은 5년간 별도 보관됩니다.
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowWithdraw(false)}
+            disabled={withdrawing}
+            className="flex-1 rounded-xl font-semibold"
+            style={{ height: 48, background: '#FFFFFF', border: `1px solid ${C.line}`, color: C.ink, fontSize: 15 }}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onWithdraw}
+            disabled={withdrawing}
+            className="flex-1 rounded-xl font-semibold"
+            style={{ height: 48, background: C.danger, color: '#FFFFFF', fontSize: 15, opacity: withdrawing ? 0.6 : 1 }}
+          >
+            {withdrawing ? '처리 중...' : '탈퇴하기'}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

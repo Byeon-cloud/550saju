@@ -46,8 +46,15 @@ export function PrivacyPage() {
               <p>이용자는 언제든지 개인정보의 열람, 수정, 삭제를 요청할 수 있어요. 아래 연락처로 문의해주세요.</p>
             </div>
             <div>
-              <p className="text-label text-text-primary font-bold mb-1">6. 개인정보 보호책임자</p>
-              <p>· 이메일: saju500help@gmail.com</p>
+              <p className="text-label text-text-primary font-bold mb-1">6. 개인정보 파기절차 및 방법</p>
+              <p>· 보유기간이 경과하거나 처리 목적이 달성된 개인정보는 지체 없이 파기해요.</p>
+              <p>· 회원탈퇴 시 사주 분석 기록·프로필·대화 기록 등 개인정보는 5일 이내 파기해요.</p>
+              <p>· 다만 전자상거래법 등 관계 법령에 따라 보존이 필요한 결제 기록은 5년간 분리 보관 후 파기해요.</p>
+              <p>· 전자적 파일은 복구할 수 없는 방법으로 영구 삭제하고, 출력물은 분쇄·소각해요.</p>
+            </div>
+            <div>
+              <p className="text-label text-text-primary font-bold mb-1">7. 개인정보 보호책임자</p>
+              <p>· 이메일: info@juulabel.com</p>
             </div>
           </div>
           <p className="text-caption text-text-hint mt-6">시행일: 2026년 4월 1일</p>

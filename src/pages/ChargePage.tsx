@@ -483,10 +483,18 @@ export function ChargePage() {
         <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           · 공유 리워드 어뷰징 감지 시 적립이 취소될 수 있어요.
         </p>
-        {/* P0-A · 토스페이 환불 정책 (앱인토스 검수 §1-12) */}
-        <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          · 환불은 토스페이 결제 취소 정책을 따르며, 결제 후 7일 이내 미사용 운에 한해 고객센터(info@juulabel.com)로 문의 시 심사 후 처리해요.
-        </p>
+        {/* 환불·청약철회 고지 — 웹/앱 분기.
+            앱(앱인토스): 토스 IAP/토스페이 우산. 웹: 전자상거래법 제17조 디지털콘텐츠 청약철회 직접 고지. */}
+        {isAppintosBuild ? (
+          /* P0-A · 토스페이 환불 정책 (앱인토스 검수 §1-12) */
+          <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+            · 환불은 토스페이 결제 취소 정책을 따르며, 결제 후 7일 이내 미사용 운에 한해 고객센터(info@juulabel.com)로 문의 시 심사 후 처리해요.
+          </p>
+        ) : (
+          <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+            · 충전한 운을 분석에 사용(생성)하면 해당 운은 환불되지 않아요. 미사용 운은 결제 후 7일 이내 환불 가능하며, 청약철회일로부터 3영업일 이내 환급돼요. (디지털콘텐츠 · 전자상거래법 제17조)
+          </p>
+        )}
         <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: '6px 0 0' }}>
           · 결제·세금 관련 안내는{' '}
           <button
@@ -527,6 +535,18 @@ export function ChargePage() {
             }}
             aria-live="polite"
           >
+            {/* 웹 전용 — 결제 직전 청약철회 고지 (전자상거래법 제17조: 디지털콘텐츠 청약철회 불가 사실 결제 전 명시) */}
+            {!isAppintosBuild && (
+              <div style={{
+                padding: '8px 20px',
+                fontSize: 11,
+                lineHeight: 1.5,
+                color: 'rgba(248,245,238,0.72)',
+                borderBottom: '1px solid rgba(248,245,238,0.12)',
+              }}>
+                결제 후 충전한 운을 분석에 사용하면 환불되지 않으며, 미사용 운만 7일 이내 환불됩니다.
+              </div>
+            )}
             <div style={{
               height: 80,
               padding: '0 20px',

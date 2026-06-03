@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.loginWithToss = void 0;
+exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.loginWithToss = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -1970,6 +1970,12 @@ var markAttendance_1 = require("./attendance/markAttendance");
 Object.defineProperty(exports, "markAttendance", { enumerable: true, get: function () { return markAttendance_1.markAttendance; } });
 var onInviteReceived_1 = require("./invite/onInviteReceived");
 Object.defineProperty(exports, "onInviteReceived", { enumerable: true, get: function () { return onInviteReceived_1.onInviteReceived; } });
+/* ─── 웹 단독 출시 — 회원탈퇴 (2026-06-03) ───
+ * 근거: docs/법적요건_웹출시.md §4 (개인정보보호법 제21조·제36조).
+ * Firestore 유저 개인정보 삭제 + Auth 계정 삭제. payments 는 전자상거래법 5년 보존.
+ */
+var deleteAccount_1 = require("./auth/deleteAccount");
+Object.defineProperty(exports, "deleteAccount", { enumerable: true, get: function () { return deleteAccount_1.deleteAccount; } });
 /* ─── LIVE BEST 실시간 집계 (2026-06-02 · D3 정식 구현) ─── */
 var topicViews_1 = require("./livebest/topicViews");
 Object.defineProperty(exports, "recordTopicView", { enumerable: true, get: function () { return topicViews_1.recordTopicView; } });
