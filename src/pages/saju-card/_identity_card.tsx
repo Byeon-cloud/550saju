@@ -712,7 +712,7 @@ export function IdentityCard({
             zIndex: 1,
           }}
         >
-          appintoss-saju.web.app
+          saju500.app
         </div>
       )}
     </div>

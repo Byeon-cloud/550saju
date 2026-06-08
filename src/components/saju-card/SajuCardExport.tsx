@@ -235,7 +235,7 @@ export function buildSajuCardFilename(name: string, birthDate?: string): string 
 
 /**
  * 공유 텍스트 빌더.
- *  - 호스트 도메인 (Firebase Hosting): https://appintoss-saju.web.app
+ *  - 호스트 도메인 (Firebase Hosting): https://saju500.app
  *  - profileId 가 있으면 /saju-card/{id} 딥링크
  *  - Stage 4 OG: name + ilju 한자를 query string 으로 전달 → 서버 SSR OG 가 동적 미리보기 PNG 생성
  *
@@ -250,7 +250,7 @@ export function buildShareTextAndUrl(
 ): { text: string; url: string } {
   const origin =
     (typeof window !== 'undefined' && window.location?.origin) ||
-    'https://appintoss-saju.web.app';
+    'https://saju500.app';
   const basePath = profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '';
 
   // Stage 4 OG personalization query — 서버 renderSajuCardOg/renderSajuCardOgImage 가 읽음

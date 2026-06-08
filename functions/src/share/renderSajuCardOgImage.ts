@@ -248,7 +248,7 @@ function buildOgHtml(name: string, ilju: string): string {
     </div>
   </div>
 
-  <div class="domain">appintoss-saju.web.app</div>
+  <div class="domain">saju500.app</div>
 </div>
 </body>
 </html>`;

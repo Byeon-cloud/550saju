@@ -679,7 +679,7 @@ function KakaoLayout({
             fontWeight: 500,
           }}
         >
-          appintoss-saju.web.app
+          saju500.app
         </div>
       </div>
 
@@ -1332,7 +1332,7 @@ function StoryLayout({
             opacity: 0.85,
           }}
         >
-          SAJU 500 · appintoss-saju.web.app
+          SAJU 500 · saju500.app
         </div>
       </div>
     </div>

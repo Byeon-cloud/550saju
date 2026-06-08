@@ -4,5 +4,4 @@ Disallow: /my
 Disallow: /charge
 Disallow: /admin
 
-# TODO(준기): 새 도메인으로 교체
-Sitemap: https://appintoss-saju.web.app/sitemap.xml
+Sitemap: https://saju500.app/sitemap.xml
