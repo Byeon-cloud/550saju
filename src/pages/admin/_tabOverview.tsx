@@ -1,0 +1,122 @@
+// 어드민 — ① Overview 탭 (2026-06-10)
+//   KPI 그리드(델타) + 매출/DAU 듀얼 시계열 + 전환 퍼널 + 원본 이벤트 CSV
+import { useMemo } from 'react';
+import {
+  ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
+import type { AdminData } from './_useAdminData';
+import { C, Kpi, Section, Empty, CsvButton, deltaPct, fmtNum, fmtWon } from './_components';
+import { buildCsv, downloadCsv, csvFilename } from './_csv';
+
+export function TabOverview({ d }: { d: AdminData }) {
+  const { cur, prev } = d;
+
+  // 신규 결제유저 — 현 기간 결제 유저 중 직전 기간엔 없던 유저 (근사)
+  const newPayers = useMemo(() => {
+    const prevSet = new Set(prev.payingUserKeys);
+    return cur.payingUserKeys.filter((k) => !prevSet.has(k)).length;
+  }, [cur.payingUserKeys, prev.payingUserKeys]);
+
+  const arppu = cur.payingUsers > 0 ? Math.round(cur.revenue / cur.payingUsers) : 0;
+  const arppuPrev = prev.payingUsers > 0 ? Math.round(prev.revenue / prev.payingUsers) : 0;
+  const contentGen = cur.contentResultTotal;
+
+  // 듀얼 시계열 — 매출(좌) + DAU(우)
+  const dualSeries = useMemo(() => cur.days.map((day, i) => ({
+    day: day.slice(5),
+    revenue: cur.revenueByDay[i],
+    dau: cur.dauByDay[i],
+  })), [cur]);
+
+  // 전환 퍼널 5단계
+  const funnel = useMemo(() => ([
+    { step: '방문(고유)', n: cur.visitors, pn: prev.visitors },
+    { step: '콘텐츠 진입', n: cur.contentOpenTotal, pn: prev.contentOpenTotal },
+    { step: '결과 도달', n: cur.contentResultTotal, pn: prev.contentResultTotal },
+    { step: '충전 진입', n: cur.chargeOpen, pn: prev.chargeOpen },
+    { step: '충전 완료', n: cur.chargeComplete, pn: prev.chargeComplete },
+  ]), [cur, prev]);
+
+  const exportRawCsv = () => {
+    const headers = ['day', 'name', 'uid', 'sid', 'props'];
+    const rows = d.rawEvents.map((e) => [e.day, e.name, e.uid, e.sid, e.props ? JSON.stringify(e.props) : '']);
+    downloadCsv(csvFilename('raw_events', cur.days[0], cur.days[cur.days.length - 1]), buildCsv(headers, rows));
+  };
+  const exportKpiCsv = () => {
+    const headers = ['지표', '현 기간', '직전 기간', '증감%'];
+    const rows: (string | number)[][] = [
+      ['기간매출(₩)', cur.revenue, prev.revenue, deltaPct(cur.revenue, prev.revenue) ?? ''],
+      ['DAU평균', cur.dauAvg, prev.dauAvg, deltaPct(cur.dauAvg, prev.dauAvg) ?? ''],
+      ['방문 고유', cur.visitors, prev.visitors, deltaPct(cur.visitors, prev.visitors) ?? ''],
+      ['결제유저', cur.payingUsers, prev.payingUsers, deltaPct(cur.payingUsers, prev.payingUsers) ?? ''],
+      ['신규 결제유저(근사)', newPayers, '', ''],
+      ['ARPPU(₩)', arppu, arppuPrev, deltaPct(arppu, arppuPrev) ?? ''],
+      ['콘텐츠 생성', contentGen, prev.contentResultTotal, deltaPct(contentGen, prev.contentResultTotal) ?? ''],
+      ['충전 완료', cur.chargeComplete, prev.chargeComplete, deltaPct(cur.chargeComplete, prev.chargeComplete) ?? ''],
+    ];
+    downloadCsv(csvFilename('overview_kpi', cur.days[0], cur.days[cur.days.length - 1]), buildCsv(headers, rows));
+  };
+
+  return (
+    <div>
+      <Section
+        title="핵심 KPI"
+        right={<div style={{ display: 'flex', gap: 6 }}><CsvButton onClick={exportKpiCsv} label="KPI CSV" /><CsvButton onClick={exportRawCsv} label="원본 이벤트 CSV" /></div>}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+          <Kpi label="총매출 (누적)" value={fmtWon(d.totalRevenue)} accent />
+          <Kpi label="기간매출" value={fmtWon(cur.revenue)} delta={deltaPct(cur.revenue, prev.revenue)} accent />
+          <Kpi label="DAU 평균" value={`${fmtNum(cur.dauAvg)}명`} delta={deltaPct(cur.dauAvg, prev.dauAvg)} />
+          <Kpi label="신규 결제유저" value={`${fmtNum(newPayers)}명`} delta={deltaPct(cur.payingUsers, prev.payingUsers)} sub={`결제유저 ${cur.payingUsers}명 중 전기간 미결제 (델타=결제유저 수 비교)`} />
+          <Kpi label="ARPPU" value={fmtWon(arppu)} delta={deltaPct(arppu, arppuPrev)} sub="기간매출 ÷ 결제유저" />
+          <Kpi label="콘텐츠 생성" value={`${fmtNum(contentGen)}건`} delta={deltaPct(contentGen, prev.contentResultTotal)} sub="content_result 기준" />
+        </div>
+      </Section>
+
+      <Section title="매출 · DAU 추이" caption="· 좌축 매출(₩) 면적 — 우축 DAU(명) 라인">
+        {dualSeries.every((p) => p.revenue === 0 && p.dau === 0) ? <Empty /> : (
+          <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
+            <ResponsiveContainer width="100%" height={240}>
+              <ComposedChart data={dualSeries} margin={{ left: 0, right: 8 }}>
+                <defs>
+                  <linearGradient id="ovRevGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={C.gold} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={C.gold} stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: C.mute }} interval="preserveStartEnd" />
+                <YAxis yAxisId="rev" tick={{ fontSize: 10, fill: C.mute }} width={48} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <YAxis yAxisId="dau" orientation="right" tick={{ fontSize: 10, fill: C.mute }} width={36} allowDecimals={false} />
+                <Tooltip formatter={(v: any, name: any) => name === '매출' ? [fmtWon(Number(v)), name] : [`${fmtNum(Number(v))}명`, name]} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Area yAxisId="rev" type="monotone" dataKey="revenue" name="매출" stroke={C.goldDeep} strokeWidth={2} fill="url(#ovRevGrad)" />
+                <Line yAxisId="dau" type="monotone" dataKey="dau" name="DAU" stroke={C.ink} strokeWidth={2} dot={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Section>
+
+      <Section title="전환 퍼널" caption="· 방문은 고유 방문자 수 · 나머지는 이벤트 건수 기준 — 단계별 %는 직전 단계 대비 전환율">
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {funnel.map((f, i) => {
+            const prevN = i > 0 ? funnel[i - 1].n : f.n;
+            const rate = prevN > 0 ? Math.round((f.n / prevN) * 100) : null;
+            return (
+              <div key={f.step} style={{ flex: '1 1 120px', textAlign: 'center', padding: '14px 8px', background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, minWidth: 110 }}>
+                <div style={{ fontSize: 11, color: C.mute }}>{f.step}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: C.ink, marginTop: 4 }}>{fmtNum(f.n)}</div>
+                {i > 0 && (
+                  <div style={{ fontSize: 11, color: C.goldDeep, fontWeight: 700, marginTop: 2 }}>
+                    {rate == null ? '-' : `${rate}%`}
+                  </div>
+                )}
+                <div style={{ fontSize: 10, color: C.mute, marginTop: 2 }}>전기간 {fmtNum(f.pn)}</div>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+    </div>
+  );
+}
