@@ -198,6 +198,9 @@ function AnimatedRoutes() {
 export function App() {
   // 앱 시작 시 초기화
   useEffect(() => {
+    // 0-a. 측정 — 앱 오픈 1회 (마운트 시 · fire-and-forget · UTM 캡처도 모듈 init 에서 함께)
+    import('@/services/analytics').then(({ trackEvent }) => trackEvent('app_open', {})).catch(() => {});
+
     // 0. Firebase 익명 인증 — 모든 페이지에서 Cloud Functions 호출 가능하게
     import('@/services/auth/authService').then(({ ensureAuth }) => {
       ensureAuth();

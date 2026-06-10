@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { logAiUsage } from '../shared/aiUsageLog';
 
 const responseSchema = {
   type: SchemaType.OBJECT,
@@ -180,7 +181,10 @@ ${question}
 
 ⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
 
+  const _t0 = Date.now(); // C7
   const result = await model.generateContent(prompt);
+  const _usage = result.response?.usageMetadata; // C7 — usage 없으면 스킵
+  if (_usage) logAiUsage({ type: 'chat', model: 'gemini-2.5-pro', inputTokens: _usage.promptTokenCount ?? 0, outputTokens: _usage.candidatesTokenCount ?? 0, ms: Date.now() - _t0, ok: true });
   const parsed = JSON.parse(result.response.text());
   return {
     answer: parsed.answer || '',

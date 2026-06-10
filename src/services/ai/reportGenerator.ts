@@ -18,13 +18,65 @@ function aiCallable(name: string) {
   return httpsCallable(functions, name, { timeout: 300000 }); // 5분
 }
 
+/* ─── AI 생성 지연/에러 측정 (C3 · 2026-06-10) ───
+ *   trackEvent('ai_done', {type, ms, mode}) / trackEvent('ai_error', {type, mode}).
+ *   fire-and-forget — 실패해도 생성 로직·UX 영향 0.
+ *   SSE 실패 → callable 폴백 시: SSE 쪽은 ai_error(sse) 1회, 폴백 결과는 callable 쪽에서
+ *   ai_done/ai_error 1회 — 같은 논리 생성의 ai_done 은 항상 1회만 기록됨. */
+function trackAi(name: 'ai_done' | 'ai_error', params: Record<string, string | number>) {
+  import('@/services/analytics').then((a) => a.trackEvent(name, params)).catch(() => {});
+}
+
+/** Cloud Function 이름 → 측정 type 매핑 (callable 경로 자동 계측) */
+const CALLABLE_AI_TYPE: Record<string, string> = {
+  generateReport: 'report',
+  generateDailyFortune: 'daily',
+  generateDreamFree: 'dream',
+  generateDreamDeep: 'deepDream',
+  generateDream: 'dream',
+  generateChatAnswer: 'chat',
+  generateDaeun: 'daeun',
+  generateMonthly: 'monthly',
+  generateCompatibility: 'compat',
+  generateTopicAnalysis: 'topic',
+  generateTojung: 'tojung',
+};
+
+/** SSE 스트림 콜백 계측 래퍼 — onDone/onError 최초 1회만 ai_done/ai_error 기록 */
+function wrapStreamCallbacks<C extends { onDone: (arg: any) => void; onError: (...args: any[]) => void }>(
+  type: string,
+  callbacks: C,
+): C {
+  const t0 = Date.now();
+  let settled = false;
+  return {
+    ...callbacks,
+    onDone: (arg: any) => {
+      if (!settled) { settled = true; trackAi('ai_done', { type, ms: Date.now() - t0, mode: 'sse' }); }
+      callbacks.onDone(arg);
+    },
+    onError: (...args: any[]) => {
+      if (!settled) { settled = true; trackAi('ai_error', { type, mode: 'sse' }); }
+      (callbacks.onError as any)(...args);
+    },
+  } as C;
+}
+
 /** 모든 Cloud Function 호출 전 인증 + emulator/prod 타겟 보장 */
 async function callWithAuth(name: string, data: any): Promise<any> {
   await ensureFunctionsTarget(); // emulator ping → prod fallback
   await ensureAuth(); // 인증 완료까지 대기
   const fn = aiCallable(name);
-  const result = await fn(data);
-  return result;
+  const type = CALLABLE_AI_TYPE[name];
+  const t0 = Date.now();
+  try {
+    const result = await fn(data);
+    if (type) trackAi('ai_done', { type, ms: Date.now() - t0, mode: 'callable' });
+    return result;
+  } catch (e) {
+    if (type) trackAi('ai_error', { type, mode: 'callable' });
+    throw e;
+  }
 }
 
 /**
@@ -62,6 +114,7 @@ export async function generatePremiumReportStream(
   situation: Situation | undefined,
   callbacks: PremiumStreamCallbacks,
 ): Promise<void> {
+  callbacks = wrapStreamCallbacks('premium', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();
 
@@ -169,6 +222,7 @@ export async function generateReportStream(
   situation: Situation | undefined,
   callbacks: ReportStreamCallbacks,
 ): Promise<void> {
+  callbacks = wrapStreamCallbacks('report', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();
 
@@ -300,6 +354,7 @@ export async function generateDailyFortuneStream(
   },
   callbacks: DailyFortuneStreamCallbacks,
 ): Promise<void> {
+  callbacks = wrapStreamCallbacks('daily', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();
 
@@ -469,6 +524,7 @@ export async function generateTopicAnalysisStream(
   args: { topicId: string; sajuData: any; baseScore?: number; partnerInfo?: any; extraInfo?: any },
   callbacks: TopicStreamCallbacks,
 ): Promise<void> {
+  callbacks = wrapStreamCallbacks('topic', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();
 
@@ -584,6 +640,7 @@ export async function generateDreamFreeStream(
   args: { saju?: any; dreamContent: string; category: string; userConcern?: string },
   callbacks: DreamFreeStreamCallbacks,
 ): Promise<void> {
+  callbacks = wrapStreamCallbacks('dream', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();
 

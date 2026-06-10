@@ -668,6 +668,8 @@ export function InputPage() {
           });
           return;
         }
+        // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+        import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'premium', amount: premiumCost })).catch(() => {});
         triggerPromotionEvent(PROMO_EVENTS.FIRST_SAJU);
         toast.show(`${premiumCost}운 차감 — 종합 사주 시작`, 'success');
         const newId = generateId();

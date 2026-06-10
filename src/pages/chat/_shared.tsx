@@ -214,6 +214,8 @@ export function ConvertUnModal({
       toast.show('잔액 차감에 실패했어요', 'warning');
       return;
     }
+    // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'chat', amount: safeAmount })).catch(() => {});
     addChatCredits(ticketsGain);
     toast.show(
       `${safeAmount}운을 대화권 ${ticketsGain}개로 바꿨어요`,

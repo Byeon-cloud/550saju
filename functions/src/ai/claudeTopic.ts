@@ -8,6 +8,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type ParseJsonMeta } from './promptsV3';
+import { logAiUsage } from '../shared/aiUsageLog';
 
 interface TopicConfig {
   label: string;
@@ -840,6 +841,7 @@ export async function generateTopicAnalysisAI(
   let firstJson: any;
   try {
     const meta1: ParseJsonMeta = { repairUsed: false };
+    const _t1 = Date.now(); // C7
     const first = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
@@ -847,12 +849,14 @@ export async function generateTopicAnalysisAI(
       system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
+    if (first.usage) logAiUsage({ type: 'topic', model, inputTokens: first.usage.input_tokens, outputTokens: first.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
     firstText = (first.content[0] as { type: string; text: string }).text;
     firstJson = parseJsonResponse(firstText, meta1);
     if (meta1.repairUsed) console.info(`[claudeTopic:${topicId}] 1차 jsonrepair 발동`);
   } catch (e1: any) {
     console.warn(`[claudeTopic:${topicId}] 1차 실패 → 재시도:`, e1?.message);
     const meta2: ParseJsonMeta = { repairUsed: false };
+    const _t2 = Date.now(); // C7
     const retry = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
@@ -860,6 +864,7 @@ export async function generateTopicAnalysisAI(
       system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
+    if (retry.usage) logAiUsage({ type: 'topic', model, inputTokens: retry.usage.input_tokens, outputTokens: retry.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
     firstText = (retry.content[0] as { type: string; text: string }).text;
     firstJson = parseJsonResponse(firstText, meta2);
     console.info(`[claudeTopic:${topicId}] 2차 성공`, meta2.repairUsed ? '(jsonrepair 발동)' : '');
@@ -875,6 +880,7 @@ export async function generateTopicAnalysisAI(
     console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선 · TOPIC_SELF_REVIEW!=1)`);
     return firstJson;
   }
+  const _t3 = Date.now(); // C7
   const review = await anthropic.messages.create({
     model,
     max_tokens: maxTokens,
@@ -886,6 +892,7 @@ export async function generateTopicAnalysisAI(
       { role: 'user', content: SELF_REVIEW_V3({ original: firstJson, kind: 'topic' }) },
     ],
   });
+  if (review.usage) logAiUsage({ type: 'topic', model, inputTokens: review.usage.input_tokens, outputTokens: review.usage.output_tokens, ms: Date.now() - _t3, ok: true }); // C7 best-effort
   const reviewText = (review.content[0] as { type: string; text: string }).text;
   try {
     return parseJsonResponse(reviewText);

@@ -3333,6 +3333,9 @@ export function TopicAnalysisPage() {
     const pricing = getTopicPrice(topicId as TopicKey);
     const actualPrice = pricing.isOnSale && pricing.salePrice != null ? pricing.salePrice : pricing.regularPrice;
 
+    // 측정 — 분석 시작 확정 (fire-and-forget · UX 영향 0)
+    import('@/services/analytics').then((a) => a.trackEvent('topic_select', { topic: topicId! })).catch(() => {});
+
     // E2 · 잔액 부족 시 입력값 보존 + inline 모달 (toast 만 X · 강제 navigate X)
     if (!spendBalance(actualPrice)) {
       // 입력값 sessionStorage 보존
@@ -3346,6 +3349,9 @@ export function TopicAnalysisPage() {
       isAnalyzingRef.current = false;
       return;
     }
+
+    // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'topic', amount: actualPrice, topic: topicId! })).catch(() => {});
 
     setPhase('loading');
     const interval = setInterval(() => setLoadingMsg(s => Math.min(s + 1, LOADING_MSGS.length - 1)), 3000);

@@ -9,6 +9,7 @@ import {
   parseJsonResponse,
   type ParseJsonMeta,
 } from './promptsV3';
+import { logAiUsage } from '../shared/aiUsageLog';
 
 /**
  * 오늘의 운세 — Claude Sonnet 4.6
@@ -50,6 +51,7 @@ export async function generateDailyFortuneAnalysis(
   // 1차 호출
   const meta1: ParseJsonMeta = { repairUsed: false };
   try {
+    const _t1 = Date.now(); // C7
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 5000,
@@ -57,6 +59,7 @@ export async function generateDailyFortuneAnalysis(
       system,
       messages: [{ role: 'user', content: user }],
     });
+    if (msg.usage) logAiUsage({ type: 'daily', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta1);
     if (meta1.repairUsed) console.info('[claudeFortune] jsonrepair 1차 발동 — 복구 성공');
@@ -65,6 +68,7 @@ export async function generateDailyFortuneAnalysis(
     console.warn('[claudeFortune] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
     // 2차 호출 — temperature 만 낮춰 sampling 변동성 감소
     const meta2: ParseJsonMeta = { repairUsed: false };
+    const _t2 = Date.now(); // C7
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 5000,
@@ -72,6 +76,7 @@ export async function generateDailyFortuneAnalysis(
       system,
       messages: [{ role: 'user', content: user }],
     });
+    if (msg.usage) logAiUsage({ type: 'daily', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta2);
     console.info('[claudeFortune] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');

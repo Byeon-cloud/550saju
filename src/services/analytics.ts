@@ -61,7 +61,50 @@ const FIRESTORE_TRACKED = new Set<string>([
   'charge_complete',    // {amount, package}
   'share_click',        // {type}
   'reward_earned',      // {kind, amount}
+  // 대시보드 v2 (2026-06-10) — 콘텐츠 구매 + AI 품질 + 광고
+  'content_purchase',   // {type, amount(운), topic?} — 운 차감 성공 직후
+  'ai_done',            // {type, ms, mode: sse|callable}
+  'ai_error',           // {type, mode}
+  'ad_impression',      // {unit}
+  'ad_click',           // {unit}
+  'ad_nofill',          // {unit}
+  'ad_fail',            // {unit}
 ]);
+
+/* ─── UTM/유입 채널 (C5 · 2026-06-10) ───
+ *   첫 진입 시 location.search 의 utm_source/utm_medium/utm_campaign + ref 를 sessionStorage 에
+ *   저장 → 세션 내 모든 Firestore 이벤트에 utm 첨부 (있을 때만). fire-and-forget. */
+const UTM_KEY = 'saju500:utm';
+
+function captureUtm(): void {
+  try {
+    if (sessionStorage.getItem(UTM_KEY)) return; // 세션 최초 1회만 (이후 내부 네비게이션은 무시)
+    const q = new URLSearchParams(window.location.search);
+    const source = q.get('utm_source') || q.get('ref') || '';
+    const medium = q.get('utm_medium') || '';
+    const campaign = q.get('utm_campaign') || '';
+    if (!source && !medium && !campaign) return;
+    sessionStorage.setItem(UTM_KEY, JSON.stringify({
+      ...(source ? { source } : {}),
+      ...(medium ? { medium } : {}),
+      ...(campaign ? { campaign } : {}),
+    }));
+  } catch { /* noop */ }
+}
+
+function getUtm(): Record<string, string> | null {
+  try {
+    const raw = sessionStorage.getItem(UTM_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+// 모듈 init 시 1회 캡처 (SSR 안전 가드)
+if (typeof window !== 'undefined') captureUtm();
 
 function logToFirestore(eventName: string, params?: Record<string, string | number>) {
   if (!FIRESTORE_TRACKED.has(eventName)) return;
@@ -71,11 +114,13 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
       const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
       const { getAuth } = await import('firebase/auth');
       const uid = getAuth().currentUser?.uid ?? null;
+      const utm = getUtm();
       await addDoc(collection(db, 'analytics'), {
         name: eventName,
         uid,
         sid: getSessionId(),
         props: params ?? {},
+        ...(utm ? { utm } : {}), // 유입 채널 (있을 때만 — C5)
         ts: serverTimestamp(),
         // 날짜 버킷 (집계 쿼리 효율) — KST 기준 YYYY-MM-DD
         day: kstDay(),

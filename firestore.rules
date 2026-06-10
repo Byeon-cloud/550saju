@@ -16,6 +16,12 @@ service cloud.firestore {
       allow read: if isOwner();
     }
 
+    // AI 토큰 사용량 로그 (C7 · 2026-06-10) — 쓰기는 서버(admin SDK)만, 읽기는 어드민 대시보드(오너)만.
+    match /aiUsage/{docId} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+
     // LIVE BEST 실시간 집계 (2026-06-02 D3) — 캐시는 공개 읽기, 쓰기/카운트/쿨다운은 Cloud Functions(admin) 전용.
     match /liveBestCache/{doc} {
       allow read: if true;       // HomePage 공개 읽기

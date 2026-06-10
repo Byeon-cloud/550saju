@@ -390,6 +390,8 @@ export function DreamPage() {
       isDeepAnalyzingRef.current = false;
       return;
     }
+    // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'dream', amount: 1 })).catch(() => {});
     // 잠금 해제 시각 효과 (사라랄) — body 에 일시 클래스 추가 → CSS 애니메이션
     setUnlockBurst(true);
     setTimeout(() => setUnlockBurst(false), 1500);

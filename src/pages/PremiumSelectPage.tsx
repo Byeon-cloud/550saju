@@ -59,6 +59,8 @@ export function PremiumSelectPage() {
       navigate(`/charge?need=${premiumPricing.actualPrice}`);
       return;
     }
+    // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'premium', amount: premiumPricing.actualPrice })).catch(() => {});
     toast.show(`${premiumPricing.actualPrice}운 차감 (잔액 ${getBalance()}운) — 종합 사주 시작`, 'success');
     sajuCtx.setInput(selected.input as any);
     sajuCtx.setSajuData(sajuData);

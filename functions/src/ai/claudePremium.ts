@@ -22,6 +22,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
 import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { logAiUsage } from '../shared/aiUsageLog';
 
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
 
@@ -222,6 +223,7 @@ async function callGroup(
     C: 7000,
   };
 
+  const _t0 = Date.now(); // C7 — 토큰 로깅용 (생성 로직 무관)
   const msg = await anthropic.messages.create({
     model,
     max_tokens: MAX_TOKENS_BY_GROUP[group],
@@ -237,6 +239,7 @@ async function callGroup(
     ],
     messages: [{ role: 'user', content: userSituation }],
   });
+  if (msg.usage) logAiUsage({ type: 'premium', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t0, ok: true }); // C7 best-effort
 
   const text = (msg.content[0] as any).text || '';
   // T2 강건성 — JSON 파싱 실패 시 incomplete JSON 복구 시도

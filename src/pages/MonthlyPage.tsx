@@ -98,6 +98,8 @@ export function MonthlyPage() {
       isAnalyzingRef.current = false;
       return;
     }
+    // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'monthly', amount: 1 })).catch(() => {});
     toast.show('1운이 차감됐어요', 'info');
     setPhase('loading');
     setLoadingStep(0);

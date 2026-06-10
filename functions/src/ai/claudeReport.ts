@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { logAiUsage } from '../shared/aiUsageLog';
 
 /**
  * 사주 리포트 — Claude Opus 4.6 (기본, 프리미엄 품질)
@@ -41,6 +42,7 @@ async function callReportGroup(
   const systemPrompt = buildSystemPrompt(sajuData, group);
   const userPrompt = buildUserPrompt(sajuData, situation) + GROUP_FOCUS[group];
   const call = async (temperature?: number) => {
+    const _t0 = Date.now(); // C7 — 토큰 로깅용 (생성 로직 무관)
     const msg = await anthropic.messages.create({
       model,
       max_tokens: 7000, // 그룹당 4섹션+부가 필드 — 16384 단일 → 3분할
@@ -49,6 +51,7 @@ async function callReportGroup(
       system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: userPrompt }],
     });
+    if (msg.usage) logAiUsage({ type: 'report', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t0, ok: true }); // C7 best-effort
     return (msg.content[0] as any).text as string;
   };
   // 3그룹 병렬 + Promise.all 은 한 그룹만 파싱 실패해도 리포트 전체가 죽음.

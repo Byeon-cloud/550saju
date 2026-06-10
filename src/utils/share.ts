@@ -93,6 +93,8 @@ function getShareCopy(params: ShareParams): ShareCopy {
 
 /** 결과 공유 실행 — 콘텐츠 타입별 카피 + URL 자동 분기 */
 export async function shareResult(params: ShareParams): Promise<boolean> {
+  // 측정 — 공유 시도 (C2 · fire-and-forget)
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: params.type || 'result' })).catch(() => {});
   const copy = getShareCopy(params);
   const webUrl = `${window.location.origin}/share/${copy.urlPath}`;
   const deepLinkPath = `/${copy.urlPath}`;

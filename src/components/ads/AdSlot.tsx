@@ -24,6 +24,11 @@ interface AdSlotProps {
   minHeight?: number;
 }
 
+/** 광고 측정 (C4 · 2026-06-10) — fire-and-forget. 실패해도 광고 동작·UX 영향 0 */
+function trackAd(name: 'ad_impression' | 'ad_click' | 'ad_nofill' | 'ad_fail', unit: string) {
+  import('@/services/analytics').then((a) => a.trackEvent(name, { unit })).catch(() => {});
+}
+
 // SDK initialize 1회만 (모듈 캐시) — 배너 여러 개여도 init 1번.
 let adsInitPromise: Promise<boolean> | null = null;
 function ensureAdsInitialized(mod: any): Promise<boolean> {
@@ -76,8 +81,11 @@ export function AdSlot({
           const result = TossAds.attachBanner(unit, containerRef.current, {
             variant: 'card',
             callbacks: {
-              onAdFailedToRender: () => { if (!cancelled) setHidden(true); },
-              onNoFill: () => { if (!cancelled) setHidden(true); },
+              // 측정 콜백 (C4) — silent-hide 동작은 그대로 (setHidden 로직 무변경)
+              onAdImpression: () => { trackAd('ad_impression', unit); },
+              onAdClicked: () => { trackAd('ad_click', unit); },
+              onAdFailedToRender: () => { trackAd('ad_fail', unit); if (!cancelled) setHidden(true); },
+              onNoFill: () => { trackAd('ad_nofill', unit); if (!cancelled) setHidden(true); },
             },
           });
           attachedRef.current = true;

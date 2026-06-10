@@ -11,6 +11,11 @@
 
 import { addRewardBalance } from '@/services/storage/localStore';
 
+/** 측정 — fire-and-forget (실패해도 UX 영향 0) */
+function track(name: string, params?: Record<string, string | number>) {
+  import('@/services/analytics').then((a) => a.trackEvent(name, params)).catch(() => {});
+}
+
 const SHARE_LOG_KEY = 'saju500_share_log';
 const MAX_DAILY_SHARES = 3;
 const REWARD_PER_SHARE = 1;
@@ -53,6 +58,7 @@ export function canEarnShareReward(): boolean {
  */
 export function claimShareRewardUnlimited(): number {
   addRewardBalance(REWARD_PER_SHARE);
+  track('reward_earned', { kind: 'share', amount: REWARD_PER_SHARE });
   return REWARD_PER_SHARE;
 }
 
@@ -72,6 +78,7 @@ export function claimShareReward(): number {
   });
 
   addRewardBalance(REWARD_PER_SHARE);
+  track('reward_earned', { kind: 'share', amount: REWARD_PER_SHARE });
   return REWARD_PER_SHARE;
 }
 
@@ -96,6 +103,8 @@ export async function inviteFriendsViaToss(opts?: {
   onShared?: () => void;               // 공유 완료했으나 한도 초과 등 미적립
   onCancel?: () => void;               // 취소·실패
 }): Promise<void> {
+  // 측정 — 공유 시도 (C2 · 친구 초대 트리거)
+  track('share_click', { type: 'invite' });
   const { isAppsInToss } = await import('@/services/payment/iapService');
   if (isAppsInToss()) {
     try {
