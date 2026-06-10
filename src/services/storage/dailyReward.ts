@@ -113,6 +113,11 @@ export function claimDailyReward(): boolean {
 
 const STREAK3_AT_KEY = 'saju500:attend_3day:streakAt'; // 마지막 3일보상 지급 시점의 streak 값
 
+// 대시보드 v2 (C2) — 리워드 적립 계측 (fire-and-forget, 실패해도 UX 영향 0)
+function trackReward(kind: 'daily' | 'streak3' | 'attend7', amount: number): void {
+  import('@/services/analytics').then((a) => a.trackEvent('reward_earned', { kind, amount })).catch(() => {});
+}
+
 export interface AttendanceRewardResult {
   attendedNewToday: boolean;
   dailyRewardGranted: boolean;   // 0.1운
@@ -135,6 +140,7 @@ export function processAttendanceRewards(): AttendanceRewardResult {
       writeMonthCount(st.monthCount + 1);
     } catch { /* noop */ }
     dailyRewardGranted = true;
+    trackReward('daily', DAILY_REWARD_UN);
   }
 
   // 2) 출석 streak 적립 (오늘 첫 콘텐츠일 때만)
@@ -144,14 +150,8 @@ export function processAttendanceRewards(): AttendanceRewardResult {
     days.push(today);
     days = days.slice(-7);
     writeAttendDays(days);
-    // 7일 연속 → 토스 100원 프로모션 (앱인토스 환경에서만 실동작)
-    if (isConsecutive7(days) && !isAttendance7Done()) {
-      import('@/services/toss/tossPromotion').then((m) => {
-        m.grant7DayAttendance().then((r) => {
-          if (r.ok || r.reason === 'already_granted') markAttendance7Done();
-        });
-      });
-    }
+    // 7일 연속 → 토스 프로모션 (반복 사이클 — 7일 채울 때마다 지급, 앱인토스 환경에서만 실동작)
+    tryGrant7DayCycle(days);
   }
 
   // 3) 3일 연속 → 1운 (3일 사이클마다 1회 · 클라 잔액 직접 적립)
@@ -167,6 +167,7 @@ export function processAttendanceRewards(): AttendanceRewardResult {
     addRewardBalance(1);
     try { window.localStorage.setItem(STREAK3_AT_KEY, String(streak)); } catch { /* noop */ }
     streak3Granted = true;
+    trackReward('streak3', 1);
   }
 
   return { attendedNewToday, dailyRewardGranted, streak3Granted, streakCount: streak };
@@ -180,7 +181,9 @@ export function processAttendanceRewards(): AttendanceRewardResult {
  * ──────────────────────────────────────────────────────────── */
 
 const ATTEND_DAYS_KEY = 'saju500:attend_7day:days'; // ['YYYY-MM-DD', ...] (최근 7일 윈도우)
-const ATTEND_DONE_KEY = 'saju500:attend_7day:done'; // 7일 완주 + 프로모션 지급 1회 플래그
+// 2026-06-08 — 준기 정정: 7일 완주 프로모는 1회성이 아니라 "7일 채울 때마다 계속 반복 지급".
+//   기존 done 플래그(영구 1회) 폐기 → 지급일 기록 + 지급 후 days 리셋(다음 사이클 1일차부터).
+const ATTEND_GRANT_AT_KEY = 'saju500:attend_7day:grantedAt'; // 마지막 지급일 YYYY-MM-DD (같은 날 중복 방지)
 
 function readAttendDays(): string[] {
   try {
@@ -219,28 +222,39 @@ export function trackAttendanceStreak(): void {
   days = days.slice(-7);
   writeAttendDays(days);
 
-  if (isConsecutive7(days) && !isAttendance7Done()) {
-    // 토스 프로모션 "7일 출석 완주 리워드" 지급 (앱인토스 환경에서만 실동작)
-    import('@/services/toss/tossPromotion').then((m) => {
-      m.grant7DayAttendance().then((r) => {
-        if (r.ok || r.reason === 'already_granted') markAttendance7Done();
-      });
-    });
-  }
+  // 토스 프로모션 "7일 출석 완주 리워드" — 반복 사이클 (앱인토스 환경에서만 실동작)
+  tryGrant7DayCycle(days);
 }
 
-export function isAttendance7Done(): boolean {
+/** 마지막 7일 완주 지급일 (같은 날 중복 지급 방지) */
+function lastGrant7Day(): string {
   try {
-    return window.localStorage.getItem(ATTEND_DONE_KEY) === '1';
+    return window.localStorage.getItem(ATTEND_GRANT_AT_KEY) ?? '';
   } catch {
-    return false;
+    return '';
   }
 }
 
-function markAttendance7Done(): void {
-  try {
-    window.localStorage.setItem(ATTEND_DONE_KEY, '1');
-  } catch { /* noop */ }
+/**
+ * 7일 연속 완주 시 토스 프로모션 지급 시도 — 반복 사이클.
+ * 지급 성공(또는 토스측 already_granted) 시: 지급일 기록 + days 윈도우 리셋 → 다음날부터 새 7일 사이클.
+ * 실패(not_in_toss 등) 시: 리셋하지 않음 → 다음 콘텐츠 이용 때 재시도.
+ */
+function tryGrant7DayCycle(days: string[]): void {
+  if (!isConsecutive7(days)) return;
+  const today = todayKey();
+  if (lastGrant7Day() === today) return; // 오늘 이미 지급됨
+  import('@/services/toss/tossPromotion').then((m) => {
+    m.grant7DayAttendance().then((r) => {
+      if (r.ok || r.reason === 'already_granted') {
+        try {
+          window.localStorage.setItem(ATTEND_GRANT_AT_KEY, today);
+        } catch { /* noop */ }
+        writeAttendDays([]); // 다음 7일 사이클 시작
+        if (r.ok) trackReward('attend7', 0); // 토스 프로모션 지급 (운 적립 아님 → amount 0)
+      }
+    });
+  });
 }
 
 export function getAttendanceStreakCount(): number {
@@ -275,11 +289,14 @@ export async function simulate7DayCompletion(): Promise<{ ok: boolean; reason?: 
     );
   }
   writeAttendDays(days);
-  // done 플래그 초기화 (재테스트 가능)
-  try { window.localStorage.removeItem(ATTEND_DONE_KEY); } catch { /* noop */ }
+  // 지급일 초기화 (재테스트 가능)
+  try { window.localStorage.removeItem(ATTEND_GRANT_AT_KEY); } catch { /* noop */ }
 
   const m = await import('@/services/toss/tossPromotion');
   const r = await m.grant7DayAttendance();
-  if (r.ok || r.reason === 'already_granted') markAttendance7Done();
+  if (r.ok || r.reason === 'already_granted') {
+    try { window.localStorage.setItem(ATTEND_GRANT_AT_KEY, todayKey()); } catch { /* noop */ }
+    writeAttendDays([]); // 다음 사이클 시작 (반복 지급 구조와 동일)
+  }
   return { ok: r.ok, reason: r.reason };
 }
