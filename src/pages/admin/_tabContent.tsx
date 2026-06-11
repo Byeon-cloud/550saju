@@ -1,7 +1,7 @@
 // 어드민 — ③ 콘텐츠 탭 (2026-06-10)
 //   콘텐츠별 퍼널 테이블(open→result→purchase 전환율) + topic_select 인기 + 생성 누적
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, LineChart, Line, Legend, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { AdminData } from './_useAdminData';
 import {
   C, Section, Empty, CsvButton, DataTable, deltaPct, fmtNum, fmtPct,
@@ -131,6 +131,35 @@ export function TabContent({ d }: { d: AdminData }) {
             { key: 'delta', label: '증감', numeric: true, render: (v) => fmtPct(v) },
           ];
           return <DataTable columns={cols} rows={rows} initialSortKey="n" />;
+        })()}
+      </Section>
+
+      <Section title="콘텐츠 생성 추이 (DB 복원 — 과거 포함)" caption="· reports.generatedAt 역산 — 행동로그 수집 이전 기간도 표시. 어떤 콘텐츠가 언제 많이 생성됐는지">
+        {(() => {
+          const topTypes = Object.entries(cur.genByDayType)
+            .map(([t, arr]) => ({ t, sum: arr.reduce((a, b) => a + b, 0) }))
+            .sort((a, b) => b.sum - a.sum).slice(0, 5).map((x) => x.t);
+          const series = cur.days.map((day, i) => {
+            const pt: Record<string, any> = { day: day.slice(5), total: cur.genByDay[i] };
+            topTypes.forEach((t) => { pt[t] = cur.genByDayType[t]?.[i] ?? 0; });
+            return pt;
+          });
+          if (cur.genTotal === 0) return <Empty />;
+          return (
+            <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={series} margin={{ left: 0, right: 8 }}>
+                  <XAxis dataKey="day" tick={{ fontSize: 10, fill: C.mute }} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: C.mute }} width={32} allowDecimals={false} />
+                  <Tooltip formatter={(v: any, name: any) => [`${fmtNum(Number(v))}건`, CONTENT_LABEL[String(name)] || String(name)]} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} formatter={(v) => CONTENT_LABEL[String(v)] || String(v)} />
+                  {topTypes.map((t, i) => (
+                    <Line key={t} type="monotone" dataKey={t} stroke={CONTENT_COLORS[i % CONTENT_COLORS.length]} strokeWidth={2} dot={false} />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          );
         })()}
       </Section>
 

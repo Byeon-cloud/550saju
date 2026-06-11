@@ -88,6 +88,11 @@ export interface PeriodAgg {
   retention: { d1Rate: number | null; d7Rate: number | null; cohortD1: number; cohortD7: number };
   // 유입
   utm: Record<string, { visits: number; contentOpens: number; charges: number }>;
+  // 과거 활동 복원 (2026-06-12) — reports.generatedAt + payments 로 역산 (행동로그 수집 이전 기간 포함)
+  genByDay: number[];                              // 일별 콘텐츠 생성 건수
+  genUsersByDay: number[];                         // 일별 활동 유저 (생성+결제 고유 uid)
+  genTotal: number;
+  genByDayType: Record<string, number[]>;          // type → 일별 생성
   // CTA 클릭 (2026-06-12 · 전역 위임 수집)
   cta: Record<string, number>;                     // label → 클릭 수
   ctaTotal: number;
@@ -126,6 +131,7 @@ function emptyAgg(days: string[]): PeriodAgg {
     visitFreq: { once: 0, few: 0, many: 0 },
     retention: { d1Rate: null, d7Rate: null, cohortD1: 0, cohortD7: 0 },
     utm: {},
+    genByDay: days.map(() => 0), genUsersByDay: days.map(() => 0), genTotal: 0, genByDayType: {},
     cta: {}, ctaTotal: 0,
     demoGender: {}, demoAge: {}, payingGender: {},
   };
@@ -438,16 +444,36 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
           });
         } catch { /* aiUsage 미배포/권한 전 — noop */ }
 
-        // 4) reports 누적 (콘텐츠 생성)
+        // 4) reports 누적 (콘텐츠 생성) + 과거 활동 복원 (2026-06-12)
+        //    행동로그(analytics) 수집 이전 기간도 generatedAt 타임스탬프로 일별 생성·활동유저 역산.
         const reportsByType: Record<string, number> = {};
+        const genUserSetsCur: Record<number, Set<string>> = {};
+        const genUserSetsPrev: Record<number, Set<string>> = {};
         try {
           const repSnap = await getDocs(collectionGroup(db, 'reports'));
           repSnap.forEach((doc) => {
             const r = doc.data() as any;
             const t = r.contentType || r.type || 'report'; // 서버 문서는 type 필드 (premium/basic/...)
             reportsByType[t] = (reportsByType[t] ?? 0) + 1;
+            const rday = paymentDay({ confirmedAt: r.generatedAt ?? r.createdAt });
+            const ruid = r.uid || doc.ref.parent.parent?.id || '';
+            const ci = curDays.indexOf(rday);
+            if (ci >= 0) {
+              cur.genByDay[ci] += 1; cur.genTotal += 1;
+              (cur.genByDayType[t] ??= curDays.map(() => 0))[ci] += 1;
+              if (ruid) (genUserSetsCur[ci] ??= new Set()).add(ruid);
+            } else {
+              const pi = prevDays.indexOf(rday);
+              if (pi >= 0) {
+                prev.genByDay[pi] += 1; prev.genTotal += 1;
+                (prev.genByDayType[t] ??= prevDays.map(() => 0))[pi] += 1;
+                if (ruid) (genUserSetsPrev[pi] ??= new Set()).add(ruid);
+              }
+            }
           });
         } catch { /* noop */ }
+        cur.genUsersByDay = curDays.map((_, i) => genUserSetsCur[i]?.size ?? 0);
+        prev.genUsersByDay = prevDays.map((_, i) => genUserSetsPrev[i]?.size ?? 0);
 
         // 5) 유저 수
         let totalUsers = 0;
