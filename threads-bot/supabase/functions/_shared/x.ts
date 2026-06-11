@@ -29,6 +29,20 @@ function authHeader(method: string, url: string, c: XCreds): string {
   return "OAuth " + Object.keys(p).sort().map((k) => `${enc(k)}="${enc(p[k])}"`).join(", ");
 }
 
+/** Threads 글 → X 문화로 변환 (스친이=스레드 용어 → 트친). 기계적 치환이라 내용 불변 */
+export function adaptForX(text: string): string {
+  return text
+    .replaceAll("스친이들", "트친들")
+    .replaceAll("스친이가", "트친이")
+    .replaceAll("스친이도", "트친도")
+    .replaceAll("스친이는", "트친은")
+    .replaceAll("스친이한테", "트친한테")
+    .replaceAll("스친이랑", "트친이랑")
+    .replaceAll("스친아", "트친아")
+    .replaceAll("스친이", "트친")
+    .replaceAll("스레드", "여기");
+}
+
 /** URL 제거 (PPU에서 URL 포스트 = $0.20 → 차단). 제거됐으면 true 반환 */
 export function stripUrls(text: string): { text: string; stripped: boolean } {
   const re = /https?:\/\/\S+/g;
@@ -58,13 +72,13 @@ export async function publishXChain(
   replies: string[],
 ): Promise<{ bodyId: string; replyIds: string[]; urlStripped: boolean }> {
   let urlStripped = false;
-  const b = stripUrls(body);
+  const b = stripUrls(adaptForX(body));
   urlStripped ||= b.stripped;
   const bodyId = await postTweet(c, b.text);
   const replyIds: string[] = [];
   let parent = bodyId;
   for (const r of replies) {
-    const rr = stripUrls(r);
+    const rr = stripUrls(adaptForX(r));
     urlStripped ||= rr.stripped;
     if (!rr.text) continue; // 링크만 있던 댓글은 통째로 스킵
     await new Promise((res) => setTimeout(res, 2000));

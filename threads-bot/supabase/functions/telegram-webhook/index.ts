@@ -338,7 +338,8 @@ Deno.serve(async (req) => {
       const next = cur === "threads" ? ["x"] : cur === "x" ? ["threads", "x"] : ["threads"];
       await sb.from("posts").update({ targets: next }).eq("id", postId);
       await editMessageReplyMarkup(BOT_TOKEN, chatId, messageId, buildApproveButtons(postId, next));
-      await answerCallbackQuery(BOT_TOKEN, cq.id, "발행 대상: " + targetLabel(next).replace("📤 ", ""));
+      const note = next.includes("x") ? " (X엔 스친이→트친 자동변환, 링크 자동제거)" : "";
+      await answerCallbackQuery(BOT_TOKEN, cq.id, "발행 대상: " + targetLabel(next).replace("📤 ", "") + note);
       return;
     }
 
