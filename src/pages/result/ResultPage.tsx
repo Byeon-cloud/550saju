@@ -263,6 +263,8 @@ export function ResultPage(props: ResultPageProps = {}) {
     refundedRef.current = true;
     const refundAmount = freshType === 'premium' ? getPremiumPrice().actualPrice : 1;
     try { refundBalance(refundAmount); } catch { /* noop */ }
+    // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
+    import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
     setStreamError(`분석에 실패해서 ${refundAmount}운을 돌려드렸어요. 잠시 후 다시 시도해주세요.`);
   }, [freshType]);
 
@@ -297,6 +299,8 @@ export function ResultPage(props: ResultPageProps = {}) {
                 createdAt: new Date().toISOString(),
                 aiResult: finalAi as any,
               });
+              // P0 CS — 결과 영속 완료 → premium pending 해제 (부팅 자동환불 대상 제외)
+              import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
             } catch { /* noop — UI 는 streamingAiResult 로 이미 렌더됨 */ }
             // URL 정리 (fresh 쿼리 제거 — 새로고침 시 재SSE 방지)
             navigate(window.location.pathname, { replace: true });

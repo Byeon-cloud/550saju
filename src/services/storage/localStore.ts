@@ -539,3 +539,8 @@ export function removeTopicReports(topicIds: string[]): number {
   console.info(`[removeTopicReports] ${topicIds.join(',')} 정리 — 리포트 ${removed}건`);
   return removed;
 }
+
+/** type prefix 로 pending 일괄 해제 — cross-page 플로우(종합사주: 차감→로딩→결과)용 */
+export function clearPendingSpendByType(typePrefix: string): void {
+  writePendingSpends(readPendingSpends().filter(p => !p.type.startsWith(typePrefix)));
+}

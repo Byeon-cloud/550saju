@@ -670,6 +670,9 @@ export function InputPage() {
         }
         // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
         import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'premium', amount: premiumCost })).catch(() => {});
+        // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
+        import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumCost)).catch(() => {});
+
         triggerPromotionEvent(PROMO_EVENTS.FIRST_SAJU);
         toast.show(`${premiumCost}운 차감 — 종합 사주 시작`, 'success');
         const newId = generateId();
