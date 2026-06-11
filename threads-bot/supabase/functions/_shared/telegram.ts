@@ -51,6 +51,19 @@ export function editMessageText(
   });
 }
 
+export function editMessageReplyMarkup(
+  token: string,
+  chatId: number | string,
+  messageId: number,
+  buttons: InlineButton[][],
+): Promise<any> {
+  return tg(token, "editMessageReplyMarkup", {
+    chat_id: chatId,
+    message_id: messageId,
+    reply_markup: { inline_keyboard: buttons },
+  });
+}
+
 export function answerCallbackQuery(
   token: string,
   callbackQueryId: string,
@@ -67,8 +80,16 @@ export function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/** 발행 대상 라벨 */
+export function targetLabel(targets: string[]): string {
+  const t = new Set(targets);
+  if (t.has("threads") && t.has("x")) return "📤 Threads+X";
+  if (t.has("x")) return "📤 X만";
+  return "📤 Threads";
+}
+
 /** 승인/예약 버튼 (callback_data 형식: act:postId) — webhook 의 handleCallback 과 1:1 */
-export function buildApproveButtons(postId: string): InlineButton[][] {
+export function buildApproveButtons(postId: string, targets: string[] = ["threads"]): InlineButton[][] {
   return [
     [
       { text: "✅ 지금 발행", callback_data: `now:${postId}` },
@@ -77,6 +98,9 @@ export function buildApproveButtons(postId: string): InlineButton[][] {
     [
       { text: "⏰ 3시간 뒤", callback_data: `3h:${postId}` },
       { text: "⏰ 내일 오전 9시", callback_data: `9am:${postId}` },
+    ],
+    [
+      { text: targetLabel(targets) + " (탭=변경)", callback_data: `tgt:${postId}` },
     ],
     [
       { text: "🔄 다시 뽑기", callback_data: `regen:${postId}` },

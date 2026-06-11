@@ -15,9 +15,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   answerCallbackQuery,
   buildApproveButtons,
+  editMessageReplyMarkup,
   editMessageText,
   esc,
   sendMessage,
+  targetLabel,
 } from "../_shared/telegram.ts";
 import { publishPost } from "../_shared/threads.ts";
 
@@ -315,6 +317,28 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({ account: accountId, content_type: type }),
       }).catch((e) => console.error("generate 호출 실패:", e));
+      return;
+    }
+
+    // 📤 발행 대상 토글: Threads → X만 → Threads+X → Threads (X 미연결 계정은 Threads 고정)
+    if (act === "tgt") {
+      const { data: p } = await sb.from("posts")
+        .select("targets, account_id").eq("id", postId).eq("status", "draft").maybeSingle();
+      if (!p) {
+        await answerCallbackQuery(BOT_TOKEN, cq.id, "이미 처리된 글이야");
+        return;
+      }
+      const { data: a } = await sb.from("accounts")
+        .select("x_api_key").eq("id", p.account_id || "moondal").maybeSingle();
+      if (!a?.x_api_key) {
+        await answerCallbackQuery(BOT_TOKEN, cq.id, "이 계정은 X 미연결 (Threads만 가능)");
+        return;
+      }
+      const cur = (p.targets ?? ["threads"]).sort().join(",");
+      const next = cur === "threads" ? ["x"] : cur === "x" ? ["threads", "x"] : ["threads"];
+      await sb.from("posts").update({ targets: next }).eq("id", postId);
+      await editMessageReplyMarkup(BOT_TOKEN, chatId, messageId, buildApproveButtons(postId, next));
+      await answerCallbackQuery(BOT_TOKEN, cq.id, "발행 대상: " + targetLabel(next).replace("📤 ", ""));
       return;
     }
 

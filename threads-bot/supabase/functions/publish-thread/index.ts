@@ -1,23 +1,20 @@
-// publish-thread : 발행 대상 1건을 집어 Threads 에 발행하고, 대댓을 단다.
+// publish-thread : 발행 대상 1건을 집어 타깃(Threads / X / 둘 다)에 발행한다.
 //
 // 호출: pg_cron 이 10분마다 (또는 수동 POST)
 // 동작:
 //   1) pending 이고 scheduled_at <= now() 인 가장 오래된 글 1건을 원자적으로 claim
-//   2) Threads 2단계 발행 (컨테이너 생성 → 30초 대기 → publish)
-//   3) reply_body 있으면 reply_to_id 로 대댓 자동
-//   4) 성공 → status='published' / 실패 → 재시도 가능하면 pending, 아니면 failed
-//
-// env (Supabase Dashboard > Edge Functions > Secrets 에 등록):
-//   THREADS_USER_ID, THREADS_ACCESS_TOKEN
-//   (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY 는 런타임 자동 주입)
+//   2) post.targets ({threads}, {x}, {threads,x}) 별로 발행
+//      - Threads: 2단계 발행 + 대댓 체인 + 주제태그
+//      - X: 본문 + 답글 체인 (⚠️ URL 자동 제거 — PPU에서 URL 포스트 $0.20 방지)
+//   3) 성공 → published / 실패 → 재시도 가능하면 pending, 아니면 failed
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { publishThreadChain } from "../_shared/threads.ts";
+import { publishXChain } from "../_shared/x.ts";
 
 const MAX_ATTEMPTS = 5; // 이 횟수까지는 실패해도 pending 으로 되돌려 재시도
 
 Deno.serve(async (req) => {
-  // 간단 인증: service_role 키(JWT) 로만 호출되도록 Supabase 가 검증(verify_jwt).
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -26,7 +23,6 @@ Deno.serve(async (req) => {
   });
 
   // ── 1) 발행 대상 1건 원자적 claim ─────────────────────────────
-  // RPC(claim_due_post) 로 SELECT ... FOR UPDATE SKIP LOCKED 처리 (동시 실행 안전)
   const { data: claimed, error: claimErr } = await sb
     .rpc("claim_due_post")
     .maybeSingle();
@@ -41,83 +37,96 @@ Deno.serve(async (req) => {
     return json({ claimed: 0, message: "유효한 발행 대상 없음 (빈 행 무시)" });
   }
 
-  // ── 계정별 자격증명 (글의 account_id 기준) ──────────────────────
+  const targets: string[] = Array.isArray(post.targets) && post.targets.length ? post.targets : ["threads"];
+
+  // ── 계정 자격증명 ───────────────────────────────────────────────
   const accountId = post.account_id || "moondal";
   const { data: acct } = await sb
     .from("accounts")
-    .select("threads_user_id, access_token")
+    .select("threads_user_id, access_token, x_api_key, x_api_secret, x_access_token, x_access_secret")
     .eq("id", accountId)
     .maybeSingle();
-  const THREADS_USER_ID = acct?.threads_user_id;
-  const THREADS_ACCESS_TOKEN = acct?.access_token || Deno.env.get("THREADS_ACCESS_TOKEN");
-  if (!THREADS_USER_ID || !THREADS_ACCESS_TOKEN) {
-    // 토큰 없는 계정(예: 공식 미설정)으로는 절대 발행 안 함 → 다른 계정으로 잘못 안 나가게
-    await sb.from("posts").update({
-      status: "failed",
-      last_error: `계정 '${accountId}' 토큰/user_id 미설정 — 발행 불가`,
-    }).eq("id", post.id);
-    return json({ claimed: 1, published: false, account: accountId, error: "계정 자격증명 없음" }, 200);
-  }
 
-  // ── 2~3) 본문 + 대댓 체인 발행 ────────────────────────────────
-  // reply_chain(배열) 우선, 없으면 reply_body(구버전) 단일로 폴백
   const replies: string[] = Array.isArray(post.reply_chain)
     ? post.reply_chain.filter((r: any) => typeof r === "string" && r.trim())
     : (post.reply_body && post.reply_body.trim() ? [post.reply_body] : []);
   const topicTag = Array.isArray(post.topic_tags) ? post.topic_tags[0] : null;
 
-  try {
-    const { bodyId, replyIds } = await publishThreadChain({
-      userId: THREADS_USER_ID,
-      accessToken: THREADS_ACCESS_TOKEN,
-      body: post.body,
-      replies,
-      topicTag,
-      imageUrl: post.image_url,
-    });
+  const ok: Record<string, any> = {};
+  const errors: string[] = [];
 
-    await sb
-      .from("posts")
-      .update({
-        status: "published",
-        thread_post_id: bodyId,
-        reply_post_id: replyIds[0] ?? null,
-        reply_post_ids: replyIds,
-        published_at: new Date().toISOString(),
-        last_error: null,
-      })
-      .eq("id", post.id);
-
-    return json({
-      claimed: 1,
-      published: true,
-      post_id: post.id,
-      thread_post_id: bodyId,
-      reply_count: replyIds.length,
-    });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    // 재시도 여지가 있으면 pending 으로 되돌림 (다음 cron 이 다시 시도)
-    const retryable = post.attempts < MAX_ATTEMPTS;
-    await sb
-      .from("posts")
-      .update({
-        status: retryable ? "pending" : "failed",
-        last_error: msg.slice(0, 2000),
-      })
-      .eq("id", post.id);
-
-    return json(
-      {
-        claimed: 1,
-        published: false,
-        post_id: post.id,
-        retryable,
-        error: msg,
-      },
-      500,
-    );
+  // ── Threads 발행 ────────────────────────────────────────────────
+  if (targets.includes("threads")) {
+    if (!acct?.threads_user_id || !acct?.access_token) {
+      errors.push(`threads: 계정 '${accountId}' Threads 자격증명 없음`);
+    } else {
+      try {
+        const { bodyId, replyIds } = await publishThreadChain({
+          userId: acct.threads_user_id,
+          accessToken: acct.access_token,
+          body: post.body,
+          replies,
+          topicTag,
+          imageUrl: post.image_url,
+        });
+        ok.threads = { bodyId, replyCount: replyIds.length };
+        await sb.from("posts").update({
+          thread_post_id: bodyId,
+          reply_post_id: replyIds[0] ?? null,
+          reply_post_ids: replyIds,
+        }).eq("id", post.id);
+      } catch (e) {
+        errors.push("threads: " + (e instanceof Error ? e.message : String(e)).slice(0, 300));
+      }
+    }
   }
+
+  // ── X 발행 (URL 자동 제거 가드) ─────────────────────────────────
+  if (targets.includes("x")) {
+    if (!acct?.x_api_key || !acct?.x_access_token) {
+      errors.push(`x: 계정 '${accountId}' X 자격증명 없음`);
+    } else {
+      try {
+        const { bodyId, replyIds, urlStripped } = await publishXChain(
+          {
+            apiKey: acct.x_api_key,
+            apiSecret: acct.x_api_secret,
+            accessToken: acct.x_access_token,
+            accessSecret: acct.x_access_secret,
+          },
+          post.body,
+          replies,
+        );
+        ok.x = { bodyId, replyCount: replyIds.length, urlStripped };
+        await sb.from("posts").update({
+          x_post_id: bodyId,
+          x_reply_ids: replyIds,
+        }).eq("id", post.id);
+      } catch (e) {
+        errors.push("x: " + (e instanceof Error ? e.message : String(e)).slice(0, 300));
+      }
+    }
+  }
+
+  // ── 결과 정리 ──────────────────────────────────────────────────
+  if (Object.keys(ok).length > 0) {
+    // 한 곳이라도 성공 → published (실패한 타깃은 last_error 에 기록)
+    await sb.from("posts").update({
+      status: "published",
+      published_at: new Date().toISOString(),
+      last_error: errors.length ? errors.join(" | ").slice(0, 2000) : null,
+    }).eq("id", post.id);
+    return json({ claimed: 1, published: true, post_id: post.id, ok, errors });
+  }
+
+  // 전부 실패 → 재시도/실패 처리
+  const msg = errors.join(" | ") || "알 수 없는 실패";
+  const retryable = post.attempts < MAX_ATTEMPTS;
+  await sb.from("posts").update({
+    status: retryable ? "pending" : "failed",
+    last_error: msg.slice(0, 2000),
+  }).eq("id", post.id);
+  return json({ claimed: 1, published: false, post_id: post.id, retryable, error: msg }, 500);
 });
 
 interface Post {
@@ -128,6 +137,7 @@ interface Post {
   reply_chain: string[] | null;
   topic_tags: string[] | null;
   account_id: string | null;
+  targets: string[] | null;
   attempts: number;
 }
 
