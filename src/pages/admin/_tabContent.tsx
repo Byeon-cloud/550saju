@@ -91,6 +91,40 @@ export function TabContent({ d }: { d: AdminData }) {
         <DataTable columns={funnelCols} rows={funnelRows} initialSortKey="open" />
       </Section>
 
+      <Section
+        title="10주제 분포 (DB 복원 — 전 기간)"
+        caption="· reports 의 topicId 기준 — 과거 포함 전체. 괄호 = 고유 유저 / [기간 N] = 선택한 기간 내 생성"
+      >
+        {(() => {
+          const TOPIC_KR: Record<string, string> = {
+            love: '연애운', reunion: '재회운', marriage: '결혼운', wealth: '재물운', exam: '합격이직운',
+            business: '사업운', health: '건강운', move: '이사운', moving: '이사운', study: '학업운', career: '직업운',
+          };
+          const rows = Object.entries(d.topicDistAll || {})
+            .map(([tid, v]) => ({ tid, label: TOPIC_KR[tid] || tid, count: v.count, users: v.users, period: cur.topicGen[tid] ?? 0 }))
+            .sort((a, b) => b.count - a.count);
+          if (rows.length === 0) return <Empty />;
+          const max = rows[0].count || 1;
+          return (
+            <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '14px 16px' }}>
+              {rows.map((r, i) => (
+                <div key={r.tid} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
+                  <span style={{ width: 76, fontSize: 12, fontWeight: 700, color: C.ink, flexShrink: 0 }}>{r.label}</span>
+                  <div style={{ flex: 1, height: 14, background: '#F3EFE6', borderRadius: 7, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.max(3, Math.round((r.count / max) * 100))}%`, height: '100%', background: CONTENT_COLORS[i % CONTENT_COLORS.length], borderRadius: 7 }} />
+                  </div>
+                  <span style={{ width: 150, fontSize: 12, color: C.ink, textAlign: 'right', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                    <b>{fmtNum(r.count)}건</b>
+                    <span style={{ color: C.mute }}> ({fmtNum(r.users)}명)</span>
+                    <span style={{ color: C.goldDeep, fontWeight: 700 }}> [기간 {fmtNum(r.period)}]</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </Section>
+
       <Section title="인기 주제 (진입 → 결제확정)" caption="· 막대 = 주제 페이지 진입(topic_open) · 툴팁의 '확정' = 운 차감 확정(topic_select) — 어떤 운을 보고, 어떤 운에 돈을 쓰는지">
         {topicBars.length === 0 ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
