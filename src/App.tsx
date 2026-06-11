@@ -233,9 +233,12 @@ export function App() {
         const fn = httpsCallable(getFunctions(app, 'us-central1'), 'claimCompensation');
         const r: any = await fn({ deviceId });
         const amount = Number(r?.data?.amount) || 0;
+        const wipeTopics: string[] = Array.isArray(r?.data?.wipeTopics) ? r.data.wipeTopics : [];
         if (amount > 0) {
-          const { addPaidBalance } = await import('@/services/storage/localStore');
+          const { addPaidBalance, removeTopicReports } = await import('@/services/storage/localStore');
           addPaidBalance(amount, 0);
+          // 잘못 생성됐던 주제 결과 동반 정리 (보관함 + 캐시) — 재열람 시 혼란 방지
+          if (wipeTopics.length > 0) removeTopicReports(wipeTopics);
           try { localStorage.setItem('saju500:comp_notice', String(amount)); } catch { /* noop */ }
         }
       } catch { /* noop — 다음 날 재시도 */ }

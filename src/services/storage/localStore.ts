@@ -503,3 +503,39 @@ export function reconcilePendingSpends(): number {
   console.info(`[pendingSpend] 자동 환불: ${total}운 (${expired.length}건 — 생성 중 이탈 복구)`);
   return total;
 }
+
+/**
+ * CS 보상 동반 정리 (2026-06-11) — 잘못 생성된 주제 결과를 보관함·캐시에서 제거.
+ * claimCompensation 의 wipeTopics 수령 시 호출 (예: ['love','marriage']).
+ * 해당 topicId 의 보관함 리포트 + topic_{id}_* 캐시(local/session 양쪽) 삭제.
+ */
+export function removeTopicReports(topicIds: string[]): number {
+  if (!Array.isArray(topicIds) || topicIds.length === 0) return 0;
+  let removed = 0;
+  try {
+    const reports = getReports();
+    const keep = reports.filter((r: any) => {
+      const tid = r?.aiResult?.topicId;
+      const isTarget = r?.contentType === 'topic' && tid && topicIds.includes(tid);
+      if (isTarget) removed++;
+      return !isTarget;
+    });
+    if (removed > 0) {
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(keep));
+      try { sessionStorage.setItem(REPORTS_KEY, JSON.stringify(keep)); } catch { /* noop */ }
+    }
+  } catch { /* noop */ }
+  // topic_{id}_* 결과 캐시 제거 (양쪽 스토리지)
+  for (const store of [localStorage, sessionStorage]) {
+    try {
+      const doomed: string[] = [];
+      for (let i = 0; i < store.length; i++) {
+        const k = store.key(i) || '';
+        if (topicIds.some(t => k.startsWith(`topic_${t}_`))) doomed.push(k);
+      }
+      doomed.forEach(k => store.removeItem(k));
+    } catch { /* noop */ }
+  }
+  console.info(`[removeTopicReports] ${topicIds.join(',')} 정리 — 리포트 ${removed}건`);
+  return removed;
+}

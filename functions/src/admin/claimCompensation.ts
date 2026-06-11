@@ -30,7 +30,7 @@ export const claimCompensation = onCall(
       const result = await db.runTransaction(async (tx) => {
         const snap = await tx.get(ref);
         if (!snap.exists) return { amount: 0 };
-        const d = snap.data() as { amount?: number; note?: string; claimed?: boolean };
+        const d = snap.data() as { amount?: number; note?: string; claimed?: boolean; wipeTopics?: string[] };
         if (d.claimed) return { amount: 0 };
         const amount = Math.max(0, Math.min(100, Number(d.amount) || 0)); // 상한 100운 안전장치
         if (amount <= 0) return { amount: 0 };
@@ -39,7 +39,8 @@ export const claimCompensation = onCall(
           claimedAt: admin.firestore.FieldValue.serverTimestamp(),
           claimedByUid: request.auth!.uid,
         });
-        return { amount, note: d.note || '' };
+        // wipeTopics: 잘못 생성된 주제 결과를 클라가 수령 시점에 보관함에서 정리 (예: ['love','marriage'])
+        return { amount, note: d.note || '', wipeTopics: Array.isArray(d.wipeTopics) ? d.wipeTopics : [] };
       });
       if (result.amount > 0) {
         console.info(`[claimCompensation] 지급: ${result.amount}운 device=${deviceId.slice(0, 12)}… uid=${request.auth.uid}`);
