@@ -27,9 +27,9 @@ import { isAppsInToss } from '@/services/payment/iapService';
  * (토스 developer 콘솔 → 프로모션 → 각 항목의 "프로모션 코드")
  */
 export const PROMO = {
-  /** 사주500 출시 프로모션 — 미션 "사주풀이 하기", 3원 지급 */
-  LAUNCH_SAJU: { code: '01KS4XVNTSTJW8VG595GTDYNNE', amount: 3 },
-  /** 사주500 · 7일 출석 완주 리워드 — 7일 연속 출석 완주 시 1회 (100원, 토스 콘솔 고정형) */
+  /** 사주 프로모션 10원 — 미션 "무료 사주 보기" (2026-06-11 승인 · 구 3원 출시프로모 01KS4XVN... 대체) */
+  LAUNCH_SAJU: { code: '01KTRSZ5JQ8ETHH3QQD9S3QSEX', amount: 10 },
+  /** 사주500 · 7일 출석 완주 리워드 — 7일 연속 완주마다 반복 지급 (100원, 토스 콘솔 고정형) */
   ATTEND_7DAY: { code: '01KPQJYBWK3T1XY7XPPBYDA530', amount: 100 },
 } as const;
 
@@ -39,9 +39,10 @@ export type PromoItem = { code: string; amount: number };
  * 프로모션 코드 — 출시 전(테스트) = `TEST_` 접두사 / 출시 후(LIVE) = raw 코드.
  *
  * 2026-05-21 확정 (준기 콘솔 확인): 토스 콘솔에 테스트 프로모션이 `TEST_` 접두사
- *   코드로 별도 등록돼 있음. raw 코드는 LIVE 프로모션(출시 후 실행).
- *   - 테스트: TEST_01KPQJYBWK3T1XY7XPPBYDA530 (7일완주) / TEST_01KS4XVNTSTJW8VG595GTDYNNE (출시 · 2026-05-27 정정)
- *   출시 시 .env 에 VITE_PROMO_LIVE=1 → raw 코드로 전환.
+ *   코드로 별도 등록돼 있음. raw 코드는 LIVE 프로모션.
+ *   - 테스트: TEST_01KPQJYBWK3T1XY7XPPBYDA530 (7일완주) / TEST_01KTRSZ5JQ8ETHH3QQD9S3QSEX (10원 · 2026-06-11 교체)
+ *   LIVE 전환 시 .env 에 VITE_PROMO_LIVE=1 → raw 코드로 전환.
+ *   ⚠️ 10원 프로모는 콘솔에서 "프로모션 시작하기" 눌러야 활성 (현재 진행 전 상태).
  */
 const PROMO_LIVE = import.meta.env.VITE_PROMO_LIVE === '1';
 
