@@ -215,6 +215,32 @@ export function App() {
       }
     }).catch(() => {});
 
+    // 0-a3. CS 보상 자동 수령 (2026-06-11 · 앱인토스 전용) — compensations/{deviceId} 장부.
+    //   일 1회 체크 → 미수령 보상 있으면 claimCompensation callable → paid 적립 + 홈 토스트.
+    import('@/services/payment/iapService').then(async ({ isAppsInToss }) => {
+      if (!isAppsInToss()) return;
+      try {
+        const todayKey = new Date().toISOString().slice(0, 10);
+        if (localStorage.getItem('saju500:comp_check_day') === todayKey) return;
+        localStorage.setItem('saju500:comp_check_day', todayKey);
+        const mod: any = await import('@apps-in-toss/web-framework');
+        const deviceId: string | undefined = mod?.getDeviceId?.();
+        if (!deviceId) return;
+        const { getFunctions, httpsCallable } = await import('firebase/functions');
+        const { app } = await import('@/services/auth/firebase');
+        const { ensureAuth } = await import('@/services/auth/authService');
+        await ensureAuth();
+        const fn = httpsCallable(getFunctions(app, 'us-central1'), 'claimCompensation');
+        const r: any = await fn({ deviceId });
+        const amount = Number(r?.data?.amount) || 0;
+        if (amount > 0) {
+          const { addPaidBalance } = await import('@/services/storage/localStore');
+          addPaidBalance(amount, 0);
+          try { localStorage.setItem('saju500:comp_notice', String(amount)); } catch { /* noop */ }
+        }
+      } catch { /* noop — 다음 날 재시도 */ }
+    }).catch(() => {});
+
     // 0-b. 2026-05-28 PM — 본인 프로필 중복 cleanup (1회 마이그레이션).
     //   기존: 새 사주 '본인' 추가 시 silent 로 myProfile 교체 → 본인 N명 누적.
     //   해결: 활성 myProfile 만 '본인' 유지, 나머지는 '가족' 자동 강등.

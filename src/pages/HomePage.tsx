@@ -92,6 +92,11 @@ export function HomePage() {
         localStorage.removeItem('saju500:refund_notice');
         refundToast.show(`이전에 생성 중 앱이 닫혀 결과를 받지 못한 ${n}운을 돌려드렸어요`, 'success');
       }
+      const comp = localStorage.getItem('saju500:comp_notice');
+      if (comp) {
+        localStorage.removeItem('saju500:comp_notice');
+        refundToast.show(`고객센터 보상 ${comp}운이 적립됐어요. 불편을 드려 죄송합니다`, 'success');
+      }
     } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

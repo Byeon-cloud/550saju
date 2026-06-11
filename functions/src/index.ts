@@ -2133,6 +2133,9 @@ export { onInviteReceived } from './invite/onInviteReceived';
  */
 export { deleteAccount } from './auth/deleteAccount';
 
+// CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
+export { claimCompensation } from './admin/claimCompensation';
+
 /* ─── LIVE BEST 실시간 집계 (2026-06-02 · D3 정식 구현) ─── */
 export { recordTopicView, aggregateTopicTop5 } from './livebest/topicViews';
 
