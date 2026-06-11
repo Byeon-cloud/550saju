@@ -46,6 +46,43 @@ function buildPartnerPillarsBlock(p: { birthYear: number; birthMonth: number; bi
 `;
 }
 
+/**
+ * 두 사람 객관 관계 확정 계산 (2026-06-12 모순 방지) — 합·충·원진은 간지의 결정론적 사실.
+ * A가 B를 보든 B가 A를 보든 동일 판정이 나오도록 서버가 계산해 주입 (AI는 해석만).
+ */
+function buildPairRelationsBlock(
+  myPillars: Array<{ 천간?: string; 지지?: string; available?: boolean }>,
+  pp: { year: string; month: string; day: string; ilgan: string },
+): string {
+  const GANHAP: Record<string, string> = {};
+  Object.assign(GANHAP, { '甲己': '갑기합(토)', '乙庚': '을경합(금)', '丙辛': '병신합(수)', '丁壬': '정임합(목)', '戊癸': '무계합(화)' });
+  const JIHAP: Record<string, string> = { '子丑': '자축합', '寅亥': '인해합', '卯戌': '묘술합', '辰酉': '진유합', '巳申': '사신합', '午未': '오미합' };
+  const CHUNG: Record<string, string> = { '子午': '자오충', '丑未': '축미충', '寅申': '인신충', '卯酉': '묘유충', '辰戌': '진술충', '巳亥': '사해충' };
+  const WONJIN: Record<string, string> = { '子未': '자미원진', '丑午': '축오원진', '寅酉': '인유원진', '卯申': '묘신원진', '辰亥': '진해원진', '巳戌': '사술원진' };
+  const pair = (a?: string, b?: string, t?: Record<string, string>) =>
+    (a && b && t) ? (t[a + b] || t[b + a] || null) : null;
+  const lines: string[] = [];
+  const myIlgan = myPillars[2]?.천간;
+  const g = pair(myIlgan, pp.ilgan, GANHAP);
+  lines.push('- 일간끼리: ' + (g ? g + ' (천간합)' : (myIlgan || '?') + ' vs ' + pp.ilgan + ' — 합 없음'));
+  const spots: Array<[string, string | undefined, string]> = [
+    ['년지', myPillars[0]?.지지, pp.year.charAt(1)],
+    ['월지', myPillars[1]?.지지, pp.month.charAt(1)],
+    ['일지', myPillars[2]?.지지, pp.day.charAt(1)],
+  ];
+  for (const [label, mine, theirs] of spots) {
+    const found = pair(mine, theirs, JIHAP) || pair(mine, theirs, CHUNG) || pair(mine, theirs, WONJIN);
+    lines.push('- ' + label + '끼리: ' + (mine || '?') + ' vs ' + theirs + ' — ' + (found || '합·충·원진 없음'));
+  }
+  return [
+    '',
+    '🔒 두 사람 객관 관계 — 서버 확정 판정 (변경·추가·생략 금지. 합/충/원진 표기는 아래만 사용):',
+    ...lines,
+    '→ 누가 기준이든 위 판정은 동일하다. 점수·해석은 위 사실에 근거하되, 위에 없는 합·충·원진을 만들어내면 오답.',
+    '',
+  ].join('\n');
+}
+
 interface TopicConfig {
   label: string;
   sections: string[];
@@ -1001,7 +1038,7 @@ function buildPrompt(
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}${breakupInfo}
 
-${buildPartnerPillarsBlock(partnerInfo)}
+${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPillars(partnerInfo); return _pp ? buildPairRelationsBlock(d.pillars || [], _pp) : ''; })()}
 → 위 확정 간지로 두 사람의 사주를 교차 분석해주세요. (상대방 사주를 다시 산출하지 마세요)
 → 상대방 이름을 자연스럽게 포함시키세요.
 → partnerProfile.pillarComparison에 나의 년주/월주/일주와 상대방의 년주/월주/일주(위 확정값)를 채우고, interactions에 합/충/형/해/상생/상극 관계를 표시하세요.${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '\n→ 상대방 시주(위 확정값)까지 관계 분석하되, pillarComparison에는 년/월/일 3주만 표시.' : ''}
@@ -1019,7 +1056,7 @@ ${buildPartnerPillarsBlock(partnerInfo)}
 이름: ${partnerInfo.name || '미상'}
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}
-${buildPartnerPillarsBlock(partnerInfo)}
+${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPillars(partnerInfo); return _pp ? buildPairRelationsBlock(d.pillars || [], _pp) : ''; })()}
 → 이 사람은 현재 교제 중입니다. 위 확정 간지로 두 사람의 결혼 궁합을 교차 분석하세요. (상대방 사주를 다시 추론하지 마세요)
 → "사주로 본 배우자상"은 이미 상대방이 있으므로, spouseProfile에 실제 상대방 특성을 반영하세요.
 → partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, marriageChemistry.
@@ -1057,7 +1094,7 @@ ${buildPartnerPillarsBlock(partnerInfo)}
 이름: ${partnerInfo.name || '미상'}
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}
-${buildPartnerPillarsBlock(partnerInfo)}
+${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPillars(partnerInfo); return _pp ? buildPairRelationsBlock(d.pillars || [], _pp) : ''; })()}
 → 위 확정 간지로 두 사람의 연애 궁합을 교차 분석하세요. (상대방 사주를 다시 추론하지 마세요)
 → partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, loveChemistry.
 → 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 연애 궁합은..."
