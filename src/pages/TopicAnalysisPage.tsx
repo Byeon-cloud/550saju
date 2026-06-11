@@ -402,7 +402,7 @@ function StatTile({ label, value, color, tone = 'default', big = false }:
   );
 }
 
-function LoveViz({ data, color }: { data: any; color: string }) {
+function LoveViz({ data, color, myName, partnerName }: { data: any; color: string; myName?: string; partnerName?: string }) {
   if (!data) return null;
   const it = data.idealType;
   const fields = it ? [
@@ -646,9 +646,13 @@ function LoveViz({ data, color }: { data: any; color: string }) {
                       })}
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-2 px-1" style={{ borderTop: '1px dashed rgba(0,0,0,0.08)' }}>
-                      <span className="text-[11px] text-text-hint font-semibold">← 나</span>
-                      <span className="text-[11px] text-text-hint font-semibold">상대 (추론) →</span>
+                      <span className="text-[11px] font-bold" style={{ color }}>← {myName ? `${myName} 님 (나)` : '나'}</span>
+                      <span className="text-[11px] text-text-hint font-semibold">{partnerName ? `${partnerName} 님 (상대)` : '상대'} →</span>
                     </div>
+                    {/* 2026-06-12 신뢰 카피 — "양방향 동일 판정" CS 혼란 예방 (합·충은 만세력 객관 계산값) */}
+                    <p className="text-[11px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                      두 분의 합·충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
+                    </p>
                   </div>
                 );
               })()}
@@ -1586,7 +1590,7 @@ function CareerViz({ data, color }: { data: any; color: string }) {
   );
 }
 
-function MarriageViz({ data, color }: { data: any; color: string }) {
+function MarriageViz({ data, color, myName, partnerName }: { data: any; color: string; myName?: string; partnerName?: string }) {
   if (!data) return null;
   const sp = data.spouseProfile;
   const tm = data.timing;
@@ -1735,9 +1739,13 @@ function MarriageViz({ data, color }: { data: any; color: string }) {
                       })}
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-2 px-1" style={{ borderTop: '1px dashed rgba(0,0,0,0.08)' }}>
-                      <span className="text-[11px] text-text-hint font-semibold">← 나</span>
-                      <span className="text-[11px] text-text-hint font-semibold">상대 (추론) →</span>
+                      <span className="text-[11px] font-bold" style={{ color }}>← {myName ? `${myName} 님 (나)` : '나'}</span>
+                      <span className="text-[11px] text-text-hint font-semibold">{partnerName ? `${partnerName} 님 (상대)` : '상대'} →</span>
                     </div>
+                    {/* 2026-06-12 신뢰 카피 — "양방향 동일 판정" CS 혼란 예방 (합·충은 만세력 객관 계산값) */}
+                    <p className="text-[11px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                      두 분의 합·충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
+                    </p>
                   </div>
                 );
               })()}
@@ -1938,7 +1946,7 @@ function HealthViz({ data, color }: { data: any; color: string }) {
   );
 }
 
-function ReunionViz({ data, color }: { data: any; color: string }) {
+function ReunionViz({ data, color, myName, partnerName }: { data: any; color: string; myName?: string; partnerName?: string }) {
   if (!data) return null;
   const prob = data.reunionProb ?? 50;
   const verdictColor = data.verdict === '재회 추천' ? '#2D8A4E' : data.verdict === '새 인연 추천' ? '#1565E0' : '#E65100';
@@ -2044,7 +2052,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold mb-1" style={{ color: ohengText[myIlganOheng] || color }}>
-                        나의 결 {myIlganOheng && <span className="opacity-70">· {myIlganOheng} 기운</span>}
+                        {myName ? `${myName} 님의 결` : '나의 결'} {myIlganOheng && <span className="opacity-70">· {myIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                         {pp.loveStyle || '내 사주의 연애 스타일을 분석 중'}
@@ -2069,7 +2077,7 @@ function ReunionViz({ data, color }: { data: any; color: string }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold mb-1" style={{ color: ohengText[ptIlganOheng] || color }}>
-                        상대의 결 {ptIlganOheng && <span className="opacity-70">· {ptIlganOheng} 기운</span>}
+                        {partnerName ? `${partnerName} 님의 결` : '상대의 결'} {ptIlganOheng && <span className="opacity-70">· {ptIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                         {pp.personality || '상대의 사주를 분석 중'}
@@ -2857,17 +2865,17 @@ function MovingViz({ data, color }: { data: any; color: string }) {
 }
 
 /** 주제별 시각화 라우터 */
-function TopicViz({ topicId, data, color, sajuData, birthYear }: { topicId: string; data: any; color: string; sajuData?: any; birthYear?: number }) {
+function TopicViz({ topicId, data, color, sajuData, birthYear, myName, partnerName }: { topicId: string; data: any; color: string; sajuData?: any; birthYear?: number; myName?: string; partnerName?: string }) {
   if (!data) return null;
   switch (topicId) {
-    case 'love': return <LoveViz data={data} color={color} />;
+    case 'love': return <LoveViz data={data} color={color} myName={myName} partnerName={partnerName} />;
     // Phase 2 Stage 2B: WealthViz 에 sajuData + birthYear 추가 — daewoon-card / relflow 사용
     case 'wealth': return <WealthViz data={data} color={color} sajuData={sajuData} birthYear={birthYear} />;
     case 'career': return <CareerViz data={data} color={color} />;
-    case 'marriage': return <MarriageViz data={data} color={color} />;
+    case 'marriage': return <MarriageViz data={data} color={color} myName={myName} partnerName={partnerName} />;
     case 'business': return <BusinessViz data={data} color={color} />;
     case 'health': return <HealthViz data={data} color={color} />;
-    case 'reunion': return <ReunionViz data={data} color={color} />;
+    case 'reunion': return <ReunionViz data={data} color={color} myName={myName} partnerName={partnerName} />;
     case 'study': return <StudyViz data={data} color={color} />;
     case 'social': return <SocialViz data={data} color={color} />;
     case 'move':
@@ -3454,14 +3462,17 @@ export function TopicAnalysisPage() {
         console.warn('[topic] SSE 실패 → callable 폴백:', streamErr?.message);
         res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner, finalExtra);
       }
-      setResult(res.content);
+      // 2026-06-12 UX — 상대방 이름을 결과에 영속: 결과 화면 '나 vs 상대' 라벨에 실명 표기
+      //   (캐시·보관함 재진입에도 유지 — 누구 기준 리포트인지 한눈에)
+      const contentFinal = partner?.name ? { ...res.content, partnerName: partner.name } : res.content;
+      setResult(contentFinal);
 
       // localStorage 캐시 (재회운/결혼운/연애운은 상대방 이름 포함)
       const hasPartnerName = (topicId === 'reunion' || topicId === 'marriage' || topicId === 'love') && partnerInfo.name;
       const cacheKey = hasPartnerName
         ? `topic_${topicId}_${selected.id}_${partnerInfo.name}`
         : `topic_${topicId}_${selected.id}`;
-      localStorage.setItem(cacheKey, JSON.stringify(res.content));
+      localStorage.setItem(cacheKey, JSON.stringify(contentFinal));
 
       // 보관함 저장
       saveReport({
@@ -3472,7 +3483,7 @@ export function TopicAnalysisPage() {
         type: 'paid',
         contentType: 'topic',
         createdAt: new Date().toISOString(),
-        aiResult: { topicId, ...res.content },
+        aiResult: { topicId, ...contentFinal },
       });
 
       clearPendingSpend(pendingId); // 결과 저장 완료 — pending 해제
@@ -4355,7 +4366,7 @@ export function TopicAnalysisPage() {
               love: '인연을 끌어당기는 글자와 결혼 자리를 확인하고 있어요.|당신의 연애 패턴을 사주에서 읽고 있어요.|인연의 시기를 월 단위로 계산하고 있어요.|사주적으로 궁합이 맞는 이성을 찾고 있어요.',
               wealth: '재성 구조로 돈 버는 스타일을 분석하고 있어요.|투자 적기를 대운 흐름으로 계산하고 있어요.|새는 돈 패턴을 사주에서 찾고 있어요.|돈을 만드는 사주 구조를 확인하고 있어요.',
               career: '책임감과 표현력의 균형을 보고 있어요.|이직 최적 타이밍을 계산하고 있어요.|면접 유리 요일과 시간대를 확인하고 있어요.|딱 맞는 직종 TOP 5를 선정하고 있어요.',
-              marriage: '배우자궁의 구조를 깊이 분석하고 있어요.|결혼 적기를 대운 흐름으로 계산하고 있어요.|사주로 배우자 성향을 추론하고 있어요.|결혼 후 생활 패턴까지 예측하고 있어요.',
+              marriage: '배우자궁의 구조를 깊이 분석하고 있어요.|결혼 적기를 대운 흐름으로 계산하고 있어요.|만세력으로 배우자 성향을 읽고 있어요.|결혼 후 생활 패턴까지 예측하고 있어요.',
               business: '사업 적성과 맞는 업종을 분석하고 있어요.|창업 최적 타이밍을 계산하고 있어요.|동업 궁합 구조를 확인하고 있어요.|사업가 기질의 사주 구조를 읽고 있어요.',
               health: '오행 균형으로 체질을 정밀 분석하고 있어요.|취약 장기와 주의 시기를 확인하고 있어요.|사주에서 건강 리스크를 찾고 있어요.|맞춤 건강 보완법을 만들고 있어요.',
               reunion: '두 사람의 사주를 교차 분석하고 있어요.|상대방의 숨은 마음까지 읽고 있어요.|궁합 구조와 신살을 정밀 분석 중이에요.|재회 전략까지 세우고 있어요.',
@@ -4368,7 +4379,7 @@ export function TopicAnalysisPage() {
             };
             const reunionSteps = [
               '사주 원국을 깊이 분석하고 있어요',
-              '상대방의 사주 성향을 추론하고 있어요',
+              '상대방의 만세력을 함께 살피고 있어요',
               '두 사람의 궁합 구조를 교차 분석 중이에요',
               '전통 신살을 하나하나 확인하고 있어요',
               '월별 재회 에너지를 계산하고 있어요',
@@ -4619,7 +4630,7 @@ export function TopicAnalysisPage() {
               <StrengthsCautions strengths={result.topicData?.strengths} cautions={result.topicData?.cautions} color={topic.color} />
 
               {/* ── 주제별 시각화 카드 ── */}
-              <TopicViz topicId={topicId || ''} data={result.topicData} color={topic.color} sajuData={selected?.sajuData} birthYear={selected?.input?.birthYear} />
+              <TopicViz topicId={topicId || ''} data={result.topicData} color={topic.color} sajuData={selected?.sajuData} birthYear={selected?.input?.birthYear} myName={selected?.name} partnerName={(result as any)?.partnerName || partnerInfo.name || undefined} />
 
               {/* 2026-05-28 — 성별 인지 heading swap: 남성→'처가', 여성→'시댁'. user 피드백: "남자면 시댁 관계 X" */}
               {(() => { void 0; return null; })()}
