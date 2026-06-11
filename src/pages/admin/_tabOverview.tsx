@@ -70,6 +70,7 @@ export function TabOverview({ d }: { d: AdminData }) {
           <Kpi label="신규 결제유저" value={`${fmtNum(newPayers)}명`} delta={deltaPct(cur.payingUsers, prev.payingUsers)} sub={`결제유저 ${cur.payingUsers}명 중 전기간 미결제 (델타=결제유저 수 비교)`} />
           <Kpi label="ARPPU" value={fmtWon(arppu)} delta={deltaPct(arppu, arppuPrev)} sub="기간매출 ÷ 결제유저" />
           <Kpi label="콘텐츠 생성" value={`${fmtNum(contentGen)}건`} delta={deltaPct(contentGen, prev.contentResultTotal)} sub="content_result 기준" />
+          <Kpi label="이탈률" value={cur.bounceRate == null ? '-' : `${cur.bounceRate}%`} delta={cur.bounceRate != null && prev.bounceRate != null ? deltaPct(cur.bounceRate, prev.bounceRate) : undefined} sub="페이지 1개만 보고 떠난 세션 비율" />
         </div>
       </Section>
 

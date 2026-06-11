@@ -21,6 +21,9 @@ export function trackPageView(pagePath: string) {
   // 2026-05-29 — 경로에서 콘텐츠 진입/결과 자동 파생 (어드민 퍼널·인기 — 페이지 수정 0).
   const t = contentTypeFromPath(pagePath);
   if (t) trackEvent('content_open', { type: t });
+  // 2026-06-12 — 주제별 진입 (어떤 운을 클릭했는지: /topic/love → topic_open {topic:'love'})
+  const tm = pagePath.match(/^\/topic\/([a-z]+)/);
+  if (tm) trackEvent('topic_open', { topic: tm[1] });
   if (/^\/result\b/.test(pagePath)) trackEvent('content_result', { type: 'premium' });
   if (/^\/charge\b/.test(pagePath)) trackEvent('charge_open', {});
 }
@@ -127,7 +130,8 @@ const FIRESTORE_TRACKED = new Set<string>([
   'page_view',
   'content_open',       // {type: daily|dream|topic|premium|chat}
   'content_result',     // {type} — 결과 도달 (퍼널)
-  'topic_select',       // {topic}
+  'topic_select',       // {topic} — 결제 확정 시
+  'topic_open',         // {topic} — 주제 페이지 진입 (2026-06-12)
   'charge_open',        // 충전 페이지 진입
   'charge_complete',    // {amount, package}
   'share_click',        // {type}
@@ -179,6 +183,18 @@ function getUtm(): Record<string, string> | null {
 // 모듈 init 시 1회 캡처 (SSR 안전 가드) + 전역 CTA 클릭 수집 시작
 if (typeof window !== 'undefined') { captureUtm(); initCtaTracking(); }
 
+/** 2026-06-12 P0 — 부팅 이벤트가 익명 로그인 완료 전에 발사되면 rules(auth 필수)에 막혀
+ *  조용히 버려지던 레이스 fix. 첫 auth 상태 확정까지 최대 6초 대기 후 기록. */
+function waitForAuth(auth: { currentUser: unknown; onAuthStateChanged: (cb: (u: unknown) => void) => () => void }): Promise<void> {
+  if (auth.currentUser) return Promise.resolve();
+  return new Promise((resolve) => {
+    const to = setTimeout(() => { try { unsub(); } catch { /* noop */ } resolve(); }, 6000);
+    const unsub = auth.onAuthStateChanged((u) => {
+      if (u) { clearTimeout(to); try { unsub(); } catch { /* noop */ } resolve(); }
+    });
+  });
+}
+
 function logToFirestore(eventName: string, params?: Record<string, string | number>) {
   if (!FIRESTORE_TRACKED.has(eventName)) return;
   // 동적 import — analytics 가 firebase 를 직접 끌고 오지 않게 (번들 분리 + 실패 무해)
@@ -186,6 +202,7 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
     .then(async ({ db }) => {
       const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
       const { getAuth } = await import('firebase/auth');
+      await waitForAuth(getAuth() as any); // 익명 로그인 레이스 해소 (rules: auth 필수)
       const uid = getAuth().currentUser?.uid ?? null;
       const utm = getUtm();
       const demo = getDemo();
@@ -201,8 +218,13 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
         // 날짜 버킷 (집계 쿼리 효율) — KST 기준 YYYY-MM-DD
         day: kstDay(),
       });
+      const w = window as unknown as { __saju500EvOk?: boolean };
+      if (!w.__saju500EvOk) { w.__saju500EvOk = true; try { console.info('[analytics] first event written:', eventName); } catch { /* noop */ } }
     })
-    .catch(() => { /* fire-and-forget */ });
+    .catch((e) => {
+      // fire-and-forget 이되, 드롭 원인은 콘솔로 노출 (2026-06-12 — 조용한 유실 디버깅)
+      try { console.warn('[analytics] drop:', eventName, (e as any)?.code || (e as any)?.message || e); } catch { /* noop */ }
+    });
 }
 
 function kstDay(): string {

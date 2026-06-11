@@ -54,13 +54,19 @@ export function TabContent({ d }: { d: AdminData }) {
     { key: 'delta', label: '진입 증감', numeric: true, render: (v) => fmtPct(v) },
   ];
 
-  // topic_select 인기 주제
-  const topicBars = useMemo(() =>
-    Object.entries(cur.topicSelect)
-      .map(([topic, n]) => ({ label: topic, n, prevN: prev.topicSelect[topic] ?? 0 }))
-      .sort((a, b) => b.n - a.n)
-      .slice(0, 12),
-  [cur.topicSelect, prev.topicSelect]);
+  // 인기 주제 — 진입(topic_open) 기준 정렬 + 결제확정(topic_select) 병기 (2026-06-12)
+  const topicBars = useMemo(() => {
+    const keys = new Set([...Object.keys(cur.topicOpen), ...Object.keys(cur.topicSelect)]);
+    return Array.from(keys)
+      .map((topic) => ({
+        label: topic,
+        n: cur.topicOpen[topic] ?? 0,
+        sel: cur.topicSelect[topic] ?? 0,
+        prevN: prev.topicOpen[topic] ?? 0,
+      }))
+      .sort((a, b) => (b.n + b.sel) - (a.n + a.sel))
+      .slice(0, 12);
+  }, [cur.topicOpen, cur.topicSelect, prev.topicOpen, prev.topicSelect]);
 
   // 생성 누적 (reports)
   const reportChips = useMemo(() =>
@@ -85,14 +91,14 @@ export function TabContent({ d }: { d: AdminData }) {
         <DataTable columns={funnelCols} rows={funnelRows} initialSortKey="open" />
       </Section>
 
-      <Section title="인기 주제 (topic_select)" caption="· 주제분석 진입 시 선택 이벤트 — 어떤 운을 가장 궁금해하는지">
+      <Section title="인기 주제 (진입 → 결제확정)" caption="· 막대 = 주제 페이지 진입(topic_open) · 툴팁의 '확정' = 운 차감 확정(topic_select) — 어떤 운을 보고, 어떤 운에 돈을 쓰는지">
         {topicBars.length === 0 ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
             <ResponsiveContainer width="100%" height={Math.max(120, topicBars.length * 36)}>
               <BarChart data={topicBars} layout="vertical" margin={{ left: 8, right: 16 }}>
                 <XAxis type="number" hide />
                 <YAxis type="category" dataKey="label" width={80} tick={{ fontSize: 12, fill: C.ink }} />
-                <Tooltip formatter={(v: any, _n: any, p: any) => [`${fmtNum(Number(v))}회 (전기간 ${fmtNum(p?.payload?.prevN ?? 0)})`, '선택']} />
+                <Tooltip formatter={(v: any, _n: any, p: any) => [`진입 ${fmtNum(Number(v))}회 · 확정 ${fmtNum(p?.payload?.sel ?? 0)}회 (전기간 진입 ${fmtNum(p?.payload?.prevN ?? 0)})`, '주제']} />
                 <Bar dataKey="n" radius={[0, 6, 6, 0]}>
                   {topicBars.map((_, i) => <Cell key={i} fill={CONTENT_COLORS[i % CONTENT_COLORS.length]} />)}
                 </Bar>

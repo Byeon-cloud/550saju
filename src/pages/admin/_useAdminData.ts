@@ -68,6 +68,8 @@ export interface PeriodAgg {
   contentPurchaseTotal: number;
   contentPurchaseUn: number;                       // 운 차감 합계
   topicSelect: Record<string, number>;
+  topicOpen: Record<string, number>;               // 주제 페이지 진입 (2026-06-12)
+  bounceRate: number | null;                       // 이탈률 = 1 pv 세션 / 전체 세션 (2026-06-12)
   // 공유·리워드
   shareClicks: number;
   shareByDay: number[];
@@ -115,7 +117,7 @@ function emptyAgg(days: string[]): PeriodAgg {
     pageViews: 0, visitors: 0, appOpens: 0, dauByDay: days.map(() => 0), dauAvg: 0,
     contentOpen: {}, contentResult: {}, contentPurchase: {},
     contentOpenTotal: 0, contentResultTotal: 0, contentPurchaseTotal: 0, contentPurchaseUn: 0,
-    topicSelect: {},
+    topicSelect: {}, topicOpen: {}, bounceRate: null,
     shareClicks: 0, shareByDay: days.map(() => 0),
     rewardByKind: {}, rewardKindByDay: {}, rewardTotal: 0,
     adStats: { impression: 0, click: 0, nofill: 0, fail: 0 },
@@ -161,6 +163,7 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
   switch (e.name) {
     case 'page_view': {
       agg.pageViews += 1;
+      scratch.pvBySession[e.sid || dauKey] = (scratch.pvBySession[e.sid || dauKey] ?? 0) + 1;
       scratch.visitorSet.add(userKey);
       (scratch.dauSets[dayIdx] ??= new Set()).add(dauKey);
       (scratch.visitDays[userKey] ??= new Set()).add(e.day);
@@ -199,6 +202,11 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
     case 'topic_select': {
       const topic = e.props?.topic as string | undefined;
       if (topic) agg.topicSelect[topic] = (agg.topicSelect[topic] ?? 0) + 1;
+      break;
+    }
+    case 'topic_open': {
+      const topic = e.props?.topic as string | undefined;
+      if (topic) agg.topicOpen[topic] = (agg.topicOpen[topic] ?? 0) + 1;
       break;
     }
     case 'share_click': {
@@ -250,6 +258,7 @@ interface PeriodScratch {
   chargeByUser: Record<string, number>;
   utmVisitSets: Record<string, Set<string>>;
   demoByUser: Record<string, { g?: string; ab?: string }>;  // 2026-06-12 인구통계
+  pvBySession: Record<string, number>;                       // 이탈률용 (sid → pv 수)
 }
 
 /** scratch → 최종 집계 마감 (방문자·DAU·리텐션·재구매·방문빈도·utm visits) */
@@ -299,6 +308,12 @@ function finalizeAgg(agg: PeriodAgg, scratch: PeriodScratch): void {
   Object.entries(scratch.utmVisitSets).forEach(([source, set]) => {
     (agg.utm[source] ??= { visits: 0, contentOpens: 0, charges: 0 }).visits = set.size;
   });
+
+  // 이탈률 (2026-06-12) — 페이지 1개만 보고 떠난 세션 비율
+  const sessions = Object.values(scratch.pvBySession);
+  agg.bounceRate = sessions.length > 0
+    ? Math.round((sessions.filter((n) => n === 1).length / sessions.length) * 100)
+    : null;
 
   // 인구통계 마감 (2026-06-12) — 고유 유저 기준 성별·연령 분포 + 결제 유저 성별
   Object.entries(scratch.demoByUser).forEach(([userKey, demo]) => {
@@ -355,8 +370,8 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
 
         const cur = emptyAgg(curDays);
         const prev = emptyAgg(prevDays);
-        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {} };
-        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {} };
+        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {} };
+        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {} };
         const rawEvents: RawEvent[] = [];
 
         // 1) analytics — 현+전 기간 (최대 60일) 한 번에 fetch
