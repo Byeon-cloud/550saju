@@ -282,9 +282,12 @@ Deno.serve(async (req) => {
         await editMessageText(BOT_TOKEN, chatId, messageId, "이미 처리됐거나 없는 답글이야.");
         return;
       }
-      const THREADS_USER_ID = Deno.env.get("THREADS_USER_ID")!;
-      const { data: tk } = await sb.rpc("get_threads_token");
-      const token = tk || Deno.env.get("THREADS_ACCESS_TOKEN");
+      // 그 댓글이 달린 '계정'의 자격증명으로 게시 (문달/공식 각자)
+      const crAccount = cr.account_id || "moondal";
+      const { data: ca } = await sb.from("accounts")
+        .select("threads_user_id, access_token").eq("id", crAccount).maybeSingle();
+      const THREADS_USER_ID = ca?.threads_user_id || Deno.env.get("THREADS_USER_ID")!;
+      const token = ca?.access_token || Deno.env.get("THREADS_ACCESS_TOKEN");
       try {
         const replyId = await publishPost(
           { userId: THREADS_USER_ID, accessToken: token, text: cr.reply_text, replyToId: commentId },
@@ -293,7 +296,7 @@ Deno.serve(async (req) => {
         await sb.from("comment_replies")
           .update({ status: "posted", thread_post_id: replyId })
           .eq("comment_id", commentId);
-        await editMessageText(BOT_TOKEN, chatId, messageId, "✅ 댓글에 사주 답글 달았어!");
+        await editMessageText(BOT_TOKEN, chatId, messageId, "✅ 댓글에 답글 달았어!");
       } catch (e) {
         await editMessageText(BOT_TOKEN, chatId, messageId, "답글 게시 실패 😢 " + (e instanceof Error ? e.message : ""));
       }
