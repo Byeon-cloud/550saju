@@ -9,3 +9,6 @@ supabase/.branches/
 # node
 node_modules/
 npm-debug.log*
+
+# 임시 스크립트 (키 포함 가능 — 커밋 금지)
+scripts/_tmp_*
