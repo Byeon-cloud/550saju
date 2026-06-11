@@ -70,7 +70,8 @@ export function AdminPage() {
     : '-';
 
   return (
-    <div style={{ minHeight: '100vh', background: C.paper }}>
+    // 앱 셸(max-width 520) 탈출 — 어드민은 데스크톱 풀폭 (2026-06-12 fix: 1080 설정이 셸에 갇혀 무용지물이던 것)
+    <div style={{ minHeight: '100vh', background: C.paper, width: '100vw', position: 'relative', left: '50%', marginLeft: '-50vw' }}>
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 16px 80px' }}>
         {/* ─── 헤더 ─── */}
         <header style={{ marginBottom: 14 }}>

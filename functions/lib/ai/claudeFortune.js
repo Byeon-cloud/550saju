@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDailyFortuneAnalysis = generateDailyFortuneAnalysis;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const aiUsageLog_1 = require("../shared/aiUsageLog");
 const MODEL = 'claude-sonnet-4-6';
 async function generateDailyFortuneAnalysis(apiKey, args) {
     const anthropic = new sdk_1.default({ apiKey });
@@ -17,6 +18,7 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
     // 1차 호출
     const meta1 = { repairUsed: false };
     try {
+        const _t1 = Date.now(); // C7
         const msg = await anthropic.messages.create({
             model: MODEL,
             max_tokens: 5000,
@@ -24,6 +26,8 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
             system,
             messages: [{ role: 'user', content: user }],
         });
+        if (msg.usage)
+            (0, aiUsageLog_1.logAiUsage)({ type: 'daily', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
         const text = msg.content[0].text;
         const result = (0, promptsV3_1.parseJsonResponse)(text, meta1);
         if (meta1.repairUsed)
@@ -34,6 +38,7 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
         console.warn('[claudeFortune] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
         // 2차 호출 — temperature 만 낮춰 sampling 변동성 감소
         const meta2 = { repairUsed: false };
+        const _t2 = Date.now(); // C7
         const msg = await anthropic.messages.create({
             model: MODEL,
             max_tokens: 5000,
@@ -41,6 +46,8 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
             system,
             messages: [{ role: 'user', content: user }],
         });
+        if (msg.usage)
+            (0, aiUsageLog_1.logAiUsage)({ type: 'daily', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
         const text = msg.content[0].text;
         const result = (0, promptsV3_1.parseJsonResponse)(text, meta2);
         console.info('[claudeFortune] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');

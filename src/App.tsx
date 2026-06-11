@@ -122,7 +122,11 @@ function ResultRouteGuard() {
 /** 페이지 이동 시 스크롤 상단 복원 */
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    // 2026-06-12 P0 — trackPageView 호출부가 0건이라 page_view/content_open/content_result 퍼널 전멸이던 fix
+    import('@/services/analytics').then(a => a.trackPageView(pathname)).catch(() => {});
+  }, [pathname]);
   return null;
 }
 

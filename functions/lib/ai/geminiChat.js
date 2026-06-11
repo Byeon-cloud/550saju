@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GUARD_TOKEN = void 0;
 exports.generateChatAnswerAI = generateChatAnswerAI;
 const generative_ai_1 = require("@google/generative-ai");
+const aiUsageLog_1 = require("../shared/aiUsageLog");
 const responseSchema = {
     type: generative_ai_1.SchemaType.OBJECT,
     properties: {
@@ -162,7 +163,11 @@ ${question}
 사용자가 "고마워", "알겠어" 등 만족 표현 시 → keywords는 새 주제 제안으로.
 
 ⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
+    const _t0 = Date.now(); // C7
     const result = await model.generateContent(prompt);
+    const _usage = result.response?.usageMetadata; // C7 — usage 없으면 스킵
+    if (_usage)
+        (0, aiUsageLog_1.logAiUsage)({ type: 'chat', model: 'gemini-2.5-pro', inputTokens: _usage.promptTokenCount ?? 0, outputTokens: _usage.candidatesTokenCount ?? 0, ms: Date.now() - _t0, ok: true });
     const parsed = JSON.parse(result.response.text());
     return {
         answer: parsed.answer || '',

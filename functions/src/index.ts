@@ -1477,13 +1477,19 @@ export const grantPurchase = onCall(
         const userRef = db.collection('users').doc(effectiveUid);
         const userDoc = await tx.get(userRef);
         const data = userDoc.data() || {};
-        tx.update(userRef, {
-          'balance.paid': (data.balance?.paid ?? 0) + paidUn,
-          'balance.bonus': (data.balance?.bonus ?? 0) + (bonusUn || 0),
+        // 2026-06-12 P0 fix — 익명 유저는 users/{uid} 문서가 없어 update()가 NOT_FOUND
+        //   → 결제 19건 전부 needs_reconciliation 으로 빠지던 원인. set(merge)로 문서 없어도 생성.
+        tx.set(userRef, {
+          balance: {
+            paid: (data.balance?.paid ?? 0) + paidUn,
+            bonus: (data.balance?.bonus ?? 0) + (bonusUn || 0),
+          },
           totalCharged: admin.firestore.FieldValue.increment(paidUn),
-        });
+        }, { merge: true });
         tx.update(paymentRef, {
           unChange: totalUn,
+          // 2026-06-12 — IAP 도 매출(KRW) 집계되도록 amount 기록 (paidUn→정가 매핑)
+          amount: ({ 1: 500, 3: 1500, 5: 2500, 10: 5000 } as Record<number, number>)[paidUn] ?? paidUn * 500,
           status: 'confirmed',
           confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

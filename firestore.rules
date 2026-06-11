@@ -23,6 +23,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 어드민 매출 집계 (2026-06-12) — collectionGroup('payments') 쿼리는 별도 경로 룰 필요
+    //   (기존 users/{uid}/payments 룰만으론 collection-group 쿼리 권한 거부 → 매출 ₩0 원인)
+    match /{path=**}/payments/{payid} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+
     // CS 보상 장부 (2026-06-11) — 접근은 claimCompensation callable(admin SDK)로만. 클라 직접 접근 차단.
     match /compensations/{deviceId} {
       allow read, write: if false;

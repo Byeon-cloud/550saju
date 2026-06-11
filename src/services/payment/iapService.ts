@@ -79,6 +79,8 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
               try {
                 // 1. 로컬 즉시 적립 (UX 빠르게)
                 addPaidBalance(product.paidUn, product.bonusUn);
+                // 측정 — IAP 충전 완료 (2026-06-12: 웹 PG만 찍히고 IAP 누락이던 갭 fix)
+                import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: pkg.price, package: resolvedId, pg: 'iap' })).catch(() => {});
 
                 // 2. 서버에 비동기 기록 (실패해도 return true — restorePendingPurchases 가 복구)
                 // 2026-05-28 — silent fail 보강: 실패 시 console.error + pending orderId 로컬 큐 적재

@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.loginWithToss = void 0;
+exports.reconcileOnce = exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.loginWithToss = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -1377,13 +1377,19 @@ exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256Mi
             const userRef = db.collection('users').doc(effectiveUid);
             const userDoc = await tx.get(userRef);
             const data = userDoc.data() || {};
-            tx.update(userRef, {
-                'balance.paid': (data.balance?.paid ?? 0) + paidUn,
-                'balance.bonus': (data.balance?.bonus ?? 0) + (bonusUn || 0),
+            // 2026-06-12 P0 fix — 익명 유저는 users/{uid} 문서가 없어 update()가 NOT_FOUND
+            //   → 결제 19건 전부 needs_reconciliation 으로 빠지던 원인. set(merge)로 문서 없어도 생성.
+            tx.set(userRef, {
+                balance: {
+                    paid: (data.balance?.paid ?? 0) + paidUn,
+                    bonus: (data.balance?.bonus ?? 0) + (bonusUn || 0),
+                },
                 totalCharged: admin.firestore.FieldValue.increment(paidUn),
-            });
+            }, { merge: true });
             tx.update(paymentRef, {
                 unChange: totalUn,
+                // 2026-06-12 — IAP 도 매출(KRW) 집계되도록 amount 기록 (paidUn→정가 매핑)
+                amount: { 1: 500, 3: 1500, 5: 2500, 10: 5000 }[paidUn] ?? paidUn * 500,
                 status: 'confirmed',
                 confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
@@ -1976,6 +1982,9 @@ Object.defineProperty(exports, "onInviteReceived", { enumerable: true, get: func
  */
 var deleteAccount_1 = require("./auth/deleteAccount");
 Object.defineProperty(exports, "deleteAccount", { enumerable: true, get: function () { return deleteAccount_1.deleteAccount; } });
+// CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
+var claimCompensation_1 = require("./admin/claimCompensation");
+Object.defineProperty(exports, "claimCompensation", { enumerable: true, get: function () { return claimCompensation_1.claimCompensation; } });
 /* ─── LIVE BEST 실시간 집계 (2026-06-02 · D3 정식 구현) ─── */
 var topicViews_1 = require("./livebest/topicViews");
 Object.defineProperty(exports, "recordTopicView", { enumerable: true, get: function () { return topicViews_1.recordTopicView; } });
@@ -2029,4 +2038,6 @@ exports.generatePremiumPdf = (0, https_1.onCall)({
         throw new https_1.HttpsError('internal', `PDF 생성 실패: ${err?.message || 'unknown'}`);
     }
 });
+var reconcileOnce_1 = require("./admin/reconcileOnce");
+Object.defineProperty(exports, "reconcileOnce", { enumerable: true, get: function () { return reconcileOnce_1.reconcileOnce; } });
 //# sourceMappingURL=index.js.map

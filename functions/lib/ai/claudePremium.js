@@ -28,6 +28,7 @@ exports.generateGroup = generateGroup;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const parseJson_1 = require("./parseJson");
 const promptsV3_1 = require("./promptsV3");
+const aiUsageLog_1 = require("../shared/aiUsageLog");
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
 const GROUP_FOCUS = {
     A: `## Group A — 핵심 8자 해석 (다른 필드 출력 금지)
@@ -205,6 +206,7 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
         B: 10000,
         C: 7000,
     };
+    const _t0 = Date.now(); // C7 — 토큰 로깅용 (생성 로직 무관)
     const msg = await anthropic.messages.create({
         model,
         max_tokens: MAX_TOKENS_BY_GROUP[group],
@@ -220,6 +222,8 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
         ],
         messages: [{ role: 'user', content: userSituation }],
     });
+    if (msg.usage)
+        (0, aiUsageLog_1.logAiUsage)({ type: 'premium', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t0, ok: true }); // C7 best-effort
     const text = msg.content[0].text || '';
     // T2 강건성 — JSON 파싱 실패 시 incomplete JSON 복구 시도
     try {
@@ -464,6 +468,8 @@ function buildSituationBlock(situation, groupFocus) {
  *  · 변경 시 cache 새로 만들어짐 (5분 TTL)
  * ═══════════════════════════════════════════════════════════════ */
 const STATIC_SYSTEM_PROMPT = `당신은 사주500 명리학 해석가입니다.
+
+## 만세력 절대 룰: 모든 간지·일간·원국은 프롬프트에 주어진 값만 사용. 생년월일로부터 직접 산출·추론 금지 (만세력 계산 능력 없음). 주어지지 않은 간지는 생략/null.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전 + 김만태 박사 논문 + 박청화 『춘하추동 신사주학』에 정통합니다.
 
 ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}

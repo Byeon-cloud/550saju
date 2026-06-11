@@ -14,7 +14,75 @@ exports.TOPIC_CONFIGS = void 0;
 exports.buildTopicCall = buildTopicCall;
 exports.generateTopicAnalysisAI = generateTopicAnalysisAI;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const lunar_javascript_1 = require("lunar-javascript");
 const promptsV3_1 = require("./promptsV3");
+const aiUsageLog_1 = require("../shared/aiUsageLog");
+/**
+ * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
+ * 기존: 프롬프트가 AI에게 상대방 사주를 "추론"하라고 지시 → LLM은 만세력 계산 불가 → 간지 환각
+ *   (실사례: 1995-06-06 戊辰일주가 壬午로 출력). 본인 사주는 calculator 주입이라 정확했음.
+ * 수정: lunar-javascript 로 서버에서 확정 계산 → 프롬프트에 "재추론 금지" 확정값으로 주입.
+ * 시간 보정: 클라 시간 선택지가 시진 대표시(밴드 중앙, 예: 오시=12시)라 -30분 KR 보정을
+ *   적용해도 같은 시진 → 간지 동일. 일주는 시간 무관.
+ */
+function computePartnerPillars(p) {
+    try {
+        const hasHour = p.birthHour != null && p.birthHour >= 0;
+        const s = hasHour
+            ? lunar_javascript_1.Solar.fromYmdHms(p.birthYear, p.birthMonth, p.birthDay, p.birthHour, 0, 0)
+            : lunar_javascript_1.Solar.fromYmd(p.birthYear, p.birthMonth, p.birthDay);
+        const ec = s.getLunar().getEightChar();
+        const day = ec.getDay();
+        return { year: ec.getYear(), month: ec.getMonth(), day, time: hasHour ? ec.getTime() : null, ilgan: day.charAt(0) };
+    }
+    catch {
+        return null;
+    }
+}
+/** 프롬프트 주입용 확정 간지 블록 — 상대방 포함 주제(연애/결혼/재회) 공통 */
+function buildPartnerPillarsBlock(p) {
+    const pp = computePartnerPillars(p);
+    if (!pp)
+        return '';
+    return `
+🔒 상대방 만세력 — 서버(lunar) 계산 확정값. 절대 재산출·추론·변경 금지:
+- 년주: ${pp.year} / 월주: ${pp.month} / 일주: ${pp.day} (일간 ${pp.ilgan})${pp.time ? ` / 시주: ${pp.time}` : ' / 시주: 미상 (생략 — 추론 금지)'}
+→ partnerCompat·partnerProfile·pillarComparison 등 상대방의 모든 간지·일간·일주·오행 표기는 위 값을 글자 그대로 사용할 것.
+→ 위 값과 다른 간지를 출력하면 명백한 오답이다. 상대방 사주를 직접 계산하거나 추정하지 마라.
+`;
+}
+/**
+ * 두 사람 객관 관계 확정 계산 (2026-06-12 모순 방지) — 합·충·원진은 간지의 결정론적 사실.
+ * A가 B를 보든 B가 A를 보든 동일 판정이 나오도록 서버가 계산해 주입 (AI는 해석만).
+ */
+function buildPairRelationsBlock(myPillars, pp) {
+    const GANHAP = {};
+    Object.assign(GANHAP, { '甲己': '갑기합(토)', '乙庚': '을경합(금)', '丙辛': '병신합(수)', '丁壬': '정임합(목)', '戊癸': '무계합(화)' });
+    const JIHAP = { '子丑': '자축합', '寅亥': '인해합', '卯戌': '묘술합', '辰酉': '진유합', '巳申': '사신합', '午未': '오미합' };
+    const CHUNG = { '子午': '자오충', '丑未': '축미충', '寅申': '인신충', '卯酉': '묘유충', '辰戌': '진술충', '巳亥': '사해충' };
+    const WONJIN = { '子未': '자미원진', '丑午': '축오원진', '寅酉': '인유원진', '卯申': '묘신원진', '辰亥': '진해원진', '巳戌': '사술원진' };
+    const pair = (a, b, t) => (a && b && t) ? (t[a + b] || t[b + a] || null) : null;
+    const lines = [];
+    const myIlgan = myPillars[2]?.천간;
+    const g = pair(myIlgan, pp.ilgan, GANHAP);
+    lines.push('- 일간끼리: ' + (g ? g + ' (천간합)' : (myIlgan || '?') + ' vs ' + pp.ilgan + ' — 합 없음'));
+    const spots = [
+        ['년지', myPillars[0]?.지지, pp.year.charAt(1)],
+        ['월지', myPillars[1]?.지지, pp.month.charAt(1)],
+        ['일지', myPillars[2]?.지지, pp.day.charAt(1)],
+    ];
+    for (const [label, mine, theirs] of spots) {
+        const found = pair(mine, theirs, JIHAP) || pair(mine, theirs, CHUNG) || pair(mine, theirs, WONJIN);
+        lines.push('- ' + label + '끼리: ' + (mine || '?') + ' vs ' + theirs + ' — ' + (found || '합·충·원진 없음'));
+    }
+    return [
+        '',
+        '🔒 두 사람 객관 관계 — 서버 확정 판정 (변경·추가·생략 금지. 합/충/원진 표기는 아래만 사용):',
+        ...lines,
+        '→ 누가 기준이든 위 판정은 동일하다. 점수·해석은 위 사실에 근거하되, 위에 없는 합·충·원진을 만들어내면 오답.',
+        '',
+    ].join('\n');
+}
 /**
  * 인접 주제 경계 (2026-04-22 SSOT v1)
  *
@@ -99,7 +167,7 @@ const TOPIC_CONFIGS = {
 - 직업/외모도 사주 근거를 기반으로 하되, 폭넓은 범위로 서술. 특정 직업 하나가 아니라 오행 성향에 맞는 직업군으로.
 
 ## 연애 상태별 분석 분기
-- 상대방 정보가 제공된 경우(연애중): 실제 상대방의 사주를 추론하여 두 사람의 연애 궁합을 교차 분석. idealType 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
+- 상대방 정보가 제공된 경우(연애중): 프롬프트에 제공되는 상대방 확정 간지(서버 계산)로 두 사람의 연애 궁합을 교차 분석. idealType 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
 - 썸 상태: 관심 대상에 대한 기초 궁합 분석. partnerCompat 채우되 compatScore에 "아직 확정 전"이라는 뉘앙스.
 - 상대방 정보가 없는 경우(솔로): 사주 원국에서 이상적 상대를 추론. partnerCompat은 null로.`,
         topicDataSchema: `"topicData": {
@@ -115,8 +183,8 @@ const TOPIC_CONFIGS = {
       "bestMeetMonth": "인연 시작 유력 시기 (예: 7~9월)",
       "partnerCompat": "상대방 정보가 있을 때만 채움. 없으면 null. 있으면 아래 구조:" 또는 null,
       "partnerCompat(상대방 있을 때)": {
-        "partnerOheng": "상대방 추정 주 오행 (목/화/토/금/수)",
-        "partnerIlgan": "상대방 추정 일간 한자 (甲/乙/丙/丁 등)",
+        "partnerOheng": "상대방 주 오행 — 제공된 확정 간지 기준 (목/화/토/금/수)",
+        "partnerIlgan": "상대방 일간 한자 — 제공된 확정값 그대로 (재추론 금지)",
         "compatScore": "0-100 정수 (연애 궁합 종합 점수)",
         "pillarComparison": {
           "myPillars": {
@@ -295,7 +363,7 @@ const TOPIC_CONFIGS = {
 - "혹시 ~한 사람과 교제 중이거나 관심 있는 사람이 있나요?" 소름 포인트
 
 ## 연애 상태별 분석 분기
-- 상대방 정보가 제공된 경우(연애중): 실제 상대방의 사주를 추론하여 두 사람의 궁합을 교차 분석. spouseProfile 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
+- 상대방 정보가 제공된 경우(연애중): 프롬프트에 제공되는 상대방 확정 간지(서버 계산)로 두 사람의 궁합을 교차 분석. spouseProfile 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
 - 상대방 정보가 없는 경우(솔로): 사주 원국에서 배우자상을 추론. partnerCompat은 null로.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"배우자복","value":"0-100 정수"},{"axis":"결혼시기","value":"0-100 정수"},{"axis":"가정안정","value":"0-100 정수"},{"axis":"양가관계","value":"0-100 정수"},{"axis":"재물복","value":"0-100 정수"}],
@@ -310,8 +378,8 @@ const TOPIC_CONFIGS = {
       "weddingLuckMonth": "결혼식 유리 월 (예: 5월, 10월)",
       "partnerCompat": "상대방 정보가 있을 때만 채움. 없으면 null. 있으면 아래 구조:" 또는 null,
       "partnerCompat(상대방 있을 때)": {
-        "partnerOheng": "상대방 추정 주 오행 (목/화/토/금/수)",
-        "partnerIlgan": "상대방 추정 일간 한자 (甲/乙/丙/丁 등)",
+        "partnerOheng": "상대방 주 오행 — 제공된 확정 간지 기준 (목/화/토/금/수)",
+        "partnerIlgan": "상대방 일간 한자 — 제공된 확정값 그대로 (재추론 금지)",
         "compatScore": "0-100 정수 (궁합 종합 점수)",
         "pillarComparison": {
           "myPillars": {
@@ -453,7 +521,7 @@ const TOPIC_CONFIGS = {
 
 ## 분석 원칙
 - 명리학 전통 이론(형충파해, 원진, 삼합, 육합, 도화살, 홍염살 등)을 철저히 활용
-- 상대방 사주를 생년월일 기반으로 추론하여 두 사주의 교차 분석 수행
+- 상대방 사주는 프롬프트에 제공되는 서버 계산 확정 간지를 그대로 사용하여 두 사주의 교차 분석 수행 (직접 산출 금지)
 - "혹시 ~하지 않았나요?" 형태의 소름 포인트 매 섹션마다 1개 이상 필수
 - 사주 전문 용어(한자 병기)를 자연스럽게 포함하되, 쉽게 설명
 - ⚠️ 각 섹션의 content는 핵심만 간결하게. 한 섹션 150~250자. 불필요한 반복/서론 금지.
@@ -549,7 +617,7 @@ const TOPIC_CONFIGS = {
       "emotionCycle": "현재 감정 흐름: 상승기/하강기/정체기 중 하나",
       "breakupCause": "이별의 사주적 핵심 원인 30자",
       "partnerProfile": {
-        "dominantOheng": "목/화/토/금/수 중 하나 (상대방 추정 주 오행)",
+        "dominantOheng": "목/화/토/금/수 중 하나 — 제공된 상대방 확정 간지 기준 (재추론 금지)",
         "personality": "상대방 연애 성향 요약 30~45자",
         "currentEmotion": "현재 감정 상태 15자",
         "reunionDesire": "0-100 정수 (상대방의 재회 욕구 추정)",
@@ -825,6 +893,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
     let firstJson;
     try {
         const meta1 = { repairUsed: false };
+        const _t1 = Date.now(); // C7
         const first = await anthropic.messages.create({
             model,
             max_tokens: maxTokens,
@@ -832,6 +901,8 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
             system: [{ type: 'text', text: promptsV3_1.TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: prompt }],
         });
+        if (first.usage)
+            (0, aiUsageLog_1.logAiUsage)({ type: 'topic', model, inputTokens: first.usage.input_tokens, outputTokens: first.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
         firstText = first.content[0].text;
         firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta1);
         if (meta1.repairUsed)
@@ -840,6 +911,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
     catch (e1) {
         console.warn(`[claudeTopic:${topicId}] 1차 실패 → 재시도:`, e1?.message);
         const meta2 = { repairUsed: false };
+        const _t2 = Date.now(); // C7
         const retry = await anthropic.messages.create({
             model,
             max_tokens: maxTokens,
@@ -847,6 +919,8 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
             system: [{ type: 'text', text: promptsV3_1.TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: prompt }],
         });
+        if (retry.usage)
+            (0, aiUsageLog_1.logAiUsage)({ type: 'topic', model, inputTokens: retry.usage.input_tokens, outputTokens: retry.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
         firstText = retry.content[0].text;
         firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta2);
         console.info(`[claudeTopic:${topicId}] 2차 성공`, meta2.repairUsed ? '(jsonrepair 발동)' : '');
@@ -861,6 +935,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
         console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선 · TOPIC_SELF_REVIEW!=1)`);
         return firstJson;
     }
+    const _t3 = Date.now(); // C7
     const review = await anthropic.messages.create({
         model,
         max_tokens: maxTokens,
@@ -872,6 +947,8 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
             { role: 'user', content: (0, promptsV3_1.SELF_REVIEW_V3)({ original: firstJson, kind: 'topic' }) },
         ],
     });
+    if (review.usage)
+        (0, aiUsageLog_1.logAiUsage)({ type: 'topic', model, inputTokens: review.usage.input_tokens, outputTokens: review.usage.output_tokens, ms: Date.now() - _t3, ok: true }); // C7 best-effort
     const reviewText = review.content[0].text;
     try {
         return (0, promptsV3_1.parseJsonResponse)(reviewText);
@@ -936,17 +1013,13 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo, extraInfo) {
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}${breakupInfo}
 
-→ 상대방의 생년월일${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '시' : ''}로 사주 원국을 산출하고, 두 사람의 사주를 교차 분석해주세요.
+${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPillars(partnerInfo); return _pp ? buildPairRelationsBlock(d.pillars || [], _pp) : ''; })()}
+→ 위 확정 간지로 두 사람의 사주를 교차 분석해주세요. (상대방 사주를 다시 산출하지 마세요)
 → 상대방 이름을 자연스럽게 포함시키세요.
-→ partnerProfile.pillarComparison에 나의 년주/월주/일주와 상대방의 년주/월주/일주(추론)를 채우고, interactions에 합/충/형/해/상생/상극 관계를 표시하세요.${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '\n→ 상대방 시주도 추론 가능하므로 시주 관계까지 분석하되, pillarComparison에는 년/월/일 3주만 표시.' : ''}
+→ partnerProfile.pillarComparison에 나의 년주/월주/일주와 상대방의 년주/월주/일주(위 확정값)를 채우고, interactions에 합/충/형/해/상생/상극 관계를 표시하세요.${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '\n→ 상대방 시주(위 확정값)까지 관계 분석하되, pillarComparison에는 년/월/일 3주만 표시.' : ''}
 → partnerProfile, compatAnalysis 필드에 상대방 분석 결과를 정확히 채우세요.
 → 두 사람의 천간합(天干合), 지지합(地支合), 원진(怨嗔) 관계를 분석하여 sinsal 필드에 반영하세요.
 → breakupDuration.currentPhaseIndex는 경과 개월 수에 정확히 대응시키세요: 0~2개월=0(충격기), 2~6개월=1(거부기), 6~12개월=2(회복기), 12~18개월=3(수용기), 18개월+=4(장기분리기).
-
-🇰🇷 **상대방 사주 산출 — KR 진태양시 보정 mandate (audit 1 P0-5)**:
-→ 상대방 사주 산출 시 한국 진태양시 보정을 고려하라 (출생시간 미상이면 시주 생략, 일주는 통상 KST 기준 사용).
-→ 일주(일간)는 추론 시 ±1일 변동 가능성을 인지하고 가장 합리적인 1개로 확정 (불확정 표기 금지 — "甲(추정)" / "乙 또는 丙" 같은 표기 절대 X).
-→ 출생시간 미상 시 시주를 강제로 추론하여 단정 X (시주 칸은 null 또는 생략).
 `;
     }
     else if (topicId === 'marriage' && partnerInfo) {
@@ -959,8 +1032,8 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo, extraInfo) {
 이름: ${partnerInfo.name || '미상'}
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}
-
-→ 이 사람은 현재 교제 중입니다. 상대방의 사주를 추론하여 두 사람의 결혼 궁합을 교차 분석하세요.
+${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPillars(partnerInfo); return _pp ? buildPairRelationsBlock(d.pillars || [], _pp) : ''; })()}
+→ 이 사람은 현재 교제 중입니다. 위 확정 간지로 두 사람의 결혼 궁합을 교차 분석하세요. (상대방 사주를 다시 추론하지 마세요)
 → "사주로 본 배우자상"은 이미 상대방이 있으므로, spouseProfile에 실제 상대방 특성을 반영하세요.
 → partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, marriageChemistry.
 → 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 결혼 궁합은..."
@@ -999,8 +1072,8 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo, extraInfo) {
 이름: ${partnerInfo.name || '미상'}
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}
-
-→ 상대방의 사주를 추론하여 두 사람의 연애 궁합을 교차 분석하세요.
+${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPillars(partnerInfo); return _pp ? buildPairRelationsBlock(d.pillars || [], _pp) : ''; })()}
+→ 위 확정 간지로 두 사람의 연애 궁합을 교차 분석하세요. (상대방 사주를 다시 추론하지 마세요)
 → partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, loveChemistry.
 → 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 연애 궁합은..."
 → idealType은 실제 상대방 특성 기반으로 서술하세요.
