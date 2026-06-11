@@ -447,3 +447,59 @@ export function deleteProfile(profileId: string): void {
   const profiles = getProfiles().filter(p => p.id !== profileId);
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * Pending Spend 장부 — 2026-06-11 P0 CS fix (권민주님 제보).
+ * 문제: 운 차감 → AI 생성 중 앱 강제종료 → 결과 미저장인데 운만 소실.
+ * 해결: 차감 직후 pending 마킹 → 결과 저장 성공 시 clear →
+ *       재접속 시 5분 경과한 미완료 pending 발견하면 자동 환불 + 안내.
+ * 환불은 paid 버킷(가장 유리)으로. localStorage 키: saju500:pending_spends
+ * ──────────────────────────────────────────────────────────── */
+const PENDING_SPENDS_KEY = 'saju500:pending_spends';
+const PENDING_EXPIRE_MS = 5 * 60 * 1000; // 5분 — 정상 생성(최대 ~2분)보다 충분히 김
+
+interface PendingSpend { id: string; type: string; amount: number; ts: number; }
+
+function readPendingSpends(): PendingSpend[] {
+  try { return JSON.parse(localStorage.getItem(PENDING_SPENDS_KEY) || '[]'); } catch { return []; }
+}
+function writePendingSpends(list: PendingSpend[]): void {
+  try { localStorage.setItem(PENDING_SPENDS_KEY, JSON.stringify(list)); } catch { /* noop */ }
+}
+
+/** 차감 직후 호출 — 생성 중 이탈 대비 마킹. 반환된 id 로 완료 시 clear. */
+export function markPendingSpend(type: string, amount: number): string {
+  const id = `${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
+  const list = readPendingSpends();
+  list.push({ id, type, amount, ts: Date.now() });
+  writePendingSpends(list.slice(-20)); // 안전 상한
+  return id;
+}
+
+/** 결과 저장 성공 시 호출 — 장부에서 제거. */
+export function clearPendingSpend(id: string): void {
+  writePendingSpends(readPendingSpends().filter(p => p.id !== id));
+}
+
+/**
+ * 부팅 시 호출 — 만료된 pending(=생성 중 앱 종료로 결과 못 받은 차감)을 자동 환불.
+ * 반환: 환불된 총 운 (0이면 없음 — 호출부에서 toast 안내).
+ */
+export function reconcilePendingSpends(): number {
+  const list = readPendingSpends();
+  if (list.length === 0) return 0;
+  const now = Date.now();
+  const expired = list.filter(p => now - p.ts > PENDING_EXPIRE_MS);
+  if (expired.length === 0) return 0;
+  const total = expired.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  if (total > 0) {
+    addPaidBalance(total, 0); // 가장 유리한 paid 버킷으로 복구
+    try {
+      import('@/services/analytics').then(a =>
+        a.trackEvent('reward_earned', { kind: 'auto_refund', amount: total })).catch(() => {});
+    } catch { /* noop */ }
+  }
+  writePendingSpends(list.filter(p => now - p.ts <= PENDING_EXPIRE_MS));
+  console.info(`[pendingSpend] 자동 환불: ${total}운 (${expired.length}건 — 생성 중 이탈 복구)`);
+  return total;
+}

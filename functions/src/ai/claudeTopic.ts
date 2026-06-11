@@ -7,8 +7,44 @@
 //   - normalizeTopicIdServer() 로 legacy 호출 'moving'/'reconciliation'/'job' 등 호환
 
 import Anthropic from '@anthropic-ai/sdk';
+import { Solar } from 'lunar-javascript';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type ParseJsonMeta } from './promptsV3';
 import { logAiUsage } from '../shared/aiUsageLog';
+
+/**
+ * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
+ * 기존: 프롬프트가 AI에게 상대방 사주를 "추론"하라고 지시 → LLM은 만세력 계산 불가 → 간지 환각
+ *   (실사례: 1995-06-06 戊辰일주가 壬午로 출력). 본인 사주는 calculator 주입이라 정확했음.
+ * 수정: lunar-javascript 로 서버에서 확정 계산 → 프롬프트에 "재추론 금지" 확정값으로 주입.
+ * 시간 보정: 클라 시간 선택지가 시진 대표시(밴드 중앙, 예: 오시=12시)라 -30분 KR 보정을
+ *   적용해도 같은 시진 → 간지 동일. 일주는 시간 무관.
+ */
+function computePartnerPillars(p: { birthYear: number; birthMonth: number; birthDay: number; birthHour?: number }):
+  { year: string; month: string; day: string; time: string | null; ilgan: string } | null {
+  try {
+    const hasHour = p.birthHour != null && p.birthHour >= 0;
+    const s = hasHour
+      ? Solar.fromYmdHms(p.birthYear, p.birthMonth, p.birthDay, p.birthHour as number, 0, 0)
+      : Solar.fromYmd(p.birthYear, p.birthMonth, p.birthDay);
+    const ec = s.getLunar().getEightChar();
+    const day = ec.getDay();
+    return { year: ec.getYear(), month: ec.getMonth(), day, time: hasHour ? ec.getTime() : null, ilgan: day.charAt(0) };
+  } catch {
+    return null;
+  }
+}
+
+/** 프롬프트 주입용 확정 간지 블록 — 상대방 포함 주제(연애/결혼/재회) 공통 */
+function buildPartnerPillarsBlock(p: { birthYear: number; birthMonth: number; birthDay: number; birthHour?: number }): string {
+  const pp = computePartnerPillars(p);
+  if (!pp) return '';
+  return `
+🔒 상대방 만세력 — 서버(lunar) 계산 확정값. 절대 재산출·추론·변경 금지:
+- 년주: ${pp.year} / 월주: ${pp.month} / 일주: ${pp.day} (일간 ${pp.ilgan})${pp.time ? ` / 시주: ${pp.time}` : ' / 시주: 미상 (생략 — 추론 금지)'}
+→ partnerCompat·partnerProfile·pillarComparison 등 상대방의 모든 간지·일간·일주·오행 표기는 위 값을 글자 그대로 사용할 것.
+→ 위 값과 다른 간지를 출력하면 명백한 오답이다. 상대방 사주를 직접 계산하거나 추정하지 마라.
+`;
+}
 
 interface TopicConfig {
   label: string;
@@ -101,7 +137,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 직업/외모도 사주 근거를 기반으로 하되, 폭넓은 범위로 서술. 특정 직업 하나가 아니라 오행 성향에 맞는 직업군으로.
 
 ## 연애 상태별 분석 분기
-- 상대방 정보가 제공된 경우(연애중): 실제 상대방의 사주를 추론하여 두 사람의 연애 궁합을 교차 분석. idealType 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
+- 상대방 정보가 제공된 경우(연애중): 프롬프트에 제공되는 상대방 확정 간지(서버 계산)로 두 사람의 연애 궁합을 교차 분석. idealType 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
 - 썸 상태: 관심 대상에 대한 기초 궁합 분석. partnerCompat 채우되 compatScore에 "아직 확정 전"이라는 뉘앙스.
 - 상대방 정보가 없는 경우(솔로): 사주 원국에서 이상적 상대를 추론. partnerCompat은 null로.`,
     topicDataSchema: `"topicData": {
@@ -117,8 +153,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "bestMeetMonth": "인연 시작 유력 시기 (예: 7~9월)",
       "partnerCompat": "상대방 정보가 있을 때만 채움. 없으면 null. 있으면 아래 구조:" 또는 null,
       "partnerCompat(상대방 있을 때)": {
-        "partnerOheng": "상대방 추정 주 오행 (목/화/토/금/수)",
-        "partnerIlgan": "상대방 추정 일간 한자 (甲/乙/丙/丁 등)",
+        "partnerOheng": "상대방 주 오행 — 제공된 확정 간지 기준 (목/화/토/금/수)",
+        "partnerIlgan": "상대방 일간 한자 — 제공된 확정값 그대로 (재추론 금지)",
         "compatScore": "0-100 정수 (연애 궁합 종합 점수)",
         "pillarComparison": {
           "myPillars": {
@@ -297,7 +333,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - "혹시 ~한 사람과 교제 중이거나 관심 있는 사람이 있나요?" 소름 포인트
 
 ## 연애 상태별 분석 분기
-- 상대방 정보가 제공된 경우(연애중): 실제 상대방의 사주를 추론하여 두 사람의 궁합을 교차 분석. spouseProfile 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
+- 상대방 정보가 제공된 경우(연애중): 프롬프트에 제공되는 상대방 확정 간지(서버 계산)로 두 사람의 궁합을 교차 분석. spouseProfile 대신 실제 상대방 데이터를 반영. partnerCompat 필드를 반드시 채울 것.
 - 상대방 정보가 없는 경우(솔로): 사주 원국에서 배우자상을 추론. partnerCompat은 null로.`,
     topicDataSchema: `"topicData": {
       "subScores": [{"axis":"배우자복","value":"0-100 정수"},{"axis":"결혼시기","value":"0-100 정수"},{"axis":"가정안정","value":"0-100 정수"},{"axis":"양가관계","value":"0-100 정수"},{"axis":"재물복","value":"0-100 정수"}],
@@ -312,8 +348,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "weddingLuckMonth": "결혼식 유리 월 (예: 5월, 10월)",
       "partnerCompat": "상대방 정보가 있을 때만 채움. 없으면 null. 있으면 아래 구조:" 또는 null,
       "partnerCompat(상대방 있을 때)": {
-        "partnerOheng": "상대방 추정 주 오행 (목/화/토/금/수)",
-        "partnerIlgan": "상대방 추정 일간 한자 (甲/乙/丙/丁 등)",
+        "partnerOheng": "상대방 주 오행 — 제공된 확정 간지 기준 (목/화/토/금/수)",
+        "partnerIlgan": "상대방 일간 한자 — 제공된 확정값 그대로 (재추론 금지)",
         "compatScore": "0-100 정수 (궁합 종합 점수)",
         "pillarComparison": {
           "myPillars": {
@@ -551,7 +587,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "emotionCycle": "현재 감정 흐름: 상승기/하강기/정체기 중 하나",
       "breakupCause": "이별의 사주적 핵심 원인 30자",
       "partnerProfile": {
-        "dominantOheng": "목/화/토/금/수 중 하나 (상대방 추정 주 오행)",
+        "dominantOheng": "목/화/토/금/수 중 하나 — 제공된 상대방 확정 간지 기준 (재추론 금지)",
         "personality": "상대방 연애 성향 요약 30~45자",
         "currentEmotion": "현재 감정 상태 15자",
         "reunionDesire": "0-100 정수 (상대방의 재회 욕구 추정)",
@@ -965,17 +1001,13 @@ function buildPrompt(
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}${breakupInfo}
 
-→ 상대방의 생년월일${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '시' : ''}로 사주 원국을 산출하고, 두 사람의 사주를 교차 분석해주세요.
+${buildPartnerPillarsBlock(partnerInfo)}
+→ 위 확정 간지로 두 사람의 사주를 교차 분석해주세요. (상대방 사주를 다시 산출하지 마세요)
 → 상대방 이름을 자연스럽게 포함시키세요.
-→ partnerProfile.pillarComparison에 나의 년주/월주/일주와 상대방의 년주/월주/일주(추론)를 채우고, interactions에 합/충/형/해/상생/상극 관계를 표시하세요.${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '\n→ 상대방 시주도 추론 가능하므로 시주 관계까지 분석하되, pillarComparison에는 년/월/일 3주만 표시.' : ''}
+→ partnerProfile.pillarComparison에 나의 년주/월주/일주와 상대방의 년주/월주/일주(위 확정값)를 채우고, interactions에 합/충/형/해/상생/상극 관계를 표시하세요.${(partnerInfo.birthHour != null && partnerInfo.birthHour >= 0) ? '\n→ 상대방 시주(위 확정값)까지 관계 분석하되, pillarComparison에는 년/월/일 3주만 표시.' : ''}
 → partnerProfile, compatAnalysis 필드에 상대방 분석 결과를 정확히 채우세요.
 → 두 사람의 천간합(天干合), 지지합(地支合), 원진(怨嗔) 관계를 분석하여 sinsal 필드에 반영하세요.
 → breakupDuration.currentPhaseIndex는 경과 개월 수에 정확히 대응시키세요: 0~2개월=0(충격기), 2~6개월=1(거부기), 6~12개월=2(회복기), 12~18개월=3(수용기), 18개월+=4(장기분리기).
-
-🇰🇷 **상대방 사주 산출 — KR 진태양시 보정 mandate (audit 1 P0-5)**:
-→ 상대방 사주 산출 시 한국 진태양시 보정을 고려하라 (출생시간 미상이면 시주 생략, 일주는 통상 KST 기준 사용).
-→ 일주(일간)는 추론 시 ±1일 변동 가능성을 인지하고 가장 합리적인 1개로 확정 (불확정 표기 금지 — "甲(추정)" / "乙 또는 丙" 같은 표기 절대 X).
-→ 출생시간 미상 시 시주를 강제로 추론하여 단정 X (시주 칸은 null 또는 생략).
 `;
   } else if (topicId === 'marriage' && partnerInfo) {
     const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
@@ -987,8 +1019,8 @@ function buildPrompt(
 이름: ${partnerInfo.name || '미상'}
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}
-
-→ 이 사람은 현재 교제 중입니다. 상대방의 사주를 추론하여 두 사람의 결혼 궁합을 교차 분석하세요.
+${buildPartnerPillarsBlock(partnerInfo)}
+→ 이 사람은 현재 교제 중입니다. 위 확정 간지로 두 사람의 결혼 궁합을 교차 분석하세요. (상대방 사주를 다시 추론하지 마세요)
 → "사주로 본 배우자상"은 이미 상대방이 있으므로, spouseProfile에 실제 상대방 특성을 반영하세요.
 → partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, marriageChemistry.
 → 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 결혼 궁합은..."
@@ -1025,8 +1057,8 @@ function buildPrompt(
 이름: ${partnerInfo.name || '미상'}
 생년월일: ${partnerInfo.birthYear}년 ${partnerInfo.birthMonth}월 ${partnerInfo.birthDay}일
 성별: ${partnerInfo.gender === 'male' ? '남' : '여'}${birthHourStr}
-
-→ 상대방의 사주를 추론하여 두 사람의 연애 궁합을 교차 분석하세요.
+${buildPartnerPillarsBlock(partnerInfo)}
+→ 위 확정 간지로 두 사람의 연애 궁합을 교차 분석하세요. (상대방 사주를 다시 추론하지 마세요)
 → partnerCompat 필드를 반드시 채우세요: pillarComparison(년주/월주/일주 비교), matchPoints/clashPoints, compatScore, loveChemistry.
 → 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 연애 궁합은..."
 → idealType은 실제 상대방 특성 기반으로 서술하세요.

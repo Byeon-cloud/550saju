@@ -206,6 +206,15 @@ export function App() {
       ensureAuth();
     });
 
+    // 0-a2. P0 CS fix (2026-06-11) — 생성 중 앱 종료로 결과 못 받은 차감 운 자동 환불.
+    //   토스트는 ToastProvider 밖이라 불가 → 공지 플래그 저장, HomePage 마운트에서 안내.
+    import('@/services/storage/localStore').then(({ reconcilePendingSpends }) => {
+      const refunded = reconcilePendingSpends();
+      if (refunded > 0) {
+        try { localStorage.setItem('saju500:refund_notice', String(refunded)); } catch { /* noop */ }
+      }
+    }).catch(() => {});
+
     // 0-b. 2026-05-28 PM — 본인 프로필 중복 cleanup (1회 마이그레이션).
     //   기존: 새 사주 '본인' 추가 시 silent 로 myProfile 교체 → 본인 N명 누적.
     //   해결: 활성 myProfile 만 '본인' 유지, 나머지는 '가족' 자동 강등.

@@ -17,6 +17,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { LegalFooter } from '@/components/layout/LegalFooter';
@@ -82,6 +83,18 @@ export function HomePage() {
   const scrollDeepDiveRight = () => {
     deepDiveScrollRef.current?.scrollBy({ left: 158, behavior: 'smooth' });
   };
+  // P0 CS fix (2026-06-11) — 부팅 자동환불 공지 (App 에서 플래그 저장 → 여기서 1회 안내)
+  const refundToast = useToast();
+  useEffect(() => {
+    try {
+      const n = localStorage.getItem('saju500:refund_notice');
+      if (n) {
+        localStorage.removeItem('saju500:refund_notice');
+        refundToast.show(`이전에 생성 중 앱이 닫혀 결과를 받지 못한 ${n}운을 돌려드렸어요`, 'success');
+      }
+    } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // 스크롤 위치 추적 — 우측 끝 도달 시 우측 버튼 숨김
   useEffect(() => {
     const el = deepDiveScrollRef.current;

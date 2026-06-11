@@ -3353,6 +3353,11 @@ export function TopicAnalysisPage() {
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'topic', amount: actualPrice, topic: topicId! })).catch(() => {});
 
+    // P0 CS fix (2026-06-11) — 생성 중 앱 종료 시 운 소실 방지: pending 마킹.
+    //   결과 저장 성공 시 clear / 에러 시 즉시 환불 / 앱 종료 시 재접속 부팅에서 자동 환불.
+    const { markPendingSpend, clearPendingSpend } = await import('@/services/storage/localStore');
+    const pendingId = markPendingSpend(`topic:${topicId}`, actualPrice);
+
     setPhase('loading');
     const interval = setInterval(() => setLoadingMsg(s => Math.min(s + 1, LOADING_MSGS.length - 1)), 3000);
 
@@ -3470,12 +3475,14 @@ export function TopicAnalysisPage() {
         aiResult: { topicId, ...res.content },
       });
 
+      clearPendingSpend(pendingId); // 결과 저장 완료 — pending 해제
       setPhase('result');
     } catch (e: any) {
       console.error('주제 분석 실패:', e);
       // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
       // 2026-05-29 fix — 환불액 1 하드코딩 → 실제 차감액(actualPrice). 재회운 정가(3운) 전환 시 과소 환불 방지.
       //   + e.message(영문 기술오류) 노출 금지 — 항상 친절 카피 + 환불 안내.
+      clearPendingSpend(pendingId); // 즉시 환불하므로 pending 해제 (부팅 이중환불 방지)
       refundBalance(actualPrice);
       setAnalyzeError(`분석에 실패해서 ${actualPrice}운을 돌려드렸어요. 잠시 후 다시 시도해주세요.`);
       setPhase('select');
