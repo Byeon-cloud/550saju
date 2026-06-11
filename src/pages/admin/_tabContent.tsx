@@ -102,6 +102,32 @@ export function TabContent({ d }: { d: AdminData }) {
         )}
       </Section>
 
+      <Section
+        title="CTA 클릭 TOP 20 (cta_click)"
+        caption="· 전 화면 버튼·링크 클릭 자동 수집 (라벨 = 버튼 텍스트) — 어떤 버튼이 실제로 눌리는지"
+      >
+        {(() => {
+          const total = cur.ctaTotal || 0;
+          const rows = Object.entries(cur.cta)
+            .map(([label, n]) => ({
+              label, n,
+              share: total > 0 ? Math.round((n / total) * 1000) / 10 : 0,
+              prevN: prev.cta[label] ?? 0,
+              delta: deltaPct(n, prev.cta[label] ?? 0),
+            }))
+            .sort((a, b) => b.n - a.n)
+            .slice(0, 20);
+          const cols: Col[] = [
+            { key: 'label', label: 'CTA (버튼 텍스트)' },
+            { key: 'n', label: '클릭', numeric: true },
+            { key: 'share', label: '비중', numeric: true, render: (v) => `${v}%` },
+            { key: 'prevN', label: '전기간', numeric: true },
+            { key: 'delta', label: '증감', numeric: true, render: (v) => fmtPct(v) },
+          ];
+          return <DataTable columns={cols} rows={rows} initialSortKey="n" />;
+        })()}
+      </Section>
+
       <Section title="콘텐츠 생성 누적 (결제·무료 합산)" caption="· reports 컬렉션 contentType 기준 — 전 기간 누적">
         {reportChips.length === 0 ? <Empty /> : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

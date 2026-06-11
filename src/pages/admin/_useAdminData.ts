@@ -27,6 +27,8 @@ export function kstDay(offset = 0): string {
 // ─── 타입 ───
 export interface RawEvent {
   day: string; name: string; uid: string; sid: string; props: any; utm?: any;
+  did?: string;                                    // 기기 영속 ID (2026-06-12)
+  demo?: { g?: string; ab?: string };              // 성별·연령대 (본인 프로필 파생)
 }
 
 export interface AiTypeAgg {
@@ -84,6 +86,13 @@ export interface PeriodAgg {
   retention: { d1Rate: number | null; d7Rate: number | null; cohortD1: number; cohortD7: number };
   // 유입
   utm: Record<string, { visits: number; contentOpens: number; charges: number }>;
+  // CTA 클릭 (2026-06-12 · 전역 위임 수집)
+  cta: Record<string, number>;                     // label → 클릭 수
+  ctaTotal: number;
+  // 인구통계 (2026-06-12 · 본인 프로필 파생 — 고유 방문자 기준)
+  demoGender: Record<string, number>;              // 'M'|'F' → 고유 유저 수
+  demoAge: Record<string, number>;                 // '20대' 등 → 고유 유저 수
+  payingGender: Record<string, number>;            // 결제 유저의 성별 분포
 }
 
 export interface AdminData {
@@ -115,6 +124,8 @@ function emptyAgg(days: string[]): PeriodAgg {
     visitFreq: { once: 0, few: 0, many: 0 },
     retention: { d1Rate: null, d7Rate: null, cohortD1: 0, cohortD7: 0 },
     utm: {},
+    cta: {}, ctaTotal: 0,
+    demoGender: {}, demoAge: {}, payingGender: {},
   };
 }
 
@@ -138,17 +149,27 @@ function paymentDay(p: any): string {
 /** analytics 이벤트 1건을 해당 기간 버킷에 누적 */
 function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: PeriodScratch): void {
   const t = e.props?.type as string | undefined;
-  const userKey = e.uid || e.sid || 'anon';
+  // 2026-06-12 — did(기기 영속) 우선: 익명 유저가 세션마다 새 사람으로 집계되던 것 fix
+  const userKey = e.uid || e.did || e.sid || 'anon';
+  const dauKey = e.did || e.uid || e.sid || 'anon';
   const utmSource = (e.utm?.source as string | undefined) || 'direct';
   const utmSlot = (agg.utm[utmSource] ??= { visits: 0, contentOpens: 0, charges: 0 });
+
+  // 인구통계 — 어떤 이벤트든 demo 첨부돼 있으면 최신값 기록 (고유 유저 기준 마감 시 집계)
+  if (e.demo && (e.demo.g || e.demo.ab)) scratch.demoByUser[userKey] = e.demo;
 
   switch (e.name) {
     case 'page_view': {
       agg.pageViews += 1;
       scratch.visitorSet.add(userKey);
-      (scratch.dauSets[dayIdx] ??= new Set()).add(e.sid || userKey);
+      (scratch.dauSets[dayIdx] ??= new Set()).add(dauKey);
       (scratch.visitDays[userKey] ??= new Set()).add(e.day);
-      (scratch.utmVisitSets[utmSource] ??= new Set()).add(e.sid || userKey);
+      (scratch.utmVisitSets[utmSource] ??= new Set()).add(dauKey);
+      break;
+    }
+    case 'cta_click': {
+      const label = (e.props?.label as string | undefined) || '';
+      if (label) { agg.cta[label] = (agg.cta[label] ?? 0) + 1; agg.ctaTotal += 1; }
       break;
     }
     case 'app_open': agg.appOpens += 1; break;
@@ -228,6 +249,7 @@ interface PeriodScratch {
   visitDays: Record<string, Set<string>>;
   chargeByUser: Record<string, number>;
   utmVisitSets: Record<string, Set<string>>;
+  demoByUser: Record<string, { g?: string; ab?: string }>;  // 2026-06-12 인구통계
 }
 
 /** scratch → 최종 집계 마감 (방문자·DAU·리텐션·재구매·방문빈도·utm visits) */
@@ -277,6 +299,15 @@ function finalizeAgg(agg: PeriodAgg, scratch: PeriodScratch): void {
   Object.entries(scratch.utmVisitSets).forEach(([source, set]) => {
     (agg.utm[source] ??= { visits: 0, contentOpens: 0, charges: 0 }).visits = set.size;
   });
+
+  // 인구통계 마감 (2026-06-12) — 고유 유저 기준 성별·연령 분포 + 결제 유저 성별
+  Object.entries(scratch.demoByUser).forEach(([userKey, demo]) => {
+    if (demo.g) agg.demoGender[demo.g] = (agg.demoGender[demo.g] ?? 0) + 1;
+    if (demo.ab) agg.demoAge[demo.ab] = (agg.demoAge[demo.ab] ?? 0) + 1;
+    if (demo.g && scratch.chargeByUser[userKey]) {
+      agg.payingGender[demo.g] = (agg.payingGender[demo.g] ?? 0) + 1;
+    }
+  });
 }
 
 /** aiUsage 1건 누적 */
@@ -324,8 +355,8 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
 
         const cur = emptyAgg(curDays);
         const prev = emptyAgg(prevDays);
-        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {} };
-        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {} };
+        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {} };
+        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {} };
         const rawEvents: RawEvent[] = [];
 
         // 1) analytics — 현+전 기간 (최대 60일) 한 번에 fetch
@@ -336,7 +367,7 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
           const e = doc.data() as any;
           const ev: RawEvent = {
             day: e.day || '', name: e.name || '', uid: e.uid || '', sid: e.sid || '',
-            props: e.props, utm: e.utm,
+            props: e.props, utm: e.utm, did: e.did || '', demo: e.demo,
           };
           if (ev.day >= curStart) {
             const idx = curDays.indexOf(ev.day);

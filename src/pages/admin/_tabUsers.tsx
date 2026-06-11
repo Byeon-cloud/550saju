@@ -75,7 +75,7 @@ export function TabUsers({ d }: { d: AdminData }) {
         </div>
       </Section>
 
-      <Section title="DAU 추이" caption="· 실선 = 현 기간 — 점선 = 직전 동일 기간 (sid 기준 고유 방문)">
+      <Section title="DAU 추이" caption="· 실선 = 현 기간 — 점선 = 직전 동일 기간 (기기 ID 기준 고유 방문)">
         {dauSeries.every((p) => p.cur === 0 && p.prev === 0) ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
             <ResponsiveContainer width="100%" height={220}>
@@ -90,6 +90,55 @@ export function TabUsers({ d }: { d: AdminData }) {
             </ResponsiveContainer>
           </div>
         )}
+      </Section>
+
+      <Section
+        title="성별 · 연령대 분포"
+        caption="· 본인 사주 프로필(성별·출생연도)에서 파생 — 프로필 입력한 방문자만 집계. 괄호 = 결제 유저"
+      >
+        {(() => {
+          const genderBars = [
+            { label: '남성', n: cur.demoGender['M'] ?? 0, pay: cur.payingGender['M'] ?? 0 },
+            { label: '여성', n: cur.demoGender['F'] ?? 0, pay: cur.payingGender['F'] ?? 0 },
+          ];
+          const AGE_ORDER = ['10대', '20대', '30대', '40대', '50대', '60대+'];
+          const ageBars = AGE_ORDER
+            .map((ab) => ({ label: ab, n: cur.demoAge[ab] ?? 0 }))
+            .filter((b) => b.n > 0);
+          const empty = genderBars.every((b) => b.n === 0) && ageBars.length === 0;
+          if (empty) return <Empty text="아직 데이터 없음 — 사주 프로필을 입력한 방문이 누적되면 표시돼요" />;
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+              <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
+                <p style={{ fontSize: 11, color: C.mute, padding: '0 8px 6px' }}>성별 (고유 방문자)</p>
+                <ResponsiveContainer width="100%" height={110}>
+                  <BarChart data={genderBars} layout="vertical" margin={{ left: 8, right: 16 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="label" width={56} tick={{ fontSize: 12, fill: C.ink }} />
+                    <Tooltip formatter={(v: any, _n: any, p: any) => [`${fmtNum(Number(v))}명 (결제 ${fmtNum(p?.payload?.pay ?? 0)}명)`, '방문자']} />
+                    <Bar dataKey="n" radius={[0, 6, 6, 0]}>
+                      <Cell fill="#5A7CA8" />
+                      <Cell fill="#C88A95" />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
+                <p style={{ fontSize: 11, color: C.mute, padding: '0 8px 6px' }}>연령대 (고유 방문자)</p>
+                <ResponsiveContainer width="100%" height={Math.max(110, ageBars.length * 32)}>
+                  <BarChart data={ageBars} layout="vertical" margin={{ left: 8, right: 16 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="label" width={56} tick={{ fontSize: 12, fill: C.ink }} />
+                    <Tooltip formatter={(v: any) => [`${fmtNum(Number(v))}명`, '방문자']} />
+                    <Bar dataKey="n" radius={[0, 6, 6, 0]}>
+                      {ageBars.map((_, i) => <Cell key={i} fill={CONTENT_COLORS[i % CONTENT_COLORS.length]} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          );
+        })()}
       </Section>
 
       <Section

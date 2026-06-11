@@ -50,6 +50,77 @@ function getSessionId(): string {
   }
 }
 
+/* ─── 기기 식별 (2026-06-12 · DAU 정확도) ───
+ *   sid 는 세션마다 바뀌어 익명 유저가 매 방문 '새 사람'으로 집계됨.
+ *   localStorage 영속 deviceId 로 같은 기기 = 같은 방문자 보장. */
+function getLocalDeviceId(): string {
+  try {
+    let did = localStorage.getItem('saju500:did');
+    if (!did) {
+      did = `d_${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`;
+      localStorage.setItem('saju500:did', did);
+    }
+    return did;
+  } catch {
+    return 'nodevice';
+  }
+}
+
+/* ─── 인구통계 (2026-06-12 · 성별/연령대) ───
+ *   본인 사주 프로필(saju500_my_profile → saju500_profiles)에서 gender + birthYear 파생.
+ *   이름·생일 원본은 절대 전송 X — {g: 'M'|'F', ab: '20대'} 만. 5분 캐시. */
+let demoCache: { v: { g?: string; ab?: string } | null; at: number } | null = null;
+function getDemo(): { g?: string; ab?: string } | null {
+  if (demoCache && Date.now() - demoCache.at < 5 * 60 * 1000) return demoCache.v;
+  let v: { g?: string; ab?: string } | null = null;
+  try {
+    const profiles = JSON.parse(localStorage.getItem('saju500_profiles') || '[]');
+    if (Array.isArray(profiles) && profiles.length > 0) {
+      const myId = localStorage.getItem('saju500_my_profile');
+      const p = profiles.find((x: any) => x?.id === myId) ?? profiles[0];
+      const input = p?.input;
+      if (input) {
+        const g = input.gender === 'male' ? 'M' : input.gender === 'female' ? 'F' : undefined;
+        let ab: string | undefined;
+        const year = Number(input.birthYear);
+        if (year > 1900 && year < 2030) {
+          const age = new Date().getFullYear() - year;
+          ab = age < 20 ? '10대' : age < 30 ? '20대' : age < 40 ? '30대'
+            : age < 50 ? '40대' : age < 60 ? '50대' : '60대+';
+        }
+        if (g || ab) v = { ...(g ? { g } : {}), ...(ab ? { ab } : {}) };
+      }
+    }
+  } catch { /* noop */ }
+  demoCache = { v, at: Date.now() };
+  return v;
+}
+
+/* ─── 전역 CTA 클릭 수집 (2026-06-12) ───
+ *   button / [role=button] / a 클릭을 문서 레벨에서 위임 수집 — 페이지별 wiring 0.
+ *   label = aria-label 우선, 없으면 텍스트 40자. 같은 라벨 800ms 내 중복 무시. */
+let lastCta = { label: '', at: 0 };
+function initCtaTracking(): void {
+  const w = window as unknown as { __saju500CtaInit?: boolean };
+  if (w.__saju500CtaInit) return;
+  w.__saju500CtaInit = true;
+  document.addEventListener('click', (ev) => {
+    try {
+      const target = ev.target as HTMLElement | null;
+      const el = target?.closest?.('button, [role="button"], a') as HTMLElement | null;
+      if (!el) return;
+      if (window.location.pathname.startsWith('/admin')) return; // 어드민 자체 클릭 제외
+      const label = (el.getAttribute('aria-label') || el.textContent || '')
+        .replace(/\s+/g, ' ').trim().slice(0, 40);
+      if (!label) return;
+      const now = Date.now();
+      if (label === lastCta.label && now - lastCta.at < 800) return;
+      lastCta = { label, at: now };
+      trackEvent('cta_click', { label, page: window.location.pathname });
+    } catch { /* noop */ }
+  }, { capture: true, passive: true });
+}
+
 // 어드민 집계에 의미있는 이벤트만 Firestore 에 기록 (노이즈·비용 절감)
 const FIRESTORE_TRACKED = new Set<string>([
   'app_open',
@@ -69,6 +140,8 @@ const FIRESTORE_TRACKED = new Set<string>([
   'ad_click',           // {unit}
   'ad_nofill',          // {unit}
   'ad_fail',            // {unit}
+  // 대시보드 v3 (2026-06-12) — CTA 클릭 (전역 위임 수집)
+  'cta_click',          // {label, page}
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───
@@ -103,8 +176,8 @@ function getUtm(): Record<string, string> | null {
   }
 }
 
-// 모듈 init 시 1회 캡처 (SSR 안전 가드)
-if (typeof window !== 'undefined') captureUtm();
+// 모듈 init 시 1회 캡처 (SSR 안전 가드) + 전역 CTA 클릭 수집 시작
+if (typeof window !== 'undefined') { captureUtm(); initCtaTracking(); }
 
 function logToFirestore(eventName: string, params?: Record<string, string | number>) {
   if (!FIRESTORE_TRACKED.has(eventName)) return;
@@ -115,12 +188,15 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
       const { getAuth } = await import('firebase/auth');
       const uid = getAuth().currentUser?.uid ?? null;
       const utm = getUtm();
+      const demo = getDemo();
       await addDoc(collection(db, 'analytics'), {
         name: eventName,
         uid,
         sid: getSessionId(),
+        did: getLocalDeviceId(),   // 기기 영속 ID (DAU 정확도 — 2026-06-12)
         props: params ?? {},
         ...(utm ? { utm } : {}), // 유입 채널 (있을 때만 — C5)
+        ...(demo ? { demo } : {}), // 성별·연령대 (본인 프로필 파생 — 2026-06-12)
         ts: serverTimestamp(),
         // 날짜 버킷 (집계 쿼리 효율) — KST 기준 YYYY-MM-DD
         day: kstDay(),
