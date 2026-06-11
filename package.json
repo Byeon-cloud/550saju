@@ -26,7 +26,7 @@
     "vite": "^6.4.1"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "^2.6.0",
+    "@apps-in-toss/web-framework": "^2.6.2",
     "@tosspayments/tosspayments-sdk": "^2.6.0",
     "firebase": "^10.14.1",
     "framer-motion": "^11.18.2",

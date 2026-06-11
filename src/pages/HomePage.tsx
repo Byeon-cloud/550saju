@@ -278,7 +278,8 @@ export function HomePage() {
               </span>
               <span className="text-[10px] font-extrabold px-2 py-1 rounded-full"
                 style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', letterSpacing: '0.04em' }}>
-                {premium.saleBadge} · 6월 15일까지
+                {/* 종료일은 pricing SSOT(saleEndDate)에서 동적 표기 — 하드코딩 드리프트 방지 */}
+                {premium.saleBadge}{premium.saleEndDate ? ` · ${Number(premium.saleEndDate.slice(5, 7))}월 ${Number(premium.saleEndDate.slice(8, 10))}일까지` : ''}
               </span>
             </>
           ) : (
