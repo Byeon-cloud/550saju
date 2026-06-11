@@ -11,7 +11,8 @@
  */
 export const OWNER_UIDS: string[] = [
   '6C4MSgYY5UMLBpsth0ehx3Pyj0K3', // 준기 · quswnsrl202@naver.com (구글 웹 로그인) · 안정적 권장
-  '8Nda5XA4GwQfyjOLJk54i0ADdTb2', // 준기 · 현재 PC 웹 익명 세션 (편의 등록 · 쿠키 삭제 시 무효 → 구글 로그인 권장)
+  '8Nda5XA4GwQfyjOLJk54i0ADdTb2', // 준기 · PC 웹 익명 세션 (편의 등록 · 쿠키 삭제 시 무효 → 구글 로그인 권장)
+  'biXRUeNouMhbtPVMDcaylJUqFqj1', // 준기 · saju500.app 익명 세션 (2026-06-11 등록 · 쿠키 삭제 시 무효)
   // 토스앱 로그인 uid 는 다름 — 토스앱에서도 어드민 보려면 그 uid 추가
 ];
 
