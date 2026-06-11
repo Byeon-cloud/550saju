@@ -222,6 +222,10 @@ export function DailyFortunePage() {
           console.warn('[DailyFortune] SSE 90s timeout → callable 폴백');
           finish('timeout');
         }, 90_000);
+        // 2026-06-11 P0 — 'done' 이벤트 유실 방어: A1·A2·B 3그룹이 모두 도착했으면
+        //   결과는 이미 완전함. done 이 8초 내 안 오면 그룹 머지본으로 자체 완료
+        //   (기존엔 90초 대기 후 callable 재생성 → 유저 90초+ 대기 + AI 비용 2배).
+        let allGroupsGraceId: ReturnType<typeof setTimeout> | null = null;
         // 첫 chunk 30초 timeout — 첫 chunk 안 오면 streaming 안 작동 가정
         const firstChunkTimeoutId = setTimeout(() => {
           if (!resolved) {
@@ -273,6 +277,20 @@ export function DailyFortunePage() {
                 setPhase('result');
               }
               console.log(`[DailyFortune] Group ${group} 완료 (${elapsedMs}ms) → 머지 갱신`);
+              // 3그룹 완비 → done 유실 대비 8초 유예 자체 완료
+              if (groupBuffer.A1 && groupBuffer.A2 && groupBuffer.B && !resolved && !allGroupsGraceId) {
+                allGroupsGraceId = setTimeout(() => {
+                  if (resolved) return;
+                  const full: any = { ...(groupBuffer.A1 || {}), ...(groupBuffer.A2 || {}), ...(groupBuffer.B || {}) };
+                  console.warn('[DailyFortune] done 미수신 — 3그룹 머지본으로 자체 완료');
+                  res = full;
+                  streamingDone = true;
+                  setResult(full);
+                  if (!phaseTransitioned) { phaseTransitioned = true; setPhase('result'); }
+                  clearTimeout(timeoutId);
+                  finish('all-groups-grace');
+                }, 8_000);
+              }
             } catch (err) {
               console.error('[DailyFortune] onGroup throw (가드됨):', err);
             }
@@ -285,6 +303,7 @@ export function DailyFortunePage() {
             console.log('[DailyFortune] SSE done', { cached, hasResult: !!streamResult });
             clearTimeout(timeoutId);
             clearTimeout(firstChunkTimeoutId);
+            if (allGroupsGraceId) clearTimeout(allGroupsGraceId);
             if (streamResult) {
               res = streamResult;
               streamingDone = true;
