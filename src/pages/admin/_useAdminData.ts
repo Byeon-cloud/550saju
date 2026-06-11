@@ -330,7 +330,7 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
 
         // 1) analytics — 현+전 기간 (최대 60일) 한 번에 fetch
         const evSnap = await getDocs(
-          query(collection(db, 'analytics'), where('day', '>=', fetchStart), orderBy('day'), limit(20000)),
+          query(collection(db, 'analytics'), where('day', '>=', fetchStart), orderBy('day'), limit(10000)),
         );
         evSnap.forEach((doc) => {
           const e = doc.data() as any;
@@ -382,7 +382,7 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
         // 3) aiUsage — 현+전 기간 토큰 원가
         try {
           const usageSnap = await getDocs(
-            query(collection(db, 'aiUsage'), where('day', '>=', fetchStart), orderBy('day'), limit(20000)),
+            query(collection(db, 'aiUsage'), where('day', '>=', fetchStart), orderBy('day'), limit(10000)),
           );
           usageSnap.forEach((doc) => {
             const u = doc.data() as any;
