@@ -155,10 +155,7 @@ Deno.serve(async (req) => {
     const parts = raw.split(/\n-{3,}\n/).map((s) => s.trim()).filter(Boolean);
     const body = parts[0] ?? raw;
     let replyChain: string[] = parts.slice(1);
-    if (replyChain.length === 0 && CTA_LINK) {
-      // "---" 안 쓰면 기본으로 링크만 대댓 하나
-      replyChain = [`전체 풀이 궁금하면 👉 ${CTA_LINK}`];
-    }
+    // 수동 글엔 링크 자동부착 안 함 (도배 방지) — 필요하면 --- 아래 직접 쓰기
 
     const { data: post, error } = await sb
       .from("posts")
