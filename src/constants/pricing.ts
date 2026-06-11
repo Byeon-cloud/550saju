@@ -101,7 +101,7 @@ export const PRODUCT_COST: Record<string, number> = {
 /* ──────────────────────────────────────────────────────────────────
  * 2026-05-28 PM — 토픽운·종합사주 세일 SSOT (준기 결정)
  *  · 주제운 정가 1운 (재회운만 정가 3운, 출시 세일 1운)
- *  · 종합사주 정가 10운, 런칭 세일 5운 (2026-06-15 까지)
+ *  · 종합사주 정가 10운, 런칭 세일 5운 (2026-06-30 까지 · 6월 한 달 런칭세일)
  *  · 세일 종료 시 saleEndDate 만료 → 자동 정가 적용 (코드 변경 0)
  *  · 모든 spendBalance() 호출은 getTopicPrice / getPremiumPrice 의 actualPrice 사용
  * ────────────────────────────────────────────────────────────────── */
@@ -168,13 +168,13 @@ export function getTopicPrice(topicId: string): PricingInfo {
   return resolvePricing(TOPIC_PRICING_RAW[topicId] || DEFAULT_TOPIC_PRICING);
 }
 
-/** 종합사주(프리미엄) raw 정의 — 2026-06-15 까지 런칭 세일 */
+/** 종합사주(프리미엄) raw 정의 — 2026-06-30 까지 런칭 세일 */
 const PREMIUM_PRICING_RAW: PricingDef = {
   regularPrice: 10,
   salePrice: 5,
   isOnSale: true,
   saleBadge: '런칭 세일',
-  saleEndDate: '2026-06-15',
+  saleEndDate: '2026-06-30',
 };
 
 /** 종합사주 가격 조회 */
