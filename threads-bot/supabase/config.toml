@@ -1,0 +1,6 @@
+# threads-bot supabase 설정 (폴더 유실 후 재생성 — 최소본)
+project_id = "threads-bot"
+
+# 텔레그램 웹훅은 JWT 없이 들어오므로 검증 면제 (보안은 시크릿 헤더로)
+[functions.telegram-webhook]
+verify_jwt = false
