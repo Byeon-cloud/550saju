@@ -101,6 +101,21 @@ Deno.serve(async (req) => {
 
     const raw = (msg.text as string).trim();
 
+    // 🔥 트렌드 글: "주제: 재선거 참정권" → 그 이슈를 사주로 엮은 글 생성
+    if (/^\/?(주제|트렌드)[:\s]/.test(raw)) {
+      const hint = raw.replace(/^\/?(주제|트렌드)\s*[:：]?\s*/, "").trim();
+      if (!hint) {
+        await sendMessage(BOT_TOKEN, chatId, "주제를 같이 적어줘. 예: 주제: 재선거 참정권");
+        return;
+      }
+      await sendMessage(BOT_TOKEN, chatId, `🔥 "${hint}" 사주로 엮어서 뽑는 중... 잠깐만!`);
+      fetch(`${SUPABASE_URL}/functions/v1/generate-content`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${SERVICE_KEY}` },
+        body: JSON.stringify({ account: accountId, content_type: "knowledge", topic_hint: hint }),
+      }).catch((e) => console.error("trend 호출 실패:", e));
+      return;
+    }
     // 시사 사주 분석: "분석: 오세훈 1961.1.4 / 정원오 ... / 누가 유리?"
     if (/^\/?(분석|이슈)/.test(raw)) {
       await sendMessage(BOT_TOKEN, chatId, "🔮 사주 분석 뽑는 중... 인물 사주 계산하느라 좀 걸려, 잠깐만!");
