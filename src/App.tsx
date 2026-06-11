@@ -212,11 +212,18 @@ export function App() {
 
     // 0-a2. P0 CS fix (2026-06-11) — 생성 중 앱 종료로 결과 못 받은 차감 운 자동 환불.
     //   토스트는 ToastProvider 밖이라 불가 → 공지 플래그 저장, HomePage 마운트에서 안내.
+    //   2026-06-12 보강: 튕긴 직후 바로 재진입하면 pending 이 아직 5분 미만이라 부팅 체크를
+    //   통과 못 함 → 다음 재시작까지 환불이 밀리던 빈틈. 만료 시점 이후 같은 세션에서 재검사.
     import('@/services/storage/localStore').then(({ reconcilePendingSpends }) => {
-      const refunded = reconcilePendingSpends();
-      if (refunded > 0) {
-        try { localStorage.setItem('saju500:refund_notice', String(refunded)); } catch { /* noop */ }
-      }
+      const settle = (refunded: number) => {
+        if (refunded > 0) {
+          try { localStorage.setItem('saju500:refund_notice', String(refunded)); } catch { /* noop */ }
+        }
+      };
+      settle(reconcilePendingSpends());
+      // 5분 만료 + 여유 15초 후 재검사 (성공 생성은 clearPendingSpend 로 이미 해제돼 영향 0)
+      const recheck = window.setTimeout(() => settle(reconcilePendingSpends()), 5 * 60 * 1000 + 15000);
+      window.addEventListener('beforeunload', () => window.clearTimeout(recheck), { once: true });
     }).catch(() => {});
 
     // 0-a3. CS 보상 자동 수령 (2026-06-11 · 앱인토스 전용) — compensations/{deviceId} 장부.
