@@ -964,9 +964,9 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               <span
                 className="text-[11px] font-bold px-2.5 py-1 rounded-full"
                 style={{ background: 'rgba(122,114,105,0.10)', color: '#7A7269', border: '1px solid rgba(122,114,105,0.20)' }}
-                title="서버 응답에 incomeSources 누락 — wealthType 기반 추정값"
+                title="재물 유형 기반 기본 구성으로 보여드려요"
               >
-                추정
+                참고
               </span>
             )}
           </div>

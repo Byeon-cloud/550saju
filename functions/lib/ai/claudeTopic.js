@@ -194,9 +194,9 @@ const TOPIC_CONFIGS = {
             "day": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"}
           },
           "partnerPillars": {
-            "year": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"},
-            "month": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"},
-            "day": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"}
+            "year": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
+            "month": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
+            "day": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"}
           },
           "interactions": [
             {"position": "년주/월주/일주", "type": "합/충/형/해/상생/상극", "desc": "의미 20자"}
@@ -389,9 +389,9 @@ const TOPIC_CONFIGS = {
             "day": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"}
           },
           "partnerPillars": {
-            "year": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"},
-            "month": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"},
-            "day": {"cheongan": "천간 추론", "jiji": "지지 추론", "oheng": "오행"}
+            "year": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
+            "month": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
+            "day": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"}
           },
           "interactions": [
             {"position": "년주/월주/일주", "type": "합/충/형/해/상생/상극", "desc": "의미 20자"}
@@ -537,7 +537,7 @@ const TOPIC_CONFIGS = {
 - 헤어진 기간이 주어지면: 그 기간 동안의 에너지 변화도 분석
 
 2. "상대방의 사주 성향 분석"
-- 상대방의 생년월일로 일간/오행 경향 추론
+- 상대방 사주는 🔒 서버 확정 간지 블록의 값만 사용 (생년월일로 직접 계산·추론 절대 금지)
 - 연애/이별에서의 성격 패턴: "이 사람은 ~한 상황에서 ~하는 타입"
 - 현재 감정 상태를 대운/세운 흐름으로 추론
 - 상대방이 재회를 원하는 정도를 사주적으로 분석
@@ -633,9 +633,9 @@ const TOPIC_CONFIGS = {
             "day": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"}
           },
           "partnerPillars": {
-            "year": {"cheongan": "천간 한자 (추론)", "jiji": "지지 한자 (추론)", "oheng": "오행"},
-            "month": {"cheongan": "천간 한자 (추론)", "jiji": "지지 한자 (추론)", "oheng": "오행"},
-            "day": {"cheongan": "천간 한자 (추론)", "jiji": "지지 한자 (추론)", "oheng": "오행"}
+            "year": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
+            "month": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
+            "day": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"}
           },
           "interactions": [
             {"position": "년주/월주/일주 중 하나", "type": "합(合)/충(沖)/형(刑)/해(害)/상생/상극 중 하나", "desc": "이 관계가 의미하는 것 20자"}
