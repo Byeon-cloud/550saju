@@ -10,6 +10,7 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import { BUSINESS_INFO } from '@/constants/businessInfo';
 
 const C = {
@@ -24,8 +25,8 @@ const C = {
 export function LegalFooter() {
   const navigate = useNavigate();
 
-  // 앱인토스에서는 토스가 판매자 → 비노출
-  if (isAppsInToss()) return null;
+  // 앱인토스에서는 토스가 판매자 → 비노출 (빌드타임 OR 런타임 — 혼용 금지)
+  if (isAppintosBuild || isAppsInToss()) return null;
 
   const b = BUSINESS_INFO;
   const infoLines: Array<[string, string]> = [

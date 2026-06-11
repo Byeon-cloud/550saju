@@ -19,6 +19,10 @@ export default defineConfig(({ mode }) => {
   define: {
     __APP_BUILD_ID__: JSON.stringify(buildId),
     __APP_VERSION__: JSON.stringify(pkg.version),
+    // 2026-06-11 — 빌드타임 타깃 확정 주입 (혼용 금지 게이트의 근거값).
+    //   기존엔 미주입 → src/lib/env.ts 가 항상 'webapp' 폴백 + 런타임 UA 에만 의존했음.
+    //   ait 빌드 = 'appintos' 확정 → 웹 전용 UI(동의모달·LegalFooter·회원탈퇴)가 앱 번들에서 빌드 레벨 차단.
+    'import.meta.env.VITE_BUILD_TARGET': JSON.stringify(isAitBuild ? 'appintos' : 'webapp'),
   },
   resolve: {
     // Array form 으로 specific alias 먼저 매칭. (object 면 '@' 가 먼저 매칭되어 '@/services/...' 가 안 잡힘)

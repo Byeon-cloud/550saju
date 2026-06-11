@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { getBalance, addPaidBalance } from '@/services/storage/localStore';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getHourBranch } from '@/utils/saju-format';
@@ -77,7 +78,9 @@ export function MyPage() {
   const location = useLocation();
   const { loading, isLoggedIn, user, login } = useAuth();
   const toast = useToast();
-  const inAppsInToss = useMemo(() => isAppsInToss(), []);
+  // 혼용 금지 (2026-06-11) — 빌드타임(isAppintosBuild) OR 런타임(isAppsInToss) 둘 중 하나라도
+  //   앱인토스면 앱 UX. ait 번들은 빌드 레벨에서 웹 전용 UI(동의모달·로그아웃·탈퇴) 차단.
+  const inAppsInToss = useMemo(() => isAppintosBuild || isAppsInToss(), []);
   const MENU_ITEMS = inAppsInToss ? MENU_ITEMS_AIT : MENU_ITEMS_WEB;
 
   const [balance, setBalance] = useState(0);

@@ -10,6 +10,7 @@ import { Header } from '@/components/layout/Header';
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import { BUSINESS_INFO } from '@/constants/businessInfo';
 
 const C = {
@@ -23,8 +24,8 @@ const C = {
 export function BusinessInfoPage() {
   usePageTitle('사업자정보');
 
-  // 앱인토스는 토스가 판매자 → 공개페이지 불필요. 홈으로.
-  if (isAppsInToss()) return <Navigate to="/" replace />;
+  // 앱인토스는 토스가 판매자 → 공개페이지 불필요. 홈으로. (빌드타임 OR 런타임 — 혼용 금지)
+  if (isAppintosBuild || isAppsInToss()) return <Navigate to="/" replace />;
 
   const b = BUSINESS_INFO;
   const rows: Array<[string, string]> = [
