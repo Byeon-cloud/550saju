@@ -30,7 +30,7 @@ const PREMIUM_HERO_GRAD = 'linear-gradient(135deg,#C9A968 0%,#A8804A 60%,#7A5C30
 export function PremiumSelectPage() {
   usePageTitle('종합 사주 풀이');
   useSeoMeta({
-    description: '10개 운으로 보는 인생 전체 풀이. 정통 명리학 6대 원전 기반 종합사주 프리미엄 리포트, 사주 500.',
+    description: '10개 운으로 보는 인생 전체 풀이. 정통 명리학 6대 원전 기반 종합사주 프리미엄 리포트, 사주500.',
   });
   const navigate = useNavigate();
   const toast = useToast();
@@ -160,7 +160,7 @@ export function PremiumSelectPage() {
               letterSpacing: '0.02em',
             }}
           >
-            사주 500 · 종합 사주
+            사주500 · 종합 사주
           </div>
           <div
             style={{

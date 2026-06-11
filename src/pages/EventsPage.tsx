@@ -246,7 +246,7 @@ export function EventsPage() {
               <path d="M8.5 10.5l7-3.5M8.5 13.5l7 3.5" />
             </svg>
             <h3 className="text-[16px] font-bold" style={{ color: C.navy, fontFamily: SERIF }}>
-              친구에게 사주 500 소개하기
+              친구에게 사주500 소개하기
             </h3>
           </header>
           <p className="text-[12px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>

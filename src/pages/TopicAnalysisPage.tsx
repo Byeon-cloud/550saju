@@ -3160,7 +3160,7 @@ export function TopicAnalysisPage() {
   // toast 제거 — F5 (AI 실패 inline error 카드) 로 대체. 향후 다른 알림 필요 시 useToast 재추가.
   usePageTitle(topic?.label || '심층분석');
   useSeoMeta({
-    description: `${topic?.label || '주제별'} 사주 심층 분석 — 정통 명리학으로 풀어내는 나의 ${topic?.label || '운세'}. 사주 500 주제별 분석.`,
+    description: `${topic?.label || '주제별'} 사주 심층 분석 — 정통 명리학으로 풀어내는 나의 ${topic?.label || '운세'}. 사주500 주제별 분석.`,
   });
 
   // 보관함에서 저장된 결과 또는 사주리포트에서 baseScore를 넘겨받은 경우

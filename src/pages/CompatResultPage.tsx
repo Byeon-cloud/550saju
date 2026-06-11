@@ -153,7 +153,7 @@ export function CompatResultPage() {
       <FadeIn>
         <ExtensionHero
           theme={compatTheme}
-          crumb="사주 500 · 더 알아볼 주제 · 궁합"
+          crumb="사주500 · 더 알아볼 주제 · 궁합"
           sub={`${state.person1.name} × ${state.person2.name} · ${state.relation}`}
           seal="合"
         />

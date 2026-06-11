@@ -78,7 +78,7 @@ interface DateInfo {
 export function DailyFortunePage() {
   usePageTitle('오늘의 운세');
   useSeoMeta({
-    description: '오늘의 운세를 명리학으로 무료로 풀이해드려요. 매일 보는 나의 운세, 사주 500.',
+    description: '오늘의 운세를 명리학으로 무료로 풀이해드려요. 매일 보는 나의 운세, 사주500.',
   });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -590,7 +590,7 @@ function SelectView({
               position: 'relative',
             }}
           >
-            사주 500 · 오늘의 운세 · {dateInfo.label}
+            사주500 · 오늘의 운세 · {dateInfo.label}
           </div>
           <div
             style={{

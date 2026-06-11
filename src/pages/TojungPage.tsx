@@ -192,7 +192,7 @@ export function TojungPage() {
       <FadeIn>
         <ExtensionHero
           theme={tojungTheme}
-          crumb="사주 500 · 더 알아볼 주제 · 토정비결"
+          crumb="사주500 · 더 알아볼 주제 · 토정비결"
           sub="토정 이지함 선생의 풀이법으로 한 해를 열두 달로 나눠 봅니다."
           seal="歲"
         />

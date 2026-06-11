@@ -125,7 +125,7 @@ export function CompatibilityPage() {
       <FadeIn>
         <ExtensionHero
           theme={compatTheme}
-          crumb="사주 500 · 더 알아볼 주제 · 궁합"
+          crumb="사주500 · 더 알아볼 주제 · 궁합"
           sub="생년월일·시 두 분의 자료를 5가지 관점에서 비교합니다."
           seal="合"
         />

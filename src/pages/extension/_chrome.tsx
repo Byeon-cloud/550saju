@@ -110,7 +110,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
  * ═════════════════════════════════════════════════════════════════ */
 export interface ExtensionHeroProps {
   theme: ExtensionTheme;
-  /** crumb — 예: "사주 500 · 더 알아볼 주제 · 궁합" (compat/tojung 만 사용) */
+  /** crumb — 예: "사주500 · 더 알아볼 주제 · 궁합" (compat/tojung 만 사용) */
   crumb?: string;
   /** sub — 일간/생년/대운 정보 또는 자유 문구 */
   sub?: string;
