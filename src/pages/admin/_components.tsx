@@ -13,6 +13,7 @@ export const CONTENT_LABEL: Record<string, string> = {
   daily: '오늘운세', dream: '꿈해몽', topic: '주제분석', premium: '종합사주',
   report: '종합사주', chat: '사주대화',
   deepDream: '심층해몽', daeun: '대운', monthly: '월운', compat: '궁합', tojung: '토정비결',
+  basic: '1운 리포트', compatibility: '궁합',
 };
 export const CONTENT_COLORS = ['#B5441F', '#1A1A1A', '#5A7CA8', '#B8965A', '#6FA08C', '#9C5A8A'];
 

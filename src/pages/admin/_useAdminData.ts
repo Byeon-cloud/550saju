@@ -429,7 +429,7 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
           const repSnap = await getDocs(collectionGroup(db, 'reports'));
           repSnap.forEach((doc) => {
             const r = doc.data() as any;
-            const t = r.contentType || 'report';
+            const t = r.contentType || r.type || 'report'; // 서버 문서는 type 필드 (premium/basic/...)
             reportsByType[t] = (reportsByType[t] ?? 0) + 1;
           });
         } catch { /* noop */ }

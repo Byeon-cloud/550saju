@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.loginWithToss = void 0;
+exports.fixPayDatesOnce = exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.loginWithToss = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -2038,4 +2038,6 @@ exports.generatePremiumPdf = (0, https_1.onCall)({
         throw new https_1.HttpsError('internal', `PDF 생성 실패: ${err?.message || 'unknown'}`);
     }
 });
+var fixPayDatesOnce_1 = require("./admin/fixPayDatesOnce");
+Object.defineProperty(exports, "fixPayDatesOnce", { enumerable: true, get: function () { return fixPayDatesOnce_1.fixPayDatesOnce; } });
 //# sourceMappingURL=index.js.map

@@ -30,6 +30,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 어드민 콘텐츠 생성 집계 (2026-06-12) — 서버가 최상위 reports 에 기록 (admin SDK 쓰기).
+    //   collectionGroup('reports') 조회용 룰 부재 → 어드민 '콘텐츠 생성 누적' 0 으로 나오던 원인.
+    match /{path=**}/reports/{rid} {
+      allow read: if isOwner();
+    }
+
     // CS 보상 장부 (2026-06-11) — 접근은 claimCompensation callable(admin SDK)로만. 클라 직접 접근 차단.
     match /compensations/{deviceId} {
       allow read, write: if false;
