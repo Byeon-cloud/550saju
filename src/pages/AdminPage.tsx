@@ -38,7 +38,7 @@ const RANGES: RangeDays[] = [7, 14, 30];
 export function AdminPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const owner = isOwner(user?.uid);
+  const owner = isOwner(user?.uid, user?.email);
 
   const [range, setRange] = useState<RangeDays>(14);
   const [tab, setTab] = useState<TabId>('overview');
@@ -50,9 +50,25 @@ export function AdminPage() {
       <div style={{ minHeight: '100vh', background: C.paper, padding: '40px 20px' }}>
         <h1 style={{ fontSize: 18, fontWeight: 800, color: C.ink }}>어드민 — 접근 권한 없음</h1>
         <p style={{ fontSize: 13, color: C.mute, marginTop: 12, lineHeight: 1.6 }}>
-          이 화면을 보려면 아래 <b>uid</b> 를 어드민으로 등록해야 해요.<br />
-          (개발자에게 이 uid 를 전달 → adminConfig.ts + firestore.rules 에 추가 후 재배포)
+          <b>구글로 로그인하면 어떤 브라우저에서든 항상 열려요</b> (이메일 기준 영구 등록).<br />
+          익명 세션 uid 는 쿠키가 지워질 때마다 바뀌어서 자꾸 풀리는 거예요.
         </p>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const { signIn } = await import('@/services/auth/authService');
+              await signIn('google');
+              window.location.reload();
+            } catch { /* 취소/실패 — 무시 */ }
+          }}
+          style={{
+            marginTop: 14, padding: '12px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
+            background: C.gold, color: '#fff', fontSize: 14, fontWeight: 800,
+          }}
+        >
+          구글로 로그인 (영구 등록)
+        </button>
         <div style={{ marginTop: 16, padding: 14, background: C.surface, border: `1px solid ${C.line}`, borderRadius: 12 }}>
           <div style={{ fontSize: 11, color: C.mute, marginBottom: 6 }}>현재 로그인 uid</div>
           <code style={{ fontSize: 13, fontWeight: 700, color: C.goldDeep, wordBreak: 'break-all' }}>

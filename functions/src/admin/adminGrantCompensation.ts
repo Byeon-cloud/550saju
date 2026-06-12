@@ -22,7 +22,10 @@ export const adminGrantCompensation = onCall(
   { timeoutSeconds: 15, memory: '256MiB', cors: true },
   async (request) => {
     const uid = request.auth?.uid;
-    if (!uid || !OWNER_UIDS.includes(uid)) throw new HttpsError('permission-denied', '오너 전용');
+    const email = String(request.auth?.token?.email || '').toLowerCase();
+    if (!uid || (!OWNER_UIDS.includes(uid) && email !== 'quswnsrl202@naver.com')) {
+      throw new HttpsError('permission-denied', '오너 전용');
+    }
 
     const action = String(request.data?.action || 'grant');
     const deviceId = String(request.data?.deviceId || '').trim().toLowerCase();

@@ -13,9 +13,17 @@ export const OWNER_UIDS: string[] = [
   '6C4MSgYY5UMLBpsth0ehx3Pyj0K3', // 준기 · quswnsrl202@naver.com (구글 웹 로그인) · 안정적 권장
   '8Nda5XA4GwQfyjOLJk54i0ADdTb2', // 준기 · PC 웹 익명 세션 (편의 등록 · 쿠키 삭제 시 무효 → 구글 로그인 권장)
   'biXRUeNouMhbtPVMDcaylJUqFqj1', // 준기 · saju500.app 익명 세션 (2026-06-11 등록 · 쿠키 삭제 시 무효)
+  '91KZVwV9foacOMJXMMZ9eWmZ4FQ2', // 준기 · 익명 세션 (2026-06-12 응급 등록 · 쿠키 삭제 시 무효)
   // 토스앱 로그인 uid 는 다름 — 토스앱에서도 어드민 보려면 그 uid 추가
 ];
 
-export function isOwner(uid: string | null | undefined): boolean {
+/** 영구 오너 — 이메일 기준 (2026-06-12). 익명 uid 는 쿠키 삭제마다 바뀌어 '됐다 안 됐다' 문제의 원인.
+ *  구글 로그인 1번이면 어떤 브라우저·기기에서든 영구 통과. firestore.rules isOwner() 와 동일 유지. */
+export const OWNER_EMAILS: string[] = [
+  'quswnsrl202@naver.com',
+];
+
+export function isOwner(uid: string | null | undefined, email?: string | null): boolean {
+  if (email && OWNER_EMAILS.includes(email.toLowerCase())) return true;
   return !!uid && OWNER_UIDS.includes(uid);
 }

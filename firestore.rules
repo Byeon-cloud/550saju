@@ -4,11 +4,15 @@ service cloud.firestore {
     // 2026-05-29 어드민 — 오너 uid 만 집계 데이터 접근. src/services/admin/adminConfig.ts 와 동일하게 유지.
     //   ⚠️ /admin 에서 본인 uid 확인 후 아래 목록 + adminConfig.ts 둘 다에 추가 + 재배포.
     function isOwner() {
-      return request.auth != null && request.auth.uid in [
+      // 영구 오너 — 구글 로그인 이메일 (익명 uid 회전 문제 해결 · 2026-06-12)
+      return request.auth != null && (
+        request.auth.token.email == 'quswnsrl202@naver.com' ||
+        request.auth.uid in [
         '6C4MSgYY5UMLBpsth0ehx3Pyj0K3', // 준기 · quswnsrl202@naver.com (구글 웹)
         '8Nda5XA4GwQfyjOLJk54i0ADdTb2', // 준기 · PC 웹 익명 세션 (편의)
-        'biXRUeNouMhbtPVMDcaylJUqFqj1'  // 준기 · saju500.app 익명 세션 (2026-06-11)
-      ];
+        'biXRUeNouMhbtPVMDcaylJUqFqj1', // 준기 · saju500.app 익명 세션 (2026-06-11)
+        '91KZVwV9foacOMJXMMZ9eWmZ4FQ2'  // 준기 · 익명 세션 (2026-06-12 응급)
+      ]);
     }
 
     // 이벤트 로그 (어드민 대시보드 소스) — 로그인 유저면 append, 읽기는 오너만.
