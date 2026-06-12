@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { DesktopBrandPanel } from '@/components/layout/DesktopBrandPanel';
 import { SajuProvider } from '@/contexts/SajuContext';
 import { TabBar } from '@/components/layout/TabBar';
 import { BalanceBar } from '@/components/layout/BalanceBar';
@@ -361,6 +362,7 @@ export function App() {
         <SajuProvider>
           <ToastProvider>
           <ScrollToTop />
+          <DesktopBrandPanel />
           <div className="app-container">
             <BalanceBar />
             <AnimatedRoutes />
