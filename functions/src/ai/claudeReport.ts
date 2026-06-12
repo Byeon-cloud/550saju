@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { logAiUsage } from '../shared/aiUsageLog';
 
 /**
@@ -276,6 +276,7 @@ function buildSystemPrompt(sajuData: any, group: ReportGroup): string {
 
   return `당신은 사주500 명리학 해석가입니다.
 ${MYEONGRI_GROUNDS_BLOCK}
+${GOOSEBUMP_BLOCK}
 
 명리학(命理學) 깊이 있는 해석 — 자평진전·적천수·궁통보감 6대 원전 정통.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전에 정통한 전문가로서,

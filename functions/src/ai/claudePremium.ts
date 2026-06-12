@@ -21,7 +21,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
-import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { logAiUsage } from '../shared/aiUsageLog';
 
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
@@ -477,6 +477,7 @@ const STATIC_SYSTEM_PROMPT = `당신은 사주500 명리학 해석가입니다.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전 + 김만태 박사 논문 + 박청화 『춘하추동 신사주학』에 정통합니다.
 
 ${MYEONGRI_GROUNDS_BLOCK}
+${GOOSEBUMP_BLOCK}
 
 이 응답은 사주500의 **프리미엄 종합 사주(10운)** 풀이입니다. 1운 본격 풀이보다 **두 배 이상 깊고**, **사주 글자에서 추출한 진짜 근거** 가 또렷한, **한 사람만의 결** 을 그려야 합니다.
 
