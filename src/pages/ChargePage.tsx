@@ -14,6 +14,8 @@ import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { isAppintosBuild } from '@/lib/env';
+import { isPortoneTestEnabled, requestPortoneTestPayment } from '@/services/payment/portonePayment';
+import type { PortonePgMethod } from '@/services/payment/portonePayment';
 
 // ── SSOT 토큰 (D1 fix 2026-04-23 / #55)
 const C = {
@@ -100,6 +102,9 @@ export function ChargePage() {
   const [selected, setSelected] = useState(initialSelected);
   const [balance, setBalanceDisplay] = useState(() => getBalance());
   const [purchasing, setPurchasing] = useState(false);
+  // PG 입점심사용 테스트 결제 (2026-06-12) — 웹 전용 · 운 적립 없음 · 자동취소
+  const [showPgSheet, setShowPgSheet] = useState(false);
+  const portoneTest = !isAppintosBuild && isPortoneTestEnabled();
   const [remainingShares, setRemainingShares] = useState(() => getRemainingShareRewards());
 
   // p15 → CHARGE_PACKAGES[3] (4 패키지 정정 후 마지막 인덱스)
@@ -169,6 +174,8 @@ export function ChargePage() {
   // ── 결제 핸들러
   const handlePurchase = async () => {
     if (!selectedPkg || purchasing) return;
+    // PG 심사용 테스트 결제 — 결제수단 선택 시트 (실청구 X · 운 적립 X)
+    if (portoneTest) { setShowPgSheet(true); return; }
     setPurchasing(true);
     const result = await purchasePackage(selectedPkg);
     setPurchasing(false);
@@ -186,6 +193,20 @@ export function ChargePage() {
     } else {
       toast.show(result.message, 'warning');
     }
+  };
+
+  // PG 심사용 테스트 결제 실행 (2026-06-12) — 운 적립 절대 없음
+  const handlePgTest = async (method: PortonePgMethod) => {
+    if (!selectedPkg || purchasing) return;
+    setShowPgSheet(false);
+    setPurchasing(true);
+    const r = await requestPortoneTestPayment({
+      method,
+      amount: selectedPkg.price,
+      orderName: `사주500 ${selectedPkg.un}운 충전`,
+    });
+    setPurchasing(false);
+    toast.show(r.message, r.ok ? 'success' : r.cancelled ? 'info' : 'warning');
   };
 
   // ── 공유 핸들러 — 전 앱 통합 (inviteFriendsViaToss SSOT)
@@ -598,6 +619,47 @@ export function ChargePage() {
             </div>
             {/* iOS 홈바 영역 흡수 */}
             <div style={{ height: 'env(safe-area-inset-bottom)', background: C.ink }} />
+
+            {/* PG 심사용 테스트 결제수단 시트 (2026-06-12 · 웹 전용) */}
+            <AnimatePresence>
+              {showPgSheet && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    onClick={() => setShowPgSheet(false)}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.45)', zIndex: 60 }}
+                  />
+                  <motion.div
+                    initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+                    style={{
+                      position: 'fixed', left: '50%', bottom: 0, transform: 'translateX(-50%)',
+                      width: '100%', maxWidth: 520, background: C.paper,
+                      borderRadius: '20px 20px 0 0', padding: '22px 20px calc(20px + env(safe-area-inset-bottom))',
+                      zIndex: 61, boxSizing: 'border-box',
+                    }}
+                  >
+                    <p style={{ fontSize: 16, fontWeight: 800, color: C.ink, margin: 0 }}>결제 수단 선택</p>
+                    <p style={{ fontSize: 12, color: C.mute, margin: '6px 0 16px', lineHeight: 1.6 }}>
+                      지금은 결제 시스템 점검(테스트) 중이에요 — 실제로 청구되지 않고 자동 취소됩니다.
+                    </p>
+                    <button onClick={() => handlePgTest('card')} style={{
+                      width: '100%', height: 52, borderRadius: 12, border: 'none', cursor: 'pointer',
+                      background: C.ink, color: C.paper, fontSize: 15, fontWeight: 700, marginBottom: 10,
+                    }}>카드 결제</button>
+                    <button onClick={() => handlePgTest('kakaopay')} style={{
+                      width: '100%', height: 52, borderRadius: 12, border: 'none', cursor: 'pointer',
+                      background: '#FEE500', color: '#1A1A1A', fontSize: 15, fontWeight: 700, marginBottom: 10,
+                    }}>카카오페이</button>
+                    <button onClick={() => setShowPgSheet(false)} style={{
+                      width: '100%', height: 44, borderRadius: 12, cursor: 'pointer',
+                      border: '1px solid rgba(26,26,26,0.12)', background: 'transparent',
+                      color: C.mute, fontSize: 14, fontWeight: 600,
+                    }}>닫기</button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
