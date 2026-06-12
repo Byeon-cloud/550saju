@@ -93,7 +93,7 @@ export function TabContent({ d }: { d: AdminData }) {
 
       <Section
         title="전 콘텐츠 분포 (DB 복원 — 전 기간)"
-        caption="· 종합사주~토정 = reports / 오늘운세 = dailyFortune 문서 / 꿈해몽무료·사주대화 = AI 호출 기록 (6/10부터·유저 수 집계불가는 —)"
+        caption="· 출시 라인업만 막대 표시 — [기간 N] = 위에서 고른 기간 내 생성 · 오늘운세는 6/12 기록 시작(이전 스트림 사용은 소급 불가) · 유저 수 집계불가는 —"
       >
         {(() => {
           const DIST_LABEL: Record<string, string> = {
@@ -101,25 +101,42 @@ export function TabContent({ d }: { d: AdminData }) {
             daily: '오늘의 운세', deepDream: '꿈해몽 유료(심층)', dreamFree: '꿈해몽 무료', chat: '사주대화',
             daeun: '대운', monthly: '월운', compatibility: '궁합', compat: '궁합', tojung: '토정비결', weekly: '주간(폐지)',
           };
-          const rows = Object.entries(d.contentDistAll || {})
-            .map(([t, v]) => ({ t, label: DIST_LABEL[t] || t, count: v.count, users: v.users }))
+          // 출시 라인업 vs 미출시·테스트 분리 (2026-06-12) — 1운리포트·토정·대운·궁합·월운은
+          // 실유저에게 노출된 적 없는 상품 → 전부 개발·테스트 기간 기록. 섞으면 분포가 거짓이 됨.
+          const LIVE_TYPES = new Set(['topic', 'premium', 'daily', 'deepDream', 'dreamFree', 'chat']);
+          const periodOf = (t: string) => (cur.genByDayType[t] ?? []).reduce((a, b) => a + b, 0);
+          const all = Object.entries(d.contentDistAll || {})
+            .map(([t, v]) => ({ t, label: DIST_LABEL[t] || t, count: v.count, users: v.users, period: periodOf(t) }))
             .sort((a, b) => b.count - a.count);
-          if (rows.length === 0) return <Empty />;
-          const max = rows[0].count || 1;
+          const live = all.filter((r) => LIVE_TYPES.has(r.t));
+          const test = all.filter((r) => !LIVE_TYPES.has(r.t));
+          if (all.length === 0) return <Empty />;
+          const max = (live[0]?.count || 1);
           return (
             <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '14px 16px' }}>
-              {rows.map((r, i) => (
+              {live.map((r, i) => (
                 <div key={r.t} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
                   <span style={{ width: 110, fontSize: 12, fontWeight: 700, color: C.ink, flexShrink: 0 }}>{r.label}</span>
                   <div style={{ flex: 1, height: 14, background: '#F3EFE6', borderRadius: 7, overflow: 'hidden' }}>
-                    <div style={{ width: `${Math.max(3, Math.round((r.count / max) * 100))}%`, height: '100%', background: CONTENT_COLORS[i % CONTENT_COLORS.length], borderRadius: 7 }} />
+                    <div style={{ width: `${Math.max(3, Math.round((Math.min(r.count, max) / max) * 100))}%`, height: '100%', background: CONTENT_COLORS[i % CONTENT_COLORS.length], borderRadius: 7 }} />
                   </div>
-                  <span style={{ width: 130, fontSize: 12, color: C.ink, textAlign: 'right', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                  <span style={{ width: 190, fontSize: 12, color: C.ink, textAlign: 'right', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
                     <b>{fmtNum(r.count)}건</b>
                     <span style={{ color: C.mute }}> {r.users == null ? '(유저 —)' : `(${fmtNum(r.users)}명)`}</span>
+                    <span style={{ color: C.goldDeep, fontWeight: 700 }}> [기간 {fmtNum(r.period)}]</span>
                   </span>
                 </div>
               ))}
+              {test.length > 0 && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${C.line}` }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: C.mute, marginBottom: 4 }}>
+                    미출시·내부 테스트 — 실유저 노출 0 (개발 기간 기록 · 분포에서 제외)
+                  </p>
+                  <p style={{ fontSize: 11, color: C.mute, margin: 0, lineHeight: 1.8 }}>
+                    {test.map((r) => `${r.label} ${fmtNum(r.count)}건`).join(' · ')}
+                  </p>
+                </div>
+              )}
             </div>
           );
         })()}

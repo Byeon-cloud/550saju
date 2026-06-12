@@ -514,10 +514,15 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
         } catch { /* noop */ }
         // 4-b) 오늘운세 — users/*/dailyFortune/{YYYY-MM-DD} collectionGroup (docId = 날짜 → 과거 전체 복원)
         const dailyDist = { count: 0, userSet: new Set<string>() };
+        const dailySeen = new Set<string>(); // uid+day 중복 제거 (plain date 마커 + legacy date_v6 캐시 공존)
         try {
           const dfSnap = await getDocs(collectionGroup(db, 'dailyFortune'));
           dfSnap.forEach((doc) => {
-            const dday = doc.id; // YYYY-MM-DD
+            const dday = doc.id.slice(0, 10); // 'YYYY-MM-DD' 또는 'YYYY-MM-DD_v6' → 날짜만
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dday)) return;
+            const dedupeKey = `${doc.ref.parent.parent?.id || ''}|${dday}`;
+            if (dailySeen.has(dedupeKey)) return;
+            dailySeen.add(dedupeKey);
             const duid = doc.ref.parent.parent?.id || '';
             dailyDist.count += 1;
             if (duid) dailyDist.userSet.add(duid);
@@ -566,7 +571,10 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
           Object.entries(reportsByType).forEach(([t, n]) => {
             contentDistAll[t] = { count: n, users: typeUserSets[t]?.size ?? 0 };
           });
-          contentDistAll['daily'] = { count: dailyDist.count, users: dailyDist.userSet.size };
+          // 오늘운세 — 마커 도입(6/12) 이전 스트림 사용은 기록이 없어 aiUsage 호출 수로 폴백 보정
+        contentDistAll['daily'] = dailyDist.count >= (aiCallDist['daily'] ?? 0)
+          ? { count: dailyDist.count, users: dailyDist.userSet.size }
+          : { count: aiCallDist['daily'] ?? 0, users: null };
           if (aiCallDist['dream']) contentDistAll['dreamFree'] = { count: aiCallDist['dream'], users: null };
           if (aiCallDist['chat']) contentDistAll['chat'] = { count: aiCallDist['chat'], users: null };
           setData({ totalUsers, topicDistAll: topicDistFinal, topicSubAll, contentDistAll, totalRevenue, todayRevenue, reportsByType, cur, prev, rawEvents, fetchedAt: new Date() });

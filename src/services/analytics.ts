@@ -114,7 +114,7 @@ function initCtaTracking(): void {
       if (!el) return;
       if (window.location.pathname.startsWith('/admin')) return; // 어드민 자체 클릭 제외
       const label = (el.getAttribute('aria-label') || el.textContent || '')
-        .replace(/\s+/g, ' ').trim().slice(0, 40);
+        .replace(/\s+/g, ' ').trim().slice(0, 24); // 카드 통째 텍스트 이어붙음 노이즈 컷 (2026-06-12)
       if (!label) return;
       const now = Date.now();
       if (label === lastCta.label && now - lastCta.at < 800) return;

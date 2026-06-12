@@ -787,6 +787,13 @@ export const generateDailyFortuneStream = onRequest(
           && Array.isArray(content.meetPeople) && content.luckyProfile;
         if (content && isV6) {
           console.log(`[dailyFortuneStream] L1 SHARED HIT key=${sharedCacheKey}`);
+          // 사용 마커 (2026-06-12 어드민 '오늘의 운세' 집계) — 익명 포함 · fire-and-forget.
+          //   기존엔 공유캐시 히트 시 기록 0 + 익명 제외 → 어드민 오늘운세 0건의 원인.
+          if (uid !== 'anonymous') {
+            db.doc(`users/${uid}/dailyFortune/${date}`)
+              .set({ servedAt: admin.firestore.FieldValue.serverTimestamp(), via: 'shared' }, { merge: true })
+              .catch(() => { /* noop */ });
+          }
           sendEvent('done', { result: content, cached: true, cacheLevel: 'shared' });
           res.end();
           return;
@@ -960,6 +967,13 @@ export const generateDailyFortuneStream = onRequest(
         console.log(`[dailyFortuneStream] shared cache saved key=${sharedCacheKey}`);
       } catch (e: any) {
         console.warn('[dailyFortuneStream] shared cache save failed:', e?.message);
+      }
+
+      // 사용 마커 (2026-06-12 어드민 집계) — 익명 포함. legacy 콘텐츠 캐시와 별개 (plain date 문서).
+      if (uid !== 'anonymous') {
+        db.doc(`users/${uid}/dailyFortune/${date}`)
+          .set({ servedAt: admin.firestore.FieldValue.serverTimestamp(), via: 'stream' }, { merge: true })
+          .catch(() => { /* noop */ });
       }
 
       // 유저별 캐시 (legacy v5 호환 — 기존 구독/저장 로직 유지)
