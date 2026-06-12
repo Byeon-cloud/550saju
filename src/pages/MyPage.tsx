@@ -1167,12 +1167,12 @@ function LoginModal({ open, onClose, toast, onLogin }: {
   open: boolean;
   onClose: () => void;
   toast: ReturnType<typeof useToast>;
-  onLogin: (provider?: 'kakao' | 'naver' | 'apple') => Promise<any>;
+  onLogin: (provider?: 'kakao' | 'naver' | 'apple' | 'google') => Promise<any>;
 }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
-  const handleLogin = async (provider: 'kakao' | 'naver' | 'apple') => {
+  const handleLogin = async (provider: 'kakao' | 'naver' | 'apple' | 'google') => {
     if (busy) return;
     setBusy(true);
     try {
@@ -1280,6 +1280,21 @@ function LoginModal({ open, onClose, toast, onLogin }: {
                   <text x="3" y="18" fontSize="16" fontWeight="900" fill="#fff">N</text>
                 </svg>
                 네이버 계속하기
+              </button>
+
+              {/* 구글 — GoogleAuthProvider (2026-06-12 추가 — 모달에 구글만 빠져 있던 것) */}
+              <button type="button"
+                onClick={() => handleLogin('google')}
+                disabled={busy}
+                className="w-full flex items-center justify-center gap-3 rounded-2xl font-semibold text-[16px]"
+                style={{ height: 52, background: '#FFFFFF', color: C.ink, border: '1px solid rgba(26,26,26,0.15)', opacity: busy ? 0.6 : 1 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
+                  <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.57 5.57 0 0 1-2.4 3.58v2.98h3.87c2.26-2.09 3.55-5.17 3.55-8.8z" />
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.94-2.93l-3.87-2.98c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.07A11.99 11.99 0 0 0 12 24z" />
+                  <path fill="#FBBC05" d="M5.27 14.29A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.29V6.64H1.29a11.99 11.99 0 0 0 0 10.72l3.98-3.07z" />
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.94 1.19 15.23 0 12 0A11.99 11.99 0 0 0 1.29 6.64l3.98 3.07C6.22 6.86 8.87 4.75 12 4.75z" />
+                </svg>
+                구글 계속하기
               </button>
 
               {/* Apple — OAuthProvider('apple.com') 정식 연결 (#auth-apple) */}
