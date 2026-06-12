@@ -77,13 +77,13 @@ export function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { loading, isLoggedIn, user, login } = useAuth();
-  // 2026-06-12 fix — 익명 세션(부팅 자동 로그인)이 '로그인됨'으로 취급돼 로그인 모달을 건너뛰고
-  //   동의 모달부터 뜨던 버그. 웹은 진짜 계정(비익명)만 로그인으로 인정. 앱인토스는 토스 신원 우산 유지.
-  const realLoggedIn = isLoggedIn && (inAppsInToss || (!!user && !user.isAnonymous));
   const toast = useToast();
   // 혼용 금지 (2026-06-11) — 빌드타임(isAppintosBuild) OR 런타임(isAppsInToss) 둘 중 하나라도
   //   앱인토스면 앱 UX. ait 번들은 빌드 레벨에서 웹 전용 UI(동의모달·로그아웃·탈퇴) 차단.
   const inAppsInToss = useMemo(() => isAppintosBuild || isAppsInToss(), []);
+  // 2026-06-12 fix — 익명 세션(부팅 자동 로그인)이 '로그인됨'으로 취급돼 로그인 모달을 건너뛰고
+  //   동의 모달부터 뜨던 버그. 웹은 진짜 계정(비익명)만 로그인으로 인정. 앱인토스는 토스 신원 우산 유지.
+  const realLoggedIn = isLoggedIn && (inAppsInToss || (!!user && !user.isAnonymous));
   const MENU_ITEMS = inAppsInToss ? MENU_ITEMS_AIT : MENU_ITEMS_WEB;
 
   const [balance, setBalance] = useState(0);
