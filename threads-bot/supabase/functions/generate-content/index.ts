@@ -61,13 +61,19 @@ Deno.serve(async (req) => {
   }
 
   // 매크로 티 방지: 떡밥성 타입은 매번 구성(구조)을 랜덤으로 바꿈
-  const useFormat = contentType === "knowledge" || contentType === "zodiac";
+  const useFormat = !topicHint && (contentType === "knowledge" || contentType === "zodiac");
   const formatHint = useFormat
     ? FORMAT_RECIPES[Math.floor(Math.random() * FORMAT_RECIPES.length)]
     : undefined;
 
   // 주제 힌트에 생일(인물)이 있으면 → 진짜 만세력 계산해서 근거로 주입 (사주 지어내기 방지)
   let personSaju = "";
+  // 힌트에서 인물 이름 추출: "홍명보 감독(1969..." / "손흥민(1992..." 패턴
+  let personName = "";
+  if (topicHint) {
+    const nm = topicHint.match(/([가-힣]{2,4})\s*(?:감독|선수|의원|시장|대표|배우|가수|작가|회장)?\s*\(\s*(?:19|20)\d{2}/);
+    if (nm) personName = nm[1];
+  }
   if (topicHint) {
     const m = topicHint.match(/((?:19|20)\d{2})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/);
     if (m) {
@@ -80,12 +86,23 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1) BRAIN 생성
-    const out = await geminiJSON(
+    // 1) BRAIN 생성 (인물 이름 검증 — 환각 시 최대 3회 재생성)
+    let out: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      out = await geminiJSON(
       GEMINI_API_KEY,
       systemPromptFor(account),
-      buildUserPrompt(contentType, ctx, ganji, formatHint) + (topicHint ? "\n\n[오늘의 주제/이슈] " + topicHint + "\n이 이슈가 오늘 글의 중심 소재다. 빙빙 돌리지 말고 이슈 자체를 직접 언급하면서(예: 투표날이면 '오늘 투표하는 날이잖아') 사주 관점으로 엮어라. 오늘이 사주로 어떤 기운의 날인지 + 누구나 공감할 좋은 바람 한 줄. 단 특정 정당/인물 지지나 비방만 절대 금지." : "") + personSaju,
+      (topicHint ? "⚠️ 최우선 임무: 아래 [오늘의 주제/이슈]가 이 글의 중심 소재다. 다른 주제로 새지 마라.\n[오늘의 주제/이슈] " + topicHint + "\n→ 이슈 자체를 직접 언급하면서 사주 관점으로 엮어라. 특정 정당/인물 지지·비방만 금지." + (personName ? " 인물 이름은 정확히 '" + personName + "' 만 사용해라. 다른 어떤 사람 이름도 절대 쓰지 마라." : "") + "" + personSaju + "\n\n" : "") + buildUserPrompt(contentType, ctx, ganji, formatHint),
+      topicHint ? 0.7 : 1.0, // 주제(인물) 글은 저온도 — 이름 환각 방지 (검증됨)
     );
+      if (!personName) break;
+      const allText = (out?.body ?? "") + (Array.isArray(out?.replies) ? out.replies.join(" ") : "");
+      const nameOk = allText.includes(personName);
+      if (nameOk) break;
+      console.warn("이름 환각 감지 (시도 " + (attempt + 1) + "/3) — 재생성");
+      out = null;
+    }
+    if (!out) throw new Error("인물 이름('" + personName + "') 환각 3회 — 생성 포기. 다시 시도해줘");
     const body: string = deNeo((out.body ?? "").trim());
     const topicTag: string = (out.topic_tag ?? "").trim();
     if (!body) throw new Error("BRAIN 빈 본문");
