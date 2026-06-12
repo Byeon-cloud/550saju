@@ -10,9 +10,9 @@
 import { isAppintosBuild } from '@/lib/env';
 
 const POINTS = [
-  { emblem: '典', title: '600년 원전으로 풀이해요', desc: '연해자평·자평진전 등 6대 고전 기반 — 광고식 운세가 아니에요' },
-  { emblem: '曆', title: '만세력부터 정확하게', desc: '진태양시 ±30분 보정까지 — 점집에서도 놓치는 계산' },
-  { emblem: '日', title: '매일 무료로 시작해요', desc: '오늘의 운세·꿈해몽은 돈 안 들어요' },
+  { emblem: '値', title: '오프라인 사주값의 1/100', desc: '그런데 내용은 10배 — 한 권 분량으로 처음부터 끝까지' },
+  { emblem: '典', title: '아무 말 운세가 아니에요', desc: '연해자평·자평진전 등 600년 고전 원전 기반 풀이' },
+  { emblem: '日', title: '매일 공짜로 시작해요', desc: '오늘의 운세·꿈해몽은 늘 무료' },
 ];
 
 const KEYWORDS = ['오늘의 운세', '꿈해몽', '연애운', '재회운', '종합사주', '사주 상담'];
@@ -60,8 +60,8 @@ export function DesktopBrandPanel() {
         <div className="dbp-cta">
           <span className="dbp-cta-emblem">運</span>
           <span>
-            <b>토스 앱</b>에서 <b>“사주 500”</b> 검색 —<br />
-            <span className="dbp-cta-sub">앱에서 더 편하게 보실 수 있어요</span>
+            설치 없이 <b>오른쪽 화면에서 바로</b> 시작하세요<br />
+            <span className="dbp-cta-sub">토스 앱에서 “사주 500”을 검색해도 만날 수 있어요</span>
           </span>
         </div>
       </div>

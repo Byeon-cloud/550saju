@@ -941,11 +941,12 @@
 
   /* ── 콘텐츠 ── */
   .desktop-brand-panel .dbp-inner {
+    /* 패널 정중앙 블록 (좌측 치우침 fix) — 블록은 중앙, 내부 텍스트는 좌정렬 */
     position: absolute;
-    top: 46%;
-    left: clamp(44px, 7vw, 130px);
-    transform: translateY(-56%);
-    max-width: 470px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -52%);
+    width: min(480px, calc(100% - 110px));
     pointer-events: auto;
   }
   .dbp-brandrow { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
@@ -954,9 +955,10 @@
   .dbp-wordmark b { color: #B8965A; }
   .dbp-title {
     font-family: 'Noto Serif KR', serif;
-    font-size: clamp(34px, 3vw, 46px);
-    font-weight: 900; line-height: 1.38; color: #1A1A1A;
+    font-size: clamp(32px, 2.6vw, 42px);
+    font-weight: 900; line-height: 1.42; color: #1A1A1A;
     letter-spacing: -0.02em; margin: 0 0 26px;
+    word-break: keep-all; /* 한국어 단어 중간 줄바꿈 방지 (읽어드/립니다 깨짐 fix) */
   }
   .dbp-title-gold {
     color: #8C6D3D;
@@ -972,8 +974,8 @@
     display: flex; align-items: center; justify-content: center;
     font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 900; color: #8C6D3D;
   }
-  .dbp-point-title { font-size: 15px; font-weight: 800; color: #1A1A1A; }
-  .dbp-point-desc { font-size: 12.5px; color: #7A7269; margin-top: 1px; }
+  .dbp-point-title { font-size: 15px; font-weight: 800; color: #1A1A1A; word-break: keep-all; }
+  .dbp-point-desc { font-size: 12.5px; color: #7A7269; margin-top: 1px; word-break: keep-all; }
 
   .dbp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 34px; max-width: 440px; }
   .dbp-chip {
