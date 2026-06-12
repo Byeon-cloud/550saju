@@ -647,7 +647,7 @@ export function ChargePage() {
                     <button onClick={() => handlePgTest('card')} style={{
                       width: '100%', height: 52, borderRadius: 12, border: 'none', cursor: 'pointer',
                       background: C.ink, color: C.paper, fontSize: 15, fontWeight: 700, marginBottom: 10,
-                    }}>카드 결제</button>
+                    }}>신용·체크카드</button>
                     <button onClick={() => handlePgTest('kakaopay')} style={{
                       width: '100%', height: 52, borderRadius: 12, border: 'none', cursor: 'pointer',
                       background: '#FEE500', color: '#1A1A1A', fontSize: 15, fontWeight: 700, marginBottom: 10,
