@@ -77,6 +77,9 @@ export function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { loading, isLoggedIn, user, login } = useAuth();
+  // 2026-06-12 fix — 익명 세션(부팅 자동 로그인)이 '로그인됨'으로 취급돼 로그인 모달을 건너뛰고
+  //   동의 모달부터 뜨던 버그. 웹은 진짜 계정(비익명)만 로그인으로 인정. 앱인토스는 토스 신원 우산 유지.
+  const realLoggedIn = isLoggedIn && (inAppsInToss || (!!user && !user.isAnonymous));
   const toast = useToast();
   // 혼용 금지 (2026-06-11) — 빌드타임(isAppintosBuild) OR 런타임(isAppsInToss) 둘 중 하나라도
   //   앱인토스면 앱 UX. ait 번들은 빌드 레벨에서 웹 전용 UI(동의모달·로그아웃·탈퇴) 차단.
@@ -99,13 +102,13 @@ export function MyPage() {
   /* 웹 전용 — 로그인 직후 동의 이력 없으면 동의 모달 노출 (앱인토스는 토스 동의 우산) */
   useEffect(() => {
     if (inAppsInToss) return;
-    if (loading || !isLoggedIn || !user?.uid) { setShowConsent(false); return; }
+    if (loading || !realLoggedIn || !user?.uid) { setShowConsent(false); return; }
     let cancelled = false;
     hasConsentRecord(user.uid).then((has) => {
       if (!cancelled && !has) setShowConsent(true);
     });
     return () => { cancelled = true; };
-  }, [inAppsInToss, loading, isLoggedIn, user?.uid]);
+  }, [inAppsInToss, loading, realLoggedIn, user?.uid]);
 
   const onConsentAgree = async (result: ConsentResult) => {
     if (user?.uid) await saveConsent(user.uid, result);
@@ -139,12 +142,12 @@ export function MyPage() {
 
   /* 비로그인 → 로그인 모달 즉시 노출 (§2-1) */
   useEffect(() => {
-    if (!loading && !isLoggedIn) {
+    if (!loading && !realLoggedIn) {
       setShowLoginModal(true);
     } else {
       setShowLoginModal(false);
     }
-  }, [loading, isLoggedIn]);
+  }, [loading, realLoggedIn]);
 
   const onMenuClick = (item: MenuItem) => {
     if (item.id === 'contact') { setShowContact(true); return; }
@@ -165,7 +168,7 @@ export function MyPage() {
       <div className="mx-auto px-4 pt-4" style={{ maxWidth: 520 }}>
 
         {/* ── ProfileHeader (§3) ── */}
-        {isLoggedIn && user ? (
+        {realLoggedIn && user ? (
           <ProfileHeader user={user} balance={balance} />
         ) : (
           /* 비로그인 skeleton — 로그인 모달이 위에 뜨므로 시각적 자리만 */
@@ -253,7 +256,7 @@ export function MyPage() {
 
         {/* 2026-06-03 웹 단독 출시 — 로그아웃 + 회원탈퇴 복원 (웹 전용, 앱인토스 비노출).
             근거: docs/법적요건_웹출시.md §4 (개인정보보호법 제21조 회원탈퇴 경로 필수). */}
-        {!inAppsInToss && isLoggedIn && (
+        {!inAppsInToss && realLoggedIn && (
           <div className="flex items-center justify-center gap-3 mt-5">
             <button
               type="button"
