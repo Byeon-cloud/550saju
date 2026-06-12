@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
   let personSaju = "";
   // 힌트에서 인물 이름 추출: "홍명보 감독(1969..." / "손흥민(1992..." 패턴
   let personName = "";
+  let personBirth = "";
   if (topicHint) {
     const nm = topicHint.match(/([가-힣]{2,4})\s*(?:감독|선수|의원|시장|대표|배우|가수|작가|회장)?\s*\(\s*(?:19|20)\d{2}/);
     if (nm) personName = nm[1];
@@ -79,6 +80,7 @@ Deno.serve(async (req) => {
     if (m) {
       try {
         const sj = computeSaju(Number(m[1]), Number(m[2]), Number(m[3]), null, null);
+        personBirth = m[1] + "." + m[2] + "." + m[3];
         personSaju = "\n\n[이 인물의 실제 사주 데이터 — 만세력 계산값]\n" + sj.summary +
           "\n사주 해석은 반드시 위 데이터에만 근거해라. 데이터에 없는 건 지어내지 마라. 인물 이름은 힌트에 적힌 그 이름만 그대로 써라(다른 인물로 바꾸기 절대 금지).";
       } catch (_e) { /* 날짜 파싱 실패 시 무시 */ }
@@ -119,7 +121,11 @@ Deno.serve(async (req) => {
     }
 
     // 이미지 필요 여부 (app_promo 등 image_idea 있으면)
-    const imageIdea: string = (out.image_idea ?? "").trim();
+    let imageIdea: string = (out.image_idea ?? "").trim();
+    // 인물 사주 글이면 → 만세력 캡쳐를 준기에게 명시적으로 요청 (바이럴용)
+    if (personName && personBirth) {
+      imageIdea = "[너가 캡쳐해서 사진 올려] " + personName + " 만세력 — 앱에 " + personBirth + " 입력해서 캡쳐 → 이 봇에 사진으로 보내줘";
+    }
     const needsImage = !!imageIdea;
 
     const { data: post, error } = await sb
