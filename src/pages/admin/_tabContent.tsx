@@ -92,6 +92,40 @@ export function TabContent({ d }: { d: AdminData }) {
       </Section>
 
       <Section
+        title="전 콘텐츠 분포 (DB 복원 — 전 기간)"
+        caption="· 종합사주~토정 = reports / 오늘운세 = dailyFortune 문서 / 꿈해몽무료·사주대화 = AI 호출 기록 (6/10부터·유저 수 집계불가는 —)"
+      >
+        {(() => {
+          const DIST_LABEL: Record<string, string> = {
+            premium: '종합사주', report: '종합사주(구)', basic: '1운 리포트', topic: '주제분석',
+            daily: '오늘의 운세', deepDream: '꿈해몽 유료(심층)', dreamFree: '꿈해몽 무료', chat: '사주대화',
+            daeun: '대운', monthly: '월운', compatibility: '궁합', compat: '궁합', tojung: '토정비결', weekly: '주간(폐지)',
+          };
+          const rows = Object.entries(d.contentDistAll || {})
+            .map(([t, v]) => ({ t, label: DIST_LABEL[t] || t, count: v.count, users: v.users }))
+            .sort((a, b) => b.count - a.count);
+          if (rows.length === 0) return <Empty />;
+          const max = rows[0].count || 1;
+          return (
+            <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '14px 16px' }}>
+              {rows.map((r, i) => (
+                <div key={r.t} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
+                  <span style={{ width: 110, fontSize: 12, fontWeight: 700, color: C.ink, flexShrink: 0 }}>{r.label}</span>
+                  <div style={{ flex: 1, height: 14, background: '#F3EFE6', borderRadius: 7, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.max(3, Math.round((r.count / max) * 100))}%`, height: '100%', background: CONTENT_COLORS[i % CONTENT_COLORS.length], borderRadius: 7 }} />
+                  </div>
+                  <span style={{ width: 130, fontSize: 12, color: C.ink, textAlign: 'right', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                    <b>{fmtNum(r.count)}건</b>
+                    <span style={{ color: C.mute }}> {r.users == null ? '(유저 —)' : `(${fmtNum(r.users)}명)`}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </Section>
+
+      <Section
         title="10주제 분포 (DB 복원 — 전 기간)"
         caption="· reports 의 topicId 기준 — 과거 포함 전체. 괄호 = 고유 유저 / [기간 N] = 선택한 기간 내 생성"
       >
@@ -120,6 +154,29 @@ export function TabContent({ d }: { d: AdminData }) {
                   </span>
                 </div>
               ))}
+              {/* 소분류 분포 (2026-06-12) — 솔로/썸/연애중 · 상대유무 · 창업준비/운영중 */}
+              {Object.keys(d.topicSubAll || {}).length > 0 && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${C.line}` }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: C.goldDeep, marginBottom: 6 }}>소분류 분포</p>
+                  {Object.entries(d.topicSubAll).map(([tid, subs]) => {
+                    const TOPIC_KR2: Record<string, string> = {
+                      love: '연애운', reunion: '재회운', marriage: '결혼운', wealth: '재물운', exam: '합격이직운',
+                      business: '사업운', health: '건강운', move: '이사운', moving: '이사운', study: '학업운', career: '직업운',
+                    };
+                    return (
+                      <div key={tid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', flexWrap: 'wrap' }}>
+                        <span style={{ width: 76, fontSize: 12, fontWeight: 700, color: C.ink, flexShrink: 0 }}>{TOPIC_KR2[tid] || tid}</span>
+                        {Object.entries(subs).sort((a, b) => b[1] - a[1]).map(([sub, n]) => (
+                          <span key={sub} style={{ fontSize: 11, padding: '2px 10px', borderRadius: 100, background: 'rgba(184,150,90,0.10)', color: C.goldDeep, fontWeight: 700 }}>
+                            {sub} {fmtNum(n)}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })}
+                  <p style={{ fontSize: 10, color: C.mute, marginTop: 4 }}>· 연애 솔로/썸/연애중 = 결과 구조 역산(과거)+입력값(신규) · 결혼 = 상대 입력 유무 · 사업 창업준비/운영중 = 신규부터</p>
+                </div>
+              )}
             </div>
           );
         })()}

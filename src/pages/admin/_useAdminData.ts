@@ -106,6 +106,8 @@ export interface PeriodAgg {
 export interface AdminData {
   totalUsers: number;
   topicDistAll: Record<string, { count: number; users: number }>; // 10주제 분포 — 전 기간 (DB 복원)
+  topicSubAll: Record<string, Record<string, number>>;            // 주제 소분류 분포 (솔로/썸/연애중 등)
+  contentDistAll: Record<string, { count: number; users: number | null }>; // 전 콘텐츠 분포 (users null = 집계불가)
   totalRevenue: number;                            // 누적 (전 기간)
   todayRevenue: number;
   reportsByType: Record<string, number>;           // 콘텐츠 생성 누적
@@ -452,6 +454,26 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
         const genUserSetsCur: Record<number, Set<string>> = {};
         const genUserSetsPrev: Record<number, Set<string>> = {};
         const topicDistAll: Record<string, { count: number; userSet: Set<string> }> = {};
+        const typeUserSets: Record<string, Set<string>> = {};
+        const topicSubAll: Record<string, Record<string, number>> = {};
+        const subOf = (tid: string, r: any): string | null => {
+          // 미래 문서: inputMeta 우선 / 과거 문서: 저장된 결과 필드로 역산
+          const meta = r.inputMeta || {};
+          const td = r.topicData || {};
+          if (tid === 'love') {
+            if (meta.loveStatus === 'solo') return '솔로';
+            if (meta.loveStatus === 'some') return '썸';
+            if (meta.loveStatus === 'dating') return '연애중';
+            return !td.partnerCompat ? '솔로' : (td.confessionTiming ? '썸' : '연애중');
+          }
+          if (tid === 'marriage') return (meta.hasPartner || td.partnerCompat || td.partnerProfile) ? '연애중' : '솔로';
+          if (tid === 'business') {
+            if (meta.bizStatus === 'preparing') return '창업 준비';
+            if (meta.bizStatus === 'running') return '운영 중';
+            return null;
+          }
+          return null;
+        };
         try {
           const repSnap = await getDocs(collectionGroup(db, 'reports'));
           repSnap.forEach((doc) => {
@@ -460,12 +482,17 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
             reportsByType[t] = (reportsByType[t] ?? 0) + 1;
             const rday = paymentDay({ confirmedAt: r.generatedAt ?? r.createdAt });
             const ruid = r.uid || doc.ref.parent.parent?.id || '';
+            if (ruid) (typeUserSets[t] ??= new Set()).add(ruid);
             // 10주제 분포 (2026-06-12) — topicId 가 전 기록에 저장돼 있어 과거 전체 분해 가능
             const tid = t === 'topic' ? String(r.topicId || 'unknown') : null;
             if (tid) {
               const slot = (topicDistAll[tid] ??= { count: 0, userSet: new Set() });
               slot.count += 1;
               if (ruid) slot.userSet.add(ruid);
+              const sub = subOf(tid, r);
+              if (sub) {
+                (topicSubAll[tid] ??= {})[sub] = (topicSubAll[tid][sub] ?? 0) + 1;
+              }
               const ci2 = curDays.indexOf(rday);
               if (ci2 >= 0) cur.topicGen[tid] = (cur.topicGen[tid] ?? 0) + 1;
               else if (prevDays.indexOf(rday) >= 0) prev.topicGen[tid] = (prev.topicGen[tid] ?? 0) + 1;
@@ -485,8 +512,44 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
             }
           });
         } catch { /* noop */ }
+        // 4-b) 오늘운세 — users/*/dailyFortune/{YYYY-MM-DD} collectionGroup (docId = 날짜 → 과거 전체 복원)
+        const dailyDist = { count: 0, userSet: new Set<string>() };
+        try {
+          const dfSnap = await getDocs(collectionGroup(db, 'dailyFortune'));
+          dfSnap.forEach((doc) => {
+            const dday = doc.id; // YYYY-MM-DD
+            const duid = doc.ref.parent.parent?.id || '';
+            dailyDist.count += 1;
+            if (duid) dailyDist.userSet.add(duid);
+            const ci = curDays.indexOf(dday);
+            if (ci >= 0) {
+              cur.genByDay[ci] += 1; cur.genTotal += 1;
+              (cur.genByDayType['daily'] ??= curDays.map(() => 0))[ci] += 1;
+              if (duid) (genUserSetsCur[ci] ??= new Set()).add(duid);
+            } else {
+              const pi = prevDays.indexOf(dday);
+              if (pi >= 0) {
+                prev.genByDay[pi] += 1; prev.genTotal += 1;
+                (prev.genByDayType['daily'] ??= prevDays.map(() => 0))[pi] += 1;
+                if (duid) (genUserSetsPrev[pi] ??= new Set()).add(duid);
+              }
+            }
+          });
+        } catch { /* rules 배포 전 — noop */ }
         cur.genUsersByDay = curDays.map((_, i) => genUserSetsCur[i]?.size ?? 0);
         prev.genUsersByDay = prevDays.map((_, i) => genUserSetsPrev[i]?.size ?? 0);
+
+        // 4-c) 꿈해몽 무료·사주대화 — aiUsage 전수 (uid 미기록 → 호출 수만 · 2026-06-10 부터)
+        const aiCallDist: Record<string, number> = {};
+        try {
+          const allUsage = await getDocs(query(collection(db, 'aiUsage'), limit(10000)));
+          allUsage.forEach((doc) => {
+            const u = doc.data() as any;
+            if (u.ok === false) return;
+            const ut = String(u.type || '');
+            aiCallDist[ut] = (aiCallDist[ut] ?? 0) + 1;
+          });
+        } catch { /* noop */ }
 
         // 5) 유저 수
         let totalUsers = 0;
@@ -498,7 +561,15 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
         if (!cancelled) {
           const topicDistFinal: Record<string, { count: number; users: number }> = {};
           Object.entries(topicDistAll).forEach(([k, v]) => { topicDistFinal[k] = { count: v.count, users: v.userSet.size }; });
-          setData({ totalUsers, topicDistAll: topicDistFinal, totalRevenue, todayRevenue, reportsByType, cur, prev, rawEvents, fetchedAt: new Date() });
+          // 전 콘텐츠 분포 — reports(유저셋 有) + 오늘운세(CG) + aiUsage(꿈무료·대화: 호출 수만)
+          const contentDistAll: Record<string, { count: number; users: number | null }> = {};
+          Object.entries(reportsByType).forEach(([t, n]) => {
+            contentDistAll[t] = { count: n, users: typeUserSets[t]?.size ?? 0 };
+          });
+          contentDistAll['daily'] = { count: dailyDist.count, users: dailyDist.userSet.size };
+          if (aiCallDist['dream']) contentDistAll['dreamFree'] = { count: aiCallDist['dream'], users: null };
+          if (aiCallDist['chat']) contentDistAll['chat'] = { count: aiCallDist['chat'], users: null };
+          setData({ totalUsers, topicDistAll: topicDistFinal, topicSubAll, contentDistAll, totalRevenue, todayRevenue, reportsByType, cur, prev, rawEvents, fetchedAt: new Date() });
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || '데이터를 불러오지 못했어요');

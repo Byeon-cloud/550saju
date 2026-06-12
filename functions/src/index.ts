@@ -1960,6 +1960,8 @@ export const generateTopicAnalysis = onCall(
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, topicId, ...result, type: 'topic',
+        // 2026-06-12 — 소분류 분포용 입력 메타 (loveStatus/bizStatus 등 + 상대방 유무)
+        inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
         aiModel: 'claude-sonnet-4-6',
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -2105,6 +2107,7 @@ export const generateTopicAnalysisStream = onRequest(
       try {
         await reportRef.set({
           uid, topicId, ...parsed, type: 'topic',
+          inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
           aiModel: 'claude-sonnet-4-6',
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

@@ -36,6 +36,11 @@ service cloud.firestore {
       allow read: if isOwner();
     }
 
+    // 어드민 오늘운세 분포 (2026-06-12) — users/*/dailyFortune/{date} collectionGroup 집계
+    match /{path=**}/dailyFortune/{date} {
+      allow read: if isOwner();
+    }
+
     // CS 보상 장부 (2026-06-11) — 접근은 claimCompensation callable(admin SDK)로만. 클라 직접 접근 차단.
     match /compensations/{deviceId} {
       allow read, write: if false;
