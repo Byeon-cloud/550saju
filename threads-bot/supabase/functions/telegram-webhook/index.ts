@@ -216,15 +216,29 @@ Deno.serve(async (req) => {
     const chatId = msg.chat.id;
     if (String(chatId) !== String(OWNER_CHAT_ID)) return;
 
-    // 이 봇(계정)의 최신 draft에 사진 첨부 (아무 글에나 가능)
-    const { data: post } = await sb
-      .from("posts")
-      .select("id, body")
-      .eq("status", "draft")
-      .eq("account_id", accountId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // 🎯 카드에 '답장'으로 사진 보내면 → 정확히 그 글에 첨부 (권장)
+    let post: any = null;
+    if (msg.reply_to_message?.message_id) {
+      const { data: target } = await sb
+        .from("posts")
+        .select("id, body")
+        .eq("tg_message_id", msg.reply_to_message.message_id)
+        .eq("status", "draft")
+        .maybeSingle();
+      if (target) post = target;
+    }
+    // 답장이 아니면: 이 봇(계정)의 최신 draft에 첨부
+    if (!post) {
+      const { data: latest } = await sb
+        .from("posts")
+        .select("id, body")
+        .eq("status", "draft")
+        .eq("account_id", accountId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      post = latest;
+    }
     if (!post) {
       await sendMessage(BOT_TOKEN, chatId, "지금 사진 붙일 글(draft)이 없어. 글 먼저 만들고(생성 or 직접 작성) 사진 보내줘!");
       return;
