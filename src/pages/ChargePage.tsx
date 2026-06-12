@@ -629,34 +629,86 @@ export function ChargePage() {
                     onClick={() => setShowPgSheet(false)}
                     style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.45)', zIndex: 60 }}
                   />
-                  <motion.div
+<motion.div
                     initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
                     transition={{ type: 'spring', damping: 28, stiffness: 320 }}
                     style={{
                       // 센터링은 margin auto 로 — transform 은 framer-motion y 애니메이션이 덮어씀 (2026-06-12 fix)
                       position: 'fixed', left: 0, right: 0, bottom: 0, margin: '0 auto',
                       width: '100%', maxWidth: 520, background: C.paper,
-                      borderRadius: '20px 20px 0 0', padding: '22px 20px calc(20px + env(safe-area-inset-bottom))',
+                      borderRadius: '20px 20px 0 0', padding: '10px 20px calc(20px + env(safe-area-inset-bottom))',
                       zIndex: 61, boxSizing: 'border-box',
                     }}
                   >
-                    <p style={{ fontSize: 16, fontWeight: 800, color: C.ink, margin: 0 }}>결제 수단 선택</p>
-                    <p style={{ fontSize: 12, color: C.mute, margin: '6px 0 16px', lineHeight: 1.6 }}>
-                      지금은 결제 시스템 점검(테스트) 중이에요 — 실제로 청구되지 않고 자동 취소됩니다.
-                    </p>
+                    {/* 그래버 핸들 (바텀시트 표준 affordance) */}
+                    <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(26,26,26,0.15)', margin: '0 auto 14px' }} />
+
+                    {/* 헤더: 타이틀 + 닫기 X */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                      <p style={{ fontSize: 17, fontWeight: 800, color: C.ink, margin: 0 }}>결제하기</p>
+                      <button onClick={() => setShowPgSheet(false)} aria-label="닫기" style={{
+                        width: 32, height: 32, borderRadius: 16, border: 'none', cursor: 'pointer',
+                        background: 'rgba(26,26,26,0.06)', color: C.mute, fontSize: 16, lineHeight: 1,
+                      }}>✕</button>
+                    </div>
+
+                    {/* 주문 요약 — 누르기 직전 금액 재확인 (이탈 방지 1순위) */}
+                    {selectedPkg && (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.25)',
+                        borderRadius: 14, padding: '14px 16px', marginBottom: 16,
+                      }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
+                          {selectedPkg.bonusUn > 0 ? `${selectedPkg.paidUn}운 + ${selectedPkg.bonusUn}운 보너스` : `${selectedPkg.un}운`}
+                        </span>
+                        <span style={{ fontSize: 17, fontWeight: 800, color: '#8C6D3D' }}>
+                          {selectedPkg.price.toLocaleString()}원
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 결제 수단 — 아이콘 + 라벨 리스트 행 (토스·배민 문법) */}
                     <button onClick={() => handlePgTest('card')} style={{
-                      width: '100%', height: 52, borderRadius: 12, border: 'none', cursor: 'pointer',
-                      background: C.ink, color: C.paper, fontSize: 15, fontWeight: 700, marginBottom: 10,
-                    }}>신용·체크카드</button>
+                      display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
+                      padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 8,
+                      border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',
+                    }}>
+                      <span style={{
+                        width: 36, height: 36, borderRadius: 9, background: 'rgba(26,26,26,0.05)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <rect x="2.5" y="5" width="19" height="14" rx="2.5" stroke="#1A1A1A" strokeWidth="1.8" />
+                          <rect x="2.5" y="8.4" width="19" height="3" fill="#1A1A1A" />
+                          <rect x="5.5" y="14.4" width="6" height="1.8" rx="0.9" fill="#1A1A1A" />
+                        </svg>
+                      </span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용·체크카드</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </button>
                     <button onClick={() => handlePgTest('kakaopay')} style={{
-                      width: '100%', height: 52, borderRadius: 12, border: 'none', cursor: 'pointer',
-                      background: '#FEE500', color: '#1A1A1A', fontSize: 15, fontWeight: 700, marginBottom: 10,
-                    }}>카카오페이</button>
-                    <button onClick={() => setShowPgSheet(false)} style={{
-                      width: '100%', height: 44, borderRadius: 12, cursor: 'pointer',
-                      border: '1px solid rgba(26,26,26,0.12)', background: 'transparent',
-                      color: C.mute, fontSize: 14, fontWeight: 600,
-                    }}>닫기</button>
+                      display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
+                      padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 14,
+                      border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',
+                    }}>
+                      <span style={{
+                        width: 36, height: 36, borderRadius: 9, background: '#FEE500',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        {/* 카카오 말풍선 심볼 */}
+                        <svg width="20" height="19" viewBox="0 0 24 22" fill="none">
+                          <path d="M12 1C5.92 1 1 4.93 1 9.78c0 3.07 1.97 5.77 4.95 7.33l-1.2 4.45c-.1.4.35.72.7.49l5.23-3.48c.44.04.88.07 1.32.07 6.08 0 11-3.93 11-8.86C23 4.93 18.08 1 12 1z" fill="#1A1A1A" />
+                        </svg>
+                      </span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>카카오페이</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </button>
+
+                    {/* 테스트 안내 — 작게 (심사 기간 한정) */}
+                    <p style={{ fontSize: 11, color: C.mute, margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
+                      지금은 결제 시스템 점검 중이에요 — 실제로 청구되지 않고 자동 취소됩니다
+                    </p>
                   </motion.div>
                 </>
               )}
