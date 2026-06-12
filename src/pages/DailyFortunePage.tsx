@@ -29,6 +29,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { ProfileSelector } from '@/components/common/ProfileSelector';
 import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
+import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
@@ -414,6 +415,8 @@ export function DailyFortunePage() {
         {/* P2-5 · 데일리 리워드 배지 — result phase 에서는 숨김 (2026-05-06)
             DarkHeader 아래 중복 정보 제거. select phase 에서만 노출. */}
         {hasAnyProfile && !isResultPhase && <DailyRewardBadge className="mb-4" />}
+        {/* 매일 아침 운세 알림 동의 (2026-06-13 · 앱인토스 + templateCode 설정 시에만 노출) */}
+        {hasAnyProfile && <DailyNotiButton className="mb-4" />}
 
         <AnimatePresence mode="wait">
           {!hasAnyProfile && (

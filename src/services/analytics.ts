@@ -146,6 +146,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'ad_fail',            // {unit}
   // 대시보드 v3 (2026-06-12) — CTA 클릭 (전역 위임 수집)
   'cta_click',          // {label, page}
+  'noti_agree',         // {result: newAgreement|alreadyAgreed|agreementRejected} — 매일 운세 알림 동의 (2026-06-13)
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───
