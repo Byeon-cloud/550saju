@@ -53,6 +53,45 @@ function ensureAdsInitialized(mod: any): Promise<boolean> {
   return adsInitPromise;
 }
 
+
+/* ─── 웹 = 구글 애드센스 (2026-06-12) ───
+ *   앱인토스 광고 자리에 웹에선 AdSense. VITE_ADSENSE_CLIENT(ca-pub-...) + VITE_ADSENSE_SLOT
+ *   없으면 렌더 0 (현행 유지) — 준기 애드센스 승인 후 .env 만 채우면 켜짐. */
+const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT as string | undefined;
+const ADSENSE_SLOT = import.meta.env.VITE_ADSENSE_SLOT as string | undefined;
+let adsenseScriptLoaded = false;
+
+function WebAdSlot({ unit, className, minHeight = 90 }: AdSlotProps) {
+  const ref = useRef<HTMLModElement>(null);
+  useEffect(() => {
+    if (!ADSENSE_CLIENT || !ADSENSE_SLOT) return;
+    if (!adsenseScriptLoaded) {
+      adsenseScriptLoaded = true;
+      const sc = document.createElement('script');
+      sc.async = true;
+      sc.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+      sc.crossOrigin = 'anonymous';
+      document.head.appendChild(sc);
+    }
+    try {
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      trackAd('ad_impression', unit || 'adsense');
+    } catch { trackAd('ad_fail', unit || 'adsense'); }
+  }, [unit]);
+  if (!ADSENSE_CLIENT || !ADSENSE_SLOT) return null;
+  return (
+    <ins
+      ref={ref}
+      className={`adsbygoogle ${className || ''}`}
+      style={{ display: 'block', minHeight }}
+      data-ad-client={ADSENSE_CLIENT}
+      data-ad-slot={ADSENSE_SLOT}
+      data-ad-format="auto"
+      data-full-width-responsive="true"
+    />
+  );
+}
+
 export function AdSlot({
   unit = AD_BANNER_GROUP_ID,
   className = '',
@@ -105,7 +144,7 @@ export function AdSlot({
   }, [unit]);
 
   // 비-앱인토스 빌드는 렌더 0
-  if (!isAppintosBuild) return null;
+  if (!isAppintosBuild) return <WebAdSlot unit={unit} className={className} minHeight={minHeight} />;
   if (hidden) return null;
 
   return (

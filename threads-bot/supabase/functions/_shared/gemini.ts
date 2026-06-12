@@ -47,18 +47,21 @@ export async function geminiJSON(
   userPrompt: string,
   temperature = 1.0, // 콘텐츠 생성=1.0(창의), 사실 분석/파싱=0.2(환각 방지)
 ): Promise<any> {
-  // 시도 순서: 2.5 → (2s) 2.5 → (5s) 2.5 → 2.0(예비)
-  const plan: Array<{ model: string; waitMs: number }> = [
-    { model: PRIMARY_MODEL, waitMs: 0 },
-    { model: PRIMARY_MODEL, waitMs: 2000 },
-    { model: PRIMARY_MODEL, waitMs: 5000 },
-    { model: FALLBACK_MODEL, waitMs: 1000 },
+  // 예비 키(다른 무료 프로젝트 = 별도 한도) 있으면 키도 폴백
+  const backupKey = Deno.env.get("GEMINI_API_KEY_2") ?? "";
+  // 시도 순서: 키1·2.5 ×2 → 키2·2.5 → 키1·2.0 → 키2·2.0
+  const plan: Array<{ model: string; key: string; waitMs: number }> = [
+    { model: PRIMARY_MODEL, key: apiKey, waitMs: 0 },
+    { model: PRIMARY_MODEL, key: apiKey, waitMs: 2500 },
+    ...(backupKey ? [{ model: PRIMARY_MODEL, key: backupKey, waitMs: 1000 }] : []),
+    { model: FALLBACK_MODEL, key: apiKey, waitMs: 1000 },
+    ...(backupKey ? [{ model: FALLBACK_MODEL, key: backupKey, waitMs: 1000 }] : []),
   ];
 
   let last = "";
   for (const step of plan) {
     if (step.waitMs) await sleep(step.waitMs);
-    const r = await callOnce(step.model, apiKey, systemPrompt, userPrompt, temperature);
+    const r = await callOnce(step.model, step.key, systemPrompt, userPrompt, temperature);
     if (r.ok) {
       const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) {

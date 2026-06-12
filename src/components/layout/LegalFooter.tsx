@@ -8,6 +8,7 @@
  * 배치: MyPage + 결제/약관/사업자정보 페이지 하단. (전 페이지 푸터는 TabBar 와 충돌하므로
  *       법적 노출 의무가 직결되는 화면에 우선 배치.)
  */
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { isAppintosBuild } from '@/lib/env';
@@ -24,6 +25,8 @@ const C = {
 
 export function LegalFooter() {
   const navigate = useNavigate();
+  // 2026-06-12 — 사업자정보 기본 접힘 (법적 요건은 토글 노출로 충족 · 화면 점유 최소화)
+  const [bizOpen, setBizOpen] = useState(false);
 
   // 앱인토스에서는 토스가 판매자 → 비노출 (빌드타임 OR 런타임 — 혼용 금지)
   if (isAppintosBuild || isAppsInToss()) return null;
@@ -78,20 +81,35 @@ export function LegalFooter() {
         </button>
       </div>
 
-      {/* 사업자 신원정보 */}
-      <div
-        className="flex flex-col items-center gap-1"
-        style={{ fontSize: 11, lineHeight: 1.6, color: C.mute, textAlign: 'center' }}
-      >
-        {infoLines.map(([label, value]) => (
-          <div key={label}>
-            <span style={{ fontWeight: 700 }}>{label}</span> {value}
+      {/* 사업자 신원정보 — 기본 접힘 (토글로 법적 노출 요건 충족 · 화면 점유 최소화) */}
+      <div className="flex flex-col items-center" style={{ textAlign: 'center' }}>
+        <button
+          type="button"
+          onClick={() => setBizOpen((v) => !v)}
+          aria-expanded={bizOpen}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: '2px 8px',
+            fontSize: 11, fontWeight: 600, color: C.mute,
+          }}
+        >
+          {b.companyName} 사업자 정보 {bizOpen ? '▴' : '▾'}
+        </button>
+        {bizOpen && (
+          <div
+            className="flex flex-col items-center gap-1 mt-2"
+            style={{ fontSize: 11, lineHeight: 1.6, color: C.mute }}
+          >
+            {infoLines.map(([label, value]) => (
+              <div key={label}>
+                <span style={{ fontWeight: 700 }}>{label}</span> {value}
+              </div>
+            ))}
+            <div className="mt-2" style={{ fontSize: 10.5, color: C.mute }}>
+              호스팅 제공: {b.hostingProvider}
+            </div>
           </div>
-        ))}
+        )}
         <div className="mt-2" style={{ fontSize: 10.5, color: C.mute }}>
-          호스팅 제공: {b.hostingProvider}
-        </div>
-        <div className="mt-1" style={{ fontSize: 10.5, color: C.mute }}>
           © {new Date().getFullYear()} 사주500. All rights reserved.
         </div>
       </div>

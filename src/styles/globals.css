@@ -899,7 +899,8 @@
     overflow-x: hidden;
     transform: translateZ(0);
     margin-left: auto !important;
-    margin-right: 7vw !important;
+    /* 스트립이 너무 우측 끝 → 중앙권으로 (중앙에서 +240px 오프셋, 최소 여백 48px) */
+    margin-right: max(48px, calc(50vw - 500px)) !important;
     box-shadow: 0 0 0 1px rgba(26, 26, 26, 0.08), 0 32px 90px rgba(26, 26, 26, 0.28);
     overscroll-behavior: contain;
     scrollbar-width: none;
@@ -910,7 +911,7 @@
     display: block;
     position: fixed;
     top: 0; bottom: 0; left: 0;
-    width: calc(93vw - 520px);
+    width: calc(100vw - 520px - max(48px, calc(50vw - 500px)));
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
@@ -1001,7 +1002,4 @@
   }
 }
 
-@media (min-width: 1700px) {
-  html:not([data-admin="1"]) .app-container { margin-right: 11vw !important; }
-  html:not([data-admin="1"]) .desktop-brand-panel { width: calc(89vw - 520px); }
-}
+
