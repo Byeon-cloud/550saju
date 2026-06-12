@@ -1026,8 +1026,9 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {(() => {
             const tc = getTimeContext();
             return (
-              <div className="time-chip">
-                <span className="ic">⏱</span>
+              <div className="time-chip" style={{ wordBreak: 'keep-all' }}>
+                {/* 2026-06-13 — ⏱ 이모지 → 時 한자 (이모지 절대 금지 정책) + keep-all (단어 깨짐 fix) */}
+                <span className="ic" style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 900 }}>時</span>
                 <span>{tc.greeting}</span>
                 <span className="sub">· {tc.subtle}</span>
               </div>
