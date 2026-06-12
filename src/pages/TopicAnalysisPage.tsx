@@ -2088,6 +2088,10 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
               );
             })()}
 
+            {/* 2026-06-13 P1-2 — 신뢰 카피 (연애·결혼과 동일 · 재회만 누락돼 있던 것) */}
+            <p className="text-[11px] text-text-hint mb-3 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+              두 분의 합·충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
+            </p>
 
             {/* 2026-05-28 — 나 vs 상대 2-카드 제거 (위 3-카드 스토리텔링에 통합됨) */}
 
