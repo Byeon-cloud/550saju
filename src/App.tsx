@@ -231,9 +231,11 @@ export function App() {
     import('@/services/payment/iapService').then(async ({ isAppsInToss }) => {
       if (!isAppsInToss()) return;
       try {
-        const todayKey = new Date().toISOString().slice(0, 10);
-        if (localStorage.getItem('saju500:comp_check_day') === todayKey) return;
-        localStorage.setItem('saju500:comp_check_day', todayKey);
+        // 2026-06-12 — 일1회 → 부팅마다 체크 (CS 지급 즉시성: 어드민 등록 → 고객 다음 앱 오픈에 바로 적립).
+        //   비용: 부팅당 callable 1회 + doc read 1회 (저트래픽 무시 가능). 세션 내 중복만 가드.
+        const w = window as unknown as { __saju500CompChecked?: boolean };
+        if (w.__saju500CompChecked) return;
+        w.__saju500CompChecked = true;
         const mod: any = await import('@apps-in-toss/web-framework');
         const deviceId: string | undefined = mod?.getDeviceId?.();
         if (!deviceId) return;

@@ -18,8 +18,9 @@ import { TabUsers } from '@/pages/admin/_tabUsers';
 import { TabAiOps } from '@/pages/admin/_tabAiOps';
 import { TabAdsPromo } from '@/pages/admin/_tabAdsPromo';
 import { TabAcquisition } from '@/pages/admin/_tabAcquisition';
+import { TabCsGrant } from '@/pages/admin/_tabCsGrant';
 
-type TabId = 'overview' | 'revenue' | 'content' | 'users' | 'aiops' | 'ads' | 'acquisition';
+type TabId = 'overview' | 'revenue' | 'content' | 'users' | 'aiops' | 'ads' | 'acquisition' | 'csgrant';
 
 const TABS: { id: TabId; label: string; render: (d: AdminData) => ReactElement }[] = [
   { id: 'overview', label: 'Overview', render: (d) => <TabOverview d={d} /> },
@@ -29,6 +30,7 @@ const TABS: { id: TabId; label: string; render: (d: AdminData) => ReactElement }
   { id: 'aiops', label: 'AI 운영', render: (d) => <TabAiOps d={d} /> },
   { id: 'ads', label: '광고·프로모', render: (d) => <TabAdsPromo d={d} /> },
   { id: 'acquisition', label: '유입', render: (d) => <TabAcquisition d={d} /> },
+  { id: 'csgrant', label: 'CS 지급', render: () => <TabCsGrant /> },
 ];
 
 const RANGES: RangeDays[] = [7, 14, 30];

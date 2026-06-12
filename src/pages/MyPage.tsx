@@ -1395,6 +1395,39 @@ function ContactSheet({ open, onClose, userId, toast: _toast }: {
   );
 }
 
+/* CS 고객센터 코드 (2026-06-12) — 앱인토스 디바이스 ID 표시 (탭하면 복사).
+   고객이 문의 시 이 코드를 불러주면 어드민 'CS 지급' 탭에서 즉시 운 보상 가능. */
+function CsCode({ toast }: { toast: ReturnType<typeof useToast> }) {
+  const [code, setCode] = useState<string | null>(null);
+  useEffect(() => {
+    import('@/services/payment/iapService').then(async ({ isAppsInToss }) => {
+      if (!isAppsInToss()) return;
+      try {
+        const mod: any = await import('@apps-in-toss/web-framework');
+        const id: string | undefined = mod?.getDeviceId?.();
+        if (id) setCode(id);
+      } catch { /* noop */ }
+    }).catch(() => { /* noop */ });
+  }, []);
+  if (!code) return null;
+  const short = `${code.slice(0, 6)}...${code.slice(-4)}`;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.show('고객센터 코드가 복사됐어요', 'success');
+    } catch {
+      toast.show('복사에 실패했어요 — 길게 눌러 직접 복사해 주세요', 'warning');
+    }
+  };
+  return (
+    <button type="button" onClick={copy} className="w-full text-center pb-4 select-none" aria-label="고객센터 코드 복사">
+      <span className="text-[11px]" style={{ color: C.mute }}>
+        고객센터 코드 <span style={{ fontFamily: 'monospace' }}>{short}</span> · 탭하면 복사
+      </span>
+    </button>
+  );
+}
+
 /* ══════════════════════════════════════════
    AppMeta — §8 (버전·빌드 + 5탭 디버그 시트)
 ══════════════════════════════════════════ */
@@ -1451,6 +1484,7 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
           사주500 v{APP_VERSION} · 빌드 {BUILD_DATE}
         </span>
       </button>
+      <CsCode toast={_toast} />
 
       {/* 디버그 시트 (5탭 활성) */}
       <AnimatePresence>
