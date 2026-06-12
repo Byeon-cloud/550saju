@@ -120,11 +120,22 @@ function ResultRouteGuard() {
   return <ResultPage />;
 }
 
+/** 라우트 플래그 — /admin 은 PC 브랜드 셸(폰프레임 스크롤) 제외 (100vw 탈출 레이아웃과 충돌) */
+function RouteFlags() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    document.documentElement.dataset.admin = pathname.startsWith('/admin') ? '1' : '0';
+  }, [pathname]);
+  return null;
+}
+
 /** 페이지 이동 시 스크롤 상단 복원 */
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
+    // PC 폰프레임 모드 — 스트립이 자체 스크롤 컨테이너라 컨테이너도 상단 복원 (2026-06-12)
+    document.querySelector('.app-container')?.scrollTo?.(0, 0);
     // 2026-06-12 P0 — trackPageView 호출부가 0건이라 page_view/content_open/content_result 퍼널 전멸이던 fix
     import('@/services/analytics').then(a => a.trackPageView(pathname)).catch(() => {});
   }, [pathname]);
@@ -362,6 +373,7 @@ export function App() {
         <SajuProvider>
           <ToastProvider>
           <ScrollToTop />
+          <RouteFlags />
           <DesktopBrandPanel />
           <div className="app-container">
             <BalanceBar />

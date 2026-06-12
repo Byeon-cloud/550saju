@@ -565,7 +565,7 @@ export function ChargePage() {
                 color: 'rgba(248,245,238,0.72)',
                 borderBottom: '1px solid rgba(248,245,238,0.12)',
               }}>
-                결제 후 충전한 운을 분석에 사용하면 환불되지 않으며, 미사용 운만 7일 이내 환불됩니다.
+                미사용 운은 7일 안에 전액 환불돼요 · 분석에 사용한 운은 환불이 어려워요
               </div>
             )}
             <div style={{
@@ -589,10 +589,8 @@ export function ChargePage() {
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
                   {selectedPkg.bonusUn > 0
-                    ? `${selectedPkg.paidUn}운+${selectedPkg.bonusUn}운 보너스`
+                    ? `${selectedPkg.paidUn}운 + ${selectedPkg.bonusUn}운 보너스`
                     : `${selectedPkg.un}운`}
-                  {' · '}
-                  {selectedPkg.price.toLocaleString()}원
                 </div>
               </div>
 
@@ -601,7 +599,7 @@ export function ChargePage() {
                 onClick={handlePurchase}
                 disabled={purchasing}
                 style={{
-                  height: 48, width: 140,
+                  height: 48, minWidth: 140, padding: '0 18px',
                   background: purchasing ? 'rgba(248,245,238,0.5)' : C.paper,
                   color: C.ink, borderRadius: 12,
                   fontSize: 15, fontWeight: 700,
@@ -614,7 +612,7 @@ export function ChargePage() {
               >
                 {purchasing
                   ? '처리 중...'
-                  : (isAppintosBuild ? '토스페이로 결제' : '결제하기')}
+                  : (isAppintosBuild ? '토스페이로 결제' : `${selectedPkg.price.toLocaleString()}원 결제하기`)}
               </button>
             </div>
             {/* iOS 홈바 영역 흡수 */}

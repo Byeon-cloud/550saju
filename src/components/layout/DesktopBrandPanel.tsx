@@ -1,35 +1,55 @@
 /**
- * DesktopBrandPanel — PC 웹 브랜드 셸 (2026-06-12)
+ * DesktopBrandPanel — PC 웹 브랜드 셸 v2 (2026-06-12)
  *
- * 배경: PC 로 saju500.app 접속 시 빈 화면에 모바일 스트립만 덜렁 떠 있던 것 →
- *   펫프렌즈류 "모바일 퍼스트 서비스의 PC 랜딩" 패턴 적용:
- *   좌측 브랜드 패널(로고·태그라인·키워드·앱 안내) + 우측 앱 스트립 + 브랜드 배경.
+ * 펫프렌즈 레이아웃 문법(좌 브랜드 임팩트 + 대각선 배경 + 우 폰 스트립)을 가져오되,
+ * 내용은 사주500 차별성으로: 600년 원전 · 만세력 정밀 계산 · 매일 무료.
  *
- * - 1180px 미만·앱인토스에선 렌더 자체 안 함 (CSS media + 빌드 플래그 이중 가드)
- * - 앱 스트립(.app-container)의 데스크톱 시프트는 globals.css @media 에서 처리
+ * - 1240px 미만 · 앱인토스 · /admin 에선 비표시 (CSS media + data-admin + 빌드 플래그)
+ * - 스트립 정렬·스크롤은 globals.css 의 .app-container 폰프레임 규칙이 담당
  */
 import { isAppintosBuild } from '@/lib/env';
 
-const KEYWORDS = ['오늘의 운세 무료', '꿈해몽', '연애운', '재회운', '종합사주', '사주 상담'];
+const POINTS = [
+  { emblem: '典', title: '600년 원전으로 풀이해요', desc: '연해자평·자평진전 등 6대 고전 기반 — 광고식 운세가 아니에요' },
+  { emblem: '曆', title: '만세력부터 정확하게', desc: '진태양시 ±30분 보정까지 — 점집에서도 놓치는 계산' },
+  { emblem: '日', title: '매일 무료로 시작해요', desc: '오늘의 운세·꿈해몽은 돈 안 들어요' },
+];
+
+const KEYWORDS = ['오늘의 운세', '꿈해몽', '연애운', '재회운', '종합사주', '사주 상담'];
 
 export function DesktopBrandPanel() {
   if (isAppintosBuild) return null;
   return (
     <aside className="desktop-brand-panel" aria-hidden="true">
-      {/* 거대 한자 워터마크 */}
+      {/* 배경 레이어 — 크림 + 잉크 대각 밴드 + 골드 라인 + 한자 워터마크 */}
+      <div className="dbp-bg-base" />
       <span className="dbp-watermark">命</span>
+      <div className="dbp-bg-ink" />
+      <div className="dbp-bg-gold" />
+      <span className="dbp-watermark dbp-watermark--ink">運</span>
 
       <div className="dbp-inner">
-        <img src="/logo.png" alt="" className="dbp-logo" />
+        <div className="dbp-brandrow">
+          <img src="/logo.png" alt="" className="dbp-logo" />
+          <span className="dbp-wordmark">사주<b>500</b></span>
+        </div>
+
         <h1 className="dbp-title">
-          사주<span className="dbp-title-gold">500</span>
+          당신의 사주,<br />
+          <span className="dbp-title-gold">처음부터 끝까지</span> 읽어드립니다
         </h1>
-        <p className="dbp-tagline">
-          당신의 사주,<br />처음부터 끝까지 읽어드립니다
-        </p>
-        <p className="dbp-sub">
-          600년 명리학 원전 기반 — 만세력 계산부터 풀이까지
-        </p>
+
+        <div className="dbp-points">
+          {POINTS.map((pt) => (
+            <div key={pt.emblem} className="dbp-point">
+              <span className="dbp-point-emblem">{pt.emblem}</span>
+              <span>
+                <div className="dbp-point-title">{pt.title}</div>
+                <div className="dbp-point-desc">{pt.desc}</div>
+              </span>
+            </div>
+          ))}
+        </div>
 
         <div className="dbp-chips">
           {KEYWORDS.map((k) => (
