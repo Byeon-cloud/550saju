@@ -29,17 +29,14 @@ function authHeader(method: string, url: string, c: XCreds): string {
   return "OAuth " + Object.keys(p).sort().map((k) => `${enc(k)}="${enc(p[k])}"`).join(", ");
 }
 
-/** Threads 글 → X 문화로 변환 (스친이=스레드 용어 → 트친). 기계적 치환이라 내용 불변 */
+/** Threads 글 → X 문화로 변환 (스친이=스레드 용어 → 트친). 기계적 치환이라 내용 불변.
+ *  순서 중요: 구체형 먼저 → 캐치올("스친"→"트친")이 마지막에 빈틈 전부 커버. */
 export function adaptForX(text: string): string {
   return text
     .replaceAll("스친이들", "트친들")
-    .replaceAll("스친이가", "트친이")
-    .replaceAll("스친이도", "트친도")
-    .replaceAll("스친이는", "트친은")
-    .replaceAll("스친이한테", "트친한테")
-    .replaceAll("스친이랑", "트친이랑")
     .replaceAll("스친아", "트친아")
-    .replaceAll("스친이", "트친")
+    .replaceAll("스친이", "트친이") // 스친이가/도/는/야/한테/면/네... 조사 통째로 보존
+    .replaceAll("스친", "트친") // 캐치올 — 어떤 변형이 와도 '스친'은 안 남음
     .replaceAll("스레드", "여기");
 }
 
