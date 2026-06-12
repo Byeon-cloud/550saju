@@ -27,8 +27,11 @@ export function kstDay(offset = 0): string {
 }
 
 // ─── 타입 ───
+export type PlatFilter = 'all' | 'web' | 'ait';
+
 export interface RawEvent {
   day: string; name: string; uid: string; sid: string; props: any; utm?: any;
+  plat?: string;                                   // web | ait (2026-06-12 · 미기록 구이벤트 = web 취급)
   did?: string;                                    // 기기 영속 ID (2026-06-12)
   demo?: { g?: string; ab?: string };              // 성별·연령대 (본인 프로필 파생)
 }
@@ -366,7 +369,7 @@ function accumulateUsage(agg: PeriodAgg, u: any): void {
 // ─────────────────────────────────────────────────────────
 // 훅 — 기간 선택 시 현 기간 + 직전 동일 기간 동시 집계
 // ─────────────────────────────────────────────────────────
-export function useAdminData(range: RangeDays, enabled: boolean) {
+export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilter = 'all') {
   const [data, setData] = useState<AdminData | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -400,6 +403,8 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
         evSnap.forEach((doc) => {
           const e = doc.data() as any;
           if (isInternalEvent(e)) return; // 오너 기기·로컬 테스트 트래픽 제외 (2026-06-12)
+          // 플랫폼 필터 (2026-06-12) — plat 미기록 구이벤트는 web 취급 (구 토스앱 번들엔 추적코드 자체가 없었음)
+          if (plat !== 'all' && ((e.plat as string) || 'web') !== plat) return;
           const ev: RawEvent = {
             day: e.day || '', name: e.name || '', uid: e.uid || '', sid: e.sid || '',
             props: e.props, utm: e.utm, did: e.did || '', demo: e.demo,
@@ -596,7 +601,7 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
       }
     })();
     return () => { cancelled = true; };
-  }, [enabled, range, reloadKey]);
+  }, [enabled, range, reloadKey, plat]);
 
   return { data, busy, error, reload };
 }

@@ -633,7 +633,8 @@ export function ChargePage() {
                     initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
                     transition={{ type: 'spring', damping: 28, stiffness: 320 }}
                     style={{
-                      position: 'fixed', left: '50%', bottom: 0, transform: 'translateX(-50%)',
+                      // 센터링은 margin auto 로 — transform 은 framer-motion y 애니메이션이 덮어씀 (2026-06-12 fix)
+                      position: 'fixed', left: 0, right: 0, bottom: 0, margin: '0 auto',
                       width: '100%', maxWidth: 520, background: C.paper,
                       borderRadius: '20px 20px 0 0', padding: '22px 20px calc(20px + env(safe-area-inset-bottom))',
                       zIndex: 61, boxSizing: 'border-box',

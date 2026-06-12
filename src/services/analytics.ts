@@ -206,6 +206,17 @@ function internalKind(): 'dev' | 'owner' | null {
   return null;
 }
 
+/* 플랫폼 판별 (2026-06-12 · 어드민 웹/앱 분리) — 모듈 1회 캐시 */
+let platCache: 'web' | 'ait' | null = null;
+async function getPlat(): Promise<'web' | 'ait'> {
+  if (platCache) return platCache;
+  try {
+    const { isAppsInToss } = await import('@/services/payment/iapService');
+    platCache = isAppsInToss() ? 'ait' : 'web';
+  } catch { platCache = 'web'; }
+  return platCache;
+}
+
 function logToFirestore(eventName: string, params?: Record<string, string | number>) {
   if (!FIRESTORE_TRACKED.has(eventName)) return;
   const internal = internalKind();
@@ -228,6 +239,7 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
         ...(utm ? { utm } : {}), // 유입 채널 (있을 때만 — C5)
         ...(demo ? { demo } : {}), // 성별·연령대 (본인 프로필 파생 — 2026-06-12)
         ...(internal === 'owner' ? { internal: true } : {}), // 오너 기기 — 집계 제외 마킹
+        plat: await getPlat(), // 웹/토스앱 분리 (2026-06-12)
         ts: serverTimestamp(),
         // 날짜 버킷 (집계 쿼리 효율) — KST 기준 YYYY-MM-DD
         day: kstDay(),

@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { isOwner } from '@/services/admin/adminConfig';
 import { useAdminData } from '@/pages/admin/_useAdminData';
-import type { RangeDays, AdminData } from '@/pages/admin/_useAdminData';
+import type { RangeDays, AdminData, PlatFilter } from '@/pages/admin/_useAdminData';
 import { C, Skeleton, fmtNum, fmtWon } from '@/pages/admin/_components';
 import { TabOverview } from '@/pages/admin/_tabOverview';
 import { TabRevenue } from '@/pages/admin/_tabRevenue';
@@ -45,8 +45,9 @@ export function AdminPage() {
   if (owner) { try { localStorage.setItem('saju500:internal', '1'); } catch { /* noop */ } }
 
   const [range, setRange] = useState<RangeDays>(14);
+  const [plat, setPlat] = useState<PlatFilter>('all'); // 웹/토스앱 분리 (2026-06-12)
   const [tab, setTab] = useState<TabId>('overview');
-  const { data, busy, error, reload } = useAdminData(range, owner && !loading);
+  const { data, busy, error, reload } = useAdminData(range, owner && !loading, plat);
 
   // ─── 비오너 — uid 노출 (등록용 · 기존 동작 보존) ───
   if (!loading && !owner) {
@@ -116,6 +117,22 @@ export function AdminPage() {
                     }}
                   >
                     {r}일
+                  </button>
+                ))}
+              </div>
+              {/* 플랫폼 필터 (2026-06-12) — 행동 이벤트 기준 분리 (매출·생성 복원은 전체 합산 유지) */}
+              <div style={{ display: 'flex', border: `1px solid ${C.line}`, borderRadius: 10, overflow: 'hidden' }}>
+                {([['all', '전체'], ['web', '웹'], ['ait', '토스앱']] as const).map(([k, label]) => (
+                  <button
+                    key={k}
+                    onClick={() => setPlat(k)}
+                    style={{
+                      padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none',
+                      background: plat === k ? C.ink : 'transparent',
+                      color: plat === k ? '#FFFFFF' : C.mute,
+                    }}
+                  >
+                    {label}
                   </button>
                 ))}
               </div>
