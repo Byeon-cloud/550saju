@@ -21,19 +21,22 @@ export function TabOverview({ d }: { d: AdminData }) {
   const arppuPrev = prev.payingUsers > 0 ? Math.round(prev.revenue / prev.payingUsers) : 0;
   const contentGen = cur.contentResultTotal;
 
-  // 듀얼 시계열 — 매출(좌) + DAU·활동유저(우)
-  //   활동유저(복원) = reports.generatedAt 역산 — 행동로그 수집 이전 과거도 보임 (2026-06-12)
+  // 듀얼 시계열 — 매출(좌) + DAU(우) 하나로 단순화 (2026-06-12 준기 피드백)
+  //   DAU = 그날 앱을 쓴 유저 — 방문로그(있으면)와 생성기록(과거 복원) 중 큰 값.
+  //   행동로그 수집 이전 기간도 생성기록으로 채워져 끊기지 않음.
   const dualSeries = useMemo(() => cur.days.map((day, i) => ({
     day: day.slice(5),
     revenue: cur.revenueByDay[i],
-    dau: cur.dauByDay[i],
-    genUsers: cur.genUsersByDay[i],
-    gens: cur.genByDay[i],
+    dau: Math.max(cur.dauByDay[i] ?? 0, cur.genUsersByDay[i] ?? 0),
   })), [cur]);
-  const genUsersAvg = useMemo(() => {
-    const arr = cur.genUsersByDay;
-    return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 10) / 10 : 0;
-  }, [cur.genUsersByDay]);
+  const dauUnifiedAvg = useMemo(() => {
+    const merged = cur.days.map((_, i) => Math.max(cur.dauByDay[i] ?? 0, cur.genUsersByDay[i] ?? 0));
+    return merged.length ? Math.round(merged.reduce((a, b) => a + b, 0) / merged.length * 10) / 10 : 0;
+  }, [cur]);
+  const dauUnifiedPrevAvg = useMemo(() => {
+    const merged = prev.days.map((_, i) => Math.max(prev.dauByDay[i] ?? 0, prev.genUsersByDay[i] ?? 0));
+    return merged.length ? Math.round(merged.reduce((a, b) => a + b, 0) / merged.length * 10) / 10 : 0;
+  }, [prev]);
 
   // 전환 퍼널 5단계
   const funnel = useMemo(() => ([
@@ -73,8 +76,7 @@ export function TabOverview({ d }: { d: AdminData }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
           <Kpi label="총매출 (누적)" value={fmtWon(d.totalRevenue)} accent />
           <Kpi label="기간매출" value={fmtWon(cur.revenue)} delta={deltaPct(cur.revenue, prev.revenue)} accent />
-          <Kpi label="DAU 평균" value={`${fmtNum(cur.dauAvg)}명`} delta={deltaPct(cur.dauAvg, prev.dauAvg)} sub="방문 로그 기준 (수집 시작 후)" />
-          <Kpi label="활동유저 평균 (복원)" value={`${genUsersAvg}명`} delta={deltaPct(Math.round(genUsersAvg), Math.round(prev.genUsersByDay.reduce((a, b) => a + b, 0) / Math.max(1, prev.genUsersByDay.length)))} sub="콘텐츠 생성 기록 역산 — 과거 포함" />
+          <Kpi label="DAU 평균" value={`${dauUnifiedAvg}명`} delta={deltaPct(dauUnifiedAvg, dauUnifiedPrevAvg)} sub="그날 앱을 쓴 유저 (방문+생성 통합)" />
           <Kpi label="신규 결제유저" value={`${fmtNum(newPayers)}명`} delta={deltaPct(cur.payingUsers, prev.payingUsers)} sub={`결제유저 ${cur.payingUsers}명 중 전기간 미결제 (델타=결제유저 수 비교)`} />
           <Kpi label="ARPPU" value={fmtWon(arppu)} delta={deltaPct(arppu, arppuPrev)} sub="기간매출 ÷ 결제유저" />
           <Kpi label="콘텐츠 생성" value={`${fmtNum(contentGen)}건`} delta={deltaPct(contentGen, prev.contentResultTotal)} sub="content_result 기준" />
@@ -82,8 +84,8 @@ export function TabOverview({ d }: { d: AdminData }) {
         </div>
       </Section>
 
-      <Section title="매출 · 활동 추이" caption="· 좌축 매출(₩) 면적 — 우축 라인: DAU(방문 로그) + 활동유저(생성 기록 복원 — 과거 포함) · 점선 = 일별 생성 건수">
-        {dualSeries.every((p) => p.revenue === 0 && p.dau === 0 && p.genUsers === 0) ? <Empty /> : (
+      <Section title="매출 · DAU 추이" caption="· 좌축 매출(₩) 면적 — 우축 DAU(명). DAU = 그날 앱을 쓴 유저 (방문 로그 + 생성 기록 통합 — 과거도 끊김 없음)">
+        {dualSeries.every((p) => p.revenue === 0 && p.dau === 0) ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
             <ResponsiveContainer width="100%" height={240}>
               <ComposedChart data={dualSeries} margin={{ left: 0, right: 8 }}>
@@ -99,9 +101,7 @@ export function TabOverview({ d }: { d: AdminData }) {
                 <Tooltip formatter={(v: any, name: any) => name === '매출' ? [fmtWon(Number(v)), name] : [`${fmtNum(Number(v))}명`, name]} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Area yAxisId="rev" type="monotone" dataKey="revenue" name="매출" stroke={C.goldDeep} strokeWidth={2} fill="url(#ovRevGrad)" />
-                <Line yAxisId="dau" type="monotone" dataKey="dau" name="DAU" stroke={C.ink} strokeWidth={2} dot={false} />
-                <Line yAxisId="dau" type="monotone" dataKey="genUsers" name="활동유저(복원)" stroke={C.goldDeep} strokeWidth={2} dot={false} />
-                <Line yAxisId="dau" type="monotone" dataKey="gens" name="생성 건수" stroke={C.mute} strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
+                <Line yAxisId="dau" type="monotone" dataKey="dau" name="DAU" stroke={C.ink} strokeWidth={2.5} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

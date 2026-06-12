@@ -14,6 +14,8 @@ export const USD_KRW = 1400;
 export const TOKEN_PRICE_PER_M: Record<string, { in: number; out: number }> = {
   opus: { in: 5, out: 25 },
   sonnet: { in: 3, out: 15 },
+  haiku: { in: 1, out: 5 },     // 2026-06-12 — 누락돼 오늘운세(Haiku)가 0원 또는 Sonnet 단가로 오계산되던 것
+  gemini: { in: 0.15, out: 0.6 }, // Flash 급 근사 — 무시 가능 수준이지만 0 보다는 정직
 };
 
 // ─── KST 날짜 유틸 ───
@@ -159,6 +161,11 @@ function paymentDay(p: any): string {
 }
 
 /** analytics 이벤트 1건을 해당 기간 버킷에 누적 */
+// 내부 트래픽 제외 (2026-06-12) — 오너 기기/로컬 테스트 이벤트는 집계에서 빼서 '가짜 데이터' 차단
+function isInternalEvent(e: any): boolean {
+  return e?.internal === true;
+}
+
 function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: PeriodScratch): void {
   const t = e.props?.type as string | undefined;
   // 2026-06-12 — did(기기 영속) 우선: 익명 유저가 세션마다 새 사람으로 집계되던 것 fix
@@ -343,7 +350,9 @@ function accumulateUsage(agg: PeriodAgg, u: any): void {
   const o = Number(u.outputTokens) || 0;
   const price = model.includes('opus') ? TOKEN_PRICE_PER_M.opus
     : model.includes('sonnet') ? TOKEN_PRICE_PER_M.sonnet
-    : null; // Gemini 등 — 무시 가능 수준
+    : model.includes('haiku') ? TOKEN_PRICE_PER_M.haiku
+    : model.includes('gemini') ? TOKEN_PRICE_PER_M.gemini
+    : null;
   const krw = price ? ((i * price.in + o * price.out) / 1_000_000) * USD_KRW : 0;
   const slot = (agg.aiUsage[type] ??= { calls: 0, inTok: 0, outTok: 0, costKrw: 0, ok: 0, fail: 0 });
   slot.calls += 1; slot.inTok += i; slot.outTok += o; slot.costKrw += krw;
@@ -390,6 +399,7 @@ export function useAdminData(range: RangeDays, enabled: boolean) {
         );
         evSnap.forEach((doc) => {
           const e = doc.data() as any;
+          if (isInternalEvent(e)) return; // 오너 기기·로컬 테스트 트래픽 제외 (2026-06-12)
           const ev: RawEvent = {
             day: e.day || '', name: e.name || '', uid: e.uid || '', sid: e.sid || '',
             props: e.props, utm: e.utm, did: e.did || '', demo: e.demo,

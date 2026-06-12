@@ -4,12 +4,11 @@ import { useMemo } from 'react';
 import type { AdminData } from './_useAdminData';
 import { USD_KRW } from './_useAdminData';
 import {
-  C, Kpi, Section, CsvButton, DataTable, deltaPct, fmtNum, fmtWon, fmtPct, CONTENT_LABEL,
+  C, Kpi, Section, CsvButton, DataTable, deltaPct, fmtNum, fmtWon, CONTENT_LABEL,
 } from './_components';
 import type { Col } from './_components';
 import { buildCsv, downloadCsv, csvFilename } from './_csv';
 
-const UN_PRICE = 500;
 
 export function TabAiOps({ d }: { d: AdminData }) {
   const { cur, prev } = d;
@@ -68,60 +67,49 @@ export function TabAiOps({ d }: { d: AdminData }) {
   ];
 
   // ── 토큰 원가 (aiUsage) ──
+  // 1건(생성물 1개)당 호출 수 — 병렬 분할·2차 리뷰 구조 반영 (2026-06-12)
+  //   종합사주·1운 리포트 = 3그룹 병렬 / 오늘운세 = Haiku 3-way / 주제분석 = 1차+2차 자기리뷰
+  const CALLS_PER_GEN: Record<string, number> = {
+    premium: 3, report: 3, daily: 3, topic: 2, dream: 1, deepDream: 1, chat: 1,
+    daeun: 1, monthly: 1, compat: 1, tojung: 1,
+  };
+  // 판매가 (운차감 × ₩500) — 무료는 0
+  const PRICE_PER_GEN: Record<string, number> = {
+    premium: 2500, report: 500, topic: 500, deepDream: 500, daily: 0, dream: 0, chat: 0,
+    daeun: 2500, monthly: 1500, compat: 2500, tojung: 1500,
+  };
   const costRows = useMemo(() =>
-    Object.entries(cur.aiUsage).map(([type, v]) => ({
-      label: CONTENT_LABEL[type] || type,
-      type,
-      calls: v.calls,
-      inTok: v.inTok,
-      outTok: v.outTok,
-      costKrw: Math.round(v.costKrw),
-      fail: v.fail,
-    })).sort((a, b) => b.costKrw - a.costKrw),
+    Object.entries(cur.aiUsage).map(([type, v]) => {
+      const gens = Math.max(1, Math.round(v.calls / (CALLS_PER_GEN[type] ?? 1)));
+      const perGen = Math.round(v.costKrw / gens);
+      const price = PRICE_PER_GEN[type];
+      return {
+        label: CONTENT_LABEL[type] || type,
+        type,
+        calls: v.calls,
+        gens,
+        inTok: v.inTok,
+        outTok: v.outTok,
+        costKrw: Math.round(v.costKrw),
+        perGen,
+        unitMargin: price != null && price > 0 ? price - perGen : null,
+        fail: v.fail,
+      };
+    }).sort((a, b) => b.costKrw - a.costKrw),
   [cur.aiUsage]);
 
   const costCols: Col[] = [
     { key: 'label', label: '콘텐츠' },
     { key: 'calls', label: '호출', numeric: true },
-    { key: 'inTok', label: '입력 토큰', numeric: true },
-    { key: 'outTok', label: '출력 토큰', numeric: true },
-    { key: 'costKrw', label: '원가(₩)', numeric: true, render: (v) => fmtWon(v) },
+    { key: 'gens', label: '생성 건(환산)', numeric: true },
+    { key: 'costKrw', label: '원가 합(₩)', numeric: true, render: (v) => fmtWon(v) },
+    { key: 'perGen', label: '1건당 원가', numeric: true, render: (v) => fmtWon(v) },
+    { key: 'unitMargin', label: '1건당 마진(판매가−원가)', numeric: true, render: (v) => v == null ? '무료' : <b style={{ color: Number(v) >= 0 ? '#2D8A4E' : '#C0392B' }}>{fmtWon(v)}</b> },
     { key: 'fail', label: '실패', numeric: true },
   ];
 
   // ── 마진 — 콘텐츠별 운차감 매출(₩) vs AI 원가(₩) ──
-  const marginRows = useMemo(() => {
-    // 운차감을 base type 으로 합산 (topic:xxx → topic)
-    const revByType: Record<string, number> = {};
-    Object.entries(cur.contentPurchase).forEach(([key, v]) => {
-      const base = key.startsWith('topic:') ? 'topic' : key;
-      revByType[base] = (revByType[base] ?? 0) + v.un * UN_PRICE;
-    });
-    const types = new Set([...Object.keys(revByType), ...Object.keys(cur.aiUsage)]);
-    return Array.from(types).map((type) => {
-      const rev = Math.round(revByType[type] ?? 0);
-      const cost = Math.round(cur.aiUsage[type]?.costKrw ?? 0);
-      const margin = rev - cost;
-      return {
-        label: CONTENT_LABEL[type] || type,
-        rev,
-        cost,
-        margin,
-        marginRate: rev > 0 ? Math.round((margin / rev) * 100) : null,
-      };
-    }).sort((a, b) => b.rev - a.rev);
-  }, [cur.contentPurchase, cur.aiUsage]);
 
-  const marginCols: Col[] = [
-    { key: 'label', label: '콘텐츠' },
-    { key: 'rev', label: '운차감 매출(₩)', numeric: true, render: (v) => fmtWon(v) },
-    { key: 'cost', label: 'AI 원가(₩)', numeric: true, render: (v) => fmtWon(v) },
-    {
-      key: 'margin', label: '마진(₩)', numeric: true,
-      render: (v) => <span style={{ color: v >= 0 ? C.up : C.down, fontWeight: 700 }}>{fmtWon(v)}</span>,
-    },
-    { key: 'marginRate', label: '마진율', numeric: true, render: (v) => fmtPct(v) },
-  ];
 
   // ── KPI ──
   const totalDone = Object.values(cur.ai).reduce((a, v) => a + v.done, 0);
@@ -130,20 +118,11 @@ export function TabAiOps({ d }: { d: AdminData }) {
   const errRate = totalDone + totalErr > 0 ? Math.round((totalErr / (totalDone + totalErr)) * 1000) / 10 : 0;
   const totalCost = Math.round(cur.aiUsageTotal.costKrw);
   const prevCost = Math.round(prev.aiUsageTotal.costKrw);
-  const totalMarginRev = marginRows.reduce((a, r) => a + r.rev, 0);
+
 
   const exportCsv = () => {
-    const headers = ['콘텐츠', '호출', '입력토큰', '출력토큰', '원가₩', '운차감매출₩', '마진₩'];
-    const byLabel: Record<string, { label: string; calls: number; inTok: number; outTok: number; costKrw: number; rev: number; margin: number }> = {};
-    costRows.forEach((r) => {
-      byLabel[r.label] = { label: r.label, calls: r.calls, inTok: r.inTok, outTok: r.outTok, costKrw: r.costKrw, rev: 0, margin: -r.costKrw };
-    });
-    marginRows.forEach((r) => {
-      const slot = (byLabel[r.label] ??= { label: r.label, calls: 0, inTok: 0, outTok: 0, costKrw: r.cost, rev: 0, margin: 0 });
-      slot.rev = r.rev;
-      slot.margin = r.margin;
-    });
-    const rows = Object.values(byLabel).map((r) => [r.label, r.calls, r.inTok, r.outTok, r.costKrw, r.rev, r.margin]);
+    const headers = ['콘텐츠', '호출', '생성건(환산)', '입력토큰', '출력토큰', '원가합₩', '1건당원가₩', '1건당마진₩'];
+    const rows = costRows.map((r) => [r.label, r.calls, r.gens, r.inTok, r.outTok, r.costKrw, r.perGen, r.unitMargin ?? '무료']);
     downloadCsv(csvFilename('ai_ops', cur.days[0], cur.days[cur.days.length - 1]), buildCsv(headers, rows));
   };
 
@@ -154,7 +133,7 @@ export function TabAiOps({ d }: { d: AdminData }) {
           <Kpi label="AI 호출 성공" value={`${fmtNum(totalDone)}건`} delta={deltaPct(totalDone, prevDone)} />
           <Kpi label="에러율" value={`${errRate}%`} sub={`에러 ${fmtNum(totalErr)}건`} />
           <Kpi label="토큰 원가 (실측)" value={fmtWon(totalCost)} delta={deltaPct(totalCost, prevCost)} accent />
-          <Kpi label="운차감 매출 vs 원가" value={fmtWon(totalMarginRev - totalCost)} sub={`매출 ${fmtWon(totalMarginRev)} − 원가 ${fmtWon(totalCost)}`} />
+          <Kpi label="1건당 원가 보기" value="아래 표" sub="합산 마진은 QA 호출이 섞여 무의미 — 단위 마진으로 판단" />
         </div>
       </Section>
 
@@ -168,17 +147,13 @@ export function TabAiOps({ d }: { d: AdminData }) {
 
       <Section
         title="토큰 원가 (aiUsage 실측)"
-        caption={`· 단가 상수 Opus $5/$25 · Sonnet $3/$15 (per 1M tokens) · 환율 ₩${USD_KRW}/$ — 캐시 할인 미반영, Gemini 제외(무시 가능 수준). 실제 청구는 Anthropic 콘솔로 교차검증.`}
+        caption={`· 단가: Opus $5/$25 · Sonnet $3/$15 · Haiku $1/$5 · Gemini Flash 근사 (per 1M tok) · 환율 ₩${USD_KRW}/$ · 캐시 할인 미반영(실청구는 이보다 낮음) — ⚠️ QA·테스트 호출 포함이라 합계보다 '1건당 원가'를 보세요. 실청구는 Anthropic 콘솔 교차검증.`}
       >
         <DataTable columns={costCols} rows={costRows} initialSortKey="costKrw" />
       </Section>
 
-      <Section
-        title="콘텐츠별 마진 (운차감 매출 − AI 원가)"
-        caption={`· 매출 = content_purchase 운 × ₩${UN_PRICE} (소비 기준 — 충전 매출과 별개) · 원가 = aiUsage 토큰 실측 — 무료 콘텐츠는 매출 0이라 마진 음수 정상`}
-      >
-        <DataTable columns={marginCols} rows={marginRows} initialSortKey="rev" />
-      </Section>
+      {/* 합산 마진 테이블 제거 (2026-06-12) — 매출(이벤트 수집분)과 원가(QA 포함 전체)의 모수가 달라
+          -101% 같은 무의미한 수치가 나오던 것. '토큰 원가' 표의 1건당 마진이 정확한 대체. */}
     </div>
   );
 }

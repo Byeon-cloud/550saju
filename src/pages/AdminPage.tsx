@@ -40,6 +40,10 @@ export function AdminPage() {
   const navigate = useNavigate();
   const owner = isOwner(user?.uid, user?.email);
 
+  // 오너 기기 마킹 (2026-06-12) — 이 기기의 이후 모든 이벤트는 internal:true 로 기록돼 집계에서 제외.
+  //   '내가 둘러본 것까지 DAU·퍼널에 섞이는' 가짜 데이터 차단.
+  if (owner) { try { localStorage.setItem('saju500:internal', '1'); } catch { /* noop */ } }
+
   const [range, setRange] = useState<RangeDays>(14);
   const [tab, setTab] = useState<TabId>('overview');
   const { data, busy, error, reload } = useAdminData(range, owner && !loading);

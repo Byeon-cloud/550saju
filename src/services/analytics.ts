@@ -195,8 +195,21 @@ function waitForAuth(auth: { currentUser: unknown; onAuthStateChanged: (cb: (u: 
   });
 }
 
+/** 내부 트래픽 판정 (2026-06-12) — 가짜 데이터 원천 차단.
+ *  localhost/127.* = 개발 → 기록 자체 skip. 오너 기기(/admin 방문 이력) = internal:true 마킹 → 집계 제외. */
+function internalKind(): 'dev' | 'owner' | null {
+  try {
+    const h = window.location.hostname;
+    if (h === 'localhost' || h.startsWith('127.') || h.startsWith('192.168.')) return 'dev';
+    if (localStorage.getItem('saju500:internal') === '1') return 'owner';
+  } catch { /* noop */ }
+  return null;
+}
+
 function logToFirestore(eventName: string, params?: Record<string, string | number>) {
   if (!FIRESTORE_TRACKED.has(eventName)) return;
+  const internal = internalKind();
+  if (internal === 'dev') return; // 로컬 개발 — 아예 기록 안 함
   // 동적 import — analytics 가 firebase 를 직접 끌고 오지 않게 (번들 분리 + 실패 무해)
   import('@/services/auth/firebase')
     .then(async ({ db }) => {
@@ -214,6 +227,7 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
         props: params ?? {},
         ...(utm ? { utm } : {}), // 유입 채널 (있을 때만 — C5)
         ...(demo ? { demo } : {}), // 성별·연령대 (본인 프로필 파생 — 2026-06-12)
+        ...(internal === 'owner' ? { internal: true } : {}), // 오너 기기 — 집계 제외 마킹
         ts: serverTimestamp(),
         // 날짜 버킷 (집계 쿼리 효율) — KST 기준 YYYY-MM-DD
         day: kstDay(),
