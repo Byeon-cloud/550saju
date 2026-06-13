@@ -1444,21 +1444,21 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
      up/peak/warn/now 타입별 톤은 .mi-month·.mi-badge 컬러로 충분히 표현. */
   /* 헤더 줄 — 월·간지·라벨 */
   .premium-mockup .month-insight-grid .mi .mi-head {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 2px;
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px;
+    margin-bottom: 3px;
   }
   .premium-mockup .month-insight-grid .mi .mi-month {
     font-family: 'Noto Serif KR', serif;
     font-size: 14px; font-weight: 800; color: #1a1a1a;
     letter-spacing: 0.02em;
-    line-height: 1;
+    line-height: 1.2; white-space: nowrap;
   }
   .premium-mockup .month-insight-grid .mi .mi-ganzi {
     font-family: 'Noto Serif KR', serif;
-    font-size: 12.5px; font-weight: 700;
+    font-size: 12px; font-weight: 700;
     color: #8B6F3D;
-    letter-spacing: 0.04em;
-    line-height: 1;
+    letter-spacing: 0.02em;
+    line-height: 1.2; white-space: nowrap;
   }
   .premium-mockup .month-insight-grid .mi .mi-badge {
     margin-left: auto;
