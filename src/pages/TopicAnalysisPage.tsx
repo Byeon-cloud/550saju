@@ -333,7 +333,7 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: 700,
                 color: '#1B5E2C',
                 background: 'rgba(45,138,78,0.16)',
@@ -355,7 +355,7 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: 700,
                 color: '#B33A0E',
                 background: 'rgba(211,47,47,0.10)',
@@ -910,9 +910,9 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
                       <stop offset="100%" stopColor={color} stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false}
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false}
                     tickFormatter={(v: string) => v.replace('월', '')} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false} />
                   <Area type="monotone" dataKey="score" stroke={color} fill="url(#wealthGrad)"
                     strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
                 </AreaChart>
@@ -1136,7 +1136,7 @@ function IncomeDonut({
             <div key={s.key} className="flex items-center gap-2 text-[11px]">
               <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: s.color, flexShrink: 0 }} />
               <span style={{ fontWeight: 700, color: '#1A1A1A', minWidth: 40 }}>{s.label}</span>
-              <span style={{ fontSize: 9.5, color: '#7A7269', fontFamily: "'Noto Serif KR', serif" }}>{s.hanja}</span>
+              <span style={{ fontSize: 11, color: '#7A7269', fontFamily: "'Noto Serif KR', serif" }}>{s.hanja}</span>
               <span style={{ marginLeft: 'auto', fontWeight: 800, color: s.color, fontFeatureSettings: '"tnum"' }}>
                 {s.pct}%
               </span>
@@ -1293,7 +1293,7 @@ function DaewoonWealthRail({
               <div style={{ height: '100%', width: `${c.intensity}%`, background: tone === 'rgba(198,40,40,0.18)' ? '#D32F2F' : (c.intensity >= 70 ? accentColor : '#8C6D3D') }} />
             </div>
             {c.isCurrent && (
-              <div style={{ fontSize: 10, fontWeight: 800, color: '#8C6D3D', marginTop: 4, letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#8C6D3D', marginTop: 4, letterSpacing: '0.05em' }}>
                 NOW
               </div>
             )}
@@ -1406,7 +1406,7 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 11, color: '#7A7269', wordBreak: 'keep-all', lineHeight: 1.4, flex: 1 }}>{cat.desc}</span>
                   <span style={{
-                    fontSize: 10, fontWeight: 700, color: '#7A7269',
+                    fontSize: 11, fontWeight: 700, color: '#7A7269',
                     background: 'rgba(0,0,0,0.04)', padding: '2px 8px', borderRadius: 100, flexShrink: 0,
                   }}>
                     없음
@@ -2154,7 +2154,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={ca.axes.map((a: any) => ({ axis: a.axis, score: a.score }))}>
                   <PolarGrid stroke="rgba(0,0,0,0.06)" />
-                  <PolarAngleAxis dataKey="axis" tick={{ fontSize: 10, fill: '#8D7B68' }} />
+                  <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11, fill: '#8D7B68' }} />
                   <Radar dataKey="score" stroke={color} fill={color} fillOpacity={0.15} strokeWidth={2} dot={{ r: 3, fill: color }} />
                 </RadarChart>
               </ResponsiveContainer>
@@ -2263,9 +2263,9 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                       <stop offset="100%" stopColor="#C88A95" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false}
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false}
                     tickFormatter={(v: string) => v.replace('월', '')} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#999' }} tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false} />
                   <Area type="monotone" dataKey="reunionChance" stroke={color} fill="url(#reunionGrad)"
                     strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
                   <Area type="monotone" dataKey="myEnergy" stroke="#C88A95" fill="url(#myEnergyGrad)"
@@ -3603,7 +3603,7 @@ export function TopicAnalysisPage() {
                                     position: 'absolute',
                                     top: -6,
                                     right: -4,
-                                    fontSize: 9,
+                                    fontSize: 11,
                                     fontWeight: 800,
                                     padding: '1px 5px',
                                     borderRadius: 999,
@@ -3626,9 +3626,9 @@ export function TopicAnalysisPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                               <span style={{ fontSize: 17, fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.01em' }}>{r.name}</span>
                               {isMe ? (
-                                <span style={{ padding: '2px 7px', borderRadius: 999, fontSize: 10, fontWeight: 800, background: '#8C6D3D', color: '#F8F5EE', letterSpacing: '0.04em' }}>본인</span>
+                                <span style={{ padding: '2px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: '#8C6D3D', color: '#F8F5EE', letterSpacing: '0.04em' }}>본인</span>
                               ) : (
-                                <span style={{ fontSize: 10.5, color: '#8C6D3D', fontWeight: 700, padding: '1px 7px', background: 'rgba(184,150,90,0.14)', borderRadius: 999 }}>{relation}</span>
+                                <span style={{ fontSize: 11, color: '#8C6D3D', fontWeight: 700, padding: '1px 7px', background: 'rgba(184,150,90,0.14)', borderRadius: 999 }}>{relation}</span>
                               )}
                             </div>
                             {il && (
@@ -4727,8 +4727,8 @@ export function TopicAnalysisPage() {
                               <stop offset="95%" stopColor={topic.color} stopOpacity={0.02} />
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
-                          <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                          <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
                           <Area type="monotone" dataKey="점수" stroke={topic.color} strokeWidth={2}
                             fill={`url(#topicGrad-${topicId})`}
                             dot={{ r: 3, fill: topic.color, strokeWidth: 0 }}

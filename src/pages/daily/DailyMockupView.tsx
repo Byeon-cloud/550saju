@@ -212,7 +212,7 @@ const MOCKUP_CSS = `
 .daily-mockup .hd::before { content: '火'; position: absolute; right: -16px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.06); line-height: 1; }
 .daily-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .9; flex-wrap: wrap; }
 .daily-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
-.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #fff8e1; padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 600; margin-left: auto; }
+.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #fff8e1; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
 .daily-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.35; }
 .daily-mockup .hd .date { font-size: 12px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
 .daily-mockup .hd .time-chip {
@@ -227,7 +227,7 @@ const MOCKUP_CSS = `
   font-weight: 600;
 }
 .daily-mockup .hd .time-chip .ic { font-size: 13px; }
-.daily-mockup .hd .time-chip .sub { font-size: 10.5px; opacity: 0.8; font-weight: 500; }
+.daily-mockup .hd .time-chip .sub { font-size: 11px; opacity: 0.8; font-weight: 500; }
 
 /* My Saju mini card — SajuCardPage 큰 색 블록 패턴 동기화 (2026-05-06 v4)
    _details_table.tsx 의 천간/지지 솔리드 컬러 블록 스타일 */
@@ -237,7 +237,7 @@ const MOCKUP_CSS = `
   box-shadow: 0 2px 8px rgba(0,0,0,.04);
   border: 1px solid var(--c-card-line);
 }
-.daily-mockup .my-saju .ttl { font-size: 10.5px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
+.daily-mockup .my-saju .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
 .daily-mockup .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .daily-mockup .saju-cell {
   display: flex; flex-direction: column; gap: 4px;
@@ -252,7 +252,7 @@ const MOCKUP_CSS = `
   padding: 5px 3px;
 }
 .daily-mockup .saju-cell .lab {
-  font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
   color: var(--c-mute); text-align: center; margin-bottom: 2px;
 }
 .daily-mockup .saju-cell.ilju .lab { color: var(--c-gold-deep); }
@@ -274,13 +274,13 @@ const MOCKUP_CSS = `
 .daily-mockup .saju-cell .ji .han { font-size: 20px; }
 .daily-mockup .saju-cell .gan .read,
 .daily-mockup .saju-cell .ji .read {
-  font-size: 9px; font-weight: 700; opacity: 0.85;
+  font-size: 11px; font-weight: 700; opacity: 0.85;
   letter-spacing: 0.05em;
   font-family: 'Pretendard', sans-serif;
 }
 .daily-mockup .saju-cell .gan-meaning,
 .daily-mockup .saju-cell .ji-meaning {
-  font-size: 9.5px; color: var(--c-mute); font-weight: 600;
+  font-size: 11px; color: var(--c-mute); font-weight: 600;
   text-align: center; line-height: 1.2;
   font-family: 'Pretendard', sans-serif;
 }
@@ -297,7 +297,7 @@ const MOCKUP_CSS = `
 
 /* Relation card — SajuCard 큰 색 블록 + 일상어 풀이 (2026-05-06 v4) */
 .daily-mockup .relation-card { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px 14px; border: 1px solid var(--c-card-line); }
-.daily-mockup .relation-card .ttl { font-size: 10.5px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 14px; }
+.daily-mockup .relation-card .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 14px; }
 .daily-mockup .rel-flex { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 8px; align-items: stretch; }
 .daily-mockup .rel-stem-card {
   background: var(--c-surface);
@@ -312,7 +312,7 @@ const MOCKUP_CSS = `
 }
 /* 상단 라벨 영역 */
 .daily-mockup .rel-stem-card .lb {
-  font-size: 10px; color: var(--c-mute);
+  font-size: 11px; color: var(--c-mute);
   font-weight: 700; letter-spacing: 0.08em;
   text-align: center; padding: 8px 6px 6px;
   background: var(--c-paper);
@@ -343,7 +343,7 @@ const MOCKUP_CSS = `
   margin-bottom: 2px;
 }
 .daily-mockup .rel-stem-card .gan-yy {
-  font-size: 10.5px; color: var(--c-mute); font-weight: 600;
+  font-size: 11px; color: var(--c-mute); font-weight: 600;
   margin-bottom: 6px;
 }
 .daily-mockup .rel-stem-card .gan-brief {
@@ -357,7 +357,7 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .rel-arrow svg { width: 40px; height: 14px; }
 .daily-mockup .rel-arrow .label {
-  font-size: 10px; font-weight: 700;
+  font-size: 11px; font-weight: 700;
   color: #fff; background: var(--c-gold);
   padding: 4px 8px; border-radius: 100px;
   white-space: nowrap; letter-spacing: 0.02em;
@@ -381,7 +381,7 @@ const MOCKUP_CSS = `
   margin-top: 8px; display: flex; gap: 8px; align-items: flex-start;
 }
 .daily-mockup .rel-explain .tag {
-  font-size: 10.5px; font-weight: 700;
+  font-size: 11px; font-weight: 700;
   padding: 3px 10px; border-radius: 100px;
   flex-shrink: 0; line-height: 1.4;
 }
@@ -399,7 +399,7 @@ const MOCKUP_CSS = `
 /* Oheng row — SajuCardPage 만세력 chip 패턴 (2026-05-06 v4)
    "木 1목" / "火 3화" / "土 1토" / "金 2 +1 금" / "水 1수" pill chip */
 .daily-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
-.daily-mockup .ohaeng-row .ttl { font-size: 10.5px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
+.daily-mockup .ohaeng-row .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
 .daily-mockup .ohaeng-row .lead { font-size: 12px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
 .daily-mockup .ohaeng-bal {
   display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
@@ -442,7 +442,7 @@ const MOCKUP_CSS = `
 .daily-mockup .ob-item.bonus .qty { color: var(--c-gold-deep); }
 .daily-mockup .ob-item .qty .plus { color: var(--c-hwa); font-weight: 800; margin-left: 2px; }
 .daily-mockup .ob-item.lack { opacity: 0.5; }
-.daily-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 9px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
+.daily-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 11px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
 /* 2026-05-28 — 좌측 골드 strip 제거. 배경 톤만으로 callout 표현. */
 .daily-mockup .ohaeng-bonus-note { margin-top: 12px; font-size: 12px; color: var(--c-ink-soft); line-height: 1.6; padding: 10px 12px; background: var(--c-gold-soft); border-radius: 8px; }
 .daily-mockup .ohaeng-bonus-note strong { color: var(--c-gold-deep); font-weight: 700; }
@@ -471,7 +471,7 @@ const MOCKUP_CSS = `
 .daily-mockup .section-header:hover { background: var(--c-paper); }
 .daily-mockup .section-header .sec-num {
   font-family: 'Noto Serif KR', serif;
-  font-size: 10px; font-weight: 700;
+  font-size: 11px; font-weight: 700;
   color: var(--c-gold); letter-spacing: 0.18em;
   margin-right: 6px;
 }
@@ -622,7 +622,7 @@ const MOCKUP_CSS = `
 .daily-mockup .meet .badge-orb span { font-size: 14px; line-height: 1.15; }
 .daily-mockup .meet .ti-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .daily-mockup .meet .ti { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 700; color: #1a1a1a; }
-.daily-mockup .meet .tag { font-size: 10.5px; padding: 2px 8px; border-radius: 100px; font-weight: 700; letter-spacing: .03em; }
+.daily-mockup .meet .tag { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 700; letter-spacing: .03em; }
 .daily-mockup .meet.boost .tag { background: var(--c-mok-soft); color: var(--c-mok); }
 .daily-mockup .meet.clash .tag { background: var(--c-hwa-soft); color: var(--c-hwa); }
 .daily-mockup .meet.calm  .tag { background: rgba(184,150,90,.14); color: #8C6D3D; }
@@ -745,7 +745,7 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .lucky .ico { font-size: 18px; line-height: 1; color: #B8965A; font-weight: 700; }
 .daily-mockup .lucky .swatch { display: block; width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.daily-mockup .lucky .lab { font-size: 10.5px; color: #B8965A; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase; }
+.daily-mockup .lucky .lab { font-size: 11px; color: #B8965A; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase; }
 .daily-mockup .lucky .vl { font-size: 14px; color: #1a1a1a; font-weight: 700; margin-top: 6px; line-height: 1.3; word-break: keep-all; }
 .daily-mockup .lucky .vl.han { font-family: 'Noto Serif KR', serif; font-size: 16px; }
 
@@ -760,10 +760,10 @@ const MOCKUP_CSS = `
   border-top: 1px dashed var(--c-card-line);
 }
 .daily-mockup .tomorrow-v2 .tomorrow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.daily-mockup .tomorrow-v2 .lab { font-size: 10.5px; color: #B8965A; letter-spacing: 0.18em; font-weight: 700; }
+.daily-mockup .tomorrow-v2 .lab { font-size: 11px; color: #B8965A; letter-spacing: 0.18em; font-weight: 700; }
 .daily-mockup .tomorrow-v2 .score-chip { background: rgba(184,150,90,0.14); border: 1px solid rgba(184,150,90,0.30); padding: 4px 10px; border-radius: 100px; display: inline-flex; align-items: baseline; gap: 2px; }
 .daily-mockup .tomorrow-v2 .score-num { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: #B8965A; line-height: 1; }
-.daily-mockup .tomorrow-v2 .score-max { font-size: 10.5px; color: #B8965A; font-weight: 600; }
+.daily-mockup .tomorrow-v2 .score-max { font-size: 11px; color: #B8965A; font-weight: 600; }
 .daily-mockup .tomorrow-v2 .tomorrow-date { font-size: 13px; color: #2a2520; font-weight: 600; line-height: 1.5; padding-bottom: 8px; border-bottom: 1px dashed rgba(184,150,90,0.30); margin-bottom: 8px; }
 .daily-mockup .tomorrow-v2 .tomorrow-date strong { color: #B8965A; font-weight: 700; }
 .daily-mockup .tomorrow-v2 .tomorrow-headline { font-size: 13.5px; color: #2a2520; line-height: 1.7; word-break: keep-all; }
