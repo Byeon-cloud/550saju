@@ -6581,7 +6581,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
       char1: r.chars[0],
       char2: r.chars[1],
       arrow: '↔',
-      desc: `${r.chars.join('')}합 — ${r.resultOheng ? `${r.resultOheng} 기운으로 묶이는 자리` : '결합되는 자리'}`,
+      desc: r.resultOheng ? `서로 끌어당겨 ${r.resultOheng} 기운으로 뭉쳐요 — 협력·시너지가 나는 짝` : '서로 끌어당겨 하나로 묶이는 짝',
       type: 'hap',
     }, '천간합');
   }
@@ -6591,7 +6591,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
       char1: r.chars[0],
       char2: r.chars[1],
       arrow: isBan ? '+' : '↔',
-      desc: `${r.chars.join('')}${isBan ? ' 반합' : '합'}${r.resultOheng ? ` — ${r.resultOheng} 기운으로 묶이는 자리` : ''}`,
+      desc: r.resultOheng ? `${isBan ? '반쯤 ' : ''}끌어당겨 ${r.resultOheng} 기운으로 뭉쳐요` : `${isBan ? '반쯤 ' : ''}끌어당기는 짝`,
       type: 'hap',
     }, isBan ? '지지반합' : '지지합');
   }
@@ -6601,7 +6601,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
       char1: r.chars[0],
       char2: r.chars[1],
       arrow: '↔',
-      desc: `${r.chars.join('')}충 — 마음이 부딪히는 자리`,
+      desc: '마음이 정면으로 부딪혀요 — 결단이 빠른 만큼 충돌도 잦아요',
       type: 'chung',
     }, '천간충');
   }
@@ -6610,7 +6610,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
       char1: r.chars[0],
       char2: r.chars[1],
       arrow: '↔',
-      desc: `${r.chars.join('')}충 — 행동 방향이 부딪히는 자리`,
+      desc: '행동 방향이 엇갈려요 — 환경 변화가 잦은 자리',
       type: 'chung',
     }, '지지충');
   }
@@ -6633,12 +6633,12 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
       char2: r.chars[1] || r.chars[0],
       arrow,
       desc:
-        t.includes('자형') ? '자형(自刑) — 자기 자신과 부딪히는 자리' :
-        t.includes('형') ? `${r.chars.join('')}형 — 결이 어긋나는 자리` :
-        t.includes('파') ? `${r.chars.join('')}파 — 흐트러지는 자리` :
-        t.includes('해') ? `${r.chars.join('')}해 — 풀리지 않는 자리` :
-        t.includes('원진') ? `${r.chars.join('')}원진 — 잠재된 갈등의 자리` :
-        `${r.chars.join('')} — 결이 어긋나는 자리`,
+        t.includes('자형') ? '스스로를 옥죄는 버릇 — 자기검열이 강한 편' :
+        t.includes('형') ? '결이 어긋나요 — 가까울수록 신경전이 생겨요' :
+        t.includes('파') ? '쌓은 게 흐트러지기 쉬워요 — 마무리 한 번 더 점검' :
+        t.includes('해') ? '은근히 풀리지 않아요 — 손해 보는 관계는 거리두기' :
+        t.includes('원진') ? '끌리면서도 미워지는 짝 — 애증이 교차해요' :
+        '결이 어긋나는 자리',
       type: 'hyeong',
       label: subtype, // 자형/형/파/해/원진 — 배지에 그대로 노출
     }, subtype);
