@@ -2717,8 +2717,8 @@ export function PremiumResult({
           {/* Phase A2 · SipDonut — 십성 분포 도넛 (mockup §3 sip-donut 진본) */}
           <SipDonut sipDist={sipDist} />
           {/* Stage 2C-#3: sip-cluster 5분류 헤더 (mockup sip-cluster 진본) */}
+          {/* 2026-06-13 — SipsungBars 제거: 도넛·5카드와 동일 데이터 3중복(AI 과잉도식화) → 5카드만 유지 */}
           <SipClusterHeader sipDist={sipDist} />
-          <SipsungBars sipDist={sipDist} dayOheng={dayOheng} />
           {/* AI sipCluster — 5 클러스터별 head 본문 + 카드 (사주 specific) — AI 없으면 사주에서 직접 도출 */}
           <SipClusterDetails aiCluster={aiResult.sipCluster} sajuData={sajuData} />
           {/* 2026-05-04 critical: Section3Body 와 SipsungStory 가 같은 본문 두 번 렌더하던 중복 버그 →
@@ -4411,75 +4411,6 @@ function PillarMessages({
   );
 }
 
-function SipsungBars({
-  sipDist,
-  dayOheng: _dayOheng,
-}: {
-  sipDist: SipDist;
-  dayOheng: OhengType;
-}) {
-  const total = Object.values(sipDist).reduce((a, b) => a + b, 0) || 1;
-  const COLORS: Record<keyof SipDist, ElemKey> = {
-    비겁: 'wood',
-    식상: 'fire',
-    재성: 'earth',
-    관성: 'metal',
-    인성: 'water',
-  };
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-      {(Object.entries(sipDist) as [keyof SipDist, number][]).map(([k, v]) => {
-        const pct = Math.round((v / total) * 100);
-        const ec = EC[COLORS[k]] || EC.earth;
-        return (
-          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span
-              style={{
-                width: 44,
-                fontSize: 12,
-                fontWeight: 700,
-                color: ec.dark,
-                flexShrink: 0,
-              }}
-            >
-              {k}
-            </span>
-            <div
-              style={{
-                flex: 1,
-                height: 14,
-                borderRadius: 999,
-                background: ec.light,
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: `${Math.max(pct, 3)}%`,
-                  background: `linear-gradient(90deg, ${ec.med}, ${ec.main})`,
-                  transition: 'width 0.8s ease-out',
-                }}
-              />
-            </div>
-            <span
-              style={{
-                width: 36,
-                textAlign: 'right',
-                fontSize: 11,
-                fontWeight: 700,
-                color: v === 0 ? '#C0392B' : ec.dark,
-              }}
-            >
-              {v === 0 ? '없음' : `${v}자`}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 /** AI sipCluster — 5 클러스터(비겁/식상/재성/관성/인성) 별 사주 specific 본문 + 카드 */
 interface AiSipClusterCard { name?: string; hanja?: string; from?: string; desc?: string; strength?: number }
 interface AiSipCluster {
@@ -5755,7 +5686,7 @@ function SipDonut({ sipDist }: { sipDist: SipDist }) {
             <span className="sd-bar">
               <span className="sd-fill" style={{ width: `${s.pct}%`, background: s.color, display: 'block' }} />
             </span>
-            <span className="sd-pct">{s.pct}%</span>
+            <span className="sd-pct">{sipDist[s.key]}자</span>
           </div>
         ))}
       </div>
@@ -6244,14 +6175,13 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
   }
   // 한글 매핑이 없는 신살에 대한 일반 액션 — 신살 카테고리 + source 기준 동적
   function getDefaultAction(s: V4SinSal): string {
-    const k = s.kr || s.hanja;
     const fromLabel = s.source ? `${s.source} 기준의 ` : '';
     if (/살|殺|煞/.test(s.hanja)) return `${fromLabel}강한 결이라 의식적으로 거리를 둘 자리. 큰 결정은 24시간 보류 룰을 두세요.`;
-    if (/귀인|貴人|덕|德|희|喜/.test(s.hanja)) return `${fromLabel}도와줄 인연이 들어오는 결. 평소 인연을 가벼이 보지 마세요.`;
+    if (/귀인|貴人|덕|德|희|喜|은|恩|생기|生氣|요안|要安|천을|天乙/.test(s.hanja)) return `${fromLabel}도와줄 인연·기회가 들어오는 결. 어려울 때 주변에 먼저 손 내밀면 풀립니다.`;
     if (/공망|空亡/.test(s.hanja)) return `${fromLabel}해당 글자가 들어오는 해엔 새 일보다 학습·자격·관계 정비에 시간을 투자하세요.`;
     if (/사|死/.test(s.hanja)) return `${fromLabel}활기가 약해지는 자리. 충분한 휴식과 회복 루틴이 필요합니다.`;
     if (/효|孝|모|母/.test(s.hanja)) return `${fromLabel}돌봄·양육·후배 멘토링 자리에서 결이 살아납니다.`;
-    return `${fromLabel}${k} — 본인 결과 가까운 자리. 강점은 살리고 약점은 의식적으로 다루세요.`;
+    return ''; // 2026-06-13 — 제네릭 필러('강점 살리고 약점 다루세요') 제거: 신살마다 동일 반복 = AI 템플릿 느낌. 액션 없으면 실천줄 미노출
   }
 
   // source 기준 prefix — 같은 신살이라도 일주/월주 기준마다 다른 작용
@@ -6286,11 +6216,13 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
           </div>
           <span className={`sm-when ${whenClass}`}>{when}</span>
         </div>
-        <div className="adv">
-          <span className="adv-icon">!</span>
-          {/* 2026-05-04 fix: action 안의 <strong> raw text → dangerouslySetInnerHTML */}
-          <span className="adv-text" dangerouslySetInnerHTML={{ __html: `<strong>실천:</strong> ${sanitizeAiText(action)}` }} />
-        </div>
+        {action && action.trim() && (
+          <div className="adv">
+            <span className="adv-icon">!</span>
+            {/* 2026-05-04 fix: action 안의 <strong> raw text → dangerouslySetInnerHTML */}
+            <span className="adv-text" dangerouslySetInnerHTML={{ __html: `<strong>실천:</strong> ${sanitizeAiText(action)}` }} />
+          </div>
+        )}
       </div>
     );
   }
@@ -7030,12 +6962,14 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
            .replace(/비겁(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '비겁(자기 결)')
            .replace(/인성(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '인성(학습·돌봄)');
       // 2차: 충·합·형·파·해·생·극 (사주 호명 보존 룰 적용)
-      t = t.replace(/(?:정면\s*)?부딪힘|충(?:돌)?|沖/g, '<strong>부딪힘</strong>')
-           .replace(/결합|합(?:국)?|合/g, '<strong>결합</strong>')
-           .replace(/어긋남|형|刑/g, '<strong>어긋남</strong>')
-           .replace(/파(?:격)?|破/g, '깨짐')
-           .replace(/해|害/g, '엇갈림')
-           .replace(/생조|생(?=[하받])/g, '받쳐줌')
+      // 2026-06-13 — 한자 형태만 치환 (沖/合/刑/破/害). 맨 한글 음절(충/합/형/파/해) 전역치환은
+      //   일반 단어 파괴(올해→올엇갈림·균형→균어긋남·적합→적결합·충분→부딪힘분) → 한자/이미일상어만.
+      t = t.replace(/정면\s*부딪힘|沖/g, '<strong>부딪힘</strong>')
+           .replace(/合/g, '<strong>결합</strong>')
+           .replace(/刑/g, '<strong>어긋남</strong>')
+           .replace(/破/g, '깨짐')
+           .replace(/害/g, '엇갈림')
+           .replace(/생조/g, '받쳐줌')
            .replace(/극(?=[하받])/g, '눌림');
       // 3차: 활성·왕성·득세·실세·휴수 → 친절한 한국어
       t = t.replace(/활성(?:화)?/g, '활기')
