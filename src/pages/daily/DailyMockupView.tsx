@@ -916,11 +916,9 @@ export function DailyMockupView(props: DailyMockupViewProps) {
   const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell: _onUpsell, onShare, onChat, onTopicClick } = props;
 
   // ── 섹션 접기/펼치기 (§01 default open · 2026-05-06 v6) ──
-  // 2026-06-13 — 전 섹션 기본 펼침 (Topic 결과지 정책 #13 'Open all sections by default' 과 통일).
-  //   기존 '01만 펼침'은 02~07 본문이 안 보여 "내용이 없다"는 오해 유발 (전수감사 발견).
-  const [openSections, setOpenSections] = useState<Set<string>>(
-    new Set(['01', '02', '03', '04', '05', '06', '07']),
-  );
+  // 2026-06-13 통일 정책 (준기 결정) — 01·02 만 펼침, 03+ 접힘.
+  //   상단 섹션은 먼저 읽히게 + 나머지는 (로딩 중이어도) 접힌 채 순차 노출되는 UX 구조. 전 콘텐츠 동일.
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['01', '02']));
   const toggleSection = useCallback((id: string) => {
     setOpenSections((prev) => {
       const next = new Set(prev);

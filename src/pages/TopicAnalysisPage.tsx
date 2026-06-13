@@ -4670,7 +4670,7 @@ export function TopicAnalysisPage() {
                         <TopicSection
                           theme={theme}
                           collapsible
-                          defaultOpen={true}
+                          defaultOpen={i < 2}
                           isLoading={sec.loading}
                           num={`SECTION ${String(i + 1).padStart(2, '0')}`}
                           title={swapGenderedTerms(sec.heading, selected?.input?.gender)}
@@ -4688,7 +4688,7 @@ export function TopicAnalysisPage() {
                         index={i + 1}
                         title={swapGenderedTerms(sec.heading, selected?.input?.gender)}
                         color={topic.color}
-                        defaultOpen={true}
+                        defaultOpen={i < 2}
                       >
                         {sec.loading ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

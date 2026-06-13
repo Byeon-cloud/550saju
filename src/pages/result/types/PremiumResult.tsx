@@ -2653,7 +2653,7 @@ export function PremiumResult({
 
       {/* ═════════════ 02 천간지지 (天干地支) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={2} title="천간지지" hanja="天干地支" hint="위로 드러난 마음과 아래에 깔린 본능">
+        <CollapsibleSection step={2} title="천간지지" hanja="天干地支" hint="위로 드러난 마음과 아래에 깔린 본능" defaultOpen>
           {/* mockup §2 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             <strong>천간(天干)은 마음</strong>이고, <strong>지지(地支)는 행동</strong>입니다. 사람들에게 보여지는 모습과, 실제로 하루를 굴리는 본능이 서로 다른 자리에 놓입니다.
