@@ -18,6 +18,7 @@ import { stripMd, sanitizeAiText } from '@/utils/format';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
 import { HourPickerSheet, HourPickerTrigger } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId } from '@/constants/topics';
+import { normalizeSipsungKo } from '@/constants/sipsungColor';
 // Phase 2 Stage 2A — 공통 MonthTimeline 컴포넌트
 // 2026-05-28 — wealth 에서 제거 (AreaChart 와 중복). buildMonthCells 만 유지 (다른 주제 wiring 대비 reserved).
 import { buildMonthCells } from './topic/_month_timeline';
@@ -1345,13 +1346,16 @@ const RELFLOW_CATEGORIES = [
 
 function RelflowCards({ sipsung }: { sipsung: any[] }) {
   // 십성 카운트
+  // ⚠️ lunar-javascript 는 간체 한자(七杀·伤官·偏财 등)를 내므로 한국어 카테고리(정관·편재 등)와
+  //   직접 비교하면 전부 미매칭 → 3카드 모두 "없음" 버그. normalizeSipsungKo 로 한국어 정통명 통일 후 카운트.
+  //   (2026-06-13 fix)
   const counts: Record<string, number> = {};
   for (const s of sipsung || []) {
     if (!s.십성 || s.십성 === '일주' || s.십성 === '日主') continue;
     const parts = String(s.십성).split('/');
     for (const p of parts) {
-      const trimmed = p.trim();
-      if (trimmed) counts[trimmed] = (counts[trimmed] ?? 0) + 1;
+      const ko = normalizeSipsungKo(p);
+      if (ko) counts[ko] = (counts[ko] ?? 0) + 1;
     }
   }
 

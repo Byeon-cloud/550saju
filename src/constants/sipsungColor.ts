@@ -134,14 +134,33 @@ export const SIPSUNG_CATEGORY_COLOR: Record<
   인성: { color: '#8E5C95', deep: '#7A4570', soft: 'rgba(142,92,149,0.10)', label: '학문 · 배움', meaning: '받아들이고 키우는 힘' },
 };
 
-/** 한자 (中) → 한국어 정규화 — calculator 출력 대응 */
+/** 한자 (中) → 한국어 정규화 — calculator(lunar-javascript) 출력 대응.
+ *  ⚠️ lunar 는 간체자(七杀·伤官·偏财·正财·劫财)를 반환한다. 번체만 넣으면 절반이 미매칭되니
+ *  간체·번체·한국어 표기를 모두 키로 둔다 (2026-06-13 fix — RelflowCards "전부 없음" 버그 근절). */
 const HANJA_TO_KO: Record<string, SipsungName> = {
-  比肩: '비견', 劫財: '겁재',
-  食神: '식신', 傷官: '상관',
-  正財: '정재', 偏財: '편재',
-  正官: '정관', 偏官: '편관', 七殺: '편관', 칠살: '편관',
+  比肩: '비견',
+  劫財: '겁재', 劫财: '겁재',
+  食神: '식신',
+  傷官: '상관', 伤官: '상관',
+  正財: '정재', 正财: '정재',
+  偏財: '편재', 偏财: '편재',
+  正官: '정관',
+  偏官: '편관', 七殺: '편관', 七杀: '편관', 칠살: '편관',
   正印: '정인', 偏印: '편인',
 };
+
+/**
+ * 십성 문자열 1토큰 → 한국어 정통명 정규화.
+ * 한국어면 그대로, 간체·번체 한자면 변환. "/" 다중 토큰은 호출부에서 분리해 넘길 것.
+ * 매칭 실패(일주·日主·미지값) 시 null.
+ */
+export function normalizeSipsungKo(s: string | undefined | null): SipsungName | null {
+  if (!s) return null;
+  const t = String(s).trim();
+  if (!t || t === '일주' || t === '日主') return null;
+  if (t in SIPSUNG_COLOR) return t as SipsungName;
+  return HANJA_TO_KO[t] ?? null;
+}
 
 /**
  * 십성 문자열 → SIPSUNG_COLOR 항목 lookup.
