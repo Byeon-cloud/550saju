@@ -6560,6 +6560,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
     arrow: string;
     desc: string;
     type: 'hap' | 'chung' | 'hyeong';
+    label?: string; // 2026-06-13 — 배지 정확화 (형/파/해/원진/자형 구분 · 기존 무조건 '형' 버그 fix)
   };
 
   // dedupe key — A·B 정렬해서 unique pair + relation type
@@ -6639,6 +6640,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
         t.includes('원진') ? `${r.chars.join('')}원진 — 잠재된 갈등의 자리` :
         `${r.chars.join('')} — 결이 어긋나는 자리`,
       type: 'hyeong',
+      label: subtype, // 자형/형/파/해/원진 — 배지에 그대로 노출
     }, subtype);
   }
 
@@ -6649,7 +6651,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
     <div className="ganji-flow">
       <div className="gf-title">사주에 새겨진 글자 간 관계</div>
       {rows.map((r, i) => {
-        const tagLabel = r.type === 'hap' ? '합' : r.type === 'chung' ? '충' : '형';
+        const tagLabel = r.label || (r.type === 'hap' ? '합' : r.type === 'chung' ? '충' : '형');
         const kr1 = HAN_TO_KR[r.char1] || '';
         const kr2 = HAN_TO_KR[r.char2] || '';
         return (
