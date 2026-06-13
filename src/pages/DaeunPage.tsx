@@ -8,6 +8,7 @@ import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { DaeunTimeline } from '@/components/saju/DaeunTimeline';
 import { ShareModal } from '@/components/share/ShareModal';
 import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, type LocalReport } from '@/services/storage/localStore';
+import { lookupCategory } from '@/constants/sipsungColor';
 import { generateDaeunAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -191,14 +192,14 @@ export function DaeunPage() {
   const sajuDaeun = selected?.sajuData?.daeun || [];
   const sipsung = (selected?.sajuData as any)?.sipsung || [];
   const sipDist = useMemo(() => {
-    const d = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
+    const d: Record<string, number> = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
+    // lunar 간체 십성(七杀·伤官 등)을 한국어 카테고리와 includes 비교하면 전부 미매칭 → 분포 0.
+    //   SSOT lookupCategory(간체·번체·다중'/' 대응)로 카운트 (2026-06-13 fix).
     for (const s of sipsung) {
-      const name = String(s?.십성 ?? '');
-      if (name.includes('비견') || name.includes('겁재')) d.비겁++;
-      else if (name.includes('식신') || name.includes('상관')) d.식상++;
-      else if (name.includes('정재') || name.includes('편재')) d.재성++;
-      else if (name.includes('정관') || name.includes('편관')) d.관성++;
-      else if (name.includes('정인') || name.includes('편인')) d.인성++;
+      for (const part of String(s?.십성 ?? '').split('/')) {
+        const cat = lookupCategory(part);
+        if (cat) d[cat]++;
+      }
     }
     return d;
   }, [sipsung]);

@@ -9,6 +9,7 @@ import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
 
 import { ShareModal } from '@/components/share/ShareModal';
 import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, type LocalReport } from '@/services/storage/localStore';
+import { lookupCategory } from '@/constants/sipsungColor';
 import { generateMonthlyFortune2026 } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -225,14 +226,13 @@ export function MonthlyPage() {
         // 2026-05-04 자연수 — 5의 배수 회피 (70 → 71)
         const baseScore = clamp100(thisMonth.score ?? 71);
         // 십성 카운트로 4 영역 가중치 산출 (사주별 다름)
-        const sipDist = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
+        const sipDist: Record<string, number> = { 비겁: 0, 식상: 0, 재성: 0, 관성: 0, 인성: 0 };
+        // lunar 간체 십성을 한국어와 includes 비교 시 전부 미매칭 → 분포 0. SSOT lookupCategory 로 교체 (2026-06-13 fix).
         for (const s of sipsung) {
-          const name = String(s?.십성 ?? '');
-          if (name.includes('비견') || name.includes('겁재')) sipDist.비겁++;
-          else if (name.includes('식신') || name.includes('상관')) sipDist.식상++;
-          else if (name.includes('정재') || name.includes('편재')) sipDist.재성++;
-          else if (name.includes('정관') || name.includes('편관')) sipDist.관성++;
-          else if (name.includes('정인') || name.includes('편인')) sipDist.인성++;
+          for (const part of String(s?.십성 ?? '').split('/')) {
+            const cat = lookupCategory(part);
+            if (cat) sipDist[cat]++;
+          }
         }
         // 일주 한자 sum (사주별 hash) — 같은 사주 내에서도 미세 분기 용
         const dayHan = sajuPillars[2]?.천간 || '';
