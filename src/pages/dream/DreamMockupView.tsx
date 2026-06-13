@@ -831,7 +831,9 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                           {Array.isArray(lockedWarnList.warns) && lockedWarnList.warns.slice(0, 3).map((w: any, i: number) => (
                             <li key={i} className={i === 0 ? '' : 'locked'}>
                               {w?.label && <><strong>{String(i + 1).padStart(2, '0')}. {stripMd(String(w.label))}.</strong> </>}
-                              <span dangerouslySetInnerHTML={safeHtml(i === 0 ? (w?.detail || w?.summary || '') : (w?.summary || ''))} />
+                              {/* i=0 은 무료 teaser(detail 노출), i≥1 은 잠금(summary). 결제(unlocked) 시 전부 detail 노출 —
+                                  CSS 블러만 풀고 본문은 summary 그대로 두던 버그 fix (2026-06-13): 유료 detail 150자가 누락되던 것 */}
+                              <span dangerouslySetInnerHTML={safeHtml((i === 0 || unlocked) ? (w?.detail || w?.summary || '') : (w?.summary || ''))} />
                             </li>
                           ))}
                         </ul>
