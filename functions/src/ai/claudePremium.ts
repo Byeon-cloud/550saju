@@ -126,8 +126,6 @@ JSON 1개로 응답:
 다른 필드는 절대 출력하지 마세요. 아래 필드만 채운 JSON 객체 1개로 응답:
 {
   "tier": "premium",
-  // 2026-06-13 rel6Cards 제거: §08 이 2026-05-05 '내 사주의 결'(lifeKeyword+강점/함정)로 교체되어
-  //   6관계 카드는 클라에서 렌더되지 않는 dead field 였음 → 출력 토큰 ~1000자 낭비 제거.
   "topicMini": {
     "// 2026-05-05 6 카드 복원 (PD 결단) — wealth·love·career·health·social·potential 6개 필수.": "",
     "// 🚨 보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지) — 각 desc 에 사주 8글자 중 specific 데이터 1회 이상 직접 호명": "",
