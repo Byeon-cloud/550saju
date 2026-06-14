@@ -493,7 +493,7 @@ export const generateReport = onCall(
     try {
       console.log(`[generateReport] Starting Claude call... reportType=${reportType}`);
       // ✅ 핵심 수정 (2026-05) — reportType 별 정확한 분기
-      //   premium → generatePremiumReport (T2 병렬 + lifeEdge/sipCluster/shinsalCards/rel6Cards/topicMini/monthlyInsight 풀 schema)
+      //   premium → generatePremiumReport (T2 병렬 + lifeEdge/sipCluster/shinsalCards/topicMini/monthlyInsight 풀 schema)
       //   basic   → generateSajuReport    (1운 기본 schema)
       // 이전 버그: 무조건 generateSajuReport 호출 → premium 결제 시에도 basic schema 반환 → 클라 PremiumResult 렌더 깨짐
       let result: any;

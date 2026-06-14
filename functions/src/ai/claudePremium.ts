@@ -75,7 +75,7 @@ JSON 1개로 응답:
     "yongsin":  "<§04 결론 ① ② ③ ④ 4줄 각 40~70자 · 각 줄에 <strong>오늘부터 할 행동/방향</strong> + <u>색·방위·시간대 등 구체 데이터</u> 둘 다 포함 (예: '용신은 목 — <strong>초록 옷·소품</strong>, <u>동쪽</u> 방위가 핵심입니다')>"
   }
 }
-⚠️ daeun/yearly/practice/monthlyWarnings/shinsalCards/monthlyInsight/daeunPeriods/rel6Cards/topicMini/scores/actionList/lifeKeyword/strengths/cautions 출력 금지.`,
+⚠️ daeun/yearly/practice/monthlyWarnings/shinsalCards/monthlyInsight/daeunPeriods/topicMini/scores/actionList/lifeKeyword/strengths/cautions 출력 금지.`,
 
   B: `## 이번 호출에서 작성할 필드 (Group B — 시간 흐름)
 다른 필드는 절대 출력하지 마세요. 아래 필드만 채운 JSON 객체 1개로 응답:
@@ -812,17 +812,6 @@ STEP 5. 소름 포인트 — 일상 행동/경험을 사주 근거로 또렷이 
     {"kr": "<신살>", "hanja": "<한자>", "tier": "참고", "desc": "<25~40자>", "when": "..."}
   ],
 
-  "rel6Cards": {
-    // 2026-05-04 컴팩트화: summary 80~120자 (이전 150+) · save·avoid 50~70자.
-    // 헤비 줄글 X. 핵심 메커니즘 1줄 + 결론 1줄 → 끝.
-    "parent":  {"summary": "<인성 기반 부모 결 80~120자>", "save": "<50~70자 한 가지만>", "avoid": "<50~70자 한 가지만>", "tag": "긴장|풍족|보유|얇음|태과"},
-    "sibling": {"summary": "<비겁 기반 80~120자>", "save": "...", "avoid": "...", "tag": "..."},
-    "spouse":  {"summary": "<재성/일지 기반 80~120자>", "save": "...", "avoid": "...", "tag": "..."},
-    "child":   {"summary": "<식상 기반 80~120자>", "save": "...", "avoid": "...", "tag": "..."},
-    "friend":  {"summary": "<비겁/도화 기반 80~120자>", "save": "...", "avoid": "...", "tag": "..."},
-    "boss":    {"summary": "<관성 기반 80~120자>", "save": "...", "avoid": "...", "tag": "..."}
-  },
-
   "actionList": [
     // 2026-05-04 컴팩트화: 70~100자 (이전 150+).
     {"ttl": "<액션 제목 15자 이내>", "desc": "<유저 사주 근거 1줄 + 구체 행동 1줄 · 70~100자>"}
@@ -887,11 +876,6 @@ STEP 5. 소름 포인트 — 일상 행동/경험을 사주 근거로 또렷이 
   - **'참고' (strength 1)**: 명목상 존재 — 이름·시기만. desc 25~40자.
 - when: '상시 작동' / '특정 시기 활성' / '특정 해 활성'
 - 참조 mockup (도화·문창·역마·홍염·공망) 모방 금지
-
-### rel6Cards (6관계) — 2026-05-04 컴팩트
-- summary 80~120자 (이전 150+) · 핵심 메커니즘 1줄 + 결론 1줄
-- save·avoid 50~70자 (한 가지만)
-- "헤비 줄글 X. 강조할 부분만 강조. 핵심 정보 전달."
 
 ### actionList (실천) — 2026-05-04 컴팩트
 - 7~9개 · desc 70~100자 (이전 150+) · 사주 근거 1줄 + 구체 행동 1줄
