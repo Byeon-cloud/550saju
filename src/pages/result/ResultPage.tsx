@@ -536,22 +536,20 @@ export function ResultPage(props: ResultPageProps = {}) {
     );
   }
 
-  if (isFreshStreamingEmpty) {
-    const isPrem = freshType === 'premium';
+  // 2026-06-15 — premium 은 결과창 즉시 노출(사주 fallback 본문 + viz + '분석 중' 배너 → 그룹 도착 시 AI 업그레이드).
+  //   basic(1운) 만 첫 그룹 도착 전 풀스크린 AILoading 유지.
+  //   배경: PremiumResult 의 AI 본문(Section1Body 등)은 2026-05 보일러플레이트 박멸에서 사주 fallback 이 추가돼
+  //         빈 aiResult 에서도 사주 기반 본문이 차므로 v2(2026-04) '빈 화면' 문제는 해소됨. isPremiumLayout 은
+  //         fresh premium 시 강제 true(아래 ~400행) 라 PremiumResult 렌더 보장. 미완 그룹 자리는 sticky 배너로 안내.
+  if (isFreshStreamingEmpty && freshType !== 'premium') {
+    // basic(1운) 전용 분기 (premium 은 위 주석대로 결과창 즉시 노출로 분리)
     return (
       <AILoading
         name={name}
-        type={isPrem ? '종합 사주 분석' : '사주 리포트 분석'}
+        type="사주 리포트 분석"
         sajuData={sajuData}
-        estimatedSeconds={isPrem ? 60 : 40}
-        steps={isPrem ? [
-          '사주 8자 구조를 분석하고 있어요',
-          '용신과 격국을 도출하고 있어요',
-          '오행 균형을 보고 있어요',
-          '대운·세운 흐름을 짚고 있어요',
-          '10주제 점수를 계산하고 있어요',
-          '10섹션 본문을 작성하고 있어요',
-        ] : [
+        estimatedSeconds={40}
+        steps={[
           '사주 8자 구조를 분석하고 있어요',
           '용신과 격국을 도출하고 있어요',
           '성격과 기질을 읽고 있어요',
