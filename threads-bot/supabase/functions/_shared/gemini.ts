@@ -47,15 +47,19 @@ export async function geminiJSON(
   userPrompt: string,
   temperature = 1.0, // 콘텐츠 생성=1.0(창의), 사실 분석/파싱=0.2(환각 방지)
 ): Promise<any> {
-  // 예비 키(다른 무료 프로젝트 = 별도 한도) 있으면 키도 폴백
-  const backupKey = Deno.env.get("GEMINI_API_KEY_2") ?? "";
-  // 시도 순서: 키1·2.5 ×2 → 키2·2.5 → 키1·2.0 → 키2·2.0
+  // 예비 키들(다른 무료 프로젝트 = 각각 별도 한도). 메인 붐비거나 한도 차면 자동 전환.
+  const backupKeys = [
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+  ].filter((k): k is string => !!k);
+  // 시도 순서: 메인·2.5 ×2 → 예비키들·2.5 → 메인·2.0 → 예비키들·2.0
   const plan: Array<{ model: string; key: string; waitMs: number }> = [
     { model: PRIMARY_MODEL, key: apiKey, waitMs: 0 },
     { model: PRIMARY_MODEL, key: apiKey, waitMs: 2500 },
-    ...(backupKey ? [{ model: PRIMARY_MODEL, key: backupKey, waitMs: 1000 }] : []),
-    { model: FALLBACK_MODEL, key: apiKey, waitMs: 1000 },
-    ...(backupKey ? [{ model: FALLBACK_MODEL, key: backupKey, waitMs: 1000 }] : []),
+    ...backupKeys.map((key) => ({ model: PRIMARY_MODEL, key, waitMs: 800 })),
+    { model: FALLBACK_MODEL, key: apiKey, waitMs: 800 },
+    ...backupKeys.map((key) => ({ model: FALLBACK_MODEL, key, waitMs: 800 })),
   ];
 
   let last = "";
