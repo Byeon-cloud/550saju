@@ -27,11 +27,14 @@ export default defineConfig(({ mode }) => {
   resolve: {
     // Array form 으로 specific alias 먼저 매칭. (object 면 '@' 가 먼저 매칭되어 '@/services/...' 가 안 잡힘)
     alias: [
-      // 앱인토스 빌드: 토스페이먼츠 SDK + tossPayments.ts 자체를 stub 으로 대체.
+      // 앱인토스 빌드: 외부 PG SDK(토스페이먼츠·포트원)를 stub 으로 대체.
       // 외부 PG SDK 가 번들에 포함되면 앱인토스 정책 위반 → 심사 반려.
+      //   2026-06-17 — 포트원(@portone) 추가 누락으로 .ait 에 포함 → 토스 반려. 토스페이먼츠와 동일 처리.
       ...(isAitBuild ? [
         { find: '@/services/payment/tossPayments', replacement: path.resolve(__dirname, './src/stubs/tossPaymentsStub.ts') },
         { find: '@tosspayments/tosspayments-sdk', replacement: path.resolve(__dirname, './src/stubs/tossPaymentsSdkStub.ts') },
+        { find: '@/services/payment/portonePayment', replacement: path.resolve(__dirname, './src/stubs/portonePaymentStub.ts') },
+        { find: '@portone/browser-sdk/v2', replacement: path.resolve(__dirname, './src/stubs/portoneSdkStub.ts') },
       ] : []),
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
