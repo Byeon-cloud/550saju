@@ -32,6 +32,8 @@ export interface LocalReport {
   contentType?: ContentType;
   /** AI 결과 원문 (ResultPage 등에서 사용) */
   aiResult?: any;
+  /** 토픽 결과의 대상 프로필 ID — 보관함 삭제 시 topic_<id>_<profileId> 캐시 동반 제거용 (2026-06-17) */
+  profileId?: string;
   /**
    * 종합 사주 schema 버전 — claudePremium.ts 의 응답 구조 변경 추적용.
    *  v1: 기존 (sections, summary, sectionConclusions[] 배열)
@@ -145,8 +147,42 @@ export function getReport(id: string): LocalReport | null {
  *   유저가 분석 1회를 지워도 본인 사주 자체는 마이/홈에 그대로 유지되어야 한다.
  */
 export function deleteReport(id: string): void {
-  const reports = getReports().filter(r => r.id !== id);
+  const all = getReports();
+  const target = all.find(r => r.id === id);
+  const reports = all.filter(r => r.id !== id);
   localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+
+  // 2026-06-17 — 토픽 결과 삭제 시 topic_<topicId>_<profileId>[_partner] 결과 캐시도 동반 제거.
+  //   (기존: deleteReport 가 보관함 list 만 지워 캐시가 남음 → 재방문 시 구매 없이 옛 결과 노출 = 매출 누수 + 깨진 캐시 고착)
+  const topicId: string | undefined = (target as any)?.aiResult?.topicId;
+  if (target?.contentType === 'topic' && topicId) {
+    // profileId: 신규 리포트는 저장됨 / 구버전은 이름+생일로 프로필 역추적
+    let profileId: string | undefined = target.profileId;
+    if (!profileId) {
+      const prof = getProfiles().find(p =>
+        p.name === target.name &&
+        (p.input as any)?.birthYear === (target.input as any)?.birthYear &&
+        (p.input as any)?.birthMonth === (target.input as any)?.birthMonth &&
+        (p.input as any)?.birthDay === (target.input as any)?.birthDay,
+      );
+      profileId = prof?.id;
+    }
+    if (profileId) {
+      const exact = `topic_${topicId}_${profileId}`;
+      for (const store of [localStorage, sessionStorage]) {
+        try {
+          const doomed: string[] = [];
+          for (let i = 0; i < store.length; i++) {
+            const k = store.key(i);
+            if (!k) continue;
+            // 솔로(정확히 일치) + 파트너 변형(_파트너명 suffix) 둘 다 제거
+            if (k === exact || k.startsWith(`${exact}_`)) doomed.push(k);
+          }
+          doomed.forEach(k => store.removeItem(k));
+        } catch { /* noop */ }
+      }
+    }
+  }
 }
 
 /**

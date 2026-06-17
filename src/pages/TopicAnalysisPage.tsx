@@ -3492,6 +3492,7 @@ export function TopicAnalysisPage() {
         contentType: 'topic',
         createdAt: new Date().toISOString(),
         aiResult: { topicId, ...contentFinal },
+        profileId: selected.id, // 보관함 삭제 시 topic_<id>_<profileId> 캐시 동반 제거용 (2026-06-17)
       });
 
       clearPendingSpend(pendingId); // 결과 저장 완료 — pending 해제
