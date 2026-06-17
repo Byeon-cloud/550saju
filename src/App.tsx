@@ -211,7 +211,49 @@ function AnimatedRoutes() {
   );
 }
 
+/**
+ * CS 보상 자동 수령 (앱인토스 전용) — compensations/{deviceId} 장부 기반.
+ *   어드민이 deviceId 로 운을 지급 → 고객 앱이 이걸 호출해 paid 잔액에 적립.
+ *   2026-06-15 — 부팅 1회 가드를 12초 throttle 로 교체 + 포그라운드 복귀마다 호출.
+ *   (토스 웹뷰가 백그라운드→복귀 시 살아있어, 어드민이 나중에 넣은 운도 재열람 때 받게.)
+ */
+async function runCsCompensationCheck(): Promise<void> {
+  try {
+    const { isAppsInToss } = await import('@/services/payment/iapService');
+    if (!isAppsInToss()) return;
+    const w = window as unknown as { __saju500CompCheckedAt?: number };
+    const now = Date.now();
+    if (w.__saju500CompCheckedAt && now - w.__saju500CompCheckedAt < 12000) return; // 12초 throttle
+    w.__saju500CompCheckedAt = now;
+    const mod: any = await import('@apps-in-toss/web-framework');
+    const deviceId: string | undefined = mod?.getDeviceId?.();
+    if (!deviceId) return;
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const { app } = await import('@/services/auth/firebase');
+    const { ensureAuth } = await import('@/services/auth/authService');
+    await ensureAuth();
+    const fn = httpsCallable(getFunctions(app, 'us-central1'), 'claimCompensation');
+    const r: any = await fn({ deviceId });
+    const amount = Number(r?.data?.amount) || 0;
+    const wipeTopics: string[] = Array.isArray(r?.data?.wipeTopics) ? r.data.wipeTopics : [];
+    if (amount > 0) {
+      const { addPaidBalance, removeTopicReports } = await import('@/services/storage/localStore');
+      addPaidBalance(amount, 0);
+      // 잘못 생성됐던 주제 결과 동반 정리 (보관함 + 캐시) — 재열람 시 혼란 방지
+      if (wipeTopics.length > 0) removeTopicReports(wipeTopics);
+      try { localStorage.setItem('saju500:comp_notice', String(amount)); } catch { /* noop */ }
+    }
+  } catch { /* noop — 다음 기회 재시도 */ }
+}
+
 export function App() {
+  // 포그라운드 복귀마다 CS 보상 재확인 (어드민이 나중에 넣은 운도 앱 재열람 때 수령)
+  useEffect(() => {
+    const onVis = () => { if (document.visibilityState === 'visible') runCsCompensationCheck(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
   // 앱 시작 시 초기화
   useEffect(() => {
     // 0-a. 측정 — 앱 오픈 1회 (마운트 시 · fire-and-forget · UTM 캡처도 모듈 init 에서 함께)
@@ -238,36 +280,10 @@ export function App() {
       window.addEventListener('beforeunload', () => window.clearTimeout(recheck), { once: true });
     }).catch(() => {});
 
-    // 0-a3. CS 보상 자동 수령 (2026-06-11 · 앱인토스 전용) — compensations/{deviceId} 장부.
-    //   일 1회 체크 → 미수령 보상 있으면 claimCompensation callable → paid 적립 + 홈 토스트.
-    import('@/services/payment/iapService').then(async ({ isAppsInToss }) => {
-      if (!isAppsInToss()) return;
-      try {
-        // 2026-06-12 — 일1회 → 부팅마다 체크 (CS 지급 즉시성: 어드민 등록 → 고객 다음 앱 오픈에 바로 적립).
-        //   비용: 부팅당 callable 1회 + doc read 1회 (저트래픽 무시 가능). 세션 내 중복만 가드.
-        const w = window as unknown as { __saju500CompChecked?: boolean };
-        if (w.__saju500CompChecked) return;
-        w.__saju500CompChecked = true;
-        const mod: any = await import('@apps-in-toss/web-framework');
-        const deviceId: string | undefined = mod?.getDeviceId?.();
-        if (!deviceId) return;
-        const { getFunctions, httpsCallable } = await import('firebase/functions');
-        const { app } = await import('@/services/auth/firebase');
-        const { ensureAuth } = await import('@/services/auth/authService');
-        await ensureAuth();
-        const fn = httpsCallable(getFunctions(app, 'us-central1'), 'claimCompensation');
-        const r: any = await fn({ deviceId });
-        const amount = Number(r?.data?.amount) || 0;
-        const wipeTopics: string[] = Array.isArray(r?.data?.wipeTopics) ? r.data.wipeTopics : [];
-        if (amount > 0) {
-          const { addPaidBalance, removeTopicReports } = await import('@/services/storage/localStore');
-          addPaidBalance(amount, 0);
-          // 잘못 생성됐던 주제 결과 동반 정리 (보관함 + 캐시) — 재열람 시 혼란 방지
-          if (wipeTopics.length > 0) removeTopicReports(wipeTopics);
-          try { localStorage.setItem('saju500:comp_notice', String(amount)); } catch { /* noop */ }
-        }
-      } catch { /* noop — 다음 날 재시도 */ }
-    }).catch(() => {});
+    // 0-a3. CS 보상 자동 수령 (2026-06-11 · 앱인토스 전용) — 부팅 시 1회.
+    //   2026-06-15 — 토스 웹뷰는 백그라운드→복귀해도 살아있어 'once per boot' 가드론 첫 1회만 돌아
+    //   어드민이 운을 나중에 넣어도 재열람 시 수령이 안 되던 문제. → 포그라운드 복귀마다 재확인(아래 visibility effect).
+    runCsCompensationCheck();
 
     // 0-b. 2026-05-28 PM — 본인 프로필 중복 cleanup (1회 마이그레이션).
     //   기존: 새 사주 '본인' 추가 시 silent 로 myProfile 교체 → 본인 N명 누적.
