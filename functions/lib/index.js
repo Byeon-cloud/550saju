@@ -199,7 +199,7 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 540, // SSE 장기 연결 — 9분 (Cloud Run 최대)
     memory: '1GiB',
-    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -355,7 +355,7 @@ exports.generateReportStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 540,
     memory: '1GiB',
-    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -501,7 +501,7 @@ exports.generateReport = (0, https_1.onCall)(
     try {
         console.log(`[generateReport] Starting Claude call... reportType=${reportType}`);
         // ✅ 핵심 수정 (2026-05) — reportType 별 정확한 분기
-        //   premium → generatePremiumReport (T2 병렬 + lifeEdge/sipCluster/shinsalCards/rel6Cards/topicMini/monthlyInsight 풀 schema)
+        //   premium → generatePremiumReport (T2 병렬 + lifeEdge/sipCluster/shinsalCards/topicMini/monthlyInsight 풀 schema)
         //   basic   → generateSajuReport    (1운 기본 schema)
         // 이전 버그: 무조건 generateSajuReport 호출 → premium 결제 시에도 basic schema 반환 → 클라 PremiumResult 렌더 깨짐
         let result;
@@ -681,7 +681,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 300,
     memory: '1GiB',
-    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -1126,7 +1126,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 300,
     memory: '1GiB',
-    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -1850,7 +1850,7 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 300,
     memory: '1GiB',
-    minInstances: 0, // 2026-05-29 PM 비용 fix — 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
+    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
