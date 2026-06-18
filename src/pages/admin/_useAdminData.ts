@@ -108,8 +108,22 @@ export interface PeriodAgg {
   payingGender: Record<string, number>;            // 결제 유저의 성별 분포
 }
 
+// 결제 건강 + LTV (2026-06-18) — payments 컬렉션 전수 집계 (전 기간). status='confirmed' 외 실패/환불도 노출.
+export interface PayHealth {
+  confirmed: number;             // 충전 성공 건수
+  failed: number;                // 결제 실패(취소 포함)
+  needsReconciliation: number;   // 승인됐으나 적립 미완 — 수동 복구 대상 (P0 모니터링)
+  pending: number;               // 미확정
+  refundCount: number;           // 환불 건수
+  refundAmount: number;          // 환불액 합(₩)
+  byPg: Record<string, number>;  // pgProvider(iap/toss/…) → 매출(₩)
+  payerCount: number;            // 결제 고유 유저 수
+  avgLtv: number;                // 1인당 누적 결제액(₩) = 총매출 ÷ 결제유저
+}
+
 export interface AdminData {
   totalUsers: number;
+  payHealth: PayHealth;
   topicDistAll: Record<string, { count: number; users: number }>; // 10주제 분포 — 전 기간 (DB 복원)
   topicSubAll: Record<string, Record<string, number>>;            // 주제 소분류 분포 (솔로/썸/연애중 등)
   contentDistAll: Record<string, { count: number; users: number | null }>; // 전 콘텐츠 분포 (users null = 집계불가)
@@ -422,16 +436,33 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
         finalizeAgg(prev, prevScratch);
 
         // 2) payments — confirmed 누적 + 기간별 (collectionGroup 전체 fetch — 저트래픽 초기 운영 전제)
+        //    2026-06-18 — 결제건강(실패/환불/needs_reconciliation) + PG채널 + LTV 동반 집계 (별도 accumulator).
         let totalRevenue = 0, todayRevenue = 0;
+        const ph = { confirmed: 0, failed: 0, needsReconciliation: 0, pending: 0, refundCount: 0, refundAmount: 0, byPg: {} as Record<string, number> };
+        const payerSet = new Set<string>();
         try {
           const paySnap = await getDocs(collectionGroup(db, 'payments'));
           paySnap.forEach((doc) => {
             const p = doc.data() as any;
             const amt = Number(p.amount) || 0;
+            const puid = doc.ref.parent.parent?.id || '';
+            const status = String(p.status ?? 'confirmed');
+            const ptype = String(p.type ?? 'charge');
+            // 결제 건강 — 모든 충전 시도 상태 분류 (use 차감은 제외)
+            if (ptype === 'refund') { ph.refundCount += 1; ph.refundAmount += amt; }
+            else if (ptype !== 'use') {
+              if (status === 'confirmed') ph.confirmed += 1;
+              else if (status === 'failed') ph.failed += 1;
+              else if (status === 'needs_reconciliation') ph.needsReconciliation += 1;
+              else if (status === 'pending') ph.pending += 1;
+            }
             const isConfirmed = p.status === 'confirmed' || p.status === undefined;
-            const isCharge = (p.type ?? 'charge') !== 'use' && (p.type ?? 'charge') !== 'refund';
+            const isCharge = ptype !== 'use' && ptype !== 'refund';
             if (!isConfirmed || !isCharge || amt <= 0) return;
             totalRevenue += amt;
+            if (puid) payerSet.add(puid);
+            const pg = String(p.pgProvider || 'unknown');
+            ph.byPg[pg] = (ph.byPg[pg] ?? 0) + amt;
             const pday = paymentDay(p);
             if (pday === today) todayRevenue += amt;
             const ci = curDays.indexOf(pday);
@@ -449,6 +480,11 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
             }
           });
         } catch { /* collectionGroup 인덱스 필요 시 0 — noop */ }
+        const payHealth: PayHealth = {
+          ...ph,
+          payerCount: payerSet.size,
+          avgLtv: payerSet.size > 0 ? Math.round(totalRevenue / payerSet.size) : 0,
+        };
 
         // 3) aiUsage — 현+전 기간 토큰 원가
         try {
@@ -592,7 +628,7 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
           : { count: aiCallDist['daily'] ?? 0, users: null };
           if (aiCallDist['dream']) contentDistAll['dreamFree'] = { count: aiCallDist['dream'], users: null };
           if (aiCallDist['chat']) contentDistAll['chat'] = { count: aiCallDist['chat'], users: null };
-          setData({ totalUsers, topicDistAll: topicDistFinal, topicSubAll, contentDistAll, totalRevenue, todayRevenue, reportsByType, cur, prev, rawEvents, fetchedAt: new Date() });
+          setData({ totalUsers, payHealth, topicDistAll: topicDistFinal, topicSubAll, contentDistAll, totalRevenue, todayRevenue, reportsByType, cur, prev, rawEvents, fetchedAt: new Date() });
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || '데이터를 불러오지 못했어요');

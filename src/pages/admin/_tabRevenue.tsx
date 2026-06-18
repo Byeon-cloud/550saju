@@ -18,6 +18,10 @@ function purchaseLabel(key: string): string {
   return key.startsWith('topic:') ? `주제·${key.slice(6)}` : (CONTENT_LABEL[key] || key);
 }
 
+function pgLabel(pg: string): string {
+  return pg === 'iap' ? '앱인토스 IAP' : pg === 'toss' ? '토스페이먼츠(웹)' : pg === 'unknown' ? '기타/미상' : pg;
+}
+
 export function TabRevenue({ d }: { d: AdminData }) {
   const { cur, prev } = d;
 
@@ -92,6 +96,26 @@ export function TabRevenue({ d }: { d: AdminData }) {
           <Kpi label="재구매율" value={fmtPct(repurchaseRate)} delta={repurchaseRate == null ? undefined : deltaPct(repurchaseRate, repurchasePrev)} sub={`충전 2회+ ${cur.repeatPayingUsers}명 / 결제 ${cur.payingUsers}명`} />
           <Kpi label="운 차감 합계" value={`${fmtNum(Math.round(cur.contentPurchaseUn * 10) / 10)}운`} delta={deltaPct(cur.contentPurchaseUn, prev.contentPurchaseUn)} sub={`추정 ${fmtWon(cur.contentPurchaseUn * UN_PRICE)}`} />
         </div>
+      </Section>
+
+      <Section title="결제 건강 · LTV" caption="· payments 컬렉션 전수(전 기간) — 위 매출 KPI(기간 한정)와 달리 누적. 실패·환불·복구필요 포함">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+          <Kpi label="1인당 LTV" value={fmtWon(d.payHealth.avgLtv)} sub={`누적매출 ÷ 결제유저 ${fmtNum(d.payHealth.payerCount)}명`} accent />
+          <Kpi label="누적 매출" value={fmtWon(d.totalRevenue)} sub={`성공 ${fmtNum(d.payHealth.confirmed)}건`} />
+          <Kpi label="결제 실패" value={`${fmtNum(d.payHealth.failed)}건`} sub={(d.payHealth.confirmed + d.payHealth.failed) > 0 ? `실패율 ${Math.round((d.payHealth.failed / (d.payHealth.confirmed + d.payHealth.failed)) * 100)}%` : '—'} />
+          <Kpi label="환불" value={`${fmtNum(d.payHealth.refundCount)}건`} sub={`환불액 ${fmtWon(d.payHealth.refundAmount)}`} />
+          <Kpi label="복구 필요" value={`${fmtNum(d.payHealth.needsReconciliation)}건`} sub="승인됐으나 적립 미완 — 수동 확인" />
+        </div>
+        {Object.keys(d.payHealth.byPg).length > 0 && (
+          <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, color: C.mute }}>PG 채널별 매출:</span>
+            {Object.entries(d.payHealth.byPg).sort((a, b) => b[1] - a[1]).map(([pg, amt]) => (
+              <div key={pg} style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 10, padding: '6px 12px', fontSize: 12 }}>
+                <span style={{ color: C.mute }}>{pgLabel(pg)}</span> <b style={{ color: C.goldDeep }}>{fmtWon(amt)}</b>
+              </div>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section title="일별 매출" caption="· 실선 면적 = 현 기간 — 점선 = 직전 동일 기간 (같은 순번 날짜끼리 정렬)">
