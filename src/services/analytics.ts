@@ -150,6 +150,11 @@ const FIRESTORE_TRACKED = new Set<string>([
   // 2026-06-18 데이터 정확성 감사 — 드롭 이벤트 복구 + 결제 퍼널 누락 보강
   'client_error',       // {msg, chunk, path} — 렌더/청크 에러 (화이트스크린 진단 비콘 — 기존 GA4 만 가고 드롭되던 것)
   'charge_failed',      // {pg, package?, amount?, reason} — 결제 실패/취소 (결제 퍼널 drop-off — 기존 미트래킹)
+  // 2026-06-18 트래킹 커버리지 — 코호트·바이럴·활성화 핵심 행동
+  'signup',             // {} — 기기 최초 부팅(신규 유저 first-seen — 정확한 코호트/신규 집계)
+  'profile_created',    // {relation, hourKnown} — 사주 프로필 첫 생성 (활성화 onboarding)
+  'invite_received',    // {granted, reason} — 공유링크 수신 전환 (바이럴 K-factor)
+  'login_success',      // {provider} — 소셜/토스 로그인 성공
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───

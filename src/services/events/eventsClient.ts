@@ -36,6 +36,8 @@ export async function onInviteReceived(args: { inviteId: string; receiver?: stri
     await ensureAuth();
     const fn = httpsCallable<typeof args, InviteResult>(functions, 'onInviteReceived', { timeout: 15000 });
     const res = await fn(args);
+    // 2026-06-18 — 바이럴 수신 전환 트래킹 (공유→신규유입 K-factor)
+    import('@/services/analytics').then((a) => a.trackEvent('invite_received', { granted: res.data?.granted ? 1 : 0, reason: String((res.data as any)?.reason || '').slice(0, 40) })).catch(() => {});
     return res.data;
   } catch (e) {
     // eslint-disable-next-line no-console

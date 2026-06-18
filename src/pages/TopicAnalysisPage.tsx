@@ -3291,6 +3291,16 @@ export function TopicAnalysisPage() {
     }
   }, [existingResult]);
 
+  // 2026-06-18 퍼널 정확성 — 토픽 결과 도달 시 content_result 발사 (기존엔 /result 경로만 자동발사돼
+  //   토픽/꿈/오늘운세 완료가 '결과도달' 퍼널에서 누락됐음). 결과당 1회.
+  const resultTrackedRef = useRef(false);
+  useEffect(() => {
+    if (phase === 'result' && topicId && !resultTrackedRef.current) {
+      resultTrackedRef.current = true;
+      import('@/services/analytics').then((a) => a.trackEvent('content_result', { type: 'topic' })).catch(() => {});
+    }
+  }, [phase, topicId]);
+
   // 2026-06-17 — 생성 중 앱 종료로 결과를 못 받은 경우(미해결 pending 차감 有), 서버에 저장된
   //   결과를 끌어와 복원 (재구매 0). pending 이 있을 때만 발동 → 의도적 보관함 삭제(pending 無)와 구분.
   const recoverKeyRef = useRef<string>('');

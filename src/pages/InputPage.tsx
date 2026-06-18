@@ -634,6 +634,12 @@ export function InputPage() {
         setMyProfile(reportId);
       }
 
+      // 2026-06-18 — 사주 프로필 생성 트래킹 (활성화 onboarding — 가입→프로필→첫콘텐츠 퍼널)
+      import('@/services/analytics').then((a) => a.trackEvent('profile_created', {
+        relation: sajuInput.relation || '본인',
+        hourKnown: sajuInput.birthHour != null && sajuInput.birthHour >= 0 ? 1 : 0,
+      })).catch(() => {});
+
       // lastInput 저장 (다음 진입 시 §8 LoadPreviousHint 활용)
       try {
         localStorage.setItem(LAST_INPUT_KEY, JSON.stringify(sajuInput));

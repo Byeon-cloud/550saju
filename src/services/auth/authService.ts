@@ -78,6 +78,7 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
 
     // PC에서는 popup
     const result = await signInWithPopup(auth, providers[provider]);
+    import('@/services/analytics').then((a) => a.trackEvent('login_success', { provider })).catch(() => {});
     return result.user;
   } catch (err: any) {
     console.error(`[Auth] ${provider} 로그인 실패:`, err);

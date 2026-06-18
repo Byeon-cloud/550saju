@@ -262,7 +262,16 @@ export function App() {
     clearChunkReloadFlag();
 
     // 0-a. 측정 — 앱 오픈 1회 (마운트 시 · fire-and-forget · UTM 캡처도 모듈 init 에서 함께)
-    import('@/services/analytics').then(({ trackEvent }) => trackEvent('app_open', {})).catch(() => {});
+    import('@/services/analytics').then(({ trackEvent }) => {
+      trackEvent('app_open', {});
+      // 2026-06-18 — 기기 최초 부팅 1회 signup (신규 유저 first-seen → 정확한 코호트/신규 집계)
+      try {
+        if (!localStorage.getItem('saju500:signed_up')) {
+          localStorage.setItem('saju500:signed_up', '1');
+          trackEvent('signup', {});
+        }
+      } catch { /* noop */ }
+    }).catch(() => {});
 
     // 0. Firebase 익명 인증 — 모든 페이지에서 Cloud Functions 호출 가능하게
     import('@/services/auth/authService').then(({ ensureAuth }) => {
