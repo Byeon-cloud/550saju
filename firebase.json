@@ -27,7 +27,7 @@
     ],
     "headers": [
       {
-        "source": "index.html",
+        "source": "**",
         "headers": [
           { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "X-Frame-Options", "value": "ALLOWALL" },
@@ -35,16 +35,9 @@
         ]
       },
       {
-        "source": "**/*.js",
+        "source": "**/*.@(js|css)",
         "headers": [
           { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
-          { "key": "Access-Control-Allow-Origin", "value": "*" }
-        ]
-      },
-      {
-        "source": "**",
-        "headers": [
-          { "key": "X-Frame-Options", "value": "ALLOWALL" },
           { "key": "Access-Control-Allow-Origin", "value": "*" }
         ]
       }
