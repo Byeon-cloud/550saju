@@ -61,6 +61,7 @@ export interface PeriodAgg {
   // 방문
   pageViews: number;
   visitors: number;                                // 고유 uid|sid
+  visitorKeys: string[];                           // 신규/재방문 방문자 산출용 (cur vs prev 비교 — payingUserKeys 패턴)
   appOpens: number;
   dauByDay: number[];
   dauAvg: number;
@@ -142,7 +143,7 @@ function emptyAgg(days: string[]): PeriodAgg {
     days,
     revenue: 0, revenueByDay: days.map(() => 0), packageDist: {},
     chargeOpen: 0, chargeComplete: 0, chargeAmount: 0, payingUsers: 0, repeatPayingUsers: 0, payingUserKeys: [],
-    pageViews: 0, visitors: 0, appOpens: 0, dauByDay: days.map(() => 0), dauAvg: 0,
+    pageViews: 0, visitors: 0, visitorKeys: [], appOpens: 0, dauByDay: days.map(() => 0), dauAvg: 0,
     contentOpen: {}, contentResult: {}, contentPurchase: {},
     contentOpenTotal: 0, contentResultTotal: 0, contentPurchaseTotal: 0, contentPurchaseUn: 0,
     topicSelect: {}, topicOpen: {}, bounceRate: null,
@@ -298,6 +299,7 @@ interface PeriodScratch {
 /** scratch → 최종 집계 마감 (방문자·DAU·리텐션·재구매·방문빈도·utm visits) */
 function finalizeAgg(agg: PeriodAgg, scratch: PeriodScratch): void {
   agg.visitors = scratch.visitorSet.size;
+  agg.visitorKeys = Array.from(scratch.visitorSet); // 신규/재방문 산출용 (cur vs prev)
   agg.dauByDay = agg.days.map((_, i) => scratch.dauSets[i]?.size ?? 0);
   const activeDays = agg.dauByDay.filter((n) => n > 0);
   agg.dauAvg = activeDays.length > 0

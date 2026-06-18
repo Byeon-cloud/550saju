@@ -25,6 +25,14 @@ export function TabUsers({ d }: { d: AdminData }) {
     prev: prev.dauByDay[i] ?? 0,
   })), [cur, prev]);
 
+  // 신규 vs 재방문 (2026-06-18) — 신규 결제유저와 동일 패턴. 현 기간 방문자 중 직전기간 미방문 = 신규.
+  const newVisitors = useMemo(() => {
+    const prevSet = new Set(prev.visitorKeys);
+    return cur.visitorKeys.filter((k) => !prevSet.has(k)).length;
+  }, [cur.visitorKeys, prev.visitorKeys]);
+  const returningVisitors = Math.max(0, cur.visitors - newVisitors);
+  const newRate = cur.visitors > 0 ? Math.round((newVisitors / cur.visitors) * 100) : null;
+
   const freqBars = useMemo(() => ([
     { label: '1회 방문', n: cur.visitFreq.once, pn: prev.visitFreq.once },
     { label: '2~3회', n: cur.visitFreq.few, pn: prev.visitFreq.few },
@@ -68,6 +76,8 @@ export function TabUsers({ d }: { d: AdminData }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
           <Kpi label="누적 가입" value={`${fmtNum(d.totalUsers)}명`} />
           <Kpi label="기간 고유 방문" value={`${fmtNum(cur.visitors)}명`} delta={deltaPct(cur.visitors, prev.visitors)} />
+          <Kpi label="신규 방문" value={`${fmtNum(newVisitors)}명`} sub={newRate == null ? '직전기간 대비 첫 방문' : `전체 방문의 ${newRate}%`} accent />
+          <Kpi label="재방문" value={`${fmtNum(returningVisitors)}명`} sub="직전기간에도 왔던 유저 (충성)" />
           <Kpi label="DAU 평균" value={`${fmtNum(cur.dauAvg)}명`} delta={deltaPct(cur.dauAvg, prev.dauAvg)} />
           <Kpi label="D1 재방문" value={fmtPct(cur.retention.d1Rate)} sub={`코호트 ${fmtNum(cur.retention.cohortD1)}명 · 근사치`} />
           <Kpi label="D7 재방문" value={fmtPct(cur.retention.d7Rate)} sub={`코호트 ${fmtNum(cur.retention.cohortD7)}명 · 근사치`} />
