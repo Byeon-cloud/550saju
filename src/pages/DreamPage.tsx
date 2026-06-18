@@ -32,6 +32,8 @@ import {
   getReport,
   saveReport,
   generateId,
+  markPendingSpend,
+  clearPendingSpend,
   type SajuProfile,
 } from '@/services/storage/localStore';
 import {
@@ -392,6 +394,9 @@ export function DreamPage() {
     }
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'dream', amount: 1 })).catch(() => {});
+    // 2026-06-18 머니세이프 — 차감 후 보관함 저장 실패(용량초과 등) 시 부팅 reconcile 이 5분 후 자동환불.
+    //   저장 성공 시 아래에서 clearPendingSpend 로 해제. (정상 경로는 동기 실행이라 즉시 해제됨)
+    const dreamPendingId = markPendingSpend('dream', 1);
     // 잠금 해제 시각 효과 (사라랄) — body 에 일시 클래스 추가 → CSS 애니메이션
     setUnlockBurst(true);
     setTimeout(() => setUnlockBurst(false), 1500);
@@ -411,8 +416,9 @@ export function DreamPage() {
           aiResult: { ...aiResult, __unlocked: true, __userInput: aiResult?.__userInput || { dreamText, concern, category: DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타' } },
           createdAt: new Date().toISOString(),
         });
+        clearPendingSpend(dreamPendingId); // 잠금해제 영속 완료 → 자동환불 대상 제외
       }
-    } catch { /* noop */ }
+    } catch { /* noop — 저장 실패 시 pending 유지 → 부팅 reconcile 자동환불 */ }
     isDeepAnalyzingRef.current = false;
   }
 

@@ -8,7 +8,7 @@ import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { MonthlyFortune } from '@/components/saju/MonthlyFortune';
 
 import { ShareModal } from '@/components/share/ShareModal';
-import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, markPendingSpend, clearPendingSpendByType, type LocalReport } from '@/services/storage/localStore';
 import { lookupCategory } from '@/constants/sipsungColor';
 import { generateMonthlyFortune2026 } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
@@ -101,6 +101,8 @@ export function MonthlyPage() {
     }
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'monthly', amount: 1 })).catch(() => {});
+    // 2026-06-18 머니세이프 — 생성 중 앱 종료로 결과 못 받으면 부팅 reconcile 이 5분 후 자동환불.
+    markPendingSpend('monthly', 1);
     toast.show('1운이 차감됐어요', 'info');
     setPhase('loading');
     setLoadingStep(0);
@@ -111,12 +113,14 @@ export function MonthlyPage() {
       setResult(res.content);
       const rid = res.reportId || generateId();
       saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
+      clearPendingSpendByType('monthly'); // 결과 저장 완료 → 자동환불 대상 제외
       setShareReportId(rid);
       setPhase('result');
     } catch (e: any) {
       console.error('월별 운세 실패:', e);
       // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
       refundBalance(1);
+      clearPendingSpendByType('monthly'); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
       setPhase('select');
       toast.show('분석에 실패해서 1운을 돌려드렸어요', 'warning');
     } finally {

@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
 import { getProfiles, getMyProfile, type LocalReport } from '@/services/storage/localStore';
-import { spendBalance } from '@/services/storage/localStore';
+import { spendBalance, markPendingSpend } from '@/services/storage/localStore';
 import { addRecentPartner, getRecentPartnerIds } from '@/services/storage/compatRecents';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -104,6 +104,9 @@ export function CompatibilityPage() {
       }
       // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
       import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: 1 })).catch(() => {});
+      // 2026-06-18 머니세이프 — 결과 페이지 이동/생성 중 앱 종료 시 부팅 reconcile 이 5분 후 자동환불.
+      //   (CompatResultPage 가 결과 저장/실패환불 시 clearPendingSpendByType('compat') 로 해제)
+      markPendingSpend('compat', 1);
       toast.show('1운이 차감됐어요', 'info');
       const rel = relation === '기타' ? customRelation || '기타' : relation;
       // P2-3 · 궁합 상대방 최근 목록 기록 (person2 = 상대방). MRU 최상단.

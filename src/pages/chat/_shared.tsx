@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   spendBalance,
   getBalance,
+  addPaidBalance,
 } from '@/services/storage/localStore';
 import {
   getChatCredits,
@@ -216,7 +217,14 @@ export function ConvertUnModal({
     }
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'chat', amount: safeAmount })).catch(() => {});
-    addChatCredits(ticketsGain);
+    // 2026-06-18 머니세이프 — 차감과 대화권 적립을 원자적으로. 적립 실패(용량초과 등) 시 차감한 운 즉시 복구.
+    try {
+      addChatCredits(ticketsGain);
+    } catch {
+      addPaidBalance(safeAmount, 0);
+      toast.show('전환에 실패해서 운을 돌려드렸어요. 다시 시도해주세요.', 'warning');
+      return;
+    }
     toast.show(
       `${safeAmount}운을 대화권 ${ticketsGain}개로 바꿨어요`,
       'success',

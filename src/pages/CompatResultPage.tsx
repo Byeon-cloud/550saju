@@ -103,7 +103,7 @@ export function CompatResultPage() {
       state.relation,
     ).then(async (res) => {
       setResult(res.content);
-      const { saveReport, generateId } = await import('@/services/storage/localStore');
+      const { saveReport, generateId, clearPendingSpendByType } = await import('@/services/storage/localStore');
       const rid = res.reportId || generateId();
       saveReport({
         id: rid,
@@ -116,13 +116,15 @@ export function CompatResultPage() {
         ...({ partner: { name: state!.person2.name, sajuData: state!.person2.sajuData, input: state!.person2.input }, relation: state!.relation } as any),
         createdAt: new Date().toISOString(),
       });
+      clearPendingSpendByType('compat'); // 결과 저장 완료 → 자동환불 대상 제외
       setShareReportId(rid);
       setPhase('result');
     }).catch(async (e) => {
       console.error('궁합 분석 실패:', e);
       // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
-      const { refundBalance } = await import('@/services/storage/localStore');
+      const { refundBalance, clearPendingSpendByType } = await import('@/services/storage/localStore');
       refundBalance(1);
+      clearPendingSpendByType('compat'); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
       const errMsg = e?.message || '알 수 없는 오류';
       toast.show(`분석에 실패해서 1운을 돌려드렸어요 (${errMsg})`, 'warning');
       setTimeout(() => navigate('/compat'), 3000);
