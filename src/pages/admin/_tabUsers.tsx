@@ -16,6 +16,17 @@ const REWARD_LABEL: Record<string, string> = {
   launch: '런칭 프로모', unknown: '기타',
 };
 
+/** 그라데이션 히어로 카드 — 핵심 결론을 평어로 (2026-06-18 · 레퍼런스 디자인 언어). */
+function HeroCard({ grad, label, big, sub }: { grad: string; label: string; big: string; sub?: string }) {
+  return (
+    <div style={{ background: grad, borderRadius: 18, padding: '18px 20px', color: '#fff', boxShadow: '0 6px 18px rgba(0,0,0,0.10)' }}>
+      <p style={{ fontSize: 12.5, opacity: 0.88, margin: 0, fontWeight: 600 }}>{label}</p>
+      <p style={{ fontSize: 26, fontWeight: 800, margin: '7px 0 2px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>{big}</p>
+      {sub && <p style={{ fontSize: 12, opacity: 0.82, margin: 0 }}>{sub}</p>}
+    </div>
+  );
+}
+
 export function TabUsers({ d }: { d: AdminData }) {
   const { cur, prev } = d;
 
@@ -72,6 +83,36 @@ export function TabUsers({ d }: { d: AdminData }) {
 
   return (
     <div>
+      {(() => {
+        const gM = cur.demoGender['M'] ?? 0, gF = cur.demoGender['F'] ?? 0;
+        const gTot = gM + gF;
+        const AGE_ORDER = ['10대', '20대', '30대', '40대', '50대', '60대+'];
+        const topAge = AGE_ORDER.map((ab) => ({ ab, n: cur.demoAge[ab] ?? 0 })).sort((a, b) => b.n - a.n)[0];
+        const ageTot = AGE_ORDER.reduce((s, ab) => s + (cur.demoAge[ab] ?? 0), 0);
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 18 }}>
+            <HeroCard
+              grad="linear-gradient(135deg,#2bb673,#3cc888)"
+              label="신규 vs 재방문 (이 기간)"
+              big={cur.visitors > 0 ? `신규 ${newRate}%` : '데이터 없음'}
+              sub={cur.visitors > 0 ? `신규 ${fmtNum(newVisitors)}명 · 재방문 ${fmtNum(returningVisitors)}명` : '방문이 누적되면 표시'}
+            />
+            <HeroCard
+              grad="linear-gradient(135deg,#3b9ad6,#5ab0e0)"
+              label="성비 (남 : 여)"
+              big={gTot > 0 ? `${Math.round((gM / gTot) * 100)}% : ${Math.round((gF / gTot) * 100)}%` : '데이터 없음'}
+              sub={gTot > 0 ? `사주 프로필 입력 ${fmtNum(gTot)}명 기준` : '프로필 데이터 누적 중'}
+            />
+            <HeroCard
+              grad="linear-gradient(135deg,#7c5cd6,#9b6ef0)"
+              label="핵심 연령대"
+              big={topAge && topAge.n > 0 ? topAge.ab : '데이터 없음'}
+              sub={topAge && topAge.n > 0 && ageTot > 0 ? `전체의 ${Math.round((topAge.n / ageTot) * 100)}% 차지` : '프로필 데이터 누적 중'}
+            />
+          </div>
+        );
+      })()}
+
       <Section title="유저 KPI" right={<CsvButton onClick={exportCsv} label="리워드 CSV" />}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
           <Kpi label="누적 가입" value={`${fmtNum(d.totalUsers)}명`} />
