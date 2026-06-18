@@ -11,9 +11,10 @@ import {
 import type { Col } from './_components';
 import { buildCsv, downloadCsv, csvFilename } from './_csv';
 
+// 실제 발생하는 reward_earned kind 만 (2026-06-18 정확성 — auto_refund 는 환불이라 집계 제외, launch 는 미발생 유령 라벨 제거)
 const REWARD_LABEL: Record<string, string> = {
-  daily: '데일리 출석', attend7: '7일 출석', streak3: '3일 연속', share: '공유 리워드',
-  launch: '런칭 프로모', unknown: '기타',
+  daily: '데일리 출석 (0.1운)', streak3: '3일 연속 (1운)', attend7: '7일 출석 (토스)', share: '공유 리워드 (0.5운)',
+  unknown: '기타',
 };
 
 /** 그라데이션 히어로 카드 — 핵심 결론을 평어로 (2026-06-18 · 레퍼런스 디자인 언어). */

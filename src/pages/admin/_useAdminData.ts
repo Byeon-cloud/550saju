@@ -252,6 +252,7 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
     }
     case 'reward_earned': {
       const kind = (e.props?.kind as string | undefined) || 'unknown';
+      if (kind === 'auto_refund') break; // 환불(생성중단 자동환불)은 리워드 아님 — 리워드 집계 제외 (정확성)
       const slot = (agg.rewardByKind[kind] ??= { count: 0, amount: 0 });
       slot.count += 1;
       slot.amount += Number(e.props?.amount) || 0;
