@@ -30,6 +30,10 @@ export class ErrorBoundary extends Component<Props, State> {
     //   배포로 옛 청크가 사라졌을 때 새 index.html(no-cache)을 다시 받으면 정상화. 세션당 1회로 루프 방지.
     const msg = String(error?.message || '') + ' ' + String((error as { name?: string })?.name || '');
     const isChunkError = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError|Loading chunk [\d]+ failed|dynamically imported module/i.test(msg);
+    // 진단 비콘 — 어떤 에러가 화면을 깨는지 실데이터로 파악(추측 종결). fire-and-forget.
+    import('@/services/analytics')
+      .then(({ trackEvent }) => trackEvent('client_error', { msg: msg.slice(0, 120), chunk: isChunkError ? 1 : 0, path: (typeof location !== 'undefined' ? location.pathname : '') }))
+      .catch(() => { /* noop */ });
     if (isChunkError) {
       try {
         if (!sessionStorage.getItem('saju500:chunk_reloaded')) {
