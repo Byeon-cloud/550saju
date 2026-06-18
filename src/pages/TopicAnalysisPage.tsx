@@ -3291,6 +3291,43 @@ export function TopicAnalysisPage() {
     }
   }, [existingResult]);
 
+  // 2026-06-17 — 생성 중 앱 종료로 결과를 못 받은 경우(미해결 pending 차감 有), 서버에 저장된
+  //   결과를 끌어와 복원 (재구매 0). pending 이 있을 때만 발동 → 의도적 보관함 삭제(pending 無)와 구분.
+  const recoverKeyRef = useRef<string>('');
+  useEffect(() => {
+    if (!topicId || !selected || phase === 'result' || result) return;
+    const key = `${topicId}:${selected.id}`;
+    if (recoverKeyRef.current === key) return;
+    recoverKeyRef.current = key;
+    (async () => {
+      try {
+        const m = await import('@/services/storage/localStore');
+        const pend = m.getPendingSpends().find((p) => p.type === `topic:${topicId}`);
+        if (!pend) return; // 미해결 차감 없음 = 복구할 끊긴 생성 없음
+        const [{ getFunctions, httpsCallable }, { app }, { ensureAuth }] = await Promise.all([
+          import('firebase/functions'), import('@/services/auth/firebase'), import('@/services/auth/authService'),
+        ]);
+        await ensureAuth();
+        const fn = httpsCallable(getFunctions(app, 'us-central1'), 'recoverTopicResult');
+        const r: any = await fn({ topicId });
+        if (r?.data?.found && r.data.content && typeof r.data.content === 'object') {
+          const content = r.data.content;
+          setResult(content);
+          setPhase('result');
+          try { localStorage.setItem(`topic_${topicId}_${selected.id}`, JSON.stringify(content)); } catch { /* noop */ }
+          m.saveReport({
+            id: r.data.reportId || m.generateId(),
+            name: selected.name, input: selected.input, sajuData: selected.sajuData,
+            type: 'paid', contentType: 'topic', createdAt: new Date().toISOString(),
+            aiResult: { topicId, ...content }, profileId: selected.id,
+          });
+          m.clearPendingSpend(pend.id); // 결과 복구됨 → 환불 대신 결과 전달
+        }
+      } catch { /* noop — 실패해도 기존 흐름(재구매/자동환불) 유지 */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicId, selected, phase, result]);
+
   // 단일 프로필이면 자동 선택
   useEffect(() => {
     if (profiles.length === 1 && !selected) {

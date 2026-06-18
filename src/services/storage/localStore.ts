@@ -504,6 +504,11 @@ function writePendingSpends(list: PendingSpend[]): void {
 }
 
 /** 차감 직후 호출 — 생성 중 이탈 대비 마킹. 반환된 id 로 완료 시 clear. */
+/** 미해결 pending 차감 목록 조회 (토픽 결과 복구 트리거 판단용 — 2026-06-17) */
+export function getPendingSpends(): Array<{ id: string; type: string; amount: number; ts: number }> {
+  return readPendingSpends();
+}
+
 export function markPendingSpend(type: string, amount: number): string {
   const id = `${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
   const list = readPendingSpends();
