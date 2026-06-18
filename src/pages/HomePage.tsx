@@ -97,6 +97,12 @@ export function HomePage() {
         localStorage.removeItem('saju500:comp_notice');
         refundToast.show(`고객센터 보상 ${comp}운이 적립됐어요. 불편을 드려 죄송합니다`, 'success');
       }
+      // 2026-06-18 — 생성 중 앱 종료로 못 받았던 종합사주 결과를 서버서 복구해 보관함에 저장한 경우 안내.
+      const prem = localStorage.getItem('saju500:premium_recovered');
+      if (prem) {
+        localStorage.removeItem('saju500:premium_recovered');
+        refundToast.show('이전에 받지 못한 종합사주 결과를 보관함에 저장했어요', 'success');
+      }
     } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

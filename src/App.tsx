@@ -285,6 +285,35 @@ export function App() {
       window.addEventListener('beforeunload', () => window.clearTimeout(recheck), { once: true });
     }).catch(() => {});
 
+    // 0-a3b. 종합사주 결과복구 (2026-06-18) — 생성 중 앱 종료로 결과 못 받은 경우(미해결 premium 차감 <5분)
+    //   서버('recovery' 필드)에서 끌어와 보관함에 복원 (재생성 0). 못 찾으면 위 reconcile 자동환불로 degrade.
+    //   pending 있을 때만 서버 호출 → 정상 부팅엔 네트워크 0.
+    import('@/services/storage/localStore').then(async (m) => {
+      const pend = m.getPendingSpends().find((p) => p.type === 'premium' && (Date.now() - p.ts) < 5 * 60 * 1000);
+      if (!pend) return;
+      const [{ getFunctions, httpsCallable }, { app }, { ensureAuth }] = await Promise.all([
+        import('firebase/functions'), import('@/services/auth/firebase'), import('@/services/auth/authService'),
+      ]);
+      await ensureAuth();
+      const fn = httpsCallable(getFunctions(app, 'us-central1'), 'recoverPremiumResult');
+      const r: any = await fn({});
+      const data = r?.data;
+      if (data?.found && data.content && data.sajuData) {
+        m.saveReport({
+          id: data.reportId || m.generateId(),
+          name: data.sajuData?.input?.name || '나',
+          input: data.sajuData?.input,
+          sajuData: data.sajuData,
+          type: 'paid',
+          contentType: 'report',
+          createdAt: new Date().toISOString(),
+          aiResult: data.reportType === 'premium' ? { ...data.content, tier: 'premium' } : data.content,
+        });
+        m.clearPendingSpendByType('premium'); // 결과 복구됨 → 환불 대신 결과 전달
+        try { localStorage.setItem('saju500:premium_recovered', '1'); } catch { /* noop */ }
+      }
+    }).catch(() => { /* noop — 실패 시 reconcile 자동환불 유지 */ });
+
     // 0-a3. CS 보상 자동 수령 (2026-06-11 · 앱인토스 전용) — 부팅 시 1회.
     //   2026-06-15 — 토스 웹뷰는 백그라운드→복귀해도 살아있어 'once per boot' 가드론 첫 1회만 돌아
     //   어드민이 운을 나중에 넣어도 재열람 시 수령이 안 되던 문제. → 포그라운드 복귀마다 재확인(아래 visibility effect).

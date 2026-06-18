@@ -312,6 +312,10 @@ export const generatePremiumReportStream = onRequest(
       } catch {
         // silent — 저장 실패해도 사용자에겐 결과 전달
       }
+      // 2026-06-18 결과복구 — content+사주를 별도 best-effort write (색인예외 필드 'recovery').
+      //   메타 저장과 분리돼 실패해도 영향 0. 생성 중 앱 종료로 클라가 결과 못 받았을 때
+      //   부팅에서 recoverPremiumResult 로 끌어와 복원 (재생성 0). 미저장 시 자동환불로 degrade.
+      try { await reportRef.set({ recovery: JSON.stringify({ content: merged, sajuData }) }, { merge: true }); } catch { /* 색인/용량 초과 — 복구 미지원 */ }
 
       sendEvent('done', { reportId: reportRef.id, content: merged });
       res.end();
@@ -446,6 +450,8 @@ export const generateReportStream = onRequest(
           shareEnabled: false,
         });
       } catch { /* silent */ }
+      // 2026-06-18 결과복구 — content+사주 별도 best-effort write (메타 저장과 분리, 색인예외 필드).
+      try { await reportRef.set({ recovery: JSON.stringify({ content: merged, sajuData }) }, { merge: true }); } catch { /* 색인/용량 초과 — 복구 미지원 */ }
 
       sendEvent('done', { reportId: reportRef.id, content: merged });
       res.end();
@@ -529,6 +535,8 @@ export const generateReport = onCall(
       } catch (fsErr: any) {
         console.error('[generateReport] Firestore save failed:', fsErr.message);
       }
+      // 2026-06-18 결과복구 — content+사주 별도 best-effort write (메타 저장과 분리, 색인예외 필드).
+      try { await reportRef.set({ recovery: JSON.stringify({ content: result.content, sajuData }) }, { merge: true }); } catch { /* 색인/용량 초과 — 복구 미지원 */ }
 
       console.log('[generateReport] Returning result');
       return { reportId: reportRef.id, ...result };
@@ -2159,6 +2167,7 @@ export { deleteAccount } from './auth/deleteAccount';
 // CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
 export { claimCompensation } from './admin/claimCompensation';
 export { recoverTopicResult } from './topic/recoverTopicResult';
+export { recoverPremiumResult } from './premium/recoverPremiumResult';
 // 어드민 CS 지급 (2026-06-12) — /admin 'CS 지급' 탭에서 디바이스 ID 로 즉시 장부 기록 (오너 전용)
 export { adminGrantCompensation } from './admin/adminGrantCompensation';
 
