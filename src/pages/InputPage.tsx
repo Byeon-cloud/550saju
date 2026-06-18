@@ -668,6 +668,8 @@ export function InputPage() {
         const premiumPricing = getPremiumPrice();
         const premiumCost = premiumPricing.actualPrice;
         if (!spendBalance(premiumCost)) {
+          // 2026-06-18 — 잔액부족 = 충전 유도 직전(전환 모멘트) 트래킹
+          import('@/services/analytics').then((a) => a.trackEvent('insufficient_balance', { type: 'premium', needed: premiumCost })).catch(() => {});
           toast.show(`${premiumCost}운이 부족해요. 충전 페이지로 이동합니다`, 'warning');
           navigate(`/charge?need=${premiumCost}`, {
             state: { from: 'input', message: `종합 사주에 ${premiumCost}운이 필요해요` },

@@ -187,6 +187,14 @@ export function DreamPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [aiResult, setAiResult] = useState<any>(navState?.savedResult ?? null);
+  // 2026-06-18 퍼널 — 꿈해몽 결과 도달 시 content_result 발사 (무료 퍼널 완성 · /result 자동발사 경로 밖)
+  const dreamResultTrackedRef = useRef(false);
+  useEffect(() => {
+    if ((phase === 'result' || phase === 'deepResult') && !dreamResultTrackedRef.current) {
+      dreamResultTrackedRef.current = true;
+      import('@/services/analytics').then((a) => a.trackEvent('content_result', { type: 'dream' })).catch(() => {});
+    }
+  }, [phase]);
   // 보관함 진입 시: type='paid' OR aiResult.__unlocked 면 잠금 해제 상태로 복원
   const [unlocked, setUnlocked] = useState(() => {
     const r = navState?.savedReport;

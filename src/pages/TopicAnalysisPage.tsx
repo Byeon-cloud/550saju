@@ -3401,6 +3401,8 @@ export function TopicAnalysisPage() {
 
     // E2 · 잔액 부족 시 입력값 보존 + inline 모달 (toast 만 X · 강제 navigate X)
     if (!spendBalance(actualPrice)) {
+      // 2026-06-18 — 잔액부족 = 충전 유도 직전(전환 모멘트) 트래킹
+      import('@/services/analytics').then((a) => a.trackEvent('insufficient_balance', { type: `topic:${topicId}`, needed: actualPrice })).catch(() => {});
       // 입력값 sessionStorage 보존
       try {
         sessionStorage.setItem(PENDING_KEY, JSON.stringify({

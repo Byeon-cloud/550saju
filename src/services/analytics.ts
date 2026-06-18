@@ -155,6 +155,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'profile_created',    // {relation, hourKnown} — 사주 프로필 첫 생성 (활성화 onboarding)
   'invite_received',    // {granted, reason} — 공유링크 수신 전환 (바이럴 K-factor)
   'login_success',      // {provider} — 소셜/토스 로그인 성공
+  'insufficient_balance', // {type, needed} — 잔액부족 감지(충전 유도 직전 — 전환 모멘트)
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───

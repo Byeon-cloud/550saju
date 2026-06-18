@@ -116,6 +116,14 @@ export function DailyFortunePage() {
   const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : 'select');
   const [result, setResult] = useState<any>(navState?.savedResult ?? null);
   const [apiError, setApiError] = useState('');
+  // 2026-06-18 퍼널 — 오늘운세 결과 도달 시 content_result 발사 (무료 퍼널 완성 · /result 자동발사 경로 밖)
+  const dailyResultTrackedRef = useRef(false);
+  useEffect(() => {
+    if (result && !dailyResultTrackedRef.current) {
+      dailyResultTrackedRef.current = true;
+      import('@/services/analytics').then((a) => a.trackEvent('content_result', { type: 'daily' })).catch(() => {});
+    }
+  }, [result]);
   // 2026-05-29 — 출시 프로모션 10원: 무료 오늘운세 결과 도달도 첫 콘텐츠로 인정 (코드 단위 dedupe · 앱인토스 only).
   useEffect(() => {
     if (phase === 'result') {
