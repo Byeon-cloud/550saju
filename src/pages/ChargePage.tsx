@@ -103,8 +103,15 @@ export function ChargePage() {
   const [balance, setBalanceDisplay] = useState(() => getBalance());
   const [purchasing, setPurchasing] = useState(false);
   // PG 입점심사용 테스트 결제 (2026-06-12) — 웹 전용 · 운 적립 없음 · 자동취소
+  // 2026-06-18 런칭 — 기본 고객은 진짜 토스 결제. 포트원 심사용 테스트창은 `?pgtest=1` URL 로만 노출
+  //   (심사관에게 /charge?pgtest=1 전달 → 공존). 일반 결제 버튼은 purchasePackage → 웹은 requestTossPayment(실결제).
   const [showPgSheet, setShowPgSheet] = useState(false);
-  const portoneTest = !isAppintosBuild && isPortoneTestEnabled();
+  const portoneTest = !isAppintosBuild && isPortoneTestEnabled()
+    && new URLSearchParams(window.location.search).has('pgtest');
+  // 2026-06-18 웹 런칭 — 웹 실결제는 토스 클라키가 live_ 일 때만 ON. test 키면 '준비중' 게이팅
+  //   (앱인토스 IAP 는 항상 라이브). 형이 live 키 교체하면 자동으로 결제 열림 — 코드 재손질 0.
+  const webPaymentReady = isAppintosBuild
+    || String(import.meta.env.VITE_TOSS_PAYMENTS_CLIENT_KEY || '').startsWith('live_');
   const [remainingShares, setRemainingShares] = useState(() => getRemainingShareRewards());
 
   // p15 → CHARGE_PACKAGES[3] (4 패키지 정정 후 마지막 인덱스)
@@ -176,6 +183,11 @@ export function ChargePage() {
     if (!selectedPkg || purchasing) return;
     // PG 심사용 테스트 결제 — 결제수단 선택 시트 (실청구 X · 운 적립 X)
     if (portoneTest) { setShowPgSheet(true); return; }
+    // 웹 실결제 미오픈(test 키) — 헛결제 방지 안내. 앱인토스 IAP·live 키면 통과.
+    if (!webPaymentReady) {
+      toast.show('웹 결제는 곧 오픈해요! 조금만 기다려 주세요 🙏', 'info');
+      return;
+    }
     setPurchasing(true);
     const result = await purchasePackage(selectedPkg);
     setPurchasing(false);
@@ -612,7 +624,9 @@ export function ChargePage() {
               >
                 {purchasing
                   ? '처리 중...'
-                  : (isAppintosBuild ? '토스페이로 결제' : `${selectedPkg.price.toLocaleString()}원 결제하기`)}
+                  : !webPaymentReady
+                    ? '결제 준비 중'
+                    : (isAppintosBuild ? '토스페이로 결제' : `${selectedPkg.price.toLocaleString()}원 결제하기`)}
               </button>
             </div>
             {/* iOS 홈바 영역 흡수 */}
