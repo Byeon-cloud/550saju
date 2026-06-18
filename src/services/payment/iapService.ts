@@ -119,6 +119,8 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
           },
           onError: (error: any) => {
             console.error('[IAP] 구매 오류:', error);
+            // 2026-06-18 — IAP 결제 실패/취소 트래킹 (결제 퍼널 drop-off · 기존 미트래킹)
+            import('@/services/analytics').then((a) => a.trackEvent('charge_failed', { pg: 'iap', reason: String(error?.code || error?.type || error?.message || 'unknown').slice(0, 60) })).catch(() => {});
             resolve({ success: false, message: '결제가 취소되었거나 오류가 발생했습니다' });
           },
         });

@@ -129,6 +129,8 @@ export function ChargePage() {
 
     if (pgStatus === 'fail') {
       const errMsg = searchParams.get('message') || '결제가 취소됐어요';
+      // 2026-06-18 — 결제 실패/취소 트래킹 (결제 퍼널 drop-off 분석 · 기존 미트래킹)
+      import('@/services/analytics').then((a) => a.trackEvent('charge_failed', { pg: 'toss', reason: errMsg.slice(0, 60) })).catch(() => {});
       toast.show(errMsg, 'warning');
       setSearchParams({}, { replace: true });
       return;

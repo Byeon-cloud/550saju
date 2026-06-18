@@ -147,6 +147,9 @@ const FIRESTORE_TRACKED = new Set<string>([
   // 대시보드 v3 (2026-06-12) — CTA 클릭 (전역 위임 수집)
   'cta_click',          // {label, page}
   'noti_agree',         // {result: newAgreement|alreadyAgreed|agreementRejected} — 매일 운세 알림 동의 (2026-06-13)
+  // 2026-06-18 데이터 정확성 감사 — 드롭 이벤트 복구 + 결제 퍼널 누락 보강
+  'client_error',       // {msg, chunk, path} — 렌더/청크 에러 (화이트스크린 진단 비콘 — 기존 GA4 만 가고 드롭되던 것)
+  'charge_failed',      // {pg, package?, amount?, reason} — 결제 실패/취소 (결제 퍼널 drop-off — 기존 미트래킹)
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───
