@@ -3,6 +3,7 @@
 //   ⚠️ 읽기 전용 — 오너 게이팅·firestore.rules 보안 모델 변경 없음. 쿼리 패턴(day >= X, orderBy day)도 기존과 동일 (신규 인덱스 불필요).
 import { useCallback, useEffect, useState } from 'react';
 import { db } from '@/services/auth/firebase';
+import { OWNER_UIDS } from '@/services/admin/adminConfig';
 import {
   collection, getDocs, query, where, orderBy, limit, collectionGroup,
 } from 'firebase/firestore';
@@ -411,6 +412,10 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
         const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {} };
         const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {} };
         const rawEvents: RawEvent[] = [];
+        // 2026-06-18 더미 제거 — 오너(본인 테스트) 데이터 전 collectionGroup 에서 제외.
+        //   OWNER_UIDS(고정) + internal:true 이벤트를 낸 모든 uid(쿠키 초기화로 바뀐 익명 오너 기기 포함).
+        //   → reports/payments/dailyFortune/users 가 이 uid 들을 건너뜀 = 실유저 수치만 남음.
+        const ownerUidSet = new Set<string>(OWNER_UIDS);
 
         // 1) analytics — 현+전 기간 (최대 60일) 한 번에 fetch
         const evSnap = await getDocs(
@@ -418,7 +423,7 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
         );
         evSnap.forEach((doc) => {
           const e = doc.data() as any;
-          if (isInternalEvent(e)) return; // 오너 기기·로컬 테스트 트래픽 제외 (2026-06-12)
+          if (isInternalEvent(e)) { if (e.uid) ownerUidSet.add(String(e.uid)); return; } // 오너·로컬 트래픽 제외 + uid 수집
           // 플랫폼 필터 (2026-06-12) — plat 미기록 구이벤트는 web 취급 (구 토스앱 번들엔 추적코드 자체가 없었음)
           if (plat !== 'all' && ((e.plat as string) || 'web') !== plat) return;
           const ev: RawEvent = {
@@ -448,6 +453,7 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
             const p = doc.data() as any;
             const amt = Number(p.amount) || 0;
             const puid = doc.ref.parent.parent?.id || '';
+            if (ownerUidSet.has(puid)) return; // 오너 테스트 결제 제외 (더미)
             const status = String(p.status ?? 'confirmed');
             const ptype = String(p.type ?? 'charge');
             // 결제 건강 — 모든 충전 시도 상태 분류 (use 차감은 제외)
@@ -531,10 +537,11 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
           const repSnap = await getDocs(collectionGroup(db, 'reports'));
           repSnap.forEach((doc) => {
             const r = doc.data() as any;
+            const ruid = r.uid || doc.ref.parent.parent?.id || '';
+            if (ownerUidSet.has(ruid)) return; // 오너 테스트 생성물 제외 (더미 — 전수감사 등)
             const t = r.contentType || r.type || 'report'; // 서버 문서는 type 필드 (premium/basic/...)
             reportsByType[t] = (reportsByType[t] ?? 0) + 1;
             const rday = paymentDay({ confirmedAt: r.generatedAt ?? r.createdAt });
-            const ruid = r.uid || doc.ref.parent.parent?.id || '';
             if (ruid) (typeUserSets[t] ??= new Set()).add(ruid);
             // 10주제 분포 (2026-06-12) — topicId 가 전 기록에 저장돼 있어 과거 전체 분해 가능
             const tid = t === 'topic' ? String(r.topicId || 'unknown') : null;
@@ -573,10 +580,11 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
           dfSnap.forEach((doc) => {
             const dday = doc.id.slice(0, 10); // 'YYYY-MM-DD' 또는 'YYYY-MM-DD_v6' → 날짜만
             if (!/^\d{4}-\d{2}-\d{2}$/.test(dday)) return;
-            const dedupeKey = `${doc.ref.parent.parent?.id || ''}|${dday}`;
+            const duid = doc.ref.parent.parent?.id || '';
+            if (ownerUidSet.has(duid)) return; // 오너 테스트 제외 (더미)
+            const dedupeKey = `${duid}|${dday}`;
             if (dailySeen.has(dedupeKey)) return;
             dailySeen.add(dedupeKey);
-            const duid = doc.ref.parent.parent?.id || '';
             dailyDist.count += 1;
             if (duid) dailyDist.userSet.add(duid);
             const ci = curDays.indexOf(dday);
@@ -609,11 +617,11 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
           });
         } catch { /* noop */ }
 
-        // 5) 유저 수
+        // 5) 유저 수 (오너 테스트 계정 제외)
         let totalUsers = 0;
         try {
           const uSnap = await getDocs(collection(db, 'users'));
-          totalUsers = uSnap.size;
+          uSnap.forEach((u) => { if (!ownerUidSet.has(u.id)) totalUsers += 1; });
         } catch { /* noop */ }
 
         if (!cancelled) {
