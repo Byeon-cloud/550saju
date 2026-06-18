@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
+import { lazyWithReload, clearChunkReloadFlag } from '@/lib/lazyWithReload';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -16,44 +17,44 @@ import { HomePage } from '@/pages/HomePage';
  *   `.env`: VITE_HOME_V5_ENABLED=1 로 ON
  */
 const HOME_V5_ENABLED = import.meta.env.VITE_HOME_V5_ENABLED === '1';
-const HomePageV5 = lazy(() => import('@/pages/HomePageV5').then(m => ({ default: m.HomePageV5 })));
+const HomePageV5 = lazyWithReload(() => import('@/pages/HomePageV5').then(m => ({ default: m.HomePageV5 })));
 
 // Lazy-loaded pages (코드 스플리팅)
-const InputPage = lazy(() => import('@/pages/InputPage').then(m => ({ default: m.InputPage })));
-const LoadingPage = lazy(() => import('@/pages/LoadingPage').then(m => ({ default: m.LoadingPage })));
-const ResultPage = lazy(() => import('@/pages/result/ResultPage').then(m => ({ default: m.ResultPage })));
-const DailyFortunePage = lazy(() => import('@/pages/DailyFortunePage').then(m => ({ default: m.DailyFortunePage })));
+const InputPage = lazyWithReload(() => import('@/pages/InputPage').then(m => ({ default: m.InputPage })));
+const LoadingPage = lazyWithReload(() => import('@/pages/LoadingPage').then(m => ({ default: m.LoadingPage })));
+const ResultPage = lazyWithReload(() => import('@/pages/result/ResultPage').then(m => ({ default: m.ResultPage })));
+const DailyFortunePage = lazyWithReload(() => import('@/pages/DailyFortunePage').then(m => ({ default: m.DailyFortunePage })));
 // 2026-05-07: 출시 후 공개 — import 보존 (관련 페이지 향후 복원용)
-const CompatibilityPage = lazy(() => import('@/pages/CompatibilityPage').then(m => ({ default: m.CompatibilityPage })));
+const CompatibilityPage = lazyWithReload(() => import('@/pages/CompatibilityPage').then(m => ({ default: m.CompatibilityPage })));
 void CompatibilityPage;
-const StoragePage = lazy(() => import('@/pages/StoragePage').then(m => ({ default: m.StoragePage })));
-const ChargePage = lazy(() => import('@/pages/ChargePage').then(m => ({ default: m.ChargePage })));
-const MyPage = lazy(() => import('@/pages/MyPage').then(m => ({ default: m.MyPage })));
-const SharePage = lazy(() => import('@/pages/SharePage').then(m => ({ default: m.SharePage })));
-const DreamPage = lazy(() => import('@/pages/DreamPage').then(m => ({ default: m.DreamPage })));
+const StoragePage = lazyWithReload(() => import('@/pages/StoragePage').then(m => ({ default: m.StoragePage })));
+const ChargePage = lazyWithReload(() => import('@/pages/ChargePage').then(m => ({ default: m.ChargePage })));
+const MyPage = lazyWithReload(() => import('@/pages/MyPage').then(m => ({ default: m.MyPage })));
+const SharePage = lazyWithReload(() => import('@/pages/SharePage').then(m => ({ default: m.SharePage })));
+const DreamPage = lazyWithReload(() => import('@/pages/DreamPage').then(m => ({ default: m.DreamPage })));
 // #51 Sprint 2 — ChatPage 3-route 분리
-const ChatListPage = lazy(() => import('@/pages/chat/ChatListPage').then(m => ({ default: m.ChatListPage })));
-const ChatNewPage = lazy(() => import('@/pages/chat/ChatNewPage').then(m => ({ default: m.ChatNewPage })));
-const ChatSessionPage = lazy(() => import('@/pages/chat/ChatSessionPage').then(m => ({ default: m.ChatSessionPage })));
+const ChatListPage = lazyWithReload(() => import('@/pages/chat/ChatListPage').then(m => ({ default: m.ChatListPage })));
+const ChatNewPage = lazyWithReload(() => import('@/pages/chat/ChatNewPage').then(m => ({ default: m.ChatNewPage })));
+const ChatSessionPage = lazyWithReload(() => import('@/pages/chat/ChatSessionPage').then(m => ({ default: m.ChatSessionPage })));
 // 2026-05-07: 출시 후 공개 — import 보존
-const DaeunPage = lazy(() => import('@/pages/DaeunPage').then(m => ({ default: m.DaeunPage })));
-const MonthlyPage = lazy(() => import('@/pages/MonthlyPage').then(m => ({ default: m.MonthlyPage })));
-const CompatResultPage = lazy(() => import('@/pages/CompatResultPage').then(m => ({ default: m.CompatResultPage })));
-const TojungPage = lazy(() => import('@/pages/TojungPage').then(m => ({ default: m.TojungPage })));
+const DaeunPage = lazyWithReload(() => import('@/pages/DaeunPage').then(m => ({ default: m.DaeunPage })));
+const MonthlyPage = lazyWithReload(() => import('@/pages/MonthlyPage').then(m => ({ default: m.MonthlyPage })));
+const CompatResultPage = lazyWithReload(() => import('@/pages/CompatResultPage').then(m => ({ default: m.CompatResultPage })));
+const TojungPage = lazyWithReload(() => import('@/pages/TojungPage').then(m => ({ default: m.TojungPage })));
 void DaeunPage; void MonthlyPage; void CompatResultPage; void TojungPage;
-const PremiumSelectPage = lazy(() => import('@/pages/PremiumSelectPage').then(m => ({ default: m.PremiumSelectPage })));
+const PremiumSelectPage = lazyWithReload(() => import('@/pages/PremiumSelectPage').then(m => ({ default: m.PremiumSelectPage })));
 // 폐기됨 (iframe srcDoc + regex 패턴) — _archive_/ 로 이동. 진본은 PremiumResult.tsx
-const ChatPagePerfect = lazy(() => import('@/pages/ChatPagePerfect').then(m => ({ default: m.ChatPagePerfect })));
-const TopicAnalysisPage = lazy(() => import('@/pages/TopicAnalysisPage').then(m => ({ default: m.TopicAnalysisPage })));
-const TermsPage = lazy(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
-const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
-const EventsPage = lazy(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
+const ChatPagePerfect = lazyWithReload(() => import('@/pages/ChatPagePerfect').then(m => ({ default: m.ChatPagePerfect })));
+const TopicAnalysisPage = lazyWithReload(() => import('@/pages/TopicAnalysisPage').then(m => ({ default: m.TopicAnalysisPage })));
+const TermsPage = lazyWithReload(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
+const PrivacyPage = lazyWithReload(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
+const EventsPage = lazyWithReload(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
 // 웹 단독 출시 — 사업자정보 공개페이지 (전자상거래법 제10조 · 앱인토스 진입 시 홈 redirect)
-const BusinessInfoPage = lazy(() => import('@/pages/BusinessInfoPage').then(m => ({ default: m.BusinessInfoPage })));
+const BusinessInfoPage = lazyWithReload(() => import('@/pages/BusinessInfoPage').then(m => ({ default: m.BusinessInfoPage })));
 // #saju-card-share Stage 2 — 만세력 카드 페이지 (lazy)
-const SajuCardPage = lazy(() => import('@/pages/saju-card/SajuCardPage').then(m => ({ default: m.SajuCardPage })));
+const SajuCardPage = lazyWithReload(() => import('@/pages/saju-card/SajuCardPage').then(m => ({ default: m.SajuCardPage })));
 // 2026-05-29 — 오너 전용 어드민 대시보드 (lazy · uid 게이트)
-const AdminPage = lazy(() => import('@/pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const AdminPage = lazyWithReload(() => import('@/pages/AdminPage').then(m => ({ default: m.AdminPage })));
 
 /** 페이지 전환 애니메이션 — 토스 스타일 */
 const pageVariants = {
@@ -256,6 +257,10 @@ export function App() {
 
   // 앱 시작 시 초기화
   useEffect(() => {
+    // 0-z. 청크 자동리로드 플래그 해제 — 여기까지 왔다는 건 앱이 정상 마운트됐다는 뜻.
+    //   다음에 또 청크 로드가 실패하면 (다음 배포 등) 다시 1회 리로드를 받을 수 있게 초기화.
+    clearChunkReloadFlag();
+
     // 0-a. 측정 — 앱 오픈 1회 (마운트 시 · fire-and-forget · UTM 캡처도 모듈 init 에서 함께)
     import('@/services/analytics').then(({ trackEvent }) => trackEvent('app_open', {})).catch(() => {});
 

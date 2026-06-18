@@ -26,6 +26,18 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('[ErrorBoundary]', error, errorInfo);
+    // 청크 로드 실패가 여기까지 도달한 경우(lazyWithReload 미경유 경로) — 화이트/에러 대신 1회 자동 리로드.
+    //   배포로 옛 청크가 사라졌을 때 새 index.html(no-cache)을 다시 받으면 정상화. 세션당 1회로 루프 방지.
+    const msg = String(error?.message || '') + ' ' + String((error as { name?: string })?.name || '');
+    const isChunkError = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError|Loading chunk [\d]+ failed|dynamically imported module/i.test(msg);
+    if (isChunkError) {
+      try {
+        if (!sessionStorage.getItem('saju500:chunk_reloaded')) {
+          sessionStorage.setItem('saju500:chunk_reloaded', '1');
+          window.location.reload();
+        }
+      } catch { /* sessionStorage 불가 — 아래 안내 UI 로 폴백 */ }
+    }
   }
 
   render() {
