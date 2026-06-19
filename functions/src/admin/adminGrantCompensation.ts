@@ -25,7 +25,8 @@ export const adminGrantCompensation = onCall(
     const uid = request.auth?.uid;
     const email = String(request.auth?.token?.email || '').toLowerCase();
     if (!uid || (!OWNER_UIDS.includes(uid) && email !== 'quswnsrl202@naver.com')) {
-      throw new HttpsError('permission-denied', '오너 전용');
+      // 2026-06-19 — 진단용: 실패 시 현재 uid/email 노출 → 오너 목록 누락 즉시 파악 (추측 종료)
+      throw new HttpsError('permission-denied', `오너 전용 — 현재 uid: ${uid || 'none'} · email: ${email || 'none'}`);
     }
 
     const action = String(request.data?.action || 'grant');
