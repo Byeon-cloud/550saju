@@ -42,19 +42,27 @@ export async function syncToCloud(uid: string): Promise<void> {
       batch.update(userRef, { lastActiveAt: new Date() });
     }
 
-    // 2. 리포트 동기화 — 로컬에만 있는 것을 업로드
+    // 2. 리포트 동기화 — 내용(aiResult)까지 백업.
+    //   2026-06-19 CRITICAL fix — 기존: 제목·사주·날짜만 올려서, 기기 저장소 비워지면 복원 시 '빈 껍데기'
+    //     → "결제했는데 결과 안 보임 / 내역 사라짐" 유료 콘텐츠 유실. 이제 aiResult 까지 백업/복원.
+    //   큰 JSON 은 문자열(aiResultJson)로 — Firestore 색인 1500byte 한계 회피 (색인예외 필드).
     const localReports = getReports();
     for (const report of localReports) {
       const reportRef = doc(db, `users/${uid}/reports`, report.id);
       const existing = await getDoc(reportRef);
-      if (!existing.exists()) {
+      const contentMissing = !existing.exists() || existing.data().aiResultJson == null;
+      if (!existing.exists() || (report.aiResult && contentMissing)) {
         batch.set(reportRef, {
           name: report.name,
           input: report.input,
           sajuData: report.sajuData,
           situation: report.situation || null,
           createdAt: report.createdAt,
-        });
+          contentType: report.contentType ?? null,
+          type: report.type ?? null,
+          profileId: report.profileId ?? null,
+          ...(report.aiResult ? { aiResultJson: JSON.stringify(report.aiResult) } : {}),
+        }, { merge: true });
       }
     }
 
@@ -78,6 +86,9 @@ export async function syncFromCloud(uid: string): Promise<void> {
     reportsSnap.forEach((docSnap) => {
       if (!localIds.has(docSnap.id)) {
         const data = docSnap.data();
+        // 2026-06-19 — 내용(aiResult) 복원 (문자열 → 파싱). 없으면(구 백업) undefined → 빈 껍데기지만 기존과 동일.
+        let aiResult: unknown = undefined;
+        try { if (data.aiResultJson) aiResult = JSON.parse(data.aiResultJson); } catch { /* noop */ }
         saveReport({
           id: docSnap.id,
           name: data.name,
@@ -85,6 +96,10 @@ export async function syncFromCloud(uid: string): Promise<void> {
           sajuData: data.sajuData,
           situation: data.situation,
           createdAt: data.createdAt,
+          contentType: data.contentType ?? undefined,
+          type: data.type ?? undefined,
+          profileId: data.profileId ?? undefined,
+          aiResult,
         } as LocalReport);
       }
     });

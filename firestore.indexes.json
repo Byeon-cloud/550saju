@@ -5,6 +5,11 @@
       "collectionGroup": "reports",
       "fieldPath": "recovery",
       "indexes": []
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "aiResultJson",
+      "indexes": []
     }
   ]
 }
