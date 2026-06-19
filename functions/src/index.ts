@@ -2168,6 +2168,7 @@ export { deleteAccount } from './auth/deleteAccount';
 export { claimCompensation } from './admin/claimCompensation';
 export { recoverTopicResult } from './topic/recoverTopicResult';
 export { recoverPremiumResult } from './premium/recoverPremiumResult';
+export { restoreLibrary } from './storage/restoreLibrary';
 // 어드민 CS 지급 (2026-06-12) — /admin 'CS 지급' 탭에서 디바이스 ID 로 즉시 장부 기록 (오너 전용)
 export { adminGrantCompensation } from './admin/adminGrantCompensation';
 

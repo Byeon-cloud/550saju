@@ -13,7 +13,7 @@
 
 import { doc, getDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/services/auth/firebase';
-import { getReports, saveReport, type LocalReport } from './localStore';
+import { getReports, saveReport, generateId, type LocalReport } from './localStore';
 import { type BalanceDetail } from './localStore';
 
 /**
@@ -138,5 +138,48 @@ export async function syncFromCloud(uid: string): Promise<void> {
     }
   } catch (err) {
     console.warn('[Sync] 클라우드 다운로드 실패:', err);
+  }
+}
+
+/**
+ * 보관함 서버 복원 (2026-06-19) — 기기 저장소가 비워져 보관함이 사라진 경우,
+ *   서버(users/{uid}/reports 백업 + top-level reports 생성원본)에서 내용까지 끌어와 복원.
+ *   @returns 복원된 리포트 수.
+ */
+export async function restoreLibraryFromServer(): Promise<number> {
+  try {
+    const [{ getFunctions, httpsCallable }, { app }, { ensureAuth }] = await Promise.all([
+      import('firebase/functions'),
+      import('@/services/auth/firebase'),
+      import('@/services/auth/authService'),
+    ]);
+    await ensureAuth();
+    const fn = httpsCallable(getFunctions(app, 'us-central1'), 'restoreLibrary');
+    const r = await fn({});
+    const reports = ((r?.data as { reports?: unknown[] })?.reports ?? []) as Array<Record<string, unknown>>;
+    const existingIds = new Set(getReports().map((x) => x.id));
+    let n = 0;
+    for (const rep of reports) {
+      if (!rep || !rep.aiResult) continue;
+      if (rep.id && existingIds.has(rep.id as string)) continue; // 이미 보관함에 있으면 skip
+      const t = rep.type === 'free' ? 'free' : 'paid';
+      saveReport({
+        id: (rep.id as string) || generateId(),
+        name: (rep.name as string) || '복원된 분석',
+        input: (rep.input ?? {}) as LocalReport['input'],
+        sajuData: (rep.sajuData ?? {}) as LocalReport['sajuData'],
+        situation: rep.situation as LocalReport['situation'],
+        type: t,
+        contentType: rep.contentType as LocalReport['contentType'],
+        aiResult: rep.aiResult,
+        profileId: rep.profileId as string | undefined,
+        createdAt: (rep.createdAt as string) || new Date().toISOString(),
+      });
+      n++;
+    }
+    return n;
+  } catch (err) {
+    console.warn('[restoreLibrary] 실패:', err);
+    return 0;
   }
 }

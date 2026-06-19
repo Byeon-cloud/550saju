@@ -172,6 +172,15 @@ export function StoragePage() {
 
   useEffect(() => {
     reloadAll();
+    // 2026-06-19 — 보관함이 비어있으면 서버에서 자동 복원 (토스 웹뷰 데이터 비워진 고객 자동 회복).
+    //   users/{uid}/reports 백업 + top-level reports 원본에서 내용까지 끌어와 채움.
+    if (getReports().length === 0) {
+      import('@/services/storage/firestoreSync')
+        .then(({ restoreLibraryFromServer }) => restoreLibraryFromServer())
+        .then((n) => { if (n > 0) { reloadAll(); toast.show(`${n}개 분석을 서버에서 복원했어요`, 'success'); } })
+        .catch(() => { /* noop */ });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 2026-05-07 fix — 보관함 필터:
