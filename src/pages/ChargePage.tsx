@@ -102,12 +102,12 @@ export function ChargePage() {
   const [selected, setSelected] = useState(initialSelected);
   const [balance, setBalanceDisplay] = useState(() => getBalance());
   const [purchasing, setPurchasing] = useState(false);
-  // PG 입점심사용 테스트 결제 (2026-06-12) — 웹 전용 · 운 적립 없음 · 자동취소
-  // 2026-06-18 런칭 — 기본 고객은 진짜 토스 결제. 포트원 심사용 테스트창은 `?pgtest=1` URL 로만 노출
-  //   (심사관에게 /charge?pgtest=1 전달 → 공존). 일반 결제 버튼은 purchasePackage → 웹은 requestTossPayment(실결제).
+  // PG 입점심사용 포트원 결제창 (2026-06-12) — 웹 전용 · 운 적립 없음 · 자동취소
+  // 2026-06-19 PG 심사 — 심사관이 saju500.app 에서 충전 시 '결제창이 떠야' 입점심사 통과(시연).
+  //   그래서 웹 충전 = 포트원 심사용 결제창 기본 노출. (포트원 계약 승인 후 실결제로 전환)
+  //   ⚠️ 운 적립 없음·자동취소라 실청구 0 → 미런칭 상태에서 안전.
   const [showPgSheet, setShowPgSheet] = useState(false);
-  const portoneTest = !isAppintosBuild && isPortoneTestEnabled()
-    && new URLSearchParams(window.location.search).has('pgtest');
+  const portoneTest = !isAppintosBuild && isPortoneTestEnabled();
   // 2026-06-18 웹 런칭 — 웹 실결제는 토스 클라키가 live_ 일 때만 ON. test 키면 '준비중' 게이팅
   //   (앱인토스 IAP 는 항상 라이브). 형이 live 키 교체하면 자동으로 결제 열림 — 코드 재손질 0.
   const webPaymentReady = isAppintosBuild
@@ -626,7 +626,7 @@ export function ChargePage() {
               >
                 {purchasing
                   ? '처리 중...'
-                  : !webPaymentReady
+                  : (!webPaymentReady && !portoneTest)
                     ? '결제 준비 중'
                     : (isAppintosBuild ? '토스페이로 결제' : `${selectedPkg.price.toLocaleString()}원 결제하기`)}
               </button>
