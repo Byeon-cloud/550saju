@@ -92,6 +92,12 @@ migrateSessionToLocal();
 // ─── 리포트 ───
 
 export function saveReport(report: LocalReport): void {
+  // 🚨 P0-2 (2026-06-22) — 결과(aiResult 보유)는 'localStorage 저장보다 먼저' 서버에 단건 백업.
+  //   localStorage quota 초과로 아래 저장이 실패해도 서버엔 진본이 남아 restoreLibrary 로 복원 가능.
+  //   익명 uid 포함 fire-and-forget (firestore.rules 가 본인 reports write 허용). 호출부 9곳 무수정.
+  if (report.aiResult) {
+    import('./firestoreSync').then((m) => m.backupReport(report)).catch(() => { /* 무해 */ });
+  }
   const reports = getReports();
   // 2026-05-27 fix — 동일 id 중복 저장 버그 (꿈해몽 free → paid 잠금해제 시
   //   free 레코드 + paid 레코드 2개 생성됨). 동일 id 있으면 제거 후 prepend

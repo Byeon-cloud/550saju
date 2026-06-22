@@ -185,6 +185,9 @@ export function ResultPage(props: ResultPageProps = {}) {
   const { mark: markAttendance } = useAttendanceOnResult();
   const navigate = useNavigate();
   const toast = useToast();
+  // P0-3 (2026-06-22) — 결제 결과가 로컬에 없을 때 서버 자동복원 트리거 + 복원 후 리렌더용.
+  const [restoreTick, setRestoreTick] = useState(0);
+  const restoreAttemptedRef = useRef(false);
 
   // 이벤트 v4 · 결과 렌더링 1회 출석 마커
   useEffect(() => {
@@ -206,6 +209,21 @@ export function ResultPage(props: ResultPageProps = {}) {
     }
   }, [reportId, navigate]);
 
+  // 🚨 P0-3 (2026-06-22) — 결제 결과가 로컬에 없으면(기기 저장소 비워짐 등) 서버에서 자동 복원.
+  //   기존: getReport(id)===null 이면 데모/타프로필로 폴백 → "결제했는데 결과 안 보임/엉뚱한 화면".
+  //   이제 진입 즉시 restoreLibraryFromServer 로 본문까지 복원 후 재조회(리렌더). fresh(새 생성)·local 제외.
+  useEffect(() => {
+    if (restoreAttemptedRef.current) return;
+    if (!reportId || reportId === 'local') return;
+    if (/[?&]fresh=1\b/.test(window.location.search)) return; // 새 생성 모드는 복원 대상 아님
+    if (getReport(reportId)) return; // 이미 로컬에 있으면 복원 불필요
+    restoreAttemptedRef.current = true;
+    import('@/services/storage/firestoreSync')
+      .then(({ restoreLibraryFromServer }) => restoreLibraryFromServer())
+      .then((n) => { if (n > 0) setRestoreTick((t) => t + 1); })
+      .catch(() => { /* 복원 실패는 무해 — 기존 폴백 유지 */ });
+  }, [reportId]);
+
   const sajuData = useMemo(() => {
     // 1. Context에 데이터 있으면 사용 (InputPage → Loading → Result 플로우)
     if (ctxData) return ctxData;
@@ -221,7 +239,8 @@ export function ResultPage(props: ResultPageProps = {}) {
     if (reports.length > 0) return reports[0].sajuData;
     // 4. 데모 데이터
     try { return getDemoData(); } catch { return null; }
-  }, [ctxData, reportId]);
+    // restoreTick: P0-3 서버 복원 성공 시 재평가 → getReport(reportId) 가 복원분을 집음
+  }, [ctxData, reportId, restoreTick]);
 
   if (!sajuData) {
     return (

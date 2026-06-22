@@ -11,8 +11,8 @@
  * - 앱 시작 시 syncFromCloud()
  */
 
-import { doc, getDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/services/auth/firebase';
+import { doc, getDoc, setDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { db, auth } from '@/services/auth/firebase';
 import { getReports, saveReport, generateId, type LocalReport } from './localStore';
 import { type BalanceDetail } from './localStore';
 
@@ -72,11 +72,32 @@ export async function syncToCloud(uid: string): Promise<void> {
   }
 }
 
+// P0-1 (2026-06-22) — 부팅 동기화 'uid당 1회' module-level 가드.
+//   useAuth() 가 여러 컴포넌트(StoragePage/MyPage/Admin 등)에서 호출 + React.StrictMode 이중마운트로
+//   같은 uid 가 인스턴스 수만큼 sync 발화하던 비용 낭비(Firestore read/write 중복) 차단.
+const _bootSyncedUids = new Set<string>();
+
+/**
+ * 부팅 시 1회 동기화 — 복원(reports 만)→백업. 익명 포함. 같은 uid 는 페이지 로드당 1회만.
+ *   복원 먼저 → 백업 순서(서버 데이터를 로컬에 채운 뒤 로컬을 서버에 올림).
+ *   잔액 복원은 reportsOnly 로 끔(이미 쓴 운 부활 과복원 방지).
+ */
+export async function bootSync(uid: string): Promise<void> {
+  if (!uid || _bootSyncedUids.has(uid)) return;
+  _bootSyncedUids.add(uid);
+  try {
+    await syncFromCloud(uid, { reportsOnly: true });
+    await syncToCloud(uid);
+  } catch {
+    // 무해 — 다음 페이지 로드에서 재시도(_bootSyncedUids 는 로드마다 초기화)
+  }
+}
+
 /**
  * 클라우드 → 로컬 동기화
  * Firestore에 있는 데이터를 localStorage에 다운로드
  */
-export async function syncFromCloud(uid: string): Promise<void> {
+export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean }): Promise<void> {
   try {
     // 1. 클라우드 리포트 → 로컬에 없는 것만 추가
     const reportsSnap = await getDocs(collection(db, `users/${uid}/reports`));
@@ -103,6 +124,10 @@ export async function syncFromCloud(uid: string): Promise<void> {
         } as LocalReport);
       }
     });
+
+    // P0-1 (2026-06-22) — 부팅/익명 복원은 reports 만 한다. 잔액 복원은 spend 가 로컬 전용인 현 구조에서
+    //   '클라우드>로컬 이면 보강'이 이미 써버린 운을 부활시키는 과복원 위험 → spend 서버화 전까진 끈다.
+    if (opts?.reportsOnly) return;
 
     // 2. 클라우드 잔액 → 로컬에 반영
     // 2026-05-28 — 무조건 덮어쓰기 제거. 어뷰징 방지 (로컬에서 차감 후 sync 시 복원되는 무한충전 차단).
@@ -181,5 +206,34 @@ export async function restoreLibraryFromServer(): Promise<number> {
   } catch (err) {
     console.warn('[restoreLibrary] 실패:', err);
     return 0;
+  }
+}
+
+/**
+ * 단건 서버 백업 (2026-06-22 P0-2) — 결과(aiResult 보유) 영속 '즉시' users/{uid}/reports 에 업서트.
+ *   휘발성 localStorage 가 비워져도 restoreLibrary/syncFromCloud 가 본문까지 복원 →
+ *   "결제했는데 결과 사라짐" 근본 차단. 익명 uid 도 firestore.rules 가 본인 reports write 허용.
+ *   localStorage quota 실패와 무관하게 진본을 서버에 먼저 확보하는 게 핵심. fire-and-forget.
+ */
+export async function backupReport(report: LocalReport): Promise<void> {
+  try {
+    if (!report || !report.id || !report.aiResult) return; // 본문 있는 것만 (빈 셸 백업 방지)
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    const reportRef = doc(db, `users/${uid}/reports`, report.id);
+    await setDoc(reportRef, {
+      name: report.name,
+      input: report.input,
+      sajuData: report.sajuData,
+      situation: report.situation ?? null,
+      createdAt: report.createdAt,
+      contentType: report.contentType ?? null,
+      type: report.type ?? null,
+      profileId: report.profileId ?? null,
+      aiResultJson: JSON.stringify(report.aiResult),
+      backedUpAt: new Date(),
+    }, { merge: true });
+  } catch (err) {
+    console.warn('[backupReport] 실패:', err);
   }
 }
