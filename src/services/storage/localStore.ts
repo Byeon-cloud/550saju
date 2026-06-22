@@ -400,15 +400,23 @@ export function spendBalance(amount: number): boolean {
 }
 
 /**
- * 환불 처리 — paid에서만 차감
- * @returns 실제 환불 가능한 운
+ * 실패 환불 — 차감했던 운을 paid 로 '되돌려준다' (AI 생성 실패 등 우리 책임).
+ *
+ * 🚨 2026-06-22 CRITICAL money fix
+ *   기존 구현이 환불인데 paid 에서 '빼고' 있었음(`d.paid - refundable`). 게다가 결제 직후엔
+ *   spendBalance 로 paid 가 이미 0이라 `min(0, n)=0` → 환불 0운인데 호출부는 "n운 돌려드렸어요"
+ *   안내 → 유저는 운 잃고 메시지만 받음. 전 호출처(ResultPage·Topic·Tojung·Monthly·Daeun·
+ *   Compat·Loading)가 전부 '돌려주기' 의미라 subtract 로 쓰는 정당한 곳 0건 → 더하기로 교정.
+ *   서버 refundBalance(balance.paid +increment) 와도 정합 → 동일기기 syncFromCloud 는
+ *   cloud==local 이라 no-op (이중환불 없음).
+ * @returns 실제 돌려준 운
  */
 export function refundBalance(amount: number): number {
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
   const d = getBalanceDetail();
-  const refundable = Math.min(d.paid, amount);
-  d.paid = Math.round((d.paid - refundable) * 10) / 10;
+  d.paid = Math.round((d.paid + amount) * 10) / 10;
   setBalanceDetail(d);
-  return refundable;
+  return amount;
 }
 
 /** 단순 잔액 설정 (레거시 호환, paid로 설정) */
