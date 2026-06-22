@@ -69,6 +69,10 @@ export const loginWithToss = onCall(
     }
   }
 );
+
+// 2026-06-22 엔드게임 P1 — 익명→토스 안정 uid 보관함 병합 (uid 회전 CS 근절용). 클라 플래그 OFF 시 미호출.
+export { mergeAnonIntoToss } from './auth/mergeAccount';
+
 const DEV_MODE = false;
 
 /**

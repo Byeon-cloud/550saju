@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { User } from 'firebase/auth';
-import { onAuthChange, signIn, checkRedirectResult, ensureAuth, type WebLoginProvider } from '@/services/auth/authService';
+import { onAuthChange, signIn, checkRedirectResult, ensureAuth, maybeUpgradeToTossIdentity, type WebLoginProvider } from '@/services/auth/authService';
 
 const DEV_MODE = false;
 
@@ -27,6 +27,8 @@ export function useAuth() {
         import('@/services/storage/firestoreSync')
           .then(({ bootSync }) => bootSync(u.uid))
           .catch(() => { /* 무해 — 다음 페이지 로드에서 재시도 */ });
+        // P1 엔드게임 — 익명→토스 안정 uid 승격(플래그 OFF 기본, 내부에서 게이팅).
+        maybeUpgradeToTossIdentity().catch(() => { /* 무해 — 익명 유지 */ });
       }
     });
 

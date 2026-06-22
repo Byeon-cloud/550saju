@@ -127,3 +127,38 @@ export async function signOut(): Promise<void> {
 export function onAuthChange(callback: (user: User | null) => void): () => void {
   return onAuthStateChanged(auth, callback);
 }
+
+// 2026-06-22 엔드게임 P1 — 익명 → 토스 안정 uid 자동 승격 + 보관함 병합 (uid 회전 CS 근절).
+//   ⚠️ 플래그 OFF 기본: VITE_TOSS_SSO_ENABLED !== 'true' 면 즉시 return → 신호 오면 .env 켜고 빌드만.
+//   흐름: 익명 ID토큰 캡처(소유증명) → 익명 로컬 서버백업 → 토스 SSO(toss_{userKey}) → mergeAnonIntoToss → 보관함 복원.
+//   안전: 잔액 미관여(localStorage uid 독립이라 같은 기기 보존). 실패 시 익명 유지(graceful).
+let _tossUpgradeAttempted = false;
+export async function maybeUpgradeToTossIdentity(): Promise<void> {
+  if (import.meta.env.VITE_TOSS_SSO_ENABLED !== 'true') return; // 플래그 OFF = 완전 비활성
+  if (_tossUpgradeAttempted) return;
+  if (!isAppsInToss()) return;                  // 앱인토스에서만 (웹은 익명 유지)
+  const cur = auth.currentUser;
+  if (!cur || !cur.isAnonymous) return;         // 익명일 때만 (이미 토스면 종료)
+  _tossUpgradeAttempted = true;
+  try {
+    const anonUid = cur.uid;
+    const anonIdToken = await cur.getIdToken(); // 소유 증명 토큰 — 토스 로그인 '전에' 캡처
+    // 익명 로컬 보관함을 서버에 먼저 백업 (머지가 users/{anonUid}/reports 를 읽으므로)
+    const sync = await import('@/services/storage/firestoreSync');
+    await sync.syncToCloud(anonUid);
+    // 익명 → 토스 안정 uid 로 전환
+    await signInWithToss();
+    const tossUid = auth.currentUser?.uid;
+    if (!tossUid || !tossUid.startsWith('toss_')) return;
+    // 익명 보관함 → 토스 uid 병합 (소유증명 토큰 동봉, 멱등)
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const { app: fb } = await import('./firebase');
+    const mergeFn = httpsCallable(getFunctions(fb, 'us-central1'), 'mergeAnonIntoToss');
+    await mergeFn({ anonIdToken });
+    // 병합분을 로컬에 복원 (reports 만 — 잔액은 같은 기기 localStorage 에 이미 보존)
+    await sync.syncFromCloud(tossUid, { reportsOnly: true });
+  } catch (e) {
+    console.warn('[tossUpgrade] 실패 — 익명 유지(다음 부팅 재시도)', e);
+    _tossUpgradeAttempted = false; // 실패 시 재시도 허용
+  }
+}
