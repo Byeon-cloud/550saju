@@ -34,8 +34,7 @@ export function PrivacyPage() {
             <div>
               <p className="text-label text-text-primary font-bold mb-1">3-1. 저장 방식 · 암호화</p>
               <p>· 사주 데이터(이름·생년월일·시간)는 Google Cloud Firestore의 관리형 암호화(AES-256-GCM, Google 관리 키)로 저장돼요.</p>
-              <p>· 브라우저 캐시는 세션 단위(sessionStorage)로만 보관되어 브라우저 종료 시 즉시 삭제돼요.</p>
-              <p>· localStorage에는 운 잔액·이용 기록 등 민감정보 외 운영 데이터만 저장해요.</p>
+              <p>· 빠른 재열람을 위해 분석 기록·프로필·운 잔액은 이용 기기의 브라우저 저장소(localStorage)에 캐시되며, 보관함·기록 삭제 또는 브라우저 데이터 삭제 시 함께 제거돼요.</p>
               <p>· 모든 API 통신은 HTTPS(TLS 1.2 이상)로 암호화돼요.</p>
             </div>
             <div>
@@ -47,7 +46,8 @@ export function PrivacyPage() {
               <p>서비스 제공을 위해 아래와 같이 개인정보 처리를 위탁하며, 일부는 국외(미국)로 이전·처리돼요. 이용자는 이에 동의하지 않을 수 있으나, 동의하지 않을 경우 AI 분석 서비스 이용이 제한돼요.</p>
               <p className="mt-1">· Anthropic, PBC (미국): 사주 데이터 기반 AI 해석 생성 — 이전 항목: 이름·생년월일·출생시간·성별, 보유: 처리 후 즉시 파기(모델 학습 미사용).</p>
               <p>· Google LLC (미국): AI 해석 생성(Gemini) 및 클라우드 인프라(Firebase) — 이전 항목: 위와 동일, 보유: 계정 생존 기간.</p>
-              <p>· 토스페이먼츠(주): 결제 처리 대행 — 이전 항목: 결제 정보.</p>
+              <p>· 포트원(주)(결제 연동 대행) 및 이를 통해 연동되는 카드사·간편결제사: 웹 결제 처리 — 이전 항목: 결제 정보.</p>
+              <p>· 비바리퍼블리카(토스): 앱(앱인토스) 인앱결제 처리 — 이전 항목: 결제 정보.</p>
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">4-2. 만 14세 미만 가입 제한</p>
@@ -70,7 +70,7 @@ export function PrivacyPage() {
               <p>· 이메일: {BUSINESS_INFO.email}</p>
             </div>
           </div>
-          <p className="text-caption text-text-hint mt-6">시행일: 2026년 6월 3일 (개정)</p>
+          <p className="text-caption text-text-hint mt-6">시행일: 2026년 6월 23일 (개정)</p>
         </div>
       </div>
     </div>
