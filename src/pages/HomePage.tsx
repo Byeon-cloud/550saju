@@ -589,10 +589,15 @@ export function HomePage() {
           <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>WHY 500</span>
           <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
         </div>
-        <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]"
+        <h2 className="mb-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]"
           style={{ color: C.ink, fontFamily: SERIF }}>
-          사주500이 <span style={{ color: C.goldHi }}>남다른 세 가지</span>
+          제대로 본 사주는, <span style={{ color: C.goldHi }}>다릅니다</span>
         </h2>
+        {/* 2026-06-22 포지셔닝(마케팅) — 차별화(제대로=다르다) + 근거(600년 원전) + 접근성(500원) 3박자.
+            바로 아래 3 차별성 카드가 '왜 다른지' 증명. 시장 최대 불만('비싸고 안 맞는다')을 정통으로 때림. */}
+        <p className="mb-3 text-[13px] leading-[1.55]" style={{ color: C.inkSoft }}>
+          600년 원전 명리학의 깊이 그대로, 문턱은 500원으로.
+        </p>
         <div className="grid grid-cols-3 gap-2">
           {/* Card 1 — 어려운 한자 No (한자 X 도식) */}
           <div className="relative rounded-[14px] p-3.5 text-center overflow-hidden"
