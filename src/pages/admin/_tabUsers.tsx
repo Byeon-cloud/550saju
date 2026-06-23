@@ -146,7 +146,7 @@ export function TabUsers({ d }: { d: AdminData }) {
 
       <Section
         title="성별 · 연령대 분포"
-        caption="· 본인 사주 프로필(성별·출생연도)에서 파생 — 프로필 입력한 방문자만 집계. 괄호 = 결제 유저"
+        caption="· 본인 사주 프로필(성별·출생연도)에서 파생. 성별 카드에 '구매 전환율'(결제자÷방문자) 직접 표시 — 어느 성별이 결제로 전환되는지 한눈에"
       >
         {(() => {
           const genderBars = [
@@ -174,6 +174,24 @@ export function TabUsers({ d }: { d: AdminData }) {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                {/* 2026-06-22 — 성별 '구매 전환'을 카드로 직접 노출 (기존: 툴팁 호버에만 숨음).
+                    "어느 성별이 결제로 전환되는지"를 한눈에 — 성별 타겟 마케팅 의사결정용. */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: '4px 8px 2px' }}>
+                  {genderBars.map((b, i) => {
+                    const conv = b.n > 0 ? Math.round((b.pay / b.n) * 100) : 0;
+                    return (
+                      <div key={b.label} style={{ background: 'rgba(184,150,90,0.08)', borderRadius: 10, padding: '8px 10px' }}>
+                        <div style={{ fontSize: 11, color: C.mute }}>{b.label} 구매 전환</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: i === 0 ? '#5A7CA8' : '#C88A95' }}>
+                          {conv}%
+                          <span style={{ fontSize: 11, fontWeight: 600, color: C.mute, marginLeft: 4 }}>
+                            (결제 {fmtNum(b.pay)} / 방문 {fmtNum(b.n)}명)
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
               <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
                 <p style={{ fontSize: 11, color: C.mute, padding: '0 8px 6px' }}>연령대 (고유 방문자)</p>
