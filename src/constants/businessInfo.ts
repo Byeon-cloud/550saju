@@ -6,8 +6,7 @@
  *   - 위반 과태료 최대 500만원.
  *   - 앱인토스는 토스가 판매자 우산 → 불필요. 웹(`!isAppsInToss()`)에서만 노출.
  *
- * ⚠️ 아래 값은 전부 placeholder 입니다.
- *    통신판매업 신고·사업자등록 완료 후 실제 값으로 교체해야 법적 효력 발생.
+ * 2026-06-22 — 사업자등록 + 통신판매업 신고 완료된 '실제 등록 정보'. 변경 시 신고증과 일치시킬 것.
  */
 export interface BusinessInfo {
   /** 상호 */
@@ -32,8 +31,8 @@ export const BUSINESS_INFO: BusinessInfo = {
   companyName: '주라벨 주식회사',
   ceoName: '변준기',
   businessRegistrationNumber: '228-88-03113',
-  // TODO(준기): 통신판매업 신고 완료 후 발급된 신고번호로 교체
-  mailOrderSalesNumber: '신고 준비 중',
+  // 2026-06-22 통신판매업 신고 완료 — 신고증(부산 사하구) 발급 번호
+  mailOrderSalesNumber: '제 2025-부산사하-0235호',
   address: '부산광역시 사하구 하신중앙로 324, 2층 6호실',
   phone: '010-6427-9803',
   // 기존 운영 메일 (MyPage CONTACT_EMAIL 과 동일 SSOT)
