@@ -271,6 +271,15 @@ export function App() {
           trackEvent('signup', {});
         }
       } catch { /* noop */ }
+      // 2026-06-22 마케팅 측정 — 공유링크(ref=share) 수신 진입 1회 invite_received (바이럴 K-factor).
+      //   세션당 1회 가드. utm.source='share' 는 captureUtm 이 이미 전 이벤트에 첨부.
+      try {
+        const ref = new URLSearchParams(window.location.search).get('ref');
+        if (ref === 'share' && !sessionStorage.getItem('saju500:invite_fired')) {
+          sessionStorage.setItem('saju500:invite_fired', '1');
+          trackEvent('invite_received', { reason: 'share_link' });
+        }
+      } catch { /* noop */ }
     }).catch(() => {});
 
     // 0. Firebase 익명 인증 — 모든 페이지에서 Cloud Functions 호출 가능하게
