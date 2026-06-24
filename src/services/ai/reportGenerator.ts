@@ -198,6 +198,11 @@ export async function generatePremiumReportStream(
         }
       }
     }
+    // 🚨 2026-06-22 CRITICAL — done/error 이벤트를 받기 전에 스트림이 끝남(모바일 네트워크 전환·
+    //   토스 웹뷰·Cloud Run/프록시 idle-timeout 등으로 연결이 '조용히' 끊김). 기존: 그냥 break →
+    //   onDone/onError 둘 다 미발화 → ResultPage '분석 중' 배너가 영원히 + 환불·에러·복구 0 (무한로딩 직접 원인).
+    //   이제 강제 onError → handleStreamFailure 로 환불 + 에러카드 정상 전환.
+    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
   } catch (e: any) {
     callbacks.onError(e?.message || '네트워크 오류');
   }
@@ -284,6 +289,8 @@ export async function generateReportStream(
         }
       }
     }
+    // 🚨 2026-06-22 CRITICAL — done/error 없이 스트림 종료(연결 silent-break) → 강제 onError (무한로딩 차단)
+    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
   } catch (e: any) {
     callbacks.onError(e?.message || '네트워크 오류');
   }

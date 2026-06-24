@@ -272,6 +272,8 @@ export function ResultPage(props: ResultPageProps = {}) {
   const [streamError, setStreamError] = useState<string | null>(null);
   const refundedRef = useRef(false);
   const streamStartedRef = useRef(false);
+  const streamSettledRef = useRef(false); // 2026-06-22 — onDone(성공)·환불(실패) 중 settle 됐는지 (워치독 가드)
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // streamingAiResult 최신값을 effect 의 async 클로저에서 안전하게 읽기 위한 ref 미러
   const streamingAiResultRef = useRef<any>(streamingAiResult);
   useEffect(() => { streamingAiResultRef.current = streamingAiResult; }, [streamingAiResult]);
@@ -280,6 +282,8 @@ export function ResultPage(props: ResultPageProps = {}) {
   const handleStreamFailure = useCallback((_msg: string) => {
     if (refundedRef.current) return;
     refundedRef.current = true;
+    streamSettledRef.current = true;
+    if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
     const refundAmount = freshType === 'premium' ? getPremiumPrice().actualPrice : 1;
     try { refundBalance(refundAmount); } catch { /* noop */ }
     // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
@@ -290,6 +294,12 @@ export function ResultPage(props: ResultPageProps = {}) {
   useEffect(() => {
     if (!isFreshMode || loadedReport || streamStartedRef.current || !sajuData) return;
     streamStartedRef.current = true;
+    // 🚨 2026-06-22 CRITICAL — wall-clock 워치독(최종 안전망). 연결 hang(reader 무한대기)·부분그룹 도착 후
+    //   멈춤 등 gotTerminal/catch 가 못 잡는 '진짜 멈춤'에서, 180초 내 완료/실패 신호가 전혀 없으면 강제
+    //   실패처리(환불 + 에러카드) → "로딩만 길고 결과 안 나옴" 영구 멈춤을 근본 차단.
+    watchdogRef.current = setTimeout(() => {
+      if (!streamSettledRef.current) handleStreamFailure('시간 초과 — 응답이 너무 오래 걸렸어요');
+    }, 180000);
     (async () => {
       try {
         const mod = await import('@/services/ai/reportGenerator');
@@ -301,6 +311,8 @@ export function ResultPage(props: ResultPageProps = {}) {
             setArrivedGroups((prev) => (prev[_g] ? prev : { ...prev, [_g]: true }));
           },
           onDone: ({ content }: { reportId: string; content: any }) => {
+            streamSettledRef.current = true;
+            if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
             const finalAi = freshType === 'premium'
               ? { ...(content as any), tier: 'premium' as const }
               : content;
@@ -338,6 +350,7 @@ export function ResultPage(props: ResultPageProps = {}) {
         if (!hasPartial) handleStreamFailure(e?.message || 'stream exception');
       }
     })();
+    return () => { if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFreshMode, freshType, sajuData, reportId]);
 

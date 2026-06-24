@@ -260,6 +260,10 @@ export const generatePremiumReportStream = onRequest(
 
     // T1 · 3 그룹 병렬 + 각 그룹 완료 시점에 SSE 송출
     sendEvent('start', { ts: Date.now() });
+    // 🚨 2026-06-22 — SSE heartbeat. start 후 첫 그룹 도착(25~80s)까지 무음이면 모바일/토스 웹뷰·프록시·
+    //   Cloud Run idle-timeout(흔히 30~60s)이 연결을 '조용히' 끊어 클라가 무한로딩. 12초마다 ': hb' 코멘트
+    //   를 흘려 무음구간을 없애 끊김 자체를 예방한다. (클라 SSE 파서는 코멘트 라인을 무시 → 안전)
+    const heartbeat = setInterval(() => { try { res.write(': hb\n\n'); } catch { /* 연결 종료됨 */ } }, 12000);
     const groups: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
     const results: Record<string, any> = {};
 
@@ -285,6 +289,7 @@ export const generatePremiumReportStream = onRequest(
       });
 
       await Promise.all(groupPromises);
+      clearInterval(heartbeat);
 
       // 모든 그룹 완료 → merge + Firestore 저장
       const merged = {
@@ -324,6 +329,7 @@ export const generatePremiumReportStream = onRequest(
       sendEvent('done', { reportId: reportRef.id, content: merged });
       res.end();
     } catch (error: any) {
+      clearInterval(heartbeat);
       console.error('generatePremiumReportStream error:', error);
       // 환불
       if (deductedAmount > 0) {
