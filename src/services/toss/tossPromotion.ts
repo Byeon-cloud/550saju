@@ -91,6 +91,13 @@ export async function grantPromotion(promo: PromoItem): Promise<GrantResult> {
     // { key } 성공
     if (result && typeof result === 'object' && 'key' in result) {
       try { window.localStorage.setItem(dKey, String(Date.now())); } catch { /* noop */ }
+      // 2026-06-24 — 프로모 실지급을 어드민에 가시화. 기존: localStorage dedupe 만 남겨 토스 프로모(10원 첫출석·
+      //   100원 7일완주)가 analytics·payments 어디에도 없어 어드민에 0 으로 보이던 것(1040원/104건 미표시 직접원인).
+      //   reward_earned 는 FIRESTORE_TRACKED 기등록 + 어드민이 kind 별 분해 → code 별(promo_xxx) 즉시 집계.
+      try {
+        const { trackEvent } = await import('@/services/analytics');
+        trackEvent('reward_earned', { kind: 'promo_' + realCode, amount: promo.amount });
+      } catch { /* noop — fire-and-forget */ }
       return { ok: true, rewardKey: (result as any).key };
     }
     // { errorCode, message } 실패

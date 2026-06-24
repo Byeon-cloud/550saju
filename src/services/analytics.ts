@@ -226,6 +226,11 @@ let platCache: 'web' | 'ait' | null = null;
 async function getPlat(): Promise<'web' | 'ait'> {
   if (platCache) return platCache;
   try {
+    // SSOT 통일 (2026-06-24) — internalKind/env 는 InTossApp UA + 빌드플래그, iapService 는 TossApp UA 로
+    //   토스 판정이 갈려 토스 이벤트가 plat:'web' 으로 잘못 라벨링되던 것 차단(어드민 '웹' 필터에 토스 이벤트
+    //   오집계 — "웹에도 매출" 혼선 원인). 빌드플래그(가장 신뢰 — .ait 는 항상 appintos) 우선 + UA 양쪽 매칭.
+    const { isAppintosBuild } = await import('@/lib/env');
+    if (isAppintosBuild) { platCache = 'ait'; return platCache; }
     const { isAppsInToss } = await import('@/services/payment/iapService');
     platCache = isAppsInToss() ? 'ait' : 'web';
   } catch { platCache = 'web'; }
