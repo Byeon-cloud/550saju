@@ -15,6 +15,7 @@ const OWNER_UIDS = [
   '8Nda5XA4GwQfyjOLJk54i0ADdTb2', // 준기 · PC 웹 익명
   'biXRUeNouMhbtPVMDcaylJUqFqj1', // 준기 · saju500.app 익명
   '91KZVwV9foacOMJXMMZ9eWmZ4FQ2', // 준기 · 익명 응급 (2026-06-12 · adminConfig/firestore.rules 와 동기화 — 드리프트 fix 2026-06-19)
+  'PWfJGV5QeYTkbNlhbXFYNWcfsnT2', // 준기 · saju500.app 세션 (2026-06-23 · 3개 목록 동기화)
 ];
 
 const TOPIC_KEYS = ['love', 'reunion', 'marriage', 'wealth', 'exam', 'business', 'health', 'move', 'study', 'career'];
