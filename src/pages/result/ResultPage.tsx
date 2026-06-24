@@ -44,6 +44,7 @@ import {
   type UnlockContentKey,
 } from './_ui_chrome';
 import { PremiumResult } from './types/PremiumResult';
+import { ResultErrorBoundary } from '@/components/common/ResultErrorBoundary';
 
 /* ══════════════════════════════════════════════════════════════════
  * Phase C — Props 시그니처 + 결과 게이트 도출 (서버 기반, 클라이언트 임시 unlock 금지)
@@ -509,7 +510,8 @@ export function ResultPage(props: ResultPageProps = {}) {
 
   // 섹션: AI 결과에서만 가져옴 (더미 데이터 없음)
   const sections: SectionData[] = useMemo(() => {
-    if (aiResult?.sections?.length > 0) {
+    // Array.isArray 가드 — sections 가 배열 아닌 truthy(문자열 등)면 .map 이 ResultPage 자체를 크래시(로컬 바운더리 밖). 2026-06-24
+    if (Array.isArray(aiResult?.sections) && aiResult.sections.length > 0) {
       // 2026-05-28 — social(대인관계) 매핑 제거 (SSOT 10주제 정렬). AI sections 에서 social 안 보냄.
       const SECTION_VISUALS: Record<string, string> = {
         summary: 'oheng_structure', structure: '', personality: 'jijanggan',
@@ -1414,15 +1416,18 @@ export function ResultPage(props: ResultPageProps = {}) {
           )}
 
           {isPremiumLayout && (
-            <PremiumResult
-              report={storedReport!}
-              sajuData={sajuData}
-              v4Pillars={v4Pillars}
-              v4Daeun={v4Daeun}
-              v4Gilsin={v4Gilsin}
-              v4Hyungsal={v4Hyungsal}
-              scores={scores}
-            />
+            // 2026-06-24 CS CRITICAL — 결과 렌더 크래시 시 홈으로 안 보내고/결제 유실 0/글 폴백.
+            <ResultErrorBoundary fallbackSections={sections}>
+              <PremiumResult
+                report={storedReport!}
+                sajuData={sajuData}
+                v4Pillars={v4Pillars}
+                v4Daeun={v4Daeun}
+                v4Gilsin={v4Gilsin}
+                v4Hyungsal={v4Hyungsal}
+                scores={scores}
+              />
+            </ResultErrorBoundary>
           )}
 
           {/* ─── Phase C · L3·L4 블러 영역 시작 (신살 + 공망 + 상세 풀이 12섹션) ─── */}
