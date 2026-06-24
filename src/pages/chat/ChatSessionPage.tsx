@@ -41,6 +41,7 @@ import {
   addChatCredits,
 } from '@/services/storage/chatCredit';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
+import { trackEvent } from '@/services/analytics';
 import { stripMd } from '@/utils/format';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 
@@ -537,6 +538,9 @@ export function ChatSessionPage() {
       setShowConvert(true);
       return;
     }
+
+    // 2026-06-24 — 사주대화 사용량 계측 (메시지 단위 · 무료패스/대화권 차감 성공 직후 1회)
+    trackEvent('content_open', { type: 'chat' });
 
     if (!roomNameSet) {
       updateRoomName(sessionId!, autoRoomName(text.trim()));

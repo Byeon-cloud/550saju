@@ -17,6 +17,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
+import { logAiUsage } from '../shared/aiUsageLog';
 
 const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-6';
 
@@ -233,6 +234,7 @@ ${question}
    *   히스토리·질문은 user 메시지에 들어가 cache miss (정상).
    *   첫 호출 후 ~5분 내 재호출은 system 토큰 비용 90% 감소.
    */
+  const _t1 = Date.now(); // C7
   const msg = await anthropic.messages.create({
     model,
     max_tokens: 2048,
@@ -245,6 +247,7 @@ ${question}
     ],
     messages: [{ role: 'user', content: userPrompt }],
   });
+  if (msg.usage) logAiUsage({ type: 'chat', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
 
   const text = (msg.content[0] as any).text || '';
   let parsed: any;

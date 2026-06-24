@@ -9,7 +9,7 @@
  * - 웹: navigator.share() 완료 시에만 리워드 (취소 = 미적립)
  */
 
-import { addRewardBalance } from '@/services/storage/localStore';
+import { addRewardBalance, getBalance } from '@/services/storage/localStore';
 
 /** 측정 — fire-and-forget (실패해도 UX 영향 0) */
 function track(name: string, params?: Record<string, string | number>) {
@@ -104,7 +104,12 @@ export async function inviteFriendsViaToss(opts?: {
   onCancel?: () => void;               // 취소·실패
 }): Promise<void> {
   // 측정 — 공유 시도 (C2 · 친구 초대 트리거)
-  track('share_click', { type: 'invite' });
+  //   2026-06-24 마케팅 차원 보강 — share.ts 와 동일하게 page + balance 첨부 (잔액대별 초대 성향).
+  track('share_click', {
+    type: 'invite',
+    page: typeof window !== 'undefined' ? window.location.pathname : '',
+    balance: Math.round(getBalance()),
+  });
   const { isAppsInToss } = await import('@/services/payment/iapService');
   if (isAppsInToss()) {
     try {

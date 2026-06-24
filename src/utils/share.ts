@@ -15,6 +15,7 @@
  */
 
 import { isAppsInToss } from '@/services/payment/iapService';
+import { getBalance } from '@/services/storage/localStore';
 
 export type ShareContentType = 'daily' | 'dream' | 'topic' | 'premium';
 
@@ -94,7 +95,13 @@ function getShareCopy(params: ShareParams): ShareCopy {
 /** 결과 공유 실행 — 콘텐츠 타입별 카피 + URL 자동 분기 */
 export async function shareResult(params: ShareParams): Promise<boolean> {
   // 측정 — 공유 시도 (C2 · fire-and-forget)
-  import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: params.type || 'result' })).catch(() => {});
+  //   2026-06-24 마케팅 차원 보강 — page(어느 페이지에서 공유?) + balance(잔액대별 공유 성향) 첨부.
+  //   getBalance() 는 모든 버킷 합산 총잔액(number) — 정수로 반올림해 카디널리티 억제.
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', {
+    type: params.type || 'result',
+    page: window.location.pathname,
+    balance: Math.round(getBalance()),
+  })).catch(() => {});
   const copy = getShareCopy(params);
   // 2026-06-22 마케팅 측정 — 공유 URL 에 ref=share 부착. 수신자 진입 시 captureUtm 이 utm.source='share' 로
   //   태깅 + App 부팅이 invite_received 발화 → "공유가 신규 방문/전환을 데려오는지(바이럴 K-factor)" 측정.

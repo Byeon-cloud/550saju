@@ -16,6 +16,7 @@ import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { isAppintosBuild } from '@/lib/env';
 import { isPortoneTestEnabled, requestPortoneTestPayment } from '@/services/payment/portonePayment';
 import type { PortonePgMethod } from '@/services/payment/portonePayment';
+import { trackEvent } from '@/services/analytics';
 
 // ── SSOT 토큰 (D1 fix 2026-04-23 / #55)
 const C = {
@@ -85,6 +86,20 @@ export function ChargePage() {
   // 2026-05-29 — 잔액부족 모달 등이 보낸 안내 메시지 (왜 충전 화면에 왔는지). 기존엔 어디서도 표시 안 됨.
   const stateMessage = (location.state as any)?.message as string | undefined;
 
+  // 2026-06-24 — '어떤 콘텐츠에서 결제를 결심했나' 트래킹용 source 파생.
+  //   returnTo/redirect 경로에서 콘텐츠 type 우선, 없으면 need 값, 둘 다 없으면 'direct'.
+  const chargeSource = (() => {
+    const path = redirectTo || '';
+    if (/^\/topic\/([a-z]+)/.test(path)) return `topic:${path.match(/^\/topic\/([a-z]+)/)![1]}`;
+    if (/^\/result\b/.test(path)) return 'premium';
+    if (/^\/chat\b/.test(path)) return 'chat';
+    if (/^\/dream\b/.test(path)) return 'dream';
+    if (/^\/daily\b/.test(path)) return 'daily';
+    if (/^\/(daeun|monthly|compat|tojung)\b/.test(path)) return path.replace(/^\/([a-z]+).*/, '$1');
+    if (needUn !== null && needUn > 0) return `need:${needUn}`;
+    return 'direct';
+  })();
+
   /**
    * 기본 선택 — `?need=N` 있으면 N 이상 충전되는 가장 작은 패키지 자동 선택,
    * 없으면 p15 (가장 인기 / 프리미엄 라인 / 5,000원).
@@ -146,8 +161,8 @@ export function ChargePage() {
               addPaidBalance(result.paidUn, result.bonusUn || 0);
               setBalanceDisplay(getBalance());
               toast.show(result.message, 'success');
-              // 2026-05-29 — 어드민 매출 퍼널: 충전 완료 이벤트
-              import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: Number(amount) || 0 }));
+              // 2026-05-29 — 어드민 매출 퍼널: 충전 완료 이벤트 (2026-06-24 source 추가 — 결제 결심 출처)
+              import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: Number(amount) || 0, source: chargeSource }));
               import('@/services/toss/tossPromotion').then(m =>
                 m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { amount: String(amount) })
               );
@@ -177,6 +192,13 @@ export function ChargePage() {
           });
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2026-06-24 — 충전 페이지 진입 트래킹 (전환 트리거 출처 명시). page_view 파생 charge_open 과 별개로
+  //   source 를 담아 '어떤 콘텐츠에서 결제를 결심했나' 파악. 마운트 1회.
+  useEffect(() => {
+    trackEvent('charge_open', { source: chargeSource });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

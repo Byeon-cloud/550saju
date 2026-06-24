@@ -202,15 +202,18 @@ function writeAttendDays(days: string[]): void {
   } catch { /* noop */ }
 }
 
-/** 연속 7일 출석 완주 여부 (오늘 포함, 마지막 7일이 day-by-day 연속인지) */
-function isConsecutive7(days: string[]): boolean {
-  if (days.length < 7) return false;
-  const last7 = days.slice(-7).map((d) => new Date(d + 'T00:00:00').getTime());
-  for (let i = 1; i < 7; i++) {
-    const diffDays = Math.round((last7[i] - last7[i - 1]) / 86400000);
-    if (diffDays !== 1) return false;
-  }
-  return true;
+// 2026-06-24 — 준기 결정: 7일 완주는 무료 데일리 유저에게 사실상 도달 불가(하루만 걸러도 영구 리셋).
+//   → 5일 완주 + grace 1일(하루 빠져도 인정). 토스 100원 지급(grant7DayAttendance)은 동일, 트리거만 5일로.
+//   ※ 토스 콘솔 프로모 설명이 '7일'이면 '5일'로 맞추면 일관적(선택 · 준기 수동).
+const ATTEND_TARGET_DAYS = 5;  // 출석 완주 목표 (구 7일 → 5일)
+const ATTEND_GRACE_DAYS = 1;   // 하루 빠져도 완주 인정
+
+/** 출석 완주 여부 — 최근 5개 출석일의 캘린더 span 이 (5-1+1=5)일 이내면 완주 = 5일 중 하루 빠짐 1회 허용. */
+function isStreakComplete(days: string[]): boolean {
+  if (days.length < ATTEND_TARGET_DAYS) return false;
+  const lastN = days.slice(-ATTEND_TARGET_DAYS).map((d) => new Date(d + 'T00:00:00').getTime());
+  const spanDays = Math.round((lastN[lastN.length - 1] - lastN[0]) / 86400000);
+  return spanDays <= (ATTEND_TARGET_DAYS - 1 + ATTEND_GRACE_DAYS);
 }
 
 /** 출석 1일 적립 — 연속 7일 완성 시 토스 프로모션 지급 호출 */
@@ -241,7 +244,7 @@ function lastGrant7Day(): string {
  * 실패(not_in_toss 등) 시: 리셋하지 않음 → 다음 콘텐츠 이용 때 재시도.
  */
 function tryGrant7DayCycle(days: string[]): void {
-  if (!isConsecutive7(days)) return;
+  if (!isStreakComplete(days)) return;
   const today = todayKey();
   if (lastGrant7Day() === today) return; // 오늘 이미 지급됨
   import('@/services/toss/tossPromotion').then((m) => {
@@ -281,7 +284,7 @@ export function getAttendanceStreakCount(): number {
 export async function simulate7DayCompletion(): Promise<{ ok: boolean; reason?: string }> {
   // 오늘 기준 과거 7일 연속 날짜 생성
   const days: string[] = [];
-  for (let i = 6; i >= 0; i--) {
+  for (let i = ATTEND_TARGET_DAYS - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     days.push(

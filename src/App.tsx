@@ -273,11 +273,12 @@ export function App() {
       } catch { /* noop */ }
       // 2026-06-22 마케팅 측정 — 공유링크(ref=share) 수신 진입 1회 invite_received (바이럴 K-factor).
       //   세션당 1회 가드. utm.source='share' 는 captureUtm 이 이미 전 이벤트에 첨부.
+      //   2026-06-24 — granted:0(수신 단계는 아직 리워드 미지급) 차원 추가. 후속 적립과 구분.
       try {
         const ref = new URLSearchParams(window.location.search).get('ref');
         if (ref === 'share' && !sessionStorage.getItem('saju500:invite_fired')) {
           sessionStorage.setItem('saju500:invite_fired', '1');
-          trackEvent('invite_received', { reason: 'share_link' });
+          trackEvent('invite_received', { granted: 0, reason: 'inbound_share' });
         }
       } catch { /* noop */ }
     }).catch(() => {});
