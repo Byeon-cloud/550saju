@@ -455,6 +455,11 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
             const amt = Number(p.amount) || 0;
             const puid = doc.ref.parent.parent?.id || '';
             if (ownerUidSet.has(puid)) return; // 오너 테스트 결제 제외 (더미)
+            // 2026-06-23 — 결제 플랫폼 = pgProvider 기준 분류. 'iap'=앱인토스(토스앱), 그 외('toss'·포트원 등)=웹.
+            //   기존 버그: 결제 루프가 plat 필터(line 429는 analytics 만)를 안 타 모든 결제가 전 플랫폼에 합산 →
+            //   '웹' 필터에도 토스앱 매출이 그대로 떴음. 웹 미출시인데 웹 매출 있는 것처럼 보이던 원인. 이제 PG 로 정확 분류.
+            const payPlat = String(p.pgProvider || '') === 'iap' ? 'ait' : 'web';
+            if (plat !== 'all' && payPlat !== plat) return; // 플랫폼 필터 (매출·결제건강 일관 적용)
             const status = String(p.status ?? 'confirmed');
             const ptype = String(p.type ?? 'charge');
             // 결제 건강 — 모든 충전 시도 상태 분류 (use 차감은 제외)
