@@ -28,8 +28,13 @@ export function TabCsGrant() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err' | 'info'; text: string } | null>(null);
 
-  const did = deviceId.trim().toLowerCase();
-  const didValid = /^[0-9a-f]{32,128}$/.test(did);
+  // 2026-06-23 — 디바이스 ID(hex 32~128) 또는 회원 ID(Firebase uid · 영숫자 20~40) 둘 다 허용.
+  //   ⚠️ uid 는 대소문자 구분이라 소문자화하면 안 됨(소문자화 시 claim 시 auth.uid 와 불일치 → 영영 미수령).
+  const _raw = deviceId.trim();
+  const _isHex = /^[0-9a-f]{32,128}$/i.test(_raw);
+  const _isUid = !_isHex && /^[A-Za-z0-9_-]{20,40}$/.test(_raw);
+  const did = _isHex ? _raw.toLowerCase() : _raw;
+  const didValid = _isHex || _isUid;
 
   const toggleWipe = (k: string) => setWipe((s) => {
     const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n;
@@ -70,14 +75,14 @@ export function TabCsGrant() {
     <div>
       <Section
         title="CS 운 지급 (디바이스 ID)"
-        caption="· 앱인토스 CS 콘솔의 문의자 디바이스 ID 또는 내정보 하단 '고객센터 코드' — 등록 즉시 장부에 기록되고, 고객이 앱을 여는 순간 자동 적립 + 토스트 안내 (배포 불필요)"
+        caption="· 디바이스 ID(CS 콘솔·내정보 '고객센터 코드') 또는 회원 ID(CS 문의 이메일 제목에 자동 포함) — 등록 즉시 장부 기록 + 고객이 앱 여는 순간 자동 적립·토스트 (배포 불필요). 어느 쪽이든 OK."
       >
         <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: 18, display: 'grid', gap: 14, maxWidth: 560 }}>
           <div>
-            <label style={labelStyle}>디바이스 ID (hex 32~128자)</label>
+            <label style={labelStyle}>디바이스 ID 또는 회원 ID</label>
             <input style={{ ...inputStyle, fontFamily: 'monospace', borderColor: did && !didValid ? '#C0392B' : C.line }}
-              value={deviceId} onChange={(e) => setDeviceId(e.target.value)} placeholder="4c7f87e8..." />
-            {did && !didValid && <p style={{ fontSize: 11, color: '#C0392B', marginTop: 4 }}>형식이 아니에요 — 소문자 hex 32~128자</p>}
+              value={deviceId} onChange={(e) => setDeviceId(e.target.value)} placeholder="디바이스 ID(hex) 또는 CS 이메일의 회원 ID" />
+            {did && !didValid && <p style={{ fontSize: 11, color: '#C0392B', marginTop: 4 }}>형식이 아니에요 — 디바이스 ID(hex 32~128) 또는 회원 ID(영숫자 20~40)</p>}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 10 }}>
             <div>

@@ -18,37 +18,48 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 export const claimCompensation = onCall(
   { timeoutSeconds: 15, memory: '256MiB', minInstances: 0, cors: true },
   async (request) => {
-    if (!request.auth?.uid) throw new HttpsError('unauthenticated', '로그인이 필요합니다');
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', '로그인이 필요합니다');
     const deviceId = String(request.data?.deviceId || '').trim().toLowerCase();
-    // 앱인토스 디바이스 ID 형식 (hex 32~128자) 외 거부 — 스캔 방지
-    if (!/^[0-9a-f]{32,128}$/.test(deviceId)) {
-      return { amount: 0 };
-    }
     const db = admin.firestore();
-    const ref = db.collection('compensations').doc(deviceId);
-    try {
-      const result = await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) return { amount: 0 };
-        const d = snap.data() as { amount?: number; note?: string; claimed?: boolean; wipeTopics?: string[] };
-        if (d.claimed) return { amount: 0 };
-        const amount = Math.max(0, Math.min(100, Number(d.amount) || 0)); // 상한 100운 안전장치
-        if (amount <= 0) return { amount: 0 };
-        tx.update(ref, {
-          claimed: true,
-          claimedAt: admin.firestore.FieldValue.serverTimestamp(),
-          claimedByUid: request.auth!.uid,
+    // 2026-06-23 — 청구 대상 키 = 디바이스 ID(유효 hex 일 때) + 회원 ID(현재 auth.uid).
+    //   admin 이 어느 키로 지급했든(디바이스ID 또는 uid) 유저가 받는다. CS 이메일이 회원ID 를 주므로
+    //   준기가 uid 로 지급 가능. 두 장부 모두 미수령이면 합산 지급(상한 100운).
+    const keys = Array.from(new Set(([
+      /^[0-9a-f]{32,128}$/.test(deviceId) ? deviceId : null,
+      uid,
+    ].filter(Boolean)) as string[]));
+
+    let total = 0;
+    let note = '';
+    const wipeTopics: string[] = [];
+    for (const key of keys) {
+      const ref = db.collection('compensations').doc(key);
+      try {
+        const r = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists) return { amount: 0 };
+          const d = snap.data() as { amount?: number; note?: string; claimed?: boolean; wipeTopics?: string[] };
+          if (d.claimed) return { amount: 0 };
+          const amount = Math.max(0, Math.min(100, Number(d.amount) || 0)); // 상한 100운 안전장치
+          if (amount <= 0) return { amount: 0 };
+          tx.update(ref, {
+            claimed: true,
+            claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+            claimedByUid: uid,
+          });
+          return { amount, note: d.note || '', wipeTopics: Array.isArray(d.wipeTopics) ? d.wipeTopics : [] };
         });
-        // wipeTopics: 잘못 생성된 주제 결과를 클라가 수령 시점에 보관함에서 정리 (예: ['love','marriage'])
-        return { amount, note: d.note || '', wipeTopics: Array.isArray(d.wipeTopics) ? d.wipeTopics : [] };
-      });
-      if (result.amount > 0) {
-        console.info(`[claimCompensation] 지급: ${result.amount}운 device=${deviceId.slice(0, 12)}… uid=${request.auth.uid}`);
+        if (r.amount > 0) {
+          total += r.amount;
+          if (r.note) note = r.note;
+          if (Array.isArray(r.wipeTopics)) wipeTopics.push(...r.wipeTopics);
+          console.info(`[claimCompensation] 지급: ${r.amount}운 key=${key.slice(0, 12)}… uid=${uid}`);
+        }
+      } catch (e: any) {
+        console.error('[claimCompensation] 키 실패:', key.slice(0, 12), e?.message);
       }
-      return result;
-    } catch (e: any) {
-      console.error('[claimCompensation] 실패:', e?.message);
-      return { amount: 0 }; // 실패해도 클라 UX 영향 0 (다음 부팅 재시도)
     }
+    return { amount: Math.min(100, total), note, wipeTopics };
   },
 );

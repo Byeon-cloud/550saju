@@ -30,12 +30,18 @@ export const adminGrantCompensation = onCall(
     }
 
     const action = String(request.data?.action || 'grant');
-    const deviceId = String(request.data?.deviceId || '').trim().toLowerCase();
-    if (!/^[0-9a-f]{32,128}$/.test(deviceId)) {
-      throw new HttpsError('invalid-argument', '디바이스 ID 형식이 아니에요 (hex 32~128자)');
+    // 2026-06-23 — 디바이스 ID(hex 32~128) 또는 회원 ID(Firebase uid · 영숫자 20~40) 둘 다 허용.
+    //   CS 이메일이 회원ID(uid)를 자동으로 주므로 그걸 그대로 넣어 지급 가능. claimCompensation 이
+    //   부팅 시 deviceId 키 + 현재 auth.uid 키 둘 다 청구하므로 어느 키로 지급해도 유저가 받는다.
+    const rawTarget = String(request.data?.deviceId || '').trim();
+    const isHexDevice = /^[0-9a-f]{32,128}$/.test(rawTarget.toLowerCase());
+    const isUid = !isHexDevice && /^[A-Za-z0-9_-]{20,40}$/.test(rawTarget);
+    if (!isHexDevice && !isUid) {
+      throw new HttpsError('invalid-argument', '디바이스 ID(hex 32~128) 또는 회원 ID(영숫자 20~40) 형식이 아니에요');
     }
+    const targetId = isHexDevice ? rawTarget.toLowerCase() : rawTarget; // hex 만 소문자 정규화, uid 는 대소문자 유지
     const db = admin.firestore();
-    const ref = db.collection('compensations').doc(deviceId);
+    const ref = db.collection('compensations').doc(targetId);
 
     // 상태 조회 — 지급 전 확인 / 수령 여부 추적
     if (action === 'status') {
@@ -75,7 +81,7 @@ export const adminGrantCompensation = onCall(
       });
       return { totalPending: total, accumulated: pendingPrev > 0 };
     });
-    console.info(`[adminGrant] ${amount}운 (대기합계 ${result.totalPending}) device=${deviceId.slice(0, 12)}… by=${uid.slice(0, 8)}`);
+    console.info(`[adminGrant] ${amount}운 (대기합계 ${result.totalPending}) target=${targetId.slice(0, 12)}… by=${uid.slice(0, 8)}`);
     return { ok: true, ...result };
   },
 );
