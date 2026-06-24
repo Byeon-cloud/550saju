@@ -263,7 +263,9 @@ export const generatePremiumReportStream = onRequest(
     // 🚨 2026-06-22 — SSE heartbeat. start 후 첫 그룹 도착(25~80s)까지 무음이면 모바일/토스 웹뷰·프록시·
     //   Cloud Run idle-timeout(흔히 30~60s)이 연결을 '조용히' 끊어 클라가 무한로딩. 12초마다 ': hb' 코멘트
     //   를 흘려 무음구간을 없애 끊김 자체를 예방한다. (클라 SSE 파서는 코멘트 라인을 무시 → 안전)
-    const heartbeat = setInterval(() => { try { res.write(': hb\n\n'); } catch { /* 연결 종료됨 */ } }, 12000);
+    // 2026-06-24 — iOS WKWebView/토스 웹뷰는 SSE 스트림을 더 공격적으로 버퍼링/조기종료(P99 iOS 150s vs AND 22s).
+    //   12s→5s 로 촘촘히 흘려 클라 reader 에 더 자주 닿게 + idle-timeout 방어 마진 확대.
+    const heartbeat = setInterval(() => { try { res.write(': hb\n\n'); } catch { /* 연결 종료됨 */ } }, 5000);
     const groups: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
     const results: Record<string, any> = {};
 
@@ -426,6 +428,8 @@ export const generateReportStream = onRequest(
     }
 
     sendEvent('start', { ts: Date.now() });
+    // 2026-06-24 — premium 과 동일 SSE heartbeat(5s). 1운 리포트 스트림도 무음끊김(idle-timeout·iOS WKWebView 버퍼링) 방어.
+    const heartbeat = setInterval(() => { try { res.write(': hb\n\n'); } catch { /* 연결 종료됨 */ } }, 5000);
     const groups: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
     const results: Record<string, any> = {};
 
@@ -446,6 +450,7 @@ export const generateReportStream = onRequest(
         }
       });
       await Promise.all(groupPromises);
+      clearInterval(heartbeat);
 
       const merged = mod.mergeReportGroups(results.A, results.B, results.C);
 
@@ -466,6 +471,7 @@ export const generateReportStream = onRequest(
       sendEvent('done', { reportId: reportRef.id, content: merged });
       res.end();
     } catch (error: any) {
+      clearInterval(heartbeat);
       console.error('generateReportStream error:', error);
       if (deductedAmount > 0) {
         await refundBalance(uid, deductedAmount, 'generateReportStream failed');

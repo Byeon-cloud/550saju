@@ -296,11 +296,13 @@ export function ResultPage(props: ResultPageProps = {}) {
     if (!isFreshMode || loadedReport || streamStartedRef.current || !sajuData) return;
     streamStartedRef.current = true;
     // 🚨 2026-06-22 CRITICAL — wall-clock 워치독(최종 안전망). 연결 hang(reader 무한대기)·부분그룹 도착 후
-    //   멈춤 등 gotTerminal/catch 가 못 잡는 '진짜 멈춤'에서, 180초 내 완료/실패 신호가 전혀 없으면 강제
+    //   멈춤 등 gotTerminal/catch 가 못 잡는 '진짜 멈춤'에서, 완료/실패 신호가 전혀 없으면 강제
     //   실패처리(환불 + 에러카드) → "로딩만 길고 결과 안 나옴" 영구 멈춤을 근본 차단.
+    // 2026-06-24 — 180→120초 단축. 정상 종합사주 생성 상한 ~80-90초라 120초는 정상을 안 자르고 끊김 꼬리만 컷
+    //   (토스 P99 로딩 150초 = 끊긴 채 워치독까지 매달린 값 → 천장을 120초로 낮춰 P99 직접 절감).
     watchdogRef.current = setTimeout(() => {
       if (!streamSettledRef.current) handleStreamFailure('시간 초과 — 응답이 너무 오래 걸렸어요');
-    }, 180000);
+    }, 120000);
     (async () => {
       try {
         const mod = await import('@/services/ai/reportGenerator');
