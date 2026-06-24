@@ -6,17 +6,29 @@ import {
 } from 'recharts';
 import type { AdminData } from './_useAdminData';
 import {
-  C, Kpi, Section, Empty, CsvButton, MiniStat, deltaPct, fmtNum,
+  C, Kpi, Section, Empty, CsvButton, MiniStat, DataTable, deltaPct, fmtNum, fmtWon,
 } from './_components';
+import type { Col } from './_components';
 import { buildCsv, downloadCsv, csvFilename } from './_csv';
 
+// 내부 운 리워드 (실지급 원화 아님 — 운 단위 적립)
 const REWARD_TREND_KINDS = ['attend7', 'daily', 'streak3', 'share'];
 const REWARD_COLORS: Record<string, string> = {
   attend7: '#B5441F', daily: '#B8965A', streak3: '#5A7CA8', share: '#6FA08C',
 };
 const REWARD_LABEL: Record<string, string> = {
-  attend7: '7일 출석', daily: '데일리', streak3: '3일 연속', share: '공유',
+  // ※ kind명은 'attend7' 이지만 의미는 5일 완주(2026-06-24 하향)
+  attend7: '5일 출석 완주', daily: '데일리 출석 (0.1운)', streak3: '3일 연속 (1운)', share: '공유 리워드',
 };
+
+// 토스 프로모 실지급(원화) — kind 가 'promo_' 로 시작. amount 는 원(₩).
+//   코드 매칭으로 사람이 읽을 라벨 부여 (테스트 프로모는 '(테스트)' 부기).
+function promoLabel(kind: string): string {
+  const test = kind.includes('TEST_') ? ' (테스트)' : '';
+  if (kind.includes('01KTRSZ')) return `첫출석 10원 프로모${test}`;
+  if (kind.includes('01KPQJ')) return `5일 완주 100원 프로모${test}`;
+  return `${kind}${test}`;
+}
 
 export function TabAdsPromo({ d }: { d: AdminData }) {
   const { cur, prev } = d;
@@ -37,6 +49,22 @@ export function TabAdsPromo({ d }: { d: AdminData }) {
     return point;
   }), [cur]);
   const hasReward = REWARD_TREND_KINDS.some((k) => (cur.rewardKindByDay[k] ?? []).some((n) => n > 0));
+
+  // 프로모 실지급(토스 원화) — rewardByKind 에서 kind.startsWith('promo_') 만 모음.
+  //   amount = 원(₩) 합. 항목별 {라벨, 건수, 지급액(₩)} + 총 지급액(₩).
+  const promoRows = useMemo(() => {
+    return Object.entries(cur.rewardByKind)
+      .filter(([kind]) => kind.startsWith('promo_'))
+      .map(([kind, v]) => ({ label: promoLabel(kind), count: v.count, amount: v.amount }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [cur]);
+  const promoTotalAmount = useMemo(() => promoRows.reduce((s, r) => s + r.amount, 0), [promoRows]);
+  const promoTotalCount = useMemo(() => promoRows.reduce((s, r) => s + r.count, 0), [promoRows]);
+  const promoCols: Col<{ label: string; count: number; amount: number }>[] = [
+    { key: 'label', label: '프로모' },
+    { key: 'count', label: '건수', numeric: true },
+    { key: 'amount', label: '지급액(₩)', numeric: true, render: (v: number) => fmtWon(v) },
+  ];
 
   const exportCsv = () => {
     const headers = ['지표', '현 기간', '직전 기간'];
@@ -77,8 +105,22 @@ export function TabAdsPromo({ d }: { d: AdminData }) {
       </Section>
 
       <Section
-        title="리워드 적립 추이 (kind별 일별)"
-        caption="· reward_earned 이벤트 — attend7(7일 출석) / daily(데일리) / streak3(3일 연속) / share(공유)"
+        title="프로모 지급 (토스 원화)"
+        caption="· reward_earned 이벤트 중 kind 가 promo_ 로 시작 — 토스를 통해 실제 원화로 지급된 프로모. 지급액 단위는 원(₩)."
+      >
+        {promoRows.length === 0 ? <Empty text="프로모 실지급 내역 없음 — 토스 프로모 지급이 누적되면 표시돼요" /> : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 10 }}>
+              <Kpi label="총 지급액 (₩)" value={fmtWon(promoTotalAmount)} sub={`${fmtNum(promoTotalCount)}건 · 토스 실지급`} accent />
+            </div>
+            <DataTable columns={promoCols} rows={promoRows} initialSortKey="amount" />
+          </>
+        )}
+      </Section>
+
+      <Section
+        title="리워드 적립 추이 (내부 운 · kind별 일별)"
+        caption="· reward_earned 이벤트 (내부 운 적립 — 실지급 원화 아님) — daily(데일리 출석 0.1운) / streak3(3일 연속 1운) / attend7(5일 출석 완주) / share(공유 리워드)"
       >
         {!hasReward ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>

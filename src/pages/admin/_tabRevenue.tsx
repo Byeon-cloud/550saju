@@ -22,6 +22,24 @@ function pgLabel(pg: string): string {
   return pg === 'iap' ? '앱인토스 IAP' : pg === 'toss' ? '토스페이먼츠(웹)' : pg === 'unknown' ? '기타/미상' : pg;
 }
 
+// 결제 직전 진입경로(source) → 사람이 읽기 좋은 라벨
+const SOURCE_TOPIC_KR: Record<string, string> = {
+  love: '연애운', reunion: '재회운', marriage: '결혼운', wealth: '재물운', exam: '합격이직운',
+  business: '사업운', health: '건강운', move: '이사운', moving: '이사운', study: '학업운', career: '직업운',
+};
+const SOURCE_LABEL: Record<string, string> = {
+  premium: '종합사주', chat: '사주대화', dream: '꿈해몽', daily: '오늘운세',
+  daeun: '대운', monthly: '월운', compat: '궁합', tojung: '토정비결', direct: '직접 진입',
+};
+function sourceLabel(src: string): string {
+  if (src.startsWith('topic:')) {
+    const tid = src.slice(6);
+    return `주제·${SOURCE_TOPIC_KR[tid] || tid}`;
+  }
+  if (src.startsWith('need:')) return '잔액부족 유도';
+  return SOURCE_LABEL[src] || src;
+}
+
 export function TabRevenue({ d }: { d: AdminData }) {
   const { cur, prev } = d;
 
@@ -69,6 +87,24 @@ export function TabRevenue({ d }: { d: AdminData }) {
       };
     }).sort((a, b) => b.un - a.un);
   }, [cur.contentPurchase, prev.contentPurchase]);
+
+  // 결제 유발 콘텐츠 (전환 트리거) — charge_complete source 별 결제 건수 + 비율
+  const triggerRows = useMemo(() => {
+    const total = Object.values(cur.chargeBySource).reduce((s, n) => s + n, 0);
+    return Object.entries(cur.chargeBySource)
+      .map(([src, count]) => ({
+        label: sourceLabel(src),
+        count,
+        share: total > 0 ? Math.round((count / total) * 1000) / 10 : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [cur.chargeBySource]);
+
+  const triggerCols: Col[] = [
+    { key: 'label', label: '진입경로' },
+    { key: 'count', label: '결제 건수', numeric: true },
+    { key: 'share', label: '비율', numeric: true, render: (v) => `${v}%` },
+  ];
 
   const purchaseCols: Col[] = [
     { key: 'label', label: '콘텐츠' },
@@ -160,6 +196,12 @@ export function TabRevenue({ d }: { d: AdminData }) {
 
       <Section title="콘텐츠별 운 차감" caption={`· content_purchase 이벤트 집계 — 추정매출 = 운 × ₩${UN_PRICE} (충전 시점 매출과는 별개인 '소비' 지표) · 주제분석은 topic 별 세분화`}>
         <DataTable columns={purchaseCols} rows={purchaseRows} initialSortKey="un" />
+      </Section>
+
+      <Section title="결제 유발 콘텐츠 (전환 트리거)" caption="· charge_complete 의 진입경로(source) 기준 — 결제 직전 어떤 콘텐츠가 충전을 유발했나 · 비율 = 기간 내 충전 건수 점유율">
+        {triggerRows.length === 0 ? <Empty /> : (
+          <DataTable columns={triggerCols} rows={triggerRows} initialSortKey="count" />
+        )}
       </Section>
     </div>
   );

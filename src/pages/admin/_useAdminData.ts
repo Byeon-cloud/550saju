@@ -80,6 +80,11 @@ export interface PeriodAgg {
   // 공유·리워드
   shareClicks: number;
   shareByDay: number[];
+  shareByPage: Record<string, number>;             // 공유 클릭 페이지별 — 어느 화면에서 공유 최다 (2026-06-24)
+  shareByBalanceBand: Record<string, number>;      // 공유자 운 잔액대별 ('0'|'1-3'|'4-9'|'10+')
+  sharerCount: number;                             // 공유한 고유 유저 수
+  sharesPerUser: number;                           // 한명당 평균 공유 횟수
+  chargeBySource: Record<string, number>;          // 결제 유발 콘텐츠(진입경로)별 — charge_complete source (2026-06-24)
   rewardByKind: Record<string, { count: number; amount: number }>;
   rewardKindByDay: Record<string, number[]>;       // kind → 일별 건수
   rewardTotal: number;
@@ -149,6 +154,7 @@ function emptyAgg(days: string[]): PeriodAgg {
     contentOpenTotal: 0, contentResultTotal: 0, contentPurchaseTotal: 0, contentPurchaseUn: 0,
     topicSelect: {}, topicOpen: {}, bounceRate: null,
     shareClicks: 0, shareByDay: days.map(() => 0),
+    shareByPage: {}, shareByBalanceBand: {}, sharerCount: 0, sharesPerUser: 0, chargeBySource: {},
     rewardByKind: {}, rewardKindByDay: {}, rewardTotal: 0,
     adStats: { impression: 0, click: 0, nofill: 0, fail: 0 },
     ai: {},
@@ -232,6 +238,9 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
       agg.chargeComplete += 1;
       agg.chargeAmount += Number(e.props?.amount) || 0;
       scratch.chargeByUser[userKey] = (scratch.chargeByUser[userKey] ?? 0) + 1;
+      // 2026-06-24 — 결제 유발 콘텐츠(진입경로): 어떤 콘텐츠에서 결제를 결심했나.
+      const src = (e.props?.source as string | undefined) || 'direct';
+      agg.chargeBySource[src] = (agg.chargeBySource[src] ?? 0) + 1;
       utmSlot.charges += 1;
       break;
     }
@@ -248,6 +257,15 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
     case 'share_click': {
       agg.shareClicks += 1;
       if (dayIdx >= 0) agg.shareByDay[dayIdx] += 1;
+      // 2026-06-24 — 마케팅 분해: 어느 화면(page)에서 공유 최다 + 공유자 운 잔액대 + 고유 공유자 수.
+      const page = (e.props?.page as string | undefined) || '(unknown)';
+      agg.shareByPage[page] = (agg.shareByPage[page] ?? 0) + 1;
+      const bal = Number(e.props?.balance);
+      if (!Number.isNaN(bal)) {
+        const band = bal <= 0 ? '0' : bal <= 3 ? '1-3운' : bal <= 9 ? '4-9운' : '10운+';
+        agg.shareByBalanceBand[band] = (agg.shareByBalanceBand[band] ?? 0) + 1;
+      }
+      scratch.sharerByUser[userKey] = (scratch.sharerByUser[userKey] ?? 0) + 1;
       break;
     }
     case 'reward_earned': {
@@ -296,6 +314,7 @@ interface PeriodScratch {
   utmVisitSets: Record<string, Set<string>>;
   demoByUser: Record<string, { g?: string; ab?: string }>;  // 2026-06-12 인구통계
   pvBySession: Record<string, number>;                       // 이탈률용 (sid → pv 수)
+  sharerByUser: Record<string, number>;                      // 공유 고유 유저 (2026-06-24)
 }
 
 /** scratch → 최종 집계 마감 (방문자·DAU·리텐션·재구매·방문빈도·utm visits) */
@@ -341,6 +360,12 @@ function finalizeAgg(agg: PeriodAgg, scratch: PeriodScratch): void {
   agg.payingUserKeys = Object.keys(scratch.chargeByUser);
   agg.payingUsers = agg.payingUserKeys.length;
   agg.repeatPayingUsers = Object.values(scratch.chargeByUser).filter((n) => n >= 2).length;
+
+  // 공유 분해 마감 (2026-06-24) — 고유 공유자 수 + 한명당 평균 공유
+  agg.sharerCount = Object.keys(scratch.sharerByUser).length;
+  agg.sharesPerUser = agg.sharerCount > 0
+    ? Math.round((agg.shareClicks / agg.sharerCount) * 10) / 10
+    : 0;
 
   // utm visits
   Object.entries(scratch.utmVisitSets).forEach(([source, set]) => {
@@ -410,8 +435,8 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
 
         const cur = emptyAgg(curDays);
         const prev = emptyAgg(prevDays);
-        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {} };
-        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {} };
+        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {}, sharerByUser: {} };
+        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {}, sharerByUser: {} };
         const rawEvents: RawEvent[] = [];
         // 2026-06-18 더미 제거 — 오너(본인 테스트) 데이터 전 collectionGroup 에서 제외.
         //   OWNER_UIDS(고정) + internal:true 이벤트를 낸 모든 uid(쿠키 초기화로 바뀐 익명 오너 기기 포함).
