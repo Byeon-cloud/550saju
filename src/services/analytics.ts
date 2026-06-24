@@ -209,8 +209,13 @@ function waitForAuth(auth: { currentUser: unknown; onAuthStateChanged: (cb: (u: 
  *  localhost/127.* = 개발 → 기록 자체 skip. 오너 기기(/admin 방문 이력) = internal:true 마킹 → 집계 제외. */
 function internalKind(): 'dev' | 'owner' | null {
   try {
+    // 🚨 2026-06-23 CRITICAL — 토스 앱(앱인토스 webview)은 hostname 이 localhost-류여도 '실 트래픽'이므로
+    //   dev 로 제외하면 안 됨. 기존: 토스 webview 가 localhost 면 dev 판정 → logToFirestore line 233 에서
+    //   전 이벤트 드롭 → 어드민이 앱인토스 DAU 500·프로모(1040원/104건)를 0 으로 집계하던 근본원인.
+    const isToss = (typeof navigator !== 'undefined' && /InTossApp/i.test(navigator.userAgent))
+      || (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_BUILD_TARGET === 'appintos');
     const h = window.location.hostname;
-    if (h === 'localhost' || h.startsWith('127.') || h.startsWith('192.168.')) return 'dev';
+    if (!isToss && (h === 'localhost' || h.startsWith('127.') || h.startsWith('192.168.'))) return 'dev';
     if (localStorage.getItem('saju500:internal') === '1') return 'owner';
   } catch { /* noop */ }
   return null;
