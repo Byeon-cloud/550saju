@@ -990,7 +990,16 @@ function buildPrompt(
   p.forEach((x: any, i: number) => { if (x.available !== false) pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기||''})${x.지지}(${x.지지읽기||''})\n`; });
   const el = d.elements || {};
   const sipsung = d.sipsung?.map((s: any) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
-  const currentDaeun = d.daeun?.find((x: any) => x.isCurrent || x.현재);
+  // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
+  //   대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그(차트는 맞는데 본문이 swap) fix. claudePremium.buildSajuBase 패턴 복제.
+  const daeunList: any[] = Array.isArray(d.daeun) ? d.daeun : [];
+  const curIdx = daeunList.findIndex((x: any) => x.isCurrent || x.현재);
+  const daeunAge = (x: any) => (x?.시작나이 != null && x?.끝나이 != null) ? `${x.시작나이}~${x.끝나이}세` : (x?.나이범위 || '');
+  const daeunFlow = daeunList.length > 0
+    ? daeunList.map((x: any, i: number) => `- ${daeunAge(x)} ${x.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+    : '미상';
+  const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
+  const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
   const today = new Date();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
@@ -1204,7 +1213,9 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ${Object.entries(el).filter(([,v]) => v === 0).map(([k]) => `→ ${k} 없음`).join('\n')}
 
 ## 십성: ${sipsung || '미상'}
-## 현재 대운: ${currentDaeun ? currentDaeun.간지 : '미상'}
+## 대운 흐름 (10년 단위 · 나이는 만 나이 기준)
+${daeunFlow}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지·순서·나이는 위 대운 흐름의 값을 그대로 인용 — 이전/다음 대운 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지. 시기 계산은 위 '현재 대운' 간지를 기준으로 하되, 본문에 이전·다음 대운을 언급할 땐 반드시 위 목록의 간지를 그대로 쓸 것.` : ''}
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
 
 ## 🔥 명리학 구조 분석 (audit 1 P0-1 — 반드시 해석에 활용)
@@ -1359,6 +1370,14 @@ ${config.specificPrompt}
 - 한자 1회 등장 시 즉시 일상어 풀이 동반
 - strong 강조는 유저 일상 결론에만
 - 숫자·시기 또렷이 ('30대 후반' '9월~2월')
+
+🚨🚨 **어조 규칙 (2026-06-24 인플루언서 피드백 — 출력 본문 전체에 절대 준수)**
+모든 sections·timeline·actionAdvice·insightCards·strengths·cautions 등 본문 전체에 적용. 위 '일상어 풀이' 룰과 충돌하지 않으며, 표현은 일상어로 하되 어조를 다음과 같이 단정·확신형으로 못박는다:
+1. **애매·면피 표현 전면 금지 (0건)**: '~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다 / 보입니다 / 편이에요' 류 어미를 한 번도 쓰지 마라. 모든 문장을 확신 있는 단정형으로 끝낸다.
+2. **단정형으로 끝낸다**: '당신은 ~한 사람입니다.' '이 시기는 ~한 때입니다.' '지금은 ~해야 할 때입니다.'
+3. **과거 적중(소름 훅)**: 각 섹션에 최소 1회, 독자가 '어? 내 얘기네?' 하게 만드는 과거 회상 질문을 넣어라. '혹시 예전에 ~한 일이 있지 않았나요?' '유독 ~할 때 ~하지 않으셨나요?'
+4. **명령형 솔루션**: 권유가 아니라 분명한 지시로. '앞으로는 이렇게 하세요.' '~는 피하고 ~를 선택하세요.' (애매한 '~하면 좋아요' X, 분명한 '~하세요' O)
+5. **루즈함 차단**: 같은 메시지를 앞·중간·끝에서 반복하지 마라. 각 단락은 새 정보를 담는다. 구구절절·동어반복 금지 — 한 번 말한 결론을 다른 표현으로 또 말하지 않는다.
 
 
 ✅ **풀이 작성 규칙**:

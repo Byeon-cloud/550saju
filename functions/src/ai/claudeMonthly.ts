@@ -27,7 +27,16 @@ function buildPrompt(d: any): string {
   });
   const el = d.elements || {};
   const sipsung = d.sipsung?.map((s: any) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
-  const currentDaeun = d.daeun?.find((x: any) => x.isCurrent || x.현재);
+  // 2026-06-26 — 대운 전체 흐름 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
+  //   대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그 fix (claudePremium.ts buildSajuBase 패턴 복제).
+  const daeunList: any[] = Array.isArray(d.daeun) ? d.daeun : [];
+  const curIdx = daeunList.findIndex((x: any) => x.isCurrent || x.현재);
+  const daeunAge = (x: any) => (x?.시작나이 != null && x?.끝나이 != null) ? `${x.시작나이}~${x.끝나이}세` : (x?.나이범위 || '');
+  const daeunFlow = daeunList.length > 0
+    ? daeunList.map((x: any, i: number) => `- ${daeunAge(x)} ${x.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+    : '미상';
+  const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
+  const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
   const now = new Date().getMonth() + 1;
   const today = new Date();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
@@ -46,7 +55,11 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 
 ## 오행: 목${el.목||0} 화${el.화||0} 토${el.토||0} 금${el.금||0} 수${el.수||0}
 ## 십성: ${sipsung || '미상'}
-## 현재 대운: ${currentDaeun ? currentDaeun.간지 : '미상'}
+
+## 대운 흐름 (10년 단위 · 나이는 만 나이 기준)
+${daeunFlow}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지·순서를 절대 바꾸지 말 것 — 이전/다음 대운 간지를 임의로 만들거나 뒤바꾸지 말고 위 대운 흐름 목록의 간지를 그대로 인용. swap 절대 금지.` : ''}
+
 ## 이름: ${d.input?.name||'미상'}, 성별: ${d.input?.gender==='male'?'남':'여'}
 
 ## 출력 (JSON만, 코드블록 없이)
@@ -80,6 +93,14 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ❌ '병화(丙火)' 단독 — 풀이 X
 ❌ '병화(丙火, 라는 뜻)' / '병화(丙火, 한자 그대로)' — 추상적 회피 X. 진짜 풀이 텍스트.
 검증법: 한자 (괄호) 부분만 빼고 일상어만 읽었을 때 자연스러운 한국어 문장이 되어야 함.
+
+
+🚨 **어조 규칙 (2026-06-24 · 인플루언서 피드백 — 출력 본문 전체에 절대 준수)**
+1. **애매·면피 표현 전면 금지**: "~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다" 류 0건. 모든 문장을 확신 있는 단정형으로 끝낸다.
+2. **단정형**: "당신은 ~한 사람입니다." "이 시기는 ~한 때입니다."
+3. **과거 적중(소름 훅)**: "혹시 예전에 ~한 일이 있지 않았나요?" "유독 ~할 때 ~하지 않으셨나요?" — 독자가 "어? 내 얘기네?" 하게.
+4. **명령형 솔루션**: "앞으로는 이렇게 하세요." "~는 피하고 ~를 선택하세요." (애매한 권유 X, 분명한 지시 O)
+5. **루즈함 차단**: 같은 메시지를 앞·중간·끝에서 반복 금지. 각 단락은 새 정보. 구구절절·동어반복 금지.
 
 
 ✨ **우리만의 차별화**:

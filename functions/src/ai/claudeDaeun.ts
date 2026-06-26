@@ -33,6 +33,18 @@ function buildPrompt(d: any): string {
   const today = new Date();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
+  // 2026-06-24 — 대운 전체 흐름을 이전/현재/다음 간지+나이로 명시. 기존엔 '현재 대운(currentDaeun)'만
+  //   넘겨서 AI 가 이전/다음 대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그(차트는 맞는데 본문이 swap) fix.
+  //   sajuData.daeun 전체를 결정론적으로 전달 → AI 가 추측·swap 불가. (claudePremium.ts buildSajuBase 패턴 복제)
+  const daeunArr: any[] = Array.isArray(d.daeun) ? d.daeun : [];
+  const curIdx = daeunArr.findIndex((x: any) => x.isCurrent || x.현재);
+  const daeunAge = (x: any) => (x?.시작나이 != null && x?.끝나이 != null) ? `${x.시작나이}~${x.끝나이}세` : (x?.나이범위 || '');
+  const daeunFlow = daeunArr.length > 0
+    ? daeunArr.map((x: any, i: number) => `- ${daeunAge(x)} ${x.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+    : '미상';
+  const prevDae = curIdx > 0 ? daeunArr[curIdx - 1] : null;
+  const nextDae = (curIdx >= 0 && curIdx < daeunArr.length - 1) ? daeunArr[curIdx + 1] : null;
+
   // 대운 periods를 사주 데이터에서 직접 구성
   const periodsTemplate = (d.daeun || []).map((du: any) => {
     const isCurrent = du.isCurrent || du.현재 || false;
@@ -52,6 +64,10 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ## 십성: ${sipsung || '미상'}
 ## 대운 리스트
 ${daeunList}
+## 대운 흐름 (10년 단위 · 나이는 만 나이 기준 · 이전→현재→다음 전부 명시)
+${daeunFlow}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunArr[curIdx].간지}(${daeunAge(daeunArr[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}.
+🚨 위 대운 흐름의 간지를 그대로 인용. 임의 생성·swap 절대 금지 — 이전/다음 대운 간지를 데이터 없이 추측하거나 순서를 뒤바꾸지 말고 위 목록 그대로 쓸 것.` : ''}
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
 
 ## ⭐ 소름 포인트
@@ -90,6 +106,19 @@ ${daeunList}
 ❌ '병화(丙火)' 단독 — 풀이 X
 ❌ '병화(丙火, 라는 뜻)' / '병화(丙火, 한자 그대로)' — 추상적 회피 X. 진짜 풀이 텍스트.
 검증법: 한자 (괄호) 부분만 빼고 일상어만 읽었을 때 자연스러운 한국어 문장이 되어야 함.
+
+
+🚨 **어조 규칙 (2026-06-24 인플루언서 피드백 · 절대 준수 — 출력 본문 전체에 적용)**
+
+이 상품은 대운이 핵심이라 특히 단정·정확해야 합니다. 모든 텍스트 필드(overview·periods의 career/love/wealth/health/advice·currentHighlight·transitionAdvice 등)에 빠짐없이 적용:
+
+1. **애매·면피 표현 전면 금지 (0건)**: '~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다' 류 단 한 번도 쓰지 말 것. 모든 문장을 확신 있는 단정형으로 끝낼 것.
+2. **단정형으로**: '당신은 ~한 사람입니다.' '이 대운은 ~한 때입니다.' '이 시기에 ~합니다.'
+3. **과거 적중(소름 훅)**: '혹시 예전 OO세 무렵에 ~한 일이 있지 않았나요?' '유독 ~할 때 ~하지 않으셨나요?' — 독자가 "어? 내 얘기네?" 하게.
+4. **명령형 솔루션**: '앞으로는 이렇게 하세요.' '~는 피하고 ~를 선택하세요.' — 애매한 권유(X), 분명한 지시(O).
+5. **루즈함 차단**: 같은 메시지를 앞·중간·끝에서 반복 금지. 각 단락·각 필드는 새 정보. 구구절절·동어반복 금지.
+
+⚠️ 단, 대운 간지·시기·사실관계는 위 ## 대운 흐름 데이터에 근거한 것만 단정할 것. '단정형'은 어조이지, 데이터에 없는 간지를 지어내라는 뜻이 절대 아님.
 
 
 ✨ **우리만의 차별화**:
@@ -134,8 +163,8 @@ ${daeunList}
   "periods": [
     ${periodsTemplate}
   ],
-  "currentHighlight": "200자 이상. 현재 대운 소름 포인트.",
-  "transitionAdvice": "100자 이상. 다음 대운 준비 조언.",
+  "currentHighlight": "200자 이상. 현재 대운 소름 포인트. 현재 대운 간지는 위 ## 대운 흐름 의 '현재 대운' 간지를 그대로 인용 (임의 생성·swap 금지).",
+  "transitionAdvice": "100자 이상. 다음 대운 준비 조언. 🚨 '다음 대운'은 반드시 위 ## 대운 흐름 의 '다음 대운' 간지를 그대로 인용 — 데이터 없이 추측·생성 금지, 현재/이전 대운과 뒤바꾸지 말 것. 다음 대운이 '없음'이면 마지막 대운임을 전제로 작성.",
   "lifePhaseMap": [
     {"phase":"성장기","daeun":"간지","theme":"키워드"},
     {"phase":"도약기","daeun":"간지","theme":"키워드"},
@@ -143,6 +172,7 @@ ${daeunList}
     {"phase":"수확기","daeun":"간지","theme":"키워드"}
   ]
 }
+⚠️ lifePhaseMap 의 daeun 간지도 위 ## 대운 흐름 목록에 실제로 존재하는 간지만 사용 (목록에 없는 간지 임의 생성 금지).
 
 ⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
 }

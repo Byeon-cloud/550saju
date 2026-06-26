@@ -341,10 +341,9 @@ export function ResultPage(props: ResultPageProps = {}) {
           },
           onError: (msg: string) => {
             console.warn('[ResultPage:fresh SSE] 실패:', msg);
-            // 첫 그룹도 못 받았으면(빈 상태) 환불 + 에러 카드. 이미 일부 그룹 도착했으면 부분 결과 유지.
-            const hasPartial = Object.keys(streamingAiResultRef.current || {}).length > 0;
-            if (!hasPartial) handleStreamFailure(msg);
-            else setStreamingAiResult((prev: any) => ({ ...(prev || {}), __error: msg }));
+            // 2026-06-24 — 이제 '완성본'만 노출하므로(부분 결과 비표시), 스트리밍 중 에러는 부분도착 여부와 무관하게
+            //   실패+환불 처리. (기존: 부분 도착 시 partial 유지 → 그 partial 이 content-change 원인이었음)
+            if (!streamSettledRef.current) handleStreamFailure(msg);
           },
         });
       } catch (e: any) {
@@ -363,17 +362,19 @@ export function ResultPage(props: ResultPageProps = {}) {
   //   v3: AILoading 유지 (첫 그룹 도착까지) → 결과 페이지 진입 시점엔 이미 첫 그룹(A) 데이터 있음
   //       AILoading 자체가 충분히 풍성 (사주 미니카드 + 5단계 인디케이터 + 명리학 팁) — user 읽을거리 충분.
   //       첫 group 도착 시 (Opus 14K ≈ 40-60초) 결과 페이지로 자연스럽게 전환.
-  const streamingFieldCount = Object.keys(streamingAiResult || {}).length;
   const isPremiumStreaming =
     isFreshMode && freshType === 'premium' && !loadedReport;
   // 2026-06-02 QA — fresh 스트리밍(premium+basic 공통) 빈-상태 게이트.
   //   기존: premium 만 AILoading 게이트 → basic(1운) fresh 는 빈 데이터로 렌더 시작 → "흰 화면 → 섹션 툭" 발생.
   //   수정: premium·basic 모두 첫 그룹 도착 전엔 AILoading 풀스크린 → 절대 빈 페이지 안 보임.
   const isFreshStreaming = isFreshMode && !loadedReport;
-  const isFreshStreamingEmpty = isFreshStreaming && streamingFieldCount === 0;
   // premium 스트리밍 진행 중(전 그룹 도착 전) — 상단 배너 게이트용
   const isPremiumStreamingIncomplete =
     isPremiumStreaming && !(arrivedGroups.A && arrivedGroups.B && arrivedGroups.C);
+  // 2026-06-24 — 인플루언서 피드백: 부분 결과를 먼저 보여주면 fallback→AI 로 '읽는 도중 내용이 바뀌어' 혼란
+  //   ("로딩중이었구나"). → 완성본만 노출. 전 그룹(A·B·C) 도착 전엔 premium·basic 모두 AILoading 유지(절대 부분 X).
+  const allGroupsArrived = arrivedGroups.A && arrivedGroups.B && arrivedGroups.C;
+  const isFreshStreamingIncomplete = isFreshStreaming && !allGroupsArrived;
 
   // effective storedReport — 저장된 게 우선, 없고 fresh 모드면 streaming 합성
   const storedReport: LocalReport | null = loadedReport ?? (streamingAiResult ? ({
@@ -572,20 +573,27 @@ export function ResultPage(props: ResultPageProps = {}) {
     );
   }
 
-  // 2026-06-15 — premium 은 결과창 즉시 노출(사주 fallback 본문 + viz + '분석 중' 배너 → 그룹 도착 시 AI 업그레이드).
-  //   basic(1운) 만 첫 그룹 도착 전 풀스크린 AILoading 유지.
-  //   배경: PremiumResult 의 AI 본문(Section1Body 등)은 2026-05 보일러플레이트 박멸에서 사주 fallback 이 추가돼
-  //         빈 aiResult 에서도 사주 기반 본문이 차므로 v2(2026-04) '빈 화면' 문제는 해소됨. isPremiumLayout 은
-  //         fresh premium 시 강제 true(아래 ~400행) 라 PremiumResult 렌더 보장. 미완 그룹 자리는 sticky 배너로 안내.
-  if (isFreshStreamingEmpty && freshType !== 'premium') {
-    // basic(1운) 전용 분기 (premium 은 위 주석대로 결과창 즉시 노출로 분리)
+  // 2026-06-24 — 인플루언서 피드백 반영(2026-06-15 '즉시 노출' 결정 폐기): premium·basic 모두 전 그룹 도착
+  //   전엔 풀스크린 AILoading 유지 → '완성본'만 노출. 부분/ fallback 본문을 먼저 보여주고 나중에 AI 로 바꾸던
+  //   것이 "읽는 도중 내용이 바뀜" 혼란의 원인이었음. A(14K)가 병목이라 어차피 대기시간은 비슷하고, 틀린 본문
+  //   노출이 사라짐. AILoading 은 사주 미니카드 + 단계 인디케이터 + 팁으로 충분히 풍성(대기 체감 완화).
+  if (isFreshStreamingIncomplete) {
+    const arrivedCount = (arrivedGroups.A ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0);
+    const isPrem = freshType === 'premium';
     return (
       <AILoading
         name={name}
-        type="사주 리포트 분석"
+        type={isPrem ? '종합 사주 분석' : '사주 리포트 분석'}
         sajuData={sajuData}
-        estimatedSeconds={40}
-        steps={[
+        estimatedSeconds={isPrem ? 80 : 45}
+        premiumNote={arrivedCount > 0 ? `정밀 분석 ${arrivedCount}/3 단계 완료 — 마지막을 마무리하고 있어요` : undefined}
+        steps={isPrem ? [
+          '사주 8자와 오행 구조를 분석하고 있어요',
+          '십성과 용신·조후를 도출하고 있어요',
+          '대운과 올해 흐름을 짚고 있어요',
+          '관계와 실천 전략을 정리하고 있어요',
+          '종합 리포트를 완성하고 있어요',
+        ] : [
           '사주 8자 구조를 분석하고 있어요',
           '용신과 격국을 도출하고 있어요',
           '성격과 기질을 읽고 있어요',
