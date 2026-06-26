@@ -132,6 +132,11 @@ export interface MyeongriAnalysis {
   /** 격국(자평진전 §10) — 정격 8종 + 변격 4종 (audit 1 P0-3) */
   격국?: string;
   격국근거?: string;
+  /** 용신(用神) — 결정론적 산출 (2026-06-26 보강1: 행운 색/방위 SSOT 단일화). 조후 우선 → 부억(신강=식상설기/신약=인성생조). */
+  용신?: OhengType;
+  희신?: OhengType;
+  기신?: OhengType;
+  용신근거?: string;
 }
 
 /** 사주 전체 데이터 */

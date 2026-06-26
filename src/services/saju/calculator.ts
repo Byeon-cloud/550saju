@@ -524,6 +524,59 @@ function analyzeGyeokguk(
   return { 격국: '판정 보류', 격국근거: '월지 십성이 명확하지 않아 격국 판정 보류' };
 }
 
+/**
+ * 용신(用神) 결정론적 산출 (2026-06-26 보강1) — 행운 색/방위 SSOT 단일화.
+ * 콘텐츠마다 AI가 용신을 재추론해 색이 갈리던 문제 → calculator 1회 산출 + 전 프롬프트 주입.
+ * 알고리즘: ① 조후 우선(겨울+화전무→화 / 여름+수전무→수) ② 부억(신강/중화강=식상 설기·희신 재성 / 신약/중화약=인성 생조·희신 생용신).
+ * 검산: 온하우스(목 신강)=화·토·수, 검증(화 중화약)=목·수·금 — 둘 다 Opus 종합사주 AI 도출과 정확히 일치.
+ */
+function analyzeYongsin(
+  ilganOheng: OhengType,
+  wolji: string,
+  gangYak: MyeongriAnalysis['일간강약'],
+  strengthScore: number,
+  pillars: Pillar[],
+): { 용신: OhengType; 희신: OhengType; 기신: OhengType; 용신근거: string } {
+  const SAENG: Record<string, OhengType> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' }; // X가 생하는 오행
+  const GEUK: Record<string, OhengType> = { 목: '토', 화: '금', 토: '수', 금: '목', 수: '화' };  // X가 극하는 오행
+  const SAENG_BY: Record<string, OhengType> = { 화: '목', 토: '화', 금: '토', 수: '금', 목: '수' }; // X를 생하는 오행(인성)
+
+  // 원국 오행 분포 (천간 + 지지 본기)
+  const cnt: Record<string, number> = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+  pillars.forEach((p) => {
+    if (p?.천간오행) cnt[p.천간오행] = (cnt[p.천간오행] || 0) + 1;
+    if (p?.지지오행) cnt[p.지지오행] = (cnt[p.지지오행] || 0) + 1;
+  });
+
+  const 식상 = SAENG[ilganOheng];
+  const 재성 = GEUK[ilganOheng];
+  const 인성 = SAENG_BY[ilganOheng];
+
+  const winter = ['亥', '子', '丑'].includes(wolji);
+  const summer = ['巳', '午', '未'].includes(wolji);
+
+  let 용신: OhengType, 희신: OhengType, 기신: OhengType, 용신근거: string;
+
+  if (winter && (cnt['화'] || 0) === 0) {
+    용신 = '화'; 희신 = '목'; 기신 = '수';
+    용신근거 = `${wolji}월 겨울 출생 + 원국에 화(火) 전무 — 조후로 데우는 화가 용신`;
+  } else if (summer && (cnt['수'] || 0) === 0) {
+    용신 = '수'; 희신 = '금'; 기신 = '토';
+    용신근거 = `${wolji}월 여름 출생 + 원국에 수(水) 전무 — 조후로 식히는 수가 용신`;
+  } else {
+    const strong = gangYak === '신강경향' || (gangYak === '중화' && strengthScore >= 0);
+    if (strong) {
+      용신 = 식상; 희신 = 재성; 기신 = 인성;
+      용신근거 = `${gangYak === '중화' ? '중화(약간 강)' : '신강'} — ${식상}(식상)으로 설기하고 ${재성}(재성)이 흐름을 잇는 것이 핵심`;
+    } else {
+      용신 = 인성; 희신 = SAENG_BY[인성]; 기신 = 재성;
+      용신근거 = `${gangYak === '중화' ? '중화(약간 약)' : '신약'} — ${인성}(인성)으로 일간을 생조해 받쳐주는 것이 1순위`;
+    }
+  }
+
+  return { 용신, 희신, 기신, 용신근거 };
+}
+
 /** 종합 명리학 분석 */
 function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: boolean): MyeongriAnalysis {
   const ilgan = pillars[2]?.천간 || '';
@@ -538,7 +591,7 @@ function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: bo
   // 2026-06-02 — 강약·격국은 지장간 할인 가중치로 판정 (종격/신강 오판 fix).
   const { gangYak, reason, score: strengthScore } = estimateStrength(ilganOheng, deukryeong, sipsungWeighted, pillars);
   const { 격국, 격국근거 } = analyzeGyeokguk(pillars, sipsung, sipsungWeighted, ilgan, ilganOheng, woljiOheng, strengthScore);
-  void wolji;
+  const { 용신, 희신, 기신, 용신근거 } = analyzeYongsin(ilganOheng, wolji, gangYak, strengthScore, pillars);
 
   return {
     일간: ilgan,
@@ -552,5 +605,9 @@ function analyzeMyeongri(pillars: Pillar[], sipsung: SipSung[], hasBirthTime: bo
     강약근거: reason,
     격국,
     격국근거,
+    용신,
+    희신,
+    기신,
+    용신근거,
   };
 }

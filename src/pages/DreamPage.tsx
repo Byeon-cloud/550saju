@@ -1789,6 +1789,8 @@ function buildSajuContext(profile: SajuProfile): any {
     ilgan: day?.천간 ?? '',
     ilganOheng: day?.천간오행 ?? '',
     ohengDistribution: ohengDist,
+    // 2026-06-26 보강1 — 결정론 용신 주입 (행운 색/방위 SSOT, 종합사주·주제운·오늘운세와 동일 소스)
+    yongsin: (profile.sajuData as any)?.myeongriAnalysis?.용신 || '',
     currentDaeun,
     fullSajuData: profile.sajuData,
   };

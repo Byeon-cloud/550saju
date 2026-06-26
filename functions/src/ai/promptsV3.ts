@@ -14,7 +14,7 @@ const LUCKY_SSOT_BLOCK = `
 ## 🚨 행운·개운 데이터 SSOT (절대 규칙 · 회귀 금지)
 luckyProfile(color·direction·number·food·glyph)·lifestyleAdvice·actionList의 색방위 처방·ohengDirectionMap 등 **모든 '행운/개운' 항목은 오직 [원국 용신(用神)] 한 가지 오행에서만** 도출한다. 같은 사람은 어느 콘텐츠(종합사주·오늘운세·주제운·꿈)에서도 행운 색·방위가 동일해야 한다.
 
-1. 먼저 용신(用神) 1개를 아래 순서로 확정하라 (콘텐츠마다 같은 답이 나오게 결정론적으로 — 이 순서를 어기면 색이 갈린다):
+1. 용신(用神)을 정한다. ★최우선: 사주 데이터(또는 사주 base)에 "용신: X" / "용신(SSOT): X"가 이미 명시돼 있으면 그 값을 무조건 그대로 사용하라 — 재추론·재계산·다른 오행으로 변경 절대 금지. 이것이 콘텐츠 간 행운색 일치의 핵심이다. 명시돼 있지 않을 때만 아래 순서로 직접 판정:
    ① 조후 우선 판정: 일간이 亥子丑월(겨울)이고 원국에 화(火)가 투출·통근 전무 → 용신=화. 巳午未월(여름)이고 수(水)가 전무 → 용신=수. (이미 그 오행이 원국에 투출/통근해 충분하면 조후 발동 안 함, ②로)
    ② 신강(일간 강·비겁 과다): 병약법 — 비겁 과다면 이를 제어하는 관성이 1순위. 관성 없으면 설기하는 식상, 식상도 약하면 생재하는 재성. (제어 > 설기 > 생재)
    ③ 신약(일간 약): 일간을 돕는 인성이 1순위, 인성 없으면 비겁.
@@ -1249,7 +1249,7 @@ export const DAILY_FORTUNE_USER_V3 = (data: {
 }): string => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신} · 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'} · 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1562,7 +1562,7 @@ export const DAILY_FORTUNE_USER_V3_GROUP_A1 = (data: {
 }): string => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신} · 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'} · 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1628,7 +1628,7 @@ export const DAILY_FORTUNE_USER_V3_GROUP_A2 = (data: {
 }): string => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신} · 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'} · 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1717,7 +1717,7 @@ export const DAILY_FORTUNE_USER_V3_GROUP_A = (data: {
 }): string => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신} · 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'} · 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1830,7 +1830,7 @@ export const DAILY_FORTUNE_USER_V3_GROUP_B = (data: {
 }): string => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신} · 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'} · 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
