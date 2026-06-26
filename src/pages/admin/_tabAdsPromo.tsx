@@ -17,8 +17,7 @@ const REWARD_COLORS: Record<string, string> = {
   attend7: '#B5441F', daily: '#B8965A', streak3: '#5A7CA8', share: '#6FA08C',
 };
 const REWARD_LABEL: Record<string, string> = {
-  // ※ kind명은 'attend7' 이지만 의미는 5일 완주(2026-06-24 하향)
-  attend7: '5일 출석 완주', daily: '데일리 출석 (0.1운)', streak3: '3일 연속 (1운)', share: '공유 리워드',
+  attend7: '7일 출석 완주', daily: '데일리 출석 (0.1운)', streak3: '3일 연속 (1운)', share: '공유 리워드',
 };
 
 // 토스 프로모 실지급(원화) — kind 가 'promo_' 로 시작. amount 는 원(₩).
@@ -26,7 +25,7 @@ const REWARD_LABEL: Record<string, string> = {
 function promoLabel(kind: string): string {
   const test = kind.includes('TEST_') ? ' (테스트)' : '';
   if (kind.includes('01KTRSZ')) return `첫출석 10원 프로모${test}`;
-  if (kind.includes('01KPQJ')) return `5일 완주 100원 프로모${test}`;
+  if (kind.includes('01KPQJ')) return `7일 완주 100원 프로모${test}`;
   return `${kind}${test}`;
 }
 
@@ -120,7 +119,7 @@ export function TabAdsPromo({ d }: { d: AdminData }) {
 
       <Section
         title="리워드 적립 추이 (내부 운 · kind별 일별)"
-        caption="· reward_earned 이벤트 (내부 운 적립 — 실지급 원화 아님) — daily(데일리 출석 0.1운) / streak3(3일 연속 1운) / attend7(5일 출석 완주) / share(공유 리워드)"
+        caption="· reward_earned 이벤트 (내부 운 적립 — 실지급 원화 아님) — daily(데일리 출석 0.1운) / streak3(3일 연속 1운) / attend7(7일 출석 완주) / share(공유 리워드)"
       >
         {!hasReward ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>

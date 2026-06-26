@@ -202,11 +202,9 @@ function writeAttendDays(days: string[]): void {
   } catch { /* noop */ }
 }
 
-// 2026-06-24 — 준기 결정: 7일 완주는 무료 데일리 유저에게 사실상 도달 불가(하루만 걸러도 영구 리셋).
-//   → 5일 완주 + grace 1일(하루 빠져도 인정). 토스 100원 지급(grant7DayAttendance)은 동일, 트리거만 5일로.
-//   ※ 토스 콘솔 프로모 설명이 '7일'이면 '5일'로 맞추면 일관적(선택 · 준기 수동).
-const ATTEND_TARGET_DAYS = 5;  // 출석 완주 목표 (구 7일 → 5일)
-const ATTEND_GRACE_DAYS = 1;   // 하루 빠져도 완주 인정
+// 2026-06-26 — 준기 결정: 5일 프로모 폐기. 토스 콘솔에 등록·활성된 기존 7일 프로모 코드 그대로 사용.
+const ATTEND_TARGET_DAYS = 7;  // 7일 출석 완주
+const ATTEND_GRACE_DAYS = 0;   // 순수 7일 연속 (원복)
 
 /** 출석 완주 여부 — 최근 5개 출석일의 캘린더 span 이 (5-1+1=5)일 이내면 완주 = 5일 중 하루 빠짐 1회 허용. */
 function isStreakComplete(days: string[]): boolean {

@@ -163,11 +163,8 @@ export function EventsPage() {
   };
 
   const weekStatusCopy = useMemo(() => {
-    // 2026-06-24 — 7일 완주는 무료 데일리 유저에게 도달 불가라 5일로 하향(준기 결정). 실지급(토스 100원)은
-    //   dailyReward 롤링 5일+grace 가 담당. 여기 주간 표시는 그 약속과 일치시키는 용도.
-    const goal = 5;
-    if (completedDays === 0) return `이번 주 시작! ${goal}일 출석하면 토스포인트 100원`;
-    if (completedDays < goal) return `${completedDays}일째 · ${goal - completedDays}일 더 출석하면 토스포인트 100원`;
+    if (completedDays === 0) return '이번 주 시작! 7일 모두 모으면 토스포인트 100원';
+    if (completedDays < 7) return `${completedDays}일째 · 남은 ${7 - completedDays}일 더 모으면 토스포인트 100원`;
     return '이번 주 완성 · 토스포인트 100원 지급 완료';
   }, [completedDays]);
 
@@ -204,7 +201,7 @@ export function EventsPage() {
             <h3 className="text-[16px] font-bold" style={{ color: C.navy, fontFamily: SERIF }}>이번 주 출석</h3>
           </header>
           <p className="text-[12px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
-            이번 주 5일 출석하면 토스포인트 100원
+            월~일 모두 체크하면 토스포인트 100원
           </p>
 
           {/* 7칸 그리드 */}
