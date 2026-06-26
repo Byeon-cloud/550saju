@@ -385,9 +385,9 @@ export function SajuCardPage() {
         style={{
           position: 'sticky',
           bottom: 0,
-          background: 'rgba(248,245,238,0.94)',
-          backdropFilter: 'blur(12px)',
+          background: C.paper,
           borderTop: `1px solid ${C.line}`,
+          boxShadow: '0 -6px 16px rgba(26,26,26,0.05)',
           padding: '12px 16px calc(12px + env(safe-area-inset-bottom))',
         }}
       >
