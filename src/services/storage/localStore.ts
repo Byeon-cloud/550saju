@@ -452,7 +452,18 @@ export function getProfiles(): SajuProfile[] {
       let migrated = false;
       for (const p of profiles) {
         if (p?.input?.birthYear && !(p.sajuData as any)?.myeongriAnalysis?.용신) {
-          try { p.sajuData = calculateSaju(p.input); migrated = true; } catch { /* 재계산 실패 시 기존 sajuData 유지 */ }
+          try {
+            const fresh = calculateSaju(p.input);
+            // 🚨 일주/간지 절대 보호 (회귀 금지) — 재계산한 4기둥이 기존과 100% 일치할 때만 적용한다.
+            //   calculator 간지 산출 로직이 그새 달라졌다면 일주가 바뀔 수 있으므로(기유→을미 류 절대 금지),
+            //   1글자라도 다르면 절대 덮어쓰지 않고 기존 sajuData(일주)를 그대로 보존한다. (용신은 AI 폴백)
+            const oldP = (p.sajuData as any)?.pillars || [];
+            const newP = (fresh as any)?.pillars || [];
+            const sameGanzi = oldP.length > 0 && oldP.length === newP.length &&
+              oldP.every((op: any, i: number) =>
+                (op?.천간 || '') === (newP[i]?.천간 || '') && (op?.지지 || '') === (newP[i]?.지지 || ''));
+            if (sameGanzi) { p.sajuData = fresh; migrated = true; }
+          } catch { /* 재계산 실패 시 기존 sajuData 유지 */ }
         }
       }
       if (migrated) {
