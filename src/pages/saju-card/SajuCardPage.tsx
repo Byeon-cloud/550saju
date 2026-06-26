@@ -383,12 +383,9 @@ export function SajuCardPage() {
       {/* ── 액션 바 (sticky) ── */}
       <div
         style={{
-          position: 'sticky',
-          bottom: 0,
           background: C.paper,
           borderTop: `1px solid ${C.line}`,
-          boxShadow: '0 -6px 16px rgba(26,26,26,0.05)',
-          padding: '12px 16px calc(12px + env(safe-area-inset-bottom))',
+          padding: '20px 16px calc(24px + env(safe-area-inset-bottom))',
         }}
       >
         <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', gap: 8 }}>
