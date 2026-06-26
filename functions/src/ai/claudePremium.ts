@@ -419,7 +419,17 @@ function buildSajuBaseBlock(sajuData: any): string {
   const elements = sajuData.elements || {};
   const sipsung =
     sajuData.sipsung?.map((s: any) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
-  const currentDaeun = sajuData.daeun?.find((d: any) => d.isCurrent || d.현재);
+  // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
+  //   대운 간지를 추측하다 뒤바꾸던 버그(인플루언서 피드백: 차트는 맞는데 본문이 이전/다음 대운을 swap) fix.
+  //   데이터(sajuData.daeun)에 전체가 있으니 결정론적으로 전달 → AI 가 추측·swap 불가.
+  const daeunList: any[] = Array.isArray(sajuData.daeun) ? sajuData.daeun : [];
+  const curIdx = daeunList.findIndex((d: any) => d.isCurrent || d.현재);
+  const daeunAge = (d: any) => (d?.시작나이 != null && d?.끝나이 != null) ? `${d.시작나이}~${d.끝나이}세` : (d?.나이범위 || '');
+  const daeunFlow = daeunList.length > 0
+    ? daeunList.map((d: any, i: number) => `- ${daeunAge(d)} ${d.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+    : '미상';
+  const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
+  const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
   const gilsin =
     sajuData.gilsin?.map((s: any) => s.이름한자 || s.이름).join(', ') || '없음';
   const hyungsal =
@@ -434,11 +444,9 @@ ${pillarsText}
 
 ## 십성: ${sipsung || '미상'}
 
-## 현재 대운: ${
-    currentDaeun
-      ? `${currentDaeun.간지} (${currentDaeun.시작나이 || currentDaeun.나이범위}세~)`
-      : '미상'
-  }
+## 대운 흐름 (10년 단위 · 나이는 만 나이 기준)
+${daeunFlow}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지·순서를 절대 바꾸지 말 것 — 이전/다음 대운 간지를 임의로 만들거나 뒤바꾸지 말고 위 목록 그대로 인용.` : ''}
 
 ## 길신: ${gilsin}
 ## 흉살: ${hyungsal}
@@ -517,6 +525,7 @@ ${GOOSEBUMP_BLOCK}
   * 행동 처방 2~3개: "결정·계약·발표는 9월~2월, 17시 이후에 잡으세요."
 
 ### SECTION 05. 대운 (大運) — 10년 단위로 흐르는 인생의 큰 강줄기
+- 🚨 '이전/현재/다음 대운'은 위 사주 base 의 '대운 흐름'에 명시된 간지·나이를 **그대로** 사용. 절대 임의 생성/swap 금지(차트와 본문이 어긋나면 신뢰 붕괴).
 - 현재 대운의 의미를 시적으로 ("지금은 X 대운 — 묵직하게 가라앉는 시기").
 - 이전 대운과의 변화 + 다음 대운 전환점.
 - 60년 가로 시간선 관점으로 인생 전체 굵직한 흐름 1~2 문단.
