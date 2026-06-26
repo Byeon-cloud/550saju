@@ -16,6 +16,7 @@
  */
 
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
+import { calculateSaju } from '@/services/saju/calculator';
 
 export type ContentType = 'report' | 'daily' | 'dream' | 'deepDream' | 'daeun' | 'monthly' | 'compat' | 'tojung' | 'topic';
 
@@ -444,7 +445,21 @@ export function generateId(): string {
 export function getProfiles(): SajuProfile[] {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const profiles: SajuProfile[] = JSON.parse(raw);
+      // 2026-06-26 보강1 마이그레이션 — 구 calculator 로 만든 프로필은 sajuData 에 용신이 없음.
+      //   행운 색/방위 SSOT(전 콘텐츠 동일 용신)를 기존 프로필에도 적용하려면 1회 재계산 필요.
+      let migrated = false;
+      for (const p of profiles) {
+        if (p?.input?.birthYear && !(p.sajuData as any)?.myeongriAnalysis?.용신) {
+          try { p.sajuData = calculateSaju(p.input); migrated = true; } catch { /* 재계산 실패 시 기존 sajuData 유지 */ }
+        }
+      }
+      if (migrated) {
+        try { localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); } catch { /* noop */ }
+      }
+      return profiles;
+    }
     // 마이그레이션: 기존 리포트에서 프로필 추출 (중복 제거)
     const reports = getReports();
     const seen = new Map<string, SajuProfile>();
