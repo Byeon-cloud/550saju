@@ -190,8 +190,35 @@ function getUtm(): Record<string, string> | null {
   }
 }
 
+/* ─── 앱인토스 진입 출처 캡처 (2026-06-27 · A) ───
+ *   토스 딥링크(intoss://saju500/path?utm_source=threads)가 query 를 webview location.search 로
+ *   안 넘기는 경우, 토스 SDK getSchemeUri() = 실행 스킴 URI 통째 → 거기서 utm/ref 파싱.
+ *   웹 utm(captureUtm)이 이미 source 를 잡았으면 스킵. best-effort, 웹 빌드선 early-return. */
+async function captureTossSchemeUtm(): Promise<void> {
+  try {
+    const { isAppintosBuild } = await import('@/lib/env');
+    if (!isAppintosBuild) return;
+    const existing = getUtm() || {};
+    if (existing.source) return; // 이미 출처 확보 시 스킵
+    const mod: any = await import('@apps-in-toss/web-framework');
+    const uri: string = typeof mod?.getSchemeUri === 'function' ? (mod.getSchemeUri() || '') : '';
+    const qi = uri.indexOf('?');
+    const q = new URLSearchParams(qi >= 0 ? uri.slice(qi + 1) : '');
+    const source = q.get('utm_source') || q.get('ref') || '';
+    const medium = q.get('utm_medium') || '';
+    const campaign = q.get('utm_campaign') || '';
+    sessionStorage.setItem(UTM_KEY, JSON.stringify({
+      ...existing,
+      // utm 태그 있으면 그 출처, 없으면 'toss_app'(토스 내부 discovery/검색/추천 or 무태그 딥링크) — 웹 direct 와 구분
+      source: source || 'toss_app',
+      ...(medium ? { medium } : {}),
+      ...(campaign ? { campaign } : {}),
+    }));
+  } catch { /* noop — 출처 캡처는 fire-and-forget */ }
+}
+
 // 모듈 init 시 1회 캡처 (SSR 안전 가드) + 전역 CTA 클릭 수집 시작
-if (typeof window !== 'undefined') { captureUtm(); initCtaTracking(); }
+if (typeof window !== 'undefined') { captureUtm(); captureTossSchemeUtm(); initCtaTracking(); }
 
 /** 2026-06-12 P0 — 부팅 이벤트가 익명 로그인 완료 전에 발사되면 rules(auth 필수)에 막혀
  *  조용히 버려지던 레이스 fix. 첫 auth 상태 확정까지 최대 6초 대기 후 기록. */
