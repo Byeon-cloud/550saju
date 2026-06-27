@@ -8,12 +8,34 @@
  */
 
 /** GA4 (외부 대시보드용 — 유입경로·유저플로우·체류시간) */
+/** 토스 자체 analytics(@apps-in-toss web-analytics)로 핵심 이벤트 미러 (2026-06-27 · D).
+ *  토스 콘솔에 screen/click 네이티브 이벤트 전송 → 토스가 유입 컨텍스트(discovery/검색/추천)로 귀속.
+ *  utm 으로 못 잡는 '토스 내부 유입' attribution 을 토스 콘솔에서 보기 위함. best-effort · 앱인토스에서만. */
+const TOSS_MIRROR = new Set(['page_view', 'cta_click', 'content_open', 'content_purchase', 'charge_complete']);
+function mirrorToTossAnalytics(eventName: string, params?: Record<string, string | number>): void {
+  if (!TOSS_MIRROR.has(eventName)) return;
+  try {
+    import('@/lib/env').then(({ isAppintosBuild }) => {
+      if (!isAppintosBuild) return;
+      import('@apps-in-toss/web-framework').then((mod: any) => {
+        const A = mod?.Analytics;
+        if (!A) return;
+        const logName = String(params?.page_path ?? params?.label ?? params?.type ?? eventName);
+        if (eventName === 'page_view') A.screen?.({ log_name: logName });
+        else A.click?.({ log_name: eventName, target: logName });
+      }).catch(() => { /* noop */ });
+    }).catch(() => { /* noop */ });
+  } catch { /* noop */ }
+}
+
 export function trackEvent(eventName: string, params?: Record<string, string | number>) {
   if (typeof window !== 'undefined' && 'gtag' in window) {
     (window as unknown as { gtag: (...args: unknown[]) => void }).gtag('event', eventName, params);
   }
   // Firestore 경량 로그 (in-app 어드민용) — 핵심 이벤트만
   logToFirestore(eventName, params);
+  // 토스 자체 analytics 미러 (D) — 앱인토스 콘솔 네이티브 유입/퍼널 (토스 내부 유입 attribution)
+  mirrorToTossAnalytics(eventName, params);
 }
 
 export function trackPageView(pagePath: string) {
