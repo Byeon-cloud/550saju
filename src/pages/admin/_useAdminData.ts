@@ -80,6 +80,8 @@ export interface PeriodAgg {
   // 공유·리워드
   shareClicks: number;
   shareByDay: number[];
+  purchasesByDay: number[];                         // 콘텐츠구매 일별 (폭증 타임라인 2026-06-27)
+  chargesByDay: number[];                           // 충전결제 일별
   shareByPage: Record<string, number>;             // 공유 클릭 페이지별 — 어느 화면에서 공유 최다 (2026-06-24)
   shareByBalanceBand: Record<string, number>;      // 공유자 운 잔액대별 ('0'|'1-3'|'4-9'|'10+')
   sharerCount: number;                             // 공유한 고유 유저 수
@@ -153,7 +155,7 @@ function emptyAgg(days: string[]): PeriodAgg {
     contentOpen: {}, contentResult: {}, contentPurchase: {},
     contentOpenTotal: 0, contentResultTotal: 0, contentPurchaseTotal: 0, contentPurchaseUn: 0,
     topicSelect: {}, topicOpen: {}, bounceRate: null,
-    shareClicks: 0, shareByDay: days.map(() => 0),
+    shareClicks: 0, shareByDay: days.map(() => 0), purchasesByDay: days.map(() => 0), chargesByDay: days.map(() => 0),
     shareByPage: {}, shareByBalanceBand: {}, sharerCount: 0, sharesPerUser: 0, chargeBySource: {},
     rewardByKind: {}, rewardKindByDay: {}, rewardTotal: 0,
     adStats: { impression: 0, click: 0, nofill: 0, fail: 0 },
@@ -231,12 +233,14 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
       const un = Number(e.props?.amount) || 0;
       slot.count += 1; slot.un += un;
       agg.contentPurchaseTotal += 1; agg.contentPurchaseUn += un;
+      if (dayIdx >= 0) agg.purchasesByDay[dayIdx] += 1;
       break;
     }
     case 'charge_open': agg.chargeOpen += 1; break;
     case 'charge_complete': {
       agg.chargeComplete += 1;
       agg.chargeAmount += Number(e.props?.amount) || 0;
+      if (dayIdx >= 0) agg.chargesByDay[dayIdx] += 1;
       scratch.chargeByUser[userKey] = (scratch.chargeByUser[userKey] ?? 0) + 1;
       // 2026-06-24 — 결제 유발 콘텐츠(진입경로): 어떤 콘텐츠에서 결제를 결심했나.
       const src = (e.props?.source as string | undefined) || 'direct';

@@ -68,6 +68,14 @@ export function TabAcquisition({ d }: { d: AdminData }) {
   })), [cur, prev]);
   const hasShare = cur.shareClicks > 0 || prev.shareClicks > 0;
 
+  // 구매·충전 일별 추이 (2026-06-27) — 폭증 감지용
+  const purchaseSeries = useMemo(() => cur.days.map((day, i) => ({
+    day: day.slice(5),
+    구매: cur.purchasesByDay?.[i] ?? 0,
+    충전: cur.chargesByDay?.[i] ?? 0,
+  })), [cur]);
+  const hasPurchaseSeries = (cur.purchasesByDay?.some((v) => v > 0)) || (cur.chargesByDay?.some((v) => v > 0));
+
   // 공유 분해 — 페이지별 분포 (건수 내림차순)
   const sharePageRows = useMemo(() =>
     Object.entries(cur.shareByPage).map(([page, count]) => ({
@@ -108,8 +116,27 @@ export function TabAcquisition({ d }: { d: AdminData }) {
       </Section>
 
       <Section
+        title="구매·충전 추이 (일별) — 폭증 감지"
+        caption="· 콘텐츠구매 + 충전결제를 일별로. 특정 날 스파이크 = 유입 폭증 · 시간대·소스 정밀 분해는 adminInflowReport 함수(?key=&days=)"
+      >
+        {!hasPurchaseSeries ? <Empty text="아직 구매 데이터 없음" /> : (
+          <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={purchaseSeries} margin={{ left: 0, right: 8 }}>
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: C.mute }} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10, fill: C.mute }} width={32} allowDecimals={false} />
+                <Tooltip formatter={(v: any, name: any) => [`${fmtNum(Number(v))}건`, name]} />
+                <Line type="monotone" dataKey="구매" stroke={C.gold} strokeWidth={2.5} dot={{ r: 2 }} />
+                <Line type="monotone" dataKey="충전" stroke="#5A7CA8" strokeWidth={2} dot={{ r: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Section>
+
+      <Section
         title="utm_source별 전환"
-        caption="· utm 파라미터 없는 진입은 direct 로 집계 (?utm_source= 또는 ?ref= 로 캠페인 구분) · 충전전환 = 충전완료 ÷ 방문"
+        caption="· 태그 링크는 그 source(?utm_source=threads 등) · 앱인토스 무태그 = toss_app(토스 내부/딥링크) · 웹 무태그 = direct · 충전전환 = 충전완료 ÷ 방문"
       >
         <DataTable columns={utmCols} rows={utmRows} initialSortKey="visits" />
       </Section>
