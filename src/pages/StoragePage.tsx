@@ -48,6 +48,7 @@ import {
 } from '@/services/storage/chatStore';
 import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
+import { getTopicPrice } from '@/constants/pricing';
 // Stage 7e-5: 보관함 카드에서 sajuData 즉시 계산 (모든 프로필 일주/오행 컬러 보장)
 import { calculateSaju } from '@/services/saju/calculator';
 
@@ -1218,9 +1219,13 @@ function HistoryCard({
     month: '2-digit',
     day: '2-digit',
   });
-  // 운 사용 표기 — paid 면 실제 결제 가격, free 면 "무료"
-  const baseCost = CONTENT_COST[ct] ?? 1;
-  const actualCost = isPremium ? 10 : baseCost;
+  // 운 사용 표기 — paid 면 실제 결제 가격(SSOT), free 면 "무료"
+  // topic 콘텐츠는 getTopicPrice(topicId).actualPrice 가 진짜 가격(재물/연애/재회=3운, 나머지=1운).
+  const actualCost = isPremium
+    ? 10
+    : ct === 'topic' && topicId
+    ? getTopicPrice(topicId).actualPrice
+    : (CONTENT_COST[ct] ?? 1);
   const unCost = report.type === 'paid'
     ? (actualCost === 0 ? '무료' : `${actualCost}운 사용`)
     : '무료';

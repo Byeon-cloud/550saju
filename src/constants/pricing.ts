@@ -153,12 +153,11 @@ function resolvePricing(def: PricingDef): PricingInfo {
 
 /** 주제운별 가격 raw 정의 (10주제) — 정의 안 된 토픽은 default 1운 */
 const TOPIC_PRICING_RAW: Record<string, PricingDef> = {
-  reunion: {
-    regularPrice: 3,
-    salePrice: 1,
-    isOnSale: false, // 2026-06-27 출시 세일 종료(준기) → 정가 3운 복귀
-    saleBadge: '출시 세일',
-  },
+  // 2026-06-27 준기: 재물·연애·재회운 = 정가 3운 (사용량 최상위 핵심 유료 콘텐츠).
+  //   나머지 7주제는 DEFAULT_TOPIC_PRICING 1운. 세일 도입 시 salePrice + isOnSale:true 만 추가.
+  love: { regularPrice: 3, isOnSale: false },
+  wealth: { regularPrice: 3, isOnSale: false },
+  reunion: { regularPrice: 3, isOnSale: false },
 };
 
 const DEFAULT_TOPIC_PRICING: PricingDef = { regularPrice: 1, isOnSale: false };

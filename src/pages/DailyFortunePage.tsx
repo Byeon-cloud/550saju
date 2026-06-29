@@ -42,6 +42,7 @@ import {
   type SajuProfile,
 } from '@/services/storage/localStore';
 import { generateDailyFortune, generateDailyFortuneStream } from '@/services/ai/reportGenerator';
+import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 import { stripMd } from '@/utils/format';
 import type { OhengType } from '@/types/saju';
 // 점수 SSOT + AI 프롬프트 baseScores100 전달
@@ -843,7 +844,7 @@ function ResultView({
                   : '건강 — 어떤 부분이 궁금하세요?'}
               </h3>
               <p style={{ fontSize: 12.5, color: '#7A7269', marginBottom: 16 }}>
-                선택하신 주제로 1운 깊이 분석을 시작합니다.
+                선택하신 주제로 깊이 분석을 시작합니다.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {SUB_TOPICS[topicPicker]?.map((t) => (
@@ -871,7 +872,7 @@ function ResultView({
                       fontSize: 11, fontWeight: 700, color: '#B8965A',
                       background: 'rgba(184,150,90,0.12)',
                       padding: '4px 10px', borderRadius: 100,
-                    }}>1운</span>
+                    }}>{formatPriceLabel(getTopicPrice(t.id))}</span>
                   </button>
                 ))}
               </div>

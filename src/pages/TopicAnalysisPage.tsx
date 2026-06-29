@@ -42,7 +42,7 @@ import {
 // AI prompt 재작성 (Phase 4) 까지 USE_TOPIC_MOCKUP_VIEW=false 로 leg스 보존
 import { TopicMockupView } from './topic/TopicMockupView';
 import { TOPIC_THEMES, normalizeTopicKey, type TopicResultV2 } from './topic/_topic_themes';
-import { getTopicPrice } from '@/constants/pricing';
+import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 
 /** Phase 4 (AI prompt 재작성) 완료 후 true 로 flip — JDS_Topic_IA 통합 결과 페이지 활성화 */
 const USE_TOPIC_MOCKUP_VIEW = false;
@@ -4463,6 +4463,7 @@ export function TopicAnalysisPage() {
             if (USE_TOPIC_MOCKUP_VIEW && selected && topicId) {
               const v2Theme = TOPIC_THEMES[normalizeTopicKey(topicId)];
               const v2Result = adaptToTopicResultV2(result, topicId);
+              const pricing = getTopicPrice(topicId as TopicKey);
               return (
                 <motion.div key="result-v2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                   <TopicMockupView
@@ -4470,7 +4471,7 @@ export function TopicAnalysisPage() {
                     profile={selected}
                     result={v2Result}
                     nameLabel={selected.name ? `${selected.name} 님` : undefined}
-                    tierLabel="1운"
+                    tierLabel={formatPriceLabel(pricing)}
                     onShare={() => { /* ShareModal trigger TBD */ }}
                     onChat={async () => {
                       const { createChatRoom } = await import('@/services/storage/chatStore');
@@ -5072,31 +5073,36 @@ export function TopicAnalysisPage() {
       </Modal>
 
       {/* audit 3 P0 E2 · 잔액 부족 inline Modal (입력값은 sessionStorage 보존됨) */}
-      <Modal isOpen={showInsufficient} onClose={() => setShowInsufficient(false)} title="1운이 부족해요">
-        <div style={{ marginBottom: 16 }}>
-          <p style={{ fontSize: 14, color: '#3D3D3D', lineHeight: 1.65, marginBottom: 8 }}>
-            <strong style={{ color: '#A37A2E' }}>{topic.label}</strong> 분석에는 1운이 필요해요.
-          </p>
-          <p style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.6 }}>
-            지금까지 입력한 내용은 그대로 저장돼 있어요. 충전 후 돌아오면 이어서 분석할 수 있습니다.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="ghost" fullWidth onClick={() => setShowInsufficient(false)}>
-            나중에
-          </Button>
-          <Button
-            variant="gold"
-            fullWidth
-            onClick={() => {
-              setShowInsufficient(false);
-              navigate('/charge', { state: { message: `${topic.label} 분석에 1운이 필요해요`, returnTo: `/topic/${topicId}` } });
-            }}
-          >
-            충전하러 가기
-          </Button>
-        </div>
-      </Modal>
+      {(() => {
+        const need = getTopicPrice(topicId as TopicKey).actualPrice;
+        return (
+        <Modal isOpen={showInsufficient} onClose={() => setShowInsufficient(false)} title={`${need}운이 부족해요`}>
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: 14, color: '#3D3D3D', lineHeight: 1.65, marginBottom: 8 }}>
+              <strong style={{ color: '#A37A2E' }}>{topic.label}</strong> 분석에는 {need}운이 필요해요.
+            </p>
+            <p style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.6 }}>
+              지금까지 입력한 내용은 그대로 저장돼 있어요. 충전 후 돌아오면 이어서 분석할 수 있습니다.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="ghost" fullWidth onClick={() => setShowInsufficient(false)}>
+              나중에
+            </Button>
+            <Button
+              variant="gold"
+              fullWidth
+              onClick={() => {
+                setShowInsufficient(false);
+                navigate(`/charge?need=${need}`, { state: { message: `${topic.label} 분석에 ${need}운이 필요해요`, returnTo: `/topic/${topicId}` } });
+              }}
+            >
+              충전하러 가기
+            </Button>
+          </div>
+        </Modal>
+        );
+      })()}
 
       {/* 2026-05-07 — partner 시간 선택 시트 (InputPage HourSheet 와 디자인 통일) */}
       <HourPickerSheet

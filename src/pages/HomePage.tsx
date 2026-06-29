@@ -75,6 +75,9 @@ export function HomePage() {
   const { name, hasProfile } = useActiveProfile();
   const todayHint = useTodayHeadline();
 
+  // DEEP DIVE 포괄 헤더용 최저 주제가 (SSOT 파생 · love/wealth/reunion=3운, 나머지 7주제=1운 → 현재 1)
+  const minTopicPrice = Math.min(...listTopics().map((t) => getTopicPrice(t.id).actualPrice));
+
   /** DEEP DIVE 10주제 가로 스크롤 ref — 우측 버튼만 (60대+ 가로스크롤 affordance · 좌측은 손가락 스와이프)
    *  2026-05-05: 좌측 버튼 제거 (카드 가림 문제) · 우측 끝 도달 시 우측 버튼 자동 숨김 */
   const deepDiveScrollRef = useRef<HTMLDivElement>(null);
@@ -393,8 +396,8 @@ export function HomePage() {
         <div className="flex items-baseline gap-2">
           <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>DEEP DIVE</span>
           <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
-          {/* 2026-05-28 PM — 가격 안내 (1운 / 재회운만 3운→1운 세일) */}
-          <span className="text-[10.5px] font-bold" style={{ color: C.goldDark }}>주제당 1운</span>
+          {/* 2026-06-29 — 가격 안내 (포괄 헤더 = 최저가 SSOT 파생 · love/wealth/reunion 정가 3운, 나머지 7주제 1운, 세일 없음) */}
+          <span className="text-[10.5px] font-bold" style={{ color: C.goldDark }}>주제당 {minTopicPrice}운부터</span>
         </div>
         <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
           진짜 궁금한 한 가지, <span style={{ color: C.goldHi }}>깊게 파보세요</span>

@@ -16,6 +16,7 @@ import type { SajuProfile } from '@/services/storage/localStore';
 import type { OhengType } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { STEM_INFO, BRANCH_INFO } from '@/utils/sajuStemBranch';
+import { getTopicPrice } from '@/constants/pricing';
 
 // HTML 안전 태그 (<strong>, <b>, <u> 등) 보존 + XSS 차단 (P0 fix 2026-05-06)
 const safeHtml = (text: any): { __html: string } => ({ __html: sanitizeAiText(String(text ?? '')) });
@@ -1469,13 +1470,15 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                   { cls: 't-rel', nm: '관계', han: '緣', key: 'love' as const, cta: '관계·연애운 깊이 보기' },
                   { cls: 't-work', nm: '일', han: '業', key: 'career' as const, cta: '직업·진로운 깊이 보기' },
                   { cls: 't-health', nm: '건강', han: '身', key: 'health' as const, cta: '건강·체질운 깊이 보기' },
-                ].map((t) => (
+                ].map((t) => {
+                  const price = getTopicPrice(t.key).actualPrice;
+                  return (
                   <button
                     key={t.key}
                     type="button"
                     className={`topic-card ${t.cls}`}
                     onClick={() => onTopicClick?.(t.key)}
-                    aria-label={`${t.nm} 깊이 보기 (1운)`}
+                    aria-label={`${t.nm} 깊이 보기 (${price}운)`}
                   >
                     <div className="head">
                       <span className="nm">{t.nm}</span>
@@ -1486,9 +1489,10 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                       <span className="score-max">/10</span>
                     </div>
                     <div className="one-liner" dangerouslySetInnerHTML={safeHtmlEmph(subScoreOneLines?.[t.key] || '—')} />
-                    <div className="cta-text"><span>{t.cta}</span><span className="cost-pill">1운</span></div>
+                    <div className="cta-text"><span>{t.cta}</span><span className="cost-pill">{price}운</span></div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
 
               {/* §07 마무리: closing 메시지 + 내일 미리보기 (사용자 요청 2026-05-07 v7)

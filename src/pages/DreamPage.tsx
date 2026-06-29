@@ -43,6 +43,7 @@ import {
 } from '@/services/ai/reportGenerator';
 import { stripMd } from '@/utils/format';
 import { TOPIC_REGISTRY } from '@/constants/topics';
+import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 import {
   RadarChart,
   PolarGrid,
@@ -1801,35 +1802,35 @@ function buildSajuContext(profile: SajuProfile): any {
  * - SSOT: src/constants/topics.ts · TOPIC_REGISTRY
  * - '연애·결혼' 혼합 라벨 → SSOT 단일 주제 (모순 방지 · love/marriage 별도 주제)
  * - 하드코딩 컬러 (#E91E63·#1565C0·#2D8A4E) → TOPIC_REGISTRY SSOT 컬러
- * - '1운 (500원)' → '1운' (원화 노출 ChargePage 로 집중)
+ * - price → formatPriceLabel(getTopicPrice(id)) SSOT 파생 (love/wealth 자동 3운 · 원화 노출 ChargePage 로 집중)
  * ═════════════════════════════════════════════════════════════════ */
 const DREAM_TOPIC_ITEMS: TopicItem[] = [
   {
     id: 'love',
     title: TOPIC_REGISTRY.love.label,
     desc: '이 꿈이 애정운에 주는 신호',
-    price: '1운',
+    price: formatPriceLabel(getTopicPrice('love')),
     color: TOPIC_REGISTRY.love.color,
   },
   {
     id: 'wealth',
     title: TOPIC_REGISTRY.wealth.label,
     desc: '재물 흐름과 기회의 방향',
-    price: '1운',
+    price: formatPriceLabel(getTopicPrice('wealth')),
     color: TOPIC_REGISTRY.wealth.color,
   },
   {
     id: 'career',
     title: TOPIC_REGISTRY.career.label,
     desc: '일·성장의 리듬 분석',
-    price: '1운',
+    price: formatPriceLabel(getTopicPrice('career')),
     color: TOPIC_REGISTRY.career.color,
   },
   {
     id: 'health',
     title: TOPIC_REGISTRY.health.label,
     desc: '컨디션과 체력의 포인트',
-    price: '1운',
+    price: formatPriceLabel(getTopicPrice('health')),
     color: TOPIC_REGISTRY.health.color,
   },
 ];

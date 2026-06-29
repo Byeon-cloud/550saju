@@ -22,6 +22,7 @@
 import React, { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
+import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 import type { LocalReport } from '@/services/storage/localStore';
 import type { OhengType, SajuData } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
@@ -1922,6 +1923,10 @@ function TopicTopRecommend({
   if (top3.length === 0) return null;
   const topScore = top3[0][1];
   const topMeta = TOPIC_META[top3[0][0]];
+  // 가격 SSOT — top3 는 주제별 가격 혼재(love/wealth 3운 등) → 최저가 '주제당 N운부터' 표기
+  const top3MinPrice = Math.min(
+    ...top3.map(([k]) => getTopicPrice(k === 'potential' ? 'study' : k).actualPrice)
+  );
 
   function getHook(score: number, key: string): string {
     return deriveTopicHook(key, score, sipDist, dayGan);
@@ -1972,7 +1977,7 @@ function TopicTopRecommend({
           }}
         >
           <span style={{ fontSize: 11 }}>◆</span>
-          1운으로 깊이 보기 · 深 度
+          주제별로 깊이 보기 · 深 度
         </div>
         <div
           style={{
@@ -1988,11 +1993,11 @@ function TopicTopRecommend({
           {topScore >= 85
             ? <>이 사주에서 가장 빛나는 결은 <span style={{ color: '#f4d166' }}>{topMeta.label}({topMeta.hanja})</span> 입니다</>
             : topScore >= 60
-            ? <>1운으로 가장 깊게 풀어볼 만한 <span style={{ color: '#f4d166' }}>3 영역</span></>
+            ? <>가장 깊게 풀어볼 만한 <span style={{ color: '#f4d166' }}>3 영역</span></>
             : <>지금 가장 보강이 필요한 <span style={{ color: '#f4d166' }}>3 영역</span></>}
         </div>
         <div style={{ fontSize: 12, color: 'rgba(244,236,216,0.66)', lineHeight: 1.6, letterSpacing: '0.01em' }}>
-          점수가 가장 도드라진 세 갈래를 <strong style={{ color: '#f4d166', fontWeight: 800 }}>1운</strong>으로 깊게 풀어드립니다 — 시기·자리·결정 포인트까지.
+          점수가 가장 도드라진 세 갈래를 깊게 풀어드립니다 — 시기·자리·결정 포인트까지.
         </div>
       </div>
 
@@ -2010,6 +2015,9 @@ function TopicTopRecommend({
           const isFirst = idx === 0;
           const rank = getRank(score);
           const hook = getHook(score, key);
+          // 가격 SSOT — key='potential' 은 route '/topic/study' → getTopicPrice('study')
+          const priceTopicId = key === 'potential' ? 'study' : key;
+          const priceLabel = formatPriceLabel(getTopicPrice(priceTopicId));
           return (
             <button
               key={key}
@@ -2158,7 +2166,7 @@ function TopicTopRecommend({
                   letterSpacing: '0.06em',
                 }}
               >
-                1운으로 보기 →
+                {priceLabel}으로 보기 →
               </span>
             </button>
           );
@@ -2176,7 +2184,7 @@ function TopicTopRecommend({
           letterSpacing: '0.04em',
         }}
       >
-        한 영역당 <strong style={{ color: '#f4d166', fontWeight: 800 }}>1운</strong> · 시기·자리·결정 포인트까지
+        주제당 <strong style={{ color: '#f4d166', fontWeight: 800 }}>{top3MinPrice}운</strong>부터 · 시기·자리·결정 포인트까지
       </div>
     </div>
   );
@@ -2875,7 +2883,7 @@ export function PremiumResult({
           2026-05-05 6 카드 복원 (잠재력·인간관계 추가) → 제목 "주제별 한눈에" → "여섯 영역 한눈에"
           ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={9} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·잠재력 — 강·약 점수와 1운 깊이 보기">
+        <CollapsibleSection step={9} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·잠재력 — 강·약 점수와 주제별 깊이 보기">
           {/* Stage 2C-2#6: 여섯 영역 점수 topic-mini grid (mockup topic-mini 진본) */}
           <TopicMiniGrid scores={scores} aiTopics={aiResult.topicMini} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} />
           {conclusionAt(8) && (
@@ -7082,11 +7090,14 @@ function TopicMiniGrid({
       const score = Number(scores?.[t.key] ?? 0);
       // 동적 hook — sipDist + dayGan 호명
       const hook = deriveTopicHook(t.key, score, sipDist, dayGan);
+      // 가격 SSOT — 주제별 actualPrice (love/wealth 3운 등)
+      const price = getTopicPrice(t.topicId).actualPrice;
       return {
         ...t,
         score,
         desc: aiDesc,
         hook,
+        price,
         isFull: false,
       };
     })
@@ -7099,11 +7110,11 @@ function TopicMiniGrid({
   const lowScore = sortedScores[sortedScores.length - 1];
 
   // CTA 보강 텍스트 — 점수별 동적 (낮을 땐 "왜 낮은지", 높을 땐 "어디까지 갈 수 있는지")
-  function getCtaLine(label: string, score: number): string {
-    if (score >= 88) return `최강 ${score}점 — 1운으로 한계 확인`;
-    if (score >= 75) return `${score}점 활용 시기 1운에서`;
-    if (score <= 50) return `약 ${score}점 — 1운으로 보강법`;
-    return `${label} 1운에서 깊이 보기`;
+  function getCtaLine(label: string, score: number, price: number): string {
+    if (score >= 88) return `최강 ${score}점 — ${price}운으로 한계 확인`;
+    if (score >= 75) return `${score}점 활용 시기 ${price}운에서`;
+    if (score <= 50) return `약 ${score}점 — ${price}운으로 보강법`;
+    return `${label} ${price}운에서 깊이 보기`;
   }
 
   // mockup §9 .topic-mini-grid 진본 — 2-column grid + 마지막 카드 .full
@@ -7154,7 +7165,7 @@ function TopicMiniGrid({
             {t.desc && <div className="tm-desc" dangerouslySetInnerHTML={{ __html: sanitizeAiText(t.desc) }} />}
             {/* 호기심 카피 — 점수별 분기 (CTA 효율 ↑) */}
             <div className="tm-hook">
-              <span className="tm-hook-label">1운으로 보면</span>
+              <span className="tm-hook-label">{t.price}운으로 보면</span>
               {t.hook}
             </div>
             {isClickable && (
@@ -7162,7 +7173,7 @@ function TopicMiniGrid({
                 className="tm-link"
                 style={isPeak ? { color: '#2e7d32', fontWeight: 700 } : isLow ? { color: '#c62828', fontWeight: 700 } : undefined}
               >
-                {getCtaLine(t.label, t.score)}
+                {getCtaLine(t.label, t.score, t.price)}
               </div>
             )}
           </div>

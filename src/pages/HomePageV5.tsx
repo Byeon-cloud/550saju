@@ -24,6 +24,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { useUserPath, type UserPath } from '@/hooks/useUserPath';
 import { HOME_REVIEWS } from '@/constants/reviews';
+import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 // 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
 
 /* ────────────────────────────────────────────────────────────
@@ -246,7 +247,7 @@ function Topic5({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   ];
   return (
     <div className="mx-4 mt-4 w-[calc(100%-32px)]">
-      <p className="text-[14px] font-bold mb-2" style={{ color: C.ink, fontFamily: SERIF }}>주제별 1운</p>
+      <p className="text-[14px] font-bold mb-2" style={{ color: C.ink, fontFamily: SERIF }}>주제별 분석</p>
       <div className="grid grid-cols-5 gap-1.5">
         {TOPICS.map((t) => (
           <button key={t.id} type="button" onClick={() => navigate(`/topic/${t.id}`)}
@@ -254,7 +255,7 @@ function Topic5({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
             style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
             <span className="w-2 h-2 rounded-full mb-1" style={{ background: t.color }} />
             <span className="text-[11px] font-bold text-center px-1 leading-tight" style={{ color: C.ink }}>{t.label}</span>
-            <span className="text-[9.5px] mt-0.5" style={{ color: C.mute }}>1운</span>
+            <span className="text-[9.5px] mt-0.5" style={{ color: C.mute }}>{formatPriceLabel(getTopicPrice(t.id))}</span>
           </button>
         ))}
       </div>

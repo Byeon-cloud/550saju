@@ -10,7 +10,9 @@ import { isAppintosBuild } from '@/lib/env';
 import { AD_BANNER_GROUP_ID } from '@/constants/config';
 import { AdSlot } from '@/components/ads/AdSlot';
 // 2026-05-29 H1 fix — 업셀 "종합 10운" 하드코딩 → SSOT 세일가 반영 (런칭세일 중 5운).
-import { getPremiumPrice } from '@/constants/pricing';
+// 2026-06-29 — report 업셀 "주제별 1운" 하드코딩 → SSOT 최저가 파생 (love/wealth/reunion 3운과 모순 제거).
+import { getPremiumPrice, getTopicPrice } from '@/constants/pricing';
+import { listTopics } from '@/constants/topics';
 
 /* ══════════════════════════════════════════════════════════════════
  * SSOT 토큰 (D1 정렬)
@@ -228,8 +230,9 @@ const UPSELL_COPY: Record<UpsellContentType, UpsellCopy> = {
     path: '/charge?need=10',
   },
   report: {
+    // cost 는 SSOT 최저가로 런타임 파생 (아래 costLabel 계산부) — 여기 값은 fallback/표식용.
     title: '주제별 심층 풀이도 이어서 받아보세요',
-    cost: '주제별 1운',
+    cost: '주제별',
     path: '/topic',
   },
 };
@@ -245,11 +248,21 @@ export function UpsellCard({ contentType, onTap }: UpsellCardProps) {
   const navigate = useNavigate();
   // 종합사주 업셀("종합 10운")은 SSOT 세일가로 표기. 세일 중: "종합 10운 → 5운".
   const pp = getPremiumPrice();
-  const costLabel = copy.cost.includes('종합')
-    ? (pp.isOnSale && pp.salePrice != null
+  let costLabel: string;
+  if (copy.cost.includes('종합')) {
+    costLabel =
+      pp.isOnSale && pp.salePrice != null
         ? `종합 ${pp.regularPrice}운 → ${pp.salePrice}운`
-        : `종합 ${pp.regularPrice}운`)
-    : copy.cost;
+        : `종합 ${pp.regularPrice}운`;
+  } else if (copy.cost.includes('주제별')) {
+    // report 업셀 → /topic 허브 (특정 토픽 아님). 가격 혼재(현 1~3운) → SSOT 최저가 시작가 표기.
+    const minTopicPrice = Math.min(
+      ...listTopics().map((t) => getTopicPrice(t.id).actualPrice),
+    );
+    costLabel = `주제별 ${minTopicPrice}운부터`;
+  } else {
+    costLabel = copy.cost;
+  }
 
   function handleTap() {
     if (onTap) onTap();
