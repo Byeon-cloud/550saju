@@ -138,25 +138,71 @@ export interface DaeunPeriodDetail {
   advice: string;
 }
 
-// ━━━ 2026 월별 운세 ━━━
+// ━━━ 월별 운세 — 단일월 심층 (2026-06-30 재작업) ━━━
+// 기존 "2026 전체 12개월" 구조 폐기 → 사용자가 고른 1개 달을 깊게.
 export interface MonthlyDetailResponse {
-  yearOverview: string;
-  bestMonth: number;
-  worstMonth: number;
-  months: MonthlyDetail[];
+  year: number;
+  month: number;
+  headline: string;              // 그 달을 한 줄로 (일상어 결론 + 후크)
+  theme: string;                 // 그 달 핵심 테마 본문
+  periods: MonthlyPeriod[];      // 상순·중순·하순 3개
+  wealth: MonthlyDomain;         // 재물운
+  love: MonthlyDomain;           // 애정운
+  career: MonthlyDomain;         // 직업운
+  health: MonthlyDomain;         // 건강운
+  luckyDays: MonthlyDayNote[];   // 길일 2~3개
+  cautionDays: MonthlyDayNote[]; // 주의일 2~3개
+  gaewoon: string;               // 개운 처방
+  keywords: string[];            // 핵심 키워드
 }
 
-export interface MonthlyDetail {
-  month: number;
+/** 상순/중순/하순 시기별 흐름 */
+export interface MonthlyPeriod {
+  phase: string;       // '상순' | '중순' | '하순'
+  dateRange: string;   // 'M/1~M/10' 등
+  score: number;       // 0-100
+  body: string;        // 120자+
+}
+
+/** 4영역 (재물·애정·직업·건강) */
+export interface MonthlyDomain {
+  score: number;       // 0-100
+  body: string;        // 80자+
+}
+
+/** 길일·주의일 메모 */
+export interface MonthlyDayNote {
+  date: string;        // 'M/D' 또는 'M/D~M/D'
+  reason: string;
+}
+
+// ━━━ 주간운세 (이번 주 7일) — 2026-06-29 NEW ━━━
+export interface WeeklyDetailResponse {
+  keywords?: string[];
+  weekHeadline: string;
+  weekTheme: string;
+  bestDay: string;
+  cautionDay: string;
+  keyDays: WeeklyKeyDay[];
+  dailyBreakdown: WeeklyDay[];
+  weekLesson: string;
+}
+
+export interface WeeklyKeyDay {
+  day: string;
+  date: string;
+  type: string; // 'best' | 'caution'
+  reason: string;
+}
+
+export interface WeeklyDay {
+  day: string;
+  date: string;
+  ganji: string;
   score: number;
-  theme: string;
-  advice: string;
-  luckyDay: string;
-  luckyItem: string;
-  career: string;
-  love: string;
-  wealth: string;
-  caution: string;
+  tone: string;
+  body: string;
+  action: string;
 }
 
 // ━━━ 궁합 분석 ━━━

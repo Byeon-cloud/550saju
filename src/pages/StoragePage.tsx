@@ -78,16 +78,17 @@ const LAST_INPUT_KEY = 'saju500.lastInput';
  *  · 이전 4 탭 통합 (사주·궁합·기타) 은 분류 모호 → 사용자가 본 콘텐츠 정확히 못 찾음
  *  · 10 탭으로 확장 + 가로 스크롤 (overflow-x-auto 이미 적용)
  * ═════════════════════════════════════════════════════════════════ */
-type FilterKey = 'all' | 'report' | 'topic' | 'compat' | 'daeun' | 'monthly' | 'tojung' | 'daily' | 'dream' | 'chat';
+type FilterKey = 'all' | 'report' | 'topic' | 'compat' | 'daeun' | 'monthly' | 'weekly' | 'tojung' | 'daily' | 'dream' | 'chat';
 
 const FILTER_TABS: { key: FilterKey; label: string }[] = [
   { key: 'all',     label: '전체' },
   { key: 'report',  label: '종합사주' },   // report (1운 + 10운)
   { key: 'topic',   label: '주제별' },     // topic (10주제)
-  // 2026-05-07: '대운/월운/궁합/토정' 출시 후 공개 (코드 보존)
+  // 2026-06-29: 월운·주간 NEW 출시. 대운/궁합/토정은 출시 후 공개 (코드 보존)
+  { key: 'monthly', label: '월운' },
+  { key: 'weekly',  label: '주간' },
   // { key: 'compat',  label: '궁합' },
   // { key: 'daeun',   label: '대운' },
-  // { key: 'monthly', label: '월운' },
   // { key: 'tojung',  label: '토정비결' },
   { key: 'daily',   label: '오늘운세' },   // daily
   { key: 'dream',   label: '꿈해몽' },     // dream + deepDream 합침
@@ -101,6 +102,7 @@ const TAB_TO_CONTENT_TYPES: Record<Exclude<FilterKey, 'all' | 'chat'>, ContentTy
   compat:  ['compat'],
   daeun:   ['daeun'],
   monthly: ['monthly'],
+  weekly:  ['weekly'],
   tojung:  ['tojung'],
   daily:   ['daily'],
   dream:   ['dream', 'deepDream'],
@@ -111,6 +113,7 @@ const CONTENT_LABEL: Record<string, string> = {
   daily: '오늘의 운세',
   daeun: '대운',
   monthly: '월운',
+  weekly: '주간운세',
   compat: '궁합',
   tojung: '토정비결',
   topic: '주제별 운세',          // 10주제 (연애·재물·취업·결혼·재회·학업·이사·건강·사업·인간관계)
@@ -123,7 +126,8 @@ const CONTENT_COST: Record<string, number> = {
   report: 1,        // basic 1운 (tier='premium' 이면 10으로 override)
   daily: 0,         // 무료
   daeun: 1,
-  monthly: 1,
+  monthly: 7,   // 2026-06-29 NEW
+  weekly: 5,    // 2026-06-29 NEW
   compat: 1,
   tojung: 1,
   topic: 1,
@@ -1429,6 +1433,7 @@ function ContentIcon({ contentType }: { contentType: ContentType | 'chat' }) {
     daily: { hanja: '日', color: '#A55F11' },
     daeun: { hanja: '運', color: C.goldDeep },
     monthly: { hanja: '月', color: '#0E4582' },
+    weekly: { hanja: '週', color: '#C77D3A' },
     compat: { hanja: '合', color: '#9C2424' },
     tojung: { hanja: '占', color: '#1F6638' },
     topic: { hanja: '深', color: C.goldDeep },
@@ -1468,7 +1473,8 @@ function HistoryEmpty({ filterKey }: { filterKey: FilterKey }) {
     topic:   { title: '주제별 분석 기록이 없어요', sub: '연애·재물·직업 등 궁금한 한 주제를 깊이 보세요' },
     compat:  { title: '궁합 기록이 없어요',         sub: '관심 있는 사람과의 궁합을 봐볼까요?' },
     daeun:   { title: '대운 기록이 없어요',         sub: '10년 단위 인생의 큰 흐름을 확인해보세요' },
-    monthly: { title: '월운 기록이 없어요',         sub: '12개월 흐름을 사주에서 풀어드려요' },
+    monthly: { title: '월운 기록이 없어요',         sub: '원하는 달을 골라 그 달을 깊이 풀어드려요' },
+    weekly:  { title: '주간운세 기록이 없어요',     sub: '이번 주 7일의 흐름을 요일별로 짚어드려요' },
     tojung:  { title: '토정비결 기록이 없어요',     sub: '한 해의 흐름을 사주 전체에서 풀어드려요' },
     daily:   { title: '오늘운세 기록이 없어요',     sub: '오늘 하루를 사주로 가볍게 살펴보세요' },
     dream:   { title: '꿈해몽 기록이 없어요',       sub: '간밤에 꾼 꿈을 풀어보세요 (무료)' },
@@ -2097,14 +2103,17 @@ function formatHourCode(hour: number): string {
   return b ? b.ko : `${hour}시`;
 }
 
-/** 출시 lockdown 콘텐츠 — 라우트는 살아있으나 페이지가 홈으로 redirect 됨 (App.tsx:145-149) */
-const LOCKDOWN_CONTENT = new Set(['compat', 'daeun', 'monthly', 'tojung']);
+/** 출시 lockdown 콘텐츠 — 라우트는 살아있으나 페이지가 홈으로 redirect 됨 (App.tsx) */
+//  2026-06-29: 월운(monthly) NEW 출시로 lockdown 제외. 주간(weekly)도 공개. 대운/궁합/토정만 유지.
+const LOCKDOWN_CONTENT = new Set(['compat', 'daeun', 'tojung']);
 
 /** 콘텐츠 유형별 결과 페이지 라우트 (스펙 §3-3 탭 시 결과 이동) */
 function routeForReport(r: LocalReport): string | null {
   const ct = r.contentType;
   if (ct === 'dream' || ct === 'deepDream') return '/dream';
   if (ct === 'daily') return '/daily';
+  if (ct === 'monthly') return '/monthly'; // 2026-06-29 NEW — 재선택 시 캐시 복원
+  if (ct === 'weekly') return '/weekly';   // 2026-06-29 NEW
   // 2026-05-28 — 출시 lockdown 4종 (compat/daeun/monthly/tojung) 은 페이지가 홈으로 redirect 됨.
   //   보관함에서 클릭 시 무한 redirect 사이클 방지 위해 null 반환. openReport 에서 안내 toast.
   if (LOCKDOWN_CONTENT.has(ct as string)) return null;

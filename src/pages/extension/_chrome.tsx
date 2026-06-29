@@ -42,7 +42,7 @@ const C = {
 /* ══════════════════════════════════════════════════════════════════
  * 4 페이지 디자인 매핑
  * ═════════════════════════════════════════════════════════════════ */
-export type ExtensionPageKey = 'daeun' | 'monthly' | 'compat' | 'tojung';
+export type ExtensionPageKey = 'daeun' | 'monthly' | 'weekly' | 'compat' | 'tojung';
 
 export interface ExtensionTheme {
   heroGrad: string;
@@ -55,7 +55,7 @@ export interface ExtensionTheme {
   /** Hero h1 메인 카피 (mockup 진본) */
   heroH1: { line1: string; line2: string };
   /** 운 비용 (페이지별) */
-  cost: '1운' | '2운' | '3운';
+  cost: '1운' | '2운' | '3운' | '5운' | '7운';
 }
 
 export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
@@ -80,6 +80,18 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     label: '월운 · 이번 달',
     heroH1: { line1: '이번 달의 결과', line2: '시기를 살핍니다' },
     cost: '1운',
+  },
+  weekly: {
+    // 2026-06-29 NEW — 주간운세 (이번 주 7일) · SSOT 색 #C77D3A
+    heroGrad: 'linear-gradient(135deg,#E0975A 0%,#C77D3A 60%,#9C5E25 100%)',
+    hanja: '週',
+    accent: '#E0975A',
+    accentDark: '#C77D3A',
+    accentSoft: 'rgba(199,125,58,0.10)',
+    hint: '#6B3F14',
+    label: '주간운세 · 이번 주',
+    heroH1: { line1: '이번 주 7일의', line2: '흐름을 짚어 드립니다' },
+    cost: '5운' as ExtensionTheme['cost'],
   },
   compat: {
     heroGrad: 'linear-gradient(135deg,#B57FA0 0%,#9C5A8A 60%,#7C4570 100%)',

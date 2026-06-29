@@ -39,9 +39,10 @@ const ChatSessionPage = lazyWithReload(() => import('@/pages/chat/ChatSessionPag
 // 2026-05-07: 출시 후 공개 — import 보존
 const DaeunPage = lazyWithReload(() => import('@/pages/DaeunPage').then(m => ({ default: m.DaeunPage })));
 const MonthlyPage = lazyWithReload(() => import('@/pages/MonthlyPage').then(m => ({ default: m.MonthlyPage })));
+const WeeklyPage = lazyWithReload(() => import('@/pages/WeeklyPage').then(m => ({ default: m.WeeklyPage }))); // 2026-06-29 NEW 주간운세
 const CompatResultPage = lazyWithReload(() => import('@/pages/CompatResultPage').then(m => ({ default: m.CompatResultPage })));
 const TojungPage = lazyWithReload(() => import('@/pages/TojungPage').then(m => ({ default: m.TojungPage })));
-void DaeunPage; void MonthlyPage; void CompatResultPage; void TojungPage;
+void DaeunPage; void CompatResultPage; void TojungPage; // MonthlyPage 는 2026-06-29 /monthly 라우트에서 사용 중
 const PremiumSelectPage = lazyWithReload(() => import('@/pages/PremiumSelectPage').then(m => ({ default: m.PremiumSelectPage })));
 // 폐기됨 (iframe srcDoc + regex 패턴) — _archive_/ 로 이동. 진본은 PremiumResult.tsx
 const ChatPagePerfect = lazyWithReload(() => import('@/pages/ChatPagePerfect').then(m => ({ default: m.ChatPagePerfect })));
@@ -164,17 +165,18 @@ function AnimatedRoutes() {
             <Route path="/loading" element={<LoadingPage />} />
             <Route path="/result/:id" element={<ResultRouteGuard />} />
             <Route path="/daily" element={<DailyFortunePage />} />
-            {/* 2026-05-07: 출시 후 공개 — 4종 (대운/월운/궁합/토정비결) URL 직접 진입 시 홈으로 redirect (코드 보존) */}
+            {/* 2026-06-29: 월운세·주간운세 NEW 출시. 나머지 3종(대운/궁합/토정)은 lockdown 유지 */}
+            <Route path="/monthly" element={<MonthlyPage />} />
+            <Route path="/weekly" element={<WeeklyPage />} />
+            {/* 2026-05-07: 출시 후 공개 — 3종 (대운/궁합/토정비결) URL 직접 진입 시 홈으로 redirect (코드 보존) */}
             <Route path="/compat" element={<Navigate to="/" replace />} />
             <Route path="/compat/result" element={<Navigate to="/" replace />} />
             <Route path="/daeun" element={<Navigate to="/" replace />} />
-            <Route path="/monthly" element={<Navigate to="/" replace />} />
             <Route path="/tojung" element={<Navigate to="/" replace />} />
-            {/* 2026-05-07 출시 후 복구
+            {/* 2026-05-07 출시 후 복구 (월운은 위에서 이미 해제)
             <Route path="/compat" element={<CompatibilityPage />} />
             <Route path="/compat/result" element={<CompatResultPage />} />
             <Route path="/daeun" element={<DaeunPage />} />
-            <Route path="/monthly" element={<MonthlyPage />} />
             <Route path="/tojung" element={<TojungPage />} />
             */}
             <Route path="/premium" element={<PremiumSelectPage />} />

@@ -35,6 +35,7 @@ export type FooterCTAPageKey =
   | 'topic:moving'    // legacy alias
   | 'daeun'
   | 'monthly'
+  | 'weekly'
   | 'compat'
   | 'tojung';
 
@@ -63,6 +64,7 @@ const CONFIG: Record<FooterCTAPageKey, FooterCTAConfig> = {
   // 2026-05-07: 출시 후 공개 — emblem 정의 보존, 라우트만 홈으로 임시 변경
   daeun:            { emblem: '運', emblemColor: '#3B7A4B', overviewLabel: '대운 흐름 전체로', overviewTo: '/' },
   monthly:          { emblem: '月', emblemColor: '#B5441F', overviewLabel: '월운 전체로',     overviewTo: '/' },
+  weekly:           { emblem: '週', emblemColor: '#C77D3A', overviewLabel: '주간 전체로',     overviewTo: '/' }, // 2026-06-29 NEW
   compat:           { emblem: '合', emblemColor: '#9C5A8A', overviewLabel: '궁합 전체로',     overviewTo: '/' },
   tojung:           { emblem: '歲', emblemColor: '#2F4B7C', overviewLabel: '토정비결 전체로', overviewTo: '/' },
 };

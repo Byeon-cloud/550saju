@@ -18,7 +18,7 @@
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
 import { calculateSaju } from '@/services/saju/calculator';
 
-export type ContentType = 'report' | 'daily' | 'dream' | 'deepDream' | 'daeun' | 'monthly' | 'compat' | 'tojung' | 'topic';
+export type ContentType = 'report' | 'daily' | 'dream' | 'deepDream' | 'daeun' | 'monthly' | 'weekly' | 'compat' | 'tojung' | 'topic';
 
 export interface LocalReport {
   id: string;

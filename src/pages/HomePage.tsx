@@ -24,7 +24,7 @@ import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { HOME_REVIEWS } from '@/constants/reviews';
 import { listTopics } from '@/constants/topics'; // 10주제 SSOT (id/한자/컬러/딱지/path)
-import { getTopicPrice, getPremiumPrice } from '@/constants/pricing'; // 가격 SSOT (세일 자동 반영)
+import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice } from '@/constants/pricing'; // 가격 SSOT (세일 자동 반영)
 import { hasFreePass } from '@/services/storage/dailyFreePass'; // 일일 무료 패스 (사용 후 1운 차감)
 import { getTopicTop5, type TopicTop5Cache } from '@/services/liveBest'; // LIVE BEST 실시간 집계 캐시
 // 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
@@ -348,6 +348,43 @@ export function HomePage() {
           </span>
         </div>
       </motion.button>
+
+      {/* ─── [05a] NEW · 시간 운세 2종 (주간 5운 / 월 7운) — 2026-06-29 출시 ─── */}
+      <div className="mx-4 mt-6 flex items-baseline justify-between">
+        <h3 className="text-[17px] font-bold tracking-[-0.01em] flex items-center gap-1.5" style={{ color: C.ink, fontFamily: SERIF }}>
+          시간의 운세
+          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded leading-none" style={{ color: '#fff', background: '#C77D3A' }}>NEW</span>
+        </h3>
+        <span className="text-[11.5px]" style={{ color: C.gray500 }}>이번 주 · 이번 달</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
+        {[
+          { id: 'weekly',  kanji: '週', h: '주간운세', sub: '이번 주 7일의 흐름', strip: '#C77D3A',          path: '/weekly',  price: getWeeklyPrice().actualPrice },
+          { id: 'monthly', kanji: '月', h: '월운세',   sub: '원하는 달, 깊게',     strip: EXT_COLORS.monthly, path: '/monthly', price: getMonthlyPrice().actualPrice },
+        ].map((c) => (
+          <motion.button
+            key={c.id}
+            type="button"
+            whileTap={{ scale: 0.98 }}
+            onClick={go(c.path)}
+            className="relative h-[120px] px-4 py-3.5 rounded-[14px] text-left overflow-hidden"
+            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
+          >
+            <span className="absolute left-0 top-0 bottom-0 w-1 rounded-l" style={{ background: c.strip }} />
+            <span className="absolute right-[-6px] top-[-10px] text-[78px] font-black leading-none"
+              style={{ opacity: 0.14, color: c.strip, fontFamily: SERIF }}>{c.kanji}</span>
+            <h4 className="relative text-[15.5px] font-bold flex items-center gap-1" style={{ color: C.ink }}>
+              {c.h}
+              <span className="text-[9px] font-extrabold px-1 py-[1px] rounded leading-none" style={{ color: '#fff', background: c.strip }}>NEW</span>
+            </h4>
+            <p className="relative text-[11.5px] leading-[1.45] mt-1" style={{ color: C.inkSoft }}>{c.sub}</p>
+            <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
+              style={{ color: C.goldDark, background: C.goldSoft }}>
+              {c.price}운
+            </span>
+          </motion.button>
+        ))}
+      </div>
 
       {/* ─── [05] 더 알아볼 주제 · 확장 4종 (대운/월운/궁합/토정) — 2026-05-07 출시 후 공개 예정 (현재 숨김, 코드 보존) ─── */}
       {false && (

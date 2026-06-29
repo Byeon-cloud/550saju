@@ -99,7 +99,7 @@ export function TabContent({ d }: { d: AdminData }) {
           const DIST_LABEL: Record<string, string> = {
             premium: '종합사주', report: '종합사주(구)', basic: '1운 리포트', topic: '주제분석',
             daily: '오늘의 운세', deepDream: '꿈해몽 유료(심층)', dreamFree: '꿈해몽 무료', chat: '사주대화',
-            daeun: '대운', monthly: '월운', compatibility: '궁합', compat: '궁합', tojung: '토정비결', weekly: '주간(폐지)',
+            daeun: '대운', monthly: '월운', compatibility: '궁합', compat: '궁합', tojung: '토정비결', weekly: '주간운세',
           };
           // 출시 라인업 vs 미출시·테스트 분리 (2026-06-12) — 1운리포트·토정·대운·궁합·월운은
           // 실유저에게 노출된 적 없는 상품 → 전부 개발·테스트 기간 기록. 섞으면 분포가 거짓이 됨.

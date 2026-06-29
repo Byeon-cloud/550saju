@@ -92,7 +92,8 @@ export const PRODUCT_COST: Record<string, number> = {
   basic: 1,
   compatibility: 1,
   daeun: 1,
-  monthly: 1,
+  monthly: 7,   // 2026-06-29 NEW 출시 — 월운세 정가 7운 (getMonthlyPrice SSOT)
+  weekly: 5,    // 2026-06-29 NEW 출시 — 주간운세 정가 5운 (getWeeklyPrice SSOT)
   yearly: 1,
   tojung: 1,
   premium: 10,
@@ -167,19 +168,42 @@ export function getTopicPrice(topicId: string): PricingInfo {
   return resolvePricing(TOPIC_PRICING_RAW[topicId] || DEFAULT_TOPIC_PRICING);
 }
 
-/** 종합사주(프리미엄) raw 정의 — 2026-06-27 런칭 세일 종료(준기 결정) → 정가 10운 복귀.
- *  세일 재개 시 isOnSale:true + saleEndDate 갱신만. */
+/** 종합사주(프리미엄) raw 정의 — 2026-06-29 하반기 시작 이벤트 재개(준기): 10운 → 5운, ~7/13(2주).
+ *  종료일(saleEndDate) 지나면 isStillOnSale 가 자동 false → 정가 10운 복귀(코드 변경 0). */
 const PREMIUM_PRICING_RAW: PricingDef = {
   regularPrice: 10,
   salePrice: 5,
-  isOnSale: false,
-  saleBadge: '런칭 세일',
-  saleEndDate: '2026-06-30',
+  isOnSale: true,
+  saleBadge: '하반기 시작 이벤트',
+  saleEndDate: '2026-07-13',
 };
 
 /** 종합사주 가격 조회 */
 export function getPremiumPrice(): PricingInfo {
   return resolvePricing(PREMIUM_PRICING_RAW);
+}
+
+/** 월운세(2026 12개월) raw 정의 — 2026-06-29 NEW 출시(준기), 정가 7운.
+ *  이벤트성 세일 시 salePrice + isOnSale:true + saleEndDate 추가만. */
+const MONTHLY_PRICING_RAW: PricingDef = {
+  regularPrice: 7,
+  isOnSale: false,
+};
+
+/** 월운세 가격 조회 — 항상 actualPrice 포함 */
+export function getMonthlyPrice(): PricingInfo {
+  return resolvePricing(MONTHLY_PRICING_RAW);
+}
+
+/** 주간운세(이번 주 7일) raw 정의 — 2026-06-29 NEW 출시(준기), 정가 5운. */
+const WEEKLY_PRICING_RAW: PricingDef = {
+  regularPrice: 5,
+  isOnSale: false,
+};
+
+/** 주간운세 가격 조회 — 항상 actualPrice 포함 */
+export function getWeeklyPrice(): PricingInfo {
+  return resolvePricing(WEEKLY_PRICING_RAW);
 }
 
 /** "1운" / "3운 → 1운 출시 세일" 형식 — chip pill */

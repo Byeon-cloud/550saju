@@ -5,6 +5,7 @@ import { defineSecret } from 'firebase-functions/params';
 const lazyClaudeReport = () => import('./ai/claudeReport');
 const lazyClaudeDaeun = () => import('./ai/claudeDaeun');
 const lazyClaudeMonthly = () => import('./ai/claudeMonthly');
+const lazyClaudeWeekly = () => import('./ai/claudeWeekly');
 const lazyClaudeCompat = () => import('./ai/claudeCompat');
 const lazyClaudeTojung = () => import('./ai/claudeTojung');
 const lazyClaudeFortune = () => import('./ai/claudeFortune');
@@ -1595,7 +1596,9 @@ export const generateDaeun = onCall(
 export const generateMonthly = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
-    const { sajuData } = request.data;
+    // 2026-06-30 재작업 — 단일월 심층. monthInfo = 클라가 lunar 로 계산한 선택월 정보
+    //   { year, month, label, wolGanji, yearGanji }. 서버는 간지 추측 X (만세력 정확성).
+    const { sajuData, monthInfo } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
@@ -1605,22 +1608,26 @@ export const generateMonthly = onCall(
       const userDoc = await userRef.get();
       if (userDoc.exists) {
         // 2026-05-28 — schema 통일 helper
+        // 2026-06-29 월운 NEW 7운 — 클라 getMonthlyPrice().actualPrice(7)와 반드시 일치(머니세이프)
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 1);
+          const result = computeBalanceDeduction(doc.data(), 7);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, result.updates);
         });
-        deductedAmount = 1;
+        deductedAmount = 7;
       }
     }
 
     try {
       const { generateMonthlyFortune } = await lazyClaudeMonthly();
-      const result = await generateMonthlyFortune(ANTHROPIC_KEY.value(), sajuData);
+      const result = await generateMonthlyFortune(ANTHROPIC_KEY.value(), sajuData, monthInfo);
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, type: 'monthly', content: result,
+        // 선택월 메타 — 보관함 재진입·구분용 (monthInfo 없으면 result 의 year/month 폴백)
+        targetYear: monthInfo?.year ?? result?.year ?? null,
+        targetMonth: monthInfo?.month ?? result?.month ?? null,
         aiModel: 'claude-sonnet-4-6',
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -1629,6 +1636,51 @@ export const generateMonthly = onCall(
       console.error('generateMonthly error:', error);
       await refundBalance(uid, deductedAmount, 'generateMonthly failed');
       throw new HttpsError('internal', `월별 운세 실패: ${error.message || 'unknown'}`);
+    }
+  }
+);
+
+/**
+ * 주간운세 (이번 주 7일) — Claude Sonnet 4.6
+ * 2026-06-29 NEW (5운). weekDays = 클라(WeeklyPage)가 lunar-javascript 로 계산한 7일 일진.
+ */
+export const generateWeekly = onCall(
+  { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
+  async (request) => {
+    const { sajuData, weekDays } = request.data;
+    if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
+
+    const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+      const userRef = db.collection('users').doc(uid);
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        // 2026-06-29 주간운세 NEW 5운 — 클라 getWeeklyPrice().actualPrice(5)와 반드시 일치(머니세이프)
+        await db.runTransaction(async (tx) => {
+          const doc = await tx.get(userRef);
+          const result = computeBalanceDeduction(doc.data(), 5);
+          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
+          tx.update(userRef, result.updates);
+        });
+        deductedAmount = 5;
+      }
+    }
+
+    try {
+      const { generateWeeklyFortune } = await lazyClaudeWeekly();
+      const result = await generateWeeklyFortune(ANTHROPIC_KEY.value(), sajuData, weekDays);
+      const reportRef = db.collection('reports').doc();
+      await reportRef.set({
+        uid, type: 'weekly', content: result,
+        aiModel: 'claude-sonnet-4-6',
+        generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { reportId: reportRef.id, content: result };
+    } catch (error: any) {
+      console.error('generateWeekly error:', error);
+      await refundBalance(uid, deductedAmount, 'generateWeekly failed');
+      throw new HttpsError('internal', `주간운세 실패: ${error.message || 'unknown'}`);
     }
   }
 );

@@ -14,6 +14,12 @@ declare module 'lunar-javascript' {
     getDayXiongSha(): string[];
     getYearXunKong(): string;
     getDayXunKong(): string;
+    /** 일진 간지 (예: "甲子") — 날짜 기반, 시간 보정 불필요 (2026-06-29 주간운세) */
+    getDayInGanZhi(): string;
+    /** 월간지 (예: "甲午") — 절기 기준, 그 달 15일로 계산 권장 (2026-06-30 월별운세 단일월) */
+    getMonthInGanZhi(): string;
+    /** 세운 간지 (예: "丙午") — 입춘 기준 연주 (2026-06-30 월별운세 단일월) */
+    getYearInGanZhi(): string;
   }
 
   export class EightChar {

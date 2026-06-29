@@ -6,6 +6,7 @@ import type {
   AIReportResponse,
   DaeunAnalysisResponse,
   MonthlyDetailResponse,
+  WeeklyDetailResponse,
   CompatibilityResponse,
   TojungResponse,
 } from '@/types/report';
@@ -37,6 +38,7 @@ const CALLABLE_AI_TYPE: Record<string, string> = {
   generateChatAnswer: 'chat',
   generateDaeun: 'daeun',
   generateMonthly: 'monthly',
+  generateWeekly: 'weekly',
   generateCompatibility: 'compat',
   generateTopicAnalysis: 'topic',
   generateTojung: 'tojung',
@@ -883,13 +885,36 @@ export async function generateDaeunAnalysis(
 }
 
 /**
- * 2026 월별 운세 — Firebase Function → Claude Sonnet 4.6
+ * 월별 운세 — 단일월 심층 (2026-06-30 재작업) — Firebase Function → Claude Sonnet 4.6
+ * monthInfo = 클라(MonthlyPage)가 lunar-javascript 로 정확 계산한 선택월 정보
+ *   { year, month, label, wolGanji, yearGanji }. 서버는 간지 추측 X (만세력 정확성).
  */
+export interface MonthInfo {
+  year: number;
+  month: number;
+  label: string;     // '2026년 6월'
+  wolGanji: string;  // 월간지 (한자, 예: '甲午')
+  yearGanji: string; // 세운간지 (한자, 예: '丙午')
+}
+
 export async function generateMonthlyFortune2026(
   sajuData: SajuData,
+  monthInfo: MonthInfo,
 ): Promise<{ reportId: string; content: MonthlyDetailResponse }> {
-  const result = await callWithAuth('generateMonthly', { sajuData });
+  const result = await callWithAuth('generateMonthly', { sajuData, monthInfo });
   return result.data as { reportId: string; content: MonthlyDetailResponse };
+}
+
+/**
+ * 주간운세 (이번 주 7일) — Firebase Function → Claude Sonnet 4.6
+ * 2026-06-29 NEW. weekDays = 클라가 lunar-javascript 로 계산한 7일 일진 [{day,date,ganji,ganjiRead}].
+ */
+export async function generateWeeklyFortune(
+  sajuData: SajuData,
+  weekDays: { day: string; date: string; ganji: string; ganjiRead?: string }[],
+): Promise<{ reportId: string; content: WeeklyDetailResponse }> {
+  const result = await callWithAuth('generateWeekly', { sajuData, weekDays });
+  return result.data as { reportId: string; content: WeeklyDetailResponse };
 }
 
 /**
