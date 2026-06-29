@@ -26,14 +26,15 @@ Deno.serve(async (req) => {
 
   const reqBody = await req.json().catch(() => ({}));
 
-  // 최근 14일 발행 글 — 글의 account_id 토큰으로 인사이트 수거
-  const since = new Date(Date.now() - 14 * 86400_000).toISOString();
+  // 최근 30일 발행 글 + '한 번도 수거 안 된' 글(나이 무관 백필) — 빈틈 없이
+  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
   const { data: posts } = await sb
     .from("posts")
     .select("id, account_id, thread_post_id")
     .eq("status", "published")
-    .gte("published_at", since)
-    .not("thread_post_id", "is", null);
+    .not("thread_post_id", "is", null)
+    .eq("deleted_on_threads", false)
+    .or(`published_at.gte.${since},insights_updated_at.is.null`);
 
   let updated = 0;
   const fails: string[] = [];
@@ -51,7 +52,14 @@ Deno.serve(async (req) => {
       }).eq("id", p.id);
       updated++;
     } catch (e) {
-      fails.push((p.account_id || "?") + ":" + (e instanceof Error ? e.message : "").slice(0, 60));
+      const msg = e instanceof Error ? e.message : "";
+      // Threads에서 삭제된 글(객체 없음) → 'deleted'로 빼서 집계/재시도에서 제외
+      if (/does not exist|Unsupported get request/i.test(msg)) {
+        await sb.from("posts").update({ deleted_on_threads: true }).eq("id", p.id);
+        fails.push((p.account_id || "?") + ":삭제됨(제외)");
+      } else {
+        fails.push((p.account_id || "?") + ":" + msg.slice(0, 50));
+      }
     }
   }
 
@@ -91,7 +99,8 @@ async function sendDigest(sb: any, accountId: string, botToken: string, chatId: 
     .from("posts")
     .select("content_type, body, views, likes, replies")
     .eq("status", "published")
-    .eq("account_id", accountId) // 계정별로만 집계
+    .eq("account_id", accountId)
+    .eq("deleted_on_threads", false) // 삭제된 유령 글 제외
     .gte("published_at", since);
 
   const label = accountId === "official" ? "🏛 사주500" : "📿 " + accountId;
