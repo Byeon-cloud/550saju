@@ -4,6 +4,14 @@ import { defineSecret } from 'firebase-functions/params';
 import { logAiFailure } from './shared/aiFailureLog';
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
 const lazyClaudeReport = () => import('./ai/claudeReport');
+
+// ── 하반기 시작 이벤트 세일 (pricing.ts SSOT 와 동기) — 서버가 직접 KST 세일 계산(클라 미신뢰).
+//    차감액이 클라 actualPrice 와 항상 일치 → 로컬/Firestore 잔액 정합 + 세일종료(7/15) 자동 정가복귀.
+const HALF_EVENT_END_MS = Date.UTC(2026, 6, 15, 14, 59, 59); // 2026-07-15 23:59:59 KST
+const onHalfEvent = (): boolean => Date.now() <= HALF_EVENT_END_MS;
+const premiumCost = (): number => (onHalfEvent() ? 5 : 10);
+const monthlyCost = (): number => (onHalfEvent() ? 5 : 7);
+const weeklyCost = (): number => (onHalfEvent() ? 3 : 5);
 const lazyClaudeDaeun = () => import('./ai/claudeDaeun');
 const lazyClaudeMonthly = () => import('./ai/claudeMonthly');
 const lazyClaudeWeekly = () => import('./ai/claudeWeekly');
@@ -236,10 +244,10 @@ export const generatePremiumReportStream = onRequest(
       return;
     }
 
-    // 잔액 차감 (premium = 10운) — 실명 로그인만
+    // 잔액 차감 (premium · 하반기 세일 자동반영) — 실명 로그인만
     let deductedAmount = 0;
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
-      const cost = 10;
+      const cost = premiumCost();
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
@@ -500,7 +508,7 @@ export const generateReport = onCall(
 
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const cost = reportType === 'premium' ? 10 : 1;
+      const cost = reportType === 'premium' ? premiumCost() : 1;
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
@@ -1610,15 +1618,16 @@ export const generateMonthly = onCall(
       const userDoc = await userRef.get();
       if (userDoc.exists) {
         // 2026-05-28 — schema 통일 helper
-        // 2026-07-01 월운 하반기 세일 5운 — 클라 getMonthlyPrice().actualPrice(세일 5)와 일치.
-        //   세일종료(7/15) 후 클라는 정가 7 차감, 서버는 하한 5만 검사(lenient) → 잔액부족 오거부 0(머니세이프).
+        // 2026-07-01 월운 — 서버가 직접 세일 계산(monthlyCost): 하반기 이벤트 5운(7/15까지)·이후 정가 7운.
+        //   클라 getMonthlyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
+        const cost = monthlyCost();
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 5);
+          const result = computeBalanceDeduction(doc.data(), cost);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, result.updates);
         });
-        deductedAmount = 5;
+        deductedAmount = cost;
       }
     }
 
@@ -1659,15 +1668,16 @@ export const generateWeekly = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
-        // 2026-07-01 주간 하반기 세일 3운 — 클라 getWeeklyPrice().actualPrice(세일 3)와 일치.
-        //   세일종료(7/15) 후 클라는 정가 5 차감, 서버는 하한 3만 검사(lenient) → 잔액부족 오거부 0(머니세이프).
+        // 2026-07-01 주간 — 서버가 직접 세일 계산(weeklyCost): 하반기 이벤트 3운(7/15까지)·이후 정가 5운.
+        //   클라 getWeeklyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
+        const cost = weeklyCost();
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 3);
+          const result = computeBalanceDeduction(doc.data(), cost);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, result.updates);
         });
-        deductedAmount = 3;
+        deductedAmount = cost;
       }
     }
 

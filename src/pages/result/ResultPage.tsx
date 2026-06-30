@@ -155,7 +155,7 @@ function PremiumDarkHeader({
           flexShrink: 0,
         }}
       >
-        10운
+        {getPremiumPrice().actualPrice}운
       </div>
     </header>
   );

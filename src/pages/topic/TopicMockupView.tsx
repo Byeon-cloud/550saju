@@ -28,6 +28,7 @@ import {
   type TopicResultV2,
   type TimelineType,
 } from './_topic_themes';
+import { getPremiumPrice } from '@/constants/pricing';
 
 /* ══════════════════════════════════════════════════════════════════
  * Helpers — DailyMockupView 의 강조 자동 주입 패턴 재사용
@@ -936,7 +937,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
             <p>10가지 결을 한 번에 — 종합사주로 평생의 흐름을 펼쳐 봅니다.</p>
             <span className="cta">
               종합사주로 보기 →
-              <span className="cost">10운</span>
+              <span className="cost">{getPremiumPrice().actualPrice}운</span>
             </span>
           </button>
         )}

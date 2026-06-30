@@ -24,7 +24,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { useUserPath, type UserPath } from '@/hooks/useUserPath';
 import { HOME_REVIEWS } from '@/constants/reviews';
-import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
+import { getTopicPrice, formatPriceLabel, getPremiumPrice } from '@/constants/pricing';
 // 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
 
 /* ────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ function PriceIntro() {
     <div className="mx-4 mt-4 w-[calc(100%-32px)] rounded-xl px-4 py-3.5" style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
       <p className="text-[12px] font-bold" style={{ color: C.goldDark, fontFamily: SERIF }}>가격 안내</p>
       <p className="text-[12.5px] mt-1 leading-[1.55]" style={{ color: C.inkSoft }}>
-        풀이는 운(運) 단위로 사용합니다. 종합 사주 = 10운. 필요한 만큼만 충전.
+        풀이는 운(運) 단위로 사용합니다. 종합 사주 = {getPremiumPrice().actualPrice}운. 필요한 만큼만 충전.
       </p>
       <p className="text-[11.5px] mt-1.5" style={{ color: C.mute }}>
         무료 일일 패스: 오늘 운세 · 꿈해몽 · 대화 1회.
@@ -198,7 +198,7 @@ function Premium10un({ displayName, hasProfile, onClick }: { displayName: string
         </span>
         <span className="text-[11px] font-bold px-2 py-1 rounded-full"
           style={{ color: C.goldShimmer, border: '1px solid rgba(232,217,184,0.4)' }}>
-          10운
+          {getPremiumPrice().actualPrice}운
         </span>
       </div>
       <span className="absolute right-[-8px] top-[14px] text-[148px] font-black leading-none pointer-events-none"
@@ -224,7 +224,7 @@ function Premium10un({ displayName, hasProfile, onClick }: { displayName: string
         </span>
         <span className="inline-flex items-center gap-1 text-[13px] font-bold px-4 py-2 rounded-full"
           style={{ background: C.goldShimmer, color: C.ink }}>
-          10운으로 시작 →
+          {getPremiumPrice().actualPrice}운으로 시작 →
         </span>
       </div>
     </motion.button>

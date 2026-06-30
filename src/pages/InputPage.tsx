@@ -154,7 +154,7 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   },
   home_body_premium: {
     hint: '종합 사주를 위해 정보를 입력해주세요',
-    submitLabel: '종합 사주 시작하기 (10운)',
+    submitLabel: `종합 사주 시작하기 (${getPremiumPrice().actualPrice}운)`,
     // 잔액 확인은 handleSubmit 의 별도 로직에서 처리. home_body_premium 분기가 먼저 처리하므로 이 경로는 실사용 X.
     // 안전 fallback: Phase 4 (2026-05-27) 결과 페이지 직진 패턴 유지.
     routeAfterSave: (id) => `/result/${id}?fresh=1&type=premium`,
