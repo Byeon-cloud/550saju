@@ -17,6 +17,7 @@ import { Solar } from 'lunar-javascript';
 import { CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
 import type { WeeklyDetailResponse, WeeklyDay } from '@/types/report';
 import { stripMd, sanitizeAiText } from '@/utils/format';
+import { autoEmphasize } from '@/utils/emphasis'; // 2026-07-01 본문 강조(형광펜·밑줄·경고) 자동 주입 — 오늘운세 정렬
 import {
   EXTENSION_THEME,
   ExtensionHero,
@@ -232,7 +233,7 @@ export function WeeklyPage() {
             ) : null}
             <p className="text-h2 text-text-primary mb-1" style={{ lineHeight: 1.4 }}>{stripMd(result.weekHeadline)}</p>
             {result.weekTheme && (
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.weekTheme) }} />
+              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.weekTheme)) }} />
             )}
             {periodLabel && (
               <p className="text-[11px] text-text-hint mt-3">이번 주 {periodLabel}</p>
@@ -286,7 +287,7 @@ export function WeeklyPage() {
                       <span className="text-h3 font-bold" style={{ color }}>{k.day}</span>
                       {k.date && <span className="text-caption text-text-muted">{k.date}</span>}
                     </div>
-                    <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(k.reason) }} />
+                    <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(k.reason)) }} />
                   </div>
                 );
               })}
@@ -309,7 +310,7 @@ export function WeeklyPage() {
           <FadeIn delay={0.32}>
             <div className="card py-5 px-5" style={{ background: `${ACCENT}0A`, border: `1px solid ${ACCENT}26` }}>
               <p className="text-caption font-bold mb-1.5" style={{ color: ACCENT, letterSpacing: '0.06em' }}>이번 주 교훈</p>
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.weekLesson) }} />
+              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.weekLesson)) }} />
             </div>
           </FadeIn>
         )}
@@ -374,7 +375,7 @@ function WeekDayCard({ day: d, accent, isYesterday }: { day: WeeklyDay; accent: 
         <span className="text-h3 font-bold" style={{ color: scoreColor }}>{score}</span>
       </div>
       {d.body && (
-        <p className="text-body-sm text-text-secondary leading-relaxed mt-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(d.body) }} />
+        <p className="text-body-sm text-text-secondary leading-relaxed mt-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(d.body)) }} />
       )}
       {d.action && (
         <div className="mt-3 py-2 px-3 rounded-lg" style={{ background: `${accent}0D` }}>

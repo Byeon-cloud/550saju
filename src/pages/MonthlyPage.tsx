@@ -15,6 +15,7 @@ import { FooterCTA } from '@/components/common/FooterCTA';
 import { Solar } from 'lunar-javascript';
 import type { MonthlyDetailResponse, MonthlyPeriod, MonthlyDomain, MonthlyDayNote } from '@/types/report';
 import { stripMd, sanitizeAiText } from '@/utils/format';
+import { autoEmphasize } from '@/utils/emphasis'; // 2026-07-01 본문 강조(형광펜·밑줄·경고) 자동 주입 — 오늘운세 정렬
 import {
   EXTENSION_THEME,
   ExtensionHero,
@@ -274,7 +275,7 @@ export function MonthlyPage() {
             {monthLabel && <p className="text-caption font-bold mb-1.5" style={{ color: ACCENT, letterSpacing: '0.04em' }}>{monthLabel}</p>}
             <p className="text-h2 text-text-primary mb-1" style={{ lineHeight: 1.4 }}>{stripMd(result.headline || '')}</p>
             {result.theme && (
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.theme) }} />
+              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.theme)) }} />
             )}
           </div>
         </FadeIn>
@@ -323,7 +324,7 @@ export function MonthlyPage() {
           <FadeIn delay={0.3}>
             <div className="card py-5 px-5" style={{ background: `${ACCENT}0A`, border: `1px solid ${ACCENT}26` }}>
               <p className="text-caption font-bold mb-1.5" style={{ color: ACCENT, letterSpacing: '0.06em' }}>이 달의 개운 처방</p>
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.gaewoon) }} />
+              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.gaewoon)) }} />
             </div>
           </FadeIn>
         )}
@@ -381,7 +382,7 @@ function PeriodCard({ period: pr }: { period: MonthlyPeriod }) {
         <span className="text-h3 font-bold" style={{ color: scoreColor }}>{score}</span>
       </div>
       {pr.body && (
-        <p className="text-body-sm text-text-secondary leading-relaxed mt-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(pr.body) }} />
+        <p className="text-body-sm text-text-secondary leading-relaxed mt-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(pr.body)) }} />
       )}
     </div>
   );
@@ -403,7 +404,7 @@ function DomainCard({ label, color, data }: { label: string; color: string; data
         <div className="h-full rounded-full" style={{ background: color, width: `${score}%` }} />
       </div>
       {data.body && (
-        <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(data.body) }} />
+        <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(data.body)) }} />
       )}
     </div>
   );
@@ -423,7 +424,7 @@ function DayNoteCard({ note, type }: { note: MonthlyDayNote; type: 'lucky' | 'ca
         {note.date && <span className="text-h3 font-bold" style={{ color }}>{stripMd(note.date)}</span>}
       </div>
       {note.reason && (
-        <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(note.reason) }} />
+        <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(note.reason)) }} />
       )}
     </div>
   );
