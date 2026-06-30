@@ -279,9 +279,51 @@ export function ResultPage(props: ResultPageProps = {}) {
   const streamingAiResultRef = useRef<any>(streamingAiResult);
   useEffect(() => { streamingAiResultRef.current = streamingAiResult; }, [streamingAiResult]);
 
+  // 2026-07-01 — 완성본 전달 공통 경로 (SSE onDone · 앱인토스 callable · recovery 모두 이걸로). 한 번만.
+  const deliverReport = useCallback((finalAi: any) => {
+    if (streamSettledRef.current) return;
+    streamSettledRef.current = true;
+    if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
+    setStreamingAiResult(finalAi);
+    setArrivedGroups({ A: true, B: true, C: true });
+    try {
+      saveReport({
+        id: reportId,
+        name: (sajuData as any)?.input?.name || '나',
+        input: (sajuData as any)?.input,
+        sajuData: sajuData as any,
+        type: 'paid',
+        contentType: 'report',
+        createdAt: new Date().toISOString(),
+        aiResult: finalAi as any,
+      });
+      // 결과 영속 완료 → premium pending 해제 (부팅 자동환불 대상 제외)
+      import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
+    } catch { /* noop — UI 는 streamingAiResult 로 이미 렌더됨 */ }
+    // URL 정리 (fresh 쿼리 제거 — 새로고침 시 재생성 방지)
+    navigate(window.location.pathname, { replace: true });
+  }, [reportId, sajuData, navigate]);
+
   // 차감액 산정: premium = 세일 반영 actualPrice, basic = 1운. 1회만 환불 (refundedRef 가드).
-  const handleStreamFailure = useCallback((_msg: string) => {
-    if (refundedRef.current) return;
+  // 🚨 2026-07-01 — 환불 전에 recovery 먼저: 서버가 이미 완성·저장(generatePremiumReportStream recovery 블롭)했으면
+  //   재생성 0 으로 그대로 전달 → "서버 성공·전달 실패 → 환불+'분석실패'+토큰낭비" 근본 차단(준기 지적).
+  const handleStreamFailure = useCallback(async (_msg: string) => {
+    if (streamSettledRef.current || refundedRef.current) return;
+    if (freshType === 'premium') {
+      try {
+        const { recoverPremiumResult } = await import('@/services/ai/reportGenerator');
+        const rec = await recoverPremiumResult();
+        const recOk = !!(rec?.found && rec.content) && (() => {
+          try { return !!rec.sajuData?.pillars && JSON.stringify(rec.sajuData.pillars) === JSON.stringify((sajuData as any)?.pillars); }
+          catch { return false; }
+        })();
+        if (recOk && !streamSettledRef.current && !refundedRef.current) {
+          deliverReport({ ...(rec.content as any), tier: 'premium' as const });
+          return; // 환불 X — 유저는 이미 만든 결과를 받음 (토큰 회수)
+        }
+      } catch { /* noop → 환불로 진행 */ }
+    }
+    if (streamSettledRef.current || refundedRef.current) return;
     refundedRef.current = true;
     streamSettledRef.current = true;
     if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
@@ -290,7 +332,7 @@ export function ResultPage(props: ResultPageProps = {}) {
     // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
     import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
     setStreamError(`분석에 실패해서 ${refundAmount}운을 돌려드렸어요. 잠시 후 다시 시도해주세요.`);
-  }, [freshType]);
+  }, [freshType, sajuData, deliverReport]);
 
   useEffect(() => {
     if (!isFreshMode || loadedReport || streamStartedRef.current || !sajuData) return;
@@ -306,6 +348,25 @@ export function ResultPage(props: ResultPageProps = {}) {
     (async () => {
       try {
         const mod = await import('@/services/ai/reportGenerator');
+        // 🚨 2026-07-01 — 토스 웹뷰는 장시간 SSE 스트림을 조기종료(종합사주 "안 나옴"·토큰낭비 직접 원인).
+        //   앱인토스는 SSE 끄고 안정적 callable(단일 요청·완성본 한 번에)로 직행. 웹만 SSE(점진 렌더) 유지.
+        const { isAppsInToss } = await import('@/services/payment/iapService');
+        if (freshType === 'premium' && isAppsInToss()) {
+          // callable await 는 self-bounding(완료/타임아웃 시 resolve/throw) → SSE용 120s watchdog 을 240s 안전망으로
+          //   교체. 드물게 느린 Opus(150s+) 케이스도 안 잘리고 완성본 전달. 진짜 hang 만 240s 후 recovery→환불.
+          if (watchdogRef.current) clearTimeout(watchdogRef.current);
+          watchdogRef.current = setTimeout(() => {
+            if (!streamSettledRef.current) handleStreamFailure('시간 초과(callable)');
+          }, 240000);
+          try {
+            const { content } = await mod.generateReport(sajuData as any, undefined, 'premium');
+            deliverReport({ ...(content as any), tier: 'premium' as const });
+          } catch (e: any) {
+            console.error('[ResultPage:fresh callable] 예외:', e?.message);
+            await handleStreamFailure(e?.message || 'callable exception');
+          }
+          return;
+        }
         const fn = freshType === 'premium' ? mod.generatePremiumReportStream : mod.generateReportStream;
         await fn(sajuData as any, undefined, {
           onGroup: (_g: 'A' | 'B' | 'C', data: any) => {
@@ -314,35 +375,14 @@ export function ResultPage(props: ResultPageProps = {}) {
             setArrivedGroups((prev) => (prev[_g] ? prev : { ...prev, [_g]: true }));
           },
           onDone: ({ content }: { reportId: string; content: any }) => {
-            streamSettledRef.current = true;
-            if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
             const finalAi = freshType === 'premium'
               ? { ...(content as any), tier: 'premium' as const }
               : content;
-            setStreamingAiResult(finalAi);
-            setArrivedGroups({ A: true, B: true, C: true });
-            // localStorage 영속 (URL reportId 와 동일 id 로 저장 → 새로고침 시 그대로 복원)
-            try {
-              saveReport({
-                id: reportId,
-                name: (sajuData as any).input?.name || '나',
-                input: (sajuData as any).input,
-                sajuData: sajuData as any,
-                type: 'paid',
-                contentType: 'report',
-                createdAt: new Date().toISOString(),
-                aiResult: finalAi as any,
-              });
-              // P0 CS — 결과 영속 완료 → premium pending 해제 (부팅 자동환불 대상 제외)
-              import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
-            } catch { /* noop — UI 는 streamingAiResult 로 이미 렌더됨 */ }
-            // URL 정리 (fresh 쿼리 제거 — 새로고침 시 재SSE 방지)
-            navigate(window.location.pathname, { replace: true });
+            deliverReport(finalAi); // 완성본 전달(영속·pending해제·URL정리 공통)
           },
           onError: (msg: string) => {
             console.warn('[ResultPage:fresh SSE] 실패:', msg);
-            // 2026-06-24 — 이제 '완성본'만 노출하므로(부분 결과 비표시), 스트리밍 중 에러는 부분도착 여부와 무관하게
-            //   실패+환불 처리. (기존: 부분 도착 시 partial 유지 → 그 partial 이 content-change 원인이었음)
+            // 2026-07-01 — 스트리밍 중 에러 → handleStreamFailure 가 recovery 우선 시도(가능하면 전달, 안 되면 환불).
             if (!streamSettledRef.current) handleStreamFailure(msg);
           },
         });
