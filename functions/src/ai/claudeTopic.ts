@@ -10,6 +10,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Solar } from 'lunar-javascript';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type ParseJsonMeta } from './promptsV3';
 import { logAiUsage } from '../shared/aiUsageLog';
+import { kstNowDate } from '../utils/kstTime';
 
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
@@ -1000,7 +1001,7 @@ function buildPrompt(
     : '미상';
   const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
   const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
-  const today = new Date();
+  const today = kstNowDate(); // 서버 UTC → KST 현재시각 (UTC 필드에 KST 값). getFullYear/getMonth 호출부 호환 유지.
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
   // 🔥 P0-1 (audit 1) — 사주 데이터 underutilization 해소: myeongriAnalysis·jijanggan·gilsin·hyungsal·gongmang·yearlyUn 모두 prompt 에 주입

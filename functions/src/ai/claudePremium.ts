@@ -23,6 +23,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { logAiUsage } from '../shared/aiUsageLog';
+import { kstNow } from '../utils/kstTime';
 
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
 
@@ -401,7 +402,7 @@ export async function generateGroup(
 
 /** T3 · 동적 짧은 context — 연도·일간 (캐시 X) */
 function buildDynamicSystemContext(sajuData: any): string {
-  const year = new Date().getFullYear();
+  const year = kstNow().year;
   const dayGan = sajuData?.pillars?.[2]?.천간 ?? '';
   return `[현재 연도]: ${year}\n[유저 일간]: ${dayGan}\n위 두 값을 응답에 반영하세요.`;
 }

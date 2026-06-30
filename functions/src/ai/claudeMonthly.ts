@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { kstNow } from '../utils/kstTime';
 
 /**
  * 월별 운세 — 단일월 심층 (2026-06-30 재작업) · Claude Sonnet 4.6
@@ -50,9 +51,9 @@ export async function generateMonthlyFortune(apiKey: string, sajuData: any, mont
 
 /** monthInfo 누락/불완전 시 폴백 — 이번 달 기준(간지 미상). 정상 경로는 항상 클라가 간지 동봉. */
 function normalizeMonthInfo(monthInfo: any): { year: number; month: number; label: string; wolGanji: string; yearGanji: string } {
-  const now = new Date();
-  const year = Number(monthInfo?.year) || now.getFullYear();
-  const month = Number(monthInfo?.month) || (now.getMonth() + 1);
+  const now = kstNow();
+  const year = Number(monthInfo?.year) || now.year;
+  const month = Number(monthInfo?.month) || now.month;
   return {
     year,
     month,
@@ -83,9 +84,9 @@ function buildPrompt(d: any, info: { year: number; month: number; label: string;
   const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
 
   // 현재 시점 대비 선택월 시제 (과거/이번달/미래)
-  const now = new Date();
-  const nowY = now.getFullYear();
-  const nowM = now.getMonth() + 1;
+  const now = kstNow();
+  const nowY = now.year;
+  const nowM = now.month;
   const selKey = info.year * 12 + info.month;
   const nowKey = nowY * 12 + nowM;
   const tense = selKey < nowKey ? '과거' : selKey === nowKey ? '이번달' : '미래';

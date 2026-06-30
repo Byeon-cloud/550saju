@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { kstNow } from '../utils/kstTime';
 
 export async function generateTojungBigyeol(apiKey: string, sajuData: any): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
@@ -35,9 +36,8 @@ function buildPrompt(d: any): string {
     : '미상';
   const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
   const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
-  const now = new Date().getMonth() + 1;
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
+  const nowKst = kstNow();
+  const dateStr = `${nowKst.year}년 ${nowKst.month}월`;
 
   return `당신은 사주500 토정비결 해석가. ${MYEONGRI_GROUNDS_BLOCK}
 

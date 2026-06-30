@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { kstNowDate } from '../utils/kstTime';
 
 /**
  * 주간운세 (이번 주 7일) — Claude Sonnet 4.6
@@ -45,13 +46,12 @@ export async function generateWeeklyFortune(apiKey: string, sajuData: any, weekD
 
 /** weekDays 누락 시 폴백 — 구매일 전날부터 7일(요일 라벨만, 간지 미상). 정상 경로는 항상 클라가 7일 간지 동봉. */
 function fallbackWeek(): any[] {
-  const base = new Date();
+  const base = kstNowDate(); // KST 오늘(UTC 필드에 KST 값) — 서버 UTC 라도 날짜 안 밀림
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
   const out: any[] = [];
   for (let i = -1; i <= 5; i++) { // -1=어제(구매 전날) ~ +5 → 총 7일
-    const d = new Date(base);
-    d.setDate(base.getDate() + i);
-    out.push({ day: WD[d.getDay()], date: `${d.getMonth() + 1}/${d.getDate()}`, ganji: '미상', ganjiRead: '' });
+    const d = new Date(base.getTime() + i * 86400000);
+    out.push({ day: WD[d.getUTCDay()], date: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`, ganji: '미상', ganjiRead: '' });
   }
   return out;
 }

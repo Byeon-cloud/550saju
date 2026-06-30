@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { kstNow } from '../utils/kstTime';
 
 export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
@@ -30,8 +31,8 @@ function buildPrompt(d: any): string {
   let daeunList = '';
   d.daeun?.forEach((x: any) => { daeunList += `- ${x.간지} (${x.시작나이||x.나이범위||''}세~${x.끝나이||''}세)${x.isCurrent||x.현재 ? ' ★현재' : ''}\n`; });
   const currentDaeun = d.daeun?.find((x: any) => x.isCurrent || x.현재);
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
+  const now = kstNow();
+  const dateStr = `${now.year}년 ${now.month}월`;
 
   // 2026-06-24 — 대운 전체 흐름을 이전/현재/다음 간지+나이로 명시. 기존엔 '현재 대운(currentDaeun)'만
   //   넘겨서 AI 가 이전/다음 대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그(차트는 맞는데 본문이 swap) fix.

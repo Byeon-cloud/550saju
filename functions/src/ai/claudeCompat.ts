@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { kstNow } from '../utils/kstTime';
 
 /**
  * 두 사주 간 자동 관계 분석 (정통 명리학 산출 결과 주입)
@@ -171,8 +172,8 @@ function personDetail(label: string, d: any): string {
 
 function buildPrompt(d1: any, d2: any, rel: string): string {
   const relLabels: Record<string, string> = { lover: '연인/배우자', friend: '친구', colleague: '직장동료', family: '가족', business: '사업파트너' };
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
+  const now = kstNow();
+  const dateStr = `${now.year}년 ${now.month}월`;
 
   // 정통 명리학 자동 산출 — AI 자유추론 X, 결정론적 입력
   const crossRelations = computeCrossRelations(d1, d2);

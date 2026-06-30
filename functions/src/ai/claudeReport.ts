@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
+import { kstNow } from '../utils/kstTime';
 import { logAiUsage } from '../shared/aiUsageLog';
 
 /**
@@ -271,8 +272,9 @@ function groupSchema(group: ReportGroup, year: number): string {
 
 /** 시스템 프롬프트 — 명리학 분석 프레임워크(공유) + 그룹별 출력 스키마 */
 function buildSystemPrompt(sajuData: any, group: ReportGroup): string {
-  const year = new Date().getFullYear();
-  const month = new Date().getMonth() + 1;
+  const now = kstNow();
+  const year = now.year;
+  const month = now.month;
 
   return `당신은 사주500 명리학 해석가입니다.
 ${MYEONGRI_GROUNDS_BLOCK}
@@ -394,10 +396,10 @@ JSON만 출력하세요. 코드블록 없이.`;
 
 function buildUserPrompt(sajuData: any, situation?: any): string {
   const p = sajuData.pillars || [];
-  const today = new Date();
-  const month = today.getMonth() + 1;
-  const year = today.getFullYear();
-  const dateStr = `${year}년 ${month}월 ${today.getDate()}일`;
+  const now = kstNow();
+  const month = now.month;
+  const year = now.year;
+  const dateStr = `${year}년 ${month}월 ${now.day}일`;
 
   // ── 사주 원국 (시일월년 순서 — 전통 명리학 표기) ──
   const labels = ['년주', '월주', '일주', '시주'];
