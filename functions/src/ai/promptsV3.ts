@@ -689,6 +689,16 @@ ${data.name} 님 사주 = 불 ${data.ohengDistribution.화 ?? 0}, 흙 ${data.ohe
 
   "todayConnection": "200~280자 · 유저 고민(${data.userConcern || '없음'}) + 사주 + 꿈 3-way · <strong> 2회+ · 면피체 금지",
 
+  "quoteInterpretations": [
+    {
+      "quote": "유저가 꿈을 묘사하며 실제로 쓴 문장/표현 한 조각을 그대로 인용 (절대 꾸며내지 말 것 — 입력에 있는 표현만)",
+      "highlight": "그 문장 안의 핵심 단어/구절 (quote 의 부분 문자열, 그대로 일치)",
+      "tag": "한 단어 감정·주제 라벨 (예: 미련·불안·기대·해방)",
+      "interp": "그 표현이 무의식적으로 드러내는 것 + ${data.ilgan} 일간 사주 연결 · 80~120자 · <strong> 1회+ · 일반 꿈사전식 X · 유저가 쓴 문장에서 출발"
+    }
+  ],
+  "// quoteInterpretations 규칙": "유저 입력에서 인상적인 표현 1~3조각 (짧으면 1~2개). 입력에 없는 문장 창작 금지. 인용할 표현이 마땅치 않으면 빈 배열.",
+
   "symbols": [
     {
       "keyword": "상징 키워드",
