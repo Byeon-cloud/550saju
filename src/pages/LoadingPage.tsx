@@ -191,8 +191,42 @@ export function LoadingPage() {
           });
           if (streamSucceeded) return;
         } catch (sseErr) {
-          console.warn('[LoadingPage] SSE 처리 중 예외 → callable 폴백:', sseErr);
-          // → 아래 callable 폴백 진행
+          console.warn('[LoadingPage] SSE 처리 중 예외 → 복구 우선 시도:', sseErr);
+          // → 아래 복구 우선, 없으면 callable 재생성
+        }
+      }
+
+      // 2026-06-30 토큰 절감(P0) — SSE 전달 실패는 '전달' 실패일 뿐, 서버는 이미 생성+recovery 저장했을 수 있음.
+      //   재생성하면 Opus 3그룹을 또 태움(토큰 2배 + CS "차감됐는데 결과 없음"의 진짜 원인).
+      //   recoverPremiumResult 로 같은 사주의 최근 결과를 끌어와 재사용(토큰 0). 사주 불일치 시에만 재생성.
+      if (reportType === 'premium') {
+        try {
+          const { recoverPremiumResult } = await import('@/services/ai/reportGenerator');
+          const rec = await recoverPremiumResult();
+          const rs: any = rec?.sajuData;
+          const sameSaju = !!(rec?.found && rec?.content && rs
+            && rs?.input?.name === sajuData!.input?.name
+            && rs?.input?.birthYear === sajuData!.input?.birthYear
+            && rs?.input?.birthMonth === sajuData!.input?.birthMonth
+            && rs?.input?.birthDay === sajuData!.input?.birthDay);
+          if (sameSaju) {
+            const rid = (rec!.reportId && String(rec!.reportId).trim()) || generateId();
+            saveReport({
+              id: rid,
+              name: sajuData!.input?.name || '나',
+              input: sajuData!.input as any,
+              sajuData: sajuData!,
+              type: 'paid',
+              contentType: 'report',
+              createdAt: new Date().toISOString(),
+              aiResult: { ...(rec!.content as any), tier: 'premium' as const },
+            });
+            console.info('[LoadingPage] SSE 실패 → 복구 성공 (재생성 0 · 토큰 절감)');
+            navigate(`/result/${rid}`, { replace: true });
+            return;
+          }
+        } catch (recErr) {
+          console.warn('[LoadingPage] 복구 시도 실패 → callable 재생성:', recErr);
         }
       }
 

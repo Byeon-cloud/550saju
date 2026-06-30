@@ -97,6 +97,20 @@ export async function generateReport(
 }
 
 /**
+ * 종합사주 결과 복구 — 서버 recovery 블롭에서 같은 uid 의 최근(1시간 내) 결과를 끌어옴 (재생성 0).
+ * 2026-06-30 토큰 절감: SSE 전달 실패 시 callable 재생성 전에 호출 → 이미 만든 결과 재사용.
+ * 호출부에서 sajuData 일치 확인 후 사용할 것(다른 사주 결과 오용 방지).
+ */
+export async function recoverPremiumResult(): Promise<{ found: boolean; reportId?: string; reportType?: string; content?: any; sajuData?: any }> {
+  try {
+    const result = await callWithAuth('recoverPremiumResult', {});
+    return (result?.data as any) || { found: false };
+  } catch {
+    return { found: false };
+  }
+}
+
+/**
  * T1 · 프리미엄 리포트 — SSE 스트리밍 (그룹 단위 점진 도착)
  *  · 서버 generatePremiumReportStream 호출 → 3 그룹 (A/B/C) 병렬 + 도착 즉시 송출
  *  · onGroup 콜백: 각 그룹 완료 시 partial 결과 (A/B/C 순서 무관)

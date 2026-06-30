@@ -2241,6 +2241,7 @@ export { restoreLibrary } from './storage/restoreLibrary';
 export { adminGrantCompensation } from './admin/adminGrantCompensation';
 // 유입/구매 폭증 서버 집계 (2026-06-27) — onRequest+secret(INFLOW_KEY). source·plat·시간대·구매 분해 JSON.
 export { adminInflowReport } from './admin/inflowReport';
+export { adminAiUsageReport } from './admin/aiUsageReport';
 
 /* ─── LIVE BEST 실시간 집계 (2026-06-02 · D3 정식 구현) ─── */
 export { recordTopicView, aggregateTopicTop5 } from './livebest/topicViews';
