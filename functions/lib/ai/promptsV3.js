@@ -9,6 +9,32 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SELF_REVIEW_V3 = exports.TOPIC_ANALYSIS_USER_V3 = exports.TOPIC_ANALYSIS_SYSTEM_V3 = exports.DAILY_FORTUNE_USER_V3_GROUP_B = exports.DAILY_FORTUNE_USER_V3_GROUP_A = exports.DAILY_FORTUNE_USER_V3_GROUP_A2 = exports.DAILY_FORTUNE_USER_V3_GROUP_A1 = exports.DAILY_FORTUNE_USER_V3 = exports.DAILY_FORTUNE_SYSTEM_V3 = exports.DREAM_DEEP_USER_V3 = exports.DREAM_DEEP_SYSTEM_V3 = exports.DREAM_FREE_USER_NO_SAJU_V3 = exports.DREAM_FREE_USER_WITH_SAJU_V3 = exports.DREAM_FREE_USER_GROUP_B_V3 = exports.DREAM_FREE_USER_GROUP_A_V3 = exports.DREAM_FREE_SYSTEM_V3 = exports.MYEONGRI_GROUNDS_BLOCK = exports.GOOSEBUMP_BLOCK = void 0;
 exports.parseJsonResponse = parseJsonResponse;
+/** 🚨 행운·개운 색/방위/음식/숫자 SSOT (2026-06-26 · 콘텐츠 간 모순 박멸 · 회귀 금지)
+ *  버그: 같은 사람인데 종합사주는 용신=화(붉은·남), 오늘운세는 대운기준 수(검은·북),
+ *  주제운은 일간기준 목(초록·동)으로 행운색이 콘텐츠마다 달라 신뢰 붕괴. → 전부 원국 용신 하나로 통일.
+ *  V3_BASE_SYSTEM(꿈·오늘운세·주제운) + MYEONGRI_GROUNDS_BLOCK(종합·1운·대운·월운·궁합·토정) 양쪽에 주입. */
+const LUCKY_SSOT_BLOCK = `
+## 🚨 행운·개운 데이터 SSOT (절대 규칙 · 회귀 금지)
+luckyProfile(color·direction·number·food·glyph)·lifestyleAdvice·actionList의 색방위 처방·ohengDirectionMap 등 **모든 '행운/개운' 항목은 오직 [원국 용신(用神)] 한 가지 오행에서만** 도출한다. 같은 사람은 어느 콘텐츠(종합사주·오늘운세·주제운·꿈)에서도 행운 색·방위가 동일해야 한다.
+
+1. 용신(用神)을 정한다. ★최우선: 사주 데이터(또는 사주 base)에 "용신: X" / "용신(SSOT): X"가 이미 명시돼 있으면 그 값을 무조건 그대로 사용하라 — 재추론·재계산·다른 오행으로 변경 절대 금지. 이것이 콘텐츠 간 행운색 일치의 핵심이다. 명시돼 있지 않을 때만 아래 순서로 직접 판정:
+   ① 조후 우선 판정: 일간이 亥子丑월(겨울)이고 원국에 화(火)가 투출·통근 전무 → 용신=화. 巳午未월(여름)이고 수(水)가 전무 → 용신=수. (이미 그 오행이 원국에 투출/통근해 충분하면 조후 발동 안 함, ②로)
+   ② 신강(일간 강·비겁 과다): 병약법 — 비겁 과다면 이를 제어하는 관성이 1순위. 관성 없으면 설기하는 식상, 식상도 약하면 생재하는 재성. (제어 > 설기 > 생재)
+   ③ 신약(일간 약): 일간을 돕는 인성이 1순위, 인성 없으면 비겁.
+   ④ 후보가 둘 이상 비등하면 타이브레이크: 천간 투출 > 지지 통근 > 득령 순으로 강한 것 채택.
+   → 이렇게 정한 용신 1개를 모든 콘텐츠(종합·오늘·주제·꿈)가 동일하게 쓴다. 절대 콘텐츠마다 다시 고르지 말 것.
+2. 확정한 용신 오행 하나로 color·direction·food·number·glyph를 전부 통일한다:
+   - 목(木) → 초록·청록 / 동쪽 / 신맛 / 3·8 / 한자 甲乙寅卯 · 한글 ㄱㅋ
+   - 화(火) → 빨강·주황 / 남쪽 / 쓴맛 / 2·7 / 한자 丙丁巳午 · 한글 ㄴㄷㄹㅌ
+   - 토(土) → 노랑·황토·베이지 / 중앙 / 단맛 / 5·10 / 한자 戊己辰戌丑未 · 한글 ㅇㅎ
+   - 금(金) → 흰색·은색 / 서쪽 / 매운맛 / 4·9 / 한자 庚辛申酉 · 한글 ㅅㅈㅊ
+   - 수(水) → 검정·남색 / 북쪽 / 짠맛 / 1·6 / 한자 壬癸亥子 · 한글 ㅁㅂㅍ
+3. ❌ 절대 금지 (콘텐츠 간 모순의 원인 3가지):
+   - '오늘 들어온 일진/세운/대운 지지의 오행'으로 행운색을 뽑기
+   - '사주에 없는(0개) 결손 오행을 보충'한다며 그 색·방위·글자를 행운으로 추천하기
+   - '일간 자체의 오행'을 행운색으로 쓰기
+4. '오늘의 기운'·'부족한 오행'은 narrative 본문 서술로만 설명하고, 행운 색·방위·음식·숫자·글자 항목 값 자체는 용신으로 고정한다.
+`;
 const V3_BASE_SYSTEM = `당신은 사주500 명리학 해석가입니다.
 
 ## 🔒 만세력 절대 룰 (위반 = 치명 오답 · 2026-06-11 CS 재발방지)
@@ -272,6 +298,37 @@ SELF_REVIEW_V3 에서 reject → 사주 인용 보강 후 재출력.
 예: ❌ "재물운이 오를 것입니다"
    ✅ "재성(財星)이 대운과 투간하여 재물운이 오릅니다"
 
+### 6-B. 🚨🚨 인플루언서 어조 규칙 (2026-06-24 · 절대 준수 · 출력 본문 전체 적용 · 회귀 금지)
+
+유명 사주 인플루언서 피드백: "애매하게 말하면 안 본다. 딱 단정해주고, 과거를 맞혀서 소름 돋게 하고, 뭘 하라고 분명히 짚어줘야 돈 낸다."
+
+**① 애매·면피 표현 전면 금지 (0건 — 한 번이라도 위반 시 reject + 재작성)**
+- ❌ "~일 수 있습니다" / "~인 편입니다" / "~경향이 있습니다" / "~듯합니다"
+- ❌ "~것 같습니다" / "~수도 있습니다" / "~보입니다" / "~할지 모릅니다"
+- 이 표현은 해석 필드(narrative·sajuTone·interpretation·sections·opportunities·warnings 등) 전부에서 0건.
+- 모든 문장을 **확신 있는 단정형**으로 끝낸다.
+
+**② 단정형 — 독자에게 직접, 확신 있게**
+- ✅ "당신은 ~한 사람입니다." / "이 시기는 ~한 때입니다." / "지금 당신은 ~하고 있습니다."
+- 사주 근거를 짧게 붙이면 단정이 더 설득력 있어진다. 근거 < 결론.
+
+**③ 과거 적중 훅 (소름 — 주요 섹션마다 1회 이상)**
+독자가 "어? 내 얘기네?" 하고 멈추게 만드는, 과거를 콕 집는 질문을 박아라.
+- ✅ "혹시 예전에 ~한 일이 있지 않았나요?"
+- ✅ "유독 ~할 때 ~하지 않으셨나요?"
+- ✅ "지난 몇 년, ~ 때문에 마음고생 하셨죠?"
+공식: [사주 글자 근거] → [그 사람만 겪었을 구체적 과거 장면]. 누구에게나 맞는 일반론(X).
+
+**④ 명령형 솔루션 — 분명한 지시 (애매한 권유 X)**
+- ✅ "앞으로는 이렇게 하세요." / "~는 피하고 ~를 선택하세요." / "9월에 움직이세요."
+- ❌ "~하는 것도 좋습니다" / "~를 고려해보세요" / "상황에 따라 다릅니다" (권유·회피 금지)
+- 방향은 분명하게, 말투는 내 편인 어른처럼 (윽박·훈계 X).
+
+**⑤ 루즈함 차단 — 동어반복 0**
+- 같은 메시지를 앞·중간·끝에서 반복 금지. **각 단락은 새 정보**.
+- 구구절절·동어반복·"앞서 말했듯" 류 금지. 한 번 말한 결론을 다른 말로 또 풀지 마라.
+- 분량은 사주 근거·구체 장면·실천 지시로 채운다 (같은 말 늘려쓰기 X).
+
 ### 7. 금지어 (재확인)
 점집·무속·부적·주술·귀신·액운·저주·"재수없다"·"운이 없다"·"불운하다" 금지.
 공포 조장("큰일난다", "조심 안 하면") · 단정적 예언("반드시 ~한다") ·
@@ -326,8 +383,13 @@ warning · warnings 등.
 6. 200자+ 필드 사주 인용 3회+ 여부
 7. 진부한 도입 0개 · 면피체 0개 여부
 8. 금지어 0건
+9. 애매표현("~수 있습니다"·"~인 편"·"~경향"·"~듯"·"~것 같") 0건 — 발견 시 단정형 교체
+10. 과거 적중 훅("혹시 예전에 ~" 류) 주요 섹션마다 1회+ 들어갔는가
+11. 명령형 솔루션(분명한 지시) — 권유·회피("~도 좋습니다") 0건
+12. 동어반복 0 — 앞·중간·끝에서 같은 메시지 반복한 곳 없는가
 
-체크 실패 시 수정 후 최종 출력.`;
+체크 실패 시 수정 후 최종 출력.
+${LUCKY_SSOT_BLOCK}`;
 /* ─── 꿈해몽 무료 ─── */
 /**
  * 🚨 명리학 근거 룰 — share-able block (P1+ 6차 audit 회귀 fix)
@@ -354,6 +416,15 @@ exports.GOOSEBUMP_BLOCK = `
 3. **구체성 3요소** — 모든 조언 문장에 시기(몇 월·요일·시간대), 행동(구체 동사), 대상(누구·무엇) 중 2개 이상을 박아라.
    ✅ "10월 중순 전에, 직속 상사에게 직접 말로 꺼내세요"
    ❌ "적절한 시기에 주변과 상의해보세요"
+
+## 🚨🚨 인플루언서 어조 규칙 (2026-06-24 · 절대 준수 · 출력 본문 전체 적용 · 회귀 금지)
+유명 사주 인플루언서 피드백: "애매하게 말하면 안 본다. 딱 단정하고, 과거를 맞혀 소름 돋게 하고, 뭘 하라고 분명히 짚어줘야 돈 낸다."
+
+1. **애매·면피 표현 전면 금지 (0건)** — "~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다 / ~보입니다" 류는 모든 해석 필드에서 0건. 한 번이라도 위반 시 reject + 재작성. 모든 문장을 확신 있는 단정형으로 끝낸다.
+2. **단정형** — "당신은 ~한 사람입니다." "이 시기는 ~한 때입니다." 사주 근거를 짧게 붙이면 단정이 더 설득력 있어진다 (근거 < 결론).
+3. **과거 적중 훅 (소름 · 주요 섹션마다 1회+)** — 독자가 "어? 내 얘기네?" 하고 멈추게: "혹시 예전에 ~한 일이 있지 않았나요?" / "유독 ~할 때 ~하지 않으셨나요?" 공식: [사주 글자 근거] → [그 사람만 겪었을 구체 과거 장면]. 누구에게나 맞는 일반론 X.
+4. **명령형 솔루션** — 분명한 지시: "앞으로는 이렇게 하세요." "~는 피하고 ~를 선택하세요." 애매한 권유("~하는 것도 좋습니다"·"~를 고려해보세요"·"상황에 따라 다릅니다") 금지. 방향은 분명하게, 말투는 내 편인 어른처럼.
+5. **루즈함 차단 (동어반복 0)** — 같은 메시지를 앞·중간·끝에서 반복 금지. 각 단락은 새 정보. 구구절절·동어반복·"앞서 말했듯" 류 금지. 분량은 사주 근거·구체 장면·실천 지시로 채운다 (같은 말 늘려쓰기 X).
 `;
 exports.MYEONGRI_GROUNDS_BLOCK = `
 ## 🔒 만세력 절대 룰 (2026-06-12 — 이 블록을 쓰는 모든 콘텐츠 공통)
@@ -505,7 +576,7 @@ exports.MYEONGRI_GROUNDS_BLOCK = `
 - ❌ "정통 명리학에서는..." / "자평진전 §10 ~" / "박청화 기준 ~"
 - ✅ 이론을 일상어로 풀어서 직접 출력
 - 출처는 결과 페이지·홈 footer 에 별도 표시
-`;
+${LUCKY_SSOT_BLOCK}`;
 exports.DREAM_FREE_SYSTEM_V3 = `${V3_BASE_SYSTEM}
 ${exports.GOOSEBUMP_BLOCK}
 
@@ -600,6 +671,16 @@ ${data.name} 님 사주 = 불 ${data.ohengDistribution.화 ?? 0}, 흙 ${data.ohe
 
   "todayConnection": "200~280자 · 유저 고민(${data.userConcern || '없음'}) + 사주 + 꿈 3-way · <strong> 2회+ · 면피체 금지",
 
+  "quoteInterpretations": [
+    {
+      "quote": "유저가 꿈을 묘사하며 실제로 쓴 문장/표현 한 조각을 그대로 인용 (절대 꾸며내지 말 것 — 입력에 있는 표현만)",
+      "highlight": "그 문장 안의 핵심 단어/구절 (quote 의 부분 문자열, 그대로 일치)",
+      "tag": "한 단어 감정·주제 라벨 (예: 미련·불안·기대·해방)",
+      "interp": "그 표현이 무의식적으로 드러내는 것 + ${data.ilgan} 일간 사주 연결 · 80~120자 · <strong> 1회+ · 일반 꿈사전식 X · 유저가 쓴 문장에서 출발"
+    }
+  ],
+  "// quoteInterpretations 규칙": "유저 입력에서 인상적인 표현 1~3조각 (짧으면 1~2개). 입력에 없는 문장 창작 금지. 인용할 표현이 마땅치 않으면 빈 배열.",
+
   "symbols": [
     {
       "keyword": "상징 키워드",
@@ -622,7 +703,7 @@ ${data.name} 님 사주 = 불 ${data.ohengDistribution.화 ?? 0}, 흙 ${data.ohe
   },
 
   "luckyProfile": {
-    "color": { "name": "한글 색상명", "hex": "#XXXXXX", "reason": "80자+ · 오행·용신 연계" }
+    "color": { "name": "한글 색상명", "hex": "#XXXXXX", "reason": "80자+ · 반드시 원국 용신(用神) 한 오행에서만 도출 (일간/결손/꿈 오행으로 색 뽑기 금지). 단 사주 없는 무사주 변형이면 꿈 상징 오행 기준" }
   }
 }
 
@@ -833,7 +914,7 @@ ${data.category}
   },
 
   "luckyProfile": {
-    "color": { "name": "한글 색상명", "hex": "#XXXXXX", "reason": "80자+ · 오행·용신 연계" }
+    "color": { "name": "한글 색상명", "hex": "#XXXXXX", "reason": "80자+ · 반드시 원국 용신(用神) 한 오행에서만 색 도출 (대운/일진/결손/일간 오행으로 색 뽑기 금지). 단 사주 없는 무사주 변형이면 꿈 상징 오행 기준" }
   }
 }
 
@@ -1067,12 +1148,12 @@ ${JSON.stringify(data.sajuData, null, 2)}
   "interpretation": "심층 해석 통합 · 1200자 이상 · 3~4단락",
   "timeline": "앞으로 전망 · 600자 이상 · 오늘·3일·1주·1개월 4구간",
   "luckyProfile": {
-    "color": { "name": "...", "hex": "#XXXXXX", "reason": "100자 이상" },
-    "number": 1~9, "numberReason": "80자 이상",
-    "direction": "8방위 한글", "directionReason": "80자 이상",
-    "element": "목|화|토|금|수", "elementReason": "80자 이상"
+    "color": { "name": "...", "hex": "#XXXXXX", "reason": "100자 이상 · 원국 용신 오행 단일 기준 (대운/세운/결손/일간 오행 금지)" },
+    "number": 1~9, "numberReason": "80자 이상 · 원국 용신 오행 단일 기준 (대운/세운/결손/일간 오행 금지)",
+    "direction": "8방위 한글", "directionReason": "80자 이상 · 원국 용신 오행 단일 기준 (대운/세운/결손/일간 오행 금지)",
+    "element": "원국 용신 오행(목|화|토|금|수 중 용신 1개)", "elementReason": "80자 이상"
   },
-  "luckyAction": "오늘~이번 주 실천 행동 · 300자 이상 · 시각·장소·방법 포함"
+  "luckyAction": "오늘~이번 주 실천 행동 · 300자 이상 · 시각·장소·방법 포함 · 색·방위 처방 시 원국 용신 오행 기준"
 }
 
 ### 금지사항
@@ -1120,7 +1201,7 @@ ${exports.GOOSEBUMP_BLOCK}
 const DAILY_FORTUNE_USER_V3 = (data) => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${data.sajuData.myeongriAnalysis.용신} · 희신 ${data.sajuData.myeongriAnalysis.희신 || '-'} · 기신 ${data.sajuData.myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${data.sajuData.myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1235,7 +1316,7 @@ ${data.baseScores100 ? `
     · 단락 1: 오늘 일진과 내 일간의 관계 (생/극/합) + <strong>핵심 결론</strong>
     · 단락 2: 사주 원국에서 강해지는 글자 (구체 행동·심리 묘사) + <strong>강조</strong>
     · 단락 3: 위험 신호 + 한 박자 늦추는 법 (<u>시간대</u> 명시 + <strong>대안</strong>)
-    · 단락 4: 부족한 기운 + 보충 방법 (<u>색상·방위·행동</u> 명시 + <strong>실천 결론</strong>)",
+    · 단락 4: 부족한 기운 + 보충 방법 (보충은 행동·습관 위주로 쓰고, 구체 색·방위는 본문에 박지 말 것 — 색·방위는 §06 럭키(용신)와 일치) + <strong>실천 결론</strong>)",
 
   "sajuTone": "200자+ · ${data.name}님 사주 본질 톤 1단락 · 일간/용신/대운 중 2회+ 인용",
 
@@ -1339,12 +1420,13 @@ ${data.baseScores100 ? `
 
   // ── §06 럭키 6 그리드 (mockup §06 · 4종 → 6종 확장) ──────────────────────────────
   "luckyProfile": {
-    "color": { "name": "한글 색상명", "hex": "#XXXXXX", "reason": "60자+ · 오행/용신 근거" },
-    "direction": { "value": "동|서|남|북|동남|동북|서남|서북", "reason": "60자+ · 오행 방위 근거" },
+    "// 🚨 color·direction·number·food·glyph 모두 [원국 용신 오행] 하나로 통일 (위 '행운·개운 데이터 SSOT' 절대 준수). 오늘 일진·대운 지지 오행이나 결손 오행으로 뽑지 말 것 — 종합사주·주제운과 색이 어긋나면 안 됨.": "",
+    "color": { "name": "용신 오행 색상(한글)", "hex": "#XXXXXX", "reason": "60자+ · 원국 용신 근거" },
+    "direction": { "value": "동|서|남|북|동남|동북|서남|서북", "reason": "60자+ · 용신 오행 방위 근거" },
     "time": { "range": "14~17시 형식", "reason": "60자+ · 왜 이 시간대" },
-    "number": { "value": "1·6 같은 단일/복수 숫자", "reason": "60자+ · 사주 근거" },
-    "food": { "name": "국·차·물 같은 음식", "reason": "60자+ · 오행/체질 근거" },
-    "glyph": { "value": "壬·癸·亥 같은 한자 1~3자", "reason": "60자+ · 부족한 기운 보충 결" }
+    "number": { "value": "용신 오행 숫자(목3·8 화2·7 토5·10 금4·9 수1·6)", "reason": "60자+ · 용신 근거" },
+    "food": { "name": "용신 오행 음식(국·차 등)", "reason": "60자+ · 용신 오행 근거" },
+    "glyph": { "value": "용신 오행 한자 1~3자 (예: 용신 화 → 丙·午)", "reason": "60자+ · 용신 오행 보강 결" }
   },
 
   // ── §07 한 문장 + 내일 미리보기 (mockup §07) ──────────────────────────────
@@ -1423,7 +1505,7 @@ exports.DAILY_FORTUNE_USER_V3 = DAILY_FORTUNE_USER_V3;
 const DAILY_FORTUNE_USER_V3_GROUP_A1 = (data) => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${data.sajuData.myeongriAnalysis.용신} · 희신 ${data.sajuData.myeongriAnalysis.희신 || '-'} · 기신 ${data.sajuData.myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${data.sajuData.myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1479,7 +1561,7 @@ exports.DAILY_FORTUNE_USER_V3_GROUP_A1 = DAILY_FORTUNE_USER_V3_GROUP_A1;
 const DAILY_FORTUNE_USER_V3_GROUP_A2 = (data) => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${data.sajuData.myeongriAnalysis.용신} · 희신 ${data.sajuData.myeongriAnalysis.희신 || '-'} · 기신 ${data.sajuData.myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${data.sajuData.myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1512,7 +1594,7 @@ ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
 
 \`\`\`json
 {
-  "todayNarrative": "1000~1200자 · 4단락 · 단락 사이 빈 줄 1개. 첫 문장 한자 0. 첫 단락에 사주 호명 1회+. 단락1: 일진과 일간 관계. 단락2: 원국에서 강해지는 글자. 단락3: 위험 신호. 단락4: 부족한 글자 + 보충 방법.",
+  "todayNarrative": "1000~1200자 · 4단락 · 단락 사이 빈 줄 1개. 첫 문장 한자 0. 첫 단락에 사주 호명 1회+. 단락1: 일진과 일간 관계. 단락2: 원국에서 강해지는 글자. 단락3: 위험 신호. 단락4: 부족한 글자 + 보충 방법 (보충은 행동 위주, 구체 색·방위는 §06 럭키 용신 기준과 일치).",
   "sajuTone": "200자+ · 사주 본질 톤 1단락 · 일간/용신/대운 중 2회+ 인용",
   "pillarMessages": {
     "year": "120자+ · 년주가 오늘과 만나는 자리",
@@ -1557,7 +1639,7 @@ exports.DAILY_FORTUNE_USER_V3_GROUP_A2 = DAILY_FORTUNE_USER_V3_GROUP_A2;
 const DAILY_FORTUNE_USER_V3_GROUP_A = (data) => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${data.sajuData.myeongriAnalysis.용신} · 희신 ${data.sajuData.myeongriAnalysis.희신 || '-'} · 기신 ${data.sajuData.myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${data.sajuData.myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1609,7 +1691,7 @@ overallScore 는 4축 평균 ±5 한도.
   "scoreHeadline": "30자 내외 · 왜 이 점수인지",
   "myToday": "30자 내외 · ${data.name}님에게 오늘이 어떤 날인지",
   "keywords": ["2~4자 명사 × 5"],
-  "todayNarrative": "1000~1200자 · 4단락 · 단락 사이 빈 줄 1개. 첫 문장 한자 0. 첫 단락에 사주 호명 1회+. 단락1: 일진과 일간 관계. 단락2: 원국에서 강해지는 글자. 단락3: 위험 신호. 단락4: 부족한 글자 + 보충 방법.",
+  "todayNarrative": "1000~1200자 · 4단락 · 단락 사이 빈 줄 1개. 첫 문장 한자 0. 첫 단락에 사주 호명 1회+. 단락1: 일진과 일간 관계. 단락2: 원국에서 강해지는 글자. 단락3: 위험 신호. 단락4: 부족한 글자 + 보충 방법 (보충은 행동 위주, 구체 색·방위는 §06 럭키 용신 기준과 일치).",
   "sajuTone": "200자+ · 사주 본질 톤 1단락 · 일간/용신/대운 중 2회+ 인용",
   "pillarMessages": {
     "year": "120자+ · 년주가 오늘과 만나는 자리",
@@ -1659,7 +1741,7 @@ exports.DAILY_FORTUNE_USER_V3_GROUP_A = DAILY_FORTUNE_USER_V3_GROUP_A;
 const DAILY_FORTUNE_USER_V3_GROUP_B = (data) => `## 유저 정보
 이름: ${data.name}
 사주: ${JSON.stringify(data.sajuData, null, 2)}
-
+${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산출 — 종합사주·주제운과 동일 소스): 용신 ${data.sajuData.myeongriAnalysis.용신} · 희신 ${data.sajuData.myeongriAnalysis.희신 || '-'} · 기신 ${data.sajuData.myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색·방위·음식·숫자·글자)는 전부 이 용신(${data.sajuData.myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
@@ -1740,12 +1822,13 @@ ${data.tomorrowGanzi ? `- 내일 간지: ${data.tomorrowGanzi}${data.tomorrowDat
     { "action": "...", "when": "...", "reason": "..." }
   ],
   "luckyProfile": {
-    "color":     { "name": "한글 색상명", "hex": "#XXXXXX", "reason": "60자+" },
-    "direction": { "value": "동|서|남|북|동남|동북|서남|서북", "reason": "60자+" },
+    "// 🚨 6종 모두 [원국 용신 오행] 하나로 통일 (행운·개운 데이터 SSOT 준수). 일진/대운/결손 오행 금지.": "",
+    "color":     { "name": "용신 오행 색상(한글)", "hex": "#XXXXXX", "reason": "60자+ · 용신 근거" },
+    "direction": { "value": "동|서|남|북|동남|동북|서남|서북", "reason": "60자+ · 용신 방위" },
     "time":      { "range": "14~17시 형식", "reason": "60자+" },
-    "number":    { "value": "1·6 형식", "reason": "60자+" },
-    "food":      { "name": "국·차·물 같은 음식", "reason": "60자+" },
-    "glyph":     { "value": "壬·癸·亥 같은 한자 1~3자", "reason": "60자+" }
+    "number":    { "value": "용신 오행 숫자(목3·8 화2·7 토5·10 금4·9 수1·6)", "reason": "60자+" },
+    "food":      { "name": "용신 오행 음식(국·차 등)", "reason": "60자+" },
+    "glyph":     { "value": "용신 오행 한자 1~3자 (예: 용신 화 → 丙·午)", "reason": "60자+" }
   },
   "dailyQuote": "60~80자 · 시적 한 문장. 사주 인용 1회+",
   "tomorrow": {
@@ -1829,7 +1912,7 @@ ${data.dailyId ? `- 오늘 운세 ID: ${data.dailyId}` : ''}
   ] × 3~5,
   "warning": "주의사항 · 200자",
   "rituals": [
-    { "title": "개운법", "body": "80자" }
+    { "title": "개운법", "body": "80자 (색·방위·음식·숫자를 쓸 경우 반드시 원국 용신 오행 기준 — 종합사주·오늘운세와 동일)" }
   ] × 2~3
 }
 `;
@@ -1865,13 +1948,27 @@ ${context.floors ? `## 필드별 글자수 하한 (floor — 미달 시 reject)\
       "양의 기운이 충만한" / "흐름이 좋아요" / "~에 집중하세요" /
       "모든 것이 유기적으로 연결된" 류 0개.
       **"이 문장이 다른 누구에게도 그대로 쓸 수 있는가?" 테스트** — 예스면 재작성.
-- [ ] **면피체 0개 (v4.2 확대)**:
+- [ ] **면피체·애매표현 0개 (2026-06-24 인플루언서 어조 강화)**:
       "~할 수 있습니다" / "~할 가능성이 있습니다" / "~할지도 모릅니다" /
-      "~할 수도 있습니다" / "일반적으로 ~한 편입니다" /
-      "~일 것입니다" / "~것처럼 보입니다" 류 **전부 0개**.
+      "~할 수도 있습니다" / "일반적으로 ~한 편입니다" / "~인 편입니다" /
+      "~경향이 있습니다" / "~듯합니다" / "~것 같습니다" /
+      "~일 것입니다" / "~것처럼 보입니다" / "~보입니다" 류 **전부 0개**.
       발견 시 해당 문장 **단정형 + 사주 근거**로 교체.
       (허용 예외: 조언 필드 — doList/actionAdvice/rituals의 "~해 볼 수 있습니다",
        "~추천드립니다"는 OK)
+- [ ] **과거 적중 훅 1회+ (소름)**:
+      주요 서사 섹션(narrative·sajuTone·interpretation·sections 등)마다
+      "혹시 예전에 ~한 일이 있지 않았나요?" / "유독 ~할 때 ~하지 않으셨나요?" 류
+      **과거를 콕 집는 훅이 1회 이상** 들어갔는가? (사주 글자 근거 → 그 사람만의 구체 과거 장면)
+      누구에게나 맞는 일반론이면 Fail — 그 사람만의 장면으로 재작성.
+- [ ] **명령형 솔루션 (분명한 지시)**:
+      실천·조언 문장이 "앞으로는 ~하세요" / "~는 피하고 ~를 선택하세요" 처럼
+      **분명한 지시**인가? "~하는 것도 좋습니다" / "~를 고려해보세요" /
+      "상황에 따라 다릅니다" 류 권유·회피 **0건**. 발견 시 명령형으로 교체.
+- [ ] **동어반복 0 (루즈함 차단)**:
+      같은 메시지를 앞·중간·끝에서 반복한 곳, "앞서 말했듯" 류 0건.
+      **각 단락이 새 정보**인가? 같은 결론을 다른 말로 또 푼 곳이 있으면
+      그 부분을 사주 근거·구체 장면·실천 지시로 교체.
 - [ ] **개인화 직접 호출 3회+**:
       모든 200자 이상 필드에서 일간·월령·용신·대운·신살·오행 균형 중
       **최소 3회 이상 구체 호명** (단순 언급 아닌 "○○ 일간이라" / "○○대운이

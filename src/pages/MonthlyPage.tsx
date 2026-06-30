@@ -11,15 +11,12 @@ import { getMonthlyPrice } from '@/constants/pricing';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
-import { FooterCTA } from '@/components/common/FooterCTA';
 import { Solar } from 'lunar-javascript';
-import type { MonthlyDetailResponse, MonthlyPeriod, MonthlyDomain, MonthlyDayNote } from '@/types/report';
-import { stripMd, sanitizeAiText } from '@/utils/format';
-import { autoEmphasize } from '@/utils/emphasis'; // 2026-07-01 본문 강조(형광펜·밑줄·경고) 자동 주입 — 오늘운세 정렬
+import type { MonthlyDetailResponse } from '@/types/report';
+import { MonthlyMockupView } from './MonthlyMockupView'; // 2026-07-01 결과 phase 오늘운세급 재구축
 import {
   EXTENSION_THEME,
   ExtensionHero,
-  ExtensionUpsellCard,
 } from './extension/_chrome';
 
 type Phase = 'select' | 'loading' | 'result';
@@ -226,7 +223,7 @@ export function MonthlyPage() {
     return <AILoading name={selected?.name} type="월별 운세" sajuData={selected?.sajuData} steps={['선택한 달의 월간지를 짚고 있어요', '상순·중순·하순 흐름을 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} />;
   }
 
-  // ─── 결과 (단일월 심층) ───
+  // ─── 결과 (단일월 심층 — 오늘운세급 MonthlyMockupView) ───
   if (!result) return null;
 
   const monthLabel = result.month ? `${result.year}년 ${result.month}월` : '';
@@ -235,199 +232,33 @@ export function MonthlyPage() {
       ? `${selected.sajuData.pillars[2].천간읽기 ?? ''}(${selected.sajuData.pillars[2].천간}) 일간`
       : undefined;
 
-  const periods: MonthlyPeriod[] = Array.isArray(result.periods) ? result.periods : [];
-  const luckyDays: MonthlyDayNote[] = Array.isArray(result.luckyDays) ? result.luckyDays : [];
-  const cautionDays: MonthlyDayNote[] = Array.isArray(result.cautionDays) ? result.cautionDays : [];
-  const domains: { key: string; label: string; color: string; data?: MonthlyDomain }[] = [
-    { key: 'wealth', label: '재물운', color: '#B8965A', data: result.wealth },
-    { key: 'love', label: '애정운', color: '#C88A95', data: result.love },
-    { key: 'career', label: '직업운', color: '#5A7CA8', data: result.career },
-    { key: 'health', label: '건강운', color: '#6FA08C', data: result.health },
-  ];
-
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--bg-page-gradient)' }}>
       <Header title="월별 운세" />
-
-      {/* ① Hero — 일간 + 선택월 라벨 */}
       <FadeIn>
-        <ExtensionHero
-          theme={EXTENSION_THEME.monthly}
-          costLabel={getMonthlyPrice().isOnSale ? `${getMonthlyPrice().regularPrice}운→${getMonthlyPrice().actualPrice}운` : `${getMonthlyPrice().actualPrice}운`}
-          sub={`${ilganLabel ?? ''}${monthLabel ? (ilganLabel ? ' · ' : '') + monthLabel : ''}`}
-          rightLabel="月運 · 이 달의 운"
+        <MonthlyMockupView
+          result={result}
+          profile={selected as any}
+          monthLabel={monthLabel}
+          ilganLabel={ilganLabel}
+          onShare={() => setShowShare(true)}
+          onChat={async () => {
+            // 결과 컨텍스트 영구 저장 (보관함 재진입에도 복원) — Daily/Topic 패턴 정렬
+            const { createChatRoom } = await import('@/services/storage/chatStore');
+            const ctx = {
+              type: 'monthly' as const,
+              label: monthLabel ? `${monthLabel} 운세` : '월별 운세',
+              fullResult: result,
+            };
+            const room = createChatRoom(selected?.name || '나', 'free', ctx);
+            navigate(`/chat/${room.id}`, { state: { profile: selected, contentContext: ctx } });
+          }}
+          onTopic={(topicId) => navigate(`/topic/${topicId}`)}
+          onTopics={() => navigate('/#home-topics')}
         />
       </FadeIn>
 
-      <div className="topic-section-body px-5 pt-4 space-y-5">
-
-        {/* ② 큰 후크 + 이 달의 테마 */}
-        <FadeIn delay={0.04}>
-          <div className="card py-6 px-5">
-            {result.keywords?.length ? (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {result.keywords.map((kw, i) => (
-                  <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: `${ACCENT}1A`, color: ACCENT, border: `1px solid ${ACCENT}33` }}>
-                    {kw}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {monthLabel && <p className="text-caption font-bold mb-1.5" style={{ color: ACCENT, letterSpacing: '0.04em' }}>{monthLabel}</p>}
-            <p className="text-h2 text-text-primary mb-1" style={{ lineHeight: 1.4 }}>{stripMd(result.headline || '')}</p>
-            {result.theme && (
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.theme)) }} />
-            )}
-          </div>
-        </FadeIn>
-
-        {/* ③ 상순·중순·하순 타임라인 카드 */}
-        {periods.length > 0 && (
-          <>
-            <FadeIn delay={0.08}>
-              <p className="text-h3 text-text-primary">한 달의 흐름</p>
-            </FadeIn>
-            {periods.map((pr, i) => (
-              <FadeIn key={`${pr.phase}-${i}`} delay={0.1 + i * 0.03}>
-                <PeriodCard period={pr} />
-              </FadeIn>
-            ))}
-          </>
-        )}
-
-        {/* ④ 4영역 (재물·애정·직업·건강) */}
-        <FadeIn delay={0.2}>
-          <p className="text-h3 text-text-primary mb-1">분야별 운세</p>
-          <div className="grid grid-cols-1 gap-3 mt-2">
-            {domains.filter(d => d.data).map((d) => (
-              <DomainCard key={d.key} label={d.label} color={d.color} data={d.data as MonthlyDomain} />
-            ))}
-          </div>
-        </FadeIn>
-
-        {/* ⑤ 길일 · 주의일 */}
-        {(luckyDays.length > 0 || cautionDays.length > 0) && (
-          <FadeIn delay={0.26}>
-            <p className="text-h3 text-text-primary mb-1">이 달의 길일·주의일</p>
-            <div className="space-y-3 mt-2">
-              {luckyDays.map((d, i) => (
-                <DayNoteCard key={`lucky-${i}`} note={d} type="lucky" />
-              ))}
-              {cautionDays.map((d, i) => (
-                <DayNoteCard key={`caution-${i}`} note={d} type="caution" />
-              ))}
-            </div>
-          </FadeIn>
-        )}
-
-        {/* ⑥ 개운 처방 */}
-        {result.gaewoon && (
-          <FadeIn delay={0.3}>
-            <div className="card py-5 px-5" style={{ background: `${ACCENT}0A`, border: `1px solid ${ACCENT}26` }}>
-              <p className="text-caption font-bold mb-1.5" style={{ color: ACCENT, letterSpacing: '0.06em' }}>이 달의 개운 처방</p>
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.gaewoon)) }} />
-            </div>
-          </FadeIn>
-        )}
-
-        <FadeIn delay={0.36}>
-          <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>결과 공유하기</Button>
-        </FadeIn>
-
-        {/* 단일 CTA — 종합사주 업셀 */}
-        <FadeIn delay={0.4}>
-          <ExtensionUpsellCard
-            title="이 달의 흐름을 사주 전체에서 풀어드립니다"
-            desc="이 달의 결이 사주 원국의 어느 자리에서 비롯되는지, 평생의 운까지 한 번에."
-            onTap={() => navigate('/charge?need=10')}
-          />
-        </FadeIn>
-
-        {/* 출처 + 디스클레이머 */}
-        <div className="mt-8 text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
-          </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
-            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
-            <br />
-            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
-          </p>
-        </div>
-
-        {/* 3-part Footer CTA */}
-        <FooterCTA pageKey="monthly" backTo="/" />
-      </div>
-
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'monthly'} />
-    </div>
-  );
-}
-
-// ─── 상순·중순·하순 카드 ───
-function PeriodCard({ period: pr }: { period: MonthlyPeriod }) {
-  const score = Math.max(0, Math.min(100, Number(pr.score) || 0));
-  const scoreColor = score >= 80 ? ACCENT : score >= 60 ? '#2D8A4E' : score >= 40 ? '#8C6D3D' : '#D32F2F';
-  return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${scoreColor}14` }}>
-            <span className="text-h3 font-black" style={{ color: scoreColor }}>{stripMd(pr.phase || '').slice(0, 2)}</span>
-          </div>
-          <div>
-            <p className="text-h3 text-text-primary">{stripMd(pr.phase || '')}</p>
-            {pr.dateRange && <p className="text-caption text-text-muted mt-0.5">{stripMd(pr.dateRange)}</p>}
-          </div>
-        </div>
-        <span className="text-h3 font-bold" style={{ color: scoreColor }}>{score}</span>
-      </div>
-      {pr.body && (
-        <p className="text-body-sm text-text-secondary leading-relaxed mt-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(pr.body)) }} />
-      )}
-    </div>
-  );
-}
-
-// ─── 4영역 카드 ───
-function DomainCard({ label, color, data }: { label: string; color: string; data: MonthlyDomain }) {
-  const score = Math.max(0, Math.min(100, Number(data.score) || 0));
-  return (
-    <div className="card py-4 px-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
-          <p className="text-h3 text-text-primary">{label}</p>
-        </div>
-        <span className="text-h3 font-bold" style={{ color }}>{score}</span>
-      </div>
-      <div className="h-1.5 rounded-full overflow-hidden mb-2.5" style={{ background: `${color}14` }}>
-        <div className="h-full rounded-full" style={{ background: color, width: `${score}%` }} />
-      </div>
-      {data.body && (
-        <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(data.body)) }} />
-      )}
-    </div>
-  );
-}
-
-// ─── 길일·주의일 카드 ───
-function DayNoteCard({ note, type }: { note: MonthlyDayNote; type: 'lucky' | 'caution' }) {
-  const isCaution = type === 'caution';
-  const color = isCaution ? '#D32F2F' : ACCENT;
-  const bg = isCaution ? 'rgba(211,47,47,0.05)' : `${ACCENT}0D`;
-  return (
-    <div className="card py-4 px-4" style={{ background: bg, border: `1px solid ${color}26` }}>
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: color, color: '#fff' }}>
-          {isCaution ? '주의' : '길일'}
-        </span>
-        {note.date && <span className="text-h3 font-bold" style={{ color }}>{stripMd(note.date)}</span>}
-      </div>
-      {note.reason && (
-        <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(note.reason)) }} />
-      )}
     </div>
   );
 }

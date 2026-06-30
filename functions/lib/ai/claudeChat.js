@@ -23,6 +23,7 @@ exports.GUARD_TOKEN = void 0;
 exports.generateChatAnswerAI = generateChatAnswerAI;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const parseJson_1 = require("./parseJson");
+const aiUsageLog_1 = require("../shared/aiUsageLog");
 const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-6';
 /* ─── Safety Guard 시스템 프롬프트 (2026-04-21 앱인토스 검수 §1-1) ───
  * geminiChat.ts 와 동일 정책. Claude system prompt 형태 + JSON 강제 + 격식체 60% + 한자 3개 이내 + 3턴 결론.
@@ -34,7 +35,8 @@ const GUARD_SYSTEM_INSTRUCTION = `당신은 40년 경력의 베테랑 사주 상
 
 [톤]
 - 격식체 60% 이상, 친근체 30~40% 보조. 어조는 차분하고 단정.
-- 한자는 답변 전체에서 3개 이내. 한자 표기 시 반드시 한글 풀이 병기.
+- 한자는 한 답변에 2개 이하. 한자 등장 즉시 괄호 일상어 풀이를 병기한다 ("편재(偏財) 기운").
+- 독자는 사주를 1도 모르는 일반인이다. 명리 용어를 문장의 주어로 쓰지 말 것 — ❌"편재가 사업 감각을 줍니다" → ✅"사업 감각이 있으신데, 이건 편재(偏財) 기운에서 나와요".
 - "반드시", "100%", "확실히 일어납니다" 같은 단정 표현 금지.
 
 [답변 구조 — 3턴 결론 원칙]
@@ -91,7 +93,8 @@ guarded 판정:
 - 그 외엔 false (guardCategory는 "none")
 
 [🔒 만세력 절대 룰 (2026-06-12 — 회귀 금지)]
-- 간지는 user 메시지의 ## 사주 원국 / ## 현재 대운 에 주어진 값만 사용. 생년월일로 간지를 직접 계산·추론하는 것 절대 금지 (LLM 은 만세력 계산 불가 — 시도하면 반드시 틀린다).
+- 간지는 user 메시지의 ## 사주 원국 / ## 대운 흐름 에 주어진 값만 사용. 생년월일로 간지를 직접 계산·추론하는 것 절대 금지 (LLM 은 만세력 계산 불가 — 시도하면 반드시 틀린다).
+- 대운은 ## 대운 흐름 목록에 이전·현재·다음을 포함한 전 구간 간지+나이가 주어진다. 사용자가 이전/다음/특정 나이대 대운을 물으면 반드시 그 목록의 간지를 그대로 인용하고, 목록에 없는 간지를 추측·생성·뒤바꾸기(swap) 절대 금지 (차트와 본문 불일치 버그 원인).
 - 사용자가 제3자(애인·가족·친구)의 생년월일만 주고 그 사람 사주를 물으면: 간지를 지어내지 말고, 일반 명리 원리로만 답하되 "정확한 풀이는 그분 사주를 입력해 궁합·주제 분석으로 보시는 게 정확해요"로 안내.
 
 [🚨 해석 원칙 — 40년 베테랑의 품격 (2026-06-12 · 회귀 금지)]
@@ -117,9 +120,12 @@ guarded 판정:
 ✅ 사주 글자 직접 호명 — '신금 두 개', '병화 일간', '축미충', '인성 3개', '겁재 두 개', 현 대운 간지 직접 인용.
 ✅ answer 본문에 사주 8글자 또는 현 대운 간지 중 specific 데이터 1회 이상 직접 호명 mandatory (가드 응답 제외).
 
-[🚨 example 사용 룰 (회귀 금지)]
+[🚨 어조 규칙 (2026-06-24 인플루언서 피드백 · 대화 맥락 적용 · 회귀 금지)]
+대화체이므로 위 '부정 단정 금지·균형·범위 정직' 룰과 충돌하지 않게, 어휘가 아니라 어조의 선명함에만 적용한다:
+1. 면피·동어반복 화법 금지 — '~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다' 류로 매 문장을 흐리지 마라. 사주 근거가 있는 부분은 '~한 자리입니다 / ~한 흐름입니다'처럼 선명하게 말한다. (단, 흉·중대결정·타인 속마음은 위 해석 원칙대로 단정하지 않고 양면+대처법으로.)
+2. 루즈함 차단 — 한 답변 안에서 같은 결론을 표현만 바꿔 두세 번 반복하지 마라. 문장마다 새 정보를 담고, 구구절절·동어반복 없이 핵심을 또렷이 전한다.
 이 시스템 프롬프트의 예시 사주 글자(壬水·偏財·正財 등)는 example.
-실제 사용자에게는 user 메시지의 ## 사주 원국 / ## 현재 대운 의 진짜 8글자·진짜 대운간지를 인용.
+실제 사용자에게는 user 메시지의 ## 사주 원국 / ## 대운 흐름 의 진짜 8글자·진짜 대운간지를 인용.
 '{유저명}' 같은 placeholder 가 user 메시지에 들어오면 ## 이름 의 진짜 이름으로 치환.
 
 [🚨 결과 페이지 컨텍스트 ([CONTENT_CONTEXT] 블록) — 2026-05-28 PM 신규 mandatory]
@@ -166,7 +172,16 @@ async function generateChatAnswerAI(apiKey, question, sajuData, chatHistory, tim
         });
         const elements = sajuData.elements || {};
         const sipsung = sajuData.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
-        const currentDaeun = sajuData.daeun?.find((d) => d.isCurrent || d.현재);
+        // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서,
+        //   유저가 이전/다음 대운을 물으면 AI 가 데이터 없이 추측·뒤바꾸던 위험 fix. claudePremium.buildSajuBase 패턴 복제.
+        const daeunList = Array.isArray(sajuData.daeun) ? sajuData.daeun : [];
+        const curIdx = daeunList.findIndex((d) => d.isCurrent || d.현재);
+        const daeunAge = (d) => (d?.시작나이 != null && d?.끝나이 != null) ? `${d.시작나이}~${d.끝나이}세` : (d?.나이범위 != null ? `${d.나이범위}세~` : '');
+        const daeunFlow = daeunList.length > 0
+            ? daeunList.map((d, i) => `- ${daeunAge(d)} ${d.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+            : '미상';
+        const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
+        const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
         sajuContext = `## 사주 원국
 ${pillarsText}
 일간(나): ${p[2]?.천간 || '미상'}
@@ -177,9 +192,9 @@ ${Object.entries(elements).filter(([, v]) => v === 0).map(([k]) => `→ ${k} 없
 ${Object.entries(elements).filter(([, v]) => v >= 3).map(([k, v]) => `→ ${k} ${v}개 과다`).join('\n')}
 
 ## 십성: ${sipsung || '미상'}
-## 현재 대운: ${currentDaeun
-            ? `${currentDaeun.간지} (${currentDaeun.시작나이 || currentDaeun.나이범위}세~)`
-            : '미상'}
+## 대운 흐름 (10년 단위 · 나이는 만 나이 기준)
+${daeunFlow}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지·순서·나이는 위 목록의 값을 그대로 인용 — 사용자가 이전/다음/특정 시기 대운을 물어도 위 목록에 있는 간지만 쓰고, 목록에 없는 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지.` : ''}
 ## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}`;
     }
     // ── 이전 대화 (최근 6턴)
@@ -213,6 +228,7 @@ ${question}
      *   히스토리·질문은 user 메시지에 들어가 cache miss (정상).
      *   첫 호출 후 ~5분 내 재호출은 system 토큰 비용 90% 감소.
      */
+    const _t1 = Date.now(); // C7
     const msg = await anthropic.messages.create({
         model,
         max_tokens: 2048,
@@ -225,6 +241,8 @@ ${question}
         ],
         messages: [{ role: 'user', content: userPrompt }],
     });
+    if (msg.usage)
+        (0, aiUsageLog_1.logAiUsage)({ type: 'chat', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
     const text = msg.content[0].text || '';
     let parsed;
     try {

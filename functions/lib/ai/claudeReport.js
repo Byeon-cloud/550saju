@@ -8,6 +8,7 @@ exports.generateReportGroup = generateReportGroup;
 exports.mergeReportGroups = mergeReportGroups;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const kstTime_1 = require("../utils/kstTime");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 /**
  * 사주 리포트 — Claude Opus 4.6 (기본, 프리미엄 품질)
@@ -232,7 +233,7 @@ function groupSchema(group, year) {
     return `{
   "sections": [
     {"id": "year${year}", "title": "${year}년 운세", "keyInsight": "${year}년 전체를 관통하는 키워드 한 줄", "content": "500자 이상. ⚠️ 현재 시제 엄격 구분. 세운 간지와 원국의 상호작용, 용신과의 관계. 상반기/하반기 흐름 차이."},
-    {"id": "daeun", "title": "대운 흐름", "keyInsight": "지금 인생에서 어떤 시기인지 한 줄 정의", "content": "400자 이상. 현재 대운의 의미, 이전 대운과의 변화, 다음 대운 전환점."},
+    {"id": "daeun", "title": "대운 흐름", "keyInsight": "지금 인생에서 어떤 시기인지 한 줄 정의", "content": "400자 이상. 현재 대운의 의미, 이전 대운과의 변화, 다음 대운 전환점. ⚠️ 이전·현재·다음 대운의 간지는 프롬프트의 '대운 흐름' 목록에 적힌 간지를 그대로 인용 — 임의 생성·순서 swap 절대 금지. 흐름 데이터가 없으면 현재 대운만 다루고 이전/다음 간지는 언급하지 말 것."},
     {"id": "mission", "title": "인생 과제", "keyInsight": "이 사람이 평생 씨름할 근본 과제 한 줄", "content": "400자 이상. 격국/용신에서 파생되는 근본적 과제. 기신을 다루는 구체적 방법."},
     {"id": "luck", "title": "개운법", "keyInsight": "가장 효과적인 개운 행동 한 가지", "content": "400자 이상. ⚠️ 반드시 용신 오행에서 파생! 색상/방위/음식/직업환경/행동습관을 용신 기반으로 구체적으로."}
   ],
@@ -253,8 +254,9 @@ function groupSchema(group, year) {
 }
 /** 시스템 프롬프트 — 명리학 분석 프레임워크(공유) + 그룹별 출력 스키마 */
 function buildSystemPrompt(sajuData, group) {
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth() + 1;
+    const now = (0, kstTime_1.kstNow)();
+    const year = now.year;
+    const month = now.month;
     return `당신은 사주500 명리학 해석가입니다.
 ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
 ${promptsV3_1.GOOSEBUMP_BLOCK}
@@ -328,6 +330,13 @@ ${promptsV3_1.GOOSEBUMP_BLOCK}
 - strong 강조는 일상 결론 한 줄에만 (한자 X).
 - 마무리는 긍정·격려.
 
+## 🚨🚨 어조 규칙 (2026-06-24 · 인플루언서 피드백 — 출력 본문 전체에 절대 준수)
+1. 애매·면피 표현 전면 금지: "~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다" 류 0건. 모든 문장을 확신 있는 단정형으로 끝낸다.
+2. 단정형으로 말한다: "당신은 ~한 사람입니다." "이 시기는 ~한 때입니다." (추측·완곡 X)
+3. 과거 적중(소름 훅)을 섞는다: "혹시 예전에 ~한 일이 있지 않았나요?" "유독 ~할 때 ~하지 않으셨나요?" — 독자가 "어? 내 얘기네?" 하게.
+4. 솔루션은 명령형: "앞으로는 이렇게 하세요." "~는 피하고 ~를 선택하세요." (애매한 권유 X, 분명한 지시 O)
+5. 루즈함 차단: 같은 메시지를 앞·중간·끝에서 반복 금지. 각 단락은 새 정보. 구구절절·동어반복 금지.
+
 ## 🚨🚨 사주 '메커니즘 나열' 금지 (2026-06-02 — "너무 어렵다" 피드백 · 회귀 금지)
 유저는 "왜 그런지의 명리학 원리"를 안 궁금해합니다. "나한테 뭐가 일어나는지"만 궁금합니다.
 한자를 괄호로 풀어도, 간지끼리 상호작용을 기계적으로 나열하면 똑같이 떨어집니다.
@@ -367,10 +376,10 @@ JSON만 출력하세요. 코드블록 없이.`;
 }
 function buildUserPrompt(sajuData, situation) {
     const p = sajuData.pillars || [];
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-    const dateStr = `${year}년 ${month}월 ${today.getDate()}일`;
+    const now = (0, kstTime_1.kstNow)();
+    const month = now.month;
+    const year = now.year;
+    const dateStr = `${year}년 ${month}월 ${now.day}일`;
     // ── 사주 원국 (시일월년 순서 — 전통 명리학 표기) ──
     const labels = ['년주', '월주', '일주', '시주'];
     let pillarsText = '';
@@ -422,13 +431,35 @@ ${distText}
   → 비겁+인성(일간 도움) vs 식상+재성+관성(일간 소모) 비율을 반드시 확인
 
 ## 형충합(刑沖合) 관계
-  ${hchText}`;
+  ${hchText}${ma.용신 ? `
+
+## 용신·희신·기신 (SSOT · 결정론 산출 — luckyProfile/개운법은 이 값 그대로 사용, 재계산 금지)
+용신 ${ma.용신} · 희신 ${ma.희신 || '-'} · 기신 ${ma.기신 || '-'} [${ma.용신근거 || ''}]
+  ※ 행운 색·방위·음식·숫자는 전부 이 용신(${ma.용신}) 오행 하나로 도출 (일간/결손/대운 오행 아님).` : ''}`;
     }
     // ── 대운 ──
+    // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 currentDaeun 1개만 줘서
+    //   AI 가 이전/다음 대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그(차트는 맞는데 본문이 swap) fix.
+    //   sajuData.daeun(전체 배열)이 있으면 결정론적으로 전달 → AI 가 추측·swap 불가.
+    //   claudePremium.ts buildSajuBaseBlock 패턴 복제(필드명: 간지/시작나이/끝나이/isCurrent).
+    const daeunList = Array.isArray(sajuData.daeun) ? sajuData.daeun : [];
+    const curIdx = daeunList.findIndex((dd) => dd.isCurrent || dd.현재);
+    const daeunAge = (dd) => (dd?.시작나이 != null && dd?.끝나이 != null) ? `${dd.시작나이}세~${dd.끝나이}세` : (dd?.나이범위 || '');
+    const daeunFlow = daeunList.length > 0
+        ? daeunList.map((dd, i) => `- ${daeunAge(dd)} ${dd.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+        : '';
+    const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
+    const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
+    // 폴백: daeun 배열이 없으면 currentDaeun 단건만 정확히 (이전/다음은 언급 지시 안 함)
     const currentDaeun = sajuData.currentDaeun;
-    const daeunText = currentDaeun
+    const currentDaeunText = currentDaeun
         ? `${currentDaeun.간지} (${currentDaeun.시작나이}세~${currentDaeun.끝나이}세)`
         : '미상';
+    const daeunText = daeunFlow
+        ? `${daeunFlow}\n${curIdx >= 0
+            ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지·순서를 절대 바꾸지 말 것 — 이전/다음 대운 간지를 임의로 만들거나 뒤바꾸지 말고 위 목록 그대로 인용.`
+            : `→ 현재 대운=${currentDaeunText}`}`
+        : `${currentDaeunText}\n→ 전체 대운 흐름 데이터 없음. 현재 대운만 위 간지 그대로 인용하고, 이전/다음 대운 간지는 임의로 만들지 말 것(언급 생략).`;
     // ── 공망 ──
     const gongmang = sajuData.gongmang || [];
     const gongmangText = gongmang
@@ -458,7 +489,7 @@ ${elText}
 ${unyoungText}
 ${myeongriSection}
 
-## 현재 대운 (大運)
+## 대운 흐름 (大運 · 10년 단위 · 나이는 만 나이 기준)
 ${daeunText}
 
 ## 공망 (空亡)

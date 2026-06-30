@@ -11,17 +11,13 @@ import { getWeeklyPrice } from '@/constants/pricing';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
-import { FooterCTA } from '@/components/common/FooterCTA';
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { Solar } from 'lunar-javascript';
 import { CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
-import type { WeeklyDetailResponse, WeeklyDay } from '@/types/report';
-import { stripMd, sanitizeAiText } from '@/utils/format';
-import { autoEmphasize } from '@/utils/emphasis'; // 2026-07-01 본문 강조(형광펜·밑줄·경고) 자동 주입 — 오늘운세 정렬
+import type { WeeklyDetailResponse } from '@/types/report';
+import { WeeklyMockupView } from './WeeklyMockupView';
 import {
   EXTENSION_THEME,
   ExtensionHero,
-  ExtensionUpsellCard,
 } from './extension/_chrome';
 
 type Phase = 'select' | 'loading' | 'result';
@@ -190,201 +186,25 @@ export function WeeklyPage() {
   }
 
   // ─── 결과 ───
-  if (!result) return null;
-
-  const weeklyTheme = EXTENSION_THEME.weekly;
-  const ACCENT = weeklyTheme.accentDark; // #C77D3A
-  const ilganLabel =
-    selected?.sajuData?.pillars?.[2]?.천간
-      ? `${selected.sajuData.pillars[2].천간읽기 ?? ''}(${selected.sajuData.pillars[2].천간}) 일간`
-      : undefined;
+  if (!result || !selected) return null;
 
   const days = Array.isArray(result.dailyBreakdown) ? result.dailyBreakdown : [];
-  const keyDays = Array.isArray(result.keyDays) ? result.keyDays : [];
   const periodLabel = days.length > 0 ? `${days[0].date} ~ ${days[days.length - 1].date}` : '';
-  const chartData = days.map((d) => ({ name: d.day, 점수: Math.max(0, Math.min(100, Number(d.score) || 0)) }));
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--bg-page-gradient)' }}>
       <Header title="주간운세" />
 
-      {/* ① Hero — 주간 후크 + 테마 + 기간 */}
-      <FadeIn>
-        <ExtensionHero
-          theme={weeklyTheme}
-          costLabel={getWeeklyPrice().isOnSale ? `${getWeeklyPrice().regularPrice}운→${getWeeklyPrice().actualPrice}운` : `${getWeeklyPrice().actualPrice}운`}
-          sub={`${ilganLabel ?? ''}${periodLabel ? (ilganLabel ? ' · ' : '') + periodLabel : ''}`}
-          rightLabel="週 · 오늘부터 7일"
-        />
-      </FadeIn>
-
-      <div className="topic-section-body px-5 pt-4 space-y-5">
-
-        {/* 큰 후크 + 이번 주 테마 */}
-        <FadeIn delay={0.04}>
-          <div className="card py-6 px-5">
-            {result.keywords?.length ? (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {result.keywords.map((kw, i) => (
-                  <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: `${ACCENT}1A`, color: ACCENT, border: `1px solid ${ACCENT}33` }}>
-                    {kw}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            <p className="text-h2 text-text-primary mb-1" style={{ lineHeight: 1.4 }}>{stripMd(result.weekHeadline)}</p>
-            {result.weekTheme && (
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.weekTheme)) }} />
-            )}
-            {periodLabel && (
-              <p className="text-[11px] text-text-hint mt-3">오늘부터 7일 {periodLabel}</p>
-            )}
-            <p className="text-[11px] text-text-hint mt-1" style={{ lineHeight: 1.55 }}>달력 주가 아니라 오늘부터 7일을 하루씩 봐드려요.</p>
-          </div>
-        </FadeIn>
-
-        {/* ② 주간 리듬 그래프 — 7일 score 추이 */}
-        {chartData.length > 0 && (
-          <FadeIn delay={0.06}>
-            <div className="card">
-              <p className="text-h3 text-text-primary mb-1">이번 주 흐름</p>
-              <p className="text-[11px] text-text-hint mb-3">7일 점수 추이 (요일별)</p>
-              <div className="h-36 -mx-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="weeklyGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={ACCENT} stopOpacity={0.25} />
-                        <stop offset="95%" stopColor={ACCENT} stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
-                    <Area type="monotone" dataKey="점수" stroke={ACCENT} strokeWidth={2}
-                      fill="url(#weeklyGrad)"
-                      dot={{ r: 2.5, fill: ACCENT, strokeWidth: 0 }}
-                      activeDot={{ r: 4, fill: ACCENT, stroke: '#fff', strokeWidth: 2 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </FadeIn>
-        )}
-
-        {/* ③ 핵심일 카드 — best/caution */}
-        {keyDays.length > 0 && (
-          <FadeIn delay={0.08}>
-            <p className="text-h3 text-text-primary mb-1">이번 주 핵심일</p>
-            <div className="grid grid-cols-1 gap-3 mt-2">
-              {keyDays.map((k, i) => {
-                const isCaution = k.type === 'caution';
-                const color = isCaution ? '#D32F2F' : ACCENT;
-                const bg = isCaution ? 'rgba(211,47,47,0.05)' : `${ACCENT}0D`;
-                return (
-                  <div key={i} className="card py-4 px-4" style={{ background: bg, border: `1px solid ${color}26` }}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: color, color: '#fff' }}>
-                        {isCaution ? '주의' : 'BEST'}
-                      </span>
-                      <span className="text-h3 font-bold" style={{ color }}>{k.day}</span>
-                      {k.date && <span className="text-caption text-text-muted">{k.date}</span>}
-                    </div>
-                    <p className="text-body-sm text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(k.reason)) }} />
-                  </div>
-                );
-              })}
-            </div>
-          </FadeIn>
-        )}
-
-        {/* ④ 7일 요일별 카드 */}
-        <FadeIn delay={0.12}>
-          <p className="text-h2 text-text-primary">요일별 상세</p>
-        </FadeIn>
-        {days.map((d, i) => (
-          <FadeIn key={`${d.day}-${d.date}-${i}`} delay={0.15 + i * 0.02}>
-            <WeekDayCard day={d} accent={ACCENT} isYesterday={i === 0} />
-          </FadeIn>
-        ))}
-
-        {/* ⑤ 이번 주 교훈 */}
-        {result.weekLesson && (
-          <FadeIn delay={0.32}>
-            <div className="card py-5 px-5" style={{ background: `${ACCENT}0A`, border: `1px solid ${ACCENT}26` }}>
-              <p className="text-caption font-bold mb-1.5" style={{ color: ACCENT, letterSpacing: '0.06em' }}>이번 주 교훈</p>
-              <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.weekLesson)) }} />
-            </div>
-          </FadeIn>
-        )}
-
-        <FadeIn delay={0.4}>
-          <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>결과 공유하기</Button>
-        </FadeIn>
-
-        {/* 단일 CTA — 종합사주 업셀 */}
-        <FadeIn delay={0.42}>
-          <ExtensionUpsellCard
-            title="이번 주의 흐름을 사주 전체에서 풀어드립니다"
-            desc="이번 주 7일의 결이 사주 원국의 어느 자리에서 비롯되는지, 평생의 운까지 한 번에."
-            onTap={() => navigate('/charge?need=10')}
-          />
-        </FadeIn>
-
-        {/* 출처 + 디스클레이머 */}
-        <div className="mt-8 text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
-          </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
-            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
-            <br />
-            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
-          </p>
-        </div>
-
-        {/* 3-part Footer CTA */}
-        <FooterCTA pageKey="weekly" backTo="/" />
-      </div>
+      <WeeklyMockupView
+        result={result}
+        profile={selected}
+        periodLabel={periodLabel}
+        onChat={() => navigate('/chat')}
+        onShare={() => setShowShare(true)}
+        onMonthly={() => navigate('/monthly')}
+      />
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'weekly'} />
-    </div>
-  );
-}
-
-function WeekDayCard({ day: d, accent, isYesterday }: { day: WeeklyDay; accent: string; isYesterday: boolean }) {
-  const score = Math.max(0, Math.min(100, Number(d.score) || 0));
-  const scoreColor = score >= 80 ? accent : score >= 60 ? '#2D8A4E' : score >= 40 ? '#8C6D3D' : '#D32F2F';
-  return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${scoreColor}14` }}>
-            <span className="text-h3 font-black" style={{ color: scoreColor }}>{d.day}</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <p className="text-h3 text-text-primary">{d.date}</p>
-              {d.ganji && (
-                <span className="text-[11px] font-semibold" style={{ color: 'var(--text-hint)', fontFamily: "'Noto Serif KR', serif" }}>{d.ganji}</span>
-              )}
-              {isYesterday && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(122,114,105,0.12)', color: 'var(--text-muted)' }}>어제</span>
-              )}
-            </div>
-            {d.tone && <p className="text-caption text-text-muted mt-0.5">{stripMd(d.tone)}</p>}
-          </div>
-        </div>
-        <span className="text-h3 font-bold" style={{ color: scoreColor }}>{score}</span>
-      </div>
-      {d.body && (
-        <p className="text-body-sm text-text-secondary leading-relaxed mt-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(d.body)) }} />
-      )}
-      {d.action && (
-        <div className="mt-3 py-2 px-3 rounded-lg" style={{ background: `${accent}0D` }}>
-          <p className="text-caption font-semibold" style={{ color: accent }}>→ {stripMd(d.action)}</p>
-        </div>
-      )}
     </div>
   );
 }

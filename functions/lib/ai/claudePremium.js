@@ -29,15 +29,16 @@ const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const parseJson_1 = require("./parseJson");
 const promptsV3_1 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
+const kstTime_1 = require("../utils/kstTime");
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
 const GROUP_FOCUS = {
-    A: `## Group A — 핵심 8자 해석 (다른 필드 출력 금지)
+    A: `## Group A — 원국·천간지지 (이 그룹 필드만 출력)
 
 ⚠️ 분량 가변화: 사주 풍부도(신살·충형·격국 명확도)에 따라 자연스럽게 길이 차등
    - 평이한 사주: 400~600자
    - 일반 사주: 550~750자
    - 풍부한 사주: 700~900자 (최대치)
-⚠️ 한자 paragraph 당 3~4개 이내. **한자 자체에는 절대 <strong> 사용 X** — 한자는 plain text 또는 <b> 검정볼드만.
+⚠️ 한자 paragraph 당 2개 이내(괄호 일상어 풀이 동반 · 예: "병화(丙火, 밝고 활달한 성격)") · 같은 한자 반복 금지. **한자 자체에는 절대 <strong> 사용 X** — 한자는 plain text 또는 <b> 검정볼드만.
 ⚠️ 강조 위계 (2026-05-04 PD 결단 · 전면 재정의):
    <strong>황금볼드 — 유저 일상 결론·삶의 의미만</strong> (예: "깔끔하고 정돈된 사람으로 보입니다", "혼자만의 시간이 에너지를 채웁니다")
    <b>검정볼드 — 한자 용어 첫 등장 시각 인식</b> (예: "<b>병화(丙火)</b>는 한낮의 태양")
@@ -50,14 +51,9 @@ JSON 1개로 응답:
   "summary": "<원국 본문 — 사주 풍부도에 맞춰 400~700자>",
   "sections": [
     {"id": "summary", "title": "원국", "content": "<400~900자 · 사주 풍부도 비례>"},
-    {"id": "structure", "title": "천간지지", "content": "<400~900자>"},
-    {"id": "sipsung", "title": "십성", "content": "<400~900자>"},
-    {"id": "yongsin", "title": "용신·조후", "content": "<500~900자>"}
+    {"id": "structure", "title": "천간지지", "content": "<400~900자>"}
   ],
   "pillarMessages": {"year": "...", "month": "...", "day": "...", "hour": "..."},
-  "lifestyleAdvice": "<200~400자>",
-  "lifeEdge": {"목": {...}, "화": {...}, "토": {...}, "금": {...}, "수": {...}},
-  "sipCluster": {"비겁": {...}, "식상": {...}, "재성": {...}, "관성": {...}, "인성": {...}},
   "analysisBase": {"격국": "...", "일간강약": "...", "용신": "...", "용신근거": "...", "희신": "...", "기신": "..."},
   "sectionConclusions": {
     "// 🔒 통일 룰 (모든 §결론 공통 · 회귀 금지) — 2026-05-05 톤 통일성 정책": "",
@@ -66,12 +62,34 @@ JSON 1개로 응답:
     "// 3) ① ② ③ 패턴은 각 줄에 strong + u 한쪽 또는 양쪽 반드시 포함 (밋밋한 줄 금지)": "",
     "// 4) 한 문단 패턴은 <strong> 1~2회 + <u> 1회 이상 반드시 포함": "",
     "wongug":   "<§01 결론 100~180자 한 문단 · <strong>한 줄 결론</strong> 1~2회 + <u>시기/숫자</u> 1회 이상>",
-    "structure":"<§02 결론 ① ② ③ 3줄 각 60~100자 · 각 줄에 <strong>결론구</strong> 포함, 사주 근거(축미충 등)는 <b>한자</b> 검정볼드만>",
+    "structure":"<§02 결론 ① ② ③ 3줄 각 60~100자 · 각 줄에 <strong>결론구</strong> 포함, 사주 근거(축미충 등)는 <b>한자</b> 검정볼드만>"
+  }
+}
+⚠️ 십성·용신 sections·lifeEdge·sipCluster·lifestyleAdvice·daeun/yearly/practice·monthlyWarnings·shinsalCards·monthlyInsight·daeunPeriods·topicMini·scores·actionList·lifeKeyword·strengths·cautions 출력 금지.`,
+    D: `## Group D — 십성·용신 심화 (이 그룹 필드만 출력)
+
+⚠️ 분량 가변화: 평이 400~600자 / 일반 550~750자 / 풍부 700~900자 (사주 풍부도 비례)
+⚠️ 한자 paragraph 당 2개 이내(괄호 일상어 풀이 동반 · 예: "식신(食神, 여유롭게 베푸는 성향)") · 같은 한자 반복 금지. **한자 자체에는 절대 <strong> X** — plain text 또는 <b> 검정볼드만.
+⚠️ 강조 위계: <strong>황금=유저 일상 결론·삶의 의미</strong> / <b>검정=한자 첫 등장</b> (예: "<b>식신(食神)</b>") / <u>황금밑줄=색·방위·시간대·시기·숫자·구체 행동</u>
+⚠️ 소름 포인트 1~2개 + 긍정 강조 1~2개 + 명확한 방향성
+
+JSON 1개로 응답:
+{
+  "tier": "premium",
+  "sections": [
+    {"id": "sipsung", "title": "십성", "content": "<400~900자>"},
+    {"id": "yongsin", "title": "용신·조후", "content": "<500~900자>"}
+  ],
+  "lifestyleAdvice": "<200~400자>",
+  "lifeEdge": {"목": {...}, "화": {...}, "토": {...}, "금": {...}, "수": {...}},
+  "sipCluster": {"비겁": {...}, "식상": {...}, "재성": {...}, "관성": {...}, "인성": {...}},
+  "sectionConclusions": {
+    "// 🔒 통일 룰: <strong>=일상 결론·행동 한 줄 1~2회(한자 X) / <u>=색·방위·시간대·시기·숫자 / 각 줄 둘 중 최소 하나 반드시": "",
     "sipsung":  "<§03 결론 ① ② ③ 3줄 각 60~100자 · 각 줄에 <strong>결론구</strong> 포함>",
     "yongsin":  "<§04 결론 ① ② ③ ④ 4줄 각 40~70자 · 각 줄에 <strong>오늘부터 할 행동/방향</strong> + <u>색·방위·시간대 등 구체 데이터</u> 둘 다 포함 (예: '용신은 목 — <strong>초록 옷·소품</strong>, <u>동쪽</u> 방위가 핵심입니다')>"
   }
 }
-⚠️ daeun/yearly/practice/monthlyWarnings/shinsalCards/monthlyInsight/daeunPeriods/topicMini/scores/actionList/lifeKeyword/strengths/cautions 출력 금지.`,
+⚠️ summary·원국/천간지지 sections·pillarMessages·analysisBase·daeun/yearly/practice·monthlyWarnings·shinsalCards·monthlyInsight·daeunPeriods·topicMini·scores·actionList·lifeKeyword·strengths·cautions 출력 금지.`,
     B: `## 이번 호출에서 작성할 필드 (Group B — 시간 흐름)
 다른 필드는 절대 출력하지 마세요. 아래 필드만 채운 JSON 객체 1개로 응답:
 {
@@ -140,6 +158,7 @@ JSON 1개로 응답:
     "// 🚨 보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지) — 각 desc 에 사주 글자 1개 이상 직접 호명",
     "//   ✅ '병화 일간이라 햇빛 1시간이 보급' / '수 0자라 물 2L가 결을 채움' / '식상 4개를 풀어내는 자리'": "",
     "//   ❌ '꾸준히 운동하세요' (일반론 · 누구나 같은 액션)": "",
+    "//   🚨 색·방위·소품 처방은 §04 용신과 반드시 일치 (행운·개운 데이터 SSOT 준수). '결손(0개) 오행 보충'한다며 흰색·서쪽 등 용신과 다른 색·방위 추천 절대 금지 — 부족 오행은 '정리 습관' 같은 행동으로만 풀고 색·방위·소품은 용신 오행으로 고정.": "",
     {"ttl": "<15자 이내>", "desc": "<70~100자 · 사주 글자 1개 이상 직접 호명 (일간·기신·약한 오행 자수·강한 십성 등) + 구체 행동 1줄>"}
   ],
   "// 2026-05-05 신규 §08 — '내 사주의 결' (관계의 결 대체 · PD 결단)": "",
@@ -192,7 +211,8 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
     // 효과: Group A 24576→14000 으로 응답 시간 30-40% 단축 (60-120s → 40-80s).
     // 이전 변천: 12288 → 16384 → 24576 (JSON 파싱 박멸) → 14000 (컴팩트 후 안전).
     const MAX_TOKENS_BY_GROUP = {
-        A: 14000,
+        A: 8000, // 2026-07-01 A 분할(원국·천간지지만) — 14000→8000 (벽시계 단축)
+        D: 8000, // 2026-07-01 신규 D(십성·용신·lifeEdge·sipCluster) — A에서 분리
         B: 10000,
         C: 7000,
     };
@@ -334,16 +354,17 @@ function recoverPartialJson(text) {
  *  · sectionConclusions: 객체 spread merge
  *  · 나머지: 그룹별 필드라 충돌 X
  */
-function mergeGroups(a, b, c) {
+function mergeGroups(a, d, b, c) {
     return {
         tier: 'premium',
-        // Group A
+        // Group A (원국·천간지지)
         summary: a?.summary || '',
         pillarMessages: a?.pillarMessages || {},
-        lifestyleAdvice: a?.lifestyleAdvice || '',
-        lifeEdge: a?.lifeEdge || {},
-        sipCluster: a?.sipCluster || {},
         analysisBase: a?.analysisBase || {},
+        // Group D (십성·용신 심화 — A에서 분리)
+        lifestyleAdvice: d?.lifestyleAdvice || '',
+        lifeEdge: d?.lifeEdge || {},
+        sipCluster: d?.sipCluster || {},
         // Group B
         monthlyWarnings: b?.monthlyWarnings || [],
         shinsalCards: b?.shinsalCards || [],
@@ -356,14 +377,16 @@ function mergeGroups(a, b, c) {
         cautions: c?.cautions || [], // 2026-05-05 신규 §08 함정 3
         scores: c?.scores || {},
         actionList: c?.actionList || [],
-        // sections — A(4) + B(3) merge → 7섹션
+        // sections — A(2:원국·천간지지) + D(2:십성·용신) + B(3) → 7섹션 (정통 순서 보존)
         sections: [
             ...(a?.sections || []),
+            ...(d?.sections || []),
             ...(b?.sections || []),
         ],
-        // sectionConclusions — A(4) + B(3) + C(1) merge → 8 결론
+        // sectionConclusions — A(2) + D(2) + B(3) + C(1) merge → 8 결론
         sectionConclusions: {
             ...(a?.sectionConclusions || {}),
+            ...(d?.sectionConclusions || {}),
             ...(b?.sectionConclusions || {}),
             ...(c?.sectionConclusions || {}),
         },
@@ -383,13 +406,14 @@ async function generatePremiumReport(apiKey, sajuData, situation) {
     // T2 · 3 그룹 병렬 호출 — Promise.all
     console.log('[claudePremium] T2 parallel call start (Group A·B·C)');
     const t0 = Date.now();
-    const [groupA, groupB, groupC] = await Promise.all([
+    const [groupA, groupD, groupB, groupC] = await Promise.all([
         callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation),
+        callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation),
         callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation),
         callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation),
     ]);
     console.log(`[claudePremium] T2 parallel done in ${Date.now() - t0}ms`);
-    const merged = mergeGroups(groupA, groupB, groupC);
+    const merged = mergeGroups(groupA, groupD, groupB, groupC);
     return { content: { ...merged, tier: 'premium' } };
 }
 /**
@@ -406,7 +430,7 @@ async function generateGroup(apiKey, sajuData, group, situation) {
 }
 /** T3 · 동적 짧은 context — 연도·일간 (캐시 X) */
 function buildDynamicSystemContext(sajuData) {
-    const year = new Date().getFullYear();
+    const year = (0, kstTime_1.kstNow)().year;
     const dayGan = sajuData?.pillars?.[2]?.천간 ?? '';
     return `[현재 연도]: ${year}\n[유저 일간]: ${dayGan}\n위 두 값을 응답에 반영하세요.`;
 }
@@ -422,9 +446,34 @@ function buildSajuBaseBlock(sajuData) {
     });
     const elements = sajuData.elements || {};
     const sipsung = sajuData.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
-    const currentDaeun = sajuData.daeun?.find((d) => d.isCurrent || d.현재);
+    // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
+    //   대운 간지를 추측하다 뒤바꾸던 버그(인플루언서 피드백: 차트는 맞는데 본문이 이전/다음 대운을 swap) fix.
+    //   데이터(sajuData.daeun)에 전체가 있으니 결정론적으로 전달 → AI 가 추측·swap 불가.
+    const daeunList = Array.isArray(sajuData.daeun) ? sajuData.daeun : [];
+    const curIdx = daeunList.findIndex((d) => d.isCurrent || d.현재);
+    const daeunAge = (d) => (d?.시작나이 != null && d?.끝나이 != null) ? `${d.시작나이}~${d.끝나이}세` : (d?.나이범위 || '');
+    const daeunFlow = daeunList.length > 0
+        ? daeunList.map((d, i) => `- ${daeunAge(d)} ${d.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+        : '미상';
+    const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
+    const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
     const gilsin = sajuData.gilsin?.map((s) => s.이름한자 || s.이름).join(', ') || '없음';
     const hyungsal = sajuData.hyungsal?.map((s) => s.이름한자 || s.이름).join(', ') || '없음';
+    // ── 명리학 SSOT 주입 (2026-06-26 회귀금지) — premium 이 십성분포/강약/득령을 0개 주입받아 천간-only 로
+    //   재계산 → "관성 0개"(천간만) vs 오늘운세 "관성 1개"(지장간 포함) 콘텐츠 간 카운트 모순(무속 신호).
+    //   claudeReport 와 동일하게 calculator.myeongriAnalysis 를 주입해 십성 개수·강약을 단일화. ──
+    const ma = sajuData.myeongriAnalysis;
+    let myeongriSection = '';
+    if (ma) {
+        const d = ma.십성분포 || {};
+        const distText = `비겁 ${d.비겁 ?? '?'} · 식상 ${d.식상 ?? '?'} · 재성 ${d.재성 ?? '?'} · 관성 ${d.관성 ?? '?'} · 인성 ${d.인성 ?? '?'}`;
+        myeongriSection = `
+
+## 십성 5분류 분포 (SSOT · 천간+지장간 모두 포함해 센 개수)
+${distText}
+  ※ 이 개수를 그대로 사용. 임의 재계산 금지. "천간에 드러나지 않았다"는 투출(透出) 여부로만 서술하고, 개수는 위 분포(지장간 포함) 기준으로 센다. ("관성 0개" 처럼 천간만 세지 말 것 — 오늘운세·1운리포트와 개수가 어긋나면 신뢰 붕괴.)
+## 일간 강약 (SSOT): ${ma.일간강약 || '미상'} [${ma.강약근거 || ''}] · 득령 ${ma.득령 ? '✓' : '✗'}${ma.격국 ? `\n## 격국 (SSOT): ${ma.격국}${ma.격국근거 ? ` [${ma.격국근거}]` : ''} — 이 격국명을 그대로 사용` : ''}${ma.용신 ? `\n## 용신·희신·기신 (SSOT · 결정론 산출 — 그대로 사용, 재계산 금지): 용신 ${ma.용신} · 희신 ${ma.희신 || '-'} · 기신 ${ma.기신 || '-'} [${ma.용신근거 || ''}]\n  ※ 행운 색·방위·음식·숫자(luckyProfile·lifestyleAdvice·actionList 처방)는 전부 이 용신(${ma.용신}) 오행 하나로 도출. 일간 오행·결손 오행·대운 오행으로 색을 뽑지 말 것.` : ''}`;
+    }
     return `## 사주 원국
 ${pillarsText}
 일간(나): ${p[2]?.천간 || '미상'}
@@ -432,11 +481,11 @@ ${pillarsText}
 ## 오행 분포
 목 ${elements.목 || 0} · 화 ${elements.화 || 0} · 토 ${elements.토 || 0} · 금 ${elements.금 || 0} · 수 ${elements.수 || 0}
 
-## 십성: ${sipsung || '미상'}
+## 십성: ${sipsung || '미상'}${myeongriSection}
 
-## 현재 대운: ${currentDaeun
-        ? `${currentDaeun.간지} (${currentDaeun.시작나이 || currentDaeun.나이범위}세~)`
-        : '미상'}
+## 대운 흐름 (10년 단위 · 나이는 만 나이 기준)
+${daeunFlow}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지·순서를 절대 바꾸지 말 것 — 이전/다음 대운 간지를 임의로 만들거나 뒤바꾸지 말고 위 목록 그대로 인용.` : ''}
 
 ## 길신: ${gilsin}
 ## 흉살: ${hyungsal}
@@ -513,6 +562,7 @@ ${promptsV3_1.GOOSEBUMP_BLOCK}
   * 행동 처방 2~3개: "결정·계약·발표는 9월~2월, 17시 이후에 잡으세요."
 
 ### SECTION 05. 대운 (大運) — 10년 단위로 흐르는 인생의 큰 강줄기
+- 🚨 '이전/현재/다음 대운'은 위 사주 base 의 '대운 흐름'에 명시된 간지·나이를 **그대로** 사용. 절대 임의 생성/swap 금지(차트와 본문이 어긋나면 신뢰 붕괴).
 - 현재 대운의 의미를 시적으로 ("지금은 X 대운 — 묵직하게 가라앉는 시기").
 - 이전 대운과의 변화 + 다음 대운 전환점.
 - 60년 가로 시간선 관점으로 인생 전체 굵직한 흐름 1~2 문단.

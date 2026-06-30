@@ -17,6 +17,7 @@ const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const lunar_javascript_1 = require("lunar-javascript");
 const promptsV3_1 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
+const kstTime_1 = require("../utils/kstTime");
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
  * 기존: 프롬프트가 AI에게 상대방 사주를 "추론"하라고 지시 → LLM은 만세력 계산 불가 → 간지 환각
@@ -593,8 +594,8 @@ const TOPIC_CONFIGS = {
 - 최종 판정(verdict) + 근거
 
 10. "재회 성공을 위한 개운법"
-- 오행 보완법: 부족한 오행을 채우는 구체적 방법
-- 행운 색상/방위/숫자/아이템
+- 오행 보완법: 부족한 오행은 생활습관·취미·환경으로 보완(색·방위는 여기 쓰지 말 것)
+- 행운 색상/방위/숫자 (원국 용신 오행 하나 기준 — 종합사주·오늘운세와 동일)/아이템
 - 연락하기 좋은 시간대(오행 기반)
 - 만날 때 좋은 장소/방향
 - 피해야 할 날짜/시간대`,
@@ -711,7 +712,7 @@ const TOPIC_CONFIGS = {
 - 식상 → 시험장에서의 표현력: "서술형에 강한지, 객관식에 강한지"
 - 합격 가능성을 사주적 근거와 함께: "인성이 ~해서 합격 기운이 ~합니다"
 - 합격에 유리한 시기: 월 단위로 "양력 O~O월 시험이 가장 유리"
-- 시험 당일 전략: 유리한 시간대, 좌석 방향(오행 방위), 행운 색상/아이템
+- 시험 당일 전략: 유리한 시간대, 좌석 방향(용신 오행 방위), 행운 색상(luckyProfile 용신 색상과 동일)/아이템
 - 집중력 패턴: "오전 vs 오후 vs 새벽 중 ~시간대가 사주적으로 최적"
 - 슬럼프 시기 예측: "O월에 슬럼프가 올 수 있는데, 이때는 ~하세요"
 - "혹시 시험 전날 잠을 못 자는 타입 아닌가요?" 같은 소름 포인트
@@ -728,7 +729,7 @@ const TOPIC_CONFIGS = {
       "slumpPeriod": "슬럼프 예상 시기 10자",
       "focusPeakHour": "집중력 피크 시간대 (예: 오전 6~9시)",
       "examLuckMonth": "시험운 최강 월 (예: 6월, 11월)",
-      "seatDirection": "유리한 좌석 방향 (예: 남향, 동향)",
+      "seatDirection": "유리한 좌석 방향 — 원국 용신 오행 방위 기준 (예: 용신 화면 남향)",
       "studyPartnerType": "함께 공부하면 좋은 사람 유형 15자",
       "examFitScore": "해당 시험의 사주 적합도 0-100 (시험명 있을 때만, 아니면 null)",
       "examTimingVerdict": "시험 시기 판정: 최적/양호/주의 중 하나 (시험 예정일 있을 때만, 아니면 null)",
@@ -769,7 +770,7 @@ const TOPIC_CONFIGS = {
 - 문창·학당·태극귀인 등 시험 길성 유무 → 합격 기운
 - 올해 세운·월운 + 현재 대운 교차 → 합격·이직 유리 월 (월 단위 구체 명시)
 - 이직 후 3개월 적응 전망 (이직 시 일간 환경 변화 분석)
-- 면접 유리 시간대·좌석 방향 (오행 방위 기반)
+- 면접 유리 시간대·좌석 방향 (용신 오행 방위 기반)
 - "혹시 최근에 이직 제안을 받았거나 고민 중이지 않나요?" 소름 포인트
 - ⚠️ 직업 정체성·평생 적성 (→ 직업운) 이나 창업 판단 (→ 사업운) 은 언급 금지. 이 섹션은 '변동 timing·방향'만.
 
@@ -808,12 +809,12 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
       "bestChangeMonths": "유리한 월 배열 (예: ['4월','9월','11월'])",
       "avoidChangeMonths": "피할 월 배열 (예: ['2월','7월'])",
       "interviewTime": "면접 유리 시간대 (예: 오전 10~11시)",
-      "interviewDirection": "면접장 좌석 유리 방향 (오행 방위, 예: 동향·남향)",
+      "interviewDirection": "면접장 좌석 유리 방향 (용신 오행 방위, 예: 용신 화면 남향)",
       "bestField": "유리한 분야 키워드 2개 (오행 근거, 예: 기획/마케팅 + 목·화 기운)",
       "changeDirection": "이직 방향 (동종업/이종업/프리랜서/공공/스타트업 중 하나 + 이유 20자)",
       "decisionUrgency": "결정 긴급도 (즉시/금년내/내년 중 하나)",
       "postChangeOutlook": "이직 후 3개월 적응 전망 35자",
-      "luckyItemForExam": "시험/면접 행운 아이템 15자"
+      "luckyItemForExam": "시험/면접 행운 아이템 15자 (용신 오행 기반 — luckyProfile.item과 일관)"
     }`,
     },
     move: {
@@ -835,7 +836,7 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
 - 금(金) — 서쪽 / 가을 / 정리
 - 수(水) — 북쪽 / 겨울 / 회복
 
-본인 일간 오행과 합(合)되는 방향이 길. 극(克)당하는 방향은 피해야 함.
+원국 용신(用神) 오행의 방위가 길, 용신을 극하는 기신(忌神) 오행 방위는 피함. (일간 오행 합/극이 아니라 용신 기준 — 종합사주·오늘운세와 동일해야 함)
 
 ## 12운성 사이클로 이동 timing
 - 생(生)·욕(浴) — 새 환경 적응 최적기
@@ -853,13 +854,13 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
       "strengths": ["이동 강점 35~50자 · 사주 글자 호명 1회","이동 강점2 35~50자 · 사주 글자 호명 1회"],
       "cautions": ["이동 주의점 35~50자 · 위기→기회 패턴","이동 주의점2 35~50자 · 위기→기회 패턴"],
       "hasYeokmasal": true 또는 false,
-      "bestDirection": "좋은 방위와 이유 20자",
-      "avoidDirection": "피할 방위와 이유 20자",
+      "bestDirection": "좋은 방위 — 원국 용신 오행 방위 기준, 이유 20자",
+      "avoidDirection": "피할 방위 — 용신의 기신 오행 방위, 이유 20자",
       "movingType": "이사/유학/해외취업 중 가장 유리한 것",
       "bestTiming": "최적 이동 시기 15자",
       "travelLuck": "해외운 수준: 높음/보통/낮음",
       "bestMoveMonth": "이사 최적 월 (예: 3~5월)",
-      "ohengDirectionMap": "오행별 방위: 목=동, 화=남, 토=중앙, 금=서, 수=북 중 본인에게 유리한 것과 이유 30자",
+      "ohengDirectionMap": "오행별 방위: 목=동, 화=남, 토=중앙, 금=서, 수=북 중 본인 용신 오행의 방위와 이유 30자 (행운·개운 SSOT — 일간 오행/결손 오행 아님)",
       "planDateVerdict": "예정 시기 판정: 좋음/보통/주의 중 하나 (예정 시기 있을 때만, 아니면 null)",
       "planDateAnalysis": "예정 시기의 사주적 이동운 분석 40자 (예정 시기 있을 때만, 아니면 null)",
       "betterAlternative": "더 좋은 시기 제안 25자 (예정 시기 있고 보통/주의일 때만, 아니면 null)",
@@ -967,8 +968,17 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo, extraInfo) {
         pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`; });
     const el = d.elements || {};
     const sipsung = d.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
-    const currentDaeun = d.daeun?.find((x) => x.isCurrent || x.현재);
-    const today = new Date();
+    // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
+    //   대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그(차트는 맞는데 본문이 swap) fix. claudePremium.buildSajuBase 패턴 복제.
+    const daeunList = Array.isArray(d.daeun) ? d.daeun : [];
+    const curIdx = daeunList.findIndex((x) => x.isCurrent || x.현재);
+    const daeunAge = (x) => (x?.시작나이 != null && x?.끝나이 != null) ? `${x.시작나이}~${x.끝나이}세` : (x?.나이범위 || '');
+    const daeunFlow = daeunList.length > 0
+        ? daeunList.map((x, i) => `- ${daeunAge(x)} ${x.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+        : '미상';
+    const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
+    const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
+    const today = (0, kstTime_1.kstNowDate)(); // 서버 UTC → KST 현재시각 (UTC 필드에 KST 값). getFullYear/getMonth 호출부 호환 유지.
     const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월`;
     // 🔥 P0-1 (audit 1) — 사주 데이터 underutilization 해소: myeongriAnalysis·jijanggan·gilsin·hyungsal·gongmang·yearlyUn 모두 prompt 에 주입
     const myeongri = d.myeongriAnalysis || {};
@@ -1125,15 +1135,15 @@ ${extraInfo.targetField ? `→ "${extraInfo.targetField}" 분야의 사주적 �
             const planInfo = extraInfo.movePlanYear ? `\n이사 예정 시기: ${extraInfo.movePlanYear}년 ${extraInfo.movePlanMonth}월` : '';
             const purposeSpecific = {
                 house: `→ 주거 이사 — 일지(나의 자리) 충/합과 월지(가정환경) 변화 분석. 새 집 풍수와 본인 일간의 오행 매칭. 가구 배치·침실 방위·현관 길흉. 가족 화합에 미치는 영향.`,
-                job: `→ 직장 이동 — 역마살 활성도와 관성(직업운) 흐름 교차. 새 사무실 방향이 본인 천간과 맞는지. 출근 동선의 길흉. (구체적 이직 timing 은 합격·이직운에서 별도 분석)`,
-                study: `→ 유학·학업 — 인성(학업운) + 문창귀인·학당귀인 활성도. 해당 국가/지역 방향이 본인 일간 길성과 맞는지. 학습 환경의 사주적 조건. 부모와의 거리감 영향.`,
+                job: `→ 직장 이동 — 역마살 활성도와 관성(직업운) 흐름 교차. 새 사무실 방향이 원국 용신 오행 방위와 맞는지. 출근 동선의 길흉. (구체적 이직 timing 은 합격·이직운에서 별도 분석)`,
+                study: `→ 유학·학업 — 인성(학업운) + 문창귀인·학당귀인 활성도. 해당 국가/지역 방향이 원국 용신 오행 방위와 맞는지(천을귀인 방향은 길성 보조). 학습 환경의 사주적 조건. 부모와의 거리감 영향.`,
                 abroad: `→ 해외 이주 — 역마살 + 천을귀인 외국 방향 + 화개살. 장기 거주 시 본인 오행이 그 지역 기운과 어울리는지. 향수병/적응 시기를 사주로 예측. 귀국 시점도 함께.`,
             };
             extraSection = `
 ## 이사 목적: ${purposeMap[extraInfo.movePurpose] || '미상'}${planInfo}
 ${purposeSpecific[extraInfo.movePurpose] || '→ 사주 원국 기반 이동운 분석.'}
 → 예정 시기의 대운/세운 흐름 짚고, 더 좋은 시기가 있으면 구체적 월 단위로 제안.
-→ 방위(8방위 중 ${purposeMap[extraInfo.movePurpose]} 에 최적), 이사 당일 시간대, 챙겨야 할 아이템까지 구체화.
+→ 방위(원국 용신 오행 방위 기준으로 8방위 중 ${purposeMap[extraInfo.movePurpose]} 에 최적), 이사 당일 시간대, 챙겨야 할 아이템까지 구체화.
 `;
         }
         else if (topicId === 'study' && extraInfo.examName) {
@@ -1159,7 +1169,7 @@ ${purposeSpecific[extraInfo.movePurpose] || '→ 사주 원국 기반 이동운 
 → 정관·편관(관성) 활성도 + 문창·학당·태극·천을 4길성 매핑.
 → 예정 시기의 대운/세운/월운 흐름을 합격운·변동운 관점으로 교차 분석.
 → 사주에 더 좋은 timing 이 있으면 월 단위로 제안 (예: "6월보다 9월이 정관 활성").
-→ 면접·실전 시 본인 강한 시간대(子/午/卯/酉 등 일간별), 좌석 방향, 옷 컬러까지 구체.
+→ 면접·실전 시 본인 강한 시간대(子/午/卯/酉 등 일간별), 좌석 방향·옷 컬러(둘 다 원국 용신 오행 방위·색 기준 — luckyProfile과 동일)까지 구체.
 → 한 번에 합격 vs 여러 번 도전 후 합격 사주인지 명시.
 `;
         }
@@ -1184,7 +1194,9 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ${Object.entries(el).filter(([, v]) => v === 0).map(([k]) => `→ ${k} 없음`).join('\n')}
 
 ## 십성: ${sipsung || '미상'}
-## 현재 대운: ${currentDaeun ? currentDaeun.간지 : '미상'}
+## 대운 흐름 (10년 단위 · 나이는 만 나이 기준)
+${daeunFlow}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지·순서·나이는 위 대운 흐름의 값을 그대로 인용 — 이전/다음 대운 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지. 시기 계산은 위 '현재 대운' 간지를 기준으로 하되, 본문에 이전·다음 대운을 언급할 땐 반드시 위 목록의 간지를 그대로 쓸 것.` : ''}
 ## 이름: ${d.input?.name || '미상'}, ${d.input?.gender === 'male' ? '남' : '여'}
 
 ## 🔥 명리학 구조 분석 (audit 1 P0-1 — 반드시 해석에 활용)
@@ -1340,6 +1352,14 @@ ${config.specificPrompt}
 - strong 강조는 유저 일상 결론에만
 - 숫자·시기 또렷이 ('30대 후반' '9월~2월')
 
+🚨🚨 **어조 규칙 (2026-06-24 인플루언서 피드백 — 출력 본문 전체에 절대 준수)**
+모든 sections·timeline·actionAdvice·insightCards·strengths·cautions 등 본문 전체에 적용. 위 '일상어 풀이' 룰과 충돌하지 않으며, 표현은 일상어로 하되 어조를 다음과 같이 단정·확신형으로 못박는다:
+1. **애매·면피 표현 전면 금지 (0건)**: '~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다 / 보입니다 / 편이에요' 류 어미를 한 번도 쓰지 마라. 모든 문장을 확신 있는 단정형으로 끝낸다.
+2. **단정형으로 끝낸다**: '당신은 ~한 사람입니다.' '이 시기는 ~한 때입니다.' '지금은 ~해야 할 때입니다.'
+3. **과거 적중(소름 훅)**: 각 섹션에 최소 1회, 독자가 '어? 내 얘기네?' 하게 만드는 과거 회상 질문을 넣어라. '혹시 예전에 ~한 일이 있지 않았나요?' '유독 ~할 때 ~하지 않으셨나요?'
+4. **명령형 솔루션**: 권유가 아니라 분명한 지시로. '앞으로는 이렇게 하세요.' '~는 피하고 ~를 선택하세요.' (애매한 '~하면 좋아요' X, 분명한 '~하세요' O)
+5. **루즈함 차단**: 같은 메시지를 앞·중간·끝에서 반복하지 마라. 각 단락은 새 정보를 담는다. 구구절절·동어반복 금지 — 한 번 말한 결론을 다른 표현으로 또 말하지 않는다.
+
 
 ✅ **풀이 작성 규칙**:
 - **첫 문장은 결론** ('{유저명} 님은 ~한 사람입니다')
@@ -1376,7 +1396,7 @@ ${config.specificPrompt}
   "summary": "200자 이상. 소름 포인트 포함. 🚨 사주 8글자 specific 데이터 1회 이상 직접 호명 mandatory (보일러플레이트 금지). 마크다운 금지.",
   "sections": [${config.sections.map(s => `{"heading": "${s}", "content": "150자 이상. 🚨 사주 specific 호명 (개수·자리·신살) 1회 이상. 마크다운 금지. **HTML 강조 mandatory**: 각 단락에 <strong>일상어 결론 1구절</strong> 1회 + <u>시기·숫자·월</u> 1~2회 + <b>한자(풀이)</b> 첫 등장 시 필수. 줄글만 X.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내 · 🚨 사주 글자 1개 이상 호명 권장", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자 · 🚨 사주 specific 데이터", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
   "timeline": [{"period": "시기", "score": 1-10, "description": "60자 이상 · 🚨 해당 시기 대운/세운 간지 + 원국 글자 충돌·합 직접 호명"}, ...6~12개],
-  "luckyProfile": {"color": "색상", "direction": "방위", "number": "숫자", "item": "아이템", "bestMonth": "최적월"},
+  "luckyProfile": {"color": "용신 오행 색상", "direction": "용신 오행 방위", "number": "용신 오행 숫자", "item": "아이템", "bestMonth": "최적월", "// 행운·개운 SSOT": "color·direction·number는 원국 용신 오행 하나로 — 주제 십성/일간 오행으로 뽑지 말 것"},
   "actionAdvice": "100자 이상. 지금 당장 할 수 있는 행동. 🚨 사주 specific 데이터(약한 오행·기신·일간 등) 1개 이상 직접 호명 mandatory. 마크다운 금지.",
   ${config.topicDataSchema}
 }`;

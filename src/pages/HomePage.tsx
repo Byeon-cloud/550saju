@@ -109,6 +109,15 @@ export function HomePage() {
     } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // 월운 등 타 페이지의 '주제별 운세 더 보기' 진입(/#home-topics) 시 주제 섹션으로 스크롤
+  useEffect(() => {
+    if (window.location.hash === '#home-topics') {
+      const t = setTimeout(() => {
+        document.getElementById('home-topics')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 180);
+      return () => clearTimeout(t);
+    }
+  }, []);
   // 스크롤 위치 추적 — 우측 끝 도달 시 우측 버튼 숨김
   useEffect(() => {
     const el = deepDiveScrollRef.current;
@@ -441,7 +450,7 @@ export function HomePage() {
       )}
 
       {/* ─── [04] 궁금한 주제 하나, 깊게 · 주제 10종 가로 스크롤 (2026-05-04 swap: DEEP DIVE 위로) ─── */}
-      <div className="mx-4 mt-9">
+      <div id="home-topics" className="mx-4 mt-9 scroll-mt-20">
         <div className="flex items-baseline gap-2">
           <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>DEEP DIVE</span>
           <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />

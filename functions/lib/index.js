@@ -33,14 +33,23 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminGrantCompensation = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.loginWithToss = void 0;
+exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeekly = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
+const aiFailureLog_1 = require("./shared/aiFailureLog");
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
 const lazyClaudeReport = () => Promise.resolve().then(() => __importStar(require('./ai/claudeReport')));
+// ── 하반기 시작 이벤트 세일 (pricing.ts SSOT 와 동기) — 서버가 직접 KST 세일 계산(클라 미신뢰).
+//    차감액이 클라 actualPrice 와 항상 일치 → 로컬/Firestore 잔액 정합 + 세일종료(7/15) 자동 정가복귀.
+const HALF_EVENT_END_MS = Date.UTC(2026, 6, 15, 14, 59, 59); // 2026-07-15 23:59:59 KST
+const onHalfEvent = () => Date.now() <= HALF_EVENT_END_MS;
+const premiumCost = () => (onHalfEvent() ? 5 : 10);
+const monthlyCost = () => (onHalfEvent() ? 5 : 7);
+const weeklyCost = () => (onHalfEvent() ? 3 : 5);
 const lazyClaudeDaeun = () => Promise.resolve().then(() => __importStar(require('./ai/claudeDaeun')));
 const lazyClaudeMonthly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeMonthly')));
+const lazyClaudeWeekly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeWeekly')));
 const lazyClaudeCompat = () => Promise.resolve().then(() => __importStar(require('./ai/claudeCompat')));
 const lazyClaudeTojung = () => Promise.resolve().then(() => __importStar(require('./ai/claudeTojung')));
 const lazyClaudeFortune = () => Promise.resolve().then(() => __importStar(require('./ai/claudeFortune')));
@@ -92,6 +101,9 @@ exports.loginWithToss = (0, https_1.onCall)({
         throw new https_1.HttpsError('internal', `로그인 실패: ${error.message}`);
     }
 });
+// 2026-06-22 엔드게임 P1 — 익명→토스 안정 uid 보관함 병합 (uid 회전 CS 근절용). 클라 플래그 OFF 시 미호출.
+var mergeAccount_1 = require("./auth/mergeAccount");
+Object.defineProperty(exports, "mergeAnonIntoToss", { enumerable: true, get: function () { return mergeAccount_1.mergeAnonIntoToss; } });
 const DEV_MODE = false;
 /**
  * AI 실패 시 서버 환불 헬퍼 — 차감했던 운을 되돌려 줌.
@@ -249,10 +261,10 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
         res.end();
         return;
     }
-    // 잔액 차감 (premium = 10운) — 실명 로그인만
+    // 잔액 차감 (premium · 하반기 세일 자동반영) — 실명 로그인만
     let deductedAmount = 0;
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
-        const cost = 10;
+        const cost = premiumCost();
         const userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
         if (userDoc.exists) {
@@ -276,7 +288,17 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
     }
     // T1 · 3 그룹 병렬 + 각 그룹 완료 시점에 SSE 송출
     sendEvent('start', { ts: Date.now() });
-    const groups = ['A', 'B', 'C'];
+    // 🚨 2026-06-22 — SSE heartbeat. start 후 첫 그룹 도착(25~80s)까지 무음이면 모바일/토스 웹뷰·프록시·
+    //   Cloud Run idle-timeout(흔히 30~60s)이 연결을 '조용히' 끊어 클라가 무한로딩. 12초마다 ': hb' 코멘트
+    //   를 흘려 무음구간을 없애 끊김 자체를 예방한다. (클라 SSE 파서는 코멘트 라인을 무시 → 안전)
+    // 2026-06-24 — iOS WKWebView/토스 웹뷰는 SSE 스트림을 더 공격적으로 버퍼링/조기종료(P99 iOS 150s vs AND 22s).
+    //   12s→5s 로 촘촘히 흘려 클라 reader 에 더 자주 닿게 + idle-timeout 방어 마진 확대.
+    const heartbeat = setInterval(() => { try {
+        res.write(': hb\n\n');
+    }
+    catch { /* 연결 종료됨 */ } }, 5000);
+    // 2026-07-01 — A 분할(원국·천간지지) + D(십성·용신) 4그룹 병렬. 벽시계 단축(병목 A 14K→8K).
+    const groups = ['A', 'D', 'B', 'C'];
     const results = {};
     try {
         const mod = await Promise.resolve().then(() => __importStar(require('./ai/claudePremium')));
@@ -299,18 +321,22 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
             }
         });
         await Promise.all(groupPromises);
+        clearInterval(heartbeat);
         // 모든 그룹 완료 → merge + Firestore 저장
         const merged = {
             tier: 'premium',
             ...results.A,
+            ...results.D,
             ...results.B,
             ...results.C,
             sections: [
                 ...(results.A?.sections || []),
+                ...(results.D?.sections || []),
                 ...(results.B?.sections || []),
             ],
             sectionConclusions: {
                 ...(results.A?.sectionConclusions || {}),
+                ...(results.D?.sectionConclusions || {}),
                 ...(results.B?.sectionConclusions || {}),
                 ...(results.C?.sectionConclusions || {}),
             },
@@ -329,11 +355,20 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
         catch {
             // silent — 저장 실패해도 사용자에겐 결과 전달
         }
+        // 2026-06-18 결과복구 — content+사주를 별도 best-effort write (색인예외 필드 'recovery').
+        //   메타 저장과 분리돼 실패해도 영향 0. 생성 중 앱 종료로 클라가 결과 못 받았을 때
+        //   부팅에서 recoverPremiumResult 로 끌어와 복원 (재생성 0). 미저장 시 자동환불로 degrade.
+        try {
+            await reportRef.set({ recovery: JSON.stringify({ content: merged, sajuData }) }, { merge: true });
+        }
+        catch { /* 색인/용량 초과 — 복구 미지원 */ }
         sendEvent('done', { reportId: reportRef.id, content: merged });
         res.end();
     }
     catch (error) {
+        clearInterval(heartbeat);
         console.error('generatePremiumReportStream error:', error);
+        (0, aiFailureLog_1.logAiFailure)({ type: 'premium', stage: 'stream', message: error?.message || 'unknown', uid });
         // 환불
         if (deductedAmount > 0) {
             await refundBalance(uid, deductedAmount, 'generatePremiumReportStream failed');
@@ -426,6 +461,11 @@ exports.generateReportStream = (0, https_1.onRequest)({
         }
     }
     sendEvent('start', { ts: Date.now() });
+    // 2026-06-24 — premium 과 동일 SSE heartbeat(5s). 1운 리포트 스트림도 무음끊김(idle-timeout·iOS WKWebView 버퍼링) 방어.
+    const heartbeat = setInterval(() => { try {
+        res.write(': hb\n\n');
+    }
+    catch { /* 연결 종료됨 */ } }, 5000);
     const groups = ['A', 'B', 'C'];
     const results = {};
     try {
@@ -445,6 +485,7 @@ exports.generateReportStream = (0, https_1.onRequest)({
             }
         });
         await Promise.all(groupPromises);
+        clearInterval(heartbeat);
         const merged = mod.mergeReportGroups(results.A, results.B, results.C);
         // Firestore 저장 (callable 과 동일 패턴)
         const reportRef = db.collection('reports').doc();
@@ -458,10 +499,16 @@ exports.generateReportStream = (0, https_1.onRequest)({
             });
         }
         catch { /* silent */ }
+        // 2026-06-18 결과복구 — content+사주 별도 best-effort write (메타 저장과 분리, 색인예외 필드).
+        try {
+            await reportRef.set({ recovery: JSON.stringify({ content: merged, sajuData }) }, { merge: true });
+        }
+        catch { /* 색인/용량 초과 — 복구 미지원 */ }
         sendEvent('done', { reportId: reportRef.id, content: merged });
         res.end();
     }
     catch (error) {
+        clearInterval(heartbeat);
         console.error('generateReportStream error:', error);
         if (deductedAmount > 0) {
             await refundBalance(uid, deductedAmount, 'generateReportStream failed');
@@ -483,7 +530,7 @@ exports.generateReport = (0, https_1.onCall)(
     let deductedAmount = 0; // 환불용 차감 기록
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const cost = reportType === 'premium' ? 10 : 1;
+        const cost = reportType === 'premium' ? premiumCost() : 1;
         const userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
         if (userDoc.exists) {
@@ -529,6 +576,11 @@ exports.generateReport = (0, https_1.onCall)(
         catch (fsErr) {
             console.error('[generateReport] Firestore save failed:', fsErr.message);
         }
+        // 2026-06-18 결과복구 — content+사주 별도 best-effort write (메타 저장과 분리, 색인예외 필드).
+        try {
+            await reportRef.set({ recovery: JSON.stringify({ content: result.content, sajuData }) }, { merge: true });
+        }
+        catch { /* 색인/용량 초과 — 복구 미지원 */ }
         console.log('[generateReport] Returning result');
         return { reportId: reportRef.id, ...result };
     }
@@ -1463,7 +1515,9 @@ exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutS
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
 exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
-    const { sajuData } = request.data;
+    // 2026-06-30 재작업 — 단일월 심층. monthInfo = 클라가 lunar 로 계산한 선택월 정보
+    //   { year, month, label, wolGanji, yearGanji }. 서버는 간지 추측 X (만세력 정확성).
+    const { sajuData, monthInfo } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
     const uid = request.auth?.uid || 'anonymous';
@@ -1473,22 +1527,28 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
         const userDoc = await userRef.get();
         if (userDoc.exists) {
             // 2026-05-28 — schema 통일 helper
+            // 2026-07-01 월운 — 서버가 직접 세일 계산(monthlyCost): 하반기 이벤트 5운(7/15까지)·이후 정가 7운.
+            //   클라 getMonthlyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
+            const cost = monthlyCost();
             await db.runTransaction(async (tx) => {
                 const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), 1);
+                const result = computeBalanceDeduction(doc.data(), cost);
                 if (!result)
                     throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
                 tx.update(userRef, result.updates);
             });
-            deductedAmount = 1;
+            deductedAmount = cost;
         }
     }
     try {
         const { generateMonthlyFortune } = await lazyClaudeMonthly();
-        const result = await generateMonthlyFortune(ANTHROPIC_KEY.value(), sajuData);
+        const result = await generateMonthlyFortune(ANTHROPIC_KEY.value(), sajuData, monthInfo);
         const reportRef = db.collection('reports').doc();
         await reportRef.set({
             uid, type: 'monthly', content: result,
+            // 선택월 메타 — 보관함 재진입·구분용 (monthInfo 없으면 result 의 year/month 폴백)
+            targetYear: monthInfo?.year ?? result?.year ?? null,
+            targetMonth: monthInfo?.month ?? result?.month ?? null,
             aiModel: 'claude-sonnet-4-6',
             generatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -1498,6 +1558,50 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
         console.error('generateMonthly error:', error);
         await refundBalance(uid, deductedAmount, 'generateMonthly failed');
         throw new https_1.HttpsError('internal', `월별 운세 실패: ${error.message || 'unknown'}`);
+    }
+});
+/**
+ * 주간운세 (이번 주 7일) — Claude Sonnet 4.6
+ * 2026-06-29 NEW (5운). weekDays = 클라(WeeklyPage)가 lunar-javascript 로 계산한 7일 일진.
+ */
+exports.generateWeekly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    const { sajuData, weekDays } = request.data;
+    if (!sajuData)
+        throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
+    const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await userRef.get();
+        if (userDoc.exists) {
+            // 2026-07-01 주간 — 서버가 직접 세일 계산(weeklyCost): 하반기 이벤트 3운(7/15까지)·이후 정가 5운.
+            //   클라 getWeeklyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
+            const cost = weeklyCost();
+            await db.runTransaction(async (tx) => {
+                const doc = await tx.get(userRef);
+                const result = computeBalanceDeduction(doc.data(), cost);
+                if (!result)
+                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
+                tx.update(userRef, result.updates);
+            });
+            deductedAmount = cost;
+        }
+    }
+    try {
+        const { generateWeeklyFortune } = await lazyClaudeWeekly();
+        const result = await generateWeeklyFortune(ANTHROPIC_KEY.value(), sajuData, weekDays);
+        const reportRef = db.collection('reports').doc();
+        await reportRef.set({
+            uid, type: 'weekly', content: result,
+            aiModel: 'claude-sonnet-4-6',
+            generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return { reportId: reportRef.id, content: result };
+    }
+    catch (error) {
+        console.error('generateWeekly error:', error);
+        await refundBalance(uid, deductedAmount, 'generateWeekly failed');
+        throw new https_1.HttpsError('internal', `주간운세 실패: ${error.message || 'unknown'}`);
     }
 });
 /**
@@ -2001,9 +2105,20 @@ Object.defineProperty(exports, "deleteAccount", { enumerable: true, get: functio
 // CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
 var claimCompensation_1 = require("./admin/claimCompensation");
 Object.defineProperty(exports, "claimCompensation", { enumerable: true, get: function () { return claimCompensation_1.claimCompensation; } });
+var recoverTopicResult_1 = require("./topic/recoverTopicResult");
+Object.defineProperty(exports, "recoverTopicResult", { enumerable: true, get: function () { return recoverTopicResult_1.recoverTopicResult; } });
+var recoverPremiumResult_1 = require("./premium/recoverPremiumResult");
+Object.defineProperty(exports, "recoverPremiumResult", { enumerable: true, get: function () { return recoverPremiumResult_1.recoverPremiumResult; } });
+var restoreLibrary_1 = require("./storage/restoreLibrary");
+Object.defineProperty(exports, "restoreLibrary", { enumerable: true, get: function () { return restoreLibrary_1.restoreLibrary; } });
 // 어드민 CS 지급 (2026-06-12) — /admin 'CS 지급' 탭에서 디바이스 ID 로 즉시 장부 기록 (오너 전용)
 var adminGrantCompensation_1 = require("./admin/adminGrantCompensation");
 Object.defineProperty(exports, "adminGrantCompensation", { enumerable: true, get: function () { return adminGrantCompensation_1.adminGrantCompensation; } });
+// 유입/구매 폭증 서버 집계 (2026-06-27) — onRequest+secret(INFLOW_KEY). source·plat·시간대·구매 분해 JSON.
+var inflowReport_1 = require("./admin/inflowReport");
+Object.defineProperty(exports, "adminInflowReport", { enumerable: true, get: function () { return inflowReport_1.adminInflowReport; } });
+var aiUsageReport_1 = require("./admin/aiUsageReport");
+Object.defineProperty(exports, "adminAiUsageReport", { enumerable: true, get: function () { return aiUsageReport_1.adminAiUsageReport; } });
 /* ─── LIVE BEST 실시간 집계 (2026-06-02 · D3 정식 구현) ─── */
 var topicViews_1 = require("./livebest/topicViews");
 Object.defineProperty(exports, "recordTopicView", { enumerable: true, get: function () { return topicViews_1.recordTopicView; } });

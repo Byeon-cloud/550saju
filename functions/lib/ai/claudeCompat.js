@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCompatibilityAnalysis = generateCompatibilityAnalysis;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const kstTime_1 = require("../utils/kstTime");
 /**
  * 두 사주 간 자동 관계 분석 (정통 명리학 산출 결과 주입)
  *
@@ -186,8 +187,8 @@ function personDetail(label, d) {
 }
 function buildPrompt(d1, d2, rel) {
     const relLabels = { lover: '연인/배우자', friend: '친구', colleague: '직장동료', family: '가족', business: '사업파트너' };
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월`;
+    const now = (0, kstTime_1.kstNow)();
+    const dateStr = `${now.year}년 ${now.month}월`;
     // 정통 명리학 자동 산출 — AI 자유추론 X, 결정론적 입력
     const crossRelations = computeCrossRelations(d1, d2);
     return `당신은 사주500 명리학 해석가. ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
