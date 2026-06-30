@@ -276,7 +276,8 @@ export const generatePremiumReportStream = onRequest(
     // 2026-06-24 — iOS WKWebView/토스 웹뷰는 SSE 스트림을 더 공격적으로 버퍼링/조기종료(P99 iOS 150s vs AND 22s).
     //   12s→5s 로 촘촘히 흘려 클라 reader 에 더 자주 닿게 + idle-timeout 방어 마진 확대.
     const heartbeat = setInterval(() => { try { res.write(': hb\n\n'); } catch { /* 연결 종료됨 */ } }, 5000);
-    const groups: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
+    // 2026-07-01 — A 분할(원국·천간지지) + D(십성·용신) 4그룹 병렬. 벽시계 단축(병목 A 14K→8K).
+    const groups: Array<'A' | 'D' | 'B' | 'C'> = ['A', 'D', 'B', 'C'];
     const results: Record<string, any> = {};
 
     try {
@@ -307,14 +308,17 @@ export const generatePremiumReportStream = onRequest(
       const merged = {
         tier: 'premium' as const,
         ...results.A,
+        ...results.D,
         ...results.B,
         ...results.C,
         sections: [
           ...(results.A?.sections || []),
+          ...(results.D?.sections || []),
           ...(results.B?.sections || []),
         ],
         sectionConclusions: {
           ...(results.A?.sectionConclusions || {}),
+          ...(results.D?.sectionConclusions || {}),
           ...(results.B?.sectionConclusions || {}),
           ...(results.C?.sectionConclusions || {}),
         },

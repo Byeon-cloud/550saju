@@ -268,7 +268,7 @@ export function ResultPage(props: ResultPageProps = {}) {
   const freshType: 'premium' | 'basic' = /[?&]type=premium\b/.test(_qs) ? 'premium' : 'basic';
   const [streamingAiResult, setStreamingAiResult] = useState<any>(isFreshMode ? {} : null);
   // 2026-06-02 QA — 그룹 도착 추적 (A/B/C). 미도착 그룹 자리에 포맷 스켈레톤 렌더 → "툭 튀어나옴" 제거.
-  const [arrivedGroups, setArrivedGroups] = useState<Record<'A' | 'B' | 'C', boolean>>({ A: false, B: false, C: false });
+  const [arrivedGroups, setArrivedGroups] = useState<Record<'A' | 'D' | 'B' | 'C', boolean>>({ A: false, D: false, B: false, C: false });
   // 2026-05-29 C1 fix — SSE 실패 시 환불 + 에러 카드. (기존: onError 가 __error 만 set → 환불 0 + AILoading 영구 멈춤)
   const [streamError, setStreamError] = useState<string | null>(null);
   const refundedRef = useRef(false);
@@ -285,7 +285,7 @@ export function ResultPage(props: ResultPageProps = {}) {
     streamSettledRef.current = true;
     if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
     setStreamingAiResult(finalAi);
-    setArrivedGroups({ A: true, B: true, C: true });
+    setArrivedGroups({ A: true, D: true, B: true, C: true });
     try {
       saveReport({
         id: reportId,
@@ -369,7 +369,7 @@ export function ResultPage(props: ResultPageProps = {}) {
         }
         const fn = freshType === 'premium' ? mod.generatePremiumReportStream : mod.generateReportStream;
         await fn(sajuData as any, undefined, {
-          onGroup: (_g: 'A' | 'B' | 'C', data: any) => {
+          onGroup: (_g: 'A' | 'D' | 'B' | 'C', data: any) => {
             // 그룹 단위 머지 (필드 누적). tier='premium' 표식은 final 에서 박음
             setStreamingAiResult((prev: any) => ({ ...(prev || {}), ...(data || {}) }));
             setArrivedGroups((prev) => (prev[_g] ? prev : { ...prev, [_g]: true }));
@@ -410,10 +410,11 @@ export function ResultPage(props: ResultPageProps = {}) {
   const isFreshStreaming = isFreshMode && !loadedReport;
   // premium 스트리밍 진행 중(전 그룹 도착 전) — 상단 배너 게이트용
   const isPremiumStreamingIncomplete =
-    isPremiumStreaming && !(arrivedGroups.A && arrivedGroups.B && arrivedGroups.C);
+    isPremiumStreaming && !(arrivedGroups.A && arrivedGroups.D && arrivedGroups.B && arrivedGroups.C);
   // 2026-06-24 — 인플루언서 피드백: 부분 결과를 먼저 보여주면 fallback→AI 로 '읽는 도중 내용이 바뀌어' 혼란
   //   ("로딩중이었구나"). → 완성본만 노출. 전 그룹(A·B·C) 도착 전엔 premium·basic 모두 AILoading 유지(절대 부분 X).
-  const allGroupsArrived = arrivedGroups.A && arrivedGroups.B && arrivedGroups.C;
+  // 4그룹(premium A·D·B·C) — D 는 premium 전용. basic(claudeReport)은 A·B·C 만이라 freshType 분기.
+  const allGroupsArrived = arrivedGroups.A && arrivedGroups.B && arrivedGroups.C && (freshType !== 'premium' || arrivedGroups.D);
   const isFreshStreamingIncomplete = isFreshStreaming && !allGroupsArrived;
 
   // effective storedReport — 저장된 게 우선, 없고 fresh 모드면 streaming 합성
@@ -618,7 +619,7 @@ export function ResultPage(props: ResultPageProps = {}) {
   //   것이 "읽는 도중 내용이 바뀜" 혼란의 원인이었음. A(14K)가 병목이라 어차피 대기시간은 비슷하고, 틀린 본문
   //   노출이 사라짐. AILoading 은 사주 미니카드 + 단계 인디케이터 + 팁으로 충분히 풍성(대기 체감 완화).
   if (isFreshStreamingIncomplete) {
-    const arrivedCount = (arrivedGroups.A ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0);
+    const arrivedCount = (arrivedGroups.A ? 1 : 0) + (arrivedGroups.D ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0);
     const isPrem = freshType === 'premium';
     return (
       <AILoading
@@ -626,7 +627,7 @@ export function ResultPage(props: ResultPageProps = {}) {
         type={isPrem ? '종합 사주 분석' : '사주 리포트 분석'}
         sajuData={sajuData}
         estimatedSeconds={isPrem ? 80 : 45}
-        premiumNote={arrivedCount > 0 ? `정밀 분석 ${arrivedCount}/3 단계 완료 — 마지막을 마무리하고 있어요` : undefined}
+        premiumNote={arrivedCount > 0 ? `정밀 분석 ${arrivedCount}/${isPrem ? 4 : 3} 단계 완료 — 마지막을 마무리하고 있어요` : undefined}
         steps={isPrem ? [
           '사주 8자와 오행 구조를 분석하고 있어요',
           '십성과 용신·조후를 도출하고 있어요',
