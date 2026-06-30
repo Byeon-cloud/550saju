@@ -355,12 +355,16 @@ export function HomePage() {
           시간의 운세
           <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded leading-none" style={{ color: '#fff', background: '#C77D3A' }}>NEW</span>
         </h3>
-        <span className="text-[11.5px]" style={{ color: C.gray500 }}>이번 주 · 이번 달</span>
+        {getWeeklyPrice().isOnSale ? (
+          <span className="text-[11.5px] font-bold" style={{ color: C.goldDark }}>하반기 이벤트 할인</span>
+        ) : (
+          <span className="text-[11.5px]" style={{ color: C.gray500 }}>이번 주 · 이번 달</span>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
         {[
-          { id: 'weekly',  kanji: '週', h: '주간운세', sub: '오늘부터 7일, 하루하루', strip: '#C77D3A',          path: '/weekly',  price: getWeeklyPrice().actualPrice },
-          { id: 'monthly', kanji: '月', h: '월운세',   sub: '원하는 달, 깊게',     strip: EXT_COLORS.monthly, path: '/monthly', price: getMonthlyPrice().actualPrice },
+          { id: 'weekly',  kanji: '週', h: '주간운세', sub: '오늘부터 7일, 하루하루', strip: '#C77D3A',          path: '/weekly',  pricing: getWeeklyPrice() },
+          { id: 'monthly', kanji: '月', h: '월운세',   sub: '원하는 달, 깊게',     strip: EXT_COLORS.monthly, path: '/monthly', pricing: getMonthlyPrice() },
         ].map((c) => (
           <motion.button
             key={c.id}
@@ -378,10 +382,18 @@ export function HomePage() {
               <span className="text-[9px] font-extrabold px-1 py-[1px] rounded leading-none" style={{ color: '#fff', background: c.strip }}>NEW</span>
             </h4>
             <p className="relative text-[11.5px] leading-[1.45] mt-1" style={{ color: C.inkSoft }}>{c.sub}</p>
-            <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
-              style={{ color: C.goldDark, background: C.goldSoft }}>
-              {c.price}운
-            </span>
+            {/* 가격 — 세일 시 정가 취소선 + 이벤트 할인가 (종합사주 카드와 동일 패턴) */}
+            {c.pricing.isOnSale && c.pricing.salePrice != null ? (
+              <span className="absolute bottom-3 right-3 flex items-center gap-1">
+                <span className="text-[10px] font-semibold" style={{ color: C.gray500, textDecoration: 'line-through' }}>{c.pricing.regularPrice}운</span>
+                <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-full" style={{ color: C.goldDark, background: C.goldSoft }}>{c.pricing.actualPrice}운</span>
+              </span>
+            ) : (
+              <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
+                style={{ color: C.goldDark, background: C.goldSoft }}>
+                {c.pricing.actualPrice}운
+              </span>
+            )}
           </motion.button>
         ))}
       </div>

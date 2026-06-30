@@ -157,7 +157,7 @@ export function WeeklyPage() {
         <FadeIn>
           <ExtensionHero
             theme={EXTENSION_THEME.weekly}
-            costLabel={`${getWeeklyPrice().actualPrice}운`}
+            costLabel={getWeeklyPrice().isOnSale ? `${getWeeklyPrice().regularPrice}운→${getWeeklyPrice().actualPrice}운` : `${getWeeklyPrice().actualPrice}운`}
             sub="오늘부터 7일 · 좋은 날과 조심할 날을 한눈에"
             rightLabel="週 · 오늘부터 7일"
           />
@@ -212,7 +212,7 @@ export function WeeklyPage() {
       <FadeIn>
         <ExtensionHero
           theme={weeklyTheme}
-          costLabel={`${getWeeklyPrice().actualPrice}운`}
+          costLabel={getWeeklyPrice().isOnSale ? `${getWeeklyPrice().regularPrice}운→${getWeeklyPrice().actualPrice}운` : `${getWeeklyPrice().actualPrice}운`}
           sub={`${ilganLabel ?? ''}${periodLabel ? (ilganLabel ? ' · ' : '') + periodLabel : ''}`}
           rightLabel="週 · 오늘부터 7일"
         />
