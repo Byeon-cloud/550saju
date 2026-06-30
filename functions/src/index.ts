@@ -1610,14 +1610,15 @@ export const generateMonthly = onCall(
       const userDoc = await userRef.get();
       if (userDoc.exists) {
         // 2026-05-28 — schema 통일 helper
-        // 2026-06-29 월운 NEW 7운 — 클라 getMonthlyPrice().actualPrice(7)와 반드시 일치(머니세이프)
+        // 2026-07-01 월운 하반기 세일 5운 — 클라 getMonthlyPrice().actualPrice(세일 5)와 일치.
+        //   세일종료(7/15) 후 클라는 정가 7 차감, 서버는 하한 5만 검사(lenient) → 잔액부족 오거부 0(머니세이프).
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 7);
+          const result = computeBalanceDeduction(doc.data(), 5);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, result.updates);
         });
-        deductedAmount = 7;
+        deductedAmount = 5;
       }
     }
 
@@ -1658,14 +1659,15 @@ export const generateWeekly = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
-        // 2026-06-29 주간운세 NEW 5운 — 클라 getWeeklyPrice().actualPrice(5)와 반드시 일치(머니세이프)
+        // 2026-07-01 주간 하반기 세일 3운 — 클라 getWeeklyPrice().actualPrice(세일 3)와 일치.
+        //   세일종료(7/15) 후 클라는 정가 5 차감, 서버는 하한 3만 검사(lenient) → 잔액부족 오거부 0(머니세이프).
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 5);
+          const result = computeBalanceDeduction(doc.data(), 3);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, result.updates);
         });
-        deductedAmount = 5;
+        deductedAmount = 3;
       }
     }
 

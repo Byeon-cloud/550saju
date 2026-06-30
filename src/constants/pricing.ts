@@ -175,7 +175,7 @@ const PREMIUM_PRICING_RAW: PricingDef = {
   salePrice: 5,
   isOnSale: true,
   saleBadge: '하반기 시작 이벤트',
-  saleEndDate: '2026-07-13',
+  saleEndDate: '2026-07-15', // 2026-07-01 준기: 15일까지 연장
 };
 
 /** 종합사주 가격 조회 */
@@ -187,7 +187,10 @@ export function getPremiumPrice(): PricingInfo {
  *  이벤트성 세일 시 salePrice + isOnSale:true + saleEndDate 추가만. */
 const MONTHLY_PRICING_RAW: PricingDef = {
   regularPrice: 7,
-  isOnSale: false,
+  salePrice: 5,
+  isOnSale: true,
+  saleBadge: '하반기 시작 이벤트',
+  saleEndDate: '2026-07-15', // 2026-07-01 준기: 월운 7→5운 이벤트 세일
 };
 
 /** 월운세 가격 조회 — 항상 actualPrice 포함 */
@@ -198,7 +201,10 @@ export function getMonthlyPrice(): PricingInfo {
 /** 주간운세(이번 주 7일) raw 정의 — 2026-06-29 NEW 출시(준기), 정가 5운. */
 const WEEKLY_PRICING_RAW: PricingDef = {
   regularPrice: 5,
-  isOnSale: false,
+  salePrice: 3,
+  isOnSale: true,
+  saleBadge: '하반기 시작 이벤트',
+  saleEndDate: '2026-07-15', // 2026-07-01 준기: 주간 5→3운 이벤트 세일
 };
 
 /** 주간운세 가격 조회 — 항상 actualPrice 포함 */

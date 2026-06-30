@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSajuContext } from '@/contexts/SajuContext';
 import { generateReport } from '@/services/ai/reportGenerator';
 import { saveReport, generateId, refundBalance } from '@/services/storage/localStore';
+import { isAppsInToss } from '@/services/payment/iapService';
 import { CHEONGAN_OHENG, JIJI_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { getHourBranch } from '@/utils/saju-format';
 import { REPORT_SECTIONS, getPremiumPrice } from '@/constants/pricing';
@@ -61,13 +62,9 @@ const STAGE_DURATIONS_PREMIUM = [6000, 9000, 0];
 export function LoadingPage() {
   const navigate = useNavigate();
   const { sajuData, situation } = useSajuContext();
-  // Stage 7e-9: URL query ?type=premium 받으면 종합 사주 (10운 차감은 호출자가 수행)
-  const reportType: 'basic' | 'premium' = (() => {
-    try {
-      const sp = new URLSearchParams(window.location.search);
-      return sp.get('type') === 'premium' ? 'premium' : 'basic';
-    } catch { return 'basic'; }
-  })();
+  // 2026-07-01 — 1운 basic 리포트 완전 폐기. 종합사주 = 10운 premium 단일 상품.
+  //   /loading 진입은 항상 premium(10운 차감은 호출자가 수행). basic 경로/Opus 500원 생성 제거.
+  const reportType = 'premium' as 'basic' | 'premium';
   const [stage, setStage] = useState<1 | 2 | 3>(1);
   const [copyIdx, setCopyIdx] = useState(0);
   const [tipIdx, setTipIdx] = useState(0);
@@ -99,10 +96,13 @@ export function LoadingPage() {
       return;
     }
 
-    // SSE 모드 결정 — 한 번만
+    // SSE 모드 결정 — 한 번만.
+    // 2026-07-01 — 토스 웹뷰는 SSE 30초+ 스트림을 조기종료(종합사주 "안 나옴" 직접 원인) → 앱인토스는
+    //   SSE 끄고 안정적인 callable(단일 요청-응답)로 직행. 웹만 SSE(점진 렌더) 유지.
     useStreamRef.current =
       reportType === 'premium' &&
-      import.meta.env.VITE_USE_PREMIUM_STREAM === 'true';
+      import.meta.env.VITE_USE_PREMIUM_STREAM === 'true' &&
+      !isAppsInToss();
 
     // ─ 단계 1 → 2 → 3 자동 전환 (SSE 모드는 onStart/onGroup 으로 stage 직접 push)
     // 2026-05-04 reportType 별 페이싱 분기 — premium 은 stage 3에서 1-2분 머무므로 단계 길이 ↑
