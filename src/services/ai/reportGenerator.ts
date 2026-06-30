@@ -58,7 +58,8 @@ function wrapStreamCallbacks<C extends { onDone: (arg: any) => void; onError: (.
       callbacks.onDone(arg);
     },
     onError: (...args: any[]) => {
-      if (!settled) { settled = true; trackAi('ai_error', { type, mode: 'sse' }); }
+      // 2026-06-30 — 실패 원인 추적: SSE 실패 reason(에러 메시지) 까지 기록 → 근본 원인 진단.
+      if (!settled) { settled = true; trackAi('ai_error', { type, mode: 'sse', ms: Date.now() - t0, reason: String(args[0] ?? '').slice(0, 140) }); }
       (callbacks.onError as any)(...args);
     },
   } as C;
@@ -76,7 +77,7 @@ async function callWithAuth(name: string, data: any): Promise<any> {
     if (type) trackAi('ai_done', { type, ms: Date.now() - t0, mode: 'callable' });
     return result;
   } catch (e) {
-    if (type) trackAi('ai_error', { type, mode: 'callable' });
+    if (type) trackAi('ai_error', { type, mode: 'callable', ms: Date.now() - t0, reason: String((e as any)?.message || '').slice(0, 140) });
     throw e;
   }
 }

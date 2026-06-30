@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
+import { logAiFailure } from './shared/aiFailureLog';
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
 const lazyClaudeReport = () => import('./ai/claudeReport');
 const lazyClaudeDaeun = () => import('./ai/claudeDaeun');
@@ -334,6 +335,7 @@ export const generatePremiumReportStream = onRequest(
     } catch (error: any) {
       clearInterval(heartbeat);
       console.error('generatePremiumReportStream error:', error);
+      logAiFailure({ type: 'premium', stage: 'stream', message: error?.message || 'unknown', uid });
       // 환불
       if (deductedAmount > 0) {
         await refundBalance(uid, deductedAmount, 'generatePremiumReportStream failed');

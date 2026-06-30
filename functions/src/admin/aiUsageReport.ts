@@ -53,12 +53,41 @@ export const adminAiUsageReport = onRequest(
       byTypeDay[tdk].calls++; byTypeDay[tdk].cost += cost;
     });
 
+    // ── 실패 추적 (2026-07-01) — 클라 ai_error(analytics) + 서버 aiFailures ──
+    const aiErrors: Record<string, any> = {};
+    try {
+      const errSnap = await db.collection('analytics').where('name', '==', 'ai_error').limit(2000).get();
+      errSnap.forEach((doc) => {
+        const e = doc.data() as any;
+        if (!days.includes(e.day)) return;
+        const p = e.props || {};
+        const k = `${e.day}|${p.type || '?'}|${p.mode || '?'}`;
+        aiErrors[k] = aiErrors[k] || { count: 0, reasons: {} };
+        aiErrors[k].count++;
+        const rsn = String(p.reason || '(reason 없음·구버전)').slice(0, 90);
+        aiErrors[k].reasons[rsn] = (aiErrors[k].reasons[rsn] || 0) + 1;
+      });
+    } catch (e: any) { aiErrors['_queryError'] = String(e?.message || e); }
+
+    const serverFails: Record<string, any> = {};
+    try {
+      const fSnap = await db.collection('aiFailures').where('day', 'in', days).get();
+      fSnap.forEach((doc) => {
+        const e = doc.data() as any;
+        const k = `${e.day}|${e.type || '?'}|${e.stage || '?'}`;
+        serverFails[k] = serverFails[k] || { count: 0, samples: [] };
+        serverFails[k].count++;
+        if (serverFails[k].samples.length < 3) serverFails[k].samples.push(String(e.message || '').slice(0, 140));
+      });
+    } catch (e: any) { serverFails['_queryError'] = String(e?.message || e); }
+
     const r2 = (o: any) => { for (const k in o) o[k].cost = Math.round(o[k].cost * 1000) / 1000; return o; };
     res.json({
       days, totalDocs: snap.size, totalCalls: calls, failCalls: fails,
       totalInputTokens: totIn, totalOutputTokens: totOut,
       estTotalCostUsd: Math.round(totCost * 100) / 100,
       byType: r2(byType), byModel: r2(byModel), byTypeDay: r2(byTypeDay),
+      aiErrors, serverFails,
     });
   }
 );
