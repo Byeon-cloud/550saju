@@ -159,6 +159,7 @@ export function MonthlyPage() {
         <FadeIn>
           <ExtensionHero
             theme={EXTENSION_THEME.monthly}
+            costLabel={`${getMonthlyPrice().actualPrice}운`}
             sub="원하는 한 달을 골라 깊게 · 상순·중순·하순까지"
             rightLabel="月運 · 한 달의 흐름"
           />
@@ -252,12 +253,13 @@ export function MonthlyPage() {
       <FadeIn>
         <ExtensionHero
           theme={EXTENSION_THEME.monthly}
+          costLabel={`${getMonthlyPrice().actualPrice}운`}
           sub={`${ilganLabel ?? ''}${monthLabel ? (ilganLabel ? ' · ' : '') + monthLabel : ''}`}
           rightLabel="月運 · 이 달의 운"
         />
       </FadeIn>
 
-      <div className="px-5 pt-4 space-y-5">
+      <div className="topic-section-body px-5 pt-4 space-y-5">
 
         {/* ② 큰 후크 + 이 달의 테마 */}
         <FadeIn delay={0.04}>

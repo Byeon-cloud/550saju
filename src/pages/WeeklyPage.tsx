@@ -157,8 +157,9 @@ export function WeeklyPage() {
         <FadeIn>
           <ExtensionHero
             theme={EXTENSION_THEME.weekly}
-            sub="이번 주 7일 · 좋은 날과 조심할 날을 한눈에"
-            rightLabel="週 · 이번 주의 흐름"
+            costLabel={`${getWeeklyPrice().actualPrice}운`}
+            sub="오늘부터 7일 · 좋은 날과 조심할 날을 한눈에"
+            rightLabel="週 · 오늘부터 7일"
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
@@ -211,12 +212,13 @@ export function WeeklyPage() {
       <FadeIn>
         <ExtensionHero
           theme={weeklyTheme}
+          costLabel={`${getWeeklyPrice().actualPrice}운`}
           sub={`${ilganLabel ?? ''}${periodLabel ? (ilganLabel ? ' · ' : '') + periodLabel : ''}`}
-          rightLabel="週 · 이번 주의 운"
+          rightLabel="週 · 오늘부터 7일"
         />
       </FadeIn>
 
-      <div className="px-5 pt-4 space-y-5">
+      <div className="topic-section-body px-5 pt-4 space-y-5">
 
         {/* 큰 후크 + 이번 주 테마 */}
         <FadeIn delay={0.04}>
@@ -236,8 +238,9 @@ export function WeeklyPage() {
               <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(result.weekTheme)) }} />
             )}
             {periodLabel && (
-              <p className="text-[11px] text-text-hint mt-3">이번 주 {periodLabel}</p>
+              <p className="text-[11px] text-text-hint mt-3">오늘부터 7일 {periodLabel}</p>
             )}
+            <p className="text-[11px] text-text-hint mt-1" style={{ lineHeight: 1.55 }}>달력 주가 아니라 오늘부터 7일을 하루씩 봐드려요.</p>
           </div>
         </FadeIn>
 

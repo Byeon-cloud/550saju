@@ -68,7 +68,8 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     hint: '#1F4A2A',
     label: '대운 흐름',
     heroH1: { line1: '인생을 흐르는', line2: '10년 단위의 결' },
-    cost: '2운',
+    // 2026-07-01 가격 fix — 대운 실제 차감 1운 (DaeunPage spendBalance(1)). 기존 '2운' stale.
+    cost: '1운',
   },
   monthly: {
     heroGrad: 'linear-gradient(135deg,#D86A45 0%,#B5441F 60%,#8E3017 100%)',
@@ -79,7 +80,8 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     hint: '#5A2010',
     label: '월운 · 이번 달',
     heroH1: { line1: '이번 달의 결과', line2: '시기를 살핍니다' },
-    cost: '1운',
+    // 2026-07-01 가격 fix — 월운 정가 7운 (getMonthlyPrice SSOT). 세일가는 호출부 costLabel 로.
+    cost: '7운',
   },
   weekly: {
     // 2026-06-29 NEW — 주간운세 (이번 주 7일) · SSOT 색 #C77D3A
@@ -102,7 +104,8 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     hint: '#4C2C44',
     label: '궁합',
     heroH1: { line1: '두 사주의 결을 겹쳐', line2: '읽어 드립니다' },
-    cost: '3운',
+    // 2026-07-01 가격 fix — 궁합 실제 차감 1운 (CompatibilityPage spendBalance(1)). 기존 '3운' stale.
+    cost: '1운',
   },
   tojung: {
     heroGrad: 'linear-gradient(135deg,#5A7CA8 0%,#2F4B7C 60%,#1A3158 100%)',
@@ -113,7 +116,8 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     hint: '#1A3158',
     label: '토정비결',
     heroH1: { line1: '한 해의 결을', line2: '열두 달로 풀어 드립니다' },
-    cost: '2운',
+    // 2026-07-01 가격 fix — 토정비결 실제 차감 1운 (TojungPage spendBalance(1)). 기존 '2운' stale.
+    cost: '1운',
   },
 };
 
@@ -132,6 +136,13 @@ export interface ExtensionHeroProps {
   seal?: string;
   /** 우측 작은 한자 라벨 (daeun/monthly용 — 예: "大運 · 10년 단위 큰 흐름") */
   rightLabel?: string;
+  /**
+   * cost 칩 라벨 오버라이드 — 세일가 표기용 (예: "7운 → 5운").
+   * ExtensionUpsellCard 의 getPremiumPrice 세일표기 패턴과 동일하게,
+   * 호출부가 getMonthlyPrice()·getWeeklyPrice() 등으로 세일가를 만들어 넘긴다.
+   * 미지정 시 theme.cost (정가) 폴백.
+   */
+  costLabel?: string;
 }
 
 export function ExtensionHero({
@@ -141,6 +152,7 @@ export function ExtensionHero({
   meta,
   seal,
   rightLabel,
+  costLabel,
 }: ExtensionHeroProps) {
   return (
     <header
@@ -237,7 +249,7 @@ export function ExtensionHero({
             fontSize: 10,
           }}
         >
-          {theme.cost}
+          {costLabel ?? theme.cost}
         </span>
         {rightLabel && (
           <span style={{ marginLeft: 'auto', fontSize: 10.5, opacity: 0.8 }}>

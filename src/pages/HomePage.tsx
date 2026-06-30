@@ -359,7 +359,7 @@ export function HomePage() {
       </div>
       <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
         {[
-          { id: 'weekly',  kanji: '週', h: '주간운세', sub: '이번 주 7일의 흐름', strip: '#C77D3A',          path: '/weekly',  price: getWeeklyPrice().actualPrice },
+          { id: 'weekly',  kanji: '週', h: '주간운세', sub: '오늘부터 7일, 하루하루', strip: '#C77D3A',          path: '/weekly',  price: getWeeklyPrice().actualPrice },
           { id: 'monthly', kanji: '月', h: '월운세',   sub: '원하는 달, 깊게',     strip: EXT_COLORS.monthly, path: '/monthly', price: getMonthlyPrice().actualPrice },
         ].map((c) => (
           <motion.button

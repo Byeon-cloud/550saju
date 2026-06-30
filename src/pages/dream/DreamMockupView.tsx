@@ -259,7 +259,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
 .dream-mockup .sec-lead { font-size: 12px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
 .dream-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
-.dream-mockup .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%); padding: 0 2px; color: #1a1a1a; }
+.dream-mockup .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; color: #1a1a1a; }
 /* <em> = 주의·경고 (번트오렌지) — 2026-05-29. font-style normal (한글 가독). */
 .dream-mockup .body p em, .dream-mockup .body em { font-style: normal; font-weight: 700; color: #B5441F; background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,.15) 56%); padding: 0 2px; border-radius: 2px; }
 
@@ -280,7 +280,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
 .dream-mockup .sym .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 12px; }
 .dream-mockup .sym .dc { font-size: 13.5px; color: #1a1a1a; line-height: 1.75; margin-top: 10px; text-align: left; word-break: keep-all; }
-.dream-mockup .sym .dc strong { font-weight: 700; background: linear-gradient(180deg, transparent 58%, rgba(212,175,55,.55) 58%); padding: 1px 3px; color: #1a1a1a; border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.dream-mockup .sym .dc strong { font-weight: 700; background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%); padding: 1px 3px; color: #1a1a1a; border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .dream-mockup .sym .dc u { text-decoration: none; border-bottom: 2px solid #B8965A; padding-bottom: 1px; color: #5C4A2E; font-weight: 600; }
 .dream-mockup .sym .dc b { color: #5C4A2E; font-weight: 700; font-family: 'Noto Serif KR', serif; background: rgba(184,150,90,0.10); padding: 1px 4px; border-radius: 3px; font-size: 0.96em; }
 
@@ -289,10 +289,10 @@ const MOCKUP_CSS = `
 .dream-mockup .qc { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 14px 14px 40px; position: relative; }
 .dream-mockup .qc::before { content: '"'; position: absolute; left: 14px; top: 8px; font-family: 'Noto Serif KR', serif; font-size: 42px; font-weight: 900; color: #1a1f3a; line-height: 1; }
 .dream-mockup .qc .src { font-family: 'Noto Serif KR', serif; font-size: 13.5px; line-height: 1.6; color: #1a1f3a; font-style: italic; font-weight: 500; word-break: keep-all; }
-.dream-mockup .qc .src .hl { background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.35) 60%); padding: 0 2px; font-weight: 600; }
+.dream-mockup .qc .src .hl { background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; font-weight: 600; }
 .dream-mockup .qc .interp { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5DFD0; font-size: 12.5px; line-height: 1.7; color: #2a2520; word-break: keep-all; }
-.dream-mockup .qc .interp .tag { display: inline-block; font-size: 11px; letter-spacing: 0.1em; font-weight: 600; color: #B8965A; background: rgba(184,148,31,.12); padding: 2px 7px; border-radius: 100px; margin-right: 6px; }
-.dream-mockup .qc .interp strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.2) 60%); padding: 0 2px; }
+.dream-mockup .qc .interp .tag { display: inline-block; font-size: 11px; letter-spacing: 0.1em; font-weight: 600; color: #B8965A; background: rgba(184,150,90,.12); padding: 2px 7px; border-radius: 100px; margin-right: 6px; }
+.dream-mockup .qc .interp strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; }
 
 /* Worry link (§04) */
 .dream-mockup .worry-link { margin-top: 14px; background: linear-gradient(135deg, rgba(106,93,63,.06), rgba(26,31,58,.04)); border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 16px; }
@@ -327,12 +327,12 @@ const MOCKUP_CSS = `
 /* 티저 — clear 문장 / 블러 문장 */
 .dream-mockup .lk-body { margin-top: 10px; }
 .dream-mockup .lk-teaser { font-size: 13.5px; line-height: 1.75; color: #2a2520; margin: 0; word-break: keep-all; font-weight: 500; }
-.dream-mockup .lk-teaser strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%); padding: 0 2px; }
+.dream-mockup .lk-teaser strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; }
 .dream-mockup .lk-blurred { margin-top: 6px; filter: blur(4.5px); user-select: none; pointer-events: none; transition: filter .55s ease; }
 .dream-mockup .lk-blurred p { font-size: 13px; line-height: 1.7; color: #2a2520; margin: 0 0 6px; }
 .dream-mockup.unlocked .lk-blurred { filter: none; user-select: text; pointer-events: auto; }
 .dream-mockup .lk-full { display: none; margin-top: 8px; font-size: 13.5px; line-height: 1.8; color: #2a2520; word-break: keep-all; }
-.dream-mockup .lk-full strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,.25) 60%); padding: 0 2px; color: #1a1a1a; }
+.dream-mockup .lk-full strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; color: #1a1a1a; }
 .dream-mockup.unlocked .lk-full { display: block; animation: lkReveal .5s ease both; }
 .dream-mockup.unlocked .lk-blurred { display: none; }
 @keyframes lkReveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -435,7 +435,7 @@ const MOCKUP_CSS = `
 /* 강조 위계 3-tier — 형광펜·밑줄·볼드 (전 본문 적용) */
 .dream-mockup p strong, .dream-mockup .lk-teaser strong, .dream-mockup .lk-full strong, .dream-mockup .qc .interp strong, .dream-mockup .worry-link p strong, .dream-mockup .warn-list li strong, .dream-mockup .sym .dc strong {
   font-weight: 700;
-  background: linear-gradient(180deg, transparent 58%, rgba(212,175,55,.55) 58%, rgba(212,175,55,.45) 95%, transparent 100%);
+  background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%, rgba(184,150,90,.32) 95%, transparent 100%);
   padding: 1px 3px;
   color: #1a1a1a;
   border-radius: 2px;
@@ -458,7 +458,7 @@ const MOCKUP_CSS = `
   border-radius: 3px;
   font-size: 0.96em;
 }
-.dream-mockup p b strong, .dream-mockup p strong b { background: linear-gradient(180deg, transparent 58%, rgba(212,175,55,.55) 58%); color: #1a1a1a; padding: 1px 4px; }
+.dream-mockup p b strong, .dream-mockup p strong b { background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%); color: #1a1a1a; padding: 1px 4px; }
 
 /* 섹션 시각 위계 — 무료 (open 상태에서 좌측 골드 라인) · 잠금 (다크 헤더) */
 .dream-mockup .section { padding-left: 0; border-left: 0; transition: padding .2s ease; }

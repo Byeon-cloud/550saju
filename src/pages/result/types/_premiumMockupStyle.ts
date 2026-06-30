@@ -379,7 +379,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .dw-cell .age { font-size: 11px; color: #7F6B4E; }
   .premium-mockup .dw-cell .gan { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; margin-top: 4px; line-height: 1; }
   .premium-mockup .dw-cell .ji  { font-family: 'Noto Serif KR', serif; font-size: 13px; color: #5C4A2E; line-height: 1.2; }
-  .premium-mockup .dw-cell .label { font-size: 8px; color: #B8965A; margin-top: 4px; font-weight: 600; }/* ─── 5. 연운 라인 차트 (점수 추이) ───────────── */
+  .premium-mockup .dw-cell .label { font-size: 11px; color: #B8965A; margin-top: 4px; font-weight: 600; letter-spacing: -0.02em; }/* ─── 5. 연운 라인 차트 (점수 추이) ───────────── */
 
   
   .premium-mockup .yeonun-chart {
@@ -415,7 +415,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .shinsal-card .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 12px; }
   .premium-mockup .shinsal-card .tag {
     margin-left: auto;
-    background: rgba(184,148,31,.1); color: #B8965A;
+    background: rgba(184,150,90,.1); color: #B8965A;
     font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 600;
   }
   .premium-mockup .shinsal-card p { font-size: 12.5px; color: #2a2520; line-height: 1.7; margin: 0; }/* ─── 7. 실천 액션 카드 ─────────────────────── */
@@ -805,7 +805,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .ganji-flow .gf-type.hap   { background: rgba(46,125,50,.1);  color: #2e7d32; }
   .premium-mockup .ganji-flow .gf-type.chung { background: rgba(198,40,40,.1);  color: #c62828; }
-  .premium-mockup .ganji-flow .gf-type.hyeong{ background: rgba(184,148,31,.12); color: #B8965A; }/* 십성 카드 강도 막대 */
+  .premium-mockup .ganji-flow .gf-type.hyeong{ background: rgba(184,150,90,.12); color: #B8965A; }/* 십성 카드 강도 막대 */
 
   
   .premium-mockup .sip-card .strength {
@@ -1548,7 +1548,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     letter-spacing: 0.03em;
   }
   .premium-mockup .shinsal-meta .sm-when.always { color: #2e7d32; border-color: rgba(46,125,50,.3); background: rgba(46,125,50,.06); }
-  .premium-mockup .shinsal-meta .sm-when.dae    { color: #B8965A; border-color: rgba(184,148,31,.4); background: rgba(184,148,31,.08); }
+  .premium-mockup .shinsal-meta .sm-when.dae    { color: #B8965A; border-color: rgba(184,150,90,.4); background: rgba(184,150,90,.08); }
   .premium-mockup .shinsal-meta .sm-when.year   { color: #1565E0; border-color: rgba(21,101,224,.3); background: rgba(21,101,224,.06); }
   .premium-mockup .shinsal-meta .sm-when.dorm   { color: #5C4A2E; }/* 보조(중) 신살 카드 — 더 컴팩트 */
 

@@ -42,7 +42,8 @@ import {
 } from '@/services/storage/chatCredit';
 import { generateChatAnswer } from '@/services/ai/reportGenerator';
 import { trackEvent } from '@/services/analytics';
-import { stripMd } from '@/utils/format';
+import { stripMd, sanitizeAiText } from '@/utils/format';
+import { autoEmphasize } from '@/utils/emphasis';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 
 /** 결과 컨텍스트 배너 — 사용자가 어떤 풀이를 보고 왔는지 시각 확인 (AI 가 진짜 컨텍스트 받았다는 증명) */
@@ -82,7 +83,7 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
         fontFamily: "'Noto Serif KR', serif", color: 'rgba(248,245,238,0.08)', lineHeight: 1,
       }} aria-hidden>{han}</div>
       <div style={{ position: 'relative' }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.15em', fontWeight: 700, color: 'rgba(248,245,238,0.75)' }}>
+        <div style={{ fontSize: 11, letterSpacing: '0.15em', fontWeight: 700, color: 'rgba(248,245,238,0.75)' }}>
           이 풀이를 보고 오셨어요
         </div>
         <div style={{ fontSize: 14, fontFamily: "'Noto Serif KR', serif", fontWeight: 700, marginTop: 4 }}>
@@ -764,7 +765,7 @@ export function ChatSessionPage() {
                 {tsLabel && (
                   <div
                     style={{
-                      fontSize: 10,
+                      fontSize: 11,
                       color: '#8a7d5f',
                       textAlign: 'center',
                       margin: '4px 0 -4px',
@@ -800,7 +801,7 @@ export function ChatSessionPage() {
                   display: 'flex',
                   gap: 6,
                   alignItems: 'center',
-                  fontSize: 10,
+                  fontSize: 11,
                   color: '#B8965A',
                   marginBottom: 6,
                   fontWeight: 600,
@@ -1109,7 +1110,7 @@ function DarkChatHeader({
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        borderBottom: '1px solid rgba(212,175,55,0.3)',
+        borderBottom: '1px solid rgba(184,150,90,0.3)',
         position: 'sticky',
         top: 0,
         zIndex: 50,
@@ -1148,7 +1149,7 @@ function DarkChatHeader({
         </div>
         <div
           style={{
-            fontSize: 10.5,
+            fontSize: 11,
             color: '#f4d166',
             marginTop: 2,
             letterSpacing: '0.05em',
@@ -1167,8 +1168,8 @@ function DarkChatHeader({
           onClick={onTicketsTap}
           aria-label={`대화권 ${ticketsTotal}개, 탭하여 충전`}
           style={{
-            background: 'rgba(212,175,55,0.15)',
-            border: '1px solid rgba(212,175,55,0.3)',
+            background: 'rgba(184,150,90,0.15)',
+            border: '1px solid rgba(184,150,90,0.3)',
             padding: '5px 10px',
             borderRadius: 100,
             fontSize: 11,
@@ -1228,8 +1229,8 @@ function ContextBanner({
     <div
       style={{
         margin: '12px 16px 0',
-        background: 'rgba(212,175,55,0.08)',
-        border: '1px solid rgba(212,175,55,0.25)',
+        background: 'rgba(184,150,90,0.08)',
+        border: '1px solid rgba(184,150,90,0.25)',
         borderRadius: 10,
         padding: '10px 12px',
         fontSize: 11.5,
@@ -1274,101 +1275,32 @@ function ContextBanner({
 }
 
 /* ══════════════════════════════════════════════════════════════════
- * AI 버블 본문 — 목업 진본 .bubble strong 골드 underline gradient
- *  · **bold** → gold underline highlight (linear-gradient 60% transparent → 60% rgba)
- *  · 한자 단일 글자 → 골드 톤 (.han 스타일)
- *  · 문단 분리 (\n\n → <p>) + 줄바꿈 (<br/>)
+ * AI 버블 본문 — 진본 safeHtmlEmph 패턴 (autoEmphasize → sanitizeAiText)
+ *  · 문단(\n\n) split 후 각 문단을 className "topic-section-body" 로 렌더
+ *  · 강조 위계: <strong> 황금 형광펜 · <u> 골드 밑줄 · <em> 번트오렌지 (globals.css 매칭)
  * ═════════════════════════════════════════════════════════════════ */
 function ChatBubbleContent({ text }: { text: string }) {
-  // 1) heading / code 제거 (stripMd 와 동일 레벨)
-  const cleaned = text
-    .replace(/^#+\s*/gm, '')
-    .replace(/`/g, '')
-    .replace(/(?<!\w)\*(?!\*)/g, ''); // italic 제거 (bold 보존)
-
-  // 2) 문단 분리
-  const paragraphs = cleaned.split(/\n{2,}/);
+  // 진본 safeHtmlEmph 패턴 — 문단(\n\n) split 후 각 문단을 autoEmphasize → sanitizeAiText 로
+  //   강조 주입(황금 형광펜 <strong> · 골드 밑줄 <u> · 번트오렌지 <em>) 후 dangerouslySetInnerHTML.
+  //   className "topic-section-body" 로 globals.css 강조 CSS 가 매칭됨.
+  const paragraphs = text.split(/\n{2,}/);
 
   return (
     <>
       {paragraphs.map((para, pIdx) => (
         <p
           key={pIdx}
+          className="topic-section-body"
           style={{
             margin: pIdx === paragraphs.length - 1 ? 0 : '0 0 10px',
           }}
-        >
-          {parseInline(para)}
-        </p>
+          dangerouslySetInnerHTML={{
+            __html: sanitizeAiText(autoEmphasize(stripMd(para))),
+          }}
+        />
       ))}
     </>
   );
-}
-
-/** **bold** + 한자 + 줄바꿈을 inline 토큰으로 분해 */
-function parseInline(text: string): ReactNode[] {
-  // 1) **bold** 우선 매치
-  const boldRe = /\*\*([^*\n]+?)\*\*/g;
-  const out: ReactNode[] = [];
-  let last = 0;
-  let m: RegExpExecArray | null;
-  let key = 0;
-  while ((m = boldRe.exec(text)) !== null) {
-    if (m.index > last) {
-      out.push(...renderHan(text.slice(last, m.index), key++));
-    }
-    out.push(
-      <strong
-        key={`b-${key++}`}
-        style={{
-          fontWeight: 600,
-          background: 'linear-gradient(180deg, transparent 60%, rgba(212,175,55,0.25) 60%)',
-          padding: '0 2px',
-          color: '#1a1a1a',
-        }}
-      >
-        {renderHan(m[1], 0)}
-      </strong>,
-    );
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) {
-    out.push(...renderHan(text.slice(last), key++));
-  }
-  return out;
-}
-
-/** 단일 한자(CJK 한 글자)는 골드 톤 .han 스타일 + 줄바꿈 처리 */
-function renderHan(text: string, baseKey: number): ReactNode[] {
-  if (!text) return [];
-  // 단일 CJK 한자(앞뒤가 비-CJK)에 한해서만 강조 — 한국어 단어 깨지지 않게
-  const segs = text.split(/([一-鿿])/);
-  const out: ReactNode[] = [];
-  segs.forEach((seg, i) => {
-    if (!seg) return;
-    if (/^[一-鿿]$/.test(seg)) {
-      out.push(
-        <span
-          key={`h-${baseKey}-${i}`}
-          style={{
-            fontFamily: "'Noto Serif KR', serif",
-            color: '#6a5d3f',
-            fontSize: '0.95em',
-          }}
-        >
-          {seg}
-        </span>,
-      );
-    } else {
-      // 줄바꿈 → <br/>
-      const parts = seg.split('\n');
-      parts.forEach((p, j) => {
-        if (j > 0) out.push(<br key={`br-${baseKey}-${i}-${j}`} />);
-        if (p) out.push(p);
-      });
-    }
-  });
-  return out;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1412,7 +1344,7 @@ function BubbleRow({
               display: 'flex',
               gap: 6,
               alignItems: 'center',
-              fontSize: 10,
+              fontSize: 11,
               color: '#B8965A',
               marginBottom: 6,
               fontWeight: 600,
@@ -1708,7 +1640,7 @@ function ChatComposer({
           color: '#f4d166',
           padding: '3px 10px',
           borderRadius: 100,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: 600,
           letterSpacing: '0.02em',
         }}
@@ -1775,7 +1707,7 @@ function ChatComposer({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: canSend ? '0 2px 6px rgba(212,175,55,0.3)' : 'none',
+            boxShadow: canSend ? '0 2px 6px rgba(184,150,90,0.3)' : 'none',
           }}
         >
           <SendIcon />
@@ -1784,7 +1716,7 @@ function ChatComposer({
       <p
         id="chat-tickets-hint"
         style={{
-          fontSize: 10.5,
+          fontSize: 11,
           color: '#8a7d5f',
           margin: '6px 4px 0',
           textAlign: 'right',

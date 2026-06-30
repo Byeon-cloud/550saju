@@ -2464,27 +2464,27 @@ export function PremiumResult({
     if (sc && typeof sc === 'object' && !Array.isArray(sc)) {
       // 객체 형태 — 키별 매핑
       const arr: string[] = new Array(10).fill('');
-      if (sc.wongug)    arr[0] = stripMd(String(sc.wongug));
-      if (sc.structure) arr[1] = stripMd(String(sc.structure));
-      if (sc.sipsung)   arr[2] = stripMd(String(sc.sipsung));
-      if (sc.yongsin)   arr[3] = stripMd(String(sc.yongsin));
-      if (sc.relation)  arr[7] = stripMd(String(sc.relation));
+      if (sc.wongug)    arr[0] = sanitizeAiText(autoEmphasize(String(sc.wongug)));
+      if (sc.structure) arr[1] = sanitizeAiText(autoEmphasize(String(sc.structure)));
+      if (sc.sipsung)   arr[2] = sanitizeAiText(autoEmphasize(String(sc.sipsung)));
+      if (sc.yongsin)   arr[3] = sanitizeAiText(autoEmphasize(String(sc.yongsin)));
+      if (sc.relation)  arr[7] = sanitizeAiText(autoEmphasize(String(sc.relation)));
       // 추가 키 호환 (서버가 이후 확장 시)
-      if (sc.daeun)     arr[4] = stripMd(String(sc.daeun));
-      if (sc.yearly)    arr[5] = stripMd(String(sc.yearly));
-      if (sc.shinsal)   arr[6] = stripMd(String(sc.shinsal));
-      if (sc.topic)     arr[8] = stripMd(String(sc.topic));
-      if (sc.practice)  arr[9] = stripMd(String(sc.practice));
+      if (sc.daeun)     arr[4] = sanitizeAiText(autoEmphasize(String(sc.daeun)));
+      if (sc.yearly)    arr[5] = sanitizeAiText(autoEmphasize(String(sc.yearly)));
+      if (sc.shinsal)   arr[6] = sanitizeAiText(autoEmphasize(String(sc.shinsal)));
+      if (sc.topic)     arr[8] = sanitizeAiText(autoEmphasize(String(sc.topic)));
+      if (sc.practice)  arr[9] = sanitizeAiText(autoEmphasize(String(sc.practice)));
       return arr;
     }
     if (Array.isArray(sc)) {
-      return sc.slice(0, 10).map((s: any) => stripMd(String(s ?? '')));
+      return sc.slice(0, 10).map((s: any) => sanitizeAiText(autoEmphasize(String(s ?? ''))));
     }
     if (Array.isArray(aiResult.sections)) {
       return aiResult.sections
         .slice(0, 10)
         .map((s: any) =>
-          typeof s?.conclusion === 'string' ? stripMd(s.conclusion) : '',
+          typeof s?.conclusion === 'string' ? sanitizeAiText(autoEmphasize(s.conclusion)) : '',
         );
     }
     return [];
@@ -3429,7 +3429,7 @@ function _LifestyleAdvice({
           margin: 0,
           whiteSpace: 'pre-line',
         }}
-        dangerouslySetInnerHTML={{ __html: sanitizeAiText(aiLifestyle) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(aiLifestyle)) }}
       />
     );
   }
@@ -4712,7 +4712,7 @@ function YearlyForecast({
 
   const baseText =
     typeof aiYearly === 'string' && aiYearly.length > 0
-      ? sanitizeAiText(aiYearly)
+      ? sanitizeAiText(autoEmphasize(aiYearly))
       : `올해 ${thisYear}년은 ${yearKr}(${yearGz}) 해입니다. ${EHAN[OHENG_TO_ELEM[dayOheng]]}(${EKR[OHENG_TO_ELEM[dayOheng]]}) 일간을 기준으로 한 흐름이 12개월에 걸쳐 어떻게 작동하는지 아래에서 한 달씩 따라가세요.`;
   void dayOheng;
 
