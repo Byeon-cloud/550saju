@@ -26,17 +26,18 @@ type Phase = 'select' | 'loading' | 'result';
 const ACCENT = '#B5441F'; // 월운 확장색 (CLAUDE.md 톤 SSOT)
 
 /**
- * 선택 가능한 12개월 — 이번 달 포함 앞으로 12개월(예: 2026/6 ~ 2027/5).
- * 7/31에 사도 8월 고르면 손해 0. 기본 선택 = 이번 달.
+ * 선택 가능한 13개월 — 지난 6개월 + 이번 달 + 앞으로 6개월 (예: 7월이면 1월~내년 1월).
+ * 지난 달은 과거형 회고(서버 시제 룰), 미래 달은 미래형. 기본 선택 = 이번 달.
+ * 7/31에 사도 8월 고르면 손해 0 · 지난 5월 회고도 가능.
  */
-function buildMonthOptions(): { year: number; month: number; label: string }[] {
+function buildMonthOptions(): { year: number; month: number; label: string; isPast: boolean; isCurrent: boolean }[] {
   const base = new Date();
-  const out: { year: number; month: number; label: string }[] = [];
-  for (let i = 0; i < 12; i++) {
+  const out: { year: number; month: number; label: string; isPast: boolean; isCurrent: boolean }[] = [];
+  for (let i = -6; i <= 6; i++) {
     const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
     const year = d.getFullYear();
     const month = d.getMonth() + 1;
-    out.push({ year, month, label: `${year}년 ${month}월` });
+    out.push({ year, month, label: `${year}년 ${month}월`, isPast: i < 0, isCurrent: i === 0 });
   }
   return out;
 }
@@ -90,8 +91,11 @@ export function MonthlyPage() {
   const subRef = useRef<{ unsubscribe: () => void } | null>(null);
   // ⚡ async 2차리뷰 — draft 노출 후 refine(2차) 백그라운드 진행 중 표시 ("다듬는 중")
   const [refining, setRefining] = useState(false);
-  // 선택한 달 인덱스 (monthOptions 기준) — 기본 = 이번 달(0)
-  const [monthIdx, setMonthIdx] = useState(0);
+  // 선택한 달 인덱스 (monthOptions 기준) — 기본 = 이번 달 (과거6+현재+미래6 배열의 현재월 위치)
+  const [monthIdx, setMonthIdx] = useState(() => {
+    const i = monthOptions.findIndex((o) => o.isCurrent);
+    return i >= 0 ? i : 6;
+  });
   const [showShare, setShowShare] = useState(false);
   const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
@@ -210,49 +214,55 @@ export function MonthlyPage() {
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
-          <FadeIn delay={0.05}>
-            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
-          </FadeIn>
-          {selected && (
-            <FadeIn delay={0.1}>
-              <div className="card-gold py-3 px-4 flex items-center justify-between">
-                <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span>님 선택됨</p>
-                <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
-              </div>
+          {/* 프로필 미선택 시에만 피커 — 선택하면 월 선택이 메인 콘텐츠가 되어 눈에 확 띄게 */}
+          {!selected && (
+            <FadeIn delay={0.05}>
+              <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
             </FadeIn>
           )}
-
-          {/* 월 선택 — 이번 달 포함 앞으로 12개월 중 1개 택1 (기본 = 이번 달) */}
           {selected && (
-            <FadeIn delay={0.14}>
-              <div className="card py-4 px-4">
-                <p className="text-h3 text-text-primary mb-1">어느 달을 볼까요?</p>
-                <p className="text-[11px] text-text-hint mb-3">이번 달부터 앞으로 12개월 중 한 달을 골라 깊게 풀어드려요.</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {monthOptions.map((o, i) => {
-                    const active = i === monthIdx;
-                    return (
-                      <button
-                        key={`${o.year}-${o.month}`}
-                        onClick={() => setMonthIdx(i)}
-                        className="py-2.5 rounded-xl text-center transition-all"
-                        style={
-                          active
-                            ? { background: ACCENT, color: '#fff', boxShadow: '0 2px 8px rgba(181,68,31,0.25)' }
-                            : { background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid rgba(0,0,0,0.06)' }
-                        }
-                      >
-                        <span className="block text-[11px] opacity-70" style={active ? { color: 'rgba(255,255,255,0.85)' } : undefined}>{o.year}</span>
-                        <span className="block text-body-sm font-bold">{o.month}월</span>
-                        {i === 0 && (
-                          <span className="block text-[11px] mt-0.5" style={active ? { color: 'rgba(255,255,255,0.9)' } : { color: ACCENT }}>이번 달</span>
-                        )}
-                      </button>
-                    );
-                  })}
+            <>
+              <FadeIn delay={0.05}>
+                <div className="card-gold py-3 px-4 flex items-center justify-between">
+                  <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span>님 선택됨</p>
+                  <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
                 </div>
-              </div>
-            </FadeIn>
+              </FadeIn>
+
+              {/* 월 선택 — 프로필 선택 후 메인 콘텐츠. 과거 6 + 이번 달 + 미래 6 (강조 테두리로 눈에 띄게) */}
+              <FadeIn delay={0.1}>
+                <div className="card py-4 px-4" style={{ border: `1.5px solid ${ACCENT}` }}>
+                  <p className="text-h3 text-text-primary mb-1">어느 달의 운세를 볼까요?</p>
+                  <p className="text-[11px] text-text-hint mb-3">지난 6개월부터 앞으로 6개월까지 — 원하는 달을 골라 깊게 풀어드려요. <span style={{ color: ACCENT, fontWeight: 700 }}>지난 달은 회고, 앞으로는 미래 흐름</span>으로 읽어드려요.</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {monthOptions.map((o, i) => {
+                      const active = i === monthIdx;
+                      return (
+                        <button
+                          key={`${o.year}-${o.month}`}
+                          onClick={() => setMonthIdx(i)}
+                          className="py-2.5 rounded-xl text-center transition-all relative"
+                          style={
+                            active
+                              ? { background: ACCENT, color: '#fff', boxShadow: '0 2px 8px rgba(181,68,31,0.25)' }
+                              : { background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid rgba(0,0,0,0.06)', opacity: o.isPast ? 0.72 : 1 }
+                          }
+                        >
+                          <span className="block text-[11px] opacity-70" style={active ? { color: 'rgba(255,255,255,0.85)' } : undefined}>{o.year}</span>
+                          <span className="block text-body-sm font-bold">{o.month}월</span>
+                          {o.isCurrent && (
+                            <span className="block text-[11px] mt-0.5" style={active ? { color: 'rgba(255,255,255,0.9)' } : { color: ACCENT }}>이번 달</span>
+                          )}
+                          {o.isPast && (
+                            <span className="block text-[11px] mt-0.5" style={active ? { color: 'rgba(255,255,255,0.85)' } : { color: 'var(--text-muted)' }}>지난 달</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </FadeIn>
+            </>
           )}
         </div>
         {selected && (
