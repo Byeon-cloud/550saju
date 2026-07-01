@@ -6,7 +6,8 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { ShareModal } from '@/components/share/ShareModal';
 import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getReport, markPendingSpend, clearPendingSpendByType, type LocalReport } from '@/services/storage/localStore';
-import { generateWeeklyFortune } from '@/services/ai/reportGenerator';
+import { generateWeeklyFortune, generateWeeklyDraft2026, generateWeeklyRefine2026 } from '@/services/ai/reportGenerator';
+import { isAsyncReviewEnabled } from '@/services/progress/progressId';
 import { getWeeklyPrice } from '@/constants/pricing';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -82,6 +83,7 @@ export function WeeklyPage() {
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
   const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
   const [result, setResult] = useState<WeeklyDetailResponse | null>(navState?.savedResult || null);
+  const [refining, setRefining] = useState(false); // ⚡ async 2차리뷰 — 초안 노출 후 다듬는 중
   const [showShare, setShowShare] = useState(false);
   const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
@@ -112,14 +114,37 @@ export function WeeklyPage() {
     // 롤링 7일 일진 (어제부터 7일) 계산 → 서버로 전달
     const weekDays = computeWeekDays();
 
+    setRefining(false);
     try {
-      const res = await generateWeeklyFortune(selected.sajuData, weekDays);
-      setResult(res.content);
-      const rid = res.reportId || generateId();
-      saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', aiResult: res.content, createdAt: new Date().toISOString() });
-      clearPendingSpendByType('weekly'); // 결과 저장 완료 → 자동환불 대상 제외
-      setShareReportId(rid);
-      setPhase('result');
+      if (isAsyncReviewEnabled()) {
+        // ⚡ async 2차리뷰 — 1차(draft) 즉시 노출 → 2차(refine) 백그라운드. 체감 로딩 반토막.
+        const draftRes = await generateWeeklyDraft2026(selected.sajuData, weekDays);
+        const rid = draftRes.reportId || generateId();
+        setResult(draftRes.content);
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', aiResult: draftRes.content, createdAt: new Date().toISOString() });
+        clearPendingSpendByType('weekly'); // draft = 결과 커밋(부팅 자동환불 제외)
+        setShareReportId(rid);
+        setRefining(true);
+        setPhase('result');
+        // 백그라운드 2차 보정 — 실패해도 draft 유지(무해·무차감이라 환불 X)
+        void generateWeeklyRefine2026(selected.sajuData, weekDays, draftRes.content, rid)
+          .then((ref) => {
+            if (ref?.content) {
+              setResult(ref.content);
+              saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', aiResult: ref.content, createdAt: new Date().toISOString() });
+            }
+          })
+          .catch((err) => console.warn('주간 보정 실패(초안 유지):', err))
+          .finally(() => setRefining(false));
+      } else {
+        const res = await generateWeeklyFortune(selected.sajuData, weekDays);
+        setResult(res.content);
+        const rid = res.reportId || generateId();
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', aiResult: res.content, createdAt: new Date().toISOString() });
+        clearPendingSpendByType('weekly'); // 결과 저장 완료 → 자동환불 대상 제외
+        setShareReportId(rid);
+        setPhase('result');
+      }
     } catch (e: any) {
       console.error('주간운세 실패:', e);
       // AI 실패 시 클라이언트에서 즉시 환불
@@ -198,6 +223,7 @@ export function WeeklyPage() {
       <WeeklyMockupView
         result={result}
         profile={selected}
+        refining={refining}
         periodLabel={periodLabel}
         onChat={() => navigate('/chat')}
         onShare={() => setShowShare(true)}

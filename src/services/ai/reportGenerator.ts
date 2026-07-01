@@ -954,6 +954,26 @@ export async function generateWeeklyFortune(
   return result.data as { reportId: string; content: WeeklyDetailResponse };
 }
 
+/** ⚡ async 2차리뷰 — 주간 초안(1차만·시간 반토막). 차감 1회. 즉시 노출용. */
+export async function generateWeeklyDraft2026(
+  sajuData: SajuData,
+  weekDays: { day: string; date: string; ganji: string; ganjiRead?: string }[],
+): Promise<{ reportId: string; content: WeeklyDetailResponse }> {
+  const result = await callWithAuth('generateWeeklyDraft', { sajuData, weekDays });
+  return result.data as { reportId: string; content: WeeklyDetailResponse };
+}
+
+/** ⚡ async 2차리뷰 — 주간 보정(2차만·백그라운드·무차감). 실패해도 draft 반환. */
+export async function generateWeeklyRefine2026(
+  sajuData: SajuData,
+  weekDays: { day: string; date: string; ganji: string; ganjiRead?: string }[],
+  draft: WeeklyDetailResponse,
+  reportId?: string,
+): Promise<{ content: WeeklyDetailResponse }> {
+  const result = await callWithAuth('generateWeeklyRefine', { sajuData, weekDays, draft, reportId });
+  return result.data as { content: WeeklyDetailResponse };
+}
+
 /**
  * 궁합 분석 — Firebase Function → Claude Sonnet 4.6
  */

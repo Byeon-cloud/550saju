@@ -40,6 +40,7 @@ interface WeeklyMockupViewProps {
   result: WeeklyDetailResponse;
   profile: LocalReport;
   periodLabel: string; // "6/30 ~ 7/6"
+  refining?: boolean;  // ⚡ async 2차리뷰 — 초안 노출 후 다듬는 중 표시
   onChat: () => void;
   onShare: () => void;
   onMonthly: () => void; // 교차 CTA — 월운세 보기
@@ -354,6 +355,16 @@ const MOCKUP_CSS = `
 
 .weekly-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed var(--c-card-line); font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
 .weekly-mockup .service-notice .src { color: var(--c-mute); margin-bottom: 6px; }
+
+/* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고) */
+.weekly-mockup .refining-pill {
+  margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
+  background: rgba(199,125,58,0.10); border: 1px solid rgba(199,125,58,0.30);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; color: #a05a24;
+}
+.weekly-mockup .refining-pill .spark { width: 7px; height: 7px; border-radius: 50%; background: #C77D3A; animation: weekly-refine-pulse 1s infinite; flex-shrink: 0; }
+@keyframes weekly-refine-pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
 `;
 
 const OHENG_KEY: Record<OhengType, string> = { 목: 'mok', 화: 'hwa', 토: 'to', 금: 'geum', 수: 'su' };
@@ -370,7 +381,7 @@ function scoreColor(score: number): string {
 }
 
 export function WeeklyMockupView(props: WeeklyMockupViewProps) {
-  const { result, profile, periodLabel, onChat, onShare, onMonthly } = props;
+  const { result, profile, periodLabel, refining, onChat, onShare, onMonthly } = props;
 
   // ── 섹션 접기/펼치기 (§01·02 default open — DailyMockupView 통일 정책) ──
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['01', '02']));
@@ -449,6 +460,14 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
             </div>
           )}
         </header>
+
+        {/* ⚡ async 2차리뷰 — 초안 노출 중, 최종 보정 진행 표시 */}
+        {refining && (
+          <div className="refining-pill">
+            <span className="spark" />
+            결과를 더 정교하게 다듬는 중이에요 · 잠시 후 자동으로 완성돼요
+          </div>
+        )}
 
         {/* 내 사주 미니 카드 */}
         {pillars.length === 4 && (

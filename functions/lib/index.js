@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeekly = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
+exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeekly = exports.generateMonthlyRefine = exports.generateMonthlyDraft = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -1562,6 +1562,77 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
         console.error('generateMonthly error:', error);
         await refundBalance(uid, deductedAmount, 'generateMonthly failed');
         throw new https_1.HttpsError('internal', `월별 운세 실패: ${error.message || 'unknown'}`);
+    }
+});
+/**
+ * ⚡ 월별 운세 초안 (draft·1차만) — async 2차리뷰용. 로딩 반토막.
+ *   차감은 여기서 1회(monthlyCost). 1차 결과를 즉시 반환(유저 조기 열람) + 리포트에 draft:true 저장.
+ *   2차 보정은 generateMonthlyRefine(백그라운드·무차감)에서.
+ */
+exports.generateMonthlyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    const { sajuData, monthInfo } = request.data;
+    if (!sajuData)
+        throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
+    const uid = request.auth?.uid || 'anonymous';
+    let deductedAmount = 0;
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await userRef.get();
+        if (userDoc.exists) {
+            const cost = monthlyCost(); // 하반기 이벤트 반영 (generateMonthly 와 동일 로직)
+            await db.runTransaction(async (tx) => {
+                const doc = await tx.get(userRef);
+                const result = computeBalanceDeduction(doc.data(), cost);
+                if (!result)
+                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
+                tx.update(userRef, result.updates);
+            });
+            deductedAmount = cost;
+        }
+    }
+    try {
+        const cm = await lazyClaudeMonthly();
+        const draft = await cm.generateMonthlyDraft(ANTHROPIC_KEY.value(), sajuData, monthInfo);
+        const reportRef = db.collection('reports').doc();
+        await reportRef.set({
+            uid, type: 'monthly', content: draft, draft: true,
+            targetYear: monthInfo?.year ?? draft?.year ?? null,
+            targetMonth: monthInfo?.month ?? draft?.month ?? null,
+            aiModel: 'claude-sonnet-4-6',
+            generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return { reportId: reportRef.id, content: draft };
+    }
+    catch (error) {
+        console.error('generateMonthlyDraft error:', error);
+        await refundBalance(uid, deductedAmount, 'generateMonthlyDraft failed');
+        throw new https_1.HttpsError('internal', `월별 운세(초안) 실패: ${error.message || 'unknown'}`);
+    }
+});
+/**
+ * ⚡ 월별 운세 보정 (refine·2차만) — async 2차리뷰 백그라운드. 🛡️ 무차감.
+ *   draft 를 받아 자가 점검·보정 → 최종본. 실패해도 draft 반환(유저는 이미 draft 봤음·환불 X).
+ *   같은 reportId 리포트를 최종본으로 갱신(draft:false).
+ */
+exports.generateMonthlyRefine = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    const { sajuData, monthInfo, draft, reportId } = request.data;
+    if (!sajuData || !draft)
+        throw new https_1.HttpsError('invalid-argument', '보정할 데이터가 없습니다');
+    try {
+        const cm = await lazyClaudeMonthly();
+        const refined = await cm.generateMonthlyRefine(ANTHROPIC_KEY.value(), sajuData, monthInfo, draft);
+        if (reportId && typeof reportId === 'string') {
+            try {
+                await db.collection('reports').doc(reportId).set({ content: refined, draft: false, refinedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            }
+            catch { /* 갱신 실패 무해 — 클라가 자체 저장 */ }
+        }
+        return { content: refined };
+    }
+    catch (error) {
+        // best-effort — 2차 실패 시 draft 그대로(무해·무차감이라 환불 대상 아님).
+        console.warn('generateMonthlyRefine 실패(draft 유지):', error?.message);
+        return { content: draft };
     }
 });
 /**
