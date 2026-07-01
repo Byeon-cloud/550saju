@@ -204,6 +204,7 @@ export function MonthlyPage() {
           <ExtensionHero
             theme={EXTENSION_THEME.monthly}
             costLabel={getMonthlyPrice().isOnSale ? `${getMonthlyPrice().regularPrice}운→${getMonthlyPrice().actualPrice}운` : `${getMonthlyPrice().actualPrice}운`}
+            eventLabel={getMonthlyPrice().isOnSale ? `이벤트 · ~${Number((getMonthlyPrice().saleEndDate || '').slice(5, 7))}/${Number((getMonthlyPrice().saleEndDate || '').slice(8, 10))}` : undefined}
             sub="원하는 한 달을 골라 깊게 · 상순·중순·하순까지"
             rightLabel="月運 · 한 달의 흐름"
           />

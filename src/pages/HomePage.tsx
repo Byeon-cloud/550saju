@@ -213,6 +213,27 @@ export function HomePage() {
   return (
     <div style={{ background: C.paper, minHeight: '100vh', paddingBottom: 32 }}>
 
+      {/* ─── [00] 하반기 시작 이벤트 알림바 — 세일 중에만 노출 · 슬림(미관 유지) · 종료일 SSOT 동적 ─── */}
+      {(() => {
+        const ev = getPremiumPrice();
+        if (!ev.isOnSale) return null;
+        const endM = ev.saleEndDate ? Number(ev.saleEndDate.slice(5, 7)) : null;
+        const endD = ev.saleEndDate ? Number(ev.saleEndDate.slice(8, 10)) : null;
+        return (
+          <div className="mx-4 mt-4 rounded-[14px] px-3.5 py-2.5 flex items-center gap-2.5 relative overflow-hidden"
+            style={{ background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldDark} 100%)`, color: '#fff', boxShadow: '0 2px 10px rgba(184,150,90,0.22)' }}>
+            <span className="text-[9.5px] font-extrabold px-2 py-[3px] rounded-full tracking-[0.1em] whitespace-nowrap"
+              style={{ background: 'rgba(255,255,255,0.24)' }}>EVENT</span>
+            <div className="flex-1 min-w-0 text-[12px] leading-[1.35]">
+              <b className="font-extrabold">하반기 시작 이벤트</b> — 종합사주·주간·월간 <b className="font-extrabold">할인 중</b>
+            </div>
+            {endM && endD && (
+              <span className="text-[11px] font-bold whitespace-nowrap" style={{ opacity: 0.95 }}>~{endM}/{endD}</span>
+            )}
+          </div>
+        );
+      })()}
+
       {/* ─── [01] Pillar 1 · 오늘의 운세 ─── */}
       {/* 2026-05-28 PM — 상단 ProfileSwitcher 제거 (준기 지시). 각 콘텐츠 랜딩에서 프로필 선택 가능하므로 중복 UI. */}
       <motion.button

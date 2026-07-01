@@ -179,6 +179,7 @@ export function WeeklyPage() {
           <ExtensionHero
             theme={EXTENSION_THEME.weekly}
             costLabel={getWeeklyPrice().isOnSale ? `${getWeeklyPrice().regularPrice}운→${getWeeklyPrice().actualPrice}운` : `${getWeeklyPrice().actualPrice}운`}
+            eventLabel={getWeeklyPrice().isOnSale ? `이벤트 · ~${Number((getWeeklyPrice().saleEndDate || '').slice(5, 7))}/${Number((getWeeklyPrice().saleEndDate || '').slice(8, 10))}` : undefined}
             sub="오늘부터 7일 · 좋은 날과 조심할 날을 한눈에"
             rightLabel="週 · 오늘부터 7일"
           />

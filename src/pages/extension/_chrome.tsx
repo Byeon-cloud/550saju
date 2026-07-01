@@ -143,6 +143,8 @@ export interface ExtensionHeroProps {
    * 미지정 시 theme.cost (정가) 폴백.
    */
   costLabel?: string;
+  /** 이벤트 배지 — 세일 중 "하반기 이벤트 · ~7/15" 표기 (cost 칩 옆). 미지정 시 미노출. */
+  eventLabel?: string;
 }
 
 export function ExtensionHero({
@@ -153,6 +155,7 @@ export function ExtensionHero({
   seal,
   rightLabel,
   costLabel,
+  eventLabel,
 }: ExtensionHeroProps) {
   return (
     <header
@@ -251,6 +254,21 @@ export function ExtensionHero({
         >
           {costLabel ?? theme.cost}
         </span>
+        {eventLabel && (
+          <span
+            style={{
+              background: 'rgba(255,255,255,0.28)',
+              padding: '3px 9px',
+              borderRadius: 100,
+              fontSize: 9.5,
+              fontWeight: 800,
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {eventLabel}
+          </span>
+        )}
         {rightLabel && (
           <span style={{ marginLeft: 'auto', fontSize: 10.5, opacity: 0.8 }}>
             {rightLabel}

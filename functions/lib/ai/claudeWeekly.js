@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateWeeklyFortune = generateWeeklyFortune;
+exports.generateWeeklyDraft = generateWeeklyDraft;
+exports.generateWeeklyRefine = generateWeeklyRefine;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
@@ -45,6 +47,50 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
     if (!jsonMatch)
         throw new Error('JSON 파싱 실패');
     return JSON.parse(jsonMatch[0]);
+}
+/**
+ * ⚡ async 2차리뷰 — draft (1차만). 주간 로딩 반토막: 1차 결과 즉시 반환.
+ *   2차 보정은 별도 refine 콜(백그라운드)에서.
+ */
+async function generateWeeklyDraft(apiKey, sajuData, weekDays) {
+    const anthropic = new sdk_1.default({ apiKey });
+    const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
+    const prompt = buildPrompt(sajuData, days);
+    const first = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 12000,
+        temperature: 0.1,
+        messages: [{ role: 'user', content: prompt }],
+    });
+    const firstText = first.content[0].text;
+    const m = firstText.match(/\{[\s\S]*\}/);
+    if (!m)
+        throw new Error('주간운세 draft JSON 파싱 실패');
+    return JSON.parse(m[0]);
+}
+/**
+ * ⚡ async 2차리뷰 — refine (2차만). draft 를 받아 자가 점검·보정 → 최종본.
+ *   🛡️ best-effort: 리뷰 파싱 실패 시 draft 그대로 반환(유저는 이미 draft 봤음·무해).
+ */
+async function generateWeeklyRefine(apiKey, sajuData, weekDays, draft) {
+    const anthropic = new sdk_1.default({ apiKey });
+    const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
+    const prompt = buildPrompt(sajuData, days);
+    const review = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 12000,
+        temperature: 0.1,
+        messages: [
+            { role: 'user', content: prompt },
+            { role: 'assistant', content: JSON.stringify(draft) },
+            { role: 'user', content: buildReviewPrompt(days) },
+        ],
+    });
+    const reviewText = review.content[0].text;
+    const m = reviewText.match(/\{[\s\S]*\}/);
+    if (!m)
+        return draft; // 리뷰 실패 → draft 유지
+    return JSON.parse(m[0]);
 }
 /** weekDays 누락 시 폴백 — 구매일 전날부터 7일(요일 라벨만, 간지 미상). 정상 경로는 항상 클라가 7일 간지 동봉. */
 function fallbackWeek() {
