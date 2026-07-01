@@ -29,3 +29,16 @@ export function isProgressiveEnabled(): boolean {
     return false;
   }
 }
+
+/**
+ * ⚡ async 2차리뷰 기능 플래그. ON 이면 주간/월간을 draft(1차·즉시노출) + refine(2차·백그라운드) 2콜로.
+ * 체감 로딩 반토막. OFF(기본)면 기존 단일 콜(1차+2차) 그대로.
+ * .env: VITE_ASYNC_REVIEW_ENABLED=true 로 ON.
+ */
+export function isAsyncReviewEnabled(): boolean {
+  try {
+    return import.meta.env.VITE_ASYNC_REVIEW_ENABLED === 'true';
+  } catch {
+    return false;
+  }
+}

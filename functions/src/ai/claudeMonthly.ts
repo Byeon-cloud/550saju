@@ -76,6 +76,56 @@ async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnT
   return JSON.parse(jsonMatch[0]);
 }
 
+/**
+ * ⚡ async 2차리뷰 — draft (1차만). 로딩 반토막용: 1차 결과를 즉시 클라에 반환 → 유저 조기 열람.
+ *  FULL 스키마로 1차 생성. 2차 리뷰는 별도 refine 콜(백그라운드)에서. 머지·year/month 보정 동일.
+ */
+export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthInfo?: any): Promise<any> {
+  const anthropic = new Anthropic({ apiKey });
+  const info = normalizeMonthInfo(monthInfo);
+  const prompt = buildPrompt(sajuData, info, 'FULL');
+  const first = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 10000,
+    temperature: 0.1,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  const firstText = (first.content[0] as any).text;
+  const m = firstText.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('월별 운세 draft JSON 파싱 실패');
+  const draft = JSON.parse(m[0]);
+  draft.year = info.year;
+  draft.month = info.month;
+  return draft;
+}
+
+/**
+ * ⚡ async 2차리뷰 — refine (2차만). draft 를 받아 자가 점검·보정 → 최종본.
+ *  🛡️ best-effort: 리뷰 파싱 실패 시 draft 그대로 반환(유저는 이미 draft 를 봤으므로 무해).
+ */
+export async function generateMonthlyRefine(apiKey: string, sajuData: any, monthInfo: any, draft: any): Promise<any> {
+  const anthropic = new Anthropic({ apiKey });
+  const info = normalizeMonthInfo(monthInfo);
+  const prompt = buildPrompt(sajuData, info, 'FULL');
+  const review = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 10000,
+    temperature: 0.1,
+    messages: [
+      { role: 'user', content: prompt },
+      { role: 'assistant', content: JSON.stringify(draft) },
+      { role: 'user', content: buildReviewPrompt(info, 'FULL') },
+    ],
+  });
+  const reviewText = (review.content[0] as any).text;
+  const m = reviewText.match(/\{[\s\S]*\}/);
+  if (!m) return { ...draft, year: info.year, month: info.month }; // 리뷰 실패 → draft 유지
+  const refined = JSON.parse(m[0]);
+  refined.year = info.year;
+  refined.month = info.month;
+  return refined;
+}
+
 /** monthInfo 누락/불완전 시 폴백 — 이번 달 기준(간지 미상). 정상 경로는 항상 클라가 간지 동봉. */
 function normalizeMonthInfo(monthInfo: any): { year: number; month: number; label: string; wolGanji: string; yearGanji: string } {
   const now = kstNow();

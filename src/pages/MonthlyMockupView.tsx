@@ -40,6 +40,7 @@ interface MonthlyMockupViewProps {
   monthLabel: string;          // "2026년 7월"
   ilganLabel?: string;         // "갑(甲) 일간"
   loading?: boolean;           // 점진 로딩 — 아직 안 도착한 섹션(M2)은 스켈레톤
+  refining?: boolean;          // ⚡ async 2차리뷰 — 초안 노출 후 다듬는 중(곧 갱신됨) 표시
   onShare: () => void;
   onChat: () => void;
   /** 영역별 → 해당 주제운 심층 분석 (재물→wealth·직업→career·애정→love·건강→health). 운 추가 소비 퍼널 */
@@ -419,6 +420,15 @@ const MOCKUP_CSS = `
 }
 @keyframes monthly-shimmer { 100% { transform: translateX(100%); } }
 @keyframes monthly-pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+
+/* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고 · 내용 바뀜 혼란 차단) */
+.monthly-mockup .refining-pill {
+  margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
+  background: var(--c-gold-soft); border: 1px solid var(--c-gold-line);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; color: var(--c-gold-deep);
+}
+.monthly-mockup .refining-pill .spark { width: 7px; height: 7px; border-radius: 50%; background: var(--c-gold); animation: monthly-pulse 1s infinite; flex-shrink: 0; }
 `;
 
 const OHENG_KEY: Record<OhengType, string> = { 목: 'mok', 화: 'hwa', 토: 'to', 금: 'geum', 수: 'su' };
@@ -435,7 +445,7 @@ function scoreColor(score: number): string {
 }
 
 export function MonthlyMockupView(props: MonthlyMockupViewProps) {
-  const { result, profile, monthLabel, ilganLabel, loading, onShare, onChat, onTopic, onTopics } = props;
+  const { result, profile, monthLabel, ilganLabel, loading, refining, onShare, onChat, onTopic, onTopics } = props;
 
   // ── 섹션 접기/펼치기 (§01·02 기본 펼침 — 전 콘텐츠 통일 정책) ──
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['01', '02']));
@@ -549,6 +559,14 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
             </div>
           )}
         </header>
+
+        {/* ⚡ async 2차리뷰 — 초안 노출 중, 최종 보정 진행 표시 */}
+        {refining && (
+          <div className="refining-pill">
+            <span className="spark" />
+            결과를 더 정교하게 다듬는 중이에요 · 잠시 후 자동으로 완성돼요
+          </div>
+        )}
 
         {/* 내 사주 미니 카드 */}
         {pillars.length === 4 && (

@@ -921,6 +921,26 @@ export async function generateMonthlyFortune2026(
   return result.data as { reportId: string; content: MonthlyDetailResponse };
 }
 
+/** ⚡ async 2차리뷰 — 초안(1차만·~시간 반토막). 차감은 여기서 1회. 즉시 노출용. */
+export async function generateMonthlyDraft2026(
+  sajuData: SajuData,
+  monthInfo: MonthInfo,
+): Promise<{ reportId: string; content: MonthlyDetailResponse }> {
+  const result = await callWithAuth('generateMonthlyDraft', { sajuData, monthInfo });
+  return result.data as { reportId: string; content: MonthlyDetailResponse };
+}
+
+/** ⚡ async 2차리뷰 — 보정(2차만·백그라운드·무차감). 실패해도 draft 그대로 반환(무해). */
+export async function generateMonthlyRefine2026(
+  sajuData: SajuData,
+  monthInfo: MonthInfo,
+  draft: MonthlyDetailResponse,
+  reportId?: string,
+): Promise<{ content: MonthlyDetailResponse }> {
+  const result = await callWithAuth('generateMonthlyRefine', { sajuData, monthInfo, draft, reportId });
+  return result.data as { content: MonthlyDetailResponse };
+}
+
 /**
  * 주간운세 (이번 주 7일) — Firebase Function → Claude Sonnet 4.6
  * 2026-06-29 NEW. weekDays = 클라가 lunar-javascript 로 계산한 7일 일진 [{day,date,ganji,ganjiRead}].

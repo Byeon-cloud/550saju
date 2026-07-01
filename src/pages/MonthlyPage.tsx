@@ -6,9 +6,9 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { ShareModal } from '@/components/share/ShareModal';
 import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getReport, markPendingSpend, clearPendingSpendByType, type LocalReport } from '@/services/storage/localStore';
-import { generateMonthlyFortune2026, type MonthInfo } from '@/services/ai/reportGenerator';
+import { generateMonthlyFortune2026, generateMonthlyDraft2026, generateMonthlyRefine2026, type MonthInfo } from '@/services/ai/reportGenerator';
 import { subscribeProgress } from '@/services/progress/progressClient';
-import { makeProgressId, isProgressiveEnabled } from '@/services/progress/progressId';
+import { makeProgressId, isProgressiveEnabled, isAsyncReviewEnabled } from '@/services/progress/progressId';
 import { getMonthlyPrice } from '@/constants/pricing';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -88,6 +88,8 @@ export function MonthlyPage() {
   // 🛡️ 점진 로딩 — M1/M2 그룹이 도착하는 대로 누적(부분). 최종 result 도착 전 조기 렌더용.
   const [partial, setPartial] = useState<Partial<MonthlyDetailResponse> | null>(null);
   const subRef = useRef<{ unsubscribe: () => void } | null>(null);
+  // ⚡ async 2차리뷰 — draft 노출 후 refine(2차) 백그라운드 진행 중 표시 ("다듬는 중")
+  const [refining, setRefining] = useState(false);
   // 선택한 달 인덱스 (monthOptions 기준) — 기본 = 이번 달(0)
   const [monthIdx, setMonthIdx] = useState(0);
   const [showShare, setShowShare] = useState(false);
@@ -134,14 +136,37 @@ export function MonthlyPage() {
       });
     }
 
+    setRefining(false);
     try {
-      const res = await generateMonthlyFortune2026(selected.sajuData, monthInfo, progressId);
-      setResult(res.content);
-      const rid = res.reportId || generateId();
-      saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
-      clearPendingSpendByType('monthly'); // 결과 저장 완료 → 자동환불 대상 제외
-      setShareReportId(rid);
-      setPhase('result');
+      if (isAsyncReviewEnabled()) {
+        // ⚡ async 2차리뷰 — 1차(draft) 즉시 노출 → 2차(refine) 백그라운드. 체감 로딩 반토막.
+        const draftRes = await generateMonthlyDraft2026(selected.sajuData, monthInfo);
+        const rid = draftRes.reportId || generateId();
+        setResult(draftRes.content);
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: draftRes.content, createdAt: new Date().toISOString() });
+        clearPendingSpendByType('monthly'); // draft = 결과 커밋(부팅 자동환불 제외)
+        setShareReportId(rid);
+        setRefining(true);
+        setPhase('result');
+        // 백그라운드 2차 보정 — 실패해도 draft 유지(무해·무차감이라 환불 X)
+        void generateMonthlyRefine2026(selected.sajuData, monthInfo, draftRes.content, rid)
+          .then((ref) => {
+            if (ref?.content) {
+              setResult(ref.content);
+              saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: ref.content, createdAt: new Date().toISOString() });
+            }
+          })
+          .catch((err) => console.warn('월별 보정 실패(초안 유지):', err))
+          .finally(() => setRefining(false));
+      } else {
+        const res = await generateMonthlyFortune2026(selected.sajuData, monthInfo, progressId);
+        setResult(res.content);
+        const rid = res.reportId || generateId();
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
+        clearPendingSpendByType('monthly'); // 결과 저장 완료 → 자동환불 대상 제외
+        setShareReportId(rid);
+        setPhase('result');
+      }
     } catch (e: any) {
       console.error('월별 운세 실패:', e);
       // AI 실패 시 클라이언트에서 즉시 환불
@@ -263,6 +288,7 @@ export function MonthlyPage() {
         <MonthlyMockupView
           result={view}
           loading={!result}
+          refining={refining}
           profile={selected as any}
           monthLabel={monthLabel}
           ilganLabel={ilganLabel}
