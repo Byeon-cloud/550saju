@@ -39,6 +39,7 @@ interface MonthlyMockupViewProps {
   profile: SajuProfile;
   monthLabel: string;          // "2026년 7월"
   ilganLabel?: string;         // "갑(甲) 일간"
+  loading?: boolean;           // 점진 로딩 — 아직 안 도착한 섹션(M2)은 스켈레톤
   onShare: () => void;
   onChat: () => void;
   /** 영역별 → 해당 주제운 심층 분석 (재물→wealth·직업→career·애정→love·건강→health). 운 추가 소비 퍼널 */
@@ -399,6 +400,25 @@ const MOCKUP_CSS = `
 
 .monthly-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px 28px; border-top: 1px dashed var(--c-card-line); font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
 .monthly-mockup .service-notice .src { color: var(--c-mute); margin-bottom: 6px; }
+
+/* 점진 로딩 스켈레톤 — "내용 바뀜"이 아니라 "채워짐" 명확한 placeholder */
+.monthly-mockup .skeleton-section .section-header { cursor: default; }
+.monthly-mockup .skel-body { padding: 12px 0 4px; }
+.monthly-mockup .skel-note { font-size: 11.5px; color: var(--c-accent); font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.monthly-mockup .skel-note .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--c-accent); animation: monthly-pulse 1s infinite; }
+.monthly-mockup .skel-line, .monthly-mockup .skel-card { position: relative; overflow: hidden; background: #ECE6DA; border-radius: 8px; }
+.monthly-mockup .skel-line { height: 13px; margin: 9px 0; }
+.monthly-mockup .skel-line.w100 { width: 100%; }
+.monthly-mockup .skel-line.w80 { width: 82%; }
+.monthly-mockup .skel-line.w60 { width: 58%; }
+.monthly-mockup .skel-card { height: 62px; margin-top: 14px; border-radius: 12px; }
+.monthly-mockup .skel-line::after, .monthly-mockup .skel-card::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
+  transform: translateX(-100%); animation: monthly-shimmer 1.3s infinite;
+}
+@keyframes monthly-shimmer { 100% { transform: translateX(100%); } }
+@keyframes monthly-pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
 `;
 
 const OHENG_KEY: Record<OhengType, string> = { 목: 'mok', 화: 'hwa', 토: 'to', 금: 'geum', 수: 'su' };
@@ -415,7 +435,7 @@ function scoreColor(score: number): string {
 }
 
 export function MonthlyMockupView(props: MonthlyMockupViewProps) {
-  const { result, profile, monthLabel, ilganLabel, onShare, onChat, onTopic, onTopics } = props;
+  const { result, profile, monthLabel, ilganLabel, loading, onShare, onChat, onTopic, onTopics } = props;
 
   // ── 섹션 접기/펼치기 (§01·02 기본 펼침 — 전 콘텐츠 통일 정책) ──
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['01', '02']));
@@ -436,6 +456,21 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         <polyline points="6 9 12 15 18 9" />
       </svg>
     </button>
+  );
+
+  // 점진 로딩 — 아직 안 도착한 섹션(주로 M2) 자리 스켈레톤. "내용이 바뀌는" 게 아니라 "채워지는" 명확한 placeholder.
+  const SkeletonSection = ({ num, title, han }: { num: string; title: string; han?: string }) => (
+    <section className="section open skeleton-section">
+      <div className="section-header">
+        <span className="sec-num">SECTION {num}</span>
+        <span className="sec-title">{title}{han && <span className="han">{han}</span>}</span>
+      </div>
+      <div className="skel-body">
+        <div className="skel-note"><span className="dot-pulse" />분석을 불러오는 중이에요</div>
+        <div className="skel-line w80" /><div className="skel-line w100" /><div className="skel-line w60" />
+        <div className="skel-card" />
+      </div>
+    </section>
   );
 
   // ── 사주 4기둥
@@ -569,13 +604,15 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
             <p className="sec-lead">이 달이 당신에게 어떤 한 달인지, 핵심 테마부터 짚어드려요.</p>
             {theme ? (
               <div className="theme-body" dangerouslySetInnerHTML={safeHtmlEmph(theme)} />
+            ) : loading ? (
+              <div className="skel-body"><div className="skel-note"><span className="dot-pulse" />분석을 불러오는 중이에요</div><div className="skel-line w80" /><div className="skel-line w100" /><div className="skel-line w60" /></div>
             ) : (
               <p className="sec-lead">이 달의 테마를 준비 중이에요.</p>
             )}
           </section>
 
           {/* §02 상순·중순·하순 흐름 — periods 3 + timeline/score */}
-          {periods.length > 0 && (
+          {periods.length > 0 ? (
             <section className={`section ${isOpen('02') ? 'open' : ''}`}>
               <SectionHeader num="02" title="상순·중순·하순 흐름" han="旬" id="02" />
               <p className="sec-lead">한 달을 셋으로 나눠, 초·중·말 어느 구간이 강하고 어디를 다스려야 하는지 한눈에.</p>
@@ -632,10 +669,12 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                 })}
               </div>
             </section>
-          )}
+          ) : loading ? (
+            <SkeletonSection num="02" title="상순·중순·하순 흐름" han="旬" />
+          ) : null}
 
           {/* §03 영역별 (財官緣壽) — score bar + body */}
-          {domains.length > 0 && (
+          {domains.length > 0 ? (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title="영역별 흐름" han="財官緣壽" id="03" />
               <p className="sec-lead">
@@ -671,10 +710,12 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                 })}
               </div>
             </section>
-          )}
+          ) : loading ? (
+            <SkeletonSection num="03" title="영역별 흐름" han="財官緣壽" />
+          ) : null}
 
           {/* §04 길일·주의일 (吉凶日) */}
-          {(luckyDays.length > 0 || cautionDays.length > 0) && (
+          {(luckyDays.length > 0 || cautionDays.length > 0) ? (
             <section className={`section ${isOpen('04') ? 'open' : ''}`}>
               <SectionHeader num="04" title="길일·주의일" han="吉凶日" id="04" />
               <p className="sec-lead">이 달 안에서 손 내밀기 좋은 날과, 한 박자 늦추는 게 좋은 날.</p>
@@ -699,10 +740,12 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                 ))}
               </div>
             </section>
-          )}
+          ) : loading ? (
+            <SkeletonSection num="04" title="길일·주의일" han="吉凶日" />
+          ) : null}
 
           {/* §05 개운 처방 (開運) */}
-          {gaewoon && (
+          {gaewoon ? (
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
               <SectionHeader num="05" title="이 달의 개운 처방" han="開運" id="05" />
               <div className="gaewoon-card">
@@ -710,7 +753,9 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                 <div className="gaewoon-body" dangerouslySetInnerHTML={safeHtmlEmph(gaewoon)} />
               </div>
             </section>
-          )}
+          ) : loading ? (
+            <SkeletonSection num="05" title="이 달의 개운 처방" han="開運" />
+          ) : null}
         </main>
 
         {/* 공유 */}

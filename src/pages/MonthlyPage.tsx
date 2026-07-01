@@ -7,6 +7,8 @@ import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { ShareModal } from '@/components/share/ShareModal';
 import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getReport, markPendingSpend, clearPendingSpendByType, type LocalReport } from '@/services/storage/localStore';
 import { generateMonthlyFortune2026, type MonthInfo } from '@/services/ai/reportGenerator';
+import { subscribeProgress } from '@/services/progress/progressClient';
+import { makeProgressId, isProgressiveEnabled } from '@/services/progress/progressId';
 import { getMonthlyPrice } from '@/constants/pricing';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -83,6 +85,9 @@ export function MonthlyPage() {
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
   const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
   const [result, setResult] = useState<MonthlyDetailResponse | null>(navState?.savedResult || null);
+  // 🛡️ 점진 로딩 — M1/M2 그룹이 도착하는 대로 누적(부분). 최종 result 도착 전 조기 렌더용.
+  const [partial, setPartial] = useState<Partial<MonthlyDetailResponse> | null>(null);
+  const subRef = useRef<{ unsubscribe: () => void } | null>(null);
   // 선택한 달 인덱스 (monthOptions 기준) — 기본 = 이번 달(0)
   const [monthIdx, setMonthIdx] = useState(0);
   const [showShare, setShowShare] = useState(false);
@@ -109,14 +114,28 @@ export function MonthlyPage() {
     // 머니세이프 — 생성 중 앱 종료로 결과 못 받으면 부팅 reconcile 이 자동환불.
     markPendingSpend('monthly', price);
     toast.show(`${price}운이 차감됐어요`, 'info');
+    setPartial(null);
     setPhase('loading');
 
     // 선택월 간지 계산 → 서버로 전달 (서버는 간지 추측 X · 만세력 정확성)
     const opt = monthOptions[monthIdx] ?? monthOptions[0];
     const monthInfo = computeMonthInfo(opt.year, opt.month);
 
+    // 🛡️ 점진 로딩(additive) — M1(흐름) 도착 시 결과창 조기 진입 + M2 스켈레톤.
+    //   구독 실패/OFF 면 아무 일도 안 일어나고 기존대로 완성본 도착 후 진입(폴백). 머니 로직 무관.
+    const progressId = isProgressiveEnabled() ? makeProgressId() : undefined;
+    if (progressId) {
+      subRef.current?.unsubscribe();
+      subRef.current = subscribeProgress(progressId, {
+        onGroup: (_key, data) => {
+          setPartial((prev) => ({ ...(prev || {}), ...(data as object) }));
+          setPhase((p) => (p === 'loading' ? 'result' : p)); // 첫 그룹 도착 → 조기 진입
+        },
+      });
+    }
+
     try {
-      const res = await generateMonthlyFortune2026(selected.sajuData, monthInfo);
+      const res = await generateMonthlyFortune2026(selected.sajuData, monthInfo, progressId);
       setResult(res.content);
       const rid = res.reportId || generateId();
       saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
@@ -128,9 +147,12 @@ export function MonthlyPage() {
       // AI 실패 시 클라이언트에서 즉시 환불
       refundBalance(price);
       clearPendingSpendByType('monthly'); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
+      setPartial(null);
       setPhase('select');
       toast.show(`분석에 실패해서 ${price}운을 돌려드렸어요`, 'warning');
     } finally {
+      subRef.current?.unsubscribe();
+      subRef.current = null;
       isAnalyzingRef.current = false;
     }
   }
@@ -224,9 +246,11 @@ export function MonthlyPage() {
   }
 
   // ─── 결과 (단일월 심층 — 오늘운세급 MonthlyMockupView) ───
-  if (!result) return null;
+  //   점진: 최종 result 우선, 없으면 partial(M1 등 도착분). loading=true 면 미도착 섹션 스켈레톤.
+  const view = (result ?? partial) as MonthlyDetailResponse | null;
+  if (!view) return null;
 
-  const monthLabel = result.month ? `${result.year}년 ${result.month}월` : '';
+  const monthLabel = view.month ? `${view.year}년 ${view.month}월` : (monthOptions[monthIdx]?.label || '');
   const ilganLabel =
     selected?.sajuData?.pillars?.[2]?.천간
       ? `${selected.sajuData.pillars[2].천간읽기 ?? ''}(${selected.sajuData.pillars[2].천간}) 일간`
@@ -237,7 +261,8 @@ export function MonthlyPage() {
       <Header title="월별 운세" />
       <FadeIn>
         <MonthlyMockupView
-          result={result}
+          result={view}
+          loading={!result}
           profile={selected as any}
           monthLabel={monthLabel}
           ilganLabel={ilganLabel}
@@ -248,7 +273,7 @@ export function MonthlyPage() {
             const ctx = {
               type: 'monthly' as const,
               label: monthLabel ? `${monthLabel} 운세` : '월별 운세',
-              fullResult: result,
+              fullResult: (result ?? view),
             };
             const room = createChatRoom(selected?.name || '나', 'free', ctx);
             navigate(`/chat/${room.id}`, { state: { profile: selected, contentContext: ctx } });

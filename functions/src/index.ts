@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { logAiFailure } from './shared/aiFailureLog';
+import { writeGroupProgress } from './shared/progressWrite'; // 점진 로딩 — 그룹별 증분 write(best-effort·머니 무관)
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
 const lazyClaudeReport = () => import('./ai/claudeReport');
 
@@ -1612,10 +1613,11 @@ export const generateMonthly = onCall(
   async (request) => {
     // 2026-06-30 재작업 — 단일월 심층. monthInfo = 클라가 lunar 로 계산한 선택월 정보
     //   { year, month, label, wolGanji, yearGanji }. 서버는 간지 추측 X (만세력 정확성).
-    const { sajuData, monthInfo } = request.data;
+    const { sajuData, monthInfo, progressId } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
 
     const uid = request.auth?.uid || 'anonymous';
+    const authUid = request.auth?.uid; // 점진 progress rules 매칭용 (익명도 실제 uid)
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       const userRef = db.collection('users').doc(uid);
@@ -1637,7 +1639,12 @@ export const generateMonthly = onCall(
 
     try {
       const { generateMonthlyFortune } = await lazyClaudeMonthly();
-      const result = await generateMonthlyFortune(ANTHROPIC_KEY.value(), sajuData, monthInfo);
+      // 점진 로딩 — progressId 있으면 M1/M2 분할 + 그룹 완성 시 progress 증분 write. 없으면 기존 단일 콜(FULL).
+      //   두 경로 모두 머지본을 그대로 반환(머니 경로·저장·환불 무변경).
+      const result = await generateMonthlyFortune(
+        ANTHROPIC_KEY.value(), sajuData, monthInfo,
+        progressId ? (key, data) => { void writeGroupProgress(db, progressId, authUid, key, data); } : undefined,
+      );
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, type: 'monthly', content: result,

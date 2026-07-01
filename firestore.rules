@@ -63,6 +63,14 @@ service cloud.firestore {
       allow read, write: if false; // 서버 전용
     }
 
+    // 점진 로딩 (2026-07-01) — 생성 중 서버가 그룹별 증분 write, 클라가 onSnapshot 구독.
+    //   read: 본인 uid 만 (미존재 doc 은 구독 타이밍상 허용 — 데이터 없어 무해) / write: 서버(admin SDK)만.
+    //   progressId 는 추측 불가 UUID + uid 일치 검사로 타 유저 리포트 내용 유출 차단.
+    match /progress/{progressId} {
+      allow read: if request.auth != null && (resource == null || resource.data.uid == request.auth.uid);
+      allow write: if false; // writeGroupProgress(admin SDK)만
+    }
+
     // 어드민 전역 집계 (collectionGroup) — 유저 카운트 + 결제 + 리포트
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;

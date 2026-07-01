@@ -915,8 +915,9 @@ export interface MonthInfo {
 export async function generateMonthlyFortune2026(
   sajuData: SajuData,
   monthInfo: MonthInfo,
+  progressId?: string, // 점진 로딩 좌표 — 서버가 M1/M2 그룹을 progress/{id} 에 증분 write
 ): Promise<{ reportId: string; content: MonthlyDetailResponse }> {
-  const result = await callWithAuth('generateMonthly', { sajuData, monthInfo });
+  const result = await callWithAuth('generateMonthly', { sajuData, monthInfo, progressId });
   return result.data as { reportId: string; content: MonthlyDetailResponse };
 }
 
@@ -927,8 +928,9 @@ export async function generateMonthlyFortune2026(
 export async function generateWeeklyFortune(
   sajuData: SajuData,
   weekDays: { day: string; date: string; ganji: string; ganjiRead?: string }[],
+  progressId?: string, // 점진 로딩 좌표 — 서버가 W1/W2 그룹을 progress/{id} 에 증분 write
 ): Promise<{ reportId: string; content: WeeklyDetailResponse }> {
-  const result = await callWithAuth('generateWeekly', { sajuData, weekDays });
+  const result = await callWithAuth('generateWeekly', { sajuData, weekDays, progressId });
   return result.data as { reportId: string; content: WeeklyDetailResponse };
 }
 
