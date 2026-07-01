@@ -8,24 +8,42 @@ const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
 /**
- * 월별 운세 — 단일월 심층 (2026-06-30 재작업) · Claude Sonnet 4.6
- *
- * 기존 "2026 전체 12개월" 거시 구조 폐기 → 사용자가 고른 1개 달을 깊게.
- * monthInfo = 클라(MonthlyPage)가 lunar-javascript 로 정확 계산한 선택월 정보:
- *   { year, month, label:'2026년 6월', wolGanji:'甲午', yearGanji:'丙午' }
- *   → 서버가 월간지·세운간지를 추측하지 않고 정확한 간지를 그대로 AI 에 주입(만세력 정확성 보장).
- *   월주는 절기 기준 → 클라가 그 달 15일로 계산(절기 경계 안전).
- *
- * 퀄리티 레버(준기 결정): 1차 생성 → 2차 자기리뷰(체크리스트 자가 보정) → 반환.
+ * 월별 운세 (2026-07-01).
+ *  - onGroup 없음(progressId 미전달·점진 OFF) → 🛡️ 기존 검증된 단일 콜(FULL) 그대로 = 회귀 위험 0.
+ *  - onGroup 있음(점진 ON) → M1(흐름)/M2(분야) 2그룹 병렬 + 그룹 완성 시 onGroup 콜백.
+ *    · M1 = keywords·headline·theme·periods (펼친 §01·02 — 먼저 도착, 가벼움)
+ *    · M2 = wealth·love·career·health·luckyDays·cautionDays·gaewoon (접힌 §03~05 — 백그라운드)
+ *  - 🛡️ 두 경로 모두 머지본을 그대로 반환(callable 머니 경로·저장·환불 무변경). 각 그룹 1차+2차 리뷰 유지.
  */
-async function generateMonthlyFortune(apiKey, sajuData, monthInfo) {
-    const anthropic = new sdk_1.default({ apiKey });
+async function generateMonthlyFortune(apiKey, sajuData, monthInfo, onGroup) {
     const info = normalizeMonthInfo(monthInfo);
-    const prompt = buildPrompt(sajuData, info);
+    if (!onGroup) {
+        // 점진 미사용 — 기존 단일 콜 경로(검증됨). year/month 만 권위값 보정.
+        const full = await generateMonthlyGroup(apiKey, sajuData, info, 'FULL');
+        return { ...(full || {}), year: info.year, month: info.month };
+    }
+    const [m1, m2] = await Promise.all([
+        generateMonthlyGroup(apiKey, sajuData, info, 'M1').then((r) => { try {
+            onGroup('M1', r);
+        }
+        catch { /* noop */ } return r; }),
+        generateMonthlyGroup(apiKey, sajuData, info, 'M2').then((r) => { try {
+            onGroup('M2', r);
+        }
+        catch { /* noop */ } return r; }),
+    ]);
+    // year/month 는 서버 권위값으로 강제 (AI 가 임의로 바꿔도 보정)
+    return { ...(m1 || {}), ...(m2 || {}), year: info.year, month: info.month };
+}
+/** 그룹 1개(M1/M2/FULL) — 1차 생성 + 2차 자기리뷰 → 파싱 */
+async function generateMonthlyGroup(apiKey, sajuData, info, group) {
+    const anthropic = new sdk_1.default({ apiKey });
+    const prompt = buildPrompt(sajuData, info, group);
+    const maxTokens = group === 'FULL' ? 10000 : group === 'M1' ? 6000 : 7000;
     // ── 1차 생성 ──
     const first = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 10000,
+        max_tokens: maxTokens,
         temperature: 0.1, // 결정론적 — 같은 사주 + 같은 달 = 같은 결과
         messages: [{ role: 'user', content: prompt }],
     });
@@ -33,23 +51,19 @@ async function generateMonthlyFortune(apiKey, sajuData, monthInfo) {
     // ── 2차 자기리뷰 (퀄리티 레버) ──
     const review = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 10000,
+        max_tokens: maxTokens,
         temperature: 0.1,
         messages: [
             { role: 'user', content: prompt },
             { role: 'assistant', content: firstText },
-            { role: 'user', content: buildReviewPrompt(info) },
+            { role: 'user', content: buildReviewPrompt(info, group) },
         ],
     });
     const reviewText = review.content[0].text;
     const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
     if (!jsonMatch)
-        throw new Error('JSON 파싱 실패');
-    const parsed = JSON.parse(jsonMatch[0]);
-    // year/month 는 서버 권위값으로 강제 (AI 가 임의로 바꿔도 보정)
-    parsed.year = info.year;
-    parsed.month = info.month;
-    return parsed;
+        throw new Error(`월별 운세 ${group} JSON 파싱 실패`);
+    return JSON.parse(jsonMatch[0]);
 }
 /** monthInfo 누락/불완전 시 폴백 — 이번 달 기준(간지 미상). 정상 경로는 항상 클라가 간지 동봉. */
 function normalizeMonthInfo(monthInfo) {
@@ -64,7 +78,7 @@ function normalizeMonthInfo(monthInfo) {
         yearGanji: monthInfo?.yearGanji || '미상',
     };
 }
-function buildPrompt(d, info) {
+function buildPrompt(d, info, group) {
     const p = d.pillars || [];
     const labels = ['년주', '월주', '일주', '시주'];
     let pillarsText = '';
@@ -96,6 +110,44 @@ function buildPrompt(d, info) {
             : `${info.label}은 앞으로 올 달 → 미래형("~할 거예요 / ~한 시기가 됩니다")으로.`;
     // 그 달의 일수 (길일·주의일 날짜 범위 가이드)
     const daysInMonth = new Date(info.year, info.month, 0).getDate();
+    // 🛡️ 점진 그룹별 출력 스키마 (2026-07-01) — 공유 톤/근거 규칙은 동일, OUTPUT 만 분리.
+    //   FULL=단일 콜(점진 OFF·검증됨) / M1=흐름(keywords·headline·theme·periods) / M2=분야(4영역·길흉일·개운).
+    const m1Fields = `"year": ${info.year},
+  "month": ${info.month},
+  "keywords": ["#이달핵심키워드1","#키워드2","#키워드3"],
+  "headline": "${info.label}을 한 줄로 (25자 이내, 일상어 결론 + 후크)",
+  "theme": "180자 이상. 이 달의 핵심 테마. 🚨 왜 이런 달인지 — 월간지 ${info.wolGanji} × 일간 ${ilgan} 충/합 + 세운 ${info.yearGanji} 흐름 직접 호명 (보일러플레이트 금지).",
+  "periods": [
+    {"phase":"상순","dateRange":"${info.month}/1~${info.month}/10","score":1-100,"body":"120자 이상 · 🚨 월간지 ${info.wolGanji} × 일간 ${ilgan} 작용 + 구체 행동"},
+    {"phase":"중순","dateRange":"${info.month}/11~${info.month}/20","score":1-100,"body":"120자 이상 · 🚨 사주 specific 호명 + 구체 행동"},
+    {"phase":"하순","dateRange":"${info.month}/21~${info.month}/${daysInMonth}","score":1-100,"body":"120자 이상 · 🚨 사주 specific 호명 + 구체 행동"}
+  ]`;
+    const m2Fields = `"wealth": {"score":1-100,"body":"80자 이상 · 🚨 사주 재성/식상 또는 ${info.wolGanji} 직접 호명"},
+  "love":   {"score":1-100,"body":"80자 이상 · 🚨 사주 재성/관성/도화 또는 ${info.wolGanji} 직접 호명"},
+  "career": {"score":1-100,"body":"80자 이상 · 🚨 사주 관성/인성 또는 ${info.wolGanji} 직접 호명"},
+  "health": {"score":1-100,"body":"80자 이상 · 🚨 사주 오행 균형 또는 ${info.wolGanji} 직접 호명"},
+  "luckyDays": [
+    {"date":"${info.month}/D 또는 ${info.month}/D~${info.month}/D","reason":"왜 좋은 날인지 (그날 일진 흐름 + 행동)"}
+  ],
+  "cautionDays": [
+    {"date":"${info.month}/D 또는 ${info.month}/D~${info.month}/D","reason":"왜 조심할 날인지 (그날 일진 흐름 + 회피 행동)"}
+  ],
+  "gaewoon": "120자 이상. 이 달 개운 처방 — 구체 행동(행운 색·방위·시간대·습관) 명령형으로. 🚨 사주 용신/오행 보완 근거 1회."`;
+    const fieldList = group === 'FULL'
+        ? 'headline·theme·periods·wealth·love·career·health·gaewoon'
+        : group === 'M1'
+            ? 'keywords·headline·theme·periods'
+            : 'wealth·love·career·health·luckyDays·cautionDays·gaewoon';
+    const schemaBlock = group === 'FULL'
+        ? `{\n  ${m1Fields},\n  ${m2Fields}\n}`
+        : group === 'M1'
+            ? `{\n  ${m1Fields}\n}`
+            : `{\n  ${m2Fields}\n}`;
+    const periodsRule = 'periods score';
+    const domainsRule = '4영역 score';
+    const scoreRule = group === 'FULL' ? 'periods·4영역 score' : group === 'M1' ? periodsRule : domainsRule;
+    const luckyRule = group === 'M1' ? '' : `⚠️ luckyDays·cautionDays 는 각각 2~3개. 모든 날짜는 ${info.month}월 1~${info.month}월 ${daysInMonth}일 범위 안. `;
+    const tailRule = `${luckyRule}${scoreRule} 가 평평하지 않게 굴곡(5의 배수 반복 금지·자연수). 마크다운 서식(**볼드** 등) 절대 금지 — 순수 한국어.`;
     return `당신은 사주500 명리학 해석가. ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
 
 ${info.label} 한 달 심층 운세 — 사주 원국 일간과 그 달의 월간지·세운간지 충/합에서 추출한 진짜 근거.
@@ -170,45 +222,20 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 ❌ 'X한 달이 됩니다' / '재물운이 좋습니다' (근거 없는 일반론).
 ✅ 사주 글자 + 월간지(${info.wolGanji})·세운간지(${info.yearGanji}) 충돌·합 직접 호명 — '${info.wolGanji} + 일간 ${ilgan} (~한 작용)', '${info.wolGanji} 월에 일지와 충돌해 ~'.
-✅ headline·theme·periods·wealth·love·career·health·gaewoon 전부에 사주 8글자 specific 데이터(개수·자리·충형·신살) 또는 월간지/세운간지를 1회 이상 직접 호명 mandatory.
+✅ ${fieldList} 전부에 사주 8글자 specific 데이터(개수·자리·충형·신살) 또는 월간지/세운간지를 1회 이상 직접 호명 mandatory.
 
 🚨 **example 사용 룰 (회귀 금지)**:
 프롬프트 예시의 사주 글자(병화·신금·축미충 등)는 example. 실제로는 위 ## 사주 원국 의 진짜 8글자 + 위 월간지(${info.wolGanji})·세운간지(${info.yearGanji}) 를 인용.
 '{유저명}' placeholder 도 위 ## 이름 의 진짜 이름으로 치환.
 같은 사주 + 같은 달 = 같은 결과 (결정론) / 다른 사주 = 완전히 다른 어휘.
 
-{
-  "year": ${info.year},
-  "month": ${info.month},
-  "keywords": ["#이달핵심키워드1","#키워드2","#키워드3"],
-  "headline": "${info.label}을 한 줄로 (25자 이내, 일상어 결론 + 후크)",
-  "theme": "180자 이상. 이 달의 핵심 테마. 🚨 왜 이런 달인지 — 월간지 ${info.wolGanji} × 일간 ${ilgan} 충/합 + 세운 ${info.yearGanji} 흐름 직접 호명 (보일러플레이트 금지).",
-  "periods": [
-    {"phase":"상순","dateRange":"${info.month}/1~${info.month}/10","score":1-100,"body":"120자 이상 · 🚨 월간지 ${info.wolGanji} × 일간 ${ilgan} 작용 + 구체 행동"},
-    {"phase":"중순","dateRange":"${info.month}/11~${info.month}/20","score":1-100,"body":"120자 이상 · 🚨 사주 specific 호명 + 구체 행동"},
-    {"phase":"하순","dateRange":"${info.month}/21~${info.month}/${daysInMonth}","score":1-100,"body":"120자 이상 · 🚨 사주 specific 호명 + 구체 행동"}
-  ],
-  "wealth": {"score":1-100,"body":"80자 이상 · 🚨 사주 재성/식상 또는 ${info.wolGanji} 직접 호명"},
-  "love":   {"score":1-100,"body":"80자 이상 · 🚨 사주 재성/관성/도화 또는 ${info.wolGanji} 직접 호명"},
-  "career": {"score":1-100,"body":"80자 이상 · 🚨 사주 관성/인성 또는 ${info.wolGanji} 직접 호명"},
-  "health": {"score":1-100,"body":"80자 이상 · 🚨 사주 오행 균형 또는 ${info.wolGanji} 직접 호명"},
-  "luckyDays": [
-    {"date":"${info.month}/D 또는 ${info.month}/D~${info.month}/D","reason":"왜 좋은 날인지 (그날 일진 흐름 + 행동)"}
-  ],
-  "cautionDays": [
-    {"date":"${info.month}/D 또는 ${info.month}/D~${info.month}/D","reason":"왜 조심할 날인지 (그날 일진 흐름 + 회피 행동)"}
-  ],
-  "gaewoon": "120자 이상. 이 달 개운 처방 — 구체 행동(행운 색·방위·시간대·습관) 명령형으로. 🚨 사주 용신/오행 보완 근거 1회."
-}
+${schemaBlock}
 
-⚠️ luckyDays·cautionDays 는 각각 2~3개. 모든 날짜는 ${info.month}월 1~${info.month}월 ${daysInMonth}일 범위 안. periods score 와 4영역 score 가 평평하지 않게 굴곡. 마크다운 서식(**볼드** 등) 절대 금지 — 순수 한국어.`;
+${tailRule}`;
 }
-function buildReviewPrompt(info) {
+function buildReviewPrompt(info, group) {
     const daysInMonth = new Date(info.year, info.month, 0).getDate();
-    return `위에서 네가 만든 ${info.label} 월별 운세 JSON 을 아래 체크리스트로 자가 점검하고, 어긴 부분을 모두 고쳐 **최종 JSON 만** 다시 출력하라 (코드블록·설명 없이 JSON 만).
-
-체크리스트:
-1. periods 가 정확히 3개(상순·중순·하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
+    const fullChecklist = `1. periods 가 정확히 3개(상순·중순·하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
 2. theme·periods·wealth·love·career·health·gaewoon 이 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
 3. 면피·애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
 4. 한자 등장 시 괄호 일상어 풀이 동반? '(라는 뜻)' 류 회피 0건?
@@ -216,7 +243,24 @@ function buildReviewPrompt(info) {
 6. 모든 score 가 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
 7. headline 이 일상어 결론 + 후크인가? 시적 비유·외계어 0건?
 8. luckyDays·cautionDays 가 각 2~3개이고 모든 date 가 ${info.month}월 범위 안인가?
-9. year=${info.year}, month=${info.month} 그대로인가? (월·연도 임의 변경 0)
+9. keywords 3개 · year=${info.year}, month=${info.month} 그대로인가? (월·연도 임의 변경 0)`;
+    const checklist = group === 'FULL' ? fullChecklist : group === 'M1' ? `1. periods 가 정확히 3개(상순·중순·하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
+2. theme·periods 가 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
+3. 면피·애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
+4. 한자 등장 시 괄호 일상어 풀이 동반? '(라는 뜻)' 류 회피 0건?
+5. 글자수 floor 충족? (theme 180자+, 각 periods.body 120자+)
+6. periods score 가 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
+7. headline 이 일상어 결론 + 후크인가? 시적 비유·외계어 0건?
+8. keywords 가 3개이고 year=${info.year}, month=${info.month} 그대로인가? (월·연도 임의 변경 0)` : `1. 면피·애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
+2. wealth·love·career·health·gaewoon 이 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
+3. 한자 등장 시 괄호 일상어 풀이 동반? '(라는 뜻)' 류 회피 0건?
+4. 글자수 floor 충족? (4영역 각 body 80자+, gaewoon 120자+)
+5. 4영역(wealth·love·career·health) score 가 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
+6. luckyDays·cautionDays 가 각 2~3개이고 모든 date 가 ${info.month}월 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?`;
+    return `위에서 네가 만든 ${info.label} 월별 운세 ${group} JSON 을 아래 체크리스트로 자가 점검하고, 어긴 부분을 모두 고쳐 **최종 JSON 만** 다시 출력하라 (코드블록·설명 없이 JSON 만).
+
+체크리스트:
+${checklist}
 
 고칠 게 없으면 그대로, 있으면 보정해서 최종 JSON 출력.`;
 }
