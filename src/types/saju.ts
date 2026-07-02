@@ -65,8 +65,12 @@ export interface UnYoung {
 /** 대운 */
 export interface DaeUn {
   순번: number;
+  /** 시작나이/끝나이 — 세는나이(虚岁) 기준 (lunar-javascript getStartAge 규약) */
   시작나이: number;
   끝나이: number;
+  /** 시작·끝 실제 연도 (2026-07 fix) — "현재 대운" 판정의 정확한 기준. 구 저장본엔 없음(optional) */
+  시작년도?: number;
+  끝년도?: number;
   천간: string;
   지지: string;
   간지: string;

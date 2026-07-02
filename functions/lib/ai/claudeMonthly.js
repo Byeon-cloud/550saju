@@ -150,16 +150,23 @@ function buildPrompt(d, info, group) {
         : '미상';
     const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
     const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
-    // 현재 시점 대비 선택월 시제 (과거/이번달/미래)
+    // 현재 시점 대비 선택월 시제 (과거/이번달/미래) + 이번달이면 오늘(일) 기준 '달 안' 시제 분리
     const now = (0, kstTime_1.kstNow)();
     const nowY = now.year;
     const nowM = now.month;
+    const nowD = now.day; // 현재 일(1~31) — 이번달 선택 시 달 안 과거/현재/미래 분기 기준
     const selKey = info.year * 12 + info.month;
     const nowKey = nowY * 12 + nowM;
     const tense = selKey < nowKey ? '과거' : selKey === nowKey ? '이번달' : '미래';
-    const tenseRule = tense === '과거' ? `${info.label}은 이미 지난 달 → 과거형 회고체("~했을 거예요 / ~한 시기였습니다")로.`
-        : tense === '이번달' ? `${info.label}은 지금 흐르는 달 → 현재형("지금 ~하고 계신다면 / 이번 달은 ~한 때입니다")으로.`
-            : `${info.label}은 앞으로 올 달 → 미래형("~할 거예요 / ~한 시기가 됩니다")으로.`;
+    const tenseRule = tense === '과거'
+        ? `${info.label}은 이미 완전히 지나간 달이다. 🚨🚨 모든 문장을 과거형 회고체로만 써라 — "~한 시기였습니다 / ~한 흐름이 흘렀어요 / ~했어야 좋았어요 / ~한 달이었습니다". theme·periods(상순·중순·하순)·4영역(재물/애정/직업/건강)·길일·주의일·개운 처방 전부 과거형. "~하세요 / ~할 거예요 / ~한 때입니다 / ~하면 좋아요" 같은 현재·미래·명령형 절대 금지(이미 지난 달엔 명령할 수 없다). 개운 처방도 "~했다면 좋았을 겁니다" 회고형으로.`
+        : tense === '이번달'
+            ? `${info.label}은 지금 흐르는 달이고, 🚨🚨 오늘은 ${info.month}월 ${nowD}일이다. 이 달 안에서도 오늘(${nowD}일)을 기준으로 시제를 정확히 갈라라:
+  · 오늘(${nowD}일)보다 앞선 구간·날짜 → 반드시 과거형("~였습니다 / ~한 흐름이 흘렀어요 / ~했어야 좋았어요")
+  · 오늘(${nowD}일)이 포함된 구간 → 현재형("지금 ~ / 오늘부터 ~")
+  · 오늘(${nowD}일) 이후 구간·날짜 → 미래·명령형("~하세요 / ~할 거예요 / ~한 시기가 됩니다")
+  ⚠️ 구간 판정: 상순=1~10일, 중순=11~20일, 하순=21일~말일. 각 구간이 ${nowD}일보다 완전히 이전이면 과거형, ${nowD}일을 포함하면 현재형(단 그 구간 안 ${nowD}일 이전 얘기는 과거형), 완전히 이후면 미래형. luckyDays·cautionDays 도 각 날짜가 ${nowD}일보다 이전이면 과거형("~했던 날"), ${nowD}일 이후면 미래·명령형("~할 날 / ~하세요").`
+            : `${info.label}은 앞으로 올 미래의 달 → 전부 미래형("~할 거예요 / ~한 시기가 됩니다 / ~하세요")으로.`;
     // 그 달의 일수 (길일·주의일 날짜 범위 가이드)
     const daysInMonth = new Date(info.year, info.month, 0).getDate();
     // 🛡️ 점진 그룹별 출력 스키마 (2026-07-01) — 공유 톤/근거 규칙은 동일, OUTPUT 만 분리.
@@ -287,6 +294,15 @@ ${tailRule}`;
 }
 function buildReviewPrompt(info, group) {
     const daysInMonth = new Date(info.year, info.month, 0).getDate();
+    // 🚨 시제 검사 (최우선) — 지난 달=과거형 / 이번 달=오늘 기준 분리 / 미래 달=미래형
+    const now = (0, kstTime_1.kstNow)();
+    const selKey = info.year * 12 + info.month;
+    const nowKey = now.year * 12 + now.month;
+    const tenseCheck = selKey < nowKey
+        ? `🚨 시제(최우선): 이 달은 이미 지난 달이다. theme·periods·4영역·길흉일·개운 모든 문장이 과거형 회고체("~였습니다/~흘렀어요/~했어야 좋았어요")인가? "~하세요/~할 거예요/~한 때입니다" 같은 현재·미래·명령형이 하나라도 있으면 전부 과거형으로 고쳐라.`
+        : selKey === nowKey
+            ? `🚨 시제(최우선): 오늘은 ${info.month}월 ${now.day}일이다. ${now.day}일보다 앞선 구간·날짜(상순 1~10·중순 11~20·하순 21~말 중 해당분 + ${now.day}일 이전 길흉일)는 과거형("~였습니다"), ${now.day}일 이후는 미래·명령형("~하세요")으로 정확히 갈렸는가? 안 맞으면 고쳐라.`
+            : `🚨 시제(최우선): 이 달은 미래의 달이다. 모든 문장이 미래형("~할 거예요/~됩니다/~하세요")인가?`;
     const fullChecklist = `1. periods 가 정확히 3개(상순·중순·하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
 2. theme·periods·wealth·love·career·health·gaewoon 이 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
 3. 면피·애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
@@ -313,6 +329,7 @@ function buildReviewPrompt(info, group) {
 
 체크리스트:
 ${checklist}
+${tenseCheck}
 
 고칠 게 없으면 그대로, 있으면 보정해서 최종 JSON 출력.`;
 }

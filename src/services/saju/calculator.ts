@@ -2,6 +2,10 @@ import { Solar, type EightChar, type Lunar } from 'lunar-javascript';
 import type { SajuInput, SajuData, Pillar, OhengDistribution, SipSung, JiJangGan, UnYoung, DaeUn, NaPeum, SinSal, GongMang, HyungChungHap, SipSungDistribution, MyeongriAnalysis, OhengType } from '@/types/saju';
 import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG, JIJI_EUMYANG } from '@/constants/oheng';
 import { correctKoreanSolarTime } from './timeCorrection';
+import { findCurrentDaeun } from './daeunCurrent';
+
+// 현재 대운 판정 SSOT 재노출 — 기존 import 경로 호환
+export { findCurrentDaeun } from './daeunCurrent';
 
 /**
  * lunar-javascript를 사용하여 사주 전체 데이터를 계산합니다.
@@ -147,6 +151,9 @@ function extractDaeun(ec: EightChar, genderFlag: number): DaeUn[] {
     순번: i + 1,
     시작나이: d.getStartAge(),
     끝나이: d.getEndAge(),
+    // 2026-07 fix — 실제 연도 (현재 대운 판정의 정확한 기준. 나이 규약 무관)
+    시작년도: d.getStartYear(),
+    끝년도: d.getEndYear(),
     천간: d.getGanZhi().charAt(0),
     지지: d.getGanZhi().charAt(1),
     간지: d.getGanZhi(),
@@ -154,12 +161,7 @@ function extractDaeun(ec: EightChar, genderFlag: number): DaeUn[] {
   }));
 }
 
-function findCurrentDaeun(daeunList: DaeUn[], birthYear: number): DaeUn | undefined {
-  const currentAge = new Date().getFullYear() - birthYear;
-  const found = daeunList.find(d => currentAge >= d.시작나이 && currentAge <= d.끝나이);
-  if (found) found.isCurrent = true;
-  return found;
-}
+// 현재 대운 판정 → `./daeunCurrent.ts` SSOT (2026-07 fix — 연나이/세는나이 off-by-one)
 
 function extractNapeum(ec: EightChar, hasBirthTime: boolean): NaPeum[] {
   const result: NaPeum[] = [

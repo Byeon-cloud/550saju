@@ -17,6 +17,7 @@
 
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
 import { calculateSaju } from '@/services/saju/calculator';
+import { refreshCurrentDaeun } from '@/services/saju/daeunCurrent';
 
 export type ContentType = 'report' | 'daily' | 'dream' | 'deepDream' | 'daeun' | 'monthly' | 'weekly' | 'compat' | 'tojung' | 'topic';
 
@@ -144,7 +145,10 @@ export function getReports(): LocalReport[] {
 }
 
 export function getReport(id: string): LocalReport | null {
-  return getReports().find(r => r.id === id) || null;
+  const found = getReports().find(r => r.id === id) || null;
+  // 2026-07 fix — 저장 리포트의 stale 현재대운 재계산 (대운 타임라인 등 시각화용. AI 본문은 불변)
+  if (found?.sajuData) refreshCurrentDaeun(found.sajuData as SajuData);
+  return found;
 }
 
 /**
@@ -469,6 +473,9 @@ export function getProfiles(): SajuProfile[] {
       if (migrated) {
         try { localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); } catch { /* noop */ }
       }
+      // 2026-07 fix — 저장 시점의 stale 현재대운(isCurrent) 을 오늘 기준으로 재계산.
+      //   해가 바뀌어 대운이 넘어가도 저장 플래그가 영구 신뢰되던 문제 차단 (in-memory only).
+      for (const p of profiles) refreshCurrentDaeun(p?.sajuData as SajuData | undefined);
       return profiles;
     }
     // 마이그레이션: 기존 리포트에서 프로필 추출 (중복 제거)

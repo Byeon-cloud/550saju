@@ -21,10 +21,8 @@ export function formatBirthDate(year: number, month: number, day: number): strin
   return `${year}년 ${month}월 ${day}일`;
 }
 
-/** 나이 계산 (만 나이) */
-export function calculateAge(birthYear: number): number {
-  return new Date().getFullYear() - birthYear;
-}
+// (2026-07 제거) calculateAge — 주석은 "만 나이"라면서 실제론 연나이를 반환하던 오표기 dead code (사용처 0).
+//   나이가 필요하면 utils/saju-format.ts 의 만나이/세는나이 헬퍼를 쓸 것. 대운 비교는 services/saju/daeunCurrent.ts SSOT.
 
 /** HTML 엔티티 디코드 (&lt; → < 등). AI 가 종종 태그를 이스케이프해서 보냄. */
 export function decodeHtmlEntities(text: string): string {

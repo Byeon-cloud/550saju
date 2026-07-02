@@ -19,6 +19,8 @@ import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
 import { HourPickerSheet, HourPickerTrigger } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId } from '@/constants/topics';
 import { normalizeSipsungKo } from '@/constants/sipsungColor';
+import { findCurrentDaeun } from '@/services/saju/daeunCurrent';
+import type { DaeUn } from '@/types/saju';
 // Phase 2 Stage 2A — 공통 MonthTimeline 컴포넌트
 // 2026-05-28 — wealth 에서 제거 (AreaChart 와 중복). buildMonthCells 만 유지 (다른 주제 wiring 대비 reserved).
 import { buildMonthCells } from './topic/_month_timeline';
@@ -1207,13 +1209,14 @@ function DaewoonWealthRail({
   birthYear: number;
   accentColor: string;
 }) {
-  const currentAge = new Date().getFullYear() - birthYear;
+  // 2026-07 fix — 연나이 fallback 은 세는나이 기준 대운나이와 1살 어긋남(현재대운 off-by-one 버그 클래스).
+  //   SSOT(daeunCurrent.findCurrentDaeun)로 재판정 후 isCurrent 만 신뢰.
+  findCurrentDaeun((daeun || []) as DaeUn[], birthYear);
   const cells = (daeun || []).slice(0, 8).map((d: any) => {
     const gan = String(d.간지 ?? '').charAt(0);
     const sipsung = deriveSipsungLocal(ilgan, gan);
     const intensity = WEALTH_SIPSUNG_INTENSITY[sipsung] ?? 50;
-    const isCurrent =
-      d.isCurrent === true || (currentAge >= d.시작나이 && currentAge <= d.끝나이);
+    const isCurrent = d.isCurrent === true;
     return {
       startAge: d.시작나이,
       endAge: d.끝나이,

@@ -3,6 +3,7 @@
 // 0 behavior change vs original
 
 import { calculateSaju } from '@/services/saju/calculator';
+import { findCurrentDaeun } from '@/services/saju/daeunCurrent';
 import { CHEONGAN_OHENG, CHEONGAN_KO, JIJI_KO, JIJI_OHENG } from '@/constants/oheng';
 import type { OhengType, Pillar, SajuData, DaeUn, SipSung, UnYoung, NaPeum, SinSal, GongMang } from '@/types/saju';
 
@@ -266,6 +267,9 @@ export function mapDaeun(
   birthYear: number,
   aiPeriods?: AiDaeunPeriod[],
 ): V4Daeun[] {
+  // 2026-07 fix — 렌더 최종 방어선: 저장/네비 state 로 넘어온 stale isCurrent 를 오늘 기준으로 재계산.
+  //   (유저 제보 "기축대운인데 무자대운 표시" — 저장 시점 플래그가 렌더까지 그대로 오던 문제)
+  findCurrentDaeun(daeunList, birthYear);
   const labels = ['학업기', '확립기', '안정기', '확립기', '수확기', '원숙기', '완성기', '지혜기', '관조기', '회고기'];
   // 비정상 항목 + 간지 없는 소운 기간 필터
   const valid = daeunList.filter(d => d.시작나이 <= d.끝나이 && d.간지 && d.간지.trim().length > 0);
@@ -285,7 +289,8 @@ export function mapDaeun(
       kr: `${ganKr}${zhiKr}`,
       elem,
       label,
-      period: `${birthYear + d.시작나이}~${birthYear + d.끝나이}`,
+      // 시작나이는 세는나이 → 실제 연도 = 출생연 + 나이 - 1. 신규 데이터는 시작년도 필드 우선 (2026-07 +1년 어긋남 fix)
+      period: `${d.시작년도 ?? (birthYear + d.시작나이 - 1)}~${d.끝년도 ?? (birthYear + d.끝나이 - 1)}`,
       current: d.isCurrent,
       score: typeof aiMatch?.score === 'number' && aiMatch.score >= 0 && aiMatch.score <= 100
         ? aiMatch.score

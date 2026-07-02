@@ -26,6 +26,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { calculateSaju } from '@/services/saju/calculator';
+import { correctKoreanSolarTime } from '@/services/saju/timeCorrection';
 import { useSajuContext } from '@/contexts/SajuContext';
 import type { CalendarType, Gender, SajuInput } from '@/types/saju';
 import type { Relation } from '@/types/user';
@@ -73,8 +74,12 @@ const C = {
 
 /* ══════════════════════════════════════════════════════════════════
  * 12지지 + 모름 (스펙 §7-1)
- *  - range는 KR ±30분 보정 적용된 사주 시간대 (스펙 §7-2)
- *  - hour는 계산기(`calculateSaju`)가 기대하는 정수 시각 (보존)
+ *  - range는 KR 진태양시 보정(-32분, 서울 기준) 적용된 사주 시간대 (스펙 §7-2)
+ *  - 경계는 시계로 :32경 (진태양시 -32분 → 태양시 정각이 시계 :32). calculateSaju 도 -32분이라
+ *    라벨=계산 일치. 예: 인시는 시계 3:32부터 → 딱 3:30은 아직 축시(태양시 2:58).
+ *    ※ 이전 :30 반올림 라벨은 3:30을 인시로 오표기했음(계산은 축시) → 2026-07 정정.
+ *  - 태어난 지역이 동쪽(영남 등)이면 보정폭이 작아(-24분) 경계가 더 늦음 → 경계값은 근사치.
+ *  - hour는 계산기가 기대하는 정수 '중앙' 시각 (보존 — 표시만 변경)
  * ═════════════════════════════════════════════════════════════════ */
 type HourCode =
   | '자' | '축' | '인' | '묘' | '진' | '사'
@@ -90,21 +95,51 @@ const HOUR_OPTIONS: Array<{
   // 2026-06-02 시주 fix — hour = 각 시(時)의 '중앙' 클럭값. 진태양시 -32분 보정 후에도
   //   선택한 시 안에 안착하도록 (예: 午 12:00 → 보정 11:28 → 午). 기존엔 시작값(午=11)이라
   //   보정 시 직전 시(巳)로 밀려 "午 선택 → 巳 계산" 모순 발생. 子(=0)는 이미 중앙(자정)이라 유지.
-  { code: '자', hanja: '子', range: '23:30 ~ 01:30', hour: 0 },
-  { code: '축', hanja: '丑', range: '01:30 ~ 03:30', hour: 2 },
-  { code: '인', hanja: '寅', range: '03:30 ~ 05:30', hour: 4 },
-  { code: '묘', hanja: '卯', range: '05:30 ~ 07:30', hour: 6 },
-  { code: '진', hanja: '辰', range: '07:30 ~ 09:30', hour: 8 },
-  { code: '사', hanja: '巳', range: '09:30 ~ 11:30', hour: 10 },
-  { code: '오', hanja: '午', range: '11:30 ~ 13:30', hour: 12 },
-  { code: '미', hanja: '未', range: '13:30 ~ 15:30', hour: 14 },
-  { code: '신', hanja: '申', range: '15:30 ~ 17:30', hour: 16 },
-  { code: '유', hanja: '酉', range: '17:30 ~ 19:30', hour: 18 },
-  { code: '술', hanja: '戌', range: '19:30 ~ 21:30', hour: 20 },
-  { code: '해', hanja: '亥', range: '21:30 ~ 23:30', hour: 22 },
+  { code: '자', hanja: '子', range: '23:32 ~ 01:31', hour: 0 },
+  { code: '축', hanja: '丑', range: '01:32 ~ 03:31', hour: 2 },
+  { code: '인', hanja: '寅', range: '03:32 ~ 05:31', hour: 4 },
+  { code: '묘', hanja: '卯', range: '05:32 ~ 07:31', hour: 6 },
+  { code: '진', hanja: '辰', range: '07:32 ~ 09:31', hour: 8 },
+  { code: '사', hanja: '巳', range: '09:32 ~ 11:31', hour: 10 },
+  { code: '오', hanja: '午', range: '11:32 ~ 13:31', hour: 12 },
+  { code: '미', hanja: '未', range: '13:32 ~ 15:31', hour: 14 },
+  { code: '신', hanja: '申', range: '15:32 ~ 17:31', hour: 16 },
+  { code: '유', hanja: '酉', range: '17:32 ~ 19:31', hour: 18 },
+  { code: '술', hanja: '戌', range: '19:32 ~ 21:31', hour: 20 },
+  { code: '해', hanja: '亥', range: '21:32 ~ 23:31', hour: 22 },
 ];
 
-const SHIJU_HOURS = HOUR_OPTIONS.map((o) => o.hour);
+/** 12지지 (시지 인덱스 0=子 순) — 시(時) 미리보기용 */
+const SIJI_TABLE: { hanja: string; ko: string }[] = [
+  { hanja: '子', ko: '자시' }, { hanja: '丑', ko: '축시' }, { hanja: '寅', ko: '인시' },
+  { hanja: '卯', ko: '묘시' }, { hanja: '辰', ko: '진시' }, { hanja: '巳', ko: '사시' },
+  { hanja: '午', ko: '오시' }, { hanja: '未', ko: '미시' }, { hanja: '申', ko: '신시' },
+  { hanja: '酉', ko: '유시' }, { hanja: '戌', ko: '술시' }, { hanja: '亥', ko: '해시' },
+];
+
+/**
+ * 입력한 시계 시각(HH:MM) → 진태양시 보정(-32분, calculateSaju 와 동일) 후 시지(時支) 미리보기.
+ *  · lunar-javascript 시지 규칙(보정된 '시' 기준 (h+1)/2)과 동일 → 실제 계산 결과와 정확히 일치.
+ *  · "3:30 → 축시" 를 입력 즉시 눈으로 확인 → 30분 경계 애매함 제거.
+ */
+function previewSiji(birthDate: string, birthTime: string): { hanja: string; ko: string } | null {
+  const dm = birthDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const tm = birthTime.match(/^(\d{1,2}):(\d{2})$/);
+  if (!dm || !tm) return null;
+  const h = Number(tm[1]);
+  const mi = Number(tm[2]);
+  if (h < 0 || h > 23 || mi < 0 || mi > 59) return null;
+  const [, , , ch] = correctKoreanSolarTime(Number(dm[1]), Number(dm[2]), Number(dm[3]), h, mi, 0);
+  const idx = Math.floor((ch + 1) / 2) % 12; // 子23~1, 丑1~3, 寅3~5 …
+  return SIJI_TABLE[idx] ?? null;
+}
+
+/** 12지지 fallback 선택 시 대표 시각(각 시의 중앙 클럭값) → 'HH:MM' */
+function hourCodeToTime(code: HourCode): string {
+  const o = HOUR_OPTIONS.find((x) => x.code === code);
+  if (!o) return '';
+  return `${String(o.hour).padStart(2, '0')}:00`;
+}
 
 const RELATIONS: { value: Relation; label: string }[] = [
   { value: '본인', label: '본인' },
@@ -315,14 +350,17 @@ export function InputPage() {
       i.birthDay,
     ).padStart(2, '0')}`;
   });
-  const [hourCode, setHourCode] = useState<HourCode>(() => {
+  // 2026-07 — 30분 블록 → 분 단위 입력. birthTime('HH:MM') 단일 소스 + timeUnknown(모름).
+  //   진태양시 보정은 calculateSaju(-32분)이 담당 → 여기선 시:분만 정확히 수집.
+  const [birthTime, setBirthTime] = useState<string>(() => {
     if (!initFromProfile) return '';
     const i = initialProfile!.input;
-    if (!i.hasBirthTime || i.birthHour === undefined) return 'unknown';
-    // 2026-06-02 시주 fix 호환 — 신규는 짝수 시각 정확 매치, 구 프로필(홀수 시작값, 예 午=11)은 +1 로 매핑.
-    const o = HOUR_OPTIONS.find((x) => x.hour === i.birthHour)
-      ?? HOUR_OPTIONS.find((x) => x.hour === (i.birthHour as number) + 1);
-    return o ? o.code : 'unknown';
+    if (!i.hasBirthTime || i.birthHour === undefined) return '';
+    return `${String(i.birthHour).padStart(2, '0')}:${String(i.birthMinute ?? 0).padStart(2, '0')}`;
+  });
+  const [timeUnknown, setTimeUnknown] = useState<boolean>(() => {
+    if (!initFromProfile) return false;
+    return !initialProfile!.input.hasBirthTime;
   });
 
   // 시트
@@ -352,10 +390,10 @@ export function InputPage() {
     if (!birthDate) out.birthDate = '생년월일을 선택해주세요';
     else if (birthDate > today)
       out.birthDate = '오늘 이후 날짜는 선택할 수 없어요';
-    if (hourCode === '')
-      out.hourCode = "태어난 시간을 선택해주세요 (모르면 '모름')";
+    if (!timeUnknown && birthTime === '')
+      out.hourCode = "태어난 시간을 입력해주세요 (모르면 '모름')";
     return out;
-  }, [name, gender, birthDate, hourCode, today]);
+  }, [name, gender, birthDate, birthTime, timeUnknown, today]);
   const isValid = Object.keys(errors).length === 0;
 
   /**
@@ -402,18 +440,6 @@ export function InputPage() {
     const bd = m ? String(Number(m[3])) : '';
     const calType: CalendarType =
       calendarSimple === 'lunar' && isLeapMonth ? 'lunar_leap' : calendarSimple;
-    let timeIndex: number | null = null;
-    let knowsTime: boolean | null = null;
-    if (hourCode === 'unknown') knowsTime = false;
-    else if (hourCode === '') knowsTime = null;
-    else {
-      knowsTime = true;
-      const o = HOUR_OPTIONS.find((o) => o.code === hourCode);
-      if (o) {
-        const idx = SHIJU_HOURS.indexOf(o.hour);
-        if (idx >= 0) timeIndex = idx;
-      }
-    }
     return {
       name,
       relation,
@@ -422,11 +448,11 @@ export function InputPage() {
       birthDay: bd,
       calendarType: calType,
       gender,
-      knowsTime,
-      timeIndex,
-      step: 1, // E40 v1 호환 — 단일 화면이므로 의미 없음
+      birthTime: timeUnknown ? '' : birthTime,
+      timeUnknown,
+      step: 1, // E40 — 단일 화면이므로 의미 없음
     };
-  }, [name, relation, birthDate, calendarSimple, isLeapMonth, gender, hourCode]);
+  }, [name, relation, birthDate, calendarSimple, isLeapMonth, gender, birthTime, timeUnknown]);
 
   const { hasInitialDraft, loadDraft, clearDraft } = useInputDraft({
     enabled: draftEnabled,
@@ -459,12 +485,12 @@ export function InputPage() {
     );
     setIsLeapMonth(d.calendarType === 'lunar_leap');
     setGender(d.gender);
-    if (d.knowsTime === false) setHourCode('unknown');
-    else if (d.knowsTime === true && d.timeIndex !== null) {
-      const o = HOUR_OPTIONS[d.timeIndex];
-      setHourCode(o ? o.code : '');
+    if (d.timeUnknown) {
+      setTimeUnknown(true);
+      setBirthTime('');
     } else {
-      setHourCode('');
+      setTimeUnknown(false);
+      setBirthTime(d.birthTime || '');
     }
     setDraftModalOpen(false);
   }
@@ -485,7 +511,7 @@ export function InputPage() {
     }
   }, []);
   const isFormEmpty =
-    !name && !birthDate && !gender && !hourCode && !isLeapMonth;
+    !name && !birthDate && !gender && birthTime === '' && !timeUnknown && !isLeapMonth;
 
   function loadLastInput() {
     try {
@@ -506,10 +532,11 @@ export function InputPage() {
       setCalendarSimple(ct.startsWith('lunar') ? 'lunar' : 'solar');
       setIsLeapMonth(ct === 'lunar_leap');
       if (li.hasBirthTime && li.birthHour !== undefined) {
-        const o = HOUR_OPTIONS.find((o) => o.hour === li.birthHour);
-        setHourCode(o ? o.code : 'unknown');
+        setTimeUnknown(false);
+        setBirthTime(`${String(li.birthHour).padStart(2, '0')}:${String(li.birthMinute ?? 0).padStart(2, '0')}`);
       } else {
-        setHourCode('unknown');
+        setTimeUnknown(true);
+        setBirthTime('');
       }
       toast.show('이전 입력값을 불러왔어요', 'info');
     } catch (e) {
@@ -545,13 +572,15 @@ export function InputPage() {
       birthDay: bd,
       calendarType: calType,
       gender,
-      hasBirthTime: hourCode !== 'unknown' && hourCode !== '',
+      hasBirthTime: !timeUnknown && birthTime !== '',
     };
     if (input.hasBirthTime) {
-      const o = HOUR_OPTIONS.find((o) => o.code === hourCode);
-      if (o) {
-        input.birthHour = o.hour;
-        input.birthMinute = 0;
+      const m2 = birthTime.match(/^(\d{1,2}):(\d{2})$/);
+      if (m2) {
+        input.birthHour = Number(m2[1]);   // 시계 시각 그대로 — 진태양시 보정은 calculateSaju 담당
+        input.birthMinute = Number(m2[2]);
+      } else {
+        input.hasBirthTime = false; // 파싱 실패 방어 → 시주 제외
       }
     }
     return input;
@@ -709,13 +738,11 @@ export function InputPage() {
     }
   }
 
-  // 시간 표시 라벨
-  const hourDisplayLabel = useMemo(() => {
-    if (hourCode === '') return '시간 선택';
-    if (hourCode === 'unknown') return '모름 — 시주 제외 풀이';
-    const o = HOUR_OPTIONS.find((o) => o.code === hourCode);
-    return o ? `${o.code}시 (${o.range})` : '시간 선택';
-  }, [hourCode]);
+  // 입력 시각 → 진태양시 보정 후 시지(時支) 실시간 미리보기
+  const sijiPreview = useMemo(
+    () => (timeUnknown || birthTime === '' ? null : previewSiji(birthDate, birthTime)),
+    [birthDate, birthTime, timeUnknown],
+  );
 
   return (
     <div
@@ -772,11 +799,22 @@ export function InputPage() {
           error={touched.birthDate ? errors.birthDate : undefined}
         />
 
-        {/* §7 BirthHourField */}
+        {/* §7 BirthHourField — 분 단위 입력 + 실시간 시(時) 표시 */}
         <BirthHourField
-          hourCode={hourCode}
-          displayLabel={hourDisplayLabel}
-          onOpenSheet={() => setHourSheetOpen(true)}
+          birthTime={birthTime}
+          timeUnknown={timeUnknown}
+          sijiPreview={sijiPreview}
+          onTimeChange={(v) => {
+            setBirthTime(v);
+            setTimeUnknown(false);
+            setTouched((t) => ({ ...t, hourCode: true }));
+          }}
+          onSetUnknown={() => {
+            setTimeUnknown(true);
+            setBirthTime('');
+            setTouched((t) => ({ ...t, hourCode: true }));
+          }}
+          onOpenBlockSheet={() => setHourSheetOpen(true)}
           error={touched.hourCode ? errors.hourCode : undefined}
         />
 
@@ -798,13 +836,19 @@ export function InputPage() {
         onBack={() => navigate(-1)}
       />
 
-      {/* §7-1 HourSheet bottom sheet */}
+      {/* §7-1 HourSheet — 시(時)만 아는 사람용 fallback (블록 → 대표 시각으로 변환) */}
       <HourSheet
         open={hourSheetOpen}
-        currentCode={hourCode}
+        currentCode={sijiPreview ? (HOUR_OPTIONS.find((o) => o.hanja === sijiPreview.hanja)?.code ?? '') : ''}
         onClose={() => setHourSheetOpen(false)}
         onSelect={(code) => {
-          setHourCode(code);
+          if (code === 'unknown') {
+            setTimeUnknown(true);
+            setBirthTime('');
+          } else {
+            setTimeUnknown(false);
+            setBirthTime(hourCodeToTime(code));
+          }
           setTouched((t) => ({ ...t, hourCode: true }));
           setHourSheetOpen(false);
         }}
@@ -1302,18 +1346,23 @@ function BirthDateField({
  * §7 BirthHourField — 시트 트리거 + KR 보정 안내 + 모름 경고
  * ═════════════════════════════════════════════════════════════════ */
 function BirthHourField({
-  hourCode,
-  displayLabel,
-  onOpenSheet,
+  birthTime,
+  timeUnknown,
+  sijiPreview,
+  onTimeChange,
+  onSetUnknown,
+  onOpenBlockSheet,
   error,
 }: {
-  hourCode: HourCode;
-  displayLabel: string;
-  onOpenSheet: () => void;
+  birthTime: string;
+  timeUnknown: boolean;
+  sijiPreview: { hanja: string; ko: string } | null;
+  onTimeChange: (v: string) => void;
+  onSetUnknown: () => void;
+  onOpenBlockSheet: () => void;
   error?: string;
 }) {
-  const isUnknown = hourCode === 'unknown';
-  const isEmpty = hourCode === '';
+  const hasTime = !timeUnknown && birthTime !== '';
   return (
     <div style={{ marginBottom: 24 }}>
       <label
@@ -1327,67 +1376,72 @@ function BirthHourField({
       >
         태어난 시간
       </label>
-      <button
-        type="button"
-        onClick={onOpenSheet}
-        aria-haspopup="listbox"
-        aria-expanded="false"
-        aria-invalid={!!error}
-        style={{
-          width: '100%',
-          height: 52,
-          background: C.surface,
-          border: `1px solid ${error ? C.danger : C.line}`,
-          borderRadius: 12,
-          padding: '0 16px',
-          fontSize: 15,
-          fontWeight: 600,
-          color: isEmpty ? C.mute : C.ink,
-          textAlign: 'left',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {displayLabel}
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={C.mute}
-          strokeWidth="2"
-          aria-hidden
-        >
-          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
 
-      {/* §7-2 KR 보정 안내 — 시간 선택 후에만 */}
-      {!isEmpty && !isUnknown && (
+      {/* 시:분 직접 입력 + 모름 토글 */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="time"
+          value={timeUnknown ? '' : birthTime}
+          onChange={(e) => onTimeChange(e.target.value)}
+          aria-invalid={!!error}
+          aria-label="태어난 시각 (시:분)"
+          style={{
+            flex: 1,
+            height: 52,
+            background: C.surface,
+            border: `1px solid ${error ? C.danger : hasTime ? C.goldLine : C.line}`,
+            borderRadius: 12,
+            padding: '0 16px',
+            fontSize: 16,
+            fontWeight: 600,
+            color: timeUnknown ? C.mute : C.ink,
+          }}
+        />
+        <button
+          type="button"
+          onClick={onSetUnknown}
+          aria-pressed={timeUnknown}
+          style={{
+            flexShrink: 0,
+            height: 52,
+            padding: '0 18px',
+            background: timeUnknown ? C.goldSoft : C.surface,
+            border: `1px solid ${timeUnknown ? C.goldLine : C.line}`,
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 700,
+            color: timeUnknown ? C.goldDeep : C.mute,
+            cursor: 'pointer',
+          }}
+        >
+          모름
+        </button>
+      </div>
+
+      {/* 실시간 시(時) 표시 — 진태양시 자동 판정 결과를 눈으로 확인 */}
+      {hasTime && sijiPreview && (
         <div
           role="note"
           style={{
             marginTop: 10,
-            background: C.noteBeige,
-            padding: '14px 16px',
+            background: C.goldSoft,
+            padding: '12px 14px',
             borderRadius: 12,
             display: 'flex',
             gap: 10,
-            alignItems: 'flex-start',
+            alignItems: 'center',
           }}
         >
           <span
             aria-hidden
             style={{
-              width: 22,
-              height: 22,
+              width: 30,
+              height: 30,
               flexShrink: 0,
               borderRadius: '50%',
-              background: 'rgba(184,150,90,0.20)',
+              background: 'rgba(184,150,90,0.22)',
               color: C.goldDeep,
-              fontSize: 12,
+              fontSize: 15,
               fontWeight: 900,
               fontFamily: "'Noto Serif KR', serif",
               display: 'inline-flex',
@@ -1396,25 +1450,22 @@ function BirthHourField({
               lineHeight: 1,
             }}
           >
-            時
+            {sijiPreview.hanja}
           </span>
-          <p
-            style={{
-              fontSize: 12.5,
-              color: C.ink,
-              lineHeight: 1.6,
-              margin: 0,
-            }}
-          >
-            한국에서 태어나셨다면, 실제 사주 시간은 시계 시간보다 약{' '}
-            <strong>30분 빨라요</strong>. 사주500은 이 보정을 자동으로
-            적용해요.
+          <p style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.55, margin: 0 }}>
+            진태양시(약 30분) 보정 후{' '}
+            <strong style={{ color: C.goldDeep }}>
+              {sijiPreview.ko}({sijiPreview.hanja})
+            </strong>{' '}
+            로 계산돼요.
+            <br />
+            표준시·서머타임까지 사주500이 자동으로 맞췄어요.
           </p>
         </div>
       )}
 
-      {/* §7-3 모름 경고 */}
-      {isUnknown && (
+      {/* 모름 경고 */}
+      {timeUnknown && (
         <p
           style={{
             fontSize: 12,
@@ -1425,6 +1476,28 @@ function BirthHourField({
         >
           시주(시간 기둥) 부분만 빼고 풀이해드려요. 그 외엔 모두 분석돼요.
         </p>
+      )}
+
+      {/* 시(時)만 아는 사람용 fallback */}
+      {!timeUnknown && (
+        <button
+          type="button"
+          onClick={onOpenBlockSheet}
+          style={{
+            marginTop: 10,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: C.goldDeep,
+            textDecoration: 'underline',
+            textUnderlineOffset: 2,
+            cursor: 'pointer',
+          }}
+        >
+          시각은 모르고 태어난 시(時)만 아세요?
+        </button>
       )}
 
       {error && (
@@ -1513,6 +1586,22 @@ function HourSheet({
             >
               태어난 시간
             </h3>
+            {/* 진태양시 보정 안내 — "왜 :30부터?" 혼동 + 경계 시각 선택 가이드 (2026-07 UX fix) */}
+            <div
+              style={{
+                margin: '0 24px 14px',
+                padding: '10px 12px',
+                background: C.goldSoft,
+                borderRadius: 12,
+                fontSize: 12,
+                lineHeight: 1.55,
+                color: C.mute,
+              }}
+            >
+              우리나라 표준시는 실제 태양 시간보다 약 30분 빨라요. 사주는 태양의 위치가 기준이라, 그만큼 앞당겨 보정한 시간대예요 (서울 기준).
+              <br />
+              시각이 <b style={{ color: C.goldDeep, fontWeight: 700 }}>경계에 딱 걸치면</b> 태어난 지역에 따라 앞뒤 시(時)로 갈릴 수 있어요.
+            </div>
             <div style={{ padding: '4px 8px 0' }}>
               {HOUR_OPTIONS.map((o) => {
                 const active = currentCode === o.code;

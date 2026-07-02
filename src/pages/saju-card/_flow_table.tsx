@@ -21,6 +21,7 @@
 import { Solar } from 'lunar-javascript';
 import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_EUMYANG, CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
 import { lookupSipsung } from '@/constants/sipsungColor';
+import { findCurrentDaeun } from '@/services/saju/daeunCurrent';
 import type { DaeUn, OhengType, SajuData, SajuInput } from '@/types/saju';
 
 const SERIF = "'Noto Serif KR', serif";
@@ -322,13 +323,11 @@ export function DaeunTable({
   birthYear: number;
   onMore?: () => void;
 }) {
-  const currentAge = new Date().getFullYear() - birthYear;
-  // calculator.ts 가 isCurrent 를 mark — fallback 으로 currentAge 매칭
+  // 2026-07 fix — 연나이 fallback 은 세는나이 대운나이와 1살 어긋남(현재대운 off-by-one 버그 클래스).
+  //   SSOT(daeunCurrent.findCurrentDaeun)로 재판정 후 isCurrent 만 신뢰.
+  findCurrentDaeun(daeun || [], birthYear);
   const cells = (daeun || []).slice(0, 8).map((d) => {
-    const isCurrent =
-      d.isCurrent === true ||
-      (currentAge >= d.시작나이 && currentAge <= d.끝나이);
-    return { d, isCurrent };
+    return { d, isCurrent: d.isCurrent === true };
   });
 
   if (cells.length === 0) {
@@ -609,13 +608,10 @@ export function MiniFlow({
   layout?: 'horizontal' | 'compact';
 }) {
   const ilgan = sajuData.pillars[2]?.천간 || '';
-  const currentAge = new Date().getFullYear() - birthYear;
-  const currentDaeun =
-    sajuData.daeun?.find(
-      (d) =>
-        d.isCurrent === true ||
-        (currentAge >= d.시작나이 && currentAge <= d.끝나이),
-    ) ?? null;
+  // 2026-07 fix — SSOT 재판정 (연나이 fallback 제거 · 현재대운 off-by-one 버그 클래스)
+  const currentDaeun = sajuData.daeun
+    ? (findCurrentDaeun(sajuData.daeun, birthYear) ?? null)
+    : null;
 
   const now = new Date();
   const year = now.getFullYear();

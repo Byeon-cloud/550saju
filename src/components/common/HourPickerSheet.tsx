@@ -19,7 +19,9 @@ const C = {
   goldSoft: 'rgba(184,150,90,0.14)',
 };
 
-/** 12지지 + 시간 매핑 — 23시 자시 시작, 23:30~ 분 보정 포함 */
+/** 12지지 + 시간 매핑 — 23시 자시 시작, 진태양시 보정(-32분, 서울 기준) 포함.
+ *  경계는 시계로 :32경 (태양시 정각 = 시계 :32). calculateSaju 도 -32분이라 라벨=계산 일치.
+ *  예: 인시는 3:32부터 → 딱 3:30은 축시(태양시 2:58). 표시만·계산 무관. 동쪽 지역은 경계 근사치. */
 const HOUR_OPTIONS: Array<{
   /** 한자 */
   hanja: string;
@@ -32,18 +34,18 @@ const HOUR_OPTIONS: Array<{
 }> = [
   // 2026-06-02 시주 fix — hour = 각 시(時) '중앙' 클럭값 (InputPage.HOUR_OPTIONS 와 동일 정책).
   //   진태양시 -32분 보정 후에도 선택한 시 안에 안착 (午 12:00 → 11:28 → 午). 子(=0)는 자정=중앙 유지.
-  { hanja: '子', ko: '자시', hour: 0,  range: '23:30 ~ 01:30' },
-  { hanja: '丑', ko: '축시', hour: 2,  range: '01:30 ~ 03:30' },
-  { hanja: '寅', ko: '인시', hour: 4,  range: '03:30 ~ 05:30' },
-  { hanja: '卯', ko: '묘시', hour: 6,  range: '05:30 ~ 07:30' },
-  { hanja: '辰', ko: '진시', hour: 8,  range: '07:30 ~ 09:30' },
-  { hanja: '巳', ko: '사시', hour: 10, range: '09:30 ~ 11:30' },
-  { hanja: '午', ko: '오시', hour: 12, range: '11:30 ~ 13:30' },
-  { hanja: '未', ko: '미시', hour: 14, range: '13:30 ~ 15:30' },
-  { hanja: '申', ko: '신시', hour: 16, range: '15:30 ~ 17:30' },
-  { hanja: '酉', ko: '유시', hour: 18, range: '17:30 ~ 19:30' },
-  { hanja: '戌', ko: '술시', hour: 20, range: '19:30 ~ 21:30' },
-  { hanja: '亥', ko: '해시', hour: 22, range: '21:30 ~ 23:30' },
+  { hanja: '子', ko: '자시', hour: 0,  range: '23:32 ~ 01:31' },
+  { hanja: '丑', ko: '축시', hour: 2,  range: '01:32 ~ 03:31' },
+  { hanja: '寅', ko: '인시', hour: 4,  range: '03:32 ~ 05:31' },
+  { hanja: '卯', ko: '묘시', hour: 6,  range: '05:32 ~ 07:31' },
+  { hanja: '辰', ko: '진시', hour: 8,  range: '07:32 ~ 09:31' },
+  { hanja: '巳', ko: '사시', hour: 10, range: '09:32 ~ 11:31' },
+  { hanja: '午', ko: '오시', hour: 12, range: '11:32 ~ 13:31' },
+  { hanja: '未', ko: '미시', hour: 14, range: '13:32 ~ 15:31' },
+  { hanja: '申', ko: '신시', hour: 16, range: '15:32 ~ 17:31' },
+  { hanja: '酉', ko: '유시', hour: 18, range: '17:32 ~ 19:31' },
+  { hanja: '戌', ko: '술시', hour: 20, range: '19:32 ~ 21:31' },
+  { hanja: '亥', ko: '해시', hour: 22, range: '21:32 ~ 23:31' },
 ];
 
 /** 입력값(0-23 hour 또는 -1 모름) → 표시 라벨 */
@@ -135,6 +137,22 @@ export function HourPickerSheet({ open, currentHour, onClose, onSelect, title = 
             >
               {title}
             </h3>
+            {/* 진태양시 보정 안내 — "왜 :30부터?" 혼동 + 경계 시각 선택 가이드 (2026-07 UX fix) */}
+            <div
+              style={{
+                margin: '0 24px 14px',
+                padding: '10px 12px',
+                background: C.goldSoft,
+                borderRadius: 12,
+                fontSize: 12,
+                lineHeight: 1.55,
+                color: C.mute,
+              }}
+            >
+              우리나라 표준시는 실제 태양 시간보다 약 30분 빨라요. 사주는 태양의 위치가 기준이라, 그만큼 앞당겨 보정한 시간대예요 (서울 기준).
+              <br />
+              시각이 <b style={{ color: C.goldDeep, fontWeight: 700 }}>경계에 딱 걸치면</b> 태어난 지역에 따라 앞뒤 시(時)로 갈릴 수 있어요.
+            </div>
             <div style={{ padding: '4px 8px 0' }}>
               {/* 모름 옵션 — 첫 번째에 두면 시각적 우선순위 ↓ — 매뉴얼 입력 안내 같이 */}
               <button

@@ -31,15 +31,15 @@ export interface InputDraftSnapshot {
   birthDay: string;
   calendarType: CalendarType;
   gender: Gender | null;
-  knowsTime: boolean | null;
-  timeIndex: number | null;
+  birthTime: string;      // 'HH:MM' — 분 단위 입력 (2026-07). '' = 미입력
+  timeUnknown: boolean;   // "모름" 선택 여부
   /** 현재 도달한 step (0~5) */
   step: number;
 }
 
 interface StoredDraft extends InputDraftSnapshot {
   savedAt: number;
-  schemaVersion: 1;
+  schemaVersion: 2;
 }
 
 function isMeaningful(snapshot: InputDraftSnapshot): boolean {
@@ -50,7 +50,8 @@ function isMeaningful(snapshot: InputDraftSnapshot): boolean {
     snapshot.birthMonth !== '' ||
     snapshot.birthDay !== '' ||
     snapshot.gender !== null ||
-    snapshot.knowsTime !== null
+    snapshot.timeUnknown ||
+    snapshot.birthTime !== ''
   );
 }
 
@@ -59,7 +60,7 @@ function readStored(): StoredDraft | null {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredDraft;
-    if (parsed.schemaVersion !== 1) return null;
+    if (parsed.schemaVersion !== 2) return null;
     if (typeof parsed.savedAt !== 'number') return null;
     if (Date.now() - parsed.savedAt > TTL_MS) {
       // TTL 초과 → 자동 정리
@@ -106,7 +107,7 @@ export function useInputDraft({ enabled, snapshot }: UseInputDraftOptions): UseI
         const payload: StoredDraft = {
           ...snapshot,
           savedAt: Date.now(),
-          schemaVersion: 1,
+          schemaVersion: 2,
         };
         window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       } catch {

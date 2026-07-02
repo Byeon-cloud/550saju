@@ -2,6 +2,7 @@ import { httpsCallable } from 'firebase/functions';
 import { ensureAuth } from '@/services/auth/authService';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import type { SajuData, Situation } from '@/types/saju';
+import { refreshCurrentDaeun } from '@/services/saju/daeunCurrent';
 import type {
   AIReportResponse,
   DaeunAnalysisResponse,
@@ -67,6 +68,11 @@ function wrapStreamCallbacks<C extends { onDone: (arg: any) => void; onError: (.
 
 /** 모든 Cloud Function 호출 전 인증 + emulator/prod 타겟 보장 */
 async function callWithAuth(name: string, data: any): Promise<any> {
+  // 2026-07 fix — AI 페이로드의 stale 현재대운 재계산 (서버 프롬프트가 isCurrent 를 그대로 신뢰).
+  //   저장 프로필로 생성 시 저장 시점 대운이 프롬프트에 박히던 문제 차단 (전 콘텐츠 단일 지점).
+  refreshCurrentDaeun(data?.sajuData);
+  refreshCurrentDaeun(data?.sajuData1); // 궁합 (2인)
+  refreshCurrentDaeun(data?.sajuData2);
   await ensureFunctionsTarget(); // emulator ping → prod fallback
   await ensureAuth(); // 인증 완료까지 대기
   const fn = aiCallable(name);
@@ -131,6 +137,7 @@ export async function generatePremiumReportStream(
   situation: Situation | undefined,
   callbacks: PremiumStreamCallbacks,
 ): Promise<void> {
+  refreshCurrentDaeun(sajuData); // 2026-07 fix — SSE 경로도 stale 현재대운 재계산
   callbacks = wrapStreamCallbacks('premium', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();
@@ -244,6 +251,7 @@ export async function generateReportStream(
   situation: Situation | undefined,
   callbacks: ReportStreamCallbacks,
 ): Promise<void> {
+  refreshCurrentDaeun(sajuData); // 2026-07 fix — SSE 경로도 stale 현재대운 재계산
   callbacks = wrapStreamCallbacks('report', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();

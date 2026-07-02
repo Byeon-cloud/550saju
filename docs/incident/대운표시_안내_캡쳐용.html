@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사주500 — 현재 대운 표시 오류 안내</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background: #F8F5EE;
+    color: #1A1A1A;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 48px;
+    line-height: 1.6;
+  }
+  .sheet { width: 100%; max-width: 560px; }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
+  }
+  .brand .emblem {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(184,150,90,0.16);
+    color: #8C6D3D; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 17px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .brand .name { font-size: 15px; font-weight: 800; letter-spacing: 0.02em; }
+  .brand .date { margin-left: auto; font-size: 12px; color: #7A7269; }
+
+  h1 { font-size: 21px; font-weight: 800; line-height: 1.4; margin-bottom: 6px; }
+  .lead { font-size: 13.5px; color: #7A7269; margin-bottom: 24px; }
+  .lead b { color: #8C6D3D; }
+
+  .card {
+    background: #FFFFFF; border: 1px solid #E5DFD0; border-radius: 16px;
+    padding: 20px; margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 14px; font-weight: 800; color: #8C6D3D;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .num {
+    width: 20px; height: 20px; border-radius: 50%; background: rgba(184,150,90,0.16);
+    color: #8C6D3D; font-size: 11px; font-weight: 900;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .card p { font-size: 13.5px; margin-bottom: 8px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card p strong { color: #A37A2E; background: rgba(244,209,102,0.55); padding: 0 2px; border-radius: 2px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 4px; }
+  th {
+    background: #F0ECE1; color: #7A7269; font-weight: 700; font-size: 12px;
+    padding: 8px 6px; text-align: center; border: 1px solid #E5DFD0;
+  }
+  td { padding: 9px 6px; text-align: center; border: 1px solid #E5DFD0; background: #FFFDF8; }
+  td.hanja { font-family: 'Noto Serif KR', serif; font-weight: 800; font-size: 14px; }
+  tr.hl td { background: rgba(184,150,90,0.12); font-weight: 700; }
+
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 800; vertical-align: middle;
+  }
+  .badge.ok { background: rgba(111,160,140,0.16); color: #3F7A62; }
+  .badge.bad { background: rgba(181,68,31,0.12); color: #B5441F; }
+
+  .compare { display: flex; gap: 10px; margin-top: 12px; }
+  .compare .col {
+    flex: 1; border-radius: 12px; padding: 14px 12px; text-align: center;
+  }
+  .compare .col.before { background: rgba(181,68,31,0.07); border: 1px solid rgba(181,68,31,0.25); }
+  .compare .col.after { background: rgba(111,160,140,0.10); border: 1px solid rgba(111,160,140,0.35); }
+  .compare .tag { font-size: 11.5px; font-weight: 800; margin-bottom: 6px; }
+  .compare .before .tag { color: #B5441F; }
+  .compare .after .tag { color: #3F7A62; }
+  .compare .gz { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; }
+  .compare .desc { font-size: 11.5px; color: #7A7269; margin-top: 4px; }
+
+  .note {
+    background: rgba(184,150,90,0.10); border-radius: 12px;
+    padding: 12px 14px; font-size: 12.5px; color: #5C5346; margin-top: 12px;
+  }
+  .note b { color: #8C6D3D; }
+
+  ul { list-style: none; }
+  ul li { font-size: 13.5px; padding-left: 16px; position: relative; margin-bottom: 7px; }
+  ul li::before {
+    content: ''; position: absolute; left: 2px; top: 9px;
+    width: 5px; height: 5px; border-radius: 50%; background: #B8965A;
+  }
+  ul li:last-child { margin-bottom: 0; }
+
+  .footer {
+    text-align: center; font-size: 11.5px; color: #7A7269; margin-top: 22px; line-height: 1.7;
+  }
+  .footer .line { width: 40px; height: 1px; background: #B8965A; margin: 0 auto 10px; opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="brand">
+    <span class="emblem">命</span>
+    <span class="name">사주500</span>
+    <span class="date">2026. 07. 안내</span>
+  </div>
+
+  <h1>「현재 대운」 표시 오류,<br>정확히 확인하고 바로잡았습니다</h1>
+  <p class="lead">소중한 제보 덕분에 찾았습니다. 결론부터 — <b>대운 계산 데이터는 처음부터 정확했고</b>, 그 표에서 "지금"을 표시해주는 부분이 1년 늦게 가리키고 있었습니다.</p>
+
+  <div class="card">
+    <h2><span class="num">1</span>사주500이 계산에 쓰는 기준</h2>
+    <table>
+      <tr><th style="width:32%">계산 층</th><th>기준</th><th style="width:18%">이번 오류</th></tr>
+      <tr>
+        <td>만세력 데이터</td>
+        <td style="text-align:left; padding-left:10px;">종이 만세력과 동일한 절기(節氣) 원리 — 60갑자·대운 순행/역행·대운수</td>
+        <td><span class="badge ok">정상</span></td>
+      </tr>
+      <tr>
+        <td>한국 시간 보정</td>
+        <td style="text-align:left; padding-left:10px;">진태양시(약 −30분)·서머타임 자동 반영</td>
+        <td><span class="badge ok">정상</span></td>
+      </tr>
+      <tr>
+        <td>화면 표시</td>
+        <td style="text-align:left; padding-left:10px;">대운표에서 "지금이 어느 대운인지" 표시</td>
+        <td><span class="badge bad">오류</span></td>
+      </tr>
+    </table>
+    <p style="font-size:12.5px; color:#7A7269;">해석 기준은 연해자평·자평진전·적천수·궁통보감 등 정통 명리 문헌을 따릅니다.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">2</span>실제 대운 데이터 — 처음부터 이렇게 맞았습니다</h2>
+    <p style="font-size:12.5px; color:#7A7269;">제보해주신 것과 같은 구조의 대운표, 만세력 원본 그대로:</p>
+    <table>
+      <tr><th>대운</th><th>나이 구간</th><th>실제 기간</th></tr>
+      <tr><td class="hanja">丁亥 정해</td><td>12~21세</td><td>2006~2015년</td></tr>
+      <tr><td class="hanja">戊子 무자</td><td>22~31세</td><td>2016~<b>2025년</b></td></tr>
+      <tr class="hl"><td class="hanja">己丑 기축</td><td>32~41세</td><td><b>2026~2035년</b></td></tr>
+    </table>
+    <p style="font-size:12.5px; color:#7A7269;">무자 대운은 2025년에 끝났고, 2026년부터는 기축 대운입니다. 데이터는 정확했습니다.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">3</span>무엇이 잘못됐었나</h2>
+    <p>만세력의 대운 나이는 <strong>세는나이</strong>(태어나면 한 살) 기준인데, 화면 표시가 <strong>만나이 방식</strong>으로 세면서 딱 1년 어긋났습니다.</p>
+    <div class="compare">
+      <div class="col before">
+        <div class="tag">기존 표시 (오류)</div>
+        <div class="gz">戊子</div>
+        <div class="desc">2026년에도 무자를<br>"현재"로 표시</div>
+      </div>
+      <div class="col after">
+        <div class="tag">수정 후 (정확)</div>
+        <div class="gz">己丑</div>
+        <div class="desc">실제 기간 그대로<br>기축을 "현재"로 표시</div>
+      </div>
+    </div>
+    <div class="note">그래서 <b>새 대운에 갓 들어선 첫 해의 분들께만</b> 이전 대운이 표시됐습니다. 대운 중간에 계신 분들은 영향이 없었고, 사주 원국(여덟 글자)·대운 간지·점수도 모두 정확했습니다.</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">4</span>어떻게 바로잡았나</h2>
+    <ul>
+      <li>나이로 세는 방식 자체를 없애고, <b>대운의 실제 시작~끝 연도</b>로 판정하도록 변경 — 어긋날 여지가 원천적으로 사라졌습니다.</li>
+      <li>만세력 원본 데이터와 교차 검증 및 경계 사례 시험을 모두 통과했습니다.</li>
+      <li>이미 받으신 리포트는 요청 시 바른 대운 기준으로 다시 생성해 드립니다.</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    <div class="line"></div>
+    사주500 — 정통 명리, 쉬운 언어<br>
+    제보해 주신 덕분에 더 정확해졌습니다. 감사합니다.
+  </div>
+
+</div>
+</body>
+</html>

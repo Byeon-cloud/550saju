@@ -63,8 +63,12 @@ declare module 'lunar-javascript' {
   }
 
   export interface DaYunItem {
+    /** 시작나이 — 세는나이(虚岁) 기준. 연나이로 비교 금지 (2026-07 현재 대운 off-by-one fix) */
     getStartAge(): number;
     getEndAge(): number;
+    /** 대운 시작·끝 실제 연도 — 현재 대운 판정은 이걸로 (나이 규약 무관) */
+    getStartYear(): number;
+    getEndYear(): number;
     getGanZhi(): string;
   }
 }
