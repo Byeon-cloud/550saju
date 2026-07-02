@@ -14,7 +14,7 @@ import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { isAppintosBuild } from '@/lib/env';
-import { isPortoneTestEnabled, requestPortoneTestPayment } from '@/services/payment/portonePayment';
+import { isPortoneTestEnabled, isPortoneLiveEnabled, requestPortoneTestPayment, requestPortoneLivePayment, confirmPortonePaymentServer } from '@/services/payment/portonePayment';
 import type { PortonePgMethod } from '@/services/payment/portonePayment';
 import { trackEvent } from '@/services/analytics';
 import { LegalFooter } from '@/components/layout/LegalFooter';
@@ -123,10 +123,13 @@ export function ChargePage() {
   //   그래서 웹 충전 = 포트원 심사용 결제창 기본 노출. (포트원 계약 승인 후 실결제로 전환)
   //   ⚠️ 운 적립 없음·자동취소라 실청구 0 → 미런칭 상태에서 안전.
   const [showPgSheet, setShowPgSheet] = useState(false);
-  const portoneTest = !isAppintosBuild && isPortoneTestEnabled();
-  // 2026-06-18 웹 런칭 — 웹 실결제는 토스 클라키가 live_ 일 때만 ON. test 키면 '준비중' 게이팅
-  //   (앱인토스 IAP 는 항상 라이브). 형이 live 키 교체하면 자동으로 결제 열림 — 코드 재손질 0.
+  // 2026-07-02 — 포트원 실결제 (PG 계약 승인 후 VITE_PORTONE_LIVE=1 로 오픈). live 가 test 보다 우선.
+  const portoneLive = !isAppintosBuild && isPortoneLiveEnabled();
+  const portoneTest = !isAppintosBuild && !portoneLive && isPortoneTestEnabled();
+  // 2026-06-18 웹 런칭 — 웹 실결제 게이트. 앱인토스 IAP 는 항상 라이브.
+  //   2026-07-02 — 포트원 실결제(VITE_PORTONE_LIVE=1)도 오픈 조건에 추가 (준기 결정: 웹 PG = 포트원).
   const webPaymentReady = isAppintosBuild
+    || portoneLive
     || String(import.meta.env.VITE_TOSS_PAYMENTS_CLIENT_KEY || '').startsWith('live_');
   const [remainingShares, setRemainingShares] = useState(() => getRemainingShareRewards());
 
@@ -138,6 +141,37 @@ export function ChargePage() {
 
   // ── E13 · Toss Payment 리다이렉트 복귀 처리 (보존)
   useEffect(() => {
+    // 포트원 실결제 리다이렉트 복귀 (모바일) — 서버 검증·지급 재개 (2026-07-02)
+    const portonePid = searchParams.get('portone_pid');
+    if (portonePid) {
+      const portoneAmount = Number(searchParams.get('portone_amount') || 0);
+      const pgCode = searchParams.get('code'); // 포트원이 실패 시 code/message 쿼리 부착
+      if (pgCode) {
+        import('@/services/analytics').then((a) => a.trackEvent('charge_failed', { pg: 'portone', reason: (searchParams.get('message') || pgCode).slice(0, 60) })).catch(() => {});
+        toast.show(searchParams.get('message') || '결제가 완료되지 않았어요', 'warning');
+        setSearchParams({}, { replace: true });
+        return;
+      }
+      setPurchasing(true);
+      confirmPortonePaymentServer(portonePid, portoneAmount)
+        .then((r) => {
+          if (r.ok && r.paidUn != null) {
+            addPaidBalance(r.paidUn, r.bonusUn || 0);
+            setBalanceDisplay(getBalance());
+            toast.show(r.message, 'success');
+            import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: portoneAmount, source: chargeSource, pg: 'portone' })).catch(() => {});
+            if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
+          } else {
+            toast.show(r.message || '결제 확인에 실패했어요. 잔액이 안 늘었다면 고객센터로 문의해주세요.', 'warning');
+          }
+        })
+        .finally(() => {
+          setPurchasing(false);
+          setSearchParams({}, { replace: true });
+        });
+      return;
+    }
+
     const pgStatus = searchParams.get('pg');
     const paymentKey = searchParams.get('paymentKey');
     const orderId = searchParams.get('orderId');
@@ -206,8 +240,8 @@ export function ChargePage() {
   // ── 결제 핸들러
   const handlePurchase = async () => {
     if (!selectedPkg || purchasing) return;
-    // PG 심사용 테스트 결제 — 결제수단 선택 시트 (실청구 X · 운 적립 X)
-    if (portoneTest) { setShowPgSheet(true); return; }
+    // 포트원 결제수단 선택 시트 — live(실결제) 또는 심사용 테스트 (live 우선)
+    if (portoneLive || portoneTest) { setShowPgSheet(true); return; }
     // 웹 실결제 미오픈(test 키) — 헛결제 방지 안내. 앱인토스 IAP·live 키면 통과.
     if (!webPaymentReady) {
       toast.show('웹 결제는 곧 오픈해요! 조금만 기다려 주세요 🙏', 'info');
@@ -229,6 +263,30 @@ export function ChargePage() {
       }
     } else {
       toast.show(result.message, 'warning');
+    }
+  };
+
+  // 포트원 실결제 실행 (2026-07-02) — 지급은 서버 confirmPortonePayment 검증 후에만
+  const handlePgLive = async (method: PortonePgMethod) => {
+    if (!selectedPkg || purchasing) return;
+    setShowPgSheet(false);
+    setPurchasing(true);
+    const r = await requestPortoneLivePayment(selectedPkg, method);
+    setPurchasing(false);
+    if (r.ok && r.paidUn != null) {
+      addPaidBalance(r.paidUn, r.bonusUn || 0);
+      setBalanceDisplay(getBalance());
+      toast.show(r.message, 'success');
+      import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: selectedPkg.price, source: chargeSource, pg: 'portone' })).catch(() => {});
+      import('@/services/toss/tossPromotion').then(m =>
+        m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { amount: String(selectedPkg.price) })
+      );
+      if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
+    } else if (r.cancelled) {
+      toast.show('결제가 취소됐어요', 'info');
+    } else {
+      import('@/services/analytics').then(a => a.trackEvent('charge_failed', { pg: 'portone', reason: (r.message || '').slice(0, 60) })).catch(() => {});
+      toast.show(r.message || '결제에 실패했어요. 다시 시도해주세요.', 'warning');
     }
   };
 
@@ -709,8 +767,8 @@ export function ChargePage() {
                       </div>
                     )}
 
-                    {/* 결제 수단 — 아이콘 + 라벨 리스트 행 (토스·배민 문법) */}
-                    <button onClick={() => handlePgTest('card')} style={{
+                    {/* 결제 수단 — 아이콘 + 라벨 리스트 행 (토스·배민 문법). live 활성 시 실결제 라우팅 */}
+                    <button onClick={() => (portoneLive ? handlePgLive : handlePgTest)('card')} style={{
                       display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
                       padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 8,
                       border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',
@@ -728,7 +786,7 @@ export function ChargePage() {
                       <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용·체크카드</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
-                    <button onClick={() => handlePgTest('kakaopay')} style={{
+                    <button onClick={() => (portoneLive ? handlePgLive : handlePgTest)('kakaopay')} style={{
                       display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
                       padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 14,
                       border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',

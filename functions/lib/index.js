@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeeklyRefine = exports.generateWeeklyDraft = exports.generateWeekly = exports.generateMonthlyRefine = exports.generateMonthlyDraft = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
+exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPortonePayment = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeeklyRefine = exports.generateWeeklyDraft = exports.generateWeekly = exports.generateMonthlyRefine = exports.generateMonthlyDraft = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -69,6 +69,7 @@ const TOSS_MTLS_KEY = (0, params_1.defineSecret)('TOSS_MTLS_KEY');
 const TOSS_DECRYPT_KEY = (0, params_1.defineSecret)('TOSS_DECRYPT_KEY');
 const TOSS_DECRYPT_AAD = (0, params_1.defineSecret)('TOSS_DECRYPT_AAD');
 const TOSS_PAYMENTS_SECRET = (0, params_1.defineSecret)('TOSS_PAYMENTS_SECRET_KEY');
+const PORTONE_V2_API_SECRET = (0, params_1.defineSecret)('PORTONE_V2_API_SECRET');
 /** 금액 → 패키지 매핑 (서버에서 검증용) */
 const PACKAGE_MAP = {
     500: { name: '한 번만', paidUn: 1, bonusUn: 0 },
@@ -1973,6 +1974,159 @@ exports.confirmPayment = (0, https_1.onCall)({ secrets: [TOSS_PAYMENTS_SECRET], 
             tossStatus: tossResult.status,
             tossMethod: tossResult.method,
             tossApprovedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        throw new https_1.HttpsError('internal', '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
+    }
+    return { success: true, message: `${totalUn}운이 충전됐어요!`, totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
+});
+/**
+ * confirmPortonePayment — 포트원 V2 웹 실결제 검증·지급 (2026-07-02 선구현)
+ *
+ * 흐름: 클라 PortOne.requestPayment 완료 → paymentId 전달 → 서버가 포트원 조회 API로
+ *   결제 사실·금액·상태를 직접 확인 후 지급. (클라 신고 금액은 참고용 — 진실은 포트원 API)
+ *
+ * 머니세이프: confirmPayment(E13)와 동일 상태머신 —
+ *   pending → confirmed | failed | needs_reconciliation. confirmed 만 중복 차단.
+ *
+ * 추가 방어 (토스 대비 강화):
+ *   ① uid 바인딩 — paymentId 접두사(uid 앞 8자) + customData.uid 이중 확인
+ *      (남의 paymentId 를 자기 계정에 컨펌하는 공격 차단)
+ *   ② LIVE 채널 게이트 — channel.type !== 'LIVE' 면 지급 거부
+ *      (테스트 결제로 실제 운을 적립하는 사고 원천 차단 · 심사용 결제창과 공존 안전)
+ *
+ * 활성화: PG 계약 승인 후 PORTONE_V2_API_SECRET 실키 교체 + 클라 VITE_PORTONE_LIVE=1.
+ *   그 전엔 시크릿이 PENDING 이라 호출돼도 포트원 인증 실패 → failed (지급 불가) — 무해.
+ */
+exports.confirmPortonePayment = (0, https_1.onCall)({ secrets: [PORTONE_V2_API_SECRET], timeoutSeconds: 15, memory: '256MiB', cors: true }, async (request) => {
+    const { paymentId, amount } = request.data;
+    if (!paymentId || typeof paymentId !== 'string' || !amount) {
+        throw new https_1.HttpsError('invalid-argument', '필수 파라미터 누락');
+    }
+    const uid = request.auth?.uid;
+    if (!uid)
+        throw new https_1.HttpsError('unauthenticated', '로그인 필요');
+    // 방어 ① — paymentId 는 클라가 `${uid8}_...` 로 생성. 다른 계정 결제 컨펌 시도 차단.
+    if (!paymentId.startsWith(uid.slice(0, 8))) {
+        throw new https_1.HttpsError('permission-denied', '본인 결제만 확인할 수 있어요');
+    }
+    // 1. E13 · 중복 지급 방지 — confirmed/needs_reconciliation 차단, pending/failed 재시도 허용
+    const paymentRef = db.collection(`users/${uid}/payments`).doc(paymentId);
+    const existing = await paymentRef.get();
+    if (existing.exists) {
+        const s = existing.data()?.status;
+        if (s === 'confirmed') {
+            return { success: true, message: '이미 처리된 결제예요' };
+        }
+        if (s === 'needs_reconciliation') {
+            throw new https_1.HttpsError('failed-precondition', '결제가 승인됐지만 지급이 완료되지 않았어요. 고객센터로 문의해주세요.');
+        }
+    }
+    // 2. 금액 → 패키지 사전 검증 (최종 검증은 포트원 API 응답 금액으로 재수행)
+    const pkg = PACKAGE_MAP[amount];
+    if (!pkg)
+        throw new https_1.HttpsError('invalid-argument', `유효하지 않은 금액: ${amount}`);
+    // 3. E13 · pending 선기록
+    await paymentRef.set({
+        type: 'charge', orderId: paymentId, amount,
+        packageName: pkg.name,
+        paidUn: pkg.paidUn, bonusUn: pkg.bonusUn,
+        pgProvider: 'portone',
+        status: 'pending',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    // 4. 포트원 V2 결제 조회 API — 결제 사실·상태·금액을 서버가 직접 확인
+    const apiSecret = PORTONE_V2_API_SECRET.value();
+    let pay;
+    try {
+        const res = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}`, {
+            method: 'GET',
+            headers: { Authorization: `PortOne ${apiSecret}` },
+        });
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            console.error('[confirmPortonePayment] 포트원 조회 실패:', res.status, errBody);
+            await paymentRef.update({
+                status: 'failed',
+                failReason: errBody?.message || `portone_http_${res.status}`,
+                failedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            throw new https_1.HttpsError('internal', '결제 확인에 실패했어요. 다시 시도해주세요.');
+        }
+        pay = await res.json();
+    }
+    catch (err) {
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        console.error('[confirmPortonePayment] 네트워크 에러:', err);
+        await paymentRef.update({
+            status: 'failed',
+            failReason: 'network_error: ' + (err.message || 'unknown'),
+            failedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        throw new https_1.HttpsError('internal', '결제 확인 중 네트워크 오류가 발생했어요.');
+    }
+    // 5. 결제 검증 — 상태 PAID + 금액 일치 + uid 바인딩(customData) + LIVE 채널
+    const failVerify = async (reason, userMsg) => {
+        console.error('[confirmPortonePayment] 검증 실패:', reason, { paymentId, uid });
+        await paymentRef.update({
+            status: 'failed', failReason: reason,
+            failedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        throw new https_1.HttpsError('failed-precondition', userMsg);
+    };
+    if (pay?.status !== 'PAID') {
+        await failVerify(`status_${pay?.status || 'unknown'}`, '결제가 완료되지 않았어요. 다시 시도해주세요.');
+    }
+    const apiAmount = pay?.amount?.total;
+    if (apiAmount !== amount || !PACKAGE_MAP[apiAmount]) {
+        await failVerify(`amount_mismatch_${apiAmount}_vs_${amount}`, '결제 금액이 일치하지 않아요. 고객센터로 문의해주세요.');
+    }
+    if (pay?.currency && pay.currency !== 'KRW') {
+        await failVerify(`currency_${pay.currency}`, '지원하지 않는 통화예요.');
+    }
+    // 방어 ① 이중 확인 — 클라가 customData 에 넣은 uid 와 호출자 일치
+    try {
+        const cd = typeof pay?.customData === 'string' ? JSON.parse(pay.customData) : pay?.customData;
+        if (cd?.uid && cd.uid !== uid) {
+            await failVerify('customdata_uid_mismatch', '본인 결제만 확인할 수 있어요.');
+        }
+    }
+    catch { /* customData 파싱 실패는 무시 (prefix 검증이 1차 방어) */ }
+    // 방어 ② — 테스트 채널 결제는 절대 지급하지 않음
+    if (pay?.channel?.type !== 'LIVE') {
+        await failVerify(`channel_${pay?.channel?.type || 'unknown'}`, '테스트 결제는 충전되지 않아요.');
+    }
+    // 6. Firestore 트랜잭션 — 잔액 지급 + pending → confirmed (confirmPayment 동일)
+    const totalUn = pkg.paidUn + pkg.bonusUn;
+    try {
+        await db.runTransaction(async (tx) => {
+            const userRef = db.collection('users').doc(uid);
+            const userDoc = await tx.get(userRef);
+            const data = userDoc.data() || {};
+            tx.update(userRef, {
+                'balance.paid': (data.balance?.paid ?? 0) + pkg.paidUn,
+                'balance.bonus': (data.balance?.bonus ?? 0) + pkg.bonusUn,
+                totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
+            });
+            tx.update(paymentRef, {
+                unChange: totalUn,
+                portoneStatus: pay.status,
+                portoneMethod: pay?.method?.type || null,
+                portoneChannel: pay?.channel?.type || null,
+                status: 'confirmed',
+                confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        });
+    }
+    catch (err) {
+        // E13 · 포트원은 PAID 인데 DB 실패 — 수동 복구 대상
+        console.error('[confirmPortonePayment] needs_reconciliation:', err);
+        await paymentRef.update({
+            status: 'needs_reconciliation',
+            failReason: 'db_transaction_failed: ' + (err.message || 'unknown'),
+            portoneStatus: pay.status,
+            portoneApprovedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         throw new https_1.HttpsError('internal', '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
     }
