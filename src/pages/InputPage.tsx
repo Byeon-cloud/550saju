@@ -26,7 +26,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { calculateSaju } from '@/services/saju/calculator';
-import { correctKoreanSolarTime } from '@/services/saju/timeCorrection';
+import { previewSiji } from '@/services/saju/sijiPreview';
 import { useSajuContext } from '@/contexts/SajuContext';
 import type { CalendarType, Gender, SajuInput } from '@/types/saju';
 import type { Relation } from '@/types/user';
@@ -109,30 +109,7 @@ const HOUR_OPTIONS: Array<{
   { code: '해', hanja: '亥', range: '21:32 ~ 23:31', hour: 22 },
 ];
 
-/** 12지지 (시지 인덱스 0=子 순) — 시(時) 미리보기용 */
-const SIJI_TABLE: { hanja: string; ko: string }[] = [
-  { hanja: '子', ko: '자시' }, { hanja: '丑', ko: '축시' }, { hanja: '寅', ko: '인시' },
-  { hanja: '卯', ko: '묘시' }, { hanja: '辰', ko: '진시' }, { hanja: '巳', ko: '사시' },
-  { hanja: '午', ko: '오시' }, { hanja: '未', ko: '미시' }, { hanja: '申', ko: '신시' },
-  { hanja: '酉', ko: '유시' }, { hanja: '戌', ko: '술시' }, { hanja: '亥', ko: '해시' },
-];
-
-/**
- * 입력한 시계 시각(HH:MM) → 진태양시 보정(-32분, calculateSaju 와 동일) 후 시지(時支) 미리보기.
- *  · lunar-javascript 시지 규칙(보정된 '시' 기준 (h+1)/2)과 동일 → 실제 계산 결과와 정확히 일치.
- *  · "3:30 → 축시" 를 입력 즉시 눈으로 확인 → 30분 경계 애매함 제거.
- */
-function previewSiji(birthDate: string, birthTime: string): { hanja: string; ko: string } | null {
-  const dm = birthDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  const tm = birthTime.match(/^(\d{1,2}):(\d{2})$/);
-  if (!dm || !tm) return null;
-  const h = Number(tm[1]);
-  const mi = Number(tm[2]);
-  if (h < 0 || h > 23 || mi < 0 || mi > 59) return null;
-  const [, , , ch] = correctKoreanSolarTime(Number(dm[1]), Number(dm[2]), Number(dm[3]), h, mi, 0);
-  const idx = Math.floor((ch + 1) / 2) % 12; // 子23~1, 丑1~3, 寅3~5 …
-  return SIJI_TABLE[idx] ?? null;
-}
+// 시지(時支) 실시간 미리보기 → `@/services/saju/sijiPreview` SSOT (2026-07 — 상대방 입력과 공용화)
 
 /** 12지지 fallback 선택 시 대표 시각(각 시의 중앙 클럭값) → 'HH:MM' */
 function hourCodeToTime(code: HourCode): string {

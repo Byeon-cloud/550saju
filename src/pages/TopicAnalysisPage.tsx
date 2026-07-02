@@ -16,11 +16,64 @@ import { ScoreRing } from '@/components/saju/ScoreRing';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
-import { HourPickerSheet, HourPickerTrigger } from '@/components/common/HourPickerSheet';
+import { HourPickerSheet } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId } from '@/constants/topics';
 import { normalizeSipsungKo } from '@/constants/sipsungColor';
 import { findCurrentDaeun } from '@/services/saju/daeunCurrent';
+import { sijiForClock } from '@/services/saju/sijiPreview';
 import type { DaeUn } from '@/types/saju';
+
+/**
+ * 상대방 출생 시간 — 분 단위 입력 + 진태양시 시지(時支) 실시간 표시 (2026-07 본인 입력과 통일).
+ * 30분 블록 선택의 "3:30 경계 애매함"을 앱이 자동 판정. 비우면 미상(-1). 시(時)만 알면 시트 fallback.
+ */
+function PartnerTimeField({
+  info,
+  onChange,
+  onOpenSheet,
+}: {
+  info: { birthYear: number; birthMonth: number; birthDay: number; birthHour: number; birthMinute?: number };
+  onChange: (hour: number, minute: number) => void;
+  onOpenSheet: () => void;
+}) {
+  const has = info.birthHour >= 0;
+  const value = has
+    ? `${String(info.birthHour).padStart(2, '0')}:${String(info.birthMinute ?? 0).padStart(2, '0')}`
+    : '';
+  const siji = has
+    ? sijiForClock(info.birthYear, info.birthMonth, info.birthDay, info.birthHour, info.birthMinute ?? 0)
+    : null;
+  return (
+    <div>
+      <input
+        type="time"
+        value={value}
+        onChange={(e) => {
+          const m2 = e.target.value.match(/^(\d{1,2}):(\d{2})$/);
+          if (m2) onChange(Number(m2[1]), Number(m2[2]));
+          else onChange(-1, 0); // 비움 = 미상
+        }}
+        aria-label="상대방 태어난 시각 (시:분)"
+        className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
+      />
+      {siji ? (
+        <p className="text-[11px] text-text-hint mt-1">
+          진태양시(약 30분) 보정 후 <b style={{ color: '#8C6D3D' }}>{siji.ko}({siji.hanja})</b> 로 계산돼요
+        </p>
+      ) : (
+        <p className="text-[11px] text-text-hint mt-1">모르면 비워두세요 — 알면 시주까지 분석하여 더 정확해요</p>
+      )}
+      <button
+        type="button"
+        onClick={onOpenSheet}
+        className="text-[11px] font-semibold mt-1 underline underline-offset-2"
+        style={{ color: '#8C6D3D' }}
+      >
+        시각은 모르고 태어난 시(時)만 아세요?
+      </button>
+    </div>
+  );
+}
 // Phase 2 Stage 2A — 공통 MonthTimeline 컴포넌트
 // 2026-05-28 — wealth 에서 제거 (AreaChart 와 중복). buildMonthCells 만 유지 (다른 주제 wiring 대비 reserved).
 import { buildMonthCells } from './topic/_month_timeline';
@@ -3240,7 +3293,8 @@ export function TopicAnalysisPage() {
   const [partnerInfo, setPartnerInfo] = useState({
     name: '', birthYear: 1995, birthMonth: 1, birthDay: 1, gender: 'male',
     breakupYear: new Date().getFullYear(), breakupMonth: 1,
-    birthHour: -1, // -1 = 미상
+    birthHour: -1, // -1 = 미상 (시계 시각 그대로 — 진태양시 보정은 서버 computePartnerPillars)
+    birthMinute: 0, // 2026-07 — 분 단위 입력 (본인 입력과 통일, 3:30 경계 자동 판정)
   });
   const [showPartner, setShowPartner] = useState(false);
   // 2026-05-07 — partner 시간 선택 sheet (네이티브 select → bottom sheet 통일)
@@ -3435,7 +3489,12 @@ export function TopicAnalysisPage() {
         || (topicId === 'marriage' && relationStatus === 'dating' && partnerInfo.name)
         || (topicId === 'love' && loveStatus !== 'solo' && partnerInfo.name);
       const partner = needsPartner
-        ? { ...partnerInfo, birthHour: partnerInfo.birthHour >= 0 ? partnerInfo.birthHour : undefined } : undefined;
+        ? {
+            ...partnerInfo,
+            birthHour: partnerInfo.birthHour >= 0 ? partnerInfo.birthHour : undefined,
+            // 2026-07 — 분 단위 (서버 computePartnerPillars 가 진태양시 보정에 사용)
+            birthMinute: partnerInfo.birthHour >= 0 ? (partnerInfo.birthMinute ?? 0) : undefined,
+          } : undefined;
 
       // 주제별 추가 정보 (사업운/취업운/이사운/학업운/연애운)
       const loveExtra = topicId === 'love' ? { loveStatus } : {};
@@ -3815,8 +3874,11 @@ export function TopicAnalysisPage() {
                                   <label className="text-[11px] text-text-hint mb-1 block">
                                     출생 시간 <span className="text-[11px] opacity-60">(선택사항)</span>
                                   </label>
-                                  <HourPickerTrigger hour={partnerInfo.birthHour} onClick={() => setHourSheetOpen(true)} />
-                                  <p className="text-[11px] text-text-hint mt-1">알면 시주까지 분석하여 더 정확해요</p>
+                                  <PartnerTimeField
+                                    info={partnerInfo}
+                                    onChange={(h, m) => setPartnerInfo(p => ({ ...p, birthHour: h, birthMinute: m }))}
+                                    onOpenSheet={() => setHourSheetOpen(true)}
+                                  />
                                 </div>
                               </div>
                             </motion.div>
@@ -3914,8 +3976,11 @@ export function TopicAnalysisPage() {
                                   <label className="text-[11px] text-text-hint mb-1 block">
                                     출생 시간 <span className="text-[11px] opacity-60">(선택사항)</span>
                                   </label>
-                                  <HourPickerTrigger hour={partnerInfo.birthHour} onClick={() => setHourSheetOpen(true)} />
-                                  <p className="text-[11px] text-text-hint mt-1">알면 시주까지 분석하여 더 정확해요</p>
+                                  <PartnerTimeField
+                                    info={partnerInfo}
+                                    onChange={(h, m) => setPartnerInfo(p => ({ ...p, birthHour: h, birthMinute: m }))}
+                                    onOpenSheet={() => setHourSheetOpen(true)}
+                                  />
                                 </div>
                               </div>
                             </motion.div>
@@ -4344,10 +4409,11 @@ export function TopicAnalysisPage() {
                                   <label className="text-[11px] text-text-hint mb-1 block">
                                     상대방 출생 시간 <span className="text-[11px] opacity-60">(선택사항)</span>
                                   </label>
-                                  <HourPickerTrigger hour={partnerInfo.birthHour} onClick={() => setHourSheetOpen(true)} />
-                                  <p className="text-[11px] text-text-hint mt-1">
-                                    알면 시주(時柱)까지 분석하여 더 정확한 결과를 드려요
-                                  </p>
+                                  <PartnerTimeField
+                                    info={partnerInfo}
+                                    onChange={(h, m) => setPartnerInfo(p => ({ ...p, birthHour: h, birthMinute: m }))}
+                                    onOpenSheet={() => setHourSheetOpen(true)}
+                                  />
                                 </div>
                               </div>
                             </motion.div>
@@ -5113,7 +5179,8 @@ export function TopicAnalysisPage() {
         currentHour={partnerInfo.birthHour}
         onClose={() => setHourSheetOpen(false)}
         onSelect={(h) => {
-          setPartnerInfo((p) => ({ ...p, birthHour: h }));
+          // 시(時) 블록 = 해당 시진 중앙 클럭값 + 분 0 (진태양시 보정 후에도 같은 시진 유지)
+          setPartnerInfo((p) => ({ ...p, birthHour: h, birthMinute: 0 }));
           setHourSheetOpen(false);
         }}
         title="상대방 출생 시간"
