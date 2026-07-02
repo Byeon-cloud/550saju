@@ -18,20 +18,30 @@ const lunar_javascript_1 = require("lunar-javascript");
 const promptsV3_1 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const kstTime_1 = require("../utils/kstTime");
+const timeCorrection_1 = require("../utils/timeCorrection");
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
  * 기존: 프롬프트가 AI에게 상대방 사주를 "추론"하라고 지시 → LLM은 만세력 계산 불가 → 간지 환각
  *   (실사례: 1995-06-06 戊辰일주가 壬午로 출력). 본인 사주는 calculator 주입이라 정확했음.
  * 수정: lunar-javascript 로 서버에서 확정 계산 → 프롬프트에 "재추론 금지" 확정값으로 주입.
- * 시간 보정: 클라 시간 선택지가 시진 대표시(밴드 중앙, 예: 오시=12시)라 -30분 KR 보정을
- *   적용해도 같은 시진 → 간지 동일. 일주는 시간 무관.
+ *
+ * 2026-07-02 진태양시 보정 도입 — 클라가 분 단위(birthMinute) 입력으로 전환.
+ *   기존엔 클라 선택지가 시진 대표시(밴드 중앙, 예: 오시=12시)라 무보정이어도 같은 시진이었지만,
+ *   분 단위 입력(예: 3:30)은 경계에서 시주가 갈리므로 클라 calculateSaju 와 동일한
+ *   correctKoreanSolarTime(-32분 + 서머타임)을 반드시 적용 (본인/상대방 시주 계산 기준 일치).
+ *   구 클라 페이로드(분 없음·중앙값)는 보정해도 같은 시진 → 하위호환 안전.
  */
 function computePartnerPillars(p) {
     try {
         const hasHour = p.birthHour != null && p.birthHour >= 0;
-        const s = hasHour
-            ? lunar_javascript_1.Solar.fromYmdHms(p.birthYear, p.birthMonth, p.birthDay, p.birthHour, 0, 0)
-            : lunar_javascript_1.Solar.fromYmd(p.birthYear, p.birthMonth, p.birthDay);
+        let s;
+        if (hasHour) {
+            const [cy, cmo, cd, ch, cmi, cs] = (0, timeCorrection_1.correctKoreanSolarTime)(p.birthYear, p.birthMonth, p.birthDay, p.birthHour, p.birthMinute ?? 0, 0);
+            s = lunar_javascript_1.Solar.fromYmdHms(cy, cmo, cd, ch, cmi, cs);
+        }
+        else {
+            s = lunar_javascript_1.Solar.fromYmd(p.birthYear, p.birthMonth, p.birthDay);
+        }
         const ec = s.getLunar().getEightChar();
         const day = ec.getDay();
         return { year: ec.getYear(), month: ec.getMonth(), day, time: hasHour ? ec.getTime() : null, ilgan: day.charAt(0) };
@@ -1016,7 +1026,7 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo, extraInfo) {
             ? `\n헤어진 시기: ${partnerInfo.breakupYear}년 ${partnerInfo.breakupMonth}월\n→ 현재까지 약 ${Math.max(0, (today.getFullYear() - partnerInfo.breakupYear) * 12 + (today.getMonth() + 1 - partnerInfo.breakupMonth))}개월 경과\n→ 헤어진 기간이 재회 가능성에 미치는 영향을 반드시 분석할 것. breakupDuration 필드에 반영.`
             : '';
         const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
-            ? `\n출생시간: ${partnerInfo.birthHour}시 → 시주(時柱) 분석 가능. 상대방의 시주까지 포함하여 4주(四柱) 완전 교차 분석.`
+            ? `\n출생시간: ${partnerInfo.birthHour}시 ${partnerInfo.birthMinute ?? 0}분 → 시주(時柱) 분석 가능. 상대방의 시주까지 포함하여 4주(四柱) 완전 교차 분석.`
             : '\n출생시간: 미상 → 년주/월주/일주(3주)로 분석.';
         partnerSection = `
 ## 상대방 정보
@@ -1035,7 +1045,7 @@ ${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPil
     }
     else if (topicId === 'marriage' && partnerInfo) {
         const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
-            ? `\n출생시간: ${partnerInfo.birthHour}시 → 시주(時柱) 분석 가능.`
+            ? `\n출생시간: ${partnerInfo.birthHour}시 ${partnerInfo.birthMinute ?? 0}분 → 시주(時柱) 분석 가능.`
             : '\n출생시간: 미상 → 년주/월주/일주(3주)로 분석.';
         partnerSection = `
 ## 현재 연애 상태: 연애 중
@@ -1064,7 +1074,7 @@ ${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPil
         // 2026-05-28 — 썸 vs 연애중 schema·내용 차별화 강화 (이전엔 1줄만 다름)
         const loveStatus = extraInfo?.loveStatus === 'some' ? '썸' : '연애중';
         const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
-            ? `\n출생시간: ${partnerInfo.birthHour}시 → 시주(時柱) 분석 가능.`
+            ? `\n출생시간: ${partnerInfo.birthHour}시 ${partnerInfo.birthMinute ?? 0}분 → 시주(時柱) 분석 가능.`
             : '\n출생시간: 미상 → 년주/월주/일주(3주)로 분석.';
         const statusBlock = loveStatus === '썸'
             ? `→ 썸 단계 핵심: 사주적으로 '관심도 신호'를 읽어내세요.

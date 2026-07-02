@@ -25,8 +25,10 @@ const C = {
 
 export function LegalFooter() {
   const navigate = useNavigate();
-  // 2026-06-12 — 사업자정보 기본 접힘 (법적 요건은 토글 노출로 충족 · 화면 점유 최소화)
-  const [bizOpen, setBizOpen] = useState(false);
+  // 2026-07-02 — 기본 펼침으로 변경. PG 입점심사 반려 요건(포트원 6/22 반려 메일)이
+  //   "상호·번호·대표·주소·전화 하단 **고정 노출**" — 접힘 토글은 심사관에게 미노출로 판정될 수 있음.
+  //   (전자상거래법 §10도 상시 표시가 원칙. 접기 토글은 유지하되 기본값만 펼침)
+  const [bizOpen, setBizOpen] = useState(true);
 
   // 앱인토스에서는 토스가 판매자 → 비노출 (빌드타임 OR 런타임 — 혼용 금지)
   if (isAppintosBuild || isAppsInToss()) return null;

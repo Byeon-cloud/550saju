@@ -17,6 +17,7 @@ import { isAppintosBuild } from '@/lib/env';
 import { isPortoneTestEnabled, requestPortoneTestPayment } from '@/services/payment/portonePayment';
 import type { PortonePgMethod } from '@/services/payment/portonePayment';
 import { trackEvent } from '@/services/analytics';
+import { LegalFooter } from '@/components/layout/LegalFooter';
 
 // ── SSOT 토큰 (D1 fix 2026-04-23 / #55)
 const C = {
@@ -574,6 +575,10 @@ export function ChargePage() {
           에서 확인하세요.
         </p>
       </div>
+
+      {/* 사업자 신원정보 — PG 입점심사 요건 "판매(결제) 페이지 하단 고정 노출" (2026-07-02).
+          앱인토스에서는 LegalFooter 내부 게이팅으로 자동 null. */}
+      <LegalFooter />
 
       {/* ─── §9. CheckoutBar (80px sticky · slide-up) ─── */}
       <AnimatePresence>
