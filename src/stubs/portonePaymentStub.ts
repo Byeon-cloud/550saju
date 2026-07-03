@@ -28,3 +28,33 @@ export async function requestPortoneTestPayment(_opts: {
   // 앱인토스에선 호출 경로가 없지만, 안전하게 no-op 반환
   return { ok: false, cancelled: false, message: '앱에서는 토스 결제를 이용해주세요' };
 }
+
+/* ── 실결제 시그니처 (2026-07-03 · portonePayment.ts 실결제 선구현과 동기) ──
+ *  앱인토스는 토스 IAP 고정 — 전부 비활성 no-op. ait 빌드 깨짐 방지용 시그니처 미러. */
+
+export interface PortoneLiveResult {
+  ok: boolean;
+  cancelled: boolean;
+  message: string;
+  totalUn?: number;
+  paidUn?: number;
+  bonusUn?: number;
+}
+
+export function isPortoneLiveEnabled(): boolean {
+  return false; // 앱인토스: 포트원 실결제 비활성 (토스 IAP 고정)
+}
+
+export async function requestPortoneLivePayment(
+  _pkg: unknown,
+  _method: PortonePgMethod,
+): Promise<PortoneLiveResult> {
+  return { ok: false, cancelled: false, message: '앱에서는 토스 결제를 이용해주세요' };
+}
+
+export async function confirmPortonePaymentServer(
+  _paymentId: string,
+  _amount: number,
+): Promise<PortoneLiveResult> {
+  return { ok: false, cancelled: false, message: '앱에서는 토스 결제를 이용해주세요' };
+}
