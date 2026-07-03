@@ -111,10 +111,22 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
   // 2026-05-29 — 토스 공유 시 ogImageUrl 미전달 → 토스 기본 OG 노출 버그 fix.
   //   현재 정적 OG 1종(og-image.png)만 존재 → 기본값으로 항상 전달. (Phase 2: 콘텐츠별 동적 OG)
   const ogImage = params.ogImageUrl || `${window.location.origin}/og-image.png`;
+  // 2026-07-03 바이럴 퍼널 — 공유 '성사' 측정 (share_click=시도와 짝. method 로 경로 분해)
+  const trackComplete = (method: string) => {
+    import('@/services/analytics').then((a) => a.trackEvent('share_complete', {
+      type: params.type || 'result',
+      method,
+      rewarded: 0, // 콘텐츠 공유는 리워드 무관 (리워드형은 shareReward.inviteFriendsViaToss)
+    })).catch(() => {});
+  };
   if (isAppsInToss()) {
-    return shareViaToss(deepLinkPath, copy.text, ogImage);
+    const ok = await shareViaToss(deepLinkPath, copy.text, ogImage);
+    if (ok) trackComplete('toss_share');
+    return ok;
   }
-  return shareViaWeb(copy.title, copy.text, webUrl);
+  const via = await shareViaWeb(copy.title, copy.text, webUrl);
+  if (via) trackComplete(via);
+  return via !== null;
 }
 
 /** 공유 링크 생성 (레거시 호환 — type 없이 호출 시 result/) */
@@ -138,17 +150,18 @@ async function shareViaToss(deepLinkPath: string, message: string, ogImageUrl?: 
   }
 }
 
-async function shareViaWeb(title: string, text: string, url: string): Promise<boolean> {
+/** @returns 성사 경로 ('web_share' | 'clipboard') 또는 null (취소/실패) — share_complete method 분해용 */
+async function shareViaWeb(title: string, text: string, url: string): Promise<'web_share' | 'clipboard' | null> {
   if (navigator.share) {
     try {
       await navigator.share({ title, text, url });
-      return true;
-    } catch { return false; }
+      return 'web_share';
+    } catch { return null; }
   }
   try {
     await navigator.clipboard.writeText(`${text}\n${url}`);
-    return true;
-  } catch { return false; }
+    return 'clipboard';
+  } catch { return null; }
 }
 
 /**

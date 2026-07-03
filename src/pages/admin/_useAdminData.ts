@@ -86,6 +86,14 @@ export interface PeriodAgg {
   shareByBalanceBand: Record<string, number>;      // 공유자 운 잔액대별 ('0'|'1-3'|'4-9'|'10+')
   sharerCount: number;                             // 공유한 고유 유저 수
   sharesPerUser: number;                           // 한명당 평균 공유 횟수
+  // 바이럴 퍼널 v2 (2026-07-03) — 시도(share_click)→성사(share_complete)→리워드→수신(invite_received)
+  shareClickByType: Record<string, number>;        // 시도 종류별 — invite(친구초대·리워드형) vs 콘텐츠(result/topic/daily/card…)
+  shareCompletes: number;                          // 공유 성사 총계
+  shareCompleteByDay: number[];                    // 성사 일별 (추이 차트 완료 라인)
+  shareCompleteByMethod: Record<string, number>;   // 성사 경로 — toss_viral(토스 SDK 친구초대)|toss_share|web_share|clipboard|web_share_file|download
+  shareCompleteByType: Record<string, number>;     // 성사 종류별
+  shareCompleteRewarded: number;                   // 성사 중 리워드 적립분 (일3회 한도 내)
+  inviteReceived: number;                          // 공유링크 수신 진입 (invite_received — 바이럴 K-factor 분자)
   chargeBySource: Record<string, number>;          // 결제 유발 콘텐츠(진입경로)별 — charge_complete source (2026-06-24)
   rewardByKind: Record<string, { count: number; amount: number }>;
   rewardKindByDay: Record<string, number[]>;       // kind → 일별 건수
@@ -157,6 +165,8 @@ function emptyAgg(days: string[]): PeriodAgg {
     topicSelect: {}, topicOpen: {}, bounceRate: null,
     shareClicks: 0, shareByDay: days.map(() => 0), purchasesByDay: days.map(() => 0), chargesByDay: days.map(() => 0),
     shareByPage: {}, shareByBalanceBand: {}, sharerCount: 0, sharesPerUser: 0, chargeBySource: {},
+    shareClickByType: {}, shareCompletes: 0, shareCompleteByDay: days.map(() => 0),
+    shareCompleteByMethod: {}, shareCompleteByType: {}, shareCompleteRewarded: 0, inviteReceived: 0,
     rewardByKind: {}, rewardKindByDay: {}, rewardTotal: 0,
     adStats: { impression: 0, click: 0, nofill: 0, fail: 0 },
     ai: {},
@@ -261,6 +271,9 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
     case 'share_click': {
       agg.shareClicks += 1;
       if (dayIdx >= 0) agg.shareByDay[dayIdx] += 1;
+      // 2026-07-03 바이럴 퍼널 — 종류별 분해 (invite=친구초대 리워드형 / result·topic·card…=콘텐츠 공유)
+      const clickType = (e.props?.type as string | undefined) || '(unknown)';
+      agg.shareClickByType[clickType] = (agg.shareClickByType[clickType] ?? 0) + 1;
       // 2026-06-24 — 마케팅 분해: 어느 화면(page)에서 공유 최다 + 공유자 운 잔액대 + 고유 공유자 수.
       const page = (e.props?.page as string | undefined) || '(unknown)';
       agg.shareByPage[page] = (agg.shareByPage[page] ?? 0) + 1;
@@ -270,6 +283,22 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
         agg.shareByBalanceBand[band] = (agg.shareByBalanceBand[band] ?? 0) + 1;
       }
       scratch.sharerByUser[userKey] = (scratch.sharerByUser[userKey] ?? 0) + 1;
+      break;
+    }
+    case 'share_complete': {
+      // 2026-07-03 바이럴 퍼널 — 공유 '성사' (시도-성사 델타 = 취소율. 토스 SDK 일3회 한도 초과 성사 포함)
+      agg.shareCompletes += 1;
+      if (dayIdx >= 0) agg.shareCompleteByDay[dayIdx] += 1;
+      const method = (e.props?.method as string | undefined) || '(unknown)';
+      agg.shareCompleteByMethod[method] = (agg.shareCompleteByMethod[method] ?? 0) + 1;
+      const cType = (e.props?.type as string | undefined) || '(unknown)';
+      agg.shareCompleteByType[cType] = (agg.shareCompleteByType[cType] ?? 0) + 1;
+      if (Number(e.props?.rewarded) === 1) agg.shareCompleteRewarded += 1;
+      break;
+    }
+    case 'invite_received': {
+      // 2026-07-03 — 공유링크 수신 진입 (기록만 되고 어드민 미집계였던 것 복구 — K-factor 분자)
+      agg.inviteReceived += 1;
       break;
     }
     case 'reward_earned': {

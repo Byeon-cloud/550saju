@@ -119,6 +119,9 @@ export async function inviteFriendsViaToss(opts?: {
         onEvent: (event: any) => {
           if (event?.type === 'sendViral') {
             const earned = claimShareReward(); // 일 3회 한도 (claimShareReward 내장)
+            // 2026-07-03 바이럴 퍼널 — 공유 '성사' 측정. 일 3회 한도 초과분(rewarded:0)도
+            //   실제 친구 공유 완료이므로 반드시 기록 (기존엔 reward_earned 만 있어 4번째~ 공유가 유령).
+            track('share_complete', { type: 'invite', method: 'toss_viral', rewarded: earned > 0 ? 1 : 0 });
             if (earned > 0) opts?.onReward?.(earned);
             else opts?.onShared?.();
           }
@@ -137,13 +140,18 @@ export async function inviteFriendsViaToss(opts?: {
     try {
       await navigator.share({ title: '사주500', text, url });
       const earned = claimShareReward();
+      track('share_complete', { type: 'invite', method: 'web_share', rewarded: earned > 0 ? 1 : 0 });
       if (earned > 0) opts?.onReward?.(earned);
       else opts?.onShared?.();
     } catch {
-      opts?.onCancel?.();
+      opts?.onCancel?.(); // 취소 = 시도(share_click)만 남음 → 어드민에서 시도-성사 델타로 취소율 파생
     }
   } else {
-    try { await navigator.clipboard.writeText(`${text}\n${url}`); } catch { /* noop */ }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      // 클립보드 복사는 '약한 성사' — method 로 구분해 집계 (실공유 여부 불명)
+      track('share_complete', { type: 'invite', method: 'clipboard', rewarded: 0 });
+    } catch { /* noop */ }
     opts?.onShared?.();
   }
 }

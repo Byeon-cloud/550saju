@@ -64,9 +64,40 @@ export function TabAcquisition({ d }: { d: AdminData }) {
   const shareSeries = useMemo(() => cur.days.map((day, i) => ({
     day: day.slice(5),
     cur: cur.shareByDay[i],
+    done: cur.shareCompleteByDay?.[i] ?? 0,
     prev: prev.shareByDay[i] ?? 0,
   })), [cur, prev]);
   const hasShare = cur.shareClicks > 0 || prev.shareClicks > 0;
+
+  // 바이럴 퍼널 v2 (2026-07-03) — 시도→성사→리워드→수신
+  const shareRewardCount = cur.rewardByKind?.['share']?.count ?? 0;
+  const completeRate = cur.shareClicks > 0 ? Math.round((cur.shareCompletes / cur.shareClicks) * 100) : null;
+  const METHOD_LABEL: Record<string, string> = {
+    toss_viral: '토스 친구초대 (SDK)', toss_share: '토스 공유', web_share: '웹 공유 (네이티브)',
+    web_share_file: '이미지 공유', clipboard: '링크·이미지 복사', download: '이미지 저장',
+  };
+  const TYPE_LABEL: Record<string, string> = {
+    invite: '친구초대 (리워드형)', result: '종합사주', topic: '주제분석', daily: '오늘운세',
+    dream: '꿈해몽', card: '사주 카드', event_invite: '이벤트 초대', premium: '종합사주',
+  };
+  const methodRows = useMemo(() =>
+    Object.entries(cur.shareCompleteByMethod ?? {})
+      .map(([m, n]) => ({ label: METHOD_LABEL[m] ?? m, n }))
+      .sort((a, b) => b.n - a.n),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [cur]);
+  const typeRows = useMemo(() => {
+    const clicks = cur.shareClickByType ?? {};
+    const dones = cur.shareCompleteByType ?? {};
+    const keys = Array.from(new Set([...Object.keys(clicks), ...Object.keys(dones)]));
+    return keys.map((k) => ({
+      label: TYPE_LABEL[k] ?? k,
+      clicks: clicks[k] ?? 0,
+      dones: dones[k] ?? 0,
+      rate: (clicks[k] ?? 0) > 0 ? Math.round(((dones[k] ?? 0) / clicks[k]) * 100) : null,
+    })).sort((a, b) => b.clicks - a.clicks);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cur]);
 
   // 구매·충전 일별 추이 (2026-06-27) — 폭증 감지용
   const purchaseSeries = useMemo(() => cur.days.map((day, i) => ({
@@ -180,15 +211,61 @@ export function TabAcquisition({ d }: { d: AdminData }) {
         </div>
       </Section>
 
-      <Section title="공유 클릭 추이 (share_click)" caption="· 실선 = 현 기간 — 점선 = 직전 동일 기간">
+      <Section
+        title="바이럴 퍼널 (공유)"
+        caption="· 시도 = 공유 버튼 클릭(share_click) — 성사 = 실제 공유 완료(share_complete: 토스 SDK sendViral·웹 공유 확정·복사) — 리워드 = 일 3회 한도 내 적립 — 수신 = 공유 링크로 들어온 방문(invite_received)"
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 10 }}>
+          <Kpi label="공유 시도" value={fmtNum(cur.shareClicks)} />
+          <Kpi label="공유 성사" value={fmtNum(cur.shareCompletes)} sub={completeRate != null ? `성사율 ${completeRate}%` : undefined} accent />
+          <Kpi label="리워드 적립" value={fmtNum(shareRewardCount)} sub="일 3회 한도 내 (kind=share)" />
+          <Kpi label="공유 유입" value={fmtNum(cur.inviteReceived)} sub="공유 링크 수신 방문" />
+        </div>
+
+        {/* 성사 경로별 — 토스 SDK vs 일반 공유 분해 (준기 요청 2026-07-03) */}
+        {methodRows.length > 0 && (
+          <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '12px 16px', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.mute, marginBottom: 8 }}>성사 경로별 (share_complete method)</div>
+            {methodRows.map((r) => {
+              const max = methodRows[0]?.n || 1;
+              return (
+                <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span style={{ width: 140, fontSize: 12, color: C.ink, flexShrink: 0 }}>{r.label}</span>
+                  <div style={{ flex: 1, height: 14, background: '#F3EFE6', borderRadius: 7, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.max(3, Math.round((r.n / max) * 100))}%`, height: '100%', background: C.gold, borderRadius: 7 }} />
+                  </div>
+                  <span style={{ width: 56, fontSize: 12, color: C.ink, textAlign: 'right', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}><b>{fmtNum(r.n)}건</b></span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 종류별 시도→성사 — 친구초대(리워드형) vs 콘텐츠 공유 */}
+        {typeRows.length > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <DataTable
+              rows={typeRows}
+              columns={[
+                { key: 'label', label: '공유 종류', render: (v) => <b style={{ color: C.ink }}>{v}</b> },
+                { key: 'clicks', label: '시도', numeric: true },
+                { key: 'dones', label: '성사', numeric: true },
+                { key: 'rate', label: '성사율', numeric: true, render: (v) => (v == null ? '-' : `${v}%`) },
+              ] as Col[]}
+            />
+          </div>
+        )}
+
         {!hasShare ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.mute, padding: '0 8px 6px' }}>일별 추이 — 골드 = 시도 · 그린 = 성사 · 점선 = 직전 기간 시도</div>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={shareSeries} margin={{ left: 0, right: 8 }}>
                 <XAxis dataKey="day" tick={{ fontSize: 10, fill: C.mute }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10, fill: C.mute }} width={32} allowDecimals={false} />
-                <Tooltip formatter={(v: any, name: any) => [`${fmtNum(Number(v))}회`, name === 'cur' ? '현 기간' : '직전 기간']} />
+                <Tooltip formatter={(v: any, name: any) => [`${fmtNum(Number(v))}회`, name === 'cur' ? '시도' : name === 'done' ? '성사' : '직전 기간']} />
                 <Line type="monotone" dataKey="cur" stroke={C.gold} strokeWidth={2.5} dot={{ r: 2 }} />
+                <Line type="monotone" dataKey="done" stroke="#6FA08C" strokeWidth={2.5} dot={{ r: 2 }} />
                 <Line type="monotone" dataKey="prev" stroke={C.mute} strokeWidth={1.5} strokeDasharray="5 4" dot={false} />
               </LineChart>
             </ResponsiveContainer>

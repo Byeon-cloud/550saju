@@ -129,6 +129,16 @@ export async function shareSajuCardImage(
   text: string,
   url: string,
 ): Promise<ShareResult> {
+  // 2026-07-03 바이럴 퍼널 — 사주 카드 이미지 공유도 시도/성사 계측 (기존 미트래킹 → 유령이었음)
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', {
+    type: 'card',
+    page: typeof window !== 'undefined' ? window.location.pathname : '',
+  })).catch(() => {});
+  const trackCardComplete = (method: string) => {
+    import('@/services/analytics').then((a) => a.trackEvent('share_complete', {
+      type: 'card', method, rewarded: 0,
+    })).catch(() => {});
+  };
   // File 객체 (Web Share API 가 File 만 허용)
   const file = (() => {
     try {
@@ -160,6 +170,7 @@ export async function shareSajuCardImage(
           url,
           files: [file],
         });
+        trackCardComplete('web_share_file');
         return {
           ok: true,
           via: 'web-share',
@@ -190,6 +201,7 @@ export async function shareSajuCardImage(
       await navigator.clipboard.write([
         new ClipboardItemCtor({ 'image/png': blob }),
       ]);
+      trackCardComplete('clipboard');
       return {
         ok: true,
         via: 'clipboard',
@@ -203,6 +215,7 @@ export async function shareSajuCardImage(
   // 3차: 강제 다운로드 (모든 폴백 실패 — 갤러리 저장 후 수동 공유)
   try {
     downloadBlob(blob, filename);
+    trackCardComplete('download');
     return {
       ok: true,
       via: 'download',
