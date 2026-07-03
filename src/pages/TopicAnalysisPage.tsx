@@ -3337,7 +3337,10 @@ export function TopicAnalysisPage() {
     const key = `topic_${topicId}_${selected.id}`;
     try {
       const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : null;
+      const parsed = raw ? JSON.parse(raw) : null;
+      // 2026-07-03 P0 — partial 박제 캐시는 자동 로드하지 않음 (없는 셈 → 아래 recover 가 서버 완성본으로 치유)
+      if (parsed?.__partial) return null;
+      return parsed;
     } catch { return null; }
   }, [selected, topicId]);
 
@@ -3370,7 +3373,11 @@ export function TopicAnalysisPage() {
       try {
         const m = await import('@/services/storage/localStore');
         const pend = m.getPendingSpends().find((p) => p.type === `topic:${topicId}`);
-        if (!pend) return; // 미해결 차감 없음 = 복구할 끊긴 생성 없음
+        // 2026-07-03 P0 — __partial 박제 저장본도 복구 대상 (pending 이 이미 환불·해제된 과거 피해 포함).
+        const partialReport = m.getReports().find((r: any) =>
+          r.contentType === 'topic' && r.profileId === selected.id
+          && r.aiResult?.topicId === topicId && r.aiResult?.__partial === true);
+        if (!pend && !partialReport) return; // 복구할 끊긴/반쪽 생성 없음
         const [{ getFunctions, httpsCallable }, { app }, { ensureAuth }] = await Promise.all([
           import('firebase/functions'), import('@/services/auth/firebase'), import('@/services/auth/authService'),
         ]);
@@ -3388,7 +3395,8 @@ export function TopicAnalysisPage() {
             type: 'paid', contentType: 'topic', createdAt: new Date().toISOString(),
             aiResult: { topicId, ...content }, profileId: selected.id,
           });
-          m.clearPendingSpend(pend.id); // 결과 복구됨 → 환불 대신 결과 전달
+          if (partialReport) { try { m.deleteReport(partialReport.id); } catch { /* noop */ } } // 반쪽 리포트 정리 (보관함 중복 방지)
+          if (pend) m.clearPendingSpend(pend.id); // 결과 복구됨 → 환불 대신 결과 전달
         }
       } catch { /* noop — 실패해도 기존 흐름(재구매/자동환불) 유지 */ }
     })();
@@ -3516,18 +3524,27 @@ export function TopicAnalysisPage() {
         //   첫 paint 조건은 substantive content 도착 시점에만 (title 단독 X)
         let latestPartial: any = null;
         res = await new Promise<{ reportId: string; content: any }>((resolve, reject) => {
-          // 2026-05-29 C2 fix — 기존: 타임아웃이 Promise 를 resolve/reject 하지 않아, 스트림이 조용히
-          //   끊기면 await 영구 hang → 보관함 저장 누락 + isAnalyzingRef 영구 잠김(재분석 불가).
-          //   수정: 60s 경과 시 받은 partial 있으면 그걸로 resolve(저장 진입), 없으면 reject(→ callable 폴백).
-          const safetyTimeoutId = setTimeout(() => {
+          // 2026-07-03 P0 fix (CS "연애운 풀이가 나오지 않아요") — 기존 60s 단일 타임아웃의 3중 결함:
+          //   ① 정상 생성이 60-90s 인데 60s 에 마감 → 부분(partial) 결과가 '완성본'처럼 저장·박제
+          //   ② 그 경로가 pending 까지 해제 → 서버 완성본 복구(recoverTopicResult, pending 필요) 영구 차단
+          //   ③ 첫 paint 시 타이머 해제 → 이후 스트림 끊기면 영구 hang (C2 가 잡았던 증상 부분 재발)
+          //   수정: [화면 공개 60s]와 [데이터 마감 150s] 분리. partial 박제는 최후수단 + __partial 마킹
+          //   (pending 유지 → 재진입 시 서버 완성본으로 자가 치유).
+          const paintTimeoutId = setTimeout(() => {
             if (!phaseShown) {
               phaseShown = true;
-              console.warn('[topic] 60s 안전 타임아웃 → phase=result + 마감 처리');
+              console.warn('[topic] 60s — 화면 부분 공개 (생성은 150s 까지 계속 대기)');
               setPhase('result');
             }
-            if (latestPartial) resolve({ reportId: '', content: latestPartial });
-            else reject(new Error('topic stream timeout'));
           }, 60_000);
+          const safetyTimeoutId = setTimeout(() => {
+            if (!phaseShown) { phaseShown = true; setPhase('result'); }
+            if (latestPartial) {
+              console.warn('[topic] 150s 마감 — partial 저장 (__partial 마킹 · pending 유지 → 재진입 복구)');
+              resolve({ reportId: '', content: { ...latestPartial, __partial: true } });
+            } else reject(new Error('topic stream timeout'));
+          }, 150_000);
+          const clearTimers = () => { clearTimeout(paintTimeoutId); clearTimeout(safetyTimeoutId); };
           generateTopicAnalysisStream(
             { topicId: topicId!, sajuData: selected.sajuData, baseScore: navState?.baseScore, partnerInfo: partner, extraInfo: finalExtra },
             {
@@ -3559,23 +3576,23 @@ export function TopicAnalysisPage() {
                   const hasMinKeys = oneLineLen >= 100 || firstSecOk;
                   if (!phaseShown && hasMinKeys) {
                     phaseShown = true;
-                    clearTimeout(safetyTimeoutId);
+                    clearTimeout(paintTimeoutId); // ⚠️ paint 타이머만 해제 — 150s 마감 타이머는 onDone 까지 유지 (hang 차단)
                     console.log(`[topic] 첫 paint (${Date.now() - t0}ms, ${totalChars}자)`);
                     setPhase('result');
                   }
                 } catch (err) { console.warn('[topic onPartial guard]', err); }
               },
               onDone: ({ reportId, content }) => {
-                clearTimeout(safetyTimeoutId);
+                clearTimers();
                 console.log(`[topic SSE] done (${Date.now() - t0}ms)`);
                 resolve({ reportId, content });
               },
               onError: (msg) => {
-                clearTimeout(safetyTimeoutId);
+                clearTimers();
                 reject(new Error(msg));
               },
             },
-          ).catch((e) => { clearTimeout(safetyTimeoutId); reject(e); });
+          ).catch((e) => { clearTimers(); reject(e); });
         });
       } catch (streamErr: any) {
         console.warn('[topic] SSE 실패 → callable 폴백:', streamErr?.message);
@@ -3606,7 +3623,13 @@ export function TopicAnalysisPage() {
         profileId: selected.id, // 보관함 삭제 시 topic_<id>_<profileId> 캐시 동반 제거용 (2026-06-17)
       });
 
-      clearPendingSpend(pendingId); // 결과 저장 완료 — pending 해제
+      // 2026-07-03 P0 — partial 박제 시 pending 유지: 재진입 시 recoverTopicResult 가 서버 완성본으로
+      //   교체(그때 clear). 5분 내 미재진입이면 부팅 reconcile 이 자동환불 — 반쪽 결과엔 환불이 정당.
+      if (!(contentFinal as any)?.__partial) {
+        clearPendingSpend(pendingId); // 완성본 저장 완료 — pending 해제
+      } else {
+        console.warn('[topic] partial 저장 — pending 유지 (재진입 복구 대기)');
+      }
       setPhase('result');
     } catch (e: any) {
       console.error('주제 분석 실패:', e);
