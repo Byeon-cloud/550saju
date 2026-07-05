@@ -2196,6 +2196,9 @@ function TopicTopRecommend({
  *  · 공유 클릭 → ShareModal 열기 (ContactsViral SDK 또는 Web Share API)
  *  · PDF 클릭 → generatePremiumPdf 호출 후 새 탭으로 다운로드
  */
+/** 2026-07-03 준기 결정 — PDF 완성판(강조 태그 변환 + 프리미엄 8필드 반영 + puppeteer A4 검증) 전까지 OFF */
+const PDF_ENABLED = false;
+
 function PremiumResultFooter({
   reportId,
   report,
@@ -2272,6 +2275,11 @@ function PremiumResultFooter({
           <div className="ti">친구에게 공유하기</div>
           <div className="sb">결과 카드 송출</div>
         </div>
+        {/* 2026-07-03 준기 결정 — PDF 버튼 비노출 ("완벽 아니면 없앤다").
+            근거: 실검증 결과 ① 본문 강조 태그(<strong> 등)가 esc 되어 문자 그대로 노출(전 섹션 오염)
+            ② 템플릿이 sections 텍스트만 담아 앱 §01~10 시각화·8필드 대비 얕음 ③ puppeteer A4 미검증.
+            서버 파이프라인(인덱스·업로드·서명URL)은 살아있으므로, 템플릿 완성판 재작성 후 재노출. */}
+        {PDF_ENABLED && (
         <div
           className="btn"
           role="button"
@@ -2290,6 +2298,7 @@ function PremiumResultFooter({
           <div className="ti">{pdfBusy ? 'PDF 생성 중…' : 'PDF 파일 저장'}</div>
           <div className="sb">A4 풀리포트</div>
         </div>
+        )}
       </div>
       <ShareModal
         isOpen={shareOpen}
