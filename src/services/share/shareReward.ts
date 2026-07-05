@@ -37,8 +37,10 @@ function saveShareLog(log: ShareLog): void {
   localStorage.setItem(SHARE_LOG_KEY, JSON.stringify(log));
 }
 
+// 2026-07-03 CS fix — UTC 날짜라 일 3회 리셋이 KST 오전 9시에야 됐음 ("다음날 리워드 안 들어와요") → KST 기준
+import { kstToday } from '@/utils/kstDate';
 function getToday(): string {
-  return new Date().toISOString().split('T')[0];
+  return kstToday();
 }
 
 /** 오늘 남은 공유 리워드 횟수 */

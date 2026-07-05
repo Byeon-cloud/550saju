@@ -2223,20 +2223,13 @@ function PremiumResultFooter({
     try {
       const r = await generatePremiumPdf({ reportId, profile, sajuData, aiResult });
       if (r?.url) {
-        // 앱인토스 분기 — window.open 시 외부 브라우저로 튕김 → a[download] 강등
+        // 2026-07-03 CS fix ("PDF 다운로드가 안 돼요") — 토스 웹뷰는 a[download] 무반응(다운로드 UI 없음).
+        //   기존 '외부 브라우저 튕김 방지' a[download] 강등이 오히려 무동작이었음 → window.open 복원.
+        //   외부 브라우저로 열리는 게 앱인토스에서 PDF 를 받을 수 있는 유일한 경로.
         const { isAppsInToss } = await import('@/services/payment/iapService');
-        if (isAppsInToss()) {
-          const a = document.createElement('a');
-          a.href = r.url;
-          a.download = `saju500-${reportId}.pdf`;
-          a.rel = 'noopener noreferrer';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        } else {
-          window.open(r.url, '_blank');
-        }
-        toast.show('PDF 다운로드를 시작했어요', 'success');
+        const inToss = isAppsInToss();
+        window.open(r.url, '_blank');
+        toast.show(inToss ? '브라우저에서 PDF가 열려요. 저장해 주세요' : 'PDF 다운로드를 시작했어요', 'success');
       } else {
         toast.show('PDF 생성에 실패했어요', 'warning');
       }

@@ -14,6 +14,7 @@
 //  - "오늘의 운세" 이름 강조 과잉 제거 / "처음부터 끝까지 읽어드립니다" / "가족·지인 재조회"
 //  - "AI 같지 않은" 카피 제거 / "광고는 있지만" 후기 치환
 
+import { kstToday } from '@/utils/kstDate';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -191,7 +192,7 @@ export function HomePage() {
       REGISTRY.career, REGISTRY.reunion, REGISTRY.health, REGISTRY.study, REGISTRY.exam,
       REGISTRY.business, REGISTRY.move,
     ];
-    const today = new Date().toISOString().slice(0, 10);
+    const today = kstToday(); // 2026-07-03 — UTC 는 KST 오전 9시에야 날짜가 바뀜 → KST 고정
     let seed = 0;
     for (let i = 0; i < today.length; i++) seed = (seed * 31 + today.charCodeAt(i)) % 2147483647;
     const rng = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };

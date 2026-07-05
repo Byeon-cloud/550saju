@@ -16,6 +16,7 @@
 //   - SSOT 토큰 (#41 sweep + D1 fix)
 //   - Flippable 정적화 (#39) — 결과 phase에서 SajuMiniCard 제거 (day-tile로 대체) · 재플립 추가 금지
 
+import { kstToday } from '@/utils/kstDate';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -767,7 +768,7 @@ function ResultView({
     await shareResult({
       type: 'daily',
       name: profile?.name || '나',
-      reportId: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
+      reportId: kstToday(), // YYYY-MM-DD (KST — 2026-07-03 UTC 날짜 fix)
     });
   };
 

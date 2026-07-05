@@ -1,3 +1,4 @@
+import { kstToday } from '@/utils/kstDate';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
@@ -547,7 +548,7 @@ export function DreamPage() {
                   await shareResult({
                     type: 'dream',
                     name: profile?.name || '나',
-                    reportId: new Date().toISOString().slice(0, 10),
+                    reportId: kstToday(), // KST (2026-07-03 UTC 날짜 fix)
                   });
                 }}
                 onChat={async () => {

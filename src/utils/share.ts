@@ -106,7 +106,9 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
   // 2026-06-22 마케팅 측정 — 공유 URL 에 ref=share 부착. 수신자 진입 시 captureUtm 이 utm.source='share' 로
   //   태깅 + App 부팅이 invite_received 발화 → "공유가 신규 방문/전환을 데려오는지(바이럴 K-factor)" 측정.
   const webUrl = `${window.location.origin}/share/${copy.urlPath}?ref=share`;
-  const deepLinkPath = `/${copy.urlPath}?ref=share`;
+  // 2026-07-03 CS fix ("공유 링크가 시스템 에러") — 토스 딥링크가 /share/ 프리픽스 없이 결과 페이지로
+  //   직행 → 수신자 기기엔 그 리포트가 없어 에러. 웹과 동일하게 공유 수신 페이지(SharePage: 미리보기+초대 CTA)로.
+  const deepLinkPath = `/share/${copy.urlPath}?ref=share`;
 
   // 2026-05-29 — 토스 공유 시 ogImageUrl 미전달 → 토스 기본 OG 노출 버그 fix.
   //   현재 정적 OG 1종(og-image.png)만 존재 → 기본값으로 항상 전달. (Phase 2: 콘텐츠별 동적 OG)

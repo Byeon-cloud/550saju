@@ -23,6 +23,8 @@
  * - 사주대화는 무료 패스 소진 후 1운(3회) 필요 (2026-04-21 갭리포트 §2-2)
  */
 
+import { kstToday } from '@/utils/kstDate';
+
 const PASS_KEY = 'saju500_daily_passes';
 
 type PassType = 'daily' | 'dream' | 'chat';
@@ -32,8 +34,9 @@ interface DailyPasses {
   used: Record<string, boolean>;
 }
 
+// 2026-07-03 fix — UTC 날짜라 "매일 자정 리셋"이 실제론 KST 오전 9시에 됐음 (아침에 무료 안 풀림) → KST
 function getToday(): string {
-  return new Date().toISOString().split('T')[0];
+  return kstToday();
 }
 
 function getPasses(): DailyPasses {
