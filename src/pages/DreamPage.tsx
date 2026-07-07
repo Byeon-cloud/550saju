@@ -254,9 +254,11 @@ export function DreamPage() {
           //   iOS 백그라운드 등으로 SSE 가 죽으면 await 영구 hang → setAiResult/saveReport 미실행
           //   → 스켈레톤 무한 + 보관함 저장 0. 수정: 받은 partial 있으면 resolve(저장 진입), 없으면 reject(→ callable 폴백).
           const safetyId = setTimeout(() => {
+            // 2026-07-03 fix — 기존: partial 을 완성본으로 resolve → __partial 마킹 없이 박제(1운 잠금해제 시
+            //   빈 섹션 결제). 수정: 항상 reject → callable 폴백(완성본 재생성). partial 저장 경로 제거.
+            //   (스트림 silent-break 는 이제 리더의 강제 onError 로 대부분 즉시 처리 — 이 타이머는 백업)
             if (!firstPaintDone) { firstPaintDone = true; setIsLoading(false); }
-            if (latestPartial && latestPartial.title) resolve(latestPartial);
-            else reject(new Error('dream stream timeout'));
+            reject(new Error('dream stream timeout'));
           }, 60_000);
           generateDreamFreeStream(
             { saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined },
@@ -395,6 +397,14 @@ export function DreamPage() {
     setShowUnlockConfirm(false);
     if (isDeepAnalyzingRef.current || unlocked) return;
     if (!profile?.sajuData || !aiResult) return;
+    // 2026-07-03 머니가드 — 잠금 콘텐츠(lockedXxx.full)가 비어 있으면 결제 차단 (반쪽 결과에 1운 방지).
+    //   무료 생성이 partial/미완이면 여기서 막고 재생성 유도 → 1운 소실 원천 차단.
+    const lockedFull = [aiResult?.lockedDayganRead?.full, aiResult?.lockedOhengFlow?.full, aiResult?.lockedTimeline?.full];
+    const anyLockedReady = lockedFull.some((v) => typeof v === 'string' && v.trim().length >= 30);
+    if ((aiResult as any)?.__partial || !anyLockedReady) {
+      toast.show('해석이 아직 다 준비되지 않았어요. 다시 시도한 뒤 열어주세요', 'warning');
+      return;
+    }
     isDeepAnalyzingRef.current = true;
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');

@@ -533,6 +533,8 @@ export async function generateDailyFortuneStream(
         }
       }
     }
+    // 2026-07-03 silent-break 가드 — done/error 없이 스트림 종료 시 강제 onError (무한로딩 차단 · 종합사주 스트림과 동일)
+    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
   } catch (e: any) {
     console.error('[generateDailyFortuneStream] fetch failed:', e?.message, e);
     callbacks.onError(e?.message || '네트워크 오류');
@@ -647,6 +649,8 @@ export async function generateTopicAnalysisStream(
         }
       }
     }
+    // 2026-07-03 silent-break 가드 — done/error 없이 스트림 종료 시 강제 onError (무한로딩 차단 · 종합사주 스트림과 동일)
+    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
   } catch (e: any) {
     console.error('[generateTopicAnalysisStream] fetch failed:', e?.message);
     callbacks.onError(e?.message || '네트워크 오류');
@@ -812,6 +816,8 @@ export async function generateDreamFreeStream(
         }
       }
     }
+    // 2026-07-03 silent-break 가드 — done/error 없이 스트림 종료 시 강제 onError (무한로딩 차단 · 종합사주 스트림과 동일)
+    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
   } catch (e: any) {
     console.error('[generateDreamFreeStream] fetch failed:', e?.message);
     callbacks.onError(e?.message || '네트워크 오류');
