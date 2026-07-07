@@ -34,7 +34,23 @@ function computePartnerPillars(p: { birthYear: number; birthMonth: number; birth
       const [cy, cmo, cd, ch, cmi, cs] = correctKoreanSolarTime(
         p.birthYear, p.birthMonth, p.birthDay, p.birthHour as number, p.birthMinute ?? 0, 0,
       );
-      s = Solar.fromYmdHms(cy, cmo, cd, ch, cmi, cs);
+      // 2026-07-03 자시(子時) 일주 fix — 클라 calculateSaju 와 동일 정책.
+      //   진태양시 보정이 자정을 넘긴 조자시(자정 직후) 는 일주가 전날로 밀리므로,
+      //   자정을 넘긴 경우에만 일주=입력일(표준시) 로 되돌리고 시진은 대표 시각으로 재배치
+      //   (lunar 이 당일 일간 오자둔으로 시천간까지 일관 계산). 야자시 등 자정 미크로스는 회귀 0.
+      const crossedMidnight =
+        cy !== p.birthYear || cmo !== p.birthMonth || cd !== p.birthDay;
+      if (crossedMidnight) {
+        const zhiIdx = Math.floor((ch + 1) / 2) % 12; // 子=0 … 亥=11
+        const REP_TIME: Array<[number, number]> = [
+          [0, 30], [2, 0], [4, 0], [6, 0], [8, 0], [10, 0],
+          [12, 0], [14, 0], [16, 0], [18, 0], [20, 0], [22, 0],
+        ];
+        const [rh, rm] = REP_TIME[zhiIdx];
+        s = Solar.fromYmdHms(p.birthYear, p.birthMonth, p.birthDay, rh, rm, 0);
+      } else {
+        s = Solar.fromYmdHms(cy, cmo, cd, ch, cmi, cs);
+      }
     } else {
       s = Solar.fromYmd(p.birthYear, p.birthMonth, p.birthDay);
     }

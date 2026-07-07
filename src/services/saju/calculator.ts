@@ -16,6 +16,11 @@ export { findCurrentDaeun } from './daeunCurrent';
  *  · 출생시간 미입력 시 보정 X (시주 자체 미산출)
  */
 export function calculateSaju(input: SajuInput): SajuData {
+  // 대운(大運) 전용 solar — 대운수(시작 나이)는 '출생 순간 → 절기'의 거리로 계산되므로
+  //   crossed-midnight 케이스에서 pillars 용 solar(입력일 대표시각)와 순간이 다르다.
+  //   진태양시 실제 순간(전날 23:xx)을 대운 계산에만 별도로 넘겨 대운수 정확도를 보존한다.
+  //   (자정 미크로스면 null → pillars 용 ec 를 그대로 사용 → 회귀 0)
+  let daeunSolar: Solar | null = null;
   const solar = input.hasBirthTime
     ? (() => {
         // 한국 진태양시 보정 적용 (입력 KST → 진태양시)
@@ -27,19 +32,40 @@ export function calculateSaju(input: SajuInput): SajuData {
           input.birthMinute!,
           0,
         );
+        // 2026-07-03 자시(子時) 일주(日柱) fix — 진태양시 -32분 보정이 자정을 넘겨 날짜가
+        //   바뀌는 조자시(자정 직후 00:00~00:31 등) 는 일주가 전날로 밀리는 버그가 있었다.
+        //   → 자정을 넘긴 경우에만: 일주(날짜)는 입력일(표준시 자정 경계)로 되돌리고, 시진(時支)은
+        //     진태양시로 판정한 시지의 '대표 시각'을 입력일에 배치해 lunar 이 당일 일간 오자둔으로
+        //     시천간까지 일관 계산하게 한다. (정책: 일주=표준시 / 시주=진태양시 · 백과사전 조자시=당일 정합)
+        //   자정을 넘기지 않는 대다수(야자시 23:00~24:00 포함) 는 기존 경로 그대로 → 회귀 0.
+        const crossedMidnight =
+          y !== input.birthYear || mo !== input.birthMonth || d !== input.birthDay;
+        if (crossedMidnight) {
+          // 대운은 진태양시 실제 출생 순간(전날 23:xx)이 절기 거리 기준 — 대운 전용 solar 로 보존
+          daeunSolar = Solar.fromYmdHms(y, mo, d, h, mi, s);
+          const zhiIdx = Math.floor((h + 1) / 2) % 12; // 子=0 … 亥=11 (진태양시 시각 기준)
+          const REP_TIME: Array<[number, number]> = [
+            [0, 30], [2, 0], [4, 0], [6, 0], [8, 0], [10, 0],
+            [12, 0], [14, 0], [16, 0], [18, 0], [20, 0], [22, 0],
+          ];
+          const [rh, rm] = REP_TIME[zhiIdx];
+          return Solar.fromYmdHms(input.birthYear, input.birthMonth, input.birthDay, rh, rm, 0);
+        }
         return Solar.fromYmdHms(y, mo, d, h, mi, s);
       })()
     : Solar.fromYmd(input.birthYear, input.birthMonth, input.birthDay);
 
   const lunar = solar.getLunar();
   const ec = lunar.getEightChar();
+  // 대운 전용 EightChar — crossed-midnight 시 진태양시 순간, 그 외엔 pillars 용 ec 재사용
+  const daeunEc = daeunSolar ? daeunSolar.getLunar().getEightChar() : ec;
 
   const pillars = extractPillars(ec, input.hasBirthTime);
   const elements = calculateElements(pillars);
   const sipsung = extractSipsung(ec, input.hasBirthTime);
   const jijanggan = extractJijanggan(ec, input.hasBirthTime);
   const unyoung12 = extractUnyoung12(ec, input.hasBirthTime);
-  const daeun = extractDaeun(ec, input.gender === 'male' ? 1 : 0);
+  const daeun = extractDaeun(daeunEc, input.gender === 'male' ? 1 : 0);
   const napeum = extractNapeum(ec, input.hasBirthTime);
   const gilsin = extractSinsal(lunar.getDayJiShen(), 'gilsin');
   const hyungsal = extractSinsal(lunar.getDayXiongSha(), 'hyungsal');

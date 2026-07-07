@@ -4,7 +4,7 @@
  *
  * 2026-07-05 완성판 재작성 (준기 결정 "완벽 아니면 없앤다" 해제 조건):
  *   ① AI 본문 강조 태그를 이스케이프하지 않고 화이트리스트 변환 (앱 강조 3-tier SSOT 동일)
- *      - <strong> 황금볼드 + 형광펜 rgba(184,150,90,.32) — 유저 일상 결론
+ *      - <strong> 황금볼드(#A37A2E) + 형광펜 rgba(244,209,102,.55) — 유저 일상 결론 (앱 SSOT)
  *      - <u>      골드 밑줄 #B8965A — 시기·숫자·색·방위
  *      - <b>      검정 볼드 — 한자 첫 등장
  *      - 그 외 태그는 제거, 나머지 텍스트는 전부 이스케이프 (XSS 방어 유지)
@@ -51,6 +51,16 @@ function decodeEntities(s) {
         .replace(/&#39;/gi, "'")
         .replace(/&nbsp;/gi, ' ');
 }
+/**
+ * 제어문자 제거 — C0/C1 컨트롤(탭·개행·CR 제외).
+ *  · richText 는 태그 자리표시자로 NUL(U+0000) 을 쓰므로, 입력에 섞인 NUL 이 자리표시자와
+ *    충돌해 강조 태그가 어긋나거나(포맷 블리드) puppeteer 로 흘러가 대체글리프(U+FFFD)로 찍히는 것을 원천 차단.
+ *  · \t(\x09)·\n(\x0a)·\r(\x0d) 는 문단 분리에 필요하므로 보존.
+ */
+function stripControls(s) {
+    // eslint-disable-next-line no-control-regex
+    return s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
+}
 /** 마크다운 서식 제거 (태그는 건드리지 않음) */
 function stripMdMarks(s) {
     return s
@@ -63,7 +73,7 @@ function stripMdMarks(s) {
 function plainText(v) {
     if (v === null || v === undefined)
         return '';
-    return stripMdMarks(decodeEntities(String(v)).replace(/<\/?[a-zA-Z][a-zA-Z0-9]*\b[^<>]*>/g, '')).trim();
+    return stripMdMarks(decodeEntities(stripControls(String(v))).replace(/<\/?[a-zA-Z][a-zA-Z0-9]*\b[^<>]*>/g, '')).trim();
 }
 /** plain + escape — 템플릿 삽입용 한 방 헬퍼 */
 function txt(v) {
@@ -79,7 +89,7 @@ const ALLOWED_TAGS = /^(strong|b|u|em|br)$/;
 function richText(v) {
     if (v === null || v === undefined)
         return '';
-    const raw = stripMdMarks(decodeEntities(String(v))).trim();
+    const raw = stripMdMarks(decodeEntities(stripControls(String(v)))).trim();
     if (!raw)
         return '';
     const toks = [];
@@ -241,12 +251,14 @@ function buildPremiumPdfHtml(input) {
     const ilganRead = day.ganRead;
     const ilganOheng = day.ganOheng;
     const analysisBase = aiResult?.analysisBase ?? {};
-    const gyeokguk = analysisBase.격국 ?? '';
-    const gangyak = analysisBase.일간강약 ?? '';
-    const yongsin = analysisBase.용신 ?? '';
-    const yongsinReason = analysisBase.용신근거 ?? '';
-    const huisin = analysisBase.희신 ?? '';
-    const gisin = analysisBase.기신 ?? '';
+    // 문자열 가드 — 비정상 shape(객체/배열/숫자)이 [object Object] 등으로 새는 것 방지 (lifeKeyword/lifestyleAdvice 형제 필드와 동일 정책)
+    const asStr = (v) => (typeof v === 'string' ? v : '');
+    const gyeokguk = asStr(analysisBase.격국);
+    const gangyak = asStr(analysisBase.일간강약);
+    const yongsin = asStr(analysisBase.용신);
+    const yongsinReason = asStr(analysisBase.용신근거);
+    const huisin = asStr(analysisBase.희신);
+    const gisin = asStr(analysisBase.기신);
     const elements = sajuData?.elements ?? {};
     const totalEl = Math.max(1, Object.values(elements).reduce((a, v) => a + (typeof v === 'number' ? v : 0), 0));
     // ── 섹션 본문 (claudePremium 7 sections · 구버전 id 호환 fallback 포함) ──
@@ -266,9 +278,14 @@ function buildPremiumPdfHtml(input) {
             return typeof sc[idx] === 'string' ? sc[idx] : '';
         return '';
     };
-    // ── 발급 일자 (KST 표기) ──
-    const issuedKst = new Date(new Date(issuedAt).getTime() + 9 * 3600e3);
-    const issuedFmt = `${issuedKst.getUTCFullYear()}년 ${issuedKst.getUTCMonth() + 1}월 ${issuedKst.getUTCDate()}일`;
+    // ── 발급 일자 (KST 표기) — 잘못된 issuedAt 이면 'NaN년…' 대신 빈 문자열 (방어) ──
+    const issuedMs = new Date(issuedAt).getTime();
+    const issuedFmt = Number.isNaN(issuedMs)
+        ? ''
+        : (() => {
+            const k = new Date(issuedMs + 9 * 3600e3);
+            return `${k.getUTCFullYear()}년 ${k.getUTCMonth() + 1}월 ${k.getUTCDate()}일`;
+        })();
     // ── 올해 간지 (연운 힌트 — 앱 §06 hint 진본과 동일 산식) ──
     const SIXTY = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉', '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未', '甲申', '乙酉', '丙戌', '丁亥', '戊子', '己丑', '庚寅', '辛卯', '壬辰', '癸巳', '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑', '壬寅', '癸卯', '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬子', '癸丑', '甲寅', '乙卯', '丙辰', '丁巳', '戊午', '己未', '庚申', '辛酉', '壬戌', '癸亥'];
     const HANJA_KO = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계', 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
@@ -407,12 +424,15 @@ function buildPremiumPdfHtml(input) {
     const LABEL_CLASS = { 상승: 'up', 정점: 'peak', 주의: 'warn', 평탄: 'flat', 지금: 'nowm' };
     const monthlyInsight = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : [];
     const monthlyHtml = monthlyInsight.length > 0
-        ? `<div class="mi-grid">${monthlyInsight.map((mi) => {
+        ? `<div class="mi-grid">${monthlyInsight.map((mi, idx) => {
             const cls = LABEL_CLASS[String(mi.label ?? '').trim()] || 'flat';
+            // month: 0/누락/범위밖(13 등) 방어 — 유효(1~12)면 그대로, 아니면 배열 인덱스+1 로 대체
+            const rawM = Math.round(Number(mi.month));
+            const m = Number.isFinite(rawM) && rawM >= 1 && rawM <= 12 ? rawM : idx + 1;
             return `
           <div class="mi-cell ${cls}">
             <div class="mi-top">
-              <span class="mi-month">${Number(mi.month) || ''}월</span>
+              <span class="mi-month">${m}월</span>
               ${mi.ganzi ? `<span class="mi-ganzi">${txt(mi.ganzi)}</span>` : ''}
               ${mi.label ? `<span class="mi-label">${txt(mi.label)}</span>` : ''}
             </div>
@@ -729,7 +749,8 @@ function buildPremiumPdfHtml(input) {
   .mi-cell strong, .pm-table strong, .daeun-table strong, .yongsin-box strong, .cluster-block strong {
     font-weight: 800;
     color: #A37A2E;
-    background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,0.32) 60%);
+    /* 앱 SSOT(_premiumMockupStyle.ts) 와 동일 — #F4D166 형광펜 @0.55 (구 #B8965A@0.32 → 톤 일치) */
+    background: linear-gradient(180deg, transparent 60%, rgba(244,209,102,0.55) 60%);
     padding: 0 2px;
     border-radius: 1px;
   }

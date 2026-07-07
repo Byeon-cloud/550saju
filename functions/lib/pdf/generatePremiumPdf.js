@@ -65,6 +65,14 @@ const htmlTemplate_1 = require("./htmlTemplate");
 /** Signed URL 유효 시간 — 24시간 (#61 스펙) */
 const SIGNED_URL_TTL_MS = 24 * 60 * 60 * 1000;
 /**
+ * PDF 전용 버킷 (2026-07-07 프로비저닝).
+ *  이 프로젝트는 Firebase Storage 기본 버킷이 미생성 상태라 admin.storage().bucket() (기본) 은
+ *  존재하지 않는 버킷을 가리켜 404. PDF 는 서버 업로드 + 서명URL 로만 접근(클라이언트 접근 X)하므로
+ *  전용 GCS 버킷(uniform access · public-access 차단 · 7일 lifecycle)을 명시 참조한다.
+ *  런타임 SA(...-compute) 에 objectAdmin + signBlob(서명URL) 부여됨.
+ */
+const PREMIUM_PDF_BUCKET = 'appintoss-saju-premium-pdf';
+/**
  * 프리미엄 결제 검증 — users/{uid}/payments 에 confirmed 5000원 결제 1건 이상.
  * 어뷰징 방지 (무료 사용자가 자기 사주를 PDF 추출하는 시도 차단).
  */
@@ -223,7 +231,7 @@ async function handleGeneratePremiumPdf(request, db) {
         throw new https_1.HttpsError('internal', 'PDF 생성 결과가 비어있습니다');
     }
     // ── 5. Storage 업로드 ──
-    const bucket = admin.storage().bucket();
+    const bucket = admin.storage().bucket(PREMIUM_PDF_BUCKET);
     const filename = `premium-pdfs/${uid}/${issueId}-${Date.now()}.pdf`;
     const file = bucket.file(filename);
     try {
