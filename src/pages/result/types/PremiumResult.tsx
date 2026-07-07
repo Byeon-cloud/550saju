@@ -2196,8 +2196,10 @@ function TopicTopRecommend({
  *  · 공유 클릭 → ShareModal 열기 (ContactsViral SDK 또는 Web Share API)
  *  · PDF 클릭 → generatePremiumPdf 호출 후 새 탭으로 다운로드
  */
-/** 2026-07-03 준기 결정 — PDF 완성판(강조 태그 변환 + 프리미엄 8필드 반영 + puppeteer A4 검증) 전까지 OFF */
-const PDF_ENABLED = false;
+/** 2026-07-08 완성판 검증 완료 → 노출 ON.
+ *  근거: htmlTemplate 재작성(강조 3-tier 화이트리스트 + 앱 §01~10 8필드) + 전용 GCS 버킷 프로비저닝 +
+ *  로컬/클라우드 e2e(A4 22p·한글폰트 임베딩·강조·서명URL·바이트 일치) + 프리프로덕션 적대적 리뷰 하드닝. */
+const PDF_ENABLED = true;
 
 function PremiumResultFooter({
   reportId,
