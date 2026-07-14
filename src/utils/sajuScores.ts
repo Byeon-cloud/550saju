@@ -237,20 +237,40 @@ function applySpread(raw: Record<TopicKey, number>): Record<TopicKey, number> {
     [45, 55],  // 6등
   ];
   const out: Record<TopicKey, number> = { career: 0, love: 0, wealth: 0, social: 0, health: 0, potential: 0 };
+  const used = new Set<number>(); // 실제 배정된 점수만 (out 의 0 초기값과 분리 — 오탐 방지)
   for (let i = 0; i < entries.length; i++) {
     const [key, rawScore] = entries[i];
     const [lo, hi] = RANK_RANGES[i] || [38, 48];
     const midRange = (lo + hi) / 2;
     // raw 점수 + key 해시로 미세 분산 (deterministic · 5의 배수 회피)
     const keyHash = key.charCodeAt(0) + key.charCodeAt(1);
-    const microShift = ((rawScore + keyHash) % 7) - 3; // -3 ~ +3
-    const offset = Math.max(-5, Math.min(5, (rawScore - 50) / 5));
+    // 🚨 2026-07-14 — NaN 방어. rawScore 가 NaN 이면(sajuData.elements 오염 등) 아래 중복회피가
+    //   무한루프였다: Set/Array.includes 는 SameValueZero 라 NaN 을 매칭하고 NaN±1 = NaN → 영원히 탈출 불가
+    //   → 동기 무한루프 = 스레드 정지 = 결과 페이지 백지(throw 가 아니라 ErrorBoundary 도 못 잡음).
+    const raw = Number.isFinite(rawScore) ? rawScore : 50;
+    const microShift = ((raw + keyHash) % 7) - 3; // -3 ~ +3
+    const offset = Math.max(-5, Math.min(5, (raw - 50) / 5));
     let s = Math.round(midRange + offset + microShift);
     // 5의 배수 회피 — ±1 보정
     if (s % 5 === 0) s += (keyHash % 2 === 0) ? 1 : -1;
-    // 같은 점수 회피 — 이미 사용된 점수면 ±1
-    while (Object.values(out).includes(s)) s = s === hi ? s - 1 : s + 1;
-    out[key] = Math.max(lo, Math.min(hi, s));
+    // 랭크 범위로 먼저 클램프 — 중복회피가 '실제 저장될 값' 기준이 되게 (구버전은 클램프가 뒤라 어긋났음)
+    s = Math.max(lo, Math.min(hi, s));
+    // 같은 점수 회피 — [lo,hi] 안에서 가까운 빈 자리 탐색. 범위가 유한하므로 **반드시 종료**한다.
+    //   (구버전 `while (values.includes(s)) s = s===hi ? s-1 : s+1` 은 종료 보장이 없던 무한루프 지뢰)
+    if (used.has(s)) {
+      let picked: number | null = null;
+      let fallback: number | null = null;
+      for (let d = 1; d <= hi - lo && picked === null; d++) {
+        for (const cand of [s - d, s + d]) {
+          if (cand < lo || cand > hi || used.has(cand)) continue;
+          if (fallback === null) fallback = cand;
+          if (cand % 5 !== 0) { picked = cand; break; } // 5의 배수 회피 우선
+        }
+      }
+      s = picked ?? fallback ?? s; // 범위가 꽉 찼으면 중복 허용 (무한루프보다 낫다)
+    }
+    used.add(s);
+    out[key] = s;
   }
   return out;
 }

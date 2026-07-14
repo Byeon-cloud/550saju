@@ -189,6 +189,8 @@ export function ResultPage(props: ResultPageProps = {}) {
   // P0-3 (2026-06-22) — 결제 결과가 로컬에 없을 때 서버 자동복원 트리거 + 복원 후 리렌더용.
   const [restoreTick, setRestoreTick] = useState(0);
   const restoreAttemptedRef = useRef(false);
+  // 2026-07-14 P0 CS — 서버 복원 시도가 끝났는지. 끝났는데도 리포트가 없으면 '빈 페이지' 대신 복구 화면.
+  const [restoreSettled, setRestoreSettled] = useState(false);
 
   // 이벤트 v4 · 결과 렌더링 1회 출석 마커
   useEffect(() => {
@@ -216,14 +218,32 @@ export function ResultPage(props: ResultPageProps = {}) {
   useEffect(() => {
     if (restoreAttemptedRef.current) return;
     if (!reportId || reportId === 'local') return;
-    if (/[?&]fresh=1\b/.test(window.location.search)) return; // 새 생성 모드는 복원 대상 아님
-    if (getReport(reportId)) return; // 이미 로컬에 있으면 복원 불필요
+    if (/[?&]fresh=1\b/.test(window.location.search)) { setRestoreSettled(true); return; } // 새 생성 모드는 복원 대상 아님
+    if (getReport(reportId)) { setRestoreSettled(true); return; } // 이미 로컬에 있으면 복원 불필요
     restoreAttemptedRef.current = true;
+    // 🚨 복원이 영영 안 끝나도(네트워크 순단·익명 인증 대기로 callable 이 pending 유지) 유저가
+    //   빈 페이지에 갇히지 않도록 상한을 둔다 → 상한 초과 시 '결과 복구' 화면으로 전환.
+    const settleTimer = setTimeout(() => setRestoreSettled(true), 6000);
     import('@/services/storage/firestoreSync')
       .then(({ restoreLibraryFromServer }) => restoreLibraryFromServer())
       .then((n) => { if (n > 0) setRestoreTick((t) => t + 1); })
-      .catch(() => { /* 복원 실패는 무해 — 기존 폴백 유지 */ });
+      .catch(() => { /* 복원 실패 — 아래 '결과 복구' 화면이 받는다 */ })
+      .finally(() => { clearTimeout(settleTimer); setRestoreSettled(true); });
+    return () => clearTimeout(settleTimer);
   }, [reportId]);
+
+  /** 서버 재복원 수동 재시도 (복구 화면의 버튼) */
+  const retryRestore = useCallback(() => {
+    setRestoreSettled(false);
+    import('@/services/storage/firestoreSync')
+      .then(({ restoreLibraryFromServer }) => restoreLibraryFromServer())
+      .then((n) => {
+        if (n > 0) { setRestoreTick((t) => t + 1); toast.show('결과를 복구했어요', 'success'); }
+        else toast.show('복구할 결과를 찾지 못했어요', 'warning');
+      })
+      .catch(() => toast.show('복구에 실패했어요. 잠시 후 다시 시도해주세요', 'warning'))
+      .finally(() => setRestoreSettled(true));
+  }, [toast]);
 
   const sajuData = useMemo(() => {
     // 1. Context에 데이터 있으면 사용 (InputPage → Loading → Result 플로우)
@@ -618,6 +638,48 @@ export function ResultPage(props: ResultPageProps = {}) {
   //   전엔 풀스크린 AILoading 유지 → '완성본'만 노출. 부분/ fallback 본문을 먼저 보여주고 나중에 AI 로 바꾸던
   //   것이 "읽는 도중 내용이 바뀜" 혼란의 원인이었음. A(14K)가 병목이라 어차피 대기시간은 비슷하고, 틀린 본문
   //   노출이 사라짐. AILoading 은 사주 미니카드 + 단계 인디케이터 + 팁으로 충분히 풍성(대기 체감 완화).
+  /* 🚨 2026-07-14 P0 CS fix — "프리미엄 사주 다시 보면 빈 화면만 나와요" (재현 확정)
+   *   증상: 결제한 리포트가 기기 저장소에 없으면(스토리지 소실·익명 uid 회전으로 서버 복원 실패 등)
+   *     storedReport=null → tier='free' → isPremiumLayout=false → PremiumResult 미렌더.
+   *     그런데 free 용 basic 섹션은 2026-05-07 에 전부 `{false && …}` 로 비활성 → **아무것도 안 남음**.
+   *     shouldRedirectLegacy 도 tier==='paid' 조건이라 안 걸려 리다이렉트조차 없음.
+   *     → 결제 유저에게 '헤더 한 줄뿐인 빈 페이지'가 그대로 노출됐다 (에러·원인·복구수단 0).
+   *   fix: 복원 시도가 끝났는데도 보여줄 결과가 없으면 → 빈 페이지 금지, 명시적 복구 화면.
+   *   회귀 금지: 결과가 없을 때 free 레이아웃으로 조용히 강등시키지 말 것. */
+  const reportMissing =
+    !isFreshMode && reportId !== 'local' && !storedReport && restoreSettled;
+  if (reportMissing) {
+    return (
+      <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
+        <Header title="사주 리포트" />
+        <ErrorState
+          title="결과를 불러오지 못했어요"
+          description="이 기기에 저장된 풀이가 사라졌어요. 아래에서 복구를 시도하거나 보관함에서 다시 열어보세요. 결제하신 운은 그대로 남아 있고, 결과가 끝내 복구되지 않으면 고객문의로 알려주시면 바로 도와드릴게요."
+          onRetry={retryRestore}
+          retryLabel="결과 복구하기"
+        />
+        <div className="max-w-mobile mx-auto px-5 pb-10 flex gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/storage')}
+            className="flex-1 py-3 rounded-xl text-h3 font-semibold"
+            style={{ background: 'rgba(184,150,90,0.12)', color: '#8C6D3D' }}
+          >
+            보관함 열기
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/my')}
+            className="flex-1 py-3 rounded-xl text-h3 font-semibold"
+            style={{ background: 'rgba(184,150,90,0.12)', color: '#8C6D3D' }}
+          >
+            고객문의
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isFreshStreamingIncomplete) {
     const arrivedCount = (arrivedGroups.A ? 1 : 0) + (arrivedGroups.D ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0);
     const isPrem = freshType === 'premium';
