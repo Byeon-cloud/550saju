@@ -132,5 +132,9 @@
       "Bash(grep -n \"1운\\\\|4운\\\\|7운\\\\|15운\\\\|운$\" /d/550saju/src/pages/ChargePage.tsx)",
       "Bash(grep -n \"report-sources\\\\|upsell-card\\\\|<section class=\\\\\"upsell\\\\\\\\|class=\\\\\"upsell-card\\\\\"\\\\\\\\|class=\\\\\"report-sources\\\\\"\" \"D:/550saju/docs/mockups/사주500_UI개편_목업_결과프리미엄_v2.html\")"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "figma-mcp",
+    "MCPMagic"
+  ]
 }

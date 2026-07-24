@@ -7,8 +7,8 @@
  *   사주 명리는 출생 순간의 천체 운행(태양시)을 기준 → 보정 필수.
  *
  * 보정 공식:
- *   진태양시 = KST - 32 분 (서울 기준; 더 정확히는 -30 ~ -32 분)
- *   본 모듈은 -32 분 보정 (홍성민 외 현대 한국 명리학자 통설)
+ *   진태양시 = KST - 30 분 (업계 표준 관행 — 경계 = 시계 :30 · 2026-07-14 기준 확정)
+ *   경도 실측은 -32분이나 대중 만세력 정합을 위해 -30분 고정 (클라와 동일 유지)
  *
  * 서머타임(일광절약시간제) 한국 적용 기간:
  *   1948-06-01 00:00 ~ 1948-09-13 00:00 (KST+1)
@@ -21,6 +21,8 @@
  *   1958-05-04 00:00 ~ 1958-09-21 00:00
  *   1959-05-03 00:00 ~ 1959-09-20 00:00
  *   1960-05-01 00:00 ~ 1960-09-18 00:00
+ *   1987-05-10 02:00 ~ 1987-10-11 03:00 (서울올림픽 · 2026-07-14 구현 추가)
+ *   1988-05-08 02:00 ~ 1988-10-09 03:00
  *   서머타임 기간엔 KST 가 +1 시간 앞섬 → 진태양시로 환산하려면 -1시간 더 빼야 함
  *
  * 출처:
@@ -30,7 +32,7 @@
  *
  * 사용:
  *   const corrected = correctKoreanSolarTime(1985, 3, 15, 11, 50);
- *   // → [1985, 3, 15, 11, 18, 0]  (32분 보정)
+ *   // → [1985, 3, 15, 11, 20, 0]  (30분 보정)
  *   Solar.fromYmdHms(...corrected);
  */
 
@@ -61,6 +63,12 @@ const KOREAN_DST_RANGES: DstRange[] = [
   { startUtc: Date.UTC(1959, 4, 2, 15, 0),  endUtc: Date.UTC(1959, 8, 19, 15, 0) },
   // 1960-05-01 ~ 1960-09-18
   { startUtc: Date.UTC(1960, 3, 30, 15, 0), endUtc: Date.UTC(1960, 8, 17, 15, 0) },
+  // 🚨 2026-07-14 추가 — 1987·1988 서울올림픽 서머타임 (PRD §4.2 스펙에 있었으나 구현 누락).
+  //   87·88년 여름 출생자의 시주가 1시간 어긋나던 정확도 버그 fix (클라와 동일 유지).
+  // 1987-05-10 02:00 ~ 1987-10-11 03:00 KST
+  { startUtc: Date.UTC(1987, 4, 9, 17, 0),  endUtc: Date.UTC(1987, 9, 10, 18, 0) },
+  // 1988-05-08 02:00 ~ 1988-10-09 03:00 KST
+  { startUtc: Date.UTC(1988, 4, 7, 17, 0),  endUtc: Date.UTC(1988, 9, 8, 18, 0) },
 ];
 
 /**
@@ -81,7 +89,9 @@ export function correctKoreanSolarTime(
   const realUtcMs = kstAsUtc - 9 * 60 * 60 * 1000;
 
   // 1단계: 서머타임 기간이면 -1 시간 더 (KST 가 +1 앞서 있었으므로)
-  let totalOffsetMin = -32; // 기본 진태양시 보정
+  // 🚨 2026-07-14 기준 확정 (준기 결정) — 업계 표준 -30분 고정 (경계 = 시계 :30).
+  //   클라 src/services/saju/timeCorrection.ts 와 반드시 동일 값 유지 (상세 근거는 클라 파일 헤더).
+  let totalOffsetMin = -30; // 기본 진태양시 보정
   for (const dst of KOREAN_DST_RANGES) {
     if (realUtcMs >= dst.startUtc && realUtcMs < dst.endUtc) {
       totalOffsetMin -= 60;
@@ -130,7 +140,7 @@ export function inspectKoreanSolarTime(
     }
   }
 
-  const offsetMin = isDst ? -92 : -32;
+  const offsetMin = isDst ? -90 : -30;
   return {
     original: [year, month, day, hour, minute, second],
     corrected: correctKoreanSolarTime(year, month, day, hour, minute, second),

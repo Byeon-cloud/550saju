@@ -11,8 +11,8 @@ export { findCurrentDaeun } from './daeunCurrent';
  * lunar-javascript를 사용하여 사주 전체 데이터를 계산합니다.
  *
  * ⚠️ 진태양시 보정 (2026-05) — 한국 출생자 시주 정확도 보장
- *  · 한국 표준시(KST) - 32분 = 서울 진태양시
- *  · 서머타임 기간(1948-51, 55-60) 추가 -60분
+ *  · 한국 표준시(KST) - 30분 = 업계 표준 진태양시 (경계=시계 :30 · 2026-07-14 기준 확정)
+ *  · 서머타임 기간(1948-51, 55-60, 87-88) 추가 -60분
  *  · 출생시간 미입력 시 보정 X (시주 자체 미산출)
  */
 export function calculateSaju(input: SajuInput): SajuData {

@@ -22,7 +22,7 @@ import { correctKoreanSolarTime } from '../utils/timeCorrection';
  * 2026-07-02 진태양시 보정 도입 — 클라가 분 단위(birthMinute) 입력으로 전환.
  *   기존엔 클라 선택지가 시진 대표시(밴드 중앙, 예: 오시=12시)라 무보정이어도 같은 시진이었지만,
  *   분 단위 입력(예: 3:30)은 경계에서 시주가 갈리므로 클라 calculateSaju 와 동일한
- *   correctKoreanSolarTime(-32분 + 서머타임)을 반드시 적용 (본인/상대방 시주 계산 기준 일치).
+ *   correctKoreanSolarTime(-30분 + 서머타임)을 반드시 적용 (본인/상대방 시주 계산 기준 일치).
  *   구 클라 페이로드(분 없음·중앙값)는 보정해도 같은 시진 → 하위호환 안전.
  */
 function computePartnerPillars(p: { birthYear: number; birthMonth: number; birthDay: number; birthHour?: number; birthMinute?: number }):

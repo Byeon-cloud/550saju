@@ -1,5 +1,5 @@
 /**
- * 시지(時支) 실시간 미리보기 SSOT — 입력한 시계 시각 → 진태양시 보정(-32분) 후 시(時) 판정.
+ * 시지(時支) 실시간 미리보기 SSOT — 입력한 시계 시각 → 진태양시 보정(-30분) 후 시(時) 판정.
  *
  * 2026-07 분 단위 입력 도입과 함께 신설. 본인(InputPage)·상대방(TopicAnalysisPage) 공용.
  *  · calculateSaju / 서버 computePartnerPillars 와 동일한 correctKoreanSolarTime 사용
