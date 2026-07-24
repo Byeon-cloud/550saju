@@ -4,10 +4,10 @@
  * 2026-07 분 단위 입력 도입과 함께 신설. 본인(InputPage)·상대방(TopicAnalysisPage) 공용.
  *  · calculateSaju / 서버 computePartnerPillars 와 동일한 correctKoreanSolarTime 사용
  *  · lunar-javascript 시지 규칙(보정된 '시' 기준 (h+1)/2)과 동일 → 실제 계산 결과와 정확히 일치
- *    (getTimeZhi 11케이스 전수 교차검증 완료 — "3:30 → 축시" 경계 포함)
+ *    (기준 v2 · -30분: 경계 = 시계 :30 정각 — "3:30 → 인시" 경계 포함 재검증 2026-07-14)
  *  · lunar 무의존 순수 모듈 (번들 안전)
  */
-import { correctKoreanSolarTime } from './timeCorrection';
+import { correctKoreanSolarTime, inspectKoreanSolarTime } from './timeCorrection';
 
 /** 12지지 (시지 인덱스 0=子 순) */
 export const SIJI_TABLE: { hanja: string; ko: string }[] = [
@@ -34,4 +34,25 @@ export function previewSiji(birthDate: string, birthTime: string): { hanja: stri
   const tm = birthTime.match(/^(\d{1,2}):(\d{2})$/);
   if (!dm || !tm) return null;
   return sijiForClock(Number(dm[1]), Number(dm[2]), Number(dm[3]), Number(tm[1]), Number(tm[2]));
+}
+
+/**
+ * 시진 밴드 선택(정확 분 모름 — "시(時)만 아세요" fallback) → 저장할 대표 클럭 시각.
+ *
+ * 🚨 2026-07-14 · 87/88 서머타임 추가에 따른 앵커 보정 — 밴드 대표시각(중앙 클럭값)은
+ *   평시 -30분 보정 후에도 선택한 시진 안에 안착하지만(午 12:00 → 11:30 → 午),
+ *   서머타임 기간 출생은 -90분이라 직전 시진으로 밀린다(午 12:00 → 10:30 → 巳)
+ *   → "午 선택 → 巳 계산" 모순. DST 기간이면 중앙값 +60분(다음 정시)으로 저장해
+ *   보정 후 다시 선택 시진 중앙(-30)에 안착시킨다 (午 → 13:00 → 11:30 → 午).
+ *   자시(0시)도 동일: DST 시 01:00 → 23:30 전날 → 자시 유지 + 일주=입력일(crossedMidnight).
+ */
+export function bandCenterHourForDate(
+  year: number, month: number, day: number, centerHour: number,
+): number {
+  try {
+    const { isDst } = inspectKoreanSolarTime(year, month, day, centerHour, 0);
+    return isDst ? (centerHour + 1) % 24 : centerHour;
+  } catch {
+    return centerHour;
+  }
 }

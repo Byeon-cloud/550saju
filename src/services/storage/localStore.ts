@@ -16,7 +16,7 @@
  */
 
 import type { SajuData, SajuInput, Situation } from '@/types/saju';
-import { calculateSaju } from '@/services/saju/calculator';
+import { calculateSaju, CALC_STANDARD_VERSION } from '@/services/saju/calculator';
 import { refreshCurrentDaeun } from '@/services/saju/daeunCurrent';
 
 export type ContentType = 'report' | 'daily' | 'dream' | 'deepDream' | 'daeun' | 'monthly' | 'weekly' | 'compat' | 'tojung' | 'topic';
@@ -451,23 +451,21 @@ export function getProfiles(): SajuProfile[] {
     const raw = localStorage.getItem(PROFILES_KEY);
     if (raw) {
       const profiles: SajuProfile[] = JSON.parse(raw);
-      // 2026-06-26 보강1 마이그레이션 — 구 calculator 로 만든 프로필은 sajuData 에 용신이 없음.
-      //   행운 색/방위 SSOT(전 콘텐츠 동일 용신)를 기존 프로필에도 적용하려면 1회 재계산 필요.
+      // 🚨 2026-07-14 계산 기준 버전 마이그레이션 (구 '용신 게이트 + 간지 보호' 대체 — 준기 기준 v2 결정)
+      //   저장된 sajuData.calcVersion 이 현행 CALC_STANDARD_VERSION 과 다르면 stale 캐시 → 무조건 재계산·덮어쓰기.
+      //   구 가드("간지 1글자라도 다르면 보존")는 '의도치 않은 calculator 드리프트' 방어용이었는데,
+      //   기준을 의도적으로 바꾼 지금은 정반대로 작동한다 — 바로잡혀야 할 프로필(자시·:30 경계·87/88 서머타임)
+      //   일수록 옛 틀린 간지를 영구 보존해버림. 의도된 기준 변경은 버전 스탬프로 구분한다:
+      //   · calcVersion 일치 = 현행 기준 계산본 → 유지
+      //   · calcVersion 불일치/부재 = 옛 기준 → fresh 로 교체 (일주·시주가 달라져도 그게 정정임)
+      //   향후 산출 규칙 변경 시 CALC_STANDARD_VERSION +1 만 하면 전 프로필 자동 정정.
       let migrated = false;
       for (const p of profiles) {
-        if (p?.input?.birthYear && !(p.sajuData as any)?.myeongriAnalysis?.용신) {
+        if (p?.input?.birthYear && (p.sajuData as any)?.calcVersion !== CALC_STANDARD_VERSION) {
           try {
             const fresh = calculateSaju(p.input);
-            // 🚨 일주/간지 절대 보호 (회귀 금지) — 재계산한 4기둥이 기존과 100% 일치할 때만 적용한다.
-            //   calculator 간지 산출 로직이 그새 달라졌다면 일주가 바뀔 수 있으므로(기유→을미 류 절대 금지),
-            //   1글자라도 다르면 절대 덮어쓰지 않고 기존 sajuData(일주)를 그대로 보존한다. (용신은 AI 폴백)
-            const oldP = (p.sajuData as any)?.pillars || [];
-            const newP = (fresh as any)?.pillars || [];
-            const sameGanzi = oldP.length > 0 && oldP.length === newP.length &&
-              oldP.every((op: any, i: number) =>
-                (op?.천간 || '') === (newP[i]?.천간 || '') && (op?.지지 || '') === (newP[i]?.지지 || ''));
-            if (sameGanzi) { p.sajuData = fresh; migrated = true; }
-          } catch { /* 재계산 실패 시 기존 sajuData 유지 */ }
+            if (fresh?.pillars?.length) { p.sajuData = fresh; migrated = true; }
+          } catch { /* 재계산 실패 시 기존 sajuData 유지 (다음 로드에서 재시도) */ }
         }
       }
       if (migrated) {

@@ -26,7 +26,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { calculateSaju } from '@/services/saju/calculator';
-import { previewSiji } from '@/services/saju/sijiPreview';
+import { previewSiji, bandCenterHourForDate } from '@/services/saju/sijiPreview';
 import { useSajuContext } from '@/contexts/SajuContext';
 import type { CalendarType, Gender, SajuInput } from '@/types/saju';
 import type { Relation } from '@/types/user';
@@ -75,7 +75,7 @@ const C = {
 /* ══════════════════════════════════════════════════════════════════
  * 12지지 + 모름 (스펙 §7-1)
  *  - range는 KR 진태양시 보정(-30분, 업계 표준 · 2026-07-14 확정) 적용된 사주 시간대 (스펙 §7-2)
- *  - 경계는 시계로 :32경 (진태양시 -32분 → 태양시 정각이 시계 :32). calculateSaju 도 -32분이라
+ *  - 경계는 시계로 :30 정각 (진태양시 -30분 · 2026-07-14 기준 v2). calculateSaju 도 -30분이라
  *    라벨=계산 일치. 예: 인시는 시계 3:32부터 → 딱 3:30은 아직 축시(태양시 2:58).
  *    ※ 이전 :30 반올림 라벨은 3:30을 인시로 오표기했음(계산은 축시) → 2026-07 정정.
  *  - 태어난 지역이 동쪽(영남 등)이면 보정폭이 작아(-24분) 경계가 더 늦음 → 경계값은 근사치.
@@ -92,8 +92,8 @@ const HOUR_OPTIONS: Array<{
   range: string;
   hour: number;
 }> = [
-  // 2026-06-02 시주 fix — hour = 각 시(時)의 '중앙' 클럭값. 진태양시 -32분 보정 후에도
-  //   선택한 시 안에 안착하도록 (예: 午 12:00 → 보정 11:28 → 午). 기존엔 시작값(午=11)이라
+  // 2026-06-02 시주 fix — hour = 각 시(時)의 '중앙' 클럭값. 진태양시 -30분 보정 후에도
+  //   선택한 시 안에 안착하도록 (예: 午 12:00 → 보정 11:30 → 午). 기존엔 시작값(午=11)이라
   //   보정 시 직전 시(巳)로 밀려 "午 선택 → 巳 계산" 모순 발생. 子(=0)는 이미 중앙(자정)이라 유지.
   { code: '자', hanja: '子', range: '23:30 ~ 01:29', hour: 0 },
   { code: '축', hanja: '丑', range: '01:30 ~ 03:29', hour: 2 },
@@ -111,9 +111,17 @@ const HOUR_OPTIONS: Array<{
 
 // 시지(時支) 실시간 미리보기 → `@/services/saju/sijiPreview` SSOT (2026-07 — 상대방 입력과 공용화)
 
-/** 12지지 fallback 선택 시 대표 시각(각 시의 중앙 클럭값) → 'HH:MM' */
-function hourCodeToTime(code: HourCode): string {
+/** 12지지 fallback 선택 시 대표 시각(각 시의 중앙 클럭값) → 'HH:MM'
+ *  birthDate('YYYY-MM-DD')가 있으면 서머타임 기간 +60분 앵커 보정 (bandCenterHourForDate 주석 참조) */
+function hourCodeToTime(code: HourCode, birthDate?: string): string {
   const o = HOUR_OPTIONS.find((x) => x.code === code);
+  if (o && birthDate) {
+    const dm = birthDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (dm) {
+      const adj = bandCenterHourForDate(Number(dm[1]), Number(dm[2]), Number(dm[3]), o.hour);
+      return `${String(adj).padStart(2, '0')}:00`;
+    }
+  }
   if (!o) return '';
   return `${String(o.hour).padStart(2, '0')}:00`;
 }
@@ -328,7 +336,7 @@ export function InputPage() {
     ).padStart(2, '0')}`;
   });
   // 2026-07 — 30분 블록 → 분 단위 입력. birthTime('HH:MM') 단일 소스 + timeUnknown(모름).
-  //   진태양시 보정은 calculateSaju(-32분)이 담당 → 여기선 시:분만 정확히 수집.
+  //   진태양시 보정은 calculateSaju(-30분)이 담당 → 여기선 시:분만 정확히 수집.
   const [birthTime, setBirthTime] = useState<string>(() => {
     if (!initFromProfile) return '';
     const i = initialProfile!.input;
@@ -824,7 +832,7 @@ export function InputPage() {
             setBirthTime('');
           } else {
             setTimeUnknown(false);
-            setBirthTime(hourCodeToTime(code));
+            setBirthTime(hourCodeToTime(code, birthDate));
           }
           setTouched((t) => ({ ...t, hourCode: true }));
           setHourSheetOpen(false);
@@ -1437,6 +1445,21 @@ function BirthHourField({
             로 계산돼요.
             <br />
             표준시·서머타임까지 사주500이 자동으로 맞췄어요.
+            {/* 2026-07-14 기준 v2 · 경계 안내 (준기: "줏대 있게 가되 부가설명은 안내") —
+                :28~:31 은 시(時) 경계 ±2분 창. 학파·만세력별로 앞뒤 시가 갈릴 수 있는 구간이라
+                기준을 숨기지 않고 명시한다. 판정 자체는 대중 만세력과 동일한 '시계 30분' 경계로 확정. */}
+            {(() => {
+              const mi = parseInt(birthTime.split(':')[1] || '', 10);
+              return mi >= 28 && mi <= 31 ? (
+                <>
+                  <br />
+                  <span style={{ color: C.goldDeep, fontWeight: 600 }}>
+                    이 시각은 시(時)의 경계 부근이에요. 만세력마다 앞뒤 시로 다르게 보기도 하는데,
+                    사주500은 널리 쓰이는 &lsquo;30분 경계&rsquo; 기준으로 풀이해드려요.
+                  </span>
+                </>
+              ) : null;
+            })()}
           </p>
         </div>
       )}

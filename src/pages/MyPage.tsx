@@ -391,7 +391,12 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
   const sajuSummary = useMemo(() => {
     if (!myProfile?.input) return null;
     try {
-      const data = (myProfile as any).sajuData || calculateSaju(myProfile.input as any);
+      // 2026-07-14 기준 v2 — 내정보 카드는 라이브 만세력이므로 항상 '현행 기준' 재계산 우선.
+      //   (getMyProfile 은 박제 리포트를 반환 → 그 캐시는 옛 기준일 수 있음. 폴백으로만 사용)
+      let data: any = null;
+      try { data = calculateSaju(myProfile.input as any); } catch { /* 폴백 */ }
+      if (!data) data = (myProfile as any).sajuData || null;
+      if (!data) return null;
       const ilgan = data?.pillars?.[2]?.천간 || '';
       const ilji = data?.pillars?.[2]?.지지 || '';
       const dayOheng = (data?.pillars?.[2]?.천간오행 || '토') as OhengType;

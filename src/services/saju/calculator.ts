@@ -7,6 +7,11 @@ import { findCurrentDaeun } from './daeunCurrent';
 // 현재 대운 판정 SSOT 재노출 — 기존 import 경로 호환
 export { findCurrentDaeun } from './daeunCurrent';
 
+/** 계산 기준 버전 — 시(時)·일주 산출 규칙이 바뀔 때만 +1 (2026-07-14 v2).
+ *  v2 = 진태양시 -30분 통일(경계=시계 :30) + 87/88 서머타임 + 자시 일주=입력일.
+ *  저장된 sajuData.calcVersion 이 이 값과 다르면 stale → getProfiles() 가 자동 재계산. */
+export const CALC_STANDARD_VERSION = 2;
+
 /**
  * lunar-javascript를 사용하여 사주 전체 데이터를 계산합니다.
  *
@@ -32,7 +37,7 @@ export function calculateSaju(input: SajuInput): SajuData {
           input.birthMinute!,
           0,
         );
-        // 2026-07-03 자시(子時) 일주(日柱) fix — 진태양시 -32분 보정이 자정을 넘겨 날짜가
+        // 2026-07-03 자시(子時) 일주(日柱) fix — 진태양시 보정(-30분·구현 당시 -32분)이 자정을 넘겨 날짜가
         //   바뀌는 조자시(자정 직후 00:00~00:31 등) 는 일주가 전날로 밀리는 버그가 있었다.
         //   → 자정을 넘긴 경우에만: 일주(날짜)는 입력일(표준시 자정 경계)로 되돌리고, 시진(時支)은
         //     진태양시로 판정한 시지의 '대표 시각'을 입력일에 배치해 lunar 이 당일 일간 오자둔으로
@@ -89,6 +94,7 @@ export function calculateSaju(input: SajuInput): SajuData {
     yearlyUn: getYearlyUn(new Date().getFullYear()),
     띠: lunar.getYearShengXiao(),
     myeongriAnalysis,
+    calcVersion: CALC_STANDARD_VERSION,
   };
 }
 

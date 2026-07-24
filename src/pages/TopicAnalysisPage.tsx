@@ -20,7 +20,7 @@ import { HourPickerSheet } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId } from '@/constants/topics';
 import { normalizeSipsungKo } from '@/constants/sipsungColor';
 import { findCurrentDaeun } from '@/services/saju/daeunCurrent';
-import { sijiForClock } from '@/services/saju/sijiPreview';
+import { sijiForClock, bandCenterHourForDate } from '@/services/saju/sijiPreview';
 import type { DaeUn } from '@/types/saju';
 
 /**
@@ -5203,7 +5203,13 @@ export function TopicAnalysisPage() {
         onClose={() => setHourSheetOpen(false)}
         onSelect={(h) => {
           // 시(時) 블록 = 해당 시진 중앙 클럭값 + 분 0 (진태양시 보정 후에도 같은 시진 유지)
-          setPartnerInfo((p) => ({ ...p, birthHour: h, birthMinute: 0 }));
+          // 2026-07-14 — 87/88 서머타임 출생은 중앙값 +60분 앵커 보정 (bandCenterHourForDate 주석 참조)
+          setPartnerInfo((p) => {
+            const adj = p.birthYear && p.birthMonth && p.birthDay
+              ? bandCenterHourForDate(p.birthYear, p.birthMonth, p.birthDay, h)
+              : h;
+            return { ...p, birthHour: adj, birthMinute: 0 };
+          });
           setHourSheetOpen(false);
         }}
         title="상대방 출생 시간"

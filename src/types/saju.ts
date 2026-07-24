@@ -160,6 +160,9 @@ export interface SajuData {
   yearlyUn?: { 천간: string; 지지: string; 간지: string };
   띠?: string;
   myeongriAnalysis?: MyeongriAnalysis;
+  /** 계산 기준 버전 (2026-07-14 도입) — calculator.CALC_STANDARD_VERSION 과 다르면 stale 캐시.
+   *  v2 = 진태양시 -30분 통일 + 87/88 서머타임 + 자시 일주(일주=입력일). */
+  calcVersion?: number;
 }
 
 /** 상황 질문 */

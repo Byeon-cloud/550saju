@@ -45,8 +45,11 @@ export function PremiumSelectPage() {
       toast.show('사주를 먼저 선택해주세요', 'info');
       return;
     }
-    const sajuData =
-      (selected as any).sajuData || calculateSaju(selected.input as any);
+    // 🚨 2026-07-14 기준 v2 — 유료 생성은 반드시 '현행 기준' 재계산 우선. 저장 캐시(sajuData)는
+    //   옛 기준(-32분·서머타임 누락·자시 일주) 계산본일 수 있어 폴백으로만 사용.
+    let sajuData: any = null;
+    try { sajuData = selected.input ? calculateSaju(selected.input as any) : null; } catch { /* 폴백으로 */ }
+    if (!sajuData) sajuData = (selected as any).sajuData || null;
     if (!sajuData) {
       toast.show('사주 계산 실패. 다시 시도해주세요', 'warning');
       return;
