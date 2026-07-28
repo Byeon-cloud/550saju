@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef } from 'react';
 import { lazyWithReload, clearChunkReloadFlag } from '@/lib/lazyWithReload';
+import { resolveBackAction } from '@/services/toss/backNavigation';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -413,24 +414,12 @@ export function App() {
         const unsubscribeBack: (() => void) | undefined =
           mod.graniteEvent?.addEventListener?.('backEvent', {
             onEvent: () => {
-              // SDK 콜백이라 Hook 사용 불가 → location.assign 으로 이동 (앱인토스 웹뷰 안전)
-              const path = window.location.pathname;
+              // 판정은 순수 함수(backNavigation.ts)에 위임 — 전 경로 자동 검증 대상.
+              // 여기서는 '실행'만 한다. SDK 콜백이라 Hook 사용 불가 → location.assign 사용.
               try {
-                // 홈이면 앱(미니앱) 종료
-                if (path === '/' || path === '/home') {
-                  mod.closeView?.();
-                  return;
-                }
-                // 결과 페이지 → 홈. 뒤로 갔다가 /loading 으로 되돌아가 재생성이 트리거되는 것 방지
-                if (path.startsWith('/result')) {
-                  window.location.assign('/');
-                  return;
-                }
-                // 딥링크·프로모 직접 진입 등으로 히스토리가 없으면 back() 이 무동작 → 갇힘. 홈으로.
-                if (window.history.length <= 1) {
-                  window.location.assign('/');
-                  return;
-                }
+                const action = resolveBackAction(window.location.pathname, window.history.length);
+                if (action.kind === 'close') { mod.closeView?.(); return; }
+                if (action.kind === 'home') { window.location.assign('/'); return; }
                 window.history.back();
               } catch {
                 // 어떤 이유로든 실패해도 최소한 홈으로 빠져나갈 수 있게 (갇힘 방지 최후 보루)
