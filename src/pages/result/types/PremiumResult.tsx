@@ -36,9 +36,10 @@ import {
   type ElemKey, type V4Pillar, type V4Daeun, type V4SinSal,
 } from '../_data';
 // #61 · 프리미엄 PDF 다운로드 버튼 (paid + unlocked 컨텍스트에서만 마운트)
-// PdfDownloadButton: result-footer 의 PDF 버튼 안에 인라인 wired (보존)
+// PDF 는 result-footer 의 버튼에 인라인 wired (handlePdf). PdfDownloadButton 컴포넌트는 미사용 —
+// 그 안의 a[download] 방식은 토스 웹뷰에서 무동작으로 판명(2026-07-03 CS)이라 import 하지 않는다.
+// 재사용하려면 반드시 services/pdf/nativePdfViewer 의 tryOpenNativePdf → window.open 폴백 순서로 쓸 것.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { PdfDownloadButton as _PdfDownloadButton } from '@/components/result/PdfDownloadButton';
 import { ShareModal } from '@/components/share/ShareModal';
 import { generatePremiumPdf, type PdfProfile } from '@/services/pdf/premiumPdfClient';
 import { useToast } from '@/components/common/Toast';
@@ -2230,9 +2231,16 @@ function PremiumResultFooter({
       if (r?.url) {
         // 2026-07-03 CS fix ("PDF 다운로드가 안 돼요") — 토스 웹뷰는 a[download] 무반응(다운로드 UI 없음).
         //   기존 '외부 브라우저 튕김 방지' a[download] 강등이 오히려 무동작이었음 → window.open 복원.
-        //   외부 브라우저로 열리는 게 앱인토스에서 PDF 를 받을 수 있는 유일한 경로.
         const { isAppsInToss } = await import('@/services/payment/iapService');
         const inToss = isAppsInToss();
+        // 2026-07-28 — 앱인토스는 SDK 네이티브 PDF 뷰어를 우선 시도한다. window.open 은 외부 브라우저가
+        //   떠서 앱을 벗어나는 동작이라, 앱 안에서 바로 열리는 openPDFViewer 가 UX 상 우위.
+        //   미지원(토스앱 5.261.0 미만)·대용량·fetch 실패 시 false 를 돌려주므로 아래 기존 경로로 폴백.
+        if (inToss) {
+          const { tryOpenNativePdf } = await import('@/services/pdf/nativePdfViewer');
+          const fname = `사주500_${(report?.name || '내')}_종합사주.pdf`;
+          if (await tryOpenNativePdf(r.url, fname, (r as any).bytes)) return; // 뷰어가 앱 안에서 열림
+        }
         window.open(r.url, '_blank');
         toast.show(inToss ? '브라우저에서 PDF가 열려요. 저장해 주세요' : 'PDF 다운로드를 시작했어요', 'success');
       } else {
