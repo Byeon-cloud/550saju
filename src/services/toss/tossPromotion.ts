@@ -27,8 +27,18 @@ import { isAppsInToss } from '@/services/payment/iapService';
  * (토스 developer 콘솔 → 프로모션 → 각 항목의 "프로모션 코드")
  */
 export const PROMO = {
-  /** 사주 프로모션 10원 — 미션 "무료 사주 보기" (2026-06-11 승인 · 구 3원 출시프로모 01KS4XVN... 대체) */
-  LAUNCH_SAJU: { code: '01KTRSZ5JQ8ETHH3QQD9S3QSEX', amount: 10 },
+  /** 사주 프로모션 50원 — 미션 "무료 사주보기" · 콘솔 2026-07-28 승인 (예산 10만원 = 2,000건 상한)
+   *
+   *  2026-07-14 준기 결정: 10원 → 50원 상향. 근거: 구 프로모(01KTRSZ...) 가 한 달 누적 273건
+   *   (2,730원)에 그쳐 토스 혜택탭 가시성 자체가 낮다고 판단. 비용 리스크(273건 기준 월 13,650원)가
+   *   작아 싸게 돌려볼 실험. 유닛 이코노믹스상 500~1,000원(토스 표준대)은 종합사주 2,500원 대비 과함.
+   *
+   *  ⚠️ 토스 콘솔은 승인된 프로모션의 금액 수정이 불가 → 금액 변경 = 새 프로모션 생성 = 새 코드 =
+   *   .ait 재빌드·재심사. 코드/금액은 반드시 콘솔 값과 일치해야 하며 어긋나면 errorCode 반환.
+   *  ⚠️ 구 코드(01KTRSZ5JQ8ETHH3QQD9S3QSEX, 10원)는 심사 통과 전 구버전 앱이 계속 호출하므로
+   *   콘솔에서 먼저 종료하지 말 것 (종료 시 그 기간 지급 0). 신버전 배포 확인 후 종료.
+   *  검증: `?_promotest=launch` 로 TEST_ 코드 지급 호출. */
+  LAUNCH_SAJU: { code: '01KYM4E5PJ4FP2ZFEG5JPDV6PZ', amount: 50 },
   /** 사주500 · 7일 출석 완주 리워드 — 7일 연속 완주마다 반복 지급 (100원, 토스 콘솔 고정형) */
   ATTEND_7DAY: { code: '01KPQJYBWK3T1XY7XPPBYDA530', amount: 100 },
 } as const;
@@ -40,9 +50,9 @@ export type PromoItem = { code: string; amount: number };
  *
  * 2026-05-21 확정 (준기 콘솔 확인): 토스 콘솔에 테스트 프로모션이 `TEST_` 접두사
  *   코드로 별도 등록돼 있음. raw 코드는 LIVE 프로모션.
- *   - 테스트: TEST_01KPQJYBWK3T1XY7XPPBYDA530 (7일완주) / TEST_01KTRSZ5JQ8ETHH3QQD9S3QSEX (10원 · 2026-06-11 교체)
+ *   - 테스트: TEST_01KPQJYBWK3T1XY7XPPBYDA530 (7일완주) / TEST_01KYM4E5PJ4FP2ZFEG5JPDV6PZ (50원 · 2026-07-28 신규 · 구 01KTRSZ 10원 대체)
  *   LIVE 전환 시 .env 에 VITE_PROMO_LIVE=1 → raw 코드로 전환.
- *   ⚠️ 10원 프로모는 콘솔에서 "프로모션 시작하기" 눌러야 활성 (현재 진행 전 상태).
+ *   ⚠️ 금액 변경 시 토스 콘솔 프로모션 설정도 같은 값으로 맞출 것 (2026-07-14 50원 상향).
  */
 const PROMO_LIVE = import.meta.env.VITE_PROMO_LIVE === '1';
 
@@ -91,7 +101,7 @@ export async function grantPromotion(promo: PromoItem): Promise<GrantResult> {
     // { key } 성공
     if (result && typeof result === 'object' && 'key' in result) {
       try { window.localStorage.setItem(dKey, String(Date.now())); } catch { /* noop */ }
-      // 2026-06-24 — 프로모 실지급을 어드민에 가시화. 기존: localStorage dedupe 만 남겨 토스 프로모(10원 첫출석·
+      // 2026-06-24 — 프로모 실지급을 어드민에 가시화. 기존: localStorage dedupe 만 남겨 토스 프로모(50원 첫콘텐츠·
       //   100원 7일완주)가 analytics·payments 어디에도 없어 어드민에 0 으로 보이던 것(1040원/104건 미표시 직접원인).
       //   reward_earned 는 FIRESTORE_TRACKED 기등록 + 어드민이 kind 별 분해 → code 별(promo_xxx) 즉시 집계.
       try {

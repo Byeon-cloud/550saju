@@ -167,7 +167,7 @@ export function DreamPage() {
     ? stateNav
     : (reportFromUrl ? { savedResult: reportFromUrl.aiResult, savedReport: reportFromUrl } : undefined);
   const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : 'category');
-  // 2026-05-29 — 출시 프로모션 10원: 무료 꿈해몽 결과 도달도 첫 콘텐츠 인정 (코드 단위 dedupe · 앱인토스 only).
+  // 2026-05-29 — 출시 프로모션(50원): 무료 꿈해몽 결과 도달도 첫 콘텐츠 인정 (코드 단위 dedupe · 앱인토스 only).
   useEffect(() => {
     if (phase === 'result' || phase === 'deepResult') {
       import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());

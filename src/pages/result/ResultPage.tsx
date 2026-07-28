@@ -195,7 +195,7 @@ export function ResultPage(props: ResultPageProps = {}) {
   // 이벤트 v4 · 결과 렌더링 1회 출석 마커
   useEffect(() => {
     markAttendance().catch(() => {/* non-blocking */});
-    // 2026-05-29 — 출시 프로모션 10원: 결과 페이지 도달 시 자동 지급 (코드 단위 dedupe · 앱인토스 only).
+    // 2026-05-29 — 출시 프로모션(50원): 결과 페이지 도달 시 자동 지급 (코드 단위 dedupe · 앱인토스 only).
     //   LoadingPage 경유뿐 아니라 보관함 재진입 등 모든 결과 도달을 커버.
     import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
       // 2026-06-02 — 출석 적립 + 일일/연속 보상 자동 지급 (콘텐츠 이용 시, 클라 잔액 적립)

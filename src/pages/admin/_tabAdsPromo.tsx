@@ -24,7 +24,9 @@ const REWARD_LABEL: Record<string, string> = {
 //   코드 매칭으로 사람이 읽을 라벨 부여 (테스트 프로모는 '(테스트)' 부기).
 function promoLabel(kind: string): string {
   const test = kind.includes('TEST_') ? ' (테스트)' : '';
-  if (kind.includes('01KTRSZ')) return `첫출석 10원 프로모${test}`;
+  if (kind.includes('01KYM4')) return `무료 사주보기 50원${test}`;
+  // 구 프로모 — 과거 지급분 라벨 유지 (2026-07-28 50원으로 교체)
+  if (kind.includes('01KTRSZ')) return `첫콘텐츠 10원 프로모(구)${test}`;
   if (kind.includes('01KPQJ')) return `7일 완주 100원 프로모${test}`;
   return `${kind}${test}`;
 }

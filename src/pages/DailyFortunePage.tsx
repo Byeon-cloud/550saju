@@ -126,7 +126,7 @@ export function DailyFortunePage() {
       import('@/services/analytics').then((a) => a.trackEvent('content_result', { type: 'daily' })).catch(() => {});
     }
   }, [result]);
-  // 2026-05-29 — 출시 프로모션 10원: 무료 오늘운세 결과 도달도 첫 콘텐츠로 인정 (코드 단위 dedupe · 앱인토스 only).
+  // 2026-05-29 — 출시 프로모션(50원): 무료 오늘운세 결과 도달도 첫 콘텐츠로 인정 (코드 단위 dedupe · 앱인토스 only).
   useEffect(() => {
     if (phase === 'result') {
       import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
