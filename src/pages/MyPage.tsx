@@ -1459,29 +1459,29 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
   const [showDebug, setShowDebug] = useState(false);
   const [promoBusy, setPromoBusy] = useState(false);
 
-  // 출시 전 프로모션 TEST 호출 — 토스 콘솔 "시작하기" 활성화용.
-  // 디버그 시트(버전 5탭) 안에서만 노출 = 일반 유저 비노출. VITE_PROMO_LIVE=1 이면 실코드.
+  // 프로모션 TEST 호출 — 토스 콘솔 "시작하기" 활성화용. 디버그 시트(버전 5탭)에서만 노출.
+  //
+  // 🚨 2026-07-29 수정 — 이전엔 grantLaunchPromotion()(=LIVE 경로)을 불러서, 라벨은 "TEST"인데
+  //   `.env VITE_PROMO_LIVE=1` 때문에 **실제 LIVE 코드로 실지급(50원 차감)** 이 나갔다.
+  //   정작 공식 문서가 요구하는 `TEST_{promotionCode}` 호출은 한 번도 수행되지 않아
+  //   콘솔에서 "프로모션 시작하기" 를 누를 수 없는 상태였다.
+  //   → testLaunchPromotion / test7DayPromotion 은 LIVE 플래그와 무관하게 항상 TEST_ 코드를 쓴다.
+  //   현재 대상: TEST_01KYM4E5PJ4FP2ZFEG5JPDV6PZ (50원 · 콘솔 2026-07-28 승인)
   const runPromoTest = async (kind: '7day' | 'launch') => {
     if (promoBusy) return;
     setPromoBusy(true);
     try {
-      if (kind === '7day') {
-        const m = await import('@/services/storage/dailyReward');
-        const r = await m.simulate7DayCompletion();
-        _toast.show(
-          r.ok ? '7일 완주 프로모 TEST 호출 성공'
-               : `7일 완주 실패: ${r.reason || '알 수 없음'}`,
-          r.ok ? 'success' : 'warning',
-        );
-      } else {
-        const m = await import('@/services/toss/tossPromotion');
-        const r = await m.grantLaunchPromotion();
-        _toast.show(
-          r.ok ? '출시 프로모 TEST 호출 성공'
-               : `출시 프로모 실패: ${r.reason || '알 수 없음'}`,
-          r.ok ? 'success' : 'warning',
-        );
-      }
+      const m = await import('@/services/toss/tossPromotion');
+      const r = kind === '7day'
+        ? await m.test7DayPromotion()
+        : await m.testLaunchPromotion();
+      const label = kind === '7day' ? '7일 완주' : '출시(무료 사주보기)';
+      _toast.show(
+        r.ok
+          ? `${label} TEST 호출 성공 — 콘솔에서 "시작하기" 가능`
+          : `${label} TEST 실패: ${m.describePromoFailure(r.reason)}`,
+        r.ok ? 'success' : 'warning',
+      );
     } catch (e: any) {
       _toast.show(`예외: ${e?.message || 'unknown'}`, 'warning');
     } finally {
@@ -1553,20 +1553,21 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
 
               <p className="text-[12px] font-bold mt-2 mb-2" style={{ color: C.gold }}>프로모션 TEST 호출 (출시 전)</p>
               <p className="text-[10px] mb-3" style={{ color: 'rgba(248,245,238,0.5)' }}>
-                토스 콘솔 "시작하기" 활성화용. 각 1회 호출 → 콘솔에서 활성화 확인 후 출시.
+                TEST_ 코드로 호출돼요 (실지급 아님). 콘솔 "시작하기" 활성화 조건 —
+                각 1회 호출 후 콘솔에서 상태 확인. ⚠️ 토스앱(QR)에서만 동작.
               </p>
               <div className="flex gap-2 mb-3">
                 <button type="button" disabled={promoBusy}
                   onClick={() => runPromoTest('7day')}
                   className="flex-1 py-3 rounded-xl text-[13px] font-bold"
                   style={{ background: C.gold, color: C.ink, opacity: promoBusy ? 0.5 : 1 }}>
-                  7일 출석 완주
+                  7일 완주 100원
                 </button>
                 <button type="button" disabled={promoBusy}
                   onClick={() => runPromoTest('launch')}
                   className="flex-1 py-3 rounded-xl text-[13px] font-bold"
                   style={{ background: C.gold, color: C.ink, opacity: promoBusy ? 0.5 : 1 }}>
-                  출시 프로모
+                  무료 사주보기 50원
                 </button>
               </div>
               <button type="button" onClick={() => setShowDebug(false)}

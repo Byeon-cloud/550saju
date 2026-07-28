@@ -131,6 +131,86 @@ export async function grantLaunchPromotion(): Promise<GrantResult> {
   return grantPromotion(PROMO.LAUNCH_SAJU);
 }
 
+/** 토스 프로모션 에러코드 → 사람이 읽는 진단 (공식 문서 기준) */
+const PROMO_ERROR_HINT: Record<string, string> = {
+  '4100': '콘솔에 없는 프로모션 코드예요 (코드 불일치)',
+  '4109': '프로모션이 실행중이 아니에요 — 콘솔에서 "시작하기" 미클릭 또는 예산 소진',
+  '4110': '토스 내부 오류로 지급 실패 — 재시도 필요',
+  '4111': '지급 내역을 찾을 수 없어요',
+  '4112': '프로모션 예산(머니)이 부족해요',
+  '4113': '이미 지급된 내역이에요 (중복 키)',
+  '4114': '1회 지급 금액을 초과했어요 — 콘솔 금액과 코드의 amount 불일치 의심',
+  '4116': '최대 지급 금액이 예산을 초과했어요',
+  sdk_version_low: '토스앱이 5.232.0 미만이에요',
+  not_in_toss: '앱인토스 환경이 아니에요 (브라우저에서는 동작 안 함)',
+  already_granted: '이 기기에서 이미 호출했어요 — 강제 재시도로 다시 보낼 수 있어요',
+};
+
+/** reason 문자열에서 에러코드를 뽑아 진단 문구로 변환 */
+export function describePromoFailure(reason?: string): string {
+  if (!reason) return '알 수 없는 실패';
+  const code = (reason.match(/\b(4\d{3})\b/) || [])[1] || reason.split(':')[0].trim();
+  return PROMO_ERROR_HINT[code] ? `${reason} — ${PROMO_ERROR_HINT[code]}` : reason;
+}
+
+/**
+ * 🧪 프로모션 **테스트** 호출 — `TEST_` 접두사 코드를 강제 사용 (VITE_PROMO_LIVE 무시).
+ *
+ * 근거(공식 문서): "실제 프로모션을 시작하기 전에 **테스트용 프로모션 코드로 최소 1회 이상 호출**해야
+ *   해요… 비게임 미니앱의 테스트 코드는 샌드박스가 아닌 **토스앱(QR 코드 테스트)** 에서 호출해야 해요."
+ *   → 이 호출을 마쳐야 콘솔에서 "프로모션 시작하기" 를 누를 수 있다.
+ *
+ * ⚠️ 기존 문제: 디버그 시트의 "프로모 TEST" 버튼이 grantLaunchPromotion() 을 불렀는데,
+ *   `.env VITE_PROMO_LIVE=1` 이라 resolveCode() 가 **LIVE 코드**를 반환 → 라벨은 TEST 인데
+ *   실제로는 실지급(50원 차감)이 나갔고, 정작 문서가 요구하는 TEST_ 호출은 한 번도 못 했다.
+ *
+ * @param force dedupe(localStorage) 를 무시하고 재호출. 테스트는 반복해야 할 수 있어 기본 true.
+ */
+export async function grantPromotionTest(
+  promo: PromoItem,
+  force = true,
+): Promise<GrantResult> {
+  if (!isAppsInToss()) return { ok: false, reason: 'not_in_toss' };
+
+  const testCode = `TEST_${promo.code}`; // LIVE 플래그와 무관하게 항상 테스트 코드
+  const dKey = dedupeKey(testCode);
+  try {
+    if (!force && window.localStorage.getItem(dKey)) {
+      return { ok: false, reason: 'already_granted' };
+    }
+  } catch { /* noop */ }
+
+  try {
+    const mod: any = await import('@apps-in-toss/web-framework');
+    const grant = mod.grantPromotionReward;
+    if (typeof grant !== 'function') return { ok: false, reason: 'sdk_unsupported' };
+
+    const result = await grant({ params: { promotionCode: testCode, amount: promo.amount } });
+
+    if (result && typeof result === 'object' && 'key' in result) {
+      try { window.localStorage.setItem(dKey, String(Date.now())); } catch { /* noop */ }
+      return { ok: true, rewardKey: (result as any).key };
+    }
+    if (result && typeof result === 'object' && 'errorCode' in result) {
+      return { ok: false, reason: `${(result as any).errorCode}: ${(result as any).message ?? ''}` };
+    }
+    if (result === undefined) return { ok: false, reason: 'sdk_version_low' };
+    return { ok: false, reason: 'unknown_error' };
+  } catch (e: any) {
+    return { ok: false, reason: e?.message || 'exception' };
+  }
+}
+
+/** 출시 프로모션 TEST 호출 (콘솔 "시작하기" 활성화용) */
+export async function testLaunchPromotion(force = true): Promise<GrantResult> {
+  return grantPromotionTest(PROMO.LAUNCH_SAJU, force);
+}
+
+/** 7일 완주 프로모션 TEST 호출 */
+export async function test7DayPromotion(force = true): Promise<GrantResult> {
+  return grantPromotionTest(PROMO.ATTEND_7DAY, force);
+}
+
 /**
  * 7일 출석 완주 리워드.
  * 7일 연속 출석 완료 시점에 호출 (출석 추적은 dailyReward.ts).
