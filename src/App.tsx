@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { lazyWithReload, clearChunkReloadFlag } from '@/lib/lazyWithReload';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -250,6 +250,8 @@ async function runCsCompensationCheck(): Promise<void> {
 }
 
 export function App() {
+  // 앱인토스 뒤로가기 이벤트 구독 해제 핸들 (graniteEvent.addEventListener 반환값)
+  const backUnsubRef = useRef<(() => void) | null>(null);
   // 포그라운드 복귀마다 CS 보상 재확인 (어드민이 나중에 넣은 운도 앱 재열람 때 수령)
   useEffect(() => {
     const onVis = () => { if (document.visibilityState === 'visible') runCsCompensationCheck(); };
@@ -394,48 +396,61 @@ export function App() {
           },
         });
 
-        // 뒤로가기 핸들러 — 페이지별 분기
-        const currentPathRef = { value: window.location.pathname };
-        // pathname 변경 감지
-        const observer = new MutationObserver(() => {
-          currentPathRef.value = window.location.pathname;
-        });
-        observer.observe(document.querySelector('head')!, { childList: true, subtree: true });
-        // popstate로도 감지
-        window.addEventListener('popstate', () => {
-          currentPathRef.value = window.location.pathname;
-        });
-        // pushState/replaceState 감지
-        const origPush = history.pushState;
-        history.pushState = function (...args) {
-          origPush.apply(this, args);
-          currentPathRef.value = window.location.pathname;
-        };
-        const origReplace = history.replaceState;
-        history.replaceState = function (...args) {
-          origReplace.apply(this, args);
-          currentPathRef.value = window.location.pathname;
-        };
-
-        if (mod.registerBackHandler) {
-          mod.registerBackHandler(() => {
-            const path = currentPathRef.value;
-            // 홈/메인이면 앱 종료
-            if (path === '/' || path === '/home') {
-              mod.closeView?.();
-              return;
-            }
-            // 결과 페이지면 홈으로 (SDK 콜백, Hook 사용 불가 — assign 사용)
-            if (path.startsWith('/result')) {
-              window.location.assign('/');
-              return;
-            }
-            // 그 외 → 브라우저 뒤로가기
-            window.history.back();
+        /* 뒤로가기 핸들러 — 페이지별 분기 (2026-07-28 SDK 2.10.7 기준 재작성)
+         *
+         * 🚨 구 코드는 `mod.registerBackHandler` 를 호출했는데 이 API 는 SDK 에 **존재한 적이 없다**
+         *   (2.6.2·2.10.7 양쪽 타입 정의 대조 확인). `if (mod.registerBackHandler)` 가드에 막혀
+         *   조용히 스킵돼 뒤로가기 커스텀 동작이 한 번도 실행되지 않았음. 정식 API 는 graniteEvent.
+         *   함께 있던 MutationObserver(head 감시) + history.pushState/replaceState 몽키패칭도
+         *   제거한다 — 콜백 안에서 window.location.pathname 을 그때그때 읽으면 항상 최신이라
+         *   불필요했고, React Router 의 history 조작과 충돌할 수 있는 위험 코드였다.
+         *
+         * ⚠️ 공식 문서: "onEvent — 뒤로가기 버튼이 눌리면 호출돼요. **기본 뒤로가기는 차단돼요.**"
+         *   → 구독하는 순간 기본 동작이 사라지므로 **모든 경로를 우리가 처리해야 한다.**
+         *   한 갈래라도 빠뜨리면 유저가 그 화면에 갇힌다. 아래 분기는 전 경로를 덮고,
+         *   마지막 fallback 까지 반드시 어딘가로 이동하도록 설계됨. (문서 권장대로 onError 필수)
+         */
+        const unsubscribeBack: (() => void) | undefined =
+          mod.graniteEvent?.addEventListener?.('backEvent', {
+            onEvent: () => {
+              // SDK 콜백이라 Hook 사용 불가 → location.assign 으로 이동 (앱인토스 웹뷰 안전)
+              const path = window.location.pathname;
+              try {
+                // 홈이면 앱(미니앱) 종료
+                if (path === '/' || path === '/home') {
+                  mod.closeView?.();
+                  return;
+                }
+                // 결과 페이지 → 홈. 뒤로 갔다가 /loading 으로 되돌아가 재생성이 트리거되는 것 방지
+                if (path.startsWith('/result')) {
+                  window.location.assign('/');
+                  return;
+                }
+                // 딥링크·프로모 직접 진입 등으로 히스토리가 없으면 back() 이 무동작 → 갇힘. 홈으로.
+                if (window.history.length <= 1) {
+                  window.location.assign('/');
+                  return;
+                }
+                window.history.back();
+              } catch {
+                // 어떤 이유로든 실패해도 최소한 홈으로 빠져나갈 수 있게 (갇힘 방지 최후 보루)
+                try { window.location.assign('/'); } catch { /* noop */ }
+              }
+            },
+            onError: () => {
+              // 이벤트 파이프라인 오류 — 기본 뒤로가기가 차단된 상태이므로 최소 동작을 보장한다
+              try { window.history.back(); } catch { /* noop */ }
+            },
           });
-        }
+        // 문서 권장: 등록된 리스너는 해제. 앱 전역 1회 구독이라 언마운트=앱 종료지만 규약대로 정리.
+        backUnsubRef.current = typeof unsubscribeBack === 'function' ? unsubscribeBack : null;
       }).catch(() => {});
     });
+    // 문서 권장 — 언마운트 시 리스너 해제 (미해제 시 중복 구독 위험)
+    return () => {
+      try { backUnsubRef.current?.(); } catch { /* noop */ }
+      backUnsubRef.current = null;
+    };
   }, []);
 
   return (
