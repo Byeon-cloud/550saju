@@ -1455,6 +1455,8 @@ function CsCode({ toast }: { toast: ReturnType<typeof useToast> }) {
    AppMeta — §8 (버전·빌드 + 5탭 디버그 시트)
 ══════════════════════════════════════════ */
 function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
+  // QA 전용 도구 노출 플래그 — .env VITE_DEBUG_TOOLS=1 인 빌드에서만 true (출시본 기본 OFF)
+  const DEBUG_TOOLS = import.meta.env.VITE_DEBUG_TOOLS === '1';
   const [tapCount, setTapCount] = useState(0);
   const [showDebug, setShowDebug] = useState(false);
   const [promoBusy, setPromoBusy] = useState(false);
@@ -1540,16 +1542,26 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
               ].map((line, i) => (
                 <p key={i} className="text-[11px] mb-1" style={{ color: 'rgba(248,245,238,0.65)' }}>{line}</p>
               ))}
-              <p className="text-[12px] font-bold mt-5 mb-2" style={{ color: C.gold }}>테스트 운 충전 (QA 전용)</p>
-              <p className="text-[10px] mb-2" style={{ color: 'rgba(248,245,238,0.5)' }}>
-                현재 {getBalance()}운 · 누를 때마다 +100운 (로컬). 출시 후 일반 유저 비노출.
-              </p>
-              <button type="button"
-                onClick={() => { addPaidBalance(100, 0); _toast.show(`+100운 충전 (현재 ${getBalance()}운)`, 'success'); }}
-                className="w-full py-3 rounded-xl text-[13px] font-bold mb-4"
-                style={{ background: C.gold, color: C.ink }}>
-                테스트 운 +100
-              </button>
+              {/* 🚨 2026-07-29 — 무료 운 충전은 빌드 플래그로 차단 (기본 OFF = 출시본 미포함).
+                  이전엔 게이트가 '버전 5탭' 뿐이라 **누구나 열어 100운(=5만원 상당)을 무한 획득**할 수 있었다.
+                  우리 유료 콘텐츠는 로컬 잔액으로 결제되므로 곧 매출 구멍. 주석은 "출시 후 비노출"이라
+                  적혀 있었으나 실제 차단 코드가 없었다.
+                  QA 시엔 .env 에 VITE_DEBUG_TOOLS=1 을 켠 로컬 빌드를 쓰거나, 어드민에서 운을 지급한다.
+                  ⚠️ 회귀 금지: 이 플래그 없이 잔액 증감 버튼을 노출하지 말 것. */}
+              {DEBUG_TOOLS && (
+                <>
+                  <p className="text-[12px] font-bold mt-5 mb-2" style={{ color: C.gold }}>테스트 운 충전 (QA 전용)</p>
+                  <p className="text-[10px] mb-2" style={{ color: 'rgba(248,245,238,0.5)' }}>
+                    현재 {getBalance()}운 · 누를 때마다 +100운 (로컬). VITE_DEBUG_TOOLS=1 빌드에서만 노출.
+                  </p>
+                  <button type="button"
+                    onClick={() => { addPaidBalance(100, 0); _toast.show(`+100운 충전 (현재 ${getBalance()}운)`, 'success'); }}
+                    className="w-full py-3 rounded-xl text-[13px] font-bold mb-4"
+                    style={{ background: C.gold, color: C.ink }}>
+                    테스트 운 +100
+                  </button>
+                </>
+              )}
 
               <p className="text-[12px] font-bold mt-2 mb-2" style={{ color: C.gold }}>프로모션 TEST 호출 (출시 전)</p>
               <p className="text-[10px] mb-3" style={{ color: 'rgba(248,245,238,0.5)' }}>
