@@ -214,7 +214,7 @@ function getUtm(): Record<string, string> | null {
 }
 
 /* ─── 앱인토스 진입 출처 캡처 (2026-06-27 · A) ───
- *   토스 딥링크(intoss://saju500/path?utm_source=threads)가 query 를 webview location.search 로
+ *   토스 딥링크(intoss://saju-500/path?utm_source=threads)가 query 를 webview location.search 로
  *   안 넘기는 경우, 토스 SDK getSchemeUri() = 실행 스킴 URI 통째 → 거기서 utm/ref 파싱.
  *   웹 utm(captureUtm)이 이미 source 를 잡았으면 스킵. best-effort, 웹 빌드선 early-return. */
 async function captureTossSchemeUtm(): Promise<void> {

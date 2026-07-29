@@ -1345,17 +1345,40 @@ function ContactSheet({ open, onClose, userId, toast: _toast }: {
   const subject = encodeURIComponent(`사주500 문의${userId ? ` [회원ID:${userId}]` : ''}`);
   const mailtoUrl = `mailto:${CONTACT_EMAIL}?subject=${subject}`;
 
+  /* 🚨 2026-07-29 — 외부 이동은 앱인토스에서 SDK openURL 을 경유한다.
+   *   토스 웹뷰는 window.open(팝업)·비-http 스킴(a[href=mailto]) 인터셉트가 보장되지 않아
+   *   무동작할 수 있는데, 이 두 경로가 곧 **필수 메뉴 '고객문의'** 라 먹통이면 심사 지적 직결.
+   *   openURL 은 "지정한 URL 을 기기 기본 브라우저나 연결된 앱에서" 열어주므로 카톡·메일앱으로 정상 전달.
+   *   웹(비-앱인토스)에서는 기존 동작을 그대로 쓴다. 실패 시에도 기존 경로로 폴백. */
+  const openExternal = async (url: string, fallback: () => void) => {
+    try {
+      const { isAppsInToss } = await import('@/services/payment/iapService');
+      if (isAppsInToss()) {
+        const mod: any = await import('@apps-in-toss/web-framework');
+        if (typeof mod.openURL === 'function') {
+          await mod.openURL(url);
+          return;
+        }
+      }
+    } catch { /* 폴백으로 */ }
+    fallback();
+  };
+
   const onMail = () => {
-    const a = document.createElement('a');
-    a.href = mailtoUrl;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    void openExternal(mailtoUrl, () => {
+      const a = document.createElement('a');
+      a.href = mailtoUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
     onClose();
   };
 
   const onKakao = () => {
-    window.open(KAKAO_CHANNEL_URL, '_blank', 'noopener,noreferrer');
+    void openExternal(KAKAO_CHANNEL_URL, () => {
+      window.open(KAKAO_CHANNEL_URL, '_blank', 'noopener,noreferrer');
+    });
     onClose();
   };
 

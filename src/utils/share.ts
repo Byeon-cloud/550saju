@@ -11,7 +11,7 @@
  *
  * OG 이미지: 1200x600px. 현재 콘텐츠별 정적 이미지 4종 (/og-{type}.png) 사용.
  *   Phase 2: 사용자별 동적 OG PNG (Storage 캐싱) — TODO
- * 딥링크: intoss://saju500/{type}/:id
+ * 딥링크: intoss://saju-500/{type}/:id
  */
 
 import { isAppsInToss } from '@/services/payment/iapService';
@@ -141,7 +141,7 @@ async function shareViaToss(deepLinkPath: string, message: string, ogImageUrl?: 
   try {
     const { share, getTossShareLink } = await import('@apps-in-toss/web-framework');
     const tossLink = await getTossShareLink(
-      `intoss://saju500${deepLinkPath}`,
+      `intoss://saju-500${deepLinkPath}`,
       ogImageUrl,
     );
     // 2026-05-28 PM — 토스 공유 시 메시지 본문 + 링크 함께 전달 (콘텐츠별 카피 보존)

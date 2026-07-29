@@ -36,6 +36,16 @@ function ensureAdsInitialized(mod: any): Promise<boolean> {
   adsInitPromise = new Promise<boolean>((resolve) => {
     const TossAds = mod?.TossAds;
     if (!TossAds?.attachBanner) { resolve(false); return; }
+    /* 🚨 2026-07-29 — 공식 규정: "광고 SDK 초기화를 호출하기 **전에 반드시 지원 여부를 확인**해야 해요."
+     *   배너 API 는 토스앱 5.241.0 이상 지원이며, 미만에서는 "빈 화면이 노출될 수 있으니 반드시 예외 처리".
+     *   구 코드는 `typeof initialize !== 'function'` 을 "init 불필요 버전"으로 낙관 처리(=true 반환)했는데,
+     *   이는 지원 확인이 아니라 추측이었고 구버전에서 빈 배너 박스가 남는 원인이 될 수 있었다.
+     *   isSupported() 가 있으면 그 판정을 우선하고, 없으면 기존 휴리스틱으로 폴백한다. */
+    if (typeof TossAds.isSupported === 'function') {
+      try {
+        if (!TossAds.isSupported()) { resolve(false); return; } // 미지원 → 슬롯 자체를 숨김
+      } catch { resolve(false); return; }
+    }
     if (typeof TossAds.initialize !== 'function') { resolve(true); return; } // init 불필요 버전
     let settled = false;
     const done = (ok: boolean) => { if (!settled) { settled = true; resolve(ok); } };
@@ -111,6 +121,13 @@ export function AdSlot({
       .then(async (mod: any) => {
         const TossAds = mod?.TossAds;
         if (!TossAds?.attachBanner) { setHidden(true); return; }
+
+        // 규정 2단계: "배너 광고를 **부착하기 전에 반드시** 지원 여부를 확인해야 해요." (초기화 전 확인과 별개)
+        if (typeof TossAds.isSupported === 'function') {
+          let supported = false;
+          try { supported = !!TossAds.isSupported(); } catch { supported = false; }
+          if (!supported) { setHidden(true); return; } // 5.241.0 미만 등 → 빈 박스 대신 슬롯 숨김
+        }
 
         const ok = await ensureAdsInitialized(mod);
         if (cancelled || !containerRef.current) return;

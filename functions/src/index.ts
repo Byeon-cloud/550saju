@@ -2303,13 +2303,18 @@ export const disconnectToss = onRequest(
       return;
     }
 
-    if (req.method !== 'POST') {
+    /* 🚨 2026-07-29 — GET 방식 지원 추가. 공식 문서는 콜백을 **GET·POST 둘 다** 규정하는데
+     *   (GET: `$callback_url?userKey=$userKey&referrer=$referrer`), 구 코드는 POST 외 전부 405 로
+     *   반려해 콘솔이 GET 으로 설정돼 있으면 콜백이 100% 실패했다. body → query 폴백을 둔다. */
+    if (req.method !== 'POST' && req.method !== 'GET') {
       res.status(405).json({ error: 'Method Not Allowed' });
       return;
     }
 
     try {
-      const { userKey, referrer } = req.body;
+      const src: any = req.method === 'GET' ? req.query : (req.body ?? {});
+      const userKey = src?.userKey ?? (req.query as any)?.userKey;
+      const referrer = String(src?.referrer ?? (req.query as any)?.referrer ?? 'UNLINK');
       if (!userKey) {
         res.status(400).json({ error: 'userKey 필요' });
         return;
@@ -2327,22 +2332,37 @@ export const disconnectToss = onRequest(
         const userDoc = usersSnap.docs[0];
         const uid = userDoc.id;
 
-        // 유저 데이터 비활성화 (5일 후 삭제 예약 — 개인정보보호법)
+        /* 🚨 2026-07-29 referrer 3종 분기 (구 코드는 전부 동일 처리 = 과처리).
+         *   정본: "UNLINK(토스 설정→연결 끊기) → 미니앱은 **로그아웃 처리**해야 함" /
+         *         WITHDRAWAL_TERMS(약관 철회) · WITHDRAWAL_TOSS(토스 회원 탈퇴) = 탈퇴 의사.
+         *   구 코드는 UNLINK 에도 Auth disabled + 5일 삭제 예약을 걸어, **유료 리포트를 보유한 유저가
+         *   연결만 끊었다가 계정이 잠기고 데이터가 삭제 예약**되는 과처리였다.
+         *   → UNLINK 는 토스 연동만 해제(재연결 가능·구매 데이터 보존), 탈퇴 2종만 비활성화+파기 예약. */
+        const isWithdrawal = referrer === 'WITHDRAWAL_TERMS' || referrer === 'WITHDRAWAL_TOSS';
+
         await userDoc.ref.update({
           status: 'disconnected',
-          disconnectReferrer: referrer || 'UNLINK',
+          disconnectReferrer: referrer,
           disconnectedAt: admin.firestore.FieldValue.serverTimestamp(),
-          deleteScheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          // 토스 연동 해제 — 재로그인 시 새로 매칭되도록 키를 비운다 (UNLINK·탈퇴 공통)
+          tossUserKey: admin.firestore.FieldValue.delete(),
+          ...(isWithdrawal
+            // 탈퇴: 5일 후 파기 예약 (개인정보보호법)
+            //   ⚠️ deleteScheduledAt 을 소비하는 스케줄러는 아직 미구현 — 별도 티켓 필요(예약만 되고 파기 X)
+            ? { deleteScheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) }
+            : {}),
         });
 
-        // Firebase Auth 계정 비활성화
-        try {
-          await admin.auth().updateUser(uid, { disabled: true });
-        } catch (e) {
-          console.warn(`[disconnectToss] Auth 비활성화 실패: ${uid}`);
+        if (isWithdrawal) {
+          // Firebase Auth 계정 비활성화 — 탈퇴 의사가 있을 때만
+          try {
+            await admin.auth().updateUser(uid, { disabled: true });
+          } catch {
+            console.warn(`[disconnectToss] Auth 비활성화 실패: ${uid}`);
+          }
         }
 
-        console.log(`[disconnectToss] 유저 비활성화 완료: ${uid} (${referrer})`);
+        console.log(`[disconnectToss] 처리 완료: ${uid} (${referrer} · ${isWithdrawal ? '탈퇴=비활성화+파기예약' : '연결해제=계정유지'})`);
       } else {
         console.warn(`[disconnectToss] 유저 못 찾음: userKey=${userKey}`);
       }

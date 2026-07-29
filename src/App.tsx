@@ -46,7 +46,6 @@ const TojungPage = lazyWithReload(() => import('@/pages/TojungPage').then(m => (
 void DaeunPage; void CompatResultPage; void TojungPage; // MonthlyPage 는 2026-06-29 /monthly 라우트에서 사용 중
 const PremiumSelectPage = lazyWithReload(() => import('@/pages/PremiumSelectPage').then(m => ({ default: m.PremiumSelectPage })));
 // 폐기됨 (iframe srcDoc + regex 패턴) — _archive_/ 로 이동. 진본은 PremiumResult.tsx
-const ChatPagePerfect = lazyWithReload(() => import('@/pages/ChatPagePerfect').then(m => ({ default: m.ChatPagePerfect })));
 const TopicAnalysisPage = lazyWithReload(() => import('@/pages/TopicAnalysisPage').then(m => ({ default: m.TopicAnalysisPage })));
 const TermsPage = lazyWithReload(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const PrivacyPage = lazyWithReload(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
@@ -181,7 +180,6 @@ function AnimatedRoutes() {
             <Route path="/tojung" element={<TojungPage />} />
             */}
             <Route path="/premium" element={<PremiumSelectPage />} />
-            <Route path="/chat-perfect" element={<ChatPagePerfect />} />
             <Route path="/topic" element={<TopicAnalysisPage />} />
             <Route path="/topic/:topicId" element={<TopicAnalysisPage />} />
             <Route path="/storage" element={<StoragePage />} />
