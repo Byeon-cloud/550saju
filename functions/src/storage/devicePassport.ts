@@ -51,7 +51,18 @@ export const registerDevicePassport = onCall(
     const known = Object.keys(uids);
     const alreadyRegistered = known.includes(uid);
 
-    // ── 1) 이관 판정 — 이 uid 가 이 기기에서 처음 보이는데, 직전 uid 가 등록돼 있으면 회전으로 간주
+    // 🌉 보상 이력 다리 (2026-08-13) — 과거 CS 보상 유저는 여권 배포 전 회전이라 devices 등록이 없다.
+    //   compensations/{deviceId}.claimedByUid 는 어드민이 확정한 '이 기기의 옛 uid' → 신뢰도 높은
+    //   donor 후보 (self-report 인 devices/ 보다 안전 — 어드민만 write). 이걸 후보에 더해
+    //   결제 안 한 과거 피해자도 다음 부팅에 자동 복구되게 한다.
+    let compDonor: string | null = null;
+    try {
+      const comp = await db.doc(`compensations/${deviceId}`).get();
+      const cuid = comp.exists ? (comp.data()?.claimedByUid as string | undefined) : undefined;
+      if (cuid && cuid !== uid && !known.includes(cuid)) compDonor = cuid;
+    } catch { /* noop */ }
+
+    // ── 1) 이관 판정 — 이 uid 가 이 기기에서 처음 보이는데, 직전 uid(등록 or 보상이력)가 있으면 회전으로 간주
     let migratedReports = 0;
     let fromUid: string | null = null;
     let rotated = false;      // 회전 감지 (리포트 0건이어도 true — 잔액 seed 트리거)
@@ -59,12 +70,13 @@ export const registerDevicePassport = onCall(
 
     const lastMigratedAt: admin.firestore.Timestamp | undefined = data.lastMigratedAt;
     const cooledDown = !lastMigratedAt || (Date.now() - lastMigratedAt.toMillis()) > MIGRATE_COOLDOWN_MS;
+    const hasDonorSource = (known.filter((k) => k !== uid).length > 0) || !!compDonor;
 
-    if (!alreadyRegistered && known.length > 0 && known.length < MAX_UIDS_PER_DEVICE && cooledDown) {
-      // 기증자 = 이 기기에서 가장 최근에 활동한 다른 uid
+    if (!alreadyRegistered && hasDonorSource && known.length < MAX_UIDS_PER_DEVICE && cooledDown) {
+      // 기증자 = 이 기기 등록 uid 중 최근 활동자 (없으면 보상이력 uid).
       const donor = known
         .filter((k) => k !== uid)
-        .sort((a, b) => (uids[b]?.toMillis?.() ?? 0) - (uids[a]?.toMillis?.() ?? 0))[0];
+        .sort((a, b) => (uids[b]?.toMillis?.() ?? 0) - (uids[a]?.toMillis?.() ?? 0))[0] || compDonor;
 
       if (donor) {
         rotated = true; // 같은 기기에 직전 uid 존재 = 회전 (리포트 유무와 무관)
