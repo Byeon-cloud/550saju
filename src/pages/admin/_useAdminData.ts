@@ -599,8 +599,30 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
         };
         try {
           const repSnap = await getDocs(collectionGroup(db, 'reports'));
+          // twin 잉여 지문 pre-pass (2026-08-13) — 과거 restoreLibrary 버그로 같은 리포트가
+          //   base36 정본 + auto-id 사본 두 문서로 남은 유저가 74명. base36 이 있는 (uid·종류·분) 조합을
+          //   기록해두고, 본 집계에서 같은 조합의 auto-id 문서를 건너뛴다.
+          const twinFp = new Set<string>();
+          repSnap.forEach((doc) => {
+            if (!doc.ref.parent.parent) return;
+            if (!/^m[a-z0-9]{9,16}$/.test(doc.id)) return;
+            const r = doc.data() as any;
+            const iso = typeof r.createdAt === 'string' ? r.createdAt : (r.createdAt?.toDate?.()?.toISOString?.() ?? '');
+            if (iso) twinFp.add(`${doc.ref.parent.parent.id}|${r.contentType ?? 'report'}|${iso.slice(0, 16)}`);
+          });
           repSnap.forEach((doc) => {
             const r = doc.data() as any;
+            // 🚨 이중 카운트 fix (2026-08-13) — collectionGroup('reports') 는 top-level 생성원본과
+            //   users/{uid}/reports 백업 미러를 **둘 다** 세서 유료 생성 지표가 ~55% 과대였다 (실측).
+            //   유저가 보는 보관함 = users 하위 미러가 전체 집합(무료 포함)이므로 그것만 센다.
+            if (!doc.ref.parent.parent) return; // top-level 원본 제외 (미러와 중복)
+            // uid 회전 자동이관 사본 제외 — 같은 리포트가 옛/새 uid 양쪽에 존재 (원본 uid 쪽만 집계)
+            if (r.migratedFromUid) return;
+            // twin 잉여 사본 제외 (auto-id 이고 같은 분에 base36 정본 존재)
+            if (/^[A-Za-z0-9]{20}$/.test(doc.id)) {
+              const iso = typeof r.createdAt === 'string' ? r.createdAt : (r.createdAt?.toDate?.()?.toISOString?.() ?? '');
+              if (iso && twinFp.has(`${doc.ref.parent.parent.id}|${r.contentType ?? 'report'}|${iso.slice(0, 16)}`)) return;
+            }
             const ruid = r.uid || doc.ref.parent.parent?.id || '';
             if (ownerUidSet.has(ruid)) return; // 오너 테스트 생성물 제외 (더미 — 전수감사 등)
             const t = r.contentType || r.type || 'report'; // 서버 문서는 type 필드 (premium/basic/...)

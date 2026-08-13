@@ -87,6 +87,11 @@ service cloud.firestore {
       match /profiles/{pid} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
+      // 잔액 미러 등 클라 상태 스냅샷 (2026-08-13 기기 여권) — 자기신고 성격, 서버 지급 판정에 미사용.
+      //   users 문서의 금전 필드 차단(위)은 그대로 — 이 서브컬렉션은 소실 복원용 참고값일 뿐.
+      match /state/{sid} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
       match /reports/{rid} {
         allow read: if (request.auth != null && request.auth.uid == uid) || isOwner();
         allow write: if request.auth != null && request.auth.uid == uid;

@@ -336,26 +336,58 @@ export function App() {
       }
     }).catch(() => { /* noop — 실패 시 reconcile 자동환불 유지 */ });
 
-    // 0-a3. CS 보상 자동 수령 (2026-06-11 · 앱인토스 전용) — 부팅 시 1회.
+    // 0-a4. 🛂 기기 여권 (2026-08-13 · 앱인토스 전용) — deviceId→uid 등록 + uid 회전 시 보관함 자동 복원.
+    //   익명 uid 는 웹뷰 저장소에 묶여 저장소가 비워지면 회전하고, 옛 uid 를 잇는 고리가 없어
+    //   CS 마다 수동 추적해야 했다(조혜미 케이스 등 3건). 토스 deviceId 는 기기 영속이라
+    //   매 부팅 등록해두면 회전 직후 서버가 직전 uid 를 찾아 보관함+잔액 미러를 자동 이관한다.
+    //   결제 무관 전 유저 커버. ⚠️ 순서: passport(미러 seed) → 보상 수령 → IAP 복구.
+    //     보상이 먼저 적립되면 seed 가드(paid>1)가 미러 복원을 거부하므로 반드시 passport 를 앞에 둔다.
+    const passportDone = import('@/services/storage/devicePassport')
+      .then(({ runDevicePassportCheck }) => runDevicePassportCheck())
+      .catch(() => { /* noop — 안전망, 부팅 크리티컬 아님 */ });
+
+    // 0-a3. CS 보상 자동 수령 (2026-06-11 · 앱인토스 전용) — 부팅 시 1회, passport(미러 seed) 이후.
     //   2026-06-15 — 토스 웹뷰는 백그라운드→복귀해도 살아있어 'once per boot' 가드론 첫 1회만 돌아
     //   어드민이 운을 나중에 넣어도 재열람 시 수령이 안 되던 문제. → 포그라운드 복귀마다 재확인(아래 visibility effect).
-    runCsCompensationCheck();
+    //   2026-08-13 — passportDone 이후로 이동: 미러 잔액이 먼저 복원되고 그 위에 보상이 가산돼야 정확.
+    passportDone.then(() => runCsCompensationCheck());
 
     // 0-b. 2026-05-28 PM — 본인 프로필 중복 cleanup (1회 마이그레이션).
     //   기존: 새 사주 '본인' 추가 시 silent 로 myProfile 교체 → 본인 N명 누적.
     //   해결: 활성 myProfile 만 '본인' 유지, 나머지는 '가족' 자동 강등.
-    import('@/services/storage/localStore').then(({ migrateOwnerDuplicates }) => {
+    import('@/services/storage/localStore').then(({ migrateOwnerDuplicates, dedupeTwinReports }) => {
       const { migrated } = migrateOwnerDuplicates();
       if (migrated > 0) {
         // eslint-disable-next-line no-console
         console.info(`[migrate] 본인 중복 ${migrated}개 → '가족'으로 강등`);
       }
+      // 보관함 twin 잉여 1회 정리 (2026-08-13 이중저장 버그 기존 피해 청소)
+      const { removed } = dedupeTwinReports();
+      if (removed > 0) console.info(`[migrate] 보관함 중복 사본 ${removed}건 정리`);
     });
 
     // 1. 미지급 IAP 주문 복구
     import('@/services/payment/iapService').then(({ restorePendingPurchases }) => {
       restorePendingPurchases();
     });
+
+    /* 1-a. 🚨 IAP 결제 이력 기반 잔액 복구 (2026-08-07 · CS "운도 보관함도 전부 사라졌어요")
+     *   잔액은 localStorage 가 주 저장소라 기기 저장소가 초기화되면 충전한 운이 사라진다.
+     *   토스 IAP 주문 이력은 토스 계정 기준이라 기기·익명 uid 와 무관하게 남으므로,
+     *   "결제했지만 이 uid 가 받은 적 없는 주문"을 서버가 판정해 재지급한다(중복·어뷰징 판정도 서버).
+     *   인증 이후에 호출해야 request.auth 가 실려서 ensureAuth 뒤에 둔다. 실패는 무해(다음 부팅 재시도). */
+    passportDone
+      .then(() => import('@/services/auth/authService'))
+      .then(({ ensureAuth }) => ensureAuth())
+      .then(() => import('@/services/payment/iapService'))
+      .then(({ restoreCompletedPurchases }) => restoreCompletedPurchases())
+      .then((r) => {
+        if (r && (r.un > 0 || r.reports > 0)) {
+          try { localStorage.setItem('saju500:iap_recovered_notice', String(r.un)); } catch { /* noop */ }
+          console.info(`[IAP복구] 결제 ${r.granted}건 · +${r.un}운 · 보관함 ${r.reports}건 복원`);
+        }
+      })
+      .catch(() => { /* noop */ });
 
     // 1-b. 출시 전 프로모션 테스트 트리거 (?_promotest=7day | launch)
     //   토스 정책: 출시 전 TEST_ 코드로 1회 호출해야 콘솔 "시작하기" 활성화.

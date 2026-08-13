@@ -1,0 +1,107 @@
+/**
+ * 기기 여권 클라 — 부팅 시 deviceId→uid 등록 + uid 회전 감지 시 보관함 자동 복원
+ *   (2026-08-13 · CS "운·보관함 전부 초기화" 재발 대응 · 서버 registerDevicePassport 짝)
+ *
+ * 동작:
+ *   1) 앱인토스에서만 (getDeviceId 는 토스 SDK 전용 — 웹은 no-op)
+ *   2) 매 부팅 서버에 (deviceId, uid) 등록 — 6h throttle 로 과호출 방지
+ *   3) 서버가 "이 기기의 직전 uid" 를 발견하면 보관함을 자동 이관 → 클라는 서버에서 내려받아
+ *      localStorage 복원 + 안내 플래그 기록 (다음 렌더에서 토스트)
+ *
+ * 실패는 전부 조용히 삼킨다 — 여권은 안전망이지 부팅 크리티컬 패스가 아니다.
+ */
+
+const THROTTLE_KEY = 'saju500:passport_at';
+const NOTICE_KEY = 'saju500:passport_recovered'; // 복원 건수 — UI 토스트용
+const SEEDED_KEY = 'saju500:balance_seeded'; // 잔액 미러 seed 완료 — IAP 복구 이중가산 방지
+const SEED_PENDING_KEY = 'saju500:seed_pending'; // seed 미완(가드/네트워크) — 다음 부팅 재시도
+const THROTTLE_MS = 6 * 60 * 60 * 1000; // 6h
+
+export async function runDevicePassportCheck(): Promise<void> {
+  try {
+    const { isAppsInToss } = await import('@/services/payment/iapService');
+    if (!isAppsInToss()) return;
+
+    // throttle — 등록은 하루 몇 번이면 충분 (회전 감지는 부팅 직후 1회가 핵심).
+    //   단 seed 재시도 대기(SEED_PENDING) 상태면 throttle 무시 — 잔액 복원이 우선.
+    try {
+      const pendingRetry = localStorage.getItem(SEED_PENDING_KEY) === '1';
+      const last = Number(localStorage.getItem(THROTTLE_KEY) || 0);
+      if (!pendingRetry && Date.now() - last < THROTTLE_MS) return;
+    } catch { /* storage 접근 불가 시에도 진행 */ }
+
+    const mod: any = await import('@apps-in-toss/web-framework');
+    const deviceId: string | undefined = mod?.getDeviceId?.();
+    if (!deviceId) return;
+
+    const { ensureAuth } = await import('@/services/auth/authService');
+    await ensureAuth();
+    const { auth } = await import('@/services/auth/firebase');
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const { app } = await import('@/services/auth/firebase');
+    const fn = httpsCallable(getFunctions(app, 'us-central1'), 'registerDevicePassport');
+    const r: any = await fn({ deviceId });
+
+    try { localStorage.setItem(THROTTLE_KEY, String(Date.now())); } catch { /* noop */ }
+
+    const migrated = Number(r?.data?.migratedReports) || 0;
+    const rotated = !!r?.data?.rotated;
+    const mirrorReady = !!r?.data?.mirrorReady;
+    const sync = await import('@/services/storage/firestoreSync');
+
+    // (a) 보관함 복원 — 서버가 옛 uid 리포트를 이 uid 로 이관했을 때
+    if (migrated > 0) {
+      await sync.syncFromCloud(uid, { reportsOnly: true });
+      try { localStorage.setItem(NOTICE_KEY, String(migrated)); } catch { /* noop */ }
+      console.info(`[기기여권] uid 회전 감지 — 보관함 ${migrated}건 자동 복원`);
+    }
+
+    // (b) 잔액 seed — 🚨 리포트 유무와 독립 (P0 fix). 회전이거나 미러 준비됐거나, 재시도 대기 상태면 시도.
+    //   무료 위주 유저(리포트 백업 0건)도 잔액이 복원돼야 한다. seedBalanceFromMirror 내부 가드로 안전.
+    const pending = (() => { try { return localStorage.getItem(SEED_PENDING_KEY) === '1'; } catch { return false; } })();
+    if (rotated || mirrorReady || pending) {
+      try {
+        const mirror = await sync.pullBalanceMirror(uid);
+        if (mirror) {
+          const store = await import('@/services/storage/localStore');
+          if (store.seedBalanceFromMirror(mirror)) {
+            try { localStorage.setItem(SEEDED_KEY, '1'); localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }
+            console.info(`[기기여권] 잔액 스냅샷 복원 — paid ${mirror.paid} · bonus ${mirror.bonus} · reward ${mirror.reward}`);
+          } else if (store.getBalance() > 1) {
+            // 이미 의미있는 잔액 보유(정상 소비/충전 재개) → 재시도 무의미, 종결 (무한 재호출 방지)
+            try { localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }
+          } else {
+            // 잔액 아직 무의미인데 못 넣음(일시적) → 다음 부팅 재시도 표식
+            try { localStorage.setItem(SEED_PENDING_KEY, '1'); } catch { /* noop */ }
+          }
+        } else if (rotated) {
+          // 회전인데 미러 pull 실패(네트워크) → 재시도 대기
+          try { localStorage.setItem(SEED_PENDING_KEY, '1'); } catch { /* noop */ }
+        }
+      } catch {
+        try { localStorage.setItem(SEED_PENDING_KEY, '1'); } catch { /* noop */ }
+      }
+    }
+  } catch {
+    // 조용히 — 다음 부팅에 재시도
+  }
+}
+
+/** 이번 부팅에서 잔액이 미러로 seed 됐는가 — IAP 복구의 로컬 이중가산 방지용 */
+export function wasBalanceSeededFromMirror(): boolean {
+  try { return localStorage.getItem(SEEDED_KEY) === '1'; } catch { return false; }
+}
+
+/** 복원 안내 플래그 소비 (토스트 1회 노출용) — 없으면 0 */
+export function consumePassportRecoveredNotice(): number {
+  try {
+    const v = Number(localStorage.getItem(NOTICE_KEY) || 0);
+    if (v > 0) localStorage.removeItem(NOTICE_KEY);
+    return v;
+  } catch {
+    return 0;
+  }
+}

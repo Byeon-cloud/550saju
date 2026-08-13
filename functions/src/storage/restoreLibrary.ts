@@ -45,6 +45,17 @@ export const restoreLibrary = onCall(
     const db = admin.firestore();
     const out: RestoredReport[] = [];
     const seen = new Set<string>();
+    // 🚨 교차 네임스페이스 dedupe (2026-08-13 · 이중저장 진앙 fix)
+    //   백업본(users/{uid}/reports)은 클라 base36 id, 생성원본(top-level reports)은 auto-id 라
+    //   doc.id 만으로는 같은 리포트를 절대 중복 판정 못 한다 → 같은 종합사주가 2건으로 복원되고,
+    //   클라가 auto-id 사본을 다시 백업해 users 하위에 영구 잉여 문서가 생겼다 (74유저·113건 실측).
+    //   지문 = contentType + 분단위 + 이름. 재생성(관측상 2분+ 간격)은 분이 갈려 안전하게 살아남고,
+    //   이름까지 봐서 같은 분에 생성된 '다른 사람' 리포트를 오탐으로 버리지 않는다.
+    const fingerprints = new Set<string>();
+    const fpOf = (contentType: string | null, iso: string | null, name: string | null): string | null => {
+      if (!iso) return null;
+      return `${contentType ?? 'report'}@${String(iso).slice(0, 16)}@${name ?? ''}`; // YYYY-MM-DDTHH:MM@이름
+    };
 
     // 1) users/{uid}/reports — 백업본 (메타 + 내용)
     try {
@@ -60,6 +71,8 @@ export const restoreLibrary = onCall(
           contentType: d.contentType ?? null, type: d.type ?? 'paid', profileId: d.profileId ?? null, aiResult,
         });
         seen.add(doc.id);
+        const fp = fpOf(d.contentType ?? null, typeof d.createdAt === 'string' ? d.createdAt : tsToIso(d.createdAt), d.name ?? null);
+        if (fp) fingerprints.add(fp);
       });
     } catch { /* noop */ }
 
@@ -75,6 +88,12 @@ export const restoreLibrary = onCall(
           try {
             const rec = JSON.parse(d.recovery) as { content?: unknown; sajuData?: { input?: { name?: string } } };
             if (!rec.content) return;
+            // 지문 dedupe — 같은 리포트의 base36 백업본이 이미 나갔으면 auto-id 원본은 보강하지 않는다.
+            //   이름+분단위 ±1분(클라 저장 시각과 서버 생성 시각이 수 초 어긋남). rec 파싱 후 이름 확보.
+            const nm = rec.sajuData?.input?.name ?? '복원된 분석';
+            const t = new Date(createdAt as string).getTime();
+            const fps = [fpOf('report', createdAt, nm), fpOf('report', new Date(t - 60_000).toISOString(), nm), fpOf('report', new Date(t + 60_000).toISOString(), nm)];
+            if (fps.some((f) => f && fingerprints.has(f))) return;
             const ai = d.type === 'premium' ? { ...(rec.content as object), tier: 'premium' } : rec.content;
             out.push({
               id: doc.id, name: rec.sajuData?.input?.name ?? '복원된 분석', input: rec.sajuData?.input ?? null,

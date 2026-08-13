@@ -138,6 +138,84 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
  * 결제는 완료됐지만 서버 지급이 실패한 경우 복구
  * App.tsx에서 한 번 호출
  */
+/**
+ * 🚨 IAP 결제 이력 기반 잔액 복구 (2026-08-07 · CS "운도 보관함도 전부 사라졌어요")
+ *
+ * 우리 잔액은 localStorage 가 주 저장소라 **기기 저장소가 초기화되면 충전한 운이 사라진다.**
+ * 서버 users/{uid}.balance 는 '충전만' 반영된 값이라 그대로 복원하면 이미 쓴 운까지 부활해서
+ * 복원 대상이 아니다(syncFromCloud 가 reportsOnly 인 이유).
+ *
+ * 반면 토스 IAP 주문 이력은 **토스 계정 기준**이라 기기·localStorage·익명 uid 와 무관하게 살아남는다.
+ * → 이력을 서버로 보내 "결제했지만 이 uid 가 받은 적 없는 주문"만 골라 재지급받는다.
+ *   중복/어뷰징 판정은 전부 서버(recoverIapOrders)가 한다. 클라는 금액을 신뢰받지 않는다.
+ *
+ * 실패해도 조용히 무시 — 기존 동작에 영향 0.
+ */
+export async function restoreCompletedPurchases(): Promise<{ granted: number; un: number; reports: number }> {
+  const NONE = { granted: 0, un: 0, reports: 0 };
+  if (!isAppsInToss()) return NONE;
+  try {
+    const { IAP } = await import('@apps-in-toss/web-framework');
+    if (typeof (IAP as any)?.getCompletedOrRefundedOrders !== 'function') return NONE;
+
+    // 페이지네이션 — hasNext/nextKey. 과도한 순회 방지로 5페이지 상한.
+    const all: Array<{ orderId: string; sku: string; status: string; date?: string }> = [];
+    let nextKey: string | null | undefined = undefined;
+    for (let page = 0; page < 5; page++) {
+      const res: any = await (IAP as any).getCompletedOrRefundedOrders(
+        nextKey ? { nextKey } : undefined,
+      );
+      if (!res || !Array.isArray(res.orders)) break; // undefined = 앱 버전 미지원(5.231.0 미만)
+      all.push(...res.orders);
+      if (!res.hasNext || !res.nextKey) break;
+      nextKey = res.nextKey;
+    }
+    const completed = all.filter((o) => o?.status === 'COMPLETED');
+    if (completed.length === 0) return NONE;
+
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const fns = getFunctions(undefined, 'us-central1');
+    const r: any = await httpsCallable(fns, 'recoverIapOrders')({ orders: completed });
+    const data = r?.data ?? {};
+    const paidUn = Number(data.paidUn) || 0;
+    const bonusUn = Number(data.bonusUn) || 0;
+
+    if (paidUn > 0 || bonusUn > 0) {
+      // 2026-08-13 — 기기 여권이 이번 부팅에 잔액 미러(잔여 잔액 스냅샷)를 이미 seed 했다면
+      //   로컬 가산 skip. 미러에는 결제 운의 '잔여분'이 이미 들어있어 원액 재지급과 겹치면 이중가산.
+      //   서버 호출 자체는 위에서 이미 끝났으므로 payments 기록·멱등 마킹은 그대로 남는다(미래 재발 방지).
+      const { wasBalanceSeededFromMirror } = await import('@/services/storage/devicePassport');
+      if (wasBalanceSeededFromMirror()) {
+        console.info(`[IAP복구] 잔액 미러 seed 감지 — 로컬 가산 skip (+${paidUn + bonusUn}운 서버기록만)`);
+      } else {
+        addPaidBalance(paidUn, bonusUn); // 서버가 승인한 금액만 로컬 반영
+        try {
+          const { trackEvent } = await import('@/services/analytics');
+          trackEvent('reward_earned', { kind: 'iap_recovery', amount: paidUn + bonusUn });
+        } catch { /* noop */ }
+      }
+    }
+
+    // 서버가 옛 uid 의 보관함을 이관했으면(uid 회전 케이스) 로컬로 내려받는다.
+    //   이관은 users/{현재uid}/reports 에 복사되므로 reportsOnly 복원이면 충분.
+    const migrated = Number(data.migratedReports) || 0;
+    if (migrated > 0) {
+      try {
+        const { getAuth } = await import('firebase/auth');
+        const curUid = getAuth().currentUser?.uid;
+        if (curUid) {
+          const sync = await import('@/services/storage/firestoreSync');
+          await sync.syncFromCloud(curUid, { reportsOnly: true });
+        }
+      } catch { /* noop — 다음 부팅 bootSync 가 받아감 */ }
+    }
+
+    return { granted: Number(data.granted) || 0, un: paidUn + bonusUn, reports: migrated };
+  } catch {
+    return NONE; // 복구 실패는 무해 — 다음 부팅에 재시도
+  }
+}
+
 export async function restorePendingPurchases(): Promise<void> {
   if (!isAppsInToss()) return;
 

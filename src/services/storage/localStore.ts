@@ -290,6 +290,45 @@ export function updateProfileRelation(profileId: string, newRelation: string): v
 /** 본인 중복 마이그레이션 (앱 시작 시 1회 실행).
  *  본인 라벨 N명 → 활성 myProfile 만 본인 유지, 나머지는 '가족' 으로 강등.
  *  2026-05-28 PM — 출시 전 cleanup. */
+/**
+ * 보관함 twin 잉여 1회 정리 (2026-08-13 · restoreLibrary 이중저장 버그의 기존 피해 청소)
+ *   같은 리포트가 base36(클라 정본) + auto-id(복원 사본) 두 건으로 저장된 유저가 74명 실측.
+ *   판정: contentType·type 동일 + 생성시각 120초 이내 + auto-id 형식 → auto-id 쪽 제거.
+ *   서버 원본은 건드리지 않는다(다운로드 차단은 syncFromCloud 지문 필터가 담당).
+ */
+export function dedupeTwinReports(): { removed: number } {
+  const DONE_KEY = 'saju500:twin_dedup_v1';
+  try {
+    if (localStorage.getItem(DONE_KEY)) return { removed: 0 };
+    const reports = getReports();
+    const isAuto = (id: string) => /^[A-Za-z0-9]{20}$/.test(id);
+    const isB36 = (id: string) => /^m[a-z0-9]{9,16}$/.test(id);
+    const ts = (r: LocalReport) => new Date(r.createdAt).getTime() || 0;
+    const lenOf = (r: LocalReport) => { try { return JSON.stringify(r.aiResult ?? '').length; } catch { return 0; } };
+    const b36s = reports.filter((r) => isB36(r.id));
+    const removeIds = new Set<string>();
+    for (const cand of reports.filter((r) => isAuto(r.id))) {
+      const cl = lenOf(cand);
+      const twin = b36s.find((b) => {
+        if ((b.contentType ?? 'report') !== (cand.contentType ?? 'report')) return false;
+        if ((b.type ?? 'paid') !== (cand.type ?? 'paid')) return false;
+        if (Math.abs(ts(b) - ts(cand)) > 120_000) return false;
+        // 내용 크기 10% 이내 — 같은 분 '다른' 리포트(내용 상이 → 크기 상이) 오탐 방지
+        const bl = lenOf(b);
+        if (cl > 0 && bl > 0 && Math.abs(bl - cl) / Math.max(bl, cl) > 0.10) return false;
+        return true;
+      });
+      if (twin) removeIds.add(cand.id);
+    }
+    if (removeIds.size > 0) {
+      const kept = reports.filter((r) => !removeIds.has(r.id));
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(kept));
+    }
+    localStorage.setItem(DONE_KEY, '1');
+    return { removed: removeIds.size };
+  } catch { return { removed: 0 }; }
+}
+
 export function migrateOwnerDuplicates(): { migrated: number } {
   try {
     const myId = localStorage.getItem(MY_PROFILE_KEY);
@@ -320,6 +359,57 @@ export function migrateOwnerDuplicates(): { migrated: number } {
 
 // ─── 잔액 (유형별) ───
 
+/**
+ * 부팅 시 잔액 키 부재 여부 (2026-08-13 · 기기 여권 잔액 복원용)
+ *   getBalanceDetail 의 레거시 폴백이 키를 즉시 만들어버려, "저장소가 비워진 직후" 신호가
+ *   소실된다. 모듈 첫 로드 시점에 미리 기록해 여권 seed 의 판단 근거로 쓴다.
+ *   (키 부재 = 새 기기 또는 저장소 초기화 — 이때만 서버 미러로 1회 seed 허용)
+ */
+const BALANCE_KEY_ABSENT_AT_BOOT = (() => {
+  try { return !localStorage.getItem('saju500_balance_v2'); } catch { return false; }
+})();
+export function wasBalanceKeyAbsentAtBoot(): boolean {
+  return BALANCE_KEY_ABSENT_AT_BOOT;
+}
+
+/**
+ * 잔액 미러 push (디바운스 2s · fire-and-forget)
+ *   운 잔액은 localStorage 단일 진본이라 저장소가 비워지면 리워드로 모은 운까지 영구 소실됐다.
+ *   모든 잔액 변경을 users/{uid}/state/balance 에 스냅샷으로 미러링 → 기기 여권이 uid 회전 시
+ *   이 미러를 새 uid 로 복사, 클라가 키 부재일 때 1회 seed 한다. (rules: state 서브컬렉션 owner 허용)
+ *   실패는 무해 — 다음 변경에서 재시도된다.
+ */
+let mirrorTimer: ReturnType<typeof setTimeout> | null = null;
+function pushBalanceMirrorDebounced(detail: BalanceDetail): void {
+  if (mirrorTimer) clearTimeout(mirrorTimer);
+  mirrorTimer = setTimeout(() => {
+    mirrorTimer = null;
+    import('./firestoreSync').then((m) => m.pushBalanceMirror(detail)).catch(() => { /* noop */ });
+  }, 2000);
+}
+
+/**
+ * 서버 미러 값으로 잔액 1회 seed (기기 여권 전용)
+ *   가드: ① 부팅 시 키가 없었을 때만 ② 현재 잔액이 레거시 시드(paid≤1·bonus0·reward0) 수준일 때만
+ *   ③ 미러 합계 상한(어뷰징 방어). 성공 시 true — 호출측이 IAP 복구의 로컬 이중가산을 막는 데 쓴다.
+ */
+export function seedBalanceFromMirror(mirror: { paid?: number; bonus?: number; reward?: number }): boolean {
+  try {
+    // 🚨 가드 핵심 = '현재 잔액이 무의미할 때만' + 상한. (BALANCE_KEY_ABSENT_AT_BOOT 을 하드 요건으로
+    //   두면 재시도 부팅에선 이미 키가 생겨 영영 seed 불가 → 재시도가 막힌다. 트리거 자체가
+    //   서버 회전 판정에 게이트돼 있고, 아래 무의미-잔액 가드로 정상 유저 덮어쓰기를 막으므로 안전.)
+    const cur = getBalanceDetail();
+    if ((cur.paid ?? 0) > 1 || (cur.bonus ?? 0) > 0 || (cur.reward ?? 0) > 0) return false; // 이미 의미있는 잔액
+    const p = Math.max(0, Number(mirror.paid) || 0);
+    const b = Math.max(0, Number(mirror.bonus) || 0);
+    const r = Math.max(0, Number(mirror.reward) || 0);
+    if (p + b + r <= 0) return false;
+    if (p + b + r > 300) return false; // 비정상 미러 — seed 거부 (수동 CS 로)
+    setBalanceDetail({ paid: p, bonus: b, reward: r });
+    return true;
+  } catch { return false; }
+}
+
 function getBalanceDetail(): BalanceDetail {
   try {
     const raw = localStorage.getItem(BALANCE_KEY);
@@ -338,6 +428,8 @@ function getBalanceDetail(): BalanceDetail {
 
 function setBalanceDetail(detail: BalanceDetail): void {
   localStorage.setItem(BALANCE_KEY, JSON.stringify(detail));
+  // 잔액 미러 — 모든 변경을 서버 스냅샷으로 (2026-08-13 기기 여권 · 소실 복원용)
+  pushBalanceMirrorDebounced(detail);
 }
 
 /** 총 잔액 (모든 유형 합산) */

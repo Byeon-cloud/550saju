@@ -1441,17 +1441,21 @@ function ContactSheet({ open, onClose, userId, toast: _toast }: {
   );
 }
 
-/* CS 고객센터 코드 (2026-06-12) — 앱인토스 디바이스 ID 표시 (탭하면 복사).
-   고객이 문의 시 이 코드를 불러주면 어드민 'CS 지급' 탭에서 즉시 운 보상 가능. */
+/* CS 고객센터 코드 (2026-06-12 · 2026-08-13 보안 수정) — 회원 ID(uid) 표시 (탭하면 복사).
+   고객이 문의 시 이 코드를 불러주면 어드민 'CS 지급' 탭에서 즉시 운 보상 가능(uid 키 지원).
+   ⚠️ 2026-08-13 — 기존엔 raw deviceId 를 클립보드에 복사했는데, deviceId 는 기기 여권(자동복구)의
+   트리거 키라 유출 시 타인 보관함(PII)+잔액 탈취에 악용될 수 있었다. uid 로 교체:
+   uid 는 passport 트리거가 아니고 firestore.rules 가 읽기를 막아 유출돼도 무해하며,
+   이미 문의 메일 제목([회원ID:...])에 노출되는 값이라 CS 워크플로 그대로. deviceId 는 기기 내부 전용. */
 function CsCode({ toast }: { toast: ReturnType<typeof useToast> }) {
   const [code, setCode] = useState<string | null>(null);
   useEffect(() => {
     import('@/services/payment/iapService').then(async ({ isAppsInToss }) => {
       if (!isAppsInToss()) return;
       try {
-        const mod: any = await import('@apps-in-toss/web-framework');
-        const id: string | undefined = mod?.getDeviceId?.();
-        if (id) setCode(id);
+        const { auth } = await import('@/services/auth/firebase');
+        const uid = auth.currentUser?.uid;
+        if (uid) setCode(uid);
       } catch { /* noop */ }
     }).catch(() => { /* noop */ });
   }, []);

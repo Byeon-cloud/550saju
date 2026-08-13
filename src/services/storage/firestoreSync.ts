@@ -103,10 +103,32 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
     const reportsSnap = await getDocs(collection(db, `users/${uid}/reports`));
     const localReports = getReports();
     const localIds = new Set(localReports.map(r => r.id));
+    // twin 잉여 차단 (2026-08-13 · 이중저장 버그의 기존 피해 방어) — 과거 restoreLibrary 버그로
+    //   같은 리포트가 base36 + auto-id 두 문서로 서버에 남아있다 (74유저·113건 실측). 서버 정리 전까지
+    //   다운로드 단계에서 거른다. 🚨 지문 = contentType + 분단위 + 내용 크기 버킷.
+    //   내용 크기까지 보는 이유: twin 은 복사본이라 크기가 같지만, 같은 분에 생성된 '서로 다른' 정당한
+    //   리포트(같은 종류 연속 구매)는 내용이 달라 크기가 다르다 → 오탐으로 진짜 데이터를 버리는 것을 방지.
+    const lenOf = (r: LocalReport): number => { try { return JSON.stringify(r.aiResult ?? '').length; } catch { return 0; } };
+    const fpOf = (ct: unknown, iso: unknown, len: number): string | null =>
+      iso ? `${ct ?? 'report'}@${String(iso).slice(0, 16)}@${Math.round(len / 800)}` : null; // ~0.8KB 버킷
+    const localFps = new Set(
+      localReports.map(r => fpOf(r.contentType, typeof r.createdAt === 'string' ? r.createdAt : new Date(r.createdAt).toISOString(), lenOf(r))).filter(Boolean),
+    );
 
-    reportsSnap.forEach((docSnap) => {
+    // 로컬이 비어있으면(회전 직후) twin 두 벌이 모두 클라우드에서 내려오므로,
+    //   base36(클라 정본)을 먼저 처리하도록 정렬 — auto-id 사본이 지문에 걸려 걸러진다.
+    const ordered = [...reportsSnap.docs].sort((a, b) => {
+      const aB36 = /^m[a-z0-9]{9,16}$/.test(a.id) ? 0 : 1;
+      const bB36 = /^m[a-z0-9]{9,16}$/.test(b.id) ? 0 : 1;
+      return aB36 - bB36;
+    });
+    ordered.forEach((docSnap) => {
       if (!localIds.has(docSnap.id)) {
         const data = docSnap.data();
+        const cloudLen = data.aiResultJson ? String(data.aiResultJson).length : 0;
+        const fp = fpOf(data.contentType, data.createdAt, cloudLen);
+        if (fp && localFps.has(fp)) return; // 같은 리포트의 다른 id 사본 — 내려받지 않음
+        if (fp) localFps.add(fp); // 이번에 추가하는 문서도 지문 등록 — 같은 배치의 twin 차단
         // 2026-06-19 — 내용(aiResult) 복원 (문자열 → 파싱). 없으면(구 백업) undefined → 빈 껍데기지만 기존과 동일.
         let aiResult: unknown = undefined;
         try { if (data.aiResultJson) aiResult = JSON.parse(data.aiResultJson); } catch { /* noop */ }
@@ -182,11 +204,23 @@ export async function restoreLibraryFromServer(): Promise<number> {
     const fn = httpsCallable(getFunctions(app, 'us-central1'), 'restoreLibrary');
     const r = await fn({});
     const reports = ((r?.data as { reports?: unknown[] })?.reports ?? []) as Array<Record<string, unknown>>;
-    const existingIds = new Set(getReports().map((x) => x.id));
+    const localReports = getReports();
+    const existingIds = new Set(localReports.map((x) => x.id));
+    // twin 지문 필터 (2026-08-13) — 서버가 이미 dedupe 하지만 ±60s 경계 누락 대비 이중 방어.
+    //   contentType + 분단위 + 내용 크기 버킷 (같은 분 다른 리포트 오탐 방지, syncFromCloud 와 동일 규칙).
+    const lenOf = (ai: unknown) => { try { return JSON.stringify(ai ?? '').length; } catch { return 0; } };
+    const fpOf = (ct: unknown, iso: unknown, len: number): string | null =>
+      iso ? `${ct ?? 'report'}@${String(iso).slice(0, 16)}@${Math.round(len / 800)}` : null;
+    const localFps = new Set(
+      localReports.map((x) => fpOf(x.contentType, typeof x.createdAt === 'string' ? x.createdAt : new Date(x.createdAt).toISOString(), lenOf(x.aiResult))).filter(Boolean),
+    );
     let n = 0;
     for (const rep of reports) {
       if (!rep || !rep.aiResult) continue;
       if (rep.id && existingIds.has(rep.id as string)) continue; // 이미 보관함에 있으면 skip
+      const fp = fpOf(rep.contentType, rep.createdAt, lenOf(rep.aiResult));
+      if (fp && localFps.has(fp)) continue; // 같은 리포트의 다른 id 사본 — 재저장 안 함
+      if (fp) localFps.add(fp);
       const t = rep.type === 'free' ? 'free' : 'paid';
       saveReport({
         id: (rep.id as string) || generateId(),
@@ -236,4 +270,39 @@ export async function backupReport(report: LocalReport): Promise<void> {
   } catch (err) {
     console.warn('[backupReport] 실패:', err);
   }
+}
+
+/**
+ * 잔액 미러 push — users/{uid}/state/balance 스냅샷 (2026-08-13 · 기기 여권 잔액 복원)
+ *   운 잔액은 localStorage 단일 진본이라 저장소 초기화 시 리워드 운까지 영구 소실됐다.
+ *   모든 잔액 변경을 여기로 미러링 → uid 회전 시 기기 여권(devicePassport)이 이 문서를
+ *   새 uid 로 복사, 클라가 '부팅 시 키 부재'일 때만 1회 seed 한다.
+ *   ⚠️ users 문서의 금전 필드(balance 등)는 rules 로 클라 차단 유지 — 미러는 별도 서브컬렉션
+ *   (state/balance) 이며 '클라 자기신고 스냅샷' 성격. 서버 지급 판정(grantPurchase 등)에는 절대 안 쓴다.
+ */
+export async function pushBalanceMirror(detail: BalanceDetail): Promise<void> {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    await setDoc(doc(db, `users/${uid}/state`, 'balance'), {
+      paid: Math.max(0, Number(detail.paid) || 0),
+      bonus: Math.max(0, Number(detail.bonus) || 0),
+      reward: Math.max(0, Number(detail.reward) || 0),
+      updatedAt: new Date(),
+    }, { merge: true });
+  } catch { /* noop — 다음 잔액 변경에서 재시도 */ }
+}
+
+/** 잔액 미러 pull — 기기 여권 seed 용 (없으면 null) */
+export async function pullBalanceMirror(uid: string): Promise<{ paid: number; bonus: number; reward: number } | null> {
+  try {
+    const snap = await getDoc(doc(db, `users/${uid}/state`, 'balance'));
+    if (!snap.exists()) return null;
+    const d = snap.data() as Record<string, unknown>;
+    return {
+      paid: Math.max(0, Number(d.paid) || 0),
+      bonus: Math.max(0, Number(d.bonus) || 0),
+      reward: Math.max(0, Number(d.reward) || 0),
+    };
+  } catch { return null; }
 }
