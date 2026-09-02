@@ -215,7 +215,7 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 540, // SSE 장기 연결 — 9분 (Cloud Run 최대)
     memory: '1GiB',
-    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
+    minInstances: 0, // 2026-06-15→2026-09-03 비용 fix: 1→0. 상시대기 5함수(스트리밍) 월 ~₩9~10만원 → 제거. cold start 는 로딩 UX 로 흡수.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -394,7 +394,7 @@ exports.generateReportStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 540,
     memory: '1GiB',
-    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
+    minInstances: 0, // 2026-06-15→2026-09-03 비용 fix: 1→0. 상시대기 5함수(스트리밍) 월 ~₩9~10만원 → 제거. cold start 는 로딩 UX 로 흡수.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -737,7 +737,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 300,
     memory: '1GiB',
-    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
+    minInstances: 0, // 2026-06-15→2026-09-03 비용 fix: 1→0. 상시대기 5함수(스트리밍) 월 ~₩9~10만원 → 제거. cold start 는 로딩 UX 로 흡수.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -1182,7 +1182,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 300,
     memory: '1GiB',
-    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
+    minInstances: 0, // 2026-06-15→2026-09-03 비용 fix: 1→0. 상시대기 5함수(스트리밍) 월 ~₩9~10만원 → 제거. cold start 는 로딩 UX 로 흡수.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
@@ -2269,7 +2269,7 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 300,
     memory: '1GiB',
-    minInstances: 1, // 2026-06-15 속도 우선(준기: 로딩=고객만족 핵심) — cold start 제거. 함수당 ~₩12K/월. 비용 부담 시 0 으로.
+    minInstances: 0, // 2026-06-15→2026-09-03 비용 fix: 1→0. 상시대기 5함수(스트리밍) 월 ~₩9~10만원 → 제거. cold start 는 로딩 UX 로 흡수.
     cors: true,
     invoker: 'public',
 }, async (req, res) => {
