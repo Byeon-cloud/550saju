@@ -32,7 +32,8 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const ANTHROPIC_KEY = defineSecret('ANTHROPIC_API_KEY');
-const GEMINI_KEY = defineSecret('GEMINI_API_KEY');
+// 2026-09-03 제거: GEMINI_KEY orphan — 전 AI 함수가 Claude 이관 완료로 Gemini 미사용(어떤 secrets:[] 에도 미바인딩).
+//   시크릿 자체는 GCP Secret Manager 에서 별도 정리(disable). 코드상 죽은 선언만 제거.
 const TOSS_MTLS_CERT = defineSecret('TOSS_MTLS_CERT');
 const TOSS_MTLS_KEY = defineSecret('TOSS_MTLS_KEY');
 const TOSS_DECRYPT_KEY = defineSecret('TOSS_DECRYPT_KEY');
