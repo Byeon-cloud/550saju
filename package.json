@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --mode ait && ait build",
-    "build:ait": "tsc && vite build --mode ait",
+    "build": "tsc && vite build",
+    "build:ait": "tsc && vite build --mode ait && ait build",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy --only hosting",
     "deploy:all": "npm run build && firebase deploy",
