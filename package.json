@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build --mode ait && ait build",
     "build:ait": "tsc && vite build --mode ait",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy --only hosting",
@@ -16,6 +16,7 @@
     "ab-test": "tsx scripts/ab-test/run.ts"
   },
   "devDependencies": {
+    "@apps-in-toss/devtools": "^3.4.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
@@ -26,7 +27,7 @@
     "vite": "^6.4.1"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "^2.10.7",
+    "@apps-in-toss/web-framework": "^3.4.1",
     "@portone/browser-sdk": "^0.1.8",
     "@tosspayments/tosspayments-sdk": "^2.6.0",
     "firebase": "^10.14.1",

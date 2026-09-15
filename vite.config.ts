@@ -4,6 +4,8 @@ import path from 'path';
 // 2026-05-29 — 앱 버전 SSOT = package.json. 빌드 시 주입 → MyPage 등에 자동 반영 (드리프트 박멸).
 import pkg from './package.json';
 
+import aitDevtools from "@apps-in-toss/devtools/unplugin";
+
 // 빌드 타겟 분기 (2026-05-09 — 앱인토스 심사 반려 fix)
 // `vite build --mode ait` 또는 `process.env.BUILD_TARGET=ait` 일 때:
 // 토스페이먼츠 PG SDK 를 stub 으로 대체 (번들에서 완전 제거).
@@ -15,7 +17,7 @@ export default defineConfig(({ mode }) => {
   const buildId = new Date().toISOString().replace('T', ' ').slice(0, 16);
 
   return {
-  plugins: [react()],
+  plugins: [aitDevtools.vite(), react()],
   define: {
     __APP_BUILD_ID__: JSON.stringify(buildId),
     __APP_VERSION__: JSON.stringify(pkg.version),
