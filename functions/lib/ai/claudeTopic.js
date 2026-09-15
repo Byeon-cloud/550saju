@@ -1086,6 +1086,22 @@ ${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPil
 → breakupDuration.currentPhaseIndex는 경과 개월 수에 정확히 대응시키세요: 0~2개월=0(충격기), 2~6개월=1(거부기), 6~12개월=2(회복기), 12~18개월=3(수용기), 18개월+=4(장기분리기).
 `;
     }
+    else if (topicId === 'reunion' && !partnerInfo) {
+        /* 🚨 2026-09-15 — 상대방 정보 미입력 재회운의 환각 차단.
+         *   기존: reunion 은 !partnerInfo 분기가 없어, 상대 데이터 0바이트인 채로
+         *   '상대방의 사주 성향 분석'·'두 사람의 오행 궁합 구조' 섹션 계약만 받아 AI 가 지어냈다. */
+        partnerSection = `
+## 상대방 사주: 미입력 (없음)
+🚨 상대방의 생년월일이 없다. **상대방의 사주팔자·일간·오행·궁합 점수를 절대 지어내지 마라.**
+→ '상대방 사주는 ○○입니다' 류의 서술 전면 금지. 추측한 상대 사주로 궁합을 계산하지 마라.
+→ 대신 **내 사주 원국에서 읽히는 것**으로만 답한다:
+   · 내 일지(배우자궁)·관성/재성 상태로 본 '내가 반복해서 끌리는 상대 유형'
+   · 내 사주의 이별 유발 구조(충·형·공망·역마 등)로 본 '관계가 깨진 패턴'
+   · 재회 가능성은 **내 사주의 대운·세운·월건 흐름**으로만 판정
+→ partnerCompat·상대 사주 관련 수치 필드는 null 로 둔다.
+→ 상대 정보가 있으면 더 정밀하다는 안내를 결과 말미에 1회 자연스럽게 덧붙인다.
+`;
+    }
     else if (topicId === 'marriage' && partnerInfo) {
         const birthHourStr = (partnerInfo.birthHour != null && partnerInfo.birthHour >= 0)
             ? `\n출생시간: ${partnerInfo.birthHour}시 ${partnerInfo.birthMinute ?? 0}분 → 시주(時柱) 분석 가능.`
@@ -1103,6 +1119,18 @@ ${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPil
 → 상대방 이름을 자연스럽게 포함: "${partnerInfo.name}님과의 결혼 궁합은..."
 → 결혼 적기 분석에서 두 사람의 대운 교차 시점도 분석하세요.
 → 시댁/처가 관계도 상대방 사주 기반으로 더 구체적으로 분석하세요.
+`;
+    }
+    else if (topicId === 'marriage' && !partnerInfo && extraInfo?.relationStatus === 'dating') {
+        /* 🚨 2026-09-15 — 기혼인데 배우자 생년월일 미입력 케이스.
+         *   기존엔 partnerInfo 부재만 보고 '솔로'로 처리해 기혼자에게 '결혼 적기'를 안내했다. */
+        partnerSection = `
+## 현재 결혼 상태: 기혼 (배우자 사주 미입력)
+🚨 이미 결혼한 사람이다. **'결혼 적기'·'언제 결혼하면 좋다'·'배우자를 만나는 시기' 류 서술 전면 금지.**
+→ 배우자 생년월일이 없으므로 **배우자 사주를 지어내지 마라.** partnerCompat 은 null.
+→ 대신 내 사주 일지(배우자궁)·관성/재성 상태로 **현재 결혼 생활의 결**을 읽는다:
+   부부 관계의 강점과 마찰 지점, 올해 부부운 흐름(대운·세운·월건), 관계 개선 실천법.
+→ 배우자 정보를 넣으면 궁합까지 본다는 안내를 말미에 1회 덧붙인다.
 `;
     }
     else if (topicId === 'marriage' && !partnerInfo) {
@@ -1161,6 +1189,18 @@ ${statusBlock}
      *   '이직 후 3개월 적응 전망' 이 강제 출력됐다(오너 실사용 지적).
      *   섹션 개수는 5개로 유지 — 클라 스트리밍 스켈레톤(slotCount=max)이 깨지지 않게. */
     let effectiveSections = config.sections;
+    if (topicId === 'marriage' && extraInfo?.relationStatus === 'dating') {
+        // 기혼자에게 '결혼 적기'·'결혼 준비'는 무의미 → 부부생활 관점으로 교체 (개수 5 유지)
+        effectiveSections = config.sections.map((sec) => sec === '결혼 적기 분석' ? '올해 부부운의 흐름'
+            : sec === '결혼 준비 조언' ? '결혼 생활 개선 조언'
+                : sec);
+    }
+    if (topicId === 'reunion' && !partnerInfo) {
+        // 상대 사주 없이 답할 수 없는 2섹션을 본인 사주 기반 제목으로 교체 (개수 10 유지)
+        effectiveSections = config.sections.map((sec) => sec === '상대방의 사주 성향 분석' ? '내 사주가 끌어당기는 상대 유형'
+            : sec === '두 사람의 오행 궁합 구조' ? '내 사주의 관계 오행 구조'
+                : sec);
+    }
     if (topicId === 'exam') {
         const ct = String(extraInfo?.changeType || '');
         if (ct === 'exam') {
