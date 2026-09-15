@@ -3507,7 +3507,10 @@ export function TopicAnalysisPage() {
       // 주제별 추가 정보 (사업운/취업운/이사운/학업운/연애운)
       const loveExtra = topicId === 'love' ? { loveStatus } : {};
       // SSOT canonical: 'move' (legacy 'moving' 는 normalizeTopicId 로 이미 정규화됨)
-      const topicExtra = (['business', 'career', 'move', 'study'].includes(topicId!))
+      // 🚨 2026-09-15 fix — 'exam' 누락으로 합격·이직운 전용 입력(changeType/시험명/예정시기)이
+      //   submit 에서 통째로 버려져 서버 exam 분기가 실행 0회 데드코드였음.
+      //   증상: 첫 취업 준비생인데 '이직' 관점 결과가 나옴. whitelist 에 exam 추가로 경로 복구.
+      const topicExtra = (['business', 'career', 'move', 'study', 'exam'].includes(topicId!))
         ? Object.fromEntries(Object.entries(extraInfo).filter(([, v]) => v !== '' && v != null)) : {};
       const extra = { ...topicExtra, ...loveExtra };
       const finalExtra = Object.keys(extra).length > 0 ? extra : undefined;

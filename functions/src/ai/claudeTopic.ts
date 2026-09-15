@@ -1029,6 +1029,25 @@ function buildPrompt(
   const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
   const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
   const today = kstNowDate(); // 서버 UTC → KST 현재시각 (UTC 필드에 KST 값). getFullYear/getMonth 호출부 호환 유지.
+  /* 🚨 2026-09-15 — 월건(月建) 12개월 간지 주입 + 세운 서버 재계산.
+   *   기존 문제: 시간 데이터가 '올해 세운' 한 줄뿐인데 프롬프트는 '월 단위 시기'를 요구 →
+   *   AI 가 근거 없이 현재月 기준 가까운 미래를 찍어 9~11월에 쏠림(실측: love 9월 1000회).
+   *   또한 yearlyUn 은 프로필 생성 시점 연도로 캐싱돼 해가 바뀌면 stale → 서버 계산값 우선. */
+  const curYear = today.getFullYear();
+  const monthGanziText = (() => {
+    try {
+      const arr: string[] = [];
+      for (let m = 1; m <= 12; m++) {
+        // 각 달 15일 = 절입(4~8일경) 경계를 피한 안전 지점 → 그 달의 월건
+        const ec = Solar.fromYmd(curYear, m, 15).getLunar().getEightChar();
+        arr.push(`${m}월 ${ec.getMonth()}`);
+      }
+      return arr.join(' · ');
+    } catch { return ''; }
+  })();
+  const serverYearGanzi = (() => {
+    try { return Solar.fromYmd(curYear, 6, 1).getLunar().getEightChar().getYear(); } catch { return ''; }
+  })();
   const dateStr = `${today.getFullYear()}년 ${today.getMonth()+1}월`;
 
   // 🔥 P0-1 (audit 1) — 사주 데이터 underutilization 해소: myeongriAnalysis·jijanggan·gilsin·hyungsal·gongmang·yearlyUn 모두 prompt 에 주입
@@ -1152,6 +1171,21 @@ ${statusBlock}
 
   // 주제별 추가 정보 섹션
   let extraSection = '';
+  /* 🚨 2026-09-15 — 상황별 섹션 제목 동적화 (exam 우선).
+   *   기존: config.sections 가 topicId 고정 배열이라 첫 취업 준비생에게도
+   *   '이직 후 3개월 적응 전망' 이 강제 출력됐다(오너 실사용 지적).
+   *   섹션 개수는 5개로 유지 — 클라 스트리밍 스켈레톤(slotCount=max)이 깨지지 않게. */
+  let effectiveSections: string[] = config.sections;
+  if (topicId === 'exam') {
+    const ct = String(extraInfo?.changeType || '');
+    if (ct === 'exam') {
+      effectiveSections = ['시험 합격운 — 올해 흐름', '합격에 유리한 분야와 방향', '시험·면접 결정 시기', '학습 컨디션과 슬럼프 관리', '올해 합격 실전 전략'];
+    } else if (ct === 'jobchange') {
+      effectiveSections = ['이직운 — 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정·면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
+    } else if (ct === 'career_pivot') {
+      effectiveSections = ['직무 전환운 — 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
+    }
+  }
   if (extraInfo) {
     if (topicId === 'business' && extraInfo.bizStatus) {
       const statusLabel = extraInfo.bizStatus === 'running' ? '현재 사업 운영중' : '창업 준비중';
@@ -1266,7 +1300,18 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ## 공망(空亡): ${gongmangText || '없음'}
 ## 12운성: ${unyoung12Text || '미산출'}
 ## 납음(納音): ${napeumText || '미산출'}
-## 올해 세운(歲運): ${yearlyUn || `${today.getFullYear()}년`}
+## 올해 세운(歲運): ${serverYearGanzi || yearlyUn || `${curYear}년`}
+## ${curYear}년 월건(月建) 12개월: ${monthGanziText || '미산출'}
+
+## 🚨 시기(월) 판정 룰 — 반드시 위 월건 간지로 계산 (2026-09-15 신설)
+'몇 월'을 쓸 때는 아래 5축 중 **최소 2축을 실제로 대조해** 근거를 만든다. 현재 날짜 기준 '가까운 미래'를 찍지 마라.
+① 용신 오행이 왕상(旺相)해지는 월건 지지 → 유리
+② 월건 지지 ↔ 일지/월지의 삼합·육합 → 유리 / 충·형·해 → 불리
+③ 월건 지지 ↔ 올해 세운 지지의 합충
+④ 이 주제의 핵심 십성이 월건 천간에 투(透)하는 월 → 발동
+⑤ 대운 교체기면 그 전후를 별도 표기
+**유리월은 연중 어디든 나올 수 있다.** 1~3월·4~6월도 사주에 따라 얼마든지 유리월이다. 지금이 몇 월인지와 무관하게 사주로만 판정하라.
+출력 시 각 월에 '왜'를 한 구절로 붙인다 (예: "3월(卯월) — 일지 亥와 삼합, 용신 木 왕지").
 
 ## 🚨 학파별 분석 룰 (반드시 적용 · 학파 우선순위 mandate)
 1차 — 자평진전파: 격국 = ${gyeokguk || '판정 보류'}. 격국별 표준 직종/관계/재물 룰 우선 적용.
@@ -1321,7 +1366,7 @@ ${config.specificPrompt}
       • <b>한자 첫 등장 (괄호 풀이 포함)</b> — 검은 볼드 ('<b>정관(正官, 책임감 있는 인연)</b>' 식)
    → 각 단락마다 <strong> 1회 + <u> 1~2회 + <b> 한자 등장 시 매번 필수.
    → 줄글만 보내면 사용자가 "어디가 핵심인지 모름" → 가독성 실패.
-2. overallScore 산출:${baseScore ? ` 이 사람의 사주 리포트에서 ${config.label} 점수가 ${baseScore}점으로 산출됨. overallScore는 반드시 ${baseScore}점으로 설정하라. 절대 다른 점수를 매기지 마.` : ' 오행 균형(과다/부족)과 십성 배치를 정량적으로 분석하여 일관되게 매겨라. 같은 사주에 같은 주제면 항상 같은 점수가 나와야 한다. 감정이 아닌 구조 기반.'}
+2. overallScore 산출:${baseScore ? ` 이 사람의 사주 리포트에서 ${config.label} 점수가 ${baseScore}점으로 산출됨. overallScore는 반드시 ${baseScore}점으로 설정하라. 절대 다른 점수를 매기지 마.` : ' 위 점수 산출 산식 8항목을 실제로 계산해서 매겨라(base 50 에서 가감). 감(感)으로 고르지 말 것. 같은 사주에 같은 주제면 항상 같은 점수.'}
 3. 각 section의 content는 단락을 나눠 가독성 있게 작성. 한 문단이 3줄을 넘지 않도록. **단락마다 핵심 1구절에 <strong> 강조 mandatory.**
 4. topicData의 각 필드를 정확한 형식으로 채워라. 시각화에 사용되므로 빠뜨리지 마.
    - pillarComparison의 cheongan/jiji는 반드시 한자 1글자만 (예: "甲", "寅"). "(추정)", "(추론)" 같은 주석을 절대 붙이지 마.
@@ -1342,14 +1387,25 @@ ${config.specificPrompt}
 ## 출력 (JSON만, 코드블록 없이)
 ⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
 
-🚨 **점수 분포 가이드 (2026-05-28 PM 준기 결단)** — "후하지도 짜지도 않게":
-- **0~49 (큰 주의)**: 사주에서 해당 영역이 구조적으로 약함 + 충/형 강함 + 용신 무력 — 드물지만 명확한 케이스에만
-- **50~59 (주의)**: 부족한 오행 + 충 발생 + 보강 필요 — 사주의 15% 정도가 여기
-- **60~69 (보통)**: 평균. 큰 강점도 큰 약점도 없는 잔잔한 흐름 — 사주의 35% 정도가 여기
-- **70~79 (안정)**: 해당 영역 십성·오행이 부드럽게 받쳐줌 + 합·귀인 1~2개 — 사주의 30% 정도가 여기
-- **80~89 (좋음)**: 길성 3+ + 용신 활성 + 충돌 없음 — 사주의 15% 정도가 여기
-- **90~100 (매우 좋음)**: 길성·삼합·록·귀인 다중 충돌 — 드물게 (5% 이내)
-**중심값은 65 부근**. 80+ 가 흔하면 신뢰도 떨어짐. 50 이하도 신중하게 (사용자가 충격받음). 같은 점수만 반복하면 차별성 없음 — 사주 구조 차이를 점수에 정직하게 반영.
+🚨 **점수 산출 산식 (2026-09-15 개편 — 목표 분포 처방 폐기)**
+점수는 '무난한 값'을 고르는 게 아니라 **아래 산식을 실제로 계산해서** 낸다.
+목표 분포·중심값 같은 건 없다. 사주가 강하면 높게, 약하면 낮게 — 계산 결과를 그대로 쓴다.
+
+**base 50 에서 시작해 가감한다 (이 주제의 핵심 십성 기준):**
+① 핵심 십성의 원국 세력: 없음 -14 / 1개 -5 / 2개 +7 / 3개 +12 / 4개 이상 +3 (과다는 탁해짐)
+② 통근: 월지(당령) +12 / 일·시지 +7 / 지장간만 +3 / 완전 무근 -10
+③ 용신 관계: 용신이 핵심십성을 생함 +12 / 용신 자체가 핵심십성 +10 / 무관 0 / 용신이 극당함 -12
+④ 해당 궁(연애·결혼=일지, 직업·시험=월지, 재물=일지+시지, 건강=일지+오행균형)의 형충회합:
+   삼합·육합 각 +7 / 충 각 -9 / 형·해 각 -5 (합계 ±18 클램프)
+⑤ 길신(천을귀인·천덕·월덕·문창·학당·금여) 해당 궁 임재: 각 +5 (최대 +13)
+⑥ 흉살(백호·괴강·원진·귀문·도화 부정작용) 해당 궁 임재: 각 -5 (최대 -13)
+⑦ 현재 대운 지지가 핵심십성을 생/합 +9 / 충·극 -9 / 무관 0
+⑧ 올해 세운 지지가 핵심십성을 생/합 +6 / 충·극 -6
+
+합산 후 0~100 클램프. **계산 결과가 41이면 41, 87이면 87을 그대로 쓴다.**
+서로 다른 사주는 위 8항목 값이 달라지므로 점수도 반드시 갈린다. 65 근처로 모으지 마라.
+같은 사주·같은 주제면 항상 같은 점수(재현성 유지). 5의 배수 회피 유지.
+subScores 각 축도 그 축의 핵심 십성으로 같은 산식을 적용해 **축마다 다른 값**을 낸다.
 
 🚨 **결정론 점수 산출 룰 (audit 1 P0-9 — 같은 사주 = 같은 점수)**:
 - subScores 5축 산출 시 base 룰을 적용:
@@ -1441,7 +1497,7 @@ ${config.specificPrompt}
   "sajuBasis": "사주 근거 한 줄 (40~60자). 2026-05-28 두괄식+일상어 강제. 형식: '[일상어 결론 한 마디] — [한자(풀이) 사주 근거]'. ✅ 좋은 예: '결혼 인연은 분명하나 시기가 늦어져요 — 정관(正官, 책임감 있는 인연)이 합으로 묶여있어요.' / '돈은 잘 들어오는데 빠르게 빠져요 — 재성(財星, 돈 자리)이 식상(食傷, 활동 에너지)에 밀려요.' ❌ 나쁜 예: '일지 자수(子水)에 정관이 자리하고 축자합(丑子合)으로 관성이 묶이는 구조' (한자 폭격·풀이 X·두괄식 X). 한자 첫 등장 시 반드시 괄호 안 일상어 풀이. 마크다운 금지.",
   "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 중 최소 1곳 자연스러운 인용 필수. 형식 예시: '적천수에서 재성이 왕하면 관성으로 제압한다고 하였는데, 당신의 경우 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달. 마크다운 금지.",
   "summary": "200자 이상. 소름 포인트 포함. 🚨 사주 8글자 specific 데이터 1회 이상 직접 호명 mandatory (보일러플레이트 금지). 마크다운 금지.",
-  "sections": [${config.sections.map(s => `{"heading": "${s}", "content": "150자 이상. 🚨 사주 specific 호명 (개수·자리·신살) 1회 이상. 마크다운 금지. **HTML 강조 mandatory**: 각 단락에 <strong>일상어 결론 1구절</strong> 1회 + <u>시기·숫자·월</u> 1~2회 + <b>한자(풀이)</b> 첫 등장 시 필수. 줄글만 X.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내 · 🚨 사주 글자 1개 이상 호명 권장", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자 · 🚨 사주 specific 데이터", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
+  "sections": [${effectiveSections.map(s => `{"heading": "${s}", "content": "150자 이상. 🚨 사주 specific 호명 (개수·자리·신살) 1회 이상. 마크다운 금지. **HTML 강조 mandatory**: 각 단락에 <strong>일상어 결론 1구절</strong> 1회 + <u>시기·숫자·월</u> 1~2회 + <b>한자(풀이)</b> 첫 등장 시 필수. 줄글만 X.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내 · 🚨 사주 글자 1개 이상 호명 권장", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자 · 🚨 사주 specific 데이터", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
   "timeline": [{"period": "시기", "score": 1-10, "description": "60자 이상 · 🚨 해당 시기 대운/세운 간지 + 원국 글자 충돌·합 직접 호명"}, ...6~12개],
   "luckyProfile": {"color": "용신 오행 색상", "direction": "용신 오행 방위", "number": "용신 오행 숫자", "item": "아이템", "bestMonth": "최적월", "// 행운·개운 SSOT": "color·direction·number는 원국 용신 오행 하나로 — 주제 십성/일간 오행으로 뽑지 말 것"},
   "actionAdvice": "100자 이상. 지금 당장 할 수 있는 행동. 🚨 사주 specific 데이터(약한 오행·기신·일간 등) 1개 이상 직접 호명 mandatory. 마크다운 금지.",
