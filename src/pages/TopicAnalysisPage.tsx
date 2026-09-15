@@ -3506,13 +3506,18 @@ export function TopicAnalysisPage() {
 
       // 주제별 추가 정보 (사업운/취업운/이사운/학업운/연애운)
       const loveExtra = topicId === 'love' ? { loveStatus } : {};
+      /* 🚨 2026-09-15 — 결혼운 기혼 오분류 fix.
+       *   기존: relationStatus('solo'=미혼 / 'dating'=기혼)가 서버로 전송되지 않고,
+       *   서버는 partnerInfo 유무로만 상태를 역추론 → 배우자 생년월일을 안 넣은 기혼자가
+       *   '솔로'로 처리돼 '결혼 적기 분석'을 받았다. 상태 자체를 명시 전송한다. */
+      const marriageExtra = topicId === 'marriage' ? { relationStatus } : {};
       // SSOT canonical: 'move' (legacy 'moving' 는 normalizeTopicId 로 이미 정규화됨)
       // 🚨 2026-09-15 fix — 'exam' 누락으로 합격·이직운 전용 입력(changeType/시험명/예정시기)이
       //   submit 에서 통째로 버려져 서버 exam 분기가 실행 0회 데드코드였음.
       //   증상: 첫 취업 준비생인데 '이직' 관점 결과가 나옴. whitelist 에 exam 추가로 경로 복구.
       const topicExtra = (['business', 'career', 'move', 'study', 'exam'].includes(topicId!))
         ? Object.fromEntries(Object.entries(extraInfo).filter(([, v]) => v !== '' && v != null)) : {};
-      const extra = { ...topicExtra, ...loveExtra };
+      const extra = { ...topicExtra, ...loveExtra, ...marriageExtra };
       const finalExtra = Object.keys(extra).length > 0 ? extra : undefined;
 
       // ── 스트리밍 우선 (오늘의 운세 패턴 · 점진 스켈레톤) → 실패 시 callable 폴백 ──
