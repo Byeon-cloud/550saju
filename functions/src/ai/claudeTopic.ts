@@ -919,7 +919,9 @@ export function buildTopicCall(
   const config = TOPIC_CONFIGS[normalizedId];
   if (!config) throw new Error(`알 수 없는 주제: ${topicId} (정규화: ${normalizedId})`);
   if (normalizedId !== topicId) console.info(`[claudeTopic] topicId 정규화: ${topicId} → ${normalizedId}`);
-  const prompt = buildPrompt(config, normalizedId, sajuData, baseScore, partnerInfo, extraInfo);
+  // baseScore 를 클라가 안 넘기면(주제분석 대부분 경로) 서버가 사주로 직접 산출 — 지연 0
+  const effectiveBaseScore = baseScore ?? computeTopicBaseScore(normalizedId, sajuData);
+  const prompt = buildPrompt(config, normalizedId, sajuData, effectiveBaseScore, partnerInfo, extraInfo);
   const model = 'claude-sonnet-4-6';
   const maxTokens = normalizedId === 'reunion' ? 16000 : 8192;
   return { system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId };
@@ -1002,6 +1004,92 @@ export async function generateTopicAnalysisAI(
     // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
     return firstJson;
   }
+}
+
+/* 🚨 2026-09-15 — 주제 점수를 서버에서 결정론적으로 산출 (지연 0).
+ *   기존: overallScore 를 LLM 정성판단에 100% 위임 → 실측 표준편차 2.4~3.0 으로 압축
+ *   (exam 43건이 67~73). 2차 리뷰를 켜면 품질은 오르지만 생성시간 2배 → CS 2배라 불가.
+ *   해법: 사주에서 계산 가능한 부분을 서버가 밀리초에 계산해 baseScore 로 주입하면
+ *   프롬프트가 "반드시 이 점수로 확정" 시키므로, AI 산수 없이 사람마다 점수가 갈린다. */
+const TOPIC_CORE_SIPSUNG: Record<string, string[]> = {
+  love:     ['정재', '편재', '정관', '편관'],
+  marriage: ['정관', '편관', '정재', '편재'],
+  reunion:  ['정관', '편관', '정재', '편재'],
+  wealth:   ['정재', '편재'],
+  career:   ['정관', '편관'],
+  exam:     ['정관', '편관', '정인', '편인'],
+  study:    ['정인', '편인'],
+  business: ['편재', '식신', '상관'],
+  social:   ['비견', '겁재', '식신'],
+};
+
+/* 십성 정규화 — 저장값이 **간체 한자**(正财·七杀·伤官)이고 지지는 '본기/중기/여기' 복합,
+ * 필드명은 position 이다. 클라 SSOT(src/constants/sipsungColor.ts normalizeSipsungKo)의
+ * 미러 — functions 는 별도 빌드라 import 불가. raw 매칭하면 silent drop 된다. */
+const SIP_HANJA_TO_KO: Record<string, string> = {
+  比肩: '비견', 劫財: '겁재', 劫财: '겁재', 食神: '식신', 傷官: '상관', 伤官: '상관',
+  正財: '정재', 正财: '정재', 偏財: '편재', 偏财: '편재', 正官: '정관',
+  偏官: '편관', 七殺: '편관', 七杀: '편관', 칠살: '편관', 正印: '정인', 偏印: '편인',
+};
+const SIP_KO_SET = new Set(['비견', '겁재', '식신', '상관', '정재', '편재', '정관', '편관', '정인', '편인']);
+function normSip(v?: string | null): string | null {
+  if (!v) return null;
+  const t = String(v).trim();
+  if (!t || t === '일주' || t === '日主') return null;
+  if (SIP_KO_SET.has(t)) return t;
+  return SIP_HANJA_TO_KO[t] ?? null;
+}
+
+/** 사주 구조로 주제 점수 산출. 데이터 부족 시 undefined → 프롬프트 산식 폴백. */
+function computeTopicBaseScore(topicId: string, d: any): number | undefined {
+  const core = TOPIC_CORE_SIPSUNG[topicId];
+  if (!core || !Array.isArray(d?.sipsung) || d.sipsung.length === 0) return undefined;
+  const list = d.sipsung as Array<{ position?: string; 위치?: string; 십성?: string }>;
+  let score = 50;
+  let coreCount = 0;    // 드러난 핵심 십성 (천간 투간 + 지지 본기)
+  let hiddenCount = 0;  // 지장간에 숨은 핵심 십성
+  let posBonus = 0;
+
+  for (const item of list) {
+    const pos = String(item.position || item.위치 || '');
+    const raw = String(item.십성 || '');
+    if (!raw) continue;
+    const isBranch = /지$/.test(pos); // 년지·월지·일지·시지
+    raw.split('/').forEach((tok, idx) => {
+      const ko = normSip(tok);
+      if (!ko || !core.includes(ko)) return;
+      const primary = !isBranch || idx === 0; // 천간이거나 지지 본기(本氣)
+      if (primary) {
+        coreCount++;
+        if (pos.includes('월지')) posBonus += 10;      // 당령 — 가장 강함
+        else if (pos.includes('일지')) posBonus += 7;
+        else if (pos.includes('시지') || pos.includes('년지')) posBonus += 3;
+        else posBonus += 2;                            // 천간 투간
+      } else {
+        hiddenCount++;
+        posBonus += 1;                                 // 지장간(중기·여기)
+      }
+    });
+  }
+
+  // ① 핵심 십성 세력 (과다는 오히려 탁해짐)
+  score += coreCount === 0 ? (hiddenCount > 0 ? -6 : -14)
+    : coreCount === 1 ? -3
+    : coreCount === 2 ? 8
+    : coreCount === 3 ? 13
+    : 4;
+  // ② 자리 가중
+  score += Math.min(posBonus, 22);
+  // ⑤⑥ 길신 / 흉살
+  const gil = Array.isArray(d.gilsin) ? d.gilsin.length : 0;
+  const hyung = Array.isArray(d.hyungsal) ? d.hyungsal.length : 0;
+  score += Math.min(gil * 3, 13);
+  score -= Math.min(hyung * 4, 13);
+  if (Array.isArray(d.gongmang) && d.gongmang.length > 0) score -= 4;
+
+  score = Math.max(8, Math.min(96, Math.round(score)));
+  if (score % 5 === 0) score += score < 50 ? -1 : 1; // 5의 배수 회피 룰 유지
+  return score;
 }
 
 function buildPrompt(
@@ -1422,7 +1510,7 @@ ${config.specificPrompt}
       • <b>한자 첫 등장 (괄호 풀이 포함)</b> — 검은 볼드 ('<b>정관(正官, 책임감 있는 인연)</b>' 식)
    → 각 단락마다 <strong> 1회 + <u> 1~2회 + <b> 한자 등장 시 매번 필수.
    → 줄글만 보내면 사용자가 "어디가 핵심인지 모름" → 가독성 실패.
-2. overallScore 산출:${baseScore ? ` 이 사람의 사주 리포트에서 ${config.label} 점수가 ${baseScore}점으로 산출됨. overallScore는 반드시 ${baseScore}점으로 설정하라. 절대 다른 점수를 매기지 마.` : ' 위 점수 산출 산식 8항목을 실제로 계산해서 매겨라(base 50 에서 가감). 감(感)으로 고르지 말 것. 같은 사주에 같은 주제면 항상 같은 점수.'}
+2. overallScore 산출:${baseScore ? ` 이 사람의 사주 구조(핵심 십성 세력·자리·길신·흉살)에서 ${config.label} 점수가 ${baseScore}점으로 산출됨. overallScore는 반드시 ${baseScore}점으로 설정하라. 절대 다른 점수를 매기지 마.` : ' 위 점수 산출 산식 8항목을 실제로 계산해서 매겨라(base 50 에서 가감). 감(感)으로 고르지 말 것. 같은 사주에 같은 주제면 항상 같은 점수.'}
 3. 각 section의 content는 단락을 나눠 가독성 있게 작성. 한 문단이 3줄을 넘지 않도록. **단락마다 핵심 1구절에 <strong> 강조 mandatory.**
 4. topicData의 각 필드를 정확한 형식으로 채워라. 시각화에 사용되므로 빠뜨리지 마.
    - pillarComparison의 cheongan/jiji는 반드시 한자 1글자만 (예: "甲", "寅"). "(추정)", "(추론)" 같은 주석을 절대 붙이지 마.
