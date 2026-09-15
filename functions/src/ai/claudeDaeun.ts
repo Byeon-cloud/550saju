@@ -8,7 +8,7 @@ export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Prom
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 8192,
+    max_tokens: 14000, // 2026-09-16 — 8192 에서 상향. 대운 8~10구간 상세 서술이 8192 를 넘겨 JSON 이 배열 중간에 잘림(2/2 재현). 천장 상향은 출력 내용을 바꾸지 않음.
     temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
     messages: [{ role: 'user', content: prompt }],
   });
