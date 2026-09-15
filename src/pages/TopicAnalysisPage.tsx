@@ -3515,8 +3515,19 @@ export function TopicAnalysisPage() {
       // 🚨 2026-09-15 fix — 'exam' 누락으로 합격·이직운 전용 입력(changeType/시험명/예정시기)이
       //   submit 에서 통째로 버려져 서버 exam 분기가 실행 0회 데드코드였음.
       //   증상: 첫 취업 준비생인데 '이직' 관점 결과가 나옴. whitelist 에 exam 추가로 경로 복구.
-      const topicExtra = (['business', 'career', 'move', 'study', 'exam'].includes(topicId!))
-        ? Object.fromEntries(Object.entries(extraInfo).filter(([, v]) => v !== '' && v != null)) : {};
+      const topicExtra = (() => {
+        if (!['business', 'career', 'move', 'study', 'exam'].includes(topicId!)) return {};
+        const e: Record<string, any> = Object.fromEntries(
+          Object.entries(extraInfo).filter(([, v]) => v !== '' && v != null));
+        /* 🚨 2026-09-15 — 유령 예정일 제거.
+         *   날짜 필드는 숫자 기본값(올해/6월/1월)이라 사용자가 '(선택)'을 건드리지 않아도
+         *   필터를 통과해 항상 전송됐고, 서버는 그걸 '사용자가 지정한 예정 시기'로 읽어
+         *   고르지도 않은 날짜로 분석했다. 동반 필드가 비면 그 날짜는 미지정으로 간주한다. */
+        if (!extraInfo.bizStatus) { delete e.bizOpenYear; delete e.bizOpenMonth; }
+        if (!extraInfo.movePurpose) { delete e.movePlanYear; delete e.movePlanMonth; }
+        if (!extraInfo.examName && !extraInfo.changeType) { delete e.examYear; delete e.examMonth; }
+        return e;
+      })();
       const extra = { ...topicExtra, ...loveExtra, ...marriageExtra };
       const finalExtra = Object.keys(extra).length > 0 ? extra : undefined;
 
@@ -4804,13 +4815,25 @@ export function TopicAnalysisPage() {
                 const liveSections: any[] = Array.isArray(result.sections) ? result.sections : [];
                 const lookupKey = topicId === 'moving' ? 'move' : (topicId || '');
                 const expectedTitles = TOPIC_SECTION_TITLES[lookupKey] || [];
+                /* 🚨 2026-09-15 — 서버가 상황(changeType·jobStatus·relationStatus·movePurpose·상대정보)에
+                 *   따라 섹션 제목을 바꾸므로(claudeTopic.ts effectiveSections), 하드코딩 미러를 그대로 쓰면
+                 *   로딩 중 상황과 안 맞는 옛 제목이 깜빡 보인다(예: 첫 취준생에게 '이직 후 3개월 적응 전망').
+                 *   미러를 서버와 이중 관리하면 drift 가 나므로, 해당 상황에서는 제목만 비우고
+                 *   서버가 실제 heading 을 보내면 그때 채운다. 슬롯 수·진행 표시는 그대로 유지. */
+                const situationDynamic =
+                  (lookupKey === 'exam' && !!extraInfo.changeType) ||
+                  (lookupKey === 'marriage' && relationStatus === 'dating') ||
+                  (lookupKey === 'reunion' && !(showPartner && partnerInfo.name)) ||
+                  (lookupKey === 'career' && (extraInfo.jobStatus === 'student' || extraInfo.jobStatus === 'employed')) ||
+                  (lookupKey === 'move' && extraInfo.movePurpose === 'house');
+                const safeTitles = situationDynamic ? [] : expectedTitles;
                 const slotCount = Math.max(expectedTitles.length, liveSections.length);
                 if (slotCount === 0) return null;
                 const scaffold = Array.from({ length: slotCount }, (_, i) => {
                   const live = liveSections[i];
                   const hasContent = !!(live && typeof live.content === 'string' && live.content.trim());
                   return {
-                    heading: (live && live.heading) || expectedTitles[i] || `섹션 ${i + 1}`,
+                    heading: (live && live.heading) || safeTitles[i] || `섹션 ${i + 1}`,
                     highlight: live?.highlight,
                     content: live?.content || '',
                     insightCards: live?.insightCards,

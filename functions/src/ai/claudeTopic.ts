@@ -1202,6 +1202,22 @@ ${statusBlock}
    *   '이직 후 3개월 적응 전망' 이 강제 출력됐다(오너 실사용 지적).
    *   섹션 개수는 5개로 유지 — 클라 스트리밍 스켈레톤(slotCount=max)이 깨지지 않게. */
   let effectiveSections: string[] = config.sections;
+  if (topicId === 'career') {
+    // 학생에게 '직장 내 인간관계', 재직자에게 '직종 TOP5' 가 나가던 문제 (개수 5 유지)
+    const js = String(extraInfo?.jobStatus || '');
+    if (js === 'student') {
+      effectiveSections = config.sections.map((sec) =>
+        sec === '직장 내 인간관계 패턴' ? '첫 직장에서 만날 관계의 결' : sec);
+    } else if (js === 'employed') {
+      effectiveSections = config.sections.map((sec) =>
+        sec === '사주가 부르는 직종 TOP 5' ? '지금 직종과 내 사주의 궁합' : sec);
+    }
+  }
+  if (topicId === 'move' && String(extraInfo?.movePurpose || '') === 'house') {
+    // 주거 이사인데 '해외운' 이 나가던 문제 (개수 5 유지)
+    effectiveSections = config.sections.map((sec) =>
+      sec === '해외운' ? '이사 후 생활의 변화' : sec);
+  }
   if (topicId === 'marriage' && extraInfo?.relationStatus === 'dating') {
     // 기혼자에게 '결혼 적기'·'결혼 준비'는 무의미 → 부부생활 관점으로 교체 (개수 5 유지)
     effectiveSections = config.sections.map((sec) =>
