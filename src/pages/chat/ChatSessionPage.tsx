@@ -17,6 +17,7 @@
 import type { ReactNode } from 'react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { hasNativeNavBack } from '@/lib/env';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -1116,23 +1117,26 @@ function DarkChatHeader({
         zIndex: 50,
       }}
     >
-      <button
-        type="button"
-        onClick={onBack}
-        aria-label="뒤로"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: '#fff',
-          opacity: 0.85,
-          fontSize: 22,
-          lineHeight: 1,
-          padding: '4px 6px',
-          cursor: 'pointer',
-        }}
-      >
-        ←
-      </button>
+      {/* 앱인토스: 토스 내비바 뒤로가기와 중복 → 숨김 (2026-09-16 심사 반려 · env.ts hasNativeNavBack) */}
+      {!hasNativeNavBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="뒤로"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#fff',
+            opacity: 0.85,
+            fontSize: 22,
+            lineHeight: 1,
+            padding: '4px 6px',
+            cursor: 'pointer',
+          }}
+        >
+          ←
+        </button>
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

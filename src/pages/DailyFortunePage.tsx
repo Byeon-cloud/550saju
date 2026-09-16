@@ -487,6 +487,7 @@ export function DailyFortunePage() {
                 subtitle={apiError || '잠시 후 다시 시도해주세요'}
                 onRetry={analyze}
                 onBack={() => setPhase('select')}
+                backLabel="선택 화면으로"
                 showRefundNote={true}
               />
             </motion.div>

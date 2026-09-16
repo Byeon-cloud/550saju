@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import type { ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hasNativeNavBack } from '@/lib/env';
 import { useAuth } from '@/hooks/useAuth';
 import { isOwner } from '@/services/admin/adminConfig';
 import { useAdminData } from '@/pages/admin/_useAdminData';
@@ -147,7 +148,9 @@ export function AdminPage() {
               >
                 {busy ? '집계 중…' : '새로고침'}
               </button>
-              <button onClick={() => navigate('/')} style={{ fontSize: 12, color: C.mute, background: 'none', border: 'none', cursor: 'pointer' }}>← 홈</button>
+              {!hasNativeNavBack && (
+                <button onClick={() => navigate('/')} style={{ fontSize: 12, color: C.mute, background: 'none', border: 'none', cursor: 'pointer' }}>← 홈</button>
+              )}
             </div>
           </div>
           {/* 요약 1줄 */}

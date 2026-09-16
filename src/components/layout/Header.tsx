@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { IconBack } from '@/components/brand/Icons';
-import { isAppintosBuild } from '@/lib/env';
+import { hasNativeNavBack } from '@/lib/env';
 
 interface HeaderProps {
   title?: string;
@@ -9,19 +9,13 @@ interface HeaderProps {
 }
 
 /**
- * 앱인토스 환경 감지 (2026-04-21 P0-C · env.ts 통합):
- * - `isAppintosBuild` — VITE_BUILD_TARGET=appintos 또는 InTossApp UA
- * - legacy: TossApp UA · intoss:// 스킴 · `<meta name="apps-in-toss">` 태그
- * 셋 중 하나라도 true 면 네이티브 뒤로가기가 있다고 판단, showBack=false.
+ * 앱인토스 = 토스 내비바에 뒤로가기가 항상 있음 → 자체 뒤로가기는 **강제로** 숨긴다.
+ * 판정 SSOT: env.ts `hasNativeNavBack` (빌드 타깃 · TossApp UA · intoss:// · meta 태그).
+ * `showBack` 을 명시로 true 넘겨도 앱인토스에선 안 뜬다 (2026-09-16 토스 심사 반려 대응).
  */
-const IS_APPS_IN_TOSS = isAppintosBuild || (typeof navigator !== 'undefined' && (
-  navigator.userAgent.includes('TossApp') ||
-  window.location.href.includes('intoss://') ||
-  !!document.querySelector('meta[name="apps-in-toss"]')
-));
-
-export function Header({ title, showBack = !IS_APPS_IN_TOSS, right }: HeaderProps) {
+export function Header({ title, showBack: showBackProp = true, right }: HeaderProps) {
   const navigate = useNavigate();
+  const showBack = showBackProp && !hasNativeNavBack;
 
   return (
     <header

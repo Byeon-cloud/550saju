@@ -61,7 +61,8 @@ type MenuItem = { id: string; label: string; path: string; icon: string };
 // Stage 7e-4: 고객문의 제거, 이용약관/개인정보처리방침은 footer 영역으로 이동
 const MENU_ITEMS_AIT: MenuItem[] = [
   { id: 'charge',  label: '운 충전',         path: '/charge',  icon: 'wallet'       },
-  { id: 'billing', label: '결제·사용 내역',   path: '/billing', icon: 'receipt'      },
+  // 2026-09-16 제거: '결제·사용 내역' → '/billing' 라우트·페이지·데이터가 전부 없어 404(NotFound)로 떨어졌음.
+  //   토스 심사 재제출 전 깨진 메뉴 차단. 내역 페이지를 실제로 만들 때 App.tsx 라우트와 함께 복귀할 것.
 ];
 
 const MENU_ITEMS_WEB: MenuItem[] = [

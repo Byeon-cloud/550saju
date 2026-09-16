@@ -22,6 +22,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { hasNativeNavBack } from '@/lib/env';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
@@ -1850,25 +1851,28 @@ function SubmitBar({
           margin: '0 auto',
         }}
       >
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="뒤로 가기"
-          style={{
-            width: 52,
-            height: 52,
-            background: C.surface,
-            color: C.inkSoft,
-            border: `1px solid ${C.line}`,
-            borderRadius: 12,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          이전
-        </button>
+        {/* 앱인토스: 토스 내비바 뒤로가기와 중복 → 숨김 (2026-09-16 심사 반려 · env.ts hasNativeNavBack) */}
+        {!hasNativeNavBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="뒤로 가기"
+            style={{
+              width: 52,
+              height: 52,
+              background: C.surface,
+              color: C.inkSoft,
+              border: `1px solid ${C.line}`,
+              borderRadius: 12,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            이전
+          </button>
+        )}
         <button
           type="button"
           onClick={onSubmit}

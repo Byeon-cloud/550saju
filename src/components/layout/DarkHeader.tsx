@@ -14,6 +14,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { hasNativeNavBack } from '@/lib/env';
 
 interface DarkHeaderProps {
   /** 메인 타이틀 (예: "이혜지 님의 오늘의 운세") */
@@ -62,23 +63,26 @@ export function DarkHeader({ title, subtitle, chip, chipVariant = 'gold', onBack
         zIndex: 50,
       }}
     >
-      <button
-        type="button"
-        onClick={handleBack}
-        aria-label="뒤로"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: '#fff',
-          opacity: 0.85,
-          fontSize: 22,
-          lineHeight: 1,
-          padding: '4px 6px',
-          cursor: 'pointer',
-        }}
-      >
-        ←
-      </button>
+      {/* 앱인토스: 토스 내비바 뒤로가기와 중복 → 숨김 (2026-09-16 심사 반려 · env.ts hasNativeNavBack) */}
+      {!hasNativeNavBack && (
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="뒤로"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#fff',
+            opacity: 0.85,
+            fontSize: 22,
+            lineHeight: 1,
+            padding: '4px 6px',
+            cursor: 'pointer',
+          }}
+        >
+          ←
+        </button>
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

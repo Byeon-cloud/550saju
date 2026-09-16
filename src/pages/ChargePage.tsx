@@ -13,7 +13,7 @@ import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getRemainingShareRewards } from '@/services/share/shareReward';
-import { isAppintosBuild } from '@/lib/env';
+import { isAppintosBuild, hasNativeNavBack } from '@/lib/env';
 import { isPortoneTestEnabled, isPortoneLiveEnabled, requestPortoneTestPayment, requestPortoneLivePayment, confirmPortonePaymentServer } from '@/services/payment/portonePayment';
 import type { PortonePgMethod } from '@/services/payment/portonePayment';
 import { trackEvent } from '@/services/analytics';
@@ -348,18 +348,23 @@ export function ChargePage() {
         padding: '0 16px',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <button
-          onClick={goBack}
-          aria-label={redirectTo ? '닫기' : '뒤로 가기'}
-          style={{
-            width: 40, height: 40,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: C.ink, background: 'transparent', border: 'none',
-            cursor: 'pointer', flexShrink: 0,
-          }}
-        >
-          {redirectTo ? <CloseIcon /> : <ArrowLeftIcon />}
-        </button>
+        {/* 앱인토스: 토스 내비바 뒤로가기와 중복 → 숨김 (2026-09-16 심사 반려 · env.ts hasNativeNavBack) */}
+        {hasNativeNavBack ? (
+          <div style={{ width: 40, flexShrink: 0 }} aria-hidden="true" />
+        ) : (
+          <button
+            onClick={goBack}
+            aria-label={redirectTo ? '닫기' : '뒤로 가기'}
+            style={{
+              width: 40, height: 40,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: C.ink, background: 'transparent', border: 'none',
+              cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            {redirectTo ? <CloseIcon /> : <ArrowLeftIcon />}
+          </button>
+        )}
         <div style={{
           flex: 1, textAlign: 'center',
           fontSize: 17, fontWeight: 700, color: C.ink,
