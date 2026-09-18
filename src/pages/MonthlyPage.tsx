@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -10,6 +10,7 @@ import { generateMonthlyFortune2026, generateMonthlyDraft2026, generateMonthlyRe
 import { subscribeProgress } from '@/services/progress/progressClient';
 import { makeProgressId, isProgressiveEnabled, isAsyncReviewEnabled } from '@/services/progress/progressId';
 import { getMonthlyPrice } from '@/constants/pricing';
+import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
@@ -62,6 +63,18 @@ function computeMonthInfo(year: number, month: number): MonthInfo {
   return { year, month, label: `${year}년 ${month}월`, wolGanji, yearGanji };
 }
 
+/** 선택 사주 → 프로필 id. 보관함 재진입(savedReport)은 리포트 id 라 이름·생년월일로 프로필을 역매칭. 못 찾으면 undefined. */
+function resolveProfileId(p: LocalReport | null): string | undefined {
+  if (!p) return undefined;
+  const profiles = getProfiles();
+  if (profiles.some((x) => x.id === p.id)) return p.id;
+  const i = p.input;
+  if (!i) return undefined;
+  return profiles.find(
+    (x) => x.name === p.name && x.input?.birthYear === i.birthYear && x.input?.birthMonth === i.birthMonth && x.input?.birthDay === i.birthDay,
+  )?.id;
+}
+
 export function MonthlyPage() {
   usePageTitle('월별 운세');
   const navigate = useNavigate();
@@ -69,7 +82,7 @@ export function MonthlyPage() {
   const toast = useToast();
 
   // 보관함에서 저장된 결과를 넘겨받은 경우
-  const rawNavState = location.state as { savedResult?: MonthlyDetailResponse; savedReport?: LocalReport } | undefined;
+  const rawNavState = location.state as { savedResult?: MonthlyDetailResponse; savedReport?: LocalReport; profileId?: string } | undefined;
   // URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
   const [searchParams] = useSearchParams();
   const reportIdFromUrl = searchParams.get('reportId');
@@ -84,7 +97,14 @@ export function MonthlyPage() {
   const monthOptions = useMemo(() => buildMonthOptions(), []);
 
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
-  const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
+  // 2026-09-17 — 입력 복귀(?profileId=)·주간운세 교차 이동(state.profileId) 시 사주 미리 선택
+  const [selected, setSelected] = useState<LocalReport | null>(() => {
+    if (navState?.savedReport) return navState.savedReport;
+    const preId = rawNavState?.profileId || searchParams.get('profileId');
+    if (!preId) return null;
+    const p = getProfiles().find((x) => x.id === preId);
+    return p ? (p as unknown as LocalReport) : null;
+  });
   const [result, setResult] = useState<MonthlyDetailResponse | null>(navState?.savedResult || null);
   // 🛡️ 점진 로딩 — M1/M2 그룹이 도착하는 대로 누적(부분). 최종 result 도착 전 조기 렌더용.
   const [partial, setPartial] = useState<Partial<MonthlyDetailResponse> | null>(null);
@@ -100,6 +120,16 @@ export function MonthlyPage() {
   const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
 
+  // 2026-09-17 — 출석 적립 + 일일/연속 보상 (오늘운세·꿈해몽과 동일 · 결과 도달 1회).
+  //   점진 로딩(partial)만 도착한 상태는 제외 — 이후 실패·환불될 수 있어 최종/초안 result 도착 시점에만.
+  const { mark } = useAttendanceOnResult();
+  const attendanceFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase !== 'result' || !result || attendanceFiredRef.current) return;
+    attendanceFiredRef.current = true;
+    import('@/services/storage/dailyReward').then((m) => m.processAttendanceRewards()).catch(() => {});
+  }, [phase, result]);
+
   const reports = useMemo(() => getProfiles(), []);
 
   async function startAnalysis() {
@@ -111,7 +141,8 @@ export function MonthlyPage() {
     const price = getMonthlyPrice().actualPrice; // 월운 정가 7운 (SSOT)
     if (!spendBalance(price)) {
       toast.show('잔액이 부족해요', 'warning');
-      navigate(`/charge?need=${price}`, { state: { message: `월별 운세에 ${price}운이 필요해요`, returnTo: '/monthly' } });
+      // 충전 복귀 시 선택 사주 유지 — ChargePage 는 state 를 넘기지 않으므로 query 로 (?profileId 미리 선택)
+      navigate(`/charge?need=${price}`, { state: { message: `월별 운세에 ${price}운이 필요해요`, returnTo: `/monthly?profileId=${encodeURIComponent((selected as any).id)}` } });
       isAnalyzingRef.current = false;
       return;
     }
@@ -152,6 +183,8 @@ export function MonthlyPage() {
         setShareReportId(rid);
         setRefining(true);
         setPhase('result');
+        // 이벤트 v4 · 출석 마커 (KST 당일 1회 · 세션 dedupe)
+        mark().catch(() => {/* non-blocking */});
         // 백그라운드 2차 보정 — 실패해도 draft 유지(무해·무차감이라 환불 X)
         void generateMonthlyRefine2026(selected.sajuData, monthInfo, draftRes.content, rid)
           .then((ref) => {
@@ -170,6 +203,7 @@ export function MonthlyPage() {
         clearPendingSpendByType('monthly'); // 결과 저장 완료 → 자동환불 대상 제외
         setShareReportId(rid);
         setPhase('result');
+        mark().catch(() => {/* non-blocking */});
       }
     } catch (e: any) {
       console.error('월별 운세 실패:', e);
@@ -315,7 +349,10 @@ export function MonthlyPage() {
             const room = createChatRoom(selected?.name || '나', 'free', ctx);
             navigate(`/chat/${room.id}`, { state: { profile: selected, contentContext: ctx } });
           }}
-          onTopic={(topicId) => navigate(`/topic/${topicId}`)}
+          onTopic={(topicId) => {
+            // 2026-09-17 — 공용 계약: 주제 페이지가 같은 사주를 미리 선택하도록 profileId 전달
+            navigate(`/topic/${topicId}`, { state: { profileId: resolveProfileId(selected) } });
+          }}
           onTopics={() => navigate('/#home-topics')}
         />
       </FadeIn>

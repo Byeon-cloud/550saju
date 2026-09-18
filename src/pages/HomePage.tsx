@@ -26,7 +26,7 @@ import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { HOME_REVIEWS } from '@/constants/reviews';
 import { listTopics } from '@/constants/topics'; // 10주제 SSOT (id/한자/컬러/딱지/path)
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice } from '@/constants/pricing'; // 가격 SSOT (세일 자동 반영)
-import { hasFreePass } from '@/services/storage/dailyFreePass'; // 일일 무료 패스 (사용 후 1운 차감)
+import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass'; // 일일 무료 패스 (사용 후 1운 차감)
 import { getTopicTop5, type TopicTop5Cache } from '@/services/liveBest'; // LIVE BEST 실시간 집계 캐시
 // 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
 
@@ -61,16 +61,17 @@ const EXT_COLORS = {
 // 2026-05-04 dead code 제거 — HASHTAGS 22개 + @ts-expect-error 함께 정리 (Top 5 로 완전 대체됨).
 
 function getTodayStr(): string {
-  const d = new Date();
-  const weekday = ['일','월','화','수','목','금','토'][d.getDay()];
-  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${weekday}요일`;
+  // 2026-09-17 — KST 기준 (기기 시간대와 무관 · 무료 패스 자정 리셋 기준과 일치)
+  const [y, m, d] = kstToday().split('-').map(Number);
+  const weekday = ['일','월','화','수','목','금','토'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${m}월 ${d}일 ${weekday}요일`;
 }
 
 export function HomePage() {
   usePageTitle('사주500 · 무료로 시작');
   useSeoMeta({
     description:
-      '600년 명리학 6대 원전 기반 AI 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세·꿈해몽 무료, 10가지 주제별 분석과 종합사주·궁합.',
+      '600년 명리학 6대 원전 기반 AI 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세·꿈해몽 매일 1회 무료, 10가지 주제별 분석과 종합사주·궁합.',
   });
   const navigate = useNavigate();
   const { name, hasProfile } = useActiveProfile();
@@ -134,10 +135,21 @@ export function HomePage() {
   const showRightBtn = deepDiveScrollPos < deepDiveMaxScroll - 8;
 
   const displayName = name || '사용자';
-  const todayStr = useMemo(() => getTodayStr(), []);
   // 2026-05-28 PM — 일일 무료 패스 상태 (사용 후 "1운" 으로 전환)
-  const dailyFreeAvailable = useMemo(() => hasFreePass('daily'), []);
-  const dreamFreeAvailable = useMemo(() => hasFreePass('dream'), []);
+  // 2026-09-17 — 마운트 스냅샷(useMemo [])이면 자정(KST) 넘김·다른 화면 사용·앱 복귀를 놓쳐
+  //   뱃지가 '오늘 1회 무료' 에 고정됨 → subscribeFreePass 로 재계산 (날짜 라벨도 함께)
+  const [todayStr, setTodayStr] = useState(() => getTodayStr());
+  const [dailyFreeAvailable, setDailyFreeAvailable] = useState(() => hasFreePass('daily'));
+  const [dreamFreeAvailable, setDreamFreeAvailable] = useState(() => hasFreePass('dream'));
+  useEffect(() => {
+    const refresh = () => {
+      setTodayStr(getTodayStr());
+      setDailyFreeAvailable(hasFreePass('daily'));
+      setDreamFreeAvailable(hasFreePass('dream'));
+    };
+    refresh();
+    return subscribeFreePass(refresh);
+  }, []);
   const reviewDoubled = useMemo(() => [...HOME_REVIEWS, ...HOME_REVIEWS], []);
 
   // 2026-06-02 D3 — LIVE BEST 실시간 집계 캐시 (liveBestCache/top5). 데이터 충분하면 실랭킹, 아니면 폴백.

@@ -41,6 +41,7 @@ const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
 const aiFailureLog_1 = require("./shared/aiFailureLog");
 const progressWrite_1 = require("./shared/progressWrite"); // 점진 로딩 — 그룹별 증분 write(best-effort·머니 무관)
+const kstTime_1 = require("./utils/kstTime");
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
 const lazyClaudeReport = () => Promise.resolve().then(() => __importStar(require('./ai/claudeReport')));
 // ── 하반기 시작 이벤트 세일 (pricing.ts SSOT 와 동기) — 서버가 직접 KST 세일 계산(클라 미신뢰).
@@ -345,6 +346,8 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
                 ...(results.B?.sectionConclusions || {}),
                 ...(results.C?.sectionConclusions || {}),
             },
+            // 2026-09-17 — 주제 추천 점수 SSOT (주제분석 computeTopicBaseScore 와 동일 값 · AI 0). callable 경로와 동일.
+            topicBaseScores: mod.computeTopicBaseScores(sajuData),
         };
         // Firestore 저장 (best-effort)
         const reportRef = db.collection('reports').doc();
@@ -611,8 +614,11 @@ exports.generateDailyFortune = (0, https_1.onCall)(
     }
     const uid = request.auth?.uid;
     // 당일 캐시 확인 (실명 유저만)
+    // 2026-09-17 — 캐시 키에 사주 8글자 포함. 기존 키(uid+날짜)는 사주와 무관해서, 본인 운세를 받은 뒤
+    //   가족 사주로 1운을 내고 SSE 가 끊겨 이 callable 로 폴백되면 **본인 운세가 반환**됐다(유료화로 돈 문제).
+    const dailyCacheId = `${date}_${buildSajuKey(sajuData)}`;
     if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(date);
+        const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(dailyCacheId);
         const cached = await cacheRef.get();
         if (cached.exists) {
             const d = cached.data();
@@ -635,9 +641,9 @@ exports.generateDailyFortune = (0, https_1.onCall)(
             dayJiShen,
             dayXiongSha,
         });
-        // 캐싱 (실명 유저만)
+        // 캐싱 (실명 유저만) — 키 = 날짜 + 사주 8글자 (위 조회와 동일)
         if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-            const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(date);
+            const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(dailyCacheId);
             await cacheRef.set({
                 content: result,
                 aiModel: 'claude-sonnet-4-6',
@@ -1128,26 +1134,29 @@ function buildLegacySajuContext(sajuData) {
 }
 /**
  * 꿈해몽 무료 (신규 v3 엔드포인트) — Claude Sonnet 4.6.
- *   쿼터: 일 1회 + 월 7회 상한 (Firestore users/{uid}/dreamQuota/{YYYY-MM}).
+ *   쿼터: 월별 이용일 집계만 (Firestore users/{uid}/dreamQuota/{YYYY-MM}, KST). 차단 없음(2026-09-17). 익명 uid 는 미적용.
+ *   2026-09-17 — 꿈해몽 '하루 1회 무료, 이후 1운' 정책: 클라가 1운 차감 후 생성하면 `paid: true` 를 보낸다.
+ *   유료 생성은 쿼터에서 제외(1운 낸 꿈이 8일째부터 거부되던 문제). 차감은 클라 기준이라 위조 가능하지만
+ *   이 쿼터는 웹 로그인 유저 한정 비용 가드일 뿐이라 허용한다.
  */
 exports.generateDreamFree = (0, https_1.onCall)(
 // minInstances: 0 — warm 비용 대신 로딩 UX 로 Cold start 흡수 (feedback_quality_over_speed 원칙)
 { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
-    const { saju, dreamContent, category, userConcern } = request.data || {};
+    const { saju, dreamContent, category, userConcern, paid } = request.data || {};
     if (!category)
         throw new https_1.HttpsError('invalid-argument', '카테고리가 없습니다');
     const uid = request.auth?.uid;
-    if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        // 쿼터 체크 — 월 7회 상한
-        const yyyymm = new Date().toISOString().slice(0, 7);
+    if (uid && paid !== true && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+        // 쿼터 체크 — 월 7일 상한 (KST 기준 · 1운 유료 생성은 제외)
+        const kn = (0, kstTime_1.kstNow)();
+        const yyyymm = `${kn.year}-${String(kn.month).padStart(2, '0')}`;
         const quotaRef = db.collection('users').doc(uid).collection('dreamQuota').doc(yyyymm);
-        const today = new Date().toISOString().slice(0, 10);
+        const today = `${yyyymm}-${String(kn.day).padStart(2, '0')}`;
         await db.runTransaction(async (tx) => {
             const q = await tx.get(quotaRef);
             const data = q.data() || { monthCount: 0, lastDate: null };
-            if (data.monthCount >= 7) {
-                throw new https_1.HttpsError('resource-exhausted', '이번 달 꿈해몽 무료 쿼터가 소진됐어요');
-            }
+            // 2026-09-17 — 월 7일 차단 제거: 약관 제5조 '꿈해몽 하루 1회 무료(이후 1운)'와 충돌했고, 차단 시
+            //   클라가 1운 흐름으로도 넘어가지 못했다. 무료 1일 1회는 클라 무료권이 강제한다. 집계(monthCount)만 유지.
             const inc = data.lastDate === today ? 0 : 1;
             tx.set(quotaRef, {
                 monthCount: data.monthCount + inc,
@@ -1221,24 +1230,23 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
         }
         catch { /* anonymous */ }
     }
-    const { saju, dreamContent, category, userConcern } = req.body || {};
+    const { saju, dreamContent, category, userConcern, paid } = req.body || {};
     if (!category) {
         sendEvent('error', { message: '카테고리가 없습니다' });
         res.end();
         return;
     }
-    // 쿼터 체크 (월 7회) — callable 과 동일
-    if (uid && !isAnon) {
+    // 쿼터 체크 (월 7일 · KST) — callable 과 동일. 1운 유료 생성(paid)은 제외.
+    if (uid && !isAnon && paid !== true) {
         try {
-            const yyyymm = new Date().toISOString().slice(0, 7);
+            const kn = (0, kstTime_1.kstNow)();
+            const yyyymm = `${kn.year}-${String(kn.month).padStart(2, '0')}`;
             const quotaRef = db.collection('users').doc(uid).collection('dreamQuota').doc(yyyymm);
-            const today = new Date().toISOString().slice(0, 10);
+            const today = `${yyyymm}-${String(kn.day).padStart(2, '0')}`;
             await db.runTransaction(async (tx) => {
                 const q = await tx.get(quotaRef);
                 const data = q.data() || { monthCount: 0, lastDate: null };
-                if (data.monthCount >= 7) {
-                    throw new Error('이번 달 꿈해몽 무료 쿼터가 소진됐어요');
-                }
+                // 2026-09-17 — 월 7일 차단 제거 (callable 과 동일 · 집계만 유지)
                 const inc = data.lastDate === today ? 0 : 1;
                 tx.set(quotaRef, {
                     monthCount: data.monthCount + inc,
@@ -2342,9 +2350,9 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
     sendEvent('start', { ts: Date.now() });
     try {
         const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
-        const { buildTopicCall } = await lazyClaudeTopic();
+        const { buildTopicCall, enforceTopicBaseScore } = await lazyClaudeTopic();
         const { parseJsonResponse } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
-        const { system, prompt, model, maxTokens } = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+        const { system, prompt, model, maxTokens, effectiveBaseScore } = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
         const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
         const t0 = Date.now();
         const runStream = async (temperature) => {
@@ -2378,6 +2386,8 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
             firstText = await runStream(0.05);
             parsed = parseJsonResponse(firstText, { repairUsed: false });
         }
+        // 사주 산출 점수 강제 (callable 과 동일 · 종합사주 추천 카드 점수와 일치 보장)
+        parsed = enforceTopicBaseScore(parsed, effectiveBaseScore);
         // Firestore 저장 (callable 과 동일 구조)
         const reportRef = db.collection('reports').doc();
         try {

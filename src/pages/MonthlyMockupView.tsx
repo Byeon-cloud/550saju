@@ -23,6 +23,7 @@ import type { MonthlyDetailResponse, MonthlyPeriod, MonthlyDomain, MonthlyDayNot
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { autoEmphasize } from '@/utils/emphasis';
 import { STEM_INFO, BRANCH_INFO } from '@/utils/sajuStemBranch';
+import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 
 /** sanitizeAiText + autoEmphasize 결합 — 모든 AI 본문 출력 통과 */
 const safeHtmlEmph = (text: any): { __html: string } => ({
@@ -703,7 +704,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                 {domains.map((d) => {
                   const sc = Math.max(0, Math.min(100, Number(d.data?.score) || 0));
                   return (
-                    <button type="button" key={d.key} className="domain" onClick={() => onTopic(d.topicId)} aria-label={`${d.nm} 전체 흐름 깊게 보기`}>
+                    <button type="button" key={d.key} className="domain" onClick={() => onTopic(d.topicId)} aria-label={`${d.nm} 전체 흐름 깊게 보기, ${formatPriceLabel(getTopicPrice(d.topicId))}`}>
                       <div className="head">
                         <div className="head-l">
                           <span className="dot" style={{ background: d.color }} />
@@ -720,7 +721,8 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                       </div>
                       {d.data?.body && <div className="domain-body" dangerouslySetInnerHTML={safeHtmlEmph(d.data.body)} />}
                       <div className="domain-cta" style={{ color: d.color }}>
-                        <span>{d.nm} 전체 흐름 깊게 보기</span>
+                        {/* 2026-09-17 — 이동 전 가격 표기 (주제운 SSOT getTopicPrice) */}
+                        <span>{d.nm} 전체 흐름 깊게 보기 · {formatPriceLabel(getTopicPrice(d.topicId))}</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
                       </div>
                     </button>

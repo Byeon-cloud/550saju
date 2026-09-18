@@ -23,7 +23,8 @@ import React, { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
-import type { LocalReport } from '@/services/storage/localStore';
+import { getProfiles, type LocalReport, type SajuProfile } from '@/services/storage/localStore';
+import { TOPIC_IDS, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import type { OhengType, SajuData } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 // 2026-05-29 — AI 가 강조 태그를 빠뜨려도 강조 보장 (본문 자동 강조). sanitizeAiText 와 함께 사용.
@@ -1883,51 +1884,188 @@ function deriveTopicHook(
       if (tier === 'mid')  return `${ganRef} 일간의 대운 흐름과 자리잡기`;
       return `${ganRef} 일간 — 늦게 피는 결의 시기`;
     }
+    // 2026-09-17 — 추천 후보 10주제 확장분 (topicBaseScores 경로). 사주 십성 카운트 호명 유지.
+    case 'exam': {
+      const g = sip.관성;
+      const i = sip.인성;
+      if (tier === 'high') return `관성 ${g}·인성 ${i}개 — 붙는 시기와 원서 넣을 달`;
+      if (tier === 'mid')  return `관·인 ${g + i}자리 — 시험·이직 타이밍 고르기`;
+      return `관·인 ${g + i}자리 — 한 번에 안 풀리는 이유와 뚫는 시기`;
+    }
+    case 'business': {
+      const s = sip.식상;
+      const j = sip.재성;
+      if (tier === 'high') return `식상 ${s}·재성 ${j}개 — 내 일로 돈 버는 시기`;
+      if (tier === 'mid')  return `식상·재성 ${s + j}자리 — 창업 시기와 위험 관리`;
+      return `식상·재성 ${s + j}자리 — 혼자 벌기 전에 점검할 것`;
+    }
+    case 'study': {
+      const n = sip.인성;
+      if (tier === 'high') return `${ganRef} 일간에 인성 ${n}개 — 배움이 성과로 바뀌는 시기`;
+      if (tier === 'mid')  return `인성 ${n}개의 집중 리듬과 공부 시기`;
+      return `인성 ${n}개 — 집중이 흩어지는 이유와 공부법`;
+    }
+    case 'marriage': {
+      const n = sip.재성 + sip.관성;
+      if (tier === 'high') return `${ganRef} 일간의 배우자 자리와 인연 드는 해`;
+      if (tier === 'mid')  return `관·재 ${n}자리 — 결혼 적기와 배우자 성향`;
+      return `관·재 ${n}자리 — 인연이 늦는 이유와 시기`;
+    }
+    case 'reunion': {
+      const n = sip.재성 + sip.관성;
+      if (tier === 'high') return `관·재 ${n}자리 — 다시 이어질 시기와 연락 타이밍`;
+      if (tier === 'mid')  return `관·재 ${n}자리 — 재회 가능성과 다가갈 방향`;
+      return `관·재 ${n}자리 — 붙잡기 전에 볼 흐름`;
+    }
     default:
-      return '1운에서 깊이 보기';
+      // 기존 '1운에서 깊이 보기' — 3운 주제(연애·재물·재회)에서 가격 오표기 → 가격 없는 카피
+      return '시기·자리·결정 포인트까지 깊이 보기';
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 2026-09-17 · 주제 점수 SSOT (C-2) + 리포트 주인 프로필 (B-3)
+ * ═════════════════════════════════════════════════════════════════ */
+type TopicBaseScores = Partial<Record<TopicId, number>>;
+
+/** 서버 claudePremium.computeTopicBaseScores 가 첨부한 주제 점수 — 주제분석 페이지가 쓰는
+ *  computeTopicBaseScore 와 같은 함수·같은 사주라 '카드 점수 = 도착한 주제 페이지 점수'.
+ *  구 리포트(필드 없음·손상)는 null → 기존 computeTopicScores 점수로 폴백. */
+function readTopicBaseScores(aiResult: any): TopicBaseScores | null {
+  const raw = aiResult?.topicBaseScores;
+  if (!raw || typeof raw !== 'object') return null;
+  const out: TopicBaseScores = {};
+  for (const id of TOPIC_IDS) {
+    const v = Number(raw[id]);
+    if (Number.isFinite(v) && v > 0) out[id] = Math.round(v);
+  }
+  return Object.keys(out).length >= 3 ? out : null;
+}
+
+/** §09 영역 키(AI topicMini·scores 키) → 이어지는 판매 주제. 인간관계는 판매 주제 없음 → 표시만. */
+const AREA_TOPIC: Record<string, TopicId | undefined> = {
+  wealth: 'wealth',
+  love: 'love',
+  career: 'career',
+  health: 'health',
+  social: undefined,
+  potential: 'study',
+};
+
+/** 영역 점수 — 주제 페이지로 이어지는 영역은 topicBaseScores 우선 (§09·사주대화 예시 질문이 같은 점수를 말하도록). */
+function resolveAreaScores(scores: Record<string, number>, base: TopicBaseScores | null): Record<string, number> {
+  if (!base) return scores;
+  const out: Record<string, number> = { ...scores };
+  for (const [area, topicId] of Object.entries(AREA_TOPIC)) {
+    const v = topicId ? base[topicId] : undefined;
+    if (typeof v === 'number') out[area] = v;
+  }
+  return out;
+}
+
+/** 추천 후보 — hookKey(deriveTopicHook 키) · topicId(라우팅·가격·메타) · score */
+interface RecoItem { hookKey: string; topicId: TopicId; score: number }
+// 연애·재회·결혼은 핵심 십성(재·관)이 같아 topicBaseScores 가 항상 동일 → 3칸 도배 방지용 1개 제한
+const RELATION_TOPICS = new Set<TopicId>(['love', 'reunion', 'marriage']);
+
+function pickTopRecommendations(scores: Record<string, number>, base: TopicBaseScores | null): RecoItem[] {
+  if (base) {
+    const sorted = TOPIC_IDS
+      .map((id, order) => ({ hookKey: id as string, topicId: id, score: base[id], order }))
+      .filter((it): it is { hookKey: string; topicId: TopicId; score: number; order: number } => typeof it.score === 'number')
+      // 동점은 홈 노출 순서(연애·재회·결혼·재물·합격…) 우선
+      .sort((a, b) => b.score - a.score || a.order - b.order);
+    const picked: RecoItem[] = [];
+    const skipped: RecoItem[] = [];
+    let relationUsed = false;
+    for (const it of sorted) {
+      if (picked.length >= 3) break;
+      const item = { hookKey: it.hookKey, topicId: it.topicId, score: it.score };
+      if (RELATION_TOPICS.has(it.topicId)) {
+        if (relationUsed) { skipped.push(item); continue; }
+        relationUsed = true;
+      }
+      picked.push(item);
+    }
+    for (const it of skipped) { if (picked.length >= 3) break; picked.push(it); }
+    return picked;
+  }
+  // 구 리포트 폴백 — 기존 5영역 (potential → 학업운)
+  return (Object.entries(scores) as Array<[string, number]>)
+    .filter(([k, v]) => AREA_TOPIC[k] && Number(v) > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k, v]) => ({ hookKey: k, topicId: AREA_TOPIC[k] as TopicId, score: Number(v) }));
+}
+
+function sameBirthInput(a?: Partial<SajuInput> | null, b?: Partial<SajuInput> | null): boolean {
+  if (!a || !b) return false;
+  const time = (x: Partial<SajuInput>) => (x.hasBirthTime && x.birthHour != null ? `${Number(x.birthHour)}:${Number(x.birthMinute ?? 0)}` : '-');
+  return Number(a.birthYear) === Number(b.birthYear)
+    && Number(a.birthMonth) === Number(b.birthMonth)
+    && Number(a.birthDay) === Number(b.birthDay)
+    && (a.gender ?? '') === (b.gender ?? '')
+    && (a.calendarType ?? 'solar') === (b.calendarType ?? 'solar')
+    && time(a) === time(b);
+}
+
+/** 리포트 주인 프로필 — 가족 사주 종합사주에서 주제분석·사주대화로 넘어갈 때 기기의 '내 프로필'로
+ *  바뀌던 문제(B-3) 방지. profileId 일치 → 이름+생년월일시 일치 → 생년월일시 일치 순.
+ *  못 찾으면 profileId 없음(주제 페이지는 선택 화면) + 리포트 사주로 프로필 형태 합성(대화용). */
+function resolveReportProfile(report: LocalReport, sajuData: SajuData): { profileId?: string; profile: SajuProfile } {
+  const input = (report.input || (sajuData as any)?.input) as SajuInput | undefined;
+  let matched: SajuProfile | undefined;
+  try {
+    const list = getProfiles();
+    matched = (report.profileId ? list.find((p) => p.id === report.profileId) : undefined)
+      || list.find((p) => sameBirthInput(p.input, input) && !!input?.name && p.name === input.name)
+      || list.find((p) => sameBirthInput(p.input, input));
+  } catch { /* noop — 합성 프로필로 진행 */ }
+  if (matched) return { profileId: matched.id, profile: matched };
+  return {
+    profile: {
+      id: report.id,
+      name: report.name || input?.name || '나',
+      input: input as SajuInput,
+      sajuData,
+      createdAt: report.createdAt,
+    },
+  };
 }
 
 /**
  * TopicTopRecommend — 사용자 점수 가장 높은 3 영역 동적 추천
- *  · scores 에서 top-3 추출 → 해당 1운 페이지로 CTA
  *  · 점수가 높을수록 "더 알아보고 싶어진다" 심리 유도 (CTA 효율 ↑)
  *  · 2026-05-05 hook 동적화 (sipDist + dayGan 호명)
+ *  · 🚨 2026-09-17 (오너 결정 "합격운 같은 게 높으면 그걸로 추천") — C-0·C-2·C-3
+ *    · 기존: 후보 5영역(직업·연애·재물·건강·학업) 고정 → 합격·이직/사업/결혼/재회 추천 불가 +
+ *      카드 점수(클라 computeTopicScores) ≠ 도착한 주제 페이지 점수(서버 computeTopicBaseScore).
+ *    · 수정: topicBaseScores(서버가 주제분석과 같은 함수로 산출·첨부) 있으면 10주제 중 상위 3 추천
+ *      → 카드 점수 = 주제 페이지 점수. 구 리포트는 기존 5영역 점수 폴백.
+ *    · 1위 '최강' 고정 라벨 제거(점수 구간 칩만) · 저점 헤더 "보강이 필요한"(실제 목록은 상위 3) 정정.
  */
 function TopicTopRecommend({
   scores,
+  topicBaseScores,
   sipDist,
   dayGan,
+  profileId,
 }: {
   scores: Record<string, number>;
+  topicBaseScores: TopicBaseScores | null;
   sipDist?: SipDist;
   dayGan?: string;
+  /** 리포트 주인 프로필 — 주제 페이지가 미리 선택 (가족 사주 리포트 대응) */
+  profileId?: string;
 }) {
   // 이모지 사용 X — 한자 + 컬러 칩만 (사주500 톤앤매너)
   const navigate = useNavigate();
-  // 2026-05-05 정적 hook 제거 — deriveTopicHook 으로 동적화 (사주 8글자 호명)
-  const TOPIC_META: Record<string, {
-    label: string; route: string; hanja: string; color: string;
-  }> = {
-    // 2026-05-28 — SSOT 10주제 정렬. social(대인관계운) 제거 (SSOT 밖 legacy — love/career 에 흡수).
-    career:    { label: '직업운',  route: '/topic/career', hanja: '官', color: '#5A7CA8' },
-    love:      { label: '연애운',  route: '/topic/love',   hanja: '桃', color: '#C88A95' }, // 2026-05-28 SSOT 정렬 (緣→桃, topics.ts:65)
-    wealth:    { label: '재물운',  route: '/topic/wealth', hanja: '財', color: '#B8965A' },
-    health:    { label: '건강운',  route: '/topic/health', hanja: '壽', color: '#6FA08C' },
-    potential: { label: '학업운',  route: '/topic/study',  hanja: '學', color: '#9C5A8A' },
-  };
-  // top-3 점수 (점수 내림차순)
-  const top3 = (Object.entries(scores) as Array<[string, number]>)
-    .filter(([k]) => TOPIC_META[k])
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
+  const top3 = pickTopRecommendations(scores, topicBaseScores);
   if (top3.length === 0) return null;
-  const topScore = top3[0][1];
-  const topMeta = TOPIC_META[top3[0][0]];
+  const topScore = top3[0].score;
+  const topMeta = TOPIC_REGISTRY[top3[0].topicId];
   // 가격 SSOT — top3 는 주제별 가격 혼재(love/wealth 3운 등) → 최저가 '주제당 N운부터' 표기
-  const top3MinPrice = Math.min(
-    ...top3.map(([k]) => getTopicPrice(k === 'potential' ? 'study' : k).actualPrice)
-  );
+  const top3MinPrice = Math.min(...top3.map((t) => getTopicPrice(t.topicId).actualPrice));
 
   function getHook(score: number, key: string): string {
     return deriveTopicHook(key, score, sipDist, dayGan);
@@ -1992,13 +2130,14 @@ function TopicTopRecommend({
           }}
         >
           {topScore >= 85
-            ? <>이 사주에서 가장 빛나는 결은 <span style={{ color: '#f4d166' }}>{topMeta.label}({topMeta.hanja})</span> 입니다</>
+            ? <>이 사주에서 가장 빛나는 결은 <span style={{ color: '#f4d166' }}>{topMeta.label}({topMeta.kanji})</span> 입니다</>
             : topScore >= 60
-            ? <>가장 깊게 풀어볼 만한 <span style={{ color: '#f4d166' }}>3 영역</span></>
-            : <>지금 가장 보강이 필요한 <span style={{ color: '#f4d166' }}>3 영역</span></>}
+            ? <>가장 깊게 풀어볼 만한 <span style={{ color: '#f4d166' }}>{top3.length} 영역</span></>
+            : <>지금 흐름을 가장 살려볼 만한 <span style={{ color: '#f4d166' }}>{top3.length} 영역</span></>}
         </div>
         <div style={{ fontSize: 12, color: 'rgba(244,236,216,0.66)', lineHeight: 1.6, letterSpacing: '0.01em' }}>
-          점수가 가장 도드라진 세 갈래를 깊게 풀어드립니다 — 시기·자리·결정 포인트까지.
+          점수가 가장 높은 {top3.length}갈래를 깊게 풀어드립니다 — 시기·자리·결정 포인트까지.
+          {topicBaseScores && ' 카드 점수는 주제별 풀이에서도 같은 기준으로 이어져요.'}
         </div>
       </div>
 
@@ -2011,18 +2150,16 @@ function TopicTopRecommend({
           gap: 9,
         }}
       >
-        {top3.map(([key, score], idx) => {
-          const meta = TOPIC_META[key];
+        {top3.map(({ hookKey, topicId, score }, idx) => {
+          const meta = TOPIC_REGISTRY[topicId];
           const isFirst = idx === 0;
           const rank = getRank(score);
-          const hook = getHook(score, key);
-          // 가격 SSOT — key='potential' 은 route '/topic/study' → getTopicPrice('study')
-          const priceTopicId = key === 'potential' ? 'study' : key;
-          const priceLabel = formatPriceLabel(getTopicPrice(priceTopicId));
+          const hook = getHook(score, hookKey);
+          const priceLabel = formatPriceLabel(getTopicPrice(topicId));
           return (
             <button
-              key={key}
-              onClick={() => navigate(meta.route)}
+              key={topicId}
+              onClick={() => navigate(meta.path, profileId ? { state: { profileId } } : undefined)}
               style={{
                 position: 'relative',
                 display: 'flex',
@@ -2089,7 +2226,7 @@ function TopicTopRecommend({
                   marginTop: isFirst ? 4 : 0,
                 }}
               >
-                {idx === 0 ? '최강' : `${idx + 1}순위`}
+                {idx === 0 ? '가장 높음' : `${idx + 1}순위`}
               </span>
 
               {/* 거대 한자 */}
@@ -2104,7 +2241,7 @@ function TopicTopRecommend({
                   textShadow: `0 2px 12px ${meta.color}44`,
                 }}
               >
-                {meta.hanja}
+                {meta.kanji}
               </span>
 
               {/* 한글 라벨 */}
@@ -2440,6 +2577,14 @@ export function PremiumResult({
   const ilganKr = sajuData.pillars[2]?.천간읽기 ?? '';
   const ilganOheng = ilgan ? CHEONGAN_OHENG[ilgan] : '';
   const sipDist = buildSipDist(sajuData);
+  // 2026-09-17 C-2 — 서버 주제 점수(주제 페이지와 동일) · 영역 표시 점수 · B-3 리포트 주인 프로필
+  const topicBaseScores = readTopicBaseScores(aiResult);
+  const areaScores = resolveAreaScores(scores, topicBaseScores);
+  const reportProfile = React.useMemo(
+    () => resolveReportProfile(report, sajuData),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [report.id, report.profileId, sajuData],
+  );
 
   // 요약 카드 — Section1Body 가 사용 (보존용 grace, 향후 외부 호출처 가능성)
   // @ts-expect-error -- 보존용 (Section1Body 가 본문 처리)
@@ -2895,9 +3040,9 @@ export function PremiumResult({
           2026-05-05 6 카드 복원 (잠재력·인간관계 추가) → 제목 "주제별 한눈에" → "여섯 영역 한눈에"
           ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={9} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·잠재력 — 강·약 점수와 주제별 깊이 보기">
+        <CollapsibleSection step={9} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·학업잠재력 — 강·약 점수와 주제별 깊이 보기">
           {/* Stage 2C-2#6: 여섯 영역 점수 topic-mini grid (mockup topic-mini 진본) */}
-          <TopicMiniGrid scores={scores} aiTopics={aiResult.topicMini} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} />
+          <TopicMiniGrid scores={areaScores} aiTopics={aiResult.topicMini} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} profileId={reportProfile.profileId} />
           {conclusionAt(8) && (
             <SectionConclusion>{conclusionAt(8)}</SectionConclusion>
           )}
@@ -2929,12 +3074,12 @@ export function PremiumResult({
 
       {/* "더 알아보기" 3 동적 카드 — 점수 가장 높은 3 영역으로 CTA */}
       <LocalFadeIn delay={50}>
-        <TopicTopRecommend scores={scores} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} />
+        <TopicTopRecommend scores={scores} topicBaseScores={topicBaseScores} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} profileId={reportProfile.profileId} />
       </LocalFadeIn>
 
       {/* ═════════════ Upsell — 사주대화 진입 CTA (목업 .upsell-card 진본) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <PremiumUpsellCard reportId={report.id} sajuData={sajuData} scores={scores} userName={report.name || '회원'} />
+        <PremiumUpsellCard reportId={report.id} sajuData={sajuData} scores={areaScores} userName={report.name || '회원'} profile={reportProfile.profile} />
       </LocalFadeIn>
 
       {/* #61 · 프리미엄 PDF 다운로드 + 공유하기 — mockup .result-footer 2-column grid 진본 */}
@@ -2968,11 +3113,14 @@ function PremiumUpsellCard({
   sajuData,
   scores,
   userName,
+  profile,
 }: {
   reportId: string;
   sajuData?: SajuData;
   scores?: Record<string, number>;
   userName?: string;
+  /** 리포트 주인 프로필 — 사주대화가 이 사주로 답하도록 (가족 사주 리포트 대응 · B-3) */
+  profile?: SajuProfile;
 }) {
   const navigate = useNavigate();
   // 2026-05-29 H3 fix — 기존 <a href="/chat/new"> = 풀 페이지 리로드(앱인토스 정책 위반) + 컨텍스트 0.
@@ -2987,9 +3135,11 @@ function PremiumUpsellCard({
       const rep = getReport(reportId);
       const ctx = { type: 'premium' as const, label: '종합사주', fullResult: rep?.aiResult };
       const room = createChatRoom(userName || '나', 'free', ctx);
-      navigate(`/chat/${room.id}`, { state: { contentContext: ctx } });
+      // 🚨 2026-09-17 B-3 — profile 미전달 시 ChatSessionPage 가 기기 '내 프로필'로 폴백 →
+      //   가족 사주 종합사주에서 넘어가도 내 사주로 대화하던 버그. 리포트 주인 프로필을 state 로 전달.
+      navigate(`/chat/${room.id}`, { state: { profile, contentContext: ctx } });
     } catch {
-      navigate('/chat/new');
+      navigate('/chat/new', profile ? { state: { profile } } : undefined);
     }
   };
   // 사주별 동적 질문 예시 — 점수 worst topic + 가까운 대운 변곡점 호명
@@ -2998,7 +3148,7 @@ function PremiumUpsellCard({
     // worst topic — 점수 가장 낮은 영역 (2026-05-28 social 제거 — SSOT 정렬)
     const TOPIC_KR: Record<string, string> = {
       career: '직업', love: '사랑', wealth: '재물',
-      health: '건강', potential: '잠재력',
+      health: '건강', potential: '학업·잠재력',
     };
     let worstKey = '';
     let worstScore = 101;
@@ -3711,7 +3861,7 @@ function RelationCompassGrid({
       </div>
       <div style={{ fontSize: 11, color: C.mute, marginBottom: 10, lineHeight: 1.55 }}>
         주변 사람의 <strong style={{ color: C.ink }}>일간 천간(태어난 날의 글자)</strong>을 알면 {userName} 님과 어떤 결인지 한눈에 보입니다.
-        <br />가까운 사람의 사주를 함께 분석해보고 싶다면 <strong style={{ color: C.goldDeep }}>궁합 1운</strong>으로.
+        {/* 2026-09-17 B-2 — '궁합 1운으로' 안내 제거: 궁합은 출시 lockdown(/compat → 홈 redirect) + 가격 오표기 */}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         {cards.map((c, i) => (
@@ -7064,9 +7214,9 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
 }
 
 /* ══════════════════════════════════════════════════════════════════
- * Stage 2C-2 #6 · TopicMiniGrid — 5 주제 점수바 (mockup topic-mini 진본)
- *  · scores prop (career·love·wealth·social·health) 활용
- *  · 5 주제 + 점수 + 막대 + 키워드
+ * Stage 2C-2 #6 · TopicMiniGrid — 여섯 영역 점수바 (mockup topic-mini 진본)
+ *  · scores prop (wealth·love·career·health·social·potential) — resolveAreaScores 적용본
+ *  · 6 영역 + 점수 + 막대 + AI 한 줄 + (판매 주제로 이어지는 영역만) CTA
  * ═════════════════════════════════════════════════════════════════ */
 interface AiTopicMini { desc?: string; meaning?: string; keyword?: string; line?: string }
 function TopicMiniGrid({
@@ -7074,24 +7224,31 @@ function TopicMiniGrid({
   aiTopics,
   sipDist,
   dayGan,
+  profileId,
 }: {
   scores: Record<string, number>;
   aiTopics?: Record<string, AiTopicMini>;
   sipDist?: SipDist;
   dayGan?: string;
+  /** 리포트 주인 프로필 — 주제 페이지가 미리 선택 (가족 사주 리포트 대응) */
+  profileId?: string;
 }) {
   const navigate = useNavigate();
   // 2026-05-05 hook 정적 → deriveTopicHook 동적화 (사주 8글자 호명)
-  // 2026-05-07: '잠재력 → /daeun' 출시 후 공개 — 학업으로 임시 대체 (코드 보존)
-  type TopicMeta = { key: string; label: string; route: string; topicId: string };
-  // 2026-05-28 — SSOT 10주제 정렬. social(대인관계운) 제거 (SSOT 밖 legacy — love/career 에 흡수).
-  const topics: TopicMeta[] = [
-    { key: 'wealth',    label: '재물',     route: '/topic/wealth', topicId: 'wealth' },
-    { key: 'love',      label: '사랑',     route: '/topic/love',   topicId: 'love' },
-    { key: 'career',    label: '직업',     route: '/topic/career', topicId: 'career' },
-    { key: 'health',    label: '건강',     route: '/topic/health', topicId: 'health' },
-    { key: 'study',     label: '학업',     route: '/topic/study',  topicId: 'study' },
-    { key: 'business',  label: '사업',     route: '/topic/business', topicId: 'business' },
+  /* 🚨 2026-09-17 C-1 — "여섯 영역"인데 4칸만 보이던 회귀 fix.
+   *   원인: dfd2b9f 가 카드 키를 study·business 로 바꿨으나 점수(computeTopicScores)·AI topicMini 는
+   *   social·potential 키 → score 0 필터로 2칸 증발 + AI 인간관계·잠재력 풀이가 버려짐.
+   *   수정: 카드 키 = AI/점수 키 6개(제목·힌트 "재물·사랑·직업·건강·인간관계·잠재력"과 일치).
+   *   판매 주제로 이어지는 영역만 클릭·가격 CTA — 인간관계는 판매 주제가 없어 카드 안 표시만
+   *   (AI 스키마 '외부 라우팅 X' 와 일치). 잠재력은 학업운으로 이어짐(점수도 학업운 기준 · resolveAreaScores). */
+  type AreaMeta = { key: string; label: string };
+  const topics: AreaMeta[] = [
+    { key: 'wealth',    label: '재물' },
+    { key: 'love',      label: '사랑' },
+    { key: 'career',    label: '직업' },
+    { key: 'health',    label: '건강' },
+    { key: 'social',    label: '인간관계' },
+    { key: 'potential', label: '학업·잠재력' },
   ];
 
   // 2026-05-05 6 카드 → 2-col grid 균일 (마지막 .full 카드 제거)
@@ -7100,12 +7257,16 @@ function TopicMiniGrid({
       const ai = aiTopics?.[t.key];
       const aiDesc = ai?.desc?.trim() || ai?.line?.trim() || ai?.meaning?.trim();
       const score = Number(scores?.[t.key] ?? 0);
-      // 동적 hook — sipDist + dayGan 호명
-      const hook = deriveTopicHook(t.key, score, sipDist, dayGan);
+      const topicId = AREA_TOPIC[t.key];
+      // 동적 hook — sipDist + dayGan 호명 (이어지는 주제가 있을 때만 — 판매 CTA 카피)
+      const hook = topicId ? deriveTopicHook(t.key, score, sipDist, dayGan) : '';
       // 가격 SSOT — 주제별 actualPrice (love/wealth 3운 등)
-      const price = getTopicPrice(t.topicId).actualPrice;
+      const price = topicId ? getTopicPrice(topicId).actualPrice : 0;
       return {
         ...t,
+        topicId,
+        topicLabel: topicId ? TOPIC_REGISTRY[topicId].label : '',
+        route: topicId ? TOPIC_REGISTRY[topicId].path : '',
         score,
         desc: aiDesc,
         hook,
@@ -7122,11 +7283,11 @@ function TopicMiniGrid({
   const lowScore = sortedScores[sortedScores.length - 1];
 
   // CTA 보강 텍스트 — 점수별 동적 (낮을 땐 "왜 낮은지", 높을 땐 "어디까지 갈 수 있는지")
-  function getCtaLine(label: string, score: number, price: number): string {
+  function getCtaLine(topicLabel: string, score: number, price: number): string {
     if (score >= 88) return `최강 ${score}점 — ${price}운으로 한계 확인`;
     if (score >= 75) return `${score}점 활용 시기 ${price}운에서`;
     if (score <= 50) return `약 ${score}점 — ${price}운으로 보강법`;
-    return `${label} ${price}운에서 깊이 보기`;
+    return `${topicLabel} ${price}운에서 깊이 보기`;
   }
 
   // mockup §9 .topic-mini-grid 진본 — 2-column grid + 마지막 카드 .full
@@ -7141,16 +7302,17 @@ function TopicMiniGrid({
           ...(isPeak ? { border: '2px solid #2e7d32', boxShadow: '0 4px 14px rgba(46,125,50,0.14)' } : {}),
           ...(isLow ? { border: '2px solid #c62828', boxShadow: '0 4px 14px rgba(198,40,40,0.14)' } : {}),
         };
-        // 2026-05-05 6 카드 복원 — 모든 카드 클릭 가능 (social, potential 포함 1운 과금 라우팅)
-        const isClickable = true;
+        // 2026-09-17 — 판매 주제로 이어지는 영역만 클릭 (인간관계는 표시만)
+        const isClickable = !!t.topicId;
+        const go = () => navigate(t.route, profileId ? { state: { profileId } } : undefined);
         return (
           <div
             key={t.key}
             className={`topic-mini${t.isFull ? ' full' : ''}`}
             role={isClickable ? 'link' : undefined}
             tabIndex={isClickable ? 0 : undefined}
-            onClick={isClickable ? () => navigate(t.route) : undefined}
-            onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(t.route); } } : undefined}
+            onClick={isClickable ? go : undefined}
+            onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } } : undefined}
             style={{ ...cardStyle, cursor: isClickable ? 'pointer' : 'default' }}
           >
             <div className="tm-head">
@@ -7175,17 +7337,19 @@ function TopicMiniGrid({
             </div>
             {/* AI 풀이 한 줄 — <strong> raw text 차단 (2026-05-04) */}
             {t.desc && <div className="tm-desc" dangerouslySetInnerHTML={{ __html: sanitizeAiText(t.desc) }} />}
-            {/* 호기심 카피 — 점수별 분기 (CTA 효율 ↑) */}
-            <div className="tm-hook">
-              <span className="tm-hook-label">{t.price}운으로 보면</span>
-              {t.hook}
-            </div>
+            {/* 호기심 카피 — 점수별 분기 (CTA 효율 ↑) · 이어지는 주제가 있을 때만 */}
+            {isClickable && t.hook && (
+              <div className="tm-hook">
+                <span className="tm-hook-label">{t.price}운으로 보면</span>
+                {t.hook}
+              </div>
+            )}
             {isClickable && (
               <div
                 className="tm-link"
                 style={isPeak ? { color: '#2e7d32', fontWeight: 700 } : isLow ? { color: '#c62828', fontWeight: 700 } : undefined}
               >
-                {getCtaLine(t.label, t.score, t.price)}
+                {getCtaLine(t.topicLabel, t.score, t.price)}
               </div>
             )}
           </div>

@@ -19,9 +19,12 @@ interface ShareModalProps {
 /**
  * 공유 모달
  *
- * 앱인토스: contactsViral SDK → 공유 리워드 1운 (하루 3회)
+ * 앱인토스: 토스 share SDK → 공유 리워드 1운 (친구 초대와 합쳐 하루 3회)
  * 웹: Web Share API (카카오/인스타 등) → 리워드 없음
  * 웹 폴백: 클립보드 복사 → 리워드 없음
+ *
+ * 2026-09-17 — 리워드는 기기 claimShareReward('share') 한 경로만. 구 코드는 여기에 더해 서버 grantShareReward 를
+ *   호출해 서버 balance.reward 에 운 1 이 별도로 쌓였다(이중 지급 경로) → 서버 호출 제거.
  */
 export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareModalProps) {
   const [phase, setPhase] = useState<'ready' | 'copied' | 'shared'>('ready');
@@ -35,16 +38,8 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
       if (success) {
         // 앱인토스에서만 리워드
         if (inToss && canEarnShareReward()) {
-          const earned = claimShareReward();
-          setRewardAmount(earned);
-          try {
-            const { auth } = await import('@/services/auth/firebase');
-            if (auth.currentUser) {
-              const { getFunctions, httpsCallable } = await import('firebase/functions');
-              const { app } = await import('@/services/auth/firebase');
-              await httpsCallable(getFunctions(app, 'us-central1'), 'grantShareReward')({});
-            }
-          } catch { /* 무시 */ }
+          // 기기 장부 한 경로 — 하루 3회 한도·보상 기록(이벤트 탭 누적 카드) 포함
+          setRewardAmount(claimShareReward('share'));
         }
         setPhase('shared');
         return;

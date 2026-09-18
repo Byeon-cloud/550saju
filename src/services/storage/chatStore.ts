@@ -98,6 +98,17 @@ export function createChatRoom(
   return room;
 }
 
+/** 2026-09-17 — 대화방 ↔ 사주 프로필 연결 저장.
+ *  목록에서 방을 다시 열면 location.state 가 없어 본인 사주로 대체되던 문제 fix
+ *  (친구 사주·주간/월간 결과로 시작한 방이 재진입 시 다른 사주 기준으로 답변하던 버그). */
+export function setChatRoomProfileId(roomId: string, profileId: string): void {
+  const rooms = getRooms();
+  const room = rooms.find(r => r.id === roomId);
+  if (!room || room.profileId === profileId) return;
+  room.profileId = profileId;
+  saveRooms(rooms);
+}
+
 /** 대화방 이름 변경 (첫 질문 기반 자동) */
 export function updateRoomName(roomId: string, name: string): void {
   const rooms = getRooms();

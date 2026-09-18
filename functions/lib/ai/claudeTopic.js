@@ -12,7 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TOPIC_CONFIGS = void 0;
 exports.buildTopicCall = buildTopicCall;
+exports.enforceTopicBaseScore = enforceTopicBaseScore;
 exports.generateTopicAnalysisAI = generateTopicAnalysisAI;
+exports.computeTopicBaseScore = computeTopicBaseScore;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const lunar_javascript_1 = require("lunar-javascript");
 const promptsV3_1 = require("./promptsV3");
@@ -912,12 +914,20 @@ function buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo) {
     const prompt = buildPrompt(config, normalizedId, sajuData, effectiveBaseScore, partnerInfo, extraInfo);
     const model = 'claude-sonnet-4-6';
     const maxTokens = normalizedId === 'reunion' ? 16000 : 8192;
-    return { system: promptsV3_1.TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId };
+    return { system: promptsV3_1.TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore };
+}
+/** 2026-09-17 — 사주 산출 점수를 AI 응답에 강제 반영. 프롬프트로 '반드시 이 점수'를 지시하지만 AI 가 어기면
+ *  종합사주 추천 카드 점수(같은 computeTopicBaseScore)와 주제 페이지 점수가 달라진다 → 파싱 후 덮어쓴다. */
+function enforceTopicBaseScore(parsed, effectiveBaseScore) {
+    if (parsed && typeof parsed === 'object' && typeof effectiveBaseScore === 'number' && Number.isFinite(effectiveBaseScore)) {
+        parsed.overallScore = effectiveBaseScore;
+    }
+    return parsed;
 }
 async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, partnerInfo, extraInfo) {
     const anthropic = new sdk_1.default({ apiKey });
     // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (운영 결정).
-    const { prompt, model, maxTokens, normalizedId } = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+    const { prompt, model, maxTokens, normalizedId, effectiveBaseScore } = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
     // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
     let firstText;
     let firstJson;
@@ -963,7 +973,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
     const SELF_REVIEW_ON = process.env.TOPIC_SELF_REVIEW === '1';
     if (!SELF_REVIEW_ON) {
         console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선 · TOPIC_SELF_REVIEW!=1)`);
-        return firstJson;
+        return enforceTopicBaseScore(firstJson, effectiveBaseScore);
     }
     const _t3 = Date.now(); // C7
     const review = await anthropic.messages.create({
@@ -981,11 +991,11 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
         (0, aiUsageLog_1.logAiUsage)({ type: 'topic', model, inputTokens: review.usage.input_tokens, outputTokens: review.usage.output_tokens, ms: Date.now() - _t3, ok: true }); // C7 best-effort
     const reviewText = review.content[0].text;
     try {
-        return (0, promptsV3_1.parseJsonResponse)(reviewText);
+        return enforceTopicBaseScore((0, promptsV3_1.parseJsonResponse)(reviewText), effectiveBaseScore);
     }
     catch {
         // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
-        return firstJson;
+        return enforceTopicBaseScore(firstJson, effectiveBaseScore);
     }
 }
 /* 🚨 2026-09-15 — 주제 점수를 서버에서 결정론적으로 산출 (지연 0).
@@ -1023,7 +1033,8 @@ function normSip(v) {
         return t;
     return SIP_HANJA_TO_KO[t] ?? null;
 }
-/** 사주 구조로 주제 점수 산출. 데이터 부족 시 undefined → 프롬프트 산식 폴백. */
+/** 사주 구조로 주제 점수 산출. 데이터 부족 시 undefined → 프롬프트 산식 폴백.
+ *  2026-09-17 export — claudePremium 이 종합사주 결과에 topicBaseScores 로 첨부 (추천 카드 점수 = 주제 페이지 점수). */
 function computeTopicBaseScore(topicId, d) {
     const core = TOPIC_CORE_SIPSUNG[topicId];
     if (!core || !Array.isArray(d?.sipsung) || d.sipsung.length === 0)

@@ -17,7 +17,7 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGr
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
 import { HourPickerSheet } from '@/components/common/HourPickerSheet';
-import { normalizeTopicId } from '@/constants/topics';
+import { normalizeTopicId, TOPIC_REGISTRY, TOPIC_IDS, type TopicId } from '@/constants/topics';
 import { normalizeSipsungKo } from '@/constants/sipsungColor';
 import { findCurrentDaeun } from '@/services/saju/daeunCurrent';
 import { sijiForClock, bandCenterHourForDate } from '@/services/saju/sijiPreview';
@@ -3236,7 +3236,8 @@ export function TopicAnalysisPage() {
   });
 
   // 보관함에서 저장된 결과 또는 사주리포트에서 baseScore를 넘겨받은 경우
-  const rawNavState = location.state as { savedResult?: any; savedReport?: LocalReport; baseScore?: number } | undefined;
+  // 2026-09-17 — profileId: 다른 화면(종합사주 추천·오늘의운세·월간·꿈해몽·다른 주제)이 넘겨준 대상 프로필
+  const rawNavState = location.state as { savedResult?: any; savedReport?: LocalReport; baseScore?: number; profileId?: string } | undefined;
   // 2026-05-28 — URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
   const [searchParams] = useSearchParams();
   const reportIdFromUrl = searchParams.get('reportId');
@@ -3249,8 +3250,20 @@ export function TopicAnalysisPage() {
     : (reportFromUrl ? { savedResult: reportFromUrl.aiResult, savedReport: reportFromUrl } : undefined);
 
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
-  const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
+  // 2026-09-17 — state.profileId 로 들어오면 해당 프로필 미리 선택 (존재할 때만 · 보관함/URL 복원이 우선).
+  //   lazy 초기값이라 첫 렌더부터 선택 상태 → 캐시 자동로드·서버 복구 effect 가 바로 동작. 단일 프로필 자동선택과 공존.
+  const [selected, setSelected] = useState<LocalReport | null>(() => {
+    if (navState?.savedReport) return navState.savedReport;
+    const pid = rawNavState?.profileId;
+    if (!pid) return null;
+    try {
+      const found = getProfiles().find((p) => p.id === pid);
+      return found ? (found as unknown as LocalReport) : null;
+    } catch { return null; }
+  });
   const [result, setResult] = useState<any>(navState?.savedResult || null);
+  // 2026-09-17 B-1 — 이번 화면에서 저장 완료된 결과 리포트 id (URL ?reportId= 기록용 · 완성본만)
+  const [savedReportId, setSavedReportId] = useState<string | null>(null);
   const [, setLoadingMsg] = useState(0);
   // 더블클릭 가드 — 1운 중복 차감 차단 (InputPage 패턴)
   const isAnalyzingRef = useRef(false);
@@ -3386,22 +3399,51 @@ export function TopicAnalysisPage() {
         const r: any = await fn({ topicId });
         if (r?.data?.found && r.data.content && typeof r.data.content === 'object') {
           const content = r.data.content;
+          const recoveredId: string = r.data.reportId || m.generateId();
           setResult(content);
           setPhase('result');
           try { localStorage.setItem(`topic_${topicId}_${selected.id}`, JSON.stringify(content)); } catch { /* noop */ }
           m.saveReport({
-            id: r.data.reportId || m.generateId(),
+            id: recoveredId,
             name: selected.name, input: selected.input, sajuData: selected.sajuData,
             type: 'paid', contentType: 'topic', createdAt: new Date().toISOString(),
             aiResult: { topicId, ...content }, profileId: selected.id,
           });
           if (partialReport) { try { m.deleteReport(partialReport.id); } catch { /* noop */ } } // 반쪽 리포트 정리 (보관함 중복 방지)
           if (pend) m.clearPendingSpend(pend.id); // 결과 복구됨 → 환불 대신 결과 전달
+          if (!(content as any)?.__partial) setSavedReportId(recoveredId); // B-1 — 뒤로가기 복원용 URL 기록
         }
       } catch { /* noop — 실패해도 기존 흐름(재구매/자동환불) 유지 */ }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, selected, phase, result]);
+
+  /* 🚨 2026-09-17 B-1 — 주제 결과 → 다른 주제 → 뒤로가기 시 결과가 사라지던 버그.
+   *   원인: 결과가 URL/히스토리 어디에도 없음 + 연애·재회·결혼은 캐시 자동로드 차단(상대방별 결과라 의도).
+   *   수정: 결과 화면이면 현재 히스토리 항목을 교체 기록 — 완성 저장본은 ?reportId=(reportFromUrl 복원 경로),
+   *   그 외(캐시 로드 등)는 state.profileId(재진입 시 프로필 미리 선택 → 캐시 자동로드).
+   *   effect 라 마운트 중에만 실행 → 스트리밍 도중 다른 화면으로 떠나도 남의 히스토리 항목을 덮지 않고,
+   *   analyze() 의 저장·pending 해제 흐름은 그대로 끝까지 진행된다.
+   *   __partial 박제본은 reportId 기록 X (URL 복원되면 recoverTopicResult 자가치유가 막힘). */
+  useEffect(() => {
+    if (phase !== 'result' || !selected) return;
+    if (rawNavState?.savedReport) return; // 보관함 진입 — 히스토리 state 에 이미 결과 보존
+    const pid = (selected as any).profileId || selected.id;
+    const wantReportId = savedReportId || reportIdFromUrl;
+    const curState: Record<string, any> =
+      location.state && typeof location.state === 'object' ? (location.state as Record<string, any>) : {};
+    if (curState.profileId === pid && (!wantReportId || reportIdFromUrl === wantReportId)) return;
+    // 페이지 전환 애니메이션(App.tsx AnimatePresence mode="wait", ~250ms) 동안 떠나는 이 페이지가 아직 살아 있어,
+    //   그 사이 저장이 끝나면 replace 가 **다음 페이지의 히스토리 항목**을 덮어써 이전 주제로 되돌려진다.
+    //   실제 주소가 아직 이 페이지일 때만 기록한다.
+    if (typeof window !== 'undefined' && window.location.pathname !== location.pathname) return;
+    // 기존 쿼리(from= 등)는 보존하고 reportId 만 set
+    const qs = new URLSearchParams(location.search);
+    if (wantReportId) qs.set('reportId', wantReportId);
+    const search = qs.toString() ? `?${qs.toString()}` : '';
+    navigate(`${location.pathname}${search}`, { replace: true, state: { ...curState, profileId: pid } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, selected, savedReportId]);
 
   // 단일 프로필이면 자동 선택
   useEffect(() => {
@@ -3630,8 +3672,9 @@ export function TopicAnalysisPage() {
       localStorage.setItem(cacheKey, JSON.stringify(contentFinal));
 
       // 보관함 저장
+      const savedId = res.reportId || generateId();
       saveReport({
-        id: res.reportId || generateId(),
+        id: savedId,
         name: selected.name,
         input: selected.input,
         sajuData: selected.sajuData,
@@ -3646,6 +3689,7 @@ export function TopicAnalysisPage() {
       //   교체(그때 clear). 5분 내 미재진입이면 부팅 reconcile 이 자동환불 — 반쪽 결과엔 환불이 정당.
       if (!(contentFinal as any)?.__partial) {
         clearPendingSpend(pendingId); // 완성본 저장 완료 — pending 해제
+        setSavedReportId(savedId); // B-1 — URL ?reportId= 기록 (언마운트 후면 no-op → 남의 히스토리 안 건드림)
       } else {
         console.warn('[topic] partial 저장 — pending 유지 (재진입 복구 대기)');
       }
@@ -5001,44 +5045,49 @@ export function TopicAnalysisPage() {
               )}
 
               {/* ── 다른 주제 CTA — audit 3 P0 E4 ──
-                  fix:
-                  1) 5 핵심 주제만 노출 (love·reunion·exam·wealth·career) — legacy social/moving 차단
-                  2) navigate 만 호출 (race condition 제거 — setPhase/setResult/setSelected 제거)
-                     라우터 변경 시 컴포넌트 자동 재마운트 → 모든 state 자동 초기화
-                  3) min-height 56px (audit 4 P1 D6) */}
+                  · navigate 만 호출 (race condition 제거 — 라우터 pathname 변경 시 컴포넌트 재마운트 → state 자동 초기화)
+                  · min-height 56px (audit 4 P1 D6)
+                  · 🚨 2026-09-17 — 결과 무관 고정 family 순서 → 주제 간 연결 우선 4칸:
+                    ① topics.ts excludedScope.redirectTo (이 주제가 다루지 않아 넘기는 인접 주제 — 예: 합격·이직→직업·사업)
+                    ② 같은 그룹  ③ 인기순(재물·연애·재회 사용량 최상위 → 합격 HOT …). 자기 자신 제외.
+                  · 가격 SSOT(formatPriceLabel) 표기 + 같은 프로필로 이어가도록 state.profileId 전달 */}
               <div className="space-y-2 pt-2">
                 <p className="text-label text-text-hint text-center">다른 운세도 궁금하다면</p>
-                {/* 2026-05-28 — SSOT 10주제 기반 동적 추천. 본인 주제 제외 + 4개 노출.
-                    인접 family 우선 (관계→관계, 직업경제→직업경제) → 같은 family 내 다른 주제부터 노출. */}
                 <div className="grid grid-cols-2 gap-2">
                   {(() => {
-                    const ALL_TOPICS: TopicKey[] = ['love', 'reunion', 'marriage', 'wealth', 'exam', 'business', 'health', 'move', 'study', 'career'];
-                    // family 매핑
-                    const FAMILY: Partial<Record<TopicKey, string>> = {
-                      love: 'A', reunion: 'A', marriage: 'A',
-                      wealth: 'B', career: 'B', business: 'B',
-                      exam: 'C', study: 'C',
-                      health: 'D', move: 'D',
+                    const cur = normalizeTopicId(topicId);
+                    const GROUP: Record<TopicId, string> = {
+                      love: 'relation', reunion: 'relation', marriage: 'relation',
+                      wealth: 'money', career: 'money', business: 'money',
+                      exam: 'growth', study: 'growth',
+                      health: 'life', move: 'life',
                     };
-                    const currentFamily = FAMILY[(topicId || 'love') as TopicKey];
-                    // 같은 family 우선, 그 다음 다른 family
-                    const others = ALL_TOPICS.filter((id) => id !== topicId);
-                    const sameFamilyFirst = [
-                      ...others.filter((id) => FAMILY[id] === currentFamily),
-                      ...others.filter((id) => FAMILY[id] !== currentFamily),
-                    ].slice(0, 4);
-                    return sameFamilyFirst.map((id) => {
+                    const POPULAR: TopicId[] = ['wealth', 'love', 'reunion', 'exam', 'career', 'marriage', 'business', 'study', 'health', 'move'];
+                    const ordered: TopicId[] = [];
+                    const push = (id: TopicId) => {
+                      if (id !== cur && !ordered.includes(id) && (TOPICS as Record<string, unknown>)[id]) ordered.push(id);
+                    };
+                    if (cur) {
+                      TOPIC_REGISTRY[cur].excludedScope.forEach((s) => push(s.redirectTo));
+                      TOPIC_IDS.filter((id) => GROUP[id] === GROUP[cur]).forEach(push);
+                    }
+                    POPULAR.forEach(push);
+                    const nextProfileId = selected ? ((selected as any).profileId || selected.id) : undefined;
+                    return ordered.slice(0, 4).map((id) => {
                       const t = TOPICS[id as TopicKey];
                       if (!t) return null;
                       return (
                         <button
                           key={id}
-                          onClick={() => navigate(`/topic/${id}`)}
+                          onClick={() => navigate(`/topic/${id}`, nextProfileId ? { state: { profileId: nextProfileId } } : undefined)}
                           className="card py-3 px-3 flex items-center gap-2"
                           style={{ minHeight: 56 }}
                         >
                           <Pictogram k={`topic:${id as TopicKey}`} size={20} color={t.color} />
-                          <span className="text-[14px] font-semibold text-text-primary">{t.label}</span>
+                          <span className="flex flex-col items-start text-left" style={{ minWidth: 0 }}>
+                            <span className="text-[14px] font-semibold text-text-primary">{t.label}</span>
+                            <span className="text-[11px] text-text-hint">{formatPriceLabel(getTopicPrice(id))}</span>
+                          </span>
                         </button>
                       );
                     });

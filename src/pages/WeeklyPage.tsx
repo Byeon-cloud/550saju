@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -8,7 +8,8 @@ import { ShareModal } from '@/components/share/ShareModal';
 import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getReport, markPendingSpend, clearPendingSpendByType, type LocalReport } from '@/services/storage/localStore';
 import { generateWeeklyFortune, generateWeeklyDraft2026, generateWeeklyRefine2026 } from '@/services/ai/reportGenerator';
 import { isAsyncReviewEnabled } from '@/services/progress/progressId';
-import { getWeeklyPrice } from '@/constants/pricing';
+import { getWeeklyPrice, getMonthlyPrice } from '@/constants/pricing';
+import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
@@ -61,6 +62,18 @@ function computeWeekDays(): { day: string; date: string; ganji: string; ganjiRea
   return out;
 }
 
+/** 선택 사주 → 프로필 id. 보관함 재진입(savedReport)은 리포트 id 라 이름·생년월일로 프로필을 역매칭. 못 찾으면 undefined. */
+function resolveProfileId(p: LocalReport | null): string | undefined {
+  if (!p) return undefined;
+  const profiles = getProfiles();
+  if (profiles.some((x) => x.id === p.id)) return p.id;
+  const i = p.input;
+  if (!i) return undefined;
+  return profiles.find(
+    (x) => x.name === p.name && x.input?.birthYear === i.birthYear && x.input?.birthMonth === i.birthMonth && x.input?.birthDay === i.birthDay,
+  )?.id;
+}
+
 export function WeeklyPage() {
   usePageTitle('주간운세');
   const navigate = useNavigate();
@@ -68,7 +81,7 @@ export function WeeklyPage() {
   const toast = useToast();
 
   // 보관함에서 저장된 결과를 넘겨받은 경우
-  const rawNavState = location.state as { savedResult?: WeeklyDetailResponse; savedReport?: LocalReport } | undefined;
+  const rawNavState = location.state as { savedResult?: WeeklyDetailResponse; savedReport?: LocalReport; profileId?: string } | undefined;
   // URL ?reportId= 폴백 — state 손실(새로고침/strict mode) 대비.
   const [searchParams] = useSearchParams();
   const reportIdFromUrl = searchParams.get('reportId');
@@ -81,12 +94,28 @@ export function WeeklyPage() {
     : (reportFromUrl ? { savedResult: reportFromUrl.aiResult as WeeklyDetailResponse, savedReport: reportFromUrl } : undefined);
 
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
-  const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
+  // 2026-09-17 — 입력 복귀(?profileId=)·타 콘텐츠 교차 이동(state.profileId) 시 사주 미리 선택
+  const [selected, setSelected] = useState<LocalReport | null>(() => {
+    if (navState?.savedReport) return navState.savedReport;
+    const preId = rawNavState?.profileId || searchParams.get('profileId');
+    if (!preId) return null;
+    const p = getProfiles().find((x) => x.id === preId);
+    return p ? (p as unknown as LocalReport) : null;
+  });
   const [result, setResult] = useState<WeeklyDetailResponse | null>(navState?.savedResult || null);
   const [refining, setRefining] = useState(false); // ⚡ async 2차리뷰 — 초안 노출 후 다듬는 중
   const [showShare, setShowShare] = useState(false);
   const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
+
+  // 2026-09-17 — 출석 적립 + 일일/연속 보상 (오늘운세·꿈해몽과 동일 · 결과 도달 1회)
+  const { mark } = useAttendanceOnResult();
+  const attendanceFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase !== 'result' || !result || attendanceFiredRef.current) return;
+    attendanceFiredRef.current = true;
+    import('@/services/storage/dailyReward').then((m) => m.processAttendanceRewards()).catch(() => {});
+  }, [phase, result]);
 
   const reports = useMemo(() => getProfiles(), []);
 
@@ -100,7 +129,8 @@ export function WeeklyPage() {
     const price = getWeeklyPrice().actualPrice; // 2026-06-29 NEW — 주간운세 정가 5운 (SSOT)
     if (!spendBalance(price)) {
       toast.show('잔액이 부족해요', 'warning');
-      navigate(`/charge?need=${price}`, { state: { message: `주간운세에 ${price}운이 필요해요`, returnTo: '/weekly' } });
+      // 충전 복귀 시 선택 사주 유지 — ChargePage 는 state 를 넘기지 않으므로 query 로 (?profileId 미리 선택)
+      navigate(`/charge?need=${price}`, { state: { message: `주간운세에 ${price}운이 필요해요`, returnTo: `/weekly?profileId=${encodeURIComponent((selected as any).id)}` } });
       isAnalyzingRef.current = false;
       return;
     }
@@ -126,6 +156,8 @@ export function WeeklyPage() {
         setShareReportId(rid);
         setRefining(true);
         setPhase('result');
+        // 이벤트 v4 · 출석 마커 (KST 당일 1회 · 세션 dedupe)
+        mark().catch(() => {/* non-blocking */});
         // 백그라운드 2차 보정 — 실패해도 draft 유지(무해·무차감이라 환불 X)
         void generateWeeklyRefine2026(selected.sajuData, weekDays, draftRes.content, rid)
           .then((ref) => {
@@ -144,6 +176,7 @@ export function WeeklyPage() {
         clearPendingSpendByType('weekly'); // 결과 저장 완료 → 자동환불 대상 제외
         setShareReportId(rid);
         setPhase('result');
+        mark().catch(() => {/* non-blocking */});
       }
     } catch (e: any) {
       console.error('주간운세 실패:', e);
@@ -216,6 +249,11 @@ export function WeeklyPage() {
 
   const days = Array.isArray(result.dailyBreakdown) ? result.dailyBreakdown : [];
   const periodLabel = days.length > 0 ? `${days[0].date} ~ ${days[days.length - 1].date}` : '';
+  // 교차 CTA(월운세) 가격 — SSOT getMonthlyPrice (세일 시 정가→세일가)
+  const monthlyPricing = getMonthlyPrice();
+  const monthlyPriceLabel = monthlyPricing.isOnSale
+    ? `${monthlyPricing.regularPrice}운→${monthlyPricing.actualPrice}운`
+    : `${monthlyPricing.actualPrice}운`;
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--bg-page-gradient)' }}>
@@ -226,9 +264,22 @@ export function WeeklyPage() {
         profile={selected}
         refining={refining}
         periodLabel={periodLabel}
-        onChat={() => navigate('/chat')}
+        onChat={async () => {
+          // 2026-09-17 fix — 기존 navigate('/chat') 은 목록으로만 가고 결과가 전달되지 않았음.
+          //   월간과 동일하게 결과 컨텍스트를 방에 영구 저장 후 해당 방으로 직행 (보관함 재진입에도 복원).
+          const { createChatRoom } = await import('@/services/storage/chatStore');
+          const ctx = {
+            type: 'weekly' as const,
+            label: '주간운세',
+            periodLabel,
+            fullResult: result,
+          };
+          const room = createChatRoom(selected?.name || '나', 'free', ctx);
+          navigate(`/chat/${room.id}`, { state: { profile: selected, contentContext: ctx } });
+        }}
         onShare={() => setShowShare(true)}
-        onMonthly={() => navigate('/monthly')}
+        onMonthly={() => navigate('/monthly', { state: { profileId: resolveProfileId(selected) } })}
+        monthlyPriceLabel={monthlyPriceLabel}
       />
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'weekly'} />

@@ -7,7 +7,11 @@ import { ensureAuth } from '@/services/auth/authService';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import type { AttendanceResult } from '@/types/rewards';
 
-/** 결과 페이지 렌더링 완료 직후 한 번 호출. 오늘(KST) 첫 호출만 실제 효과. */
+/**
+ * 결과 페이지 렌더링 완료 직후 한 번 호출. 오늘(KST) 첫 호출만 실제 효과.
+ * 2026-09-17 — 서버 STUB 장부(users/{uid}.unBalance · streakAttendance) 기록용. 운은 기기 장부
+ *   (dailyReward.processAttendanceRewards)에서 지급되므로 반환값을 표시·토스트 근거로 쓰지 말 것.
+ */
 export async function markAttendance(): Promise<AttendanceResult | null> {
   try {
     await ensureFunctionsTarget();
@@ -29,7 +33,11 @@ export interface InviteResult {
   idempotencyKey?: string;
 }
 
-/** 앱인토스 ShareReward 콜백 또는 수동 초대 확정 시 호출. */
+/**
+ * @deprecated 2026-09-17 — 호출처 없음. 초대 보상은 기기 장부(shareReward.claimShareReward('invite'))로 통일.
+ *   서버 inviteEvents·unBalance 에 운이 따로 쌓이던 경로이며, 한 번에 여러 친구에게 보내도 inviteId 가 1개라
+ *   2번째부터 already_claimed 로 막히던 문제도 있었다. 서버 함수 정리는 functions 영역 과제.
+ */
 export async function onInviteReceived(args: { inviteId: string; receiver?: string }): Promise<InviteResult | null> {
   try {
     await ensureFunctionsTarget();

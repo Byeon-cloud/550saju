@@ -673,7 +673,7 @@ export interface DreamFreeStreamCallbacks {
 }
 
 export async function generateDreamFreeStream(
-  args: { saju?: any; dreamContent: string; category: string; userConcern?: string },
+  args: { saju?: any; dreamContent: string; category: string; userConcern?: string; paid?: boolean },
   callbacks: DreamFreeStreamCallbacks,
 ): Promise<void> {
   callbacks = wrapStreamCallbacks('dream', callbacks); // C3 측정 (로직 무변경)
@@ -832,6 +832,8 @@ export async function generateDreamFree(args: {
   dreamContent: string;
   category: string;
   userConcern?: string;
+  /** 1운 차감 후 생성 — 서버 월 쿼터 제외 (2026-09-17 하루 1회 무료 정책) */
+  paid?: boolean;
 }): Promise<any> {
   const result = await callWithAuth('generateDreamFree', args);
   return result.data;

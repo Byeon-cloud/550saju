@@ -12,12 +12,14 @@
  *  - locked-stack (§05~§09 잠금 5섹션 + 도식화 + 블러)
  *  - paid-cta (1운 결제)
  *  - ad-slot
+ *  - topic-rec (꿈 종류 → 주제 추천 카드 · 2026-09-17)
  *  - actions (공유 + 사주대화)
  */
 
 import { useMemo, useState, type ReactNode } from 'react';
 import type { SajuProfile } from '@/services/storage/localStore';
 import { stripMd, sanitizeAiText } from '@/utils/format';
+import { getDreamTopicRec } from './dreamTopicRec';
 
 /** AI 본문 강약 자동 보강 — 사주용어 b 태그 + 시간/방위/숫자 u 밑줄 + 결론 strong 형광펜 (꿈해몽 톤 확장) */
 function autoEmphasize(input: string): string {
@@ -153,11 +155,17 @@ interface DreamMockupViewProps {
   dreamText: string;
   concern: string;
   unlocked?: boolean;
-  /** AI 스트리밍 중 — 데이터 미도착 섹션은 skeleton 표시 */
+  /** AI 스트리밍 중 — 데이터 미도착 섹션은 skeleton 표시 · 잠금 해제 CTA 비활성 */
   isStreaming?: boolean;
+  /** 결과 생성일 (보관함 저장본 createdAt) — 없으면 오늘 날짜 */
+  createdAt?: string | number;
+  /** 꿈 카테고리 id (DREAM_CATEGORIES) — 주제 추천 카드 매핑용 */
+  categoryId?: string | null;
   onUnlock: () => void;
   onShare: () => void;
   onChat: () => void;
+  /** 주제 추천 카드 탭 → 주제 분석 이동 (없으면 카드 미노출) */
+  onTopic?: (topicId: string) => void;
 }
 
 /** 아코디언 + skeleton 지원 섹션 래퍼 (무료 = defaultOpen false, 잠금 = true) */
@@ -236,6 +244,8 @@ const MOCKUP_CSS = `
 .dream-mockup .hd .top { display: flex; gap: 8px; font-size: 12px; opacity: .95; flex-wrap: wrap; align-items: center; }
 .dream-mockup .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
 .dream-mockup .hd .badge.free { background: rgba(212,175,55,.22); color: #f2d678; }
+/* 2026-09-17 — 잠금 해제(1운) 결과 헤더: 무료 뱃지 대신 그린 톤 '잠금 해제' */
+.dream-mockup .hd .badge.open { background: rgba(111,160,140,.28); color: #cfe8dc; }
 .dream-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 23px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; }
 .dream-mockup .hd .date { font-size: 12px; opacity: .7; margin-top: 6px; font-feature-settings: 'tnum'; position: relative; }
 
@@ -390,6 +400,8 @@ const MOCKUP_CSS = `
 .dream-mockup .paid-cta .hook strong { color: #f2d678; font-weight: 600; }
 .dream-mockup .paid-cta .cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 13px 18px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; position: relative; text-align: center; border: none; width: 100%; }
 .dream-mockup .paid-cta .cta-btn .cost { background: rgba(26,26,26,.12); padding: 3px 10px; border-radius: 100px; font-size: 11.5px; font-weight: 700; }
+/* 2026-09-17 — 스트리밍 중 결제 race 차단: 잠금 풀이가 다 쓰일 때까지 CTA 비활성 */
+.dream-mockup .paid-cta .cta-btn:disabled { opacity: .55; cursor: default; }
 .dream-mockup .paid-cta .sub { font-size: 11px; color: #7F6B4E; text-align: center; margin-top: 8px; position: relative; }
 
 /* Actions */
@@ -399,6 +411,22 @@ const MOCKUP_CSS = `
 .dream-mockup .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
 .dream-mockup .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
 .dream-mockup .actions .btn .sb { font-size: 11px; color: #7F6B4E; }
+
+/* 꿈 종류 → 주제 추천 (2026-09-17) — 카드 1장 + 보조 링크 */
+.dream-mockup .topic-rec { margin: 22px 20px 0; }
+.dream-mockup .topic-rec .tr-lab { font-size: 11px; color: #7F6B4E; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+.dream-mockup .topic-rec .tr-card { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #E5DFD0; border-radius: 16px; padding: 14px 14px 14px 16px; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease; }
+.dream-mockup .topic-rec .tr-card:hover { border-color: #B8965A; box-shadow: 0 4px 12px rgba(184,150,90,.12); }
+.dream-mockup .topic-rec .tr-card:focus-visible, .dream-mockup .topic-rec .tr-sub:focus-visible { outline: 2px solid #B8965A; outline-offset: 2px; }
+.dream-mockup .topic-rec .tr-kanji { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; }
+.dream-mockup .topic-rec .tr-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dream-mockup .topic-rec .tr-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dream-mockup .topic-rec .tr-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
+.dream-mockup .topic-rec .tr-price { font-size: 11px; font-weight: 700; color: #8C6D3D; background: rgba(184,150,90,.12); padding: 2px 8px; border-radius: 100px; }
+.dream-mockup .topic-rec .tr-copy { font-size: 12.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
+.dream-mockup .topic-rec .tr-arrow { flex-shrink: 0; font-size: 20px; color: #B8965A; line-height: 1; }
+.dream-mockup .topic-rec .tr-sub { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 12px 4px; font-size: 12px; color: #7F6B4E; text-align: center; cursor: pointer; word-break: keep-all; }
+.dream-mockup .topic-rec .tr-sub .tr-sub-name { color: #5C4A2E; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Notice */
 .dream-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed #E5DFD0; font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; }
@@ -487,7 +515,7 @@ const OHENG_KANJI: Record<string, string> = { 목: '木', 화: '火', 토: '土'
 const OHENG_COLOR: Record<string, string> = { 수: '#1565c0', 토: '#7F6B4E', 목: '#2e7d32', 화: '#c62828', 금: '#757575' };
 
 export function DreamMockupView(props: DreamMockupViewProps) {
-  const { result: raw, profile, hasSaju, category, dreamText, concern, unlocked = false, isStreaming = false, onUnlock, onShare, onChat } = props;
+  const { result: raw, profile, hasSaju, category, dreamText, concern, unlocked = false, isStreaming = false, createdAt, categoryId, onUnlock, onShare, onChat, onTopic } = props;
 
   // 스키마 어댑터 — AI V3 schema (narrative/sajuTone/todayConnection/verdict/symbols.meaningWithSaju) →
   //   View v5 (firstImpression/worryConnection/quoteInterpretations/dreamQuote/symbols.meaning) 매핑.
@@ -516,8 +544,13 @@ export function DreamMockupView(props: DreamMockupViewProps) {
   }, [raw]);
 
   const title = stripMd(String(result?.title || '꿈 해석'));
-  const today = new Date();
-  const dateLabel = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+  // 2026-09-17 fix — 보관함에서 다시 연 꿈도 '오늘' 날짜로 찍히던 문제 → 저장본은 생성일(createdAt) 기준
+  const fmtDate = (d: Date) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  const createdDate = createdAt != null ? new Date(createdAt) : null;
+  const dateLabel = fmtDate(createdDate && !Number.isNaN(createdDate.getTime()) ? createdDate : new Date());
+  const isTodayRecord = dateLabel === fmtDate(new Date());
+  // 꿈 종류 → 주제 추천 (SSOT 파생 · 카테고리 없으면 기본 규칙)
+  const topicRec = useMemo(() => getDreamTopicRec(categoryId), [categoryId]);
   const ilganLabel = profile?.sajuData?.pillars?.[2]?.천간 ? ` · ${profile.sajuData.pillars[2].천간}${profile.sajuData.pillars[2].천간오행 || ''} 일간` : '';
 
   const firstImpression = result.firstImpression;
@@ -566,8 +599,18 @@ export function DreamMockupView(props: DreamMockupViewProps) {
         {/* Header */}
         <header className="hd">
           <div className="top">
-            <span className="badge">무료 · 꿈해몽</span>
-            <span className="badge free">오늘 1회 무료</span>
+            {/* 2026-09-17 fix — 1운으로 연(해제·유료) 결과에도 '무료 · 오늘 1회 무료' 가 붙던 문제 */}
+            {unlocked ? (
+              <>
+                <span className="badge">꿈해몽 · 전체 풀이</span>
+                <span className="badge open">잠금 해제</span>
+              </>
+            ) : (
+              <>
+                <span className="badge">무료 · 꿈해몽</span>
+                {isTodayRecord && <span className="badge free">오늘 1회 무료</span>}
+              </>
+            )}
             <span>{profile?.name || '당신'} 님</span>
           </div>
           <h1>{title}</h1>
@@ -944,14 +987,58 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <p className="hook">
                   {profile?.name ?? '당신'} 님은 <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동·오행 흐름·꿈의 경고·예고 시기·실천 처방)을 전부 열어드립니다.
                 </p>
-                <button type="button" className="cta-btn" onClick={onUnlock}>
-                  내 사주 연동 심층 풀이 열기
-                  <span className="cost">1운</span>
+                {/* 2026-09-17 — 스트리밍 중 결제 race 차단 (잠금 본문이 다 쓰이기 전 1운 차감 → 해제 저장 누락·자동환불 꼬임) */}
+                <button
+                  type="button"
+                  className="cta-btn"
+                  onClick={onUnlock}
+                  disabled={isStreaming}
+                  aria-busy={isStreaming || undefined}
+                >
+                  {isStreaming ? '풀이를 마무리하는 중이에요' : '내 사주 연동 심층 풀이 열기'}
+                  {!isStreaming && <span className="cost">1운</span>}
                 </button>
-                <div className="sub">풀이는 즉시 열립니다 · 결과는 보관함에 자동 저장</div>
+                <div className="sub">
+                  {isStreaming
+                    ? '잠금 풀이까지 다 쓰이면 바로 열 수 있어요'
+                    : '풀이는 즉시 열립니다 · 결과는 보관함에 자동 저장'}
+                </div>
               </div>
             )}
           </>
+        )}
+
+        {/* 꿈 종류 → 주제 추천 (2026-09-17 · 잠금 해제 여부 무관 노출) */}
+        {onTopic && (
+          <section className="topic-rec" aria-label="이 꿈과 이어서 볼 주제">
+            <div className="tr-lab">이 꿈과 이어서 보면 좋은 풀이</div>
+            <button type="button" className="tr-card" onClick={() => onTopic(topicRec.id)}>
+              <span
+                className="tr-kanji"
+                aria-hidden="true"
+                style={{ color: topicRec.color, background: `${topicRec.color}1F` }}
+              >
+                {topicRec.kanji}
+              </span>
+              <span className="tr-main">
+                <span className="tr-head">
+                  <span className="tr-name">{topicRec.label}</span>
+                  <span className="tr-price">{topicRec.price}</span>
+                </span>
+                <span className="tr-copy">{topicRec.copy}</span>
+              </span>
+              <span className="tr-arrow" aria-hidden="true">›</span>
+            </button>
+            {topicRec.secondary && (
+              <button
+                type="button"
+                className="tr-sub"
+                onClick={() => topicRec.secondary && onTopic(topicRec.secondary.id)}
+              >
+                {topicRec.secondary.lead} <span className="tr-sub-name">{topicRec.secondary.label} 보기</span> · {topicRec.secondary.price}
+              </button>
+            )}
+          </section>
         )}
 
         {/* Actions */}

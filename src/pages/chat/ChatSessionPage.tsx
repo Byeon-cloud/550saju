@@ -23,6 +23,7 @@ import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   getMyProfile,
+  getProfiles,
   type LocalReport,
   type SajuProfile,
 } from '@/services/storage/localStore';
@@ -33,9 +34,11 @@ import {
   updateRoomName,
   deleteChatRoom,
   createChatRoom,
+  setChatRoomProfileId,
   type ChatMessage,
 } from '@/services/storage/chatStore';
-import { hasFreePass, useFreePass, restoreFreePass } from '@/services/storage/dailyFreePass';
+import { hasFreePass, useFreePass, restoreFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
+import { kstToday } from '@/utils/kstDate';
 import {
   getChatCredits,
   useChatCredit,
@@ -46,17 +49,38 @@ import { trackEvent } from '@/services/analytics';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { autoEmphasize } from '@/utils/emphasis';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
+import { getTopicPrice, getWeeklyPrice, getMonthlyPrice, formatPriceLabel } from '@/constants/pricing';
+import { TOPIC_REGISTRY, normalizeTopicId, type TopicId } from '@/constants/topics';
+import { EXTENSION_THEME } from '@/pages/extension/_chrome';
+
+/** AI 문자열 → 순수 텍스트 (markdown + HTML 태그 제거). 인사·배너·컨텍스트 프롬프트용. */
+function plainText(s: unknown): string {
+  return stripMd(String(s ?? '')).replace(/<\/?[a-zA-Z][a-zA-Z0-9]*\b[^<>]*>/g, '').trim();
+}
+
+/** 대화 사주 → 프로필 id. getMyProfile()·보관함 결과는 리포트 id 라 이름·생년월일로 프로필을 역매칭. 못 찾으면 undefined. */
+function resolveProfileId(p: SajuProfile | LocalReport | null | undefined): string | undefined {
+  if (!p) return undefined;
+  const profiles = getProfiles();
+  if (p.id && profiles.some((x) => x.id === p.id)) return p.id;
+  const i = p.input;
+  if (!i) return undefined;
+  return profiles.find(
+    (x) => x.name === p.name && x.input?.birthYear === i.birthYear && x.input?.birthMonth === i.birthMonth && x.input?.birthDay === i.birthDay,
+  )?.id;
+}
 
 /** 결과 컨텍스트 배너 — 사용자가 어떤 풀이를 보고 왔는지 시각 확인 (AI 가 진짜 컨텍스트 받았다는 증명) */
 function ResultContextBanner({ ctx }: { ctx: any }) {
   if (!ctx || !ctx.type) return null;
   const HAN: Record<string, string> = {
     dream: '夢', daily: '日', topic: '題', premium: '命',
-    compat: '合', daeun: '運', monthly: '月', tojung: '歲',
+    compat: '合', daeun: '運', monthly: '月', weekly: '週', tojung: '歲',
   };
   const COLORS: Record<string, string> = {
     dream: '#1a1f3a', daily: '#B5441F', topic: '#B8965A', premium: '#8C6D3D',
-    compat: '#9C5A8A', daeun: '#3B7A4B', monthly: '#B5441F', tojung: '#2F4B7C',
+    compat: '#9C5A8A', daeun: '#3B7A4B', monthly: EXTENSION_THEME.monthly.accentDark,
+    weekly: EXTENSION_THEME.weekly.accentDark, tojung: '#2F4B7C',
   };
   const han = HAN[ctx.type] || '解';
   const color = COLORS[ctx.type] || '#B8965A';
@@ -72,6 +96,16 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
     );
   } else if (ctx.fullResult?.title) {
     summary = <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 6, fontFamily: "'Noto Serif KR', serif", fontWeight: 600 }}>{stripMd(String(ctx.fullResult.title))}</div>;
+  } else if (ctx.fullResult?.weekHeadline || ctx.fullResult?.headline) {
+    // 2026-09-17 — 주간(weekHeadline)·월간(headline) 한 줄 요약
+    summary = (
+      <>
+        <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 6, fontFamily: "'Noto Serif KR', serif", fontWeight: 600 }}>
+          {plainText(ctx.fullResult.weekHeadline || ctx.fullResult.headline)}
+        </div>
+        {ctx.periodLabel && <div style={{ fontSize: 11, color: 'rgba(248,245,238,0.7)', marginTop: 4 }}>기간 · {ctx.periodLabel}</div>}
+      </>
+    );
   }
   return (
     <div style={{
@@ -102,6 +136,8 @@ function buildContextPrompt(ctx: any, userName: string): string {
   if (!ctx || typeof ctx !== 'object') return '';
   const { type, label, dreamText, concern, category, fullResult } = ctx;
   const lines: string[] = [`[CONTENT_CONTEXT] ${userName}님은 방금 "${label || type}" 풀이를 보고 채팅에 들어왔습니다.`];
+  // 결과 데이터 줄이 실제로 들어갔는지 판정 기준점 — 라벨·기간 같은 메타 줄은 데이터로 세지 않음 (아래 지시문 분기용)
+  let dataStart = lines.length;
   if (type === 'dream') {
     if (category) lines.push(`꿈 주제: ${category}`);
     if (dreamText) lines.push(`꿈 내용: "${dreamText}"`);
@@ -119,6 +155,7 @@ function buildContextPrompt(ctx: any, userName: string): string {
     // 2026-05-28 PM 완전 재작성 — user: "결과페이지 점수도 모름" 사건.
     //   AI 가 결과를 충분히 알고 대화 가능하도록 풀-컨텍스트 주입.
     if (label) lines.push(`주제: ${label}`);
+    dataStart = lines.length;
     if (fullResult?.overallScore != null) lines.push(`전체 점수: ${fullResult.overallScore}점 / 100`);
     if (fullResult?.gradeLabel) lines.push(`등급: ${stripMd(String(fullResult.gradeLabel))}`);
     if (fullResult?.oneLineSummary) lines.push(`한 줄 결론: ${stripMd(String(fullResult.oneLineSummary))}`);
@@ -195,15 +232,95 @@ function buildContextPrompt(ctx: any, userName: string): string {
         }
       });
     }
+  } else if (type === 'weekly') {
+    // 2026-09-17 — 주간운세 (WeeklyDetailResponse · 구매일 전날부터 롤링 7일)
+    if (ctx.periodLabel) lines.push(`기간: ${ctx.periodLabel} (구매일 전날부터 7일)`);
+    dataStart = lines.length;
+    if (fullResult?.weekHeadline) lines.push(`이번 주 한 줄: ${plainText(fullResult.weekHeadline)}`);
+    if (Array.isArray(fullResult?.keywords) && fullResult.keywords.length > 0) {
+      lines.push(`핵심 키워드: ${fullResult.keywords.slice(0, 5).map((k: unknown) => plainText(k)).join(' ')}`);
+    }
+    if (fullResult?.weekTheme) lines.push(`이번 주 흐름: ${plainText(fullResult.weekTheme).slice(0, 400)}`);
+    // 요일별 — 날짜·일진·점수·톤 + 본문 앞부분 + 실천
+    if (Array.isArray(fullResult?.dailyBreakdown)) {
+      fullResult.dailyBreakdown.slice(0, 7).forEach((d: any) => {
+        if (!d) return;
+        const head = [d.day, d.date, d.ganji].filter(Boolean).map((v: unknown) => plainText(v)).join(' ');
+        const score = d.score != null ? ` ${d.score}점` : '';
+        const tone = d.tone ? ` · ${plainText(d.tone)}` : '';
+        const body = d.body ? ` — ${plainText(d.body).slice(0, 120)}` : '';
+        const action = d.action ? ` (실천: ${plainText(d.action).slice(0, 60)})` : '';
+        lines.push(`[${head}]${score}${tone}${body}${action}`);
+      });
+    }
+    // 핵심일 (좋은 날·주의일)
+    const keyDays = Array.isArray(fullResult?.keyDays) ? fullResult.keyDays : [];
+    keyDays.slice(0, 4).forEach((k: any) => {
+      if (!k) return;
+      const kind = k.type === 'caution' ? '주의일' : '좋은 날';
+      const when = [k.day, k.date].filter(Boolean).map((v: unknown) => plainText(v)).join(' ');
+      lines.push(`${kind}: ${when}${k.reason ? ` — ${plainText(k.reason).slice(0, 150)}` : ''}`);
+    });
+    if (keyDays.length === 0) {
+      if (fullResult?.bestDay) lines.push(`좋은 날: ${plainText(fullResult.bestDay)}`);
+      if (fullResult?.cautionDay) lines.push(`주의일: ${plainText(fullResult.cautionDay)}`);
+    }
+    if (fullResult?.weekLesson) lines.push(`이번 주 교훈: ${plainText(fullResult.weekLesson).slice(0, 200)}`);
+  } else if (type === 'monthly') {
+    // 2026-09-17 — 월별 운세 (MonthlyDetailResponse · 단일월 심층)
+    if (fullResult?.year && fullResult?.month) lines.push(`대상 달: ${fullResult.year}년 ${fullResult.month}월`);
+    dataStart = lines.length;
+    if (fullResult?.headline) lines.push(`이 달 한 줄: ${plainText(fullResult.headline)}`);
+    if (Array.isArray(fullResult?.keywords) && fullResult.keywords.length > 0) {
+      lines.push(`핵심 키워드: ${fullResult.keywords.slice(0, 5).map((k: unknown) => plainText(k)).join(' ')}`);
+    }
+    if (fullResult?.theme) lines.push(`이 달 핵심 테마: ${plainText(fullResult.theme).slice(0, 400)}`);
+    // 상순·중순·하순
+    if (Array.isArray(fullResult?.periods)) {
+      fullResult.periods.slice(0, 3).forEach((p: any) => {
+        if (!p) return;
+        const head = [p.phase, p.dateRange].filter(Boolean).map((v: unknown) => plainText(v)).join(' ');
+        const score = p.score != null ? ` ${p.score}점` : '';
+        const body = p.body ? ` — ${plainText(p.body).slice(0, 150)}` : '';
+        lines.push(`[${head}]${score}${body}`);
+      });
+    }
+    // 영역별 (재물·직업·애정·건강) — 이번 달 점수
+    const DOMAINS: [string, string][] = [['wealth', '재물운'], ['career', '직업운'], ['love', '애정운'], ['health', '건강운']];
+    DOMAINS.forEach(([key, nm]) => {
+      const dm = fullResult?.[key];
+      if (!dm || (dm.score == null && !dm.body)) return;
+      const score = dm.score != null ? ` ${dm.score}점` : '';
+      const body = dm.body ? ` — ${plainText(dm.body).slice(0, 120)}` : '';
+      lines.push(`이번 달 ${nm}${score}${body}`);
+    });
+    const dayNotes = (arr: unknown, kind: string) => {
+      if (!Array.isArray(arr)) return;
+      arr.slice(0, 3).forEach((d: any) => {
+        if (!d?.date && !d?.reason) return;
+        lines.push(`${kind}: ${d?.date ? plainText(d.date) : ''}${d?.reason ? ` — ${plainText(d.reason).slice(0, 100)}` : ''}`);
+      });
+    };
+    dayNotes(fullResult?.luckyDays, '길일');
+    dayNotes(fullResult?.cautionDays, '주의일');
+    if (fullResult?.gaewoon) lines.push(`개운 처방: ${plainText(fullResult.gaewoon).slice(0, 200)}`);
   }
-  // 2026-05-28 — compat/daeun/monthly/tojung 4종 미출시. 활성화 시 동일 패턴으로 추가.
+  // compat/daeun/tojung 3종은 출시 lockdown (라우트 홈 redirect) — 공개 시 동일 패턴으로 분기 추가.
+  const hasData = lines.length > dataStart;
   lines.push('');
   lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  lines.push('⚠️ 중요: 위 데이터는 사용자가 방금 본 결과 페이지의 실제 콘텐츠입니다.');
-  lines.push('- 점수·등급·키워드·강점·주의·섹션·행운 프로필 등 위 데이터를 그대로 참조해 답변하세요.');
-  lines.push('- "확인이 어렵다", "결과 페이지를 보세요" 같은 답변 금지. 위 데이터가 곧 결과 페이지입니다.');
-  lines.push('- 새로 분석하지 말고 이미 본 풀이의 "깊이"를 늘려주는 답변을 하세요.');
-  lines.push('- 사용자가 점수를 물으면 "위 데이터의 전체 점수"를 직접 인용하세요.');
+  if (hasData) {
+    lines.push('⚠️ 중요: 위 데이터는 사용자가 방금 본 결과 페이지의 실제 콘텐츠입니다.');
+    lines.push('- 점수·키워드·시기(요일·상중하순)·섹션·행운 정보 등 위 데이터를 그대로 참조해 답변하세요.');
+    lines.push('- "확인이 어렵다", "결과 페이지를 보세요" 같은 답변 금지. 위 데이터가 곧 결과 페이지입니다.');
+    lines.push('- 새로 분석하지 말고 이미 본 풀이의 "깊이"를 늘려주는 답변을 하세요.');
+    lines.push('- 사용자가 점수를 물으면 위 데이터에 있는 점수를 직접 인용하세요.');
+  } else {
+    // 2026-09-17 — 결과 데이터가 비었는데 "위 데이터를 그대로 참조" 지시를 넣으면 AI 가 점수·날짜를 지어냄(환각) → 분기.
+    lines.push('⚠️ 중요: 이 풀이의 세부 결과 데이터는 전달되지 않았습니다.');
+    lines.push('- 결과 페이지의 점수·날짜·문구를 추측하거나 지어내지 마세요.');
+    lines.push('- 사주 원국 기준으로 답하고, 결과 세부 내용을 물으면 결과 화면에서 다시 확인할 수 있다고 짧게 안내하세요.');
+  }
   return lines.join('\n');
 }
 import type { SajuData } from '@/types/saju';
@@ -215,75 +332,111 @@ import {
 
 /* ══════════════════════════════════════════════════════════════════
  * 추천 콘텐츠 카드 매핑 (스펙 §8) — 세션당 최대 2개
+ *  2026-09-17 SSOT 정렬: 주제 한자·색·라우트 = TOPIC_REGISTRY, 주간/월간 = EXTENSION_THEME,
+ *  가격 = pricing SSOT (기존 '· 1운' 고정 표기·事/#0E4582 등 하드코딩 제거).
  * ═════════════════════════════════════════════════════════════════ */
+type RecKey = TopicId | 'weekly' | 'monthly';
+
 interface ContentRec {
   path: string;
   title: string;
   desc: string;
   hanja: string;
   color: string;
-  topicKey: string; // 같은 주제 중복 방지용 키
+  topicKey: RecKey; // 같은 추천 중복 방지용 키
+  priceLabel: string;
 }
 
+/** '일'이 "일(업무)"로 쓰였는지 판정.
+ *  · 다른 단어 속 '일'(내일·일요일·일주일·일간·일주·큰일)은 앞 경계 + 뒤 조사로 거름.
+ *  · 앞 단어 끝 글자가 받침 ㄴ/ㄹ(관형형: 좋은·무슨·큰·나쁜·어떤·생길·별)이면 "좋은 일·무슨 일" 같은 일반 사건 → 제외.
+ *    (lookbehind 없이 앞 글자를 직접 검사 — 아래 REC_RULES 주석 참고) */
+function hasWorkIl(text: string): boolean {
+  const re = /(^|[\s,.!?])일(?=[이을은에도만하할해]|자리|터|[\s,.!?]|$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    let j = m.index + m[1].length - 1; // '일' 바로 앞 글자
+    while (j >= 0 && /[\s,.!?]/.test(text[j])) j--;
+    if (j < 0) return true; // 문장 첫 단어가 '일'
+    const code = text.charCodeAt(j);
+    const jong = code >= 0xac00 && code <= 0xd7a3 ? (code - 0xac00) % 28 : -1;
+    if (jong === 4 || jong === 8) continue; // ㄴ·ㄹ 받침 관형형 → 일반 '일'
+    return true;
+  }
+  return false;
+}
+
+/** 키워드 → 추천 규칙. 배열 순서 = 우선순위 (인접 주제는 구체적인 쪽 먼저: 재회·결혼 → 연애 / 합격·이직 → 직업 / 사업 → 재물).
+ *  2026-09-18 오탐 정리: 헤어스타일·아파트·이사님·"가게 될까"·"좋은 일/무슨 일"·집에 가다 류가 주제로 잡히던 문제.
+ *  ⚠ lookbehind((?<=…)) 금지 — 구형 iOS WebView 는 정규식 파싱 에러로 페이지 모듈 전체가 죽음 (lookahead 만 사용). */
+const REC_RULES: { key: RecKey; re: RegExp; extra?: (text: string) => boolean }[] = [
+  // '헤어'는 헤어지다 활용형만 (헤어스타일·헤어샵 제외)
+  { key: 'reunion', re: /이별|재회|헤어[지진졌짐질져]/ },
+  { key: 'marriage', re: /결혼|배우자|신혼/ },
+  // '궁합'·커플 질문은 궁합 출시 전까지 연애운으로 (2026-05-07 결정 유지) · 썸네일 제외
+  { key: 'love', re: /연애|썸(?!네일)|연인|궁합|커플|남자친구|여자친구|남친|여친/ },
+  { key: 'exam', re: /이직|합격|시험|취업|면접/ },
+  // 단독 '일'은 hasWorkIl 로 판정 (좋은 일·무슨 일 제외)
+  { key: 'career', re: /직장|승진|회사|업무|일자리|일터|하는 ?일|맡은 ?일/, extra: hasWorkIl },
+  // '가게 되다/될까'(동사 가다)·'가게끔' 제외
+  { key: 'business', re: /사업|창업|가게(?!끔| ?(되|될|돼|됐|됩))/ },
+  { key: 'wealth', re: /돈|재물|투자/ },
+  // 이사님·이사회·이사장 등 직함 제외 / '집에 가·집에서' 같은 일상 표현 제외 (집중·집값 등은 뒤 글자로 거름)
+  { key: 'move', re: /이사(?![님회장진직급])|이동|(^|[\s,.!?])집(?=[이을은도]|에(?!서| ?(가|와|오|있))|[\s,.!?]|$)/ },
+  { key: 'study', re: /공부|학업/ },
+  // 아파트·아프리카 제외
+  { key: 'health', re: /건강|아프(?!리카)|아픔|아파(?!트)|병원|피곤/ },
+  { key: 'weekly', re: /이번 ?주|주간/ },
+  { key: 'monthly', re: /이번 ?달|월간/ },
+];
+
+function buildRec(key: RecKey): ContentRec {
+  if (key === 'weekly') {
+    const t = EXTENSION_THEME.weekly;
+    return {
+      path: '/weekly',
+      title: '이번 주 7일 흐름을 풀어드릴까요?',
+      desc: '좋은 날·조심할 날을 하루씩',
+      hanja: t.hanja.slice(0, 1),
+      color: t.accentDark,
+      topicKey: 'weekly',
+      priceLabel: formatPriceLabel(getWeeklyPrice()),
+    };
+  }
+  if (key === 'monthly') {
+    const t = EXTENSION_THEME.monthly;
+    return {
+      path: '/monthly',
+      title: '이번 달 흐름을 깊게 풀어드릴까요?',
+      desc: '상순·중순·하순과 길일·주의일',
+      hanja: t.hanja.slice(0, 1),
+      color: t.accentDark,
+      topicKey: 'monthly',
+      priceLabel: formatPriceLabel(getMonthlyPrice()),
+    };
+  }
+  const meta = TOPIC_REGISTRY[key];
+  return {
+    path: meta.path,
+    title: `${meta.label}을 더 깊게 풀어드릴까요?`,
+    desc: meta.subCopy,
+    hanja: meta.kanji,
+    color: meta.color,
+    topicKey: key,
+    priceLabel: formatPriceLabel(getTopicPrice(key)),
+  };
+}
+
+/** texts 를 앞에서부터(최근 질문 → 전체 대화) 검사해 아직 안 보인 첫 추천을 고름 */
 function pickRecommendation(
-  allUserText: string,
-  alreadyShown: Set<string>,
+  texts: string[],
+  excluded: Set<string>,
 ): ContentRec | null {
-  // 2026-05-07: '궁합' 출시 후 공개 — 연애운으로 대체 (코드 보존)
-  if (/궁합|상대방|남자친구|여자친구|배우자|커플/.test(allUserText)) {
-    if (!alreadyShown.has('love'))
-      return {
-        path: '/topic/love',
-        title: '두 사람의 연애운 결을 풀어드릴까요?',
-        desc: '만남·관계·인연 흐름을 사주로',
-        hanja: '緣',
-        color: '#C88A95',
-        topicKey: 'love',
-      };
-  }
-  if (/이직|취업|직장|직업|승진|적성/.test(allUserText)) {
-    if (!alreadyShown.has('career'))
-      return {
-        path: '/topic/career',
-        title: '취업·이직운을 더 깊게 풀어드릴게요',
-        desc: '이직 타이밍·맞는 업종·면접 유리한 날',
-        hanja: '事',
-        color: '#0E4582',
-        topicKey: 'career',
-      };
-  }
-  if (/연애|사랑|썸|이별|인연/.test(allUserText)) {
-    if (!alreadyShown.has('love'))
-      return {
-        path: '/topic/love',
-        title: '연애운을 깊게 풀어볼까요?',
-        desc: '이상형·인연 시기·연애 패턴',
-        hanja: '愛',
-        color: '#9C2424',
-        topicKey: 'love',
-      };
-  }
-  if (/돈|재물|투자|재테크|사업/.test(allUserText)) {
-    if (!alreadyShown.has('wealth'))
-      return {
-        path: '/topic/wealth',
-        title: '재물 주제로 더 깊게 풀어드릴게요',
-        desc: '돈 흐름·투자 적기·새는 돈 패턴',
-        hanja: '財',
-        color: C.goldDeep,
-        topicKey: 'wealth',
-      };
-  }
-  if (/건강|피곤|아프/.test(allUserText)) {
-    if (!alreadyShown.has('health'))
-      return {
-        path: '/topic/health',
-        title: '건강운도 풀어드릴까요?',
-        desc: '오행별 취약 장기·주의 시기',
-        hanja: '健',
-        color: '#1F6638',
-        topicKey: 'health',
-      };
+  for (const text of texts) {
+    if (!text) continue;
+    for (const rule of REC_RULES) {
+      if (!excluded.has(rule.key) && (rule.re.test(text) || !!rule.extra?.(text))) return buildRec(rule.key);
+    }
   }
   return null;
 }
@@ -343,10 +496,25 @@ export function ChatSessionPage() {
     | SajuProfile
     | LocalReport
     | undefined;
-  const myProfile = useMemo(
-    () => stateProfile || getMyProfile(),
-    [stateProfile],
-  );
+  // 2026-09-17 — 목록에서 방을 다시 열면 state 가 없어 본인 사주로 대체되던 문제 fix:
+  //   state.profile → 방에 저장된 profileId → 본인 사주 순으로 복원.
+  const myProfile = useMemo<SajuProfile | LocalReport | null>(() => {
+    if (stateProfile) return stateProfile;
+    try {
+      const pid = getChatRoom(sessionId)?.profileId;
+      if (pid) {
+        const p = getProfiles().find((x) => x.id === pid);
+        if (p) return p;
+      }
+    } catch { /* noop */ }
+    return getMyProfile();
+  }, [stateProfile, sessionId]);
+  // 결과 페이지·사주 선택에서 넘어온 사주를 방에 연결 저장 (재진입 복원용)
+  useEffect(() => {
+    if (!stateProfile) return;
+    const pid = resolveProfileId(stateProfile);
+    if (pid) setChatRoomProfileId(sessionId, pid);
+  }, [stateProfile, sessionId]);
   const sajuData: SajuData | undefined = myProfile?.sajuData;
   const hasProfile = !!myProfile;
   const userName = myProfile?.name || '';
@@ -360,7 +528,17 @@ export function ChatSessionPage() {
   const [showWrapUp, setShowWrapUp] = useState(false);
   const [roomNameSet, setRoomNameSet] = useState(false);
 
-  const [shownRecs, setShownRecs] = useState<Set<string>>(new Set());
+  // 추천 카드 — 실제로 "보인" 추천 키 (세션당 최대 2개 판정 · 새로고침에도 유지)
+  const recStoreKey = `chat:recsShown:${sessionId}`;
+  const [shownRecs, setShownRecs] = useState<Set<string>>(() => {
+    try {
+      const raw = sessionStorage.getItem(recStoreKey);
+      if (raw) return new Set(JSON.parse(raw) as string[]);
+    } catch { /* noop */ }
+    return new Set();
+  });
+  const [activeRec, setActiveRec] = useState<ContentRec | null>(null);
+  const recCheckpointRef = useRef('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingRoomDelete, setPendingRoomDelete] = useState(false);
 
@@ -453,7 +631,24 @@ export function ChatSessionPage() {
         ? `${userName}님, "${title}" 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`
         : `${userName}님 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`;
       defaultQuestions = ['내 사주의 가장 강한 오행은?', '올해 가장 큰 변곡점은 언제?', '직업·재물·연애 중 어느 운세가 가장 좋아요?'];
-    // 2026-05-28 — compat/daeun/monthly/tojung 4종 미출시 → ctxType 분기 제거 (도달 불가능 dead code)
+    } else if (ctxType === 'weekly') {
+      // 2026-09-17 — 주간운세 결과 → 사주대화 (한 줄 요약 인용)
+      const head = plainText(contentContext?.fullResult?.weekHeadline);
+      const headShort = head.length > 40 ? `${head.slice(0, 40)}…` : head;
+      greeting = headShort
+        ? `${userName}님, "${headShort}" 주간운세를 보고 오셨네요. 이번 7일 중 더 깊이 살피고 싶은 날이나 일을 편하게 물어보세요.`
+        : `${userName}님, 주간운세를 보고 오셨네요. 이번 7일 중 더 깊이 살피고 싶은 날이나 일을 편하게 물어보세요.`;
+      defaultQuestions = ['이번 주 가장 좋은 날엔 뭘 하면 좋을까요?', '조심할 날은 어떻게 보내면 좋을까요?', '중요한 약속은 언제 잡는 게 좋아요?'];
+    } else if (ctxType === 'monthly') {
+      // 2026-09-17 — 월별 운세 결과 → 사주대화
+      const head = plainText(contentContext?.fullResult?.headline);
+      const headShort = head.length > 40 ? `${head.slice(0, 40)}…` : head;
+      const monthName = ctxLabel && /\d+월/.test(ctxLabel) ? ctxLabel.replace(/\s*운세$/, '') : '이 달';
+      greeting = headShort
+        ? `${userName}님, "${headShort}" 풀이를 보고 오셨네요. ${monthName} 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`
+        : `${userName}님, ${monthName} 운세를 보고 오셨네요. 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
+      defaultQuestions = ['이 달 가장 힘을 줘도 되는 시기는?', '길일에는 무엇을 하면 좋을까요?', '이 달 재물과 일 중 어디에 집중할까요?'];
+    // compat/daeun/tojung 3종은 출시 lockdown → 인사 분기 없음 (공개 시 추가)
     } else if (fromTopicLabel) {
       // legacy fallback (Topic 페이지가 contentContext 보다 topicLabel 만 전달했을 때)
       greeting = `${userName}님의 ${fromTopicLabel} 풀이를 보고 오셨네요. ${fromTopicLabel}에 대해 더 깊이 궁금한 점을 편하게 물어보세요.`;
@@ -511,6 +706,8 @@ export function ChatSessionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [refreshTick, messages.length],
   );
+  // 무료권 변화(다른 화면 사용·자정 KST 넘김·앱 복귀) 시 대화권 재계산 — 켜 둔 채 자정을 넘겨도 오늘 무료 1회가 바로 반영되도록
+  useEffect(() => subscribeFreePass(() => setRefreshTick((t) => t + 1)), []);
 
   // ── 메시지 전송
   async function sendMessage(text: string) {
@@ -520,23 +717,28 @@ export function ChatSessionPage() {
     // (이전: hasProfile 체크가 일부 UI 분기에만 있어, sendMessage 가 saju 없이 호출 가능)
     if (!myProfile?.sajuData) {
       toast.show('맞춤 답변을 위해 먼저 사주를 입력해 주세요.', 'warning');
-      navigate('/input');
+      navigate('/input?from=chat');
       return;
     }
 
     const userMsgCount = messages.filter((m) => m.role === 'user').length;
 
     // 무료 패스 → 결제 크레딧 → 부족. 2026-05-29 — 소비 종류 추적(실패 시 복구용).
+    //   2026-09-17 fix — 무료권은 "오늘 첫 질문 1개" 정책: 방과 무관하게 무료권이 남아 있으면 먼저 소비.
+    //   (기존: '이 방의 첫 메시지'일 때만 무료 → 이미 대화가 있는 방에선 무료 1회를 못 쓰고 유료 대화권이 먼저 빠짐)
     let consumed: 'freepass' | 'credit' | null = null;
-    if (userMsgCount === 0 && hasFreePass('chat')) {
+    // 2026-09-18 — 무료권 쓴 날(KST). 자정 넘겨 실패하면 새 날 무료권까지 복구되는 것 방지 (restoreFreePass usedOn)
+    let freePassUsedOn: string | undefined;
+    if (hasFreePass('chat')) {
+      freePassUsedOn = kstToday();
       useFreePass('chat');
       consumed = 'freepass';
     } else if (getChatCredits() > 0) {
       useChatCredit();
       consumed = 'credit';
     } else {
-      // P2-4 보존: userMsgCount > 0 이면 이미 오늘 무료 사용 → 한도 소진 카피
-      setConvertMode(userMsgCount > 0 ? 'quota_exceeded' : 'default');
+      // P2-4 보존: 여기 도달 = 오늘 무료권 이미 사용 + 대화권 0 → 한도 소진 카피 (무료권 기준 판정)
+      setConvertMode('quota_exceeded');
       setShowConvert(true);
       return;
     }
@@ -561,6 +763,7 @@ export function ChatSessionPage() {
     setMessages((prev) => [...prev, userMsg]);
     addChatMessage(sessionId!, userMsg);
     setInputText('');
+    setActiveRec(null); // 다음 질문으로 넘어가면 이전 추천 카드는 내림
     setIsLoading(true);
 
     try {
@@ -572,6 +775,15 @@ export function ChatSessionPage() {
         ? [{ role: 'user' as const, content: buildContextPrompt(contentContext, userName) }, ...history]
         : history;
       const result = await generateChatAnswer(text.trim(), sajuData, augmentedHistory);
+      // 2026-09-17 — 서버 안전가드 응답(consumed: 0 · 의료·법률·투자 등 답변 불가 안내)은 차감하지 않음 → 소비분 복구.
+      //   서버 계약: functions/src/index.ts generateChatAnswer 반환 { answer, keywords, consumed: 0|1, guard }.
+      //   클라 타입(reportGenerator)엔 consumed 가 없어 교차 타입으로 읽기만 함.
+      const serverConsumed = (result as typeof result & { consumed?: number }).consumed;
+      if (serverConsumed === 0) {
+        if (consumed === 'credit') addChatCredits(1);
+        else if (consumed === 'freepass') restoreFreePass('chat', freePassUsedOn);
+        consumed = null; // 이후 예외 시 catch 이중 복구 방지
+      }
       const aiMsg: ChatMessage = {
         id: Date.now().toString(36) + '_ai',
         role: 'assistant',
@@ -589,7 +801,7 @@ export function ChatSessionPage() {
       if (consumed === 'credit') {
         addChatCredits(1);
       } else if (consumed === 'freepass') {
-        restoreFreePass('chat');
+        restoreFreePass('chat', freePassUsedOn);
       }
       const aiMsg: ChatMessage = {
         id: Date.now().toString(36) + '_ai',
@@ -605,6 +817,9 @@ export function ChatSessionPage() {
     }
   }
 
+  /** 대화 마무리 — 5턴(질문 5개) 이후 노출되는 "대화 마무리하기".
+   *  정책(2026-09-17 오너 결정 · 현행 유지): 마무리 요약은 AI 를 1회 더 호출하지만 대화권·무료권을 차감하지 않음.
+   *  실패해도 차감이 없으므로 복구 로직 불필요 (토스트만). */
   async function wrapUp() {
     setIsLoading(true);
     try {
@@ -637,37 +852,61 @@ export function ChatSessionPage() {
     }
   }
 
-  // 추천 카드 (세션당 최대 2개)
-  const userMsgCount = messages.filter((m) => m.role === 'user').length;
-  const allUserTexts = messages
-    .filter((m) => m.role === 'user')
-    .map((m) => m.content)
-    .join(' ');
-  const contentRec = useMemo(() => {
-    if (userMsgCount < 2) return null;
-    if (shownRecs.size >= 2) return null;
-    // 3 메시지마다 한 번씩만 추천
-    if (userMsgCount % 3 !== 0) return null;
-    return pickRecommendation(allUserTexts, shownRecs);
-  }, [userMsgCount, allUserTexts, shownRecs]);
-
-  // 추천 카드가 처음 노출될 때 shownRecs에 기록
-  useEffect(() => {
-    if (contentRec && !shownRecs.has(contentRec.topicKey)) {
-      // 다음 렌더부터 표시 — 카드는 contentRec 자체에 의존
-      // 노출 후 클릭/스크롤 시점에 추가하지 않고, 즉시 추가하면 같은 컴포지션에서 사라짐
-      // 노출은 한 번만 — 카드 클릭 시점에 추가하기 위해 상태 분리
+  // ── 추천 카드 (세션당 최대 2개)
+  //   2026-09-17 fix — 기존엔 누르거나 닫은 추천만 세서, 보고 지나친 추천은 한도에 안 잡혀 계속 노출됨.
+  //   이제 "화면에 실제로 보인" 추천을 셈. 대화 중엔 3번째 질문마다(답변 도착 후) 1회, 마무리 후엔 1개 노출.
+  //   이동한 콘텐츠(주간·월간·같은 주제)에서 들어온 방이면 그 콘텐츠는 추천에서 제외.
+  const contextRecKey = useMemo<RecKey | null>(() => {
+    const t = contentContext?.type;
+    if (t === 'weekly' || t === 'monthly') return t;
+    if (t === 'topic') {
+      const fromState = normalizeTopicId((location.state as any)?.fromTopic);
+      if (fromState) return fromState;
+      const lbl = String(contentContext?.label || '');
+      return Object.values(TOPIC_REGISTRY).find((m) => m.label === lbl)?.id ?? null;
     }
-  }, [contentRec, shownRecs]);
+    return null;
+  }, [contentContext, location.state]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const userTexts = messages.filter((m) => m.role === 'user').map((m) => m.content);
+    if (userTexts.length === 0) return;
+    const checkpoint = isCompleted ? 'done' : `q${userTexts.length}`;
+    if (recCheckpointRef.current === checkpoint) return;
+    recCheckpointRef.current = checkpoint;
+    if (!isCompleted && userTexts.length % 3 !== 0) return;
+
+    const excluded = new Set<string>(shownRecs);
+    if (contextRecKey) excluded.add(contextRecKey);
+    let rec: ContentRec | null = null;
+    if (shownRecs.size < 2) {
+      rec = pickRecommendation([userTexts[userTexts.length - 1], userTexts.join(' ')], excluded);
+    }
+    if (!rec && isCompleted) {
+      // 마무리 후 1개 보장 — 새 추천이 없으면(한도 도달·키워드 없음) 마지막으로 보인 추천을 다시, 그것도 없으면 주간/월간 흐름
+      const lastShown = Array.from(shownRecs).pop() as RecKey | undefined;
+      rec = buildRec(lastShown ?? (contextRecKey === 'weekly' ? 'monthly' : 'weekly'));
+    }
+    setActiveRec(rec);
+    if (rec && !shownRecs.has(rec.topicKey)) {
+      const next = new Set(shownRecs);
+      next.add(rec.topicKey);
+      setShownRecs(next);
+      try { sessionStorage.setItem(recStoreKey, JSON.stringify(Array.from(next))); } catch { /* noop */ }
+    }
+  }, [messages, isLoading, isCompleted, shownRecs, contextRecKey, recStoreKey]);
 
   function handleOpenRec() {
-    if (!contentRec) return;
-    setShownRecs((prev) => new Set([...prev, contentRec.topicKey]));
-    navigate(contentRec.path);
+    if (!activeRec) return;
+    const rec = activeRec;
+    setActiveRec(null);
+    // 공용 계약: 이동한 콘텐츠가 같은 사주를 미리 선택하도록 profileId 전달
+    const profileId = resolveProfileId(myProfile);
+    navigate(rec.path, profileId ? { state: { profileId } } : undefined);
   }
   function handleDismissRec() {
-    if (!contentRec) return;
-    setShownRecs((prev) => new Set([...prev, contentRec.topicKey]));
+    setActiveRec(null);
   }
 
   // 메뉴 액션
@@ -677,10 +916,12 @@ export function ChatSessionPage() {
   }
   function handleMenuOpenLatestResult() {
     setMenuOpen(false);
-    if (myProfile && 'sajuData' in myProfile && myProfile.id) {
-      navigate(`/result/${myProfile.id}`);
+    // 2026-09-17 fix — 기존 /result/{프로필id} 는 프로필 id 로 결과 화면이 열리지 않아 빈 화면 위험 → 사주 카드(만세력)로.
+    const profileId = resolveProfileId(myProfile);
+    if (profileId) {
+      navigate(`/saju-card/${profileId}`);
     } else {
-      toast.show('연결된 풀이 결과가 없어요', 'info');
+      toast.show('연결된 사주 카드가 없어요', 'info');
     }
   }
   function handleMenuDelete() {
@@ -859,10 +1100,10 @@ export function ChatSessionPage() {
           )}
         </AnimatePresence>
 
-        {/* §8 SuggestedContentCard (세션당 최대 2개) */}
-        {contentRec && !isCompleted && (
+        {/* §8 SuggestedContentCard (세션당 최대 2개 · 마무리 후 1개) */}
+        {activeRec && !isLoading && (
           <SuggestedContentCard
-            rec={contentRec}
+            rec={activeRec}
             onTap={handleOpenRec}
             onDismiss={handleDismissRec}
           />
@@ -953,8 +1194,10 @@ export function ChatSessionPage() {
           onSend={() => sendMessage(inputText)}
           disabled={isLoading}
           ticketsTotal={tickets.total}
+          freeAvailable={tickets.free > 0}
           onNeedCharge={() => {
-            setConvertMode('default');
+            // 대화권 0 = 오늘 무료권도 이미 사용 → 한도 소진 카피 (sendMessage 분기와 동일)
+            setConvertMode('quota_exceeded');
             setShowConvert(true);
           }}
         />
@@ -1535,7 +1778,7 @@ function SuggestedContentCard({
             margin: '3px 0 0',
           }}
         >
-          {rec.desc} · 1운
+          {rec.desc} · {rec.priceLabel}
         </p>
       </div>
       <button
@@ -1590,6 +1833,7 @@ function ChatComposer({
   onSend,
   disabled,
   ticketsTotal,
+  freeAvailable,
   onNeedCharge,
 }: {
   value: string;
@@ -1597,6 +1841,8 @@ function ChatComposer({
   onSend: () => void;
   disabled: boolean;
   ticketsTotal: number;
+  /** 오늘 무료 1회 남음 — 다음 질문은 무료권이 먼저 차감됨 (sendMessage 소비 순서와 일치) */
+  freeAvailable: boolean;
   onNeedCharge: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -1649,7 +1895,7 @@ function ChatComposer({
           letterSpacing: '0.02em',
         }}
       >
-        {blocked ? '운 충전 필요' : '대화권 1개 차감'}
+        {blocked ? '운 충전 필요' : freeAvailable ? '오늘 첫 질문 무료' : '대화권 1개 차감'}
       </div>
       <div
         style={{
@@ -1728,7 +1974,7 @@ function ChatComposer({
       >
         {blocked
           ? '대화권이 없어요. 탭하면 운으로 바꿀 수 있어요.'
-          : `대화권 ${ticketsTotal}개 남음`}
+          : `대화권 ${ticketsTotal}개 남음${freeAvailable ? ' (오늘 무료 1회 포함)' : ''}`}
       </p>
     </div>
   );
@@ -1796,7 +2042,7 @@ function ChatMenuSheet({
                 margin: '6px auto 12px',
               }}
             />
-            <MenuItem label="이 사주의 최근 풀이 보기" onClick={onOpenLatestResult} />
+            <MenuItem label="이 사주 카드 보기" onClick={onOpenLatestResult} />
             <MenuItem label="다른 사주로 바꾸기" onClick={onChangeProfile} />
             <MenuItem
               label="대화 삭제"

@@ -1212,10 +1212,16 @@ function HistoryCard({
   // 종합사주는 tier 로 1운/10운(프리미엄) 분기
   const aiTier = (report as any)?.aiResult?.tier;
   const isPremium = ct === 'report' && aiTier === 'premium';
+  // 2026-09-17 — 꿈해몽은 CONTENT_COST 0(무료)이라 1운으로 잠금 해제·생성한 꿈도 '무료'로 표기되던 버그.
+  //   type 'paid' 또는 aiResult.__unlocked 면 '전체 풀이' 라벨 + '1운 사용'.
+  const isUnlockedDream = ct === 'dream'
+    && (report.type === 'paid' || !!(report as any).aiResult?.__unlocked);
   const label = ct === 'topic'
     ? (TOPIC_LABEL[topicId] ?? '주제별 운세')
     : isPremium
     ? '종합 사주 · 프리미엄'
+    : isUnlockedDream
+    ? '꿈해몽 · 전체 풀이'
     : baseLabel;
 
   const dateStr = new Date(report.createdAt).toLocaleDateString('ko-KR', {
@@ -1229,8 +1235,13 @@ function HistoryCard({
     ? 10
     : ct === 'topic' && topicId
     ? getTopicPrice(topicId).actualPrice
+    // 2026-09-17 — 오늘의 운세 '하루 1회 무료, 이후 1운': paid 기록은 CONTENT_COST 0(무료)이 아니라 1운
+    : ct === 'daily'
+    ? 1
     : (CONTENT_COST[ct] ?? 1);
-  const unCost = report.type === 'paid'
+  const unCost = isUnlockedDream
+    ? '1운 사용'
+    : report.type === 'paid'
     ? (actualCost === 0 ? '무료' : `${actualCost}운 사용`)
     : '무료';
 
@@ -1477,7 +1488,7 @@ function HistoryEmpty({ filterKey }: { filterKey: FilterKey }) {
     weekly:  { title: '주간운세 기록이 없어요',     sub: '이번 주 7일의 흐름을 요일별로 짚어드려요' },
     tojung:  { title: '토정비결 기록이 없어요',     sub: '한 해의 흐름을 사주 전체에서 풀어드려요' },
     daily:   { title: '오늘운세 기록이 없어요',     sub: '오늘 하루를 사주로 가볍게 살펴보세요' },
-    dream:   { title: '꿈해몽 기록이 없어요',       sub: '간밤에 꾼 꿈을 풀어보세요 (무료)' },
+    dream:   { title: '꿈해몽 기록이 없어요',       sub: '간밤에 꾼 꿈을 풀어보세요 (하루 1회 무료)' },
     chat:    { title: '사주대화 기록이 없어요',     sub: '사주에 대한 궁금증을 자유롭게 물어보세요' },
   };
   const m = messages[filterKey];

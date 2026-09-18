@@ -1,14 +1,17 @@
 // StreakWidget — 블록 2. 3일 연속 이동윈도우 도트 3칸.
 // 스펙: 09_이벤트_v4.md §3 · 핸드오버 §1-C-7 block 2
+//
+// 2026-09-17 — 기기 장부(dailyReward.getAttendanceSnapshot) 기준으로 재작성.
+//   구 동작: 서버 STUB streak 를 읽어 오늘 미출석인데 '오늘' 칸이 체크되고, 끊긴 연속에도
+//   "내일까지 이어지면 운 1" 이 뜨고, 실제 운 1 을 받은 날엔 달성 표시가 안 나왔다.
 
 import { useMemo } from 'react';
+import type { AttendanceSnapshot } from '@/services/storage/dailyReward';
 
 export interface StreakWidgetProps {
-  /** 0~3. 0=idle/리셋, 1=오늘 체크, 2=어제+오늘, 3=그제·어제·오늘 (달성). */
-  streak: number;
-  /** 어제 출석 있었는데 오늘 미체크 등 끊김 감지 플래그 */
-  missedYesterday?: boolean;
-  /** Day 3 달성 순간 1.2s 펄스 — 부모가 true 1회 전달 시 강조 */
+  /** 기기 출석 스냅샷 */
+  snapshot: AttendanceSnapshot;
+  /** 3일 달성(운 1 지급) 날 1.2s 펄스 — 부모가 true 1회 전달 시 강조 */
   pulsing?: boolean;
 }
 
@@ -17,54 +20,50 @@ interface DotState {
   state: 'done' | 'today' | 'pending' | 'missed';
 }
 
-/** 이동윈도우 라벨 규칙 (v4 §3):
- *  streak ∈ {0}: [오늘, 내일, 모레] — 모두 pending
- *  streak == 1: [오늘, 내일, 모레] — 오늘만 done
- *  streak == 2: [어제, 오늘, 내일] — 어제·오늘 done, 내일 pending
- *  streak == 3: [그제, 어제, 오늘] — 모두 done (달성 직후 0.8초 노출 후 리셋)
+const dot = (label: string, state: DotState['state']): DotState => ({ label, state });
+
+/** 이동윈도우 라벨 규칙 (v4 §3) — 3일 보상 사이클에서 채운 칸(streak3Filled) 기준:
+ *  오늘 출석함   1칸: [오늘✓, 내일, 모레]  2칸: [어제✓, 오늘✓, 내일]  3칸: [그제✓, 어제✓, 오늘✓] (운 1 지급일)
+ *  어제까지 이어짐 1칸: [어제✓, 오늘, 내일]  2칸: [그제✓, 어제✓, 오늘]  0칸: [오늘, 내일, 모레] (어제 3일째 달성 → 새 사이클)
+ *  끊김: [어제✗, 오늘, 내일] · 기록 없음: [오늘, 내일, 모레]
  */
-function computeDots(streak: number, missedYesterday: boolean): DotState[] {
-  if (missedYesterday && streak <= 1) {
-    // 끊김: 어제 자리가 missed
-    return [
-      { label: '어제', state: 'missed' },
-      { label: '오늘', state: streak >= 1 ? 'done' : 'today' },
-      { label: '내일', state: 'pending' },
-    ];
+function computeDots(s: AttendanceSnapshot): DotState[] {
+  const pos = s.streak3Filled;
+  if (s.attendedToday) {
+    if (pos <= 1) return [dot('오늘', 'done'), dot('내일', 'pending'), dot('모레', 'pending')];
+    if (pos === 2) return [dot('어제', 'done'), dot('오늘', 'done'), dot('내일', 'pending')];
+    return [dot('그제', 'done'), dot('어제', 'done'), dot('오늘', 'done')];
   }
-  if (streak <= 1) {
-    return [
-      { label: '오늘', state: streak === 1 ? 'done' : 'today' },
-      { label: '내일', state: 'pending' },
-      { label: '모레', state: 'pending' },
-    ];
+  if (s.alive) {
+    if (pos === 1) return [dot('어제', 'done'), dot('오늘', 'today'), dot('내일', 'pending')];
+    if (pos === 2) return [dot('그제', 'done'), dot('어제', 'done'), dot('오늘', 'today')];
+    return [dot('오늘', 'today'), dot('내일', 'pending'), dot('모레', 'pending')];
   }
-  if (streak === 2) {
-    return [
-      { label: '어제', state: 'done' },
-      { label: '오늘', state: 'done' },
-      { label: '내일', state: 'pending' },
-    ];
-  }
-  // streak >= 3 (달성)
-  return [
-    { label: '그제', state: 'done' },
-    { label: '어제', state: 'done' },
-    { label: '오늘', state: 'done' },
-  ];
+  if (s.broken) return [dot('어제', 'missed'), dot('오늘', 'today'), dot('내일', 'pending')];
+  return [dot('오늘', 'today'), dot('내일', 'pending'), dot('모레', 'pending')];
 }
 
-function statusCopy(streak: number, missedYesterday: boolean): string {
-  if (missedYesterday && streak <= 1) return '어제는 빠졌어요 · 오늘부터 다시 시작';
-  if (streak === 0) return '오늘 결과 하나 보면 시작돼요';
-  if (streak === 1) return '이틀만 더 이어지면 운 1';
-  if (streak === 2) return '내일까지 이어지면 운 1 받아요';
-  return '운 1 지급 완료 · 다시 이어가봐요';
+function statusCopy(s: AttendanceSnapshot): string {
+  const pos = s.streak3Filled;
+  if (s.attendedToday) {
+    if (pos <= 1) return '이틀만 더 이어지면 운 1';
+    if (pos === 2) return '내일까지 이어지면 운 1 받아요';
+    return s.streak3PaidToday
+      ? `${s.streak}일 연속 · 오늘 운 1 받았어요`
+      : `${s.streak}일 연속 출석 중이에요`;
+  }
+  if (s.alive) {
+    if (pos === 1) return '오늘 이어가면 내일 운 1 받을 수 있어요';
+    if (pos === 2) return '오늘 결과 하나 보면 운 1 받아요';
+    return '오늘 결과 하나 보면 다음 3일이 시작돼요';
+  }
+  if (s.broken) return '어제는 빠졌어요 · 오늘부터 다시 시작';
+  return '오늘 결과 하나 보면 시작돼요';
 }
 
-export function StreakWidget({ streak, missedYesterday = false, pulsing = false }: StreakWidgetProps) {
-  const dots = useMemo(() => computeDots(streak, missedYesterday), [streak, missedYesterday]);
-  const status = statusCopy(streak, missedYesterday);
+export function StreakWidget({ snapshot, pulsing = false }: StreakWidgetProps) {
+  const dots = useMemo(() => computeDots(snapshot), [snapshot]);
+  const status = statusCopy(snapshot);
 
   return (
     <section
@@ -80,19 +79,24 @@ export function StreakWidget({ streak, missedYesterday = false, pulsing = false 
         <h3 className="text-[16px] font-bold" style={{ color: '#1D2D4A', fontFamily: "'Noto Serif KR', serif" }}>
           3일 연속 출석
         </h3>
+        {snapshot.streak > 0 ? (
+          <span className="ml-auto text-[12px] font-semibold" style={{ color: '#8C6D3D' }}>
+            {snapshot.streak}일 연속
+          </span>
+        ) : null}
       </header>
       <p className="text-[12px] mb-4" style={{ color: '#8A7F6E', lineHeight: 1.5 }}>
-        3일 이어서 출석하면 운 1. 중간에 빠지면 리셋돼요.
+        3일 이어서 출석할 때마다 운 1. 하루 빠지면 처음부터 다시 세요.
       </p>
 
       {/* 도트 3칸 */}
       <div className="flex gap-2.5 mb-3 justify-center">
-        {dots.map((dot, idx) => (
-          <DotCell key={idx} dot={dot} pulsing={pulsing && dot.state === 'done'} />
+        {dots.map((d, idx) => (
+          <DotCell key={idx} dot={d} pulsing={pulsing && d.state === 'done'} />
         ))}
       </div>
 
-      <p className="text-[13px] text-center font-medium" style={{ color: '#9A7D47' }}>
+      <p className="text-[13px] text-center font-medium" style={{ color: '#9A7D47' }} aria-live="polite">
         {status}
       </p>
     </section>
@@ -114,7 +118,7 @@ function DotCell({ dot, pulsing }: { dot: DotState; pulsing: boolean }) {
 
   return (
     <div className={base} style={style}>
-      <span className="text-[10px] font-medium"
+      <span className="text-[11px] font-medium"
         style={{ color: dot.state === 'done' ? '#fff' : dot.state === 'today' ? '#1D2D4A' : '#8A7F6E' }}>
         {dot.label}
       </span>

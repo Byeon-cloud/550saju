@@ -389,25 +389,25 @@ export function App() {
       })
       .catch(() => { /* noop */ });
 
-    // 1-b. 출시 전 프로모션 테스트 트리거 (?_promotest=7day | launch)
+    // 1-b. 출시 전 프로모션 테스트 트리거 (?_promotest=7day | launch) — 개발 서버 전용
     //   토스 정책: 출시 전 TEST_ 코드로 1회 호출해야 콘솔 "시작하기" 활성화.
-    //   7일 출석은 실제 7일 걸려 테스트 불가 → 쿼리로 즉시 시뮬레이션.
-    try {
-      const pt = new URLSearchParams(window.location.search).get('_promotest');
-      if (pt === '7day') {
-        import('@/services/storage/dailyReward').then((m) =>
-          m.simulate7DayCompletion().then((r) =>
-            alert(`[7일 완주 프로모션 테스트] ${r.ok ? '[OK] TEST 호출 성공' : '[FAIL] ' + (r.reason || '')}`)
-          )
-        );
-      } else if (pt === 'launch') {
-        import('@/services/toss/tossPromotion').then((m) =>
-          m.grantLaunchPromotion().then((r) =>
-            alert(`[출시 프로모션 테스트] ${r.ok ? '[OK] TEST 호출 성공' : '[FAIL] ' + (r.reason || '')}`)
-          )
-        );
-      }
-    } catch { /* noop */ }
+    //   2026-09-17 보안 fix: 이 블록이 실서비스 번들에 그대로 있어 누구나 쿼리 하나로
+    //   launch=LIVE 코드 실지급(50원) · 7day=출석 없이 실지급(100원) + 실제 출석 기록 삭제가 가능했고, alert() 도 썼다.
+    //   → import.meta.env.DEV 상수 폴딩으로 프로덕션 번들에서 경로 자체 제거 + TEST_ 코드 전용 함수만 호출
+    //     (출석 기록·보상 장부 무변경). 토스앱 QR 실기기 TEST 호출은 MyPage 디버그 시트(VITE_DEBUG_TOOLS=1 빌드)로.
+    if (import.meta.env.DEV) {
+      try {
+        const pt = new URLSearchParams(window.location.search).get('_promotest');
+        if (pt === '7day' || pt === 'launch') {
+          import('@/services/toss/tossPromotion').then(async (m) => {
+            const r = pt === '7day' ? await m.test7DayPromotion() : await m.testLaunchPromotion();
+            console.info(
+              `[promotest:${pt}] ${r.ok ? 'TEST_ 코드 호출 성공' : 'TEST_ 코드 호출 실패 — ' + m.describePromoFailure(r.reason)}`,
+            );
+          });
+        }
+      } catch { /* noop */ }
+    }
 
     // 2. 앱인토스 전용 초기화
     import('@/services/payment/iapService').then(({ isAppsInToss }) => {

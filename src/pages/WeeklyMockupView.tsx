@@ -44,6 +44,7 @@ interface WeeklyMockupViewProps {
   onChat: () => void;
   onShare: () => void;
   onMonthly: () => void; // 교차 CTA — 월운세 보기
+  monthlyPriceLabel?: string; // 교차 CTA 가격 표기 (예: "7운") — WeeklyPage 가 getMonthlyPrice SSOT 로 계산
 }
 
 // 주간 SSOT 색
@@ -381,7 +382,7 @@ function scoreColor(score: number): string {
 }
 
 export function WeeklyMockupView(props: WeeklyMockupViewProps) {
-  const { result, profile, periodLabel, refining, onChat, onShare, onMonthly } = props;
+  const { result, profile, periodLabel, refining, onChat, onShare, onMonthly, monthlyPriceLabel } = props;
 
   // ── 섹션 접기/펼치기 (§01·02 default open — DailyMockupView 통일 정책) ──
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['01', '02']));
@@ -648,7 +649,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
               <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             <div className="ti">월운세 보기</div>
-            <div className="sb">한 달 전체의 흐름</div>
+            <div className="sb">한 달 전체의 흐름{monthlyPriceLabel ? ` · ${monthlyPriceLabel}` : ''}</div>
           </button>
         </div>
 

@@ -1,115 +1,88 @@
 // CumulativeReceivedCard — 블록 5. 누적 운 카드 (하단 CTA 교체)
 // 스펙: 09_이벤트_v4.md §6 · 핸드오버 §1-C-7 block 5
-// Firestore `users/{uid}/rewardClaims` 를 클라이언트에서 집계 (rules read:본인만)
+//
+// 2026-09-17 — 기기 보상 장부(dailyReward.getRewardLedger) 기준으로 재작성.
+//   구 동작: 서버 users/{uid}/rewardClaims 집계 → 기기에서 실제로 지급된 운(0.1운·3일·공유/초대)은 서버에 없어 0 으로 보였고,
+//   상세 조회는 인덱스 없는 where+orderBy 라 실패, 'etc' 타입은 서버에 존재하지 않았다.
+//   장부는 이 기기에서 도입 이후 기록부터 쌓인다 (since 안내).
 
 import { useEffect, useMemo, useState } from 'react';
-import { collection, query, where, getDocs, limit as fsLimit, orderBy } from 'firebase/firestore';
-import { db } from '@/services/auth/firebase';
-import { useAuth } from '@/hooks/useAuth';
+import {
+  getReceivedUnTotal,
+  getRewardLedger,
+  hasRewardRecords,
+  REWARD_LEDGER_CHANGED_EVENT,
+} from '@/services/storage/dailyReward';
+import type { DeviceRewardType, RewardLedger } from '@/types/rewards';
 
-interface Aggregate {
-  total: number;
-  byType: {
-    attendance_streak3: number;
-    invite: number;
-    share: number;
-    etc: number;
-  };
-  tosspointCount: number;
-  tosspointAmount: number;
-}
+const UN_ROWS: Array<{ type: DeviceRewardType; label: string }> = [
+  { type: 'daily', label: '하루 첫 결과' },
+  { type: 'streak3', label: '3일 연속 출석' },
+  { type: 'invite', label: '친구 초대' },
+  { type: 'share', label: '결과 공유' },
+];
 
-const ZERO: Aggregate = {
-  total: 0,
-  byType: { attendance_streak3: 0, invite: 0, share: 0, etc: 0 },
-  tosspointCount: 0,
-  tosspointAmount: 0,
+const TOSSPOINT_ROWS: Array<{ type: DeviceRewardType; label: string }> = [
+  { type: 'attend7', label: '7일 연속 출석' },
+  { type: 'launch_promo', label: '첫 콘텐츠 이용' },
+];
+
+const DETAIL_TITLE: Record<DeviceRewardType, string> = {
+  daily: '하루 첫 결과',
+  streak3: '3일 연속 출석',
+  invite: '친구 초대',
+  share: '결과 공유',
+  launch_promo: '토스포인트 · 첫 콘텐츠 이용',
+  attend7: '토스포인트 · 7일 연속 출석',
 };
 
+const isTossPoint = (t: DeviceRewardType) => t === 'attend7' || t === 'launch_promo';
+
+/** 0.1 단위 운 표시 (정수면 소수점 없이) */
+function fmtUn(n: number): string {
+  const v = Math.round(n * 10) / 10;
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
+
+function fmtDate(date: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  return m ? `${m[1]}.${m[2]}.${m[3]}` : date;
+}
+
 function statusCopy(total: number): string {
-  if (total === 0) return '이벤트 탭에서 받은 운이 여기 쌓여요 · 첫 운을 받아볼까요';
+  if (total === 0) return '이벤트로 받은 운이 여기 쌓여요 · 첫 운을 받아볼까요';
   if (total <= 9) return '차곡차곡 쌓이고 있어요';
   if (total <= 49) return '꾸준함이 복을 불러요';
   return '귀인의 기운이 머물고 있어요';
 }
 
-export function CumulativeReceivedCard() {
-  const { user } = useAuth();
-  const uid = user?.uid;
-  const [agg, setAgg] = useState<Aggregate>(ZERO);
-  const [loading, setLoading] = useState(true);
-  const [detailType, setDetailType] = useState<string | null>(null);
-  const [detailList, setDetailList] = useState<Array<{ id: string; amount: number; grantedAt?: any; cycle?: string }>>([]);
+export interface CumulativeReceivedCardProps {
+  /** 토스포인트 줄 노출 (앱인토스) — 웹이어도 받은 기록이 있으면 노출 */
+  showTossPoint?: boolean;
+}
+
+export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeReceivedCardProps) {
+  const [ledger, setLedger] = useState<RewardLedger>(() => getRewardLedger());
+  const [detailType, setDetailType] = useState<DeviceRewardType | null>(null);
 
   useEffect(() => {
-    if (!uid) {
-      setAgg(ZERO);
-      setLoading(false);
-      return;
-    }
-    (async () => {
-      try {
-        const snap = await getDocs(collection(db, `users/${uid}/rewardClaims`));
-        const next: Aggregate = { total: 0, byType: { attendance_streak3: 0, invite: 0, share: 0, etc: 0 }, tosspointCount: 0, tosspointAmount: 0 };
-        snap.forEach((doc) => {
-          const d = doc.data() as any;
-          const t = d?.type as string;
-          const amount = Number(d?.amount ?? 0);
-          if (t === 'attendance_week7_tosspoint') {
-            // 토스포인트는 별도 집계 (운 합산에서 제외)
-            next.tosspointCount += 1;
-            next.tosspointAmount += amount;
-            return;
-          }
-          if (t === 'attendance_week7_fallback' || t === 'attendance_week7_pending') {
-            // pending은 합산 제외 · fallback(운 2)은 etc로 분류
-            if (t === 'attendance_week7_fallback') next.byType.etc += amount;
-            return;
-          }
-          // UN 계열
-          next.total += amount;
-          if (t === 'attendance_streak3') next.byType.attendance_streak3 += amount;
-          else if (t === 'invite') next.byType.invite += amount;
-          else if (t === 'share') next.byType.share += amount;
-          else next.byType.etc += amount;
-        });
-        setAgg(next);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('[CumulativeReceivedCard] aggregate failed', e);
-        setAgg(ZERO);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [uid]);
+    const refresh = () => setLedger(getRewardLedger());
+    refresh();
+    window.addEventListener(REWARD_LEDGER_CHANGED_EVENT, refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener(REWARD_LEDGER_CHANGED_EVENT, refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
 
-  const status = useMemo(() => statusCopy(agg.total), [agg.total]);
+  const total = useMemo(() => getReceivedUnTotal(ledger), [ledger]);
+  const status = useMemo(() => statusCopy(total), [total]);
+  const hasRecords = useMemo(() => hasRewardRecords(ledger), [ledger]);
+  const tossPointCount = ledger.counts.attend7 + ledger.counts.launch_promo;
+  const tossPointVisible = showTossPoint || tossPointCount > 0;
 
-  const openDetail = async (type: string) => {
-    if (!uid) return;
-    setDetailType(type);
-    try {
-      const q = query(
-        collection(db, `users/${uid}/rewardClaims`),
-        where('type', '==', type),
-        orderBy('grantedAt', 'desc'),
-        fsLimit(10),
-      );
-      const snap = await getDocs(q);
-      setDetailList(
-        snap.docs.map((d) => ({
-          id: d.id,
-          amount: (d.data() as any)?.amount ?? 0,
-          grantedAt: (d.data() as any)?.grantedAt,
-          cycle: (d.data() as any)?.cycle,
-        })),
-      );
-    } catch (e) {
-      setDetailList([]);
-    }
-  };
-
+  const detailList = detailType ? ledger.recent[detailType] : [];
   const closeDetail = () => setDetailType(null);
 
   return (
@@ -127,7 +100,7 @@ export function CumulativeReceivedCard() {
         <div className="mt-3 flex items-end gap-1.5">
           <span className="font-extrabold leading-none"
             style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 48, color: '#B8965A' }}>
-            {loading ? '—' : agg.total}
+            {fmtUn(total)}
           </span>
           <span className="text-[18px] font-semibold pb-1" style={{ color: '#1D2D4A' }}>운</span>
         </div>
@@ -135,21 +108,37 @@ export function CumulativeReceivedCard() {
         <p className="mt-2 text-[12px]" style={{ color: '#8A7F6E' }}>{status}</p>
 
         <div className="mt-5 pt-4 space-y-2" style={{ borderTop: '1px solid #EDEAE0' }}>
-          <Row label="출석 3일 연속" amount={agg.byType.attendance_streak3} onInfo={() => openDetail('attendance_streak3')} />
-          <Row label="친구 초대"       amount={agg.byType.invite} onInfo={() => openDetail('invite')} />
-          <Row label="공유"             amount={agg.byType.share} onInfo={() => openDetail('share')} />
-          <Row label="기타"             amount={agg.byType.etc} onInfo={() => openDetail('etc')} />
+          {UN_ROWS.map((row) => (
+            <Row
+              key={row.type}
+              label={row.label}
+              amountText={`운 ${fmtUn(ledger.totals[row.type])}`}
+              onInfo={() => setDetailType(row.type)}
+            />
+          ))}
         </div>
 
-        {agg.tosspointCount > 0 ? (
-          <div className="mt-4 pt-3" style={{ borderTop: '1px solid #EDEAE0' }}>
-            <Row
-              label="토스포인트 (7일 완주)"
-              amountText={`${agg.tosspointAmount}원 · ${agg.tosspointCount}회 수령`}
-              highlight
-              onInfo={() => openDetail('attendance_week7_tosspoint')}
-            />
+        {tossPointVisible ? (
+          <div className="mt-4 pt-3 space-y-2" style={{ borderTop: '1px solid #EDEAE0' }}>
+            <p className="text-[12px] font-medium" style={{ color: '#8A7F6E' }}>받은 토스포인트</p>
+            {TOSSPOINT_ROWS.map((row) => (
+              <Row
+                key={row.type}
+                label={row.label}
+                amountText={ledger.counts[row.type] > 0
+                  ? `${ledger.totals[row.type]}원 · ${ledger.counts[row.type]}회`
+                  : '0원'}
+                highlight={ledger.counts[row.type] > 0}
+                onInfo={() => setDetailType(row.type)}
+              />
+            ))}
           </div>
+        ) : null}
+
+        {hasRecords ? (
+          <p className="mt-4 text-[11px]" style={{ color: '#8A7F6E', lineHeight: 1.5 }}>
+            이 기기에 기록된 내역이에요 · {fmtDate(ledger.since)}부터 쌓였어요
+          </p>
         ) : null}
       </section>
 
@@ -161,6 +150,7 @@ export function CumulativeReceivedCard() {
           onClick={closeDetail}
           role="dialog"
           aria-modal="true"
+          aria-label={`${DETAIL_TITLE[detailType]} 최근 10건`}
         >
           <div
             className="w-full max-w-[460px] rounded-t-3xl p-6 pb-10"
@@ -169,7 +159,7 @@ export function CumulativeReceivedCard() {
           >
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: '#E5DFD0' }} />
             <h4 className="text-[16px] font-bold mb-3" style={{ color: '#1D2D4A', fontFamily: "'Noto Serif KR', serif" }}>
-              최근 10건
+              {DETAIL_TITLE[detailType]} · 최근 10건
             </h4>
             {detailList.length === 0 ? (
               <p className="text-[13px] py-6 text-center" style={{ color: '#8A7F6E' }}>
@@ -180,10 +170,10 @@ export function CumulativeReceivedCard() {
                 {detailList.map((x) => (
                   <li key={x.id} className="flex items-center justify-between text-[13px]">
                     <span style={{ color: '#6B5F4E' }}>
-                      {x.cycle ?? '—'}
+                      {fmtDate(x.date)}
                     </span>
                     <span className="font-semibold" style={{ color: '#1A1A1A' }}>
-                      {detailType === 'attendance_week7_tosspoint' ? `${x.amount}원` : `운 ${x.amount}`}
+                      {isTossPoint(detailType) ? `${x.amount}원` : `운 ${fmtUn(x.amount)}`}
                     </span>
                   </li>
                 ))}
@@ -202,8 +192,8 @@ export function CumulativeReceivedCard() {
 }
 
 function Row({
-  label, amount, amountText, onInfo, highlight,
-}: { label: string; amount?: number; amountText?: string; onInfo: () => void; highlight?: boolean }) {
+  label, amountText, onInfo, highlight,
+}: { label: string; amountText: string; onInfo: () => void; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="text-[13px]" style={{ color: highlight ? '#1A1A1A' : '#6B5F4E', fontWeight: highlight ? 600 : 500 }}>
@@ -211,7 +201,7 @@ function Row({
       </span>
       <div className="flex items-center gap-2">
         <span className="text-[13px] font-semibold" style={{ color: '#1A1A1A' }}>
-          {amountText ?? `운 ${amount ?? 0}`}
+          {amountText}
         </span>
         <button type="button" onClick={onInfo} aria-label={`${label} 최근 10건 보기`}
           className="w-5 h-5 rounded-full inline-flex items-center justify-center"

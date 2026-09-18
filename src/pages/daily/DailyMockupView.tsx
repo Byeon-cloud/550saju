@@ -16,7 +16,30 @@ import type { SajuProfile } from '@/services/storage/localStore';
 import type { OhengType } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { STEM_INFO, BRANCH_INFO } from '@/utils/sajuStemBranch';
-import { getTopicPrice } from '@/constants/pricing';
+import { getTopicPrice, getWeeklyPrice, getMonthlyPrice, type PricingInfo } from '@/constants/pricing';
+import type { TopicId } from '@/constants/topics';
+
+/**
+ * §07 4영역 → 실제 주제 묶음 (2026-09-17) — 카드 가격 표기 · DailyFortunePage 선택창 공용 SSOT.
+ *   가격이 섞인 묶음은 실제 최저가 기준 "N운~" (예: 관계 = 결혼 1운 · 연애/재회 3운 → "1운~")
+ */
+export const DAILY_TOPIC_GROUPS: Record<'wealth' | 'love' | 'career' | 'health', readonly TopicId[]> = {
+  wealth: ['wealth'],
+  love: ['love', 'marriage', 'reunion'],
+  career: ['career', 'exam', 'business', 'study'],
+  health: ['health', 'move'],
+};
+
+function groupPriceLabel(key: keyof typeof DAILY_TOPIC_GROUPS): string {
+  const prices = DAILY_TOPIC_GROUPS[key].map((id) => getTopicPrice(id).actualPrice);
+  const min = Math.min(...prices);
+  return prices.some((p) => p !== min) ? `${min}운~` : `${min}운`;
+}
+
+/** 주간·월간 가격 chip — 세일 중이면 "정가 → 실제" (Weekly/MonthlyPage 히어로 표기와 동일 기준) */
+function extensionCostLabel(p: PricingInfo): string {
+  return p.isOnSale && p.salePrice != null ? `${p.regularPrice}운 → ${p.actualPrice}운` : `${p.actualPrice}운`;
+}
 
 // HTML 안전 태그 (<strong>, <b>, <u> 등) 보존 + XSS 차단 (P0 fix 2026-05-06)
 const safeHtml = (text: any): { __html: string } => ({ __html: sanitizeAiText(String(text ?? '')) });
@@ -173,7 +196,14 @@ interface DailyMockupViewProps {
   myOheng: OhengType; // "목"
   /** @deprecated 2026-05-07 — 내부에서 getOhengRelation() 으로 직접 계산. prop 호환만 유지. */
   relationLabel?: string;
-  onUpsell: () => void; // 월운 업셀
+  /** 주간운세 추천 카드 CTA (2026-09-17 복구 — 주간 5운·월간 7운 2026-06-29 출시) */
+  onUpsell: () => void;
+  /** 월별 운세 보조 링크 */
+  onMonthly?: () => void;
+  /** 헤더 태그 — 무료 1회 / 1운 추가 이용 (기본 '오늘 1회 무료') */
+  priceTag?: string;
+  /** 스트리밍 생성 중 — 데이터 없는 §07 은 이때만 스켈레톤, 끝나면 대체 표시 · 추천 카드는 끝난 뒤 노출 */
+  isGenerating?: boolean;
   onShare: () => void;
   onChat: () => void;
   /** §02 4영역 카드 클릭 — topicId: 'wealth'|'love'|'career'|'health' (2026-05-06 v6) */
@@ -804,6 +834,18 @@ const MOCKUP_CSS = `
 .daily-mockup .upsell p { font-size: 12.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; word-break: keep-all; }
 .daily-mockup .upsell .cta { display: inline-flex; gap: 6px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; position: relative; align-items: center; border: none; }
 .daily-mockup .upsell .cost { background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #E8D9B8; margin-left: 6px; font-weight: 600; }
+/* 2026-09-17 주간·월간 추천 카드 (기존 .upsell 재사용) */
+.daily-mockup .upsell.upsell-weekly::before { content: '週'; }
+.daily-mockup .upsell .cta-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; position: relative; }
+.daily-mockup .upsell .cta-row .cta { min-height: 44px; padding: 0 20px; }
+.daily-mockup .upsell .cta-row .cost { margin-left: 0; }
+.daily-mockup .upsell .sub-link {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 44px; margin-top: 16px; padding: 12px 0 0;
+  border: none; border-top: 1px dashed rgba(232,217,184,0.22); background: transparent;
+  color: #E8D9B8; font: inherit; font-size: 12.5px; font-weight: 600; text-align: left; cursor: pointer; word-break: keep-all;
+}
+.daily-mockup .upsell .sub-link .sub-cost { font-size: 11px; color: #c4baa0; white-space: nowrap; }
 
 .daily-mockup .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid var(--c-card-line); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .daily-mockup .actions .btn { background: #fff; border: 1px solid var(--c-card-line); border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
@@ -914,7 +956,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
 }
 
 export function DailyMockupView(props: DailyMockupViewProps) {
-  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell: _onUpsell, onShare, onChat, onTopicClick } = props;
+  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell, onMonthly, priceTag = '오늘 1회 무료', isGenerating = false, onShare, onChat, onTopicClick } = props;
 
   // ── 섹션 접기/펼치기 (§01 default open · 2026-05-06 v6) ──
   // 2026-06-13 통일 정책 (준기 결정) — 01·02 만 펼침, 03+ 접힘.
@@ -982,8 +1024,12 @@ export function DailyMockupView(props: DailyMockupViewProps) {
 
   const subScores = result?.subScores || {};
   const subScoreOneLines = result?.subScoreOneLines || {};
+  const hasSubScores = subScores.wealth !== undefined || subScores.love !== undefined;
   const get10 = (key: string): string => {
-    const v = Number(subScores?.[key] ?? 0);
+    const raw = subScores?.[key];
+    // 2026-09-17 — 점수 없음은 0.0 이 아니라 '—' (생성 완료 후 subScores 누락 시 대체 표시)
+    if (raw === undefined || raw === null || raw === '' || !Number.isFinite(Number(raw))) return '—';
+    const v = Number(raw);
     return (Math.max(0, Math.min(100, v)) / 10).toFixed(1);
   };
 
@@ -1018,7 +1064,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           <div className="top">
             <span className="badge">오늘의 운세</span>
             <span>{profile?.name || '당신'} 님</span>
-            <span className="free-tag">오늘 1회 무료</span>
+            <span className="free-tag">{priceTag}</span>
           </div>
           <h1>{stripAll(title)}</h1>
           <div className="date">{dateLabel}</div>
@@ -1446,7 +1492,9 @@ export function DailyMockupView(props: DailyMockupViewProps) {
 
           {/* §07 4영역 점수 (CTA) — 맨 아래 이동 (사용자 요청 2026-05-06 v6)
               "재물·관계·일·건강 깊이 보기" CTA. 유저가 콘텐츠 다 읽은 후 자연스러운 진입 자리. */}
-          {!(subScores.wealth !== undefined || subScores.love !== undefined) && (
+          {/* 2026-09-17 — 스켈레톤은 생성 중에만. 생성이 끝났는데 subScores 가 없으면 아래 카드(점수 '—')로 대체해
+              '더 깊이 보기' 진입이 사라지지 않게 */}
+          {!hasSubScores && isGenerating && (
             <section className={`section ${isOpen('07') ? 'open' : ''}`}>
               <SectionHeader num="07" title="오늘 4개의 결" han="四運" id="07" />
               <div className="topic-grid">
@@ -1460,10 +1508,14 @@ export function DailyMockupView(props: DailyMockupViewProps) {
               </div>
             </section>
           )}
-          {(subScores.wealth !== undefined || subScores.love !== undefined) && (
+          {(hasSubScores || !isGenerating) && (
             <section className={`section ${isOpen('07') ? 'open' : ''}`}>
               <SectionHeader num="07" title="오늘 4개의 결" han="四運" id="07" />
-              <p className="sec-lead">각 영역을 더 깊이 보고 싶다면 카드를 눌러주세요.</p>
+              <p className="sec-lead">
+                {hasSubScores
+                  ? '각 영역을 더 깊이 보고 싶다면 카드를 눌러주세요.'
+                  : '이번 풀이에는 영역별 점수가 담기지 않았어요. 궁금한 영역을 눌러 더 깊이 볼 수 있어요.'}
+              </p>
               <div className="topic-grid">
                 {[
                   { cls: 't-money', nm: '재물', han: '財', key: 'wealth' as const, cta: '재물운 깊이 보기' },
@@ -1471,25 +1523,27 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                   { cls: 't-work', nm: '일', han: '業', key: 'career' as const, cta: '직업·진로운 깊이 보기' },
                   { cls: 't-health', nm: '건강', han: '身', key: 'health' as const, cta: '건강·체질운 깊이 보기' },
                 ].map((t) => {
-                  const price = getTopicPrice(t.key).actualPrice;
+                  // 2026-09-17 — 카드 하나가 여러 주제로 이어지므로 묶음 실제 최저가 기준 표기 ("1운~")
+                  const price = groupPriceLabel(t.key);
+                  const score10 = get10(t.key);
                   return (
                   <button
                     key={t.key}
                     type="button"
                     className={`topic-card ${t.cls}`}
                     onClick={() => onTopicClick?.(t.key)}
-                    aria-label={`${t.nm} 깊이 보기 (${price}운)`}
+                    aria-label={`${t.nm} 깊이 보기 (${price})`}
                   >
                     <div className="head">
                       <span className="nm">{t.nm}</span>
                       <span className="han">{t.han}</span>
                     </div>
                     <div className="score-row">
-                      <span className="score">{get10(t.key)}</span>
-                      <span className="score-max">/10</span>
+                      <span className="score">{score10}</span>
+                      {score10 !== '—' && <span className="score-max">/10</span>}
                     </div>
                     <div className="one-liner" dangerouslySetInnerHTML={safeHtmlEmph(subScoreOneLines?.[t.key] || '—')} />
-                    <div className="cta-text"><span>{t.cta}</span><span className="cost-pill">{price}운</span></div>
+                    <div className="cta-text"><span>{t.cta}</span><span className="cost-pill">{price}</span></div>
                   </button>
                   );
                 })}
@@ -1539,7 +1593,28 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           )}
         </main>
 
-        {/* 월운 업셀 — 2026-05-27 제거 (월운 상품 미출시) */}
+        {/* 주간·월간 추천 — 2026-09-17 복구 (2026-05-27 월운 미출시로 제거했으나 주간 5운·월간 7운 2026-06-29 출시).
+            오늘 하루 → 이번 주 7일 → 한 달 흐름으로 이어보기. 가격은 pricing SSOT. 생성이 끝난 뒤에만 노출. */}
+        {!isGenerating && (
+          <section className="upsell upsell-weekly" aria-label="이어서 볼 만한 운세">
+            <div className="lab">NEXT · 이번 주 흐름</div>
+            <h3>오늘 하루를 봤다면,<br />이번 주 7일도 이어서 볼까요?</h3>
+            <p>
+              {profile?.name ? `${stripAll(profile.name)}님 사주로` : '내 사주로'} 오늘부터 7일 중 힘을 실어도 좋은 날과
+              한 템포 쉬어갈 날을 짚어드려요.
+            </p>
+            <div className="cta-row">
+              <button type="button" className="cta" onClick={onUpsell}>주간운세 보기</button>
+              <span className="cost">{extensionCostLabel(getWeeklyPrice())}</span>
+            </div>
+            {onMonthly && (
+              <button type="button" className="sub-link" onClick={onMonthly}>
+                <span>한 달 흐름이 궁금하다면 · 월별 운세 보기</span>
+                <span className="sub-cost">{extensionCostLabel(getMonthlyPrice())}</span>
+              </button>
+            )}
+          </section>
+        )}
 
         {/* 액션 */}
         <div className="actions">

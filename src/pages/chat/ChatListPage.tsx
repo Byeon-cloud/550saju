@@ -5,8 +5,8 @@
 // "+" 버튼 → /chat/new (B 화면)
 // 카드 탭 → /chat/:sessionId (C 화면)
 
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -15,9 +15,13 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   getChatRooms,
   deleteChatRoom,
+  createChatRoom,
+  setChatRoomProfileId,
   type ChatRoom,
 } from '@/services/storage/chatStore';
+import { getProfiles } from '@/services/storage/localStore';
 import { CREDITS_PER_UN } from '@/services/storage/chatCredit';
+import { subscribeFreePass } from '@/services/storage/dailyFreePass';
 import {
   C,
   ConvertUnModal,
@@ -38,6 +42,21 @@ export function ChatListPage() {
 
   const timeCtx = useMemo(() => getTimeGreeting(), []);
 
+  // 2026-09-17 — 입력 복귀 경로: /input?from=chat 저장 후 /chat?profileId=… 로 오는데 목록이 파라미터를 무시해
+  //   방금 등록한 사주로 대화를 시작할 수 없었음 → 그 사주로 새 방을 열어 바로 진입.
+  const [searchParams] = useSearchParams();
+  const profileStartRef = useRef(false);
+  useEffect(() => {
+    const pid = searchParams.get('profileId');
+    if (!pid || profileStartRef.current) return;
+    profileStartRef.current = true;
+    const profile = getProfiles().find((p) => p.id === pid);
+    if (!profile) return;
+    const room = createChatRoom(profile.name);
+    setChatRoomProfileId(room.id, profile.id);
+    navigate(`/chat/${room.id}`, { replace: true, state: { profile } });
+  }, [searchParams, navigate]);
+
   function reloadAll() {
     setRooms(getChatRooms());
     setTickets(getTotalTickets());
@@ -46,6 +65,9 @@ export function ChatListPage() {
   useEffect(() => {
     reloadAll();
   }, []);
+
+  // 무료권 변화(자정 KST 넘김·앱 복귀·다른 화면 사용) 시 잔여 대화권 배너 재계산
+  useEffect(() => subscribeFreePass(() => setTickets(getTotalTickets())), []);
 
   function confirmDelete() {
     if (!pendingDelete) return;

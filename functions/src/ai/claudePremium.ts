@@ -24,6 +24,7 @@ import { safeParseJson } from './parseJson';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { logAiUsage } from '../shared/aiUsageLog';
 import { kstNow } from '../utils/kstTime';
+import { computeTopicBaseScore } from './claudeTopic';
 
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
 
@@ -402,7 +403,25 @@ export async function generatePremiumReport(
   console.log(`[claudePremium] T2 parallel done in ${Date.now() - t0}ms`);
 
   const merged = mergeGroups(groupA, groupD, groupB, groupC);
-  return { content: { ...merged, tier: 'premium' } };
+  return { content: { ...merged, tier: 'premium', topicBaseScores: computeTopicBaseScores(sajuData) } };
+}
+
+/* 🚨 2026-09-17 — 종합사주 '주제별로 깊이 보기' 추천 점수 SSOT.
+ *   기존: 추천 카드 점수 = 클라 computeTopicScores(AI 점수 또는 공식+순위 강제분산),
+ *         주제 페이지 점수 = 서버 computeTopicBaseScore → "84점 보고 샀는데 다른 점수".
+ *   수정: 주제분석과 '같은 함수·같은 sajuData' 로 10주제 점수를 결정론 산출해 결과에 첨부.
+ *         AI 호출·토큰 증가 0. 핵심 십성 매핑이 없는 주제(health·move)는 undefined → 제외.
+ *   ⚠️ SSE(generatePremiumReportStream 머지)·callable(generatePremiumReport) 양 경로 모두 첨부해야 함. */
+const PREMIUM_RECO_TOPIC_IDS = ['love', 'reunion', 'marriage', 'wealth', 'exam', 'business', 'health', 'move', 'study', 'career'] as const;
+export function computeTopicBaseScores(sajuData: any): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const id of PREMIUM_RECO_TOPIC_IDS) {
+    try {
+      const s = computeTopicBaseScore(id, sajuData);
+      if (typeof s === 'number' && Number.isFinite(s)) out[id] = s;
+    } catch { /* 데이터 이상 — 해당 주제만 제외 */ }
+  }
+  return out;
 }
 
 /**

@@ -113,13 +113,21 @@ export function saveReport(report: LocalReport): void {
   } catch (e) {
     // 2026-05-29 — 용량초과(QuotaExceededError) 가드. 무가드 시 "돈 내고 결과 유실" 발생.
     //   전략: 방금 저장할 report 는 무조건 보존 + 무료/에페메럴(daily·dream) 오래된 것부터 제거 → 재시도.
+    //   2026-09-18 — daily·dream 에도 결제분(1운 오늘의 운세 · 잠금해제 꿈해몽)이 생김 → 결제분은 에페메럴 취급 X,
+    //   무료 기록을 모두 비운 뒤에만 최후수단으로 제거 (서버 단건 백업은 위에서 이미 발사됨).
     const EPHEMERAL = new Set(['daily', 'dream']);
+    const isPaidRecord = (r: LocalReport) => r.type === 'paid' || !!r.aiResult?.__unlocked;
     let working = reports.slice();
     for (let attempt = 0; attempt < 8; attempt++) {
-      // 1순위: 에페메럴(현재 report 제외) 가장 오래된 것 제거, 없으면 가장 오래된 비-현재 레코드 제거
+      // 1순위: 무료 에페메럴(현재 report·결제분 제외) 가장 오래된 것
+      // 2순위: 그 밖의 무료 기록 가장 오래된 것
+      // 최후수단: 가장 오래된 비-현재 레코드 (기존 동작 — 새 결과 저장 자체가 실패하는 것보다 나음)
       const evictIdx = (() => {
         for (let i = working.length - 1; i > 0; i--) {
-          if (working[i].id !== report.id && EPHEMERAL.has(working[i].contentType ?? '')) return i;
+          if (working[i].id !== report.id && EPHEMERAL.has(working[i].contentType ?? '') && !isPaidRecord(working[i])) return i;
+        }
+        for (let i = working.length - 1; i > 0; i--) {
+          if (working[i].id !== report.id && !isPaidRecord(working[i])) return i;
         }
         for (let i = working.length - 1; i > 0; i--) {
           if (working[i].id !== report.id) return i;

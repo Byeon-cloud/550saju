@@ -1,5 +1,5 @@
 import { kstToday } from '@/utils/kstDate';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +28,7 @@ import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { useToast } from '@/components/common/Toast';
 import {
   spendBalance,
+  refundBalance,
   getBalance,
   getProfiles,
   getReport,
@@ -35,8 +36,17 @@ import {
   generateId,
   markPendingSpend,
   clearPendingSpend,
+  type LocalReport,
   type SajuProfile,
 } from '@/services/storage/localStore';
+// 2026-09-17 오너 결정 — 꿈해몽 무료는 하루 1회, 2회차부터 1운 (홈 뱃지 '오늘 1회 무료'/'1운' 과 같은 무료권 SSOT).
+//   useFreePass 는 React 훅이 아닌 일반 함수 → 훅 규칙 오탐을 피하려고 consumeFreePass 별칭으로 가져온다.
+import {
+  hasFreePass,
+  useFreePass as consumeFreePass,
+  restoreFreePass,
+  subscribeFreePass,
+} from '@/services/storage/dailyFreePass';
 import {
   generateDreamFree,
   // generateDreamDeepV3 — 2026-05-27 블러잠금 SSOT 정석화로 사용 제거 (AI 재호출 0). legacy import 보존.
@@ -142,6 +152,67 @@ const GRADE_V4: Record<string, string> = {
   D: '#8F1F1C',
 };
 
+/** 저장 레코드가 이미 결제(잠금 해제)된 꿈인지 — type 'paid' 또는 aiResult.__unlocked */
+function isReportUnlocked(r: any): boolean {
+  return !!r && (r.type === 'paid' || !!r.aiResult?.__unlocked);
+}
+
+/**
+ * 잠금 5섹션 완성도 — 1운 차감 직전 가드 (2026-09-17 강화).
+ *   기존: 3섹션 본문 중 1개만 30자면 통과 → 스트리밍 도중·반쪽 결과에도 결제되던 문제.
+ *   수정: 일간 연동·오행 흐름·예고 시기 본문 + 경고 목록 상세 + 실천 처방 목록까지 5섹션 모두 확인.
+ */
+function isLockedContentReady(r: any): boolean {
+  if (!r || typeof r !== 'object' || r.__partial) return false;
+  const textLen = (v: any) => (typeof v === 'string' ? v.trim().length : 0);
+  const listLen = (v: any) => (Array.isArray(v) ? v.filter((s: any) => textLen(s) > 0).length : 0);
+  const fullsReady = [r.lockedDayganRead?.full, r.lockedOhengFlow?.full, r.lockedTimeline?.full]
+    .every((v) => textLen(v) >= 60);
+  const warns: any[] = Array.isArray(r.lockedWarnList?.warns) ? r.lockedWarnList.warns : [];
+  const warnsReady = warns.length > 0 && warns.every((w) => textLen(w?.detail) >= 20);
+  const actionReady = listLen(r.lockedAction?.doList) > 0 && listLen(r.lockedAction?.dontList) > 0;
+  return fullsReady && warnsReady && actionReady;
+}
+
+/** 운 잔액 표시 — 리워드 0.1운 단위라 `잔액 - 1` 부동소수 오차(1.2999…) 제거, 소수 1자리 */
+function formatUn(v: number): string {
+  const n = Math.round(v * 10) / 10;
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
+/* ─── 충전 이동 시 입력값 보존 (2026-09-17) ───
+ *   무료권 소진 + 잔액 부족 → 충전 페이지 → 결제 성공(returnTo) 또는 뒤로가기로 /dream 복귀 시 적던 꿈 복원.
+ *   sessionStorage(탭 단위) · 30분 TTL · 복원 직후 삭제 · 새 생성 시작 시에도 삭제. */
+const DREAM_DRAFT_KEY = 'saju500:dream_draft:v1';
+const DREAM_DRAFT_TTL_MS = 30 * 60 * 1000;
+type DreamDraft = { category: DreamCategory | null; dreamText: string; concern: string; ts: number };
+
+function saveDreamDraft(d: Omit<DreamDraft, 'ts'>): void {
+  try { sessionStorage.setItem(DREAM_DRAFT_KEY, JSON.stringify({ ...d, ts: Date.now() })); } catch { /* noop */ }
+}
+function clearDreamDraft(): void {
+  try { sessionStorage.removeItem(DREAM_DRAFT_KEY); } catch { /* noop */ }
+}
+function readDreamDraft(): DreamDraft | null {
+  try {
+    const raw = sessionStorage.getItem(DREAM_DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as DreamDraft;
+    if (!d || typeof d.dreamText !== 'string' || Date.now() - Number(d.ts) > DREAM_DRAFT_TTL_MS) {
+      clearDreamDraft();
+      return null;
+    }
+    return {
+      category: DREAM_CATEGORIES.some((c) => c.id === d.category) ? d.category : null,
+      dreamText: d.dreamText,
+      concern: typeof d.concern === 'string' ? d.concern : '',
+      ts: Number(d.ts),
+    };
+  } catch {
+    return null;
+  }
+}
+
 type Phase = 'category' | 'detail' | 'result' | 'deepLoading' | 'deepResult';
 
 export function DreamPage() {
@@ -163,10 +234,15 @@ export function DreamPage() {
     if (!reportIdFromUrl) return null;
     try { return getReport(reportIdFromUrl); } catch { return null; }
   }, [reportIdFromUrl]);
-  const navState = stateNav?.savedReport
-    ? stateNav
-    : (reportFromUrl ? { savedResult: reportFromUrl.aiResult, savedReport: reportFromUrl } : undefined);
-  const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : 'category');
+  // 2026-09-17 이중결제 fix — URL reportId 가 있으면 localStorage 최신본을 history state 보다 우선.
+  //   history state 는 '진입 시점 스냅샷'이라, 보관함에서 연 무료 꿈을 1운으로 해제 → 다른 화면 → 뒤로가기 시
+  //   무료 스냅샷이 복원돼 다시 잠기고 1운이 또 차감되던 버그. 저장본(해제 반영)이 진본.
+  const navState = reportFromUrl
+    ? { savedResult: reportFromUrl.aiResult, savedReport: reportFromUrl }
+    : (stateNav?.savedReport ? stateNav : undefined);
+  // 충전 페이지에서 돌아온 경우 적던 꿈 복원 (보관함 결과 복원이 우선)
+  const [draft] = useState<DreamDraft | null>(() => (navState?.savedReport ? null : readDreamDraft()));
+  const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : (draft ? 'detail' : 'category'));
   // 2026-05-29 — 출시 프로모션(50원): 무료 꿈해몽 결과 도달도 첫 콘텐츠 인정 (코드 단위 dedupe · 앱인토스 only).
   useEffect(() => {
     if (phase === 'result' || phase === 'deepResult') {
@@ -183,9 +259,9 @@ export function DreamPage() {
   const _restoredCategoryId = _restoredInput?.category
     ? (DREAM_CATEGORIES.find((c) => c.label === _restoredInput.category)?.id ?? null)
     : null;
-  const [selectedCategory, setSelectedCategory] = useState<DreamCategory | null>(_restoredCategoryId);
-  const [dreamText, setDreamText] = useState(_restoredInput?.dreamText ?? '');
-  const [concern, setConcern] = useState(_restoredInput?.concern ?? '');
+  const [selectedCategory, setSelectedCategory] = useState<DreamCategory | null>(_restoredCategoryId ?? draft?.category ?? null);
+  const [dreamText, setDreamText] = useState(_restoredInput?.dreamText ?? draft?.dreamText ?? '');
+  const [concern, setConcern] = useState(_restoredInput?.concern ?? draft?.concern ?? '');
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [aiResult, setAiResult] = useState<any>(navState?.savedResult ?? null);
@@ -198,18 +274,47 @@ export function DreamPage() {
     }
   }, [phase]);
   // 보관함 진입 시: type='paid' OR aiResult.__unlocked 면 잠금 해제 상태로 복원
-  const [unlocked, setUnlocked] = useState(() => {
-    const r = navState?.savedReport;
-    if (!r) return false;
-    return r.type === 'paid' || !!(r.aiResult?.__unlocked);
-  }); // 블러잠금 해제 state (AI 재호출 0)
-  const [showUnlockConfirm, setShowUnlockConfirm] = useState(false); // 1운 차감 확인 모달
+  const [unlocked, setUnlocked] = useState(() => isReportUnlocked(navState?.savedReport)); // 블러잠금 해제 state (AI 재호출 0)
+  // 비동기 흐름(스트리밍 후 저장 시점 등)에서 최신 해제 여부를 읽기 위한 ref — state 와 항상 같이 갱신
+  const unlockedRef = useRef(unlocked);
+  function applyUnlocked(v: boolean) {
+    unlockedRef.current = v;
+    setUnlocked(v);
+  }
+  const [showUnlockConfirm, setShowUnlockConfirm] = useState(false); // 1운 차감 확인 모달 (잠금 해제)
+  const [showPaidStartConfirm, setShowPaidStartConfirm] = useState(false); // 1운 차감 확인 모달 (무료권 소진 후 새 꿈)
+  // 1운 안내 사유 — 'daily' = 오늘 무료 1회 사용 / 'quota' = 서버 월 무료 한도 소진 (모달·충전 문구 분기)
+  const [paidStartReason, setPaidStartReason] = useState<'daily' | 'quota'>('daily');
+  const [freeAvailable, setFreeAvailable] = useState(() => hasFreePass('dream')); // 오늘 무료 꿈해몽 남았는지
+  // 다른 화면·탭에서의 사용/복구, 켜 둔 채 자정(KST) 넘김, 앱 복귀 시 입력 화면 '무료/1운' 표기 재계산
+  useEffect(() => subscribeFreePass(() => setFreeAvailable(hasFreePass('dream'))), []);
   const [unlockBurst, setUnlockBurst] = useState(false); // 잠금 해제 시각 효과 (사라랄)
   const [apiError, setApiError] = useState('');
+  const [restoreNote, setRestoreNote] = useState(''); // 생성 실패 시 되돌림 안내 (1운 환불 / 무료 1회 복구)
+  // 레거시 'deepDream'(구 심층 해몽 · AI 재호출본) 보관함 기록 → DeepResultView 로 하위호환 렌더
+  const [legacyDeep, setLegacyDeep] = useState(navState?.savedReport?.contentType === 'deepDream');
+  // 결과 헤더 날짜 — 저장본은 생성일(createdAt), 새 풀이는 저장 시각
+  const [recordCreatedAt, setRecordCreatedAt] = useState<string | number | null>(navState?.savedReport?.createdAt ?? null);
   const isAnalyzingRef = useRef(false);
   const isDeepAnalyzingRef = useRef(false);
   // 보관함 진입 시 기존 rid 를 보관 (1운 결제 시 동일 레코드 갱신)
   const currentReportIdRef = useRef<string | null>(navState?.savedReport?.id ?? null);
+  // 생성 회차 — 타임아웃 후에도 살아 있는 SSE 콜백이 폴백 결과를 덮어쓰지 않게 구분
+  const runIdRef = useRef(0);
+  // 생성 중 페이지 이탈 가드 — 언마운트 뒤 navigate(replace) 로 사용자가 보고 있는 화면을 가로채지 않게
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+  // 충전 복귀로 입력값을 복원했으면 1회 안내 후 보관본 삭제
+  const draftNoticeShownRef = useRef(false);
+  useEffect(() => {
+    if (!draft || draftNoticeShownRef.current) return;
+    draftNoticeShownRef.current = true;
+    clearDreamDraft();
+    toast.show('적어두신 꿈을 그대로 불러왔어요', 'info');
+  }, [draft, toast]);
 
   const profile: SajuProfile | null = useMemo(
     () => getProfiles().find((p) => !p.relation || p.relation === '본인') || null,
@@ -219,13 +324,184 @@ export function DreamPage() {
 
   function selectCategory(id: DreamCategory) {
     setSelectedCategory(id);
+    setFreeAvailable(hasFreePass('dream')); // 자정 넘김 등 — 입력 화면 진입 시 무료권 재확인
     setTimeout(() => setPhase('detail'), 300);
   }
 
-  /* ─── 무료 해몽 (generateDreamFree · Sonnet 4.6 v3) ─── */
-  async function analyze() {
+  /** 지금 화면의 사용자 입력 (보관함 __userInput 저장 · 재진입 echo 복원용) */
+  function currentUserInput() {
+    return {
+      dreamText,
+      concern,
+      category: DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타',
+    };
+  }
+
+  /** 충전 페이지 이동 (공용 계약) — ChargePage 가 state.returnTo 를 redirect 로 인식해 결제 성공 후 복귀 */
+  function goCharge(message: string, returnTo: string) {
+    navigate('/charge?need=1', { state: { message, returnTo } });
+  }
+
+  /**
+   * 현재 history 항목을 저장 레코드로 교체 (2026-09-17).
+   *   URL 에 ?reportId 를 박고 state 도 최신본으로 → 다른 화면 갔다 뒤로가기·충전 후 복귀·새로고침 시
+   *   진입 시점 스냅샷이 아니라 이 레코드(해제 반영)가 복원된다. 라우트 key 는 pathname 이라 리마운트 없음.
+   */
+  function syncHistoryToReport(report: LocalReport) {
+    if (!mountedRef.current) return; // 생성 중 이탈 — 사용자가 보고 있는 다른 화면을 건드리지 않음
+    // 퇴장 애니메이션(AnimatePresence mode="wait" · ~250ms) 동안은 아직 마운트 상태라 mountedRef 로 못 거른다.
+    //   실제 주소가 이미 다음 화면이면 그 화면의 history 항목을 덮어쓰지 않도록 중단.
+    if (window.location.pathname.replace(/\/+$/, '') !== '/dream') return;
+    const params = new URLSearchParams(location.search);
+    params.set('reportId', report.id);
+    navigate(`${location.pathname}?${params.toString()}`, {
+      replace: true,
+      state: { savedResult: report.aiResult, savedReport: report },
+    });
+  }
+
+  /** 보관함 꿈 레코드 조립 — 'paid' 면 __unlocked 플래그. base(기존 저장본)가 있으면 그 사주 정보 유지 */
+  function buildDreamRecord(p: {
+    id: string;
+    type: 'free' | 'paid';
+    createdAt: string | number;
+    result: any;
+    base?: LocalReport | null;
+  }): LocalReport {
+    return {
+      id: p.id,
+      name: p.base?.name || profile?.name || '꿈해몽',
+      input: (p.base?.input ?? profile?.input ?? {}) as any,
+      sajuData: (p.base?.sajuData ?? profile?.sajuData ?? {}) as any,
+      type: p.type,
+      contentType: 'dream',
+      createdAt: p.createdAt,
+      aiResult: {
+        ...(p.result || {}),
+        ...(p.type === 'paid' ? { __unlocked: true } : {}),
+        __userInput: p.result?.__userInput || currentUserInput(),
+      },
+    };
+  }
+
+  /** 꿈 종류 → 주제 추천 카드 탭 (공용 계약: TopicAnalysisPage 가 state.profileId 로 프로필 미리 선택) */
+  function openTopic(topicId: string) {
+    import('@/services/analytics')
+      .then((a) => a.trackEvent('dream_topic_rec_click', { topic: topicId, category: selectedCategory || 'other' }))
+      .catch(() => {});
+    navigate(`/topic/${topicId}`, { state: { profileId: profile?.id } });
+  }
+
+  /* ─── 꿈해몽 생성 시작점 (2026-09-17 오너 결정) ───
+   *   · 무료는 하루 1회 — 무료권 SSOT = dailyFreePass 'dream' (홈 뱃지와 같은 소스)
+   *   · 무료권 소진 후 새 꿈 = 1운. 확인 모달 → 차감 → 생성 → 잠금 섹션까지 처음부터 열린 상태로 제공
+   *     (추가 1운 잠금해제 요구 금지 · 이중과금 방지) · 저장 type 'paid' + aiResult.__unlocked
+   *   · 잔액 부족 → 입력값 보존 후 충전 이동 (복귀 시 입력값 복원)
+   *   · 보관함에서 기존 결과를 다시 여는 건 이 경로를 타지 않음 → 항상 무료 */
+  function analyze() {
     if (isAnalyzingRef.current || isLoading) return;
+    if (hasFreePass('dream')) {
+      void runAnalyze('free');
+      return;
+    }
+    setFreeAvailable(false);
+    askPaidStart();
+  }
+
+  /** 무료권 소진 → 1운 확인 모달. 잔액 부족이면 입력값 보존 후 충전 이동 */
+  function askPaidStart(reason: 'daily' | 'quota' = 'daily') {
+    setPaidStartReason(reason);
+    if (getBalance() < 1) {
+      saveDreamDraft({ category: selectedCategory, dreamText, concern });
+      toast.show('잔액이 부족해요', 'warning');
+      goCharge(
+        reason === 'quota'
+          ? '이번 달 무료 꿈해몽을 다 썼어요. 새 꿈 풀이에 1운이 필요해요'
+          : '오늘 무료 꿈해몽을 사용했어요. 새 꿈 풀이에 1운이 필요해요',
+        '/dream',
+      );
+      return;
+    }
+    setShowPaidStartConfirm(true);
+  }
+
+  /** 1운 확인 모달 OK → 차감 후 생성 */
+  function confirmPaidStart() {
+    setShowPaidStartConfirm(false);
+    if (isAnalyzingRef.current || isLoading) return;
+    // 모달이 떠 있는 사이 자정(KST)이 지나 무료권이 새로 생겼으면 무료로 진행 (불필요한 차감 방지 · 오늘의 운세와 동일)
+    //   단, 서버 월 한도 소진으로 뜬 모달이면 무료 경로가 다시 막히므로 그대로 1운 진행.
+    if (paidStartReason === 'daily' && hasFreePass('dream')) {
+      void runAnalyze('free');
+      return;
+    }
+    void runAnalyze('paid');
+  }
+
+  /* ─── 꿈해몽 생성 (generateDreamFree · SSE 우선 + callable 폴백 · 무료/1운 공용) ─── */
+  async function runAnalyze(mode: 'free' | 'paid') {
+    if (isAnalyzingRef.current) return;
     isAnalyzingRef.current = true;
+
+    // ── 무료권/운 선차감 — 결과를 못 받으면 catch 에서 되돌림 ──
+    let passUsed = false;
+    // 무료권을 쓴 KST 날짜 — 복구는 '그날 쓴 무료권'만 (자정 넘겨 실패 시 다음 날 무료권을 건드리지 않게)
+    let passUsedOn = '';
+    let charged = false;
+    let pendingId: string | null = null;
+    // 2026-09-17 — localStorage 예외(용량·차단 등)로 가드 ref 가 true 로 고착되지 않게 try 로 감쌈
+    try {
+      if (mode === 'free') {
+        passUsedOn = kstToday();
+        if (!consumeFreePass('dream')) {
+          // 다른 탭 등에서 방금 무료권을 씀 → 1운 안내로 전환
+          isAnalyzingRef.current = false;
+          setFreeAvailable(false);
+          askPaidStart();
+          return;
+        }
+        passUsed = true;
+        setFreeAvailable(false);
+      } else {
+        if (!spendBalance(1)) {
+          isAnalyzingRef.current = false;
+          saveDreamDraft({ category: selectedCategory, dreamText, concern });
+          toast.show('잔액이 부족해요', 'warning');
+          goCharge('새 꿈 풀이에 1운이 필요해요', '/dream');
+          return;
+        }
+        charged = true;
+        // 머니세이프 — 생성 중 앱 종료 등으로 저장까지 못 가면 부팅 reconcile 이 5분 후 자동환불
+        pendingId = markPendingSpend('dream', 1);
+        // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+        import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'dream', amount: 1 })).catch(() => {});
+      }
+    } catch (err) {
+      console.error('[DreamPage:analyze] 선차감 실패:', err);
+      // 차감까지 됐으면 되돌림 (생성 시작 전이라 결과 없음)
+      try {
+        if (charged) {
+          refundBalance(1);
+          if (pendingId) clearPendingSpend(pendingId);
+        } else if (passUsed) {
+          restoreFreePass('dream', passUsedOn);
+        }
+      } catch { /* noop */ }
+      isAnalyzingRef.current = false;
+      toast.show('잠시 문제가 생겼어요. 다시 시도해주세요', 'warning');
+      return;
+    }
+
+    const runId = ++runIdRef.current;
+    const userInput = currentUserInput();
+    let switchToPaid = false; // 서버 월 무료 한도 소진 시 1운 흐름으로 전환
+    clearDreamDraft();
+    currentReportIdRef.current = null; // 새 꿈 = 새 보관함 레코드
+    setRecordCreatedAt(null);
+    setLegacyDeep(false);
+    setRestoreNote('');
+    // 1운으로 시작한 꿈은 처음부터 잠금 해제 상태로 스트리밍 (같은 화면 · 블러 없음 · CTA 없음)
+    applyUnlocked(mode === 'paid');
     setIsLoading(true);
     setIsStreaming(true);
     setApiError('');
@@ -235,7 +511,7 @@ export function DreamPage() {
     setPhase('result');
 
     try {
-      const categoryLabel = DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타';
+      const categoryLabel = userInput.category;
       const fullText = [dreamText, concern ? `\n현재 고민: ${concern}` : ''].filter(Boolean).join('');
       const saju = profile?.sajuData ? buildSajuContext(profile) : undefined;
 
@@ -248,6 +524,11 @@ export function DreamPage() {
         const { generateDreamFreeStream } = await import('@/services/ai/reportGenerator');
         let firstPaintDone = false;
         let latestPartial: any = null; // 2026-06-02 — 타임아웃 시 저장용 최신 partial
+        // 2026-09-17 fix — 스트림 함수가 AbortSignal 을 받지 않아, 첫 paint 전 60초 타임아웃으로 폴백한 뒤에도
+        //   fetch 가 살아 늦은 partial/group 이 callable 폴백 결과를 덮어쓰던 문제 → 닫힌 뒤 도착한 콜백은 전부 무시.
+        //   안전 타이머는 첫 paint 시 해제(기존 동작) — 이후 hang 은 리더의 강제 onError 가 처리.
+        let streamClosed = false;
+        const isLive = () => !streamClosed && runIdRef.current === runId;
         const t0 = Date.now();
         result = await new Promise<any>((resolve, reject) => {
           // 2026-06-02 fix — 기존: 타임아웃이 setIsLoading(false) 만 하고 Promise 를 끝내지 않아,
@@ -257,14 +538,16 @@ export function DreamPage() {
             // 2026-07-03 fix — 기존: partial 을 완성본으로 resolve → __partial 마킹 없이 박제(1운 잠금해제 시
             //   빈 섹션 결제). 수정: 항상 reject → callable 폴백(완성본 재생성). partial 저장 경로 제거.
             //   (스트림 silent-break 는 이제 리더의 강제 onError 로 대부분 즉시 처리 — 이 타이머는 백업)
+            streamClosed = true; // 이후 도착하는 스트림 콜백 무시 (폴백 결과 보호)
             if (!firstPaintDone) { firstPaintDone = true; setIsLoading(false); }
             reject(new Error('dream stream timeout'));
           }, 60_000);
           generateDreamFreeStream(
-            { saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined },
+            { saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined, paid: mode === 'paid' },
             {
               onStart: () => console.log('[dream SSE] start'),
               onPartial: ({ partial, totalChars }) => {
+                if (!isLive()) return;
                 try {
                   if (!partial || typeof partial !== 'object') return;
                   setAiResult({ ...partial });
@@ -279,18 +562,19 @@ export function DreamPage() {
                   const ready = narLen >= 50 || (hasTitle && verdictLen >= 30) || elapsed >= 10_000;
                   if (!firstPaintDone && ready) {
                     firstPaintDone = true;
-                    clearTimeout(safetyId);
+                    clearTimeout(safetyId); // 첫 paint 후엔 60초 상한 없음 (긴 생성 도중 끊고 재생성하던 회귀 방지)
                     console.log(`[dream] 첫 paint (${elapsed}ms, ${totalChars}자, narLen=${narLen}, title=${hasTitle})`);
                     setIsLoading(false);
                   }
                 } catch (err) { console.warn('[dream onPartial guard]', err); }
               },
               onGroup: ({ group, data, elapsedMs }) => {
+                if (!isLive()) return;
                 // 그룹 완전 도착 — 머지된 데이터로 즉시 갱신 (partial 보다 정확)
                 console.log(`[dream] Group ${group} 완료 (${elapsedMs}ms)`);
                 if (!firstPaintDone && group === 'A') {
                   firstPaintDone = true;
-                  clearTimeout(safetyId);
+                  clearTimeout(safetyId); // 첫 paint 후엔 60초 상한 없음
                   console.log(`[dream] 첫 paint (Group A done · ${Date.now() - t0}ms)`);
                   setIsLoading(false);
                 }
@@ -299,16 +583,25 @@ export function DreamPage() {
                 latestPartial = { ...(latestPartial || {}), ...(data || {}) };
               },
               onDone: ({ content }) => {
+                if (!isLive()) return;
+                streamClosed = true;
                 clearTimeout(safetyId);
                 console.log(`[dream SSE] done (${Date.now() - t0}ms)`);
                 resolve(content);
               },
               onError: (msg, code) => {
+                if (!isLive()) return;
+                streamClosed = true;
                 clearTimeout(safetyId);
                 reject(Object.assign(new Error(msg), { code }));
               },
             },
-          ).catch((e) => { clearTimeout(safetyId); reject(e); });
+          ).catch((e) => {
+            if (!isLive()) return;
+            streamClosed = true;
+            clearTimeout(safetyId);
+            reject(e);
+          });
         });
       } catch (streamErr: any) {
         if (streamErr?.code === 'quota' || String(streamErr?.message).includes('쿼터')) {
@@ -316,7 +609,7 @@ export function DreamPage() {
         }
         console.warn('[dream] SSE 실패 → callable 폴백:', streamErr?.message);
         result = await generateDreamFree({
-          saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined,
+          saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined, paid: mode === 'paid',
         });
       }
 
@@ -325,53 +618,94 @@ export function DreamPage() {
         throw new Error('응답 데이터 형식이 올바르지 않아요');
       }
 
+      // 1운으로 시작했는데 잠금 풀이가 비어 있으면 반쪽 결과에 1운을 받지 않는다 → 환불 + 무료 결과로 보관
+      if (charged && !isLockedContentReady(result)) {
+        refundBalance(1);
+        if (pendingId) clearPendingSpend(pendingId);
+        charged = false;
+        pendingId = null;
+        applyUnlocked(false);
+        toast.show('잠금 풀이 일부가 비어 있어 1운을 돌려드렸어요', 'info');
+      }
+      // 결제로 연 꿈이면 처음부터 해제 상태로 저장 (방어: 생성 중 해제가 끼어든 경우 포함)
+      const paidRecord = charged || unlockedRef.current;
+
       setAiResult(result);
 
       // 이벤트 v4 · 출석 마커 (KST 당일 1회)
       mark().catch(() => {/* non-blocking */});
 
-      // 보관함 저장 (무료) — 잠금 해제 시 같은 레코드를 갱신하도록 id 보관
+      // 보관함 저장 — 1운으로 연 꿈은 type 'paid' + __unlocked (재진입 시 해제 유지 · 보관함 '1운 사용' 표기)
+      //   2026-05-28 — user input (꿈주제·꿈내용·고민) 도 함께 저장 → 보관함 재진입 시 입력 echo 복원
       try {
-        const rid = generateId();
-        currentReportIdRef.current = rid;
-        // 2026-05-28 — user input (꿈주제·꿈내용·고민) 도 함께 저장 → 보관함 재진입 시 입력 echo 복원
-        const categoryLabelForSave = DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타';
-        saveReport({
-          id: rid,
-          name: profile?.name || '꿈해몽',
-          input: (profile?.input ?? {}) as any,
-          sajuData: (profile?.sajuData ?? {}) as any,
-          type: 'free',
-          contentType: 'dream',
+        const record = buildDreamRecord({
+          id: generateId(),
+          type: paidRecord ? 'paid' : 'free',
           createdAt: new Date().toISOString(),
-          aiResult: { ...result, __userInput: { dreamText, concern, category: categoryLabelForSave } },
+          result: { ...result, __userInput: userInput },
         });
+        currentReportIdRef.current = record.id; // 잠금 해제 시 같은 레코드 갱신
+        saveReport(record);
+        setRecordCreatedAt(record.createdAt);
+        if (pendingId) clearPendingSpend(pendingId); // 영속 완료 → 자동환불 대상 제외
+        // 현재 history 항목을 이 결과로 교체 → 다른 화면 갔다 뒤로가기·충전 후 복귀 시 그대로 복원
+        syncHistoryToReport(record);
       } catch {
-        /* 보관함 실패는 무시 */
+        /* 보관함 실패 — 무료는 무시. 1운은 pending 유지 → 부팅 reconcile 자동환불 */
       }
     } catch (e: any) {
-      console.error('[DreamPage:free] API 실패:', e);
-      // 쿼터 소진 전용 메시지
-      if (e?.code === 'resource-exhausted' || String(e?.message).includes('쿼터')) {
-        setApiError('이번 달 꿈해몽 무료 쿼터가 소진됐어요. 다음 달에 다시 만나요.');
-      } else {
-        // 2026-05-29 — e.message(영문 기술오류) 노출 금지. 항상 친절 카피.
-        setApiError('꿈을 살피는 데 잠시 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
-      }
+      console.error('[DreamPage:analyze] API 실패:', e);
+      const isQuota = e?.code === 'resource-exhausted' || e?.code === 'quota' || String(e?.message).includes('쿼터');
+      applyUnlocked(false);
       setAiResult(null);
+      if (isQuota && passUsed && !charged) {
+        // 2026-09-17 — 서버 월 무료 한도 소진(무료 경로): 무료권을 복구하면 다시 무료 시도 → 또 거절 무한 반복.
+        //   오늘 무료권은 소진 처리로 두고 1운 흐름으로 전환 (1운 생성은 paid:true 로 서버 쿼터 제외).
+        switchToPaid = true;
+        setFreeAvailable(false);
+        setApiError('');
+      } else {
+        // 결과를 못 받았으면 선차감 되돌림 — 1운은 환불, 무료권은 복구 (오늘 무료 1회 보존)
+        if (charged) {
+          refundBalance(1);
+          if (pendingId) clearPendingSpend(pendingId);
+          setRestoreNote('차감된 1운은 돌려드렸어요.');
+        } else if (passUsed) {
+          restoreFreePass('dream', passUsedOn); // 그날 쓴 무료권만 복구 (자정 넘김 실패 시 다음 날 무료권 보호)
+          setFreeAvailable(hasFreePass('dream'));
+          setRestoreNote('오늘 무료 1회는 그대로 남아 있어요.');
+        }
+        if (isQuota) {
+          // 쿼터 소진 전용 메시지
+          setApiError('이번 달 꿈해몽 무료 쿼터가 소진됐어요. 다음 달에 다시 만나요.');
+        } else {
+          // 2026-05-29 — e.message(영문 기술오류) 노출 금지. 항상 친절 카피.
+          setApiError('꿈을 살피는 데 잠시 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
+        }
+      }
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
-      setPhase('result');
+      // 월 한도 소진 → 입력 화면으로 돌아가 1운 안내 모달 (적은 꿈 그대로)
+      setPhase(switchToPaid ? 'detail' : 'result');
       isAnalyzingRef.current = false;
+    }
+    if (switchToPaid) {
+      toast.show('이번 달 무료 꿈해몽을 다 썼어요. 1운으로 풀 수 있어요', 'info');
+      askPaidStart('quota');
     }
   }
 
   /* ─── 잠금 해제 (블러잠금 SSOT — AI 재호출 0, 페이지 전환 0) ───
    *   CLAUDE.md 정책: "spendBalance(1) → setUnlocked(true). AI 재호출/페이지전환 제거"
-   *   2026-05-27 v11: 확인 모달 + 잠금 해제 애니메이션 (사라랄 효과) 추가. */
-  async function startDeepAnalysis() {
-    if (isDeepAnalyzingRef.current || unlocked) return;
+   *   2026-05-27 v11: 확인 모달 + 잠금 해제 애니메이션 (사라랄 효과) 추가.
+   *   2026-09-17: 이중결제 가드(저장본이 이미 해제면 무차감) · 스트리밍 중 차단 · 5섹션 완성도 · 충전 복귀 경로 */
+  function startDeepAnalysis() {
+    if (isDeepAnalyzingRef.current || unlockedRef.current) return;
+    if (isStreaming || isLoading || isAnalyzingRef.current) {
+      toast.show('풀이를 마무리하는 중이에요. 다 쓰이면 바로 열 수 있어요', 'info');
+      return;
+    }
     if (!profile?.sajuData) {
       toast.show('먼저 사주를 분석해주세요', 'warning');
       navigate('/input');
@@ -381,77 +715,127 @@ export function DreamPage() {
       toast.show('무료 해석을 먼저 진행해주세요', 'warning');
       return;
     }
-    // 잔액 사전 체크 — 부족하면 충전 페이지로
-    const currentBalance = getBalance();
-    if (currentBalance < 1) {
+    // 이미 결제·해제된 저장본이면 차감 없이 해제만 (뒤로가기 스냅샷·다른 탭으로 잠겨 보이던 경우)
+    if (restoreUnlockedFromSaved()) return;
+    // 2026-07-03 머니가드 → 2026-09-17 5섹션 강화 — 반쪽 결과에 1운 방지 (재생성 유도)
+    if (!isLockedContentReady(aiResult)) {
+      toast.show('해석이 아직 다 준비되지 않았어요. 다시 시도한 뒤 열어주세요', 'warning');
+      return;
+    }
+    // 잔액 사전 체크 — 부족하면 충전 페이지로 (결과 저장 보장 후 이 결과로 복귀)
+    if (getBalance() < 1) {
       toast.show('잔액이 부족해요', 'warning');
-      navigate('/charge', { state: { message: '심층 해몽에 1운이 필요해요' } });
+      goChargeForUnlock();
       return;
     }
     // 확인 모달 (앱인토스 정책: window.confirm 금지 → 커스텀 modal state)
     setShowUnlockConfirm(true);
   }
 
+  /** 저장 레코드가 이미 결제/해제 상태면 화면만 해제하고 history 를 최신본으로 교체. 처리했으면 true */
+  function restoreUnlockedFromSaved(): boolean {
+    const rid = currentReportIdRef.current;
+    const saved = rid ? getReport(rid) : null;
+    if (!saved || !isReportUnlocked(saved)) return false;
+    applyUnlocked(true);
+    if (saved.aiResult) setAiResult(saved.aiResult);
+    syncHistoryToReport(saved);
+    toast.show('이미 열어둔 풀이예요', 'info');
+    return true;
+  }
+
+  /** 잠금 해제용 충전 이동 — 결과가 보관함에 없으면 먼저 저장해 복귀 경로(?reportId)를 보장 */
+  function goChargeForUnlock() {
+    let rid = currentReportIdRef.current;
+    if (!rid || !getReport(rid)) {
+      try {
+        const record = buildDreamRecord({
+          id: rid || generateId(),
+          type: 'free',
+          createdAt: recordCreatedAt ?? new Date().toISOString(),
+          result: aiResult,
+        });
+        saveReport(record);
+        rid = record.id;
+        currentReportIdRef.current = rid;
+        setRecordCreatedAt(record.createdAt);
+      } catch {
+        rid = null; // 저장 불가(용량 초과 등) — 복귀 경로 없이 이동
+      }
+    }
+    goCharge('꿈해몽 잠금 풀이에 1운이 필요해요', rid ? `/dream?reportId=${encodeURIComponent(rid)}` : '/dream');
+  }
+
   /** 확인 모달 OK 시 실제 차감 + 잠금 해제 */
-  async function confirmDeepUnlock() {
+  function confirmDeepUnlock() {
     setShowUnlockConfirm(false);
-    if (isDeepAnalyzingRef.current || unlocked) return;
+    if (isDeepAnalyzingRef.current || unlockedRef.current) return;
+    if (isStreaming || isLoading || isAnalyzingRef.current) return;
     if (!profile?.sajuData || !aiResult) return;
-    // 2026-07-03 머니가드 — 잠금 콘텐츠(lockedXxx.full)가 비어 있으면 결제 차단 (반쪽 결과에 1운 방지).
-    //   무료 생성이 partial/미완이면 여기서 막고 재생성 유도 → 1운 소실 원천 차단.
-    const lockedFull = [aiResult?.lockedDayganRead?.full, aiResult?.lockedOhengFlow?.full, aiResult?.lockedTimeline?.full];
-    const anyLockedReady = lockedFull.some((v) => typeof v === 'string' && v.trim().length >= 30);
-    if ((aiResult as any)?.__partial || !anyLockedReady) {
+    // 모달이 떠 있는 사이 다른 탭 등에서 해제됐을 수도 — 저장본 재확인 (이중결제 방지)
+    if (restoreUnlockedFromSaved()) return;
+    if (!isLockedContentReady(aiResult)) {
       toast.show('해석이 아직 다 준비되지 않았어요. 다시 시도한 뒤 열어주세요', 'warning');
       return;
     }
     isDeepAnalyzingRef.current = true;
-    if (!spendBalance(1)) {
-      toast.show('잔액이 부족해요', 'warning');
-      navigate('/charge', { state: { message: '심층 해몽에 1운이 필요해요' } });
-      isDeepAnalyzingRef.current = false;
-      return;
-    }
-    // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
-    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'dream', amount: 1 })).catch(() => {});
-    // 2026-06-18 머니세이프 — 차감 후 보관함 저장 실패(용량초과 등) 시 부팅 reconcile 이 5분 후 자동환불.
-    //   저장 성공 시 아래에서 clearPendingSpend 로 해제. (정상 경로는 동기 실행이라 즉시 해제됨)
-    const dreamPendingId = markPendingSpend('dream', 1);
-    // 잠금 해제 시각 효과 (사라랄) — body 에 일시 클래스 추가 → CSS 애니메이션
-    setUnlockBurst(true);
-    setTimeout(() => setUnlockBurst(false), 1500);
-    toast.show('잠금이 풀렸어요 · 1운 차감', 'success');
-    setUnlocked(true);
-    // 보관함 동일 레코드 갱신 (__unlocked 플래그 + type='paid' 로 전환) — 재진입 시 잠금 해제 상태 유지
+    // 2026-09-17 — 차감·저장 중 예외가 나도 가드 ref 가 true 로 고착되지 않게 try/finally
     try {
-      const rid = currentReportIdRef.current;
-      if (rid) {
-        saveReport({
-          id: rid,
-          name: profile.name || '꿈해몽',
-          input: profile.input,
-          sajuData: profile.sajuData,
-          type: 'paid',
-          contentType: 'dream',
-          aiResult: { ...aiResult, __unlocked: true, __userInput: aiResult?.__userInput || { dreamText, concern, category: DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타' } },
-          createdAt: new Date().toISOString(),
-        });
-        clearPendingSpend(dreamPendingId); // 잠금해제 영속 완료 → 자동환불 대상 제외
+      if (!spendBalance(1)) {
+        toast.show('잔액이 부족해요', 'warning');
+        goChargeForUnlock();
+        return;
       }
-    } catch { /* noop — 저장 실패 시 pending 유지 → 부팅 reconcile 자동환불 */ }
-    isDeepAnalyzingRef.current = false;
+      // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
+      import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'dream', amount: 1 })).catch(() => {});
+      // 2026-06-18 머니세이프 — 차감 후 보관함 저장 실패(용량초과 등) 시 부팅 reconcile 이 5분 후 자동환불.
+      //   저장 성공 시 아래에서 clearPendingSpend 로 해제. (정상 경로는 동기 실행이라 즉시 해제됨)
+      const dreamPendingId = markPendingSpend('dream', 1);
+      // 잠금 해제 시각 효과 (사라랄) — body 에 일시 클래스 추가 → CSS 애니메이션
+      setUnlockBurst(true);
+      setTimeout(() => setUnlockBurst(false), 1500);
+      toast.show('잠금이 풀렸어요 · 1운 차감', 'success');
+      applyUnlocked(true);
+      // 보관함 동일 레코드 갱신 (__unlocked 플래그 + type='paid' 로 전환) — 재진입 시 잠금 해제 상태 유지
+      try {
+        const rid = currentReportIdRef.current || generateId();
+        const saved = getReport(rid);
+        const record = buildDreamRecord({
+          id: rid,
+          type: 'paid',
+          // 생성일 유지 — 결과 헤더·보관함 날짜가 해제 시각으로 바뀌지 않게
+          createdAt: saved?.createdAt ?? recordCreatedAt ?? new Date().toISOString(),
+          result: aiResult,
+          base: saved,
+        });
+        currentReportIdRef.current = rid;
+        saveReport(record);
+        setRecordCreatedAt(record.createdAt);
+        clearPendingSpend(dreamPendingId); // 잠금해제 영속 완료 → 자동환불 대상 제외
+        // 뒤로가기 시 진입 시점(무료) 스냅샷이 복원돼 다시 잠기던 이중결제 차단 — history 항목 교체
+        syncHistoryToReport(record);
+      } catch { /* noop — 저장 실패 시 pending 유지 → 부팅 reconcile 자동환불 */ }
+    } finally {
+      isDeepAnalyzingRef.current = false;
+    }
   }
 
-  // @ts-expect-error legacy — DeepResultView 와 함께 dead code (블러잠금 SSOT 후)
+  // 레거시 'deepDream' 결과(DeepResultView)의 '처음으로' — 새 꿈 입력으로 초기화
   function reset() {
     setPhase('category');
     setSelectedCategory(null);
     setDreamText('');
     setConcern('');
     setAiResult(null);
-    setUnlocked(false);
+    applyUnlocked(false);
+    setLegacyDeep(false);
+    setRecordCreatedAt(null);
+    setRestoreNote('');
+    setFreeAvailable(hasFreePass('dream'));
     currentReportIdRef.current = null;
     setApiError('');
+    // URL ?reportId 제거 — 뒤로가기·새로고침 시 방금 닫은 기록이 다시 열리지 않게
+    if (location.search) navigate(location.pathname, { replace: true });
   }
 
   // 2026-05-27 — 사주 없으면 꿈해몽 진입 차단. AI 가 사주와 꿈을 교차 해석하는 게 핵심이라
@@ -518,6 +902,7 @@ export function DreamPage() {
               onBack={() => setPhase('category')}
               onSubmit={analyze}
               submitting={isLoading}
+              freeAvailable={freeAvailable}
             />
           )}
 
@@ -537,21 +922,32 @@ export function DreamPage() {
           )}
 
           {phase === 'result' && !isLoading && !aiResult && (
-            <ErrorView key="error" apiError={apiError} onBack={() => setPhase('detail')} />
+            <ErrorView key="error" apiError={apiError} restoreNote={restoreNote} onBack={() => setPhase('detail')} />
           )}
 
-          {phase === 'result' && !isLoading && aiResult && (
+          {/* 레거시 'deepDream' 보관함 기록 (2026-05-27 이전 AI 재호출 심층본) — 하위호환 렌더.
+              DreamMockupView 는 lockedXxx 스키마라 이 기록을 열면 스켈레톤만 보이던 버그 (2026-09-17 fix) */}
+          {phase === 'result' && !isLoading && aiResult && legacyDeep && (
+            <motion.div key="legacy-deep" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <DeepResultView result={aiResult} profile={profile} onReset={reset} />
+            </motion.div>
+          )}
+
+          {phase === 'result' && !isLoading && aiResult && !legacyDeep && (
             <motion.div key="result" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               <DreamMockupView
                 result={adaptDreamResult(aiResult)}
                 profile={profile}
                 hasSaju={hasSaju}
                 category={DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '기타'}
+                categoryId={selectedCategory}
                 dreamText={dreamText}
                 concern={concern}
                 unlocked={unlocked}
                 isStreaming={isStreaming}
+                createdAt={recordCreatedAt ?? undefined}
                 onUnlock={startDeepAnalysis}
+                onTopic={openTopic}
                 onShare={async () => {
                   // 2026-05-28 PM — 결과 페이지 공유 = OG 바이럴 (보상 X). shareResult 사용.
                   const { shareResult } = await import('@/utils/share');
@@ -595,68 +991,32 @@ export function DreamPage() {
               결제 = 같은 result phase 에서 unlocked=true 로 블러만 해제. 페이지 전환 0. */}
         </AnimatePresence>
 
-        {/* 1운 차감 확인 모달 (앱인토스 정책: window.confirm 금지) */}
+        {/* 1운 차감 확인 모달 (앱인토스 정책: window.confirm 금지) — 잠금 해제 */}
         {showUnlockConfirm && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            style={{
-              position: 'fixed', inset: 0, zIndex: 100,
-              background: 'rgba(10, 12, 22, 0.55)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '20px', animation: 'fadeIn .2s ease both',
-            }}
-            onClick={() => setShowUnlockConfirm(false)}
+          <DreamConfirmModal
+            title="1운으로 잠금을 풀까요?"
+            confirmLabel="1운으로 풀기"
+            onCancel={() => setShowUnlockConfirm(false)}
+            onConfirm={confirmDeepUnlock}
           >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                background: '#fff', borderRadius: 16, maxWidth: 380, width: '100%',
-                padding: '24px 22px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-                animation: 'modalPop .25s cubic-bezier(.34,1.56,.64,1) both',
-              }}
-            >
-              <div style={{
-                fontFamily: "'Noto Serif KR', serif", fontSize: 17, fontWeight: 700,
-                color: '#1a1a1a', marginBottom: 8, letterSpacing: '-0.01em',
-              }}>
-                1운으로 잠금을 풀까요?
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.6, color: '#5C4A2E', marginBottom: 18, wordBreak: 'keep-all' }}>
-                일간 연동·오행 흐름·꿈의 경고·예고 시기·실천 처방
-                <strong style={{ color: '#1a1a1a' }}> 다섯 섹션</strong>이 즉시 열려요.<br />
-                현재 잔액 <b style={{ color: '#B8965A' }}>{getBalance()}운</b> → 차감 후 <b>{getBalance() - 1}운</b>
-              </p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowUnlockConfirm(false)}
-                  style={{
-                    flex: 1, height: 48, border: '1px solid #E5DFD0', background: '#fff',
-                    borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#5C4A2E', cursor: 'pointer',
-                  }}
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmDeepUnlock}
-                  style={{
-                    flex: 1.5, height: 48, border: 'none',
-                    background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
-                    color: '#1a1a1a', borderRadius: 100, fontSize: 14, fontWeight: 800,
-                    cursor: 'pointer', boxShadow: '0 4px 12px rgba(184,150,90,0.35)',
-                  }}
-                >
-                  1운으로 풀기
-                </button>
-              </div>
-              <style dangerouslySetInnerHTML={{ __html: `
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes modalPop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-              `}} />
-            </div>
-          </div>
+            일간 연동·오행 흐름·꿈의 경고·예고 시기·실천 처방
+            <strong style={{ color: '#1a1a1a' }}> 다섯 섹션</strong>이 즉시 열려요.<br />
+            현재 잔액 <b style={{ color: '#B8965A' }}>{formatUn(getBalance())}운</b> → 차감 후 <b>{formatUn(getBalance() - 1)}운</b>
+          </DreamConfirmModal>
+        )}
+
+        {/* 1운 차감 확인 모달 — 오늘 무료권 소진 후 새 꿈 (2026-09-17 · 잠금 섹션까지 한 번에) */}
+        {showPaidStartConfirm && (
+          <DreamConfirmModal
+            title={paidStartReason === 'quota' ? '이번 달 무료 꿈해몽을 다 썼어요' : '오늘 무료 꿈해몽을 사용했어요'}
+            confirmLabel="1운으로 풀기"
+            onCancel={() => setShowPaidStartConfirm(false)}
+            onConfirm={confirmPaidStart}
+          >
+            1운으로 이 꿈을 풀까요?
+            <strong style={{ color: '#1a1a1a' }}> 잠금 섹션까지 모두</strong> 열려요.<br />
+            현재 잔액 <b style={{ color: '#B8965A' }}>{formatUn(getBalance())}운</b> → 차감 후 <b>{formatUn(getBalance() - 1)}운</b>
+          </DreamConfirmModal>
         )}
 
         {/* 잠금 해제 시각 효과 (사라랄) — 1.5초간 골드 burst overlay */}
@@ -798,6 +1158,7 @@ function DetailPhase({
   onBack,
   onSubmit,
   submitting,
+  freeAvailable,
 }: {
   categoryId: DreamCategory | null;
   dreamText: string;
@@ -807,6 +1168,8 @@ function DetailPhase({
   onBack: () => void;
   onSubmit: () => void;
   submitting: boolean;
+  /** 오늘 무료 꿈해몽이 남았는지 — 없으면 '1운' 표기 */
+  freeAvailable: boolean;
 }) {
   const cat = DREAM_CATEGORIES.find((c) => c.id === categoryId);
   return (
@@ -881,14 +1244,22 @@ function DetailPhase({
             className="cta-gold"
             onClick={onSubmit}
             disabled={submitting || dreamText.trim().length === 0}
-            aria-label="꿈 해석 받기"
+            aria-label={freeAvailable ? '꿈 해석 받기' : '1운으로 꿈 해석 받기'}
           >
             {submitting
               ? '꿈을 살피는 중이에요...'
               : dreamText.trim().length === 0
                 ? '꿈 내용을 적어주세요'
-                : '꿈 해석 받기'}
+                : freeAvailable
+                  ? '꿈 해석 받기'
+                  : '1운으로 꿈 해석 받기'}
           </button>
+          {/* 2026-09-17 — 무료는 하루 1회. 소진 후엔 1운 (잠금 섹션까지 한 번에 열림) */}
+          <p className="sec-caption" style={{ textAlign: 'center', marginTop: 8, wordBreak: 'keep-all' }}>
+            {freeAvailable
+              ? '오늘 1회 무료로 풀어드려요'
+              : '오늘 무료 꿈해몽은 사용했어요 · 1운이면 잠금 섹션까지 한 번에 열려요'}
+          </p>
         </div>
       </div>
     </motion.div>
@@ -898,10 +1269,20 @@ function DetailPhase({
 /* ══════════════════════════════════════════════════════════════════
  * 오류 화면 (generateDreamFree 실패) — v4.1 ErrorState 공용
  * ═════════════════════════════════════════════════════════════════ */
-function ErrorView({ apiError, onBack }: { apiError: string; onBack: () => void }) {
+function ErrorView({
+  apiError,
+  restoreNote = '',
+  onBack,
+}: {
+  apiError: string;
+  /** 생성 실패 시 되돌림 안내 (1운 환불 / 오늘 무료 1회 복구) — 있으면 공용 '운은 차감되지 않았습니다' 대신 노출 */
+  restoreNote?: string;
+  onBack: () => void;
+}) {
   // 쿼터 소진은 운 차감 자체가 없으므로 refund 안내 불필요
   const isQuotaExhausted =
     apiError.includes('쿼터') || apiError.includes('resource-exhausted');
+  const withNote = (s: string) => (restoreNote ? `${s} ${restoreNote}` : s);
 
   return (
     <motion.div
@@ -910,18 +1291,98 @@ function ErrorView({ apiError, onBack }: { apiError: string; onBack: () => void 
     >
       <ErrorState
         title={isQuotaExhausted ? '이번 달 무료 쿼터가 소진됐어요' : '해석을 가져오지 못했어요'}
-        subtitle={
+        subtitle={withNote(
           isQuotaExhausted
             ? '다음 달에 다시 만나요. 그동안은 사주 리포트로 더 깊은 분석도 가능해요.'
-            : apiError || '잠시 후 다시 시도해주세요'
-        }
+            : apiError || '잠시 후 다시 시도해주세요',
+        )}
         onRetry={isQuotaExhausted ? undefined : onBack}
         onBack={onBack}
         retryLabel="다시 시도"
         backLabel="꿈 다시 적기"
-        showRefundNote={!isQuotaExhausted}
+        showRefundNote={!isQuotaExhausted && !restoreNote}
       />
     </motion.div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * 1운 차감 확인 모달 (앱인토스 정책: window.confirm/alert 금지)
+ *   잠금 해제 · 무료권 소진 후 새 꿈 — 두 흐름이 같은 모달 UI 공유 (2026-09-17 추출)
+ * ═════════════════════════════════════════════════════════════════ */
+function DreamConfirmModal({
+  title,
+  confirmLabel,
+  onCancel,
+  onConfirm,
+  children,
+}: {
+  title: string;
+  confirmLabel: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(10, 12, 22, 0.55)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px', animation: 'fadeIn .2s ease both',
+      }}
+      onClick={onCancel}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#fff', borderRadius: 16, maxWidth: 380, width: '100%',
+          padding: '24px 22px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          animation: 'modalPop .25s cubic-bezier(.34,1.56,.64,1) both',
+        }}
+      >
+        <div style={{
+          fontFamily: "'Noto Serif KR', serif", fontSize: 17, fontWeight: 700,
+          color: '#1a1a1a', marginBottom: 8, letterSpacing: '-0.01em',
+        }}>
+          {title}
+        </div>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: '#5C4A2E', marginBottom: 18, wordBreak: 'keep-all' }}>
+          {children}
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              flex: 1, height: 48, border: '1px solid #E5DFD0', background: '#fff',
+              borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#5C4A2E', cursor: 'pointer',
+            }}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            style={{
+              flex: 1.5, height: 48, border: 'none',
+              background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
+              color: '#1a1a1a', borderRadius: 100, fontSize: 14, fontWeight: 800,
+              cursor: 'pointer', boxShadow: '0 4px 12px rgba(184,150,90,0.35)',
+            }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes modalPop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        `}} />
+      </div>
+    </div>
   );
 }
 
@@ -1379,7 +1840,7 @@ function _FreeResultView_legacy({
 /* ══════════════════════════════════════════════════════════════════
  * 심층 결과 (유료 1운 · Sonnet + 2차 리뷰)
  * ═════════════════════════════════════════════════════════════════ */
-// @ts-expect-error 블러잠금 SSOT 후 dead code (legacy 보존)
+// 2026-09-17 — 신규 생성은 없음. 레거시 'deepDream' 보관함 기록 하위호환 렌더 경로로만 사용.
 function DeepResultView({
   result,
   profile,

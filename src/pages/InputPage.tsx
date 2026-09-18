@@ -148,6 +148,13 @@ type FromKey =
   | 'home_body_wolun'
   | 'home_body_gunghap'
   | 'home_body_tojeong'
+  | 'home_body_tojung' /* TojungPage 빈상태 (lockdown) */
+  | 'home_body_weekly' /* WeeklyPage 빈상태 */
+  | 'home_body_monthly' /* MonthlyPage 빈상태 */
+  | 'weekly'
+  | 'monthly'
+  | 'daily' /* 오늘의 운세 빈상태 */
+  | 'dream' /* 꿈해몽 빈상태 */
   | 'storage'
   | 'chat'
   | 'my' /* Stage 7e-5: 내 정보에서 사주 입력 → 사주 카드로 진입 (운 차감 X) */
@@ -162,6 +169,16 @@ interface FromIntent {
   routeAfterSave?: (newId: string) => string;
 }
 
+/** 2026-09-17 — 스테일 from 값 정리.
+ *  대운·궁합·토정은 출시 lockdown(라우트가 홈 redirect)이고 /topic/daewoon·/topic/tojeong 은 없는 주제라
+ *  저장 후 엉뚱한 화면(홈 redirect·주제 404)에 떨어졌음 → 홈으로 명시 폴백.
+ *  사주 저장만 하고 운은 차감하지 않으므로 버튼에 가격(1운) 표기도 뺌. */
+const LOCKED_FALLBACK_INTENT: FromIntent = {
+  hint: '사주 정보를 입력해주세요',
+  submitLabel: '사주 저장하기',
+  routeAfterSave: () => '/',
+};
+
 const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   home_pillar_daily: {
     hint: '오늘의 운세를 보려면 사주 정보가 필요해요',
@@ -169,9 +186,41 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
     routeAfterSave: () => '/daily',
   },
   home_pillar_dream: {
-    hint: '오늘의 운세를 보려면 사주 정보가 필요해요',
+    hint: '꿈을 사주와 함께 풀려면 사주 정보가 필요해요',
     submitLabel: '꿈해몽 시작하기',
     routeAfterSave: () => '/dream',
+  },
+  // 2026-09-17 — 콘텐츠 빈상태 → 입력 → 원래 콘텐츠로 복귀 (저장만 · 운 차감 없음)
+  daily: {
+    hint: '오늘의 운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '오늘의 운세 보기',
+    routeAfterSave: () => '/daily',
+  },
+  dream: {
+    hint: '꿈을 사주와 함께 풀려면 사주 정보가 필요해요',
+    submitLabel: '꿈해몽 시작하기',
+    routeAfterSave: () => '/dream',
+  },
+  // 주간·월간은 방금 저장한 사주를 미리 선택해 둔 채로 복귀 (?profileId= · WeeklyPage/MonthlyPage 가 처리)
+  weekly: {
+    hint: '주간운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '주간운세 보러 가기',
+    routeAfterSave: (id) => `/weekly?profileId=${encodeURIComponent(id)}`,
+  },
+  home_body_weekly: {
+    hint: '주간운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '주간운세 보러 가기',
+    routeAfterSave: (id) => `/weekly?profileId=${encodeURIComponent(id)}`,
+  },
+  monthly: {
+    hint: '월별 운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '월별 운세 보러 가기',
+    routeAfterSave: (id) => `/monthly?profileId=${encodeURIComponent(id)}`,
+  },
+  home_body_monthly: {
+    hint: '월별 운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '월별 운세 보러 가기',
+    routeAfterSave: (id) => `/monthly?profileId=${encodeURIComponent(id)}`,
   },
   home_body_premium: {
     hint: '종합 사주를 위해 정보를 입력해주세요',
@@ -185,26 +234,17 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
     submitLabel: '주제 고르러 가기',
     routeAfterSave: () => '/topic',
   },
-  home_body_daewoon: {
-    hint: '주제별 심층 풀이에 필요한 사주 정보예요',
-    submitLabel: '대운 풀이 시작 (1운)',
-    routeAfterSave: () => '/topic/daewoon',
-  },
+  // 대운·궁합·토정 — lockdown/없는 주제 → 홈 폴백 (LOCKED_FALLBACK_INTENT 주석 참고)
+  home_body_daewoon: LOCKED_FALLBACK_INTENT,
+  // 월운은 /monthly 로 출시됨 → 구 /topic/wolun(없는 주제) 대신 월별 운세로
   home_body_wolun: {
-    hint: '주제별 심층 풀이에 필요한 사주 정보예요',
-    submitLabel: '월운 풀이 시작 (1운)',
-    routeAfterSave: () => '/topic/wolun',
+    hint: '월별 운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '월별 운세 보러 가기',
+    routeAfterSave: (id) => `/monthly?profileId=${encodeURIComponent(id)}`,
   },
-  home_body_gunghap: {
-    hint: '주제별 심층 풀이에 필요한 사주 정보예요',
-    submitLabel: '궁합 풀이 시작 (1운)',
-    routeAfterSave: () => '/compat',
-  },
-  home_body_tojeong: {
-    hint: '주제별 심층 풀이에 필요한 사주 정보예요',
-    submitLabel: '토정비결 풀이 시작 (1운)',
-    routeAfterSave: () => '/topic/tojeong',
-  },
+  home_body_gunghap: LOCKED_FALLBACK_INTENT,
+  home_body_tojeong: LOCKED_FALLBACK_INTENT,
+  home_body_tojung: LOCKED_FALLBACK_INTENT,
   storage: {
     hint: '새로운 사주를 등록합니다',
     submitLabel: '사주 저장하기',
@@ -233,11 +273,8 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
     // Stage 7e-8: 사주풀이 폐기 — 미정의 fallback 도 사주카드 진입으로 통일
     routeAfterSave: (id) => `/saju-card/${id}`,
   },
-  compat: {
-    hint: '궁합 분석할 분의 사주를 입력해주세요',
-    submitLabel: '궁합 풀이 시작 (1운)',
-    routeAfterSave: () => '/compat',
-  },
+  // 궁합 (레거시 · lockdown) — /compat 은 홈 redirect 라 홈으로 명시 폴백
+  compat: LOCKED_FALLBACK_INTENT,
 };
 
 // Stage 7e-8: 사주풀이 폐기 — DEFAULT_INTENT 도 사주카드 진입으로 통일

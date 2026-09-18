@@ -1,5 +1,7 @@
 // HeroBadge — 블록 1. "콘텐츠 하나만 봐도 오늘 출석 +1"
 // 스펙: 09_이벤트_v4.md §2 · 핸드오버 §1-C-7 block 1
+// 2026-09-17 — 출석 인정 범위 = 콘텐츠 결과 도달(dailyReward.processAttendanceRewards 호출처)과 문구 일치.
+//   오늘의 운세 배지로 0.1운만 받는 것은 출석이 아니다.
 
 export function HeroBadge() {
   return (
@@ -29,7 +31,7 @@ export function HeroBadge() {
           콘텐츠 하나만 봐도 오늘 출석 +1
         </p>
         <p className="mt-1 text-[12px] leading-[1.45]" style={{ color: '#8A7F6E' }}>
-          오늘의 운세·꿈해몽·1운 해석 등 결과 1개만 보면 충분해요
+          오늘의 운세·꿈해몽·주제·주간·월간 등 결과를 하나 보면 출석
         </p>
       </div>
     </section>
