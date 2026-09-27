@@ -264,7 +264,7 @@ export function setMyProfile(reportId: string): void {
         pChanged = true;
       }
     }
-    if (pChanged) localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+    if (pChanged) writeProfiles(profiles);
   } catch { /* noop */ }
 }
 
@@ -283,7 +283,7 @@ export function updateProfileRelation(profileId: string, newRelation: string): v
     const target = profiles.find(p => p.id === profileId);
     if (target) {
       target.relation = newRelation as any;
-      localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+      writeProfiles(profiles);
     }
     // 같은 ID 의 리포트도 동기화
     const reports = getReports();
@@ -352,7 +352,7 @@ export function migrateOwnerDuplicates(): { migrated: number } {
         migrated++;
       }
     }
-    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+    writeProfiles(profiles);
     // 리포트도 동기화
     const reports = getReports();
     for (const r of reports) {
@@ -569,7 +569,7 @@ export function getProfiles(): SajuProfile[] {
         }
       }
       if (migrated) {
-        try { localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); } catch { /* noop */ }
+        try { writeProfiles(profiles); } catch { /* noop */ }
       }
       // 2026-07 fix — 저장 시점의 stale 현재대운(isCurrent) 을 오늘 기준으로 재계산.
       //   해가 바뀌어 대운이 넘어가도 저장 플래그가 영구 신뢰되던 문제 차단 (in-memory only).
@@ -597,7 +597,7 @@ export function getProfiles(): SajuProfile[] {
     }
     const profiles = Array.from(seen.values());
     if (profiles.length > 0) {
-      localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+      writeProfiles(profiles);
     }
     return profiles;
   } catch { return []; }
@@ -615,7 +615,7 @@ export function saveProfileDirect(profile: SajuProfile): void {
   } else {
     profiles.unshift(profile);
   }
-  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  writeProfiles(profiles);
 }
 
 /**
@@ -626,7 +626,81 @@ export function saveProfileDirect(profile: SajuProfile): void {
  */
 export function deleteProfile(profileId: string): void {
   const profiles = getProfiles().filter(p => p.id !== profileId);
+  writeProfiles(profiles);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 사주원국(프로필) 서버 미러 + 복원 병합 (2026-09-27)
+ *   CS "사주원국 기록이 사라졌어요" — 프로필은 localStorage 에만 있어 저장소가 비면 복원 불가였다
+ *   (리포트는 서버 백업이 있었지만 프로필은 0). 모든 프로필 쓰기에 서버 미러(state/profiles)를 동반하고,
+ *   기기 여권이 옛 계정 미러를 합쳐주면 여기서 로컬로 병합한다. 병합은 '없는 것만 추가'.
+ * ──────────────────────────────────────────────────────────── */
+function profileKey(p: { name?: string; input?: Partial<SajuInput> | null }): string {
+  return `${p.name}_${p.input?.birthYear}_${p.input?.birthMonth}_${p.input?.birthDay}`;
+}
+
+let profilesMirrorTimer: ReturnType<typeof setTimeout> | null = null;
+function writeProfiles(profiles: SajuProfile[]): void {
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  if (profilesMirrorTimer) clearTimeout(profilesMirrorTimer);
+  profilesMirrorTimer = setTimeout(() => {
+    profilesMirrorTimer = null;
+    import('./firestoreSync').then((m) => m.pushProfilesMirror(profiles)).catch(() => { /* noop */ });
+  }, 2000);
+}
+
+/** 리포트에서 프로필 후보 추출 (getProfiles 초기 마이그레이션과 같은 규칙) */
+export function profilesFromReports(reports: LocalReport[]): SajuProfile[] {
+  const seen = new Map<string, SajuProfile>();
+  for (const r of reports) {
+    if (!r?.input?.birthYear || !r.name) continue;
+    if (r.contentType === 'compat') continue;
+    if (r.name.includes('×') || r.name.includes('x')) continue;
+    const k = profileKey(r);
+    if (!seen.has(k)) {
+      seen.set(k, { id: r.id, name: r.name, input: r.input, sajuData: r.sajuData, relation: r.input?.relation, createdAt: r.createdAt });
+    }
+  }
+  return Array.from(seen.values());
+}
+
+/** 복원 프로필 병합 — 이름+생년월일 기준으로 없는 것만 추가. 추가 수 반환. */
+export function mergeProfiles(
+  incoming: Array<{ id?: string; name?: string; input?: SajuInput | null; sajuData?: SajuData; relation?: string | null; createdAt?: string | number }>,
+): number {
+  try {
+    const current = getProfiles();
+    const keys = new Set(current.map(profileKey));
+    const hasSelf = current.some((p) => !p.relation || p.relation === '본인');
+    let added = 0;
+    for (const p of incoming || []) {
+      if (!p?.name || !p.input?.birthYear) continue;
+      const k = profileKey(p);
+      if (keys.has(k)) continue;
+      let sajuData = p.sajuData;
+      if (!sajuData?.pillars?.length || (sajuData as any)?.calcVersion !== CALC_STANDARD_VERSION) {
+        try { sajuData = calculateSaju(p.input); } catch { /* 재계산 실패 시 원본 유지 */ }
+      }
+      if (!sajuData?.pillars?.length) continue;
+      // '본인'은 1명만 (InputPage 정책) — 이미 본인이 있으면 복원분은 가족으로
+      const rel = p.relation ?? p.input?.relation ?? undefined;
+      const relation = rel === '본인' && hasSelf ? '가족' : rel;
+      current.push({
+        id: p.id || generateId(),
+        name: p.name,
+        input: relation && p.input.relation !== relation ? { ...p.input, relation } : p.input,
+        sajuData,
+        relation,
+        createdAt: p.createdAt ?? new Date().toISOString(),
+      });
+      keys.add(k);
+      added++;
+    }
+    if (added > 0) writeProfiles(current);
+    return added;
+  } catch {
+    return 0;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────

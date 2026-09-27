@@ -43,14 +43,28 @@ export async function runDevicePassportCheck(): Promise<void> {
     const { getFunctions, httpsCallable } = await import('firebase/functions');
     const { app } = await import('@/services/auth/firebase');
     const fn = httpsCallable(getFunctions(app, 'us-central1'), 'registerDevicePassport');
-    const r: any = await fn({ deviceId });
+    // 토스 익명키 — '미니앱 × 토스 계정' 고유값. 기기가 바뀌어도 같은 사람을 잇는다 (2026-09-27).
+    const anonKey = await getTossAnonKey(mod);
+    const r: any = await fn(anonKey ? { deviceId, anonKey } : { deviceId });
 
     try { localStorage.setItem(THROTTLE_KEY, String(Date.now())); } catch { /* noop */ }
 
     const migrated = Number(r?.data?.migratedReports) || 0;
     const rotated = !!r?.data?.rotated;
     const mirrorReady = !!r?.data?.mirrorReady;
+    const profilesRestored = Number(r?.data?.profilesRestored) || 0;
     const sync = await import('@/services/storage/firestoreSync');
+
+    // (0) 사주원국 복원 — 서버가 옛 계정 목록을 합쳐줬으면 로컬로 병합 (없는 것만 추가)
+    if (profilesRestored > 0 || rotated) {
+      try {
+        const items = await sync.pullProfilesMirror(uid);
+        if (items.length) {
+          const store = await import('@/services/storage/localStore');
+          store.mergeProfiles(items);
+        }
+      } catch { /* noop — 리포트 복원 경로가 인물도 함께 복원한다 */ }
+    }
 
     // (a) 보관함 복원 — 서버가 옛 uid 리포트를 이 uid 로 이관했을 때
     if (migrated > 0) {
@@ -88,6 +102,25 @@ export async function runDevicePassportCheck(): Promise<void> {
   } catch {
     // 조용히 — 다음 부팅에 재시도
   }
+}
+
+/** 토스 익명키 조회 — 3.x `User.getAnonymousKey`(throw) 우선, 없으면 구 `getAnonymousKey`. 3초 타임아웃. */
+async function getTossAnonKey(mod: any): Promise<string | undefined> {
+  const withTimeout = <T,>(p: Promise<T>): Promise<T | undefined> =>
+    Promise.race([p, new Promise<undefined>((res) => setTimeout(() => res(undefined), 3000))]);
+  try {
+    if (typeof mod?.User?.getAnonymousKey === 'function') {
+      const res: any = await withTimeout(mod.User.getAnonymousKey());
+      if (res?.hash) return String(res.hash);
+    }
+  } catch { /* 미지원 앱 버전 등 — 구 API 시도 */ }
+  try {
+    if (typeof mod?.getAnonymousKey === 'function') {
+      const res: any = await withTimeout(mod.getAnonymousKey());
+      if (res && typeof res === 'object' && res.hash) return String(res.hash);
+    }
+  } catch { /* noop */ }
+  return undefined;
 }
 
 /** 이번 부팅에서 잔액이 미러로 seed 됐는가 — IAP 복구의 로컬 이중가산 방지용 */

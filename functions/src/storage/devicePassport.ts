@@ -18,17 +18,18 @@
  *   - 보관함(reports)만. 결제(payments)는 복사하지 않는다 — 잔액 복원은 recoverIapOrders 가
  *     결제 이력 검증으로 담당하며, payments 를 미리 복사하면 그쪽 지급 판정이 skip 돼 버린다.
  *   - 기증자(donor)는 '이 기기에서 등록된 적 있는 uid' 로 한정 — 임의 uid 보관함 탈취 불가.
- *   - 기기당 24h 이관 1회 + 등록 uid 상한 → 어뷰징/폭주 방어. 이관 내역은 문서에 감사 로그.
+ *   - 등록 uid 상한 → 어뷰징/폭주 방어. 이관 내역은 문서에 감사 로그.
+ *   - (2026-09-27) 24h 쿨다운 폐지 — 연속 회전 피해의 직접 원인이었다. 복사·skip 이라 멱등.
+ *   - (2026-09-27) 토스 익명키(anonKeys/{sha256}) 등록부 추가 — 기기 변경에도 같은 사람을 잇는다.
  */
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { createHash } from 'crypto';
 
 const db = admin.firestore();
 
 /** 한 번의 이관에서 복사할 리포트 상한 (조혜미 47건 대비 여유) */
 const MIGRATE_LIMIT = 300;
-/** 같은 기기의 이관 최소 간격(ms) — 회전이 하루 두 번 일어날 일은 없다 */
-const MIGRATE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 /** 기기당 등록 uid 상한 — 초과는 비정상 기기로 보고 등록만 받고 이관은 중단 */
 const MAX_UIDS_PER_DEVICE = 12;
 
@@ -62,69 +63,128 @@ export const registerDevicePassport = onCall(
       if (cuid && cuid !== uid && !known.includes(cuid)) compDonor = cuid;
     } catch { /* noop */ }
 
-    // ── 1) 이관 판정 — 이 uid 가 이 기기에서 처음 보이는데, 직전 uid(등록 or 보상이력)가 있으면 회전으로 간주
+    // ── 0) 토스 익명키 등록부 (2026-09-27) — User.getAnonymousKey() 는 '미니앱 × 토스 계정' 고유 해시라
+    //   기기를 바꾸거나 deviceId 가 달라져도 같은 사람을 잇는다. deviceId 와 같은 신뢰 수준(클라 제공값)으로 취급.
+    //   문서 id 는 원문 대신 sha256 (해시에 '/' 등이 있어도 안전, 원문 노출 최소화).
+    const rawAnon = String(request.data?.anonKey || '').trim();
+    const anonKey = /^[A-Za-z0-9_\-+=/.]{8,256}$/.test(rawAnon) ? rawAnon : '';
+    const anonRef = anonKey ? db.doc(`anonKeys/${createHash('sha256').update(anonKey).digest('hex')}`) : null;
+    let anonUids: string[] = [];
+    if (anonRef) {
+      try {
+        const a = await anonRef.get();
+        const m: Record<string, admin.firestore.Timestamp | null> = a.exists ? ((a.data() as any)?.uids || {}) : {};
+        anonUids = Object.entries(m)
+          .filter(([k]) => k !== uid)
+          .sort((x, y) => (y[1]?.toMillis?.() ?? 0) - (x[1]?.toMillis?.() ?? 0))
+          .map(([k]) => k);
+      } catch { /* noop */ }
+    }
+
+    // ── 1) 이관 판정
+    //   🚨 2026-09-27 재설계 — 실측 피해(9/26 CS): 저장소가 비면 익명 로그인이 연달아 2번 일어나 uid 가
+    //   몇 초~몇 분 간격으로 두 번 바뀐다. 구 로직은 ① 첫 uid 로 이관 후 ② '24h 쿨다운' 때문에 두 번째(실제로
+    //   쓰이는) uid 이관을 막았고 ③ 한 번 등록된 uid 는 다시 보지 않아, 복구가 영구히 빗나갔다(4기기).
+    //   → 쿨다운 폐지 + 형제 uid 전부를 기증자로 + 이미 등록된 uid 라도 '빠진 리포트'가 있으면 채운다.
+    //   이관은 복사·있는 문서 skip 이라 몇 번을 돌아도 멱등 — 쿨다운 없이도 폭주·중복이 생기지 않는다.
     let migratedReports = 0;
     let fromUid: string | null = null;
-    let rotated = false;      // 회전 감지 (리포트 0건이어도 true — 잔액 seed 트리거)
+    let rotated = false;      // 새 uid 가 이 기기/계정에서 처음 보임 (리포트 0건이어도 true — 잔액 seed 트리거)
     let mirrorReady = false;  // 이 uid 에 잔액 미러가 존재 (seed 재료 있음)
+    let profilesRestored = 0; // 사주원국 미러로 합쳐진 인물 수
 
-    const lastMigratedAt: admin.firestore.Timestamp | undefined = data.lastMigratedAt;
-    const cooledDown = !lastMigratedAt || (Date.now() - lastMigratedAt.toMillis()) > MIGRATE_COOLDOWN_MS;
-    const hasDonorSource = (known.filter((k) => k !== uid).length > 0) || !!compDonor;
+    // 기증자 = 이 기기 등록 uid(최근순) ∪ 익명키 등록 uid ∪ 보상이력 uid — 현재 uid 제외, 상한 적용
+    const donors = Array.from(new Set([
+      ...known.filter((k) => k !== uid)
+        .sort((a, b) => (uids[b]?.toMillis?.() ?? 0) - (uids[a]?.toMillis?.() ?? 0)),
+      ...anonUids,
+      ...(compDonor ? [compDonor] : []),
+    ])).slice(0, MAX_UIDS_PER_DEVICE);
 
-    if (!alreadyRegistered && hasDonorSource && known.length < MAX_UIDS_PER_DEVICE && cooledDown) {
-      // 기증자 = 이 기기 등록 uid 중 최근 활동자 (없으면 보상이력 uid).
-      const donor = known
-        .filter((k) => k !== uid)
-        .sort((a, b) => (uids[b]?.toMillis?.() ?? 0) - (uids[a]?.toMillis?.() ?? 0))[0] || compDonor;
-
-      if (donor) {
-        rotated = true; // 같은 기기에 직전 uid 존재 = 회전 (리포트 유무와 무관)
-        try {
-          const donorReports = await db.collection(`users/${donor}/reports`).limit(MIGRATE_LIMIT).get();
-          if (!donorReports.empty) {
-            let batch = db.batch();
-            let pending = 0;
-            for (const d of donorReports.docs) {
-              const destRef = db.doc(`users/${uid}/reports/${d.id}`);
-              const dest = await destRef.get();
-              if (dest.exists) continue; // 있는 건 절대 덮지 않음 (멱등)
-              batch.set(destRef, {
-                ...d.data(),
-                migratedFromUid: donor,
-                migratedVia: 'device-passport',
-                migratedAt: admin.firestore.FieldValue.serverTimestamp(),
-              });
-              migratedReports++;
-              pending++;
-              if (pending >= 400) { await batch.commit(); batch = db.batch(); pending = 0; }
-            }
-            if (pending > 0) await batch.commit();
-            fromUid = donor;
-            console.log(`[devicePassport] 자동 이관 ${donor} → ${uid} · 리포트 ${migratedReports}건 (device=${deviceId.slice(0, 12)}…)`);
+    if (donors.length > 0 && known.length < MAX_UIDS_PER_DEVICE) {
+      if (!alreadyRegistered) rotated = true;
+      try {
+        // 현재 uid 의 문서 id — listDocuments 는 본문을 읽지 않아 저렴
+        const destIds = new Set((await db.collection(`users/${uid}/reports`).listDocuments()).map((r) => r.id));
+        let batch = db.batch();
+        let pending = 0;
+        for (const donor of donors) {
+          if (migratedReports >= MIGRATE_LIMIT) break;
+          const refs = await db.collection(`users/${donor}/reports`).listDocuments();
+          const missing = refs.filter((r) => !destIds.has(r.id)).slice(0, MIGRATE_LIMIT - migratedReports);
+          if (missing.length === 0) continue;
+          const snaps = await db.getAll(...missing);
+          let fromThis = 0;
+          for (const d of snaps) {
+            if (!d.exists || destIds.has(d.id)) continue;
+            batch.set(db.doc(`users/${uid}/reports/${d.id}`), {
+              ...d.data(),
+              migratedFromUid: donor,
+              migratedVia: 'device-passport',
+              migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            destIds.add(d.id); // 형제끼리 같은 리포트(이전 이관 사본)는 한 번만
+            migratedReports++; fromThis++; pending++;
+            if (pending >= 400) { await batch.commit(); batch = db.batch(); pending = 0; }
           }
-        } catch (e: any) {
-          // 리포트 이관 실패해도 잔액 미러는 아래에서 별도로 시도 (0건 유저 잔액 복원 P0)
-          console.warn(`[devicePassport] 리포트 이관 실패 device=${deviceId.slice(0, 12)}…: ${e?.message || e}`);
+          if (fromThis > 0 && !fromUid) fromUid = donor;
         }
+        if (pending > 0) await batch.commit();
+        if (migratedReports > 0) {
+          console.log(`[devicePassport] 자동 이관 → ${uid} · 리포트 ${migratedReports}건 · 기증자 ${donors.length} (${alreadyRegistered ? '누락 보충' : '회전'} · device=${deviceId.slice(0, 12)}…)`);
+        }
+      } catch (e: any) {
+        // 리포트 이관 실패해도 잔액 미러는 아래에서 별도로 시도 (0건 유저 잔액 복원 P0)
+        console.warn(`[devicePassport] 리포트 이관 실패 device=${deviceId.slice(0, 12)}…: ${e?.message || e}`);
+      }
 
-        // 잔액 미러 이관 — 🚨 리포트 유무와 독립 (리포트 0건·무료 위주 유저도 잔액 복원돼야 함, P0 fix).
-        //   클라가 '키 부재' 일 때 1회 seed 하는 재료. 멱등: dest 없을 때만.
-        try {
-          const mirror = await db.doc(`users/${donor}/state/balance`).get();
-          const dest = await db.doc(`users/${uid}/state/balance`).get();
-          if (dest.exists) {
-            mirrorReady = true;
-          } else if (mirror.exists) {
+      // 잔액 미러 — 리포트 유무와 독립. dest 가 없을 때만 1회, 기증자 중 미러가 있는 가장 최근 uid 에서.
+      try {
+        const dest = await db.doc(`users/${uid}/state/balance`).get();
+        if (dest.exists) {
+          mirrorReady = rotated || !!(dest.data() as any)?.migratedFromUid;
+        } else {
+          for (const donor of donors) {
+            const mirror = await db.doc(`users/${donor}/state/balance`).get();
+            if (!mirror.exists) continue;
             await db.doc(`users/${uid}/state/balance`).set({
               ...mirror.data(),
               migratedFromUid: donor,
               migratedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
             mirrorReady = true;
+            if (!fromUid) fromUid = donor;
+            break;
           }
-        } catch { /* 미러 이관 실패는 무해 — 클라가 rotated 로 재시도 */ }
-      }
+        }
+      } catch { /* 미러 이관 실패는 무해 — 클라가 rotated 로 재시도 */ }
+
+      // 사주원국 미러 (2026-09-27) — 기증자 목록을 현재 uid 목록에 합친다 (이름+생년월일 기준, 추가만)
+      try {
+        const destRef = db.doc(`users/${uid}/state/profiles`);
+        const destSnap = await destRef.get();
+        const items: any[] = destSnap.exists && Array.isArray((destSnap.data() as any)?.items) ? [...(destSnap.data() as any).items] : [];
+        const pkey = (p: any) => `${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`;
+        const keys = new Set(items.map(pkey));
+        for (const donor of donors) {
+          const m = await db.doc(`users/${donor}/state/profiles`).get();
+          const arr: any[] = m.exists && Array.isArray((m.data() as any)?.items) ? (m.data() as any).items : [];
+          for (const p of arr) {
+            if (!p?.name || !p?.input?.birthYear) continue;
+            const k = pkey(p);
+            if (keys.has(k)) continue;
+            keys.add(k); items.push(p); profilesRestored++;
+          }
+        }
+        if (profilesRestored > 0) {
+          await destRef.set({
+            items: items.slice(0, 100),
+            count: Math.min(items.length, 100),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            migratedProfilesAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+      } catch { /* 무해 — 리포트 복원 경로가 인물도 함께 복원한다 */ }
     } else if (alreadyRegistered) {
       // 재부팅(같은 uid) — 이미 이관돼 온 잔액 미러가 있으면 seed 재시도 재료로 알린다 (네트워크 실패 복구).
       try {
@@ -139,15 +199,24 @@ export const registerDevicePassport = onCall(
       lastUid: uid,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
-    if (rotated && fromUid) {
+    if (fromUid && (migratedReports > 0 || rotated)) {
       update.lastMigratedAt = admin.firestore.FieldValue.serverTimestamp();
       // 감사 로그 — 최근 20건만 유지
       const log: any[] = Array.isArray(data.migrationLog) ? data.migrationLog.slice(-19) : [];
-      log.push({ from: fromUid, to: uid, reports: migratedReports, at: new Date().toISOString() });
+      log.push({ from: fromUid, to: uid, reports: migratedReports, at: new Date().toISOString(), heal: alreadyRegistered });
       update.migrationLog = log;
     }
     await ref.set(update, { merge: true });
+    if (anonRef) {
+      try {
+        await anonRef.set({
+          uids: { [uid]: admin.firestore.FieldValue.serverTimestamp() },
+          devices: { [deviceId.slice(0, 64)]: admin.firestore.FieldValue.serverTimestamp() },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      } catch { /* 등록 실패는 무해 — 다음 부팅 재시도 */ }
+    }
 
-    return { registered: true, migratedReports, rotated, mirrorReady };
+    return { registered: true, migratedReports, rotated, mirrorReady, profilesRestored };
   },
 );

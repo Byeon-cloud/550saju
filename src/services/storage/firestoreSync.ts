@@ -13,7 +13,7 @@
 
 import { doc, getDoc, setDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { db, auth } from '@/services/auth/firebase';
-import { getReports, saveReport, generateId, type LocalReport } from './localStore';
+import { getReports, saveReport, generateId, mergeProfiles, profilesFromReports, type LocalReport, type SajuProfile } from './localStore';
 import { type BalanceDetail } from './localStore';
 
 /**
@@ -117,6 +117,7 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
 
     // 로컬이 비어있으면(회전 직후) twin 두 벌이 모두 클라우드에서 내려오므로,
     //   base36(클라 정본)을 먼저 처리하도록 정렬 — auto-id 사본이 지문에 걸려 걸러진다.
+    const addedReports: LocalReport[] = []; // 이번 동기화로 새로 내려온 리포트 — 사주원국 복원용
     const ordered = [...reportsSnap.docs].sort((a, b) => {
       const aB36 = /^m[a-z0-9]{9,16}$/.test(a.id) ? 0 : 1;
       const bB36 = /^m[a-z0-9]{9,16}$/.test(b.id) ? 0 : 1;
@@ -132,7 +133,7 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
         // 2026-06-19 — 내용(aiResult) 복원 (문자열 → 파싱). 없으면(구 백업) undefined → 빈 껍데기지만 기존과 동일.
         let aiResult: unknown = undefined;
         try { if (data.aiResultJson) aiResult = JSON.parse(data.aiResultJson); } catch { /* noop */ }
-        saveReport({
+        const restored = {
           id: docSnap.id,
           name: data.name,
           input: data.input,
@@ -143,9 +144,15 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
           type: data.type ?? undefined,
           profileId: data.profileId ?? undefined,
           aiResult,
-        } as LocalReport);
+        } as LocalReport;
+        saveReport(restored);
+        addedReports.push(restored);
       }
     });
+
+    // 사주원국 복원 (2026-09-27) — 새로 내려온 리포트의 인물을 프로필 목록에 합친다.
+    //   '이번에 새로 받은 리포트'만 보므로, 유저가 지운 프로필(리포트는 이미 로컬에 있음)은 되살아나지 않는다.
+    if (addedReports.length > 0) mergeProfiles(profilesFromReports(addedReports));
 
     // P0-1 (2026-06-22) — 부팅/익명 복원은 reports 만 한다. 잔액 복원은 spend 가 로컬 전용인 현 구조에서
     //   '클라우드>로컬 이면 보강'이 이미 써버린 운을 부활시키는 과복원 위험 → spend 서버화 전까진 끈다.
@@ -291,6 +298,36 @@ export async function pushBalanceMirror(detail: BalanceDetail): Promise<void> {
       updatedAt: new Date(),
     }, { merge: true });
   } catch { /* noop — 다음 잔액 변경에서 재시도 */ }
+}
+
+/**
+ * 사주원국 미러 push (2026-09-27) — 프로필은 로컬 전용이라 저장소가 비면 복원 불가였다.
+ *   users/{uid}/state/profiles 에 목록을 스냅샷(사주 계산값 제외 — 복원 시 재계산). 실패는 다음 쓰기에서 재시도.
+ */
+export async function pushProfilesMirror(profiles: SajuProfile[]): Promise<void> {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    const items = (profiles || []).slice(0, 100).map((p) => ({
+      id: p.id,
+      name: p.name ?? '',
+      input: p.input ?? null,
+      relation: p.relation ?? null,
+      createdAt: typeof p.createdAt === 'string' ? p.createdAt : new Date(p.createdAt as number).toISOString(),
+    }));
+    // Firestore 는 undefined 를 거부 — JSON 왕복으로 제거
+    const clean = JSON.parse(JSON.stringify(items));
+    await setDoc(doc(db, `users/${uid}/state`, 'profiles'), { items: clean, count: clean.length, updatedAt: new Date() });
+  } catch { /* noop */ }
+}
+
+/** 사주원국 미러 pull — 기기 여권 복원 후 병합용 (없으면 빈 배열) */
+export async function pullProfilesMirror(uid: string): Promise<any[]> {
+  try {
+    const snap = await getDoc(doc(db, `users/${uid}/state`, 'profiles'));
+    const items = snap.exists() ? (snap.data() as any)?.items : null;
+    return Array.isArray(items) ? items : [];
+  } catch { return []; }
 }
 
 /** 잔액 미러 pull — 기기 여권 seed 용 (없으면 null) */

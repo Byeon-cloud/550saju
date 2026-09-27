@@ -18,13 +18,30 @@ import { isAppsInToss } from '@/services/payment/iapService';
  * 모든 유저에게 Firebase Auth 토큰을 부여하여 Cloud Functions 호출 가능하게
  * 나중에 토스/소셜 로그인 시 linkWithCredential로 계정 연결
  */
+/**
+ * 익명 로그인 보장 — 🚨 2026-09-27 단일화 (CS "운·보관함·사주원국 전부 사라짐" 진범 중 하나).
+ *   저장소가 비워진 부팅에서 여러 곳(여권·보상·동기화·이벤트…)이 동시에 ensureAuth 를 부르면
+ *   signInAnonymously 가 병렬로 돌아 **익명 계정이 몇 초 간격으로 2개** 생겼다(실측 4기기).
+ *   복구 장치는 첫 계정으로 이관하는데 앱은 두 번째 계정으로 넘어가 복구가 빗나갔다.
+ *   → ① 저장된 로그인 복원(authStateReady)이 끝날 때까지 기다리고 ② 진행 중 호출을 공유한다.
+ */
+let ensureAuthInflight: Promise<void> | null = null;
 export async function ensureAuth(): Promise<void> {
   if (auth.currentUser) return; // 이미 로그인됨
-  try {
-    await signInAnonymously(auth);
-  } catch (e) {
-    console.warn('[Auth] 익명 로그인 실패:', e);
-  }
+  if (ensureAuthInflight) return ensureAuthInflight;
+  ensureAuthInflight = (async () => {
+    try {
+      // 복원 전 currentUser 는 null — 여기서 새로 로그인하면 멀쩡한 기존 계정을 버리게 된다
+      try { await auth.authStateReady(); } catch { /* 구형 SDK — 아래 판정으로 진행 */ }
+      if (auth.currentUser) return;
+      await signInAnonymously(auth);
+    } catch (e) {
+      console.warn('[Auth] 익명 로그인 실패:', e);
+    } finally {
+      ensureAuthInflight = null;
+    }
+  })();
+  return ensureAuthInflight;
 }
 
 const googleProvider = new GoogleAuthProvider();
