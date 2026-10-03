@@ -762,7 +762,9 @@ export function mergeProfiles(
  * 환불은 paid 버킷(가장 유리)으로. localStorage 키: saju500:pending_spends
  * ──────────────────────────────────────────────────────────── */
 const PENDING_SPENDS_KEY = 'saju500:pending_spends';
-const PENDING_EXPIRE_MS = 5 * 60 * 1000; // 5분 — 정상 생성(최대 ~2분)보다 충분히 김
+// 2026-10-04 5분 → 12분: 재회운은 생성 ~222초 + 마감 300초 + 서버 완성본 대기(최대 330초)라, 5분이면
+//   아직 생성 중인 결제가 자동환불돼 '결과도 받고 환불도 받는' 누수가 생겼다. 실패 건 환불은 7분 늦어질 뿐.
+export const PENDING_EXPIRE_MS = 12 * 60 * 1000;
 
 interface PendingSpend { id: string; type: string; amount: number; ts: number; }
 

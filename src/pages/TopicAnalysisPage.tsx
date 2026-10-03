@@ -10,7 +10,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 // 2026-05-29 — 주제분석 결과도 출석 이벤트(3일 연속·이번주) 카운트에 포함 (기존 누락 fix).
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
-import { generateTopicAnalysis } from '@/services/ai/reportGenerator';
+import { generateTopicAnalysis, type TopicStreamErrorKind } from '@/services/ai/reportGenerator';
 import { AILoading } from '@/components/common/AILoading';
 import { ScoreRing } from '@/components/saju/ScoreRing';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
@@ -97,6 +97,8 @@ import {
 // AI prompt 재작성 (Phase 4) 까지 USE_TOPIC_MOCKUP_VIEW=false 로 leg스 보존
 import { TopicMockupView } from './topic/TopicMockupView';
 import { TOPIC_THEMES, normalizeTopicKey, type TopicResultV2 } from './topic/_topic_themes';
+// 2026-10-04 — 주제 반쪽(__partial) 자가치유 · 스트림 마감 정책 · 폴백 전 서버 완성본 채택
+import * as topicHeal from './topic/topicPartialHeal';
 import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 
 /** Phase 4 (AI prompt 재작성) 완료 후 true 로 flip — JDS_Topic_IA 통합 결과 페이지 활성화 */
@@ -3267,6 +3269,12 @@ export function TopicAnalysisPage() {
   const [, setLoadingMsg] = useState(0);
   // 더블클릭 가드 — 1운 중복 차감 차단 (InputPage 패턴)
   const isAnalyzingRef = useRef(false);
+  // 2026-10-04 — 늦게 도착한 완성본·비동기 복구가 다른 시도/다른 주제/선택 화면을 덮지 않게: 시도 번호 + 현재 phase 미러.
+  //   주제 변경·언마운트 시 번호를 올려 진행 중이던 시도의 화면 갱신을 끊는다 (저장·승격은 계속 진행).
+  const attemptSeqRef = useRef(0);
+  const phaseRef = useRef<Phase>(phase);
+  phaseRef.current = phase;
+  useEffect(() => () => { attemptSeqRef.current++; }, [topicId]);
   // F3 · 상대방 입력 명시 펼침 (sessionStorage 복원에 사용)
   const [, setPartnerExpanded] = useState(false);
   // 2026-05-28 — 결과 페이지 진입 시 skeleton → 본문 교체 (user 피드백 "스켈레톤 활용").
@@ -3376,47 +3384,69 @@ export function TopicAnalysisPage() {
 
   // 2026-06-17 — 생성 중 앱 종료로 결과를 못 받은 경우(미해결 pending 차감 有), 서버에 저장된
   //   결과를 끌어와 복원 (재구매 0). pending 이 있을 때만 발동 → 의도적 보관함 삭제(pending 無)와 구분.
+  // 🚨 2026-10-04 재작성 — 기존 자가치유가 실측상 대부분 안 먹던 이유와 수정 (보관함 반쪽 14건 중 10건 미치유):
+  //   ① 서버 '최신 1건 · 1시간 창' 만 봐서 1시간 뒤 재방문은 영영 미치유
+  //      → restoreLibrary(창 없음·생성 시각 포함) 후보 중 본문 지문이 '같은 생성' 인 완성본만 채택
+  //   ② 반쪽을 지우고 서버 id 로 새로 저장 → 서버 미러에 반쪽이 남아 복원 때 되살아남
+  //      → 같은 레코드 id 를 유지한 채 본문만 교체 (재차감 0 · 보관함 중복 0 · 미러도 덮어씀)
+  //   ③ 최신 1건을 무검증 채택 → 연달아 돌린 다른 시도(다른 상대방) 결과로 덮일 위험 → 지문 검증
+  //   이 화면(주제·프로필)의 최근 1시간 치유본만 바로 띄우고, 그 외는 보관함만 조용히 치유한다.
   const recoverKeyRef = useRef<string>('');
   useEffect(() => {
     if (!topicId || !selected || phase === 'result' || result) return;
     const key = `${topicId}:${selected.id}`;
     if (recoverKeyRef.current === key) return;
     recoverKeyRef.current = key;
+    const profile = selected;
+    // 비동기 도중 사용자가 분석을 시작했으면 화면을 가로채지 않는다
+    const canShow = () => phaseRef.current === 'select' && !isAnalyzingRef.current;
     (async () => {
       try {
-        const m = await import('@/services/storage/localStore');
-        const pend = m.getPendingSpends().find((p) => p.type === `topic:${topicId}`);
-        // 2026-07-03 P0 — __partial 박제 저장본도 복구 대상 (pending 이 이미 환불·해제된 과거 피해 포함).
-        const partialReport = m.getReports().find((r: any) =>
-          r.contentType === 'topic' && r.profileId === selected.id
-          && r.aiResult?.topicId === topicId && r.aiResult?.__partial === true);
-        if (!pend && !partialReport) return; // 복구할 끊긴/반쪽 생성 없음
-        const [{ getFunctions, httpsCallable }, { app }, { ensureAuth }] = await Promise.all([
-          import('firebase/functions'), import('@/services/auth/firebase'), import('@/services/auth/authService'),
-        ]);
-        await ensureAuth();
-        const fn = httpsCallable(getFunctions(app, 'us-central1'), 'recoverTopicResult');
-        const r: any = await fn({ topicId });
-        if (r?.data?.found && r.data.content && typeof r.data.content === 'object') {
-          const content = r.data.content;
-          const recoveredId: string = r.data.reportId || m.generateId();
-          setResult(content);
-          setPhase('result');
-          try { localStorage.setItem(`topic_${topicId}_${selected.id}`, JSON.stringify(content)); } catch { /* noop */ }
-          m.saveReport({
-            id: recoveredId,
-            name: selected.name, input: selected.input, sajuData: selected.sajuData,
-            type: 'paid', contentType: 'topic', createdAt: new Date().toISOString(),
-            aiResult: { topicId, ...content }, profileId: selected.id,
-          });
-          if (partialReport) { try { m.deleteReport(partialReport.id); } catch { /* noop */ } } // 반쪽 리포트 정리 (보관함 중복 방지)
-          if (pend) m.clearPendingSpend(pend.id); // 결과 복구됨 → 환불 대신 결과 전달
-          if (!(content as any)?.__partial) setSavedReportId(recoveredId); // B-1 — 뒤로가기 복원용 URL 기록
+        // 1) 반쪽(__partial) 저장본 → 서버 완성본으로 승격
+        const healed = await topicHeal.healPartialTopicReports();
+        const mine = healed
+          .filter((r) => r.aiResult?.topicId === topicId && r.profileId === profile.id
+            && Date.now() - new Date(r.createdAt).getTime() < 60 * 60 * 1000)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        if (mine) {
+          if (canShow()) { setResult(mine.aiResult); setPhase('result'); setSavedReportId(mine.id); }
+          return;
         }
+        // 2) 반쪽조차 못 남기고 앱이 닫힌 경우 (pending 만 남음) → 서버 완성본을 새 기록으로
+        const rec = await topicHeal.recoverPendingTopic({ topicId, profile, newId: generateId });
+        if (rec && canShow()) { setResult(rec.aiResult); setPhase('result'); setSavedReportId(rec.id); }
       } catch { /* noop — 실패해도 기존 흐름(재구매/자동환불) 유지 */ }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, selected, phase, result]);
+
+  // 🚨 2026-10-04 — 보관함에서 반쪽(__partial) 기록을 열면 그 자리에서 서버 완성본으로 승격 (같은 id).
+  //   기존: phase='result' 로 진입해 위 복구 effect 가 아예 돌지 않음 → 반쪽이 영구 노출됐다.
+  const storageHealRef = useRef<string>('');
+  useEffect(() => {
+    const rep = navState?.savedReport;
+    if (!rep?.id || !(rep.aiResult as any)?.__partial || storageHealRef.current === rep.id) return;
+    storageHealRef.current = rep.id;
+    (async () => {
+      const [healed] = await topicHeal.healPartialTopicReports({ onlyIds: [rep.id], force: true });
+      if (!healed || phaseRef.current !== 'result' || isAnalyzingRef.current) return;
+      setResult(healed.aiResult);
+      // 히스토리의 반쪽도 교체 — 뒤로/앞으로·새로고침 재방문 시 반쪽이 다시 뜨지 않게 (실제 주소가 이 화면일 때만).
+      //   반쪽이 '이미 따로 있던 완성본' 으로 대체(정리)된 경우 id 가 바뀌므로 ?reportId= 도 갱신.
+      if (typeof window !== 'undefined' && window.location.pathname === location.pathname) {
+        const qs = new URLSearchParams(location.search);
+        if (qs.has('reportId')) qs.set('reportId', healed.id);
+        const search = qs.toString() ? `?${qs.toString()}` : '';
+        navigate(`${location.pathname}${search}`, {
+          replace: true,
+          state: rawNavState?.savedReport
+            ? { ...rawNavState, savedResult: healed.aiResult, savedReport: healed }
+            : location.state,
+        });
+      }
+    })().catch(() => { /* noop — 실패 시 반쪽 그대로 (다음 진입/부팅에서 재시도) */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navState?.savedReport?.id]);
 
   /* 🚨 2026-09-17 B-1 — 주제 결과 → 다른 주제 → 뒤로가기 시 결과가 사라지던 버그.
    *   원인: 결과가 URL/히스토리 어디에도 없음 + 연애·재회·결혼은 캐시 자동로드 차단(상대방별 결과라 의도).
@@ -3529,6 +3559,9 @@ export function TopicAnalysisPage() {
     //   결과 저장 성공 시 clear / 에러 시 즉시 환불 / 앱 종료 시 재접속 부팅에서 자동 환불.
     const { markPendingSpend, clearPendingSpend } = await import('@/services/storage/localStore');
     const pendingId = markPendingSpend(`topic:${topicId}`, actualPrice);
+    // 2026-10-04 — 이 시도가 진행 중임을 표시(재진입 복구가 가로채지 않게) + 시도 번호(늦은 완성본이 다른 화면을 덮지 않게)
+    topicHeal.markTopicInFlight(pendingId);
+    const attemptSeq = ++attemptSeqRef.current;
 
     setPhase('loading');
     const interval = setInterval(() => setLoadingMsg(s => Math.min(s + 1, LOADING_MSGS.length - 1)), 3000);
@@ -3572,44 +3605,68 @@ export function TopicAnalysisPage() {
       })();
       const extra = { ...topicExtra, ...loveExtra, ...marriageExtra };
       const finalExtra = Object.keys(extra).length > 0 ? extra : undefined;
+      // 2026-10-04 — pending ↔ 대상 프로필·상대방 장부 (앱 종료 후 복구가 엉뚱한 프로필/상대방에 붙지 않게)
+      topicHeal.recordTopicAttempt(pendingId, { topicId: topicId!, profileId: selected.id, partnerName: partner?.name || undefined });
 
       // ── 스트리밍 우선 (오늘의 운세 패턴 · 점진 스켈레톤) → 실패 시 callable 폴백 ──
       // 프롬프트·모델·출력은 callable 과 100% 동일 (전송만 SSE). partial 은 adaptToTopicResultV2
       // 가 전부 ?.||fallback 방어라 안전. 첫 minimal key 도달 시 phase='result' 전이.
       let res: { reportId: string; content: any };
+      // 2026-10-04 — 마감 뒤 같은 연결로 늦게 도착한 완성본 (반쪽 저장 후 같은 레코드로 승격 — 아래 저장부에서 apply 연결)
+      const late: { content: any; reportId: string; apply: null | ((content: any, reportId: string) => void) } =
+        { content: null, reportId: '', apply: null };
+      // C2 — 타임아웃 시 저장용 최신 partial (2026-10-04: 폴백 전 서버 완성본 대조 지문으로도 사용 → try 밖으로)
+      let latestPartial: any = null;
+      const sse: { started: boolean; errKind: TopicStreamErrorKind | null } = { started: false, errKind: null };
+      let t0 = Date.now();
       try {
         const { generateTopicAnalysisStream } = await import('@/services/ai/reportGenerator');
         let phaseShown = false;
-        const t0 = Date.now();
-        // ⭐ 2026-05-27 v2 — 안전 타임아웃 60초 (Sonnet 14K 토큰 = 60-90s).
-        //   첫 paint 조건은 substantive content 도착 시점에만 (title 단독 X)
-        let latestPartial: any = null;
+        t0 = Date.now();
+        let lastActivity = t0;
+        // ⭐ 2026-05-27 v2 — 첫 paint 조건은 substantive content 도착 시점에만 (title 단독 X)
         res = await new Promise<{ reportId: string; content: any }>((resolve, reject) => {
           // 2026-07-03 P0 fix (CS "연애운 풀이가 나오지 않아요") — 기존 60s 단일 타임아웃의 3중 결함:
           //   ① 정상 생성이 60-90s 인데 60s 에 마감 → 부분(partial) 결과가 '완성본'처럼 저장·박제
           //   ② 그 경로가 pending 까지 해제 → 서버 완성본 복구(recoverTopicResult, pending 필요) 영구 차단
           //   ③ 첫 paint 시 타이머 해제 → 이후 스트림 끊기면 영구 hang (C2 가 잡았던 증상 부분 재발)
-          //   수정: [화면 공개 60s]와 [데이터 마감 150s] 분리. partial 박제는 최후수단 + __partial 마킹
+          //   수정: [화면 공개 60s]와 [데이터 마감] 분리. partial 박제는 최후수단 + __partial 마킹
           //   (pending 유지 → 재진입 시 서버 완성본으로 자가 치유).
+          // 🚨 2026-10-04 — 150s 고정 마감이 재회운(실측 ~222s · 출력 13.6~14.7K 토큰)을 매번 반쪽으로 잘랐다
+          //   (보관함 박제 14건 중 11건이 재회운). 서버는 그 61~94초 뒤 완성본을 저장하고 같은 연결로 done 까지
+          //   보냈지만, 이미 resolve 된 Promise 라 클라가 버렸다. 수정:
+          //   ① 마감 = 재회운 300s / 그 외 150s (topicStreamDeadlineMs)
+          //   ② 마감 시점에 20s 안에 청크가 들어왔으면 '진행 중' → 끊지 않고 연장 (절대 상한 600s)
+          //   ③ 그래도 반쪽으로 끝냈으면 늦게 온 done 을 버리지 않고 같은 레코드로 승격 (late)
+          let settled = false; // 완료·실패·마감(반쪽) 중 하나로 이미 끝냈는가
           const paintTimeoutId = setTimeout(() => {
             if (!phaseShown) {
               phaseShown = true;
-              console.warn('[topic] 60s — 화면 부분 공개 (생성은 150s 까지 계속 대기)');
+              console.warn('[topic] 60s — 화면 부분 공개 (생성은 마감까지 계속 대기)');
               setPhase('result');
             }
           }, 60_000);
-          const safetyTimeoutId = setTimeout(() => {
+          let safetyTimeoutId: ReturnType<typeof setTimeout> | undefined;
+          const onDeadline = () => {
+            const now = Date.now();
+            if (now - lastActivity < topicHeal.TOPIC_STREAM_IDLE_MS && now - t0 < topicHeal.TOPIC_STREAM_ABSOLUTE_CAP_MS) {
+              safetyTimeoutId = setTimeout(onDeadline, 5_000); // 청크가 들어오는 중 — 마감으로 끊지 않음
+              return;
+            }
+            settled = true;
             if (!phaseShown) { phaseShown = true; setPhase('result'); }
             if (latestPartial) {
-              console.warn('[topic] 150s 마감 — partial 저장 (__partial 마킹 · pending 유지 → 재진입 복구)');
+              console.warn(`[topic] ${Math.round((now - t0) / 1000)}s 마감 — partial 저장 (__partial 마킹 · pending 유지 · 늦은 완성본 승격 대기)`);
               resolve({ reportId: '', content: { ...latestPartial, __partial: true } });
             } else reject(new Error('topic stream timeout'));
-          }, 150_000);
-          const clearTimers = () => { clearTimeout(paintTimeoutId); clearTimeout(safetyTimeoutId); };
+          };
+          safetyTimeoutId = setTimeout(onDeadline, topicHeal.topicStreamDeadlineMs(topicId!));
+          const clearTimers = () => { clearTimeout(paintTimeoutId); if (safetyTimeoutId) clearTimeout(safetyTimeoutId); };
           generateTopicAnalysisStream(
             { topicId: topicId!, sajuData: selected.sajuData, baseScore: navState?.baseScore, partnerInfo: partner, extraInfo: finalExtra },
             {
-              onStart: () => console.log('[topic SSE] start'),
+              onStart: () => { sse.started = true; lastActivity = Date.now(); console.log('[topic SSE] start'); },
+              onProgress: () => { lastActivity = Date.now(); },
               // 오늘의 운세 패턴 — 첫 partial 도착 시 result phase 전이 + 점진 렌더.
               //   방어 가드 (꿈해몽 회귀 학습): 불완전한 섹션(heading/content 미생성) 은
               //   렌더링에서 필터링 → 렌더 컴포넌트가 undefined 만나서 깨질 위험 0.
@@ -3617,6 +3674,7 @@ export function TopicAnalysisPage() {
               //   뒷 섹션은 스트리밍으로 채워짐 (오늘의 운세 동일 UX).
               onPartial: ({ partial, totalChars }) => {
                 try {
+                  if (settled) return; // 마감 후 — 화면·저장본은 늦은 완성본 승격이 교체
                   if (!partial || typeof partial !== 'object') return;
                   const safe = {
                     ...partial,
@@ -3627,8 +3685,10 @@ export function TopicAnalysisPage() {
                       ? partial.timeline.filter((t: any) => t && t.period && t.description)
                       : undefined,
                   };
-                  setResult(safe);
                   latestPartial = safe; // C2 — 타임아웃 시 저장용 최신 partial 보존
+                  // 2026-10-04 — 다른 시도/다른 주제 화면이면 화면은 건드리지 않음 (데이터만 계속 보존)
+                  if (attemptSeqRef.current !== attemptSeq) return;
+                  setResult(safe);
                   // ⭐ 2026-05-27 v2 — substantive content 도착 시점에만 phase 전이.
                   //   첫 섹션이 heading+content 둘 다 채워졌거나 oneLineSummary 100자+
                   const oneLineLen = typeof safe.oneLineSummary === 'string' ? safe.oneLineSummary.length : 0;
@@ -3637,7 +3697,7 @@ export function TopicAnalysisPage() {
                   const hasMinKeys = oneLineLen >= 100 || firstSecOk;
                   if (!phaseShown && hasMinKeys) {
                     phaseShown = true;
-                    clearTimeout(paintTimeoutId); // ⚠️ paint 타이머만 해제 — 150s 마감 타이머는 onDone 까지 유지 (hang 차단)
+                    clearTimeout(paintTimeoutId); // ⚠️ paint 타이머만 해제 — 마감 타이머는 onDone 까지 유지 (hang 차단)
                     console.log(`[topic] 첫 paint (${Date.now() - t0}ms, ${totalChars}자)`);
                     setPhase('result');
                   }
@@ -3645,19 +3705,45 @@ export function TopicAnalysisPage() {
               },
               onDone: ({ reportId, content }) => {
                 clearTimers();
+                if (settled) {
+                  // 2026-10-04 — 마감 뒤 도착한 완성본: 버리지 않고 반쪽 레코드를 같은 id 로 승격
+                  console.log(`[topic SSE] late done (${Date.now() - t0}ms) — 반쪽 승격`);
+                  if (late.apply) late.apply(content, reportId);
+                  else { late.content = content; late.reportId = reportId; }
+                  return;
+                }
+                settled = true;
                 console.log(`[topic SSE] done (${Date.now() - t0}ms)`);
                 resolve({ reportId, content });
               },
-              onError: (msg) => {
+              onError: (msg, info) => {
                 clearTimers();
+                if (settled) return; // 반쪽 저장 후 연결 종료 — 후속 재시도(scheduleTopicHealRetries)가 처리
+                settled = true;
+                sse.errKind = info?.kind ?? 'network';
                 reject(new Error(msg));
               },
             },
-          ).catch((e) => { clearTimers(); reject(e); });
+          ).catch((e) => {
+            clearTimers();
+            if (!settled) { settled = true; sse.errKind = 'network'; reject(e); }
+          });
         });
       } catch (streamErr: any) {
-        console.warn('[topic] SSE 실패 → callable 폴백:', streamErr?.message);
-        res = await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner, finalExtra);
+        console.warn('[topic] SSE 실패:', streamErr?.message, sse.errKind);
+        // 🚨 2026-10-04 이중 생성 방지 — 연결만 끊긴 경우(iOS 'Load failed' 등) 서버 스트림은 끝까지 돌아
+        //   완성본을 저장한다 (실측: 같은 uid·주제·입력 완성본 2건이 47~153초 간격 = 스트림 + callable 폴백 둘 다 완주).
+        //   바로 callable 을 부르면 같은 결과를 또 생성(토큰 2배 · 서버 차감 2회)하고 재회운은 ~222초를 처음부터 다시 기다린다.
+        //   → 시작된 스트림이 연결 단에서 끊겼고 반쪽 지문이 있으면, 서버 완성본(지문 일치만)을 먼저 기다려 채택.
+        //     서버가 error 를 보냈거나(생성 실패·서버 환불) 못 찾으면 기존대로 callable.
+        let adopted: { reportId: string; content: any } | null = null;
+        if (sse.started && sse.errKind !== 'server' && sse.errKind !== 'http' && latestPartial) {
+          adopted = await topicHeal.waitForServerTopicResult(topicId!, latestPartial, {
+            deadlineAt: t0 + topicHeal.topicAdoptWaitMs(topicId!),
+          });
+          if (adopted) console.log(`[topic] 서버 스트림 완성본 채택 (${Date.now() - t0}ms) — callable 재생성 생략`);
+        }
+        res = adopted ?? await generateTopicAnalysis(topicId!, selected.sajuData, navState?.baseScore, partner, finalExtra);
       }
       // 2026-06-12 UX — 상대방 이름을 결과에 영속: 결과 화면 '나 vs 상대' 라벨에 실명 표기
       //   (캐시·보관함 재진입에도 유지 — 누구 기준 리포트인지 한눈에)
@@ -3685,13 +3771,28 @@ export function TopicAnalysisPage() {
         profileId: selected.id, // 보관함 삭제 시 topic_<id>_<profileId> 캐시 동반 제거용 (2026-06-17)
       });
 
-      // 2026-07-03 P0 — partial 박제 시 pending 유지: 재진입 시 recoverTopicResult 가 서버 완성본으로
-      //   교체(그때 clear). 5분 내 미재진입이면 부팅 reconcile 이 자동환불 — 반쪽 결과엔 환불이 정당.
+      // 2026-07-03 P0 — partial 박제 시 pending 유지: 서버 완성본으로 승격될 때 clear.
+      //   승격 전에 5분이 지나 부팅 reconcile 이 자동환불했다면, 그 뒤 승격돼도 재차감하지 않는다 (반쪽 노출 보상).
       if (!(contentFinal as any)?.__partial) {
         clearPendingSpend(pendingId); // 완성본 저장 완료 — pending 해제
         setSavedReportId(savedId); // B-1 — URL ?reportId= 기록 (언마운트 후면 no-op → 남의 히스토리 안 건드림)
       } else {
-        console.warn('[topic] partial 저장 — pending 유지 (재진입 복구 대기)');
+        console.warn('[topic] partial 저장 — pending 유지 (늦은 완성본 승격 / 후속 재시도 대기)');
+        // 🚨 2026-10-04 — 반쪽 저장 뒤 도착하는 완성본으로 '같은 레코드' 를 승격 (재차감 0 · 보관함 중복 0 · 서버 미러도 갱신).
+        //   ① 같은 SSE 연결로 늦게 온 done (late) — 실측상 재회운 반쪽의 서버 완성은 마감 61~94초 뒤
+        //   ② 연결이 끊겨 done 을 못 받으면 서버 완성본 후속 조회 (scheduleTopicHealRetries · 지문 일치만)
+        //   화면은 이 시도가 아직 떠 있을 때만 교체 (다른 시도·주제·선택 화면이면 보관함만 치유).
+        const showHealed = (rec: LocalReport) => {
+          if (attemptSeqRef.current !== attemptSeq || phaseRef.current === 'select') return;
+          setResult(rec.aiResult);
+          setSavedReportId(rec.id);
+        };
+        late.apply = (full, serverReportId) => {
+          const rec = topicHeal.upgradePartialTopicRecord(savedId, full, { serverReportId, pendingId });
+          if (rec && !rec.aiResult?.__partial) showHealed(rec);
+        };
+        if (late.content) late.apply(late.content, late.reportId);
+        else topicHeal.scheduleTopicHealRetries(savedId, { onHealed: showHealed });
       }
       setPhase('result');
     } catch (e: any) {
@@ -3706,6 +3807,7 @@ export function TopicAnalysisPage() {
     } finally {
       clearInterval(interval);
       isAnalyzingRef.current = false;
+      topicHeal.unmarkTopicInFlight(pendingId); // 반쪽으로 끝났으면 그 pending 은 반쪽 레코드가 소유 (승격 시 clear)
     }
   }
 

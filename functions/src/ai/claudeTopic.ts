@@ -925,7 +925,7 @@ export function buildTopicCall(
   const model = 'claude-sonnet-4-6';
   // 2026-10-03 상한 상향 16000/8192 → 20000/12000 — 운영 실측: callable 67건 중 20건이 cap 95%↑·3건 정확히 8192 도달(잘림),
   //   재회운 출력 13.6~14.7K(16000 근접). 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만 생김.
-  const maxTokens = normalizedId === 'reunion' ? 20000 : 12000;
+  const maxTokens = normalizedId === 'reunion' ? 16000 : 12000; // 재회운 16000 유지(2026-10-04): 실측 최대 출력 14.7K 로 잘림 0 · 20000 은 ~66tok/s 기준 서버 timeoutSeconds 300 초과 위험
   return { system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore };
 }
 

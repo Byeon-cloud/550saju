@@ -546,18 +546,27 @@ export async function generateDailyFortuneStream(
  *   서버: generateTopicAnalysisStream (onRequest SSE). 프롬프트·모델 callable 과 동일.
  *   onPartial: 누적 텍스트 partial-json 파싱 결과 (첫 minimal key 도달 시 클라 phase 전이)
  *   onDone: 최종 parsed content + reportId  /  onError: 실패 (호출부에서 callable 폴백)
+ *   onProgress: 청크·재시도 도착마다 (2026-10-04 — 호출부 마감 타이머가 '진행 중' 스트림을 끊지 않게)
+ *   onError 2번째 인자 kind (2026-10-04 — 이중 생성 방지 판단용):
+ *     'server'  = 서버가 error 이벤트 송출 (생성 실패 · 서버가 차감분 환불함) → 바로 callable 폴백
+ *     'http'    = 응답 자체 실패 (start 전) → 바로 callable 폴백
+ *     'network' / 'closed' = 연결만 끊김 (iOS 'Load failed' 등) → 서버 스트림은 계속 돌아 완성본을 저장할 수 있음
  */
+export type TopicStreamErrorKind = 'server' | 'http' | 'network' | 'closed';
 export interface TopicStreamCallbacks {
   onStart?: () => void;
   onPartial?: (info: { partial: any; totalChars: number }) => void;
+  onProgress?: (info: { totalChars: number }) => void;
   onDone: (info: { reportId: string; content: any }) => void;
-  onError: (message: string) => void;
+  onError: (message: string, info?: { kind: TopicStreamErrorKind }) => void;
 }
 
 export async function generateTopicAnalysisStream(
   args: { topicId: string; sajuData: any; baseScore?: number; partnerInfo?: any; extraInfo?: any },
   callbacks: TopicStreamCallbacks,
 ): Promise<void> {
+  // 2026-10-04 — callable(callWithAuth)·종합사주 스트림과 동일하게 stale 현재대운 재계산 (주제 SSE 경로만 누락돼 있었음)
+  refreshCurrentDaeun(args?.sajuData);
   callbacks = wrapStreamCallbacks('topic', callbacks); // C3 측정 (로직 무변경)
   await ensureFunctionsTarget();
   await ensureAuth();
@@ -566,7 +575,7 @@ export async function generateTopicAnalysisStream(
   const idToken = await getAuth().currentUser?.getIdToken();
 
   const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
-  if (!projectId) { callbacks.onError('Firebase 프로젝트 설정 오류'); return; }
+  if (!projectId) { callbacks.onError('Firebase 프로젝트 설정 오류', { kind: 'http' }); return; }
   const useEmulator =
     import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
   const url = useEmulator
@@ -577,13 +586,17 @@ export async function generateTopicAnalysisStream(
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
     const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(args) });
-    if (!res.ok || !res.body) { callbacks.onError(`서버 오류 ${res.status}`); return; }
+    if (!res.ok || !res.body) { callbacks.onError(`서버 오류 ${res.status}`, { kind: 'http' }); return; }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
     let accumulated = '';
     let lastSig = '';
+    const progress = () => {
+      try { callbacks.onProgress?.({ totalChars: accumulated.length }); }
+      catch (err) { console.warn('[topicStream] onProgress threw:', err); }
+    };
 
     // partial-json lazy import (실패해도 스트리밍 자체는 작동 — done 에서 최종 파싱)
     let partialParse: any = null;
@@ -640,20 +653,23 @@ export async function generateTopicAnalysisStream(
         } else if (eventName === 'chunk') {
           accumulated += String(payload.delta || '');
           tryEmitPartial();
+          progress();
+        } else if (eventName === 'retry') {
+          progress(); // 서버 파싱 실패 재생성 — 진행 중 신호 (마감 타이머 연장)
         } else if (eventName === 'done') {
           callbacks.onDone({ reportId: payload.reportId, content: payload.content });
           return;
         } else if (eventName === 'error') {
-          callbacks.onError(payload.message || '알 수 없는 오류');
+          callbacks.onError(payload.message || '알 수 없는 오류', { kind: 'server' });
           return;
         }
       }
     }
     // 2026-07-03 silent-break 가드 — done/error 없이 스트림 종료 시 강제 onError (무한로딩 차단 · 종합사주 스트림과 동일)
-    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
+    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.', { kind: 'closed' });
   } catch (e: any) {
     console.error('[generateTopicAnalysisStream] fetch failed:', e?.message);
-    callbacks.onError(e?.message || '네트워크 오류');
+    callbacks.onError(e?.message || '네트워크 오류', { kind: 'network' });
   }
 }
 

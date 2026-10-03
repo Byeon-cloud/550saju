@@ -185,6 +185,11 @@ export function StoragePage() {
         .then((n) => { if (n > 0) { reloadAll(); toast.show(`${n}개 분석을 서버에서 복원했어요`, 'success'); } })
         .catch(() => { /* noop */ });
     }
+    // 2026-10-04 — 반쪽(__partial)으로 저장된 주제 결과를 서버 완성본으로 치유 (같은 기록 id · 재차감 0)
+    import('@/pages/topic/topicPartialHeal')
+      .then((m) => m.healPartialTopicReports())
+      .then((h) => { if (Array.isArray(h) && h.length > 0) reloadAll(); })
+      .catch(() => { /* noop */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

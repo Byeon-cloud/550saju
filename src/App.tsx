@@ -295,23 +295,29 @@ export function App() {
     //   토스트는 ToastProvider 밖이라 불가 → 공지 플래그 저장, HomePage 마운트에서 안내.
     //   2026-06-12 보강: 튕긴 직후 바로 재진입하면 pending 이 아직 5분 미만이라 부팅 체크를
     //   통과 못 함 → 다음 재시작까지 환불이 밀리던 빈틈. 만료 시점 이후 같은 세션에서 재검사.
-    import('@/services/storage/localStore').then(({ reconcilePendingSpends }) => {
+    import('@/services/storage/localStore').then(({ reconcilePendingSpends, PENDING_EXPIRE_MS }) => {
       const settle = (refunded: number) => {
         if (refunded > 0) {
           try { localStorage.setItem('saju500:refund_notice', String(refunded)); } catch { /* noop */ }
         }
       };
       settle(reconcilePendingSpends());
-      // 5분 만료 + 여유 15초 후 재검사 (성공 생성은 clearPendingSpend 로 이미 해제돼 영향 0)
-      const recheck = window.setTimeout(() => settle(reconcilePendingSpends()), 5 * 60 * 1000 + 15000);
+      // 만료(12분) + 여유 15초 후 재검사 (성공 생성은 clearPendingSpend 로 이미 해제돼 영향 0)
+      const recheck = window.setTimeout(() => settle(reconcilePendingSpends()), PENDING_EXPIRE_MS + 15000);
       window.addEventListener('beforeunload', () => window.clearTimeout(recheck), { once: true });
     }).catch(() => {});
+
+    // 0-a2b. 주제 결과 반쪽(__partial) 자가치유 (2026-10-04) — 마감에 잘려 반쪽만 저장된 결과를 서버 완성본으로
+    //   같은 기록 id 그대로 승격(재차감 0). 반쪽 기록이 없으면 네트워크 0. 실측: 재회운 79% 가 반쪽 박제였다.
+    window.setTimeout(() => {
+      import('@/pages/topic/topicPartialHeal').then((m) => m.healPartialTopicReports()).catch(() => {});
+    }, 4000);
 
     // 0-a3b. 종합사주 결과복구 (2026-06-18) — 생성 중 앱 종료로 결과 못 받은 경우(미해결 premium 차감 <5분)
     //   서버('recovery' 필드)에서 끌어와 보관함에 복원 (재생성 0). 못 찾으면 위 reconcile 자동환불로 degrade.
     //   pending 있을 때만 서버 호출 → 정상 부팅엔 네트워크 0.
     import('@/services/storage/localStore').then(async (m) => {
-      const pend = m.getPendingSpends().find((p) => p.type === 'premium' && (Date.now() - p.ts) < 5 * 60 * 1000);
+      const pend = m.getPendingSpends().find((p) => p.type === 'premium' && (Date.now() - p.ts) < m.PENDING_EXPIRE_MS);
       if (!pend) return;
       const [{ getFunctions, httpsCallable }, { app }, { ensureAuth }] = await Promise.all([
         import('firebase/functions'), import('@/services/auth/firebase'), import('@/services/auth/authService'),
