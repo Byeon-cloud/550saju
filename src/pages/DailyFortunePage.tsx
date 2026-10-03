@@ -63,8 +63,6 @@ import {
   useFreePass as consumeFreePass,
   restoreFreePass,
   subscribeFreePass,
-  isFreePassPolicyActive,
-  FREE_PASS_POLICY_START_LABEL,
 } from '@/services/storage/dailyFreePass';
 import { generateDailyFortune, generateDailyFortuneStream } from '@/services/ai/reportGenerator';
 import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
@@ -662,7 +660,7 @@ export function DailyFortunePage() {
               profile={selectedProfile}
               dateInfo={dateInfo}
               ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '오늘의 운세 보기 (무료)' : '오늘의 운세 보기 · 1운'}
-              tierChip={todayReport ? '오늘 받은 운세 · 다시 보기 무료' : dailyInProgress ? '만드는 중' : !isFreePassPolicyActive() ? `무료 · ${FREE_PASS_POLICY_START_LABEL}부터 1일 1회` : freePassAvailable ? '무료 · 1일 1회' : '오늘 무료 사용 · 이후 1운'}
+              tierChip={todayReport ? '오늘 받은 운세 · 다시 보기 무료' : dailyInProgress ? '만드는 중' : freePassAvailable ? '무료 · 1일 1회' : '오늘 무료 사용 · 이후 1운'}
               onAnalyze={requestAnalyze}
             />
           )}
@@ -1150,7 +1148,7 @@ function ResultView({
         myGan={myGan}
         myGanReading={myGanReading}
         myOheng={myOheng}
-        priceTag={tier === 'paid' ? '1운 추가 이용' : isFreePassPolicyActive() ? '오늘 1회 무료' : '무료'}
+        priceTag={tier === 'paid' ? '1운 추가 이용' : '오늘 1회 무료'}
         isGenerating={isGenerating}
         onUpsell={onWeeklyUpsell}
         onMonthly={onMonthlyUpsell}

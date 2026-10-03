@@ -1,6 +1,5 @@
 import { Header } from '@/components/layout/Header';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { isFreePassPolicyActive } from '@/services/storage/dailyFreePass';
 
 export function TermsPage() {
   usePageTitle('이용약관');
@@ -8,19 +7,6 @@ export function TermsPage() {
     <div className="min-h-screen bg-bg-page">
       <Header title="이용약관" />
       <div className="px-5 pt-4 pb-20 space-y-4">
-        {/* 2026-10-04 개정 사전 안내 — 불리한 변경(무료 횟수)이라 시행 30일 이상 전부터 노출, 시행일 지나면 자동으로 숨김 */}
-        {!isFreePassPolicyActive() && (
-          <div className="card" style={{ borderColor: '#B8965A' }}>
-            <p className="text-label text-text-primary font-bold mb-2">약관 개정 안내 (2026년 11월 10일 시행)</p>
-            <div className="text-body-sm text-text-secondary leading-relaxed space-y-1">
-              <p>· 꿈해몽: 지금은 횟수 제한 없이 무료지만, 11월 10일부터는 하루 1회 무료이고 그 이후 새 꿈 풀이에는 1운이 필요해요.</p>
-              <p>· 오늘의 운세: 11월 10일부터 하루 1회 무료, 같은 날 두 번째 이용부터 1운이 필요해요. 이미 받은 운세를 다시 보는 것은 계속 무료예요.</p>
-              <p>· 대화권: 쓰지 않은 대화권 3개를 1운으로 다시 바꿀 수 있다는 내용을 반영했어요.</p>
-              <p>· 약관이 바뀔 때 미리 알려드리는 기간을 새로 적었어요 (제12조).</p>
-              <p className="pt-1">11월 9일까지는 지금처럼 이용할 수 있어요. 바뀐 약관에 동의하지 않으시면 시행일 전까지 이용을 멈추고 미사용 운의 환불을 요청할 수 있어요.</p>
-            </div>
-          </div>
-        )}
         <div className="card">
           <h2 className="text-h2 text-text-primary mb-4">사주500 이용약관</h2>
           <div className="text-body-sm text-text-secondary leading-relaxed space-y-4">
@@ -45,9 +31,6 @@ export function TermsPage() {
               <p className="text-label text-text-primary font-bold mb-1">제5조 (무료 서비스)</p>
               <p>오늘의 운세·꿈해몽·사주대화는 하루 1회 무료로 이용할 수 있고, 그 이후 이용에는 운(사주대화는 대화권)이 필요해요. 사주팔자 확인과 이미 받은 결과를 보관함에서 다시 보는 것은 언제나 무료예요.</p>
               <p className="mt-1">매일 자정(한국시간 00:00)에 무료 이용 횟수가 초기화돼요.</p>
-              {!isFreePassPolicyActive() && (
-                <p className="mt-1">오늘의 운세·꿈해몽의 하루 1회 제한은 2026년 11월 10일부터 적용돼요. 그 전까지는 횟수 제한 없이 무료로 이용할 수 있어요.</p>
-              )}
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">제6조 (청약철회 및 환불)</p>
@@ -81,7 +64,7 @@ export function TermsPage() {
               <p className="mt-1">바뀐 약관에 동의하지 않으시면 이용을 멈추고 미사용 운의 환불을 요청할 수 있어요.</p>
             </div>
           </div>
-          <p className="text-caption text-text-hint mt-6">시행일: 2026년 11월 10일 (개정 · 2026년 10월 공지) · 이전 약관 시행일: 2026년 6월 3일</p>
+          <p className="text-caption text-text-hint mt-6">시행일: 2026년 10월 4일 (개정) · 이전 약관 시행일: 2026년 6월 3일</p>
         </div>
       </div>
     </div>

@@ -46,8 +46,6 @@ import {
   useFreePass as consumeFreePass,
   restoreFreePass,
   subscribeFreePass,
-  isFreePassPolicyActive,
-  FREE_PASS_POLICY_START_LABEL,
 } from '@/services/storage/dailyFreePass';
 import {
   generateDreamFree,
@@ -1258,11 +1256,9 @@ function DetailPhase({
           </button>
           {/* 2026-09-17 — 무료는 하루 1회. 소진 후엔 1운 (잠금 섹션까지 한 번에 열림) */}
           <p className="sec-caption" style={{ textAlign: 'center', marginTop: 8, wordBreak: 'keep-all' }}>
-            {!isFreePassPolicyActive()
-              ? `무료로 풀어드려요 · ${FREE_PASS_POLICY_START_LABEL}부터는 하루 1회 무료, 이후 1운이에요`
-              : freeAvailable
-                ? '오늘 1회 무료로 풀어드려요'
-                : '오늘 무료 꿈해몽은 사용했어요 · 1운이면 잠금 섹션까지 한 번에 열려요'}
+            {freeAvailable
+              ? '오늘 1회 무료로 풀어드려요'
+              : '오늘 무료 꿈해몽은 사용했어요 · 1운이면 잠금 섹션까지 한 번에 열려요'}
           </p>
         </div>
       </div>
