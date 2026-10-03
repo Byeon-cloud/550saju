@@ -913,7 +913,9 @@ function buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo) {
     const effectiveBaseScore = baseScore ?? computeTopicBaseScore(normalizedId, sajuData);
     const prompt = buildPrompt(config, normalizedId, sajuData, effectiveBaseScore, partnerInfo, extraInfo);
     const model = 'claude-sonnet-4-6';
-    const maxTokens = normalizedId === 'reunion' ? 16000 : 8192;
+    // 2026-10-03 상한 상향 16000/8192 → 20000/12000 — 운영 실측: callable 67건 중 20건이 cap 95%↑·3건 정확히 8192 도달(잘림),
+    //   재회운 출력 13.6~14.7K(16000 근접). 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만 생김.
+    const maxTokens = normalizedId === 'reunion' ? 16000 : 12000; // 재회운 16000 유지(2026-10-04): 실측 최대 출력 14.7K 로 잘림 0 · 20000 은 ~66tok/s 기준 서버 timeoutSeconds 300 초과 위험
     return { system: promptsV3_1.TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore };
 }
 /** 2026-09-17 — 사주 산출 점수를 AI 응답에 강제 반영. 프롬프트로 '반드시 이 점수'를 지시하지만 AI 가 어기면
@@ -941,8 +943,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
             system: [{ type: 'text', text: promptsV3_1.TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: prompt }],
         });
-        if (first.usage)
-            (0, aiUsageLog_1.logAiUsage)({ type: 'topic', model, inputTokens: first.usage.input_tokens, outputTokens: first.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
+        (0, aiUsageLog_1.logAnthropicUsage)('topic', model, first, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
         firstText = first.content[0].text;
         firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta1);
         if (meta1.repairUsed)
@@ -959,8 +960,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
             system: [{ type: 'text', text: promptsV3_1.TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: prompt }],
         });
-        if (retry.usage)
-            (0, aiUsageLog_1.logAiUsage)({ type: 'topic', model, inputTokens: retry.usage.input_tokens, outputTokens: retry.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
+        (0, aiUsageLog_1.logAnthropicUsage)('topic', model, retry, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
         firstText = retry.content[0].text;
         firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta2);
         console.info(`[claudeTopic:${topicId}] 2차 성공`, meta2.repairUsed ? '(jsonrepair 발동)' : '');
@@ -987,8 +987,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
             { role: 'user', content: (0, promptsV3_1.SELF_REVIEW_V3)({ original: firstJson, kind: 'topic' }) },
         ],
     });
-    if (review.usage)
-        (0, aiUsageLog_1.logAiUsage)({ type: 'topic', model, inputTokens: review.usage.input_tokens, outputTokens: review.usage.output_tokens, ms: Date.now() - _t3, ok: true }); // C7 best-effort
+    (0, aiUsageLog_1.logAnthropicUsage)('topic', model, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
     const reviewText = review.content[0].text;
     try {
         return enforceTopicBaseScore((0, promptsV3_1.parseJsonResponse)(reviewText), effectiveBaseScore);

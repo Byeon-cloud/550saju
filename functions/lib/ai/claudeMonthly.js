@@ -9,6 +9,7 @@ exports.generateMonthlyRefine = generateMonthlyRefine;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
+const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
 /**
  * 월별 운세 (2026-07-01).
  *  - onGroup 없음(progressId 미전달·점진 OFF) → 🛡️ 기존 검증된 단일 콜(FULL) 그대로 = 회귀 위험 0.
@@ -43,14 +44,17 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
     const prompt = buildPrompt(sajuData, info, group);
     const maxTokens = group === 'FULL' ? 10000 : group === 'M1' ? 6000 : 7000;
     // ── 1차 생성 ──
+    const _t1 = Date.now(); // C7
     const first = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: maxTokens,
         temperature: 0.1, // 결정론적 — 같은 사주 + 같은 달 = 같은 결과
         messages: [{ role: 'user', content: prompt }],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
     // ── 2차 자기리뷰 (퀄리티 레버) ──
+    const _t2 = Date.now(); // C7
     const review = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: maxTokens,
@@ -61,6 +65,7 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
             { role: 'user', content: buildReviewPrompt(info, group) },
         ],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
     const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
     if (!jsonMatch)
@@ -75,12 +80,14 @@ async function generateMonthlyDraft(apiKey, sajuData, monthInfo) {
     const anthropic = new sdk_1.default({ apiKey });
     const info = normalizeMonthInfo(monthInfo);
     const prompt = buildPrompt(sajuData, info, 'FULL');
+    const _t1 = Date.now(); // C7
     const first = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 10000,
         temperature: 0.1,
         messages: [{ role: 'user', content: prompt }],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
     const m = firstText.match(/\{[\s\S]*\}/);
     if (!m)
@@ -98,6 +105,7 @@ async function generateMonthlyRefine(apiKey, sajuData, monthInfo, draft) {
     const anthropic = new sdk_1.default({ apiKey });
     const info = normalizeMonthInfo(monthInfo);
     const prompt = buildPrompt(sajuData, info, 'FULL');
+    const _t2 = Date.now(); // C7
     const review = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 10000,
@@ -108,6 +116,7 @@ async function generateMonthlyRefine(apiKey, sajuData, monthInfo, draft) {
             { role: 'user', content: buildReviewPrompt(info, 'FULL') },
         ],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
     const m = reviewText.match(/\{[\s\S]*\}/);
     if (!m)

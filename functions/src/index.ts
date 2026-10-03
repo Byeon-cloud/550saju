@@ -2625,6 +2625,7 @@ export { recoverPremiumResult } from './premium/recoverPremiumResult';
 // 2026-08-07 — IAP 주문 이력 기반 잔액 복구 (기기 초기화로 운이 사라진 CS 대응)
 export { recoverIapOrders } from './payment/recoverIapOrders';
 export { registerDevicePassport } from './storage/devicePassport';
+export { auditOrphanAccounts } from './storage/orphanAudit'; // 2026-10-04 매일 갈라진 계정 점검·빠진 기록 보충
 export { restoreLibrary } from './storage/restoreLibrary';
 // 어드민 CS 지급 (2026-06-12) — /admin 'CS 지급' 탭에서 디바이스 ID 로 즉시 장부 기록 (오너 전용)
 export { adminGrantCompensation } from './admin/adminGrantCompensation';

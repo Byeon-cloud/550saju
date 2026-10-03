@@ -234,8 +234,7 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
         ],
         messages: [{ role: 'user', content: userSituation }],
     });
-    if (msg.usage)
-        (0, aiUsageLog_1.logAiUsage)({ type: 'premium', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t0, ok: true }); // C7 best-effort
+    (0, aiUsageLog_1.logAnthropicUsage)('premium', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
     const text = msg.content[0].text || '';
     // T2 강건성 — JSON 파싱 실패 시 incomplete JSON 복구 시도
     try {

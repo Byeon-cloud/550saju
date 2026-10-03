@@ -9,6 +9,7 @@ exports.generateWeeklyRefine = generateWeeklyRefine;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
+const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
 /**
  * 주간운세 (이번 주 7일) — Claude Sonnet 4.6
  * 2026-06-29 NEW 출시 (5운). 오늘운세(1일)·월운(12개월 거시)와 시간 해상도로 분리된 "이번 주 7일 미시 흐름".
@@ -24,14 +25,17 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
     const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
     const prompt = buildPrompt(sajuData, days);
     // ── 1차 생성 ──
+    const _t1 = Date.now(); // C7
     const first = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 12000,
         temperature: 0.1, // 결정론적 — 같은 사주 + 같은 주 = 같은 결과
         messages: [{ role: 'user', content: prompt }],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
     // ── 2차 자기리뷰 (퀄리티 레버) ──
+    const _t2 = Date.now(); // C7
     const review = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 12000,
@@ -42,6 +46,7 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
             { role: 'user', content: buildReviewPrompt(days) },
         ],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
     const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
     if (!jsonMatch)
@@ -56,12 +61,14 @@ async function generateWeeklyDraft(apiKey, sajuData, weekDays) {
     const anthropic = new sdk_1.default({ apiKey });
     const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
     const prompt = buildPrompt(sajuData, days);
+    const _t1 = Date.now(); // C7
     const first = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 12000,
         temperature: 0.1,
         messages: [{ role: 'user', content: prompt }],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
     const m = firstText.match(/\{[\s\S]*\}/);
     if (!m)
@@ -76,6 +83,7 @@ async function generateWeeklyRefine(apiKey, sajuData, weekDays, draft) {
     const anthropic = new sdk_1.default({ apiKey });
     const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
     const prompt = buildPrompt(sajuData, days);
+    const _t2 = Date.now(); // C7
     const review = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 12000,
@@ -86,6 +94,7 @@ async function generateWeeklyRefine(apiKey, sajuData, weekDays, draft) {
             { role: 'user', content: buildReviewPrompt(days) },
         ],
     });
+    (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
     const m = reviewText.match(/\{[\s\S]*\}/);
     if (!m)

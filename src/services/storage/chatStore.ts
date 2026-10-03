@@ -65,6 +65,57 @@ function saveRooms(rooms: ChatRoom[]): void {
   // 최대 개수 제한
   const trimmed = rooms.slice(0, MAX_ROOMS);
   localStorage.setItem(CHAT_KEY, JSON.stringify(trimmed));
+  scheduleChatMirror();
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 사주대화 서버 백업 (2026-10-04 · "기록 소실 절대 없게")
+ *   대화는 localStorage 에만 있어 저장소가 비면 영구 소실이었다. 바뀐 방만 users/{uid}/chats/{roomId} 로
+ *   올리고(3초 debounce), 저장소 초기화·계정 회전 후엔 서버에서 되받는다. 지운 대화는 삭제 기록으로 제외.
+ * ──────────────────────────────────────────────────────────── */
+const CHAT_DELETED_KEY = 'saju500_deleted_chat_ids';
+let chatMirrorTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleChatMirror(): void {
+  if (chatMirrorTimer) clearTimeout(chatMirrorTimer);
+  chatMirrorTimer = setTimeout(() => {
+    chatMirrorTimer = null;
+    import('./firestoreSync').then((m) => m.pushChatMirror(getRooms())).catch(() => { /* 다음 변경에서 재시도 */ });
+  }, 3000);
+}
+
+export function getDeletedChatIds(): Set<string> {
+  try {
+    const arr = JSON.parse(localStorage.getItem(CHAT_DELETED_KEY) || '[]');
+    return new Set(Array.isArray(arr) ? arr.filter((x: unknown) => typeof x === 'string') : []);
+  } catch { return new Set(); }
+}
+function addDeletedChatId(id: string): void {
+  try {
+    const list = Array.from(getDeletedChatIds()).filter((x) => x !== id);
+    list.push(id);
+    localStorage.setItem(CHAT_DELETED_KEY, JSON.stringify(list.slice(-300)));
+  } catch { /* noop */ }
+}
+
+/** 서버에서 받은 대화방 병합 — 없는 방만 추가(보관 기간·삭제 기록 존중). 추가 수 반환 */
+export function mergeRestoredChatRooms(incoming: ChatRoom[]): number {
+  try {
+    const rooms = getRooms();
+    const have = new Set(rooms.map((r) => r.id));
+    const deleted = getDeletedChatIds();
+    const cutoff = Date.now() - RETENTION_DAYS * 86400000;
+    let added = 0;
+    for (const r of incoming || []) {
+      if (!r?.id || have.has(r.id) || deleted.has(r.id)) continue;
+      if (!Array.isArray(r.messages) || new Date(r.updatedAt).getTime() <= cutoff) continue;
+      rooms.push(r); have.add(r.id); added++;
+    }
+    if (added > 0) {
+      rooms.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      localStorage.setItem(CHAT_KEY, JSON.stringify(rooms.slice(0, MAX_ROOMS)));
+    }
+    return added;
+  } catch { return 0; }
 }
 
 /** 모든 채팅방 조회 (최신순) */
@@ -148,6 +199,9 @@ export function completeChatRoom(roomId: string): void {
 export function deleteChatRoom(id: string): void {
   const rooms = getRooms().filter(r => r.id !== id);
   saveRooms(rooms);
+  // 서버 백업도 지우고 삭제 기록 — 복원·기기 여권이 되살리지 않게 (2026-10-04)
+  addDeletedChatId(id);
+  import('./firestoreSync').then((m) => m.deleteChatRemote(id)).catch(() => { /* 로컬 삭제 기록이 재다운로드를 막는다 */ });
 }
 
 /** 채팅방 수 */

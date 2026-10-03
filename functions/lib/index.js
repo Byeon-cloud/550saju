@@ -33,13 +33,14 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.registerDevicePassport = exports.recoverIapOrders = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPortonePayment = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeeklyRefine = exports.generateWeeklyDraft = exports.generateWeekly = exports.generateMonthlyRefine = exports.generateMonthlyDraft = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
+exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.auditOrphanAccounts = exports.registerDevicePassport = exports.recoverIapOrders = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPortonePayment = exports.confirmPayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeeklyRefine = exports.generateWeeklyDraft = exports.generateWeekly = exports.generateMonthlyRefine = exports.generateMonthlyDraft = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generateReportStream = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
 // 2026-07-03: 런타임 Node 20 → 22 (firebase.json "runtime": "nodejs22" · Node 20 은 2026-10-30 지원 종료).
 //   CLI 는 소스 해시만 비교해 런타임 변경만으론 전 함수를 skip — 이 주석이 해시를 바꿔 재배포를 트리거함.
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
 const aiFailureLog_1 = require("./shared/aiFailureLog");
+const aiUsageLog_1 = require("./shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget · 생성 로직 무관)
 const progressWrite_1 = require("./shared/progressWrite"); // 점진 로딩 — 그룹별 증분 write(best-effort·머니 무관)
 const kstTime_1 = require("./utils/kstTime");
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
@@ -871,6 +872,11 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                     });
                 }
             }
+            // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+            try {
+                (0, aiUsageLog_1.logAnthropicUsage)('daily', 'claude-haiku-4-5', await stream.finalMessage(), tg0, 'stream');
+            }
+            catch { /* best-effort */ }
             const elapsedMs = Date.now() - tg0;
             console.log(`[dailyFortuneStream] Group ${groupId} complete`, {
                 chunks: chunkCount,
@@ -932,6 +938,11 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                     sendEvent('chunk', { group: 'fallback', delta: event.delta.text, totalChars: fbAcc.length });
                 }
             }
+            // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+            try {
+                (0, aiUsageLog_1.logAnthropicUsage)('daily', 'claude-sonnet-4-6', await fbStream.finalMessage(), tFb, 'fallback');
+            }
+            catch { /* best-effort */ }
             try {
                 const fbParsed = parseJsonResponse(fbAcc, { repairUsed: false }) || {};
                 // 정상 그룹은 유지, 누락된 부분만 Sonnet 결과로 채움
@@ -1278,6 +1289,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
                 const runStream = async (temperature) => {
                     let acc = '';
                     let idx = 0;
+                    const _t0 = Date.now(); // C7
                     const stream = anthropic.messages.stream({
                         model, max_tokens: maxTokens, temperature, system,
                         messages: [{ role: 'user', content: user }],
@@ -1290,6 +1302,11 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
                             sendEvent('chunk', { group, delta: event.delta.text, totalChars: acc.length, chunkIdx: idx });
                         }
                     }
+                    // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+                    try {
+                        (0, aiUsageLog_1.logAnthropicUsage)('dream', model, await stream.finalMessage(), _t0, 'stream');
+                    }
+                    catch { /* best-effort */ }
                     return acc;
                 };
                 let text = await runStream(0.7);
@@ -1327,6 +1344,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
         const runStream = async (temperature) => {
             let acc = '';
             let idx = 0;
+            const _t0 = Date.now(); // C7
             const stream = anthropic.messages.stream({
                 model, max_tokens: maxTokens, temperature, system,
                 messages: [{ role: 'user', content: user }],
@@ -1338,6 +1356,11 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
                     sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx: idx });
                 }
             }
+            // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+            try {
+                (0, aiUsageLog_1.logAnthropicUsage)('dream', model, await stream.finalMessage(), _t0, 'stream');
+            }
+            catch { /* best-effort */ }
             return acc;
         };
         let text = await runStream(0.7);
@@ -2358,6 +2381,7 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
         const runStream = async (temperature) => {
             let acc = '';
             let chunkIdx = 0;
+            const _t0 = Date.now(); // C7
             const stream = anthropic.messages.stream({
                 model,
                 max_tokens: maxTokens,
@@ -2372,6 +2396,11 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
                     sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx });
                 }
             }
+            // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+            try {
+                (0, aiUsageLog_1.logAnthropicUsage)('topic', model, await stream.finalMessage(), _t0, 'stream');
+            }
+            catch { /* best-effort */ }
             return acc;
         };
         // 1차 스트리밍 (파싱 실패 시 temp 낮춰 1회 재시도 — callable 과 동일)
@@ -2440,6 +2469,8 @@ var recoverIapOrders_1 = require("./payment/recoverIapOrders");
 Object.defineProperty(exports, "recoverIapOrders", { enumerable: true, get: function () { return recoverIapOrders_1.recoverIapOrders; } });
 var devicePassport_1 = require("./storage/devicePassport");
 Object.defineProperty(exports, "registerDevicePassport", { enumerable: true, get: function () { return devicePassport_1.registerDevicePassport; } });
+var orphanAudit_1 = require("./storage/orphanAudit"); // 2026-10-04 매일 갈라진 계정 점검·빠진 기록 보충
+Object.defineProperty(exports, "auditOrphanAccounts", { enumerable: true, get: function () { return orphanAudit_1.auditOrphanAccounts; } });
 var restoreLibrary_1 = require("./storage/restoreLibrary");
 Object.defineProperty(exports, "restoreLibrary", { enumerable: true, get: function () { return restoreLibrary_1.restoreLibrary; } });
 // 어드민 CS 지급 (2026-06-12) — /admin 'CS 지급' 탭에서 디바이스 ID 로 즉시 장부 기록 (오너 전용)

@@ -50,8 +50,7 @@ async function callReportGroup(anthropic, model, sajuData, situation, group) {
             system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: userPrompt }],
         });
-        if (msg.usage)
-            (0, aiUsageLog_1.logAiUsage)({ type: 'report', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t0, ok: true }); // C7 best-effort
+        (0, aiUsageLog_1.logAnthropicUsage)('report', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
         return msg.content[0].text;
     };
     // 3그룹 병렬 + Promise.all 은 한 그룹만 파싱 실패해도 리포트 전체가 죽음.

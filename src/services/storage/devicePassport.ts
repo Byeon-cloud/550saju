@@ -74,7 +74,7 @@ async function runDevicePassportCheckInner(): Promise<void> {
 
     try { localStorage.setItem(THROTTLE_KEY, String(Date.now())); } catch { /* noop */ }
 
-    const migrated = Number(r?.data?.migratedReports) || 0;
+    const migrated = (Number(r?.data?.migratedReports) || 0) + (Number(r?.data?.migratedChats) || 0);
     const rotated = !!r?.data?.rotated;
     const mirrorReady = !!r?.data?.mirrorReady;
     const profilesRestored = Number(r?.data?.profilesRestored) || 0;

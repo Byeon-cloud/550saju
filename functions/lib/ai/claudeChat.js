@@ -241,8 +241,7 @@ ${question}
         ],
         messages: [{ role: 'user', content: userPrompt }],
     });
-    if (msg.usage)
-        (0, aiUsageLog_1.logAiUsage)({ type: 'chat', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
+    (0, aiUsageLog_1.logAnthropicUsage)('chat', model, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = msg.content[0].text || '';
     let parsed;
     try {

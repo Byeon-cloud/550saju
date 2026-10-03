@@ -92,6 +92,7 @@ export const registerDevicePassport = onCall(
     let rotated = false;      // 새 uid 가 이 기기/계정에서 처음 보임 (리포트 0건이어도 true — 잔액 seed 트리거)
     let mirrorReady = false;  // 이 uid 에 잔액 미러가 존재 (seed 재료 있음)
     let profilesRestored = 0; // 사주원국 미러로 합쳐진 인물 수
+    let migratedChats = 0;    // 사주대화 백업 이관 수 (2026-10-04)
 
     // 기증자 = 이 기기 등록 uid(최근순) ∪ 익명키 등록 uid ∪ 보상이력 uid — 현재 uid 제외, 상한 적용
     const donors = Array.from(new Set([
@@ -157,6 +158,34 @@ export const registerDevicePassport = onCall(
         // 리포트 이관 실패해도 잔액 미러는 아래에서 별도로 시도 (0건 유저 잔액 복원 P0)
         console.warn(`[devicePassport] 리포트 이관 실패 device=${deviceId.slice(0, 12)}…: ${e?.message || e}`);
       }
+
+      // 사주대화 백업 (2026-10-04) — 형제 계정의 대화방 중 이 계정에 없는 것만 복사 (삭제 장부 존중)
+      try {
+        const destChatIds = new Set((await db.collection(`users/${uid}/chats`).listDocuments()).map((r) => r.id));
+        const deletedChats = new Set<string>();
+        for (const u of [uid, ...donors]) {
+          try {
+            const dl = await db.doc(`users/${u}/state/deleted`).get();
+            const ids = dl.exists ? (dl.data() as any)?.chatIds : null;
+            if (Array.isArray(ids)) ids.forEach((x: any) => typeof x === 'string' && deletedChats.add(x));
+          } catch { /* noop */ }
+        }
+        let batch = db.batch();
+        let pending = 0;
+        for (const donor of donors) {
+          const refs = (await db.collection(`users/${donor}/chats`).listDocuments())
+            .filter((r) => !destChatIds.has(r.id) && !deletedChats.has(r.id))
+            .slice(0, 100);
+          if (refs.length === 0) continue;
+          for (const d of await db.getAll(...refs)) {
+            if (!d.exists || destChatIds.has(d.id)) continue;
+            batch.set(db.doc(`users/${uid}/chats/${d.id}`), { ...d.data(), migratedFromUid: donor });
+            destChatIds.add(d.id); migratedChats++; pending++;
+            if (pending >= 50) { await batch.commit(); batch = db.batch(); pending = 0; } // 대화 문서는 클 수 있어 작게 커밋
+          }
+        }
+        if (pending > 0) await batch.commit();
+      } catch { /* 대화 이관 실패는 무해 — 다음 부팅 재시도 */ }
 
       // 잔액 미러 — 리포트 유무와 독립. 기기 기증자 중 미러가 있는 가장 최근 uid 에서 1회.
       //   🚨 2026-10-03 경합 fix: 저장소가 빈 부팅에서 앱 첫 화면이 기본 잔액(1운)을 먼저 서버에 올려,
@@ -254,6 +283,6 @@ export const registerDevicePassport = onCall(
       } catch { /* 등록 실패는 무해 — 다음 부팅 재시도 */ }
     }
 
-    return { registered: true, migratedReports, rotated, mirrorReady, profilesRestored };
+    return { registered: true, migratedReports, rotated, mirrorReady, profilesRestored, migratedChats };
   },
 );

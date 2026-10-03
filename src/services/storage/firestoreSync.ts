@@ -15,6 +15,7 @@ import { doc, getDoc, setDoc, collection, getDocs, writeBatch, deleteDoc, arrayU
 import { db, auth } from '@/services/auth/firebase';
 import { getReports, saveReport, generateId, mergeProfiles, profilesFromReports, getDeletedReportIds, getDeletedProfileKeys, type LocalReport, type SajuProfile } from './localStore';
 import { type BalanceDetail } from './localStore';
+import { mergeRestoredChatRooms, getDeletedChatIds, type ChatRoom } from './chatStore';
 
 /**
  * 로컬 → 클라우드 동기화
@@ -160,6 +161,12 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
         addedReports.push(restored);
       }
     });
+
+    // 사주대화 복원 (2026-10-04) — 저장소 초기화·계정 회전 후 서버 백업에서 없는 대화방만 되받는다
+    try {
+      const chats = await pullChatRooms(uid);
+      if (chats.length) mergeRestoredChatRooms(chats);
+    } catch { /* noop */ }
 
     // 사주원국 복원 (2026-09-27) — 새로 내려온 리포트의 인물을 프로필 목록에 합친다.
     //   '이번에 새로 받은 리포트'만 보므로, 유저가 지운 프로필(리포트는 이미 로컬에 있음)은 되살아나지 않는다.
@@ -377,6 +384,65 @@ export async function pullProfilesMirror(uid: string): Promise<any[]> {
     const deleted = new Set<string>(Array.isArray(data?.deletedKeys) ? data.deletedKeys : []);
     return items.filter((p: any) => !deleted.has(`${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`));
   } catch { return []; }
+}
+
+/* ── 사주대화 서버 백업 (2026-10-04) ── */
+const CHAT_SIG_KEY = 'saju500:chat_mirror_sig';
+const chatSig = (r: ChatRoom): string =>
+  `${r.updatedAt}|${r.messages?.length ?? 0}|${r.name}|${r.profileId ?? ''}|${r.completed ? 1 : 0}`;
+
+/** 바뀐 대화방만 users/{uid}/chats/{roomId} 로 업로드 (서명 비교 — 계정이 바뀌면 전부 다시) */
+export async function pushChatMirror(rooms: ChatRoom[]): Promise<void> {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !Array.isArray(rooms)) return;
+    let store: { uid?: string; sigs?: Record<string, string> } = {};
+    try { store = JSON.parse(localStorage.getItem(CHAT_SIG_KEY) || '{}'); } catch { /* noop */ }
+    const sigs: Record<string, string> = store.uid === uid ? (store.sigs || {}) : {};
+    for (const r of rooms) {
+      if (!r?.id) continue;
+      const s = chatSig(r);
+      if (sigs[r.id] === s) continue;
+      let json = JSON.stringify(r);
+      // 문서 1MB 한도 — 결과 원문(fullResult)이 크면 그것만 빼고 대화는 반드시 보존
+      if (json.length > 900_000 && r.contentContext) {
+        json = JSON.stringify({ ...r, contentContext: { ...r.contentContext, fullResult: undefined } });
+      }
+      await setDoc(doc(db, `users/${uid}/chats`, r.id), { roomJson: json, updatedAt: r.updatedAt, v: 1 });
+      sigs[r.id] = s;
+    }
+    localStorage.setItem(CHAT_SIG_KEY, JSON.stringify({ uid, sigs }));
+  } catch { /* noop — 다음 변경에서 재시도 */ }
+}
+
+/** 서버 백업 대화방 (서버 삭제 장부·이 기기 삭제 기록 제외) */
+export async function pullChatRooms(uid: string): Promise<ChatRoom[]> {
+  try {
+    const snap = await getDocs(collection(db, `users/${uid}/chats`));
+    if (snap.empty) return [];
+    const deleted = getDeletedChatIds();
+    try {
+      const del = await getDoc(doc(db, `users/${uid}/state`, 'deleted'));
+      const ids = del.exists() ? (del.data() as any)?.chatIds : null;
+      if (Array.isArray(ids)) ids.forEach((x: unknown) => typeof x === 'string' && deleted.add(x));
+    } catch { /* noop */ }
+    const out: ChatRoom[] = [];
+    snap.forEach((d) => {
+      if (deleted.has(d.id)) return;
+      try { const r = JSON.parse((d.data() as any).roomJson); if (r?.id) out.push(r); } catch { /* 손상 문서 무시 */ }
+    });
+    return out;
+  } catch { return []; }
+}
+
+/** 대화방 삭제를 서버에 반영 — 백업 문서 삭제 + 삭제 장부 기록 */
+export async function deleteChatRemote(id: string): Promise<void> {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !id) return;
+    await setDoc(doc(db, `users/${uid}/state`, 'deleted'), { chatIds: arrayUnion(id), updatedAt: new Date() }, { merge: true });
+    await deleteDoc(doc(db, `users/${uid}/chats`, id));
+  } catch { /* noop */ }
 }
 
 /** 잔액 미러 pull — 기기 여권 seed 용 (없으면 null) */

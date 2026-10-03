@@ -96,8 +96,7 @@ async function generateDreamFree(apiKey, args) {
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user }],
         });
-        if (msg.usage)
-            (0, aiUsageLog_1.logAiUsage)({ type: 'dream', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
+        (0, aiUsageLog_1.logAnthropicUsage)('dream', MODEL, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
         const text = msg.content[0].text;
         const result = (0, promptsV3_1.parseJsonResponse)(text, meta1);
         if (meta1.repairUsed)
@@ -115,8 +114,7 @@ async function generateDreamFree(apiKey, args) {
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user }],
         });
-        if (msg.usage)
-            (0, aiUsageLog_1.logAiUsage)({ type: 'dream', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
+        (0, aiUsageLog_1.logAnthropicUsage)('dream', MODEL, msg, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
         const text = msg.content[0].text;
         const result = (0, promptsV3_1.parseJsonResponse)(text, meta2);
         console.info('[claudeDreamFree] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
@@ -147,8 +145,7 @@ async function generateDreamDeep(apiKey, args) {
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user }],
         });
-        if (first.usage)
-            (0, aiUsageLog_1.logAiUsage)({ type: 'deepDream', model: MODEL, inputTokens: first.usage.input_tokens, outputTokens: first.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
+        (0, aiUsageLog_1.logAnthropicUsage)('deepDream', MODEL, first, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
         firstText = first.content[0].text;
         firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta1);
         if (meta1.repairUsed)
@@ -165,8 +162,7 @@ async function generateDreamDeep(apiKey, args) {
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user }],
         });
-        if (retry.usage)
-            (0, aiUsageLog_1.logAiUsage)({ type: 'deepDream', model: MODEL, inputTokens: retry.usage.input_tokens, outputTokens: retry.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
+        (0, aiUsageLog_1.logAnthropicUsage)('deepDream', MODEL, retry, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
         firstText = retry.content[0].text;
         firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta2);
         console.info('[claudeDreamDeep] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
@@ -190,8 +186,7 @@ async function generateDreamDeep(apiKey, args) {
             },
         ],
     });
-    if (review.usage)
-        (0, aiUsageLog_1.logAiUsage)({ type: 'deepDream', model: MODEL, inputTokens: review.usage.input_tokens, outputTokens: review.usage.output_tokens, ms: Date.now() - _t3, ok: true }); // C7 best-effort
+    (0, aiUsageLog_1.logAnthropicUsage)('deepDream', MODEL, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
     const reviewText = review.content[0].text;
     try {
         return (0, promptsV3_1.parseJsonResponse)(reviewText);
