@@ -262,7 +262,8 @@ export function ChargePage() {
         setTimeout(() => navigate(-1), 1500);
       }
     } else {
-      toast.show(result.message, 'warning');
+      // 유저가 스스로 닫은 취소는 경고가 아니라 안내 톤
+      toast.show(result.message, result.message === '결제를 취소했어요' ? 'info' : 'warning');
     }
   };
 

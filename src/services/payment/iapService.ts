@@ -47,6 +47,27 @@ const IAP_PRODUCT_MAP: Record<string, { sku: string; paidUn: number; bonusUn: nu
 /**
  * 인앱결제 요청
  */
+/**
+ * IAP 실패 사유별 안내 (2026-10-03) — 실측 충전 실패 70건 중 '토스 환경 제한' 10·'한국 계정 전용' 7건이
+ *   사유 없이 '결제가 취소되었거나 오류가 발생했습니다' 한 줄만 보여 유저가 해결 방법을 몰랐다.
+ *   코드 정의: 앱인토스 인앱결제 문서 (INVALID_USER_ENVIRONMENT · KOREAN_ACCOUNT_ONLY · USER_CANCELED).
+ */
+function iapErrorMessage(error: any): string {
+  const code = String(error?.code || error?.type || '').toUpperCase();
+  switch (code) {
+    case 'USER_CANCELED':
+      return '결제를 취소했어요';
+    case 'KOREAN_ACCOUNT_ONLY':
+      return '한국 App Store 계정에서만 결제할 수 있어요. 기기의 App Store 국가·지역을 대한민국으로 바꾼 뒤 다시 시도해 주세요.';
+    case 'INVALID_USER_ENVIRONMENT':
+      return '지금 기기·계정 설정에서는 결제가 제한돼 있어요. 토스 앱을 최신 버전으로 업데이트한 뒤 다시 시도하고, 계속되면 고객문의로 알려주세요.';
+    case 'INTERNAL_ERROR':
+      return '결제 처리 중 잠시 문제가 생겼어요. 잠시 후 다시 시도해 주세요. 결제가 완료됐다면 운은 자동으로 들어가요.';
+    default:
+      return '결제가 완료되지 않았어요. 잠시 후 다시 시도해 주세요.';
+  }
+}
+
 export async function purchasePackage(pkg: ChargePackage): Promise<{ success: boolean; message: string }> {
   if (isAppsInToss()) {
     return purchaseViaIAP(pkg);
@@ -121,7 +142,7 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
             console.error('[IAP] 구매 오류:', error);
             // 2026-06-18 — IAP 결제 실패/취소 트래킹 (결제 퍼널 drop-off · 기존 미트래킹)
             import('@/services/analytics').then((a) => a.trackEvent('charge_failed', { pg: 'iap', reason: String(error?.code || error?.type || error?.message || 'unknown').slice(0, 60) })).catch(() => {});
-            resolve({ success: false, message: '결제가 취소되었거나 오류가 발생했습니다' });
+            resolve({ success: false, message: iapErrorMessage(error) });
           },
         });
       }).catch(() => {
