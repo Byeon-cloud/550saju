@@ -5,8 +5,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { db } from '@/services/auth/firebase';
 import { OWNER_UIDS } from '@/services/admin/adminConfig';
 import {
-  collection, getDocs, query, where, orderBy, limit, collectionGroup,
+  collection, getDocs, query, where, orderBy, limit, collectionGroup, startAfter,
 } from 'firebase/firestore';
+import type { DocumentData, QueryDocumentSnapshot, QuerySnapshot } from 'firebase/firestore';
 
 export type RangeDays = 7 | 14 | 30;
 
@@ -48,17 +49,21 @@ export interface AiUsageAgg {
 
 export interface PeriodAgg {
   days: string[];                                  // 기간 내 KST day 배열 (오름차순)
-  // 매출 (payments confirmed)
+  // 매출 (payments confirmed — 2026-10-03 부터 고유 주문(orderId) 기준 · 복구 지급 중복 제외)
   revenue: number;
   revenueByDay: number[];
-  packageDist: Record<string, number>;             // 충전 금액(₩) → 건수
-  // 충전 이벤트
+  packageDist: Record<string, number>;             // 충전 금액(₩) → 고유 주문 건수
+  payOrders: number;                               // 결제 건수 — 고유 주문(orderId) 기준
+  // 충전 이벤트 (analytics — 진입경로·utm 귀속용. 결제 건수·결제 유저는 payments 장부 기준)
   chargeOpen: number;
-  chargeComplete: number;
+  chargeComplete: number;                          // charge_complete 이벤트 수 (참고용 — 결제 건수는 payOrders)
   chargeAmount: number;                            // charge_complete props.amount 합 (₩)
+  // 결제 유저 — payments 장부 기준. 같은 주문으로 이어진 uid(회전 전후)는 1명
   payingUsers: number;
-  repeatPayingUsers: number;                       // 충전 2회+
-  payingUserKeys: string[];                        // 신규 결제유저 산출용 (cur vs prev 비교)
+  repeatPayingUsers: number;                       // 기간 내 결제 2회+
+  payingUserKeys: string[];                        // 결제 유저 키 (uid 묶음 대표)
+  newPayingUsers: number;                          // 기간 내 첫 결제 유저 (전체 결제 이력 기준)
+  recovery: { count: number; amount: number; excluded: number; excludedAmount: number }; // 기간 내 처리된 결제이력 복구 지급 (처리일 기준) — excluded = 원결제와 중복이라 매출 제외분
   // 방문
   pageViews: number;
   visitors: number;                                // 고유 uid|sid
@@ -81,7 +86,7 @@ export interface PeriodAgg {
   shareClicks: number;
   shareByDay: number[];
   purchasesByDay: number[];                         // 콘텐츠구매 일별 (폭증 타임라인 2026-06-27)
-  chargesByDay: number[];                           // 충전결제 일별
+  chargesByDay: number[];                           // 충전결제 일별 — payments 장부 고유 주문 (2026-10-03)
   shareByPage: Record<string, number>;             // 공유 클릭 페이지별 — 어느 화면에서 공유 최다 (2026-06-24)
   shareByBalanceBand: Record<string, number>;      // 공유자 운 잔액대별 ('0'|'1-3'|'4-9'|'10+')
   sharerCount: number;                             // 공유한 고유 유저 수
@@ -126,16 +131,25 @@ export interface PeriodAgg {
 }
 
 // 결제 건강 + LTV (2026-06-18) — payments 컬렉션 전수 집계 (전 기간). status='confirmed' 외 실패/환불도 노출.
+//   2026-10-03 — 모든 건수·금액은 고유 주문(orderId) 기준. 복구 지급·이관 사본은 아래 보조지표로 분리.
 export interface PayHealth {
-  confirmed: number;             // 충전 성공 건수
+  confirmed: number;             // 충전 성공 건수 (고유 주문)
   failed: number;                // 결제 실패(취소 포함)
   needsReconciliation: number;   // 승인됐으나 적립 미완 — 수동 복구 대상 (P0 모니터링)
   pending: number;               // 미확정
   refundCount: number;           // 환불 건수
   refundAmount: number;          // 환불액 합(₩)
   byPg: Record<string, number>;  // pgProvider(iap/toss/…) → 매출(₩)
-  payerCount: number;            // 결제 고유 유저 수
+  payerCount: number;            // 결제 고유 유저 수 (같은 주문으로 이어진 uid 는 1명)
   avgLtv: number;                // 1인당 누적 결제액(₩) = 총매출 ÷ 결제유저
+  docCount: number;              // 충전 결제 문서 수 (오너 제외·플랫폼 필터 후)
+  orderCount: number;            // 고유 주문 수
+  recoveredDupCount: number;     // 결제이력 복구 지급 중 원결제 기록과 겹친 것 → 매출 제외
+  recoveredDupAmount: number;
+  recoveredOnlyCount: number;    // 결제이력 복구 지급인데 원결제 기록이 없는 것 → 실결제라 원결제일 매출로 반영
+  recoveredOnlyAmount: number;
+  dupCopyCount: number;          // 그 밖의 같은 주문 사본 (uid 이관 사본 등) → 매출 제외
+  dupCopyAmount: number;
 }
 
 export interface AdminData {
@@ -144,7 +158,7 @@ export interface AdminData {
   topicDistAll: Record<string, { count: number; users: number }>; // 10주제 분포 — 전 기간 (DB 복원)
   topicSubAll: Record<string, Record<string, number>>;            // 주제 소분류 분포 (솔로/썸/연애중 등)
   contentDistAll: Record<string, { count: number; users: number | null }>; // 전 콘텐츠 분포 (users null = 집계불가)
-  totalRevenue: number;                            // 누적 (전 기간)
+  totalRevenue: number;                            // 누적 (전 기간 · 고유 주문 기준)
   todayRevenue: number;
   reportsByType: Record<string, number>;           // 콘텐츠 생성 누적
   cur: PeriodAgg;
@@ -157,8 +171,9 @@ export interface AdminData {
 function emptyAgg(days: string[]): PeriodAgg {
   return {
     days,
-    revenue: 0, revenueByDay: days.map(() => 0), packageDist: {},
+    revenue: 0, revenueByDay: days.map(() => 0), packageDist: {}, payOrders: 0,
     chargeOpen: 0, chargeComplete: 0, chargeAmount: 0, payingUsers: 0, repeatPayingUsers: 0, payingUserKeys: [],
+    newPayingUsers: 0, recovery: { count: 0, amount: 0, excluded: 0, excludedAmount: 0 },
     pageViews: 0, visitors: 0, visitorKeys: [], appOpens: 0, dauByDay: days.map(() => 0), dauAvg: 0,
     contentOpen: {}, contentResult: {}, contentPurchase: {},
     contentOpenTotal: 0, contentResultTotal: 0, contentPurchaseTotal: 0, contentPurchaseUn: 0,
@@ -196,6 +211,37 @@ function paymentDay(p: any): string {
   if (typeof v?.seconds === 'number') return kstDayFromMs(v.seconds * 1000);
   return '';
 }
+
+/** Timestamp/string/number → epoch ms (없으면 0) */
+function tsMs(v: any): number {
+  if (!v) return 0;
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') { const t = Date.parse(v); return Number.isNaN(t) ? 0 : t; }
+  if (typeof v?.toDate === 'function') return v.toDate().getTime();
+  if (typeof v?.seconds === 'number') return v.seconds * 1000;
+  return 0;
+}
+
+/** 토스 IAP 주문일(orderDate) → KST day. 오프셋 없는 'YYYY-MM-DDTHH:mm:ss' 는 KST 현지시각(실측 — 원결제 confirmedAt 과 9시간 차),
+ *  Z/오프셋이 붙어 오면 변환. 형식이 아니면 '' (→ 복구 처리일로 폴백) */
+function orderDateDay(v: any): string {
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(v)) return '';
+  if (/(Z|[+-]\d{2}:?\d{2})$/.test(v)) { const t = Date.parse(v); return Number.isNaN(t) ? '' : kstDayFromMs(t); }
+  return v.slice(0, 10);
+}
+
+// ─── 결제 장부 (2026-10-03 · 매출 이중집계 fix) ───
+interface PayRow {
+  uid: string; amt: number; status: string;
+  recovered: boolean;   // recoveredFromIapHistory — 결제이력 복구 지급 (functions/src/payment/recoverIapOrders.ts)
+  migrated: boolean;    // migratedFromUid — uid 이관 사본
+  ms: number;           // 확정 시각 (정본 선택용)
+  day: string;          // 매출 귀속일 KST (확정일 · 원결제 기록 없는 복구분은 원결제일)
+  orderDay: string;     // 토스 주문일 KST (복구 문서에만 기록됨)
+  pg: string;
+}
+const PAY_STATUS_RANK: Record<string, number> = { confirmed: 4, completed: 4, needs_reconciliation: 3, pending: 2, failed: 1 };
+const isPaidStatus = (s: string): boolean => s === 'confirmed' || s === 'completed';
 
 /** analytics 이벤트 1건을 해당 기간 버킷에 누적 */
 // 내부 트래픽 제외 (2026-06-12) — 오너 기기/로컬 테스트 이벤트는 집계에서 빼서 '가짜 데이터' 차단
@@ -248,10 +294,9 @@ function accumulateEvent(agg: PeriodAgg, e: RawEvent, dayIdx: number, scratch: P
     }
     case 'charge_open': agg.chargeOpen += 1; break;
     case 'charge_complete': {
+      // 2026-10-03 — 결제 건수·결제 유저·일별 충전은 payments 장부(고유 주문)로 이관. 이벤트는 진입경로·utm 귀속만.
       agg.chargeComplete += 1;
       agg.chargeAmount += Number(e.props?.amount) || 0;
-      if (dayIdx >= 0) agg.chargesByDay[dayIdx] += 1;
-      scratch.chargeByUser[userKey] = (scratch.chargeByUser[userKey] ?? 0) + 1;
       // 2026-06-24 — 결제 유발 콘텐츠(진입경로): 어떤 콘텐츠에서 결제를 결심했나.
       const src = (e.props?.source as string | undefined) || 'direct';
       agg.chargeBySource[src] = (agg.chargeBySource[src] ?? 0) + 1;
@@ -343,7 +388,6 @@ interface PeriodScratch {
   visitorSet: Set<string>;
   dauSets: Record<number, Set<string>>;
   visitDays: Record<string, Set<string>>;
-  chargeByUser: Record<string, number>;
   utmVisitSets: Record<string, Set<string>>;
   demoByUser: Record<string, { g?: string; ab?: string }>;  // 2026-06-12 인구통계
   pvBySession: Record<string, number>;                       // 이탈률용 (sid → pv 수)
@@ -389,10 +433,7 @@ function finalizeAgg(agg: PeriodAgg, scratch: PeriodScratch): void {
     cohortD1: d1E, cohortD7: d7E,
   };
 
-  // 재구매
-  agg.payingUserKeys = Object.keys(scratch.chargeByUser);
-  agg.payingUsers = agg.payingUserKeys.length;
-  agg.repeatPayingUsers = Object.values(scratch.chargeByUser).filter((n) => n >= 2).length;
+  // 결제 유저·재구매 — payments 장부 집계 후 applyPayers() 에서 채움 (2026-10-03)
 
   // 공유 분해 마감 (2026-06-24) — 고유 공유자 수 + 한명당 평균 공유
   agg.sharerCount = Object.keys(scratch.sharerByUser).length;
@@ -411,13 +452,35 @@ function finalizeAgg(agg: PeriodAgg, scratch: PeriodScratch): void {
     ? Math.round((sessions.filter((n) => n === 1).length / sessions.length) * 100)
     : null;
 
-  // 인구통계 마감 (2026-06-12) — 고유 유저 기준 성별·연령 분포 + 결제 유저 성별
-  Object.entries(scratch.demoByUser).forEach(([userKey, demo]) => {
+  // 인구통계 마감 (2026-06-12) — 고유 유저 기준 성별·연령 분포 (결제 유저 성별은 applyPayers)
+  Object.values(scratch.demoByUser).forEach((demo) => {
     if (demo.g) agg.demoGender[demo.g] = (agg.demoGender[demo.g] ?? 0) + 1;
     if (demo.ab) agg.demoAge[demo.ab] = (agg.demoAge[demo.ab] ?? 0) + 1;
-    if (demo.g && scratch.chargeByUser[userKey]) {
-      agg.payingGender[demo.g] = (agg.payingGender[demo.g] ?? 0) + 1;
-    }
+  });
+}
+
+/** 결제 유저 지표 마감 (2026-10-03) — payments 장부 기준. payers: 대표 uid → 기간 내 고유 주문 수 */
+function applyPayers(
+  agg: PeriodAgg, payers: Map<string, number>, firstPayDay: Map<string, string>,
+  scratch: PeriodScratch, rootUid: (u: string) => string,
+): void {
+  agg.payingUserKeys = Array.from(payers.keys());
+  agg.payingUsers = payers.size;
+  agg.repeatPayingUsers = Array.from(payers.values()).filter((n) => n >= 2).length;
+  const start = agg.days[0] || '';
+  agg.newPayingUsers = agg.payingUserKeys.filter((k) => {
+    const f = firstPayDay.get(k);
+    return !!f && f >= start;
+  }).length;
+  // 결제자 성별 — 이벤트 demo(본인 프로필) 중 결제 유저만, 같은 사람(uid 묶음)은 1회
+  agg.payingGender = {};
+  const seen = new Set<string>();
+  Object.entries(scratch.demoByUser).forEach(([userKey, demo]) => {
+    if (!demo.g) return;
+    const k = rootUid(userKey);
+    if (!payers.has(k) || seen.has(k)) return;
+    seen.add(k);
+    agg.payingGender[demo.g] = (agg.payingGender[demo.g] ?? 0) + 1;
   });
 }
 
@@ -468,21 +531,40 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
 
         const cur = emptyAgg(curDays);
         const prev = emptyAgg(prevDays);
-        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {}, sharerByUser: {} };
-        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, chargeByUser: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {}, sharerByUser: {} };
+        const curScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {}, sharerByUser: {} };
+        const prevScratch: PeriodScratch = { visitorSet: new Set(), dauSets: {}, visitDays: {}, utmVisitSets: {}, demoByUser: {}, pvBySession: {}, sharerByUser: {} };
         const rawEvents: RawEvent[] = [];
         // 2026-06-18 더미 제거 — 오너(본인 테스트) 데이터 전 collectionGroup 에서 제외.
         //   OWNER_UIDS(고정) + internal:true 이벤트를 낸 모든 uid(쿠키 초기화로 바뀐 익명 오너 기기 포함).
         //   → reports/payments/dailyFortune/users 가 이 uid 들을 건너뜀 = 실유저 수치만 남음.
         const ownerUidSet = new Set<string>(OWNER_UIDS);
 
-        // 1) analytics — 현+전 기간 (최대 60일) 한 번에 fetch
-        const evSnap = await getDocs(
-          query(collection(db, 'analytics'), where('day', '>=', fetchStart), orderBy('day'), limit(10000)),
-        );
-        evSnap.forEach((doc) => {
-          const e = doc.data() as any;
-          if (isInternalEvent(e)) { if (e.uid) ownerUidSet.add(String(e.uid)); return; } // 오너·로컬 트래픽 제외 + uid 수집
+        // 1) analytics — 현+전 기간 (최대 60일) 페이지 단위 전수 fetch
+        //    🚨 2026-10-03 — 기존 limit(10000) 단일 쿼리는 day 오름차순이라, 30일 보기(60일치 ≈ 1.3만 건)에서
+        //    최근 며칠이 통째로 잘려 현 기간 방문·퍼널이 과소 집계됐다. startAfter 커서로 끝까지 읽는다.
+        const evRows: any[] = [];
+        const EV_PAGE = 10000;
+        let evCursor: QueryDocumentSnapshot<DocumentData> | null = null;
+        for (let page = 0; page < 20; page++) { // 안전 상한 20만 건
+          const evSnap: QuerySnapshot<DocumentData> = await getDocs(evCursor
+            ? query(collection(db, 'analytics'), where('day', '>=', fetchStart), orderBy('day'), startAfter(evCursor), limit(EV_PAGE))
+            : query(collection(db, 'analytics'), where('day', '>=', fetchStart), orderBy('day'), limit(EV_PAGE)));
+          evSnap.forEach((doc) => { evRows.push(doc.data()); });
+          if (evSnap.size < EV_PAGE) break;
+          evCursor = evSnap.docs[evSnap.docs.length - 1];
+        }
+        // 오너 판정 1차 패스 (2026-10-03) — internal 마킹 이벤트의 uid·기기(did)를 먼저 모은 뒤, 같은 uid/기기의
+        //   마킹 안 된 이벤트(어드민 첫 방문 전 기록)까지 제외. 기존엔 마킹된 이벤트만 빠졌다 (실측 6월 73건 누수).
+        const ownerDidSet = new Set<string>();
+        evRows.forEach((e) => {
+          if (!isInternalEvent(e)) return;
+          if (e.uid) ownerUidSet.add(String(e.uid));
+          if (typeof e.did === 'string' && e.did.startsWith('d_')) ownerDidSet.add(e.did); // 'nodevice' 폴백은 제외
+        });
+        evRows.forEach((e) => {
+          if (isInternalEvent(e)) return; // 오너·로컬 트래픽 제외
+          if (e.uid && ownerUidSet.has(String(e.uid))) return;
+          if (e.did && ownerDidSet.has(String(e.did))) return;
           // 플랫폼 필터 (2026-06-12) — plat 미기록 구이벤트는 web 취급 (구 토스앱 번들엔 추적코드 자체가 없었음)
           if (plat !== 'all' && ((e.plat as string) || 'web') !== plat) return;
           const ev: RawEvent = {
@@ -501,62 +583,138 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
         finalizeAgg(cur, curScratch);
         finalizeAgg(prev, prevScratch);
 
-        // 2) payments — confirmed 누적 + 기간별 (collectionGroup 전체 fetch — 저트래픽 초기 운영 전제)
-        //    2026-06-18 — 결제건강(실패/환불/needs_reconciliation) + PG채널 + LTV 동반 집계 (별도 accumulator).
+        // 2) payments — 고유 주문(orderId) 장부 (2026-10-03 매출 이중집계 fix)
+        //    🚨 같은 orderId 가 서로 다른 uid 아래 두 번 기록된다 — uid 회전(기기 초기화·재설치) 후
+        //    recoverIapOrders 가 토스 결제이력으로 새 uid 에 재지급하며 `recoveredFromIapHistory:true` 문서를
+        //    남기기 때문. 문서 단위로 더하면 재지급이 매출로 또 잡힌다 (실측 14주문·₩37,000 과대 · 9월 31,500→24,000).
+        //    규칙 ① 주문당 매출 1건 — 정본 = 원결제 문서(복구·이관 사본 아님) 중 가장 이른 것.
+        //         ② 원결제 문서가 아예 없는 복구분(결제 직후 지급 기록 실패 → 이력복구로만 남은 실결제)은
+        //            매출로 인정하되 원결제일(orderDate)로 귀속.   ③ 복구 지급은 보조지표로 따로 노출.
+        //         ④ 결제 유저 = 같은 주문으로 이어진 uid 들(회전 전후)을 1명으로 묶음.
+        //    collectionGroup 전체 fetch — 저트래픽 운영 전제. 플랫폼 = pgProvider('iap'=앱인토스, 그 외=웹 · 2026-06-23).
         let totalRevenue = 0, todayRevenue = 0;
-        const ph = { confirmed: 0, failed: 0, needsReconciliation: 0, pending: 0, refundCount: 0, refundAmount: 0, byPg: {} as Record<string, number> };
-        const payerSet = new Set<string>();
+        const ph: PayHealth = {
+          confirmed: 0, failed: 0, needsReconciliation: 0, pending: 0, refundCount: 0, refundAmount: 0, byPg: {},
+          payerCount: 0, avgLtv: 0, docCount: 0, orderCount: 0,
+          recoveredDupCount: 0, recoveredDupAmount: 0, recoveredOnlyCount: 0, recoveredOnlyAmount: 0,
+          dupCopyCount: 0, dupCopyAmount: 0,
+        };
+        // uid 묶음 (union-find) — 같은 주문이 걸린 uid = 같은 토스 계정
+        const uidLink = new Map<string, string>();
+        const rootUid = (u: string): string => {
+          let r = u;
+          while (uidLink.has(r) && uidLink.get(r) !== r) r = uidLink.get(r)!;
+          let c = u;
+          while (c !== r) { const n = uidLink.get(c)!; uidLink.set(c, r); c = n; }
+          return r;
+        };
+        const payerRoots = new Set<string>();
+        const curPayers = new Map<string, number>();   // 대표 uid → 기간 내 고유 주문 수
+        const prevPayers = new Map<string, number>();
+        const firstPayDay = new Map<string, string>(); // 대표 uid → 전체 이력상 첫 결제일
         try {
           const paySnap = await getDocs(collectionGroup(db, 'payments'));
+          const orders = new Map<string, PayRow[]>();
+          const refunds = new Map<string, number>();
           paySnap.forEach((doc) => {
             const p = doc.data() as any;
-            const amt = Number(p.amount) || 0;
             const puid = doc.ref.parent.parent?.id || '';
             if (ownerUidSet.has(puid)) return; // 오너 테스트 결제 제외 (더미)
-            // 2026-06-23 — 결제 플랫폼 = pgProvider 기준 분류. 'iap'=앱인토스(토스앱), 그 외('toss'·포트원 등)=웹.
-            //   기존 버그: 결제 루프가 plat 필터(line 429는 analytics 만)를 안 타 모든 결제가 전 플랫폼에 합산 →
-            //   '웹' 필터에도 토스앱 매출이 그대로 떴음. 웹 미출시인데 웹 매출 있는 것처럼 보이던 원인. 이제 PG 로 정확 분류.
             const payPlat = String(p.pgProvider || '') === 'iap' ? 'ait' : 'web';
             if (plat !== 'all' && payPlat !== plat) return; // 플랫폼 필터 (매출·결제건강 일관 적용)
-            const status = String(p.status ?? 'confirmed');
             const ptype = String(p.type ?? 'charge');
-            // 결제 건강 — 모든 충전 시도 상태 분류 (use 차감은 제외)
-            if (ptype === 'refund') { ph.refundCount += 1; ph.refundAmount += amt; }
-            else if (ptype !== 'use') {
-              if (status === 'confirmed') ph.confirmed += 1;
-              else if (status === 'failed') ph.failed += 1;
-              else if (status === 'needs_reconciliation') ph.needsReconciliation += 1;
-              else if (status === 'pending') ph.pending += 1;
+            if (ptype === 'use') return; // 운 차감 기록 — 결제 아님
+            const oid = String(p.orderId || doc.id);
+            const amt = Number(p.amount) || 0;
+            if (ptype === 'refund') { if (!refunds.has(oid)) refunds.set(oid, amt); return; }
+            ph.docCount += 1;
+            const row: PayRow = {
+              uid: puid, amt,
+              status: String(p.status ?? 'confirmed'),
+              recovered: p.recoveredFromIapHistory === true,
+              migrated: !!p.migratedFromUid,
+              ms: tsMs(p.confirmedAt ?? p.createdAt),
+              day: paymentDay(p),
+              orderDay: orderDateDay(p.orderDate),
+              pg: String(p.pgProvider || 'unknown'),
+            };
+            const arr = orders.get(oid);
+            if (arr) arr.push(row); else orders.set(oid, [row]);
+          });
+          refunds.forEach((amt) => { ph.refundCount += 1; ph.refundAmount += amt; });
+
+          // 주문 단위 판정
+          const revenueRows: PayRow[] = [];
+          const earliest = (xs: PayRow[]): PayRow => xs.reduce((a, b) => ((b.ms || Infinity) < (a.ms || Infinity) ? b : a));
+          orders.forEach((rows) => {
+            ph.orderCount += 1;
+            for (let i = 1; i < rows.length; i++) { // 같은 주문의 uid 들 = 같은 사람
+              const a = rootUid(rows[0].uid), b = rootUid(rows[i].uid);
+              if (a && b && a !== b) uidLink.set(b, a);
             }
-            const isConfirmed = p.status === 'confirmed' || p.status === undefined;
-            const isCharge = ptype !== 'use' && ptype !== 'refund';
-            if (!isConfirmed || !isCharge || amt <= 0) return;
-            totalRevenue += amt;
-            if (puid) payerSet.add(puid);
-            const pg = String(p.pgProvider || 'unknown');
-            ph.byPg[pg] = (ph.byPg[pg] ?? 0) + amt;
-            const pday = paymentDay(p);
-            if (pday === today) todayRevenue += amt;
-            const ci = curDays.indexOf(pday);
-            if (ci >= 0) {
-              cur.revenue += amt;
-              cur.revenueByDay[ci] += amt;
-              cur.packageDist[String(amt)] = (cur.packageDist[String(amt)] ?? 0) + 1;
-            } else {
-              const pi = prevDays.indexOf(pday);
-              if (pi >= 0) {
-                prev.revenue += amt;
-                prev.revenueByDay[pi] += amt;
-                prev.packageDist[String(amt)] = (prev.packageDist[String(amt)] ?? 0) + 1;
+            // 결제 건강 — 주문의 최종 상태 1개 (confirmed > needs_reconciliation > pending > failed)
+            const best = rows.reduce((b, r) => ((PAY_STATUS_RANK[r.status] ?? 0) > (PAY_STATUS_RANK[b.status] ?? 0) ? r : b));
+            if (isPaidStatus(best.status)) ph.confirmed += 1;
+            else if (best.status === 'failed') ph.failed += 1;
+            else if (best.status === 'needs_reconciliation') ph.needsReconciliation += 1;
+            else if (best.status === 'pending') ph.pending += 1;
+
+            const paid = rows.filter((r) => isPaidStatus(r.status) && r.amt > 0);
+            if (paid.length === 0) return;
+            const originals = paid.filter((r) => !r.recovered && !r.migrated);
+            const nonRecovered = paid.filter((r) => !r.recovered);
+            const canon = originals.length ? earliest(originals) : nonRecovered.length ? earliest(nonRecovered) : earliest(paid);
+            paid.forEach((r) => {
+              if (r.recovered) {
+                const isDup = r !== canon;
+                if (isDup) { ph.recoveredDupCount += 1; ph.recoveredDupAmount += r.amt; }
+                else { ph.recoveredOnlyCount += 1; ph.recoveredOnlyAmount += r.amt; }
+                const ragg = curDays.includes(r.day) ? cur : prevDays.includes(r.day) ? prev : null; // 복구 처리일 기준
+                if (ragg) {
+                  ragg.recovery.count += 1; ragg.recovery.amount += r.amt;
+                  if (isDup) { ragg.recovery.excluded += 1; ragg.recovery.excludedAmount += r.amt; }
+                }
+              } else if (r !== canon) {
+                ph.dupCopyCount += 1; ph.dupCopyAmount += r.amt; // uid 이관 사본 등
               }
+            });
+            // 원결제 기록 없는 복구분 → 원결제일 귀속 (orderDate 없으면 복구일)
+            revenueRows.push(canon.recovered && canon.orderDay ? { ...canon, day: canon.orderDay } : canon);
+          });
+
+          revenueRows.forEach((o) => {
+            const amt = o.amt;
+            const payer = o.uid ? rootUid(o.uid) : '';
+            totalRevenue += amt;
+            ph.byPg[o.pg] = (ph.byPg[o.pg] ?? 0) + amt;
+            if (payer) {
+              payerRoots.add(payer);
+              const f = firstPayDay.get(payer);
+              if (o.day && (!f || o.day < f)) firstPayDay.set(payer, o.day);
+            }
+            if (o.day === today) todayRevenue += amt;
+            const ci = curDays.indexOf(o.day);
+            const pi = ci >= 0 ? -1 : prevDays.indexOf(o.day);
+            const agg = ci >= 0 ? cur : pi >= 0 ? prev : null;
+            if (!agg) return;
+            const idx = ci >= 0 ? ci : pi;
+            agg.revenue += amt;
+            agg.revenueByDay[idx] += amt;
+            agg.packageDist[String(amt)] = (agg.packageDist[String(amt)] ?? 0) + 1;
+            agg.payOrders += 1;
+            agg.chargesByDay[idx] += 1;
+            if (payer) {
+              const m = ci >= 0 ? curPayers : prevPayers;
+              m.set(payer, (m.get(payer) ?? 0) + 1);
             }
           });
         } catch { /* collectionGroup 인덱스 필요 시 0 — noop */ }
-        const payHealth: PayHealth = {
-          ...ph,
-          payerCount: payerSet.size,
-          avgLtv: payerSet.size > 0 ? Math.round(totalRevenue / payerSet.size) : 0,
-        };
+        ph.payerCount = payerRoots.size;
+        ph.avgLtv = payerRoots.size > 0 ? Math.round(totalRevenue / payerRoots.size) : 0;
+        const payHealth = ph;
+        // 기간별 결제 유저·재구매·신규·결제자 성별 — 장부 기준 (analytics 이벤트 기준 폐기)
+        applyPayers(cur, curPayers, firstPayDay, curScratch, rootUid);
+        applyPayers(prev, prevPayers, firstPayDay, prevScratch, rootUid);
 
         // 3) aiUsage — 현+전 기간 토큰 원가
         try {
@@ -610,6 +768,7 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
             const iso = typeof r.createdAt === 'string' ? r.createdAt : (r.createdAt?.toDate?.()?.toISOString?.() ?? '');
             if (iso) twinFp.add(`${doc.ref.parent.parent.id}|${r.contentType ?? 'report'}|${iso.slice(0, 16)}`);
           });
+          const seenReportIds = new Set<string>(); // 같은 리포트 id 가 여러 uid 미러에 남은 잔여 사본 (2026-10-03)
           repSnap.forEach((doc) => {
             const r = doc.data() as any;
             // 🚨 이중 카운트 fix (2026-08-13) — collectionGroup('reports') 는 top-level 생성원본과
@@ -625,6 +784,9 @@ export function useAdminData(range: RangeDays, enabled: boolean, plat: PlatFilte
             }
             const ruid = r.uid || doc.ref.parent.parent?.id || '';
             if (ownerUidSet.has(ruid)) return; // 오너 테스트 생성물 제외 (더미 — 전수감사 등)
+            // 이관 플래그 없이 두 uid 에 남은 같은 리포트(CS 복원 등 · 실측 5건) — 1회만 집계
+            if (seenReportIds.has(doc.id)) return;
+            seenReportIds.add(doc.id);
             const t = r.contentType || r.type || 'report'; // 서버 문서는 type 필드 (premium/basic/...)
             reportsByType[t] = (reportsByType[t] ?? 0) + 1;
             const rday = paymentDay({ confirmedAt: r.generatedAt ?? r.createdAt });

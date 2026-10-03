@@ -148,7 +148,7 @@ export function TabAcquisition({ d }: { d: AdminData }) {
 
       <Section
         title="구매·충전 추이 (일별) — 폭증 감지"
-        caption="· 콘텐츠구매 + 충전결제를 일별로. 특정 날 스파이크 = 유입 폭증 · 시간대·소스 정밀 분해는 adminInflowReport 함수(?key=&days=)"
+        caption="· 콘텐츠구매(이벤트) + 충전결제(결제 장부 · 주문번호 고유)를 일별로. 특정 날 스파이크 = 유입 폭증 · 시간대·소스 정밀 분해는 adminInflowReport 함수(?key=&days=)"
       >
         {!hasPurchaseSeries ? <Empty text="아직 구매 데이터 없음" /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>

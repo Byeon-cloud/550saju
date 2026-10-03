@@ -125,22 +125,33 @@ export function TabRevenue({ d }: { d: AdminData }) {
     <div>
       <Section title="매출 KPI" right={<CsvButton onClick={exportCsv} label="운차감 CSV" />}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
-          <Kpi label="기간매출" value={fmtWon(cur.revenue)} delta={deltaPct(cur.revenue, prev.revenue)} accent />
-          <Kpi label="충전 완료" value={`${fmtNum(cur.chargeComplete)}건`} delta={deltaPct(cur.chargeComplete, prev.chargeComplete)} />
+          <Kpi label="기간매출" value={fmtWon(cur.revenue)} delta={deltaPct(cur.revenue, prev.revenue)} accent sub="주문번호 기준 · 복구 지급 중복 제외" />
+          <Kpi label="결제 건수" value={`${fmtNum(cur.payOrders)}건`} delta={deltaPct(cur.payOrders, prev.payOrders)} sub="주문번호 고유" />
           <Kpi label="ARPU" value={fmtWon(arpu)} delta={deltaPct(arpu, arpuPrev)} sub="기간매출 ÷ 고유 방문" />
           <Kpi label="ARPPU" value={fmtWon(arppu)} delta={deltaPct(arppu, arppuPrev)} sub="기간매출 ÷ 결제유저" />
-          <Kpi label="재구매율" value={fmtPct(repurchaseRate)} delta={repurchaseRate == null ? undefined : deltaPct(repurchaseRate, repurchasePrev)} sub={`충전 2회+ ${cur.repeatPayingUsers}명 / 결제 ${cur.payingUsers}명`} />
+          <Kpi label="재구매율" value={fmtPct(repurchaseRate)} delta={repurchaseRate == null ? undefined : deltaPct(repurchaseRate, repurchasePrev)} sub={`2회+ 결제 ${cur.repeatPayingUsers}명 / 결제 ${cur.payingUsers}명`} />
           <Kpi label="운 차감 합계" value={`${fmtNum(Math.round(cur.contentPurchaseUn * 10) / 10)}운`} delta={deltaPct(cur.contentPurchaseUn, prev.contentPurchaseUn)} sub={`추정 ${fmtWon(cur.contentPurchaseUn * UN_PRICE)}`} />
+          <Kpi label="이력복구 지급" value={`${fmtNum(cur.recovery.count)}건`} sub={cur.recovery.count > 0 ? `${fmtWon(cur.recovery.amount)} · 원결제 중복 ${cur.recovery.excluded}건은 매출 제외` : '기간 내 없음 — 처리일 기준'} />
         </div>
       </Section>
 
-      <Section title="결제 건강 · LTV" caption="· payments 컬렉션 전수(전 기간) — 위 매출 KPI(기간 한정)와 달리 누적. 실패·환불·복구필요 포함">
+      <Section title="결제 건강 · LTV" caption="· payments 전수(전 기간) · 주문번호(orderId) 고유 집계 — 같은 결제가 uid 회전 후 이력복구로 다시 기록돼도 1건. 위 매출 KPI(기간 한정)와 달리 누적. 실패·환불·복구필요 포함">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
-          <Kpi label="1인당 LTV" value={fmtWon(d.payHealth.avgLtv)} sub={`누적매출 ÷ 결제유저 ${fmtNum(d.payHealth.payerCount)}명`} accent />
-          <Kpi label="누적 매출" value={fmtWon(d.totalRevenue)} sub={`성공 ${fmtNum(d.payHealth.confirmed)}건`} />
+          <Kpi label="1인당 LTV" value={fmtWon(d.payHealth.avgLtv)} sub={`누적매출 ÷ 결제유저 ${fmtNum(d.payHealth.payerCount)}명 (같은 결제로 이어진 uid 는 1명)`} accent />
+          <Kpi label="누적 매출" value={fmtWon(d.totalRevenue)} sub={`성공 ${fmtNum(d.payHealth.confirmed)}건 (주문 고유)`} />
           <Kpi label="결제 실패" value={`${fmtNum(d.payHealth.failed)}건`} sub={(d.payHealth.confirmed + d.payHealth.failed) > 0 ? `실패율 ${Math.round((d.payHealth.failed / (d.payHealth.confirmed + d.payHealth.failed)) * 100)}%` : '—'} />
           <Kpi label="환불" value={`${fmtNum(d.payHealth.refundCount)}건`} sub={`환불액 ${fmtWon(d.payHealth.refundAmount)}`} />
           <Kpi label="복구 필요" value={`${fmtNum(d.payHealth.needsReconciliation)}건`} sub="승인됐으나 적립 미완 — 수동 확인" />
+          <Kpi
+            label="이력복구 지급 (누적)"
+            value={`${fmtNum(d.payHealth.recoveredDupCount + d.payHealth.recoveredOnlyCount)}건`}
+            sub={`원결제 중복 ${fmtNum(d.payHealth.recoveredDupCount)}건 ${fmtWon(d.payHealth.recoveredDupAmount)} 매출 제외 · 원결제 기록 없음 ${fmtNum(d.payHealth.recoveredOnlyCount)}건 ${fmtWon(d.payHealth.recoveredOnlyAmount)} 원결제일 매출 반영`}
+          />
+          <Kpi
+            label="중복 제외액"
+            value={fmtWon(d.payHealth.recoveredDupAmount + d.payHealth.dupCopyAmount)}
+            sub={`결제 문서 ${fmtNum(d.payHealth.docCount)}건 → 고유 주문 ${fmtNum(d.payHealth.orderCount)}건`}
+          />
         </div>
         {Object.keys(d.payHealth.byPg).length > 0 && (
           <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -177,7 +188,7 @@ export function TabRevenue({ d }: { d: AdminData }) {
         )}
       </Section>
 
-      <Section title="충전 패키지 분포" caption="· payments(confirmed) 금액 단위로 분류 — 1운 ₩500 / 4운 ₩1,500 / 7운 ₩2,500 / 14운 ₩5,000">
+      <Section title="충전 패키지 분포" caption="· payments(confirmed · 주문번호 고유) 금액 단위로 분류 — 1운 ₩500 / 4운 ₩1,500 / 7운 ₩2,500 / 14운 ₩5,000">
         {packageRows.length === 0 ? <Empty /> : (
           <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 8px 8px' }}>
             <ResponsiveContainer width="100%" height={Math.max(120, packageRows.length * 44)}>

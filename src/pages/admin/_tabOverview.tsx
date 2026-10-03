@@ -11,11 +11,8 @@ import { buildCsv, downloadCsv, csvFilename } from './_csv';
 export function TabOverview({ d }: { d: AdminData }) {
   const { cur, prev } = d;
 
-  // 신규 결제유저 — 현 기간 결제 유저 중 직전 기간엔 없던 유저 (근사)
-  const newPayers = useMemo(() => {
-    const prevSet = new Set(prev.payingUserKeys);
-    return cur.payingUserKeys.filter((k) => !prevSet.has(k)).length;
-  }, [cur.payingUserKeys, prev.payingUserKeys]);
+  // 신규 결제유저 — 기간 내 결제 유저 중 첫 결제가 이 기간인 유저 (결제 장부 전체 이력 기준 · 2026-10-03)
+  const newPayers = cur.newPayingUsers;
 
   const arppu = cur.payingUsers > 0 ? Math.round(cur.revenue / cur.payingUsers) : 0;
   const arppuPrev = prev.payingUsers > 0 ? Math.round(prev.revenue / prev.payingUsers) : 0;
@@ -44,7 +41,7 @@ export function TabOverview({ d }: { d: AdminData }) {
     { step: '콘텐츠 진입', n: cur.contentOpenTotal, pn: prev.contentOpenTotal },
     { step: '결과 도달', n: cur.contentResultTotal, pn: prev.contentResultTotal },
     { step: '충전 진입', n: cur.chargeOpen, pn: prev.chargeOpen },
-    { step: '충전 완료', n: cur.chargeComplete, pn: prev.chargeComplete },
+    { step: '결제 완료', n: cur.payOrders, pn: prev.payOrders },
   ]), [cur, prev]);
 
   const exportRawCsv = () => {
@@ -59,10 +56,10 @@ export function TabOverview({ d }: { d: AdminData }) {
       ['DAU평균', cur.dauAvg, prev.dauAvg, deltaPct(cur.dauAvg, prev.dauAvg) ?? ''],
       ['방문 고유', cur.visitors, prev.visitors, deltaPct(cur.visitors, prev.visitors) ?? ''],
       ['결제유저', cur.payingUsers, prev.payingUsers, deltaPct(cur.payingUsers, prev.payingUsers) ?? ''],
-      ['신규 결제유저(근사)', newPayers, '', ''],
+      ['신규 결제유저', newPayers, prev.newPayingUsers, deltaPct(newPayers, prev.newPayingUsers) ?? ''],
       ['ARPPU(₩)', arppu, arppuPrev, deltaPct(arppu, arppuPrev) ?? ''],
       ['콘텐츠 생성', contentGen, prev.contentResultTotal, deltaPct(contentGen, prev.contentResultTotal) ?? ''],
-      ['충전 완료', cur.chargeComplete, prev.chargeComplete, deltaPct(cur.chargeComplete, prev.chargeComplete) ?? ''],
+      ['결제 건수(주문 고유)', cur.payOrders, prev.payOrders, deltaPct(cur.payOrders, prev.payOrders) ?? ''],
     ];
     downloadCsv(csvFilename('overview_kpi', cur.days[0], cur.days[cur.days.length - 1]), buildCsv(headers, rows));
   };
@@ -77,7 +74,7 @@ export function TabOverview({ d }: { d: AdminData }) {
           <Kpi label="총매출 (누적)" value={fmtWon(d.totalRevenue)} accent />
           <Kpi label="기간매출" value={fmtWon(cur.revenue)} delta={deltaPct(cur.revenue, prev.revenue)} accent />
           <Kpi label="DAU 평균" value={`${dauUnifiedAvg}명`} delta={deltaPct(dauUnifiedAvg, dauUnifiedPrevAvg)} sub="그날 앱을 쓴 유저 (방문+생성 통합)" />
-          <Kpi label="신규 결제유저" value={`${fmtNum(newPayers)}명`} delta={deltaPct(cur.payingUsers, prev.payingUsers)} sub={`결제유저 ${cur.payingUsers}명 중 전기간 미결제 (델타=결제유저 수 비교)`} />
+          <Kpi label="신규 결제유저" value={`${fmtNum(newPayers)}명`} delta={deltaPct(newPayers, prev.newPayingUsers)} sub={`결제유저 ${cur.payingUsers}명 중 첫 결제 (전체 결제 이력 기준)`} />
           <Kpi label="ARPPU" value={fmtWon(arppu)} delta={deltaPct(arppu, arppuPrev)} sub="기간매출 ÷ 결제유저" />
           <Kpi label="콘텐츠 생성" value={`${fmtNum(contentGen)}건`} delta={deltaPct(contentGen, prev.contentResultTotal)} sub="content_result 기준" />
           <Kpi label="이탈률" value={cur.bounceRate == null ? '-' : `${cur.bounceRate}%`} delta={cur.bounceRate != null && prev.bounceRate != null ? deltaPct(cur.bounceRate, prev.bounceRate) : undefined} sub="페이지 1개만 보고 떠난 세션 비율" />
@@ -108,7 +105,7 @@ export function TabOverview({ d }: { d: AdminData }) {
         )}
       </Section>
 
-      <Section title="전환 퍼널" caption="· 방문은 고유 방문자 수 · 나머지는 이벤트 건수 기준 — 단계별 %는 직전 단계 대비 전환율">
+      <Section title="전환 퍼널" caption="· 방문은 고유 방문자 수 · 결제 완료는 결제 장부의 고유 주문 수 · 나머지는 이벤트 건수 기준 — 단계별 %는 직전 단계 대비 전환율">
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {funnel.map((f, i) => {
             const prevN = i > 0 ? funnel[i - 1].n : f.n;
