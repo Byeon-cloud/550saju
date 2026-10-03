@@ -11,9 +11,9 @@
  * - 앱 시작 시 syncFromCloud()
  */
 
-import { doc, getDoc, setDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, writeBatch, deleteDoc, arrayUnion, query, where } from 'firebase/firestore';
 import { db, auth } from '@/services/auth/firebase';
-import { getReports, saveReport, generateId, mergeProfiles, profilesFromReports, type LocalReport, type SajuProfile } from './localStore';
+import { getReports, saveReport, generateId, mergeProfiles, profilesFromReports, getDeletedReportIds, getDeletedProfileKeys, type LocalReport, type SajuProfile } from './localStore';
 import { type BalanceDetail } from './localStore';
 
 /**
@@ -114,6 +114,15 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
     const localFps = new Set(
       localReports.map(r => fpOf(r.contentType, typeof r.createdAt === 'string' ? r.createdAt : new Date(r.createdAt).toISOString(), lenOf(r))).filter(Boolean),
     );
+    // 삭제 기록 (2026-10-03) — 이 기기에서 지운 id + 서버 삭제 장부(다른 기기·저장소 초기화 대비)의 id·지문은 내려받지 않는다
+    const deletedIds = getDeletedReportIds();
+    const deletedFps = new Set<string>();
+    try {
+      const del = await getDoc(doc(db, `users/${uid}/state`, 'deleted'));
+      const d = del.exists() ? (del.data() as any) : null;
+      (Array.isArray(d?.reportIds) ? d.reportIds : []).forEach((x: unknown) => typeof x === 'string' && deletedIds.add(x));
+      (Array.isArray(d?.fingerprints) ? d.fingerprints : []).forEach((x: unknown) => typeof x === 'string' && deletedFps.add(x));
+    } catch { /* 장부 없음 — 로컬 기록만으로 */ }
 
     // 로컬이 비어있으면(회전 직후) twin 두 벌이 모두 클라우드에서 내려오므로,
     //   base36(클라 정본)을 먼저 처리하도록 정렬 — auto-id 사본이 지문에 걸려 걸러진다.
@@ -125,9 +134,11 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
     });
     ordered.forEach((docSnap) => {
       if (!localIds.has(docSnap.id)) {
+        if (deletedIds.has(docSnap.id)) return; // 유저가 지운 결과 — 되살리지 않음
         const data = docSnap.data();
         const cloudLen = data.aiResultJson ? String(data.aiResultJson).length : 0;
         const fp = fpOf(data.contentType, data.createdAt, cloudLen);
+        if (fp && deletedFps.has(fp)) return; // 지운 결과의 쌍둥이 사본
         if (fp && localFps.has(fp)) return; // 같은 리포트의 다른 id 사본 — 내려받지 않음
         if (fp) localFps.add(fp); // 이번에 추가하는 문서도 지문 등록 — 같은 배치의 twin 차단
         // 2026-06-19 — 내용(aiResult) 복원 (문자열 → 파싱). 없으면(구 백업) undefined → 빈 껍데기지만 기존과 동일.
@@ -301,6 +312,40 @@ export async function pushBalanceMirror(detail: BalanceDetail): Promise<void> {
 }
 
 /**
+ * 결과 삭제를 서버에 반영 (2026-10-03) — 지운 결과가 부팅 동기화·기기 여권 복원으로 되살아나던 버그.
+ *   ① 이 계정의 같은 결과 사본(같은 id + 같은 종류·생성시각의 쌍둥이 사본) 삭제
+ *   ② 삭제 장부 users/{uid}/state/deleted 에 id·지문 기록 — 다른 기기/저장소 초기화 뒤에도 다시 내려받지 않고,
+ *      서버 기기 여권도 옛 계정에서 복사해 오지 않는다.
+ */
+export async function deleteReportRemote(report: LocalReport): Promise<void> {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !report?.id) return;
+    const iso = typeof report.createdAt === 'string' ? report.createdAt : new Date(report.createdAt as number).toISOString();
+    let len = 0;
+    try { len = JSON.stringify(report.aiResult ?? '').length; } catch { /* noop */ }
+    const fp = `${report.contentType ?? 'report'}@${iso.slice(0, 16)}@${Math.round(len / 800)}`;
+    await setDoc(doc(db, `users/${uid}/state`, 'deleted'), {
+      reportIds: arrayUnion(report.id),
+      fingerprints: arrayUnion(fp),
+      updatedAt: new Date(),
+    }, { merge: true });
+    await deleteDoc(doc(db, `users/${uid}/reports`, report.id));
+    // 쌍둥이 사본 (과거 이중저장 버그로 auto-id 사본이 남아 있을 수 있다)
+    try {
+      const twins = await getDocs(query(collection(db, `users/${uid}/reports`), where('createdAt', '==', report.createdAt)));
+      for (const t of twins.docs) {
+        const data = t.data() as any;
+        if ((data.contentType ?? 'report') !== (report.contentType ?? 'report')) continue;
+        await deleteDoc(t.ref);
+      }
+    } catch { /* 쌍둥이 정리 실패는 무해 — 지문 장부가 재다운로드를 막는다 */ }
+  } catch (err) {
+    console.warn('[deleteReportRemote] 실패:', err);
+  }
+}
+
+/**
  * 사주원국 미러 push (2026-09-27) — 프로필은 로컬 전용이라 저장소가 비면 복원 불가였다.
  *   users/{uid}/state/profiles 에 목록을 스냅샷(사주 계산값 제외 — 복원 시 재계산). 실패는 다음 쓰기에서 재시도.
  */
@@ -317,7 +362,9 @@ export async function pushProfilesMirror(profiles: SajuProfile[]): Promise<void>
     }));
     // Firestore 는 undefined 를 거부 — JSON 왕복으로 제거
     const clean = JSON.parse(JSON.stringify(items));
-    await setDoc(doc(db, `users/${uid}/state`, 'profiles'), { items: clean, count: clean.length, updatedAt: new Date() });
+    // 지운 인물 키 동반 (2026-10-03) — 기기 여권이 다른 계정 목록을 합칠 때 되살리지 않도록
+    const deletedKeys = Array.from(getDeletedProfileKeys()).slice(-500);
+    await setDoc(doc(db, `users/${uid}/state`, 'profiles'), { items: clean, count: clean.length, deletedKeys, updatedAt: new Date() });
   } catch { /* noop */ }
 }
 
@@ -325,13 +372,15 @@ export async function pushProfilesMirror(profiles: SajuProfile[]): Promise<void>
 export async function pullProfilesMirror(uid: string): Promise<any[]> {
   try {
     const snap = await getDoc(doc(db, `users/${uid}/state`, 'profiles'));
-    const items = snap.exists() ? (snap.data() as any)?.items : null;
-    return Array.isArray(items) ? items : [];
+    const data = snap.exists() ? (snap.data() as any) : null;
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const deleted = new Set<string>(Array.isArray(data?.deletedKeys) ? data.deletedKeys : []);
+    return items.filter((p: any) => !deleted.has(`${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`));
   } catch { return []; }
 }
 
 /** 잔액 미러 pull — 기기 여권 seed 용 (없으면 null) */
-export async function pullBalanceMirror(uid: string): Promise<{ paid: number; bonus: number; reward: number } | null> {
+export async function pullBalanceMirror(uid: string): Promise<{ paid: number; bonus: number; reward: number; migratedFromUid?: string } | null> {
   try {
     const snap = await getDoc(doc(db, `users/${uid}/state`, 'balance'));
     if (!snap.exists()) return null;
@@ -340,6 +389,8 @@ export async function pullBalanceMirror(uid: string): Promise<{ paid: number; bo
       paid: Math.max(0, Number(d.paid) || 0),
       bonus: Math.max(0, Number(d.bonus) || 0),
       reward: Math.max(0, Number(d.reward) || 0),
+      // 옛 계정에서 이관돼 온 미러인지 — 아니면 이 기기가 방금 올린 기본값일 수 있다 (seed 금지)
+      migratedFromUid: typeof d.migratedFromUid === 'string' ? d.migratedFromUid : undefined,
     };
   } catch { return null; }
 }

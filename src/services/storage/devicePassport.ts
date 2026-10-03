@@ -13,11 +13,23 @@
 
 const THROTTLE_KEY = 'saju500:passport_at';
 const NOTICE_KEY = 'saju500:passport_recovered'; // 복원 건수 — UI 토스트용
-const SEEDED_KEY = 'saju500:balance_seeded'; // 잔액 미러 seed 완료 — IAP 복구 이중가산 방지
+const SEEDED_KEY = 'saju500:balance_seeded'; // (구) 영구 플래그 — 2026-10-03 부팅 단위로 교체, 남은 값은 정리
+let seededThisBoot = false; // 이번 부팅에 잔액 미러로 seed 했는가 — IAP 복구 이중가산 방지
+try { localStorage.removeItem(SEEDED_KEY); } catch { /* noop */ }
+const PROFILES_BACKFILL_KEY = 'saju500:profiles_mirror_v1'; // 기존 유저 사주원국 미러 1회 백필
 const SEED_PENDING_KEY = 'saju500:seed_pending'; // seed 미완(가드/네트워크) — 다음 부팅 재시도
 const THROTTLE_MS = 6 * 60 * 60 * 1000; // 6h
 
 export async function runDevicePassportCheck(): Promise<void> {
+  try {
+    await runDevicePassportCheckInner();
+  } finally {
+    // 저장소가 빈 부팅에서 보류했던 잔액 미러 push 해제 (여권이 끝났거나 실행되지 않음)
+    try { (await import('@/services/storage/localStore')).releaseBalanceMirror(); } catch { /* noop */ }
+  }
+}
+
+async function runDevicePassportCheckInner(): Promise<void> {
   try {
     const { isAppsInToss } = await import('@/services/payment/iapService');
     if (!isAppsInToss()) return;
@@ -42,6 +54,19 @@ export async function runDevicePassportCheck(): Promise<void> {
 
     const { getFunctions, httpsCallable } = await import('firebase/functions');
     const { app } = await import('@/services/auth/firebase');
+    // 기존 유저 사주원국 미러 백필 (1회) — 미러는 프로필을 쓸 때만 생겨서, 기존 유저는 영영 백업이 없었다
+    try {
+      if (!localStorage.getItem(PROFILES_BACKFILL_KEY)) {
+        const store = await import('@/services/storage/localStore');
+        const profs = store.getProfiles();
+        if (profs.length > 0) {
+          const s = await import('@/services/storage/firestoreSync');
+          await s.pushProfilesMirror(profs);
+        }
+        localStorage.setItem(PROFILES_BACKFILL_KEY, '1');
+      }
+    } catch { /* 다음 부팅 재시도 */ }
+
     const fn = httpsCallable(getFunctions(app, 'us-central1'), 'registerDevicePassport');
     // 토스 익명키 — '미니앱 × 토스 계정' 고유값. 기기가 바뀌어도 같은 사람을 잇는다 (2026-09-27).
     const anonKey = await getTossAnonKey(mod);
@@ -79,10 +104,14 @@ export async function runDevicePassportCheck(): Promise<void> {
     if (rotated || mirrorReady || pending) {
       try {
         const mirror = await sync.pullBalanceMirror(uid);
-        if (mirror) {
+        if (mirror && !mirror.migratedFromUid) {
+          // 옛 계정에서 온 미러가 아님(이 기기의 기본값 등) — seed 할 재료가 아니다. 재시도 루프도 끝낸다.
+          try { localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }
+        } else if (mirror) {
           const store = await import('@/services/storage/localStore');
           if (store.seedBalanceFromMirror(mirror)) {
-            try { localStorage.setItem(SEEDED_KEY, '1'); localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }
+            seededThisBoot = true;
+            try { localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }
             console.info(`[기기여권] 잔액 스냅샷 복원 — paid ${mirror.paid} · bonus ${mirror.bonus} · reward ${mirror.reward}`);
           } else if (store.getBalance() > 1) {
             // 이미 의미있는 잔액 보유(정상 소비/충전 재개) → 재시도 무의미, 종결 (무한 재호출 방지)
@@ -106,14 +135,16 @@ export async function runDevicePassportCheck(): Promise<void> {
 
 /** 토스 익명키 조회 — 3.x `User.getAnonymousKey`(throw) 우선, 없으면 구 `getAnonymousKey`. 3초 타임아웃. */
 async function getTossAnonKey(mod: any): Promise<string | undefined> {
+  // 전체 대기 예산 3초 하나 — 여권(잔액·보관함 복원)을 늦추지 않도록
   const withTimeout = <T,>(p: Promise<T>): Promise<T | undefined> =>
     Promise.race([p, new Promise<undefined>((res) => setTimeout(() => res(undefined), 3000))]);
-  try {
-    if (typeof mod?.User?.getAnonymousKey === 'function') {
+  if (typeof mod?.User?.getAnonymousKey === 'function') {
+    try {
       const res: any = await withTimeout(mod.User.getAnonymousKey());
       if (res?.hash) return String(res.hash);
-    }
-  } catch { /* 미지원 앱 버전 등 — 구 API 시도 */ }
+    } catch { /* 미지원 앱 버전 등 */ }
+    return undefined; // 신 API 가 있는 SDK 면 구 API 재시도로 대기를 늘리지 않는다
+  }
   try {
     if (typeof mod?.getAnonymousKey === 'function') {
       const res: any = await withTimeout(mod.getAnonymousKey());
@@ -125,7 +156,7 @@ async function getTossAnonKey(mod: any): Promise<string | undefined> {
 
 /** 이번 부팅에서 잔액이 미러로 seed 됐는가 — IAP 복구의 로컬 이중가산 방지용 */
 export function wasBalanceSeededFromMirror(): boolean {
-  try { return localStorage.getItem(SEEDED_KEY) === '1'; } catch { return false; }
+  return seededThisBoot;
 }
 
 /** 복원 안내 플래그 소비 (토스트 1회 노출용) — 없으면 0 */

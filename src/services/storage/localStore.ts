@@ -171,6 +171,13 @@ export function deleteReport(id: string): void {
   const reports = all.filter(r => r.id !== id);
   localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
 
+  // 2026-10-03 — 지운 결과가 다음 실행에 되살아나던 버그(로컬만 삭제 → 부팅 동기화가 서버 사본을 다시 내려받음).
+  //   삭제 기록을 남기고 서버 사본(쌍둥이 사본 포함)도 지운다. 개인정보처리방침 '기록 삭제 시 함께 제거'와 정합.
+  pushTombstone(DELETED_REPORTS_KEY, id);
+  if (target) {
+    import('./firestoreSync').then((m) => m.deleteReportRemote(target)).catch(() => { /* 다음 삭제·동기화에서 재시도 불가 — 로컬 기록이 재다운로드를 막는다 */ });
+  }
+
   // 2026-06-17 — 토픽 결과 삭제 시 topic_<topicId>_<profileId>[_partner] 결과 캐시도 동반 제거.
   //   (기존: deleteReport 가 보관함 list 만 지워 캐시가 남음 → 재방문 시 구매 없이 옛 결과 노출 = 매출 누수 + 깨진 캐시 고착)
   const topicId: string | undefined = (target as any)?.aiResult?.topicId;
@@ -388,7 +395,19 @@ export function wasBalanceKeyAbsentAtBoot(): boolean {
  *   실패는 무해 — 다음 변경에서 재시도된다.
  */
 let mirrorTimer: ReturnType<typeof setTimeout> | null = null;
+// 🚨 2026-10-03 경합 fix — 저장소가 빈 부팅(키 부재)에서 첫 화면이 만든 기본 잔액(1운)을 서버에 먼저 올리면,
+//   기기 여권이 옛 계정 잔액을 복사하지 못하고 그 기본값을 '복원'했다. 여권이 끝날 때까지 push 를 보류한다.
+let mirrorHeld = BALANCE_KEY_ABSENT_AT_BOOT;
+let heldDetail: BalanceDetail | null = null;
+if (mirrorHeld) setTimeout(() => releaseBalanceMirror(), 45000); // 안전장치 — 여권이 안 돌아도(웹 등) 45초 뒤 해제
+/** 기기 여권 종료 시 호출 — 보류한 잔액 미러를 (현재 값으로) 올린다 */
+export function releaseBalanceMirror(): void {
+  if (!mirrorHeld) return;
+  mirrorHeld = false;
+  if (heldDetail) { const d = getBalanceDetail(); heldDetail = null; pushBalanceMirrorDebounced(d); }
+}
 function pushBalanceMirrorDebounced(detail: BalanceDetail): void {
+  if (mirrorHeld) { heldDetail = detail; return; }
   if (mirrorTimer) clearTimeout(mirrorTimer);
   mirrorTimer = setTimeout(() => {
     mirrorTimer = null;
@@ -607,6 +626,7 @@ export function getProfiles(): SajuProfile[] {
 export function saveProfileDirect(profile: SajuProfile): void {
   const profiles = getProfiles();
   const key = `${profile.name}_${profile.input.birthYear}_${profile.input.birthMonth}_${profile.input.birthDay}`;
+  dropTombstone(DELETED_PROFILES_KEY, key); // 지웠던 인물을 다시 등록하면 삭제 기록 해제
   const idx = profiles.findIndex(p =>
     `${p.name}_${p.input.birthYear}_${p.input.birthMonth}_${p.input.birthDay}` === key
   );
@@ -625,9 +645,39 @@ export function saveProfileDirect(profile: SajuProfile): void {
  *   본인 프로필을 지우더라도 결제하여 받은 분석 결과는 보관함에 그대로 남는다.
  */
 export function deleteProfile(profileId: string): void {
-  const profiles = getProfiles().filter(p => p.id !== profileId);
-  writeProfiles(profiles);
+  const all = getProfiles();
+  const target = all.find(p => p.id === profileId);
+  // 삭제 기록 — 복원 병합(리포트·서버 미러)이 지운 인물을 되살리지 않도록 (2026-10-03)
+  if (target) pushTombstone(DELETED_PROFILES_KEY, profileKey(target));
+  writeProfiles(all.filter(p => p.id !== profileId));
 }
+
+/* 삭제 기록(tombstone) — 지운 결과·인물이 동기화/복원으로 되살아나지 않게 (2026-10-03) */
+const DELETED_REPORTS_KEY = 'saju500_deleted_report_ids';
+const DELETED_PROFILES_KEY = 'saju500_deleted_profile_keys';
+const TOMBSTONE_CAP = 500;
+function readTombstones(key: string): string[] {
+  try {
+    const raw = localStorage.getItem(key);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
+  } catch { return []; }
+}
+function pushTombstone(key: string, value: string): void {
+  try {
+    const list = readTombstones(key).filter((x) => x !== value);
+    list.push(value);
+    localStorage.setItem(key, JSON.stringify(list.slice(-TOMBSTONE_CAP)));
+  } catch { /* noop */ }
+}
+function dropTombstone(key: string, value: string): void {
+  try {
+    const list = readTombstones(key);
+    if (list.includes(value)) localStorage.setItem(key, JSON.stringify(list.filter((x) => x !== value)));
+  } catch { /* noop */ }
+}
+export function getDeletedReportIds(): Set<string> { return new Set(readTombstones(DELETED_REPORTS_KEY)); }
+export function getDeletedProfileKeys(): Set<string> { return new Set(readTombstones(DELETED_PROFILES_KEY)); }
 
 /* ─────────────────────────────────────────────────────────────
  * 사주원국(프로필) 서버 미러 + 복원 병합 (2026-09-27)
@@ -671,12 +721,13 @@ export function mergeProfiles(
   try {
     const current = getProfiles();
     const keys = new Set(current.map(profileKey));
+    const deleted = getDeletedProfileKeys(); // 유저가 지운 인물은 복원하지 않는다
     const hasSelf = current.some((p) => !p.relation || p.relation === '본인');
     let added = 0;
     for (const p of incoming || []) {
       if (!p?.name || !p.input?.birthYear) continue;
       const k = profileKey(p);
-      if (keys.has(k)) continue;
+      if (keys.has(k) || deleted.has(k)) continue;
       let sajuData = p.sajuData;
       if (!sajuData?.pillars?.length || (sajuData as any)?.calcVersion !== CALC_STANDARD_VERSION) {
         try { sajuData = calculateSaju(p.input); } catch { /* 재계산 실패 시 원본 유지 */ }

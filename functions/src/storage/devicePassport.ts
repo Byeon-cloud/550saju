@@ -101,22 +101,42 @@ export const registerDevicePassport = onCall(
       ...(compDonor ? [compDonor] : []),
     ])).slice(0, MAX_UIDS_PER_DEVICE);
 
+    // 잔액은 '같은 기기'에서 이어지는 계정(기기 등록 uid·보상이력 uid)에게서만 받는다 — 익명키로만 이어진
+    //   다른 기기의 잔액을 복사하면 두 기기에서 같은 운을 쓰게 된다(복제). 리포트·인물은 공유해도 무해.
+    const deviceDonors = donors.filter((d) => known.includes(d) || d === compDonor);
     if (donors.length > 0 && known.length < MAX_UIDS_PER_DEVICE) {
-      if (!alreadyRegistered) rotated = true;
+      if (!alreadyRegistered && deviceDonors.length > 0) rotated = true;
       try {
         // 현재 uid 의 문서 id — listDocuments 는 본문을 읽지 않아 저렴
         const destIds = new Set((await db.collection(`users/${uid}/reports`).listDocuments()).map((r) => r.id));
+        // 삭제 장부 (2026-10-03) — 유저가 지운 결과(id·지문)는 어느 계정에서든 다시 복사하지 않는다
+        const deletedIds = new Set<string>();
+        const deletedFps = new Set<string>();
+        for (const u of [uid, ...donors]) {
+          try {
+            const dl = await db.doc(`users/${u}/state/deleted`).get();
+            const dd = dl.exists ? (dl.data() as any) : null;
+            (Array.isArray(dd?.reportIds) ? dd.reportIds : []).forEach((x: any) => typeof x === 'string' && deletedIds.add(x));
+            (Array.isArray(dd?.fingerprints) ? dd.fingerprints : []).forEach((x: any) => typeof x === 'string' && deletedFps.add(x));
+          } catch { /* noop */ }
+        }
+        const fpOfDoc = (d: any): string => {
+          const iso = typeof d?.createdAt === 'string' ? d.createdAt : (d?.createdAt ? new Date(d.createdAt).toISOString() : '');
+          const len = d?.aiResultJson ? String(d.aiResultJson).length : 0;
+          return `${d?.contentType ?? 'report'}@${String(iso).slice(0, 16)}@${Math.round(len / 800)}`;
+        };
         let batch = db.batch();
         let pending = 0;
         for (const donor of donors) {
           if (migratedReports >= MIGRATE_LIMIT) break;
           const refs = await db.collection(`users/${donor}/reports`).listDocuments();
-          const missing = refs.filter((r) => !destIds.has(r.id)).slice(0, MIGRATE_LIMIT - migratedReports);
+          const missing = refs.filter((r) => !destIds.has(r.id) && !deletedIds.has(r.id)).slice(0, MIGRATE_LIMIT - migratedReports);
           if (missing.length === 0) continue;
           const snaps = await db.getAll(...missing);
           let fromThis = 0;
           for (const d of snaps) {
             if (!d.exists || destIds.has(d.id)) continue;
+            if (deletedFps.has(fpOfDoc(d.data()))) continue; // 지운 결과의 쌍둥이 사본
             batch.set(db.doc(`users/${uid}/reports/${d.id}`), {
               ...d.data(),
               migratedFromUid: donor,
@@ -138,17 +158,26 @@ export const registerDevicePassport = onCall(
         console.warn(`[devicePassport] 리포트 이관 실패 device=${deviceId.slice(0, 12)}…: ${e?.message || e}`);
       }
 
-      // 잔액 미러 — 리포트 유무와 독립. dest 가 없을 때만 1회, 기증자 중 미러가 있는 가장 최근 uid 에서.
+      // 잔액 미러 — 리포트 유무와 독립. 기기 기증자 중 미러가 있는 가장 최근 uid 에서 1회.
+      //   🚨 2026-10-03 경합 fix: 저장소가 빈 부팅에서 앱 첫 화면이 기본 잔액(1운)을 먼저 서버에 올려,
+      //   dest 가 '있다'고 판단해 옛 잔액 복사를 건너뛰고 클라는 자기 기본값을 seed 했다(운 소실 그대로).
+      //   → dest 가 기본값 수준(paid≤1·bonus 0·reward≤0.1)이고 이관 표식이 없으면 기증자 미러로 덮는다.
       try {
         const dest = await db.doc(`users/${uid}/state/balance`).get();
-        if (dest.exists) {
-          mirrorReady = rotated || !!(dest.data() as any)?.migratedFromUid;
-        } else {
-          for (const donor of donors) {
+        const dd = dest.exists ? (dest.data() as any) : null;
+        const destIsDefault = !!dd && !dd.migratedFromUid
+          && (Number(dd.paid) || 0) <= 1 && (Number(dd.bonus) || 0) <= 0 && (Number(dd.reward) || 0) <= 0.1;
+        if (dest.exists && !destIsDefault) {
+          mirrorReady = !!dd?.migratedFromUid;
+        } else if (!alreadyRegistered || !dest.exists) {
+          for (const donor of deviceDonors) {
             const mirror = await db.doc(`users/${donor}/state/balance`).get();
             if (!mirror.exists) continue;
+            const md = mirror.data() as any;
+            const total = (Number(md?.paid) || 0) + (Number(md?.bonus) || 0) + (Number(md?.reward) || 0);
+            if (dest.exists && total <= 1.1) break; // 기증자도 기본값 — 덮을 이유 없음
             await db.doc(`users/${uid}/state/balance`).set({
-              ...mirror.data(),
+              ...md,
               migratedFromUid: donor,
               migratedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
@@ -160,12 +189,17 @@ export const registerDevicePassport = onCall(
       } catch { /* 미러 이관 실패는 무해 — 클라가 rotated 로 재시도 */ }
 
       // 사주원국 미러 (2026-09-27) — 기증자 목록을 현재 uid 목록에 합친다 (이름+생년월일 기준, 추가만)
+      //   2026-10-03: 계정 첫 등장(회전) 또는 이 계정 미러가 아직 없을 때만 — 이미 쓰던 계정에서 매번 합치면
+      //   유저가 지운 인물이 형제 미러에서 계속 되살아난다.
       try {
         const destRef = db.doc(`users/${uid}/state/profiles`);
         const destSnap = await destRef.get();
+        if (alreadyRegistered && destSnap.exists) throw new Error('skip-merge');
         const items: any[] = destSnap.exists && Array.isArray((destSnap.data() as any)?.items) ? [...(destSnap.data() as any).items] : [];
         const pkey = (p: any) => `${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`;
         const keys = new Set(items.map(pkey));
+        // 이 계정에서 지운 인물은 다른 계정 목록에서 되살리지 않는다 (2026-10-03)
+        (Array.isArray((destSnap.data() as any)?.deletedKeys) ? (destSnap.data() as any).deletedKeys : []).forEach((k: any) => keys.add(String(k)));
         for (const donor of donors) {
           const m = await db.doc(`users/${donor}/state/profiles`).get();
           const arr: any[] = m.exists && Array.isArray((m.data() as any)?.items) ? (m.data() as any).items : [];
@@ -176,6 +210,9 @@ export const registerDevicePassport = onCall(
             keys.add(k); items.push(p); profilesRestored++;
           }
         }
+        // 상한 100 — 잘려 나간 건 '복원'으로 세지 않는다 (매 호출 무의미한 쓰기·pull 방지)
+        const destBase = destSnap.exists && Array.isArray((destSnap.data() as any)?.items) ? (destSnap.data() as any).items.length : 0;
+        profilesRestored = Math.max(0, Math.min(items.length, 100) - destBase);
         if (profilesRestored > 0) {
           await destRef.set({
             items: items.slice(0, 100),
