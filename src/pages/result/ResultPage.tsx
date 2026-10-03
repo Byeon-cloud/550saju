@@ -196,16 +196,10 @@ export function ResultPage(props: ResultPageProps = {}) {
   // 2026-07-14 P0 CS — 서버 복원 시도가 끝났는지. 끝났는데도 리포트가 없으면 '빈 페이지' 대신 복구 화면.
   const [restoreSettled, setRestoreSettled] = useState(false);
 
-  // 이벤트 v4 · 결과 렌더링 1회 출석 마커
-  useEffect(() => {
-    markAttendance().catch(() => {/* non-blocking */});
-    // 2026-05-29 — 출시 프로모션(50원): 결과 페이지 도달 시 자동 지급 (코드 단위 dedupe · 앱인토스 only).
-    //   LoadingPage 경유뿐 아니라 보관함 재진입 등 모든 결과 도달을 커버.
-    import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
-      // 2026-06-02 — 출석 적립 + 일일/연속 보상 자동 지급 (콘텐츠 이용 시, 클라 잔액 적립)
-      import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // 이벤트 v4 · 출석·프로모 — 2026-10-03: 실제 결과가 화면에 있을 때만 (아래 attendanceFiredRef effect).
+  //   기존엔 마운트 즉시 실행 → 없는 결과 주소('결과를 불러오지 못했어요')에서도 출석·0.1운이 적립됐다
+  //   (출석은 7일 토스포인트 100원 조건이라 돈 경로).
+  const attendanceFiredRef = useRef(false);
 
   // /result/local 진입 차단 — 옛날 legacy layout 폴백 노출 방지 (사용자 강력 요청)
   // 이 경로는 LoadingPage 에러 폴백으로만 진입 가능했으나 폴백 자체 제거됨
@@ -452,6 +446,18 @@ export function ResultPage(props: ResultPageProps = {}) {
     createdAt: new Date().toISOString(),
     aiResult: streamingAiResult,
   } as unknown as LocalReport) : null);
+
+  // 결과가 실제로 있을 때 1회 — 출석 마커 + 출시 프로모션(50원·앱인토스) + 일일/연속 보상.
+  //   fresh 생성은 전 그룹 도착 후(중도 실패·환불 건 제외). 보관함 재진입 등 모든 결과 도달 커버.
+  const hasRealResult = !!storedReport && (!isFreshMode || allGroupsArrived);
+  useEffect(() => {
+    if (!hasRealResult || attendanceFiredRef.current) return;
+    attendanceFiredRef.current = true;
+    markAttendance().catch(() => {/* non-blocking */});
+    import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
+    import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRealResult]);
 
   // ── Phase C · 결과 게이트 도출 (서버 응답 기준)
   const gate = useMemo(() => deriveResultGate(storedReport), [storedReport]);
