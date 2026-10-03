@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { logAiFailure } from './shared/aiFailureLog';
+import { logAnthropicUsage } from './shared/aiUsageLog'; // C7 원가 기록 (fire-and-forget · 생성 로직 무관)
 import { writeGroupProgress } from './shared/progressWrite'; // 점진 로딩 — 그룹별 증분 write(best-effort·머니 무관)
 import { kstNow } from './utils/kstTime';
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
@@ -914,6 +915,8 @@ export const generateDailyFortuneStream = onRequest(
             });
           }
         }
+        // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+        try { logAnthropicUsage('daily', 'claude-haiku-4-5', await stream.finalMessage(), tg0, 'stream'); } catch { /* best-effort */ }
 
         const elapsedMs = Date.now() - tg0;
         console.log(`[dailyFortuneStream] Group ${groupId} complete`, {
@@ -982,6 +985,8 @@ export const generateDailyFortuneStream = onRequest(
             sendEvent('chunk', { group: 'fallback', delta: event.delta.text, totalChars: fbAcc.length });
           }
         }
+        // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+        try { logAnthropicUsage('daily', 'claude-sonnet-4-6', await fbStream.finalMessage(), tFb, 'fallback'); } catch { /* best-effort */ }
         try {
           const fbParsed: any = parseJsonResponse(fbAcc, { repairUsed: false }) || {};
           // 정상 그룹은 유지, 누락된 부분만 Sonnet 결과로 채움
@@ -1355,6 +1360,7 @@ export const generateDreamFreeStream = onRequest(
           const runStream = async (temperature: number): Promise<string> => {
             let acc = '';
             let idx = 0;
+            const _t0 = Date.now(); // C7
             const stream = anthropic.messages.stream({
               model, max_tokens: maxTokens, temperature, system,
               messages: [{ role: 'user', content: user }],
@@ -1367,6 +1373,8 @@ export const generateDreamFreeStream = onRequest(
                 sendEvent('chunk', { group, delta: event.delta.text, totalChars: acc.length, chunkIdx: idx });
               }
             }
+            // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+            try { logAnthropicUsage('dream', model, await stream.finalMessage(), _t0, 'stream'); } catch { /* best-effort */ }
             return acc;
           };
           let text = await runStream(0.7);
@@ -1405,6 +1413,7 @@ export const generateDreamFreeStream = onRequest(
       const runStream = async (temperature: number): Promise<string> => {
         let acc = '';
         let idx = 0;
+        const _t0 = Date.now(); // C7
         const stream = anthropic.messages.stream({
           model, max_tokens: maxTokens, temperature, system,
           messages: [{ role: 'user', content: user }],
@@ -1416,6 +1425,8 @@ export const generateDreamFreeStream = onRequest(
             sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx: idx });
           }
         }
+        // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+        try { logAnthropicUsage('dream', model, await stream.finalMessage(), _t0, 'stream'); } catch { /* best-effort */ }
         return acc;
       };
       let text = await runStream(0.7);
@@ -2533,6 +2544,7 @@ export const generateTopicAnalysisStream = onRequest(
       const runStream = async (temperature: number): Promise<string> => {
         let acc = '';
         let chunkIdx = 0;
+        const _t0 = Date.now(); // C7
         const stream = anthropic.messages.stream({
           model,
           max_tokens: maxTokens,
@@ -2547,6 +2559,8 @@ export const generateTopicAnalysisStream = onRequest(
             sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx });
           }
         }
+        // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
+        try { logAnthropicUsage('topic', model, await stream.finalMessage(), _t0, 'stream'); } catch { /* best-effort */ }
         return acc;
       };
 

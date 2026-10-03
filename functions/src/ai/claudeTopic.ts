@@ -9,7 +9,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Solar } from 'lunar-javascript';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type ParseJsonMeta } from './promptsV3';
-import { logAiUsage } from '../shared/aiUsageLog';
+import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
 import { correctKoreanSolarTime } from '../utils/timeCorrection';
 
@@ -923,7 +923,9 @@ export function buildTopicCall(
   const effectiveBaseScore = baseScore ?? computeTopicBaseScore(normalizedId, sajuData);
   const prompt = buildPrompt(config, normalizedId, sajuData, effectiveBaseScore, partnerInfo, extraInfo);
   const model = 'claude-sonnet-4-6';
-  const maxTokens = normalizedId === 'reunion' ? 16000 : 8192;
+  // 2026-10-03 상한 상향 16000/8192 → 20000/12000 — 운영 실측: callable 67건 중 20건이 cap 95%↑·3건 정확히 8192 도달(잘림),
+  //   재회운 출력 13.6~14.7K(16000 근접). 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만 생김.
+  const maxTokens = normalizedId === 'reunion' ? 20000 : 12000;
   return { system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore };
 }
 
@@ -962,7 +964,7 @@ export async function generateTopicAnalysisAI(
       system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
-    if (first.usage) logAiUsage({ type: 'topic', model, inputTokens: first.usage.input_tokens, outputTokens: first.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
+    logAnthropicUsage('topic', model, first, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     firstText = (first.content[0] as { type: string; text: string }).text;
     firstJson = parseJsonResponse(firstText, meta1);
     if (meta1.repairUsed) console.info(`[claudeTopic:${topicId}] 1차 jsonrepair 발동`);
@@ -977,7 +979,7 @@ export async function generateTopicAnalysisAI(
       system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
-    if (retry.usage) logAiUsage({ type: 'topic', model, inputTokens: retry.usage.input_tokens, outputTokens: retry.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
+    logAnthropicUsage('topic', model, retry, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
     firstText = (retry.content[0] as { type: string; text: string }).text;
     firstJson = parseJsonResponse(firstText, meta2);
     console.info(`[claudeTopic:${topicId}] 2차 성공`, meta2.repairUsed ? '(jsonrepair 발동)' : '');
@@ -1005,7 +1007,7 @@ export async function generateTopicAnalysisAI(
       { role: 'user', content: SELF_REVIEW_V3({ original: firstJson, kind: 'topic' }) },
     ],
   });
-  if (review.usage) logAiUsage({ type: 'topic', model, inputTokens: review.usage.input_tokens, outputTokens: review.usage.output_tokens, ms: Date.now() - _t3, ok: true }); // C7 best-effort
+  logAnthropicUsage('topic', model, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
   const reviewText = (review.content[0] as { type: string; text: string }).text;
   try {
     return enforceTopicBaseScore(parseJsonResponse(reviewText), effectiveBaseScore);

@@ -17,7 +17,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
-import { logAiUsage } from '../shared/aiUsageLog';
+import { logAnthropicUsage } from '../shared/aiUsageLog';
 
 const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-6';
 
@@ -259,7 +259,7 @@ ${question}
     ],
     messages: [{ role: 'user', content: userPrompt }],
   });
-  if (msg.usage) logAiUsage({ type: 'chat', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
+  logAnthropicUsage('chat', model, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
 
   const text = (msg.content[0] as any).text || '';
   let parsed: any;

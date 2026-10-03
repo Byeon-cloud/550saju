@@ -9,7 +9,7 @@ import {
   parseJsonResponse,
   type ParseJsonMeta,
 } from './promptsV3';
-import { logAiUsage } from '../shared/aiUsageLog';
+import { logAnthropicUsage } from '../shared/aiUsageLog';
 
 /**
  * 오늘의 운세 — Claude Sonnet 4.6
@@ -54,12 +54,14 @@ export async function generateDailyFortuneAnalysis(
     const _t1 = Date.now(); // C7
     const msg = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 5000,
+      // 2026-10-03 5000→8000 — 운영 실측: callable 폴백 21/21 건이 5000 에서 잘림(stop_reason=max_tokens).
+      //   index.ts 스트림 Sonnet 폴백(8000)과 일치. 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만.
+      max_tokens: 8000,
       temperature: 0.7,
       system,
       messages: [{ role: 'user', content: user }],
     });
-    if (msg.usage) logAiUsage({ type: 'daily', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t1, ok: true }); // C7 best-effort
+    logAnthropicUsage('daily', MODEL, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta1);
     if (meta1.repairUsed) console.info('[claudeFortune] jsonrepair 1차 발동 — 복구 성공');
@@ -71,12 +73,12 @@ export async function generateDailyFortuneAnalysis(
     const _t2 = Date.now(); // C7
     const msg = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 5000,
+      max_tokens: 8000, // 2026-10-03 5000→8000 (위 1차 호출 주석 참조)
       temperature: 0.5,
       system,
       messages: [{ role: 'user', content: user }],
     });
-    if (msg.usage) logAiUsage({ type: 'daily', model: MODEL, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t2, ok: true }); // C7 best-effort
+    logAnthropicUsage('daily', MODEL, msg, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta2);
     console.info('[claudeFortune] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');

@@ -22,7 +22,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
-import { logAiUsage } from '../shared/aiUsageLog';
+import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNow } from '../utils/kstTime';
 import { computeTopicBaseScore } from './claudeTopic';
 
@@ -251,7 +251,7 @@ async function callGroup(
     ],
     messages: [{ role: 'user', content: userSituation }],
   });
-  if (msg.usage) logAiUsage({ type: 'premium', model, inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens, ms: Date.now() - _t0, ok: true }); // C7 best-effort
+  logAnthropicUsage('premium', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
 
   const text = (msg.content[0] as any).text || '';
   // T2 강건성 — JSON 파싱 실패 시 incomplete JSON 복구 시도
