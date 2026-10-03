@@ -26,7 +26,7 @@ import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { HOME_REVIEWS } from '@/constants/reviews';
 import { listTopics } from '@/constants/topics'; // 10주제 SSOT (id/한자/컬러/딱지/path)
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice } from '@/constants/pricing'; // 가격 SSOT (세일 자동 반영)
-import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass'; // 일일 무료 패스 (사용 후 1운 차감)
+import { hasFreePass, subscribeFreePass, isFreePassPolicyActive } from '@/services/storage/dailyFreePass'; // 일일 무료 패스 (사용 후 1운 차감)
 import { getTopicTop5, type TopicTop5Cache } from '@/services/liveBest'; // LIVE BEST 실시간 집계 캐시
 // 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
 
@@ -263,7 +263,7 @@ export function HomePage() {
         <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
           style={{ background: 'rgba(248,245,238,0.18)', color: C.paper, backdropFilter: 'blur(8px)' }}>
           <span className="w-1 h-1 rounded-full" style={{ background: C.goldShimmer, boxShadow: '0 0 0 2px rgba(232,217,184,0.25)' }} />
-          {dailyFreeAvailable ? '오늘 1회 무료' : '1운'}
+          {!isFreePassPolicyActive() ? '무료' : dailyFreeAvailable ? '오늘 1회 무료' : '1운'}
         </div>
         <div className="text-[12px] font-medium" style={{ opacity: 0.85 }}>{todayStr}</div>
         <div className="mt-3">
@@ -299,7 +299,7 @@ export function HomePage() {
         <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
           style={{ background: 'rgba(248,245,238,0.18)', color: C.paper, backdropFilter: 'blur(8px)' }}>
           <span className="w-1 h-1 rounded-full" style={{ background: C.goldShimmer }} />
-          {dreamFreeAvailable ? '오늘 1회 무료' : '1운'}
+          {!isFreePassPolicyActive() ? '무료' : dreamFreeAvailable ? '오늘 1회 무료' : '1운'}
         </div>
         <h2 className="mt-7 text-[26px] font-extrabold leading-[1.28] tracking-[-0.02em]" style={{ fontFamily: SERIF }}>
           어젯밤 꿈,<br />내 사주로 풀어드려요

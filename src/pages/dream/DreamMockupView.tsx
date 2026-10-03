@@ -20,6 +20,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import type { SajuProfile } from '@/services/storage/localStore';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { getDreamTopicRec } from './dreamTopicRec';
+import { isFreePassPolicyActive } from '@/services/storage/dailyFreePass';
 
 /** AI 본문 강약 자동 보강 — 사주용어 b 태그 + 시간/방위/숫자 u 밑줄 + 결론 strong 형광펜 (꿈해몽 톤 확장) */
 function autoEmphasize(input: string): string {
@@ -608,7 +609,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             ) : (
               <>
                 <span className="badge">무료 · 꿈해몽</span>
-                {isTodayRecord && <span className="badge free">오늘 1회 무료</span>}
+                {isTodayRecord && isFreePassPolicyActive() && <span className="badge free">오늘 1회 무료</span>}
               </>
             )}
             <span>{profile?.name || '당신'} 님</span>

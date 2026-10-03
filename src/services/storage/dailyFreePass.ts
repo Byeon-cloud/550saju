@@ -35,6 +35,20 @@ const PASS_KEY = 'saju500_daily_passes';
 
 type PassType = 'daily' | 'dream' | 'chat';
 
+/* ── 정책 시행일 (2026-10-04 결정) ──
+ *   운영 앱(09-17 번들)은 오늘의 운세·꿈해몽이 무제한 무료였고, 6/3 약관도 꿈해몽(기본 해석)을 무료로 적어 두었다.
+ *   '하루 1회 무료 → 이후 1운' 은 이용자에게 불리한 변경이라 30일 이상 앞서 알린 뒤 시행한다.
+ *   시행일 전에는 오늘의 운세·꿈해몽 무료권을 소진하지 않고(무제한 무료), 화면·약관에 시행일을 미리 안내한다.
+ *   사주대화(첫 질문 무료 → 대화권)는 기존 정책 그대로 — 게이트 대상 아님. */
+export const FREE_PASS_POLICY_START = '2026-11-10'; // KST
+export const FREE_PASS_POLICY_START_LABEL = '11월 10일';
+
+/** 오늘의 운세·꿈해몽 '하루 1회 무료 → 이후 1운' 이 시행 중인지 (KST 기준) */
+export function isFreePassPolicyActive(): boolean {
+  return getToday() >= FREE_PASS_POLICY_START;
+}
+const isGated = (type: PassType) => type !== 'chat' && !isFreePassPolicyActive();
+
 interface DailyPasses {
   date: string; // YYYY-MM-DD
   used: Record<string, boolean>;
@@ -74,6 +88,7 @@ function savePasses(passes: DailyPasses): boolean {
  * 오늘의 무료 이용권이 남아있는지 확인
  */
 export function hasFreePass(type: PassType): boolean {
+  if (isGated(type)) return true; // 시행일 전 — 무제한 무료
   const passes = getPasses();
   return !passes.used[type];
 }
@@ -83,6 +98,7 @@ export function hasFreePass(type: PassType): boolean {
  * @returns true면 무료 이용 성공, false면 이미 사용함 (또는 사용 기록 저장 실패 — 무료로 진행하지 않음)
  */
 export function useFreePass(type: PassType): boolean {
+  if (isGated(type)) return true; // 시행일 전 — 기록하지 않음 (시행일 첫 이용도 무료로 남게)
   const passes = getPasses();
   if (passes.used[type]) return false;
 
@@ -115,8 +131,8 @@ export function restoreFreePass(type: PassType, usedOn?: string): void {
 export function getAllFreePassStatus(): Record<PassType, boolean> {
   const passes = getPasses();
   return {
-    daily: !passes.used['daily'],
-    dream: !passes.used['dream'],
+    daily: isGated('daily') || !passes.used['daily'],
+    dream: isGated('dream') || !passes.used['dream'],
     chat: !passes.used['chat'],
   };
 }
