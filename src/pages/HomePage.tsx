@@ -74,8 +74,8 @@ export function HomePage() {
       '600년 명리학 6대 원전 기반 AI 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세·꿈해몽 매일 1회 무료, 10가지 주제별 분석과 종합사주·궁합.',
   });
   const navigate = useNavigate();
-  const { name, hasProfile } = useActiveProfile();
-  const todayHint = useTodayHeadline();
+  const { name, hasProfile, profile: activeProfile } = useActiveProfile();
+  const todayHint = useTodayHeadline(activeProfile, name);
 
   // DEEP DIVE 포괄 헤더용 최저 주제가 (SSOT 파생 · love/wealth/reunion=3운, 나머지 7주제=1운 → 현재 1)
   const minTopicPrice = Math.min(...listTopics().map((t) => getTopicPrice(t.id).actualPrice));

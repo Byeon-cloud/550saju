@@ -2,7 +2,9 @@
 // 근거: 목업 "변준기 · 1995" ProfileSwitcher + 잔액·프로필 기반.
 
 import { useEffect, useState } from 'react';
-import { getProfiles, type SajuProfile, getMyProfile, getBalance } from '@/services/storage/localStore';
+import { getProfiles, type SajuProfile, getMyProfile, getBalance, getReports } from '@/services/storage/localStore';
+import { buildTodayHeadline, dayPillarOf } from '@/services/saju/todayHeadline';
+import { kstToday } from '@/utils/kstDate';
 
 export interface HomeActiveProfile {
   profile: SajuProfile | null;
@@ -44,18 +46,42 @@ export function useActiveProfile(): HomeActiveProfile {
   return state;
 }
 
-/** 오늘의 운세 한마디 stub — TODO(Phase 2): generateDailyFortune 연결. */
-export function useTodayHeadline(): string {
-  // 요일·간지 기반 간단 변주. 실제 풀이는 /daily에서.
-  const msgs = [
-    '재물 기운이 천천히 움직이는 하루예요. 서두르지 말고 한 걸음씩 쌓아가세요.',
-    '관계의 결이 부드러워지는 날. 오래 연락 안 한 이에게 한 줄 남겨보세요.',
-    '결정보다 관찰이 이로운 자리예요. 오늘은 판단을 미루는 것도 방법입니다.',
-    '작은 시도가 큰 흐름을 만드는 시점이에요. 준비만 오래 하던 일을 꺼내보세요.',
-    '에너지가 안쪽으로 모이는 하루. 바깥보다 안을 정리하세요.',
-  ];
-  const idx = new Date().getDate() % msgs.length;
-  return msgs[idx];
+/**
+ * 홈 '오늘의 운세' 한 줄 (2026-10-03 — 날짜로 돌리던 고정 5문장 stub 교체).
+ *   ① 오늘 이 사람의 오늘의 운세를 이미 받았으면 그 AI 결과 한 줄(scoreHeadline)
+ *   ② 아니면 오늘 일진 × 이 사람 일간의 십성(+일지 충)으로 고른 결정론 문장
+ *   ③ 사주 정보가 없으면 오늘 일진만 알려주는 문장
+ */
+export function useTodayHeadline(profile?: SajuProfile | null, name?: string): string {
+  const today = kstToday();
+  const todayGanzi = dayPillarOf(today);
+  const pillars = (profile?.sajuData as any)?.pillars;
+  const dayGan: string = pillars?.[2]?.천간 || '';
+  const dayJi: string | undefined = pillars?.[2]?.지지 || undefined;
+  const pid = profile?.id;
+  const birthKey = profile?.input ? `${profile.name}_${profile.input.birthYear}_${profile.input.birthMonth}_${profile.input.birthDay}` : '';
+
+  // ① 오늘 받은 운세가 있으면 그 결과의 한 줄이 가장 정확하다
+  try {
+    const rec = getReports().find((r: any) => {
+      if (r?.contentType !== 'daily' || r?.aiResult?.__partial) return false;
+      const fd = r?.aiResult?.__fortuneDate;
+      if (fd !== today) return false;
+      if (pid && r.profileId === pid) return true;
+      return !!birthKey && `${r.name}_${r.input?.birthYear}_${r.input?.birthMonth}_${r.input?.birthDay}` === birthKey;
+    }) as any;
+    const h = String(rec?.aiResult?.scoreHeadline || '').replace(/<[^>]+>/g, '').replace(/\*\*/g, '').trim();
+    if (h) return h;
+  } catch { /* 기본 문장으로 */ }
+
+  // ② 사주 기반 결정론
+  const line = buildTodayHeadline(dayGan, dayJi, todayGanzi, name || profile?.name || '');
+  if (line) return line;
+
+  // ③ 사주 정보 없음 — 오늘 일진만
+  return todayGanzi
+    ? `오늘은 ${todayGanzi}일이에요. 내 일간과 오늘 기운이 어떻게 만나는지 풀어드릴게요.`
+    : '오늘 내 사주에 들어오는 기운을 풀어드릴게요.';
 }
 
 /** 현재 운 잔액 (paid + bonus + reward 합). */
