@@ -21,6 +21,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GUARD_TOKEN = void 0;
 exports.generateChatAnswerAI = generateChatAnswerAI;
+const sajuFacts_1 = require("./sajuFacts");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const parseJson_1 = require("./parseJson");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
@@ -40,9 +41,11 @@ const GUARD_SYSTEM_INSTRUCTION = `당신은 40년 경력의 베테랑 사주 상
 - "반드시", "100%", "확실히 일어납니다" 같은 단정 표현 금지.
 
 [답변 구조 — 3턴 결론 원칙]
-- 매 답변은 "사주 근거 1문장 → 핵심 해석 1~2문단 → 실생활 조언 + 후속 질문 1개" 3턴 구조.
+- 매 답변은 "결론 1문장(질문에 대한 답 + 그 사주 근거를 일상어로) → 핵심 해석 1~2문단 → 실생활 조언 + 후속 질문 1개" 3턴 구조.
 - 답변 길이는 400~600자. 모호한 되물음·"좋은 질문이에요" 같은 사족 금지.
-- 첫 문장부터 사주 근거로 진입하고, 마지막에 자연스러운 후속 질문 1개를 둡니다.
+- 첫 문장은 질문에 대한 답(결론)으로 시작하고, 근거는 사주에서 일상어로 붙인다 — 명리 용어는 괄호로만 (2026-10-04).
+  ❌ "현재 대운 경신(庚申)은 을목 일간에게 부담이 되는…" 으로 시작 / ✅ "이번 주말 연락은 조금 미루시는 게 좋겠어요. 지금은 마음이 앞서기 쉬운 시기(庚申 대운)라서요."
+- 마지막에 자연스러운 후속 질문 1개를 둡니다. 본문에 책 이름·학자 이름(출처)은 쓰지 않는다.
 
 [답변 범위]
 - 사주·운세·시기·관계·직업·재물·건강 일반 조언은 가능.
@@ -257,7 +260,7 @@ ${question}
         };
     }
     return {
-        answer: typeof parsed.answer === 'string' ? parsed.answer : '',
+        answer: typeof parsed.answer === 'string' ? (0, sajuFacts_1.sanitizeText)(parsed.answer) : '', // 2026-10-04 출처·오기 한자·시간 표기 정리
         keywords: Array.isArray(parsed.keywords) && parsed.keywords.length > 0
             ? parsed.keywords.slice(0, 3).map((k) => String(k))
             : ['올해 재물운은?', '연애운 궁금합니다', '건강 쪽도 봐주세요'],
