@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDailyFortuneAnalysis = generateDailyFortuneAnalysis;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const sajuFacts_1 = require("./sajuFacts");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const MODEL = 'claude-sonnet-4-6';
 async function generateDailyFortuneAnalysis(apiKey, args) {
@@ -33,7 +34,7 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
         const result = (0, promptsV3_1.parseJsonResponse)(text, meta1);
         if (meta1.repairUsed)
             console.info('[claudeFortune] jsonrepair 1차 발동 — 복구 성공');
-        return result;
+        return (0, sajuFacts_1.sanitizeAiOutput)((0, sajuFacts_1.applyDailyMeetGlyphs)(result, args.sajuData)); // 2026-10-04 확정 글자 + 출력 정리
     }
     catch (e1) {
         console.warn('[claudeFortune] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
@@ -51,7 +52,7 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
         const text = msg.content[0].text;
         const result = (0, promptsV3_1.parseJsonResponse)(text, meta2);
         console.info('[claudeFortune] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
-        return result;
+        return (0, sajuFacts_1.sanitizeAiOutput)((0, sajuFacts_1.applyDailyMeetGlyphs)(result, args.sajuData));
     }
 }
 //# sourceMappingURL=claudeFortune.js.map

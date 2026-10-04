@@ -305,7 +305,7 @@ export function HomePage() {
           어젯밤 꿈,<br />내 사주로 풀어드려요
         </h2>
         <p className="mt-2 text-[13.5px] leading-[1.6] font-medium" style={{ opacity: 0.92 }}>
-          꿈 단어를 적으면 {hasProfile ? `${displayName}님` : '여러분'} 사주에 맞춰 해석해드려요
+          꿈 단어를 적으면 {hasProfile ? `${displayName}님` : '내'} 사주에 맞춰 해석해드려요
         </p>
         <span className="absolute -bottom-6 right-2 text-[120px] font-black leading-none pointer-events-none"
           style={{ opacity: 0.08, color: C.goldShimmer, fontFamily: SERIF }}>夢</span>

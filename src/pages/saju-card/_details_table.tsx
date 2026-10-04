@@ -20,8 +20,18 @@
 import { useState, useMemo } from 'react';
 import type { SajuData, OhengType, SajuInput } from '@/types/saju';
 import type { SinsalAnalysis } from '@/services/saju/sinsal';
-import type { RelationsAnalysis } from '@/services/saju/relations';
+import { analyzeRelations, type RelationsAnalysis } from '@/services/saju/relations';
 import { lookupSipsung } from '@/constants/sipsungColor';
+
+/** lunar-javascript 간체 → 정체 (만세력 표 표시용 · 12운성·납음에 나오는 글자만) */
+const SIMP_TO_TRAD: Record<string, string> = {
+  绝: '絶', 长: '長', 临: '臨', 带: '帶', 禄: '祿', 养: '養', 头: '頭', 剑: '劍', 锋: '鋒', 炉: '爐', 涧: '澗',
+  蜡: '蠟', 杨: '楊', 雳: '靂', 灯: '燈', 驿: '驛', 钗: '釵', 钏: '釧', 旁: '傍',
+};
+function toTraditional(s: string): string {
+  return s ? s.replace(/[绝长临带禄养头剑锋炉涧蜡杨雳灯驿钗钏旁]/g, (c) => SIMP_TO_TRAD[c] || c) : s;
+}
+
 
 const C = {
   paper: '#F8F5EE',
@@ -95,12 +105,17 @@ export function SajuDetailsTable({
   // 만세력 단일 표(B) + 운의 흐름(F) 만 노출
   void input;
   void lunar;
+  // 2026-10-04 — 호출부가 relationsAnalysis 를 안 넘겨(7b 매트릭스 폐지 잔재) '관계' 행이 항상 '— — — —' 였음.
+  //   안 넘어오면 여기서 계산 (卯酉충 같은 합·충이 표에 표시되도록).
+  const computedRel = useMemo<RelationsAnalysis | null>(() => {
+    try { return analyzeRelations(sajuData.pillars, (sajuData as any).gongmang); } catch { return null; }
+  }, [sajuData]);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
       <SectionB_ManseTable
         sajuData={sajuData}
         sinsalAnalysis={sinsalAnalysis}
-        relationsAnalysis={relationsAnalysis ?? null}
+        relationsAnalysis={relationsAnalysis ?? computedRel}
       />
       <SectionF_FlowLinks onMoreDaeun={onMoreDaeun} onMoreMonthly={onMoreMonthly} />
     </div>
@@ -169,7 +184,7 @@ function SectionB_ManseTable({
     '長生': '장생', '沐浴': '목욕', '冠帶': '관대', '冠带': '관대',
     '臨官': '건록', '临官': '건록', '建祿': '건록', '建禄': '건록',
     '帝旺': '제왕', '衰': '쇠', '病': '병', '死': '사',
-    '墓': '묘', '絶': '절', '絕': '절', '胎': '태', '養': '양', '养': '양',
+    '墓': '묘', '絶': '절', '絕': '절', '绝': '절', '胎': '태', '養': '양', '养': '양', '长生': '장생',
   };
   const UNYUNG_KO_TO_HANJA: Record<string, string> = {
     '장생': '長生', '목욕': '沐浴', '관대': '冠帶', '건록': '建祿', '제왕': '帝旺',
@@ -181,8 +196,9 @@ function SectionB_ManseTable({
     const raw = found?.운성 || '';
     const rawHan = found?.운성한자 || '';
     // 정규화 — raw 가 한자면 한글로, 한글이면 hanja 보강
-    const ko = UNYUNG_HANJA_TO_KO[raw] || raw;
-    const han = rawHan || UNYUNG_KO_TO_HANJA[ko] || raw;
+    const ko = UNYUNG_HANJA_TO_KO[raw] || UNYUNG_HANJA_TO_KO[rawHan] || raw;
+    // 2026-10-04 — 표시 한자는 정체 SSOT 우선 (lunar 간체 '绝'이 한글 없이 그대로 노출되던 문제)
+    const han = UNYUNG_KO_TO_HANJA[ko] || toTraditional(rawHan || raw);
     return { ko, han };
   };
 
@@ -219,8 +235,9 @@ function SectionB_ManseTable({
     const raw = found?.납음 || '';
     const rawHan = found?.납음한자 || '';
     // raw 가 한자면 한글로 정규화
-    const ko = NAPEUM_HANJA_TO_KO[raw] || raw;
-    const han = rawHan || (NAPEUM_HANJA_TO_KO[raw] ? raw : '');
+    const ko = NAPEUM_HANJA_TO_KO[raw] || NAPEUM_HANJA_TO_KO[rawHan] || raw;
+    // 2026-10-04 — 간체(城头土·剑锋金)가 그대로 노출되던 문제 → 정체로 표시
+    const han = toTraditional(rawHan || (NAPEUM_HANJA_TO_KO[raw] ? raw : ''));
     return { ko, han };
   };
 

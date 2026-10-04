@@ -31,6 +31,8 @@ const parseJson_1 = require("./parseJson");
 const promptsV3_1 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const kstTime_1 = require("../utils/kstTime");
+const lunar_javascript_1 = require("lunar-javascript");
+const sajuFacts_1 = require("./sajuFacts");
 const claudeTopic_1 = require("./claudeTopic");
 const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
 const GROUP_FOCUS = {
@@ -238,7 +240,7 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
     const text = msg.content[0].text || '';
     // T2 강건성 — JSON 파싱 실패 시 incomplete JSON 복구 시도
     try {
-        return (0, parseJson_1.safeParseJson)(text);
+        return postProcessGroup(group, (0, parseJson_1.safeParseJson)(text));
     }
     catch (e) {
         console.error(`[claudePremium] Group ${group} JSON parse failed (length=${text.length}):`, e.message);
@@ -246,7 +248,7 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
         try {
             const recovered = recoverPartialJson(text);
             console.warn(`[claudePremium] Group ${group} recovered partial JSON (keys: ${Object.keys(recovered).join(',')})`);
-            return recovered;
+            return postProcessGroup(group, recovered);
         }
         catch (e2) {
             console.error(`[claudePremium] Group ${group} recovery also failed:`, e2.message);
@@ -349,6 +351,21 @@ function recoverPartialJson(text) {
     }
     return JSON.parse(recovered);
 }
+/** 그룹 결과 후처리 — monthlyInsight 간지를 실제 월주로 교정 + 출처·오기 한자·시간 표기 정리 (callable·SSE 공용 경로) */
+function postProcessGroup(group, parsed) {
+    try {
+        if (group === 'B' && parsed && Array.isArray(parsed.monthlyInsight)) {
+            const cal = calendarMonthGanzi((0, kstTime_1.kstNow)().year);
+            parsed.monthlyInsight.forEach((mi) => {
+                const m = Number(mi?.month);
+                if (m >= 1 && m <= 12 && cal[m - 1])
+                    mi.ganzi = cal[m - 1];
+            });
+        }
+    }
+    catch { /* noop */ }
+    return (0, sajuFacts_1.sanitizeAiOutput)(parsed);
+}
 /**
  * T2 · 3 그룹 결과 병합
  *  · sections: 배열 concat (id 순서 보존)
@@ -448,11 +465,36 @@ async function generateGroup(apiKey, sajuData, group, situation) {
     const sajuBase = buildSajuBaseBlock(sajuData);
     return callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation);
 }
-/** T3 · 동적 짧은 context — 연도·일간 (캐시 X) */
+/** 올해 양력 1~12월의 실제 월주 (각 달 15일 기준 — 절입 경계 회피). 양력 1월은 寅월이 아니라 丑월. */
+function calendarMonthGanzi(year) {
+    const out = [];
+    for (let m = 1; m <= 12; m++) {
+        try {
+            out.push(lunar_javascript_1.Solar.fromYmd(year, m, 15).getLunar().getEightChar().getMonth());
+        }
+        catch {
+            out.push('');
+        }
+    }
+    return out;
+}
+/** T3 · 동적 짧은 context — 연도·일간 + 실제 월건·이번 달 (캐시 X)
+ *  2026-10-04 — 10월에 산 고객에게 '1~3월/4~6월' 연간 계획·'4월에 결정하세요' 가 나가던 문제 +
+ *  monthlyInsight 간지를 모델이 '1월=寅' 으로 계산해 한 칸씩 밀림(10월 己亥 ↔ 본문 10월 무술월 모순). */
 function buildDynamicSystemContext(sajuData) {
     const year = (0, kstTime_1.kstNow)().year;
     const dayGan = sajuData?.pillars?.[2]?.천간 ?? '';
-    return `[현재 연도]: ${year}\n[유저 일간]: ${dayGan}\n위 두 값을 응답에 반영하세요.`;
+    const now = (0, kstTime_1.kstNowDate)();
+    const month = now.getMonth() + 1;
+    const cal = calendarMonthGanzi(year).map((g, i) => `${i + 1}월 ${g}`).join(' · ');
+    return `[현재 연도]: ${year}
+[이번 달]: ${year}년 ${month}월
+[유저 일간]: ${dayGan}
+[${year}년 양력 월 → 실제 월주 (서버 계산 · monthlyInsight.ganzi 와 본문의 'N월(○○월)' 표기는 반드시 이 값)]: ${cal}
+[이번 달부터 12개월 월주]: ${(0, sajuFacts_1.upcomingMonthPillarsText)(now, 12)}
+🚨 시기 규칙: 연운(§06)·실천(§07)·monthlyWarnings 의 조언은 '이번 달부터 앞으로 12개월' 기준. 이미 지난 달은 추천·경고 대상으로 쓰지 말고 회고 1문장 이내.
+   §07 분기 액션은 이번 달부터 3개월씩 4구간 (예: 10월이면 '10~12월 / 내년 1~3월 / 4~6월 / 7~9월'). 내년 달은 '내년 3월'처럼 연도를 붙인다.
+   monthlyWarnings.month 는 이번 달 이후만 (내년이면 '${year + 1}년 3월' 형식). 월주는 위 값만 사용 — 직접 계산 금지 (양력 1월은 寅월이 아님).`;
 }
 /** T3 · 사주 base 블록 (캐시 가능 — 같은 사주 재호출 시 hit) */
 function buildSajuBaseBlock(sajuData) {
@@ -587,16 +629,16 @@ ${promptsV3_1.GOOSEBUMP_BLOCK}
 - 이전 대운과의 변화 + 다음 대운 전환점.
 - 60년 가로 시간선 관점으로 인생 전체 굵직한 흐름 1~2 문단.
 
-### SECTION 06. 연운 (年運) — 올해의 흐름
+### SECTION 06. 연운 (年運) — 지금부터 12개월의 흐름 (올해 키워드 + 남은 달 + 내년 초)
 - 올해([현재 연도])의 키워드 한 줄 ("보여주고 싶다, 그런데 마음대로 되지 않는다" 같은 입체적 표현).
-- 상반기/하반기 흐름 차이.
+- '올해 남은 달' 과 '내년 상반기' 흐름 차이 (이번 달이 1~2월이면 상반기/하반기로 써도 됨). 지난 달은 회고 1문장 이내.
 - **monthlyWarnings 필드** 1~3개 시기별 경고:
   * { "month": "9월", "title": "새 일을 벌이지 않기", "desc": "자형(自刑)이 발동하는 시기 — 새 프로젝트·큰 계약·이사는 8월 말까지 마무리하거나 10월 이후로 미루기. 9월은 정리와 휴식의 한 달로." }
 
 ### SECTION 07. 실천 — 신살의 결을 살리고, 분기별 액션
 - 길신(도화살·천을귀인·천덕귀인 등) 흡수: 어떤 결을 어떻게 살릴지 구체적 행동.
 - 흉살(자형·괴강·양인·도화살의 부정 측면 등): 의식적으로 비켜가는 행동.
-- 분기별(1~3월/4~6월/7~9월/10~12월) 손에 잡히는 액션 1~2개씩.
+- 이번 달부터 3개월씩 4구간(동적 context 의 '시기 규칙' 참조) 손에 잡히는 액션 1~2개씩.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 카피 톤 (목업 v2 학습)
@@ -949,7 +991,7 @@ STEP 5. 소름 포인트 — 일상 행동/경험을 사주 근거로 또렷이 
 
 ### monthlyInsight (12개월)
 - 12개 모두 출력 (1~12월)
-- ganzi 는 [현재 연도] 의 실제 월 간지 (한자)
+- ganzi 는 동적 context 의 '[현재 연도] 양력 월 → 실제 월주' 값 그대로 (직접 계산 금지)
 - text 50자+ · 유저 사주 일간 + 그 달 천간지지 관계 기반
 
 ### sectionConclusions (다크박스 결론)

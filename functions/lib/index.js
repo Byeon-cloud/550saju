@@ -793,7 +793,8 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     }
     sendEvent('start', { ts: Date.now() });
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
-    const SCHEMA_VERSION = 'v6';
+    // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
+    const SCHEMA_VERSION = 'v7';
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
     const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);
@@ -830,6 +831,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     try {
         const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
         const { DAILY_FORTUNE_SYSTEM_V3, DAILY_FORTUNE_USER_V3, DAILY_FORTUNE_USER_V3_GROUP_A1, DAILY_FORTUNE_USER_V3_GROUP_A2, DAILY_FORTUNE_USER_V3_GROUP_B, parseJsonResponse, } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
+        const { applyDailyMeetGlyphs, sanitizeAiOutput } = await Promise.resolve().then(() => __importStar(require('./ai/sajuFacts')));
         const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
         const system = DAILY_FORTUNE_SYSTEM_V3;
         const userA1 = DAILY_FORTUNE_USER_V3_GROUP_A1({
@@ -893,6 +895,10 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
             }
             const keyCount = parsed && typeof parsed === 'object' ? Object.keys(parsed).length : 0;
             console.log(`[dailyFortuneStream] Group ${groupId} → ${keyCount} keys: [${Object.keys(parsed || {}).join(', ')}]`);
+            // 2026-10-04 — 만나는 사람 글자 = 용신·희신·기신 확정값 (예시 복사 방지) + 출처·오기 한자·'오후 14시' 정리
+            if (groupId === 'B')
+                parsed = applyDailyMeetGlyphs(parsed, sajuData);
+            parsed = sanitizeAiOutput(parsed);
             sendEvent('group', { group: groupId, data: parsed, elapsedMs });
             return parsed;
         };
@@ -958,6 +964,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                 console.error('[dailyFortuneStream] Sonnet fallback parse failed:', e?.message);
             }
         }
+        merged = sanitizeAiOutput(applyDailyMeetGlyphs(merged, sajuData)); // 폴백 경로 포함 최종 정리
         console.log('[dailyFortuneStream] complete', {
             totalElapsedMs: Date.now() - t0,
             sajuKey,

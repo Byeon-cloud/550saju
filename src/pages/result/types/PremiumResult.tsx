@@ -19,6 +19,7 @@
 // 섹션간 32px + divider 1px gray-line opacity 0.5 · 글자수 노출 금지
 // _data/_atoms/_visuals 무수정 (Phase D' 원칙)
 
+import { Solar } from 'lunar-javascript';
 import React, { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
@@ -3624,6 +3625,11 @@ function _LifestyleAdvice({
 }
 
 
+/** 양력 y년 m월의 실제 월주 (각 달 15일 기준 · 절입 경계 회피). 실패 시 '' */
+function realMonthGanzi(y: number, m: number): string {
+  try { const ec = Solar.fromYmd(y, m, 15).getLunar().getEightChar(); return ec.getMonthGan() + ec.getMonthZhi(); } catch { return ''; }
+}
+
 /**
  * YeonunLineChart — §06 mockup yeonun-chart 진본
  *  · 12개월 활력 지수 SVG line + area + now/peak markers
@@ -3664,9 +3670,10 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
   const CHUNG: Record<string, string> = {
     子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳',
   };
+  const lineYear = new Date().getFullYear();
   for (let m = 1; m <= 12; m++) {
     if (scores.find((s) => s.m === m)) continue;
-    const monthZhi = MONTH_ZHI[(m - 1) % 12];
+    const monthZhi = realMonthGanzi(lineYear, m).slice(1) || MONTH_ZHI[(m - 1) % 12]; // 2026-10-04 실제 월지
     const monthOh = HAN_OH[monthZhi];
     let score = 60;
     let label = '평탄';
@@ -6998,11 +7005,14 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
   // m=1 (양력 1월) — 절기 기준으로는 12월에 해당 (대한); 단순화: m → MONTH_ZHI 인덱스 + offset
   // 사용자에게는 양력 1월=인월 (寅) 가정 — 사주명리 일반화
   const currentMonth = new Date().getMonth() + 1;
+  // 2026-10-04 — '양력 1월=寅월' 단순화가 한 칸씩 밀려 있었음 (실제 1월=丑월, 寅월은 입춘 이후 2월).
+  //   만세력(lunar) 실값 사용 — 실패 시에만 기존 근사치.
   for (let m = 1; m <= 12; m++) {
-    const monthIdx = (m - 1) % 12; // 1월=寅 (idx 0)
+    const real = realMonthGanzi(thisYear, m);
+    if (real) { cells[m - 1].ganzi = real; continue; }
+    const monthIdx = (m - 1) % 12;
     const ganIdx = (startGanIdx + monthIdx) % 10;
-    const ganzi = ALL_GAN[ganIdx] + MONTH_ZHI[monthIdx];
-    cells[m - 1].ganzi = ganzi;
+    cells[m - 1].ganzi = ALL_GAN[ganIdx] + MONTH_ZHI[monthIdx];
   }
   // AI insight 적용
   if (insight) {

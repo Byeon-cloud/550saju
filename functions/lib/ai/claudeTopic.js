@@ -21,6 +21,7 @@ const promptsV3_1 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const kstTime_1 = require("../utils/kstTime");
 const timeCorrection_1 = require("../utils/timeCorrection");
+const sajuFacts_1 = require("./sajuFacts");
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
  * 기존: 프롬프트가 AI에게 상대방 사주를 "추론"하라고 지시 → LLM은 만세력 계산 불가 → 간지 환각
@@ -805,14 +806,14 @@ const TOPIC_CONFIGS = {
 🚨 **합격 길성 일간별 매핑 (P1 명리학 정확도 — 사주 데이터 ## 일주 길신 직접 인용)**:
 sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 mention 금지 — 가짜 길성 fabricate X):
 
-- **문창귀인(文昌貴人)** — 일간별 위치:
-  · 甲乙(목): 巳, 午 / 丙丁(화): 申, 酉 / 戊己(토): 申, 酉 / 庚辛(금): 亥, 子 / 壬癸(수): 寅, 卯
+- **문창귀인(文昌貴人)** — 일간별 위치 (일간마다 한 글자):
+  · 甲: 巳 / 乙: 午 / 丙: 申 / 丁: 酉 / 戊: 申 / 己: 酉 / 庚: 亥 / 辛: 子 / 壬: 寅 / 癸: 卯
   · 효과: 글로 보는 시험(논술·주관식·SQL/코딩 시험) 강세, 학습 효율 ↑
 - **학당귀인(學堂貴人)** — 일간별:
   · 甲: 亥 / 乙: 午 / 丙: 寅 / 丁: 酉 / 戊: 寅 / 己: 酉 / 庚: 巳 / 辛: 子 / 壬: 申 / 癸: 卯
   · 효과: 학습 시간 길어도 효율 유지 / 자격증·국가시험 강세
 - **태극귀인(太極貴人)** — 일간별:
-  · 甲乙: 子 / 丙丁: 酉 / 戊己: 寅 / 庚辛: 巳 / 壬癸: 午
+  · 甲乙: 子·午 / 丙丁: 卯·酉 / 戊己: 辰·戌·丑·未 / 庚辛: 寅·亥 / 壬癸: 巳·申
   · 효과: 의외의 도움 (학연·인맥·추천) 으로 합격 / 면접 운 강
 - **천을귀인(天乙貴人)** — 일간별 (보너스 길성):
   · 甲戊庚: 丑·未 / 乙己: 子·申 / 丙丁: 亥·酉 / 辛: 寅·午 / 壬癸: 巳·卯
@@ -825,7 +826,7 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
 - 식상격 + 표현형 직업 → 면접 강세 (서류 → 면접 역전형)
 - 정인격 + 문창 → 학자·연구·학술 자격 강세
 
-⚠ 인용 가능: 자평진전 "정관격이 문창을 만나면 향시(鄕試)에 합격한다" 류.`,
+⚠ 고전 근거는 내부 판단용 — 본문에 책 이름·학파·'고서에 따르면' 언급 금지. 귀인 보유 여부는 아래 '귀인·신살 확정표' 가 최우선.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"합격운","value":"0-100 정수"},{"axis":"이직운","value":"0-100 정수"},{"axis":"변동 leverage","value":"0-100 정수"},{"axis":"면접운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
@@ -923,8 +924,24 @@ function buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo) {
 function enforceTopicBaseScore(parsed, effectiveBaseScore) {
     if (parsed && typeof parsed === 'object' && typeof effectiveBaseScore === 'number' && Number.isFinite(effectiveBaseScore)) {
         parsed.overallScore = effectiveBaseScore;
+        // 2026-10-04 — 재회운: 상단 점수 73 · 본문 '재회 가능성 68점' 처럼 한 화면에 두 숫자가 나오던 모순.
+        //   재회 가능성 = 확정 점수로 통일 (topicData.reunionProb · subScores '재회가능성' · 본문 'N점').
+        const td = parsed.topicData;
+        const oldProb = td && td.reunionProb != null && Number.isFinite(Number(td.reunionProb)) ? Number(td.reunionProb) : null;
+        if (oldProb != null && oldProb !== effectiveBaseScore) {
+            td.reunionProb = effectiveBaseScore;
+            if (Array.isArray(td.subScores)) {
+                td.subScores.forEach((s) => { if (s && /재회\s*가능성/.test(String(s.axis || '')))
+                    s.value = effectiveBaseScore; });
+            }
+            const re = new RegExp(`(재회\\s*가능성[^0-9]{0,8})${oldProb}점`, 'g');
+            const walk = (v) => typeof v === 'string' ? v.replace(re, `$1${effectiveBaseScore}점`)
+                : Array.isArray(v) ? v.map(walk) : (v && typeof v === 'object') ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : v;
+            parsed = walk(parsed);
+        }
     }
-    return parsed;
+    // 출처 언급·오기 한자·'오후 14시' 표기 정리 (sajuFacts.sanitizeAiOutput)
+    return (0, sajuFacts_1.sanitizeAiOutput)(parsed);
 }
 async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, partnerInfo, extraInfo) {
     const anthropic = new sdk_1.default({ apiKey });
@@ -1132,6 +1149,24 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo, extraInfo) {
     const serverYearGanzi = (() => {
         try {
             return lunar_javascript_1.Solar.fromYmd(curYear, 6, 1).getLunar().getEightChar().getYear();
+        }
+        catch {
+            return '';
+        }
+    })();
+    const upcomingText = (0, sajuFacts_1.upcomingMonthPillarsText)(today, 15);
+    const gwiinText = (() => {
+        try {
+            const posNames = ['년지', '월지', '일지', '시지'];
+            const natal = p.map((x, i) => (x && x.available !== false && x.지지 ? { pos: posNames[i], br: String(x.지지) } : null))
+                .filter(Boolean);
+            const cur = curIdx >= 0 ? daeunList[curIdx] : null;
+            return (0, sajuFacts_1.gwiinFactsText)({
+                dayGan: String(p[2]?.천간 || ''), natal,
+                daeunBranch: cur?.간지 ? String(cur.간지).slice(1) : undefined, daeunLabel: cur?.간지 ? `${cur.간지} 대운` : undefined,
+                yearBranch: serverYearGanzi ? serverYearGanzi.slice(1) : undefined, yearLabel: serverYearGanzi ? `${serverYearGanzi}년` : undefined,
+                now: today,
+            });
         }
         catch {
             return '';
@@ -1449,7 +1484,12 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ## 12운성: ${unyoung12Text || '미산출'}
 ## 납음(納音): ${napeumText || '미산출'}
 ## 올해 세운(歲運): ${serverYearGanzi || yearlyUn || `${curYear}년`}
-## ${curYear}년 월건(月建) 12개월: ${monthGanziText || '미산출'}
+## 월건(月建) — 이번 달부터 15개월 (연도별 실제 간지 · 내년 달도 이 값만 사용): ${upcomingText || monthGanziText || '미산출'}
+## 🚨 간지·귀인·시진은 직접 계산 금지 — 아래 확정표만 사용 (2026-10-04 · 내년 월건 날조·문창 오판·유시=수 오류 실측)
+### 귀인·신살 확정표 (서버 계산 · 여기 '원국 없음'인 신살을 '있다'고 쓰지 말 것)
+${gwiinText || '미산출'}
+### 시간대 오행 (시진): ${sajuFacts_1.SIJIN_OHENG_LINE}
+### 숫자 날조 금지: '합격률 두 배'·'확률 N%'·'3개월간 좋은 결과' 같은 검증 불가 수치·보장 금지 (점수 필드 제외).
 
 ## 🚨 시기(월) 판정 룰 — 반드시 위 월건 간지로 계산 (2026-09-15 신설)
 '몇 월'을 쓸 때는 아래 5축 중 **최소 2축을 실제로 대조해** 근거를 만든다. 현재 날짜 기준 '가까운 미래'를 찍지 마라.

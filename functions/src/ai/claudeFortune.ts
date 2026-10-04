@@ -9,6 +9,7 @@ import {
   parseJsonResponse,
   type ParseJsonMeta,
 } from './promptsV3';
+import { applyDailyMeetGlyphs, sanitizeAiOutput } from './sajuFacts';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 
 /**
@@ -65,7 +66,7 @@ export async function generateDailyFortuneAnalysis(
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta1);
     if (meta1.repairUsed) console.info('[claudeFortune] jsonrepair 1차 발동 — 복구 성공');
-    return result;
+    return sanitizeAiOutput(applyDailyMeetGlyphs(result, (args as any).sajuData)); // 2026-10-04 확정 글자 + 출력 정리
   } catch (e1: any) {
     console.warn('[claudeFortune] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
     // 2차 호출 — temperature 만 낮춰 sampling 변동성 감소
@@ -82,6 +83,6 @@ export async function generateDailyFortuneAnalysis(
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta2);
     console.info('[claudeFortune] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
-    return result;
+    return sanitizeAiOutput(applyDailyMeetGlyphs(result, (args as any).sajuData));
   }
 }
