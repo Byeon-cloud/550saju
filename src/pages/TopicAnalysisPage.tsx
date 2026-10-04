@@ -3223,6 +3223,20 @@ function SectionBody({ content, color }: { content: string; color: string }) {
 /* ════════════════════════════════════════════════
    메인 페이지 컴포넌트
    ════════════════════════════════════════════════ */
+
+/** 2026-10-04 — '지금 상황 한 줄' 예시 (주제별) */
+const CONCERN_PLACEHOLDER: Record<string, string> = {
+  love: '예: 3년째 솔로인데 올해 안에 인연이 있을지 궁금해요',
+  reunion: '예: 7월에 제가 먼저 헤어지자고 했고, 지금은 연락이 끊겼어요',
+  marriage: '예: 2년 만난 사람과 결혼 얘기가 오가는데 확신이 안 서요',
+  wealth: '예: 적금만 하다가 투자를 시작해볼까 고민 중이에요',
+  exam: '예: 회사 3년차인데 이직을 준비하고 있어요',
+  business: '예: 퇴사하고 작은 가게 창업을 준비하고 있어요',
+  health: '예: 요즘 잠을 잘 못 자고 쉽게 피곤해요',
+  move: '예: 내년 초 전세 만기라 이사 갈 곳을 고민 중이에요',
+  study: '예: 자격증 공부를 하는데 집중이 잘 안 돼요',
+  career: '예: 지금 일이 저와 맞는지, 계속해도 될지 고민이에요',
+};
 export function TopicAnalysisPage() {
   const { topicId: rawTopicId } = useParams<{ topicId: string }>();
   // SSOT v1 정렬 (2026-04-22): legacy URL ('/topic/moving') 을 canonical ('move') 로 정규화.
@@ -3325,6 +3339,8 @@ export function TopicAnalysisPage() {
   // 연애운: 솔로/썸/연애중
   const [loveStatus, setLoveStatus] = useState<'solo' | 'some' | 'dating'>('solo');
   // 사업운/취업운/이사운/학업운/합격이직운: 추가 상태 정보
+  // 2026-10-04 — '지금 상황 한 줄' (전 주제 · 선택). 꿈해몽의 '요즘 떠나지 않는 생각' 칸처럼, 적은 상황에 맞춰 풀이.
+  const [concern, setConcern] = useState('');
   const [extraInfo, setExtraInfo] = useState({
     // 사업운
     bizStatus: '' as '' | 'preparing' | 'running',
@@ -3494,6 +3510,7 @@ export function TopicAnalysisPage() {
       if (data?.showPartner !== undefined) setShowPartner(data.showPartner);
       if (data?.partnerExpanded !== undefined) setPartnerExpanded(data.partnerExpanded);
       if (data?.extraInfo) setExtraInfo(data.extraInfo);
+      if (typeof data?.concern === 'string') setConcern(data.concern);
       if (data?.selectedId) {
         const found = profiles.find((p) => p.id === data.selectedId);
         if (found) setSelected(found as unknown as LocalReport);
@@ -3543,7 +3560,7 @@ export function TopicAnalysisPage() {
       // 입력값 sessionStorage 보존
       try {
         sessionStorage.setItem(PENDING_KEY, JSON.stringify({
-          partnerInfo, loveStatus, relationStatus, showPartner, extraInfo,
+          partnerInfo, loveStatus, relationStatus, showPartner, extraInfo, concern,
           selectedId: selected.id,
         }));
       } catch { /* noop */ }
@@ -3603,7 +3620,8 @@ export function TopicAnalysisPage() {
         if (!extraInfo.examName && !extraInfo.changeType) { delete e.examYear; delete e.examMonth; }
         return e;
       })();
-      const extra = { ...topicExtra, ...loveExtra, ...marriageExtra };
+      const concernExtra = concern.trim() ? { userConcern: concern.trim().slice(0, 200) } : {};
+      const extra = { ...topicExtra, ...loveExtra, ...marriageExtra, ...concernExtra };
       const finalExtra = Object.keys(extra).length > 0 ? extra : undefined;
       // 2026-10-04 — pending ↔ 대상 프로필·상대방 장부 (앱 종료 후 복구가 엉뚱한 프로필/상대방에 붙지 않게)
       topicHeal.recordTopicAttempt(pendingId, { topicId: topicId!, profileId: selected.id, partnerName: partner?.name || undefined });
@@ -4609,6 +4627,31 @@ export function TopicAnalysisPage() {
                         </AnimatePresence>
                       </div>
                     </FadeIn>
+                  )}
+
+                  {/* 2026-10-04 — 지금 상황 한 줄 (선택) */}
+                  {selected && (
+                    <div style={{ background: '#FFFFFF', border: '1px solid #E8E2D6', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
+                      <label htmlFor="topic-concern" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>
+                        지금 상황을 한 줄로 알려주세요 <span style={{ fontWeight: 500, color: '#7A7269' }}>(선택)</span>
+                      </label>
+                      <p style={{ fontSize: 12, color: '#7A7269', lineHeight: 1.5, marginBottom: 8 }}>
+                        적어주시면 그 상황에 맞춰 풀어드려요. 비워둬도 괜찮아요.
+                      </p>
+                      <textarea
+                        id="topic-concern"
+                        value={concern}
+                        onChange={(e) => setConcern(e.target.value.slice(0, 200))}
+                        rows={2}
+                        maxLength={200}
+                        placeholder={CONCERN_PLACEHOLDER[topicId || ''] || '예: 지금 가장 마음에 걸리는 상황을 적어주세요'}
+                        style={{
+                          width: '100%', boxSizing: 'border-box', resize: 'none', fontSize: 16, lineHeight: 1.5,
+                          color: '#1A1A1A', background: '#F8F5EE', border: '1px solid #E8E2D6', borderRadius: 10, padding: '10px 12px',
+                        }}
+                      />
+                      <div style={{ textAlign: 'right', fontSize: 11, color: '#7A7269', marginTop: 4 }}>{concern.length}/200</div>
+                    </div>
                   )}
 
                   {/* F5 · AI 실패 inline error 카드 */}

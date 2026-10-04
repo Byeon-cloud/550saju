@@ -203,3 +203,30 @@ export function applyDailyMeetGlyphs<T>(result: T, sajuData: any): T {
     return result;
   } catch { return result; }
 }
+
+/* ── 오늘 일진 판정 (2026-10-04) — 오늘의 운세 3그룹(A1·A2·B) 공통 전제 ──
+ *   병렬 그룹이 각자 '오늘이 좋은 날인지'를 따로 판단해 서로 엇갈리고, 辛亥일(亥=수)에 '용신 수가 약해진다'
+ *   같은 사실 오류가 났다. 일진 천간·지지가 용신/희신/기신 중 무엇인지 서버가 정해 모든 그룹에 같은 문장으로 준다. */
+const GAN_OH: Record<string, string> = { 甲: '목', 乙: '목', 丙: '화', 丁: '화', 戊: '토', 己: '토', 庚: '금', 辛: '금', 壬: '수', 癸: '수' };
+const GEN: Record<string, string> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };   // A 가 생하는 것
+const CTRL: Record<string, string> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };  // A 가 극하는 것
+export function todayYongsinLine(todayGanzi: string, sajuData: any): string {
+  try {
+    const ma = sajuData?.myeongriAnalysis || {};
+    const y = ma.용신; const h = ma.희신; const k = ma.기신;
+    if (!y || !todayGanzi || todayGanzi.length < 2) return '';
+    const g = GAN_OH[todayGanzi[0]]; const b = BR_OHENG[todayGanzi[1]];
+    if (!g || !b) return '';
+    const role = (o: string) => (o === y ? '용신' : o === h ? '희신' : o === k ? '기신' : '중립');
+    const r1 = role(g); const r2 = role(b);
+    const good = [r1, r2].filter((r) => r === '용신' || r === '희신').length;
+    const bad = [r1, r2].filter((r) => r === '기신').length;
+    const verdict = good === 2 ? '도움 기운이 강한 날' : good >= 1 && bad >= 1 ? '도움과 부담이 섞인 날'
+      : good === 1 ? '도움 기운이 들어오는 날' : bad >= 1 ? '부담 기운이 강한 날 (무리하지 않는 날)' : '무난한 날';
+    const ys = (g === y || b === y) ? `용신(${y}) 오행이 직접 들어와 힘을 받는 날`
+      : (GEN[g] === y || GEN[b] === y) ? `용신(${y})을 살려주는 기운이 들어오는 날`
+      : (CTRL[g] === y || CTRL[b] === y) ? `용신(${y})이 눌리는 날`
+      : `용신(${y})에 큰 변화가 없는 날`;
+    return `- 오늘 일진 판정 (서버 계산 · 모든 섹션 공통 전제 · 반대 서술 금지): ${todayGanzi} = 천간 ${todayGanzi[0]}(${g}·${r1}) + 지지 ${todayGanzi[1]}(${b}·${r2}) → ${verdict} · ${ys}`;
+  } catch { return ''; }
+}

@@ -794,7 +794,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     sendEvent('start', { ts: Date.now() });
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
-    const SCHEMA_VERSION = 'v7';
+    const SCHEMA_VERSION = 'v8'; // 2026-10-04 v8 — 오늘 일진 판정 공통 전제 추가
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
     const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);

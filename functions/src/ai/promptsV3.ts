@@ -1242,6 +1242,7 @@ ${GOOSEBUMP_BLOCK}
 6. **성별 기준 해석 (2026-10-04).** 연애·인연은 사주 주인의 성별(sajuData.input.gender)로 읽는다.
    여성 = 관성(일간을 극하는 오행)이 남자·연인·남편의 별 / 남성 = 재성(일간이 극하는 오행)이 여자·연인·아내의 별.
    ❌ 여성에게 '편재 = 정처 아닌 인연' 같은 남성 기준 풀이 금지.
+   성별은 해석에만 반영 — '당신은 여성이라' 같은 성별 설명 문장은 쓰지 말 것.
 
 7. **검증 불가 보장·수치 금지.** "앞으로 3개월간 좋은 결과", "성공 확률이 높아집니다", "반드시 ~된다" 금지.
    ✅ "~하기 좋은 흐름이에요", "~할 여지가 커요".
@@ -1281,6 +1282,7 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
+${todayYongsinLine(data.todayGanzi, data.sajuData)}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1595,6 +1597,7 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
+${todayYongsinLine(data.todayGanzi, data.sajuData)}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.baseScores100 ? `
 ## ⚠ 점수 SSOT (필수 준수)
@@ -1661,6 +1664,7 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
+${todayYongsinLine(data.todayGanzi, data.sajuData)}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1751,6 +1755,7 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
+${todayYongsinLine(data.todayGanzi, data.sajuData)}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1864,6 +1869,7 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
+${todayYongsinLine(data.todayGanzi, data.sajuData)}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -2200,7 +2206,7 @@ ${context.kind === 'topic' ? `
  * 실패 시 throw — 호출부에서 재시도 여부 결정.
  */
 import { jsonrepair } from 'jsonrepair';
-import { dailyMeetGlyphJson, dailyMeetPromptBlock } from './sajuFacts';
+import { dailyMeetGlyphJson, dailyMeetPromptBlock, todayYongsinLine } from './sajuFacts';
 
 /** parseJsonResponse 호출부에서 "jsonrepair 가 발동했는가" 관측용 플래그. */
 export interface ParseJsonMeta {
