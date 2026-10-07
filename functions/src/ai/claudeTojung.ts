@@ -1,6 +1,24 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
 import { kstNow } from '../utils/kstTime';
+import { Solar } from 'lunar-javascript';
+import { ganziRoleText, ganziKo, gwiinFactsText, sanitizeAiOutput } from './sajuFacts';
+
+/* 2026-10-07 — '토정비결' → '신년운세' 재출시.
+ *   기존: '2026 병오년' 하드코딩(10월 구매자에게 끝나가는 해) + 월 간지를 모델이 계산 + '주역 64괘 중 하나'를
+ *   달마다 고르게 함 — 실제 토정비결은 144괘 산식이라 근거 없는 '전통' 연출이었다.
+ *   현재: 대상 연도 = 10월부터 내년(그 전엔 올해) · 세운·12개월 월주·용신 역할·그 해 대운·귀인 달을 서버가 계산.
+ *   응답 키(months[].괘/괘의미/전통해석/현대해석)는 유지 — 예전 보관함 결과·화면 호환. 괘 자리엔 실제 월주가 들어간다. */
+export function tojungTargetYear(): number {
+  const n = kstNow();
+  return n.month >= 10 ? n.year + 1 : n.year;
+}
+function monthPillar(y: number, m: number): string {
+  try { return Solar.fromYmd(y, m, 15).getLunar().getEightChar().getMonth(); } catch { return ''; }
+}
+function yearPillar(y: number): string {
+  try { return Solar.fromYmd(y, 6, 1).getLunar().getEightChar().getYear(); } catch { return ''; }
+}
 
 export async function generateTojungBigyeol(apiKey: string, sajuData: any): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
@@ -14,9 +32,28 @@ export async function generateTojungBigyeol(apiKey: string, sajuData: any): Prom
   });
 
   const text = (msg.content[0] as any).text;
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('JSON 파싱 실패');
-  return JSON.parse(jsonMatch[0]);
+  const parsed: any = parseJsonResponse(text) || {};
+  const ty = tojungTargetYear();
+  const ygz = yearPillar(ty);
+  // 달 간지·역할은 서버 확정값으로 덮어씀 (모델이 바꿔 써도 화면은 실제 만세력)
+  if (Array.isArray(parsed.months)) {
+    parsed.months.forEach((m: any) => {
+      const mm = Number(m?.month);
+      if (mm >= 1 && mm <= 12) {
+        const gz = monthPillar(ty, mm);
+        if (gz) { m.괘 = `${gz}(${ganziKo(gz)})월`; m.괘의미 = ganziRoleText(gz, sajuData, '달'); }
+      }
+    });
+  }
+  parsed.targetYear = ty;
+  parsed.hexagram = {
+    yearLabel: `${ty} ${ganziKo(ygz)}년 · 신년운세`,
+    glyph: ygz,
+    name: `${ganziKo(ygz)}년의 ${sajuData?.input?.name || '나'}`,
+    oneLine: String(parsed.headline || ''),
+    pullQuote: parsed.pullQuote ? String(parsed.pullQuote) : undefined,
+  };
+  return sanitizeAiOutput(parsed);
 }
 
 function buildPrompt(d: any): string {
@@ -38,12 +75,41 @@ function buildPrompt(d: any): string {
   const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
   const nowKst = kstNow();
   const dateStr = `${nowKst.year}년 ${nowKst.month}월`;
+  const ty = tojungTargetYear();
+  const ygz = yearPillar(ty);
+  const yko = ganziKo(ygz);
+  const monthsFact = Array.from({ length: 12 }, (_, i) => {
+    const gz = monthPillar(ty, i + 1);
+    return `- ${i + 1}월 ${gz}(${ganziKo(gz)}) : ${ganziRoleText(gz, d, '달')}`;
+  }).join('\n');
+  const tyDaeun = daeunList.find((x: any) => Number(x?.시작년도) <= ty && ty <= Number(x?.끝년도));
+  const gwiin = (() => {
+    try {
+      const posNames = ['년지', '월지', '일지', '시지'];
+      const natal = p.map((x: any, i: number) => (x && x.available !== false && x.지지 ? { pos: posNames[i], br: String(x.지지) } : null)).filter(Boolean) as Array<{ pos: string; br: string }>;
+      return gwiinFactsText({
+        dayGan: String(p[2]?.천간 || ''), natal,
+        daeunBranch: tyDaeun?.간지 ? String(tyDaeun.간지).slice(1) : undefined, daeunLabel: tyDaeun?.간지 ? `${tyDaeun.간지} 대운` : undefined,
+        yearBranch: ygz ? ygz.slice(1) : undefined, yearLabel: ygz ? `${ty}년 ${ygz}` : undefined,
+        now: new Date(ty, 0, 15),
+      });
+    } catch { return ''; }
+  })();
 
-  return `당신은 사주500 토정비결 해석가. ${MYEONGRI_GROUNDS_BLOCK}
+  return `당신은 사주500 신년운세 해석가. ${MYEONGRI_GROUNDS_BLOCK}
 
-2026 병오년 토정비결 — 사주 글자 + 병오년 세운에서 추출한 진짜 근거.
+${ty}년 ${yko}(${ygz})년 신년운세 — 사주 원국 + ${ty}년 세운·열두 달 월운에서 추출한 진짜 근거.
 
-⚠️ 현재 날짜: ${dateStr}
+⚠️ 현재 날짜: ${dateStr} · 분석 대상: ${ty}년 1월~12월 (양력)
+
+## 🚨 ${ty}년 확정값 (서버 계산 · 직접 계산 금지 · 이 값과 다른 간지·역할 서술 금지)
+- ${ty}년 세운: ${ganziRoleText(ygz, d, '해')}
+- ${ty}년의 대운: ${tyDaeun?.간지 ? `${tyDaeun.간지}(${ganziKo(String(tyDaeun.간지))}) 대운 · ${ganziRoleText(String(tyDaeun.간지), d, '해')}` : '미상'}
+- 열두 달 월주 (양력 달 기준 · 1월은 寅월이 아니라 丑월):
+${monthsFact}
+- 귀인·신살이 걸리는 달 (원국에 '없음'인 신살은 '있다'고 쓰지 말 것):
+${gwiin || '미산출'}
+→ 각 달 score·keyword·풀이는 위 '도움/부담' 판정과 원국 형충합을 근거로. 판정이 '부담'인 달을 최고점으로 쓰지 말 것.
 
 ## 사주 원국
 ${pillarsText}일간: ${p[2]?.천간 || '미상'}
@@ -99,7 +165,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 
 ✨ **우리만의 차별화**:
-- 6대 원전 학술 인용 1회 자연스럽게
+- 고전 근거는 내부 판단용 — 본문에 책 이름·학파·'고서에 따르면' 언급 금지
 - 결정론 (같은 사주 = 같은 결과)
 - 한자 1회 등장 시 즉시 일상어 풀이 동반
 - strong 강조는 유저 일상 결론에만
@@ -122,8 +188,9 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 동적 작용해야 하는 콘텐츠 = 사주 8글자마다 매번 다른 문장.
 
 ❌ 'X한 해입니다' / '평탄한 한 해' (근거 없는 일반론) — 같은 띠/같은 출생연도면 누구나 동일한 결과 금지.
-✅ 사주 글자 + 병오년 충돌·합 직접 호명 — '병오년 + 일간 신금 (불금 갈등)', '병오년 도화살 발동', '오미합 + 일지 자수와 자오충'.
-✅ 각 yearOverview 6운 / months 12개의 현대해석 에 사주 8글자 specific 데이터 또는 해당 월간지·병오년과의 충돌·합 1회 이상 직접 호명 mandatory.
+❌ 주역 괘·토정비결 괘를 지어내지 말 것 — 근거는 위 확정 월주·세운·원국뿐.
+✅ 사주 글자 + ${ty}년 세운(${ygz})과의 충돌·합 직접 호명 (예시 형식: '세운 + 일간 관계', '세운 지지와 일지의 합·충').
+✅ 각 yearOverview 6운 / months 12개의 현대해석 에 사주 8글자 specific 데이터 또는 위 확정 월주·세운과의 충돌·합 1회 이상 직접 호명 mandatory.
 
 🚨 **example 사용 룰 (회귀 금지)**:
 프롬프트 예시의 사주 글자(병화·신금·축미충 등)는 example. 실제 사용자에게는 위 ## 사주 원국 의 진짜 8글자를 인용.
@@ -132,6 +199,14 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 
 {
+  "headline": "${ty}년을 한 문장으로 (35~50자 · 세운과 원국 관계 근거)",
+  "pullQuote": "기억에 남을 짧은 한마디 (20~30자)",
+  "fourBox": [
+    {"head": "상반기", "value": "6자 내외 핵심", "desc": "20자 내외 근거"},
+    {"head": "하반기", "value": "6자 내외 핵심", "desc": "20자 내외 근거"},
+    {"head": "좋은 달", "value": "예: 3·6·11월 (확정 월주 '도움' 판정 기준)", "desc": "20자 내외"},
+    {"head": "조심할 달", "value": "예: 2·8월 (확정 월주 '부담' 판정 기준)", "desc": "20자 내외"}
+  ],
   "keywords": ["#사주핵심키워드1","#키워드2","#키워드3"],
   "categoryScores": {"총운": "0-100 정수", "금전운": "0-100 정수", "건강운": "0-100 정수", "직장운": "0-100 정수", "애정운": "0-100 정수", "결혼운": "0-100 정수"},
   "yearOverview": {
@@ -139,10 +214,10 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
     "직장운": "150자 이상 · 🚨 관성 직접 호명", "애정운": "150자 이상 · 🚨 도화살/배우자궁 직접 호명", "결혼운": "150자 이상 · 🚨 일지/관성 직접 호명"
   },
   "months": [
-    {"month": 1, "괘": "주역 64괘 중 하나 (예: 地天泰)", "괘의미": "괘의 뜻 한 줄 (예: 하늘과 땅이 교류하여 모든 것이 형통함)",
-     "전통해석": "80자 이상. 토정비결 전통 시적 표현 (고풍스럽게, 4자 성어 활용)",
-     "현대해석": "80자 이상. 현대어로 구체적 상황 묘사 (직장, 연애, 금전 등) · 🚨 사주 specific 또는 월간지 호명 mandatory",
-     "score": 1-100, "keyword": "4~6글자"}, ...12개월
+    {"month": 1, "괘": "(서버가 채움 — 빈 문자열)", "괘의미": "(서버가 채움 — 빈 문자열)",
+     "전통해석": "그 달을 한 줄로 (25~40자 · 4자 성어 1개까지 OK · 고풍체 금지 — 읽기 쉬운 한 줄)",
+     "현대해석": "100자 이상. 그 달에 실제로 일어날 장면 (직장·연애·돈·건강) + 할 일 1개 · 🚨 위 확정 월주와 원국의 관계 1회 이상 호명",
+     "score": 1-100, "keyword": "4~6글자"}, ...12개월 (1월~12월)
   ],
   "luckyAdvice": "100자 이상. 올해 개운법."
 }

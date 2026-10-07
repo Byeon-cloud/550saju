@@ -172,10 +172,10 @@ function AnimatedRoutes() {
             <Route path="/compat" element={<CompatibilityPage />} />
             <Route path="/compat/result" element={<CompatResultPage />} />
             <Route path="/daeun" element={<Navigate to="/" replace />} />
-            <Route path="/tojung" element={<Navigate to="/" replace />} />
+            {/* 2026-10-07: 토정비결 → 신년운세 재출시 (대상 연도 자동 · 서버 확정 월주) */}
+            <Route path="/tojung" element={<TojungPage />} />
             {/* 2026-05-07 출시 후 복구 (월운은 위에서 이미 해제)
             <Route path="/daeun" element={<DaeunPage />} />
-            <Route path="/tojung" element={<TojungPage />} />
             */}
             <Route path="/premium" element={<PremiumSelectPage />} />
             <Route path="/topic" element={<TopicAnalysisPage />} />

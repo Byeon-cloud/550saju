@@ -67,6 +67,12 @@ function getTodayStr(): string {
   return `${m}월 ${d}일 ${weekday}요일`;
 }
 
+/** 2026-10-07 신년운세 대상 연도 — 10월부터 내년 (TojungPage·서버와 같은 규칙) */
+const NEW_YEAR_TARGET = (() => {
+  const d = new Date(Date.now() + 9 * 3600e3);
+  return d.getUTCMonth() + 1 >= 10 ? d.getUTCFullYear() + 1 : d.getUTCFullYear();
+})();
+
 export function HomePage() {
   usePageTitle('사주500 · 무료로 시작');
   useSeoMeta({
@@ -441,30 +447,36 @@ export function HomePage() {
         ))}
       </div>
 
-      {/* ─── [05b] NEW · 궁합 (2026-10-04 공개) — 두 사람 사주 비교 ─── */}
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.98 }}
-        onClick={go('/compat')}
-        className="relative mx-4 mt-2.5 w-[calc(100%-32px)] h-[96px] px-4 py-3.5 rounded-[14px] text-left overflow-hidden"
-        style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
-        aria-label="궁합 보기 1운"
-      >
-        <span className="absolute left-0 top-0 bottom-0 w-1 rounded-l" style={{ background: EXT_COLORS.compat }} />
-        <span className="absolute right-[-4px] top-[-12px] text-[78px] font-black leading-none"
-          style={{ opacity: 0.14, color: EXT_COLORS.compat, fontFamily: SERIF }}>合</span>
-        <h4 className="relative text-[15.5px] font-bold flex items-center gap-1" style={{ color: C.ink }}>
-          궁합 보기
-          <span className="text-[11px] font-extrabold px-1 py-[1px] rounded leading-none" style={{ color: '#fff', background: EXT_COLORS.compat }}>NEW</span>
-        </h4>
-        <p className="relative text-[11.5px] leading-[1.45] mt-1" style={{ color: C.inkSoft }}>
-          연인·썸·헤어진 사람·친구·가족 — 두 사람 사주가 맞물리는 자리
-        </p>
-        <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
-          style={{ color: C.goldDark, background: C.goldSoft }}>
-          1운
-        </span>
-      </motion.button>
+      {/* ─── [05b] NEW · 궁합(10-04) · 신년운세(10-07) — 2칸 ─── */}
+      <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
+        {[
+          { id: 'compat', kanji: '合', h: '궁합 보기', sub: '연인·썸·헤어진 사람·가족, 두 사람 사주', strip: EXT_COLORS.compat, path: '/compat', price: 1 },
+          { id: 'newyear', kanji: '歲', h: `${NEW_YEAR_TARGET} 신년운세`, sub: '내 사주로 미리 보는 열두 달', strip: EXT_COLORS.tojung, path: '/tojung', price: 2 },
+        ].map((c) => (
+          <motion.button
+            key={c.id}
+            type="button"
+            whileTap={{ scale: 0.98 }}
+            onClick={go(c.path)}
+            className="relative h-[120px] px-4 py-3.5 rounded-[14px] text-left overflow-hidden"
+            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
+            aria-label={`${c.h} ${c.price}운`}
+          >
+            <span className="absolute left-0 top-0 bottom-0 w-1 rounded-l" style={{ background: c.strip }} />
+            <span className="absolute right-[-6px] top-[-10px] text-[78px] font-black leading-none"
+              style={{ opacity: 0.14, color: c.strip, fontFamily: SERIF }}>{c.kanji}</span>
+            <h4 className="relative text-[15.5px] font-bold flex items-center gap-1" style={{ color: C.ink }}>
+              {c.h}
+              <span className="text-[11px] font-extrabold px-1 py-[1px] rounded leading-none" style={{ color: '#fff', background: c.strip }}>NEW</span>
+            </h4>
+            <p className="relative text-[11.5px] leading-[1.45] mt-1" style={{ color: C.inkSoft }}>{c.sub}</p>
+            <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
+              style={{ color: C.goldDark, background: C.goldSoft }}>
+              {c.price}운
+            </span>
+          </motion.button>
+        ))}
+      </div>
 
       {/* ─── [05] 더 알아볼 주제 · 확장 4종 (대운/월운/궁합/토정) — 2026-05-07 출시 후 공개 예정 (현재 숨김, 코드 보존) ─── */}
       {false && (

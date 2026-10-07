@@ -16,6 +16,7 @@ import { FooterCTA } from '@/components/common/FooterCTA';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { TojungResponse } from '@/types/report';
 import { stripMd, sanitizeAiText } from '@/utils/format';
+import { kstToday } from '@/utils/kstDate';
 // Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
 import {
   EXTENSION_THEME,
@@ -28,11 +29,20 @@ import {
 
 type Phase = 'select' | 'loading' | 'result';
 
+/* 2026-10-07 — '토정비결' → '신년운세' 재출시 (경로 /tojung · contentType 'tojung' 유지).
+ *   대상 연도 = 10월부터 내년 (서버 claudeTojung.tojungTargetYear 와 같은 규칙) · 가격 2운. */
+const NEWYEAR_PRICE = 2;
+function newYearTarget(): number {
+  const [y, m] = kstToday().split('-').map(Number);
+  return m >= 10 ? y + 1 : y;
+}
+const TY = newYearTarget();
+
 const LOADING_STEPS = [
-  '올해의 상괘를 뽑고 있어요...',
-  '월별 괘를 배치하고 있어요...',
-  '전통 해석을 현대어로 풀고 있어요...',
-  '개운 조언을 작성하고 있어요...',
+  `${TY}년 세운과 사주를 맞춰보고 있어요...`,
+  '열두 달 흐름을 배치하고 있어요...',
+  '달마다 풀이를 쓰고 있어요...',
+  '한 해 개운 조언을 작성하고 있어요...',
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -43,7 +53,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function TojungPage() {
-  usePageTitle('토정비결');
+  usePageTitle(`${TY} 신년운세`);
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -79,7 +89,7 @@ export function TojungPage() {
 
     // 캐시 확인 — 이전에 분석한 적 있으면 무료로 바로 보여줌
     const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'tojung');
-    if (cached?.aiResult) {
+    if (cached?.aiResult && Number((cached.aiResult as any)?.targetYear) === TY) {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');
@@ -87,17 +97,17 @@ export function TojungPage() {
       return;
     }
 
-    if (!spendBalance(1)) {
+    if (!spendBalance(NEWYEAR_PRICE)) {
       toast.show('잔액이 부족해요', 'warning');
-      navigate('/charge', { state: { message: '토정비결에 1운이 필요해요' } });
+      navigate('/charge', { state: { message: `${TY} 신년운세에 ${NEWYEAR_PRICE}운이 필요해요` } });
       isAnalyzingRef.current = false;
       return;
     }
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
-    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'tojung', amount: 1 })).catch(() => {});
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'tojung', amount: NEWYEAR_PRICE })).catch(() => {});
     // 2026-06-18 머니세이프 — 생성 중 앱 종료로 결과 못 받으면 부팅 reconcile 이 5분 후 자동환불.
-    markPendingSpend('tojung', 1);
-    toast.show('1운이 차감됐어요', 'info');
+    markPendingSpend('tojung', NEWYEAR_PRICE);
+    toast.show(`${NEWYEAR_PRICE}운이 차감됐어요`, 'info');
     setPhase('loading');
     setLoadingStep(0);
     const interval = setInterval(() => setLoadingStep(s => Math.min(s + 1, LOADING_STEPS.length - 1)), 3000);
@@ -111,12 +121,12 @@ export function TojungPage() {
       setShareReportId(rid);
       setPhase('result');
     } catch (e: any) {
-      console.error('토정비결 실패:', e);
+      console.error('신년운세 실패:', e);
       // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
-      refundBalance(1);
+      refundBalance(NEWYEAR_PRICE);
       clearPendingSpendByType('tojung'); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
       setPhase('select');
-      toast.show('분석에 실패해서 1운을 돌려드렸어요', 'warning');
+      toast.show(`분석에 실패해서 ${NEWYEAR_PRICE}운을 돌려드렸어요`, 'warning');
     } finally {
       clearInterval(interval);
       isAnalyzingRef.current = false;
@@ -128,10 +138,10 @@ export function TojungPage() {
     if (reports.length === 0) {
       return (
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
-          <Header title="토정비결" />
+          <Header title="신년운세" />
           <div className="px-5 pt-8 text-center space-y-4">
-            <p className="text-h2 text-text-primary">먼저 사주를 분석해주세요</p>
-            <p className="text-body-sm text-text-muted">사주 데이터가 있어야 토정비결을 볼 수 있어요.</p>
+            <p className="text-h2 text-text-primary">먼저 사주를 입력해주세요</p>
+            <p className="text-body-sm text-text-muted">사주가 있어야 {TY}년 신년운세를 볼 수 있어요.</p>
             <Button onClick={() => navigate('/input?from=home_body_tojung')} variant="gold" size="lg" fullWidth>사주 분석하러 가기</Button>
           </div>
         </div>
@@ -140,18 +150,18 @@ export function TojungPage() {
 
     return (
       <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
-        <Header title="토정비결" />
+        <Header title="신년운세" />
         {/* 2026-05-04 ExtensionHero 통일 (select phase 부터 적용) */}
         <FadeIn>
           <ExtensionHero
             theme={EXTENSION_THEME.tojung}
-            sub="조선시대 이토정 선생의 전통 운세법 · 주역 64괘로 12개월"
-            rightLabel="歲 · 한 해의 결"
+            sub={`${TY}년 한 해를 내 사주로 열두 달 미리 봅니다`}
+            rightLabel={`歲 · ${TY}`}
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
           <FadeIn delay={0.05}>
-            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 토정비결을 볼까요?" />
+            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title={`누구의 ${TY} 신년운세를 볼까요?`} />
           </FadeIn>
           {selected && (
             <FadeIn delay={0.1}>
@@ -164,7 +174,7 @@ export function TojungPage() {
         </div>
         {selected && (
           <div className="sticky-cta-bottom">
-            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth>토정비결 보기 (1운)</Button>
+            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth>{TY} 신년운세 보기 ({NEWYEAR_PRICE}운)</Button>
           </div>
         )}
       </div>
@@ -173,13 +183,16 @@ export function TojungPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="토정비결" sajuData={selected?.sajuData} steps={['올해의 괘를 뽑고 있어요', '월별 괘를 배치하고 있어요', '전통 해석을 현대어로 풀고 있어요']} />;
+    return <AILoading name={selected?.name} type={`${TY} 신년운세`} sajuData={selected?.sajuData} steps={[`${TY}년 세운과 사주를 맞춰보고 있어요`, '열두 달 흐름을 배치하고 있어요', '달마다 풀이를 쓰고 있어요']} />;
   }
 
   // ─── 결과 ───
   if (!result) return null;
 
   const categories = Object.entries(result.yearOverview) as [string, string][];
+  // 대상 연도 — 신년운세(10-07~)는 targetYear 를 담고, 옛 토정비결 결과는 없음 → 2026 토정비결로 표기
+  const resultYear = Number((result as any)?.targetYear) || 0;
+  const isLegacyTojung = !resultYear;
 
   // Phase D'-4 Bundle 2 — chrome theme + AI hexagram/fourBox (over-fit 방지: 응답 있을 때만)
   const tojungTheme = EXTENSION_THEME.tojung;
@@ -190,14 +203,14 @@ export function TojungPage() {
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #F5F0E8 0%, #FFFFFF 30%)' }}>
-      <Header title="토정비결" />
+      <Header title={isLegacyTojung ? '토정비결' : '신년운세'} />
 
       {/* Phase D'-4 Bundle 2 — ExtensionHero (歲 인장 + 네이비 그라디언트) */}
       <FadeIn>
         <ExtensionHero
           theme={tojungTheme}
-          crumb="사주500 · 더 알아볼 주제 · 토정비결"
-          sub="토정 이지함 선생의 풀이법으로 한 해를 열두 달로 나눠 봅니다."
+          crumb={isLegacyTojung ? '사주500 · 토정비결' : `사주500 · ${resultYear} 신년운세`}
+          sub={isLegacyTojung ? '한 해를 열두 달로 나눠 봅니다.' : `${resultYear}년 세운과 열두 달 월운을 내 사주에 맞춰 봅니다.`}
           seal="歲"
         />
       </FadeIn>
@@ -206,7 +219,7 @@ export function TojungPage() {
       {aiHex && (
         <FadeIn delay={0.04}>
           <TojungHexagramCard
-            yearLabel={String(aiHex.yearLabel ?? '2026 병오년 · 본괘')}
+            yearLabel={String(aiHex.yearLabel ?? (isLegacyTojung ? '2026 병오년' : `${resultYear}년`))}
             glyph={String(aiHex.glyph ?? '')}
             name={String(aiHex.name ?? '')}
             oneLine={stripMd(String(aiHex.oneLine ?? aiHex.summary ?? ''))}
@@ -227,7 +240,7 @@ export function TojungPage() {
         {/* 헤더 */}
         <FadeIn>
           <div className="text-center py-4">
-            <p className="text-caption text-brand-gold font-semibold">2026년 토정비결</p>
+            <p className="text-caption text-brand-gold font-semibold">{isLegacyTojung ? '2026년 토정비결' : `${resultYear}년 신년운세`}</p>
             <p className="text-display text-text-primary">{selected?.name}님</p>
           </div>
         </FadeIn>
@@ -287,7 +300,7 @@ export function TojungPage() {
         <FadeIn delay={0.25}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">월별 운세 흐름</p>
-            <p className="text-[10px] text-text-hint mb-3">12개월 점수 추이</p>
+            <p className="text-[11px] text-text-hint mb-3">1월~12월 점수 흐름</p>
             <div className="h-36 -mx-2">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={result.months.map((m: any) => ({ name: `${m.month}월`, 점수: m.score || 5 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -297,8 +310,9 @@ export function TojungPage() {
                       <stop offset="95%" stopColor="#B8965A" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
+                  {/* 2026-10-07 — 점수는 1~100 인데 축이 0~10 이라 선이 위로 잘렸음 */}
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
                   <Area type="monotone" dataKey="점수" stroke="#B8965A" strokeWidth={2}
                     fill="url(#tojungGrad)"
                     dot={{ r: 2.5, fill: '#B8965A', strokeWidth: 0 }} />
@@ -310,8 +324,8 @@ export function TojungPage() {
 
         {/* 12개월 상세 */}
         <FadeIn delay={0.3}>
-          <p className="text-h2 text-text-primary">월별 토정비결</p>
-          <p className="text-caption text-text-muted">각 달을 눌러 전통 괘와 현대어 풀이를 확인하세요</p>
+          <p className="text-h2 text-text-primary">{isLegacyTojung ? '월별 토정비결' : '달마다 미리 보기'}</p>
+          <p className="text-caption text-text-muted">각 달을 눌러 자세한 풀이를 확인하세요</p>
         </FadeIn>
 
         <div className="space-y-3">
@@ -333,7 +347,7 @@ export function TojungPage() {
         {/* 개운 조언 */}
         <FadeIn delay={0.7}>
           <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(184,150,90,0.06)', border: '1px solid rgba(184,150,90,0.15)' }}>
-            <p className="text-h3 text-text-primary mb-2">올해의 개운 조언</p>
+            <p className="text-h3 text-text-primary mb-2">{isLegacyTojung ? '올해의 개운 조언' : `${resultYear}년 개운 조언`}</p>
             <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.luckyAdvice) }} />
           </div>
         </FadeIn>
@@ -344,17 +358,18 @@ export function TojungPage() {
 
         {/* Phase D'-4 Bundle 2 — ExtensionUpsellCard (단일 CTA) */}
         <FadeIn delay={0.78}>
+          {/* 2026-10-07 — 충전 페이지(막다른 길) 대신 종합사주로 */}
           <ExtensionUpsellCard
-            title="한 해의 흐름을 사주 전체에서 풀어드립니다"
-            desc="토정비결 12절이 사주 원국과 어떻게 맞물리는지, 평생의 결까지 한 번에."
-            onTap={() => navigate('/charge?need=10')}
+            title="한 해를 넘어 내 사주 전체가 궁금하다면"
+            desc="종합사주에서 성격·관계·대운까지 처음부터 끝까지 읽어드려요."
+            onTap={() => navigate('/premium')}
           />
         </FadeIn>
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) + 토정 이지함『토정비결』기반
+            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.

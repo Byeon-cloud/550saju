@@ -66,7 +66,7 @@ const CONFIG: Record<FooterCTAPageKey, FooterCTAConfig> = {
   monthly:          { emblem: '月', emblemColor: '#B5441F', overviewLabel: '월운 전체로',     overviewTo: '/' },
   weekly:           { emblem: '週', emblemColor: '#C77D3A', overviewLabel: '주간 전체로',     overviewTo: '/' }, // 2026-06-29 NEW
   compat:           { emblem: '合', emblemColor: '#9C5A8A', overviewLabel: '궁합 전체로',     overviewTo: '/' },
-  tojung:           { emblem: '歲', emblemColor: '#2F4B7C', overviewLabel: '토정비결 전체로', overviewTo: '/' },
+  tojung:           { emblem: '歲', emblemColor: '#2F4B7C', overviewLabel: '신년운세 전체로', overviewTo: '/' },
 };
 
 interface FooterCTAProps {

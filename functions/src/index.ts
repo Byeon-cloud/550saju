@@ -1953,11 +1953,11 @@ export const generateTojung = onCall(
         // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 1);
+          const result = computeBalanceDeduction(doc.data(), 2); // 2026-10-07 신년운세 2운
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, result.updates);
         });
-        deductedAmount = 1;
+        deductedAmount = 2;
       }
     }
 

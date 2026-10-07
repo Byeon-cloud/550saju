@@ -237,3 +237,28 @@ export function todayYongsinLine(todayGanzi: string, sajuData: any): string {
     return `- 오늘 일진 판정 (서버 계산 · 모든 섹션 공통 전제 · 반대 서술 금지): ${todayGanzi} = 천간 ${todayGanzi[0]}(${g}·${r1}) + 지지 ${todayGanzi[1]}(${b}·${r2}) → ${verdict} · ${ys}`;
   } catch { return ''; }
 }
+
+/* ── 간지 1개의 용신 역할 판정 (오늘 일진·세운·월운 공용) ── */
+const GAN_KO: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계' };
+const ZHI_KO: Record<string, string> = { 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
+export function ganziKo(gz: string): string {
+  return gz && gz.length >= 2 ? `${GAN_KO[gz[0]] || ''}${ZHI_KO[gz[1]] || ''}` : '';
+}
+/** '丁未 = 丁(화·중립) + 未(토·기신) → 부담 기운이 강한 해' 형태 (sajuData.myeongriAnalysis 용신·희신·기신 기준) */
+export function ganziRoleText(gz: string, sajuData: any, unit: '해' | '달' | '날' = '달'): string {
+  try {
+    const ma = sajuData?.myeongriAnalysis || {};
+    const y = ma.용신; const h = ma.희신; const k = ma.기신;
+    if (!gz || gz.length < 2) return '';
+    const g = GAN_OH[gz[0]]; const b = BR_OHENG[gz[1]];
+    if (!g || !b) return gz;
+    if (!y) return `${gz}(${g}·${b})`;
+    const role = (o: string) => (o === y ? '용신' : o === h ? '희신' : o === k ? '기신' : '중립');
+    const r1 = role(g); const r2 = role(b);
+    const good = [r1, r2].filter((r) => r === '용신' || r === '희신').length;
+    const bad = [r1, r2].filter((r) => r === '기신').length;
+    const verdict = good === 2 ? `도움 기운이 강한 ${unit}` : good >= 1 && bad >= 1 ? `도움과 부담이 섞인 ${unit}`
+      : good === 1 ? `도움 기운이 들어오는 ${unit}` : bad >= 1 ? `부담 기운이 강한 ${unit}` : `무난한 ${unit}`;
+    return `${gz} = ${gz[0]}(${g}·${r1}) + ${gz[1]}(${b}·${r2}) → ${verdict}`;
+  } catch { return gz; }
+}

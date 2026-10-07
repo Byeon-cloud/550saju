@@ -244,7 +244,7 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   },
   home_body_gunghap: LOCKED_FALLBACK_INTENT,
   home_body_tojeong: LOCKED_FALLBACK_INTENT,
-  home_body_tojung: LOCKED_FALLBACK_INTENT,
+  home_body_tojung: { hint: '신년운세를 볼 사주 정보를 입력해주세요', submitLabel: '저장하고 신년운세 보러 가기', routeAfterSave: () => '/tojung' },
   storage: {
     hint: '새로운 사주를 등록합니다',
     submitLabel: '사주 저장하기',

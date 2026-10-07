@@ -67,7 +67,7 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
               {/* 전통 해석 — 고풍스러운 스타일 */}
               {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 배경 톤만 유지. */}
               <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(184,150,90,0.08)' }}>
-                <p className="text-caption text-text-hint mb-1">전통 풀이</p>
+                <p className="text-caption text-text-hint mb-1">한 줄로</p>
                 <p className="text-body-sm text-text-secondary leading-relaxed" style={{ fontStyle: 'italic' }}>
                   {stripMd(전통해석)}
                 </p>
@@ -75,7 +75,7 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
 
               {/* 현대 해석 */}
               <div>
-                <p className="text-caption text-text-hint mb-1">현대어 풀이</p>
+                <p className="text-caption text-text-hint mb-1">자세한 풀이</p>
                 <p className="text-body-sm text-text-secondary leading-relaxed">{stripMd(현대해석)}</p>
               </div>
             </div>
