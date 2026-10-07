@@ -3802,6 +3802,7 @@ function RelationCompassGrid({
   dayOheng: OhengType;
   userName: string;
 }) {
+  const navigate = useNavigate();
   const e = sajuData.elements as Record<OhengType, number>;
   const counts: Array<[OhengType, number]> = [
     ['목', Number(e?.목 ?? 0)], ['화', Number(e?.화 ?? 0)],
@@ -3810,13 +3811,23 @@ function RelationCompassGrid({
   ];
   // 일간을 생해주는 오행 (인성) — 마음이 놓이는 사람
   const SANGSAENG_REV: Record<OhengType, OhengType> = { 목: '수', 화: '목', 토: '화', 금: '토', 수: '금' };
-  const calmer = SANGSAENG_REV[dayOheng];
+  let calmer = SANGSAENG_REV[dayOheng];
   // 가장 약한 오행 — calmer 와 dayOheng 제외한 오행 중 최약
   const sorted = [...counts].sort((a, b) => a[1] - b[1]);
-  const weakest = (sorted.find(([k]) => k !== calmer && k !== dayOheng) ?? sorted[0])[0];
+  let weakest = (sorted.find(([k]) => k !== calmer && k !== dayOheng) ?? sorted[0])[0];
   // 가장 강한 오행 (일간 + 인성 제외) — 부딪히는 사람
-  const strongest = ([...counts].sort((a, b) => b[1] - a[1])
+  let strongest = ([...counts].sort((a, b) => b[1] - a[1])
     .find(([k]) => k !== calmer && k !== dayOheng && k !== weakest) ?? counts[0])[0];
+  // 2026-10-07 — 용신·희신·기신 SSOT 우선 (오늘의 운세 '만나면 좋은 사람'과 같은 기준).
+  //   개수 기반(최약=힘, 최강=부딪힘)은 결정론 용신 분석과 엇갈려, 두 콘텐츠를 산 고객에게 반대 말을 할 수 있었다.
+  const ma = ((sajuData as any).myeongriAnalysis || {}) as Record<string, string>;
+  const OH: OhengType[] = ['목', '화', '토', '금', '수'];
+  const usesSsot = OH.includes(ma.용신 as OhengType) && OH.includes(ma.희신 as OhengType) && OH.includes(ma.기신 as OhengType);
+  if (usesSsot) {
+    weakest = ma.용신 as OhengType;   // 힘이 되는 사람 = 용신
+    calmer = ma.희신 as OhengType;    // 마음이 놓이는 사람 = 희신
+    strongest = ma.기신 as OhengType; // 부딪히는 사람 = 기신
+  }
   // 천간 매핑
   const GAN_BY_OHENG: Record<OhengType, [string, string]> = {
     목: ['甲', '乙'], 화: ['丙', '丁'], 토: ['戊', '己'], 금: ['庚', '辛'], 수: ['壬', '癸'],
@@ -3844,7 +3855,9 @@ function RelationCompassGrid({
 
   // 카드 3: 마음이 놓이는 — 일간을 생하는 오행 (인성)
   const calmGan = GAN_BY_OHENG[calmer];
-  const calmDesc = `${HAN_BY_OHENG[calmer]}(${KR_BY_OHENG[calmer]}) 일간. ${userName} 님 일간 ${HAN_BY_OHENG[dayOheng]}을 받쳐주는 결로, 결정을 받아주고 기다려주는 사람입니다.`;
+  const calmDesc = calmer === SANGSAENG_REV[dayOheng]
+    ? `${HAN_BY_OHENG[calmer]}(${KR_BY_OHENG[calmer]}) 일간. ${userName} 님 일간 ${HAN_BY_OHENG[dayOheng]}을 받쳐주는 결로, 결정을 받아주고 기다려주는 사람입니다.`
+    : `${HAN_BY_OHENG[calmer]}(${KR_BY_OHENG[calmer]}) 일간. ${userName} 님에게 꼭 필요한 기운을 북돋아 주는 사람이라, 함께 있으면 마음이 놓입니다.`;
 
   const cards = [
     { label: '힘이 되는 사람', glyph: `${boostGan[0]} · ${boostGan[1]}`, desc: boostDesc, color: '#2e7d32', bg: 'rgba(46,125,50,.06)' },
@@ -3868,7 +3881,15 @@ function RelationCompassGrid({
       </div>
       <div style={{ fontSize: 11, color: C.mute, marginBottom: 10, lineHeight: 1.55 }}>
         주변 사람의 <strong style={{ color: C.ink }}>일간 천간(태어난 날의 글자)</strong>을 알면 {userName} 님과 어떤 결인지 한눈에 보입니다.
-        {/* 2026-09-17 B-2 — '궁합 1운으로' 안내 제거: 궁합은 출시 lockdown(/compat → 홈 redirect) + 가격 오표기 */}
+        {/* 2026-10-07 궁합 공개 — 특정 사람과의 관계는 궁합으로 연결 (09-17 lockdown 때 제거했던 안내 복구 · 가격 SSOT 1운) */}
+        {' '}
+        <button
+          type="button"
+          onClick={() => navigate('/compat')}
+          style={{ color: C.goldDeep, fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', padding: 0, fontSize: 11, cursor: 'pointer' }}
+        >
+          특정 사람과는 궁합 보기(1운)
+        </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         {cards.map((c, i) => (

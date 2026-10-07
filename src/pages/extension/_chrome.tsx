@@ -114,10 +114,10 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentDark: '#2F4B7C',
     accentSoft: 'rgba(47,75,124,0.10)',
     hint: '#1A3158',
-    label: '토정비결',
-    heroH1: { line1: '한 해의 결을', line2: '열두 달로 풀어 드립니다' },
-    // 2026-07-01 가격 fix — 토정비결 실제 차감 1운 (TojungPage spendBalance(1)). 기존 '2운' stale.
-    cost: '1운',
+    // 2026-10-07 — 토정비결 → 신년운세 재출시 (TojungPage NEWYEAR_PRICE=2 · 서버 generateTojung 2운)
+    label: '신년운세',
+    heroH1: { line1: '다가올 한 해를', line2: '열두 달로 미리 봅니다' },
+    cost: '2운',
   },
 };
 
