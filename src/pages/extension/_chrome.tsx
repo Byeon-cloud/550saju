@@ -249,7 +249,7 @@ export function ExtensionHero({
             background: 'rgba(255,255,255,0.14)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 10,
+            fontSize: 11,
           }}
         >
           {costLabel ?? theme.cost}
@@ -270,7 +270,7 @@ export function ExtensionHero({
           </span>
         )}
         {rightLabel && (
-          <span style={{ marginLeft: 'auto', fontSize: 10.5, opacity: 0.8 }}>
+          <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8 }}>
             {rightLabel}
           </span>
         )}
@@ -308,7 +308,7 @@ export function ExtensionHero({
             display: 'flex',
             gap: 10,
             marginTop: 10,
-            fontSize: 10.5,
+            fontSize: 11,
             opacity: 0.8,
             flexWrap: 'wrap',
             position: 'relative',
@@ -455,7 +455,7 @@ export function ExtensionUpsellCard({
       </span>
       <div
         style={{
-          fontSize: 10,
+          fontSize: 11,
           color: '#E8D9B8',
           letterSpacing: '0.15em',
           fontWeight: 600,
@@ -660,7 +660,7 @@ export function DaeunBars({
         {hint && (
           <span
             style={{
-              fontSize: 10.5,
+              fontSize: 11,
               color: C.mute,
               fontWeight: 500,
               letterSpacing: 0,
@@ -723,7 +723,7 @@ export function DaeunBars({
               >
                 <span
                   style={{
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: 800,
                     color: numColor,
                   }}
@@ -940,7 +940,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                   color: C.goldDeep,
                   padding: '2px 8px',
                   borderRadius: 100,
-                  fontSize: 10.5,
+                  fontSize: 11,
                   fontWeight: 700,
                 }}
               >
@@ -1008,7 +1008,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                       color: C.inkSoft,
                       padding: '2px 8px',
                       borderRadius: 100,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: 600,
                     }}
                   >
@@ -1062,7 +1062,7 @@ export function MonthHero({
         <div>
           <div
             style={{
-              fontSize: 10,
+              fontSize: 11,
               color: '#B5441F',
               letterSpacing: '0.2em',
               fontWeight: 700,
@@ -1307,7 +1307,7 @@ export function CalGrid({
           {monthLabel ?? '캘린더 · 일별 강도'}
         </div>
         {hint && (
-          <div style={{ fontSize: 10.5, color: C.mute }}>{hint}</div>
+          <div style={{ fontSize: 11, color: C.mute }}>{hint}</div>
         )}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
@@ -1428,7 +1428,7 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: 11,
           color: '#9C5A8A',
           letterSpacing: '0.15em',
           fontWeight: 700,
@@ -1484,7 +1484,7 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
               border: '1px solid rgba(156,90,138,0.20)',
               padding: '3px 7px',
               borderRadius: 6,
-              fontSize: 10,
+              fontSize: 11,
               color: '#7C4570',
             }}
           >
@@ -1551,7 +1551,7 @@ export function CompatTimeline({ steps }: { steps: CompatTimelineStep[] }) {
             />
             <div
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 color: '#9C5A8A',
                 fontWeight: 700,
                 marginBottom: 3,
@@ -1714,7 +1714,7 @@ export function TojungFourBox({ items }: { items: TojungFourItem[] }) {
         >
           <div
             style={{
-              fontSize: 10,
+              fontSize: 11,
               color: '#2F4B7C',
               fontWeight: 700,
               letterSpacing: '0.1em',
@@ -1809,7 +1809,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
               >
                 {m.month}
               </span>
-              <span style={{ fontSize: 10, color: C.mute, fontWeight: 600 }}>
+              <span style={{ fontSize: 11, color: C.mute, fontWeight: 600 }}>
                 월
               </span>
               {m.variant === 'good' && (

@@ -235,6 +235,19 @@ export function getMyProfile(): LocalReport | null {
   if (myId) {
     const report = getReport(myId);
     if (report) return report;
+    // 2026-10-07 — 사주 등록은 05-07 부터 '프로필만' 저장이라 본인 id 가 리포트에 없다 → 프로필에서 찾는다.
+    //   기존엔 여기서 null → 호출부가 '가장 최근 프로필'로 폴백해, 친구·상대 사주를 추가한 유저에게
+    //   홈 인사·오늘의 한 줄·궁합 '나' 칸이 상대방으로 바뀌어 나갔다 (10-07 궁합 공개 QA 에서 발견).
+    try {
+      const prof = getProfiles().find((p) => p.id === myId);
+      if (prof) return prof as unknown as LocalReport;
+    } catch { /* noop */ }
+  }
+  // 본인(relation '본인') 프로필 우선
+  const owner = findExistingOwnerProfile();
+  if (owner) {
+    localStorage.setItem(MY_PROFILE_KEY, owner.id);
+    return owner as unknown as LocalReport;
   }
   // fallback: relation이 '본인'이거나 미지정인 첫 번째 리포트
   const reports = getReports();
