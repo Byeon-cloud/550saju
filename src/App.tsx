@@ -168,14 +168,12 @@ function AnimatedRoutes() {
             {/* 2026-06-29: 월운세·주간운세 NEW 출시. 나머지 3종(대운/궁합/토정)은 lockdown 유지 */}
             <Route path="/monthly" element={<MonthlyPage />} />
             <Route path="/weekly" element={<WeeklyPage />} />
-            {/* 2026-05-07: 출시 후 공개 — 3종 (대운/궁합/토정비결) URL 직접 진입 시 홈으로 redirect (코드 보존) */}
-            <Route path="/compat" element={<Navigate to="/" replace />} />
-            <Route path="/compat/result" element={<Navigate to="/" replace />} />
+            {/* 2026-10-04: 궁합 공개 (고객 시점 시식·수리 후). 대운·토정비결은 lockdown 유지 — URL 직접 진입 시 홈 redirect */}
+            <Route path="/compat" element={<CompatibilityPage />} />
+            <Route path="/compat/result" element={<CompatResultPage />} />
             <Route path="/daeun" element={<Navigate to="/" replace />} />
             <Route path="/tojung" element={<Navigate to="/" replace />} />
             {/* 2026-05-07 출시 후 복구 (월운은 위에서 이미 해제)
-            <Route path="/compat" element={<CompatibilityPage />} />
-            <Route path="/compat/result" element={<CompatResultPage />} />
             <Route path="/daeun" element={<DaeunPage />} />
             <Route path="/tojung" element={<TojungPage />} />
             */}

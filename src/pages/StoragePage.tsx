@@ -87,7 +87,7 @@ const FILTER_TABS: { key: FilterKey; label: string }[] = [
   // 2026-06-29: 월운·주간 NEW 출시. 대운/궁합/토정은 출시 후 공개 (코드 보존)
   { key: 'monthly', label: '월운' },
   { key: 'weekly',  label: '주간' },
-  // { key: 'compat',  label: '궁합' },
+  { key: 'compat',  label: '궁합' },     // 2026-10-04 공개
   // { key: 'daeun',   label: '대운' },
   // { key: 'tojung',  label: '토정비결' },
   { key: 'daily',   label: '오늘운세' },   // daily
@@ -2121,7 +2121,7 @@ function formatHourCode(hour: number): string {
 
 /** 출시 lockdown 콘텐츠 — 라우트는 살아있으나 페이지가 홈으로 redirect 됨 (App.tsx) */
 //  2026-06-29: 월운(monthly) NEW 출시로 lockdown 제외. 주간(weekly)도 공개. 대운/궁합/토정만 유지.
-const LOCKDOWN_CONTENT = new Set(['compat', 'daeun', 'tojung']);
+const LOCKDOWN_CONTENT = new Set(['daeun', 'tojung']); // 2026-10-04 궁합 공개
 
 /** 콘텐츠 유형별 결과 페이지 라우트 (스펙 §3-3 탭 시 결과 이동) */
 function routeForReport(r: LocalReport): string | null {
@@ -2130,6 +2130,7 @@ function routeForReport(r: LocalReport): string | null {
   if (ct === 'daily') return '/daily';
   if (ct === 'monthly') return '/monthly'; // 2026-06-29 NEW — 재선택 시 캐시 복원
   if (ct === 'weekly') return '/weekly';   // 2026-06-29 NEW
+  if (ct === 'compat') return '/compat/result'; // 2026-10-04 공개 — savedResult/savedReport state + ?reportId 로 재열람
   // 2026-05-28 — 출시 lockdown 4종 (compat/daeun/monthly/tojung) 은 페이지가 홈으로 redirect 됨.
   //   보관함에서 클릭 시 무한 redirect 사이클 방지 위해 null 반환. openReport 에서 안내 toast.
   if (LOCKDOWN_CONTENT.has(ct as string)) return null;

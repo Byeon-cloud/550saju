@@ -54,7 +54,7 @@ export function CompatibilityPage() {
     if (!person) {
       return (
         <button
-          onClick={() => profiles.length > 0 ? setShowPicker(slot) : navigate('/input')}
+          onClick={() => profiles.length > 0 ? setShowPicker(slot) : navigate('/input?from=compat')}
           className="flex-1 rounded-2xl border-2 border-dashed border-border py-6 flex flex-col items-center justify-center gap-2"
           style={{ background: 'var(--bg-surface)' }}
         >
@@ -63,7 +63,7 @@ export function CompatibilityPage() {
           </div>
           <p className="text-caption text-text-muted">{slot === 1 ? '본인 선택' : '상대방 선택'}</p>
           {profiles.length === 0 && (
-            <p className="text-[10px] text-text-hint">사주 분석 먼저 필요</p>
+            <p className="text-[11px] text-text-hint">사주 분석 먼저 필요</p>
           )}
         </button>
       );
@@ -83,7 +83,7 @@ export function CompatibilityPage() {
         <p className="text-caption text-text-muted mt-0.5">
           {ilgan}({oheng}) 일간
         </p>
-        <p className="text-[10px] text-text-hint mt-0.5">탭하여 변경</p>
+        <p className="text-[11px] text-text-hint mt-0.5">탭하여 변경</p>
       </button>
     );
   }
@@ -196,12 +196,13 @@ export function CompatibilityPage() {
         <FadeIn delay={0.15}>
           <div className="card space-y-3">
             <p className="text-label text-text-hint">궁합 분석에 포함되는 항목</p>
+            {/* 2026-10-04 — 결과에 실제로 나오는 항목만 안내 (예전 '시기별 변화·상황별 점수'는 결과에 없었음) */}
             {[
-              { title: '오행 조화도', desc: '두 사람의 오행이 서로를 보완하는지 분석해요' },
-              { title: '일간 관계', desc: '생(生)·극(剋)·합(合) 관계로 기본 궁합을 판단해요' },
-              { title: '십성 시너지', desc: '서로에게 어떤 역할인지 (정관, 식신, 재성 등)' },
-              { title: '시기별 궁합 변화', desc: '대운 흐름에 따라 관계가 어떻게 변하는지' },
-              { title: '종합 궁합 점수', desc: '연애, 결혼, 직장 등 상황별 점수로 확인해요' },
+              { title: '두 사람이 맞물리는 자리', desc: '두 사주 글자 사이의 합·충을 찾아 끌림과 부딪힘의 이유를 짚어요' },
+              { title: '5가지 궁합 점수', desc: '성격 · 가치관 · 소통 · 감정 · 미래를 각각 점수로 보여드려요' },
+              { title: '오행 조화', desc: '서로에게 없는 기운을 채워주는 사이인지 살펴봐요' },
+              { title: '강점과 숙제', desc: '잘 맞는 점 3가지, 조심할 점 3가지와 구체적인 조언' },
+              { title: '앞으로 1~3년', desc: '관계가 어떤 방향으로 흘러갈지 짚어드려요' },
             ].map((item) => (
               <div key={item.title} className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 flex-shrink-0" />
@@ -242,14 +243,14 @@ export function CompatibilityPage() {
           궁합 보기 (1운)
         </Button>
         {!canSubmit && (
-          <p className="text-center text-[10px] text-text-hint mt-2">
+          <p className="text-center text-[11px] text-text-hint mt-2">
             {!person1 || !person2 ? '두 사람 모두 선택해주세요' : !relation ? '관계를 선택해주세요' : '같은 사람끼리는 궁합을 볼 수 없어요'}
           </p>
         )}
         {/* 향후 서비스 예고 — 확장 가능 구조 */}
         {/*
         <div className="mt-3 space-y-2">
-          <p className="text-[10px] text-text-disabled text-center">추가 서비스 (준비 중)</p>
+          <p className="text-[11px] text-text-disabled text-center">추가 서비스 (준비 중)</p>
           <button disabled className="w-full card text-left py-3 px-4 opacity-50">
             <p className="text-label text-text-muted">재회운 분석</p>
             <p className="text-caption text-text-hint">이별 후 다시 만날 가능성을 분석해요</p>
@@ -323,7 +324,7 @@ export function CompatibilityPage() {
                               <p className="text-caption font-bold text-text-primary leading-tight">
                                 {p.name}
                               </p>
-                              <p className="text-[10px] text-text-muted leading-tight">
+                              <p className="text-[11px] text-text-muted leading-tight">
                                 {ilgan}({oheng})
                               </p>
                             </div>

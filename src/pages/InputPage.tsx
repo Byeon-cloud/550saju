@@ -273,8 +273,12 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
     // Stage 7e-8: 사주풀이 폐기 — 미정의 fallback 도 사주카드 진입으로 통일
     routeAfterSave: (id) => `/saju-card/${id}`,
   },
-  // 궁합 (레거시 · lockdown) — /compat 은 홈 redirect 라 홈으로 명시 폴백
-  compat: LOCKED_FALLBACK_INTENT,
+  // 궁합 (2026-10-04 공개) — 상대방 사주 저장 후 궁합 화면으로 복귀 (새 프로필이 상대 칸에 자동 선택됨)
+  compat: {
+    hint: '궁합을 볼 상대의 사주 정보를 입력해주세요',
+    submitLabel: '저장하고 궁합 보러 가기',
+    routeAfterSave: () => '/compat',
+  },
 };
 
 // Stage 7e-8: 사주풀이 폐기 — DEFAULT_INTENT 도 사주카드 진입으로 통일

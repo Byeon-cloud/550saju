@@ -334,11 +334,18 @@ export function CompatResultPage() {
 
         {/* Phase D'-4 후속 — ExtensionUpsellCard (단일 CTA) */}
         <FadeIn delay={0.42}>
-          <ExtensionUpsellCard
-            title="두 사주의 궁합과 평생 흐름까지 함께"
-            desc="관계의 방향을 사주 전체에서 풀어드립니다. 시기·인연·동반의 자리까지."
-            onTap={() => navigate('/charge?need=10')}
-          />
+          {/* 2026-10-04 — 기존: 충전 페이지로 보내는 막다른 CTA. 관계에 맞는 다음 콘텐츠로 연결 */}
+          {(() => {
+            const rel = String(state.relation || '');
+            const next = /이별/.test(rel)
+              ? { title: '다시 만날 수 있을까요?', desc: '재회운에서 두 사람의 흐름과 다가갈 시기를 짚어드려요.', to: '/topic/reunion' }
+              : /배우자/.test(rel)
+                ? { title: '부부의 앞으로 흐름이 궁금하다면', desc: '결혼운에서 두 분의 생활·시기 흐름을 더 깊게 봐드려요.', to: '/topic/marriage' }
+                : /연인|썸/.test(rel)
+                  ? { title: '이 관계, 더 깊게 보고 싶다면', desc: '연애운에서 지금 관계의 흐름과 시기를 자세히 풀어드려요.', to: '/topic/love' }
+                  : { title: '내 사주 전체가 궁금하다면', desc: '종합사주에서 성격·관계·시기까지 처음부터 끝까지 읽어드려요.', to: '/premium' };
+            return <ExtensionUpsellCard title={next.title} desc={next.desc} onTap={() => navigate(next.to)} />;
+          })()}
         </FadeIn>
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}

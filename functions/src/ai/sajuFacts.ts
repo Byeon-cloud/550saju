@@ -128,12 +128,19 @@ const HANJA_FIX: Array<[RegExp, string]> = [
   [/相官格/g, '傷官格'], [/相官/g, '傷官'], [/偐財/g, '偏財'], [/偏才/g, '偏財'], [/正才/g, '正財'],
   [/七煞/g, '七殺'],
 ];
+/* 검증 불가 보장 문구 — 프롬프트로 금지해도 경량 모델이 가끔 쓰는 상투구 (10-07 운영 실측: 배포 후 오늘의 운세 2건) */
+const GUARANTEE_FIX: Array<[RegExp, string]> = [
+  [/성공 확률이 (?:크게 |훨씬 |더 |한층 )?(?:높아집니다|높아져요|올라갑니다|올라가요|높습니다|높아요)/g, '한결 수월하게 풀리기 쉬워요'],
+  [/(?:앞으로 |향후 )?3개월간 좋은 결과를 만듭니다/g, '좋은 흐름으로 이어지기 쉬워요'],
+  [/합격률이 (?:두|2) ?배(?:입니다|예요|이에요)?/g, '합격 가능성을 높여주는 경로예요'],
+];
 function fixTime(s: string): string {
   return s.replace(/(오전|오후)\s?(1[3-9]|2[0-3])시/g, (_m, _ap, h) => `오후 ${Number(h) - 12}시`);
 }
 export function sanitizeText(s: string): string {
   let t = s.replace(SOURCE_RE, '');
   for (const [re, to] of HANJA_FIX) t = t.replace(re, to);
+  for (const [re, to] of GUARANTEE_FIX) t = t.replace(re, to);
   t = fixTime(t);
   return t;
 }

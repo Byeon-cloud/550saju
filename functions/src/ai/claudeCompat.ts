@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
 import { kstNow } from '../utils/kstTime';
+import { Solar } from 'lunar-javascript';
+import { sanitizeAiOutput } from './sajuFacts';
 
 /**
  * 두 사주 간 자동 관계 분석 (정통 명리학 산출 결과 주입)
@@ -155,9 +157,8 @@ export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: a
   });
 
   const text = (msg.content[0] as any).text;
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('JSON 파싱 실패');
-  return JSON.parse(jsonMatch[0]);
+  // 2026-10-04 궁합 공개 — 공용 파서(코드블록·잘린 JSON 복구) + 출처·오기 한자·시간 표기 정리
+  return sanitizeAiOutput(parseJsonResponse(text));
 }
 
 function personDetail(label: string, d: any): string {
@@ -177,13 +178,30 @@ function buildPrompt(d1: any, d2: any, rel: string): string {
 
   // 정통 명리학 자동 산출 — AI 자유추론 X, 결정론적 입력
   const crossRelations = computeCrossRelations(d1, d2);
+  // 2026-10-04 — futureOutlook '향후 1~3년' 의 연도 간지를 모델이 계산하지 않게 (주제분석 내년 월건 날조와 같은 위험)
+  const yearsText = [0, 1, 2, 3].map((i) => {
+    const y = now.year + i;
+    try { return `${y}년 ${Solar.fromYmd(y, 6, 1).getLunar().getEightChar().getYear()}`; } catch { return `${y}년`; }
+  }).join(' · ');
+  const relKo = relLabels[rel] || rel || '';
+  const relLens = /이별/.test(relKo) ? '헤어진 사이 — 왜 엇갈렸는지(충·원진 근거)와 다시 만난다면 서로 무엇이 달라져야 하는지. 재회 가능성·시기 단정은 하지 말 것(재회운 영역).'
+    : /썸/.test(relKo) ? '아직 시작 전인 사이 — 서로 끌리는 지점과 관계로 발전할 때 부딪힐 지점, 다가가는 방식.'
+    : /연인/.test(relKo) ? '연인 — 끌림·감정·생활·미래의 궁합.'
+    : /배우자/.test(relKo) ? '부부 — 생활·돈·가족 역할에서의 궁합과 오래 함께하는 법.'
+    : /부모|자녀|형제|자매|가족/.test(relKo) ? '가족 — 연애 궁합 표현(인연·끌림) 금지. 서로의 역할·말이 통하는 방식·서운함이 쌓이는 지점.'
+    : /친구/.test(relKo) ? '친구 — 연애 표현 금지. 함께 있을 때의 편안함·서로 채워주는 점·멀어지기 쉬운 지점.'
+    : /동료|사업/.test(relKo) ? '일로 만난 사이 — 연애 표현 금지. 일하는 방식·역할 분담·의견 충돌 시 푸는 법.'
+    : '연인 — 끌림·감정·생활·미래의 궁합.';
 
   return `당신은 사주500 명리학 해석가. ${MYEONGRI_GROUNDS_BLOCK}
 
 궁합 깊이 있는 분석 — 두 사주 글자에서 추출한 진짜 근거.
 
 ⚠️ 현재 날짜: ${dateStr}
-관계 유형: ${relLabels[rel] || rel || '두 사람'}
+관계 유형: ${relKo || '두 사람'}
+관계 관점 (이 관점으로 5개 카테고리를 쓴다): ${relLens}
+앞으로의 연도 간지 (futureOutlook 에서 연도를 쓸 땐 이 값만 · 직접 계산 금지): ${yearsText}
+🚨 성별 기준 (연인·배우자·썸·이별일 때): 여성에게 연인·남편의 별은 관성(일간을 극하는 오행), 남성에게 연인·아내의 별은 재성(일간이 극하는 오행). 반대 성별 기준 풀이 금지.
 
 ${personDetail('사람 1', d1)}
 
@@ -200,7 +218,8 @@ ${crossRelations}
 - AI 추가 해석은 위 결과 기반 — 임의 추론 금지
 
 ## ⭐ 소름 포인트 (각 카테고리 1개, 총 5개)
-일상 패턴 묘사:
+🚨 아래 예시 문장을 그대로 쓰지 말 것 — 형식만 참고하고, 두 사람의 실제 글자(위 산출 결과)에서 새 장면을 만든다. '항상·언제나' 같은 절대 표현 금지.
+일상 패턴 묘사 (형식 예시):
 - "한 사람이 화나면 말을 안 하고, 다른 사람은 반대로 말이 많아지시죠?"
 - "돈 쓰는 방식이 다를 거예요. 한 쪽은 저축형, 다른 쪽은 경험 투자형"
 - "싸운 후 먼저 연락하는 사람이 항상 같은 쪽일 거예요"
@@ -239,7 +258,7 @@ ${crossRelations}
 
 
 ✨ **우리만의 차별화**:
-- 6대 원전 학술 인용 1회 자연스럽게
+- 고전 근거는 내부 판단용 — 본문에 책 이름·학파·'고서에 따르면' 언급 금지
 - 결정론 (같은 사주 = 같은 결과)
 - 한자 1회 등장 시 즉시 일상어 풀이 동반
 - strong 강조는 유저 일상 결론에만

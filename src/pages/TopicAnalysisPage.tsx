@@ -5198,6 +5198,20 @@ export function TopicAnalysisPage() {
                   · 가격 SSOT(formatPriceLabel) 표기 + 같은 프로필로 이어가도록 state.profileId 전달 */}
               <div className="space-y-2 pt-2">
                 <p className="text-label text-text-hint text-center">다른 운세도 궁금하다면</p>
+                {/* 2026-10-04 궁합 공개 — 연애·재회·결혼 결과에서 '그 사람과의 궁합'으로 바로 연결 */}
+                {['love', 'reunion', 'marriage'].includes(String(normalizeTopicId(topicId))) && (
+                  <button
+                    onClick={() => navigate('/compat')}
+                    className="card w-full py-3 px-3 flex items-center gap-2"
+                    style={{ minHeight: 56 }}
+                  >
+                    <span style={{ width: 20, textAlign: 'center', fontWeight: 900, color: '#9C5A8A', fontFamily: "'Noto Serif KR', serif" }}>合</span>
+                    <span className="flex flex-col items-start text-left" style={{ minWidth: 0 }}>
+                      <span className="text-[14px] font-semibold text-text-primary">그 사람과의 궁합 보기</span>
+                      <span className="text-[11px] text-text-hint">두 사람 사주가 맞물리는 자리 · 1운</span>
+                    </span>
+                  </button>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   {(() => {
                     const cur = normalizeTopicId(topicId);
