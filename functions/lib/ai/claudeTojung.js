@@ -78,10 +78,13 @@ async function generateTojungBigyeol(apiKey, sajuData) {
     const ygz = yearPillar(ty);
     const picks = (0, sajuFacts_1.dayPicksForYear)(ty, sajuData);
     const shared = buildPrompt(sajuData, picks);
+    // 2026-10-08 원가 — 세 그룹이 같은 공유 프롬프트(~1.2만 토큰)를 동시에 보내면 서로 캐시를 못 읽고 셋 다 '캐시 쓰기'(입력가 1.25배)로
+    //   과금됐다(실측 755원/건, cacheRead 0). A 가 먼저 프롬프트를 캐시하도록 B·C 를 5초 늦게 출발 → B·C 는 캐시 읽기(0.1배).
+    const later = (ms, fn) => new Promise((res, rej) => setTimeout(() => fn().then(res, rej), ms));
     const [a, b, c] = await Promise.all([
         callNyGroup(anthropic, shared, 'A', ty),
-        callNyGroup(anthropic, shared, 'B', ty),
-        callNyGroup(anthropic, shared, 'C', ty),
+        later(5000, () => callNyGroup(anthropic, shared, 'B', ty)),
+        later(5000, () => callNyGroup(anthropic, shared, 'C', ty)),
     ]);
     const months = [...(b.months || []), ...(c.months || [])]
         .filter((m) => Number(m?.month) >= 1 && Number(m?.month) <= 12)
