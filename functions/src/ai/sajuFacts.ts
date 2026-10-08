@@ -126,7 +126,7 @@ export const SIJIN_OHENG_LINE =
 const SOURCE_RE = /(?:자평진전|적천수천미|적천수|궁통보감|연해자평|명리약언|삼명통회|명리정종|난강망)파?\s*(?:에서는|에서도|에서|에 따르면|에선|에는|은|는|의 표현으로|의|이)?\s*/g;
 const HANJA_FIX: Array<[RegExp, string]> = [
   [/相官格/g, '傷官格'], [/相官/g, '傷官'], [/偐財/g, '偏財'], [/偏才/g, '偏財'], [/正才/g, '正財'],
-  [/七煞/g, '七殺'],
+  [/七煞/g, '七殺'], [/花蓋/g, '華蓋'],
 ];
 /* 검증 불가 보장 문구 — 프롬프트로 금지해도 경량 모델이 가끔 쓰는 상투구 (10-07 운영 실측: 배포 후 오늘의 운세 2건) */
 const GUARANTEE_FIX: Array<[RegExp, string]> = [
@@ -296,7 +296,7 @@ export function dayPicksForYear(year: number, sajuData: any): {
         const chung = !!dayJi && CHUNG_PAIR[dayJi] === gz[1];
         if (chung) { score -= 2; why.push(`일지 ${dayJi}와 부딪히는 날`); }
         if (go === k || bo === k) why.push(`기신(${k}) 기운이 강한 날`);
-        days.push({ label: `${m}/${d}(${WEEK_KO[s.getWeek()]})`, score, why: why.join(' · '), chung });
+        days.push({ label: `${m}/${d}(${WEEK_KO[s.getWeek()]})`, score, why: [`${gz}(${ganziKo(gz)})일`, ...why].join(' · '), chung });
       }
       const good = days.filter((x) => !x.chung && x.score >= 3).sort((a, b) => b.score - a.score).slice(0, 3);
       const goodFallback = good.length ? good : days.filter((x) => !x.chung && x.score >= 2).sort((a, b) => b.score - a.score).slice(0, 3);
