@@ -828,7 +828,7 @@ export const generateDailyFortuneStream = onRequest(
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v9';
+    const SCHEMA_VERSION = 'v10'; // 10-08 A2·B 서버 반분할(90초 폴백 여유)
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
     const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);
@@ -897,14 +897,30 @@ export const generateDailyFortuneStream = onRequest(
 
       const t0 = Date.now();
 
-      const runGroup = async (groupId: 'A1' | 'A2' | 'B', userPrompt: string, maxTokens: number) => {
-        // 2026-10-08 원가 — B 는 A2 와 같은 Sonnet·같은 시스템 프롬프트 → 4초 늦게 출발해 A2 가 쓴 캐시를 읽는다 (동시 출발 = 둘 다 캐시 쓰기)
-        if (groupId === 'B') await new Promise((r) => setTimeout(r, 4000));
-        const groupModel = GROUP_MODEL[groupId];
+      /* 2026-10-08 — Sonnet 승격 후 A2·B 가 각 ~70s → 앱(09-17 번들 포함)의 90초 SSE 폴백 한계에 근접.
+       *   서버에서 A2 = A2a(본문·사주 톤) + A2b(기둥별·분야별 풀이), B = B1(시간대·할 일) + B2(사람·행운·내일)로 반씩 병렬 생성해
+       *   클라에는 기존과 똑같이 'A1'·'A2'·'B' 3개 group 이벤트로 보낸다 (클라 변경 0 · 본문은 A2a 가 'A2' 로 실시간 스트리밍).
+       *   Sonnet 4호출은 같은 시스템 프롬프트 → A2a 가 먼저 캐시를 쓰고 나머지는 4초 뒤 출발해 캐시 읽기. */
+      type DailySub = 'A1' | 'A2a' | 'A2b' | 'B1' | 'B2';
+      const SUB_MODEL: Record<DailySub, string> = {
+        A1: GROUP_MODEL.A1, A2a: GROUP_MODEL.A2, A2b: GROUP_MODEL.A2, B1: GROUP_MODEL.B, B2: GROUP_MODEL.B,
+      };
+      const SUB_KEYS: Record<Exclude<DailySub, 'A1'>, string[]> = {
+        A2a: ['todayNarrative', 'sajuTone'],
+        A2b: ['pillarMessages', 'ohengDistribution', 'todayOhengEmphasis', 'subScoreReasons'],
+        B1: ['timeSlots', 'hourlyPeak', 'hourlyAvoid', 'doList', 'dontList'],
+        B2: ['meetPeople', 'luckyProfile', 'dailyQuote', 'tomorrow'],
+      };
+      const subOnly = (sub: Exclude<DailySub, 'A1'>) =>
+        `\n\n## ⚡⚡ 이번 호출의 최종 출력 범위 (위 스키마 중 이 키들만): ${SUB_KEYS[sub].join(', ')}\n` +
+        `이 키들만 담은 JSON 객체 하나만 출력. 다른 키는 다른 호출이 쓰므로 출력 금지. 위 '오늘 시간대·오행 관계 확정표'를 그대로 따를 것.`;
+
+      const runSub = async (sub: DailySub, userPrompt: string, maxTokens: number, streamAs: 'A1' | 'A2' | 'B' | null, delayMs = 0) => {
+        if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
+        const groupModel = SUB_MODEL[sub];
         const tg0 = Date.now();
         let accumulated = '';
         let chunkCount = 0;
-
         const stream = anthropic.messages.stream({
           model: groupModel,
           max_tokens: maxTokens,
@@ -917,57 +933,54 @@ export const generateDailyFortuneStream = onRequest(
           }],
           messages: [{ role: 'user', content: userPrompt }],
         });
-
         for await (const event of stream as any) {
           if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
             accumulated += event.delta.text;
             chunkCount++;
-            sendEvent('chunk', {
-              group: groupId,
-              delta: event.delta.text,
-              totalChars: accumulated.length,
-              chunkIdx: chunkCount,
-            });
+            if (streamAs) sendEvent('chunk', { group: streamAs, delta: event.delta.text, totalChars: accumulated.length, chunkIdx: chunkCount });
           }
         }
         // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
         try { logAnthropicUsage('daily', groupModel, await stream.finalMessage(), tg0, 'stream'); } catch { /* best-effort */ }
-
         const elapsedMs = Date.now() - tg0;
-        console.log(`[dailyFortuneStream] Group ${groupId} complete`, {
-          chunks: chunkCount,
-          chars: accumulated.length,
-          elapsedMs,
-        });
-
         let parsed: any = {};
         try {
           parsed = parseJsonResponse(accumulated, { repairUsed: false }) || {};
         } catch (parseErr: any) {
-          console.error(`[dailyFortuneStream] Group ${groupId} parse FAILED:`, parseErr?.message);
+          console.error(`[dailyFortuneStream] ${sub} parse FAILED:`, parseErr?.message);
           parsed = {};
         }
-        const keyCount = parsed && typeof parsed === 'object' ? Object.keys(parsed).length : 0;
-        console.log(`[dailyFortuneStream] Group ${groupId} → ${keyCount} keys: [${Object.keys(parsed || {}).join(', ')}]`);
-
-        // 2026-10-04 — 만나는 사람 글자 = 용신·희신·기신 확정값 (예시 복사 방지) + 출처·오기 한자·'오후 14시' 정리
-        if (groupId === 'B') {
-          parsed = applyDailyMeetGlyphs(parsed, sajuData);
-          // 시간대는 서버 확정값 (본문 A2 와 엇갈림 방지)
-          if (hourWin.peak && parsed?.hourlyPeak) parsed.hourlyPeak.range = hourWin.peak;
-          if (hourWin.avoid && parsed?.hourlyAvoid) parsed.hourlyAvoid.range = hourWin.avoid;
-        }
-        parsed = sanitizeAiOutput(parsed);
-        sendEvent('group', { group: groupId, data: parsed, elapsedMs });
-        return parsed;
+        console.log(`[dailyFortuneStream] ${sub} complete`, { model: groupModel, chars: accumulated.length, elapsedMs, keys: Object.keys(parsed || {}).join(',') });
+        return { parsed: (parsed && typeof parsed === 'object') ? parsed : {}, elapsedMs };
       };
 
-      // 3-way 병렬 실행
-      const [resA1, resA2, resB] = await Promise.all([
-        runGroup('A1', userA1, 1500),
-        runGroup('A2', userA2, 6000),
-        runGroup('B',  userB, 6000),
-      ]);
+      const pA1 = runSub('A1', userA1, 1500, 'A1').then((r) => {
+        const data = sanitizeAiOutput(r.parsed);
+        sendEvent('group', { group: 'A1', data, elapsedMs: r.elapsedMs });
+        return data;
+      });
+      const pA2 = Promise.all([
+        runSub('A2a', userA2 + subOnly('A2a'), 4000, 'A2'),
+        runSub('A2b', userA2 + subOnly('A2b'), 4000, null, 4000),
+      ]).then(([x, y]) => {
+        const data = sanitizeAiOutput({ ...y.parsed, ...x.parsed });
+        sendEvent('group', { group: 'A2', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs + 4000) });
+        return data;
+      });
+      const pB = Promise.all([
+        runSub('B1', userB + subOnly('B1'), 4000, 'B', 4000),
+        runSub('B2', userB + subOnly('B2'), 4000, null, 4000),
+      ]).then(([x, y]) => {
+        let data: any = { ...y.parsed, ...x.parsed };
+        // 2026-10-04 — 만나는 사람 글자 = 용신·희신·기신 확정값 (예시 복사 방지) / 10-08 시간대 서버 확정값
+        data = applyDailyMeetGlyphs(data, sajuData);
+        if (hourWin.peak && data?.hourlyPeak) data.hourlyPeak.range = hourWin.peak;
+        if (hourWin.avoid && data?.hourlyAvoid) data.hourlyAvoid.range = hourWin.avoid;
+        data = sanitizeAiOutput(data);
+        sendEvent('group', { group: 'B', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs) + 4000 });
+        return data;
+      });
+      const [resA1, resA2, resB] = await Promise.all([pA1, pA2, pB]);
 
       const a1: any = (resA1 && typeof resA1 === 'object') ? resA1 : {};
       const a2: any = (resA2 && typeof resA2 === 'object') ? resA2 : {};
