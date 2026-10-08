@@ -197,7 +197,7 @@ export function dailyMeetPromptBlock(sajuData: any): string {
 ${row('boost', 'boost(끌어주는 사람) = 용신')}
 ${row('calm', 'calm(편안한 사람) = 희신')}
 ${row('clash', 'clash(부딪힐 수 있는 사람) = 기신')}
-- desc 는 위 '생활 단서'로 시작 (분위기·말투·행동). '임수 기운을 가진 사람' 처럼 독자가 알아볼 수 없는 표현 금지.
+- desc 는 위 '생활 단서'의 뜻을 살려 오늘 상황에 맞게 새로 쓴다 (단서 문장 그대로 복사 금지 — 같은 용신끼리 같은 문장이 나옴). '임수 기운을 가진 사람' 처럼 독자가 알아볼 수 없는 표현 금지.
 `;
 }
 /** 결과의 meetPeople glyphs·ohengHint 를 확정값으로 덮어씀 (모델이 예시를 베껴도 안전) */
