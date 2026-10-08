@@ -1283,6 +1283,8 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${todayYongsinLine(data.todayGanzi, data.sajuData)}
+${todayRelationsText(data.todayGanzi, data.sajuData)}
+${todayHourWindows(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1598,6 +1600,8 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${todayYongsinLine(data.todayGanzi, data.sajuData)}
+${todayRelationsText(data.todayGanzi, data.sajuData)}
+${todayHourWindows(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.baseScores100 ? `
 ## ⚠ 점수 SSOT (필수 준수)
@@ -1665,6 +1669,8 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${todayYongsinLine(data.todayGanzi, data.sajuData)}
+${todayRelationsText(data.todayGanzi, data.sajuData)}
+${todayHourWindows(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1756,6 +1762,8 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${todayYongsinLine(data.todayGanzi, data.sajuData)}
+${todayRelationsText(data.todayGanzi, data.sajuData)}
+${todayHourWindows(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1870,6 +1878,8 @@ ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${todayYongsinLine(data.todayGanzi, data.sajuData)}
+${todayRelationsText(data.todayGanzi, data.sajuData)}
+${todayHourWindows(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -2206,7 +2216,7 @@ ${context.kind === 'topic' ? `
  * 실패 시 throw — 호출부에서 재시도 여부 결정.
  */
 import { jsonrepair } from 'jsonrepair';
-import { dailyMeetGlyphJson, dailyMeetPromptBlock, todayYongsinLine } from './sajuFacts';
+import { dailyMeetGlyphJson, dailyMeetPromptBlock, todayYongsinLine, todayRelationsText, todayHourWindows } from './sajuFacts';
 
 /** parseJsonResponse 호출부에서 "jsonrepair 가 발동했는가" 관측용 플래그. */
 export interface ParseJsonMeta {

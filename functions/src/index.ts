@@ -827,7 +827,8 @@ export const generateDailyFortuneStream = onRequest(
 
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
-    const SCHEMA_VERSION = 'v8'; // 2026-10-04 v8 — 오늘 일진 판정 공통 전제 추가
+    // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
+    const SCHEMA_VERSION = 'v9';
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
     const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);
@@ -872,7 +873,12 @@ export const generateDailyFortuneStream = onRequest(
         DAILY_FORTUNE_USER_V3_GROUP_B,
         parseJsonResponse,
       } = await import('./ai/promptsV3');
-      const { applyDailyMeetGlyphs, sanitizeAiOutput } = await import('./ai/sajuFacts');
+      const { applyDailyMeetGlyphs, sanitizeAiOutput, todayHourWindows } = await import('./ai/sajuFacts');
+      const hourWin = todayHourWindows(String(date || ''), sajuData);
+      /* 2026-10-08 — 그룹별 모델: A1(헤더·점수 · 첫 화면 ~5초)은 Haiku 유지, 해석 본문 A2·시간대/사람/행운 B 는 Sonnet.
+       *   A/B 시식(같은 사주·같은 날): Haiku 는 명리 용어 주어·병렬 그룹 간 시간대 모순·처방형 미신·성별 설명 문장이 남고,
+       *   Sonnet 은 일상어 장면·일관성이 뚜렷이 우수. 원가 ~190→~320원/건 (공유 캐시라 같은 사주·같은 날은 1회만). */
+      const GROUP_MODEL: Record<'A1' | 'A2' | 'B', string> = { A1: 'claude-haiku-4-5', A2: 'claude-sonnet-4-6', B: 'claude-sonnet-4-6' };
       const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
       const system = DAILY_FORTUNE_SYSTEM_V3;
 
@@ -892,18 +898,22 @@ export const generateDailyFortuneStream = onRequest(
       const t0 = Date.now();
 
       const runGroup = async (groupId: 'A1' | 'A2' | 'B', userPrompt: string, maxTokens: number) => {
+        // 2026-10-08 원가 — B 는 A2 와 같은 Sonnet·같은 시스템 프롬프트 → 4초 늦게 출발해 A2 가 쓴 캐시를 읽는다 (동시 출발 = 둘 다 캐시 쓰기)
+        if (groupId === 'B') await new Promise((r) => setTimeout(r, 4000));
+        const groupModel = GROUP_MODEL[groupId];
         const tg0 = Date.now();
         let accumulated = '';
         let chunkCount = 0;
 
         const stream = anthropic.messages.stream({
-          model: 'claude-haiku-4-5', // Haiku 4.5 — 그룹별 병렬
+          model: groupModel,
           max_tokens: maxTokens,
           temperature: 0.4,
           system: [{
             type: 'text',
             text: system,
-            cache_control: { type: 'ephemeral', ttl: '1h' } as any,
+            // 2026-10-08 — 1h TTL(쓰기 2배)은 하루 수 건 트래픽에선 재사용이 거의 없어 손해 → 기본 5분(쓰기 1.25배)
+            cache_control: { type: 'ephemeral' },
           }],
           messages: [{ role: 'user', content: userPrompt }],
         });
@@ -921,7 +931,7 @@ export const generateDailyFortuneStream = onRequest(
           }
         }
         // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
-        try { logAnthropicUsage('daily', 'claude-haiku-4-5', await stream.finalMessage(), tg0, 'stream'); } catch { /* best-effort */ }
+        try { logAnthropicUsage('daily', groupModel, await stream.finalMessage(), tg0, 'stream'); } catch { /* best-effort */ }
 
         const elapsedMs = Date.now() - tg0;
         console.log(`[dailyFortuneStream] Group ${groupId} complete`, {
@@ -941,7 +951,12 @@ export const generateDailyFortuneStream = onRequest(
         console.log(`[dailyFortuneStream] Group ${groupId} → ${keyCount} keys: [${Object.keys(parsed || {}).join(', ')}]`);
 
         // 2026-10-04 — 만나는 사람 글자 = 용신·희신·기신 확정값 (예시 복사 방지) + 출처·오기 한자·'오후 14시' 정리
-        if (groupId === 'B') parsed = applyDailyMeetGlyphs(parsed, sajuData);
+        if (groupId === 'B') {
+          parsed = applyDailyMeetGlyphs(parsed, sajuData);
+          // 시간대는 서버 확정값 (본문 A2 와 엇갈림 방지)
+          if (hourWin.peak && parsed?.hourlyPeak) parsed.hourlyPeak.range = hourWin.peak;
+          if (hourWin.avoid && parsed?.hourlyAvoid) parsed.hourlyAvoid.range = hourWin.avoid;
+        }
         parsed = sanitizeAiOutput(parsed);
         sendEvent('group', { group: groupId, data: parsed, elapsedMs });
         return parsed;
@@ -950,8 +965,8 @@ export const generateDailyFortuneStream = onRequest(
       // 3-way 병렬 실행
       const [resA1, resA2, resB] = await Promise.all([
         runGroup('A1', userA1, 1500),
-        runGroup('A2', userA2, 5000),
-        runGroup('B',  userB, 5000),
+        runGroup('A2', userA2, 6000),
+        runGroup('B',  userB, 6000),
       ]);
 
       const a1: any = (resA1 && typeof resA1 === 'object') ? resA1 : {};
@@ -1015,14 +1030,14 @@ export const generateDailyFortuneStream = onRequest(
         totalElapsedMs: Date.now() - t0,
         sajuKey,
         finalKeys: Object.keys(merged).length,
-        model: 'claude-haiku-4-5 + sonnet-fallback',
+        model: 'A1 haiku · A2/B sonnet (+ sonnet-fallback)',
       });
 
       // ── L1 · Shared Cache 저장 (uid 무관) ──
       try {
         await sharedCacheRef.set({
           content: merged,
-          aiModel: 'claude-haiku-4-5',
+          aiModel: 'haiku-a1+sonnet-a2b',
           schemaVersion: SCHEMA_VERSION,
           sajuKey,
           date,
@@ -1046,7 +1061,7 @@ export const generateDailyFortuneStream = onRequest(
           const userCacheRef = db.doc(`users/${uid}/dailyFortune/${date}_${SCHEMA_VERSION}`);
           await userCacheRef.set({
             content: merged,
-            aiModel: 'claude-haiku-4-5',
+            aiModel: 'haiku-a1+sonnet-a2b',
             schemaVersion: SCHEMA_VERSION,
             sharedKey: sharedCacheKey,
             generatedAt: admin.firestore.FieldValue.serverTimestamp(),

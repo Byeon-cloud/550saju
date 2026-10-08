@@ -1225,6 +1225,8 @@ ${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${(0, sajuFacts_1.todayYongsinLine)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayRelationsText)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayHourWindows)(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1531,6 +1533,8 @@ ${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${(0, sajuFacts_1.todayYongsinLine)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayRelationsText)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayHourWindows)(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.baseScores100 ? `
 ## ⚠ 점수 SSOT (필수 준수)
@@ -1588,6 +1592,8 @@ ${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${(0, sajuFacts_1.todayYongsinLine)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayRelationsText)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayHourWindows)(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1668,6 +1674,8 @@ ${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${(0, sajuFacts_1.todayYongsinLine)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayRelationsText)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayHourWindows)(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}
@@ -1771,6 +1779,8 @@ ${data.sajuData?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT · 결정론 산�
 - 날짜: ${data.date} (${data.weekday})
 - 오늘 간지: ${data.todayGanzi}
 ${(0, sajuFacts_1.todayYongsinLine)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayRelationsText)(data.todayGanzi, data.sajuData)}
+${(0, sajuFacts_1.todayHourWindows)(data.date, data.sajuData).text}
 ${data.jeolgi ? `- 오늘 절기: ${data.jeolgi}` : ''}
 ${data.dayJiShen ? `- 오늘 길신: ${data.dayJiShen.join(', ')}` : ''}
 ${data.dayXiongSha ? `- 오늘 흉살: ${data.dayXiongSha.join(', ')}` : ''}

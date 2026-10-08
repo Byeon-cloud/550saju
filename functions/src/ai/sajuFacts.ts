@@ -135,7 +135,10 @@ const GUARANTEE_FIX: Array<[RegExp, string]> = [
   [/합격률이 (?:두|2) ?배(?:입니다|예요|이에요)?/g, '합격 가능성을 높여주는 경로예요'],
 ];
 function fixTime(s: string): string {
-  return s.replace(/(오전|오후)\s?(1[3-9]|2[0-3])시/g, (_m, _ap, h) => `오후 ${Number(h) - 12}시`);
+  return s
+    // '오후 14~17시' → '오후 2~5시' (2026-10-08 실측 잔존)
+    .replace(/(오전|오후)\s?(1[3-9]|2[0-3])\s?~\s?(1[3-9]|2[0-4])시/g, (_m, _ap, a, b) => `오후 ${Number(a) - 12}~${Number(b) - 12}시`)
+    .replace(/(오전|오후)\s?(1[3-9]|2[0-3])시/g, (_m, _ap, h) => `오후 ${Number(h) - 12}시`);
 }
 export function sanitizeText(s: string): string {
   let t = s.replace(SOURCE_RE, '');
@@ -339,4 +342,76 @@ export function monthBaseScore(gz: string, sajuData: any): number {
     if (s % 5 === 0) s += 1;
     return s;
   } catch { return 66; }
+}
+
+/* ── 오늘의 운세 공통 사실 (2026-10-08) — 병렬 그룹·모델 무관하게 같은 근거 ──
+ *   A/B 시식: Haiku·Sonnet 모두 오행 생극을 가끔 거꾸로 씀('목이 금을 누른다' 등), 병렬 그룹끼리
+ *   '오전에 결정' ↔ '오후 14~17시 회의는 반드시'처럼 시간대가 엇갈림 → 관계·시간대를 서버가 확정. */
+const REL = (a: string, b: string): string => {
+  if (!a || !b) return '';
+  if (a === b) return `${a}·${b} 같은 기운`;
+  if (GEN[a] === b) return `${a}이(가) ${b}을(를) 생함(${a}생${b})`;
+  if (GEN[b] === a) return `${b}이(가) ${a}을(를) 생함(${b}생${a})`;
+  if (CTRL[a] === b) return `${a}이(가) ${b}을(를) 극함(${a}극${b})`;
+  if (CTRL[b] === a) return `${b}이(가) ${a}을(를) 극함(${b}극${a})`;
+  return '';
+};
+const JI_HAP6: Record<string, string> = { 子: '丑', 丑: '子', 寅: '亥', 亥: '寅', 卯: '戌', 戌: '卯', 辰: '酉', 酉: '辰', 巳: '申', 申: '巳', 午: '未', 未: '午' };
+export function todayRelationsText(todayGanzi: string, sajuData: any): string {
+  try {
+    if (!todayGanzi || todayGanzi.length < 2) return '';
+    const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
+    const dayJi = String(sajuData?.pillars?.[2]?.지지 || '');
+    const me = GAN_OH[dayGan];
+    const tg = GAN_OH[todayGanzi[0]]; const tb = BR_OHENG[todayGanzi[1]];
+    const y = sajuData?.myeongriAnalysis?.용신;
+    const female = (sajuData?.input?.gender || '') !== 'male';
+    // 연인의 별: 여성=관성(일간을 극하는 오행), 남성=재성(일간이 극하는 오행)
+    const partner = me ? (female ? Object.keys(CTRL).find((k) => CTRL[k] === me) : CTRL[me]) : undefined;
+    const lines: string[] = [];
+    if (me) lines.push(`- 오늘 기운 ↔ 일간 ${dayGan}(${me}): 천간 ${todayGanzi[0]}(${tg}) — ${REL(tg, me)} / 지지 ${todayGanzi[1]}(${tb}) — ${REL(tb, me)}`);
+    if (y) lines.push(`- 오늘 기운 ↔ 용신(${y}): 천간 — ${REL(tg, y)} / 지지 — ${REL(tb, y)}`);
+    if (partner) lines.push(`- 연인의 별(${female ? '여성: 관성' : '남성: 재성'} = ${partner}) ↔ 오늘 기운: 천간 — ${REL(tg, partner)} / 지지 — ${REL(tb, partner)}`);
+    if (dayJi) {
+      const r = CHUNG_PAIR[dayJi] === todayGanzi[1] ? `${dayJi}${todayGanzi[1]}충 (부딪힘)` : JI_HAP6[dayJi] === todayGanzi[1] ? `${dayJi}${todayGanzi[1]}합 (가까워짐)` : dayJi === todayGanzi[1] ? '같은 글자 (겹침)' : '합·충 없음';
+      lines.push(`- 일지 ${dayJi} ↔ 오늘 지지 ${todayGanzi[1]}: ${r}`);
+    }
+    return `### 오늘 오행 관계 확정표 (서버 계산 · 생극 방향을 이 표와 반대로 쓰지 말 것)\n${lines.join('\n')}`;
+  } catch { return ''; }
+}
+
+/** 오늘의 좋은 시간대·조심할 시간대 (한국 진태양시 :30 경계 시진 × 용신·희신·기신·일지충) */
+export function todayHourWindows(date: string, sajuData: any): { peak: string; avoid: string; text: string } {
+  try {
+    const [y, m, d] = date.split('-').map(Number);
+    const ma = sajuData?.myeongriAnalysis || {};
+    const yy = ma.용신; const h = ma.희신; const k = ma.기신;
+    if (!yy || !y) return { peak: '', avoid: '', text: '' };
+    const dayJi = String(sajuData?.pillars?.[2]?.지지 || '');
+    const role = (o: string) => (o === yy ? 2 : o === h ? 1 : o === k ? -2 : 0);
+    // 낮 시간대 시진 (07:30~23:30) — 각 시진 가운데 시각으로 시주 산출
+    const SLOTS: Array<{ start: string; end: string; mid: number }> = [
+      { start: '07:30', end: '09:30', mid: 8 }, { start: '09:30', end: '11:30', mid: 10 }, { start: '11:30', end: '13:30', mid: 12 },
+      { start: '13:30', end: '15:30', mid: 14 }, { start: '15:30', end: '17:30', mid: 16 }, { start: '17:30', end: '19:30', mid: 18 },
+      { start: '19:30', end: '21:30', mid: 20 }, { start: '21:30', end: '23:30', mid: 22 },
+    ];
+    const scored = SLOTS.map((s) => {
+      const gz = Solar.fromYmdHms(y, m, d, s.mid, 0, 0).getLunar().getTimeInGanZhi();
+      let sc = role(GAN_OH[gz[0]]) + role(BR_OHENG[gz[1]]);
+      if (dayJi && CHUNG_PAIR[dayJi] === gz[1]) sc -= 2;
+      return { ...s, gz, sc };
+    });
+    // 최고 구간: 인접 2시진 합이 최대인 곳 (같으면 이른 시간)
+    let best = 0, bestI = 0;
+    for (let i = 0; i < scored.length - 1; i++) { const v = scored[i].sc + scored[i + 1].sc; if (i === 0 || v > best) { best = v; bestI = i; } }
+    const pk = [scored[bestI], scored[bestI + 1]];
+    const worst = [...scored].sort((a, b) => a.sc - b.sc)[0];
+    const peak = `${pk[0].start}~${pk[1].end}`;
+    const avoid = `${worst.start}~${worst.end}`;
+    const text = `### 오늘 시간대 확정 (서버 계산 · 모든 섹션 공통 — timeSlots·hourlyPeak·hourlyAvoid·doList·본문이 이 값과 엇갈리면 안 됨)
+- 가장 좋은 시간: ${peak} (${pk.map((x) => `${x.gz[1]}시 ${x.gz}`).join(' · ')})
+- 조심할 시간: ${avoid} (${worst.gz[1]}시 ${worst.gz})
+- 시진별 점수: ${scored.map((x) => `${x.start} ${x.gz}:${x.sc}`).join(' · ')}`;
+    return { peak, avoid, text };
+  } catch { return { peak: '', avoid: '', text: '' }; }
 }
