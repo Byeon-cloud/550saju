@@ -262,3 +262,81 @@ export function ganziRoleText(gz: string, sajuData: any, unit: '해' | '달' | '
     return `${gz} = ${gz[0]}(${g}·${r1}) + ${gz[1]}(${b}·${r2}) → ${verdict}`;
   } catch { return gz; }
 }
+
+/* ── 날짜 단위 판정 (신년운세 '좋은 날·조심할 날' · 2026-10-08) ── */
+const CHUNG_PAIR: Record<string, string> = { 子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳' };
+const WEEK_KO = ['일', '월', '화', '수', '목', '금', '토'];
+/** 그 해 각 달의 좋은 날(최대 3)·조심할 날(최대 2) + 한 해 꼭 기억할 날(최대 6) — 일진 × 용신·희신·기신·천을귀인·일지충 */
+export function dayPicksForYear(year: number, sajuData: any): {
+  perMonth: Record<number, { good: string[]; caution: string[] }>;
+  keyDates: Array<{ date: string; why: string }>;
+} {
+  const out: Record<number, { good: string[]; caution: string[] }> = {};
+  const all: Array<{ m: number; label: string; score: number; why: string }> = [];
+  try {
+    const ma = sajuData?.myeongriAnalysis || {};
+    const y = ma.용신; const h = ma.희신; const k = ma.기신;
+    const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
+    const dayJi = String(sajuData?.pillars?.[2]?.지지 || '');
+    const cheoneul = CHEONEUL[dayGan] || [];
+    const role = (o: string) => (o === y ? 2 : o === h ? 1 : o === k ? -2 : 0);
+    const roleName = (o: string) => (o === y ? `용신(${o})` : o === h ? `희신(${o})` : '');
+    for (let m = 1; m <= 12; m++) {
+      const days: Array<{ label: string; score: number; why: string; chung: boolean }> = [];
+      const last = new Date(year, m, 0).getDate();
+      for (let d = 1; d <= last; d++) {
+        const s = Solar.fromYmd(year, m, d);
+        const gz = s.getLunar().getDayInGanZhi();
+        const go = GAN_OH[gz[0]]; const bo = BR_OHENG[gz[1]];
+        let score = role(go) + role(bo);
+        const why: string[] = [];
+        const helpers = Array.from(new Set([roleName(go), roleName(bo)].filter(Boolean)));
+        if (helpers.length) why.push(`${helpers.join('·')} 기운이 들어오는 날`);
+        if (cheoneul.includes(gz[1])) { score += 1; why.push('천을귀인 날'); }
+        const chung = !!dayJi && CHUNG_PAIR[dayJi] === gz[1];
+        if (chung) { score -= 2; why.push(`일지 ${dayJi}와 부딪히는 날`); }
+        if (go === k || bo === k) why.push(`기신(${k}) 기운이 강한 날`);
+        days.push({ label: `${m}/${d}(${WEEK_KO[s.getWeek()]})`, score, why: why.join(' · '), chung });
+      }
+      const good = days.filter((x) => !x.chung && x.score >= 3).sort((a, b) => b.score - a.score).slice(0, 3);
+      const goodFallback = good.length ? good : days.filter((x) => !x.chung && x.score >= 2).sort((a, b) => b.score - a.score).slice(0, 3);
+      const caution = days.filter((x) => x.score <= -3 || (x.chung && x.score <= -1)).sort((a, b) => a.score - b.score).slice(0, 2);
+      const byDate = (a: { label: string }, b: { label: string }) => Number(a.label.split('/')[1].split('(')[0]) - Number(b.label.split('/')[1].split('(')[0]);
+      out[m] = { good: [...goodFallback].sort(byDate).map((x) => x.label), caution: [...caution].sort(byDate).map((x) => x.label) };
+      goodFallback.forEach((x) => all.push({ m, label: x.label, score: x.score, why: x.why }));
+    }
+  } catch { /* noop */ }
+  // 한 해 꼭 기억할 날 — 점수 최상위, 달마다 1개까지, 최대 6
+  const keyDates: Array<{ date: string; why: string }> = [];
+  const usedMonth = new Set<number>();
+  for (const x of all.sort((a, b) => b.score - a.score)) {
+    if (keyDates.length >= 6) break;
+    if (x.score < 3 || usedMonth.has(x.m)) continue;
+    usedMonth.add(x.m);
+    keyDates.push({ date: x.label, why: x.why });
+  }
+  keyDates.sort((a, b) => {
+    const [am, ad] = a.date.split('(')[0].split('/').map(Number); const [bm, bd] = b.date.split('(')[0].split('/').map(Number);
+    return am - bm || ad - bd;
+  });
+  return { perMonth: out, keyDates };
+}
+
+/** 달 기준 점수 (월주 × 용신·희신·기신 · 일지충·천을귀인) — 병렬 그룹 간 점수 일관성 앵커 */
+export function monthBaseScore(gz: string, sajuData: any): number {
+  try {
+    const ma = sajuData?.myeongriAnalysis || {};
+    const y = ma.용신; const h = ma.희신; const k = ma.기신;
+    const role = (o: string) => (o === y ? 2 : o === h ? 1 : o === k ? -2 : 0);
+    const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
+    const dayJi = String(sajuData?.pillars?.[2]?.지지 || '');
+    const sum = role(GAN_OH[gz[0]]) + role(BR_OHENG[gz[1]]);
+    const table: Record<number, number> = { 4: 88, 3: 84, 2: 78, 1: 72, 0: 66, '-1': 61, '-2': 56, '-3': 51, '-4': 47 } as any;
+    let s = table[Math.max(-4, Math.min(4, sum))] ?? 66;
+    if (dayJi && CHUNG_PAIR[dayJi] === gz[1]) s -= 4;
+    if ((CHEONEUL[dayGan] || []).includes(gz[1])) s += 2;
+    s = Math.max(30, Math.min(95, s));
+    if (s % 5 === 0) s += 1;
+    return s;
+  } catch { return 66; }
+}

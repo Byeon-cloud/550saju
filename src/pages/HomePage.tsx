@@ -451,7 +451,7 @@ export function HomePage() {
       <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
         {[
           { id: 'compat', kanji: '合', h: '궁합 보기', sub: '연인·썸·헤어진 사람·가족, 두 사람 사주', strip: EXT_COLORS.compat, path: '/compat', price: 1 },
-          { id: 'newyear', kanji: '歲', h: `${NEW_YEAR_TARGET} 신년운세`, sub: '내 사주로 미리 보는 열두 달', strip: EXT_COLORS.tojung, path: '/tojung', price: 2 },
+          { id: 'newyear', kanji: '歲', h: `${NEW_YEAR_TARGET} 신년운세`, sub: '열두 달 풀이 + 달마다 좋은 날', strip: EXT_COLORS.tojung, path: '/tojung', price: 7 },
         ].map((c) => (
           <motion.button
             key={c.id}

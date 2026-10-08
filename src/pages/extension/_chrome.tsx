@@ -114,10 +114,10 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentDark: '#2F4B7C',
     accentSoft: 'rgba(47,75,124,0.10)',
     hint: '#1A3158',
-    // 2026-10-07 — 토정비결 → 신년운세 재출시 (TojungPage NEWYEAR_PRICE=2 · 서버 generateTojung 2운)
+    // 2026-10-08 — 신년운세 7운 프리미엄 (TojungPage NEWYEAR_PRICE=7 · 서버 generateTojung 7운)
     label: '신년운세',
-    heroH1: { line1: '다가올 한 해를', line2: '열두 달로 미리 봅니다' },
-    cost: '2운',
+    heroH1: { line1: '다가올 한 해를', line2: '날짜까지 미리 봅니다' },
+    cost: '7운',
   },
 };
 

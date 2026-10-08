@@ -2,7 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
 import { kstNow } from '../utils/kstTime';
 import { Solar } from 'lunar-javascript';
-import { ganziRoleText, ganziKo, gwiinFactsText, sanitizeAiOutput } from './sajuFacts';
+import { ganziRoleText, ganziKo, gwiinFactsText, sanitizeAiOutput, dayPicksForYear, monthBaseScore } from './sajuFacts';
+import { logAnthropicUsage } from '../shared/aiUsageLog';
 
 /* 2026-10-07 — '토정비결' → '신년운세' 재출시.
  *   기존: '2026 병오년' 하드코딩(10월 구매자에게 끝나가는 해) + 월 간지를 모델이 계산 + '주역 64괘 중 하나'를
@@ -20,43 +21,140 @@ function yearPillar(y: number): string {
   try { return Solar.fromYmd(y, 6, 1).getLunar().getEightChar().getYear(); } catch { return ''; }
 }
 
+/* 2026-10-08 — 신년운세 7운 프리미엄화 (오너: "7운 · 퀄리티 좋게").
+ *   Sonnet 단일 → Opus 3그룹 병렬 (종합사주와 같은 모델·패턴):
+ *     A = 한 해 총평(헤드라인·4박스·6분야 심층·결정 타이밍·개운) · B = 1~6월 · C = 7~12월
+ *   달마다 '좋은 날·조심할 날'(일진 × 용신·희신·기신·천을귀인·일지충)과 달 기준 점수는 서버 확정값 →
+ *   그룹 간 점수·판정이 엇갈리지 않고, 날짜는 만세력 그대로. */
+const NEWYEAR_MODEL = process.env.SAJU_PREMIUM_MODEL || 'claude-opus-4-6';
+type NyGroup = 'A' | 'B' | 'C';
+
+async function callNyGroup(anthropic: Anthropic, shared: string, group: NyGroup, ty: number): Promise<any> {
+  const user = nyGroupInstruction(group, ty);
+  const MAX: Record<NyGroup, number> = { A: 9000, B: 9000, C: 9000 };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const t0 = Date.now();
+    const msg = await anthropic.messages.create({
+      model: NEWYEAR_MODEL,
+      max_tokens: MAX[group],
+      temperature: attempt === 0 ? 0.2 : 0.1,
+      system: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: user }],
+    });
+    try { logAnthropicUsage('tojung', NEWYEAR_MODEL, msg, t0); } catch { /* best-effort */ }
+    try {
+      const parsed: any = parseJsonResponse((msg.content[0] as any).text || '');
+      if (group === 'A' && parsed?.yearOverview && parsed?.headline) return parsed;
+      if (group !== 'A' && Array.isArray(parsed?.months) && parsed.months.length >= 5) return parsed;
+      console.warn(`[newyear] group ${group} 필드 부족 (attempt ${attempt + 1})`);
+    } catch (e: any) {
+      console.warn(`[newyear] group ${group} 파싱 실패 (attempt ${attempt + 1}):`, e?.message);
+    }
+  }
+  throw new Error(`신년운세 ${group} 그룹 생성 실패`);
+}
+
 export async function generateTojungBigyeol(apiKey: string, sajuData: any): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
-  const prompt = buildPrompt(sajuData);
-
-  const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 12000, // 2026-09-16 — 8192 는 잘림 위험 구간(대운이 동일 값에서 파손). 천장만 상향(내용 불변).
-    temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  const text = (msg.content[0] as any).text;
-  const parsed: any = parseJsonResponse(text) || {};
   const ty = tojungTargetYear();
   const ygz = yearPillar(ty);
-  // 달 간지·역할은 서버 확정값으로 덮어씀 (모델이 바꿔 써도 화면은 실제 만세력)
-  if (Array.isArray(parsed.months)) {
-    parsed.months.forEach((m: any) => {
-      const mm = Number(m?.month);
-      if (mm >= 1 && mm <= 12) {
-        const gz = monthPillar(ty, mm);
-        if (gz) { m.괘 = `${gz}(${ganziKo(gz)})월`; m.괘의미 = ganziRoleText(gz, sajuData, '달'); }
-      }
-    });
-  }
-  parsed.targetYear = ty;
-  parsed.hexagram = {
+  const picks = dayPicksForYear(ty, sajuData);
+  const shared = buildPrompt(sajuData, picks);
+
+  const [a, b, c] = await Promise.all([
+    callNyGroup(anthropic, shared, 'A', ty),
+    callNyGroup(anthropic, shared, 'B', ty),
+    callNyGroup(anthropic, shared, 'C', ty),
+  ]);
+
+  const months: any[] = [...(b.months || []), ...(c.months || [])]
+    .filter((m: any) => Number(m?.month) >= 1 && Number(m?.month) <= 12)
+    .sort((x: any, y: any) => Number(x.month) - Number(y.month));
+  // 달 간지·역할·날짜·점수 앵커는 서버 확정값 (모델이 바꿔 써도 화면은 만세력 그대로)
+  months.forEach((m: any) => {
+    const mm = Number(m.month);
+    const gz = monthPillar(ty, mm);
+    if (gz) {
+      m.괘 = `${gz}(${ganziKo(gz)})월`;
+      m.괘의미 = ganziRoleText(gz, sajuData, '달');
+      const base = monthBaseScore(gz, sajuData);
+      const sc = Number(m.score);
+      m.score = Number.isFinite(sc) ? Math.max(base - 6, Math.min(base + 6, Math.round(sc))) : base;
+    }
+    m.goodDays = picks.perMonth[mm]?.good || [];
+    m.cautionDays = picks.perMonth[mm]?.caution || [];
+  });
+
+  const merged: any = {
+    ...a,
+    months,
+    keyDates: picks.keyDates,
+    targetYear: ty,
+    schemaVersion: 2,
+  };
+  merged.hexagram = {
     yearLabel: `${ty} ${ganziKo(ygz)}년 · 신년운세`,
     glyph: ygz,
     name: `${ganziKo(ygz)}년의 ${sajuData?.input?.name || '나'}`,
-    oneLine: String(parsed.headline || ''),
-    pullQuote: parsed.pullQuote ? String(parsed.pullQuote) : undefined,
+    oneLine: String(a.headline || ''),
+    pullQuote: a.pullQuote ? String(a.pullQuote) : undefined,
   };
-  return sanitizeAiOutput(parsed);
+  return sanitizeAiOutput(merged);
 }
 
-function buildPrompt(d: any): string {
+/** 그룹별 출력 지시 — 공유 컨텍스트(사주·확정값·톤)는 system 에 캐시 */
+function nyGroupInstruction(group: NyGroup, ty: number): string {
+  if (group === 'A') {
+    return `## 이번 응답 = 그룹 A (한 해 총평) 만. months 는 출력하지 마세요 (다른 그룹이 씀).
+JSON 만 출력 (코드블록 없이):
+{
+  "headline": "${ty}년을 한 문장으로 (35~50자 · 세운과 원국 관계 근거 · 결론형)",
+  "pullQuote": "기억에 남을 짧은 한마디 (20~30자)",
+  "keywords": ["#키워드1","#키워드2","#키워드3"],
+  "fourBox": [
+    {"head": "상반기", "value": "6자 내외 핵심", "desc": "25자 내외 근거 (확정 월 기준점수·판정 인용)"},
+    {"head": "하반기", "value": "6자 내외 핵심", "desc": "25자 내외 근거"},
+    {"head": "좋은 달", "value": "기준점수 상위 3~4개 달 (예: 2·3·11·12월)", "desc": "25자 내외"},
+    {"head": "조심할 달", "value": "기준점수 하위 2개 달", "desc": "25자 내외"}
+  ],
+  "categoryScores": {"총운": 정수, "금전운": 정수, "건강운": 정수, "직장운": 정수, "애정운": 정수, "결혼운": 정수},
+  "yearOverview": {
+    "총운": "400~500자 · 첫 문장 결론 → 세운·그 해 대운이 원국과 만나는 구조(근거 1~2개) → 상반기/하반기 흐름(구체 월) → 올해 가장 중요한 행동 1개",
+    "금전운": "350~450자 · 돈이 들어오고 나가는 구체 장면 + 좋은 달·조심할 달(확정값) + 해야 할 것/피할 것",
+    "건강운": "300~400자 · 약해지기 쉬운 몸·컨디션 패턴 + 조심할 달 + 생활 습관 1~2개 (의학적 진단 단정 금지)",
+    "직장운": "350~450자 · 일·이직·평가·인간관계 장면 + 움직이기 좋은 달/버틸 달",
+    "애정운": "350~450자 · 성별 기준(여성=관성, 남성=재성이 연인의 별) · 솔로/연애 중 둘 다 읽히게 · 인연이 들어오는 달",
+    "결혼운": "300~400자 · 결혼·동거·관계 진전 흐름 · 단정 대신 조건과 시기"
+  },
+  "turningPoints": [
+    {"when": "예: 2~3월", "title": "15자 내외 (결정·이동·관계 중 하나)", "desc": "120~180자 · 왜 이때인지(확정 월주 근거) + 무엇을 하면 좋은지"},
+    {"when": "...", "title": "...", "desc": "..."},
+    {"when": "...", "title": "...", "desc": "..."}
+  ],
+  "luckyAdvice": "300~400자 · 용신 기준 개운 습관 (색·방위·숫자는 상징으로 가볍게) + 꼭 기억할 날(확정값) 활용법"
+}
+점수 규칙: 0~100 정수, 5의 배수만 반복 금지, 분야마다 다른 값.`;
+  }
+  const range = group === 'B' ? [1, 6] : [7, 12];
+  const monthsList = Array.from({ length: range[1] - range[0] + 1 }, (_, i) => range[0] + i).join('·');
+  return `## 이번 응답 = 그룹 ${group} (${monthsList}월) 만. 총평·다른 달은 출력하지 마세요 (다른 그룹이 씀).
+JSON 만 출력 (코드블록 없이):
+{
+  "months": [
+    {"month": ${range[0]},
+     "keyword": "4~6글자 (그 달의 핵심)",
+     "score": "확정 '달 기준점수' ±4 안의 정수",
+     "전통해석": "그 달을 한 줄로 (25~40자 · 읽기 쉬운 결론 · 4자 성어 1개까지 OK)",
+     "현대해석": "300~400자 · ① 그 달 실제로 일어날 장면 2개(일·돈·관계·몸 중 두드러진 것) ② 근거: 확정 월주와 원국의 관계 1회 호명(괄호로 쉬운 풀이) ③ 이 달 '좋은 날'·'조심할 날'(확정값) 중 1~2개를 날짜로 언급하며 그날 무엇을 하면 좋은지",
+     "todo": "이 달 꼭 할 일 한 문장 (40자 내외 · 구체 행동)",
+     "avoid": "이 달 피할 일 한 문장 (40자 내외)"
+    }, ... ${monthsList}월 모두 (${range[1] - range[0] + 1}개)
+  ]
+}
+규칙: 달마다 다른 장면·다른 조언 (같은 문장 반복 금지) · 날짜는 확정값에 있는 것만 · 점수는 기준점수 ±4.`;
+}
+
+function buildPrompt(d: any, picks?: ReturnType<typeof dayPicksForYear>): string {
   const p = d.pillars || [];
   const labels = ['년주', '월주', '일주', '시주'];
   let pillarsText = '';
@@ -80,8 +178,11 @@ function buildPrompt(d: any): string {
   const yko = ganziKo(ygz);
   const monthsFact = Array.from({ length: 12 }, (_, i) => {
     const gz = monthPillar(ty, i + 1);
-    return `- ${i + 1}월 ${gz}(${ganziKo(gz)}) : ${ganziRoleText(gz, d, '달')}`;
+    const pm = picks?.perMonth?.[i + 1];
+    const days = pm ? ` · 좋은 날 ${pm.good.join(', ') || '없음'} · 조심할 날 ${pm.caution.join(', ') || '없음'}` : '';
+    return `- ${i + 1}월 ${gz}(${ganziKo(gz)}) : ${ganziRoleText(gz, d, '달')} · 달 기준점수 ${monthBaseScore(gz, d)}${days}`;
   }).join('\n');
+  const keyDatesFact = (picks?.keyDates || []).map((k) => `${k.date} (${k.why})`).join(' · ');
   const tyDaeun = daeunList.find((x: any) => Number(x?.시작년도) <= ty && ty <= Number(x?.끝년도));
   const gwiin = (() => {
     try {
@@ -107,6 +208,8 @@ ${ty}년 ${yko}(${ygz})년 신년운세 — 사주 원국 + ${ty}년 세운·열
 - ${ty}년의 대운: ${tyDaeun?.간지 ? `${tyDaeun.간지}(${ganziKo(String(tyDaeun.간지))}) 대운 · ${ganziRoleText(String(tyDaeun.간지), d, '해')}` : '미상'}
 - 열두 달 월주 (양력 달 기준 · 1월은 寅월이 아니라 丑월):
 ${monthsFact}
+- 한 해 꼭 기억할 날 (서버 계산): ${keyDatesFact || '없음'}
+- 날짜 판정 기준: 그날 일진이 용신·희신이면 좋은 날, 기신이 강하거나 일지와 충이면 조심할 날 (천을귀인 날 가점). 날짜는 위 값만 인용 — 새 날짜를 만들지 말 것.
 - 귀인·신살이 걸리는 달 (원국에 '없음'인 신살은 '있다'고 쓰지 말 것):
 ${gwiin || '미산출'}
 → 각 달 score·keyword·풀이는 위 '도움/부담' 판정과 원국 형충합을 근거로. 판정이 '부담'인 달을 최고점으로 쓰지 말 것.
@@ -123,7 +226,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}, ${d.input?.birthYear||''}년생${d.띠 ? `, ${d.띠}띠` : ''}
 
-## 출력 (JSON만, 코드블록 없이)
+## 출력 형식은 user 메시지의 그룹 지시를 따른다 (JSON만, 코드블록 없이)
 ⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
 
 🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X · 일상어 O)**
@@ -197,30 +300,6 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 '{유저명}' placeholder 도 위 ## 이름 의 진짜 이름으로 치환.
 같은 사주 = 같은 결과 (결정론) / 다른 사주 = 완전히 다른 어휘.
 
-
-{
-  "headline": "${ty}년을 한 문장으로 (35~50자 · 세운과 원국 관계 근거)",
-  "pullQuote": "기억에 남을 짧은 한마디 (20~30자)",
-  "fourBox": [
-    {"head": "상반기", "value": "6자 내외 핵심", "desc": "20자 내외 근거"},
-    {"head": "하반기", "value": "6자 내외 핵심", "desc": "20자 내외 근거"},
-    {"head": "좋은 달", "value": "예: 3·6·11월 (확정 월주 '도움' 판정 기준)", "desc": "20자 내외"},
-    {"head": "조심할 달", "value": "예: 2·8월 (확정 월주 '부담' 판정 기준)", "desc": "20자 내외"}
-  ],
-  "keywords": ["#사주핵심키워드1","#키워드2","#키워드3"],
-  "categoryScores": {"총운": "0-100 정수", "금전운": "0-100 정수", "건강운": "0-100 정수", "직장운": "0-100 정수", "애정운": "0-100 정수", "결혼운": "0-100 정수"},
-  "yearOverview": {
-    "총운": "150자 이상 · 🚨 사주 specific + 병오년 호명", "금전운": "150자 이상 · 🚨 재성/식상 직접 호명", "건강운": "150자 이상 · 🚨 약한 오행 직접 호명",
-    "직장운": "150자 이상 · 🚨 관성 직접 호명", "애정운": "150자 이상 · 🚨 도화살/배우자궁 직접 호명", "결혼운": "150자 이상 · 🚨 일지/관성 직접 호명"
-  },
-  "months": [
-    {"month": 1, "괘": "(서버가 채움 — 빈 문자열)", "괘의미": "(서버가 채움 — 빈 문자열)",
-     "전통해석": "그 달을 한 줄로 (25~40자 · 4자 성어 1개까지 OK · 고풍체 금지 — 읽기 쉬운 한 줄)",
-     "현대해석": "100자 이상. 그 달에 실제로 일어날 장면 (직장·연애·돈·건강) + 할 일 1개 · 🚨 위 확정 월주와 원국의 관계 1회 이상 호명",
-     "score": 1-100, "keyword": "4~6글자"}, ...12개월 (1월~12월)
-  ],
-  "luckyAdvice": "100자 이상. 올해 개운법."
-}
 
 ⚠️ 작성 규칙: 모든 텍스트는 순수 한국어로. 마크다운 서식(**볼드**, *이탤릭*, # 헤딩, \`코드\`)을 절대 사용하지 마. 강조가 필요하면 "따옴표"나 문맥으로 표현해.`;
 }

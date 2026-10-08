@@ -10,11 +10,16 @@ interface Props {
   현대해석: string;
   score: number;
   keyword: string;
+  /** 2026-10-08 신년운세 7운 — 서버 일진 계산 좋은 날·조심할 날 + 이 달 할 일·피할 일 (없으면 미표시 · 옛 결과 호환) */
+  goodDays?: string[];
+  cautionDays?: string[];
+  todo?: string;
+  avoid?: string;
   delay?: number;
 }
 
 /** 토정비결 월별 카드 — 전통 괘 + 현대 해석 */
-export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해석, score, keyword, delay = 0 }: Props) {
+export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해석, score, keyword, goodDays, cautionDays, todo, avoid, delay = 0 }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const scoreColor = score >= 80 ? '#B8965A' : score >= 60 ? '#2D8A4E' : score >= 40 ? '#2D4470' : '#D32F2F';
@@ -78,6 +83,26 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
                 <p className="text-caption text-text-hint mb-1">자세한 풀이</p>
                 <p className="text-body-sm text-text-secondary leading-relaxed">{stripMd(현대해석)}</p>
               </div>
+
+              {/* 2026-10-08 — 이 달 할 일 · 피할 일 */}
+              {(todo || avoid) && (
+                <div className="space-y-1.5">
+                  {todo && <p className="text-body-sm text-text-primary"><span className="font-bold" style={{ color: '#2D8A4E' }}>할 일 </span>{stripMd(todo)}</p>}
+                  {avoid && <p className="text-body-sm text-text-primary"><span className="font-bold" style={{ color: '#D32F2F' }}>피할 일 </span>{stripMd(avoid)}</p>}
+                </div>
+              )}
+
+              {/* 2026-10-08 — 좋은 날 · 조심할 날 (일진 × 용신 계산) */}
+              {((goodDays && goodDays.length > 0) || (cautionDays && cautionDays.length > 0)) && (
+                <div className="flex flex-wrap gap-1.5">
+                  {(goodDays || []).map((d) => (
+                    <span key={`g${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(45,138,78,0.10)', color: '#2D8A4E' }}>좋은 날 {d}</span>
+                  ))}
+                  {(cautionDays || []).map((d) => (
+                    <span key={`c${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(211,47,47,0.08)', color: '#B23A3A' }}>조심 {d}</span>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}

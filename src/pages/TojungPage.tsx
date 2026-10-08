@@ -30,8 +30,9 @@ import {
 type Phase = 'select' | 'loading' | 'result';
 
 /* 2026-10-07 — '토정비결' → '신년운세' 재출시 (경로 /tojung · contentType 'tojung' 유지).
- *   대상 연도 = 10월부터 내년 (서버 claudeTojung.tojungTargetYear 와 같은 규칙) · 가격 2운. */
-const NEWYEAR_PRICE = 2;
+ *   대상 연도 = 10월부터 내년 (서버 claudeTojung.tojungTargetYear 와 같은 규칙).
+ *   2026-10-08 오너 "7운 · 퀄리티 좋게" → 7운 프리미엄 (Opus 3그룹 · 달마다 좋은 날/조심할 날 · 결정 타이밍). */
+const NEWYEAR_PRICE = 7;
 function newYearTarget(): number {
   const [y, m] = kstToday().split('-').map(Number);
   return m >= 10 ? y + 1 : y;
@@ -40,9 +41,9 @@ const TY = newYearTarget();
 
 const LOADING_STEPS = [
   `${TY}년 세운과 사주를 맞춰보고 있어요...`,
-  '열두 달 흐름을 배치하고 있어요...',
-  '달마다 풀이를 쓰고 있어요...',
-  '한 해 개운 조언을 작성하고 있어요...',
+  '365일 일진에서 좋은 날·조심할 날을 고르고 있어요...',
+  '열두 달 흐름을 달마다 풀고 있어요...',
+  '결정 타이밍과 개운 조언을 정리하고 있어요...',
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -89,7 +90,7 @@ export function TojungPage() {
 
     // 캐시 확인 — 이전에 분석한 적 있으면 무료로 바로 보여줌
     const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'tojung');
-    if (cached?.aiResult && Number((cached.aiResult as any)?.targetYear) === TY) {
+    if (cached?.aiResult && Number((cached.aiResult as any)?.targetYear) === TY && Number((cached.aiResult as any)?.schemaVersion) >= 2) {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');
@@ -183,7 +184,7 @@ export function TojungPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type={`${TY} 신년운세`} sajuData={selected?.sajuData} steps={[`${TY}년 세운과 사주를 맞춰보고 있어요`, '열두 달 흐름을 배치하고 있어요', '달마다 풀이를 쓰고 있어요']} />;
+    return <AILoading name={selected?.name} type={`${TY} 신년운세`} sajuData={selected?.sajuData} steps={[`${TY}년 세운과 사주를 맞춰보고 있어요`, '365일 일진에서 좋은 날·조심할 날을 고르고 있어요', '열두 달 흐름을 달마다 풀고 있어요', '결정 타이밍과 개운 조언을 정리하고 있어요']} />;
   }
 
   // ─── 결과 ───
@@ -322,6 +323,46 @@ export function TojungPage() {
           </div>
         </FadeIn>
 
+        {/* 2026-10-08 — 결정 타이밍 (7운 프리미엄) */}
+        {Array.isArray((result as any).turningPoints) && (result as any).turningPoints.length > 0 && (
+          <FadeIn delay={0.27}>
+            <div className="card">
+              <p className="text-h3 text-text-primary mb-1">올해의 결정 타이밍</p>
+              <p className="text-[11px] text-text-hint mb-3">움직이기 좋은 때와 그 이유</p>
+              <div className="space-y-3">
+                {((result as any).turningPoints as Array<{ when: string; title: string; desc: string }>).map((tp, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex-shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-lg h-fit"
+                      style={{ background: 'rgba(47,75,124,0.08)', color: '#2F4B7C', whiteSpace: 'nowrap' }}>{tp.when}</div>
+                    <div className="min-w-0">
+                      <p className="text-label text-text-primary font-bold">{stripMd(String(tp.title || ''))}</p>
+                      <p className="text-body-sm text-text-secondary leading-relaxed mt-0.5" dangerouslySetInnerHTML={{ __html: sanitizeAiText(String(tp.desc || '')) }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </FadeIn>
+        )}
+
+        {/* 2026-10-08 — 한 해 꼭 기억할 날 (서버 일진 계산) */}
+        {Array.isArray((result as any).keyDates) && (result as any).keyDates.length > 0 && (
+          <FadeIn delay={0.29}>
+            <div className="card">
+              <p className="text-h3 text-text-primary mb-1">{resultYear}년 꼭 기억할 날</p>
+              <p className="text-[11px] text-text-hint mb-3">내 사주에 도움 기운이 가장 크게 들어오는 날 · 중요한 약속·결정·시작에</p>
+              <div className="grid grid-cols-2 gap-2">
+                {((result as any).keyDates as Array<{ date: string; why: string }>).map((k, i) => (
+                  <div key={i} className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.18)' }}>
+                    <p className="text-[15px] font-black" style={{ color: '#8C6D3D' }}>{k.date}</p>
+                    <p className="text-[11px] text-text-muted leading-snug mt-0.5">{k.why}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </FadeIn>
+        )}
+
         {/* 12개월 상세 */}
         <FadeIn delay={0.3}>
           <p className="text-h2 text-text-primary">{isLegacyTojung ? '월별 토정비결' : '달마다 미리 보기'}</p>
@@ -339,6 +380,10 @@ export function TojungPage() {
               현대해석={m.현대해석}
               score={m.score}
               keyword={m.keyword}
+              goodDays={(m as any).goodDays}
+              cautionDays={(m as any).cautionDays}
+              todo={(m as any).todo}
+              avoid={(m as any).avoid}
               delay={0.35 + i * 0.03}
             />
           ))}

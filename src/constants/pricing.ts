@@ -95,7 +95,7 @@ export const PRODUCT_COST: Record<string, number> = {
   monthly: 7,   // 2026-06-29 NEW 출시 — 월운세 정가 7운 (getMonthlyPrice SSOT)
   weekly: 5,    // 2026-06-29 NEW 출시 — 주간운세 정가 5운 (getWeeklyPrice SSOT)
   yearly: 1,
-  tojung: 2, // 2026-10-07 신년운세 재출시 (12개월 · Sonnet) — 클라 TojungPage·서버 generateTojung 과 일치
+  tojung: 7, // 2026-10-08 신년운세 7운 프리미엄 (Opus 3그룹) — 클라 TojungPage·서버 generateTojung 과 일치
   premium: 10,
 };
 
@@ -246,7 +246,7 @@ export const ALL_SERVICES = [
   { id: 'compatibility', title: '궁합 분석', desc: '두 사람의 사주 비교 · 연애/결혼/직장', price: 1, label: '500원' },
   { id: 'daeun', title: '대운 해설', desc: '10년 단위 운의 흐름과 전환점', price: 1, label: '500원' },
   { id: 'monthly', title: '2026 월별 운세', desc: '올해 12개월, 좋은 달과 조심할 달', price: 1, label: '500원' },
-  { id: 'tojung', title: '신년운세', desc: '내 사주로 미리 보는 한 해 열두 달', price: 2, label: '1,000원' },
+  { id: 'tojung', title: '신년운세', desc: '내 사주로 미리 보는 한 해 열두 달 · 좋은 날까지', price: 7, label: '3,500원' },
   // 프리미엄 (10운 = 5,000원) — Phase 2에서 활성화
   // { id: 'premium', title: '프리미엄 심층 분석', desc: '기본 12항목 + PDF + 월운 상세 + 궁합 + 전문가 코멘트', price: 10, label: '5,000원' },
 ] as const;
