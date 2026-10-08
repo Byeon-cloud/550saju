@@ -311,7 +311,11 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
         const mod = await Promise.resolve().then(() => __importStar(require('./ai/claudePremium')));
         const apiKey = ANTHROPIC_KEY.value();
         // 각 그룹 병렬 호출 — Promise.all 대신 개별 then 으로 도착 즉시 송출
+        // 2026-10-08 원가 — 4그룹이 같은 시스템 프롬프트(~2.6만 토큰)를 동시에 보내 매번 넷 다 '캐시 쓰기'(1.25배)·읽기 0 (실측 ~1,600원/건).
+        //   A 가 먼저 캐시하도록 D·B·C 를 5초 늦게 출발 → 캐시 읽기(0.1배)로 건당 ~600원 절감. 내용 불변.
         const groupPromises = groups.map(async (g) => {
+            if (g !== 'A')
+                await new Promise((r) => setTimeout(r, 5000));
             const t0 = Date.now();
             try {
                 const result = await mod.generateGroup(apiKey, sajuData, g, situation);

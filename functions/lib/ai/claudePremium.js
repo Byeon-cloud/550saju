@@ -424,11 +424,13 @@ async function generatePremiumReport(apiKey, sajuData, situation) {
     // T2 · 3 그룹 병렬 호출 — Promise.all
     console.log('[claudePremium] T2 parallel call start (Group A·B·C)');
     const t0 = Date.now();
+    // 2026-10-08 원가 — A 가 먼저 시스템 프롬프트를 캐시하도록 D·B·C 5초 지연 (SSE 경로와 동일 · 캐시 읽기 0.1배)
+    const later = (ms, fn) => new Promise((res, rej) => setTimeout(() => fn().then(res, rej), ms));
     const [groupA, groupD, groupB, groupC] = await Promise.all([
         callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation),
-        callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation),
-        callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation),
-        callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation),
+        later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation)),
+        later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation)),
+        later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation)),
     ]);
     console.log(`[claudePremium] T2 parallel done in ${Date.now() - t0}ms`);
     const merged = mergeGroups(groupA, groupD, groupB, groupC);
