@@ -190,6 +190,11 @@ export const warmupGenerateReport = onCall(
  *  · 인증: Authorization: Bearer <Firebase ID Token>
  *  · 잔액 차감 + 환불 + Firestore 저장은 generateReport 와 동일 패턴
  */
+/** 점진 표시 좌표 id — 클라 crypto.randomUUID / 'pg_' 폴백 형식만 허용 */
+function safeProgressId(v: unknown): string | undefined {
+  return typeof v === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(v) ? v : undefined;
+}
+
 export const generatePremiumReportStream = onRequest(
   {
     secrets: [ANTHROPIC_KEY],
@@ -302,7 +307,8 @@ export const generatePremiumReportStream = onRequest(
           results[g] = result;
           sendEvent('group', {
             group: g,
-            data: result,
+            // 2026-10-09 — C 에 §09 서버 주제 점수 포함 (점진 화면에서 숫자가 나중에 바뀌지 않게)
+            data: g === 'C' ? { ...result, topicBaseScores: mod.computeTopicBaseScores(sajuData) } : result,
             elapsedMs: Date.now() - t0,
           });
         } catch (e: any) {
@@ -548,10 +554,16 @@ export const generateReport = onCall(
       let result: any;
       if (reportType === 'premium') {
         const premMod = await import('./ai/claudePremium');
+        // 2026-10-09 — 점진 표시 (앱인토스 callable 경로): progressId 가 오면 그룹 완성마다 progress/{id} 에 write → 앱이 구독해
+        //   도착한 섹션부터 보여주고 나머지는 스켈레톤. 결과 전달·차감·환불 경로는 그대로 (write 는 best-effort).
+        const progressId = safeProgressId(request.data?.progressId);
+        const { writeGroupProgress, setProgressMeta } = await import('./shared/progressWrite');
+        if (progressId && uid !== 'anonymous') await setProgressMeta(db, progressId, uid, { type: 'premium', total: 4 });
         result = await premMod.generatePremiumReport(
           ANTHROPIC_KEY.value(),
           sajuData,
           situation,
+          progressId && uid !== 'anonymous' ? (g, data) => writeGroupProgress(db, progressId, uid, g, data) : undefined,
         );
       } else {
         const mod = await lazyClaudeReport();
@@ -2007,7 +2019,15 @@ export const generateTojung = onCall(
 
     try {
       const { generateTojungBigyeol } = await lazyClaudeTojung();
-      const result = await generateTojungBigyeol(ANTHROPIC_KEY.value(), sajuData);
+      // 2026-10-09 — 점진 표시: progressId 가 오면 그룹(총평·1~6월·7~12월) 완성마다 progress/{id} write (best-effort)
+      const progressId = safeProgressId(request.data?.progressId);
+      const { writeGroupProgress, setProgressMeta } = await import('./shared/progressWrite');
+      if (progressId && uid !== 'anonymous') await setProgressMeta(db, progressId, uid, { type: 'tojung', total: 3 });
+      const result = await generateTojungBigyeol(
+        ANTHROPIC_KEY.value(),
+        sajuData,
+        progressId && uid !== 'anonymous' ? (g, data) => writeGroupProgress(db, progressId, uid, g, data) : undefined,
+      );
       const reportRef = db.collection('reports').doc();
       await reportRef.set({
         uid, type: 'tojung', content: result,

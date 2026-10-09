@@ -403,6 +403,8 @@ export async function generatePremiumReport(
   apiKey: string,
   sajuData: any,
   situation?: any,
+  /** 2026-10-09 — 점진 표시: 그룹 완성 즉시 호출 (progress/{id} write 용 · best-effort, 결과 전달 경로와 무관) */
+  onGroup?: (group: 'A' | 'D' | 'B' | 'C', data: any) => Promise<void> | void,
 ): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
   const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
@@ -416,11 +418,19 @@ export async function generatePremiumReport(
   const t0 = Date.now();
   // 2026-10-08 원가 — A 가 먼저 시스템 프롬프트를 캐시하도록 D·B·C 5초 지연 (SSE 경로와 동일 · 캐시 읽기 0.1배)
   const later = <T,>(ms: number, fn: () => Promise<T>) => new Promise<T>((res, rej) => setTimeout(() => fn().then(res, rej), ms));
+  const tap = (g: 'A' | 'D' | 'B' | 'C') => (data: any) => {
+    if (onGroup) {
+      // C 는 §09 점수(서버 결정론 주제 점수)까지 같이 — 점진 화면에서 나중에 숫자가 바뀌지 않게
+      const payload = g === 'C' ? { ...data, topicBaseScores: computeTopicBaseScores(sajuData) } : data;
+      Promise.resolve(onGroup(g, payload)).catch(() => { /* best-effort */ });
+    }
+    return data;
+  };
   const [groupA, groupD, groupB, groupC] = await Promise.all([
-    callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation),
-    later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation)),
-    later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation)),
-    later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation)),
+    callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation).then(tap('A')),
+    later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('D')),
+    later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('B')),
+    later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('C')),
   ]);
   console.log(`[claudePremium] T2 parallel done in ${Date.now() - t0}ms`);
 
