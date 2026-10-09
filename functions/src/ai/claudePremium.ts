@@ -163,6 +163,8 @@ JSON 1개로 응답:
     "potential": {"desc": "<60~80자 · 인성/식상·현 대운 간지 직접 호명 + 결>"}
   },
   // 🚨 scores 점수 룰: 5의 배수만 반복 금지 (67·73·81·88 같이 자연수). 6 영역 모두 다른 값. spread 20~40 (너무 균일·너무 극단 X).
+  "// 2026-10-09 — 사주대화 연결": "",
+  "chatQuestions": ["이 종합 풀이를 읽은 이 사람이 사주대화에서 바로 물어볼 질문 · 18~35자 · 이 사주의 구체 글자·대운 간지·약한 영역·올해 시기를 담아", "(두 번째 질문 — 다른 각도)", "(세 번째 질문 — 다른 각도)"],
   "scores": {"career": <0-100 · 5의 배수 금지>, "love": <0-100>, "wealth": <0-100>, "social": <0-100>, "health": <0-100>, "potential": <0-100>},
   "actionList": [
     "// 2026-05-04 재조정: 너무 길지 않게. 각 액션 데스크 70~100자 (이전 150+ 에서 축소).",
@@ -375,6 +377,7 @@ function mergeGroups(a: any, d: any, b: any, c: any): any {
     cautions: c?.cautions || [],                // 2026-05-05 신규 §08 함정 3
     scores: c?.scores || {},
     actionList: c?.actionList || [],
+    chatQuestions: Array.isArray(c?.chatQuestions) ? c.chatQuestions.filter((q: any) => typeof q === 'string' && q.trim()).slice(0, 3) : [],
     // sections — A(2:원국·천간지지) + D(2:십성·용신) + B(3) → 7섹션 (정통 순서 보존)
     sections: [
       ...(a?.sections || []),

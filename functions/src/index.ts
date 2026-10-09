@@ -828,7 +828,8 @@ export const generateDailyFortuneStream = onRequest(
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v13'; // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
+    const SCHEMA_VERSION = 'v14'; // v14 — nextHooks(다음 주제·사주대화 질문)
+    // v13 // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
     // v12 // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
@@ -911,7 +912,7 @@ export const generateDailyFortuneStream = onRequest(
         A2a: ['todayNarrative', 'sajuTone'],
         A2b: ['pillarMessages', 'ohengDistribution', 'todayOhengEmphasis', 'subScoreReasons'],
         B1: ['timeSlots', 'hourlyPeak', 'hourlyAvoid', 'doList', 'dontList'],
-        B2: ['meetPeople', 'luckyProfile', 'dailyQuote', 'tomorrow'],
+        B2: ['meetPeople', 'luckyProfile', 'dailyQuote', 'tomorrow', 'nextHooks'],
       };
       const subOnly = (sub: Exclude<DailySub, 'A1'>) =>
         `\n\n## ⚡⚡ 이번 호출의 최종 출력 범위 (위 스키마 중 이 키들만): ${SUB_KEYS[sub].join(', ')}\n` +
@@ -978,6 +979,16 @@ export const generateDailyFortuneStream = onRequest(
         data = applyDailyMeetGlyphs(data, sajuData);
         if (hourWin.peak && data?.hourlyPeak) data.hourlyPeak.range = hourWin.peak;
         if (hourWin.avoid && data?.hourlyAvoid) data.hourlyAvoid.range = hourWin.avoid;
+        // 2026-10-09 — 다음 콘텐츠 연결(주제 1 + 사주대화 질문 3) 정리 (허용 id·길이)
+        if (data?.nextHooks && typeof data.nextHooks === 'object') {
+          const okIds = ['love', 'wealth', 'career', 'health', 'exam', 'reunion', 'marriage'];
+          const tp = data.nextHooks.topic;
+          data.nextHooks = {
+            topic: tp && okIds.includes(tp.id) && typeof tp.hook === 'string' ? { id: tp.id, hook: String(tp.hook).replace(/<[^>]+>/g, '').trim().slice(0, 90) } : null,
+            chatQuestions: (Array.isArray(data.nextHooks.chatQuestions) ? data.nextHooks.chatQuestions : [])
+              .filter((q: any) => typeof q === 'string' && q.trim()).slice(0, 3).map((q: string) => q.replace(/<[^>]+>/g, '').trim().slice(0, 60)),
+          };
+        }
         data = sanitizeAiOutput(data);
         sendEvent('group', { group: 'B', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs) + 4000 });
         return data;
@@ -2574,6 +2585,8 @@ export const generateTopicAnalysisStream = onRequest(
       const { default: Anthropic } = await import('@anthropic-ai/sdk');
       const { buildTopicCall, enforceTopicBaseScore, runTopicGeneration } = await lazyClaudeTopic();
       const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+      // 2026-10-09 — 상황별 섹션 제목을 먼저 보냄 → 앱 로딩 스켈레톤이 서버와 같은 제목 (구버전 앱은 무시)
+      sendEvent('outline', { headings: call.sections });
       const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
       const t0 = Date.now();
       // 2026-10-08 — 생성은 claudeTopic.runTopicGeneration 공용 (callable 폴백과 같은 코드 · 시스템 프롬프트 캐시).

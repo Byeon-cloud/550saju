@@ -705,16 +705,17 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     // 2026-05-08 SSOT sync: '학업·시험운' → '학업운' (topics.ts SSOT 일치)
     // 시험 합격 timing 은 exam (합격·이직운) 영역. study 는 학업·집중력·학습 패턴.
     label: '학업운',
-    sections: ['나의 학습 체질 분석', '합격 가능성과 시기', '시험 당일 최적 전략', '슬럼프 극복법', '올해 합격 로드맵'],
+    // 2026-10-09 — 경계(시험 합격 timing 은 합격·이직운)와 충돌하던 '합격 가능성과 시기'·'올해 합격 로드맵' 교체
+    sections: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '슬럼프 극복법', '올해 공부 로드맵'],
     specificPrompt: `⭐ 시험/취업 준비생에게 "이거 보고 힘 얻었다" 반응이 나올 정도로 구체적으로.
 
 - 인성(정인/편인) 강약 → 학습 체질: 암기형/이해형/직관형/반복형 판별 + 구체적 공부법
 - 식상 → 시험장에서의 표현력: "서술형에 강한지, 객관식에 강한지"
-- 합격 가능성을 사주적 근거와 함께: "인성이 ~해서 합격 기운이 ~합니다"
-- 합격에 유리한 시기: 월 단위로 "양력 O~O월 시험이 가장 유리"
-- 시험 당일 전략: 유리한 시간대, 좌석 방향(용신 오행 방위), 행운 색상(luckyProfile 용신 색상과 동일)/아이템
+- 공부가 실력으로 붙는 힘을 사주적 근거와 함께: "인성이 ~해서 한 번 잡은 내용은 오래 갑니다"
+- 실력이 오르는 시기: 월 단위로 "양력 O~O월에 공부가 가장 잘 붙는다" (특정 시험의 합격 날짜 단정은 합격·이직운 영역 — 쓰지 말 것)
+- 시험 보는 날·공부 환경: 유리한 시간대, 좌석 방향(용신 오행 방위), 행운 색상(luckyProfile 용신 색상과 동일)/아이템
 - 집중력 패턴: "오전 vs 오후 vs 새벽 중 ~시간대가 사주적으로 최적"
-- 슬럼프 시기 예측: "O월에 슬럼프가 올 수 있는데, 이때는 ~하세요"
+- 슬럼프 시기 예측: "O월에 슬럼프가 옵니다 — 이때는 ~하세요"
 - "혹시 시험 전날 잠을 못 자는 타입 아닌가요?" 같은 소름 포인트
 - 같이 공부하면 좋은 사람의 사주적 특성`,
     topicDataSchema: `"topicData": {
@@ -881,13 +882,17 @@ export interface TopicCall {
   maxTokens: number;
   normalizedId: string;
   effectiveBaseScore?: number;
+  /** 상황별 섹션 제목 (topicSectionTitles) — 스트림 'outline' 이벤트로 앱 스켈레톤에 먼저 보냄 */
+  sections: string[];
+  /** 생성 후 서버 확정값 덧입히기 (예: 연애 상태) */
+  finalize?: (r: any) => any;
   /** 재회운 — 본문/카드 데이터 병렬 분할 (공유 prompt 뒤에 각자 suffix) */
   split?: { mainSuffix: string; dataSuffix: string; mainMaxTokens: number; dataMaxTokens: number; fill: (td: any) => any };
 }
 const REUNION_MAIN_ONLY = `
 
 ## ⚡ 이번 호출의 출력 범위
-위 JSON 스키마에서 "topicData" 를 뺀 나머지 키만 출력한다 (title·overallScore·sajuBasis·sajuConnection·summary·sections·timeline·luckyProfile·actionAdvice).
+위 JSON 스키마에서 "topicData" 를 뺀 나머지 키만 출력한다 (title·overallScore·sajuBasis·sajuConnection·summary·sections·timeline·luckyProfile·actionAdvice·nextHooks).
 topicData 는 다른 호출이 같은 확정표로 동시에 쓰고 있다 — 출력 금지. sections 는 10개 전부 순서대로.`;
 const REUNION_DATA_ONLY = `
 
@@ -935,7 +940,8 @@ export async function runTopicGeneration(
       return parseJsonResponse(await once(suffix, maxTokens, 0.05, live), { repairUsed: false });
     }
   };
-  if (!call.split) return gen(undefined, call.maxTokens, true, '1차');
+  const fin = (r: any) => (call.finalize ? call.finalize(r) : r);
+  if (!call.split) return fin(await gen(undefined, call.maxTokens, true, '1차'));
   const sp = call.split;
   const [main, data] = await Promise.all([
     gen(sp.mainSuffix, sp.mainMaxTokens, true, '본문'),
@@ -951,7 +957,7 @@ export async function runTopicGeneration(
     : {};
   const { topicData: _ignored, ...rest } = (main && typeof main === 'object' ? main : {}) as any;
   void _ignored;
-  return { ...rest, topicData: sp.fill(td) };
+  return fin({ ...rest, topicData: sp.fill(td) });
 }
 
 export function buildTopicCall(
@@ -995,7 +1001,25 @@ export function buildTopicCall(
   // 2026-10-03 상한 상향 16000/8192 → 20000/12000 — 운영 실측: callable 67건 중 20건이 cap 95%↑·3건 정확히 8192 도달(잘림),
   //   재회운 출력 13.6~14.7K(16000 근접). 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만 생김.
   const maxTokens = normalizedId === 'reunion' ? 16000 : 12000; // 재회운 16000 유지(2026-10-04): 실측 최대 출력 14.7K 로 잘림 0 · 20000 은 ~66tok/s 기준 서버 timeoutSeconds 300 초과 위험
-  return { system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore, split };
+  // 연애운 — 화면이 상태(솔로/썸/연애중)에 맞는 카드·라벨을 고르도록 서버가 상태를 결과에 찍는다 (상대 정보 유무와 무관)
+  const loveStatus = normalizedId === 'love'
+    ? (/^(some|썸)$/.test(String(extraInfo?.loveStatus || '')) ? 'some' : /^(dating|연애중)$/.test(String(extraInfo?.loveStatus || '')) ? 'dating' : 'solo')
+    : null;
+  const finalize = (r: any) => {
+    if (r && typeof r === 'object') {
+      cleanNextHooks(r, normalizedId);
+      if (loveStatus) {
+        r.topicData = r.topicData && typeof r.topicData === 'object' ? r.topicData : {};
+        r.topicData.loveStatus = loveStatus;
+        if (loveStatus === 'dating') r.topicData.idealType = null;
+      }
+    }
+    return r;
+  };
+  return {
+    system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore, split,
+    sections: topicSectionTitles(normalizedId, partnerInfo, extraInfo), finalize,
+  };
 }
 
 /** 2026-09-17 — 사주 산출 점수를 AI 응답에 강제 반영. 프롬프트로 '반드시 이 점수'를 지시하지만 AI 가 어기면
@@ -1186,6 +1210,89 @@ export function computeTopicBaseScore(topicId: string, d: any): number | undefin
   score = Math.max(8, Math.min(96, Math.round(score)));
   if (score % 5 === 0) score += score < 50 ? -1 : 1; // 5의 배수 회피 룰 유지
   return score;
+}
+
+/** 2026-10-09 — 주제 × 상황 섹션 제목 SSOT. buildPrompt 와 스트림 'outline' 이벤트(앱 로딩 스켈레톤 제목)가 같이 쓴다.
+ *  상황과 어긋난 제목은 신뢰를 바로 깎는다 — 실측(전체 주제 결과): 썸·연애중 34건이 '인연이 시작되는 시기와 장소'·'사주 궁합이 잘 맞는 이성',
+ *  구직중 12건이 '직장 내 인간관계 패턴', 사업 운영중 5건이 '창업 타이밍', 주거 이사 7건이 '이사/이직/유학 전망'. 섹션 개수는 유지. */
+/** 2026-10-09 — 다음 주제 연결(nextHooks.topics) 허용 id = 출시 주제 10종 */
+const HOOK_TOPIC_IDS = ['love', 'reunion', 'marriage', 'wealth', 'exam', 'business', 'health', 'move', 'study', 'career'];
+function hookIdList(current: string): string {
+  return HOOK_TOPIC_IDS.filter((id) => id !== current).map((id) => `${id}=${TOPIC_CONFIGS[id]?.label || id}`).join(' · ');
+}
+/** nextHooks 정리 — 허용 id·중복·길이 (모델 출력은 데이터로만) */
+function cleanNextHooks(r: any, current: string): void {
+  const nh = r?.nextHooks;
+  if (!nh || typeof nh !== 'object') return;
+  const seen = new Set<string>();
+  const topics = (Array.isArray(nh.topics) ? nh.topics : [])
+    .filter((x: any) => x && HOOK_TOPIC_IDS.includes(x.id) && x.id !== current && !seen.has(x.id) && typeof x.hook === 'string' && x.hook.trim() && seen.add(x.id))
+    .slice(0, 2)
+    .map((x: any) => ({ id: x.id, hook: String(x.hook).replace(/<[^>]+>/g, '').trim().slice(0, 90) }));
+  const chatQuestions = (Array.isArray(nh.chatQuestions) ? nh.chatQuestions : [])
+    .filter((q: any) => typeof q === 'string' && q.trim())
+    .slice(0, 3)
+    .map((q: string) => q.replace(/<[^>]+>/g, '').trim().slice(0, 60));
+  r.nextHooks = { topics, chatQuestions };
+}
+
+export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extraInfo?: Record<string, any>): string[] {
+  const config = TOPIC_CONFIGS[topicId];
+  if (!config) return [];
+  const base = config.sections;
+  const swap = (map: Record<string, string>) => base.map((sec) => map[sec] ?? sec);
+  const hasPartner = !!partnerInfo;
+  switch (topicId) {
+    case 'love': {
+      const ls = String(extraInfo?.loveStatus || '');
+      if (ls === 'some' || ls === '썸') {
+        return ['나의 연애 스타일', hasPartner ? '그 사람과 나의 사주 궁합' : '내 사주가 끌리는 사람의 결', '썸이 연애로 이어지는 시기', '썸에서 반복되는 나의 패턴', '올해 연애 흐름과 고백 타이밍'];
+      }
+      if (ls === 'dating' || ls === '연애중') {
+        return ['나의 연애 스타일', hasPartner ? '두 사람의 사주 궁합' : '내 사주로 본 지금 관계의 결', '관계가 깊어지는 시기와 고비', '연애 중 반복되는 패턴', '올해 두 사람의 흐름과 전략'];
+      }
+      return base;
+    }
+    case 'marriage': {
+      if (extraInfo?.relationStatus === 'dating') {
+        // 기혼 — 결혼 적기·준비는 무의미 → 부부생활 관점
+        return swap({ '결혼 적기 분석': '올해 부부운의 흐름', '결혼 후 생활 패턴': '부부 생활 패턴', '결혼 준비 조언': '결혼 생활 개선 조언' });
+      }
+      if (hasPartner) return swap({ '결혼 적기 분석': '두 사람의 결혼 적기', '배우자 성향': '그 사람의 배우자 성향' });
+      return swap({ '배우자 성향': '미래 배우자의 성향' });
+    }
+    case 'career': {
+      const js = String(extraInfo?.jobStatus || '');
+      if (js === 'student') return swap({ '직장 내 인간관계 패턴': '첫 직장에서 만날 관계의 결' });
+      if (js === 'jobseeking') return swap({ '직장 내 인간관계 패턴': '입사 후 만날 관계의 결' });
+      if (js === 'employed') return swap({ '사주가 부르는 직종 TOP 5': '지금 직종과 내 사주의 궁합' });
+      return base;
+    }
+    case 'business': {
+      if (extraInfo?.bizStatus === 'running') return swap({ '맞는 업종': '지금 업종과 사주의 궁합', '창업 타이밍': '확장·전환 타이밍' });
+      return base;
+    }
+    case 'move': {
+      const mp = String(extraInfo?.movePurpose || '');
+      if (mp === 'house') return swap({ '이사/이직/유학 전망': '지금 옮겨도 되는가 — 이사 전망', '해외운': '이사 후 생활의 변화' });
+      if (mp === 'study') return swap({ '이사/이직/유학 전망': '유학·학업 이동 전망', '해외운': '타지에서의 적응운' });
+      if (mp === 'abroad') return swap({ '이사/이직/유학 전망': '해외 이주 전망', '해외운': '이주 후 정착운' });
+      return swap({ '이사/이직/유학 전망': '이사·유학·이주 전망' }); // 이직은 합격·이직운 영역
+    }
+    case 'reunion': {
+      if (!hasPartner) return swap({ '상대방의 사주 성향 분석': '내 사주가 끌어당기는 상대 유형', '두 사람의 오행 궁합 구조': '내 사주의 관계 오행 구조' });
+      return base;
+    }
+    case 'exam': {
+      const ct = String(extraInfo?.changeType || '');
+      if (ct === 'exam') return ['시험 합격운 — 올해 흐름', '합격에 유리한 분야와 방향', '시험·면접 결정 시기', '학습 컨디션과 슬럼프 관리', '올해 합격 실전 전략'];
+      if (ct === 'jobchange') return ['이직운 — 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정·면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
+      if (ct === 'career_pivot') return ['직무 전환운 — 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
+      return base;
+    }
+    default:
+      return base;
+  }
 }
 
 function buildPrompt(
@@ -1385,7 +1492,35 @@ ${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPil
 ${statusBlock}
 `;
   } else if (topicId === 'love' && !partnerInfo) {
-    partnerSection = `
+    /* 🚨 2026-10-09 — 썸·연애중을 골랐지만 상대 생년월일을 안 넣은 사람이 '솔로'로 처리돼 '새 인연 만나는 시기'를 받던 버그.
+     *   상태는 그대로 존중하고, 상대 사주는 지어내지 않는다 (내 사주로 읽는 관계). */
+    const ls = String(extraInfo?.loveStatus || '');
+    if (ls === 'some' || ls === '썸') {
+      partnerSection = `
+## 현재 연애 상태: 썸 (관심 상대의 생년월일은 입력하지 않음)
+🚨 상대방의 사주팔자·일간·궁합 점수를 절대 지어내지 마라. 상대 사주 없이 **내 사주에서 읽히는 썸의 흐름**으로만 답한다.
+→ 썸 핵심: 내가 썸에서 보이는 패턴 · 썸이 연애로 이어지는 시기 · 내 사주에 맞는 다가가는 방식.
+   • confessionTiming: 고백·관계를 정하기 좋은 시기 (월 단위 1~3개 + 근거: 도화 활성·연인의 별·일지 합)
+   • approachStrategy: 내 일간 성향에 맞는 다가가는 방식 (직진 / 천천히 / 친구로 시작 중 하나를 단정)
+   • signalReading: 내 사주로 볼 때 이 썸이 이어지는 신호 3가지 (내가 확인할 행동 기준)
+   • interestLevel 은 상대 사주가 없으므로 null.
+→ bestMeetMonth = '썸이 연애로 이어지는 시기'. partnerCompat은 null.
+→ 섹션 제목이 썸 상황에 맞게 바뀌어 있다 — 각 섹션은 그 제목이 묻는 것에 답한다. '새 인연을 만나는 시기' 류 솔로용 서술 금지.
+`;
+    } else if (ls === 'dating' || ls === '연애중') {
+      partnerSection = `
+## 현재 연애 상태: 연애중 (연인의 생년월일은 입력하지 않음)
+🚨 연인의 사주팔자·일간·궁합 점수를 절대 지어내지 마라. 연인 사주 없이 **내 사주에서 읽히는 지금 관계의 흐름**으로만 답한다.
+→ 연애중 핵심: 관계의 흐름과 안정성 (내 사주 기준).
+   • stabilityPhase: 지금 관계가 어느 단계인지 (밀월/안정/권태/위기 중 하나를 단정 + 내 사주 근거 — 올해 세운·대운이 일지(배우자 자리)를 어떻게 건드리는지)
+   • longTermOutlook: 앞으로 6~12개월 관계 흐름 (월건 표 기준)
+   • riskMonth: 다툼·서운함이 커지는 달 2~3개 (일지 충·기신 달 근거)
+   • deepenTip: 내 일간 성향에 맞는 관계가 깊어지는 방법
+→ bestMeetMonth = '관계가 깊어지는 시기'. idealType 은 null (이미 연인이 있다). partnerCompat은 null.
+→ 섹션 제목이 연애중 상황에 맞게 바뀌어 있다 — '새 인연'·'인연이 시작되는' 류 솔로용 서술 금지.
+`;
+    } else {
+      partnerSection = `
 ## 현재 연애 상태: 솔로
 → 솔로 상태 핵심: '새 인연 만나는 자리와 시기' 에 집중.
    • newEncounterMonth: 새 인연 가능성 높은 월 2-3개 (도화 활성·합 패턴 근거)
@@ -1393,6 +1528,7 @@ ${statusBlock}
    • selfPreparation: 본인 사주가 누군가를 만나기 전 다듬어야 할 결 (예: 식상 강하면 표현 다듬기)
 → partnerCompat은 null로 설정하세요.
 `;
+    }
   }
 
   if (reunionFactsText) partnerSection += reunionFactsText; // 2026-10-08 재회 타이밍·판정 확정표 (본문·카드 두 호출 공통)
@@ -1417,47 +1553,8 @@ ${statusBlock}
    *   기존: config.sections 가 topicId 고정 배열이라 첫 취업 준비생에게도
    *   '이직 후 3개월 적응 전망' 이 강제 출력됐다(오너 실사용 지적).
    *   섹션 개수는 5개로 유지 — 클라 스트리밍 스켈레톤(slotCount=max)이 깨지지 않게. */
-  let effectiveSections: string[] = config.sections;
-  if (topicId === 'career') {
-    // 학생에게 '직장 내 인간관계', 재직자에게 '직종 TOP5' 가 나가던 문제 (개수 5 유지)
-    const js = String(extraInfo?.jobStatus || '');
-    if (js === 'student') {
-      effectiveSections = config.sections.map((sec) =>
-        sec === '직장 내 인간관계 패턴' ? '첫 직장에서 만날 관계의 결' : sec);
-    } else if (js === 'employed') {
-      effectiveSections = config.sections.map((sec) =>
-        sec === '사주가 부르는 직종 TOP 5' ? '지금 직종과 내 사주의 궁합' : sec);
-    }
-  }
-  if (topicId === 'move' && String(extraInfo?.movePurpose || '') === 'house') {
-    // 주거 이사인데 '해외운' 이 나가던 문제 (개수 5 유지)
-    effectiveSections = config.sections.map((sec) =>
-      sec === '해외운' ? '이사 후 생활의 변화' : sec);
-  }
-  if (topicId === 'marriage' && extraInfo?.relationStatus === 'dating') {
-    // 기혼자에게 '결혼 적기'·'결혼 준비'는 무의미 → 부부생활 관점으로 교체 (개수 5 유지)
-    effectiveSections = config.sections.map((sec) =>
-      sec === '결혼 적기 분석' ? '올해 부부운의 흐름'
-      : sec === '결혼 준비 조언' ? '결혼 생활 개선 조언'
-      : sec);
-  }
-  if (topicId === 'reunion' && !partnerInfo) {
-    // 상대 사주 없이 답할 수 없는 2섹션을 본인 사주 기반 제목으로 교체 (개수 10 유지)
-    effectiveSections = config.sections.map((sec) =>
-      sec === '상대방의 사주 성향 분석' ? '내 사주가 끌어당기는 상대 유형'
-      : sec === '두 사람의 오행 궁합 구조' ? '내 사주의 관계 오행 구조'
-      : sec);
-  }
-  if (topicId === 'exam') {
-    const ct = String(extraInfo?.changeType || '');
-    if (ct === 'exam') {
-      effectiveSections = ['시험 합격운 — 올해 흐름', '합격에 유리한 분야와 방향', '시험·면접 결정 시기', '학습 컨디션과 슬럼프 관리', '올해 합격 실전 전략'];
-    } else if (ct === 'jobchange') {
-      effectiveSections = ['이직운 — 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정·면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
-    } else if (ct === 'career_pivot') {
-      effectiveSections = ['직무 전환운 — 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
-    }
-  }
+  // 상황별 제목 — topicSectionTitles SSOT (스트림 outline 이벤트와 같은 값)
+  const effectiveSections: string[] = topicSectionTitles(topicId, partnerInfo, extraInfo);
   if (extraInfo) {
     if (topicId === 'business' && extraInfo.bizStatus) {
       const statusLabel = extraInfo.bizStatus === 'running' ? '현재 사업 운영중' : '창업 준비중';
@@ -1778,6 +1875,7 @@ subScores 각 축도 그 축의 핵심 십성으로 같은 산식을 적용해 *
   "timeline": [{"period": "시기", "score": 1-10, "description": "60자 이상 · 🚨 해당 시기 대운/세운 간지 + 원국 글자 충돌·합 직접 호명"}, ...6~12개],
   "luckyProfile": {"color": "용신 오행 색상", "direction": "용신 오행 방위", "number": "용신 오행 숫자", "item": "아이템", "bestMonth": "최적월", "// 행운·개운 SSOT": "color·direction·number는 원국 용신 오행 하나로 — 주제 십성/일간 오행으로 뽑지 말 것"},
   "actionAdvice": "100자 이상. 지금 당장 할 수 있는 행동. 🚨 사주 specific 데이터(약한 오행·기신·일간 등) 1개 이상 직접 호명 mandatory. 마크다운 금지.",
+  "nextHooks": {"topics": [{"id": "다른 주제 id 하나 (${hookIdList(topicId)})", "hook": "35~55자 · 이 결과의 구체 내용(시기·글자·상황)에서 자연히 생기는 다음 궁금증 + 그 주제에서 무엇을 알 수 있는지. 그 주제의 답을 여기서 미리 단정하지 말 것"}, {"id": "...", "hook": "..."}], "chatQuestions": ["이 결과를 읽은 이 사람이 사주대화에서 바로 물어볼 질문 · 18~35자 · 결과 속 구체 시기·상황·인물을 담아", "(두 번째 질문 — 다른 각도)", "(세 번째 질문 — 다른 각도)"]},
   ${config.topicDataSchema}
 }`;
 }
