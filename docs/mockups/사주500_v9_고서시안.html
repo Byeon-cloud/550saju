@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>사주500 v9 고서 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet" />
+<!--
+  v9 (2026-10-10) — v8 + 준기 피드백
+  1) 사주책 → 진짜 고서(선장본): 한지 표지 · 능화문 · 제첨(제목 쪽지) · 붉은 실 오침 제본 · 포각(모서리 비단) · 책장 두께
+     속지 = 광곽(테두리 두 줄) + 판심(가운데 제목줄 · 물고기 꼬리 표시) — 글은 가로쓰기 유지(가독성)
+  2) 빠졌던 상품 복귀: 2027 신년운세(제철) · 이번 주 · 11월 · 궁합
+  3) 홈만이 아니라 전 화면 같은 언어: 오늘의 운세 결과 / 결제 확인 / 연애운 결과
+  색: 먹 · 종이 + 금색은 누르는 곳에만 + 붉은 실·낙관은 아주 작게
+  그림: 공유마당 저작권 만료 저작물 — 정선 「개화사」「인왕제색도」, 김홍도 「금강사군첩 · 장안사」
+  사실(만세력 검증): 2026-10-10 丁巳일 / 10-13(화) 庚申일 / 11-07~ 己亥월 / 12-07~ 庚子월 / 2027 丁未년
+  페르소나: 서윤 1993-05-14 06:30 여 · 癸酉 丁巳 乙未 己卯 · 庚申 대운(28~37)
+-->
+<style>
+:root {
+  --paper: #F4EFE4; --paper-2: #EBE3D3; --card: #FFFDF8; --hanji: #F3EBDA;
+  --ink: #1A1612; --ink-2: #4B4238; --mute: #8B8070; --line: #E1D7C4;
+  --gold: #B8965A; --gold-hi: #D2B477; --gold-deep: #8C6D3D;
+  --seal: #A23A2A; --thread: #A5302A;
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg fill='none' stroke='%237a6440' stroke-opacity='.18' stroke-width='.6'%3E%3Cpath d='M10 30c30 8 50-6 80 4'/%3E%3Cpath d='M120 60c20 10 40 2 70 12'/%3E%3Cpath d='M30 140c25-6 45 8 75 0'/%3E%3Cpath d='M150 170c18 6 40-4 70 6'/%3E%3Cpath d='M60 210c20 4 35-8 60 2'/%3E%3Cpath d='M180 110c10 14 30 10 50 22'/%3E%3C/g%3E%3C/svg%3E");
+  --neunghwa: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cg fill='none' stroke='%23845f2c' stroke-opacity='.35' stroke-width='.8'%3E%3Cpath d='M14 0L28 14L14 28L0 14Z'/%3E%3Cpath d='M14 9c2 2 2 3 0 5c-2-2-2-3 0-5zM14 14c2 2 2 3 0 5c-2-2-2-3 0-5zM9 14c2-2 3-2 5 0c-2 2-3 2-5 0zM14 14c2-2 3-2 5 0c-2 2-3 2-5 0z'/%3E%3C/g%3E%3C/svg%3E");
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Pretendard, -apple-system, sans-serif; background: #D9D2C4; color: var(--ink); -webkit-font-smoothing: antialiased; }
+.stage { display: flex; gap: 32px; justify-content: center; align-items: flex-start; padding: 28px 16px 60px; flex-wrap: wrap; }
+.label { width: 375px; font-size: 13px; color: #5A5146; margin-bottom: 10px; font-weight: 700; }
+.phone { width: 375px; height: 812px; overflow-y: auto; background: var(--paper); border-radius: 36px; box-shadow: 0 30px 80px rgba(0,0,0,.22); position: relative; scrollbar-width: none; }
+.phone::-webkit-scrollbar { display: none; }
+
+/* ===== 공통 컴포넌트 (전 화면 공용) ===== */
+.cta { height: 58px; border-radius: 14px; background: linear-gradient(180deg, var(--gold-hi) 0%, var(--gold) 100%); color: #17110A; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 24px rgba(140,109,61,.28), inset 0 1px 0 rgba(255,255,255,.45); letter-spacing: -.01em; }
+.cta small { font-size: 13px; font-weight: 700; opacity: .72; }
+.ghost { height: 50px; border-radius: 12px; border: 1.5px solid var(--ink); color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: 15px; }
+.ghost small { font-weight: 700; color: var(--ink-2); }
+.blur { filter: blur(5px); user-select: none; }
+.lock { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--gold-deep); font-weight: 800; margin-left: 4px; white-space: nowrap; }
+.seal { display: inline-grid; place-items: center; border: 1.6px solid var(--seal); color: var(--seal); font-family: 'Noto Serif KR', serif; font-weight: 900; border-radius: 4px; line-height: 1; }
+.serif { font-family: 'Noto Serif KR', serif; }
+strong.hl { font-weight: 700; color: var(--ink); background: linear-gradient(transparent 64%, rgba(184,150,90,.32) 64%); }
+.h-sec { padding: 34px 22px 12px; }
+.h-sec .k { font-size: 12px; font-weight: 700; color: var(--mute); }
+.h-sec h2 { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; letter-spacing: -.02em; line-height: 1.4; margin-top: 4px; }
+/* 고서 속지: 광곽(테두리 두 줄) */
+.gwang { background: var(--hanji); background-image: var(--fiber), var(--noise); background-blend-mode: multiply; border: 1.6px solid #5C4E3C; box-shadow: inset 0 0 0 3px var(--hanji), inset 0 0 0 4px rgba(92,78,60,.55); border-radius: 3px; }
+/* 판심: 가운데 제목줄 + 물고기 꼬리(어미) */
+.pansim { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 12.5px; letter-spacing: .3em; color: var(--ink-2); padding: 10px 0 9px; border-bottom: 1px solid rgba(92,78,60,.45); }
+.pansim svg { width: 16px; height: 9px; }
+/* 섹션 머리 (전 콘텐츠 공용) */
+.shead { display: flex; align-items: baseline; gap: 10px; padding: 0 2px; }
+.shead .no { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 15px; color: var(--seal); width: 18px; }
+.shead .ti { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 19px; letter-spacing: -.02em; }
+.shead .hj { margin-left: auto; font-family: 'Noto Serif KR', serif; font-size: 12px; color: var(--mute); letter-spacing: .15em; }
+.sec { margin: 0 16px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.sec p { font-size: 15.5px; line-height: 1.8; color: var(--ink-2); margin-top: 10px; }
+.sec.fold .shead:after { content: '+'; font-size: 20px; color: var(--mute); margin-left: 10px; }
+.sec.fold .shead .hj { margin-left: auto; }
+/* 콘텐츠 머리 그림띠 */
+.strip { height: 170px; position: relative; background-repeat: no-repeat; }
+.strip:after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(244,239,228,.25) 0%, rgba(244,239,228,0) 40%, rgba(244,239,228,.85) 82%, var(--paper) 100%); }
+.bar { height: 52px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; position: absolute; top: 0; left: 0; right: 0; z-index: 3; }
+.bar .r { position: absolute; right: 18px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+
+/* ===== 1. 홈 ===== */
+.top { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; z-index: 2; }
+.logo { font-weight: 800; font-size: 17px; letter-spacing: -.02em; display: flex; align-items: center; gap: 7px; color: var(--ink); }
+.logo i { font-style: normal; width: 24px; height: 24px; border-radius: 5px; background: var(--seal); display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 13px; color: #fff; }
+.un { height: 32px; padding: 0 12px; border-radius: 999px; background: rgba(255,253,248,.82); border: 1px solid var(--line); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; font-size: 13px; font-weight: 800; color: var(--ink); }
+.un span { margin-left: 7px; padding-left: 7px; border-left: 1px solid var(--line); font-weight: 600; color: var(--ink-2); }
+.hero .art { height: 430px; background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Gaehwasa_temple_by_Jeong_Seon.jpg/1280px-Gaehwasa_temple_by_Jeong_Seon.jpg') 40% 30px / 128% auto no-repeat, #ECE4D3; position: relative; }
+.hero .art:before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 90px; background: linear-gradient(180deg, var(--paper) 0%, rgba(244,239,228,0) 100%); z-index: 1; }
+.hero .art:after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(244,239,228,0) 52%, rgba(244,239,228,.78) 80%, var(--paper) 100%); }
+.hero .body { position: relative; margin-top: -150px; padding: 0 22px; z-index: 1; }
+.date { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.date .seal { width: 34px; height: 34px; font-size: 12px; background: rgba(255,253,248,.6); }
+.hook { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 30px; line-height: 1.36; letter-spacing: -.03em; margin-top: 12px; }
+.hook u { text-decoration: none; background: linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%); }
+.tease { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+.tease b { color: var(--ink); }
+.hero .cta { margin-top: 14px; }
+.under { text-align: center; font-size: 12.5px; color: var(--mute); margin-top: 9px; }
+
+/* 신년운세 (제철) */
+.newyear { margin: 26px 16px 0; border-radius: 18px; overflow: hidden; background: var(--ink); color: #EFE6D6; position: relative; }
+.newyear .art { height: 150px; background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Inwangjesaekdo.jpg/1280px-Inwangjesaekdo.jpg') 30% 40% / 190% auto no-repeat; filter: grayscale(.2) contrast(1.05); position: relative; }
+.newyear .art:after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(26,22,18,.05) 0%, rgba(26,22,18,.35) 55%, var(--ink) 100%); }
+.newyear .in { padding: 0 20px 20px; margin-top: -40px; position: relative; }
+.newyear .yr { display: flex; align-items: flex-end; gap: 10px; }
+.newyear .yr b { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 44px; line-height: .9; color: #FBF4E6; letter-spacing: .02em; }
+.newyear .yr span { font-size: 13px; color: #BFB3A0; padding-bottom: 3px; }
+.newyear .t { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; line-height: 1.42; margin-top: 12px; }
+.newyear p { font-size: 13.5px; color: #C9BDAA; line-height: 1.65; margin-top: 8px; }
+.newyear .ghost { margin-top: 16px; border-color: rgba(239,230,214,.55); color: #F2E9DA; }
+.newyear .ghost small { color: #BFB3A0; }
+
+/* 가까운 날 → 먼 날 */
+.ladder { margin: 0 16px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; }
+.ld { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 16px; border-bottom: 1px solid var(--line); }
+.ld:last-child { border-bottom: 0; }
+.ld .hz { width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 19px; }
+.ld .a { font-size: 12px; font-weight: 800; color: var(--mute); }
+.ld .b { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; line-height: 1.45; margin-top: 2px; letter-spacing: -.02em; }
+.ld .c { font-size: 13px; font-weight: 800; color: var(--gold-deep); text-align: right; white-space: nowrap; }
+
+/* 무료 2칸 */
+.duo { margin: 12px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini { background: var(--card); border-radius: 16px; padding: 16px 14px 14px; border: 1px solid var(--line); }
+.mini .f { font-size: 11.5px; font-weight: 800; color: var(--gold-deep); }
+.mini .h { font-size: 16px; font-weight: 800; margin-top: 6px; line-height: 1.35; letter-spacing: -.02em; }
+.mini .s { font-size: 12.5px; color: var(--mute); margin-top: 6px; line-height: 1.45; }
+.mini .go { margin-top: 12px; font-size: 13.5px; font-weight: 800; }
+
+/* ── 고서 사주책 ── */
+.desk { margin: 0 16px; border-radius: 20px 20px 0 0; height: 328px; position: relative; overflow: hidden; background: #E9E0CD; }
+.desk .bg { position: absolute; inset: 0; background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/%EA%B9%80%ED%99%8D%EB%8F%84_%EA%B8%88%EA%B0%95%EC%82%AC%EA%B5%B0%EC%B2%A9_-_%EC%9E%A5%EC%95%88%EC%82%AC.jpg/1280px-%EA%B9%80%ED%99%8D%EB%8F%84_%EA%B8%88%EA%B0%95%EC%82%AC%EA%B5%B0%EC%B2%A9_-_%EC%9E%A5%EC%95%88%EC%82%AC.jpg') 40% 55% / cover no-repeat; opacity: .42; }
+.desk .bg:after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%); }
+.gobook { position: absolute; left: 50%; top: 34px; width: 172px; height: 238px; transform: translateX(-50%) rotate(-2.2deg); }
+.gobook .pages { position: absolute; left: -5px; top: 5px; right: 3px; bottom: -5px; border-radius: 2px; background: repeating-linear-gradient(90deg, #F1E8D4 0 1.5px, #DCCDAE 1.5px 2.4px); box-shadow: 0 22px 34px rgba(40,28,14,.32), 0 3px 6px rgba(40,28,14,.25); }
+.gcover { position: absolute; inset: 0; border-radius: 2px; background-color: #A98F62; background-image: radial-gradient(ellipse at 40% 35%, rgba(255,240,205,.16) 0%, rgba(120,84,36,0) 50%, rgba(78,54,24,.42) 100%), radial-gradient(ellipse at 75% 80%, rgba(70,48,20,.18) 0%, rgba(70,48,20,0) 45%), var(--neunghwa), var(--noise); background-blend-mode: normal, normal, multiply, multiply; overflow: hidden; }
+.gcover:after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 18px rgba(80,52,18,.45), inset 0 0 2px rgba(60,40,12,.6); }
+.jecheom { position: absolute; left: 14px; top: 14px; width: 36px; height: 132px; background: #F4EBD6; background-image: var(--noise); background-blend-mode: multiply; border: 1px solid #7E6338; box-shadow: inset 0 0 0 2px #F4EBD6, inset 0 0 0 2.8px rgba(126,99,56,.7); display: flex; align-items: center; justify-content: center; }
+.jecheom b { writing-mode: vertical-rl; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 17px; letter-spacing: .32em; color: #241B12; }
+.bind { position: absolute; right: 0; top: 0; bottom: 0; width: 20px; }
+.bind .ln { position: absolute; left: 7px; top: 0; bottom: 0; width: 1.8px; background: var(--thread); }
+.bind .h { position: absolute; left: 7px; right: 0; height: 1.8px; background: var(--thread); }
+.bind .h:before { content: ''; position: absolute; left: -2.5px; top: -2px; width: 5.5px; height: 5.5px; border-radius: 50%; background: #3A2A1A; }
+.pogak { position: absolute; right: 0; width: 18px; height: 18px; background: #3E2C1E; background-image: var(--noise); }
+.pogak.t { top: 0; border-bottom-left-radius: 2px; }
+.pogak.b { bottom: 0; border-top-left-radius: 2px; }
+.gcover .who { position: absolute; left: 60px; bottom: 16px; font-size: 10.5px; font-weight: 700; color: rgba(36,27,18,.72); line-height: 1.45; }
+.desk .cap { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600; }
+.bookbody { margin: 0 16px; background: var(--card); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 20px 20px; padding: 18px; }
+.bookbody .who { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; line-height: 1.45; letter-spacing: -.02em; }
+.bookbody .who em { font-style: normal; color: var(--gold-deep); }
+.bookbody .sub { font-size: 13px; color: var(--mute); margin-top: 6px; line-height: 1.5; }
+.daeun { margin-top: 16px; }
+.daeun .t { font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; }
+.daeun .t span { color: var(--mute); font-weight: 600; }
+.du { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 10px; }
+.du div { text-align: center; padding: 7px 0 6px; border-radius: 6px; background: var(--paper); font-size: 10.5px; color: var(--mute); }
+.du div b { display: block; font-family: 'Noto Serif KR', serif; font-size: 14px; color: var(--ink-2); font-weight: 700; line-height: 1.15; }
+.du .now { background: var(--ink); color: #CFC3AF; }
+.du .now b { color: #FFF8EA; }
+.du .nx { outline: 1.5px dashed var(--gold); outline-offset: -1.5px; }
+.daeun .note { font-size: 13.5px; color: var(--ink-2); margin-top: 10px; line-height: 1.6; }
+.toc { margin-top: 16px; padding: 0 14px 6px; }
+.toc li { list-style: none; display: grid; grid-template-columns: 22px 1fr; gap: 6px; padding: 11px 0; border-bottom: 1px solid rgba(92,78,60,.22); font-size: 14px; line-height: 1.5; }
+.toc li:last-child { border-bottom: 0; }
+.toc li .no { font-family: 'Noto Serif KR', serif; font-weight: 900; color: var(--seal); font-size: 13px; padding-top: 1px; }
+.toc li .ti { font-weight: 700; color: var(--ink); }
+.toc li .pv { display: block; font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.toc .more { font-size: 12.5px; color: var(--mute); text-align: center; display: block; grid-template-columns: none; }
+.keep { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+.keep span { font-size: 12px; color: var(--ink-2); background: var(--paper); border-radius: 999px; padding: 6px 10px; font-weight: 600; }
+.bookbody .cta { margin-top: 14px; }
+
+/* 고민 */
+.qs { margin: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.q { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 16px 14px; }
+.q .r1 { display: flex; align-items: flex-start; gap: 12px; }
+.q .hz { width: 38px; height: 38px; border-radius: 8px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; color: var(--ink); font-size: 17px; flex-shrink: 0; }
+.q .a { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.4; }
+.q .b { font-size: 12.5px; color: var(--mute); margin-top: 3px; }
+.q .fact { margin-top: 12px; background: var(--paper); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+.q .fact b { color: var(--ink); }
+.q .fact .tag { display: inline-block; font-size: 11px; font-weight: 800; color: var(--gold-deep); margin-right: 6px; }
+.q .r2 { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+.q .r2 .p { font-size: 14px; font-weight: 800; }
+.q .r2 .go { font-size: 14px; font-weight: 800; color: var(--gold-deep); }
+.q.small { padding: 14px 16px; }
+.q.small .r1 { align-items: center; }
+.q.small .pp { margin-left: auto; font-weight: 800; font-size: 14px; }
+.allq { margin: 12px 16px 0; text-align: center; font-size: 14px; font-weight: 700; color: var(--ink-2); padding: 12px; }
+
+/* 후기·강점 */
+.notice { margin: 0 16px 10px; font-size: 11.5px; color: var(--seal); font-weight: 700; }
+.revs { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 4px; scrollbar-width: none; }
+.revs::-webkit-scrollbar { display: none; }
+.rv { flex: 0 0 262px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.rv .why { font-size: 12px; font-weight: 800; color: var(--gold-deep); }
+.rv .qt { font-family: 'Noto Serif KR', serif; font-size: 15.5px; line-height: 1.6; margin-top: 8px; }
+.rv .who { font-size: 12px; color: var(--mute); margin-top: 12px; }
+.proof { margin: 14px 16px 0; border-top: 1px solid var(--line); }
+.proof li { list-style: none; display: flex; gap: 12px; padding: 13px 2px; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.55; }
+.proof li b { font-weight: 800; }
+.proof li span { color: var(--ink-2); }
+.proof li i { font-style: normal; font-family: 'Noto Serif KR', serif; font-weight: 900; color: var(--seal); width: 18px; flex-shrink: 0; }
+.credit { margin: 26px 22px 0; font-size: 11px; color: var(--mute); line-height: 1.6; }
+.pad { height: 110px; }
+.tabbar { position: sticky; bottom: 0; height: 78px; background: rgba(255,253,248,.97); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5,1fr); padding-bottom: 16px; margin-top: -78px; z-index: 5; }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--mute); }
+.tab svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab.on { color: var(--ink); font-weight: 800; }
+
+/* ===== 2. 오늘의 운세 결과 ===== */
+.daily .strip { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Gaehwasa_temple_by_Jeong_Seon.jpg/1280px-Gaehwasa_temple_by_Jeong_Seon.jpg'); background-size: 150% auto; background-position: 22% 24%; }
+.dhead { padding: 0 22px; margin-top: -54px; position: relative; z-index: 2; }
+.score { display: flex; align-items: flex-end; gap: 12px; margin-top: 14px; }
+.score b { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 64px; line-height: .85; letter-spacing: -.04em; }
+.score span { font-size: 13.5px; color: var(--ink-2); padding-bottom: 5px; line-height: 1.45; }
+.verdict { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; line-height: 1.45; margin-top: 14px; letter-spacing: -.02em; }
+.tl { margin: 34px 22px 0; position: relative; }
+.tl .b { display: grid; grid-template-columns: 2fr 2fr 1.4fr 2fr 2fr; gap: 3px; }
+.tl .b div { height: 10px; border-radius: 3px; }
+.tl .l { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--mute); margin-top: 6px; }
+.tl .pin { position: absolute; left: 51%; top: -26px; font-size: 11.5px; font-weight: 800; color: var(--seal); white-space: nowrap; transform: translateX(-50%); }
+.tl .pin:after { content: ''; position: absolute; left: 50%; top: 17px; width: 1px; height: 10px; background: var(--seal); }
+
+/* ===== 3. 결제 확인 시트 ===== */
+.dim { position: absolute; inset: 0; background: rgba(26,22,18,.48); z-index: 6; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; border-radius: 22px 22px 0 0; background: var(--hanji); background-image: var(--fiber), var(--noise); background-blend-mode: multiply; padding: 10px 20px 26px; }
+.sheet .handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(75,66,56,.3); margin: 0 auto 14px; }
+.sheet .pansim { margin: 0 -20px; }
+.sheet h3 { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 16px; }
+.sheet .fact { margin-top: 10px; font-size: 14px; line-height: 1.65; color: var(--ink-2); }
+.sheet .fact b { color: var(--ink); }
+.sheet ol { margin-top: 14px; border-top: 1px solid rgba(92,78,60,.3); }
+.sheet li { list-style: none; display: flex; gap: 10px; padding: 9px 2px; border-bottom: 1px solid rgba(92,78,60,.18); font-size: 14.5px; font-weight: 600; }
+.sheet li i { font-style: normal; font-family: 'Noto Serif KR', serif; font-weight: 900; color: var(--seal); width: 16px; }
+.sheet .time { font-size: 12.5px; color: var(--mute); margin-top: 10px; line-height: 1.5; }
+.sheet .bal { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; background: rgba(255,253,248,.7); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.sheet .bal b { font-weight: 800; }
+.sheet .bal .need { color: var(--seal); font-weight: 800; }
+.sheet .cta { margin-top: 14px; }
+.sheet .sub2 { text-align: center; font-size: 12.5px; color: var(--mute); margin-top: 9px; }
+
+/* ===== 4. 연애운 결과 ===== */
+.love .strip { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/%EA%B9%80%ED%99%8D%EB%8F%84_%EA%B8%88%EA%B0%95%EC%82%AC%EA%B5%B0%EC%B2%A9_-_%EC%9E%A5%EC%95%88%EC%82%AC.jpg/1280px-%EA%B9%80%ED%99%8D%EB%8F%84_%EA%B8%88%EA%B0%95%EC%82%AC%EA%B5%B0%EC%B2%A9_-_%EC%9E%A5%EC%95%88%EC%82%AC.jpg'); background-size: 170% auto; background-position: 30% 30%; }
+.lhead { padding: 0 22px; margin-top: -50px; position: relative; z-index: 2; }
+.lhead .k { font-size: 13px; color: var(--ink-2); font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.lhead .k .seal { width: 30px; height: 30px; font-size: 14px; background: rgba(255,253,248,.6); }
+.lhead h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; letter-spacing: -.03em; margin-top: 10px; }
+.conc { margin: 18px 16px 0; padding: 0 18px 18px; }
+.conc .pansim { margin: 0 -18px 14px; }
+.conc p { font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.75; letter-spacing: -.01em; }
+.stats { margin: 12px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.stat .a { font-size: 12px; color: var(--mute); font-weight: 700; }
+.stat .b { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; margin-top: 4px; }
+.stat .c { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><symbol id="eomi" viewBox="0 0 16 9"><path d="M0 0h16v4.2L8 9 0 4.2z" fill="#4B4238"/></symbol><symbol id="eomi2" viewBox="0 0 16 9"><path d="M0 9h16V4.8L8 0 0 4.8z" fill="#4B4238"/></symbol><symbol id="lk" viewBox="0 0 11 12"><rect x="1" y="5" width="9" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 5V3.5a2.5 2.5 0 015 0V5" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol></defs></svg>
+<div class="stage">
+
+<!-- ═══════════ 1. 홈 ═══════════ -->
+<div>
+  <div class="label">① 홈 — 오늘 예고 · 신년(제철) · 가까운 날→먼 날 · 고서 사주책 · 고민</div>
+  <div class="phone" id="p1">
+    <div class="top"><div class="logo"><i>命</i>사주500</div><div class="un">1.2운<span>충전</span></div></div>
+    <section class="hero">
+      <div class="art"></div>
+      <div class="body">
+        <div class="date"><span class="seal">丁巳</span>10월 10일 · 서윤님의 오늘</div>
+        <div class="hook">오후 3시 반부터는<br><u>결정을 미루세요.</u></div>
+        <div class="tease">그 전에 <b>꼭 만나야 할 사람</b>이 있어요 — <span class="blur">말수가 적고 단단한 사람</span><span class="lock"><svg width="11" height="12"><use href="#lk"/></svg>잠김</span></div>
+        <div class="cta">오늘 운세 전부 열기 <small>무료</small></div>
+        <div class="under">오늘 1회 무료 · 결제 없이 바로 열려요</div>
+      </div>
+    </section>
+
+    <!-- 신년운세 — 10월~1월 제철 -->
+    <section class="newyear">
+      <div class="art"></div>
+      <div class="in">
+        <div class="yr"><b>丁未</b><span>2027년 · 정미년</span></div>
+        <div class="t">2027년, 서윤님에게<br>재물의 별이 들어옵니다</div>
+        <p>정미년의 未는 서윤님(乙)에게 재물의 별이에요. 열두 달 중 언제 들어오고 언제 새는지, 달마다 좋은 날까지 짚어 드려요.</p>
+        <div class="ghost">2027 신년운세 보기 <small>· 7운</small></div>
+      </div>
+    </section>
+
+    <!-- 가까운 날 → 먼 날 -->
+    <div class="h-sec"><div class="k">가까운 날부터 먼 날까지</div><h2>서윤님 운, 기간별로</h2></div>
+    <div class="ladder">
+      <div class="ld"><span class="hz">週</span><div><div class="a">이번 주 · 7일</div><div class="b">화요일(13일)은 연인의 별과<br>짝이 맞는 날</div></div><span class="c">5운 ›</span></div>
+      <div class="ld"><span class="hz">月</span><div><div class="a">11월 · 己亥월</div><div class="b">사주에 삼합(亥卯未)이<br>완성되는 달 — 1년에 한 번</div></div><span class="c">7운 ›</span></div>
+      <div class="ld"><span class="hz">緣</span><div><div class="a">12월 7일부터 · D-58</div><div class="b">인연의 문이 열리는 달</div></div><span class="c">연애운 3운 ›</span></div>
+    </div>
+
+    <div class="duo">
+      <div class="mini"><div class="f">오늘 무료</div><div class="h">어젯밤 꿈,<br>무슨 뜻일까</div><div class="s">꿈 단어만 적으면 내 사주로 풀어요</div><div class="go">꿈 풀기 ›</div></div>
+      <div class="mini"><div class="f">오늘 1번 무료</div><div class="h">내 사주에게<br>직접 물어보기</div><div class="s">"그 사람 연락 올까요?" 같은 질문도</div><div class="go">물어보기 ›</div></div>
+    </div>
+
+    <!-- 고서 사주책 -->
+    <div class="h-sec"><div class="k">평생 한 번 읽는 풀이 · 종합사주</div><h2>서윤님 인생이 한 권에</h2></div>
+    <div class="desk">
+      <div class="bg"></div>
+      <div class="gobook">
+        <div class="pages"></div>
+        <div class="gcover">
+          <div class="jecheom"><b>乙未命書</b></div>
+          <div class="bind"><div class="ln"></div><div class="h" style="top:9%"></div><div class="h" style="top:28%"></div><div class="h" style="top:49.5%"></div><div class="h" style="top:71%"></div><div class="h" style="top:90%"></div></div>
+          <i class="pogak t"></i><i class="pogak b"></i>
+                  </div>
+      </div>
+      <div class="cap">서윤 · 癸酉生 — 8글자로 엮은 열 장</div>
+    </div>
+    <section class="bookbody">
+      <div class="who">서윤님은 <em>한여름 들녘에 고개 숙인 곡식</em>으로 태어났어요.</div>
+      <div class="sub">乙未일주 — 이 한 줄에서 시작해 돈·사랑·일·건강까지 열 장으로 풀어요.</div>
+      <div class="daeun">
+        <div class="t">10년마다 바뀌는 운 <span>지금 · 다음</span></div>
+        <div class="du">
+          <div><b>戊午</b>8세</div><div><b>己未</b>18세</div><div class="now"><b>庚申</b>28세</div><div class="nx"><b>辛酉</b>38세</div><div><b>壬戌</b>48세</div><div><b>癸亥</b>58세</div><div><b>甲子</b>68세</div><div><b>乙丑</b>78세</div>
+        </div>
+        <div class="note">지금은 <b>庚申 대운</b>(28~37세). 다음 10년이 바뀌는 해는 <b>2030년</b>이에요. 인생에서 가장 좋은 10년은 <span class="blur">48세부터 시작되는 壬戌</span><span class="lock"><svg width="11" height="12"><use href="#lk"/></svg>잠김</span></div>
+      </div>
+      <div class="gwang" style="margin-top:16px">
+        <div class="pansim"><svg><use href="#eomi"/></svg>乙未命書 · 目次<svg><use href="#eomi2"/></svg></div>
+        <ul class="toc">
+          <li><span class="no">一</span><span><span class="ti">진짜 강점 3 · 빠지기 쉬운 함정 3</span><span class="pv">첫 번째 함정 — <span class="blur">좋은 사람으로 남으려다 손해를 떠안는</span> 패턴</span></span></li>
+          <li><span class="no">二</span><span><span class="ti">돈·사랑·일·건강·사람·공부 점수</span><span class="pv">가장 강한 영역 <span class="blur">재물 84</span> · 가장 약한 영역 <span class="blur">건강 58</span></span></span></li>
+          <li><span class="no">三</span><span><span class="ti">나에게 부족한 기운과 채우는 법</span><span class="pv">색 · 방위 · 계절 · 습관까지</span></span></li>
+          <li><span class="no">四</span><span><span class="ti">오늘부터 바꿀 다섯 가지</span><span class="pv">읽고 끝나지 않게, 할 일로 정리해 드려요</span></span></li>
+          <li class="more">+ 원국 · 십성 · 대운 · 신살 · 올해 흐름 등 여섯 장 더</li>
+        </ul>
+      </div>
+      <div class="keep"><span>한 번 사면 평생 보관</span><span>PDF로 저장</span><span>다 읽고 궁금한 건 바로 질문</span></div>
+      <div class="cta">내 사주책 펼치기 <small>10운</small></div>
+    </section>
+
+    <!-- 고민 -->
+    <div class="h-sec"><div class="k">요즘 많이 찾는 고민</div><h2>지금 마음에 걸리는 게 있다면</h2></div>
+    <div class="qs">
+      <div class="q">
+        <div class="r1"><span class="hz">緣</span><div><div class="a">그 사람, 내 사람일까</div><div class="b">연애운 · 인연이 오는 달과 알아보는 법</div></div></div>
+        <div class="fact"><span class="tag">서윤님 사주</span>연인의 별이 <b>1개(酉)</b> 있어요. 12월엔 <b>하나가 더</b> 들어와요.</div>
+        <div class="r2"><span class="p">3운</span><span class="go">내 연애운 보기 ›</span></div>
+      </div>
+      <div class="q">
+        <div class="r1"><span class="hz">復</span><div><div class="a">헤어진 그 사람, 다시 올까</div><div class="b">재회운 · 재회 가능성 판정과 연락할 달</div></div></div>
+        <div class="fact"><span class="tag">함께 넣으면</span>그 사람 생일을 넣으면 <b>두 사주를 같이</b> 놓고, 다시 닿는 달을 짚어 드려요.</div>
+        <div class="r2"><span class="p">3운</span><span class="go">재회운 보기 ›</span></div>
+      </div>
+      <div class="q">
+        <div class="r1"><span class="hz">進</span><div><div class="a">이번엔 붙을까, 옮겨도 될까</div><div class="b">합격·이직운 · 결과가 나오는 달</div></div></div>
+        <div class="fact"><span class="tag">서윤님 사주</span>태어난 해(癸酉)에 <b>시험·자리의 별과 공부의 별</b>이 나란히 있어요.</div>
+        <div class="r2"><span class="p">1운</span><span class="go">합격·이직운 보기 ›</span></div>
+      </div>
+      <div class="q small"><div class="r1"><span class="hz">財</span><div><div class="a">왜 돈이 안 모일까</div><div class="b">재물의 별 2개 · 둘 다 큰돈이 오가는 별(편재)</div></div><span class="pp">3운</span></div></div>
+      <div class="q small"><div class="r1"><span class="hz">合</span><div><div class="a">그 사람과 나, 잘 맞을까</div><div class="b">궁합 · 두 사람 8글자를 겹쳐 봐요</div></div><span class="pp">1운</span></div></div>
+      <div class="q small"><div class="r1"><span class="hz">婚</span><div><div class="a">이 사람과 결혼해도 될까</div><div class="b">결혼운 · 결혼 적기와 배우자 성향</div></div><span class="pp">1운</span></div></div>
+    </div>
+    <div class="allq">고민 10가지 전부 보기 ›</div>
+
+    <div class="h-sec"><div class="k">먼저 본 사람들</div><h2>읽어본 사람들이 남긴 말</h2></div>
+    <div class="notice">시안 표시 — 아래 문장은 자리 예시. 실제 구매자 후기(노출 동의분)로만 채웁니다.</div>
+    <div class="revs">
+      <div class="rv"><div class="why">태어난 시간까지 반영</div><div class="qt">"친구랑 생년월일이 같은데, 태어난 시간 넣으니까 풀이가 완전히 달랐어요."</div><div class="who">구매자 · 종합사주 · 10월</div></div>
+      <div class="rv"><div class="why">읽다 궁금하면 바로 질문</div><div class="qt">"결과에 나온 12월 얘기를 대화로 더 물어봤는데, 앞 내용이랑 이어서 답해줘요."</div><div class="who">구매자 · 연애운 · 10월</div></div>
+    </div>
+    <ul class="proof">
+      <li><i>一</i><span><b>태어난 시간을 30분 단위로 보정</b>해요. 서울과 표준시의 차이까지 맞춰 8글자를 세웁니다.</span></li>
+      <li><i>二</i><span><b>달과 시간대는 만세력으로 계산</b>해요. 오늘의 일진, 이번 달 간지를 내 8글자와 직접 맞춰 봅니다.</span></li>
+      <li><i>三</i><span><b>한 번 산 풀이는 평생 보관</b>돼요. 다시 열 때 운이 들지 않아요.</span></li>
+    </ul>
+    <div class="credit">그림 · 정선 「개화사」「인왕제색도」, 김홍도 「금강사군첩 — 장안사」 (공유마당 · 저작권 만료 저작물)</div>
+    <div class="pad"></div>
+    <nav class="tabbar"><div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg>홈</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>사주대화</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-3.8L6 20V5a1 1 0 0 1 1-1z"/></svg>보관함</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M4 9h16v4H4zM5.5 13h13v7h-13zM12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg>이벤트</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/></svg>내 정보</div></nav>
+  </div>
+</div>
+
+<!-- ═══════════ 2. 오늘의 운세 결과 ═══════════ -->
+<div>
+  <div class="label">② 오늘의 운세 결과 — 같은 그림띠 · 같은 섹션 머리</div>
+  <div class="phone daily" id="p2">
+    <div class="bar">오늘의 운세<span class="r">공유</span></div>
+    <div class="strip"></div>
+    <div class="dhead">
+      <div class="date"><span class="seal">丁巳</span>10월 10일 · 서윤님의 오늘</div>
+      <div class="score"><b>64</b><span>오늘 운<br>100점 중</span></div>
+      <div class="verdict">오늘은 정하지 말고,<br>알아보는 날입니다.</div>
+    </div>
+    <div class="tl">
+      <div class="pin">3시 반부터 주의</div>
+      <div class="b"><div style="background:#4B4238"></div><div style="background:#7A6E5E"></div><div style="background:#B3A893"></div><div style="background:#A23A2A"></div><div style="background:#6E2A20"></div></div>
+      <div class="l"><span>아침</span><span>점심</span><span>오후</span><span>저녁</span><span>밤</span></div>
+    </div>
+    <div style="height:18px"></div>
+    <div class="sec">
+      <div class="shead"><span class="no">一</span><span class="ti">오늘의 결</span><span class="hj">日柱</span></div>
+      <p>丁巳일은 서윤님(乙)에게 <strong class="hl">말과 표현의 기운이 강하게 들어오는 날</strong>이에요. 미뤄 둔 연락, 부탁, 설명은 오전에 끝내세요. 오후 3시 반부터는 같은 말도 날카롭게 들려서, <strong class="hl">새 약속과 큰 결정은 내일로</strong> 넘기는 게 맞습니다.</p>
+    </div>
+    <div class="sec fold"><div class="shead"><span class="no">二</span><span class="ti">오늘의 시간 흐름</span><span class="hj">時運</span></div></div>
+    <div class="sec fold"><div class="shead"><span class="no">三</span><span class="ti">오늘 만나는 사람</span><span class="hj">人緣</span></div></div>
+    <div class="sec fold"><div class="shead"><span class="no">四</span><span class="ti">오늘의 행동 처방</span><span class="hj">處方</span></div></div>
+    <div class="sec fold"><div class="shead"><span class="no">五</span><span class="ti">오늘의 럭키</span><span class="hj">吉物</span></div></div>
+    <div style="height:40px"></div>
+  </div>
+</div>
+
+<!-- ═══════════ 3. 결제 확인 ═══════════ -->
+<div>
+  <div class="label">③ 결제 확인 — 무엇을 받는지 먼저, 버튼은 하나</div>
+  <div class="phone love" id="p3">
+    <div class="bar">연애운</div>
+    <div class="strip"></div>
+    <div class="lhead"><div class="k"><span class="seal">緣</span>연애운</div><h1>그 사람, 내 사람일까</h1></div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div class="handle"></div>
+      <div class="pansim"><svg><use href="#eomi"/></svg>緣 · 戀愛運<svg><use href="#eomi2"/></svg></div>
+      <h3>서윤님 연애운을 열까요?</h3>
+      <div class="fact">연인의 별이 <b>1개(酉)</b>, 12월(庚子월)엔 <b>서윤님과 짝을 이루는 별</b>이 하나 더 들어와요. 이 흐름을 다섯 장으로 풀어요.</div>
+      <ol>
+        <li><i>一</i>나의 연애 스타일</li>
+        <li><i>二</i>사주 궁합이 잘 맞는 이성</li>
+        <li><i>三</i>인연이 시작되는 시기와 장소</li>
+        <li><i>四</i>연애 중 반복되는 패턴</li>
+        <li><i>五</i>올해 연애 흐름과 전략</li>
+      </ol>
+      <div class="time">첫 풀이는 20초쯤 뜨고, 전체는 2분 안팎이에요 — 위에서부터 차례로 채워져요. 다 읽고 궁금한 건 사주대화로 이어서 물어볼 수 있어요.</div>
+      <div class="bal"><span>내 운 <b>1.2운</b></span><span class="need">1.8운 모자라요</span></div>
+      <div class="cta">충전하고 바로 열기 <small>3운</small></div>
+      <div class="sub2">충전이 끝나면 이 화면으로 돌아와 바로 열려요</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 4. 연애운 결과 ═══════════ -->
+<div>
+  <div class="label">④ 연애운 결과 — 결론은 고서 한 쪽처럼</div>
+  <div class="phone love" id="p4">
+    <div class="bar">연애운<span class="r">공유</span></div>
+    <div class="strip"></div>
+    <div class="lhead"><div class="k"><span class="seal">緣</span>서윤님의 연애운 · 솔로</div><h1>12월, 인연이 시작됩니다</h1></div>
+    <div class="conc gwang">
+      <div class="pansim"><svg><use href="#eomi"/></svg>結 論<svg><use href="#eomi2"/></svg></div>
+      <p>12월(庚子월)에 들어오는 庚은 서윤님(乙)과 <strong class="hl">짝을 이루는 연인의 별</strong>이에요. 11월까지는 사람을 넓게 만나고, <strong class="hl">마음을 정하는 건 12월로</strong> 미루세요.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="a">인연 시작 유력 시기</div><div class="b">12월</div><div class="c">庚子월 · 乙庚합</div></div>
+      <div class="stat"><div class="a">인연을 만날 곳</div><div class="b" style="font-size:18px;line-height:1.3">일로 엮인 자리</div><div class="c">모임보다 일터·배움터</div></div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="sec">
+      <div class="shead"><span class="no">一</span><span class="ti">나의 연애 스타일</span><span class="hj">戀愛</span></div>
+      <p>乙木은 덩굴처럼 기대어 자라는 기운이에요. 서윤님은 <strong class="hl">먼저 다가가기보다, 믿을 만한 사람인지 오래 지켜본 뒤 마음을 여는</strong> 연애를 합니다.</p>
+    </div>
+    <div class="sec fold"><div class="shead"><span class="no">二</span><span class="ti">사주 궁합이 잘 맞는 이성</span><span class="hj">配合</span></div></div>
+    <div class="sec fold"><div class="shead"><span class="no">三</span><span class="ti">인연이 시작되는 시기와 장소</span><span class="hj">時處</span></div></div>
+    <div style="height:40px"></div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
