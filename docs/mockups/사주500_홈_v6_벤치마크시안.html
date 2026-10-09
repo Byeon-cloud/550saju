@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>사주500 홈 v6 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+/* ── 토큰 (벤치마크 결론: 종이·먹·골드 1개 + 흙빛 오행) ── */
+:root {
+  --paper: #F7F4EE;   /* 바탕 */
+  --surface: #FFFFFF; /* 카드 */
+  --ink: #1A1A1A;     /* 본문 */
+  --ink-2: #4A4540;   /* 보조 본문 */
+  --mute: #8A8278;    /* 설명 */
+  --line: #E7E1D6;    /* 구분선 */
+  --gold: #B8965A;    /* 강조 1색 */
+  --gold-deep: #8C6D3D;
+  --gold-soft: #F3ECDD;
+  --night: #1F1C18;   /* 프리미엄 면 */
+  /* 오행 — 원색 대신 흙빛 (종이 위 인주·먹 느낌) */
+  --wood: #5F7D5B; --fire: #B0513C; --earth: #A9874B; --metal: #8C8A82; --water: #3F5A72;
+  --r-lg: 16px; --r-md: 12px; --r-sm: 8px;
+  --shadow: 0 1px 2px rgba(26,26,26,.04), 0 4px 16px rgba(26,26,26,.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Pretendard, -apple-system, sans-serif; background: #EDE9E1; color: var(--ink); -webkit-font-smoothing: antialiased; }
+.serif { font-family: 'Noto Serif KR', serif; }
+.stage { display: flex; gap: 40px; justify-content: center; align-items: flex-start; padding: 40px 16px; flex-wrap: wrap; }
+
+/* ── 폰 ── */
+.phone { width: 375px; min-height: 812px; background: var(--paper); border-radius: 36px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.18); position: relative; }
+.scroll { padding-bottom: 96px; }
+.topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 17px; letter-spacing: -.02em; }
+.seal { width: 26px; height: 26px; border-radius: 7px; background: var(--fire); color: #fff; display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 14px; }
+.chip { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.chip b { color: var(--gold-deep); }
+.chip span { color: var(--mute); font-weight: 600; }
+
+.greet { padding: 4px 20px 12px; font-size: 13px; color: var(--mute); }
+
+/* 오늘의 한 줄 (Co-Star 식 단정 한 문장 + 할 것/피할 것) */
+.today { margin: 0 16px; background: var(--surface); border-radius: var(--r-lg); padding: 22px 20px 18px; box-shadow: var(--shadow); }
+.today .meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--mute); margin-bottom: 14px; }
+.today .meta .free { color: var(--gold-deep); font-weight: 700; }
+.today h2 { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 24px; line-height: 1.42; letter-spacing: -.02em; }
+.today .why { margin-top: 10px; font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+.dodont { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.dodont div { border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; font-size: 13px; line-height: 1.45; }
+.dodont dt { font-size: 11px; color: var(--mute); margin-bottom: 3px; }
+.btn { display: flex; align-items: center; justify-content: center; height: 52px; border-radius: var(--r-md); font-size: 16px; font-weight: 700; border: 0; width: 100%; cursor: pointer; }
+.btn-ink { background: var(--ink); color: #fff; margin-top: 16px; }
+
+/* 리스트 행 (TDS ListRow 식) */
+.rows { margin: 12px 16px 0; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; min-height: 64px; }
+.row + .row { border-top: 1px solid var(--line); }
+.row .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 16px; background: var(--gold-soft); color: var(--gold-deep); flex-shrink: 0; }
+.row .tx { flex: 1; min-width: 0; }
+.row .t1 { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.row .t2 { font-size: 13px; color: var(--mute); margin-top: 2px; }
+.row .rt { font-size: 13px; color: var(--mute); white-space: nowrap; }
+.row .rt.gold { color: var(--gold-deep); font-weight: 700; }
+.chev { color: #C9C2B6; font-size: 18px; margin-left: 2px; }
+
+.sec { padding: 28px 20px 10px; display: flex; justify-content: space-between; align-items: baseline; }
+.sec h3 { font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+.sec a { font-size: 13px; color: var(--mute); text-decoration: none; }
+
+/* 내 사주 맞춤 주제 3 */
+.pick .score { width: 44px; text-align: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 22px; color: var(--ink); flex-shrink: 0; }
+.pick .score small { display: block; font-family: Pretendard, sans-serif; font-size: 11px; font-weight: 600; color: var(--mute); margin-top: 1px; }
+.pick .t2 { color: var(--ink-2); }
+
+/* 종합사주 (밤 먹색 면 한 장 · 워터마크 없이 인장 1개) */
+.prem { margin: 12px 16px 0; background: var(--night); color: #F4EFE6; border-radius: var(--r-lg); padding: 22px 20px 20px; }
+.prem .top { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #BFB3A0; }
+.prem .top .s { width: 22px; height: 22px; border-radius: 6px; background: var(--gold); color: var(--night); display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 12px; }
+.prem h3 { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; line-height: 1.4; margin-top: 12px; letter-spacing: -.02em; }
+.prem p { font-size: 13px; color: #CFC6B8; line-height: 1.6; margin-top: 8px; }
+.prem .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+.prem .price { font-size: 14px; color: #E9DFC9; font-weight: 700; }
+.prem .go { height: 44px; padding: 0 18px; border-radius: var(--r-md); background: var(--gold); color: var(--night); font-weight: 800; font-size: 15px; display: flex; align-items: center; }
+
+/* 주제 전체 — 10개 다 보이는 2열 */
+.grid { margin: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--surface); border-radius: var(--r-md); padding: 14px; box-shadow: var(--shadow); display: flex; gap: 10px; align-items: center; min-height: 64px; }
+.tile .h { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 15px; color: #fff; flex-shrink: 0; }
+.tile .n { font-size: 14px; font-weight: 700; }
+.tile .p { font-size: 12px; color: var(--mute); margin-top: 1px; }
+.new { display: inline-block; font-size: 10.5px; font-weight: 800; color: var(--fire); margin-left: 4px; letter-spacing: .02em; }
+
+.footer { padding: 28px 20px 12px; font-size: 12px; color: var(--mute); line-height: 1.6; text-align: center; }
+
+/* 탭바 (TDS 내비 식 · 가운데 과장 없음) */
+.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 76px; background: rgba(255,255,255,.96); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: 14px; }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--mute); }
+.tab .i { width: 22px; height: 22px; border-radius: 6px; border: 1.8px solid currentColor; }
+.tab.on { color: var(--ink); font-weight: 700; }
+
+/* ── 토큰 시트 ── */
+.sheet { width: 420px; background: #fff; border-radius: 20px; padding: 28px; box-shadow: 0 10px 40px rgba(0,0,0,.08); }
+.sheet h4 { font-size: 13px; color: var(--mute); font-weight: 700; margin: 22px 0 10px; }
+.sheet h4:first-child { margin-top: 0; }
+.sheet .title { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+.sw { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.sw div { font-size: 11px; color: var(--ink-2); }
+.sw i { display: block; height: 40px; border-radius: 10px; margin-bottom: 4px; border: 1px solid rgba(0,0,0,.06); }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: var(--ink-2); }
+.cmp .t { display: flex; gap: 4px; }
+.cmp .t span { width: 36px; height: 44px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 18px; }
+.scale div { display: flex; align-items: baseline; gap: 12px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.scale code { font-size: 11px; color: var(--mute); width: 64px; flex-shrink: 0; }
+.rules li { font-size: 13px; color: var(--ink-2); line-height: 1.6; margin-left: 16px; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ═══ 홈 v6 시안 ═══ -->
+  <div class="phone" id="phone">
+    <div class="scroll">
+      <div class="topbar">
+        <div class="brand"><span class="seal">命</span>사주500</div>
+        <div class="chip">운 <b>1.2</b><span>· 충전</span></div>
+      </div>
+      <div class="greet">서윤님, 10월 10일 정사일이에요</div>
+
+      <!-- 오늘의 한 줄 -->
+      <section class="today">
+        <div class="meta"><span>오늘의 운세</span><span class="free">오늘 1회 무료</span></div>
+        <h2>오늘은 정하지 말고,<br>알아보는 날입니다.</h2>
+        <p class="why">정사일의 불 기운이 서윤님 乙木의 판단을 서두르게 해요. 결정은 내일로 미루고 오늘은 정보만 모으세요.</p>
+        <dl class="dodont">
+          <div><dt>할 것</dt><dd>공부 · 비교 · 기록</dd></div>
+          <div><dt>피할 것</dt><dd>서명 · 큰 지출</dd></div>
+        </dl>
+        <button class="btn btn-ink">오늘 풀이 전체 보기</button>
+      </section>
+
+      <!-- 꿈해몽: 큰 카드 대신 한 줄 -->
+      <div class="rows">
+        <div class="row">
+          <div class="ic">夢</div>
+          <div class="tx"><div class="t1">어젯밤 꿈, 내 사주로 풀기</div><div class="t2">꿈 단어만 적으면 돼요</div></div>
+          <div class="rt gold">무료</div><span class="chev">›</span>
+        </div>
+      </div>
+
+      <!-- 내 사주 맞춤 주제 (Value First · 개인화) -->
+      <div class="sec"><h3>서윤님 사주에서 지금 짚을 주제</h3></div>
+      <div class="rows pick">
+        <div class="row">
+          <div class="score">77<small>연애</small></div>
+          <div class="tx"><div class="t1">연애운</div><div class="t2">12월에 인연의 문이 열려요</div></div>
+          <div class="rt">3운</div><span class="chev">›</span>
+        </div>
+        <div class="row">
+          <div class="score">72<small>합격</small></div>
+          <div class="tx"><div class="t1">합격·이직운</div><div class="t2">올해 변동이 실제로 움직여요</div></div>
+          <div class="rt">1운</div><span class="chev">›</span>
+        </div>
+        <div class="row">
+          <div class="score">61<small>재물</small></div>
+          <div class="tx"><div class="t1">재물운</div><div class="t2">들어오는 만큼 새는 자리가 보여요</div></div>
+          <div class="rt">3운</div><span class="chev">›</span>
+        </div>
+      </div>
+
+      <!-- 종합사주: 한 장, 한 메시지 -->
+      <section class="prem">
+        <div class="top"><span class="s">命</span>종합사주 · 10섹션</div>
+        <h3>처음부터 끝까지,<br>내 사주 한 권.</h3>
+        <p>성격·관계·일·돈·대운까지 한 번에 읽고, PDF로 간직해요.</p>
+        <div class="foot"><span class="price">10운</span><span class="go">읽어보기</span></div>
+      </section>
+
+      <!-- 주제 전체: 10개 다 보이게 -->
+      <div class="sec"><h3>주제별로 깊게</h3><a>주제당 1운부터</a></div>
+      <div class="grid">
+        <div class="tile"><span class="h" style="background:var(--fire)">緣</span><div><div class="n">연애운</div><div class="p">3운</div></div></div>
+        <div class="tile"><span class="h" style="background:#9B5B6B">復</span><div><div class="n">재회운</div><div class="p">3운</div></div></div>
+        <div class="tile"><span class="h" style="background:#8E6A86">婚</span><div><div class="n">결혼운</div><div class="p">1운</div></div></div>
+        <div class="tile"><span class="h" style="background:var(--earth)">財</span><div><div class="n">재물운</div><div class="p">3운</div></div></div>
+        <div class="tile"><span class="h" style="background:var(--water)">進</span><div><div class="n">합격·이직운</div><div class="p">1운</div></div></div>
+        <div class="tile"><span class="h" style="background:#6E6A5F">業</span><div><div class="n">사업운</div><div class="p">1운</div></div></div>
+        <div class="tile"><span class="h" style="background:var(--wood)">壽</span><div><div class="n">건강운</div><div class="p">1운</div></div></div>
+        <div class="tile"><span class="h" style="background:#5C7A86">移</span><div><div class="n">이사·이동운</div><div class="p">1운</div></div></div>
+        <div class="tile"><span class="h" style="background:#7A6A9A">學</span><div><div class="n">학업운</div><div class="p">1운</div></div></div>
+        <div class="tile"><span class="h" style="background:#4F5E78">官</span><div><div class="n">직업운</div><div class="p">1운</div></div></div>
+      </div>
+
+      <!-- 기간·관계 -->
+      <div class="sec"><h3>기간과 관계로 보기</h3></div>
+      <div class="rows">
+        <div class="row"><div class="ic">歲</div><div class="tx"><div class="t1">2027 신년운세<span class="new">NEW</span></div><div class="t2">열두 달과 달마다 좋은 날</div></div><div class="rt">7운</div><span class="chev">›</span></div>
+        <div class="row"><div class="ic">合</div><div class="tx"><div class="t1">궁합<span class="new">NEW</span></div><div class="t2">그 사람과 맞물리는 자리</div></div><div class="rt">1운</div><span class="chev">›</span></div>
+        <div class="row"><div class="ic">週</div><div class="tx"><div class="t1">주간운세</div><div class="t2">오늘부터 7일</div></div><div class="rt">5운</div><span class="chev">›</span></div>
+        <div class="row"><div class="ic">月</div><div class="tx"><div class="t1">월운세</div><div class="t2">고른 달을 깊게</div></div><div class="rt">7운</div><span class="chev">›</span></div>
+      </div>
+
+      <div class="footer">명리 원전과 정확한 만세력으로 풀어요.<br>사업자 정보 · 이용약관 · 개인정보처리방침</div>
+    </div>
+    <nav class="tabbar">
+      <div class="tab on"><span class="i"></span>홈</div>
+      <div class="tab"><span class="i"></span>사주대화</div>
+      <div class="tab"><span class="i"></span>보관함</div>
+      <div class="tab"><span class="i"></span>이벤트</div>
+      <div class="tab"><span class="i"></span>내 정보</div>
+    </nav>
+  </div>
+
+  <!-- ═══ 토큰 시트 ═══ -->
+  <div class="sheet">
+    <div class="title">디자인 기준 (안)</div>
+    <h4>기본 색 7 — 지금 HEX 422개 · rgba 432개를 여기로</h4>
+    <div class="sw">
+      <div><i style="background:var(--paper)"></i>바탕</div>
+      <div><i style="background:var(--surface)"></i>카드</div>
+      <div><i style="background:var(--ink)"></i>먹</div>
+      <div><i style="background:var(--mute)"></i>설명</div>
+      <div><i style="background:var(--line)"></i>선</div>
+      <div><i style="background:var(--gold)"></i>골드</div>
+      <div><i style="background:var(--gold-deep)"></i>골드 진</div>
+      <div><i style="background:var(--night)"></i>밤</div>
+    </div>
+    <h4>오행 — 원색(Material) 대신 흙빛</h4>
+    <div class="cmp">
+      <div>지금<div class="t"><span style="background:#D32F2F">丙</span><span style="background:#2E7D32">甲</span><span style="background:#E8B82A">戊</span><span style="background:#757575">庚</span><span style="background:#1565C0">壬</span></div></div>
+      <div>시안<div class="t"><span style="background:var(--fire)">丙</span><span style="background:var(--wood)">甲</span><span style="background:var(--earth)">戊</span><span style="background:var(--metal)">庚</span><span style="background:var(--water)">壬</span></div></div>
+    </div>
+    <h4>글자 6단계 — 지금 약 50종</h4>
+    <div class="scale">
+      <div><code>28 명조</code><span class="serif" style="font-size:28px;font-weight:700">오늘의 한 줄</span></div>
+      <div><code>22 명조</code><span class="serif" style="font-size:22px;font-weight:700">결론 제목</span></div>
+      <div><code>17 굵게</code><span style="font-size:17px;font-weight:800">섹션 제목</span></div>
+      <div><code>15</code><span style="font-size:15px">본문 · 리스트</span></div>
+      <div><code>13</code><span style="font-size:13px;color:var(--mute)">설명 · 보조</span></div>
+      <div><code>11</code><span style="font-size:11px;color:var(--mute)">라벨 (최소)</span></div>
+    </div>
+    <h4>규칙</h4>
+    <ul class="rules">
+      <li>둥글기 3단계 16·12·8 / 그림자 1종 / 주요 버튼 1종(먹)</li>
+      <li>한 화면 한 메시지 · 배지는 화면당 1종</li>
+      <li>영어 대문자 소제목 0 · 한자 워터마크 0 (인장 1개만)</li>
+      <li>강조는 한 문단에 한 번 · 명조는 결론에만</li>
+      <li>후기·숫자 자랑 섹션 대신 실제 후기 수집 후 노출</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
