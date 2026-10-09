@@ -503,7 +503,21 @@ export function reunionPlan(args: {
     const score = typeof args.score === 'number' && Number.isFinite(args.score)
       ? args.score
       : Math.round(rows.reduce((s, r) => s + r.chance, 0) / rows.length);
-    const verdict: ReunionPlan['verdict'] = score >= 68 ? '재회 추천' : score <= 52 ? '새 인연 추천' : '상황에 따라';
+    /* 판정 = 재회 점수 + 두 사람 사이 + 최고 달 세기. 점수만으론 못 가른다 (10-09 실측 재회 74건: 39건이 정확히 63점 ·
+     *   모델 단독 판정은 93%가 '재회 추천' — 듣기 좋은 답으로 쏠림). 두 사람 일간 천간합·일지 합/충/원진은 사람마다 다르다. */
+    const GANHAP: Record<string, string> = { 甲: '己', 己: '甲', 乙: '庚', 庚: '乙', 丙: '辛', 辛: '丙', 丁: '壬', 壬: '丁', 戊: '癸', 癸: '戊' };
+    const peak = Math.max(...rows.map((r) => r.chance));
+    const parts: string[] = [`재회 점수 ${score}`];
+    let vs = score;
+    if (pGan && GANHAP[dayGan] === pGan) { vs += 5; parts.push(`일간 ${dayGan}${pGan} 천간합 +5`); }
+    if (pJi && dayJi) {
+      if (JI_HAP6[dayJi] === pJi) { vs += 5; parts.push(`일지 ${dayJi}${pJi} 합 +5`); }
+      else if (CHUNG_PAIR[dayJi] === pJi) { vs -= 7; parts.push(`일지 ${dayJi}${pJi} 충 −7`); }
+      else if (WONJIN_PAIR[dayJi] === pJi) { vs -= 4; parts.push(`일지 ${dayJi}${pJi} 원진 −4`); }
+    }
+    if (peak >= 85) { vs += 3; parts.push(`최고 달 ${peak} +3`); } else if (peak <= 65) { vs -= 3; parts.push(`최고 달 ${peak} −3`); }
+    const verdict: ReunionPlan['verdict'] = vs >= 68 ? '재회 추천' : vs <= 62 ? '새 인연 추천' : '상황에 따라'; // 임계값: 300쌍 모의 분포 ≈ 30% · 49% · 21%
+    const verdictWhy = `${parts.join(' · ')} → ${vs}`;
     const contactAdvice: ReunionPlan['contactAdvice'] = verdict === '새 인연 추천' ? '새출발' : bi === 0 ? '지금 연락하기' : '기다리기';
     const trend = (rows[1].chance + rows[2].chance + rows[3].chance) / 3 - rows[0].chance;
     const emotionCycle: ReunionPlan['emotionCycle'] = trend > 4 ? '상승기' : trend < -4 ? '하강기' : '정체기';
@@ -517,12 +531,13 @@ export function reunionPlan(args: {
       (r.why.length ? ` · ${r.why.join(', ')}` : ''));
     const text = `
 ## 🔒 재회 타이밍·판정 확정표 (서버 계산 — 본문·데이터 모두 이 표와 다르게 쓰지 말 것)
-- 판정: ${verdict} (재회 점수 ${score}점 기준) · 지금 할 일: ${contactAdvice}${contactAdvice === '기다리기' ? ` (${rel(a.y, a.m)}부터 움직인다 — 그 전엔 먼저 연락하지 않는다)` : ''} · 감정 흐름: ${emotionCycle}
+- 판정: ${verdict} (근거: ${verdictWhy} · 68 이상 재회 추천 / 62 이하 새 인연 추천) · 지금 할 일: ${contactAdvice}${contactAdvice === '기다리기' ? ` (${rel(a.y, a.m)}부터 움직인다 — 그 전엔 먼저 연락하지 않는다)` : ''} · 감정 흐름: ${emotionCycle}
 - 재회 적기: ${bestTiming} · 첫 연락 최적 달: ${bestContactMonth} · 조심할 달: ${cautionMonths}${phaseIndex != null ? `\n- 이별 후 현재 단계: ${REUNION_PHASES[phaseIndex].name} (${REUNION_PHASES[phaseIndex].period})` : ''}
 - 월별 (이번 달부터 12개월 · 나의 에너지${pOh ? ' / 상대 에너지' : ''} / 재회 기운 · 근거):
 ${lines.join('\n')}
 → '재회 가능성과 적기'·'월별 재회 에너지 흐름'·'재회 실전 전략'·'재회 후 관계 변화 예측' 과 timeline 은 위 시기·수치를 그대로 인용한다. 표에 없는 달을 적기로 만들지 말 것.
-→ '새 인연 vs 재회 — 냉정한 비교' 의 최종 판정 = 위 판정. 근거 칸의 글자(합·충·원진·연인의 별)를 본문에서 직접 짚어라.${pOh ? '' : '\n→ 상대 생년월일이 없다 — 상대 에너지·궁합 수치는 만들지 말 것.'}
+→ '새 인연 vs 재회 — 냉정한 비교' 의 최종 판정 = 위 판정. 근거 칸의 글자(합·충·원진·연인의 별)를 본문에서 직접 짚어라.${verdict === '상황에 따라' ? `
+→ '상황에 따라' 를 애매하게 쓰지 말 것 — 갈림길을 못 박는다: '${bestTiming}에 상대가 먼저 반응하면 재회, 그때도 조용하면 정리하세요' 처럼 기준과 시한을 단정.` : ''}${pOh ? '' : '\n→ 상대 생년월일이 없다 — 상대 에너지·궁합 수치는 만들지 말 것.'}
 `;
     return {
       text,
