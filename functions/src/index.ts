@@ -828,7 +828,8 @@ export const generateDailyFortuneStream = onRequest(
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v12'; // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
+    const SCHEMA_VERSION = 'v13'; // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
+    // v12 // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
     const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);
