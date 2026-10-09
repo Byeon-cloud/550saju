@@ -157,6 +157,8 @@ JSON 1개로 응답:
     "potential": {"desc": "<60~80자 · 인성/식상·현 대운 간지 직접 호명 + 결>"}
   },
   // 🚨 scores 점수 룰: 5의 배수만 반복 금지 (67·73·81·88 같이 자연수). 6 영역 모두 다른 값. spread 20~40 (너무 균일·너무 극단 X).
+  "// 2026-10-09 — 사주대화 연결": "",
+  "chatQuestions": ["이 종합 풀이를 읽은 이 사람이 사주대화에서 바로 물어볼 질문 · 18~35자 · 이 사주의 구체 글자·대운 간지·약한 영역·올해 시기를 담아", "(두 번째 질문 — 다른 각도)", "(세 번째 질문 — 다른 각도)"],
   "scores": {"career": <0-100 · 5의 배수 금지>, "love": <0-100>, "wealth": <0-100>, "social": <0-100>, "health": <0-100>, "potential": <0-100>},
   "actionList": [
     "// 2026-05-04 재조정: 너무 길지 않게. 각 액션 데스크 70~100자 (이전 150+ 에서 축소).",
@@ -396,6 +398,7 @@ function mergeGroups(a, d, b, c) {
         cautions: c?.cautions || [], // 2026-05-05 신규 §08 함정 3
         scores: c?.scores || {},
         actionList: c?.actionList || [],
+        chatQuestions: Array.isArray(c?.chatQuestions) ? c.chatQuestions.filter((q) => typeof q === 'string' && q.trim()).slice(0, 3) : [],
         // sections — A(2:원국·천간지지) + D(2:십성·용신) + B(3) → 7섹션 (정통 순서 보존)
         sections: [
             ...(a?.sections || []),
@@ -416,7 +419,9 @@ function mergeGroups(a, d, b, c) {
  *  · 3 그룹 병렬 → 가장 긴 그룹 시간만큼 (90s → ~30s)
  *  · 모든 그룹 Opus 동일 모델 (퀄리티·통일성 보장)
  */
-async function generatePremiumReport(apiKey, sajuData, situation) {
+async function generatePremiumReport(apiKey, sajuData, situation, 
+/** 2026-10-09 — 점진 표시: 그룹 완성 즉시 호출 (progress/{id} write 용 · best-effort, 결과 전달 경로와 무관) */
+onGroup) {
     const anthropic = new sdk_1.default({ apiKey });
     const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
     const staticSystem = STATIC_SYSTEM_PROMPT;
@@ -427,11 +432,19 @@ async function generatePremiumReport(apiKey, sajuData, situation) {
     const t0 = Date.now();
     // 2026-10-08 원가 — A 가 먼저 시스템 프롬프트를 캐시하도록 D·B·C 5초 지연 (SSE 경로와 동일 · 캐시 읽기 0.1배)
     const later = (ms, fn) => new Promise((res, rej) => setTimeout(() => fn().then(res, rej), ms));
+    const tap = (g) => (data) => {
+        if (onGroup) {
+            // C 는 §09 점수(서버 결정론 주제 점수)까지 같이 — 점진 화면에서 나중에 숫자가 바뀌지 않게
+            const payload = g === 'C' ? { ...data, topicBaseScores: computeTopicBaseScores(sajuData) } : data;
+            Promise.resolve(onGroup(g, payload)).catch(() => { });
+        }
+        return data;
+    };
     const [groupA, groupD, groupB, groupC] = await Promise.all([
-        callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation),
-        later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation)),
-        later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation)),
-        later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation)),
+        callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation).then(tap('A')),
+        later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('D')),
+        later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('B')),
+        later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('C')),
     ]);
     console.log(`[claudePremium] T2 parallel done in ${Date.now() - t0}ms`);
     const merged = mergeGroups(groupA, groupD, groupB, groupC);

@@ -73,7 +73,9 @@ async function callNyGroup(anthropic, shared, group, ty) {
     }
     throw new Error(`신년운세 ${group} 그룹 생성 실패`);
 }
-async function generateTojungBigyeol(apiKey, sajuData) {
+async function generateTojungBigyeol(apiKey, sajuData, 
+/** 2026-10-09 — 점진 표시: 그룹 완성 즉시 (A=총평 · B=1~6월 · C=7~12월) — best-effort */
+onGroup) {
     const anthropic = new sdk_1.default({ apiKey });
     const ty = tojungTargetYear();
     const ygz = yearPillar(ty);
@@ -82,42 +84,48 @@ async function generateTojungBigyeol(apiKey, sajuData) {
     // 2026-10-08 원가 — 세 그룹이 같은 공유 프롬프트(~1.2만 토큰)를 동시에 보내면 서로 캐시를 못 읽고 셋 다 '캐시 쓰기'(입력가 1.25배)로
     //   과금됐다(실측 755원/건, cacheRead 0). A 가 먼저 프롬프트를 캐시하도록 B·C 를 5초 늦게 출발 → B·C 는 캐시 읽기(0.1배).
     const later = (ms, fn) => new Promise((res, rej) => setTimeout(() => fn().then(res, rej), ms));
+    // 달 간지·역할·날짜·점수 앵커는 서버 확정값 (모델이 바꿔 써도 화면은 만세력 그대로) — 그룹 단위로 적용(점진 표시 = 최종본)
+    const finishMonths = (arr) => {
+        const ms = (Array.isArray(arr) ? arr : [])
+            .filter((m) => Number(m?.month) >= 1 && Number(m?.month) <= 12)
+            .sort((x, y) => Number(x.month) - Number(y.month));
+        ms.forEach((m) => {
+            const mm = Number(m.month);
+            const gz = monthPillar(ty, mm);
+            if (gz) {
+                m.괘 = `${gz}(${(0, sajuFacts_1.ganziKo)(gz)})월`;
+                m.괘의미 = (0, sajuFacts_1.ganziRoleText)(gz, sajuData, '달');
+                const base = (0, sajuFacts_1.monthBaseScore)(gz, sajuData);
+                const sc = Number(m.score);
+                m.score = Number.isFinite(sc) ? Math.max(base - 6, Math.min(base + 6, Math.round(sc))) : base;
+            }
+            m.goodDays = picks.perMonth[mm]?.good || [];
+            m.cautionDays = picks.perMonth[mm]?.caution || [];
+        });
+        return ms;
+    };
+    const head = (a) => {
+        const h = { ...a, keyDates: picks.keyDates, targetYear: ty, schemaVersion: 2 };
+        h.hexagram = {
+            yearLabel: `${ty} ${(0, sajuFacts_1.ganziKo)(ygz)}년 · 신년운세`,
+            glyph: ygz,
+            name: `${(0, sajuFacts_1.ganziKo)(ygz)}년의 ${sajuData?.input?.name || '나'}`,
+            oneLine: String(a.headline || ''),
+            pullQuote: a.pullQuote ? String(a.pullQuote) : undefined,
+        };
+        return h;
+    };
+    const emit = (g, data) => {
+        if (onGroup)
+            Promise.resolve(onGroup(g, (0, sajuFacts_1.sanitizeAiOutput)(data))).catch(() => { });
+    };
     const [a, b, c] = await Promise.all([
-        callNyGroup(anthropic, shared, 'A', ty),
-        later(5000, () => callNyGroup(anthropic, shared, 'B', ty)),
-        later(5000, () => callNyGroup(anthropic, shared, 'C', ty)),
+        callNyGroup(anthropic, shared, 'A', ty).then((x) => { emit('A', head(x)); return x; }),
+        later(5000, () => callNyGroup(anthropic, shared, 'B', ty)).then((x) => { emit('B', { months: finishMonths(x?.months) }); return x; }),
+        later(5000, () => callNyGroup(anthropic, shared, 'C', ty)).then((x) => { emit('C', { months: finishMonths(x?.months) }); return x; }),
     ]);
-    const months = [...(b.months || []), ...(c.months || [])]
-        .filter((m) => Number(m?.month) >= 1 && Number(m?.month) <= 12)
-        .sort((x, y) => Number(x.month) - Number(y.month));
-    // 달 간지·역할·날짜·점수 앵커는 서버 확정값 (모델이 바꿔 써도 화면은 만세력 그대로)
-    months.forEach((m) => {
-        const mm = Number(m.month);
-        const gz = monthPillar(ty, mm);
-        if (gz) {
-            m.괘 = `${gz}(${(0, sajuFacts_1.ganziKo)(gz)})월`;
-            m.괘의미 = (0, sajuFacts_1.ganziRoleText)(gz, sajuData, '달');
-            const base = (0, sajuFacts_1.monthBaseScore)(gz, sajuData);
-            const sc = Number(m.score);
-            m.score = Number.isFinite(sc) ? Math.max(base - 6, Math.min(base + 6, Math.round(sc))) : base;
-        }
-        m.goodDays = picks.perMonth[mm]?.good || [];
-        m.cautionDays = picks.perMonth[mm]?.caution || [];
-    });
-    const merged = {
-        ...a,
-        months,
-        keyDates: picks.keyDates,
-        targetYear: ty,
-        schemaVersion: 2,
-    };
-    merged.hexagram = {
-        yearLabel: `${ty} ${(0, sajuFacts_1.ganziKo)(ygz)}년 · 신년운세`,
-        glyph: ygz,
-        name: `${(0, sajuFacts_1.ganziKo)(ygz)}년의 ${sajuData?.input?.name || '나'}`,
-        oneLine: String(a.headline || ''),
-        pullQuote: a.pullQuote ? String(a.pullQuote) : undefined,
-    };
+    const months = finishMonths([...(b.months || []), ...(c.months || [])]);
+    const merged = { ...head(a), months };
     return (0, sajuFacts_1.sanitizeAiOutput)(merged);
 }
 /** 그룹별 출력 지시 — 공유 컨텍스트(사주·확정값·톤)는 system 에 캐시 */

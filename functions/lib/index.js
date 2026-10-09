@@ -214,6 +214,10 @@ exports.warmupGenerateReport = (0, https_1.onCall)({ timeoutSeconds: 10, memory:
  *  · 인증: Authorization: Bearer <Firebase ID Token>
  *  · 잔액 차감 + 환불 + Firestore 저장은 generateReport 와 동일 패턴
  */
+/** 점진 표시 좌표 id — 클라 crypto.randomUUID / 'pg_' 폴백 형식만 허용 */
+function safeProgressId(v) {
+    return typeof v === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(v) ? v : undefined;
+}
 exports.generatePremiumReportStream = (0, https_1.onRequest)({
     secrets: [ANTHROPIC_KEY],
     timeoutSeconds: 540, // SSE 장기 연결 — 9분 (Cloud Run 최대)
@@ -322,7 +326,8 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
                 results[g] = result;
                 sendEvent('group', {
                     group: g,
-                    data: result,
+                    // 2026-10-09 — C 에 §09 서버 주제 점수 포함 (점진 화면에서 숫자가 나중에 바뀌지 않게)
+                    data: g === 'C' ? { ...result, topicBaseScores: mod.computeTopicBaseScores(sajuData) } : result,
                     elapsedMs: Date.now() - t0,
                 });
             }
@@ -567,7 +572,13 @@ exports.generateReport = (0, https_1.onCall)(
         let result;
         if (reportType === 'premium') {
             const premMod = await Promise.resolve().then(() => __importStar(require('./ai/claudePremium')));
-            result = await premMod.generatePremiumReport(ANTHROPIC_KEY.value(), sajuData, situation);
+            // 2026-10-09 — 점진 표시 (앱인토스 callable 경로): progressId 가 오면 그룹 완성마다 progress/{id} 에 write → 앱이 구독해
+            //   도착한 섹션부터 보여주고 나머지는 스켈레톤. 결과 전달·차감·환불 경로는 그대로 (write 는 best-effort).
+            const progressId = safeProgressId(request.data?.progressId);
+            const { writeGroupProgress, setProgressMeta } = await Promise.resolve().then(() => __importStar(require('./shared/progressWrite')));
+            if (progressId && uid !== 'anonymous')
+                await setProgressMeta(db, progressId, uid, { type: 'premium', total: 4 });
+            result = await premMod.generatePremiumReport(ANTHROPIC_KEY.value(), sajuData, situation, progressId && uid !== 'anonymous' ? (g, data) => writeGroupProgress(db, progressId, uid, g, data) : undefined);
         }
         else {
             const mod = await lazyClaudeReport();
@@ -799,7 +810,8 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v13'; // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
+    const SCHEMA_VERSION = 'v14'; // v14 — nextHooks(다음 주제·사주대화 질문)
+    // v13 // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
     // v12 // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
@@ -865,7 +877,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
             A2a: ['todayNarrative', 'sajuTone'],
             A2b: ['pillarMessages', 'ohengDistribution', 'todayOhengEmphasis', 'subScoreReasons'],
             B1: ['timeSlots', 'hourlyPeak', 'hourlyAvoid', 'doList', 'dontList'],
-            B2: ['meetPeople', 'luckyProfile', 'dailyQuote', 'tomorrow'],
+            B2: ['meetPeople', 'luckyProfile', 'dailyQuote', 'tomorrow', 'nextHooks'],
         };
         const subOnly = (sub) => `\n\n## ⚡⚡ 이번 호출의 최종 출력 범위 (위 스키마 중 이 키들만): ${SUB_KEYS[sub].join(', ')}\n` +
             `이 키들만 담은 JSON 객체 하나만 출력. 다른 키는 다른 호출이 쓰므로 출력 금지. 위 '오늘 시간대·오행 관계 확정표'를 그대로 따를 것.`;
@@ -937,6 +949,16 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                 data.hourlyPeak.range = hourWin.peak;
             if (hourWin.avoid && data?.hourlyAvoid)
                 data.hourlyAvoid.range = hourWin.avoid;
+            // 2026-10-09 — 다음 콘텐츠 연결(주제 1 + 사주대화 질문 3) 정리 (허용 id·길이)
+            if (data?.nextHooks && typeof data.nextHooks === 'object') {
+                const okIds = ['love', 'wealth', 'career', 'health', 'exam', 'reunion', 'marriage'];
+                const tp = data.nextHooks.topic;
+                data.nextHooks = {
+                    topic: tp && okIds.includes(tp.id) && typeof tp.hook === 'string' ? { id: tp.id, hook: String(tp.hook).replace(/<[^>]+>/g, '').trim().slice(0, 90) } : null,
+                    chatQuestions: (Array.isArray(data.nextHooks.chatQuestions) ? data.nextHooks.chatQuestions : [])
+                        .filter((q) => typeof q === 'string' && q.trim()).slice(0, 3).map((q) => q.replace(/<[^>]+>/g, '').trim().slice(0, 60)),
+                };
+            }
             data = sanitizeAiOutput(data);
             sendEvent('group', { group: 'B', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs) + 4000 });
             return data;
@@ -1887,7 +1909,12 @@ exports.generateTojung = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
     }
     try {
         const { generateTojungBigyeol } = await lazyClaudeTojung();
-        const result = await generateTojungBigyeol(ANTHROPIC_KEY.value(), sajuData);
+        // 2026-10-09 — 점진 표시: progressId 가 오면 그룹(총평·1~6월·7~12월) 완성마다 progress/{id} write (best-effort)
+        const progressId = safeProgressId(request.data?.progressId);
+        const { writeGroupProgress, setProgressMeta } = await Promise.resolve().then(() => __importStar(require('./shared/progressWrite')));
+        if (progressId && uid !== 'anonymous')
+            await setProgressMeta(db, progressId, uid, { type: 'tojung', total: 3 });
+        const result = await generateTojungBigyeol(ANTHROPIC_KEY.value(), sajuData, progressId && uid !== 'anonymous' ? (g, data) => writeGroupProgress(db, progressId, uid, g, data) : undefined);
         const reportRef = db.collection('reports').doc();
         await reportRef.set({
             uid, type: 'tojung', content: result,
@@ -2416,6 +2443,8 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
         const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
         const { buildTopicCall, enforceTopicBaseScore, runTopicGeneration } = await lazyClaudeTopic();
         const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+        // 2026-10-09 — 상황별 섹션 제목을 먼저 보냄 → 앱 로딩 스켈레톤이 서버와 같은 제목 (구버전 앱은 무시)
+        sendEvent('outline', { headings: call.sections });
         const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
         const t0 = Date.now();
         // 2026-10-08 — 생성은 claudeTopic.runTopicGeneration 공용 (callable 폴백과 같은 코드 · 시스템 프롬프트 캐시).

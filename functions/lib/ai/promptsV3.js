@@ -1467,6 +1467,11 @@ ${(0, sajuFacts_1.dailyMeetPromptBlock)(data.sajuData)}
     "ganzi": "${data.tomorrowGanzi || ''}",
     "headline": "40~60자 · 내일 핵심 한 줄. ⚠️ 톤: 명리 한자 (신금·사화·신사일 등) 본문 노출 금지. 일상어로 '내일 어떤 하루인지' 풀어서 설명. 예: '신뢰가 쌓이는 하루, 차분한 만남이 의미 있는 결입니다.' / '<strong>새 시작의 신호</strong>가 오는 날, <u>오전</u>에 결정 내리기 좋습니다.'",
     "scoreHint": 0~100
+  },
+  "nextHooks": {
+    "topic": {"id": "love|wealth|career|health|exam|reunion|marriage 중 오늘 풀이와 가장 이어지는 하나", "hook": "35~55자 · 오늘 풀이의 구체 내용(시간대·사람·영역 점수)에서 자연히 생기는 궁금증 + 그 주제에서 알 수 있는 것. 그 주제의 답을 미리 단정하지 말 것"},
+    "chatQuestions": ["오늘 풀이를 읽은 이 사람이 사주대화에서 바로 물어볼 질문 · 18~35자 · 오늘 결과 속 구체 시간·사람·행동을 담아", "(두 번째 질문 — 다른 각도)", "(세 번째 질문 — 다른 각도)"],
+    "// 규칙": "시간을 쓰면 위 시간대 확정표 표기 그대로(오전/오후 + 1~12시). '연인의 별'은 연애(love) 연결에서만 — 재물 연결엔 '돈의 별(재성)'처럼 그 주제 말로"
   }
 }
 
@@ -1480,6 +1485,7 @@ ${(0, sajuFacts_1.dailyMeetPromptBlock)(data.sajuData)}
 - doList/dontList 각 reason ≥ 60자 · action ≤ 15자 · when ≤ 15자
 - luckyProfile 6종 각 reason ≥ 60자
 - dailyQuote 60~80자
+- nextHooks.chatQuestions 3개 각 18~35자 (서로 다른 결의 질문)
 - subScoreOneLines 4축 각 ≤ 35자
 
 ### E. 자기 체크 (출력 직전 점검 — 위반 시 즉시 재작성)
@@ -1882,6 +1888,11 @@ ${(0, sajuFacts_1.dailyMeetPromptBlock)(data.sajuData)}
     "ganzi": "${data.tomorrowGanzi || ''}",
     "headline": "30자 내외 · 내일 핵심 한 줄",
     "scoreHint": 0~100
+  },
+  "nextHooks": {
+    "topic": {"id": "love|wealth|career|health|exam|reunion|marriage 중 오늘 풀이와 가장 이어지는 하나", "hook": "35~55자 · 오늘 풀이의 구체 내용(시간대·사람·영역 점수)에서 자연히 생기는 궁금증 + 그 주제에서 알 수 있는 것. 그 주제의 답을 미리 단정하지 말 것"},
+    "chatQuestions": ["오늘 풀이를 읽은 이 사람이 사주대화에서 바로 물어볼 질문 · 18~35자 · 오늘 결과 속 구체 시간·사람·행동을 담아", "(두 번째 질문 — 다른 각도)", "(세 번째 질문 — 다른 각도)"],
+    "// 규칙": "시간을 쓰면 위 시간대 확정표 표기 그대로(오전/오후 + 1~12시). '연인의 별'은 연애(love) 연결에서만 — 재물 연결엔 '돈의 별(재성)'처럼 그 주제 말로"
   }
 }
 \`\`\`
@@ -1892,6 +1903,7 @@ ${(0, sajuFacts_1.dailyMeetPromptBlock)(data.sajuData)}
 - doList/dontList 각 reason ≥ 60자 · action ≤ 15자 · when ≤ 15자
 - luckyProfile 6종 각 reason ≥ 60자
 - dailyQuote 60~80자
+- nextHooks.chatQuestions 3개 각 18~35자 (서로 다른 결의 질문)
 
 ### E. 자기 체크 (출력 직전)
 1. 첫 문장 한자 0?
