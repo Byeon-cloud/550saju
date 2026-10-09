@@ -312,7 +312,7 @@ export function MonthlyPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="월별 운세" sajuData={selected?.sajuData} steps={['선택한 달의 월간지를 짚고 있어요', '상순·중순·하순 흐름을 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} />;
+    return <AILoading name={selected?.name} type="월별 운세" sajuData={selected?.sajuData} steps={['선택한 달의 월간지를 짚고 있어요', '상순·중순·하순 흐름을 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} estimatedSeconds={60} />;
   }
 
   // ─── 결과 (단일월 심층 — 오늘운세급 MonthlyMockupView) ───

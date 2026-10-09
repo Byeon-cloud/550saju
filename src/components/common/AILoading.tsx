@@ -143,9 +143,12 @@ export function AILoading({
 
   const currentTip = shuffledTips[tipIndex];
   // overallProgress — streaming 일 땐 chars 비율 직접 사용, 아니면 doneCount 기반
+  // 2026-10-09 — timer 모드는 경과 시간으로도 계속 차오르게 (단계가 다 찬 뒤 링이 멈춰 '멈춘 것 같은' 구간 제거).
+  //   estimatedSeconds 시점 ~80% · 1.5배 ~88% · 2배 ~92% · 95% 상한.
+  const timeProgress = 15 + 80 * (1 - Math.exp(-elapsed / Math.max(8, estimatedSeconds * 0.6)));
   const overallProgress = streamProgress
     ? Math.min(95, (streamProgress.chars / 4000) * 80 + 15)
-    : Math.min(95, (doneCount / sections.length) * 100 + 15);
+    : Math.min(95, Math.max((doneCount / sections.length) * 100 + 15, timeProgress));
 
   return (
     <div
@@ -474,7 +477,9 @@ export function AILoading({
         }}
       >
         {/* 시간 약속 워딩 제거 (2026-05-06) — 못 지키면 안 좋아. 대신 진행 상태 텍스트 */}
-        {elapsed > 30
+        {!streamProgress && estimatedSeconds >= 40 && elapsed > estimatedSeconds
+          ? '마지막까지 꼼꼼히 다듬고 있어요'
+          : elapsed > 30
           ? '꼼꼼히 풀이하고 있어요'
           : elapsed > 10
             ? '사주를 깊게 살펴보고 있어요'

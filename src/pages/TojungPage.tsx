@@ -184,7 +184,7 @@ export function TojungPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type={`${TY} 신년운세`} sajuData={selected?.sajuData} steps={[`${TY}년 세운과 사주를 맞춰보고 있어요`, '365일 일진에서 좋은 날·조심할 날을 고르고 있어요', '열두 달 흐름을 달마다 풀고 있어요', '결정 타이밍과 개운 조언을 정리하고 있어요']} />;
+    return <AILoading name={selected?.name} type={`${TY} 신년운세`} sajuData={selected?.sajuData} steps={[`${TY}년 세운과 사주를 맞춰보고 있어요`, '365일 일진에서 좋은 날·조심할 날을 고르고 있어요', '열두 달 흐름을 달마다 풀고 있어요', '결정 타이밍과 개운 조언을 정리하고 있어요']} estimatedSeconds={100} />;
   }
 
   // ─── 결과 ───

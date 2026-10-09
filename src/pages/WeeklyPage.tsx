@@ -241,7 +241,7 @@ export function WeeklyPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="주간운세" sajuData={selected?.sajuData} steps={['이번 주 일진을 짚고 있어요', '요일별 운세 점수를 계산하고 있어요', '이번 주 핵심일을 찾고 있어요']} />;
+    return <AILoading name={selected?.name} type="주간운세" sajuData={selected?.sajuData} steps={['이번 주 일진을 짚고 있어요', '요일별 운세 점수를 계산하고 있어요', '이번 주 핵심일을 찾고 있어요']} estimatedSeconds={50} />;
   }
 
   // ─── 결과 ───

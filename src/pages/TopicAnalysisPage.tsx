@@ -4751,7 +4751,7 @@ export function TopicAnalysisPage() {
                 sajuData={selected?.sajuData}
                 steps={topicId === 'reunion' ? reunionSteps : defaultSteps}
                 premiumNote={TOPIC_NOTES[topicId || '']}
-                estimatedSeconds={topicId === 'reunion' ? 60 : 30}
+                estimatedSeconds={25} // 10-09 — 첫 화면(첫 섹션) 실측 ~23초 · 재회운도 본문 스트리밍이라 같음
               />
             );
           })()}

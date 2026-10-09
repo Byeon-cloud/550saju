@@ -698,7 +698,7 @@ export function ResultPage(props: ResultPageProps = {}) {
         name={name}
         type={isPrem ? '종합 사주 분석' : '사주 리포트 분석'}
         sajuData={sajuData}
-        estimatedSeconds={isPrem ? 80 : 45}
+        estimatedSeconds={isPrem ? 100 : 85}
         premiumNote={arrivedCount > 0 ? `정밀 분석 ${arrivedCount}/${isPrem ? 4 : 3} 단계 완료 — 마지막을 마무리하고 있어요` : undefined}
         steps={isPrem ? [
           '사주 8자와 오행 구조를 분석하고 있어요',

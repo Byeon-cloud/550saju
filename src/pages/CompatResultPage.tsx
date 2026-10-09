@@ -135,7 +135,7 @@ export function CompatResultPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={`${state.person1.name} × ${state.person2.name}`} type="궁합 분석" sajuData={state.person1?.sajuData} steps={['두 사람의 오행을 비교하고 있어요', '십성 관계를 분석하고 있어요', '궁합 점수를 계산하고 있어요']} />;
+    return <AILoading name={`${state.person1.name} × ${state.person2.name}`} type="궁합 분석" sajuData={state.person1?.sajuData} steps={['두 사람의 오행을 비교하고 있어요', '십성 관계를 분석하고 있어요', '궁합 점수를 계산하고 있어요']} estimatedSeconds={80} />;
   }
 
   // ─── 결과 ───
