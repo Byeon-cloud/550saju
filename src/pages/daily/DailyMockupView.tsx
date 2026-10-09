@@ -913,7 +913,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
       category: '도움·배움 자리',
       meaning: `오늘 ${todayK} 기운이 내 ${myK} 기운을 키워주는 날이에요. 윗사람·스승·책에서 도움이 들어오는 자리.`,
       good: '윗사람·선배·스승의 도움, 배움·정리·휴식에 유리한 자리.',
-      watch: '받는 데 익숙해지면 추진력 떨어질 수 있어요. 받은 만큼 한 번은 움직이세요.',
+      watch: '받는 데 익숙해지면 추진력이 떨어집니다. 받은 만큼 한 번은 움직이세요.',
       type: 'support-me',
     };
   }
@@ -932,7 +932,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
       label: '재물·기회',
       category: '재물·기회 자리',
       meaning: `내 ${myK} 기운이 오늘 ${todayK}을 다스리는 날이에요. 돈·기회·결실이 눈앞에 보이는 자리.`,
-      good: '돈·기회·결실이 보이는 날. 작은 입금·협상·계약 신호 가능.',
+      good: '돈·기회·결실이 보이는 날. 작은 입금·협상·계약 신호가 들어옵니다.',
       watch: '한 번에 다 끌어당기려 하면 마찰. 한 박자 늦추는 게 효율적입니다.',
       type: 'i-control',
     };
@@ -943,7 +943,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
       category: '책임·기준 자리',
       meaning: `오늘 ${todayK} 기운이 내 ${myK} 기운을 누르는 날이에요. 마감·약속·평가가 또렷해지는 자리.`,
       good: '체계·규율·시험·평가에 집중력 살아나는 날. 마감·약속이 또렷해집니다.',
-      watch: '피로감·긴장 누적되기 쉬워요. 깊은 결정은 내일로 미루세요.',
+      watch: '피로와 긴장이 쌓이는 날이에요. 깊은 결정은 내일로 미루세요.',
       type: 'controls-me',
     };
   }
@@ -1305,7 +1305,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                   if (!desc || desc.length < 20) {
                     const fallbackByType: Record<string, string> = {
                       boost: '<u>차분하고 깊이 있는 분위기</u>의 사람과 만나면 오늘 흐름이 부드러워집니다. <strong>대화 중 무리한 결정은 미루세요</strong>.',
-                      clash: '<u>강하고 결단 있는 톤</u>의 사람과는 마찰이 생길 수 있어요. <strong>한 박자 늦추는 게 효율적입니다</strong>.',
+                      clash: '<u>강하고 결단 있는 톤</u>의 사람과는 마찰이 생깁니다. <strong>한 박자 늦추는 게 효율적입니다</strong>.',
                       calm: '<u>실질적이고 안정적인 분위기</u>의 사람과 가벼운 대화·식사가 좋아요. <strong>깊은 결정은 다른 자리에서</strong>.',
                     };
                     desc = fallbackByType[type] || fallbackByType.boost;

@@ -175,12 +175,12 @@ const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', �
 const TOPIC_SECTION_TITLES: Record<string, string[]> = {
   love: ['나의 연애 스타일', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 패턴', '올해 연애 흐름과 전략'],
   wealth: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '새는 돈 패턴', '올해 재물 전략'],
-  career: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '직장 내 인간관계 패턴'],
+  career: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '일터에서 반복되는 관계 패턴'],
   marriage: ['결혼 적기 분석', '미래 배우자의 성향', '결혼 후 생활 패턴', '배우자 가족 관계', '결혼 준비 조언'],
-  business: ['사업가 기질 분석', '맞는 업종', '창업 타이밍', '동업 궁합', '사업 리스크 관리'],
+  business: ['사업가 기질 분석', '맞는 업종', '창업·확장 타이밍', '동업 궁합', '사업 리스크 관리'],
   health: ['오행별 취약 장기', '체질 분석', '올해 건강 주의 시기', '정신 건강 패턴', '건강 개선 전략'],
   study: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '슬럼프 극복법', '올해 공부 로드맵'],
-  exam: ['변동의 timing — 올해 합격·이직 기운', '합격·이직 유리 방향과 분야', '면접·자격시험 결정 시기', '이직 후 3개월 적응 전망', '올해 변동 실전 전략'],
+  exam: ['올해 합격·변동 기운', '유리한 방향과 분야', '시험·면접·결정 시기', '변동 후 적응 전망', '올해 실전 전략'],
   move: ['이동 적기 분석', '좋은 방향', '이사·유학·이주 전망', '해외운', '올해 이동 전략'],
   reunion: ['이별의 사주적 원인 분석', '상대방의 사주 성향 분석', '두 사람의 오행 궁합 구조', '전통 연애 신살(神殺) 분석', '재회 가능성과 적기', '월별 재회 에너지 흐름', '재회 실전 전략', '재회 후 관계 변화 예측', '새 인연 vs 재회 — 냉정한 비교', '재회 성공을 위한 개운법'],
 };
@@ -5031,7 +5031,7 @@ export function TopicAnalysisPage() {
                   (lookupKey === 'marriage' && (relationStatus === 'dating' || !!(showPartner && partnerInfo.name))) ||
                   (lookupKey === 'reunion' && !(showPartner && partnerInfo.name)) ||
                   (lookupKey === 'career' && !!extraInfo.jobStatus) ||
-                  (lookupKey === 'business' && extraInfo.bizStatus === 'running') ||
+                  (lookupKey === 'business' && !!extraInfo.bizStatus) ||
                   (lookupKey === 'move' && !!extraInfo.movePurpose) ||
                   (lookupKey === 'love' && loveStatus !== 'solo');
                 const safeTitles = serverTitles && serverTitles.length > 0 ? serverTitles : (situationDynamic ? [] : expectedTitles);

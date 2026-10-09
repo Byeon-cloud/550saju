@@ -1290,11 +1290,13 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
       if (js === 'student') return swap({ '직장 내 인간관계 패턴': '첫 직장에서 만날 관계의 결' });
       if (js === 'jobseeking') return swap({ '직장 내 인간관계 패턴': '입사 후 만날 관계의 결' });
       if (js === 'employed') return swap({ '사주가 부르는 직종 TOP 5': '지금 직종과 내 사주의 궁합' });
-      return base;
+      // 상황 미선택(실측 절반) — 재직 여부를 모르니 '직장 내'로 단정하지 않는다
+      return swap({ '직장 내 인간관계 패턴': '일터에서 반복되는 관계 패턴' });
     }
     case 'business': {
       if (extraInfo?.bizStatus === 'running') return swap({ '맞는 업종': '지금 업종과 사주의 궁합', '창업 타이밍': '확장·전환 타이밍' });
-      return base;
+      if (extraInfo?.bizStatus === 'preparing') return base;
+      return swap({ '창업 타이밍': '창업·확장 타이밍' }); // 미선택 — 운영 중일 수도
     }
     case 'move': {
       const mp = String(extraInfo?.movePurpose || '');
@@ -1312,7 +1314,8 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
       if (ct === 'exam') return ['시험 합격운 — 올해 흐름', '합격에 유리한 분야와 방향', '시험·면접 결정 시기', '학습 컨디션과 슬럼프 관리', '올해 합격 실전 전략'];
       if (ct === 'jobchange') return ['이직운 — 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정·면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
       if (ct === 'career_pivot') return ['직무 전환운 — 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
-      return base;
+      // 미선택(실측 44/51건) — 시험 준비생에게 '이직 후 3개월 적응'이 나가던 문제 → 변동 종류를 단정하지 않는 제목
+      return ['올해 합격·변동 기운', '유리한 방향과 분야', '시험·면접·결정 시기', '변동 후 적응 전망', '올해 실전 전략'];
     }
     default:
       return base;

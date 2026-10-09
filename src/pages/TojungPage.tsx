@@ -474,13 +474,15 @@ export function TojungPage() {
           {partialMode && !arrivedNy.C && <NySkeleton label="7~12월 풀이를 쓰고 있어요" lines={3} />}
         </div>
 
-        {/* 개운 조언 */}
+        {/* 개운 조언 — 점진 표시 중 총평(A) 도착 전엔 숨김 */}
+        {!!result.luckyAdvice && (
         <FadeIn delay={0.7}>
           <div className="py-5 px-5 rounded-2xl" style={{ background: 'rgba(184,150,90,0.06)', border: '1px solid rgba(184,150,90,0.15)' }}>
             <p className="text-h3 text-text-primary mb-2">{isLegacyTojung ? '올해의 개운 조언' : `${resultYear}년 개운 조언`}</p>
             <p className="text-body-sm text-text-secondary leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.luckyAdvice) }} />
           </div>
         </FadeIn>
+        )}
 
         {!partialMode && (
         <FadeIn delay={0.75}>
