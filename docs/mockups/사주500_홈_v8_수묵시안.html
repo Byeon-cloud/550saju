@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>사주500 홈 v8 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet" />
+<!--
+  v8 원칙 (2026-10-10 준기 피드백)
+  - 색은 먹(ink)과 종이(paper) 두 가지. 금색은 "누르는 곳"에만. 붉은 낙관은 아주 작게, 장식 1점.
+  - 그림은 저작권 만료 공유저작물만: 정선 「개화사」(히어로), 김홍도 「금강사군첩 · 장안사」(사주책 표지)
+    출처 — 한국저작권위원회 공유마당 (만료 저작물) / Wikimedia Commons PD
+  - 화면의 모든 사실(일진·대운·십성·월 간지)은 만세력 계산값. 지어낸 숫자·후기 없음.
+  - 페르소나: 서윤 · 1993-05-14 06:30 · 여 · 癸酉 丁巳 乙未 己卯 · 현재 庚申 대운(28~37) · 오늘 2026-10-10 丁巳일
+-->
+<style>
+:root {
+  --paper: #F4EFE4; --paper-2: #EBE3D3; --card: #FFFDF8;
+  --ink: #1A1612; --ink-2: #4B4238; --mute: #8B8070; --line: #E1D7C4;
+  --gold: #B8965A; --gold-hi: #D2B477; --gold-deep: #8C6D3D;
+  --seal: #A23A2A;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Pretendard, -apple-system, sans-serif; background: #D9D2C4; color: var(--ink); -webkit-font-smoothing: antialiased; }
+.serif { font-family: 'Noto Serif KR', serif; }
+.stage { display: flex; gap: 36px; justify-content: center; align-items: flex-start; padding: 28px 16px 60px; flex-wrap: wrap; }
+.label { width: 375px; font-size: 13px; color: #5A5146; margin-bottom: 10px; font-weight: 700; }
+.phone { width: 375px; height: 812px; overflow-y: auto; background: var(--paper); border-radius: 36px; box-shadow: 0 30px 80px rgba(0,0,0,.22); position: relative; scrollbar-width: none; }
+.phone::-webkit-scrollbar { display: none; }
+
+/* 공통 */
+.cta { height: 58px; border-radius: 14px; background: linear-gradient(180deg, var(--gold-hi) 0%, var(--gold) 100%); color: #17110A; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 24px rgba(140,109,61,.28), inset 0 1px 0 rgba(255,255,255,.45); letter-spacing: -.01em; }
+.cta small { font-size: 13px; font-weight: 700; opacity: .72; }
+.ghost { height: 50px; border-radius: 12px; border: 1.5px solid var(--ink); color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: 15px; }
+.ghost small { font-weight: 700; color: var(--ink-2); }
+.blur { filter: blur(5px); user-select: none; }
+.lock { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--gold-deep); font-weight: 800; margin-left: 4px; white-space: nowrap; }
+.seal { display: inline-grid; place-items: center; border: 1.6px solid var(--seal); color: var(--seal); font-family: 'Noto Serif KR', serif; font-weight: 900; border-radius: 4px; line-height: 1; }
+.h-sec { padding: 34px 22px 12px; }
+.h-sec .k { font-size: 12px; font-weight: 700; color: var(--mute); }
+.h-sec h2 { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; letter-spacing: -.02em; line-height: 1.4; margin-top: 4px; }
+
+/* ── 히어로: 정선 「개화사」 ── */
+.hero { position: relative; color: var(--ink); }
+.hero .art { height: 430px; background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Gaehwasa_temple_by_Jeong_Seon.jpg/1280px-Gaehwasa_temple_by_Jeong_Seon.jpg') 40% 30px / 128% auto no-repeat, #ECE4D3; position: relative; }
+.hero .art:before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 90px; background: linear-gradient(180deg, var(--paper) 0%, rgba(244,239,228,.0) 100%); z-index: 1; }
+.hero .art:after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(244,239,228,.0) 0%, rgba(244,239,228,0) 52%, rgba(244,239,228,.78) 80%, var(--paper) 100%); }
+.top { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; z-index: 2; }
+.logo { font-weight: 800; font-size: 17px; letter-spacing: -.02em; display: flex; align-items: center; gap: 7px; color: var(--ink); }
+.logo i { font-style: normal; width: 24px; height: 24px; border-radius: 5px; background: var(--seal); display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 13px; color: #fff; }
+.un { height: 32px; padding: 0 12px; border-radius: 999px; background: rgba(255,253,248,.82); border: 1px solid var(--line); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; font-size: 13px; font-weight: 800; color: var(--ink); }
+.un span { margin-left: 7px; padding-left: 7px; border-left: 1px solid var(--line); font-weight: 600; color: var(--ink-2); }
+.hero .body { position: relative; margin-top: -150px; padding: 0 22px; z-index: 1; }
+.date { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.date .seal { width: 34px; height: 34px; font-size: 12px; letter-spacing: .02em; background: rgba(255,253,248,.6); }
+.hook { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 30px; line-height: 1.36; letter-spacing: -.03em; margin-top: 12px; }
+.hook u { text-decoration: none; background: linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%); }
+.tease { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+.tease b { color: var(--ink); }
+.hero .cta { margin-top: 14px; }
+.under { text-align: center; font-size: 12.5px; color: var(--mute); margin-top: 9px; }
+
+/* ── D-day ── */
+.dday { margin: 26px 16px 0; border-radius: 18px; background: var(--ink); color: #EFE6D6; padding: 22px 20px 20px; position: relative; overflow: hidden; }
+.dday .k { font-size: 12px; color: #A99D8A; font-weight: 700; }
+.dday .row { display: flex; align-items: flex-end; gap: 14px; margin-top: 10px; }
+.dday .num { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 56px; line-height: .86; letter-spacing: -.03em; color: #F7F0E3; }
+.dday .num small { font-size: 22px; margin-right: 2px; color: #CFC3AF; }
+.dday .t { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; line-height: 1.38; padding-bottom: 2px; }
+.dday p { font-size: 13.5px; color: #C9BDAA; line-height: 1.65; margin-top: 14px; }
+.dday p b { color: #F2E9DA; font-weight: 700; }
+.dday .ghost { margin-top: 16px; border-color: rgba(239,230,214,.55); color: #F2E9DA; }
+.dday .ghost small { color: #BFB3A0; }
+.dday .wm { position: absolute; right: 14px; top: 16px; }
+.dday .wm .seal { width: 30px; height: 30px; font-size: 14px; border-color: rgba(214,120,100,.7); color: rgba(214,120,100,.85); }
+
+/* ── 무료 2칸 ── */
+.duo { margin: 12px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini { background: var(--card); border-radius: 16px; padding: 16px 14px 14px; border: 1px solid var(--line); }
+.mini .f { font-size: 11.5px; font-weight: 800; color: var(--gold-deep); }
+.mini .h { font-size: 16px; font-weight: 800; margin-top: 6px; line-height: 1.35; letter-spacing: -.02em; }
+.mini .s { font-size: 12.5px; color: var(--mute); margin-top: 6px; line-height: 1.45; }
+.mini .go { margin-top: 12px; font-size: 13.5px; font-weight: 800; }
+
+/* ── 사주책 (종합사주) ── */
+.bookwrap { margin: 0 16px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.cover { position: relative; height: 230px; background: var(--paper-2); display: flex; align-items: center; justify-content: center; }
+.cover .bg { position: absolute; inset: 0; background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/%EA%B9%80%ED%99%8D%EB%8F%84_%EA%B8%88%EA%B0%95%EC%82%AC%EA%B5%B0%EC%B2%A9_-_%EC%9E%A5%EC%95%88%EC%82%AC.jpg/1280px-%EA%B9%80%ED%99%8D%EB%8F%84_%EA%B8%88%EA%B0%95%EC%82%AC%EA%B5%B0%EC%B2%A9_-_%EC%9E%A5%EC%95%88%EC%82%AC.jpg') 40% 55% / cover no-repeat; opacity: .55; }
+.book { position: relative; width: 150px; height: 196px; background: #F3ECDD; border-radius: 3px 8px 8px 3px; box-shadow: 7px 0 0 -2px #2A231C inset, 0 18px 30px rgba(26,22,18,.35), 0 2px 4px rgba(26,22,18,.25); padding: 16px 14px 14px 20px; display: flex; flex-direction: column; }
+.book .lbl { width: 30px; border: 1px solid #9A8B73; padding: 7px 0; text-align: center; writing-mode: vertical-rl; font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 13px; letter-spacing: .25em; color: var(--ink); background: #FBF7EE; align-self: flex-end; }
+.book .il { margin-top: auto; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 30px; line-height: 1; color: var(--ink); }
+.book .nm { font-size: 11px; color: var(--ink-2); margin-top: 6px; font-weight: 700; }
+.book .seal { position: absolute; left: 22px; top: 16px; width: 22px; height: 22px; font-size: 11px; }
+.bookbody { padding: 18px 18px 18px; }
+.bookbody .who { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; line-height: 1.45; letter-spacing: -.02em; }
+.bookbody .who em { font-style: normal; color: var(--gold-deep); }
+.bookbody .sub { font-size: 13px; color: var(--mute); margin-top: 6px; line-height: 1.5; }
+/* 대운 띠 */
+.daeun { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.daeun .t { font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; }
+.daeun .t span { color: var(--mute); font-weight: 600; }
+.du { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 10px; }
+.du div { text-align: center; padding: 7px 0 6px; border-radius: 6px; background: var(--paper); font-size: 10.5px; color: var(--mute); }
+.du div b { display: block; font-family: 'Noto Serif KR', serif; font-size: 14px; color: var(--ink-2); font-weight: 700; line-height: 1.15; }
+.du .now { background: var(--ink); color: #CFC3AF; }
+.du .now b { color: #FFF8EA; }
+.du .nx { outline: 1.5px dashed var(--gold); outline-offset: -1.5px; }
+.daeun .note { font-size: 13.5px; color: var(--ink-2); margin-top: 10px; line-height: 1.6; }
+/* 목차 */
+.toc { margin-top: 16px; border-top: 1px solid var(--line); }
+.toc li { list-style: none; display: grid; grid-template-columns: 26px 1fr; gap: 6px; padding: 11px 0; border-bottom: 1px dashed var(--line); font-size: 14px; line-height: 1.5; }
+.toc li .no { font-family: 'Noto Serif KR', serif; font-weight: 700; color: var(--mute); font-size: 13px; padding-top: 1px; }
+.toc li .ti { font-weight: 700; color: var(--ink); }
+.toc li .pv { display: block; font-size: 13px; color: var(--ink-2); margin-top: 2px; font-weight: 500; }
+.toc .more { font-size: 12.5px; color: var(--mute); padding: 10px 0 0; text-align: center; border: 0; display: block; }
+.keep { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+.keep span { font-size: 12px; color: var(--ink-2); background: var(--paper); border-radius: 999px; padding: 6px 10px; font-weight: 600; }
+.bookbody .cta { margin-top: 14px; }
+
+/* ── 고민 (주제운) ── */
+.qs { margin: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.q { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 16px 14px; }
+.q .r1 { display: flex; align-items: flex-start; gap: 12px; }
+.q .hz { width: 38px; height: 38px; border-radius: 8px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; color: var(--ink); font-size: 17px; flex-shrink: 0; }
+.q .a { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.4; }
+.q .b { font-size: 12.5px; color: var(--mute); margin-top: 3px; }
+.q .fact { margin-top: 12px; background: var(--paper); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+.q .fact b { color: var(--ink); }
+.q .fact .tag { display: inline-block; font-size: 11px; font-weight: 800; color: var(--gold-deep); margin-right: 6px; }
+.q .r2 { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+.q .r2 .p { font-size: 14px; font-weight: 800; }
+.q .r2 .go { font-size: 14px; font-weight: 800; color: var(--gold-deep); }
+.q.small { padding: 14px 16px; }
+.q.small .r1 { align-items: center; }
+.allq { margin: 12px 16px 0; text-align: center; font-size: 14px; font-weight: 700; color: var(--ink-2); padding: 12px; }
+
+/* ── 후기 (강점 증명) ── */
+.notice { margin: 0 16px 10px; font-size: 11.5px; color: var(--seal); font-weight: 700; }
+.revs { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 4px; scrollbar-width: none; }
+.revs::-webkit-scrollbar { display: none; }
+.rv { flex: 0 0 262px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.rv .why { font-size: 12px; font-weight: 800; color: var(--gold-deep); }
+.rv .qt { font-family: 'Noto Serif KR', serif; font-size: 15.5px; line-height: 1.6; margin-top: 8px; letter-spacing: -.01em; }
+.rv .who { font-size: 12px; color: var(--mute); margin-top: 12px; }
+.proof { margin: 14px 16px 0; border-top: 1px solid var(--line); }
+.proof li { list-style: none; display: flex; gap: 12px; padding: 13px 2px; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.55; }
+.proof li b { font-weight: 800; }
+.proof li span { color: var(--ink-2); }
+.proof li i { font-style: normal; font-family: 'Noto Serif KR', serif; font-weight: 900; color: var(--mute); width: 18px; flex-shrink: 0; }
+
+.credit { margin: 26px 22px 0; font-size: 11px; color: var(--mute); line-height: 1.6; }
+.pad { height: 110px; }
+.tabbar { position: sticky; bottom: 0; height: 78px; background: rgba(255,253,248,.97); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5,1fr); padding-bottom: 16px; margin-top: -78px; z-index: 5; }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--mute); }
+.tab svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab.on { color: var(--ink); font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="stage">
+<div>
+  <div class="label">v8 · 수묵 + 오늘 예고 (색은 먹·종이 / 금색은 누르는 곳에만)</div>
+  <div class="phone" id="ph">
+    <div class="top"><div class="logo"><i>命</i>사주500</div><div class="un">1.2운<span>충전</span></div></div>
+
+    <!-- 1. 오늘 예고 -->
+    <section class="hero">
+      <div class="art"></div>
+      <div class="body">
+        <div class="date"><span class="seal">丁巳</span>10월 10일 · 서윤님의 오늘</div>
+        <div class="hook">오후 3시 반부터는<br><u>결정을 미루세요.</u></div>
+        <div class="tease">그 전에 <b>꼭 만나야 할 사람</b>이 있어요 — <span class="blur">말수가 적고 단단한 사람</span><span class="lock"><svg width="11" height="12" viewBox="0 0 11 12" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="1" y="5" width="9" height="6" rx="1.5"/><path d="M3 5V3.5a2.5 2.5 0 015 0V5"/></svg>잠김</span></div>
+        <div class="cta">오늘 운세 전부 열기 <small>무료</small></div>
+        <div class="under">오늘 1회 무료 · 결제 없이 바로 열려요</div>
+      </div>
+    </section>
+
+    <!-- 2. D-day : 내 사주에서 다가오는 달 -->
+    <section class="dday">
+      <div class="wm"><span class="seal">合</span></div>
+      <div class="k">서윤님 사주에서 다가오는 큰 달</div>
+      <div class="row"><div class="num"><small>D-</small>58</div><div class="t">12월 7일,<br>인연의 문이 열립니다</div></div>
+      <p>12월(庚子월)에 들어오는 <b>庚은 서윤님(乙)과 짝을 이루는 연인의 별</b>이에요. 그 전에 정리해 둘 것, 들어오는 사람을 알아보는 법이 연애운에 있어요.</p>
+      <div class="ghost">12월 전에 알아둘 것 보기 <small>· 연애운 3운</small></div>
+    </section>
+
+    <!-- 3. 오늘 무료 -->
+    <div class="duo">
+      <div class="mini"><div class="f">오늘 무료</div><div class="h">어젯밤 꿈,<br>무슨 뜻일까</div><div class="s">꿈 단어만 적으면 내 사주로 풀어요</div><div class="go">꿈 풀기 ›</div></div>
+      <div class="mini"><div class="f">오늘 1번 무료</div><div class="h">내 사주에게<br>직접 물어보기</div><div class="s">"그 사람 연락 올까요?" 같은 질문도</div><div class="go">물어보기 ›</div></div>
+    </div>
+
+    <!-- 4. 사주책 (종합사주 10운) -->
+    <div class="h-sec"><div class="k">평생 한 번 읽는 풀이</div><h2>서윤님 인생이 한 권에</h2></div>
+    <section class="bookwrap">
+      <div class="cover">
+        <div class="bg"></div>
+        <div class="book"><span class="seal">命</span><div class="lbl">서윤의 사주</div><div class="il">乙未</div><div class="nm">癸酉 · 丁巳 · 乙未 · 己卯</div></div>
+      </div>
+      <div class="bookbody">
+        <div class="who">서윤님은 <em>한여름 들녘에 고개 숙인 곡식</em>으로 태어났어요.</div>
+        <div class="sub">乙未일주 — 이 한 줄에서 시작해 돈·사랑·일·건강까지 10장으로 풀어요.</div>
+
+        <div class="daeun">
+          <div class="t">10년마다 바뀌는 운 <span>지금 · 다음</span></div>
+          <div class="du">
+            <div><b>戊午</b>8세</div><div><b>己未</b>18세</div><div class="now"><b>庚申</b>28세</div><div class="nx"><b>辛酉</b>38세</div><div><b>壬戌</b>48세</div><div><b>癸亥</b>58세</div><div><b>甲子</b>68세</div><div><b>乙丑</b>78세</div>
+          </div>
+          <div class="note">지금은 <b>庚申 대운</b>(28~37세). 다음 10년이 바뀌는 해는 <b>2030년</b>이에요. 인생에서 가장 좋은 10년은 <span class="blur">48세부터 시작되는 壬戌</span><span class="lock"><svg width="11" height="12" viewBox="0 0 11 12" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="1" y="5" width="9" height="6" rx="1.5"/><path d="M3 5V3.5a2.5 2.5 0 015 0V5"/></svg>잠김</span></div>
+        </div>
+
+        <ul class="toc">
+          <li><span class="no">1장</span><span><span class="ti">진짜 강점 3 · 빠지기 쉬운 함정 3</span><span class="pv">첫 번째 함정 — <span class="blur">좋은 사람으로 남으려다 손해를 떠안는</span> 패턴</span></span></li>
+          <li><span class="no">2장</span><span><span class="ti">돈·사랑·일·건강·사람·공부 점수</span><span class="pv">가장 강한 영역 <span class="blur">재물 84</span> · 가장 약한 영역 <span class="blur">건강 58</span></span></span></li>
+          <li><span class="no">3장</span><span><span class="ti">나에게 부족한 기운과 채우는 법</span><span class="pv">색 · 방위 · 계절 · 습관까지</span></span></li>
+          <li><span class="no">4장</span><span><span class="ti">오늘부터 바꿀 다섯 가지</span><span class="pv">읽고 끝나지 않게, 할 일로 정리해 드려요</span></span></li>
+          <li class="more">+ 원국 · 십성 · 신살 · 올해 흐름 등 6장 더</li>
+        </ul>
+        <div class="keep"><span>한 번 사면 평생 보관</span><span>PDF로 저장</span><span>다 읽고 궁금한 건 바로 질문</span></div>
+        <div class="cta">내 사주책 펼치기 <small>10운</small></div>
+      </div>
+    </section>
+
+    <!-- 5. 고민으로 고르는 주제 -->
+    <div class="h-sec"><div class="k">요즘 많이 찾는 고민</div><h2>지금 마음에 걸리는 게 있다면</h2></div>
+    <div class="qs">
+      <div class="q">
+        <div class="r1"><span class="hz">緣</span><div><div class="a">그 사람, 내 사람일까</div><div class="b">연애운 · 인연이 오는 달과 알아보는 법</div></div></div>
+        <div class="fact"><span class="tag">서윤님 사주</span>연인의 별이 <b>1개(酉)</b> 있어요. 12월엔 <b>하나가 더</b> 들어와요.</div>
+        <div class="r2"><span class="p">3운</span><span class="go">내 연애운 보기 ›</span></div>
+      </div>
+      <div class="q">
+        <div class="r1"><span class="hz">復</span><div><div class="a">헤어진 그 사람, 다시 올까</div><div class="b">재회운 · 재회 가능성 판정과 연락할 달</div></div></div>
+        <div class="fact"><span class="tag">함께 넣으면</span>그 사람 생일을 넣으면 <b>두 사주를 같이</b> 놓고, 다시 닿는 달을 짚어 드려요.</div>
+        <div class="r2"><span class="p">3운</span><span class="go">재회운 보기 ›</span></div>
+      </div>
+      <div class="q">
+        <div class="r1"><span class="hz">進</span><div><div class="a">이번엔 붙을까, 옮겨도 될까</div><div class="b">합격·이직운 · 결과가 나오는 달</div></div></div>
+        <div class="fact"><span class="tag">서윤님 사주</span>태어난 해(癸酉)에 <b>시험·자리의 별과 공부의 별</b>이 나란히 있어요.</div>
+        <div class="r2"><span class="p">1운</span><span class="go">합격·이직운 보기 ›</span></div>
+      </div>
+      <div class="q small">
+        <div class="r1"><span class="hz">財</span><div><div class="a">왜 돈이 안 모일까</div><div class="b">재물의 별 2개 · 둘 다 큰돈이 오가는 별(편재)</div></div><span class="p" style="margin-left:auto;font-weight:800;font-size:14px">3운</span></div>
+      </div>
+      <div class="q small">
+        <div class="r1"><span class="hz">婚</span><div><div class="a">이 사람과 결혼해도 될까</div><div class="b">결혼운 · 결혼 적기와 배우자 성향</div></div><span class="p" style="margin-left:auto;font-weight:800;font-size:14px">1운</span></div>
+      </div>
+    </div>
+    <div class="allq">고민 10가지 전부 보기 ›</div>
+
+    <!-- 6. 왜 사주500인가 — 실제 후기 (수집 후 노출) -->
+    <div class="h-sec"><div class="k">먼저 본 사람들</div><h2>읽어본 사람들이 남긴 말</h2></div>
+    <div class="notice">시안 표시 — 아래 문장은 자리 예시. 실제 구매자 후기(노출 동의분)로만 채웁니다.</div>
+    <div class="revs">
+      <div class="rv"><div class="why">태어난 시간까지 반영</div><div class="qt">"친구랑 생년월일이 같은데, 태어난 시간 넣으니까 풀이가 완전히 달랐어요."</div><div class="who">구매자 · 종합사주 · 10월</div></div>
+      <div class="rv"><div class="why">읽다 궁금하면 바로 질문</div><div class="qt">"결과에 나온 12월 얘기를 대화로 더 물어봤는데, 앞 내용이랑 이어서 답해줘요."</div><div class="who">구매자 · 연애운 · 10월</div></div>
+      <div class="rv"><div class="why">뻔한 말이 없다</div><div class="qt">"'조심하세요'로 안 끝나고 몇 시, 몇 월까지 짚어줘서 저장해 뒀어요."</div><div class="who">구매자 · 오늘의 운세 · 10월</div></div>
+    </div>
+    <ul class="proof">
+      <li><i>一</i><span><b>태어난 시간을 30분 단위로 보정</b>해요. 서울과 표준시의 차이까지 맞춰 8글자를 세웁니다.</span></li>
+      <li><i>二</i><span><b>달과 시간대는 만세력으로 계산</b>해요. 오늘의 일진, 이번 달 간지를 내 8글자와 직접 맞춰 봅니다.</span></li>
+      <li><i>三</i><span><b>한 번 산 풀이는 평생 보관</b>돼요. 다시 열 때 운이 들지 않아요.</span></li>
+    </ul>
+
+    <div class="credit">그림 · 정선 「개화사」, 김홍도 「금강사군첩 — 장안사」 (공유마당 · 저작권 만료 저작물)</div>
+    <div class="pad"></div>
+    <nav class="tabbar"><div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg>홈</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>사주대화</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-3.8L6 20V5a1 1 0 0 1 1-1z"/></svg>보관함</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M4 9h16v4H4zM5.5 13h13v7h-13zM12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg>이벤트</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/></svg>내 정보</div></nav>
+  </div>
+</div>
+</div>
+</body>
+</html>
