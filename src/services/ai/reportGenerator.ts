@@ -98,8 +98,10 @@ export async function generateReport(
   sajuData: SajuData,
   situation?: Situation,
   reportType: 'basic' | 'premium' = 'basic',
+  /** 2026-10-09 — 점진 표시 좌표 (서버가 그룹 완성마다 progress/{id} 에 write) */
+  progressId?: string,
 ): Promise<{ reportId: string; content: AIReportResponse }> {
-  const result = await callWithAuth('generateReport', { sajuData, situation, reportType });
+  const result = await callWithAuth('generateReport', { sajuData, situation, reportType, ...(progressId ? { progressId } : {}) });
   return result.data as { reportId: string; content: AIReportResponse };
 }
 
@@ -555,6 +557,8 @@ export async function generateDailyFortuneStream(
 export type TopicStreamErrorKind = 'server' | 'http' | 'network' | 'closed';
 export interface TopicStreamCallbacks {
   onStart?: () => void;
+  /** 2026-10-09 — 서버가 상황별 섹션 제목을 먼저 보냄 (로딩 스켈레톤 제목을 서버와 일치) */
+  onOutline?: (headings: string[]) => void;
   onPartial?: (info: { partial: any; totalChars: number }) => void;
   onProgress?: (info: { totalChars: number }) => void;
   onDone: (info: { reportId: string; content: any }) => void;
@@ -654,6 +658,8 @@ export async function generateTopicAnalysisStream(
           accumulated += String(payload.delta || '');
           tryEmitPartial();
           progress();
+        } else if (eventName === 'outline') {
+          if (Array.isArray(payload.headings)) callbacks.onOutline?.(payload.headings.filter((h: unknown) => typeof h === 'string'));
         } else if (eventName === 'retry') {
           progress(); // 서버 파싱 실패 재생성 — 진행 중 신호 (마감 타이머 연장)
         } else if (eventName === 'done') {
@@ -1037,7 +1043,9 @@ export async function generateTopicAnalysis(
  */
 export async function generateTojungBigyeol(
   sajuData: SajuData,
+  /** 2026-10-09 — 점진 표시 좌표 (서버가 총평·1~6월·7~12월 완성마다 progress/{id} 에 write) */
+  progressId?: string,
 ): Promise<{ reportId: string; content: TojungResponse }> {
-  const result = await callWithAuth('generateTojung', { sajuData });
+  const result = await callWithAuth('generateTojung', { sajuData, ...(progressId ? { progressId } : {}) });
   return result.data as { reportId: string; content: TojungResponse };
 }

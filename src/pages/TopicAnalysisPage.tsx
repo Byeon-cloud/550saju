@@ -100,6 +100,7 @@ import { TOPIC_THEMES, normalizeTopicKey, type TopicResultV2 } from './topic/_to
 // 2026-10-04 — 주제 반쪽(__partial) 자가치유 · 스트림 마감 정책 · 폴백 전 서버 완성본 채택
 import * as topicHeal from './topic/topicPartialHeal';
 import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
+import { NextStepsCard, openChatWithResult } from '@/components/common/NextStepsCard';
 
 /** Phase 4 (AI prompt 재작성) 완료 후 true 로 flip — JDS_Topic_IA 통합 결과 페이지 활성화 */
 const USE_TOPIC_MOCKUP_VIEW = false;
@@ -175,12 +176,12 @@ const TOPIC_SECTION_TITLES: Record<string, string[]> = {
   love: ['나의 연애 스타일', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 패턴', '올해 연애 흐름과 전략'],
   wealth: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '새는 돈 패턴', '올해 재물 전략'],
   career: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '직장 내 인간관계 패턴'],
-  marriage: ['결혼 적기 분석', '배우자 성향', '결혼 후 생활 패턴', '배우자 가족 관계', '결혼 준비 조언'],
+  marriage: ['결혼 적기 분석', '미래 배우자의 성향', '결혼 후 생활 패턴', '배우자 가족 관계', '결혼 준비 조언'],
   business: ['사업가 기질 분석', '맞는 업종', '창업 타이밍', '동업 궁합', '사업 리스크 관리'],
   health: ['오행별 취약 장기', '체질 분석', '올해 건강 주의 시기', '정신 건강 패턴', '건강 개선 전략'],
-  study: ['나의 학습 체질 분석', '합격 가능성과 시기', '시험 당일 최적 전략', '슬럼프 극복법', '올해 합격 로드맵'],
+  study: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '슬럼프 극복법', '올해 공부 로드맵'],
   exam: ['변동의 timing — 올해 합격·이직 기운', '합격·이직 유리 방향과 분야', '면접·자격시험 결정 시기', '이직 후 3개월 적응 전망', '올해 변동 실전 전략'],
-  move: ['이동 적기 분석', '좋은 방향', '이사/이직/유학 전망', '해외운', '올해 이동 전략'],
+  move: ['이동 적기 분석', '좋은 방향', '이사·유학·이주 전망', '해외운', '올해 이동 전략'],
   reunion: ['이별의 사주적 원인 분석', '상대방의 사주 성향 분석', '두 사람의 오행 궁합 구조', '전통 연애 신살(神殺) 분석', '재회 가능성과 적기', '월별 재회 에너지 흐름', '재회 실전 전략', '재회 후 관계 변화 예측', '새 인연 vs 재회 — 냉정한 비교', '재회 성공을 위한 개운법'],
 };
 
@@ -472,9 +473,15 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
   ].filter(r => r.value) : [];
 
   // 2026-05-28 — 분기별 신규 필드 (server schema 분리)
-  const isSolo = !data.partnerCompat;
-  const isSome = data.partnerCompat && data.confessionTiming;
-  const isDating = data.partnerCompat && (data.stabilityPhase || data.longTermOutlook);
+  // 🚨 2026-10-09 — 상태는 서버 스탬프(topicData.loveStatus) 우선. 이전엔 '상대 궁합 데이터 유무'로 갈라
+  //   연애중인데 상대 생년월일을 안 넣은 사람이 솔로 화면('인연 시작 유력 시기'·'궁합 잘 맞는 이성')을 봤다.
+  const loveStatus: 'solo' | 'some' | 'dating' =
+    data.loveStatus === 'some' || data.loveStatus === 'dating' || data.loveStatus === 'solo'
+      ? data.loveStatus
+      : (data.partnerCompat ? (data.confessionTiming ? 'some' : 'dating') : 'solo');
+  const isSolo = loveStatus === 'solo';
+  const isSome = loveStatus === 'some' && !!(data.confessionTiming || data.approachStrategy || data.signalReading || data.interestLevel != null);
+  const isDating = loveStatus === 'dating' && !!(data.stabilityPhase || data.longTermOutlook || data.riskMonth || data.deepenTip);
 
   return (
     <FadeIn delay={0.1}>
@@ -594,7 +601,7 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
               <StatTile label="매력의 별 · 도화살" value={data.doHwaSal ? '있음' : '없음'} color={color} tone={data.doHwaSal ? 'good' : 'default'} big />
             )}
             {data.bestMeetMonth && (
-              <StatTile label="인연 시작 유력 시기" value={data.bestMeetMonth} color={color} tone="good" big />
+              <StatTile label={loveStatus === 'some' ? '썸이 연애로 이어지는 시기' : loveStatus === 'dating' ? '관계가 깊어지는 시기' : '인연 시작 유력 시기'} value={data.bestMeetMonth} color={color} tone="good" big />
             )}
           </div>
           {data.attractionSource && (
@@ -611,10 +618,10 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
           )}
         </div>
 
-        {/* 궁합 좋은 이성 */}
-        {fields.length > 0 && (
+        {/* 궁합 좋은 이성 — 연애중이면 숨김 (이미 연인이 있다) */}
+        {fields.length > 0 && loveStatus !== 'dating' && (
           <div className="card">
-            <p className="text-h3 text-text-primary mb-3">사주 궁합이 잘 맞는 이성</p>
+            <p className="text-h3 text-text-primary mb-3">{loveStatus === 'some' ? '내 사주와 잘 맞는 사람의 결' : '사주 궁합이 잘 맞는 이성'}</p>
             <div className="space-y-2.5">
               {fields.map((f, i) => (
                 <div key={i} className="flex items-start gap-2">
@@ -3278,6 +3285,11 @@ export function TopicAnalysisPage() {
     } catch { return null; }
   });
   const [result, setResult] = useState<any>(navState?.savedResult || null);
+  // 2026-10-09 — 서버가 먼저 보낸 상황별 섹션 제목 (로딩 스켈레톤 제목 = 실제 제목)
+  const [serverTitles, setServerTitles] = useState<string[] | null>(null);
+  // 생성이 끝났는지 (NEXT 카드는 다 쓴 뒤에만 — 반쯤 쓰인 문장이 보이지 않게)
+  const [streaming, setStreaming] = useState(false);
+  const streamComplete = !streaming;
   // 2026-09-17 B-1 — 이번 화면에서 저장 완료된 결과 리포트 id (URL ?reportId= 기록용 · 완성본만)
   const [savedReportId, setSavedReportId] = useState<string | null>(null);
   const [, setLoadingMsg] = useState(0);
@@ -3642,6 +3654,8 @@ export function TopicAnalysisPage() {
         let phaseShown = false;
         t0 = Date.now();
         let lastActivity = t0;
+        setServerTitles(null);
+        setStreaming(true);
         // ⭐ 2026-05-27 v2 — 첫 paint 조건은 substantive content 도착 시점에만 (title 단독 X)
         res = await new Promise<{ reportId: string; content: any }>((resolve, reject) => {
           // 2026-07-03 P0 fix (CS "연애운 풀이가 나오지 않아요") — 기존 60s 단일 타임아웃의 3중 결함:
@@ -3684,6 +3698,7 @@ export function TopicAnalysisPage() {
             { topicId: topicId!, sajuData: selected.sajuData, baseScore: navState?.baseScore, partnerInfo: partner, extraInfo: finalExtra },
             {
               onStart: () => { sse.started = true; lastActivity = Date.now(); console.log('[topic SSE] start'); },
+              onOutline: (headings) => { if (attemptSeqRef.current === attemptSeq && headings.length > 0) setServerTitles(headings); },
               onProgress: () => { lastActivity = Date.now(); },
               // 오늘의 운세 패턴 — 첫 partial 도착 시 result phase 전이 + 점진 렌더.
               //   방어 가드 (꿈해몽 회귀 학습): 불완전한 섹션(heading/content 미생성) 은
@@ -3767,6 +3782,7 @@ export function TopicAnalysisPage() {
       //   (캐시·보관함 재진입에도 유지 — 누구 기준 리포트인지 한눈에)
       const contentFinal = partner?.name ? { ...res.content, partnerName: partner.name } : res.content;
       setResult(contentFinal);
+      setStreaming(false);
 
       // localStorage 캐시 (재회운/결혼운/연애운은 상대방 이름 포함)
       const hasPartnerName = (topicId === 'reunion' || topicId === 'marriage' || topicId === 'love') && partnerInfo.name;
@@ -3823,6 +3839,7 @@ export function TopicAnalysisPage() {
       setAnalyzeError(`분석에 실패해서 ${actualPrice}운을 돌려드렸어요. 잠시 후 다시 시도해주세요.`);
       setPhase('select');
     } finally {
+      setStreaming(false);
       clearInterval(interval);
       isAnalyzingRef.current = false;
       topicHeal.unmarkTopicInFlight(pendingId); // 반쪽으로 끝났으면 그 pending 은 반쪽 레코드가 소유 (승격 시 clear)
@@ -5011,12 +5028,14 @@ export function TopicAnalysisPage() {
                  *   서버가 실제 heading 을 보내면 그때 채운다. 슬롯 수·진행 표시는 그대로 유지. */
                 const situationDynamic =
                   (lookupKey === 'exam' && !!extraInfo.changeType) ||
-                  (lookupKey === 'marriage' && relationStatus === 'dating') ||
+                  (lookupKey === 'marriage' && (relationStatus === 'dating' || !!(showPartner && partnerInfo.name))) ||
                   (lookupKey === 'reunion' && !(showPartner && partnerInfo.name)) ||
-                  (lookupKey === 'career' && (extraInfo.jobStatus === 'student' || extraInfo.jobStatus === 'employed')) ||
-                  (lookupKey === 'move' && extraInfo.movePurpose === 'house');
-                const safeTitles = situationDynamic ? [] : expectedTitles;
-                const slotCount = Math.max(expectedTitles.length, liveSections.length);
+                  (lookupKey === 'career' && !!extraInfo.jobStatus) ||
+                  (lookupKey === 'business' && extraInfo.bizStatus === 'running') ||
+                  (lookupKey === 'move' && !!extraInfo.movePurpose) ||
+                  (lookupKey === 'love' && loveStatus !== 'solo');
+                const safeTitles = serverTitles && serverTitles.length > 0 ? serverTitles : (situationDynamic ? [] : expectedTitles);
+                const slotCount = Math.max(serverTitles?.length || expectedTitles.length, liveSections.length);
                 if (slotCount === 0) return null;
                 const scaffold = Array.from({ length: slotCount }, (_, i) => {
                   const live = liveSections[i];
@@ -5189,6 +5208,22 @@ export function TopicAnalysisPage() {
                 </div>
               )}
 
+              {/* 2026-10-09 — NEXT: 이 결과에서 이어지는 주제 2 + 사주대화 질문 3 (서버 nextHooks · 다 쓴 뒤에만) */}
+              {streamComplete && !result.__partial && result.nextHooks && (() => {
+                const nh = result.nextHooks;
+                const nextProfileId = selected ? ((selected as any).profileId || selected.id) : undefined;
+                return (
+                  <div className="pt-2">
+                    <NextStepsCard
+                      topics={Array.isArray(nh.topics) ? nh.topics : []}
+                      questions={Array.isArray(nh.chatQuestions) ? nh.chatQuestions : []}
+                      onTopic={(id) => navigate(`/topic/${id}`, nextProfileId ? { state: { profileId: nextProfileId } } : undefined)}
+                      onAsk={(q) => { void openChatWithResult({ navigate, name: selected?.name || '나', profile: selected, ctx: { type: 'topic', label: topic.label, fullResult: result }, question: q }); }}
+                    />
+                  </div>
+                );
+              })()}
+
               {/* ── 다른 주제 CTA — audit 3 P0 E4 ──
                   · navigate 만 호출 (race condition 제거 — 라우터 pathname 변경 시 컴포넌트 재마운트 → state 자동 초기화)
                   · min-height 56px (audit 4 P1 D6)
@@ -5197,7 +5232,7 @@ export function TopicAnalysisPage() {
                     ② 같은 그룹  ③ 인기순(재물·연애·재회 사용량 최상위 → 합격 HOT …). 자기 자신 제외.
                   · 가격 SSOT(formatPriceLabel) 표기 + 같은 프로필로 이어가도록 state.profileId 전달 */}
               <div className="space-y-2 pt-2">
-                <p className="text-label text-text-hint text-center">다른 운세도 궁금하다면</p>
+                <p className="text-label text-text-hint text-center">{streamComplete && result.nextHooks?.topics?.length > 0 ? '다른 주제 더 보기' : '다른 운세도 궁금하다면'}</p>
                 {/* 2026-10-04 궁합 공개 — 연애·재회·결혼 결과에서 '그 사람과의 궁합'으로 바로 연결 */}
                 {['love', 'reunion', 'marriage'].includes(String(normalizeTopicId(topicId))) && (
                   <button
@@ -5231,6 +5266,9 @@ export function TopicAnalysisPage() {
                       TOPIC_IDS.filter((id) => GROUP[id] === GROUP[cur]).forEach(push);
                     }
                     POPULAR.forEach(push);
+                    // NEXT 카드에 이미 나온 주제는 타일에서 뺌 (같은 주제 두 번 X)
+                    const hooked = new Set<string>(streamComplete && Array.isArray(result.nextHooks?.topics) ? result.nextHooks.topics.map((h: any) => h?.id) : []);
+                    for (let i = ordered.length - 1; i >= 0; i--) if (hooked.has(ordered[i])) ordered.splice(i, 1);
                     const nextProfileId = selected ? ((selected as any).profileId || selected.id) : undefined;
                     return ordered.slice(0, 4).map((id) => {
                       const t = TOPICS[id as TopicKey];
@@ -5387,7 +5425,7 @@ export function TopicAnalysisPage() {
                     <>{actualPrice}운이 차감돼요 (잔액 {balance}운)</>
                   )}
                 </li>
-                <li>· 보통 30초~1분 정도 걸려요</li>
+                <li>· {topicId === 'reunion' ? '첫 풀이는 20초쯤 뜨고, 전체는 3분 안팎이에요' : '첫 풀이는 20초쯤 뜨고, 전체는 2분 안팎이에요'} — 위에서부터 차례로 채워져요</li>
                 <li>· 결과는 보관함에 자동 저장돼요</li>
               </ul>
             );

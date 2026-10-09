@@ -484,6 +484,7 @@ export function ChatSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [pendingAsk, setPendingAsk] = useState<string | null>(null);
   const toast = useToast();
 
   if (!sessionId) {
@@ -620,7 +621,9 @@ export function ChatSessionPage() {
       greeting = `${userName}님, ${titlePhrase} 오늘 하루를 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
       defaultQuestions = ['오늘 가장 조심할 시간대는?', '오늘의 행운 색·방위는?', '내일 운세도 미리 알려주세요'];
     } else if (ctxType === 'topic' && ctxLabel) {
-      const oneLine = contentContext?.fullResult?.oneLineSummary ? String(contentContext.fullResult.oneLineSummary).trim() : '';
+      const oneLine = contentContext?.fullResult?.oneLineSummary
+        ? String(contentContext.fullResult.oneLineSummary).trim()
+        : (plainText(contentContext?.fullResult?.summary).split(/(?<=[.!?。])\s/)[0] || '').trim();
       const oneLineShort = oneLine.length > 50 ? `${oneLine.slice(0, 50)}…` : oneLine;
       const summaryPhrase = oneLineShort ? ` "${oneLineShort}" 라는 풀이를 본 김에 ` : ' ';
       greeting = `${userName}님,${summaryPhrase}${ctxLabel}에 대해 더 깊이 궁금한 점 편하게 물어보세요.`;
@@ -660,6 +663,13 @@ export function ChatSessionPage() {
       greeting = '편하게 물어보세요. 사주를 등록하면 더 정확한 맞춤 풀이가 가능해요.';
       defaultQuestions = ['내 연애 스타일이 궁금해요', '올해 운세가 궁금해요', '사주로 뭘 알 수 있나요?'];
     }
+    // 2026-10-09 — 결과가 만든 맞춤 질문(주제·오늘 nextHooks.chatQuestions / 종합 chatQuestions) 우선 — 일반 질문보다 클릭이 붙는다
+    {
+      const fr = contentContext?.fullResult as any;
+      const raw = Array.isArray(fr?.nextHooks?.chatQuestions) ? fr.nextHooks.chatQuestions : (Array.isArray(fr?.chatQuestions) ? fr.chatQuestions : []);
+      const aiQs = raw.filter((q: unknown) => typeof q === 'string' && (q as string).trim()).slice(0, 3) as string[];
+      if (aiQs.length >= 2) defaultQuestions = aiQs;
+    }
     const welcome: ChatMessage = {
       id: 'welcome',
       role: 'assistant',
@@ -675,8 +685,24 @@ export function ChatSessionPage() {
       (location.state as any)?.prefill ||
       (window.history.state?.usr as any)?.prefill;
     if (prefill && typeof prefill === 'string') setInputText(prefill);
+    // 2026-10-09 — 결과 화면 'NEXT' 카드에서 고른 질문: 한 번만, 환영 메시지 뒤에 바로 전송 (뒤로 갔다 와도 재전송 X)
+    const autoAsk = (location.state as any)?.autoAsk;
+    if (typeof autoAsk === 'string' && autoAsk.trim()) {
+      setPendingAsk(autoAsk.trim().slice(0, 200));
+      try { navigate(location.pathname, { replace: true, state: { ...(location.state as any), autoAsk: undefined } }); } catch { /* noop */ }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
+
+  // autoAsk 실행 — 환영 메시지가 들어간 뒤(최신 state 로) 1회
+  useEffect(() => {
+    if (!pendingAsk || isLoading) return;
+    if (!messages.some((m) => m.id === 'welcome')) return;
+    const q = pendingAsk;
+    setPendingAsk(null);
+    void sendMessage(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAsk, messages, isLoading]);
 
   // ── 자동 스크롤
   useEffect(() => {

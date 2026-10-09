@@ -45,6 +45,27 @@ import {
   type UnlockContentKey,
 } from './_ui_chrome';
 import { PremiumResult } from './types/PremiumResult';
+
+/** 2026-10-09 — 종합사주 그룹 점진 머지. 그룹마다 sections·sectionConclusions 가 따로 오므로 spread 만 하면
+ *  나중 그룹 sections 가 앞 그룹 것을 덮는다(§02 본문이 사라졌다 다시 나타남). id 기준 합치고 정통 순서로 정렬. */
+const PREMIUM_SECTION_ORDER = ['summary', 'structure', 'sipsung', 'yongsin', 'daeun', 'yearly', 'shinsal', 'practice'];
+function mergePremiumGroup(prev: any, data: any): any {
+  const p = prev || {};
+  const d = data || {};
+  const secs: any[] = Array.isArray(p.sections) ? [...p.sections] : [];
+  for (const sec of Array.isArray(d.sections) ? d.sections : []) {
+    const i = secs.findIndex((x: any) => x?.id && x.id === sec?.id);
+    if (i >= 0) secs[i] = sec; else secs.push(sec);
+  }
+  const rank = (x: any) => { const r = PREMIUM_SECTION_ORDER.indexOf(String(x?.id || '')); return r < 0 ? 99 : r; };
+  secs.sort((a: any, b: any) => rank(a) - rank(b));
+  return {
+    ...p,
+    ...d,
+    sections: secs,
+    sectionConclusions: { ...(p.sectionConclusions || {}), ...(d.sectionConclusions || {}) },
+  };
+}
 import { ResultErrorBoundary } from '@/components/common/ResultErrorBoundary';
 
 /* ══════════════════════════════════════════════════════════════════
@@ -376,12 +397,32 @@ export function ResultPage(props: ResultPageProps = {}) {
           watchdogRef.current = setTimeout(() => {
             if (!streamSettledRef.current) handleStreamFailure('시간 초과(callable)');
           }, 240000);
+          // 2026-10-09 — 점진 표시: 서버가 그룹 완성마다 progress/{id} 에 쓰고, 여기서 구독해 도착한 섹션부터 보여준다
+          //   (나머지는 '작성 중' 스켈레톤). 완성본 전달·환불 경로는 그대로 — 구독 실패해도 기존처럼 완성본으로.
+          let progressSub: { unsubscribe: () => void } | null = null;
+          let progressId: string | undefined;
           try {
-            const { content } = await mod.generateReport(sajuData as any, undefined, 'premium');
+            const [{ makeProgressId }, { subscribeProgress }] = await Promise.all([
+              import('@/services/progress/progressId'),
+              import('@/services/progress/progressClient'),
+            ]);
+            progressId = makeProgressId();
+            progressSub = subscribeProgress(progressId, {
+              onGroup: (g, data) => {
+                if (streamSettledRef.current || !['A', 'D', 'B', 'C'].includes(g)) return;
+                setStreamingAiResult((prev: any) => mergePremiumGroup(prev, data));
+                setArrivedGroups((prev) => (prev[g as 'A'] ? prev : { ...prev, [g]: true }));
+              },
+            });
+          } catch { /* 점진 표시는 부가 기능 */ }
+          try {
+            const { content } = await mod.generateReport(sajuData as any, undefined, 'premium', progressId);
             deliverReport({ ...(content as any), tier: 'premium' as const });
           } catch (e: any) {
             console.error('[ResultPage:fresh callable] 예외:', e?.message);
             await handleStreamFailure(e?.message || 'callable exception');
+          } finally {
+            progressSub?.unsubscribe();
           }
           return;
         }
@@ -389,7 +430,7 @@ export function ResultPage(props: ResultPageProps = {}) {
         await fn(sajuData as any, undefined, {
           onGroup: (_g: 'A' | 'D' | 'B' | 'C', data: any) => {
             // 그룹 단위 머지 (필드 누적). tier='premium' 표식은 final 에서 박음
-            setStreamingAiResult((prev: any) => ({ ...(prev || {}), ...(data || {}) }));
+            setStreamingAiResult((prev: any) => mergePremiumGroup(prev, data));
             setArrivedGroups((prev) => (prev[_g] ? prev : { ...prev, [_g]: true }));
           },
           onDone: ({ content }: { reportId: string; content: any }) => {
@@ -690,7 +731,8 @@ export function ResultPage(props: ResultPageProps = {}) {
     );
   }
 
-  if (isFreshStreamingIncomplete) {
+  const anyGroupArrived = arrivedGroups.A || arrivedGroups.D || arrivedGroups.B || arrivedGroups.C;
+  if (isFreshStreamingIncomplete && !(freshType === 'premium' && anyGroupArrived)) {
     const arrivedCount = (arrivedGroups.A ? 1 : 0) + (arrivedGroups.D ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0);
     const isPrem = freshType === 'premium';
     return (
@@ -1528,11 +1570,16 @@ export function ResultPage(props: ResultPageProps = {}) {
               }} />
               <style>{`@keyframes premium-spin { to { transform: rotate(360deg); } }`}</style>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#5C4A2E', marginBottom: 2 }}>
-                  사주를 깊게 풀어내는 중이에요
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#5C4A2E', marginBottom: 4 }}>
+                  풀이를 쓰는 중이에요 · {(arrivedGroups.A ? 1 : 0) + (arrivedGroups.D ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0)}/4 도착
+                </div>
+                <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
+                  {(['A', 'D', 'B', 'C'] as const).map((g) => (
+                    <div key={g} style={{ flex: 1, height: 4, borderRadius: 999, background: arrivedGroups[g] ? '#B8965A' : 'rgba(184,150,90,0.18)', transition: 'background 0.4s' }} />
+                  ))}
                 </div>
                 <div style={{ fontSize: 11, color: '#8C6D3D', lineHeight: 1.5 }}>
-                  분량이 많아 1~2분 정도 걸려요. 도착한 섹션부터 채워집니다.
+                  '작성 중' 표시가 없는 섹션은 지금 바로 읽을 수 있어요. 나머지도 다 쓰는 대로 채워져요.
                 </div>
               </div>
             </div>
@@ -1549,6 +1596,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 v4Gilsin={v4Gilsin}
                 v4Hyungsal={v4Hyungsal}
                 scores={scores}
+                pendingGroups={isPremiumStreamingIncomplete ? { A: !arrivedGroups.A, D: !arrivedGroups.D, B: !arrivedGroups.B, C: !arrivedGroups.C } : undefined}
               />
             </ResultErrorBoundary>
           )}

@@ -29,6 +29,37 @@ import {
 
 type Phase = 'select' | 'loading' | 'result';
 
+/** 2026-10-09 — 점진 표시: 그룹(A 총평 · B 1~6월 · C 7~12월) 도착분 머지 */
+function mergeNyGroup(prev: any, data: any): any {
+  const p = prev || {};
+  const months: any[] = Array.isArray(p.months) ? [...p.months] : [];
+  for (const m of Array.isArray(data?.months) ? data.months : []) {
+    const i = months.findIndex((x: any) => Number(x?.month) === Number(m?.month));
+    if (i >= 0) months[i] = m; else months.push(m);
+  }
+  months.sort((a: any, b: any) => Number(a.month) - Number(b.month));
+  const { months: _ignored, ...rest } = data || {};
+  void _ignored;
+  return { ...p, ...rest, months };
+}
+
+/** 아직 안 온 자리 — 내용 대신 '쓰는 중' shimmer (나중에 글이 바뀌지 않게) */
+function NySkeleton({ label, lines = 3, height = 12 }: { label: string; lines?: number; height?: number }) {
+  return (
+    <div className="card" aria-live="polite">
+      <style>{`@keyframes ny-shimmer{0%{background-position:-240px 0}100%{background-position:240px 0}}`}</style>
+      <p className="text-[12px] font-bold mb-2.5" style={{ color: '#2F4B7C' }}>{label}</p>
+      {Array.from({ length: lines }, (_, i) => (
+        <div key={i} style={{
+          height, width: `${[100, 92, 76, 88][i % 4]}%`, borderRadius: 6, marginBottom: 8,
+          background: 'linear-gradient(90deg, rgba(47,75,124,0.07) 0%, rgba(47,75,124,0.16) 50%, rgba(47,75,124,0.07) 100%)',
+          backgroundSize: '480px 100%', animation: 'ny-shimmer 1.4s ease-in-out infinite',
+        }} />
+      ))}
+    </div>
+  );
+}
+
 /* 2026-10-07 — '토정비결' → '신년운세' 재출시 (경로 /tojung · contentType 'tojung' 유지).
  *   대상 연도 = 10월부터 내년 (서버 claudeTojung.tojungTargetYear 와 같은 규칙).
  *   2026-10-08 오너 "7운 · 퀄리티 좋게" → 7운 프리미엄 (Opus 3그룹 · 달마다 좋은 날/조심할 날 · 결정 타이밍). */
@@ -80,6 +111,9 @@ export function TojungPage() {
   // 2026-05-07 fix — 동적 reportId
   const [shareReportId, setShareReportId] = useState<string>(navState?.savedReport?.id || '');
   const isAnalyzingRef = useRef(false);
+  // 2026-10-09 — 점진 표시 (생성 중 도착 그룹부터 화면에)
+  const [arrivedNy, setArrivedNy] = useState<Record<'A' | 'B' | 'C', boolean>>({ A: true, B: true, C: true });
+  const partialMode = !(arrivedNy.A && arrivedNy.B && arrivedNy.C);
 
   const reports = useMemo(() => getProfiles(), []);
 
@@ -113,15 +147,42 @@ export function TojungPage() {
     setLoadingStep(0);
     const interval = setInterval(() => setLoadingStep(s => Math.min(s + 1, LOADING_STEPS.length - 1)), 3000);
 
+    // 2026-10-09 — 점진 표시: 서버가 총평·1~6월·7~12월을 완성하는 대로 progress/{id} 에 쓰고 여기서 구독.
+    //   첫 그룹이 오면 결과 화면으로 넘어가고, 안 온 자리는 스켈레톤. 결제·저장·환불 경로는 그대로.
+    let progressSub: { unsubscribe: () => void } | null = null;
+    let progressId: string | undefined;
+    let settled = false;
+    setArrivedNy({ A: false, B: false, C: false });
     try {
-      const res = await generateTojungBigyeol(selected.sajuData);
+      const [{ makeProgressId }, { subscribeProgress }] = await Promise.all([
+        import('@/services/progress/progressId'),
+        import('@/services/progress/progressClient'),
+      ]);
+      progressId = makeProgressId();
+      progressSub = subscribeProgress(progressId, {
+        onGroup: (g, data) => {
+          if (settled || !['A', 'B', 'C'].includes(g)) return;
+          setResult((prev) => mergeNyGroup(prev, data) as TojungResponse);
+          setArrivedNy((prev) => ({ ...prev, [g]: true }));
+          setPhase('result');
+        },
+      });
+    } catch { /* 점진 표시는 부가 기능 */ }
+
+    try {
+      const res = await generateTojungBigyeol(selected.sajuData, progressId);
+      settled = true;
       setResult(res.content);
+      setArrivedNy({ A: true, B: true, C: true });
       const rid = res.reportId || generateId();
       saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', aiResult: res.content, createdAt: new Date().toISOString() });
       clearPendingSpendByType('tojung'); // 결과 저장 완료 → 자동환불 대상 제외
       setShareReportId(rid);
       setPhase('result');
     } catch (e: any) {
+      settled = true;
+      setArrivedNy({ A: true, B: true, C: true });
+      setResult(null);
       console.error('신년운세 실패:', e);
       // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
       refundBalance(NEWYEAR_PRICE);
@@ -130,6 +191,7 @@ export function TojungPage() {
       toast.show(`분석에 실패해서 ${NEWYEAR_PRICE}운을 돌려드렸어요`, 'warning');
     } finally {
       clearInterval(interval);
+      progressSub?.unsubscribe();
       isAnalyzingRef.current = false;
     }
   }
@@ -190,7 +252,8 @@ export function TojungPage() {
   // ─── 결과 ───
   if (!result) return null;
 
-  const categories = Object.entries(result.yearOverview) as [string, string][];
+  const categories = Object.entries(result.yearOverview || {}) as [string, string][];
+  const monthsArr: any[] = Array.isArray((result as any).months) ? (result as any).months : [];
   // 대상 연도 — 신년운세(10-07~)는 targetYear 를 담고, 옛 토정비결 결과는 없음 → 2026 토정비결로 표기
   const resultYear = Number((result as any)?.targetYear) || 0;
   const isLegacyTojung = !resultYear;
@@ -238,6 +301,23 @@ export function TojungPage() {
 
       <div className="px-5 pt-4 space-y-5">
 
+        {/* 2026-10-09 — 점진 표시 진행 바 (총평 · 1~6월 · 7~12월) */}
+        {partialMode && (
+          <div className="sticky z-40" style={{ top: 56 }}>
+            <div className="rounded-xl px-3.5 py-3" style={{ background: 'linear-gradient(135deg, #F4F7FC 0%, #EAF0F8 100%)', border: '1px solid rgba(47,75,124,0.22)', boxShadow: '0 2px 8px rgba(47,75,124,0.10)' }}>
+              <p className="text-[12.5px] font-bold mb-1.5" style={{ color: '#2F4B7C' }}>
+                신년운세를 쓰는 중이에요 · {(arrivedNy.A ? 1 : 0) + (arrivedNy.B ? 1 : 0) + (arrivedNy.C ? 1 : 0)}/3 도착
+              </p>
+              <div className="flex gap-1 mb-1.5">
+                {(['A', 'B', 'C'] as const).map((g) => (
+                  <div key={g} className="flex-1 rounded-full" style={{ height: 4, background: arrivedNy[g] ? '#2F4B7C' : 'rgba(47,75,124,0.16)', transition: 'background 0.4s' }} />
+                ))}
+              </div>
+              <p className="text-[11px] leading-snug" style={{ color: '#4A5E80' }}>한 해 총평 · 1~6월 · 7~12월 순서 없이, 다 쓰는 대로 채워져요.</p>
+            </div>
+          </div>
+        )}
+
         {/* 헤더 */}
         <FadeIn>
           <div className="text-center py-4">
@@ -261,6 +341,7 @@ export function TojungPage() {
         )}
 
         {/* 6대 카테고리 그리드 */}
+        {partialMode && !arrivedNy.A && <NySkeleton label="분야별 한 해 풀이를 쓰고 있어요" lines={4} />}
         <FadeIn delay={0.05}>
           <div className="grid grid-cols-2 gap-3">
             {categories.map(([key, value], i) => {
@@ -298,6 +379,7 @@ export function TojungPage() {
         </FadeIn>
 
         {/* 12개월 점수 흐름 */}
+        {partialMode && monthsArr.length < 12 ? <NySkeleton label="열두 달 흐름을 모으고 있어요" lines={2} height={22} /> : (
         <FadeIn delay={0.25}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">월별 운세 흐름</p>
@@ -322,6 +404,7 @@ export function TojungPage() {
             </div>
           </div>
         </FadeIn>
+        )}
 
         {/* 2026-10-08 — 결정 타이밍 (7운 프리미엄) */}
         {Array.isArray((result as any).turningPoints) && (result as any).turningPoints.length > 0 && (
@@ -370,7 +453,8 @@ export function TojungPage() {
         </FadeIn>
 
         <div className="space-y-3">
-          {result.months.map((m, i) => (
+          {partialMode && !arrivedNy.B && <NySkeleton label="1~6월 풀이를 쓰고 있어요" lines={3} />}
+          {monthsArr.map((m, i) => (
             <TojungMonthCard
               key={m.month}
               month={m.month}
@@ -387,6 +471,7 @@ export function TojungPage() {
               delay={0.35 + i * 0.03}
             />
           ))}
+          {partialMode && !arrivedNy.C && <NySkeleton label="7~12월 풀이를 쓰고 있어요" lines={3} />}
         </div>
 
         {/* 개운 조언 */}
@@ -397,9 +482,11 @@ export function TojungPage() {
           </div>
         </FadeIn>
 
+        {!partialMode && (
         <FadeIn delay={0.75}>
           <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>결과 공유하기</Button>
         </FadeIn>
+        )}
 
         {/* Phase D'-4 Bundle 2 — ExtensionUpsellCard (단일 CTA) */}
         <FadeIn delay={0.78}>

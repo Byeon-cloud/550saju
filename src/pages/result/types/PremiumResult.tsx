@@ -2500,12 +2500,37 @@ function TocSideIndicator({ count }: { count: number }) {
  *  · 첫 섹션만 defaultOpen=true, 나머지는 접힌 채 시작 (60대+ 사용성)
  *  · 키보드 (Enter/Space) 토글, aria-expanded 관리
  */
+/** 2026-10-09 — 점진 표시 중 아직 안 온 섹션 자리 (shimmer). 내용 대신 '쓰는 중'만 — 나중에 글이 바뀌는 일 없음 */
+function SectionPendingSkeleton() {
+  return (
+    <div aria-live="polite" style={{ padding: '4px 0 2px' }}>
+      <style>{`@keyframes prem-shimmer{0%{background-position:-240px 0}100%{background-position:240px 0}}`}</style>
+      <div style={{ fontSize: 12, color: '#8C6D3D', fontWeight: 700, marginBottom: 10, letterSpacing: '-0.01em' }}>
+        이 섹션 풀이를 쓰고 있어요 · 다 쓰는 대로 여기에 채워져요
+      </div>
+      {[100, 94, 97, 70].map((w, i) => (
+        <div
+          key={i}
+          style={{
+            height: 12, width: `${w}%`, borderRadius: 6, marginBottom: 9,
+            background: 'linear-gradient(90deg, rgba(184,150,90,0.10) 0%, rgba(184,150,90,0.24) 50%, rgba(184,150,90,0.10) 100%)',
+            backgroundSize: '480px 100%',
+            animation: 'prem-shimmer 1.4s ease-in-out infinite',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function CollapsibleSection({
   step,
   title,
   hanja,
   hint,
   defaultOpen = false,
+  pending = false,
+  pendingPreview,
   children,
 }: {
   step: number;
@@ -2513,6 +2538,10 @@ function CollapsibleSection({
   hanja: string;
   hint?: ReactNode;
   defaultOpen?: boolean;
+  /** 이 섹션이 쓰는 생성 그룹이 아직 도착 전 — 본문 대신 스켈레톤 */
+  pending?: boolean;
+  /** 도착 전에도 보여줘도 되는 부분 (사주 원국 표처럼 AI 와 무관한 확정 데이터) */
+  pendingPreview?: ReactNode;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -2536,6 +2565,11 @@ function CollapsibleSection({
           <div className="section-num">SECTION {String(step).padStart(2, '0')}</div>
           <div className="section-title">
             {title} <span className="hanja">{hanja}</span>
+            {pending && (
+              <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: '#8C6D3D', background: 'rgba(184,150,90,0.14)', borderRadius: 999, padding: '2px 8px', verticalAlign: 'middle' }}>
+                작성 중
+              </span>
+            )}
           </div>
           {hint && <div className="section-sub">{hint}</div>}
         </div>
@@ -2544,7 +2578,12 @@ function CollapsibleSection({
         </div>
       </div>
       <div className={`section-body${open ? '' : ' collapsed'}`}>
-        {children}
+        {pending ? (
+          <>
+            {pendingPreview}
+            <SectionPendingSkeleton />
+          </>
+        ) : children}
       </div>
     </section>
   );
@@ -2561,6 +2600,8 @@ export interface PremiumResultProps {
   v4Gilsin: V4SinSal[];
   v4Hyungsal: V4SinSal[];
   scores: Record<string, number>;
+  /** 2026-10-09 — 점진 표시: 아직 도착 안 한 생성 그룹 (A 원국·천간지지 / D 십성·용신 / B 대운·연운·신살 / C 본질·주제·실천) */
+  pendingGroups?: Partial<Record<'A' | 'D' | 'B' | 'C', boolean>>;
 }
 
 export function PremiumResult({
@@ -2571,8 +2612,12 @@ export function PremiumResult({
   v4Gilsin,
   v4Hyungsal,
   scores,
+  pendingGroups,
 }: PremiumResultProps) {
   const aiResult: any = report.aiResult ?? {};
+  // 섹션이 읽는 그룹 중 하나라도 미도착이면 그 섹션은 스켈레톤 (§04 는 A 의 용신 판정도 씀)
+  const pendingOf = (...gs: Array<'A' | 'D' | 'B' | 'C'>) => gs.some((g) => !!pendingGroups?.[g]);
+  const anyPending = pendingOf('A', 'D', 'B', 'C');
   const dayOheng = (sajuData.pillars[2]?.천간오행 ?? '토') as OhengType;
   const ilgan = sajuData.pillars[2]?.천간 ?? '';
   const ilganKr = sajuData.pillars[2]?.천간읽기 ?? '';
@@ -2774,6 +2819,8 @@ export function PremiumResult({
       <LocalFadeIn>
         <CollapsibleSection
           step={1}
+          pending={pendingOf('A')}
+          pendingPreview={<><WongugTable v4Pillars={v4Pillars} sajuData={sajuData} sipDist={sipDist} /><OhaengRadarSVG elements={sajuData.elements} /></>}
           title="원국"
           hanja="原局"
           hint="태어난 순간 하늘과 땅이 그려낸 여덟 글자"
@@ -2819,7 +2866,7 @@ export function PremiumResult({
 
       {/* ═════════════ 02 천간지지 (天干地支) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={2} title="천간지지" hanja="天干地支" hint="위로 드러난 마음과 아래에 깔린 본능" defaultOpen>
+        <CollapsibleSection step={2} pending={pendingOf('A', 'D')} title="천간지지" hanja="天干地支" hint="위로 드러난 마음과 아래에 깔린 본능" defaultOpen>
           {/* mockup §2 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             <strong>천간(天干)은 마음</strong>이고, <strong>지지(地支)는 행동</strong>입니다. 사람들에게 보여지는 모습과, 실제로 하루를 굴리는 본능이 서로 다른 자리에 놓입니다.
@@ -2875,7 +2922,7 @@ export function PremiumResult({
 
       {/* ═════════════ 03 십성 (十神) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={3} title="십성" hanja="十神" hint="관계와 욕망을 그리는 열 개의 키">
+        <CollapsibleSection step={3} pending={pendingOf('D')} title="십성" hanja="十神" hint="관계와 욕망을 그리는 열 개의 키">
           {/* mockup §3 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             <strong>십성(十神)</strong>은 사주가 사람의 욕망과 관계를 풀어내는 언어입니다. 다섯 무리(<strong>비겁·식상·재성·관성·인성</strong>)로 묶이며, {report.name || '회원'} 님 사주에서는 가장 두꺼운 무리가 본인의 핵심 결을 만듭니다.
@@ -2906,7 +2953,7 @@ export function PremiumResult({
 
       {/* ═════════════ 04 용신·조후 (用神·調候) — 신규 ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={4} title="용신·조후" hanja="用神·調候" hint="사주가 가장 갈증을 느끼는 것 — 색·방위·계절·물건·습관까지">
+        <CollapsibleSection step={4} pending={pendingOf('A', 'D')} title="용신·조후" hanja="用神·調候" hint="사주가 가장 갈증을 느끼는 것 — 색·방위·계절·물건·습관까지">
           {/* mockup §4 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             사주 풀이의 진짜 가치는 여기서 나옵니다. 원국에서 무엇이 부족한지를 알아냈다면, 그것을 일상에서 어떻게 채울지가 다음 단계입니다. 명리에서 이 자리를 <strong>용신(用神)</strong>이라 부릅니다. {report.name || '회원'} 님 사주의 용신은 두 글자로 못 박을 수 있습니다.
@@ -2938,7 +2985,7 @@ export function PremiumResult({
 
       {/* ═════════════ 05 대운 (大運) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={5} title="대운" hanja="大運" hint="10년 단위로 흐르는 인생의 큰 강줄기">
+        <CollapsibleSection step={5} pending={pendingOf('B')} title="대운" hanja="大運" hint="10년 단위로 흐르는 인생의 큰 강줄기">
           <DaeunTimeline v4Daeun={v4Daeun} />
           {/* Stage 2C-2#2: daewoon-scores 8 row (mockup daewoon-scores 진본 — 정점/현재 강조) */}
           <DaewoonScores v4Daeun={v4Daeun} dayOheng={dayOheng} />
@@ -2968,7 +3015,7 @@ export function PremiumResult({
 
       {/* ═════════════ 06 연운 (年運) — 시기별 경고 카드 추가 ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={6} title="연운" hanja="年運" hint={(() => {
+        <CollapsibleSection step={6} pending={pendingOf('B')} title="연운" hanja="年運" hint={(() => {
           const y = new Date().getFullYear();
           const SIXTY = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉', '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未', '甲申', '乙酉', '丙戌', '丁亥', '戊子', '己丑', '庚寅', '辛卯', '壬辰', '癸巳', '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑', '壬寅', '癸卯', '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬子', '癸丑', '甲寅', '乙卯', '丙辰', '丁巳', '戊午', '己未', '庚申', '辛酉', '壬戌', '癸亥'];
           const HK: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계', 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
@@ -2995,7 +3042,7 @@ export function PremiumResult({
 
       {/* ═════════════ 07 신살 (神殺) — 길신·흉살 ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={7} title="신살" hanja="神殺" hint={(() => {
+        <CollapsibleSection step={7} pending={pendingOf('B')} title="신살" hanja="神殺" hint={(() => {
               const total = (v4Gilsin?.length ?? 0) + (v4Hyungsal?.length ?? 0);
               if (total === 0) return '강하게 발현된 신살이 없는 균형 잡힌 결';
               const aiCount = Array.isArray(aiResult.shinsalCards) ? aiResult.shinsalCards.length : 0;
@@ -3029,7 +3076,7 @@ export function PremiumResult({
           - 이후: 본인 사주 통합 메타 (한 줄 키워드 + 강점·함정) — 모든 사람에게 의미 있음
           - AI schema 신규: lifeKeyword (한 줄) + strengths[3] + cautions[3] */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={8} title="내 사주의 결" hanja="本質" hint="사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3 · 함정 3">
+        <CollapsibleSection step={8} pending={pendingOf('C')} title="내 사주의 결" hanja="本質" hint="사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3 · 함정 3">
           <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
           <StrengthsCautionsCards aiResult={aiResult} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
         </CollapsibleSection>
@@ -3041,7 +3088,7 @@ export function PremiumResult({
           2026-05-05 6 카드 복원 (잠재력·인간관계 추가) → 제목 "주제별 한눈에" → "여섯 영역 한눈에"
           ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={9} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·학업잠재력 — 강·약 점수와 주제별 깊이 보기">
+        <CollapsibleSection step={9} pending={pendingOf('C')} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·학업잠재력 — 강·약 점수와 주제별 깊이 보기">
           {/* Stage 2C-2#6: 여섯 영역 점수 topic-mini grid (mockup topic-mini 진본) */}
           <TopicMiniGrid scores={areaScores} aiTopics={aiResult.topicMini} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} profileId={reportProfile.profileId} />
           {conclusionAt(8) && (
@@ -3054,7 +3101,7 @@ export function PremiumResult({
 
       {/* ═════════════ 10 실천 (實踐) — 분기별 손에 잡히는 액션 ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={10} title="실천" hanja="實踐" hint="사주를 안 다음, 오늘부터 바꾸어볼 다섯 가지">
+        <CollapsibleSection step={10} pending={pendingOf('C')} title="실천" hanja="實踐" hint="사주를 안 다음, 오늘부터 바꾸어볼 다섯 가지">
           {/* 도입 paragraph — 사주별 동적 (일간 + 가장 약한 오행 기반) */}
           <Section10Intro userName={report.name || '회원'} sajuData={sajuData} dayOheng={dayOheng} aiText={typeof aiResult.practiceIntro === 'string' ? aiResult.practiceIntro : undefined} />
           <PracticeChecklist aiResult={aiResult} scores={scores} sajuData={sajuData} sipDist={sipDist} />
@@ -3069,10 +3116,13 @@ export function PremiumResult({
       </LocalFadeIn>
 
       {/* word-count 마커 (mockup §word-count 진본) — "完 · 10섹션 풀이 완료" */}
+      {!anyPending && (
       <div className="word-count">
         <span className="han">完</span> · 10섹션 풀이 완료
       </div>
+      )}
 
+      {!pendingOf('C') && (<>
       {/* "더 알아보기" 3 동적 카드 — 점수 가장 높은 3 영역으로 CTA */}
       <LocalFadeIn delay={50}>
         <TopicTopRecommend scores={scores} topicBaseScores={topicBaseScores} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} profileId={reportProfile.profileId} />
@@ -3080,9 +3130,11 @@ export function PremiumResult({
 
       {/* ═════════════ Upsell — 사주대화 진입 CTA (목업 .upsell-card 진본) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <PremiumUpsellCard reportId={report.id} sajuData={sajuData} scores={areaScores} userName={report.name || '회원'} profile={reportProfile.profile} />
+        <PremiumUpsellCard reportId={report.id} sajuData={sajuData} scores={areaScores} userName={report.name || '회원'} profile={reportProfile.profile} aiQuestions={Array.isArray(aiResult.chatQuestions) ? aiResult.chatQuestions.filter((q: unknown) => typeof q === 'string' && (q as string).trim()) : undefined} />
       </LocalFadeIn>
+      </>)}
 
+      {!anyPending && (<>
       {/* #61 · 프리미엄 PDF 다운로드 + 공유하기 — mockup .result-footer 2-column grid 진본 */}
       <LocalFadeIn delay={60}>
         <PremiumResultFooter
@@ -3092,6 +3144,7 @@ export function PremiumResult({
           aiResult={aiResult}
         />
       </LocalFadeIn>
+      </>)}
 
       {/* ═════════════ ReportSources — 지식 기반 fine-print (목업 .report-sources 진본) ═════════════ */}
       <ReportSources />
@@ -3115,6 +3168,7 @@ function PremiumUpsellCard({
   scores,
   userName,
   profile,
+  aiQuestions,
 }: {
   reportId: string;
   sajuData?: SajuData;
@@ -3122,11 +3176,13 @@ function PremiumUpsellCard({
   userName?: string;
   /** 리포트 주인 프로필 — 사주대화가 이 사주로 답하도록 (가족 사주 리포트 대응 · B-3) */
   profile?: SajuProfile;
+  /** 2026-10-09 — 이 풀이가 만든 맞춤 질문 (서버 C 그룹 chatQuestions) — 누르면 사주대화에서 바로 질문 */
+  aiQuestions?: string[];
 }) {
   const navigate = useNavigate();
   // 2026-05-29 H3 fix — 기존 <a href="/chat/new"> = 풀 페이지 리로드(앱인토스 정책 위반) + 컨텍스트 0.
   //   → SPA navigate + contentContext(type:'premium') 전달. buildContextPrompt 에 premium 분기 이미 존재.
-  const handleChat = async (e: React.MouseEvent) => {
+  const handleChat = async (e: React.MouseEvent, question?: string) => {
     e.preventDefault();
     try {
       const [{ getReport }, { createChatRoom }] = await Promise.all([
@@ -3138,7 +3194,7 @@ function PremiumUpsellCard({
       const room = createChatRoom(userName || '나', 'free', ctx);
       // 🚨 2026-09-17 B-3 — profile 미전달 시 ChatSessionPage 가 기기 '내 프로필'로 폴백 →
       //   가족 사주 종합사주에서 넘어가도 내 사주로 대화하던 버그. 리포트 주인 프로필을 state 로 전달.
-      navigate(`/chat/${room.id}`, { state: { profile, contentContext: ctx } });
+      navigate(`/chat/${room.id}`, { state: { profile, contentContext: ctx, ...(question ? { autoAsk: question } : {}) } });
     } catch {
       navigate('/chat/new', profile ? { state: { profile } } : undefined);
     }
@@ -3201,7 +3257,27 @@ function PremiumUpsellCard({
     <div className="upsell-card">
       <div className="label">DEEPER · 더 들어가보기</div>
       <h3>이 풀이를 두고 직접 물어보세요</h3>
-      <p>{q1}, {q2} — 풀이를 보며 떠오른 질문을, 사주를 살피며 답해드려요.</p>
+      {aiQuestions && aiQuestions.length >= 2 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '10px 0 14px' }}>
+          {aiQuestions.slice(0, 3).map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={(e) => handleChat(e, q)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', minHeight: 44,
+                background: 'rgba(248,245,238,0.08)', border: '1px solid rgba(232,217,184,0.22)', borderRadius: 10,
+                padding: '10px 12px', color: '#F8F5EE', fontSize: 13, lineHeight: 1.5, cursor: 'pointer', wordBreak: 'keep-all',
+              }}
+            >
+              <span style={{ flex: 1 }}>“{q}”</span>
+              <span aria-hidden style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#E8D9B8' }}>물어보기</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p>{q1}, {q2} — 풀이를 보며 떠오른 질문을, 사주를 살피며 답해드려요.</p>
+      )}
       <a href="/chat/new" onClick={handleChat} className="cta" style={{ textDecoration: 'none' }}>
         사주대화로 이어가기 →
       </a>

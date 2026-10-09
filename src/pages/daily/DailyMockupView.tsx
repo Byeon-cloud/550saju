@@ -11,7 +11,7 @@
  *  - **legacy 코드 호출 금지** — 본 컴포넌트 외부에서 옛 카드 렌더 X
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, type ReactNode } from 'react';
 import type { SajuProfile } from '@/services/storage/localStore';
 import type { OhengType } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
@@ -206,6 +206,8 @@ interface DailyMockupViewProps {
   isGenerating?: boolean;
   onShare: () => void;
   onChat: () => void;
+  /** 2026-10-09 — 오늘 풀이에서 이어지는 주제·사주대화 질문 카드 (생성 끝난 뒤 §07 아래) */
+  nextSteps?: ReactNode;
   /** §02 4영역 카드 클릭 — topicId: 'wealth'|'love'|'career'|'health' (2026-05-06 v6) */
   onTopicClick?: (topicId: 'wealth' | 'love' | 'career' | 'health') => void;
 }
@@ -956,7 +958,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
 }
 
 export function DailyMockupView(props: DailyMockupViewProps) {
-  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell, onMonthly, priceTag = '오늘 1회 무료', isGenerating = false, onShare, onChat, onTopicClick } = props;
+  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell, onMonthly, priceTag = '오늘 1회 무료', isGenerating = false, onShare, onChat, onTopicClick, nextSteps } = props;
 
   // ── 섹션 접기/펼치기 (§01 default open · 2026-05-06 v6) ──
   // 2026-06-13 통일 정책 (준기 결정) — 01·02 만 펼침, 03+ 접힘.
@@ -1592,6 +1594,10 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             </section>
           )}
         </main>
+
+        {!isGenerating && nextSteps && (
+          <div style={{ margin: '4px 16px 22px' }}>{nextSteps}</div>
+        )}
 
         {/* 주간·월간 추천 — 2026-09-17 복구 (2026-05-27 월운 미출시로 제거했으나 주간 5운·월간 7운 2026-06-29 출시).
             오늘 하루 → 이번 주 7일 → 한 달 흐름으로 이어보기. 가격은 pricing SSOT. 생성이 끝난 뒤에만 노출. */}

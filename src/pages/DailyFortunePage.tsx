@@ -70,6 +70,7 @@ import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { stripMd } from '@/utils/format';
 import type { OhengType } from '@/types/saju';
 // 점수 SSOT + AI 프롬프트 baseScores100 전달
+import { NextStepsCard, openChatWithResult } from '@/components/common/NextStepsCard';
 import { computeDailyBase100 } from '@/utils/sajuScores';
 // DailyMockupView 단일 호출 (legacy chrome 폐기 · 2026-05-06)
 import { DailyMockupView, DAILY_TOPIC_GROUPS } from './daily/DailyMockupView';
@@ -1169,6 +1170,20 @@ function ResultView({
             },
           });
         }}
+        nextSteps={(() => {
+          // 2026-10-09 — 오늘 풀이에서 이어지는 주제 1 + 사주대화 질문 3 (서버 nextHooks)
+          const nh = (result as any)?.nextHooks;
+          if (!nh) return undefined;
+          return (
+            <NextStepsCard
+              title="오늘 풀이에서 이어지는 이야기"
+              topics={nh.topic && nh.topic.id ? [nh.topic] : []}
+              questions={Array.isArray(nh.chatQuestions) ? nh.chatQuestions : []}
+              onTopic={(id) => goTopic(id)}
+              onAsk={(q) => { void openChatWithResult({ navigate, name: profile?.name || '나', profile, ctx: { type: 'daily', label: '오늘의 운세', fullResult: result }, question: q }); }}
+            />
+          );
+        })()}
         onTopicClick={(topicId) => {
           // 4영역 클릭 → sub-picker (관계/일/건강) 또는 직접 (재물)
           // wealth: 직접 / love(관계): 연애·결혼·재회·궁합 / career(일): 직업·시험·사업 / health(건강): 체질·이사
