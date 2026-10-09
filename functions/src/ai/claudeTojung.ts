@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { TONE_FINAL_CHECK } from './promptsV3';
 import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
 import { kstNow } from '../utils/kstTime';
 import { Solar } from 'lunar-javascript';
@@ -39,7 +40,7 @@ async function callNyGroup(anthropic: Anthropic, shared: string, group: NyGroup,
       max_tokens: MAX[group],
       temperature: attempt === 0 ? 0.2 : 0.1,
       system: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: user }],
+      messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
     try { logAnthropicUsage('tojung', NEWYEAR_MODEL, msg, t0); } catch { /* best-effort */ }
     try {

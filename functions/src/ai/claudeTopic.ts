@@ -8,7 +8,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Solar } from 'lunar-javascript';
-import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type ParseJsonMeta } from './promptsV3';
+import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, TONE_FINAL_CHECK, type ParseJsonMeta } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
 import { correctKoreanSolarTime } from '../utils/timeCorrection';
@@ -905,8 +905,8 @@ export async function runTopicGeneration(
 ): Promise<any> {
   const system = [{ type: 'text' as const, text: call.system, cache_control: { type: 'ephemeral' as const } }];
   const content = (suffix?: string): any => (suffix
-    ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix }]
-    : call.prompt);
+    ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix + TONE_FINAL_CHECK }]
+    : call.prompt + TONE_FINAL_CHECK);
   const once = async (suffix: string | undefined, maxTokens: number, temperature: number, live: boolean): Promise<string> => {
     const t0 = Date.now();
     const stream = anthropic.messages.stream({
@@ -1772,7 +1772,7 @@ subScores 각 축도 그 축의 핵심 십성으로 같은 산식을 적용해 *
   "title": "${d.input?.name||''}님의 ${config.label} 심층분석",
   "overallScore": ${baseScore ? baseScore : '"0-100 정수"'},
   "sajuBasis": "사주 근거 한 줄 (40~60자). 2026-05-28 두괄식+일상어 강제. 형식: '[일상어 결론 한 마디] — [한자(풀이) 사주 근거]'. ✅ 좋은 예: '결혼 인연은 분명하나 시기가 늦어져요 — 정관(正官, 책임감 있는 인연)이 합으로 묶여있어요.' / '돈은 잘 들어오는데 빠르게 빠져요 — 재성(財星, 돈 자리)이 식상(食傷, 활동 에너지)에 밀려요.' ❌ 나쁜 예: '일지 자수(子水)에 정관이 자리하고 축자합(丑子合)으로 관성이 묶이는 구조' (한자 폭격·풀이 X·두괄식 X). 한자 첫 등장 시 반드시 괄호 안 일상어 풀이. 마크다운 금지.",
-  "sajuConnection": "분석 메모 (화면에 표시되지 않음 · 250~400자) — sections 를 쓰기 전에 근거를 압축 정리: 원국 핵심 구조 · 현재 대운 · 올해 세운 · 이 주제에 작용하는 글자와 그 작용. 이후 summary·sections·timeline 은 이 메모와 모순 없이 쓴다. 마크다운 금지.",
+  "sajuConnection": "분석 메모 (화면에 표시되지 않음 · 150~250자 · 문장 다듬지 말고 근거만 촘촘히) — sections 를 쓰기 전에 근거를 압축 정리: 원국 핵심 구조 · 현재 대운 · 올해 세운 · 이 주제에 작용하는 글자와 그 작용. 이후 summary·sections·timeline 은 이 메모와 모순 없이 쓴다. 마크다운 금지.",
   "summary": "핵심 결론 2~3문장 · 150~230자. 🚨 첫 문장은 화면 맨 위 결론 박스에 그대로 나간다 (나머지는 화면에 안 나옴) → 이 주제의 결론을 단정형 한 문장 30~60자로 먼저 말한다 (예: 재회운 '재회는 열려 있습니다 — 12월 첫째 주가 승부처예요.' / 재물운 '돈은 들어오는데, 새는 구멍부터 막아야 쌓입니다.'). 사주 구조 설명('~격으로, ~한 구조입니다')으로 시작하지 말 것. 둘째 문장부터 그 결론의 사주 근거 1개를 직접 호명 (보일러플레이트 금지). 마크다운 금지.",
   "sections": [${effectiveSections.map(s => `{"heading": "${s}", "content": "150자 이상. 🚨 사주 specific 호명 (개수·자리·신살) 1회 이상. 마크다운 금지. **HTML 강조 mandatory**: 각 단락에 <strong>일상어 결론 1구절</strong> 1회 + <u>시기·숫자·월</u> 1~2회 + <b>한자(풀이)</b> 첫 등장 시 필수. 줄글만 X.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내 · 🚨 사주 글자 1개 이상 호명 권장", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자 · 🚨 사주 specific 데이터", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
   "timeline": [{"period": "시기", "score": 1-10, "description": "60자 이상 · 🚨 해당 시기 대운/세운 간지 + 원국 글자 충돌·합 직접 호명"}, ...6~12개],

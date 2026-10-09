@@ -19,6 +19,7 @@
 //   · Promise.all 로 90s → 30s (가장 긴 그룹 시간만큼)
 //   · 퀄리티 보존: 모든 그룹이 sajuData 풀 컨텍스트 + 동일 모델
 
+import { TONE_FINAL_CHECK } from './promptsV3';
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
@@ -251,7 +252,7 @@ async function callGroup(
       // 2차 캐시 — 사주 base (모든 그룹 공통)
       { type: 'text', text: sajuBase, cache_control: { type: 'ephemeral' } },
     ],
-    messages: [{ role: 'user', content: userSituation }],
+    messages: [{ role: 'user', content: userSituation + TONE_FINAL_CHECK }],
   });
   logAnthropicUsage('premium', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
 

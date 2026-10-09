@@ -828,7 +828,7 @@ export const generateDailyFortuneStream = onRequest(
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v11'; // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지
+    const SCHEMA_VERSION = 'v12'; // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
     const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);
@@ -872,6 +872,7 @@ export const generateDailyFortuneStream = onRequest(
         DAILY_FORTUNE_USER_V3_GROUP_A2,
         DAILY_FORTUNE_USER_V3_GROUP_B,
         parseJsonResponse,
+        TONE_FINAL_CHECK,
       } = await import('./ai/promptsV3');
       const { applyDailyMeetGlyphs, sanitizeAiOutput, todayHourWindows } = await import('./ai/sajuFacts');
       const hourWin = todayHourWindows(String(date || ''), sajuData);
@@ -931,7 +932,7 @@ export const generateDailyFortuneStream = onRequest(
             // 2026-10-08 — 1h TTL(쓰기 2배)은 하루 수 건 트래픽에선 재사용이 거의 없어 손해 → 기본 5분(쓰기 1.25배)
             cache_control: { type: 'ephemeral' },
           }],
-          messages: [{ role: 'user', content: userPrompt }],
+          messages: [{ role: 'user', content: userPrompt + TONE_FINAL_CHECK }],
         });
         for await (const event of stream as any) {
           if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -1013,7 +1014,7 @@ export const generateDailyFortuneStream = onRequest(
           max_tokens: 8000,
           temperature: 0.4,
           system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral', ttl: '1h' } as any }],
-          messages: [{ role: 'user', content: fbUser }],
+          messages: [{ role: 'user', content: fbUser + TONE_FINAL_CHECK }],
         });
         for await (const event of fbStream as any) {
           if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -1379,7 +1380,7 @@ export const generateDreamFreeStream = onRequest(
     try {
       const { default: Anthropic } = await import('@anthropic-ai/sdk');
       const { buildDreamFreeCall, buildDreamFreeGroupCall } = await lazyClaudeDream();
-      const { parseJsonResponse } = await import('./ai/promptsV3');
+      const { parseJsonResponse, TONE_FINAL_CHECK } = await import('./ai/promptsV3');
       const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
       const t0 = Date.now();
 
@@ -1400,7 +1401,7 @@ export const generateDreamFreeStream = onRequest(
             const _t0 = Date.now(); // C7
             const stream = anthropic.messages.stream({
               model, max_tokens: maxTokens, temperature, system,
-              messages: [{ role: 'user', content: user }],
+              messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
             });
             for await (const event of stream as any) {
               if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -1453,7 +1454,7 @@ export const generateDreamFreeStream = onRequest(
         const _t0 = Date.now(); // C7
         const stream = anthropic.messages.stream({
           model, max_tokens: maxTokens, temperature, system,
-          messages: [{ role: 'user', content: user }],
+          messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
         });
         for await (const event of stream as any) {
           if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {

@@ -15,6 +15,7 @@
 //   - GUARD_TOKEN export 동일
 //   - 반환 타입 동일: { answer, keywords, guarded?, guardCategory? }
 
+import { TONE_FINAL_CHECK } from './promptsV3';
 import { sanitizeText } from './sajuFacts';
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
@@ -260,7 +261,7 @@ ${question}
         cache_control: { type: 'ephemeral' },
       },
     ],
-    messages: [{ role: 'user', content: userPrompt }],
+    messages: [{ role: 'user', content: userPrompt + TONE_FINAL_CHECK }],
   });
   logAnthropicUsage('chat', model, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
 

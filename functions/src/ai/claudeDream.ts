@@ -1,6 +1,7 @@
 // Migrated from geminiDream.ts on 2026-04-19 (Sonnet 4.6 v3).
 // See commit 926ead2 + docs/prd/AI프롬프트_v3_Sonnet4.6.md
 
+import { TONE_FINAL_CHECK } from './promptsV3';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   DREAM_FREE_SYSTEM_V3,
@@ -153,7 +154,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
       max_tokens: 14000,
       temperature: 0.7,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: user }],
+      messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
     logAnthropicUsage('dream', MODEL, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = (msg.content[0] as { type: string; text: string }).text;
@@ -169,7 +170,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
       max_tokens: 14000,
       temperature: 0.5,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: user }],
+      messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
     logAnthropicUsage('dream', MODEL, msg, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = (msg.content[0] as { type: string; text: string }).text;
@@ -202,7 +203,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
       max_tokens: 16384,
       temperature: 0.7,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: user }],
+      messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
     logAnthropicUsage('deepDream', MODEL, first, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     firstText = (first.content[0] as { type: string; text: string }).text;
@@ -217,7 +218,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
       max_tokens: 16384,
       temperature: 0.5,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: user }],
+      messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
     logAnthropicUsage('deepDream', MODEL, retry, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
     firstText = (retry.content[0] as { type: string; text: string }).text;

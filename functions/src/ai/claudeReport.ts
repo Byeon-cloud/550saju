@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { TONE_FINAL_CHECK } from './promptsV3';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { kstNow } from '../utils/kstTime';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
@@ -50,7 +51,7 @@ async function callReportGroup(
       ...(temperature != null ? { temperature } : {}),
       // 프롬프트 캐싱 — 시스템(프레임워크+스키마)은 호출마다 동일 → 캐시 hit 시 TTFT·비용 절감 (품질 무관)
       system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [{ role: 'user', content: userPrompt + TONE_FINAL_CHECK }],
     });
     logAnthropicUsage('report', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
     return (msg.content[0] as any).text as string;

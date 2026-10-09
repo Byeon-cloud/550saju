@@ -2,6 +2,7 @@
 // See commit 926ead2 + docs/prd/AI프롬프트_v3_Sonnet4.6.md
 // v4.2 (2026-04-19): jsonrepair + retry-once (prod Daily JSON malformation 대응)
 
+import { TONE_FINAL_CHECK } from './promptsV3';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   DAILY_FORTUNE_SYSTEM_V3,
@@ -60,7 +61,7 @@ export async function generateDailyFortuneAnalysis(
       max_tokens: 8000,
       temperature: 0.7,
       system,
-      messages: [{ role: 'user', content: user }],
+      messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
     logAnthropicUsage('daily', MODEL, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = (msg.content[0] as { type: string; text: string }).text;
@@ -77,7 +78,7 @@ export async function generateDailyFortuneAnalysis(
       max_tokens: 8000, // 2026-10-03 5000→8000 (위 1차 호출 주석 참조)
       temperature: 0.5,
       system,
-      messages: [{ role: 'user', content: user }],
+      messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
     logAnthropicUsage('daily', MODEL, msg, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = (msg.content[0] as { type: string; text: string }).text;
