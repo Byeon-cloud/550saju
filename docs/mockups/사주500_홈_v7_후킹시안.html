@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>사주500 홈 v7 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --paper: #F5F0E6; --ink: #17130F; --ink-2: #4A4239; --mute: #8A7F70; --line: #E3D9C6;
+  --gold: #C9A45C; --gold-2: #E4C88A; --gold-deep: #8C6D3D;
+  --wine: #3B1E22; --night: #120F0B;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Pretendard, -apple-system, sans-serif; background: #DCD5C8; color: var(--ink); -webkit-font-smoothing: antialiased; }
+.serif { font-family: 'Noto Serif KR', serif; }
+.stage { display: flex; gap: 36px; justify-content: center; align-items: flex-start; padding: 32px 16px 60px; flex-wrap: wrap; }
+.label { width: 375px; font-size: 13px; color: #5A5146; margin-bottom: 10px; font-weight: 700; }
+.phone { width: 375px; height: 812px; overflow-y: auto; background: var(--paper); border-radius: 36px; box-shadow: 0 30px 80px rgba(0,0,0,.22); position: relative; scrollbar-width: none; }
+.phone::-webkit-scrollbar { display: none; }
+
+/* ── A: 그림 히어로 ── */
+.hero { position: relative; height: 520px; color: #fff; overflow: hidden; }
+.hero .art { position: absolute; inset: 0; background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Irworobongdo.jpg/1280px-Irworobongdo.jpg') 80% 0% / auto 100% no-repeat; filter: saturate(.95) contrast(1.03); }
+.hero .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,15,11,.45) 0%, rgba(18,15,11,.02) 16%, rgba(18,15,11,.2) 34%, rgba(18,15,11,.86) 52%, #120F0B 74%); }
+.hero .top { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; }
+.logo { font-weight: 800; font-size: 17px; letter-spacing: -.02em; display: flex; align-items: center; gap: 7px; }
+.logo i { font-style: normal; width: 24px; height: 24px; border-radius: 6px; background: #A8432F; display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 13px; color: #fff; }
+.un { height: 32px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; font-size: 13px; font-weight: 700; }
+.hero .body { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 22px 22px; }
+.date { font-size: 13px; color: rgba(255,255,255,.72); display: flex; align-items: center; gap: 8px; }
+.date b { font-family: 'Noto Serif KR', serif; color: var(--gold-2); font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+.hook { font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 27px; line-height: 1.38; letter-spacing: -.025em; margin-top: 10px; }
+.hook em { font-style: normal; color: var(--gold-2); }
+.tease { margin-top: 14px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,.9); }
+.blur { filter: blur(5px); user-select: none; color: #fff; }
+.lock { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--gold-2); font-weight: 700; margin-left: 4px; }
+.cta { margin-top: 16px; height: 58px; border-radius: 14px; background: linear-gradient(180deg, #E2C27F 0%, #C9A45C 100%); color: #1B140A; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 24px rgba(201,164,92,.35), inset 0 1px 0 rgba(255,255,255,.5); letter-spacing: -.01em; }
+.cta small { font-size: 13px; font-weight: 700; opacity: .7; }
+.under { text-align: center; font-size: 12px; color: rgba(255,255,255,.55); margin-top: 9px; }
+
+/* D-day 카드 */
+.dday { margin: 18px 16px 0; border-radius: 18px; background: var(--wine); color: #F6EADF; padding: 20px; position: relative; overflow: hidden; }
+.dday .k { font-size: 12px; color: #D9B9A6; font-weight: 700; }
+.dday .row { display: flex; align-items: flex-end; gap: 14px; margin-top: 8px; }
+.dday .num { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 54px; line-height: .9; color: var(--gold-2); letter-spacing: -.03em; }
+.dday .num small { font-size: 22px; margin-right: 2px; }
+.dday .t { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; line-height: 1.38; padding-bottom: 3px; }
+.dday p { font-size: 13px; color: #D8C2B5; line-height: 1.6; margin-top: 12px; }
+.dday .btn2 { margin-top: 14px; height: 48px; border-radius: 12px; border: 1px solid rgba(228,200,138,.55); color: var(--gold-2); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+.dday .seal { position: absolute; right: -6px; top: -14px; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 120px; color: rgba(255,255,255,.04); }
+
+/* 오늘 무료 2칸 */
+.duo { margin: 12px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini { background: #fff; border-radius: 16px; padding: 16px 14px; border: 1px solid var(--line); }
+.mini .f { font-size: 11px; font-weight: 800; color: #A8432F; }
+.mini .h { font-size: 16px; font-weight: 800; margin-top: 6px; line-height: 1.35; letter-spacing: -.02em; }
+.mini .s { font-size: 12.5px; color: var(--mute); margin-top: 6px; line-height: 1.45; }
+.mini .go { margin-top: 12px; font-size: 13px; font-weight: 800; color: var(--ink); }
+
+/* 내 사주 한 권 */
+.book { margin: 12px 16px 0; background: #fff; border-radius: 18px; border: 1px solid var(--line); padding: 18px; }
+.book .hd { display: flex; justify-content: space-between; align-items: center; }
+.book .hd b { font-size: 16px; font-weight: 800; }
+.book .hd span { font-size: 12px; color: var(--mute); }
+.pillars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 14px; }
+.pillars div { border-radius: 10px; background: #F7F1E6; text-align: center; padding: 8px 0 7px; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 20px; line-height: 1.25; }
+.pillars div small { display: block; font-family: Pretendard, sans-serif; font-size: 10.5px; color: var(--mute); font-weight: 600; margin-bottom: 2px; }
+.pillars .me { background: #2A221A; color: var(--gold-2); }
+.pillars .me small { color: #B9A88D; }
+.book .line { margin-top: 14px; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); }
+.book .line .blur { color: var(--ink-2); }
+.book .btn3 { margin-top: 14px; height: 50px; border-radius: 12px; background: var(--ink); color: #F3E7CF; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 800; }
+.book .btn3 small { color: #BBA986; font-weight: 700; }
+
+/* 고민으로 고르는 주제 */
+.sec { padding: 26px 20px 10px; font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+.qs { margin: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.q { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+.q .hz { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-family: 'Noto Serif KR', serif; font-weight: 900; color: #fff; font-size: 15px; flex-shrink: 0; }
+.q .tx { flex: 1; }
+.q .a { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.q .b { font-size: 12px; color: var(--mute); margin-top: 2px; }
+.q .p { font-size: 13px; font-weight: 800; color: var(--gold-deep); }
+.pad { height: 110px; }
+.tabbar { position: sticky; bottom: 0; height: 78px; background: rgba(255,255,255,.97); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5,1fr); padding-bottom: 16px; margin-top: -78px; }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--mute); }
+.tab svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.un span { margin-left: 7px; padding-left: 7px; border-left: 1px solid rgba(255,255,255,.3); font-weight: 600; opacity: .85; }
+.b-top .un span { border-left-color: rgba(23,19,15,.18); }
+.tab.on { color: var(--ink); font-weight: 800; }
+
+/* ── B: 큰 숫자 + 하루 시간표 ── */
+.b-top { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; }
+.b-top .un { background: #fff; border: 1px solid var(--line); color: var(--ink); }
+.b-hero { margin: 4px 16px 0; background: var(--night); color: #fff; border-radius: 22px; padding: 22px 20px 20px; position: relative; overflow: hidden; }
+.b-hero .art2 { position: absolute; right: -40px; top: -20px; width: 260px; height: 200px; background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Irworobongdo.jpg/1280px-Irworobongdo.jpg') 72% 14% / auto 240% no-repeat; opacity: .42; -webkit-mask-image: radial-gradient(closest-side, #000 40%, transparent 100%); mask-image: radial-gradient(closest-side, #000 40%, transparent 100%); }
+.b-hero .d { position: relative; font-size: 13px; color: rgba(255,255,255,.65); }
+.b-hero .sc { position: relative; display: flex; align-items: flex-end; gap: 10px; margin-top: 8px; }
+.b-hero .sc b { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 76px; line-height: .85; letter-spacing: -.04em; color: var(--gold-2); }
+.b-hero .sc span { font-size: 14px; color: rgba(255,255,255,.7); padding-bottom: 6px; line-height: 1.4; }
+.b-hero .v { position: relative; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; line-height: 1.42; margin-top: 14px; letter-spacing: -.02em; }
+.timeline { position: relative; margin-top: 40px; }
+.timeline .bar { display: grid; grid-template-columns: 2fr 2fr 1.4fr 2fr 2fr; gap: 3px; }
+.timeline .bar div { height: 10px; border-radius: 3px; }
+.timeline .lbl { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.55); margin-top: 6px; }
+.timeline .pin { position: absolute; left: 51%; top: -26px; font-size: 11px; font-weight: 800; color: #F1B49C; white-space: nowrap; transform: translateX(-50%); }
+.timeline .pin:after { content: ''; position: absolute; left: 50%; top: 16px; width: 1px; height: 12px; background: #F1B49C; }
+.b-hero .tease { margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+<!-- ═════════════ 시안 A — 그림 + 오늘 예고 ═════════════ -->
+<div>
+  <div class="label">A · 그림 + 오늘 예고 (첫 화면에 "나에게 무슨 일이")</div>
+  <div class="phone">
+    <section class="hero">
+      <div class="art"></div><div class="shade"></div>
+      <div class="top"><div class="logo"><i>命</i>사주500</div><div class="un">1.2운<span>충전</span></div></div>
+      <div class="body">
+        <div class="date"><b>丁巳</b>10월 10일 정사일 · 서윤님의 오늘</div>
+        <div class="hook">오후 3시 반부터는<br><em>결정을 미루세요.</em></div>
+        <div class="tease">그 전에 꼭 만나야 할 사람이 있어요 — <span class="blur">강하고 단호한 목소리의 사람</span><span class="lock"><svg width="11" height="12" viewBox="0 0 11 12" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="5" width="9" height="6" rx="1.5"/><path d="M3 5V3.5a2.5 2.5 0 015 0V5"/></svg>잠김</span></div>
+        <div class="cta">오늘 운세 전부 열기 <small>무료</small></div>
+        <div class="under">오늘 1회 무료 · 8초면 첫 풀이가 떠요</div>
+      </div>
+    </section>
+
+    <section class="dday">
+      <div class="seal">緣</div>
+      <div class="k">서윤님 사주에서 지금 가장 크게 움직이는 것</div>
+      <div class="row"><div class="num"><small>D-</small>58</div><div class="t">12월 7일, 인연의<br>문이 열립니다</div></div>
+      <p>연인의 별(金)이 들어오는 庚子월이에요. 그 전에 정리해 둘 것과, 들어오는 사람을 알아보는 법이 연애운에 있어요.</p>
+      <div class="btn2">12월 전에 알아둘 것 보기 · 연애운 3운</div>
+    </section>
+
+    <div class="duo">
+      <div class="mini"><div class="f">오늘 무료</div><div class="h">어젯밤 꿈,<br>무슨 뜻일까</div><div class="s">꿈 단어만 적으면 내 사주로 풀어요</div><div class="go">꿈 풀기 ›</div></div>
+      <div class="mini"><div class="f">오늘 1번 무료</div><div class="h">사주에게<br>직접 물어보기</div><div class="s">"그 사람 연락 올까요?" 같은 질문도</div><div class="go">물어보기 ›</div></div>
+    </div>
+
+    <section class="book">
+      <div class="hd"><b>서윤님 사주 한 권</b><span>종합사주 · 10섹션</span></div>
+      <div class="pillars">
+        <div><small>시</small>己<br>卯</div>
+        <div class="me"><small>일 · 나</small>乙<br>未</div>
+        <div><small>월</small>丁<br>巳</div>
+        <div><small>연</small>癸<br>酉</div>
+      </div>
+      <p class="line">서윤님은 <span class="blur">서운한 걸 사흘쯤 품고 있다가 한 번에 터뜨리는</span> 사람입니다. 그래서…</p>
+      <div class="btn3">내 사주 전부 읽기 <small>10운</small></div>
+    </section>
+
+    <div class="sec">요즘 마음에 걸리는 게 있다면</div>
+    <div class="qs">
+      <div class="q"><span class="hz" style="background:#9B5B6B">復</span><div class="tx"><div class="a">헤어진 그 사람, 다시 올까</div><div class="b">재회운 · 재회 가능성과 연락할 달</div></div><span class="p">3운</span></div>
+      <div class="q"><span class="hz" style="background:#3F5A72">進</span><div class="tx"><div class="a">이번엔 붙을까, 옮겨도 될까</div><div class="b">합격·이직운 · 결과가 나오는 달</div></div><span class="p">1운</span></div>
+      <div class="q"><span class="hz" style="background:#A9874B">財</span><div class="tx"><div class="a">왜 돈이 안 모일까</div><div class="b">재물운 · 새는 구멍과 들어오는 시기</div></div><span class="p">3운</span></div>
+      <div class="q"><span class="hz" style="background:#8E6A86">婚</span><div class="tx"><div class="a">이 사람과 결혼해도 될까</div><div class="b">결혼운 · 결혼 적기와 배우자 결</div></div><span class="p">1운</span></div>
+    </div>
+    <div class="pad"></div>
+    <nav class="tabbar"><div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg>홈</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>사주대화</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-3.8L6 20V5a1 1 0 0 1 1-1z"/></svg>보관함</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M4 9h16v4H4zM5.5 13h13v7h-13zM12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg>이벤트</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/></svg>내 정보</div></nav>
+  </div>
+</div>
+
+<!-- ═════════════ 시안 B — 큰 점수 + 하루 시간표 ═════════════ -->
+<div>
+  <div class="label">B · 오늘 점수 + 하루 시간표 (토스식 한 숫자)</div>
+  <div class="phone">
+    <div class="b-top"><div class="logo" style="color:var(--ink)"><i>命</i>사주500</div><div class="un">1.2운<span>충전</span></div></div>
+    <section class="b-hero">
+      <div class="art2"></div>
+      <div class="d">10월 10일 정사일 · 서윤님의 오늘</div>
+      <div class="sc"><b>64</b><span>오늘 운<br>어제보다 −9</span></div>
+      <div class="v">오늘은 정하지 말고,<br>알아보는 날입니다.</div>
+      <div class="timeline">
+        <div class="pin">3시 반부터 주의</div>
+        <div class="bar"><div style="background:#5F7D5B"></div><div style="background:#8BA27A"></div><div style="background:#C9A45C"></div><div style="background:#B0513C"></div><div style="background:#7A3B30"></div></div>
+        <div class="lbl"><span>아침</span><span>점심</span><span>오후</span><span>저녁</span><span>밤</span></div>
+      </div>
+      <div class="tease">오늘 피해야 할 사람과 꼭 해야 할 한 가지 — <span class="blur">강하고 단호한 목소리의 사람</span><span class="lock"><svg width="11" height="12" viewBox="0 0 11 12" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="5" width="9" height="6" rx="1.5"/><path d="M3 5V3.5a2.5 2.5 0 015 0V5"/></svg>잠김</span></div>
+      <div class="cta">오늘 운세 전부 열기 <small>무료</small></div>
+    </section>
+
+    <section class="dday" style="margin-top:12px">
+      <div class="seal">緣</div>
+      <div class="k">서윤님 사주에서 지금 가장 크게 움직이는 것</div>
+      <div class="row"><div class="num"><small>D-</small>58</div><div class="t">12월 7일, 인연의<br>문이 열립니다</div></div>
+      <div class="btn2">12월 전에 알아둘 것 보기 · 연애운 3운</div>
+    </section>
+    <div class="duo">
+      <div class="mini"><div class="f">오늘 무료</div><div class="h">어젯밤 꿈,<br>무슨 뜻일까</div><div class="s">꿈 단어만 적으면 내 사주로 풀어요</div><div class="go">꿈 풀기 ›</div></div>
+      <div class="mini"><div class="f">오늘 1번 무료</div><div class="h">사주에게<br>직접 물어보기</div><div class="s">"그 사람 연락 올까요?" 같은 질문도</div><div class="go">물어보기 ›</div></div>
+    </div>
+
+    <div class="sec">요즘 마음에 걸리는 게 있다면</div>
+    <div class="qs">
+      <div class="q"><span class="hz" style="background:#9B5B6B">復</span><div class="tx"><div class="a">헤어진 그 사람, 다시 올까</div><div class="b">재회운 · 재회 가능성과 연락할 달</div></div><span class="p">3운</span></div>
+      <div class="q"><span class="hz" style="background:#3F5A72">進</span><div class="tx"><div class="a">이번엔 붙을까, 옮겨도 될까</div><div class="b">합격·이직운 · 결과가 나오는 달</div></div><span class="p">1운</span></div>
+      <div class="q"><span class="hz" style="background:#A9874B">財</span><div class="tx"><div class="a">왜 돈이 안 모일까</div><div class="b">재물운 · 새는 구멍과 들어오는 시기</div></div><span class="p">3운</span></div>
+      <div class="q"><span class="hz" style="background:#8E6A86">婚</span><div class="tx"><div class="a">이 사람과 결혼해도 될까</div><div class="b">결혼운 · 결혼 적기와 배우자 결</div></div><span class="p">1운</span></div>
+    </div>
+    <div class="pad"></div>
+    <nav class="tabbar"><div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg>홈</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>사주대화</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-3.8L6 20V5a1 1 0 0 1 1-1z"/></svg>보관함</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M4 9h16v4H4zM5.5 13h13v7h-13zM12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg>이벤트</div><div class="tab"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/></svg>내 정보</div></nav>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
