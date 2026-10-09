@@ -1236,6 +1236,30 @@ function cleanNextHooks(r: any, current: string): void {
   r.nextHooks = { topics, chatQuestions };
 }
 
+/** 2026-10-09 — 연애운 상태별 카드 필드를 스키마에 넣는다. 지금까진 지시문(산문)에만 있어 모델이 거의 안 써서
+ *  화면의 '새 인연이 닿는 자리'·'썸의 결'·'관계의 흐름과 안정성' 카드가 대부분 비어 있었다 (10-09 라이브: 연애중인데 0개). */
+function loveSchemaWithStatus(schema: string, extraInfo?: Record<string, any>): string {
+  const ls = String(extraInfo?.loveStatus || '');
+  const extra = (ls === 'some' || ls === '썸')
+    ? `,
+      "confessionTiming": "고백·관계를 정하기 좋은 시기 (월 단위 1~3개 + 근거) 40~70자",
+      "approachStrategy": "내 일간 성향에 맞는 다가가는 방식 하나를 단정 + 이유 40~70자",
+      "signalReading": "이 썸이 이어지는 신호 3가지 (내가 확인할 행동 기준) 60~90자",
+      "interestLevel": "상대 정보가 있을 때만 0-100 정수, 없으면 null"`
+    : (ls === 'dating' || ls === '연애중')
+      ? `,
+      "stabilityPhase": "지금 관계 단계 (밀월/안정/권태/위기 중 하나를 단정) + 사주 근거 40~70자",
+      "longTermOutlook": "앞으로 6~12개월 관계 흐름 (월건 표 기준 시기 포함) 50~80자",
+      "riskMonth": "다툼·서운함이 커지는 달 2~3개 + 근거 (예: 1월·7월 — 일지 충) 30~50자",
+      "deepenTip": "내 일간 성향에 맞는 관계가 깊어지는 방법 40~70자"`
+      : `,
+      "newEncounterMonth": "새 인연 가능성 높은 달 2~3개 + 근거 30~50자",
+      "encounterPlace": "사주에 맞는 만남 자리 3가지 (오행+생활 영역) 40~70자",
+      "selfPreparation": "누군가를 만나기 전 다듬을 것 하나 + 사주 근거 40~70자"`;
+  const k = schema.lastIndexOf('}');
+  return k > 0 ? schema.slice(0, k).replace(/\s*$/, '') + extra + String.fromCharCode(10) + '    ' + schema.slice(k) : schema;
+}
+
 export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extraInfo?: Record<string, any>): string[] {
   const config = TOPIC_CONFIGS[topicId];
   if (!config) return [];
@@ -1876,7 +1900,7 @@ subScores 각 축도 그 축의 핵심 십성으로 같은 산식을 적용해 *
   "luckyProfile": {"color": "용신 오행 색상", "direction": "용신 오행 방위", "number": "용신 오행 숫자", "item": "아이템", "bestMonth": "최적월", "// 행운·개운 SSOT": "color·direction·number는 원국 용신 오행 하나로 — 주제 십성/일간 오행으로 뽑지 말 것"},
   "actionAdvice": "100자 이상. 지금 당장 할 수 있는 행동. 🚨 사주 specific 데이터(약한 오행·기신·일간 등) 1개 이상 직접 호명 mandatory. 마크다운 금지.",
   "nextHooks": {"topics": [{"id": "다른 주제 id 하나 (${hookIdList(topicId)})", "hook": "35~55자 · 이 결과의 구체 내용(시기·글자·상황)에서 자연히 생기는 다음 궁금증 + 그 주제에서 무엇을 알 수 있는지. 그 주제의 답을 여기서 미리 단정하지 말 것"}, {"id": "...", "hook": "..."}], "chatQuestions": ["이 결과를 읽은 이 사람이 사주대화에서 바로 물어볼 질문 · 18~35자 · 결과 속 구체 시기·상황·인물을 담아", "(두 번째 질문 — 다른 각도)", "(세 번째 질문 — 다른 각도)"]},
-  ${config.topicDataSchema}
+  ${topicId === 'love' ? loveSchemaWithStatus(config.topicDataSchema, extraInfo) : config.topicDataSchema}
 }`;
 }
 
