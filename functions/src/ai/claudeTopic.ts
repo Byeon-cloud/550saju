@@ -12,7 +12,7 @@ import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, type Parse
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
 import { correctKoreanSolarTime } from '../utils/timeCorrection';
-import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput } from './sajuFacts';
+import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData } from './sajuFacts';
 
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
@@ -601,12 +601,12 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 
 5. "재회 가능성과 적기"
 - 재회 가능성을 % 수치 + 3가지 이상 사주 근거
-- 대운/세운에서 인성/식상이 오는 시기를 재회 적기로 분석
+- 재회 적기 = 🔒 재회 타이밍·판정 확정표의 적기 그대로 (근거 칸의 합·충·원진·연인의 별을 짚어 왜 그 달인지 설명)
 - 양력 월 단위: "양력 O월~O월, 연락의 문이 열립니다"
 - 어떤 계기로 재회가 시작될지 구체적 시나리오
 
 6. "월별 재회 에너지 흐름"
-- 올해 12개월 동안의 나의 에너지/상대 에너지/재회 확률 변화를 수치로
+- 이번 달부터 12개월 — 확정표의 나의 에너지/상대 에너지/재회 기운 수치를 그대로 인용해 흐름을 풀이
 - 에너지가 높은 달에 무엇을 해야 하는지
 - 에너지가 낮은 달에 피해야 할 것
 - 월운(月運) 기반 분석
@@ -635,23 +635,19 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 만날 때 좋은 장소/방향
 - 피해야 할 날짜/시간대`,
     topicDataSchema: `"topicData": {
+      "// 서버 확정": "월별 에너지·재회 적기·첫 연락 달·판정·연락 판단·감정 흐름·두 사람 기둥 간지·이별 단계 설명은 서버가 채운다 — 출력 금지",
       "subScores": [{"axis":"재회가능성","value":"0-100 정수"},{"axis":"상대마음","value":"0-100 정수"},{"axis":"궁합구조","value":"0-100 정수"},{"axis":"타이밍","value":"0-100 정수"},{"axis":"관계성장","value":"0-100 정수"}],
       "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4","#키워드5"],
       "strengths": ["재회 긍정 요인 35~50자 · 사주 호명","긍정 요인2 35~50자","긍정 요인3 35~50자"],
       "cautions": ["재회 주의점 35~50자 · 위기→기회 패턴","주의점2 35~50자 · 위기→기회 패턴","주의점3 35~50자 · 위기→기회"],
       "reunionProb": "0-100 정수",
       "partnerFeeling": "상대 현재 감정 추론 30자",
-      "bestTiming": "재회 적기 15자 (예: 7~9월)",
-      "verdict": "재회 추천/새 인연 추천/상황에 따라 중 하나",
       "comparison": {
         "reunionPros": ["장점1 20자", "장점2 20자", "장점3 20자"],
         "reunionCons": ["단점1 20자", "단점2 20자"],
         "newLovePros": ["장점1 20자", "장점2 20자"],
         "newLoveCons": ["단점1 20자", "단점2 20자"]
       },
-      "contactAdvice": "지금 연락하기/기다리기/새출발 중 하나",
-      "bestContactMonth": "최적 연락 시기 (예: 5~6월)",
-      "emotionCycle": "현재 감정 흐름: 상승기/하강기/정체기 중 하나",
       "breakupCause": "이별의 사주적 핵심 원인 30자",
       "partnerProfile": {
         "dominantOheng": "목/화/토/금/수 중 하나 — 제공된 상대방 확정 간지 기준 (재추론 금지)",
@@ -663,16 +659,6 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
         "matchPoints": ["잘 맞는 점 + 사주 근거 30자", "잘 맞는 점2 + 근거 30자", "잘 맞는 점3 + 근거 30자"],
         "clashPoints": ["안 맞는 점 + 사주 근거 30자", "안 맞는 점2 + 근거 30자"],
         "pillarComparison": {
-          "myPillars": {
-            "year": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"},
-            "month": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"},
-            "day": {"cheongan": "천간 한자", "jiji": "지지 한자", "oheng": "오행"}
-          },
-          "partnerPillars": {
-            "year": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
-            "month": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"},
-            "day": {"cheongan": "천간 한자 — 🔒 서버 확정값 그대로", "jiji": "지지 한자 — 🔒 서버 확정값 그대로", "oheng": "오행"}
-          },
           "interactions": [
             {"position": "년주/월주/일주 중 하나", "type": "합(合)/충(沖)/형(刑)/해(害)/상생/상극 중 하나", "desc": "이 관계가 의미하는 것 20자"}
           ]
@@ -688,20 +674,6 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
           {"axis": "미래 비전", "score": "0-100"}
         ]
       },
-      "monthlyEnergy": [
-        {"month": "1월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "2월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "3월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "4월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "5월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "6월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "7월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "8월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "9월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "10월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "11월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"},
-        {"month": "12월", "myEnergy": "0-100", "partnerEnergy": "0-100", "reunionChance": "0-100"}
-      ],
       "sinsal": {
         "doHwaSal": {"have": "true/false", "desc": "사주 근거 간단히 15자 (예: 酉에 위치)", "meaning": "쉽게 말하면 이런 뜻이에요 — 사주 초보자가 바로 이해할 수 있는 설명 40자", "impact": "positive/negative/neutral", "advice": "이 사람에게 구체적으로 어떻게 작용하는지 + 어떻게 하면 좋은지 35자"},
         "hongYeomSal": {"have": "true/false", "desc": "사주 근거 15자", "meaning": "쉬운 설명 40자", "impact": "positive/negative/neutral", "advice": "구체적 작용 + 조언 35자"},
@@ -720,18 +692,11 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "greenFlags": ["긍정 신호 35~50자 · 사주 호명", "긍정 신호2 35~50자", "긍정 신호3 35~50자"],
       "redFlags": ["경고 신호 35~50자 · 위기→기회", "경고 신호2 35~50자", "경고 신호3 35~50자"],
       "breakupDuration": {
-        "healingStage": "충격기/거부기/회복기/수용기/장기분리기 중 하나",
         "stageDesc": "현재 단계에 대한 설명 30자 (예: '감정 정리는 됐지만 미련이 남아있는 시기')",
         "optimalWait": "최적 대기 기간 15자",
         "reunionImpact": "이 기간이 재회 확률에 미치는 구체적 영향 40자",
         "emotionNow": "현재 양쪽 감정 상태 요약 20자 (예: '나는 미련, 상대는 무관심')",
-        "phases": [
-          {"name": "충격기", "period": "0~2개월", "desc": "이별 직후 감정 혼란기. 현실 부정과 슬픔이 교차하는 시기", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
-          {"name": "거부기", "period": "2~6개월", "desc": "이별을 거부하며 연락 충동이 강한 시기. 분노와 그리움 반복", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
-          {"name": "회복기", "period": "6~12개월", "desc": "감정 정리가 시작되며 일상 회복이 진행되는 시기", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
-          {"name": "수용기", "period": "12~18개월", "desc": "이별을 받아들이고 객관적 시야가 생기는 시기. 재회 판단 가능", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"},
-          {"name": "장기 분리기", "period": "18개월~", "desc": "감정 완전 정리 후 새 관계 or 성숙한 재회가 가능한 시기", "myState": "나의 상태 10자", "partnerState": "상대 상태 10자"}
-        ],
+        "phases": [{"myState": "그 단계의 나의 상태 10자", "partnerState": "그 단계의 상대 상태 10자"}, ... 5개 — 순서: 충격기·거부기·회복기·수용기·장기 분리기 (단계 이름·기간·설명은 서버가 채움)],
         "currentPhaseIndex": "0~4 정수 (헤어진 기간 기준으로 정확히 매칭. 0=충격기 0~2개월, 1=거부기 2~6개월, 2=회복기 6~12개월, 3=수용기 12~18개월, 4=장기분리기 18개월+)"
       }
     }`,
@@ -909,25 +874,128 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
  * 스트리밍 SSE 엔드포인트(generateTopicAnalysisStream)와 callable 이 동일 파라미터 공유 —
  * 프롬프트·모델·출력 100% 동일, 전송 방식만 다름 (콘텐츠 변경 위험 0).
  */
+export interface TopicCall {
+  system: string;
+  prompt: string;
+  model: string;
+  maxTokens: number;
+  normalizedId: string;
+  effectiveBaseScore?: number;
+  /** 재회운 — 본문/카드 데이터 병렬 분할 (공유 prompt 뒤에 각자 suffix) */
+  split?: { mainSuffix: string; dataSuffix: string; mainMaxTokens: number; dataMaxTokens: number; fill: (td: any) => any };
+}
+const REUNION_MAIN_ONLY = `
+
+## ⚡ 이번 호출의 출력 범위
+위 JSON 스키마에서 "topicData" 를 뺀 나머지 키만 출력한다 (title·overallScore·sajuBasis·sajuConnection·summary·sections·timeline·luckyProfile·actionAdvice).
+topicData 는 다른 호출이 같은 확정표로 동시에 쓰고 있다 — 출력 금지. sections 는 10개 전부 순서대로.`;
+const REUNION_DATA_ONLY = `
+
+## ⚡ 이번 호출의 출력 범위
+{"topicData": { ... }} 한 키만 담은 JSON 객체 하나만 출력한다. 본문(summary·sections·timeline 등)은 다른 호출이 같은 확정표로 동시에 쓰고 있다 — 출력 금지.
+카드 문구도 본문과 같은 근거(재회 타이밍·판정 확정표 · 두 사람 객관 관계)로 쓴다. 서버가 채우는 항목은 출력하지 않는다.`;
+
+/** 주제 생성 공용 (SSE 스트림 · callable 폴백 같은 코드). 파싱 실패 시 temperature 낮춰 1회 재생성.
+ *  split(재회운)이면 본문은 onDelta 로 실시간, 카드 데이터는 4초 뒤 병렬(프롬프트 캐시 읽기) → 합쳐서 반환. */
+export async function runTopicGeneration(
+  anthropic: Anthropic,
+  call: TopicCall,
+  via: 'stream' | 'callable',
+  hooks: { onDelta?: (delta: string, totalChars: number, chunkIdx: number) => void; onRetry?: (reason: string) => void } = {},
+): Promise<any> {
+  const system = [{ type: 'text' as const, text: call.system, cache_control: { type: 'ephemeral' as const } }];
+  const content = (suffix?: string): any => (suffix
+    ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix }]
+    : call.prompt);
+  const once = async (suffix: string | undefined, maxTokens: number, temperature: number, live: boolean): Promise<string> => {
+    const t0 = Date.now();
+    const stream = anthropic.messages.stream({
+      model: call.model, max_tokens: maxTokens, temperature, system,
+      messages: [{ role: 'user', content: content(suffix) }],
+    });
+    let acc = '';
+    let idx = 0;
+    for await (const ev of stream as any) {
+      if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+        acc += ev.delta.text;
+        idx++;
+        if (live && hooks.onDelta) hooks.onDelta(ev.delta.text, acc.length, idx);
+      }
+    }
+    try { logAnthropicUsage('topic', call.model, await stream.finalMessage(), t0, via); } catch { /* best-effort */ }
+    return acc;
+  };
+  const gen = async (suffix: string | undefined, maxTokens: number, live: boolean, label: string): Promise<any> => {
+    const text = await once(suffix, maxTokens, 0.1, live);
+    try {
+      return parseJsonResponse(text, { repairUsed: false });
+    } catch (e: any) {
+      console.warn(`[claudeTopic:${call.normalizedId}] ${label} 파싱 실패 → 재시도:`, e?.message);
+      if (live) hooks.onRetry?.('parse_fail');
+      return parseJsonResponse(await once(suffix, maxTokens, 0.05, live), { repairUsed: false });
+    }
+  };
+  if (!call.split) return gen(undefined, call.maxTokens, true, '1차');
+  const sp = call.split;
+  const [main, data] = await Promise.all([
+    gen(sp.mainSuffix, sp.mainMaxTokens, true, '본문'),
+    new Promise((r) => setTimeout(r, 4000))
+      .then(() => gen(sp.dataSuffix, sp.dataMaxTokens, false, '카드'))
+      .catch((e: any) => {
+        console.error(`[claudeTopic:${call.normalizedId}] 카드 데이터 실패 — 서버 확정값만 채움:`, e?.message);
+        return null;
+      }),
+  ]);
+  const td = data && typeof data === 'object'
+    ? (data.topicData && typeof data.topicData === 'object' ? data.topicData : data)
+    : {};
+  const { topicData: _ignored, ...rest } = (main && typeof main === 'object' ? main : {}) as any;
+  void _ignored;
+  return { ...rest, topicData: sp.fill(td) };
+}
+
 export function buildTopicCall(
   topicId: string,
   sajuData: any,
   baseScore?: number,
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number; birthMinute?: number },
   extraInfo?: Record<string, any>,
-): { system: string; prompt: string; model: string; maxTokens: number; normalizedId: string; effectiveBaseScore?: number } {
+): TopicCall {
   const normalizedId = normalizeTopicIdServer(topicId);
   const config = TOPIC_CONFIGS[normalizedId];
   if (!config) throw new Error(`알 수 없는 주제: ${topicId} (정규화: ${normalizedId})`);
   if (normalizedId !== topicId) console.info(`[claudeTopic] topicId 정규화: ${topicId} → ${normalizedId}`);
   // baseScore 를 클라가 안 넘기면(주제분석 대부분 경로) 서버가 사주로 직접 산출 — 지연 0
   const effectiveBaseScore = baseScore ?? computeTopicBaseScore(normalizedId, sajuData);
-  const prompt = buildPrompt(config, normalizedId, sajuData, effectiveBaseScore, partnerInfo, extraInfo);
+  /* 2026-10-08 — 재회운 병렬 분할. 출력 ~14.8K자(다른 주제 2배) · 실측 중앙 222초(최대 225초) → 앱 마감에 걸려
+   *   반쪽 저장이 재회운에 몰렸다(10-04 박제 14건 중 11건). 본문(sections 10개·timeline 등 · 실시간 스트리밍)과
+   *   카드 데이터(topicData · 4초 뒤 병렬)를 나눠 생성. 섹션 10개는 한 호출이 끝까지 쓰므로 서사는 그대로.
+   *   두 호출이 시기·판정을 따로 고르지 않도록 서버 확정표(reunionPlan)를 양쪽 프롬프트에 같이 넣고,
+   *   모델이 베끼던 고정값(기둥 간지·이별 단계 설명·월별 수치)은 서버가 채운다. */
+  let reunionText = '';
+  let split: TopicCall['split'];
+  if (normalizedId === 'reunion') {
+    const pp = partnerInfo ? computePartnerPillars(partnerInfo) : null;
+    const bi = partnerInfo as { breakupYear?: number; breakupMonth?: number } | undefined;
+    const plan = reunionPlan({
+      sajuData, partnerDay: pp?.day ?? null, now: kstNowDate(), score: effectiveBaseScore,
+      breakupYear: bi?.breakupYear, breakupMonth: bi?.breakupMonth,
+    });
+    reunionText = plan?.text || '';
+    split = {
+      mainSuffix: REUNION_MAIN_ONLY,
+      dataSuffix: REUNION_DATA_ONLY,
+      mainMaxTokens: 12000,
+      dataMaxTokens: 8000,
+      fill: (td: any) => fillReunionTopicData(td, plan, Array.isArray(sajuData?.pillars) ? sajuData.pillars : null, pp),
+    };
+  }
+  const prompt = buildPrompt(config, normalizedId, sajuData, effectiveBaseScore, partnerInfo, extraInfo, reunionText);
   const model = 'claude-sonnet-4-6';
   // 2026-10-03 상한 상향 16000/8192 → 20000/12000 — 운영 실측: callable 67건 중 20건이 cap 95%↑·3건 정확히 8192 도달(잘림),
   //   재회운 출력 13.6~14.7K(16000 근접). 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만 생김.
   const maxTokens = normalizedId === 'reunion' ? 16000 : 12000; // 재회운 16000 유지(2026-10-04): 실측 최대 출력 14.7K 로 잘림 0 · 20000 은 ~66tok/s 기준 서버 timeoutSeconds 300 초과 위험
-  return { system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore };
+  return { system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore, split };
 }
 
 /** 2026-09-17 — 사주 산출 점수를 AI 응답에 강제 반영. 프롬프트로 '반드시 이 점수'를 지시하지만 AI 가 어기면
@@ -964,10 +1032,20 @@ export async function generateTopicAnalysisAI(
 ): Promise<any> {
   const anthropic = new Anthropic({ apiKey });
   // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (운영 결정).
-  const { prompt, model, maxTokens, normalizedId, effectiveBaseScore } =
-    buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+  const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+  const { prompt, model, maxTokens, effectiveBaseScore } = call;
 
-  // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
+  // 2차 자기 리뷰 — 고가치 유료 상품 품질 보정 (AI프롬프트_v3 §8).
+  // ⚠️ 2차 리뷰는 1차와 동일 분량을 한 번 더 생성 → 응답시간 ~2배 (주제분석 1분+ 주범).
+  //   출시 속도 우선: 기본 OFF (1차 결과 직반환 — 1차도 system 에 self-check 내장됨).
+  //   품질 최대화 필요 시 env `TOPIC_SELF_REVIEW=1` 로 재활성 (재배포 필요). 재회운(분할 생성)은 리뷰 없이 공용 경로.
+  const SELF_REVIEW_ON = process.env.TOPIC_SELF_REVIEW === '1';
+  if (!SELF_REVIEW_ON || call.split) {
+    console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선 · TOPIC_SELF_REVIEW!=1)`);
+    return enforceTopicBaseScore(await runTopicGeneration(anthropic, call, 'callable'), effectiveBaseScore);
+  }
+
+  // (TOPIC_SELF_REVIEW=1 전용) 1차 생성 (파싱 실패 시 temperature 0.05 로 1회 재시도)
   let firstText: string;
   let firstJson: any;
   try {
@@ -1001,16 +1079,6 @@ export async function generateTopicAnalysisAI(
     console.info(`[claudeTopic:${topicId}] 2차 성공`, meta2.repairUsed ? '(jsonrepair 발동)' : '');
   }
 
-  // 2차 자기 리뷰 — 고가치 유료 상품 품질 보정 (AI프롬프트_v3 §8).
-  // ⚠️ 2차 리뷰는 1차와 동일 분량을 한 번 더 생성 → 응답시간 ~2배 (주제분석 1분+ 주범).
-  //   출시 속도 우선: 기본 OFF (1차 결과 직반환 — 1차도 system 에 self-check 내장됨).
-  //   품질 최대화 필요 시 env `TOPIC_SELF_REVIEW=1` 로 재활성 (재배포 필요).
-  //   ⚠️ 프롬프트 구조 무변경 — 2차 skip 은 검증된 1차 JSON 직반환이라 콘텐츠 누락 위험 0.
-  const SELF_REVIEW_ON = process.env.TOPIC_SELF_REVIEW === '1';
-  if (!SELF_REVIEW_ON) {
-    console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선 · TOPIC_SELF_REVIEW!=1)`);
-    return enforceTopicBaseScore(firstJson, effectiveBaseScore);
-  }
   const _t3 = Date.now(); // C7
   const review = await anthropic.messages.create({
     model,
@@ -1127,6 +1195,7 @@ function buildPrompt(
   baseScore?: number,
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; breakupYear?: number; breakupMonth?: number; birthHour?: number; birthMinute?: number },
   extraInfo?: Record<string, any>,
+  reunionFactsText = '',
 ): string {
   const p = d.pillars || [];
   const labels = ['년주', '월주', '일주', '시주'];
@@ -1325,6 +1394,8 @@ ${statusBlock}
 → partnerCompat은 null로 설정하세요.
 `;
   }
+
+  if (reunionFactsText) partnerSection += reunionFactsText; // 2026-10-08 재회 타이밍·판정 확정표 (본문·카드 두 호출 공통)
 
   // 2026-10-04 — 사용자가 직접 적은 '지금 상황 한 줄' (전 주제 공통 · 선택).
   //   고객 시점 시식: 꿈해몽은 '요즘 떠나지 않는 생각'을 받아 "~라고 하셨는데" 로 짚어 체감 적중도가 높았지만,
@@ -1701,7 +1772,7 @@ subScores 각 축도 그 축의 핵심 십성으로 같은 산식을 적용해 *
   "title": "${d.input?.name||''}님의 ${config.label} 심층분석",
   "overallScore": ${baseScore ? baseScore : '"0-100 정수"'},
   "sajuBasis": "사주 근거 한 줄 (40~60자). 2026-05-28 두괄식+일상어 강제. 형식: '[일상어 결론 한 마디] — [한자(풀이) 사주 근거]'. ✅ 좋은 예: '결혼 인연은 분명하나 시기가 늦어져요 — 정관(正官, 책임감 있는 인연)이 합으로 묶여있어요.' / '돈은 잘 들어오는데 빠르게 빠져요 — 재성(財星, 돈 자리)이 식상(食傷, 활동 에너지)에 밀려요.' ❌ 나쁜 예: '일지 자수(子水)에 정관이 자리하고 축자합(丑子合)으로 관성이 묶이는 구조' (한자 폭격·풀이 X·두괄식 X). 한자 첫 등장 시 반드시 괄호 안 일상어 풀이. 마크다운 금지.",
-  "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 고전 이론의 원리를 근거로 쓰되 책 이름·'~에서 이르길' 같은 출처 언급은 금지 (책 이름은 자동 삭제돼 문장이 깨짐). 형식 예시: '재성이 이렇게 강하면 관성이 다잡아줘야 하는데, 당신 사주는 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달. 마크다운 금지.",
+  "sajuConnection": "분석 메모 (화면에 표시되지 않음 · 250~400자) — sections 를 쓰기 전에 근거를 압축 정리: 원국 핵심 구조 · 현재 대운 · 올해 세운 · 이 주제에 작용하는 글자와 그 작용. 이후 summary·sections·timeline 은 이 메모와 모순 없이 쓴다. 마크다운 금지.",
   "summary": "200자 이상. 소름 포인트 포함. 🚨 사주 8글자 specific 데이터 1회 이상 직접 호명 mandatory (보일러플레이트 금지). 마크다운 금지.",
   "sections": [${effectiveSections.map(s => `{"heading": "${s}", "content": "150자 이상. 🚨 사주 specific 호명 (개수·자리·신살) 1회 이상. 마크다운 금지. **HTML 강조 mandatory**: 각 단락에 <strong>일상어 결론 1구절</strong> 1회 + <u>시기·숫자·월</u> 1~2회 + <b>한자(풀이)</b> 첫 등장 시 필수. 줄글만 X.", "highlight": "이 섹션 핵심 한 줄 요약 30자 이내 · 🚨 사주 글자 1개 이상 호명 권장", "insightCards": [{"label": "사주용어(漢字)", "value": "핵심 데이터 15~25자 · 🚨 사주 specific 데이터", "type": "info 또는 accent 또는 warning"}]}`).join(', ')}],
   "timeline": [{"period": "시기", "score": 1-10, "description": "60자 이상 · 🚨 해당 시기 대운/세운 간지 + 원국 글자 충돌·합 직접 호명"}, ...6~12개],

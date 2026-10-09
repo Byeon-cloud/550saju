@@ -415,3 +415,152 @@ export function todayHourWindows(date: string, sajuData: any): { peak: string; a
     return { peak, avoid, text };
   } catch { return { peak: '', avoid: '', text: '' }; }
 }
+
+/* ── 재회운 타이밍·판정 확정표 (2026-10-08) ──
+ *   재회운 출력은 ~14.8K자(다른 주제의 2배) · 실측 중앙 222초 → 본문(sections 등)과 카드 데이터(topicData)를
+ *   두 호출로 나눠 병렬 생성한다. 두 호출이 시기·판정을 따로 고르면 '본문 적기 3월 ↔ 카드 적기 5월' 모순이 나므로
+ *   월별 수치·적기·판정을 서버가 결정론으로 정해 양쪽에 같은 표로 준다 (같은 사주 = 같은 시기).
+ *   근거: 월건 ↔ 용신·희신·기신(monthBaseScore) · 연인의 별(여성 관성/남성 재성)이 들어오는 달 ·
+ *   월지 ↔ 상대 일지 합·충·원진 · 월지 ↔ 내 일지 합. 상대 에너지 = 월건이 상대 일간을 생·극하는 관계. */
+const WONJIN_PAIR: Record<string, string> = { 子: '未', 未: '子', 丑: '午', 午: '丑', 寅: '酉', 酉: '寅', 卯: '申', 申: '卯', 辰: '亥', 亥: '辰', 巳: '戌', 戌: '巳' };
+export const REUNION_PHASES = [
+  { name: '충격기', period: '0~2개월', desc: '이별 직후 감정 혼란기. 현실 부정과 슬픔이 교차하는 시기' },
+  { name: '거부기', period: '2~6개월', desc: '이별을 거부하며 연락 충동이 강한 시기. 분노와 그리움 반복' },
+  { name: '회복기', period: '6~12개월', desc: '감정 정리가 시작되며 일상 회복이 진행되는 시기' },
+  { name: '수용기', period: '12~18개월', desc: '이별을 받아들이고 객관적 시야가 생기는 시기. 재회 판단 가능' },
+  { name: '장기 분리기', period: '18개월~', desc: '감정 완전 정리 후 새 관계 or 성숙한 재회가 가능한 시기' },
+];
+export interface ReunionPlan {
+  text: string;
+  monthly: Array<{ label: string; my: number; partner: number | null; chance: number }>;
+  bestTiming: string;
+  bestContactMonth: string;
+  cautionMonths: string;
+  verdict: '재회 추천' | '상황에 따라' | '새 인연 추천';
+  contactAdvice: '지금 연락하기' | '기다리기' | '새출발';
+  emotionCycle: '상승기' | '하강기' | '정체기';
+  phaseIndex: number | null;
+}
+export function reunionPlan(args: {
+  sajuData: any; partnerDay?: string | null; now: Date; score?: number; breakupYear?: number; breakupMonth?: number;
+}): ReunionPlan | null {
+  try {
+    const { sajuData, partnerDay, now } = args;
+    const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
+    const dayJi = String(sajuData?.pillars?.[2]?.지지 || '');
+    const me = GAN_OH[dayGan];
+    if (!me) return null;
+    const female = (sajuData?.input?.gender || '') !== 'male';
+    const star = female ? Object.keys(CTRL).find((k) => CTRL[k] === me) : CTRL[me]; // 연인의 별 오행
+    const starName = female ? '관성' : '재성';
+    const ma = sajuData?.myeongriAnalysis || {};
+    const pGan = partnerDay ? partnerDay.charAt(0) : '';
+    const pJi = partnerDay ? partnerDay.charAt(1) : '';
+    const pOh = GAN_OH[pGan];
+    const relTo = (x: string, base: string) =>
+      x === base ? 3 : GEN[x] === base ? 6 : GEN[base] === x ? 1 : CTRL[base] === x ? -1 : CTRL[x] === base ? -5 : 0;
+    const clampN = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Math.round(n)));
+    const notFive = (n: number) => (n % 5 === 0 ? n + 1 : n);
+    const y0 = now.getFullYear();
+    const m0 = now.getMonth() + 1;
+    const rel = (y: number, m: number) => (y === y0 ? `올해 ${m}월` : y === y0 + 1 ? `내년 ${m}월` : `${y}년 ${m}월`);
+    const rows: Array<{ y: number; m: number; gz: string; my: number; partner: number | null; chance: number; why: string[] }> = [];
+    for (let i = 0; i < 12; i++) {
+      const y = y0 + Math.floor((m0 - 1 + i) / 12);
+      const m = ((m0 - 1 + i) % 12) + 1;
+      const gz = Solar.fromYmd(y, m, 15).getLunar().getEightChar().getMonth();
+      const go = GAN_OH[gz[0]]; const bo = BR_OHENG[gz[1]]; const b = gz[1];
+      const why: string[] = [];
+      const my = monthBaseScore(gz, sajuData);
+      if (ma.용신 && (go === ma.용신 || bo === ma.용신)) why.push('용신 달');
+      else if (ma.기신 && (go === ma.기신 || bo === ma.기신)) why.push('기신 달');
+      let bonus = 0;
+      if (star && (go === star || bo === star)) { bonus += (go === star ? 4 : 0) + (bo === star ? 3 : 0); why.push(`연인의 별(${starName}·${star}) 들어옴`); }
+      if (pJi) {
+        if (JI_HAP6[pJi] === b) { bonus += 5; why.push(`상대 일지 ${pJi}와 ${b} 합`); }
+        else if (CHUNG_PAIR[pJi] === b) { bonus -= 6; why.push(`상대 일지 ${pJi}와 ${b} 충`); }
+        else if (WONJIN_PAIR[pJi] === b) { bonus -= 3; why.push(`상대 일지 ${pJi}와 ${b} 원진`); }
+      }
+      if (dayJi && JI_HAP6[dayJi] === b) { bonus += 3; why.push(`내 일지 ${dayJi}와 ${b} 합`); }
+      else if (dayJi && CHUNG_PAIR[dayJi] === b) why.push(`내 일지 ${dayJi}와 ${b} 충`);
+      const partner = pOh
+        ? notFive(clampN(66 + relTo(go, pOh) + relTo(bo, pOh) + (pJi && JI_HAP6[pJi] === b ? 4 : 0) - (pJi && CHUNG_PAIR[pJi] === b ? 5 : 0), 30, 95))
+        : null;
+      const chance = notFive(clampN(my * 0.7 + (partner ?? my) * 0.3 + bonus, 25, 95));
+      rows.push({ y, m, gz, my, partner, chance, why });
+    }
+    let bi = 0;
+    for (let i = 1; i < 11; i++) if (rows[i].chance + rows[i + 1].chance > rows[bi].chance + rows[bi + 1].chance) bi = i;
+    const a = rows[bi]; const z = rows[bi + 1];
+    const bestTiming = a.y === z.y
+      ? (a.y === y0 ? `올해 ${a.m}~${z.m}월` : a.y === y0 + 1 ? `내년 ${a.m}~${z.m}월` : `${a.y}년 ${a.m}~${z.m}월`)
+      : `${rel(a.y, a.m)}~${rel(z.y, z.m).replace(/^올해 /, '')}`;
+    let ci = 0;
+    rows.forEach((r, i) => { if (r.chance > rows[ci].chance) ci = i; });
+    const bestContactMonth = rel(rows[ci].y, rows[ci].m);
+    const low = rows.map((r, i) => ({ r, i })).sort((p, q) => p.r.chance - q.r.chance || p.i - q.i).slice(0, 2).sort((p, q) => p.i - q.i);
+    const cautionMonths = low.map(({ r }) => rel(r.y, r.m)).join('·');
+    const score = typeof args.score === 'number' && Number.isFinite(args.score)
+      ? args.score
+      : Math.round(rows.reduce((s, r) => s + r.chance, 0) / rows.length);
+    const verdict: ReunionPlan['verdict'] = score >= 68 ? '재회 추천' : score <= 52 ? '새 인연 추천' : '상황에 따라';
+    const contactAdvice: ReunionPlan['contactAdvice'] = verdict === '새 인연 추천' ? '새출발' : bi === 0 ? '지금 연락하기' : '기다리기';
+    const trend = (rows[1].chance + rows[2].chance + rows[3].chance) / 3 - rows[0].chance;
+    const emotionCycle: ReunionPlan['emotionCycle'] = trend > 4 ? '상승기' : trend < -4 ? '하강기' : '정체기';
+    let phaseIndex: number | null = null;
+    if (args.breakupYear && args.breakupMonth) {
+      const gap = Math.max(0, (y0 - args.breakupYear) * 12 + (m0 - args.breakupMonth));
+      phaseIndex = gap < 2 ? 0 : gap < 6 ? 1 : gap < 12 ? 2 : gap < 18 ? 3 : 4;
+    }
+    const lines = rows.map((r) =>
+      `  · ${r.y}년 ${r.m}월 ${r.gz}(${ganziKo(r.gz)}) — 나 ${r.my}${r.partner != null ? ` / 상대 ${r.partner}` : ''} / 재회 기운 ${r.chance}` +
+      (r.why.length ? ` · ${r.why.join(', ')}` : ''));
+    const text = `
+## 🔒 재회 타이밍·판정 확정표 (서버 계산 — 본문·데이터 모두 이 표와 다르게 쓰지 말 것)
+- 판정: ${verdict} (재회 점수 ${score}점 기준) · 지금 할 일: ${contactAdvice}${contactAdvice === '기다리기' ? ` (${rel(a.y, a.m)}부터 움직인다 — 그 전엔 먼저 연락하지 않는다)` : ''} · 감정 흐름: ${emotionCycle}
+- 재회 적기: ${bestTiming} · 첫 연락 최적 달: ${bestContactMonth} · 조심할 달: ${cautionMonths}${phaseIndex != null ? `\n- 이별 후 현재 단계: ${REUNION_PHASES[phaseIndex].name} (${REUNION_PHASES[phaseIndex].period})` : ''}
+- 월별 (이번 달부터 12개월 · 나의 에너지${pOh ? ' / 상대 에너지' : ''} / 재회 기운 · 근거):
+${lines.join('\n')}
+→ '재회 가능성과 적기'·'월별 재회 에너지 흐름'·'재회 실전 전략'·'재회 후 관계 변화 예측' 과 timeline 은 위 시기·수치를 그대로 인용한다. 표에 없는 달을 적기로 만들지 말 것.
+→ '새 인연 vs 재회 — 냉정한 비교' 의 최종 판정 = 위 판정. 근거 칸의 글자(합·충·원진·연인의 별)를 본문에서 직접 짚어라.${pOh ? '' : '\n→ 상대 생년월일이 없다 — 상대 에너지·궁합 수치는 만들지 말 것.'}
+`;
+    return {
+      text,
+      monthly: rows.map((r) => ({ label: `${r.m}월`, my: r.my, partner: r.partner, chance: r.chance })),
+      bestTiming, bestContactMonth, cautionMonths, verdict, contactAdvice, emotionCycle, phaseIndex,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** 재회운 topicData — 서버 확정값 채우기 (모델이 베끼던 고정 문구·간지·월별 수치 + 판정) */
+export function fillReunionTopicData(td: any, plan: ReunionPlan | null, mine: Array<{ 천간?: string; 지지?: string }> | null, partner: { year: string; month: string; day: string } | null): any {
+  const out: any = td && typeof td === 'object' ? td : {};
+  if (plan) {
+    out.monthlyEnergy = plan.monthly.map((x) => ({ month: x.label, myEnergy: x.my, partnerEnergy: x.partner, reunionChance: x.chance }));
+    out.bestTiming = plan.bestTiming;
+    out.bestContactMonth = plan.bestContactMonth;
+    out.verdict = plan.verdict;
+    out.contactAdvice = plan.contactAdvice;
+    out.emotionCycle = plan.emotionCycle;
+  }
+  if (out.breakupDuration || plan?.phaseIndex != null) {
+    const bd = out.breakupDuration && typeof out.breakupDuration === 'object' ? out.breakupDuration : {};
+    const states: any[] = Array.isArray(bd.phases) ? bd.phases : [];
+    bd.phases = REUNION_PHASES.map((p, i) => ({ ...p, myState: states[i]?.myState || '', partnerState: states[i]?.partnerState || '' }));
+    if (plan?.phaseIndex != null) bd.currentPhaseIndex = plan.phaseIndex;
+    const idx = Number(bd.currentPhaseIndex);
+    if (Number.isInteger(idx) && idx >= 0 && idx < REUNION_PHASES.length) { bd.currentPhaseIndex = idx; bd.healingStage = REUNION_PHASES[idx].name; }
+    out.breakupDuration = bd;
+  }
+  if (partner && mine && out.partnerProfile && typeof out.partnerProfile === 'object') {
+    const pc = out.partnerProfile.pillarComparison && typeof out.partnerProfile.pillarComparison === 'object' ? out.partnerProfile.pillarComparison : {};
+    const cell = (gan?: string, ji?: string) => (gan && ji ? { cheongan: gan, jiji: ji, oheng: GAN_OH[gan] || '' } : undefined);
+    pc.myPillars = { year: cell(mine[0]?.천간, mine[0]?.지지), month: cell(mine[1]?.천간, mine[1]?.지지), day: cell(mine[2]?.천간, mine[2]?.지지) };
+    pc.partnerPillars = { year: cell(partner.year[0], partner.year[1]), month: cell(partner.month[0], partner.month[1]), day: cell(partner.day[0], partner.day[1]) };
+    if (!Array.isArray(pc.interactions)) pc.interactions = [];
+    out.partnerProfile.pillarComparison = pc;
+  }
+  return out;
+}

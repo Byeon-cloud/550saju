@@ -2570,50 +2570,22 @@ export const generateTopicAnalysisStream = onRequest(
 
     try {
       const { default: Anthropic } = await import('@anthropic-ai/sdk');
-      const { buildTopicCall, enforceTopicBaseScore } = await lazyClaudeTopic();
-      const { parseJsonResponse } = await import('./ai/promptsV3');
-      const { system, prompt, model, maxTokens, effectiveBaseScore } =
-        buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
-
+      const { buildTopicCall, enforceTopicBaseScore, runTopicGeneration } = await lazyClaudeTopic();
+      const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
       const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
       const t0 = Date.now();
-
-      const runStream = async (temperature: number): Promise<string> => {
-        let acc = '';
-        let chunkIdx = 0;
-        const _t0 = Date.now(); // C7
-        const stream = anthropic.messages.stream({
-          model,
-          max_tokens: maxTokens,
-          temperature,
-          system,
-          messages: [{ role: 'user', content: prompt }],
-        });
-        for await (const event of stream as any) {
-          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-            acc += event.delta.text;
-            chunkIdx++;
-            sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx });
-          }
-        }
-        // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
-        try { logAnthropicUsage('topic', model, await stream.finalMessage(), _t0, 'stream'); } catch { /* best-effort */ }
-        return acc;
-      };
-
-      // 1차 스트리밍 (파싱 실패 시 temp 낮춰 1회 재시도 — callable 과 동일)
-      let firstText = await runStream(0.1);
-      let parsed: any;
-      try {
-        parsed = parseJsonResponse(firstText, { repairUsed: false });
-      } catch (e1: any) {
-        console.warn(`[topicStream:${topicId}] 1차 파싱 실패 → 재시도:`, e1?.message);
-        sendEvent('retry', { reason: 'parse_fail' });
-        firstText = await runStream(0.05);
-        parsed = parseJsonResponse(firstText, { repairUsed: false });
-      }
+      // 2026-10-08 — 생성은 claudeTopic.runTopicGeneration 공용 (callable 폴백과 같은 코드 · 시스템 프롬프트 캐시).
+      //   재회운은 본문(아래 chunk 로 실시간)과 카드 데이터(병렬)를 나눠 생성 → 클라 계약(start·chunk·retry·done) 그대로.
+      //   파싱 실패 재생성·사주 산출 점수 강제는 기존과 동일.
+      let parsed: any = await runTopicGeneration(anthropic, call, 'stream', {
+        onDelta: (delta, totalChars, chunkIdx) => sendEvent('chunk', { delta, totalChars, chunkIdx }),
+        onRetry: (reason) => {
+          console.warn(`[topicStream:${topicId}] 1차 파싱 실패 → 재시도`);
+          sendEvent('retry', { reason });
+        },
+      });
       // 사주 산출 점수 강제 (callable 과 동일 · 종합사주 추천 카드 점수와 일치 보장)
-      parsed = enforceTopicBaseScore(parsed, effectiveBaseScore);
+      parsed = enforceTopicBaseScore(parsed, call.effectiveBaseScore);
 
       // Firestore 저장 (callable 과 동일 구조)
       const reportRef = db.collection('reports').doc();
