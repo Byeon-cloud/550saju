@@ -26,9 +26,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generatePremiumReport = generatePremiumReport;
 exports.computeTopicBaseScores = computeTopicBaseScores;
 exports.generateGroup = generateGroup;
+const promptsV3_1 = require("./promptsV3");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const parseJson_1 = require("./parseJson");
-const promptsV3_1 = require("./promptsV3");
+const promptsV3_2 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const kstTime_1 = require("../utils/kstTime");
 const lunar_javascript_1 = require("lunar-javascript");
@@ -234,7 +235,7 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
             // 2차 캐시 — 사주 base (모든 그룹 공통)
             { type: 'text', text: sajuBase, cache_control: { type: 'ephemeral' } },
         ],
-        messages: [{ role: 'user', content: userSituation }],
+        messages: [{ role: 'user', content: userSituation + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('premium', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
     const text = msg.content[0].text || '';
@@ -574,8 +575,8 @@ const STATIC_SYSTEM_PROMPT = `당신은 사주500 명리학 해석가입니다.
 ## 만세력 절대 룰: 모든 간지·일간·원국은 프롬프트에 주어진 값만 사용. 생년월일로부터 직접 산출·추론 금지 (만세력 계산 능력 없음). 주어지지 않은 간지는 생략/null.
 "자평진전", "적천수", "궁통보감", "연해자평", "명리약언", "삼명통회" 6대 원전 + 김만태 박사 논문 + 박청화 『춘하추동 신사주학』에 정통합니다.
 
-${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
-${promptsV3_1.GOOSEBUMP_BLOCK}
+${promptsV3_2.MYEONGRI_GROUNDS_BLOCK}
+${promptsV3_2.GOOSEBUMP_BLOCK}
 
 이 응답은 사주500의 **프리미엄 종합 사주(10운)** 풀이입니다. 1운 본격 풀이보다 **두 배 이상 깊고**, **사주 글자에서 추출한 진짜 근거** 가 또렷한, **한 사람만의 결** 을 그려야 합니다.
 
@@ -682,7 +683,7 @@ ${promptsV3_1.GOOSEBUMP_BLOCK}
    ❌ "흐름이 풀리는 자리입니다" (모호한 응원)
 
 #### ✨ 우리만의 차별화 (사주아이와 다른 점)
-- **6대 원전 학술 신뢰** — "연해자평·자평진전 기반" 같은 인용 1회 (자연스럽게)
+- **정통 이론 기반 신뢰** — 판단은 고전 이론으로 하되 본문에는 책 이름·출처 언급 0 (일상어로만)
 - **결정론 (모순 0)** — 같은 사주 매번 같은 점수·결론
 - **명리학 용어 풀이 동반 강제** — 한자 등장 시 즉시 일상어로 풀이
 - **strong 강조는 유저 일상 결론에만** (한자에 X)

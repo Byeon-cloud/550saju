@@ -799,7 +799,8 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v11'; // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지
+    const SCHEMA_VERSION = 'v13'; // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
+    // v12 // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
     const sajuKey = buildSajuKey(sajuData);
     const sharedCacheKey = `${sajuKey}_${date}_${SCHEMA_VERSION}`;
     const sharedCacheRef = db.doc(`sharedDailyFortune/${sharedCacheKey}`);
@@ -835,7 +836,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     // 각 그룹 sanity check (글자수 + 핵심 필드) → 누락 시 Sonnet 단일 fallback
     try {
         const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
-        const { DAILY_FORTUNE_SYSTEM_V3, DAILY_FORTUNE_USER_V3, DAILY_FORTUNE_USER_V3_GROUP_A1, DAILY_FORTUNE_USER_V3_GROUP_A2, DAILY_FORTUNE_USER_V3_GROUP_B, parseJsonResponse, } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
+        const { DAILY_FORTUNE_SYSTEM_V3, DAILY_FORTUNE_USER_V3, DAILY_FORTUNE_USER_V3_GROUP_A1, DAILY_FORTUNE_USER_V3_GROUP_A2, DAILY_FORTUNE_USER_V3_GROUP_B, parseJsonResponse, TONE_FINAL_CHECK, } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
         const { applyDailyMeetGlyphs, sanitizeAiOutput, todayHourWindows } = await Promise.resolve().then(() => __importStar(require('./ai/sajuFacts')));
         const hourWin = todayHourWindows(String(date || ''), sajuData);
         /* 2026-10-08 — 그룹별 모델: A1(헤더·점수 · 첫 화면 ~5초)은 Haiku 유지, 해석 본문 A2·시간대/사람/행운 B 는 Sonnet.
@@ -885,7 +886,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                         // 2026-10-08 — 1h TTL(쓰기 2배)은 하루 수 건 트래픽에선 재사용이 거의 없어 손해 → 기본 5분(쓰기 1.25배)
                         cache_control: { type: 'ephemeral' },
                     }],
-                messages: [{ role: 'user', content: userPrompt }],
+                messages: [{ role: 'user', content: userPrompt + TONE_FINAL_CHECK }],
             });
             for await (const event of stream) {
                 if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -969,7 +970,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                 max_tokens: 8000,
                 temperature: 0.4,
                 system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral', ttl: '1h' } }],
-                messages: [{ role: 'user', content: fbUser }],
+                messages: [{ role: 'user', content: fbUser + TONE_FINAL_CHECK }],
             });
             for await (const event of fbStream) {
                 if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -1316,7 +1317,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
     try {
         const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
         const { buildDreamFreeCall, buildDreamFreeGroupCall } = await lazyClaudeDream();
-        const { parseJsonResponse } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
+        const { parseJsonResponse, TONE_FINAL_CHECK } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
         const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
         const t0 = Date.now();
         // 2026-05-27 v8 — 2-그룹 병렬 (사주 있을 때만, 없으면 단일 호출)
@@ -1332,7 +1333,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
                     const _t0 = Date.now(); // C7
                     const stream = anthropic.messages.stream({
                         model, max_tokens: maxTokens, temperature, system,
-                        messages: [{ role: 'user', content: user }],
+                        messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
                     });
                     for await (const event of stream) {
                         if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -1387,7 +1388,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
             const _t0 = Date.now(); // C7
             const stream = anthropic.messages.stream({
                 model, max_tokens: maxTokens, temperature, system,
-                messages: [{ role: 'user', content: user }],
+                messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
             });
             for await (const event of stream) {
                 if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -2413,50 +2414,22 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
     sendEvent('start', { ts: Date.now() });
     try {
         const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
-        const { buildTopicCall, enforceTopicBaseScore } = await lazyClaudeTopic();
-        const { parseJsonResponse } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
-        const { system, prompt, model, maxTokens, effectiveBaseScore } = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
+        const { buildTopicCall, enforceTopicBaseScore, runTopicGeneration } = await lazyClaudeTopic();
+        const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
         const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
         const t0 = Date.now();
-        const runStream = async (temperature) => {
-            let acc = '';
-            let chunkIdx = 0;
-            const _t0 = Date.now(); // C7
-            const stream = anthropic.messages.stream({
-                model,
-                max_tokens: maxTokens,
-                temperature,
-                system,
-                messages: [{ role: 'user', content: prompt }],
-            });
-            for await (const event of stream) {
-                if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-                    acc += event.delta.text;
-                    chunkIdx++;
-                    sendEvent('chunk', { delta: event.delta.text, totalChars: acc.length, chunkIdx });
-                }
-            }
-            // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
-            try {
-                (0, aiUsageLog_1.logAnthropicUsage)('topic', model, await stream.finalMessage(), _t0, 'stream');
-            }
-            catch { /* best-effort */ }
-            return acc;
-        };
-        // 1차 스트리밍 (파싱 실패 시 temp 낮춰 1회 재시도 — callable 과 동일)
-        let firstText = await runStream(0.1);
-        let parsed;
-        try {
-            parsed = parseJsonResponse(firstText, { repairUsed: false });
-        }
-        catch (e1) {
-            console.warn(`[topicStream:${topicId}] 1차 파싱 실패 → 재시도:`, e1?.message);
-            sendEvent('retry', { reason: 'parse_fail' });
-            firstText = await runStream(0.05);
-            parsed = parseJsonResponse(firstText, { repairUsed: false });
-        }
+        // 2026-10-08 — 생성은 claudeTopic.runTopicGeneration 공용 (callable 폴백과 같은 코드 · 시스템 프롬프트 캐시).
+        //   재회운은 본문(아래 chunk 로 실시간)과 카드 데이터(병렬)를 나눠 생성 → 클라 계약(start·chunk·retry·done) 그대로.
+        //   파싱 실패 재생성·사주 산출 점수 강제는 기존과 동일.
+        let parsed = await runTopicGeneration(anthropic, call, 'stream', {
+            onDelta: (delta, totalChars, chunkIdx) => sendEvent('chunk', { delta, totalChars, chunkIdx }),
+            onRetry: (reason) => {
+                console.warn(`[topicStream:${topicId}] 1차 파싱 실패 → 재시도`);
+                sendEvent('retry', { reason });
+            },
+        });
         // 사주 산출 점수 강제 (callable 과 동일 · 종합사주 추천 카드 점수와 일치 보장)
-        parsed = enforceTopicBaseScore(parsed, effectiveBaseScore);
+        parsed = enforceTopicBaseScore(parsed, call.effectiveBaseScore);
         // Firestore 저장 (callable 과 동일 구조)
         const reportRef = db.collection('reports').doc();
         try {

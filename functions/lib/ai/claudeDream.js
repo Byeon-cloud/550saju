@@ -9,15 +9,16 @@ exports.buildDreamFreeGroupCall = buildDreamFreeGroupCall;
 exports.buildDreamFreeCall = buildDreamFreeCall;
 exports.generateDreamFree = generateDreamFree;
 exports.generateDreamDeep = generateDreamDeep;
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const promptsV3_2 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const MODEL = 'claude-sonnet-4-6';
 function buildDreamFreeGroupCall(args, group) {
-    const system = promptsV3_1.DREAM_FREE_SYSTEM_V3;
+    const system = promptsV3_2.DREAM_FREE_SYSTEM_V3;
     if (!args.saju) {
         // 사주 없으면 단일 callable fallback 사용 (Group B 없음)
-        const user = (0, promptsV3_1.DREAM_FREE_USER_NO_SAJU_V3)({
+        const user = (0, promptsV3_2.DREAM_FREE_USER_NO_SAJU_V3)({
             dreamContent: args.dreamContent,
             userConcern: args.userConcern,
             category: args.category,
@@ -40,8 +41,8 @@ function buildDreamFreeGroupCall(args, group) {
         category: args.category,
     };
     const user = group === 'A'
-        ? (0, promptsV3_1.DREAM_FREE_USER_GROUP_A_V3)(headerData)
-        : (0, promptsV3_1.DREAM_FREE_USER_GROUP_B_V3)(headerData);
+        ? (0, promptsV3_2.DREAM_FREE_USER_GROUP_A_V3)(headerData)
+        : (0, promptsV3_2.DREAM_FREE_USER_GROUP_B_V3)(headerData);
     // 그룹별 토큰 분할 (2026-05-27 v10 — 안전 복원):
     //   v9 의 5500/5000 은 AI 가 JSON 못 끝내고 잘림 → 파싱 실패 → callable 폴백 → 1분 대기 회귀.
     //   A=7500 (무료 4섹션 + 충분한 안전 마진) · B=7000 (잠금 5섹션 + 안전 마진).
@@ -55,9 +56,9 @@ function buildDreamFreeGroupCall(args, group) {
  * 프롬프트·모델·출력 100% 동일, 전송 방식만 다름 (콘텐츠 변경 위험 0).
  */
 function buildDreamFreeCall(args) {
-    const system = promptsV3_1.DREAM_FREE_SYSTEM_V3;
+    const system = promptsV3_2.DREAM_FREE_SYSTEM_V3;
     const user = args.saju
-        ? (0, promptsV3_1.DREAM_FREE_USER_WITH_SAJU_V3)({
+        ? (0, promptsV3_2.DREAM_FREE_USER_WITH_SAJU_V3)({
             name: args.saju.name,
             yearGanzi: args.saju.yearGanzi,
             monthGanzi: args.saju.monthGanzi,
@@ -72,7 +73,7 @@ function buildDreamFreeCall(args) {
             userConcern: args.userConcern,
             category: args.category,
         })
-        : (0, promptsV3_1.DREAM_FREE_USER_NO_SAJU_V3)({
+        : (0, promptsV3_2.DREAM_FREE_USER_NO_SAJU_V3)({
             dreamContent: args.dreamContent,
             userConcern: args.userConcern,
             category: args.category,
@@ -94,11 +95,11 @@ async function generateDreamFree(apiKey, args) {
             max_tokens: 14000,
             temperature: 0.7,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: user }],
+            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
         (0, aiUsageLog_1.logAnthropicUsage)('dream', MODEL, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
         const text = msg.content[0].text;
-        const result = (0, promptsV3_1.parseJsonResponse)(text, meta1);
+        const result = (0, promptsV3_2.parseJsonResponse)(text, meta1);
         if (meta1.repairUsed)
             console.info('[claudeDreamFree] jsonrepair 1차 발동 — 복구 성공');
         return result;
@@ -112,11 +113,11 @@ async function generateDreamFree(apiKey, args) {
             max_tokens: 14000,
             temperature: 0.5,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: user }],
+            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
         (0, aiUsageLog_1.logAnthropicUsage)('dream', MODEL, msg, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
         const text = msg.content[0].text;
-        const result = (0, promptsV3_1.parseJsonResponse)(text, meta2);
+        const result = (0, promptsV3_2.parseJsonResponse)(text, meta2);
         console.info('[claudeDreamFree] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
         return result;
     }
@@ -124,8 +125,8 @@ async function generateDreamFree(apiKey, args) {
 /** 심층 꿈해몽 (유료 1운) — 1차 생성 후 2차 자기 리뷰 */
 async function generateDreamDeep(apiKey, args) {
     const anthropic = new sdk_1.default({ apiKey });
-    const system = promptsV3_1.DREAM_DEEP_SYSTEM_V3;
-    const user = (0, promptsV3_1.DREAM_DEEP_USER_V3)({
+    const system = promptsV3_2.DREAM_DEEP_SYSTEM_V3;
+    const user = (0, promptsV3_2.DREAM_DEEP_USER_V3)({
         name: args.saju.name,
         sajuData: args.saju.fullSajuData ?? args.saju,
         dreamContent: args.dreamContent,
@@ -143,11 +144,11 @@ async function generateDreamDeep(apiKey, args) {
             max_tokens: 16384,
             temperature: 0.7,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: user }],
+            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
         (0, aiUsageLog_1.logAnthropicUsage)('deepDream', MODEL, first, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
         firstText = first.content[0].text;
-        firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta1);
+        firstJson = (0, promptsV3_2.parseJsonResponse)(firstText, meta1);
         if (meta1.repairUsed)
             console.info('[claudeDreamDeep] 1차 jsonrepair 발동');
     }
@@ -160,11 +161,11 @@ async function generateDreamDeep(apiKey, args) {
             max_tokens: 16384,
             temperature: 0.5,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: user }],
+            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
         (0, aiUsageLog_1.logAnthropicUsage)('deepDream', MODEL, retry, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
         firstText = retry.content[0].text;
-        firstJson = (0, promptsV3_1.parseJsonResponse)(firstText, meta2);
+        firstJson = (0, promptsV3_2.parseJsonResponse)(firstText, meta2);
         console.info('[claudeDreamDeep] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
     }
     // 2차 자기 리뷰
@@ -178,7 +179,7 @@ async function generateDreamDeep(apiKey, args) {
             { role: 'assistant', content: firstText },
             {
                 role: 'user',
-                content: (0, promptsV3_1.SELF_REVIEW_V3)({
+                content: (0, promptsV3_2.SELF_REVIEW_V3)({
                     original: firstJson,
                     kind: 'dream-deep',
                     freeResult: args.freeResultSummary,
@@ -189,7 +190,7 @@ async function generateDreamDeep(apiKey, args) {
     (0, aiUsageLog_1.logAnthropicUsage)('deepDream', MODEL, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
     const reviewText = review.content[0].text;
     try {
-        return (0, promptsV3_1.parseJsonResponse)(reviewText);
+        return (0, promptsV3_2.parseJsonResponse)(reviewText);
     }
     catch {
         // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)

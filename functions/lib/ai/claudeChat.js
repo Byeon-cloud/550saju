@@ -21,6 +21,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GUARD_TOKEN = void 0;
 exports.generateChatAnswerAI = generateChatAnswerAI;
+const promptsV3_1 = require("./promptsV3");
 const sajuFacts_1 = require("./sajuFacts");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const parseJson_1 = require("./parseJson");
@@ -109,10 +110,10 @@ guarded 판정:
 
 [소름 포인트 공식 — 매 답변 1개 이상 필수]
 오행 분포로 이 사람의 실생활 패턴을 묘사하세요:
-- 수(水) 없음: "결정할 때 직감보다 분석에 의존하시는 편이지요"
+- 수(水) 없음: "결정할 때 직감보다 분석부터 하시지요"
 - 식상 강함: "표현하거나 만들어내는 것에 재능이 있으시지요"
 - 대운 전환기: "지금 대운 전환의 자리라 이런 고민이 자연스럽습니다"
-- 오행 과다·부족과 질문 연결: "목(木) 기운이 강해 조직에서 답답함을 느끼실 수 있습니다"
+- 오행 과다·부족과 질문 연결: "목(木) 기운이 강해 조직 안에서 자주 답답하셨을 겁니다"
 - 십성과 성격 연결: "편재(偏財)가 있어 사업 감각이 있되, 정재(正財)가 약해 관리에 주의가 필요합니다"
 
 [🚨 보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지)]
@@ -242,7 +243,7 @@ ${question}
                 cache_control: { type: 'ephemeral' },
             },
         ],
-        messages: [{ role: 'user', content: userPrompt }],
+        messages: [{ role: 'user', content: userPrompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('chat', model, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = msg.content[0].text || '';

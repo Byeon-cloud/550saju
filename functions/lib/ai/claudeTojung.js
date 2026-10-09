@@ -7,6 +7,7 @@ exports.tojungTargetYear = tojungTargetYear;
 exports.generateTojungBigyeol = generateTojungBigyeol;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const promptsV3_2 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
 const lunar_javascript_1 = require("lunar-javascript");
 const sajuFacts_1 = require("./sajuFacts");
@@ -52,14 +53,14 @@ async function callNyGroup(anthropic, shared, group, ty) {
             max_tokens: MAX[group],
             temperature: attempt === 0 ? 0.2 : 0.1,
             system: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: user }],
+            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
         try {
             (0, aiUsageLog_1.logAnthropicUsage)('tojung', NEWYEAR_MODEL, msg, t0);
         }
         catch { /* best-effort */ }
         try {
-            const parsed = (0, promptsV3_1.parseJsonResponse)(msg.content[0].text || '');
+            const parsed = (0, promptsV3_2.parseJsonResponse)(msg.content[0].text || '');
             if (group === 'A' && parsed?.yearOverview && parsed?.headline)
                 return parsed;
             if (group !== 'A' && Array.isArray(parsed?.months) && parsed.months.length >= 5)
@@ -217,7 +218,7 @@ function buildPrompt(d, picks) {
             return '';
         }
     })();
-    return `당신은 사주500 신년운세 해석가. ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
+    return `당신은 사주500 신년운세 해석가. ${promptsV3_2.MYEONGRI_GROUNDS_BLOCK}
 
 ${ty}년 ${yko}(${ygz})년 신년운세 — 사주 원국 + ${ty}년 세운·열두 달 월운에서 추출한 진짜 근거.
 

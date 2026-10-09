@@ -7,7 +7,7 @@
  * 기준 PRD: `docs/prd/AI프롬프트_v3_Sonnet4.6.md`.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SELF_REVIEW_V3 = exports.TOPIC_ANALYSIS_USER_V3 = exports.TOPIC_ANALYSIS_SYSTEM_V3 = exports.DAILY_FORTUNE_USER_V3_GROUP_B = exports.DAILY_FORTUNE_USER_V3_GROUP_A = exports.DAILY_FORTUNE_USER_V3_GROUP_A2 = exports.DAILY_FORTUNE_USER_V3_GROUP_A1 = exports.DAILY_FORTUNE_USER_V3 = exports.DAILY_FORTUNE_SYSTEM_V3 = exports.DREAM_DEEP_USER_V3 = exports.DREAM_DEEP_SYSTEM_V3 = exports.DREAM_FREE_USER_NO_SAJU_V3 = exports.DREAM_FREE_USER_WITH_SAJU_V3 = exports.DREAM_FREE_USER_GROUP_B_V3 = exports.DREAM_FREE_USER_GROUP_A_V3 = exports.DREAM_FREE_SYSTEM_V3 = exports.MYEONGRI_GROUNDS_BLOCK = exports.GOOSEBUMP_BLOCK = void 0;
+exports.TONE_FINAL_CHECK = exports.SELF_REVIEW_V3 = exports.TOPIC_ANALYSIS_USER_V3 = exports.TOPIC_ANALYSIS_SYSTEM_V3 = exports.DAILY_FORTUNE_USER_V3_GROUP_B = exports.DAILY_FORTUNE_USER_V3_GROUP_A = exports.DAILY_FORTUNE_USER_V3_GROUP_A2 = exports.DAILY_FORTUNE_USER_V3_GROUP_A1 = exports.DAILY_FORTUNE_USER_V3 = exports.DAILY_FORTUNE_SYSTEM_V3 = exports.DREAM_DEEP_USER_V3 = exports.DREAM_DEEP_SYSTEM_V3 = exports.DREAM_FREE_USER_NO_SAJU_V3 = exports.DREAM_FREE_USER_WITH_SAJU_V3 = exports.DREAM_FREE_USER_GROUP_B_V3 = exports.DREAM_FREE_USER_GROUP_A_V3 = exports.DREAM_FREE_SYSTEM_V3 = exports.MYEONGRI_GROUNDS_BLOCK = exports.GOOSEBUMP_BLOCK = void 0;
 exports.parseJsonResponse = parseJsonResponse;
 /** 🚨 행운·개운 색/방위/음식/숫자 SSOT (2026-06-26 · 콘텐츠 간 모순 박멸 · 회귀 금지)
  *  버그: 같은 사람인데 종합사주는 용신=화(붉은·남), 오늘운세는 대운기준 수(검은·북),
@@ -401,7 +401,7 @@ exports.GOOSEBUMP_BLOCK = `
 유저 실제 피드백: "사주로 해석해준 건 맞는데 줄글 느낌이고 소름 포인트가 없다. 두루뭉실하게 말하지 말고 확실하게 딱! 방향을 제시해주는 게 좋다."
 
 1. **소름 포인트 의무** — 주요 섹션마다 1개 이상: 사주 글자에서 도출한 실생활 디테일을 콕 집어라.
-   ✅ "수(水)가 하나도 없는 사주라, 결정 전에 정보를 잔뜩 모아놓고도 마지막엔 직감을 못 믿어 미루는 편이지요"
+   ✅ "수(水)가 하나도 없는 사주라, 결정 전에 정보를 잔뜩 모아놓고도 마지막엔 직감을 못 믿어 결국 미루시죠"
    ✅ "축미충이 있어 가까운 사람과 한 번 틀어지면 본인이 먼저 연락 못 하는 타입입니다"
    ❌ "신중한 성격이에요" / "인간관계에서 갈등이 있을 수 있어요" (누구에게나 맞는 말 — 금지)
    소름의 공식: [사주 근거 글자] → [그 사람만의 구체 행동·습관·장면]. 장면이 그려져야 소름이다.
@@ -428,7 +428,7 @@ exports.GOOSEBUMP_BLOCK = `
    · ❌ "예상 밖의 연락이 올 수 있어요" → ✅ "오늘 저녁, 한동안 뜸했던 사람에게서 연락이 옵니다. 반갑게 받으세요."
    · ❌ "감정이 예민해지는 편이에요" → ✅ "당신은 서운한 걸 바로 말하지 않고 사흘쯤 품고 있다가 터뜨리는 사람입니다."
    · 단호하되 겁주기·저주·불행 단정('큰일 난다·망한다·죽는다·헤어진다')은 금지 — 말투는 내 편인 어른.
-   · 무색무취 문장 금지: "오늘은 돈이 크게 들어오거나 나가는 날은 아니에요"처럼 누구에게나 맞는 문장 대신, 이 사람의 원국 글자·용신·대운·오늘 관계에서만 나올 수 있는 문장을 쓴다 (같은 일주끼리 공통되는 성향 서술은 OK).
+   · 무색무취 문장 금지: '별일 없는 평범한 날' 류의 누구에게나 맞는 문장(이 금지 설명의 표현도 그대로 쓰지 말 것) 대신, 이 사람의 원국 글자·용신·대운·오늘 관계에서만 나올 수 있는 문장을 쓴다 (같은 일주끼리 공통되는 성향 서술은 OK).
    ❌ "흐름이 좋아집니다" / "긍정적인 시기입니다" / "변화가 있겠습니다" / "9~11월 사이에 기회가 옵니다"(범위만 넓고 근거 0)
    ✅ "일지 亥와 삼합하는 3월(卯월)에 면접운이 가장 강합니다 — 관성이 천간에 투(透)하는 달이라 결정권자 눈에 띕니다."
    공식: **[사주 글자·구조 근거] + [무엇이] + [언제/어떻게]** — 셋 중 하나라도 빠지면 무내용 단정이다.
@@ -1155,7 +1155,7 @@ ${JSON.stringify(data.sajuData, null, 2)}
   "symbols": [
     { "keyword": "...", "oheng": "...", "pictogram": "...", "meaning": "350자 이상 · 대운·세운·용신 연계" }
   ] × 5~7,
-  "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 중 최소 1곳 자연스러운 인용 필수. 형식 예시: '적천수에서 재성이 왕하면 관성으로 제압한다고 하였는데, 당신의 경우 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달.",
+  "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 고전 이론의 원리를 근거로 쓰되 책 이름·'~에서 이르길' 같은 출처 언급은 금지 (책 이름은 자동 삭제돼 문장이 깨짐). 형식 예시: '재성이 이렇게 강하면 관성이 다잡아줘야 하는데, 당신 사주는 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달.",
   "ohengMessage": "오행의 메시지 · 400자 이상",
   "interpretation": "심층 해석 통합 · 1200자 이상 · 3~4단락",
   "timeline": "앞으로 전망 · 600자 이상 · 오늘·3일·1주·1개월 4구간",
@@ -1185,17 +1185,17 @@ ${exports.GOOSEBUMP_BLOCK}
    쓰지 마라.** 독자는 이 단어들을 모른다. 보면 바로 나간다.
    ❌ "당신의 일간인 무토가 정관과 정면으로 만나는 날" / "관성이 5개나 있는 당신" / "해사충이 활성화"
    ✅ "오늘은 미뤄둔 책임·약속이 마음에 떠오르는 날이에요" / "원래 맡은 일은 끝까지 해내는 분이라" /
-      "묻어뒀던 감정이 불쑥 올라올 수 있어요"
+      "묻어뒀던 감정이 불쑥 올라오는 날이에요"
    → 한자·명리어가 꼭 필요하면 문장 끝에 괄호로 가볍게 한 번만 (예: "…책임이 무거워지는 하루예요 (戊午日)").
       한 섹션에 괄호 한자 2개 이하.
 
 2. **결론부터, 장면으로.** 명리 분석 과정을 설명하지 말고 "그래서 오늘 너에게 뭐가 일어나는지"를
    먼저 그려라. 점집 어르신이 손 잡고 말해주듯 — 따뜻하고 단정적으로.
    ❌ "당신의 사주에 금이 부족한데 오늘 무오일은 금을 약하게 만들어 판단력이…"
-   ✅ "오후 들어선 마음이 급해지기 쉬워요. 큰 결정은 점심 전에 끝내두세요."
+   ✅ "오후 들어서면 마음이 급해집니다. 큰 결정은 점심 전에 끝내두세요."
 
 3. **소름 포인트는 유지하되 용어 0.** 사주 근거는 너만 알고, 독자에겐 '내 얘기네' 싶은 실생활 장면만.
-   ✅ "결정하기 전에 정보는 잔뜩 모으면서도, 막판엔 확신이 안 서서 미루는 편이지요?"
+   ✅ "결정하기 전에 정보는 잔뜩 모으면서도, 막판엔 확신이 안 서서 결국 미루시죠?"
 
 4. **번역체·드라마체 금지.** "당신은 ~한 시간을 맞이합니다", "~의 시험대에 오르는 시간입니다" 식 금지.
    "~예요/~해요" 다정한 구어체. 단, 가벼운 반말체 아님(존댓말 점집 어르신).
@@ -1415,7 +1415,7 @@ ${(0, sajuFacts_1.dailyMeetPromptBlock)(data.sajuData)}
       "glyphs": ${(0, sajuFacts_1.dailyMeetGlyphJson)(data.sajuData, 'clash')},
       "title": "부딪힐 수 있는 사람",
       "tag": "⚠ 주의",
-      "desc": "120자+ · 첫 문장 = 분위기/행동/옷차림. 예: '<u>강하고 결단력 있는 톤</u>의 사람, <u>흰색·은색 계열</u> 옷을 즐겨 입는 사람과는 오늘 마찰이 생기기 쉬워요. 의견을 직접적으로 표현하는 타입. <strong>회의·협상은 한 박자 늦추는 게 효율적</strong>입니다. (근거 한 줄은 B-2 확정 오행 기준)'",
+      "desc": "120자+ · 첫 문장 = 분위기/행동/옷차림. 예: '<u>강하고 결단력 있는 톤</u>의 사람, <u>흰색·은색 계열</u> 옷을 즐겨 입는 사람과는 오늘 마찰이 생깁니다. 의견을 직접적으로 표현하는 타입. <strong>회의·협상은 한 박자 늦추는 게 효율적</strong>입니다. (근거 한 줄은 B-2 확정 오행 기준)'",
       "ohengHint": "..."
     },
     {
@@ -1943,7 +1943,7 @@ ${data.dailyId ? `- 오늘 운세 ID: ${data.dailyId}` : ''}
   "headline": "30자 이내",
   "score": 0~100,
   "summary": "400자 이상",
-  "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 중 최소 1곳 자연스러운 인용 필수. 형식 예시: '적천수에서 재성이 왕하면 관성으로 제압한다고 하였는데, 당신의 경우 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달.",
+  "sajuConnection": "800자 이상 · 원국·대운·세운 교차 · 한자 5~8개 허용 · 고전 이론의 원리를 근거로 쓰되 책 이름·'~에서 이르길' 같은 출처 언급은 금지 (책 이름은 자동 삭제돼 문장이 깨짐). 형식 예시: '재성이 이렇게 강하면 관성이 다잡아줘야 하는데, 당신 사주는 ...' 금지: 원문 한자 나열, 번역체. 권장: 한국어 풀이에 녹여서 전달.",
   "currentFlow": {
     "thisWeek": "이번 주 흐름 · 300자",
     "thisMonth": "이달 흐름 · 300자",
@@ -2184,4 +2184,15 @@ function parseJsonResponse(text, meta) {
         }
     }
 }
+/* 2026-10-09 — 출력 직전 어조 점검. user 메시지 맨 끝에 붙인다 (긴 시스템 규칙만으론 안 먹힘:
+ *   v11 오늘의 운세 6인 패널 실측 — 본문·시간대·할 일·점수 이유 전 그룹에 '~기 쉬운 날'·'~ㄹ 수 있어요'가 1인당 2~8회 남음). */
+exports.TONE_FINAL_CHECK = `
+
+## ✅ 출력 직전 마지막 점검 (어조)
+아래 어미가 한 번이라도 있으면 그 문장을 단정형으로 고친 뒤 출력한다 — 사주에 보이는 대로 짚어주는 사람의 말투.
+- 'OO하기 쉬워요 / OO하기 쉬운 △△ / OO하기 쉽습니다' → 'OO합니다 / OO하는 △△'
+- 'OO할 수 있어요 / OO할 수 있습니다 / OO할 수도 있어요' → 'OO합니다' (해석 문장일 때)
+- 'OO할 가능성이 높아요 / OO하는 편이에요 / OO인 것 같아요 / OO인 듯해요 / OO하는 경향이 있어요' → 'OO합니다'
+- 형태(어미)만 바꾼다 — OO·△△ 자리는 원래 문장의 내용 그대로. 이 점검 때문에 새 문장을 지어내거나 다른 사람에게도 맞을 상투 문장을 넣지 말 것.
+- 단, 겁주기·불행 단정('헤어진다·망한다·병난다')으로 바꾸지 말 것 — 단호하되 내 편인 어른의 말투. 근거 없는 확률·보장 숫자도 금지.`;
 //# sourceMappingURL=promptsV3.js.map

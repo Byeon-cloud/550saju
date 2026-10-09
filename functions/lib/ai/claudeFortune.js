@@ -7,15 +7,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDailyFortuneAnalysis = generateDailyFortuneAnalysis;
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const promptsV3_2 = require("./promptsV3");
 const sajuFacts_1 = require("./sajuFacts");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const MODEL = 'claude-sonnet-4-6';
 async function generateDailyFortuneAnalysis(apiKey, args) {
     const anthropic = new sdk_1.default({ apiKey });
-    const system = promptsV3_1.DAILY_FORTUNE_SYSTEM_V3;
-    const user = (0, promptsV3_1.DAILY_FORTUNE_USER_V3)(args);
+    const system = promptsV3_2.DAILY_FORTUNE_SYSTEM_V3;
+    const user = (0, promptsV3_2.DAILY_FORTUNE_USER_V3)(args);
     // 1차 호출
     const meta1 = { repairUsed: false };
     try {
@@ -27,11 +28,11 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
             max_tokens: 8000,
             temperature: 0.7,
             system,
-            messages: [{ role: 'user', content: user }],
+            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
         (0, aiUsageLog_1.logAnthropicUsage)('daily', MODEL, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
         const text = msg.content[0].text;
-        const result = (0, promptsV3_1.parseJsonResponse)(text, meta1);
+        const result = (0, promptsV3_2.parseJsonResponse)(text, meta1);
         if (meta1.repairUsed)
             console.info('[claudeFortune] jsonrepair 1차 발동 — 복구 성공');
         return (0, sajuFacts_1.sanitizeAiOutput)((0, sajuFacts_1.applyDailyMeetGlyphs)(result, args.sajuData)); // 2026-10-04 확정 글자 + 출력 정리
@@ -46,11 +47,11 @@ async function generateDailyFortuneAnalysis(apiKey, args) {
             max_tokens: 8000, // 2026-10-03 5000→8000 (위 1차 호출 주석 참조)
             temperature: 0.5,
             system,
-            messages: [{ role: 'user', content: user }],
+            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
         (0, aiUsageLog_1.logAnthropicUsage)('daily', MODEL, msg, _t2, 'callable'); // C7 best-effort (truncated·cache 포함)
         const text = msg.content[0].text;
-        const result = (0, promptsV3_1.parseJsonResponse)(text, meta2);
+        const result = (0, promptsV3_2.parseJsonResponse)(text, meta2);
         console.info('[claudeFortune] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
         return (0, sajuFacts_1.sanitizeAiOutput)((0, sajuFacts_1.applyDailyMeetGlyphs)(result, args.sajuData));
     }

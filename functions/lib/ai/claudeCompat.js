@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCompatibilityAnalysis = generateCompatibilityAnalysis;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const promptsV3_1 = require("./promptsV3");
+const promptsV3_2 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
 const lunar_javascript_1 = require("lunar-javascript");
 const sajuFacts_1 = require("./sajuFacts");
@@ -169,11 +170,11 @@ async function generateCompatibilityAnalysis(apiKey, sajuData1, sajuData2, relat
         model: 'claude-sonnet-4-6',
         max_tokens: 12000, // 2026-09-16 — 8192 는 잘림 위험 구간(대운이 동일 값에서 파손). 천장만 상향(내용 불변).
         temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     const text = msg.content[0].text;
     // 2026-10-04 궁합 공개 — 공용 파서(코드블록·잘린 JSON 복구) + 출처·오기 한자·시간 표기 정리
-    return (0, sajuFacts_1.sanitizeAiOutput)((0, promptsV3_1.parseJsonResponse)(text));
+    return (0, sajuFacts_1.sanitizeAiOutput)((0, promptsV3_2.parseJsonResponse)(text));
 }
 function personDetail(label, d) {
     const p = d.pillars || [];
@@ -210,7 +211,7 @@ function buildPrompt(d1, d2, rel) {
                         : /친구/.test(relKo) ? '친구 — 연애 표현 금지. 함께 있을 때의 편안함·서로 채워주는 점·멀어지기 쉬운 지점.'
                             : /동료|사업/.test(relKo) ? '일로 만난 사이 — 연애 표현 금지. 일하는 방식·역할 분담·의견 충돌 시 푸는 법.'
                                 : '연인 — 끌림·감정·생활·미래의 궁합.';
-    return `당신은 사주500 명리학 해석가. ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
+    return `당신은 사주500 명리학 해석가. ${promptsV3_2.MYEONGRI_GROUNDS_BLOCK}
 
 궁합 깊이 있는 분석 — 두 사주 글자에서 추출한 진짜 근거.
 
