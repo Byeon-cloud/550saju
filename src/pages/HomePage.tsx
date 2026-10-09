@@ -1,914 +1,548 @@
-// HomePage v4.2 (2026-04-22 PM) — v4.1 + 통일 개편 (준기 8 결정 반영)
-// 사양: docs/mockups/사주500_UI개편_목업_홈_v4.html + Cowork 세션 14 교정 + PM 8 결정
-// 순서: ProfileSwitcher → [01]오늘운세 → [02]꿈해몽 → [03]프리미엄 → [05]확장4
-//       → [07]후기16 → [04]주제10 → [08]3차별성 → [09]해시태그22 → [06inline]상담anchor → [10]Footer
-// #49 (2026-04-23): 후기16 위치 이동 — 확장4 직후, 주제10 앞
-// PM 변경 포인트 (2026-04-22 준기 결정):
-//  - 주제 5 → 10 (연애·재회·결혼·재물·합격이직·사업·건강·이사이동·학업·직업)
-//    + 인기 딱지 (연애·재회·합격이직), 추천 딱지 (사업·재물)
-//  - 사주대화 [06] 카드 제거 → 푸터 직전 1줄 인라인 anchor 로 대체
-//    카피: "심층적인 상담이 필요한 날엔? → 사주 상담하러 가기"
-//  - [08] 철학 단일 Pillar → 3 차별성 인포그래픽 (어려운 한자 No / 6대 원전 기반 / 모순 없는 풀이)
-//    멘트 던지지 말고 도식화. 이모지 절대 X (SVG + 한자 + 컬러칩만).
-// 기존 v4.1 교정 (유지):
-//  - "오늘의 운세" 이름 강조 과잉 제거 / "처음부터 끝까지 읽어드립니다" / "가족·지인 재조회"
-//  - "AI 같지 않은" 카피 제거 / "광고는 있지만" 후기 치환
+// HomePage v9 (2026-10-10) — 수묵·고서 시안 적용 (docs/mockups/사주500_v9_고서시안.html)
+//   순서: 오늘 예고(히어로) → 신년운세(제철) → 가까운 날→먼 날(주·월·인연 D-day) → 오늘 무료(꿈·대화)
+//         → 사주책(종합사주) → 고민(주제운) → 실제 후기(있을 때만) → 강점 → 푸터
+//   원칙
+//   - 화면의 사주 문장은 전부 hookFacts(만세력 계산 사실)에서 온다. AI 가 정하는 값(가장 좋은 날·점수)은 미리 말하지 않는다.
+//   - 잠긴 내용은 가짜 글자 블러가 아니라 가림막(<Redact/>) — 결제 후 다른 말이 나오는 미끼 금지.
+//   - 금색은 누르는 곳에만 · 색은 먹·종이 · 글자는 그림 위에 올리지 않는다 (가독성).
+//   - 후기는 실제 구매자 후기(노출 동의 + 오너 승인)만. 없으면 섹션째 숨김 (구 HOME_REVIEWS 시드는 노출 중단).
 
-import { kstToday } from '@/utils/kstDate';
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { kstToday } from '@/utils/kstDate';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
-import { HOME_REVIEWS } from '@/constants/reviews';
-import { listTopics } from '@/constants/topics'; // 10주제 SSOT (id/한자/컬러/딱지/path)
-import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice } from '@/constants/pricing'; // 가격 SSOT (세일 자동 반영)
-import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass'; // 일일 무료 패스 (사용 후 1운 차감)
-import { getTopicTop5, type TopicTop5Cache } from '@/services/liveBest'; // LIVE BEST 실시간 집계 캐시
-// 프리미엄 카드 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
+import { listTopics, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
+import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, PRODUCT_COST } from '@/constants/pricing';
+import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
+import { getReports } from '@/services/storage/localStore';
+import { getPublicReviews, type PublicReview } from '@/services/reviews';
+import {
+  todayHook, todayGz, weekFact, nextMonthFact, loveDday, yearFact, yearGz, loveStars, wealthStars,
+  examFact, spouseSeatFact, persona, monthDayLabel, josa,
+} from '@/services/saju/hookFacts';
+import { CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
+import type { SajuData } from '@/types/saju';
+import {
+  HJ, SERIF, ART, ART_CREDIT, GoldCta, GhostButton, Seal, Redact, Gwang, GoBook, hanjaNum,
+} from '@/components/hanji/Hanji';
 
-/* SSOT 디자인 토큰 — PC_인수인계 §5 기준 (2026-04-22) */
-const C = {
-  paper: '#F8F5EE',
-  ink: '#1A1A1A',
-  inkSoft: '#3D3D3D',
-  gray500: '#6B6B6B',
-  grayLine: '#E5DFD0',
-  gold: '#B8965A',
-  goldDark: '#8C6D3D',           // SSOT gold-deep — D1 fix (2026-04-23)
-  /** 2026-05-04 신규: h2 헤드라인 강조 색 (PremiumResult 본문 strong 과 통일 · 가독성 ↑) */
-  goldHi: '#A37A2E',
-  goldSoft: 'rgba(184,150,90,0.14)', // SSOT soft gold — D1 fix (2026-04-23)
-  goldShimmer: '#E8D9B8',
-} as const;
-
-const SERIF = "'Noto Serif KR', serif";
-
-/* 주제 10색 — @/constants/topics SSOT 참조 (TOPIC_REGISTRY[id].color).
-   (구 inline TOPIC_COLORS 는 2026-04-22 SSOT 일원화 이후 제거) */
-
-/* 확장 4색 */
-const EXT_COLORS = {
-  daeun:   '#3B7A4B', // 대운 運
-  monthly: '#B5441F', // 월운 月
-  compat:  '#9C5A8A', // 궁합 合
-  tojung:  '#2F4B7C', // 토정비결 歲
-} as const;
-
-// 2026-05-04 dead code 제거 — HASHTAGS 22개 + @ts-expect-error 함께 정리 (Top 5 로 완전 대체됨).
-
-function getTodayStr(): string {
-  // 2026-09-17 — KST 기준 (기기 시간대와 무관 · 무료 패스 자정 리셋 기준과 일치)
-  const [y, m, d] = kstToday().split('-').map(Number);
-  const weekday = ['일','월','화','수','목','금','토'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
-  return `${m}월 ${d}일 ${weekday}요일`;
-}
-
-/** 2026-10-07 신년운세 대상 연도 — 10월부터 내년 (TojungPage·서버와 같은 규칙) */
+/** 신년운세 대상 연도 — 10월부터 내년 (TojungPage·서버와 같은 규칙) */
 const NEW_YEAR_TARGET = (() => {
   const d = new Date(Date.now() + 9 * 3600e3);
   return d.getUTCMonth() + 1 >= 10 ? d.getUTCFullYear() + 1 : d.getUTCFullYear();
 })();
 
+function todayLabel(dateKey: string): string {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const wd = ['일', '월', '화', '수', '목', '금', '토'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${m}월 ${d}일 ${wd}요일`;
+}
+function readingOf(ch: string): string { return CHEONGAN_KO[ch] || JIJI_KO[ch] || ''; }
+
+/** 오늘 이 사람의 오늘의 운세를 이미 받았는지 (홈 훅과 같은 판정) */
+function receivedDailyToday(profile: any, today: string): boolean {
+  try {
+    const pid = profile?.id;
+    const bk = profile?.input ? `${profile.name}_${profile.input.birthYear}_${profile.input.birthMonth}_${profile.input.birthDay}` : '';
+    return getReports().some((r: any) => {
+      if (r?.contentType !== 'daily' || r?.aiResult?.__partial || r?.aiResult?.__fortuneDate !== today) return false;
+      if (pid && r.profileId === pid) return true;
+      return !!bk && `${r.name}_${r.input?.birthYear}_${r.input?.birthMonth}_${r.input?.birthDay}` === bk;
+    });
+  } catch { return false; }
+}
+
+/** 고민 문장 — 주제 SSOT(라벨·한자·경로)에 '사람이 실제로 하는 질문'만 얹는다 */
+const CONCERN_Q: Record<TopicId, string> = {
+  love: '그 사람, 내 사람일까',
+  reunion: '헤어진 그 사람, 다시 올까',
+  exam: '이번엔 붙을까, 옮겨도 될까',
+  wealth: '왜 돈이 안 모일까',
+  marriage: '이 사람과 결혼해도 될까',
+  career: '지금 일, 계속해도 될까',
+  business: '시작해도 될까, 넓혀도 될까',
+  health: '요즘 몸이 보내는 신호',
+  move: '옮기면 나아질까',
+  study: '공부가 잘 붙는 때는 언제일까',
+};
+
 export function HomePage() {
   usePageTitle('사주500 · 무료로 시작');
   useSeoMeta({
     description:
-      '600년 명리학 6대 원전 기반 AI 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세·꿈해몽 매일 1회 무료, 10가지 주제별 분석과 종합사주·궁합.',
+      '600년 명리학 6대 원전 기반 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세·꿈해몽 매일 1회 무료, 10가지 주제별 분석과 종합사주·궁합·신년운세.',
   });
   const navigate = useNavigate();
-  const { name, hasProfile, profile: activeProfile } = useActiveProfile();
-  const todayHint = useTodayHeadline(activeProfile, name);
+  const toast = useToast();
+  const { name, hasProfile, profile } = useActiveProfile();
+  const todayLine = useTodayHeadline(profile, name);
+  const displayName = name || '나';
+  const sajuData = (profile?.sajuData || null) as SajuData | null;
+  const hasSaju = !!(hasProfile && sajuData?.pillars?.[2]?.천간);
+  const profileId = (profile as any)?.id as string | undefined;
 
-  // DEEP DIVE 포괄 헤더용 최저 주제가 (SSOT 파생 · love/wealth/reunion=3운, 나머지 7주제=1운 → 현재 1)
-  const minTopicPrice = Math.min(...listTopics().map((t) => getTopicPrice(t.id).actualPrice));
-
-  /** DEEP DIVE 10주제 가로 스크롤 ref — 우측 버튼만 (60대+ 가로스크롤 affordance · 좌측은 손가락 스와이프)
-   *  2026-05-05: 좌측 버튼 제거 (카드 가림 문제) · 우측 끝 도달 시 우측 버튼 자동 숨김 */
-  const deepDiveScrollRef = useRef<HTMLDivElement>(null);
-  const [deepDiveScrollPos, setDeepDiveScrollPos] = useState(0);
-  const [deepDiveMaxScroll, setDeepDiveMaxScroll] = useState(0);
-  const scrollDeepDiveRight = () => {
-    deepDiveScrollRef.current?.scrollBy({ left: 158, behavior: 'smooth' });
-  };
-  // P0 CS fix (2026-06-11) — 부팅 자동환불 공지 (App 에서 플래그 저장 → 여기서 1회 안내)
-  const refundToast = useToast();
+  // 부팅 자동환불·보상·복구 안내 (App 이 플래그 저장 → 홈에서 1회)
   useEffect(() => {
     try {
       const n = localStorage.getItem('saju500:refund_notice');
-      if (n) {
-        localStorage.removeItem('saju500:refund_notice');
-        refundToast.show(`이전에 생성 중 앱이 닫혀 결과를 받지 못한 ${n}운을 돌려드렸어요`, 'success');
-      }
+      if (n) { localStorage.removeItem('saju500:refund_notice'); toast.show(`이전에 생성 중 앱이 닫혀 결과를 받지 못한 ${n}운을 돌려드렸어요`, 'success'); }
       const comp = localStorage.getItem('saju500:comp_notice');
-      if (comp) {
-        localStorage.removeItem('saju500:comp_notice');
-        refundToast.show(`고객센터 보상 ${comp}운이 적립됐어요. 불편을 드려 죄송합니다`, 'success');
-      }
-      // 2026-06-18 — 생성 중 앱 종료로 못 받았던 종합사주 결과를 서버서 복구해 보관함에 저장한 경우 안내.
+      if (comp) { localStorage.removeItem('saju500:comp_notice'); toast.show(`고객센터 보상 ${comp}운이 적립됐어요. 불편을 드려 죄송합니다`, 'success'); }
       const prem = localStorage.getItem('saju500:premium_recovered');
-      if (prem) {
-        localStorage.removeItem('saju500:premium_recovered');
-        refundToast.show('이전에 받지 못한 종합사주 결과를 보관함에 저장했어요', 'success');
-      }
+      if (prem) { localStorage.removeItem('saju500:premium_recovered'); toast.show('이전에 받지 못한 종합사주 결과를 보관함에 저장했어요', 'success'); }
     } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // 월운 등 타 페이지의 '주제별 운세 더 보기' 진입(/#home-topics) 시 주제 섹션으로 스크롤
+  // 다른 화면의 '주제별 운세 더 보기'(/#home-topics) 진입 시 고민 섹션으로
   useEffect(() => {
-    if (window.location.hash === '#home-topics') {
-      const t = setTimeout(() => {
-        document.getElementById('home-topics')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 180);
-      return () => clearTimeout(t);
-    }
+    if (window.location.hash !== '#home-topics') return;
+    const t = setTimeout(() => document.getElementById('home-topics')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 180);
+    return () => clearTimeout(t);
   }, []);
-  // 스크롤 위치 추적 — 우측 끝 도달 시 우측 버튼 숨김
-  useEffect(() => {
-    const el = deepDiveScrollRef.current;
-    if (!el) return;
-    const handleScroll = () => {
-      setDeepDiveScrollPos(el.scrollLeft);
-      setDeepDiveMaxScroll(el.scrollWidth - el.clientWidth);
-    };
-    handleScroll();
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, []);
-  const showRightBtn = deepDiveScrollPos < deepDiveMaxScroll - 8;
 
-  const displayName = name || '사용자';
-  // 2026-05-28 PM — 일일 무료 패스 상태 (사용 후 "1운" 으로 전환)
-  // 2026-09-17 — 마운트 스냅샷(useMemo [])이면 자정(KST) 넘김·다른 화면 사용·앱 복귀를 놓쳐
-  //   뱃지가 '오늘 1회 무료' 에 고정됨 → subscribeFreePass 로 재계산 (날짜 라벨도 함께)
-  const [todayStr, setTodayStr] = useState(() => getTodayStr());
-  const [dailyFreeAvailable, setDailyFreeAvailable] = useState(() => hasFreePass('daily'));
-  const [dreamFreeAvailable, setDreamFreeAvailable] = useState(() => hasFreePass('dream'));
+  // 날짜·무료 패스 — 자정(KST)·다른 화면 사용·앱 복귀 때 다시 계산
+  const [today, setToday] = useState(() => kstToday());
+  const [dailyFree, setDailyFree] = useState(() => hasFreePass('daily'));
+  const [dreamFree, setDreamFree] = useState(() => hasFreePass('dream'));
   useEffect(() => {
-    const refresh = () => {
-      setTodayStr(getTodayStr());
-      setDailyFreeAvailable(hasFreePass('daily'));
-      setDreamFreeAvailable(hasFreePass('dream'));
-    };
+    const refresh = () => { setToday(kstToday()); setDailyFree(hasFreePass('daily')); setDreamFree(hasFreePass('dream')); };
     refresh();
     return subscribeFreePass(refresh);
   }, []);
-  const reviewDoubled = useMemo(() => [...HOME_REVIEWS, ...HOME_REVIEWS], []);
 
-  // 2026-06-02 D3 — LIVE BEST 실시간 집계 캐시 (liveBestCache/top5). 데이터 충분하면 실랭킹, 아니면 폴백.
-  const [liveCache, setLiveCache] = useState<TopicTop5Cache | null>(null);
+  const [reviews, setReviews] = useState<PublicReview[]>([]);
   useEffect(() => {
     let alive = true;
-    getTopicTop5(1).then((c) => { if (alive) setLiveCache(c); }).catch(() => {});
+    getPublicReviews(10).then((r) => { if (alive) setReviews(r); }).catch(() => {});
     return () => { alive = false; };
   }, []);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
-  /**
-   * 지금 인기 Top 5
-   *  - 실데이터(liveBestCache) 있으면 → 실제 24h 조회수 랭킹 (정식 구현 · D3)
-   *  - 없거나 데이터 빈약하면 → 종합사주 1위 고정 + 날짜 시드 셔플 (폴백 · 거짓 들통 방지)
-   */
-  const liveBestTop5 = useMemo(() => {
-    type LiveBestItem = { rank: number; label: string; sub: string; path: string; heat: 'HOT' | 'NEW' | '' };
-    const premiumPriceInfo = getPremiumPrice();
-    const priceSubText = premiumPriceInfo.isOnSale && premiumPriceInfo.salePrice != null
-      ? `10섹션 깊이 풀이 · ${premiumPriceInfo.salePrice}운 (${premiumPriceInfo.saleBadge})`
-      : `10섹션 깊이 풀이 · ${premiumPriceInfo.regularPrice}운`;
+  /* ── 사실 계산 (사주 있을 때만 · 결정론) ── */
+  const facts = useMemo(() => {
+    if (!hasSaju || !sajuData) return null;
+    try {
+      return {
+        today: todayHook(sajuData, today),
+        week: weekFact(sajuData, today),
+        month: nextMonthFact(sajuData, today),
+        love: loveDday(sajuData, today),
+        year: yearFact(sajuData, NEW_YEAR_TARGET),
+        loveStars: loveStars(sajuData),
+        wealth: wealthStars(sajuData),
+        exam: examFact(sajuData),
+        spouse: spouseSeatFact(sajuData),
+        persona: persona(sajuData),
+      };
+    } catch { return null; }
+  }, [hasSaju, sajuData, today]);
+  const tg = useMemo(() => todayGz(today), [today]);
+  const ny = useMemo(() => yearGz(NEW_YEAR_TARGET), []);
+  const gotDaily = hasSaju && receivedDailyToday(profile, today);
+  const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
 
-    // id → 표시 정보 (서버 랭킹 id 와 1:1 매핑 · recordTopicView 화이트리스트와 동일 키)
-    const REGISTRY: Record<string, Omit<LiveBestItem, 'rank'>> = {
-      premium:  { label: '종합 사주',    sub: priceSubText,                path: '/premium',          heat: 'HOT' },
-      daily:    { label: '오늘의 운세',   sub: '매일 1회 무료',            path: '/daily',            heat: 'HOT' },
-      wealth:   { label: '재물운',        sub: '돈·실리·재물 흐름',        path: '/topic/wealth',     heat: 'HOT' },
-      love:     { label: '연애운',        sub: '만남·관계·인연 흐름',      path: '/topic/love',       heat: '' },
-      dream:    { label: '꿈 해몽',       sub: '오늘 꾼 꿈의 의미',        path: '/dream',            heat: '' },
-      marriage: { label: '결혼운',        sub: '인연 시기와 배우자 결',    path: '/topic/marriage',   heat: '' },
-      career:   { label: '직업운',        sub: '커리어·승진·평생 결',      path: '/topic/career',     heat: '' },
-      reunion:  { label: '재회운',        sub: '헤어진 사람과의 흐름',      path: '/topic/reunion',    heat: 'NEW' },
-      health:   { label: '건강운',        sub: '몸·마음 흐름과 주의 시기',  path: '/topic/health',     heat: '' },
-      study:    { label: '학업운',        sub: '집중·시험·합격 흐름',      path: '/topic/study',      heat: '' },
-      exam:     { label: '합격·이직운',   sub: '시험·이직 결정 시기',      path: '/topic/exam',       heat: 'HOT' },
-      business: { label: '사업운',        sub: '창업·자영업 흐름과 시기',  path: '/topic/business',   heat: '' },
-      move:     { label: '이사·이동운',   sub: '이사·이동 길흉 방향',      path: '/topic/move',       heat: '' },
-    };
+  const premium = getPremiumPrice().actualPrice;
+  const weekly = getWeeklyPrice().actualPrice;
+  const monthly = getMonthlyPrice().actualPrice;
+  const tojung = PRODUCT_COST.tojung;
+  const compat = PRODUCT_COST.compatibility;
 
-    // ── 실데이터 랭킹 (조회수 ≥3 주제 확보 시) ──
-    if (liveCache && Array.isArray(liveCache.ids)) {
-      const realIds = liveCache.ids.filter((id) => REGISTRY[id]).slice(0, 5);
-      if (realIds.length >= 3) {
-        return realIds.map((id, i) => ({ rank: i + 1, ...REGISTRY[id] }));
-      }
-    }
-
-    // ── 폴백: 종합사주 1위 고정 + 날짜 시드 셔플 ──
-    const FIXED_TOP1: LiveBestItem = { rank: 1, ...REGISTRY.premium };
-    const POOL: Omit<LiveBestItem, 'rank'>[] = [
-      REGISTRY.daily, REGISTRY.wealth, REGISTRY.love, REGISTRY.dream, REGISTRY.marriage,
-      REGISTRY.career, REGISTRY.reunion, REGISTRY.health, REGISTRY.study, REGISTRY.exam,
-      REGISTRY.business, REGISTRY.move,
-    ];
-    const today = kstToday(); // 2026-07-03 — UTC 는 KST 오전 9시에야 날짜가 바뀜 → KST 고정
-    let seed = 0;
-    for (let i = 0; i < today.length; i++) seed = (seed * 31 + today.charCodeAt(i)) % 2147483647;
-    const rng = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-    const shuffled = [...POOL];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    const rest: LiveBestItem[] = shuffled.slice(0, 4).map((p, i) => ({ ...p, rank: i + 2 }));
-    return [FIXED_TOP1, ...rest];
-  }, [liveCache]);
-
-  const go = (path: string) => () => navigate(path);
-  // 프리미엄 클릭 → /premium (ProfilePicker + 10운 차감 + /loading)
-  const goPremium = () => {
-    navigate('/premium');
-  };
+  /** 올해가 아닌 날짜엔 '내년 ' — '2월'만 쓰면 올해 2월로 읽힌다 */
+  const yr = (dateKey: string) => (Number(dateKey.slice(0, 4)) > Number(today.slice(0, 4)) ? '내년 ' : '');
+  const goTopic = (id: string) => navigate(`/topic/${id}`, profileId ? { state: { profileId } } : undefined);
+  const withPid = (path: string) => (profileId ? `${path}${path.includes('?') ? '&' : '?'}profileId=${encodeURIComponent(profileId)}` : path);
 
   return (
-    <div style={{ background: C.paper, minHeight: '100vh', paddingBottom: 32 }}>
+    <div style={{ background: HJ.paper, minHeight: '100vh', paddingBottom: 112, color: HJ.ink }}>
 
-      {/* ─── [00] 하반기 시작 이벤트 알림바 — 세일 중에만 노출 · 슬림(미관 유지) · 종료일 SSOT 동적 ─── */}
-      {(() => {
-        const ev = getPremiumPrice();
-        if (!ev.isOnSale) return null;
-        const endM = ev.saleEndDate ? Number(ev.saleEndDate.slice(5, 7)) : null;
-        const endD = ev.saleEndDate ? Number(ev.saleEndDate.slice(8, 10)) : null;
-        return (
-          <div className="mx-4 mt-4 rounded-[14px] px-3.5 py-2.5 flex items-center gap-2.5 relative overflow-hidden"
-            style={{ background: `linear-gradient(135deg, ${C.gold} 0%, ${C.goldDark} 100%)`, color: '#fff', boxShadow: '0 2px 10px rgba(184,150,90,0.22)' }}>
-            <span className="text-[9.5px] font-extrabold px-2 py-[3px] rounded-full tracking-[0.1em] whitespace-nowrap"
-              style={{ background: 'rgba(255,255,255,0.24)' }}>EVENT</span>
-            <div className="flex-1 min-w-0 text-[12px] leading-[1.35]">
-              <b className="font-extrabold">하반기 시작 이벤트</b> — 종합사주·주간·월간 <b className="font-extrabold">할인 중</b>
-            </div>
-            {endM && endD && (
-              <span className="text-[11px] font-bold whitespace-nowrap" style={{ opacity: 0.95 }}>~{endM}/{endD}</span>
-            )}
+      {/* ━━━ 1. 오늘 예고 ━━━ */}
+      <section style={{ position: 'relative' }}>
+        <div aria-hidden="true" style={{
+          height: 330, position: 'relative', backgroundColor: '#ECE4D3',
+          backgroundImage: `url(${ART.gaehwasa})`, backgroundRepeat: 'no-repeat', backgroundSize: '128% auto', backgroundPosition: '40% 0',
+        }}>
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(244,239,228,.0) 0%, rgba(244,239,228,0) 48%, rgba(244,239,228,.85) 82%, ${HJ.paper} 100%)` }} />
+        </div>
+        <div style={{ position: 'relative', marginTop: -64, padding: '0 22px' }}>
+          <div className="flex items-center gap-2" style={{ fontSize: 14, color: HJ.ink2, fontWeight: 600 }}>
+            <Seal size={36}>{tg.gz}</Seal>
+            <span>{todayLabel(today)} · {hasSaju ? `${displayName}님의 오늘` : `오늘은 ${tg.ko}일`}</span>
           </div>
-        );
-      })()}
 
-      {/* ─── [01] Pillar 1 · 오늘의 운세 ─── */}
-      {/* 2026-05-28 PM — 상단 ProfileSwitcher 제거 (준기 지시). 각 콘텐츠 랜딩에서 프로필 선택 가능하므로 중복 UI. */}
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.99 }}
-        onClick={go('/daily')}
-        className="relative mx-4 mt-4 w-[calc(100%-32px)] rounded-[20px] px-[22px] py-5 text-left overflow-hidden"
-        style={{
-          height: 210,
-          background: 'linear-gradient(135deg, #B5441F 0%, #7B2E15 100%)',
-          color: C.paper,
-        }}
-      >
-        <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-          style={{ background: 'rgba(248,245,238,0.18)', color: C.paper, backdropFilter: 'blur(8px)' }}>
-          <span className="w-1 h-1 rounded-full" style={{ background: C.goldShimmer, boxShadow: '0 0 0 2px rgba(232,217,184,0.25)' }} />
-          {dailyFreeAvailable ? '오늘 1회 무료' : '1운'}
-        </div>
-        <div className="text-[12px] font-medium" style={{ opacity: 0.85 }}>{todayStr}</div>
-        <div className="mt-3">
-          <h2 className="text-[26px] font-extrabold leading-[1.28] tracking-[-0.02em]" style={{ fontFamily: SERIF }}>
-            오늘의 운세
-          </h2>
-          <p className="mt-2 text-[13.5px] leading-[1.6] font-medium max-w-[320px]" style={{ opacity: 0.92 }}>
-            {hasProfile ? todayHint : '사주만 입력하면 매일 하루 한 장 무료로 받을 수 있어요.'}
-          </p>
-        </div>
-        <span className="absolute -bottom-7 -left-3 text-[140px] font-black leading-none pointer-events-none"
-          style={{ opacity: 0.1, fontFamily: SERIF }}>火</span>
-      </motion.button>
-
-      {/* ─── [02] Pillar 2 · 꿈해몽 ─── */}
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.99 }}
-        onClick={go('/dream')}
-        className="relative mx-4 mt-3 w-[calc(100%-32px)] rounded-[20px] px-[22px] py-5 text-left overflow-hidden"
-        style={{ height: 210, background: C.ink, color: C.paper }}
-      >
-        <div className="absolute inset-0 pointer-events-none" style={{
-          opacity: 0.18,
-          backgroundImage: `
-            radial-gradient(circle at 20% 30%, #fff 0.6px, transparent 1px),
-            radial-gradient(circle at 70% 50%, #fff 0.8px, transparent 1px),
-            radial-gradient(circle at 40% 70%, #fff 0.5px, transparent 1px),
-            radial-gradient(circle at 85% 20%, #fff 0.7px, transparent 1px),
-            radial-gradient(circle at 15% 85%, #fff 0.6px, transparent 1px)
-          `,
-        }} />
-        <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-          style={{ background: 'rgba(248,245,238,0.18)', color: C.paper, backdropFilter: 'blur(8px)' }}>
-          <span className="w-1 h-1 rounded-full" style={{ background: C.goldShimmer }} />
-          {dreamFreeAvailable ? '오늘 1회 무료' : '1운'}
-        </div>
-        <h2 className="mt-7 text-[26px] font-extrabold leading-[1.28] tracking-[-0.02em]" style={{ fontFamily: SERIF }}>
-          어젯밤 꿈,<br />내 사주로 풀어드려요
-        </h2>
-        <p className="mt-2 text-[13.5px] leading-[1.6] font-medium" style={{ opacity: 0.92 }}>
-          꿈 단어를 적으면 {hasProfile ? `${displayName}님` : '내'} 사주에 맞춰 해석해드려요
-        </p>
-        <span className="absolute -bottom-6 right-2 text-[120px] font-black leading-none pointer-events-none"
-          style={{ opacity: 0.08, color: C.goldShimmer, fontFamily: SERIF }}>夢</span>
-      </motion.button>
-
-      {/* ─── [03] 프리미엄 15운 (비즈니스 메인 — 2026-04-27 4 패키지 정정: 10본+5보너스) ─── */}
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.99 }}
-        onClick={goPremium}
-        className="relative mx-4 mt-6 w-[calc(100%-32px)] rounded-[18px] px-[22px] pt-[22px] pb-5 text-left overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2520 60%, #1a1a1a 100%)',
-          color: C.paper,
-          border: '1px solid rgba(184,150,90,0.4)',
-        }}
-      >
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: `radial-gradient(ellipse at 85% 30%, rgba(232,217,184,0.22) 0%, transparent 55%),
-                       radial-gradient(ellipse at 10% 90%, rgba(184,150,90,0.18) 0%, transparent 55%)`,
-        }} />
-        {(() => {
-          const premium = getPremiumPrice();
-          return (
-        <div className="flex items-center gap-1.5 relative z-10 flex-wrap">
-          <span className="text-[10.5px] font-extrabold px-2.5 py-1 rounded-full tracking-[0.05em]"
-            style={{ background: `linear-gradient(135deg, ${C.goldShimmer}, ${C.gold})`, color: C.ink }}>
-            PREMIUM
-          </span>
-          {/* 2026-05-28 PM — 종합사주 10→5운 런칭 세일 (~2026-06-15) */}
-          {premium.isOnSale && premium.salePrice != null ? (
-            <>
-              <span className="text-[11px] font-bold px-2 py-1 rounded-full"
-                style={{ color: 'rgba(248,245,238,0.55)', border: '1px solid rgba(232,217,184,0.25)', textDecoration: 'line-through' }}>
-                {premium.regularPrice}운
-              </span>
-              <span className="text-[12px] font-extrabold px-2.5 py-1 rounded-full"
-                style={{ color: C.ink, background: C.goldShimmer }}>
-                {premium.salePrice}운
-              </span>
-              <span className="text-[10px] font-extrabold px-2 py-1 rounded-full"
-                style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', letterSpacing: '0.04em' }}>
-                {/* 종료일은 pricing SSOT(saleEndDate)에서 동적 표기 — 하드코딩 드리프트 방지 */}
-                {premium.saleBadge}{premium.saleEndDate ? ` · ${Number(premium.saleEndDate.slice(5, 7))}월 ${Number(premium.saleEndDate.slice(8, 10))}일까지` : ''}
-              </span>
-            </>
+          {hasSaju ? (
+            gotDaily ? (
+              <>
+                <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 26, lineHeight: 1.42, letterSpacing: '-.03em', marginTop: 14 }}>
+                  {todayLine}
+                </h1>
+                <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/daily')}>오늘 운세 다시 보기</GoldCta>
+                <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>오늘 받은 풀이를 그대로 다시 열어요</p>
+              </>
+            ) : (
+              <>
+                {facts?.today ? (
+                  <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 29, lineHeight: 1.38, letterSpacing: '-.03em', marginTop: 14 }}>
+                    {facts.today.avoid},<br />
+                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>큰 결정은 미루세요.</span>
+                  </h1>
+                ) : (
+                  <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 24, lineHeight: 1.45, letterSpacing: '-.02em', marginTop: 14 }}>
+                    {todayLine}
+                  </h1>
+                )}
+                {facts?.today && (
+                  <div style={{ marginTop: 16, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '13px 15px', fontSize: 15, lineHeight: 1.65, color: HJ.ink2 }}>
+                    <b style={{ color: HJ.ink }}>가장 좋은 시간은 {facts.today.peak}</b>이에요.
+                    {' '}이 시간에 할 일, 만나면 좋은 사람은 오늘 운세에 있어요.
+                  </div>
+                )}
+                <GoldCta style={{ marginTop: 16 }} onClick={() => navigate('/daily')} sub={dailyFree ? '무료' : '1운'}>
+                  오늘 운세 전부 열기
+                </GoldCta>
+                <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>
+                  {dailyFree ? '오늘 1회 무료 · 결제 없이 바로 열려요' : '오늘 무료 1회는 썼어요 · 두 번째부터 1운'}
+                </p>
+              </>
+            )
           ) : (
-            <span className="text-[11px] font-bold px-2 py-1 rounded-full"
-              style={{ color: C.goldShimmer, border: '1px solid rgba(232,217,184,0.4)' }}>
-              {premium.regularPrice}운
-            </span>
+            <>
+              <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 28, lineHeight: 1.4, letterSpacing: '-.03em', marginTop: 14 }}>
+                태어난 날만 넣으면,<br />
+                <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 내 하루가 보여요.</span>
+              </h1>
+              <p style={{ marginTop: 12, fontSize: 15.5, lineHeight: 1.7, color: HJ.ink2 }}>
+                몇 시에 움직이고 몇 시에 쉬어야 하는지, 오늘 만나면 좋은 사람까지 내 사주로 짚어 드려요.
+              </p>
+              <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/input?from=daily')} sub="무료">
+                내 사주 넣고 오늘 운세 보기
+              </GoldCta>
+              <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>결제 없이 바로 · 한 번 넣으면 계속 써요</p>
+            </>
           )}
         </div>
-          );
-        })()}
-        <span className="absolute right-[-8px] top-[14px] text-[148px] font-black leading-none pointer-events-none"
-          style={{ color: C.gold, opacity: 0.12, fontFamily: SERIF }}>命</span>
-        <h2 className="mt-6 text-[24px] font-extrabold leading-[1.3] tracking-[-0.01em] relative" style={{ fontFamily: SERIF }}>
-          당신의 <em className="not-italic" style={{ color: C.goldShimmer }}>사주 전체</em>를<br />처음부터 끝까지 읽어드립니다
-        </h2>
-        <p className="mt-2.5 text-[13.5px] leading-[1.65] max-w-[300px] relative" style={{ opacity: 0.88 }}>
-          천간·지지·대운·십성·신살 — 한 권의 깊이로 {hasProfile ? `${displayName}님` : '당신'}의 삶을 정리해드립니다.
-        </p>
-        <div className="mt-3.5 flex gap-1.5 flex-wrap relative">
-          {['10개 섹션 완전 분석', '가족·지인 사주도 함께', 'PDF로 보관'].map((f) => (
-            <span key={f} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-              style={{ border: '1px solid rgba(232,217,184,0.28)', color: C.goldShimmer, background: 'rgba(232,217,184,0.06)' }}>
-              {f}
-            </span>
-          ))}
-        </div>
-        <div className="mt-4 pt-3.5 flex items-center justify-between relative"
-          style={{ borderTop: '1px solid rgba(232,217,184,0.18)' }}>
-          <span className="text-[12px]" style={{ color: 'rgba(248,245,238,0.7)' }}>
-            한 번 결제하면 보관함에서 언제든 다시 보기
-          </span>
-          <span className="inline-flex items-center gap-1 text-[13px] font-bold px-4 py-2 rounded-full"
-            style={{ background: C.goldShimmer, color: C.ink }}>
-            {(() => {
-              const p = getPremiumPrice();
-              return `${p.actualPrice}운으로 시작 →`;
-            })()}
-          </span>
-        </div>
-      </motion.button>
+      </section>
 
-      {/* ─── [05a] NEW · 시간 운세 2종 (주간 5운 / 월 7운) — 2026-06-29 출시 ─── */}
-      <div className="mx-4 mt-6 flex items-baseline justify-between">
-        <h3 className="text-[17px] font-bold tracking-[-0.01em] flex items-center gap-1.5" style={{ color: C.ink, fontFamily: SERIF }}>
-          시간의 운세
-          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded leading-none" style={{ color: '#fff', background: '#C77D3A' }}>NEW</span>
-        </h3>
-        {getWeeklyPrice().isOnSale ? (
-          <span className="text-[11.5px] font-bold" style={{ color: C.goldDark }}>하반기 이벤트 할인</span>
-        ) : (
-          <span className="text-[11.5px]" style={{ color: C.gray500 }}>이번 주 · 이번 달</span>
+      {/* ━━━ 2. 신년운세 (10월~ 내년) ━━━ */}
+      <section style={{ margin: '30px 16px 0', borderRadius: 18, overflow: 'hidden', background: HJ.ink, color: '#EFE6D6' }}>
+        <div aria-hidden="true" style={{ height: 140, position: 'relative', backgroundImage: `url(${ART.inwang})`, backgroundSize: '190% auto', backgroundPosition: '30% 40%', backgroundRepeat: 'no-repeat' }}>
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(26,22,18,.05) 0%, rgba(26,22,18,.4) 55%, ${HJ.ink} 100%)` }} />
+        </div>
+        <div style={{ padding: '0 20px 20px', marginTop: -34, position: 'relative' }}>
+          <div className="flex items-end gap-2.5">
+            <b style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 42, lineHeight: 0.9, color: '#FBF4E6' }}>{ny.gz}</b>
+            <span style={{ fontSize: 14, color: '#C9BDAA', paddingBottom: 3 }}>{NEW_YEAR_TARGET}년 · {ny.ko}년</span>
+          </div>
+          {facts?.year?.star ? (
+            <>
+              <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, lineHeight: 1.42, marginTop: 12 }}>
+                {NEW_YEAR_TARGET}년, {displayName}님에게<br />{facts.year.star}이 들어옵니다
+              </h2>
+              <p style={{ fontSize: 15, color: '#D3C7B4', lineHeight: 1.7, marginTop: 8 }}>
+                {ny.ko}년의 {facts.year.ch}({readingOf(facts.year.ch)}){josa(readingOf(facts.year.ch), '은', '는')} {displayName}님({dayGan})에게 {facts.year.star}이에요.
+                {' '}열두 달 흐름과 달마다 좋은 날까지 짚어 드려요.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, lineHeight: 1.42, marginTop: 12 }}>
+                {NEW_YEAR_TARGET}년, 나에게는<br />어떤 해일까요
+              </h2>
+              <p style={{ fontSize: 15, color: '#D3C7B4', lineHeight: 1.7, marginTop: 8 }}>
+                {ny.ko}년이 내 사주에 무엇을 들이는지, 열두 달 흐름과 달마다 좋은 날까지 짚어 드려요.
+              </p>
+            </>
+          )}
+          <GhostButton onInk style={{ marginTop: 16 }} onClick={() => navigate('/tojung')} sub={`· ${tojung}운`}>
+            {NEW_YEAR_TARGET} 신년운세 보기
+          </GhostButton>
+        </div>
+      </section>
+
+      {/* ━━━ 3. 가까운 날 → 먼 날 ━━━ */}
+      <SecTitle k="가까운 날부터 먼 날까지" h={hasSaju ? `${displayName}님 운, 기간별로` : '내 운, 기간별로'} />
+      <div style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 18 }}>
+        <LadderRow hz="週" k={facts?.week ? `이번 주 · ${facts.week.weekday}요일(${Number(facts.week.date.slice(8))}일) ${facts.week.gz}일` : '이번 주 · 7일'}
+          t={facts?.week ? facts.week.text : '오늘부터 7일, 하루씩 짚어 드려요'}
+          price={`${weekly}운`} onClick={() => navigate('/weekly', profileId ? { state: { profileId } } : undefined)} />
+        <LadderRow hz="月"
+          k={facts?.month ? `${yr(facts.month.month.start)}${facts.month.month.calMonth}월 · ${facts.month.gzKo}월(${facts.month.month.gz})` : '원하는 달 하나'}
+          t={facts?.month ? `${facts.month.title}${facts.month.once ? ' — 1년에 한 번' : ''}` : '그 달의 돈·일·사람 흐름을 깊게'}
+          price={`${monthly}운`}
+          onClick={() => navigate(withPid(facts?.month ? `/monthly?month=${facts.month.month.start.slice(0, 7)}` : '/monthly'))} />
+        {facts?.love && (
+          <LadderRow hz={TOPIC_REGISTRY.love.kanji}
+            k={`${yr(facts.love.month.start)}${monthDayLabel(facts.love.month.start)}부터 · D-${facts.love.days}`}
+            t={facts.love.hap ? '연인의 별이 짝(合)으로 들어오는 달' : '연인의 별이 들어오는 달'}
+            price={`연애운 ${getTopicPrice('love').actualPrice}운`} onClick={() => goTopic('love')} last />
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
-        {[
-          { id: 'weekly',  kanji: '週', h: '주간운세', sub: '오늘부터 7일, 하루하루', strip: '#C77D3A',          path: '/weekly',  pricing: getWeeklyPrice() },
-          { id: 'monthly', kanji: '月', h: '월운세',   sub: '원하는 달, 깊게',     strip: EXT_COLORS.monthly, path: '/monthly', pricing: getMonthlyPrice() },
-        ].map((c) => (
-          <motion.button
-            key={c.id}
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            onClick={go(c.path)}
-            className="relative h-[120px] px-4 py-3.5 rounded-[14px] text-left overflow-hidden"
-            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
-          >
-            <span className="absolute left-0 top-0 bottom-0 w-1 rounded-l" style={{ background: c.strip }} />
-            <span className="absolute right-[-6px] top-[-10px] text-[78px] font-black leading-none"
-              style={{ opacity: 0.14, color: c.strip, fontFamily: SERIF }}>{c.kanji}</span>
-            <h4 className="relative text-[15.5px] font-bold flex items-center gap-1" style={{ color: C.ink }}>
-              {c.h}
-              <span className="text-[9px] font-extrabold px-1 py-[1px] rounded leading-none" style={{ color: '#fff', background: c.strip }}>NEW</span>
-            </h4>
-            <p className="relative text-[11.5px] leading-[1.45] mt-1" style={{ color: C.inkSoft }}>{c.sub}</p>
-            {/* 가격 — 세일 시 정가 취소선 + 이벤트 할인가 (종합사주 카드와 동일 패턴) */}
-            {c.pricing.isOnSale && c.pricing.salePrice != null ? (
-              <span className="absolute bottom-3 right-3 flex items-center gap-1">
-                <span className="text-[10px] font-semibold" style={{ color: C.gray500, textDecoration: 'line-through' }}>{c.pricing.regularPrice}운</span>
-                <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-full" style={{ color: C.goldDark, background: C.goldSoft }}>{c.pricing.actualPrice}운</span>
-              </span>
-            ) : (
-              <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
-                style={{ color: C.goldDark, background: C.goldSoft }}>
-                {c.pricing.actualPrice}운
-              </span>
+
+      {/* ━━━ 4. 오늘 무료 ━━━ */}
+      <div className="grid grid-cols-2 gap-2.5" style={{ margin: '12px 16px 0' }}>
+        <MiniCard f={dreamFree ? '오늘 무료' : '1운'} h={<>어젯밤 꿈,<br />무슨 뜻일까</>} s="꿈 단어만 적으면 내 사주로 풀어요" go="꿈 풀기" onClick={() => navigate('/dream')} />
+        <MiniCard f="오늘 1번 무료" h={<>내 사주에게<br />직접 물어보기</>} s={'"그 사람 연락 올까요?" 같은 질문도'} go="물어보기" onClick={() => navigate('/chat')} />
+      </div>
+
+      {/* ━━━ 5. 사주책 (종합사주) ━━━ */}
+      <SecTitle k="평생 한 번 읽는 풀이 · 종합사주" h={hasSaju ? `${displayName}님 인생이 한 권에` : '내 인생이 한 권에'} />
+      <div style={{ margin: '0 16px', borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD' }}>
+        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.jangansa})`, backgroundSize: 'cover', backgroundPosition: '40% 55%', opacity: 0.42 }} />
+        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%)' }} />
+        <div style={{ position: 'absolute', left: '50%', top: 30, transform: 'translateX(-50%)' }}>
+          <GoBook title={facts?.persona ? `${facts.persona.dayGz}命書` : '四柱命書'} />
+        </div>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 14, textAlign: 'center', fontSize: 13, color: HJ.ink2, fontWeight: 600 }}>
+          {facts?.persona ? `${displayName} · ${facts.persona.birthYearGz}生 — 8글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
+        </div>
+      </div>
+      <section style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderTop: 0, borderRadius: '0 0 20px 20px', padding: 18 }}>
+        {facts?.persona?.identity ? (
+          <>
+            <p style={{ fontFamily: SERIF, fontSize: 19.5, fontWeight: 700, lineHeight: 1.5, letterSpacing: '-.02em' }}>
+              {displayName}님은 <span style={{ color: HJ.goldText }}>{facts.persona.identity}</span>{josa(facts.persona.identity, '으로', '로')} 태어났어요.
+            </p>
+            <p style={{ fontSize: 14, color: HJ.mute, marginTop: 6, lineHeight: 1.6 }}>
+              {facts.persona.dayGz}일주 — 이 한 줄에서 시작해 돈·사랑·일·건강까지 열 장으로 풀어요.
+            </p>
+          </>
+        ) : (
+          <p style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.5 }}>
+            태어난 날의 8글자에서 시작해 돈·사랑·일·건강까지, 열 장으로 처음부터 끝까지 풀어요.
+          </p>
+        )}
+
+        {facts?.persona && facts.persona.daeun.length >= 4 && (
+          <div style={{ marginTop: 16 }}>
+            <div className="flex justify-between" style={{ fontSize: 14, fontWeight: 800 }}>
+              10년마다 바뀌는 운 <span style={{ color: HJ.mute, fontWeight: 600, fontSize: 13 }}>지금 · 다음</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${facts.persona.daeun.length}, 1fr)`, gap: 3, marginTop: 10 }}>
+              {facts.persona.daeun.map((d, i) => {
+                const now = i === facts.persona!.currentIdx;
+                const nx = i === facts.persona!.currentIdx + 1;
+                return (
+                  <div key={i} style={{
+                    textAlign: 'center', padding: '7px 0 6px', borderRadius: 6, fontSize: 11.5,
+                    background: now ? HJ.ink : HJ.paper, color: now ? '#D8CDB9' : HJ.mute,
+                    outline: nx ? `1.5px dashed ${HJ.gold}` : undefined, outlineOffset: -1.5,
+                  }}>
+                    <b style={{ display: 'block', fontFamily: SERIF, fontSize: 14.5, color: now ? '#FFF8EA' : HJ.ink2, fontWeight: 700, lineHeight: 1.2 }}>{d.gz}</b>
+                    {d.age}세
+                  </div>
+                );
+              })}
+            </div>
+            {facts.persona.current && (
+              <p style={{ fontSize: 15, color: HJ.ink2, marginTop: 10, lineHeight: 1.65 }}>
+                지금은 <b style={{ color: HJ.ink }}>{facts.persona.current.gz} 대운</b>({facts.persona.current.from}~{facts.persona.current.to}세)
+                {facts.persona.nextYear ? <>, 다음 10년이 바뀌는 해는 <b style={{ color: HJ.ink }}>{facts.persona.nextYear}년</b>이에요.</> : '이에요.'}
+                {' '}인생에서 가장 좋은 10년은 <Redact w={92} />
+              </p>
             )}
-          </motion.button>
-        ))}
-      </div>
+          </div>
+        )}
 
-      {/* ─── [05b] NEW · 궁합(10-04) · 신년운세(10-07) — 2칸 ─── */}
-      <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
-        {[
-          { id: 'compat', kanji: '合', h: '궁합 보기', sub: '연인·썸·헤어진 사람·가족, 두 사람 사주', strip: EXT_COLORS.compat, path: '/compat', price: 1 },
-          { id: 'newyear', kanji: '歲', h: `${NEW_YEAR_TARGET} 신년운세`, sub: '열두 달 풀이 + 달마다 좋은 날', strip: EXT_COLORS.tojung, path: '/tojung', price: 7 },
-        ].map((c) => (
-          <motion.button
-            key={c.id}
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            onClick={go(c.path)}
-            className="relative h-[120px] px-4 py-3.5 rounded-[14px] text-left overflow-hidden"
-            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
-            aria-label={`${c.h} ${c.price}운`}
-          >
-            <span className="absolute left-0 top-0 bottom-0 w-1 rounded-l" style={{ background: c.strip }} />
-            <span className="absolute right-[-6px] top-[-10px] text-[78px] font-black leading-none"
-              style={{ opacity: 0.14, color: c.strip, fontFamily: SERIF }}>{c.kanji}</span>
-            <h4 className="relative text-[15.5px] font-bold flex items-center gap-1" style={{ color: C.ink }}>
-              {c.h}
-              <span className="text-[11px] font-extrabold px-1 py-[1px] rounded leading-none" style={{ color: '#fff', background: c.strip }}>NEW</span>
-            </h4>
-            <p className="relative text-[11.5px] leading-[1.45] mt-1" style={{ color: C.inkSoft }}>{c.sub}</p>
-            <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
-              style={{ color: C.goldDark, background: C.goldSoft }}>
-              {c.price}운
-            </span>
-          </motion.button>
-        ))}
-      </div>
+        <Gwang title={facts?.persona ? `${facts.persona.dayGz}命書 · 目次` : '命書 · 目次'} style={{ marginTop: 16 }} bodyStyle={{ padding: '4px 14px 8px' }}>
+          <TocRow no={1} t="진짜 강점 3 · 빠지기 쉬운 함정 3" pv={hasSaju ? <>첫 번째 함정 — <Redact w={110} /></> : '내 사주가 반복하는 패턴'} />
+          <TocRow no={2} t="돈·사랑·일·건강·사람·공부 점수" pv={hasSaju ? <>가장 강한 영역 <Redact w={44} lock={false} /> · 가장 약한 영역 <Redact w={44} /></> : '여섯 영역의 강약을 한눈에'} />
+          <TocRow no={3} t="나에게 부족한 기운과 채우는 법" pv="색 · 방위 · 계절 · 습관까지" />
+          <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게, 할 일로 정리해 드려요" />
+          <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>+ 원국 · 십성 · 대운 · 신살 · 올해 흐름 등 여섯 장 더</p>
+        </Gwang>
+        <div className="flex flex-wrap gap-1.5" style={{ marginTop: 14 }}>
+          {['한 번 사면 평생 보관', 'PDF로 저장', '다 읽고 궁금한 건 바로 질문'].map((t) => (
+            <span key={t} style={{ fontSize: 13, color: HJ.ink2, background: HJ.paper, borderRadius: 999, padding: '6px 11px', fontWeight: 600 }}>{t}</span>
+          ))}
+        </div>
+        <GoldCta style={{ marginTop: 14 }} onClick={() => navigate('/premium')} sub={`${premium}운`}>
+          {hasSaju ? '내 사주책 펼치기' : '내 사주책 만들기'}
+        </GoldCta>
+        <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 9 }}>
+          열 장 한 권 · 장마다 {Math.round((premium / 10) * 10) / 10}운 꼴
+        </p>
+      </section>
 
-      {/* ─── [05] 더 알아볼 주제 · 확장 4종 (대운/월운/궁합/토정) — 2026-05-07 출시 후 공개 예정 (현재 숨김, 코드 보존) ─── */}
-      {false && (
-      <>
-      <div className="mx-4 mt-6 flex items-baseline justify-between">
-        <h3 className="text-[17px] font-bold tracking-[-0.01em]" style={{ color: C.ink, fontFamily: SERIF }}>
-          더 알아볼 주제
-        </h3>
-        <span className="text-[11.5px]" style={{ color: C.gray500 }}>
-          대운·월운·궁합·토정비결
-        </span>
+      {/* ━━━ 6. 고민 (주제운) ━━━ */}
+      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
+        <SecTitle k="요즘 많이 찾는 고민" h="지금 마음에 걸리는 게 있다면" />
       </div>
-      <div className="grid grid-cols-2 gap-2.5 mx-4 mt-2.5">
-        {[
-          { id: 'daeun',  kanji: '運', h: '대운 10년 흐름', sub: '앞으로의 10년 주기 기운', strip: EXT_COLORS.daeun,   path: '/daeun' },
-          { id: 'wolun',  kanji: '月', h: '월운 이번 달',   sub: '이번 달 재물·연애·일',   strip: EXT_COLORS.monthly, path: '/monthly' },
-          { id: 'gung',   kanji: '合', h: '궁합 보기',      sub: '두 사람 사주 궁합',      strip: EXT_COLORS.compat,  path: '/compat' },
-          { id: 'tojeong',kanji: '歲', h: '토정비결',       sub: '올해 1년 흐름',          strip: EXT_COLORS.tojung,  path: '/tojung' },
-        ].map((c) => (
-          <motion.button
-            key={c.id}
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            onClick={go(c.path)}
-            className="relative h-[120px] px-4 py-3.5 rounded-[14px] text-left overflow-hidden"
-            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
-          >
-            <span className="absolute left-0 top-0 bottom-0 w-1 rounded-l"
-              style={{ background: c.strip }} />
-            <span className="absolute right-[-6px] top-[-10px] text-[78px] font-black leading-none"
-              style={{ opacity: 0.14, color: c.strip, fontFamily: SERIF }}>{c.kanji}</span>
-            <h4 className="relative text-[15.5px] font-bold" style={{ color: C.ink }}>{c.h}</h4>
-            <p className="relative text-[11.5px] leading-[1.45] mt-1" style={{ color: C.inkSoft }}>{c.sub}</p>
-            <span className="absolute bottom-3 right-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full"
-              style={{ color: C.goldDark, background: C.goldSoft }}>
-              1운
-            </span>
-          </motion.button>
+      <div className="flex flex-col gap-2.5" style={{ margin: '0 16px' }}>
+        <ConcernCard id="love" q={CONCERN_Q.love} b="연애운 · 인연이 오는 달과 알아보는 법" onClick={() => goTopic('love')}
+          fact={facts ? <>
+            {facts.loveStars.count > 0
+              ? <>연인의 별이 <b style={{ color: HJ.ink }}>{facts.loveStars.count}개({facts.loveStars.chars.join('')})</b> 있어요. </>
+              : <>사주에 연인의 별이 드러나 있지 않아요. </>}
+            {facts.love && <><b style={{ color: HJ.ink }}>{yr(facts.love.month.start)}{facts.love.month.calMonth}월</b>에 {facts.loveStars.count > 0 ? '하나가 더' : '그 별이'} 들어와요.</>}
+          </> : undefined} />
+        <ConcernCard id="reunion" q={CONCERN_Q.reunion} b="재회운 · 재회 가능성 판정과 연락할 달" onClick={() => goTopic('reunion')}
+          factTag="함께 넣으면" fact={<>그 사람 생일을 넣으면 <b style={{ color: HJ.ink }}>두 사주를 같이</b> 놓고, 다시 닿는 달을 짚어 드려요.</>} />
+        <ConcernCard id="exam" q={CONCERN_Q.exam} b="합격·이직운 · 결과가 나오는 달" onClick={() => goTopic('exam')}
+          fact={facts ? <>{facts.exam}</> : undefined} />
+        <ConcernRow id="wealth" q={CONCERN_Q.wealth}
+          b={facts ? (facts.wealth.count > 0
+            ? `재물의 별 ${facts.wealth.count}개 · ${facts.wealth.pyeon && !facts.wealth.jeong ? '큰돈이 오가는 별(편재)' : facts.wealth.jeong && !facts.wealth.pyeon ? '꾸준히 쌓는 별(정재)' : '쌓는 별과 오가는 별이 함께'}`
+            : '재물의 별이 들어오는 때와 새는 곳') : '재물운 · 새는 구멍과 들어오는 시기'}
+          price={`${getTopicPrice('wealth').actualPrice}운`} onClick={() => goTopic('wealth')} />
+        <ConcernRow hz="合" q="그 사람과 나, 잘 맞을까" b="궁합 · 두 사람 8글자를 겹쳐 봐요" price={`${compat}운`} onClick={() => navigate('/compat')} />
+        <ConcernRow id="marriage" q={CONCERN_Q.marriage} b={facts ? facts.spouse : '결혼운 · 결혼 적기와 배우자 성향'} price={`${getTopicPrice('marriage').actualPrice}운`} onClick={() => goTopic('marriage')} />
+        {showAllTopics && (['career', 'business', 'health', 'move', 'study'] as TopicId[]).map((id) => (
+          <ConcernRow key={id} id={id} q={CONCERN_Q[id]} b={`${TOPIC_REGISTRY[id].label} · ${TOPIC_REGISTRY[id].subCopy}`} price={`${getTopicPrice(id).actualPrice}운`} onClick={() => goTopic(id)} />
         ))}
       </div>
-      </>
+      {!showAllTopics && (
+        <button type="button" onClick={() => setShowAllTopics(true)}
+          style={{ display: 'block', width: 'calc(100% - 32px)', margin: '10px 16px 0', padding: 14, fontSize: 15, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+          고민 {listTopics().length}가지 전부 보기 ›
+        </button>
       )}
 
-      {/* ─── [04] 궁금한 주제 하나, 깊게 · 주제 10종 가로 스크롤 (2026-05-04 swap: DEEP DIVE 위로) ─── */}
-      <div id="home-topics" className="mx-4 mt-9 scroll-mt-20">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>DEEP DIVE</span>
-          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
-          {/* 2026-06-29 — 가격 안내 (포괄 헤더 = 최저가 SSOT 파생 · love/wealth/reunion 정가 3운, 나머지 7주제 1운, 세일 없음) */}
-          <span className="text-[10.5px] font-bold" style={{ color: C.goldDark }}>주제당 {minTopicPrice}운부터</span>
-        </div>
-        <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          진짜 궁금한 한 가지, <span style={{ color: C.goldHi }}>깊게 파보세요</span>
-        </h2>
-      </div>
-      <p className="mx-4 mt-2 text-[13px] leading-[1.6]" style={{ color: C.inkSoft }}>
-        연애·재회·결혼·재물·합격이직·사업·건강·이사·학업·직업 — <strong style={{ color: C.ink }}>궁금한 한 가지</strong>를 끝까지 풀어드려요.
-      </p>
-      {/* 2026-05-04 우측 화살표 button — 60대+ 가로 스크롤 affordance
-          2026-05-05 fix: 좌측 버튼 제거 (카드 가림 문제) · 우측 버튼만 유지 (initial affordance) + 우측 끝 도달 시 fade gradient 로 알림 */}
-      <div className="relative mt-3">
-        <div
-          ref={deepDiveScrollRef}
-          className="overflow-x-auto pb-2 no-scrollbar"
-          style={{
-            scrollSnapType: 'x mandatory',
-            // 우측 끝까지 안 갔으면 우측 fade — 더 있다는 신호 (좌측은 fade X · 한국 LTR 환경)
-            WebkitMaskImage: showRightBtn
-              ? 'linear-gradient(90deg, black 0, black calc(100% - 56px), transparent 100%)'
-              : 'none',
-            maskImage: showRightBtn
-              ? 'linear-gradient(90deg, black 0, black calc(100% - 56px), transparent 100%)'
-              : 'none',
-            transition: 'mask-image 0.2s, -webkit-mask-image 0.2s',
-          }}
-        >
-        <div
-          className="flex gap-2.5"
-          style={{
-            width: 'max-content',
-            paddingLeft: 16,
-            paddingRight: showRightBtn ? 60 : 16, // 우측 버튼 있을 때만 카드 buffer
-            transition: 'padding 0.2s',
-          }}
-        >
-          {/* 10주제 SSOT 소비 — @/constants/topics (순서/한자/컬러/딱지/subCopy/path 모두 SSOT) */}
-          {listTopics().map((t) => {
-            const pricing = getTopicPrice(t.id);
-            return (
-            <motion.button
-              key={t.id}
-              type="button"
-              whileTap={{ scale: 0.97 }}
-              onClick={go(t.path)}
-              className="relative min-w-[148px] h-[180px] rounded-[16px] px-4 py-4 text-left overflow-hidden"
-              style={{
-                background: '#FFFFFF',
-                border: `1px solid ${C.grayLine}`,
-                scrollSnapAlign: 'start',
-              }}
-              aria-label={`${t.label} 분석으로 이동`}
-            >
-              <span className="absolute top-0 left-0 right-0 h-[3px]"
-                style={{ background: t.color }} />
-              <span className="absolute right-[-10px] bottom-[-20px] text-[104px] font-black leading-none"
-                style={{ opacity: 0.1, color: t.color, fontFamily: SERIF }}>{t.kanji}</span>
-              {/* 인기/추천 딱지 — 우상단 (이모지 X · 텍스트만) */}
-              {t.badge && (
-                <span
-                  className="absolute top-2 right-2 text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-[4px] tracking-[0.06em]"
-                  style={{
-                    color: '#FFFFFF',
-                    background: t.color,
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  {t.badge}
-                </span>
-              )}
-              <div className="relative">
-                <div className="text-[11px] font-bold tracking-[0.04em]" style={{ color: t.color }}>
-                  {t.kanji}
+      {/* ━━━ 7. 실제 후기 (승인된 것만 · 없으면 숨김) ━━━ */}
+      {reviews.length > 0 && (
+        <>
+          <SecTitle k="먼저 본 사람들" h="읽어본 사람들이 남긴 말" />
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar" style={{ padding: '0 16px 4px' }}>
+            {reviews.map((r) => (
+              <div key={r.id} style={{ flex: '0 0 270px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 13, color: HJ.goldText, fontWeight: 800 }} aria-label={`별점 ${r.rating}점`}>
+                  {'★'.repeat(r.rating)}<span style={{ color: HJ.line }}>{'★'.repeat(5 - r.rating)}</span>
                 </div>
-                <h4 className="mt-1 text-[17px] font-extrabold" style={{ color: C.ink, fontFamily: SERIF }}>
-                  {t.label}
-                </h4>
-                <p className="mt-1.5 text-[11.5px] leading-[1.45]" style={{ color: C.inkSoft }}>
-                  {t.subCopy}
-                </p>
+                <p style={{ fontSize: 15.5, lineHeight: 1.65, marginTop: 8, color: HJ.ink }}>“{r.text}”</p>
+                <p style={{ fontSize: 13, color: HJ.mute, marginTop: 10 }}>구매자 · {r.contentLabel}{r.month ? ` · ${r.month}월` : ''}</p>
               </div>
-              {/* 2026-05-28 PM — 가격 chip (좌하단). 세일 토픽은 strike + sale badge */}
-              <div className="absolute left-3 bottom-3 right-3 flex items-center gap-1.5">
-                {pricing.isOnSale && pricing.salePrice != null ? (
-                  <>
-                    <span className="text-[10px]" style={{ color: C.gray500, textDecoration: 'line-through' }}>
-                      {pricing.regularPrice}운
-                    </span>
-                    <span className="text-[12px] font-extrabold" style={{ color: t.color }}>
-                      {pricing.salePrice}운
-                    </span>
-                    <span
-                      className="text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-[4px]"
-                      style={{
-                        background: 'rgba(244,209,102,0.40)',
-                        color: '#8C6D3D',
-                        letterSpacing: '0.04em',
-                      }}
-                    >
-                      {pricing.saleBadge}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-[12px] font-extrabold" style={{ color: t.color }}>
-                    {pricing.regularPrice}운
-                  </span>
-                )}
-              </div>
-            </motion.button>
-            );
-          })}
-          <div className="min-w-[16px]" />
-        </div>
-        </div>
-        {/* 좌측 버튼 제거 (2026-05-05) — 카드 가림 문제 + 60대 affordance 는 우측 1개로 충분 (Netflix·유튜브 패턴 · 손가락 스와이프로 좌측 이동) */}
-        {/* 우측 화살표 버튼 — 60대+ 가로 스크롤 affordance · 카드 1개 분량(158px) 부드럽게 이동 */}
-        {showRightBtn && (
-          <button
-            type="button"
-            aria-label="다른 주제 더 보기"
-            onClick={scrollDeepDiveRight}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.96)',
-              border: `1px solid ${C.grayLine}`,
-              boxShadow: `0 4px 12px rgba(184,150,90,0.20), 0 0 0 4px rgba(255,255,255,0.45)`,
-              zIndex: 2,
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.goldHi} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 6l6 6-6 6" />
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {/* ─── [07] Reviews 16 (우→좌 자동 캐러셀) · 2026-05-04 swap: DEEP DIVE 다음 ─── */}
-      <div id="voices-section" className="mx-4 mt-9 scroll-mt-24">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>VOICES</span>
-          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
-        </div>
-        <h2 className="mt-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          먼저 받아본 분들이 <span style={{ color: C.goldHi }}>남긴 한 줄</span>
-        </h2>
-      </div>
-      <div className="mt-3 overflow-hidden pb-2"
-        style={{ maskImage: 'linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%)' }}>
-        <div className="flex gap-3 px-4 review-scroll">
-          {reviewDoubled.map((r, i) => (
-            <div key={i} className="min-w-[280px] max-w-[280px] h-[116px] rounded-2xl p-4"
-              style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
-              <div className="text-[11.5px] font-semibold mb-1.5" style={{ color: C.goldDark }}>
-                {r.age} {r.gender}
-              </div>
-              <div className="text-[13px] leading-[1.6] font-medium line-clamp-3" style={{ color: C.ink }}>
-                {r.text}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── [06inline] 사주대화 anchor (2026-05-04: VOICES 밑으로 이동 + 키움 + 줄바꿈) ─── */}
-      <div className="mx-4 mt-7 text-center">
-        <button
-          type="button"
-          onClick={go('/chat')}
-          className="inline-flex flex-col items-center gap-1.5 px-5 py-3.5 rounded-2xl transition-colors"
-          style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.gold; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.grayLine; }}
-        >
-          <span className="text-[14px] font-medium" style={{ color: C.gray500 }}>
-            심층적인 상담이 필요한 날엔?
-          </span>
-          <span className="text-[17px] font-extrabold tracking-[-0.01em]"
-            style={{ color: C.goldHi, fontFamily: SERIF }}>
-            사주 상담하러 가기 →
-          </span>
-        </button>
-      </div>
-
-      {/* ─── [08] 3 차별성 인포그래픽 (PM 결정 #7 · 사주대화 카드 제거 + 철학 → 차별성 도식화) ─── */}
-      {/*  멘트 던지지 말고 도식화. 이모지 X. SVG 아이콘 + 한자 + 컬러 칩만 사용.  */}
-      <div className="mx-4 mt-9 w-[calc(100%-32px)]">
-        <div className="flex items-baseline gap-2 mb-1.5">
-          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>WHY 500</span>
-          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
-        </div>
-        <h2 className="mb-1.5 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]"
-          style={{ color: C.ink, fontFamily: SERIF }}>
-          제대로 본 사주는, <span style={{ color: C.goldHi }}>다릅니다</span>
-        </h2>
-        {/* 2026-06-22 포지셔닝(마케팅) — 차별화(제대로=다르다) + 근거(600년 원전) + 접근성(500원) 3박자.
-            바로 아래 3 차별성 카드가 '왜 다른지' 증명. 시장 최대 불만('비싸고 안 맞는다')을 정통으로 때림. */}
-        <p className="mb-3 text-[13px] leading-[1.55]" style={{ color: C.inkSoft }}>
-          600년 원전 명리학의 깊이 그대로, 문턱은 500원으로.
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          {/* Card 1 — 어려운 한자 No (한자 X 도식) */}
-          <div className="relative rounded-[14px] p-3.5 text-center overflow-hidden"
-            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
-            <div className="relative h-[52px] flex items-center justify-center mb-2">
-              <span className="text-[40px] font-black leading-none"
-                style={{ color: C.ink, opacity: 0.18, fontFamily: SERIF }}>難</span>
-              <svg viewBox="0 0 56 56" className="absolute inset-0 m-auto" width="56" height="56" aria-hidden="true">
-                <line x1="8" y1="8" x2="48" y2="48" stroke={C.gold} strokeWidth="3" strokeLinecap="round" />
-                <line x1="48" y1="8" x2="8" y2="48" stroke={C.gold} strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            </div>
-            <h4 className="text-[12.5px] font-extrabold leading-[1.3]"
-              style={{ color: C.ink, fontFamily: SERIF }}>
-              어려운 한자 No
-            </h4>
-            <p className="mt-1 text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>
-              쉬운 한국어로<br />풀어드려요
-            </p>
+            ))}
           </div>
+        </>
+      )}
 
-          {/* Card 2 — 6대 원전 기반 (책 6권 스택 SVG) */}
-          <div className="relative rounded-[14px] p-3.5 text-center overflow-hidden"
-            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
-            <div className="relative h-[52px] flex items-center justify-center mb-2">
-              <svg viewBox="0 0 56 52" width="56" height="52" aria-hidden="true">
-                {/* 6 stacked horizontal book bars */}
-                {[0, 1, 2, 3, 4, 5].map((i) => {
-                  const y = 6 + i * 7;
-                  const w = 36 + ((i % 2) * 6);
-                  const x = (56 - w) / 2;
-                  return (
-                    <rect
-                      key={i}
-                      x={x}
-                      y={y}
-                      width={w}
-                      height={4}
-                      rx="1"
-                      fill={C.gold}
-                      opacity={0.25 + i * 0.12}
-                    />
-                  );
-                })}
-              </svg>
-              <span className="absolute -bottom-1 right-1 text-[14px] font-black leading-none"
-                style={{ color: C.goldDark, opacity: 0.85, fontFamily: SERIF }}>典</span>
-            </div>
-            <h4 className="text-[12.5px] font-extrabold leading-[1.3]"
-              style={{ color: C.ink, fontFamily: SERIF }}>
-              6대 원전 기반
-            </h4>
-            <p className="mt-1 text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>
-              전통 명리학<br />그대로
-            </p>
-          </div>
-
-          {/* Card 3 — 단 500원, 깊이는 만 원짜리 */}
-          <div className="relative rounded-[14px] p-3.5 text-center overflow-hidden"
-            style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}>
-            <div className="relative h-[52px] flex items-center justify-center mb-2">
-              <svg viewBox="0 0 56 52" width="56" height="52" aria-hidden="true">
-                {/* 동전 stack — 가성비 상징 */}
-                <ellipse cx="28" cy="40" rx="18" ry="4" fill={C.gold} opacity="0.25" />
-                <ellipse cx="28" cy="34" rx="18" ry="4" fill={C.gold} opacity="0.45" />
-                <ellipse cx="28" cy="28" rx="18" ry="4" fill={C.gold} opacity="0.65" />
-                <ellipse cx="28" cy="22" rx="18" ry="4" fill={C.gold} opacity="0.85" />
-                <text x="28" y="25" textAnchor="middle" fontSize="11" fontWeight="800" fill="#FFFFFF" fontFamily={SERIF}>500</text>
-              </svg>
-            </div>
-            <h4 className="text-[12.5px] font-extrabold leading-[1.3]"
-              style={{ color: C.ink, fontFamily: SERIF }}>
-              단 500원의 깊이
-            </h4>
-            <p className="mt-1 text-[12px] leading-[1.5]" style={{ color: C.inkSoft }}>
-              점집 50,000원<br />그 깊이 그대로
-            </p>
-          </div>
-        </div>
+      {/* ━━━ 8. 강점 — 확인 가능한 사실만 ━━━ */}
+      <div id="voices-section" style={{ scrollMarginTop: 72 }}>
+        <SecTitle k="사주500을 고르는 이유" h="제대로 본 사주는, 다릅니다" />
       </div>
+      <p style={{ margin: '-4px 22px 0', fontSize: 15, color: HJ.ink2, lineHeight: 1.65 }}>600년 원전 명리학의 깊이 그대로, 문턱은 500원으로.</p>
+      <ul style={{ margin: '12px 16px 0', borderTop: `1px solid ${HJ.line}`, listStyle: 'none', padding: 0 }}>
+        {[
+          ['태어난 시간을 30분 단위로 보정해요.', '서울과 표준시의 차이까지 맞춰 8글자를 세웁니다.'],
+          ['달과 시간대는 만세력으로 계산해요.', '오늘의 일진, 이번 달 간지를 내 8글자와 직접 맞춰 봅니다.'],
+          ['한 번 산 풀이는 평생 보관돼요.', '보관함에서 다시 열 때 운이 들지 않아요.'],
+        ].map(([b, s], i) => (
+          <li key={i} className="flex gap-3" style={{ padding: '14px 2px', borderBottom: `1px solid ${HJ.line}`, fontSize: 15, lineHeight: 1.6 }}>
+            <span style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.seal, width: 18, flexShrink: 0 }}>{hanjaNum(i + 1)}</span>
+            <span><b style={{ fontWeight: 800 }}>{b}</b> <span style={{ color: HJ.ink2 }}>{s}</span></span>
+          </li>
+        ))}
+      </ul>
 
-      {/* ─── [09] 실시간 Best Top 5 — CTA 직접 연결 ─── */}
-      <div className="mx-4 mt-9">
-        <div className="flex items-baseline gap-2 mb-1.5">
-          <span className="text-[10px] font-extrabold tracking-[0.15em]" style={{ color: C.goldDark }}>LIVE BEST</span>
-          <span className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${C.grayLine}, transparent)` }} />
-          <span className="flex items-center gap-1 text-[10.5px] font-bold" style={{ color: '#D32F2F' }}>
-            <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#D32F2F', boxShadow: '0 0 0 2px rgba(211,47,47,0.18)' }} />
-            오늘
-          </span>
+      {/* ━━━ 푸터 ━━━ */}
+      <div style={{ margin: '26px 16px 0', textAlign: 'center' }}>
+        <div className="flex items-center justify-center gap-3" style={{ fontSize: 13.5, color: HJ.mute }}>
+          <button type="button" onClick={() => navigate('/my')}>내 정보</button>
+          <span style={{ color: HJ.line }}>|</span>
+          <button type="button" onClick={() => navigate('/charge')}>충전</button>
+          <span style={{ color: HJ.line }}>|</span>
+          <button type="button" onClick={() => navigate('/storage')}>보관함</button>
         </div>
-        <h2 className="mb-3 text-[20px] font-extrabold tracking-[-0.015em] leading-[1.3]" style={{ color: C.ink, fontFamily: SERIF }}>
-          오늘 가장 많이 보는 <span style={{ color: C.goldHi }}>Top 5</span>
-        </h2>
-        <div className="mt-2 flex flex-col gap-2">
-          {liveBestTop5.map((item) => (
-            <button
-              key={item.rank}
-              type="button"
-              onClick={go(item.path)}
-              className="flex items-center gap-3 px-3 py-3 rounded-[12px] text-left transition-colors"
-              style={{ background: '#FFFFFF', border: `1px solid ${C.grayLine}` }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.gold; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.grayLine; }}
-            >
-              <span
-                className="flex items-center justify-center font-extrabold"
-                style={{
-                  width: 26, height: 26, borderRadius: 6,
-                  fontSize: 13, fontFamily: SERIF,
-                  background: item.rank <= 3
-                    ? `linear-gradient(135deg, #E8D9B8, ${C.goldDark})`
-                    : C.goldSoft,
-                  color: item.rank <= 3 ? '#1a1a1a' : C.goldDark,
-                  flexShrink: 0,
-                }}
-              >
-                {item.rank}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[14px] font-bold" style={{ color: C.ink, fontFamily: SERIF }}>{item.label}</span>
-                  {item.heat === 'HOT' && (
-                    <span className="text-[9px] font-extrabold px-1.5 rounded" style={{ background: '#D32F2F', color: '#fff' }}>HOT</span>
-                  )}
-                  {item.heat === 'NEW' && (
-                    <span className="text-[9px] font-extrabold px-1.5 rounded" style={{ background: '#2D8A4E', color: '#fff' }}>NEW</span>
-                  )}
-                </div>
-                <div className="text-[11.5px] mt-0.5" style={{ color: C.inkSoft }}>{item.sub}</div>
-              </div>
-              <span className="text-[14px] font-bold" style={{ color: C.goldDark, flexShrink: 0 }}>→</span>
-            </button>
-          ))}
-        </div>
+        <p style={{ marginTop: 12, fontSize: 12, color: HJ.mute, lineHeight: 1.6 }}>{ART_CREDIT}</p>
+        <p style={{ marginTop: 6, fontSize: 12, color: HJ.mute }}>© 2026 사주500</p>
       </div>
-
-      {/* ─── [10] Footer ─── */}
-      <div className="mx-4 mt-5 pt-5 border-t text-center"
-        style={{ borderColor: C.grayLine }}>
-        <div className="text-[13.5px] font-bold tracking-[-0.01em]" style={{ color: C.ink, fontFamily: SERIF }}>
-          사주500
-        </div>
-        <div className="mt-1 text-[11.5px]" style={{ color: C.gray500 }}>
-          무료로 시작 · 필요한 만큼만
-        </div>
-        <div className="mt-3 flex items-center justify-center gap-3 text-[11px]"
-          style={{ color: C.gray500 }}>
-          <button type="button" onClick={go('/my')}>내정보</button>
-          <span style={{ color: C.grayLine }}>|</span>
-          <button type="button" onClick={go('/charge')}>충전</button>
-          <span style={{ color: C.grayLine }}>|</span>
-          <button type="button" onClick={go('/storage')}>보관함</button>
-        </div>
-        <div className="mt-3 text-[10.5px]" style={{ color: C.gray500 }}>
-          © 2026 사주500
-        </div>
-      </div>
-
-      {/* 사업자 신원정보 — 전자상거래법 §10 초기화면 표시 (앱인토스 시 LegalFooter 내부에서 null) */}
       <LegalFooter />
-
-      {/* Review scroll + 가로 스크롤바 숨김 (prefers-reduced-motion 존중) */}
-      <style>{`
-        @keyframes home-review-scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .review-scroll {
-          animation: home-review-scroll 90s linear infinite;
-          width: max-content;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .review-scroll { animation: none; }
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
     </div>
+  );
+}
+
+/* ─── 작은 부품 (홈 전용) ─── */
+function SecTitle({ k, h }: { k: string; h: string }) {
+  return (
+    <div style={{ padding: '34px 22px 12px' }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: HJ.mute }}>{k}</div>
+      <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.4, marginTop: 4 }}>{h}</h2>
+    </div>
+  );
+}
+
+function HzBox({ children, size = 44 }: { children: ReactNode; size?: number }) {
+  return (
+    <span style={{ width: size, height: size, borderRadius: 10, border: `1.5px solid ${HJ.ink}`, display: 'grid', placeItems: 'center', fontFamily: SERIF, fontWeight: 900, fontSize: Math.round(size * 0.43), flexShrink: 0, color: HJ.ink }}>
+      {children}
+    </span>
+  );
+}
+
+function LadderRow({ hz, k, t, price, onClick, last }: { hz: string; k: string; t: string; price: string; onClick: () => void; last?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full text-left"
+      style={{ display: 'grid', gridTemplateColumns: '44px 1fr auto', gap: 12, alignItems: 'center', padding: 16, borderBottom: last ? 0 : `1px solid ${HJ.line}`, background: 'transparent' }}>
+      <HzBox>{hz}</HzBox>
+      <span>
+        <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: HJ.mute }}>{k}</span>
+        <span style={{ display: 'block', fontFamily: SERIF, fontSize: 16.5, fontWeight: 700, lineHeight: 1.45, marginTop: 2, letterSpacing: '-.02em', color: HJ.ink }}>{t}</span>
+      </span>
+      <span style={{ fontSize: 14, fontWeight: 800, color: HJ.goldText, whiteSpace: 'nowrap' }}>{price} ›</span>
+    </button>
+  );
+}
+
+function MiniCard({ f, h, s, go, onClick }: { f: string; h: ReactNode; s: string; go: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="text-left" style={{ background: HJ.card, borderRadius: 16, padding: '16px 14px 14px', border: `1px solid ${HJ.line}` }}>
+      <div style={{ fontSize: 13, fontWeight: 800, color: HJ.goldText }}>{f}</div>
+      <div style={{ fontSize: 16.5, fontWeight: 800, marginTop: 6, lineHeight: 1.38, letterSpacing: '-.02em', color: HJ.ink }}>{h}</div>
+      <div style={{ fontSize: 13.5, color: HJ.mute, marginTop: 6, lineHeight: 1.5 }}>{s}</div>
+      <div style={{ marginTop: 12, fontSize: 14.5, fontWeight: 800, color: HJ.ink }}>{go} ›</div>
+    </button>
+  );
+}
+
+function TocRow({ no, t, pv }: { no: number; t: string; pv: ReactNode }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '22px 1fr', gap: 6, padding: '11px 0', borderBottom: '1px solid rgba(92,78,60,.2)' }}>
+      <span style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.seal, fontSize: 14, paddingTop: 1 }}>{hanjaNum(no)}</span>
+      <span>
+        <span style={{ display: 'block', fontWeight: 700, fontSize: 15, color: HJ.ink, lineHeight: 1.5 }}>{t}</span>
+        <span style={{ display: 'block', fontSize: 14, color: HJ.ink2, marginTop: 2, lineHeight: 1.55 }}>{pv}</span>
+      </span>
+    </div>
+  );
+}
+
+function ConcernCard({ id, q, b, fact, factTag = '내 사주', onClick }: { id: TopicId; q: string; b: string; fact?: ReactNode; factTag?: string; onClick: () => void }) {
+  const price = getTopicPrice(id).actualPrice;
+  return (
+    <button type="button" onClick={onClick} className="w-full text-left" style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '16px 16px 14px' }}>
+      <span className="flex items-start gap-3">
+        <HzBox size={40}>{TOPIC_REGISTRY[id].kanji}</HzBox>
+        <span>
+          <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.4, color: HJ.ink }}>{q}</span>
+          <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 3 }}>{b}</span>
+        </span>
+      </span>
+      {fact && (
+        <span style={{ display: 'block', marginTop: 12, background: HJ.paper, borderRadius: 10, padding: '10px 12px', fontSize: 14.5, lineHeight: 1.65, color: HJ.ink2 }}>
+          <span style={{ fontSize: 12.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>{factTag}</span>{fact}
+        </span>
+      )}
+      <span className="flex justify-between items-center" style={{ marginTop: 12 }}>
+        <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink }}>{price}운</span>
+        <span style={{ fontSize: 15, fontWeight: 800, color: HJ.goldText }}>{TOPIC_REGISTRY[id].label} 보기 ›</span>
+      </span>
+    </button>
+  );
+}
+
+function ConcernRow({ id, hz, q, b, price, onClick }: { id?: TopicId; hz?: string; q: string; b: string; price: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full text-left flex items-center gap-3" style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '14px 16px' }}>
+      <HzBox size={40}>{hz || (id ? TOPIC_REGISTRY[id].kanji : '')}</HzBox>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: SERIF, fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.4, color: HJ.ink }}>{q}</span>
+        <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 3, lineHeight: 1.5 }}>{b}</span>
+      </span>
+      <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{price}</span>
+    </button>
   );
 }
 

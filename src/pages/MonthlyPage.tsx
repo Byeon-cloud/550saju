@@ -113,6 +113,13 @@ export function MonthlyPage() {
   const [refining, setRefining] = useState(false);
   // 선택한 달 인덱스 (monthOptions 기준) — 기본 = 이번 달 (과거6+현재+미래6 배열의 현재월 위치)
   const [monthIdx, setMonthIdx] = useState(() => {
+    // 2026-10-10 — 홈 '다음 달' 카드(?month=YYYY-MM)에서 오면 그 달을 미리 선택
+    const want = searchParams.get('month');
+    if (want && /^\d{4}-\d{2}$/.test(want)) {
+      const [wy, wm] = want.split('-').map(Number);
+      const j = monthOptions.findIndex((o) => o.year === wy && o.month === wm);
+      if (j >= 0) return j;
+    }
     const i = monthOptions.findIndex((o) => o.isCurrent);
     return i >= 0 ? i : 6;
   });

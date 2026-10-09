@@ -20,6 +20,10 @@ declare module 'lunar-javascript' {
     getMonthInGanZhi(): string;
     /** 세운 간지 (예: "丙午") — 입춘 기준 연주 (2026-06-30 월별운세 단일월) */
     getYearInGanZhi(): string;
+    /** 절기(입춘·절입 시각) 기준 정확한 간지 — 2026-10-10 hookFacts 사용 */
+    getYearInGanZhiExact(): string;
+    getMonthInGanZhiExact(): string;
+    getTimeInGanZhi(): string;
   }
 
   export class EightChar {

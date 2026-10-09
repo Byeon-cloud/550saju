@@ -30,7 +30,8 @@ export function TabBar() {
       className="tabbar fixed bottom-0 inset-x-0 z-30 mx-auto max-w-mobile"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="mx-3 mb-2 rounded-2xl bg-white/95 backdrop-blur-xl shadow-lg border border-white/60">
+      <div className="mx-3 mb-2 rounded-2xl backdrop-blur-xl"
+        style={{ background: 'rgba(255,253,248,0.97)', border: '1px solid #E1D7C4', boxShadow: '0 8px 24px rgba(40,28,14,0.12)' }}>
         <div className="flex h-[64px] relative items-end">
           {TABS.map((tab) => {
             const active = tab.path === '/'
@@ -50,11 +51,11 @@ export function TabBar() {
                   <motion.div
                     whileTap={{ scale: 0.9 }}
                     className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
-                    style={{ background: active ? '#B8965A' : '#1B2A4A' }}
+                    style={{ background: active ? '#B8965A' : '#1A1612' }}
                   >
                     <Icon size={22} color="#FFFFFF" />
                   </motion.div>
-                  <span className={`text-[11px] mt-1 font-semibold ${active ? 'text-brand-gold' : 'text-text-hint'}`}>
+                  <span className="text-[12px] mt-1 font-semibold" style={{ color: active ? '#1A1612' : '#6F6557' }}>
                     {tab.label}
                   </span>
                 </button>
@@ -70,11 +71,9 @@ export function TabBar() {
               >
                 <Icon
                   size={20}
-                  color={active ? '#B8965A' : '#A8B1C1'}
+                  color={active ? '#1A1612' : '#8B8070'}
                 />
-                <span className={`text-[11px] font-semibold transition-colors duration-200 ${
-                  active ? 'text-brand-gold' : 'text-text-hint'
-                }`}>
+                <span className="text-[12px] font-semibold transition-colors duration-200" style={{ color: active ? '#1A1612' : '#6F6557', fontWeight: active ? 800 : 600 }}>
                   {tab.label}
                 </span>
                 {active && (
