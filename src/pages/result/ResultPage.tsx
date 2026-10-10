@@ -14,6 +14,7 @@ import { useSajuContext } from '@/contexts/SajuContext';
 import { Header } from '@/components/layout/Header';
 import { ErrorState } from '@/components/common/ErrorState';
 import { FooterCTA } from '@/components/common/FooterCTA';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useToast } from '@/components/common/Toast';
 import { AILoading } from '@/components/common/AILoading';
 import {
@@ -1599,6 +1600,10 @@ export function ResultPage(props: ResultPageProps = {}) {
                 pendingGroups={isPremiumStreamingIncomplete ? { A: !arrivedGroups.A, D: !arrivedGroups.D, B: !arrivedGroups.B, C: !arrivedGroups.C } : undefined}
               />
             </ResultErrorBoundary>
+          )}
+          {/* 2026-10-10 — 실제 후기 수집 (4그룹 다 도착한 뒤 · 결과 1건당 한 번) */}
+          {isPremiumLayout && !isPremiumStreamingIncomplete && reportId !== 'local' && (
+            <ReviewAsk contentType="premium" contentLabel="종합사주" reportKey={reportId} style={{ margin: '24px 16px 8px' }} />
           )}
 
           {/* ─── Phase C · L3·L4 블러 영역 시작 (신살 + 공망 + 상세 풀이 12섹션) ─── */}

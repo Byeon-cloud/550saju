@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -281,6 +282,10 @@ export function WeeklyPage() {
         onMonthly={() => navigate('/monthly', { state: { profileId: resolveProfileId(selected) } })}
         monthlyPriceLabel={monthlyPriceLabel}
       />
+      {/* 2026-10-10 — 실제 후기 수집 (최종 결과 + 저장된 뒤) */}
+      {result && !refining && shareReportId && (
+        <ReviewAsk contentType="weekly" contentLabel="주간 운세" reportKey={shareReportId} />
+      )}
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'weekly'} />
     </div>

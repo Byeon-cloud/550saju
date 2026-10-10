@@ -71,6 +71,27 @@ service cloud.firestore {
       allow write: if false; // writeGroupProgress(admin SDK)만
     }
 
+    // 후기 (2026-10-10) — 결과를 다 읽은 사람이 남김. 본인 create 만(수정·삭제 불가 · 필드/길이 고정).
+    //   공개 읽기는 오너 승인(status=approved) + 공개 동의(consentPublic) 분만. 승인/숨김은 오너만(status 만 변경).
+    //   이름·나이·생일은 받지 않는다 (src/services/reviews.ts).
+    match /reviews/{rid} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'contentType', 'contentLabel', 'rating', 'text', 'consentPublic', 'status', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.contentType is string && request.resource.data.contentType.size() <= 20
+        && request.resource.data.contentLabel is string && request.resource.data.contentLabel.size() <= 20
+        && request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.text is string && request.resource.data.text.size() <= 300
+        && request.resource.data.consentPublic is bool
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+      allow read: if isOwner() || (resource.data.status == 'approved' && resource.data.consentPublic == true);
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['approved', 'hidden', 'pending'];
+      allow delete: if false;
+    }
+
     // 어드민 전역 집계 (collectionGroup) — 유저 카운트 + 결제 + 리포트
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;

@@ -13,6 +13,7 @@ import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA } from '@/components/common/FooterCTA';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import type { TojungResponse } from '@/types/report';
 import { stripMd, sanitizeAiText } from '@/utils/format';
@@ -499,6 +500,11 @@ export function TojungPage() {
             onTap={() => navigate('/premium')}
           />
         </FadeIn>
+
+        {/* 2026-10-10 — 실제 후기 수집 (3그룹 다 도착 + 저장된 뒤) */}
+        {!partialMode && shareReportId && (
+          <ReviewAsk contentType="tojung" contentLabel="신년운세" reportKey={shareReportId} style={{ margin: '24px 0 0' }} />
+        )}
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">

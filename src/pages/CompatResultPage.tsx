@@ -12,6 +12,7 @@ import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
 import { FooterCTA } from '@/components/common/FooterCTA';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import type { CompatibilityResponse } from '@/types/report';
 import { sanitizeAiText } from '@/utils/format';
@@ -347,6 +348,11 @@ export function CompatResultPage() {
             return <ExtensionUpsellCard title={next.title} desc={next.desc} onTap={() => navigate(next.to)} />;
           })()}
         </FadeIn>
+
+        {/* 2026-10-10 — 실제 후기 수집 (저장된 결과에만) */}
+        {shareReportId && (
+          <ReviewAsk contentType="compat" contentLabel="궁합" reportKey={shareReportId} style={{ margin: '24px 0 0' }} />
+        )}
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">

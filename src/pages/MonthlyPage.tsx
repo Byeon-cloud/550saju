@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -363,6 +364,10 @@ export function MonthlyPage() {
           onTopics={() => navigate('/#home-topics')}
         />
       </FadeIn>
+      {/* 2026-10-10 — 실제 후기 수집 (최종 결과 + 저장된 뒤) */}
+      {result && !refining && shareReportId && (
+        <ReviewAsk contentType="monthly" contentLabel="월간 운세" reportKey={shareReportId} />
+      )}
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'monthly'} />
     </div>

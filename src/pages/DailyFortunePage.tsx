@@ -22,6 +22,7 @@
 //   - Flippable 정적화 (#39) — 결과 phase에서 SajuMiniCard 제거 (day-tile로 대체) · 재플립 추가 금지
 
 import { kstToday } from '@/utils/kstDate';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -715,6 +716,13 @@ export function DailyFortunePage() {
             />
           )}
         </AnimatePresence>
+
+        {/* 2026-10-10 — 실제 후기 수집 (생성 끝난 뒤 · 사람·날짜당 한 번) */}
+        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
+          <ReviewAsk contentType="daily" contentLabel="오늘의 운세"
+            reportKey={`daily:${selectedProfile.id}:${(result as any).__fortuneDate || todayKey}`}
+            style={{ margin: '28px 0 0' }} />
+        )}
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">

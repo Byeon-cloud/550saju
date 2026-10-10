@@ -101,6 +101,7 @@ import { TOPIC_THEMES, normalizeTopicKey, type TopicResultV2 } from './topic/_to
 import * as topicHeal from './topic/topicPartialHeal';
 import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 import { NextStepsCard, openChatWithResult } from '@/components/common/NextStepsCard';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 
 /** Phase 4 (AI prompt 재작성) 완료 후 true 로 flip — JDS_Topic_IA 통합 결과 페이지 활성화 */
 const USE_TOPIC_MOCKUP_VIEW = false;
@@ -5223,6 +5224,13 @@ export function TopicAnalysisPage() {
                   </div>
                 );
               })()}
+
+              {/* 2026-10-10 — 실제 후기 수집 (다 쓴 뒤에만 · 결과 1건당 한 번) */}
+              {streamComplete && !result.__partial && (
+                <ReviewAsk contentType="topic" contentLabel={topic.label}
+                  reportKey={savedReportId || `topic:${topicId}:${selected ? ((selected as any).profileId || selected.id) : ''}`}
+                  style={{ margin: '8px 0 0' }} />
+              )}
 
               {/* ── 다른 주제 CTA — audit 3 P0 E4 ──
                   · navigate 만 호출 (race condition 제거 — 라우터 pathname 변경 시 컴포넌트 재마운트 → state 자동 초기화)
