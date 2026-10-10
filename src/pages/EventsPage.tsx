@@ -49,7 +49,7 @@ import { AD_BANNER_GROUP_ID } from '@/constants/config';
 const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
-  navy: '#1D2D4A',
+  navy: '#1A1612',
   muted: '#7A7269',              // SSOT --mute — D1 fix (2026-04-23)
   gold: '#B8965A',
   goldDark: '#8C6D3D',          // SSOT --gold-deep — D1 fix (2026-04-23)
@@ -214,8 +214,8 @@ export function EventsPage() {
                     </span>
                     <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center"
                       style={{
-                        background: done ? C.gold : isToday ? C.goldLight : '#FFFFFF',
-                        border: done ? `2px solid ${C.goldDark}` : isToday ? `2px solid ${C.goldDark}` : `2px dashed ${C.line}`,
+                        background: done ? C.ink : isToday ? C.goldLight : '#FFFFFF', // 2026-10-10 v9 상태 표시는 먹
+                        border: done ? `2px solid ${C.ink}` : isToday ? `2px solid ${C.goldDark}` : `2px dashed ${C.line}`,
                       }}>
                       {done ? (
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -231,7 +231,7 @@ export function EventsPage() {
 
             {/* 진행바 */}
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.line }}>
-              <div className="h-full transition-all" style={{ width: `${weekPct}%`, background: C.gold }} />
+              <div className="h-full transition-all" style={{ width: `${weekPct}%`, background: C.ink }} />
             </div>
             <p className="text-[12px] mt-2.5" style={{ color: C.muted }} aria-live="polite">
               <strong style={{ color: C.ink }}>{filled7}/{ATTEND_CYCLE_DAYS}</strong> · {weekStatusCopy}

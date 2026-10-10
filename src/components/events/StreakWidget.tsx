@@ -76,7 +76,7 @@ export function StreakWidget({ snapshot, pulsing = false }: StreakWidgetProps) {
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v5l3 2" />
         </svg>
-        <h3 className="text-[16px] font-bold" style={{ color: '#1D2D4A', fontFamily: "'Noto Serif KR', serif" }}>
+        <h3 className="text-[16px] font-bold" style={{ color: '#1A1612', fontFamily: "'Noto Serif KR', serif" }}>
           3일 연속 출석
         </h3>
         {snapshot.streak > 0 ? (
@@ -107,7 +107,7 @@ function DotCell({ dot, pulsing }: { dot: DotState; pulsing: boolean }) {
   const base = 'flex-1 max-w-[100px] h-[60px] rounded-xl flex flex-col items-center justify-center gap-1 transition-all';
   const style: React.CSSProperties =
     dot.state === 'done'
-      ? { border: '2px solid #B8965A', background: '#B8965A', color: '#fff',
+      ? { border: '2px solid #1A1612', background: '#1A1612', color: '#fff', /* 2026-10-10 v9 — 상태 표시는 먹 (금색은 버튼에만) */
           boxShadow: pulsing ? '0 0 0 4px rgba(184,150,90,0.35)' : '0 2px 6px rgba(184,150,90,0.2)',
           animation: pulsing ? 'streak-pulse 1.2s ease-out 1' : 'none' }
       : dot.state === 'today'
@@ -119,7 +119,7 @@ function DotCell({ dot, pulsing }: { dot: DotState; pulsing: boolean }) {
   return (
     <div className={base} style={style}>
       <span className="text-[11px] font-medium"
-        style={{ color: dot.state === 'done' ? '#fff' : dot.state === 'today' ? '#1D2D4A' : '#8A7F6E' }}>
+        style={{ color: dot.state === 'done' ? '#fff' : dot.state === 'today' ? '#1A1612' : '#8A7F6E' }}>
         {dot.label}
       </span>
       {dot.state === 'done' ? (

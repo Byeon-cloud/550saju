@@ -28,10 +28,10 @@
     --brand-gold-vivid: #8C6D3D;
     --brand-gold-glow: rgba(184,150,90,0.15);
 
-    /* === 배경 — 쿨 톤 기반 (미세하게 네이비 틴트) === */
+    /* === 배경 — 2026-10-10 v9 종이 톤 (구 쿨 톤·네이비 틴트 폐기) === */
     --bg-page: #F4EFE4;
     --bg-page-gradient: linear-gradient(180deg, #F6F1E7 0%, #F1EBDF 50%, #ECE5D7 100%);
-    --bg-card: #FFFFFF;
+    --bg-card: #FFFDF8;
     --bg-card-hover: #FBF8F1;
     --bg-surface: #F8F4EC;
     --bg-gold: linear-gradient(135deg, #FDF8EE 0%, #F8EDD4 50%, #FDF8EE 100%);

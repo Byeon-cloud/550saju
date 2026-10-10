@@ -20,7 +20,7 @@ import { HourPickerSheet } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId, TOPIC_REGISTRY, TOPIC_IDS, type TopicId } from '@/constants/topics';
 import { kstToday } from '@/utils/kstDate';
 import { loveStars, loveDday, wealthStars, examFact, spouseSeatFact, josa } from '@/services/saju/hookFacts';
-import { HJ, GoldCta, Pansim, hanjaNum } from '@/components/hanji/Hanji';
+import { HJ, GoldCta, Pansim, hanjaNum, INK_HERO_BG } from '@/components/hanji/Hanji';
 
 /** 2026-10-10 — 결제 확인 시트의 '내 사주' 한 줄 (만세력 사실만 · 홈 고민 카드와 같은 문장) */
 function confirmFact(key: string, sd: any): string | null {
@@ -3890,15 +3890,19 @@ export function TopicAnalysisPage() {
             select/loading phase: 페이지 자체에 minimal 헤더 인라인 (Header 컴포넌트 또는 단순 라벨) */}
         {phase !== 'result' && (
           <FadeIn>
-            <div className="text-center py-2">
-              <p className="text-[11px] tracking-widest mb-1" style={{ color: topic.color, fontFamily: "'Noto Serif KR', serif" }}>
-                {topic.label.toUpperCase()}
-              </p>
-              <h1 className="text-h2 text-text-primary" style={{ fontFamily: "'Noto Serif KR', serif" }}>
+            {/* 2026-10-10 v9 — 다른 콘텐츠(주간·월간·궁합·종합사주)와 같은 먹 + 그림 머리 */}
+            <header style={{ margin: '-16px -20px 0', padding: '20px 22px 26px', color: '#FFFFFF', background: INK_HERO_BG }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#D3C7B4', fontWeight: 600 }}>
+                <span className="hj-seal" style={{ width: 30, height: 30, fontSize: 14, color: '#E7B9AC', borderColor: 'rgba(231,185,172,.7)', background: 'transparent' }}>
+                  {TOPIC_REGISTRY[(normalizeTopicId(topicId || '') || topicId) as TopicId]?.kanji || '命'}
+                </span>
+                주제운 · {getTopicPrice(topicId as TopicKey).actualPrice}운
+              </div>
+              <h1 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 24, fontWeight: 700, marginTop: 12, lineHeight: 1.35, letterSpacing: '-0.02em' }}>
                 {topic.label} 심층분석
               </h1>
-              <p className="text-[12px] text-text-hint mt-1">{topic.desc}</p>
-            </div>
+              <p style={{ fontSize: 14.5, color: '#D3C7B4', marginTop: 6, lineHeight: 1.6 }}>{topic.desc}</p>
+            </header>
           </FadeIn>
         )}
 

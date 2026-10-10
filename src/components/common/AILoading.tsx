@@ -157,8 +157,8 @@ export function AILoading({
     >
       {/* 헤더 — name + type */}
       <div className="text-center mb-5">
-        <p style={{ fontSize: 11, color: C.mute, letterSpacing: '0.16em', marginBottom: 4 }}>
-          ANALYZING
+        <p style={{ fontSize: 13, color: C.mute, marginBottom: 4 }}>
+          풀이를 쓰는 중
         </p>
         <p
           style={{
@@ -182,7 +182,7 @@ export function AILoading({
           transition={{ duration: 0.4 }}
           className="w-full max-w-[340px] mb-5 rounded-2xl"
           style={{
-            background: 'linear-gradient(180deg, #1a1f3a 0%, #0e1428 100%)',
+            background: 'linear-gradient(180deg, #1A1612 0%, #0F0C09 100%)',
             color: '#F8F5EE',
             padding: '14px 16px',
           }}

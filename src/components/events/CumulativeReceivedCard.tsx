@@ -102,7 +102,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
             style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 48, color: '#B8965A' }}>
             {fmtUn(total)}
           </span>
-          <span className="text-[18px] font-semibold pb-1" style={{ color: '#1D2D4A' }}>운</span>
+          <span className="text-[18px] font-semibold pb-1" style={{ color: '#1A1612' }}>운</span>
         </div>
 
         <p className="mt-2 text-[12px]" style={{ color: '#8A7F6E' }}>{status}</p>
@@ -158,7 +158,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: '#E5DFD0' }} />
-            <h4 className="text-[16px] font-bold mb-3" style={{ color: '#1D2D4A', fontFamily: "'Noto Serif KR', serif" }}>
+            <h4 className="text-[16px] font-bold mb-3" style={{ color: '#1A1612', fontFamily: "'Noto Serif KR', serif" }}>
               {DETAIL_TITLE[detailType]} · 최근 10건
             </h4>
             {detailList.length === 0 ? (

@@ -474,15 +474,15 @@ export function ChargePage() {
                   minHeight: 18,
                 }}>
                   <span style={{
-                    fontSize: 11, fontWeight: 700, color: C.goldDeep,
+                    fontSize: 12.5, fontWeight: 700, color: C.goldDeep,
                     letterSpacing: '-0.01em',
                   }}>
                     {pkg.label || ' '}
                   </span>
                   {hasBonus ? (
                     <span style={{
-                      fontSize: 10, fontWeight: 700, color: '#FFFFFF',
-                      background: C.success, padding: '2px 7px', borderRadius: 999,
+                      fontSize: 12, fontWeight: 700, color: '#FFFFFF',
+                      background: '#1A1612', padding: '2px 8px', borderRadius: 999, // 2026-10-10 v9 상태 표시는 먹
                       flexShrink: 0, lineHeight: 1.4,
                     }}>
                       +{pkg.bonusUn}운 보너스

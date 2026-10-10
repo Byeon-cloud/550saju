@@ -1210,15 +1210,15 @@ export function TopicUpsellCard({
       </span>
       <div
         style={{
-          fontSize: 10,
+          fontSize: 13,
           color: '#E8C5CB',
-          letterSpacing: '0.15em',
+          letterSpacing: 0,
           fontWeight: 600,
           marginBottom: 8,
           position: 'relative',
         }}
       >
-        PREMIUM
+        종합사주 · 열 장
       </div>
       <h3
         style={{

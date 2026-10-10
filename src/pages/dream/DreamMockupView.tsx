@@ -255,7 +255,7 @@ const MOCKUP_CSS = `
 .dream-mockup .ic { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 3px 10px rgba(0,0,0,.05); border: 1px solid rgba(0,0,0,0.04); }
 .dream-mockup .ic .lb { font-size: 11px; color: #7F6B4E; letter-spacing: 0.18em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .dream-mockup .ic.topic .lb { color: #B8965A; }
-.dream-mockup .ic.dream .lb { color: #1a1f3a; }
+.dream-mockup .ic.dream .lb { color: #1A1612; }
 .dream-mockup .ic .lb .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 .dream-mockup .ic .tx { font-size: 13px; line-height: 1.7; color: #2a2520; margin-top: 6px; word-break: keep-all; }
 .dream-mockup .ic.topic .tx { font-weight: 600; font-family: 'Noto Serif KR', serif; font-size: 14.5px; }
@@ -276,11 +276,11 @@ const MOCKUP_CSS = `
 /* Symbol grid (§02) */
 .dream-mockup .symbol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 0; }
 .dream-mockup .sym { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 12px 12px; text-align: center; }
-.dream-mockup .sym .pic { width: 54px; height: 54px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #F0E8D9, #E5DFD0); border-radius: 50%; color: #1a1f3a; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; }
+.dream-mockup .sym .pic { width: 54px; height: 54px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #F0E8D9, #E5DFD0); border-radius: 50%; color: #1A1612; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; }
 .dream-mockup .sym .pic svg { width: 30px; height: 30px; }
 .dream-mockup .sym .pic.water { background: linear-gradient(135deg, #dbe7f4, #a8c5e6); color: #3E5F82; }
 .dream-mockup .sym .pic.foot { background: linear-gradient(135deg, #F0E8D9, #d4c789); color: #5C4A2E; }
-.dream-mockup .sym .pic.ripple { background: linear-gradient(135deg, #dbe7f4, #bfd3ea); color: #1a1f3a; }
+.dream-mockup .sym .pic.ripple { background: linear-gradient(135deg, #dbe7f4, #bfd3ea); color: #1A1612; }
 .dream-mockup .sym .pic.shadow { background: linear-gradient(135deg, #2a2520, #1a1a1a); color: #E8D9B8; }
 .dream-mockup .sym .pic.fire { background: linear-gradient(135deg, #fbe0e0, #f0a8a8); color: #c62828; }
 .dream-mockup .sym .pic.metal { background: linear-gradient(135deg, #ececec, #c8c8c8); color: #555; }
@@ -297,27 +297,27 @@ const MOCKUP_CSS = `
 /* Quote (§03) */
 .dream-mockup .quote-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
 .dream-mockup .qc { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 14px 14px 40px; position: relative; }
-.dream-mockup .qc::before { content: '"'; position: absolute; left: 14px; top: 8px; font-family: 'Noto Serif KR', serif; font-size: 42px; font-weight: 900; color: #1a1f3a; line-height: 1; }
-.dream-mockup .qc .src { font-family: 'Noto Serif KR', serif; font-size: 13.5px; line-height: 1.6; color: #1a1f3a; font-style: italic; font-weight: 500; word-break: keep-all; }
+.dream-mockup .qc::before { content: '"'; position: absolute; left: 14px; top: 8px; font-family: 'Noto Serif KR', serif; font-size: 42px; font-weight: 900; color: #1A1612; line-height: 1; }
+.dream-mockup .qc .src { font-family: 'Noto Serif KR', serif; font-size: 13.5px; line-height: 1.6; color: #1A1612; font-style: italic; font-weight: 500; word-break: keep-all; }
 .dream-mockup .qc .src .hl { background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; font-weight: 600; }
 .dream-mockup .qc .interp { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5DFD0; font-size: 12.5px; line-height: 1.7; color: #2a2520; word-break: keep-all; }
 .dream-mockup .qc .interp .tag { display: inline-block; font-size: 11px; letter-spacing: 0.1em; font-weight: 600; color: #B8965A; background: rgba(184,150,90,.12); padding: 2px 7px; border-radius: 100px; margin-right: 6px; }
 .dream-mockup .qc .interp strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; }
 
 /* Worry link (§04) */
-.dream-mockup .worry-link { margin-top: 14px; background: linear-gradient(135deg, rgba(106,93,63,.06), rgba(26,31,58,.04)); border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 16px; }
+.dream-mockup .worry-link { margin-top: 14px; background: linear-gradient(135deg, rgba(106,93,63,.06), rgba(26,22,18,.04)); border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 16px; }
 .dream-mockup .worry-link .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .dream-mockup .worry-link .h .lab { font-size: 11px; letter-spacing: 0.15em; color: #5C4A2E; font-weight: 600; }
 .dream-mockup .worry-link .h .arrow { color: #B8965A; font-size: 12px; }
-.dream-mockup .worry-link .h .lab.dream { color: #1a1f3a; }
+.dream-mockup .worry-link .h .lab.dream { color: #1A1612; }
 .dream-mockup .worry-link p { font-size: 13px; line-height: 1.75; color: #2a2520; margin: 0; word-break: keep-all; }
-.dream-mockup .worry-link p strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(26,31,58,.15) 60%); padding: 0 2px; }
+.dream-mockup .worry-link p strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(26,22,18,.15) 60%); padding: 0 2px; }
 /* 2026-05-28 — 좌측 컬러 strip 제거. 그라데이션 배경 + 큰 따옴표(typography)로 인용 표현. */
-.dream-mockup .pullq { background: linear-gradient(135deg, rgba(26,31,58,.06), rgba(212,175,55,.07)); border-radius: 10px; padding: 30px 20px 16px; margin: 16px 0 0; font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.75; color: #1a1a1a; font-weight: 500; word-break: keep-all; position: relative; }
-.dream-mockup .pullq::before { content: '"'; position: absolute; top: 6px; left: 14px; font-family: 'Noto Serif KR', serif; font-size: 42px; line-height: 1; color: rgba(26,31,58,0.22); font-weight: 700; }
+.dream-mockup .pullq { background: linear-gradient(135deg, rgba(26,22,18,.06), rgba(212,175,55,.07)); border-radius: 10px; padding: 30px 20px 16px; margin: 16px 0 0; font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.75; color: #1a1a1a; font-weight: 500; word-break: keep-all; position: relative; }
+.dream-mockup .pullq::before { content: '"'; position: absolute; top: 6px; left: 14px; font-family: 'Noto Serif KR', serif; font-size: 42px; line-height: 1; color: rgba(26,22,18,0.22); font-weight: 700; }
 
 /* 잠금 진입 헤더 */
-.dream-mockup .locked-header { margin: 28px 20px 0; padding: 14px 16px; background: linear-gradient(135deg, #1a1f3a 0%, #0e1428 100%); color: #fff; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 10px; }
+.dream-mockup .locked-header { margin: 28px 20px 0; padding: 14px 16px; background: linear-gradient(135deg, #1A1612 0%, #0F0C09 100%); color: #fff; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 10px; }
 .dream-mockup .locked-header svg { width: 18px; height: 18px; color: #E8D9B8; flex-shrink: 0; }
 .dream-mockup .locked-header .title-col { flex: 1; }
 .dream-mockup .locked-header .lab { font-size: 11px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; }
@@ -391,7 +391,7 @@ const MOCKUP_CSS = `
 .dream-mockup .db-list li { font-size: 12px; line-height: 1.6; color: #2a2520; word-break: keep-all; }
 
 /* Big CTA */
-.dream-mockup .paid-cta { margin: 0 20px; margin-top: -28px; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px 20px; position: relative; overflow: hidden; z-index: 2; box-shadow: 0 8px 30px rgba(26,31,58,.22); transition: opacity .4s ease, transform .4s ease; }
+.dream-mockup .paid-cta { margin: 0 20px; margin-top: -28px; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px 20px; position: relative; overflow: hidden; z-index: 2; box-shadow: 0 8px 30px rgba(26,22,18,.22); transition: opacity .4s ease, transform .4s ease; }
 .dream-mockup.unlocked .paid-cta { display: none; }
 .dream-mockup .paid-cta::before { display: none; content: '解'; position: absolute; right: -10px; bottom: -30px; font-family: 'Noto Serif KR', serif; font-size: 140px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
 .dream-mockup .paid-cta .lab { font-size: 11px; color: #E8D9B8; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 6px; position: relative; }

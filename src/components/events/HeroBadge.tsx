@@ -27,7 +27,7 @@ export function HeroBadge() {
 
       <div className="flex-1 min-w-0">
         <p className="text-[15px] font-bold leading-[1.4]"
-          style={{ color: '#1D2D4A', fontFamily: "'Noto Serif KR', serif" }}>
+          style={{ color: '#1A1612', fontFamily: "'Noto Serif KR', serif" }}>
           콘텐츠 하나만 봐도 오늘 출석 +1
         </p>
         <p className="mt-1 text-[12px] leading-[1.45]" style={{ color: '#8A7F6E' }}>

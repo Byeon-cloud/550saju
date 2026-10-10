@@ -459,15 +459,15 @@ export function ExtensionUpsellCard({
       </span>
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: '#E8D9B8',
-          letterSpacing: '0.15em',
+          letterSpacing: 0,
           fontWeight: 600,
           marginBottom: 8,
           position: 'relative',
         }}
       >
-        PREMIUM
+        종합사주 · 열 장
       </div>
       <h3
         style={{

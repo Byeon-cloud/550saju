@@ -421,15 +421,17 @@ export function ConvertUnModal({
                   onClick={handleConvertForward}
                   style={{
                     width: '100%',
-                    height: 52,
-                    background: C.ink,
-                    color: C.paper,
+                    height: 54,
+                    // 2026-10-10 v9 — 운을 쓰는 주 버튼은 금색 (한지 GoldCta 와 같은 결)
+                    background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
+                    color: '#17110A',
                     border: 'none',
-                    borderRadius: 12,
-                    fontSize: 15,
-                    fontWeight: 700,
+                    borderRadius: 14,
+                    fontSize: 16,
+                    fontWeight: 800,
                     cursor: 'pointer',
                     marginBottom: 8,
+                    boxShadow: '0 10px 22px rgba(140,109,61,.26), inset 0 1px 0 rgba(255,255,255,.45)',
                   }}
                 >
                   {safeAmount}운 → {ticketsGain}대화권 바꾸기

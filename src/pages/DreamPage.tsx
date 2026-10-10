@@ -1,4 +1,5 @@
 import { kstToday } from '@/utils/kstDate';
+import { INK_HERO_BG } from '@/components/hanji/Hanji';
 import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
@@ -1071,20 +1072,9 @@ function CategoryPhase({
       className="space-y-5"
     >
       <FadeIn>
-        <div className="card-navy-v4" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div
-            style={{
-              position: 'absolute',
-              top: -40,
-              right: -40,
-              width: 128,
-              height: 128,
-              borderRadius: 64,
-              opacity: 0.05,
-              background: 'radial-gradient(circle, #B8965A, transparent 70%)',
-            }}
-          />
-          <p className="sec-meta" style={{ color: 'rgba(245,239,224,0.5)' }}>꿈해몽</p>
+        {/* 2026-10-10 v9 — 다른 콘텐츠와 같은 먹 + 그림 머리 */}
+        <div className="card-navy-v4" style={{ position: 'relative', overflow: 'hidden', background: INK_HERO_BG }}>
+          <p className="sec-meta" style={{ color: 'rgba(245,239,224,0.72)', fontSize: 13 }}>꿈해몽</p>
           <h2 className="sec-title-lg" style={{ color: '#F5EFE0', marginTop: 6 }}>
             간밤에 어떤 꿈을<br />꾸셨나요?
           </h2>
@@ -1111,27 +1101,29 @@ function CategoryPhase({
               }}
             >
               <div className="flex items-center gap-3">
+                {/* 2026-10-10 v9 — 분류별 색 아이콘 → 먹 선 아이콘 (색은 누르는 곳에만) */}
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `${cat.color}14` }}
+                  style={{ background: '#F4EFE4', border: '1px solid #E1D7C4' }}
                 >
-                  <Pictogram k={`dream:${cat.id}`} size={22} color={cat.color} />
+                  <Pictogram k={`dream:${cat.id}`} size={22} color="#4B4238" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="sec-title" style={{ fontSize: 15 }}>{cat.label}</p>
+                    <p className="sec-title" style={{ fontSize: 16 }}>{cat.label}</p>
                     {cat.hot && (
                       <span
                         style={{
-                          fontSize: 9,
+                          fontSize: 12,
                           fontWeight: 700,
-                          padding: '2px 5px',
-                          borderRadius: 3,
-                          color: '#B04A38',
-                          background: 'rgba(176,74,56,0.1)',
+                          padding: '2px 7px',
+                          borderRadius: 999,
+                          color: '#7A5C2E',
+                          background: '#F4EFE4',
+                          border: '1px solid #E1D7C4',
                         }}
                       >
-                        HOT
+                        많이 봐요
                       </span>
                     )}
                   </div>

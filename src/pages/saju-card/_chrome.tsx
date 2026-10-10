@@ -142,7 +142,7 @@ export function SajuCardHero({
         padding: 'calc(28px + env(safe-area-inset-top)) 20px 28px',
         color: '#FFFFFF',
         // 다크 네이비 + 일간 오행 그라디언트 합성 (dramatic)
-        background: `linear-gradient(180deg, #0F1828 0%, #1A2540 50%, ${theme.accent}33 100%), ${theme.heroGrad}`,
+        background: `linear-gradient(180deg, #0F0C09 0%, #1F1913 50%, ${theme.accent}33 100%), ${theme.heroGrad}`,
         backgroundBlendMode: 'multiply',
         marginLeft: -18,
         marginRight: -18,
@@ -195,7 +195,7 @@ export function SajuCardHero({
         <span
           style={{
             background: theme.accent,
-            color: '#0F1828',
+            color: '#0F0C09',
             padding: '4px 12px',
             borderRadius: 100,
             fontSize: 10.5,
