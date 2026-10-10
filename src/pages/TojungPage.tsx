@@ -49,11 +49,11 @@ function NySkeleton({ label, lines = 3, height = 12 }: { label: string; lines?: 
   return (
     <div className="card" aria-live="polite">
       <style>{`@keyframes ny-shimmer{0%{background-position:-240px 0}100%{background-position:240px 0}}`}</style>
-      <p className="text-[12px] font-bold mb-2.5" style={{ color: '#2F4B7C' }}>{label}</p>
+      <p className="text-[12px] font-bold mb-2.5" style={{ color: '#1A1612' }}>{label}</p>
       {Array.from({ length: lines }, (_, i) => (
         <div key={i} style={{
           height, width: `${[100, 92, 76, 88][i % 4]}%`, borderRadius: 6, marginBottom: 8,
-          background: 'linear-gradient(90deg, rgba(47,75,124,0.07) 0%, rgba(47,75,124,0.16) 50%, rgba(47,75,124,0.07) 100%)',
+          background: 'linear-gradient(90deg, rgba(140,109,61,0.07) 0%, rgba(140,109,61,0.16) 50%, rgba(140,109,61,0.07) 100%)',
           backgroundSize: '480px 100%', animation: 'ny-shimmer 1.4s ease-in-out infinite',
         }} />
       ))}
@@ -82,7 +82,8 @@ const CATEGORY_ICONS: Record<string, string> = {
   총운: '總', 금전운: '財', 건강운: '健', 직장운: '職', 애정운: '愛', 결혼운: '婚',
 };
 const CATEGORY_COLORS: Record<string, string> = {
-  총운: '#B8965A', 금전운: '#B07F38', 건강운: '#4E7A57', 직장운: '#3E5F82', 애정운: '#E91E63', 결혼운: '#7A5C7E',
+  // 2026-10-10 v9 — 분야마다 다른 색(분홍·초록·파랑) → 금 하나 (이 색 저 색 금지)
+  총운: '#8C6D3D', 금전운: '#8C6D3D', 건강운: '#8C6D3D', 직장운: '#8C6D3D', 애정운: '#8C6D3D', 결혼운: '#8C6D3D',
 };
 
 export function TojungPage() {
@@ -305,13 +306,13 @@ export function TojungPage() {
         {/* 2026-10-09 — 점진 표시 진행 바 (총평 · 1~6월 · 7~12월) */}
         {partialMode && (
           <div className="sticky z-40" style={{ top: 56 }}>
-            <div className="rounded-xl px-3.5 py-3" style={{ background: 'linear-gradient(135deg, #F4F7FC 0%, #EAF0F8 100%)', border: '1px solid rgba(47,75,124,0.22)', boxShadow: '0 2px 8px rgba(47,75,124,0.10)' }}>
-              <p className="text-[12.5px] font-bold mb-1.5" style={{ color: '#2F4B7C' }}>
+            <div className="rounded-xl px-3.5 py-3" style={{ background: 'linear-gradient(135deg, #F4F7FC 0%, #EAF0F8 100%)', border: '1px solid rgba(140,109,61,0.22)', boxShadow: '0 2px 8px rgba(140,109,61,0.10)' }}>
+              <p className="text-[12.5px] font-bold mb-1.5" style={{ color: '#1A1612' }}>
                 신년운세를 쓰는 중이에요 · {(arrivedNy.A ? 1 : 0) + (arrivedNy.B ? 1 : 0) + (arrivedNy.C ? 1 : 0)}/3 도착
               </p>
               <div className="flex gap-1 mb-1.5">
                 {(['A', 'B', 'C'] as const).map((g) => (
-                  <div key={g} className="flex-1 rounded-full" style={{ height: 4, background: arrivedNy[g] ? '#2F4B7C' : 'rgba(47,75,124,0.16)', transition: 'background 0.4s' }} />
+                  <div key={g} className="flex-1 rounded-full" style={{ height: 4, background: arrivedNy[g] ? '#1A1612' : 'rgba(140,109,61,0.16)', transition: 'background 0.4s' }} />
                 ))}
               </div>
               <p className="text-[11px] leading-snug" style={{ color: '#4A5E80' }}>한 해 총평 · 1~6월 · 7~12월 순서 없이, 다 쓰는 대로 채워져요.</p>
@@ -344,7 +345,8 @@ export function TojungPage() {
         {/* 6대 카테고리 그리드 */}
         {partialMode && !arrivedNy.A && <NySkeleton label="분야별 한 해 풀이를 쓰고 있어요" lines={4} />}
         <FadeIn delay={0.05}>
-          <div className="grid grid-cols-2 gap-3">
+          {/* 2026-10-10 v9 가독성 — 긴 글을 좁은 두 칸에 넣지 않는다 (한 칸) */}
+          <div className="grid grid-cols-1 gap-3">
             {categories.map(([key, value], i) => {
               const catColor = CATEGORY_COLORS[key] || '#B8965A';
               const catScore = (result as any).categoryScores?.[key];
@@ -417,7 +419,7 @@ export function TojungPage() {
                 {((result as any).turningPoints as Array<{ when: string; title: string; desc: string }>).map((tp, i) => (
                   <div key={i} className="flex gap-3">
                     <div className="flex-shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-lg h-fit"
-                      style={{ background: 'rgba(47,75,124,0.08)', color: '#2F4B7C', whiteSpace: 'nowrap' }}>{tp.when}</div>
+                      style={{ background: 'rgba(140,109,61,0.08)', color: '#1A1612', whiteSpace: 'nowrap' }}>{tp.when}</div>
                     <div className="min-w-0">
                       <p className="text-label text-text-primary font-bold">{stripMd(String(tp.title || ''))}</p>
                       <p className="text-body-sm text-text-secondary leading-relaxed mt-0.5" dangerouslySetInnerHTML={{ __html: sanitizeAiText(String(tp.desc || '')) }} />

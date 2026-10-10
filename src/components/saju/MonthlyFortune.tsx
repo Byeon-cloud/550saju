@@ -75,14 +75,14 @@ export function MonthlyFortune({ data }: Props) {
           <div className="flex-1 p-2 rounded-lg text-center" style={{ background: '#E7EFE6', border: '1px solid #c8e6c9' }}>
             <p style={{ fontSize: 9, color: '#4E7A57', fontWeight: 600 }}>최고의 달</p>
             <p style={{ fontSize: 16, fontWeight: 900, color: '#4E7A57' }}>{bestMonth.month}월</p>
-            <p style={{ fontSize: 10, color: '#4caf50', fontWeight: 700 }}>{bestMonth.score}점</p>
+            <p style={{ fontSize: 10, color: '#6E9776', fontWeight: 700 }}>{bestMonth.score}점</p>
           </div>
         )}
         {worstMonth && (
           <div className="flex-1 p-2 rounded-lg text-center" style={{ background: '#fff3e0', border: '1px solid #ffe0b2' }}>
             <p style={{ fontSize: 9, color: '#8A6226', fontWeight: 600 }}>주의할 달</p>
             <p style={{ fontSize: 16, fontWeight: 900, color: '#8A6226' }}>{worstMonth.month}월</p>
-            <p style={{ fontSize: 10, color: '#ff9800', fontWeight: 700 }}>{worstMonth.score}점</p>
+            <p style={{ fontSize: 10, color: '#B07F38', fontWeight: 700 }}>{worstMonth.score}점</p>
           </div>
         )}
       </div>

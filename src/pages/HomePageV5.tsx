@@ -117,7 +117,7 @@ function PillarDaily({ path, displayName, todayStr, todayHint, hasProfile, onCli
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
       className="relative mx-4 mt-4 w-[calc(100%-32px)] rounded-[20px] px-[22px] py-5 text-left overflow-hidden"
-      style={{ height: 210, background: 'linear-gradient(135deg, #B5441F 0%, #7B2E15 100%)', color: C.paper }}
+      style={{ height: 210, background: 'linear-gradient(135deg, #A23A2A 0%, #7B2E15 100%)', color: C.paper }}
     >
       <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
         style={{ background: 'rgba(248,245,238,0.18)', color: C.paper, backdropFilter: 'blur(8px)' }}>
@@ -271,7 +271,7 @@ function Extensions4({ navigate }: { navigate: ReturnType<typeof useNavigate> })
   // 인수인계 §5 확장 4색
   const EXT = [
     { id: 'daeun',   kanji: '運', h: '대운 10년 흐름', sub: '앞으로의 10년 기운',   strip: '#3B7A4B', path: '/daeun',   price: '3운' },
-    { id: 'wolun',   kanji: '月', h: '월운 이번 달',   sub: '재물·연애·일 흐름',    strip: '#B5441F', path: '/monthly', price: '2운' },
+    { id: 'wolun',   kanji: '月', h: '월운 이번 달',   sub: '재물·연애·일 흐름',    strip: '#A23A2A', path: '/monthly', price: '2운' },
     { id: 'gung',    kanji: '合', h: '궁합 보기',      sub: '두 사람 사주 궁합',    strip: '#9C5A8A', path: '/compat',  price: '2운' },
     { id: 'tojeong', kanji: '歲', h: '토정비결',       sub: '올해 1년 흐름',         strip: '#2F4B7C', path: '/tojung',  price: '3운' },
   ];

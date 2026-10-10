@@ -1180,7 +1180,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                           <p style={{ fontSize: 9, fontWeight: 700, color: '#4E7A57' }}>희신 — 용신을 돕는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span style={{ fontSize: 18, fontWeight: 900, color: huiOheng?.color || '#4E7A57' }}>{analysisBase.희신}</span>
-                            {huiOheng && <span style={{ fontSize: 9, color: '#4caf50' }}>{(huiOheng as any).nature}</span>}
+                            {huiOheng && <span style={{ fontSize: 9, color: '#6E9776' }}>{(huiOheng as any).nature}</span>}
                           </div>
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>

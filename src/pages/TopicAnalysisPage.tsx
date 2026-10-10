@@ -182,18 +182,18 @@ function adaptToTopicResultV2(result: any, topicId: string): TopicResultV2 {
  */
 const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> = {
   // SSOT v1 컬러 정렬 (2026-04-22 · @/constants/topics)
-  love:     { label: '연애운',       color: '#C88A95', desc: '만남·관계·인연 흐름' },
-  wealth:   { label: '재물운',       color: '#B8965A', desc: '돈·투자·현금흐름 변곡' },
-  career:   { label: '직업운',       color: '#5A7CA8', desc: '커리어·승진·평생 결' },
-  marriage: { label: '결혼운',       color: '#C97B95', desc: '인연 시기와 배우자 결' },
-  business: { label: '사업운',       color: '#A37A2E', desc: '창업·자영업 흐름과 시기' },
-  health:   { label: '건강운',       color: '#6FA08C', desc: '체질·기운·주의 시기' },
-  reunion:  { label: '재회운',       color: '#D89A8A', desc: '헤어진 사람과의 흐름' },
-  study:    { label: '학업운',       color: '#9C5A8A', desc: '집중력·지식 흡수·학습 패턴' },
-  exam:     { label: '합격·이직운', color: '#5A6FA8', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
-  move:     { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
-  social:   { label: '대인관계운',   color: '#B07F38', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
-  moving:   { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
+  love:     { label: '연애운',       color: '#8C6D3D', desc: '만남·관계·인연 흐름' },
+  wealth:   { label: '재물운',       color: '#8C6D3D', desc: '돈·투자·현금흐름 변곡' },
+  career:   { label: '직업운',       color: '#8C6D3D', desc: '커리어·승진·평생 결' },
+  marriage: { label: '결혼운',       color: '#8C6D3D', desc: '인연 시기와 배우자 결' },
+  business: { label: '사업운',       color: '#8C6D3D', desc: '창업·자영업 흐름과 시기' },
+  health:   { label: '건강운',       color: '#8C6D3D', desc: '체질·기운·주의 시기' },
+  reunion:  { label: '재회운',       color: '#8C6D3D', desc: '헤어진 사람과의 흐름' },
+  study:    { label: '학업운',       color: '#8C6D3D', desc: '집중력·지식 흡수·학습 패턴' },
+  exam:     { label: '합격·이직운', color: '#8C6D3D', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
+  move:     { label: '이사·이동운', color: '#8C6D3D', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
+  social:   { label: '대인관계운',   color: '#8C6D3D', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
+  moving:   { label: '이사·이동운', color: '#8C6D3D', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
 };
 
 const OHENG_COLORS: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
@@ -297,7 +297,7 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   연보라: '#BA68C8', 라벤더: '#BA68C8',
   진보라: '#4A148C', 자주: '#AD1457', 자주색: '#AD1457',
   // 분홍 계열
-  분홍: '#C88A95', 분홍색: '#C88A95', 핑크: '#C88A95',
+  분홍: '#8C6D3D', 분홍색: '#8C6D3D', 핑크: '#8C6D3D',
   연분홍: '#F48FB1', 로즈: '#C62828', 장미: '#C62828',
   // 주황 계열
   주황: '#8A6226', 주황색: '#8A6226', 오렌지: '#8A6226',
@@ -640,7 +640,7 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
             </div>
           )}
           {data.charmPoint && (
-            <div className="mt-2 rounded-xl py-2.5 px-3" style={{ background: 'rgba(233,30,99,0.04)' }}>
+            <div className="mt-2 rounded-xl py-2.5 px-3" style={{ background: 'rgba(140,109,61,0.04)' }}>
               <p className="text-[11px] font-semibold mb-0.5" style={{ color }}>나의 매력 포인트</p>
               <p className="text-[12px] text-text-primary leading-snug">{data.charmPoint}</p>
             </div>
@@ -810,7 +810,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
         { key: 'main',    label: '본업',    hanja: '本業', value: Number(s.main ?? 0),    color: '#B8965A' },
         { key: 'invest',  label: '투자',    hanja: '投資', value: Number(s.invest ?? 0),  color: '#3E5F82' },
         { key: 'side',    label: '사이드',   hanja: '副業', value: Number(s.side ?? 0),    color: '#4E7A57' },
-        { key: 'inherit', label: '상속·기타', hanja: '其他', value: Number(s.inherit ?? 0), color: '#9C5A8A' },
+        { key: 'inherit', label: '상속·기타', hanja: '其他', value: Number(s.inherit ?? 0), color: '#8C6D3D' },
       ];
     }
     // wealthType 기반 inference (서버 response 누락 시 안전 fallback)
@@ -825,7 +825,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
       { key: 'main',    label: '본업',    hanja: '本業', value: dist.main,    color: '#B8965A' },
       { key: 'invest',  label: '투자',    hanja: '投資', value: dist.invest,  color: '#3E5F82' },
       { key: 'side',    label: '사이드',   hanja: '副業', value: dist.side,    color: '#4E7A57' },
-      { key: 'inherit', label: '상속·기타', hanja: '其他', value: dist.inherit, color: '#9C5A8A' },
+      { key: 'inherit', label: '상속·기타', hanja: '其他', value: dist.inherit, color: '#8C6D3D' },
     ];
   }, [data.incomeSources, data.wealthType]);
   const isInferredDist = !data.incomeSources;
@@ -2276,7 +2276,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="space-y-3">
               {[
                 { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C88A95" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#C88A95' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8C6D3D" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#8C6D3D' },
                 { key: 'hongYeomSal', name: '홍염살', hanja: '紅艶殺', summary: '강렬한 끌림', subject: '나의 사주',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B04A38" strokeWidth="2"><path d="M12 2c1 3 4 5.5 4 10a4 4 0 11-8 0c0-4.5 3-7 4-10z" /></svg>, activeColor: '#B04A38' },
                 { key: 'wonJinSal', name: '원진살', hanja: '怨嗔殺', summary: '감정 어긋남', subject: '두 사람 사이',
@@ -2357,8 +2357,8 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                       <stop offset="100%" stopColor={color} stopOpacity={0.02} />
                     </linearGradient>
                     <linearGradient id="myEnergyGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#C88A95" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="#C88A95" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor="#8C6D3D" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#8C6D3D" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false}
@@ -2366,7 +2366,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false} />
                   <Area type="monotone" dataKey="reunionChance" stroke={color} fill="url(#reunionGrad)"
                     strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
-                  <Area type="monotone" dataKey="myEnergy" stroke="#C88A95" fill="url(#myEnergyGrad)"
+                  <Area type="monotone" dataKey="myEnergy" stroke="#8C6D3D" fill="url(#myEnergyGrad)"
                     strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -2377,7 +2377,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                 <span className="text-[11px] text-text-hint">재회 확률</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-[2px] rounded-full" style={{ background: '#C88A95', opacity: 0.6 }} />
+                <div className="w-3 h-[2px] rounded-full" style={{ background: '#8C6D3D', opacity: 0.6 }} />
                 <span className="text-[11px] text-text-hint">나의 에너지</span>
               </div>
             </div>
@@ -2714,7 +2714,7 @@ function StudyViz({ data, color }: { data: any; color: string }) {
  *  · StudyViz 재사용 + exam-specific 카드 추가
  *  · 합격 신살 (문창·학당·태극귀인) 활성화 상태
  *  · 시험·면접·이직 3축 인디케이터
- *  · 보라계 컬러 (#9C5A8A)
+ *  · 보라계 컬러 (#8C6D3D)
  */
 function ExamViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
@@ -5280,7 +5280,7 @@ export function TopicAnalysisPage() {
                     className="card w-full py-3 px-3 flex items-center gap-2"
                     style={{ minHeight: 56 }}
                   >
-                    <span style={{ width: 20, textAlign: 'center', fontWeight: 900, color: '#9C5A8A', fontFamily: "'Noto Serif KR', serif" }}>合</span>
+                    <span style={{ width: 20, textAlign: 'center', fontWeight: 900, color: '#8C6D3D', fontFamily: "'Noto Serif KR', serif" }}>合</span>
                     <span className="flex flex-col items-start text-left" style={{ minWidth: 0 }}>
                       <span className="text-[14px] font-semibold text-text-primary">그 사람과의 궁합 보기</span>
                       <span className="text-[11px] text-text-hint">두 사람 사주가 맞물리는 자리 · 1운</span>

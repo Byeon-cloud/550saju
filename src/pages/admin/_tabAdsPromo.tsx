@@ -14,7 +14,7 @@ import { buildCsv, downloadCsv, csvFilename } from './_csv';
 // 내부 운 리워드 (실지급 원화 아님 — 운 단위 적립)
 const REWARD_TREND_KINDS = ['attend7', 'daily', 'streak3', 'share'];
 const REWARD_COLORS: Record<string, string> = {
-  attend7: '#B5441F', daily: '#B8965A', streak3: '#5A7CA8', share: '#6FA08C',
+  attend7: '#A23A2A', daily: '#B8965A', streak3: '#5A7CA8', share: '#6FA08C',
 };
 const REWARD_LABEL: Record<string, string> = {
   attend7: '7일 출석 완주', daily: '데일리 출석 (0.1운)', streak3: '3일 연속 (1운)', share: '공유 리워드',

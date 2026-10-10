@@ -78,9 +78,9 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
     compat: '合', daeun: '運', monthly: '月', weekly: '週', tojung: '歲',
   };
   const COLORS: Record<string, string> = {
-    dream: '#1A1612', daily: '#B5441F', topic: '#B8965A', premium: '#8C6D3D',
-    compat: '#9C5A8A', daeun: '#3B7A4B', monthly: EXTENSION_THEME.monthly.accentDark,
-    weekly: EXTENSION_THEME.weekly.accentDark, tojung: '#2F4B7C',
+    dream: '#1A1612', daily: '#A23A2A', topic: '#B8965A', premium: '#8C6D3D',
+    compat: '#8C6D3D', daeun: '#3B7A4B', monthly: EXTENSION_THEME.monthly.accentDark,
+    weekly: EXTENSION_THEME.weekly.accentDark, tojung: '#1A1612',
   };
   const han = HAN[ctx.type] || '解';
   const color = COLORS[ctx.type] || '#B8965A';

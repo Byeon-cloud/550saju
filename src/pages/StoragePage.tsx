@@ -1449,7 +1449,7 @@ function ContentIcon({ contentType }: { contentType: ContentType | 'chat' }) {
     daily: { hanja: '日', color: '#A55F11' },
     daeun: { hanja: '運', color: C.goldDeep },
     monthly: { hanja: '月', color: '#0E4582' },
-    weekly: { hanja: '週', color: '#C77D3A' },
+    weekly: { hanja: '週', color: '#8C6D3D' },
     compat: { hanja: '合', color: '#9C2424' },
     tojung: { hanja: '占', color: '#1F6638' },
     topic: { hanja: '深', color: C.goldDeep },

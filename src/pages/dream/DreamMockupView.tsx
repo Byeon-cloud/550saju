@@ -245,7 +245,7 @@ const MOCKUP_CSS = `
 .dream-mockup .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
 .dream-mockup .hd .badge.free { background: rgba(212,175,55,.22); color: #f2d678; }
 /* 2026-09-17 — 잠금 해제(1운) 결과 헤더: 무료 뱃지 대신 그린 톤 '잠금 해제' */
-.dream-mockup .hd .badge.open { background: rgba(111,160,140,.28); color: #cfe8dc; }
+.dream-mockup .hd .badge.open { background: rgba(140,109,61,.28); color: #cfe8dc; }
 .dream-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 23px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; }
 .dream-mockup .hd .date { font-size: 12px; opacity: .7; margin-top: 6px; font-feature-settings: 'tnum'; position: relative; }
 
@@ -264,29 +264,31 @@ const MOCKUP_CSS = `
 /* Body */
 .dream-mockup .body { padding: 18px 20px 0; }
 .dream-mockup .section { margin-top: 24px; }
-.dream-mockup .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #5C4A2E; letter-spacing: 0.2em; margin-bottom: 4px; }
+.dream-mockup .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 900; color: #A23A2A; letter-spacing: 0; margin-bottom: 4px; } /* 2026-10-10 v9 — SECTION 01 → 一 */
 .dream-mockup .sec-title { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; color: #1a1a1a; }
 .dream-mockup .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
 .dream-mockup .sec-lead { font-size: 12px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
 .dream-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 .dream-mockup .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; color: #1a1a1a; }
 /* <em> = 주의·경고 (번트오렌지) — 2026-05-29. font-style normal (한글 가독). */
-.dream-mockup .body p em, .dream-mockup .body em { font-style: normal; font-weight: 700; color: #B5441F; background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,.15) 56%); padding: 0 2px; border-radius: 2px; }
+.dream-mockup .body p em, .dream-mockup .body em { font-style: normal; font-weight: 700; color: #A23A2A; background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%); padding: 0 2px; border-radius: 2px; }
 
 /* Symbol grid (§02) */
-.dream-mockup .symbol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 0; }
-.dream-mockup .sym { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 12px 12px; text-align: center; }
-.dream-mockup .sym .pic { width: 54px; height: 54px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #F0E8D9, #E5DFD0); border-radius: 50%; color: #1A1612; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; }
+.dream-mockup .symbol-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 14px 0 0; } /* 2026-10-10 v9 가독성 — 긴 설명을 좁은 두 칸에 넣지 않음 */
+.dream-mockup .sym { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px; text-align: left; display: grid; grid-template-columns: 54px 1fr; column-gap: 14px; align-items: start; } /* 2026-10-10 v9 한 칸 가로형 — 그림 왼쪽·글 오른쪽 */
+.dream-mockup .sym > *:not(.pic) { grid-column: 2; }
+.dream-mockup .sym > .pic { grid-row: 1 / span 4; }
+.dream-mockup .sym .pic { width: 54px; height: 54px; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #F0E8D9, #E5DFD0); border-radius: 50%; color: #1A1612; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; }
 .dream-mockup .sym .pic svg { width: 30px; height: 30px; }
 .dream-mockup .sym .pic.water { background: linear-gradient(135deg, #dbe7f4, #a8c5e6); color: #3E5F82; }
 .dream-mockup .sym .pic.foot { background: linear-gradient(135deg, #F0E8D9, #d4c789); color: #5C4A2E; }
 .dream-mockup .sym .pic.ripple { background: linear-gradient(135deg, #dbe7f4, #bfd3ea); color: #1A1612; }
 .dream-mockup .sym .pic.shadow { background: linear-gradient(135deg, #2a2520, #1a1a1a); color: #E8D9B8; }
-.dream-mockup .sym .pic.fire { background: linear-gradient(135deg, #fbe0e0, #f0a8a8); color: #c62828; }
+.dream-mockup .sym .pic.fire { background: linear-gradient(135deg, #F6E5E0, #E8C3B9); color: #B04A38; }
 .dream-mockup .sym .pic.metal { background: linear-gradient(135deg, #ececec, #c8c8c8); color: #555; }
 .dream-mockup .sym .pic.leaf { background: linear-gradient(135deg, #e0eed5, #b8d99c); color: #4E7A57; }
 .dream-mockup .sym .pic.mountain { background: linear-gradient(135deg, #efe5d4, #d8c89e); color: #7F6B4E; }
-.dream-mockup .sym .hd2 { display: flex; justify-content: center; align-items: baseline; gap: 6px; }
+.dream-mockup .sym .hd2 { display: flex; justify-content: flex-start; align-items: baseline; gap: 6px; }
 .dream-mockup .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
 .dream-mockup .sym .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 12px; }
 .dream-mockup .sym .dc { font-size: 13.5px; color: #1a1a1a; line-height: 1.75; margin-top: 10px; text-align: left; word-break: keep-all; }
@@ -329,7 +331,7 @@ const MOCKUP_CSS = `
 .dream-mockup.unlocked .locked-stack::after { opacity: 0; }
 .dream-mockup .lk-sec { padding: 16px 18px; border-bottom: 1px solid #F0E8D9; position: relative; }
 .dream-mockup .lk-sec:last-child { border-bottom: 0; }
-.dream-mockup .lk-sec .sec-num { color: #7F6B4E; opacity: .8; }
+.dream-mockup .lk-sec .sec-num { color: #A23A2A; opacity: .75; }
 .dream-mockup .lk-sec .sec-title { font-size: 16.5px; display: flex; align-items: center; gap: 8px; }
 .dream-mockup .lk-sec .lock-icon { width: 14px; height: 14px; color: #B8965A; flex-shrink: 0; transition: opacity .55s ease; }
 .dream-mockup.unlocked .lk-sec .lock-icon { display: none; }
@@ -492,7 +494,7 @@ const MOCKUP_CSS = `
 .dream-mockup .section { padding-left: 0; border-left: 0; transition: padding .2s ease; }
 .dream-mockup .section .acc-head { padding: 14px 0 8px; }
 .dream-mockup .section.is-open { padding-left: 12px; border-left: 3px solid rgba(184,150,90,.55); margin-left: -4px; }
-.dream-mockup .section .sec-num { color: #B8965A; font-weight: 700; }
+.dream-mockup .section .sec-num { color: #A23A2A; font-weight: 900; }
 .dream-mockup .section + .section { border-top: 1px solid #EEE5D2; margin-top: 16px; }
 
 /* §02 symbol 카드 hover 미세 강조 */
@@ -640,7 +642,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
         <main className="body">
           {/* §01 첫 인상 (default 펼침 — 진입 시 가장 먼저 읽힘) */}
           <DreamSection
-            num="SECTION 01"
+            num="一"
             title="첫 인상"
             han="初相"
             defaultOpen={true}
@@ -664,7 +666,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
 
           {/* §02 꿈 속 상징 (default 펼침 — 스트리밍 중 항상 4 슬롯 / 종료 시 실 카드 개수만) */}
           <DreamSection
-            num="SECTION 02"
+            num="二"
             title="꿈 속 상징"
             han="象徵"
             defaultOpen={true}
@@ -715,7 +717,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               prompt V5 업그레이드 후 정상 노출. 임시로 quotes 있을 때만 렌더. */}
           {quotes.length > 0 && (
             <DreamSection
-              num="SECTION 03"
+              num="三"
               title={`${profile?.name ? `${profile.name} 님` : '내가'} 쓴 문장이 말하는 것`}
               han="文解"
               defaultOpen={false}
@@ -738,7 +740,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
 
           {/* §04 요새 고민과 이 꿈 */}
           <DreamSection
-            num="SECTION 04"
+            num="四"
             title="요새 고민과 이 꿈"
             han="應夢"
             defaultOpen={false}
@@ -785,7 +787,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               {/* §05 일간 연동 */}
               {(lockedDayganRead?.teaser || isStreaming) && (
                 <div className="lk-sec">
-                  <div className="sec-num">SECTION 05</div>
+                  <div className="sec-num">五</div>
                   <div className="sec-title">
                     {stripMd(String(lockedDayganRead?.title || '일간으로 보는 이 꿈'))}
                     <svg className="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -814,7 +816,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               {/* §06 오행 흐름 */}
               {(lockedOhengFlow?.teaser || isStreaming) && (
                 <div className="lk-sec">
-                  <div className="sec-num">SECTION 06</div>
+                  <div className="sec-num">六</div>
                   <div className="sec-title">
                     {stripMd(String(lockedOhengFlow?.title || '꿈이 드러낸 오행 흐름'))}
                     <svg className="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -859,7 +861,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               {/* §07 경고 */}
               {(lockedWarnList?.intro || isStreaming) && (
                 <div className="lk-sec">
-                  <div className="sec-num">SECTION 07</div>
+                  <div className="sec-num">七</div>
                   <div className="sec-title">
                     {stripMd(String(lockedWarnList?.title || '이 꿈이 경고하는 것'))} <span className="han">忌</span>
                     <svg className="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -893,7 +895,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               {/* §08 시기 */}
               {(lockedTimeline?.teaser || isStreaming) && (
                 <div className="lk-sec">
-                  <div className="sec-num">SECTION 08</div>
+                  <div className="sec-num">八</div>
                   <div className="sec-title">
                     {stripMd(String(lockedTimeline?.title || '이 꿈이 예고하는 시기'))}
                     <svg className="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -933,7 +935,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               {/* §09 처방 */}
               {(lockedAction?.teaser || isStreaming) && (
                 <div className="lk-sec">
-                  <div className="sec-num">SECTION 09</div>
+                  <div className="sec-num">九</div>
                   <div className="sec-title">
                     {stripMd(String(lockedAction?.title || '구체 실천 처방'))} <span className="han">處方</span>
                     <svg className="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

@@ -5303,7 +5303,7 @@ function PracticeChecklist({
               boxShadow: '0 4px 14px rgba(184,150,90,0.12)',
             } : {}),
             ...(i === actions.length - 1 ? {
-              background: 'linear-gradient(135deg, rgba(78,122,87,0.06) 0%, rgba(76,175,80,0.03) 100%)',
+              background: 'linear-gradient(135deg, rgba(78,122,87,0.06) 0%, rgba(78,122,87,0.03) 100%)',
               borderColor: 'rgba(78,122,87,0.3)',
             } : {}),
           }}
@@ -5977,7 +5977,7 @@ function SipDonut({ sipDist }: { sipDist: SipDist }) {
 function SipClusterHeader({ sipDist }: { sipDist: any }) {
   const clusters: Array<{ key: keyof typeof sipDist; label: string; hanja: string; color: string; meaning: string }> = [
     { key: '비겁', label: '비겁', hanja: '比劫', color: '#5C9A6F', meaning: '자아·경쟁' },
-    { key: '식상', label: '식상', hanja: '食傷', color: '#C88A95', meaning: '표현·창작' },
+    { key: '식상', label: '식상', hanja: '食傷', color: '#8C6D3D', meaning: '표현·창작' },
     { key: '재성', label: '재성', hanja: '財星', color: '#B8965A', meaning: '재물·실리' },
     { key: '관성', label: '관성', hanja: '官星', color: '#5A7CA8', meaning: '관계·책임' },
     { key: '인성', label: '인성', hanja: '印星', color: '#8E5C95', meaning: '학문·배움' },
@@ -7438,7 +7438,7 @@ function TopicMiniGrid({
                 className="tm-fill"
                 style={{
                   width: `${t.score}%`,
-                  ...(isPeak ? { background: 'linear-gradient(90deg, #4caf50, #4E7A57)' } : {}),
+                  ...(isPeak ? { background: 'linear-gradient(90deg, #6E9776, #4E7A57)' } : {}),
                   ...(isLow ? { background: 'linear-gradient(90deg, #ef5350, #c62828)' } : {}),
                 }}
               />

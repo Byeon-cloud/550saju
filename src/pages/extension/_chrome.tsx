@@ -1,8 +1,8 @@
 // extension/_chrome.tsx — Phase D'-4 Bundle 1 (#54) 확장 4종 mockup 시각 패턴 추출
 // 진본:
 //   - 확장_대운흐름_v1 (287L)  → DaeunPage  (2운, 大運, #3B7A4B)
-//   - 확장_월운_v1 (285L)      → MonthlyPage (1운, 月運, #B5441F)
-//   - 확장_궁합_v1 (289L)      → CompatibilityPage (3운, 合, #9C5A8A)
+//   - 확장_월운_v1 (285L)      → MonthlyPage (1운, 月運, #A23A2A)
+//   - 확장_궁합_v1 (289L)      → CompatibilityPage (3운, 合, #8C6D3D)
 //   - 확장_토정비결_v1 (272L)  → TojungPage (2운, 歲, #2F4B7C)
 //
 // 핵심 패턴:
@@ -15,7 +15,7 @@
 // 원칙:
 //   - mockup 진본 디자인 그대로 (badge·tier·sub·meta·seal·sec-num·han·pullq·src 등)
 //   - SSOT 토큰만 (banned 회피)
-//   - 4 페이지 색 SSOT v1 (#3B7A4B / #B5441F / #9C5A8A / #2F4B7C)
+//   - 4 페이지 색 SSOT v1 (#3B7A4B / #A23A2A / #8C6D3D / #2F4B7C)
 //   - D∞ 단일 CTA (작업 0)
 //   - mount는 Bundle 2
 
@@ -59,62 +59,64 @@ export interface ExtensionTheme {
   cost: '1운' | '2운' | '3운' | '5운' | '7운';
 }
 
+// 2026-10-10 v9 — 콘텐츠별 강조색(대운 초록·월간 주홍·궁합 보라·신년 남청) 폐기 → 금(라벨·칩) + 먹(제목) 하나로.
+//   heroGrad 는 더 안 씀 (ExtensionHero = INK_HERO_BG). 값은 하위호환으로만 남김.
 export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
   daeun: {
-    heroGrad: 'linear-gradient(135deg,#5C9A6F 0%,#3B7A4B 60%,#1F5A30 100%)',
+    heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#1A1612 60%,#1A1612 100%)',
     hanja: '大運',
-    accent: '#5C9A6F',
-    accentDark: '#3B7A4B',
-    accentSoft: 'rgba(59,122,75,0.10)',
-    hint: '#1F4A2A',
+    accent: '#8C6D3D',
+    accentDark: '#1A1612',
+    accentSoft: 'rgba(140,109,61,0.10)',
+    hint: '#4B4238',
     label: '대운 흐름',
     heroH1: { line1: '인생을 흐르는', line2: '10년 단위의 결' },
     // 2026-07-01 가격 fix — 대운 실제 차감 1운 (DaeunPage spendBalance(1)). 기존 '2운' stale.
     cost: '1운',
   },
   monthly: {
-    heroGrad: 'linear-gradient(135deg,#D86A45 0%,#B5441F 60%,#8E3017 100%)',
+    heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#A23A2A 60%,#6E2A20 100%)',
     hanja: '月運',
-    accent: '#D86A45',
-    accentDark: '#B5441F',
-    accentSoft: 'rgba(181,68,31,0.10)',
-    hint: '#5A2010',
+    accent: '#8C6D3D',
+    accentDark: '#1A1612',
+    accentSoft: 'rgba(140,109,61,0.10)',
+    hint: '#4B4238',
     label: '월운 · 이번 달',
     heroH1: { line1: '이번 달의 결과', line2: '시기를 살핍니다' },
     // 2026-07-01 가격 fix — 월운 정가 7운 (getMonthlyPrice SSOT). 세일가는 호출부 costLabel 로.
     cost: '7운',
   },
   weekly: {
-    // 2026-06-29 NEW — 주간운세 (이번 주 7일) · SSOT 색 #C77D3A
-    heroGrad: 'linear-gradient(135deg,#E0975A 0%,#C77D3A 60%,#9C5E25 100%)',
+    // 2026-06-29 NEW — 주간운세 (이번 주 7일) · SSOT 색 #8C6D3D
+    heroGrad: 'linear-gradient(135deg,#B8965A 0%,#8C6D3D 60%,#7A5C2E 100%)',
     hanja: '週',
-    accent: '#E0975A',
-    accentDark: '#C77D3A',
-    accentSoft: 'rgba(199,125,58,0.10)',
-    hint: '#6B3F14',
+    accent: '#8C6D3D',
+    accentDark: '#1A1612',
+    accentSoft: 'rgba(140,109,61,0.10)',
+    hint: '#4B4238',
     label: '주간운세 · 이번 주',
     heroH1: { line1: '이번 주 7일의', line2: '흐름을 짚어 드립니다' },
     cost: '5운' as ExtensionTheme['cost'],
   },
   compat: {
-    heroGrad: 'linear-gradient(135deg,#B57FA0 0%,#9C5A8A 60%,#7C4570 100%)',
+    heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#1A1612 60%,#1A1612 100%)',
     hanja: '合',
-    accent: '#B57FA0',
-    accentDark: '#9C5A8A',
-    accentSoft: 'rgba(156,90,138,0.10)',
-    hint: '#4C2C44',
+    accent: '#8C6D3D',
+    accentDark: '#1A1612',
+    accentSoft: 'rgba(140,109,61,0.10)',
+    hint: '#4B4238',
     label: '궁합',
     heroH1: { line1: '두 사주의 결을 겹쳐', line2: '읽어 드립니다' },
     // 2026-07-01 가격 fix — 궁합 실제 차감 1운 (CompatibilityPage spendBalance(1)). 기존 '3운' stale.
     cost: '1운',
   },
   tojung: {
-    heroGrad: 'linear-gradient(135deg,#5A7CA8 0%,#2F4B7C 60%,#1A3158 100%)',
+    heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#1A1612 60%,#1A1612 100%)',
     hanja: '歲',
-    accent: '#5A7CA8',
-    accentDark: '#2F4B7C',
-    accentSoft: 'rgba(47,75,124,0.10)',
-    hint: '#1A3158',
+    accent: '#8C6D3D',
+    accentDark: '#1A1612',
+    accentSoft: 'rgba(140,109,61,0.10)',
+    hint: '#4B4238',
     // 2026-10-08 — 신년운세 7운 프리미엄 (TojungPage NEWYEAR_PRICE=7 · 서버 generateTojung 7운)
     label: '신년운세',
     heroH1: { line1: '다가올 한 해를', line2: '날짜까지 미리 봅니다' },
@@ -687,11 +689,11 @@ export function DaeunBars({
           const isNow = b.variant === 'now';
           const isPeak = b.variant === 'peak';
           const fillBg = isPeak
-            ? 'linear-gradient(180deg, #B5441F, #8E3017)'
+            ? 'linear-gradient(180deg, #A23A2A, #6E2A20)'
             : isNow
-            ? 'linear-gradient(180deg, #3B7A4B, #1F5A30)'
+            ? 'linear-gradient(180deg, #1A1612, #1A1612)'
             : 'linear-gradient(180deg, #C9D5BD, #A1B8A6)';
-          const numColor = isNow || isPeak ? '#FFFFFF' : '#3B7A4B';
+          const numColor = isNow || isPeak ? '#FFFFFF' : '#1A1612';
           return (
             <div
               key={i}
@@ -714,14 +716,14 @@ export function DaeunBars({
                   paddingTop: 4,
                   position: 'relative',
                   border: isNow
-                    ? '2px solid #1F5A30'
+                    ? '2px solid #1A1612'
                     : isPeak
-                    ? '2px solid #8E3017'
+                    ? '2px solid #6E2A20'
                     : 'none',
                   boxShadow: isPeak
-                    ? '0 2px 8px rgba(181,68,31,0.30)'
+                    ? '0 2px 8px rgba(162,58,42,0.30)'
                     : isNow
-                    ? '0 2px 8px rgba(59,122,75,0.30)'
+                    ? '0 2px 8px rgba(140,109,61,0.30)'
                     : 'none',
                 }}
               >
@@ -744,9 +746,9 @@ export function DaeunBars({
                   fontSize: 11,
                   fontWeight: 700,
                   color: isNow
-                    ? '#1F5A30'
+                    ? '#1A1612'
                     : isPeak
-                    ? '#8E3017'
+                    ? '#6E2A20'
                     : C.ink,
                 }}
               >
@@ -775,7 +777,7 @@ const HEAT_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
   2: '#C9D5BD',
   3: '#A1C7AE',
   4: '#5C8A6F',
-  5: '#3B7A4B',
+  5: '#1A1612',
 };
 
 export function DaeunHeatGrid({
@@ -904,17 +906,17 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
       {cards.map((c, i) => {
         const accent =
           c.badge === 'now'
-            ? '#3B7A4B'
+            ? '#1A1612'
             : c.badge === 'peak'
-            ? '#B5441F'
+            ? '#A23A2A'
             : c.badge === 'warn'
             ? '#8C6D3D'
             : C.line;
         const bg =
           c.badge === 'now'
-            ? 'rgba(59,122,75,0.06)'
+            ? 'rgba(140,109,61,0.06)'
             : c.badge === 'peak'
-            ? 'rgba(181,68,31,0.06)'
+            ? 'rgba(162,58,42,0.06)'
             : c.badge === 'warn'
             ? 'rgba(140,109,61,0.06)'
             : '#FFFFFF';
@@ -1067,7 +1069,7 @@ export function MonthHero({
           <div
             style={{
               fontSize: 11,
-              color: '#B5441F',
+              color: '#A23A2A',
               letterSpacing: '0.2em',
               fontWeight: 700,
             }}
@@ -1079,7 +1081,7 @@ export function MonthHero({
               fontFamily: "'Noto Serif KR', serif",
               fontSize: 56,
               fontWeight: 800,
-              color: '#B5441F',
+              color: '#A23A2A',
               lineHeight: 1,
               marginTop: 4,
             }}
@@ -1088,7 +1090,7 @@ export function MonthHero({
             <small
               style={{
                 fontSize: 18,
-                color: '#8E3017',
+                color: '#6E2A20',
                 fontWeight: 600,
                 marginLeft: 4,
               }}
@@ -1099,8 +1101,8 @@ export function MonthHero({
         </div>
         <div
           style={{
-            background: 'rgba(181,68,31,0.10)',
-            color: '#8E3017',
+            background: 'rgba(162,58,42,0.10)',
+            color: '#6E2A20',
             padding: '4px 10px',
             borderRadius: 100,
             fontFamily: "'Noto Serif KR', serif",
@@ -1148,10 +1150,10 @@ export interface FourCardItem {
 }
 
 const FOURCARD_COLORS: Record<1 | 2 | 3 | 4, string> = {
-  1: '#3B7A4B', // 가장 강
-  2: '#5A7CA8',
-  3: '#B5441F', // 약함 (주의)
-  4: '#9C5A8A',
+  1: '#1A1612', // 가장 강
+  2: '#8C6D3D',
+  3: '#A23A2A', // 약함 (주의)
+  4: '#1A1612',
 };
 
 export function FourCard({ items, title }: { items: FourCardItem[]; title?: string }) {
@@ -1267,9 +1269,9 @@ export interface CalDay {
 
 const CAL_INTENSITY: Record<0 | 1 | 2 | 3, string> = {
   0: 'transparent',
-  1: 'rgba(181,68,31,0.10)',
-  2: 'rgba(181,68,31,0.30)',
-  3: 'rgba(181,68,31,0.55)',
+  1: 'rgba(162,58,42,0.10)',
+  2: 'rgba(162,58,42,0.30)',
+  3: 'rgba(162,58,42,0.55)',
 };
 
 export function CalGrid({
@@ -1303,7 +1305,7 @@ export function CalGrid({
         <div
           style={{
             fontSize: 11,
-            color: '#B5441F',
+            color: '#A23A2A',
             letterSpacing: '0.15em',
             fontWeight: 700,
           }}
@@ -1402,15 +1404,15 @@ export function CompatPair({
           fontFamily: "'Noto Serif KR', serif",
           fontSize: 28,
           fontWeight: 800,
-          color: '#9C5A8A',
-          background: 'rgba(156,90,138,0.10)',
+          color: '#1A1612',
+          background: 'rgba(140,109,61,0.10)',
           width: 44,
           height: 44,
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '1px solid rgba(156,90,138,0.30)',
+          border: '1px solid rgba(140,109,61,0.30)',
         }}
       >
         {centerHanja}
@@ -1433,7 +1435,7 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
       <div
         style={{
           fontSize: 11,
-          color: '#9C5A8A',
+          color: '#1A1612',
           letterSpacing: '0.15em',
           fontWeight: 700,
           marginBottom: 4,
@@ -1456,7 +1458,7 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
           fontFamily: "'Noto Serif KR', serif",
           fontSize: 22,
           fontWeight: 700,
-          color: '#9C5A8A',
+          color: '#1A1612',
           lineHeight: 1,
           marginBottom: 4,
         }}
@@ -1484,12 +1486,12 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
           <span
             key={i}
             style={{
-              background: 'rgba(156,90,138,0.06)',
-              border: '1px solid rgba(156,90,138,0.20)',
+              background: 'rgba(140,109,61,0.06)',
+              border: '1px solid rgba(140,109,61,0.20)',
               padding: '3px 7px',
               borderRadius: 6,
               fontSize: 11,
-              color: '#7C4570',
+              color: '#1A1612',
             }}
           >
             <b
@@ -1534,7 +1536,7 @@ export function CompatTimeline({ steps }: { steps: CompatTimelineStep[] }) {
           top: 6,
           bottom: 6,
           width: 1.5,
-          background: 'rgba(156,90,138,0.30)',
+          background: 'rgba(140,109,61,0.30)',
         }}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1549,14 +1551,14 @@ export function CompatTimeline({ steps }: { steps: CompatTimelineStep[] }) {
                 width: 13,
                 height: 13,
                 borderRadius: '50%',
-                background: s.highlight ? '#9C5A8A' : '#FFFFFF',
-                border: '2px solid #9C5A8A',
+                background: s.highlight ? '#1A1612' : '#FFFFFF',
+                border: '2px solid #1A1612',
               }}
             />
             <div
               style={{
                 fontSize: 11,
-                color: '#9C5A8A',
+                color: '#1A1612',
                 fontWeight: 700,
                 marginBottom: 3,
                 letterSpacing: '0.04em',
@@ -1612,18 +1614,18 @@ export function TojungHexagramCard({
     <section
       style={{
         margin: '12px 20px 0',
-        background: 'linear-gradient(135deg, #FFFFFF, rgba(47,75,124,0.04))',
-        border: '1px solid rgba(47,75,124,0.30)',
+        background: 'linear-gradient(135deg, #FFFFFF, rgba(140,109,61,0.04))',
+        border: '1px solid rgba(140,109,61,0.30)',
         borderRadius: 14,
         padding: '20px 22px',
         textAlign: 'center',
-        boxShadow: '0 4px 16px rgba(47,75,124,0.06)',
+        boxShadow: '0 4px 16px rgba(140,109,61,0.06)',
       }}
     >
       <div
         style={{
           fontSize: 11,
-          color: '#2F4B7C',
+          color: '#1A1612',
           letterSpacing: '0.2em',
           fontWeight: 700,
           marginBottom: 12,
@@ -1636,7 +1638,7 @@ export function TojungHexagramCard({
           fontFamily: "'Noto Serif KR', serif",
           fontSize: 36,
           fontWeight: 800,
-          color: '#2F4B7C',
+          color: '#1A1612',
           letterSpacing: '0.05em',
           marginBottom: 8,
           lineHeight: 1.1,
@@ -1671,8 +1673,8 @@ export function TojungHexagramCard({
             fontFamily: "'Noto Serif KR', serif",
             fontSize: 12.5,
             fontStyle: 'italic',
-            color: '#2F4B7C',
-            background: 'rgba(47,75,124,0.06)',
+            color: '#1A1612',
+            background: 'rgba(140,109,61,0.06)',
             borderRadius: 8,
             padding: '10px 14px',
             lineHeight: 1.65,
@@ -1710,7 +1712,7 @@ export function TojungFourBox({ items }: { items: TojungFourItem[] }) {
           key={i}
           style={{
             background: '#FFFFFF',
-            border: '1px solid rgba(47,75,124,0.20)',
+            border: '1px solid rgba(140,109,61,0.20)',
             borderRadius: 10,
             padding: '12px 14px',
             textAlign: 'center',
@@ -1719,7 +1721,7 @@ export function TojungFourBox({ items }: { items: TojungFourItem[] }) {
           <div
             style={{
               fontSize: 11,
-              color: '#2F4B7C',
+              color: '#1A1612',
               fontWeight: 700,
               letterSpacing: '0.1em',
               marginBottom: 6,
@@ -1773,15 +1775,15 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
       {months.map((m) => {
         const accent =
           m.variant === 'good'
-            ? '#3B7A4B'
+            ? '#1A1612'
             : m.variant === 'caution'
-            ? '#B5441F'
-            : '#2F4B7C';
+            ? '#A23A2A'
+            : '#1A1612';
         const bg =
           m.variant === 'good'
-            ? 'rgba(59,122,75,0.06)'
+            ? 'rgba(140,109,61,0.06)'
             : m.variant === 'caution'
-            ? 'rgba(181,68,31,0.06)'
+            ? 'rgba(162,58,42,0.06)'
             : '#FFFFFF';
         return (
           <div
@@ -1823,7 +1825,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
                     fontSize: 9,
                     fontWeight: 700,
                     color: '#FFFFFF',
-                    background: '#3B7A4B',
+                    background: '#1A1612',
                     padding: '1px 6px',
                     borderRadius: 100,
                   }}
@@ -1838,7 +1840,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
                     fontSize: 9,
                     fontWeight: 700,
                     color: '#FFFFFF',
-                    background: '#B5441F',
+                    background: '#A23A2A',
                     padding: '1px 6px',
                     borderRadius: 100,
                   }}

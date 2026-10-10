@@ -25,7 +25,7 @@ import {
 
 type Phase = 'select' | 'loading' | 'result';
 
-const ACCENT = '#B5441F'; // 월운 확장색 (CLAUDE.md 톤 SSOT)
+const ACCENT = '#A23A2A'; // 월운 확장색 (CLAUDE.md 톤 SSOT)
 
 /**
  * 선택 가능한 13개월 — 지난 6개월 + 이번 달 + 앞으로 6개월 (예: 7월이면 1월~내년 1월).
@@ -286,7 +286,7 @@ export function MonthlyPage() {
                           className="py-2.5 rounded-xl text-center transition-all relative"
                           style={
                             active
-                              ? { background: ACCENT, color: '#fff', boxShadow: '0 2px 8px rgba(181,68,31,0.25)' }
+                              ? { background: ACCENT, color: '#fff', boxShadow: '0 2px 8px rgba(162,58,42,0.25)' }
                               : { background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid rgba(0,0,0,0.06)', opacity: o.isPast ? 0.72 : 1 }
                           }
                         >

@@ -583,9 +583,9 @@ export function Component12Unseong({
 
   // Stage 7e-2: 12운성 단계별 의미 컬러 (인생의 흐름)
   const STAGE_PHASE_COLOR = (idx: number): string => {
-    if (idx <= 1) return '#C88A95';      // 절·태 (시작 전·잉태) — 핑크
+    if (idx <= 1) return '#8C6D3D';      // 절·태 (시작 전·잉태) — 핑크
     if (idx === 2) return '#A4B79A';     // 양 — 연두
-    if (idx <= 5) return '#6FA08C';      // 장생·목욕·관대 (성장) — 그린
+    if (idx <= 5) return '#8C6D3D';      // 장생·목욕·관대 (성장) — 그린
     if (idx <= 7) return '#B8965A';      // 건록·제왕 (절정) — 골드
     if (idx <= 9) return '#D08F5A';      // 쇠·병 (쇠퇴) — 주황
     return '#7A7269';                     // 사·묘 (정리) — 회색
@@ -769,10 +769,10 @@ export function Component12Unseong({
       {/* 4 기둥 dot — Stage 7b 컬러 분리 (시=핑크 / 일=골드 / 월=블루 / 년=그린) */}
       {pillarDots.map((p, i) => {
         const colorMap: Record<string, string> = {
-          '시지': '#C88A95',
+          '시지': '#8C6D3D',
           '일지': '#B8965A',
           '월지': '#5A7CA8',
-          '년지': '#6FA08C',
+          '년지': '#8C6D3D',
         };
         const dotColor = colorMap[p.position] || '#B8965A';
         return (

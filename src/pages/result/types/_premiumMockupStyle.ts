@@ -180,8 +180,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .section-body p em {
     font-style: normal;
     font-weight: 700;
-    color: #B5441F;
-    background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,0.15) 56%);
+    color: #A23A2A;
+    background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,0.15) 56%);
     padding: 0 2px;
     border-radius: 2px;
   }
@@ -328,7 +328,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .o-hwa  .o-label { color: #B04A38; } .premium-mockup .o-hwa  .o-fill { background: linear-gradient(90deg, #EF5350, #B04A38); }
   .premium-mockup .o-to   .o-label { color: #B07F38; } .premium-mockup .o-to   .o-fill { background: linear-gradient(90deg, #F9C849, #B07F38); }
   .premium-mockup .o-geum .o-label { color: #7D7870; } .premium-mockup .o-geum .o-fill { background: linear-gradient(90deg, #BDBDBD, #7D7870); }
-  .premium-mockup .o-su   .o-label { color: #3E5F82; } .premium-mockup .o-su   .o-fill { background: linear-gradient(90deg, #2196F3, #3E5F82); }
+  .premium-mockup .o-su   .o-label { color: #3E5F82; } .premium-mockup .o-su   .o-fill { background: linear-gradient(90deg, #3E5F82, #3E5F82); }
   /* ─── 3. 십성 카드 그리드 ──────────────────────── */
 
   
@@ -848,7 +848,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     height: 100%; border-radius: 100px;
     background: linear-gradient(90deg, #E8D9B8, #B8965A);
   }
-  .premium-mockup .daewoon-scores .ds-fill.peak { background: linear-gradient(90deg, #4E7A57, #4caf50); }
+  .premium-mockup .daewoon-scores .ds-fill.peak { background: linear-gradient(90deg, #4E7A57, #6E9776); }
   .premium-mockup .daewoon-scores .ds-fill.now  {
     background: linear-gradient(90deg, #B8965A, #E8D9B8);
     box-shadow: 0 0 0 1px rgba(212,175,55,.4);
@@ -1191,7 +1191,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel6-do   .ic {
     color: #fff;
-    background: linear-gradient(135deg, #4caf50, #4E7A57);
+    background: linear-gradient(135deg, #6E9776, #4E7A57);
   }
   .premium-mockup .rel6-dont .ic {
     color: #fff;

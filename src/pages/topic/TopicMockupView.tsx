@@ -331,8 +331,8 @@ const MOCKUP_CSS = `
 /* <em> = 주의·경고 (번트오렌지) — 2026-05-29. 황금 형광펜과 대비. font-style normal (한글 가독). */
 .topic-mockup .body p em, .topic-mockup .body em,
 .topic-mockup .reason em, .topic-mockup .ds em {
-  font-style: normal; font-weight: 700; color: #B5441F;
-  background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,.15) 56%);
+  font-style: normal; font-weight: 700; color: #A23A2A;
+  background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%);
   padding: 0 2px; border-radius: 2px;
 }
 

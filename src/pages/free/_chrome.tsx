@@ -700,9 +700,9 @@ export interface TodayTopicCard {
 
 const TOPIC_CARD_COLOR: Record<TodayTopicCard['key'], { accent: string; soft: string }> = {
   money: { accent: '#B8965A', soft: 'rgba(184,150,90,0.10)' },
-  rel: { accent: '#C88A95', soft: 'rgba(200,138,149,0.10)' },
-  work: { accent: '#5A7CA8', soft: 'rgba(90,124,168,0.10)' },
-  health: { accent: '#6FA08C', soft: 'rgba(111,160,140,0.10)' },
+  rel: { accent: '#8C6D3D', soft: 'rgba(140,109,61,0.10)' },
+  work: { accent: '#5A7CA8', soft: 'rgba(140,109,61,0.10)' },
+  health: { accent: '#8C6D3D', soft: 'rgba(140,109,61,0.10)' },
 };
 
 export function TodayTopicGrid({ cards }: { cards: TodayTopicCard[] }) {

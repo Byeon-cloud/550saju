@@ -266,10 +266,11 @@ export function IdentityCard({
         overflow: 'hidden',
       }}
     >
-      {/* 배경 워터마크 */}
+      {/* 배경 워터마크 — 2026-10-10 v9 제거 */}
       <span
         aria-hidden
         style={{
+          display: 'none',
           position: 'absolute',
           right: -60,
           top: 100,

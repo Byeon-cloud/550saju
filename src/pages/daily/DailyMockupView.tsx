@@ -570,8 +570,8 @@ const MOCKUP_CSS = `
 .daily-mockup .ds em {
   font-style: normal;
   font-weight: 700;
-  color: #B5441F;
-  background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,.15) 56%);
+  color: #A23A2A;
+  background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%);
   padding: 0 2px; border-radius: 2px;
 }
 .daily-mockup .body p .han { font-family: 'Noto Serif KR', serif; color: var(--c-ink-soft); font-size: 13px; }
@@ -607,9 +607,9 @@ const MOCKUP_CSS = `
   pointer-events: none;
 }
 .daily-mockup .topic-card.t-money  { --card-tone: rgba(184,150,90,0.14); }
-.daily-mockup .topic-card.t-rel    { --card-tone: rgba(200,138,149,0.18); }
-.daily-mockup .topic-card.t-work   { --card-tone: rgba(90,124,168,0.18); }
-.daily-mockup .topic-card.t-health { --card-tone: rgba(111,160,140,0.18); }
+.daily-mockup .topic-card.t-rel    { --card-tone: rgba(140,109,61,0.18); }
+.daily-mockup .topic-card.t-work   { --card-tone: rgba(140,109,61,0.18); }
+.daily-mockup .topic-card.t-health { --card-tone: rgba(140,109,61,0.18); }
 .daily-mockup .topic-card .head { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
 .daily-mockup .topic-card .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
 .daily-mockup .topic-card .han {
@@ -620,17 +620,17 @@ const MOCKUP_CSS = `
   line-height: 1.2;
 }
 .daily-mockup .topic-card.t-money  .han { --han-bg: rgba(184,150,90,0.14); --han-fg: #8C6D3D; }
-.daily-mockup .topic-card.t-rel    .han { --han-bg: rgba(200,138,149,0.16); --han-fg: #B05B6B; }
-.daily-mockup .topic-card.t-work   .han { --han-bg: rgba(90,124,168,0.14); --han-fg: #4D6E96; }
-.daily-mockup .topic-card.t-health .han { --han-bg: rgba(111,160,140,0.16); --han-fg: #5A8674; }
+.daily-mockup .topic-card.t-rel    .han { --han-bg: rgba(140,109,61,0.16); --han-fg: #B05B6B; }
+.daily-mockup .topic-card.t-work   .han { --han-bg: rgba(140,109,61,0.14); --han-fg: #4D6E96; }
+.daily-mockup .topic-card.t-health .han { --han-bg: rgba(140,109,61,0.16); --han-fg: #5A8674; }
 .daily-mockup .topic-card .score-row { display: flex; align-items: baseline; gap: 4px; margin-top: 6px; position: relative; z-index: 1; }
 .daily-mockup .topic-card .score { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; }
 .daily-mockup .topic-card .score-max { font-size: 11px; color: var(--c-mute); }
 .daily-mockup .topic-card .one-liner { font-size: 11.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.55; word-break: keep-all; position: relative; z-index: 1; }
 .daily-mockup .topic-card.t-money .score  { color: #B8965A; }
-.daily-mockup .topic-card.t-rel .score    { color: #C88A95; }
+.daily-mockup .topic-card.t-rel .score    { color: #8C6D3D; }
 .daily-mockup .topic-card.t-work .score   { color: #5A7CA8; }
-.daily-mockup .topic-card.t-health .score { color: #6FA08C; }
+.daily-mockup .topic-card.t-health .score { color: #8C6D3D; }
 .daily-mockup .topic-card .cta-text { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--c-card-line); font-size: 11px; color: #B8965A; font-weight: 600; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
 .daily-mockup .topic-card .cost-pill { background: rgba(184,148,31,.1); color: #B8965A; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }
 

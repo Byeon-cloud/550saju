@@ -47,75 +47,75 @@ export interface SipsungColorMeta {
 export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
   // 비겁 (녹)
   비견: {
-    color: '#5C9A6F',
-    soft: 'rgba(92,154,111,0.10)',
+    color: '#4E7A57',
+    soft: 'rgba(78,122,87,0.10)',
     category: '비겁',
     hanja: '比肩',
     meaning: '나와 같은 자리 — 동료·경쟁자',
   },
   겁재: {
-    color: '#4A8068',
-    soft: 'rgba(74,128,104,0.10)',
+    color: '#355A3E',
+    soft: 'rgba(53,90,62,0.10)',
     category: '비겁',
     hanja: '劫財',
     meaning: '재물을 빼앗기는 결 — 양면적 동지',
   },
   // 식상 (분)
   식신: {
-    color: '#C88A95',
-    soft: 'rgba(200,138,149,0.10)',
+    color: '#B04A38',
+    soft: 'rgba(176,74,56,0.10)',
     category: '식상',
     hanja: '食神',
     meaning: '내가 만들어내는 결 — 표현·창작',
   },
   상관: {
-    color: '#B57FA0',
-    soft: 'rgba(181,127,160,0.10)',
+    color: '#8A3326',
+    soft: 'rgba(138,51,38,0.10)',
     category: '식상',
     hanja: '傷官',
     meaning: '재능과 반항의 결 — 날카로운 표현',
   },
   // 재성 (금)
   정재: {
-    color: '#D4B07F',
-    soft: 'rgba(212,176,127,0.12)',
+    color: '#B07F38',
+    soft: 'rgba(176,127,56,0.12)',
     category: '재성',
     hanja: '正財',
     meaning: '꾸준한 재물 — 노력의 결과',
   },
   편재: {
-    color: '#B8965A',
-    soft: 'rgba(184,150,90,0.12)',
+    color: '#8A6226',
+    soft: 'rgba(138,98,38,0.12)',
     category: '재성',
     hanja: '偏財',
     meaning: '큰 재물 흐름 — 사업·투자',
   },
   // 관성 (청)
   정관: {
-    color: '#5A7CA8',
-    soft: 'rgba(90,124,168,0.10)',
+    color: '#3E5F82',
+    soft: 'rgba(62,95,130,0.10)',
     category: '관성',
     hanja: '正官',
     meaning: '책임과 명예 — 안정된 자리',
   },
   편관: {
-    color: '#3F5A7C',
-    soft: 'rgba(63,90,124,0.10)',
+    color: '#2A4560',
+    soft: 'rgba(42,69,96,0.10)',
     category: '관성',
     hanja: '偏官',
     meaning: '강한 압박 — 도전·돌파',
   },
   // 인성 (자)
   정인: {
-    color: '#8E5C95',
-    soft: 'rgba(142,92,149,0.10)',
+    color: '#7A5C7E',
+    soft: 'rgba(122,92,126,0.10)',
     category: '인성',
     hanja: '正印',
     meaning: '받아들이는 결 — 학문·어머니',
   },
   편인: {
-    color: '#7A4570',
-    soft: 'rgba(122,69,112,0.10)',
+    color: '#5C4360',
+    soft: 'rgba(92,67,96,0.10)',
     category: '인성',
     hanja: '偏印',
     meaning: '독특한 직관 — 종교·예술',
@@ -127,11 +127,11 @@ export const SIPSUNG_CATEGORY_COLOR: Record<
   SipsungCategory,
   { color: string; deep: string; soft: string; label: string; meaning: string }
 > = {
-  비겁: { color: '#5C9A6F', deep: '#4A8068', soft: 'rgba(92,154,111,0.10)', label: '자아 · 경쟁', meaning: '독립심·자기 길' },
-  식상: { color: '#C88A95', deep: '#B57FA0', soft: 'rgba(200,138,149,0.10)', label: '표현 · 창작', meaning: '만들고 나누는 힘' },
-  재성: { color: '#D4B07F', deep: '#B8965A', soft: 'rgba(212,176,127,0.12)', label: '재물 · 실리', meaning: '돈의 흐름과 자원' },
-  관성: { color: '#5A7CA8', deep: '#3F5A7C', soft: 'rgba(90,124,168,0.10)', label: '관계 · 책임', meaning: '권위·명예의 자리' },
-  인성: { color: '#8E5C95', deep: '#7A4570', soft: 'rgba(142,92,149,0.10)', label: '학문 · 배움', meaning: '받아들이고 키우는 힘' },
+  비겁: { color: '#4E7A57', deep: '#355A3E', soft: 'rgba(78,122,87,0.10)', label: '자아 · 경쟁', meaning: '독립심·자기 길' },
+  식상: { color: '#B04A38', deep: '#8A3326', soft: 'rgba(176,74,56,0.10)', label: '표현 · 창작', meaning: '만들고 나누는 힘' },
+  재성: { color: '#B07F38', deep: '#8A6226', soft: 'rgba(176,127,56,0.12)', label: '재물 · 실리', meaning: '돈의 흐름과 자원' },
+  관성: { color: '#3E5F82', deep: '#2A4560', soft: 'rgba(62,95,130,0.10)', label: '관계 · 책임', meaning: '권위·명예의 자리' },
+  인성: { color: '#7A5C7E', deep: '#5C4360', soft: 'rgba(122,92,126,0.10)', label: '학문 · 배움', meaning: '받아들이고 키우는 힘' },
 };
 
 /** 한자 (中) → 한국어 정규화 — calculator(lunar-javascript) 출력 대응.

@@ -15,7 +15,7 @@ export const CONTENT_LABEL: Record<string, string> = {
   deepDream: '심층해몽', daeun: '대운', monthly: '월운', compat: '궁합', tojung: '토정비결',
   basic: '1운 리포트', compatibility: '궁합',
 };
-export const CONTENT_COLORS = ['#B5441F', '#1A1A1A', '#5A7CA8', '#B8965A', '#6FA08C', '#9C5A8A'];
+export const CONTENT_COLORS = ['#A23A2A', '#1A1A1A', '#5A7CA8', '#B8965A', '#6FA08C', '#9C5A8A'];
 
 export const fmtNum = (n: number): string => n.toLocaleString('ko-KR');
 export const fmtWon = (n: number): string => `₩${Math.round(n).toLocaleString('ko-KR')}`;

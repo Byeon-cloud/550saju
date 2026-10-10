@@ -254,7 +254,7 @@ function getOgTheme(type?: ShareContentType): OgTheme {
   switch (type) {
     case 'daily':
       return {
-        bgFrom: '#B5441F', bgTo: '#7B2E15', accent: '#F4D166', hanja: '火',
+        bgFrom: '#A23A2A', bgTo: '#7B2E15', accent: '#F4D166', hanja: '火',
         headline: () => '오늘 운세',
         tagline: '500원에 만나는 정통 명리학 — 매일 무료',
       };

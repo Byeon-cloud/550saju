@@ -9,7 +9,7 @@
  *  - SectionHeader + openSections state (§01·02 기본 펼침) 아코디언
  *  - 강조: safeHtmlEmph(본문) · safeHtml(헤드라인) · stripAll(순수텍스트)
  *  - 콘텐츠 정체성: 월간 = 한 달 상·중·하순 깊이 (오늘운세 = 하루, 주간운세 = 7일 하루하루)
- *  - 월운색 #B5441F (CLAUDE.md 톤 SSOT)
+ *  - 월운색 #A23A2A (CLAUDE.md 톤 SSOT)
  *
  * 데이터: types/report.ts MonthlyDetailResponse
  *   headline·theme·keywords·periods[3]{phase,dateRange,score,body}
@@ -34,7 +34,7 @@ const safeHtmlEmph = (text: any): { __html: string } => ({
 const stripAll = (text: any): string =>
   stripMd(String(text ?? '')).replace(/<\/?[a-zA-Z][a-zA-Z0-9]*\b[^<>]*>/g, '');
 
-const ACCENT = '#B5441F'; // 월운 확장색 (CLAUDE.md 톤 SSOT)
+const ACCENT = '#A23A2A'; // 월운 확장색 (CLAUDE.md 톤 SSOT)
 
 interface MonthlyMockupViewProps {
   result: MonthlyDetailResponse;
@@ -67,9 +67,9 @@ const MOCKUP_CSS = `
   --c-card-line: rgba(184,150,90,0.18);
   --c-line: #E5DFD0;
   /* 월운 강조색 */
-  --c-accent: #B5441F;
-  --c-accent-soft: rgba(181,68,31,0.10);
-  --c-accent-line: rgba(181,68,31,0.30);
+  --c-accent: #A23A2A;
+  --c-accent-soft: rgba(162,58,42,0.10);
+  --c-accent-line: rgba(162,58,42,0.30);
   /* 5 오행 정식 (SajuCard OHENG_THEME) */
   --c-mok: #4E7A57; --c-hwa: #B04A38; --c-to: #B07F38; --c-geum: #7D7870; --c-su: #3E5F82;
   --c-mok-soft: rgba(78,122,87,0.10); --c-hwa-soft: rgba(176,74,56,0.10);
@@ -273,8 +273,8 @@ const MOCKUP_CSS = `
 .monthly-mockup .gaewoon-body em {
   font-style: normal;
   font-weight: 700;
-  color: #B5441F;
-  background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,.15) 56%);
+  color: #A23A2A;
+  background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%);
   padding: 0 2px; border-radius: 2px;
 }
 
@@ -282,7 +282,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .theme-body { font-size: 14.5px; line-height: 1.85; color: #2a2520; word-break: keep-all; }
 .monthly-mockup .theme-body strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.32) 55%); padding: 0 3px; border-radius: 2px; }
 .monthly-mockup .theme-body u { text-decoration: underline; text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
-.monthly-mockup .theme-body em { font-style: normal; font-weight: 700; color: #B5441F; background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,.15) 56%); padding: 0 2px; border-radius: 2px; }
+.monthly-mockup .theme-body em { font-style: normal; font-weight: 700; color: #A23A2A; background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%); padding: 0 2px; border-radius: 2px; }
 
 /* §02 상순·중순·하순 흐름 — timeline + score */
 .monthly-mockup .period-chart { margin: 14px 0 0; background: #fff; border-radius: 12px; padding: 14px; border: 1px solid var(--c-card-line); }
@@ -318,7 +318,7 @@ const MOCKUP_CSS = `
   appearance: none; font: inherit; color: inherit; cursor: pointer;
   transition: border-color .18s, box-shadow .18s, transform .12s;
 }
-.monthly-mockup .domain:hover { border-color: var(--c-accent-line); box-shadow: 0 4px 14px rgba(181,68,31,.08); }
+.monthly-mockup .domain:hover { border-color: var(--c-accent-line); box-shadow: 0 4px 14px rgba(162,58,42,.08); }
 .monthly-mockup .domain:active { transform: scale(0.992); }
 .monthly-mockup .domain .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .monthly-mockup .domain .sc-wrap { display: flex; align-items: center; gap: 6px; }
@@ -376,7 +376,7 @@ const MOCKUP_CSS = `
   padding: 16px;
   position: relative; overflow: hidden;
 }
-.monthly-mockup .gaewoon-card::before { display: none; content: '開'; position: absolute; right: -8px; bottom: -24px; font-family: 'Noto Serif KR', serif; font-size: 110px; font-weight: 900; color: rgba(181,68,31,.06); line-height: 1; }
+.monthly-mockup .gaewoon-card::before { display: none; content: '開'; position: absolute; right: -8px; bottom: -24px; font-family: 'Noto Serif KR', serif; font-size: 110px; font-weight: 900; color: rgba(162,58,42,.06); line-height: 1; }
 .monthly-mockup .gaewoon-card .lab { font-size: 11px; color: var(--c-accent); letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px; position: relative; }
 .monthly-mockup .gaewoon-card .gaewoon-body { font-size: 14px; line-height: 1.8; color: #2a2520; word-break: keep-all; position: relative; }
 .monthly-mockup .gaewoon-body strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.32) 55%); padding: 0 3px; border-radius: 2px; }
@@ -523,8 +523,8 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
   const domains: { key: string; topicId: string; nm: string; han: string; color: string; data?: MonthlyDomain }[] = [
     { key: 'wealth', topicId: 'wealth', nm: '재물운', han: '財', color: '#B8965A', data: result?.wealth },
     { key: 'career', topicId: 'career', nm: '직업운', han: '官', color: '#5A7CA8', data: result?.career },
-    { key: 'love', topicId: 'love', nm: '애정운', han: '緣', color: '#C88A95', data: result?.love },
-    { key: 'health', topicId: 'health', nm: '건강운', han: '壽', color: '#6FA08C', data: result?.health },
+    { key: 'love', topicId: 'love', nm: '애정운', han: '緣', color: '#8C6D3D', data: result?.love },
+    { key: 'health', topicId: 'health', nm: '건강운', han: '壽', color: '#8C6D3D', data: result?.health },
   ].filter((d) => d.data && (d.data.body || typeof d.data.score === 'number'));
 
   // ── 상중하순 흐름 SVG path (3 점수 → 곡선)

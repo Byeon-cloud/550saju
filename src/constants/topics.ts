@@ -63,7 +63,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     //   사유: 桃 = 사주 직접 한자(도화살), 緣 = 일반 인연 (재회 復와 인접 — UX 헷갈림).
     //   D∞ 원칙: mockup 진본 디자인 우선.
     kanji: '桃',
-    color: '#C88A95',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
     subCopy: '만남·관계·인연 흐름',
     lens: '일반 만남·관계 흐름·매력 발산·연애 패턴',
@@ -78,7 +78,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'reunion',
     label: '재회운',
     kanji: '復',
-    color: '#D89A8A',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
     subCopy: '헤어진 사람과의 흐름',
     lens: '헤어진 사람과의 재결합 가능성·timing·접촉 방향',
@@ -93,7 +93,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'marriage',
     label: '결혼운',
     kanji: '婚',
-    color: '#C97B95',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '인연 시기와 배우자 결',
     lens: '결혼 timing·배우자 결·결혼 후 생활 패턴',
@@ -108,7 +108,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'wealth',
     label: '재물운',
     kanji: '財',
-    color: '#B8965A',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '추천',
     subCopy: '돈·투자·현금흐름 변곡',
     lens: '돈의 결·투자·현금흐름·재물 timing',
@@ -123,7 +123,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'exam',
     label: '합격·이직운',
     kanji: '進',
-    color: '#5A6FA8',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
     subCopy: '시험·이직 결정 시기',
     lens: '시험·자격증·이직·전직 변동의 timing 과 방향',
@@ -138,7 +138,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'business',
     label: '사업운',
     kanji: '業',
-    color: '#A37A2E',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '추천',
     subCopy: '창업·자영업 흐름과 시기',
     lens: '자영업·창업의 결·재무 리스크·사업 timing',
@@ -153,7 +153,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'health',
     label: '건강운',
     kanji: '壽',
-    color: '#6FA08C',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '체질·기운·주의 시기',
     lens: '체질·기운·올해 주의 시기·생활 습관',
@@ -165,7 +165,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'move',
     label: '이사·이동운',
     kanji: '移',
-    color: '#4F8A8B',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '이사·이동 길흉 방향',
     lens: '주거 이전·이동·여행 timing 과 방향',
@@ -179,7 +179,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'study',
     label: '학업운',
     kanji: '學',
-    color: '#9C5A8A',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '시험·집중력·지식 흡수',
     lens: '학업·집중력·지식 흡수·학습 패턴',
@@ -194,7 +194,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     id: 'career',
     label: '직업운',
     kanji: '官',
-    color: '#5A7CA8',
+    color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '커리어·승진·평생 결',
     lens: '평생의 일의 결·적성·승진 흐름·조직 내 패턴',

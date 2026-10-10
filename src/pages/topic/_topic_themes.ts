@@ -99,9 +99,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '桃花',
     sec01Title: '연애운 핵심 결',
     heroH1: { line1: '관계의 흐름과', line2: '인연이 닿는 자리' },
-    accent: '#C88A95',
-    accentDark: '#A1606C',
-    accentSoft: 'rgba(200,138,149,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '일지 배우자궁',
     sipsungAxes: {
       main: '재성',
@@ -132,9 +132,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '復縁',
     sec01Title: '재회운 핵심 결',
     heroH1: { line1: '다시 닿을 수 있는', line2: '관계의 변곡점' },
-    accent: '#D89A8A',
-    accentDark: '#A8685A',
-    accentSoft: 'rgba(216,154,138,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '합·충 변곡',
     sipsungAxes: {
       main: '합·충',
@@ -165,9 +165,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '婚姻',
     sec01Title: '결혼운 핵심 결',
     heroH1: { line1: '평생을 함께 할', line2: '동반자의 결' },
-    accent: '#C97B95',
-    accentDark: '#9C4F6D',
-    accentSoft: 'rgba(201,123,149,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '일지 배우자궁',
     sipsungAxes: {
       main: '정관',
@@ -198,8 +198,8 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '財星',
     sec01Title: '재물운 핵심 결',
     heroH1: { line1: '돈이 들어오고', line2: '머무는 자리' },
-    accent: '#B8965A',
-    accentDark: '#8C6D3D',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
     accentSoft: 'rgba(184,150,90,0.10)',
     sajuRefPrefix: '재성',
     sipsungAxes: {
@@ -231,9 +231,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '進就',
     sec01Title: '시험운 핵심 결',
     heroH1: { line1: '집중이 빛나는', line2: '합격의 시간' },
-    accent: '#5A6FA8',
-    accentDark: '#3F4F7C',
-    accentSoft: 'rgba(90,111,168,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '문창귀인·학당귀인',
     sipsungAxes: {
       main: '정관',
@@ -264,8 +264,8 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '創業',
     sec01Title: '사업운 핵심 결',
     heroH1: { line1: '판을 키우는', line2: '사업가의 결' },
-    accent: '#A37A2E',
-    accentDark: '#7A5A20',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
     accentSoft: 'rgba(163,122,46,0.10)',
     sajuRefPrefix: '편재·식신',
     sipsungAxes: {
@@ -297,9 +297,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '官星',
     sec01Title: '직업운 핵심 결',
     heroH1: { line1: '쌓아올리는 자리와', line2: '커리어의 결' },
-    accent: '#5A7CA8',
-    accentDark: '#3F5A7C',
-    accentSoft: 'rgba(90,124,168,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '관성',
     sipsungAxes: {
       main: '정관',
@@ -330,9 +330,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '壽元',
     sec01Title: '건강운 핵심 결',
     heroH1: { line1: '몸의 결과', line2: '오래 가는 흐름' },
-    accent: '#6FA08C',
-    accentDark: '#4A8071',
-    accentSoft: 'rgba(111,160,140,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '일간 강약',
     sipsungAxes: {
       main: '일간 강약',
@@ -363,9 +363,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '移動',
     sec01Title: '이사운 핵심 결',
     heroH1: { line1: '머무를 자리와', line2: '떠날 시점의 결' },
-    accent: '#4F8A8B',
-    accentDark: '#356061',
-    accentSoft: 'rgba(79,138,139,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '역마살',
     sipsungAxes: {
       main: '역마살',
@@ -396,9 +396,9 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     sec01Hanja: '學業',
     sec01Title: '학업운 핵심 결',
     heroH1: { line1: '집중이 흐르는', line2: '시간과 자리' },
-    accent: '#9C5A8A',
-    accentDark: '#7C4570',
-    accentSoft: 'rgba(156,90,138,0.10)',
+    accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     sajuRefPrefix: '인성·문창귀인',
     sipsungAxes: {
       main: '정인',

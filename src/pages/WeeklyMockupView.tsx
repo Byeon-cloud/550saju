@@ -9,10 +9,10 @@
  *  - hd(Hero) → my-saju(4기둥, 기본 노출) → ohaeng-row(오행 균형, 기본 노출)
  *    → main.body(SECTION 아코디언 01·02 기본 펼침) → actions → service-notice
  *  - 동적 데이터 = AI 응답(WeeklyDetailResponse) + sajuData (props)
- *  - 강조 SSOT: 형광펜 rgba(184,150,90,.32) · 밑줄 #B8965A · 한자 검정볼드 · 경고 #B5441F
+ *  - 강조 SSOT: 형광펜 rgba(184,150,90,.32) · 밑줄 #B8965A · 한자 검정볼드 · 경고 #A23A2A
  *
  * 주간 특색 (오늘운세와 차별):
- *  - 주간색 #C77D3A (오늘=화/적색 대비)
+ *  - 주간색 #8C6D3D (오늘=화/적색 대비)
  *  - 7일 하루하루 리듬 (오늘운세=하루 시간 흐름)
  *  - 과거형 어조: index 0 = 어제(지난 날), index 1 = 오늘, index 2+ = 다가올 날
  *  - recharts AreaChart 7일 score 그래프 + best/caution 핵심일 시각 강조
@@ -49,7 +49,7 @@ interface WeeklyMockupViewProps {
 }
 
 // 주간 SSOT 색
-const ACCENT = '#C77D3A';
+const ACCENT = '#8C6D3D';
 
 const MOCKUP_CSS = `
 .weekly-mockup * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
@@ -66,8 +66,8 @@ const MOCKUP_CSS = `
   --c-gold-line: rgba(184,150,90,0.40);
   --c-card-line: rgba(184,150,90,0.18);
   --c-line: #E5DFD0;
-  /* 주간 테마 색 #C77D3A */
-  --c-week: #C77D3A; --c-week-deep: #9C5E25; --c-week-soft: rgba(199,125,58,0.10);
+  /* 주간 테마 색 #8C6D3D */
+  --c-week: #8C6D3D; --c-week-deep: #7A5C2E; --c-week-soft: rgba(140,109,61,0.10);
   /* 5 오행 정식 (SajuCard OHENG_THEME 일치) */
   --c-mok: #4E7A57; --c-hwa: #B04A38; --c-to: #B07F38; --c-geum: #7D7870; --c-su: #3E5F82;
   --c-mok-soft: rgba(78,122,87,0.10); --c-hwa-soft: rgba(176,74,56,0.10);
@@ -260,8 +260,8 @@ const MOCKUP_CSS = `
 .weekly-mockup .body em,
 .weekly-mockup .ds em,
 .weekly-mockup .reason em {
-  font-style: normal; font-weight: 700; color: #B5441F;
-  background: linear-gradient(180deg, transparent 56%, rgba(181,68,31,.15) 56%);
+  font-style: normal; font-weight: 700; color: #A23A2A;
+  background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%);
   padding: 0 2px; border-radius: 2px;
 }
 .weekly-mockup .body p .han { font-family: 'Noto Serif KR', serif; color: var(--c-ink-soft); font-size: 13px; }
@@ -281,7 +281,7 @@ const MOCKUP_CSS = `
   background: #fff; border: 1px solid var(--c-card-line); border-radius: 12px;
   padding: 14px; transition: all .2s; position: relative;
 }
-.weekly-mockup .day-card.is-today { border: 2px solid var(--c-week); box-shadow: 0 2px 10px rgba(199,125,58,0.16); }
+.weekly-mockup .day-card.is-today { border: 2px solid var(--c-week); box-shadow: 0 2px 10px rgba(140,109,61,0.16); }
 .weekly-mockup .day-card.is-past { opacity: 0.78; background: linear-gradient(180deg, #fff 0%, #FBF8F2 100%); }
 .weekly-mockup .day-card .day-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .weekly-mockup .day-card .day-head-left { display: flex; align-items: center; gap: 10px; }
@@ -300,7 +300,7 @@ const MOCKUP_CSS = `
 }
 .weekly-mockup .day-card .day-when.past   { background: rgba(122,114,105,0.12); color: var(--c-mute); }
 .weekly-mockup .day-card .day-when.today   { background: var(--c-week); color: #fff; }
-.weekly-mockup .day-card .day-when.future { background: var(--c-week-soft); color: var(--c-week-deep); border: 1px solid rgba(199,125,58,0.30); }
+.weekly-mockup .day-card .day-when.future { background: var(--c-week-soft); color: var(--c-week-deep); border: 1px solid rgba(140,109,61,0.30); }
 .weekly-mockup .day-card .day-tone { font-size: 11.5px; color: var(--c-mute); margin-top: 1px; }
 .weekly-mockup .day-card .day-score { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 800; line-height: 1; }
 .weekly-mockup .day-card .day-body { font-size: 13px; color: #2a2520; line-height: 1.7; margin-top: 8px; word-break: keep-all; }
@@ -318,7 +318,7 @@ const MOCKUP_CSS = `
   border-radius: 12px; padding: 14px 16px;
   border: 1px solid transparent;
 }
-.weekly-mockup .keyday.best    { background: var(--c-week-soft); border-color: rgba(199,125,58,0.26); }
+.weekly-mockup .keyday.best    { background: var(--c-week-soft); border-color: rgba(140,109,61,0.26); }
 .weekly-mockup .keyday.caution { background: rgba(176,74,56,0.05); border-color: rgba(176,74,56,0.20); }
 .weekly-mockup .keyday .kd-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .weekly-mockup .keyday .kd-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 100px; color: #fff; letter-spacing: 0.04em; }
@@ -326,19 +326,19 @@ const MOCKUP_CSS = `
 .weekly-mockup .keyday.caution .kd-badge { background: #B04A38; }
 .weekly-mockup .keyday .kd-day { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 800; }
 .weekly-mockup .keyday.best    .kd-day { color: var(--c-week-deep); }
-.weekly-mockup .keyday.caution .kd-day { color: #B5441F; }
+.weekly-mockup .keyday.caution .kd-day { color: #A23A2A; }
 .weekly-mockup .keyday .kd-date { font-size: 11px; color: var(--c-mute); font-feature-settings: 'tnum'; }
 .weekly-mockup .keyday .kd-reason { font-size: 12.5px; color: #2a2520; line-height: 1.7; word-break: keep-all; }
 
 /* §04 이번 주 교훈 (pullquote 톤) */
 .weekly-mockup .lesson {
-  background: linear-gradient(135deg, rgba(199,125,58,.07), rgba(184,150,90,.08));
+  background: linear-gradient(135deg, rgba(140,109,61,.07), rgba(184,150,90,.08));
   border-radius: 10px; padding: 30px 20px 18px; margin-top: 14px;
   font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.8; color: #1a1a1a;
   font-weight: 500; word-break: keep-all; position: relative;
 }
-.weekly-mockup .lesson::before { content: '"'; position: absolute; top: 6px; left: 14px; font-family: 'Noto Serif KR', serif; font-size: 42px; line-height: 1; color: rgba(199,125,58,0.30); font-weight: 700; }
-.weekly-mockup .lesson strong { color: var(--c-week-deep); font-weight: 700; background: linear-gradient(180deg, transparent 55%, rgba(199,125,58,.22) 55%); padding: 0 3px; }
+.weekly-mockup .lesson::before { content: '"'; position: absolute; top: 6px; left: 14px; font-family: 'Noto Serif KR', serif; font-size: 42px; line-height: 1; color: rgba(140,109,61,0.30); font-weight: 700; }
+.weekly-mockup .lesson strong { color: var(--c-week-deep); font-weight: 700; background: linear-gradient(180deg, transparent 55%, rgba(140,109,61,.22) 55%); padding: 0 3px; }
 
 /* Actions + notice (DailyMockupView 동일) */
 .weekly-mockup .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid var(--c-card-line); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -361,11 +361,11 @@ const MOCKUP_CSS = `
 /* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고) */
 .weekly-mockup .refining-pill {
   margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
-  background: rgba(199,125,58,0.10); border: 1px solid rgba(199,125,58,0.30);
+  background: rgba(140,109,61,0.10); border: 1px solid rgba(140,109,61,0.30);
   display: flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 600; color: #a05a24;
 }
-.weekly-mockup .refining-pill .spark { width: 7px; height: 7px; border-radius: 50%; background: #C77D3A; animation: weekly-refine-pulse 1s infinite; flex-shrink: 0; }
+.weekly-mockup .refining-pill .spark { width: 7px; height: 7px; border-radius: 50%; background: #8C6D3D; animation: weekly-refine-pulse 1s infinite; flex-shrink: 0; }
 @keyframes weekly-refine-pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
 `;
 
@@ -547,7 +547,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
                 <div className="sub">7일 점수 추이 (요일별)</div>
                 <div className="chart-wrap">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -4, bottom: 0 }} /* 2026-10-10 — left -22 가 Y축(폭 36)을 잘라 '100·75·50' 이 끝자리만 보이던 버그 */>
                       <defs>
                         <linearGradient id="weeklyMockupGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor={ACCENT} stopOpacity={0.28} />

@@ -1,10 +1,10 @@
 // topic/_chrome.tsx — Phase D'-2 (#54) 5 mockup 시각 패턴 추출
 // 진본: docs/mockups/사주500_UI개편_목업_1운_주제별*.html (5종)
-//   - 연애 v1 (桃, 핑크-자주 #C88A95 → #A1606C)
+//   - 연애 v1 (桃, 핑크-자주 #8C6D3D → #7A5C2E)
 //   - 재물 v2 (財, 골드 #B8965A → #8C6D3D)
 //   - 직업 v1 (官, 블루 #5A7CA8 → #3F5A7C)
-//   - 건강 v1 (壽, 그린 #6FA08C → #4A8071)
-//   - 공부 v1 (學, 보라 #9C5A8A → #7C4570)
+//   - 건강 v1 (壽, 그린 #8C6D3D → #7A5C2E)
+//   - 공부 v1 (學, 보라 #8C6D3D → #7A5C2E)
 //
 // 핵심 패턴 (5 mockup 공통):
 //   1. TopicHero — gradient 배경 + 한자 워터마크 + badge·tier·일간 정보
@@ -60,14 +60,14 @@ export interface TopicChromeTheme {
 
 export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
   love: {
-    heroGrad: 'linear-gradient(135deg,#C88A95 0%,#A1606C 60%,#8E4D5B 100%)',
+    heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#7A5C2E 60%,#8E4D5B 100%)',
     hanja: '桃',
-    accent: '#C88A95',
-    accentDark: '#A1606C',
-    accentSoft: 'rgba(200,138,149,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#5C2E36',
     badgeOn: '#FFFFFF',
-    quoteBorder: '#A1606C',
+    quoteBorder: '#7A5C2E',
     label: '연애운',
     heroH1: { line1: '관계의 흐름과', line2: '인연이 닿는 자리' },
     heroHint: '천천히 읽어보세요 · 인연의 결은 한 번에 들어오지 않아요',
@@ -75,9 +75,9 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
   wealth: {
     heroGrad: 'linear-gradient(135deg,#D4B07F 0%,#B8965A 55%,#8C6D3D 100%)',
     hanja: '財',
-    accent: '#B8965A',
-    accentDark: '#8C6D3D',
-    accentSoft: 'rgba(184,150,90,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#5C4A2E',
     badgeOn: '#FFFFFF',
     quoteBorder: '#8C6D3D',
@@ -88,9 +88,9 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
   career: {
     heroGrad: 'linear-gradient(135deg,#7B9BC4 0%,#5A7CA8 55%,#3F5A7C 100%)',
     hanja: '官',
-    accent: '#5A7CA8',
-    accentDark: '#3F5A7C',
-    accentSoft: 'rgba(90,124,168,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#28405C',
     badgeOn: '#FFFFFF',
     quoteBorder: '#3F5A7C',
@@ -99,67 +99,67 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     heroHint: '천천히 읽어보세요 · 일의 결은 시간이 만들어가요',
   },
   health: {
-    heroGrad: 'linear-gradient(135deg,#8FB8A8 0%,#6FA08C 55%,#4A8071 100%)',
+    heroGrad: 'linear-gradient(135deg,#8FB8A8 0%,#8C6D3D 55%,#7A5C2E 100%)',
     hanja: '壽',
-    accent: '#6FA08C',
-    accentDark: '#4A8071',
-    accentSoft: 'rgba(111,160,140,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#2E5448',
     badgeOn: '#FFFFFF',
-    quoteBorder: '#4A8071',
+    quoteBorder: '#7A5C2E',
     label: '건강운',
     heroH1: { line1: '몸의 결과', line2: '오래 가는 흐름' },
     heroHint: '천천히 읽어보세요 · 몸의 신호는 작은 데서 시작돼요',
   },
   study: {
-    heroGrad: 'linear-gradient(135deg,#B57FA0 0%,#9C5A8A 55%,#7C4570 100%)',
+    heroGrad: 'linear-gradient(135deg,#B57FA0 0%,#8C6D3D 55%,#7A5C2E 100%)',
     hanja: '學',
-    accent: '#9C5A8A',
-    accentDark: '#7C4570',
-    accentSoft: 'rgba(156,90,138,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4C2C44',
     badgeOn: '#FFFFFF',
-    quoteBorder: '#7C4570',
+    quoteBorder: '#7A5C2E',
     label: '학업운',
     heroH1: { line1: '집중이 흐르는', line2: '시간과 자리' },
     heroHint: '천천히 읽어보세요 · 공부의 결은 리듬에서 나와요',
   },
   // 2026-05-28 — SSOT 10주제 chrome 확장. TOPIC_REGISTRY 색상 기반 (topics.ts) — 디자인 양극화 해소.
   reunion: {
-    heroGrad: 'linear-gradient(135deg,#E0AC9C 0%,#D89A8A 55%,#A6705F 100%)',
+    heroGrad: 'linear-gradient(135deg,#E0AC9C 0%,#8C6D3D 55%,#7A5C2E 100%)',
     hanja: '復',
-    accent: '#D89A8A',
-    accentDark: '#A6705F',
-    accentSoft: 'rgba(216,154,138,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#5E3326',
     badgeOn: '#FFFFFF',
-    quoteBorder: '#A6705F',
+    quoteBorder: '#7A5C2E',
     label: '재회운',
     heroH1: { line1: '헤어진 사람과의', line2: '회복 가능성' },
     heroHint: '천천히 읽어보세요 · 끝난 결도 다시 흐를 수 있어요',
   },
   marriage: {
-    heroGrad: 'linear-gradient(135deg,#D5A0B0 0%,#C97B95 55%,#9A5470 100%)',
+    heroGrad: 'linear-gradient(135deg,#D5A0B0 0%,#8C6D3D 55%,#7A5C2E 100%)',
     hanja: '婚',
-    accent: '#C97B95',
-    accentDark: '#9A5470',
-    accentSoft: 'rgba(201,123,149,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#56263A',
     badgeOn: '#FFFFFF',
-    quoteBorder: '#9A5470',
+    quoteBorder: '#7A5C2E',
     label: '결혼운',
     heroH1: { line1: '인연이 닿는 시기와', line2: '배우자의 결' },
     heroHint: '천천히 읽어보세요 · 평생 함께할 결을 살펴봐요',
   },
   exam: {
-    heroGrad: 'linear-gradient(135deg,#8B9CC9 0%,#5A6FA8 55%,#3E4F7C 100%)',
+    heroGrad: 'linear-gradient(135deg,#8B9CC9 0%,#8C6D3D 55%,#7A5C2E 100%)',
     hanja: '進',
-    accent: '#5A6FA8',
-    accentDark: '#3E4F7C',
-    accentSoft: 'rgba(90,111,168,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#22315C',
     badgeOn: '#FFFFFF',
-    quoteBorder: '#3E4F7C',
+    quoteBorder: '#7A5C2E',
     label: '합격·이직운',
     heroH1: { line1: '시험·이직이', line2: '풀리는 시기' },
     heroHint: '천천히 읽어보세요 · 도약의 결은 미리 와요',
@@ -167,9 +167,9 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
   business: {
     heroGrad: 'linear-gradient(135deg,#C49B5C 0%,#A37A2E 55%,#7A5820 100%)',
     hanja: '業',
-    accent: '#A37A2E',
-    accentDark: '#7A5820',
-    accentSoft: 'rgba(163,122,46,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#3F2D10',
     badgeOn: '#FFFFFF',
     quoteBorder: '#7A5820',
@@ -178,14 +178,14 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     heroHint: '천천히 읽어보세요 · 사업의 결은 타이밍에서 갈려요',
   },
   move: {
-    heroGrad: 'linear-gradient(135deg,#7AA5A6 0%,#4F8A8B 55%,#356465 100%)',
+    heroGrad: 'linear-gradient(135deg,#7AA5A6 0%,#8C6D3D 55%,#7A5C2E 100%)',
     hanja: '移',
-    accent: '#4F8A8B',
-    accentDark: '#356465',
-    accentSoft: 'rgba(79,138,139,0.10)',
+    accent: '#8C6D3D',
+    accentDark: '#7A5C2E',
+    accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#1C3D3E',
     badgeOn: '#FFFFFF',
-    quoteBorder: '#356465',
+    quoteBorder: '#7A5C2E',
     label: '이사·이동운',
     heroH1: { line1: '이사·이동의', line2: '길흉과 방향' },
     heroHint: '천천히 읽어보세요 · 이동의 결은 방향에서 시작돼요',
@@ -219,7 +219,7 @@ export function TopicHero({
 }) {
   // 2026-05-28 PM — DailyMockupView SSOT 통일: 토픽-컬러 그라데이션 (다크 네이비 폐기).
   //   준기 결정: "Daily 디자인+포맷이 전체 앱에 더 잘 맞아". heroGrad 는 각 토픽 컬러로 정의됨 (TOPIC_CHROME §59-179).
-  //   예: 재물 #B8965A 골드, 연애 #C88A95 핑크, 건강 #6FA08C 그린.
+  //   예: 재물 #B8965A 골드, 연애 #8C6D3D 핑크, 건강 #8C6D3D 그린.
   return (
     <div
       style={{
@@ -1249,7 +1249,7 @@ export function TopicUpsellCard({
         style={{
           display: 'inline-flex',
           gap: 6,
-          background: 'linear-gradient(135deg, #E8C5CB, #A1606C)',
+          background: 'linear-gradient(135deg, #E8C5CB, #7A5C2E)',
           color: '#1A1A1A',
           padding: '10px 18px',
           borderRadius: 100,

@@ -858,8 +858,8 @@
   .topic-section-body em {
     font-style: normal;
     font-weight: 700;
-    color: #B5441F;
-    background: linear-gradient(180deg, transparent 56%, rgba(181, 68, 31, 0.15) 56%);
+    color: #A23A2A;
+    background: linear-gradient(180deg, transparent 56%, rgba(162, 58, 42, 0.15) 56%);
     padding: 0 2px;
     border-radius: 2px;
   }

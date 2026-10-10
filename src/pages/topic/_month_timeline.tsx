@@ -8,11 +8,11 @@
  *   - 4-tier 범례 (강·중·주의·평이)
  *
  * 5 Topic 분기 + Stage 2B/2D~2G 에서 재사용:
- *   - love: 분홍 톤 (#A1606C / #E8C5CB)
+ *   - love: 분홍 톤 (#7A5C2E / #E8C5CB)
  *   - wealth: 골드 톤 (#B8965A / #E8D9B8)
  *   - career: 청 톤 (#3F5A7C / #A8C0E0)
- *   - health: 녹 톤 (#4A8071 / #A8C9C0)
- *   - study: 자 톤 (#7C4570 / #C8A8C0)
+ *   - health: 녹 톤 (#7A5C2E / #A8C9C0)
+ *   - study: 자 톤 (#7A5C2E / #C8A8C0)
  *
  * 정책 (b) 준수:
  *   - 이모지 0건
@@ -88,11 +88,11 @@ export interface MonthTimelineProps {
  * ═════════════════════════════════════════════════════════════════ */
 
 export const MONTH_TIMELINE_THEMES = {
-  love:    { high: '#A1606C', mid: 'rgba(200,138,149,0.45)', low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#A1606C' },
+  love:    { high: '#7A5C2E', mid: 'rgba(140,109,61,0.45)', low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#7A5C2E' },
   wealth:  { high: '#B8965A', mid: '#E8D9B8',                 low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#8C6D3D' },
-  career:  { high: '#3F5A7C', mid: 'rgba(90,124,168,0.45)',  low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#3F5A7C' },
-  health:  { high: '#4A8071', mid: 'rgba(111,160,140,0.45)', low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#4A8071' },
-  study:   { high: '#7C4570', mid: 'rgba(156,90,138,0.45)',  low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#7C4570' },
+  career:  { high: '#3F5A7C', mid: 'rgba(140,109,61,0.45)',  low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#3F5A7C' },
+  health:  { high: '#7A5C2E', mid: 'rgba(140,109,61,0.45)', low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#7A5C2E' },
+  study:   { high: '#7A5C2E', mid: 'rgba(140,109,61,0.45)',  low: 'rgba(198,40,40,0.18)', plain: '#E5DFD0', ringColor: '#7A5C2E' },
 } as const satisfies Record<string, MonthTimelineTheme>;
 
 const DEFAULT_LEGEND = { high: '강', mid: '중', low: '주의', plain: '평이' };
