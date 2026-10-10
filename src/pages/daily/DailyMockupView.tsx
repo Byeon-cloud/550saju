@@ -1572,7 +1572,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
               {tomorrow && (
                 <div className="tomorrow tomorrow-v2">
                   <div className="tomorrow-head">
-                    <span className="lab">TOMORROW, 내일</span>
+                    <span className="lab">내일 미리 보기</span>
                     {typeof tomorrow.scoreHint === 'number' && (
                       <div className="score-chip">
                         <span className="score-num">{(tomorrow.scoreHint / 10).toFixed(1)}</span>

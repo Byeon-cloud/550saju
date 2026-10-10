@@ -473,7 +473,7 @@ function KakaoLayout({
               boxShadow: `0 4px 12px rgba(140,109,61,0.25)`,
             }}
           >
-            SAJU 500
+            사주 500
           </span>
           <span
             style={{
@@ -775,7 +775,7 @@ function FeedLayout({
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
           <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 22, letterSpacing: '0.3em' }}>
-            SAJU 500
+            사주 500
           </span>
           <span
             style={{
@@ -921,7 +921,7 @@ function FeedLayout({
                 marginBottom: 4,
               }}
             >
-              SAJU 500
+              사주 500
             </div>
             <div style={{ fontSize: 13, color: '#7A7269' }}>
               정통 명리학 사주 풀이, {birthLabel}
@@ -1039,7 +1039,7 @@ function StoryLayout({
               boxShadow: `0 4px 16px rgba(140,109,61,0.30)`,
             }}
           >
-            SAJU 500
+            사주 500
           </span>
           <span
             style={{
@@ -1335,7 +1335,7 @@ function StoryLayout({
             opacity: 0.85,
           }}
         >
-          SAJU 500, saju500.app
+          사주 500  saju500.app
         </div>
       </div>
     </div>

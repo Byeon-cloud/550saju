@@ -160,10 +160,10 @@ const MOCKUP_CSS = `
 .monthly-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
 .monthly-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
 .monthly-mockup .ohaeng-row .lead { font-size: 13.5px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
-.monthly-mockup .ohaeng-bal { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.monthly-mockup .ohaeng-bal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .monthly-mockup .ob-item {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; border-radius: 100px;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 8px 0; border-radius: 100px;
   background: var(--c-surface);
   border: 1.5px solid var(--c-card-line);
   font-family: 'Noto Serif KR', serif;
@@ -621,7 +621,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           {/* §01 이 달의 결 — theme */}
           <section className={`section ${isOpen('01') ? 'open' : ''}`}>
             <SectionHeader num="01" title="이번 달의 결" han="月運" id="01" />
-            <p className="sec-lead">이 달이 당신에게 어떤 한 달인지, 핵심 테마부터 짚어드려요.</p>
+            <p className="sec-lead">{profile?.name ? `${profile.name} 님에게 ` : ''}이번 달이 어떤 한 달인지, 핵심부터 짚어 드려요.</p>
             {theme ? (
               <div className="theme-body" dangerouslySetInnerHTML={safeHtmlEmph(theme)} />
             ) : loading ? (
@@ -635,7 +635,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           {periods.length > 0 ? (
             <section className={`section ${isOpen('02') ? 'open' : ''}`}>
               <SectionHeader num="02" title="상순, 중순, 하순 흐름" han="旬" id="02" />
-              <p className="sec-lead">한 달을 셋으로 나눠, 초, 중, 말 어느 구간이 강하고 어디를 다스려야 하는지 한눈에.</p>
+              <p className="sec-lead">한 달을 셋으로 나눠, 상순, 중순, 하순 중 어느 구간이 강하고 어디를 다스려야 하는지 한눈에.</p>
 
               {/* timeline 인포그래픽 (점수 3개 → 곡선) */}
               {periodSvgPath && (

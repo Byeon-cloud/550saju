@@ -204,7 +204,7 @@ export function SajuCardHero({
             boxShadow: `0 2px 8px ${theme.accent}66`,
           }}
         >
-          SAJU 500
+          사주 500
         </span>
         <span
           style={{

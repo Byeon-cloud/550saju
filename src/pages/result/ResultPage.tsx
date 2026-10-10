@@ -166,7 +166,7 @@ function PremiumDarkHeader({
             letterSpacing: '0.05em',
           }}
         >
-          종합사주, 열 장 풀이
+          종합사주 열 장 풀이
         </div>
       </div>
       <div

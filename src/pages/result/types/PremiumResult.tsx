@@ -3415,7 +3415,7 @@ function YongsinBox({
             fontWeight: 700,
           }}
         >
-          PRESCRIPTION, 處方
+          실천 처방
         </span>
       </div>
 

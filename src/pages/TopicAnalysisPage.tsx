@@ -4895,11 +4895,11 @@ export function TopicAnalysisPage() {
 
               {/* ─── Phase D'-2 Bundle 2 · TopicHero (5 주제 한정) ─── */}
               {/* 2026-05-28 PM — DailyMockupView 패턴 통일: personName chip + bottomHint pill 추가.
-                  세일 토픽(재회운)은 tierLabel="3운 → 1운 SALE" 노출. */}
+                  세일 토픽(재회운)은 tierLabel="3운 → 1운 할인" 노출. */}
               {theme && (() => {
                 const pricing = getTopicPrice(topicId as TopicKey);
                 const tierLabel = pricing.isOnSale && pricing.salePrice != null
-                  ? `${pricing.regularPrice}운 → ${pricing.salePrice}운 ${pricing.saleBadge || 'SALE'}`
+                  ? `${pricing.regularPrice}운 → ${pricing.salePrice}운 ${pricing.saleBadge || '할인'}`
                   : `${pricing.regularPrice}운`;
                 return (
                 <div style={{ margin: '0 -20px 0' }}>

@@ -197,6 +197,11 @@ export function sanitizeText(s: string): string {
   for (const [re, to] of HANJA_FIX) t = t.replace(re, to);
   for (const [re, to] of GUARANTEE_FIX) t = t.replace(re, to);
   t = fixTime(t);
+  // 2026-10-11 — 호칭 통일: '서윤 씨는' → '서윤 님은' (띄어 쓴 '씨'만, '날씨', '솜씨' 등 붙은 말은 그대로)
+  t = t.replace(/([가-힣]{2,4}) 씨(는|가|의|에게|께서|도|를|와|과|,|\.|!|\?|\s|$)/g, (_m, nm: string, j: string) => {
+    const jj = j === '는' ? '은' : j === '가' ? '이' : j === '를' ? '을' : j === '와' ? '과' : j;
+    return `${nm} 님${jj}`;
+  });
   return t;
 }
 /** 결과 JSON 의 모든 문자열 정리 (키는 그대로) */

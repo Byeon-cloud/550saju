@@ -160,10 +160,10 @@ const MOCKUP_CSS = `
 .weekly-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
 .weekly-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
 .weekly-mockup .ohaeng-row .lead { font-size: 13.5px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
-.weekly-mockup .ohaeng-bal { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.weekly-mockup .ohaeng-bal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .weekly-mockup .ob-item {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; border-radius: 100px;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 8px 0; border-radius: 100px;
   background: var(--c-surface);
   border: 1.5px solid var(--c-card-line);
   font-family: 'Noto Serif KR', serif;

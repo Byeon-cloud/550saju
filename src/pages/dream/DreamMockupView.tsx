@@ -984,7 +984,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             {/* Big CTA */}
             {!unlocked && (
               <div className="paid-cta">
-                <div className="lab">UNLOCK, 사주 연동 심층 풀이</div>
+                <div className="lab">사주와 함께 보는 깊은 풀이</div>
                 <h3>같은 꿈도 사주 일간에 따라<br />의미가 달라집니다.</h3>
                 <p className="hook">
                   {profile?.name ?? '당신'} 님은 <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방)을 전부 열어드립니다.
