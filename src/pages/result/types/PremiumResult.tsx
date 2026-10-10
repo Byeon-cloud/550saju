@@ -2805,9 +2805,9 @@ export function PremiumResult({
                 </span>
                 {ohengSymbol[ilganOhengKr] || '본연의 기운'}
               </span>
-              <span>, </span>
+              <span aria-hidden="true" style={{ width: 1, height: 10, background: 'currentColor', opacity: 0.3, alignSelf: 'center' }} />
               <span>{seasonText}</span>
-              <span>, </span>
+              <span aria-hidden="true" style={{ width: 1, height: 10, background: 'currentColor', opacity: 0.3, alignSelf: 'center' }} />
               <span>{reportDateText}</span>
             </div>
           </div>

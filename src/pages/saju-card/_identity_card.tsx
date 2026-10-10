@@ -654,7 +654,7 @@ export function IdentityCard({
               </span>
             )}
             {gabjaIdx > 0 && meaningEntry?.personality && (
-              <span style={{ color: C.line }}>, </span>
+              <span aria-hidden="true" style={{ width: 1, height: 10, background: C.line }} />
             )}
             {meaningEntry?.personality && (
               <span style={{ fontWeight: 700, color: C.goldDeep, letterSpacing: '0.02em' }}>

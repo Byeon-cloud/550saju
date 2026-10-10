@@ -627,7 +627,7 @@ export function ChargePage() {
               padding: 0, textDecoration: 'underline',
             }}
           >이용약관</button>
-          {' '}, {' '}
+          과{' '}
           <button
             onClick={() => navigate('/privacy')}
             style={{

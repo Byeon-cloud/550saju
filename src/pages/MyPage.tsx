@@ -245,7 +245,7 @@ export function MyPage() {
           >
             이용약관
           </button>
-          <span style={{ opacity: 0.4 }}>, </span>
+          <span aria-hidden="true" style={{ width: 1, height: 11, background: 'currentColor', opacity: 0.3 }} />
           <button
             type="button"
             onClick={() => navigate('/privacy')}
@@ -1324,7 +1324,7 @@ function LoginModal({ open, onClose, toast, onLogin }: {
             <p className="text-center text-[11px] mt-5 leading-[1.6]" style={{ color: C.mute }}>
               로그인하면{' '}
               <button type="button" className="underline" onClick={() => navigate('/terms')}>이용약관</button>
-              {', '}
+              과{' '}
               <button type="button" className="underline" onClick={() => navigate('/privacy')}>개인정보처리방침</button>
               에 동의한 것으로 간주합니다.
             </p>
