@@ -256,7 +256,7 @@ export function TopicHero({
         style={{
           display: 'flex',
           gap: 8,
-          fontSize: 11,
+          fontSize: 13,
           flexWrap: 'wrap',
           alignItems: 'center',
           position: 'relative',
@@ -268,7 +268,7 @@ export function TopicHero({
             background: 'rgba(255,255,255,0.95)',
             padding: '4px 12px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 700,
             color: theme.accentDark,
             letterSpacing: '0.02em',
@@ -283,7 +283,7 @@ export function TopicHero({
               border: '1px solid rgba(255,255,255,0.25)',
               padding: '4px 10px',
               borderRadius: 100,
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 600,
               color: '#FFFFFF',
             }}
@@ -296,7 +296,7 @@ export function TopicHero({
             background: 'rgba(255,255,255,0.15)',
             padding: '4px 10px',
             borderRadius: 100,
-            fontSize: 10,
+            fontSize: 12,
             color: '#FFFFFF',
             opacity: 0.92,
           }}
@@ -307,7 +307,7 @@ export function TopicHero({
           <span
             style={{
               marginLeft: 'auto',
-              fontSize: 10.5,
+              fontSize: 13,
               opacity: 0.7,
               fontFamily: "'Noto Serif KR', serif",
               color: theme.accent,
@@ -337,7 +337,7 @@ export function TopicHero({
       {(ilganLabel || birthLabel) && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             opacity: 0.92,
             marginTop: 6,
             position: 'relative',
@@ -359,7 +359,7 @@ export function TopicHero({
             border: '1px solid rgba(255,255,255,0.18)',
             borderRadius: 100,
             padding: '7px 14px',
-            fontSize: 11.5,
+            fontSize: 13,
             color: '#FFFFFF',
             display: 'inline-flex',
             alignItems: 'center',
@@ -453,7 +453,7 @@ export function TopicScoreCard({
     >
       {/* 1행 — 라벨 + 큰 점수 */}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ fontSize: 11.5, color: theme.accentDark, letterSpacing: '0.08em', fontWeight: 700 }}>
+        <div style={{ fontSize: 13, color: theme.accentDark, letterSpacing: '0.08em', fontWeight: 700 }}>
           {title}
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
@@ -469,11 +469,11 @@ export function TopicScoreCard({
           >
             {pct}
           </span>
-          <span style={{ fontSize: 12, color: theme.hint, fontWeight: 600 }}>/ 100</span>
+          <span style={{ fontSize: 13.5, color: theme.hint, fontWeight: 600 }}>/ 100</span>
           <span
             style={{
               marginLeft: 6,
-              fontSize: 10.5,
+              fontSize: 13,
               fontWeight: 800,
               padding: '3px 8px',
               borderRadius: 100,
@@ -519,7 +519,7 @@ export function TopicScoreCard({
       </div>
 
       {/* 3행 — scale labels 3-band (보강기/안정기/상승기) — 부정 단어 박멸 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: theme.hint, fontWeight: 600, marginBottom: 12, paddingLeft: 2, paddingRight: 2 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: theme.hint, fontWeight: 600, marginBottom: 12, paddingLeft: 2, paddingRight: 2 }}>
         <span>보강기</span>
         <span style={{ marginLeft: '15%' }}>안정기</span>
         <span>상승기</span>
@@ -538,7 +538,7 @@ export function TopicScoreCard({
           background: 'rgba(184,150,90,0.08)',
           borderRadius: 10,
           borderLeft: `3px solid ${theme.accent}`,
-          fontSize: 11.5,
+          fontSize: 13,
           color: '#3D3427',
           lineHeight: 1.5,
         }}>
@@ -549,7 +549,7 @@ export function TopicScoreCard({
       {/* 6행 — disclaimer (작은 글, 항상 노출) */}
       <div style={{
         marginTop: 8,
-        fontSize: 10.5,
+        fontSize: 13,
         color: theme.hint,
         lineHeight: 1.5,
         opacity: 0.85,
@@ -559,7 +559,7 @@ export function TopicScoreCard({
       </div>
 
       {note && (
-        <div style={{ fontSize: 11.5, color: theme.hint, marginTop: 4, lineHeight: 1.55 }}>
+        <div style={{ fontSize: 13, color: theme.hint, marginTop: 4, lineHeight: 1.55 }}>
           {note}
         </div>
       )}
@@ -602,7 +602,7 @@ export function TopicLinkCard({
           flexWrap: 'wrap',
           gap: 6,
           alignItems: 'center',
-          fontSize: 11.5,
+          fontSize: 13,
           color: theme.hint,
           lineHeight: 1.5,
         }}
@@ -614,7 +614,7 @@ export function TopicLinkCard({
               <span
                 style={{
                   color: theme.accentDark,
-                  fontSize: 12,
+                  fontSize: 13.5,
                 }}
                 aria-hidden
               >
@@ -626,7 +626,7 @@ export function TopicLinkCard({
       </div>
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13.5,
           color: '#2A2520',
           marginTop: 8,
           lineHeight: 1.65,
@@ -781,7 +781,7 @@ export function TopicSection({
       {sub && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             color: theme.hint,
             marginTop: 4,
             lineHeight: 1.55,
@@ -922,7 +922,7 @@ export function LockVeil({
         {subLabel && (
           <div
             style={{
-              fontSize: 11.5,
+              fontSize: 13,
               color: theme.hint,
               marginTop: 4,
               textAlign: 'center',
@@ -1026,7 +1026,7 @@ export function TopicConclusionDark({
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 700,
           color: '#8C6D3D',
           letterSpacing: '0.14em',
@@ -1055,7 +1055,7 @@ export function TopicConclusionDark({
       {sajuRef && (
         <p
           style={{
-            fontSize: 12.5,
+            fontSize: 13.5,
             color: '#5C4220',
             lineHeight: 1.6,
             margin: '12px 0 0',
@@ -1140,7 +1140,7 @@ export function TopicActionList({
             </div>
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13.5,
                 color: theme.hint,
                 lineHeight: 1.65,
               }}
@@ -1235,7 +1235,7 @@ export function TopicUpsellCard({
       </h3>
       <p
         style={{
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: '#C4A8AE',
           marginBottom: 14,
           lineHeight: 1.6,
@@ -1265,7 +1265,7 @@ export function TopicUpsellCard({
             background: 'rgba(255,255,255,0.08)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
             color: '#5C2E36',
             marginLeft: 6,
             fontWeight: 600,
@@ -1297,7 +1297,7 @@ export function TopicSourceCite({
         background: theme.accentSoft,
         border: `1px solid ${theme.accent}33`,
         borderRadius: 10,
-        fontSize: 11,
+        fontSize: 13,
         color: theme.hint,
         lineHeight: 1.6,
       }}
@@ -1408,7 +1408,7 @@ export function TopicSajuMini({
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: 12,
           color: theme.accentDark,
           letterSpacing: '0.15em',
           fontWeight: 600,
@@ -1487,12 +1487,12 @@ export function TopicSajuMini({
                 </span>
               )}
               {/* 시/일/월/년 col-header */}
-              <div style={{ fontSize: 10, color: '#B8965A', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>
+              <div style={{ fontSize: 12, color: '#B8965A', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>
                 {c.label}
               </div>
               {/* 십성 sip-tag (인성/관성/재성/일간 등) — 종합사주 SSOT */}
               {c.ganSip && (
-                <div style={{ fontSize: 9, color: c.ilju ? '#8C6D3D' : theme.accentDark, fontWeight: 600, marginBottom: 4, letterSpacing: '0.02em' }}>
+                <div style={{ fontSize: 12, color: c.ilju ? '#8C6D3D' : theme.accentDark, fontWeight: 600, marginBottom: 4, letterSpacing: '0.02em' }}>
                   {c.ganSip}
                 </div>
               )}
@@ -1518,12 +1518,12 @@ export function TopicSajuMini({
               </div>
               {/* 2026-05-28 PM — Daily 친근 hangul (큰나무/대양/보석) + 작은 학술 (갑/양목) 하이브리드 */}
               {ganFriendly(c.gan) && (
-                <div style={{ fontSize: 12, color: '#1A1A1A', marginTop: 4, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                <div style={{ fontSize: 13.5, color: '#1A1A1A', marginTop: 4, fontWeight: 700, letterSpacing: '-0.01em' }}>
                   {ganFriendly(c.gan)}
                 </div>
               )}
               {c.ganYum && (
-                <div style={{ fontSize: 9, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
+                <div style={{ fontSize: 12, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
                   {c.ganYum}
                 </div>
               )}
@@ -1550,22 +1550,22 @@ export function TopicSajuMini({
               </div>
               {/* 2026-05-28 PM — Daily 친근 hangul (말/쥐/소) + 작은 학술 (오/양화) 하이브리드 */}
               {jiFriendly(c.ji) && (
-                <div style={{ fontSize: 12, color: '#1A1A1A', marginTop: 4, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                <div style={{ fontSize: 13.5, color: '#1A1A1A', marginTop: 4, fontWeight: 700, letterSpacing: '-0.01em' }}>
                   {jiFriendly(c.ji)}
                 </div>
               )}
               {c.jiYum && (
-                <div style={{ fontSize: 9, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
+                <div style={{ fontSize: 12, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
                   {c.jiYum}
                 </div>
               )}
               {/* 일주 라벨 또는 십성 (ganSip 없는 경우 fallback) */}
               {c.ilju && !c.ganSip ? (
-                <div style={{ fontSize: 9, color: '#8C6D3D', marginTop: 4, fontWeight: 700 }}>
+                <div style={{ fontSize: 12, color: '#8C6D3D', marginTop: 4, fontWeight: 700 }}>
                   일간
                 </div>
               ) : c.ten && !c.ganSip ? (
-                <div style={{ fontSize: 9, color: theme.accentDark, marginTop: 4, fontWeight: 600 }}>
+                <div style={{ fontSize: 12, color: theme.accentDark, marginTop: 4, fontWeight: 600 }}>
                   {c.ten}
                 </div>
               ) : null}
@@ -1646,17 +1646,16 @@ export function TopicOhengBalance({
       <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>
         내 사주 오행 + {theme.label} 핵심
       </div>
-      <div style={{ fontSize: 11, color: '#7A7269', marginBottom: 12 }}>
+      <div style={{ fontSize: 13, color: '#7A7269', marginBottom: 12 }}>
         사주 5기운 균형 + {theme.label} 분석 핵심 기운
       </div>
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
           gap: 6,
+          marginTop: 10,
           marginBottom: 12,
-          flexWrap: 'wrap',
         }}
       >
         {OHENG_ORDER.map((k) => {
@@ -1668,10 +1667,11 @@ export function TopicOhengBalance({
             <div
               key={k}
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px 6px 10px',
+                justifyContent: 'center',
+                gap: 4,
+                padding: '7px 0',
                 background: palette.bg,
                 border: `2px solid ${isDominant ? palette.color : 'transparent'}`,
                 borderRadius: 100,
@@ -1706,14 +1706,18 @@ export function TopicOhengBalance({
                 <span
                   aria-hidden
                   style={{
-                    fontSize: 9,
+                    position: 'absolute',
+                    top: -10,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 12,
                     fontWeight: 800,
                     color: '#FFFFFF',
                     background: theme.accentDark,
-                    padding: '2px 5px',
+                    padding: '1px 7px',
                     borderRadius: 100,
                     letterSpacing: '0.05em',
-                    marginLeft: 1,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   주력
@@ -1723,7 +1727,7 @@ export function TopicOhengBalance({
           );
         })}
       </div>
-      <div style={{ fontSize: 12, color: '#1A1A1A', lineHeight: 1.55 }}>
+      <div style={{ fontSize: 13.5, color: '#1A1A1A', lineHeight: 1.55 }}>
         {note}
       </div>
     </div>

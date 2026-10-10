@@ -191,7 +191,7 @@ export function AILoading({
             <>
               <div
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   letterSpacing: '0.1em',
                   color: 'rgba(248,245,238,0.55)',
                   fontWeight: 700,
@@ -233,7 +233,7 @@ export function AILoading({
               >
                 <div
                   style={{
-                    fontSize: 9,
+                    fontSize: 12,
                     color: 'rgba(248,245,238,0.55)',
                     fontWeight: 700,
                   }}
@@ -401,7 +401,7 @@ export function AILoading({
                 {isDone && (
                   <div
                     style={{
-                      fontSize: 10,
+                      fontSize: 12,
                       color: C.positive,
                       fontWeight: 600,
                       marginTop: 2,
@@ -433,7 +433,7 @@ export function AILoading({
         >
           <p
             style={{
-              fontSize: 10,
+              fontSize: 12,
               color: C.goldDeep,
               fontWeight: 800,
               letterSpacing: '0.16em',
@@ -442,7 +442,7 @@ export function AILoading({
           >
             {currentTip.category}
           </p>
-          <p style={{ fontSize: 12.5, color: C.inkSoft, lineHeight: 1.6 }}>{currentTip.text}</p>
+          <p style={{ fontSize: 13.5, color: C.inkSoft, lineHeight: 1.6 }}>{currentTip.text}</p>
         </motion.div>
       </AnimatePresence>
 
@@ -454,7 +454,7 @@ export function AILoading({
           <AnimatePresence mode="wait">
             <motion.p
               key={noteIdx}
-              className="text-[11px] text-center leading-relaxed mt-3 px-4 max-w-[280px]"
+              className="text-[13px] text-center leading-relaxed mt-3 px-4 max-w-[280px]"
               style={{ color: C.goldDeep, fontStyle: 'italic' }}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -470,7 +470,7 @@ export function AILoading({
       {/* 예상 소요 시간 */}
       <p
         style={{
-          fontSize: 10,
+          fontSize: 12,
           color: C.mute,
           marginTop: 12,
           letterSpacing: '0.04em',

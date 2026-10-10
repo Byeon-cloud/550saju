@@ -68,7 +68,7 @@ export function ChatNewPage() {
               </h2>
               <p
                 style={{
-                  fontSize: 12,
+                  fontSize: 13.5,
                   color: C.inkSoft,
                   margin: '0 0 14px',
                 }}
@@ -220,7 +220,7 @@ function ProfileRow({
               style={{
                 padding: '1px 6px',
                 borderRadius: 4,
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: 800,
                 background: C.ink,
                 color: C.paper,
@@ -229,10 +229,10 @@ function ProfileRow({
               나
             </span>
           ) : (
-            <span style={{ fontSize: 11, color: C.mute }}>{relation}</span>
+            <span style={{ fontSize: 13, color: C.mute }}>{relation}</span>
           )}
         </div>
-        <div style={{ fontSize: 11.5, color: C.mute, lineHeight: 1.45 }}>
+        <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.45 }}>
           {profile.input.birthYear}.
           {String(profile.input.birthMonth).padStart(2, '0')}.
           {String(profile.input.birthDay).padStart(2, '0')}

@@ -259,7 +259,7 @@ function ComparisonBars({ data }: { data: WealthFlowType }) {
         return (
           <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{
-              width: 52, fontSize: 11, fontWeight: 700, color: '#6b5b47',
+              width: 52, fontSize: 13, fontWeight: 700, color: '#6b5b47',
               textAlign: 'right', flexShrink: 0,
             }}>
               {label}
@@ -275,7 +275,7 @@ function ComparisonBars({ data }: { data: WealthFlowType }) {
               }} />
             </div>
             <span style={{
-              width: 28, fontSize: 12, fontWeight: 800, color: band.color,
+              width: 28, fontSize: 13.5, fontWeight: 800, color: band.color,
               textAlign: 'right', flexShrink: 0,
             }}>
               {score}
@@ -344,7 +344,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
               {meta.label}
             </span>
             <span style={{
-              fontSize: 10, color: '#a0937f', fontWeight: 500,
+              fontSize: 12, color: '#a0937f', fontWeight: 500,
             }}>
               {meta.sub}
             </span>
@@ -352,7 +352,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
           <div style={{
             display: 'inline-block', marginTop: 4,
             padding: '2px 8px', borderRadius: 6,
-            background: band.bg, fontSize: 10, fontWeight: 700, color: band.color,
+            background: band.bg, fontSize: 12, fontWeight: 700, color: band.color,
           }}>
             {band.label}
           </div>
@@ -366,12 +366,12 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
           borderBottom: '1px solid #f0ebe3',
         }}>
           <p style={{
-            fontSize: 10, fontWeight: 700, color: '#B8965A',
+            fontSize: 12, fontWeight: 700, color: '#B8965A',
             marginBottom: 3, letterSpacing: 0.3,
           }}>
             사주 분석
           </p>
-          <p style={{ fontSize: 11, color: '#5a4d3e', lineHeight: 1.7 }}>
+          <p style={{ fontSize: 13, color: '#5a4d3e', lineHeight: 1.7 }}>
             {style}
           </p>
         </div>
@@ -383,12 +383,12 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
         borderBottom: '1px solid #f0ebe3',
       }}>
         <p style={{
-          fontSize: 10, fontWeight: 700, color: '#B8965A',
+          fontSize: 12, fontWeight: 700, color: '#B8965A',
           marginBottom: 3, letterSpacing: 0.3,
         }}>
           이 점수의 의미
         </p>
-        <p style={{ fontSize: 11, color: '#5a4d3e', lineHeight: 1.7 }}>
+        <p style={{ fontSize: 13, color: '#5a4d3e', lineHeight: 1.7 }}>
           {interpretationText}
         </p>
       </div>
@@ -399,12 +399,12 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
         background: '#faf7f2',
       }}>
         <p style={{
-          fontSize: 10, fontWeight: 700, color: meta.themeColor,
+          fontSize: 12, fontWeight: 700, color: meta.themeColor,
           marginBottom: 3, letterSpacing: 0.3,
         }}>
           실천 조언
         </p>
-        <p style={{ fontSize: 11, color: '#5a4d3e', lineHeight: 1.7 }}>
+        <p style={{ fontSize: 13, color: '#5a4d3e', lineHeight: 1.7 }}>
           {actionText}
         </p>
       </div>
@@ -445,13 +445,13 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <span style={{ fontSize: 12, fontWeight: 900, color: '#fff' }}>
+            <span style={{ fontSize: 13.5, fontWeight: 900, color: '#fff' }}>
               {wealthType.name.charAt(0)}
             </span>
           </div>
           <div>
             <p style={{
-              fontSize: 10, color: '#B8965A', fontWeight: 600,
+              fontSize: 12, color: '#B8965A', fontWeight: 600,
               marginBottom: 1,
             }}>
               나의 재물 체질
@@ -461,7 +461,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
             </p>
           </div>
         </div>
-        <p style={{ fontSize: 11, color: '#5a4d3e', lineHeight: 1.75, marginBottom: 8 }}>
+        <p style={{ fontSize: 13, color: '#5a4d3e', lineHeight: 1.75, marginBottom: 8 }}>
           {wealthType.description}
         </p>
         <div style={{
@@ -471,12 +471,12 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
           border: '1px solid #B8965A18',
         }}>
           <p style={{
-            fontSize: 10, fontWeight: 700, color: '#B8965A',
+            fontSize: 12, fontWeight: 700, color: '#B8965A',
             marginBottom: 3,
           }}>
             핵심 전략
           </p>
-          <p style={{ fontSize: 11, color: '#5a4d3e', lineHeight: 1.7 }}>
+          <p style={{ fontSize: 13, color: '#5a4d3e', lineHeight: 1.7 }}>
             {wealthType.advice}
           </p>
         </div>
@@ -490,7 +490,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
         padding: '14px 16px 16px',
       }}>
         <p style={{
-          fontSize: 11, fontWeight: 700, color: '#3D3427',
+          fontSize: 13, fontWeight: 700, color: '#3D3427',
           marginBottom: 12,
         }}>
           재물 흐름 한눈에 보기
@@ -506,12 +506,12 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
         padding: '14px 16px',
       }}>
         <p style={{
-          fontSize: 11, fontWeight: 700, color: '#B8965A',
+          fontSize: 13, fontWeight: 700, color: '#B8965A',
           marginBottom: 6,
         }}>
           세 영역의 관계 분석
         </p>
-        <p style={{ fontSize: 11, color: '#5a4d3e', lineHeight: 1.8 }}>
+        <p style={{ fontSize: 13, color: '#5a4d3e', lineHeight: 1.8 }}>
           {flowDiagnosis}
         </p>
       </div>

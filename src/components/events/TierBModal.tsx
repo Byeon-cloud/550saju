@@ -115,7 +115,7 @@ export function TierBModal({ open, kind, onClose, autoCloseMs = 3000 }: TierBMod
             <p className="mt-4 text-[13px] font-semibold leading-[1.6]" style={{ color: '#1A1A1A' }}>
               {title}
             </p>
-            <p className="mt-1 text-[12px] leading-[1.55]" style={{ color: '#6B5F4E' }}>
+            <p className="mt-1 text-[13.5px] leading-[1.55]" style={{ color: '#6B5F4E' }}>
               {sub}
             </p>
 

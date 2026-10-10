@@ -50,7 +50,7 @@ function NySkeleton({ label, lines = 3, height = 12 }: { label: string; lines?: 
   return (
     <div className="card" aria-live="polite">
       <style>{`@keyframes ny-shimmer{0%{background-position:-240px 0}100%{background-position:240px 0}}`}</style>
-      <p className="text-[12px] font-bold mb-2.5" style={{ color: '#1A1612' }}>{label}</p>
+      <p className="text-[13.5px] font-bold mb-2.5" style={{ color: '#1A1612' }}>{label}</p>
       {Array.from({ length: lines }, (_, i) => (
         <div key={i} style={{
           height, width: `${[100, 92, 76, 88][i % 4]}%`, borderRadius: 6, marginBottom: 8,
@@ -236,7 +236,7 @@ export function TojungPage() {
         </div>
         {selected && (
           <div className="sticky-cta-bottom">
-            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth>{TY} 신년운세 보기 ({NEWYEAR_PRICE}운)</Button>
+            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth sub={`${NEWYEAR_PRICE}운`}>{TY} 신년운세 보기</Button>
           </div>
         )}
       </div>
@@ -272,7 +272,7 @@ export function TojungPage() {
       <FadeIn>
         <ExtensionHero
           theme={tojungTheme}
-          crumb={isLegacyTojung ? '사주500, 토정비결' : `사주500, ${resultYear} 신년운세`}
+          crumb={isLegacyTojung ? '토정비결' : `${resultYear} 신년운세`}
           sub={isLegacyTojung ? '한 해를 열두 달로 나눠 봅니다.' : `${resultYear}년 세운과 열두 달 월운을 내 사주에 맞춰 봅니다.`}
           seal="歲"
         />
@@ -282,7 +282,7 @@ export function TojungPage() {
       {aiHex && (
         <FadeIn delay={0.04}>
           <TojungHexagramCard
-            yearLabel={String(aiHex.yearLabel ?? (isLegacyTojung ? '2026 병오년' : `${resultYear}년`))}
+            yearLabel={String(aiHex.yearLabel ?? (isLegacyTojung ? '2026 병오년' : `${resultYear}년`)).replace(/,\s*(?=신년운세|토정비결)/, ' ')}
             glyph={String(aiHex.glyph ?? '')}
             name={String(aiHex.name ?? '')}
             oneLine={stripMd(String(aiHex.oneLine ?? aiHex.summary ?? ''))}
@@ -304,7 +304,7 @@ export function TojungPage() {
         {partialMode && (
           <div className="sticky z-40" style={{ top: 56 }}>
             <div className="rounded-xl px-3.5 py-3" style={{ background: 'linear-gradient(135deg, #F4F7FC 0%, #EAF0F8 100%)', border: '1px solid rgba(140,109,61,0.22)', boxShadow: '0 2px 8px rgba(140,109,61,0.10)' }}>
-              <p className="text-[12.5px] font-bold mb-1.5" style={{ color: '#1A1612' }}>
+              <p className="text-[13.5px] font-bold mb-1.5" style={{ color: '#1A1612' }}>
                 신년운세를 쓰는 중이에요, {(arrivedNy.A ? 1 : 0) + (arrivedNy.B ? 1 : 0) + (arrivedNy.C ? 1 : 0)}/3 도착
               </p>
               <div className="flex gap-1 mb-1.5">
@@ -312,7 +312,7 @@ export function TojungPage() {
                   <div key={g} className="flex-1 rounded-full" style={{ height: 4, background: arrivedNy[g] ? '#1A1612' : 'rgba(140,109,61,0.16)', transition: 'background 0.4s' }} />
                 ))}
               </div>
-              <p className="text-[11px] leading-snug" style={{ color: '#4A5E80' }}>한 해 총평, 1~6월, 7~12월 순서 없이, 다 쓰는 대로 채워져요.</p>
+              <p className="text-[13px] leading-snug" style={{ color: '#4A5E80' }}>한 해 총평, 1~6월, 7~12월 순서 없이, 다 쓰는 대로 채워져요.</p>
             </div>
           </div>
         )}
@@ -330,7 +330,7 @@ export function TojungPage() {
           <FadeIn delay={0.03}>
             <div className="flex flex-wrap gap-1.5 justify-center">
               {(result as any).keywords.map((kw: string, i: number) => (
-                <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                <span key={i} className="text-[13px] font-semibold px-2.5 py-1 rounded-full"
                   style={{ background: 'rgba(184,150,90,0.1)', color: '#8C6D3D', border: '1px solid rgba(184,150,90,0.2)' }}>
                   {kw}
                 </span>
@@ -357,11 +357,11 @@ export function TojungPage() {
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${catColor}12` }}>
-                      <span className="text-[12px] font-black" style={{ color: catColor }}>{CATEGORY_ICONS[key] || '總'}</span>
+                      <span className="text-[13.5px] font-black" style={{ color: catColor }}>{CATEGORY_ICONS[key] || '總'}</span>
                     </div>
                     <p className="text-label text-text-primary font-bold flex-1">{key}</p>
                     {catScore != null && (
-                      <span className="text-[12px] font-black" style={{ color: catColor }}>{catScore}</span>
+                      <span className="text-[13.5px] font-black" style={{ color: catColor }}>{catScore}</span>
                     )}
                   </div>
                   {catScore != null && (
@@ -383,10 +383,10 @@ export function TojungPage() {
         <FadeIn delay={0.25}>
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">월별 운세 흐름</p>
-            <p className="text-[11px] text-text-hint mb-3">1월~12월 점수 흐름</p>
+            <p className="text-[13px] text-text-hint mb-3">1월~12월 점수 흐름</p>
             <div className="h-36 -mx-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={result.months.map((m: any) => ({ name: `${m.month}월`, 점수: m.score || 5 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <AreaChart data={result.months.map((m: any) => ({ name: String(m.month), 점수: m.score || 5 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="tojungGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#B8965A" stopOpacity={0.25} />
@@ -394,7 +394,7 @@ export function TojungPage() {
                     </linearGradient>
                   </defs>
                   {/* 2026-10-07 — 점수는 1~100 인데 축이 0~10 이라 선이 위로 잘렸음 */}
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" interval={0} tick={{ fontSize: 12, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
                   <Area type="monotone" dataKey="점수" stroke="#B8965A" strokeWidth={2}
                     fill="url(#tojungGrad)"
@@ -411,11 +411,11 @@ export function TojungPage() {
           <FadeIn delay={0.27}>
             <div className="card">
               <p className="text-h3 text-text-primary mb-1">올해의 결정 타이밍</p>
-              <p className="text-[11px] text-text-hint mb-3">움직이기 좋은 때와 그 이유</p>
+              <p className="text-[13px] text-text-hint mb-3">움직이기 좋은 때와 그 이유</p>
               <div className="space-y-3">
                 {((result as any).turningPoints as Array<{ when: string; title: string; desc: string }>).map((tp, i) => (
                   <div key={i} className="flex gap-3">
-                    <div className="flex-shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-lg h-fit"
+                    <div className="flex-shrink-0 text-[13.5px] font-bold px-2.5 py-1 rounded-lg h-fit"
                       style={{ background: 'rgba(140,109,61,0.08)', color: '#1A1612', whiteSpace: 'nowrap' }}>{tp.when}</div>
                     <div className="min-w-0">
                       <p className="text-label text-text-primary font-bold">{stripMd(String(tp.title || ''))}</p>
@@ -433,12 +433,12 @@ export function TojungPage() {
           <FadeIn delay={0.29}>
             <div className="card">
               <p className="text-h3 text-text-primary mb-1">{resultYear}년 꼭 기억할 날</p>
-              <p className="text-[11px] text-text-hint mb-3">내 사주에 도움 기운이 가장 크게 들어오는 날, 중요한 약속, 결정, 시작에</p>
+              <p className="text-[13px] text-text-hint mb-3">내 사주에 도움 기운이 가장 크게 들어오는 날, 중요한 약속, 결정, 시작에</p>
               <div className="grid grid-cols-2 gap-2">
                 {((result as any).keyDates as Array<{ date: string; why: string }>).map((k, i) => (
                   <div key={i} className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.18)' }}>
                     <p className="text-[15px] font-black" style={{ color: '#8C6D3D' }}>{k.date}</p>
-                    <p className="text-[11px] text-text-muted leading-snug mt-0.5">{k.why}</p>
+                    <p className="text-[13px] text-text-muted leading-snug mt-0.5">{k.why}</p>
                   </div>
                 ))}
               </div>
@@ -507,10 +507,10 @@ export function TojungPage() {
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
             의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.

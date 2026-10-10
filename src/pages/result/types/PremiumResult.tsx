@@ -471,7 +471,7 @@ function ShinsalSummary({
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 12,
+          fontSize: 13.5,
           fontWeight: 700,
           color: C.goldDeep,
           letterSpacing: '0.04em',
@@ -659,7 +659,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
           >
             12운성 <span style={{ color: C.goldDeep, fontWeight: 700, marginLeft: 2 }}>十二運星</span>
           </div>
-          <div style={{ fontSize: 12, color: C.mute, lineHeight: 1.5, marginTop: 2 }}>
+          <div style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.5, marginTop: 2 }}>
             인생을 12단계로 나눠 — 어느 자리(시기)가 강하고 약한지 한 눈에 봅니다
           </div>
         </div>
@@ -673,7 +673,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
           borderRadius: 10,
           padding: '11px 13px',
           marginBottom: 14,
-          fontSize: 11.5,
+          fontSize: 13,
           color: C.inkSoft,
           lineHeight: 1.7,
           wordBreak: 'keep-all',
@@ -682,7 +682,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
         <span style={{ fontWeight: 700, color: C.goldDeep, marginRight: 4 }}>이렇게 읽으세요</span>
         — 사람이 <strong style={{ color: C.ink }}>태어나(장생) → 자라고 → 정점(제왕) → 저물고(쇠, 병, 사) → 다시 씨앗이 되는(태와 양)</strong> 인생 사이클 12단계입니다.
         내 사주 4 자리(년, 월, 일, 시)가 각각 어느 단계에 해당하는지 보면, <strong style={{ color: C.ink }}>인생 어느 시기가 강하고 약한지</strong> 가늠할 수 있어요.
-        <span style={{ display: 'block', marginTop: 6, fontSize: 11, color: C.mute }}>
+        <span style={{ display: 'block', marginTop: 6, fontSize: 13, color: C.mute }}>
           • <strong style={{ color: '#4E7A57', fontWeight: 700 }}>녹색</strong>은 강한 자리, <strong style={{ color: '#C62828', fontWeight: 700 }}>빨강</strong>은 약한 자리, <strong style={{ color: '#B8965A', fontWeight: 700 }}>골드</strong>는 변화의 자리예요.
         </span>
       </div>
@@ -702,7 +702,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
         >
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 800,
               color: C.goldDeep,
               letterSpacing: '0.12em',
@@ -719,7 +719,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
               return (
                 <React.Fragment key={i}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 11, color: C.mute, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 3 }}>
+                    <span style={{ fontSize: 13, color: C.mute, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 3 }}>
                       {lifeArcLabels[i] || ''}
                     </span>
                     <div
@@ -740,7 +740,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                     >
                       {x.han || x.kr.charAt(0)}
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: c.c, marginTop: 3 }}>{x.kr}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: c.c, marginTop: 3 }}>{x.kr}</span>
                   </div>
                   {i < lifeArc.length - 1 && (
                     <span style={{ fontSize: 14, color: C.mute, padding: '0 2px', fontWeight: 800 }}>›</span>
@@ -750,7 +750,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
             })}
           </div>
           <p
-            style={{ fontSize: 12, color: C.ink, lineHeight: 1.7, margin: 0, wordBreak: 'keep-all' }}
+            style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.7, margin: 0, wordBreak: 'keep-all' }}
             dangerouslySetInnerHTML={{ __html: buildLifeArc() }}
           />
         </div>
@@ -788,7 +788,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                     top: -8,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 800,
                     background: 'linear-gradient(135deg, #f4d166, #B8965A)',
                     color: '#1a1a1a',
@@ -809,7 +809,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                     top: -8,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 800,
                     background: 'rgba(198,40,40,0.92)',
                     color: '#fff',
@@ -840,13 +840,13 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
               >
                 {c.label}
               </span>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.mute, letterSpacing: '0.04em', marginTop: isStrongest || isWeakest ? 6 : 2 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.mute, letterSpacing: '0.04em', marginTop: isStrongest || isWeakest ? 6 : 2 }}>
                 {u.pos}
               </div>
               <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 26, fontWeight: 900, color: c.c, lineHeight: 1, margin: '4px 0 2px', textShadow: `0 2px 8px ${c.c}22` }}>
                 {u.han || u.kr.charAt(0)}
               </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: c.c, letterSpacing: '0.02em' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: c.c, letterSpacing: '0.02em' }}>
                 {u.kr}
               </div>
               {/* 강도 5점 */}
@@ -863,7 +863,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                   />
                 ))}
               </div>
-              <div style={{ fontSize: 11, color: C.inkSoft, lineHeight: 1.45, marginTop: 5, wordBreak: 'keep-all' }}>
+              <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.45, marginTop: 5, wordBreak: 'keep-all' }}>
                 {meta?.short || ''}
               </div>
             </div>
@@ -881,7 +881,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
             border: '1px solid #E5DFD0',
             borderRadius: 8,
             padding: '11px 13px',
-            fontSize: 12,
+            fontSize: 13.5,
             color: C.ink,
             lineHeight: 1.7,
             wordBreak: 'keep-all',
@@ -890,7 +890,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
           <span
             style={{
               display: 'inline-block',
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 800,
               color: colorOf(strongest.meta.kind).c,
               background: `${colorOf(strongest.meta.kind).c}14`,
@@ -905,7 +905,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
             가장 강함
           </span>
           <span dangerouslySetInnerHTML={{ __html: strongest.meta.pillarPhrase(strongest.pos) }} />
-          <div style={{ marginTop: 6, fontSize: 11, color: C.mute, fontStyle: 'italic' }}>
+          <div style={{ marginTop: 6, fontSize: 13, color: C.mute, fontStyle: 'italic' }}>
             ↳ {strongest.meta.everyday}
           </div>
         </div>
@@ -919,7 +919,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
             border: '1px solid #E5DFD0',
             borderRadius: 8,
             padding: '11px 13px',
-            fontSize: 12,
+            fontSize: 13.5,
             color: C.ink,
             lineHeight: 1.7,
             wordBreak: 'keep-all',
@@ -928,7 +928,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
           <span
             style={{
               display: 'inline-block',
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 800,
               color: colorOf(weakest.meta.kind).c,
               background: `${colorOf(weakest.meta.kind).c}14`,
@@ -943,7 +943,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
             가장 약함
           </span>
           <span dangerouslySetInnerHTML={{ __html: weakest.meta.pillarPhrase(weakest.pos) }} />
-          <div style={{ marginTop: 6, fontSize: 11, color: C.mute, fontStyle: 'italic' }}>
+          <div style={{ marginTop: 6, fontSize: 13, color: C.mute, fontStyle: 'italic' }}>
             ↳ {weakest.meta.everyday}
           </div>
         </div>
@@ -962,7 +962,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
         <summary
           style={{
             cursor: 'pointer',
-            fontSize: 12,
+            fontSize: 13.5,
             fontWeight: 700,
             color: C.goldDeep,
             letterSpacing: '0.04em',
@@ -972,7 +972,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
         >
           12 단계 사이클이 뭐예요? <span style={{ color: C.mute, fontWeight: 500, marginLeft: 4 }}>+ 펼치기</span>
         </summary>
-        <div style={{ marginTop: 10, fontSize: 11.5, color: C.inkSoft, lineHeight: 1.7 }}>
+        <div style={{ marginTop: 10, fontSize: 13, color: C.inkSoft, lineHeight: 1.7 }}>
           사람이 <strong style={{ color: C.ink }}>태어나(장생) → 자라고 → 정점(제왕) → 저물고(쇠, 병, 사) → 다시 씨앗이 되는(태와 양)</strong> 인생 사이클을 12 단계로 본 것입니다.
           내 일간이 사주 4 자리(년, 월, 일, 시)에서 어느 단계에 해당하는지 보면 — <strong style={{ color: C.ink }}>인생 어느 시기에 어떤 결</strong>이 작동하는지 보입니다.
           <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
@@ -987,7 +987,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                     alignItems: 'flex-start',
                     // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 한자 컬러로 톤 표현.
                     gap: 8,
-                    fontSize: 11,
+                    fontSize: 13,
                     padding: '6px 8px',
                     background: i % 2 === 0 ? 'rgba(184,150,90,0.04)' : '#fff',
                     borderRadius: 5,
@@ -996,7 +996,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                   <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 900, color: c.c, minWidth: 20, textAlign: 'center', flexShrink: 0 }}>
                     {KR_TO_HAN[stage]}
                   </span>
-                  <span style={{ fontWeight: 800, color: c.c, minWidth: 30, fontSize: 11, flexShrink: 0 }}>{stage}</span>
+                  <span style={{ fontWeight: 800, color: c.c, minWidth: 30, fontSize: 13, flexShrink: 0 }}>{stage}</span>
                   <span style={{ flex: 1, lineHeight: 1.55 }}>
                     <span style={{ color: C.ink, fontWeight: 600 }}>{m.everyday}</span>
                   </span>
@@ -1756,7 +1756,7 @@ function Section1Pullquote({
       {ilganSymbol && (
         <p
           style={{
-            fontSize: 12.5,
+            fontSize: 13.5,
             color: '#5C4A2E',
             marginTop: 8,
             fontWeight: 400,
@@ -1818,7 +1818,7 @@ function ShinsalFinePrint({
   return (
     <p
       style={{
-        fontSize: 11.5,
+        fontSize: 13,
         color: '#5C4A2E',
         margin: '14px 2px 0',
         lineHeight: 1.6,
@@ -2106,7 +2106,7 @@ function TopicTopRecommend({
             alignItems: 'center',
             gap: 6,
             fontFamily: "'Noto Serif KR', serif",
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 800,
             color: '#f4d166',
             letterSpacing: '0.18em',
@@ -2137,7 +2137,7 @@ function TopicTopRecommend({
             ? <>가장 깊게 풀어볼 만한 <span style={{ color: '#f4d166' }}>{top3.length} 영역</span></>
             : <>지금 흐름을 가장 살려볼 만한 <span style={{ color: '#f4d166' }}>{top3.length} 영역</span></>}
         </div>
-        <div style={{ fontSize: 12, color: 'rgba(244,236,216,0.66)', lineHeight: 1.6, letterSpacing: '0.01em' }}>
+        <div style={{ fontSize: 13.5, color: 'rgba(244,236,216,0.66)', lineHeight: 1.6, letterSpacing: '0.01em' }}>
           점수가 가장 높은 {top3.length}갈래를 깊게 풀어드립니다 — 시기, 자리, 결정 포인트까지.
           {topicBaseScores && ' 카드 점수는 주제별 풀이에서도 같은 기준으로 이어져요.'}
         </div>
@@ -2203,7 +2203,7 @@ function TopicTopRecommend({
                     top: -8,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 800,
                     background: 'linear-gradient(135deg, #f4d166, #B8965A)',
                     color: '#1a1a1a',
@@ -2221,7 +2221,7 @@ function TopicTopRecommend({
               {/* 순위 +1 (소) */}
               <span
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                   color: 'rgba(244,236,216,0.5)',
                   letterSpacing: '0.12em',
@@ -2247,7 +2247,7 @@ function TopicTopRecommend({
               </span>
 
               {/* 한글 라벨 */}
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#F4ECD8', letterSpacing: '0.02em' }}>
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: '#F4ECD8', letterSpacing: '0.02em' }}>
                 {meta.label}
               </span>
 
@@ -2282,7 +2282,7 @@ function TopicTopRecommend({
               {/* 호기심 한 줄 — "어디서 가장 빛나는지·언제 자리를 잡는지" */}
               <span
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   color: 'rgba(244,236,216,0.66)',
                   lineHeight: 1.5,
                   marginTop: 6,
@@ -2300,7 +2300,7 @@ function TopicTopRecommend({
               <span
                 style={{
                   marginTop: 6,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 800,
                   color: meta.color,
                   letterSpacing: '0.06em',
@@ -2319,7 +2319,7 @@ function TopicTopRecommend({
           padding: '12px 18px 16px',
           borderTop: '1px solid rgba(244,209,102,0.14)',
           textAlign: 'center',
-          fontSize: 11,
+          fontSize: 13,
           color: 'rgba(244,236,216,0.56)',
           letterSpacing: '0.04em',
         }}
@@ -2506,7 +2506,7 @@ function SectionPendingSkeleton() {
   return (
     <div aria-live="polite" style={{ padding: '4px 0 2px' }}>
       <style>{`@keyframes prem-shimmer{0%{background-position:-240px 0}100%{background-position:240px 0}}`}</style>
-      <div style={{ fontSize: 12, color: '#8C6D3D', fontWeight: 700, marginBottom: 10, letterSpacing: '-0.01em' }}>
+      <div style={{ fontSize: 13.5, color: '#8C6D3D', fontWeight: 700, marginBottom: 10, letterSpacing: '-0.01em' }}>
         이 섹션 풀이를 쓰고 있어요, 다 쓰는 대로 여기에 채워져요
       </div>
       {[100, 94, 97, 70].map((w, i) => (
@@ -2567,7 +2567,7 @@ function CollapsibleSection({
           <div className="section-title">
             {title} <span className="hanja">{hanja}</span>
             {pending && (
-              <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: '#8C6D3D', background: 'rgba(184,150,90,0.14)', borderRadius: 999, padding: '2px 8px', verticalAlign: 'middle' }}>
+              <span style={{ marginLeft: 8, fontSize: 13, fontWeight: 700, color: '#8C6D3D', background: 'rgba(184,150,90,0.14)', borderRadius: 999, padding: '2px 8px', verticalAlign: 'middle' }}>
                 작성 중
               </span>
             )}
@@ -2897,7 +2897,7 @@ export function PremiumResult({
           >
             오행별 인생의 결 — 나에게 뭐가 있고 뭐가 비는가
           </h4>
-          <p style={{ fontSize: 11.5, color: '#5C4A2E', margin: '0 0 10px', lineHeight: 1.55 }}>
+          <p style={{ fontSize: 13, color: '#5C4A2E', margin: '0 0 10px', lineHeight: 1.55 }}>
             각 오행이 어떻게 작동하는지, <strong style={{ color: '#355A3E' }}>살릴 것</strong> /{' '}
             <strong style={{ color: '#8b1a1a' }}>조심할 것</strong>로 못 박아둡니다
           </p>
@@ -3256,7 +3256,7 @@ function PremiumUpsellCard({
 
   return (
     <div className="upsell-card">
-      <div className="label">DEEPER, 더 들어가보기</div>
+      <div className="label">이 풀이로 더 묻기</div>
       <h3>이 풀이를 두고 직접 물어보세요</h3>
       {aiQuestions && aiQuestions.length >= 2 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '10px 0 14px' }}>
@@ -3272,7 +3272,7 @@ function PremiumUpsellCard({
               }}
             >
               <span style={{ flex: 1 }}>“{q}”</span>
-              <span aria-hidden style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#E8D9B8' }}>물어보기</span>
+              <span aria-hidden style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: '#E8D9B8' }}>물어보기</span>
             </button>
           ))}
         </div>
@@ -3297,7 +3297,7 @@ function ReportSources() {
         margin: '28px 2px 0',
         padding: '12px 0 0',
         borderTop: '1px solid rgba(138,125,95,0.16)',
-        fontSize: 11,
+        fontSize: 13,
         lineHeight: 1.72,
         color: '#a89c7f',
         letterSpacing: '0.005em',
@@ -3403,13 +3403,13 @@ function YongsinBox({
           >
             用神 處方
           </span>
-          <span style={{ fontSize: 11, color: 'rgba(255,254,248,0.82)', letterSpacing: '0.06em', fontWeight: 600 }}>
+          <span style={{ fontSize: 13, color: 'rgba(255,254,248,0.82)', letterSpacing: '0.06em', fontWeight: 600 }}>
             용신 처방
           </span>
         </div>
         <span
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: 'rgba(255,254,248,0.7)',
             letterSpacing: '0.12em',
             fontWeight: 700,
@@ -3423,7 +3423,7 @@ function YongsinBox({
         {/* 도입 문장 */}
         <p
           style={{
-            fontSize: 12.5,
+            fontSize: 13.5,
             color: C.inkSoft,
             margin: '0 0 14px',
             lineHeight: 1.7,
@@ -3479,7 +3479,7 @@ function YongsinBox({
         >
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 700,
               color: primaryEc.dark,
               letterSpacing: '0.1em',
@@ -3490,7 +3490,7 @@ function YongsinBox({
           </div>
           <p
             style={{
-              fontSize: 12.5,
+              fontSize: 13.5,
               color: C.ink,
               lineHeight: 1.78,
               margin: 0,
@@ -3534,7 +3534,7 @@ function YongsinBox({
             </div>
             <p
               style={{
-                fontSize: 11.5,
+                fontSize: 13,
                 color: '#9C2424',
                 lineHeight: 1.65,
                 margin: 0,
@@ -3583,7 +3583,7 @@ function YongsinChip({
       {/* rank 라벨 */}
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 800,
           color: color,
           letterSpacing: '0.06em',
@@ -3630,7 +3630,7 @@ function YongsinChip({
         }}
       >
         {oheng}
-        <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.72, marginLeft: 4 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, opacity: 0.72, marginLeft: 4 }}>
           ({['목', '화', '토', '금', '수'].includes(oheng) ? oheng + '의 결' : ''})
         </span>
       </div>
@@ -3689,7 +3689,7 @@ function _LifestyleAdvice({
       </p>
       <p
         style={{
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: C.inkSoft,
           lineHeight: 1.7,
           margin: 0,
@@ -3780,7 +3780,7 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 12,
+          fontSize: 13.5,
           fontWeight: 700,
           color: C.goldDeep,
           letterSpacing: '0.04em',
@@ -3791,7 +3791,7 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
         }}
       >
         <span>월별 흐름 — 1~12월 활력 지수</span>
-        <span style={{ fontSize: 11, color: C.mute, fontWeight: 500 }}>
+        <span style={{ fontSize: 13, color: C.mute, fontWeight: 500 }}>
           평탄 60 / 상승 75+ / 정점 90+ / 주의 40-
         </span>
       </div>
@@ -3956,14 +3956,14 @@ function RelationCompassGrid({
       >
         올해 인연의 결, 緣
       </div>
-      <div style={{ fontSize: 11, color: C.mute, marginBottom: 10, lineHeight: 1.55 }}>
+      <div style={{ fontSize: 13, color: C.mute, marginBottom: 10, lineHeight: 1.55 }}>
         주변 사람의 <strong style={{ color: C.ink }}>일간 천간(태어난 날의 글자)</strong>을 알면 {userName} 님과 어떤 결인지 한눈에 보입니다.
         {/* 2026-10-07 궁합 공개 — 특정 사람과의 관계는 궁합으로 연결 (09-17 lockdown 때 제거했던 안내 복구 · 가격 SSOT 1운) */}
         {' '}
         <button
           type="button"
           onClick={() => navigate('/compat')}
-          style={{ color: C.goldDeep, fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', padding: 0, fontSize: 11, cursor: 'pointer' }}
+          style={{ color: C.goldDeep, fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', padding: 0, fontSize: 13, cursor: 'pointer' }}
         >
           특정 사람과는 궁합 보기(1운)
         </button>
@@ -3984,7 +3984,7 @@ function RelationCompassGrid({
           >
             <div
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 800,
                 color: c.color,
                 letterSpacing: '0.05em',
@@ -4010,7 +4010,7 @@ function RelationCompassGrid({
             </div>
             <div
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: c.color,
                 textAlign: 'center',
@@ -4020,7 +4020,7 @@ function RelationCompassGrid({
             >
               일간
             </div>
-            <div style={{ fontSize: 11, color: C.inkSoft, lineHeight: 1.55, textAlign: 'left', marginTop: 4 }}>
+            <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.55, textAlign: 'left', marginTop: 4 }}>
               {c.desc}
             </div>
           </div>
@@ -4076,7 +4076,7 @@ function MonthlyWarnings({ aiResult }: { aiResult: any }) {
           >
             <span
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 800,
                 color: '#9C2424',
                 background: '#FBE5E5',
@@ -4092,7 +4092,7 @@ function MonthlyWarnings({ aiResult }: { aiResult: any }) {
           </div>
           <p
             style={{
-              fontSize: 12.5,
+              fontSize: 13.5,
               color: C.inkSoft,
               lineHeight: 1.65,
               margin: 0,
@@ -4331,7 +4331,7 @@ function LifeKeywordHero({
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 700,
           color: '#8C6D3D',
           letterSpacing: '0.08em',
@@ -4508,7 +4508,7 @@ function StrengthsCautionsCards({
           >
             <span
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: 4,
@@ -4547,7 +4547,7 @@ function StrengthsCautionsCards({
                 </div>
                 <p
                   style={{
-                    fontSize: 12.5,
+                    fontSize: 13.5,
                     color: '#3D3D3D',
                     lineHeight: 1.65,
                     margin: 0,
@@ -4579,7 +4579,7 @@ function StrengthsCautionsCards({
           >
             <span
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: 4,
@@ -4618,7 +4618,7 @@ function StrengthsCautionsCards({
                 </div>
                 <p
                   style={{
-                    fontSize: 12.5,
+                    fontSize: 13.5,
                     color: '#3D3D3D',
                     lineHeight: 1.65,
                     margin: 0,
@@ -4661,7 +4661,7 @@ function PillarMessages({
           >
             <div
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: C.goldDeep,
                 marginBottom: 3,
@@ -4904,7 +4904,7 @@ function SipsungStory({
     >
       <p
         style={{
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 700,
           color: C.goldDeep,
           margin: '0 0 4px',
@@ -5331,7 +5331,7 @@ function PracticeChecklist({
               }}
             >
               {a.title}
-              {i === 0 && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 800, color: '#B8965A', background: 'rgba(184,150,90,0.14)', padding: '2px 6px', borderRadius: 4, verticalAlign: 'middle' }}>1순위</span>}
+              {i === 0 && <span style={{ marginLeft: 6, fontSize: 13, fontWeight: 800, color: '#B8965A', background: 'rgba(184,150,90,0.14)', padding: '2px 6px', borderRadius: 4, verticalAlign: 'middle' }}>1순위</span>}
             </div>
             {/* 2026-05-04 fix: <strong> raw text → dangerouslySetInnerHTML */}
             <div className="desc" dangerouslySetInnerHTML={{ __html: sanitizeAiText(a.desc) }} />
@@ -5888,11 +5888,11 @@ function LifeEdgeList({
               )}
               <br /><br />
               <div style={{ marginBottom: 6 }}>
-                <strong style={{ color: '#355A3E', display: 'inline-block', minWidth: 56, fontSize: 11, padding: '2px 6px', background: 'rgba(78,122,87,0.10)', borderRadius: 4, marginRight: 6 }}>살릴 것</strong>
+                <strong style={{ color: '#355A3E', display: 'inline-block', minWidth: 56, fontSize: 13, padding: '2px 6px', background: 'rgba(78,122,87,0.10)', borderRadius: 4, marginRight: 6 }}>살릴 것</strong>
                 <span style={{ color: '#2a2520' }} dangerouslySetInnerHTML={{ __html: saveText }} />
               </div>
               <div>
-                <strong style={{ color: '#8b1a1a', display: 'inline-block', minWidth: 56, fontSize: 11, padding: '2px 6px', background: 'rgba(198,40,40,0.10)', borderRadius: 4, marginRight: 6 }}>조심할 것</strong>
+                <strong style={{ color: '#8b1a1a', display: 'inline-block', minWidth: 56, fontSize: 13, padding: '2px 6px', background: 'rgba(198,40,40,0.10)', borderRadius: 4, marginRight: 6 }}>조심할 것</strong>
                 <span style={{ color: '#2a2520' }} dangerouslySetInnerHTML={{ __html: avoidText }} />
               </div>
             </div>
@@ -6001,10 +6001,10 @@ function SipClusterHeader({ sipDist }: { sipDist: any }) {
               boxShadow: isPeak ? `0 2px 6px ${cl.color}33` : 'none',
             }}
           >
-            <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 12, fontWeight: 700, color: cl.color, lineHeight: 1 }}>
+            <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13.5, fontWeight: 700, color: cl.color, lineHeight: 1 }}>
               {cl.hanja}
             </div>
-            <div style={{ fontSize: 11, color: C.mute, marginTop: 2, fontWeight: 600 }}>{cl.label}</div>
+            <div style={{ fontSize: 13, color: C.mute, marginTop: 2, fontWeight: 600 }}>{cl.label}</div>
             <div style={{ fontSize: 16, fontWeight: 800, color: cl.color, fontFeatureSettings: '"tnum"', marginTop: 4 }}>
               {v}
             </div>
@@ -6150,7 +6150,7 @@ function YongsinLifeTable({ primary, lifestyle }: { primary: OhengType; lifestyl
           >
             용신 일상 적용 8행, 用神 應用 八行
           </div>
-          <div style={{ fontSize: 11, color: C.mute, marginTop: 2, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: C.mute, marginTop: 2, lineHeight: 1.5 }}>
             오늘부터 일상 한 켠에 두면 결이 채워집니다 — 작게라도 매일.
           </div>
         </div>
@@ -6190,13 +6190,13 @@ function YongsinLifeTable({ primary, lifestyle }: { primary: OhengType; lifestyl
                 >
                   {r.han}
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: accent, letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: accent, letterSpacing: '0.04em' }}>
                   {r.kr}
                 </span>
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 13.5,
                   color: C.ink,
                   lineHeight: 1.55,
                   fontWeight: 600,
@@ -6205,7 +6205,7 @@ function YongsinLifeTable({ primary, lifestyle }: { primary: OhengType; lifestyl
               >
                 {r.val}
               </div>
-              <div style={{ fontSize: 11, color: C.mute, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.5 }}>
                 {r.hint}
               </div>
             </div>
@@ -6296,7 +6296,7 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
           </span>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: C.mute, marginBottom: 2 }}>현재 대운, {cur.age}</div>
+          <div style={{ fontSize: 13, color: C.mute, marginBottom: 2 }}>현재 대운, {cur.age}</div>
           <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>
             {cur.gz}({cur.kr || ''}) — {cur.label || '진행 중'}의 10년
           </div>
@@ -6304,22 +6304,22 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {ganSip && (
-          <div style={{ display: 'flex', gap: 8, fontSize: 11.5, lineHeight: 1.55 }}>
+          <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
             <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>천간 {ganHan}</span>
             <span style={{ color: C.inkSoft, flex: 1 }}>{ganSip}</span>
           </div>
         )}
         {jiSip && (
-          <div style={{ display: 'flex', gap: 8, fontSize: 11.5, lineHeight: 1.55 }}>
+          <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
             <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>지지 {jiHan}</span>
             <span style={{ color: C.inkSoft, flex: 1 }}>{jiSip}</span>
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8, fontSize: 11.5, lineHeight: 1.55 }}>
+        <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
           <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>키 사건</span>
           <span style={{ color: C.inkSoft, flex: 1 }}>{keyEvents}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, fontSize: 11.5, lineHeight: 1.55 }}>
+        <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
           <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>조심</span>
           <span style={{ color: C.inkSoft, flex: 1 }}>{cautions}</span>
         </div>
@@ -6402,7 +6402,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
     return (
       <p
         style={{
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: '#5C4A2E',
           textAlign: 'center',
           margin: '20px 0',
@@ -6478,7 +6478,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
         <div className="head">
           <span className="nm">{krLabel}</span>
           <span className="han">{s.hanja}</span>
-          {fromText && <span className="han" style={{ fontSize: 11, color: '#7F6B4E' }}>, {fromText}</span>}
+          {fromText && <span className="han" style={{ fontSize: 13, color: '#7F6B4E' }}>, {fromText}</span>}
           <span className="tag">{isFull ? '강하게 작동' : '은근히 작동'}</span>
         </div>
         {/* 2026-05-05: <strong> raw text 차단 */}
@@ -6523,12 +6523,12 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
         }}
       >
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 800, color: '#1A1A1A', minWidth: 36 }}>{krLabel}</span>
-        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 12, color: '#7F6B4E', minWidth: 28 }}>{s.hanja}</span>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13.5, color: '#7F6B4E', minWidth: 28 }}>{s.hanja}</span>
         {/* 2026-05-05: <strong> raw text 차단 */}
-        <span style={{ flex: 1, fontSize: 12.5, color: '#3D3D3D', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(desc) }} />
+        <span style={{ flex: 1, fontSize: 13.5, color: '#3D3D3D', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(desc) }} />
         <span style={{
           flexShrink: 0,
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 700,
           padding: '2px 8px',
           borderRadius: 999,
@@ -6546,7 +6546,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
       {strong.length > 0 && (
         <>
           <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13, color: '#1A1A1A', fontWeight: 800, margin: '4px 0 8px', letterSpacing: '0.02em' }}>
-            핵심 신살 <span style={{ fontSize: 11, color: '#8C6D3D', fontWeight: 700, marginLeft: 4 }}>본인 결의 중심</span>
+            핵심 신살 <span style={{ fontSize: 13, color: '#8C6D3D', fontWeight: 700, marginLeft: 4 }}>본인 결의 중심</span>
           </h4>
           <div className="shinsal-list">
             {strong.map((s) => renderCard(s, 5, '상시 작동', true, 'always'))}
@@ -6556,8 +6556,8 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
       {/* 중 + 참고 — 한 줄 카드 (이름·한자·한 줄·작동 시기) */}
       {(mid.length > 0 || ref.length > 0) && (
         <>
-          <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 12.5, color: '#7A7269', fontWeight: 700, margin: '18px 0 8px', letterSpacing: '0.02em' }}>
-            그 외 신살 <span style={{ fontSize: 11, color: '#A8A097', fontWeight: 600, marginLeft: 4 }}>부수적과 시기별 작동</span>
+          <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13.5, color: '#7A7269', fontWeight: 700, margin: '18px 0 8px', letterSpacing: '0.02em' }}>
+            그 외 신살 <span style={{ fontSize: 13, color: '#A8A097', fontWeight: 600, marginLeft: 4 }}>부수적과 시기별 작동</span>
           </h4>
           <div>
             {mid.map((s) => renderMiniRow(s, '상시'))}
@@ -6977,7 +6977,7 @@ function DaewoonLine60({ v4Daeun, sajuData: _sajuData }: { v4Daeun: V4Daeun[]; s
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 12,
+          fontSize: 13.5,
           fontWeight: 700,
           color: C.goldDeep,
           letterSpacing: '0.04em',
@@ -7426,8 +7426,8 @@ function TopicMiniGrid({
             <div className="tm-head">
               <span className="tm-ttl" style={isPeak ? { color: '#4E7A57' } : isLow ? { color: '#c62828' } : undefined}>
                 {t.label}
-                {isPeak && <span style={{ marginLeft: 5, fontSize: 11, fontWeight: 800, color: '#4E7A57', background: 'rgba(78,122,87,0.12)', padding: '1px 5px', borderRadius: 4, verticalAlign: 'middle' }}>최강</span>}
-                {isLow && <span style={{ marginLeft: 5, fontSize: 11, fontWeight: 800, color: '#c62828', background: 'rgba(198,40,40,0.10)', padding: '1px 5px', borderRadius: 4, verticalAlign: 'middle' }}>주의</span>}
+                {isPeak && <span style={{ marginLeft: 5, fontSize: 13, fontWeight: 800, color: '#4E7A57', background: 'rgba(78,122,87,0.12)', padding: '1px 5px', borderRadius: 4, verticalAlign: 'middle' }}>최강</span>}
+                {isLow && <span style={{ marginLeft: 5, fontSize: 13, fontWeight: 800, color: '#c62828', background: 'rgba(198,40,40,0.10)', padding: '1px 5px', borderRadius: 4, verticalAlign: 'middle' }}>주의</span>}
               </span>
               <span className="tm-score" style={isPeak ? { color: '#4E7A57' } : isLow ? { color: '#c62828' } : undefined}>
                 {t.score}

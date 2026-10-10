@@ -50,7 +50,7 @@ function fmtDate(date: string): string {
 }
 
 function statusCopy(total: number): string {
-  if (total === 0) return '이벤트로 받은 운이 여기 쌓여요, 첫 운을 받아볼까요';
+  if (total === 0) return '이벤트로 받은 운이 여기 쌓여요. 첫 운을 받아볼까요?';
   if (total <= 9) return '차곡차곡 쌓이고 있어요';
   if (total <= 49) return '꾸준함이 복을 불러요';
   return '귀인의 기운이 머물고 있어요';
@@ -95,7 +95,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
           boxShadow: '0 1px 2px rgba(47,42,35,0.04), 0 8px 24px rgba(47,42,35,0.04)',
         }}
       >
-        <p className="text-[12px] font-medium" style={{ color: '#8A7F6E' }}>지금까지 받은 운</p>
+        <p className="text-[13.5px] font-medium" style={{ color: '#8A7F6E' }}>지금까지 받은 운</p>
 
         <div className="mt-3 flex items-end gap-1.5">
           <span className="font-extrabold leading-none"
@@ -105,14 +105,14 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
           <span className="text-[18px] font-semibold pb-1" style={{ color: '#1A1612' }}>운</span>
         </div>
 
-        <p className="mt-2 text-[12px]" style={{ color: '#8A7F6E' }}>{status}</p>
+        <p className="mt-2 text-[13.5px]" style={{ color: '#8A7F6E' }}>{status}</p>
 
         <div className="mt-5 pt-4 space-y-2" style={{ borderTop: '1px solid #EDEAE0' }}>
           {UN_ROWS.map((row) => (
             <Row
               key={row.type}
               label={row.label}
-              amountText={`운 ${fmtUn(ledger.totals[row.type])}`}
+              amountText={`${fmtUn(ledger.totals[row.type])}운`}
               onInfo={() => setDetailType(row.type)}
             />
           ))}
@@ -120,7 +120,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
 
         {tossPointVisible ? (
           <div className="mt-4 pt-3 space-y-2" style={{ borderTop: '1px solid #EDEAE0' }}>
-            <p className="text-[12px] font-medium" style={{ color: '#8A7F6E' }}>받은 토스포인트</p>
+            <p className="text-[13.5px] font-medium" style={{ color: '#8A7F6E' }}>받은 토스포인트</p>
             {TOSSPOINT_ROWS.map((row) => (
               <Row
                 key={row.type}
@@ -136,7 +136,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
         ) : null}
 
         {hasRecords ? (
-          <p className="mt-4 text-[11px]" style={{ color: '#8A7F6E', lineHeight: 1.5 }}>
+          <p className="mt-4 text-[13px]" style={{ color: '#8A7F6E', lineHeight: 1.5 }}>
             이 기기에 기록된 내역이에요, {fmtDate(ledger.since)}부터 쌓였어요
           </p>
         ) : null}
@@ -173,7 +173,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
                       {fmtDate(x.date)}
                     </span>
                     <span className="font-semibold" style={{ color: '#1A1A1A' }}>
-                      {isTossPoint(detailType) ? `${x.amount}원` : `운 ${fmtUn(x.amount)}`}
+                      {isTossPoint(detailType) ? `${x.amount}원` : `${fmtUn(x.amount)}운`}
                     </span>
                   </li>
                 ))}

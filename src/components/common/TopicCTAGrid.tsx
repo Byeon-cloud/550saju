@@ -73,9 +73,9 @@ export function TopicCTAGrid({ topics, onTopicTap, meta, title }: TopicCTAGridPr
               <Pictogram k={`topic:${t.id}`} size={18} color={t.color || '#B8965A'} />
             </div>
             <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{t.title}</p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{t.desc}</p>
+            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.4 }}>{t.desc}</p>
             {t.price && (
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--brand-gold)', marginTop: 'auto' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-gold)', marginTop: 'auto' }}>
                 {t.price}
               </p>
             )}

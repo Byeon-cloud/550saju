@@ -56,7 +56,7 @@ export function LegalFooter() {
       {/* 링크 행 */}
       <div
         className="flex items-center justify-center flex-wrap gap-x-3 gap-y-2 mb-3"
-        style={{ fontSize: 12, fontWeight: 700 }}
+        style={{ fontSize: 13.5, fontWeight: 700 }}
       >
         <button
           type="button"
@@ -91,7 +91,7 @@ export function LegalFooter() {
           aria-expanded={bizOpen}
           style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: '2px 8px',
-            fontSize: 11, fontWeight: 600, color: C.mute,
+            fontSize: 13, fontWeight: 600, color: C.mute,
           }}
         >
           {b.companyName} 사업자 정보 {bizOpen ? '▴' : '▾'}
@@ -99,19 +99,19 @@ export function LegalFooter() {
         {bizOpen && (
           <div
             className="flex flex-col items-center gap-1 mt-2"
-            style={{ fontSize: 11, lineHeight: 1.6, color: C.mute }}
+            style={{ fontSize: 13, lineHeight: 1.6, color: C.mute }}
           >
             {infoLines.map(([label, value]) => (
               <div key={label}>
                 <span style={{ fontWeight: 700 }}>{label}</span> {value}
               </div>
             ))}
-            <div className="mt-2" style={{ fontSize: 10.5, color: C.mute }}>
+            <div className="mt-2" style={{ fontSize: 13, color: C.mute }}>
               호스팅 제공: {b.hostingProvider}
             </div>
           </div>
         )}
-        <div className="mt-2" style={{ fontSize: 10.5, color: C.mute }}>
+        <div className="mt-2" style={{ fontSize: 13, color: C.mute }}>
           © {new Date().getFullYear()} 사주500. All rights reserved.
         </div>
       </div>

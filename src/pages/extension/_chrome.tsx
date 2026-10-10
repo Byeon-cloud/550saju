@@ -81,7 +81,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentDark: '#1A1612',
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
-    label: '월운, 이번 달',
+    label: '이번 달 월운',
     heroH1: { line1: '이번 달의 결과', line2: '시기를 살핍니다' },
     // 2026-07-01 가격 fix — 월운 정가 7운 (getMonthlyPrice SSOT). 세일가는 호출부 costLabel 로.
     cost: '7운',
@@ -94,7 +94,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentDark: '#1A1612',
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
-    label: '주간운세, 이번 주',
+    label: '이번 주 운세',
     heroH1: { line1: '이번 주 7일의', line2: '흐름을 짚어 드립니다' },
     cost: '5운' as ExtensionTheme['cost'],
   },
@@ -217,7 +217,7 @@ export function ExtensionHero({
       {crumb && (
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             opacity: 0.75,
             marginBottom: 8,
             position: 'relative',
@@ -231,7 +231,7 @@ export function ExtensionHero({
         style={{
           display: 'flex',
           gap: 10,
-          fontSize: 12,
+          fontSize: 13.5,
           opacity: 0.92,
           flexWrap: 'wrap',
           alignItems: 'center',
@@ -243,7 +243,7 @@ export function ExtensionHero({
             background: 'rgba(255,255,255,0.22)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 600,
           }}
         >
@@ -254,7 +254,7 @@ export function ExtensionHero({
             background: 'rgba(255,255,255,0.14)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
           }}
         >
           {costLabel ?? theme.cost}
@@ -265,7 +265,7 @@ export function ExtensionHero({
               background: 'rgba(255,255,255,0.28)',
               padding: '3px 9px',
               borderRadius: 100,
-              fontSize: 9.5,
+              fontSize: 12,
               fontWeight: 800,
               letterSpacing: '0.02em',
               whiteSpace: 'nowrap',
@@ -275,7 +275,7 @@ export function ExtensionHero({
           </span>
         )}
         {rightLabel && (
-          <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8 }}>
+          <span style={{ marginLeft: 'auto', fontSize: 13, opacity: 0.8 }}>
             {rightLabel}
           </span>
         )}
@@ -298,7 +298,7 @@ export function ExtensionHero({
       {sub && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             opacity: 0.85,
             marginTop: 4,
             position: 'relative',
@@ -313,7 +313,7 @@ export function ExtensionHero({
             display: 'flex',
             gap: 10,
             marginTop: 10,
-            fontSize: 11,
+            fontSize: 13,
             opacity: 0.8,
             flexWrap: 'wrap',
             position: 'relative',
@@ -351,7 +351,7 @@ export function ExtensionSection({
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 600,
           color: theme.accentDark,
           letterSpacing: '0.2em',
@@ -385,7 +385,7 @@ export function ExtensionSection({
       {sub && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             color: theme.hint,
             marginTop: 4,
             lineHeight: 1.55,
@@ -486,7 +486,7 @@ export function ExtensionUpsellCard({
       </h3>
       <p
         style={{
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: '#C4B69A',
           marginBottom: 14,
           lineHeight: 1.6,
@@ -516,7 +516,7 @@ export function ExtensionUpsellCard({
             background: 'rgba(255,255,255,0.10)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
             color: '#5C4A2E',
             marginLeft: 6,
             fontWeight: 600,
@@ -602,7 +602,7 @@ export function ExtensionLockVeil({
         {subLabel && (
           <div
             style={{
-              fontSize: 11.5,
+              fontSize: 13,
               color: theme.hint,
               marginTop: 4,
               textAlign: 'center',
@@ -655,7 +655,7 @@ export function DaeunBars({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
-          fontSize: 11,
+          fontSize: 13,
           color: C.goldDeep,
           letterSpacing: '0.15em',
           fontWeight: 700,
@@ -666,7 +666,7 @@ export function DaeunBars({
         {hint && (
           <span
             style={{
-              fontSize: 11,
+              fontSize: 13,
               color: C.mute,
               fontWeight: 500,
               letterSpacing: 0,
@@ -729,7 +729,7 @@ export function DaeunBars({
               >
                 <span
                   style={{
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 800,
                     color: numColor,
                   }}
@@ -737,13 +737,13 @@ export function DaeunBars({
                   {b.value}
                 </span>
               </div>
-              <span style={{ fontSize: 9, color: C.mute, fontWeight: 600 }}>
+              <span style={{ fontSize: 12, color: C.mute, fontWeight: 600 }}>
                 {b.age}
               </span>
               <span
                 style={{
                   fontFamily: "'Noto Serif KR', serif",
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                   color: isNow
                     ? '#1A1612'
@@ -803,7 +803,7 @@ export function DaeunHeatGrid({
     >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: C.goldDeep,
           letterSpacing: '0.15em',
           fontWeight: 700,
@@ -817,7 +817,7 @@ export function DaeunHeatGrid({
           display: 'grid',
           gridTemplateColumns: `48px repeat(${yearCount}, 1fr)`,
           gap: 3,
-          fontSize: 9,
+          fontSize: 12,
         }}
       >
         <div></div>
@@ -834,7 +834,7 @@ export function DaeunHeatGrid({
             <div
               key={`l-${ri}`}
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: C.ink,
                 alignSelf: 'center',
@@ -861,7 +861,7 @@ export function DaeunHeatGrid({
       <div
         style={{
           marginTop: 10,
-          fontSize: 9.5,
+          fontSize: 12,
           color: C.mute,
           display: 'flex',
           gap: 4,
@@ -946,7 +946,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                   color: C.goldDeep,
                   padding: '2px 8px',
                   borderRadius: 100,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                 }}
               >
@@ -962,7 +962,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
               >
                 {c.key}
               </span>
-              <span style={{ fontSize: 11, color: C.mute }}>
+              <span style={{ fontSize: 13, color: C.mute }}>
                 {c.reading}
                 {c.tag ? ` ${c.tag}` : ''}
               </span>
@@ -970,7 +970,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                 <span
                   style={{
                     marginLeft: 'auto',
-                    fontSize: 9,
+                    fontSize: 12,
                     fontWeight: 800,
                     color: '#FFFFFF',
                     background: accent,
@@ -989,7 +989,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
             </div>
             <div
               style={{
-                fontSize: 12.5,
+                fontSize: 13.5,
                 color: C.inkSoft,
                 lineHeight: 1.7,
                 wordBreak: 'keep-all',
@@ -1014,7 +1014,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                       color: C.inkSoft,
                       padding: '2px 8px',
                       borderRadius: 100,
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: 600,
                     }}
                   >
@@ -1068,7 +1068,7 @@ export function MonthHero({
         <div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               color: '#A23A2A',
               letterSpacing: '0.2em',
               fontWeight: 700,
@@ -1106,7 +1106,7 @@ export function MonthHero({
             padding: '4px 10px',
             borderRadius: 100,
             fontFamily: "'Noto Serif KR', serif",
-            fontSize: 12,
+            fontSize: 13.5,
             fontWeight: 700,
           }}
         >
@@ -1170,7 +1170,7 @@ export function FourCard({ items, title }: { items: FourCardItem[]; title?: stri
       {title && (
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: C.goldDeep,
             letterSpacing: '0.15em',
             fontWeight: 700,
@@ -1202,7 +1202,7 @@ export function FourCard({ items, title }: { items: FourCardItem[]; title?: stri
             >
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   color,
                   fontWeight: 700,
                   marginBottom: 4,
@@ -1304,7 +1304,7 @@ export function CalGrid({
       >
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: '#A23A2A',
             letterSpacing: '0.15em',
             fontWeight: 700,
@@ -1313,7 +1313,7 @@ export function CalGrid({
           {monthLabel ?? '캘린더, 일별 강도'}
         </div>
         {hint && (
-          <div style={{ fontSize: 11, color: C.mute }}>{hint}</div>
+          <div style={{ fontSize: 13, color: C.mute }}>{hint}</div>
         )}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
@@ -1322,7 +1322,7 @@ export function CalGrid({
             key={d}
             style={{
               textAlign: 'center',
-              fontSize: 9.5,
+              fontSize: 12,
               color: i === 0 ? '#C62828' : i === 6 ? '#3E5F82' : C.mute,
               fontWeight: 700,
               padding: '4px 0',
@@ -1346,7 +1346,7 @@ export function CalGrid({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 11,
+              fontSize: 13,
               color:
                 c.day === 0
                   ? 'transparent'
@@ -1434,7 +1434,7 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
     >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: '#1A1612',
           letterSpacing: '0.15em',
           fontWeight: 700,
@@ -1467,7 +1467,7 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
       </div>
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: C.inkSoft,
           marginBottom: 8,
           lineHeight: 1.5,
@@ -1490,7 +1490,7 @@ function CompatPCard({ card }: { card: CompatPersonCard }) {
               border: '1px solid rgba(140,109,61,0.20)',
               padding: '3px 7px',
               borderRadius: 6,
-              fontSize: 11,
+              fontSize: 13,
               color: '#1A1612',
             }}
           >
@@ -1557,7 +1557,7 @@ export function CompatTimeline({ steps }: { steps: CompatTimelineStep[] }) {
             />
             <div
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 color: '#1A1612',
                 fontWeight: 700,
                 marginBottom: 3,
@@ -1579,7 +1579,7 @@ export function CompatTimeline({ steps }: { steps: CompatTimelineStep[] }) {
             </div>
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13.5,
                 color: C.inkSoft,
                 lineHeight: 1.65,
                 wordBreak: 'keep-all',
@@ -1624,7 +1624,7 @@ export function TojungHexagramCard({
     >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: '#1A1612',
           letterSpacing: '0.2em',
           fontWeight: 700,
@@ -1658,7 +1658,7 @@ export function TojungHexagramCard({
       </div>
       <div
         style={{
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: C.inkSoft,
           lineHeight: 1.7,
           marginBottom: pullQuote ? 16 : 0,
@@ -1671,7 +1671,7 @@ export function TojungHexagramCard({
         <div
           style={{
             fontFamily: "'Noto Serif KR', serif",
-            fontSize: 12.5,
+            fontSize: 13.5,
             fontStyle: 'italic',
             color: '#1A1612',
             background: 'rgba(140,109,61,0.06)',
@@ -1720,7 +1720,7 @@ export function TojungFourBox({ items }: { items: TojungFourItem[] }) {
         >
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               color: '#1A1612',
               fontWeight: 700,
               letterSpacing: '0.1em',
@@ -1740,7 +1740,7 @@ export function TojungFourBox({ items }: { items: TojungFourItem[] }) {
           >
             {it.value}
           </div>
-          <div style={{ fontSize: 11, color: C.mute, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.5 }}>
             {it.desc}
           </div>
         </div>
@@ -1815,14 +1815,14 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
               >
                 {m.month}
               </span>
-              <span style={{ fontSize: 11, color: C.mute, fontWeight: 600 }}>
+              <span style={{ fontSize: 13, color: C.mute, fontWeight: 600 }}>
                 월
               </span>
               {m.variant === 'good' && (
                 <span
                   style={{
                     marginLeft: 'auto',
-                    fontSize: 9,
+                    fontSize: 12,
                     fontWeight: 700,
                     color: '#FFFFFF',
                     background: '#1A1612',
@@ -1837,7 +1837,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
                 <span
                   style={{
                     marginLeft: 'auto',
-                    fontSize: 9,
+                    fontSize: 12,
                     fontWeight: 700,
                     color: '#FFFFFF',
                     background: '#A23A2A',
@@ -1851,7 +1851,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
             </div>
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13.5,
                 color: C.ink,
                 lineHeight: 1.6,
                 marginBottom: m.action ? 6 : 0,
@@ -1864,7 +1864,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
             {m.action && (
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   color: accent,
                   fontWeight: 600,
                   paddingTop: 6,

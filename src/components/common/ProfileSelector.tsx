@@ -183,7 +183,7 @@ export function ProfileSelector({
                       <p className="text-body-md" style={{ fontWeight: 700 }}>
                         {p.name}
                       </p>
-                      <p className="sec-caption" style={{ fontSize: 11 }}>
+                      <p className="sec-caption" style={{ fontSize: 13 }}>
                         {formatBirth(p.input)}
                       </p>
                     </div>

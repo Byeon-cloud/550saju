@@ -180,7 +180,7 @@ export function MonthTimeline({
           {title}
         </span>
         {hanjaSuffix && (
-          <span style={{ fontSize: 11, color: C.mute, fontFamily: SERIF }}>
+          <span style={{ fontSize: 13, color: C.mute, fontFamily: SERIF }}>
             {hanjaSuffix}
           </span>
         )}
@@ -192,7 +192,7 @@ export function MonthTimeline({
       {subtitle && (
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: C.mute,
             marginBottom: 10,
             fontStyle: 'italic',
@@ -280,7 +280,7 @@ export function MonthTimeline({
           flexWrap: 'wrap',
           gap: 8,
           marginTop: 10,
-          fontSize: 10.5,
+          fontSize: 13,
           color: C.mute,
         }}
       >

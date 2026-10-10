@@ -45,7 +45,7 @@ export function OhengCompareBar({
   return (
     <div>
       {secondary && (
-        <div style={{ display: 'flex', gap: 12, marginBottom: 8, fontSize: 11 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 8, fontSize: 13 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ width: 10, height: 10, background: 'var(--brand-gold)', borderRadius: 2 }} />
             <span style={{ color: 'var(--text-muted)' }}>{primaryLabel}</span>
@@ -80,7 +80,7 @@ export function OhengCompareBar({
                 {emphasized && (
                   <span
                     style={{
-                      fontSize: 9,
+                      fontSize: 12,
                       marginLeft: 4,
                       padding: '1px 4px',
                       borderRadius: 3,

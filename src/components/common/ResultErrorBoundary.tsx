@@ -53,7 +53,7 @@ export class ResultErrorBoundary extends Component<Props, State> {
       <div style={{ padding: '20px 18px' }}>
         <div style={{ background: '#FFF8E8', border: '1px solid #E8D9B5', borderRadius: 14, padding: '14px 16px', marginBottom: 18 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#5C4A2E', marginBottom: 4 }}>결과는 안전하게 저장돼 있어요</div>
-          <div style={{ fontSize: 12, color: '#8C6D3D', lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13.5, color: '#8C6D3D', lineHeight: 1.6 }}>
             화면을 꾸미는 중 일부 문제가 생겨, 우선 풀이를 글로 보여드려요. 결제하신 운은 그대로예요.
           </div>
         </div>

@@ -73,7 +73,7 @@ export function SharePage() {
         {/* 히어로 — 동적 (이름 알면 호명, 모르면 generic) */}
         <FadeIn delay={0.03}>
           <div className="card-navy py-7 px-5">
-            <p className="text-[10px] text-white/30 mb-1">{typeLabel} 결과</p>
+            <p className="text-[12px] text-white/30 mb-1">{typeLabel} 결과</p>
             <h1 className="text-display text-white leading-snug">
               {sajuOwner ? `${sajuOwner}님의 ${typeLabel}\n결과가 도착했어요` : '누군가 당신에게\n사주 결과를 공유했어요'}
             </h1>
@@ -133,7 +133,7 @@ export function SharePage() {
           <div className="flex flex-wrap gap-2 justify-center">
             {/* 2026-05-28 — 미출시 4종(대운/월운/궁합/토정) 제거. 현재 출시 라인업으로만 표시 */}
             {['직업', '재물', '연애', '건강', '공부', '결혼', '시험', '개운'].map((item) => (
-              <span key={item} className="px-3 py-1.5 rounded-full text-[11px] text-text-muted bg-bg-surface border border-border-light">
+              <span key={item} className="px-3 py-1.5 rounded-full text-[13px] text-text-muted bg-bg-surface border border-border-light">
                 {item}
               </span>
             ))}
@@ -146,7 +146,7 @@ export function SharePage() {
             <Button variant="gold" fullWidth size="lg" onClick={() => navigate('/input')}>
               나도 내 사주 알아보기
             </Button>
-            <p className="text-center text-[10px] text-text-hint">
+            <p className="text-center text-[12px] text-text-hint">
               1운, 깊이 있는 분석, 3분 완성
             </p>
             <button

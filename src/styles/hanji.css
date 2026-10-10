@@ -28,6 +28,11 @@
 .hj-cta:active { transform: scale(.985); }
 .hj-cta[disabled] { opacity: .55; cursor: default; }
 .hj-cta small { font-size: 14px; font-weight: 700; opacity: .75; }
+/* 공용 Button 부품 (components/common/Button) — 2026-10-11 GoldCta, GhostButton 과 같은 모양 */
+.hj-btn-gold { background: linear-gradient(180deg, var(--hj-gold-hi) 0%, var(--hj-gold) 100%); color: #17110A; border: 0; box-shadow: 0 8px 18px rgba(140,109,61,.22), inset 0 1px 0 rgba(255,255,255,.45); }
+.hj-btn-ink { background: var(--hj-ink); color: #F5EDDF; border: 0; }
+.hj-btn-line { background: transparent; color: var(--hj-ink); border: 1.5px solid var(--hj-ink); }
+.hj-btn-text { background: transparent; color: var(--hj-ink-2); border: 0; }
 /* 보조 버튼 — 먹 테두리 */
 .hj-ghost { width: 100%; min-height: 50px; border-radius: 12px; border: 1.5px solid var(--hj-ink); background: transparent; color: var(--hj-ink); display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: 15.5px; cursor: pointer; padding: 0 14px; }
 .hj-ghost small { font-weight: 700; font-size: 14px; color: var(--hj-ink-2); }

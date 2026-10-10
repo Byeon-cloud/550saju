@@ -310,7 +310,7 @@ function SectionB_ManseTable({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.16em' }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.16em' }}>
             오행 분포
           </span>
         </div>
@@ -330,7 +330,7 @@ function SectionB_ManseTable({
                   background: isTop ? `${OHENG_HEX[o]}1A` : isZero ? '#F5F0E8' : '#FFFFFF',
                   border: `1.2px solid ${isTop ? OHENG_HEX[o] : isZero ? C.line : `${OHENG_HEX[o]}55`}`,
                   borderRadius: 999,
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: isTop ? 900 : 700,
                   letterSpacing: '0.02em',
                 }}
@@ -339,7 +339,7 @@ function SectionB_ManseTable({
                 <span style={{ color: isZero ? C.mute : C.ink, fontFeatureSettings: '"tnum"' }}>
                   {v}
                 </span>
-                <span style={{ fontSize: 9, color: C.mute, fontWeight: 600 }}>{o}</span>
+                <span style={{ fontSize: 12, color: C.mute, fontWeight: 600 }}>{o}</span>
               </div>
             );
           })}
@@ -357,7 +357,7 @@ function SectionB_ManseTable({
           marginBottom: 10,
         }}
       >
-        <span style={{ fontSize: 9.5, color: C.mute, alignSelf: 'center', marginRight: 4, letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 12, color: C.mute, alignSelf: 'center', marginRight: 4, letterSpacing: '0.04em' }}>
           정보
         </span>
         {TOGGLE_LABELS.map((t) => {
@@ -372,7 +372,7 @@ function SectionB_ManseTable({
                 background: on ? C.goldSoftStrong : '#FFFFFF',
                 border: `1px solid ${on ? C.gold : C.line}`,
                 borderRadius: 999,
-                fontSize: 10.5,
+                fontSize: 13,
                 fontWeight: on ? 800 : 600,
                 color: on ? C.goldDeep : C.mute,
                 cursor: 'pointer',
@@ -395,7 +395,7 @@ function SectionB_ManseTable({
             width: '100%',
             borderCollapse: 'separate',
             borderSpacing: '3px 3px',
-            fontSize: 11.5,
+            fontSize: 13,
             tableLayout: 'fixed',
           }}
         >
@@ -423,11 +423,11 @@ function SectionB_ManseTable({
                       color: isDay ? C.goldDeep : C.mute,
                     }}
                   >
-                    <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.04em' }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: '0.04em' }}>
                       {labelsKo[i]}
-                      {isDay && <span style={{ marginLeft: 3, fontSize: 9, color: C.gold }}>(나)</span>}
+                      {isDay && <span style={{ marginLeft: 3, fontSize: 12, color: C.gold }}>(나)</span>}
                     </div>
-                    <div style={{ fontFamily: SERIF, fontSize: 9, marginTop: 2, fontWeight: 600, opacity: 0.75 }}>
+                    <div style={{ fontFamily: SERIF, fontSize: 12, marginTop: 2, fontWeight: 600, opacity: 0.75 }}>
                       {labelsHanja[i]}
                     </div>
                   </th>
@@ -447,7 +447,7 @@ function SectionB_ManseTable({
                   const sym = relPerPillar[pIdx];
                   return (
                     <td key={i} style={{ ...tdCell, background: sym ? C.highlight : C.surface, borderColor: sym ? C.highlightLine : C.line }}>
-                      <span style={{ fontSize: 11, color: sym ? C.goldDeep : C.mute, fontWeight: 700, letterSpacing: '0.04em' }}>
+                      <span style={{ fontSize: 13, color: sym ? C.goldDeep : C.mute, fontWeight: 700, letterSpacing: '0.04em' }}>
                         {sym || '—'}
                       </span>
                     </td>
@@ -567,7 +567,7 @@ function SectionB_ManseTable({
                   return (
                     <td key={i} style={tdCell}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                        <span style={{ fontSize: 12, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{u.ko}</span>
+                        <span style={{ fontSize: 13.5, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{u.ko}</span>
                         {u.han && (
                           <span style={{ fontFamily: SERIF, fontSize: 8.5, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
                             {u.han}
@@ -590,7 +590,7 @@ function SectionB_ManseTable({
                   return (
                     <td key={i} style={tdCell}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                        <span style={{ fontSize: 12, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>
+                        <span style={{ fontSize: 13.5, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>
                           {s.replace('살', '')}
                         </span>
                         {han && (
@@ -614,7 +614,7 @@ function SectionB_ManseTable({
                   return (
                     <td key={i} style={tdCell}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                        <span style={{ fontSize: 11.5, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{np.ko}</span>
+                        <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{np.ko}</span>
                         {np.han && (
                           <span style={{ fontFamily: SERIF, fontSize: 8.5, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
                             {np.han}
@@ -732,7 +732,7 @@ function BigCharCell({
         </span>
         <span
           style={{
-            fontSize: 9,
+            fontSize: 12,
             fontWeight: 600,
             opacity: 0.85,
             letterSpacing: '0.04em',
@@ -741,7 +741,7 @@ function BigCharCell({
           {OHENG_HAN[oheng]}
         </span>
       </div>
-      <div style={{ fontSize: 9.5, color: C.mute, marginTop: 3, textAlign: 'center', fontWeight: 600 }}>
+      <div style={{ fontSize: 12, color: C.mute, marginTop: 3, textAlign: 'center', fontWeight: 600 }}>
         {chRead}
       </div>
     </td>
@@ -764,7 +764,7 @@ function BigEmptyCell() {
           alignItems: 'center',
           justifyContent: 'center',
           color: C.mute,
-          fontSize: 10,
+          fontSize: 12,
           fontStyle: 'italic',
           background: C.paperSoft,
         }}
@@ -874,7 +874,7 @@ const linkBtnStyle: React.CSSProperties = {
   background: '#FFFFFF',
   border: `1px solid ${C.goldLine}`,
   borderRadius: 10,
-  fontSize: 12.5,
+  fontSize: 13.5,
   fontWeight: 700,
   color: C.goldDeep,
   cursor: 'pointer',
@@ -917,7 +917,7 @@ function DetailCard({
         <span style={{ fontFamily: SERIF, fontSize: 13, fontWeight: 800, color: C.goldDeep }}>
           {title}
         </span>
-        <span style={{ fontSize: 10.5, color: C.mute, fontFamily: SERIF }}>{hanja}</span>
+        <span style={{ fontSize: 13, color: C.mute, fontFamily: SERIF }}>{hanja}</span>
       </div>
       {children}
     </div>

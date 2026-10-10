@@ -312,7 +312,7 @@
     align-items: center;
     padding: 4px 10px;
     border-radius: 9999px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.01em;
   }
@@ -432,7 +432,7 @@
   .text-body-sm { font-size: 14px; line-height: 1.7; font-weight: 400; }
   .text-caption { font-size: 13px; line-height: 1.5; font-weight: 400; }
   .text-label { font-size: 13px; line-height: 1.4; font-weight: 600; letter-spacing: 0.02em; }
-  .text-tiny { font-size: 12px; line-height: 1.4; font-weight: 500; }
+  .text-tiny { font-size: 13px; line-height: 1.45; font-weight: 500; }
 
   .text-brand { color: var(--brand-gold); }
   .text-brand-dark { color: var(--brand-navy); }
@@ -482,7 +482,7 @@
     font-weight: 400;
   }
   .text-label {
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.4;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -511,7 +511,7 @@
     color: var(--text-muted);
   }
   .sec-meta {
-    font-size: 12px;
+    font-size: 13.5px;
     line-height: 1.4;
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -606,7 +606,7 @@
     letter-spacing: -0.015em;
   }
   .card-locked-sub {
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 500;
     color: var(--text-muted);
     letter-spacing: -0.005em;
@@ -719,7 +719,7 @@
     text-align: center;
   }
   .pillar-mini-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-muted);
     letter-spacing: 0.02em;
@@ -747,7 +747,7 @@
     gap: 8px;
   }
   .oheng-row-label {
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 700;
     letter-spacing: -0.005em;
   }
@@ -764,7 +764,7 @@
     transition: width 0.4s ease;
   }
   .oheng-row-value {
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 700;
     color: var(--text-secondary);
     text-align: right;
@@ -797,7 +797,7 @@
     border-radius: 999px;
     background: rgba(184, 150, 90, 0.1);
     color: var(--brand-gold);
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 600;
     letter-spacing: -0.005em;
     border: 0.5px solid rgba(184, 150, 90, 0.22);
@@ -980,7 +980,7 @@
     font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 900; color: #8C6D3D;
   }
   .dbp-point-title { font-size: 15px; font-weight: 800; color: #1A1A1A; word-break: keep-all; }
-  .dbp-point-desc { font-size: 12.5px; color: #7A7269; margin-top: 1px; word-break: keep-all; }
+  .dbp-point-desc { font-size: 13.5px; color: #7A7269; margin-top: 1px; word-break: keep-all; }
 
   .dbp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 34px; max-width: 440px; }
   .dbp-chip {
@@ -997,7 +997,7 @@
     box-shadow: 0 14px 36px rgba(26, 26, 26, 0.30);
   }
   .dbp-cta b { color: #F4D166; font-weight: 700; }
-  .dbp-cta-sub { font-size: 12px; color: rgba(248, 245, 238, 0.65); }
+  .dbp-cta-sub { font-size: 13.5px; color: rgba(248, 245, 238, 0.65); }
   .dbp-cta-emblem {
     width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
     background: rgba(184, 150, 90, 0.25);

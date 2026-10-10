@@ -57,7 +57,7 @@ export function BalanceBar() {
           >
             <div className="w-5 h-5 rounded-full flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
-              <span className="text-[9px] font-black text-white">運</span>
+              <span className="text-[12px] font-black text-white">運</span>
             </div>
             <span className="text-[14px] font-bold" style={{ color: '#1A1612' }}>{balance}운</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2.5" strokeLinecap="round">

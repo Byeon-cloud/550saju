@@ -156,7 +156,7 @@ export function CompatResultPage() {
       <FadeIn>
         <ExtensionHero
           theme={compatTheme}
-          crumb="사주500, 더 알아볼 주제, 궁합"
+          crumb="두 사람 궁합"
           sub={`${state.person1.name} × ${state.person2.name}, ${state.relation}`}
           seal="合"
         />
@@ -178,13 +178,13 @@ export function CompatResultPage() {
         <FadeIn delay={0.03}>
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             {(result as any).relationshipType && (
-              <span className="text-[11px] font-bold px-3 py-1.5 rounded-full text-white"
+              <span className="text-[13px] font-bold px-3 py-1.5 rounded-full text-white"
                 style={{ background: '#B8965A' }}>
                 {(result as any).relationshipType}
               </span>
             )}
             {(result as any).keywords?.map((kw: string, i: number) => (
-              <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+              <span key={i} className="text-[13px] font-semibold px-2.5 py-1 rounded-full"
                 style={{ background: 'rgba(184,150,90,0.1)', color: '#8C6D3D', border: '1px solid rgba(184,150,90,0.2)' }}>
                 {kw}
               </span>
@@ -356,10 +356,10 @@ export function CompatResultPage() {
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
             의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.

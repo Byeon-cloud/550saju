@@ -241,19 +241,19 @@ const MOCKUP_CSS = `
 }
 .dream-mockup .hd::before { display: none; content: '夢'; position: absolute; right: -20px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 220px; font-weight: 900; color: rgba(255,255,255,.05); line-height: 1; }
 .dream-mockup .hd::after { display: none; content: ''; position: absolute; top: 10px; right: 30px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(212,175,55,.3), transparent 70%); border-radius: 50%; }
-.dream-mockup .hd .top { display: flex; gap: 8px; font-size: 12px; opacity: .95; flex-wrap: wrap; align-items: center; }
-.dream-mockup .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
+.dream-mockup .hd .top { display: flex; gap: 8px; font-size: 13.5px; opacity: .95; flex-wrap: wrap; align-items: center; }
+.dream-mockup .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
 .dream-mockup .hd .badge.free { background: rgba(212,175,55,.22); color: #f2d678; }
 /* 2026-09-17 — 잠금 해제(1운) 결과 헤더: 무료 뱃지 대신 그린 톤 '잠금 해제' */
 .dream-mockup .hd .badge.open { background: rgba(140,109,61,.28); color: #cfe8dc; }
 .dream-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 23px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; }
-.dream-mockup .hd .date { font-size: 12px; opacity: .7; margin-top: 6px; font-feature-settings: 'tnum'; position: relative; }
+.dream-mockup .hd .date { font-size: 13.5px; opacity: .7; margin-top: 6px; font-feature-settings: 'tnum'; position: relative; }
 
 /* 3-part input */
 .dream-mockup .input-stack { margin: 16px 20px 0; display: flex; flex-direction: column; gap: 10px; }
 /* 2026-05-28 — 3카드 좌측 컬러 strip 제거 (AI grid 디자인 티). 톤은 .lb 의 dot + 컬러 텍스트로 표현. */
 .dream-mockup .ic { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 3px 10px rgba(0,0,0,.05); border: 1px solid rgba(0,0,0,0.04); }
-.dream-mockup .ic .lb { font-size: 11px; color: #7F6B4E; letter-spacing: 0.18em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.dream-mockup .ic .lb { font-size: 13px; color: #7F6B4E; letter-spacing: 0.18em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .dream-mockup .ic.topic .lb { color: #B8965A; }
 .dream-mockup .ic.dream .lb { color: #1A1612; }
 .dream-mockup .ic .lb .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
@@ -267,7 +267,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 900; color: #A23A2A; letter-spacing: 0; margin-bottom: 4px; } /* 2026-10-10 v9 — SECTION 01 → 一 */
 .dream-mockup .sec-title { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; color: #1a1a1a; }
 .dream-mockup .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
-.dream-mockup .sec-lead { font-size: 12px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
+.dream-mockup .sec-lead { font-size: 13.5px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
 .dream-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 .dream-mockup .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; color: #1a1a1a; }
 /* <em> = 주의와 경고 (번트오렌지) — 2026-05-29. font-style normal (한글 가독). */
@@ -290,7 +290,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sym .pic.mountain { background: linear-gradient(135deg, #efe5d4, #d8c89e); color: #7F6B4E; }
 .dream-mockup .sym .hd2 { display: flex; justify-content: flex-start; align-items: baseline; gap: 6px; }
 .dream-mockup .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
-.dream-mockup .sym .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 12px; }
+.dream-mockup .sym .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 13.5px; }
 .dream-mockup .sym .dc { font-size: 13.5px; color: #1a1a1a; line-height: 1.75; margin-top: 10px; text-align: left; word-break: keep-all; }
 .dream-mockup .sym .dc strong { font-weight: 700; background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%); padding: 1px 3px; color: #1a1a1a; border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .dream-mockup .sym .dc u { text-decoration: none; border-bottom: 2px solid #B8965A; padding-bottom: 1px; color: #5C4A2E; font-weight: 600; }
@@ -302,15 +302,15 @@ const MOCKUP_CSS = `
 .dream-mockup .qc::before { content: '"'; position: absolute; left: 14px; top: 8px; font-family: 'Noto Serif KR', serif; font-size: 42px; font-weight: 900; color: #1A1612; line-height: 1; }
 .dream-mockup .qc .src { font-family: 'Noto Serif KR', serif; font-size: 13.5px; line-height: 1.6; color: #1A1612; font-style: italic; font-weight: 500; word-break: keep-all; }
 .dream-mockup .qc .src .hl { background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; font-weight: 600; }
-.dream-mockup .qc .interp { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5DFD0; font-size: 12.5px; line-height: 1.7; color: #2a2520; word-break: keep-all; }
-.dream-mockup .qc .interp .tag { display: inline-block; font-size: 11px; letter-spacing: 0.1em; font-weight: 600; color: #B8965A; background: rgba(184,150,90,.12); padding: 2px 7px; border-radius: 100px; margin-right: 6px; }
+.dream-mockup .qc .interp { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5DFD0; font-size: 13.5px; line-height: 1.7; color: #2a2520; word-break: keep-all; }
+.dream-mockup .qc .interp .tag { display: inline-block; font-size: 13px; letter-spacing: 0.1em; font-weight: 600; color: #B8965A; background: rgba(184,150,90,.12); padding: 2px 7px; border-radius: 100px; margin-right: 6px; }
 .dream-mockup .qc .interp strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; }
 
 /* Worry link (§04) */
 .dream-mockup .worry-link { margin-top: 14px; background: linear-gradient(135deg, rgba(106,93,63,.06), rgba(26,22,18,.04)); border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 16px; }
 .dream-mockup .worry-link .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.dream-mockup .worry-link .h .lab { font-size: 11px; letter-spacing: 0.15em; color: #5C4A2E; font-weight: 600; }
-.dream-mockup .worry-link .h .arrow { color: #B8965A; font-size: 12px; }
+.dream-mockup .worry-link .h .lab { font-size: 13px; letter-spacing: 0.15em; color: #5C4A2E; font-weight: 600; }
+.dream-mockup .worry-link .h .arrow { color: #B8965A; font-size: 13.5px; }
 .dream-mockup .worry-link .h .lab.dream { color: #1A1612; }
 .dream-mockup .worry-link p { font-size: 13px; line-height: 1.75; color: #2a2520; margin: 0; word-break: keep-all; }
 .dream-mockup .worry-link p strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(26,22,18,.15) 60%); padding: 0 2px; }
@@ -322,7 +322,7 @@ const MOCKUP_CSS = `
 .dream-mockup .locked-header { margin: 28px 20px 0; padding: 14px 16px; background: linear-gradient(135deg, #1A1612 0%, #0F0C09 100%); color: #fff; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 10px; }
 .dream-mockup .locked-header svg { width: 18px; height: 18px; color: #E8D9B8; flex-shrink: 0; }
 .dream-mockup .locked-header .title-col { flex: 1; }
-.dream-mockup .locked-header .lab { font-size: 11px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; }
+.dream-mockup .locked-header .lab { font-size: 13px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; }
 .dream-mockup .locked-header .ttl { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 600; margin-top: 2px; }
 
 /* 잠금 섹션 스택 */
@@ -354,7 +354,7 @@ const MOCKUP_CSS = `
 .dream-mockup .lk-diag.pie-teaser { display: grid; grid-template-columns: 80px 1fr; gap: 14px; align-items: center; }
 .dream-mockup .lk-diag.pie-teaser .pie { width: 80px; height: 80px; border-radius: 50%; position: relative; }
 .dream-mockup .lk-diag.pie-teaser .pie::after { content: ''; position: absolute; inset: 18%; background: #F8F5EE; border-radius: 50%; }
-.dream-mockup .lk-diag.pie-teaser .legend { font-size: 11px; color: #5C4A2E; line-height: 1.6; }
+.dream-mockup .lk-diag.pie-teaser .legend { font-size: 13px; color: #5C4A2E; line-height: 1.6; }
 .dream-mockup .lk-diag.pie-teaser .legend .row { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
 .dream-mockup .lk-diag.pie-teaser .legend .sw { width: 8px; height: 8px; border-radius: 2px; }
 
@@ -364,8 +364,8 @@ const MOCKUP_CSS = `
 .dream-mockup .lk-diag.timeline .tl-cell { height: 22px; background: #E5DFD0; border-radius: 2px; position: relative; }
 .dream-mockup .lk-diag.timeline .tl-cell.mark { background: #B8965A; }
 .dream-mockup .lk-diag.timeline .tl-cell.mark.strong { background: #c62828; }
-.dream-mockup .lk-diag.timeline .tl-lbls { display: flex; justify-content: space-between; font-size: 11px; color: #7F6B4E; margin-top: 4px; font-feature-settings: 'tnum'; }
-.dream-mockup .lk-diag.timeline .tl-cap { font-size: 11px; color: #5C4A2E; margin-top: 6px; }
+.dream-mockup .lk-diag.timeline .tl-lbls { display: flex; justify-content: space-between; font-size: 13px; color: #7F6B4E; margin-top: 4px; font-feature-settings: 'tnum'; }
+.dream-mockup .lk-diag.timeline .tl-cap { font-size: 13px; color: #5C4A2E; margin-top: 6px; }
 .dream-mockup .lk-diag.timeline .tl-cap strong { color: #c62828; font-weight: 600; }
 
 /* Warn list */
@@ -380,7 +380,7 @@ const MOCKUP_CSS = `
 .dream-mockup .dual-blind { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .dream-mockup .db-col { background: #F8F5EE; border-radius: 8px; padding: 10px 12px; border: 1px solid #E5DFD0; }
 /* 2026-05-28 — 상단 컬러 strip 제거. .ch 라벨 컬러로 톤 표현. */
-.dream-mockup .db-col .ch { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+.dream-mockup .db-col .ch { font-family: 'Noto Serif KR', serif; font-size: 13.5px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
 .dream-mockup .db-col.go .ch { color: #4E7A57; }
 .dream-mockup .db-col.no .ch { color: #c62828; }
 .dream-mockup .db-col .lines { display: flex; flex-direction: column; gap: 6px; filter: blur(4.5px); transition: filter .55s ease; }
@@ -390,33 +390,33 @@ const MOCKUP_CSS = `
 .dream-mockup.unlocked .db-col .lines { display: none; }
 .dream-mockup .db-list { display: none; list-style: none; padding: 0; margin: 0; flex-direction: column; gap: 6px; }
 .dream-mockup.unlocked .db-list { display: flex; }
-.dream-mockup .db-list li { font-size: 12px; line-height: 1.6; color: #2a2520; word-break: keep-all; }
+.dream-mockup .db-list li { font-size: 13.5px; line-height: 1.6; color: #2a2520; word-break: keep-all; }
 
 /* Big CTA */
 .dream-mockup .paid-cta { margin: 0 20px; margin-top: -28px; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px 20px; position: relative; overflow: hidden; z-index: 2; box-shadow: 0 8px 30px rgba(26,22,18,.22); transition: opacity .4s ease, transform .4s ease; }
 .dream-mockup.unlocked .paid-cta { display: none; }
 .dream-mockup .paid-cta::before { display: none; content: '解'; position: absolute; right: -10px; bottom: -30px; font-family: 'Noto Serif KR', serif; font-size: 140px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
-.dream-mockup .paid-cta .lab { font-size: 11px; color: #E8D9B8; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 6px; position: relative; }
+.dream-mockup .paid-cta .lab { font-size: 13px; color: #E8D9B8; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 6px; position: relative; }
 .dream-mockup .paid-cta h3 { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; position: relative; line-height: 1.45; }
 .dream-mockup .paid-cta .hook { font-size: 13px; color: #c4baa0; line-height: 1.7; position: relative; margin-bottom: 14px; word-break: keep-all; }
 .dream-mockup .paid-cta .hook strong { color: #f2d678; font-weight: 600; }
 .dream-mockup .paid-cta .cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 13px 18px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; position: relative; text-align: center; border: none; width: 100%; }
-.dream-mockup .paid-cta .cta-btn .cost { background: rgba(26,26,26,.12); padding: 3px 10px; border-radius: 100px; font-size: 11.5px; font-weight: 700; }
+.dream-mockup .paid-cta .cta-btn .cost { background: rgba(26,26,26,.12); padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 700; }
 /* 2026-09-17 — 스트리밍 중 결제 race 차단: 잠금 풀이가 다 쓰일 때까지 CTA 비활성 */
 .dream-mockup .paid-cta .cta-btn:disabled { opacity: .55; cursor: default; }
-.dream-mockup .paid-cta .sub { font-size: 11px; color: #7F6B4E; text-align: center; margin-top: 8px; position: relative; }
+.dream-mockup .paid-cta .sub { font-size: 13px; color: #7F6B4E; text-align: center; margin-top: 8px; position: relative; }
 
 /* Actions */
 .dream-mockup .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid #E5DFD0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dream-mockup .actions .btn { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
 .dream-mockup .actions .btn:hover { border-color: #B8965A; }
 .dream-mockup .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
-.dream-mockup .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
-.dream-mockup .actions .btn .sb { font-size: 11px; color: #7F6B4E; }
+.dream-mockup .actions .btn .ti { font-size: 13.5px; font-weight: 600; }
+.dream-mockup .actions .btn .sb { font-size: 13px; color: #7F6B4E; }
 
 /* 꿈 종류 → 주제 추천 (2026-09-17) — 카드 1장 + 보조 링크 */
 .dream-mockup .topic-rec { margin: 22px 20px 0; }
-.dream-mockup .topic-rec .tr-lab { font-size: 11px; color: #7F6B4E; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+.dream-mockup .topic-rec .tr-lab { font-size: 13px; color: #7F6B4E; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
 .dream-mockup .topic-rec .tr-card { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #E5DFD0; border-radius: 16px; padding: 14px 14px 14px 16px; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease; }
 .dream-mockup .topic-rec .tr-card:hover { border-color: #B8965A; box-shadow: 0 4px 12px rgba(184,150,90,.12); }
 .dream-mockup .topic-rec .tr-card:focus-visible, .dream-mockup .topic-rec .tr-sub:focus-visible { outline: 2px solid #B8965A; outline-offset: 2px; }
@@ -424,14 +424,14 @@ const MOCKUP_CSS = `
 .dream-mockup .topic-rec .tr-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .dream-mockup .topic-rec .tr-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dream-mockup .topic-rec .tr-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
-.dream-mockup .topic-rec .tr-price { font-size: 11px; font-weight: 700; color: #8C6D3D; background: rgba(184,150,90,.12); padding: 2px 8px; border-radius: 100px; }
-.dream-mockup .topic-rec .tr-copy { font-size: 12.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
+.dream-mockup .topic-rec .tr-price { font-size: 13px; font-weight: 700; color: #8C6D3D; background: rgba(184,150,90,.12); padding: 2px 8px; border-radius: 100px; }
+.dream-mockup .topic-rec .tr-copy { font-size: 13.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
 .dream-mockup .topic-rec .tr-arrow { flex-shrink: 0; font-size: 20px; color: #B8965A; line-height: 1; }
-.dream-mockup .topic-rec .tr-sub { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 12px 4px; font-size: 12px; color: #7F6B4E; text-align: center; cursor: pointer; word-break: keep-all; }
+.dream-mockup .topic-rec .tr-sub { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 12px 4px; font-size: 13.5px; color: #7F6B4E; text-align: center; cursor: pointer; word-break: keep-all; }
 .dream-mockup .topic-rec .tr-sub .tr-sub-name { color: #5C4A2E; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Notice */
-.dream-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed #E5DFD0; font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; }
+.dream-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed #E5DFD0; font-size: 13px; line-height: 1.65; color: #9A8B70; text-align: center; }
 .dream-mockup .service-notice p { margin: 0; }
 .dream-mockup .spacer { height: 80px; }
 
@@ -653,7 +653,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             {firstImpression?.narrative && (
               <>
                 {Array.isArray(firstImpression.strongImages) && firstImpression.strongImages.length >= 1 && (
-                  <p style={{ marginTop: 6, fontSize: 12, color: '#7F6B4E' }}>
+                  <p style={{ marginTop: 6, fontSize: 13.5, color: '#7F6B4E' }}>
                     가장 세게 남은 이미지: {firstImpression.strongImages.slice(0, 2).map((s: string) => `"${s}"`).join(', ')}
                   </p>
                 )}
@@ -774,7 +774,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
               <div className="title-col">
-                <div className="lab">{unlocked ? 'UNLOCKED, 사주 연동 심층 풀이' : 'DEEPER, 사주 연동 심층 풀이'}</div>
+                <div className="lab">{unlocked ? '사주와 함께 본 깊은 풀이' : '사주와 함께 보는 깊은 풀이'}</div>
                 <div className="ttl">
                   {unlocked
                     ? `${profile?.name ?? '당신'} 님 사주와 꿈을 함께 읽은 심층 풀이`

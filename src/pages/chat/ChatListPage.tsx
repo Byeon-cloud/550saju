@@ -120,7 +120,7 @@ export function ChatListPage() {
         >
           <p
             style={{
-              fontSize: 11,
+              fontSize: 13,
               color: C.mute,
               fontWeight: 600,
               margin: 0,
@@ -352,7 +352,7 @@ function TicketBalanceBanner({
             >
               대화권이 없어요
             </p>
-            <p style={{ fontSize: 11, color: C.mute, margin: '2px 0 0' }}>
+            <p style={{ fontSize: 13, color: C.mute, margin: '2px 0 0' }}>
               운으로 바꾸면 이어서 질문할 수 있어요
             </p>
           </>
@@ -370,7 +370,7 @@ function TicketBalanceBanner({
               {tickets.free > 0 && (
                 <span
                   style={{
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: 600,
                     color: C.goldDeep,
                     marginLeft: 6,
@@ -380,7 +380,7 @@ function TicketBalanceBanner({
                 </span>
               )}
             </p>
-            <p style={{ fontSize: 11, color: C.inkSoft, margin: '2px 0 0' }}>
+            <p style={{ fontSize: 13, color: C.inkSoft, margin: '2px 0 0' }}>
               1운 → {CREDITS_PER_UN}대화권으로 바꿀 수 있어요
             </p>
           </>
@@ -397,7 +397,7 @@ function TicketBalanceBanner({
           color: noTickets ? C.paper : C.goldDeep,
           border: noTickets ? 'none' : `1px solid ${C.goldLine}`,
           borderRadius: 999,
-          fontSize: 12,
+          fontSize: 13.5,
           fontWeight: 700,
           cursor: 'pointer',
           flexShrink: 0,
@@ -489,7 +489,7 @@ function SessionCard({
             {room.completed && (
               <span
                 style={{
-                  fontSize: 9,
+                  fontSize: 12,
                   fontWeight: 700,
                   color: C.mute,
                   background: C.line,
@@ -504,7 +504,7 @@ function SessionCard({
           </div>
           <div
             style={{
-              fontSize: 12,
+              fontSize: 13.5,
               color: C.mute,
               marginTop: 2,
               whiteSpace: 'nowrap',
@@ -517,7 +517,7 @@ function SessionCard({
         </div>
         <span
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: C.mute,
             flexShrink: 0,
           }}
@@ -589,12 +589,13 @@ function ListEmpty({ onStart }: { onStart: () => void }) {
         style={{
           minWidth: 200,
           height: 52,
-          background: C.ink,
-          color: C.paper,
+          background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
+          color: '#17110A',
           border: 'none',
-          borderRadius: 12,
-          fontSize: 15,
-          fontWeight: 700,
+          borderRadius: 14,
+          fontSize: 16,
+          fontWeight: 800,
+          boxShadow: '0 8px 18px rgba(140,109,61,.22)',
           cursor: 'pointer',
         }}
       >

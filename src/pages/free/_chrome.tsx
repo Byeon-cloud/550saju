@@ -125,7 +125,7 @@ export function FreeHero({
         style={{
           display: 'flex',
           gap: 10,
-          fontSize: 12,
+          fontSize: 13.5,
           opacity: 0.92,
           flexWrap: 'wrap',
           alignItems: 'center',
@@ -137,7 +137,7 @@ export function FreeHero({
             background: 'rgba(255,255,255,0.22)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 600,
           }}
         >
@@ -150,7 +150,7 @@ export function FreeHero({
             background: 'rgba(255,255,255,0.14)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 10,
+            fontSize: 12,
           }}
         >
           {freeTagLabel}
@@ -172,7 +172,7 @@ export function FreeHero({
       {meta && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             opacity: 0.85,
             marginTop: 4,
             position: 'relative',
@@ -218,7 +218,7 @@ export function FreeSection({
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 600,
           color: accent,
           letterSpacing: '0.2em',
@@ -252,7 +252,7 @@ export function FreeSection({
       {lead && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             color: C.mute,
             marginTop: 4,
             lineHeight: 1.55,
@@ -354,7 +354,7 @@ export function FreeUpsellCard({
       </h3>
       <p
         style={{
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: '#C4B69A',
           marginBottom: 14,
           lineHeight: 1.6,
@@ -384,7 +384,7 @@ export function FreeUpsellCard({
             background: 'rgba(255,255,255,0.10)',
             padding: '3px 10px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
             color: '#5C4A2E',
             marginLeft: 6,
             fontWeight: 600,
@@ -407,7 +407,7 @@ export function FreeServiceNotice({ children }: { children: ReactNode }) {
         margin: '22px 20px 0',
         padding: '14px 18px',
         borderTop: `1px dashed ${C.line}`,
-        fontSize: 11,
+        fontSize: 13,
         lineHeight: 1.65,
         color: '#9A8B70',
         textAlign: 'center',
@@ -464,7 +464,7 @@ export function TodayRelationCard({
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: 12,
           color: C.goldDeep,
           letterSpacing: '0.15em',
           fontWeight: 600,
@@ -499,7 +499,7 @@ export function TodayRelationCard({
           </svg>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 700,
               color: C.goldDeep,
               marginTop: 2,
@@ -521,7 +521,7 @@ export function TodayRelationCard({
           padding: '12px 14px',
           background: C.goldSoft,
           borderRadius: 10,
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: C.ink,
           lineHeight: 1.7,
           wordBreak: 'keep-all',
@@ -568,7 +568,7 @@ function RelOrbBlock({
       </div>
       <div
         style={{
-          fontSize: 10,
+          fontSize: 12,
           color: C.mute,
           marginTop: 6,
           fontWeight: 600,
@@ -576,7 +576,7 @@ function RelOrbBlock({
       >
         {label}
       </div>
-      <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 2 }}>{name}</div>
+      <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2 }}>{name}</div>
     </div>
   );
 }
@@ -609,7 +609,7 @@ export function TodayOhengRow({ items }: { items: OhengItem[] }) {
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: 12,
           color: C.goldDeep,
           letterSpacing: '0.15em',
           fontWeight: 600,
@@ -661,14 +661,14 @@ export function TodayOhengRow({ items }: { items: OhengItem[] }) {
               />
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                   color: it.lack ? '#C62828' : color,
                 }}
               >
                 {it.qty}
                 {it.todayBonus && (
-                  <span style={{ fontSize: 9, marginLeft: 2, color: C.goldDeep }}>
+                  <span style={{ fontSize: 12, marginLeft: 2, color: C.goldDeep }}>
                     {it.todayBonus}
                   </span>
                 )}
@@ -754,7 +754,7 @@ export function TodayTopicGrid({ cards }: { cards: TodayTopicCard[] }) {
             >
               <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: 700,
                   color: col.accent,
                   letterSpacing: '0.04em',
@@ -785,11 +785,11 @@ export function TodayTopicGrid({ cards }: { cards: TodayTopicCard[] }) {
               >
                 {c.score}
               </span>
-              <span style={{ fontSize: 11, color: C.mute, fontWeight: 600 }}>/10</span>
+              <span style={{ fontSize: 13, color: C.mute, fontWeight: 600 }}>/10</span>
             </div>
             <div
               style={{
-                fontSize: 11.5,
+                fontSize: 13,
                 color: C.inkSoft,
                 lineHeight: 1.6,
                 marginBottom: 10,
@@ -808,7 +808,7 @@ export function TodayTopicGrid({ cards }: { cards: TodayTopicCard[] }) {
                 borderTop: `1px solid ${C.line}`,
               }}
             >
-              <span style={{ fontSize: 11, fontWeight: 600, color: col.accent }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: col.accent }}>
                 {c.ctaText}
               </span>
               <span
@@ -818,7 +818,7 @@ export function TodayTopicGrid({ cards }: { cards: TodayTopicCard[] }) {
                   color: col.accent,
                   padding: '2px 8px',
                   borderRadius: 100,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
                 }}
               >
@@ -907,7 +907,7 @@ export function TodayMeetStack({ items }: { items: TodayMeetItem[] }) {
                 </span>
                 <span
                   style={{
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: 700,
                     color: accent,
                     background: `${accent}14`,
@@ -920,7 +920,7 @@ export function TodayMeetStack({ items }: { items: TodayMeetItem[] }) {
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 13.5,
                   color: C.inkSoft,
                   lineHeight: 1.7,
                   wordBreak: 'keep-all',
@@ -973,7 +973,7 @@ export function DreamInputStack({ items }: { items: DreamInputItem[] }) {
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 10,
+              fontSize: 12,
               color: C.goldDeep,
               fontWeight: 700,
               letterSpacing: '0.1em',
@@ -1089,7 +1089,7 @@ export function DreamSymbolGrid({ items }: { items: DreamSymbolItem[] }) {
           </div>
           <div
             style={{
-              fontSize: 11.5,
+              fontSize: 13,
               color: C.inkSoft,
               lineHeight: 1.6,
               wordBreak: 'keep-all',
@@ -1154,7 +1154,7 @@ export function DreamQuoteStack({ items }: { items: DreamQuoteItem[] }) {
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 color: C.goldDeep,
                 background: C.goldSoft,

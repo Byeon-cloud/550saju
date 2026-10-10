@@ -298,7 +298,7 @@ export function LoadingPage() {
                 transition={{ duration: 0.4 }}
                 className="w-6 h-6 rounded-full flex items-center justify-center"
               >
-                <span className={`text-[10px] font-bold ${stage >= s.id ? 'text-white' : 'text-text-disabled'}`}>{s.id}</span>
+                <span className={`text-[12px] font-bold ${stage >= s.id ? 'text-white' : 'text-text-disabled'}`}>{s.id}</span>
               </motion.div>
             </div>
             {s.id < 3 && (
@@ -389,8 +389,8 @@ export function LoadingPage() {
                   if (p?.available === false) {
                     return (
                       <div key={i} className="flex-1 rounded-lg border border-dashed border-border py-3 text-center bg-bg-surface">
-                        <p className="text-[9px] text-text-hint">{posLabels[i]}주</p>
-                        <p className="text-[10px] text-text-disabled mt-1">미입력</p>
+                        <p className="text-[12px] text-text-hint">{posLabels[i]}주</p>
+                        <p className="text-[12px] text-text-disabled mt-1">미입력</p>
                       </div>
                     );
                   }
@@ -425,7 +425,7 @@ export function LoadingPage() {
                         boxShadow: isMe ? '0 4px 14px rgba(184,150,90,0.18)' : 'none',
                       }}
                     >
-                      <p className={`text-[10px] ${isMe ? 'text-brand-gold font-bold' : 'text-text-hint'}`}>
+                      <p className={`text-[12px] ${isMe ? 'text-brand-gold font-bold' : 'text-text-hint'}`}>
                         {posLabels[i]}주
                       </p>
                       <p className="text-h2 mt-1 leading-tight">
@@ -471,7 +471,7 @@ export function LoadingPage() {
                       }}
                       className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                     />
-                    <span className={`text-[10px] truncate ${done ? 'text-text-secondary' : active ? 'text-brand-gold font-semibold' : 'text-text-disabled'}`}>
+                    <span className={`text-[12px] truncate ${done ? 'text-text-secondary' : active ? 'text-brand-gold font-semibold' : 'text-text-disabled'}`}>
                       {section.title}
                     </span>
                   </div>
@@ -553,7 +553,7 @@ export function LoadingPage() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
           >
-            <p className="text-[10px] font-semibold text-brand-gold mb-1.5">{currentTip.category}</p>
+            <p className="text-[12px] font-semibold text-brand-gold mb-1.5">{currentTip.category}</p>
             <p className="text-body-sm text-text-secondary leading-relaxed">
               {currentTip.text}
             </p>
@@ -563,7 +563,7 @@ export function LoadingPage() {
 
       {/* 2026-05-04 정직화: 표기 vs 실제 mismatch 수정 — premium 은 Opus + 16-24k tokens 라 60-120초.
        *  유저를 속이지 않게 reportType 분기 표기. */}
-      <p className="text-[10px] text-text-disabled mt-5">
+      <p className="text-[12px] text-text-disabled mt-5">
         {reportType === 'premium'
           ? '약 60~120초 소요, 10섹션 깊이 풀이'
           : '약 15~30초 소요'}

@@ -113,7 +113,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
                     <span style={{ fontSize: 15, fontWeight: 800 }}>{s.keyword}</span>
                     <span
                       style={{
-                        fontSize: 11, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                        fontSize: 13, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
                         background: `${OHENG_COLORS[s.correctOheng]}15`,
                         color: OHENG_COLORS[s.correctOheng],
                       }}
@@ -121,9 +121,9 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
                       {s.correctOheng}({s.correctOheng === '목' ? '木' : s.correctOheng === '화' ? '火' : s.correctOheng === '토' ? '土' : s.correctOheng === '금' ? '金' : '水'})
                     </span>
                     {correct ? (
-                      <span style={{ fontSize: 11, color: '#4E7A57', fontWeight: 700 }}>✓ 맞음</span>
+                      <span style={{ fontSize: 13, color: '#4E7A57', fontWeight: 700 }}>✓ 맞음</span>
                     ) : (
-                      <span style={{ fontSize: 11, color: '#6F6557', fontWeight: 700 }}>
+                      <span style={{ fontSize: 13, color: '#6F6557', fontWeight: 700 }}>
                         (선택: {userMap[s.id]})
                       </span>
                     )}
@@ -182,7 +182,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
               aria-label={`${s.keyword} ${placed ? `— ${placed}에 배치됨` : '— 탭하여 선택'}`}
             >
               <Pictogram k={s.pictogram} size={24} color={placed ? OHENG_COLORS[placed] : '#1A1612'} />
-              <span style={{ fontSize: 11, fontWeight: 700 }}>{s.keyword}</span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{s.keyword}</span>
             </motion.button>
           );
         })}
@@ -218,7 +218,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
               }}
             >
               <p style={{ fontSize: 13, fontWeight: 800, color: OHENG_COLORS[oh] }}>{oh}</p>
-              <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {count > 0 ? `${count}개` : '비어있음'}
               </p>
             </div>

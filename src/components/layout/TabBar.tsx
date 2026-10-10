@@ -55,7 +55,7 @@ export function TabBar() {
                   >
                     <Icon size={22} color="#FFFFFF" />
                   </motion.div>
-                  <span className="text-[12px] mt-1 font-semibold" style={{ color: active ? '#1A1612' : '#6F6557' }}>
+                  <span className="text-[13.5px] mt-1 font-semibold" style={{ color: active ? '#1A1612' : '#6F6557' }}>
                     {tab.label}
                   </span>
                 </button>
@@ -73,7 +73,7 @@ export function TabBar() {
                   size={20}
                   color={active ? '#1A1612' : '#8B8070'}
                 />
-                <span className="text-[12px] font-semibold transition-colors duration-200" style={{ color: active ? '#1A1612' : '#6F6557', fontWeight: active ? 800 : 600 }}>
+                <span className="text-[13.5px] font-semibold transition-colors duration-200" style={{ color: active ? '#1A1612' : '#6F6557', fontWeight: active ? 800 : 600 }}>
                   {tab.label}
                 </span>
                 {active && (

@@ -85,16 +85,16 @@ function PartnerTimeField({
         className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
       />
       {siji ? (
-        <p className="text-[11px] text-text-hint mt-1">
+        <p className="text-[13px] text-text-hint mt-1">
           진태양시(약 30분) 보정 후 <b style={{ color: '#8C6D3D' }}>{siji.ko}({siji.hanja})</b> 로 계산돼요
         </p>
       ) : (
-        <p className="text-[11px] text-text-hint mt-1">모르면 비워두세요 — 알면 시주까지 분석하여 더 정확해요</p>
+        <p className="text-[13px] text-text-hint mt-1">모르면 비워두세요 — 알면 시주까지 분석하여 더 정확해요</p>
       )}
       <button
         type="button"
         onClick={onOpenSheet}
-        className="text-[11px] font-semibold mt-1 underline underline-offset-2"
+        className="text-[13px] font-semibold mt-1 underline underline-offset-2"
         style={{ color: '#8C6D3D' }}
       >
         시각은 모르고 태어난 시(時)만 아세요?
@@ -335,8 +335,8 @@ function HBar({ value, label, color, suffix = '' }: { value: number; label: stri
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-text-secondary leading-snug">{label}</span>
-        <span className="text-[11px] font-bold flex-shrink-0 ml-2" style={{ color }}>{value}{suffix}</span>
+        <span className="text-[13px] text-text-secondary leading-snug">{label}</span>
+        <span className="text-[13px] font-bold flex-shrink-0 ml-2" style={{ color }}>{value}{suffix}</span>
       </div>
       <div className="h-[14px] rounded-full overflow-hidden" style={{ background: `${color}10` }}>
         <motion.div className="h-full rounded-full" style={{ background: color }}
@@ -349,7 +349,7 @@ function HBar({ value, label, color, suffix = '' }: { value: number; label: stri
 /* ─── 뱃지 ─── */
 function TypeBadge({ label, color }: { label: string; color: string }) {
   return (
-    <motion.span className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold"
+    <motion.span className="inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-bold"
       style={{ background: `${color}15`, color, border: `1.5px solid ${color}25` }}
       initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}>
       {label}
@@ -368,7 +368,7 @@ function SubScoreRadar({ subScores, color }: { subScores: { axis: string; value:
     <FadeIn delay={0.15}>
       <div className="card">
         <p className="text-h3 text-text-primary mb-1">세부 역량 분석</p>
-        <p className="text-[11px] text-text-hint mb-2">5가지 항목별 점수 비교</p>
+        <p className="text-[13px] text-text-hint mb-2">5가지 항목별 점수 비교</p>
         <div className="h-52 -mx-2">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={subScores.map(s => ({ name: s.axis, value: s.value, fullMark: 100 }))}>
@@ -381,7 +381,7 @@ function SubScoreRadar({ subScores, color }: { subScores: { axis: string; value:
         </div>
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-1">
           {subScores.map((s, i) => (
-            <span key={i} className="text-[11px] text-text-muted">
+            <span key={i} className="text-[13px] text-text-muted">
               {s.axis} <strong className="font-bold" style={{ color }}>{s.value}</strong>
             </span>
           ))}
@@ -421,7 +421,7 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: '#1B5E2C',
                 background: 'rgba(78,122,87,0.16)',
@@ -435,7 +435,7 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
             >
               좋은 점
             </span>
-            <span style={{ flex: 1, fontSize: 12.5, color: '#1A1A1A', lineHeight: 1.55, wordBreak: 'keep-all' }}>{s}</span>
+            <span style={{ flex: 1, fontSize: 13.5, color: '#1A1A1A', lineHeight: 1.55, wordBreak: 'keep-all' }}>{s}</span>
           </div>
         ))}
         {cautions?.map((c, i) => (
@@ -443,7 +443,7 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: '#B33A0E',
                 background: 'rgba(176,74,56,0.10)',
@@ -457,7 +457,7 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
             >
               조심할 점
             </span>
-            <span style={{ flex: 1, fontSize: 12.5, color: '#1A1A1A', lineHeight: 1.55, wordBreak: 'keep-all' }}>{c}</span>
+            <span style={{ flex: 1, fontSize: 13.5, color: '#1A1A1A', lineHeight: 1.55, wordBreak: 'keep-all' }}>{c}</span>
           </div>
         ))}
       </div>
@@ -484,7 +484,7 @@ function StatTile({ label, value, color, tone = 'default', big = false }:
       : { bg: `${color}0E`, fg: color };
   return (
     <div className="rounded-xl px-2.5 py-3 text-center" style={{ background: pal.bg }}>
-      <p className="text-[11px] text-text-hint mb-1 leading-tight">{label}</p>
+      <p className="text-[13px] text-text-hint mb-1 leading-tight">{label}</p>
       <p className={`${big ? 'text-[15px]' : 'text-[13px]'} font-bold leading-tight`} style={{ color: pal.fg }}>{value}</p>
     </div>
   );
@@ -525,19 +525,19 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
             <div className="space-y-2.5">
               {data.newEncounterMonth && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>새 인연 가능성 월</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>새 인연 가능성 월</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.newEncounterMonth}</p>
                 </div>
               )}
               {data.encounterPlace && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>만남이 잘 풀리는 자리</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>만남이 잘 풀리는 자리</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.encounterPlace}</p>
                 </div>
               )}
               {data.selfPreparation && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>인연 전에 다듬을 결</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>인연 전에 다듬을 결</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.selfPreparation}</p>
                 </div>
               )}
@@ -553,13 +553,13 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
             <div className="space-y-2.5">
               {data.confessionTiming && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>고백 적기</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>고백 적기</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.confessionTiming}</p>
                 </div>
               )}
               {data.interestLevel != null && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>상대방의 호감 강도</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>상대방의 호감 강도</p>
                   <div className="flex items-center gap-2">
                     <span className="text-[20px] font-black" style={{ color }}>{typeof data.interestLevel === 'number' ? `${data.interestLevel}%` : data.interestLevel}</span>
                     {typeof data.interestLevel === 'number' && (
@@ -572,13 +572,13 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
               )}
               {data.approachStrategy && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>접근 전략</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>접근 전략</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.approachStrategy}</p>
                 </div>
               )}
               {data.signalReading && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>지금 상대의 마음 신호</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>지금 상대의 마음 신호</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.signalReading}</p>
                 </div>
               )}
@@ -594,25 +594,25 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
             <div className="space-y-2.5">
               {data.stabilityPhase && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>현재 관계 단계</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>현재 관계 단계</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.stabilityPhase}</p>
                 </div>
               )}
               {data.longTermOutlook && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>장기 전망 (6~12개월)</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>장기 전망 (6~12개월)</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.longTermOutlook}</p>
                 </div>
               )}
               {data.riskMonth && (
                 <div className="rounded-xl p-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: '#8A6226' }}>다툼 주의 시기</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color: '#8A6226' }}>다툼 주의 시기</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.riskMonth}</p>
                 </div>
               )}
               {data.deepenTip && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>깊어지는 방법</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>깊어지는 방법</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.deepenTip}</p>
                 </div>
               )}
@@ -635,14 +635,14 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
           </div>
           {data.attractionSource && (
             <div className="mt-2.5 rounded-xl py-2.5 px-3" style={{ background: `${color}06` }}>
-              <p className="text-[11px] font-semibold mb-0.5" style={{ color }}>매력의 원천</p>
-              <p className="text-[12px] text-text-primary leading-snug">{data.attractionSource}</p>
+              <p className="text-[13px] font-semibold mb-0.5" style={{ color }}>매력의 원천</p>
+              <p className="text-[13.5px] text-text-primary leading-snug">{data.attractionSource}</p>
             </div>
           )}
           {data.charmPoint && (
             <div className="mt-2 rounded-xl py-2.5 px-3" style={{ background: 'rgba(140,109,61,0.04)' }}>
-              <p className="text-[11px] font-semibold mb-0.5" style={{ color }}>나의 매력 포인트</p>
-              <p className="text-[12px] text-text-primary leading-snug">{data.charmPoint}</p>
+              <p className="text-[13px] font-semibold mb-0.5" style={{ color }}>나의 매력 포인트</p>
+              <p className="text-[13.5px] text-text-primary leading-snug">{data.charmPoint}</p>
             </div>
           )}
         </div>
@@ -654,8 +654,8 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
             <div className="space-y-2.5">
               {fields.map((f, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-[11px] font-bold mt-0.5 w-14 flex-shrink-0 text-right" style={{ color }}>{f.label}</span>
-                  <p className="text-[12px] text-text-primary leading-snug flex-1">{f.value}</p>
+                  <span className="text-[13px] font-bold mt-0.5 w-14 flex-shrink-0 text-right" style={{ color }}>{f.label}</span>
+                  <p className="text-[13.5px] text-text-primary leading-snug flex-1">{f.value}</p>
                 </div>
               ))}
             </div>
@@ -688,11 +688,11 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
               <div className="flex items-center justify-between mb-2">
                 <p className="text-h3 text-text-primary">두 사람의 연애 궁합</p>
                 {pc.compatScore != null && (
-                  <span className="text-[12px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${color}10`, color }}>{pc.compatScore}점</span>
+                  <span className="text-[13.5px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${color}10`, color }}>{pc.compatScore}점</span>
                 )}
               </div>
               {pc.loveChemistry && (
-                <p className="text-[11px] text-text-muted mb-3 leading-snug">{pc.loveChemistry}</p>
+                <p className="text-[13px] text-text-muted mb-3 leading-snug">{pc.loveChemistry}</p>
               )}
 
               {/* 기둥 비교 — 2026-05-28 가독성 개선: 한자 박스 크게(44px), 행간 넓힘, 가운데 아이콘 명확화 */}
@@ -703,18 +703,18 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
                   const fg = ohengText[oh] || '#3D3427';
                   return (
                     <div className={`flex-1 rounded-xl p-3 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg, border: `1px solid ${fg}25` }}>
-                      {side === 'right' && <span className="text-[12px] font-bold" style={{ color: fg }}>{oh}</span>}
+                      {side === 'right' && <span className="text-[13.5px] font-bold" style={{ color: fg }}>{oh}</span>}
                       <div className="flex gap-1.5">
                         <span className="w-11 h-11 rounded-lg flex items-center justify-center text-[20px] font-black" style={{ background: '#fff', color: fg, border: `1.5px solid ${fg}40`, fontFamily: "'Noto Serif KR', serif" }}>{cleanHanja(p.cheongan)}</span>
                         <span className="w-11 h-11 rounded-lg flex items-center justify-center text-[20px] font-black" style={{ background: '#fff', color: fg, border: `1.5px solid ${fg}40`, fontFamily: "'Noto Serif KR', serif" }}>{cleanHanja(p.jiji)}</span>
                       </div>
-                      {side === 'left' && <span className="text-[12px] font-bold" style={{ color: fg }}>{oh}</span>}
+                      {side === 'left' && <span className="text-[13.5px] font-bold" style={{ color: fg }}>{oh}</span>}
                     </div>
                   );
                 };
                 return (
                   <div className="mb-3">
-                    <p className="text-[12px] text-text-hint mb-3 font-semibold">사주 기둥(柱) 비교</p>
+                    <p className="text-[13.5px] text-text-hint mb-3 font-semibold">사주 기둥(柱) 비교</p>
                     <div className="space-y-4">
                       {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
                         const myP = pComp.myPillars?.[key];
@@ -724,8 +724,8 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
                         return (
                           <div key={key}>
                             <div className="flex items-center gap-1.5 mb-1.5">
-                              <span className="text-[12px] text-text-hint font-bold">{label}</span>
-                              {ts && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
+                              <span className="text-[13.5px] text-text-hint font-bold">{label}</span>
+                              {ts && <span className="text-[13px] font-bold px-2 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
                             </div>
                             <div className="flex items-center gap-1.5">
                               {myP && renderPillar(myP, 'left')}
@@ -734,17 +734,17 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
                               </div>
                               {ptP && renderPillar(ptP, 'right')}
                             </div>
-                            {inter?.desc && <p className="text-[12px] text-text-secondary mt-2 ml-1 leading-relaxed" style={{ wordBreak: 'keep-all' }}>{inter.desc}</p>}
+                            {inter?.desc && <p className="text-[13.5px] text-text-secondary mt-2 ml-1 leading-relaxed" style={{ wordBreak: 'keep-all' }}>{inter.desc}</p>}
                           </div>
                         );
                       })}
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-2 px-1" style={{ borderTop: '1px dashed rgba(0,0,0,0.08)' }}>
-                      <span className="text-[11px] font-bold" style={{ color }}>← {myName ? `${myName} 님 (나)` : '나'}</span>
-                      <span className="text-[11px] text-text-hint font-semibold">{partnerName ? `${partnerName} 님 (상대)` : '상대'} →</span>
+                      <span className="text-[13px] font-bold" style={{ color }}>← {myName ? `${myName} 님 (나)` : '나'}</span>
+                      <span className="text-[13px] text-text-hint font-semibold">{partnerName ? `${partnerName} 님 (상대)` : '상대'} →</span>
                     </div>
                     {/* 2026-06-12 신뢰 카피 — "양방향 동일 판정" CS 혼란 예방 (합·충은 만세력 객관 계산값) */}
-                    <p className="text-[11px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                    <p className="text-[13px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                       두 분의 합과 충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
                     </p>
                   </div>
@@ -772,8 +772,8 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
               {/* 상대방 연애 스타일 */}
               {pc.partnerLoveStyle && (
                 <div className="rounded-xl py-2 px-3" style={{ background: `${color}05`, borderLeft: `3px solid ${color}30` }}>
-                  <p className="text-[11px] font-semibold mb-0.5" style={{ color }}>상대방의 연애 스타일</p>
-                  <p className="text-[11px] text-text-primary leading-snug">{pc.partnerLoveStyle}</p>
+                  <p className="text-[13px] font-semibold mb-0.5" style={{ color }}>상대방의 연애 스타일</p>
+                  <p className="text-[13px] text-text-primary leading-snug">{pc.partnerLoveStyle}</p>
                 </div>
               )}
             </div>
@@ -868,8 +868,8 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {data.earningPower != null && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] text-text-secondary font-semibold">수익력 <span className="text-[11px] text-text-hint font-normal">돈 벌어오는 힘</span></span>
-                  <span className="text-[18px] font-black" style={{ color: '#4E7A57', fontFamily: "'Noto Serif KR', serif" }}>{data.earningPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
+                  <span className="text-[13.5px] text-text-secondary font-semibold">수익력 <span className="text-[13px] text-text-hint font-normal">돈 벌어오는 힘</span></span>
+                  <span className="text-[18px] font-black" style={{ color: '#4E7A57', fontFamily: "'Noto Serif KR', serif" }}>{data.earningPower}<small className="text-[13px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
                 <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(78,122,87,0.10)' }}>
                   <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #4E7A57 0%, #4caf50 100%)', width: `${data.earningPower}%` }} />
@@ -879,8 +879,8 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {data.savingPower != null && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] text-text-secondary font-semibold">저축력 <span className="text-[11px] text-text-hint font-normal">돈 모으는 힘</span></span>
-                  <span className="text-[18px] font-black" style={{ color: '#3E5F82', fontFamily: "'Noto Serif KR', serif" }}>{data.savingPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
+                  <span className="text-[13.5px] text-text-secondary font-semibold">저축력 <span className="text-[13px] text-text-hint font-normal">돈 모으는 힘</span></span>
+                  <span className="text-[18px] font-black" style={{ color: '#3E5F82', fontFamily: "'Noto Serif KR', serif" }}>{data.savingPower}<small className="text-[13px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
                 <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(62,95,130,0.10)' }}>
                   <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #3E5F82 0%, #42a5f5 100%)', width: `${data.savingPower}%` }} />
@@ -890,8 +890,8 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {data.spendingRisk != null && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] text-text-secondary font-semibold">지출 위험도 <span className="text-[11px] text-text-hint font-normal">높을수록 새는 돈 큼</span></span>
-                  <span className="text-[18px] font-black" style={{ color: '#B04A38', fontFamily: "'Noto Serif KR', serif" }}>{data.spendingRisk}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
+                  <span className="text-[13.5px] text-text-secondary font-semibold">지출 위험도 <span className="text-[13px] text-text-hint font-normal">높을수록 새는 돈 큼</span></span>
+                  <span className="text-[18px] font-black" style={{ color: '#B04A38', fontFamily: "'Noto Serif KR', serif" }}>{data.spendingRisk}<small className="text-[13px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
                 <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(176,74,56,0.10)' }}>
                   <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #B04A38 0%, #ef5350 100%)', width: `${data.spendingRisk}%` }} />
@@ -928,21 +928,21 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <div className="grid grid-cols-2 gap-2.5" style={{ position: 'relative' }}>
             {data.jaeseongType && (
               <div className="rounded-xl p-3.5" style={{ background: `${color}0A`, border: `1px solid ${color}25` }}>
-                <p className="text-[11px] font-bold mb-1.5" style={{ color: '#8C6D3D' }}>돈 부르는 결</p>
+                <p className="text-[13px] font-bold mb-1.5" style={{ color: '#8C6D3D' }}>돈 부르는 결</p>
                 <p className="text-[16px] font-black mb-1" style={{ color, fontFamily: "'Noto Serif KR', serif" }}>{data.jaeseongType}</p>
-                {data.jaeseongDesc && <p className="text-[11px] text-text-secondary leading-snug" style={{ wordBreak: 'keep-all' }}>{data.jaeseongDesc}</p>}
+                {data.jaeseongDesc && <p className="text-[13px] text-text-secondary leading-snug" style={{ wordBreak: 'keep-all' }}>{data.jaeseongDesc}</p>}
               </div>
             )}
             {data.wealthPeakPeriod && (
               <div className="rounded-xl p-3.5" style={{ background: 'rgba(176,127,56,0.08)', border: '1px solid rgba(176,127,56,0.30)' }}>
-                <p className="text-[11px] font-bold mb-1.5" style={{ color: '#8C6D3D' }}>재물 전성기</p>
+                <p className="text-[13px] font-bold mb-1.5" style={{ color: '#8C6D3D' }}>재물 전성기</p>
                 <p className="text-[16px] font-black mb-1" style={{ color: '#8B6F0C', fontFamily: "'Noto Serif KR', serif" }}>{data.wealthPeakPeriod}</p>
-                <p className="text-[11px] text-text-secondary leading-snug" style={{ wordBreak: 'keep-all' }}>이 시기에 자산이 가장 크게 불어요</p>
+                <p className="text-[13px] text-text-secondary leading-snug" style={{ wordBreak: 'keep-all' }}>이 시기에 자산이 가장 크게 불어요</p>
               </div>
             )}
             {data.investStyle && (
               <div className="rounded-xl p-3.5" style={{ background: 'rgba(62,95,130,0.06)', border: '1px solid rgba(62,95,130,0.25)' }}>
-                <p className="text-[11px] font-bold mb-1.5 text-[#3E5F82]">투자 성향</p>
+                <p className="text-[13px] font-bold mb-1.5 text-[#3E5F82]">투자 성향</p>
                 <p className="text-[16px] font-black text-[#3E5F82]" style={{ fontFamily: "'Noto Serif KR', serif" }}>{data.investStyle}</p>
               </div>
             )}
@@ -950,7 +950,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               <div className="rounded-xl p-3.5" style={{ background: 'rgba(78,122,87,0.06)', border: '1px solid rgba(78,122,87,0.25)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4E7A57" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
-                  <p className="text-[11px] font-bold text-[#4E7A57]">올해 투자 적기</p>
+                  <p className="text-[13px] font-bold text-[#4E7A57]">올해 투자 적기</p>
                 </div>
                 <p className="text-[16px] font-black text-[#4E7A57]" style={{ fontFamily: "'Noto Serif KR', serif" }}>{data.bestInvestMonth}</p>
               </div>
@@ -959,7 +959,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           {data.wealthFlow && (
             <div className="mt-3 rounded-xl py-2.5 px-3.5 flex items-center gap-2" style={{ background: `${color}10`, border: `1px solid ${color}30`, position: 'relative' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-              <p className="text-[12px] text-text-secondary">올해 재물 흐름: <strong style={{ color, fontWeight: 700 }}>{data.wealthFlow}</strong></p>
+              <p className="text-[13.5px] text-text-secondary">올해 재물 흐름: <strong style={{ color, fontWeight: 700 }}>{data.wealthFlow}</strong></p>
             </div>
           )}
         </div>
@@ -989,12 +989,12 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               }}>月</span>
               <p className="text-h3 text-text-primary" style={{ margin: 0, flex: 1 }}>월별 재물 흐름</p>
               {data.dangerMonths && (
-                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(176,74,56,0.10)', color: '#B04A38', border: '1px solid rgba(176,74,56,0.25)' }}>
+                <span className="text-[13px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(176,74,56,0.10)', color: '#B04A38', border: '1px solid rgba(176,74,56,0.25)' }}>
                   주의: {data.dangerMonths}
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-text-hint mb-3 ml-9">올해 12개월 재물 에너지 추이</p>
+            <p className="text-[13px] text-text-hint mb-3 ml-9">올해 12개월 재물 에너지 추이</p>
             <div className="h-[150px] -mx-2">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthly.map((m: any) => ({ ...m, score: typeof m.score === 'number' ? m.score : parseInt(m.score) || 0 }))} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
@@ -1017,11 +1017,11 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               <div className="flex items-center justify-center gap-4 mt-2">
                 <div className="flex items-center gap-1.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4E7A57" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
-                  <span className="text-[11px] text-text-muted">최고: <strong className="text-[#4E7A57]">{bestMonth} ({bestScore}점)</strong></span>
+                  <span className="text-[13px] text-text-muted">최고: <strong className="text-[#4E7A57]">{bestMonth} ({bestScore}점)</strong></span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B04A38" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                  <span className="text-[11px] text-text-muted">주의: <strong className="text-[#B04A38]">{worstMonth} ({worstScore}점)</strong></span>
+                  <span className="text-[13px] text-text-muted">주의: <strong className="text-[#B04A38]">{worstMonth} ({worstScore}점)</strong></span>
                 </div>
               </div>
             )}
@@ -1056,7 +1056,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             <p className="text-h3 text-text-primary" style={{ margin: 0, flex: 1 }}>돈이 들어오는 통로</p>
             {isInferredDist && (
               <span
-                className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                className="text-[13px] font-bold px-2.5 py-1 rounded-full"
                 style={{ background: 'rgba(122,114,105,0.10)', color: '#7A7269', border: '1px solid rgba(122,114,105,0.20)' }}
                 title="재물 유형 기반 기본 구성으로 보여드려요"
               >
@@ -1064,7 +1064,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               </span>
             )}
           </div>
-          <p className="text-[11px] text-text-hint mb-3 ml-9">
+          <p className="text-[13px] text-text-hint mb-3 ml-9">
             본업, 투자, 사이드, 기타 — 4 통로의 비중
           </p>
           <IncomeDonut segments={incomeDistribution} accentColor={color} />
@@ -1075,9 +1075,9 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <div className="card">
             <div className="flex items-center justify-between mb-1">
               <p className="text-h3 text-text-primary">평생 재물 흐름</p>
-              <span className="text-[11px] text-text-hint">大運, 10년 단위</span>
+              <span className="text-[13px] text-text-hint">大運, 10년 단위</span>
             </div>
-            <p className="text-[11px] text-text-hint mb-3">
+            <p className="text-[13px] text-text-hint mb-3">
               8 대운 60년 — 재물 강세 시기 한눈에
             </p>
             <DaewoonWealthRail
@@ -1094,9 +1094,9 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <div className="card">
             <div className="flex items-center justify-between mb-1">
               <p className="text-h3 text-text-primary">돈을 움직이는 인맥</p>
-              <span className="text-[11px] text-text-hint">人脈</span>
+              <span className="text-[13px] text-text-hint">人脈</span>
             </div>
-            <p className="text-[11px] text-text-hint mb-3">
+            <p className="text-[13px] text-text-hint mb-3">
               사주 십성에서 도출 — 도와주는 사람 / 부딪히는 사람 / 평온한 사람
             </p>
             <RelflowCards sipsung={sajuData.sipsung} />
@@ -1111,11 +1111,11 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <p className="text-[12px] font-bold text-[#8A6226]">돈이 새는 자리 — 미리 챙기면 막을 수 있어요</p>
+              <p className="text-[13.5px] font-bold text-[#8A6226]">돈이 새는 자리 — 미리 챙기면 막을 수 있어요</p>
             </div>
             <p className="text-[13px] text-text-primary font-semibold leading-snug mb-1">{data.moneyLeakTrap}</p>
             {data.moneyLeakDesc && (
-              <p className="text-[11px] text-text-secondary leading-relaxed">{data.moneyLeakDesc}</p>
+              <p className="text-[13px] text-text-secondary leading-relaxed">{data.moneyLeakDesc}</p>
             )}
           </div>
         )}
@@ -1227,10 +1227,10 @@ function IncomeDonut({
       <div className="flex-1 min-w-0">
         <div className="flex flex-col gap-1.5">
           {arcs.map((s) => (
-            <div key={s.key} className="flex items-center gap-2 text-[11px]">
+            <div key={s.key} className="flex items-center gap-2 text-[13px]">
               <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: s.color, flexShrink: 0 }} />
               <span style={{ fontWeight: 700, color: '#1A1A1A', minWidth: 40 }}>{s.label}</span>
-              <span style={{ fontSize: 11, color: '#7A7269', fontFamily: "'Noto Serif KR', serif" }}>{s.hanja}</span>
+              <span style={{ fontSize: 13, color: '#7A7269', fontFamily: "'Noto Serif KR', serif" }}>{s.hanja}</span>
               <span style={{ marginLeft: 'auto', fontWeight: 800, color: s.color, fontFeatureSettings: '"tnum"' }}>
                 {s.pct}%
               </span>
@@ -1353,7 +1353,7 @@ function DaewoonWealthRail({
                 ★
               </span>
             )}
-            <div style={{ fontSize: 11, fontWeight: 700, color: c.isCurrent ? '#8C6D3D' : '#7A7269', marginBottom: 5 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: c.isCurrent ? '#8C6D3D' : '#7A7269', marginBottom: 5 }}>
               {c.startAge}~{c.endAge}세
             </div>
             <div
@@ -1376,7 +1376,7 @@ function DaewoonWealthRail({
                   borderRadius: 4,
                   background: tone,
                   color: fg,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                 }}
               >
@@ -1388,7 +1388,7 @@ function DaewoonWealthRail({
               <div style={{ height: '100%', width: `${c.intensity}%`, background: tone === 'rgba(198,40,40,0.18)' ? '#B04A38' : (c.intensity >= 70 ? accentColor : '#8C6D3D') }} />
             </div>
             {c.isCurrent && (
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#8C6D3D', marginTop: 4, letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#8C6D3D', marginTop: 4, letterSpacing: '0.05em' }}>
                 NOW
               </div>
             )}
@@ -1502,9 +1502,9 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               {isEmpty ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: '#7A7269', wordBreak: 'keep-all', lineHeight: 1.4, flex: 1 }}>{cat.desc}</span>
+                  <span style={{ fontSize: 13, color: '#7A7269', wordBreak: 'keep-all', lineHeight: 1.4, flex: 1 }}>{cat.desc}</span>
                   <span style={{
-                    fontSize: 11, fontWeight: 700, color: '#7A7269',
+                    fontSize: 13, fontWeight: 700, color: '#7A7269',
                     background: 'rgba(0,0,0,0.04)', padding: '2px 8px', borderRadius: 100, flexShrink: 0,
                   }}>
                     없음
@@ -1512,7 +1512,7 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
                 </div>
               ) : (
                 <>
-                  <p style={{ fontSize: 12, color: '#5C4A2E', lineHeight: 1.55, marginBottom: 8, wordBreak: 'keep-all' }}>
+                  <p style={{ fontSize: 13.5, color: '#5C4A2E', lineHeight: 1.55, marginBottom: 8, wordBreak: 'keep-all' }}>
                     {cat.desc}
                   </p>
                   {/* 데이터 영역 */}
@@ -1520,9 +1520,9 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
                     <span style={{ fontSize: 22, fontWeight: 800, color: cat.color, fontFeatureSettings: '"tnum"', lineHeight: 1 }}>
                       {total}
                     </span>
-                    <span style={{ fontSize: 12, color: '#7A7269' }}>자</span>
+                    <span style={{ fontSize: 13.5, color: '#7A7269' }}>자</span>
                     <span style={{
-                      fontSize: 11, fontWeight: 700, color: cat.color,
+                      fontSize: 13, fontWeight: 700, color: cat.color,
                       background: '#fff', border: `1px solid ${cat.color}40`,
                       padding: '3px 8px', borderRadius: 100, marginLeft: 'auto',
                     }}>
@@ -1555,13 +1555,13 @@ function CareerViz({ data, color }: { data: any; color: string }) {
               <p className="text-h3 text-text-primary">사주가 부르는 직종 TOP 5</p>
               {data.workStyle && <TypeBadge label={data.workStyle} color={color} />}
             </div>
-            <p className="text-[11px] text-text-hint mb-3">일간 오행, 격국, 십성 비중 분석 — 잘 맞는 5직종</p>
+            <p className="text-[13px] text-text-hint mb-3">일간 오행, 격국, 십성 비중 분석 — 잘 맞는 5직종</p>
             <div className="space-y-3">
               {data.careerFit.map((c: any, i: number) => (
                 <div key={i} className="space-y-1">
                   <HBar value={c.fitPercent || 0} label={c.job || ''} color={color} suffix="%" />
                   {c.reason && (
-                    <p className="text-[11.5px] leading-relaxed pl-1" style={{ color: '#5C4A2E', wordBreak: 'keep-all' }}>
+                    <p className="text-[13px] leading-relaxed pl-1" style={{ color: '#5C4A2E', wordBreak: 'keep-all' }}>
                       {c.reason}
                     </p>
                   )}
@@ -1576,15 +1576,15 @@ function CareerViz({ data, color }: { data: any; color: string }) {
             <p className="text-h3 text-text-primary mb-3">맞춤 분석</p>
             {data.statusAnalysis && (
               <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
-                <p className="text-[11px] font-bold mb-0.5" style={{ color }}>현재 상태 분석</p>
-                <p className="text-[12px] text-text-primary leading-snug">{data.statusAnalysis}</p>
+                <p className="text-[13px] font-bold mb-0.5" style={{ color }}>현재 상태 분석</p>
+                <p className="text-[13.5px] text-text-primary leading-snug">{data.statusAnalysis}</p>
               </div>
             )}
             {data.fieldFitScore != null && (
               <div className="rounded-xl p-3" style={{ background: 'rgba(0,0,0,0.015)' }}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[11px] font-bold" style={{ color }}>관심 분야 적합도</p>
-                  <span className="text-[14px] font-black" style={{ color }}>{data.fieldFitScore}<span className="text-[11px]">점</span></span>
+                  <p className="text-[13px] font-bold" style={{ color }}>관심 분야 적합도</p>
+                  <span className="text-[14px] font-black" style={{ color }}>{data.fieldFitScore}<span className="text-[13px]">점</span></span>
                 </div>
                 <div className="h-[8px] rounded-full overflow-hidden mb-1.5" style={{ background: `${color}12` }}>
                   <motion.div className="h-full rounded-full" style={{ background: color }}
@@ -1592,13 +1592,13 @@ function CareerViz({ data, color }: { data: any; color: string }) {
                     transition={{ duration: 0.8, delay: 0.3 }} />
                 </div>
                 {data.fieldFitAnalysis && (
-                  <p className="text-[11px] text-text-secondary leading-snug">{data.fieldFitAnalysis}</p>
+                  <p className="text-[13px] text-text-secondary leading-snug">{data.fieldFitAnalysis}</p>
                 )}
               </div>
             )}
             {data.jobChangeTiming && (
               <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
-                <p className="text-[11px] text-text-hint">이직 최적 시기: <strong className="text-[#4E7A57]">{data.jobChangeTiming}</strong></p>
+                <p className="text-[13px] text-text-hint">이직 최적 시기: <strong className="text-[#4E7A57]">{data.jobChangeTiming}</strong></p>
               </div>
             )}
           </div>
@@ -1637,14 +1637,14 @@ function CareerViz({ data, color }: { data: any; color: string }) {
             <div className="space-y-2">
               {data.coreStrength && (
                 <div className="rounded-xl py-2 px-3" style={{ background: `${color}08`, borderLeft: `3px solid ${color}` }}>
-                  <p className="text-[11px] font-bold mb-0.5" style={{ color }}>타고난 직업 강점</p>
-                  <p className="text-[12.5px] text-text-primary leading-snug">{stripMd(String(data.coreStrength))}</p>
+                  <p className="text-[13px] font-bold mb-0.5" style={{ color }}>타고난 직업 강점</p>
+                  <p className="text-[13.5px] text-text-primary leading-snug">{stripMd(String(data.coreStrength))}</p>
                 </div>
               )}
               {data.officeAdaptType && (
                 <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                  <p className="text-[11px] font-bold mb-0.5" style={{ color: '#5C4A2E' }}>직장 적응 타입</p>
-                  <p className="text-[12.5px] text-text-primary leading-snug">{stripMd(String(data.officeAdaptType))}</p>
+                  <p className="text-[13px] font-bold mb-0.5" style={{ color: '#5C4A2E' }}>직장 적응 타입</p>
+                  <p className="text-[13.5px] text-text-primary leading-snug">{stripMd(String(data.officeAdaptType))}</p>
                 </div>
               )}
               {data.sipsungBalance && (
@@ -1669,14 +1669,14 @@ function CareerViz({ data, color }: { data: any; color: string }) {
               {data.careerPhases.map((p: any, i: number) => (
                 <div key={i} className="rounded-xl py-2.5 px-3 bg-white" style={{ borderLeft: `3px solid ${p.isCurrent ? color : '#E5DFD0'}` }}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[11px] font-bold" style={{ color: p.isCurrent ? color : '#5C4A2E' }}>
+                    <p className="text-[13px] font-bold" style={{ color: p.isCurrent ? color : '#5C4A2E' }}>
                       {p.label || p.age || `단계 ${i + 1}`}
-                      {p.isCurrent && <span className="ml-1.5 text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: color, color: '#fff' }}>NOW</span>}
+                      {p.isCurrent && <span className="ml-1.5 text-[13px] px-1.5 py-0.5 rounded-full" style={{ background: color, color: '#fff' }}>NOW</span>}
                     </p>
-                    {p.score != null && <span className="text-[12px] font-black" style={{ color: p.isCurrent ? color : '#7A7269' }}>{p.score}</span>}
+                    {p.score != null && <span className="text-[13.5px] font-black" style={{ color: p.isCurrent ? color : '#7A7269' }}>{p.score}</span>}
                   </div>
                   {p.description && (
-                    <p className="text-[12px] text-text-primary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(String(p.description)) }} />
+                    <p className="text-[13.5px] text-text-primary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(String(p.description)) }} />
                   )}
                 </div>
               ))}
@@ -1723,13 +1723,13 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
           </div>
           {tm?.bestPeriod && (
             <div className="mt-2.5 rounded-xl py-2.5 px-3 flex items-center gap-3" style={{ background: `${color}06` }}>
-              <p className="text-[11px] font-semibold" style={{ color }}>결혼 적기</p>
+              <p className="text-[13px] font-semibold" style={{ color }}>결혼 적기</p>
               <p className="text-[13px] text-text-primary font-bold flex-1">{tm.bestPeriod}</p>
             </div>
           )}
           {data.weddingLuckMonth && (
             <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
-              <p className="text-[11px] text-text-hint">결혼식 유리 월: <strong className="text-[#4E7A57]">{data.weddingLuckMonth}</strong></p>
+              <p className="text-[13px] text-text-hint">결혼식 유리 월: <strong className="text-[#4E7A57]">{data.weddingLuckMonth}</strong></p>
             </div>
           )}
         </div>
@@ -1743,8 +1743,8 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
             <div className="space-y-2.5">
               {fields.map((f, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-[11px] font-bold mt-0.5 w-14 flex-shrink-0 text-right" style={{ color }}>{f.label}</span>
-                  <p className="text-[12px] text-text-primary leading-snug flex-1">{f.value}</p>
+                  <span className="text-[13px] font-bold mt-0.5 w-14 flex-shrink-0 text-right" style={{ color }}>{f.label}</span>
+                  <p className="text-[13.5px] text-text-primary leading-snug flex-1">{f.value}</p>
                 </div>
               ))}
             </div>
@@ -1754,8 +1754,8 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
         {/* 갈등 패턴 경고 */}
         {data.conflictPattern && (
           <div className="card" style={{ background: 'rgba(138,98,38,0.04)', border: '1px solid rgba(138,98,38,0.25)' }}>
-            <p className="text-[11px] font-bold text-[#8A6226] mb-1">부부 갈등 핵심 패턴</p>
-            <p className="text-[12px] text-text-primary leading-snug">{data.conflictPattern}</p>
+            <p className="text-[13px] font-bold text-[#8A6226] mb-1">부부 갈등 핵심 패턴</p>
+            <p className="text-[13.5px] text-text-primary leading-snug">{data.conflictPattern}</p>
           </div>
         )}
 
@@ -1785,11 +1785,11 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
               <div className="flex items-center justify-between mb-2">
                 <p className="text-h3 text-text-primary">두 사람의 결혼 궁합</p>
                 {pc.compatScore != null && (
-                  <span className="text-[12px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${color}10`, color }}>{pc.compatScore}점</span>
+                  <span className="text-[13.5px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${color}10`, color }}>{pc.compatScore}점</span>
                 )}
               </div>
               {pc.marriageChemistry && (
-                <p className="text-[11px] text-text-muted mb-3 leading-snug">{pc.marriageChemistry}</p>
+                <p className="text-[13px] text-text-muted mb-3 leading-snug">{pc.marriageChemistry}</p>
               )}
 
               {/* 기둥 비교 — 2026-05-28 가독성 개선: 한자 박스 크게(44px), 행간 넓힘, 가운데 아이콘 명확화 */}
@@ -1800,18 +1800,18 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
                   const fg = ohengText[oh] || '#3D3427';
                   return (
                     <div className={`flex-1 rounded-xl p-3 flex items-center gap-2 ${side === 'right' ? 'justify-end' : ''}`} style={{ background: bg, border: `1px solid ${fg}25` }}>
-                      {side === 'right' && <span className="text-[12px] font-bold" style={{ color: fg }}>{oh}</span>}
+                      {side === 'right' && <span className="text-[13.5px] font-bold" style={{ color: fg }}>{oh}</span>}
                       <div className="flex gap-1.5">
                         <span className="w-11 h-11 rounded-lg flex items-center justify-center text-[20px] font-black" style={{ background: '#fff', color: fg, border: `1.5px solid ${fg}40`, fontFamily: "'Noto Serif KR', serif" }}>{cleanHanja(p.cheongan)}</span>
                         <span className="w-11 h-11 rounded-lg flex items-center justify-center text-[20px] font-black" style={{ background: '#fff', color: fg, border: `1.5px solid ${fg}40`, fontFamily: "'Noto Serif KR', serif" }}>{cleanHanja(p.jiji)}</span>
                       </div>
-                      {side === 'left' && <span className="text-[12px] font-bold" style={{ color: fg }}>{oh}</span>}
+                      {side === 'left' && <span className="text-[13.5px] font-bold" style={{ color: fg }}>{oh}</span>}
                     </div>
                   );
                 };
                 return (
                   <div className="mb-3">
-                    <p className="text-[12px] text-text-hint mb-3 font-semibold">사주 기둥(柱) 비교</p>
+                    <p className="text-[13.5px] text-text-hint mb-3 font-semibold">사주 기둥(柱) 비교</p>
                     <div className="space-y-4">
                       {[{ key: 'year', label: '년주' }, { key: 'month', label: '월주' }, { key: 'day', label: '일주' }].map(({ key, label }) => {
                         const myP = pComp.myPillars?.[key];
@@ -1821,8 +1821,8 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
                         return (
                           <div key={key}>
                             <div className="flex items-center gap-1.5 mb-1.5">
-                              <span className="text-[12px] text-text-hint font-bold">{label}</span>
-                              {ts && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
+                              <span className="text-[13.5px] text-text-hint font-bold">{label}</span>
+                              {ts && <span className="text-[13px] font-bold px-2 py-0.5 rounded-full ml-auto" style={{ background: ts.bg, color: ts.color }}>{ts.icon} {inter.type}</span>}
                             </div>
                             <div className="flex items-center gap-1.5">
                               {myP && renderPillar(myP, 'left')}
@@ -1831,17 +1831,17 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
                               </div>
                               {ptP && renderPillar(ptP, 'right')}
                             </div>
-                            {inter?.desc && <p className="text-[12px] text-text-secondary mt-2 ml-1 leading-relaxed" style={{ wordBreak: 'keep-all' }}>{inter.desc}</p>}
+                            {inter?.desc && <p className="text-[13.5px] text-text-secondary mt-2 ml-1 leading-relaxed" style={{ wordBreak: 'keep-all' }}>{inter.desc}</p>}
                           </div>
                         );
                       })}
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-2 px-1" style={{ borderTop: '1px dashed rgba(0,0,0,0.08)' }}>
-                      <span className="text-[11px] font-bold" style={{ color }}>← {myName ? `${myName} 님 (나)` : '나'}</span>
-                      <span className="text-[11px] text-text-hint font-semibold">{partnerName ? `${partnerName} 님 (상대)` : '상대'} →</span>
+                      <span className="text-[13px] font-bold" style={{ color }}>← {myName ? `${myName} 님 (나)` : '나'}</span>
+                      <span className="text-[13px] text-text-hint font-semibold">{partnerName ? `${partnerName} 님 (상대)` : '상대'} →</span>
                     </div>
                     {/* 2026-06-12 신뢰 카피 — "양방향 동일 판정" CS 혼란 예방 (합·충은 만세력 객관 계산값) */}
-                    <p className="text-[11px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                    <p className="text-[13px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                       두 분의 합과 충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
                     </p>
                   </div>
@@ -1869,8 +1869,8 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
               {/* 상대방 결혼관 */}
               {pc.partnerMarriageStyle && (
                 <div className="rounded-xl py-2 px-3" style={{ background: `${color}05`, borderLeft: `3px solid ${color}30` }}>
-                  <p className="text-[11px] font-semibold mb-0.5" style={{ color }}>상대방의 결혼관</p>
-                  <p className="text-[11px] text-text-primary leading-snug">{pc.partnerMarriageStyle}</p>
+                  <p className="text-[13px] font-semibold mb-0.5" style={{ color }}>상대방의 결혼관</p>
+                  <p className="text-[13px] text-text-primary leading-snug">{pc.partnerMarriageStyle}</p>
                 </div>
               )}
             </div>
@@ -1909,19 +1909,19 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
                 <StatTile label="사업 단계" value={data.currentBizPhase} color={color} />
               )}
               {data.bizHealthScore != null && (
-                <StatTile label="사업 건강도" value={<>{data.bizHealthScore}<span className="text-[11px] font-normal">점</span></>} color={color} big />
+                <StatTile label="사업 건강도" value={<>{data.bizHealthScore}<span className="text-[13px] font-normal">점</span></>} color={color} big />
               )}
             </div>
             {data.openingAnalysis && (
               <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
-                <p className="text-[11px] font-bold mb-0.5" style={{ color }}>개업 시점 분석</p>
-                <p className="text-[12px] text-text-primary leading-snug">{data.openingAnalysis}</p>
+                <p className="text-[13px] font-bold mb-0.5" style={{ color }}>개업 시점 분석</p>
+                <p className="text-[13.5px] text-text-primary leading-snug">{data.openingAnalysis}</p>
               </div>
             )}
             {data.nextPhaseAdvice && (
               <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
-                <p className="text-[11px] font-bold text-[#4E7A57] mb-0.5">다음 단계 전략</p>
-                <p className="text-[12px] text-text-primary leading-snug">{data.nextPhaseAdvice}</p>
+                <p className="text-[13px] font-bold text-[#4E7A57] mb-0.5">다음 단계 전략</p>
+                <p className="text-[13.5px] text-text-primary leading-snug">{data.nextPhaseAdvice}</p>
               </div>
             )}
           </div>
@@ -1949,7 +1949,7 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
           <p className="text-h3 text-text-primary mb-3">{dynamicTitle}</p>
           <div className={`grid ${gridCols} gap-2`}>
             {data.startupReadiness != null && (
-              <StatTile label="창업 준비도" value={<>{data.startupReadiness}<span className="text-[11px] font-normal">점</span></>} color={color} big />
+              <StatTile label="창업 준비도" value={<>{data.startupReadiness}<span className="text-[13px] font-normal">점</span></>} color={color} big />
             )}
             {data.riskLevel && (
               <StatTile label="리스크 수준" value={data.riskLevel} color={color} tone={data.riskLevel === '높음' ? 'warn' : 'default'} />
@@ -1960,13 +1960,13 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
           </div>
           {data.bestStartMonth && (
             <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
-              <p className="text-[11px] text-text-hint">창업 최적 시기: <strong className="text-[#4E7A57]">{data.bestStartMonth}</strong></p>
+              <p className="text-[13px] text-text-hint">창업 최적 시기: <strong className="text-[#4E7A57]">{data.bestStartMonth}</strong></p>
             </div>
           )}
           {data.partnerAdvice && (
             <div className="mt-2 rounded-xl py-2.5 px-3" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
-              <p className="text-[11px] font-bold mb-0.5" style={{ color }}>동업 조언</p>
-              <p className="text-[12px] text-text-primary leading-snug">{data.partnerAdvice}</p>
+              <p className="text-[13px] font-bold mb-0.5" style={{ color }}>동업 조언</p>
+              <p className="text-[13.5px] text-text-primary leading-snug">{data.partnerAdvice}</p>
             </div>
           )}
         </div>
@@ -1990,7 +1990,7 @@ function HealthViz({ data, color }: { data: any; color: string }) {
             <div className="flex items-center gap-2 mb-3">
               {data.bodyType && <TypeBadge label={data.bodyType} color={color} />}
               {data.bestExercise && (
-                <span className="text-[11px] text-text-muted">추천: {data.bestExercise}</span>
+                <span className="text-[13px] text-text-muted">추천: {data.bestExercise}</span>
               )}
             </div>
           )}
@@ -2003,15 +2003,15 @@ function HealthViz({ data, color }: { data: any; color: string }) {
                   <div key={i} className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ background: `${elColor}18` }}>
-                      <span className="text-[11px] font-black" style={{ color: elColor }}>{o.element}</span>
+                      <span className="text-[13px] font-black" style={{ color: elColor }}>{o.element}</span>
                     </div>
-                    <span className="text-[11px] text-text-secondary w-14 flex-shrink-0">{o.organ}</span>
+                    <span className="text-[13px] text-text-secondary w-14 flex-shrink-0">{o.organ}</span>
                     <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ background: `${stColor}10` }}>
                       <motion.div className="h-full rounded-full" style={{ background: stColor }}
                         initial={{ width: 0 }} animate={{ width: `${Math.min(o.risk || 0, 100)}%` }}
                         transition={{ duration: 0.8, delay: 0.1 * i }} />
                     </div>
-                    <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-lg flex-shrink-0"
+                    <span className="text-[13px] font-bold px-1.5 py-0.5 rounded-lg flex-shrink-0"
                       style={{ background: `${stColor}12`, color: stColor }}>{o.status}</span>
                   </div>
                 );
@@ -2079,7 +2079,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                   initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, type: 'spring' }}>
                   {prob}%
                 </motion.span>
-                <span className="text-[11px] text-text-muted mt-0.5">재회 가능성</span>
+                <span className="text-[13px] text-text-muted mt-0.5">재회 가능성</span>
               </div>
             </div>
           </div>
@@ -2104,13 +2104,13 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
               <StatTile label="최적 연락" value={data.bestContactMonth} color={color} tone="good" />
             )}
             {ca?.totalScore != null && (
-              <StatTile label="궁합 점수" value={<>{ca.totalScore}<span className="text-[11px] font-normal">점</span></>} color={color} />
+              <StatTile label="궁합 점수" value={<>{ca.totalScore}<span className="text-[13px] font-normal">점</span></>} color={color} />
             )}
           </div>
           {data.breakupCause && (
             <div className="mt-2.5 rounded-xl py-2.5 px-3" style={{ background: 'rgba(138,98,38,0.05)' }}>
-              <p className="text-[11px] font-bold text-[#8A6226] mb-0.5">이별의 사주적 핵심 원인</p>
-              <p className="text-[12px] text-text-primary leading-snug">{data.breakupCause}</p>
+              <p className="text-[13px] font-bold text-[#8A6226] mb-0.5">이별의 사주적 핵심 원인</p>
+              <p className="text-[13.5px] text-text-primary leading-snug">{data.breakupCause}</p>
             </div>
           )}
         </div>
@@ -2124,7 +2124,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
         {pp && (
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">두 사람, 어떻게 다를까?</p>
-            <p className="text-[12px] text-text-muted mb-4 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+            <p className="text-[13.5px] text-text-muted mb-4 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
               {pp.myVsPartner || '두 사람의 결을 일상어로 풀어드려요.'}
             </p>
 
@@ -2149,7 +2149,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                       나
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold mb-1" style={{ color: ohengText[myIlganOheng] || color }}>
+                      <p className="text-[13px] font-bold mb-1" style={{ color: ohengText[myIlganOheng] || color }}>
                         {myName ? `${myName} 님의 결` : '나의 결'} {myIlganOheng && <span className="opacity-70">, {myIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
@@ -2160,7 +2160,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                   {/* 두 사람의 만남 (가운데) — 합/충/생/극 일상어로 */}
                   {dayType && (
                     <div className="rounded-xl p-3.5 text-center" style={{ background: isPositive ? 'rgba(78,122,87,0.06)' : isNegative ? 'rgba(138,98,38,0.06)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isPositive ? 'rgba(78,122,87,0.2)' : isNegative ? 'rgba(138,98,38,0.2)' : 'rgba(0,0,0,0.08)'}` }}>
-                      <p className="text-[11px] font-bold mb-1" style={{ color: isPositive ? '#4E7A57' : isNegative ? '#8A6226' : '#7A7269' }}>
+                      <p className="text-[13px] font-bold mb-1" style={{ color: isPositive ? '#4E7A57' : isNegative ? '#8A6226' : '#7A7269' }}>
                         {isPositive ? '✓ 잘 맞물리는 결' : isNegative ? '⚠ 부딪히는 결' : '두 사람의 만남'}
                       </p>
                       <p className="text-[13px] font-bold text-text-primary mb-1.5" style={{ wordBreak: 'keep-all' }}>
@@ -2174,7 +2174,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                       상대
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold mb-1" style={{ color: ohengText[ptIlganOheng] || color }}>
+                      <p className="text-[13px] font-bold mb-1" style={{ color: ohengText[ptIlganOheng] || color }}>
                         {partnerName ? `${partnerName} 님의 결` : '상대의 결'} {ptIlganOheng && <span className="opacity-70">, {ptIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
@@ -2187,7 +2187,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             })()}
 
             {/* 2026-06-13 P1-2 — 신뢰 카피 (연애·결혼과 동일 · 재회만 누락돼 있던 것) */}
-            <p className="text-[11px] text-text-hint mb-3 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+            <p className="text-[13px] text-text-hint mb-3 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
               두 분의 합과 충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
             </p>
 
@@ -2197,20 +2197,20 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="grid grid-cols-2 gap-2 mb-3">
               {pp.currentEmotion && (
                 <div className="rounded-xl p-2.5" style={{ background: 'rgba(138,98,38,0.04)' }}>
-                  <p className="text-[11px] text-text-hint mb-0.5">상대 현재 감정</p>
-                  <p className="text-[11px] font-semibold text-[#8A6226]">{pp.currentEmotion}</p>
+                  <p className="text-[13px] text-text-hint mb-0.5">상대 현재 감정</p>
+                  <p className="text-[13px] font-semibold text-[#8A6226]">{pp.currentEmotion}</p>
                 </div>
               )}
               {pp.reunionDesire != null && (
                 <div className="rounded-xl p-2.5" style={{ background: `${color}06` }}>
-                  <p className="text-[11px] text-text-hint mb-1">상대 재회 욕구</p>
+                  <p className="text-[13px] text-text-hint mb-1">상대 재회 욕구</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-[8px] rounded-full overflow-hidden" style={{ background: `${color}12` }}>
                       <motion.div className="h-full rounded-full" style={{ background: color }}
                         initial={{ width: 0 }} animate={{ width: `${Math.min(pp.reunionDesire, 100)}%` }}
                         transition={{ duration: 0.8, delay: 0.4 }} />
                     </div>
-                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color }}>{pp.reunionDesire}%</span>
+                    <span className="text-[13px] font-bold flex-shrink-0" style={{ color }}>{pp.reunionDesire}%</span>
                   </div>
                 </div>
               )}
@@ -2244,7 +2244,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="flex items-center justify-between mb-3">
               <p className="text-h3 text-text-primary">궁합 구조 분석</p>
               {ca.totalScore != null && (
-                <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg"
+                <span className="text-[13px] font-bold px-2.5 py-1 rounded-lg"
                   style={{ background: `${color}10`, color }}>{ca.totalScore}점</span>
               )}
             </div>
@@ -2260,8 +2260,8 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="grid grid-cols-5 gap-1 mt-2">
               {ca.axes.map((a: any, i: number) => (
                 <div key={i} className="text-center">
-                  <p className="text-[12px] font-bold" style={{ color }}>{a.score}</p>
-                  <p className="text-[11px] text-text-hint">{a.axis}</p>
+                  <p className="text-[13.5px] font-bold" style={{ color }}>{a.score}</p>
+                  <p className="text-[13px] text-text-hint">{a.axis}</p>
                 </div>
               ))}
             </div>
@@ -2272,7 +2272,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
         {sinsalList && (
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">타고난 6 가지 연애 특질</p>
-            <p className="text-[11px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
+            <p className="text-[13px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
             <div className="space-y-3">
               {[
                 { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',
@@ -2305,13 +2305,13 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-[12px] font-bold text-text-primary">{name}</p>
-                          <span className="text-[11px] text-text-hint">({hanja})</span>
-                          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-[rgba(0,0,0,0.04)] text-text-hint">{subject}</span>
+                          <p className="text-[13.5px] font-bold text-text-primary">{name}</p>
+                          <span className="text-[13px] text-text-hint">({hanja})</span>
+                          <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-[rgba(0,0,0,0.04)] text-text-hint">{subject}</span>
                         </div>
-                        <p className="text-[11px] text-text-muted">{summary}</p>
+                        <p className="text-[13px] text-text-muted">{summary}</p>
                       </div>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                      <span className="text-[13px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
                         style={{ background: isActive ? `${impactColor}12` : 'rgba(0,0,0,0.04)', color: isActive ? impactColor : '#bbb' }}>
                         {isActive ? impactLabel : '없음'}
                       </span>
@@ -2320,8 +2320,8 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                     <div className="px-3.5 pb-3 space-y-1.5">
                       {s.meaning && (
                         <div className="rounded-lg py-2 px-2.5" style={{ background: isActive ? `${activeColor}06` : 'rgba(0,0,0,0.02)' }}>
-                          <p className="text-[11px] font-semibold mb-0.5" style={{ color: isActive ? activeColor : '#999' }}>쉽게 말하면</p>
-                          <p className="text-[11px] text-text-primary leading-relaxed">{s.meaning}</p>
+                          <p className="text-[13px] font-semibold mb-0.5" style={{ color: isActive ? activeColor : '#999' }}>쉽게 말하면</p>
+                          <p className="text-[13px] text-text-primary leading-relaxed">{s.meaning}</p>
                         </div>
                       )}
                       {s.advice && isActive && (
@@ -2329,11 +2329,11 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={activeColor} strokeWidth="2.5" className="mt-0.5 flex-shrink-0">
                             <path d="M9 18l6-6-6-6" />
                           </svg>
-                          <p className="text-[11px] text-text-secondary leading-snug">{s.advice}</p>
+                          <p className="text-[13px] text-text-secondary leading-snug">{s.advice}</p>
                         </div>
                       )}
                       {s.desc && !s.meaning && (
-                        <p className="text-[11px] text-text-secondary leading-snug">{s.desc}</p>
+                        <p className="text-[13px] text-text-secondary leading-snug">{s.desc}</p>
                       )}
                     </div>
                   </div>
@@ -2347,7 +2347,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
         {data.monthlyEnergy?.length > 0 && (
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">월별 재회 에너지 흐름</p>
-            <p className="text-[11px] text-text-hint mb-3">나의 에너지 / 재회 확률 추이</p>
+            <p className="text-[13px] text-text-hint mb-3">나의 에너지 / 재회 확률 추이</p>
             <div className="h-[160px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data.monthlyEnergy} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
@@ -2374,11 +2374,11 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="flex items-center justify-center gap-4 mt-2">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-[2px] rounded-full" style={{ background: color }} />
-                <span className="text-[11px] text-text-hint">재회 확률</span>
+                <span className="text-[13px] text-text-hint">재회 확률</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-[2px] rounded-full" style={{ background: '#8C6D3D', opacity: 0.6 }} />
-                <span className="text-[11px] text-text-hint">나의 에너지</span>
+                <span className="text-[13px] text-text-hint">나의 에너지</span>
               </div>
             </div>
           </div>
@@ -2388,7 +2388,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
         {data.reunionFactors?.length > 0 && (
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">재회 핵심 변수</p>
-            <p className="text-[11px] text-text-hint mb-3">사주 구조에서 재회에 영향을 미치는 요인들</p>
+            <p className="text-[13px] text-text-hint mb-3">사주 구조에서 재회에 영향을 미치는 요인들</p>
             <div className="space-y-2.5">
               {data.reunionFactors.map((f: any, i: number) => {
                 const isFav = f.favorable === true || f.favorable === 'true';
@@ -2403,16 +2403,16 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                           style={{ background: `${barColor}15`, color: barColor }}>
                           {isFav ? '+' : '!'}
                         </span>
-                        <p className="text-[12px] font-bold text-text-primary">{f.factor}</p>
+                        <p className="text-[13.5px] font-bold text-text-primary">{f.factor}</p>
                       </div>
-                      <span className="text-[11px] font-bold flex-shrink-0" style={{ color: barColor }}>{impact}%</span>
+                      <span className="text-[13px] font-bold flex-shrink-0" style={{ color: barColor }}>{impact}%</span>
                     </div>
                     <div className="h-[6px] rounded-full overflow-hidden ml-7" style={{ background: `${barColor}10` }}>
                       <motion.div className="h-full rounded-full" style={{ background: barColor }}
                         initial={{ width: 0 }} animate={{ width: `${impact}%` }}
                         transition={{ duration: 0.8, delay: 0.3 + i * 0.1 }} />
                     </div>
-                    {f.desc && <p className="text-[11px] text-text-muted mt-1 ml-7 leading-snug">{f.desc}</p>}
+                    {f.desc && <p className="text-[13px] text-text-muted mt-1 ml-7 leading-snug">{f.desc}</p>}
                   </motion.div>
                 );
               })}
@@ -2427,14 +2427,14 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="grid grid-cols-2 gap-3">
               {data.greenFlags?.length > 0 && (
                 <div className="rounded-xl p-3" style={{ background: 'rgba(78,122,87,0.04)' }}>
-                  <p className="text-[11px] font-bold text-[#4E7A57] mb-2 flex items-center gap-1">
+                  <p className="text-[13px] font-bold text-[#4E7A57] mb-2 flex items-center gap-1">
                     <span className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
                       style={{ background: 'rgba(78,122,87,0.15)' }}>+</span>
                     긍정 신호
                   </p>
                   {data.greenFlags.map((f: string, i: number) => (
-                    <p key={i} className="text-[11px] text-text-secondary mb-1.5 leading-snug pl-5 relative">
-                      <span className="absolute left-0 top-0.5 text-[#4E7A57] text-[11px]">&#x2713;</span>
+                    <p key={i} className="text-[13px] text-text-secondary mb-1.5 leading-snug pl-5 relative">
+                      <span className="absolute left-0 top-0.5 text-[#4E7A57] text-[13px]">&#x2713;</span>
                       {stripMd(f)}
                     </p>
                   ))}
@@ -2442,14 +2442,14 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
               )}
               {data.redFlags?.length > 0 && (
                 <div className="rounded-xl p-3" style={{ background: 'rgba(176,74,56,0.04)' }}>
-                  <p className="text-[11px] font-bold text-[#B04A38] mb-2 flex items-center gap-1">
+                  <p className="text-[13px] font-bold text-[#B04A38] mb-2 flex items-center gap-1">
                     <span className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
                       style={{ background: 'rgba(176,74,56,0.12)' }}>!</span>
                     경고 신호
                   </p>
                   {data.redFlags.map((f: string, i: number) => (
-                    <p key={i} className="text-[11px] text-text-secondary mb-1.5 leading-snug pl-5 relative">
-                      <span className="absolute left-0 top-0.5 text-[#B04A38] text-[11px]">&#x2717;</span>
+                    <p key={i} className="text-[13px] text-text-secondary mb-1.5 leading-snug pl-5 relative">
+                      <span className="absolute left-0 top-0.5 text-[#B04A38] text-[13px]">&#x2717;</span>
                       {stripMd(f)}
                     </p>
                   ))}
@@ -2464,7 +2464,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">이별 기간 분석</p>
             {bd.emotionNow && (
-              <p className="text-[11px] text-text-muted mb-3">{bd.emotionNow}</p>
+              <p className="text-[13px] text-text-muted mb-3">{bd.emotionNow}</p>
             )}
 
             {/* 감정 페이즈 타임라인 */}
@@ -2509,28 +2509,28 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                           <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">{phaseIcons[i] || phaseIcons[4]}</span>
                           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isCurrent ? 'animate-pulse' : ''}`}
                             style={{ background: isCurrent ? color : isPast ? `${color}40` : `${color}15` }} />
-                          <p className={`text-[11px] flex-1 ${isCurrent ? 'font-bold' : isPast ? 'font-medium text-text-muted' : 'font-medium text-text-hint'}`}
+                          <p className={`text-[13px] flex-1 ${isCurrent ? 'font-bold' : isPast ? 'font-medium text-text-muted' : 'font-medium text-text-hint'}`}
                             style={isCurrent ? { color } : {}}>
                             {ph.name} <span className={`font-normal ${isCurrent ? '' : 'text-text-hint'}`} style={isCurrent ? { color: `${color}90` } : {}}>({ph.period})</span>
                           </p>
-                          {isCurrent && <span className="text-[11px] px-1.5 py-0.5 rounded-full font-bold text-white" style={{ background: color }}>현재</span>}
-                          {isPast && <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium text-text-hint" style={{ background: 'rgba(0,0,0,0.04)' }}>지남</span>}
+                          {isCurrent && <span className="text-[13px] px-1.5 py-0.5 rounded-full font-bold text-white" style={{ background: color }}>현재</span>}
+                          {isPast && <span className="text-[13px] px-1.5 py-0.5 rounded-full font-medium text-text-hint" style={{ background: 'rgba(0,0,0,0.04)' }}>지남</span>}
                         </div>
                         {/* 단계 설명 — 모든 단계에 표시 */}
                         {ph.desc && (
-                          <p className={`text-[11px] leading-snug ml-7 mb-1 ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                          <p className={`text-[13px] leading-snug ml-7 mb-1 ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
                             {ph.desc}
                           </p>
                         )}
                         {/* 나/상대 상태 — 모든 단계에 표시 */}
                         <div className="ml-7 grid grid-cols-2 gap-2">
                           {ph.myState && (
-                            <p className={`text-[11px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                            <p className={`text-[13px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
                               나: <span className={`font-semibold ${isCurrent ? 'text-text-primary' : ''}`}>{ph.myState}</span>
                             </p>
                           )}
                           {ph.partnerState && (
-                            <p className={`text-[11px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
+                            <p className={`text-[13px] ${isCurrent ? 'text-text-secondary' : 'text-text-hint'}`}>
                               상대: <span className={`font-semibold ${isCurrent ? 'text-text-primary' : ''}`}>{ph.partnerState}</span>
                             </p>
                           )}
@@ -2546,23 +2546,23 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="grid grid-cols-2 gap-2 mb-2">
               {bd.healingStage && (
                 <div className="rounded-xl p-2.5" style={{ background: `${color}06` }}>
-                  <p className="text-[11px] text-text-hint mb-0.5">현재 단계</p>
-                  <p className="text-[12px] font-bold" style={{ color }}>{bd.healingStage}</p>
+                  <p className="text-[13px] text-text-hint mb-0.5">현재 단계</p>
+                  <p className="text-[13.5px] font-bold" style={{ color }}>{bd.healingStage}</p>
                 </div>
               )}
               {bd.optimalWait && (
                 <div className="rounded-xl p-2.5" style={{ background: 'rgba(78,122,87,0.05)' }}>
-                  <p className="text-[11px] text-text-hint mb-0.5">최적 대기 기간</p>
-                  <p className="text-[12px] font-bold text-[#4E7A57]">{bd.optimalWait}</p>
+                  <p className="text-[13px] text-text-hint mb-0.5">최적 대기 기간</p>
+                  <p className="text-[13.5px] font-bold text-[#4E7A57]">{bd.optimalWait}</p>
                 </div>
               )}
             </div>
             {bd.stageDesc && (
-              <p className="text-[11px] text-text-secondary leading-relaxed mb-1.5">{bd.stageDesc}</p>
+              <p className="text-[13px] text-text-secondary leading-relaxed mb-1.5">{bd.stageDesc}</p>
             )}
             {bd.reunionImpact && (
               <div className="rounded-xl py-2 px-3 mt-1" style={{ background: `${color}05`, borderLeft: `3px solid ${color}30` }}>
-                <p className="text-[11px] text-text-primary leading-snug">{bd.reunionImpact}</p>
+                <p className="text-[13px] text-text-primary leading-snug">{bd.reunionImpact}</p>
               </div>
             )}
           </div>
@@ -2577,15 +2577,15 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
                     style={{ background: color }}>R</span>
-                  <p className="text-[11px] font-bold" style={{ color }}>재회</p>
+                  <p className="text-[13px] font-bold" style={{ color }}>재회</p>
                 </div>
                 {data.comparison.reunionPros?.map((p: string, i: number) => (
-                  <p key={`rp${i}`} className="text-[11px] text-text-secondary mb-1 flex items-start gap-1">
+                  <p key={`rp${i}`} className="text-[13px] text-text-secondary mb-1 flex items-start gap-1">
                     <span className="text-[#4E7A57] mt-0.5 flex-shrink-0 font-bold">+</span>{stripMd(p)}
                   </p>
                 ))}
                 {data.comparison.reunionCons?.map((c: string, i: number) => (
-                  <p key={`rc${i}`} className="text-[11px] text-text-muted mb-1 flex items-start gap-1">
+                  <p key={`rc${i}`} className="text-[13px] text-text-muted mb-1 flex items-start gap-1">
                     <span className="text-[#B04A38] mt-0.5 flex-shrink-0 font-bold">-</span>{stripMd(c)}
                   </p>
                 ))}
@@ -2594,15 +2594,15 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
                     style={{ background: '#3E5F82' }}>N</span>
-                  <p className="text-[11px] font-bold text-[#3E5F82]">새 인연</p>
+                  <p className="text-[13px] font-bold text-[#3E5F82]">새 인연</p>
                 </div>
                 {data.comparison.newLovePros?.map((p: string, i: number) => (
-                  <p key={`np${i}`} className="text-[11px] text-text-secondary mb-1 flex items-start gap-1">
+                  <p key={`np${i}`} className="text-[13px] text-text-secondary mb-1 flex items-start gap-1">
                     <span className="text-[#4E7A57] mt-0.5 flex-shrink-0 font-bold">+</span>{stripMd(p)}
                   </p>
                 ))}
                 {data.comparison.newLoveCons?.map((c: string, i: number) => (
-                  <p key={`nc${i}`} className="text-[11px] text-text-muted mb-1 flex items-start gap-1">
+                  <p key={`nc${i}`} className="text-[13px] text-text-muted mb-1 flex items-start gap-1">
                     <span className="text-[#B04A38] mt-0.5 flex-shrink-0 font-bold">-</span>{stripMd(c)}
                   </p>
                 ))}
@@ -2642,10 +2642,10 @@ function StudyViz({ data, color }: { data: any; color: string }) {
             <div className="grid grid-cols-2 gap-2 mb-2">
               {data.examFitScore != null && (
                 <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
-                  <p className="text-[11px] text-text-hint mb-1">시험 적합도</p>
+                  <p className="text-[13px] text-text-hint mb-1">시험 적합도</p>
                   <div className="flex items-end gap-1">
                     <span className="text-[20px] font-black" style={{ color }}>{data.examFitScore}</span>
-                    <span className="text-[11px] text-text-muted mb-1">/ 100</span>
+                    <span className="text-[13px] text-text-muted mb-1">/ 100</span>
                   </div>
                   <div className="h-[6px] rounded-full overflow-hidden mt-1" style={{ background: `${color}12` }}>
                     <motion.div className="h-full rounded-full" style={{ background: color }}
@@ -2658,7 +2658,7 @@ function StudyViz({ data, color }: { data: any; color: string }) {
                 <div className="rounded-xl p-3" style={{
                   background: data.examTimingVerdict === '최적' ? 'rgba(78,122,87,0.06)' : data.examTimingVerdict === '주의' ? 'rgba(176,74,56,0.05)' : `${color}06`
                 }}>
-                  <p className="text-[11px] text-text-hint mb-1">시험 시기 판정</p>
+                  <p className="text-[13px] text-text-hint mb-1">시험 시기 판정</p>
                   <p className="text-[18px] font-black" style={{
                     color: data.examTimingVerdict === '최적' ? '#4E7A57' : data.examTimingVerdict === '주의' ? '#B04A38' : color
                   }}>{data.examTimingVerdict}</p>
@@ -2667,13 +2667,13 @@ function StudyViz({ data, color }: { data: any; color: string }) {
             </div>
             {data.examTimingAnalysis && (
               <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
-                <p className="text-[12px] text-text-primary leading-snug">{data.examTimingAnalysis}</p>
+                <p className="text-[13.5px] text-text-primary leading-snug">{data.examTimingAnalysis}</p>
               </div>
             )}
             {data.examDayTips && (
               <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
-                <p className="text-[11px] font-bold text-[#4E7A57] mb-0.5">시험 당일 꿀팁</p>
-                <p className="text-[12px] text-text-primary leading-snug">{data.examDayTips}</p>
+                <p className="text-[13px] font-bold text-[#4E7A57] mb-0.5">시험 당일 꿀팁</p>
+                <p className="text-[13.5px] text-text-primary leading-snug">{data.examDayTips}</p>
               </div>
             )}
           </div>
@@ -2699,7 +2699,7 @@ function StudyViz({ data, color }: { data: any; color: string }) {
           </div>
           {data.slumpPeriod && (
             <div className="mt-2.5 rounded-xl py-2 px-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
-              <p className="text-[11px] text-text-primary">슬럼프 주의 시기: <strong className="text-[#8A6226]">{data.slumpPeriod}</strong></p>
+              <p className="text-[13px] text-text-primary">슬럼프 주의 시기: <strong className="text-[#8A6226]">{data.slumpPeriod}</strong></p>
             </div>
           )}
         </div>
@@ -2744,31 +2744,31 @@ function ExamViz({ data, color }: { data: any; color: string }) {
             <div className="space-y-2.5">
               {examTargetInfo && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>예정 시기 판정</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>예정 시기 판정</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{examTargetInfo}</p>
                 </div>
               )}
               {examTimingAnalysis && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>대운과 세운 흐름</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>대운과 세운 흐름</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{examTimingAnalysis}</p>
                 </div>
               )}
               {oneShotVsMultiple && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>합격 접근 방식</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>합격 접근 방식</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{oneShotVsMultiple}</p>
                 </div>
               )}
               {decisionUrgency && (
                 <div className="rounded-xl p-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: '#8A6226' }}>결정 시급도</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color: '#8A6226' }}>결정 시급도</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{decisionUrgency}</p>
                 </div>
               )}
               {recommendedFields && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>사주 맞춤 추천 분야</p>
+                  <p className="text-[13px] font-bold mb-1" style={{ color }}>사주 맞춤 추천 분야</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{Array.isArray(recommendedFields) ? recommendedFields.join(', ') : recommendedFields}</p>
                 </div>
               )}
@@ -2814,11 +2814,11 @@ function ExamViz({ data, color }: { data: any; color: string }) {
         {/* 합격 신살 (문창·학당·태극) 활성화 상태 */}
         {luckSinsal && (Array.isArray(luckSinsal) ? luckSinsal.length > 0 : true) && (
           <div className="card" style={{ background: `linear-gradient(135deg, ${color}08, ${color}03)` }}>
-            <p className="text-[12px] font-bold mb-2" style={{ color }}>★ 합격 길성 (합격에 도움 주는 별)</p>
+            <p className="text-[13.5px] font-bold mb-2" style={{ color }}>★ 합격 길성 (합격에 도움 주는 별)</p>
             {Array.isArray(luckSinsal) ? (
               <div className="flex flex-wrap gap-2">
                 {luckSinsal.map((s: any, i: number) => (
-                  <span key={i} className="px-3 py-1 rounded-full text-[12px] font-semibold"
+                  <span key={i} className="px-3 py-1 rounded-full text-[13.5px] font-semibold"
                     style={{ background: `${color}15`, color, border: `1px solid ${color}40` }}>
                     {typeof s === 'string' ? s : s.name || s.label || ''}
                   </span>
@@ -2852,37 +2852,37 @@ function SocialViz({ data, color }: { data: any; color: string }) {
           {data.guiinProfile && (
             <div className="rounded-xl p-3" style={{ background: `${color}06` }}>
               <div className="flex items-center gap-2 mb-1.5">
-                <p className="text-[11px] font-bold" style={{ color }}>귀인(貴人) 프로필</p>
+                <p className="text-[13px] font-bold" style={{ color }}>귀인(貴人) 프로필</p>
                 {data.guiinProfile.oheng && (
-                  <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-lg"
+                  <span className="text-[13px] font-bold px-1.5 py-0.5 rounded-lg"
                     style={{ background: `${guiinOhengColor}15`, color: guiinOhengColor }}>
                     {data.guiinProfile.oheng}
                   </span>
                 )}
               </div>
               {data.guiinProfile.traits && (
-                <p className="text-[12px] text-text-primary mb-1">{data.guiinProfile.traits}</p>
+                <p className="text-[13.5px] text-text-primary mb-1">{data.guiinProfile.traits}</p>
               )}
               {data.guiinProfile.when && (
-                <p className="text-[11px] text-text-muted">만남 시기: <strong style={{ color }}>{data.guiinProfile.when}</strong></p>
+                <p className="text-[13px] text-text-muted">만남 시기: <strong style={{ color }}>{data.guiinProfile.when}</strong></p>
               )}
             </div>
           )}
           {data.bestAllyType && (
             <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
-              <p className="text-[11px] text-text-hint">잘 맞는 동료/친구: <strong className="text-[#4E7A57]">{data.bestAllyType}</strong></p>
+              <p className="text-[13px] text-text-hint">잘 맞는 동료/친구: <strong className="text-[#4E7A57]">{data.bestAllyType}</strong></p>
             </div>
           )}
         </div>
         {/* 주의 사항 카드 */}
         {(data.gossipMonth || data.conflictTrigger) && (
           <div className="card" style={{ background: 'rgba(138,98,38,0.04)', border: '1px solid rgba(138,98,38,0.25)' }}>
-            <p className="text-[11px] font-bold text-[#8A6226] mb-2">주의 포인트</p>
+            <p className="text-[13px] font-bold text-[#8A6226] mb-2">주의 포인트</p>
             {data.gossipMonth && (
-              <p className="text-[11px] text-text-primary mb-1.5">구설수 주의 월: <strong className="text-[#8A6226]">{data.gossipMonth}</strong></p>
+              <p className="text-[13px] text-text-primary mb-1.5">구설수 주의 월: <strong className="text-[#8A6226]">{data.gossipMonth}</strong></p>
             )}
             {data.conflictTrigger && (
-              <p className="text-[11px] text-text-primary">갈등 트리거: <strong className="text-[#8A6226]">{data.conflictTrigger}</strong></p>
+              <p className="text-[13px] text-text-primary">갈등 트리거: <strong className="text-[#8A6226]">{data.conflictTrigger}</strong></p>
             )}
           </div>
         )}
@@ -2942,13 +2942,13 @@ function MovingViz({ data, color }: { data: any; color: string }) {
             )}
             {data.planDateAnalysis && (
               <div className="rounded-xl py-2.5 px-3 mb-2" style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
-                <p className="text-[12px] text-text-primary leading-snug">{data.planDateAnalysis}</p>
+                <p className="text-[13.5px] text-text-primary leading-snug">{data.planDateAnalysis}</p>
               </div>
             )}
             {data.purposeAdvice && (
               <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(62,95,130,0.05)' }}>
-                <p className="text-[11px] font-bold text-[#3E5F82] mb-0.5">이사 목적 조언</p>
-                <p className="text-[12px] text-text-primary leading-snug">{data.purposeAdvice}</p>
+                <p className="text-[13px] font-bold text-[#3E5F82] mb-0.5">이사 목적 조언</p>
+                <p className="text-[13.5px] text-text-primary leading-snug">{data.purposeAdvice}</p>
               </div>
             )}
           </div>
@@ -2958,7 +2958,7 @@ function MovingViz({ data, color }: { data: any; color: string }) {
         {data.ohengDirectionMap && (
           <div className="card">
             <p className="text-h3 text-text-primary mb-2">오행 방위 분석</p>
-            <p className="text-[12px] text-text-secondary leading-relaxed">{data.ohengDirectionMap}</p>
+            <p className="text-[13.5px] text-text-secondary leading-relaxed">{data.ohengDirectionMap}</p>
           </div>
         )}
       </div>
@@ -3002,8 +3002,8 @@ function InsightCards({ cards, color }: { cards?: { label: string; value: string
         return (
           <div key={ci} className="flex-1 min-w-[140px] rounded-xl px-3 py-2.5"
             style={{ background: s.bg, border: `1px solid ${s.border}` }}>
-            <p className="text-[11px] font-bold mb-0.5" style={{ color: s.labelColor }}>{card.label}</p>
-            <p className="text-[11px] text-text-primary leading-snug">{card.value}</p>
+            <p className="text-[13px] font-bold mb-0.5" style={{ color: s.labelColor }}>{card.label}</p>
+            <p className="text-[13px] text-text-primary leading-snug">{card.value}</p>
           </div>
         );
       })}
@@ -3226,7 +3226,7 @@ function SectionBody({ content, color }: { content: string; color: string }) {
           return (
             <div key={pi} className="rounded-xl py-2.5 px-3.5 mt-0.5"
               style={{ background: `${color}06`, borderLeft: `3px solid ${color}35` }}>
-              <p className="text-[11px] font-bold mb-1" style={{ color }}>실천 포인트</p>
+              <p className="text-[13px] font-bold mb-1" style={{ color }}>실천 포인트</p>
               <p
                 className="text-body-sm text-text-primary leading-relaxed whitespace-pre-line"
                 dangerouslySetInnerHTML={{ __html: sanitizeAiText(emphasized) }}
@@ -3975,7 +3975,7 @@ export function TopicAnalysisPage() {
                                     position: 'absolute',
                                     top: -6,
                                     right: -4,
-                                    fontSize: 11,
+                                    fontSize: 13,
                                     fontWeight: 800,
                                     padding: '1px 5px',
                                     borderRadius: 999,
@@ -3998,13 +3998,13 @@ export function TopicAnalysisPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                               <span style={{ fontSize: 17, fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.01em' }}>{r.name}</span>
                               {isMe ? (
-                                <span style={{ padding: '2px 7px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: '#8C6D3D', color: '#F8F5EE', letterSpacing: '0.04em' }}>본인</span>
+                                <span style={{ padding: '2px 7px', borderRadius: 999, fontSize: 13, fontWeight: 800, background: '#8C6D3D', color: '#F8F5EE', letterSpacing: '0.04em' }}>본인</span>
                               ) : (
-                                <span style={{ fontSize: 11, color: '#8C6D3D', fontWeight: 700, padding: '1px 7px', background: 'rgba(184,150,90,0.14)', borderRadius: 999 }}>{relation}</span>
+                                <span style={{ fontSize: 13, color: '#8C6D3D', fontWeight: 700, padding: '1px 7px', background: 'rgba(184,150,90,0.14)', borderRadius: 999 }}>{relation}</span>
                               )}
                             </div>
                             {il && (
-                              <div style={{ fontSize: 12, fontWeight: 700, color: '#8C6D3D', letterSpacing: '0.02em' }}>
+                              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#8C6D3D', letterSpacing: '0.02em' }}>
                                 일간 {il}, {oh}
                               </div>
                             )}
@@ -4035,7 +4035,7 @@ export function TopicAnalysisPage() {
                     </div>
                     <div>
                       <p className="text-body-sm font-semibold text-text-secondary">다른 사람의 사주 분석하기</p>
-                      <p className="text-[11px] text-text-hint">새로운 생년월일시를 입력해요</p>
+                      <p className="text-[13px] text-text-hint">새로운 생년월일시를 입력해요</p>
                     </div>
                   </button>
 
@@ -4049,7 +4049,7 @@ export function TopicAnalysisPage() {
                           </svg>
                           <div>
                             <p className="text-h3 text-text-primary">현재 연애 상태</p>
-                            <p className="text-[11px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                            <p className="text-[13px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
                           </div>
                         </div>
 
@@ -4062,7 +4062,7 @@ export function TopicAnalysisPage() {
                           ].map(s => (
                             <button key={s.v}
                               className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 ${loveStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
-                              style={loveStatus === s.v ? { background: topic.color } : {}}
+                              style={loveStatus === s.v ? { background: '#1A1612' } : {}}
                               onClick={() => setLoveStatus(s.v)}>
                               {s.icon} {s.l}
                             </button>
@@ -4075,13 +4075,13 @@ export function TopicAnalysisPage() {
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                               <div className="pt-3 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                                <p className="text-[11px] text-text-muted">
+                                <p className="text-[13px] text-text-muted">
                                   {loveStatus === 'some' ? '관심 상대의 정보를 입력하면 궁합 분석이 가능해요' : '상대방 정보를 입력하면 실제 사주 궁합 기반 분석이 가능해요'}
                                 </p>
 
                                 {/* 이름 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">이름</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">이름</label>
                                   <input type="text" placeholder="상대방 이름"
                                     className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                                     value={partnerInfo.name}
@@ -4090,7 +4090,7 @@ export function TopicAnalysisPage() {
 
                                 {/* 생년월일 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">생년월일 (양력)</label>
                                   <div className="flex gap-2">
                                     <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
@@ -4112,7 +4112,7 @@ export function TopicAnalysisPage() {
 
                                 {/* 성별 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">성별</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">성별</label>
                                   <div className="flex gap-2">
                                     {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
                                       <button key={g.v}
@@ -4127,8 +4127,8 @@ export function TopicAnalysisPage() {
 
                                 {/* 출생 시간 (선택) */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">
-                                    출생 시간 <span className="text-[11px] opacity-60">(선택사항)</span>
+                                  <label className="text-[13px] text-text-hint mb-1 block">
+                                    출생 시간 <span className="text-[13px] opacity-60">(선택사항)</span>
                                   </label>
                                   <PartnerTimeField
                                     info={partnerInfo}
@@ -4154,7 +4154,7 @@ export function TopicAnalysisPage() {
                           </svg>
                           <div>
                             <p className="text-h3 text-text-primary">결혼 상태</p>
-                            <p className="text-[11px] text-text-hint">상태에 따라 분석 방향이 달라져요 (미혼/기혼)</p>
+                            <p className="text-[13px] text-text-hint">상태에 따라 분석 방향이 달라져요 (미혼/기혼)</p>
                           </div>
                         </div>
 
@@ -4179,11 +4179,11 @@ export function TopicAnalysisPage() {
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                               <div className="pt-3 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                                <p className="text-[11px] text-text-muted">배우자 정보를 입력하면 실제 사주 궁합 기반 부부 분석이 가능해요</p>
+                                <p className="text-[13px] text-text-muted">배우자 정보를 입력하면 실제 사주 궁합 기반 부부 분석이 가능해요</p>
 
                                 {/* 이름 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">배우자 이름</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">배우자 이름</label>
                                   <input type="text" placeholder="배우자 이름"
                                     className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                                     value={partnerInfo.name}
@@ -4192,7 +4192,7 @@ export function TopicAnalysisPage() {
 
                                 {/* 생년월일 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">생년월일 (양력)</label>
                                   <div className="flex gap-2">
                                     <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
@@ -4214,7 +4214,7 @@ export function TopicAnalysisPage() {
 
                                 {/* 성별 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">성별</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">성별</label>
                                   <div className="flex gap-2">
                                     {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
                                       <button key={g.v}
@@ -4229,8 +4229,8 @@ export function TopicAnalysisPage() {
 
                                 {/* 출생 시간 (선택) */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">
-                                    출생 시간 <span className="text-[11px] opacity-60">(선택사항)</span>
+                                  <label className="text-[13px] text-text-hint mb-1 block">
+                                    출생 시간 <span className="text-[13px] opacity-60">(선택사항)</span>
                                   </label>
                                   <PartnerTimeField
                                     info={partnerInfo}
@@ -4254,7 +4254,7 @@ export function TopicAnalysisPage() {
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
                           <div>
                             <p className="text-h3 text-text-primary">현재 사업 상태</p>
-                            <p className="text-[11px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                            <p className="text-[13px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
                           </div>
                         </div>
                         <div className="flex gap-2 mb-2">
@@ -4274,7 +4274,7 @@ export function TopicAnalysisPage() {
                           {extraInfo.bizStatus === 'running' && (
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                               <div className="pt-3 space-y-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                                <label className="text-[11px] text-text-hint block">개업 시기</label>
+                                <label className="text-[13px] text-text-hint block">개업 시기</label>
                                 {/* 2026-05-28 — 미래 차단 (이미 운영중이라 개업은 과거). currentYear+currentMonth 까지만 */}
                                 {(() => {
                                   const now = new Date();
@@ -4303,7 +4303,7 @@ export function TopicAnalysisPage() {
                                     </div>
                                   );
                                 })()}
-                                <p className="text-[11px] text-text-hint">개업 시점의 대운 흐름을 분석해드려요</p>
+                                <p className="text-[13px] text-text-hint">개업 시점의 대운 흐름을 분석해드려요</p>
                               </div>
                             </motion.div>
                           )}
@@ -4320,7 +4320,7 @@ export function TopicAnalysisPage() {
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
                           <div>
                             <p className="text-h3 text-text-primary">현재 상태</p>
-                            <p className="text-[11px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
+                            <p className="text-[13px] text-text-hint">상태에 따라 분석 방향이 달라져요</p>
                           </div>
                         </div>
                         <div className="flex gap-2 mb-2 flex-wrap">
@@ -4338,12 +4338,12 @@ export function TopicAnalysisPage() {
                           ))}
                         </div>
                         <div className="pt-2">
-                          <label className="text-[11px] text-text-hint mb-1 block">관심 분야 / 희망 직종 <span className="text-[11px] opacity-60">(선택)</span></label>
+                          <label className="text-[13px] text-text-hint mb-1 block">관심 분야 / 희망 직종 <span className="text-[13px] opacity-60">(선택)</span></label>
                           <input type="text" placeholder="예: IT개발, 디자인, 마케팅, 공무원..."
                             className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                             value={extraInfo.targetField}
                             onChange={e => setExtraInfo(p => ({ ...p, targetField: e.target.value }))} />
-                          <p className="text-[11px] text-text-hint mt-1">입력하면 해당 분야의 사주적 적합도를 분석해요</p>
+                          <p className="text-[13px] text-text-hint mt-1">입력하면 해당 분야의 사주적 적합도를 분석해요</p>
                         </div>
                       </div>
                     </FadeIn>
@@ -4357,11 +4357,11 @@ export function TopicAnalysisPage() {
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
                           <div>
                             <p className="text-h3 text-text-primary">이사 계획</p>
-                            <p className="text-[11px] text-text-hint">목적과 시기에 맞는 분석을 해드려요</p>
+                            <p className="text-[13px] text-text-hint">목적과 시기에 맞는 분석을 해드려요</p>
                           </div>
                         </div>
                         <div>
-                          <label className="text-[11px] text-text-hint mb-1 block">이사 목적</label>
+                          <label className="text-[13px] text-text-hint mb-1 block">이사 목적</label>
                           <div className="flex gap-2 flex-wrap mb-3">
                             {[
                               { v: 'house' as const, l: '주거 이사' },
@@ -4370,7 +4370,7 @@ export function TopicAnalysisPage() {
                               { v: 'abroad' as const, l: '해외 이주' },
                             ].map(s => (
                               <button key={s.v}
-                                className={`flex-1 min-w-[70px] h-11 rounded-xl text-[12px] font-semibold transition-all ${extraInfo.movePurpose === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
+                                className={`flex-1 min-w-[70px] h-11 rounded-xl text-[13.5px] font-semibold transition-all ${extraInfo.movePurpose === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
                                 style={extraInfo.movePurpose === s.v ? { background: topic.color } : {}}
                                 onClick={() => setExtraInfo(p => ({ ...p, movePurpose: p.movePurpose === s.v ? '' : s.v }))}>
                                 {s.l}
@@ -4387,7 +4387,7 @@ export function TopicAnalysisPage() {
                           const availableMonths = isCurrentYear ? months.filter(m => m >= cMonth) : months;
                           return (
                             <div>
-                              <label className="text-[11px] text-text-hint mb-1 block">이사 예정 시기 <span className="text-[11px] opacity-60">(선택)</span></label>
+                              <label className="text-[13px] text-text-hint mb-1 block">이사 예정 시기 <span className="text-[13px] opacity-60">(선택)</span></label>
                               <div className="flex gap-2">
                                 <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                   value={extraInfo.movePlanYear}
@@ -4406,7 +4406,7 @@ export function TopicAnalysisPage() {
                                   {availableMonths.map(m => <option key={m} value={m}>{m}월</option>)}
                                 </select>
                               </div>
-                              <p className="text-[11px] text-text-hint mt-1">예정 시기의 이동운과 최적 방위를 분석해요</p>
+                              <p className="text-[13px] text-text-hint mt-1">예정 시기의 이동운과 최적 방위를 분석해요</p>
                             </div>
                           );
                         })()}
@@ -4422,12 +4422,12 @@ export function TopicAnalysisPage() {
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                           <div>
                             <p className="text-h3 text-text-primary">변동 정보</p>
-                            <p className="text-[11px] text-text-hint">어떤 변동을 준비 중인지 알려주세요</p>
+                            <p className="text-[13px] text-text-hint">어떤 변동을 준비 중인지 알려주세요</p>
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div>
-                            <label className="text-[11px] text-text-hint mb-1 block">변동 유형 <span className="text-[11px] opacity-60">(선택)</span></label>
+                            <label className="text-[13px] text-text-hint mb-1 block">변동 유형 <span className="text-[13px] opacity-60">(선택)</span></label>
                             <div className="flex gap-2 flex-wrap">
                               {[
                                 { v: 'exam', l: '시험과 자격증' },
@@ -4452,7 +4452,7 @@ export function TopicAnalysisPage() {
                             </div>
                           </div>
                           <div>
-                            <label className="text-[11px] text-text-hint mb-1 block">시험명 또는 목표 <span className="text-[11px] opacity-60">(선택)</span></label>
+                            <label className="text-[13px] text-text-hint mb-1 block">시험명 또는 목표 <span className="text-[13px] opacity-60">(선택)</span></label>
                             <input type="text" placeholder="예: 7급 공무원, 변호사시험, 대기업 이직..."
                               className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                               value={extraInfo.examName}
@@ -4467,7 +4467,7 @@ export function TopicAnalysisPage() {
                             const availableMonths = isCurrentYear ? months.filter(m => m >= cMonth) : months;
                             return (
                               <div>
-                                <label className="text-[11px] text-text-hint mb-1 block">예정 시기 <span className="text-[11px] opacity-60">(선택)</span></label>
+                                <label className="text-[13px] text-text-hint mb-1 block">예정 시기 <span className="text-[13px] opacity-60">(선택)</span></label>
                                 <div className="flex gap-2">
                                   <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                     value={extraInfo.examYear}
@@ -4486,7 +4486,7 @@ export function TopicAnalysisPage() {
                                     {availableMonths.map(m => <option key={m} value={m}>{m}월</option>)}
                                   </select>
                                 </div>
-                                <p className="text-[11px] text-text-hint mt-1">예정 시기의 합격과 변동운을 정밀 분석합니다</p>
+                                <p className="text-[13px] text-text-hint mt-1">예정 시기의 합격과 변동운을 정밀 분석합니다</p>
                               </div>
                             );
                           })()}
@@ -4503,12 +4503,12 @@ export function TopicAnalysisPage() {
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={topic.color} strokeWidth="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg>
                           <div>
                             <p className="text-h3 text-text-primary">시험 정보</p>
-                            <p className="text-[11px] text-text-hint">시험에 맞춘 정밀 분석을 해드려요</p>
+                            <p className="text-[13px] text-text-hint">시험에 맞춘 정밀 분석을 해드려요</p>
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div>
-                            <label className="text-[11px] text-text-hint mb-1 block">준비중인 시험 <span className="text-[11px] opacity-60">(선택)</span></label>
+                            <label className="text-[13px] text-text-hint mb-1 block">준비중인 시험 <span className="text-[13px] opacity-60">(선택)</span></label>
                             <input type="text" placeholder="예: 공무원, 수능, 토익, 자격증명..."
                               className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                               value={extraInfo.examName}
@@ -4523,7 +4523,7 @@ export function TopicAnalysisPage() {
                             const availableMonths = isCurrentYear ? months.filter(m => m >= cMonth) : months;
                             return (
                               <div>
-                                <label className="text-[11px] text-text-hint mb-1 block">시험 예정 시기 <span className="text-[11px] opacity-60">(선택)</span></label>
+                                <label className="text-[13px] text-text-hint mb-1 block">시험 예정 시기 <span className="text-[13px] opacity-60">(선택)</span></label>
                                 <div className="flex gap-2">
                                   <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                     value={extraInfo.examYear}
@@ -4542,7 +4542,7 @@ export function TopicAnalysisPage() {
                                     {availableMonths.map(m => <option key={m} value={m}>{m}월</option>)}
                                   </select>
                                 </div>
-                                <p className="text-[11px] text-text-hint mt-1">시험 시기에 맞춘 합격 전략을 세워드려요</p>
+                                <p className="text-[13px] text-text-hint mt-1">시험 시기에 맞춘 합격 전략을 세워드려요</p>
                               </div>
                             );
                           })()}
@@ -4561,7 +4561,7 @@ export function TopicAnalysisPage() {
                             <Pictogram k="topic:letter" size={16} color="#7A5C7E" />
                             <div className="text-left">
                               <p className="text-h3 text-text-primary">재회 상대방 정보</p>
-                              <p className="text-[11px] text-text-hint">입력하면 더 정확한 분석이 가능해요</p>
+                              <p className="text-[13px] text-text-hint">입력하면 더 정확한 분석이 가능해요</p>
                             </div>
                           </div>
                           <motion.svg width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -4579,7 +4579,7 @@ export function TopicAnalysisPage() {
 
                                 {/* 이름 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">이름</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">이름</label>
                                   <input type="text" placeholder="상대방 이름"
                                     className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                                     style={{ '--tw-ring-color': topic.color } as any}
@@ -4589,7 +4589,7 @@ export function TopicAnalysisPage() {
 
                                 {/* 생년월일 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">생년월일 (양력)</label>
                                   <div className="flex gap-2">
                                     <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
@@ -4611,7 +4611,7 @@ export function TopicAnalysisPage() {
 
                                 {/* 성별 */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">성별</label>
+                                  <label className="text-[13px] text-text-hint mb-1 block">성별</label>
                                   <div className="flex gap-2">
                                     {[{ v: 'male', l: '남성' }, { v: 'female', l: '여성' }].map(g => (
                                       <button key={g.v}
@@ -4633,7 +4633,7 @@ export function TopicAnalysisPage() {
                                   const availableMonths = isCurrentYear ? months.filter(m => m <= cMonth) : months;
                                   return (
                                     <div>
-                                      <label className="text-[11px] text-text-hint mb-1 block">헤어진 시기</label>
+                                      <label className="text-[13px] text-text-hint mb-1 block">헤어진 시기</label>
                                       <div className="flex gap-2">
                                         <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                           value={partnerInfo.breakupYear}
@@ -4653,7 +4653,7 @@ export function TopicAnalysisPage() {
                                           {availableMonths.map(m => <option key={m} value={m}>{m}월</option>)}
                                         </select>
                                       </div>
-                                      <p className="text-[11px] text-text-hint mt-1">
+                                      <p className="text-[13px] text-text-hint mt-1">
                                         헤어진 기간에 따른 재회 에너지 변화를 분석해드려요
                                       </p>
                                     </div>
@@ -4662,8 +4662,8 @@ export function TopicAnalysisPage() {
 
                                 {/* 상대방 출생 시간 (선택) */}
                                 <div>
-                                  <label className="text-[11px] text-text-hint mb-1 block">
-                                    상대방 출생 시간 <span className="text-[11px] opacity-60">(선택사항)</span>
+                                  <label className="text-[13px] text-text-hint mb-1 block">
+                                    상대방 출생 시간 <span className="text-[13px] opacity-60">(선택사항)</span>
                                   </label>
                                   <PartnerTimeField
                                     info={partnerInfo}
@@ -4685,7 +4685,7 @@ export function TopicAnalysisPage() {
                       <label htmlFor="topic-concern" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>
                         지금 상황을 한 줄로 알려주세요 <span style={{ fontWeight: 500, color: '#7A7269' }}>(선택)</span>
                       </label>
-                      <p style={{ fontSize: 12, color: '#7A7269', lineHeight: 1.5, marginBottom: 8 }}>
+                      <p style={{ fontSize: 13.5, color: '#7A7269', lineHeight: 1.5, marginBottom: 8 }}>
                         적어주시면 그 상황에 맞춰 풀어드려요. 비워둬도 괜찮아요.
                       </p>
                       <textarea
@@ -4700,7 +4700,7 @@ export function TopicAnalysisPage() {
                           color: '#1A1A1A', background: '#F8F5EE', border: '1px solid #E8E2D6', borderRadius: 10, padding: '10px 12px',
                         }}
                       />
-                      <div style={{ textAlign: 'right', fontSize: 11, color: '#7A7269', marginTop: 4 }}>{concern.length}/200</div>
+                      <div style={{ textAlign: 'right', fontSize: 13, color: '#7A7269', marginTop: 4 }}>{concern.length}/200</div>
                     </div>
                   )}
 
@@ -4719,14 +4719,14 @@ export function TopicAnalysisPage() {
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#8B1A1A', marginBottom: 6 }}>
                         분석에 실패했어요
                       </div>
-                      <div style={{ fontSize: 12.5, color: '#3D3D3D', lineHeight: 1.6, marginBottom: 10 }}>
+                      <div style={{ fontSize: 13.5, color: '#3D3D3D', lineHeight: 1.6, marginBottom: 10 }}>
                         {analyzeError}
                       </div>
                       <button
                         type="button"
                         onClick={() => { setAnalyzeError(null); requestAnalyze(); }}
                         style={{
-                          fontSize: 12.5, fontWeight: 700, color: '#1A1A1A',
+                          fontSize: 13.5, fontWeight: 700, color: '#1A1A1A',
                           background: '#F8F5EE', border: '1px solid #B8965A',
                           borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
                         }}
@@ -4984,15 +4984,15 @@ export function TopicAnalysisPage() {
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                     <span className="text-3xl font-black" style={{ color: j.color }}>{j.hanja}</span>
                   </motion.div>
-                  <p className="text-[12px] text-center" style={{ color: j.color }}>{j.reading}, {j.desc}</p>
+                  <p className="text-[13.5px] text-center" style={{ color: j.color }}>{j.reading}, {j.desc}</p>
 
                   {/* 사주 근거 */}
                   {result.sajuBasis && (
                     <motion.div className="mt-4 pt-3 text-center"
                       style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-                      <p className="text-[11px] text-text-hint mb-1">사주 근거</p>
-                      <p className="text-[12px] text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.sajuBasis) }} />
+                      <p className="text-[13px] text-text-hint mb-1">사주 근거</p>
+                      <p className="text-[13.5px] text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(result.sajuBasis) }} />
                     </motion.div>
                   )}
                   {!result.sajuBasis && result.gradeLabel && (
@@ -5003,7 +5003,7 @@ export function TopicAnalysisPage() {
                   <motion.div className="mt-4 pt-3"
                     style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
-                    <p className="text-[11px] text-text-hint text-center mb-2">등급 기준</p>
+                    <p className="text-[13px] text-text-hint text-center mb-2">등급 기준</p>
                     <div className="flex justify-between px-1">
                       {GRADE_SCALE.map(g => {
                         const isActive = g.hanja === j.hanja;
@@ -5011,7 +5011,7 @@ export function TopicAnalysisPage() {
                           <div key={g.hanja} className="flex flex-col items-center gap-0.5 px-1 py-1 rounded-lg transition-all"
                             style={isActive ? { background: `${g.color}10`, outline: `1.5px solid ${g.color}30` } : {}}>
                             <span className="text-[13px] font-black" style={{ color: g.color, opacity: isActive ? 1 : 0.4 }}>{g.hanja}</span>
-                            <span className="text-[11px]" style={{ color: isActive ? g.color : 'var(--text-disabled)' }}>{g.range}점</span>
+                            <span className="text-[13px]" style={{ color: isActive ? g.color : 'var(--text-disabled)' }}>{g.range}점</span>
                           </div>
                         );
                       })}
@@ -5115,7 +5115,7 @@ export function TopicAnalysisPage() {
                           <>
                             {sec.highlight && (
                               <div className="mb-3 rounded-xl py-2.5 px-3" style={{ background: `${topic.color}08` }}>
-                                <p className="text-[12px] font-semibold leading-snug" style={{ color: topic.color }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(swapGenderedTerms(sec.highlight, selected?.input?.gender)) }} />
+                                <p className="text-[13.5px] font-semibold leading-snug" style={{ color: topic.color }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(swapGenderedTerms(sec.highlight, selected?.input?.gender)) }} />
                               </div>
                             )}
                             <SectionBody content={swapGenderedTerms(sec.content, selected?.input?.gender)} color={topic.color} />
@@ -5154,9 +5154,9 @@ export function TopicAnalysisPage() {
                     <div className="mt-3 space-y-1.5 border-t border-border-light pt-3">
                       {result.timeline.map((t: any, i: number) => (
                         <div key={i} className="flex items-start gap-2">
-                          <span className="text-[11px] font-bold mt-0.5 w-14 flex-shrink-0 text-right" style={{ color: topic.color }}>{t.period}</span>
+                          <span className="text-[13px] font-bold mt-0.5 w-14 flex-shrink-0 text-right" style={{ color: topic.color }}>{t.period}</span>
                           <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: topic.color }} />
-                          <p className="text-[11px] text-text-muted flex-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(t.description) }} />
+                          <p className="text-[13px] text-text-muted flex-1" dangerouslySetInnerHTML={{ __html: sanitizeAiText(t.description) }} />
                         </div>
                       ))}
                     </div>
@@ -5188,8 +5188,8 @@ export function TopicAnalysisPage() {
                               {item.icon}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[11px] text-text-hint">{item.label}</p>
-                              <p className="text-[12px] font-semibold text-text-primary leading-snug">{item.value}</p>
+                              <p className="text-[13px] text-text-hint">{item.label}</p>
+                              <p className="text-[13.5px] font-semibold text-text-primary leading-snug">{item.value}</p>
                             </div>
                           </div>
                         ))}
@@ -5279,7 +5279,7 @@ export function TopicAnalysisPage() {
                     <span style={{ width: 20, textAlign: 'center', fontWeight: 900, color: '#8C6D3D', fontFamily: "'Noto Serif KR', serif" }}>合</span>
                     <span className="flex flex-col items-start text-left" style={{ minWidth: 0 }}>
                       <span className="text-[14px] font-semibold text-text-primary">그 사람과의 궁합 보기</span>
-                      <span className="text-[11px] text-text-hint">두 사람 사주가 맞물리는 자리, 1운</span>
+                      <span className="text-[13px] text-text-hint">두 사람 사주가 맞물리는 자리, 1운</span>
                     </span>
                   </button>
                 )}
@@ -5319,7 +5319,7 @@ export function TopicAnalysisPage() {
                           <Pictogram k={`topic:${id as TopicKey}`} size={20} color={t.color} />
                           <span className="flex flex-col items-start text-left" style={{ minWidth: 0 }}>
                             <span className="text-[14px] font-semibold text-text-primary">{t.label}</span>
-                            <span className="text-[11px] text-text-hint">{formatPriceLabel(getTopicPrice(id))}</span>
+                            <span className="text-[13px] text-text-hint">{formatPriceLabel(getTopicPrice(id))}</span>
                           </span>
                         </button>
                       );
@@ -5330,10 +5330,10 @@ export function TopicAnalysisPage() {
 
               {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — DailyFortune/Dream 통일 패턴 */}
               <div className="mt-8 text-center space-y-1">
-                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
                   한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
                 </p>
-                <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+                <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
                   사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
                   <br />
                   의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
@@ -5387,8 +5387,8 @@ export function TopicAnalysisPage() {
                     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                   </svg>
-                  <span style={{ fontSize: 12.5, fontWeight: 600 }}>친구에게 공유하기</span>
-                  <span style={{ fontSize: 11, color: '#7A7269' }}>결과 카드 송출</span>
+                  <span style={{ fontSize: 13.5, fontWeight: 600 }}>친구에게 공유하기</span>
+                  <span style={{ fontSize: 13, color: '#7A7269' }}>결과 카드 송출</span>
                 </button>
                 <button
                   type="button"
@@ -5428,8 +5428,8 @@ export function TopicAnalysisPage() {
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                   </svg>
-                  <span style={{ fontSize: 12.5, fontWeight: 600 }}>이 주제로 상담 이어가기</span>
-                  <span style={{ fontSize: 11, color: '#7A7269' }}>사주대화</span>
+                  <span style={{ fontSize: 13.5, fontWeight: 600 }}>이 주제로 상담 이어가기</span>
+                  <span style={{ fontSize: 13, color: '#7A7269' }}>사주대화</span>
                 </button>
               </div>
             </motion.div>
@@ -5478,7 +5478,7 @@ export function TopicAnalysisPage() {
                 <Pansim>{kanji} {topic.label}</Pansim>
                 {fact && (
                   <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.65, marginTop: 12, wordBreak: 'keep-all' }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>내 사주</span>{fact}
+                    <span style={{ fontSize: 13.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>내 사주</span>{fact}
                   </p>
                 )}
                 {titles.length > 0 ? (

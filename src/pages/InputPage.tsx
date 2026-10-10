@@ -1003,7 +1003,7 @@ function IntentHintBlock({ hint }: { hint: string }) {
         <p style={{ fontSize: 13, color: C.ink, fontWeight: 500, margin: 0 }}>
           {hint}
         </p>
-        <p style={{ fontSize: 11, color: C.inkSoft, margin: '2px 0 0' }}>
+        <p style={{ fontSize: 13, color: C.inkSoft, margin: '2px 0 0' }}>
           잠깐이면 끝나요
         </p>
       </div>
@@ -1073,7 +1073,7 @@ function NameField({
       />
       <p
         style={{
-          fontSize: 12,
+          fontSize: 13.5,
           color: C.inkSoft,
           marginTop: 6,
         }}
@@ -1083,7 +1083,7 @@ function NameField({
       {error && (
         <p
           id="input-name-error"
-          style={{ fontSize: 12, color: C.danger, marginTop: 6 }}
+          style={{ fontSize: 13.5, color: C.danger, marginTop: 6 }}
         >
           {error}
         </p>
@@ -1112,7 +1112,7 @@ function NameField({
                 background: active ? C.ink : C.surface,
                 color: active ? C.paper : C.inkSoft,
                 border: `1px solid ${active ? C.ink : C.line}`,
-                fontSize: 12,
+                fontSize: 13.5,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -1220,7 +1220,7 @@ function GenderSelector({
         })}
       </div>
       {error && (
-        <p style={{ fontSize: 12, color: C.danger, marginTop: 6 }}>{error}</p>
+        <p style={{ fontSize: 13.5, color: C.danger, marginTop: 6 }}>{error}</p>
       )}
     </div>
   );
@@ -1299,7 +1299,7 @@ function BirthDateField({
       {calendarSimple === 'lunar' && (
         <p
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: C.inkSoft,
             margin: '0 0 10px',
           }}
@@ -1351,7 +1351,7 @@ function BirthDateField({
             style={{ width: 18, height: 18, accentColor: C.gold }}
           />
           윤달
-          <span style={{ fontSize: 11, color: C.mute, marginLeft: 2 }}>
+          <span style={{ fontSize: 13, color: C.mute, marginLeft: 2 }}>
             (해당하는 달일 때만 체크)
           </span>
         </label>
@@ -1360,7 +1360,7 @@ function BirthDateField({
       {error && (
         <p
           id="input-birth-error"
-          style={{ fontSize: 12, color: C.danger, marginTop: 6 }}
+          style={{ fontSize: 13.5, color: C.danger, marginTop: 6 }}
         >
           {error}
         </p>
@@ -1479,7 +1479,7 @@ function BirthHourField({
           >
             {sijiPreview.hanja}
           </span>
-          <p style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.55, margin: 0 }}>
+          <p style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.55, margin: 0 }}>
             진태양시(약 30분) 보정 후{' '}
             <strong style={{ color: C.goldDeep }}>
               {sijiPreview.ko}({sijiPreview.hanja})
@@ -1510,7 +1510,7 @@ function BirthHourField({
       {timeUnknown && (
         <p
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             color: C.goldDeep,
             marginTop: 8,
             fontWeight: 500,
@@ -1530,7 +1530,7 @@ function BirthHourField({
             background: 'none',
             border: 'none',
             padding: 0,
-            fontSize: 12.5,
+            fontSize: 13.5,
             fontWeight: 600,
             color: C.goldDeep,
             textDecoration: 'underline',
@@ -1543,7 +1543,7 @@ function BirthHourField({
       )}
 
       {error && (
-        <p style={{ fontSize: 12, color: C.danger, marginTop: 6 }}>{error}</p>
+        <p style={{ fontSize: 13.5, color: C.danger, marginTop: 6 }}>{error}</p>
       )}
     </div>
   );
@@ -1635,7 +1635,7 @@ function HourSheet({
                 padding: '10px 12px',
                 background: C.goldSoft,
                 borderRadius: 12,
-                fontSize: 12,
+                fontSize: 13.5,
                 lineHeight: 1.55,
                 color: C.mute,
               }}
@@ -1690,7 +1690,7 @@ function HourSheet({
                       </div>
                       <div
                         style={{
-                          fontSize: 12,
+                          fontSize: 13.5,
                           color: C.mute,
                           marginTop: 2,
                         }}
@@ -1754,7 +1754,7 @@ function HourSheet({
                   >
                     모름
                   </div>
-                  <div style={{ fontSize: 12, color: C.mute, marginTop: 2 }}>
+                  <div style={{ fontSize: 13.5, color: C.mute, marginTop: 2 }}>
                     시주 제외 풀이 (약 20% 간소화)
                   </div>
                 </div>
@@ -1798,7 +1798,7 @@ function LoadPreviousHint({ onLoad }: { onLoad: () => void }) {
         <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
         <path d="M3 4v4h4" />
       </svg>
-      <span style={{ fontSize: 12, color: C.inkSoft, flex: 1 }}>
+      <span style={{ fontSize: 13.5, color: C.inkSoft, flex: 1 }}>
         지난번 입력값이 있어요
       </span>
       <button
@@ -1829,7 +1829,7 @@ function NoticeBlock() {
     <div style={{ padding: '16px 4px 8px' }}>
       <p
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: C.mute,
           lineHeight: 1.75,
           margin: 0,
@@ -1839,7 +1839,7 @@ function NoticeBlock() {
       </p>
       <p
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: C.mute,
           lineHeight: 1.75,
           margin: 0,

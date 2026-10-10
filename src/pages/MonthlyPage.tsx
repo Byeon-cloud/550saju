@@ -272,7 +272,7 @@ export function MonthlyPage() {
               <FadeIn delay={0.1}>
                 <div className="card py-4 px-4" style={{ border: `1.5px solid ${ACCENT}` }}>
                   <p className="text-h3 text-text-primary mb-1">어느 달의 운세를 볼까요?</p>
-                  <p className="text-[11px] text-text-hint mb-3">지난 6개월부터 앞으로 6개월까지 — 원하는 달을 골라 깊게 풀어드려요. <span style={{ color: ACCENT, fontWeight: 700 }}>지난 달은 회고, 앞으로는 미래 흐름</span>으로 읽어드려요.</p>
+                  <p className="text-[13px] text-text-hint mb-3">지난 6개월부터 앞으로 6개월까지 — 원하는 달을 골라 깊게 풀어드려요. <span style={{ color: ACCENT, fontWeight: 700 }}>지난 달은 회고, 앞으로는 미래 흐름</span>으로 읽어드려요.</p>
                   <div className="grid grid-cols-3 gap-2">
                     {monthOptions.map((o, i) => {
                       const active = i === monthIdx;
@@ -287,13 +287,13 @@ export function MonthlyPage() {
                               : { background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid rgba(0,0,0,0.06)', opacity: o.isPast ? 0.72 : 1 }
                           }
                         >
-                          <span className="block text-[11px] opacity-70" style={active ? { color: 'rgba(255,255,255,0.85)' } : undefined}>{o.year}</span>
+                          <span className="block text-[13px] opacity-70" style={active ? { color: 'rgba(255,255,255,0.85)' } : undefined}>{o.year}</span>
                           <span className="block text-body-sm font-bold">{o.month}월</span>
                           {o.isCurrent && (
-                            <span className="block text-[11px] mt-0.5" style={active ? { color: 'rgba(255,255,255,0.9)' } : { color: ACCENT }}>이번 달</span>
+                            <span className="block text-[13px] mt-0.5" style={active ? { color: 'rgba(255,255,255,0.9)' } : { color: ACCENT }}>이번 달</span>
                           )}
                           {o.isPast && (
-                            <span className="block text-[11px] mt-0.5" style={active ? { color: 'rgba(255,255,255,0.85)' } : { color: 'var(--text-muted)' }}>지난 달</span>
+                            <span className="block text-[13px] mt-0.5" style={active ? { color: 'rgba(255,255,255,0.85)' } : { color: 'var(--text-muted)' }}>지난 달</span>
                           )}
                         </button>
                       );
@@ -306,8 +306,8 @@ export function MonthlyPage() {
         </div>
         {selected && (
           <div className="sticky-cta-bottom">
-            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth>
-              {monthOptions[monthIdx]?.label} 운세 보기 ({getMonthlyPrice().actualPrice}운)
+            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth sub={`${getMonthlyPrice().actualPrice}운`}>
+              {monthOptions[monthIdx]?.label} 운세 보기
             </Button>
           </div>
         )}

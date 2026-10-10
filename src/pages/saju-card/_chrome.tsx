@@ -198,7 +198,7 @@ export function SajuCardHero({
             color: '#0F0C09',
             padding: '4px 12px',
             borderRadius: 100,
-            fontSize: 10.5,
+            fontSize: 13,
             fontWeight: 800,
             letterSpacing: '0.12em',
             boxShadow: `0 2px 8px ${theme.accent}66`,
@@ -211,7 +211,7 @@ export function SajuCardHero({
             background: 'rgba(255,255,255,0.12)',
             padding: '4px 12px',
             borderRadius: 100,
-            fontSize: 10,
+            fontSize: 12,
             color: '#E8E2D4',
             border: `1px solid ${theme.accent}44`,
           }}
@@ -221,7 +221,7 @@ export function SajuCardHero({
         <span
           style={{
             marginLeft: 'auto',
-            fontSize: 10,
+            fontSize: 12,
             color: theme.accent,
             fontWeight: 700,
             letterSpacing: '0.06em',
@@ -307,7 +307,7 @@ export function SajuCardHero({
 
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           opacity: 0.78,
           marginTop: 12,
           position: 'relative',
@@ -352,7 +352,7 @@ export function SajuCardSection({
       <div
         style={{
           fontFamily: SERIF,
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 700,
           color: theme.accentDark,
           letterSpacing: '0.2em',
@@ -386,7 +386,7 @@ export function SajuCardSection({
       {intro && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             color: C.mute,
             marginTop: 6,
             lineHeight: 1.6,
@@ -494,7 +494,7 @@ export function SajuCardLabelRow({
         </div>
         <div
           style={{
-            fontSize: 9,
+            fontSize: 12,
             color: theme.accentDark,
             marginTop: 4,
             fontWeight: 600,
@@ -545,7 +545,7 @@ export function SajuCardLabelRow({
             <div
               style={{
                 fontFamily: SANS,
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 600,
                 color: it.isDay ? C.goldDeep : C.ink,
                 lineHeight: 1.25,
@@ -711,7 +711,7 @@ function PillarCardCol({
       {/* 라벨 (한자 + 한국어) */}
       <div
         style={{
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: 700,
           color: isDay ? C.goldDeep : C.mute,
           letterSpacing: '0.04em',
@@ -773,7 +773,7 @@ function PillarCardCol({
       ) : (
         <div
           style={{
-            fontSize: 10,
+            fontSize: 12,
             color: C.mute,
             padding: '24px 0',
             fontStyle: 'italic',
@@ -838,7 +838,7 @@ function CharRow({
             borderRadius: 999,
             background: sipsungColor,
             color: '#FFFFFF',
-            fontSize: 9.5,
+            fontSize: 12,
             fontWeight: 800,
             letterSpacing: '0.03em',
             lineHeight: 1.3,
@@ -876,7 +876,7 @@ function CharRow({
       >
         {ch}
       </div>
-      <div style={{ fontSize: 9.5, color: C.mute, marginTop: 3, fontWeight: 600 }}>{chRead}</div>
+      <div style={{ fontSize: 12, color: C.mute, marginTop: 3, fontWeight: 600 }}>{chRead}</div>
     </div>
   );
 }
@@ -915,7 +915,7 @@ export function OhengCountRow({
         background: C.surface,
         border: `1px solid ${C.cardLine}`,
         borderRadius: 10,
-        fontSize: 12,
+        fontSize: 13.5,
         color: C.inkSoft,
       }}
     >
@@ -949,7 +949,7 @@ export function OhengCountRow({
               fontFamily: SERIF,
               fontWeight: isStrong ? 800 : 600,
               color: isZero ? '#C04545' : isStrong ? ohengHex : C.inkSoft,
-              fontSize: 12,
+              fontSize: 13.5,
             }}
           >
             <span style={{ color: ohengHex, fontWeight: 700 }}>
@@ -986,7 +986,7 @@ export function SajuMetaRow({
     <div
       style={{
         marginTop: 6,
-        fontSize: 11.5,
+        fontSize: 13,
         color: C.mute,
         fontStyle: 'italic',
         lineHeight: 1.55,

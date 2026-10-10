@@ -230,7 +230,7 @@ export function WeeklyPage() {
         </div>
         {selected && (
           <div className="sticky-cta-bottom">
-            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth>주간운세 보기 ({getWeeklyPrice().actualPrice}운)</Button>
+            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth sub={`${getWeeklyPrice().actualPrice}운`}>주간운세 보기</Button>
           </div>
         )}
       </div>

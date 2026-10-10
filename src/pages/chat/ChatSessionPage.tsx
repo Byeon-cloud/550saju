@@ -89,9 +89,9 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
   if (ctx.type === 'dream') {
     summary = (
       <>
-        {ctx.category && <div style={{ fontSize: 11, color: 'rgba(248,245,238,0.6)', marginTop: 6 }}>꿈 주제, {ctx.category}</div>}
+        {ctx.category && <div style={{ fontSize: 13, color: 'rgba(248,245,238,0.6)', marginTop: 6 }}>꿈 주제, {ctx.category}</div>}
         {ctx.dreamText && <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 4, fontStyle: 'italic' }}>"{ctx.dreamText}"</div>}
-        {ctx.concern && <div style={{ fontSize: 12, color: 'rgba(248,245,238,0.75)', marginTop: 4 }}>요새 고민, {ctx.concern}</div>}
+        {ctx.concern && <div style={{ fontSize: 13.5, color: 'rgba(248,245,238,0.75)', marginTop: 4 }}>요새 고민, {ctx.concern}</div>}
       </>
     );
   } else if (ctx.fullResult?.title) {
@@ -103,7 +103,7 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
         <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 6, fontFamily: "'Noto Serif KR', serif", fontWeight: 600 }}>
           {plainText(ctx.fullResult.weekHeadline || ctx.fullResult.headline)}
         </div>
-        {ctx.periodLabel && <div style={{ fontSize: 11, color: 'rgba(248,245,238,0.7)', marginTop: 4 }}>기간, {ctx.periodLabel}</div>}
+        {ctx.periodLabel && <div style={{ fontSize: 13, color: 'rgba(248,245,238,0.7)', marginTop: 4 }}>기간, {ctx.periodLabel}</div>}
       </>
     );
   }
@@ -118,7 +118,7 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
         fontFamily: "'Noto Serif KR', serif", color: 'rgba(248,245,238,0.08)', lineHeight: 1,
       }} aria-hidden>{han}</div>
       <div style={{ position: 'relative' }}>
-        <div style={{ fontSize: 11, letterSpacing: '0.15em', fontWeight: 700, color: 'rgba(248,245,238,0.75)' }}>
+        <div style={{ fontSize: 13, letterSpacing: '0.15em', fontWeight: 700, color: 'rgba(248,245,238,0.75)' }}>
           이 풀이를 보고 오셨어요
         </div>
         <div style={{ fontSize: 14, fontFamily: "'Noto Serif KR', serif", fontWeight: 700, marginTop: 4 }}>
@@ -1033,7 +1033,7 @@ export function ChatSessionPage() {
                 {tsLabel && (
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: 13,
                       color: '#8a7d5f',
                       textAlign: 'center',
                       margin: '4px 0 -4px',
@@ -1069,7 +1069,7 @@ export function ChatSessionPage() {
                   display: 'flex',
                   gap: 6,
                   alignItems: 'center',
-                  fontSize: 11,
+                  fontSize: 13,
                   color: '#B8965A',
                   marginBottom: 6,
                   fontWeight: 600,
@@ -1162,7 +1162,7 @@ export function ChatSessionPage() {
             </p>
             <p
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 color: C.inkSoft,
                 margin: '4px 0 0',
               }}
@@ -1182,7 +1182,7 @@ export function ChatSessionPage() {
           >
             <p
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 color: C.mute,
                 margin: '0 0 12px',
               }}
@@ -1196,13 +1196,13 @@ export function ChatSessionPage() {
                 navigate(`/chat/${room.id}`, { replace: true });
               }}
               style={{
-                padding: '10px 20px',
-                background: C.ink,
-                color: C.paper,
+                padding: '12px 22px',
+                background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
+                color: '#17110A',
                 border: 'none',
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 700,
+                borderRadius: 14,
+                fontSize: 15,
+                fontWeight: 800,
                 cursor: 'pointer',
               }}
             >
@@ -1422,7 +1422,7 @@ function DarkChatHeader({
         </div>
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: '#f4d166',
             marginTop: 2,
             letterSpacing: '0.05em',
@@ -1445,7 +1445,7 @@ function DarkChatHeader({
             border: '1px solid rgba(184,150,90,0.3)',
             padding: '5px 10px',
             borderRadius: 100,
-            fontSize: 11,
+            fontSize: 13,
             color: '#f4d166',
             fontWeight: 600,
             display: 'inline-flex',
@@ -1506,7 +1506,7 @@ function ContextBanner({
         border: '1px solid rgba(184,150,90,0.25)',
         borderRadius: 10,
         padding: '10px 12px',
-        fontSize: 11.5,
+        fontSize: 13,
         color: '#6a5d3f',
         display: 'flex',
         gap: 8,
@@ -1617,7 +1617,7 @@ function BubbleRow({
               display: 'flex',
               gap: 6,
               alignItems: 'center',
-              fontSize: 11,
+              fontSize: 13,
               color: '#B8965A',
               marginBottom: 6,
               fontWeight: 600,
@@ -1682,7 +1682,7 @@ function BubbleRow({
                     color: C.ink,
                     border: `1px solid ${C.line}`,
                     borderRadius: 999,
-                    fontSize: 12,
+                    fontSize: 13.5,
                     fontWeight: 500,
                     cursor: 'pointer',
                   }}
@@ -1704,7 +1704,7 @@ function BubbleRow({
                     color: C.inkSoft,
                     border: `1px solid ${C.line}`,
                     borderRadius: 12,
-                    fontSize: 12,
+                    fontSize: 13.5,
                     fontWeight: 600,
                     cursor: 'pointer',
                   }}
@@ -1721,7 +1721,7 @@ function BubbleRow({
                     color: '#FFFFFF',
                     border: 'none',
                     borderRadius: 12,
-                    fontSize: 12,
+                    fontSize: 13.5,
                     fontWeight: 700,
                     cursor: 'pointer',
                   }}
@@ -1799,7 +1799,7 @@ function SuggestedContentCard({
         </p>
         <p
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: C.inkSoft,
             margin: '3px 0 0',
           }}
@@ -1817,7 +1817,7 @@ function SuggestedContentCard({
           color: C.paper,
           border: 'none',
           borderRadius: 8,
-          fontSize: 12,
+          fontSize: 13.5,
           fontWeight: 700,
           cursor: 'pointer',
           flexShrink: 0,
@@ -1916,7 +1916,7 @@ function ChatComposer({
           color: '#f4d166',
           padding: '3px 10px',
           borderRadius: 100,
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 600,
           letterSpacing: '0.02em',
         }}
@@ -1992,7 +1992,7 @@ function ChatComposer({
       <p
         id="chat-tickets-hint"
         style={{
-          fontSize: 11,
+          fontSize: 13,
           color: '#8a7d5f',
           margin: '6px 4px 0',
           textAlign: 'right',

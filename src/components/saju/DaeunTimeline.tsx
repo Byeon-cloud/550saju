@@ -35,10 +35,10 @@ export function DaeunTimeline({ daeunList }: DaeunTimelineProps) {
                       {d.간지}
                     </span>
                     {d.isCurrent && (
-                      <span className="badge badge-gold text-[9px]">현재 대운</span>
+                      <span className="badge badge-gold text-[12px]">현재 대운</span>
                     )}
                   </div>
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                  <span className="text-[13px] font-medium" style={{ color: 'var(--text-muted)' }}>
                     {d.시작나이}~{d.끝나이}세
                   </span>
                 </div>

@@ -326,7 +326,7 @@ export function HomePage() {
                 const nx = i === facts.persona!.currentIdx + 1;
                 return (
                   <div key={i} style={{
-                    textAlign: 'center', padding: '7px 0 6px', borderRadius: 6, fontSize: 11.5,
+                    textAlign: 'center', padding: '7px 0 6px', borderRadius: 6, fontSize: 13,
                     background: now ? HJ.ink : HJ.paper, color: now ? '#D8CDB9' : HJ.mute,
                     outline: nx ? `1.5px dashed ${HJ.gold}` : undefined, outlineOffset: -1.5,
                   }}>
@@ -445,8 +445,8 @@ export function HomePage() {
           <span style={{ color: HJ.line }}>|</span>
           <button type="button" onClick={() => navigate('/storage')}>보관함</button>
         </div>
-        <p style={{ marginTop: 12, fontSize: 12, color: HJ.mute, lineHeight: 1.6 }}>{ART_CREDIT}</p>
-        <p style={{ marginTop: 6, fontSize: 12, color: HJ.mute }}>© 2026 사주500</p>
+        <p style={{ marginTop: 12, fontSize: 13.5, color: HJ.mute, lineHeight: 1.6 }}>{ART_CREDIT}</p>
+        <p style={{ marginTop: 6, fontSize: 13.5, color: HJ.mute }}>© 2026 사주500</p>
       </div>
       <LegalFooter />
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
@@ -522,7 +522,7 @@ function ConcernCard({ id, q, b, fact, factTag = '내 사주', onClick }: { id: 
       </span>
       {fact && (
         <span style={{ display: 'block', marginTop: 12, background: HJ.paper, borderRadius: 10, padding: '10px 12px', fontSize: 14.5, lineHeight: 1.65, color: HJ.ink2 }}>
-          <span style={{ fontSize: 12.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>{factTag}</span>{fact}
+          <span style={{ fontSize: 13.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>{factTag}</span>{fact}
         </span>
       )}
       <span className="flex justify-between items-center" style={{ marginTop: 12 }}>

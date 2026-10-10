@@ -254,7 +254,7 @@ export function GwiinSealCard({
         <div
           style={{
             fontFamily: "'Noto Serif KR', serif",
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 700,
             color: '#A63030',
             letterSpacing: '0.18em',
@@ -302,7 +302,7 @@ export function GwiinSealCard({
             display: 'flex',
             flexDirection: 'column',
             gap: 3,
-            fontSize: 10.5,
+            fontSize: 13,
             color: '#7A7269',
             lineHeight: 1.5,
           }}

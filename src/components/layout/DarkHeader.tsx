@@ -100,7 +100,7 @@ export function DarkHeader({ title, subtitle, chip, chipVariant = 'gold', onBack
         </div>
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: '#E8D9B8',
             marginTop: 2,
             letterSpacing: '0.05em',
@@ -113,7 +113,7 @@ export function DarkHeader({ title, subtitle, chip, chipVariant = 'gold', onBack
         <div
           style={{
             ...chipStyle,
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: 700,
             padding: '4px 10px',
             borderRadius: 100,

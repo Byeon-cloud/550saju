@@ -145,20 +145,20 @@ export function PremiumSelectPage() {
           </div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               opacity: 0.78,
               marginBottom: 8,
               position: 'relative',
               letterSpacing: '0.02em',
             }}
           >
-            사주500, 종합 사주
+            평생 한 번 읽는 종합사주
           </div>
           <div
             style={{
               display: 'flex',
               gap: 10,
-              fontSize: 12,
+              fontSize: 13.5,
               opacity: 0.92,
               flexWrap: 'wrap',
               alignItems: 'center',
@@ -170,7 +170,7 @@ export function PremiumSelectPage() {
                 background: 'rgba(255,255,255,0.22)',
                 padding: '3px 10px',
                 borderRadius: 100,
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 600,
               }}
             >
@@ -182,17 +182,17 @@ export function PremiumSelectPage() {
               if (p.isOnSale && p.salePrice != null) {
                 return (
                   <>
-                    <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: 100, fontSize: 10, textDecoration: 'line-through', opacity: 0.7 }}>
+                    <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: 100, fontSize: 12, textDecoration: 'line-through', opacity: 0.7 }}>
                       {p.regularPrice}운
                     </span>
-                    <span style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 800 }}>
+                    <span style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', padding: '3px 10px', borderRadius: 100, fontSize: 13, fontWeight: 800 }}>
                       {p.salePrice}운, {p.saleBadge}
                     </span>
                   </>
                 );
               }
               return (
-                <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 10 }}>
+                <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 12 }}>
                   {p.regularPrice}운
                 </span>
               );
@@ -202,7 +202,7 @@ export function PremiumSelectPage() {
                 background: 'rgba(255,255,255,0.14)',
                 padding: '3px 10px',
                 borderRadius: 100,
-                fontSize: 10,
+                fontSize: 12,
               }}
             >
               한국 명리학 6대 원전 기반
@@ -221,7 +221,7 @@ export function PremiumSelectPage() {
           >
             한 사주의 결을<br />처음부터 끝까지 풀어드립니다
           </h1>
-          <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4, position: 'relative' }}>
+          <div style={{ fontSize: 13.5, opacity: 0.85, marginTop: 4, position: 'relative' }}>
             원국, 천간지지, 십성, 용신, 대운, 연운, 신살, 관계, 주제, 실천 — 10 섹션 깊이 풀이.
           </div>
         </header>
@@ -233,8 +233,8 @@ export function PremiumSelectPage() {
           <div
             className="py-3 px-4 rounded-xl flex items-center justify-between"
             style={{
-              background: enough ? 'rgba(78,122,87,0.06)' : 'rgba(198,40,40,0.06)',
-              border: `1px solid ${enough ? 'rgba(78,122,87,0.20)' : 'rgba(198,40,40,0.20)'}`,
+              background: '#FFFDF8',
+              border: '1px solid #E1D7C4',
             }}
           >
             <p className="text-caption text-text-muted">내 잔액</p>
@@ -242,7 +242,7 @@ export function PremiumSelectPage() {
               style={{
                 fontSize: 18,
                 fontWeight: 800,
-                color: enough ? '#4E7A57' : '#c62828',
+                color: enough ? '#1A1612' : '#A23A2A',
                 fontFeatureSettings: "'tnum'",
               }}
             >
@@ -286,12 +286,13 @@ export function PremiumSelectPage() {
             variant="gold"
             size="lg"
             fullWidth
-          >
-            {enough
+            sub={enough
               ? premiumPriceInfo.isOnSale && premiumPriceInfo.salePrice != null
-                ? `종합 사주 시작 (${premiumPrice}운, ${premiumPriceInfo.saleBadge})`
-                : `종합 사주 시작 (${premiumPrice}운)`
-              : `잔액 부족 (${balance}/${premiumPrice}운)`}
+                ? `${premiumPriceInfo.saleBadge} ${premiumPrice}운`
+                : `${premiumPrice}운`
+              : `지금 ${balance}운`}
+          >
+            {enough ? '종합사주 시작하기' : '운을 채우고 시작하기'}
           </Button>
         </div>
       )}

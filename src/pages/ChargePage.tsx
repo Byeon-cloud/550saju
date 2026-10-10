@@ -401,7 +401,7 @@ export function ChargePage() {
           <div style={{ marginTop: 4, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.4 }}>
             <strong style={{ color: C.goldDeep, fontWeight: 700 }}>1운 = 500원</strong>으로 충전돼요
           </div>
-          <div style={{ marginTop: 2, fontSize: 11.5, color: C.mute }}>
+          <div style={{ marginTop: 2, fontSize: 13, color: C.mute }}>
             사주 풀이는 모두 운(運)으로 결제해요
           </div>
         </div>
@@ -474,14 +474,14 @@ export function ChargePage() {
                   minHeight: 18,
                 }}>
                   <span style={{
-                    fontSize: 12.5, fontWeight: 700, color: C.goldDeep,
+                    fontSize: 13.5, fontWeight: 700, color: C.goldDeep,
                     letterSpacing: '-0.01em',
                   }}>
                     {pkg.label || ' '}
                   </span>
                   {hasBonus ? (
                     <span style={{
-                      fontSize: 12, fontWeight: 700, color: '#FFFFFF',
+                      fontSize: 13.5, fontWeight: 700, color: '#FFFFFF',
                       background: '#1A1612', padding: '2px 8px', borderRadius: 999, // 2026-10-10 v9 상태 표시는 먹
                       flexShrink: 0, lineHeight: 1.4,
                     }}>
@@ -503,7 +503,7 @@ export function ChargePage() {
                         {pkg.paidUn}운
                         <span style={{ color: C.gold, margin: '0 2px' }}>+</span>
                         {pkg.bonusUn}운
-                        <span style={{ fontSize: 11, color: C.goldDeep, fontWeight: 700, marginLeft: 4 }}>
+                        <span style={{ fontSize: 13, color: C.goldDeep, fontWeight: 700, marginLeft: 4 }}>
                           보너스
                         </span>
                       </>
@@ -520,7 +520,7 @@ export function ChargePage() {
 
                 {/* 하단: 유도 문구 */}
                 <div style={{
-                  fontSize: 11, color: C.inkSoft, lineHeight: 1.4, fontWeight: 500,
+                  fontSize: 13, color: C.inkSoft, lineHeight: 1.4, fontWeight: 500,
                 }}>
                   {pkg.guide}
                 </div>
@@ -536,7 +536,7 @@ export function ChargePage() {
         padding: '0 16px', gap: 12, marginTop: 16,
       }}>
         <div style={{ flex: 1, height: 1, background: C.line }} />
-        <span style={{ fontSize: 12, color: C.mute, fontWeight: 500, flexShrink: 0 }}>또는</span>
+        <span style={{ fontSize: 13.5, color: C.mute, fontWeight: 500, flexShrink: 0 }}>또는</span>
         <div style={{ flex: 1, height: 1, background: C.line }} />
       </div>
 
@@ -556,7 +556,7 @@ export function ChargePage() {
           }}>
             친구에게 공유하고 1운 받기
           </div>
-          <div style={{ marginTop: 6, fontSize: 12, color: C.mute, lineHeight: 1.55 }}>
+          <div style={{ marginTop: 6, fontSize: 13.5, color: C.mute, lineHeight: 1.55 }}>
             하루 3번까지, 총 3운(=1,500원치)까지<br />
             받을 수 있어요
           </div>
@@ -568,7 +568,7 @@ export function ChargePage() {
           {/* 카운터 pill */}
           <div style={{
             background: C.goldSoft, borderRadius: 999,
-            padding: '4px 10px', fontSize: 11, fontWeight: 700, color: C.goldDeep,
+            padding: '4px 10px', fontSize: 13, fontWeight: 700, color: C.goldDeep,
           }}>
             오늘 {sharesUsed}/{MAX_DAILY_SHARES}회
           </div>
@@ -593,36 +593,36 @@ export function ChargePage() {
 
       {/* ─── §8. Notice (이용 정책) ─── */}
       <div style={{ padding: '20px 20px 8px', marginTop: 12 }}>
-        <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+        <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           보너스 운은 환불 대상에서 제외됩니다 (본 운만 환불 가능).
         </p>
-        <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+        <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           구매한 운은 계정 종료 시 소멸돼요.
         </p>
-        <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+        <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           운은 사주500 앱 안에서만 사용할 수 있어요.
         </p>
-        <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+        <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           공유 리워드 어뷰징 감지 시 적립이 취소될 수 있어요.
         </p>
         {/* 환불·청약철회 고지 — 웹/앱 분기.
             앱(앱인토스): 토스 IAP/토스페이 우산. 웹: 전자상거래법 제17조 디지털콘텐츠 청약철회 직접 고지. */}
         {isAppintosBuild ? (
           /* P0-A · 토스페이 환불 정책 (앱인토스 검수 §1-12) */
-          <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+          <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
             환불은 토스페이 결제 취소 정책을 따르며, 결제 후 7일 이내 미사용 운에 한해 고객센터(info@juulabel.com)로 문의 시 심사 후 처리해요.
           </p>
         ) : (
-          <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
+          <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
             충전한 운을 분석에 사용(생성)하면 해당 운은 환불되지 않아요. 미사용 운은 결제 후 7일 이내 환불 가능하며, 청약철회일로부터 3영업일 이내 환급돼요. (디지털콘텐츠, 전자상거래법 제17조)
           </p>
         )}
-        <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: '6px 0 0' }}>
+        <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: '6px 0 0' }}>
           결제와 세금 관련 안내는{' '}
           <button
             onClick={() => navigate('/terms')}
             style={{
-              fontSize: 12, fontWeight: 600, color: C.goldDeep,
+              fontSize: 13.5, fontWeight: 600, color: C.goldDeep,
               background: 'none', border: 'none', cursor: 'pointer',
               padding: 0, textDecoration: 'underline',
             }}
@@ -631,7 +631,7 @@ export function ChargePage() {
           <button
             onClick={() => navigate('/privacy')}
             style={{
-              fontSize: 12, fontWeight: 600, color: C.goldDeep,
+              fontSize: 13.5, fontWeight: 600, color: C.goldDeep,
               background: 'none', border: 'none', cursor: 'pointer',
               padding: 0, textDecoration: 'underline',
             }}
@@ -665,7 +665,7 @@ export function ChargePage() {
             {!isAppintosBuild && (
               <div style={{
                 padding: '8px 20px',
-                fontSize: 11,
+                fontSize: 13,
                 lineHeight: 1.5,
                 color: 'rgba(248,245,238,0.72)',
                 borderBottom: '1px solid rgba(248,245,238,0.12)',
@@ -682,7 +682,7 @@ export function ChargePage() {
               {/* 좌: 선택한 패키지 요약 */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 12, fontWeight: 600,
+                  fontSize: 13.5, fontWeight: 600,
                   color: 'rgba(248,245,238,0.6)',
                   letterSpacing: '-0.01em',
                 }}>
@@ -811,7 +811,7 @@ export function ChargePage() {
                     </button>
 
                     {/* 테스트 안내 — 작게 (심사 기간 한정) */}
-                    <p style={{ fontSize: 11, color: C.mute, margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 13, color: C.mute, margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
                       지금은 결제 시스템 점검 중이에요 — 실제로 청구되지 않고 자동 취소됩니다
                     </p>
                   </motion.div>

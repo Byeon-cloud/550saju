@@ -1020,10 +1020,10 @@ export function DreamPage() {
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)' }}>
             사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
           </p>
         </div>
@@ -1092,7 +1092,7 @@ function CategoryPhase({
                     {cat.hot && (
                       <span
                         style={{
-                          fontSize: 12,
+                          fontSize: 13.5,
                           fontWeight: 700,
                           padding: '2px 7px',
                           borderRadius: 999,
@@ -1434,7 +1434,7 @@ function _FreeResultView_legacy({
                   borderRadius: 999,
                   background: `${gradeColor}18`,
                   color: gradeColor,
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: 800,
                   letterSpacing: '-0.01em',
                 }}
@@ -1850,7 +1850,7 @@ function DeepResultView({
                   borderRadius: 999,
                   background: `${gradeColor}18`,
                   color: gradeColor,
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: 800,
                 }}
               >
@@ -2013,7 +2013,7 @@ function ScoreDonut({ score, color }: { score: number; color: string }) {
         <span style={{ fontSize: 24, fontWeight: 900, color, letterSpacing: '-0.03em' }}>
           {score}
         </span>
-        <span className="sec-caption" style={{ fontSize: 10 }}>점</span>
+        <span className="sec-caption" style={{ fontSize: 12 }}>점</span>
       </div>
     </div>
   );
@@ -2056,7 +2056,7 @@ function LuckyColorCard({ color }: { color: any; height?: number }) {
       <p
         className="text-body-sm"
         style={{
-          fontSize: 12,
+          fontSize: 13.5,
           color: 'var(--text-secondary)',
           lineHeight: 1.5,
           margin: 0,
@@ -2107,7 +2107,7 @@ function LuckyStatCard({
       <p
         className="text-body-sm"
         style={{
-          fontSize: 12,
+          fontSize: 13.5,
           color: 'var(--text-secondary)',
           lineHeight: 1.5,
           margin: 0,

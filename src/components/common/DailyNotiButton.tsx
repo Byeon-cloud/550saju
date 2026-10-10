@@ -77,7 +77,7 @@ export function DailyNotiButton({ className }: { className?: string }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         padding: '10px 14px', borderRadius: 12,
         background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.22)',
-        fontSize: 12.5, fontWeight: 600, color: C.goldDeep,
+        fontSize: 13.5, fontWeight: 600, color: C.goldDeep,
       }}>
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 900 }}>日</span>
         매일 아침 9시, 운세 알림을 받고 있어요
@@ -100,7 +100,7 @@ export function DailyNotiButton({ className }: { className?: string }) {
         }}>日</span>
         <span>
           <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: C.ink }}>매일 아침 운세 알림 받기</span>
-          <span style={{ display: 'block', fontSize: 11.5, color: C.mute, marginTop: 1 }}>아침 9시, 오늘의 운세가 도착해요</span>
+          <span style={{ display: 'block', fontSize: 13, color: C.mute, marginTop: 1 }}>아침 9시, 오늘의 운세가 도착해요</span>
         </span>
       </span>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>

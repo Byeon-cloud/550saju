@@ -93,11 +93,11 @@ export function Component12UnseongSection({
               }}
             >
               일주는 <span style={{ color: C.goldDeep, fontWeight: 800 }}>{meaning.ko}</span>
-              <span style={{ fontFamily: SERIF, fontSize: 11, color: C.mute, marginLeft: 4 }}>({meaning.hanja})</span>
+              <span style={{ fontFamily: SERIF, fontSize: 13, color: C.mute, marginLeft: 4 }}>({meaning.hanja})</span>
               에 있어요
             </div>
           )}
-          <div style={{ fontSize: 11, color: C.mute, lineHeight: 1.6, fontStyle: 'italic' }}>
+          <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.6, fontStyle: 'italic' }}>
             12운성은 사람이 태어나서 자라고 활동하다 정리되는 순환을 12단계로 본 명리학 모델입니다.
             본인의 일주가 어느 단계에 놓였는지에 따라 살아가는 리듬이 다르게 나타납니다.
           </div>
@@ -127,7 +127,7 @@ export function Component12UnseongSection({
               <div
                 style={{
                   fontFamily: SERIF,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                   color: C.goldDeep,
                   letterSpacing: '0.06em',
@@ -153,7 +153,7 @@ export function Component12UnseongSection({
               <div
                 style={{
                   fontFamily: SERIF,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 700,
                   color: C.goldDeep,
                   letterSpacing: '0.06em',
@@ -163,10 +163,10 @@ export function Component12UnseongSection({
                   gap: 6,
                 }}
               >
-                <span style={{ fontSize: 12 }}>道</span>
+                <span style={{ fontSize: 13.5 }}>道</span>
                 <span>이 결로 살아가려면</span>
               </div>
-              <div style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.7 }}>
+              <div style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.7 }}>
                 {detail.howToLive}
               </div>
             </div>
@@ -184,7 +184,7 @@ export function Component12UnseongSection({
                 <div
                   style={{
                     fontFamily: SERIF,
-                    fontSize: 10.5,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: C.goldDeep,
                     letterSpacing: '0.06em',
@@ -193,7 +193,7 @@ export function Component12UnseongSection({
                 >
                   강점, 長
                 </div>
-                <div style={{ fontSize: 11.5, color: C.inkSoft, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.6 }}>
                   {detail.strength}
                 </div>
               </div>
@@ -208,7 +208,7 @@ export function Component12UnseongSection({
                 <div
                   style={{
                     fontFamily: SERIF,
-                    fontSize: 10.5,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: C.goldDeep,
                     letterSpacing: '0.06em',
@@ -217,7 +217,7 @@ export function Component12UnseongSection({
                 >
                   주의, 短
                 </div>
-                <div style={{ fontSize: 11.5, color: C.inkSoft, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.6 }}>
                   {detail.caution}
                 </div>
               </div>
@@ -318,7 +318,7 @@ export function SinsalCardsSection({ sinsalAnalysis }: SinsalCardsSectionProps) 
             background: C.paperSoft,
             border: `1px dashed ${C.cardLine}`,
             borderRadius: 12,
-            fontSize: 12,
+            fontSize: 13.5,
             color: C.mute,
             lineHeight: 1.6,
             fontStyle: 'italic',
@@ -389,13 +389,13 @@ function SinsalCard({
           >
             {ko}
           </span>
-          <span style={{ fontFamily: SERIF, fontSize: 10, color: C.mute, fontWeight: 600 }}>
+          <span style={{ fontFamily: SERIF, fontSize: 12, color: C.mute, fontWeight: 600 }}>
             ({card.hanja})
           </span>
         </div>
         <span
           style={{
-            fontSize: 9,
+            fontSize: 12,
             fontWeight: 800,
             padding: '2px 6px',
             borderRadius: 999,
@@ -425,7 +425,7 @@ function SinsalCard({
       {/* 의미 */}
       <div
         style={{
-          fontSize: 11.5,
+          fontSize: 13,
           color: has ? C.inkSoft : C.mute,
           lineHeight: 1.5,
           fontWeight: 500,
@@ -438,7 +438,7 @@ function SinsalCard({
         <div
           style={{
             marginTop: 'auto',
-            fontSize: 10,
+            fontSize: 12,
             color: tone,
             fontWeight: 700,
             letterSpacing: '0.04em',
@@ -734,7 +734,7 @@ const linkBtnStyle: React.CSSProperties = {
   background: '#FFFFFF',
   border: `1px solid ${C.goldLine}`,
   borderRadius: 10,
-  fontSize: 12.5,
+  fontSize: 13.5,
   fontWeight: 700,
   color: C.goldDeep,
   cursor: 'pointer',
@@ -777,10 +777,10 @@ function SectionCard({
         }}
       >
         <span style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 800, color: C.goldDeep }}>{title}</span>
-        <span style={{ fontSize: 11, color: C.mute, fontFamily: SERIF }}>{hanja}</span>
+        <span style={{ fontSize: 13, color: C.mute, fontFamily: SERIF }}>{hanja}</span>
       </div>
       {intro && (
-        <div style={{ fontSize: 11, color: C.mute, marginBottom: 10, lineHeight: 1.5, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 13, color: C.mute, marginBottom: 10, lineHeight: 1.5, fontStyle: 'italic' }}>
           {intro}
         </div>
       )}

@@ -114,10 +114,10 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
           fontFamily: SERIF,
         }}
       >
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: C_GOLD_DEEP, letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C_GOLD_DEEP, letterSpacing: '0.04em' }}>
           {p.label}
         </span>
-        <span style={{ fontSize: 9, color: '#A8A097', marginTop: 2 }}>모름</span>
+        <span style={{ fontSize: 12, color: '#A8A097', marginTop: 2 }}>모름</span>
       </div>
     );
   }
@@ -182,7 +182,7 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
         {/* 한글 음 — 항상 표시 (한자만 보이는 가독성 문제 해결) */}
         <span
           style={{
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 700,
             color: isDay ? C_GOLD_DEEP : '#5A5249',
             letterSpacing: '0.02em',
@@ -214,7 +214,7 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
       {/* 라벨 (시/일/월/년) */}
       <span
         style={{
-          fontSize: 10.5,
+          fontSize: 13,
           fontWeight: 800,
           color: isDay ? C_GOLD_DEEP : '#A8A097',
           letterSpacing: '0.06em',

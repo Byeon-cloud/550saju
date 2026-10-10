@@ -28,7 +28,7 @@ export function ScoreRing({ label, score, color, delay = 0, icon }: ScoreRingPro
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {icon && <span className="text-[12px] leading-none mb-0.5">{icon}</span>}
+          {icon && <span className="text-[13.5px] leading-none mb-0.5">{icon}</span>}
           <motion.span
             className="text-[15px] font-black leading-none"
             style={{ color }}
@@ -40,7 +40,7 @@ export function ScoreRing({ label, score, color, delay = 0, icon }: ScoreRingPro
           </motion.span>
         </div>
       </div>
-      <span className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+      <span className="text-[13px] font-semibold" style={{ color: 'var(--text-secondary)' }}>{label}</span>
     </div>
   );
 }

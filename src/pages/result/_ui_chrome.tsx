@@ -119,7 +119,7 @@ export function PaywallBar({
               </div>
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   color: 'rgba(248,245,238,0.6)',
                   marginTop: 2,
                 }}
@@ -305,7 +305,7 @@ export function UpsellCard({ contentType, onTap }: UpsellCardProps) {
         <div
           style={{
             marginTop: 6,
-            fontSize: 12,
+            fontSize: 13.5,
             fontWeight: 700,
             color: C.goldDeep,
           }}

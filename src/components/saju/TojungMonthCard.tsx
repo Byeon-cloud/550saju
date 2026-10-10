@@ -96,10 +96,10 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
               {((goodDays && goodDays.length > 0) || (cautionDays && cautionDays.length > 0)) && (
                 <div className="flex flex-wrap gap-1.5">
                   {(goodDays || []).map((d) => (
-                    <span key={`g${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(78,122,87,0.10)', color: '#4E7A57' }}>좋은 날 {d}</span>
+                    <span key={`g${d}`} className="text-[13px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(78,122,87,0.10)', color: '#4E7A57' }}>좋은 날 {d}</span>
                   ))}
                   {(cautionDays || []).map((d) => (
-                    <span key={`c${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(176,74,56,0.08)', color: '#B23A3A' }}>조심 {d}</span>
+                    <span key={`c${d}`} className="text-[13px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(176,74,56,0.08)', color: '#B23A3A' }}>조심 {d}</span>
                   ))}
                 </div>
               )}

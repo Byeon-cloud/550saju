@@ -322,11 +322,11 @@ export function IdentityCard({
             letterSpacing: '0.16em',
           }}
         >
-          사주<span style={{ fontSize: 11, opacity: 0.7, marginLeft: 2 }}>500</span>
+          사주<span style={{ fontSize: 13, opacity: 0.7, marginLeft: 2 }}>500</span>
         </span>
         <span
           style={{
-            fontSize: 10,
+            fontSize: 12,
             color: C.mute,
             letterSpacing: '0.16em',
           }}
@@ -365,7 +365,7 @@ export function IdentityCard({
           >
             {birthLine}
             {ageLine && (
-              <span style={{ fontSize: 11, color: C.mute, fontWeight: 600, marginLeft: 6 }}>
+              <span style={{ fontSize: 13, color: C.mute, fontWeight: 600, marginLeft: 6 }}>
 , {ageLine}
               </span>
             )}
@@ -373,7 +373,7 @@ export function IdentityCard({
           {/* 2줄: 시간 */}
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               color: hasBirthTime ? C.goldDeep : C.mute,
               fontWeight: hasBirthTime ? 700 : 500,
               fontStyle: hasBirthTime ? 'normal' : 'italic',
@@ -410,7 +410,7 @@ export function IdentityCard({
           {/* "일주(日柱) · 나" 강조 라벨 */}
           <div
             style={{
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: 800,
               color: C.gold,
               letterSpacing: '0.18em',
@@ -497,7 +497,7 @@ export function IdentityCard({
                     textAlign: 'center',
                   }}
                 >
-                  <span style={{ fontSize: 9, fontWeight: 700, marginBottom: 2 }}>{labelKo}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, marginBottom: 2 }}>{labelKo}</span>
                   <span>모름</span>
                 </div>
               );
@@ -570,7 +570,7 @@ export function IdentityCard({
                   </span>
                 )}
                 <span style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.0 }}>{p.천간}</span>
-                <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.85, marginTop: 1 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.85, marginTop: 1 }}>
                   {OHENG_HAN[ganOheng]}
                 </span>
               </div>
@@ -645,7 +645,7 @@ export function IdentityCard({
               background: C.surface,
               border: `1px solid ${C.goldLine}`,
               borderRadius: 999,
-              fontSize: 11,
+              fontSize: 13,
             }}
           >
             {gabjaIdx > 0 && (
@@ -705,7 +705,7 @@ export function IdentityCard({
           style={{
             position: 'relative',
             textAlign: 'center',
-            fontSize: 10,
+            fontSize: 12,
             color: C.mute,
             letterSpacing: '0.18em',
             padding: '8px 22px 16px',

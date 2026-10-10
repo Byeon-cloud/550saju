@@ -80,12 +80,12 @@ export function StreakWidget({ snapshot, pulsing = false }: StreakWidgetProps) {
           3일 연속 출석
         </h3>
         {snapshot.streak > 0 ? (
-          <span className="ml-auto text-[12px] font-semibold" style={{ color: '#8C6D3D' }}>
+          <span className="ml-auto text-[13.5px] font-semibold" style={{ color: '#8C6D3D' }}>
             {snapshot.streak}일 연속
           </span>
         ) : null}
       </header>
-      <p className="text-[12px] mb-4" style={{ color: '#8A7F6E', lineHeight: 1.5 }}>
+      <p className="text-[13.5px] mb-4" style={{ color: '#8A7F6E', lineHeight: 1.5 }}>
         3일 이어서 출석할 때마다 운 1. 하루 빠지면 처음부터 다시 세요.
       </p>
 
@@ -118,7 +118,7 @@ function DotCell({ dot, pulsing }: { dot: DotState; pulsing: boolean }) {
 
   return (
     <div className={base} style={style}>
-      <span className="text-[11px] font-medium"
+      <span className="text-[13px] font-medium"
         style={{ color: dot.state === 'done' ? '#fff' : dot.state === 'today' ? '#1A1612' : '#8A7F6E' }}>
         {dot.label}
       </span>

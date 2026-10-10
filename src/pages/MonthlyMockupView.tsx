@@ -83,18 +83,18 @@ const MOCKUP_CSS = `
   color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
 }
 .monthly-mockup .hd::before { display: none; content: '月'; position: absolute; right: -16px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
-.monthly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .92; flex-wrap: wrap; }
-.monthly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
-.monthly-mockup .hd .month-tag { background: rgba(255,248,225,.22); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
+.monthly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; opacity: .92; flex-wrap: wrap; }
+.monthly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
+.monthly-mockup .hd .month-tag { background: rgba(255,248,225,.22); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-left: auto; }
 .monthly-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 25px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; }
-.monthly-mockup .hd .sub { font-size: 12.5px; opacity: .85; margin-top: 6px; position: relative; }
+.monthly-mockup .hd .sub { font-size: 13.5px; opacity: .85; margin-top: 6px; position: relative; }
 .monthly-mockup .hd .kw-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; position: relative; }
 .monthly-mockup .hd .kw {
   display: inline-flex; align-items: center;
   padding: 4px 11px; border-radius: 100px;
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.24);
-  font-size: 11px; color: rgba(255,255,255,0.95); font-weight: 600;
+  font-size: 13px; color: rgba(255,255,255,0.95); font-weight: 600;
 }
 
 /* My Saju mini card — DailyMockupView 와 100% 동일 */
@@ -104,7 +104,7 @@ const MOCKUP_CSS = `
   box-shadow: 0 2px 8px rgba(0,0,0,.04);
   border: 1px solid var(--c-card-line);
 }
-.monthly-mockup .my-saju .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
+.monthly-mockup .my-saju .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
 .monthly-mockup .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .monthly-mockup .saju-cell {
   display: flex; flex-direction: column; gap: 4px;
@@ -119,7 +119,7 @@ const MOCKUP_CSS = `
   padding: 5px 3px;
 }
 .monthly-mockup .saju-cell .lab {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
   color: var(--c-mute); text-align: center; margin-bottom: 2px;
 }
 .monthly-mockup .saju-cell.ilju .lab { color: var(--c-gold-deep); }
@@ -138,12 +138,12 @@ const MOCKUP_CSS = `
 .monthly-mockup .saju-cell .ji .han { font-size: 20px; }
 .monthly-mockup .saju-cell .gan .read,
 .monthly-mockup .saju-cell .ji .read {
-  font-size: 11px; font-weight: 700; opacity: 0.85;
+  font-size: 13px; font-weight: 700; opacity: 0.85;
   letter-spacing: 0.05em; font-family: 'Pretendard', sans-serif;
 }
 .monthly-mockup .saju-cell .gan-meaning,
 .monthly-mockup .saju-cell .ji-meaning {
-  font-size: 11px; color: var(--c-mute); font-weight: 600;
+  font-size: 13px; color: var(--c-mute); font-weight: 600;
   text-align: center; line-height: 1.2; font-family: 'Pretendard', sans-serif;
 }
 .monthly-mockup .saju-cell.ilju .gan-meaning,
@@ -158,8 +158,8 @@ const MOCKUP_CSS = `
 
 /* Oheng row — DailyMockupView chip 패턴 */
 .monthly-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
-.monthly-mockup .ohaeng-row .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
-.monthly-mockup .ohaeng-row .lead { font-size: 12px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
+.monthly-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
+.monthly-mockup .ohaeng-row .lead { font-size: 13.5px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
 .monthly-mockup .ohaeng-bal { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .monthly-mockup .ob-item {
   display: inline-flex; align-items: center; gap: 6px;
@@ -187,7 +187,7 @@ const MOCKUP_CSS = `
   color: var(--c-ink); font-feature-settings: 'tnum';
 }
 .monthly-mockup .ob-item.lack { opacity: 0.5; }
-.monthly-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 11px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
+.monthly-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 13px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
 
 /* Body */
 .monthly-mockup .body { padding: 22px 20px 0; }
@@ -239,7 +239,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
 .monthly-mockup .section.open > *:last-child { padding-bottom: 18px; }
 .monthly-mockup .section.open > .sec-lead:first-of-type { padding-top: 14px; }
-.monthly-mockup .sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.monthly-mockup .sec-lead { font-size: 13.5px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .monthly-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 
 /* 강조 위계 (DailyMockupView 와 동일) */
@@ -286,7 +286,7 @@ const MOCKUP_CSS = `
 
 /* §02 상순, 중순, 하순 흐름 — timeline + score */
 .monthly-mockup .period-chart { margin: 14px 0 0; background: #fff; border-radius: 12px; padding: 14px; border: 1px solid var(--c-card-line); }
-.monthly-mockup .period-chart .ttl { font-size: 11px; color: var(--c-accent); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
+.monthly-mockup .period-chart .ttl { font-size: 13px; color: var(--c-accent); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
 .monthly-mockup .period-svg { width: 100%; height: 110px; }
 .monthly-mockup .period-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
 .monthly-mockup .period {
@@ -301,7 +301,7 @@ const MOCKUP_CSS = `
   font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 800;
 }
 .monthly-mockup .period .phase-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1.2; }
-.monthly-mockup .period .phase-range { font-size: 11px; color: var(--c-mute); margin-top: 2px; font-feature-settings: 'tnum'; }
+.monthly-mockup .period .phase-range { font-size: 13px; color: var(--c-mute); margin-top: 2px; font-feature-settings: 'tnum'; }
 .monthly-mockup .period .phase-score { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 800; line-height: 1; }
 .monthly-mockup .period .score-bar { height: 6px; border-radius: 100px; overflow: hidden; background: rgba(0,0,0,0.06); margin-bottom: 10px; }
 .monthly-mockup .period .score-bar > span { display: block; height: 100%; border-radius: 100px; }
@@ -323,7 +323,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .domain .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .monthly-mockup .domain .sc-wrap { display: flex; align-items: center; gap: 6px; }
 .monthly-mockup .domain .sc-tag {
-  font-size: 10px; font-weight: 700; color: var(--c-mute);
+  font-size: 12px; font-weight: 700; color: var(--c-mute);
   background: var(--c-paper); padding: 2px 7px; border-radius: 100px;
   border: 1px solid var(--c-card-line); white-space: nowrap; letter-spacing: 0.02em;
 }
@@ -331,13 +331,13 @@ const MOCKUP_CSS = `
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   margin-top: 12px; padding-top: 11px;
   border-top: 1px dashed var(--c-card-line);
-  font-size: 12.5px; font-weight: 700; letter-spacing: -0.01em;
+  font-size: 13.5px; font-weight: 700; letter-spacing: -0.01em;
 }
 .monthly-mockup .domain .domain-cta svg { width: 16px; height: 16px; flex-shrink: 0; }
 .monthly-mockup .domain .head-l { display: flex; align-items: center; gap: 8px; }
 .monthly-mockup .domain .dot { width: 10px; height: 10px; border-radius: 50%; }
 .monthly-mockup .domain .han-chip {
-  font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 700;
+  font-family: 'Noto Serif KR', serif; font-size: 13.5px; font-weight: 700;
   padding: 2px 8px; border-radius: 100px;
 }
 .monthly-mockup .domain .nm { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 700; color: #1a1a1a; }
@@ -357,13 +357,13 @@ const MOCKUP_CSS = `
 .monthly-mockup .day-note.lucky { background: var(--c-accent-soft); border-color: var(--c-accent-line); }
 .monthly-mockup .day-note.caution { background: rgba(176,74,56,0.05); border-color: rgba(176,74,56,0.22); }
 .monthly-mockup .day-note .head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.monthly-mockup .day-note .pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; color: #fff; }
+.monthly-mockup .day-note .pill { font-size: 13px; font-weight: 700; padding: 2px 9px; border-radius: 100px; color: #fff; }
 .monthly-mockup .day-note.lucky .pill { background: var(--c-accent); }
 .monthly-mockup .day-note.caution .pill { background: #B04A38; }
 .monthly-mockup .day-note .dt { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 800; font-feature-settings: 'tnum'; }
 .monthly-mockup .day-note.lucky .dt { color: var(--c-accent); }
 .monthly-mockup .day-note.caution .dt { color: #B04A38; }
-.monthly-mockup .day-note .day-reason { font-size: 12.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
+.monthly-mockup .day-note .day-reason { font-size: 13.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
 .monthly-mockup .day-reason strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.30) 55%); padding: 0 2px; }
 .monthly-mockup .day-reason u { text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 2px; color: #1a1a1a; font-weight: 600; }
 
@@ -377,7 +377,7 @@ const MOCKUP_CSS = `
   position: relative; overflow: hidden;
 }
 .monthly-mockup .gaewoon-card::before { display: none; content: '開'; position: absolute; right: -8px; bottom: -24px; font-family: 'Noto Serif KR', serif; font-size: 110px; font-weight: 900; color: rgba(162,58,42,.06); line-height: 1; }
-.monthly-mockup .gaewoon-card .lab { font-size: 11px; color: var(--c-accent); letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px; position: relative; }
+.monthly-mockup .gaewoon-card .lab { font-size: 13px; color: var(--c-accent); letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px; position: relative; }
 .monthly-mockup .gaewoon-card .gaewoon-body { font-size: 14px; line-height: 1.8; color: #2a2520; word-break: keep-all; position: relative; }
 .monthly-mockup .gaewoon-body strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.32) 55%); padding: 0 3px; border-radius: 2px; }
 .monthly-mockup .gaewoon-body u { text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; color: #1a1a1a; font-weight: 600; }
@@ -387,8 +387,8 @@ const MOCKUP_CSS = `
 .monthly-mockup .actions .btn { background: #fff; border: 1px solid var(--c-card-line); border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; font: inherit; appearance: none; text-align: center; }
 .monthly-mockup .actions .btn:hover { background: var(--c-paper); }
 .monthly-mockup .actions .btn svg { width: 22px; height: 22px; color: var(--c-accent); }
-.monthly-mockup .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
-.monthly-mockup .actions .btn .sb { font-size: 11px; color: var(--c-mute); }
+.monthly-mockup .actions .btn .ti { font-size: 13.5px; font-weight: 600; }
+.monthly-mockup .actions .btn .sb { font-size: 13px; color: var(--c-mute); }
 
 /* Share (단일 full-width) */
 .monthly-mockup .share-row { margin: 14px 20px 0; }
@@ -401,13 +401,13 @@ const MOCKUP_CSS = `
 }
 .monthly-mockup .share-row button svg { width: 18px; height: 18px; }
 
-.monthly-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px 28px; border-top: 1px dashed var(--c-card-line); font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
+.monthly-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px 28px; border-top: 1px dashed var(--c-card-line); font-size: 13px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
 .monthly-mockup .service-notice .src { color: var(--c-mute); margin-bottom: 6px; }
 
 /* 점진 로딩 스켈레톤 — "내용 바뀜"이 아니라 "채워짐" 명확한 placeholder */
 .monthly-mockup .skeleton-section .section-header { cursor: default; }
 .monthly-mockup .skel-body { padding: 12px 0 4px; }
-.monthly-mockup .skel-note { font-size: 11.5px; color: var(--c-accent); font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.monthly-mockup .skel-note { font-size: 13px; color: var(--c-accent); font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 .monthly-mockup .skel-note .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--c-accent); animation: monthly-pulse 1s infinite; }
 .monthly-mockup .skel-line, .monthly-mockup .skel-card { position: relative; overflow: hidden; background: #ECE6DA; border-radius: 8px; }
 .monthly-mockup .skel-line { height: 13px; margin: 9px 0; }
@@ -428,7 +428,7 @@ const MOCKUP_CSS = `
   margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
   background: var(--c-gold-soft); border: 1px solid var(--c-gold-line);
   display: flex; align-items: center; gap: 8px;
-  font-size: 12px; font-weight: 600; color: var(--c-gold-deep);
+  font-size: 13.5px; font-weight: 600; color: var(--c-gold-deep);
 }
 .monthly-mockup .refining-pill .spark { width: 7px; height: 7px; border-radius: 50%; background: var(--c-gold); animation: monthly-pulse 1s infinite; flex-shrink: 0; }
 `;

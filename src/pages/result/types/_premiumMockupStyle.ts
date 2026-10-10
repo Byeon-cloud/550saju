@@ -40,11 +40,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .header .back { font-size: 22px; cursor: pointer; opacity: .8; }
   .premium-mockup .header .meta { flex: 1; }
   .premium-mockup .header .meta .title { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 600; letter-spacing: 0; }
-  .premium-mockup .header .meta .sub { font-size: 11px; color: #E8D9B8; margin-top: 2px; letter-spacing: 0.05em; }
+  .premium-mockup .header .meta .sub { font-size: 13px; color: #E8D9B8; margin-top: 2px; letter-spacing: 0.05em; }
   .premium-mockup .header .badge {
     background: linear-gradient(135deg, #E8D9B8 0%, #B8965A 100%);
     color: #1a1a1a;
-    font-size: 11px; font-weight: 700;
+    font-size: 13px; font-weight: 700;
     padding: 4px 10px; border-radius: 100px;
     letter-spacing: 0.08em;
   }/* ─── Hero (인물 정보 카드) ──────────────────────────── */
@@ -96,11 +96,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     color: #4E7A57;
   }
   .premium-mockup .hero-card .ilgan .label {
-    font-size: 12px; color: #4E7A57; font-weight: 500;
+    font-size: 13.5px; color: #4E7A57; font-weight: 500;
   }
   .premium-mockup .hero-card .meta {
     margin-top: 14px;
-    display: flex; gap: 12px; font-size: 11px; color: #7F6B4E;
+    display: flex; gap: 12px; font-size: 13px; color: #7F6B4E;
     position: relative; z-index: 2;
   }
   .premium-mockup .hero-card .meta span { display: inline-flex; align-items: center; gap: 4px; }/* ─── 섹션 공통 ──────────────────────────────────── */
@@ -129,7 +129,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin-left: 6px; font-size: 17px;
   }
   .premium-mockup .section-sub {
-    font-size: 12px; color: #7F6B4E;
+    font-size: 13.5px; color: #7F6B4E;
     margin-bottom: 18px;
   }
   .premium-mockup .section p {
@@ -218,7 +218,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     align-items: center;
   }
   .premium-mockup .wongug-table .row-label {
-    font-size: 11px; color: #7F6B4E;
+    font-size: 13px; color: #7F6B4E;
     align-self: center;
     justify-self: center;
     text-align: center;
@@ -226,7 +226,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     width: 100%;
   }
   .premium-mockup .wongug-table .col-header {
-    font-size: 11px; color: #B8965A;
+    font-size: 13px; color: #B8965A;
     padding: 4px 0;
     font-weight: 700; letter-spacing: 0.08em;
   }
@@ -286,7 +286,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: #1A1A1A; color: #fff; border-color: #3D3D3D;
   }
   .premium-mockup .wongug-cell .yum {
-    font-size: 11px; color: #7F6B4E; margin-top: 6px; font-weight: 500;
+    font-size: 13px; color: #7F6B4E; margin-top: 6px; font-weight: 500;
   }/* ─── 오행 밸런스 차트 ─────────────────────────── */
 
   
@@ -297,7 +297,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     padding: 14px 12px;
   }
   .premium-mockup .ohaeng-chart .title {
-    font-size: 11px; color: #5C4A2E;
+    font-size: 13px; color: #5C4A2E;
     margin-bottom: 8px; font-weight: 500;
   }
   .premium-mockup .ohaeng-bar {
@@ -305,7 +305,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .premium-mockup .ohaeng-bar .o-label {
     font-family: 'Noto Serif KR', serif;
@@ -350,8 +350,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-family: 'Noto Serif KR', serif;
     font-size: 14px; font-weight: 600; color: #1a1a1a;
   }
-  .premium-mockup .sip-card .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 12px; }
-  .premium-mockup .sip-card .desc { font-size: 11.5px; color: #5C4A2E; line-height: 1.6; }/* ─── 4. 대운 타임라인 ─────────────────────────── */
+  .premium-mockup .sip-card .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 13.5px; }
+  .premium-mockup .sip-card .desc { font-size: 13px; color: #5C4A2E; line-height: 1.6; }/* ─── 4. 대운 타임라인 ─────────────────────────── */
 
   
   .premium-mockup .daewoon-timeline {
@@ -378,10 +378,10 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(180deg, rgba(212,175,55,.18) 0%, rgba(212,175,55,.08) 100%);
     border-color: #E8D9B8;
   }
-  .premium-mockup .dw-cell .age { font-size: 11px; color: #7F6B4E; }
+  .premium-mockup .dw-cell .age { font-size: 13px; color: #7F6B4E; }
   .premium-mockup .dw-cell .gan { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; margin-top: 4px; line-height: 1; }
   .premium-mockup .dw-cell .ji  { font-family: 'Noto Serif KR', serif; font-size: 13px; color: #5C4A2E; line-height: 1.2; }
-  .premium-mockup .dw-cell .label { font-size: 11px; color: #B8965A; margin-top: 4px; font-weight: 600; letter-spacing: -0.02em; }/* ─── 5. 연운 라인 차트 (점수 추이) ───────────── */
+  .premium-mockup .dw-cell .label { font-size: 13px; color: #B8965A; margin-top: 4px; font-weight: 600; letter-spacing: -0.02em; }/* ─── 5. 연운 라인 차트 (점수 추이) ───────────── */
 
   
   .premium-mockup .yeonun-chart {
@@ -392,7 +392,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin: 14px 0;
   }
   .premium-mockup .yeonun-chart .ttl {
-    font-size: 11px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
+    font-size: 13px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
   }
   .premium-mockup .yeonun-svg { width: 100%; height: 120px; }/* ─── 6. 신살 카드 리스트 ────────────────────── */
 
@@ -414,13 +414,13 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-family: 'Noto Serif KR', serif;
     font-size: 14px; font-weight: 700; color: #1a1a1a;
   }
-  .premium-mockup .shinsal-card .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 12px; }
+  .premium-mockup .shinsal-card .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 13.5px; }
   .premium-mockup .shinsal-card .tag {
     margin-left: auto;
     background: rgba(184,150,90,.1); color: #B8965A;
-    font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 600;
+    font-size: 13px; padding: 2px 8px; border-radius: 100px; font-weight: 600;
   }
-  .premium-mockup .shinsal-card p { font-size: 12.5px; color: #2a2520; line-height: 1.7; margin: 0; }/* ─── 7. 실천 액션 카드 ─────────────────────── */
+  .premium-mockup .shinsal-card p { font-size: 13.5px; color: #2a2520; line-height: 1.7; margin: 0; }/* ─── 7. 실천 액션 카드 ─────────────────────── */
 
   
   .premium-mockup .action-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
@@ -443,7 +443,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .action-card .body { flex: 1; }
   .premium-mockup .action-card .body .ttl { font-weight: 600; font-size: 14px; color: #1a1a1a; margin-bottom: 4px; }
-  .premium-mockup .action-card .body .desc { font-size: 12.5px; color: #5C4A2E; line-height: 1.65; }/* ─── Pull-quote (인용 강조 박스) ──────────────── */
+  .premium-mockup .action-card .body .desc { font-size: 13.5px; color: #5C4A2E; line-height: 1.65; }/* ─── Pull-quote (인용 강조 박스) ──────────────── */
 
   
   /* 2026-05-28 — 좌측 strip 제거. 그라데이션 + 큰 따옴표(::before)로 인용 표현. */
@@ -509,7 +509,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     line-height: 1;
   }
   .premium-mockup .upsell-card .label {
-    font-size: 11px; color: #E8D9B8;
+    font-size: 13px; color: #E8D9B8;
     letter-spacing: 0.15em; font-weight: 600;
     margin-bottom: 8px;
   }
@@ -520,7 +520,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     position: relative;
   }
   .premium-mockup .upsell-card p {
-    font-size: 12.5px; color: #c4baa0;
+    font-size: 13.5px; color: #c4baa0;
     margin-bottom: 14px; line-height: 1.6;
     position: relative;
   }
@@ -549,15 +549,15 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .result-footer .btn:hover { border-color: #B8965A; }
   .premium-mockup .result-footer .btn svg { width: 22px; height: 22px; color: #B8965A; }
-  .premium-mockup .result-footer .btn .ti { font-size: 12.5px; font-weight: 600; }
-  .premium-mockup .result-footer .btn .sb { font-size: 11px; color: #7F6B4E; }/* ─── 리포트의 지식 기반 (fine print, 찾아 읽는 사람만) ─── */
+  .premium-mockup .result-footer .btn .ti { font-size: 13.5px; font-weight: 600; }
+  .premium-mockup .result-footer .btn .sb { font-size: 13px; color: #7F6B4E; }/* ─── 리포트의 지식 기반 (fine print, 찾아 읽는 사람만) ─── */
 
   
   .premium-mockup .report-sources {
     margin: 28px 2px 0;
     padding: 12px 0 0;
     border-top: 1px solid rgba(138,125,95,.16);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.72;
     color: #a89c7f;
     letter-spacing: 0.005em;
@@ -607,7 +607,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     position: relative;
     display: inline-block;
     font-family: 'Noto Serif KR', serif;
-    font-size: 11px;
+    font-size: 13px;
     color: #f4d166;
     letter-spacing: 0.16em;
     font-weight: 800;
@@ -620,7 +620,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     content: '◇  ';
     color: #f4d166;
     opacity: 0.7;
-    font-size: 11px;
+    font-size: 13px;
     margin-right: 4px;
   }
   .premium-mockup .section-conclusion p,
@@ -664,7 +664,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     padding-top: 12px;
     border-top: 1px dashed rgba(244,209,102,0.18);
     font-family: 'Noto Serif KR', serif;
-    font-size: 11px;
+    font-size: 13px;
     color: rgba(244,209,102,0.62);
     letter-spacing: 0.08em;
     text-align: right;
@@ -673,7 +673,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   
   .premium-mockup .word-count {
     text-align: center;
-    font-size: 11px;
+    font-size: 13px;
     color: #7F6B4E;
     margin: 24px 0 12px;
     letter-spacing: 0.05em;
@@ -705,7 +705,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border: 1px solid #E5DFD0;
     border-radius: 100px;
     padding: 1px 7px;
-    font-size: 11px; color: #7F6B4E;
+    font-size: 13px; color: #7F6B4E;
     font-weight: 600; letter-spacing: 0.05em;
     white-space: nowrap;
   }
@@ -724,7 +724,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin: 12px 0;
   }
   .premium-mockup .yy-title {
-    font-size: 11px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
+    font-size: 13px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
   }
   .premium-mockup .yy-bar {
     display: flex; height: 24px; border-radius: 6px; overflow: hidden;
@@ -738,7 +738,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(90deg, #37474f, #546e7a);
     color: #fff; display: flex; align-items: center; justify-content: center;
   }
-  .premium-mockup .yy-caption { font-size: 11px; color: #5C4A2E; margin-top: 6px; line-height: 1.55; }/* 오행 강과 약 진단 도식 */
+  .premium-mockup .yy-caption { font-size: 13px; color: #5C4A2E; margin-top: 6px; line-height: 1.55; }/* 오행 강과 약 진단 도식 */
 
   
   .premium-mockup .ohaeng-diag {
@@ -773,7 +773,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .ohaeng-diag .od-dots span.on { background: #B8965A; }
   .premium-mockup .ohaeng-diag .od-label {
-    font-size: 11px; color: #7F6B4E; margin-top: 4px;
+    font-size: 13px; color: #7F6B4E; margin-top: 4px;
     font-weight: 600; letter-spacing: 0.05em;
   }
   .premium-mockup .ohaeng-diag .od-label.s { color: #4E7A57; }
@@ -788,23 +788,23 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin: 12px 0;
   }
   .premium-mockup .ganji-flow .gf-title {
-    font-size: 11px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
+    font-size: 13px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
   }
   .premium-mockup .ganji-flow .gf-row {
     display: flex; align-items: center; gap: 10px;
     padding: 8px 0;
     border-top: 1px dashed #E5DFD0;
-    font-size: 12px; color: #2a2520;
+    font-size: 13.5px; color: #2a2520;
   }
   .premium-mockup .ganji-flow .gf-row:first-of-type { border-top: 0; }
   .premium-mockup .ganji-flow .gf-glyph {
     font-family: 'Noto Serif KR', serif;
     font-size: 15px; font-weight: 700;
   }
-  .premium-mockup .ganji-flow .gf-arrow { color: #B8965A; font-size: 11px; }
+  .premium-mockup .ganji-flow .gf-arrow { color: #B8965A; font-size: 13px; }
   .premium-mockup .ganji-flow .gf-type {
     margin-left: auto; padding: 2px 8px; border-radius: 100px;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
   }
   .premium-mockup .ganji-flow .gf-type.hap   { background: rgba(78,122,87,.1);  color: #4E7A57; }
   .premium-mockup .ganji-flow .gf-type.chung { background: rgba(198,40,40,.1);  color: #c62828; }
@@ -820,7 +820,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .sip-card .strength span.on { background: #B8965A; }
   .premium-mockup .sip-card .s-label {
-    font-size: 11px; color: #7F6B4E;
+    font-size: 13px; color: #7F6B4E;
     margin-top: 4px; letter-spacing: 0.05em;
   }/* 대운 점수 막대 (60년) */
 
@@ -833,14 +833,14 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border: 1px solid #E5DFD0;
   }
   .premium-mockup .daewoon-scores .ds-title {
-    font-size: 11px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
+    font-size: 13px; color: #5C4A2E; margin-bottom: 10px; font-weight: 500;
   }
   .premium-mockup .daewoon-scores .ds-row {
     display: grid;
     grid-template-columns: 58px 1fr 32px;
     align-items: center; gap: 8px;
     margin-bottom: 5px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .premium-mockup .daewoon-scores .ds-age { color: #7F6B4E; letter-spacing: 0.03em; }
   .premium-mockup .daewoon-scores .ds-track { background: #E5DFD0; height: 8px; border-radius: 100px; position: relative; }
@@ -855,7 +855,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .daewoon-scores .ds-score { text-align: right; color: #1a1a1a; font-weight: 600; }
   .premium-mockup .daewoon-scores .ds-caption {
-    margin-top: 8px; font-size: 11px; color: #7F6B4E;
+    margin-top: 8px; font-size: 13px; color: #7F6B4E;
     padding-top: 8px; border-top: 1px dashed #E5DFD0; line-height: 1.6;
   }/* 신살 × 행동 카드 (v2 확장) */
 
@@ -874,7 +874,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-size: 11px; font-weight: 700;
   }
   .premium-mockup .shinsal-card .adv .adv-text {
-    font-size: 11.5px; color: #2a2520; line-height: 1.55;
+    font-size: 13px; color: #2a2520; line-height: 1.55;
   }/* 주제별 미니 카드 그리드 */
 
   
@@ -929,7 +929,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     transition: width 0.4s ease;
   }
   .premium-mockup .topic-mini .tm-desc {
-    font-size: 11.5px; color: #5C4A2E; line-height: 1.6;
+    font-size: 13px; color: #5C4A2E; line-height: 1.6;
     word-break: keep-all;
     margin-bottom: 4px;
   }
@@ -941,7 +941,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     padding: 7px 9px;
     background: rgba(184,150,90,0.06);
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 13px;
     color: #5C4A2E;
     line-height: 1.5;
     word-break: keep-all;
@@ -949,7 +949,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .topic-mini .tm-hook .tm-hook-label {
     display: inline-block;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
     color: #B8965A;
     background: #fff;
@@ -989,7 +989,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin-top: auto;
     padding-top: 6px;
     border-top: 1px dashed #E5DFD0;
-    font-size: 11px; color: #B8965A;
+    font-size: 13px; color: #B8965A;
     font-weight: 700;
     display: flex; align-items: center; justify-content: space-between;
     gap: 6px;
@@ -1037,14 +1037,14 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: rgba(212,175,55,.10);
     border: 1px solid rgba(212,175,55,.32);
     border-radius: 100px;
-    color: #8a6e1f; font-size: 12px; font-weight: 600;
+    color: #8a6e1f; font-size: 13.5px; font-weight: 600;
     padding: 8px 14px; letter-spacing: 0.04em;
     pointer-events: none; 
     min-width: 76px; justify-content: center;
   }
   .premium-mockup .sec-toggle .chev {
     display: inline-block; transition: transform .25s ease;
-    font-size: 11px; line-height: 1;
+    font-size: 13px; line-height: 1;
   }
   .premium-mockup .sec-toggle.collapsed .chev { transform: rotate(-90deg); }
   .premium-mockup .section-body {
@@ -1065,12 +1065,12 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: #fff; border-radius: 10px; padding: 10px 8px;
     border: 1px solid #E5DFD0; text-align: center;
   }
-  .premium-mockup .rel-card .rc-label { font-size: 11px; color: #7F6B4E; letter-spacing: 0.06em; font-weight: 600; }
+  .premium-mockup .rel-card .rc-label { font-size: 13px; color: #7F6B4E; letter-spacing: 0.06em; font-weight: 600; }
   .premium-mockup .rel-card .rc-glyph {
     font-family: 'Noto Serif KR', serif;
     font-size: 18px; font-weight: 700; margin: 4px 0;
   }
-  .premium-mockup .rel-card .rc-desc { font-size: 11px; color: #2a2520; line-height: 1.5; }
+  .premium-mockup .rel-card .rc-desc { font-size: 13px; color: #2a2520; line-height: 1.5; }
   .premium-mockup .rel-card.boost .rc-glyph { color: #4E7A57; }
   .premium-mockup .rel-card.clash .rc-glyph { color: #c62828; }
   .premium-mockup .rel-card.calm  .rc-glyph { color: #3E5F82; }/* 관계의 결 (六親) — 6카드 상세 */
@@ -1113,7 +1113,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel6-tag {
     margin-left: auto;
-    font-size: 11px; padding: 3px 10px;
+    font-size: 13px; padding: 3px 10px;
     border-radius: 100px; font-weight: 600;
     letter-spacing: 0.02em;
   }
@@ -1139,7 +1139,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     padding: 8px 10px;
     background: linear-gradient(180deg, #FAF6EC 0%, #F4ECD8 100%);
     border-radius: 6px;
-    font-size: 11.5px;
+    font-size: 13px;
     color: #5C4A2E;
     line-height: 1.6;
     word-break: keep-all;
@@ -1148,7 +1148,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     flex-shrink: 0;
     display: inline-block;
     font-family: 'Noto Serif KR', serif;
-    font-size: 11px; font-weight: 800;
+    font-size: 13px; font-weight: 800;
     color: #B8965A;
     background: #fff;
     padding: 1px 6px;
@@ -1168,7 +1168,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .rel6-dont {
     display: flex; align-items: flex-start; gap: 10px;
     padding: 10px 12px; border-radius: 8px;
-    font-size: 12.5px; line-height: 1.62;
+    font-size: 13.5px; line-height: 1.62;
     color: #2a2520;
     word-break: keep-all;
   }
@@ -1184,7 +1184,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     flex-shrink: 0;
     font-family: 'Noto Serif KR', serif;
     font-weight: 800;
-    font-size: 11px; letter-spacing: 0.06em;
+    font-size: 13px; letter-spacing: 0.06em;
     padding: 2px 8px;
     border-radius: 4px;
     line-height: 1.5;
@@ -1230,11 +1230,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .now-daewoon .nd-glyph .g-gan { font-size: 20px; font-weight: 700; color: #4E7A57; }
   .premium-mockup .now-daewoon .nd-glyph .g-ji  { font-size: 14px; color: #7D7870; }
-  .premium-mockup .now-daewoon .nd-info .nd-age { font-size: 11px; color: #B8965A; font-weight: 600; letter-spacing: 0.08em; }
+  .premium-mockup .now-daewoon .nd-info .nd-age { font-size: 13px; color: #B8965A; font-weight: 600; letter-spacing: 0.08em; }
   .premium-mockup .now-daewoon .nd-info .nd-key { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-top: 2px; font-family: 'Noto Serif KR', serif; }
   .premium-mockup .now-daewoon .nd-row {
     display: grid; grid-template-columns: 70px 1fr;
-    gap: 6px; font-size: 11.5px; padding: 4px 0;
+    gap: 6px; font-size: 13px; padding: 4px 0;
     border-top: 1px dashed rgba(212,175,55,.3);
     color: #2a2520; line-height: 1.55;
   }
@@ -1254,7 +1254,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     text-align: center;
   }
   .premium-mockup .ohaeng-radar .or-title {
-    font-size: 11px; color: #5C4A2E; margin-bottom: 4px; font-weight: 500; text-align: left;
+    font-size: 13px; color: #5C4A2E; margin-bottom: 4px; font-weight: 500; text-align: left;
   }
   .premium-mockup .ohaeng-radar svg { width: 100%; max-width: 260px; height: 240px; display: block; margin: 0 auto; }/* 오행별 인생의 결 카드 */
 
@@ -1293,14 +1293,14 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-size: 14px; font-weight: 700; color: #1a1a1a;
   }
   .premium-mockup .life-edge-card .le-tag {
-    margin-left: auto; font-size: 11px;
+    margin-left: auto; font-size: 13px;
     padding: 2px 8px; border-radius: 100px;
     background: #E5DFD0; color: #5C4A2E; font-weight: 600;
   }
   .premium-mockup .life-edge-card .le-tag.s { background: rgba(78,122,87,.12); color: #4E7A57; }
   .premium-mockup .life-edge-card .le-tag.w { background: rgba(198,40,40,.10); color: #c62828; }
   .premium-mockup .life-edge-card .le-desc {
-    font-size: 12.5px; color: #2a2520; line-height: 1.65;
+    font-size: 13.5px; color: #2a2520; line-height: 1.65;
   }/* 십성 분류 헤더 */
 
   
@@ -1309,7 +1309,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   /* 2026-05-28 — sub-header 좌측 strip 제거. 컬러 텍스트만으로 라벨 표현. */
   .premium-mockup .sip-cluster-head {
-    font-size: 11px; color: #B8965A;
+    font-size: 13px; color: #B8965A;
     letter-spacing: 0.1em; font-weight: 700;
     margin: 12px 0 6px;
   }/* 십성 분포 도넛 */
@@ -1326,7 +1326,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .sip-donut .sd-svg { flex-shrink: 0; width: 100px; height: 100px; }
   .premium-mockup .sip-donut .sd-legend {
     flex: 1; display: flex; flex-direction: column; gap: 4px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .premium-mockup .sip-donut .sd-row {
     display: grid; grid-template-columns: 12px 70px 1fr 28px;
@@ -1351,7 +1351,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     overflow: hidden;
   }
   .premium-mockup .daewoon-line .dl-title {
-    font-size: 11px; color: #5C4A2E; margin-bottom: 12px; font-weight: 500;
+    font-size: 13px; color: #5C4A2E; margin-bottom: 12px; font-weight: 500;
   }
   .premium-mockup .daewoon-line .dl-bar {
     position: relative; height: 36px;
@@ -1369,7 +1369,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     transform: translateX(-50%);
     background: #1a1a1a; color: #E8D9B8;
     padding: 3px 7px; border-radius: 100px;
-    font-size: 11px; font-weight: 700;
+    font-size: 13px; font-weight: 700;
     letter-spacing: 0.05em; white-space: nowrap;
     box-shadow: 0 2px 6px rgba(0,0,0,.15);
   }
@@ -1382,7 +1382,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .daewoon-line .dl-mark.peak::after { border-top-color: #4E7A57; }
   .premium-mockup .daewoon-line .dl-axis {
     display: flex; justify-content: space-between;
-    font-size: 11px; color: #7F6B4E;
+    font-size: 13px; color: #7F6B4E;
     padding: 0 2px;
   }/* 인생 단계 3카드 */
 
@@ -1404,14 +1404,14 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     box-shadow: 0 4px 10px rgba(212,175,55,.1);
   }
   .premium-mockup .life-stage-card .ls-tag {
-    font-size: 11px; color: #B8965A; font-weight: 700; letter-spacing: 0.1em;
+    font-size: 13px; color: #B8965A; font-weight: 700; letter-spacing: 0.1em;
   }
   .premium-mockup .life-stage-card .ls-age {
     font-family: 'Noto Serif KR', serif;
     font-size: 13px; font-weight: 700; color: #1a1a1a;
   }
   .premium-mockup .life-stage-card .ls-key {
-    font-size: 11px; color: #2a2520; line-height: 1.45;
+    font-size: 13px; color: #2a2520; line-height: 1.45;
     margin-top: 2px;
   }
   .premium-mockup .life-stage-card .ls-glyph {
@@ -1428,7 +1428,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     padding: 14px;
     display: grid; grid-template-columns: repeat(2, 1fr);
     gap: 9px;
-    font-size: 12px;
+    font-size: 13.5px;
     box-shadow: 0 3px 14px rgba(184,150,90,0.10);
   }
   .premium-mockup .month-insight-grid .mi {
@@ -1458,14 +1458,14 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .month-insight-grid .mi .mi-ganzi {
     font-family: 'Noto Serif KR', serif;
-    font-size: 12px; font-weight: 700;
+    font-size: 13.5px; font-weight: 700;
     color: #8B6F3D;
     letter-spacing: 0.02em;
     line-height: 1.2; white-space: nowrap;
   }
   .premium-mockup .month-insight-grid .mi .mi-badge {
     margin-left: auto;
-    font-size: 11px; font-weight: 800;
+    font-size: 13px; font-weight: 800;
     padding: 2px 7px;
     border-radius: 99px;
     letter-spacing: 0.06em;
@@ -1475,7 +1475,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     line-height: 1.5;
   }
   .premium-mockup .month-insight-grid .mi .mi-text {
-    font-size: 11.5px;
+    font-size: 13px;
     color: #2a2520;
     line-height: 1.6;
     word-break: keep-all;
@@ -1487,7 +1487,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .month-insight-grid .mi .mi-tag {
     display: inline-block;
     margin-top: 4px;
-    font-size: 11px;
+    font-size: 13px;
     color: #7A7269;
     background: rgba(184,150,90,0.08);
     padding: 1px 6px;
@@ -1544,7 +1544,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .shinsal-meta .sm-pulse span.on { background: #B8965A; }
   .premium-mockup .shinsal-meta .sm-when {
-    font-size: 11px; color: #7F6B4E;
+    font-size: 13px; color: #7F6B4E;
     padding: 2px 7px; border-radius: 100px;
     background: #F4EFE4;
     border: 1px solid #E5DFD0;
@@ -1557,7 +1557,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
 
   
   .premium-mockup .shinsal-card.mid { padding: 10px 12px; }
-  .premium-mockup .shinsal-card.mid p { font-size: 11.5px; }
+  .premium-mockup .shinsal-card.mid p { font-size: 13px; }
   .premium-mockup .shinsal-card.mid .adv { padding-top: 6px; margin-top: 6px; }/* 참고 신살 뱃지 */
 
   
@@ -1570,12 +1570,12 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border: 1px dashed #E5DFD0;
   }
   .premium-mockup .shinsal-refs .sr-title {
-    width: 100%; font-size: 11px; color: #5C4A2E;
+    width: 100%; font-size: 13px; color: #5C4A2E;
     font-weight: 600; letter-spacing: 0.05em;
     margin-bottom: 2px;
   }
   .premium-mockup .shinsal-refs .sr-tag {
-    font-size: 11px;
+    font-size: 13px;
     padding: 4px 10px; border-radius: 100px;
     background: #fff; color: #2a2520;
     border: 1px solid #E5DFD0;
@@ -1583,9 +1583,9 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .shinsal-refs .sr-tag .sr-han {
     font-family: 'Noto Serif KR', serif;
-    font-size: 11px; color: #B8965A;
+    font-size: 13px; color: #B8965A;
   }
   .premium-mockup .shinsal-refs .sr-tag .sr-note {
-    font-size: 11px; color: #7F6B4E;
+    font-size: 13px; color: #7F6B4E;
   }
 `;

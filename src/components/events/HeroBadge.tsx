@@ -30,7 +30,7 @@ export function HeroBadge() {
           style={{ color: '#1A1612', fontFamily: "'Noto Serif KR', serif" }}>
           콘텐츠 하나만 봐도 오늘 출석 +1
         </p>
-        <p className="mt-1 text-[12px] leading-[1.45]" style={{ color: '#8A7F6E' }}>
+        <p className="mt-1 text-[13.5px] leading-[1.45]" style={{ color: '#8A7F6E' }}>
           오늘의 운세, 꿈해몽, 주제, 주간, 월간 등 결과를 하나 보면 출석
         </p>
       </div>

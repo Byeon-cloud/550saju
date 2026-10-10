@@ -852,7 +852,7 @@ function ProfileCard({
                   position: 'absolute',
                   top: -6,
                   right: -4,
-                  fontSize: 9,
+                  fontSize: 12,
                   fontWeight: 800,
                   padding: '1px 5px',
                   borderRadius: 999,
@@ -918,7 +918,7 @@ function ProfileCard({
                 style={{
                   padding: '2px 7px',
                   borderRadius: 999,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 800,
                   background: C.goldDeep,
                   color: C.paper,
@@ -931,7 +931,7 @@ function ProfileCard({
             {!isMe && (
               <span
                 style={{
-                  fontSize: 10.5,
+                  fontSize: 13,
                   color: C.goldDeep,
                   fontWeight: 700,
                   padding: '1px 7px',
@@ -944,7 +944,7 @@ function ProfileCard({
               </span>
             )}
           </div>
-          <div style={{ fontSize: 12, color: C.mute, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.5 }}>
             {profile.input.birthYear}.
             {String(profile.input.birthMonth).padStart(2, '0')}.
             {String(profile.input.birthDay).padStart(2, '0')} ({calLabel}), {' '}
@@ -953,7 +953,7 @@ function ProfileCard({
           {ilgan && (
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13.5,
                 fontWeight: 700,
                 color: C.goldDeep,
                 marginTop: 2,
@@ -1107,7 +1107,7 @@ function HistorySection({
                   background: active ? C.ink : C.goldSoft,
                   color: active ? C.paper : C.ink,
                   border: `1px solid ${active ? C.ink : C.line}`,
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
@@ -1340,16 +1340,19 @@ function HistoryCard({
               textOverflow: 'ellipsis',
             }}
           >
-            {label}, <span style={{ fontWeight: 500 }}>{displayName}</span>
+            {label} <span style={{ fontWeight: 500, color: C.mute }}>{displayName}</span>
           </div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               color: C.mute,
               marginTop: 2,
+              display: 'flex',
+              gap: 10,
             }}
           >
-            {dateStr}, {unCost}
+            <span>{dateStr}</span>
+            <span>{unCost}</span>
           </div>
         </div>
         {/* 우 chevron 또는 일괄 모드 시 빈공간 */}
@@ -1425,11 +1428,11 @@ function ChatRoomCard({
             textOverflow: 'ellipsis',
           }}
         >
-          대화, {room.name}
+          사주대화 <span style={{ fontWeight: 500, color: C.mute }}>{room.name}</span>
         </div>
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             color: C.mute,
             marginTop: 2,
             whiteSpace: 'nowrap',
@@ -1437,7 +1440,8 @@ function ChatRoomCard({
             textOverflow: 'ellipsis',
           }}
         >
-          {room.lastMessage || '대화를 시작해보세요'}, {dateStr}
+          <span style={{ flexShrink: 0, marginRight: 10 }}>{dateStr}</span>
+          {room.lastMessage || '대화를 시작해보세요'}
         </div>
       </div>
       {!bulkMode && <ChevronRightIcon />}
@@ -1533,7 +1537,7 @@ function HistoryEmpty({ filterKey }: { filterKey: FilterKey }) {
       <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: '0 0 4px' }}>
         {m.title}
       </p>
-      <p style={{ fontSize: 12, color: C.inkSoft, margin: 0 }}>{m.sub}</p>
+      <p style={{ fontSize: 13.5, color: C.inkSoft, margin: 0 }}>{m.sub}</p>
     </div>
   );
 }
@@ -1598,7 +1602,7 @@ function BulkActionBar({
                 color: C.paper,
                 border: '1px solid rgba(248,245,238,0.4)',
                 borderRadius: 10,
-                fontSize: 12,
+                fontSize: 13.5,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -1614,7 +1618,7 @@ function BulkActionBar({
                 background: 'transparent',
                 color: 'rgba(248,245,238,0.7)',
                 border: 'none',
-                fontSize: 12,
+                fontSize: 13.5,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -1963,7 +1967,7 @@ function ShareRewardCard({
         </p>
         <p
           style={{
-            fontSize: 12,
+            fontSize: 13.5,
             color: C.inkSoft,
             margin: '3px 0 0',
           }}

@@ -334,7 +334,7 @@ export function SajuCardPage() {
                 return (
                   <span
                     style={{
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: 700,
                       padding: '3px 10px',
                       background: 'rgba(248,245,238,0.22)',
@@ -365,7 +365,7 @@ export function SajuCardPage() {
             style={{
               marginTop: 16,
               padding: '14px 4px 8px',
-              fontSize: 10,
+              fontSize: 12,
               color: C.mute,
               lineHeight: 1.7,
               textAlign: 'center',
@@ -535,7 +535,7 @@ function ExportModeSheet({
         >
           어디에 공유하실래요?
         </div>
-        <div style={{ fontSize: 11, color: C.mute, marginBottom: 14 }}>
+        <div style={{ fontSize: 13, color: C.mute, marginBottom: 14 }}>
           용도에 맞게 핵심만 골라 자동 정리해드려요
         </div>
 
@@ -566,11 +566,11 @@ function ExportModeSheet({
                 >
                   {opt.title}
                 </div>
-                <div style={{ fontSize: 11, color: C.mute }}>{opt.desc}</div>
+                <div style={{ fontSize: 13, color: C.mute }}>{opt.desc}</div>
               </div>
               <div
                 style={{
-                  fontSize: 10, color: C.goldDeep, fontWeight: 600,
+                  fontSize: 12, color: C.goldDeep, fontWeight: 600,
                   letterSpacing: '0.04em', flexShrink: 0,
                   fontFeatureSettings: '"tnum"',
                 }}

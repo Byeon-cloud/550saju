@@ -144,7 +144,7 @@ export function HourPickerSheet({ open, currentHour, onClose, onSelect, title = 
                 padding: '10px 12px',
                 background: C.goldSoft,
                 borderRadius: 12,
-                fontSize: 12,
+                fontSize: 13.5,
                 lineHeight: 1.55,
                 color: C.mute,
               }}
@@ -186,7 +186,7 @@ export function HourPickerSheet({ open, currentHour, onClose, onSelect, title = 
                 </span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>모름</div>
-                  <div style={{ fontSize: 12, color: C.mute, marginTop: 2 }}>
+                  <div style={{ fontSize: 13.5, color: C.mute, marginTop: 2 }}>
                     시간 정보 없이 분석 (시주 제외)
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export function HourPickerSheet({ open, currentHour, onClose, onSelect, title = 
                       </div>
                       <div
                         style={{
-                          fontSize: 12,
+                          fontSize: 13.5,
                           color: C.mute,
                           marginTop: 2,
                         }}

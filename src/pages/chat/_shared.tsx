@@ -377,7 +377,7 @@ export function ConvertUnModal({
                       marginBottom: 8,
                     }}
                   >
-                    <span style={{ fontSize: 12, color: C.inkSoft }}>
+                    <span style={{ fontSize: 13.5, color: C.inkSoft }}>
                       변환할 운
                     </span>
                     <span
@@ -407,7 +407,7 @@ export function ConvertUnModal({
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      fontSize: 11,
+                      fontSize: 13,
                       color: C.mute,
                       marginTop: 4,
                     }}
@@ -509,7 +509,7 @@ export function ConvertUnModal({
               <p
                 style={{
                   marginTop: 8,
-                  fontSize: 10.5,
+                  fontSize: 13,
                   color: C.mute,
                   textAlign: 'center',
                   lineHeight: 1.55,
@@ -535,7 +535,7 @@ function Row({ label, value }: { label: string; value: string }) {
         padding: '4px 0',
       }}
     >
-      <span style={{ fontSize: 12, color: C.inkSoft }}>{label}</span>
+      <span style={{ fontSize: 13.5, color: C.inkSoft }}>{label}</span>
       <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
         {value}
       </span>

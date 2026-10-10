@@ -196,7 +196,7 @@ export function EventsPage() {
               </svg>
               <h3 className="text-[16px] font-bold" style={{ color: C.navy, fontFamily: SERIF }}>7일 연속 출석</h3>
             </header>
-            <p className="text-[12px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
+            <p className="text-[13.5px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
               요일 상관없이 7일 이어서 출석할 때마다 토스포인트 {TOSSPOINT_7DAY}원. 하루 빠지면 1일째부터 다시 세요.
             </p>
 
@@ -207,7 +207,7 @@ export function EventsPage() {
                 const isToday = i === todayCell && todayCell < ATTEND_CYCLE_DAYS;
                 return (
                   <div key={i} className="flex flex-col items-center gap-1 py-1">
-                    <span className="text-[11px] font-medium"
+                    <span className="text-[13px] font-medium"
                       style={{ color: done ? C.ink : isToday ? C.goldDark : C.muted,
                         fontWeight: isToday ? 600 : 500 }}>
                       {isToday ? '오늘' : `${i + 1}일`}
@@ -233,11 +233,11 @@ export function EventsPage() {
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.line }}>
               <div className="h-full transition-all" style={{ width: `${weekPct}%`, background: C.ink }} />
             </div>
-            <p className="text-[12px] mt-2.5" style={{ color: C.muted }} aria-live="polite">
+            <p className="text-[13.5px] mt-2.5" style={{ color: C.muted }} aria-live="polite">
               <strong style={{ color: C.ink }}>{filled7}/{ATTEND_CYCLE_DAYS}</strong>, {weekStatusCopy}
             </p>
             {attend7PaidCount > 0 ? (
-              <p className="text-[12px] mt-1.5" style={{ color: C.muted }}>
+              <p className="text-[13.5px] mt-1.5" style={{ color: C.muted }}>
                 지금까지 <strong style={{ color: C.ink }}>{attend7PaidCount}회</strong> 받았어요
               </p>
             ) : null}
@@ -259,21 +259,21 @@ export function EventsPage() {
               친구에게 사주500 소개하기
             </h3>
           </header>
-          <p className="text-[12px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
-            하루 {MAX_DAILY_SHARE_REWARDS}회, 초대당 운 1 (결과 공유와 합쳐 하루 {MAX_DAILY_SHARE_REWARDS}회)
+          <p className="text-[13.5px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
+            친구 한 명 초대할 때마다 1운, 결과 공유와 합쳐 하루 {MAX_DAILY_SHARE_REWARDS}회까지
           </p>
 
           <button type="button" onClick={onShareInvite}
             disabled={invitesDone}
             className="w-full flex items-center justify-center gap-2.5 py-[18px] rounded-[14px] font-semibold text-[16px] transition"
             style={{
-              background: invitesDone ? '#EFE9DA' : C.gold,
-              color: invitesDone ? C.muted : '#fff',
-              boxShadow: invitesDone ? 'none' : '0 2px 6px rgba(184,150,90,0.3)',
+              background: invitesDone ? '#EFE9DA' : 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
+              color: invitesDone ? C.muted : '#17110A',
+              boxShadow: invitesDone ? 'none' : '0 8px 18px rgba(140,109,61,.22)',
               cursor: invitesDone ? 'default' : 'pointer',
             }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke={invitesDone ? C.muted : '#fff'} strokeWidth="1.75"
+              stroke={invitesDone ? C.muted : '#17110A'} strokeWidth="1.75"
               strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
@@ -281,7 +281,7 @@ export function EventsPage() {
             </svg>
             <span>{invitesDone ? '오늘 초대는 끝났어요' : '친구에게 공유하기'}</span>
           </button>
-          <p className="text-[12px] text-center mt-3" style={{ color: C.muted }}>
+          <p className="text-[13.5px] text-center mt-3" style={{ color: C.muted }}>
             오늘 <strong style={{ color: C.ink }}>{invitesUsed}/{MAX_DAILY_SHARE_REWARDS}</strong>회, 일 {MAX_DAILY_SHARE_REWARDS}회 한도
           </p>
         </section>

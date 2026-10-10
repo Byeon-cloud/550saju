@@ -662,7 +662,7 @@ export function DailyFortunePage() {
               onCreateNew={() => navigate('/input?new=1')}
               profile={selectedProfile}
               dateInfo={dateInfo}
-              ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '오늘의 운세 보기 (무료)' : '1운으로 오늘의 운세 보기'}
+              ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '무료로 오늘의 운세 보기' : '1운으로 오늘의 운세 보기'}
               tierChip={todayReport ? '다시 보기는 무료' : dailyInProgress ? '만드는 중' : freePassAvailable ? '하루 1회 무료' : '두 번째부터 1운'}
               onAnalyze={requestAnalyze}
             />
@@ -727,10 +727,10 @@ export function DailyFortunePage() {
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)' }}>
             사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
           </p>
         </div>
@@ -793,7 +793,7 @@ function SelectView({
   onCreateNew: () => void;
   profile: SajuProfile | null;
   dateInfo: DateInfo;
-  /** 무료 있음 '(무료)' / 소진 '· 1운' / 오늘 기록 있음 '다시 보기' */
+  /** 무료 있음 '무료로 ~ 보기' / 소진 '1운으로 ~ 보기' / 오늘 기록 있음 '다시 보기' */
   ctaLabel: string;
   /** 히어로 과금 칩 */
   tierChip: string;
@@ -871,30 +871,30 @@ function SelectView({
           </div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 13,
               opacity: 0.78,
               marginBottom: 8,
               letterSpacing: '0.02em',
               position: 'relative',
             }}
           >
-            사주500, 오늘의 운세, {dateInfo.label}
+            {dateInfo.label} 오늘의 운세
           </div>
           <div
             style={{
               display: 'flex',
               gap: 8,
-              fontSize: 12,
+              fontSize: 13.5,
               opacity: 0.92,
               flexWrap: 'wrap',
               alignItems: 'center',
               position: 'relative',
             }}
           >
-            <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600 }}>
+            <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 10px', borderRadius: 100, fontSize: 13, fontWeight: 600 }}>
               일진 운세
             </span>
-            <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 11 }}>
+            <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 13 }}>
               {tierChip}
             </span>
           </div>
@@ -912,7 +912,7 @@ function SelectView({
             {profile?.name ?? '당신'}님의<br />
             오늘 운세를 풀어드릴게요
           </h2>
-          <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4, position: 'relative' }}>
+          <div style={{ fontSize: 13.5, opacity: 0.85, marginTop: 4, position: 'relative' }}>
             일주와 오늘 간지의 작용, 용신과 대운 흐름까지 함께 살펴볼게요.
           </div>
         </header>
@@ -926,7 +926,7 @@ function SelectView({
               <p className="sec-title" style={{ margin: 0 }}>내 만세력</p>
               <span style={{
                 fontFamily: "'Noto Serif KR', serif",
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: 'var(--brand-gold)',
                 letterSpacing: '0.06em',
@@ -1098,7 +1098,7 @@ function ResultView({
                   : topicPicker === 'career' ? '일 — 어떤 부분이 궁금하세요?'
                   : '건강 — 어떤 부분이 궁금하세요?'}
               </h3>
-              <p style={{ fontSize: 12.5, color: '#7A7269', marginBottom: 16 }}>
+              <p style={{ fontSize: 13.5, color: '#7A7269', marginBottom: 16 }}>
                 고른 주제 화면으로 이동해요. 운이 차감되기 전에 한 번 더 확인해드려요.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1121,10 +1121,10 @@ function ResultView({
                         fontFamily: "'Noto Serif KR', serif",
                         fontSize: 15, fontWeight: 700, color: '#1A1A1A',
                       }}>{t.label}</div>
-                      <div style={{ fontSize: 12, color: '#7A7269', marginTop: 2 }}>{t.desc}</div>
+                      <div style={{ fontSize: 13.5, color: '#7A7269', marginTop: 2 }}>{t.desc}</div>
                     </div>
                     <span style={{
-                      fontSize: 11, fontWeight: 700, color: '#B8965A',
+                      fontSize: 13, fontWeight: 700, color: '#B8965A',
                       background: 'rgba(184,150,90,0.12)',
                       padding: '4px 10px', borderRadius: 100,
                     }}>{formatPriceLabel(getTopicPrice(t.id))}</span>

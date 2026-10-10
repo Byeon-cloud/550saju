@@ -81,11 +81,11 @@ const MOCKUP_CSS = `
   color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
 }
 .weekly-mockup .hd::before { display: none; content: '週'; position: absolute; right: -10px; bottom: -34px; font-family: 'Noto Serif KR', serif; font-size: 190px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
-.weekly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .92; flex-wrap: wrap; }
-.weekly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
-.weekly-mockup .hd .span-tag { background: rgba(255,255,255,.22); color: #fff8ef; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
+.weekly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; opacity: .92; flex-wrap: wrap; }
+.weekly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
+.weekly-mockup .hd .span-tag { background: rgba(255,255,255,.22); color: #fff8ef; padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-left: auto; }
 .weekly-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; word-break: keep-all; }
-.weekly-mockup .hd .date { font-size: 12px; opacity: .85; margin-top: 6px; font-feature-settings: 'tnum'; position: relative; }
+.weekly-mockup .hd .date { font-size: 13.5px; opacity: .85; margin-top: 6px; font-feature-settings: 'tnum'; position: relative; }
 .weekly-mockup .hd .kw-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
 .weekly-mockup .hd .kw {
   display: inline-flex; align-items: center;
@@ -93,7 +93,7 @@ const MOCKUP_CSS = `
   background: rgba(255,255,255,0.16);
   border: 1px solid rgba(255,255,255,0.22);
   border-radius: 100px;
-  font-size: 11px; font-weight: 600;
+  font-size: 13px; font-weight: 600;
   color: rgba(255,255,255,0.95);
 }
 
@@ -104,7 +104,7 @@ const MOCKUP_CSS = `
   box-shadow: 0 2px 8px rgba(0,0,0,.04);
   border: 1px solid var(--c-card-line);
 }
-.weekly-mockup .my-saju .ttl { font-size: 11px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
+.weekly-mockup .my-saju .ttl { font-size: 13px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
 .weekly-mockup .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .weekly-mockup .saju-cell {
   display: flex; flex-direction: column; gap: 4px;
@@ -119,7 +119,7 @@ const MOCKUP_CSS = `
   padding: 5px 3px;
 }
 .weekly-mockup .saju-cell .lab {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
   color: var(--c-mute); text-align: center; margin-bottom: 2px;
 }
 .weekly-mockup .saju-cell.ilju .lab { color: var(--c-gold-deep); }
@@ -138,12 +138,12 @@ const MOCKUP_CSS = `
 .weekly-mockup .saju-cell .ji .han { font-size: 20px; }
 .weekly-mockup .saju-cell .gan .read,
 .weekly-mockup .saju-cell .ji .read {
-  font-size: 11px; font-weight: 700; opacity: 0.85;
+  font-size: 13px; font-weight: 700; opacity: 0.85;
   letter-spacing: 0.05em; font-family: 'Pretendard', sans-serif;
 }
 .weekly-mockup .saju-cell .gan-meaning,
 .weekly-mockup .saju-cell .ji-meaning {
-  font-size: 11px; color: var(--c-mute); font-weight: 600;
+  font-size: 13px; color: var(--c-mute); font-weight: 600;
   text-align: center; line-height: 1.2; font-family: 'Pretendard', sans-serif;
 }
 .weekly-mockup .saju-cell.ilju .gan-meaning,
@@ -158,8 +158,8 @@ const MOCKUP_CSS = `
 
 /* Oheng row — DailyMockupView chip 패턴 */
 .weekly-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
-.weekly-mockup .ohaeng-row .ttl { font-size: 11px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
-.weekly-mockup .ohaeng-row .lead { font-size: 12px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
+.weekly-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
+.weekly-mockup .ohaeng-row .lead { font-size: 13.5px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
 .weekly-mockup .ohaeng-bal { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .weekly-mockup .ob-item {
   display: inline-flex; align-items: center; gap: 6px;
@@ -187,7 +187,7 @@ const MOCKUP_CSS = `
   color: var(--c-ink); font-feature-settings: 'tnum';
 }
 .weekly-mockup .ob-item.lack { opacity: 0.5; }
-.weekly-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 11px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
+.weekly-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 13px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
 
 /* Body + SECTION 아코디언 (DailyMockupView 동일) */
 .weekly-mockup .body { padding: 22px 20px 0; }
@@ -234,7 +234,7 @@ const MOCKUP_CSS = `
 .weekly-mockup .section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
 .weekly-mockup .section.open > *:last-child { padding-bottom: 18px; }
 .weekly-mockup .section.open > .sec-lead:first-of-type { padding-top: 14px; }
-.weekly-mockup .sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.weekly-mockup .sec-lead { font-size: 13.5px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .weekly-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 
 /* 강조 위계 통일 (DailyMockupView SSOT) */
@@ -271,8 +271,8 @@ const MOCKUP_CSS = `
 
 /* §02 주간 리듬 그래프 */
 .weekly-mockup .week-chart { margin: 14px 0 0; background: #fff; border-radius: 12px; padding: 14px; border: 1px solid var(--c-card-line); }
-.weekly-mockup .week-chart .ttl { font-size: 11px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 4px; }
-.weekly-mockup .week-chart .sub { font-size: 11px; color: var(--c-mute); margin-bottom: 8px; }
+.weekly-mockup .week-chart .ttl { font-size: 13px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 4px; }
+.weekly-mockup .week-chart .sub { font-size: 13px; color: var(--c-mute); margin-bottom: 8px; }
 .weekly-mockup .week-chart .chart-wrap { width: 100%; height: 150px; margin: 0 -6px; }
 
 /* §02 요일별 카드 stack */
@@ -294,20 +294,20 @@ const MOCKUP_CSS = `
 .weekly-mockup .day-card .day-meta { display: flex; flex-direction: column; gap: 2px; }
 .weekly-mockup .day-card .day-date-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .weekly-mockup .day-card .day-date { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
-.weekly-mockup .day-card .day-ganji { font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: var(--c-mute); }
+.weekly-mockup .day-card .day-ganji { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 600; color: var(--c-mute); }
 .weekly-mockup .day-card .day-when {
-  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; letter-spacing: 0.02em;
+  font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 100px; letter-spacing: 0.02em;
 }
 .weekly-mockup .day-card .day-when.past   { background: rgba(122,114,105,0.12); color: var(--c-mute); }
 .weekly-mockup .day-card .day-when.today   { background: var(--c-week); color: #fff; }
 .weekly-mockup .day-card .day-when.future { background: var(--c-week-soft); color: var(--c-week-deep); border: 1px solid rgba(140,109,61,0.30); }
-.weekly-mockup .day-card .day-tone { font-size: 11.5px; color: var(--c-mute); margin-top: 1px; }
+.weekly-mockup .day-card .day-tone { font-size: 13px; color: var(--c-mute); margin-top: 1px; }
 .weekly-mockup .day-card .day-score { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 800; line-height: 1; }
 .weekly-mockup .day-card .day-body { font-size: 13px; color: #2a2520; line-height: 1.7; margin-top: 8px; word-break: keep-all; }
 .weekly-mockup .day-card .day-action {
   margin-top: 10px; padding: 9px 12px; border-radius: 10px;
   background: var(--c-week-soft);
-  font-size: 12px; font-weight: 600; color: var(--c-week-deep);
+  font-size: 13.5px; font-weight: 600; color: var(--c-week-deep);
   line-height: 1.5; word-break: keep-all;
 }
 .weekly-mockup .day-card .day-action .arr { font-weight: 800; margin-right: 4px; }
@@ -321,14 +321,14 @@ const MOCKUP_CSS = `
 .weekly-mockup .keyday.best    { background: var(--c-week-soft); border-color: rgba(140,109,61,0.26); }
 .weekly-mockup .keyday.caution { background: rgba(176,74,56,0.05); border-color: rgba(176,74,56,0.20); }
 .weekly-mockup .keyday .kd-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.weekly-mockup .keyday .kd-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 100px; color: #fff; letter-spacing: 0.04em; }
+.weekly-mockup .keyday .kd-badge { font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 100px; color: #fff; letter-spacing: 0.04em; }
 .weekly-mockup .keyday.best    .kd-badge { background: var(--c-week); }
 .weekly-mockup .keyday.caution .kd-badge { background: #B04A38; }
 .weekly-mockup .keyday .kd-day { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 800; }
 .weekly-mockup .keyday.best    .kd-day { color: var(--c-week-deep); }
 .weekly-mockup .keyday.caution .kd-day { color: #A23A2A; }
-.weekly-mockup .keyday .kd-date { font-size: 11px; color: var(--c-mute); font-feature-settings: 'tnum'; }
-.weekly-mockup .keyday .kd-reason { font-size: 12.5px; color: #2a2520; line-height: 1.7; word-break: keep-all; }
+.weekly-mockup .keyday .kd-date { font-size: 13px; color: var(--c-mute); font-feature-settings: 'tnum'; }
+.weekly-mockup .keyday .kd-reason { font-size: 13.5px; color: #2a2520; line-height: 1.7; word-break: keep-all; }
 
 /* §04 이번 주 교훈 (pullquote 톤) */
 .weekly-mockup .lesson {
@@ -345,8 +345,8 @@ const MOCKUP_CSS = `
 .weekly-mockup .actions .btn { background: #fff; border: 1px solid var(--c-card-line); border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; appearance: none; font: inherit; }
 .weekly-mockup .actions .btn:hover { border-color: var(--c-week); }
 .weekly-mockup .actions .btn svg { width: 22px; height: 22px; color: var(--c-week); }
-.weekly-mockup .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
-.weekly-mockup .actions .btn .sb { font-size: 11px; color: var(--c-mute); }
+.weekly-mockup .actions .btn .ti { font-size: 13.5px; font-weight: 600; }
+.weekly-mockup .actions .btn .sb { font-size: 13px; color: var(--c-mute); }
 
 .weekly-mockup .share-btn {
   margin: 16px 20px 0; width: calc(100% - 40px);
@@ -355,7 +355,7 @@ const MOCKUP_CSS = `
   font-size: 14px; font-weight: 700; cursor: pointer; appearance: none; font-family: inherit;
 }
 
-.weekly-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed var(--c-card-line); font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
+.weekly-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed var(--c-card-line); font-size: 13px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
 .weekly-mockup .service-notice .src { color: var(--c-mute); margin-bottom: 6px; }
 
 /* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고) */
@@ -363,7 +363,7 @@ const MOCKUP_CSS = `
   margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
   background: rgba(140,109,61,0.10); border: 1px solid rgba(140,109,61,0.30);
   display: flex; align-items: center; gap: 8px;
-  font-size: 12px; font-weight: 600; color: #a05a24;
+  font-size: 13.5px; font-weight: 600; color: #a05a24;
 }
 .weekly-mockup .refining-pill .spark { width: 7px; height: 7px; border-radius: 50%; background: #8C6D3D; animation: weekly-refine-pulse 1s infinite; flex-shrink: 0; }
 @keyframes weekly-refine-pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }

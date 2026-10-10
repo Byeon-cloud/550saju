@@ -76,7 +76,7 @@ export function NextStepsCard({ topics, questions, onTopic, onAsk, title = '이 
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
                     <span style={{ fontSize: 14, fontWeight: 800, color: C.ink }}>{meta.label}</span>
-                    <span style={{ fontSize: 11, color: C.mute }}>{formatPriceLabel(getTopicPrice(t.id))}</span>
+                    <span style={{ fontSize: 13, color: C.mute }}>{formatPriceLabel(getTopicPrice(t.id))}</span>
                   </span>
                   <span style={{ display: 'block', fontSize: 13, color: '#3D3D3D', lineHeight: 1.55, wordBreak: 'keep-all' }}>{t.hook}</span>
                 </span>
@@ -100,7 +100,7 @@ export function NextStepsCard({ topics, questions, onTopic, onAsk, title = '이 
               問
             </span>
             <span style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>이 결과로 바로 물어보기</span>
-            <span style={{ fontSize: 11, color: C.mute }}>사주대화</span>
+            <span style={{ fontSize: 13, color: C.mute }}>사주대화</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {qs.map((q) => (
@@ -115,7 +115,7 @@ export function NextStepsCard({ topics, questions, onTopic, onAsk, title = '이 
                 }}
               >
                 <span style={{ flex: 1, fontSize: 13, color: '#3D3D3D', lineHeight: 1.5, wordBreak: 'keep-all' }}>“{q}”</span>
-                <span aria-hidden style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: C.goldDeep }}>물어보기</span>
+                <span aria-hidden style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: C.goldDeep }}>물어보기</span>
               </button>
             ))}
           </div>

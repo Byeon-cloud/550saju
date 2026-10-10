@@ -245,11 +245,11 @@ const MOCKUP_CSS = `
   color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
 }
 .daily-mockup .hd::before { display: none; content: '火'; position: absolute; right: -16px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.06); line-height: 1; }
-.daily-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .9; flex-wrap: wrap; }
-.daily-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
-.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
+.daily-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; opacity: .9; flex-wrap: wrap; }
+.daily-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
+.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-left: auto; }
 .daily-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.35; }
-.daily-mockup .hd .date { font-size: 12px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
+.daily-mockup .hd .date { font-size: 13.5px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
 .daily-mockup .hd .time-chip {
   display: inline-flex; align-items: center; gap: 6px;
   margin-top: 12px;
@@ -257,12 +257,12 @@ const MOCKUP_CSS = `
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.22);
   border-radius: 100px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: rgba(255,255,255,0.92);
   font-weight: 600;
 }
 .daily-mockup .hd .time-chip .ic { font-size: 13px; }
-.daily-mockup .hd .time-chip .sub { font-size: 11px; opacity: 0.8; font-weight: 500; }
+.daily-mockup .hd .time-chip .sub { font-size: 13px; opacity: 0.8; font-weight: 500; }
 
 /* My Saju mini card — SajuCardPage 큰 색 블록 패턴 동기화 (2026-05-06 v4)
    _details_table.tsx 의 천간/지지 솔리드 컬러 블록 스타일 */
@@ -272,7 +272,7 @@ const MOCKUP_CSS = `
   box-shadow: 0 2px 8px rgba(0,0,0,.04);
   border: 1px solid var(--c-card-line);
 }
-.daily-mockup .my-saju .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
+.daily-mockup .my-saju .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
 .daily-mockup .saju-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .daily-mockup .saju-cell {
   display: flex; flex-direction: column; gap: 4px;
@@ -287,7 +287,7 @@ const MOCKUP_CSS = `
   padding: 5px 3px;
 }
 .daily-mockup .saju-cell .lab {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
   color: var(--c-mute); text-align: center; margin-bottom: 2px;
 }
 .daily-mockup .saju-cell.ilju .lab { color: var(--c-gold-deep); }
@@ -309,13 +309,13 @@ const MOCKUP_CSS = `
 .daily-mockup .saju-cell .ji .han { font-size: 20px; }
 .daily-mockup .saju-cell .gan .read,
 .daily-mockup .saju-cell .ji .read {
-  font-size: 11px; font-weight: 700; opacity: 0.85;
+  font-size: 13px; font-weight: 700; opacity: 0.85;
   letter-spacing: 0.05em;
   font-family: 'Pretendard', sans-serif;
 }
 .daily-mockup .saju-cell .gan-meaning,
 .daily-mockup .saju-cell .ji-meaning {
-  font-size: 11px; color: var(--c-mute); font-weight: 600;
+  font-size: 13px; color: var(--c-mute); font-weight: 600;
   text-align: center; line-height: 1.2;
   font-family: 'Pretendard', sans-serif;
 }
@@ -332,8 +332,8 @@ const MOCKUP_CSS = `
 
 /* Relation card — SajuCard 큰 색 블록 + 일상어 풀이 (2026-05-06 v4) */
 .daily-mockup .relation-card { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px 14px; border: 1px solid var(--c-card-line); }
-.daily-mockup .relation-card .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 14px; }
-.daily-mockup .rel-flex { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 8px; align-items: stretch; }
+.daily-mockup .relation-card .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 14px; }
+.daily-mockup .rel-flex { display: grid; grid-template-columns: 1fr 66px 1fr; gap: 6px; align-items: stretch; }
 .daily-mockup .rel-stem-card {
   background: var(--c-surface);
   border-radius: 12px;
@@ -347,7 +347,7 @@ const MOCKUP_CSS = `
 }
 /* 상단 라벨 영역 */
 .daily-mockup .rel-stem-card .lb {
-  font-size: 11px; color: var(--c-mute);
+  font-size: 13px; color: var(--c-mute);
   font-weight: 700; letter-spacing: 0.08em;
   text-align: center; padding: 8px 6px 6px;
   background: var(--c-paper);
@@ -378,11 +378,11 @@ const MOCKUP_CSS = `
   margin-bottom: 2px;
 }
 .daily-mockup .rel-stem-card .gan-yy {
-  font-size: 11px; color: var(--c-mute); font-weight: 600;
+  font-size: 13px; color: var(--c-mute); font-weight: 600;
   margin-bottom: 6px;
 }
 .daily-mockup .rel-stem-card .gan-brief {
-  font-size: 11px; color: var(--c-ink-soft);
+  font-size: 13px; color: var(--c-ink-soft);
   line-height: 1.5; word-break: keep-all;
 }
 /* 화살표 + 카테고리 chip */
@@ -392,10 +392,10 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .rel-arrow svg { width: 40px; height: 14px; }
 .daily-mockup .rel-arrow .label {
-  font-size: 11px; font-weight: 700;
-  color: #fff; background: var(--c-gold);
-  padding: 4px 8px; border-radius: 100px;
-  white-space: nowrap; letter-spacing: 0.02em;
+  font-size: 13px; font-weight: 700;
+  color: #7A5C2E; background: rgba(184,150,90,0.14);
+  padding: 4px 6px; border-radius: 10px;
+  white-space: normal; letter-spacing: 0;
   text-align: center; line-height: 1.3;
   word-break: keep-all;
 }
@@ -416,7 +416,7 @@ const MOCKUP_CSS = `
   margin-top: 8px; display: flex; gap: 8px; align-items: flex-start;
 }
 .daily-mockup .rel-explain .tag {
-  font-size: 11px; font-weight: 700;
+  font-size: 13px; font-weight: 700;
   padding: 3px 10px; border-radius: 100px;
   flex-shrink: 0; line-height: 1.4;
 }
@@ -434,14 +434,14 @@ const MOCKUP_CSS = `
 /* Oheng row — SajuCardPage 만세력 chip 패턴 (2026-05-06 v4)
    "木 1목" / "火 3화" / "土 1토" / "金 2 +1 금" / "水 1수" pill chip */
 .daily-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
-.daily-mockup .ohaeng-row .ttl { font-size: 11px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
-.daily-mockup .ohaeng-row .lead { font-size: 12px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
+.daily-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
+.daily-mockup .ohaeng-row .lead { font-size: 13.5px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
 .daily-mockup .ohaeng-bal {
-  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
 }
 .daily-mockup .ob-item {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; border-radius: 100px;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 8px 0; border-radius: 100px;
   background: var(--c-surface);
   border: 1.5px solid var(--c-card-line);
   font-family: 'Noto Serif KR', serif;
@@ -477,9 +477,9 @@ const MOCKUP_CSS = `
 .daily-mockup .ob-item.bonus .qty { color: var(--c-gold-deep); }
 .daily-mockup .ob-item .qty .plus { color: var(--c-hwa); font-weight: 800; margin-left: 2px; }
 .daily-mockup .ob-item.lack { opacity: 0.5; }
-.daily-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 11px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
+.daily-mockup .ob-item.lack .qty::after { content: ' 부족'; font-size: 13px; color: var(--c-hwa); font-weight: 700; margin-left: 2px; }
 /* 2026-05-28 — 좌측 골드 strip 제거. 배경 톤만으로 callout 표현. */
-.daily-mockup .ohaeng-bonus-note { margin-top: 12px; font-size: 12px; color: var(--c-ink-soft); line-height: 1.6; padding: 10px 12px; background: var(--c-gold-soft); border-radius: 8px; }
+.daily-mockup .ohaeng-bonus-note { margin-top: 12px; font-size: 13.5px; color: var(--c-ink-soft); line-height: 1.6; padding: 10px 12px; background: var(--c-gold-soft); border-radius: 8px; }
 .daily-mockup .ohaeng-bonus-note strong { color: var(--c-gold-deep); font-weight: 700; }
 
 /* Body */
@@ -533,7 +533,7 @@ const MOCKUP_CSS = `
 .daily-mockup .section.open > *:not(.section-header) { padding-left: 18px; padding-right: 18px; }
 .daily-mockup .section.open > *:last-child { padding-bottom: 18px; }
 .daily-mockup .section.open > .sec-lead:first-of-type { padding-top: 14px; }
-.daily-mockup .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #B8965A; letter-spacing: 0.2em; margin-bottom: 4px; }
+.daily-mockup .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 600; color: #B8965A; letter-spacing: 0.2em; margin-bottom: 4px; }
 .daily-mockup .sec-title { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; color: #1a1a1a; }
 .daily-mockup .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
 .daily-mockup .sec-lead { font-size: 13.5px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
@@ -576,7 +576,7 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .body p .han { font-family: 'Noto Serif KR', serif; color: var(--c-ink-soft); font-size: 13px; }
 .daily-mockup .score-headline { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; margin-top: 8px; line-height: 1.55; }
-.daily-mockup .my-today { font-size: 12.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.65; }
+.daily-mockup .my-today { font-size: 13.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.65; }
 
 /* Topic grid (§02) */
 .daily-mockup .topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 0; }
@@ -613,7 +613,7 @@ const MOCKUP_CSS = `
 .daily-mockup .topic-card .head { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
 .daily-mockup .topic-card .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
 .daily-mockup .topic-card .han {
-  font-family: 'Noto Serif KR', serif; font-size: 12.5px; font-weight: 700;
+  font-family: 'Noto Serif KR', serif; font-size: 13.5px; font-weight: 700;
   padding: 3px 8px; border-radius: 100px;
   background: var(--han-bg, rgba(184,150,90,0.12));
   color: var(--han-fg, #8C6D3D);
@@ -625,20 +625,20 @@ const MOCKUP_CSS = `
 .daily-mockup .topic-card.t-health .han { --han-bg: rgba(140,109,61,0.16); --han-fg: #5A8674; }
 .daily-mockup .topic-card .score-row { display: flex; align-items: baseline; gap: 4px; margin-top: 6px; position: relative; z-index: 1; }
 .daily-mockup .topic-card .score { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; }
-.daily-mockup .topic-card .score-max { font-size: 11px; color: var(--c-mute); }
-.daily-mockup .topic-card .one-liner { font-size: 11.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.55; word-break: keep-all; position: relative; z-index: 1; }
+.daily-mockup .topic-card .score-max { font-size: 13px; color: var(--c-mute); }
+.daily-mockup .topic-card .one-liner { font-size: 13px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.55; word-break: keep-all; position: relative; z-index: 1; }
 .daily-mockup .topic-card.t-money .score  { color: #B8965A; }
 .daily-mockup .topic-card.t-rel .score    { color: #8C6D3D; }
 .daily-mockup .topic-card.t-work .score   { color: #8C6D3D; }
 .daily-mockup .topic-card.t-health .score { color: #8C6D3D; }
-.daily-mockup .topic-card .cta-text { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--c-card-line); font-size: 11px; color: #B8965A; font-weight: 600; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-.daily-mockup .topic-card .cost-pill { background: rgba(184,148,31,.1); color: #B8965A; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+.daily-mockup .topic-card .cta-text { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--c-card-line); font-size: 13px; color: #B8965A; font-weight: 600; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+.daily-mockup .topic-card .cost-pill { background: rgba(184,148,31,.1); color: #B8965A; padding: 2px 8px; border-radius: 100px; font-size: 13px; font-weight: 600; }
 
 /* Hour chart (§03) */
 .daily-mockup .hour-chart { margin: 14px 0 0; background: #fff; border-radius: 12px; padding: 14px; border: 1px solid var(--c-card-line); }
-.daily-mockup .hour-chart .ttl { font-size: 11px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 10px; }
+.daily-mockup .hour-chart .ttl { font-size: 13px; color: #B8965A; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 10px; }
 .daily-mockup .hour-svg { width: 100%; height: 120px; }
-.daily-mockup .hour-legend { display: flex; gap: 10px; font-size: 11px; color: var(--c-ink-soft); margin-top: 6px; align-items: center; flex-wrap: wrap; }
+.daily-mockup .hour-legend { display: flex; gap: 10px; font-size: 13px; color: var(--c-ink-soft); margin-top: 6px; align-items: center; flex-wrap: wrap; }
 .daily-mockup .hour-legend .sw { width: 10px; height: 10px; border-radius: 50%; }
 
 /* Meet (§04) */
@@ -657,14 +657,14 @@ const MOCKUP_CSS = `
 .daily-mockup .meet .badge-orb span { font-size: 14px; line-height: 1.15; }
 .daily-mockup .meet .ti-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .daily-mockup .meet .ti { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 700; color: #1a1a1a; }
-.daily-mockup .meet .tag { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 700; letter-spacing: .03em; }
+.daily-mockup .meet .tag { font-size: 13px; padding: 2px 8px; border-radius: 100px; font-weight: 700; letter-spacing: .03em; }
 .daily-mockup .meet.boost .tag { background: var(--c-mok-soft); color: var(--c-mok); }
 .daily-mockup .meet.clash .tag { background: var(--c-hwa-soft); color: var(--c-hwa); }
 .daily-mockup .meet.calm  .tag { background: rgba(184,150,90,.14); color: #8C6D3D; }
-.daily-mockup .meet .ds { font-size: 12.5px; color: #2a2520; line-height: 1.7; margin-top: 6px; }
+.daily-mockup .meet .ds { font-size: 13.5px; color: #2a2520; line-height: 1.7; margin-top: 6px; }
 .daily-mockup .meet .ds strong { color: var(--c-gold-deep); font-weight: 700; background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.32) 55%); padding: 0 3px; border-radius: 2px; }
 .daily-mockup .meet .ds u { color: #1a1a1a; text-decoration-color: #B8965A; text-decoration-thickness: 2px; text-underline-offset: 2px; }
-.daily-mockup .meet .ds .han { font-family: 'Noto Serif KR', serif; color: var(--c-ink-soft); font-size: 11.5px; }
+.daily-mockup .meet .ds .han { font-family: 'Noto Serif KR', serif; color: var(--c-ink-soft); font-size: 13px; }
 
 /* Do/Don't (§05) */
 /* §04 행동 처방 — 클린 디자인 v4 (2026-05-06) */
@@ -698,7 +698,7 @@ const MOCKUP_CSS = `
   color: var(--c-gold-deep);
 }
 .daily-mockup .do-col .ch .count {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--c-gold-deep);
   font-weight: 700; margin-left: auto;
   font-family: 'Pretendard', sans-serif;
@@ -734,7 +734,7 @@ const MOCKUP_CSS = `
   color: var(--c-ink); flex: 1; line-height: 1.3;
 }
 .daily-mockup .do-list li .when {
-  display: inline-block; font-size: 11px; color: var(--c-gold-deep);
+  display: inline-block; font-size: 13px; color: var(--c-gold-deep);
   font-weight: 700;
   padding: 3px 10px; background: var(--c-gold-soft);
   border-radius: 100px;
@@ -742,7 +742,7 @@ const MOCKUP_CSS = `
   margin-left: 32px;
 }
 .daily-mockup .do-list li .reason {
-  display: block; font-size: 12.5px; color: var(--c-ink-soft);
+  display: block; font-size: 13.5px; color: var(--c-ink-soft);
   line-height: 1.7;
   margin-left: 32px;
 }
@@ -780,7 +780,7 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .lucky .ico { font-size: 18px; line-height: 1; color: #B8965A; font-weight: 700; }
 .daily-mockup .lucky .swatch { display: block; width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.daily-mockup .lucky .lab { font-size: 11px; color: #B8965A; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase; }
+.daily-mockup .lucky .lab { font-size: 13px; color: #B8965A; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase; }
 .daily-mockup .lucky .vl { font-size: 14px; color: #1a1a1a; font-weight: 700; margin-top: 6px; line-height: 1.3; word-break: keep-all; }
 .daily-mockup .lucky .vl.han { font-family: 'Noto Serif KR', serif; font-size: 16px; }
 
@@ -795,10 +795,10 @@ const MOCKUP_CSS = `
   border-top: 1px dashed var(--c-card-line);
 }
 .daily-mockup .tomorrow-v2 .tomorrow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.daily-mockup .tomorrow-v2 .lab { font-size: 11px; color: #B8965A; letter-spacing: 0.18em; font-weight: 700; }
+.daily-mockup .tomorrow-v2 .lab { font-size: 13px; color: #B8965A; letter-spacing: 0.18em; font-weight: 700; }
 .daily-mockup .tomorrow-v2 .score-chip { background: rgba(184,150,90,0.14); border: 1px solid rgba(184,150,90,0.30); padding: 4px 10px; border-radius: 100px; display: inline-flex; align-items: baseline; gap: 2px; }
 .daily-mockup .tomorrow-v2 .score-num { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: #B8965A; line-height: 1; }
-.daily-mockup .tomorrow-v2 .score-max { font-size: 11px; color: #B8965A; font-weight: 600; }
+.daily-mockup .tomorrow-v2 .score-max { font-size: 13px; color: #B8965A; font-weight: 600; }
 .daily-mockup .tomorrow-v2 .tomorrow-date { font-size: 13px; color: #2a2520; font-weight: 600; line-height: 1.5; padding-bottom: 8px; border-bottom: 1px dashed rgba(184,150,90,0.30); margin-bottom: 8px; }
 .daily-mockup .tomorrow-v2 .tomorrow-date strong { color: #B8965A; font-weight: 700; }
 .daily-mockup .tomorrow-v2 .tomorrow-headline { font-size: 13.5px; color: #2a2520; line-height: 1.7; word-break: keep-all; }
@@ -828,16 +828,16 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .closing-note .closing-icon svg { width: 16px; height: 16px; }
 .daily-mockup .closing-note .closing-title { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
-.daily-mockup .closing-note .closing-sub { font-size: 12px; color: var(--c-mute); margin-top: 3px; }
+.daily-mockup .closing-note .closing-sub { font-size: 13.5px; color: var(--c-mute); margin-top: 3px; }
 
 /* Upsell + Actions */
 .daily-mockup .upsell { margin: 22px 20px 0; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; }
 .daily-mockup .upsell::before { display: none; content: '月'; position: absolute; right: -8px; bottom: -28px; font-family: 'Noto Serif KR', serif; font-size: 130px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
-.daily-mockup .upsell .lab { font-size: 11px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+.daily-mockup .upsell .lab { font-size: 13px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
 .daily-mockup .upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; position: relative; line-height: 1.45; }
-.daily-mockup .upsell p { font-size: 12.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; word-break: keep-all; }
+.daily-mockup .upsell p { font-size: 13.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; word-break: keep-all; }
 .daily-mockup .upsell .cta { display: inline-flex; gap: 6px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; position: relative; align-items: center; border: none; }
-.daily-mockup .upsell .cost { background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #E8D9B8; margin-left: 6px; font-weight: 600; }
+.daily-mockup .upsell .cost { background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 100px; font-size: 13px; color: #E8D9B8; margin-left: 6px; font-weight: 600; }
 /* 2026-09-17 주간과 월간 추천 카드 (기존 .upsell 재사용) */
 .daily-mockup .upsell.upsell-weekly::before { content: '週'; }
 .daily-mockup .upsell .cta-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; position: relative; }
@@ -847,17 +847,17 @@ const MOCKUP_CSS = `
   position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px;
   width: 100%; min-height: 44px; margin-top: 16px; padding: 12px 0 0;
   border: none; border-top: 1px dashed rgba(232,217,184,0.22); background: transparent;
-  color: #E8D9B8; font: inherit; font-size: 12.5px; font-weight: 600; text-align: left; cursor: pointer; word-break: keep-all;
+  color: #E8D9B8; font: inherit; font-size: 13.5px; font-weight: 600; text-align: left; cursor: pointer; word-break: keep-all;
 }
-.daily-mockup .upsell .sub-link .sub-cost { font-size: 11px; color: #c4baa0; white-space: nowrap; }
+.daily-mockup .upsell .sub-link .sub-cost { font-size: 13px; color: #c4baa0; white-space: nowrap; }
 
 .daily-mockup .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid var(--c-card-line); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .daily-mockup .actions .btn { background: #fff; border: 1px solid var(--c-card-line); border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
 .daily-mockup .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
-.daily-mockup .actions .btn .ti { font-size: 12.5px; font-weight: 600; }
-.daily-mockup .actions .btn .sb { font-size: 11px; color: var(--c-mute); }
+.daily-mockup .actions .btn .ti { font-size: 13.5px; font-weight: 600; }
+.daily-mockup .actions .btn .sb { font-size: 13px; color: var(--c-mute); }
 
-.daily-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed var(--c-card-line); font-size: 11px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
+.daily-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed var(--c-card-line); font-size: 13px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
 
 /* Skeleton — Progressive Render (2026-05-06) */
 .daily-mockup .skeleton-block { background: linear-gradient(90deg, #F0E8D9 0%, #F8F2E5 50%, #F0E8D9 100%); background-size: 200% 100%; animation: skel-pulse 1.4s ease-in-out infinite; border-radius: 6px; }
@@ -1605,7 +1605,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             오늘 하루 → 이번 주 7일 → 한 달 흐름으로 이어보기. 가격은 pricing SSOT. 생성이 끝난 뒤에만 노출. */}
         {!isGenerating && (
           <section className="upsell upsell-weekly" aria-label="이어서 볼 만한 운세">
-            <div className="lab">NEXT, 이번 주 흐름</div>
+            <div className="lab">이어서 보면 좋은 운세</div>
             <h3>오늘 하루를 봤다면,<br />이번 주 7일도 이어서 볼까요?</h3>
             <p>
               {profile?.name ? `${stripAll(profile.name)}님 사주로` : '내 사주로'} 오늘부터 7일 중 힘을 실어도 좋은 날과

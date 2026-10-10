@@ -163,7 +163,7 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
                 </span>
                 <span
                   onClick={(e) => { e.stopPropagation(); navigate('/terms'); }}
-                  style={{ fontSize: 12, color: C.mute, textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{ fontSize: 13.5, color: C.mute, textDecoration: 'underline', cursor: 'pointer' }}
                 >
                   보기
                 </span>
@@ -184,7 +184,7 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
                     </span>
                     <span
                       onClick={(e) => { e.stopPropagation(); navigate('/privacy'); }}
-                      style={{ fontSize: 12, color: C.mute, textDecoration: 'underline', cursor: 'pointer' }}
+                      style={{ fontSize: 13.5, color: C.mute, textDecoration: 'underline', cursor: 'pointer' }}
                     >
                       보기
                     </span>
@@ -192,7 +192,7 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
                   {/* 4요소 고지 */}
                   <span
                     className="block mt-2"
-                    style={{ fontSize: 11.5, color: C.mute, lineHeight: 1.7, fontWeight: 400 }}
+                    style={{ fontSize: 13, color: C.mute, lineHeight: 1.7, fontWeight: 400 }}
                   >
                     목적: 사주 분석 서비스 제공, 운 잔액 관리, 결제 처리<br />
                     항목: 이름, 생년월일시, 결제정보<br />
@@ -213,7 +213,7 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
                 <CheckBox checked={marketing} />
                 <span className="flex-1" style={{ fontSize: 14, color: C.inkSoft }}>
                   <span style={{ color: C.mute, fontWeight: 700 }}>[선택]</span> 마케팅 정보 수신 동의
-                  <span className="block" style={{ fontSize: 11.5, color: C.mute, fontWeight: 400, marginTop: 2 }}>
+                  <span className="block" style={{ fontSize: 13, color: C.mute, fontWeight: 400, marginTop: 2 }}>
                     이벤트와 혜택 소식을 이메일로 받아요. 미동의해도 서비스 이용에 제한이 없어요.
                   </span>
                 </span>

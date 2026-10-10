@@ -172,8 +172,8 @@ export function DaeunPage() {
 
         {selected && (
           <div className="sticky-cta-bottom">
-            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth>
-              대운 분석하기 (1운)
+            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth sub="1운">
+              대운 분석하기
             </Button>
           </div>
         )}
@@ -299,7 +299,7 @@ export function DaeunPage() {
             {(effectiveResult as any).keywords?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {(effectiveResult as any).keywords.map((kw: string, i: number) => (
-                  <span key={i} className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                  <span key={i} className="text-[13px] font-semibold px-2.5 py-1 rounded-full"
                     style={{ background: 'rgba(184,150,90,0.1)', color: '#8C6D3D', border: '1px solid rgba(184,150,90,0.2)' }}>
                     {kw}
                   </span>
@@ -315,7 +315,7 @@ export function DaeunPage() {
           <FadeIn delay={0.03}>
             <div className="card">
               <p className="text-h3 text-text-primary mb-1">대운별 점수 흐름</p>
-              <p className="text-[10px] text-text-hint mb-3">10년 단위 운의 흐름</p>
+              <p className="text-[12px] text-text-hint mb-3">10년 단위 운의 흐름</p>
               <div className="h-36 -mx-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={periods.map((p: any) => ({ name: `${p.시작나이}세`, 점수: p.score || 50 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -392,15 +392,15 @@ export function DaeunPage() {
                       <div key={i} className="flex items-start gap-3 relative">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${isCurrent ? 'ring-2 ring-offset-2 ring-brand-gold' : ''}`}
                           style={{ background: isCurrent ? '#B8965A' : 'rgba(184,150,90,0.1)' }}>
-                          <span className={`text-[11px] font-black ${isCurrent ? 'text-white' : 'text-brand-gold'}`}>{lp.daeun.charAt(0)}</span>
+                          <span className={`text-[13px] font-black ${isCurrent ? 'text-white' : 'text-brand-gold'}`}>{lp.daeun.charAt(0)}</span>
                         </div>
                         <div className="flex-1 pt-1">
                           <div className="flex items-center gap-2">
                             <p className="text-[13px] font-bold text-text-primary">{lp.phase}</p>
-                            <span className="text-[11px] text-brand-gold font-semibold">{lp.daeun}</span>
-                            {isCurrent && <span className="text-[9px] font-bold text-white bg-brand-gold rounded px-1.5 py-0.5">NOW</span>}
+                            <span className="text-[13px] text-brand-gold font-semibold">{lp.daeun}</span>
+                            {isCurrent && <span className="text-[12px] font-bold text-white bg-brand-gold rounded px-1.5 py-0.5">NOW</span>}
                           </div>
-                          <p className="text-[11px] text-text-muted mt-0.5" dangerouslySetInnerHTML={{ __html: sanitizeAiText(lp.theme) }} />
+                          <p className="text-[13px] text-text-muted mt-0.5" dangerouslySetInnerHTML={{ __html: sanitizeAiText(lp.theme) }} />
                         </div>
                       </div>
                     );
@@ -438,10 +438,10 @@ export function DaeunPage() {
 
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
             의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
@@ -514,13 +514,13 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                     { label: '건강', score: (period as any).healthScore, color: '#4E7A57' },
                   ].map(a => (
                     <div key={a.label} className="text-center">
-                      <p className="text-[9px] text-text-hint mb-1">{a.label}</p>
+                      <p className="text-[12px] text-text-hint mb-1">{a.label}</p>
                       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: `${a.color}12` }}>
                         <motion.div className="h-full rounded-full" style={{ background: a.color }}
                           initial={{ width: 0 }} animate={{ width: `${Math.min(a.score || 0, 100)}%` }}
                           transition={{ duration: 0.8 }} />
                       </div>
-                      <p className="text-[10px] font-bold mt-0.5" style={{ color: a.color }}>{a.score}</p>
+                      <p className="text-[12px] font-bold mt-0.5" style={{ color: a.color }}>{a.score}</p>
                     </div>
                   ))}
                 </div>
@@ -532,7 +532,7 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                 { label: '건강',     value: period.health, color: '#4E7A57' },
               ].map(area => (
                 <div key={area.label}>
-                  <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold mb-1"
+                  <span className="inline-block px-1.5 py-0.5 rounded text-[12px] font-bold mb-1"
                     style={{ background: `${area.color}12`, color: area.color }}>{area.label}</span>
                   <p dangerouslySetInnerHTML={{ __html: sanitizeAiText(area.value) }} />
                 </div>

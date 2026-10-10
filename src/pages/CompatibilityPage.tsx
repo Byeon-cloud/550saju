@@ -63,7 +63,7 @@ export function CompatibilityPage() {
           </div>
           <p className="text-caption text-text-muted">{slot === 1 ? '본인 선택' : '상대방 선택'}</p>
           {profiles.length === 0 && (
-            <p className="text-[11px] text-text-hint">사주 분석 먼저 필요</p>
+            <p className="text-[13px] text-text-hint">사주 분석 먼저 필요</p>
           )}
         </button>
       );
@@ -83,7 +83,7 @@ export function CompatibilityPage() {
         <p className="text-caption text-text-muted mt-0.5">
           {ilgan}({oheng}) 일간
         </p>
-        <p className="text-[11px] text-text-hint mt-0.5">탭하여 변경</p>
+        <p className="text-[13px] text-text-hint mt-0.5">탭하여 변경</p>
       </button>
     );
   }
@@ -128,7 +128,7 @@ export function CompatibilityPage() {
       <FadeIn>
         <ExtensionHero
           theme={compatTheme}
-          crumb="사주500, 더 알아볼 주제, 궁합"
+          crumb="두 사람 궁합"
           sub="생년월일과 시 두 분의 자료를 5가지 관점에서 비교합니다."
           seal="合"
         />
@@ -219,10 +219,10 @@ export function CompatibilityPage() {
       {/* P0-D · 출처 + 디스클레이머 — 하단 sticky 위가 아닌 본문 끝에 배치 (sticky bar 가 콘텐츠 가리는 문제 해결) */}
       <div className="px-5 pt-4 pb-[120px] mt-6">
         <div className="text-center space-y-1">
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
             의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
@@ -239,11 +239,12 @@ export function CompatibilityPage() {
           disabled={!canSubmit || isSubmitting}
           loading={isSubmitting}
           onClick={handleSubmit}
+          sub="1운"
         >
-          궁합 보기 (1운)
+          궁합 보기
         </Button>
         {!canSubmit && (
-          <p className="text-center text-[11px] text-text-hint mt-2">
+          <p className="text-center text-[13px] text-text-hint mt-2">
             {!person1 || !person2 ? '두 사람 모두 선택해주세요' : !relation ? '관계를 선택해주세요' : '같은 사람끼리는 궁합을 볼 수 없어요'}
           </p>
         )}
@@ -324,7 +325,7 @@ export function CompatibilityPage() {
                               <p className="text-caption font-bold text-text-primary leading-tight">
                                 {p.name}
                               </p>
-                              <p className="text-[11px] text-text-muted leading-tight">
+                              <p className="text-[13px] text-text-muted leading-tight">
                                 {ilgan}({oheng})
                               </p>
                             </div>

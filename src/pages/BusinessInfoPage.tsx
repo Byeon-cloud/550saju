@@ -64,7 +64,7 @@ export function BusinessInfoPage() {
                   style={{
                     flex: '0 0 116px',
                     padding: '12px 14px',
-                    fontSize: 12.5,
+                    fontSize: 13.5,
                     fontWeight: 700,
                     color: C.goldDeep,
                     background: 'rgba(184,150,90,0.06)',

@@ -145,7 +145,7 @@ export function PdfDownloadButton({
       </h3>
       <p
         style={{
-          fontSize: 12,
+          fontSize: 13.5,
           color: C.mute,
           margin: '0 0 14px',
           lineHeight: 1.6,
@@ -180,7 +180,7 @@ export function PdfDownloadButton({
       </button>
 
       {issuedUrl && !busy && (
-        <p style={{ fontSize: 11, color: C.mute, marginTop: 10, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: C.mute, marginTop: 10, lineHeight: 1.5 }}>
           다운로드가 시작되지 않으면{' '}
           <a
             href={issuedUrl}
@@ -194,7 +194,7 @@ export function PdfDownloadButton({
         </p>
       )}
 
-      <p style={{ fontSize: 10, color: C.mute, marginTop: 10, opacity: 0.75 }}>
+      <p style={{ fontSize: 12, color: C.mute, marginTop: 10, opacity: 0.75 }}>
         ※ 서버에서 안전하게 생성된 PDF 입니다. 다운로드 링크는 24시간 유효합니다.
       </p>
     </div>
