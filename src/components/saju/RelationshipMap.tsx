@@ -5,8 +5,8 @@ interface Props {
 }
 
 const LABELS = {
-  work: { label: '직장', color: '#2D4470' },
-  friend: { label: '친구', color: '#2D8A4E' },
+  work: { label: '직장', color: '#3A3128' },
+  friend: { label: '친구', color: '#4E7A57' },
   lover: { label: '연인', color: '#B8965A' },
 } as const;
 

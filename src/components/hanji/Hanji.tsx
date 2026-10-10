@@ -28,6 +28,8 @@ export const ART = {
   jangansa: '/art/jangansa.webp',
   inwang: '/art/inwang.webp',
 } as const;
+/** 콘텐츠 머리 공통 배경 — 먹 + 정선 「인왕제색도」 (주제별 색 그라데이션 대체 · 전 콘텐츠 같은 머리) */
+export const INK_HERO_BG = "linear-gradient(180deg, rgba(26,22,18,.55) 0%, rgba(26,22,18,.82) 45%, #1A1612 100%), url('/art/inwang.webp') 30% 35% / cover no-repeat, #1A1612";
 export const ART_CREDIT = '그림 · 정선 「개화사」「인왕제색도」, 김홍도 「금강사군첩 · 장안사」 (공유마당 · 저작권 만료 저작물)';
 
 export function GoldCta({ children, sub, onClick, disabled, ariaLabel, style }: {

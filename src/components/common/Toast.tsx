@@ -37,9 +37,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <AnimatePresence>
           {toasts.map((toast) => {
             const colors = {
-              success: { bg: '#2E7D32', text: '#fff' },
-              info: { bg: '#1B2A4A', text: '#fff' },
-              warning: { bg: '#F57C00', text: '#fff' },
+              success: { bg: '#4E7A57', text: '#fff' },
+              info: { bg: '#1A1612', text: '#fff' },
+              warning: { bg: '#B07F38', text: '#fff' },
             }[toast.type];
             return (
               <motion.div

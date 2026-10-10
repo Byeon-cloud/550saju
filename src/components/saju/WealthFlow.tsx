@@ -33,11 +33,11 @@ interface ScoreBand {
 }
 
 function getScoreBand(score: number): ScoreBand {
-  if (score >= 80) return { label: '매우 강함', color: '#2D8A4E', bg: '#E8F5E9' };
+  if (score >= 80) return { label: '매우 강함', color: '#4E7A57', bg: '#E7EFE6' };
   if (score >= 65) return { label: '양호', color: '#3B7DD8', bg: '#E3F0FF' };
-  if (score >= 50) return { label: '보통', color: '#B8965A', bg: '#FFF8E1' };
+  if (score >= 50) return { label: '보통', color: '#B8965A', bg: '#F5EBD9' };
   if (score >= 35) return { label: '보완 필요', color: '#E08A3C', bg: '#FFF3E0' };
-  return { label: '매우 약함', color: '#C75050', bg: '#FFEBEE' };
+  return { label: '매우 약함', color: '#C75050', bg: '#F6E5E0' };
 }
 
 /* ─── 벌기 해석 ─── */
@@ -291,7 +291,7 @@ function ComparisonBars({ data }: { data: WealthFlowType }) {
 const STAGE_META = {
   earning: { label: '벌기', sub: '수입 에너지', themeColor: '#B8965A' },
   spending: { label: '소비관리', sub: '지출 통제력', themeColor: '#7A8BA0' },
-  saving: { label: '모으기', sub: '돈 모으는 힘', themeColor: '#2D8A4E' },
+  saving: { label: '모으기', sub: '돈 모으는 힘', themeColor: '#4E7A57' },
 } as const;
 
 function StageCard({ stageKey, score, style, interpretation, action, dayGan, jaeCount, sikCount, biCount }: {

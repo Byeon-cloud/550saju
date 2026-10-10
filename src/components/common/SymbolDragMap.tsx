@@ -23,11 +23,11 @@ interface SymbolDragMapProps {
 
 const OHENG_LIST: OhengType[] = ['목', '화', '토', '금', '수'];
 const OHENG_COLORS: Record<OhengType, string> = {
-  목: '#2D8A4E',
-  화: '#D32F2F',
-  토: '#E8B82A',
-  금: '#4A4A4A',
-  수: '#1565E0',
+  목: '#4E7A57',
+  화: '#B04A38',
+  토: '#B07F38',
+  금: '#7D7870',
+  수: '#3E5F82',
 };
 
 /**
@@ -121,9 +121,9 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
                       {s.correctOheng}({s.correctOheng === '목' ? '木' : s.correctOheng === '화' ? '火' : s.correctOheng === '토' ? '土' : s.correctOheng === '금' ? '金' : '水'})
                     </span>
                     {correct ? (
-                      <span style={{ fontSize: 11, color: '#2D8A4E', fontWeight: 700 }}>✓ 맞음</span>
+                      <span style={{ fontSize: 11, color: '#4E7A57', fontWeight: 700 }}>✓ 맞음</span>
                     ) : (
-                      <span style={{ fontSize: 11, color: '#8892A4', fontWeight: 700 }}>
+                      <span style={{ fontSize: 11, color: '#6F6557', fontWeight: 700 }}>
                         (선택: {userMap[s.id]})
                       </span>
                     )}
@@ -181,7 +181,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
               }}
               aria-label={`${s.keyword} ${placed ? `— ${placed}에 배치됨` : '— 탭하여 선택'}`}
             >
-              <Pictogram k={s.pictogram} size={24} color={placed ? OHENG_COLORS[placed] : '#1B2A4A'} />
+              <Pictogram k={s.pictogram} size={24} color={placed ? OHENG_COLORS[placed] : '#1A1612'} />
               <span style={{ fontSize: 11, fontWeight: 700 }}>{s.keyword}</span>
             </motion.button>
           );

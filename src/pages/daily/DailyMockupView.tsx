@@ -232,9 +232,9 @@ const MOCKUP_CSS = `
   --c-card-line: rgba(184,150,90,0.18);
   --c-line: #E1D7C4;
   /* 5 오행 정식 (SajuCard OHENG_THEME) */
-  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
-  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
-  --c-to-soft: rgba(232,184,42,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(21,101,224,0.10);
+  --c-mok: #4E7A57; --c-hwa: #B04A38; --c-to: #B07F38; --c-geum: #7D7870; --c-su: #3E5F82;
+  --c-mok-soft: rgba(78,122,87,0.10); --c-hwa-soft: rgba(176,74,56,0.10);
+  --c-to-soft: rgba(176,127,56,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(62,95,130,0.10);
 }
 .daily-mockup .page { max-width: 480px; margin: 0 auto; background: var(--c-paper); }
 
@@ -247,7 +247,7 @@ const MOCKUP_CSS = `
 .daily-mockup .hd::before { display: none; content: '火'; position: absolute; right: -16px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.06); line-height: 1; }
 .daily-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .9; flex-wrap: wrap; }
 .daily-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
-.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #fff8e1; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
+.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
 .daily-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.35; }
 .daily-mockup .hd .date { font-size: 12px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
 .daily-mockup .hd .time-chip {
@@ -832,7 +832,7 @@ const MOCKUP_CSS = `
 
 /* Upsell + Actions */
 .daily-mockup .upsell { margin: 22px 20px 0; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px; position: relative; overflow: hidden; }
-.daily-mockup .upsell::before { content: '月'; position: absolute; right: -8px; bottom: -28px; font-family: 'Noto Serif KR', serif; font-size: 130px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
+.daily-mockup .upsell::before { display: none; content: '月'; position: absolute; right: -8px; bottom: -28px; font-family: 'Noto Serif KR', serif; font-size: 130px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
 .daily-mockup .upsell .lab { font-size: 11px; color: #E8D9B8; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
 .daily-mockup .upsell h3 { font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; position: relative; line-height: 1.45; }
 .daily-mockup .upsell p { font-size: 12.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; word-break: keep-all; }

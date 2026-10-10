@@ -143,8 +143,8 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
       className="relative flex flex-col items-center rounded-2xl overflow-hidden"
       style={{
         animation: `cardReveal 0.8s ease ${index * 180}ms both`,
-        background: p.isMe ? 'linear-gradient(180deg, #1B2A4A, #243656)' : '#FFFFFF',
-        border: p.isMe ? '2px solid #B8965A' : '1px solid #E2E5EC',
+        background: p.isMe ? 'linear-gradient(180deg, #1A1612, #2A231C)' : '#FFFFFF',
+        border: p.isMe ? '2px solid #B8965A' : '1px solid #E1D7C4',
         boxShadow: p.isMe ? '0 4px 20px rgba(184,150,90,0.2)' : '0 2px 8px rgba(0,0,0,0.04)',
       }}
     >
@@ -155,11 +155,11 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
 
       {/* 기둥 라벨 */}
       <div className="w-full pt-3 pb-1 px-2 text-center"
-        style={{ background: p.isMe ? 'rgba(184,150,90,0.15)' : '#F8F9FB' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: p.isMe ? '#E8D5A8' : '#8892A4' }}>
+        style={{ background: p.isMe ? 'rgba(184,150,90,0.15)' : '#F8F4EC' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: p.isMe ? '#E8D5A8' : '#6F6557' }}>
           {p.label} {p.sub}
         </div>
-        <div style={{ fontSize: 9, color: p.isMe ? 'rgba(255,255,255,0.4)' : '#A8B1C1' }}>{p.desc}</div>
+        <div style={{ fontSize: 9, color: p.isMe ? 'rgba(255,255,255,0.4)' : '#8B8070' }}>{p.desc}</div>
         {p.isMe && (
           <div className="inline-block rounded-full mt-1 px-2 py-0.5"
             style={{ background: '#B8965A', fontSize: 9, fontWeight: 800, color: '#fff' }}>
@@ -184,7 +184,7 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
       </div>
 
       {/* 구분선 */}
-      <div className="w-10 h-px mx-auto" style={{ background: p.isMe ? 'rgba(184,150,90,0.3)' : '#E2E5EC' }} />
+      <div className="w-10 h-px mx-auto" style={{ background: p.isMe ? 'rgba(184,150,90,0.3)' : '#E1D7C4' }} />
 
       {/* 지지 */}
       <div className="w-full py-3 px-2 text-center">

@@ -104,7 +104,7 @@ export function TabAiOps({ d }: { d: AdminData }) {
     { key: 'gens', label: '생성 건(환산)', numeric: true },
     { key: 'costKrw', label: '원가 합(₩)', numeric: true, render: (v) => fmtWon(v) },
     { key: 'perGen', label: '1건당 원가', numeric: true, render: (v) => fmtWon(v) },
-    { key: 'unitMargin', label: '1건당 마진(판매가−원가)', numeric: true, render: (v) => v == null ? '무료' : <b style={{ color: Number(v) >= 0 ? '#2D8A4E' : '#C0392B' }}>{fmtWon(v)}</b> },
+    { key: 'unitMargin', label: '1건당 마진(판매가−원가)', numeric: true, render: (v) => v == null ? '무료' : <b style={{ color: Number(v) >= 0 ? '#4E7A57' : '#C0392B' }}>{fmtWon(v)}</b> },
     { key: 'fail', label: '실패', numeric: true },
   ];
 

@@ -18,11 +18,11 @@ export interface ElemColor {
 }
 
 export const EC: Record<ElemKey, ElemColor> = {
-  wood: { main: '#2d8a4e', light: '#e8f5e9', med: '#a5d6a7', dark: '#1b5e20', grad: 'linear-gradient(135deg,#e8f5e9,#c8e6c9)' },
-  fire: { main: '#d32f2f', light: '#ffebee', med: '#ef9a9a', dark: '#b71c1c', grad: 'linear-gradient(135deg,#ffebee,#ffcdd2)' },
-  earth: { main: '#E8B82A', light: '#fff8e1', med: '#ffe082', dark: '#e65100', grad: 'linear-gradient(135deg,#fff8e1,#ffecb3)' },
-  metal: { main: '#4A4A4A', light: '#f5f5f5', med: '#e0e0e0', dark: '#424242', grad: 'linear-gradient(135deg,#f5f5f5,#e0e0e0)' },
-  water: { main: '#1565E0', light: '#e3f2fd', med: '#90caf9', dark: '#0d47a1', grad: 'linear-gradient(135deg,#e3f2fd,#bbdefb)' },
+  wood: { main: '#4E7A57', light: '#E7EFE6', med: '#a5d6a7', dark: '#355A3E', grad: 'linear-gradient(135deg,#E7EFE6,#c8e6c9)' },
+  fire: { main: '#B04A38', light: '#F6E5E0', med: '#ef9a9a', dark: '#8A3326', grad: 'linear-gradient(135deg,#F6E5E0,#ffcdd2)' },
+  earth: { main: '#B07F38', light: '#F5EBD9', med: '#ffe082', dark: '#8A6226', grad: 'linear-gradient(135deg,#F5EBD9,#ffecb3)' },
+  metal: { main: '#7D7870', light: '#EEECE8', med: '#e0e0e0', dark: '#57534D', grad: 'linear-gradient(135deg,#EEECE8,#e0e0e0)' },
+  water: { main: '#3E5F82', light: '#E4EAF1', med: '#90caf9', dark: '#2A4560', grad: 'linear-gradient(135deg,#E4EAF1,#bbdefb)' },
 };
 export const EKR: Record<ElemKey, string> = { wood: '목(木)', fire: '화(火)', earth: '토(土)', metal: '금(金)', water: '수(水)' };
 export const EHAN: Record<ElemKey, string> = { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' };

@@ -64,6 +64,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     overflow: hidden;
   }
   .premium-mockup .hero-card::before {
+    display: none; /* 2026-10-10 v9 워터마크 제거 */
     content: '命';
     position: absolute;
     right: -10px; bottom: -30px;
@@ -92,10 +93,10 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .hero-card .ilgan .hanja {
     font-family: 'Noto Serif KR', serif;
     font-size: 18px; font-weight: 700;
-    color: #2e7d32;
+    color: #4E7A57;
   }
   .premium-mockup .hero-card .ilgan .label {
-    font-size: 12px; color: #2e7d32; font-weight: 500;
+    font-size: 12px; color: #4E7A57; font-weight: 500;
   }
   .premium-mockup .hero-card .meta {
     margin-top: 14px;
@@ -267,15 +268,15 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   /* 5 오행 박스 — 배경 색 + 흰 글씨 (금만 흰 배경 + 검은 글씨) */
   .premium-mockup .wongug-cell .glyph.mok {
-    background: #2D8A4E; color: #fff; border-color: #1B5E2C;
+    background: #4E7A57; color: #fff; border-color: #1B5E2C;
     text-shadow: 0 1px 2px rgba(0,0,0,0.15);
   }
   .premium-mockup .wongug-cell .glyph.hwa {
-    background: #D32F2F; color: #fff; border-color: #9B1B1B;
+    background: #B04A38; color: #fff; border-color: #9B1B1B;
     text-shadow: 0 1px 2px rgba(0,0,0,0.15);
   }
   .premium-mockup .wongug-cell .glyph.to {
-    background: #E8B82A; color: #fff; border-color: #C9A030;
+    background: #B07F38; color: #fff; border-color: #C9A030;
     text-shadow: 0 1px 2px rgba(0,0,0,0.15);
   }
   .premium-mockup .wongug-cell .glyph.geum {
@@ -323,11 +324,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   /* 오행 5색 — 전통 명리학 컨벤션 + 시인성 ↑ 5색 모두 명확 구분 (2026-05-04 v2 색감 통일)
      · 木 짙은녹  · 火 적색  · 土 진한 황색  · 金 무채 차콜 (메탈릭 실버)  · 水 깊은 남색
      · 金/水 분리 핵심: 金 hue=0° (무채) · 水 hue=215° (남색) — 절대 겹치지 않음 */
-  .premium-mockup .o-mok  .o-label { color: #2D8A4E; } .premium-mockup .o-mok  .o-fill { background: linear-gradient(90deg, #4FAE6D, #2D8A4E); }
-  .premium-mockup .o-hwa  .o-label { color: #D32F2F; } .premium-mockup .o-hwa  .o-fill { background: linear-gradient(90deg, #EF5350, #D32F2F); }
-  .premium-mockup .o-to   .o-label { color: #E8B82A; } .premium-mockup .o-to   .o-fill { background: linear-gradient(90deg, #F9C849, #E8B82A); }
-  .premium-mockup .o-geum .o-label { color: #4A4A4A; } .premium-mockup .o-geum .o-fill { background: linear-gradient(90deg, #BDBDBD, #4A4A4A); }
-  .premium-mockup .o-su   .o-label { color: #1565E0; } .premium-mockup .o-su   .o-fill { background: linear-gradient(90deg, #2196F3, #1565E0); }
+  .premium-mockup .o-mok  .o-label { color: #4E7A57; } .premium-mockup .o-mok  .o-fill { background: linear-gradient(90deg, #4FAE6D, #4E7A57); }
+  .premium-mockup .o-hwa  .o-label { color: #B04A38; } .premium-mockup .o-hwa  .o-fill { background: linear-gradient(90deg, #EF5350, #B04A38); }
+  .premium-mockup .o-to   .o-label { color: #B07F38; } .premium-mockup .o-to   .o-fill { background: linear-gradient(90deg, #F9C849, #B07F38); }
+  .premium-mockup .o-geum .o-label { color: #7D7870; } .premium-mockup .o-geum .o-fill { background: linear-gradient(90deg, #BDBDBD, #7D7870); }
+  .premium-mockup .o-su   .o-label { color: #3E5F82; } .premium-mockup .o-su   .o-fill { background: linear-gradient(90deg, #2196F3, #3E5F82); }
   /* ─── 3. 십성 카드 그리드 ──────────────────────── */
 
   
@@ -447,7 +448,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   
   /* 2026-05-28 — 좌측 strip 제거. 그라데이션 + 큰 따옴표(::before)로 인용 표현. */
   .premium-mockup .pullquote {
-    background: linear-gradient(135deg, rgba(46,125,50,.05) 0%, rgba(212,175,55,.06) 100%);
+    background: linear-gradient(135deg, rgba(78,122,87,.05) 0%, rgba(212,175,55,.06) 100%);
     border-radius: 12px;
     padding: 26px 20px 18px;
     margin: 18px 0;
@@ -458,7 +459,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     position: absolute;
     top: -14px; left: 14px;
     font-family: 'Noto Serif KR', serif;
-    font-size: 60px; color: rgba(46,125,50,.2);
+    font-size: 60px; color: rgba(78,122,87,.2);
     line-height: 1;
   }
   .premium-mockup .pullquote p {
@@ -498,6 +499,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     overflow: hidden;
   }
   .premium-mockup .upsell-card::before {
+    display: none;
     content: '對';
     position: absolute;
     right: -10px; bottom: -30px;
@@ -750,18 +752,18 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border: 1px solid #E5DFD0;
     position: relative;
   }
-  .premium-mockup .ohaeng-diag .od-cell.strong { border-color: #2e7d32; background: rgba(46,125,50,.05); }
+  .premium-mockup .ohaeng-diag .od-cell.strong { border-color: #4E7A57; background: rgba(78,122,87,.05); }
   .premium-mockup .ohaeng-diag .od-cell.weak   { border-color: #c62828; background: rgba(198,40,40,.04); }
   .premium-mockup .ohaeng-diag .od-han {
     font-family: 'Noto Serif KR', serif;
     font-size: 20px; font-weight: 700;
     line-height: 1;
   }
-  .premium-mockup .ohaeng-diag .od-han.mok  { color: #2D8A4E; }
-  .premium-mockup .ohaeng-diag .od-han.hwa  { color: #D32F2F; }
-  .premium-mockup .ohaeng-diag .od-han.to   { color: #E8B82A; }
-  .premium-mockup .ohaeng-diag .od-han.geum { color: #4A4A4A; }
-  .premium-mockup .ohaeng-diag .od-han.su   { color: #1565E0; }
+  .premium-mockup .ohaeng-diag .od-han.mok  { color: #4E7A57; }
+  .premium-mockup .ohaeng-diag .od-han.hwa  { color: #B04A38; }
+  .premium-mockup .ohaeng-diag .od-han.to   { color: #B07F38; }
+  .premium-mockup .ohaeng-diag .od-han.geum { color: #7D7870; }
+  .premium-mockup .ohaeng-diag .od-han.su   { color: #3E5F82; }
   .premium-mockup .ohaeng-diag .od-dots {
     margin-top: 6px; display: flex; justify-content: center; gap: 2px;
   }
@@ -774,7 +776,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-size: 11px; color: #7F6B4E; margin-top: 4px;
     font-weight: 600; letter-spacing: 0.05em;
   }
-  .premium-mockup .ohaeng-diag .od-label.s { color: #2e7d32; }
+  .premium-mockup .ohaeng-diag .od-label.s { color: #4E7A57; }
   .premium-mockup .ohaeng-diag .od-label.w { color: #c62828; }/* 천간-지지 합·충 도식 */
 
   
@@ -804,7 +806,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin-left: auto; padding: 2px 8px; border-radius: 100px;
     font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
   }
-  .premium-mockup .ganji-flow .gf-type.hap   { background: rgba(46,125,50,.1);  color: #2e7d32; }
+  .premium-mockup .ganji-flow .gf-type.hap   { background: rgba(78,122,87,.1);  color: #4E7A57; }
   .premium-mockup .ganji-flow .gf-type.chung { background: rgba(198,40,40,.1);  color: #c62828; }
   .premium-mockup .ganji-flow .gf-type.hyeong{ background: rgba(184,150,90,.12); color: #B8965A; }/* 십성 카드 강도 막대 */
 
@@ -846,7 +848,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     height: 100%; border-radius: 100px;
     background: linear-gradient(90deg, #E8D9B8, #B8965A);
   }
-  .premium-mockup .daewoon-scores .ds-fill.peak { background: linear-gradient(90deg, #2e7d32, #4caf50); }
+  .premium-mockup .daewoon-scores .ds-fill.peak { background: linear-gradient(90deg, #4E7A57, #4caf50); }
   .premium-mockup .daewoon-scores .ds-fill.now  {
     background: linear-gradient(90deg, #B8965A, #E8D9B8);
     box-shadow: 0 0 0 1px rgba(212,175,55,.4);
@@ -961,15 +963,15 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   /* peak 카드는 그린 톤 hook */
   .premium-mockup .topic-mini[style*="rgb(46, 125, 50)"] .tm-hook,
-  .premium-mockup .topic-mini[style*="#2e7d32"] .tm-hook {
-    background: rgba(46,125,50,0.06);
-    border-left-color: rgba(46,125,50,0.42);
-    color: #1b5e20;
+  .premium-mockup .topic-mini[style*="#4E7A57"] .tm-hook {
+    background: rgba(78,122,87,0.06);
+    border-left-color: rgba(78,122,87,0.42);
+    color: #355A3E;
   }
   .premium-mockup .topic-mini[style*="rgb(46, 125, 50)"] .tm-hook .tm-hook-label,
-  .premium-mockup .topic-mini[style*="#2e7d32"] .tm-hook .tm-hook-label {
-    color: #2e7d32;
-    border-color: rgba(46,125,50,0.32);
+  .premium-mockup .topic-mini[style*="#4E7A57"] .tm-hook .tm-hook-label {
+    color: #4E7A57;
+    border-color: rgba(78,122,87,0.32);
   }
   /* low 카드는 레드 톤 hook */
   .premium-mockup .topic-mini[style*="rgb(198, 40, 40)"] .tm-hook,
@@ -1007,7 +1009,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .topic-mini.full {
     grid-column: span 2;
     min-height: 132px;
-    background: linear-gradient(135deg, rgba(212,175,55,.08), rgba(46,125,50,.04));
+    background: linear-gradient(135deg, rgba(212,175,55,.08), rgba(78,122,87,.04));
   }/* 아코디언 토글 — 헤더 전체가 클릭 영역 (60대+ 사용성) */
 
   
@@ -1069,9 +1071,9 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-size: 18px; font-weight: 700; margin: 4px 0;
   }
   .premium-mockup .rel-card .rc-desc { font-size: 11px; color: #2a2520; line-height: 1.5; }
-  .premium-mockup .rel-card.boost .rc-glyph { color: #2e7d32; }
+  .premium-mockup .rel-card.boost .rc-glyph { color: #4E7A57; }
   .premium-mockup .rel-card.clash .rc-glyph { color: #c62828; }
-  .premium-mockup .rel-card.calm  .rc-glyph { color: #1565E0; }/* 관계의 결 (六親) — 6카드 상세 */
+  .premium-mockup .rel-card.calm  .rc-glyph { color: #3E5F82; }/* 관계의 결 (六親) — 6카드 상세 */
 
   
   /* 2026-05-28 — 6카드 균일 좌측 strip 제거 (AI 손톱 디자인 티). 톤은 rel6-name(::after dot) 으로 표현. */
@@ -1086,11 +1088,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--rel6-dot, #7F6B4E);
   }
-  .premium-mockup .rel6-card.c-parent  { --rel6-dot: #1565E0; }
-  .premium-mockup .rel6-card.c-sibling { --rel6-dot: #2e7d32; }
+  .premium-mockup .rel6-card.c-parent  { --rel6-dot: #3E5F82; }
+  .premium-mockup .rel6-card.c-sibling { --rel6-dot: #4E7A57; }
   .premium-mockup .rel6-card.c-spouse  { --rel6-dot: #c62828; }
   .premium-mockup .rel6-card.c-child   { --rel6-dot: #7F6B4E; }
-  .premium-mockup .rel6-card.c-friend  { --rel6-dot: #757575; }
+  .premium-mockup .rel6-card.c-friend  { --rel6-dot: #7D7870; }
   .premium-mockup .rel6-card.c-boss    { --rel6-dot: #5C4A2E; }
 
   .premium-mockup .rel6-head {
@@ -1100,11 +1102,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-family: 'Noto Serif KR', serif;
     font-size: 19px; font-weight: 700;
   }
-  .premium-mockup .rel6-card.c-parent  .rel6-name { color: #1565E0; }
-  .premium-mockup .rel6-card.c-sibling .rel6-name { color: #2e7d32; }
+  .premium-mockup .rel6-card.c-parent  .rel6-name { color: #3E5F82; }
+  .premium-mockup .rel6-card.c-sibling .rel6-name { color: #4E7A57; }
   .premium-mockup .rel6-card.c-spouse  .rel6-name { color: #c62828; }
   .premium-mockup .rel6-card.c-child   .rel6-name { color: #7F6B4E; }
-  .premium-mockup .rel6-card.c-friend  .rel6-name { color: #757575; }
+  .premium-mockup .rel6-card.c-friend  .rel6-name { color: #7D7870; }
   .premium-mockup .rel6-card.c-boss    .rel6-name { color: #5C4A2E; }
   .premium-mockup .rel6-label {
     font-size: 13px; color: #1a1a1a; font-weight: 600;
@@ -1117,7 +1119,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel6-tag.t-warn  { background: rgba(198,40,40,.10); color: #c62828; }
   .premium-mockup .rel6-tag.t-neut  { background: rgba(212,175,55,.16); color: #B8965A; }
-  .premium-mockup .rel6-tag.t-good  { background: rgba(46,125,50,.12); color: #2e7d32; }
+  .premium-mockup .rel6-tag.t-good  { background: rgba(78,122,87,.12); color: #4E7A57; }
 
   .premium-mockup .rel6-summary {
     margin: 0 0 8px;
@@ -1172,7 +1174,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   /* 2026-05-28 — do/dont 좌측 strip 제거. 배경 그라데이션 + 라벨 컬러로 톤 표현. */
   .premium-mockup .rel6-do  {
-    background: linear-gradient(135deg, rgba(46,125,50,.10) 0%, rgba(46,125,50,.02) 100%);
+    background: linear-gradient(135deg, rgba(78,122,87,.10) 0%, rgba(78,122,87,.02) 100%);
   }
   .premium-mockup .rel6-dont{
     background: linear-gradient(135deg, rgba(198,40,40,.09) 0%, rgba(198,40,40,.02) 100%);
@@ -1189,7 +1191,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel6-do   .ic {
     color: #fff;
-    background: linear-gradient(135deg, #4caf50, #2e7d32);
+    background: linear-gradient(135deg, #4caf50, #4E7A57);
   }
   .premium-mockup .rel6-dont .ic {
     color: #fff;
@@ -1204,12 +1206,12 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-weight: 700; color: #1a1a1a;
     background: none; padding: 0;
   }
-  .premium-mockup .rel6-do   .txt strong { color: #1b5e20; }
+  .premium-mockup .rel6-do   .txt strong { color: #355A3E; }
   .premium-mockup .rel6-dont .txt strong { color: #8b1a1a; }/* 10년 대운 카드 (현재 시기만 크게) */
 
   
   .premium-mockup .now-daewoon {
-    background: linear-gradient(135deg, rgba(212,175,55,.1), rgba(46,125,50,.04));
+    background: linear-gradient(135deg, rgba(212,175,55,.1), rgba(78,122,87,.04));
     border: 1px solid rgba(212,175,55,.35);
     border-radius: 12px;
     padding: 14px 14px 12px;
@@ -1226,8 +1228,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: #fff; border: 1px solid rgba(212,175,55,.4);
     line-height: 1.1;
   }
-  .premium-mockup .now-daewoon .nd-glyph .g-gan { font-size: 20px; font-weight: 700; color: #2e7d32; }
-  .premium-mockup .now-daewoon .nd-glyph .g-ji  { font-size: 14px; color: #757575; }
+  .premium-mockup .now-daewoon .nd-glyph .g-gan { font-size: 20px; font-weight: 700; color: #4E7A57; }
+  .premium-mockup .now-daewoon .nd-glyph .g-ji  { font-size: 14px; color: #7D7870; }
   .premium-mockup .now-daewoon .nd-info .nd-age { font-size: 11px; color: #B8965A; font-weight: 600; letter-spacing: 0.08em; }
   .premium-mockup .now-daewoon .nd-info .nd-key { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-top: 2px; font-family: 'Noto Serif KR', serif; }
   .premium-mockup .now-daewoon .nd-row {
@@ -1268,11 +1270,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border: 1px solid rgba(0,0,0,0.04);
     background: linear-gradient(135deg, #fff 0%, #F4EFE4 100%);
   }
-  .premium-mockup .life-edge-card.mok  { background: linear-gradient(135deg, #fff, rgba(46,125,50,.06)); }
+  .premium-mockup .life-edge-card.mok  { background: linear-gradient(135deg, #fff, rgba(78,122,87,.06)); }
   .premium-mockup .life-edge-card.hwa  { background: linear-gradient(135deg, #fff, rgba(198,40,40,.06)); }
-  .premium-mockup .life-edge-card.to   { background: linear-gradient(135deg, #fff, rgba(232,184,42,.08)); }
+  .premium-mockup .life-edge-card.to   { background: linear-gradient(135deg, #fff, rgba(176,127,56,.08)); }
   .premium-mockup .life-edge-card.geum { background: linear-gradient(135deg, #fff, rgba(74,74,74,.06)); }
-  .premium-mockup .life-edge-card.su   { background: linear-gradient(135deg, #fff, rgba(21,101,224,.07)); }
+  .premium-mockup .life-edge-card.su   { background: linear-gradient(135deg, #fff, rgba(62,95,130,.07)); }
   .premium-mockup .life-edge-card .le-head {
     display: flex; align-items: center; gap: 8px;
     margin-bottom: 6px;
@@ -1281,11 +1283,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-family: 'Noto Serif KR', serif;
     font-size: 22px; font-weight: 700; line-height: 1;
   }
-  .premium-mockup .life-edge-card.mok .le-glyph  { color: #2D8A4E; }
-  .premium-mockup .life-edge-card.hwa .le-glyph  { color: #D32F2F; }
-  .premium-mockup .life-edge-card.to  .le-glyph  { color: #E8B82A; }
-  .premium-mockup .life-edge-card.geum .le-glyph { color: #4A4A4A; }
-  .premium-mockup .life-edge-card.su  .le-glyph  { color: #1565E0; }
+  .premium-mockup .life-edge-card.mok .le-glyph  { color: #4E7A57; }
+  .premium-mockup .life-edge-card.hwa .le-glyph  { color: #B04A38; }
+  .premium-mockup .life-edge-card.to  .le-glyph  { color: #B07F38; }
+  .premium-mockup .life-edge-card.geum .le-glyph { color: #7D7870; }
+  .premium-mockup .life-edge-card.su  .le-glyph  { color: #3E5F82; }
   .premium-mockup .life-edge-card .le-name {
     font-family: 'Noto Serif KR', serif;
     font-size: 14px; font-weight: 700; color: #1a1a1a;
@@ -1295,7 +1297,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     padding: 2px 8px; border-radius: 100px;
     background: #E5DFD0; color: #5C4A2E; font-weight: 600;
   }
-  .premium-mockup .life-edge-card .le-tag.s { background: rgba(46,125,50,.12); color: #2e7d32; }
+  .premium-mockup .life-edge-card .le-tag.s { background: rgba(78,122,87,.12); color: #4E7A57; }
   .premium-mockup .life-edge-card .le-tag.w { background: rgba(198,40,40,.10); color: #c62828; }
   .premium-mockup .life-edge-card .le-desc {
     font-size: 12.5px; color: #2a2520; line-height: 1.65;
@@ -1356,7 +1358,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(90deg,
       #cfd8dc 0%, #cfd8dc 12%,
       #E8D9B8 12%, #E8D9B8 25%,
-      #2e7d32 50%, #2e7d32 62%,
+      #4E7A57 50%, #4E7A57 62%,
       #E8D9B8 75%, #E8D9B8 87%,
       #cfd8dc 87%, #cfd8dc 100%);
     border-radius: 100px;
@@ -1376,8 +1378,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     top: 100%; left: 50%; transform: translateX(-50%);
     border: 4px solid transparent; border-top-color: #1a1a1a;
   }
-  .premium-mockup .daewoon-line .dl-mark.peak { background: #2e7d32; color: #fff; }
-  .premium-mockup .daewoon-line .dl-mark.peak::after { border-top-color: #2e7d32; }
+  .premium-mockup .daewoon-line .dl-mark.peak { background: #4E7A57; color: #fff; }
+  .premium-mockup .daewoon-line .dl-mark.peak::after { border-top-color: #4E7A57; }
   .premium-mockup .daewoon-line .dl-axis {
     display: flex; justify-content: space-between;
     font-size: 11px; color: #7F6B4E;
@@ -1493,20 +1495,20 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     letter-spacing: 0.04em;
   }
   /* up — 상승 (그린) */
-  .premium-mockup .month-insight-grid .mi.up .mi-month  { color: #2e7d32; }
-  .premium-mockup .month-insight-grid .mi.up .mi-badge  { background: rgba(46,125,50,0.10); color: #2e7d32; border-color: rgba(46,125,50,0.32); }
+  .premium-mockup .month-insight-grid .mi.up .mi-month  { color: #4E7A57; }
+  .premium-mockup .month-insight-grid .mi.up .mi-badge  { background: rgba(78,122,87,0.10); color: #4E7A57; border-color: rgba(78,122,87,0.32); }
   /* peak — 정점 (그린 + 강조) */
   .premium-mockup .month-insight-grid .mi.peak {
-    background: linear-gradient(135deg, #fff 0%, rgba(46,125,50,0.05) 100%);
-    border-color: rgba(46,125,50,0.42);
-    box-shadow: 0 0 0 2px rgba(46,125,50,0.18), 0 2px 8px rgba(46,125,50,0.10);
+    background: linear-gradient(135deg, #fff 0%, rgba(78,122,87,0.05) 100%);
+    border-color: rgba(78,122,87,0.42);
+    box-shadow: 0 0 0 2px rgba(78,122,87,0.18), 0 2px 8px rgba(78,122,87,0.10);
   }
-  .premium-mockup .month-insight-grid .mi.peak .mi-month { color: #1b5e20; }
+  .premium-mockup .month-insight-grid .mi.peak .mi-month { color: #355A3E; }
   .premium-mockup .month-insight-grid .mi.peak .mi-badge {
-    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    background: linear-gradient(135deg, #4E7A57, #355A3E);
     color: #fff; border-color: transparent;
   }
-  .premium-mockup .month-insight-grid .mi.peak .mi-text strong { color: #1b5e20; }
+  .premium-mockup .month-insight-grid .mi.peak .mi-text strong { color: #355A3E; }
   /* warn — 주의 (레드) */
   .premium-mockup .month-insight-grid .mi.warn {
     background: linear-gradient(135deg, #fff 0%, rgba(198,40,40,0.04) 100%);
@@ -1548,9 +1550,9 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border: 1px solid #E5DFD0;
     letter-spacing: 0.03em;
   }
-  .premium-mockup .shinsal-meta .sm-when.always { color: #2e7d32; border-color: rgba(46,125,50,.3); background: rgba(46,125,50,.06); }
+  .premium-mockup .shinsal-meta .sm-when.always { color: #4E7A57; border-color: rgba(78,122,87,.3); background: rgba(78,122,87,.06); }
   .premium-mockup .shinsal-meta .sm-when.dae    { color: #B8965A; border-color: rgba(184,150,90,.4); background: rgba(184,150,90,.08); }
-  .premium-mockup .shinsal-meta .sm-when.year   { color: #1565E0; border-color: rgba(21,101,224,.3); background: rgba(21,101,224,.06); }
+  .premium-mockup .shinsal-meta .sm-when.year   { color: #3E5F82; border-color: rgba(62,95,130,.3); background: rgba(62,95,130,.06); }
   .premium-mockup .shinsal-meta .sm-when.dorm   { color: #5C4A2E; }/* 보조(중) 신살 카드 — 더 컴팩트 */
 
   

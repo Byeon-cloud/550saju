@@ -7,7 +7,7 @@
  *   - 스타일 규칙 일관성: viewBox 24x24, stroke 1.5, fillOpacity 0.12~0.18
  *
  * 사용 예
- *   <Pictogram k="dream:water" size={28} color="#1565C0" />
+ *   <Pictogram k="dream:water" size={28} color="#3E5F82" />
  *   <Pictogram k="topic:love" />
  *   <Pictogram k="concern:career" size={32} className="opacity-80" />
  *

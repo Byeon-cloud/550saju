@@ -101,7 +101,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
               style={{ background: 'var(--bg-card)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
 
               {/* 프리뷰 카드 */}
-              <div className="px-5 pt-6 pb-5" style={{ background: 'linear-gradient(135deg, #1B2A4A, #243656)' }}>
+              <div className="px-5 pt-6 pb-5" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
                 <div className="text-center">
                   <p className="text-[10px] text-white/30 mb-1">사주500 분석 결과</p>
                   <p className="text-h1 text-white">{name}님의 사주</p>
@@ -195,9 +195,9 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                       initial={{ scale: 0 }} animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                       className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                      style={{ background: 'rgba(46,125,50,0.1)' }}
+                      style={{ background: 'rgba(78,122,87,0.1)' }}
                     >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2.5" strokeLinecap="round">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4E7A57" strokeWidth="2.5" strokeLinecap="round">
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     </motion.div>

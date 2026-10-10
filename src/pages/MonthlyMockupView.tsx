@@ -71,21 +71,21 @@ const MOCKUP_CSS = `
   --c-accent-soft: rgba(181,68,31,0.10);
   --c-accent-line: rgba(181,68,31,0.30);
   /* 5 오행 정식 (SajuCard OHENG_THEME) */
-  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
-  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
-  --c-to-soft: rgba(232,184,42,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(21,101,224,0.10);
+  --c-mok: #4E7A57; --c-hwa: #B04A38; --c-to: #B07F38; --c-geum: #7D7870; --c-su: #3E5F82;
+  --c-mok-soft: rgba(78,122,87,0.10); --c-hwa-soft: rgba(176,74,56,0.10);
+  --c-to-soft: rgba(176,127,56,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(62,95,130,0.10);
 }
 .monthly-mockup .page { max-width: 480px; margin: 0 auto; background: var(--c-paper); }
 
 /* Header — 월운색 그라데이션 + 月 워터마크 */
 .monthly-mockup .hd {
-  background: linear-gradient(135deg, #c9522a 0%, #b5441f 55%, #7a2c13 100%);
+  background: linear-gradient(180deg, rgba(26,22,18,.55) 0%, rgba(26,22,18,.82) 45%, #1A1612 100%), url('/art/inwang.webp') 30% 35% / cover no-repeat, #1A1612; /* 2026-10-10 v9 먹 머리 */
   color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
 }
-.monthly-mockup .hd::before { content: '月'; position: absolute; right: -16px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
+.monthly-mockup .hd::before { display: none; content: '月'; position: absolute; right: -16px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
 .monthly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .92; flex-wrap: wrap; }
 .monthly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
-.monthly-mockup .hd .month-tag { background: rgba(255,248,225,.22); color: #fff8e1; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
+.monthly-mockup .hd .month-tag { background: rgba(255,248,225,.22); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
 .monthly-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 25px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; }
 .monthly-mockup .hd .sub { font-size: 12.5px; opacity: .85; margin-top: 6px; position: relative; }
 .monthly-mockup .hd .kw-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; position: relative; }
@@ -355,14 +355,14 @@ const MOCKUP_CSS = `
   border: 1px solid var(--c-card-line);
 }
 .monthly-mockup .day-note.lucky { background: var(--c-accent-soft); border-color: var(--c-accent-line); }
-.monthly-mockup .day-note.caution { background: rgba(211,47,47,0.05); border-color: rgba(211,47,47,0.22); }
+.monthly-mockup .day-note.caution { background: rgba(176,74,56,0.05); border-color: rgba(176,74,56,0.22); }
 .monthly-mockup .day-note .head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .monthly-mockup .day-note .pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 100px; color: #fff; }
 .monthly-mockup .day-note.lucky .pill { background: var(--c-accent); }
-.monthly-mockup .day-note.caution .pill { background: #D32F2F; }
+.monthly-mockup .day-note.caution .pill { background: #B04A38; }
 .monthly-mockup .day-note .dt { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 800; font-feature-settings: 'tnum'; }
 .monthly-mockup .day-note.lucky .dt { color: var(--c-accent); }
-.monthly-mockup .day-note.caution .dt { color: #D32F2F; }
+.monthly-mockup .day-note.caution .dt { color: #B04A38; }
 .monthly-mockup .day-note .day-reason { font-size: 12.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
 .monthly-mockup .day-reason strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.30) 55%); padding: 0 2px; }
 .monthly-mockup .day-reason u { text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 2px; color: #1a1a1a; font-weight: 600; }
@@ -376,7 +376,7 @@ const MOCKUP_CSS = `
   padding: 16px;
   position: relative; overflow: hidden;
 }
-.monthly-mockup .gaewoon-card::before { content: '開'; position: absolute; right: -8px; bottom: -24px; font-family: 'Noto Serif KR', serif; font-size: 110px; font-weight: 900; color: rgba(181,68,31,.06); line-height: 1; }
+.monthly-mockup .gaewoon-card::before { display: none; content: '開'; position: absolute; right: -8px; bottom: -24px; font-family: 'Noto Serif KR', serif; font-size: 110px; font-weight: 900; color: rgba(181,68,31,.06); line-height: 1; }
 .monthly-mockup .gaewoon-card .lab { font-size: 11px; color: var(--c-accent); letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px; position: relative; }
 .monthly-mockup .gaewoon-card .gaewoon-body { font-size: 14px; line-height: 1.8; color: #2a2520; word-break: keep-all; position: relative; }
 .monthly-mockup .gaewoon-body strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.32) 55%); padding: 0 3px; border-radius: 2px; }
@@ -441,9 +441,9 @@ function getOhengClass(o?: OhengType | string): string {
 /** 점수 → 색 밴드 (월운색 → 녹 → 골드 → 적) */
 function scoreColor(score: number): string {
   if (score >= 80) return ACCENT;
-  if (score >= 60) return '#2D8A4E';
+  if (score >= 60) return '#4E7A57';
   if (score >= 40) return '#8C6D3D';
-  return '#D32F2F';
+  return '#B04A38';
 }
 
 export function MonthlyMockupView(props: MonthlyMockupViewProps) {

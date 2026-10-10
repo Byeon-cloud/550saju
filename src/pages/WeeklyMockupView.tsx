@@ -69,18 +69,18 @@ const MOCKUP_CSS = `
   /* 주간 테마 색 #C77D3A */
   --c-week: #C77D3A; --c-week-deep: #9C5E25; --c-week-soft: rgba(199,125,58,0.10);
   /* 5 오행 정식 (SajuCard OHENG_THEME 일치) */
-  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
-  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
-  --c-to-soft: rgba(232,184,42,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(21,101,224,0.10);
+  --c-mok: #4E7A57; --c-hwa: #B04A38; --c-to: #B07F38; --c-geum: #7D7870; --c-su: #3E5F82;
+  --c-mok-soft: rgba(78,122,87,0.10); --c-hwa-soft: rgba(176,74,56,0.10);
+  --c-to-soft: rgba(176,127,56,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(62,95,130,0.10);
 }
 .weekly-mockup .page { max-width: 480px; margin: 0 auto; background: var(--c-paper); }
 
 /* Header — 주간 후크 + 기간 + 週 워터마크 */
 .weekly-mockup .hd {
-  background: linear-gradient(135deg, #E0975A 0%, #C77D3A 60%, #9C5E25 100%);
+  background: linear-gradient(180deg, rgba(26,22,18,.55) 0%, rgba(26,22,18,.82) 45%, #1A1612 100%), url('/art/inwang.webp') 30% 35% / cover no-repeat, #1A1612; /* 2026-10-10 v9 먹 머리 */
   color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
 }
-.weekly-mockup .hd::before { content: '週'; position: absolute; right: -10px; bottom: -34px; font-family: 'Noto Serif KR', serif; font-size: 190px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
+.weekly-mockup .hd::before { display: none; content: '週'; position: absolute; right: -10px; bottom: -34px; font-family: 'Noto Serif KR', serif; font-size: 190px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
 .weekly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .92; flex-wrap: wrap; }
 .weekly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
 .weekly-mockup .hd .span-tag { background: rgba(255,255,255,.22); color: #fff8ef; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
@@ -319,11 +319,11 @@ const MOCKUP_CSS = `
   border: 1px solid transparent;
 }
 .weekly-mockup .keyday.best    { background: var(--c-week-soft); border-color: rgba(199,125,58,0.26); }
-.weekly-mockup .keyday.caution { background: rgba(211,47,47,0.05); border-color: rgba(211,47,47,0.20); }
+.weekly-mockup .keyday.caution { background: rgba(176,74,56,0.05); border-color: rgba(176,74,56,0.20); }
 .weekly-mockup .keyday .kd-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .weekly-mockup .keyday .kd-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 100px; color: #fff; letter-spacing: 0.04em; }
 .weekly-mockup .keyday.best    .kd-badge { background: var(--c-week); }
-.weekly-mockup .keyday.caution .kd-badge { background: #D32F2F; }
+.weekly-mockup .keyday.caution .kd-badge { background: #B04A38; }
 .weekly-mockup .keyday .kd-day { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 800; }
 .weekly-mockup .keyday.best    .kd-day { color: var(--c-week-deep); }
 .weekly-mockup .keyday.caution .kd-day { color: #B5441F; }
@@ -377,9 +377,9 @@ function getOhengClass(o?: OhengType | string): string {
 /** 점수 → 컬러 밴드 (WeekDayCard 와 동일 정책: 80↑ 주간색 / 60↑ 녹 / 40↑ 골드 / else 적) */
 function scoreColor(score: number): string {
   if (score >= 80) return ACCENT;
-  if (score >= 60) return '#2D8A4E';
+  if (score >= 60) return '#4E7A57';
   if (score >= 40) return '#8C6D3D';
-  return '#D32F2F';
+  return '#B04A38';
 }
 
 export function WeeklyMockupView(props: WeeklyMockupViewProps) {

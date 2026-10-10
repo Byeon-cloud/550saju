@@ -20,6 +20,7 @@
 //   - mount는 Bundle 2
 
 import type { ReactNode } from 'react';
+import { INK_HERO_BG } from '@/components/hanji/Hanji';
 // 2026-05-29 H1 fix — 업셀 "10운" 하드코딩 → SSOT 세일가.
 import { getPremiumPrice } from '@/constants/pricing';
 
@@ -164,12 +165,14 @@ export function ExtensionHero({
         overflow: 'hidden',
         padding: '18px 20px 28px',
         color: '#FFFFFF',
-        background: theme.heroGrad,
+        // 2026-10-10 v9 — 콘텐츠별 색 그라데이션 → 먹 + 그림 (전 콘텐츠 같은 머리)
+        background: INK_HERO_BG,
       }}
     >
       <span
         aria-hidden
         style={{
+          display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
           position: 'absolute',
           right: -18,
           bottom: -40,
@@ -440,6 +443,7 @@ export function ExtensionUpsellCard({
       <span
         aria-hidden
         style={{
+          display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
           position: 'absolute',
           right: -8,
           bottom: -28,
@@ -1317,7 +1321,7 @@ export function CalGrid({
             style={{
               textAlign: 'center',
               fontSize: 9.5,
-              color: i === 0 ? '#C62828' : i === 6 ? '#1565C0' : C.mute,
+              color: i === 0 ? '#C62828' : i === 6 ? '#3E5F82' : C.mute,
               fontWeight: 700,
               padding: '4px 0',
             }}
@@ -1347,7 +1351,7 @@ export function CalGrid({
                   : c.weekday === 'sun'
                   ? '#C62828'
                   : c.weekday === 'sat'
-                  ? '#1565C0'
+                  ? '#3E5F82'
                   : C.ink,
               fontWeight: c.isToday ? 800 : 500,
             }}

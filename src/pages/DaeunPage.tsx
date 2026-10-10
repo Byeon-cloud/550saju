@@ -468,7 +468,7 @@ export function DaeunPage() {
 // ─── 기간별 카드 (접기/펼치기) ───
 function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] }) {
   const [expanded, setExpanded] = useState(period.isCurrent);
-  const scoreColor = period.score >= 75 ? '#B8965A' : period.score >= 50 ? '#2D8A4E' : '#2D4470';
+  const scoreColor = period.score >= 75 ? '#B8965A' : period.score >= 50 ? '#4E7A57' : '#3A3128';
 
   return (
     <button onClick={() => setExpanded(!expanded)} className={`w-full text-left card transition-all ${period.isCurrent ? 'ring-2 ring-brand-gold' : ''}`}>
@@ -511,10 +511,10 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
               {(period as any).careerScore != null && (
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {[
-                    { label: '직업', score: (period as any).careerScore, color: '#1B2A4A' },
+                    { label: '직업', score: (period as any).careerScore, color: '#1A1612' },
                     { label: '연애', score: (period as any).loveScore, color: '#C88A95' },
                     { label: '재물', score: (period as any).wealthScore, color: '#B8965A' },
-                    { label: '건강', score: (period as any).healthScore, color: '#2D8A4E' },
+                    { label: '건강', score: (period as any).healthScore, color: '#4E7A57' },
                   ].map(a => (
                     <div key={a.label} className="text-center">
                       <p className="text-[9px] text-text-hint mb-1">{a.label}</p>
@@ -529,10 +529,10 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                 </div>
               )}
               {[
-                { label: '직업/진로', value: period.career, color: '#1B2A4A' },
+                { label: '직업/진로', value: period.career, color: '#1A1612' },
                 { label: '연애/관계', value: period.love, color: '#C88A95' },
                 { label: '재물',     value: period.wealth, color: '#B8965A' },
-                { label: '건강',     value: period.health, color: '#2D8A4E' },
+                { label: '건강',     value: period.health, color: '#4E7A57' },
               ].map(area => (
                 <div key={area.label}>
                   <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold mb-1"

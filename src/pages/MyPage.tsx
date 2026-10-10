@@ -368,15 +368,15 @@ function findMyProfile():
    · 클릭 시 사주 카드 페이지로 진입
 ══════════════════════════════════════════ */
 const OHENG_HEX_MY: Record<OhengType, string> = {
-  목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0',
+  목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82',
 };
 const OHENG_HAN_MY: Record<OhengType, string> = {
   목: '木', 화: '火', 토: '土', 금: '金', 수: '水',
 };
 const OHENG_BOX_MY: Record<OhengType, { bg: string; fg: string; outline: string }> = {
-  목: { bg: '#2D8A4E', fg: '#FFFFFF', outline: '#1B5E2C' },
-  화: { bg: '#D32F2F', fg: '#FFFFFF', outline: '#9B1B1B' },
-  토: { bg: '#E8B82A', fg: '#FFFFFF', outline: '#B85A0E' },
+  목: { bg: '#4E7A57', fg: '#FFFFFF', outline: '#1B5E2C' },
+  화: { bg: '#B04A38', fg: '#FFFFFF', outline: '#9B1B1B' },
+  토: { bg: '#B07F38', fg: '#FFFFFF', outline: '#B85A0E' },
   금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C' },
   수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D' },
 };
@@ -645,6 +645,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
       <span
         aria-hidden
         style={{
+          display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
           position: 'absolute',
           right: -28,
           bottom: -52,
@@ -1022,7 +1023,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
                   const isGil = s.category === 'gilsin';
                   const isHyung = s.category === 'hyungsal';
                   const styling = isGil
-                    ? { color: '#1B5E2C', border: 'rgba(45,138,78,0.45)', bg: 'rgba(45,138,78,0.08)' }
+                    ? { color: '#1B5E2C', border: 'rgba(78,122,87,0.45)', bg: 'rgba(78,122,87,0.08)' }
                     : isHyung
                       ? { color: '#A14A14', border: 'rgba(180,80,30,0.40)', bg: 'rgba(180,80,30,0.06)' }
                       : { color: C.goldDeep, border: `${C.gold}55`, bg: '#FFFFFF' };

@@ -66,7 +66,7 @@ export function TimelineSwipe({ steps, onLockedTap, lockedCta = '1운으로 열�
                 >
                   <div className="card-locked-blur" aria-hidden="true">
                     <div style={{ padding: 20 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#8892A4' }}>{step.label}</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#6F6557' }}>{step.label}</p>
                       <p style={{ fontSize: 15, lineHeight: 1.7, marginTop: 8 }}>
                         {step.title}에 대한 구체적 흐름과 조언이 이 안에 있습니다…
                       </p>

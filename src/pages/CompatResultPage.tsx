@@ -37,10 +37,10 @@ const LOADING_STEPS = [
 // 2026-05-05 SSOT — 수오행 컬러는 OHENG_MAP['수'].color (constants/oheng.ts) 에서 직접 호출
 const CATEGORY_COLORS: Record<string, string> = {
   personality: '#B8965A',
-  values: '#2D8A4E',
+  values: '#4E7A57',
   communication: OHENG_MAP['수'].color,
-  emotion: '#D32F2F',
-  future: '#7B1FA2',
+  emotion: '#B04A38',
+  future: '#7A5C7E',
 };
 
 export function CompatResultPage() {
@@ -210,8 +210,8 @@ export function CompatResultPage() {
                 <p className="text-caption text-text-muted">{state.person1.name}</p>
               </div>
               <div className="px-3 py-1.5 rounded-full" style={{
-                background: result.ohengHarmony.relation === '상생' ? 'rgba(45,138,78,0.1)' : 'rgba(211,47,47,0.1)',
-                color: result.ohengHarmony.relation === '상생' ? '#2D8A4E' : '#D32F2F',
+                background: result.ohengHarmony.relation === '상생' ? 'rgba(78,122,87,0.1)' : 'rgba(176,74,56,0.1)',
+                color: result.ohengHarmony.relation === '상생' ? '#4E7A57' : '#B04A38',
               }}>
                 <span className="text-label font-bold">{result.ohengHarmony.relation}</span>
               </div>

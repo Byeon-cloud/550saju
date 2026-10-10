@@ -123,15 +123,15 @@ const DREAM_CATEGORIES: Array<{
   hot?: boolean;
 }> = [
   // 2026-05-04 SSOT 정렬 — 5오행 컬러 (목/화/토/금/수) + brand-gold 만 사용. 자유 hex 제거.
-  // 木=#2D8A4E 火=#D32F2F 土=#E8B82A 金=#4A4A4A 水=#1565E0 brand-gold=#B8965A
-  { id: 'animal', label: '동물이 나오는 꿈', color: '#2D8A4E', examples: '뱀, 개, 고양이, 돼지, 호랑이', hot: true },
-  { id: 'water', label: '물과 관련된 꿈', color: '#1565C0', examples: '바다, 강, 비, 홍수, 수영', hot: true },
-  { id: 'death', label: '죽음 · 이별의 꿈', color: '#4A4A4A', examples: '누군가 죽는 꿈, 장례식, 이별' },
-  { id: 'flying', label: '하늘을 나는 꿈', color: '#1565C0', examples: '날기, 떨어지기, 높은 곳' },
+  // 木=#4E7A57 火=#B04A38 土=#B07F38 金=#7D7870 水=#3E5F82 brand-gold=#B8965A
+  { id: 'animal', label: '동물이 나오는 꿈', color: '#4E7A57', examples: '뱀, 개, 고양이, 돼지, 호랑이', hot: true },
+  { id: 'water', label: '물과 관련된 꿈', color: '#3E5F82', examples: '바다, 강, 비, 홍수, 수영', hot: true },
+  { id: 'death', label: '죽음 · 이별의 꿈', color: '#7D7870', examples: '누군가 죽는 꿈, 장례식, 이별' },
+  { id: 'flying', label: '하늘을 나는 꿈', color: '#3E5F82', examples: '날기, 떨어지기, 높은 곳' },
   { id: 'money', label: '돈 · 재물의 꿈', color: '#B8965A', examples: '돈 줍기, 복권, 금, 보석', hot: true },
-  { id: 'people', label: '사람이 나오는 꿈', color: '#D32F2F', examples: '가족, 연인, 낯선 사람, 유명인' },
-  { id: 'chase', label: '쫓기는 꿈', color: '#D32F2F', examples: '쫓기기, 도망, 숨기, 위험' },
-  { id: 'nature', label: '자연 · 날씨 꿈', color: '#F57F17', examples: '꽃, 산, 불, 지진, 눈' },
+  { id: 'people', label: '사람이 나오는 꿈', color: '#B04A38', examples: '가족, 연인, 낯선 사람, 유명인' },
+  { id: 'chase', label: '쫓기는 꿈', color: '#B04A38', examples: '쫓기기, 도망, 숨기, 위험' },
+  { id: 'nature', label: '자연 · 날씨 꿈', color: '#B07F38', examples: '꽃, 산, 불, 지진, 눈' },
   { id: 'other', label: '직접 적을게요', color: '#7A7269', examples: '위 항목에 없는 꿈을 자유롭게' },
 ];
 
@@ -147,7 +147,7 @@ const OHENG_PICTOGRAM_KEY: Record<OhengType, PictogramKey> = {
 const GRADE_V4: Record<string, string> = {
   S: '#B8965A',
   A: '#8C6D3D',
-  B: '#2D4470',
+  B: '#3A3128',
   C: '#8F6B4E',
   D: '#8F1F1C',
 };
@@ -1127,8 +1127,8 @@ function CategoryPhase({
                           fontWeight: 700,
                           padding: '2px 5px',
                           borderRadius: 3,
-                          color: '#D32F2F',
-                          background: 'rgba(211,47,47,0.1)',
+                          color: '#B04A38',
+                          background: 'rgba(176,74,56,0.1)',
                         }}
                       >
                         HOT
@@ -1617,12 +1617,12 @@ function _FreeResultView_legacy({
             <div style={{ width: '100%', height: 260 }}>
               <ResponsiveContainer>
                 <RadarChart data={radarData}>
-                  <PolarGrid stroke="#E2E5EC" />
+                  <PolarGrid stroke="#E1D7C4" />
                   <PolarAngleAxis
                     dataKey="axis"
                     tick={{
                       fontSize: 13,
-                      fill: '#1B2A4A',
+                      fill: '#1A1612',
                       fontFamily: 'Pretendard Variable, Pretendard, sans-serif',
                     }}
                   />
@@ -2010,7 +2010,7 @@ function ScoreDonut({ score, color }: { score: number; color: string }) {
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="rgba(27,42,74,0.06)"
+          stroke="rgba(40,28,14,0.06)"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -2078,7 +2078,7 @@ function LuckyColorCard({ color }: { color: any; height?: number }) {
           height: 44,
           borderRadius: 8,
           background: hex,
-          border: '0.5px solid rgba(27,42,74,0.1)',
+          border: '0.5px solid rgba(40,28,14,0.1)',
         }}
         aria-hidden
       />
@@ -2273,7 +2273,7 @@ function buildSajuContext(profile: SajuProfile): any {
  * 주제 CTA 4카드 (IX-5) — 2026-04-22 SSOT v1 정렬
  * - SSOT: src/constants/topics.ts · TOPIC_REGISTRY
  * - '연애·결혼' 혼합 라벨 → SSOT 단일 주제 (모순 방지 · love/marriage 별도 주제)
- * - 하드코딩 컬러 (#E91E63·#1565C0·#2D8A4E) → TOPIC_REGISTRY SSOT 컬러
+ * - 하드코딩 컬러 (#E91E63·#3E5F82·#4E7A57) → TOPIC_REGISTRY SSOT 컬러
  * - price → formatPriceLabel(getTopicPrice(id)) SSOT 파생 (love/wealth 자동 3운 · 원화 노출 ChargePage 로 집중)
  * ═════════════════════════════════════════════════════════════════ */
 const DREAM_TOPIC_ITEMS: TopicItem[] = [

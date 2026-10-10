@@ -5,6 +5,7 @@
 //   ✗ 잔액 부족: 부족 안내 (충전 직접 유도 UI 는 토스 정책 회피로 제거)
 
 import { useState, useMemo } from 'react';
+import { INK_HERO_BG } from '@/components/hanji/Hanji';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -23,9 +24,6 @@ import {
 } from '@/services/storage/localStore';
 import { useSajuContext } from '@/contexts/SajuContext';
 import { calculateSaju } from '@/services/saju/calculator';
-
-/** 종합 사주 hero 톤 — ExtensionHero 와 동일한 디자인 패턴 (gradient + 한자 워터마크 + seal + crumb + tier) */
-const PREMIUM_HERO_GRAD = 'linear-gradient(135deg,#C9A968 0%,#A8804A 60%,#7A5C30 100%)';
 
 export function PremiumSelectPage() {
   usePageTitle('종합 사주 풀이');
@@ -115,12 +113,13 @@ export function PremiumSelectPage() {
             overflow: 'hidden',
             padding: '18px 20px 28px',
             color: '#FFFFFF',
-            background: PREMIUM_HERO_GRAD,
+            background: INK_HERO_BG, // 2026-10-10 v9 먹 머리 (구 PREMIUM_HERO_GRAD)
           }}
         >
           <span
             aria-hidden
             style={{
+              display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
               position: 'absolute',
               right: -18,
               bottom: -40,
@@ -247,8 +246,8 @@ export function PremiumSelectPage() {
           <div
             className="py-3 px-4 rounded-xl flex items-center justify-between"
             style={{
-              background: enough ? 'rgba(46,125,50,0.06)' : 'rgba(198,40,40,0.06)',
-              border: `1px solid ${enough ? 'rgba(46,125,50,0.20)' : 'rgba(198,40,40,0.20)'}`,
+              background: enough ? 'rgba(78,122,87,0.06)' : 'rgba(198,40,40,0.06)',
+              border: `1px solid ${enough ? 'rgba(78,122,87,0.20)' : 'rgba(198,40,40,0.20)'}`,
             }}
           >
             <p className="text-caption text-text-muted">내 잔액</p>
@@ -256,7 +255,7 @@ export function PremiumSelectPage() {
               style={{
                 fontSize: 18,
                 fontWeight: 800,
-                color: enough ? '#2e7d32' : '#c62828',
+                color: enough ? '#4E7A57' : '#c62828',
                 fontFeatureSettings: "'tnum'",
               }}
             >

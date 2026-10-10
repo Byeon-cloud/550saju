@@ -266,7 +266,7 @@ function getOgTheme(type?: ShareContentType): OgTheme {
       };
     case 'topic':
       return {
-        bgFrom: '#1B2A4A', bgTo: '#243656', accent: '#E8D5A8', hanja: '命',
+        bgFrom: '#1A1612', bgTo: '#2A231C', accent: '#E8D5A8', hanja: '命',
         headline: (tl) => tl || '주제 분석',
         tagline: '500원에 만나는 정통 명리학 — 깊이 있는 한 가지',
       };
@@ -278,7 +278,7 @@ function getOgTheme(type?: ShareContentType): OgTheme {
       };
     default:
       return {
-        bgFrom: '#1B2A4A', bgTo: '#243656', accent: '#B8965A', hanja: '命',
+        bgFrom: '#1A1612', bgTo: '#2A231C', accent: '#B8965A', hanja: '命',
         headline: () => '사주 결과',
         tagline: '500원에 만나는 정통 명리학',
       };

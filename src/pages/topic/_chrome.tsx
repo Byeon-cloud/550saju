@@ -25,6 +25,7 @@
 //   - SSOT 토큰만 사용 (banned: #A08B6A/#F0E8D9/#7F6B4E/#B8965A/#8C6D3D)
 
 import { useState, useEffect, useRef, type ReactNode } from 'react';
+import { INK_HERO_BG } from '@/components/hanji/Hanji';
 
 /* ══════════════════════════════════════════════════════════════════
  * 5 주제 디자인 매핑 (mockup 진본 색 추출)
@@ -226,14 +227,15 @@ export function TopicHero({
         overflow: 'hidden',
         padding: '20px 22px 30px',
         color: '#FFFFFF',
-        background: theme.heroGrad,
-        borderTop: `3px solid ${theme.accentDark}`,
+        // 2026-10-10 v9 — 주제별 색 그라데이션 → 먹 + 그림 (전 콘텐츠 같은 머리)
+        background: INK_HERO_BG,
       }}
     >
-      {/* 한자 워터마크 — Daily 패턴 (흰색 + opacity) */}
+      {/* 한자 워터마크 — 2026-10-10 v9 제거 */}
       <span
         aria-hidden
         style={{
+          display: 'none',
           position: 'absolute',
           right: -20,
           bottom: -50,
@@ -588,7 +590,7 @@ export function TopicLinkCard({
     <div
       style={{
         margin: '12px 20px 0',
-        background: `linear-gradient(135deg, ${theme.accentSoft}, rgba(46,125,50,0.04))`,
+        background: `linear-gradient(135deg, ${theme.accentSoft}, rgba(78,122,87,0.04))`,
         border: `1px solid ${theme.accent}4D`,
         borderRadius: 12,
         padding: 14,
@@ -648,7 +650,7 @@ function Pill({
 }) {
   const color =
     variant === 'gan'
-      ? '#2E7D32'
+      ? '#4E7A57'
       : variant === 'ten'
       ? theme.accentDark
       : variant === 'sinsal'
@@ -1004,6 +1006,7 @@ export function TopicConclusionDark({
       <span
         aria-hidden
         style={{
+          display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
           position: 'absolute',
           right: -12,
           bottom: -36,
@@ -1191,6 +1194,7 @@ export function TopicUpsellCard({
       <span
         aria-hidden
         style={{
+          display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
           position: 'absolute',
           right: -8,
           bottom: -28,
@@ -1330,9 +1334,9 @@ export interface TopicSajuMiniCell {
 // 2026-05-28 — 종합사주(PremiumResult wongug-cell) SSOT 정렬 — 오행 박스 컬러 매핑
 //   천간/지지 글자를 컬러 박스 안에 흰 글씨로 (금만 흰 배경 + 검은 글씨)
 const OHENG_BOX: Record<string, { bg: string; color: string; border: string }> = {
-  목: { bg: '#2D8A4E', color: '#fff', border: '#1B5E2C' },
-  화: { bg: '#D32F2F', color: '#fff', border: '#9B1B1B' },
-  토: { bg: '#E8B82A', color: '#fff', border: '#C9A030' },
+  목: { bg: '#4E7A57', color: '#fff', border: '#1B5E2C' },
+  화: { bg: '#B04A38', color: '#fff', border: '#9B1B1B' },
+  토: { bg: '#B07F38', color: '#fff', border: '#C9A030' },
   금: { bg: '#FFFFFF', color: '#1A1A1A', border: '#9C9C9C' },
   수: { bg: '#1A1A1A', color: '#fff', border: '#3D3D3D' },
 };
@@ -1595,9 +1599,9 @@ const TOPIC_KEY_OHENG_LABEL: Record<TopicChromeKey, string> = {
 
 // 오행 컬러 (badge inner) — 종합사주 SSOT
 const OHENG_BADGE: Record<string, { color: string; bg: string }> = {
-  목: { color: '#2D8A4E', bg: 'rgba(45,138,78,0.10)' },
-  화: { color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
-  토: { color: '#E8B82A', bg: 'rgba(232,184,42,0.12)' },
+  목: { color: '#4E7A57', bg: 'rgba(78,122,87,0.10)' },
+  화: { color: '#B04A38', bg: 'rgba(176,74,56,0.10)' },
+  토: { color: '#B07F38', bg: 'rgba(176,127,56,0.12)' },
   금: { color: '#7A6A52', bg: 'rgba(156,156,156,0.14)' },
   수: { color: '#1A1A1A', bg: 'rgba(26,26,26,0.08)' },
 };

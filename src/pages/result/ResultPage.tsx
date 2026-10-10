@@ -994,11 +994,11 @@ export function ResultPage(props: ResultPageProps = {}) {
 
             // 오행 해석 데이터
             const OHENG_MEANING: Record<string, { name: string; symbol: string; nature: string; color: string; season: string; direction: string; goodWith: string; lifestyle: string }> = {
-              목: { name: '목(木)', symbol: '木', nature: '성장·생명·인자함', color: '#2D8A4E', season: '봄', direction: '동쪽', goodWith: '녹색 식물, 나무 소품, 동쪽 배치', lifestyle: '아침 산책, 녹색 채소, 원목 가구 활용' },
-              화: { name: '화(火)', symbol: '火', nature: '열정·표현·예의', color: '#D32F2F', season: '여름', direction: '남쪽', goodWith: '붉은색 포인트, 밝은 조명, 남향 생활', lifestyle: '유산소 운동, 매운맛 음식, 사교 활동' },
-              토: { name: '토(土)', symbol: '土', nature: '안정·포용·신뢰', color: '#E8B82A', season: '환절기', direction: '중앙', goodWith: '황토색 소품, 도자기, 안정적 공간', lifestyle: '규칙적 생활, 잡곡밥, 명상·산책' },
-              금: { name: '금(金)', symbol: '金', nature: '결단·정의·절제', color: '#4A4A4A', season: '가을', direction: '서쪽', goodWith: '금속 소품, 흰색 인테리어, 서쪽 배치', lifestyle: '호흡 운동, 현미·배, 미니멀 정리' },
-              수: { name: '수(水)', symbol: '水', nature: '지혜·유연·적응', color: '#1565E0', season: '겨울', direction: '북쪽', goodWith: '물 관련 소품, 검은색 포인트, 수족관', lifestyle: '수영·반신욕, 해산물·검은콩, 독서·명상' },
+              목: { name: '목(木)', symbol: '木', nature: '성장·생명·인자함', color: '#4E7A57', season: '봄', direction: '동쪽', goodWith: '녹색 식물, 나무 소품, 동쪽 배치', lifestyle: '아침 산책, 녹색 채소, 원목 가구 활용' },
+              화: { name: '화(火)', symbol: '火', nature: '열정·표현·예의', color: '#B04A38', season: '여름', direction: '남쪽', goodWith: '붉은색 포인트, 밝은 조명, 남향 생활', lifestyle: '유산소 운동, 매운맛 음식, 사교 활동' },
+              토: { name: '토(土)', symbol: '土', nature: '안정·포용·신뢰', color: '#B07F38', season: '환절기', direction: '중앙', goodWith: '황토색 소품, 도자기, 안정적 공간', lifestyle: '규칙적 생활, 잡곡밥, 명상·산책' },
+              금: { name: '금(金)', symbol: '金', nature: '결단·정의·절제', color: '#7D7870', season: '가을', direction: '서쪽', goodWith: '금속 소품, 흰색 인테리어, 서쪽 배치', lifestyle: '호흡 운동, 현미·배, 미니멀 정리' },
+              수: { name: '수(水)', symbol: '水', nature: '지혜·유연·적응', color: '#3E5F82', season: '겨울', direction: '북쪽', goodWith: '물 관련 소품, 검은색 포인트, 수족관', lifestyle: '수영·반신욕, 해산물·검은콩, 독서·명상' },
             };
 
             // 신강/신약 해석
@@ -1028,7 +1028,7 @@ export function ResultPage(props: ResultPageProps = {}) {
             const yongOheng = OHENG_MEANING[analysisBase.용신];
             const huiOheng = analysisBase.희신 ? OHENG_MEANING[analysisBase.희신] : null;
             const giOheng = analysisBase.기신 ? OHENG_MEANING[analysisBase.기신] : null;
-            const gangYakColor = analysisBase.일간강약 === '신강' ? '#D32F2F' : analysisBase.일간강약 === '신약' ? '#1565E0' : '#E8B82A';
+            const gangYakColor = analysisBase.일간강약 === '신강' ? '#B04A38' : analysisBase.일간강약 === '신약' ? '#3E5F82' : '#B07F38';
 
             return (
             <LocalFadeIn delay={80}>
@@ -1045,7 +1045,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                       <p style={{ fontSize: 10, color: '#a0937f', fontWeight: 600 }}>격국 — 사주의 구조 유형</p>
                       <p style={{ fontSize: 20, fontWeight: 900, color: '#3D3427', marginTop: 2 }}>{analysisBase.격국}</p>
                     </div>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #1B2A4A, #243656)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #1A1612, #2A231C)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontSize: 18, color: '#E8D5A8', fontWeight: 800 }}>格</span>
                     </div>
                   </div>
@@ -1054,13 +1054,13 @@ export function ResultPage(props: ResultPageProps = {}) {
                       <p style={{ fontSize: 12, color: '#6b5b47', lineHeight: 1.7, fontWeight: 600 }}>{gyeokInfo.summary}</p>
                       <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.75 }}>{gyeokInfo.personality}</p>
                       <div className="flex gap-2">
-                        <div className="flex-1 p-2.5 rounded-lg" style={{ background: '#e8f5e9', border: '1px solid #c8e6c9' }}>
-                          <p style={{ fontSize: 9, fontWeight: 700, color: '#2e7d32', marginBottom: 2 }}>이런 점이 좋아요</p>
-                          <p style={{ fontSize: 10, color: '#2e7d32', lineHeight: 1.6 }}>{gyeokInfo.good}</p>
+                        <div className="flex-1 p-2.5 rounded-lg" style={{ background: '#E7EFE6', border: '1px solid #c8e6c9' }}>
+                          <p style={{ fontSize: 9, fontWeight: 700, color: '#4E7A57', marginBottom: 2 }}>이런 점이 좋아요</p>
+                          <p style={{ fontSize: 10, color: '#4E7A57', lineHeight: 1.6 }}>{gyeokInfo.good}</p>
                         </div>
                         <div className="flex-1 p-2.5 rounded-lg" style={{ background: '#fff3e0', border: '1px solid #ffe0b2' }}>
-                          <p style={{ fontSize: 9, fontWeight: 700, color: '#e65100', marginBottom: 2 }}>주의할 점</p>
-                          <p style={{ fontSize: 10, color: '#e65100', lineHeight: 1.6 }}>{gyeokInfo.caution}</p>
+                          <p style={{ fontSize: 9, fontWeight: 700, color: '#8A6226', marginBottom: 2 }}>주의할 점</p>
+                          <p style={{ fontSize: 10, color: '#8A6226', lineHeight: 1.6 }}>{gyeokInfo.caution}</p>
                         </div>
                       </div>
                     </div>
@@ -1087,13 +1087,13 @@ export function ResultPage(props: ResultPageProps = {}) {
                   <div className="px-4 py-3 space-y-2.5" style={{ background: '#fff' }}>
                     <p style={{ fontSize: 11, color: '#6b5b47', lineHeight: 1.75 }}>{gangYak.meaning}</p>
                     <div className="flex gap-2">
-                      <div className="flex-1 p-2.5 rounded-lg" style={{ background: '#e8f5e9', border: '1px solid #c8e6c9' }}>
-                        <p style={{ fontSize: 9, fontWeight: 700, color: '#2e7d32', marginBottom: 2 }}>강점</p>
-                        <p style={{ fontSize: 10, color: '#2e7d32', lineHeight: 1.6 }}>{gangYak.good}</p>
+                      <div className="flex-1 p-2.5 rounded-lg" style={{ background: '#E7EFE6', border: '1px solid #c8e6c9' }}>
+                        <p style={{ fontSize: 9, fontWeight: 700, color: '#4E7A57', marginBottom: 2 }}>강점</p>
+                        <p style={{ fontSize: 10, color: '#4E7A57', lineHeight: 1.6 }}>{gangYak.good}</p>
                       </div>
                       <div className="flex-1 p-2.5 rounded-lg" style={{ background: '#fff3e0', border: '1px solid #ffe0b2' }}>
-                        <p style={{ fontSize: 9, fontWeight: 700, color: '#e65100', marginBottom: 2 }}>약점</p>
-                        <p style={{ fontSize: 10, color: '#e65100', lineHeight: 1.6 }}>{gangYak.caution}</p>
+                        <p style={{ fontSize: 9, fontWeight: 700, color: '#8A6226', marginBottom: 2 }}>약점</p>
+                        <p style={{ fontSize: 10, color: '#8A6226', lineHeight: 1.6 }}>{gangYak.caution}</p>
                       </div>
                     </div>
                     <div className="p-2.5 rounded-lg" style={{ background: '#f5f0e8', border: '1px dashed #d4cbb8' }}>
@@ -1176,15 +1176,15 @@ export function ResultPage(props: ResultPageProps = {}) {
                   <div className="flex gap-2 mb-3">
                     {analysisBase.희신 && (
                       <div className="flex-1 rounded-xl overflow-hidden" style={{ border: '1px solid #c8e6c9' }}>
-                        <div className="px-3 py-2" style={{ background: '#e8f5e9' }}>
-                          <p style={{ fontSize: 9, fontWeight: 700, color: '#2e7d32' }}>희신 — 용신을 돕는 오행</p>
+                        <div className="px-3 py-2" style={{ background: '#E7EFE6' }}>
+                          <p style={{ fontSize: 9, fontWeight: 700, color: '#4E7A57' }}>희신 — 용신을 돕는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span style={{ fontSize: 18, fontWeight: 900, color: huiOheng?.color || '#2D8A4E' }}>{analysisBase.희신}</span>
+                            <span style={{ fontSize: 18, fontWeight: 900, color: huiOheng?.color || '#4E7A57' }}>{analysisBase.희신}</span>
                             {huiOheng && <span style={{ fontSize: 9, color: '#4caf50' }}>{(huiOheng as any).nature}</span>}
                           </div>
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>
-                          <p style={{ fontSize: 10, color: '#2e7d32', lineHeight: 1.6 }}>
+                          <p style={{ fontSize: 10, color: '#4E7A57', lineHeight: 1.6 }}>
                             용신({analysisBase.용신})을 옆에서 돕는 오행이에요. {analysisBase.희신} 에너지가 많은 환경에 있으면 용신의 효과가 배가돼요.
                           </p>
                         </div>
@@ -1192,10 +1192,10 @@ export function ResultPage(props: ResultPageProps = {}) {
                     )}
                     {analysisBase.기신 && (
                       <div className="flex-1 rounded-xl overflow-hidden" style={{ border: '1px solid #ffcdd2' }}>
-                        <div className="px-3 py-2" style={{ background: '#ffebee' }}>
+                        <div className="px-3 py-2" style={{ background: '#F6E5E0' }}>
                           <p style={{ fontSize: 9, fontWeight: 700, color: '#c62828' }}>기신 — 균형을 깨는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span style={{ fontSize: 18, fontWeight: 900, color: giOheng?.color || '#D32F2F' }}>{analysisBase.기신}</span>
+                            <span style={{ fontSize: 18, fontWeight: 900, color: giOheng?.color || '#B04A38' }}>{analysisBase.기신}</span>
                             {giOheng && <span style={{ fontSize: 9, color: '#ef5350' }}>{(giOheng as any).nature}</span>}
                           </div>
                         </div>
@@ -1210,7 +1210,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 )}
 
                 {/* ────── 5. 종합 요약 — "그래서 나는?" ────── */}
-                <div className="p-3.5 rounded-xl" style={{ background: 'linear-gradient(135deg, #1B2A4A, #243656)', boxShadow: '0 2px 12px rgba(27,42,74,0.15)' }}>
+                <div className="p-3.5 rounded-xl" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)', boxShadow: '0 2px 12px rgba(40,28,14,0.15)' }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: '#E8D5A8', marginBottom: 6 }}>한 줄 요약 — 그래서 나는?</p>
                   <p style={{ fontSize: 12, color: '#fff', lineHeight: 1.8 }}>
                     {gyeokInfo
@@ -1269,7 +1269,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               <div className="space-y-2">
                 {v4Unyoung.map((u, i) => {
                   const level = getUnyoungEnergyLevel(u.kr);
-                  const bgColor = level >= 4 ? '#e8f5e9' : level <= 1 ? '#fce4ec' : '#fff3e0';
+                  const bgColor = level >= 4 ? '#E7EFE6' : level <= 1 ? '#fce4ec' : '#fff3e0';
                   const borderColor = level >= 4 ? '#a5d6a7' : level <= 1 ? '#f8bbd0' : '#ffe0b2';
                   const posCtx = getUnyoungPositionContext(u.pillar);
                   return (
@@ -1314,10 +1314,10 @@ export function ResultPage(props: ResultPageProps = {}) {
                   const labels: Record<string, string> = { career: '직업운', love: '애정운', wealth: '재물운', health: '건강운', potential: '잠재력' };
                   return (
                     <div className="space-y-1.5">
-                      <p style={{ fontSize: 12, color: '#2E7D32', fontWeight: 600 }}>
+                      <p style={{ fontSize: 12, color: '#4E7A57', fontWeight: 600 }}>
                         가장 강한 운: {labels[best[0]]} ({best[1]}점) — 이 영역에서 타고난 재능이 빛나요
                       </p>
-                      <p style={{ fontSize: 12, color: '#D32F2F', fontWeight: 600 }}>
+                      <p style={{ fontSize: 12, color: '#B04A38', fontWeight: 600 }}>
                         보완이 필요한 운: {labels[worst[0]]} ({worst[1]}점) — 의식적인 노력이 도움돼요
                       </p>
                       <p style={{ fontSize: 11, color: '#8b7e6f' }}>
@@ -1346,7 +1346,7 @@ export function ResultPage(props: ResultPageProps = {}) {
 
               {/* ═══ 대운 타임라인 시각화 (업그레이드) ═══ */}
               <div className="mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid #e8e0d4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                <div className="px-4 py-2.5" style={{ background: 'linear-gradient(135deg, #1B2A4A, #243656)' }}>
+                <div className="px-4 py-2.5" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: '#E8D5A8', letterSpacing: '0.5px' }}>인생 대운 타임라인</p>
                   <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>10년 단위 운의 큰 흐름 — 오행별 색상 구분</p>
                 </div>
@@ -1506,7 +1506,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                   const isIlju = n.pillar === '일주';
                   return (
                     <div key={i} className="p-3 rounded-xl" style={{
-                      background: isIlju ? '#FFF8E1' : '#faf7f2',
+                      background: isIlju ? '#F5EBD9' : '#faf7f2',
                       border: isIlju ? '2px solid #B8965A' : '1px solid #e8e0d4',
                     }}>
                       <div className="flex items-center gap-3">
@@ -1620,7 +1620,7 @@ export function ResultPage(props: ResultPageProps = {}) {
             <div className="card">
               <h2 className="text-h3 text-text-primary mb-1">신살 — 타고난 별</h2>
               <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 4 }}>
-                사주에 타고난 특별한 에너지예요. <span style={{ color: '#2e7d32', fontWeight: 700 }}>길신</span>은 타고난 재능과 행운, <span style={{ color: '#e65100', fontWeight: 700 }}>흉살</span>은 주의하면 오히려 강점으로 바뀌는 에너지예요.
+                사주에 타고난 특별한 에너지예요. <span style={{ color: '#4E7A57', fontWeight: 700 }}>길신</span>은 타고난 재능과 행운, <span style={{ color: '#8A6226', fontWeight: 700 }}>흉살</span>은 주의하면 오히려 강점으로 바뀌는 에너지예요.
               </p>
               <p style={{ fontSize: 10, color: '#a0937f', marginBottom: 12 }}>
                 아래 신살은 <b style={{ color: '#6b5b47' }}>일주(日柱)</b> 기준으로 추출한 것으로, 본인의 핵심 성향에 직접 영향을 줍니다.
@@ -1628,13 +1628,13 @@ export function ResultPage(props: ResultPageProps = {}) {
 
               {/* 요약 뱃지 */}
               <div className="flex items-center gap-2 mb-4">
-                <span className="rounded-full px-2.5 py-1" style={{ background: '#e8f5e9', fontSize: 10, fontWeight: 700, color: '#2e7d32' }}>
+                <span className="rounded-full px-2.5 py-1" style={{ background: '#E7EFE6', fontSize: 10, fontWeight: 700, color: '#4E7A57' }}>
                   길신 {v4Gilsin.length}개
                 </span>
-                <span className="rounded-full px-2.5 py-1" style={{ background: '#fff3e0', fontSize: 10, fontWeight: 700, color: '#e65100' }}>
+                <span className="rounded-full px-2.5 py-1" style={{ background: '#fff3e0', fontSize: 10, fontWeight: 700, color: '#8A6226' }}>
                   흉살 {v4Hyungsal.length}개
                 </span>
-                <span className="rounded-full px-2.5 py-1" style={{ background: '#f5f5f5', fontSize: 10, fontWeight: 600, color: '#4A4A4A' }}>
+                <span className="rounded-full px-2.5 py-1" style={{ background: '#EEECE8', fontSize: 10, fontWeight: 600, color: '#7D7870' }}>
                   일주 기준
                 </span>
               </div>
@@ -1643,18 +1643,18 @@ export function ResultPage(props: ResultPageProps = {}) {
                 <div className="text-label text-func-success mb-2">길신 — 타고난 재능</div>
                 <div className="space-y-2">
                   {v4Gilsin.map((g, i) => (
-                    <div key={i} className="p-3 rounded-xl" style={{ background: '#e8f5e9', border: '1px solid #c8e6c9' }}>
+                    <div key={i} className="p-3 rounded-xl" style={{ background: '#E7EFE6', border: '1px solid #c8e6c9' }}>
                       <div className="flex items-center gap-2 mb-1.5">
-                        <span style={{ fontSize: 14, fontWeight: 900, color: '#2e7d32' }}>{g.hanja}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#2e7d32' }}>{g.kr}</span>
-                        <span className="rounded" style={{ padding: '1px 6px', background: '#c8e6c9', color: '#1b5e20', fontSize: 9, fontWeight: 700 }}>
+                        <span style={{ fontSize: 14, fontWeight: 900, color: '#4E7A57' }}>{g.hanja}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#4E7A57' }}>{g.kr}</span>
+                        <span className="rounded" style={{ padding: '1px 6px', background: '#c8e6c9', color: '#355A3E', fontSize: 9, fontWeight: 700 }}>
                           {g.source}
                         </span>
                       </div>
-                      <p style={{ fontSize: 11, color: '#2e7d32', lineHeight: 1.6, fontWeight: 500, marginBottom: 4 }}>
+                      <p style={{ fontSize: 11, color: '#4E7A57', lineHeight: 1.6, fontWeight: 500, marginBottom: 4 }}>
                         {g.desc}
                       </p>
-                      <p style={{ fontSize: 10, color: '#1b5e20', lineHeight: 1.5, paddingTop: 4, borderTop: '1px dashed #a5d6a740' }}>
+                      <p style={{ fontSize: 10, color: '#355A3E', lineHeight: 1.5, paddingTop: 4, borderTop: '1px dashed #a5d6a740' }}>
                         <b>실전 활용:</b> {getGilsinActionTip(g.hanja)}
                       </p>
                     </div>
@@ -1667,13 +1667,13 @@ export function ResultPage(props: ResultPageProps = {}) {
                   {v4Hyungsal.map((h, i) => (
                     <div key={i} className="p-3 rounded-xl" style={{ background: '#fff3e0', border: '1px solid #ffe0b2' }}>
                       <div className="flex items-center gap-2 mb-1.5">
-                        <span style={{ fontSize: 14, fontWeight: 900, color: '#e65100' }}>{h.hanja}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#e65100' }}>{h.kr}</span>
+                        <span style={{ fontSize: 14, fontWeight: 900, color: '#8A6226' }}>{h.hanja}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#8A6226' }}>{h.kr}</span>
                         <span className="rounded" style={{ padding: '1px 6px', background: '#ffe0b2', color: '#bf360c', fontSize: 9, fontWeight: 700 }}>
                           {h.source}
                         </span>
                       </div>
-                      <p style={{ fontSize: 11, color: '#e65100', lineHeight: 1.6, fontWeight: 500, marginBottom: 4 }}>
+                      <p style={{ fontSize: 11, color: '#8A6226', lineHeight: 1.6, fontWeight: 500, marginBottom: 4 }}>
                         {h.desc}
                       </p>
                       <p style={{ fontSize: 10, color: '#bf360c', lineHeight: 1.5, paddingTop: 4, borderTop: '1px dashed #ffcc8040' }}>
@@ -1726,7 +1726,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                         {g.meaning}
                       </p>
                       <div className="p-2.5 rounded-lg" style={{ background: '#f3e5f5', border: '1px dashed #ce93d8' }}>
-                        <p style={{ fontSize: 10, fontWeight: 700, color: '#7b1fa2', marginBottom: 2 }}>실전 활용</p>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: '#7A5C7E', marginBottom: 2 }}>실전 활용</p>
                         <p style={{ fontSize: 11, color: '#6a1b9a', lineHeight: 1.6 }}>
                           {g.tip}
                         </p>

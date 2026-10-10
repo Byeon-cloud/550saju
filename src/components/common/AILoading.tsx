@@ -55,7 +55,7 @@ const C = {
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.10)',
   goldLine: 'rgba(184,150,90,0.40)',
-  positive: '#2D8A4E',
+  positive: '#4E7A57',
   line: '#E5DFD0',
 } as const;
 
@@ -288,7 +288,7 @@ export function AILoading({
             transform="rotate(-90 40 40)"
           />
           <circle cx="40" cy="22" r="5" fill={C.gold} />
-          <circle cx="40" cy="58" r="5" fill="#1B2A4A" />
+          <circle cx="40" cy="58" r="5" fill="#1A1612" />
         </svg>
       </motion.div>
 

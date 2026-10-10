@@ -236,11 +236,11 @@ const MOCKUP_CSS = `
 
 /* Header */
 .dream-mockup .hd {
-  background: linear-gradient(180deg, #1a1f3a 0%, #0e1428 70%, #050712 100%);
+  background: linear-gradient(180deg, rgba(26,22,18,.55) 0%, rgba(26,22,18,.82) 45%, #1A1612 100%), url('/art/inwang.webp') 30% 35% / cover no-repeat, #1A1612; /* 2026-10-10 v9 먹 머리 */
   color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
 }
-.dream-mockup .hd::before { content: '夢'; position: absolute; right: -20px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 220px; font-weight: 900; color: rgba(255,255,255,.05); line-height: 1; }
-.dream-mockup .hd::after { content: ''; position: absolute; top: 10px; right: 30px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(212,175,55,.3), transparent 70%); border-radius: 50%; }
+.dream-mockup .hd::before { display: none; content: '夢'; position: absolute; right: -20px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 220px; font-weight: 900; color: rgba(255,255,255,.05); line-height: 1; }
+.dream-mockup .hd::after { display: none; content: ''; position: absolute; top: 10px; right: 30px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(212,175,55,.3), transparent 70%); border-radius: 50%; }
 .dream-mockup .hd .top { display: flex; gap: 8px; font-size: 12px; opacity: .95; flex-wrap: wrap; align-items: center; }
 .dream-mockup .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
 .dream-mockup .hd .badge.free { background: rgba(212,175,55,.22); color: #f2d678; }
@@ -278,13 +278,13 @@ const MOCKUP_CSS = `
 .dream-mockup .sym { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 12px 12px; text-align: center; }
 .dream-mockup .sym .pic { width: 54px; height: 54px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #F0E8D9, #E5DFD0); border-radius: 50%; color: #1a1f3a; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; }
 .dream-mockup .sym .pic svg { width: 30px; height: 30px; }
-.dream-mockup .sym .pic.water { background: linear-gradient(135deg, #dbe7f4, #a8c5e6); color: #1565c0; }
+.dream-mockup .sym .pic.water { background: linear-gradient(135deg, #dbe7f4, #a8c5e6); color: #3E5F82; }
 .dream-mockup .sym .pic.foot { background: linear-gradient(135deg, #F0E8D9, #d4c789); color: #5C4A2E; }
 .dream-mockup .sym .pic.ripple { background: linear-gradient(135deg, #dbe7f4, #bfd3ea); color: #1a1f3a; }
 .dream-mockup .sym .pic.shadow { background: linear-gradient(135deg, #2a2520, #1a1a1a); color: #E8D9B8; }
 .dream-mockup .sym .pic.fire { background: linear-gradient(135deg, #fbe0e0, #f0a8a8); color: #c62828; }
 .dream-mockup .sym .pic.metal { background: linear-gradient(135deg, #ececec, #c8c8c8); color: #555; }
-.dream-mockup .sym .pic.leaf { background: linear-gradient(135deg, #e0eed5, #b8d99c); color: #2e7d32; }
+.dream-mockup .sym .pic.leaf { background: linear-gradient(135deg, #e0eed5, #b8d99c); color: #4E7A57; }
 .dream-mockup .sym .pic.mountain { background: linear-gradient(135deg, #efe5d4, #d8c89e); color: #7F6B4E; }
 .dream-mockup .sym .hd2 { display: flex; justify-content: center; align-items: baseline; gap: 6px; }
 .dream-mockup .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
@@ -379,7 +379,7 @@ const MOCKUP_CSS = `
 .dream-mockup .db-col { background: #F8F5EE; border-radius: 8px; padding: 10px 12px; border: 1px solid #E5DFD0; }
 /* 2026-05-28 — 상단 컬러 strip 제거. .ch 라벨 컬러로 톤 표현. */
 .dream-mockup .db-col .ch { font-family: 'Noto Serif KR', serif; font-size: 12px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
-.dream-mockup .db-col.go .ch { color: #2e7d32; }
+.dream-mockup .db-col.go .ch { color: #4E7A57; }
 .dream-mockup .db-col.no .ch { color: #c62828; }
 .dream-mockup .db-col .lines { display: flex; flex-direction: column; gap: 6px; filter: blur(4.5px); transition: filter .55s ease; }
 .dream-mockup .db-col .line { height: 8px; background: #E5DFD0; border-radius: 2px; }
@@ -393,7 +393,7 @@ const MOCKUP_CSS = `
 /* Big CTA */
 .dream-mockup .paid-cta { margin: 0 20px; margin-top: -28px; background: linear-gradient(135deg, #1a1a1a, #2a2520); color: #fff; border-radius: 14px; padding: 22px 20px 20px; position: relative; overflow: hidden; z-index: 2; box-shadow: 0 8px 30px rgba(26,31,58,.22); transition: opacity .4s ease, transform .4s ease; }
 .dream-mockup.unlocked .paid-cta { display: none; }
-.dream-mockup .paid-cta::before { content: '解'; position: absolute; right: -10px; bottom: -30px; font-family: 'Noto Serif KR', serif; font-size: 140px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
+.dream-mockup .paid-cta::before { display: none; content: '解'; position: absolute; right: -10px; bottom: -30px; font-family: 'Noto Serif KR', serif; font-size: 140px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
 .dream-mockup .paid-cta .lab { font-size: 11px; color: #E8D9B8; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 6px; position: relative; }
 .dream-mockup .paid-cta h3 { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; position: relative; line-height: 1.45; }
 .dream-mockup .paid-cta .hook { font-size: 13px; color: #c4baa0; line-height: 1.7; position: relative; margin-bottom: 14px; word-break: keep-all; }
@@ -512,7 +512,7 @@ const SYMBOL_PIC_CLASS: Record<string, string> = {
 };
 
 const OHENG_KANJI: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
-const OHENG_COLOR: Record<string, string> = { 수: '#1565c0', 토: '#7F6B4E', 목: '#2e7d32', 화: '#c62828', 금: '#757575' };
+const OHENG_COLOR: Record<string, string> = { 수: '#3E5F82', 토: '#7F6B4E', 목: '#4E7A57', 화: '#c62828', 금: '#7D7870' };
 
 export function DreamMockupView(props: DreamMockupViewProps) {
   const { result: raw, profile, hasSaju, category, dreamText, concern, unlocked = false, isStreaming = false, createdAt, categoryId, onUnlock, onShare, onChat, onTopic } = props;

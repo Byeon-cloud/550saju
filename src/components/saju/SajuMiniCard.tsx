@@ -43,9 +43,9 @@ const OHENG_HAN: Record<OhengType, string> = {
 
 /** saju-card OHENG_BOX 와 동일 — 5 오행 박스 톤 */
 const OHENG_BOX: Record<OhengType, { bg: string; fg: string; outline: string }> = {
-  목: { bg: '#2D8A4E', fg: '#FFFFFF', outline: '#1B5E2C' },
-  화: { bg: '#D32F2F', fg: '#FFFFFF', outline: '#9B1B1B' },
-  토: { bg: '#E8B82A', fg: '#FFFFFF', outline: '#C9A030' },
+  목: { bg: '#4E7A57', fg: '#FFFFFF', outline: '#1B5E2C' },
+  화: { bg: '#B04A38', fg: '#FFFFFF', outline: '#9B1B1B' },
+  토: { bg: '#B07F38', fg: '#FFFFFF', outline: '#C9A030' },
   금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C' },
   수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D' },
 };

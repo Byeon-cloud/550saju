@@ -28,6 +28,7 @@
 //   - 디스클레이머·DailyRewardBadge·Flippable 정적화는 호출처 보존
 
 import type { ReactNode } from 'react';
+import { INK_HERO_BG } from '@/components/hanji/Hanji';
 // 2026-05-29 H1 fix — 업셀 "10운" 하드코딩 → SSOT 세일가 (런칭세일 중 5운).
 import { getPremiumPrice } from '@/constants/pricing';
 
@@ -49,11 +50,11 @@ const C = {
 
 // 5오행 색 (SSOT D1 fix 정렬)
 export const OHENG_COLOR_FREE: Record<string, string> = {
-  목: '#2E7D32',
+  목: '#4E7A57',
   화: '#C62828',
-  토: '#F57F17',
-  금: '#4A4A4A',
-  수: '#1565C0',
+  토: '#B07F38',
+  금: '#7D7870',
+  수: '#3E5F82',
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -86,7 +87,7 @@ export function FreeHero({
   userName,
   h1,
   meta,
-  gradient = 'linear-gradient(135deg,#4A6B5E 0%,#2D4A3F 60%,#1A302A 100%)',
+  gradient: _legacyGradient, // 2026-10-10 v9 — 더 안 씀 (먹 머리 통일) · 호출처 하위호환으로만 받음
   hanjaWatermark,
   hanjaOpacityRgb = 'rgba(255,255,255,0.07)',
 }: FreeHeroProps) {
@@ -97,13 +98,15 @@ export function FreeHero({
         overflow: 'hidden',
         padding: '18px 20px 28px',
         color: '#FFFFFF',
-        background: gradient,
+        // 2026-10-10 v9 — 콘텐츠별 색 그라데이션 대신 먹 + 그림 (전 콘텐츠 같은 머리)
+        background: INK_HERO_BG,
       }}
     >
       {hanjaWatermark && (
         <span
           aria-hidden
           style={{
+            display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
             position: 'absolute',
             right: -18,
             bottom: -40,
@@ -310,6 +313,7 @@ export function FreeUpsellCard({
       <span
         aria-hidden
         style={{
+          display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
           position: 'absolute',
           right: -8,
           bottom: -28,
@@ -848,8 +852,8 @@ export function TodayMeetStack({ items }: { items: TodayMeetItem[] }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {items.map((it, i) => {
         const isBoost = it.variant === 'boost';
-        const accent = isBoost ? '#1565C0' : '#4A4A4A';
-        const bg = isBoost ? 'rgba(21,101,224,0.06)' : 'rgba(74,74,74,0.06)';
+        const accent = isBoost ? '#3E5F82' : '#7D7870';
+        const bg = isBoost ? 'rgba(62,95,130,0.06)' : 'rgba(74,74,74,0.06)';
         return (
           <div
             key={i}

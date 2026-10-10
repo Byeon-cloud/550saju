@@ -76,7 +76,7 @@ export function CompatibilityPage() {
         className="flex-1 card text-center py-5"
       >
         <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center mb-2"
-          style={{ background: 'rgba(27,42,74,0.06)' }}>
+          style={{ background: 'rgba(40,28,14,0.06)' }}>
           <span className="text-h1 text-brand-navy">{person.name.charAt(0)}</span>
         </div>
         <p className="text-h3 text-text-primary">{person.name}</p>

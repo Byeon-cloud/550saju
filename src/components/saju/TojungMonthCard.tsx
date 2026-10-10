@@ -22,7 +22,7 @@ interface Props {
 export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해석, score, keyword, goodDays, cautionDays, todo, avoid, delay = 0 }: Props) {
   const [expanded, setExpanded] = useState(false);
 
-  const scoreColor = score >= 80 ? '#B8965A' : score >= 60 ? '#2D8A4E' : score >= 40 ? '#2D4470' : '#D32F2F';
+  const scoreColor = score >= 80 ? '#B8965A' : score >= 60 ? '#4E7A57' : score >= 40 ? '#3A3128' : '#B04A38';
 
   return (
     <motion.button
@@ -87,8 +87,8 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
               {/* 2026-10-08 — 이 달 할 일 · 피할 일 */}
               {(todo || avoid) && (
                 <div className="space-y-1.5">
-                  {todo && <p className="text-body-sm text-text-primary"><span className="font-bold" style={{ color: '#2D8A4E' }}>할 일 </span>{stripMd(todo)}</p>}
-                  {avoid && <p className="text-body-sm text-text-primary"><span className="font-bold" style={{ color: '#D32F2F' }}>피할 일 </span>{stripMd(avoid)}</p>}
+                  {todo && <p className="text-body-sm text-text-primary"><span className="font-bold" style={{ color: '#4E7A57' }}>할 일 </span>{stripMd(todo)}</p>}
+                  {avoid && <p className="text-body-sm text-text-primary"><span className="font-bold" style={{ color: '#B04A38' }}>피할 일 </span>{stripMd(avoid)}</p>}
                 </div>
               )}
 
@@ -96,10 +96,10 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
               {((goodDays && goodDays.length > 0) || (cautionDays && cautionDays.length > 0)) && (
                 <div className="flex flex-wrap gap-1.5">
                   {(goodDays || []).map((d) => (
-                    <span key={`g${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(45,138,78,0.10)', color: '#2D8A4E' }}>좋은 날 {d}</span>
+                    <span key={`g${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(78,122,87,0.10)', color: '#4E7A57' }}>좋은 날 {d}</span>
                   ))}
                   {(cautionDays || []).map((d) => (
-                    <span key={`c${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(211,47,47,0.08)', color: '#B23A3A' }}>조심 {d}</span>
+                    <span key={`c${d}`} className="text-[11px] font-bold px-2 py-1 rounded-lg" style={{ background: 'rgba(176,74,56,0.08)', color: '#B23A3A' }}>조심 {d}</span>
                   ))}
                 </div>
               )}

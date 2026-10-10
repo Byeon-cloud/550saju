@@ -49,7 +49,7 @@ export function CompatProfilePair({ person1, person2, overallScore, relation }: 
     );
   };
 
-  const gradeColor = overallScore >= 85 ? '#B8965A' : overallScore >= 70 ? '#2D8A4E' : overallScore >= 55 ? '#2D4470' : '#D32F2F';
+  const gradeColor = overallScore >= 85 ? '#B8965A' : overallScore >= 70 ? '#4E7A57' : overallScore >= 55 ? '#3A3128' : '#B04A38';
   const gradeLabel = overallScore >= 85 ? '천생연분' : overallScore >= 70 ? '좋은 궁합' : overallScore >= 55 ? '무난한 궁합' : '노력이 필요해요';
 
   return (

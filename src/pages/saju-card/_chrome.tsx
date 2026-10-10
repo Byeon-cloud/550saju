@@ -10,7 +10,7 @@
  *  · saju-card 전용 (PaywallBar / LockVeil 등 차감 컴포넌트 미포함 — 보관함 카드는 잠금 X)
  *
  * SSOT 토큰:
- *  · 5 오행 컬러 (목 #2D8A4E · 화 #D32F2F · 토 #E8B82A · 금 #4A4A4A · 수 #1565E0)
+ *  · 5 오행 컬러 (목 #4E7A57 · 화 #B04A38 · 토 #B07F38 · 금 #7D7870 · 수 #3E5F82)
  *  · 카드 컨테이너: surface #FFFFFF · border rgba(184,150,90,0.18) · radius 16
  */
 
@@ -59,34 +59,34 @@ export const OHENG_THEME: Record<OhengType, OhengTheme> = {
   목: {
     heroGrad: 'linear-gradient(135deg,#4A8068 0%,#2D5A3F 60%,#1A3326 100%)',
     watermarkHanja: '木',
-    accent: '#2D8A4E',
+    accent: '#4E7A57',
     accentDark: '#1B5E2C',
-    accentSoft: 'rgba(45,138,78,0.12)',
-    cardLine: 'rgba(45,138,78,0.22)',
+    accentSoft: 'rgba(78,122,87,0.12)',
+    cardLine: 'rgba(78,122,87,0.22)',
     label: '목(木) · 푸른',
   },
   화: {
     heroGrad: 'linear-gradient(135deg,#C04545 0%,#8E2E2E 60%,#5C1A1A 100%)',
     watermarkHanja: '火',
-    accent: '#D32F2F',
+    accent: '#B04A38',
     accentDark: '#9B1B1B',
-    accentSoft: 'rgba(211,47,47,0.10)',
-    cardLine: 'rgba(211,47,47,0.20)',
+    accentSoft: 'rgba(176,74,56,0.10)',
+    cardLine: 'rgba(176,74,56,0.20)',
     label: '화(火) · 붉은',
   },
   토: {
     heroGrad: 'linear-gradient(135deg,#D4A645 0%,#A87E2A 60%,#6E5018 100%)',
     watermarkHanja: '土',
-    accent: '#E8B82A',
+    accent: '#B07F38',
     accentDark: '#A8530B',
-    accentSoft: 'rgba(232,184,42,0.10)',
-    cardLine: 'rgba(232,184,42,0.22)',
+    accentSoft: 'rgba(176,127,56,0.10)',
+    cardLine: 'rgba(176,127,56,0.22)',
     label: '토(土) · 노란',
   },
   금: {
     heroGrad: 'linear-gradient(135deg,#7E8893 0%,#525864 60%,#2E323B 100%)',
     watermarkHanja: '金',
-    accent: '#4A4A4A',
+    accent: '#7D7870',
     accentDark: '#3D3D3D',
     accentSoft: 'rgba(74,74,74,0.10)',
     cardLine: 'rgba(74,74,74,0.22)',
@@ -95,10 +95,10 @@ export const OHENG_THEME: Record<OhengType, OhengTheme> = {
   수: {
     heroGrad: 'linear-gradient(135deg,#4A75B0 0%,#2E5285 60%,#1A3258 100%)',
     watermarkHanja: '水',
-    accent: '#1565E0',
+    accent: '#3E5F82',
     accentDark: '#0D3F8A',
-    accentSoft: 'rgba(21,101,224,0.10)',
-    cardLine: 'rgba(21,101,224,0.20)',
+    accentSoft: 'rgba(62,95,130,0.10)',
+    cardLine: 'rgba(62,95,130,0.20)',
     label: '수(水) · 검은',
   },
 };
@@ -591,11 +591,11 @@ export interface EightCharGridProps {
 }
 
 const OHENG_HEX_INLINE: Record<OhengType, string> = {
-  목: '#2D8A4E',
-  화: '#D32F2F',
-  토: '#E8B82A',
-  금: '#4A4A4A',
-  수: '#1565E0',
+  목: '#4E7A57',
+  화: '#B04A38',
+  토: '#B07F38',
+  금: '#7D7870',
+  수: '#3E5F82',
 };
 
 /** 십성 ⇄ 위치 매핑 헬퍼 — calculator 출력 ('년간', '월지' 등) → 천간/지지 */
@@ -796,9 +796,9 @@ interface OhengBoxStyle {
   shadow: string;
 }
 const OHENG_BOX_STYLE: Record<OhengType, OhengBoxStyle> = {
-  목: { bg: '#2D8A4E', fg: '#FFFFFF', outline: '#1B5E2C', shadow: 'rgba(45,138,78,0.35)' },
-  화: { bg: '#D32F2F', fg: '#FFFFFF', outline: '#9B1B1B', shadow: 'rgba(211,47,47,0.35)' },
-  토: { bg: '#E8B82A', fg: '#FFFFFF', outline: '#B85A0E', shadow: 'rgba(232,184,42,0.35)' },
+  목: { bg: '#4E7A57', fg: '#FFFFFF', outline: '#1B5E2C', shadow: 'rgba(78,122,87,0.35)' },
+  화: { bg: '#B04A38', fg: '#FFFFFF', outline: '#9B1B1B', shadow: 'rgba(176,74,56,0.35)' },
+  토: { bg: '#B07F38', fg: '#FFFFFF', outline: '#B85A0E', shadow: 'rgba(176,127,56,0.35)' },
   금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C', shadow: 'rgba(28,28,28,0.20)' },
   수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D', shadow: 'rgba(0,0,0,0.45)' },
 };
@@ -934,11 +934,11 @@ export function OhengCountRow({
         const isZero = v === 0;
         const isStrong = v >= 3;
         const ohengHex =
-          o === '목' ? '#2D8A4E'
-          : o === '화' ? '#D32F2F'
-          : o === '토' ? '#E8B82A'
-          : o === '금' ? '#4A4A4A'
-          : '#1565E0';
+          o === '목' ? '#4E7A57'
+          : o === '화' ? '#B04A38'
+          : o === '토' ? '#B07F38'
+          : o === '금' ? '#7D7870'
+          : '#3E5F82';
         return (
           <span
             key={o}

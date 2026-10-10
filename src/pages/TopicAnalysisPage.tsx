@@ -192,11 +192,11 @@ const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> =
   study:    { label: '학업운',       color: '#9C5A8A', desc: '집중력·지식 흡수·학습 패턴' },
   exam:     { label: '합격·이직운', color: '#5A6FA8', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
   move:     { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
-  social:   { label: '대인관계운',   color: '#F57F17', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
+  social:   { label: '대인관계운',   color: '#B07F38', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
   moving:   { label: '이사·이동운', color: '#4F8A8B', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
 };
 
-const OHENG_COLORS: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
+const OHENG_COLORS: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
 
 /** 2026-05-29 — 토픽별 섹션 제목 SSOT (functions/src/ai/claudeTopic.ts TOPIC_CONFIGS.sections 미러).
  *  스트리밍 중 결과 페이지가 "빈 화면 → 갑툭튀" 하지 않도록, 도착 전 섹션 헤더 + 스켈레톤 스캐폴드를 미리 렌더.
@@ -257,25 +257,25 @@ type Phase = 'select' | 'loading' | 'result';
 /** 점수 -> 한자 판정 (사주 전통 방식) */
 function getJudgment(score: number) {
   if (score >= 85) return { hanja: '大吉', reading: '대길', desc: '매우 좋은 기운', color: '#B8965A', bg: 'rgba(184,150,90,0.12)' };
-  if (score >= 70) return { hanja: '吉',   reading: '길',   desc: '좋은 기운의 흐름', color: '#2D8A4E', bg: 'rgba(45,138,78,0.10)' };
-  if (score >= 55) return { hanja: '平',   reading: '평',   desc: '무난한 흐름',   color: '#1565E0', bg: 'rgba(21,101,224,0.10)' };
-  if (score >= 40) return { hanja: '小注意', reading: '소주의', desc: '보완이 필요한 기운', color: '#E65100', bg: 'rgba(230,81,0,0.10)' };
-  return               { hanja: '要注意', reading: '요주의', desc: '적극 보완 필요', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' };
+  if (score >= 70) return { hanja: '吉',   reading: '길',   desc: '좋은 기운의 흐름', color: '#4E7A57', bg: 'rgba(78,122,87,0.10)' };
+  if (score >= 55) return { hanja: '平',   reading: '평',   desc: '무난한 흐름',   color: '#3E5F82', bg: 'rgba(62,95,130,0.10)' };
+  if (score >= 40) return { hanja: '小注意', reading: '소주의', desc: '보완이 필요한 기운', color: '#8A6226', bg: 'rgba(138,98,38,0.10)' };
+  return               { hanja: '要注意', reading: '요주의', desc: '적극 보완 필요', color: '#B04A38', bg: 'rgba(176,74,56,0.10)' };
 }
 
 const LUCKY_COLOR_HEX: Record<string, string> = {
   // 빨강 계열
-  빨강: '#D32F2F', 빨간색: '#D32F2F', 붉은색: '#D32F2F', 적색: '#D32F2F', 레드: '#D32F2F',
-  진빨강: '#B71C1C', 와인: '#880E4F', 와인색: '#880E4F',
+  빨강: '#B04A38', 빨간색: '#B04A38', 붉은색: '#B04A38', 적색: '#B04A38', 레드: '#B04A38',
+  진빨강: '#8A3326', 와인: '#880E4F', 와인색: '#880E4F',
   // 파랑 계열
-  파랑: '#1565E0', 파란색: '#1565E0', 청색: '#1565E0', 블루: '#1565E0',
-  진파랑: '#0D47A1', 남색: '#1A237E', 남청색: '#1A237E', 감색: '#1A237E',
+  파랑: '#3E5F82', 파란색: '#3E5F82', 청색: '#3E5F82', 블루: '#3E5F82',
+  진파랑: '#2A4560', 남색: '#1A237E', 남청색: '#1A237E', 감색: '#1A237E',
   하늘: '#42A5F5', 하늘색: '#42A5F5', 연파랑: '#42A5F5', 스카이: '#42A5F5',
-  진청색: '#0D47A1', 진청: '#0D47A1',
+  진청색: '#2A4560', 진청: '#2A4560',
   // 초록 계열
-  초록: '#2D8A4E', 초록색: '#2D8A4E', 녹색: '#2D8A4E', 그린: '#2D8A4E',
+  초록: '#4E7A57', 초록색: '#4E7A57', 녹색: '#4E7A57', 그린: '#4E7A57',
   연두: '#7CB342', 연두색: '#7CB342',
-  진초록: '#1B5E20', 짙은초록: '#1B5E20',
+  진초록: '#355A3E', 짙은초록: '#355A3E',
   // 청록 계열
   청록: '#00897B', 청록색: '#00897B', 청녹: '#00897B', 청녹색: '#00897B',
   민트: '#26A69A', 민트색: '#26A69A', 옥색: '#26A69A', 옥: '#26A69A',
@@ -286,25 +286,25 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   연노랑: '#FDD835',
   // 흰색/검정 계열
   흰색: '#BDBDBD', 백색: '#BDBDBD', 하양: '#BDBDBD', 하얀색: '#BDBDBD', 화이트: '#BDBDBD',
-  검정: '#424242', 검은색: '#424242', 흑색: '#424242', 블랙: '#424242',
-  회색: '#4A4A4A', 회색빛: '#4A4A4A', 은색: '#9E9E9E', 실버: '#9E9E9E',
+  검정: '#57534D', 검은색: '#57534D', 흑색: '#57534D', 블랙: '#57534D',
+  회색: '#7D7870', 회색빛: '#7D7870', 은색: '#9E9E9E', 실버: '#9E9E9E',
   // 금색 계열
   금색: '#B8965A', 골드: '#B8965A', 금: '#B8965A', 황토: '#BF8C3E', 황토색: '#BF8C3E',
   갈색: '#795548', 브라운: '#795548', 갈: '#795548',
   베이지: '#D7CCC8', 아이보리: '#EFEBE9',
   // 보라 계열
-  보라: '#7B1FA2', 보라색: '#7B1FA2', 자색: '#7B1FA2', 퍼플: '#7B1FA2',
+  보라: '#7A5C7E', 보라색: '#7A5C7E', 자색: '#7A5C7E', 퍼플: '#7A5C7E',
   연보라: '#BA68C8', 라벤더: '#BA68C8',
   진보라: '#4A148C', 자주: '#AD1457', 자주색: '#AD1457',
   // 분홍 계열
   분홍: '#C88A95', 분홍색: '#C88A95', 핑크: '#C88A95',
   연분홍: '#F48FB1', 로즈: '#C62828', 장미: '#C62828',
   // 주황 계열
-  주황: '#E65100', 주황색: '#E65100', 오렌지: '#E65100',
+  주황: '#8A6226', 주황색: '#8A6226', 오렌지: '#8A6226',
   살구: '#FF8A65', 살구색: '#FF8A65', 코랄: '#FF7043',
 };
 
-/** 행운 컬러 텍스트에서 hex 찾기 — "검은색, 진청색(수 기운)" → '#424242' */
+/** 행운 컬러 텍스트에서 hex 찾기 — "검은색, 진청색(수 기운)" → '#57534D' */
 function findLuckyColorHex(value: string): string | null {
   if (!value) return null;
   for (const [key, hex] of Object.entries(LUCKY_COLOR_HEX)) {
@@ -316,10 +316,10 @@ function findLuckyColorHex(value: string): string | null {
 /** 등급 기준표 데이터 */
 const GRADE_SCALE = [
   { hanja: '大吉', reading: '대길', range: '85~100', color: '#B8965A' },
-  { hanja: '吉', reading: '길', range: '70~84', color: '#2D8A4E' },
-  { hanja: '平', reading: '평', range: '55~69', color: '#1565E0' },
-  { hanja: '小注意', reading: '소주의', range: '40~54', color: '#E65100' },
-  { hanja: '要注意', reading: '요주의', range: '~39', color: '#D32F2F' },
+  { hanja: '吉', reading: '길', range: '70~84', color: '#4E7A57' },
+  { hanja: '平', reading: '평', range: '55~69', color: '#3E5F82' },
+  { hanja: '小注意', reading: '소주의', range: '40~54', color: '#8A6226' },
+  { hanja: '要注意', reading: '요주의', range: '~39', color: '#B04A38' },
 ];
 
 const LOADING_MSGS = [
@@ -424,8 +424,8 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
                 fontSize: 11,
                 fontWeight: 700,
                 color: '#1B5E2C',
-                background: 'rgba(45,138,78,0.16)',
-                border: '1px solid rgba(45,138,78,0.32)',
+                background: 'rgba(78,122,87,0.16)',
+                border: '1px solid rgba(78,122,87,0.32)',
                 padding: '3px 10px',
                 borderRadius: 100,
                 letterSpacing: '0.02em',
@@ -446,8 +446,8 @@ function StrengthsCautions({ strengths, cautions }: { strengths?: string[]; caut
                 fontSize: 11,
                 fontWeight: 700,
                 color: '#B33A0E',
-                background: 'rgba(211,47,47,0.10)',
-                border: '1px solid rgba(211,47,47,0.32)',
+                background: 'rgba(176,74,56,0.10)',
+                border: '1px solid rgba(176,74,56,0.32)',
                 padding: '3px 10px',
                 borderRadius: 100,
                 letterSpacing: '0.02em',
@@ -478,7 +478,7 @@ type StatTone = 'default' | 'good' | 'warn';
 function StatTile({ label, value, color, tone = 'default', big = false }:
   { label: string; value: React.ReactNode; color: string; tone?: StatTone; big?: boolean }) {
   const pal = tone === 'good'
-    ? { bg: 'rgba(45,138,78,0.08)', fg: '#2D8A4E' }
+    ? { bg: 'rgba(78,122,87,0.08)', fg: '#4E7A57' }
     : tone === 'warn'
       ? { bg: 'rgba(192,57,43,0.07)', fg: '#C0392B' }
       : { bg: `${color}0E`, fg: color };
@@ -605,8 +605,8 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
                 </div>
               )}
               {data.riskMonth && (
-                <div className="rounded-xl p-3" style={{ background: 'rgba(230,81,0,0.06)' }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: '#E65100' }}>다툼 주의 시기</p>
+                <div className="rounded-xl p-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
+                  <p className="text-[11px] font-bold mb-1" style={{ color: '#8A6226' }}>다툼 주의 시기</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{data.riskMonth}</p>
                 </div>
               )}
@@ -665,17 +665,17 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
         {/* 상대방 궁합 분석 (썸/연애중일 때만) */}
         {data.partnerCompat && (() => {
           const pc = data.partnerCompat;
-          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
-          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
+          const ohengBg: Record<string, string> = { 목: 'rgba(78,122,87,0.10)', 화: 'rgba(176,74,56,0.10)', 토: 'rgba(176,127,56,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(62,95,130,0.10)' };
+          const ohengText: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
           const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
-            '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
-            '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
-            '형': { icon: '刑', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
-            '해': { icon: '害', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
-            '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
-            '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+            '합': { icon: '合', color: '#4E7A57', bg: 'rgba(78,122,87,0.12)' },
+            '충': { icon: '沖', color: '#B04A38', bg: 'rgba(176,74,56,0.10)' },
+            '형': { icon: '刑', color: '#8A6226', bg: 'rgba(138,98,38,0.10)' },
+            '해': { icon: '害', color: '#8A6226', bg: 'rgba(138,98,38,0.10)' },
+            '상생': { icon: '生', color: '#4E7A57', bg: 'rgba(78,122,87,0.12)' },
+            '상극': { icon: '克', color: '#B04A38', bg: 'rgba(176,74,56,0.10)' },
           };
-          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#4A4A4A', bg: 'rgba(0,0,0,0.06)' }; };
+          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#7D7870', bg: 'rgba(0,0,0,0.06)' }; };
           const pComp = pc.pillarComparison;
           const interMap: Record<string, any> = {};
           (pComp?.interactions || []).forEach((it: any) => {
@@ -755,14 +755,14 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
               {(pc.matchPoints?.length > 0 || pc.clashPoints?.length > 0) && (
                 <div className="space-y-2.5 mb-3">
                   {pc.matchPoints?.map((m: string, i: number) => (
-                    <div key={`m${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(45,138,78,0.07)' }}>
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(45,138,78,0.18)', color: '#2D8A4E', border: '1px solid rgba(45,138,78,0.25)', fontFamily: "'Noto Serif KR', serif" }}>合</span>
+                    <div key={`m${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(78,122,87,0.07)' }}>
+                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(78,122,87,0.18)', color: '#4E7A57', border: '1px solid rgba(78,122,87,0.25)', fontFamily: "'Noto Serif KR', serif" }}>合</span>
                       <p className="text-[13px] text-text-primary leading-relaxed flex-1" style={{ wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(m) }} />
                     </div>
                   ))}
                   {pc.clashPoints?.map((c: string, i: number) => (
-                    <div key={`c${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(230,81,0,0.06)' }}>
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(230,81,0,0.16)', color: '#E65100', border: '1px solid rgba(230,81,0,0.25)', fontFamily: "'Noto Serif KR', serif" }}>沖</span>
+                    <div key={`c${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
+                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(138,98,38,0.16)', color: '#8A6226', border: '1px solid rgba(138,98,38,0.25)', fontFamily: "'Noto Serif KR', serif" }}>沖</span>
                       <p className="text-[13px] text-text-primary leading-relaxed flex-1" style={{ wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
                     </div>
                   ))}
@@ -808,8 +808,8 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
       const s = data.incomeSources;
       return [
         { key: 'main',    label: '본업',    hanja: '本業', value: Number(s.main ?? 0),    color: '#B8965A' },
-        { key: 'invest',  label: '투자',    hanja: '投資', value: Number(s.invest ?? 0),  color: '#1565E0' },
-        { key: 'side',    label: '사이드',   hanja: '副業', value: Number(s.side ?? 0),    color: '#2D8A4E' },
+        { key: 'invest',  label: '투자',    hanja: '投資', value: Number(s.invest ?? 0),  color: '#3E5F82' },
+        { key: 'side',    label: '사이드',   hanja: '副業', value: Number(s.side ?? 0),    color: '#4E7A57' },
         { key: 'inherit', label: '상속·기타', hanja: '其他', value: Number(s.inherit ?? 0), color: '#9C5A8A' },
       ];
     }
@@ -823,8 +823,8 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
     else dist = { main: 50, invest: 20, side: 20, inherit: 10 };
     return [
       { key: 'main',    label: '본업',    hanja: '本業', value: dist.main,    color: '#B8965A' },
-      { key: 'invest',  label: '투자',    hanja: '投資', value: dist.invest,  color: '#1565E0' },
-      { key: 'side',    label: '사이드',   hanja: '副業', value: dist.side,    color: '#2D8A4E' },
+      { key: 'invest',  label: '투자',    hanja: '投資', value: dist.invest,  color: '#3E5F82' },
+      { key: 'side',    label: '사이드',   hanja: '副業', value: dist.side,    color: '#4E7A57' },
       { key: 'inherit', label: '상속·기타', hanja: '其他', value: dist.inherit, color: '#9C5A8A' },
     ];
   }, [data.incomeSources, data.wealthType]);
@@ -848,7 +848,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <span aria-hidden style={{
             position: 'absolute', right: -10, bottom: -22,
             fontFamily: "'Noto Serif KR', serif",
-            fontSize: 120, fontWeight: 900, color, opacity: 0.05,
+            display: 'none', fontSize: 120, fontWeight: 900, color, opacity: 0.05,
             lineHeight: 1, pointerEvents: 'none',
           }}>力</span>
           {/* 헤더 — 한자 chip + 라벨 */}
@@ -869,10 +869,10 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[12px] text-text-secondary font-semibold">수익력 <span className="text-[11px] text-text-hint font-normal">· 돈 벌어오는 힘</span></span>
-                  <span className="text-[18px] font-black" style={{ color: '#2D8A4E', fontFamily: "'Noto Serif KR', serif" }}>{data.earningPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
+                  <span className="text-[18px] font-black" style={{ color: '#4E7A57', fontFamily: "'Noto Serif KR', serif" }}>{data.earningPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
-                <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(45,138,78,0.10)' }}>
-                  <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #2D8A4E 0%, #4caf50 100%)', width: `${data.earningPower}%` }} />
+                <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(78,122,87,0.10)' }}>
+                  <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #4E7A57 0%, #4caf50 100%)', width: `${data.earningPower}%` }} />
                 </div>
               </div>
             )}
@@ -880,10 +880,10 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[12px] text-text-secondary font-semibold">저축력 <span className="text-[11px] text-text-hint font-normal">· 돈 모으는 힘</span></span>
-                  <span className="text-[18px] font-black" style={{ color: '#1565C0', fontFamily: "'Noto Serif KR', serif" }}>{data.savingPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
+                  <span className="text-[18px] font-black" style={{ color: '#3E5F82', fontFamily: "'Noto Serif KR', serif" }}>{data.savingPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
-                <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(21,101,192,0.10)' }}>
-                  <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #1565C0 0%, #42a5f5 100%)', width: `${data.savingPower}%` }} />
+                <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(62,95,130,0.10)' }}>
+                  <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #3E5F82 0%, #42a5f5 100%)', width: `${data.savingPower}%` }} />
                 </div>
               </div>
             )}
@@ -891,10 +891,10 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[12px] text-text-secondary font-semibold">지출 위험도 <span className="text-[11px] text-text-hint font-normal">· 높을수록 새는 돈 큼</span></span>
-                  <span className="text-[18px] font-black" style={{ color: '#D32F2F', fontFamily: "'Noto Serif KR', serif" }}>{data.spendingRisk}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
+                  <span className="text-[18px] font-black" style={{ color: '#B04A38', fontFamily: "'Noto Serif KR', serif" }}>{data.spendingRisk}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
-                <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(211,47,47,0.10)' }}>
-                  <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #D32F2F 0%, #ef5350 100%)', width: `${data.spendingRisk}%` }} />
+                <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(176,74,56,0.10)' }}>
+                  <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #B04A38 0%, #ef5350 100%)', width: `${data.spendingRisk}%` }} />
                 </div>
               </div>
             )}
@@ -912,7 +912,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <span aria-hidden style={{
             position: 'absolute', right: -10, bottom: -22,
             fontFamily: "'Noto Serif KR', serif",
-            fontSize: 120, fontWeight: 900, color, opacity: 0.05,
+            display: 'none', fontSize: 120, fontWeight: 900, color, opacity: 0.05,
             lineHeight: 1, pointerEvents: 'none',
           }}>鍵</span>
           <div className="flex items-center gap-2 mb-4" style={{ position: 'relative' }}>
@@ -934,25 +934,25 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               </div>
             )}
             {data.wealthPeakPeriod && (
-              <div className="rounded-xl p-3.5" style={{ background: 'rgba(232,184,42,0.08)', border: '1px solid rgba(232,184,42,0.30)' }}>
+              <div className="rounded-xl p-3.5" style={{ background: 'rgba(176,127,56,0.08)', border: '1px solid rgba(176,127,56,0.30)' }}>
                 <p className="text-[11px] font-bold mb-1.5" style={{ color: '#8C6D3D' }}>재물 전성기</p>
                 <p className="text-[16px] font-black mb-1" style={{ color: '#8B6F0C', fontFamily: "'Noto Serif KR', serif" }}>{data.wealthPeakPeriod}</p>
                 <p className="text-[11px] text-text-secondary leading-snug" style={{ wordBreak: 'keep-all' }}>이 시기에 자산이 가장 크게 불어요</p>
               </div>
             )}
             {data.investStyle && (
-              <div className="rounded-xl p-3.5" style={{ background: 'rgba(21,101,224,0.06)', border: '1px solid rgba(21,101,224,0.25)' }}>
-                <p className="text-[11px] font-bold mb-1.5 text-[#1565C0]">투자 성향</p>
-                <p className="text-[16px] font-black text-[#1565C0]" style={{ fontFamily: "'Noto Serif KR', serif" }}>{data.investStyle}</p>
+              <div className="rounded-xl p-3.5" style={{ background: 'rgba(62,95,130,0.06)', border: '1px solid rgba(62,95,130,0.25)' }}>
+                <p className="text-[11px] font-bold mb-1.5 text-[#3E5F82]">투자 성향</p>
+                <p className="text-[16px] font-black text-[#3E5F82]" style={{ fontFamily: "'Noto Serif KR', serif" }}>{data.investStyle}</p>
               </div>
             )}
             {data.bestInvestMonth && (
-              <div className="rounded-xl p-3.5" style={{ background: 'rgba(45,138,78,0.06)', border: '1px solid rgba(45,138,78,0.25)' }}>
+              <div className="rounded-xl p-3.5" style={{ background: 'rgba(78,122,87,0.06)', border: '1px solid rgba(78,122,87,0.25)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
-                  <p className="text-[11px] font-bold text-[#2D8A4E]">올해 투자 적기</p>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4E7A57" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
+                  <p className="text-[11px] font-bold text-[#4E7A57]">올해 투자 적기</p>
                 </div>
-                <p className="text-[16px] font-black text-[#2D8A4E]" style={{ fontFamily: "'Noto Serif KR', serif" }}>{data.bestInvestMonth}</p>
+                <p className="text-[16px] font-black text-[#4E7A57]" style={{ fontFamily: "'Noto Serif KR', serif" }}>{data.bestInvestMonth}</p>
               </div>
             )}
           </div>
@@ -976,7 +976,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             <span aria-hidden style={{
               position: 'absolute', right: -10, bottom: -22,
               fontFamily: "'Noto Serif KR', serif",
-              fontSize: 120, fontWeight: 900, color, opacity: 0.05,
+              display: 'none', fontSize: 120, fontWeight: 900, color, opacity: 0.05,
               lineHeight: 1, pointerEvents: 'none',
             }}>月</span>
             <div className="flex items-center gap-2 mb-1" style={{ position: 'relative' }}>
@@ -989,7 +989,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
               }}>月</span>
               <p className="text-h3 text-text-primary" style={{ margin: 0, flex: 1 }}>월별 재물 흐름</p>
               {data.dangerMonths && (
-                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(211,47,47,0.10)', color: '#D32F2F', border: '1px solid rgba(211,47,47,0.25)' }}>
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(176,74,56,0.10)', color: '#B04A38', border: '1px solid rgba(176,74,56,0.25)' }}>
                   주의: {data.dangerMonths}
                 </span>
               )}
@@ -1016,12 +1016,12 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {bestMonth && worstMonth && (
               <div className="flex items-center justify-center gap-4 mt-2">
                 <div className="flex items-center gap-1.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
-                  <span className="text-[11px] text-text-muted">최고: <strong className="text-[#2D8A4E]">{bestMonth} ({bestScore}점)</strong></span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4E7A57" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>
+                  <span className="text-[11px] text-text-muted">최고: <strong className="text-[#4E7A57]">{bestMonth} ({bestScore}점)</strong></span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                  <span className="text-[11px] text-text-muted">주의: <strong className="text-[#D32F2F]">{worstMonth} ({worstScore}점)</strong></span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B04A38" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                  <span className="text-[11px] text-text-muted">주의: <strong className="text-[#B04A38]">{worstMonth} ({worstScore}점)</strong></span>
                 </div>
               </div>
             )}
@@ -1042,7 +1042,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <span aria-hidden style={{
             position: 'absolute', right: -10, bottom: -22,
             fontFamily: "'Noto Serif KR', serif",
-            fontSize: 120, fontWeight: 900, color, opacity: 0.05,
+            display: 'none', fontSize: 120, fontWeight: 900, color, opacity: 0.05,
             lineHeight: 1, pointerEvents: 'none',
           }}>通</span>
           <div className="flex items-center gap-2 mb-1" style={{ position: 'relative' }}>
@@ -1105,13 +1105,13 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
 
         {/* 돈 새는 함정 경고 */}
         {data.moneyLeakTrap && (
-          <div className="card" style={{ background: 'rgba(230,81,0,0.04)', border: '1px solid rgba(230,81,0,0.25)' }}>
+          <div className="card" style={{ background: 'rgba(138,98,38,0.04)', border: '1px solid rgba(138,98,38,0.25)' }}>
             <div className="flex items-center gap-2 mb-1.5">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A6226" strokeWidth="2">
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <p className="text-[12px] font-bold text-[#E65100]">돈이 새는 자리 — 미리 챙기면 막을 수 있어요</p>
+              <p className="text-[12px] font-bold text-[#8A6226]">돈이 새는 자리 — 미리 챙기면 막을 수 있어요</p>
             </div>
             <p className="text-[13px] text-text-primary font-semibold leading-snug mb-1">{data.moneyLeakTrap}</p>
             {data.moneyLeakDesc && (
@@ -1385,7 +1385,7 @@ function DaewoonWealthRail({
             )}
             {/* 재물 강도 mini bar — 두께 늘려서 가독 */}
             <div style={{ height: 5, marginTop: 7, background: '#F0ECE1', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${c.intensity}%`, background: tone === 'rgba(198,40,40,0.18)' ? '#D32F2F' : (c.intensity >= 70 ? accentColor : '#8C6D3D') }} />
+              <div style={{ height: '100%', width: `${c.intensity}%`, background: tone === 'rgba(198,40,40,0.18)' ? '#B04A38' : (c.intensity >= 70 ? accentColor : '#8C6D3D') }} />
             </div>
             {c.isCurrent && (
               <div style={{ fontSize: 11, fontWeight: 800, color: '#8C6D3D', marginTop: 4, letterSpacing: '0.05em' }}>
@@ -1410,9 +1410,9 @@ const RELFLOW_CATEGORIES = [
     key: 'helper',
     label: '도와주는 사람',
     hanja: '助',
-    color: '#2D8A4E',
-    bg: 'rgba(45,138,78,0.06)',
-    border: 'rgba(45,138,78,0.30)',
+    color: '#4E7A57',
+    bg: 'rgba(78,122,87,0.06)',
+    border: 'rgba(78,122,87,0.30)',
     sipsungs: ['정인', '편인', '식신', '상관'] as const,
     desc: '인성·식상 — 돈 굴리는 지혜와 재능을 주는 사람',
   },
@@ -1420,9 +1420,9 @@ const RELFLOW_CATEGORIES = [
     key: 'rival',
     label: '부딪히는 사람',
     hanja: '爭',
-    color: '#D32F2F',
-    bg: 'rgba(211,47,47,0.06)',
-    border: 'rgba(211,47,47,0.30)',
+    color: '#B04A38',
+    bg: 'rgba(176,74,56,0.06)',
+    border: 'rgba(176,74,56,0.30)',
     sipsungs: ['비견', '겁재'] as const,
     desc: '비겁 — 같은 자리를 노리는 경쟁자, 돈 다투는 결',
   },
@@ -1430,9 +1430,9 @@ const RELFLOW_CATEGORIES = [
     key: 'peace',
     label: '평온한 사람',
     hanja: '安',
-    color: '#1565E0',
-    bg: 'rgba(21,101,224,0.06)',
-    border: 'rgba(21,101,224,0.30)',
+    color: '#3E5F82',
+    bg: 'rgba(62,95,130,0.06)',
+    border: 'rgba(62,95,130,0.30)',
     sipsungs: ['정관', '편관', '정재', '편재'] as const,
     desc: '관성·재성 — 책임과 실리를 함께 나누는 자리',
   },
@@ -1597,8 +1597,8 @@ function CareerViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.jobChangeTiming && (
-              <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
-                <p className="text-[11px] text-text-hint">이직 최적 시기: <strong className="text-[#2D8A4E]">{data.jobChangeTiming}</strong></p>
+              <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
+                <p className="text-[11px] text-text-hint">이직 최적 시기: <strong className="text-[#4E7A57]">{data.jobChangeTiming}</strong></p>
               </div>
             )}
           </div>
@@ -1728,8 +1728,8 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
             </div>
           )}
           {data.weddingLuckMonth && (
-            <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
-              <p className="text-[11px] text-text-hint">결혼식 유리 월: <strong className="text-[#2D8A4E]">{data.weddingLuckMonth}</strong></p>
+            <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
+              <p className="text-[11px] text-text-hint">결혼식 유리 월: <strong className="text-[#4E7A57]">{data.weddingLuckMonth}</strong></p>
             </div>
           )}
         </div>
@@ -1753,8 +1753,8 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
 
         {/* 갈등 패턴 경고 */}
         {data.conflictPattern && (
-          <div className="card" style={{ background: 'rgba(230,81,0,0.04)', border: '1px solid rgba(230,81,0,0.25)' }}>
-            <p className="text-[11px] font-bold text-[#E65100] mb-1">부부 갈등 핵심 패턴</p>
+          <div className="card" style={{ background: 'rgba(138,98,38,0.04)', border: '1px solid rgba(138,98,38,0.25)' }}>
+            <p className="text-[11px] font-bold text-[#8A6226] mb-1">부부 갈등 핵심 패턴</p>
             <p className="text-[12px] text-text-primary leading-snug">{data.conflictPattern}</p>
           </div>
         )}
@@ -1762,17 +1762,17 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
         {/* 상대방 궁합 분석 (연애중일 때만) */}
         {data.partnerCompat && (() => {
           const pc = data.partnerCompat;
-          const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
-          const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
+          const ohengBg: Record<string, string> = { 목: 'rgba(78,122,87,0.10)', 화: 'rgba(176,74,56,0.10)', 토: 'rgba(176,127,56,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(62,95,130,0.10)' };
+          const ohengText: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
           const typeIcon: Record<string, { icon: string; color: string; bg: string }> = {
-            '합': { icon: '合', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
-            '충': { icon: '沖', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
-            '형': { icon: '刑', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
-            '해': { icon: '害', color: '#E65100', bg: 'rgba(230,81,0,0.10)' },
-            '상생': { icon: '生', color: '#2D8A4E', bg: 'rgba(45,138,78,0.12)' },
-            '상극': { icon: '克', color: '#D32F2F', bg: 'rgba(211,47,47,0.10)' },
+            '합': { icon: '合', color: '#4E7A57', bg: 'rgba(78,122,87,0.12)' },
+            '충': { icon: '沖', color: '#B04A38', bg: 'rgba(176,74,56,0.10)' },
+            '형': { icon: '刑', color: '#8A6226', bg: 'rgba(138,98,38,0.10)' },
+            '해': { icon: '害', color: '#8A6226', bg: 'rgba(138,98,38,0.10)' },
+            '상생': { icon: '生', color: '#4E7A57', bg: 'rgba(78,122,87,0.12)' },
+            '상극': { icon: '克', color: '#B04A38', bg: 'rgba(176,74,56,0.10)' },
           };
-          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#4A4A4A', bg: 'rgba(0,0,0,0.06)' }; };
+          const getTS = (type: string) => { for (const [k, v] of Object.entries(typeIcon)) if (type?.includes(k)) return v; return { icon: '?', color: '#7D7870', bg: 'rgba(0,0,0,0.06)' }; };
           const pComp = pc.pillarComparison;
           const interMap: Record<string, any> = {};
           (pComp?.interactions || []).forEach((it: any) => {
@@ -1852,14 +1852,14 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
               {(pc.matchPoints?.length > 0 || pc.clashPoints?.length > 0) && (
                 <div className="space-y-2.5 mb-3">
                   {pc.matchPoints?.map((m: string, i: number) => (
-                    <div key={`m${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(45,138,78,0.07)' }}>
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(45,138,78,0.18)', color: '#2D8A4E', border: '1px solid rgba(45,138,78,0.25)', fontFamily: "'Noto Serif KR', serif" }}>合</span>
+                    <div key={`m${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(78,122,87,0.07)' }}>
+                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(78,122,87,0.18)', color: '#4E7A57', border: '1px solid rgba(78,122,87,0.25)', fontFamily: "'Noto Serif KR', serif" }}>合</span>
                       <p className="text-[13px] text-text-primary leading-relaxed flex-1" style={{ wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(m) }} />
                     </div>
                   ))}
                   {pc.clashPoints?.map((c: string, i: number) => (
-                    <div key={`c${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(230,81,0,0.06)' }}>
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(230,81,0,0.16)', color: '#E65100', border: '1px solid rgba(230,81,0,0.25)', fontFamily: "'Noto Serif KR', serif" }}>沖</span>
+                    <div key={`c${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
+                      <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5" style={{ background: 'rgba(138,98,38,0.16)', color: '#8A6226', border: '1px solid rgba(138,98,38,0.25)', fontFamily: "'Noto Serif KR', serif" }}>沖</span>
                       <p className="text-[13px] text-text-primary leading-relaxed flex-1" style={{ wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
                     </div>
                   ))}
@@ -1919,8 +1919,8 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.nextPhaseAdvice && (
-              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
-                <p className="text-[11px] font-bold text-[#2D8A4E] mb-0.5">다음 단계 전략</p>
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
+                <p className="text-[11px] font-bold text-[#4E7A57] mb-0.5">다음 단계 전략</p>
                 <p className="text-[12px] text-text-primary leading-snug">{data.nextPhaseAdvice}</p>
               </div>
             )}
@@ -1959,8 +1959,8 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
             )}
           </div>
           {data.bestStartMonth && (
-            <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
-              <p className="text-[11px] text-text-hint">창업 최적 시기: <strong className="text-[#2D8A4E]">{data.bestStartMonth}</strong></p>
+            <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
+              <p className="text-[11px] text-text-hint">창업 최적 시기: <strong className="text-[#4E7A57]">{data.bestStartMonth}</strong></p>
             </div>
           )}
           {data.partnerAdvice && (
@@ -1979,7 +1979,7 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
 
 function HealthViz({ data, color }: { data: any; color: string }) {
   if (!data) return null;
-  const statusColor: Record<string, string> = { '양호': '#2D8A4E', '주의': '#E65100', '경고': '#D32F2F' };
+  const statusColor: Record<string, string> = { '양호': '#4E7A57', '주의': '#8A6226', '경고': '#B04A38' };
   return (
     <FadeIn delay={0.1}>
       <div className="space-y-3">
@@ -2047,10 +2047,10 @@ function HealthViz({ data, color }: { data: any; color: string }) {
 function ReunionViz({ data, color, myName, partnerName }: { data: any; color: string; myName?: string; partnerName?: string }) {
   if (!data) return null;
   const prob = data.reunionProb ?? 50;
-  const verdictColor = data.verdict === '재회 추천' ? '#2D8A4E' : data.verdict === '새 인연 추천' ? '#1565E0' : '#E65100';
-  const contactColor: Record<string, string> = { '지금 연락하기': '#2D8A4E', '기다리기': '#F57F17', '새출발': '#1565E0' };
-  const cycleColor: Record<string, string> = { '상승기': '#2D8A4E', '하강기': '#D32F2F', '정체기': '#4A4A4A' };
-  const ohengColor: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
+  const verdictColor = data.verdict === '재회 추천' ? '#4E7A57' : data.verdict === '새 인연 추천' ? '#3E5F82' : '#8A6226';
+  const contactColor: Record<string, string> = { '지금 연락하기': '#4E7A57', '기다리기': '#B07F38', '새출발': '#3E5F82' };
+  const cycleColor: Record<string, string> = { '상승기': '#4E7A57', '하강기': '#B04A38', '정체기': '#7D7870' };
+  const ohengColor: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
   const pp = data.partnerProfile;
   const ca = data.compatAnalysis;
   const sinsalList = data.sinsal;
@@ -2108,8 +2108,8 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             )}
           </div>
           {data.breakupCause && (
-            <div className="mt-2.5 rounded-xl py-2.5 px-3" style={{ background: 'rgba(230,81,0,0.05)' }}>
-              <p className="text-[11px] font-bold text-[#E65100] mb-0.5">이별의 사주적 핵심 원인</p>
+            <div className="mt-2.5 rounded-xl py-2.5 px-3" style={{ background: 'rgba(138,98,38,0.05)' }}>
+              <p className="text-[11px] font-bold text-[#8A6226] mb-0.5">이별의 사주적 핵심 원인</p>
               <p className="text-[12px] text-text-primary leading-snug">{data.breakupCause}</p>
             </div>
           )}
@@ -2132,8 +2132,8 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             {(() => {
               // 상대 핵심 키워드 추출 (interactions 가장 강한 1개)
               const pc = pp.pillarComparison;
-              const ohengBg: Record<string, string> = { 목: 'rgba(45,138,78,0.10)', 화: 'rgba(211,47,47,0.10)', 토: 'rgba(232,184,42,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(21,101,224,0.10)' };
-              const ohengText: Record<string, string> = { 목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#4A4A4A', 수: '#1565E0' };
+              const ohengBg: Record<string, string> = { 목: 'rgba(78,122,87,0.10)', 화: 'rgba(176,74,56,0.10)', 토: 'rgba(176,127,56,0.10)', 금: 'rgba(74,74,74,0.10)', 수: 'rgba(62,95,130,0.10)' };
+              const ohengText: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
               const myIlganOheng = pc?.myPillars?.day ? cleanOheng(pc.myPillars.day.oheng) : '';
               const ptIlganOheng = pc?.partnerPillars?.day ? cleanOheng(pc.partnerPillars.day.oheng) : '';
               // 일주 interaction 만 추출 (가장 핵심)
@@ -2159,8 +2159,8 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                   </div>
                   {/* 두 사람의 만남 (가운데) — 합/충/생/극 일상어로 */}
                   {dayType && (
-                    <div className="rounded-xl p-3.5 text-center" style={{ background: isPositive ? 'rgba(45,138,78,0.06)' : isNegative ? 'rgba(230,81,0,0.06)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isPositive ? 'rgba(45,138,78,0.2)' : isNegative ? 'rgba(230,81,0,0.2)' : 'rgba(0,0,0,0.08)'}` }}>
-                      <p className="text-[11px] font-bold mb-1" style={{ color: isPositive ? '#2D8A4E' : isNegative ? '#E65100' : '#7A7269' }}>
+                    <div className="rounded-xl p-3.5 text-center" style={{ background: isPositive ? 'rgba(78,122,87,0.06)' : isNegative ? 'rgba(138,98,38,0.06)' : 'rgba(0,0,0,0.03)', border: `1px solid ${isPositive ? 'rgba(78,122,87,0.2)' : isNegative ? 'rgba(138,98,38,0.2)' : 'rgba(0,0,0,0.08)'}` }}>
+                      <p className="text-[11px] font-bold mb-1" style={{ color: isPositive ? '#4E7A57' : isNegative ? '#8A6226' : '#7A7269' }}>
                         {isPositive ? '✓ 잘 맞물리는 결' : isNegative ? '⚠ 부딪히는 결' : '두 사람의 만남'}
                       </p>
                       <p className="text-[13px] font-bold text-text-primary mb-1.5" style={{ wordBreak: 'keep-all' }}>
@@ -2196,9 +2196,9 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             {/* 상대 현재 감정 + 재회 욕구 */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               {pp.currentEmotion && (
-                <div className="rounded-xl p-2.5" style={{ background: 'rgba(230,81,0,0.04)' }}>
+                <div className="rounded-xl p-2.5" style={{ background: 'rgba(138,98,38,0.04)' }}>
                   <p className="text-[11px] text-text-hint mb-0.5">상대 현재 감정</p>
-                  <p className="text-[11px] font-semibold text-[#E65100]">{pp.currentEmotion}</p>
+                  <p className="text-[11px] font-semibold text-[#8A6226]">{pp.currentEmotion}</p>
                 </div>
               )}
               {pp.reunionDesire != null && (
@@ -2220,16 +2220,16 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             {(pp.matchPoints?.length > 0 || pp.clashPoints?.length > 0) && (
               <div className="space-y-2.5 mt-3">
                 {pp.matchPoints?.map((m: string, i: number) => (
-                  <div key={`m${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(45,138,78,0.07)' }}>
+                  <div key={`m${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(78,122,87,0.07)' }}>
                     <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5"
-                      style={{ background: 'rgba(45,138,78,0.18)', color: '#2D8A4E', border: '1px solid rgba(45,138,78,0.25)', fontFamily: "'Noto Serif KR', serif" }}>合</span>
+                      style={{ background: 'rgba(78,122,87,0.18)', color: '#4E7A57', border: '1px solid rgba(78,122,87,0.25)', fontFamily: "'Noto Serif KR', serif" }}>合</span>
                     <p className="text-[13px] text-text-primary leading-relaxed flex-1" style={{ wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(m) }} />
                   </div>
                 ))}
                 {pp.clashPoints?.map((c: string, i: number) => (
-                  <div key={`c${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(230,81,0,0.06)' }}>
+                  <div key={`c${i}`} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
                     <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[13px] font-black mt-0.5"
-                      style={{ background: 'rgba(230,81,0,0.16)', color: '#E65100', border: '1px solid rgba(230,81,0,0.25)', fontFamily: "'Noto Serif KR', serif" }}>沖</span>
+                      style={{ background: 'rgba(138,98,38,0.16)', color: '#8A6226', border: '1px solid rgba(138,98,38,0.25)', fontFamily: "'Noto Serif KR', serif" }}>沖</span>
                     <p className="text-[13px] text-text-primary leading-relaxed flex-1" style={{ wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
                   </div>
                 ))}
@@ -2278,22 +2278,22 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                 { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',
                   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C88A95" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" /></svg>, activeColor: '#C88A95' },
                 { key: 'hongYeomSal', name: '홍염살', hanja: '紅艶殺', summary: '강렬한 끌림', subject: '나의 사주',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 2c1 3 4 5.5 4 10a4 4 0 11-8 0c0-4.5 3-7 4-10z" /></svg>, activeColor: '#D32F2F' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B04A38" strokeWidth="2"><path d="M12 2c1 3 4 5.5 4 10a4 4 0 11-8 0c0-4.5 3-7 4-10z" /></svg>, activeColor: '#B04A38' },
                 { key: 'wonJinSal', name: '원진살', hanja: '怨嗔殺', summary: '감정 어긋남', subject: '두 사람 사이',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M16 8l-8 8M8 8l8 8" /></svg>, activeColor: '#E65100' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A6226" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M16 8l-8 8M8 8l8 8" /></svg>, activeColor: '#8A6226' },
                 { key: 'cheonEulGuiin', name: '천을귀인', hanja: '天乙貴人', summary: '귀인의 도움', subject: '나의 사주',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>, activeColor: '#2D8A4E' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4E7A57" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01z" /></svg>, activeColor: '#4E7A57' },
                 { key: 'samhap', name: '삼합', hanja: '三合', summary: '세 기운의 조화', subject: '두 사람 사이',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><path d="M12 3l8.66 15H3.34z" /></svg>, activeColor: '#1565E0' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3E5F82" strokeWidth="2"><path d="M12 3l8.66 15H3.34z" /></svg>, activeColor: '#3E5F82' },
                 { key: 'yukhap', name: '육합', hanja: '六合', summary: '짝궁 결합', subject: '두 사람 사이',
-                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><circle cx="9" cy="12" r="5" /><circle cx="15" cy="12" r="5" /></svg>, activeColor: '#7B1FA2' },
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A5C7E" strokeWidth="2"><circle cx="9" cy="12" r="5" /><circle cx="15" cy="12" r="5" /></svg>, activeColor: '#7A5C7E' },
               ].map(({ key, name, hanja, summary, subject, icon, activeColor }) => {
                 const s = sinsalList[key];
                 if (!s) return null;
                 const isActive = s.have === true || s.have === 'true';
                 const impactType = s.impact || (isActive ? 'positive' : 'neutral');
                 const impactLabel = impactType === 'positive' ? '좋은 영향' : impactType === 'negative' ? '주의 필요' : '해당 없음';
-                const impactColor = impactType === 'positive' ? '#2D8A4E' : impactType === 'negative' ? '#E65100' : '#999';
+                const impactColor = impactType === 'positive' ? '#4E7A57' : impactType === 'negative' ? '#8A6226' : '#999';
                 return (
                   <div key={key} className="rounded-2xl overflow-hidden"
                     style={{ background: isActive ? `${activeColor}04` : 'rgba(0,0,0,0.015)', border: `1px solid ${isActive ? `${activeColor}15` : 'rgba(0,0,0,0.04)'}` }}>
@@ -2392,10 +2392,10 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="space-y-2.5">
               {data.reunionFactors.map((f: any, i: number) => {
                 const isFav = f.favorable === true || f.favorable === 'true';
-                const barColor = isFav ? '#2D8A4E' : '#E65100';
+                const barColor = isFav ? '#4E7A57' : '#8A6226';
                 const impact = Math.min(f.impact ?? 50, 100);
                 return (
-                  <motion.div key={i} className="rounded-xl p-3" style={{ background: isFav ? 'rgba(45,138,78,0.04)' : 'rgba(230,81,0,0.03)' }}
+                  <motion.div key={i} className="rounded-xl p-3" style={{ background: isFav ? 'rgba(78,122,87,0.04)' : 'rgba(138,98,38,0.03)' }}
                     initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.1 }}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
@@ -2426,30 +2426,30 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <p className="text-h3 text-text-primary mb-3">재회 신호 분석</p>
             <div className="grid grid-cols-2 gap-3">
               {data.greenFlags?.length > 0 && (
-                <div className="rounded-xl p-3" style={{ background: 'rgba(45,138,78,0.04)' }}>
-                  <p className="text-[11px] font-bold text-[#2D8A4E] mb-2 flex items-center gap-1">
+                <div className="rounded-xl p-3" style={{ background: 'rgba(78,122,87,0.04)' }}>
+                  <p className="text-[11px] font-bold text-[#4E7A57] mb-2 flex items-center gap-1">
                     <span className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
-                      style={{ background: 'rgba(45,138,78,0.15)' }}>+</span>
+                      style={{ background: 'rgba(78,122,87,0.15)' }}>+</span>
                     긍정 신호
                   </p>
                   {data.greenFlags.map((f: string, i: number) => (
                     <p key={i} className="text-[11px] text-text-secondary mb-1.5 leading-snug pl-5 relative">
-                      <span className="absolute left-0 top-0.5 text-[#2D8A4E] text-[11px]">&#x2713;</span>
+                      <span className="absolute left-0 top-0.5 text-[#4E7A57] text-[11px]">&#x2713;</span>
                       {stripMd(f)}
                     </p>
                   ))}
                 </div>
               )}
               {data.redFlags?.length > 0 && (
-                <div className="rounded-xl p-3" style={{ background: 'rgba(211,47,47,0.04)' }}>
-                  <p className="text-[11px] font-bold text-[#D32F2F] mb-2 flex items-center gap-1">
+                <div className="rounded-xl p-3" style={{ background: 'rgba(176,74,56,0.04)' }}>
+                  <p className="text-[11px] font-bold text-[#B04A38] mb-2 flex items-center gap-1">
                     <span className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
-                      style={{ background: 'rgba(211,47,47,0.12)' }}>!</span>
+                      style={{ background: 'rgba(176,74,56,0.12)' }}>!</span>
                     경고 신호
                   </p>
                   {data.redFlags.map((f: string, i: number) => (
                     <p key={i} className="text-[11px] text-text-secondary mb-1.5 leading-snug pl-5 relative">
-                      <span className="absolute left-0 top-0.5 text-[#D32F2F] text-[11px]">&#x2717;</span>
+                      <span className="absolute left-0 top-0.5 text-[#B04A38] text-[11px]">&#x2717;</span>
                       {stripMd(f)}
                     </p>
                   ))}
@@ -2489,15 +2489,15 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                     // 각 단계 아이콘 (SVG 인라인)
                     const phaseIcons = [
                       // 충격기: 깨진 하트
-                      <svg key="p0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2"><path d="M12 6l-2 4 3 2-4 6" /><path d="M19.5 13c0 4.5-7.5 9-7.5 9s-7.5-4.5-7.5-9a6 6 0 0112 0z" /></svg>,
+                      <svg key="p0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B04A38" strokeWidth="2"><path d="M12 6l-2 4 3 2-4 6" /><path d="M19.5 13c0 4.5-7.5 9-7.5 9s-7.5-4.5-7.5-9a6 6 0 0112 0z" /></svg>,
                       // 거부기: 화난 얼굴(번개)
-                      <svg key="p1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2"><path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" /></svg>,
+                      <svg key="p1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A6226" strokeWidth="2"><path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" /></svg>,
                       // 회복기: 새싹
-                      <svg key="p2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D8A4E" strokeWidth="2"><path d="M12 22V10" /><path d="M6 12c0-3.3 2.7-6 6-6" /><path d="M18 12c0-3.3-2.7-6-6-6" /><circle cx="12" cy="22" r="1" fill="#2D8A4E" /></svg>,
+                      <svg key="p2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4E7A57" strokeWidth="2"><path d="M12 22V10" /><path d="M6 12c0-3.3 2.7-6 6-6" /><path d="M18 12c0-3.3-2.7-6-6-6" /><circle cx="12" cy="22" r="1" fill="#4E7A57" /></svg>,
                       // 수용기: 균형
-                      <svg key="p3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>,
+                      <svg key="p3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3E5F82" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>,
                       // 장기 분리기: 나비(날개)
-                      <svg key="p4" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7B1FA2" strokeWidth="2"><path d="M12 12c-3-3-7-3-8 0s1 7 4 7c2 0 3-2 4-4" /><path d="M12 12c3-3 7-3 8 0s-1 7-4 7c-2 0-3-2-4-4" /><path d="M12 7v10" /></svg>,
+                      <svg key="p4" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A5C7E" strokeWidth="2"><path d="M12 12c-3-3-7-3-8 0s1 7 4 7c2 0 3-2 4-4" /><path d="M12 12c3-3 7-3 8 0s-1 7-4 7c-2 0-3-2-4-4" /><path d="M12 7v10" /></svg>,
                     ];
                     return (
                       <div key={i} className="rounded-xl p-3 transition-all"
@@ -2551,9 +2551,9 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                 </div>
               )}
               {bd.optimalWait && (
-                <div className="rounded-xl p-2.5" style={{ background: 'rgba(45,138,78,0.05)' }}>
+                <div className="rounded-xl p-2.5" style={{ background: 'rgba(78,122,87,0.05)' }}>
                   <p className="text-[11px] text-text-hint mb-0.5">최적 대기 기간</p>
-                  <p className="text-[12px] font-bold text-[#2D8A4E]">{bd.optimalWait}</p>
+                  <p className="text-[12px] font-bold text-[#4E7A57]">{bd.optimalWait}</p>
                 </div>
               )}
             </div>
@@ -2581,29 +2581,29 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                 </div>
                 {data.comparison.reunionPros?.map((p: string, i: number) => (
                   <p key={`rp${i}`} className="text-[11px] text-text-secondary mb-1 flex items-start gap-1">
-                    <span className="text-[#2D8A4E] mt-0.5 flex-shrink-0 font-bold">+</span>{stripMd(p)}
+                    <span className="text-[#4E7A57] mt-0.5 flex-shrink-0 font-bold">+</span>{stripMd(p)}
                   </p>
                 ))}
                 {data.comparison.reunionCons?.map((c: string, i: number) => (
                   <p key={`rc${i}`} className="text-[11px] text-text-muted mb-1 flex items-start gap-1">
-                    <span className="text-[#D32F2F] mt-0.5 flex-shrink-0 font-bold">-</span>{stripMd(c)}
+                    <span className="text-[#B04A38] mt-0.5 flex-shrink-0 font-bold">-</span>{stripMd(c)}
                   </p>
                 ))}
               </div>
-              <div className="rounded-xl p-3" style={{ background: 'rgba(21,101,224,0.05)' }}>
+              <div className="rounded-xl p-3" style={{ background: 'rgba(62,95,130,0.05)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                    style={{ background: '#1565E0' }}>N</span>
-                  <p className="text-[11px] font-bold text-[#1565C0]">새 인연</p>
+                    style={{ background: '#3E5F82' }}>N</span>
+                  <p className="text-[11px] font-bold text-[#3E5F82]">새 인연</p>
                 </div>
                 {data.comparison.newLovePros?.map((p: string, i: number) => (
                   <p key={`np${i}`} className="text-[11px] text-text-secondary mb-1 flex items-start gap-1">
-                    <span className="text-[#2D8A4E] mt-0.5 flex-shrink-0 font-bold">+</span>{stripMd(p)}
+                    <span className="text-[#4E7A57] mt-0.5 flex-shrink-0 font-bold">+</span>{stripMd(p)}
                   </p>
                 ))}
                 {data.comparison.newLoveCons?.map((c: string, i: number) => (
                   <p key={`nc${i}`} className="text-[11px] text-text-muted mb-1 flex items-start gap-1">
-                    <span className="text-[#D32F2F] mt-0.5 flex-shrink-0 font-bold">-</span>{stripMd(c)}
+                    <span className="text-[#B04A38] mt-0.5 flex-shrink-0 font-bold">-</span>{stripMd(c)}
                   </p>
                 ))}
               </div>
@@ -2656,11 +2656,11 @@ function StudyViz({ data, color }: { data: any; color: string }) {
               )}
               {data.examTimingVerdict && (
                 <div className="rounded-xl p-3" style={{
-                  background: data.examTimingVerdict === '최적' ? 'rgba(45,138,78,0.06)' : data.examTimingVerdict === '주의' ? 'rgba(211,47,47,0.05)' : `${color}06`
+                  background: data.examTimingVerdict === '최적' ? 'rgba(78,122,87,0.06)' : data.examTimingVerdict === '주의' ? 'rgba(176,74,56,0.05)' : `${color}06`
                 }}>
                   <p className="text-[11px] text-text-hint mb-1">시험 시기 판정</p>
                   <p className="text-[18px] font-black" style={{
-                    color: data.examTimingVerdict === '최적' ? '#2D8A4E' : data.examTimingVerdict === '주의' ? '#D32F2F' : color
+                    color: data.examTimingVerdict === '최적' ? '#4E7A57' : data.examTimingVerdict === '주의' ? '#B04A38' : color
                   }}>{data.examTimingVerdict}</p>
                 </div>
               )}
@@ -2671,8 +2671,8 @@ function StudyViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.examDayTips && (
-              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
-                <p className="text-[11px] font-bold text-[#2D8A4E] mb-0.5">시험 당일 꿀팁</p>
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
+                <p className="text-[11px] font-bold text-[#4E7A57] mb-0.5">시험 당일 꿀팁</p>
                 <p className="text-[12px] text-text-primary leading-snug">{data.examDayTips}</p>
               </div>
             )}
@@ -2698,8 +2698,8 @@ function StudyViz({ data, color }: { data: any; color: string }) {
             )}
           </div>
           {data.slumpPeriod && (
-            <div className="mt-2.5 rounded-xl py-2 px-3" style={{ background: 'rgba(230,81,0,0.06)' }}>
-              <p className="text-[11px] text-text-primary">슬럼프 주의 시기: <strong className="text-[#E65100]">{data.slumpPeriod}</strong></p>
+            <div className="mt-2.5 rounded-xl py-2 px-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
+              <p className="text-[11px] text-text-primary">슬럼프 주의 시기: <strong className="text-[#8A6226]">{data.slumpPeriod}</strong></p>
             </div>
           )}
         </div>
@@ -2761,8 +2761,8 @@ function ExamViz({ data, color }: { data: any; color: string }) {
                 </div>
               )}
               {decisionUrgency && (
-                <div className="rounded-xl p-3" style={{ background: 'rgba(230,81,0,0.06)' }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color: '#E65100' }}>결정 시급도</p>
+                <div className="rounded-xl p-3" style={{ background: 'rgba(138,98,38,0.06)' }}>
+                  <p className="text-[11px] font-bold mb-1" style={{ color: '#8A6226' }}>결정 시급도</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{decisionUrgency}</p>
                 </div>
               )}
@@ -2869,20 +2869,20 @@ function SocialViz({ data, color }: { data: any; color: string }) {
             </div>
           )}
           {data.bestAllyType && (
-            <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(45,138,78,0.05)' }}>
-              <p className="text-[11px] text-text-hint">잘 맞는 동료/친구: <strong className="text-[#2D8A4E]">{data.bestAllyType}</strong></p>
+            <div className="mt-2 rounded-xl py-2 px-3" style={{ background: 'rgba(78,122,87,0.05)' }}>
+              <p className="text-[11px] text-text-hint">잘 맞는 동료/친구: <strong className="text-[#4E7A57]">{data.bestAllyType}</strong></p>
             </div>
           )}
         </div>
         {/* 주의 사항 카드 */}
         {(data.gossipMonth || data.conflictTrigger) && (
-          <div className="card" style={{ background: 'rgba(230,81,0,0.04)', border: '1px solid rgba(230,81,0,0.25)' }}>
-            <p className="text-[11px] font-bold text-[#E65100] mb-2">주의 포인트</p>
+          <div className="card" style={{ background: 'rgba(138,98,38,0.04)', border: '1px solid rgba(138,98,38,0.25)' }}>
+            <p className="text-[11px] font-bold text-[#8A6226] mb-2">주의 포인트</p>
             {data.gossipMonth && (
-              <p className="text-[11px] text-text-primary mb-1.5">구설수 주의 월: <strong className="text-[#E65100]">{data.gossipMonth}</strong></p>
+              <p className="text-[11px] text-text-primary mb-1.5">구설수 주의 월: <strong className="text-[#8A6226]">{data.gossipMonth}</strong></p>
             )}
             {data.conflictTrigger && (
-              <p className="text-[11px] text-text-primary">갈등 트리거: <strong className="text-[#E65100]">{data.conflictTrigger}</strong></p>
+              <p className="text-[11px] text-text-primary">갈등 트리거: <strong className="text-[#8A6226]">{data.conflictTrigger}</strong></p>
             )}
           </div>
         )}
@@ -2902,7 +2902,7 @@ function MovingViz({ data, color }: { data: any; color: string }) {
             <p className="text-h3 text-text-primary">이동 분석</p>
             {data.hasYeokmasal != null && (
               <TypeBadge label={data.hasYeokmasal ? '역마살(驛馬殺) 있음' : '역마살 없음'}
-                color={data.hasYeokmasal ? '#E65100' : '#2D8A4E'} />
+                color={data.hasYeokmasal ? '#8A6226' : '#4E7A57'} />
             )}
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -2946,8 +2946,8 @@ function MovingViz({ data, color }: { data: any; color: string }) {
               </div>
             )}
             {data.purposeAdvice && (
-              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(21,101,224,0.05)' }}>
-                <p className="text-[11px] font-bold text-[#1565C0] mb-0.5">이사 목적 조언</p>
+              <div className="rounded-xl py-2 px-3" style={{ background: 'rgba(62,95,130,0.05)' }}>
+                <p className="text-[11px] font-bold text-[#3E5F82] mb-0.5">이사 목적 조언</p>
                 <p className="text-[12px] text-text-primary leading-snug">{data.purposeAdvice}</p>
               </div>
             )}
@@ -2991,9 +2991,9 @@ function TopicViz({ topicId, data, color, sajuData, birthYear, myName, partnerNa
 function InsightCards({ cards, color }: { cards?: { label: string; value: string; type: string }[]; color: string }) {
   if (!cards?.length) return null;
   const styles: Record<string, { bg: string; border: string; labelColor: string }> = {
-    info:    { bg: 'rgba(21,101,224,0.06)',  border: 'rgba(21,101,224,0.15)', labelColor: '#1565E0' },
+    info:    { bg: 'rgba(62,95,130,0.06)',  border: 'rgba(62,95,130,0.15)', labelColor: '#3E5F82' },
     accent:  { bg: `${color}08`,             border: `${color}20`,            labelColor: color },
-    warning: { bg: 'rgba(230,81,0,0.06)',    border: 'rgba(230,81,0,0.15)',   labelColor: '#E65100' },
+    warning: { bg: 'rgba(138,98,38,0.06)',    border: 'rgba(138,98,38,0.15)',   labelColor: '#8A6226' },
   };
   return (
     <div className="mt-3 pt-3 flex flex-wrap gap-2" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
@@ -4011,7 +4011,7 @@ export function TopicAnalysisPage() {
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
                             </div>
                           ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8B1C1" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }} aria-hidden>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B8070" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }} aria-hidden>
                               <path d="M9 18l6-6-6-6" />
                             </svg>
                           )}
@@ -4554,7 +4554,7 @@ export function TopicAnalysisPage() {
                         <button className="w-full flex items-center justify-between"
                           onClick={() => setShowPartner(!showPartner)}>
                           <div className="flex items-center gap-2">
-                            <Pictogram k="topic:letter" size={16} color="#7B1FA2" />
+                            <Pictogram k="topic:letter" size={16} color="#7A5C7E" />
                             <div className="text-left">
                               <p className="text-h3 text-text-primary">재회 상대방 정보</p>
                               <p className="text-[11px] text-text-hint">입력하면 더 정확한 분석이 가능해요</p>

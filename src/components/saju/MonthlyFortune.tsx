@@ -72,16 +72,16 @@ export function MonthlyFortune({ data }: Props) {
       {/* 고점/저점 요약 */}
       <div className="flex gap-2 mb-1">
         {bestMonth && (
-          <div className="flex-1 p-2 rounded-lg text-center" style={{ background: '#e8f5e9', border: '1px solid #c8e6c9' }}>
-            <p style={{ fontSize: 9, color: '#2e7d32', fontWeight: 600 }}>최고의 달</p>
-            <p style={{ fontSize: 16, fontWeight: 900, color: '#2e7d32' }}>{bestMonth.month}월</p>
+          <div className="flex-1 p-2 rounded-lg text-center" style={{ background: '#E7EFE6', border: '1px solid #c8e6c9' }}>
+            <p style={{ fontSize: 9, color: '#4E7A57', fontWeight: 600 }}>최고의 달</p>
+            <p style={{ fontSize: 16, fontWeight: 900, color: '#4E7A57' }}>{bestMonth.month}월</p>
             <p style={{ fontSize: 10, color: '#4caf50', fontWeight: 700 }}>{bestMonth.score}점</p>
           </div>
         )}
         {worstMonth && (
           <div className="flex-1 p-2 rounded-lg text-center" style={{ background: '#fff3e0', border: '1px solid #ffe0b2' }}>
-            <p style={{ fontSize: 9, color: '#e65100', fontWeight: 600 }}>주의할 달</p>
-            <p style={{ fontSize: 16, fontWeight: 900, color: '#e65100' }}>{worstMonth.month}월</p>
+            <p style={{ fontSize: 9, color: '#8A6226', fontWeight: 600 }}>주의할 달</p>
+            <p style={{ fontSize: 16, fontWeight: 900, color: '#8A6226' }}>{worstMonth.month}월</p>
             <p style={{ fontSize: 10, color: '#ff9800', fontWeight: 700 }}>{worstMonth.score}점</p>
           </div>
         )}
@@ -127,24 +127,24 @@ export function MonthlyFortune({ data }: Props) {
               <g key={i}>
                 {/* 포인트 원 */}
                 <circle cx={p.x} cy={p.y} r={r}
-                  fill={isBest ? '#2e7d32' : isWorst ? '#e65100' : '#B8965A'}
+                  fill={isBest ? '#4E7A57' : isWorst ? '#8A6226' : '#B8965A'}
                   stroke="#fff" strokeWidth={isBest || isWorst ? 2 : 1}
                 />
                 {/* 고점/저점 라벨 */}
                 {isBest && (
                   <g>
-                    <rect x={p.x - 14} y={p.y - 20} width="28" height="14" rx="3" fill="#2e7d32" />
+                    <rect x={p.x - 14} y={p.y - 20} width="28" height="14" rx="3" fill="#4E7A57" />
                     <text x={p.x} y={p.y - 11} fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">{p.score}</text>
                   </g>
                 )}
                 {isWorst && (
                   <g>
-                    <rect x={p.x - 14} y={p.y + 6} width="28" height="14" rx="3" fill="#e65100" />
+                    <rect x={p.x - 14} y={p.y + 6} width="28" height="14" rx="3" fill="#8A6226" />
                     <text x={p.x} y={p.y + 15} fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">{p.score}</text>
                   </g>
                 )}
                 {/* 월 라벨 */}
-                <text x={p.x} y={H - 8} fontSize="8" fill={isBest ? '#2e7d32' : isWorst ? '#e65100' : '#a0937f'} textAnchor="middle" fontWeight={isBest || isWorst ? '700' : '400'}>
+                <text x={p.x} y={H - 8} fontSize="8" fill={isBest ? '#4E7A57' : isWorst ? '#8A6226' : '#a0937f'} textAnchor="middle" fontWeight={isBest || isWorst ? '700' : '400'}>
                   {p.month}월
                 </text>
               </g>
@@ -156,12 +156,12 @@ export function MonthlyFortune({ data }: Props) {
       {/* 범례 */}
       <div className="flex items-center justify-center gap-4">
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#2e7d32' }} />
-          <span style={{ fontSize: 10, color: '#2e7d32', fontWeight: 600 }}>최고점</span>
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#4E7A57' }} />
+          <span style={{ fontSize: 10, color: '#4E7A57', fontWeight: 600 }}>최고점</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#e65100' }} />
-          <span style={{ fontSize: 10, color: '#e65100', fontWeight: 600 }}>최저점</span>
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#8A6226' }} />
+          <span style={{ fontSize: 10, color: '#8A6226', fontWeight: 600 }}>최저점</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#B8965A' }} />

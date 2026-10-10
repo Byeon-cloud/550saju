@@ -270,7 +270,7 @@ function ProfileCardCompact({
         height="16"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#A8B1C1"
+        stroke="#8B8070"
         strokeWidth="2"
         strokeLinecap="round"
         style={{ flexShrink: 0 }}

@@ -48,7 +48,7 @@ import { MiniFlow } from './_flow_table';
 import { getIljuMeaning } from '@/constants/iljuMeaning';
 
 const OHENG_HEX: Record<OhengType, string> = {
-  목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0',
+  목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82',
 };
 
 export type ExportMode = 'instagram-1x1' | 'instagram-9x16' | 'kakao-share';

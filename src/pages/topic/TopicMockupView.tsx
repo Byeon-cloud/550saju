@@ -154,9 +154,9 @@ const MOCKUP_CSS = `
   --c-gold-line: rgba(184,150,90,0.40);
   --c-card-line: rgba(184,150,90,0.18);
   --c-line: #E1D7C4;
-  --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
-  --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
-  --c-to-soft: rgba(232,184,42,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(21,101,224,0.10);
+  --c-mok: #4E7A57; --c-hwa: #B04A38; --c-to: #B07F38; --c-geum: #7D7870; --c-su: #3E5F82;
+  --c-mok-soft: rgba(78,122,87,0.10); --c-hwa-soft: rgba(176,74,56,0.10);
+  --c-to-soft: rgba(176,127,56,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(62,95,130,0.10);
 }
 .topic-mockup .page { max-width: 480px; margin: 0 auto; background: var(--c-paper); }
 
@@ -255,6 +255,7 @@ const MOCKUP_CSS = `
   box-shadow: 0 4px 16px rgba(184,150,90,0.10);
 }
 .topic-mockup .conclusion::after {
+  display: none; /* 2026-10-10 v9 워터마크 제거 */
   content: attr(data-han); position: absolute; right: -12px; bottom: -36px;
   font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900;
   color: var(--c-topic-accent); opacity: 0.06; line-height: 1; pointer-events: none;

@@ -277,7 +277,7 @@ export function HourPickerTrigger({
         width: '100%',
         height: 52,
         background: '#FFFFFF',
-        border: `1px solid ${invalid ? '#D32F2F' : C.line}`,
+        border: `1px solid ${invalid ? '#B04A38' : C.line}`,
         borderRadius: 12,
         padding: '0 16px',
         fontSize: 15,

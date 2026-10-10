@@ -22,6 +22,7 @@
 //   - Flippable 정적화 (#39) — 결과 phase에서 SajuMiniCard 제거 (day-tile로 대체) · 재플립 추가 금지
 
 import { kstToday } from '@/utils/kstDate';
+import { INK_HERO_BG } from '@/components/hanji/Hanji';
 import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -824,13 +825,14 @@ function SelectView({
             overflow: 'hidden',
             padding: '18px 20px 28px',
             color: '#FFFFFF',
-            background: 'linear-gradient(135deg,#7A6347 0%,#54422E 60%,#332618 100%)',
+            background: INK_HERO_BG, // 2026-10-10 v9 먹 머리
             borderRadius: 16,
           }}
         >
           <span
             aria-hidden
             style={{
+              display: 'none', // 2026-10-10 v9 — 큰 한자 워터마크 제거
               position: 'absolute',
               right: -18,
               bottom: -40,

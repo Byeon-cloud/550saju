@@ -30,7 +30,7 @@ const C = {
   goldSoft: 'rgba(184,150,90,0.14)',
   goldLine: 'rgba(184,150,90,0.28)',
   line: '#E5DFD0',
-  success: '#2E7D32',
+  success: '#4E7A57',
 } as const;
 
 const MAX_DAILY_SHARES = 3;

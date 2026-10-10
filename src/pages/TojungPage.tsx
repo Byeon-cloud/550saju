@@ -82,7 +82,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   총운: '總', 금전운: '財', 건강운: '健', 직장운: '職', 애정운: '愛', 결혼운: '婚',
 };
 const CATEGORY_COLORS: Record<string, string> = {
-  총운: '#B8965A', 금전운: '#E8B82A', 건강운: '#2D8A4E', 직장운: '#1565E0', 애정운: '#E91E63', 결혼운: '#7B1FA2',
+  총운: '#B8965A', 금전운: '#B07F38', 건강운: '#4E7A57', 직장운: '#3E5F82', 애정운: '#E91E63', 결혼운: '#7A5C7E',
 };
 
 export function TojungPage() {

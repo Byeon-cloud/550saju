@@ -61,10 +61,10 @@ export function SharePage() {
         <FadeIn>
           <div className="flex items-center gap-1.5">
             <svg width="20" height="20" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="11" stroke="#1B2A4A" strokeWidth="1" fill="none" opacity="0.3" />
-              <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#1B2A4A" />
+              <circle cx="12" cy="12" r="11" stroke="#1A1612" strokeWidth="1" fill="none" opacity="0.3" />
+              <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#1A1612" />
               <circle cx="12" cy="7" r="2" fill="#B8965A" />
-              <circle cx="12" cy="17" r="2" fill="#1B2A4A" stroke="#B8965A" strokeWidth="0.8" />
+              <circle cx="12" cy="17" r="2" fill="#1A1612" stroke="#B8965A" strokeWidth="0.8" />
             </svg>
             <span className="text-caption text-text-hint font-semibold">사주500</span>
           </div>

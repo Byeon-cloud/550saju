@@ -42,17 +42,17 @@ const C = {
 const SERIF = "'Noto Serif KR', 'Apple SD Gothic Neo', serif";
 
 const OHENG_ACCENT: Record<OhengType, { color: string; soft: string; tag: string }> = {
-  목: { color: '#2D8A4E', soft: 'rgba(45,138,78,0.06)',  tag: '木' },
-  화: { color: '#D32F2F', soft: 'rgba(211,47,47,0.05)',  tag: '火' },
-  토: { color: '#E8B82A', soft: 'rgba(232,184,42,0.06)', tag: '土' },
-  금: { color: '#4A4A4A', soft: 'rgba(74,74,74,0.06)', tag: '金' },
-  수: { color: '#1565E0', soft: 'rgba(21,101,224,0.05)', tag: '水' },
+  목: { color: '#4E7A57', soft: 'rgba(78,122,87,0.06)',  tag: '木' },
+  화: { color: '#B04A38', soft: 'rgba(176,74,56,0.05)',  tag: '火' },
+  토: { color: '#B07F38', soft: 'rgba(176,127,56,0.06)', tag: '土' },
+  금: { color: '#7D7870', soft: 'rgba(74,74,74,0.06)', tag: '金' },
+  수: { color: '#3E5F82', soft: 'rgba(62,95,130,0.05)', tag: '水' },
 };
 
 const OHENG_BOX: Record<OhengType, { bg: string; fg: string; outline: string }> = {
-  목: { bg: '#2D8A4E', fg: '#FFFFFF', outline: '#1B5E2C' },
-  화: { bg: '#D32F2F', fg: '#FFFFFF', outline: '#9B1B1B' },
-  토: { bg: '#E8B82A', fg: '#FFFFFF', outline: '#C9A030' },
+  목: { bg: '#4E7A57', fg: '#FFFFFF', outline: '#1B5E2C' },
+  화: { bg: '#B04A38', fg: '#FFFFFF', outline: '#9B1B1B' },
+  토: { bg: '#B07F38', fg: '#FFFFFF', outline: '#C9A030' },
   금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C' },
   수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D' },
 };

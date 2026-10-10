@@ -51,23 +51,23 @@ const C = {
   line: '#E5DFD0',
   danger: '#C04D4D',
   dangerSoft: 'rgba(192,77,77,0.08)',
-  positive: '#2D8A4E',
-  positiveSoft: 'rgba(45,138,78,0.08)',
+  positive: '#4E7A57',
+  positiveSoft: 'rgba(78,122,87,0.08)',
 } as const;
 
 const SERIF = "'Noto Serif KR', serif";
 
 const OHENG_BOX_DETAIL: Record<OhengType, { bg: string; fg: string; outline: string }> = {
-  목: { bg: '#2D8A4E', fg: '#FFFFFF', outline: '#1B5E2C' },
-  화: { bg: '#D32F2F', fg: '#FFFFFF', outline: '#9B1B1B' },
-  토: { bg: '#E8B82A', fg: '#FFFFFF', outline: '#C9A030' },
+  목: { bg: '#4E7A57', fg: '#FFFFFF', outline: '#1B5E2C' },
+  화: { bg: '#B04A38', fg: '#FFFFFF', outline: '#9B1B1B' },
+  토: { bg: '#B07F38', fg: '#FFFFFF', outline: '#C9A030' },
   금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C' },
   수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D' },
 };
 
 const OHENG_HAN: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
 const OHENG_HEX: Record<OhengType, string> = {
-  목: '#2D8A4E', 화: '#D32F2F', 토: '#E8B82A', 금: '#4A4A4A', 수: '#1565E0',
+  목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82',
 };
 
 const SHIPISINSAL_HANJA: Record<string, string> = {

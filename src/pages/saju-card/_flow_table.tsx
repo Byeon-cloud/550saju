@@ -37,9 +37,9 @@ interface OhengBoxStyle {
 }
 
 const OHENG_BOX: Record<OhengType, OhengBoxStyle> = {
-  목: { bg: '#2D8A4E', fg: '#FFFFFF' },
-  화: { bg: '#D32F2F', fg: '#FFFFFF' },
-  토: { bg: '#E8B82A', fg: '#FFFFFF' },
+  목: { bg: '#4E7A57', fg: '#FFFFFF' },
+  화: { bg: '#B04A38', fg: '#FFFFFF' },
+  토: { bg: '#B07F38', fg: '#FFFFFF' },
   금: { bg: '#FFFFFF', fg: '#1A1A1A', borderOpt: '#9C9C9C' }, // 흰 박스 + 검 한자 + 회 outline
   수: { bg: '#2C2C2C', fg: '#FFFFFF' },
 };
@@ -230,9 +230,9 @@ function FlowCell({
   const sipMeta = lookupSipsung(sipsung);
   const unseong = deriveUnseong(ilgan, ganji.zhi);
 
-  const ringColor = highlightTone === 'red' ? '#D32F2F' : '#B8965A';
+  const ringColor = highlightTone === 'red' ? '#B04A38' : '#B8965A';
   const ringBg =
-    highlightTone === 'red' ? 'rgba(211,47,47,0.06)' : 'rgba(184,150,90,0.08)';
+    highlightTone === 'red' ? 'rgba(176,74,56,0.06)' : 'rgba(184,150,90,0.08)';
 
   return (
     <div
