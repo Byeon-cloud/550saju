@@ -35,7 +35,7 @@ function isStub() {
 async function grantTossPoint(params) {
     if (isStub()) {
         // eslint-disable-next-line no-console
-        console.info('[appintosClient] STUB mode · grantTossPoint', {
+        console.info('[appintosClient] STUB mode, grantTossPoint', {
             userKey: params.userKey.slice(0, 8) + '...',
             amount: params.amount,
             idempotencyKey: params.idempotencyKey,

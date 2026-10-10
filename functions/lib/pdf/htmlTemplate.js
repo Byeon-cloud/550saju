@@ -317,7 +317,7 @@ function buildPremiumPdfHtml(input) {
         <div class="pillar-stem-read">${esc(p.slot.ganRead)}</div>
         <div class="pillar-branch" style="color:${jiColor}">${esc(p.slot.ji)}</div>
         <div class="pillar-branch-read">${esc(p.slot.jiRead)}</div>
-        <div class="pillar-oheng">${esc(p.slot.ganOheng)} · ${esc(p.slot.jiOheng)}</div>
+        <div class="pillar-oheng">${esc(p.slot.ganOheng)}, ${esc(p.slot.jiOheng)}</div>
       </div>`;
     }).join('');
     const ohengBars = ['목', '화', '토', '금', '수'].map((k) => {
@@ -335,10 +335,10 @@ function buildPremiumPdfHtml(input) {
     /* ═════════════ §02 조각 — pillarMessages + lifeEdge ═════════════ */
     const pm = aiResult?.pillarMessages ?? {};
     const pmRows = [
-        { key: 'year', label: '年 년주', sub: '초년 · 뿌리' },
-        { key: 'month', label: '月 월주', sub: '청년 · 사회' },
-        { key: 'day', label: '日 일주', sub: '나 · 배우자' },
-        { key: 'hour', label: '時 시주', sub: '말년 · 자녀' },
+        { key: 'year', label: '年 년주', sub: '초년, 뿌리' },
+        { key: 'month', label: '月 월주', sub: '청년, 사회' },
+        { key: 'day', label: '日 일주', sub: '나, 배우자' },
+        { key: 'hour', label: '時 시주', sub: '말년, 자녀' },
     ].filter((r) => typeof pm[r.key] === 'string' && pm[r.key].trim());
     const pillarMessagesHtml = pmRows.length > 0
         ? `<table class="pm-table"><tbody>${pmRows.map((r) => `
@@ -517,7 +517,7 @@ function buildPremiumPdfHtml(input) {
     // 레거시 rel6Cards (2026-05-05 이전 저장본) — lifeKeyword 계열 없을 때만 fallback 렌더
     const rel6 = aiResult?.rel6Cards ?? {};
     const REL6_META = [
-        { key: 'parent', label: '부모' }, { key: 'sibling', label: '형제·동기' }, { key: 'spouse', label: '배우자' },
+        { key: 'parent', label: '부모' }, { key: 'sibling', label: '형제와 동기' }, { key: 'spouse', label: '배우자' },
         { key: 'child', label: '자녀' }, { key: 'friend', label: '친구' }, { key: 'boss', label: '윗사람' },
     ];
     const rel6Html = (!lifeKeyword && strengths.length === 0 && rel6 && typeof rel6 === 'object')
@@ -599,11 +599,11 @@ function buildPremiumPdfHtml(input) {
     // ── 디스클레이머 (DailyFortune/Dream/PremiumResult 통일 패턴) ──
     const disclaimer = `
     <p class="disclaimer-source">
-      한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+      한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
     </p>
     <p class="disclaimer-body">
       사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.<br/>
-      의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+      의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
     </p>`;
     // ═════════════ 섹션 블록 조립 (내용 있는 섹션만 — 빈 섹션 0 정책) ═════════════
     const sections = [];
@@ -632,7 +632,7 @@ function buildPremiumPdfHtml(input) {
         sections.push(`
 <div class="section">
   ${sectionHead(3, '십성', '十神', '관계와 욕망을 그리는 열 개의 키')}
-  ${sipClusterHtml ? subBlock('다섯 무리 — 비겁·식상·재성·관성·인성', sipClusterHtml) : ''}
+  ${sipClusterHtml ? subBlock('다섯 무리 — 비겁, 식상, 재성, 관성, 인성', sipClusterHtml) : ''}
   ${secSipsung ? `<div class="body-text">${paragraphs(secSipsung)}</div>` : ''}
   ${conclusionBox(conclusion('sipsung', 2))}
 </div>`);
@@ -641,9 +641,9 @@ function buildPremiumPdfHtml(input) {
     if (yongsinBoxHtml || secYongsin || lifestyleAdvice) {
         sections.push(`
 <div class="section">
-  ${sectionHead(4, '용신·조후', '用神·調候', '사주가 가장 갈증을 느끼는 것 — 색·방위·계절·물건·습관까지')}
+  ${sectionHead(4, '용신과 조후', '用神 調候', '사주가 가장 갈증을 느끼는 것 — 색, 방위, 계절, 물건, 습관까지')}
   ${yongsinBoxHtml}
-  ${gyeokguk || gangyak ? `<div class="base-row-line">${gyeokguk ? `격국(格局) <b>${txt(gyeokguk)}</b>` : ''}${gyeokguk && gangyak ? ' · ' : ''}${gangyak ? `일간 강약 <b>${txt(gangyak)}</b>` : ''}</div>` : ''}
+  ${gyeokguk || gangyak ? `<div class="base-row-line">${gyeokguk ? `격국(格局) <b>${txt(gyeokguk)}</b>` : ''}${gyeokguk && gangyak ? ', ' : ''}${gangyak ? `일간 강약 <b>${txt(gangyak)}</b>` : ''}</div>` : ''}
   ${secYongsin ? `<div class="body-text">${paragraphs(secYongsin)}</div>` : ''}
   ${lifestyleAdvice ? subBlock('일상 처방 — 용신 기반 라이프스타일', `<div class="body-text">${paragraphs(lifestyleAdvice)}</div>`) : ''}
   ${conclusionBox(conclusion('yongsin', 3))}
@@ -674,7 +674,7 @@ function buildPremiumPdfHtml(input) {
     if (shinsalCards.length > 0) {
         sections.push(`
 <div class="section">
-  ${sectionHead(7, '신살', '神殺', `사주에 자리한 길신·흉살 — ${shinsalCards.length}개 (강 ${strongShinsal.length} · 중 ${midShinsal.length} · 참고 ${refShinsal.length})`)}
+  ${sectionHead(7, '신살', '神殺', `사주에 자리한 길신과 흉살 — ${shinsalCards.length}개 (강 ${strongShinsal.length}, 중 ${midShinsal.length}, 참고 ${refShinsal.length})`)}
   ${strongShinsalHtml}
   ${midShinsalHtml}
   ${refShinsalHtml ? subBlock('참고 — 명목상 자리만 잡은 신살', refShinsalHtml) : ''}
@@ -685,7 +685,7 @@ function buildPremiumPdfHtml(input) {
     if (lifeKeywordHtml || strengthsHtml || cautionsHtml || rel6Html) {
         sections.push(`
 <div class="section">
-  ${sectionHead(8, '내 사주의 결', '本質', '사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3 · 함정 3')}
+  ${sectionHead(8, '내 사주의 결', '本質', '사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3, 함정 3')}
   ${lifeKeywordHtml}
   ${strengthsHtml ? subBlock('진짜 강점 3', strengthsHtml) : ''}
   ${cautionsHtml ? subBlock('의식할 함정 3', cautionsHtml) : ''}
@@ -697,7 +697,7 @@ function buildPremiumPdfHtml(input) {
     if (topicHtml) {
         sections.push(`
 <div class="section">
-  ${sectionHead(9, '여섯 영역 한눈에', '主題', '재물·사랑·직업·건강·인간관계·잠재력 — 강·약 점수')}
+  ${sectionHead(9, '여섯 영역 한눈에', '主題', '재물, 사랑, 직업, 건강, 인간관계, 잠재력 — 강과 약 점수')}
   ${topicHtml}
   ${conclusionBox(conclusion('topic', 8))}
 </div>`);
@@ -1268,14 +1268,14 @@ function buildPremiumPdfHtml(input) {
 
 <!-- ─────────── 표지 ─────────── -->
 <div class="cover">
-  <div class="cover-logo">사주500 · SAJU500</div>
+  <div class="cover-logo">사주500, SAJU500</div>
   <h1 class="cover-title">프리미엄 명리 분석</h1>
   <div class="cover-sub">한국 명리학 6대 원전 기반 정통 풀이</div>
 
   <div class="cover-name-block">
     <div class="cover-name">${esc(profile.name)}</div>
     <div class="cover-birth">
-      ${esc(profile.birthDate || '')}${profile.birthTime ? ' ' + esc(profile.birthTime) : ''}${profile.gender ? ' · ' + (profile.gender === 'male' ? '남' : '여') : ''}
+      ${esc(profile.birthDate || '')}${profile.birthTime ? ' ' + esc(profile.birthTime) : ''}${profile.gender ? ', ' + (profile.gender === 'male' ? '남' : '여') : ''}
     </div>
   </div>
 
@@ -1285,7 +1285,7 @@ function buildPremiumPdfHtml(input) {
 
   <div class="cover-base">
     <div class="cover-base-title">분석 기반 (命理 核心)</div>
-    <div class="cover-base-row"><span class="k">일간(日干)</span>${esc(ilgan)}${ilganRead ? ` (${esc(ilganRead)})` : ''}${ilganOheng ? ` · ${esc(ilganOheng)} 오행` : ''}</div>
+    <div class="cover-base-row"><span class="k">일간(日干)</span>${esc(ilgan)}${ilganRead ? ` (${esc(ilganRead)})` : ''}${ilganOheng ? ` ${esc(ilganOheng)} 오행` : ''}</div>
     ${gyeokguk ? `<div class="cover-base-row"><span class="k">격국(格局)</span>${txt(gyeokguk)}</div>` : ''}
     ${gangyak ? `<div class="cover-base-row"><span class="k">일간 강약</span>${txt(gangyak)}</div>` : ''}
     ${yongsin ? `<div class="cover-base-row"><span class="k">용신(用神)</span>${txt(yongsin)}${yongsinReason ? ` — ${txt(yongsinReason)}` : ''}</div>` : ''}
@@ -1294,7 +1294,7 @@ function buildPremiumPdfHtml(input) {
   </div>
 
   <div class="cover-issued">
-    발급일 ${esc(issuedFmt)} · 발급번호 ${esc(issueId)}
+    발급일 ${esc(issuedFmt)}, 발급번호 ${esc(issueId)}
   </div>
 </div>
 
@@ -1304,7 +1304,7 @@ ${sections.join('\n')}
 <div class="disclaimer">
   ${disclaimer}
   <div class="footer-meta">
-    SAJU500 · ${esc(profile.name)} · 발급 ${esc(issuedFmt)} · No.${esc(issueId)}
+    SAJU500, ${esc(profile.name)}, 발급 ${esc(issuedFmt)}, No.${esc(issueId)}
   </div>
 </div>
 

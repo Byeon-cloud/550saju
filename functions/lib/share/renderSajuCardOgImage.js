@@ -92,8 +92,8 @@ function buildOgHtml(name, ilju) {
     const safeName = name || '나';
     const safeIlju = ilju || '命';
     const subline = ohengLabel
-        ? `일주 ${esc(ilju)} · ${esc(ohengLabel)} 일간`
-        : '사주 카드 · 정통 명리학';
+        ? `일주 ${esc(ilju)}, ${esc(ohengLabel)} 일간`
+        : '사주 카드, 정통 명리학';
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>

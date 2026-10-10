@@ -58,7 +58,7 @@ function buildBotHtml(params) {
     // 카피 — Stage 3 buildShareTextAndUrl 과 일관
     const safeName = name || '내';
     const title = `${safeName}님의 사주 카드`;
-    const description = `${ilju ? `일주 ${ilju} · ` : ''}사주500 에서 풀이 받기 (500원~)`;
+    const description = `${ilju ? `일주 ${ilju}, ` : ''}사주500 에서 풀이 받기 (500원~)`;
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>

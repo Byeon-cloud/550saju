@@ -7,6 +7,7 @@ exports.generateMonthlyFortune = generateMonthlyFortune;
 exports.generateMonthlyDraft = generateMonthlyDraft;
 exports.generateMonthlyRefine = generateMonthlyRefine;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const sajuFacts_1 = require("./sajuFacts");
 const promptsV3_1 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
 const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
@@ -70,7 +71,7 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
     const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
     if (!jsonMatch)
         throw new Error(`월별 운세 ${group} JSON 파싱 실패`);
-    return JSON.parse(jsonMatch[0]);
+    return (0, sajuFacts_1.sanitizeAiOutput)(JSON.parse(jsonMatch[0]));
 }
 /**
  * ⚡ async 2차리뷰 — draft (1차만). 로딩 반토막용: 1차 결과를 즉시 클라에 반환 → 유저 조기 열람.
@@ -168,13 +169,13 @@ function buildPrompt(d, info, group) {
     const nowKey = nowY * 12 + nowM;
     const tense = selKey < nowKey ? '과거' : selKey === nowKey ? '이번달' : '미래';
     const tenseRule = tense === '과거'
-        ? `${info.label}은 이미 완전히 지나간 달이다. 🚨🚨 모든 문장을 과거형 회고체로만 써라 — "~한 시기였습니다 / ~한 흐름이 흘렀어요 / ~했어야 좋았어요 / ~한 달이었습니다". theme·periods(상순·중순·하순)·4영역(재물/애정/직업/건강)·길일·주의일·개운 처방 전부 과거형. "~하세요 / ~할 거예요 / ~한 때입니다 / ~하면 좋아요" 같은 현재·미래·명령형 절대 금지(이미 지난 달엔 명령할 수 없다). 개운 처방도 "~했다면 좋았을 겁니다" 회고형으로.`
+        ? `${info.label}은 이미 완전히 지나간 달이다. 🚨🚨 모든 문장을 과거형 회고체로만 써라 — "~한 시기였습니다 / ~한 흐름이 흘렀어요 / ~했어야 좋았어요 / ~한 달이었습니다". theme, periods(상순, 중순, 하순), 4영역(재물/애정/직업/건강), 길일, 주의일, 개운 처방 전부 과거형. "~하세요 / ~할 거예요 / ~한 때입니다 / ~하면 좋아요" 같은 현재, 미래, 명령형 절대 금지(이미 지난 달엔 명령할 수 없다). 개운 처방도 "~했다면 좋았을 겁니다" 회고형으로.`
         : tense === '이번달'
             ? `${info.label}은 지금 흐르는 달이고, 🚨🚨 오늘은 ${info.month}월 ${nowD}일이다. 이 달 안에서도 오늘(${nowD}일)을 기준으로 시제를 정확히 갈라라:
-  · 오늘(${nowD}일)보다 앞선 구간·날짜 → 반드시 과거형("~였습니다 / ~한 흐름이 흘렀어요 / ~했어야 좋았어요")
-  · 오늘(${nowD}일)이 포함된 구간 → 현재형("지금 ~ / 오늘부터 ~")
-  · 오늘(${nowD}일) 이후 구간·날짜 → 미래·명령형("~하세요 / ~할 거예요 / ~한 시기가 됩니다")
-  ⚠️ 구간 판정: 상순=1~10일, 중순=11~20일, 하순=21일~말일. 각 구간이 ${nowD}일보다 완전히 이전이면 과거형, ${nowD}일을 포함하면 현재형(단 그 구간 안 ${nowD}일 이전 얘기는 과거형), 완전히 이후면 미래형. luckyDays·cautionDays 도 각 날짜가 ${nowD}일보다 이전이면 과거형("~했던 날"), ${nowD}일 이후면 미래·명령형("~할 날 / ~하세요").`
+  오늘(${nowD}일)보다 앞선 구간과 날짜 → 반드시 과거형("~였습니다 / ~한 흐름이 흘렀어요 / ~했어야 좋았어요")
+  오늘(${nowD}일)이 포함된 구간 → 현재형("지금 ~ / 오늘부터 ~")
+  오늘(${nowD}일) 이후 구간과 날짜 → 미래와 명령형("~하세요 / ~할 거예요 / ~한 시기가 됩니다")
+  ⚠️ 구간 판정: 상순=1~10일, 중순=11~20일, 하순=21일~말일. 각 구간이 ${nowD}일보다 완전히 이전이면 과거형, ${nowD}일을 포함하면 현재형(단 그 구간 안 ${nowD}일 이전 얘기는 과거형), 완전히 이후면 미래형. luckyDays, cautionDays 도 각 날짜가 ${nowD}일보다 이전이면 과거형("~했던 날"), ${nowD}일 이후면 미래와 명령형("~할 날 / ~하세요").`
             : `${info.label}은 앞으로 올 미래의 달 → 전부 미래형("~할 거예요 / ~한 시기가 됩니다 / ~하세요")으로.`;
     // 그 달의 일수 (길일·주의일 날짜 범위 가이드)
     const daysInMonth = new Date(info.year, info.month, 0).getDate();
@@ -186,26 +187,26 @@ function buildPrompt(d, info, group) {
   "headline": "${info.label}을 한 줄로 (25자 이내, 일상어 결론 + 후크)",
   "theme": "180자 이상. 이 달의 핵심 테마. 🚨 왜 이런 달인지 — 월간지 ${info.wolGanji} × 일간 ${ilgan} 충/합 + 세운 ${info.yearGanji} 흐름 직접 호명 (보일러플레이트 금지).",
   "periods": [
-    {"phase":"상순","dateRange":"${info.month}/1~${info.month}/10","score":1-100,"body":"120자 이상 · 🚨 월간지 ${info.wolGanji} × 일간 ${ilgan} 작용 + 구체 행동"},
-    {"phase":"중순","dateRange":"${info.month}/11~${info.month}/20","score":1-100,"body":"120자 이상 · 🚨 사주 specific 호명 + 구체 행동"},
-    {"phase":"하순","dateRange":"${info.month}/21~${info.month}/${daysInMonth}","score":1-100,"body":"120자 이상 · 🚨 사주 specific 호명 + 구체 행동"}
+    {"phase":"상순","dateRange":"${info.month}/1~${info.month}/10","score":1-100,"body":"120자 이상, 🚨 월간지 ${info.wolGanji} × 일간 ${ilgan} 작용 + 구체 행동"},
+    {"phase":"중순","dateRange":"${info.month}/11~${info.month}/20","score":1-100,"body":"120자 이상, 🚨 사주 specific 호명 + 구체 행동"},
+    {"phase":"하순","dateRange":"${info.month}/21~${info.month}/${daysInMonth}","score":1-100,"body":"120자 이상, 🚨 사주 specific 호명 + 구체 행동"}
   ]`;
-    const m2Fields = `"wealth": {"score":1-100,"body":"80자 이상 · 🚨 사주 재성/식상 또는 ${info.wolGanji} 직접 호명"},
-  "love":   {"score":1-100,"body":"80자 이상 · 🚨 사주 재성/관성/도화 또는 ${info.wolGanji} 직접 호명"},
-  "career": {"score":1-100,"body":"80자 이상 · 🚨 사주 관성/인성 또는 ${info.wolGanji} 직접 호명"},
-  "health": {"score":1-100,"body":"80자 이상 · 🚨 사주 오행 균형 또는 ${info.wolGanji} 직접 호명"},
+    const m2Fields = `"wealth": {"score":1-100,"body":"80자 이상, 🚨 사주 재성/식상 또는 ${info.wolGanji} 직접 호명"},
+  "love":   {"score":1-100,"body":"80자 이상, 🚨 사주 재성/관성/도화 또는 ${info.wolGanji} 직접 호명"},
+  "career": {"score":1-100,"body":"80자 이상, 🚨 사주 관성/인성 또는 ${info.wolGanji} 직접 호명"},
+  "health": {"score":1-100,"body":"80자 이상, 🚨 사주 오행 균형 또는 ${info.wolGanji} 직접 호명"},
   "luckyDays": [
     {"date":"${info.month}/D 또는 ${info.month}/D~${info.month}/D","reason":"왜 좋은 날인지 (그날 일진 흐름 + 행동)"}
   ],
   "cautionDays": [
     {"date":"${info.month}/D 또는 ${info.month}/D~${info.month}/D","reason":"왜 조심할 날인지 (그날 일진 흐름 + 회피 행동)"}
   ],
-  "gaewoon": "120자 이상. 이 달 개운 처방 — 구체 행동(행운 색·방위·시간대·습관) 명령형으로. 🚨 사주 용신/오행 보완 근거 1회."`;
+  "gaewoon": "120자 이상. 이 달 개운 처방 — 구체 행동(행운 색, 방위, 시간대, 습관) 명령형으로. 🚨 사주 용신/오행 보완 근거 1회."`;
     const fieldList = group === 'FULL'
-        ? 'headline·theme·periods·wealth·love·career·health·gaewoon'
+        ? 'headline, theme, periods, wealth, love, career, health, gaewoon'
         : group === 'M1'
-            ? 'keywords·headline·theme·periods'
-            : 'wealth·love·career·health·luckyDays·cautionDays·gaewoon';
+            ? 'keywords, headline, theme, periods'
+            : 'wealth, love, career, health, luckyDays, cautionDays, gaewoon';
     const schemaBlock = group === 'FULL'
         ? `{\n  ${m1Fields},\n  ${m2Fields}\n}`
         : group === 'M1'
@@ -213,16 +214,16 @@ function buildPrompt(d, info, group) {
             : `{\n  ${m2Fields}\n}`;
     const periodsRule = 'periods score';
     const domainsRule = '4영역 score';
-    const scoreRule = group === 'FULL' ? 'periods·4영역 score' : group === 'M1' ? periodsRule : domainsRule;
-    const luckyRule = group === 'M1' ? '' : `⚠️ luckyDays·cautionDays 는 각각 2~3개. 모든 날짜는 ${info.month}월 1~${info.month}월 ${daysInMonth}일 범위 안. `;
-    const tailRule = `${luckyRule}${scoreRule} 가 평평하지 않게 굴곡(5의 배수 반복 금지·자연수). 마크다운 서식(**볼드** 등) 절대 금지 — 순수 한국어.`;
+    const scoreRule = group === 'FULL' ? 'periods, 4영역 score' : group === 'M1' ? periodsRule : domainsRule;
+    const luckyRule = group === 'M1' ? '' : `⚠️ luckyDays, cautionDays 는 각각 2~3개. 모든 날짜는 ${info.month}월 1~${info.month}월 ${daysInMonth}일 범위 안. `;
+    const tailRule = `${luckyRule}${scoreRule} 가 평평하지 않게 굴곡(5의 배수 반복 금지와 자연수). 마크다운 서식(**볼드** 등) 절대 금지 — 순수 한국어.`;
     return `당신은 사주500 명리학 해석가. ${promptsV3_1.MYEONGRI_GROUNDS_BLOCK}
 
-${info.label} 한 달 심층 운세 — 사주 원국 일간과 그 달의 월간지·세운간지 충/합에서 추출한 진짜 근거.
+${info.label} 한 달 심층 운세 — 사주 원국 일간과 그 달의 월간지와 세운간지 충/합에서 추출한 진짜 근거.
 
-⚠️ 분석 대상: 오직 ${info.label} 한 달만 깊게. 다른 달·연간 전체 흐름 X.
+⚠️ 분석 대상: 오직 ${info.label} 한 달만 깊게. 다른 달과 연간 전체 흐름 X.
 ⚠️ 시제: ${tenseRule}
-⚠️ 그 달은 ${info.month}월 1일~${info.month}월 ${daysInMonth}일까지. 길일·주의일·시기는 반드시 이 날짜 범위 안에서.
+⚠️ 그 달은 ${info.month}월 1일~${info.month}월 ${daysInMonth}일까지. 길일, 주의일, 시기는 반드시 이 날짜 범위 안에서.
 
 ## 사주 원국
 ${pillarsText}일간: ${ilgan}
@@ -234,16 +235,16 @@ ${pillarsText}일간: ${ilgan}
 - 월간지: ${info.wolGanji} (${info.label}의 월주)
 - 세운간지(올해): ${info.yearGanji}
 
-## 대운 흐름 (10년 단위 · 나이는 만 나이 기준)
+## 대운 흐름 (10년 단위, 나이는 만 나이 기준)
 ${daeunFlow}
-${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'} · 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}) · 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지·순서를 절대 바꾸지 말 것.` : ''}
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지와 순서를 절대 바꾸지 말 것.` : ''}
 
 ## 이름: ${d.input?.name || '미상'}, 성별: ${d.input?.gender === 'male' ? '남' : '여'}
 
 ## 출력 (JSON만, 코드블록 없이)
-⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (periods·wealth·love·career·health) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로. 같은 응답 안 점수가 모두 다른 값이어야 함.
+⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (periods, wealth, love, career, health) 는 **5의 배수만 반복 금지**. 65, 70, 75, 80 같은 fake 신호 X. 67, 73, 81, 88 같이 자연수로. 같은 응답 안 점수가 모두 다른 값이어야 함.
 
-🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X · 일상어 O)**
+🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X, 일상어 O)**
 
 사용자 피드백:
 > '무슨 말인지 모르겠다. 한낮의 태양이다 / 형국이다 — 이게 뭔 뜻이냐.
@@ -252,15 +253,15 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ❌ **절대 금지 패턴**:
 1. 시적 비유 폭격: '한낮의 태양' '차가운 밤 호수' '~의 형국' — 비유가 풀이를 대체 X.
 2. 문어체 단어 남발: '결' '자리' '형국' 한 문단 2회 이내.
-3. 중의적·모호한 표현: '흐름이 풀리는 자리' → '이 달 중순에 일이 잘 풀립니다'
-4. 한자 폭격: 한자(丙火·신금·축미충 등) 첫 등장 1번만, 이후는 한글 또는 일상어.
-5. **독자 = 사주를 1도 모르는 일반인.** 명리 용어(십성·격국·충·합 등)를 문장의 주어/핵심으로 쓰지 말 것 — 주어는 항상 '쉬운 일상 결론'. 괄호 한자는 한 body/블록당 2개 이하(누적 금지). 누가 읽어도 한 번에 이해되는 짧고 단호한 문장으로.
+3. 중의적과 모호한 표현: '흐름이 풀리는 자리' → '이 달 중순에 일이 잘 풀립니다'
+4. 한자 폭격: 한자(丙火, 신금, 축미충 등) 첫 등장 1번만, 이후는 한글 또는 일상어.
+5. **독자 = 사주를 1도 모르는 일반인.** 명리 용어(십성, 격국, 충, 합 등)를 문장의 주어/핵심으로 쓰지 말 것 — 주어는 항상 '쉬운 일상 결론'. 괄호 한자는 한 body/블록당 2개 이하(누적 금지). 누가 읽어도 한 번에 이해되는 짧고 단호한 문장으로.
 
-📚 **"사주아이" 톤 레퍼 (참고 · 모방 X · 우리 특색 살림)**:
+📚 **"사주아이" 톤 레퍼 (참고, 모방 X, 우리 특색 살림)**:
 1. **각 섹션 시작 = 일상어 결론 한 줄** (제목 후크 톤)
 2. **사주 근거는 두 번째 문장부터, 한자는 1회만** + 즉시 일상어 풀이
 3. **공감 + 위로 + 행동 처방** (가장 강력)
-4. **마무리 = 응원 + 구체 행동** (행운 날짜·방위·시기 등 구체)
+4. **마무리 = 응원 + 구체 행동** (행운 날짜, 방위, 시기 등 구체)
 
 🚨 **한자 풀이 형식 강제 (2026-05-05 PD 결단 — '라는 뜻' 같은 회피 X)**:
 한자 등장 시 괄호 안에 **실제 일상어 풀이 텍스트** 동반:
@@ -270,30 +271,30 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ❌ '병화(丙火, 라는 뜻)' / '병화(丙火, 한자 그대로)' — 추상적 회피 X. 진짜 풀이 텍스트.
 검증법: 한자 (괄호) 부분만 빼고 일상어만 읽었을 때 자연스러운 한국어 문장이 되어야 함.
 
-🚨 **어조 규칙 (2026-06-24 · 인플루언서 피드백 — 출력 본문 전체에 절대 준수)**
-1. **애매·면피 표현 전면 금지**: "~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다" 류 0건. 모든 문장을 확신 있는 단정형으로.
+🚨 **어조 규칙 (2026-06-24, 인플루언서 피드백 — 출력 본문 전체에 절대 준수)**
+1. **애매와 면피 표현 전면 금지**: "~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다" 류 0건. 모든 문장을 확신 있는 단정형으로.
 2. **단정형**: "이 달은 ~한 때입니다." "${info.month}월 중순엔 ~합니다."
 3. **과거 적중(소름 훅) 1회**: "혹시 예전에 ~한 일이 있지 않았나요?" — 독자가 "어? 내 얘기네?" 하게.
 4. **명령형 솔루션**: "이 달엔 ~는 피하고 ~를 선택하세요." (애매한 권유 X, 분명한 지시 O)
-5. **루즈함 차단**: 같은 메시지를 앞·중간·끝에서 반복 금지. 각 단락은 새 정보.
+5. **루즈함 차단**: 같은 메시지를 앞, 중간, 끝에서 반복 금지. 각 단락은 새 정보.
 
 ✨ **우리만의 차별화**:
-- 고전 이론은 판단 근거로만 — 본문에 책 이름·'고서에 따르면' 같은 출처 언급 0 (책 이름은 자동 삭제돼 문장이 깨짐 · 출력은 일상어)
+- 고전 이론은 판단 근거로만 — 본문에 책 이름, '고서에 따르면' 같은 출처 언급 0 (책 이름은 자동 삭제돼 문장이 깨짐, 출력은 일상어)
 - 결정론 (같은 사주 + 같은 달 = 같은 결과)
 - 한자 1회 등장 시 즉시 일상어 풀이 동반
 - strong 강조는 유저 일상 결론에만
-- 숫자·날짜 또렷이 ('${info.month}월 중순' '${info.month}/15~${info.month}/20')
+- 숫자와 날짜 또렷이 ('${info.month}월 중순' '${info.month}/15~${info.month}/20')
 
-🚨 **보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지)**
+🚨 **보일러플레이트 절대 금지 (2026-05-05 audit, 회귀 금지)**
 
 동적 작용해야 하는 콘텐츠 = 사주 8글자마다 매번 다른 문장.
 
 ❌ 'X한 달이 됩니다' / '재물운이 좋습니다' (근거 없는 일반론).
-✅ 사주 글자 + 월간지(${info.wolGanji})·세운간지(${info.yearGanji}) 충돌·합 직접 호명 — '${info.wolGanji} + 일간 ${ilgan} (~한 작용)', '${info.wolGanji} 월에 일지와 충돌해 ~'.
-✅ ${fieldList} 전부에 사주 8글자 specific 데이터(개수·자리·충형·신살) 또는 월간지/세운간지를 1회 이상 직접 호명 mandatory.
+✅ 사주 글자 + 월간지(${info.wolGanji}), 세운간지(${info.yearGanji}) 충돌과 합 직접 호명 — '${info.wolGanji} + 일간 ${ilgan} (~한 작용)', '${info.wolGanji} 월에 일지와 충돌해 ~'.
+✅ ${fieldList} 전부에 사주 8글자 specific 데이터(개수, 자리, 충형, 신살) 또는 월간지/세운간지를 1회 이상 직접 호명 mandatory.
 
 🚨 **example 사용 룰 (회귀 금지)**:
-프롬프트 예시의 사주 글자(병화·신금·축미충 등)는 example. 실제로는 위 ## 사주 원국 의 진짜 8글자 + 위 월간지(${info.wolGanji})·세운간지(${info.yearGanji}) 를 인용.
+프롬프트 예시의 사주 글자(병화, 신금, 축미충 등)는 example. 실제로는 위 ## 사주 원국 의 진짜 8글자 + 위 월간지(${info.wolGanji}), 세운간지(${info.yearGanji}) 를 인용.
 '{유저명}' placeholder 도 위 ## 이름 의 진짜 이름으로 치환.
 같은 사주 + 같은 달 = 같은 결과 (결정론) / 다른 사주 = 완전히 다른 어휘.
 
@@ -308,33 +309,33 @@ function buildReviewPrompt(info, group) {
     const selKey = info.year * 12 + info.month;
     const nowKey = now.year * 12 + now.month;
     const tenseCheck = selKey < nowKey
-        ? `🚨 시제(최우선): 이 달은 이미 지난 달이다. theme·periods·4영역·길흉일·개운 모든 문장이 과거형 회고체("~였습니다/~흘렀어요/~했어야 좋았어요")인가? "~하세요/~할 거예요/~한 때입니다" 같은 현재·미래·명령형이 하나라도 있으면 전부 과거형으로 고쳐라.`
+        ? `🚨 시제(최우선): 이 달은 이미 지난 달이다. theme, periods, 4영역, 길흉일, 개운 모든 문장이 과거형 회고체("~였습니다/~흘렀어요/~했어야 좋았어요")인가? "~하세요/~할 거예요/~한 때입니다" 같은 현재, 미래, 명령형이 하나라도 있으면 전부 과거형으로 고쳐라.`
         : selKey === nowKey
-            ? `🚨 시제(최우선): 오늘은 ${info.month}월 ${now.day}일이다. ${now.day}일보다 앞선 구간·날짜(상순 1~10·중순 11~20·하순 21~말 중 해당분 + ${now.day}일 이전 길흉일)는 과거형("~였습니다"), ${now.day}일 이후는 미래·명령형("~하세요")으로 정확히 갈렸는가? 안 맞으면 고쳐라.`
+            ? `🚨 시제(최우선): 오늘은 ${info.month}월 ${now.day}일이다. ${now.day}일보다 앞선 구간과 날짜(상순 1~10, 중순 11~20, 하순 21~말 중 해당분 + ${now.day}일 이전 길흉일)는 과거형("~였습니다"), ${now.day}일 이후는 미래와 명령형("~하세요")으로 정확히 갈렸는가? 안 맞으면 고쳐라.`
             : `🚨 시제(최우선): 이 달은 미래의 달이다. 모든 문장이 미래형("~할 거예요/~됩니다/~하세요")인가?`;
-    const fullChecklist = `1. periods 가 정확히 3개(상순·중순·하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
-2. theme·periods·wealth·love·career·health·gaewoon 이 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
-3. 면피·애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
+    const fullChecklist = `1. periods 가 정확히 3개(상순, 중순, 하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
+2. theme, periods, wealth, love, career, health, gaewoon 이 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
+3. 면피와 애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
 4. 한자 등장 시 괄호 일상어 풀이 동반? '(라는 뜻)' 류 회피 0건?
 5. 글자수 floor 충족? (theme 180자+, 각 periods.body 120자+, 4영역 각 body 80자+, gaewoon 120자+)
 6. 모든 score 가 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
-7. headline 이 일상어 결론 + 후크인가? 시적 비유·외계어 0건?
-8. luckyDays·cautionDays 가 각 2~3개이고 모든 date 가 ${info.month}월 범위 안인가?
-9. keywords 3개 · year=${info.year}, month=${info.month} 그대로인가? (월·연도 임의 변경 0)`;
-    const checklist = group === 'FULL' ? fullChecklist : group === 'M1' ? `1. periods 가 정확히 3개(상순·중순·하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
-2. theme·periods 가 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
-3. 면피·애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
+7. headline 이 일상어 결론 + 후크인가? 시적 비유와 외계어 0건?
+8. luckyDays, cautionDays 가 각 2~3개이고 모든 date 가 ${info.month}월 범위 안인가?
+9. keywords 3개, year=${info.year}, month=${info.month} 그대로인가? (월과 연도 임의 변경 0)`;
+    const checklist = group === 'FULL' ? fullChecklist : group === 'M1' ? `1. periods 가 정확히 3개(상순, 중순, 하순)이고 각 dateRange 가 ${info.month}월 날짜 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?
+2. theme, periods 가 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
+3. 면피와 애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
 4. 한자 등장 시 괄호 일상어 풀이 동반? '(라는 뜻)' 류 회피 0건?
 5. 글자수 floor 충족? (theme 180자+, 각 periods.body 120자+)
 6. periods score 가 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
-7. headline 이 일상어 결론 + 후크인가? 시적 비유·외계어 0건?
-8. keywords 가 3개이고 year=${info.year}, month=${info.month} 그대로인가? (월·연도 임의 변경 0)` : `1. 면피·애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
-2. wealth·love·career·health·gaewoon 이 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
+7. headline 이 일상어 결론 + 후크인가? 시적 비유와 외계어 0건?
+8. keywords 가 3개이고 year=${info.year}, month=${info.month} 그대로인가? (월과 연도 임의 변경 0)` : `1. 면피와 애매 표현('~일 수 있습니다 / ~인 편입니다 / ~듯합니다 / ~경향') 0건? 전부 단정형?
+2. wealth, love, career, health, gaewoon 이 월간지 ${info.wolGanji} 또는 세운 ${info.yearGanji} 또는 사주 8글자를 직접 호명했는가? 근거 없는 일반론 0건?
 3. 한자 등장 시 괄호 일상어 풀이 동반? '(라는 뜻)' 류 회피 0건?
 4. 글자수 floor 충족? (4영역 각 body 80자+, gaewoon 120자+)
-5. 4영역(wealth·love·career·health) score 가 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
-6. luckyDays·cautionDays 가 각 2~3개이고 모든 date 가 ${info.month}월 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?`;
-    return `위에서 네가 만든 ${info.label} 월별 운세 ${group} JSON 을 아래 체크리스트로 자가 점검하고, 어긴 부분을 모두 고쳐 **최종 JSON 만** 다시 출력하라 (코드블록·설명 없이 JSON 만).
+5. 4영역(wealth, love, career, health) score 가 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
+6. luckyDays, cautionDays 가 각 2~3개이고 모든 date 가 ${info.month}월 범위(${info.month}/1 ~ ${info.month}/${daysInMonth}) 안인가?`;
+    return `위에서 네가 만든 ${info.label} 월별 운세 ${group} JSON 을 아래 체크리스트로 자가 점검하고, 어긴 부분을 모두 고쳐 **최종 JSON 만** 다시 출력하라 (코드블록과 설명 없이 JSON 만).
 
 체크리스트:
 ${checklist}

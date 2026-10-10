@@ -11,6 +11,7 @@ exports.generateDreamFree = generateDreamFree;
 exports.generateDreamDeep = generateDreamDeep;
 const promptsV3_1 = require("./promptsV3");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const sajuFacts_1 = require("./sajuFacts");
 const promptsV3_2 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const MODEL = 'claude-sonnet-4-6';
@@ -102,7 +103,7 @@ async function generateDreamFree(apiKey, args) {
         const result = (0, promptsV3_2.parseJsonResponse)(text, meta1);
         if (meta1.repairUsed)
             console.info('[claudeDreamFree] jsonrepair 1차 발동 — 복구 성공');
-        return result;
+        return (0, sajuFacts_1.sanitizeAiOutput)(result);
     }
     catch (e1) {
         console.warn('[claudeDreamFree] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
@@ -119,7 +120,7 @@ async function generateDreamFree(apiKey, args) {
         const text = msg.content[0].text;
         const result = (0, promptsV3_2.parseJsonResponse)(text, meta2);
         console.info('[claudeDreamFree] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
-        return result;
+        return (0, sajuFacts_1.sanitizeAiOutput)(result);
     }
 }
 /** 심층 꿈해몽 (유료 1운) — 1차 생성 후 2차 자기 리뷰 */
@@ -190,7 +191,7 @@ async function generateDreamDeep(apiKey, args) {
     (0, aiUsageLog_1.logAnthropicUsage)('deepDream', MODEL, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
     const reviewText = review.content[0].text;
     try {
-        return (0, promptsV3_2.parseJsonResponse)(reviewText);
+        return (0, sajuFacts_1.sanitizeAiOutput)((0, promptsV3_2.parseJsonResponse)(reviewText));
     }
     catch {
         // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
