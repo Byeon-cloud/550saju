@@ -156,8 +156,8 @@ export function CompatResultPage() {
       <FadeIn>
         <ExtensionHero
           theme={compatTheme}
-          crumb="사주500 · 더 알아볼 주제 · 궁합"
-          sub={`${state.person1.name} × ${state.person2.name} · ${state.relation}`}
+          crumb="사주500, 더 알아볼 주제, 궁합"
+          sub={`${state.person1.name} × ${state.person2.name}, ${state.relation}`}
           seal="合"
         />
       </FadeIn>
@@ -341,10 +341,10 @@ export function CompatResultPage() {
             const next = /이별/.test(rel)
               ? { title: '다시 만날 수 있을까요?', desc: '재회운에서 두 사람의 흐름과 다가갈 시기를 짚어드려요.', to: '/topic/reunion' }
               : /배우자/.test(rel)
-                ? { title: '부부의 앞으로 흐름이 궁금하다면', desc: '결혼운에서 두 분의 생활·시기 흐름을 더 깊게 봐드려요.', to: '/topic/marriage' }
+                ? { title: '부부의 앞으로 흐름이 궁금하다면', desc: '결혼운에서 두 분의 생활과 시기 흐름을 더 깊게 봐드려요.', to: '/topic/marriage' }
                 : /연인|썸/.test(rel)
                   ? { title: '이 관계, 더 깊게 보고 싶다면', desc: '연애운에서 지금 관계의 흐름과 시기를 자세히 풀어드려요.', to: '/topic/love' }
-                  : { title: '내 사주 전체가 궁금하다면', desc: '종합사주에서 성격·관계·시기까지 처음부터 끝까지 읽어드려요.', to: '/premium' };
+                  : { title: '내 사주 전체가 궁금하다면', desc: '종합사주에서 성격, 관계, 시기까지 처음부터 끝까지 읽어드려요.', to: '/premium' };
             return <ExtensionUpsellCard title={next.title} desc={next.desc} onTap={() => navigate(next.to)} />;
           })()}
         </FadeIn>
@@ -357,12 +357,12 @@ export function CompatResultPage() {
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+            한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
-            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+            의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
           </p>
         </div>
 

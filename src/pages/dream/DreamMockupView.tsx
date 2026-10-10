@@ -104,7 +104,7 @@ function autoEmphasize(input: string): string {
         // 종결 강조 (확장)
         '(?:게 좋아요|필수예요|필요해요|중요해요|좋습니다|중요합니다|필요합니다|효율적입니다|적절합니다|좋은 자리예요|어울려요|터뜨린 것입니다|준비됐다는 뜻입니다|준비가 되었다는 뜻입니다|살아있습니다|돌파의 전조입니다|결단의 시점입니다|받아들일 때입니다)',
       ];
-      const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9·~()<>/'\"-]{8,50}(?:${endings.join('|')}))[.!?]?$`);
+      const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9, ~()<>/'\"-]{8,50}(?:${endings.join('|')}))[.!?]?$`);
       let added = 0;
       const replacements: Array<{ phrase: string }> = [];
       for (const sentence of sentences) {
@@ -270,12 +270,12 @@ const MOCKUP_CSS = `
 .dream-mockup .sec-lead { font-size: 12px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
 .dream-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 .dream-mockup .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; color: #1a1a1a; }
-/* <em> = 주의·경고 (번트오렌지) — 2026-05-29. font-style normal (한글 가독). */
+/* <em> = 주의와 경고 (번트오렌지) — 2026-05-29. font-style normal (한글 가독). */
 .dream-mockup .body p em, .dream-mockup .body em { font-style: normal; font-weight: 700; color: #A23A2A; background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%); padding: 0 2px; border-radius: 2px; }
 
 /* Symbol grid (§02) */
 .dream-mockup .symbol-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 14px 0 0; } /* 2026-10-10 v9 가독성 — 긴 설명을 좁은 두 칸에 넣지 않음 */
-.dream-mockup .sym { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px; text-align: left; display: grid; grid-template-columns: 54px 1fr; column-gap: 14px; align-items: start; } /* 2026-10-10 v9 한 칸 가로형 — 그림 왼쪽·글 오른쪽 */
+.dream-mockup .sym { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px; text-align: left; display: grid; grid-template-columns: 54px 1fr; column-gap: 14px; align-items: start; } /* 2026-10-10 v9 한 칸 가로형 — 그림 왼쪽과 글 오른쪽 */
 .dream-mockup .sym > *:not(.pic) { grid-column: 2; }
 .dream-mockup .sym > .pic { grid-row: 1 / span 4; }
 .dream-mockup .sym .pic { width: 54px; height: 54px; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #F0E8D9, #E5DFD0); border-radius: 50%; color: #1A1612; font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; }
@@ -462,7 +462,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sym.sym-skel .dc { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
 .dream-mockup .sym.sym-skel .dc .skel-line { height: 10px; }
 
-/* 강조 위계 3-tier — 형광펜·밑줄·볼드 (전 본문 적용) */
+/* 강조 위계 3-tier — 형광펜, 밑줄, 볼드 (전 본문 적용) */
 .dream-mockup p strong, .dream-mockup .lk-teaser strong, .dream-mockup .lk-full strong, .dream-mockup .qc .interp strong, .dream-mockup .worry-link p strong, .dream-mockup .warn-list li strong, .dream-mockup .sym .dc strong {
   font-weight: 700;
   background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%, rgba(184,150,90,.32) 95%, transparent 100%);
@@ -490,7 +490,7 @@ const MOCKUP_CSS = `
 }
 .dream-mockup p b strong, .dream-mockup p strong b { background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%); color: #1a1a1a; padding: 1px 4px; }
 
-/* 섹션 시각 위계 — 무료 (open 상태에서 좌측 골드 라인) · 잠금 (다크 헤더) */
+/* 섹션 시각 위계 — 무료 (open 상태에서 좌측 골드 라인), 잠금 (다크 헤더) */
 .dream-mockup .section { padding-left: 0; border-left: 0; transition: padding .2s ease; }
 .dream-mockup .section .acc-head { padding: 14px 0 8px; }
 .dream-mockup .section.is-open { padding-left: 12px; border-left: 3px solid rgba(184,150,90,.55); margin-left: -4px; }
@@ -553,7 +553,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
   const isTodayRecord = dateLabel === fmtDate(new Date());
   // 꿈 종류 → 주제 추천 (SSOT 파생 · 카테고리 없으면 기본 규칙)
   const topicRec = useMemo(() => getDreamTopicRec(categoryId), [categoryId]);
-  const ilganLabel = profile?.sajuData?.pillars?.[2]?.천간 ? ` · ${profile.sajuData.pillars[2].천간}${profile.sajuData.pillars[2].천간오행 || ''} 일간` : '';
+  const ilganLabel = profile?.sajuData?.pillars?.[2]?.천간 ? ` ${profile.sajuData.pillars[2].천간}${profile.sajuData.pillars[2].천간오행 || ''} 일간` : '';
 
   const firstImpression = result.firstImpression;
   const symbols: any[] = Array.isArray(result.symbols)
@@ -604,12 +604,12 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             {/* 2026-09-17 fix — 1운으로 연(해제·유료) 결과에도 '무료 · 오늘 1회 무료' 가 붙던 문제 */}
             {unlocked ? (
               <>
-                <span className="badge">꿈해몽 · 전체 풀이</span>
+                <span className="badge">꿈해몽, 전체 풀이</span>
                 <span className="badge open">잠금 해제</span>
               </>
             ) : (
               <>
-                <span className="badge">무료 · 꿈해몽</span>
+                <span className="badge">무료, 꿈해몽</span>
                 {isTodayRecord && <span className="badge free">오늘 1회 무료</span>}
               </>
             )}
@@ -654,7 +654,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               <>
                 {Array.isArray(firstImpression.strongImages) && firstImpression.strongImages.length >= 1 && (
                   <p style={{ marginTop: 6, fontSize: 12, color: '#7F6B4E' }}>
-                    가장 세게 남은 이미지: {firstImpression.strongImages.slice(0, 2).map((s: string) => `"${s}"`).join(' · ')}
+                    가장 세게 남은 이미지: {firstImpression.strongImages.slice(0, 2).map((s: string) => `"${s}"`).join(', ')}
                   </p>
                 )}
                 {String(firstImpression.narrative).split('\n').filter(Boolean).map((para: string, i: number) => (
@@ -774,7 +774,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
               <div className="title-col">
-                <div className="lab">{unlocked ? 'UNLOCKED · 사주 연동 심층 풀이' : 'DEEPER · 사주 연동 심층 풀이'}</div>
+                <div className="lab">{unlocked ? 'UNLOCKED, 사주 연동 심층 풀이' : 'DEEPER, 사주 연동 심층 풀이'}</div>
                 <div className="ttl">
                   {unlocked
                     ? `${profile?.name ?? '당신'} 님 사주와 꿈을 함께 읽은 심층 풀이`
@@ -800,7 +800,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                         <p className="lk-teaser" dangerouslySetInnerHTML={safeHtml(lockedDayganRead.teaser)} />
                         <div className="lk-blurred">
                           <p>일간이 갖는 고유한 의미를 깊이 풀어드립니다. 결정적인 풀이는 잠금 해제 후에 보여드립니다.</p>
-                          <p>월간·연간 배치와 어떻게 맞물려 지금의 머뭇거림을 만드는지 이어서 풀이합니다.</p>
+                          <p>월간과 연간 배치와 어떻게 맞물려 지금의 머뭇거림을 만드는지 이어서 풀이합니다.</p>
                         </div>
                         {lockedDayganRead.full && <div className="lk-full" dangerouslySetInnerHTML={safeHtml(lockedDayganRead.full)} />}
                       </>
@@ -845,7 +845,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                         )}
                         <p className="lk-teaser" style={{ marginTop: 10 }} dangerouslySetInnerHTML={safeHtml(lockedOhengFlow.teaser)} />
                         <div className="lk-blurred">
-                          <p>이 오행 분포가 사주 원국·현재 운세와 어떻게 맞물리는지를 이어서 풀이합니다.</p>
+                          <p>이 오행 분포가 사주 원국과 현재 운세와 어떻게 맞물리는지를 이어서 풀이합니다.</p>
                         </div>
                         {lockedOhengFlow.full && <div className="lk-full" dangerouslySetInnerHTML={safeHtml(lockedOhengFlow.full)} />}
                       </>
@@ -984,10 +984,10 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             {/* Big CTA */}
             {!unlocked && (
               <div className="paid-cta">
-                <div className="lab">UNLOCK · 사주 연동 심층 풀이</div>
+                <div className="lab">UNLOCK, 사주 연동 심층 풀이</div>
                 <h3>같은 꿈도 사주 일간에 따라<br />의미가 달라집니다.</h3>
                 <p className="hook">
-                  {profile?.name ?? '당신'} 님은 <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동·오행 흐름·꿈의 경고·예고 시기·실천 처방)을 전부 열어드립니다.
+                  {profile?.name ?? '당신'} 님은 <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동과 오행 흐름과 꿈의 경고와 예고 시기와 실천 처방)을 전부 열어드립니다.
                 </p>
                 {/* 2026-09-17 — 스트리밍 중 결제 race 차단 (잠금 본문이 다 쓰이기 전 1운 차감 → 해제 저장 누락·자동환불 꼬임) */}
                 <button
@@ -1003,7 +1003,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <div className="sub">
                   {isStreaming
                     ? '잠금 풀이까지 다 쓰이면 바로 열 수 있어요'
-                    : '풀이는 즉시 열립니다 · 결과는 보관함에 자동 저장'}
+                    : '풀이는 즉시 열립니다, 결과는 보관함에 자동 저장'}
                 </div>
               </div>
             )}
@@ -1037,7 +1037,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 className="tr-sub"
                 onClick={() => topicRec.secondary && onTopic(topicRec.secondary.id)}
               >
-                {topicRec.secondary.lead} <span className="tr-sub-name">{topicRec.secondary.label} 보기</span> · {topicRec.secondary.price}
+                {topicRec.secondary.lead} <span className="tr-sub-name">{topicRec.secondary.label} 보기</span>, {topicRec.secondary.price}
               </button>
             )}
           </section>

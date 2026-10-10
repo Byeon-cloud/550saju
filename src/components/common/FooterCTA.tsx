@@ -54,7 +54,7 @@ const CONFIG: Record<FooterCTAPageKey, FooterCTAConfig> = {
   'topic:career':   { emblem: '官', emblemColor: '#8C6D3D', overviewLabel: '직업 전체로',     overviewTo: '/' },
   'topic:health':   { emblem: '壽', emblemColor: '#8C6D3D', overviewLabel: '건강 전체로',     overviewTo: '/' },
   'topic:study':    { emblem: '學', emblemColor: '#8C6D3D', overviewLabel: '학업 전체로',     overviewTo: '/' }, // SSOT v1 (구 印)
-  'topic:exam':     { emblem: '進', emblemColor: '#8C6D3D', overviewLabel: '합격·이직 전체로', overviewTo: '/' }, // SSOT v1 신규
+  'topic:exam':     { emblem: '進', emblemColor: '#8C6D3D', overviewLabel: '합격 이직 전체로', overviewTo: '/' }, // SSOT v1 신규
   'topic:marriage': { emblem: '婚', emblemColor: '#8C6D3D', overviewLabel: '결혼 전체로',     overviewTo: '/' }, // SSOT v1 (구 盟)
   'topic:business': { emblem: '業', emblemColor: '#A37A2E', overviewLabel: '사업 전체로',     overviewTo: '/' },
   'topic:reunion':  { emblem: '復', emblemColor: '#8C6D3D', overviewLabel: '재회 전체로',     overviewTo: '/' }, // SSOT v1 (구 緣)

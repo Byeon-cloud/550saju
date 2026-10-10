@@ -112,7 +112,7 @@ async function runDevicePassportCheckInner(): Promise<void> {
           if (store.seedBalanceFromMirror(mirror)) {
             seededThisBoot = true;
             try { localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }
-            console.info(`[기기여권] 잔액 스냅샷 복원 — paid ${mirror.paid} · bonus ${mirror.bonus} · reward ${mirror.reward}`);
+            console.info(`[기기여권] 잔액 스냅샷 복원 — paid ${mirror.paid}, bonus ${mirror.bonus}, reward ${mirror.reward}`);
           } else if (store.getBalance() > 1) {
             // 이미 의미있는 잔액 보유(정상 소비/충전 재개) → 재시도 무의미, 종결 (무한 재호출 방지)
             try { localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }

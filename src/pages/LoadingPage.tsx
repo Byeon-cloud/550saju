@@ -31,13 +31,13 @@ const STAGES = [
 /** 단계별 회전 카피 — PRD §4.1 */
 const ROTATING_COPY: Record<number, string[]> = {
   1: [
-    '잠시만요. 60갑자(태어난 해·달·일·시)를 맞추고 있어요.',
+    '잠시만요. 60갑자(태어난 해, 달, 일, 시)를 맞추고 있어요.',
     '시간을 되돌려 당신이 태어난 순간을 보고 있어요.',
     '한국 진태양시(127.5°)로 보정하고 있어요.',
   ],
   2: [
     '천간과 지지(태어난 8글자)가 만나는 자리를 보고 있어요.',
-    '오행(목·화·토·금·수)의 균형을 재고 있어요.',
+    '오행(목, 화, 토, 금, 수)의 균형을 재고 있어요.',
     '십성(나의 사회적 역할)의 자리를 확인 중이에요.',
   ],
   3: [
@@ -221,7 +221,7 @@ export function LoadingPage() {
               createdAt: new Date().toISOString(),
               aiResult: { ...(rec!.content as any), tier: 'premium' as const },
             });
-            console.info('[LoadingPage] SSE 실패 → 복구 성공 (재생성 0 · 토큰 절감)');
+            console.info('[LoadingPage] SSE 실패 → 복구 성공 (재생성 0, 토큰 절감)');
             navigate(`/result/${rid}`, { replace: true });
             return;
           }
@@ -429,10 +429,10 @@ export function LoadingPage() {
                         {posLabels[i]}주
                       </p>
                       <p className="text-h2 mt-1 leading-tight">
-                        <span style={{ color: ganColor, fontWeight: 800 }}>{p?.천간 || '·'}</span>
+                        <span style={{ color: ganColor, fontWeight: 800 }}>{p?.천간 || ', '}</span>
                       </p>
                       <p className="text-h2 leading-tight">
-                        <span style={{ color: jiColor, fontWeight: 800 }}>{p?.지지 || '·'}</span>
+                        <span style={{ color: jiColor, fontWeight: 800 }}>{p?.지지 || ', '}</span>
                       </p>
                     </motion.div>
                   );
@@ -565,7 +565,7 @@ export function LoadingPage() {
        *  유저를 속이지 않게 reportType 분기 표기. */}
       <p className="text-[10px] text-text-disabled mt-5">
         {reportType === 'premium'
-          ? '약 60~120초 소요 · 10섹션 깊이 풀이'
+          ? '약 60~120초 소요, 10섹션 깊이 풀이'
           : '약 15~30초 소요'}
       </p>
     </div>

@@ -3,6 +3,7 @@
 
 import { TONE_FINAL_CHECK } from './promptsV3';
 import Anthropic from '@anthropic-ai/sdk';
+import { sanitizeAiOutput } from './sajuFacts';
 import {
   DREAM_FREE_SYSTEM_V3,
   DREAM_FREE_USER_WITH_SAJU_V3,
@@ -160,7 +161,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta1);
     if (meta1.repairUsed) console.info('[claudeDreamFree] jsonrepair 1차 발동 — 복구 성공');
-    return result;
+    return sanitizeAiOutput(result);
   } catch (e1: any) {
     console.warn('[claudeDreamFree] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
     const meta2: ParseJsonMeta = { repairUsed: false };
@@ -176,7 +177,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const text = (msg.content[0] as { type: string; text: string }).text;
     const result = parseJsonResponse(text, meta2);
     console.info('[claudeDreamFree] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
-    return result;
+    return sanitizeAiOutput(result);
   }
 }
 
@@ -248,7 +249,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
   logAnthropicUsage('deepDream', MODEL, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
   const reviewText = (review.content[0] as { type: string; text: string }).text;
   try {
-    return parseJsonResponse(reviewText);
+    return sanitizeAiOutput(parseJsonResponse(reviewText));
   } catch {
     // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
     return firstJson;

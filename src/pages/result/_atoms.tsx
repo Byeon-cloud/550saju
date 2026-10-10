@@ -175,7 +175,7 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
         </div>
         <div className="flex items-center justify-center gap-1 mt-1.5">
           <div className="w-2 h-2 rounded-full" style={{ background: gc.main }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: p.isMe ? '#E8D5A8' : gc.main }}>{p.gKr} · {p.gM}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: p.isMe ? '#E8D5A8' : gc.main }}>{p.gKr}, {p.gM}</span>
         </div>
         <div className="inline-block rounded-full mt-1.5"
           style={{ padding: '2px 8px', background: p.isMe ? 'rgba(255,255,255,0.1)' : gc.main + '12', color: p.isMe ? '#E8D5A8' : gc.dark, fontSize: 10, fontWeight: 600 }}>
@@ -193,7 +193,7 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
         </div>
         <div className="flex items-center justify-center gap-1 mt-1.5">
           <div className="w-2 h-2 rounded-full" style={{ background: jc.main }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: p.isMe ? '#E8D5A8' : jc.main }}>{p.jKr} · {p.jM}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: p.isMe ? '#E8D5A8' : jc.main }}>{p.jKr}, {p.jM}</span>
         </div>
         <div className="inline-block rounded-full mt-1.5"
           style={{ padding: '2px 8px', background: p.isMe ? 'rgba(255,255,255,0.1)' : jc.main + '12', color: p.isMe ? '#E8D5A8' : jc.dark, fontSize: 10, fontWeight: 600 }}>

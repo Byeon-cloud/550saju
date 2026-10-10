@@ -19,7 +19,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     box-shadow: 0 0 80px rgba(0,0,0,.4);
     /* 가로 오버플로우 차단 — 내부 nowrap/고정폭 요소가 페이지를 뷰포트 밖으로
        밀어 전체가 옆으로 스크롤되던 버그 fix. clip = scroll container 안 만듦
-       → sticky 헤더·내부 overflow-x:auto 스크롤 영역 정상 유지. */
+       → sticky 헤더와 내부 overflow-x:auto 스크롤 영역 정상 유지. */
     overflow-x: clip;
     box-sizing: border-box;
   }
@@ -109,7 +109,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .content { padding: 0 20px 100px; background: #F4EFE4; }
   .premium-mockup .section { margin-top: 32px; }
   .premium-mockup .section-num {
-    /* 2026-10-10 v9 — 'SECTION 01' 영문 머리 → 一 二 三 (붉은 낙관색 · 전 콘텐츠 같은 섹션 머리) */
+    /* 2026-10-10 v9 — 'SECTION 01' 영문 머리 → 一 二 三 (붉은 낙관색, 전 콘텐츠 같은 섹션 머리) */
     display: inline-block;
     font-family: 'Noto Serif KR', serif;
     font-size: 17px; font-weight: 900;
@@ -139,9 +139,9 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     word-break: keep-all;
   }
   /* 강조 시스템 (2026-05) — 3단계 위계
-   *  · <strong> = 가장 중요 (황금 볼드 + 황금 밑줄) — 핵심 키워드 (사주 글자, 격국, 용신)
-   *  · <b>      = 적당히 중요 (검정 볼드) — 진단 단어
-   *  · <u>      = 황금 밑줄 (강조 X 볼드 X)  — 부가 정보 표시
+   *, <strong> = 가장 중요 (황금 볼드 + 황금 밑줄) — 핵심 키워드 (사주 글자, 격국, 용신)
+   *, <b>      = 적당히 중요 (검정 볼드) — 진단 단어
+   *, <u>      = 황금 밑줄 (강조 X 볼드 X)  — 부가 정보 표시
    */
   /* 2026-05-29 — 셀렉터를 .premium-mockup p 로 확장. 기존엔 .section/.section-body 안에서만 황금 형광펜이라,
      DaeunSection 등 일반 div 안의 본문 strong 은 밋밋한 기본 볼드였음. 모든 본문 강조 = 확실히 황금 형광펜. */
@@ -174,7 +174,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     text-underline-offset: 2px;
     color: inherit;
   }
-  /* <em> = 주의·경고 (번트오렌지) — Daily/Topic 와 톤 통일. font-style normal (한글 가독). */
+  /* <em> = 주의와 경고 (번트오렌지) — Daily/Topic 와 톤 통일. font-style normal (한글 가독). */
   .premium-mockup p em,
   .premium-mockup .section p em,
   .premium-mockup .section-body p em {
@@ -322,8 +322,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     text-align: right; color: #7F6B4E; font-feature-settings: 'tnum';
   }
   /* 오행 5색 — 전통 명리학 컨벤션 + 시인성 ↑ 5색 모두 명확 구분 (2026-05-04 v2 색감 통일)
-     · 木 짙은녹  · 火 적색  · 土 진한 황색  · 金 무채 차콜 (메탈릭 실버)  · 水 깊은 남색
-     · 金/水 분리 핵심: 金 hue=0° (무채) · 水 hue=215° (남색) — 절대 겹치지 않음 */
+     木 짙은녹, 火 적색, 土 진한 황색, 金 무채 차콜 (메탈릭 실버), 水 깊은 남색
+     金/水 분리 핵심: 金 hue=0° (무채), 水 hue=215° (남색) — 절대 겹치지 않음 */
   .premium-mockup .o-mok  .o-label { color: #4E7A57; } .premium-mockup .o-mok  .o-fill { background: linear-gradient(90deg, #4FAE6D, #4E7A57); }
   .premium-mockup .o-hwa  .o-label { color: #B04A38; } .premium-mockup .o-hwa  .o-fill { background: linear-gradient(90deg, #EF5350, #B04A38); }
   .premium-mockup .o-to   .o-label { color: #B07F38; } .premium-mockup .o-to   .o-fill { background: linear-gradient(90deg, #F9C849, #B07F38); }
@@ -658,7 +658,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin-right: 6px;
     font-size: 14px;
   }
-  /* 결론 박스 마지막 한 줄 — 인용·도장 */
+  /* 결론 박스 마지막 한 줄 — 인용과 도장 */
   .premium-mockup .section-conclusion .sc-stamp {
     margin-top: 14px;
     padding-top: 12px;
@@ -738,7 +738,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(90deg, #37474f, #546e7a);
     color: #fff; display: flex; align-items: center; justify-content: center;
   }
-  .premium-mockup .yy-caption { font-size: 11px; color: #5C4A2E; margin-top: 6px; line-height: 1.55; }/* 오행 강·약 진단 도식 */
+  .premium-mockup .yy-caption { font-size: 11px; color: #5C4A2E; margin-top: 6px; line-height: 1.55; }/* 오행 강과 약 진단 도식 */
 
   
   .premium-mockup .ohaeng-diag {
@@ -777,7 +777,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-weight: 600; letter-spacing: 0.05em;
   }
   .premium-mockup .ohaeng-diag .od-label.s { color: #4E7A57; }
-  .premium-mockup .ohaeng-diag .od-label.w { color: #c62828; }/* 천간-지지 합·충 도식 */
+  .premium-mockup .ohaeng-diag .od-label.w { color: #c62828; }/* 천간-지지 합과 충 도식 */
 
   
   .premium-mockup .ganji-flow {
@@ -933,7 +933,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     word-break: keep-all;
     margin-bottom: 4px;
   }
-  /* 호기심 hook — "1운으로 보면 ◇◇·◇◇" CTA 유도 */
+  /* 호기심 hook — "1운으로 보면 ◇◇, ◇◇" CTA 유도 */
   /* 2026-05-28 — 좌측 strip 제거 (균일 list 안 AI 디자인 티). */
   .premium-mockup .topic-mini .tm-hook {
     flex: 1;
@@ -1444,8 +1444,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     display: flex; flex-direction: column; gap: 5px;
   }
   /* 2026-05-28 — 12개월 카드 좌측 strip 제거 (균일 grid 동일 strip = AI 손톱 디자인 티).
-     up/peak/warn/now 타입별 톤은 .mi-month·.mi-badge 컬러로 충분히 표현. */
-  /* 헤더 줄 — 월·간지·라벨 */
+     up/peak/warn/now 타입별 톤은 .mi-month, .mi-badge 컬러로 충분히 표현. */
+  /* 헤더 줄 — 월, 간지, 라벨 */
   .premium-mockup .month-insight-grid .mi .mi-head {
     display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px;
     margin-bottom: 3px;

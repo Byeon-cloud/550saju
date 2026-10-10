@@ -152,7 +152,7 @@ export const registerDevicePassport = onCall(
         }
         if (pending > 0) await batch.commit();
         if (migratedReports > 0) {
-          console.log(`[devicePassport] 자동 이관 → ${uid} · 리포트 ${migratedReports}건 · 기증자 ${donors.length} (${alreadyRegistered ? '누락 보충' : '회전'} · device=${deviceId.slice(0, 12)}…)`);
+          console.log(`[devicePassport] 자동 이관 → ${uid}, 리포트 ${migratedReports}건, 기증자 ${donors.length} (${alreadyRegistered ? '누락 보충' : '회전'}, device=${deviceId.slice(0, 12)}…)`);
         }
       } catch (e: any) {
         // 리포트 이관 실패해도 잔액 미러는 아래에서 별도로 시도 (0건 유저 잔액 복원 P0)

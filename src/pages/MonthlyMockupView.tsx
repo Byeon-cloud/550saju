@@ -284,7 +284,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .theme-body u { text-decoration: underline; text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--c-ink); font-weight: 600; }
 .monthly-mockup .theme-body em { font-style: normal; font-weight: 700; color: #A23A2A; background: linear-gradient(180deg, transparent 56%, rgba(162,58,42,.15) 56%); padding: 0 2px; border-radius: 2px; }
 
-/* §02 상순·중순·하순 흐름 — timeline + score */
+/* §02 상순, 중순, 하순 흐름 — timeline + score */
 .monthly-mockup .period-chart { margin: 14px 0 0; background: #fff; border-radius: 12px; padding: 14px; border: 1px solid var(--c-card-line); }
 .monthly-mockup .period-chart .ttl { font-size: 11px; color: var(--c-accent); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 12px; }
 .monthly-mockup .period-svg { width: 100%; height: 110px; }
@@ -348,7 +348,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .domain-body strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.30) 55%); padding: 0 2px; }
 .monthly-mockup .domain-body u { text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 2px; color: #1a1a1a; font-weight: 600; }
 
-/* §04 길일·주의일 (吉凶日) */
+/* §04 길일과 주의일 (吉凶日) */
 .monthly-mockup .day-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .monthly-mockup .day-note {
   border-radius: 12px; padding: 13px 14px;
@@ -423,7 +423,7 @@ const MOCKUP_CSS = `
 @keyframes monthly-shimmer { 100% { transform: translateX(100%); } }
 @keyframes monthly-pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
 
-/* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고 · 내용 바뀜 혼란 차단) */
+/* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고, 내용 바뀜 혼란 차단) */
 .monthly-mockup .refining-pill {
   margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
   background: var(--c-gold-soft); border: 1px solid var(--c-gold-line);
@@ -551,7 +551,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           </div>
           <h1>{headline}</h1>
           {(ilganLabel || monthLabel) && (
-            <div className="sub">{ilganLabel}{ilganLabel && monthLabel ? ' · ' : ''}{monthLabel}</div>
+            <div className="sub">{ilganLabel}{ilganLabel && monthLabel ? ', ' : ''}{monthLabel}</div>
           )}
           {keywords.length > 0 && (
             <div className="kw-row">
@@ -566,7 +566,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         {refining && (
           <div className="refining-pill">
             <span className="spark" />
-            결과를 더 정교하게 다듬는 중이에요 · 잠시 후 자동으로 완성돼요
+            결과를 더 정교하게 다듬는 중이에요, 잠시 후 자동으로 완성돼요
           </div>
         )}
 
@@ -634,8 +634,8 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           {/* §02 상순·중순·하순 흐름 — periods 3 + timeline/score */}
           {periods.length > 0 ? (
             <section className={`section ${isOpen('02') ? 'open' : ''}`}>
-              <SectionHeader num="02" title="상순·중순·하순 흐름" han="旬" id="02" />
-              <p className="sec-lead">한 달을 셋으로 나눠, 초·중·말 어느 구간이 강하고 어디를 다스려야 하는지 한눈에.</p>
+              <SectionHeader num="02" title="상순, 중순, 하순 흐름" han="旬" id="02" />
+              <p className="sec-lead">한 달을 셋으로 나눠, 초, 중, 말 어느 구간이 강하고 어디를 다스려야 하는지 한눈에.</p>
 
               {/* timeline 인포그래픽 (점수 3개 → 곡선) */}
               {periodSvgPath && (
@@ -690,7 +690,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
               </div>
             </section>
           ) : loading ? (
-            <SkeletonSection num="02" title="상순·중순·하순 흐름" han="旬" />
+            <SkeletonSection num="02" title="상순, 중순, 하순 흐름" han="旬" />
           ) : null}
 
           {/* §03 영역별 (財官緣壽) — score bar + body */}
@@ -723,7 +723,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                       {d.data?.body && <div className="domain-body" dangerouslySetInnerHTML={safeHtmlEmph(d.data.body)} />}
                       <div className="domain-cta" style={{ color: d.color }}>
                         {/* 2026-09-17 — 이동 전 가격 표기 (주제운 SSOT getTopicPrice) */}
-                        <span>{d.nm} 전체 흐름 깊게 보기 · {formatPriceLabel(getTopicPrice(d.topicId))}</span>
+                        <span>{d.nm} 전체 흐름 깊게 보기, {formatPriceLabel(getTopicPrice(d.topicId))}</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
                       </div>
                     </button>
@@ -738,7 +738,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           {/* §04 길일·주의일 (吉凶日) */}
           {(luckyDays.length > 0 || cautionDays.length > 0) ? (
             <section className={`section ${isOpen('04') ? 'open' : ''}`}>
-              <SectionHeader num="04" title="길일·주의일" han="吉凶日" id="04" />
+              <SectionHeader num="04" title="길일과 주의일" han="吉凶日" id="04" />
               <p className="sec-lead">이 달 안에서 손 내밀기 좋은 날과, 한 박자 늦추는 게 좋은 날.</p>
               <div className="day-stack">
                 {luckyDays.map((d, i) => (
@@ -762,7 +762,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
               </div>
             </section>
           ) : loading ? (
-            <SkeletonSection num="04" title="길일·주의일" han="吉凶日" />
+            <SkeletonSection num="04" title="길일과 주의일" han="吉凶日" />
           ) : null}
 
           {/* §05 개운 처방 (開運) */}
@@ -806,13 +806,13 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
               <rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
             </svg>
             <div className="ti">주제별 운세 더 보기</div>
-            <div className="sb">연애·재물·합격·사업 …</div>
+            <div className="sb">연애, 재물, 합격, 사업 …</div>
           </button>
         </div>
 
         <div className="service-notice">
-          <p className="src">한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반</p>
-          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+          <p className="src">한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반</p>
+          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
         </div>
       </div>
     </div>

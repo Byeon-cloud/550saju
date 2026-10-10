@@ -83,7 +83,7 @@ export function formatBirthHour(hour?: number, minute?: number): string {
     ? `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
     : `${hour}시`;
   if (!branch) return timeStr;
-  return `${timeStr} · ${branch.ko}(${branch.hanja}, ${branch.range})`;
+  return `${timeStr}, ${branch.ko}(${branch.hanja}, ${branch.range})`;
 }
 
 /** Stage 7e-6: 짧은 시간 라벨 (보관함 등) — 분 0 이면 시간만 */
@@ -94,5 +94,5 @@ export function formatBirthHourShort(hour?: number, minute?: number): string {
   // 2026-06-02 — 밴드 입력(분 X)이면 대표시각("12시") 숨기고 시(時) 이름만 (11:41 입력자 혼란 방지).
   if (!hasMinute) return branch ? branch.ko : `${hour}시`;
   const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  return branch ? `${timeStr} · ${branch.ko}` : timeStr;
+  return branch ? `${timeStr}, ${branch.ko}` : timeStr;
 }

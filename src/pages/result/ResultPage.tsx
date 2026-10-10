@@ -166,7 +166,7 @@ function PremiumDarkHeader({
             letterSpacing: '0.05em',
           }}
         >
-          종합사주 · 열 장 풀이
+          종합사주, 열 장 풀이
         </div>
       </div>
       <div
@@ -745,7 +745,7 @@ export function ResultPage(props: ResultPageProps = {}) {
         premiumNote={arrivedCount > 0 ? `정밀 분석 ${arrivedCount}/${isPrem ? 4 : 3} 단계 완료 — 마지막을 마무리하고 있어요` : undefined}
         steps={isPrem ? [
           '사주 8자와 오행 구조를 분석하고 있어요',
-          '십성과 용신·조후를 도출하고 있어요',
+          '십성과 용신과 조후를 도출하고 있어요',
           '대운과 올해 흐름을 짚고 있어요',
           '관계와 실천 전략을 정리하고 있어요',
           '종합 리포트를 완성하고 있어요',
@@ -802,25 +802,25 @@ export function ResultPage(props: ResultPageProps = {}) {
             <div className="card space-y-3">
               <h2 className="text-h3 text-text-primary">사주팔자(四柱八字)란?</h2>
               <p className="text-caption text-text-muted leading-relaxed">
-                태어난 <b className="text-text-secondary">해·월·일·시</b>의 네 기둥(四柱), 각 기둥의 천간(위)·지지(아래) 여덟 글자(八字).
+                태어난 <b className="text-text-secondary">해, 월, 일, 시</b>의 네 기둥(四柱), 각 기둥의 천간(위), 지지(아래) 여덟 글자(八字).
                 {hasBirthTime ? ' 4기둥 8글자 완전판으로 분석합니다.' : ' 출생시간 미상으로 3기둥 6글자로 분석합니다.'}
               </p>
               <div className="grid grid-cols-2 gap-2 text-center text-caption text-text-muted">
                 <div className="p-2.5 rounded-xl bg-bg-surface">
                   <div className="text-label text-text-secondary mb-0.5">↑ 천간 天干</div>
-                  <div>하늘의 기운 · 겉으로 드러나는 나</div>
+                  <div>하늘의 기운, 겉으로 드러나는 나</div>
                 </div>
                 <div className="p-2.5 rounded-xl bg-bg-surface">
                   <div className="text-label text-text-secondary mb-0.5">↓ 지지 地支</div>
-                  <div>땅의 기운 · 내면에 숨겨진 나</div>
+                  <div>땅의 기운, 내면에 숨겨진 나</div>
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-1.5 text-center text-tiny text-text-muted">
                 {([
-                  { t: '시주 時柱', d: '자녀·말년', hl: false, dim: !hasBirthTime },
-                  { t: '일주 日柱', d: '나·배우자', hl: true, dim: false },
-                  { t: '월주 月柱', d: '부모·직장', hl: false, dim: false },
-                  { t: '년주 年柱', d: '조상·사회', hl: false, dim: false },
+                  { t: '시주 時柱', d: '자녀와 말년', hl: false, dim: !hasBirthTime },
+                  { t: '일주 日柱', d: '나와 배우자', hl: true, dim: false },
+                  { t: '월주 月柱', d: '부모와 직장', hl: false, dim: false },
+                  { t: '년주 年柱', d: '조상과 사회', hl: false, dim: false },
                 ] as const).map((x, i) => (
                   <div
                     key={i}
@@ -920,38 +920,38 @@ export function ResultPage(props: ResultPageProps = {}) {
             const GYEOKGUK_INFO: Record<string, { summary: string; personality: string; good: string; caution: string }> = {
               정인격: {
                 summary: '학문과 배움을 통해 성장하는 구조의 사주',
-                personality: '지적 호기심이 강하고 배움에 끌리는 타입이에요. 책·강의·자격증 등 공부를 통해 안정감을 얻고, 남에게 가르치는 일에서 보람을 느끼는 구조예요.',
-                good: '학습 능력이 뛰어나 전문직·교육직에 유리하고, 어머니·스승 같은 귀인이 잘 나타나요',
+                personality: '지적 호기심이 강하고 배움에 끌리는 타입이에요. 책, 강의, 자격증 등 공부를 통해 안정감을 얻고, 남에게 가르치는 일에서 보람을 느끼는 구조예요.',
+                good: '학습 능력이 뛰어나 전문직과 교육직에 유리하고, 어머니와 스승 같은 귀인이 잘 나타나요',
                 caution: '생각이 많아 행동이 느려질 수 있고, 너무 안전한 길만 선택하려는 경향 주의',
               },
               편인격: {
                 summary: '독특한 시각과 직관으로 승부하는 구조의 사주',
-                personality: '남들과 다른 감각이 있어요. 정석보다 독학, 체계보다 직관으로 움직이며, 예술·기술·영적 분야에서 두각을 나타내는 타입이에요.',
+                personality: '남들과 다른 감각이 있어요. 정석보다 독학, 체계보다 직관으로 움직이며, 예술, 기술, 영적 분야에서 두각을 나타내는 타입이에요.',
                 good: '창의력과 직관이 뛰어나 남들이 못 보는 기회를 포착할 수 있어요',
                 caution: '끈기 부족과 변덕이 약점이 될 수 있어요. 한 가지에 집중하는 연습이 필요해요',
               },
               정관격: {
                 summary: '규칙과 질서 속에서 안정적으로 성장하는 구조의 사주',
-                personality: '책임감이 강하고 규칙을 중시해요. 조직에서 인정받으며 승진하는 정통 엘리트 코스가 잘 맞는 타입이에요. 공직·대기업·전문직과 인연이 깊어요.',
-                good: '사회적 신뢰와 지위를 자연스럽게 얻는 구조. 공직·대기업에서 강점',
+                personality: '책임감이 강하고 규칙을 중시해요. 조직에서 인정받으며 승진하는 정통 엘리트 코스가 잘 맞는 타입이에요. 공직, 대기업, 전문직과 인연이 깊어요.',
+                good: '사회적 신뢰와 지위를 자연스럽게 얻는 구조. 공직과 대기업에서 강점',
                 caution: '지나친 원칙주의가 관계를 딱딱하게 만들 수 있어요. 유연성을 의식적으로 키우세요',
               },
               편관격: {
                 summary: '강한 압박을 에너지로 전환하는 구조의 사주',
-                personality: '외부 압박과 경쟁 속에서 오히려 힘을 발휘하는 타입이에요. 위기 상황에서 진가를 보이며, 리더십과 추진력이 강해요. 군인·경찰·사업가 기질이 있어요.',
+                personality: '외부 압박과 경쟁 속에서 오히려 힘을 발휘하는 타입이에요. 위기 상황에서 진가를 보이며, 리더십과 추진력이 강해요. 군인, 경찰, 사업가 기질이 있어요.',
                 good: '위기관리 능력이 탁월하고, 강한 추진력으로 큰 성과를 낼 수 있어요',
                 caution: '스트레스를 받으면 공격적이 될 수 있어요. 감정 조절과 휴식이 중요해요',
               },
               식신격: {
                 summary: '창작과 표현을 통해 가치를 만드는 구조의 사주',
-                personality: '무언가를 만들어내는 데 천부적 재능이 있어요. 요리·글쓰기·디자인·콘텐츠 등 창작 활동에서 행복을 느끼고, 자연스럽게 재물도 따라와요.',
-                good: '창작·표현 분야에서 자연스럽게 돈이 벌리는 구조. 프리랜서·창작자에 적합',
+                personality: '무언가를 만들어내는 데 천부적 재능이 있어요. 요리, 글쓰기, 디자인, 콘텐츠 등 창작 활동에서 행복을 느끼고, 자연스럽게 재물도 따라와요.',
+                good: '창작과 표현 분야에서 자연스럽게 돈이 벌리는 구조. 프리랜서와 창작자에 적합',
                 caution: '게으름과 안주가 적. 현재에 만족하면 성장이 멈출 수 있어요',
               },
               상관격: {
                 summary: '기존 틀을 깨고 혁신하는 구조의 사주',
                 personality: '권위에 도전하고 새로운 방식을 만들어내는 반골 기질이에요. 기존 질서에 답답함을 느끼고, 남들이 생각 못한 방법으로 문제를 해결하는 타입이에요.',
-                good: '혁신적 아이디어로 새 시장을 개척하는 능력. 스타트업·예술·IT에 강점',
+                good: '혁신적 아이디어로 새 시장을 개척하는 능력. 스타트업, 예술, IT에 강점',
                 caution: '말실수와 대인관계 충돌 주의. 특히 윗사람과의 갈등이 생기기 쉬워요',
               },
               정재격: {
@@ -962,19 +962,19 @@ export function ResultPage(props: ResultPageProps = {}) {
               },
               편재격: {
                 summary: '기회를 포착해 큰 재물을 다루는 구조의 사주',
-                personality: '투자 감각이 있고 기회를 보면 과감하게 움직이는 타입이에요. 사업·무역·투자에서 두각을 나타내며, 돈의 흐름을 읽는 감각이 남다른 구조예요.',
-                good: '사업 수완이 뛰어나고, 큰 돈을 다루는 능력이 있어요. 투자·무역에 유리',
+                personality: '투자 감각이 있고 기회를 보면 과감하게 움직이는 타입이에요. 사업, 무역, 투자에서 두각을 나타내며, 돈의 흐름을 읽는 감각이 남다른 구조예요.',
+                good: '사업 수완이 뛰어나고, 큰 돈을 다루는 능력이 있어요. 투자와 무역에 유리',
                 caution: '도박성 투자와 과소비 주의. 리스크 관리를 의식적으로 해야 해요',
               },
               비견격: {
                 summary: '독립적인 힘으로 자기 길을 개척하는 구조의 사주',
                 personality: '자존심이 강하고 남에게 기대지 않는 타입이에요. 독립심과 경쟁심이 강하며, 혼자서도 잘 해내는 추진력이 있어요. 독립 사업이나 1인 기업에 적합해요.',
-                good: '독립적으로 성취하는 능력이 탁월. 창업·프리랜서에서 강점',
+                good: '독립적으로 성취하는 능력이 탁월. 창업과 프리랜서에서 강점',
                 caution: '고집과 타협 부족이 약점. 협력하면 더 큰 성과를 낼 수 있어요',
               },
               겁재격: {
                 summary: '승부욕과 경쟁에서 힘을 발휘하는 구조의 사주',
-                personality: '지기 싫어하는 성격이에요. 경쟁 상황에서 폭발적인 에너지를 보이며, 위기를 기회로 바꾸는 힘이 있어요. 영업·스포츠·투자 분야와 인연이 깊어요.',
+                personality: '지기 싫어하는 성격이에요. 경쟁 상황에서 폭발적인 에너지를 보이며, 위기를 기회로 바꾸는 힘이 있어요. 영업, 스포츠, 투자 분야와 인연이 깊어요.',
                 good: '위기 상황에서 오히려 강해지는 구조. 경쟁이 치열한 분야에서 두각',
                 caution: '재물 손실과 인간관계 충돌 주의. 욕심을 조절하는 것이 핵심 과제',
               },
@@ -987,31 +987,31 @@ export function ResultPage(props: ResultPageProps = {}) {
               양인격: {
                 summary: '강렬한 에너지를 어떻게 쓰느냐가 인생을 결정하는 구조의 사주',
                 personality: '에너지가 매우 강하고 카리스마가 있어요. 잘 쓰면 리더, 잘못 쓰면 갈등의 원인이 되는 양날의 검 같은 구조예요.',
-                good: '강한 리더십과 결단력. 군인·경찰·외과의·사업가로 대성할 수 있어요',
+                good: '강한 리더십과 결단력. 군인, 경찰, 외과의, 사업가로 대성할 수 있어요',
                 caution: '분노 조절이 최대 과제. 에너지를 운동이나 사업으로 승화시키세요',
               },
             };
 
             // 오행 해석 데이터
             const OHENG_MEANING: Record<string, { name: string; symbol: string; nature: string; color: string; season: string; direction: string; goodWith: string; lifestyle: string }> = {
-              목: { name: '목(木)', symbol: '木', nature: '성장·생명·인자함', color: '#4E7A57', season: '봄', direction: '동쪽', goodWith: '녹색 식물, 나무 소품, 동쪽 배치', lifestyle: '아침 산책, 녹색 채소, 원목 가구 활용' },
-              화: { name: '화(火)', symbol: '火', nature: '열정·표현·예의', color: '#B04A38', season: '여름', direction: '남쪽', goodWith: '붉은색 포인트, 밝은 조명, 남향 생활', lifestyle: '유산소 운동, 매운맛 음식, 사교 활동' },
-              토: { name: '토(土)', symbol: '土', nature: '안정·포용·신뢰', color: '#B07F38', season: '환절기', direction: '중앙', goodWith: '황토색 소품, 도자기, 안정적 공간', lifestyle: '규칙적 생활, 잡곡밥, 명상·산책' },
-              금: { name: '금(金)', symbol: '金', nature: '결단·정의·절제', color: '#7D7870', season: '가을', direction: '서쪽', goodWith: '금속 소품, 흰색 인테리어, 서쪽 배치', lifestyle: '호흡 운동, 현미·배, 미니멀 정리' },
-              수: { name: '수(水)', symbol: '水', nature: '지혜·유연·적응', color: '#3E5F82', season: '겨울', direction: '북쪽', goodWith: '물 관련 소품, 검은색 포인트, 수족관', lifestyle: '수영·반신욕, 해산물·검은콩, 독서·명상' },
+              목: { name: '목(木)', symbol: '木', nature: '성장, 생명, 인자함', color: '#4E7A57', season: '봄', direction: '동쪽', goodWith: '녹색 식물, 나무 소품, 동쪽 배치', lifestyle: '아침 산책, 녹색 채소, 원목 가구 활용' },
+              화: { name: '화(火)', symbol: '火', nature: '열정, 표현, 예의', color: '#B04A38', season: '여름', direction: '남쪽', goodWith: '붉은색 포인트, 밝은 조명, 남향 생활', lifestyle: '유산소 운동, 매운맛 음식, 사교 활동' },
+              토: { name: '토(土)', symbol: '土', nature: '안정, 포용, 신뢰', color: '#B07F38', season: '환절기', direction: '중앙', goodWith: '황토색 소품, 도자기, 안정적 공간', lifestyle: '규칙적 생활, 잡곡밥, 명상과 산책' },
+              금: { name: '금(金)', symbol: '金', nature: '결단, 정의, 절제', color: '#7D7870', season: '가을', direction: '서쪽', goodWith: '금속 소품, 흰색 인테리어, 서쪽 배치', lifestyle: '호흡 운동, 현미와 배, 미니멀 정리' },
+              수: { name: '수(水)', symbol: '水', nature: '지혜, 유연, 적응', color: '#3E5F82', season: '겨울', direction: '북쪽', goodWith: '물 관련 소품, 검은색 포인트, 수족관', lifestyle: '수영과 반신욕, 해산물과 검은콩, 독서와 명상' },
             };
 
             // 신강/신약 해석
             const gangYakDetail: Record<string, { meaning: string; good: string; caution: string; strategy: string }> = {
               신강: {
                 meaning: '일간(나)의 힘이 사주에서 강한 위치에 있어요. 주변 환경보다 내 에너지가 더 세서, 스스로 길을 개척하는 주도형 사주예요.',
-                good: '자기 주장이 뚜렷하고 추진력이 강해요. 리더십·독립 사업·자기 브랜드에 유리해요',
+                good: '자기 주장이 뚜렷하고 추진력이 강해요. 리더십과 독립 사업과 자기 브랜드에 유리해요',
                 caution: '남의 말을 안 듣는 고집, 무리한 확장, 건강 과신이 약점이에요',
                 strategy: '용신(부족한 오행)을 채워 에너지를 분산시키고, 협력자를 두는 것이 핵심이에요',
               },
               신약: {
                 meaning: '일간(나)의 힘이 사주에서 약한 편이에요. 주변 환경의 영향을 많이 받지만, 그만큼 적응력과 관찰력이 뛰어난 구조예요.',
-                good: '눈치가 빠르고 겸손해서 귀인이 잘 나타나요. 팀워크·조직·파트너십에 유리해요',
+                good: '눈치가 빠르고 겸손해서 귀인이 잘 나타나요. 팀워크, 조직, 파트너십에 유리해요',
                 caution: '우유부단함, 자신감 부족, 남 눈치 보기가 약점이에요',
                 strategy: '용신(나를 도와주는 오행)을 보강해 자신감과 에너지를 높이는 것이 핵심이에요',
               },
@@ -1033,9 +1033,9 @@ export function ResultPage(props: ResultPageProps = {}) {
             return (
             <LocalFadeIn delay={80}>
               <div className="card py-5 px-4">
-                <h2 className="text-h3 text-text-primary mb-1">격국·용신 분석</h2>
+                <h2 className="text-h3 text-text-primary mb-1">격국과 용신 분석</h2>
                 <p style={{ fontSize: 11, color: '#8b7e6f', marginBottom: 12, lineHeight: 1.6 }}>
-                  사주의 구조(격국)를 파악하고, 균형을 맞춰줄 핵심 오행(용신)을 도출했어요. 아래 분석이 개운법·직업·건강의 근거가 됩니다.
+                  사주의 구조(격국)를 파악하고, 균형을 맞춰줄 핵심 오행(용신)을 도출했어요. 아래 분석이 개운법, 직업, 건강의 근거가 됩니다.
                 </p>
 
                 {/* ────── 1. 격국 ────── */}
@@ -1151,7 +1151,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                         <div className="px-3 py-2.5 space-y-1.5" style={{ background: '#fff' }}>
                           <div className="flex items-start gap-2">
                             <span style={{ fontSize: 10, fontWeight: 700, color: '#a0937f', width: 40, flexShrink: 0 }}>방위</span>
-                            <span style={{ fontSize: 11, color: '#6b5b47' }}>{yongOheng.direction} 방향이 유리 — 책상·침대를 {yongOheng.direction}으로 배치</span>
+                            <span style={{ fontSize: 11, color: '#6b5b47' }}>{yongOheng.direction} 방향이 유리 — 책상과 침대를 {yongOheng.direction}으로 배치</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <span style={{ fontSize: 10, fontWeight: 700, color: '#a0937f', width: 40, flexShrink: 0 }}>계절</span>
@@ -1201,7 +1201,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>
                           <p style={{ fontSize: 10, color: '#c62828', lineHeight: 1.6 }}>
-                            사주 균형을 무너뜨리는 오행이에요. {analysisBase.기신} 에너지가 과하면 건강·재물·관계에 부정적 영향이 생길 수 있어요.
+                            사주 균형을 무너뜨리는 오행이에요. {analysisBase.기신} 에너지가 과하면 건강, 재물, 관계에 부정적 영향이 생길 수 있어요.
                           </p>
                         </div>
                       </div>
@@ -1455,7 +1455,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 10, color: '#a0937f' }}>{d.period} · {d.label}</div>
+                        <div style={{ fontSize: 10, color: '#a0937f' }}>{d.period}, {d.label}</div>
                       </div>
                       <span style={{ fontSize: 16 }}>{EHAN[d.elem]}</span>
                     </div>
@@ -1572,7 +1572,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               <style>{`@keyframes premium-spin { to { transform: rotate(360deg); } }`}</style>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: '#5C4A2E', marginBottom: 4 }}>
-                  풀이를 쓰는 중이에요 · {(arrivedGroups.A ? 1 : 0) + (arrivedGroups.D ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0)}/4 도착
+                  풀이를 쓰는 중이에요, {(arrivedGroups.A ? 1 : 0) + (arrivedGroups.D ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0)}/4 도착
                 </div>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
                   {(['A', 'D', 'B', 'C'] as const).map((g) => (
@@ -1751,7 +1751,7 @@ export function ResultPage(props: ResultPageProps = {}) {
           <div>
             <div className="flex items-center gap-2 px-1 mb-3">
               <div className="w-5 h-px bg-brand-gold" />
-              <h2 className="text-h3 text-text-primary">상세 풀이 · 12섹션</h2>
+              <h2 className="text-h3 text-text-primary">상세 풀이, 12섹션</h2>
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="space-y-2.5">
@@ -1847,12 +1847,12 @@ export function ResultPage(props: ResultPageProps = {}) {
           {false && !isPremiumLayout && (
             <div className="mt-8 text-center space-y-1">
               <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+                한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
               </p>
               <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
                 사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
                 <br />
-                의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+                의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
               </p>
             </div>
           )}

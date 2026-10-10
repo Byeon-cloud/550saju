@@ -409,7 +409,7 @@ export function processAttendanceRewards(): AttendanceRewardResult {
       if (give3) {
         addRewardBalance(STREAK_REWARD_UN);
         // 알림 플래그를 장부 기록(변경 이벤트 발행)보다 먼저 — 이벤트 탭이 이벤트를 받자마자 플래그를 읽을 수 있게
-        setPendingEventNotice(EVENTS_PENDING_TIER_A_KEY, `운 ${STREAK_REWARD_UN} 들어왔어요 · ${next.streak}일 연속 출석`);
+        setPendingEventNotice(EVENTS_PENDING_TIER_A_KEY, `운 ${STREAK_REWARD_UN} 들어왔어요, ${next.streak}일 연속 출석`);
         appendRewardLog('streak3', STREAK_REWARD_UN, `streak3:${today}`);
         trackReward('streak3', STREAK_REWARD_UN);
         streak3Granted = true;

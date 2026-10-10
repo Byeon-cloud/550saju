@@ -112,7 +112,7 @@ export function EventsPage() {
   const onShareInvite = async () => {
     if (getRemainingShareRewards() <= 0) {
       refresh();
-      toast.show('오늘 초대는 끝났어요 · 내일 다시 참여해주세요', 'info');
+      toast.show('오늘 초대는 끝났어요, 내일 다시 참여해주세요', 'info');
       return;
     }
     // 2026-06-24 — 이벤트 페이지 친구초대 CTA 클릭 계측 (바이럴 트리거 · 전역 cta_click 과 별개로 의미화)
@@ -128,8 +128,8 @@ export function EventsPage() {
         refresh();
         toast.show(
           getRemainingShareRewards() <= 0
-            ? '오늘 초대 보상은 끝났어요 · 내일 다시 참여해주세요'
-            : '공유 링크를 준비했어요 · 친구에게 보내주세요',
+            ? '오늘 초대 보상은 끝났어요, 내일 다시 참여해주세요'
+            : '공유 링크를 준비했어요, 친구에게 보내주세요',
           'info',
         );
       },
@@ -148,19 +148,19 @@ export function EventsPage() {
 
   const weekStatusCopy = useMemo(() => {
     if (snapshot.cycle7CompletedToday) {
-      if (paidToday) return `7일 연속 완주 · 토스포인트 ${TOSSPOINT_7DAY}원 지급 완료`;
-      if (pendingToday) return `7일 연속 완주 · 토스포인트 ${TOSSPOINT_7DAY}원 지급 대기 중이에요`;
-      return '7일 연속 완주 · 내일부터 새 7일이 시작돼요';
+      if (paidToday) return `7일 연속 완주, 토스포인트 ${TOSSPOINT_7DAY}원 지급 완료`;
+      if (pendingToday) return `7일 연속 완주, 토스포인트 ${TOSSPOINT_7DAY}원 지급 대기 중이에요`;
+      return '7일 연속 완주, 내일부터 새 7일이 시작돼요';
     }
     if (filled7 === 0) {
       return snapshot.broken
-        ? `연속이 끊겼어요 · 오늘부터 다시 7일 이으면 토스포인트 ${TOSSPOINT_7DAY}원`
+        ? `연속이 끊겼어요, 오늘부터 다시 7일 이으면 토스포인트 ${TOSSPOINT_7DAY}원`
         : `오늘부터 7일 이어서 출석하면 토스포인트 ${TOSSPOINT_7DAY}원`;
     }
     if (snapshot.attendedToday) {
-      return `${filled7}일째 · ${ATTEND_CYCLE_DAYS - filled7}일 더 이어지면 토스포인트 ${TOSSPOINT_7DAY}원`;
+      return `${filled7}일째, ${ATTEND_CYCLE_DAYS - filled7}일 더 이어지면 토스포인트 ${TOSSPOINT_7DAY}원`;
     }
-    return `${filled7}일째까지 이어졌어요 · 오늘 결과 하나 보면 ${filled7 + 1}일째`;
+    return `${filled7}일째까지 이어졌어요, 오늘 결과 하나 보면 ${filled7 + 1}일째`;
   }, [snapshot, filled7, paidToday, pendingToday]);
 
   // 3일 달성 펄스 — 오늘 운 1 을 받은 날 이 페이지 진입 시 표시 효과만
@@ -234,7 +234,7 @@ export function EventsPage() {
               <div className="h-full transition-all" style={{ width: `${weekPct}%`, background: C.ink }} />
             </div>
             <p className="text-[12px] mt-2.5" style={{ color: C.muted }} aria-live="polite">
-              <strong style={{ color: C.ink }}>{filled7}/{ATTEND_CYCLE_DAYS}</strong> · {weekStatusCopy}
+              <strong style={{ color: C.ink }}>{filled7}/{ATTEND_CYCLE_DAYS}</strong>, {weekStatusCopy}
             </p>
             {attend7PaidCount > 0 ? (
               <p className="text-[12px] mt-1.5" style={{ color: C.muted }}>
@@ -260,7 +260,7 @@ export function EventsPage() {
             </h3>
           </header>
           <p className="text-[12px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
-            하루 {MAX_DAILY_SHARE_REWARDS}회 · 초대당 운 1 (결과 공유와 합쳐 하루 {MAX_DAILY_SHARE_REWARDS}회)
+            하루 {MAX_DAILY_SHARE_REWARDS}회, 초대당 운 1 (결과 공유와 합쳐 하루 {MAX_DAILY_SHARE_REWARDS}회)
           </p>
 
           <button type="button" onClick={onShareInvite}
@@ -282,7 +282,7 @@ export function EventsPage() {
             <span>{invitesDone ? '오늘 초대는 끝났어요' : '친구에게 공유하기'}</span>
           </button>
           <p className="text-[12px] text-center mt-3" style={{ color: C.muted }}>
-            오늘 <strong style={{ color: C.ink }}>{invitesUsed}/{MAX_DAILY_SHARE_REWARDS}</strong>회 · 일 {MAX_DAILY_SHARE_REWARDS}회 한도
+            오늘 <strong style={{ color: C.ink }}>{invitesUsed}/{MAX_DAILY_SHARE_REWARDS}</strong>회, 일 {MAX_DAILY_SHARE_REWARDS}회 한도
           </p>
         </section>
 

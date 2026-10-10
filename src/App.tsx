@@ -388,7 +388,7 @@ export function App() {
       .then((r) => {
         if (r && (r.un > 0 || r.reports > 0)) {
           try { localStorage.setItem('saju500:iap_recovered_notice', String(r.un)); } catch { /* noop */ }
-          console.info(`[IAP복구] 결제 ${r.granted}건 · +${r.un}운 · 보관함 ${r.reports}건 복원`);
+          console.info(`[IAP복구] 결제 ${r.granted}건, +${r.un}운, 보관함 ${r.reports}건 복원`);
         }
       })
       .catch(() => { /* noop */ });

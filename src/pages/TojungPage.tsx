@@ -73,7 +73,7 @@ const TY = newYearTarget();
 
 const LOADING_STEPS = [
   `${TY}년 세운과 사주를 맞춰보고 있어요...`,
-  '365일 일진에서 좋은 날·조심할 날을 고르고 있어요...',
+  '365일 일진에서 좋은 날과 조심할 날을 고르고 있어요...',
   '열두 달 흐름을 달마다 풀고 있어요...',
   '결정 타이밍과 개운 조언을 정리하고 있어요...',
 ];
@@ -221,7 +221,7 @@ export function TojungPage() {
           <ExtensionHero
             theme={EXTENSION_THEME.tojung}
             sub={`${TY}년 한 해를 내 사주로 열두 달 미리 봅니다`}
-            rightLabel={`歲 · ${TY}`}
+            rightLabel={`歲, ${TY}`}
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
@@ -248,7 +248,7 @@ export function TojungPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type={`${TY} 신년운세`} sajuData={selected?.sajuData} steps={[`${TY}년 세운과 사주를 맞춰보고 있어요`, '365일 일진에서 좋은 날·조심할 날을 고르고 있어요', '열두 달 흐름을 달마다 풀고 있어요', '결정 타이밍과 개운 조언을 정리하고 있어요']} estimatedSeconds={100} />;
+    return <AILoading name={selected?.name} type={`${TY} 신년운세`} sajuData={selected?.sajuData} steps={[`${TY}년 세운과 사주를 맞춰보고 있어요`, '365일 일진에서 좋은 날과 조심할 날을 고르고 있어요', '열두 달 흐름을 달마다 풀고 있어요', '결정 타이밍과 개운 조언을 정리하고 있어요']} estimatedSeconds={100} />;
   }
 
   // ─── 결과 ───
@@ -275,7 +275,7 @@ export function TojungPage() {
       <FadeIn>
         <ExtensionHero
           theme={tojungTheme}
-          crumb={isLegacyTojung ? '사주500 · 토정비결' : `사주500 · ${resultYear} 신년운세`}
+          crumb={isLegacyTojung ? '사주500, 토정비결' : `사주500, ${resultYear} 신년운세`}
           sub={isLegacyTojung ? '한 해를 열두 달로 나눠 봅니다.' : `${resultYear}년 세운과 열두 달 월운을 내 사주에 맞춰 봅니다.`}
           seal="歲"
         />
@@ -308,14 +308,14 @@ export function TojungPage() {
           <div className="sticky z-40" style={{ top: 56 }}>
             <div className="rounded-xl px-3.5 py-3" style={{ background: 'linear-gradient(135deg, #F4F7FC 0%, #EAF0F8 100%)', border: '1px solid rgba(140,109,61,0.22)', boxShadow: '0 2px 8px rgba(140,109,61,0.10)' }}>
               <p className="text-[12.5px] font-bold mb-1.5" style={{ color: '#1A1612' }}>
-                신년운세를 쓰는 중이에요 · {(arrivedNy.A ? 1 : 0) + (arrivedNy.B ? 1 : 0) + (arrivedNy.C ? 1 : 0)}/3 도착
+                신년운세를 쓰는 중이에요, {(arrivedNy.A ? 1 : 0) + (arrivedNy.B ? 1 : 0) + (arrivedNy.C ? 1 : 0)}/3 도착
               </p>
               <div className="flex gap-1 mb-1.5">
                 {(['A', 'B', 'C'] as const).map((g) => (
                   <div key={g} className="flex-1 rounded-full" style={{ height: 4, background: arrivedNy[g] ? '#1A1612' : 'rgba(140,109,61,0.16)', transition: 'background 0.4s' }} />
                 ))}
               </div>
-              <p className="text-[11px] leading-snug" style={{ color: '#4A5E80' }}>한 해 총평 · 1~6월 · 7~12월 순서 없이, 다 쓰는 대로 채워져요.</p>
+              <p className="text-[11px] leading-snug" style={{ color: '#4A5E80' }}>한 해 총평, 1~6월, 7~12월 순서 없이, 다 쓰는 대로 채워져요.</p>
             </div>
           </div>
         )}
@@ -436,7 +436,7 @@ export function TojungPage() {
           <FadeIn delay={0.29}>
             <div className="card">
               <p className="text-h3 text-text-primary mb-1">{resultYear}년 꼭 기억할 날</p>
-              <p className="text-[11px] text-text-hint mb-3">내 사주에 도움 기운이 가장 크게 들어오는 날 · 중요한 약속·결정·시작에</p>
+              <p className="text-[11px] text-text-hint mb-3">내 사주에 도움 기운이 가장 크게 들어오는 날, 중요한 약속, 결정, 시작에</p>
               <div className="grid grid-cols-2 gap-2">
                 {((result as any).keyDates as Array<{ date: string; why: string }>).map((k, i) => (
                   <div key={i} className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.18)' }}>
@@ -498,7 +498,7 @@ export function TojungPage() {
           {/* 2026-10-07 — 충전 페이지(막다른 길) 대신 종합사주로 */}
           <ExtensionUpsellCard
             title="한 해를 넘어 내 사주 전체가 궁금하다면"
-            desc="종합사주에서 성격·관계·대운까지 처음부터 끝까지 읽어드려요."
+            desc="종합사주에서 성격, 관계, 대운까지 처음부터 끝까지 읽어드려요."
             onTap={() => navigate('/premium')}
           />
         </FadeIn>
@@ -511,12 +511,12 @@ export function TojungPage() {
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — Phase 누락 보강 2 패턴 */}
         <div className="mt-8 text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+            한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
-            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+            의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
           </p>
         </div>
 

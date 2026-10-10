@@ -101,7 +101,7 @@ export const mergeAnonIntoToss = onCall(
       doneAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    console.log(`[mergeAnonIntoToss] anon=${anonUid} → ${tossUid} · 리포트 ${copied}건 복사`);
+    console.log(`[mergeAnonIntoToss] anon=${anonUid} → ${tossUid}, 리포트 ${copied}건 복사`);
     return { merged: true, copied };
   }
 );

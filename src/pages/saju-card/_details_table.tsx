@@ -268,7 +268,7 @@ function SectionB_ManseTable({
     void displayIdx;
     // pillarKey '시'/'일'/'월'/'년' index = 0/1/2/3
     // display order = pillarKey 그대로 [시,일,월,년]
-    return [0, 1, 2, 3].map((i) => Array.from(buckets[i]).join('·'));
+    return [0, 1, 2, 3].map((i) => Array.from(buckets[i]).join(', '));
   }, [relationsAnalysis]);
   // relPerPillar[0] = 시주, [1] = 일주, [2] = 월주, [3] = 년주
 

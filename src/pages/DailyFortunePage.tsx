@@ -612,7 +612,7 @@ export function DailyFortunePage() {
       {isResultPhase ? (
         <DarkHeader
           title={`${selectedProfile?.name || '내'} 님의 오늘의 운세`}
-          subtitle={resultTier === 'paid' ? '오늘 하루 · 일곱 장 풀이' : '무료 · 오늘 하루 일곱 장 풀이'}
+          subtitle={resultTier === 'paid' ? '오늘 하루, 일곱 장 풀이' : '무료, 오늘 하루 일곱 장 풀이'}
           chip={resultTier === 'paid' ? '1운' : '무료'}
           chipVariant={resultTier === 'paid' ? 'gold' : 'free'}
         />
@@ -662,8 +662,8 @@ export function DailyFortunePage() {
               onCreateNew={() => navigate('/input?new=1')}
               profile={selectedProfile}
               dateInfo={dateInfo}
-              ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '오늘의 운세 보기 (무료)' : '오늘의 운세 보기 · 1운'}
-              tierChip={todayReport ? '오늘 받은 운세 · 다시 보기 무료' : dailyInProgress ? '만드는 중' : freePassAvailable ? '무료 · 1일 1회' : '오늘 무료 사용 · 이후 1운'}
+              ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '오늘의 운세 보기 (무료)' : '오늘의 운세 보기, 1운'}
+              tierChip={todayReport ? '오늘 받은 운세, 다시 보기 무료' : dailyInProgress ? '만드는 중' : freePassAvailable ? '무료, 1일 1회' : '오늘 무료 사용, 이후 1운'}
               onAnalyze={requestAnalyze}
             />
           )}
@@ -728,7 +728,7 @@ export function DailyFortunePage() {
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+            한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
             사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
@@ -752,12 +752,12 @@ export function DailyFortunePage() {
           </p>
           <ul style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.7, paddingLeft: 0, listStyle: 'none', wordBreak: 'keep-all' }}>
             {balance >= 1 ? (
-              <li>· 현재 잔액 {balance}운 → 차감 후 {Math.round((balance - 1) * 10) / 10}운</li>
+              <li>현재 잔액 {balance}운 → 차감 후 {Math.round((balance - 1) * 10) / 10}운</li>
             ) : (
-              <li>· 현재 잔액 {balance}운 · 1운이 필요해요</li>
+              <li>현재 잔액 {balance}운, 1운이 필요해요</li>
             )}
-            <li>· 받은 결과는 보관함에 저장되고, 오늘 다시 열 때는 차감되지 않아요</li>
-            <li>· 무료 1회는 매일 자정(한국시간)에 다시 생겨요</li>
+            <li>받은 결과는 보관함에 저장되고, 오늘 다시 열 때는 차감되지 않아요</li>
+            <li>무료 1회는 매일 자정(한국시간)에 다시 생겨요</li>
           </ul>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -878,7 +878,7 @@ function SelectView({
               position: 'relative',
             }}
           >
-            사주500 · 오늘의 운세 · {dateInfo.label}
+            사주500, 오늘의 운세, {dateInfo.label}
           </div>
           <div
             style={{
@@ -913,7 +913,7 @@ function SelectView({
             오늘 운세를 풀어드릴게요
           </h2>
           <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4, position: 'relative' }}>
-            일주와 오늘 간지의 작용, 용신·대운 흐름까지 함께 살펴볼게요.
+            일주와 오늘 간지의 작용, 용신과 대운 흐름까지 함께 살펴볼게요.
           </div>
         </header>
       </FadeIn>
@@ -1017,7 +1017,7 @@ function ResultView({
       const yy = d.getFullYear();
       const mm = d.getMonth() + 1;
       const dd = d.getDate();
-      const ganziLabel = dateInfo?.ganzi ? ` · ${todayGanReading}일(${dateInfo.ganzi})` : '';
+      const ganziLabel = dateInfo?.ganzi ? ` ${todayGanReading}일(${dateInfo.ganzi})` : '';
       return `${yy}년 ${mm}월 ${dd}일 ${dateInfo?.weekday || ''}요일${ganziLabel}`;
     } catch {
       return dateInfo?.label || '';

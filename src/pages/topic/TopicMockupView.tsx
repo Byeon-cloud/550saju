@@ -102,7 +102,7 @@ function autoEmphasize(input: string): string {
       '(?:게 좋아요|필수예요|필요해요|중요해요|좋습니다|중요합니다|필요합니다|효율적입니다|적절합니다|좋은 자리예요|어울려요|솟아오릅니다|강화합니다|극대화됩니다|커집니다|높습니다|좋아집니다|수월합니다|핵심 과제입니다)',
     ];
     const conclusionPattern = new RegExp(
-      `([가-힣\\sA-Za-z0-9·~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`
+      `([가-힣\\sA-Za-z0-9, ~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`
     );
 
     let strongCount = 0;
@@ -142,7 +142,7 @@ const MOCKUP_CSS = `
 .topic-mockup * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 .topic-mockup {
   font-family: 'Pretendard', sans-serif; color: #1A1612; letter-spacing: -0.01em; background: #F4EFE4;
-  /* 2026-10-10 v9 한지 톤 — 먹·종이 (src/styles/hanji.css 와 같은 값 · 보조 글자 대비 5:1) */
+  /* 2026-10-10 v9 한지 톤 — 먹과 종이 (src/styles/hanji.css 와 같은 값, 보조 글자 대비 5:1) */
   --c-paper: #F4EFE4;
   --c-surface: #FFFDF8;
   --c-ink: #1A1612;
@@ -328,7 +328,7 @@ const MOCKUP_CSS = `
 .topic-mockup .body p b, .topic-mockup .body b {
   font-weight: 700; color: var(--c-ink); font-family: 'Noto Serif KR', serif;
 }
-/* <em> = 주의·경고 (번트오렌지) — 2026-05-29. 황금 형광펜과 대비. font-style normal (한글 가독). */
+/* <em> = 주의와 경고 (번트오렌지) — 2026-05-29. 황금 형광펜과 대비. font-style normal (한글 가독). */
 .topic-mockup .body p em, .topic-mockup .body em,
 .topic-mockup .reason em, .topic-mockup .ds em {
   font-style: normal; font-weight: 700; color: #A23A2A;
@@ -694,7 +694,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
             {theme.heroH1.line2}
           </h1>
           {profile?.name && (
-            <div className="meta">{profile.name} 님 · {theme.sajuRefPrefix}</div>
+            <div className="meta">{profile.name} 님, {theme.sajuRefPrefix}</div>
           )}
         </header>
 
@@ -763,7 +763,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {sipCells.length === 4 && (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title={`${theme.label} 십성 분포`} han="十神" id="03" />
-              <div className="sec-lead">{theme.label}에 직접 영향을 주는 4축 — {theme.sipsungAxes.main}·{theme.sipsungAxes.secondary}·{theme.sipsungAxes.resistance}·{theme.sipsungAxes.aux}</div>
+              <div className="sec-lead">{theme.label}에 직접 영향을 주는 4축 — {theme.sipsungAxes.main}, {theme.sipsungAxes.secondary}, {theme.sipsungAxes.resistance}, {theme.sipsungAxes.aux}</div>
               <div className="sip-grid">
                 {sipCells.map((c: any, i: number) => (
                   <div key={i} className={`sip-cell lv-${c?.level || '보통'}`}>
@@ -785,8 +785,8 @@ export function TopicMockupView(props: TopicMockupViewProps) {
               <SectionHeader num="04" title="시기별 흐름" han="時運" id="04" />
               <div className="sec-lead">
                 {timelineType === '12months' && '한 해의 12개월 흐름'}
-                {timelineType === '3stage' && '시작 · 전환 · 결판 3단계'}
-                {timelineType === 'semester' && '학기 단위 집중 · 정체 · 도약'}
+                {timelineType === '3stage' && '시작, 전환, 결판 3단계'}
+                {timelineType === 'semester' && '학기 단위 집중, 정체, 도약'}
               </div>
               {timelineType === '12months' && (
                 <div className="tl-12m">
@@ -822,7 +822,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {meet && (meet.boost || meet.clash || meet.calm) && (
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
               <SectionHeader num="05" title={`${theme.label} 인연`} han="人緣" id="05" />
-              <div className="sec-lead">도움 · 충돌 · 평온 — 세 가지 결</div>
+              <div className="sec-lead">도움, 충돌, 평온 — 세 가지 결</div>
               <div className="meet-stack">
                 {(['boost', 'clash', 'calm'] as const).map((kind) => {
                   const m = meet[kind];
@@ -906,7 +906,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {lucky && (
             <section className={`section ${isOpen('07') ? 'open' : ''}`}>
               <SectionHeader num="07" title={`${theme.label} 럭키 6`} han="吉物" id="07" />
-              <div className="sec-lead">색·방위·시간·숫자·단어·음식</div>
+              <div className="sec-lead">색, 방위, 시간, 숫자, 단어, 음식</div>
               <div className="lucky-grid">
                 {luckyEntries.map((e) => {
                   const v = lucky[e.key as keyof typeof lucky];
@@ -937,7 +937,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
         {/* Upsell — 종합사주 유도 */}
         {onUpsell && (
           <button type="button" className="upsell" onClick={onUpsell}>
-            <div className="lb">종합사주 · 열 장</div>
+            <div className="lb">종합사주, 열 장</div>
             <h3>{upsellLine || '평생을 사주 전체로 보면'}</h3>
             <p>10가지 결을 한 번에 — 종합사주로 평생의 흐름을 펼쳐 봅니다.</p>
             <span className="cta">

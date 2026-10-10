@@ -7,6 +7,8 @@ import { logAiFailure } from './shared/aiFailureLog';
 import { logAnthropicUsage } from './shared/aiUsageLog'; // C7 원가 기록 (fire-and-forget · 생성 로직 무관)
 import { writeGroupProgress } from './shared/progressWrite'; // 점진 로딩 — 그룹별 증분 write(best-effort·머니 무관)
 import { kstNow } from './utils/kstTime';
+/** 2026-10-10 — 스트림 완료본도 콜러블과 같은 정리(출처·한자·보장·시각·가운뎃점) — 여러 번 걸어도 같은 결과 */
+const cleanAiOut = async <T,>(v: T): Promise<T> => (await import('./ai/sajuFacts')).sanitizeAiOutput(v);
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
 const lazyClaudeReport = () => import('./ai/claudeReport');
 
@@ -360,7 +362,7 @@ export const generatePremiumReportStream = onRequest(
       //   부팅에서 recoverPremiumResult 로 끌어와 복원 (재생성 0). 미저장 시 자동환불로 degrade.
       try { await reportRef.set({ recovery: JSON.stringify({ content: merged, sajuData }) }, { merge: true }); } catch { /* 색인/용량 초과 — 복구 미지원 */ }
 
-      sendEvent('done', { reportId: reportRef.id, content: merged });
+      sendEvent('done', { reportId: reportRef.id, content: await cleanAiOut(merged) });
       res.end();
     } catch (error: any) {
       clearInterval(heartbeat);
@@ -501,7 +503,7 @@ export const generateReportStream = onRequest(
       // 2026-06-18 결과복구 — content+사주 별도 best-effort write (메타 저장과 분리, 색인예외 필드).
       try { await reportRef.set({ recovery: JSON.stringify({ content: merged, sajuData }) }, { merge: true }); } catch { /* 색인/용량 초과 — 복구 미지원 */ }
 
-      sendEvent('done', { reportId: reportRef.id, content: merged });
+      sendEvent('done', { reportId: reportRef.id, content: await cleanAiOut(merged) });
       res.end();
     } catch (error: any) {
       clearInterval(heartbeat);
@@ -616,7 +618,7 @@ export const generateDailyFortune = onCall(
   async (request) => {
     const { name, sajuData, date, weekday, todayGanzi, jeolgi, dayJiShen, dayXiongSha } = request.data || {};
     if (!sajuData || !date || !todayGanzi) {
-      throw new HttpsError('invalid-argument', '사주·날짜·오늘 간지가 필요합니다');
+      throw new HttpsError('invalid-argument', '사주, 날짜, 오늘 간지가 필요합니다');
     }
 
     const uid = request.auth?.uid;
@@ -703,9 +705,9 @@ const GUARD_KEYWORDS: Array<{ re: RegExp; cat: GuardCategory }> = [
 const GUARD_RESPONSE: Record<GuardCategory, string> = {
   self_harm: '사주는 결정된 운명을 알려주는 도구가 아닙니다. 지금 마음이 많이 힘드시면 자살예방상담전화 1393(24시간), 정신건강상담 1577-0199에 연락해 주세요. 사주 상담은 다음 기회에 다시 찾아주시면 좋겠습니다.',
   drugs: '사주 상담은 약물 관련 정보를 제공하지 않습니다. 마약류중독상담 1342로 연결해 드립니다.',
-  crime: '타인에게 해를 끼치거나 법을 어기는 일에 대한 상담은 어렵습니다. 범죄신고 112 · 사이버범죄 118 로 문의해 주세요.',
-  investment: '사주는 특정 종목·번호를 예측하지 않습니다. 재물운의 흐름과 시기는 안내드릴 수 있습니다. 금융투자의 결과는 본인 책임이며, 전문가 자문을 권해드립니다.',
-  medical_legal: '의료·법률 단정은 사주의 영역이 아닙니다. 사주는 가능성과 흐름을 보는 도구입니다. 확정 진단은 해당 분야 전문가의 진단·자문을 권해드립니다.',
+  crime: '타인에게 해를 끼치거나 법을 어기는 일에 대한 상담은 어렵습니다. 범죄신고 112, 사이버범죄 118 로 문의해 주세요.',
+  investment: '사주는 특정 종목과 번호를 예측하지 않습니다. 재물운의 흐름과 시기는 안내드릴 수 있습니다. 금융투자의 결과는 본인 책임이며, 전문가 자문을 권해드립니다.',
+  medical_legal: '의료와 법률 단정은 사주의 영역이 아닙니다. 사주는 가능성과 흐름을 보는 도구입니다. 확정 진단은 해당 분야 전문가의 진단과 자문을 권해드립니다.',
 };
 
 /** 키워드 1차 필터 — 매칭 시 카테고리 반환, 미매칭 시 null. */
@@ -830,7 +832,7 @@ export const generateDailyFortuneStream = onRequest(
     } = req.body || {};
 
     if (!sajuData || !date || !todayGanzi) {
-      sendEvent('error', { message: '사주·날짜·오늘 간지가 필요합니다' });
+      sendEvent('error', { message: '사주, 날짜, 오늘 간지가 필요합니다' });
       res.end();
       return;
     }
@@ -864,7 +866,7 @@ export const generateDailyFortuneStream = onRequest(
               .set({ servedAt: admin.firestore.FieldValue.serverTimestamp(), via: 'shared' }, { merge: true })
               .catch(() => { /* noop */ });
           }
-          sendEvent('done', { result: content, cached: true, cacheLevel: 'shared' });
+          sendEvent('done', { result: await cleanAiOut(content), cached: true, cacheLevel: 'shared' });
           res.end();
           return;
         }
@@ -928,7 +930,7 @@ export const generateDailyFortuneStream = onRequest(
       };
       const subOnly = (sub: Exclude<DailySub, 'A1'>) =>
         `\n\n## ⚡⚡ 이번 호출의 최종 출력 범위 (위 스키마 중 이 키들만): ${SUB_KEYS[sub].join(', ')}\n` +
-        `이 키들만 담은 JSON 객체 하나만 출력. 다른 키는 다른 호출이 쓰므로 출력 금지. 위 '오늘 시간대·오행 관계 확정표'를 그대로 따를 것.`;
+        `이 키들만 담은 JSON 객체 하나만 출력. 다른 키는 다른 호출이 쓰므로 출력 금지. 위 '오늘 시간대와 오행 관계 확정표'를 그대로 따를 것.`;
 
       const runSub = async (sub: DailySub, userPrompt: string, maxTokens: number, streamAs: 'A1' | 'A2' | 'B' | null, delayMs = 0) => {
         if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
@@ -1068,7 +1070,7 @@ export const generateDailyFortuneStream = onRequest(
         totalElapsedMs: Date.now() - t0,
         sajuKey,
         finalKeys: Object.keys(merged).length,
-        model: 'A1 haiku · A2/B sonnet (+ sonnet-fallback)',
+        model: 'A1 haiku, A2/B sonnet (+ sonnet-fallback)',
       });
 
       // ── L1 · Shared Cache 저장 (uid 무관) ──
@@ -1110,7 +1112,7 @@ export const generateDailyFortuneStream = onRequest(
       }
 
       sendEvent('done', {
-        result: merged,
+        result: await cleanAiOut(merged),
         cached: false,
         cacheLevel: 'miss',
         elapsedMs: Date.now() - t0,
@@ -1462,7 +1464,7 @@ export const generateDreamFreeStream = onRequest(
         const merged = { ...groupA.parsed, ...groupB.parsed };
         const totalMs = Date.now() - t0;
         console.log(`[dreamFreeStream] both groups done in ${totalMs}ms (A=${groupA.elapsedMs}ms, B=${groupB.elapsedMs}ms)`);
-        sendEvent('done', { content: merged, elapsedMs: totalMs, mode: '2-group-parallel' });
+        sendEvent('done', { content: await cleanAiOut(merged), elapsedMs: totalMs, mode: '2-group-parallel' });
         res.end();
         return;
       }
@@ -1502,7 +1504,7 @@ export const generateDreamFreeStream = onRequest(
         parsed = parseJsonResponse(text, { repairUsed: false });
       }
       console.log(`[dreamFreeStream] single-call done in ${Date.now() - t0}ms`);
-      sendEvent('done', { content: parsed, elapsedMs: Date.now() - t0, mode: 'single-call' });
+      sendEvent('done', { content: await cleanAiOut(parsed), elapsedMs: Date.now() - t0, mode: 'single-call' });
       res.end();
     } catch (error: any) {
       console.error('generateDreamFreeStream error:', error);
@@ -2452,7 +2454,7 @@ export const disconnectToss = onRequest(
           }
         }
 
-        console.log(`[disconnectToss] 처리 완료: ${uid} (${referrer} · ${isWithdrawal ? '탈퇴=비활성화+파기예약' : '연결해제=계정유지'})`);
+        console.log(`[disconnectToss] 처리 완료: ${uid} (${referrer}, ${isWithdrawal ? '탈퇴=비활성화+파기예약' : '연결해제=계정유지'})`);
       } else {
         console.warn(`[disconnectToss] 유저 못 찾음: userKey=${userKey}`);
       }
@@ -2571,7 +2573,7 @@ export const generateTopicAnalysisStream = onRequest(
 
     const { topicId, sajuData, baseScore, partnerInfo, extraInfo } = req.body || {};
     if (!topicId || !sajuData) {
-      sendEvent('error', { message: 'topicId·sajuData 필요' });
+      sendEvent('error', { message: 'topicId, sajuData 필요' });
       res.end();
       return;
     }
@@ -2636,7 +2638,7 @@ export const generateTopicAnalysisStream = onRequest(
       }
 
       console.log(`[topicStream:${topicId}] done in ${Date.now() - t0}ms`);
-      sendEvent('done', { reportId: reportRef.id, content: parsed, elapsedMs: Date.now() - t0 });
+      sendEvent('done', { reportId: reportRef.id, content: await cleanAiOut(parsed), elapsedMs: Date.now() - t0 });
       res.end();
     } catch (error: any) {
       console.error('generateTopicAnalysisStream error:', error);

@@ -182,18 +182,18 @@ function adaptToTopicResultV2(result: any, topicId: string): TopicResultV2 {
  */
 const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> = {
   // SSOT v1 컬러 정렬 (2026-04-22 · @/constants/topics)
-  love:     { label: '연애운',       color: '#8C6D3D', desc: '만남·관계·인연 흐름' },
-  wealth:   { label: '재물운',       color: '#8C6D3D', desc: '돈·투자·현금흐름 변곡' },
-  career:   { label: '직업운',       color: '#8C6D3D', desc: '커리어·승진·평생 결' },
+  love:     { label: '연애운',       color: '#8C6D3D', desc: '만남, 관계, 인연 흐름' },
+  wealth:   { label: '재물운',       color: '#8C6D3D', desc: '돈, 투자, 현금흐름 변곡' },
+  career:   { label: '직업운',       color: '#8C6D3D', desc: '커리어, 승진, 평생 결' },
   marriage: { label: '결혼운',       color: '#8C6D3D', desc: '인연 시기와 배우자 결' },
-  business: { label: '사업운',       color: '#8C6D3D', desc: '창업·자영업 흐름과 시기' },
-  health:   { label: '건강운',       color: '#8C6D3D', desc: '체질·기운·주의 시기' },
+  business: { label: '사업운',       color: '#8C6D3D', desc: '창업과 자영업 흐름과 시기' },
+  health:   { label: '건강운',       color: '#8C6D3D', desc: '체질, 기운, 주의 시기' },
   reunion:  { label: '재회운',       color: '#8C6D3D', desc: '헤어진 사람과의 흐름' },
-  study:    { label: '학업운',       color: '#8C6D3D', desc: '집중력·지식 흡수·학습 패턴' },
-  exam:     { label: '합격·이직운', color: '#8C6D3D', desc: '시험·이직 결정 시기' }, // SSOT v1 신규
-  move:     { label: '이사·이동운', color: '#8C6D3D', desc: '이사·이동 길흉 방향' }, // SSOT v1 canonical
+  study:    { label: '학업운',       color: '#8C6D3D', desc: '집중력과 지식 흡수와 학습 패턴' },
+  exam:     { label: '합격 이직운', color: '#8C6D3D', desc: '시험과 이직 결정 시기' }, // SSOT v1 신규
+  move:     { label: '이사 이동운', color: '#8C6D3D', desc: '이사 이동 길흉 방향' }, // SSOT v1 canonical
   social:   { label: '대인관계운',   color: '#8C6D3D', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지
-  moving:   { label: '이사·이동운', color: '#8C6D3D', desc: '이사·이동 길흉 방향' }, // legacy — 'move' alias
+  moving:   { label: '이사 이동운', color: '#8C6D3D', desc: '이사 이동 길흉 방향' }, // legacy — 'move' alias
 };
 
 const OHENG_COLORS: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
@@ -206,11 +206,11 @@ const TOPIC_SECTION_TITLES: Record<string, string[]> = {
   wealth: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '새는 돈 패턴', '올해 재물 전략'],
   career: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '일터에서 반복되는 관계 패턴'],
   marriage: ['결혼 적기 분석', '미래 배우자의 성향', '결혼 후 생활 패턴', '배우자 가족 관계', '결혼 준비 조언'],
-  business: ['사업가 기질 분석', '맞는 업종', '창업·확장 타이밍', '동업 궁합', '사업 리스크 관리'],
+  business: ['사업가 기질 분석', '맞는 업종', '창업과 확장 타이밍', '동업 궁합', '사업 리스크 관리'],
   health: ['오행별 취약 장기', '체질 분석', '올해 건강 주의 시기', '정신 건강 패턴', '건강 개선 전략'],
   study: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '슬럼프 극복법', '올해 공부 로드맵'],
-  exam: ['올해 합격·변동 기운', '유리한 방향과 분야', '시험·면접·결정 시기', '변동 후 적응 전망', '올해 실전 전략'],
-  move: ['이동 적기 분석', '좋은 방향', '이사·유학·이주 전망', '해외운', '올해 이동 전략'],
+  exam: ['올해 합격과 변동 기운', '유리한 방향과 분야', '시험, 면접, 결정 시기', '변동 후 적응 전망', '올해 실전 전략'],
+  move: ['이동 적기 분석', '좋은 방향', '이사, 유학, 이주 전망', '해외운', '올해 이동 전략'],
   reunion: ['이별의 사주적 원인 분석', '상대방의 사주 성향 분석', '두 사람의 오행 궁합 구조', '전통 연애 신살(神殺) 분석', '재회 가능성과 적기', '월별 재회 에너지 흐름', '재회 실전 전략', '재회 후 관계 변화 예측', '새 인연 vs 재회 — 냉정한 비교', '재회 성공을 위한 개운법'],
 };
 
@@ -627,7 +627,7 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
           </div>
           <div className="grid grid-cols-2 gap-2">
             {data.doHwaSal != null && (
-              <StatTile label="매력의 별 · 도화살" value={data.doHwaSal ? '있음' : '없음'} color={color} tone={data.doHwaSal ? 'good' : 'default'} big />
+              <StatTile label="매력의 별, 도화살" value={data.doHwaSal ? '있음' : '없음'} color={color} tone={data.doHwaSal ? 'good' : 'default'} big />
             )}
             {data.bestMeetMonth && (
               <StatTile label={loveStatus === 'some' ? '썸이 연애로 이어지는 시기' : loveStatus === 'dating' ? '관계가 깊어지는 시기' : '인연 시작 유력 시기'} value={data.bestMeetMonth} color={color} tone="good" big />
@@ -745,7 +745,7 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
                     </div>
                     {/* 2026-06-12 신뢰 카피 — "양방향 동일 판정" CS 혼란 예방 (합·충은 만세력 객관 계산값) */}
                     <p className="text-[11px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
-                      두 분의 합·충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
+                      두 분의 합과 충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
                     </p>
                   </div>
                 );
@@ -810,7 +810,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
         { key: 'main',    label: '본업',    hanja: '本業', value: Number(s.main ?? 0),    color: '#B8965A' },
         { key: 'invest',  label: '투자',    hanja: '投資', value: Number(s.invest ?? 0),  color: '#3E5F82' },
         { key: 'side',    label: '사이드',   hanja: '副業', value: Number(s.side ?? 0),    color: '#4E7A57' },
-        { key: 'inherit', label: '상속·기타', hanja: '其他', value: Number(s.inherit ?? 0), color: '#8C6D3D' },
+        { key: 'inherit', label: '상속과 기타', hanja: '其他', value: Number(s.inherit ?? 0), color: '#8C6D3D' },
       ];
     }
     // wealthType 기반 inference (서버 response 누락 시 안전 fallback)
@@ -825,7 +825,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
       { key: 'main',    label: '본업',    hanja: '本業', value: dist.main,    color: '#B8965A' },
       { key: 'invest',  label: '투자',    hanja: '投資', value: dist.invest,  color: '#3E5F82' },
       { key: 'side',    label: '사이드',   hanja: '副業', value: dist.side,    color: '#4E7A57' },
-      { key: 'inherit', label: '상속·기타', hanja: '其他', value: dist.inherit, color: '#8C6D3D' },
+      { key: 'inherit', label: '상속과 기타', hanja: '其他', value: dist.inherit, color: '#8C6D3D' },
     ];
   }, [data.incomeSources, data.wealthType]);
   const isInferredDist = !data.incomeSources;
@@ -868,7 +868,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {data.earningPower != null && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] text-text-secondary font-semibold">수익력 <span className="text-[11px] text-text-hint font-normal">· 돈 벌어오는 힘</span></span>
+                  <span className="text-[12px] text-text-secondary font-semibold">수익력 <span className="text-[11px] text-text-hint font-normal">돈 벌어오는 힘</span></span>
                   <span className="text-[18px] font-black" style={{ color: '#4E7A57', fontFamily: "'Noto Serif KR', serif" }}>{data.earningPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
                 <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(78,122,87,0.10)' }}>
@@ -879,7 +879,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {data.savingPower != null && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] text-text-secondary font-semibold">저축력 <span className="text-[11px] text-text-hint font-normal">· 돈 모으는 힘</span></span>
+                  <span className="text-[12px] text-text-secondary font-semibold">저축력 <span className="text-[11px] text-text-hint font-normal">돈 모으는 힘</span></span>
                   <span className="text-[18px] font-black" style={{ color: '#3E5F82', fontFamily: "'Noto Serif KR', serif" }}>{data.savingPower}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
                 <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(62,95,130,0.10)' }}>
@@ -890,7 +890,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {data.spendingRisk != null && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] text-text-secondary font-semibold">지출 위험도 <span className="text-[11px] text-text-hint font-normal">· 높을수록 새는 돈 큼</span></span>
+                  <span className="text-[12px] text-text-secondary font-semibold">지출 위험도 <span className="text-[11px] text-text-hint font-normal">높을수록 새는 돈 큼</span></span>
                   <span className="text-[18px] font-black" style={{ color: '#B04A38', fontFamily: "'Noto Serif KR', serif" }}>{data.spendingRisk}<small className="text-[11px] font-normal text-text-hint ml-0.5">점</small></span>
                 </div>
                 <div className="h-[10px] rounded-full overflow-hidden" style={{ background: 'rgba(176,74,56,0.10)' }}>
@@ -1065,7 +1065,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             )}
           </div>
           <p className="text-[11px] text-text-hint mb-3 ml-9">
-            본업·투자·사이드·기타 — 4 통로의 비중
+            본업, 투자, 사이드, 기타 — 4 통로의 비중
           </p>
           <IncomeDonut segments={incomeDistribution} accentColor={color} />
         </div>
@@ -1075,7 +1075,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
           <div className="card">
             <div className="flex items-center justify-between mb-1">
               <p className="text-h3 text-text-primary">평생 재물 흐름</p>
-              <span className="text-[11px] text-text-hint">大運 · 10년 단위</span>
+              <span className="text-[11px] text-text-hint">大運, 10년 단위</span>
             </div>
             <p className="text-[11px] text-text-hint mb-3">
               8 대운 60년 — 재물 강세 시기 한눈에
@@ -1346,7 +1346,7 @@ function DaewoonWealthRail({
               boxShadow: c.isCurrent ? '0 2px 8px rgba(184,150,90,0.20)' : 'none',
               position: 'relative',
             }}
-            title={`${c.startAge}~${c.endAge}세 · ${c.ganji} · ${c.sipsung || '—'} (재물 ${c.intensity})`}
+            title={`${c.startAge}~${c.endAge}세, ${c.ganji}, ${c.sipsung || '—'} (재물 ${c.intensity})`}
           >
             {isPeak && (
               <span aria-hidden style={{ position: 'absolute', top: -6, right: -2, fontSize: 12, color: accentColor }}>
@@ -1414,7 +1414,7 @@ const RELFLOW_CATEGORIES = [
     bg: 'rgba(78,122,87,0.06)',
     border: 'rgba(78,122,87,0.30)',
     sipsungs: ['정인', '편인', '식신', '상관'] as const,
-    desc: '인성·식상 — 돈 굴리는 지혜와 재능을 주는 사람',
+    desc: '인성과 식상 — 돈 굴리는 지혜와 재능을 주는 사람',
   },
   {
     key: 'rival',
@@ -1434,7 +1434,7 @@ const RELFLOW_CATEGORIES = [
     bg: 'rgba(62,95,130,0.06)',
     border: 'rgba(62,95,130,0.30)',
     sipsungs: ['정관', '편관', '정재', '편재'] as const,
-    desc: '관성·재성 — 책임과 실리를 함께 나누는 자리',
+    desc: '관성과 재성 — 책임과 실리를 함께 나누는 자리',
   },
 ];
 
@@ -1526,7 +1526,7 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
                       background: '#fff', border: `1px solid ${cat.color}40`,
                       padding: '3px 8px', borderRadius: 100, marginLeft: 'auto',
                     }}>
-                      주력 · {dominant}
+                      주력, {dominant}
                     </span>
                   </div>
                 </>
@@ -1555,7 +1555,7 @@ function CareerViz({ data, color }: { data: any; color: string }) {
               <p className="text-h3 text-text-primary">사주가 부르는 직종 TOP 5</p>
               {data.workStyle && <TypeBadge label={data.workStyle} color={color} />}
             </div>
-            <p className="text-[11px] text-text-hint mb-3">일간 오행·격국·십성 비중 분석 — 잘 맞는 5직종</p>
+            <p className="text-[11px] text-text-hint mb-3">일간 오행, 격국, 십성 비중 분석 — 잘 맞는 5직종</p>
             <div className="space-y-3">
               {data.careerFit.map((c: any, i: number) => (
                 <div key={i} className="space-y-1">
@@ -1842,7 +1842,7 @@ function MarriageViz({ data, color, myName, partnerName }: { data: any; color: s
                     </div>
                     {/* 2026-06-12 신뢰 카피 — "양방향 동일 판정" CS 혼란 예방 (합·충은 만세력 객관 계산값) */}
                     <p className="text-[11px] text-text-hint mt-2 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
-                      두 분의 합·충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
+                      두 분의 합과 충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
                     </p>
                   </div>
                 );
@@ -2150,7 +2150,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold mb-1" style={{ color: ohengText[myIlganOheng] || color }}>
-                        {myName ? `${myName} 님의 결` : '나의 결'} {myIlganOheng && <span className="opacity-70">· {myIlganOheng} 기운</span>}
+                        {myName ? `${myName} 님의 결` : '나의 결'} {myIlganOheng && <span className="opacity-70">, {myIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                         {pp.loveStyle || '내 사주의 연애 스타일을 분석 중'}
@@ -2175,7 +2175,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold mb-1" style={{ color: ohengText[ptIlganOheng] || color }}>
-                        {partnerName ? `${partnerName} 님의 결` : '상대의 결'} {ptIlganOheng && <span className="opacity-70">· {ptIlganOheng} 기운</span>}
+                        {partnerName ? `${partnerName} 님의 결` : '상대의 결'} {ptIlganOheng && <span className="opacity-70">, {ptIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                         {pp.personality || '상대의 사주를 분석 중'}
@@ -2188,7 +2188,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
 
             {/* 2026-06-13 P1-2 — 신뢰 카피 (연애·결혼과 동일 · 재회만 누락돼 있던 것) */}
             <p className="text-[11px] text-text-hint mb-3 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
-              두 분의 합·충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
+              두 분의 합과 충 판정은 만세력 계산값이라 어느 분 기준으로 보셔도 똑같아요. 풀이만 {myName ? `${myName} 님` : '나'}의 사주를 중심으로 전개돼요.
             </p>
 
             {/* 2026-05-28 — 나 vs 상대 2-카드 제거 (위 3-카드 스토리텔링에 통합됨) */}
@@ -2750,7 +2750,7 @@ function ExamViz({ data, color }: { data: any; color: string }) {
               )}
               {examTimingAnalysis && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
-                  <p className="text-[11px] font-bold mb-1" style={{ color }}>대운·세운 흐름</p>
+                  <p className="text-[11px] font-bold mb-1" style={{ color }}>대운과 세운 흐름</p>
                   <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{examTimingAnalysis}</p>
                 </div>
               )}
@@ -2769,7 +2769,7 @@ function ExamViz({ data, color }: { data: any; color: string }) {
               {recommendedFields && (
                 <div className="rounded-xl p-3" style={{ background: `${color}08` }}>
                   <p className="text-[11px] font-bold mb-1" style={{ color }}>사주 맞춤 추천 분야</p>
-                  <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{Array.isArray(recommendedFields) ? recommendedFields.join(' · ') : recommendedFields}</p>
+                  <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>{Array.isArray(recommendedFields) ? recommendedFields.join(', ') : recommendedFields}</p>
                 </div>
               )}
             </div>
@@ -2789,7 +2789,7 @@ function ExamViz({ data, color }: { data: any; color: string }) {
             ? '핵심 지표'
             : parts.length === 1
               ? `${parts[0]} 핵심 지표`
-              : `${parts.join('·')} 핵심 지표`;
+              : `${parts.join(', ')} 핵심 지표`;
           return (
           <div className="card">
             <p className="text-h3 text-text-primary mb-3">{dynamicTitle}</p>
@@ -3028,7 +3028,7 @@ function swapGenderedTerms(text: string | undefined | null, gender?: 'male' | 'f
       .replace(/시댁\s*분위기/g, '처가 분위기')
       .replace(/시댁\s*가족/g, '처가 가족')
       .replace(/시댁\s*어른/g, '처가 어른')
-      .replace(/시부모/g, '장인·장모')
+      .replace(/시부모/g, '장인과 장모')
       .replace(/시어머니/g, '장모님')
       .replace(/시아버지/g, '장인어른')
       .replace(/시댁/g, '처가');
@@ -3717,7 +3717,7 @@ export function TopicAnalysisPage() {
             settled = true;
             if (!phaseShown) { phaseShown = true; setPhase('result'); }
             if (latestPartial) {
-              console.warn(`[topic] ${Math.round((now - t0) / 1000)}s 마감 — partial 저장 (__partial 마킹 · pending 유지 · 늦은 완성본 승격 대기)`);
+              console.warn(`[topic] ${Math.round((now - t0) / 1000)}s 마감 — partial 저장 (__partial 마킹, pending 유지, 늦은 완성본 승격 대기)`);
               resolve({ reportId: '', content: { ...latestPartial, __partial: true } });
             } else reject(new Error('topic stream timeout'));
           };
@@ -3896,7 +3896,7 @@ export function TopicAnalysisPage() {
                 <span className="hj-seal" style={{ width: 30, height: 30, fontSize: 14, color: '#E7B9AC', borderColor: 'rgba(231,185,172,.7)', background: 'transparent' }}>
                   {TOPIC_REGISTRY[(normalizeTopicId(topicId || '') || topicId) as TopicId]?.kanji || '命'}
                 </span>
-                주제운 · {getTopicPrice(topicId as TopicKey).actualPrice}운
+                주제운 {getTopicPrice(topicId as TopicKey).actualPrice}운
               </div>
               <h1 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 24, fontWeight: 700, marginTop: 12, lineHeight: 1.35, letterSpacing: '-0.02em' }}>
                 {topic.label} 심층분석
@@ -4005,7 +4005,7 @@ export function TopicAnalysisPage() {
                             </div>
                             {il && (
                               <div style={{ fontSize: 12, fontWeight: 700, color: '#8C6D3D', letterSpacing: '0.02em' }}>
-                                일간 {il} · {oh}
+                                일간 {il}, {oh}
                               </div>
                             )}
                           </div>
@@ -4430,7 +4430,7 @@ export function TopicAnalysisPage() {
                             <label className="text-[11px] text-text-hint mb-1 block">변동 유형 <span className="text-[11px] opacity-60">(선택)</span></label>
                             <div className="flex gap-2 flex-wrap">
                               {[
-                                { v: 'exam', l: '시험·자격증' },
+                                { v: 'exam', l: '시험과 자격증' },
                                 { v: 'jobchange', l: '이직' },
                                 { v: 'career_pivot', l: '직무 전환' },
                               ].map((s) => {
@@ -4486,7 +4486,7 @@ export function TopicAnalysisPage() {
                                     {availableMonths.map(m => <option key={m} value={m}>{m}월</option>)}
                                   </select>
                                 </div>
-                                <p className="text-[11px] text-text-hint mt-1">예정 시기의 합격·변동운을 정밀 분석합니다</p>
+                                <p className="text-[11px] text-text-hint mt-1">예정 시기의 합격과 변동운을 정밀 분석합니다</p>
                               </div>
                             );
                           })()}
@@ -4747,7 +4747,7 @@ export function TopicAnalysisPage() {
                             {topic.label} 분석하기 (
                             <span style={{ textDecoration: 'line-through', opacity: 0.7, marginRight: 4 }}>{pricing.regularPrice}운</span>
                             <span style={{ fontWeight: 800 }}>{actualPrice}운</span>
-                            <span style={{ marginLeft: 6, fontSize: '0.85em', color: '#FFD54F' }}>· {pricing.saleBadge}</span>
+                            <span style={{ marginLeft: 6, fontSize: '0.85em', color: '#FFD54F' }}>, {pricing.saleBadge}</span>
                             )
                           </span>
                         ) : (
@@ -4780,10 +4780,10 @@ export function TopicAnalysisPage() {
               reunion: '두 사람의 사주를 교차 분석하고 있어요.|상대방의 숨은 마음까지 읽고 있어요.|궁합 구조와 신살을 정밀 분석 중이에요.|재회 전략까지 세우고 있어요.',
               study: '인성 구조로 학습 체질을 분석하고 있어요.|합격 운과 최적 시기를 계산하고 있어요.|집중력 피크 시간대를 찾고 있어요.|시험 당일 전략까지 세우고 있어요.',
               // audit 2 P1 B1 — exam 키 신규 추가 (TOPICS 에 등록됐지만 NOTES 누락이었음)
-              exam: '합격·이직 좋은 달을 사주에서 찾고 있어요.|면접 유리한 시간대를 보고 있어요.|변동 운이 강한 시기를 짚고 있어요.|합격 신살(문창·학당·태극)을 확인하고 있어요.',
-              move: '이동·변화의 글자를 확인하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
+              exam: '합격 이직 좋은 달을 사주에서 찾고 있어요.|면접 유리한 시간대를 보고 있어요.|변동 운이 강한 시기를 짚고 있어요.|합격 신살(문창, 학당, 태극)을 확인하고 있어요.',
+              move: '이동과 변화의 글자를 확인하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
               social: '도와줄 인연이 있는 자리를 보고 있어요.|귀인운이 언제 오는지 확인하고 있어요.|구설수 주의 시기를 계산하고 있어요.|사주적 관계 패턴을 읽고 있어요.',
-              moving: '이동·변화의 글자를 확인하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
+              moving: '이동과 변화의 글자를 확인하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
             };
             const reunionSteps = [
               '사주 원국을 깊이 분석하고 있어요',
@@ -4961,7 +4961,7 @@ export function TopicAnalysisPage() {
                       theme={theme}
                       score={score}
                       title={`${topic.label} 지수`}
-                      body={`${j.reading} · ${j.desc}`}
+                      body={`${j.reading}, ${j.desc}`}
                       // note 제거 — 중복 + 어려운 단어
                     />
                   </div>
@@ -4988,7 +4988,7 @@ export function TopicAnalysisPage() {
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                     <span className="text-3xl font-black" style={{ color: j.color }}>{j.hanja}</span>
                   </motion.div>
-                  <p className="text-[12px] text-center" style={{ color: j.color }}>{j.reading} · {j.desc}</p>
+                  <p className="text-[12px] text-center" style={{ color: j.color }}>{j.reading}, {j.desc}</p>
 
                   {/* 사주 근거 */}
                   {result.sajuBasis && (
@@ -5050,7 +5050,7 @@ export function TopicAnalysisPage() {
                   도착 전 섹션도 헤더 + 스켈레톤으로 미리 그려 전체 구조를 즉시 노출 (회사형 skeleton screen).
                   loading = 콘텐츠 미도착 OR 글로벌 1200ms 미경과 → 진입 즉시 전체 스켈레톤, 이후 도착순 콘텐츠 교체. */}
               {(() => {
-                const SECTION_HANJA = ['·一語', '·三月', '·一年', '·終身', '·處方', '·神算', '·實踐', '·豫測', '·要訣', '·開運'];
+                const SECTION_HANJA = ['一語', '三月', '一年', '終身', '處方', '神算', '實踐', '豫測', '要訣', '開運'];
                 const liveSections: any[] = Array.isArray(result.sections) ? result.sections : [];
                 const lookupKey = topicId === 'moving' ? 'move' : (topicId || '');
                 const expectedTitles = TOPIC_SECTION_TITLES[lookupKey] || [];
@@ -5093,7 +5093,7 @@ export function TopicAnalysisPage() {
                           isLoading={sec.loading}
                           num={hanjaNum(i + 1)}
                           title={swapGenderedTerms(sec.heading, selected?.input?.gender)}
-                          hanjaSuffix={SECTION_HANJA[i] || '·一語'}
+                          hanjaSuffix={SECTION_HANJA[i] || '一語'}
                           sub={sec.highlight ? swapGenderedTerms(stripMd(sec.highlight), selected?.input?.gender) : undefined}
                         >
                           <SectionBody content={swapGenderedTerms(sec.content, selected?.input?.gender)} color={topic.color} />
@@ -5224,7 +5224,7 @@ export function TopicAnalysisPage() {
                     theme={theme}
                     num="지금 할 수 있는 일"
                     title="3가지 실천"
-                    hanjaSuffix="·三行"
+                    hanjaSuffix="三行"
                   >
                     <TopicActionList theme={theme} items={actionItems} />
                   </TopicSection>
@@ -5283,7 +5283,7 @@ export function TopicAnalysisPage() {
                     <span style={{ width: 20, textAlign: 'center', fontWeight: 900, color: '#8C6D3D', fontFamily: "'Noto Serif KR', serif" }}>合</span>
                     <span className="flex flex-col items-start text-left" style={{ minWidth: 0 }}>
                       <span className="text-[14px] font-semibold text-text-primary">그 사람과의 궁합 보기</span>
-                      <span className="text-[11px] text-text-hint">두 사람 사주가 맞물리는 자리 · 1운</span>
+                      <span className="text-[11px] text-text-hint">두 사람 사주가 맞물리는 자리, 1운</span>
                     </span>
                   </button>
                 )}
@@ -5335,12 +5335,12 @@ export function TopicAnalysisPage() {
               {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) — DailyFortune/Dream 통일 패턴 */}
               <div className="mt-8 text-center space-y-1">
                 <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                  한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+                  한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
                 </p>
                 <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
                   사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
                   <br />
-                  의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+                  의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
                 </p>
               </div>
 
@@ -5479,7 +5479,7 @@ export function TopicAnalysisPage() {
           return (
             <>
               <div className="hj-sheet" style={{ borderRadius: 14, border: `1px solid ${HJ.line}`, padding: '0 14px 12px', marginBottom: 14 }}>
-                <Pansim>{kanji} · {topic.label}</Pansim>
+                <Pansim>{kanji} {topic.label}</Pansim>
                 {fact && (
                   <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.65, marginTop: 12, wordBreak: 'keep-all' }}>
                     <span style={{ fontSize: 12.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>내 사주</span>{fact}
@@ -5515,7 +5515,7 @@ export function TopicAnalysisPage() {
               <GoldCta onClick={short ? goCharge : analyze} sub={`${actualPrice}운`}>
                 {short ? '충전하고 바로 열기' : `${topic.label} 열기`}
               </GoldCta>
-              {short && <p style={{ fontSize: 13, color: HJ.mute, textAlign: 'center', marginTop: 8 }}>충전하면 이 화면으로 돌아와요 · 입력한 내용은 그대로예요</p>}
+              {short && <p style={{ fontSize: 13, color: HJ.mute, textAlign: 'center', marginTop: 8 }}>충전하면 이 화면으로 돌아와요, 입력한 내용은 그대로예요</p>}
               <button type="button" onClick={() => { setShowConfirm(false); isAnalyzingRef.current = false; }}
                 style={{ display: 'block', margin: '10px auto 0', fontSize: 14.5, color: HJ.mute, background: 'transparent', border: 0, padding: 8 }}>
                 다음에 할게요

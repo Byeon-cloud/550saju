@@ -165,7 +165,7 @@ export function PremiumSelectPage() {
               letterSpacing: '0.02em',
             }}
           >
-            사주500 · 종합 사주
+            사주500, 종합 사주
           </div>
           <div
             style={{
@@ -199,7 +199,7 @@ export function PremiumSelectPage() {
                       {p.regularPrice}운
                     </span>
                     <span style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 800 }}>
-                      {p.salePrice}운 · {p.saleBadge}
+                      {p.salePrice}운, {p.saleBadge}
                     </span>
                   </>
                 );
@@ -235,7 +235,7 @@ export function PremiumSelectPage() {
             한 사주의 결을<br />처음부터 끝까지 풀어드립니다
           </h1>
           <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4, position: 'relative' }}>
-            원국·천간지지·십성·용신·대운·연운·신살·관계·주제·실천 — 10 섹션 깊이 풀이.
+            원국, 천간지지, 십성, 용신, 대운, 연운, 신살, 관계, 주제, 실천 — 10 섹션 깊이 풀이.
           </div>
         </header>
       </FadeIn>
@@ -302,7 +302,7 @@ export function PremiumSelectPage() {
           >
             {enough
               ? premiumPriceInfo.isOnSale && premiumPriceInfo.salePrice != null
-                ? `종합 사주 시작 (${premiumPrice}운 · ${premiumPriceInfo.saleBadge})`
+                ? `종합 사주 시작 (${premiumPrice}운, ${premiumPriceInfo.saleBadge})`
                 : `종합 사주 시작 (${premiumPrice}운)`
               : `잔액 부족 (${balance}/${premiumPrice}운)`}
           </Button>

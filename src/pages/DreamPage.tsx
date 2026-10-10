@@ -127,12 +127,12 @@ const DREAM_CATEGORIES: Array<{
   // 木=#4E7A57 火=#B04A38 土=#B07F38 金=#7D7870 水=#3E5F82 brand-gold=#B8965A
   { id: 'animal', label: '동물이 나오는 꿈', color: '#4E7A57', examples: '뱀, 개, 고양이, 돼지, 호랑이', hot: true },
   { id: 'water', label: '물과 관련된 꿈', color: '#3E5F82', examples: '바다, 강, 비, 홍수, 수영', hot: true },
-  { id: 'death', label: '죽음 · 이별의 꿈', color: '#7D7870', examples: '누군가 죽는 꿈, 장례식, 이별' },
+  { id: 'death', label: '죽음, 이별의 꿈', color: '#7D7870', examples: '누군가 죽는 꿈, 장례식, 이별' },
   { id: 'flying', label: '하늘을 나는 꿈', color: '#3E5F82', examples: '날기, 떨어지기, 높은 곳' },
-  { id: 'money', label: '돈 · 재물의 꿈', color: '#B8965A', examples: '돈 줍기, 복권, 금, 보석', hot: true },
+  { id: 'money', label: '돈, 재물의 꿈', color: '#B8965A', examples: '돈 줍기, 복권, 금, 보석', hot: true },
   { id: 'people', label: '사람이 나오는 꿈', color: '#B04A38', examples: '가족, 연인, 낯선 사람, 유명인' },
   { id: 'chase', label: '쫓기는 꿈', color: '#B04A38', examples: '쫓기기, 도망, 숨기, 위험' },
-  { id: 'nature', label: '자연 · 날씨 꿈', color: '#B07F38', examples: '꽃, 산, 불, 지진, 눈' },
+  { id: 'nature', label: '자연, 날씨 꿈', color: '#B07F38', examples: '꽃, 산, 불, 지진, 눈' },
   { id: 'other', label: '직접 적을게요', color: '#7A7269', examples: '위 항목에 없는 꿈을 자유롭게' },
 ];
 
@@ -219,7 +219,7 @@ type Phase = 'category' | 'detail' | 'result' | 'deepLoading' | 'deepResult';
 export function DreamPage() {
   usePageTitle('꿈해몽');
   useSeoMeta({
-    description: '꿈의 의미를 명리학으로 무료로 풀이해드려요. 길몽·흉몽 해석부터 오늘의 조언까지, 사주500 꿈해몽.',
+    description: '꿈의 의미를 명리학으로 무료로 풀이해드려요. 길몽과 흉몽 해석부터 오늘의 조언까지, 사주500 꿈해몽.',
   });
   const navigate = useNavigate();
   const location = useLocation();
@@ -576,7 +576,7 @@ export function DreamPage() {
                 if (!firstPaintDone && group === 'A') {
                   firstPaintDone = true;
                   clearTimeout(safetyId); // 첫 paint 후엔 60초 상한 없음
-                  console.log(`[dream] 첫 paint (Group A done · ${Date.now() - t0}ms)`);
+                  console.log(`[dream] 첫 paint (Group A done, ${Date.now() - t0}ms)`);
                   setIsLoading(false);
                 }
                 // 그룹 완료 데이터로 갱신 (partial-json 보다 정확한 fully-parsed JSON)
@@ -795,7 +795,7 @@ export function DreamPage() {
       // 잠금 해제 시각 효과 (사라랄) — body 에 일시 클래스 추가 → CSS 애니메이션
       setUnlockBurst(true);
       setTimeout(() => setUnlockBurst(false), 1500);
-      toast.show('잠금이 풀렸어요 · 1운 차감', 'success');
+      toast.show('잠금이 풀렸어요, 1운 차감', 'success');
       applyUnlocked(true);
       // 보관함 동일 레코드 갱신 (__unlocked 플래그 + type='paid' 로 전환) — 재진입 시 잠금 해제 상태 유지
       try {
@@ -861,7 +861,7 @@ export function DreamPage() {
           </h2>
           <p style={{ fontSize: 13.5, lineHeight: 1.7, color: '#5C4A2E', marginBottom: 28, wordBreak: 'keep-all' }}>
             꿈해몽은 <strong style={{ color: '#1a1a1a' }}>사주와 꿈을 교차해 해석</strong>합니다.<br />
-            일간·오행·대운이 있어야 깊이 있는 풀이가 가능해요.
+            일간, 오행, 대운이 있어야 깊이 있는 풀이가 가능해요.
           </p>
           <button
             type="button"
@@ -1000,7 +1000,7 @@ export function DreamPage() {
             onCancel={() => setShowUnlockConfirm(false)}
             onConfirm={confirmDeepUnlock}
           >
-            일간 연동·오행 흐름·꿈의 경고·예고 시기·실천 처방
+            일간 연동과 오행 흐름과 꿈의 경고와 예고 시기와 실천 처방
             <strong style={{ color: '#1a1a1a' }}> 다섯 섹션</strong>이 즉시 열려요.<br />
             현재 잔액 <b style={{ color: '#B8965A' }}>{formatUn(getBalance())}운</b> → 차감 후 <b>{formatUn(getBalance() - 1)}운</b>
           </DreamConfirmModal>
@@ -1043,7 +1043,7 @@ export function DreamPage() {
         {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
         <div className="mt-10 text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+            한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)' }}>
             사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
@@ -1212,7 +1212,7 @@ function DetailPhase({
         <div>
           <p className="sec-title" style={{ marginBottom: 6 }}>요즘 머릿속에서 떠나지 않는 게 있다면</p>
           <p className="text-body-sm" style={{ color: 'var(--text-muted)', marginBottom: 10 }}>
-            걱정·고민·최근 겪은 사건을 적어주시면 꿈과 연결해 더 정확하게 해석해드려요.
+            걱정, 고민, 최근 겪은 사건을 적어주시면 꿈과 연결해 더 정확하게 해석해드려요.
           </p>
           <textarea
             value={concern}
@@ -1250,7 +1250,7 @@ function DetailPhase({
           <p className="sec-caption" style={{ textAlign: 'center', marginTop: 8, wordBreak: 'keep-all' }}>
             {freeAvailable
               ? '오늘 1회 무료로 풀어드려요'
-              : '오늘 무료 꿈해몽은 사용했어요 · 1운이면 잠금 섹션까지 한 번에 열려요'}
+              : '오늘 무료 꿈해몽은 사용했어요, 1운이면 잠금 섹션까지 한 번에 열려요'}
           </p>
         </div>
       </div>
@@ -1646,7 +1646,7 @@ function _FreeResultView_legacy({
             <div style={{ marginTop: 10 }}>
               <LockedCard
                 title={stripMd(String(sajuConnection.lockedPreview))}
-                subtitle="대운·세운 흐름까지 이어서 보세요"
+                subtitle="대운과 세운 흐름까지 이어서 보세요"
                 ctaText="사주 리포트로 전체 보기 (500원)"
                 onUnlock={onFullReport}
               />
@@ -1757,7 +1757,7 @@ function _FreeResultView_legacy({
                   <LockedCard
                     key={i}
                     title={stripMd(String(lt))}
-                    subtitle={i === 0 ? '사주 용신을 활용하는 구체적 방법' : '주의해야 할 사람·상황'}
+                    subtitle={i === 0 ? '사주 용신을 활용하는 구체적 방법' : '주의해야 할 사람과 상황'}
                     ctaText={i === 0 ? '전체 조언 열기 (1운)' : '추가 조언 보기 (1운)'}
                     onUnlock={onDeepAnalysis}
                   />
@@ -1814,7 +1814,7 @@ function _FreeResultView_legacy({
       <FadeIn delay={0.48}>
         <FreeUpsellCard
           title="꿈 패턴의 뿌리, 사주로 더 깊게"
-          desc="오늘 꿈의 결을 사주 전체에서 풀어드립니다. 성격·대인·직업·재물·애정·건강까지."
+          desc="오늘 꿈의 결을 사주 전체에서 풀어드립니다. 성격, 대인, 직업, 재물, 애정, 건강까지."
           ctaLabel="사주 전체로"
           /* 2026-05-29 H1 — costLabel 제거 → FreeUpsellCard SSOT 기본값(세일가) 사용 */
           onTap={onFullReport}
@@ -1876,7 +1876,7 @@ function DeepResultView({
                   fontWeight: 800,
                 }}
               >
-                심층 · {grade}등급
+                심층, {grade}등급
               </span>
               <p className="sec-title-lg" style={{ marginTop: 6 }}>{title}</p>
             </div>
@@ -2286,7 +2286,7 @@ const DREAM_TOPIC_ITEMS: TopicItem[] = [
   {
     id: 'career',
     title: TOPIC_REGISTRY.career.label,
-    desc: '일·성장의 리듬 분석',
+    desc: '일과 성장의 리듬 분석',
     price: formatPriceLabel(getTopicPrice('career')),
     color: TOPIC_REGISTRY.career.color,
   },

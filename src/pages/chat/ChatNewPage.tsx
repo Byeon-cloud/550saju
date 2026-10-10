@@ -236,7 +236,7 @@ function ProfileRow({
           {profile.input.birthYear}.
           {String(profile.input.birthMonth).padStart(2, '0')}.
           {String(profile.input.birthDay).padStart(2, '0')}
-          {ilgan && ` · 일간 ${ilgan}(${oheng})`}
+          {ilgan && ` 일간 ${ilgan}(${oheng})`}
         </div>
       </div>
       <svg

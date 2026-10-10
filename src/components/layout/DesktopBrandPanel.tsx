@@ -11,8 +11,8 @@ import { isAppintosBuild } from '@/lib/env';
 
 const POINTS = [
   { emblem: '値', title: '오프라인 사주값의 1/100', desc: '그런데 내용은 10배 — 한 권 분량으로 처음부터 끝까지' },
-  { emblem: '典', title: '아무 말 운세가 아니에요', desc: '연해자평·자평진전 등 600년 고전 원전 기반 풀이' },
-  { emblem: '日', title: '매일 공짜로 시작해요', desc: '오늘의 운세·꿈해몽은 늘 무료' },
+  { emblem: '典', title: '아무 말 운세가 아니에요', desc: '연해자평과 자평진전 등 600년 고전 원전 기반 풀이' },
+  { emblem: '日', title: '매일 공짜로 시작해요', desc: '오늘의 운세와 꿈해몽은 늘 무료' },
 ];
 
 const KEYWORDS = ['오늘의 운세', '꿈해몽', '연애운', '재회운', '종합사주', '사주 상담'];

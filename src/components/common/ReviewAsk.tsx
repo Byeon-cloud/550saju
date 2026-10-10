@@ -77,7 +77,7 @@ export function ReviewAsk({ contentType, contentLabel, reportKey, style }: {
             <label className="flex items-start gap-2.5" style={{ marginTop: 10, fontSize: 14.5, color: HJ.ink2, lineHeight: 1.55, cursor: 'pointer' }}>
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
                 style={{ width: 20, height: 20, marginTop: 1, accentColor: HJ.ink, flexShrink: 0 }} />
-              <span>홈에 이름 없이 소개해도 좋아요<br /><span style={{ fontSize: 13, color: HJ.mute }}>이름·나이·생일은 남지 않아요. 확인을 거친 뒤에만 보여요.</span></span>
+              <span>홈에 이름 없이 소개해도 좋아요<br /><span style={{ fontSize: 13, color: HJ.mute }}>이름, 나이, 생일은 남지 않아요. 확인을 거친 뒤에만 보여요.</span></span>
             </label>
             <GoldCta style={{ marginTop: 14 }} onClick={send} disabled={sending}>{sending ? '남기는 중…' : '후기 남기기'}</GoldCta>
             {err && <p style={{ fontSize: 13.5, color: HJ.seal, textAlign: 'center', marginTop: 8 }}>{err}</p>}

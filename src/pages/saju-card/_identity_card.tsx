@@ -220,7 +220,7 @@ export function IdentityCard({
     const iljiKo = ZHI_KO[ilji] || '';
     return iljiKo ? `${iljiKo}(${ilji}) 일지` : '';
   })();
-  const academicLabel = ilganTag && sijiTag ? `${ilganTag} · ${sijiTag}` : ilganTag;
+  const academicLabel = ilganTag && sijiTag ? `${ilganTag}, ${sijiTag}` : ilganTag;
 
   // 출생정보 (Stage 7b — hero 위 통합)
   const birthLine = (() => {
@@ -233,7 +233,7 @@ export function IdentityCard({
     if (!birthYear || !birthMonth || !birthDay) return '';
     const man = getManAge(birthYear, birthMonth, birthDay);
     const sehe = getKoreanAge(birthYear);
-    return `만 ${man}세 · 세는 ${sehe}세`;
+    return `만 ${man}세, 세는 ${sehe}세`;
   })();
   // 2026-06-02 — 입력은 '시(時) 밴드'만 받음(분 단위 X) → 대표시각 "11시"를 그대로 보이면
   //   11:41 입력자가 "내 시간 아닌데" 혼란. 분이 실제 있을 때만 정확 시각 표기, 없으면 시(時) 이름만.
@@ -249,7 +249,7 @@ export function IdentityCard({
     const label = `${branch.ko}(${branch.hanja}, ${branch.range})`;
     // 분이 명시된 경우에만 정확 시각 prefix, 아니면 시(時)만
     return hasMinute
-      ? `${String(birthHour).padStart(2, '0')}:${String(birthMinute).padStart(2, '0')} · ${label}`
+      ? `${String(birthHour).padStart(2, '0')}:${String(birthMinute).padStart(2, '0')}, ${label}`
       : label;
   })();
 
@@ -366,7 +366,7 @@ export function IdentityCard({
             {birthLine}
             {ageLine && (
               <span style={{ fontSize: 11, color: C.mute, fontWeight: 600, marginLeft: 6 }}>
-                · {ageLine}
+, {ageLine}
               </span>
             )}
           </div>
@@ -421,7 +421,7 @@ export function IdentityCard({
               background: C.goldSoft,
             }}
           >
-            일주(日柱) · 나
+            일주(日柱), 나
           </div>
           {/* Stage 7e — 일주 한자 세로 복원 (사용자 결정: 세로 임팩트 유지) */}
           <div
@@ -654,7 +654,7 @@ export function IdentityCard({
               </span>
             )}
             {gabjaIdx > 0 && meaningEntry?.personality && (
-              <span style={{ color: C.line }}>·</span>
+              <span style={{ color: C.line }}>, </span>
             )}
             {meaningEntry?.personality && (
               <span style={{ fontWeight: 700, color: C.goldDeep, letterSpacing: '0.02em' }}>

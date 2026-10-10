@@ -69,7 +69,7 @@ function computeCrossRelations(d1: any, d2: any): string {
     } else if (GAN_CHUNG[key]) {
       findings.push(`⚠ 일간충: ${day1}↔${day2} (의견 충돌 잦음 — 다만 대체로 강한 인연)`);
     } else if (day1 === day2) {
-      findings.push(`= 일간 동일: ${day1} (성향 비슷 · 다만 경쟁의 결도)`);
+      findings.push(`= 일간 동일: ${day1} (성향 비슷, 다만 경쟁의 결도)`);
     }
   }
 
@@ -81,10 +81,10 @@ function computeCrossRelations(d1: any, d2: any): string {
     if (JI_HAP[key]) {
       findings.push(`★ 일지합: ${dayJi1}+${dayJi2} → ${JI_HAP[key]} 화 (배우자궁 결합 — 깊은 정서적 연결)`);
     } else if (JI_CHUNG[key]) {
-      findings.push(`⚠ 일지충: ${dayJi1}↔${dayJi2} (관계 변동·이별 가능성 — 거리 조절 필요)`);
+      findings.push(`⚠ 일지충: ${dayJi1}↔${dayJi2} (관계 변동과 이별 가능성 — 거리 조절 필요)`);
     }
     if (WONJIN[key]) findings.push(`⚠ 일지원진: ${dayJi1}↔${dayJi2} (말 없는 미움 — 오해 누적 주의)`);
-    if (GWIMUN[key]) findings.push(`⚠ 일지귀문: ${dayJi1}↔${dayJi2} (정신적 부담·감정 기복)`);
+    if (GWIMUN[key]) findings.push(`⚠ 일지귀문: ${dayJi1}↔${dayJi2} (정신적 부담과 감정 기복)`);
   }
 
   // 3. 8자 전체 cross 관계 (16 쌍)
@@ -137,13 +137,13 @@ function computeCrossRelations(d1: any, d2: any): string {
   const lacking2 = (['목', '화', '토', '금', '수']).filter((k) => Number(e2[k] || 0) === 0);
   const complement1 = lacking1.filter((k) => Number(e2[k] || 0) >= 2);
   const complement2 = lacking2.filter((k) => Number(e1[k] || 0) >= 2);
-  if (complement1.length > 0) findings.push(`★ 오행 보완: 사람1 부족한 ${complement1.join('·')} 을 사람2 가 채워줌`);
-  if (complement2.length > 0) findings.push(`★ 오행 보완: 사람2 부족한 ${complement2.join('·')} 을 사람1 이 채워줌`);
+  if (complement1.length > 0) findings.push(`★ 오행 보완: 사람1 부족한 ${complement1.join(', ')} 을 사람2 가 채워줌`);
+  if (complement2.length > 0) findings.push(`★ 오행 보완: 사람2 부족한 ${complement2.join(', ')} 을 사람1 이 채워줌`);
 
   void ALL_GAN;
   return findings.length > 0
     ? findings.map((f) => `  - ${f}`).join('\n')
-    : '  - 두 사주 간 합·충·삼합 모두 없음 (중성적 관계 — 적당한 거리)';
+    : '  - 두 사주 간 합, 충, 삼합 모두 없음 (중성적 관계 — 적당한 거리)';
 }
 
 export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: any, sajuData2: any, relation: string): Promise<any> {
@@ -183,16 +183,16 @@ function buildPrompt(d1: any, d2: any, rel: string): string {
   const yearsText = [0, 1, 2, 3].map((i) => {
     const y = now.year + i;
     try { return `${y}년 ${Solar.fromYmd(y, 6, 1).getLunar().getEightChar().getYear()}`; } catch { return `${y}년`; }
-  }).join(' · ');
+  }).join(', ');
   const relKo = relLabels[rel] || rel || '';
-  const relLens = /이별/.test(relKo) ? '헤어진 사이 — 왜 엇갈렸는지(충·원진 근거)와 다시 만난다면 서로 무엇이 달라져야 하는지. 재회 가능성·시기 단정은 하지 말 것(재회운 영역).'
+  const relLens = /이별/.test(relKo) ? '헤어진 사이 — 왜 엇갈렸는지(충과 원진 근거)와 다시 만난다면 서로 무엇이 달라져야 하는지. 재회 가능성과 시기 단정은 하지 말 것(재회운 영역).'
     : /썸/.test(relKo) ? '아직 시작 전인 사이 — 서로 끌리는 지점과 관계로 발전할 때 부딪힐 지점, 다가가는 방식.'
-    : /연인/.test(relKo) ? '연인 — 끌림·감정·생활·미래의 궁합.'
-    : /배우자/.test(relKo) ? '부부 — 생활·돈·가족 역할에서의 궁합과 오래 함께하는 법.'
-    : /부모|자녀|형제|자매|가족/.test(relKo) ? '가족 — 연애 궁합 표현(인연·끌림) 금지. 서로의 역할·말이 통하는 방식·서운함이 쌓이는 지점.'
-    : /친구/.test(relKo) ? '친구 — 연애 표현 금지. 함께 있을 때의 편안함·서로 채워주는 점·멀어지기 쉬운 지점.'
-    : /동료|사업/.test(relKo) ? '일로 만난 사이 — 연애 표현 금지. 일하는 방식·역할 분담·의견 충돌 시 푸는 법.'
-    : '연인 — 끌림·감정·생활·미래의 궁합.';
+    : /연인/.test(relKo) ? '연인 — 끌림, 감정, 생활, 미래의 궁합.'
+    : /배우자/.test(relKo) ? '부부 — 생활, 돈, 가족 역할에서의 궁합과 오래 함께하는 법.'
+    : /부모|자녀|형제|자매|가족/.test(relKo) ? '가족 — 연애 궁합 표현(인연과 끌림) 금지. 서로의 역할과 말이 통하는 방식과 서운함이 쌓이는 지점.'
+    : /친구/.test(relKo) ? '친구 — 연애 표현 금지. 함께 있을 때의 편안함과 서로 채워주는 점과 멀어지기 쉬운 지점.'
+    : /동료|사업/.test(relKo) ? '일로 만난 사이 — 연애 표현 금지. 일하는 방식과 역할 분담과 의견 충돌 시 푸는 법.'
+    : '연인 — 끌림, 감정, 생활, 미래의 궁합.';
 
   return `당신은 사주500 명리학 해석가. ${MYEONGRI_GROUNDS_BLOCK}
 
@@ -201,8 +201,8 @@ function buildPrompt(d1: any, d2: any, rel: string): string {
 ⚠️ 현재 날짜: ${dateStr}
 관계 유형: ${relKo || '두 사람'}
 관계 관점 (이 관점으로 5개 카테고리를 쓴다): ${relLens}
-앞으로의 연도 간지 (futureOutlook 에서 연도를 쓸 땐 이 값만 · 직접 계산 금지): ${yearsText}
-🚨 성별 기준 (연인·배우자·썸·이별일 때): 여성에게 연인·남편의 별은 관성(일간을 극하는 오행), 남성에게 연인·아내의 별은 재성(일간이 극하는 오행). 반대 성별 기준 풀이 금지.
+앞으로의 연도 간지 (futureOutlook 에서 연도를 쓸 땐 이 값만, 직접 계산 금지): ${yearsText}
+🚨 성별 기준 (연인, 배우자, 썸, 이별일 때): 여성에게 연인과 남편의 별은 관성(일간을 극하는 오행), 남성에게 연인과 아내의 별은 재성(일간이 극하는 오행). 반대 성별 기준 풀이 금지.
 
 ${personDetail('사람 1', d1)}
 
@@ -212,23 +212,23 @@ ${personDetail('사람 2', d2)}
 ${crossRelations}
 
 ## 위 자동 산출 결과 활용 규칙:
-- ★ 표시 (합·삼합·오행보완): 강점·강한 인연으로 강조
-- ⚠ 표시 (충·원진·귀문): 도전 과제 / 주의점으로 강조
-- 일간/일지 합·충은 가장 무게 두기 (배우자궁·자아 본질)
+- ★ 표시 (합, 삼합, 오행보완): 강점과 강한 인연으로 강조
+- ⚠ 표시 (충, 원진, 귀문): 도전 과제 / 주의점으로 강조
+- 일간/일지 합과 충은 가장 무게 두기 (배우자궁과 자아 본질)
 - 산출 결과를 categories[].description 과 strengths/challenges 에 직접 반영
 - AI 추가 해석은 위 결과 기반 — 임의 추론 금지
 
 ## ⭐ 소름 포인트 (각 카테고리 1개, 총 5개)
-🚨 아래 예시 문장을 그대로 쓰지 말 것 — 형식만 참고하고, 두 사람의 실제 글자(위 산출 결과)에서 새 장면을 만든다. '항상·언제나' 같은 절대 표현 금지.
+🚨 아래 예시 문장을 그대로 쓰지 말 것 — 형식만 참고하고, 두 사람의 실제 글자(위 산출 결과)에서 새 장면을 만든다. '항상과 언제나' 같은 절대 표현 금지.
 일상 패턴 묘사 (형식 예시):
 - "한 사람이 화나면 말을 안 하고, 다른 사람은 반대로 말이 많아지시죠?"
 - "돈 쓰는 방식이 다를 거예요. 한 쪽은 저축형, 다른 쪽은 경험 투자형"
 - "싸운 후 먼저 연락하는 사람이 항상 같은 쪽일 거예요"
 
 ## 출력 (JSON만, 코드블록 없이)
-⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores·subScores·overallScore·monthlyScore·compatScore·careerScore 등) 는 **5의 배수만 반복 금지**. 65·70·75·80 같은 fake 신호 X. 67·73·81·88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
+⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores, subScores, overallScore, monthlyScore, compatScore, careerScore 등) 는 **5의 배수만 반복 금지**. 65, 70, 75, 80 같은 fake 신호 X. 67, 73, 81, 88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
 
-🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X · 일상어 O)**
+🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X, 일상어 O)**
 
 사용자 피드백:
 > '무슨 말인지 모르겠다. 한낮의 태양이다 / 겨울 한복판에 태어난 태양이다 / 형국이다 — 이게 뭔 뜻이냐.
@@ -237,17 +237,17 @@ ${crossRelations}
 ❌ **절대 금지 패턴**:
 1. 시적 비유 폭격: '한낮의 태양' '차가운 밤 호수' '장작을 대주는 자리' '~의 형국' — 비유가 풀이를 대체 X.
 2. 문어체 단어 남발: '결' '자리' '형국' 한 문단 2회 이내.
-3. 중의적·모호한 표현: '흐름이 풀리는 자리' → '30대 중반에 일이 잘 풀립니다'
+3. 중의적과 모호한 표현: '흐름이 풀리는 자리' → '30대 중반에 일이 잘 풀립니다'
    '준비된 결이 또렷' → '준비는 잘 되어 있어요' / '의식의 자리에 두십시오' → '꼭 신경 쓰세요'
-4. 한자 폭격: 한자(丙火·신금·축미충 등) 첫 등장 1번만, 이후는 한글 또는 일상어.
+4. 한자 폭격: 한자(丙火, 신금, 축미충 등) 첫 등장 1번만, 이후는 한글 또는 일상어.
 
-📚 **"사주아이" 톤 레퍼 (참고 · 모방 X · 우리 특색 살림)**:
+📚 **"사주아이" 톤 레퍼 (참고, 모방 X, 우리 특색 살림)**:
 1. **각 섹션 시작 = 일상어 결론 한 줄** (제목 후크 톤)
    ✅ '겉으로는 차분해 보이지만 속에는 따뜻함을 찾는 마음이 늘 움직이는 분입니다'
 2. **사주 근거는 두 번째 문장부터, 한자는 1회만** + 즉시 일상어 풀이
 3. **공감 + 위로 + 행동 처방** (가장 강력)
    ✅ '<strong>본인에게는 가혹한 잣대를 들이대요</strong>. 이제는 본인 행복을 위해 그 섬세함을 써보세요. <strong>완벽하지 않아도 충분히 가치 있는 사람입니다</strong>.'
-4. **마무리 = 응원 + 구체 행동** (행운 색·방위·시기 등 구체)
+4. **마무리 = 응원 + 구체 행동** (행운 색, 방위, 시기 등 구체)
 
 🚨 **한자 풀이 형식 강제 (2026-05-05 PD 결단 — '라는 뜻' 같은 회피 X)**:
 한자 등장 시 괄호 안에 **실제 일상어 풀이 텍스트** 동반:
@@ -259,15 +259,15 @@ ${crossRelations}
 
 
 ✨ **우리만의 차별화**:
-- 고전 근거는 내부 판단용 — 본문에 책 이름·학파·'고서에 따르면' 언급 금지
+- 고전 근거는 내부 판단용 — 본문에 책 이름, 학파, '고서에 따르면' 언급 금지
 - 결정론 (같은 사주 = 같은 결과)
 - 한자 1회 등장 시 즉시 일상어 풀이 동반
 - strong 강조는 유저 일상 결론에만
-- 숫자·시기 또렷이 ('30대 후반' '9월~2월')
+- 숫자와 시기 또렷이 ('30대 후반' '9월~2월')
 
 
 🚨 **어조 (2026-10-08)**: "~할 수 있어요 / ~하기 쉬워요 / ~인 편이에요 / ~경향 / ~것 같아요" 금지 — 두 사주에 보이는 대로 단호하게.
-   ❌ "말다툼이 생기기 쉬워요" → ✅ "돈 얘기만 나오면 두 사람 목소리가 높아집니다. 큰 지출은 하루 묵혔다 정하세요." (겁주기·이별 단정 금지)
+   ❌ "말다툼이 생기기 쉬워요" → ✅ "돈 얘기만 나오면 두 사람 목소리가 높아집니다. 큰 지출은 하루 묵혔다 정하세요." (겁주기와 이별 단정 금지)
 
 ✅ **풀이 작성 규칙**:
 - **첫 문장은 결론** ('{유저명} 님은 ~한 사람입니다')
@@ -280,16 +280,16 @@ ${crossRelations}
 - ✅ '<b>도화살(桃花殺)</b> — 즉 <strong>사람을 끌어당기는 매력</strong>이 강해요.'
 
 
-🚨 **보일러플레이트 절대 금지 (2026-05-05 audit · 회귀 금지)**
+🚨 **보일러플레이트 절대 금지 (2026-05-05 audit, 회귀 금지)**
 
 동적 작용해야 하는 콘텐츠 = 두 사주 16글자마다 매번 다른 문장.
 
 ❌ 'X한 궁합입니다' / '서로 잘 맞아요' (근거 없는 일반론).
 ✅ 두 사주 cross-relations 직접 호명 — '갑목 일간 + 기토 일간 = 갑기합 토', '두 사람 일지 모두 인목 (성향 비슷)', '오미합 + 자축충'.
-✅ 각 category.description / strengths / challenges 에 위 ## 정통 명리학 산출 결과 의 ★/⚠ 항목 또는 두 사람 8글자 중 specific 데이터(글자명·일간·일지·오행보완) 1회 이상 직접 호명 mandatory.
+✅ 각 category.description / strengths / challenges 에 위 ## 정통 명리학 산출 결과 의 ★/⚠ 항목 또는 두 사람 8글자 중 specific 데이터(글자명, 일간, 일지, 오행보완) 1회 이상 직접 호명 mandatory.
 
 🚨 **example 사용 룰 (회귀 금지)**:
-프롬프트 예시의 사주 글자(병화·신금·축미충 등)는 example. 실제 사용자에게는 위 ## 사람 1 / ## 사람 2 의 진짜 16글자를 인용.
+프롬프트 예시의 사주 글자(병화, 신금, 축미충 등)는 example. 실제 사용자에게는 위 ## 사람 1 / ## 사람 2 의 진짜 16글자를 인용.
 '{유저명}' placeholder 도 위 두 사람의 진짜 이름으로 치환.
 같은 두 사주 = 같은 결과 (결정론) / 다른 두 사주 = 완전히 다른 어휘.
 
@@ -300,14 +300,14 @@ ${crossRelations}
   "keywords": ["#궁합키워드1","#키워드2","#키워드3"],
   "summary": "200자 이상. 두 사람의 관계 본질. 🚨 두 사주 cross-relations 1개 이상 직접 호명 mandatory.",
   "categories": [
-    {"id": "personality", "name": "성격 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사람 일간/일지/십성 직접 호명"},
-    {"id": "values", "name": "가치관 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"},
-    {"id": "communication", "name": "소통 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"},
-    {"id": "emotion", "name": "감정 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"},
-    {"id": "future", "name": "미래 궁합", "score": 0-100, "description": "150자 이상 · 🚨 두 사주 specific 호명"}
+    {"id": "personality", "name": "성격 궁합", "score": 0-100, "description": "150자 이상, 🚨 두 사람 일간/일지/십성 직접 호명"},
+    {"id": "values", "name": "가치관 궁합", "score": 0-100, "description": "150자 이상, 🚨 두 사주 specific 호명"},
+    {"id": "communication", "name": "소통 궁합", "score": 0-100, "description": "150자 이상, 🚨 두 사주 specific 호명"},
+    {"id": "emotion", "name": "감정 궁합", "score": 0-100, "description": "150자 이상, 🚨 두 사주 specific 호명"},
+    {"id": "future", "name": "미래 궁합", "score": 0-100, "description": "150자 이상, 🚨 두 사주 specific 호명"}
   ],
-  "strengths": ["50자 이상씩 3개 · 🚨 cross-relations ★ 항목 직접 호명"],
-  "challenges": ["50자 이상씩 3개 · 🚨 cross-relations ⚠ 항목 직접 호명"],
+  "strengths": ["50자 이상씩 3개, 🚨 cross-relations ★ 항목 직접 호명"],
+  "challenges": ["50자 이상씩 3개, 🚨 cross-relations ⚠ 항목 직접 호명"],
   "advice": "150자 이상. 실용적 조언.",
   "futureOutlook": "100자 이상. 향후 1~3년.",
   "ohengHarmony": {

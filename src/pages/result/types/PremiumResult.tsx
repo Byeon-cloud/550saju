@@ -102,54 +102,54 @@ interface LifestyleSet {
 }
 const OHENG_LIFESTYLE: Record<OhengType, LifestyleSet> = {
   목: {
-    color: '녹색·청록·밝은 베이지',
+    color: '녹색, 청록, 밝은 베이지',
     direction: '동쪽',
     season: '봄',
-    hobby: '산책·식물 가꾸기·서예·필사',
-    time: '인시(03~05시) · 묘시(05~07시) · 봄철 새벽',
-    food: '신맛 약간 · 푸른 잎채소·녹차·식초·매실',
-    item: '나무 가구·관엽식물·녹색 노트·만년필',
-    people: '일간 甲·乙(木) 또는 壬·癸(水) 인 사람이 결을 살려줍니다',
+    hobby: '산책과 식물 가꾸기, 서예, 필사',
+    time: '인시(03~05시), 묘시(05~07시), 봄철 새벽',
+    food: '신맛 약간, 푸른 잎채소, 녹차, 식초, 매실',
+    item: '나무 가구, 관엽식물, 녹색 노트와 만년필',
+    people: '일간 甲 乙(木) 또는 壬 癸(水) 인 사람이 결을 살려줍니다',
   },
   화: {
-    color: '빨강·주황 포인트',
+    color: '빨강과 주황 포인트',
     direction: '남쪽',
     season: '여름',
-    hobby: '유산소 운동·사교 활동·요리·발표',
-    time: '오시(11~13시) · 여름 정오 · 한낮',
-    food: '쓴맛 약간 · 커피·매운 양념·붉은 과일',
-    item: '캔들·붉은 인테리어·태양 모티프 액자',
-    people: '일간 丙·丁(火) 또는 甲·乙(木) 인 사람이 결을 받쳐줍니다',
+    hobby: '유산소 운동과 사교 활동, 요리, 발표',
+    time: '오시(11~13시), 여름 정오, 한낮',
+    food: '쓴맛 약간, 커피와 매운 양념과 붉은 과일',
+    item: '캔들과 붉은 인테리어와 태양 모티프 액자',
+    people: '일간 丙 丁(火) 또는 甲 乙(木) 인 사람이 결을 받쳐줍니다',
   },
   토: {
-    color: '황토색·도자기 톤·베이지',
-    direction: '중앙·서남쪽',
+    color: '황토색과 도자기 톤과 베이지',
+    direction: '중앙과 서남쪽',
     season: '환절기',
-    hobby: '명상·정원·도자기·텃밭·요가',
-    time: '진시(07~09시) · 미시(13~15시) · 술시(19~21시)',
-    food: '단맛 약간 · 잡곡·고구마·꿀·건과류',
-    item: '도자기 컵·테라코타 화분·황토 매트',
-    people: '일간 戊·己(土) 또는 丙·丁(火) 인 사람이 안정감을 줍니다',
+    hobby: '명상, 정원, 도자기, 텃밭, 요가',
+    time: '진시(07~09시), 미시(13~15시), 술시(19~21시)',
+    food: '단맛 약간, 잡곡, 고구마, 꿀, 건과류',
+    item: '도자기 컵과 테라코타 화분과 황토 매트',
+    people: '일간 戊 己(土) 또는 丙 丁(火) 인 사람이 안정감을 줍니다',
   },
   금: {
-    color: '흰색·은색·검정',
-    direction: '서쪽·북서쪽',
+    color: '흰색, 은색, 검정',
+    direction: '서쪽과 북서쪽',
     season: '가을',
-    hobby: '미니멀 정리·서예·검도·호흡 운동·요리(칼)',
-    time: '신시(15~17시) · 유시(17~19시) · 가을 늦은 오후',
-    food: '매운맛 약간 · 흰살 생선·견과류·마늘·생강',
-    item: '은반지·금속 시계·검정 만년필·미니멀 가구',
-    people: '일간 庚·辛(金) 또는 戊·己(土) 인 사람이 결을 다듬어줍니다',
+    hobby: '미니멀 정리, 서예, 검도, 호흡 운동과 요리(칼)',
+    time: '신시(15~17시), 유시(17~19시), 가을 늦은 오후',
+    food: '매운맛 약간, 흰살 생선, 견과류, 마늘, 생강',
+    item: '은반지와 금속 시계와 검정 만년필과 미니멀 가구',
+    people: '일간 庚 辛(金) 또는 戊 己(土) 인 사람이 결을 다듬어줍니다',
   },
   수: {
-    color: '검정·짙은 청색·남색',
+    color: '검정과 짙은 청색과 남색',
     direction: '북쪽',
     season: '겨울',
-    hobby: '수영·반신욕·낚시·명상·독서',
-    time: '해시(21~23시) · 자시(23~01시) · 겨울 새벽',
-    food: '짠맛 약간 · 해산물·검정콩·미역·물 충분히',
-    item: '유리 컵·아쿠아리움·푸른 그림·블루투스 이어폰',
-    people: '일간 壬·癸(水) 또는 庚·辛(金) 인 사람이 회복을 도와줍니다',
+    hobby: '수영, 반신욕, 낚시, 명상, 독서',
+    time: '해시(21~23시), 자시(23~01시), 겨울 새벽',
+    food: '짠맛 약간, 해산물, 검정콩, 미역, 물 충분히',
+    item: '유리 컵, 아쿠아리움, 푸른 그림과 블루투스 이어폰',
+    people: '일간 壬 癸(水) 또는 庚 辛(金) 인 사람이 회복을 도와줍니다',
   },
 };
 
@@ -158,13 +158,13 @@ const ILGAN_SYMBOL: Record<string, string> = {
   甲: '봄 새벽에 곧게 뻗는 큰 나무의 상(象). 흔들리지 않으려 뿌리부터 다잡는 결',
   乙: '바람에 휘는 작은 풀과 덩굴의 상. 부드럽되 끈질긴 결',
   丙: '한낮 정오의 태양. 가리지 않고 비추는 너른 빛의 결',
-  丁: '저녁 등불·촛불의 상. 어둠 속에서도 또렷하게 길을 비추는 결',
-  戊: '높은 산·너른 들의 상. 묵직하게 자리 잡고 바뀌지 않는 결',
+  丁: '저녁 등불과 촛불의 상. 어둠 속에서도 또렷하게 길을 비추는 결',
+  戊: '높은 산과 너른 들의 상. 묵직하게 자리 잡고 바뀌지 않는 결',
   己: '논과 밭의 상. 작게 받아들이고 길러내는 부드러운 결',
-  庚: '광물·도끼날의 상. 정확하고 단단하게 끊어내는 결',
-  辛: '보석·세공된 금속의 상. 섬세하고 빛나는 결',
-  壬: '큰 강·바다의 상. 넓고 깊게 흐르는 결',
-  癸: '가는 빗줄기·이슬의 상. 조용히 스며들어 모든 것을 적시는 결',
+  庚: '광물과 도끼날의 상. 정확하고 단단하게 끊어내는 결',
+  辛: '보석과 세공된 금속의 상. 섬세하고 빛나는 결',
+  壬: '큰 강과 바다의 상. 넓고 깊게 흐르는 결',
+  癸: '가는 빗줄기와 이슬의 상. 조용히 스며들어 모든 것을 적시는 결',
 };
 
 /** 신강·신약 + 일간 오행 → 용신 후보 도출 (analysisBase 우선, fallback) */
@@ -253,11 +253,11 @@ function buildSipDist(sajuData: SajuData): SipDist {
 }
 
 const SIP_STORY: Record<keyof SipDist, string> = {
-  비겁: '독립심·경쟁심 영역. 자기 길을 개척하는 힘',
-  식상: '표현·창작·소통 영역. 만들어내고 나누는 힘',
-  재성: '재물·실리 영역. 돈의 흐름과 자원 운용 능력',
-  관성: '직장·사회적 지위 영역. 책임과 명예의 영역',
-  인성: '학문·배움·어머니 영역. 받아들이고 키우는 힘',
+  비겁: '독립심과 경쟁심 영역. 자기 길을 개척하는 힘',
+  식상: '표현, 창작, 소통 영역. 만들어내고 나누는 힘',
+  재성: '재물과 실리 영역. 돈의 흐름과 자원 운용 능력',
+  관성: '직장과 사회적 지위 영역. 책임과 명예의 영역',
+  인성: '학문, 배움, 어머니 영역. 받아들이고 키우는 힘',
 };
 
 /* 목업 .divider 진본 — className 만 사용 (좌우 골드 그라디언트 + 한자 라벨 CSS) */
@@ -316,11 +316,11 @@ function Section5Body({
   const SG: Record<OhengType, OhengType> = { 목: '토', 화: '금', 토: '수', 금: '목', 수: '화' };
   function getSipsung(target: OhengType | undefined): { name: string; effect: string } {
     if (!target) return { name: '', effect: '' };
-    if (target === dayOheng) return { name: '비견·겁재', effect: '같은 결의 자리. 동료·파트너·자기 사람의 자리' };
-    if (SS[dayOheng] === target) return { name: '식신·상관', effect: '드러내는 자리·이름이 알려지는 자리' };
-    if (SG[dayOheng] === target) return { name: '정재·편재', effect: '실리·자원이 손에 잡히는 자리' };
-    if (SG[target] === dayOheng) return { name: '정관·편관', effect: '책임·평가가 들어오는 자리' };
-    if (SS[target] === dayOheng) return { name: '정인·편인', effect: '받아들이고 익히는 자리' };
+    if (target === dayOheng) return { name: '비견과 겁재', effect: '같은 결의 자리. 동료, 파트너, 자기 사람의 자리' };
+    if (SS[dayOheng] === target) return { name: '식신과 상관', effect: '드러내는 자리와 이름이 알려지는 자리' };
+    if (SG[dayOheng] === target) return { name: '정재와 편재', effect: '실리와 자원이 손에 잡히는 자리' };
+    if (SG[target] === dayOheng) return { name: '정관과 편관', effect: '책임과 평가가 들어오는 자리' };
+    if (SS[target] === dayOheng) return { name: '정인과 편인', effect: '받아들이고 익히는 자리' };
     return { name: '', effect: '' };
   }
   const ganHan = cur.gz?.[0] || '';
@@ -351,7 +351,7 @@ function Section5Body({
     const n2ganHan = next2.gz?.[0] || '';
     const n2ganOh = HAN_OH[n2ganHan];
     const n2Sip = getSipsung(n2ganOh);
-    para4 = `<strong>${next2.age} ${next2.gz}(${next2.kr || ''})</strong>는 ${userName} 님 사주에 <strong>${n2ganOh ? KR[n2ganOh] : ''}</strong>의 결이 더해지는 시기입니다. ${n2Sip.effect}가 또렷이 자리잡고, 명예·이름이 자리잡은 뒤 마음의 결이 한 번 더 정리됩니다.`;
+    para4 = `<strong>${next2.age} ${next2.gz}(${next2.kr || ''})</strong>는 ${userName} 님 사주에 <strong>${n2ganOh ? KR[n2ganOh] : ''}</strong>의 결이 더해지는 시기입니다. ${n2Sip.effect}가 또렷이 자리잡고, 명예와 이름이 자리잡은 뒤 마음의 결이 한 번 더 정리됩니다.`;
   }
 
   return (
@@ -409,13 +409,13 @@ function ShinsalSummary({
   if (list.length === 0) return null;
   function tagOfShinsal(name: string): string {
     if (/도화|桃花|홍염|紅艶/.test(name)) return '매력';
-    if (/문창|文昌|학당|學堂/.test(name)) return '학문·표현';
+    if (/문창|文昌|학당|學堂/.test(name)) return '학문과 표현';
     if (/천을|天乙|월덕|月德/.test(name)) return '귀인';
-    if (/역마|驛馬/.test(name)) return '이동·변화';
-    if (/화개|華蓋/.test(name)) return '예술·연구';
-    if (/백호|白虎/.test(name)) return '추진력 · 건강 주의';
+    if (/역마|驛馬/.test(name)) return '이동과 변화';
+    if (/화개|華蓋/.test(name)) return '예술과 연구';
+    if (/백호|白虎/.test(name)) return '추진력, 건강 주의';
     if (/괴강|魁罡/.test(name)) return '결단';
-    if (/양인|羊刃/.test(name)) return '결단·양면';
+    if (/양인|羊刃/.test(name)) return '결단과 양면';
     if (/공망|空亡/.test(name)) return '특정 해 활성';
     if (/원진|怨嗔/.test(name)) return '관계 갈등';
     if (/혈|血|사|死/.test(name)) return '건강 주의';
@@ -435,7 +435,7 @@ function ShinsalSummary({
   const strongNames = strongOnes
     .slice(0, 3)
     .map((s) => `<b>${s.kr}${s.hanja ? `(${s.hanja})` : ''}</b>`)
-    .join(' · ');
+    .join(', ');
   // dayOheng 별 마무리 격려 (5 가지 다른 결)
   const ohengEnding: Record<OhengType, string> = {
     목: '뻗어나가는 결을 살려주는 자리',
@@ -455,7 +455,7 @@ function ShinsalSummary({
   } else if (tags.length === 1) {
     summary = `${ganRef}에 또렷이 작동하는 신살은 ${strongNames} <u>${strongCount}개</u> — <strong>${tags[0]} 결</strong>이에요. 지금까지 살아오면서 이 결과 관련된 일이 자주 있었을 거예요. ${closingPhrase}.`;
   } else {
-    summary = `${ganRef}에 또렷이 작동하는 신살은 ${strongNames} <u>${strongCount}개</u> — <strong>${tags.slice(0, 2).join('·')} 결</strong>이에요. 지금까지 인생 곳곳에 영향을 줬을 결들이고, ${closingPhrase}.`;
+    summary = `${ganRef}에 또렷이 작동하는 신살은 ${strongNames} <u>${strongCount}개</u> — <strong>${tags.slice(0, 2).join(', ')} 결</strong>이에요. 지금까지 인생 곳곳에 영향을 줬을 결들이고, ${closingPhrase}.`;
   }
 
   return (
@@ -538,42 +538,42 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
   };
   // 일상 비유 — 인생 어느 시기에 해당하는지 누구나 이해할 수 있게
   const STAGE: Record<string, StageMeta> = {
-    장생: { intensity: 4, kind: 'strong', short: '새로 태어나는 결 — 시작·배움',
-      everyday: '갓 태어난 아기 — 호기심·에너지·배움이 가득',
-      pillarPhrase: (p) => `${p}에 장생이면 — 그 자리에서 <strong>새로 시작하는 힘</strong>이 강합니다. 늦게 시작해도 탄력을 받는 결이라, 진로 전환·새 분야 도전이 잘 풀려요.` },
-    목욕: { intensity: 3, kind: 'mid', short: '씻고 가라앉는 결 — 정비·변화',
+    장생: { intensity: 4, kind: 'strong', short: '새로 태어나는 결 — 시작과 배움',
+      everyday: '갓 태어난 아기 — 호기심, 에너지, 배움이 가득',
+      pillarPhrase: (p) => `${p}에 장생이면 — 그 자리에서 <strong>새로 시작하는 힘</strong>이 강합니다. 늦게 시작해도 탄력을 받는 결이라, 진로 전환과 새 분야 도전이 잘 풀려요.` },
+    목욕: { intensity: 3, kind: 'mid', short: '씻고 가라앉는 결 — 정비와 변화',
       everyday: '사춘기 — 흔들리고 매력이 피어나는 시기',
-      pillarPhrase: (p) => `${p}에 목욕이면 — <strong>변화·이동·매력</strong>이 두드러지는 자리. 한곳에 오래 머무는 게 답답하고, 사람들이 끌리는 결이 있습니다.` },
+      pillarPhrase: (p) => `${p}에 목욕이면 — <strong>변화, 이동, 매력</strong>이 두드러지는 자리. 한곳에 오래 머무는 게 답답하고, 사람들이 끌리는 결이 있습니다.` },
     관대: { intensity: 4, kind: 'strong', short: '옷 갖춰 입는 결 — 자리 잡음',
-      everyday: '사회 첫 출근 — 자격·옷·이름값을 갖추는 시기',
-      pillarPhrase: (p) => `${p}에 관대면 — <strong>형식·자격·이름값</strong>이 자리잡는 결. 자격증·학위·직함이 결을 살리는 자리예요.` },
+      everyday: '사회 첫 출근 — 자격, 옷, 이름값을 갖추는 시기',
+      pillarPhrase: (p) => `${p}에 관대면 — <strong>형식, 자격, 이름값</strong>이 자리잡는 결. 자격증, 학위, 직함이 결을 살리는 자리예요.` },
     건록: { intensity: 5, kind: 'strong', short: '봉록을 받는 결 — 안정된 자리',
       everyday: '커리어 안정기 — 자기 발로 서서 월급 받는 시기',
       pillarPhrase: (p) => `${p}에 건록이면 — <strong>자기 발로 서는 가장 안정된 자리</strong>. 노력한 만큼 결실이 또렷하게 돌아옵니다.` },
     제왕: { intensity: 5, kind: 'strong', short: '정점에 오른 결 — 가장 강한 자리',
-      everyday: '인생 정점 — 권력·영향력이 가장 큰 시기',
+      everyday: '인생 정점 — 권력과 영향력이 가장 큰 시기',
       pillarPhrase: (p) => `${p}에 제왕이면 — 그 자리에서 <strong>정점</strong>입니다. 너무 강해서 옆 사람과 부딪히기 쉬우니 한 박자 양보하는 연습이 필요해요.` },
-    쇠:   { intensity: 2, kind: 'weak',   short: '한풀 꺾이는 결 — 정리·이양',
+    쇠:   { intensity: 2, kind: 'weak',   short: '한풀 꺾이는 결 — 정리와 이양',
       everyday: '은퇴 직전 — 후임에게 자리를 물려주는 시기',
-      pillarPhrase: (p) => `${p}에 쇠면 — <strong>결을 다듬고 다음 사람에게 넘기는</strong> 자리. 욕심내지 않으면 평탄하고, 멘토링·후배 양성이 잘 풀립니다.` },
-    병:   { intensity: 2, kind: 'weak',   short: '아픔을 겪는 결 — 회복·돌봄',
+      pillarPhrase: (p) => `${p}에 쇠면 — <strong>결을 다듬고 다음 사람에게 넘기는</strong> 자리. 욕심내지 않으면 평탄하고, 멘토링과 후배 양성이 잘 풀립니다.` },
+    병:   { intensity: 2, kind: 'weak',   short: '아픔을 겪는 결 — 회복과 돌봄',
       everyday: '몸이 아픈 시기 — 무리하지 말고 회복이 본업',
-      pillarPhrase: (p) => `${p}에 병이면 — 본인이 <strong>돌봐야 하는 결</strong>. 무리하면 가장 먼저 탈이 나는 자리라, 건강·휴식 우선순위를 높이세요.` },
+      pillarPhrase: (p) => `${p}에 병이면 — 본인이 <strong>돌봐야 하는 결</strong>. 무리하면 가장 먼저 탈이 나는 자리라, 건강과 휴식 우선순위를 높이세요.` },
     사:   { intensity: 1, kind: 'weak',   short: '저무는 결 — 거두고 매듭',
       everyday: '인생 마무리 — 거두고 정리하는 시기',
-      pillarPhrase: (p) => `${p}에 사면 — <strong>끝맺음·정리</strong>의 자리. 새로 벌이기보다 마무리·완결이 본업. 종교·연구·기록 분야에 적합.` },
-    묘:   { intensity: 2, kind: 'weak',   short: '저장하는 결 — 보존·기다림',
+      pillarPhrase: (p) => `${p}에 사면 — <strong>끝맺음과 정리</strong>의 자리. 새로 벌이기보다 마무리와 완결이 본업. 종교, 연구, 기록 분야에 적합.` },
+    묘:   { intensity: 2, kind: 'weak',   short: '저장하는 결 — 보존과 기다림',
       everyday: '창고 — 깊이 묻어두고 시간이 지나야 가치가 보임',
-      pillarPhrase: (p) => `${p}에 묘면 — <strong>깊이 묻어두는</strong> 자리. 시간이 지나야 가치가 드러나는 결이라, 장기 자산·연구·콜렉션이 잘 어울립니다.` },
-    절:   { intensity: 1, kind: 'weak',   short: '끊기는 결 — 끝·분리',
-      everyday: '단절·이별 — 기존 결을 비우는 시기',
-      pillarPhrase: (p) => `${p}에 절이면 — <strong>단절·분리</strong>의 결. 기존 결을 비우고 새 결로 갈아타는 자리예요. 환경 변화 후에 진짜 본인 결이 드러납니다.` },
+      pillarPhrase: (p) => `${p}에 묘면 — <strong>깊이 묻어두는</strong> 자리. 시간이 지나야 가치가 드러나는 결이라, 장기 자산, 연구, 콜렉션이 잘 어울립니다.` },
+    절:   { intensity: 1, kind: 'weak',   short: '끊기는 결 — 끝과 분리',
+      everyday: '단절과 이별 — 기존 결을 비우는 시기',
+      pillarPhrase: (p) => `${p}에 절이면 — <strong>단절과 분리</strong>의 결. 기존 결을 비우고 새 결로 갈아타는 자리예요. 환경 변화 후에 진짜 본인 결이 드러납니다.` },
     태:   { intensity: 3, kind: 'mid',    short: '잉태하는 결 — 새 흐름의 씨앗',
       everyday: '뱃속 아기 — 새 결이 안에서 자라는 시기',
       pillarPhrase: (p) => `${p}에 태면 — <strong>새 결이 안에서 자라는</strong> 자리. 아직 밖에 드러나지 않은 잠재가 있어요. 늦게 피는 결.` },
     양:   { intensity: 3, kind: 'mid',    short: '품어 기르는 결 — 잠재기',
       everyday: '갓난아기 — 보호받으며 자라는 시기',
-      pillarPhrase: (p) => `${p}에 양이면 — <strong>보호받으며 자라는 결</strong>. 지켜주는 환경(가족·멘토·조직)이 필요한 자리.` },
+      pillarPhrase: (p) => `${p}에 양이면 — <strong>보호받으며 자라는 결</strong>. 지켜주는 환경(가족, 멘토, 조직)이 필요한 자리.` },
   };
 
   // 12운성 사이클 (전통 순서 — 장생 → 목욕 → 관대 → 건록 → 제왕 → 쇠 → 병 → 사 → 묘 → 절 → 태 → 양)
@@ -607,9 +607,9 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
     const intensities = lifeArc.map((x) => x.meta?.intensity ?? 3);
     const start = intensities[0];
     const end = intensities[intensities.length - 1];
-    if (start >= 4 && end >= 4) return '<strong>전반·후반 모두 자리 잡는 결</strong>이 강합니다. 흐름이 끊기지 않는 사주.';
-    if (start >= 4 && end <= 2) return '<strong>초년이 강하고 말년이 깊어지는 결</strong>. 화려함보다 정리·보존의 마무리.';
-    if (start <= 2 && end >= 4) return '<strong>늦게 피는 결</strong>입니다. 초·중년이 단단하지 않아도 후반에 자리잡습니다.';
+    if (start >= 4 && end >= 4) return '<strong>전반과 후반 모두 자리 잡는 결</strong>이 강합니다. 흐름이 끊기지 않는 사주.';
+    if (start >= 4 && end <= 2) return '<strong>초년이 강하고 말년이 깊어지는 결</strong>. 화려함보다 정리와 보존의 마무리.';
+    if (start <= 2 && end >= 4) return '<strong>늦게 피는 결</strong>입니다. 초와 중년이 단단하지 않아도 후반에 자리잡습니다.';
     if (start >= 4 && intensities[1] <= 2) return '<strong>이른 자리잡음 후 한 번 꺾이는 결</strong>. 중년의 정리 시기를 잘 통과해야 합니다.';
     if (intensities.every((v) => v <= 2)) return '<strong>잔잔하게 흐르는 결</strong>. 큰 부침보다 꾸준한 안정이 본업.';
     if (intensities.every((v) => v >= 4)) return '<strong>매 자리마다 강한 결</strong>. 흐름의 정점이 여러 번 옵니다.';
@@ -680,8 +680,8 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
         }}
       >
         <span style={{ fontWeight: 700, color: C.goldDeep, marginRight: 4 }}>이렇게 읽으세요</span>
-        — 사람이 <strong style={{ color: C.ink }}>태어나(장생) → 자라고 → 정점(제왕) → 저물고(쇠·병·사) → 다시 씨앗이 되는(태·양)</strong> 인생 사이클 12단계입니다.
-        내 사주 4 자리(년·월·일·시)가 각각 어느 단계에 해당하는지 보면, <strong style={{ color: C.ink }}>인생 어느 시기가 강하고 약한지</strong> 가늠할 수 있어요.
+        — 사람이 <strong style={{ color: C.ink }}>태어나(장생) → 자라고 → 정점(제왕) → 저물고(쇠, 병, 사) → 다시 씨앗이 되는(태와 양)</strong> 인생 사이클 12단계입니다.
+        내 사주 4 자리(년, 월, 일, 시)가 각각 어느 단계에 해당하는지 보면, <strong style={{ color: C.ink }}>인생 어느 시기가 강하고 약한지</strong> 가늠할 수 있어요.
         <span style={{ display: 'block', marginTop: 6, fontSize: 11, color: C.mute }}>
           • <strong style={{ color: '#4E7A57', fontWeight: 700 }}>녹색</strong>은 강한 자리, <strong style={{ color: '#C62828', fontWeight: 700 }}>빨강</strong>은 약한 자리, <strong style={{ color: '#B8965A', fontWeight: 700 }}>골드</strong>는 변화의 자리예요.
         </span>
@@ -709,7 +709,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
               marginBottom: 8,
             }}
           >
-            ◆ 인생 흐름 한 줄 · 命途
+            ◆ 인생 흐름 한 줄, 命途
           </div>
           {/* 4 stage 시각 timeline */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 10 }}>
@@ -973,8 +973,8 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
           12 단계 사이클이 뭐예요? <span style={{ color: C.mute, fontWeight: 500, marginLeft: 4 }}>+ 펼치기</span>
         </summary>
         <div style={{ marginTop: 10, fontSize: 11.5, color: C.inkSoft, lineHeight: 1.7 }}>
-          사람이 <strong style={{ color: C.ink }}>태어나(장생) → 자라고 → 정점(제왕) → 저물고(쇠·병·사) → 다시 씨앗이 되는(태·양)</strong> 인생 사이클을 12 단계로 본 것입니다.
-          내 일간이 사주 4 자리(년·월·일·시)에서 어느 단계에 해당하는지 보면 — <strong style={{ color: C.ink }}>인생 어느 시기에 어떤 결</strong>이 작동하는지 보입니다.
+          사람이 <strong style={{ color: C.ink }}>태어나(장생) → 자라고 → 정점(제왕) → 저물고(쇠, 병, 사) → 다시 씨앗이 되는(태와 양)</strong> 인생 사이클을 12 단계로 본 것입니다.
+          내 일간이 사주 4 자리(년, 월, 일, 시)에서 어느 단계에 해당하는지 보면 — <strong style={{ color: C.ink }}>인생 어느 시기에 어떤 결</strong>이 작동하는지 보입니다.
           <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
             {CYCLE_ORDER.map((stage, i) => {
               const m = STAGE[stage];
@@ -1034,7 +1034,7 @@ function Section1Conclusion({
   const HAN: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
   const KR: Record<OhengType, string> = { 목: '나무', 화: '불', 토: '흙', 금: '쇠', 수: '물' };
   const dayOh = (ilganOheng || '토') as OhengType;
-  const html = `${userName} 님은 <strong>${ilgan}(${KR[dayOh]}) 일간</strong>으로, <strong>${HAN[strong]}(${KR[strong]})이 가장 두텁고 ${HAN[weak1]}·${HAN[weak2]}이 부족한 결</strong>입니다. 재능·표현력은 사주가 받쳐주지만, <strong>다듬는 칼(규율·마감)과 뿌리에 물을 대는 쉼(${KR[weak1]}·${KR[weak2]})</strong>은 본인이 구조로 설계해두어야 합니다. 재능보다 <strong>'브레이크'를 먼저 다는</strong> 사주입니다.`;
+  const html = `${userName} 님은 <strong>${ilgan}(${KR[dayOh]}) 일간</strong>으로, <strong>${HAN[strong]}(${KR[strong]})이 가장 두텁고 ${HAN[weak1]}, ${HAN[weak2]}이 부족한 결</strong>입니다. 재능과 표현력은 사주가 받쳐주지만, <strong>다듬는 칼(규율과 마감)과 뿌리에 물을 대는 쉼(${KR[weak1]}, ${KR[weak2]})</strong>은 본인이 구조로 설계해두어야 합니다. 재능보다 <strong>'브레이크'를 먼저 다는</strong> 사주입니다.`;
   return (
     <div className="section-conclusion">
       <div className="sc-label">이 섹션의 결론 — 한 줄로 요약하면</div>
@@ -1070,15 +1070,15 @@ function Section2Conclusion({
   const top = (Object.entries(sipDist) as [string, number][]).sort((a, b) => b[1] - a[1])[0];
   const TOP_DESC: Record<string, string> = {
     비겁: `<strong>"내가 끌고 가야지"의 본능</strong>이 평생 작동합니다. <strong>책임져야 할 대상은 '한두 개'로 의도적으로 좁혀야</strong> 본인이 무너지지 않습니다.`,
-    식상: `<strong>표현·창작이 본인 결의 핵심</strong>입니다. <strong>본인 이름이 붙는 채널을 1년 이상</strong> 끊김 없이 굴려야 결과가 모입니다.`,
-    재성: `<strong>실리·자원을 다루는 결</strong>이 강합니다. 다만 <strong>한 자리에 너무 깊이 들어가면</strong> 빠르게 잃을 수 있어 분산이 평생 원칙입니다.`,
-    관성: `<strong>책임·평가의 결</strong>이 짙습니다. <strong>판단·재량이 보장된 자리</strong>에서 가장 빛나며, 단단한 위계는 5년 이상 권하지 않습니다.`,
+    식상: `<strong>표현과 창작이 본인 결의 핵심</strong>입니다. <strong>본인 이름이 붙는 채널을 1년 이상</strong> 끊김 없이 굴려야 결과가 모입니다.`,
+    재성: `<strong>실리와 자원을 다루는 결</strong>이 강합니다. 다만 <strong>한 자리에 너무 깊이 들어가면</strong> 빠르게 잃을 수 있어 분산이 평생 원칙입니다.`,
+    관성: `<strong>책임과 평가의 결</strong>이 짙습니다. <strong>판단과 재량이 보장된 자리</strong>에서 가장 빛나며, 단단한 위계는 5년 이상 권하지 않습니다.`,
     인성: `<strong>받아들이고 익히는 결</strong>이 강합니다. 배움 안에서만 머물지 말고 <strong>배운 즉시 산출</strong>로 이어주세요.`,
   };
   const isStrong = ['甲', '丙', '戊', '庚', '壬'].includes(ilgan);
   const html =
     `<p><span class="sc-num">①</span> ${TOP_DESC[top[0]]}</p>` +
-    `<p><span class="sc-num">②</span> ${userName} 님은 일간 <strong>${ilgan}</strong>의 ${isStrong ? '양적·외향' : '음적·내향'} 결을 평생 따라갑니다. <strong>본인 결을 거스르는 자리에 오래 두지 마세요</strong>.</p>` +
+    `<p><span class="sc-num">②</span> ${userName} 님은 일간 <strong>${ilgan}</strong>의 ${isStrong ? '양적과 외향' : '음적과 내향'} 결을 평생 따라갑니다. <strong>본인 결을 거스르는 자리에 오래 두지 마세요</strong>.</p>` +
     `<p><span class="sc-num">③</span> 천간(마음)과 지지(행동)의 짜임이 <strong>${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '일치' : '미세하게 어긋'}</strong>합니다. ${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '본인 결과 행동이 자연스럽게 맞물리는 강점.' : '"보여지는 모습과 실제 행동이 다르다"는 결이 있어, 자기 일치도를 의식적으로 점검하세요.'}</p>`;
   return (
     <div className="section-conclusion">
@@ -1105,18 +1105,18 @@ function Section3Conclusion({
   const ONE_LINE: Record<keyof SipDist, string> = {
     비겁: '"자기 길을 개척하는 사람"',
     식상: '"만들고 드러내는 사람"',
-    재성: '"실리·자원을 다루는 사람"',
-    관성: '"책임·평가를 받쳐주는 사람"',
+    재성: '"실리와 자원을 다루는 사람"',
+    관성: '"책임과 평가를 받쳐주는 사람"',
     인성: '"받아들이고 익히는 사람"',
   };
   // ① ② ③ 패턴으로 묶음 → SectionConclusion 의 numSplit 분기에서 동일 디자인 렌더
   const text = [
     `① <strong>${ONE_LINE[top]}</strong> — 본인이 <strong>${top}(${pct(top)}%)이 가장 두꺼운 결</strong>. 이 결을 살리는 자리에 가야 본인이 살아납니다.`,
     sipDist.식상 >= 2 && sipDist.관성 >= 1
-      ? `② 직장 안에서 답답하다면 — 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>1인 프로젝트·사업</strong> 쪽이 사주에 더 맞아요.`
+      ? `② 직장 안에서 답답하다면 — 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>1인 프로젝트와 사업</strong> 쪽이 사주에 더 맞아요.`
       : `② ${userName} 님 사주는 한쪽으로 치우치지 않은 <strong>균형 잡힌 결</strong>. 어느 자리에서도 적응하지만 본인 결정 권한을 의식적으로 잡아두세요.`,
     sipDist.비겁 >= 2 && sipDist.재성 >= 1
-      ? `③ 돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong> — 동업·지인 투자는 사주에 박힌 취약점입니다.`
+      ? `③ 돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong> — 동업과 지인 투자는 사주에 박힌 취약점입니다.`
       : ''
   ].filter(Boolean).join('\n');
   return <SectionConclusion label={`이 섹션의 결론 — 한 줄로 ${userName} 님은`}>{text}</SectionConclusion>;
@@ -1135,8 +1135,8 @@ function Section4Conclusion({
   const html =
     `<p>→ 책상을 <strong>${lifestyle.direction}</strong>으로 돌리세요. 이게 1번입니다.</p>` +
     `<p>→ 옷장에 <strong>${lifestyle.color} 비중을 50% 이상</strong>으로 맞추세요.</p>` +
-    `<p>→ 결정·계약·발표는 <strong>${lifestyle.season}</strong>에 잡으세요. 같은 일도 흐름이 다릅니다.</p>` +
-    `<p>→ 매일 <strong>${HAN[primary]}(${primary === '수' ? '물 2L' : primary === '화' ? '햇빛 1시간' : primary === '목' ? '식물·나무 만지기' : primary === '금' ? '미니멀 정리' : '잡곡·도자기 활용'})</strong>를 보급하세요. 의지가 아니라 보급입니다.</p>`;
+    `<p>→ 결정, 계약, 발표는 <strong>${lifestyle.season}</strong>에 잡으세요. 같은 일도 흐름이 다릅니다.</p>` +
+    `<p>→ 매일 <strong>${HAN[primary]}(${primary === '수' ? '물 2L' : primary === '화' ? '햇빛 1시간' : primary === '목' ? '식물과 나무 만지기' : primary === '금' ? '미니멀 정리' : '잡곡과 도자기 활용'})</strong>를 보급하세요. 의지가 아니라 보급입니다.</p>`;
   return (
     <div className="section-conclusion">
       <div className="sc-label">이 섹션의 결론 — 오늘부터 못 박을 것</div>
@@ -1186,11 +1186,11 @@ function _Section8Conclusion({
   const sorted = (Object.entries(sipDist) as [keyof SipDist, number][]).sort((a, b) => b[1] - a[1]);
   const topSip = sorted[0][0];
   const TOP_REL: Record<keyof SipDist, string> = {
-    비겁: '<strong>친구·동료·형제</strong>의 자리',
-    식상: '<strong>자녀·창작</strong>의 자리',
-    재성: '<strong>배우자·실리</strong>의 자리',
-    관성: '<strong>상사·평가</strong>의 자리',
-    인성: '<strong>부모·학습</strong>의 자리',
+    비겁: '<strong>친구, 동료, 형제</strong>의 자리',
+    식상: '<strong>자녀와 창작</strong>의 자리',
+    재성: '<strong>배우자와 실리</strong>의 자리',
+    관성: '<strong>상사와 평가</strong>의 자리',
+    인성: '<strong>부모와 학습</strong>의 자리',
   };
   const dangerLine = sipDist.비겁 >= 2 && sipDist.재성 >= 1
     ? `${userName} 님 사주는 <strong>비겁이 재성을 침범하는 구조</strong>라 <strong>가까운 사람과 큰돈을 섞을 때</strong>가 가장 큰 위험점입니다.`
@@ -1201,9 +1201,9 @@ function _Section8Conclusion({
   const calmer = SS_REV[dayOheng];
   const HAN: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
   const KR: Record<OhengType, string> = { 목: '나무', 화: '불', 토: '흙', 금: '쇠', 수: '물' };
-  const GAN_BY_OH: Record<OhengType, string> = { 목: '甲·乙', 화: '丙·丁', 토: '戊·己', 금: '庚·辛', 수: '壬·癸' };
-  const partner = `<strong>${GAN_BY_OH[calmer]}(${HAN[calmer]}·${KR[calmer]})</strong> 일간의 사람`;
-  const html = `${userName} 님 인생의 가장 큰 자산은 ${TOP_REL[topSip]}입니다. ${dangerLine ? `동시에 가장 큰 위험도 거기 있습니다 — ${dangerLine} <strong>"가까이 두되 결정 권한·돈은 분리한다"</strong>가 평생의 원칙이 되어야 합니다. ` : ''}${partner}을 곁에 두면 부족한 ${KR[calmer]}의 결을 채워줍니다.`;
+  const GAN_BY_OH: Record<OhengType, string> = { 목: '甲 乙', 화: '丙 丁', 토: '戊 己', 금: '庚 辛', 수: '壬 癸' };
+  const partner = `<strong>${GAN_BY_OH[calmer]}(${HAN[calmer]}, ${KR[calmer]})</strong> 일간의 사람`;
+  const html = `${userName} 님 인생의 가장 큰 자산은 ${TOP_REL[topSip]}입니다. ${dangerLine ? `동시에 가장 큰 위험도 거기 있습니다 — ${dangerLine} <strong>"가까이 두되 결정 권한과 돈은 분리한다"</strong>가 평생의 원칙이 되어야 합니다. ` : ''}${partner}을 곁에 두면 부족한 ${KR[calmer]}의 결을 채워줍니다.`;
   return (
     <div className="section-conclusion">
       <div className="sc-label">이 섹션의 결론 — 관계 한 줄 정리</div>
@@ -1296,8 +1296,8 @@ function _Section3Body({
     비겁: `<strong>"내가 결정하고 내가 책임지는"</strong> 결의 사람 — 자기 길을 개척하는 자리에 가야 본인이 살아납니다.`,
     식상: `<strong>"창의적으로 일하면서 표현하고 싶은"</strong> 결 — 만들어내고 드러내는 자리에 가야 살아납니다.`,
     재성: `<strong>"실리를 다루고 자원을 갖추는"</strong> 결 — 본업 + 사이드 자산을 동시에 굴릴 때 본인이 살아납니다.`,
-    관성: `<strong>"평가받고 책임지는"</strong> 결 — 사회적 자리·타이틀·역할이 또렷해질 때 본인이 살아납니다.`,
-    인성: `<strong>"받아들이고 익히는"</strong> 결 — 학습·돌봄·연구 자리에서 본인이 살아납니다.`,
+    관성: `<strong>"평가받고 책임지는"</strong> 결 — 사회적 자리, 타이틀, 역할이 또렷해질 때 본인이 살아납니다.`,
+    인성: `<strong>"받아들이고 익히는"</strong> 결 — 학습, 돌봄, 연구 자리에서 본인이 살아납니다.`,
   };
   const para1 = `${userName} 님 사주에서 가장 두꺼운 무리는 <strong>${top}(${pct(top)}%)</strong>입니다. ${TOP_PROFILE[top]} 다른 무리들도 함께 자리해 ${userName} 님이 <strong>"매일 여러 욕망이 동시에 잡아당기는"</strong> 피곤함을 자주 느낄 수 있는데, 한쪽으로 치우치지 않으니 다재다능해 보이는 결입니다.`;
 
@@ -1306,11 +1306,11 @@ function _Section3Body({
   if (sipDist.식상 >= 2 && sipDist.관성 >= 1) {
     para2 = `특히 <strong>상관과 정관이 같이 있는 구조</strong>는 명리에서 자주 다루어지는 자리입니다. 옛 책에서는 <strong>"상관견관(傷官見官)"</strong> — 표현하고 싶은 마음과 규율이 부딪히는 자리라 하였습니다. ${userName} 님이 직장 안에서 답답함을 자주 느낀다면, 능력 부족이 아니라 <strong>구조적으로 충돌이 짜여 있는</strong> 문제입니다. 이 글자가 도리어 본인의 사업이나 1인 프로젝트에서는 가장 큰 무기가 됩니다.`;
   } else if (sipDist.인성 >= 3) {
-    para2 = `<strong>인성이 두꺼운 사주</strong>는 받아들이고 익히는 결이 강한데, 너무 두꺼우면 <strong>배움 안에서만 머물기 쉬운</strong> 자리이기도 합니다. 배운 즉시 글·발표·작품으로 산출하는 루틴을 두면 인성의 결이 진짜 자산이 됩니다.`;
+    para2 = `<strong>인성이 두꺼운 사주</strong>는 받아들이고 익히는 결이 강한데, 너무 두꺼우면 <strong>배움 안에서만 머물기 쉬운</strong> 자리이기도 합니다. 배운 즉시 글, 발표, 작품으로 산출하는 루틴을 두면 인성의 결이 진짜 자산이 됩니다.`;
   } else if (sipDist.관성 >= 3) {
-    para2 = `<strong>관성이 두꺼운 사주</strong>는 사회적 평가·책임의 결이 강합니다. 다만 위계가 단단한 조직에서 <strong>판단·재량이 좁게 묶이면</strong> 답답해집니다. 본인 판단이 보장된 자리에서 가장 빛납니다.`;
+    para2 = `<strong>관성이 두꺼운 사주</strong>는 사회적 평가와 책임의 결이 강합니다. 다만 위계가 단단한 조직에서 <strong>판단과 재량이 좁게 묶이면</strong> 답답해집니다. 본인 판단이 보장된 자리에서 가장 빛납니다.`;
   } else if (sipDist.재성 >= 3) {
-    para2 = `<strong>재성이 두꺼운 사주</strong>는 실리·자원을 다루는 결이 강합니다. 다만 너무 두꺼우면 <strong>"돈이 들어와도 다시 빠져나가는"</strong> 패턴이 있어, 자동이체·고정 적립 같은 시스템 저축이 평생의 자산이 됩니다.`;
+    para2 = `<strong>재성이 두꺼운 사주</strong>는 실리와 자원을 다루는 결이 강합니다. 다만 너무 두꺼우면 <strong>"돈이 들어와도 다시 빠져나가는"</strong> 패턴이 있어, 자동이체와 고정 적립 같은 시스템 저축이 평생의 자산이 됩니다.`;
   } else {
     para2 = `${userName} 님 사주는 한쪽 무리가 압도적이지 않아 <strong>균형 잡힌 결</strong>입니다. 어느 자리에 가도 적응하는 강점이 있되, 본인 결정의 핵심 축을 의식적으로 잡아두는 게 평생 자산입니다.`;
   }
@@ -1318,11 +1318,11 @@ function _Section3Body({
   // 겁재 강한 사주 — 금전 손실 패턴
   let para3 = '';
   if (sipDist.비겁 >= 2 && sipDist.재성 >= 1) {
-    para3 = `<strong>겁재가 강한 사주</strong>의 특성도 짚어두겠습니다. 같은 결의 사람이 옆에 많아 든든해 보이지만, 정재(돈·약속)를 빼앗아가는 자리이기도 합니다. <strong>형제·친구·동업자와 금전을 섞을 때 가장 큰 손실이 일어납니다. 이건 확률이 아니라 ${userName} 님 사주에 박힌 패턴입니다.</strong> 돈에 대해서는 한 발 떨어져 결정하는 습관이 평생의 자산이 됩니다.`;
+    para3 = `<strong>겁재가 강한 사주</strong>의 특성도 짚어두겠습니다. 같은 결의 사람이 옆에 많아 든든해 보이지만, 정재(돈과 약속)를 빼앗아가는 자리이기도 합니다. <strong>형제, 친구, 동업자와 금전을 섞을 때 가장 큰 손실이 일어납니다. 이건 확률이 아니라 ${userName} 님 사주에 박힌 패턴입니다.</strong> 돈에 대해서는 한 발 떨어져 결정하는 습관이 평생의 자산이 됩니다.`;
   } else if (sipDist.비겁 >= 3) {
-    para3 = `<strong>비겁이 매우 두꺼운 사주</strong>는 자기 결정권이 단단한 만큼, 같은 결의 사람과 협업할 때 의도가 서로 부딪히기 쉽습니다. <strong>역할·지분을 시작 전에 명문화</strong>하는 것이 평생의 원칙이 되어야 합니다.`;
+    para3 = `<strong>비겁이 매우 두꺼운 사주</strong>는 자기 결정권이 단단한 만큼, 같은 결의 사람과 협업할 때 의도가 서로 부딪히기 쉽습니다. <strong>역할과 지분을 시작 전에 명문화</strong>하는 것이 평생의 원칙이 되어야 합니다.`;
   } else if (sipDist.식상 >= 3) {
-    para3 = `<strong>식상이 매우 두꺼운 사주</strong>는 표현·창작 결이 핵심이라, 본인 이름이 붙는 채널 (글·영상·강의·발표)을 1년 이상 끊김 없이 굴리면 <strong>다음 대운에서 큰 빛</strong>이 됩니다.`;
+    para3 = `<strong>식상이 매우 두꺼운 사주</strong>는 표현과 창작 결이 핵심이라, 본인 이름이 붙는 채널 (글, 영상, 강의, 발표)을 1년 이상 끊김 없이 굴리면 <strong>다음 대운에서 큰 빛</strong>이 됩니다.`;
   } else if (sipDist.재성 >= 3) {
     para3 = `재성이 두꺼운 사주는 <strong>본업과 사이드 자산을 함께 굴리는</strong> 결이 강점입니다. 다만 한 자리에 너무 깊이 들어가면 빠르게 쌓아도 빠르게 잃을 수 있어, <strong>분산</strong>이 평생 원칙이 되어야 합니다.`;
   } else {
@@ -1380,11 +1380,11 @@ function Section2Body({
   const ganOhengs = [3, 2, 1, 0]
     .map((i) => pillars[i]?.천간오행 ? KR_OH[pillars[i].천간오행 as OhengType] : '')
     .filter(Boolean)
-    .join('·');
+    .join(', ');
   const jiOhengs = [3, 2, 1, 0]
     .map((i) => pillars[i]?.지지오행 ? KR_OH[pillars[i].지지오행 as OhengType] : '')
     .filter(Boolean)
-    .join('·');
+    .join(', ');
   const dayOheng = (ilganOheng || '토') as OhengType;
   const yearJi = pillars[0]?.지지 || '';
   const yearJiOheng = pillars[0]?.지지오행 as OhengType | undefined;
@@ -1394,7 +1394,7 @@ function Section2Body({
 
   // 천간 줄 풀이 — 일간 oheng 기준 다른 천간 분석
   const otherGans = [pillars[0]?.천간, pillars[1]?.천간, pillars[3]?.천간].filter(Boolean);
-  const para1 = `${userName} 님 천간 줄은 <strong>${ganChars.join(' ')}</strong> — ${ganOhengs}입니다. <strong>${ilgan}(${KR_OH[dayOheng]})</strong>인 ${userName} 님이 가운데에 자리하고, 그 옆으로 ${otherGans.length > 0 ? `<strong>${otherGans.join('·')}</strong>` : '다른 글자'}가 함께 있습니다. 천간에 어떤 글자가 가까이 와 있느냐가 본인이 본능적으로 <strong>곁에 두려 하는 마음의 결</strong>을 만듭니다.`;
+  const para1 = `${userName} 님 천간 줄은 <strong>${ganChars.join(' ')}</strong> — ${ganOhengs}입니다. <strong>${ilgan}(${KR_OH[dayOheng]})</strong>인 ${userName} 님이 가운데에 자리하고, 그 옆으로 ${otherGans.length > 0 ? `<strong>${otherGans.join(', ')}</strong>` : '다른 글자'}가 함께 있습니다. 천간에 어떤 글자가 가까이 와 있느냐가 본인이 본능적으로 <strong>곁에 두려 하는 마음의 결</strong>을 만듭니다.`;
 
   // 지지 줄 풀이 — 4 글자 흐름 + 강한 오행 카운트
   const jiOhengCounts: Record<OhengType, number> = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
@@ -1408,7 +1408,7 @@ function Section2Body({
   // 연주 글자 — 어릴적 환경
   const yearJiKr = yearJiOheng ? KR_OH[yearJiOheng] : '';
   const para3 = yearJi
-    ? `연주의 <strong>${yearJi}(${yearJiKr})</strong>는 ${userName} 님 어릴 적 환경에서 받은 자리입니다. 평소에는 멀리 있어 잊고 살지만, 진짜 지칠 때 <strong>본가·고향·오래된 인연</strong> 같은 곳에서 길어 마시는 한 모금이 되어 줍니다. 사주에서 가장 멀리 있으면서, 동시에 가장 귀한 자리입니다.`
+    ? `연주의 <strong>${yearJi}(${yearJiKr})</strong>는 ${userName} 님 어릴 적 환경에서 받은 자리입니다. 평소에는 멀리 있어 잊고 살지만, 진짜 지칠 때 <strong>본가, 고향, 오래된 인연</strong> 같은 곳에서 길어 마시는 한 모금이 되어 줍니다. 사주에서 가장 멀리 있으면서, 동시에 가장 귀한 자리입니다.`
     : '';
 
   // 합·충·형 한 줄 — 가장 도드라진 관계
@@ -1423,7 +1423,7 @@ function Section2Body({
     else if (firstHyeong) kuncungInfo = `<strong>${firstHyeong.chars.join('')}${firstHyeong.type?.replace(/지지|천간/, '') || '형'}</strong>이 어긋나는 자리`;
   }
   const para4 = kuncungInfo
-    ? `한 가지 더. 위 도식에 표시된 ${kuncungInfo}는 ${userName} 님 사주에 평생 작동하는 결입니다. 본인이 그 자리에서 어떤 마음·행동을 자주 보였는지 곰곰이 떠올려보면, 사주가 가리키는 결이 또렷이 잡힐 것입니다.`
+    ? `한 가지 더. 위 도식에 표시된 ${kuncungInfo}는 ${userName} 님 사주에 평생 작동하는 결입니다. 본인이 그 자리에서 어떤 마음과 행동을 자주 보였는지 곰곰이 떠올려보면, 사주가 가리키는 결이 또렷이 잡힐 것입니다.`
     : `천간과 지지 사이에 큰 충돌이 없어, ${userName} 님 사주는 마음과 행동이 자연스럽게 흐르는 결입니다. 큰 사건보다 잔잔히 자기 결을 다지는 흐름이 됩니다.`;
 
   return (
@@ -1529,7 +1529,7 @@ function Section1Body({
   const dominantPhrase = `<strong>${dominantSubject}${hasJongseong(KR[strongest[0]]) ? '이' : '가'} ${strongest[1]}자</strong>`;
   const weakestPhrase = weakest[1] !== second_weak[1]
     ? `<strong>${weakestSubject}${hasJongseong(KR[weakest[0]]) ? '이' : '가'} ${weakest[1]}자</strong>${second_weak[1] <= 1 ? `, ${HAN[second_weak[0]]}(${KR[second_weak[0]]})도 ${second_weak[1]}자` : ''}`
-    : `<strong>${HAN[weakest[0]]}·${HAN[second_weak[0]]}가 각 ${weakest[1]}자</strong>`;
+    : `<strong>${HAN[weakest[0]]}, ${HAN[second_weak[0]]}가 각 ${weakest[1]}자</strong>`;
   // 일간 오행과 같은 글자 호명
   const sameOhengChars = sajuData.pillars
     .flatMap((p) => p.available ? [
@@ -1557,7 +1557,7 @@ function Section1Body({
   })();
   const para2 = `태어난 달이 <strong>${monthRead}월(${monthZhi}月)</strong>이라 발아래에는 <strong>${season.name}</strong>의 기운이 깔려 있습니다. <strong>${flowTrim}</strong>${flowLastJong ? '이' : '가'} ${userName} 님 사주 흐름의 핵심 마음으로 작동합니다.`;
 
-  const para3 = `다만 한 가지 짚어두어야 할 점이 있습니다. 여덟 글자 중 ${dominantPhrase}로 가장 두텁고${sameOhengChars.length > 0 && strongest[0] === dayOheng ? ` (${sameOhengChars.join('·')})` : ''}, ${weakestPhrase}로 가장 얇습니다. ${advice}`;
+  const para3 = `다만 한 가지 짚어두어야 할 점이 있습니다. 여덟 글자 중 ${dominantPhrase}로 가장 두텁고${sameOhengChars.length > 0 && strongest[0] === dayOheng ? ` (${sameOhengChars.join(', ')})` : ''}, ${weakestPhrase}로 가장 얇습니다. ${advice}`;
 
   return (
     <div style={{ marginTop: 18 }}>
@@ -1733,7 +1733,7 @@ function Section1Pullquote({
   const dayOheng = (ilganOheng || '토') as OhengType;
   const lead = ILGAN_LEAD[dayOheng] || `${ilgan}(${KR[dayOheng]}) 일간`;
   const strongPhrase = STRONG_KEY[strong];
-  const weakPhrase = `${WEAK_KEY[weak1]}·${WEAK_KEY[weak2]}`;
+  const weakPhrase = `${WEAK_KEY[weak1]}, ${WEAK_KEY[weak2]}`;
   // 받침 처리
   const _hasJong = (s: string): boolean => {
     if (!s) return false;
@@ -1825,7 +1825,7 @@ function ShinsalFinePrint({
       }}
     >
       ※ 신살은 사주마다 성립 여부가 달라 <strong>0~10개 이상</strong>까지 차이가 납니다.{' '}
-      {missing.map((m) => m.kr).join('·')} 등은 {userName} 님 사주에는 성립하지 않아 표기하지 않았습니다
+      {missing.map((m) => m.kr).join(', ')} 등은 {userName} 님 사주에는 성립하지 않아 표기하지 않았습니다
       {total > 0 ? ` (현재 ${total}개 자리잡음)` : ''}.
     </p>
   );
@@ -1852,14 +1852,14 @@ function deriveTopicHook(
   switch (topicKey) {
     case 'career': {
       const n = sip.관성;
-      if (tier === 'high') return `${ganRef} 일간에 관성 ${n}개 — 어디서 빛나는지·언제 자리잡는지`;
+      if (tier === 'high') return `${ganRef} 일간에 관성 ${n}개 — 어디서 빛나는지와 언제 자리잡는지`;
       if (tier === 'mid')  return `관성 ${n}개의 활용 시기와 자리 선택`;
       return `관성 ${n}개 — 자리잡기 어려운 이유와 보강법`;
     }
     case 'love': {
       const n = sip.재성 + sip.관성;
       if (tier === 'high') return `${ganRef}이 끌어당기는 인연의 결과 시기`;
-      if (tier === 'mid')  return `결혼 적정기 + 만남의 결 (관·재 ${n}자리)`;
+      if (tier === 'mid')  return `결혼 적정기 + 만남의 결 (관과 재 ${n}자리)`;
       return `인연이 얕은 이유 + 결을 채우는 법`;
     }
     case 'wealth': {
@@ -1870,7 +1870,7 @@ function deriveTopicHook(
     }
     case 'social': {
       const n = sip.비겁;
-      if (tier === 'high') return `비겁 ${n}개 — 결을 살리는 사람·소모하는 사람`;
+      if (tier === 'high') return `비겁 ${n}개 — 결을 살리는 사람과 소모하는 사람`;
       if (tier === 'mid')  return `비겁 ${n}개의 관계 결과 거리감 조정`;
       return `비겁 ${n}개 — 관계가 얕은 이유와 깊이 가는 법`;
     }
@@ -1890,16 +1890,16 @@ function deriveTopicHook(
     case 'exam': {
       const g = sip.관성;
       const i = sip.인성;
-      if (tier === 'high') return `관성 ${g}·인성 ${i}개 — 붙는 시기와 원서 넣을 달`;
-      if (tier === 'mid')  return `관·인 ${g + i}자리 — 시험·이직 타이밍 고르기`;
-      return `관·인 ${g + i}자리 — 한 번에 안 풀리는 이유와 뚫는 시기`;
+      if (tier === 'high') return `관성 ${g}, 인성 ${i}개 — 붙는 시기와 원서 넣을 달`;
+      if (tier === 'mid')  return `관과 인 ${g + i}자리 — 시험과 이직 타이밍 고르기`;
+      return `관과 인 ${g + i}자리 — 한 번에 안 풀리는 이유와 뚫는 시기`;
     }
     case 'business': {
       const s = sip.식상;
       const j = sip.재성;
-      if (tier === 'high') return `식상 ${s}·재성 ${j}개 — 내 일로 돈 버는 시기`;
-      if (tier === 'mid')  return `식상·재성 ${s + j}자리 — 창업 시기와 위험 관리`;
-      return `식상·재성 ${s + j}자리 — 혼자 벌기 전에 점검할 것`;
+      if (tier === 'high') return `식상 ${s}, 재성 ${j}개 — 내 일로 돈 버는 시기`;
+      if (tier === 'mid')  return `식상과 재성 ${s + j}자리 — 창업 시기와 위험 관리`;
+      return `식상과 재성 ${s + j}자리 — 혼자 벌기 전에 점검할 것`;
     }
     case 'study': {
       const n = sip.인성;
@@ -1910,18 +1910,18 @@ function deriveTopicHook(
     case 'marriage': {
       const n = sip.재성 + sip.관성;
       if (tier === 'high') return `${ganRef} 일간의 배우자 자리와 인연 드는 해`;
-      if (tier === 'mid')  return `관·재 ${n}자리 — 결혼 적기와 배우자 성향`;
-      return `관·재 ${n}자리 — 인연이 늦는 이유와 시기`;
+      if (tier === 'mid')  return `관과 재 ${n}자리 — 결혼 적기와 배우자 성향`;
+      return `관과 재 ${n}자리 — 인연이 늦는 이유와 시기`;
     }
     case 'reunion': {
       const n = sip.재성 + sip.관성;
-      if (tier === 'high') return `관·재 ${n}자리 — 다시 이어질 시기와 연락 타이밍`;
-      if (tier === 'mid')  return `관·재 ${n}자리 — 재회 가능성과 다가갈 방향`;
-      return `관·재 ${n}자리 — 붙잡기 전에 볼 흐름`;
+      if (tier === 'high') return `관과 재 ${n}자리 — 다시 이어질 시기와 연락 타이밍`;
+      if (tier === 'mid')  return `관과 재 ${n}자리 — 재회 가능성과 다가갈 방향`;
+      return `관과 재 ${n}자리 — 붙잡기 전에 볼 흐름`;
     }
     default:
       // 기존 '1운에서 깊이 보기' — 3운 주제(연애·재물·재회)에서 가격 오표기 → 가격 없는 카피
-      return '시기·자리·결정 포인트까지 깊이 보기';
+      return '시기, 자리, 결정 포인트까지 깊이 보기';
   }
 }
 
@@ -2118,7 +2118,7 @@ function TopicTopRecommend({
           }}
         >
           <span style={{ fontSize: 11 }}>◆</span>
-          주제별로 깊이 보기 · 深 度
+          주제별로 깊이 보기, 深 度
         </div>
         <div
           style={{
@@ -2138,7 +2138,7 @@ function TopicTopRecommend({
             : <>지금 흐름을 가장 살려볼 만한 <span style={{ color: '#f4d166' }}>{top3.length} 영역</span></>}
         </div>
         <div style={{ fontSize: 12, color: 'rgba(244,236,216,0.66)', lineHeight: 1.6, letterSpacing: '0.01em' }}>
-          점수가 가장 높은 {top3.length}갈래를 깊게 풀어드립니다 — 시기·자리·결정 포인트까지.
+          점수가 가장 높은 {top3.length}갈래를 깊게 풀어드립니다 — 시기, 자리, 결정 포인트까지.
           {topicBaseScores && ' 카드 점수는 주제별 풀이에서도 같은 기준으로 이어져요.'}
         </div>
       </div>
@@ -2324,7 +2324,7 @@ function TopicTopRecommend({
           letterSpacing: '0.04em',
         }}
       >
-        주제당 <strong style={{ color: '#f4d166', fontWeight: 800 }}>{top3MinPrice}운</strong>부터 · 시기·자리·결정 포인트까지
+        주제당 <strong style={{ color: '#f4d166', fontWeight: 800 }}>{top3MinPrice}운</strong>부터, 시기, 자리, 결정 포인트까지
       </div>
     </div>
   );
@@ -2507,7 +2507,7 @@ function SectionPendingSkeleton() {
     <div aria-live="polite" style={{ padding: '4px 0 2px' }}>
       <style>{`@keyframes prem-shimmer{0%{background-position:-240px 0}100%{background-position:240px 0}}`}</style>
       <div style={{ fontSize: 12, color: '#8C6D3D', fontWeight: 700, marginBottom: 10, letterSpacing: '-0.01em' }}>
-        이 섹션 풀이를 쓰고 있어요 · 다 쓰는 대로 여기에 채워져요
+        이 섹션 풀이를 쓰고 있어요, 다 쓰는 대로 여기에 채워져요
       </div>
       {[100, 94, 97, 70].map((w, i) => (
         <div
@@ -2776,7 +2776,7 @@ export function PremiumResult({
           <div className="hero-card">
             <div className="person">{report.name || '회원'}</div>
             <div className="birth">
-              {birthDateText} ({calendarText}) · {hourBranchText}
+              {birthDateText} ({calendarText}), {hourBranchText}
             </div>
             <div
               className="ilgan"
@@ -2789,7 +2789,7 @@ export function PremiumResult({
                 {ilganHan}
               </span>
               <span className="label" style={{ color: ilBox.fg }}>
-                일간 {ilganHan}({ilganKr || ''}) · {ilganYinYang}
+                일간 {ilganHan}({ilganKr || ''}), {ilganYinYang}
                 {ilganOhengKr}
               </span>
             </div>
@@ -2805,9 +2805,9 @@ export function PremiumResult({
                 </span>
                 {ohengSymbol[ilganOhengKr] || '본연의 기운'}
               </span>
-              <span>·</span>
+              <span>, </span>
               <span>{seasonText}</span>
-              <span>·</span>
+              <span>, </span>
               <span>{reportDateText}</span>
             </div>
           </div>
@@ -2898,7 +2898,7 @@ export function PremiumResult({
             오행별 인생의 결 — 나에게 뭐가 있고 뭐가 비는가
           </h4>
           <p style={{ fontSize: 11.5, color: '#5C4A2E', margin: '0 0 10px', lineHeight: 1.55 }}>
-            각 오행이 어떻게 작동하는지 · <strong style={{ color: '#355A3E' }}>살릴 것</strong> /{' '}
+            각 오행이 어떻게 작동하는지, <strong style={{ color: '#355A3E' }}>살릴 것</strong> /{' '}
             <strong style={{ color: '#8b1a1a' }}>조심할 것</strong>로 못 박아둡니다
           </p>
           <LifeEdgeList
@@ -2926,7 +2926,7 @@ export function PremiumResult({
         <CollapsibleSection step={3} pending={pendingOf('D')} title="십성" hanja="十神" hint="관계와 욕망을 그리는 열 개의 키">
           {/* mockup §3 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
-            <strong>십성(十神)</strong>은 사주가 사람의 욕망과 관계를 풀어내는 언어입니다. 다섯 무리(<strong>비겁·식상·재성·관성·인성</strong>)로 묶이며, {report.name || '회원'} 님 사주에서는 가장 두꺼운 무리가 본인의 핵심 결을 만듭니다.
+            <strong>십성(十神)</strong>은 사주가 사람의 욕망과 관계를 풀어내는 언어입니다. 다섯 무리(<strong>비겁, 식상, 재성, 관성, 인성</strong>)로 묶이며, {report.name || '회원'} 님 사주에서는 가장 두꺼운 무리가 본인의 핵심 결을 만듭니다.
           </p>
           {/* Phase A2 · SipDonut — 십성 분포 도넛 (mockup §3 sip-donut 진본) */}
           <SipDonut sipDist={sipDist} />
@@ -2950,11 +2950,11 @@ export function PremiumResult({
         </CollapsibleSection>
       </LocalFadeIn>
 
-      <SectionDivider label="用 神 · 調 候" />
+      <SectionDivider label="用 神 調 候" />
 
       {/* ═════════════ 04 용신·조후 (用神·調候) — 신규 ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={4} pending={pendingOf('A', 'D')} title="용신·조후" hanja="用神·調候" hint="사주가 가장 갈증을 느끼는 것 — 색·방위·계절·물건·습관까지">
+        <CollapsibleSection step={4} pending={pendingOf('A', 'D')} title="용신과 조후" hanja="用神 調候" hint="사주가 가장 갈증을 느끼는 것 — 색, 방위, 계절, 물건, 습관까지">
           {/* mockup §4 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             사주 풀이의 진짜 가치는 여기서 나옵니다. 원국에서 무엇이 부족한지를 알아냈다면, 그것을 일상에서 어떻게 채울지가 다음 단계입니다. 명리에서 이 자리를 <strong>용신(用神)</strong>이라 부릅니다. {report.name || '회원'} 님 사주의 용신은 두 글자로 못 박을 수 있습니다.
@@ -3054,7 +3054,7 @@ export function PremiumResult({
               const mid = Math.min(2, Math.max(0, n - 2));
               const ref = Math.max(0, n - 4);
               const name = report.name || '회원';
-              return `사주마다 0~10개까지 다릅니다 · ${name} 님께는 ${n}개가 자리합니다 (강 ${strong} · 중 ${mid} · 참고 ${ref})`;
+              return `사주마다 0~10개까지 다릅니다, ${name} 님께는 ${n}개가 자리합니다 (강 ${strong}, 중 ${mid}, 참고 ${ref})`;
             })()}>
           {/* Stage 2C-#4: 신살 3 tier (강·중·참고) — mockup shinsal-3tier 진본
               AI shinsalCards 우선 + V4SinSal fallback */}
@@ -3077,7 +3077,7 @@ export function PremiumResult({
           - 이후: 본인 사주 통합 메타 (한 줄 키워드 + 강점·함정) — 모든 사람에게 의미 있음
           - AI schema 신규: lifeKeyword (한 줄) + strengths[3] + cautions[3] */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={8} pending={pendingOf('C')} title="내 사주의 결" hanja="本質" hint="사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3 · 함정 3">
+        <CollapsibleSection step={8} pending={pendingOf('C')} title="내 사주의 결" hanja="本質" hint="사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3, 함정 3">
           <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
           <StrengthsCautionsCards aiResult={aiResult} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
         </CollapsibleSection>
@@ -3089,7 +3089,7 @@ export function PremiumResult({
           2026-05-05 6 카드 복원 (잠재력·인간관계 추가) → 제목 "주제별 한눈에" → "여섯 영역 한눈에"
           ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={9} pending={pendingOf('C')} title="여섯 영역 한눈에" hanja="主題" hint="재물·사랑·직업·건강·인간관계·학업잠재력 — 강·약 점수와 주제별 깊이 보기">
+        <CollapsibleSection step={9} pending={pendingOf('C')} title="여섯 영역 한눈에" hanja="主題" hint="재물, 사랑, 직업, 건강, 인간관계, 학업잠재력 — 강과 약 점수와 주제별 깊이 보기">
           {/* Stage 2C-2#6: 여섯 영역 점수 topic-mini grid (mockup topic-mini 진본) */}
           <TopicMiniGrid scores={areaScores} aiTopics={aiResult.topicMini} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} profileId={reportProfile.profileId} />
           {conclusionAt(8) && (
@@ -3119,7 +3119,7 @@ export function PremiumResult({
       {/* word-count 마커 (mockup §word-count 진본) — "完 · 10섹션 풀이 완료" */}
       {!anyPending && (
       <div className="word-count">
-        <span className="han">完</span> · 10섹션 풀이 완료
+        <span className="han">完</span> 10섹션 풀이 완료
       </div>
       )}
 
@@ -3206,7 +3206,7 @@ function PremiumUpsellCard({
     // worst topic — 점수 가장 낮은 영역 (2026-05-28 social 제거 — SSOT 정렬)
     const TOPIC_KR: Record<string, string> = {
       career: '직업', love: '사랑', wealth: '재물',
-      health: '건강', potential: '학업·잠재력',
+      health: '건강', potential: '학업과 잠재력',
     };
     let worstKey = '';
     let worstScore = 101;
@@ -3256,7 +3256,7 @@ function PremiumUpsellCard({
 
   return (
     <div className="upsell-card">
-      <div className="label">DEEPER · 더 들어가보기</div>
+      <div className="label">DEEPER, 더 들어가보기</div>
       <h3>이 풀이를 두고 직접 물어보세요</h3>
       {aiQuestions && aiQuestions.length >= 2 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '10px 0 14px' }}>
@@ -3309,30 +3309,30 @@ function ReportSources() {
         <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
           『연해자평(淵海子平)』
         </span>
-        ·
+, 
         <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
           『자평진전(子平眞詮)』
         </span>
-        ·
+, 
         <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
           『적천수(滴天髓)』
         </span>
-        ·
+, 
         <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
           『궁통보감(窮通寶鑑)』
         </span>
-        ·
+, 
         <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
           『명리약언(命理約言)』
         </span>
-        ·
+, 
         <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
           『삼명통회(三命通會)』
         </span>
-        를 비롯한 사주명리 6대 원전과 김만태 「한국 사주명리의 수용양상과 전개」(2011)를 포함한 현대 명리학 논문·통계 자료를 지식 기반으로, 고성능 인공지능 응용 프로그램 인터페이스(API)가 당신의 원국·대운·연운에 맞춰 개인별로 생성한 풀이입니다.
+        를 비롯한 사주명리 6대 원전과 김만태 「한국 사주명리의 수용양상과 전개」(2011)를 포함한 현대 명리학 논문과 통계 자료를 지식 기반으로, 고성능 인공지능 응용 프로그램 인터페이스(API)가 당신의 원국, 대운, 연운에 맞춰 개인별로 생성한 풀이입니다.
       </p>
       <p style={{ margin: '8px 0 0', color: '#9A8B70', fontStyle: 'italic' }}>
-        사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+        사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
       </p>
     </div>
   );
@@ -3415,7 +3415,7 @@ function YongsinBox({
             fontWeight: 700,
           }}
         >
-          PRESCRIPTION · 處方
+          PRESCRIPTION, 處方
         </span>
       </div>
 
@@ -3445,8 +3445,8 @@ function YongsinBox({
           }}
         >
           <YongsinChip
-            rank="1순위 · 용신"
-            rankHan="第一·用神"
+            rank="1순위, 용신"
+            rankHan="第一 用神"
             oheng={primary}
             hanja={primaryHanja}
             color={primaryEc.dark}
@@ -3455,8 +3455,8 @@ function YongsinBox({
           />
           {secondary && secondaryEc && (
             <YongsinChip
-              rank="2순위 · 조후"
-              rankHan="第二·調候"
+              rank="2순위, 조후"
+              rankHan="第二 調候"
               oheng={secondary}
               hanja={secondaryHanja}
               color={secondaryEc.dark}
@@ -3486,7 +3486,7 @@ function YongsinBox({
               marginBottom: 6,
             }}
           >
-            왜 이 결이 필요한가 · 何以必須
+            왜 이 결이 필요한가, 何以必須
           </div>
           <p
             style={{
@@ -3541,7 +3541,7 @@ function YongsinBox({
                 flex: 1,
               }}
             >
-              반대로 <strong>{analysisBase.기신}(기신·忌神)</strong>이 강해지는 시기에는
+              반대로 <strong>{analysisBase.기신}(기신, 忌神)</strong>이 강해지는 시기에는
               새 일을 벌이지 않는 편이 좋습니다. 결이 어긋나 힘이 빠지는 때입니다.
             </p>
           </div>
@@ -3684,7 +3684,7 @@ function _LifestyleAdvice({
         }}
       >
         옷장에 <strong style={{ color: C.goldDeep }}>{lifestyle.color}</strong> 비중을 의식적으로 올리세요.
-        {' '}결정·계약·발표는 <strong style={{ color: C.goldDeep }}>{lifestyle.season}</strong>에
+        {' '}결정, 계약, 발표는 <strong style={{ color: C.goldDeep }}>{lifestyle.season}</strong>에
         {' '}몰아두면 같은 일도 흐름이 다릅니다.
       </p>
       <p
@@ -3921,8 +3921,8 @@ function RelationCompassGrid({
     : weakest === '화'
     ? `${HAN_BY_OHENG[weakest]}(${KR_BY_OHENG[weakest]}) 일간. 표현이 거침없고 따뜻한 사람이 ${userName} 님 결을 살려줍니다.`
     : weakest === '토'
-    ? `${HAN_BY_OHENG[weakest]}(${KR_BY_OHENG[weakest]}) 일간. 안정·실리에 강한 사람이 ${userName} 님 결을 받쳐줍니다.`
-    : `${HAN_BY_OHENG[weakest]}(${KR_BY_OHENG[weakest]}) 일간. 자라남·시작에 강한 사람이 ${userName} 님 결을 밀어줍니다.`;
+    ? `${HAN_BY_OHENG[weakest]}(${KR_BY_OHENG[weakest]}) 일간. 안정과 실리에 강한 사람이 ${userName} 님 결을 받쳐줍니다.`
+    : `${HAN_BY_OHENG[weakest]}(${KR_BY_OHENG[weakest]}) 일간. 자라남과 시작에 강한 사람이 ${userName} 님 결을 밀어줍니다.`;
 
   // 카드 2: 부딪히는 — strongest 오행 일간 (같은 결 과잉 또는 일간 충돌)
   const clashGan = GAN_BY_OHENG[strongest];
@@ -3937,9 +3937,9 @@ function RelationCompassGrid({
     : `${HAN_BY_OHENG[calmer]}(${KR_BY_OHENG[calmer]}) 일간. ${userName} 님에게 꼭 필요한 기운을 북돋아 주는 사람이라, 함께 있으면 마음이 놓입니다.`;
 
   const cards = [
-    { label: '힘이 되는 사람', glyph: `${boostGan[0]} · ${boostGan[1]}`, desc: boostDesc, color: '#4E7A57', bg: 'rgba(78,122,87,.06)' },
-    { label: '부딪히는 사람', glyph: `${clashGan[0]} · ${clashGan[1]}`, desc: clashDesc, color: '#c62828', bg: 'rgba(198,40,40,.06)' },
-    { label: '마음이 놓이는 사람', glyph: `${calmGan[0]} · ${calmGan[1]}`, desc: calmDesc, color: '#7F6B4E', bg: 'rgba(127,107,78,.06)' },
+    { label: '힘이 되는 사람', glyph: `${boostGan[0]}, ${boostGan[1]}`, desc: boostDesc, color: '#4E7A57', bg: 'rgba(78,122,87,.06)' },
+    { label: '부딪히는 사람', glyph: `${clashGan[0]}, ${clashGan[1]}`, desc: clashDesc, color: '#c62828', bg: 'rgba(198,40,40,.06)' },
+    { label: '마음이 놓이는 사람', glyph: `${calmGan[0]}, ${calmGan[1]}`, desc: calmDesc, color: '#7F6B4E', bg: 'rgba(127,107,78,.06)' },
   ];
 
   return (
@@ -3954,7 +3954,7 @@ function RelationCompassGrid({
           marginBottom: 4,
         }}
       >
-        올해 인연의 결 · 緣
+        올해 인연의 결, 緣
       </div>
       <div style={{ fontSize: 11, color: C.mute, marginBottom: 10, lineHeight: 1.55 }}>
         주변 사람의 <strong style={{ color: C.ink }}>일간 천간(태어난 날의 글자)</strong>을 알면 {userName} 님과 어떤 결인지 한눈에 보입니다.
@@ -4147,7 +4147,7 @@ function SectionConclusion({
             const stripped = s.replace(/^[①②③④⑤]\s*/, '');
             return (
               <p key={i}>
-                <span className="sc-num">{nums[i] || '·'}</span>
+                <span className="sc-num">{nums[i] || ', '}</span>
                 <span dangerouslySetInnerHTML={{ __html: stripped }} />
               </p>
             );
@@ -4211,8 +4211,8 @@ const SIP_TOP_FRAME: Record<keyof SipDist, { strong: string; gift: string }> = {
 const SIP_BOT_GROW: Record<keyof SipDist, string> = {
   비겁: '본인 중심을 한 번씩 다지는 시간',
   식상: '한 줄씩 밖으로 풀어내는 표현 습관',
-  재성: '결과로 옮기는 다리(돈·지표·마감)',
-  관성: '책임·체계를 받아들이는 한 자리',
+  재성: '결과로 옮기는 다리(돈, 지표, 마감)',
+  관성: '책임과 체계를 받아들이는 한 자리',
   인성: '안에 모으고 배우는 시간',
 };
 
@@ -4395,7 +4395,7 @@ function deriveStrengthsCautions(
       desc: `${ganRef}에 <u>비겁 ${n}개</u>가 받쳐주는 ${grade(n)} 추진력입니다. <strong>한번 정한 길은 끝까지 밀어붙이는 결</strong>이라, 주변이 자연스럽게 따라옵니다.`,
     }),
     식상: (n) => ({
-      title: '표현·창의',
+      title: '표현과 창의',
       desc: `${ganRef}이 <u>식상 ${n}개</u>로 풀어내는 ${grade(n)} 표현력이에요. <strong>본인 색을 자연스럽게 드러내는 결</strong>이라, 같은 일도 당신만의 톤으로 옮겨집니다.`,
     }),
     재성: (n) => ({
@@ -4517,7 +4517,7 @@ function StrengthsCautionsCards({
                 letterSpacing: '0.06em',
               }}
             >
-              長 · 강점
+              長, 강점
             </span>
             <span style={{ color: '#3D3D3D', fontWeight: 600 }}>당신이 타고난 진짜 결</span>
           </div>
@@ -4588,7 +4588,7 @@ function StrengthsCautionsCards({
                 letterSpacing: '0.06em',
               }}
             >
-              短 · 함정
+              短, 함정
             </span>
             <span style={{ color: '#3D3D3D', fontWeight: 600 }}>의식적으로 다뤄야 할 패턴</span>
           </div>
@@ -4733,15 +4733,15 @@ function SipClusterDetails({ aiCluster, sajuData }: { aiCluster?: AiSipCluster; 
     const POS_ZHI = ['연지', '월지', '일지', '시지'];
     const SIP_DESC: Record<string, string> = {
       비견: '<strong>같은 결의 자리</strong>. 자기 결을 지키는 힘이자 동지가 되는 결.',
-      겁재: '<strong>경쟁·재물의 이탈</strong>로 이어지는 자리. 동업·금전 거래에서 특히 주의.',
-      식신: '<strong>지속·전문성·꾸준한 산출</strong>. 한 분야를 길게 파고드는 힘.',
-      상관: '<strong>창의·표현·말의 힘</strong>. 위계 안에서는 종종 오해를 사기도.',
-      편재: '<strong>큰 흐름의 재물</strong>. 사업·투자·유동 자산의 결.',
-      정재: '<strong>꾸준한 수익·내 사람·약속</strong>. 가까이 자리해 든든하지만 무리하기 쉬움.',
-      편관: '<strong>강한 압력·돌발 책임</strong>. 큰일을 떠맡는 자리. 절제하면 추진력.',
-      정관: '<strong>또렷한 규율·체면·평가</strong>. 타인이 평가하는 자리에 약간 예민한 편.',
-      편인: '<strong>직관·상상·외부 지식</strong>. 책·여행·낯선 대화에서 영감.',
-      정인: '<strong>학문·돌봄·받아들이는 결</strong>. 어머니·전통적 학습과 인연이 깊음.',
+      겁재: '<strong>경쟁과 재물의 이탈</strong>로 이어지는 자리. 동업과 금전 거래에서 특히 주의.',
+      식신: '<strong>지속, 전문성, 꾸준한 산출</strong>. 한 분야를 길게 파고드는 힘.',
+      상관: '<strong>창의, 표현, 말의 힘</strong>. 위계 안에서는 종종 오해를 사기도.',
+      편재: '<strong>큰 흐름의 재물</strong>. 사업, 투자, 유동 자산의 결.',
+      정재: '<strong>꾸준한 수익과 내 사람과 약속</strong>. 가까이 자리해 든든하지만 무리하기 쉬움.',
+      편관: '<strong>강한 압력과 돌발 책임</strong>. 큰일을 떠맡는 자리. 절제하면 추진력.',
+      정관: '<strong>또렷한 규율, 체면, 평가</strong>. 타인이 평가하는 자리에 약간 예민한 편.',
+      편인: '<strong>직관, 상상, 외부 지식</strong>. 책, 여행, 낯선 대화에서 영감.',
+      정인: '<strong>학문, 돌봄, 받아들이는 결</strong>. 어머니와 전통적 학습과 인연이 깊음.',
     };
     // 1단계: 모든 글자 → 십성 + 위치 + 가중치 수집
     interface Found { sd: ReturnType<typeof getSipsungOf>; from: string; weight: number }
@@ -4790,7 +4790,7 @@ function SipClusterDetails({ aiCluster, sajuData }: { aiCluster?: AiSipCluster; 
       const c = result[g.cluster] ?? { head: '', cards: [] };
       c.cards = c.cards || [];
       const fromList = g.froms.length > 1
-        ? g.froms.join(' · ')
+        ? g.froms.join(', ')
         : g.froms[0];
       c.cards.push({
         name,
@@ -4830,7 +4830,7 @@ function SipClusterDetails({ aiCluster, sajuData }: { aiCluster?: AiSipCluster; 
     <>
       {items.map((it) => (
         <div key={it.key} className="sip-cluster">
-          <div className="sip-cluster-head">{it.headHanja} · {it.tagline}</div>
+          <div className="sip-cluster-head">{it.headHanja}, {it.tagline}</div>
           {it.data?.head && (
             <p style={{ fontSize: 13, color: '#2a2520', lineHeight: 1.7, margin: '0 0 8px', wordBreak: 'keep-all' }}>
               {stripMd(String(it.data.head))}
@@ -4855,7 +4855,7 @@ function SipClusterDetails({ aiCluster, sajuData }: { aiCluster?: AiSipCluster; 
                         <span key={i2} className={i2 < s ? 'on' : undefined} />
                       ))}
                     </div>
-                    <div className="s-label">강도 {s} / 5 · {strengthLabel(s)}</div>
+                    <div className="s-label">강도 {s} / 5, {strengthLabel(s)}</div>
                   </div>
                 );
               })}
@@ -4920,7 +4920,7 @@ function SipsungStory({
           margin: 0,
         }}
       >
-        <strong>{top[0]}</strong> · {SIP_STORY[top[0]]}
+        <strong>{top[0]}</strong>, {SIP_STORY[top[0]]}
       </p>
     </div>
   );
@@ -5079,23 +5079,23 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   const WEAK_FILL: Record<OhengType, { title: string; desc: string }> = {
     목: {
       title: `${HAN.목}(목) 결을 채우는 작은 산책`,
-      desc: `${ilganPrefix}목(木) ${weakest.n}자라 자기 시작·결정의 결이 얇은 사주. 새벽·이른 아침 30분 산책, 푸른 잎 식물 한 그루, 신맛 음식(매실·식초·녹차)을 일상에 두면 결정력이 자랍니다.`,
+      desc: `${ilganPrefix}목(木) ${weakest.n}자라 자기 시작과 결정의 결이 얇은 사주. 새벽과 이른 아침 30분 산책, 푸른 잎 식물 한 그루, 신맛 음식(매실, 식초, 녹차)을 일상에 두면 결정력이 자랍니다.`,
     },
     화: {
       title: `${HAN.화}(화) 결을 채우는 표현 채널`,
-      desc: `${ilganPrefix}화(火) ${weakest.n}자라 표현·발표의 결이 약한 사주. 한낮 11~13시 햇볕 쬐기, 붉은 색 인테리어 한 곳, 매주 한 번 사람들 앞에 의견 내는 자리(미팅 발표·후기 작성)를 의도적으로 만드세요.`,
+      desc: `${ilganPrefix}화(火) ${weakest.n}자라 표현과 발표의 결이 약한 사주. 한낮 11~13시 햇볕 쬐기, 붉은 색 인테리어 한 곳, 매주 한 번 사람들 앞에 의견 내는 자리(미팅 발표와 후기 작성)를 의도적으로 만드세요.`,
     },
     토: {
       title: `${HAN.토}(토) 결을 채우는 진득함`,
-      desc: `${ilganPrefix}토(土) ${weakest.n}자라 자리 잡는 힘이 얇은 사주. 한 자리·한 가게·한 사람에게 1년 이상 머무는 약속을 캘린더에 못 박으세요. 단맛(곡물·꿀)과 황토색 물건이 결을 받쳐줍니다.`,
+      desc: `${ilganPrefix}토(土) ${weakest.n}자라 자리 잡는 힘이 얇은 사주. 한 자리와 한 가게와 한 사람에게 1년 이상 머무는 약속을 캘린더에 못 박으세요. 단맛(곡물과 꿀)과 황토색 물건이 결을 받쳐줍니다.`,
     },
     금: {
       title: `${HAN.금}(금) 결을 채우는 마감의 힘`,
-      desc: `${ilganPrefix}금(金) ${weakest.n}자라 다듬고 끝내는 결이 얇은 사주. 시작한 일을 끝까지 마무리하는 체크리스트, 매운맛(마늘·생강) 음식, 흰색·은색 소품을 늘리면 결정력이 또렷해집니다.`,
+      desc: `${ilganPrefix}금(金) ${weakest.n}자라 다듬고 끝내는 결이 얇은 사주. 시작한 일을 끝까지 마무리하는 체크리스트, 매운맛(마늘과 생강) 음식, 흰색과 은색 소품을 늘리면 결정력이 또렷해집니다.`,
     },
     수: {
       title: `${HAN.수}(수) 결을 채우는 침묵의 5분`,
-      desc: `${ilganPrefix}수(水) ${weakest.n}자라 깊이 가라앉는 결이 얇은 사주. 하루 끝 5분 침묵·반신욕·검정 물잔, 짠맛 음식(미역·해산물)을 더하세요. 결정 전 하룻밤 묵히는 습관이 한 해 점수를 올립니다.`,
+      desc: `${ilganPrefix}수(水) ${weakest.n}자라 깊이 가라앉는 결이 얇은 사주. 하루 끝 5분 침묵, 반신욕, 검정 물잔, 짠맛 음식(미역과 해산물)을 더하세요. 결정 전 하룻밤 묵히는 습관이 한 해 점수를 올립니다.`,
     },
   };
 
@@ -5108,19 +5108,19 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
     },
     화: {
       title: `${HAN.화}(화) ${strongest.n}자 — 한 박자 늦추기`,
-      desc: `${ilganPrefix}화 ${strongest.n}자 — 즉각 표현·결정 욕구가 강한 사주. 중요한 메시지·계약·답변은 "보내기 전 1시간 묵히기" 룰을 적용하세요. 식은 결정이 더 정확합니다.`,
+      desc: `${ilganPrefix}화 ${strongest.n}자 — 즉각 표현과 결정 욕구가 강한 사주. 중요한 메시지, 계약, 답변은 "보내기 전 1시간 묵히기" 룰을 적용하세요. 식은 결정이 더 정확합니다.`,
     },
     토: {
       title: `${HAN.토}(토) ${strongest.n}자 — 떠나는 연습`,
-      desc: `${ilganPrefix}토 ${strongest.n}자 — 머물려는 힘이 강한 사주라 변화를 미루기 쉽습니다. 분기마다 한 번은 새 환경(여행·이사·부서 이동) 노출을 캘린더에 못 박으세요. 결을 흔들어주는 자극이 필요합니다.`,
+      desc: `${ilganPrefix}토 ${strongest.n}자 — 머물려는 힘이 강한 사주라 변화를 미루기 쉽습니다. 분기마다 한 번은 새 환경(여행, 이사, 부서 이동) 노출을 캘린더에 못 박으세요. 결을 흔들어주는 자극이 필요합니다.`,
     },
     금: {
       title: `${HAN.금}(금) ${strongest.n}자 — 부드럽게 넘기기`,
-      desc: `${ilganPrefix}금 ${strongest.n}자 — 정확·원칙·자르는 힘이 강한 사주라 사람을 깎기 쉽습니다. 비판하기 전 "긍정 한 줄 → 본론" 순서를 의식하세요. 칼은 칼집에 있을 때 가장 단단합니다.`,
+      desc: `${ilganPrefix}금 ${strongest.n}자 — 정확, 원칙, 자르는 힘이 강한 사주라 사람을 깎기 쉽습니다. 비판하기 전 "긍정 한 줄 → 본론" 순서를 의식하세요. 칼은 칼집에 있을 때 가장 단단합니다.`,
     },
     수: {
       title: `${HAN.수}(수) ${strongest.n}자 — 표현으로 풀기`,
-      desc: `${ilganPrefix}수 ${strongest.n}자 — 생각이 깊고 가라앉는 사주라 안에 쌓아두기 쉽습니다. 글·일기·짧은 음성 메모 — 무엇이든 매일 한 줄씩 풀어내세요. 풀지 않으면 무거워지는 결입니다.`,
+      desc: `${ilganPrefix}수 ${strongest.n}자 — 생각이 깊고 가라앉는 사주라 안에 쌓아두기 쉽습니다. 글, 일기, 짧은 음성 메모 — 무엇이든 매일 한 줄씩 풀어내세요. 풀지 않으면 무거워지는 결입니다.`,
     },
   };
 
@@ -5129,24 +5129,24 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   const sipCountFor = (k: keyof typeof sip) => sip[k];
   const SIP_ZERO_FILL: Record<keyof typeof sip, { title: string; desc: string }> = {
     비겁: {
-      title: '동료·친구를 의식적으로 만들기',
-      desc: `비겁 ${sipCountFor('비겁')}자 — ${dayGanLabel || dayGan} 일간을 함께 받쳐줄 동등한 결의 사람이 얇은 사주. 같은 분야 모임·동호회·스터디 한 군데를 1년 이상 꾸준히 다니세요. 만들지 않으면 외로워지는 결입니다.`,
+      title: '동료와 친구를 의식적으로 만들기',
+      desc: `비겁 ${sipCountFor('비겁')}자 — ${dayGanLabel || dayGan} 일간을 함께 받쳐줄 동등한 결의 사람이 얇은 사주. 같은 분야 모임, 동호회, 스터디 한 군데를 1년 이상 꾸준히 다니세요. 만들지 않으면 외로워지는 결입니다.`,
     },
     식상: {
       title: '표현하는 한 채널 1년 이상',
-      desc: `식상 ${sipCountFor('식상')}자 — ${dayGanLabel || dayGan} 일간이 만들어내고 표현하는 결이 얇은 사주. 글·영상·강의·SNS 형식은 자유, 한 채널만 1년 이상 끊김 없이 굴리세요. 이게 다음 대운의 빛이 됩니다.`,
+      desc: `식상 ${sipCountFor('식상')}자 — ${dayGanLabel || dayGan} 일간이 만들어내고 표현하는 결이 얇은 사주. 글, 영상, 강의, SNS 형식은 자유, 한 채널만 1년 이상 끊김 없이 굴리세요. 이게 다음 대운의 빛이 됩니다.`,
     },
     재성: {
-      title: '실리·자원을 의식의 자리에',
-      desc: `재성 ${sipCountFor('재성')}자 — 돈·실리가 자연발생하지 않는 사주. 자동이체·적립식 계좌·고정비 축소 같은 시스템 저축을 의지가 아닌 구조로 설계하세요.`,
+      title: '실리와 자원을 의식의 자리에',
+      desc: `재성 ${sipCountFor('재성')}자 — 돈과 실리가 자연발생하지 않는 사주. 자동이체와 적립식 계좌와 고정비 축소 같은 시스템 저축을 의지가 아닌 구조로 설계하세요.`,
     },
     관성: {
-      title: '책임·자리를 의식적으로 받기',
-      desc: `관성 ${sipCountFor('관성')}자 — 자리·책임이 자연발생하지 않는 사주. 본인 판단·재량이 보장되는 자리(1인 프로젝트·창업·임원·핵심 PM)를 5년 단위로 의식적으로 설계하세요.`,
+      title: '책임과 자리를 의식적으로 받기',
+      desc: `관성 ${sipCountFor('관성')}자 — 자리와 책임이 자연발생하지 않는 사주. 본인 판단과 재량이 보장되는 자리(1인 프로젝트, 창업, 임원, 핵심 PM)를 5년 단위로 의식적으로 설계하세요.`,
     },
     인성: {
-      title: '학습·기록을 평생 자산으로',
-      desc: `인성 ${sipCountFor('인성')}자 — ${dayGanLabel || dayGan} 일간을 받쳐주는 결이 얇은 사주. 자격증·학위·전문 도서 — 무엇이든 매년 한 가지씩 쌓아두세요. 받침이 본인이 만들어야 하는 자리입니다.`,
+      title: '학습과 기록을 평생 자산으로',
+      desc: `인성 ${sipCountFor('인성')}자 — ${dayGanLabel || dayGan} 일간을 받쳐주는 결이 얇은 사주. 자격증, 학위, 전문 도서 — 무엇이든 매년 한 가지씩 쌓아두세요. 받침이 본인이 만들어야 하는 자리입니다.`,
     },
   };
 
@@ -5157,14 +5157,14 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   const ILGAN_LIFE: Record<OhengType, { title: string; desc: string }> = {
     목: {
       title: `${dayGanLabel || dayGan} 일간 — 봄 새벽의 결 살리기`,
-      desc: `${dayGanLabel || dayGan} 일간은 곧게 뻗는 결이 강점이지만 부러지기도 쉬운 결. 매일 같은 시간·같은 자리에서 5분 호흡으로 뿌리를 내리세요. 흔들릴 때 가장 먼저 다잡을 것은 자세입니다.${curDaeunSuffix}`,
+      desc: `${dayGanLabel || dayGan} 일간은 곧게 뻗는 결이 강점이지만 부러지기도 쉬운 결. 매일 같은 시간과 같은 자리에서 5분 호흡으로 뿌리를 내리세요. 흔들릴 때 가장 먼저 다잡을 것은 자세입니다.${curDaeunSuffix}`,
     },
     화: {
       title: `${dayGanLabel || dayGan} 일간 — 한낮의 빛 다스리기`,
-      desc: `${dayGanLabel || dayGan} 일간은 비추는 힘이 강점이지만 자기를 태우기도 쉬운 결. 식사·수면 리듬이 무너지면 가장 먼저 무너집니다. 한 끼만이라도 같은 시간에.${curDaeunSuffix}`,
+      desc: `${dayGanLabel || dayGan} 일간은 비추는 힘이 강점이지만 자기를 태우기도 쉬운 결. 식사와 수면 리듬이 무너지면 가장 먼저 무너집니다. 한 끼만이라도 같은 시간에.${curDaeunSuffix}`,
     },
     토: {
-      title: `${dayGanLabel || dayGan} 일간 — 산·들의 결 살리기`,
+      title: `${dayGanLabel || dayGan} 일간 — 산과 들의 결 살리기`,
       desc: `${dayGanLabel || dayGan} 일간은 받아주는 결이 강점이지만 너무 머물러 굳기도 쉬운 결. 분기에 한 번은 새 환경에 본인을 노출하세요. 토는 흔들릴 때 비로소 새 씨앗을 받습니다.${curDaeunSuffix}`,
     },
     금: {
@@ -5173,7 +5173,7 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
     },
     수: {
       title: `${dayGanLabel || dayGan} 일간 — 흐르는 결 살리기`,
-      desc: `${dayGanLabel || dayGan} 일간은 깊이가 강점이지만 한 자리에 머무는 게 답답한 결. 1년에 한 번은 새 분야·새 도시·새 사람에게 노출되는 일정을 잡으세요. 물은 흐를 때 맑습니다.${curDaeunSuffix}`,
+      desc: `${dayGanLabel || dayGan} 일간은 깊이가 강점이지만 한 자리에 머무는 게 답답한 결. 1년에 한 번은 새 분야와 새 도시와 새 사람에게 노출되는 일정을 잡으세요. 물은 흐를 때 맑습니다.${curDaeunSuffix}`,
     },
   };
 
@@ -5193,11 +5193,11 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   }
   // 4. 가장 강한 십성 활용
   const TOP_SIP_ACTION: Record<keyof typeof sip, { title: string; desc: string }> = {
-    비겁: { title: `비겁 ${topSip[1]}자 — 같은 결 사람과의 협업`, desc: '같은 분야 동료가 결을 살리는 사주. 단 금전 거래·공동 투자는 시작 전 역할·지분을 명문화한 뒤 시작하세요. 깨지면 크게 깨지는 자리입니다.' },
-    식상: { title: `식상 ${topSip[1]}자 — 표현 채널 키우기`, desc: '만들어내는 힘이 강한 사주. 글·영상·강의·요리·디자인 — 무엇이든 한 분야를 1년 이상 끌고 가세요. 다음 대운에서 빛이 되는 자리입니다.' },
-    재성: { title: `재성 ${topSip[1]}자 — 실리의 흐름 잡기`, desc: '돈·자원이 손에 잡히는 사주. 큰 돈은 천천히 굴리는 자산(부동산·장기 적립)으로, 빠른 회전은 작게. 재성이 두꺼우면 선택지가 너무 많아 결정을 미루는 함정.' },
-    관성: { title: `관성 ${topSip[1]}자 — 책임 자리 받기`, desc: '책임·평가가 따라오는 사주. 위계 조직보다는 본인 판단·재량이 보장되는 자리(임원·핵심 PM·1인 프로젝트)에서 가장 빛납니다.' },
-    인성: { title: `인성 ${topSip[1]}자 — 학습으로 결 다지기`, desc: '받아들이고 익히는 결이 강한 사주. 매년 자격증·학위·전문 도서 한 가지씩 쌓아두세요. 받침이 평생 자산이 되는 자리입니다.' },
+    비겁: { title: `비겁 ${topSip[1]}자 — 같은 결 사람과의 협업`, desc: '같은 분야 동료가 결을 살리는 사주. 단 금전 거래와 공동 투자는 시작 전 역할과 지분을 명문화한 뒤 시작하세요. 깨지면 크게 깨지는 자리입니다.' },
+    식상: { title: `식상 ${topSip[1]}자 — 표현 채널 키우기`, desc: '만들어내는 힘이 강한 사주. 글, 영상, 강의, 요리, 디자인 — 무엇이든 한 분야를 1년 이상 끌고 가세요. 다음 대운에서 빛이 되는 자리입니다.' },
+    재성: { title: `재성 ${topSip[1]}자 — 실리의 흐름 잡기`, desc: '돈과 자원이 손에 잡히는 사주. 큰 돈은 천천히 굴리는 자산(부동산과 장기 적립)으로, 빠른 회전은 작게. 재성이 두꺼우면 선택지가 너무 많아 결정을 미루는 함정.' },
+    관성: { title: `관성 ${topSip[1]}자 — 책임 자리 받기`, desc: '책임과 평가가 따라오는 사주. 위계 조직보다는 본인 판단과 재량이 보장되는 자리(임원과 핵심 PM, 1인 프로젝트)에서 가장 빛납니다.' },
+    인성: { title: `인성 ${topSip[1]}자 — 학습으로 결 다지기`, desc: '받아들이고 익히는 결이 강한 사주. 매년 자격증, 학위, 전문 도서 한 가지씩 쌓아두세요. 받침이 평생 자산이 되는 자리입니다.' },
   };
   actions.push(TOP_SIP_ACTION[topSip[0]]);
   // 5. 일간 오행 라이프스타일
@@ -5206,7 +5206,7 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   if (nextDaeunAge > 0 && nextDaeunGZ) {
     actions.push({
       title: `${nextDaeunAge}세 ${nextDaeunGZ} 대운 — 미리 준비할 것`,
-      desc: `이번 대운에서 ${nextDaeunAge}세 ${nextDaeunGZ} 대운으로 넘어가는 변곡점이 있습니다. 새 결로 갈아타기 전에 지금 시기 마무리할 것(미루던 정리·매듭)을 분기별로 짚어두면 다음 대운에서 가볍게 출발합니다.`,
+      desc: `이번 대운에서 ${nextDaeunAge}세 ${nextDaeunGZ} 대운으로 넘어가는 변곡점이 있습니다. 새 결로 갈아타기 전에 지금 시기 마무리할 것(미루던 정리와 매듭)을 분기별로 짚어두면 다음 대운에서 가볍게 출발합니다.`,
     });
   } else {
     // 대운 없을 때 fallback (어린 사주) — 일간 본질로 보강
@@ -5218,23 +5218,23 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   // 7. 신살 기반 액션 — 핵심 신살 1개 호명
   if (hasDohwa) {
     actions.push({
-      title: '도화·홍염의 결 — 표현으로 살리기',
-      desc: '도화살·홍염살이 사주에 자리잡고 있습니다. 매력·감각이 강한 결이라 가까운 사람과의 거리감 조절이 평생 과제. 표현·예술·콘텐츠 영역에서 빛나는 자리예요.',
+      title: '도화와 홍염의 결 — 표현으로 살리기',
+      desc: '도화살과 홍염살이 사주에 자리잡고 있습니다. 매력과 감각이 강한 결이라 가까운 사람과의 거리감 조절이 평생 과제. 표현, 예술, 콘텐츠 영역에서 빛나는 자리예요.',
     });
   } else if (hasMunchang) {
     actions.push({
-      title: '문창귀인 — 글·기록의 결 살리기',
-      desc: '문창귀인이 사주에 자리잡고 있어 글·연구·시험·자격 영역의 결이 강합니다. 매주 한 편 정리·기록하는 자리를 의식적으로 만드세요. 결을 살리지 않으면 잠재로만 남습니다.',
+      title: '문창귀인 — 글과 기록의 결 살리기',
+      desc: '문창귀인이 사주에 자리잡고 있어 글, 연구, 시험, 자격 영역의 결이 강합니다. 매주 한 편 정리와 기록하는 자리를 의식적으로 만드세요. 결을 살리지 않으면 잠재로만 남습니다.',
     });
   } else if (hasYeokma) {
     actions.push({
-      title: '역마의 결 — 이동·새 환경에 노출',
-      desc: '역마살이 사주에 자리잡고 있어 한 자리에 오래 머무는 결이 답답합니다. 분기에 한 번은 새 도시·새 사람·새 분야에 본인을 노출하는 일정을 잡으세요.',
+      title: '역마의 결 — 이동과 새 환경에 노출',
+      desc: '역마살이 사주에 자리잡고 있어 한 자리에 오래 머무는 결이 답답합니다. 분기에 한 번은 새 도시와 새 사람과 새 분야에 본인을 노출하는 일정을 잡으세요.',
     });
   } else if (hasBaekho) {
     actions.push({
-      title: '백호·괴강의 결 — 추진력 + 건강 점검',
-      desc: '백호살·괴강이 사주에 자리잡아 추진력이 강한 만큼 건강 부담도 따라옵니다. 매년 같은 달 종합검진을 캘린더에 고정하세요. 간 수치·혈압·심박 추적이 다음 대운의 정점을 받쳐줍니다.',
+      title: '백호와 괴강의 결 — 추진력 + 건강 점검',
+      desc: '백호살과 괴강이 사주에 자리잡아 추진력이 강한 만큼 건강 부담도 따라옵니다. 매년 같은 달 종합검진을 캘린더에 고정하세요. 간 수치, 혈압, 심박 추적이 다음 대운의 정점을 받쳐줍니다.',
     });
   } else if (hasCheonul) {
     actions.push({
@@ -5617,7 +5617,7 @@ function OhaengRadarSVG({ elements }: { elements: any }) {
     <div className="ohaeng-radar">
       <div className="or-title">
         오행 레이더 — 한눈에 보는 균형도{' '}
-        <span style={{ color: '#a08a5a', fontWeight: 400 }}>· 바깥 = 5자 · 안쪽 = 0자</span>
+        <span style={{ color: '#a08a5a', fontWeight: 400 }}>바깥 = 5자, 안쪽 = 0자</span>
       </div>
       <svg viewBox="0 0 260 240" xmlns="http://www.w3.org/2000/svg">
         {/* 동심오각형 */}
@@ -5746,7 +5746,7 @@ function LifeEdgeList({
   }
   const COPY: Record<OhengType, CardCopy> = {
     목: {
-      glyph: '木', name: '나무 — 주체성 · 성장 욕구', color: '#4E7A57', cls: 'mok',
+      glyph: '木', name: '나무 — 주체성, 성장 욕구', color: '#4E7A57', cls: 'mok',
       bg: 'rgba(78,122,87,.05)', border: '#4E7A57',
       head: {
         strong: `${u} 님은 "스스로 결정하고 스스로 걷는 사람"입니다. 같은 결의 글자가 여럿 모여 주체성이 남들보다 확실히 두껍습니다. 지금까지 살면서 "남이 시키는 대로 하는 게 가장 힘들었다"는 감각이 분명히 있었을 겁니다.`,
@@ -5754,76 +5754,76 @@ function LifeEdgeList({
         weak: `${u} 님은 주변의 의견과 분위기를 흡수하면서 결정하는 결입니다. 부드러운 강함 — 다만 본인의 욕구를 자주 뒷자리에 두는 패턴이 있습니다.`,
       },
       save: {
-        strong: '본인이 결정 주도권을 쥐는 자리. 1인 프로젝트·창업·프리랜서는 사주가 밀어줍니다.',
-        mid: '본인 색깔이 분명히 묻어나는 자리. 의견 내는 회의·기획 주도·중간 리더 자리에서 강합니다.',
-        weak: '주체성을 키우는 환경 — 1:1 코칭·의사결정 훈련·취미라도 "내가 고른다"는 감각을 자주 만들어두세요.',
+        strong: '본인이 결정 주도권을 쥐는 자리. 1인 프로젝트, 창업, 프리랜서는 사주가 밀어줍니다.',
+        mid: '본인 색깔이 분명히 묻어나는 자리. 의견 내는 회의와 기획 주도와 중간 리더 자리에서 강합니다.',
+        weak: '주체성을 키우는 환경 — 1:1 코칭과 의사결정 훈련과 취미라도 "내가 고른다"는 감각을 자주 만들어두세요.',
       },
       avoid: {
-        strong: '같은 결의 사람이 많아 동업·공동창업은 반드시 지분·의사결정 구조를 먼저 못 박아야 깨집니다. 그냥 하면 깨져요.',
+        strong: '같은 결의 사람이 많아 동업과 공동창업은 반드시 지분과 의사결정 구조를 먼저 못 박아야 깨집니다. 그냥 하면 깨져요.',
         mid: '지나치게 "내가 맞다"는 자세로 굳어지면 옆이 떠납니다. 정기적으로 다른 시선을 들이는 루틴을 두세요.',
         weak: '결정의 책임을 남에게 미루는 패턴. "그냥 알아서 해줘"라는 말을 본인이 자주 하고 있다면 신호입니다.',
       },
     },
     화: {
-      glyph: '火', name: '불 — 표현력 · 드러나는 힘', color: '#c62828', cls: 'hwa',
+      glyph: '火', name: '불 — 표현력, 드러나는 힘', color: '#c62828', cls: 'hwa',
       bg: 'rgba(198,40,40,.05)', border: '#c62828',
       head: {
-        strong: `${u} 님의 가장 큰 무기입니다. 말·글·영상·강의 — 드러내는 영역에서 같은 노력으로 남보다 2배의 효과가 납니다.`,
+        strong: `${u} 님의 가장 큰 무기입니다. 말, 글, 영상, 강의 — 드러내는 영역에서 같은 노력으로 남보다 2배의 효과가 납니다.`,
         mid: `${u} 님은 표현이 자연스럽게 풀리는 사람입니다. 본인의 생각을 말로 정리하면서 더 명확해지는 결.`,
         weak: `${u} 님은 안에 담아두는 결입니다. 표현이 부족한 게 아니라, 다듬어서 한 번에 내놓는 스타일.`,
       },
       save: {
-        strong: '직업·사업의 축에 반드시 "드러내는 채널"이 들어가 있어야 합니다. 뒷작업만 하는 자리에 가면 재능이 새요.',
-        mid: '발표·강의·콘텐츠 — 본인 이름이 붙는 일에서 강합니다. 익명/뒷작업 비중이 너무 높으면 활기가 죽습니다.',
-        weak: '표현 채널을 의식적으로 한두 개 굴려두세요. 글·영상·뉴스레터 — 드러나는 횟수 자체를 늘려야 자라납니다.',
+        strong: '직업과 사업의 축에 반드시 "드러내는 채널"이 들어가 있어야 합니다. 뒷작업만 하는 자리에 가면 재능이 새요.',
+        mid: '발표, 강의, 콘텐츠 — 본인 이름이 붙는 일에서 강합니다. 익명/뒷작업 비중이 너무 높으면 활기가 죽습니다.',
+        weak: '표현 채널을 의식적으로 한두 개 굴려두세요. 글, 영상, 뉴스레터 — 드러나는 횟수 자체를 늘려야 자라납니다.',
       },
       avoid: {
         strong: '불이 많아 감정 기복이 또렷합니다. 화가 올라오는 날은 중요한 결정을 다음 날로 미루세요.',
-        mid: '"말이 앞서고 행동이 따라가는" 패턴 주의. 발표/약속을 한 뒤에 일정·여유를 다시 점검하세요.',
-        weak: '본인의 감정·의견을 너무 오래 묻어두면 어느 순간 한 번에 터집니다. 정기적으로 말로 풀어내는 자리를 만드세요.',
+        mid: '"말이 앞서고 행동이 따라가는" 패턴 주의. 발표/약속을 한 뒤에 일정과 여유를 다시 점검하세요.',
+        weak: '본인의 감정과 의견을 너무 오래 묻어두면 어느 순간 한 번에 터집니다. 정기적으로 말로 풀어내는 자리를 만드세요.',
       },
     },
     토: {
       // 가독성 보강 (2026-05-04): #B07F38 (어두운 황토) → #F4D166 (밝은 금) — LifeEdgeList strong 텍스트 가독성
-      glyph: '土', name: '흙 — 재물 · 자리잡는 힘', color: '#F4D166', cls: 'to',
+      glyph: '土', name: '흙 — 재물, 자리잡는 힘', color: '#F4D166', cls: 'to',
       bg: 'rgba(244,209,102,0.10)', border: '#F4D166',
       head: {
-        strong: `${u} 님은 "쌓고 머무는 힘"이 강합니다. 한 자리에 진득하게 앉아 자산·관계·신뢰를 천천히 쌓아 올리는 결.`,
+        strong: `${u} 님은 "쌓고 머무는 힘"이 강합니다. 한 자리에 진득하게 앉아 자산, 관계, 신뢰를 천천히 쌓아 올리는 결.`,
         mid: `${u} 님은 안정과 확장의 균형이 잡힌 결입니다. 무리하게 벌이지 않으면서도 흐름은 놓치지 않는 사람.`,
         weak: `돈이 "벌리는 재능"은 있는데 "쌓이는 자리"가 얇습니다. 벌어도 빠르게 빠져나가는 패턴을 이미 경험했을 겁니다.`,
       },
       save: {
-        strong: '장기 자산·부동산·진득한 사업이 강점. 빠른 회전보다 천천히 굴리는 자산을 늘리세요.',
+        strong: '장기 자산, 부동산, 진득한 사업이 강점. 빠른 회전보다 천천히 굴리는 자산을 늘리세요.',
         mid: '저축과 투자, 안정과 도전을 분기별로 갈라 쓰세요. 한쪽에 치우치지 않는 게 강점입니다.',
-        weak: '자동이체·적립식 계좌·고정비 축소 같은 "시스템 저축"을 반드시 설계하세요. 의지로 안 됩니다, 구조로만 됩니다.',
+        weak: '자동이체와 적립식 계좌와 고정비 축소 같은 "시스템 저축"을 반드시 설계하세요. 의지로 안 됩니다, 구조로만 됩니다.',
       },
       avoid: {
         strong: '머물려는 힘이 너무 강해 변화 시기를 놓칠 수 있어요. 5년에 한 번은 본인 자리를 점검하세요.',
         mid: '"이 정도면 됐다"는 안도감이 가장 위험합니다. 작은 도전을 끊지 않는 게 안정의 진짜 형태.',
-        weak: '큰 부동산·큰 투자를 미루는 편이 맞습니다. 흙이 두꺼워지는 대운을 만나면 그때 한 번에 굳히세요.',
+        weak: '큰 부동산과 큰 투자를 미루는 편이 맞습니다. 흙이 두꺼워지는 대운을 만나면 그때 한 번에 굳히세요.',
       },
     },
     금: {
-      glyph: '金', name: '쇠 — 다듬기 · 절제 · 원칙', color: '#7D7870', cls: 'geum',
+      glyph: '金', name: '쇠 — 다듬기, 절제, 원칙', color: '#7D7870', cls: 'geum',
       bg: 'rgba(74,74,74,0.05)', border: '#7D7870',
       head: {
-        strong: `${u} 님은 원칙·기준·디테일에서 강합니다. 헐겁게 끝내는 걸 본인이 가장 못 견디는 사람.`,
+        strong: `${u} 님은 원칙, 기준, 디테일에서 강합니다. 헐겁게 끝내는 걸 본인이 가장 못 견디는 사람.`,
         mid: `${u} 님은 필요할 때 단호해지는 결입니다. 평소엔 부드럽다가 결정의 순간엔 칼처럼 자르는 사람.`,
         weak: `이게 ${u} 님 사주의 약점이 될 수 있습니다. "일을 여러 개 동시에 벌여놓고 하나도 제대로 못 끝낸 적"이 있었다면 재능 문제가 아니라 이것 때문입니다.`,
       },
       save: {
-        strong: '품질·검수·기획 다듬기가 본업의 무기. 거친 결과물을 정교하게 다듬는 자리에서 빛납니다.',
+        strong: '품질, 검수, 기획 다듬기가 본업의 무기. 거친 결과물을 정교하게 다듬는 자리에서 빛납니다.',
         mid: '본인이 "여기까지"라고 정한 선은 잘 지켜집니다. 큰 결정엔 본인의 직감을 믿으세요.',
-        weak: '외부 규율(마감·계약·코치·발표일)을 의도적으로 설치하세요. 스스로 짜는 마감은 거의 지켜지지 않습니다. 약속해버리면 됩니다.',
+        weak: '외부 규율(마감, 계약, 코치, 발표일)을 의도적으로 설치하세요. 스스로 짜는 마감은 거의 지켜지지 않습니다. 약속해버리면 됩니다.',
       },
       avoid: {
-        strong: '"틀렸다·안 된다"는 판단이 너무 빨라 사람이 떠납니다. 결정을 하루 미뤄보는 연습이 필요해요.',
+        strong: '"틀렸다와 안 된다"는 판단이 너무 빨라 사람이 떠납니다. 결정을 하루 미뤄보는 연습이 필요해요.',
         mid: '원칙주의가 본인을 옥죄는 순간이 있습니다. 한 분기에 한 번은 본인에게 "괜찮다"고 풀어주세요.',
         weak: '"하고 싶은 것"을 줄이는 게 평생 과제입니다. 하나를 끝낼 때까지 다음 것은 시작하지 마세요.',
       },
     },
     수: {
-      glyph: '水', name: '물 — 쉼 · 회복 · 지혜', color: '#3E5F82', cls: 'su',
+      glyph: '水', name: '물 — 쉼, 회복, 지혜', color: '#3E5F82', cls: 'su',
       bg: 'rgba(62,95,130,.05)', border: '#3E5F82',
       head: {
         strong: `${u} 님은 회복력과 통찰이 깊은 결입니다. 한 발 빠져 흐름을 보는 자리에서 가장 정확한 사람.`,
@@ -5831,7 +5831,7 @@ function LifeEdgeList({
         weak: `가장 중요한 보급선인데 가장 얇습니다. 번아웃이 또렷하게 반복될 사주입니다. 이미 한두 번 크게 지쳐본 적이 있을 겁니다.`,
       },
       save: {
-        strong: '관찰·기획·전략 — 한 발 떨어져서 판을 보는 자리에서 강합니다. 깊게 생각하는 시간을 자산으로 쓰세요.',
+        strong: '관찰, 기획, 전략 — 한 발 떨어져서 판을 보는 자리에서 강합니다. 깊게 생각하는 시간을 자산으로 쓰세요.',
         mid: '쉼과 일의 리듬이 잡혀 있는 게 강점. 이 리듬을 무너뜨릴만한 일정은 의식적으로 거절하세요.',
         weak: '"안 하는 시간"을 캘린더에 먼저 박을 것. 분기마다 2박 이상의 온전한 휴식. 즉흥으로 두면 절대 만들어지지 않습니다.',
       },
@@ -5854,7 +5854,7 @@ function LifeEdgeList({
         const ai = aiCards?.[key];
         const userChars = [...new Set(charsByOheng[key] || [])];
         const charsHint = userChars.length > 0
-          ? `(${u} 님 사주의 ${card.glyph} 글자: ${userChars.join('·')})`
+          ? `(${u} 님 사주의 ${card.glyph} 글자: ${userChars.join(', ')})`
           : `(${u} 님 사주에 ${card.glyph} 글자가 비어있는 자리)`;
         // AI head 가 너무 짧으면 (50자 미만) mockup 진본 fallback 사용 — 풍부도 보장
         // 2026-05-04 sanitize: AI 응답에 <strong>/<b> 등 HTML 태그가 섞여 raw text 로 노출되는 버그 차단
@@ -5872,7 +5872,7 @@ function LifeEdgeList({
             <div className="le-head">
               <span className="le-glyph">{card.glyph}</span>
               <span className="le-name">{card.name}</span>
-              <span className={`le-tag ${t.tag}`.trim()}>{t.label} · {c}자</span>
+              <span className={`le-tag ${t.tag}`.trim()}>{t.label}, {c}자</span>
             </div>
             <div className="le-desc">
               {/* 첫 문장 색강조 + 본문은 HTML 통과 (다른 41개 컴포넌트와 동일 패턴) */}
@@ -5976,11 +5976,11 @@ function SipDonut({ sipDist }: { sipDist: SipDist }) {
  * ═════════════════════════════════════════════════════════════════ */
 function SipClusterHeader({ sipDist }: { sipDist: any }) {
   const clusters: Array<{ key: keyof typeof sipDist; label: string; hanja: string; color: string; meaning: string }> = [
-    { key: '비겁', label: '비겁', hanja: '比劫', color: '#4E7A57', meaning: '자아·경쟁' },
-    { key: '식상', label: '식상', hanja: '食傷', color: '#B04A38', meaning: '표현·창작' },
-    { key: '재성', label: '재성', hanja: '財星', color: '#B07F38', meaning: '재물·실리' },
-    { key: '관성', label: '관성', hanja: '官星', color: '#3E5F82', meaning: '관계·책임' },
-    { key: '인성', label: '인성', hanja: '印星', color: '#7A5C7E', meaning: '학문·배움' },
+    { key: '비겁', label: '비겁', hanja: '比劫', color: '#4E7A57', meaning: '자아와 경쟁' },
+    { key: '식상', label: '식상', hanja: '食傷', color: '#B04A38', meaning: '표현과 창작' },
+    { key: '재성', label: '재성', hanja: '財星', color: '#B07F38', meaning: '재물과 실리' },
+    { key: '관성', label: '관성', hanja: '官星', color: '#3E5F82', meaning: '관계와 책임' },
+    { key: '인성', label: '인성', hanja: '印星', color: '#7A5C7E', meaning: '학문과 배움' },
   ];
   const max = Math.max(...clusters.map((c) => Number(sipDist[c.key] ?? 0)));
 
@@ -6024,53 +6024,53 @@ function YongsinLifeTable({ primary, lifestyle }: { primary: OhengType; lifestyl
   // 같은 색·방위 라벨도 용신이 목·화·토·금·수 마다 다른 의미
   const HINTS: Record<OhengType, Record<string, string>> = {
     목: {
-      color: '초록·연두 옷·소품이 본인의 시작 결을 살립니다.',
-      direction: '동쪽이 본인 결을 키우는 방향 — 책상·침대를 돌리세요.',
+      color: '초록과 연두 옷과 소품이 본인의 시작 결을 살립니다.',
+      direction: '동쪽이 본인 결을 키우는 방향 — 책상과 침대를 돌리세요.',
       season: '봄철에 일이 풀리는 결 — 큰 결정은 이 시기로.',
       time: '아침 5~7시(卯時)가 가장 또렷한 결입니다.',
-      food: '잎채소·견과·곡물이 결을 채워줍니다.',
-      item: '식물·나무 소재 가구·연필이 결을 살립니다.',
-      hobby: '등산·정원·식물 가꾸기가 갈증을 풀어줍니다.',
+      food: '잎채소, 견과, 곡물이 결을 채워줍니다.',
+      item: '식물과 나무 소재 가구와 연필이 결을 살립니다.',
+      hobby: '등산, 정원, 식물 가꾸기가 갈증을 풀어줍니다.',
       people: '시작 의지가 또렷한 사람이 결을 채워줍니다.',
     },
     화: {
-      color: '빨강·주황·핑크가 본인의 표현 결을 살립니다.',
+      color: '빨강, 주황, 핑크가 본인의 표현 결을 살립니다.',
       direction: '남쪽이 결을 키우는 방향 — 햇빛 쪽으로.',
       season: '여름에 일이 풀리는 결 — 큰 결정은 이 시기로.',
       time: '오전 11~13시(午時)가 가장 또렷한 결입니다.',
-      food: '매운맛·따뜻한 음식·생강이 결을 채워줍니다.',
-      item: '캔들·조명·붉은 소품이 결을 살립니다.',
-      hobby: '운동·댄스·요가가 갈증을 풀어줍니다.',
+      food: '매운맛과 따뜻한 음식과 생강이 결을 채워줍니다.',
+      item: '캔들, 조명, 붉은 소품이 결을 살립니다.',
+      hobby: '운동, 댄스, 요가가 갈증을 풀어줍니다.',
       people: '밝고 에너지 있는 사람이 결을 채워줍니다.',
     },
     토: {
-      color: '노랑·베이지·황토색이 본인의 안정 결을 살립니다.',
-      direction: '중앙·정중앙이 결을 키우는 자리.',
+      color: '노랑, 베이지, 황토색이 본인의 안정 결을 살립니다.',
+      direction: '중앙과 정중앙이 결을 키우는 자리.',
       season: '환절기(특히 늦여름)에 일이 풀립니다.',
       time: '아침 7~9시(辰時)가 가장 또렷한 결입니다.',
-      food: '단맛·곡물·뿌리채소가 결을 채워줍니다.',
-      item: '도자기·테라코타·황토 소품이 결을 살립니다.',
-      hobby: '도예·정원·산책이 갈증을 풀어줍니다.',
+      food: '단맛, 곡물, 뿌리채소가 결을 채워줍니다.',
+      item: '도자기, 테라코타, 황토 소품이 결을 살립니다.',
+      hobby: '도예, 정원, 산책이 갈증을 풀어줍니다.',
       people: '신뢰감 있고 안정적인 사람이 결을 채워줍니다.',
     },
     금: {
-      color: '흰색·은색이 본인의 단정한 결을 살립니다.',
+      color: '흰색과 은색이 본인의 단정한 결을 살립니다.',
       direction: '서쪽이 결을 키우는 방향.',
       season: '가을에 일이 풀리는 결 — 큰 결정은 이 시기로.',
       time: '오후 5~7시(酉時)가 가장 또렷한 결입니다.',
-      food: '매운맛·견과·하얀 음식이 결을 채워줍니다.',
-      item: '금속 시계·미니멀 정리가 결을 살립니다.',
-      hobby: '서예·미니멀·정리가 갈증을 풀어줍니다.',
+      food: '매운맛, 견과, 하얀 음식이 결을 채워줍니다.',
+      item: '금속 시계와 미니멀 정리가 결을 살립니다.',
+      hobby: '서예, 미니멀, 정리가 갈증을 풀어줍니다.',
       people: '결단력 있고 정갈한 사람이 결을 채워줍니다.',
     },
     수: {
-      color: '검정·짙은 남색이 본인의 사색 결을 살립니다.',
+      color: '검정과 짙은 남색이 본인의 사색 결을 살립니다.',
       direction: '북쪽이 결을 키우는 방향.',
       season: '겨울에 일이 풀리는 결 — 큰 결정은 이 시기로.',
       time: '밤 11~1시(子時)가 가장 또렷한 결입니다.',
-      food: '짠맛·해산물·검은 음식이 결을 채워줍니다.',
-      item: '유리·수정·반신욕이 결을 살립니다.',
-      hobby: '수영·낚시·독서가 갈증을 풀어줍니다.',
+      food: '짠맛, 해산물, 검은 음식이 결을 채워줍니다.',
+      item: '유리, 수정, 반신욕이 결을 살립니다.',
+      hobby: '수영, 낚시, 독서가 갈증을 풀어줍니다.',
       people: '깊이 있고 차분한 사람이 결을 채워줍니다.',
     },
   };
@@ -6148,7 +6148,7 @@ function YongsinLifeTable({ primary, lifestyle }: { primary: OhengType; lifestyl
               lineHeight: 1.3,
             }}
           >
-            용신 일상 적용 8행 · 用神 應用 八行
+            용신 일상 적용 8행, 用神 應用 八行
           </div>
           <div style={{ fontSize: 11, color: C.mute, marginTop: 2, lineHeight: 1.5 }}>
             오늘부터 일상 한 켠에 두면 결이 채워집니다 — 작게라도 매일.
@@ -6247,10 +6247,10 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
   const SANGGEUK: Record<OhengType, OhengType> = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
   function getSipsung(target: OhengType | undefined): string {
     if (!target) return '';
-    if (target === dayOheng) return '비견·겁재 — 같은 결의 자리';
-    if (SANGSAENG[dayOheng] === target) return '식상 — 표현·창작이 강해지는 자리';
-    if (SANGGEUK[dayOheng] === target) return '재성 — 실리·자원이 손에 잡히는 자리';
-    if (SANGGEUK[target] === dayOheng) return '관성 — 책임·평가가 들어오는 자리';
+    if (target === dayOheng) return '비견과 겁재 — 같은 결의 자리';
+    if (SANGSAENG[dayOheng] === target) return '식상 — 표현과 창작이 강해지는 자리';
+    if (SANGGEUK[dayOheng] === target) return '재성 — 실리와 자원이 손에 잡히는 자리';
+    if (SANGGEUK[target] === dayOheng) return '관성 — 책임과 평가가 들어오는 자리';
     if (SANGSAENG[target] === dayOheng) return '인성 — 받아들이고 익히는 자리';
     return '';
   }
@@ -6261,18 +6261,18 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
   // 키 사건과 조심도 사주 specific 변동
   const isStrong = ganOheng === dayOheng || jiOheng === dayOheng;
   const keyEvents = isStrong
-    ? `${ageRange.split('~')[0]}년 자기 결을 굳히는 시기. 중반에는 자리·이름이 한 단계 자리잡습니다.`
+    ? `${ageRange.split('~')[0]}년 자기 결을 굳히는 시기. 중반에는 자리와 이름이 한 단계 자리잡습니다.`
     : ganSip.includes('재성') || jiSip.includes('재성')
-    ? `${ageRange.split('~')[0]}년 재물·실리의 첫 문이 열리고, 중반에 결실이 손에 잡힙니다.`
+    ? `${ageRange.split('~')[0]}년 재물과 실리의 첫 문이 열리고, 중반에 결실이 손에 잡힙니다.`
     : ganSip.includes('관성') || jiSip.includes('관성')
-    ? `${ageRange.split('~')[0]}년 책임·자리의 시기. 중반에 평가가 또렷해집니다.`
+    ? `${ageRange.split('~')[0]}년 책임과 자리의 시기. 중반에 평가가 또렷해집니다.`
     : ganSip.includes('인성') || jiSip.includes('인성')
-    ? `${ageRange.split('~')[0]}년 학습·자격·인연 정비의 시기.`
-    : `${ageRange.split('~')[0]}년 표현·창작이 결의 핵심.`;
+    ? `${ageRange.split('~')[0]}년 학습, 자격, 인연 정비의 시기.`
+    : `${ageRange.split('~')[0]}년 표현과 창작이 결의 핵심.`;
   const cautions = isStrong
     ? `같은 결이 겹쳐 자기 결정권이 강해지는 만큼 옆 의견을 의식적으로 듣는 연습.`
     : ganSip.includes('관성')
-    ? `위계·평가가 까다로워지는 시기. 정면 충돌보다 시간차로 풀어내기.`
+    ? `위계와 평가가 까다로워지는 시기. 정면 충돌보다 시간차로 풀어내기.`
     : `흐름이 빨라질수록 한 박자 늦추는 룰을 본인 캘린더에 박아두세요.`;
 
   return (
@@ -6296,7 +6296,7 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
           </span>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: C.mute, marginBottom: 2 }}>현재 대운 · {cur.age}</div>
+          <div style={{ fontSize: 11, color: C.mute, marginBottom: 2 }}>현재 대운, {cur.age}</div>
           <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>
             {cur.gz}({cur.kr || ''}) — {cur.label || '진행 중'}의 10년
           </div>
@@ -6428,14 +6428,14 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
   // 신살별 실천 팁 (mockup 패턴 — 한 줄 액션)
   const ACTION_TIP: Record<string, string> = {
     도화살: '한 달에 하루는 약속 없이 혼자 보낼 것. 도화는 적당히 거리를 두는 사람에게 가장 강하게 작동합니다.',
-    문창귀인: '"쓰는 채널" 한 곳을 5년 단위로 굴릴 것. 직업 선택 시 글·강의가 들어가는 자리가 무조건 유리합니다.',
+    문창귀인: '"쓰는 채널" 한 곳을 5년 단위로 굴릴 것. 직업 선택 시 글과 강의가 들어가는 자리가 무조건 유리합니다.',
     천을귀인: '결정적 순간에 도와줄 사람이 나타납니다. 평소 인연을 가벼이 보지 마세요.',
     역마살: '3년 이상 같은 자리에 묶이지 않도록 의식적으로 영역을 넓힐 것. 한 회사에서도 직무 전환을 활용합니다.',
-    홍염살: '결혼·동거의 큰 결정은 36~38세에 안정됩니다. 그 전에는 강도보다 다양성을 경험하세요.',
-    화개살: '예술·연구·종교성 — 한 분야를 깊이 파고드는 결을 살리세요.',
-    학당귀인: '평생 학습 — 자격·언어·전문 분야 하나는 꾸준히 갱신.',
+    홍염살: '결혼과 동거의 큰 결정은 36~38세에 안정됩니다. 그 전에는 강도보다 다양성을 경험하세요.',
+    화개살: '예술, 연구, 종교성 — 한 분야를 깊이 파고드는 결을 살리세요.',
+    학당귀인: '평생 학습 — 자격, 언어, 전문 분야 하나는 꾸준히 갱신.',
     백호살: '추진력은 강점, 건강은 부담. 매년 같은 달에 종합검진 예약.',
-    공망: '辰·巳 해에는 새 사업·큰 투자를 미루고 학습·자격·관계 정비에 시간을 투자하세요.',
+    공망: '辰 巳 해에는 새 사업과 큰 투자를 미루고 학습, 자격, 관계 정비에 시간을 투자하세요.',
     원진살: '특정 띠 사람과는 거리감 유지. 같은 일은 멀리서 다루는 편이 낫습니다.',
     양인살: '결단력의 양면 — 큰 결정 전 24시간 보류 룰을 두세요.',
   };
@@ -6452,10 +6452,10 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
   function getDefaultAction(s: V4SinSal): string {
     const fromLabel = s.source ? `${s.source} 기준의 ` : '';
     if (/살|殺|煞/.test(s.hanja)) return `${fromLabel}강한 결이라 의식적으로 거리를 둘 자리. 큰 결정은 24시간 보류 룰을 두세요.`;
-    if (/귀인|貴人|덕|德|희|喜|은|恩|생기|生氣|요안|要安|천을|天乙/.test(s.hanja)) return `${fromLabel}도와줄 인연·기회가 들어오는 결. 어려울 때 주변에 먼저 손 내밀면 풀립니다.`;
-    if (/공망|空亡/.test(s.hanja)) return `${fromLabel}해당 글자가 들어오는 해엔 새 일보다 학습·자격·관계 정비에 시간을 투자하세요.`;
+    if (/귀인|貴人|덕|德|희|喜|은|恩|생기|生氣|요안|要安|천을|天乙/.test(s.hanja)) return `${fromLabel}도와줄 인연과 기회가 들어오는 결. 어려울 때 주변에 먼저 손 내밀면 풀립니다.`;
+    if (/공망|空亡/.test(s.hanja)) return `${fromLabel}해당 글자가 들어오는 해엔 새 일보다 학습, 자격, 관계 정비에 시간을 투자하세요.`;
     if (/사|死/.test(s.hanja)) return `${fromLabel}활기가 약해지는 자리. 충분한 휴식과 회복 루틴이 필요합니다.`;
-    if (/효|孝|모|母/.test(s.hanja)) return `${fromLabel}돌봄·양육·후배 멘토링 자리에서 결이 살아납니다.`;
+    if (/효|孝|모|母/.test(s.hanja)) return `${fromLabel}돌봄, 양육, 후배 멘토링 자리에서 결이 살아납니다.`;
     return ''; // 2026-06-13 — 제네릭 필러('강점 살리고 약점 다루세요') 제거: 신살마다 동일 반복 = AI 템플릿 느낌. 액션 없으면 실천줄 미노출
   }
 
@@ -6478,8 +6478,8 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
         <div className="head">
           <span className="nm">{krLabel}</span>
           <span className="han">{s.hanja}</span>
-          {fromText && <span className="han" style={{ fontSize: 11, color: '#7F6B4E' }}>· {fromText}</span>}
-          <span className="tag">{isFull ? '강 · 핵심' : '중 · 작동'}</span>
+          {fromText && <span className="han" style={{ fontSize: 11, color: '#7F6B4E' }}>, {fromText}</span>}
+          <span className="tag">{isFull ? '강, 핵심' : '중, 작동'}</span>
         </div>
         {/* 2026-05-05: <strong> raw text 차단 */}
         <p dangerouslySetInnerHTML={{ __html: sanitizeAiText(desc) }} />
@@ -6546,7 +6546,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
       {strong.length > 0 && (
         <>
           <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13, color: '#1A1A1A', fontWeight: 800, margin: '4px 0 8px', letterSpacing: '0.02em' }}>
-            핵심 신살 <span style={{ fontSize: 11, color: '#8C6D3D', fontWeight: 700, marginLeft: 4 }}>· 본인 결의 중심</span>
+            핵심 신살 <span style={{ fontSize: 11, color: '#8C6D3D', fontWeight: 700, marginLeft: 4 }}>본인 결의 중심</span>
           </h4>
           <div className="shinsal-list">
             {strong.map((s) => renderCard(s, 5, '상시 작동', true, 'always'))}
@@ -6557,7 +6557,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
       {(mid.length > 0 || ref.length > 0) && (
         <>
           <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 12.5, color: '#7A7269', fontWeight: 700, margin: '18px 0 8px', letterSpacing: '0.02em' }}>
-            그 외 신살 <span style={{ fontSize: 11, color: '#A8A097', fontWeight: 600, marginLeft: 4 }}>· 부수적·시기별 작동</span>
+            그 외 신살 <span style={{ fontSize: 11, color: '#A8A097', fontWeight: 600, marginLeft: 4 }}>부수적과 시기별 작동</span>
           </h4>
           <div>
             {mid.map((s) => renderMiniRow(s, '상시'))}
@@ -6597,40 +6597,40 @@ function _RelationSixCards({ sipDist, aiCards }: { sipDist: any; aiCards?: AiRel
   const summaries: Record<RelKey, string> = {
     parent:
       sip.인성 >= 3
-        ? `<strong>인성 ${sip.인성}자</strong>로 부모 영향이 매우 깊은 결입니다. 정서·습관·진로 결정까지 부모의 결이 본인 안에 깊게 자리잡고 있습니다.`
+        ? `<strong>인성 ${sip.인성}자</strong>로 부모 영향이 매우 깊은 결입니다. 정서, 습관, 진로 결정까지 부모의 결이 본인 안에 깊게 자리잡고 있습니다.`
         : sip.인성 >= 1
         ? `<strong>인성 ${sip.인성}자</strong>로 부모와의 결이 자연스럽게 연결됩니다. 받쳐주고 또 받치는 양방향 관계로 잘 풀립니다.`
         : `<strong>인성 0자</strong>로 어려서부터 자기 결로 길을 낸 자리입니다. 부모와는 정서적 의존보다 <strong>실용적 거리</strong>가 어울립니다.`,
     sibling:
       sip.비겁 >= 3
-        ? `<strong>비겁 ${sip.비겁}자</strong>로 형제·동기 결이 두텁습니다. 같은 결끼리 모이는 자리가 자주 만들어지지만, <strong>경쟁·갈등의 결</strong>도 함께 따라옵니다.`
+        ? `<strong>비겁 ${sip.비겁}자</strong>로 형제와 동기 결이 두텁습니다. 같은 결끼리 모이는 자리가 자주 만들어지지만, <strong>경쟁과 갈등의 결</strong>도 함께 따라옵니다.`
         : sip.비겁 >= 1
-        ? `<strong>비겁 ${sip.비겁}자</strong>로 형제·동기와 <strong>균형 잡힌 거리</strong>를 두는 결입니다. 기댈 한두 명은 있지만 의존하지는 않는 자리.`
-        : `<strong>비겁 0자</strong>로 형제·동기 결이 얇은 자리입니다. <strong>혼자 결정·혼자 길을 내는 결</strong>이라, 깊은 친구 한두 명이 평생 자산이 됩니다.`,
+        ? `<strong>비겁 ${sip.비겁}자</strong>로 형제와 동기와 <strong>균형 잡힌 거리</strong>를 두는 결입니다. 기댈 한두 명은 있지만 의존하지는 않는 자리.`
+        : `<strong>비겁 0자</strong>로 형제와 동기 결이 얇은 자리입니다. <strong>혼자 결정과 혼자 길을 내는 결</strong>이라, 깊은 친구 한두 명이 평생 자산이 됩니다.`,
     spouse:
       sip.재성 >= 3
-        ? `<strong>재성 ${sip.재성}자</strong>로 배우자·이성 결이 풍부합니다. <strong>안정된 결의 사람</strong>이 길게 가지만, 너무 많은 선택이 결정을 미루는 함정.`
+        ? `<strong>재성 ${sip.재성}자</strong>로 배우자와 이성 결이 풍부합니다. <strong>안정된 결의 사람</strong>이 길게 가지만, 너무 많은 선택이 결정을 미루는 함정.`
         : sip.재성 >= 1
-        ? `<strong>재성 ${sip.재성}자</strong>로 배우자 결이 안정적입니다. 일·가정·돈을 함께 그릴 수 있는 결의 사람이 어울립니다.`
-        : `<strong>재성 0자</strong>로 배우자 결을 <strong>본인이 의식적으로 만들어가야</strong> 하는 자리. 자연발생보다 약속·구조가 관계를 살립니다.`,
+        ? `<strong>재성 ${sip.재성}자</strong>로 배우자 결이 안정적입니다. 일, 가정, 돈을 함께 그릴 수 있는 결의 사람이 어울립니다.`
+        : `<strong>재성 0자</strong>로 배우자 결을 <strong>본인이 의식적으로 만들어가야</strong> 하는 자리. 자연발생보다 약속과 구조가 관계를 살립니다.`,
     child:
       sip.식상 >= 3
-        ? `<strong>식상 ${sip.식상}자</strong>로 자녀 결이 두텁고 표현·창의의 결을 자녀에게 그대로 물려주는 자리입니다. <strong>본인이 주는 만큼 자녀가 빛나는</strong> 결.`
+        ? `<strong>식상 ${sip.식상}자</strong>로 자녀 결이 두텁고 표현과 창의의 결을 자녀에게 그대로 물려주는 자리입니다. <strong>본인이 주는 만큼 자녀가 빛나는</strong> 결.`
         : sip.식상 >= 1
-        ? `<strong>식상 ${sip.식상}자</strong>로 자녀의 표현·창작을 자연스럽게 받쳐주는 결. 함께 무언가를 만드는 시간이 가장 깊은 정.`
-        : `<strong>식상 0자</strong>로 자녀와의 결이 <strong>구조·약속 중심</strong>으로 풀리는 자리. 감정 표현보다 일관된 환경이 더 큰 정.`,
+        ? `<strong>식상 ${sip.식상}자</strong>로 자녀의 표현과 창작을 자연스럽게 받쳐주는 결. 함께 무언가를 만드는 시간이 가장 깊은 정.`
+        : `<strong>식상 0자</strong>로 자녀와의 결이 <strong>구조와 약속 중심</strong>으로 풀리는 자리. 감정 표현보다 일관된 환경이 더 큰 정.`,
     friend:
       sip.비겁 >= 3
-        ? `<strong>비겁 ${sip.비겁}자</strong>로 친구·동료 결이 두텁습니다. 모임의 중심이 자주 되지만, <strong>자기 결이 흐려지는 위험</strong>도 함께.`
+        ? `<strong>비겁 ${sip.비겁}자</strong>로 친구와 동료 결이 두텁습니다. 모임의 중심이 자주 되지만, <strong>자기 결이 흐려지는 위험</strong>도 함께.`
         : sip.비겁 >= 1
-        ? `<strong>비겁 ${sip.비겁}자</strong>로 친구·동료 결이 균형 잡혀 있습니다. 폭은 넓지 않아도 깊이 있는 한두 명이 운의 다리.`
-        : `<strong>비겁 0자</strong>로 친구·동료 결이 얇은 자리. <strong>넓게보다 깊게</strong>가 사주의 답. 한두 명에 집중하면 평생 자산.`,
+        ? `<strong>비겁 ${sip.비겁}자</strong>로 친구와 동료 결이 균형 잡혀 있습니다. 폭은 넓지 않아도 깊이 있는 한두 명이 운의 다리.`
+        : `<strong>비겁 0자</strong>로 친구와 동료 결이 얇은 자리. <strong>넓게보다 깊게</strong>가 사주의 답. 한두 명에 집중하면 평생 자산.`,
     boss:
       sip.관성 >= 3
-        ? `<strong>관성 ${sip.관성}자</strong>로 상사·권위 결이 매우 강한 자리. 자리·평가가 빠르게 따라오지만, <strong>위에서 내려오는 압력</strong>도 그만큼 큽니다.`
+        ? `<strong>관성 ${sip.관성}자</strong>로 상사와 권위 결이 매우 강한 자리. 자리와 평가가 빠르게 따라오지만, <strong>위에서 내려오는 압력</strong>도 그만큼 큽니다.`
         : sip.관성 >= 1
-        ? `<strong>관성 ${sip.관성}자</strong>로 조직·권위 결이 자리잡고 있습니다. 책임·평가의 결이 본인을 단단하게 만듭니다.`
-        : `<strong>관성 0자</strong>로 상사·위계의 결이 얇은 자리. <strong>본인 판단·재량이 보장되는 자리</strong>(1인 프로젝트·창업·임원)에서 가장 빛납니다.`,
+        ? `<strong>관성 ${sip.관성}자</strong>로 조직과 권위 결이 자리잡고 있습니다. 책임과 평가의 결이 본인을 단단하게 만듭니다.`
+        : `<strong>관성 0자</strong>로 상사와 위계의 결이 얇은 자리. <strong>본인 판단과 재량이 보장되는 자리</strong>(1인 프로젝트, 창업, 임원)에서 가장 빛납니다.`,
   };
 
   // sixBase — 6 카드 메타 (한자/한글/sipsung/save/careful — 사주별 동적)
@@ -6647,32 +6647,32 @@ function _RelationSixCards({ sipDist, aiCards }: { sipDist: any; aiCards?: AiRel
     { relKey: 'parent', cls: 'c-parent', name: '父 母', label: '부모', sipsung: '인성',
       save: `<strong>주기적 안부 + 짧은 방문</strong>이 큰 자산입니다. 인성은 받는 자리라 ${sip.인성 >= 2 ? '연락 빈도가 곧 관계의 깊이' : '간격을 두되 정성을 모으는 방식'}이 어울립니다.`,
       careful: `${sip.인성 >= 3 ? '본가에서 큰 결정을 협의하지 마세요. <strong>결정은 본가 밖에서 내리고 결과만 공유</strong>하세요. 의견이 본인 결을 덮어버립니다.' : '효심으로 자립을 미루기 쉬운 자리. <strong>독립의 결단</strong>은 본인이 짚어야 합니다.'}`,
-      why: `인성은 부모·스승·받는 자리. ${sip.인성}자 분포가 부모와의 거리감을 결정합니다.`,
+      why: `인성은 부모, 스승, 받는 자리. ${sip.인성}자 분포가 부모와의 거리감을 결정합니다.`,
     },
-    { relKey: 'sibling', cls: 'c-sibling', name: '兄 弟', label: '형제·동기', sipsung: '비겁',
-      save: `${sip.비겁 >= 2 ? '같은 분야 협업은 폭발력이 큽니다. <strong>역할·지분을 시작 전에 문서화</strong>해야 합니다.' : '<strong>깊은 한두 명</strong>에게 정성을 모으세요. 넓게 흩어지면 결이 얕아집니다.'}`,
-      careful: `<strong>금전 거래·공동 투자는 사주가 가장 약한 자리</strong>입니다. 비겁이 ${sip.비겁}자이면 한 번 깨지면 크게 깨집니다. 돈 주고받기는 ${sip.비겁 >= 2 ? '계약서·이자' : '소액 한정'}으로.`,
-      why: `비겁은 동기·경쟁·동등한 결의 자리. 이 결이 ${sip.비겁}자면 형제·동료 관계의 채도가 그만큼 진해집니다.`,
+    { relKey: 'sibling', cls: 'c-sibling', name: '兄 弟', label: '형제와 동기', sipsung: '비겁',
+      save: `${sip.비겁 >= 2 ? '같은 분야 협업은 폭발력이 큽니다. <strong>역할과 지분을 시작 전에 문서화</strong>해야 합니다.' : '<strong>깊은 한두 명</strong>에게 정성을 모으세요. 넓게 흩어지면 결이 얕아집니다.'}`,
+      careful: `<strong>금전 거래와 공동 투자는 사주가 가장 약한 자리</strong>입니다. 비겁이 ${sip.비겁}자이면 한 번 깨지면 크게 깨집니다. 돈 주고받기는 ${sip.비겁 >= 2 ? '계약서와 이자' : '소액 한정'}으로.`,
+      why: `비겁은 동기, 경쟁, 동등한 결의 자리. 이 결이 ${sip.비겁}자면 형제와 동료 관계의 채도가 그만큼 진해집니다.`,
     },
-    { relKey: 'spouse', cls: 'c-spouse', name: '配 偶', label: '배우자·연인', sipsung: '재성',
-      save: `${sip.재성 >= 2 ? '<strong>꾸준한 결의 사람</strong>이 잘 어울립니다. 안정된 약속·실리 기반의 관계가 가장 길게 갑니다.' : '<strong>먼저 표현하고 먼저 약속</strong>하는 자리. 자연발생을 기다리면 결이 흐려집니다.'}`,
-      careful: `즉흥적·강한 카리스마형은 흔들림이 큽니다. <strong>차분히 받쳐주는 결</strong>을 우선하세요. ${sip.재성 >= 3 ? '재성이 풍족할수록 선택지에 휘둘리기 쉽습니다.' : '재성이 적을수록 한 번 정한 결을 오래 가져가는 편이 안전합니다.'}`,
-      why: `재성은 결혼·이성·돈의 자리. ${sip.재성}자 분포가 배우자 결의 두께를 결정합니다.`,
+    { relKey: 'spouse', cls: 'c-spouse', name: '配 偶', label: '배우자와 연인', sipsung: '재성',
+      save: `${sip.재성 >= 2 ? '<strong>꾸준한 결의 사람</strong>이 잘 어울립니다. 안정된 약속과 실리 기반의 관계가 가장 길게 갑니다.' : '<strong>먼저 표현하고 먼저 약속</strong>하는 자리. 자연발생을 기다리면 결이 흐려집니다.'}`,
+      careful: `즉흥적과 강한 카리스마형은 흔들림이 큽니다. <strong>차분히 받쳐주는 결</strong>을 우선하세요. ${sip.재성 >= 3 ? '재성이 풍족할수록 선택지에 휘둘리기 쉽습니다.' : '재성이 적을수록 한 번 정한 결을 오래 가져가는 편이 안전합니다.'}`,
+      why: `재성은 결혼, 이성, 돈의 자리. ${sip.재성}자 분포가 배우자 결의 두께를 결정합니다.`,
     },
     { relKey: 'child', cls: 'c-child', name: '子 女', label: '자녀', sipsung: '식상',
-      save: `${sip.식상 >= 2 ? '자녀의 <strong>표현·창작을 적극적으로 받아주는 부모</strong>가 됩니다. 함께 무언가를 만드는 시간이 자산.' : '자녀에게 <strong>일관된 환경·예측 가능한 약속</strong>이 큰 정. 감정 표현보다 구조가 정을 만듭니다.'}`,
+      save: `${sip.식상 >= 2 ? '자녀의 <strong>표현과 창작을 적극적으로 받아주는 부모</strong>가 됩니다. 함께 무언가를 만드는 시간이 자산.' : '자녀에게 <strong>일관된 환경과 예측 가능한 약속</strong>이 큰 정. 감정 표현보다 구조가 정을 만듭니다.'}`,
       careful: `${sip.식상 >= 2 ? '본인의 기준을 자녀에게 투영하기 쉽습니다. <strong>다른 결을 받아들이는 연습</strong>이 평생 과제입니다.' : '자녀의 표현 욕구를 자기 기준으로 누르지 않도록. <strong>침묵보다 한 줄의 인정</strong>이 결을 살립니다.'}`,
-      why: `식상은 표현·자녀·내가 만들어내는 결의 자리. ${sip.식상}자 분포가 자녀 관계의 결을 결정합니다.`,
+      why: `식상은 표현, 자녀, 내가 만들어내는 결의 자리. ${sip.식상}자 분포가 자녀 관계의 결을 결정합니다.`,
     },
-    { relKey: 'friend', cls: 'c-friend', name: '朋 友', label: '친구·동료', sipsung: '비겁',
+    { relKey: 'friend', cls: 'c-friend', name: '朋 友', label: '친구와 동료', sipsung: '비겁',
       save: `${sip.비겁 >= 2 ? '<strong>인연의 달에 만난 사람</strong>은 한 해 내내 이어집니다. 작은 정성이 다음 운의 다리.' : '<strong>깊은 한두 명</strong>에게 정성을 모으세요. 넓게보다 깊게가 사주의 답.'}`,
       careful: `${sip.비겁 >= 3 ? '사람이 많아지면 자기 결을 잃기 쉽습니다. <strong>한 달에 하루는 약속 없는 날</strong>을 캘린더에 못 박으세요.' : '얕은 자리에 정성을 흩지 마세요. <strong>받기보다 주는 자리</strong>를 미리 정해두는 편이 안전합니다.'}`,
-      why: `비겁은 친구·동료·동등한 결의 자리. ${sip.비겁}자 분포가 인연의 폭과 깊이를 결정합니다.`,
+      why: `비겁은 친구, 동료, 동등한 결의 자리. ${sip.비겁}자 분포가 인연의 폭과 깊이를 결정합니다.`,
     },
-    { relKey: 'boss', cls: 'c-boss', name: '上 司', label: '상사·권위', sipsung: '관성',
-      save: `${sip.관성 >= 2 ? '본인의 <strong>판단·재량이 보장되는 자리</strong>(임원·핵심 PM·1인 프로젝트)에서 빛납니다.' : '본인의 <strong>판단·재량이 보장되는 자리</strong>(1인 프로젝트·창업)에서 가장 빛납니다.'}`,
+    { relKey: 'boss', cls: 'c-boss', name: '上 司', label: '상사와 권위', sipsung: '관성',
+      save: `${sip.관성 >= 2 ? '본인의 <strong>판단과 재량이 보장되는 자리</strong>(임원과 핵심 PM, 1인 프로젝트)에서 빛납니다.' : '본인의 <strong>판단과 재량이 보장되는 자리</strong>(1인 프로젝트와 창업)에서 가장 빛납니다.'}`,
       careful: `${sip.관성 >= 3 ? '책임이 몰리는 결. <strong>위에서 내려오는 평가에 자기 결을 잃지 않도록</strong> 분기마다 본인 우선순위 점검.' : '위계가 단단한 조직에서 오래 버티려 하면 본인 사주를 거스르는 일. <strong>5년 이상은 권하지 않습니다.</strong>'}`,
-      why: `관성은 책임·평가·위계의 자리. ${sip.관성}자 분포가 조직 내 입지의 결을 결정합니다.`,
+      why: `관성은 책임, 평가, 위계의 자리. ${sip.관성}자 분포가 조직 내 입지의 결을 결정합니다.`,
     },
   ];
 
@@ -6788,7 +6788,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
       char1: r.chars[0],
       char2: r.chars[1],
       arrow: '↔',
-      desc: r.resultOheng ? `서로 끌어당겨 ${r.resultOheng} 기운으로 뭉쳐요 — 협력·시너지가 나는 짝` : '서로 끌어당겨 하나로 묶이는 짝',
+      desc: r.resultOheng ? `서로 끌어당겨 ${r.resultOheng} 기운으로 뭉쳐요 — 협력과 시너지가 나는 짝` : '서로 끌어당겨 하나로 묶이는 짝',
       type: 'hap',
     }, '천간합');
   }
@@ -6984,7 +6984,7 @@ function DaewoonLine60({ v4Daeun, sajuData: _sajuData }: { v4Daeun: V4Daeun[]; s
           marginBottom: 8,
         }}
       >
-        60년 흐름 · 一甲子
+        60년 흐름, 一甲子
       </div>
       <div
         style={{
@@ -7032,7 +7032,7 @@ function DaewoonLine60({ v4Daeun, sajuData: _sajuData }: { v4Daeun: V4Daeun[]; s
                 border: isCurrent ? `2px solid ${C.gold}` : 'none',
                 boxShadow: isCurrent ? `0 0 8px ${elemColor}88` : 'none',
               }}
-              title={`${d.age} · ${d.gz}`}
+              title={`${d.age}, ${d.gz}`}
             />
           );
         })}
@@ -7190,10 +7190,10 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
 
       // 1단계: 일지 충/합/형이 있으면 우선 (강한 신호)
       if (isChung) {
-        line = `<strong>일지 ${dayJiLabel} 와 부딪히는 달</strong> — 결정·이동·이별 같은 큰 변동이 일어나기 쉬운 자리입니다.`;
+        line = `<strong>일지 ${dayJiLabel} 와 부딪히는 달</strong> — 결정, 이동, 이별 같은 큰 변동이 일어나기 쉬운 자리입니다.`;
         tag = '부딪힘';
       } else if (isHap) {
-        line = `<strong>일지 ${dayJiLabel} 와 결합하는 달</strong> — 인연·계약·합류 같은 묶이는 결이 강해지는 자리.`;
+        line = `<strong>일지 ${dayJiLabel} 와 결합하는 달</strong> — 인연, 계약, 합류 같은 묶이는 결이 강해지는 자리.`;
         tag = '결합';
       } else if (isHyeong) {
         line = `<strong>일지 ${dayJiLabel} 와 어긋나는 달</strong> — 안에서 갈등이 도드라지는 자리. 사람보다 일에 집중하세요.`;
@@ -7201,20 +7201,20 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
       }
       // 2단계: 충/합/형 없을 때 일간 vs 월지 오행 6갈래
       else if (monthOh === dayOheng) {
-        line = '<strong>나에게 힘이 모이는 시기</strong> — 자기 결정·결심에 좋습니다.';
+        line = '<strong>나에게 힘이 모이는 시기</strong> — 자기 결정과 결심에 좋습니다.';
         tag = '자기 결';
       } else if (SS[monthOh] === dayOheng) {
-        line = '<strong>도움받는 시기</strong> — 학습·정리·회복에 무게중심을 두세요.';
-        tag = '학습·돌봄';
+        line = '<strong>도움받는 시기</strong> — 학습, 정리, 회복에 무게중심을 두세요.';
+        tag = '학습과 돌봄';
       } else if (SS[dayOheng] === monthOh) {
-        line = '<strong>드러내는 시기</strong> — 발표·콘텐츠·소통이 잘 풀립니다.';
-        tag = '표현·창작';
+        line = '<strong>드러내는 시기</strong> — 발표, 콘텐츠, 소통이 잘 풀립니다.';
+        tag = '표현과 창작';
       } else if (SG[dayOheng] === monthOh) {
-        line = '<strong>실리가 손에 잡히는 시기</strong> — 협상·계약·금전 결정 유리.';
-        tag = '실리·자원';
+        line = '<strong>실리가 손에 잡히는 시기</strong> — 협상, 계약, 금전 결정 유리.';
+        tag = '실리와 자원';
       } else if (SG[monthOh] === dayOheng) {
         line = '<strong>평가받는 시기</strong> — 신중하게 마무리하고 큰 결정은 미루세요.';
-        tag = '책임·평가';
+        tag = '책임과 평가';
       } else {
         line = '<strong>한 박자 늦추는</strong> 평탄한 시기.';
         tag = '평탄';
@@ -7234,11 +7234,11 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
       // 🚨 2026-05-05 audit P0 — 글로벌 replace 가 사주 specific 호명 ("재성 N개", "관성 두 개") 무력화
       // → 카운트·자리 호명 패턴 (재성 N개, 관성 두 개, 인성 일지 등) 보존, 단독 등장 시만 일상어 풀이 추가
       // negative lookahead: 뒤에 숫자·"개"·자리 등 호명 토큰이 따라오면 치환 X (사주 specific 보존)
-      t = t.replace(/재성(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|자수|글자|두 ?개|세 ?개))/g, '재성(실리·자원)')
-           .replace(/관성(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '관성(책임·평가)')
-           .replace(/식상(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '식상(표현·창작)')
+      t = t.replace(/재성(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|자수|글자|두 ?개|세 ?개))/g, '재성(실리와 자원)')
+           .replace(/관성(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '관성(책임과 평가)')
+           .replace(/식상(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '식상(표현과 창작)')
            .replace(/비겁(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '비겁(자기 결)')
-           .replace(/인성(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '인성(학습·돌봄)');
+           .replace(/인성(?![\s가-힣]*?(?:\d|[一二三四五]|개|두|세|네|다섯|에|의|이|은|는|월|일|시|년|자리|글자|두 ?개|세 ?개))/g, '인성(학습과 돌봄)');
       // 2차: 충·합·형·파·해·생·극 (사주 호명 보존 룰 적용)
       // 2026-06-13 — 한자 형태만 치환 (沖/合/刑/破/害). 맨 한글 음절(충/합/형/파/해) 전역치환은
       //   일반 단어 파괴(올해→올엇갈림·균형→균어긋남·적합→적결합·충분→부딪힘분) → 한자/이미일상어만.
@@ -7265,7 +7265,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
       // 6차: tag 추출 (첫 strong 키워드 또는 분류 라벨 기반)
       const tagMatch = t.match(/<strong>([^<]+)<\/strong>/);
       if (tagMatch) {
-        const candidate = tagMatch[1].replace(/[—\-·]/g, '·').slice(0, 14);
+        const candidate = tagMatch[1].replace(/[—\-·]/g, ', ').slice(0, 14);
         if (cell.cls === 'peak') cell.tag = '정점';
         else if (cell.cls === 'warn') cell.tag = '주의';
         else if (cell.cls === 'up') cell.tag = '상승';
@@ -7356,7 +7356,7 @@ function TopicMiniGrid({
     { key: 'career',    label: '직업' },
     { key: 'health',    label: '건강' },
     { key: 'social',    label: '인간관계' },
-    { key: 'potential', label: '학업·잠재력' },
+    { key: 'potential', label: '학업과 잠재력' },
   ];
 
   // 2026-05-05 6 카드 → 2-col grid 균일 (마지막 .full 카드 제거)

@@ -753,7 +753,7 @@ function ProfileCard({
     const branch = formatHourCode(h);
     // 2026-06-02 — 분 입력이 없으면 대표시각("11시") 숨기고 시(時)만 (밴드 입력이라 분은 오해 소지).
     return m > 0
-      ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} · ${branch}`
+      ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}, ${branch}`
       : branch;
   })();
 
@@ -944,7 +944,7 @@ function ProfileCard({
           <div style={{ fontSize: 12, color: C.mute, lineHeight: 1.5 }}>
             {profile.input.birthYear}.
             {String(profile.input.birthMonth).padStart(2, '0')}.
-            {String(profile.input.birthDay).padStart(2, '0')} ({calLabel}) ·{' '}
+            {String(profile.input.birthDay).padStart(2, '0')} ({calLabel}), {' '}
             {hourLabel}
           </div>
           {ilgan && (
@@ -957,7 +957,7 @@ function ProfileCard({
                 letterSpacing: '0.02em',
               }}
             >
-              일간 {ilgan} · {oheng}
+              일간 {ilgan}, {oheng}
             </div>
           )}
         </button>
@@ -1224,9 +1224,9 @@ function HistoryCard({
   const label = ct === 'topic'
     ? (TOPIC_LABEL[topicId] ?? '주제별 운세')
     : isPremium
-    ? '종합 사주 · 프리미엄'
+    ? '종합 사주, 프리미엄'
     : isUnlockedDream
-    ? '꿈해몽 · 전체 풀이'
+    ? '꿈해몽, 전체 풀이'
     : baseLabel;
 
   const dateStr = new Date(report.createdAt).toLocaleDateString('ko-KR', {
@@ -1337,7 +1337,7 @@ function HistoryCard({
               textOverflow: 'ellipsis',
             }}
           >
-            {label} · <span style={{ fontWeight: 500 }}>{displayName}</span>
+            {label}, <span style={{ fontWeight: 500 }}>{displayName}</span>
           </div>
           <div
             style={{
@@ -1346,7 +1346,7 @@ function HistoryCard({
               marginTop: 2,
             }}
           >
-            {dateStr} · {unCost}
+            {dateStr}, {unCost}
           </div>
         </div>
         {/* 우 chevron 또는 일괄 모드 시 빈공간 */}
@@ -1422,7 +1422,7 @@ function ChatRoomCard({
             textOverflow: 'ellipsis',
           }}
         >
-          대화 · {room.name}
+          대화, {room.name}
         </div>
         <div
           style={{
@@ -1434,7 +1434,7 @@ function ChatRoomCard({
             textOverflow: 'ellipsis',
           }}
         >
-          {room.lastMessage || '대화를 시작해보세요'} · {dateStr}
+          {room.lastMessage || '대화를 시작해보세요'}, {dateStr}
         </div>
       </div>
       {!bulkMode && <ChevronRightIcon />}
@@ -1486,7 +1486,7 @@ function HistoryEmpty({ filterKey }: { filterKey: FilterKey }) {
   const messages: Record<FilterKey, { title: string; sub: string }> = {
     all:     { title: '아직 풀이가 없어요',         sub: '오늘의 운세부터 가볍게 시작해보세요' },
     report:  { title: '종합사주 기록이 없어요',     sub: '500원 1운으로 본격 사주 풀이를 받아보세요' },
-    topic:   { title: '주제별 분석 기록이 없어요', sub: '연애·재물·직업 등 궁금한 한 주제를 깊이 보세요' },
+    topic:   { title: '주제별 분석 기록이 없어요', sub: '연애, 재물, 직업 등 궁금한 한 주제를 깊이 보세요' },
     compat:  { title: '궁합 기록이 없어요',         sub: '관심 있는 사람과의 궁합을 봐볼까요?' },
     daeun:   { title: '대운 기록이 없어요',         sub: '10년 단위 인생의 큰 흐름을 확인해보세요' },
     monthly: { title: '월운 기록이 없어요',         sub: '원하는 달을 골라 그 달을 깊이 풀어드려요' },

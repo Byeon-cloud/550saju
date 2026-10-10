@@ -73,7 +73,7 @@ export function TimelineSwipe({ steps, onLockedTap, lockedCta = '1운으로 열�
                     </div>
                   </div>
                   <div className="card-locked-overlay">
-                    <p className="card-locked-title">{step.label} · {step.title}</p>
+                    <p className="card-locked-title">{step.label}, {step.title}</p>
                     <div className="card-locked-cta">
                       <span>{lockedCta}</span>
                     </div>

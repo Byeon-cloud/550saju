@@ -40,12 +40,12 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     titleKo: '주역',
     titleHanja: '周易',
     titlePinyin: 'Zhōu Yì',
-    author: '전통적으로 복희·문왕·주공·공자에 귀속',
-    authorHanja: '伏羲·文王·周公·孔子',
+    author: '전통적으로 복희, 문왕, 주공, 공자에 귀속',
+    authorHanja: '伏羲 文王 周公 孔子',
     era: '서주~전국시대',
     yearApprox: 'BC 1000~BC 300',
     description: '음양(陰陽) 사상과 64괘 체계를 담은 동양 철학의 최고 원전',
-    significance: '명리학의 철학적 뿌리. 음양론·변화론·상수학의 원천',
+    significance: '명리학의 철학적 뿌리. 음양론, 변화론, 상수학의 원천',
     tags: ['음양론', '상수학', '원류'],
   },
   {
@@ -57,8 +57,8 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     authorHanja: '蕭吉',
     era: '수(隋)나라',
     yearApprox: '약 594년',
-    description: '오행(五行)에 관한 거의 모든 고대 자료를 발췌·집대성한 백과사전적 저작',
-    significance: '오행론의 종합 정리서. 목·화·토·금·수의 생극제화 이론 체계화',
+    description: '오행(五行)에 관한 거의 모든 고대 자료를 발췌와 집대성한 백과사전적 저작',
+    significance: '오행론의 종합 정리서. 목, 화, 토, 금, 수의 생극제화 이론 체계화',
     tags: ['오행론', '기초이론', '집대성'],
   },
 
@@ -72,7 +72,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     authorHanja: '李虛中',
     era: '당(唐)나라',
     yearApprox: '약 800년',
-    description: '연·월·일 3주(三柱)로 인간의 운명을 분석한 최초의 체계적 명리서',
+    description: '연, 월, 일 3주(三柱)로 인간의 운명을 분석한 최초의 체계적 명리서',
     significance: '명리학의 시조. 간지(干支)로 운명을 논하는 체계의 최초 확립자',
     tags: ['삼주법', '명리학 시원', '당사주'],
   },
@@ -100,7 +100,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     authorHanja: '京圖(原著), 劉基/劉伯溫(撰註)',
     era: '송말~명초',
     yearApprox: '약 1300~1368년',
-    description: '7언 운문 형식으로 천간·지지·체용·강약 등 명리 핵심 원리를 압축한 최고봉 이론서',
+    description: '7언 운문 형식으로 천간, 지지, 체용, 강약 등 명리 핵심 원리를 압축한 최고봉 이론서',
     significance: '명리학 3대 고전 중 하나. "기운과 흐름"의 관점에서 사주를 해석하는 방법론의 원전',
     tags: ['3대 고전', '체용론', '강약론', '기운 흐름'],
   },
@@ -114,7 +114,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     era: '명(明)나라',
     yearApprox: '약 1550년',
     description: '이전의 모든 명리 이론과 산발적 고서를 집대성한 명리학의 백과사전',
-    significance: '200여 년의 팔자학 역사를 총정리. 납음·신살·격국 등 전 영역을 망라한 최대 규모 저작',
+    significance: '200여 년의 팔자학 역사를 총정리. 납음, 신살, 격국 등 전 영역을 망라한 최대 규모 저작',
     tags: ['집대성', '백과사전', '납음', '신살', '격국론'],
   },
   {
@@ -126,7 +126,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     authorHanja: '張楠(張神峰)',
     era: '명(明)나라',
     yearApprox: '약 1580년',
-    description: '병·사·묘·절(病死墓絶) 등 12운성의 실전 적용과 격국 분석을 정리한 실전서',
+    description: '병, 사, 묘, 절(病死墓絶) 등 12운성의 실전 적용과 격국 분석을 정리한 실전서',
     significance: '12운성 해석법의 정립. 격국 판단의 실전적 기준을 제시',
     tags: ['12운성', '격국론', '실전'],
   },
@@ -142,7 +142,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     era: '명~청',
     yearApprox: '청 가경연간 (약 1796~1820)',
     description: '월령(月令)별 일간의 조후(調候) 용신을 체계적으로 정리한 조후론의 핵심 원전',
-    significance: '명리학 3대 고전 중 하나. "환경과 조화"의 관점에서 계절·기후에 따른 오행 배합을 논함',
+    significance: '명리학 3대 고전 중 하나. "환경과 조화"의 관점에서 계절과 기후에 따른 오행 배합을 논함',
     tags: ['3대 고전', '조후론', '월령', '용신'],
   },
   {
@@ -168,7 +168,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     era: '청(清)나라 초기',
     yearApprox: '약 1650년',
     description: '간명법 48장, 부 20장, 논 48장, 잡론 24칙의 4권 구성으로 명리 요점을 간결하게 정리',
-    significance: '고전 격국·신살 이론의 오류를 비판적으로 검토한 선구적 저작',
+    significance: '고전 격국과 신살 이론의 오류를 비판적으로 검토한 선구적 저작',
     tags: ['비판적 검토', '간명법', '격국론'],
   },
 
@@ -209,7 +209,7 @@ export const CLASSICAL_TEXTS: ClassicalText[] = [
     era: '중화민국',
     yearApprox: '약 1930년대',
     description: '자평진전 원문에 서락오가 평론과 주석을 더한 근대 명리학의 중요 참고서',
-    significance: '격국용신론을 근대적 논리로 재정리. 현대 한·중·일 명리학의 기본 교재',
+    significance: '격국용신론을 근대적 논리로 재정리. 현대 한, 중, 일 명리학의 기본 교재',
     tags: ['자평진전 주석', '격국론', '서락오'],
   },
 ];
@@ -239,9 +239,9 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     id: 'eumyang',
     nameKo: '음양론',
     nameHanja: '陰陽論',
-    description: '만물을 음(陰)과 양(陽)의 대립·조화로 설명하는 동양 철학의 근본 원리',
+    description: '만물을 음(陰)과 양(陽)의 대립과 조화로 설명하는 동양 철학의 근본 원리',
     detail:
-      '천간 10자와 지지 12자 각각에 음양을 배속하여, 사주 원국의 음양 균형과 편중을 분석합니다. 양이 강하면 외향적·능동적, 음이 강하면 내향적·수렴적 성향으로 해석합니다.',
+      '천간 10자와 지지 12자 각각에 음양을 배속하여, 사주 원국의 음양 균형과 편중을 분석합니다. 양이 강하면 외향적과 능동적, 음이 강하면 내향적과 수렴적 성향으로 해석합니다.',
     sourceTexts: ['주역(周易)', '오행대의(五行大義)'],
     applicationInApp: '사주 원국의 음양 비율 분석, 성격 기질 판단의 기초',
   },
@@ -249,9 +249,9 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     id: 'oheng',
     nameKo: '오행론',
     nameHanja: '五行論',
-    description: '목(木)·화(火)·토(土)·금(金)·수(水) 다섯 가지 기운의 상생·상극 관계 체계',
+    description: '목(木), 화(火), 토(土), 금(金), 수(水) 다섯 가지 기운의 상생과 상극 관계 체계',
     detail:
-      '오행의 생(生)·극(剋)·제(制)·화(化) 관계를 통해 사주 원국의 에너지 흐름과 균형을 파악합니다. 상생은 돕는 관계(목생화, 화생토 등), 상극은 제어하는 관계(목극토, 토극수 등)입니다.',
+      '오행의 생(生), 극(剋), 제(制), 화(化) 관계를 통해 사주 원국의 에너지 흐름과 균형을 파악합니다. 상생은 돕는 관계(목생화, 화생토 등), 상극은 제어하는 관계(목극토, 토극수 등)입니다.',
     sourceTexts: ['오행대의(五行大義)', '연해자평(淵海子平)', '삼명통회(三命通會)'],
     applicationInApp: '오행 분포도(레이더 차트), 보충 오행 추천, 개운법 산출',
   },
@@ -261,7 +261,7 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '十星論 / 十神論',
     description: '일간을 기준으로 다른 7글자와의 관계를 10가지 유형으로 분류하는 체계',
     detail:
-      '비견·겁재·식신·상관·편재·정재·편관·정관·편인·정인의 10가지 관계를 통해 성격, 직업적성, 대인관계, 재물운 등을 해석합니다. 일간이 "나"이고, 나와 같은 오행은 비겁, 내가 생하는 오행은 식상, 내가 극하는 오행은 재성 등으로 분류합니다.',
+      '비견, 겁재, 식신, 상관, 편재, 정재, 편관, 정관, 편인, 정인의 10가지 관계를 통해 성격, 직업적성, 대인관계, 재물운 등을 해석합니다. 일간이 "나"이고, 나와 같은 오행은 비겁, 내가 생하는 오행은 식상, 내가 극하는 오행은 재성 등으로 분류합니다.',
     sourceTexts: ['연해자평(淵海子平)', '자평진전(子平眞詮)', '적천수(滴天髓)'],
     applicationInApp: '성격 분석, 직업적성 매칭, 대인관계 유형 판단, 재물운 해석',
   },
@@ -271,9 +271,9 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '格局論',
     description: '월령(月令)의 지장간을 기준으로 사주의 구조적 유형(격국)을 판별하는 이론',
     detail:
-      '정격 8격(정관격·편관격·정인격·편인격·정재격·편재격·식신격·상관격)과 특별격(종격·화격 등)으로 사주의 근본 구조를 분류합니다. 격국은 사주의 "설계도"에 해당하며, 어떤 방향으로 인생이 전개될지의 큰 틀을 보여줍니다.',
+      '정격 8격(정관격, 편관격, 정인격, 편인격, 정재격, 편재격, 식신격, 상관격)과 특별격(종격과 화격 등)으로 사주의 근본 구조를 분류합니다. 격국은 사주의 "설계도"에 해당하며, 어떤 방향으로 인생이 전개될지의 큰 틀을 보여줍니다.',
     sourceTexts: ['자평진전(子平眞詮)', '연해자평(淵海子平)', '삼명통회(三命通會)'],
-    applicationInApp: '사주 구조 분석, 직업운·재물운의 방향성 판단',
+    applicationInApp: '사주 구조 분석, 직업운과 재물운의 방향성 판단',
   },
   {
     id: 'yongsin',
@@ -288,7 +288,7 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
       '적천수(滴天髓)',
       '적천수천미(滴天髓闡微)',
     ],
-    applicationInApp: '개운법 산출, 행운 프로필(색상·방위·숫자) 추천의 근거',
+    applicationInApp: '개운법 산출, 행운 프로필(색상, 방위, 숫자) 추천의 근거',
   },
   {
     id: 'johu',
@@ -306,9 +306,9 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '抑扶論',
     description: '일간의 강약을 판단하여, 강하면 억제(抑)하고 약하면 부조(扶)하는 균형 이론',
     detail:
-      '일간이 강하면(인성·비겁이 많으면) 식상·재성·관성으로 설기시켜 균형을 맞추고, 일간이 약하면(관살·재성이 많으면) 인성·비겁으로 보강합니다. 현대 명리학에서 가장 보편적으로 사용되는 용신 판단법입니다.',
+      '일간이 강하면(인성과 비겁이 많으면) 식상, 재성, 관성으로 설기시켜 균형을 맞추고, 일간이 약하면(관살과 재성이 많으면) 인성과 비겁으로 보강합니다. 현대 명리학에서 가장 보편적으로 사용되는 용신 판단법입니다.',
     sourceTexts: ['적천수(滴天髓)', '적천수천미(滴天髓闡微)', '자평진전(子平眞詮)'],
-    applicationInApp: '일간 강약 판단, 용신·희신 산출, 대운 길흉 분석',
+    applicationInApp: '일간 강약 판단, 용신과 희신 산출, 대운 길흉 분석',
   },
   {
     id: 'daeun',
@@ -316,7 +316,7 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '大運論 / 行運論',
     description: '10년 단위의 대운(大運)과 매년의 세운(歲運)으로 시간적 운세 변화를 분석하는 이론',
     detail:
-      '대운은 월주를 기점으로 순행 또는 역행하며 10년 단위로 바뀝니다. 대운의 천간·지지가 사주 원국과 어떤 관계를 맺느냐에 따라 해당 시기의 길흉이 결정됩니다. 세운(년운)은 매년 바뀌는 운으로, 대운과 함께 복합적으로 작용합니다.',
+      '대운은 월주를 기점으로 순행 또는 역행하며 10년 단위로 바뀝니다. 대운의 천간과 지지가 사주 원국과 어떤 관계를 맺느냐에 따라 해당 시기의 길흉이 결정됩니다. 세운(년운)은 매년 바뀌는 운으로, 대운과 함께 복합적으로 작용합니다.',
     sourceTexts: ['연해자평(淵海子平)', '적천수(滴天髓)', '삼명통회(三命通會)'],
     applicationInApp: '대운 타임라인, 올해 운세, 월운 차트',
   },
@@ -326,7 +326,7 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '支藏干論',
     description: '지지(地支) 속에 숨어 있는 천간(天干)을 분석하여 내면의 작용을 파악하는 이론',
     detail:
-      '12지지 각각에는 1~3개의 천간이 숨어 있습니다(여기·중기·본기). 이 지장간들이 사주 원국에서 어떤 십성 역할을 하는지 분석하면, 겉으로 드러나지 않는 내면의 성향과 잠재력을 파악할 수 있습니다.',
+      '12지지 각각에는 1~3개의 천간이 숨어 있습니다(여기, 중기, 본기). 이 지장간들이 사주 원국에서 어떤 십성 역할을 하는지 분석하면, 겉으로 드러나지 않는 내면의 성향과 잠재력을 파악할 수 있습니다.',
     sourceTexts: ['연해자평(淵海子平)', '삼명통회(三命通會)', '자평진전(子平眞詮)'],
     applicationInApp: '숨은 성향 분석, 내면 에너지 파악, 잠재력 발굴',
   },
@@ -336,7 +336,7 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '十二運星論',
     description: '천간이 12지지를 만나 거치는 12단계 에너지 순환 과정을 분석하는 이론',
     detail:
-      '장생·목욕·관대·건록·제왕·쇠·병·사·묘·절·태·양의 12단계로 에너지 상태를 파악합니다. 이것은 생물학적 "죽음"이 아니라 에너지의 순환과 변화를 상징합니다. 제왕은 에너지의 정점, 절은 새로운 시작 직전의 준비 단계입니다.',
+      '장생, 목욕, 관대, 건록, 제왕, 쇠, 병, 사, 묘, 절, 태, 양의 12단계로 에너지 상태를 파악합니다. 이것은 생물학적 "죽음"이 아니라 에너지의 순환과 변화를 상징합니다. 제왕은 에너지의 정점, 절은 새로운 시작 직전의 준비 단계입니다.',
     sourceTexts: ['연해자평(淵海子平)', '삼명통회(三命通會)', '명리약언(命理正宗)'],
     applicationInApp: '에너지 상태 표시, 현재 인생 단계 해석',
   },
@@ -346,9 +346,9 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '神煞論',
     description: '특정 간지 조합에서 나타나는 길신(吉神)과 흉살(凶煞)을 분석하는 보조 이론',
     detail:
-      '천을귀인·문창귀인·역마·도화·화개 등의 길신과, 양인·공망·겁살 등의 흉살이 있습니다. 현대 명리학에서는 신살을 절대적 길흉이 아닌 "경향성"으로 해석하며, 보조적 참고 자료로 활용합니다.',
+      '천을귀인, 문창귀인, 역마, 도화, 화개 등의 길신과, 양인, 공망, 겁살 등의 흉살이 있습니다. 현대 명리학에서는 신살을 절대적 길흉이 아닌 "경향성"으로 해석하며, 보조적 참고 자료로 활용합니다.',
     sourceTexts: ['삼명통회(三命通會)', '연해자평(淵海子平)'],
-    applicationInApp: '경향성 분석(보조), 재능·주의사항 보충 설명',
+    applicationInApp: '경향성 분석(보조), 재능과 주의사항 보충 설명',
   },
   {
     id: 'napeum',
@@ -356,7 +356,7 @@ export const THEORETICAL_FRAMEWORKS: TheoreticalFramework[] = [
     nameHanja: '納音論',
     description: '60갑자 각각에 배속된 고유 오행(납음오행)으로 근본 에너지 성질을 파악하는 이론',
     detail:
-      '해중금(海中金)·노중화(爐中火)·대림목(大林木) 등 60갑자의 납음은 단순한 오행보다 구체적인 에너지 속성을 나타냅니다. 예를 들어 같은 금(金)이라도 "바다 속의 금"과 "검 위의 금"은 성질이 다릅니다.',
+      '해중금(海中金), 노중화(爐中火), 대림목(大林木) 등 60갑자의 납음은 단순한 오행보다 구체적인 에너지 속성을 나타냅니다. 예를 들어 같은 금(金)이라도 "바다 속의 금"과 "검 위의 금"은 성질이 다릅니다.',
     sourceTexts: ['삼명통회(三命通會)', '연해자평(淵海子平)', '오행대의(五行大義)'],
     applicationInApp: '납음 오행 표시, 근본 에너지 성질 해석',
   },
@@ -385,7 +385,7 @@ export const HISTORICAL_SCHOLARS: HistoricalScholar[] = [
     nameHanja: '李虛中',
     era: '당(唐)나라',
     yearApprox: '약 761~813',
-    contribution: '연·월·일 3주(三柱)를 사용한 명리학의 창시자. "당사주(唐四柱)"의 원류',
+    contribution: '연, 월, 일 3주(三柱)를 사용한 명리학의 창시자. "당사주(唐四柱)"의 원류',
     majorWorks: ['이허중명서(李虛中命書)'],
   },
   {
@@ -403,7 +403,7 @@ export const HISTORICAL_SCHOLARS: HistoricalScholar[] = [
     nameHanja: '徐升',
     era: '남송(南宋)',
     yearApprox: '약 1200년대',
-    contribution: '서자평의 이론을 정리·편찬하여 연해자평을 엮음',
+    contribution: '서자평의 이론을 정리와 편찬하여 연해자평을 엮음',
     majorWorks: ['연해자평(淵海子平)'],
   },
   {
@@ -448,7 +448,7 @@ export const HISTORICAL_SCHOLARS: HistoricalScholar[] = [
     nameHanja: '陳素庵(陳之遴)',
     era: '청(清)나라 초기',
     yearApprox: '1605~1666',
-    contribution: '명리약언을 통해 기존 격국·신살 이론의 오류를 비판적으로 검토한 선구자',
+    contribution: '명리약언을 통해 기존 격국과 신살 이론의 오류를 비판적으로 검토한 선구자',
     majorWorks: ['명리약언(命理約言)'],
   },
   {
@@ -475,7 +475,7 @@ export const HISTORICAL_SCHOLARS: HistoricalScholar[] = [
     nameHanja: '徐樂吾',
     era: '중화민국 초기',
     yearApprox: '1886~1948',
-    contribution: '적천수징의·자평진전평주 등 다수의 주석서를 통해 명리학의 논리적 체계를 근대적으로 정립. 한·중·일 현대 명리학에 지대한 영향',
+    contribution: '적천수징의와 자평진전평주 등 다수의 주석서를 통해 명리학의 논리적 체계를 근대적으로 정립. 한, 중, 일 현대 명리학에 지대한 영향',
     majorWorks: [
       '적천수징의(滴天髓徵義)',
       '자평진전평주(子平眞詮評註)',
@@ -505,7 +505,7 @@ export const KOREAN_ACADEMIC_INFO: KoreanAcademicInfo[] = [
       {
         name: '원광대학교 동양학대학원 동양철학전공',
         detail:
-          '석사·박사과정. 명리학·풍수·주역·음양오행론·술수학·동양천문학 등 개설. 문학석사/문학박사 수여',
+          '석사와 박사과정. 명리학, 풍수, 주역, 음양오행론, 술수학, 동양천문학 등 개설. 문학석사/문학박사 수여',
         url: 'https://orient.wku.ac.kr/',
       },
       {
@@ -519,7 +519,7 @@ export const KOREAN_ACADEMIC_INFO: KoreanAcademicInfo[] = [
         detail: '평생교육원 명리학 전문가과정 운영',
       },
       {
-        name: '울산대학교 철학·상담학과',
+        name: '울산대학교 철학과 상담학과',
         detail: '사주명리학 자격검정시험 연계 교육',
       },
       {
@@ -535,7 +535,7 @@ export const KOREAN_ACADEMIC_INFO: KoreanAcademicInfo[] = [
       {
         name: '한국명리학회 (K-MRA)',
         detail:
-          '사주명리학·관상학 연구. 자평명리학 이론 정립 및 학술자료 발간',
+          '사주명리학과 관상학 연구. 자평명리학 이론 정립 및 학술자료 발간',
         url: 'https://www.k-mra.com/',
       },
       {
@@ -544,7 +544,7 @@ export const KOREAN_ACADEMIC_INFO: KoreanAcademicInfo[] = [
       },
       {
         name: '한국철학회',
-        detail: '동양철학 분과에서 음양오행론·역학 관련 논문 게재',
+        detail: '동양철학 분과에서 음양오행론과 역학 관련 논문 게재',
         url: 'https://hanchul.org/',
       },
     ],
@@ -555,7 +555,7 @@ export const KOREAN_ACADEMIC_INFO: KoreanAcademicInfo[] = [
       {
         name: 'KCI (한국학술지인용색인)',
         detail:
-          '2006~2024년 기준 사주명리학 관련 학술 논문 205편 이상 수록. 철학·상담학·교육학 분야 학제적 연구 활발',
+          '2006~2024년 기준 사주명리학 관련 학술 논문 205편 이상 수록. 철학, 상담학, 교육학 분야 학제적 연구 활발',
         url: 'https://www.kci.go.kr/',
       },
       {
@@ -565,7 +565,7 @@ export const KOREAN_ACADEMIC_INFO: KoreanAcademicInfo[] = [
       },
       {
         name: 'KISS (한국학술정보)',
-        detail: '동양철학·명리학 관련 논문 검색',
+        detail: '동양철학과 명리학 관련 논문 검색',
         url: 'https://kiss.kstudy.com/',
       },
     ],
@@ -582,11 +582,11 @@ export const KOREAN_ACADEMIC_INFO: KoreanAcademicInfo[] = [
         detail: '한국 사회에서의 명리 문화, 상담 현장 연구',
       },
       {
-        name: '심리학·상담학 융합',
+        name: '심리학과 상담학 융합',
         detail: 'MBTI와 사주명리의 연관성, 명리심리상담 방법론',
       },
       {
-        name: '건축·주거 연구',
+        name: '건축과 주거 연구',
         detail: '사주명리학을 활용한 거주자 평가 방법',
       },
     ],
@@ -607,12 +607,12 @@ export const METHODOLOGY_SUMMARY = {
   title: '사주500의 해석 방법론',
   subtitle: '천 년의 학술적 전통에 기반한 AI 명리 분석',
   description:
-    '사주500은 당나라 이허중(李虛中, 8세기)의 삼주법에서 시작하여 송나라 서자평(徐子平)이 확립한 자평명리학을 기반으로, 적천수·자평진전·궁통보감 등 명리학 3대 고전의 이론 체계를 AI가 종합적으로 분석합니다.',
+    '사주500은 당나라 이허중(李虛中, 8세기)의 삼주법에서 시작하여 송나라 서자평(徐子平)이 확립한 자평명리학을 기반으로, 적천수, 자평진전, 궁통보감 등 명리학 3대 고전의 이론 체계를 AI가 종합적으로 분석합니다.',
   coreMethodologies: [
     '음양오행론(陰陽五行論): 주역과 오행대의에 근거한 에너지 균형 분석',
     '십성론(十神論): 연해자평에서 확립된 10가지 인간관계 유형 분석',
     '격국론(格局論): 자평진전의 월령 중심 사주 구조 분류 체계',
-    '용신론(用神論): 적천수·궁통보감의 억부·조후법에 의한 핵심 기운 산출',
+    '용신론(用神論): 적천수와 궁통보감의 억부와 조후법에 의한 핵심 기운 산출',
     '대운론(大運論): 10년 주기의 운세 변화 흐름 분석',
   ],
   historicalDepth: '약 1,200년의 학술적 전통 (당 이허중 ~ 현대)',
@@ -626,7 +626,7 @@ export const CREDIBILITY_BADGES = [
     icon: 'book',
     label: '고전 원전',
     value: `${CLASSICAL_TEXTS.length}권`,
-    description: '적천수·자평진전·궁통보감 등',
+    description: '적천수, 자평진전, 궁통보감 등',
   },
   {
     icon: 'history',
@@ -638,13 +638,13 @@ export const CREDIBILITY_BADGES = [
     icon: 'theory',
     label: '이론 체계',
     value: `${THEORETICAL_FRAMEWORKS.length}개`,
-    description: '음양오행·십성·격국·용신 등',
+    description: '음양오행, 십성, 격국, 용신 등',
   },
   {
     icon: 'scholar',
     label: '역대 학자',
     value: `${HISTORICAL_SCHOLARS.length}인`,
-    description: '이허중·서자평·임철초·서락오 등',
+    description: '이허중, 서자평, 임철초, 서락오 등',
   },
   {
     icon: 'paper',

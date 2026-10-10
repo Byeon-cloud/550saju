@@ -191,7 +191,7 @@ export function Component12UnseongSection({
                     marginBottom: 6,
                   }}
                 >
-                  강점 · 長
+                  강점, 長
                 </div>
                 <div style={{ fontSize: 11.5, color: C.inkSoft, lineHeight: 1.6 }}>
                   {detail.strength}
@@ -215,7 +215,7 @@ export function Component12UnseongSection({
                     marginBottom: 6,
                   }}
                 >
-                  주의 · 短
+                  주의, 短
                 </div>
                 <div style={{ fontSize: 11.5, color: C.inkSoft, lineHeight: 1.6 }}>
                   {detail.caution}
@@ -444,7 +444,7 @@ function SinsalCard({
             letterSpacing: '0.04em',
           }}
         >
-          {positions.join(' · ')}
+          {positions.join(', ')}
         </div>
       )}
     </div>
@@ -707,7 +707,7 @@ export function UnFlowEntryLinks({
 }: UnFlowEntryLinksProps) {
   if (!onMoreDaeun && !onMoreMonthly) return null;
   return (
-    <SectionCard title="운의 흐름" hanja="運勢" intro="시간이 만드는 또 하나의 사주 — 대운(10년) · 월운(12개월).">
+    <SectionCard title="운의 흐름" hanja="運勢" intro="시간이 만드는 또 하나의 사주 — 대운(10년), 월운(12개월).">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {onMoreDaeun && (
           <button type="button" onClick={onMoreDaeun} style={linkBtnStyle}>

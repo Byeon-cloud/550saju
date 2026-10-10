@@ -13,7 +13,7 @@ import { CHEONGAN_OHENG } from '@/constants/oheng';
 // Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
 import { EXTENSION_THEME, ExtensionHero } from './extension/_chrome';
 
-const RELATIONS = ['연인', '배우자', '썸', '이별', '친구', '동료', '부모-자녀', '형제·자매', '기타'] as const;
+const RELATIONS = ['연인', '배우자', '썸', '이별', '친구', '동료', '부모-자녀', '형제와 자매', '기타'] as const;
 
 export function CompatibilityPage() {
   usePageTitle('궁합');
@@ -128,8 +128,8 @@ export function CompatibilityPage() {
       <FadeIn>
         <ExtensionHero
           theme={compatTheme}
-          crumb="사주500 · 더 알아볼 주제 · 궁합"
-          sub="생년월일·시 두 분의 자료를 5가지 관점에서 비교합니다."
+          crumb="사주500, 더 알아볼 주제, 궁합"
+          sub="생년월일과 시 두 분의 자료를 5가지 관점에서 비교합니다."
           seal="合"
         />
       </FadeIn>
@@ -198,8 +198,8 @@ export function CompatibilityPage() {
             <p className="text-label text-text-hint">궁합 분석에 포함되는 항목</p>
             {/* 2026-10-04 — 결과에 실제로 나오는 항목만 안내 (예전 '시기별 변화·상황별 점수'는 결과에 없었음) */}
             {[
-              { title: '두 사람이 맞물리는 자리', desc: '두 사주 글자 사이의 합·충을 찾아 끌림과 부딪힘의 이유를 짚어요' },
-              { title: '5가지 궁합 점수', desc: '성격 · 가치관 · 소통 · 감정 · 미래를 각각 점수로 보여드려요' },
+              { title: '두 사람이 맞물리는 자리', desc: '두 사주 글자 사이의 합과 충을 찾아 끌림과 부딪힘의 이유를 짚어요' },
+              { title: '5가지 궁합 점수', desc: '성격, 가치관, 소통, 감정, 미래를 각각 점수로 보여드려요' },
               { title: '오행 조화', desc: '서로에게 없는 기운을 채워주는 사이인지 살펴봐요' },
               { title: '강점과 숙제', desc: '잘 맞는 점 3가지, 조심할 점 3가지와 구체적인 조언' },
               { title: '앞으로 1~3년', desc: '관계가 어떤 방향으로 흘러갈지 짚어드려요' },
@@ -220,12 +220,12 @@ export function CompatibilityPage() {
       <div className="px-5 pt-4 pb-[120px] mt-6">
         <div className="text-center space-y-1">
           <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+            한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
           <p className="text-[11px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
-            의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+            의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
           </p>
         </div>
       </div>
@@ -359,7 +359,7 @@ export function CompatibilityPage() {
                         <div className="flex-1">
                           <p className="text-h3 text-text-primary">{r.name}</p>
                           <p className="text-caption text-text-muted">
-                            {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')} · {ilgan}({oheng})
+                            {r.input.birthYear}.{String(r.input.birthMonth).padStart(2,'0')}.{String(r.input.birthDay).padStart(2,'0')}, {ilgan}({oheng})
                           </p>
                         </div>
                       </button>

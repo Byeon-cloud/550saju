@@ -337,7 +337,7 @@ export function FreeUpsellCard({
           position: 'relative',
         }}
       >
-        종합사주 · 열 장
+        종합사주, 열 장
       </div>
       <h3
         style={{

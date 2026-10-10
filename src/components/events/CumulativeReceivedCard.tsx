@@ -32,8 +32,8 @@ const DETAIL_TITLE: Record<DeviceRewardType, string> = {
   streak3: '3일 연속 출석',
   invite: '친구 초대',
   share: '결과 공유',
-  launch_promo: '토스포인트 · 첫 콘텐츠 이용',
-  attend7: '토스포인트 · 7일 연속 출석',
+  launch_promo: '토스포인트, 첫 콘텐츠 이용',
+  attend7: '토스포인트, 7일 연속 출석',
 };
 
 const isTossPoint = (t: DeviceRewardType) => t === 'attend7' || t === 'launch_promo';
@@ -50,7 +50,7 @@ function fmtDate(date: string): string {
 }
 
 function statusCopy(total: number): string {
-  if (total === 0) return '이벤트로 받은 운이 여기 쌓여요 · 첫 운을 받아볼까요';
+  if (total === 0) return '이벤트로 받은 운이 여기 쌓여요, 첫 운을 받아볼까요';
   if (total <= 9) return '차곡차곡 쌓이고 있어요';
   if (total <= 49) return '꾸준함이 복을 불러요';
   return '귀인의 기운이 머물고 있어요';
@@ -126,7 +126,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
                 key={row.type}
                 label={row.label}
                 amountText={ledger.counts[row.type] > 0
-                  ? `${ledger.totals[row.type]}원 · ${ledger.counts[row.type]}회`
+                  ? `${ledger.totals[row.type]}원, ${ledger.counts[row.type]}회`
                   : '0원'}
                 highlight={ledger.counts[row.type] > 0}
                 onInfo={() => setDetailType(row.type)}
@@ -137,7 +137,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
 
         {hasRecords ? (
           <p className="mt-4 text-[11px]" style={{ color: '#8A7F6E', lineHeight: 1.5 }}>
-            이 기기에 기록된 내역이에요 · {fmtDate(ledger.since)}부터 쌓였어요
+            이 기기에 기록된 내역이에요, {fmtDate(ledger.since)}부터 쌓였어요
           </p>
         ) : null}
       </section>
@@ -159,7 +159,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
           >
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: '#E5DFD0' }} />
             <h4 className="text-[16px] font-bold mb-3" style={{ color: '#1A1612', fontFamily: "'Noto Serif KR', serif" }}>
-              {DETAIL_TITLE[detailType]} · 최근 10건
+              {DETAIL_TITLE[detailType]} 최근 10건
             </h4>
             {detailList.length === 0 ? (
               <p className="text-[13px] py-6 text-center" style={{ color: '#8A7F6E' }}>

@@ -245,7 +245,7 @@ export function MyPage() {
           >
             이용약관
           </button>
-          <span style={{ opacity: 0.4 }}>·</span>
+          <span style={{ opacity: 0.4 }}>, </span>
           <button
             type="button"
             onClick={() => navigate('/privacy')}
@@ -308,7 +308,7 @@ export function MyPage() {
       {/* ── 회원탈퇴 확인 Modal (되돌릴 수 없음) ── */}
       <Modal isOpen={showWithdraw} onClose={() => !withdrawing && setShowWithdraw(false)} title="회원탈퇴">
         <p className="text-body-sm text-text-secondary leading-relaxed mb-2">
-          탈퇴하면 사주 분석 기록·프로필·대화 기록이 모두 삭제되며 되돌릴 수 없어요.
+          탈퇴하면 사주 분석 기록, 프로필, 대화 기록이 모두 삭제되며 되돌릴 수 없어요.
         </p>
         <p className="text-caption text-text-muted leading-relaxed mb-5">
           단, 전자상거래법에 따라 결제 기록은 5년간 별도 보관됩니다.
@@ -410,7 +410,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
       // 2026-06-02 — 밴드 입력(분 X)이라 "11시" 대신 시(時) 이름만. 분 있으면 정확 시각 병기.
       const hourLabel = i.hasBirthTime
         ? ((i.birthMinute ?? 0) > 0
-            ? `${i.birthHour}시 ${i.birthMinute}분 · ${getHourBranch(i.birthHour, i.birthMinute)?.ko ?? ''}`.trim()
+            ? `${i.birthHour}시 ${i.birthMinute}분, ${getHourBranch(i.birthHour, i.birthMinute)?.ko ?? ''}`.trim()
             : (getHourBranch(i.birthHour, 0)?.ko ?? `${i.birthHour}시`))
         : '시간 모름';
       const GAN_KO: Record<string, string> = {
@@ -563,7 +563,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
         identity: meaning?.identity || '',
         personality: meaning?.personality || '',
         pillars: pillarsRaw,
-        birthLine: `${calLabel} ${birthYMD} · ${hourLabel}`,
+        birthLine: `${calLabel} ${birthYMD}, ${hourLabel}`,
         academicLabel,
         ohengCount,
         getSipsungLabel,
@@ -730,7 +730,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
               background: '#FFFFFF',
             }}
           >
-            일주 · 나
+            일주, 나
           </div>
           <div
             style={{
@@ -848,7 +848,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
                 fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
                 color: isDay ? C.goldDeep : C.mute, marginBottom: 4,
               }}>
-                {labelKo}{isDay ? ' · 나' : ''}
+                {labelKo}{isDay ? ' 나' : ''}
               </div>
               {/* 천간 십성 */}
               {ganSip && (
@@ -1263,7 +1263,7 @@ function LoginModal({ open, onClose, toast, onLogin }: {
               내 사주를 안전하게<br />보관해요
             </h1>
             <p className="text-center text-[14px] leading-[1.6] mb-8" style={{ color: C.mute }}>
-              로그인하면 운 잔액·풀이 기록·결제 내역을<br />안전하게 관리할 수 있어요
+              로그인하면 운 잔액과 풀이 기록과 결제 내역을<br />안전하게 관리할 수 있어요
             </p>
 
             {/* CTA 버튼 3개 (§2-2) */}
@@ -1474,7 +1474,7 @@ function CsCode({ toast }: { toast: ReturnType<typeof useToast> }) {
   return (
     <button type="button" onClick={copy} className="w-full text-center pb-4 select-none" aria-label="고객센터 코드 복사">
       <span className="text-[11px]" style={{ color: C.mute }}>
-        고객센터 코드 <span style={{ fontFamily: 'monospace' }}>{short}</span> · 탭하면 복사
+        고객센터 코드 <span style={{ fontFamily: 'monospace' }}>{short}</span> 탭하면 복사
       </span>
     </button>
   );
@@ -1535,7 +1535,7 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
         className="w-full text-center py-5 select-none"
         aria-label="앱 버전 정보">
         <span className="text-[11px]" style={{ color: C.mute }}>
-          사주500 v{APP_VERSION} · 빌드 {BUILD_DATE}
+          사주500 v{APP_VERSION} 빌드 {BUILD_DATE}
         </span>
       </button>
       <CsCode toast={_toast} />
@@ -1581,7 +1581,7 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
                 <>
                   <p className="text-[12px] font-bold mt-5 mb-2" style={{ color: C.gold }}>테스트 운 충전 (QA 전용)</p>
                   <p className="text-[10px] mb-2" style={{ color: 'rgba(248,245,238,0.5)' }}>
-                    현재 {getBalance()}운 · 누를 때마다 +100운 (로컬). VITE_DEBUG_TOOLS=1 빌드에서만 노출.
+                    현재 {getBalance()}운, 누를 때마다 +100운 (로컬). VITE_DEBUG_TOOLS=1 빌드에서만 노출.
                   </p>
                   <button type="button"
                     onClick={() => { addPaidBalance(100, 0); _toast.show(`+100운 충전 (현재 ${getBalance()}운)`, 'success'); }}

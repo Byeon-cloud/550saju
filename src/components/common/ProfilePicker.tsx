@@ -247,7 +247,7 @@ function ProfileCardCompact({
         <div style={{ fontSize: 12, color: '#7A7269', lineHeight: 1.5 }}>
           {profile.input.birthYear}.
           {String(profile.input.birthMonth).padStart(2, '0')}.
-          {String(profile.input.birthDay).padStart(2, '0')} ({calLabel}) · {hourLabel}
+          {String(profile.input.birthDay).padStart(2, '0')} ({calLabel}), {hourLabel}
         </div>
         {ilgan && (
           <div
@@ -259,7 +259,7 @@ function ProfileCardCompact({
               letterSpacing: '0.02em',
             }}
           >
-            일간 {ilgan} · {oheng}
+            일간 {ilgan}, {oheng}
           </div>
         )}
       </div>

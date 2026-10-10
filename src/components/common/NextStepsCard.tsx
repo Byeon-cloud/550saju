@@ -100,7 +100,7 @@ export function NextStepsCard({ topics, questions, onTopic, onAsk, title = '이 
               問
             </span>
             <span style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>이 결과로 바로 물어보기</span>
-            <span style={{ fontSize: 11, color: C.mute }}>· 사주대화</span>
+            <span style={{ fontSize: 11, color: C.mute }}>사주대화</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {qs.map((q) => (

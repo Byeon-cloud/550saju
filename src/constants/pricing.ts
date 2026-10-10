@@ -243,10 +243,10 @@ export const ALL_SERVICES = [
   // 유료 (1운 = 500원)
   { id: 'saju', title: '내 사주 풀이', desc: '성격, 직업, 연애, 재물, 건강 상세 분석', price: 1, label: '1운' },
   { id: 'chat', title: '사주 상담', desc: '대화로 주고받는 1:1 맞춤 사주 상담', price: 1, label: '1운 = 3회' },
-  { id: 'compatibility', title: '궁합 분석', desc: '두 사람의 사주 비교 · 연애/결혼/직장', price: 1, label: '500원' },
+  { id: 'compatibility', title: '궁합 분석', desc: '두 사람의 사주 비교, 연애/결혼/직장', price: 1, label: '500원' },
   { id: 'daeun', title: '대운 해설', desc: '10년 단위 운의 흐름과 전환점', price: 1, label: '500원' },
   { id: 'monthly', title: '2026 월별 운세', desc: '올해 12개월, 좋은 달과 조심할 달', price: 1, label: '500원' },
-  { id: 'tojung', title: '신년운세', desc: '내 사주로 미리 보는 한 해 열두 달 · 좋은 날까지', price: 7, label: '3,500원' },
+  { id: 'tojung', title: '신년운세', desc: '내 사주로 미리 보는 한 해 열두 달, 좋은 날까지', price: 7, label: '3,500원' },
   // 프리미엄 (10운 = 5,000원) — Phase 2에서 활성화
   // { id: 'premium', title: '프리미엄 심층 분석', desc: '기본 12항목 + PDF + 월운 상세 + 궁합 + 전문가 코멘트', price: 10, label: '5,000원' },
 ] as const;

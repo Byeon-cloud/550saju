@@ -45,7 +45,7 @@ const GWIIN_META: Record<string, GwiinMeta> = {
     hanja: '天乙貴人',
     hanjaShort: '天乙',
     meaning: '사주에서 가장 귀한 별. 위기 때 도움받고 인복이 깊은 자리.',
-    source: '자평진전·적천수',
+    source: '자평진전과 적천수',
     priority: 1,
   },
   월덕귀인: {
@@ -68,7 +68,7 @@ const GWIIN_META: Record<string, GwiinMeta> = {
     name: '문창귀인',
     hanja: '文昌貴人',
     hanjaShort: '文昌',
-    meaning: '학문·시험·문서의 별. 두뇌 회전과 글재주의 자리.',
+    meaning: '학문, 시험, 문서의 별. 두뇌 회전과 글재주의 자리.',
     source: '자평진전',
     priority: 4,
   },
@@ -230,7 +230,7 @@ export function GwiinSealCard({
   const positions = hit.positions
     .map((p) => `${p.pillar}(${p.char})`)
     .filter((v, i, arr) => arr.indexOf(v) === i)
-    .join(' · ');
+    .join(', ');
 
   return (
     <div

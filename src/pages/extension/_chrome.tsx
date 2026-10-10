@@ -81,7 +81,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentDark: '#1A1612',
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
-    label: '월운 · 이번 달',
+    label: '월운, 이번 달',
     heroH1: { line1: '이번 달의 결과', line2: '시기를 살핍니다' },
     // 2026-07-01 가격 fix — 월운 정가 7운 (getMonthlyPrice SSOT). 세일가는 호출부 costLabel 로.
     cost: '7운',
@@ -94,7 +94,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentDark: '#1A1612',
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
-    label: '주간운세 · 이번 주',
+    label: '주간운세, 이번 주',
     heroH1: { line1: '이번 주 7일의', line2: '흐름을 짚어 드립니다' },
     cost: '5운' as ExtensionTheme['cost'],
   },
@@ -320,7 +320,7 @@ export function ExtensionHero({
           }}
         >
           {meta.map((m, i) => (
-            <span key={i}>· {m}</span>
+            <span key={i}>, {m}</span>
           ))}
         </div>
       )}
@@ -469,7 +469,7 @@ export function ExtensionUpsellCard({
           position: 'relative',
         }}
       >
-        종합사주 · 열 장
+        종합사주, 열 장
       </div>
       <h3
         style={{
@@ -881,7 +881,7 @@ export function DaeunHeatGrid({
             }}
           />
         ))}{' '}
-        약 → 강 · ◼ 박스: 올해
+        약 → 강, ◼ 박스: 올해
       </div>
     </div>
   );
@@ -964,7 +964,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
               </span>
               <span style={{ fontSize: 11, color: C.mute }}>
                 {c.reading}
-                {c.tag ? ` · ${c.tag}` : ''}
+                {c.tag ? ` ${c.tag}` : ''}
               </span>
               {c.badge && (
                 <span
@@ -1310,7 +1310,7 @@ export function CalGrid({
             fontWeight: 700,
           }}
         >
-          {monthLabel ?? '캘린더 · 일별 강도'}
+          {monthLabel ?? '캘린더, 일별 강도'}
         </div>
         {hint && (
           <div style={{ fontSize: 11, color: C.mute }}>{hint}</div>

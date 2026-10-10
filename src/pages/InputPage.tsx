@@ -924,7 +924,7 @@ export function InputPage() {
             <p className="text-body-sm text-text-muted leading-relaxed" style={{ wordBreak: 'keep-all' }}>
               이미 본인 사주로 <strong style={{ color: '#1A1A1A' }}>{ownerDupModal.existingName}</strong> 님이 저장되어 있어요.
               <br />
-              본인 사주는 한 명만 가질 수 있습니다. <strong style={{ color: '#1A1A1A' }}>운 잔액·결제 내역은 그대로 유지</strong>됩니다.
+              본인 사주는 한 명만 가질 수 있습니다. <strong style={{ color: '#1A1A1A' }}>운 잔액과 결제 내역은 그대로 유지</strong>됩니다.
             </p>
             <div className="flex flex-col gap-2">
               <Button
@@ -1078,7 +1078,7 @@ function NameField({
           marginTop: 6,
         }}
       >
-        내 사주 말고 친구·가족 것도 별명으로 구분하면 좋아요
+        내 사주 말고 친구와 가족 것도 별명으로 구분하면 좋아요
       </p>
       {error && (
         <p
@@ -1486,7 +1486,7 @@ function BirthHourField({
             </strong>{' '}
             로 계산돼요.
             <br />
-            표준시·서머타임까지 사주500이 자동으로 맞췄어요.
+            표준시와 서머타임까지 사주500이 자동으로 맞췄어요.
             {/* 2026-07-14 기준 v2 · 경계 안내 (준기: "줏대 있게 가되 부가설명은 안내") —
                 :28~:31 은 시(時) 경계 ±2분 창. 학파·만세력별로 앞뒤 시가 갈릴 수 있는 구간이라
                 기준을 숨기지 않고 명시한다. 판정 자체는 대중 만세력과 동일한 '시계 30분' 경계로 확정. */}
@@ -1835,7 +1835,7 @@ function NoticeBlock() {
           margin: 0,
         }}
       >
-        · 입력한 정보는 풀이·저장에만 사용되며 외부 공유되지 않아요.
+        입력한 정보는 풀이와 저장에만 사용되며 외부 공유되지 않아요.
       </p>
       <p
         style={{
@@ -1845,7 +1845,7 @@ function NoticeBlock() {
           margin: 0,
         }}
       >
-        · 생년월일·시간은 사주 풀이 품질에 직접 영향을 줘요. 가능한 한 정확히
+        생년월일과 시간은 사주 풀이 품질에 직접 영향을 줘요. 가능한 한 정확히
         입력해주세요.
       </p>
     </div>

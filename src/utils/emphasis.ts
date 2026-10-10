@@ -58,7 +58,7 @@ export function autoEmphasize(input: string): string {
       '(?:하세요|미루세요|집중하세요|정리하세요|만나세요|배치하세요|챙기세요|준비하세요|확인하세요|시도하세요|체크하세요|넘기세요|놓치지 마세요|유지하세요|시작하세요|마무리하세요|머물러 보세요|꺼내세요|살펴보세요|믿으세요|들어보세요|찾으세요|보충하세요|모으세요|끌어당기세요)',
       '(?:게 좋아요|필수예요|필요해요|중요해요|좋습니다|중요합니다|필요합니다|효율적입니다|적절합니다|좋은 자리예요|어울려요|솟아오릅니다|강화합니다|극대화됩니다|커집니다|높습니다|좋아집니다|수월합니다|핵심 과제입니다)',
     ];
-    const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9·~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`);
+    const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9, ~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`);
     let strongCount = 0;
     const replacements: string[] = [];
     for (const sentence of sentences) {

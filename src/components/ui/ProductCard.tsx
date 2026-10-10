@@ -77,12 +77,12 @@ export function ProductCard({
         ))}
       </ul>
       {cta.href ? (
-        <a href={cta.href} aria-label={`${title} · ${cta.label}`}>{ButtonBody}</a>
+        <a href={cta.href} aria-label={`${title}, ${cta.label}`}>{ButtonBody}</a>
       ) : (
         <button
           type="button"
           onClick={cta.onClick}
-          aria-label={`${title} · ${cta.label}`}
+          aria-label={`${title}, ${cta.label}`}
           className="block w-full"
         >
           {ButtonBody}

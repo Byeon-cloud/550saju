@@ -147,7 +147,7 @@ export function SharePage() {
               나도 내 사주 알아보기
             </Button>
             <p className="text-center text-[10px] text-text-hint">
-              1운 · 깊이 있는 분석 · 3분 완성
+              1운, 깊이 있는 분석, 3분 완성
             </p>
             <button
               onClick={() => navigate('/')}

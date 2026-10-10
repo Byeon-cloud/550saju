@@ -29,7 +29,7 @@ export function ReviewCard({
     >
       <header className="flex items-center gap-2">
         <span className="text-sm font-semibold text-ink">{persona}</span>
-        {context ? <span className="text-xs text-gray-500">· {context}</span> : null}
+        {context ? <span className="text-xs text-gray-500">, {context}</span> : null}
       </header>
       <Stars value={stars} className="mt-1" />
       <p className="mt-3 text-sm text-gray-700 leading-[1.7] line-clamp-3">{snippet}</p>
@@ -39,7 +39,7 @@ export function ReviewCard({
           onClick={onUnlock}
           className="mt-3 w-full h-[44px] rounded-lg bg-white border border-ink text-sm font-semibold hover:bg-gray-100 transition"
         >
-          전체 읽기 · 500원
+          전체 읽기, 500원
         </button>
       ) : null}
     </article>

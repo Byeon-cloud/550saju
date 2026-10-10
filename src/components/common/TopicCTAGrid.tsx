@@ -57,7 +57,7 @@ export function TopicCTAGrid({ topics, onTopicTap, meta, title }: TopicCTAGridPr
               gap: 6,
               minHeight: 118,
             }}
-            aria-label={`${t.title} 심층 분석 · ${t.price ?? '1운'}`}
+            aria-label={`${t.title} 심층 분석, ${t.price ?? '1운'}`}
           >
             <div
               style={{

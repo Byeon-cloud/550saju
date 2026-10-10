@@ -30,7 +30,7 @@ const TABS: { id: TabId; label: string; render: (d: AdminData) => ReactElement }
   { id: 'content', label: '콘텐츠', render: (d) => <TabContent d={d} /> },
   { id: 'users', label: '유저', render: (d) => <TabUsers d={d} /> },
   { id: 'aiops', label: 'AI 운영', render: (d) => <TabAiOps d={d} /> },
-  { id: 'ads', label: '광고·프로모', render: (d) => <TabAdsPromo d={d} /> },
+  { id: 'ads', label: '광고와 프로모', render: (d) => <TabAdsPromo d={d} /> },
   { id: 'acquisition', label: '유입', render: (d) => <TabAcquisition d={d} /> },
   { id: 'csgrant', label: 'CS 지급', render: () => <TabCsGrant /> },
   { id: 'reviews', label: '후기', render: () => <TabReviews /> },
@@ -159,9 +159,9 @@ export function AdminPage() {
           {data && (
             <p style={{ fontSize: 12, color: C.mute, marginTop: 8 }}>
               기간 <b style={{ color: C.ink }}>{data.cur.days[0]} ~ {data.cur.days[data.cur.days.length - 1]}</b>
-              {' · '}유저 <b style={{ color: C.ink }}>{fmtNum(data.totalUsers)}명</b>
-              {' · '}오늘 매출 <b style={{ color: C.goldDeep }}>{fmtWon(data.todayRevenue)}</b>
-              {' · '}기간 매출 <b style={{ color: C.goldDeep }}>{fmtWon(data.cur.revenue)}</b>
+              {', '}유저 <b style={{ color: C.ink }}>{fmtNum(data.totalUsers)}명</b>
+              {', '}오늘 매출 <b style={{ color: C.goldDeep }}>{fmtWon(data.todayRevenue)}</b>
+              {', '}기간 매출 <b style={{ color: C.goldDeep }}>{fmtWon(data.cur.revenue)}</b>
             </p>
           )}
         </header>
@@ -198,8 +198,8 @@ export function AdminPage() {
         {data && activeTab.render(data)}
 
         <p style={{ fontSize: 11, color: C.mute, marginTop: 24, lineHeight: 1.6 }}>
-          · 집계는 실시간 클라이언트 계산 (새로고침/기간 변경 시 갱신) — 델타는 직전 동일 기간 대비<br />
-          · 유입경로·체류시간·유저플로우 상세는 GA4(analytics.google.com) 참조
+          집계는 실시간 클라이언트 계산 (새로고침/기간 변경 시 갱신) — 델타는 직전 동일 기간 대비<br />
+          유입경로, 체류시간, 유저플로우 상세는 GA4(analytics.google.com) 참조
         </p>
       </div>
     </div>

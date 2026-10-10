@@ -447,9 +447,9 @@ function estimateStrength(
 
   const reason = reasons.join(', ');
   // 등급 세분 (매우신강·신강경향·중화·신약경향·매우신약)
-  if (score >= 6) return { gangYak: '신강경향', reason: '매우신강 · ' + reason, score };
+  if (score >= 6) return { gangYak: '신강경향', reason: '매우신강, ' + reason, score };
   if (score >= 2) return { gangYak: '신강경향', reason, score };
-  if (score <= -6) return { gangYak: '신약경향', reason: '매우신약 · ' + reason, score };
+  if (score <= -6) return { gangYak: '신약경향', reason: '매우신약, ' + reason, score };
   if (score <= -2) return { gangYak: '신약경향', reason, score };
   return { gangYak: '중화', reason, score };
 }
@@ -505,7 +505,7 @@ function analyzeGyeokguk(
   const yangInJi: Record<string, string> = { 甲: '卯', 丙: '午', 戊: '午', 庚: '酉', 壬: '子' };
   const wolji = pillars[1]?.지지 || '';
   if (yangIlgan && yangInJi[ilgan] === wolji) {
-    return { 격국: '양인격(羊刃格)', 격국근거: `${ilgan} 일간 + 월지 ${wolji} (양인 자리) — 추진력·전문성 강한 변격` };
+    return { 격국: '양인격(羊刃格)', 격국근거: `${ilgan} 일간 + 월지 ${wolji} (양인 자리) — 추진력과 전문성 강한 변격` };
   }
 
   // 3) 건록격: 월지 = 일간 본기 (일간과 같은 오행, 같은 음양)

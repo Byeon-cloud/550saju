@@ -35,8 +35,8 @@ export function upcomingMonthPillarsText(now: Date, count = 15): string {
       const mz = ec.getMonth();
       out.push(`${y}년 ${m}월 ${mz}(${BR_OHENG[mz.slice(1)] || ''})${i === 0 ? ' ← 이번 달' : ''}`);
     }
-    const past = m0 > 1 ? `\n※ ${y0}년 1~${m0 - 1}월은 이미 지난 달 — 추천·회피 시기로 쓰지 말 것 (과거 회고로만 언급 가능).` : '';
-    return out.join(' · ') + past;
+    const past = m0 > 1 ? `\n※ ${y0}년 1~${m0 - 1}월은 이미 지난 달 — 추천과 회피 시기로 쓰지 말 것 (과거 회고로만 언급 가능).` : '';
+    return out.join(', ') + past;
   } catch {
     return '';
   }
@@ -94,21 +94,21 @@ export function gwiinFactsText(args: {
     if (args.daeunBranch && targets.includes(args.daeunBranch)) parts.push(`현재 대운 ${args.daeunLabel || args.daeunBranch} 에 걸림`);
     if (args.yearBranch && targets.includes(args.yearBranch)) parts.push(`올해 세운 ${args.yearLabel || args.yearBranch} 에 걸림`);
     const mh = months.filter((m) => targets.includes(m.br)).map((m) => m.label);
-    if (mh.length) parts.push(`해당 월: ${mh.join('·')}`);
+    if (mh.length) parts.push(`해당 월: ${mh.join(', ')}`);
     return parts.join(' / ');
   };
   const lines: string[] = [];
-  lines.push(`- 천을귀인(${CHEONEUL[dayGan].join('·')}): ${where(CHEONEUL[dayGan])}`);
+  lines.push(`- 천을귀인(${CHEONEUL[dayGan].join(', ')}): ${where(CHEONEUL[dayGan])}`);
   lines.push(`- 문창귀인(${MUNCHANG[dayGan]}): ${where([MUNCHANG[dayGan]])}`);
   lines.push(`- 학당귀인(${HAKDANG[dayGan]}): ${where([HAKDANG[dayGan]])}`);
-  lines.push(`- 태극귀인(${TAEGEUK[dayGan].join('·')}): ${where(TAEGEUK[dayGan])}`);
+  lines.push(`- 태극귀인(${TAEGEUK[dayGan].join(', ')}): ${where(TAEGEUK[dayGan])}`);
   const dayBr = natal.find((n) => n.pos === '일지')?.br;
   const yearBr = natal.find((n) => n.pos === '년지')?.br;
   const bases = Array.from(new Set([dayBr, yearBr].filter(Boolean) as string[]));
   for (const base of bases) {
     const s = samhapOf(base);
     if (!s) continue;
-    const label = base === dayBr && base === yearBr ? '일지·년지' : base === dayBr ? '일지' : '년지';
+    const label = base === dayBr && base === yearBr ? '일지와 년지' : base === dayBr ? '일지' : '년지';
     lines.push(`- 도화(${label} ${base} 기준 → ${s.dohwa}): ${where([s.dohwa])}`);
     lines.push(`- 역마(${label} ${base} 기준 → ${s.yeokma}): ${where([s.yeokma])}`);
     lines.push(`- 화개(${label} ${base} 기준 → ${s.hwagae}): ${where([s.hwagae])}`);
@@ -118,9 +118,9 @@ export function gwiinFactsText(args: {
 
 /** 시진(時辰) 오행 — 한국 진태양시 보정 기준(경계 :30). 시간대 근거는 이 표로만 */
 export const SIJIN_OHENG_LINE =
-  '23:30~01:30 子(수) · 01:30~03:30 丑(토) · 03:30~05:30 寅(목) · 05:30~07:30 卯(목) · 07:30~09:30 辰(토) · ' +
-  '09:30~11:30 巳(화) · 11:30~13:30 午(화) · 13:30~15:30 未(토) · 15:30~17:30 申(금) · 17:30~19:30 酉(금) · ' +
-  '19:30~21:30 戌(토) · 21:30~23:30 亥(수)';
+  '23:30~01:30 子(수), 01:30~03:30 丑(토), 03:30~05:30 寅(목), 05:30~07:30 卯(목), 07:30~09:30 辰(토), ' +
+  '09:30~11:30 巳(화), 11:30~13:30 午(화), 13:30~15:30 未(토), 15:30~17:30 申(금), 17:30~19:30 酉(금), ' +
+  '19:30~21:30 戌(토), 21:30~23:30 亥(수)';
 
 /* ── 출력 정리 ── */
 const SOURCE_RE = /(?:자평진전|적천수천미|적천수|궁통보감|연해자평|명리약언|삼명통회|명리정종|난강망)파?\s*(?:에서는|에서도|에서|에 따르면|에선|에는|은|는|의 표현으로|의|이)?\s*/g;
@@ -140,8 +140,27 @@ function fixTime(s: string): string {
     .replace(/(오전|오후)\s?(1[3-9]|2[0-3])\s?~\s?(1[3-9]|2[0-4])시/g, (_m, _ap, a, b) => `오후 ${Number(a) - 12}~${Number(b) - 12}시`)
     .replace(/(오전|오후)\s?(1[3-9]|2[0-3])시/g, (_m, _ap, h) => `오후 ${Number(h) - 12}시`);
 }
+/* ── 가운뎃점(·) 제거 (2026-10-10 오너: "· 는 AI만 쓰는 문장 구조, 다 빼라") ──
+ *   클라 src 일괄 변환과 같은 규칙: 줄머리 글머리표 삭제 / 한자·한자 → 띄어쓰기 /
+ *   한글 두 낱말 → '과/와' / 그 밖의 나열 → 쉼표 */
+function josaGwa(word: string): string {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  if (code < 0 || code > 11171) return '와';
+  return code % 28 ? '과' : '와';
+}
+export function stripMiddleDots(s: string): string {
+  if (!s || s.indexOf('·') < 0) return s;
+  let t = s;
+  t = t.replace(/합격·이직/g, '합격 이직').replace(/이사·이동/g, '이사 이동');
+  t = t.replace(/(^|\n)([ \t]*)·[ \t]+(?=\S)/g, '$1$2');
+  t = t.replace(/([\u3400-\u9FFF\uF900-\uFAFF])\s*·\s*(?=[\u3400-\u9FFF\uF900-\uFAFF])/g, '$1 ');
+  t = t.replace(/(?<![가-힣·])([가-힣]{1,6})·([가-힣]{1,8})(?![가-힣]*·)/g, (_m, a: string, b: string) => `${a}${josaGwa(a)} ${b}`);
+  t = t.replace(/[ \t]*·[ \t]*/g, ', ');
+  return t.replace(/, ,/g, ',');
+}
+
 export function sanitizeText(s: string): string {
-  let t = s.replace(SOURCE_RE, '');
+  let t = stripMiddleDots(s.replace(SOURCE_RE, ''));
   for (const [re, to] of HANJA_FIX) t = t.replace(re, to);
   for (const [re, to] of GUARANTEE_FIX) t = t.replace(re, to);
   t = fixTime(t);
@@ -192,8 +211,8 @@ export function dailyMeetPromptBlock(sajuData: any): string {
   const plan = dailyMeetPlan(sajuData);
   if (!plan) return '';
   const row = (t: MeetType, label: string) =>
-    `- ${label}: ${plan[t].oheng} 오행 (${plan[t].glyphs.join('·')}) — 생활에서 알아볼 단서: '${plan[t].trait}' 사람`;
-  return `### B-2. meetPeople 글자·오행 = 확정값 (서버 계산 · 바꾸지 말 것)
+    `- ${label}: ${plan[t].oheng} 오행 (${plan[t].glyphs.join(', ')}) — 생활에서 알아볼 단서: '${plan[t].trait}' 사람`;
+  return `### B-2. meetPeople 글자와 오행 = 확정값 (서버 계산, 바꾸지 말 것)
 ${row('boost', 'boost(끌어주는 사람) = 용신')}
 ${row('calm', 'calm(편안한 사람) = 희신')}
 ${row('clash', 'clash(부딪힐 수 있는 사람) = 기신')}
@@ -237,7 +256,7 @@ export function todayYongsinLine(todayGanzi: string, sajuData: any): string {
       : (GEN[g] === y || GEN[b] === y) ? `용신(${y})을 살려주는 기운이 들어오는 날`
       : (CTRL[g] === y || CTRL[b] === y) ? `용신(${y})이 눌리는 날`
       : `용신(${y})에 큰 변화가 없는 날`;
-    return `- 오늘 일진 판정 (서버 계산 · 모든 섹션 공통 전제 · 반대 서술 금지): ${todayGanzi} = 천간 ${todayGanzi[0]}(${g}·${r1}) + 지지 ${todayGanzi[1]}(${b}·${r2}) → ${verdict} · ${ys}`;
+    return `- 오늘 일진 판정 (서버 계산, 모든 섹션 공통 전제, 반대 서술 금지): ${todayGanzi} = 천간 ${todayGanzi[0]}(${g}, ${r1}) + 지지 ${todayGanzi[1]}(${b}, ${r2}) → ${verdict}, ${ys}`;
   } catch { return ''; }
 }
 
@@ -255,14 +274,14 @@ export function ganziRoleText(gz: string, sajuData: any, unit: '해' | '달' | '
     if (!gz || gz.length < 2) return '';
     const g = GAN_OH[gz[0]]; const b = BR_OHENG[gz[1]];
     if (!g || !b) return gz;
-    if (!y) return `${gz}(${g}·${b})`;
+    if (!y) return `${gz}(${g}, ${b})`;
     const role = (o: string) => (o === y ? '용신' : o === h ? '희신' : o === k ? '기신' : '중립');
     const r1 = role(g); const r2 = role(b);
     const good = [r1, r2].filter((r) => r === '용신' || r === '희신').length;
     const bad = [r1, r2].filter((r) => r === '기신').length;
     const verdict = good === 2 ? `도움 기운이 강한 ${unit}` : good >= 1 && bad >= 1 ? `도움과 부담이 섞인 ${unit}`
       : good === 1 ? `도움 기운이 들어오는 ${unit}` : bad >= 1 ? `부담 기운이 강한 ${unit}` : `무난한 ${unit}`;
-    return `${gz} = ${gz[0]}(${g}·${r1}) + ${gz[1]}(${b}·${r2}) → ${verdict}`;
+    return `${gz} = ${gz[0]}(${g}, ${r1}) + ${gz[1]}(${b}, ${r2}) → ${verdict}`;
   } catch { return gz; }
 }
 
@@ -294,12 +313,12 @@ export function dayPicksForYear(year: number, sajuData: any): {
         let score = role(go) + role(bo);
         const why: string[] = [];
         const helpers = Array.from(new Set([roleName(go), roleName(bo)].filter(Boolean)));
-        if (helpers.length) why.push(`${helpers.join('·')} 기운이 들어오는 날`);
+        if (helpers.length) why.push(`${helpers.join(', ')} 기운이 들어오는 날`);
         if (cheoneul.includes(gz[1])) { score += 1; why.push('천을귀인 날'); }
         const chung = !!dayJi && CHUNG_PAIR[dayJi] === gz[1];
         if (chung) { score -= 2; why.push(`일지 ${dayJi}와 부딪히는 날`); }
         if (go === k || bo === k) why.push(`기신(${k}) 기운이 강한 날`);
-        days.push({ label: `${m}/${d}(${WEEK_KO[s.getWeek()]})`, score, why: [`${gz}(${ganziKo(gz)})일`, ...why].join(' · '), chung });
+        days.push({ label: `${m}/${d}(${WEEK_KO[s.getWeek()]})`, score, why: [`${gz}(${ganziKo(gz)})일`, ...why].join(', '), chung });
       }
       const good = days.filter((x) => !x.chung && x.score >= 3).sort((a, b) => b.score - a.score).slice(0, 3);
       const goodFallback = good.length ? good : days.filter((x) => !x.chung && x.score >= 2).sort((a, b) => b.score - a.score).slice(0, 3);
@@ -349,7 +368,7 @@ export function monthBaseScore(gz: string, sajuData: any): number {
  *   '오전에 결정' ↔ '오후 14~17시 회의는 반드시'처럼 시간대가 엇갈림 → 관계·시간대를 서버가 확정. */
 const REL = (a: string, b: string): string => {
   if (!a || !b) return '';
-  if (a === b) return `${a}·${b} 같은 기운`;
+  if (a === b) return `${a}, ${b} 같은 기운`;
   if (GEN[a] === b) return `${a}이(가) ${b}을(를) 생함(${a}생${b})`;
   if (GEN[b] === a) return `${b}이(가) ${a}을(를) 생함(${b}생${a})`;
   if (CTRL[a] === b) return `${a}이(가) ${b}을(를) 극함(${a}극${b})`;
@@ -373,10 +392,10 @@ export function todayRelationsText(todayGanzi: string, sajuData: any): string {
     if (y) lines.push(`- 오늘 기운 ↔ 용신(${y}): 천간 — ${REL(tg, y)} / 지지 — ${REL(tb, y)}`);
     if (partner) lines.push(`- 연인의 별(${female ? '여성: 관성' : '남성: 재성'} = ${partner}) ↔ 오늘 기운: 천간 — ${REL(tg, partner)} / 지지 — ${REL(tb, partner)}`);
     if (dayJi) {
-      const r = CHUNG_PAIR[dayJi] === todayGanzi[1] ? `${dayJi}${todayGanzi[1]}충 (부딪힘)` : JI_HAP6[dayJi] === todayGanzi[1] ? `${dayJi}${todayGanzi[1]}합 (가까워짐)` : dayJi === todayGanzi[1] ? '같은 글자 (겹침)' : '합·충 없음';
+      const r = CHUNG_PAIR[dayJi] === todayGanzi[1] ? `${dayJi}${todayGanzi[1]}충 (부딪힘)` : JI_HAP6[dayJi] === todayGanzi[1] ? `${dayJi}${todayGanzi[1]}합 (가까워짐)` : dayJi === todayGanzi[1] ? '같은 글자 (겹침)' : '합과 충 없음';
       lines.push(`- 일지 ${dayJi} ↔ 오늘 지지 ${todayGanzi[1]}: ${r}`);
     }
-    return `### 오늘 오행 관계 확정표 (서버 계산 · 생극 방향을 이 표와 반대로 쓰지 말 것)\n${lines.join('\n')}`;
+    return `### 오늘 오행 관계 확정표 (서버 계산, 생극 방향을 이 표와 반대로 쓰지 말 것)\n${lines.join('\n')}`;
   } catch { return ''; }
 }
 
@@ -408,10 +427,10 @@ export function todayHourWindows(date: string, sajuData: any): { peak: string; a
     const worst = [...scored].sort((a, b) => a.sc - b.sc)[0];
     const peak = `${pk[0].start}~${pk[1].end}`;
     const avoid = `${worst.start}~${worst.end}`;
-    const text = `### 오늘 시간대 확정 (서버 계산 · 모든 섹션 공통 — timeSlots·hourlyPeak·hourlyAvoid·doList·본문이 이 값과 엇갈리면 안 됨)
-- 가장 좋은 시간: ${peak} (${pk.map((x) => `${x.gz[1]}시 ${x.gz}`).join(' · ')})
+    const text = `### 오늘 시간대 확정 (서버 계산, 모든 섹션 공통 — timeSlots, hourlyPeak, hourlyAvoid, doList, 본문이 이 값과 엇갈리면 안 됨)
+- 가장 좋은 시간: ${peak} (${pk.map((x) => `${x.gz[1]}시 ${x.gz}`).join(', ')})
 - 조심할 시간: ${avoid} (${worst.gz[1]}시 ${worst.gz})
-- 시진별 점수: ${scored.map((x) => `${x.start} ${x.gz}:${x.sc}`).join(' · ')}`;
+- 시진별 점수: ${scored.map((x) => `${x.start} ${x.gz}:${x.sc}`).join(', ')}`;
     return { peak, avoid, text };
   } catch { return { peak: '', avoid: '', text: '' }; }
 }
@@ -475,7 +494,7 @@ export function reunionPlan(args: {
       if (ma.용신 && (go === ma.용신 || bo === ma.용신)) why.push('용신 달');
       else if (ma.기신 && (go === ma.기신 || bo === ma.기신)) why.push('기신 달');
       let bonus = 0;
-      if (star && (go === star || bo === star)) { bonus += (go === star ? 4 : 0) + (bo === star ? 3 : 0); why.push(`연인의 별(${starName}·${star}) 들어옴`); }
+      if (star && (go === star || bo === star)) { bonus += (go === star ? 4 : 0) + (bo === star ? 3 : 0); why.push(`연인의 별(${starName}, ${star}) 들어옴`); }
       if (pJi) {
         if (JI_HAP6[pJi] === b) { bonus += 5; why.push(`상대 일지 ${pJi}와 ${b} 합`); }
         else if (CHUNG_PAIR[pJi] === b) { bonus -= 6; why.push(`상대 일지 ${pJi}와 ${b} 충`); }
@@ -499,7 +518,7 @@ export function reunionPlan(args: {
     rows.forEach((r, i) => { if (r.chance > rows[ci].chance) ci = i; });
     const bestContactMonth = rel(rows[ci].y, rows[ci].m);
     const low = rows.map((r, i) => ({ r, i })).sort((p, q) => p.r.chance - q.r.chance || p.i - q.i).slice(0, 2).sort((p, q) => p.i - q.i);
-    const cautionMonths = low.map(({ r }) => rel(r.y, r.m)).join('·');
+    const cautionMonths = low.map(({ r }) => rel(r.y, r.m)).join(', ');
     const score = typeof args.score === 'number' && Number.isFinite(args.score)
       ? args.score
       : Math.round(rows.reduce((s, r) => s + r.chance, 0) / rows.length);
@@ -517,7 +536,7 @@ export function reunionPlan(args: {
     }
     if (peak >= 85) { vs += 3; parts.push(`최고 달 ${peak} +3`); } else if (peak <= 65) { vs -= 3; parts.push(`최고 달 ${peak} −3`); }
     const verdict: ReunionPlan['verdict'] = vs >= 68 ? '재회 추천' : vs <= 62 ? '새 인연 추천' : '상황에 따라'; // 임계값: 300쌍 모의 분포 ≈ 30% · 49% · 21%
-    const verdictWhy = `${parts.join(' · ')} → ${vs}`;
+    const verdictWhy = `${parts.join(', ')} → ${vs}`;
     const contactAdvice: ReunionPlan['contactAdvice'] = verdict === '새 인연 추천' ? '새출발' : bi === 0 ? '지금 연락하기' : '기다리기';
     const trend = (rows[1].chance + rows[2].chance + rows[3].chance) / 3 - rows[0].chance;
     const emotionCycle: ReunionPlan['emotionCycle'] = trend > 4 ? '상승기' : trend < -4 ? '하강기' : '정체기';
@@ -527,17 +546,17 @@ export function reunionPlan(args: {
       phaseIndex = gap < 2 ? 0 : gap < 6 ? 1 : gap < 12 ? 2 : gap < 18 ? 3 : 4;
     }
     const lines = rows.map((r) =>
-      `  · ${r.y}년 ${r.m}월 ${r.gz}(${ganziKo(r.gz)}) — 나 ${r.my}${r.partner != null ? ` / 상대 ${r.partner}` : ''} / 재회 기운 ${r.chance}` +
-      (r.why.length ? ` · ${r.why.join(', ')}` : ''));
+      `  ${r.y}년 ${r.m}월 ${r.gz}(${ganziKo(r.gz)}) — 나 ${r.my}${r.partner != null ? ` / 상대 ${r.partner}` : ''} / 재회 기운 ${r.chance}` +
+      (r.why.length ? ` ${r.why.join(', ')}` : ''));
     const text = `
-## 🔒 재회 타이밍·판정 확정표 (서버 계산 — 본문·데이터 모두 이 표와 다르게 쓰지 말 것)
-- 판정: ${verdict} (근거: ${verdictWhy} · 68 이상 재회 추천 / 62 이하 새 인연 추천) · 지금 할 일: ${contactAdvice}${contactAdvice === '기다리기' ? ` (${rel(a.y, a.m)}부터 움직인다 — 그 전엔 먼저 연락하지 않는다)` : ''} · 감정 흐름: ${emotionCycle}
-- 재회 적기: ${bestTiming} · 첫 연락 최적 달: ${bestContactMonth} · 조심할 달: ${cautionMonths}${phaseIndex != null ? `\n- 이별 후 현재 단계: ${REUNION_PHASES[phaseIndex].name} (${REUNION_PHASES[phaseIndex].period})` : ''}
-- 월별 (이번 달부터 12개월 · 나의 에너지${pOh ? ' / 상대 에너지' : ''} / 재회 기운 · 근거):
+## 🔒 재회 타이밍과 판정 확정표 (서버 계산 — 본문과 데이터 모두 이 표와 다르게 쓰지 말 것)
+- 판정: ${verdict} (근거: ${verdictWhy}, 68 이상 재회 추천 / 62 이하 새 인연 추천), 지금 할 일: ${contactAdvice}${contactAdvice === '기다리기' ? ` (${rel(a.y, a.m)}부터 움직인다 — 그 전엔 먼저 연락하지 않는다)` : ''}, 감정 흐름: ${emotionCycle}
+- 재회 적기: ${bestTiming}, 첫 연락 최적 달: ${bestContactMonth}, 조심할 달: ${cautionMonths}${phaseIndex != null ? `\n- 이별 후 현재 단계: ${REUNION_PHASES[phaseIndex].name} (${REUNION_PHASES[phaseIndex].period})` : ''}
+- 월별 (이번 달부터 12개월, 나의 에너지${pOh ? ' / 상대 에너지' : ''} / 재회 기운, 근거):
 ${lines.join('\n')}
-→ '재회 가능성과 적기'·'월별 재회 에너지 흐름'·'재회 실전 전략'·'재회 후 관계 변화 예측' 과 timeline 은 위 시기·수치를 그대로 인용한다. 표에 없는 달을 적기로 만들지 말 것.
-→ '새 인연 vs 재회 — 냉정한 비교' 의 최종 판정 = 위 판정. 근거 칸의 글자(합·충·원진·연인의 별)를 본문에서 직접 짚어라.${verdict === '상황에 따라' ? `
-→ '상황에 따라' 를 애매하게 쓰지 말 것 — 갈림길을 못 박는다: '${bestTiming}에 상대가 먼저 반응하면 재회, 그때도 조용하면 정리하세요' 처럼 기준과 시한을 단정.` : ''}${pOh ? '' : '\n→ 상대 생년월일이 없다 — 상대 에너지·궁합 수치는 만들지 말 것.'}
+→ '재회 가능성과 적기', '월별 재회 에너지 흐름', '재회 실전 전략', '재회 후 관계 변화 예측' 과 timeline 은 위 시기와 수치를 그대로 인용한다. 표에 없는 달을 적기로 만들지 말 것.
+→ '새 인연 vs 재회 — 냉정한 비교' 의 최종 판정 = 위 판정. 근거 칸의 글자(합, 충, 원진, 연인의 별)를 본문에서 직접 짚어라.${verdict === '상황에 따라' ? `
+→ '상황에 따라' 를 애매하게 쓰지 말 것 — 갈림길을 못 박는다: '${bestTiming}에 상대가 먼저 반응하면 재회, 그때도 조용하면 정리하세요' 처럼 기준과 시한을 단정.` : ''}${pOh ? '' : '\n→ 상대 생년월일이 없다 — 상대 에너지와 궁합 수치는 만들지 말 것.'}
 `;
     return {
       text,

@@ -373,7 +373,7 @@ export function SajuCardPage() {
               letterSpacing: '0.02em',
             }}
           >
-            한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반
+            한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
             <br />
             사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
           </div>
@@ -497,7 +497,7 @@ function ExportModeSheet({
     spec: string;
   }> = [
     { id: 'instagram-1x1', title: '한 장 카드',          desc: '핵심만 정사각형 — 인스타 피드용',     spec: '1080 × 1080' },
-    { id: 'instagram-9x16', title: '스토리',             desc: '인스타·카톡 스토리 세로 풀화면',       spec: '1080 × 1920' },
+    { id: 'instagram-9x16', title: '스토리',             desc: '인스타와 카톡 스토리 세로 풀화면',       spec: '1080 × 1920' },
     { id: 'page',           title: '전체 보관용',         desc: '모든 정보 풍부하게 — PDF 같은 톤',     spec: '~520 × ~1820' },
   ];
 

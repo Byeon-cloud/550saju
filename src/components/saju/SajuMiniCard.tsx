@@ -86,7 +86,7 @@ export function SajuMiniCard({ pillars, onFlip: _onFlip, highlightDay = true }: 
           <div
             key={`${p.label}-${i}`}
             style={{ minHeight: 132 }}
-            aria-label={`${p.label}주 · ${p.unavailable ? '미입력' : `${p.gan}${p.ji}`}`}
+            aria-label={`${p.label}주, ${p.unavailable ? '미입력' : `${p.gan}${p.ji}`}`}
           >
             {renderCell(p, isDay)}
           </div>

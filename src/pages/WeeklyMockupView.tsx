@@ -455,7 +455,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
             <span className="span-tag">오늘부터 7일</span>
           </div>
           <h1 dangerouslySetInnerHTML={safeHtml(weekHeadline)} />
-          {periodLabel && <div className="date">오늘부터 7일 · {periodLabel}</div>}
+          {periodLabel && <div className="date">오늘부터 7일, {periodLabel}</div>}
           {keywords.length > 0 && (
             <div className="kw-row">
               {keywords.map((kw, i) => <span key={i} className="kw">{stripAll(kw)}</span>)}
@@ -467,7 +467,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
         {refining && (
           <div className="refining-pill">
             <span className="spark" />
-            결과를 더 정교하게 다듬는 중이에요 · 잠시 후 자동으로 완성돼요
+            결과를 더 정교하게 다듬는 중이에요, 잠시 후 자동으로 완성돼요
           </div>
         )}
 
@@ -650,13 +650,13 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
               <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             <div className="ti">월운세 보기</div>
-            <div className="sb">한 달 전체의 흐름{monthlyPriceLabel ? ` · ${monthlyPriceLabel}` : ''}</div>
+            <div className="sb">한 달 전체의 흐름{monthlyPriceLabel ? ` ${monthlyPriceLabel}` : ''}</div>
           </button>
         </div>
 
         <div className="service-notice">
-          <p className="src">한국 명리학 6대 원전(연해자평·자평진전·적천수·궁통보감·명리약언·삼명통회) 기반</p>
-          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+          <p className="src">한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반</p>
+          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
         </div>
       </div>
     </div>

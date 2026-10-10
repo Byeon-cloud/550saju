@@ -49,7 +49,7 @@ function statusCopy(s: AttendanceSnapshot): string {
     if (pos <= 1) return '이틀만 더 이어지면 운 1';
     if (pos === 2) return '내일까지 이어지면 운 1 받아요';
     return s.streak3PaidToday
-      ? `${s.streak}일 연속 · 오늘 운 1 받았어요`
+      ? `${s.streak}일 연속, 오늘 운 1 받았어요`
       : `${s.streak}일 연속 출석 중이에요`;
   }
   if (s.alive) {
@@ -57,7 +57,7 @@ function statusCopy(s: AttendanceSnapshot): string {
     if (pos === 2) return '오늘 결과 하나 보면 운 1 받아요';
     return '오늘 결과 하나 보면 다음 3일이 시작돼요';
   }
-  if (s.broken) return '어제는 빠졌어요 · 오늘부터 다시 시작';
+  if (s.broken) return '어제는 빠졌어요, 오늘부터 다시 시작';
   return '오늘 결과 하나 보면 시작돼요';
 }
 

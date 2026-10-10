@@ -250,9 +250,9 @@ export function MonthlyPage() {
           <ExtensionHero
             theme={EXTENSION_THEME.monthly}
             costLabel={getMonthlyPrice().isOnSale ? `${getMonthlyPrice().regularPrice}운→${getMonthlyPrice().actualPrice}운` : `${getMonthlyPrice().actualPrice}운`}
-            eventLabel={getMonthlyPrice().isOnSale ? `이벤트 · ~${Number((getMonthlyPrice().saleEndDate || '').slice(5, 7))}/${Number((getMonthlyPrice().saleEndDate || '').slice(8, 10))}` : undefined}
-            sub="원하는 한 달을 골라 깊게 · 상순·중순·하순까지"
-            rightLabel="月運 · 한 달의 흐름"
+            eventLabel={getMonthlyPrice().isOnSale ? `이벤트, ~${Number((getMonthlyPrice().saleEndDate || '').slice(5, 7))}/${Number((getMonthlyPrice().saleEndDate || '').slice(8, 10))}` : undefined}
+            sub="원하는 한 달을 골라 깊게, 상순, 중순, 하순까지"
+            rightLabel="月運, 한 달의 흐름"
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
@@ -320,7 +320,7 @@ export function MonthlyPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="월별 운세" sajuData={selected?.sajuData} steps={['선택한 달의 월간지를 짚고 있어요', '상순·중순·하순 흐름을 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} estimatedSeconds={60} />;
+    return <AILoading name={selected?.name} type="월별 운세" sajuData={selected?.sajuData} steps={['선택한 달의 월간지를 짚고 있어요', '상순, 중순, 하순 흐름을 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} estimatedSeconds={60} />;
   }
 
   // ─── 결과 (단일월 심층 — 오늘운세급 MonthlyMockupView) ───

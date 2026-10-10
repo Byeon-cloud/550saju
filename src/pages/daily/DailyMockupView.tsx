@@ -137,7 +137,7 @@ function autoEmphasize(input: string): string {
       // 종결형 + 서술 결론 (분석 본문)
       '(?:게 좋아요|필수예요|필요해요|중요해요|좋습니다|중요합니다|필요합니다|효율적입니다|적절합니다|좋은 자리예요|어울려요|솟아오릅니다|강화합니다|극대화됩니다|커집니다|높습니다|좋아집니다|수월합니다|핵심 과제입니다)',
     ];
-    const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9·~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`);
+    const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9, ~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`);
 
     let strongCount = 0;
     const maxStrong = 2;
@@ -215,11 +215,11 @@ interface DailyMockupViewProps {
 
 const MOCKUP_CSS = `
 /* ═══ SajuCard 토큰 정식 동기화 (2026-05-06 v3) ═══
-   src/pages/saju-card/_chrome.tsx 의 C·OHENG_THEME 와 100% 일치 */
+   src/pages/saju-card/_chrome.tsx 의 C, OHENG_THEME 와 100% 일치 */
 .daily-mockup * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 .daily-mockup {
   font-family: 'Pretendard', sans-serif; color: #1A1612; letter-spacing: -0.01em; background: #F4EFE4;
-  /* 2026-10-10 v9 한지 톤 — 먹·종이 (src/styles/hanji.css 와 같은 값 · 보조 글자 대비 5:1) */
+  /* 2026-10-10 v9 한지 톤 — 먹과 종이 (src/styles/hanji.css 와 같은 값, 보조 글자 대비 5:1) */
   --c-paper: #F4EFE4;
   --c-surface: #FFFDF8;
   --c-ink: #1A1612;
@@ -291,7 +291,7 @@ const MOCKUP_CSS = `
   color: var(--c-mute); text-align: center; margin-bottom: 2px;
 }
 .daily-mockup .saju-cell.ilju .lab { color: var(--c-gold-deep); }
-/* 천간/지지 큰 색 블록 + 읽기/상징 (SajuCardPage 스타일 · 2026-05-06 v5) */
+/* 천간/지지 큰 색 블록 + 읽기/상징 (SajuCardPage 스타일, 2026-05-06 v5) */
 .daily-mockup .saju-cell .gan,
 .daily-mockup .saju-cell .ji {
   font-family: 'Noto Serif KR', serif;
@@ -539,7 +539,7 @@ const MOCKUP_CSS = `
 .daily-mockup .sec-lead { font-size: 13.5px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .daily-mockup .body p { font-size: 15.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 /* ⭐ 강조 위계 통일 (PremiumResult 패턴) — 2026-05-06 v5
-   <strong> = 황금볼드 (일상 결론) · <u> = 황금밑줄 (시기·숫자·색) · <b> = 검정볼드 (한자) */
+   <strong> = 황금볼드 (일상 결론), <u> = 황금밑줄 (시기, 숫자, 색), <b> = 검정볼드 (한자) */
 .daily-mockup .body p strong,
 .daily-mockup .body strong:not(.no-emph) {
   font-weight: 700;
@@ -562,7 +562,7 @@ const MOCKUP_CSS = `
   color: var(--c-ink);
   font-family: 'Noto Serif KR', serif;
 }
-/* <em> = 주의·경고 (번트오렌지) — 2026-05-29. 황금 형광펜(긍정 결론)과 대비되는 경고 톤.
+/* <em> = 주의와 경고 (번트오렌지) — 2026-05-29. 황금 형광펜(긍정 결론)과 대비되는 경고 톤.
    font-style normal (한글 italic 가독성 ↓), class 없이 태그만으로 스타일 (sanitize 가 속성 strip). */
 .daily-mockup .body p em,
 .daily-mockup .body em,
@@ -642,7 +642,7 @@ const MOCKUP_CSS = `
 .daily-mockup .hour-legend .sw { width: 10px; height: 10px; border-radius: 50%; }
 
 /* Meet (§04) */
-/* §04 만나는 사람 — 브랜드톤 통일 (2026-05-06 v2 · orb 3D 폐기) */
+/* §04 만나는 사람 — 브랜드톤 통일 (2026-05-06 v2, orb 3D 폐기) */
 .daily-mockup .meet-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .daily-mockup .meet { background: #fff; border: 1px solid var(--c-card-line); border-radius: 12px; padding: 14px; display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: flex-start; }
 .daily-mockup .meet .badge-orb {
@@ -838,7 +838,7 @@ const MOCKUP_CSS = `
 .daily-mockup .upsell p { font-size: 12.5px; color: #c4baa0; margin-bottom: 14px; line-height: 1.6; position: relative; word-break: keep-all; }
 .daily-mockup .upsell .cta { display: inline-flex; gap: 6px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; position: relative; align-items: center; border: none; }
 .daily-mockup .upsell .cost { background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 100px; font-size: 11px; color: #E8D9B8; margin-left: 6px; font-weight: 600; }
-/* 2026-09-17 주간·월간 추천 카드 (기존 .upsell 재사용) */
+/* 2026-09-17 주간과 월간 추천 카드 (기존 .upsell 재사용) */
 .daily-mockup .upsell.upsell-weekly::before { content: '週'; }
 .daily-mockup .upsell .cta-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; position: relative; }
 .daily-mockup .upsell .cta-row .cta { min-height: 44px; padding: 0 20px; }
@@ -900,9 +900,9 @@ function getOhengRelation(my: OhengType, today: OhengType): {
     return {
       label: '동행',
       category: '동료 자리',
-      meaning: `오늘은 나와 같은 ${myK} 기운이 만나는 날이에요. 동료·동반자처럼 같은 결의 사람과 함께하는 자리.`,
-      good: '협력·연대·공감대 형성에 유리. 같은 결의 사람과 만남이 의미 있어요.',
-      watch: '경쟁·자존심 부딪힘 주의. 한 박자 양보가 흐름을 부드럽게 합니다.',
+      meaning: `오늘은 나와 같은 ${myK} 기운이 만나는 날이에요. 동료와 동반자처럼 같은 결의 사람과 함께하는 자리.`,
+      good: '협력, 연대, 공감대 형성에 유리. 같은 결의 사람과 만남이 의미 있어요.',
+      watch: '경쟁과 자존심 부딪힘 주의. 한 박자 양보가 흐름을 부드럽게 합니다.',
       type: 'same',
     };
   }
@@ -912,39 +912,39 @@ function getOhengRelation(my: OhengType, today: OhengType): {
   if (sheng[today] === my) {
     return {
       label: '도움 받음',
-      category: '도움·배움 자리',
-      meaning: `오늘 ${todayK} 기운이 내 ${myK} 기운을 키워주는 날이에요. 윗사람·스승·책에서 도움이 들어오는 자리.`,
-      good: '윗사람·선배·스승의 도움, 배움·정리·휴식에 유리한 자리.',
+      category: '도움과 배움 자리',
+      meaning: `오늘 ${todayK} 기운이 내 ${myK} 기운을 키워주는 날이에요. 윗사람, 스승, 책에서 도움이 들어오는 자리.`,
+      good: '윗사람, 선배, 스승의 도움, 배움, 정리, 휴식에 유리한 자리.',
       watch: '받는 데 익숙해지면 추진력이 떨어집니다. 받은 만큼 한 번은 움직이세요.',
       type: 'support-me',
     };
   }
   if (sheng[my] === today) {
     return {
-      label: '표현·창의',
-      category: '표현·나눔 자리',
-      meaning: `내 ${myK} 기운이 오늘 ${todayK}을 살려주는 날이에요. 말·글·아이디어로 나누고 표현하는 자리.`,
-      good: '말·글·아이디어가 잘 풀리는 날. 표현하고 나누는 자리에 유리.',
+      label: '표현과 창의',
+      category: '표현과 나눔 자리',
+      meaning: `내 ${myK} 기운이 오늘 ${todayK}을 살려주는 날이에요. 말, 글, 아이디어로 나누고 표현하는 자리.`,
+      good: '말, 글, 아이디어가 잘 풀리는 날. 표현하고 나누는 자리에 유리.',
       watch: '에너지 빼주는 자리라 피로감 누적 주의. 무리하지 말고 한 번에 몰아치지 마세요.',
       type: 'i-support',
     };
   }
   if (ke[my] === today) {
     return {
-      label: '재물·기회',
-      category: '재물·기회 자리',
-      meaning: `내 ${myK} 기운이 오늘 ${todayK}을 다스리는 날이에요. 돈·기회·결실이 눈앞에 보이는 자리.`,
-      good: '돈·기회·결실이 보이는 날. 작은 입금·협상·계약 신호가 들어옵니다.',
+      label: '재물과 기회',
+      category: '재물과 기회 자리',
+      meaning: `내 ${myK} 기운이 오늘 ${todayK}을 다스리는 날이에요. 돈, 기회, 결실이 눈앞에 보이는 자리.`,
+      good: '돈, 기회, 결실이 보이는 날. 작은 입금, 협상, 계약 신호가 들어옵니다.',
       watch: '한 번에 다 끌어당기려 하면 마찰. 한 박자 늦추는 게 효율적입니다.',
       type: 'i-control',
     };
   }
   if (ke[today] === my) {
     return {
-      label: '책임·기준',
-      category: '책임·기준 자리',
-      meaning: `오늘 ${todayK} 기운이 내 ${myK} 기운을 누르는 날이에요. 마감·약속·평가가 또렷해지는 자리.`,
-      good: '체계·규율·시험·평가에 집중력 살아나는 날. 마감·약속이 또렷해집니다.',
+      label: '책임과 기준',
+      category: '책임과 기준 자리',
+      meaning: `오늘 ${todayK} 기운이 내 ${myK} 기운을 누르는 날이에요. 마감, 약속, 평가가 또렷해지는 자리.`,
+      good: '체계, 규율, 시험, 평가에 집중력 살아나는 날. 마감과 약속이 또렷해집니다.',
       watch: '피로와 긴장이 쌓이는 날이에요. 깊은 결정은 내일로 미루세요.',
       type: 'controls-me',
     };
@@ -1079,7 +1079,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                 {/* 2026-06-13 — ⏱ 이모지 → 時 한자 (이모지 절대 금지 정책) + keep-all (단어 깨짐 fix) */}
                 <span className="ic" style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 900 }}>時</span>
                 <span>{tc.greeting}</span>
-                <span className="sub">· {tc.subtle}</span>
+                <span className="sub">, {tc.subtle}</span>
               </div>
             );
           })()}
@@ -1282,7 +1282,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {meetPeople.length === 0 ? (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title="오늘 만나는 사람" han="人緣" id="03" />
-              <p className="sec-lead">오행으로 본 오늘의 인연 결. 일간이 무엇인지 모르더라도 행동·분위기로 가늠할 수 있습니다.</p>
+              <p className="sec-lead">오행으로 본 오늘의 인연 결. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
               {[0, 1, 2].map((i) => (
                 <div key={i} style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 12, padding: 14, marginTop: 12, display: 'flex', gap: 12 }}>
                   <div className="skeleton-block" style={{ width: 48, height: 48, borderRadius: '50%', flexShrink: 0 }} />
@@ -1297,7 +1297,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           ) : (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title="오늘 만나는 사람" han="人緣" id="03" />
-              <p className="sec-lead">오행으로 본 오늘의 인연 결. 일간이 무엇인지 모르더라도 행동·분위기로 가늠할 수 있습니다.</p>
+              <p className="sec-lead">오행으로 본 오늘의 인연 결. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
               <div className="meet-stack">
                 {meetPeople.map((m, i) => {
                   const type = String(m?.type || 'boost');
@@ -1308,7 +1308,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                     const fallbackByType: Record<string, string> = {
                       boost: '<u>차분하고 깊이 있는 분위기</u>의 사람과 만나면 오늘 흐름이 부드러워집니다. <strong>대화 중 무리한 결정은 미루세요</strong>.',
                       clash: '<u>강하고 결단 있는 톤</u>의 사람과는 마찰이 생깁니다. <strong>한 박자 늦추는 게 효율적입니다</strong>.',
-                      calm: '<u>실질적이고 안정적인 분위기</u>의 사람과 가벼운 대화·식사가 좋아요. <strong>깊은 결정은 다른 자리에서</strong>.',
+                      calm: '<u>실질적이고 안정적인 분위기</u>의 사람과 가벼운 대화와 식사가 좋아요. <strong>깊은 결정은 다른 자리에서</strong>.',
                     };
                     desc = fallbackByType[type] || fallbackByType.boost;
                   }
@@ -1523,9 +1523,9 @@ export function DailyMockupView(props: DailyMockupViewProps) {
               <div className="topic-grid">
                 {[
                   { cls: 't-money', nm: '재물', han: '財', key: 'wealth' as const, cta: '재물운 깊이 보기' },
-                  { cls: 't-rel', nm: '관계', han: '緣', key: 'love' as const, cta: '관계·연애운 깊이 보기' },
-                  { cls: 't-work', nm: '일', han: '業', key: 'career' as const, cta: '직업·진로운 깊이 보기' },
-                  { cls: 't-health', nm: '건강', han: '身', key: 'health' as const, cta: '건강·체질운 깊이 보기' },
+                  { cls: 't-rel', nm: '관계', han: '緣', key: 'love' as const, cta: '관계와 연애운 깊이 보기' },
+                  { cls: 't-work', nm: '일', han: '業', key: 'career' as const, cta: '직업과 진로운 깊이 보기' },
+                  { cls: 't-health', nm: '건강', han: '身', key: 'health' as const, cta: '건강과 체질운 깊이 보기' },
                 ].map((t) => {
                   // 2026-09-17 — 카드 하나가 여러 주제로 이어지므로 묶음 실제 최저가 기준 표기 ("1운~")
                   const price = groupPriceLabel(t.key);
@@ -1572,7 +1572,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
               {tomorrow && (
                 <div className="tomorrow tomorrow-v2">
                   <div className="tomorrow-head">
-                    <span className="lab">TOMORROW · 내일</span>
+                    <span className="lab">TOMORROW, 내일</span>
                     {typeof tomorrow.scoreHint === 'number' && (
                       <div className="score-chip">
                         <span className="score-num">{(tomorrow.scoreHint / 10).toFixed(1)}</span>
@@ -1586,7 +1586,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                         return <>{String(tomorrow.date).slice(5).replace('-', '월 ')}일</>;
                       } catch { return null; }
                     })()}
-                    {tomorrow.ganzi && <> · <strong>{stripAll(tomorrow.ganzi)}일</strong></>}
+                    {tomorrow.ganzi && <>, <strong>{stripAll(tomorrow.ganzi)}일</strong></>}
                   </div>
                   {tomorrow.headline && (
                     <div className="tomorrow-headline" dangerouslySetInnerHTML={safeHtmlEmph(tomorrow.headline)} />
@@ -1605,7 +1605,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             오늘 하루 → 이번 주 7일 → 한 달 흐름으로 이어보기. 가격은 pricing SSOT. 생성이 끝난 뒤에만 노출. */}
         {!isGenerating && (
           <section className="upsell upsell-weekly" aria-label="이어서 볼 만한 운세">
-            <div className="lab">NEXT · 이번 주 흐름</div>
+            <div className="lab">NEXT, 이번 주 흐름</div>
             <h3>오늘 하루를 봤다면,<br />이번 주 7일도 이어서 볼까요?</h3>
             <p>
               {profile?.name ? `${stripAll(profile.name)}님 사주로` : '내 사주로'} 오늘부터 7일 중 힘을 실어도 좋은 날과
@@ -1617,7 +1617,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             </div>
             {onMonthly && (
               <button type="button" className="sub-link" onClick={onMonthly}>
-                <span>한 달 흐름이 궁금하다면 · 월별 운세 보기</span>
+                <span>한 달 흐름이 궁금하다면, 월별 운세 보기</span>
                 <span className="sub-cost">{extensionCostLabel(getMonthlyPrice())}</span>
               </button>
             )}
@@ -1645,7 +1645,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
         </div>
 
         <div className="service-notice">
-          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료·법률·재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
         </div>
       </div>
     </div>

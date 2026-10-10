@@ -594,31 +594,31 @@ export function ChargePage() {
       {/* ─── §8. Notice (이용 정책) ─── */}
       <div style={{ padding: '20px 20px 8px', marginTop: 12 }}>
         <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          · 보너스 운은 환불 대상에서 제외됩니다 (본 운만 환불 가능).
+          보너스 운은 환불 대상에서 제외됩니다 (본 운만 환불 가능).
         </p>
         <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          · 구매한 운은 계정 종료 시 소멸돼요.
+          구매한 운은 계정 종료 시 소멸돼요.
         </p>
         <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          · 운은 사주500 앱 안에서만 사용할 수 있어요.
+          운은 사주500 앱 안에서만 사용할 수 있어요.
         </p>
         <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          · 공유 리워드 어뷰징 감지 시 적립이 취소될 수 있어요.
+          공유 리워드 어뷰징 감지 시 적립이 취소될 수 있어요.
         </p>
         {/* 환불·청약철회 고지 — 웹/앱 분기.
             앱(앱인토스): 토스 IAP/토스페이 우산. 웹: 전자상거래법 제17조 디지털콘텐츠 청약철회 직접 고지. */}
         {isAppintosBuild ? (
           /* P0-A · 토스페이 환불 정책 (앱인토스 검수 §1-12) */
           <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-            · 환불은 토스페이 결제 취소 정책을 따르며, 결제 후 7일 이내 미사용 운에 한해 고객센터(info@juulabel.com)로 문의 시 심사 후 처리해요.
+            환불은 토스페이 결제 취소 정책을 따르며, 결제 후 7일 이내 미사용 운에 한해 고객센터(info@juulabel.com)로 문의 시 심사 후 처리해요.
           </p>
         ) : (
           <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-            · 충전한 운을 분석에 사용(생성)하면 해당 운은 환불되지 않아요. 미사용 운은 결제 후 7일 이내 환불 가능하며, 청약철회일로부터 3영업일 이내 환급돼요. (디지털콘텐츠 · 전자상거래법 제17조)
+            충전한 운을 분석에 사용(생성)하면 해당 운은 환불되지 않아요. 미사용 운은 결제 후 7일 이내 환불 가능하며, 청약철회일로부터 3영업일 이내 환급돼요. (디지털콘텐츠, 전자상거래법 제17조)
           </p>
         )}
         <p style={{ fontSize: 11, color: C.mute, lineHeight: 1.75, margin: '6px 0 0' }}>
-          · 결제·세금 관련 안내는{' '}
+          결제와 세금 관련 안내는{' '}
           <button
             onClick={() => navigate('/terms')}
             style={{
@@ -627,7 +627,7 @@ export function ChargePage() {
               padding: 0, textDecoration: 'underline',
             }}
           >이용약관</button>
-          {' '}·{' '}
+          {' '}, {' '}
           <button
             onClick={() => navigate('/privacy')}
             style={{
@@ -670,7 +670,7 @@ export function ChargePage() {
                 color: 'rgba(248,245,238,0.72)',
                 borderBottom: '1px solid rgba(248,245,238,0.12)',
               }}>
-                미사용 운은 7일 안에 전액 환불돼요 · 분석에 사용한 운은 환불이 어려워요
+                미사용 운은 7일 안에 전액 환불돼요, 분석에 사용한 운은 환불이 어려워요
               </div>
             )}
             <div style={{
@@ -789,7 +789,7 @@ export function ChargePage() {
                           <rect x="5.5" y="14.4" width="6" height="1.8" rx="0.9" fill="#1A1A1A" />
                         </svg>
                       </span>
-                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용·체크카드</span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용과 체크카드</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                     <button onClick={() => (portoneLive ? handlePgLive : handlePgTest)('kakaopay')} style={{

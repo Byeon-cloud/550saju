@@ -70,7 +70,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7A5C2E',
     label: '연애운',
     heroH1: { line1: '관계의 흐름과', line2: '인연이 닿는 자리' },
-    heroHint: '천천히 읽어보세요 · 인연의 결은 한 번에 들어오지 않아요',
+    heroHint: '천천히 읽어보세요, 인연의 결은 한 번에 들어오지 않아요',
   },
   wealth: {
     heroGrad: 'linear-gradient(135deg,#D4B07F 0%,#B8965A 55%,#8C6D3D 100%)',
@@ -83,7 +83,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#8C6D3D',
     label: '재물운',
     heroH1: { line1: '돈이 들어오고', line2: '머무는 자리' },
-    heroHint: '천천히 읽어보세요 · 돈의 결은 한 줄로 풀리지 않아요',
+    heroHint: '천천히 읽어보세요, 돈의 결은 한 줄로 풀리지 않아요',
   },
   career: {
     heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#8C6D3D 55%,#3F5A7C 100%)',
@@ -96,7 +96,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#3F5A7C',
     label: '직업운',
     heroH1: { line1: '쌓아올리는 자리와', line2: '커리어의 결' },
-    heroHint: '천천히 읽어보세요 · 일의 결은 시간이 만들어가요',
+    heroHint: '천천히 읽어보세요, 일의 결은 시간이 만들어가요',
   },
   health: {
     heroGrad: 'linear-gradient(135deg,#8FB8A8 0%,#8C6D3D 55%,#7A5C2E 100%)',
@@ -109,7 +109,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7A5C2E',
     label: '건강운',
     heroH1: { line1: '몸의 결과', line2: '오래 가는 흐름' },
-    heroHint: '천천히 읽어보세요 · 몸의 신호는 작은 데서 시작돼요',
+    heroHint: '천천히 읽어보세요, 몸의 신호는 작은 데서 시작돼요',
   },
   study: {
     heroGrad: 'linear-gradient(135deg,#B57FA0 0%,#8C6D3D 55%,#7A5C2E 100%)',
@@ -122,7 +122,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7A5C2E',
     label: '학업운',
     heroH1: { line1: '집중이 흐르는', line2: '시간과 자리' },
-    heroHint: '천천히 읽어보세요 · 공부의 결은 리듬에서 나와요',
+    heroHint: '천천히 읽어보세요, 공부의 결은 리듬에서 나와요',
   },
   // 2026-05-28 — SSOT 10주제 chrome 확장. TOPIC_REGISTRY 색상 기반 (topics.ts) — 디자인 양극화 해소.
   reunion: {
@@ -136,7 +136,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7A5C2E',
     label: '재회운',
     heroH1: { line1: '헤어진 사람과의', line2: '회복 가능성' },
-    heroHint: '천천히 읽어보세요 · 끝난 결도 다시 흐를 수 있어요',
+    heroHint: '천천히 읽어보세요, 끝난 결도 다시 흐를 수 있어요',
   },
   marriage: {
     heroGrad: 'linear-gradient(135deg,#D5A0B0 0%,#8C6D3D 55%,#7A5C2E 100%)',
@@ -149,7 +149,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7A5C2E',
     label: '결혼운',
     heroH1: { line1: '인연이 닿는 시기와', line2: '배우자의 결' },
-    heroHint: '천천히 읽어보세요 · 평생 함께할 결을 살펴봐요',
+    heroHint: '천천히 읽어보세요, 평생 함께할 결을 살펴봐요',
   },
   exam: {
     heroGrad: 'linear-gradient(135deg,#8B9CC9 0%,#8C6D3D 55%,#7A5C2E 100%)',
@@ -160,9 +160,9 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     hint: '#22315C',
     badgeOn: '#FFFFFF',
     quoteBorder: '#7A5C2E',
-    label: '합격·이직운',
-    heroH1: { line1: '시험·이직이', line2: '풀리는 시기' },
-    heroHint: '천천히 읽어보세요 · 도약의 결은 미리 와요',
+    label: '합격 이직운',
+    heroH1: { line1: '시험과 이직이', line2: '풀리는 시기' },
+    heroHint: '천천히 읽어보세요, 도약의 결은 미리 와요',
   },
   business: {
     heroGrad: 'linear-gradient(135deg,#C49B5C 0%,#A37A2E 55%,#7A5820 100%)',
@@ -174,8 +174,8 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     badgeOn: '#FFFFFF',
     quoteBorder: '#7A5820',
     label: '사업운',
-    heroH1: { line1: '창업·자영업', line2: '흐름과 시기' },
-    heroHint: '천천히 읽어보세요 · 사업의 결은 타이밍에서 갈려요',
+    heroH1: { line1: '창업과 자영업', line2: '흐름과 시기' },
+    heroHint: '천천히 읽어보세요, 사업의 결은 타이밍에서 갈려요',
   },
   move: {
     heroGrad: 'linear-gradient(135deg,#7AA5A6 0%,#8C6D3D 55%,#7A5C2E 100%)',
@@ -186,9 +186,9 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     hint: '#1C3D3E',
     badgeOn: '#FFFFFF',
     quoteBorder: '#7A5C2E',
-    label: '이사·이동운',
-    heroH1: { line1: '이사·이동의', line2: '길흉과 방향' },
-    heroHint: '천천히 읽어보세요 · 이동의 결은 방향에서 시작돼요',
+    label: '이사 이동운',
+    heroH1: { line1: '이사 이동의', line2: '길흉과 방향' },
+    heroHint: '천천히 읽어보세요, 이동의 결은 방향에서 시작돼요',
   },
 };
 
@@ -346,7 +346,7 @@ export function TopicHero({
           }}
         >
           {ilganLabel}
-          {ilganLabel && birthLabel ? ' · ' : ''}
+          {ilganLabel && birthLabel ? ', ' : ''}
           {birthLabel}
         </div>
       )}
@@ -439,7 +439,7 @@ export function TopicScoreCard({
   // body 가 "길 · 좋은 기운의 흐름" generic 인지 체크 → generic 이면 rich phrase 로 대체
   const isGeneric = /^(길|평|주의|흉)\s*·\s*(좋은|무난한|흔들리는|큰)/.test(body);
   const rich = getRichScoreLabel(theme, pct);
-  const headline = isGeneric || !body ? rich.phrase : body.split('·').slice(-1)[0].trim();
+  const headline = isGeneric || !body ? rich.phrase : body.split(', ').slice(-1)[0].trim();
 
   return (
     <div
@@ -897,7 +897,7 @@ export function LockVeil({
           cursor: onUnlock ? 'pointer' : 'default',
           padding: 0,
         }}
-        aria-label={`${primaryLabel} ${subLabel ? '· ' + subLabel : ''}`}
+        aria-label={`${primaryLabel} ${subLabel ? ', ' + subLabel : ''}`}
       >
         <div
           style={{
@@ -1218,7 +1218,7 @@ export function TopicUpsellCard({
           position: 'relative',
         }}
       >
-        종합사주 · 열 장
+        종합사주, 열 장
       </div>
       <h3
         style={{
@@ -1302,7 +1302,7 @@ export function TopicSourceCite({
         lineHeight: 1.6,
       }}
     >
-      <strong style={{ color: '#1A1A1A', fontWeight: 600 }}>풀이 근거</strong> · {citation}
+      <strong style={{ color: '#1A1A1A', fontWeight: 600 }}>풀이 근거</strong>, {citation}
     </div>
   );
 }
@@ -1585,16 +1585,16 @@ export function TopicSajuMini({
 
 // 토픽별 핵심 오행 키 매핑 (참고용 — UX 카피로만 노출, 점수는 사주 본래 카운트)
 const TOPIC_KEY_OHENG_LABEL: Record<TopicChromeKey, string> = {
-  love:      '재성·관성',     // 배우자성
+  love:      '재성과 관성',     // 배우자성
   wealth:    '재성',          // 정재·편재
   career:    '관성',          // 정관·편관
   health:    '인성',          // 정인·편인
-  study:     '인성·식상',     // 인성+식상관
-  reunion:   '재성·관성',
-  marriage:  '재성·관성',
-  exam:      '관성·인성',
-  business:  '재성·식상',
-  move:      '관성·재성',
+  study:     '인성과 식상',     // 인성+식상관
+  reunion:   '재성과 관성',
+  marriage:  '재성과 관성',
+  exam:      '관성과 인성',
+  business:  '재성과 식상',
+  move:      '관성과 재성',
 };
 
 // 오행 컬러 (badge inner) — 종합사주 SSOT
@@ -1628,10 +1628,10 @@ export function TopicOhengBalance({
   const note =
     augmentNote ||
     (missing.length === 0
-      ? `5기운 모두 갖춘 균형 사주 · ${theme.label} 핵심은 ${keyLabel} 기운입니다.`
+      ? `5기운 모두 갖춘 균형 사주, ${theme.label} 핵심은 ${keyLabel} 기운입니다.`
       : missing.length === 1
         ? `${OHENG_HANJA[missing[0]]}(${missing[0]}) 기운이 비어있어 ${theme.label} 핵심 ${keyLabel} 보강이 필요해요.`
-        : `${missing.map((m) => OHENG_HANJA[m]).join('·')} 기운이 부족 — ${theme.label} 분석은 ${OHENG_HANJA[dominant]}(${dominant}) 중심으로 풀려요.`);
+        : `${missing.map((m) => OHENG_HANJA[m]).join(', ')} 기운이 부족 — ${theme.label} 분석은 ${OHENG_HANJA[dominant]}(${dominant}) 중심으로 풀려요.`);
 
   return (
     <div

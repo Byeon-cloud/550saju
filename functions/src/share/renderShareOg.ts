@@ -76,10 +76,10 @@ const TOPIC_LABEL_MAP: Record<string, string> = {
   reunion: '재회운',
   marriage: '결혼운',
   wealth: '재물운',
-  exam: '합격·이직운',
+  exam: '합격 이직운',
   business: '사업운',
   health: '건강운',
-  move: '이사·이동운',
+  move: '이사 이동운',
   study: '학업운',
   career: '직업운',
 };

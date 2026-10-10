@@ -58,9 +58,9 @@ function iapErrorMessage(error: any): string {
     case 'USER_CANCELED':
       return '결제를 취소했어요';
     case 'KOREAN_ACCOUNT_ONLY':
-      return '한국 App Store 계정에서만 결제할 수 있어요. 기기의 App Store 국가·지역을 대한민국으로 바꾼 뒤 다시 시도해 주세요.';
+      return '한국 App Store 계정에서만 결제할 수 있어요. 기기의 App Store 국가와 지역을 대한민국으로 바꾼 뒤 다시 시도해 주세요.';
     case 'INVALID_USER_ENVIRONMENT':
-      return '지금 기기·계정 설정에서는 결제가 제한돼 있어요. 토스 앱을 최신 버전으로 업데이트한 뒤 다시 시도하고, 계속되면 고객문의로 알려주세요.';
+      return '지금 기기와 계정 설정에서는 결제가 제한돼 있어요. 토스 앱을 최신 버전으로 업데이트한 뒤 다시 시도하고, 계속되면 고객문의로 알려주세요.';
     case 'INTERNAL_ERROR':
       return '결제 처리 중 잠시 문제가 생겼어요. 잠시 후 다시 시도해 주세요. 결제가 완료됐다면 운은 자동으로 들어가요.';
     default:

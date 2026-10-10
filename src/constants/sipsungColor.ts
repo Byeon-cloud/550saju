@@ -51,7 +51,7 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(78,122,87,0.10)',
     category: '비겁',
     hanja: '比肩',
-    meaning: '나와 같은 자리 — 동료·경쟁자',
+    meaning: '나와 같은 자리 — 동료와 경쟁자',
   },
   겁재: {
     color: '#355A3E',
@@ -66,7 +66,7 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(176,74,56,0.10)',
     category: '식상',
     hanja: '食神',
-    meaning: '내가 만들어내는 결 — 표현·창작',
+    meaning: '내가 만들어내는 결 — 표현과 창작',
   },
   상관: {
     color: '#8A3326',
@@ -88,7 +88,7 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(138,98,38,0.12)',
     category: '재성',
     hanja: '偏財',
-    meaning: '큰 재물 흐름 — 사업·투자',
+    meaning: '큰 재물 흐름 — 사업과 투자',
   },
   // 관성 (청)
   정관: {
@@ -103,7 +103,7 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(42,69,96,0.10)',
     category: '관성',
     hanja: '偏官',
-    meaning: '강한 압박 — 도전·돌파',
+    meaning: '강한 압박 — 도전과 돌파',
   },
   // 인성 (자)
   정인: {
@@ -111,14 +111,14 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(122,92,126,0.10)',
     category: '인성',
     hanja: '正印',
-    meaning: '받아들이는 결 — 학문·어머니',
+    meaning: '받아들이는 결 — 학문과 어머니',
   },
   편인: {
     color: '#5C4360',
     soft: 'rgba(92,67,96,0.10)',
     category: '인성',
     hanja: '偏印',
-    meaning: '독특한 직관 — 종교·예술',
+    meaning: '독특한 직관 — 종교와 예술',
   },
 };
 
@@ -127,11 +127,11 @@ export const SIPSUNG_CATEGORY_COLOR: Record<
   SipsungCategory,
   { color: string; deep: string; soft: string; label: string; meaning: string }
 > = {
-  비겁: { color: '#4E7A57', deep: '#355A3E', soft: 'rgba(78,122,87,0.10)', label: '자아 · 경쟁', meaning: '독립심·자기 길' },
-  식상: { color: '#B04A38', deep: '#8A3326', soft: 'rgba(176,74,56,0.10)', label: '표현 · 창작', meaning: '만들고 나누는 힘' },
-  재성: { color: '#B07F38', deep: '#8A6226', soft: 'rgba(176,127,56,0.12)', label: '재물 · 실리', meaning: '돈의 흐름과 자원' },
-  관성: { color: '#3E5F82', deep: '#2A4560', soft: 'rgba(62,95,130,0.10)', label: '관계 · 책임', meaning: '권위·명예의 자리' },
-  인성: { color: '#7A5C7E', deep: '#5C4360', soft: 'rgba(122,92,126,0.10)', label: '학문 · 배움', meaning: '받아들이고 키우는 힘' },
+  비겁: { color: '#4E7A57', deep: '#355A3E', soft: 'rgba(78,122,87,0.10)', label: '자아, 경쟁', meaning: '독립심과 자기 길' },
+  식상: { color: '#B04A38', deep: '#8A3326', soft: 'rgba(176,74,56,0.10)', label: '표현, 창작', meaning: '만들고 나누는 힘' },
+  재성: { color: '#B07F38', deep: '#8A6226', soft: 'rgba(176,127,56,0.12)', label: '재물, 실리', meaning: '돈의 흐름과 자원' },
+  관성: { color: '#3E5F82', deep: '#2A4560', soft: 'rgba(62,95,130,0.10)', label: '관계, 책임', meaning: '권위와 명예의 자리' },
+  인성: { color: '#7A5C7E', deep: '#5C4360', soft: 'rgba(122,92,126,0.10)', label: '학문, 배움', meaning: '받아들이고 키우는 힘' },
 };
 
 /** 한자 (中) → 한국어 정규화 — calculator(lunar-javascript) 출력 대응.

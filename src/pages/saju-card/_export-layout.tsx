@@ -237,7 +237,7 @@ function EightCharGridExport({
                       letterSpacing: '0.06em',
                     }}
                   >
-                    日主 · 나
+                    日主, 나
                   </div>
                 )}
 
@@ -515,7 +515,7 @@ function KakaoLayout({
                 marginBottom: 4,
               }}
             >
-              日柱 · {iljuKo}
+              日柱, {iljuKo}
             </div>
             <div
               style={{
@@ -805,7 +805,7 @@ function FeedLayout({
           })()}
         </h1>
         <div style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 600, opacity: 0.92, position: 'relative' }}>
-          {ilju} <span style={{ opacity: 0.78 }}>({iljuKo})</span> 일주 ·{' '}
+          {ilju} <span style={{ opacity: 0.78 }}>({iljuKo})</span> 일주, {' '}
           <span style={{ fontSize: 14, opacity: 0.78 }}>
             {(() => {
               const m = getIljuMeaning(ilju);
@@ -858,7 +858,7 @@ function FeedLayout({
             marginBottom: 16,
           }}
         >
-          四柱八字 · 사주 8글자
+          四柱八字, 사주 8글자
         </div>
         <EightCharGridExport
           pillars={sajuData.pillars}
@@ -922,7 +922,7 @@ function FeedLayout({
               SAJU 500
             </div>
             <div style={{ fontSize: 13, color: '#7A7269' }}>
-              정통 명리학 사주 풀이 · {birthLabel}
+              정통 명리학 사주 풀이, {birthLabel}
             </div>
           </div>
           <div
@@ -1079,7 +1079,7 @@ function StoryLayout({
                 marginBottom: 8,
               }}
             >
-              日柱 · {iljuKo}
+              日柱, {iljuKo}
             </div>
             <div
               style={{
@@ -1218,7 +1218,7 @@ function StoryLayout({
                     marginBottom: 6,
                   }}
                 >
-                  만세력 시그니처 · 핵심 귀인
+                  만세력 시그니처, 핵심 귀인
                 </div>
                 <div
                   style={{
@@ -1239,7 +1239,7 @@ function StoryLayout({
                   {meta?.meaning || primaryGwiin.meaning}
                 </div>
                 <div style={{ fontSize: 11, color: '#8C6D3D', fontWeight: 600, letterSpacing: '0.06em' }}>
-                  출처 · {meta?.source || '명리학 원전'}
+                  출처, {meta?.source || '명리학 원전'}
                 </div>
               </div>
             </div>
@@ -1261,7 +1261,7 @@ function StoryLayout({
               運勢
             </span>
             <span style={{ fontSize: 12, color: theme.accent, fontWeight: 700, letterSpacing: '0.08em' }}>
-              운의 흐름 (대운·세운·월운)
+              운의 흐름 (대운, 세운, 월운)
             </span>
           </div>
           <MiniFlow sajuData={sajuData} birthYear={input.birthYear} />
@@ -1280,7 +1280,7 @@ function StoryLayout({
                 marginBottom: 14,
               }}
             >
-              神煞 · 핵심 신살
+              神煞, 핵심 신살
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {keySinsals.slice(0, 3).map((hit, i) => (
@@ -1332,7 +1332,7 @@ function StoryLayout({
             opacity: 0.85,
           }}
         >
-          SAJU 500 · saju500.app
+          SAJU 500, saju500.app
         </div>
       </div>
     </div>

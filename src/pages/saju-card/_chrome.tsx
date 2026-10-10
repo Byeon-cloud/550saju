@@ -63,7 +63,7 @@ export const OHENG_THEME: Record<OhengType, OhengTheme> = {
     accentDark: '#1B5E2C',
     accentSoft: 'rgba(78,122,87,0.12)',
     cardLine: 'rgba(78,122,87,0.22)',
-    label: '목(木) · 푸른',
+    label: '목(木), 푸른',
   },
   화: {
     heroGrad: 'linear-gradient(135deg,#C04545 0%,#8E2E2E 60%,#5C1A1A 100%)',
@@ -72,7 +72,7 @@ export const OHENG_THEME: Record<OhengType, OhengTheme> = {
     accentDark: '#9B1B1B',
     accentSoft: 'rgba(176,74,56,0.10)',
     cardLine: 'rgba(176,74,56,0.20)',
-    label: '화(火) · 붉은',
+    label: '화(火), 붉은',
   },
   토: {
     heroGrad: 'linear-gradient(135deg,#D4A645 0%,#A87E2A 60%,#6E5018 100%)',
@@ -81,7 +81,7 @@ export const OHENG_THEME: Record<OhengType, OhengTheme> = {
     accentDark: '#A8530B',
     accentSoft: 'rgba(176,127,56,0.10)',
     cardLine: 'rgba(176,127,56,0.22)',
-    label: '토(土) · 노란',
+    label: '토(土), 노란',
   },
   금: {
     heroGrad: 'linear-gradient(135deg,#7E8893 0%,#525864 60%,#2E323B 100%)',
@@ -90,7 +90,7 @@ export const OHENG_THEME: Record<OhengType, OhengTheme> = {
     accentDark: '#3D3D3D',
     accentSoft: 'rgba(74,74,74,0.10)',
     cardLine: 'rgba(74,74,74,0.22)',
-    label: '금(金) · 하얀',
+    label: '금(金), 하얀',
   },
   수: {
     heroGrad: 'linear-gradient(135deg,#4A75B0 0%,#2E5285 60%,#1A3258 100%)',
@@ -99,7 +99,7 @@ export const OHENG_THEME: Record<OhengType, OhengTheme> = {
     accentDark: '#0D3F8A',
     accentSoft: 'rgba(62,95,130,0.10)',
     cardLine: 'rgba(62,95,130,0.20)',
-    label: '수(水) · 검은',
+    label: '수(水), 검은',
   },
 };
 
@@ -266,7 +266,7 @@ export function SajuCardHero({
               marginBottom: 4,
             }}
           >
-            日柱 · {iljuKo}
+            日柱, {iljuKo}
           </div>
           <div
             style={{
@@ -992,7 +992,7 @@ export function SajuMetaRow({
         lineHeight: 1.55,
       }}
     >
-      {items.join(' · ')}
+      {items.join(', ')}
     </div>
   );
 }

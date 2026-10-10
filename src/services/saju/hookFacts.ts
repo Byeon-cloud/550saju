@@ -35,7 +35,7 @@ const CAT: Record<SipsungKo, StarCat> = {
 };
 /** 유저에게 보이는 별 이름 (한자 대신 쉬운 말 · 한자노출 정책) */
 const STAR_NAME: Record<StarCat, string> = {
-  재성: '재물의 별', 관성: '자리·명예의 별', 인성: '배움·도움의 별', 식상: '표현·재능의 별', 비겁: '사람·경쟁의 별',
+  재성: '재물의 별', 관성: '자리와 명예의 별', 인성: '배움과 도움의 별', 식상: '표현과 재능의 별', 비겁: '사람과 경쟁의 별',
 };
 
 /* ── 작은 도구 ── */
@@ -307,11 +307,11 @@ export function examFact(s: SajuData): string {
     if (cats.includes('관성') && cats.includes('인성') && !together) together = `${names[i]}(${p.천간}${p.지지})`;
     cats.forEach((c) => { if (c === '관성') gwan++; if (c === '인성') inn++; });
   });
-  if (together) return `${together}에 시험·자리의 별과 공부의 별이 나란히 있어요.`;
-  if (gwan && inn) return `시험·자리의 별 ${gwan}개, 공부의 별 ${inn}개가 함께 있는 사주예요.`;
-  if (gwan) return `시험·자리의 별이 ${gwan}개 있어요. 공부의 별이 들어오는 때를 짚어 드려요.`;
-  if (inn) return `공부의 별이 ${inn}개 있어요. 시험·자리의 별이 들어오는 때를 짚어 드려요.`;
-  return '시험·자리의 별이 들어오는 때를 짚어 드려요.';
+  if (together) return `${together}에 시험과 자리의 별과 공부의 별이 나란히 있어요.`;
+  if (gwan && inn) return `시험과 자리의 별 ${gwan}개, 공부의 별 ${inn}개가 함께 있는 사주예요.`;
+  if (gwan) return `시험과 자리의 별이 ${gwan}개 있어요. 공부의 별이 들어오는 때를 짚어 드려요.`;
+  if (inn) return `공부의 별이 ${inn}개 있어요. 시험과 자리의 별이 들어오는 때를 짚어 드려요.`;
+  return '시험과 자리의 별이 들어오는 때를 짚어 드려요.';
 }
 
 /** 결혼: 일지(배우자 자리)에 앉은 별 */

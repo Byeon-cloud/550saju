@@ -75,18 +75,18 @@ const SHIPISINSAL_HANJA: Record<string, string> = {
 };
 
 const SHIPISINSAL_MEAN: Record<string, string> = {
-  겁살: '재물·건강 손실의 위험을 알리는 살. 방심하지 말고 단단히 지킬 때',
-  재살: '큰 변화·이동의 시기. 위기와 기회가 동시에 오는 살',
+  겁살: '재물과 건강 손실의 위험을 알리는 살. 방심하지 말고 단단히 지킬 때',
+  재살: '큰 변화와 이동의 시기. 위기와 기회가 동시에 오는 살',
   천살: '하늘이 내리는 시험. 인내와 성찰로 단련되는 시기',
-  지살: '이사·이동·환경 변화. 새 출발의 신호',
-  도화살: '매력·인기·이성운. 사람을 끌어당기는 자석 같은 별',
+  지살: '이사 이동과 환경 변화. 새 출발의 신호',
+  도화살: '매력, 인기, 이성운. 사람을 끌어당기는 자석 같은 별',
   월살: '소모와 답답함의 시기. 휴식과 정비가 필요한 별',
-  망신살: '체면·자존심에 흠이 갈 수 있는 별. 절제와 신중함이 약',
-  장성살: '권위·리더십의 별. 무리를 이끄는 힘',
+  망신살: '체면과 자존심에 흠이 갈 수 있는 별. 절제와 신중함이 약',
+  장성살: '권위와 리더십의 별. 무리를 이끄는 힘',
   반안살: '안정과 풍요의 별. 자리 잡고 꽃피우는 시기',
-  역마살: '이동·여행·외국 인연의 별. 한곳에 머물지 않는 결',
-  육해살: '관계 갈등·소송의 위험. 인간관계 정리가 필요한 별',
-  화개살: '예술·종교·철학의 별. 깊은 사유와 영감의 결',
+  역마살: '이동, 여행, 외국 인연의 별. 한곳에 머물지 않는 결',
+  육해살: '관계 갈등과 소송의 위험. 인간관계 정리가 필요한 별',
+  화개살: '예술, 종교, 철학의 별. 깊은 사유와 영감의 결',
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -272,7 +272,7 @@ function computeGilsongGwiin(pillars: Pillar[]): SinsalHit[] {
         hanja: '天乙貴人',
         positions,
         category: 'gilsin',
-        meaning: '가장 강력한 길성. 위기 시 도움 받는 인연·귀인 운',
+        meaning: '가장 강력한 길성. 위기 시 도움 받는 인연과 귀인 운',
       });
     }
   }
@@ -286,7 +286,7 @@ function computeGilsongGwiin(pillars: Pillar[]): SinsalHit[] {
         hanja: '文昌貴人',
         positions,
         category: 'gilsin',
-        meaning: '학문·시험·문서 운. 두뇌 회전이 빠르고 글재주가 있음',
+        meaning: '학문, 시험, 문서 운. 두뇌 회전이 빠르고 글재주가 있음',
       });
     }
   }
@@ -331,7 +331,7 @@ function computeGilsongGwiin(pillars: Pillar[]): SinsalHit[] {
         hanja: '金輿星',
         positions,
         category: 'gilsin',
-        meaning: '배우자 인연·풍요 운. 좋은 짝과 안락한 가정',
+        meaning: '배우자 인연과 풍요 운. 좋은 짝과 안락한 가정',
       });
     }
   }
@@ -345,7 +345,7 @@ function computeGilsongGwiin(pillars: Pillar[]): SinsalHit[] {
         hanja: '太極貴人',
         positions,
         category: 'gilsin',
-        meaning: '큰 깨달음·치유의 별. 종교·철학·의료에 인연',
+        meaning: '큰 깨달음과 치유의 별. 종교, 철학, 의료에 인연',
       });
     }
   }
@@ -373,7 +373,7 @@ function computeBojoSinsal(pillars: Pillar[]): SinsalHit[] {
         hanja: '紅艶殺',
         positions,
         category: 'neutral',
-        meaning: '강력한 매력·이성 운. 도화살의 짙은 버전',
+        meaning: '강력한 매력과 이성 운. 도화살의 짙은 버전',
       });
     }
   }
@@ -410,7 +410,7 @@ function computeBojoSinsal(pillars: Pillar[]): SinsalHit[] {
       hanja: '懸針殺',
       positions: hyeonchimPositions,
       category: 'hyungsal',
-      meaning: '날카로운 직관·예리한 분석. 의료·법조·언론 적성, 다만 말이 날카로워 인간관계 주의',
+      meaning: '날카로운 직관과 예리한 분석. 의료, 법조, 언론 적성, 다만 말이 날카로워 인간관계 주의',
     });
   }
 
@@ -424,7 +424,7 @@ function computeBojoSinsal(pillars: Pillar[]): SinsalHit[] {
         hanja: '白虎大殺',
         positions: [{ pillar: PILLAR_LABELS[i], char: ganji }],
         category: 'hyungsal',
-        meaning: '큰 사고·돌발 변화의 별. 근거리 안전·건강 주의',
+        meaning: '큰 사고와 돌발 변화의 별. 근거리 안전과 건강 주의',
       });
     }
   });

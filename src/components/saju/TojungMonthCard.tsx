@@ -40,7 +40,7 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
             <span className="text-h2 font-black" style={{ color: scoreColor }}>{month}</span>
           </div>
           <div>
-            <p className="text-label text-text-primary font-bold">{month}월 · {keyword}</p>
+            <p className="text-label text-text-primary font-bold">{month}월, {keyword}</p>
             <p className="text-caption text-text-muted">{괘}</p>
           </div>
         </div>

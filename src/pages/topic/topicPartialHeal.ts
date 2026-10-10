@@ -253,7 +253,7 @@ export function upgradePartialTopicRecord(
       if (pend) clearPendingSpend(pend.id);
     }
   } catch { /* noop */ }
-  console.info(`[topicHeal] 반쪽 → 완성본 승격 (${topicId} · ${recordId})`);
+  console.info(`[topicHeal] 반쪽 → 완성본 승격 (${topicId}, ${recordId})`);
   return healed;
 }
 
@@ -322,7 +322,7 @@ function removeSupersededPartial(t: LocalReport): void {
   } catch { /* noop */ }
   try { deleteReport(t.id); } catch { /* noop */ }
   for (const [k, v] of keep) { try { localStorage.setItem(k, v); } catch { /* noop */ } }
-  console.info(`[topicHeal] 완성본이 이미 있는 반쪽 정리 (${topicId} · ${t.id})`);
+  console.info(`[topicHeal] 완성본이 이미 있는 반쪽 정리 (${topicId}, ${t.id})`);
 }
 
 /**
