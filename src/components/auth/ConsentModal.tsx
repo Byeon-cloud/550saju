@@ -194,7 +194,7 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
                     className="block mt-2"
                     style={{ fontSize: 11.5, color: C.mute, lineHeight: 1.7, fontWeight: 400 }}
                   >
-                    목적: 사주 분석 서비스 제공과 운 잔액 관리와 결제 처리<br />
+                    목적: 사주 분석 서비스 제공, 운 잔액 관리, 결제 처리<br />
                     항목: 이름, 생년월일시, 결제정보<br />
                     보유기간: 계정 유지 동안 (결제 기록은 전자상거래법에 따라 5년)<br />
                     AI 분석을 위해 일부 정보가 국외(미국, Anthropic, Google)로 이전과 처리됩니다. (처리 후 즉시 파기)<br />

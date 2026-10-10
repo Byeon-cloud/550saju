@@ -189,7 +189,7 @@ const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> =
   business: { label: '사업운',       color: '#8C6D3D', desc: '창업과 자영업 흐름과 시기' },
   health:   { label: '건강운',       color: '#8C6D3D', desc: '체질, 기운, 주의 시기' },
   reunion:  { label: '재회운',       color: '#8C6D3D', desc: '헤어진 사람과의 흐름' },
-  study:    { label: '학업운',       color: '#8C6D3D', desc: '집중력과 지식 흡수와 학습 패턴' },
+  study:    { label: '학업운',       color: '#8C6D3D', desc: '집중력, 지식 흡수, 학습 패턴' },
   exam:     { label: '합격 이직운', color: '#8C6D3D', desc: '시험과 이직 결정 시기' }, // SSOT v1 신규
   move:     { label: '이사 이동운', color: '#8C6D3D', desc: '이사 이동 길흉 방향' }, // SSOT v1 canonical
   social:   { label: '대인관계운',   color: '#8C6D3D', desc: '귀인운, 구설수 주의, 관계 패턴' }, // legacy 유지

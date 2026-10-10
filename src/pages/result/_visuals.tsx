@@ -702,7 +702,7 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
           65~79% = 타고난 적성이 충분히 있어 잘 해낼 수 있는 분야.
           55~64% = 노력하면 되지만 에너지가 더 드는 방향.
           55% 미만 = 이 방향보다 더 맞는 길이 있다는 신호.
-          <b style={{ color: '#6b5b47' }}> 점수는 일간 오행({dayOheng}), 십성 분포와 오행 밸런스를 종합 산출한 결과예요.</b>
+          <b style={{ color: '#6b5b47' }}> 점수는 일간 오행({dayOheng}), 십성 분포, 오행 밸런스를 종합 산출한 결과예요.</b>
         </p>
       </div>
     </div>
@@ -909,12 +909,12 @@ export function GaewoonVis({ elements }: { elements?: V4Elements }) {
       color: '초록과 연두',
       direction: '동쪽',
       food: '잎채소, 견과, 곡물',
-      exercise: '등산과 정원 가꾸기와 산책',
+      exercise: '등산, 정원 가꾸기, 산책',
     },
     화: {
       color: '빨강과 주황',
       direction: '남쪽',
-      food: '매운맛과 따뜻한 음식과 생강',
+      food: '매운맛, 따뜻한 음식, 생강',
       exercise: '댄스, 요가, 유산소 운동',
     },
     토: {
@@ -927,7 +927,7 @@ export function GaewoonVis({ elements }: { elements?: V4Elements }) {
       color: '흰색과 은색',
       direction: '서쪽',
       food: '매운맛, 견과, 하얀 음식',
-      exercise: '서예와 미니멀 정리와 홈트',
+      exercise: '서예, 미니멀 정리, 홈트',
     },
     수: {
       color: '검정과 남색',

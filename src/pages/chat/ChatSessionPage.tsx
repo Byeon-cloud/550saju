@@ -408,7 +408,7 @@ function buildRec(key: RecKey): ContentRec {
     return {
       path: '/monthly',
       title: '이번 달 흐름을 깊게 풀어드릴까요?',
-      desc: '상순, 중순, 하순과 길일과 주의일',
+      desc: '상순, 중순, 하순과 길일, 주의일',
       hanja: t.hanja.slice(0, 1),
       color: t.accentDark,
       topicKey: 'monthly',

@@ -987,7 +987,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <div className="lab">UNLOCK, 사주 연동 심층 풀이</div>
                 <h3>같은 꿈도 사주 일간에 따라<br />의미가 달라집니다.</h3>
                 <p className="hook">
-                  {profile?.name ?? '당신'} 님은 <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동과 오행 흐름과 꿈의 경고와 예고 시기와 실천 처방)을 전부 열어드립니다.
+                  {profile?.name ?? '당신'} 님은 <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방)을 전부 열어드립니다.
                 </p>
                 {/* 2026-09-17 — 스트리밍 중 결제 race 차단 (잠금 본문이 다 쓰이기 전 1운 차감 → 해제 저장 누락·자동환불 꼬임) */}
                 <button

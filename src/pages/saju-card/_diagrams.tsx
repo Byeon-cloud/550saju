@@ -469,7 +469,7 @@ export const UNSEONG_12_DETAILS: Record<string, Unseong12Detail> = {
   '쇠': {
     hanja: '衰', ko: '쇠',
     everyday: '은퇴 직전 — 후임에게 자리를 물려주는 시기',
-    howToLive: '결을 다듬고 다음 사람에게 넘기는 자리. 욕심내지 않으면 평탄하고, 멘토링과 후배 양성, 글쓰기, 기록이 잘 풀립니다.',
+    howToLive: '결을 다듬고 다음 사람에게 넘기는 자리. 욕심내지 않으면 평탄하고, 멘토링, 후배 양성, 글쓰기, 기록이 잘 풀립니다.',
     strength: '경험, 여유, 이양의 결, 다듬어진 안목',
     caution: '소외감과 우울 주의, 활동성 의식적 유지',
   },
@@ -938,10 +938,10 @@ export function getDayUnseongMeaning(unyoung: Array<{ position: string; 운성: 
 
 /** 지지 → 계절 매핑 (월령 기준) */
 const ZHI_SEASON: Record<string, string> = {
-  寅: '봄과 맹춘', 卯: '봄과 중춘', 辰: '봄과 계춘',
-  巳: '여름과 맹하', 午: '여름과 중하', 未: '여름과 계하',
-  申: '가을과 맹추', 酉: '가을과 중추', 戌: '가을과 계추',
-  亥: '겨울과 맹동', 子: '겨울과 중동', 丑: '겨울과 계동',
+  寅: '초봄', 卯: '한봄', 辰: '늦봄',
+  巳: '초여름', 午: '한여름', 未: '늦여름',
+  申: '초가을', 酉: '한가을', 戌: '늦가을',
+  亥: '초겨울', 子: '한겨울', 丑: '늦겨울',
 };
 
 export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {

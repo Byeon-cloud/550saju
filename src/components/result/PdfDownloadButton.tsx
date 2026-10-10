@@ -153,7 +153,7 @@ export function PdfDownloadButton({
       >
         7섹션 전체를 인쇄용 A4 PDF 로 받아보세요.
         <br />
-        한자와 오행 컬러와 럭키 프로필까지 그대로.
+        한자, 오행 컬러, 럭키 프로필까지 그대로.
       </p>
 
       <button

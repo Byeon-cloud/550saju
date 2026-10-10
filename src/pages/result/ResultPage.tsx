@@ -987,7 +987,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               양인격: {
                 summary: '강렬한 에너지를 어떻게 쓰느냐가 인생을 결정하는 구조의 사주',
                 personality: '에너지가 매우 강하고 카리스마가 있어요. 잘 쓰면 리더, 잘못 쓰면 갈등의 원인이 되는 양날의 검 같은 구조예요.',
-                good: '강한 리더십과 결단력. 군인, 경찰, 외과의, 사업가로 대성할 수 있어요',
+                good: '강한 리더십과 결단력. 군인, 경찰, 외과의와 사업가로 대성할 수 있어요',
                 caution: '분노 조절이 최대 과제. 에너지를 운동이나 사업으로 승화시키세요',
               },
             };
@@ -1005,7 +1005,7 @@ export function ResultPage(props: ResultPageProps = {}) {
             const gangYakDetail: Record<string, { meaning: string; good: string; caution: string; strategy: string }> = {
               신강: {
                 meaning: '일간(나)의 힘이 사주에서 강한 위치에 있어요. 주변 환경보다 내 에너지가 더 세서, 스스로 길을 개척하는 주도형 사주예요.',
-                good: '자기 주장이 뚜렷하고 추진력이 강해요. 리더십과 독립 사업과 자기 브랜드에 유리해요',
+                good: '자기 주장이 뚜렷하고 추진력이 강해요. 리더십, 독립 사업, 자기 브랜드에 유리해요',
                 caution: '남의 말을 안 듣는 고집, 무리한 확장, 건강 과신이 약점이에요',
                 strategy: '용신(부족한 오행)을 채워 에너지를 분산시키고, 협력자를 두는 것이 핵심이에요',
               },

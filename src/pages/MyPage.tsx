@@ -1263,7 +1263,7 @@ function LoginModal({ open, onClose, toast, onLogin }: {
               내 사주를 안전하게<br />보관해요
             </h1>
             <p className="text-center text-[14px] leading-[1.6] mb-8" style={{ color: C.mute }}>
-              로그인하면 운 잔액과 풀이 기록과 결제 내역을<br />안전하게 관리할 수 있어요
+              로그인하면 운 잔액, 풀이 기록, 결제 내역을<br />안전하게 관리할 수 있어요
             </p>
 
             {/* CTA 버튼 3개 (§2-2) */}

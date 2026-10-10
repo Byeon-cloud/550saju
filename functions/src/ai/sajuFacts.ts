@@ -141,21 +141,54 @@ function fixTime(s: string): string {
     .replace(/(오전|오후)\s?(1[3-9]|2[0-3])시/g, (_m, _ap, h) => `오후 ${Number(h) - 12}시`);
 }
 /* ── 가운뎃점(·) 제거 (2026-10-10 오너: "· 는 AI만 쓰는 문장 구조, 다 빼라") ──
- *   클라 src 일괄 변환과 같은 규칙: 줄머리 글머리표 삭제 / 한자·한자 → 띄어쓰기 /
+ *   클라 utils/noDot.ts 와 같은 본문 (10-11 v3: 나열 사슬은 쉼표, 홀로 붙인 짝만 과/와) /
  *   한글 두 낱말 → '과/와' / 그 밖의 나열 → 쉼표 */
 function josaGwa(word: string): string {
   const code = word.charCodeAt(word.length - 1) - 0xac00;
   if (code < 0 || code > 11171) return '와';
   return code % 28 ? '과' : '와';
 }
+const PARTICLE_END = /[가-힣](은|는|을|를|에|에서|으로|에게|하고|하며|하는)$/;
+/** 점 사이 말이 짧은 명사구(3낱말 이하, 조사로 끝나는 낱말 없음)면 같은 나열 사슬 */
+function shortNounPhrase(span: string): boolean {
+  const words = span.trim().split(/\s+/).filter(Boolean);
+  if (!words.length || words.length > 3) return false;
+  return !words.some((w) => (w.length >= 2 && PARTICLE_END.test(w)) || (w.length >= 3 && /의$/.test(w) && !/주의$/.test(w)));
+}
+function fixDotSeg(seg: string): string {
+  const idx: number[] = [];
+  for (let i = 0; i < seg.length; i++) if (seg[i] === '·') idx.push(i);
+  if (!idx.length) return seg;
+  const inChain = idx.map(() => false);
+  for (let k = 0; k + 1 < idx.length; k++) {
+    if (shortNounPhrase(seg.slice(idx[k] + 1, idx[k + 1]))) { inChain[k] = true; inChain[k + 1] = true; }
+  }
+  let out = '';
+  let last = 0;
+  for (let k = 0; k < idx.length; k++) {
+    const i = idx[k];
+    let left = seg.slice(last, i);
+    let rep = ', ';
+    if (!inChain[k]) {
+      const pm = left.match(/(?:^|[^가-힣])([가-힣]{1,6})$/);
+      const nm = seg.slice(i + 1).match(/^[가-힣]{1,8}/);
+      if (pm && nm) rep = josaGwa(pm[1]) + ' ';
+    }
+    if (rep === ', ') left = left.replace(/[ \t]+$/, '');
+    out += left + rep;
+    last = i + 1;
+    if (rep === ', ') while (seg[last] === ' ' || seg[last] === '\t') last++;
+  }
+  return out + seg.slice(last);
+}
 export function stripMiddleDots(s: string): string {
   if (!s || s.indexOf('·') < 0) return s;
-  let t = s;
-  t = t.replace(/합격·이직/g, '합격 이직').replace(/이사·이동/g, '이사 이동');
+  let t = s.replace(/합격·이직/g, '합격 이직').replace(/이사·이동/g, '이사 이동');
   t = t.replace(/(^|\n)([ \t]*)·[ \t]+(?=\S)/g, '$1$2');
   t = t.replace(/([\u3400-\u9FFF\uF900-\uFAFF])\s*·\s*(?=[\u3400-\u9FFF\uF900-\uFAFF])/g, '$1 ');
-  t = t.replace(/(?<![가-힣·])([가-힣]{1,6})·([가-힣]{1,8})(?![가-힣]*·)/g, (_m, a: string, b: string) => `${a}${josaGwa(a)} ${b}`);
-  t = t.replace(/[ \t]*·[ \t]*/g, ', ');
+  t = t.replace(/[ \t]+·[ \t]+/g, ', ');
+  t = t.replace(/[^,.;:!?\n()[\]<>"'`{}|/=+*#—–]+/g, (seg) => (seg.indexOf('·') >= 0 ? fixDotSeg(seg) : seg));
+  t = t.replace(/·/g, ', ');
   return t.replace(/, ,/g, ',');
 }
 

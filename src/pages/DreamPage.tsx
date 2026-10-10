@@ -1007,7 +1007,7 @@ export function DreamPage() {
             onCancel={() => setShowUnlockConfirm(false)}
             onConfirm={confirmDeepUnlock}
           >
-            일간 연동과 오행 흐름과 꿈의 경고와 예고 시기와 실천 처방
+            일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방
             <strong style={{ color: '#1a1a1a' }}> 다섯 섹션</strong>이 즉시 열려요.<br />
             현재 잔액 <b style={{ color: '#B8965A' }}>{formatUn(getBalance())}운</b> → 차감 후 <b>{formatUn(getBalance() - 1)}운</b>
           </DreamConfirmModal>

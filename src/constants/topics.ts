@@ -66,7 +66,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
     subCopy: '만남, 관계, 인연 흐름',
-    lens: '일반 만남과 관계 흐름과 매력 발산과 연애 패턴',
+    lens: '일반 만남, 관계 흐름, 매력 발산, 연애 패턴',
     excludedScope: [
       { reason: '결혼 timing/배우자 결', redirectTo: 'marriage' },
       { reason: '헤어진 사람과의 재회', redirectTo: 'reunion' },
@@ -96,7 +96,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '인연 시기와 배우자 결',
-    lens: '결혼 timing, 배우자 결과 결혼 후 생활 패턴',
+    lens: '결혼 timing, 배우자 결, 결혼 후 생활 패턴',
     excludedScope: [
       { reason: '연애 일반', redirectTo: 'love' },
       { reason: '재회 결정', redirectTo: 'reunion' },
@@ -141,7 +141,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '추천',
     subCopy: '창업과 자영업 흐름과 시기',
-    lens: '자영업과 창업의 결과 재무 리스크와 사업 timing',
+    lens: '자영업과 창업의 결, 재무 리스크, 사업 timing',
     excludedScope: [
       { reason: '직장인 커리어', redirectTo: 'career' },
       { reason: '단기 시험과 이직', redirectTo: 'exam' },
@@ -156,7 +156,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '체질, 기운, 주의 시기',
-    lens: '체질, 기운, 올해 주의 시기와 생활 습관',
+    lens: '체질, 기운, 올해 주의 시기, 생활 습관',
     excludedScope: [],
     path: '/topic/health',
     inforgraphicType: '체질 레이더 (오행 균형 + 주의 시기 달력)',
@@ -182,7 +182,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '시험, 집중력, 지식 흡수',
-    lens: '학업, 집중력, 지식 흡수와 학습 패턴',
+    lens: '학업, 집중력, 지식 흡수, 학습 패턴',
     excludedScope: [
       { reason: '시험 합격 timing', redirectTo: 'exam' },
       { reason: '평생 직업 결', redirectTo: 'career' },
@@ -197,7 +197,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
     subCopy: '커리어, 승진, 평생 결',
-    lens: '평생의 일의 결, 적성, 승진 흐름과 조직 내 패턴',
+    lens: '평생의 일의 결, 적성, 승진 흐름, 조직 내 패턴',
     excludedScope: [
       { reason: '시험과 이직 timing', redirectTo: 'exam' },
       { reason: '자영업과 창업', redirectTo: 'business' },

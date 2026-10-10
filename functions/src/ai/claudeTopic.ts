@@ -130,25 +130,25 @@ interface TopicConfig {
  * 각 주제 프롬프트 끝에 "다루지 않는 것 + 다른 주제로 보낼 영역" 을 명시 주입.
  */
 const TOPIC_BOUNDARIES: Record<string, { scope: string; excludes: string[] }> = {
-  love:     { scope: '일반 만남과 관계 흐름과 매력 발산과 연애 패턴',
+  love:     { scope: '일반 만남, 관계 흐름, 매력 발산, 연애 패턴',
               excludes: ['결혼 timing/배우자 결 단정 (→ 결혼운 영역)', '헤어진 특정인과의 재회 가능성 (→ 재회운 영역)'] },
   reunion:  { scope: '헤어진 사람과의 재결합 가능성, timing, 접촉 방향',
               excludes: ['일반 새 만남 (→ 연애운)', '결혼 결정 (→ 결혼운)'] },
-  marriage: { scope: '결혼 timing, 배우자 결과 결혼 후 생활 패턴',
+  marriage: { scope: '결혼 timing, 배우자 결, 결혼 후 생활 패턴',
               excludes: ['연애 일반/썸 (→ 연애운)', '재회 결정 (→ 재회운)'] },
   wealth:   { scope: '돈의 결, 투자, 현금흐름, 재물 timing',
               excludes: ['사업 결정/창업 판단 (→ 사업운)', '직장 수입 구조/승진 (→ 직업운)'] },
   exam:     { scope: '시험, 자격증, 이직, 전직 변동의 timing 과 방향',
               excludes: ['평생 직업 적성/정체성 (→ 직업운)', '창업과 자영업 결정 (→ 사업운)'] },
-  business: { scope: '자영업과 창업의 결과 재무 리스크와 사업 timing',
+  business: { scope: '자영업과 창업의 결, 재무 리스크, 사업 timing',
               excludes: ['직장인 커리어/승진 (→ 직업운)', '단기 시험과 이직 timing (→ 합격이직운)'] },
-  health:   { scope: '체질, 기운, 올해 주의 시기와 생활 습관',
+  health:   { scope: '체질, 기운, 올해 주의 시기, 생활 습관',
               excludes: [] },
   move:     { scope: '주거 이전, 이동, 여행 timing 과 방향',
               excludes: ['직장 이직 (→ 합격이직운)'] },
-  study:    { scope: '학업, 집중력, 지식 흡수와 학습 패턴',
+  study:    { scope: '학업, 집중력, 지식 흡수, 학습 패턴',
               excludes: ['시험 합격 timing 단정 (→ 합격이직운)', '평생 직업 결 (→ 직업운)'] },
-  career:   { scope: '평생의 일의 결, 적성, 승진 흐름과 조직 내 패턴',
+  career:   { scope: '평생의 일의 결, 적성, 승진 흐름, 조직 내 패턴',
               excludes: ['시험과 이직 timing (→ 합격이직운)', '자영업과 창업 (→ 사업운)'] },
 };
 
@@ -1620,7 +1620,7 @@ ${extraInfo.targetField ? `→ "${extraInfo.targetField}" 분야의 사주적 �
       const purposeMap: Record<string, string> = { house: '주거 이사', job: '직장 이동', study: '유학/학업', abroad: '해외 이주' };
       const planInfo = extraInfo.movePlanYear ? `\n이사 예정 시기: ${extraInfo.movePlanYear}년 ${extraInfo.movePlanMonth}월` : '';
       const purposeSpecific: Record<string, string> = {
-        house: `→ 주거 이사 — 일지(나의 자리) 충/합과 월지(가정환경) 변화 분석. 새 집 풍수와 본인 일간의 오행 매칭. 가구 배치와 침실 방위와 현관 길흉. 가족 화합에 미치는 영향.`,
+        house: `→ 주거 이사 — 일지(나의 자리) 충/합과 월지(가정환경) 변화 분석. 새 집 풍수와 본인 일간의 오행 매칭. 가구 배치, 침실 방위, 현관 길흉. 가족 화합에 미치는 영향.`,
         job: `→ 직장 이동 — 역마살 활성도와 관성(직업운) 흐름 교차. 새 사무실 방향이 원국 용신 오행 방위와 맞는지. 출근 동선의 길흉. (구체적 이직 timing 은 합격 이직운에서 별도 분석)`,
         study: `→ 유학과 학업 — 인성(학업운) + 문창귀인과 학당귀인 활성도. 해당 국가/지역 방향이 원국 용신 오행 방위와 맞는지(천을귀인 방향은 길성 보조). 학습 환경의 사주적 조건. 부모와의 거리감 영향.`,
         abroad: `→ 해외 이주 — 역마살 + 천을귀인 외국 방향 + 화개살. 장기 거주 시 본인 오행이 그 지역 기운과 어울리는지. 향수병/적응 시기를 사주로 예측. 귀국 시점도 함께.`,

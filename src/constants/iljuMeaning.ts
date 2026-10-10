@@ -35,7 +35,7 @@ export interface IljuMeaning {
 
 export const ILJU_MEANING: Record<string, IljuMeaning> = {
   // 甲 (큰 나무) — 곧음·성장·시작
-  甲子: { hanja: '甲子', identity: '새벽을 향해 뻗는 거목',           description: '곧게 뿌리내려\n첫 시도에 강한 사람',           personality: '리더십과 첫 시도와 꾸준함' },
+  甲子: { hanja: '甲子', identity: '새벽을 향해 뻗는 거목',           description: '곧게 뿌리내려\n첫 시도에 강한 사람',           personality: '리더십, 첫 시도, 꾸준함' },
   甲寅: { hanja: '甲寅', identity: '산 정상에 우뚝 선 거목',           description: '권위와 자기 주도로\n결단을 내리는 사람',         personality: '카리스마, 독립, 직진형' },
   甲辰: { hanja: '甲辰', identity: '용이 머무는 못 옆 거목',           description: '단단한 뿌리 위에서\n야망을 키우는 사람',         personality: '야심, 통솔, 깊은 신념' },
   甲午: { hanja: '甲午', identity: '한낮 햇빛에 곧게 자란 나무',       description: '활동력 강하고\n표현이 명료한 사람',             personality: '추진력, 표현, 열정' },
