@@ -50,7 +50,7 @@ export function NextStepsCard({ topics, questions, onTopic, onAsk, title = '이 
         boxShadow: '0 4px 16px rgba(184,150,90,0.10)',
       }}
     >
-      <p style={{ fontSize: 11, color: C.goldDeep, fontWeight: 800, letterSpacing: '0.14em', marginBottom: 4 }}>NEXT</p>
+      <p style={{ fontSize: 13, color: C.goldDeep, fontWeight: 800, marginBottom: 4 }}>이어서 보면 좋은 것</p>
       <p style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 17, fontWeight: 800, color: C.ink, letterSpacing: '-0.01em', marginBottom: 12 }}>
         {title}
       </p>

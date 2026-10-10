@@ -17,6 +17,7 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
+import { hanjaNum } from '@/components/hanji/Hanji';
 import type { SajuProfile } from '@/services/storage/localStore';
 import type { OhengType } from '@/types/saju';
 import type { MonthlyDetailResponse, MonthlyPeriod, MonthlyDomain, MonthlyDayNote } from '@/types/report';
@@ -212,9 +213,9 @@ const MOCKUP_CSS = `
 .monthly-mockup .section-header:hover { background: var(--c-paper); }
 .monthly-mockup .section-header .sec-num {
   font-family: 'Noto Serif KR', serif;
-  font-size: 11px; font-weight: 700;
-  color: var(--c-accent); letter-spacing: 0.18em;
-  margin-right: 6px;
+  font-size: 16px; font-weight: 900;
+  color: #A23A2A; letter-spacing: 0;
+  min-width: 18px; margin-right: 2px;
 }
 .monthly-mockup .section-header .sec-title {
   font-family: 'Noto Serif KR', serif;
@@ -461,7 +462,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
   const isOpen = (id: string) => openSections.has(id);
   const SectionHeader = ({ num, title, han, id }: { num: string; title: string; han?: string; id: string }) => (
     <button type="button" className="section-header" onClick={() => toggleSection(id)} aria-expanded={isOpen(id)}>
-      <span className="sec-num">SECTION {num}</span>
+      <span className="sec-num">{hanjaNum(Number(num))}</span>
       <span className="sec-title">{title}{han && <span className="han">{han}</span>}</span>
       <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 12 15 18 9" />
@@ -473,7 +474,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
   const SkeletonSection = ({ num, title, han }: { num: string; title: string; han?: string }) => (
     <section className="section open skeleton-section">
       <div className="section-header">
-        <span className="sec-num">SECTION {num}</span>
+        <span className="sec-num">{hanjaNum(Number(num))}</span>
         <span className="sec-title">{title}{han && <span className="han">{han}</span>}</span>
       </div>
       <div className="skel-body">

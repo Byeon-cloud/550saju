@@ -1254,7 +1254,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                   <path d={`${hourSvgPath.path} L320,120 L0,120 Z`} fill="url(#dailyGrad)" />
                   <path d={hourSvgPath.path} stroke="#B8965A" strokeWidth="2" fill="none" />
                   <circle cx={hourSvgPath.peakX} cy={hourSvgPath.peakY} r="5" fill="#fff" stroke="#B8965A" strokeWidth="2" />
-                  <text x={hourSvgPath.peakX} y={hourSvgPath.peakY - 11} textAnchor="middle" fontSize="9" fill="#B8965A" fontWeight="600">PEAK</text>
+                  <text x={hourSvgPath.peakX} y={hourSvgPath.peakY - 11} textAnchor="middle" fontSize="9" fill="#B8965A" fontWeight="700">가장 좋음</text>
                   {timeSlots.map((s, i) => (
                     <text key={i} x={[0, 80, 160, 240][i]} y="115" fontSize="9" fill="#7A7269">
                       {String(s?.slot || '').replace(/[()]/g, '').split(' ')[0] || ''}

@@ -2063,7 +2063,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
         {/* ━━━ 1. 재회 확률 대형 게이지 ━━━ */}
         {/* 2026-05-28 PM QA — cream bg는 globals.css .topic-analysis-page .card SSOT 통해 자동 적용 */}
         <div className="card py-6">
-          <p className="text-[11px] text-text-hint text-center tracking-widest mb-3">REUNION PROBABILITY</p>
+          <p className="text-[13px] text-text-hint text-center mb-3">재회 가능성</p>
           <div className="flex justify-center mb-4">
             <div className="relative w-36 h-36">
               <svg viewBox="0 0 140 140" className="w-full h-full -rotate-90">
@@ -5087,7 +5087,7 @@ export function TopicAnalysisPage() {
                           collapsible
                           defaultOpen={i < 2}
                           isLoading={sec.loading}
-                          num={`SECTION ${String(i + 1).padStart(2, '0')}`}
+                          num={hanjaNum(i + 1)}
                           title={swapGenderedTerms(sec.heading, selected?.input?.gender)}
                           hanjaSuffix={SECTION_HANJA[i] || '·一語'}
                           sub={sec.highlight ? swapGenderedTerms(stripMd(sec.highlight), selected?.input?.gender) : undefined}

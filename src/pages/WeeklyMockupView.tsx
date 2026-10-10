@@ -20,6 +20,7 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
+import { hanjaNum } from '@/components/hanji/Hanji';
 import type { LocalReport } from '@/services/storage/localStore';
 import type { OhengType } from '@/types/saju';
 import type { WeeklyDetailResponse } from '@/types/report';
@@ -210,9 +211,9 @@ const MOCKUP_CSS = `
 .weekly-mockup .section-header:hover { background: var(--c-paper); }
 .weekly-mockup .section-header .sec-num {
   font-family: 'Noto Serif KR', serif;
-  font-size: 11px; font-weight: 700;
-  color: var(--c-week-deep); letter-spacing: 0.18em;
-  margin-right: 6px;
+  font-size: 16px; font-weight: 900;
+  color: #A23A2A; letter-spacing: 0;
+  min-width: 18px; margin-right: 2px;
 }
 .weekly-mockup .section-header .sec-title {
   font-family: 'Noto Serif KR', serif;
@@ -397,7 +398,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
   const isOpen = (id: string) => openSections.has(id);
   const SectionHeader = ({ num, title, han, id }: { num: string; title: string; han?: string; id: string }) => (
     <button type="button" className="section-header" onClick={() => toggleSection(id)} aria-expanded={isOpen(id)}>
-      <span className="sec-num">SECTION {num}</span>
+      <span className="sec-num">{hanjaNum(Number(num))}</span>
       <span className="sec-title">{title}{han && <span className="han">{han}</span>}</span>
       <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 12 15 18 9" />
@@ -608,7 +609,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
                   return (
                     <div key={i} className={`keyday ${isCaution ? 'caution' : 'best'}`}>
                       <div className="kd-head">
-                        <span className="kd-badge">{isCaution ? '주의' : 'BEST'}</span>
+                        <span className="kd-badge">{isCaution ? '주의' : '좋은 날'}</span>
                         <span className="kd-day">{stripAll(k.day)}</span>
                         {k.date && <span className="kd-date">{stripAll(k.date)}</span>}
                       </div>

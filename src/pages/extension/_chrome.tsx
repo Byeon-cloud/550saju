@@ -974,9 +974,9 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                   }}
                 >
                   {c.badge === 'now'
-                    ? 'NOW'
+                    ? '지금'
                     : c.badge === 'peak'
-                    ? 'PEAK'
+                    ? '정점'
                     : '注'}
                 </span>
               )}

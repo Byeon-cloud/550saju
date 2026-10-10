@@ -726,11 +726,11 @@ export function TopicSection({
         style={{
           display: 'inline-block',
           fontFamily: "'Noto Serif KR', serif",
-          fontSize: 11,
-          fontWeight: 600,
-          color: theme.accentDark,
-          letterSpacing: '0.2em',
-          marginBottom: 6,
+          fontSize: 17,
+          fontWeight: 900,
+          color: '#A23A2A',
+          letterSpacing: 0,
+          marginBottom: 4,
         }}
       >
         {num}
@@ -751,10 +751,10 @@ export function TopicSection({
           {hanjaSuffix && (
             <span
               style={{
-                color: theme.accentDark,
+                color: '#6F6557',
                 fontWeight: 500,
                 marginLeft: 6,
-                fontSize: 14,
+                fontSize: 13.5,
               }}
             >
               {hanjaSuffix}

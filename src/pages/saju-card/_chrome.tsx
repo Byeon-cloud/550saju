@@ -15,6 +15,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { hanjaNum } from '@/components/hanji/Hanji';
 import type { OhengType } from '@/types/saju';
 
 const C = {
@@ -358,7 +359,7 @@ export function SajuCardSection({
           marginBottom: 6,
         }}
       >
-        SECTION {num}
+        {hanjaNum(Number(num)) || num}
       </div>
       <div
         style={{
