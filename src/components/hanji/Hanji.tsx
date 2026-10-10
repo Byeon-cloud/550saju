@@ -27,10 +27,12 @@ export const ART = {
   gaehwasa: '/art/gaehwasa.webp',
   jangansa: '/art/jangansa.webp',
   inwang: '/art/inwang.webp',
+  /** 사주책 표지 — 훈민정음 해례본 영인본 표지(서울대 규장각, 퍼블릭 도메인)를 각색: 제목 글자와 소장 딱지를 지우고 황갈색으로 */
+  gobook: '/art/gobook.webp',
 } as const;
 /** 콘텐츠 머리 공통 배경 — 먹 + 정선 「인왕제색도」 (주제별 색 그라데이션 대체 · 전 콘텐츠 같은 머리) */
 export const INK_HERO_BG = "linear-gradient(180deg, rgba(26,22,18,.55) 0%, rgba(26,22,18,.82) 45%, #1A1612 100%), url('/art/inwang.webp') 30% 35% / cover no-repeat, #1A1612";
-export const ART_CREDIT = '그림: 정선 「개화사」「인왕제색도」, 김홍도 「금강사군첩」 중 장안사 (공유마당 저작권 만료 저작물)';
+export const ART_CREDIT = '그림: 정선 「개화사」「인왕제색도」, 김홍도 「금강사군첩」 중 장안사 (공유마당 저작권 만료 저작물). 책 표지: 훈민정음 해례본 영인본 표지 (서울대 규장각, 퍼블릭 도메인)를 고쳐 씀';
 
 export function GoldCta({ children, sub, onClick, disabled, ariaLabel, style }: {
   children: ReactNode; sub?: ReactNode; onClick?: () => void; disabled?: boolean; ariaLabel?: string; style?: CSSProperties;
@@ -126,20 +128,13 @@ export function ArtStrip({ src, height = 150, position = '40% 25%', size = '140%
   );
 }
 
-/** 고서 선장본 — 제첨(제목 쪽지) · 붉은 실 오침 제본 · 포각 */
+/** 고서 선장본 — 실제 옛 책 표지 사진(각색본) 위 제목 쪽지에 사용자 제목을 얹는다 (2026-10-11, CSS 로 그린 책 대체) */
 export function GoBook({ title }: { title: string }) {
   return (
     <div className="hj-book" aria-hidden="true">
       <div className="pages" />
-      <div className="cover">
-        <div className="slip"><b>{title}</b></div>
-        <div className="bind">
-          <div className="ln" />
-          {[9, 28, 49.5, 71, 90].map((t) => <div key={t} className="h" style={{ top: `${t}%` }} />)}
-        </div>
-        <i className="pogak t" />
-        <i className="pogak b" />
-      </div>
+      <img className="cover-img" src={ART.gobook} alt="" draggable={false} />
+      <div className="slip"><b>{title}</b></div>
     </div>
   );
 }

@@ -55,20 +55,14 @@
 .hj-pansim { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Noto Serif KR', serif; font-weight: 700; font-size: 13px; letter-spacing: .28em; color: var(--hj-ink-2); padding: 10px 0 9px; border-bottom: 1px solid rgba(92,78,60,.4); }
 .hj-pansim svg { width: 16px; height: 9px; flex-shrink: 0; }
 
-/* 고서 책 (선장본) */
-.hj-book { position: relative; width: 172px; height: 238px; transform: rotate(-2.2deg); }
-.hj-book .pages { position: absolute; left: -5px; top: 5px; right: 3px; bottom: -5px; border-radius: 2px; background: repeating-linear-gradient(90deg, #F1E8D4 0 1.5px, #DCCDAE 1.5px 2.4px); box-shadow: 0 22px 34px rgba(40,28,14,.32), 0 3px 6px rgba(40,28,14,.25); }
-.hj-book .cover { position: absolute; inset: 0; border-radius: 2px; background-color: #A98F62; background-image: radial-gradient(ellipse at 40% 35%, rgba(255,240,205,.16) 0%, rgba(120,84,36,0) 50%, rgba(78,54,24,.42) 100%), radial-gradient(ellipse at 75% 80%, rgba(70,48,20,.18) 0%, rgba(70,48,20,0) 45%), var(--hj-neunghwa), var(--hj-noise); background-blend-mode: normal, normal, multiply, multiply; overflow: hidden; }
-.hj-book .cover::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 18px rgba(80,52,18,.45), inset 0 0 2px rgba(60,40,12,.6); }
-.hj-book .slip { position: absolute; left: 14px; top: 14px; width: 36px; min-height: 120px; padding: 10px 0; background: #F4EBD6; background-image: var(--hj-noise); background-blend-mode: multiply; border: 1px solid #7E6338; box-shadow: inset 0 0 0 2px #F4EBD6, inset 0 0 0 2.8px rgba(126,99,56,.7); display: flex; align-items: center; justify-content: center; }
-.hj-book .slip b { writing-mode: vertical-rl; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 17px; letter-spacing: .32em; color: #241B12; }
-.hj-book .bind { position: absolute; right: 0; top: 0; bottom: 0; width: 20px; }
-.hj-book .bind .ln { position: absolute; left: 7px; top: 0; bottom: 0; width: 1.8px; background: var(--hj-thread); }
-.hj-book .bind .h { position: absolute; left: 7px; right: 0; height: 1.8px; background: var(--hj-thread); }
-.hj-book .bind .h::before { content: ''; position: absolute; left: -2.5px; top: -2px; width: 5.5px; height: 5.5px; border-radius: 50%; background: #3A2A1A; }
-.hj-book .pogak { position: absolute; right: 0; width: 18px; height: 18px; background: #3E2C1E; background-image: var(--hj-noise); }
-.hj-book .pogak.t { top: 0; border-bottom-left-radius: 2px; }
-.hj-book .pogak.b { bottom: 0; border-top-left-radius: 2px; }
+/* 고서 책 (선장본) — 2026-10-11 실제 옛 책 표지 사진(각색본, 762x1093 비율) + 제목 쪽지 글자만 얹음 */
+.hj-book { position: relative; width: 172px; height: 247px; transform: rotate(-2.2deg); }
+.hj-book .pages { position: absolute; left: -5px; top: 5px; right: 3px; bottom: -5px; border-radius: 2px; background: repeating-linear-gradient(90deg, #EFE6D2 0 1.5px, #D8C8A8 1.5px 2.4px); box-shadow: 0 22px 34px rgba(40,28,14,.32), 0 3px 6px rgba(40,28,14,.25); }
+.hj-book .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border-radius: 2px; user-select: none; -webkit-user-drag: none; }
+.hj-book::after { content: ''; position: absolute; inset: 0; border-radius: 2px; box-shadow: inset 0 0 14px rgba(60,40,16,.28); pointer-events: none; }
+/* 사진 속 쪽지 안쪽 칸(가는 선 사이) 위치 — x 52~154, y 54~571 / 762x1093 */
+.hj-book .slip { position: absolute; left: 6.8%; top: 4.9%; width: 13.4%; height: 47.3%; display: flex; align-items: center; justify-content: center; z-index: 1; }
+.hj-book .slip b { writing-mode: vertical-rl; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 17px; letter-spacing: .3em; color: #261C13; mix-blend-mode: multiply; opacity: .92; }
 
 /* 결제 확인 시트 등 한지 면 */
 .hj-sheet { background: var(--hj-hanji); position: relative; }

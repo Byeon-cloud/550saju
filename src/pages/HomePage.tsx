@@ -292,7 +292,7 @@ export function HomePage() {
       <div style={{ margin: '0 16px', borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD' }}>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.jangansa})`, backgroundSize: 'cover', backgroundPosition: '40% 55%', opacity: 0.42 }} />
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%)' }} />
-        <div style={{ position: 'absolute', left: '50%', top: 30, transform: 'translateX(-50%)' }}>
+        <div style={{ position: 'absolute', left: '50%', top: 18, transform: 'translateX(-50%)' }}>
           <GoBook title={facts?.persona ? `${facts.persona.dayGz}命書` : '四柱命書'} />
         </div>
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 14, textAlign: 'center', fontSize: 13, color: HJ.ink2, fontWeight: 600 }}>
