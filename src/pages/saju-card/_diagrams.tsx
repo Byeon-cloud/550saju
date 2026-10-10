@@ -771,7 +771,7 @@ export function Component12Unseong({
         const colorMap: Record<string, string> = {
           '시지': '#8C6D3D',
           '일지': '#B8965A',
-          '월지': '#5A7CA8',
+          '월지': '#8C6D3D',
           '년지': '#8C6D3D',
         };
         const dotColor = colorMap[p.position] || '#B8965A';

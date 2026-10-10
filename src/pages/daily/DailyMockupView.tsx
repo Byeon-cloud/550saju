@@ -629,7 +629,7 @@ const MOCKUP_CSS = `
 .daily-mockup .topic-card .one-liner { font-size: 11.5px; color: var(--c-ink-soft); margin-top: 6px; line-height: 1.55; word-break: keep-all; position: relative; z-index: 1; }
 .daily-mockup .topic-card.t-money .score  { color: #B8965A; }
 .daily-mockup .topic-card.t-rel .score    { color: #8C6D3D; }
-.daily-mockup .topic-card.t-work .score   { color: #5A7CA8; }
+.daily-mockup .topic-card.t-work .score   { color: #8C6D3D; }
 .daily-mockup .topic-card.t-health .score { color: #8C6D3D; }
 .daily-mockup .topic-card .cta-text { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--c-card-line); font-size: 11px; color: #B8965A; font-weight: 600; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
 .daily-mockup .topic-card .cost-pill { background: rgba(184,148,31,.1); color: #B8965A; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }

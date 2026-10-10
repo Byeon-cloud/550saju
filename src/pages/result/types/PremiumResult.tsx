@@ -5976,11 +5976,11 @@ function SipDonut({ sipDist }: { sipDist: SipDist }) {
  * ═════════════════════════════════════════════════════════════════ */
 function SipClusterHeader({ sipDist }: { sipDist: any }) {
   const clusters: Array<{ key: keyof typeof sipDist; label: string; hanja: string; color: string; meaning: string }> = [
-    { key: '비겁', label: '비겁', hanja: '比劫', color: '#5C9A6F', meaning: '자아·경쟁' },
-    { key: '식상', label: '식상', hanja: '食傷', color: '#8C6D3D', meaning: '표현·창작' },
-    { key: '재성', label: '재성', hanja: '財星', color: '#B8965A', meaning: '재물·실리' },
-    { key: '관성', label: '관성', hanja: '官星', color: '#5A7CA8', meaning: '관계·책임' },
-    { key: '인성', label: '인성', hanja: '印星', color: '#8E5C95', meaning: '학문·배움' },
+    { key: '비겁', label: '비겁', hanja: '比劫', color: '#4E7A57', meaning: '자아·경쟁' },
+    { key: '식상', label: '식상', hanja: '食傷', color: '#B04A38', meaning: '표현·창작' },
+    { key: '재성', label: '재성', hanja: '財星', color: '#B07F38', meaning: '재물·실리' },
+    { key: '관성', label: '관성', hanja: '官星', color: '#3E5F82', meaning: '관계·책임' },
+    { key: '인성', label: '인성', hanja: '印星', color: '#7A5C7E', meaning: '학문·배움' },
   ];
   const max = Math.max(...clusters.map((c) => Number(sipDist[c.key] ?? 0)));
 

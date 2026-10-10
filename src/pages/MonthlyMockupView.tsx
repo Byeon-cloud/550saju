@@ -522,7 +522,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
 
   const domains: { key: string; topicId: string; nm: string; han: string; color: string; data?: MonthlyDomain }[] = [
     { key: 'wealth', topicId: 'wealth', nm: '재물운', han: '財', color: '#B8965A', data: result?.wealth },
-    { key: 'career', topicId: 'career', nm: '직업운', han: '官', color: '#5A7CA8', data: result?.career },
+    { key: 'career', topicId: 'career', nm: '직업운', han: '官', color: '#8C6D3D', data: result?.career },
     { key: 'love', topicId: 'love', nm: '애정운', han: '緣', color: '#8C6D3D', data: result?.love },
     { key: 'health', topicId: 'health', nm: '건강운', han: '壽', color: '#8C6D3D', data: result?.health },
   ].filter((d) => d.data && (d.data.body || typeof d.data.score === 'number'));

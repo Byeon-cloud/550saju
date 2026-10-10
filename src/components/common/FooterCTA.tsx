@@ -51,14 +51,14 @@ const CONFIG: Record<FooterCTAPageKey, FooterCTAConfig> = {
   report:           { emblem: '命', emblemColor: '#B8965A', overviewLabel: '사주 전체로',     overviewTo: '/storage' },
   'topic:love':     { emblem: '桃', emblemColor: '#8C6D3D', overviewLabel: '연애 전체로',     overviewTo: '/' }, // 2026-04-26: 緣 → 桃 (mockup 진본, 도화살 직접 한자)
   'topic:wealth':   { emblem: '財', emblemColor: '#B8965A', overviewLabel: '재물 전체로',     overviewTo: '/' },
-  'topic:career':   { emblem: '官', emblemColor: '#5A7CA8', overviewLabel: '직업 전체로',     overviewTo: '/' },
+  'topic:career':   { emblem: '官', emblemColor: '#8C6D3D', overviewLabel: '직업 전체로',     overviewTo: '/' },
   'topic:health':   { emblem: '壽', emblemColor: '#8C6D3D', overviewLabel: '건강 전체로',     overviewTo: '/' },
   'topic:study':    { emblem: '學', emblemColor: '#8C6D3D', overviewLabel: '학업 전체로',     overviewTo: '/' }, // SSOT v1 (구 印)
   'topic:exam':     { emblem: '進', emblemColor: '#8C6D3D', overviewLabel: '합격·이직 전체로', overviewTo: '/' }, // SSOT v1 신규
   'topic:marriage': { emblem: '婚', emblemColor: '#8C6D3D', overviewLabel: '결혼 전체로',     overviewTo: '/' }, // SSOT v1 (구 盟)
   'topic:business': { emblem: '業', emblemColor: '#A37A2E', overviewLabel: '사업 전체로',     overviewTo: '/' },
   'topic:reunion':  { emblem: '復', emblemColor: '#8C6D3D', overviewLabel: '재회 전체로',     overviewTo: '/' }, // SSOT v1 (구 緣)
-  'topic:social':   { emblem: '人', emblemColor: '#5A7CA8', overviewLabel: '대인관계 전체로', overviewTo: '/' },
+  'topic:social':   { emblem: '人', emblemColor: '#8C6D3D', overviewLabel: '대인관계 전체로', overviewTo: '/' },
   'topic:move':     { emblem: '移', emblemColor: '#8C6D3D', overviewLabel: '이동 전체로',     overviewTo: '/' }, // SSOT v1 canonical
   'topic:moving':   { emblem: '移', emblemColor: '#8C6D3D', overviewLabel: '이동 전체로',     overviewTo: '/' }, // legacy alias
   // 2026-05-07: 출시 후 공개 — emblem 정의 보존, 라우트만 홈으로 임시 변경

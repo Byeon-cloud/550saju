@@ -86,7 +86,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     heroHint: '천천히 읽어보세요 · 돈의 결은 한 줄로 풀리지 않아요',
   },
   career: {
-    heroGrad: 'linear-gradient(135deg,#7B9BC4 0%,#5A7CA8 55%,#3F5A7C 100%)',
+    heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#8C6D3D 55%,#3F5A7C 100%)',
     hanja: '官',
     accent: '#8C6D3D',
     accentDark: '#7A5C2E',
