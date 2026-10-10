@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { NeedSaju } from '@/components/hanji/Hanji';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -129,11 +130,7 @@ export function DaeunPage() {
       return (
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
           <Header title="대운 해설" />
-          <div className="px-5 pt-8 text-center space-y-4">
-            <p className="text-h2 text-text-primary">먼저 사주를 분석해주세요</p>
-            <p className="text-body-sm text-text-muted">사주 데이터가 있어야 대운 해설을 볼 수 있어요.</p>
-            <Button onClick={() => navigate('/input?from=home_body_daewoon')} variant="gold" size="lg" fullWidth>사주 분석하러 가기</Button>
-          </div>
+          <NeedSaju mark="運" desc="10년마다 바뀌는 큰 운을 내 사주로 짚어 드려요. 태어난 날과 시간만 있으면 돼요." onClick={() => navigate('/input?from=home_body_daewoon')} />
         </div>
       );
     }
@@ -146,7 +143,7 @@ export function DaeunPage() {
           <ExtensionHero
             theme={EXTENSION_THEME.daeun}
             sub="10년 단위로 바뀌는 운의 흐름, 직업, 연애, 재물, 건강"
-            rightLabel="大運, 10년 단위 큰 흐름"
+            rightLabel="大運 10년 단위 큰 흐름"
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
@@ -288,7 +285,7 @@ export function DaeunPage() {
         <ExtensionHero
           theme={daeunTheme}
           sub={`${ilganLabel ?? ''}${birthLabel ? ', ' + birthLabel : ''}`}
-          rightLabel="大運, 10년 단위 큰 흐름"
+          rightLabel="大運 10년 단위 큰 흐름"
         />
       </FadeIn>
 

@@ -5,7 +5,7 @@
 //   ✗ 잔액 부족: 부족 안내 (충전 직접 유도 UI 는 토스 정책 회피로 제거)
 
 import { useState, useMemo } from 'react';
-import { INK_HERO_BG } from '@/components/hanji/Hanji';
+import { INK_HERO_BG, NeedSaju } from '@/components/hanji/Hanji';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
@@ -78,20 +78,7 @@ export function PremiumSelectPage() {
     return (
       <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
         <Header title="종합 사주" />
-        <div className="px-5 pt-8 text-center space-y-4">
-          <p className="text-h2 text-text-primary">먼저 사주를 입력해주세요</p>
-          <p className="text-body-sm text-text-muted">
-            사주 데이터가 있어야 종합 사주를 볼 수 있어요.
-          </p>
-          <Button
-            onClick={() => navigate('/input?from=home_body_premium')}
-            variant="gold"
-            size="lg"
-            fullWidth
-          >
-            사주 입력하러 가기
-          </Button>
-        </div>
+        <NeedSaju mark="命" desc="태어난 날과 시간으로 열 장을 엮어요. 사주를 먼저 넣어 주세요." onClick={() => navigate('/input?from=home_body_premium')} />
       </div>
     );
   }

@@ -20,7 +20,7 @@ import { HourPickerSheet } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId, TOPIC_REGISTRY, TOPIC_IDS, type TopicId } from '@/constants/topics';
 import { kstToday } from '@/utils/kstDate';
 import { loveStars, loveDday, wealthStars, examFact, spouseSeatFact, josa } from '@/services/saju/hookFacts';
-import { HJ, GoldCta, Pansim, hanjaNum, INK_HERO_BG } from '@/components/hanji/Hanji';
+import { HJ, GoldCta, Pansim, hanjaNum, INK_HERO_BG, NeedSaju } from '@/components/hanji/Hanji';
 
 /** 2026-10-10 — 결제 확인 시트의 '내 사주' 한 줄 (만세력 사실만 · 홈 고민 카드와 같은 문장) */
 function confirmFact(key: string, sd: any): string | null {
@@ -4758,12 +4758,8 @@ export function TopicAnalysisPage() {
                   })()}
                 </>
               ) : (
-                <div className="card text-center py-10 space-y-3">
-                  <p className="text-h2 text-text-primary">사주를 먼저 입력해주세요</p>
-                  <p className="text-body-sm text-text-muted">생년월일시를 입력하면 {topic.label} 심층분석을 받을 수 있어요</p>
-                  {/* E3 · returnTo state — 입력 후 자동 복귀 동선 */}
-                  <Button variant="gold" onClick={() => navigate('/input', { state: { returnTo: `/topic/${topicId}` } })}>사주 입력하기</Button>
-                </div>
+                /* E3 returnTo state — 입력 후 자동 복귀 동선 */
+                <NeedSaju mark={TOPIC_REGISTRY[(normalizeTopicId(topicId || '') || topicId) as TopicId]?.kanji || '命'} desc={`태어난 날과 시간을 넣으면 ${topic.label}을 내 사주로 깊이 풀어 드려요.`} onClick={() => navigate('/input', { state: { returnTo: `/topic/${topicId}` } })} />
               )}
             </motion.div>
           )}

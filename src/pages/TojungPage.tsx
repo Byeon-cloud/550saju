@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { NeedSaju } from '@/components/hanji/Hanji';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -204,11 +205,7 @@ export function TojungPage() {
       return (
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
           <Header title="신년운세" />
-          <div className="px-5 pt-8 text-center space-y-4">
-            <p className="text-h2 text-text-primary">먼저 사주를 입력해주세요</p>
-            <p className="text-body-sm text-text-muted">사주가 있어야 {TY}년 신년운세를 볼 수 있어요.</p>
-            <Button onClick={() => navigate('/input?from=home_body_tojung')} variant="gold" size="lg" fullWidth>사주 분석하러 가기</Button>
-          </div>
+          <NeedSaju mark="歲" desc={`${TY}년 열두 달을 내 사주로 미리 봐요. 태어난 날과 시간만 있으면 돼요.`} onClick={() => navigate('/input?from=home_body_tojung')} />
         </div>
       );
     }
@@ -221,7 +218,7 @@ export function TojungPage() {
           <ExtensionHero
             theme={EXTENSION_THEME.tojung}
             sub={`${TY}년 한 해를 내 사주로 열두 달 미리 봅니다`}
-            rightLabel={`歲, ${TY}`}
+            rightLabel={`歲 ${TY}`}
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">

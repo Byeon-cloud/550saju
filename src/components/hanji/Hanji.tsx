@@ -138,3 +138,19 @@ export function GoBook({ title }: { title: string }) {
     </div>
   );
 }
+
+/** 사주가 아직 없을 때 — 왜 필요한지 한 줄 + 바로 넣는 버튼 하나 (2026-10-11 빈 화면 7곳 통일) */
+export function NeedSaju({ mark, title = '먼저 사주를 넣어 주세요', desc, cta = '사주 넣으러 가기', onClick }: {
+  mark: string; title?: string; desc: ReactNode; cta?: string; onClick: () => void;
+}) {
+  return (
+    <div style={{ maxWidth: 520, margin: '0 auto', padding: '44px 20px 120px', textAlign: 'center' }}>
+      <Seal size={58} fontSize={28}>{mark}</Seal>
+      <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, color: HJ.ink, marginTop: 18, lineHeight: 1.4 }}>{title}</h2>
+      <p style={{ fontSize: 15.5, lineHeight: 1.7, color: HJ.ink2, marginTop: 10 }}>{desc}</p>
+      <div style={{ marginTop: 28 }}>
+        <GoldCta onClick={onClick} sub="1분이면 끝나요">{cta}</GoldCta>
+      </div>
+    </div>
+  );
+}

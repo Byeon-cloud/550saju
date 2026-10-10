@@ -318,7 +318,7 @@ export function HomePage() {
         {facts?.persona && facts.persona.daeun.length >= 4 && (
           <div style={{ marginTop: 16 }}>
             <div className="flex justify-between" style={{ fontSize: 14, fontWeight: 800 }}>
-              10년마다 바뀌는 운 <span style={{ color: HJ.mute, fontWeight: 600, fontSize: 13 }}>지금, 다음</span>
+              10년마다 바뀌는 운 <span style={{ color: HJ.mute, fontWeight: 600, fontSize: 13 }}>지금과 다음</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${facts.persona.daeun.length}, 1fr)`, gap: 3, marginTop: 10 }}>
               {facts.persona.daeun.map((d, i) => {

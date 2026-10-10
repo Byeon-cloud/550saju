@@ -6479,7 +6479,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
           <span className="nm">{krLabel}</span>
           <span className="han">{s.hanja}</span>
           {fromText && <span className="han" style={{ fontSize: 11, color: '#7F6B4E' }}>, {fromText}</span>}
-          <span className="tag">{isFull ? '강, 핵심' : '중, 작동'}</span>
+          <span className="tag">{isFull ? '강하게 작동' : '은근히 작동'}</span>
         </div>
         {/* 2026-05-05: <strong> raw text 차단 */}
         <p dangerouslySetInnerHTML={{ __html: sanitizeAiText(desc) }} />

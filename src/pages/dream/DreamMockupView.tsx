@@ -609,7 +609,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               </>
             ) : (
               <>
-                <span className="badge">무료, 꿈해몽</span>
+                <span className="badge">무료 꿈해몽</span>
                 {isTodayRecord && <span className="badge free">오늘 1회 무료</span>}
               </>
             )}

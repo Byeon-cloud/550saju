@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { NeedSaju } from '@/components/hanji/Hanji';
 import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
@@ -197,11 +198,7 @@ export function WeeklyPage() {
       return (
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
           <Header title="주간운세" />
-          <div className="px-5 pt-8 text-center space-y-4">
-            <p className="text-h2 text-text-primary">먼저 사주를 분석해주세요</p>
-            <p className="text-body-sm text-text-muted">사주 데이터가 있어야 주간운세를 볼 수 있어요.</p>
-            <Button onClick={() => navigate('/input?from=home_body_weekly')} variant="gold" size="lg" fullWidth>사주 분석하러 가기</Button>
-          </div>
+          <NeedSaju mark="週" desc="오늘부터 7일을 내 사주로 짚어 드려요. 태어난 날과 시간만 있으면 돼요." onClick={() => navigate('/input?from=home_body_weekly')} />
         </div>
       );
     }
@@ -215,7 +212,7 @@ export function WeeklyPage() {
             costLabel={getWeeklyPrice().isOnSale ? `${getWeeklyPrice().regularPrice}운→${getWeeklyPrice().actualPrice}운` : `${getWeeklyPrice().actualPrice}운`}
             eventLabel={getWeeklyPrice().isOnSale ? `이벤트, ~${Number((getWeeklyPrice().saleEndDate || '').slice(5, 7))}/${Number((getWeeklyPrice().saleEndDate || '').slice(8, 10))}` : undefined}
             sub="오늘부터 7일, 좋은 날과 조심할 날을 한눈에"
-            rightLabel="週, 오늘부터 7일"
+            rightLabel="週 오늘부터 7일"
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">

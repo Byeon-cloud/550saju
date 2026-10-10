@@ -1,5 +1,5 @@
 import { kstToday } from '@/utils/kstDate';
-import { INK_HERO_BG } from '@/components/hanji/Hanji';
+import { INK_HERO_BG, NeedSaju } from '@/components/hanji/Hanji';
 import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
@@ -846,36 +846,7 @@ export function DreamPage() {
     return (
       <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
         <Header title="꿈해몽" />
-        <div className="px-5 pt-12 pb-[120px] mx-auto text-center" style={{ maxWidth: 520 }}>
-          <div style={{
-            display: 'inline-flex', width: 72, height: 72, borderRadius: '50%',
-            background: 'rgba(184,150,90,0.12)', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 20,
-          }}>
-            <span aria-hidden style={{
-              fontFamily: "'Noto Serif KR', serif", fontSize: 36, fontWeight: 900,
-              color: '#B8965A', lineHeight: 1,
-            }}>夢</span>
-          </div>
-          <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 20, fontWeight: 700, color: '#1a1a1a', marginBottom: 10 }}>
-            먼저 사주를 입력해주세요
-          </h2>
-          <p style={{ fontSize: 13.5, lineHeight: 1.7, color: '#5C4A2E', marginBottom: 28, wordBreak: 'keep-all' }}>
-            꿈해몽은 <strong style={{ color: '#1a1a1a' }}>사주와 꿈을 교차해 해석</strong>합니다.<br />
-            일간, 오행, 대운이 있어야 깊이 있는 풀이가 가능해요.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/input?from=dream')}
-            style={{
-              background: '#B8965A', color: '#F8F5EE', border: 'none',
-              borderRadius: 999, padding: '14px 28px', fontSize: 14, fontWeight: 800,
-              cursor: 'pointer', minHeight: 44,
-            }}
-          >
-            사주 입력하러 가기 →
-          </button>
-        </div>
+        <NeedSaju mark="夢" desc="꿈해몽은 사주와 꿈을 함께 봐요. 일간, 오행, 대운이 있어야 내 꿈이 무슨 뜻인지 짚어 드릴 수 있어요." cta="사주 넣고 꿈 풀기" onClick={() => navigate('/input?from=dream')} />
       </div>
     );
   }

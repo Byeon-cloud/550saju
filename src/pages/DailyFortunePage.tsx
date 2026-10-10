@@ -612,7 +612,7 @@ export function DailyFortunePage() {
       {isResultPhase ? (
         <DarkHeader
           title={`${selectedProfile?.name || '내'} 님의 오늘의 운세`}
-          subtitle={resultTier === 'paid' ? '오늘 하루, 일곱 장 풀이' : '무료, 오늘 하루 일곱 장 풀이'}
+          subtitle={resultTier === 'paid' ? '오늘 하루를 일곱 장으로' : '무료로 읽는 오늘 하루 일곱 장'}
           chip={resultTier === 'paid' ? '1운' : '무료'}
           chipVariant={resultTier === 'paid' ? 'gold' : 'free'}
         />
@@ -662,8 +662,8 @@ export function DailyFortunePage() {
               onCreateNew={() => navigate('/input?new=1')}
               profile={selectedProfile}
               dateInfo={dateInfo}
-              ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '오늘의 운세 보기 (무료)' : '오늘의 운세 보기, 1운'}
-              tierChip={todayReport ? '오늘 받은 운세, 다시 보기 무료' : dailyInProgress ? '만드는 중' : freePassAvailable ? '무료, 1일 1회' : '오늘 무료 사용, 이후 1운'}
+              ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '오늘의 운세 보기 (무료)' : '1운으로 오늘의 운세 보기'}
+              tierChip={todayReport ? '다시 보기는 무료' : dailyInProgress ? '만드는 중' : freePassAvailable ? '하루 1회 무료' : '두 번째부터 1운'}
               onAnalyze={requestAnalyze}
             />
           )}

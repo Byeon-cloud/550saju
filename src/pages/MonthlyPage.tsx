@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { NeedSaju } from '@/components/hanji/Hanji';
 import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
@@ -234,11 +235,7 @@ export function MonthlyPage() {
       return (
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
           <Header title="월별 운세" />
-          <div className="px-5 pt-8 text-center space-y-4">
-            <p className="text-h2 text-text-primary">먼저 사주를 분석해주세요</p>
-            <p className="text-body-sm text-text-muted">사주 데이터가 있어야 월별 운세를 볼 수 있어요.</p>
-            <Button onClick={() => navigate('/input?from=home_body_monthly')} variant="gold" size="lg" fullWidth>사주 분석하러 가기</Button>
-          </div>
+          <NeedSaju mark="月" desc="한 달의 흐름을 내 사주로 짚어 드려요. 태어난 날과 시간만 있으면 돼요." onClick={() => navigate('/input?from=home_body_monthly')} />
         </div>
       );
     }
@@ -252,7 +249,7 @@ export function MonthlyPage() {
             costLabel={getMonthlyPrice().isOnSale ? `${getMonthlyPrice().regularPrice}운→${getMonthlyPrice().actualPrice}운` : `${getMonthlyPrice().actualPrice}운`}
             eventLabel={getMonthlyPrice().isOnSale ? `이벤트, ~${Number((getMonthlyPrice().saleEndDate || '').slice(5, 7))}/${Number((getMonthlyPrice().saleEndDate || '').slice(8, 10))}` : undefined}
             sub="원하는 한 달을 골라 깊게, 상순, 중순, 하순까지"
-            rightLabel="月運, 한 달의 흐름"
+            rightLabel="月運 한 달의 흐름"
           />
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
