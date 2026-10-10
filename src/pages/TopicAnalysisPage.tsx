@@ -18,6 +18,34 @@ import { stripMd, sanitizeAiText } from '@/utils/format';
 import { Pictogram, type TopicKey } from '@/components/brand/PictogramRegistry';
 import { HourPickerSheet } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId, TOPIC_REGISTRY, TOPIC_IDS, type TopicId } from '@/constants/topics';
+import { kstToday } from '@/utils/kstDate';
+import { loveStars, loveDday, wealthStars, examFact, spouseSeatFact, josa } from '@/services/saju/hookFacts';
+import { HJ, GoldCta, Pansim, hanjaNum } from '@/components/hanji/Hanji';
+
+/** 2026-10-10 — 결제 확인 시트의 '내 사주' 한 줄 (만세력 사실만 · 홈 고민 카드와 같은 문장) */
+function confirmFact(key: string, sd: any): string | null {
+  try {
+    if (!sd?.pillars?.[2]?.천간) return null;
+    const today = kstToday();
+    const yr = (d: string) => (Number(d.slice(0, 4)) > Number(today.slice(0, 4)) ? '내년 ' : '');
+    if (key === 'love' || key === 'reunion') {
+      const ls = loveStars(sd);
+      const ld = loveDday(sd, today);
+      const a = ls.count > 0 ? `연인의 별이 ${ls.count}개(${ls.chars.join('')}) 있어요.` : '사주에 연인의 별이 드러나 있지 않아요.';
+      const b = ld ? ` ${yr(ld.month.start)}${ld.month.calMonth}월에 ${ls.count > 0 ? '하나가 더' : '그 별이'} 들어와요.` : '';
+      return a + b;
+    }
+    if (key === 'wealth') {
+      const w = wealthStars(sd);
+      if (!w.count) return '재물의 별이 드러나 있지 않은 사주예요. 돈이 들어오는 길과 때를 따로 짚어 드려요.';
+      const kind = w.pyeon && !w.jeong ? '큰돈이 오가는 별(편재)' : w.jeong && !w.pyeon ? '꾸준히 쌓는 별(정재)' : '쌓는 별과 오가는 별이 함께';
+      return `재물의 별이 ${w.count}개 — ${kind}이에요.`;
+    }
+    if (key === 'exam') return examFact(sd);
+    if (key === 'marriage') return spouseSeatFact(sd);
+    return null;
+  } catch { return null; }
+}
 import { normalizeSipsungKo } from '@/constants/sipsungColor';
 import { findCurrentDaeun } from '@/services/saju/daeunCurrent';
 import { sijiForClock, bandCenterHourForDate } from '@/services/saju/sijiPreview';
@@ -5410,43 +5438,87 @@ export function TopicAnalysisPage() {
         </AnimatePresence>
       </div>
 
-      {/* audit 3 P0 E1 · 결제 직전 confirm Modal — 2026-05-28 PM TOPIC_PRICING SSOT 적용 */}
-      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title={`${topic.label} 분석을 시작할까요?`}>
-        <div style={{ marginBottom: 16 }}>
-          <p style={{ fontSize: 14, color: '#3D3D3D', lineHeight: 1.65, marginBottom: 8 }}>
-            {selected?.name || '회원'} 님 사주로 <strong style={{ color: '#A37A2E' }}>{topic.label}</strong> 심층분석을 시작합니다.
-          </p>
-          {(() => {
-            const pricing = getTopicPrice(topicId as TopicKey);
-            const actualPrice = pricing.isOnSale && pricing.salePrice != null ? pricing.salePrice : pricing.regularPrice;
-            return (
-              <ul style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.7, paddingLeft: 0, listStyle: 'none' }}>
-                <li>
-                  · {pricing.isOnSale && pricing.salePrice != null ? (
-                    <>
-                      <span style={{ textDecoration: 'line-through', opacity: 0.7, marginRight: 4 }}>{pricing.regularPrice}운</span>
-                      <strong style={{ color: '#A37A2E' }}>{actualPrice}운</strong> 차감돼요{' '}
-                      <span style={{ background: 'rgba(244,209,102,0.35)', padding: '1px 6px', borderRadius: 100, fontSize: 11, fontWeight: 700, color: '#8C6D3D' }}>{pricing.saleBadge}</span>{' '}
-                      (잔액 {balance}운)
-                    </>
-                  ) : (
-                    <>{actualPrice}운이 차감돼요 (잔액 {balance}운)</>
-                  )}
-                </li>
-                <li>· {topicId === 'reunion' ? '첫 풀이는 20초쯤 뜨고, 전체는 3분 안팎이에요' : '첫 풀이는 20초쯤 뜨고, 전체는 2분 안팎이에요'} — 위에서부터 차례로 채워져요</li>
-                <li>· 결과는 보관함에 자동 저장돼요</li>
-              </ul>
-            );
-          })()}
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="ghost" fullWidth onClick={() => { setShowConfirm(false); isAnalyzingRef.current = false; }}>
-            취소
-          </Button>
-          <Button variant="gold" fullWidth onClick={analyze}>
-            시작하기
-          </Button>
-        </div>
+      {/* audit 3 P0 E1 · 결제 직전 confirm — 2026-10-10 v9 한지 결제 시트
+          무엇을 받는지(실제 장 제목) → 내 사주 사실 한 줄 → 걸리는 시간 → 잔액 → 버튼 하나.
+          잔액이 모자라면 여기서 바로 '충전하고 바로 열기'(입력값 보존 · 돌아오면 이어서). */}
+      <Modal isOpen={showConfirm} onClose={() => { setShowConfirm(false); isAnalyzingRef.current = false; }}
+        title={`${selected?.name ? `${selected.name}님 ` : ''}${topic.label}${josa(topic.label, '을', '를')} 열까요?`}>
+        {(() => {
+          const pricing = getTopicPrice(topicId as TopicKey);
+          const actualPrice = pricing.isOnSale && pricing.salePrice != null ? pricing.salePrice : pricing.regularPrice;
+          const lookupKey = topicId === 'moving' ? 'move' : (topicId || '');
+          const dyn =
+            (lookupKey === 'exam' && !!extraInfo.changeType) ||
+            (lookupKey === 'marriage' && (relationStatus === 'dating' || !!(showPartner && partnerInfo.name))) ||
+            (lookupKey === 'reunion' && !(showPartner && partnerInfo.name)) ||
+            (lookupKey === 'career' && !!extraInfo.jobStatus) ||
+            (lookupKey === 'business' && !!extraInfo.bizStatus) ||
+            (lookupKey === 'move' && !!extraInfo.movePurpose) ||
+            (lookupKey === 'love' && loveStatus !== 'solo');
+          const titles = dyn ? [] : (TOPIC_SECTION_TITLES[lookupKey] || []);
+          const fact = confirmFact(lookupKey, (selected as any)?.sajuData);
+          const r1 = (n: number) => Math.round(n * 10) / 10;
+          const short = balance < actualPrice;
+          const kanji = TOPIC_REGISTRY[(normalizeTopicId(lookupKey) || lookupKey) as TopicId]?.kanji || '命';
+          const goCharge = () => {
+            try {
+              sessionStorage.setItem(PENDING_KEY, JSON.stringify({
+                partnerInfo, loveStatus, relationStatus, showPartner, extraInfo, concern,
+                selectedId: selected?.id,
+              }));
+            } catch { /* noop */ }
+            import('@/services/analytics').then((a) => a.trackEvent('insufficient_balance', { type: `topic:${topicId}`, needed: actualPrice })).catch(() => {});
+            setShowConfirm(false);
+            isAnalyzingRef.current = false;
+            navigate(`/charge?need=${actualPrice}`, { state: { message: `${topic.label}에 ${actualPrice}운이 필요해요`, returnTo: `/topic/${topicId}` } });
+          };
+          return (
+            <>
+              <div className="hj-sheet" style={{ borderRadius: 14, border: `1px solid ${HJ.line}`, padding: '0 14px 12px', marginBottom: 14 }}>
+                <Pansim>{kanji} · {topic.label}</Pansim>
+                {fact && (
+                  <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.65, marginTop: 12, wordBreak: 'keep-all' }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>내 사주</span>{fact}
+                  </p>
+                )}
+                {titles.length > 0 ? (
+                  <ol style={{ listStyle: 'none', padding: 0, marginTop: 10, borderTop: '1px solid rgba(92,78,60,.25)' }}>
+                    {titles.map((t, i) => (
+                      <li key={i} style={{ display: 'flex', gap: 10, padding: '9px 2px', borderBottom: '1px solid rgba(92,78,60,.15)', fontSize: 15, fontWeight: 600, color: HJ.ink }}>
+                        <span style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 900, color: HJ.seal, width: 16, flexShrink: 0 }}>{hanjaNum(i + 1)}</span>{t}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p style={{ fontSize: 15, color: HJ.ink, fontWeight: 600, marginTop: 12 }}>지금 고른 상황에 맞춘 다섯 장으로 풀어요.</p>
+                )}
+                <p style={{ fontSize: 13.5, color: HJ.mute, lineHeight: 1.6, marginTop: 10, wordBreak: 'keep-all' }}>
+                  {topicId === 'reunion' ? '첫 풀이는 20초쯤 뜨고, 전체는 3분 안팎이에요' : '첫 풀이는 20초쯤 뜨고, 전체는 2분 안팎이에요'} — 위에서부터 차례로 채워져요.
+                  {' '}다 읽고 궁금한 건 사주대화로 이어서 물어볼 수 있고, 결과는 보관함에 평생 남아요.
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '12px 14px', fontSize: 15, marginBottom: 12 }}>
+                <span style={{ color: HJ.ink2 }}>내 운 <b style={{ color: HJ.ink }}>{r1(balance)}운</b></span>
+                {short
+                  ? <b style={{ color: HJ.seal }}>{r1(actualPrice - balance)}운 모자라요</b>
+                  : <span style={{ color: HJ.ink2 }}>열고 나면 <b style={{ color: HJ.ink }}>{r1(balance - actualPrice)}운</b></span>}
+              </div>
+              {pricing.isOnSale && pricing.salePrice != null && (
+                <p style={{ fontSize: 13.5, color: HJ.ink2, textAlign: 'center', marginBottom: 8 }}>
+                  <span style={{ textDecoration: 'line-through', opacity: 0.7, marginRight: 6 }}>{pricing.regularPrice}운</span>{pricing.saleBadge}
+                </p>
+              )}
+              <GoldCta onClick={short ? goCharge : analyze} sub={`${actualPrice}운`}>
+                {short ? '충전하고 바로 열기' : `${topic.label} 열기`}
+              </GoldCta>
+              {short && <p style={{ fontSize: 13, color: HJ.mute, textAlign: 'center', marginTop: 8 }}>충전하면 이 화면으로 돌아와요 · 입력한 내용은 그대로예요</p>}
+              <button type="button" onClick={() => { setShowConfirm(false); isAnalyzingRef.current = false; }}
+                style={{ display: 'block', margin: '10px auto 0', fontSize: 14.5, color: HJ.mute, background: 'transparent', border: 0, padding: 8 }}>
+                다음에 할게요
+              </button>
+            </>
+          );
+        })()}
       </Modal>
 
       {/* audit 3 P0 E2 · 잔액 부족 inline Modal (입력값은 sessionStorage 보존됨) */}
