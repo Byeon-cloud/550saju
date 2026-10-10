@@ -611,7 +611,7 @@ export function DailyFortunePage() {
       {isResultPhase ? (
         <DarkHeader
           title={`${selectedProfile?.name || '내'} 님의 오늘의 운세`}
-          subtitle={resultTier === 'paid' ? '7섹션 일일 풀이' : 'FREE · 7섹션 일일 풀이'}
+          subtitle={resultTier === 'paid' ? '오늘 하루 · 일곱 장 풀이' : '무료 · 오늘 하루 일곱 장 풀이'}
           chip={resultTier === 'paid' ? '1운' : '무료'}
           chipVariant={resultTier === 'paid' ? 'gold' : 'free'}
         />

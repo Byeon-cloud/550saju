@@ -166,7 +166,7 @@ function PremiumDarkHeader({
             letterSpacing: '0.05em',
           }}
         >
-          PREMIUM · 10섹션 종합 풀이
+          종합사주 · 열 장 풀이
         </div>
       </div>
       <div

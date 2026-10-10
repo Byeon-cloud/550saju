@@ -13,7 +13,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     width: 100%;
     max-width: 480px;
     margin: 0 auto;
-    background: #F8F5EE;
+    background: #F4EFE4;
     min-height: 100vh;
     position: relative;
     box-shadow: 0 0 80px rgba(0,0,0,.4);
@@ -51,12 +51,12 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
 
   
   .premium-mockup .hero {
-    background: linear-gradient(180deg, #1a1a1a 0%, #1a1a1a 60%, #F8F5EE 60%, #F8F5EE 100%);
+    background: linear-gradient(180deg, #1a1a1a 0%, #1a1a1a 60%, #F4EFE4 60%, #F4EFE4 100%);
     padding: 24px 20px 0;
     position: relative;
   }
   .premium-mockup .hero-card {
-    background: linear-gradient(135deg, #F8F5EE 0%, #F0E8D9 100%);
+    background: linear-gradient(135deg, #F4EFE4 0%, #F0E8D9 100%);
     border-radius: 16px;
     padding: 24px 22px;
     box-shadow: 0 12px 40px rgba(0,0,0,.25), 0 0 0 1px rgba(212,175,55,.4);
@@ -105,15 +105,16 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .hero-card .meta span { display: inline-flex; align-items: center; gap: 4px; }/* ─── 섹션 공통 ──────────────────────────────────── */
 
   
-  .premium-mockup .content { padding: 0 20px 100px; background: #F8F5EE; }
+  .premium-mockup .content { padding: 0 20px 100px; background: #F4EFE4; }
   .premium-mockup .section { margin-top: 32px; }
   .premium-mockup .section-num {
+    /* 2026-10-10 v9 — 'SECTION 01' 영문 머리 → 一 二 三 (붉은 낙관색 · 전 콘텐츠 같은 섹션 머리) */
     display: inline-block;
     font-family: 'Noto Serif KR', serif;
-    font-size: 11px; font-weight: 600;
-    color: #B8965A;
-    letter-spacing: 0.2em;
-    margin-bottom: 6px;
+    font-size: 17px; font-weight: 900;
+    color: #A23A2A;
+    letter-spacing: 0;
+    margin-bottom: 4px;
   }
   .premium-mockup .section-title {
     font-family: 'Noto Serif KR', serif;
@@ -197,7 +198,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
 
   
   .premium-mockup .wongug {
-    background: linear-gradient(180deg, #fff 0%, #F8F5EE 100%);
+    background: linear-gradient(180deg, #fff 0%, #F4EFE4 100%);
     border-radius: 14px;
     padding: 20px 12px 18px;
     border: 1px solid #E5DFD0;
@@ -290,7 +291,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   
   .premium-mockup .ohaeng-chart {
     margin-top: 14px;
-    background: #F8F5EE;
+    background: #F4EFE4;
     border-radius: 10px;
     padding: 14px 12px;
   }
@@ -353,7 +354,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
 
   
   .premium-mockup .daewoon-timeline {
-    background: linear-gradient(135deg, #fff 0%, #F8F5EE 100%);
+    background: linear-gradient(135deg, #fff 0%, #F4EFE4 100%);
     border-radius: 14px;
     padding: 18px 14px;
     border: 1px solid #E5DFD0;
@@ -366,7 +367,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .dw-cell {
     text-align: center;
-    background: #F8F5EE;
+    background: #F4EFE4;
     border-radius: 8px;
     padding: 8px 4px;
     border: 1px solid transparent;
@@ -423,7 +424,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   
   .premium-mockup .action-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
   .premium-mockup .action-card {
-    background: linear-gradient(135deg, #fff 0%, #F8F5EE 100%);
+    background: linear-gradient(135deg, #fff 0%, #F4EFE4 100%);
     border-radius: 12px;
     padding: 14px 16px;
     border: 1px solid #E5DFD0;
@@ -824,7 +825,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   
   .premium-mockup .daewoon-scores {
     margin-top: 14px;
-    background: #F8F5EE;
+    background: #F4EFE4;
     border-radius: 10px;
     padding: 14px 12px 10px;
     border: 1px solid #E5DFD0;
@@ -1265,7 +1266,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border-radius: 12px;
     padding: 14px;
     border: 1px solid rgba(0,0,0,0.04);
-    background: linear-gradient(135deg, #fff 0%, #F8F5EE 100%);
+    background: linear-gradient(135deg, #fff 0%, #F4EFE4 100%);
   }
   .premium-mockup .life-edge-card.mok  { background: linear-gradient(135deg, #fff, rgba(46,125,50,.06)); }
   .premium-mockup .life-edge-card.hwa  { background: linear-gradient(135deg, #fff, rgba(198,40,40,.06)); }
@@ -1341,7 +1342,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   
   .premium-mockup .daewoon-line {
     margin-top: 14px;
-    background: #F8F5EE;
+    background: #F4EFE4;
     border-radius: 10px;
     padding: 14px 14px 8px;
     border: 1px solid #E5DFD0;
@@ -1466,7 +1467,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     padding: 2px 7px;
     border-radius: 99px;
     letter-spacing: 0.06em;
-    background: #F8F5EE;
+    background: #F4EFE4;
     color: #7A7269;
     border: 1px solid #E5DFD0;
     line-height: 1.5;
@@ -1543,7 +1544,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .shinsal-meta .sm-when {
     font-size: 11px; color: #7F6B4E;
     padding: 2px 7px; border-radius: 100px;
-    background: #F8F5EE;
+    background: #F4EFE4;
     border: 1px solid #E5DFD0;
     letter-spacing: 0.03em;
   }
@@ -1562,7 +1563,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     display: flex; flex-wrap: wrap; gap: 6px;
     margin-top: 12px;
     padding: 12px;
-    background: #F8F5EE;
+    background: #F4EFE4;
     border-radius: 10px;
     border: 1px dashed #E5DFD0;
   }

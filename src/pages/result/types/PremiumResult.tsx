@@ -20,6 +20,7 @@
 // _data/_atoms/_visuals 무수정 (Phase D' 원칙)
 
 import { Solar } from 'lunar-javascript';
+import { hanjaNum } from '@/components/hanji/Hanji';
 import React, { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
@@ -2562,7 +2563,7 @@ function CollapsibleSection({
         }}
       >
         <div>
-          <div className="section-num">SECTION {String(step).padStart(2, '0')}</div>
+          <div className="section-num">{hanjaNum(step)}</div>
           <div className="section-title">
             {title} <span className="hanja">{hanja}</span>
             {pending && (

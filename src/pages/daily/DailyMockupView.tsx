@@ -12,6 +12,7 @@
  */
 
 import { useMemo, useState, useCallback, type ReactNode } from 'react';
+import { hanjaNum } from '@/components/hanji/Hanji';
 import type { SajuProfile } from '@/services/storage/localStore';
 import type { OhengType } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
@@ -217,19 +218,19 @@ const MOCKUP_CSS = `
    src/pages/saju-card/_chrome.tsx 의 C·OHENG_THEME 와 100% 일치 */
 .daily-mockup * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 .daily-mockup {
-  font-family: 'Pretendard', sans-serif; color: #1A1A1A; letter-spacing: -0.01em; background: #F8F5EE;
-  /* 색상 SSOT (SajuCard 와 100% 일치) */
-  --c-paper: #F8F5EE;
-  --c-surface: #FFFFFF;
-  --c-ink: #1A1A1A;
-  --c-ink-soft: #3D3D3D;
-  --c-mute: #7A7269;
+  font-family: 'Pretendard', sans-serif; color: #1A1612; letter-spacing: -0.01em; background: #F4EFE4;
+  /* 2026-10-10 v9 한지 톤 — 먹·종이 (src/styles/hanji.css 와 같은 값 · 보조 글자 대비 5:1) */
+  --c-paper: #F4EFE4;
+  --c-surface: #FFFDF8;
+  --c-ink: #1A1612;
+  --c-ink-soft: #4B4238;
+  --c-mute: #6F6557;
   --c-gold: #B8965A;
   --c-gold-deep: #8C6D3D;
   --c-gold-soft: rgba(184,150,90,0.10);
   --c-gold-line: rgba(184,150,90,0.40);
   --c-card-line: rgba(184,150,90,0.18);
-  --c-line: #E5DFD0;
+  --c-line: #E1D7C4;
   /* 5 오행 정식 (SajuCard OHENG_THEME) */
   --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
   --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
@@ -239,10 +240,11 @@ const MOCKUP_CSS = `
 
 /* Header */
 .daily-mockup .hd {
-  background: linear-gradient(135deg, #c62828 0%, #8b1a1a 60%, #5a0f0f 100%);
+  /* 2026-10-10 v9 — 붉은 그라데이션 + 큰 火 워터마크 → 먹 바탕 + 정선 「인왕제색도」 (공유마당 만료 저작물) */
+  background: linear-gradient(180deg, rgba(26,22,18,.55) 0%, rgba(26,22,18,.82) 45%, #1A1612 100%), url('/art/inwang.webp') 30% 35% / cover no-repeat, #1A1612;
   color: #fff; padding: 18px 20px 28px; position: relative; overflow: hidden;
 }
-.daily-mockup .hd::before { content: '火'; position: absolute; right: -16px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.06); line-height: 1; }
+.daily-mockup .hd::before { display: none; content: '火'; position: absolute; right: -16px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.06); line-height: 1; }
 .daily-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 12px; opacity: .9; flex-wrap: wrap; }
 .daily-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 11px; }
 .daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #fff8e1; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-left: auto; }
@@ -504,19 +506,19 @@ const MOCKUP_CSS = `
 .daily-mockup .section-header:hover { background: var(--c-paper); }
 .daily-mockup .section-header .sec-num {
   font-family: 'Noto Serif KR', serif;
-  font-size: 11px; font-weight: 700;
-  color: var(--c-gold); letter-spacing: 0.18em;
-  margin-right: 6px;
+  font-size: 16px; font-weight: 900;
+  color: #A23A2A; letter-spacing: 0;
+  min-width: 18px; margin-right: 2px;
 }
 .daily-mockup .section-header .sec-title {
   font-family: 'Noto Serif KR', serif;
-  font-size: 16px; font-weight: 700;
+  font-size: 17.5px; font-weight: 700;
   color: var(--c-ink);
   flex: 1;
 }
 .daily-mockup .section-header .sec-title .han {
-  color: var(--c-gold); font-weight: 500;
-  margin-left: 6px; font-size: 13px;
+  color: var(--c-mute); font-weight: 500;
+  margin-left: 8px; font-size: 13px; letter-spacing: .1em;
 }
 .daily-mockup .section-header .chevron {
   width: 20px; height: 20px;
@@ -534,8 +536,8 @@ const MOCKUP_CSS = `
 .daily-mockup .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 600; color: #B8965A; letter-spacing: 0.2em; margin-bottom: 4px; }
 .daily-mockup .sec-title { font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; color: #1a1a1a; }
 .daily-mockup .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
-.daily-mockup .sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
-.daily-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
+.daily-mockup .sec-lead { font-size: 13.5px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.daily-mockup .body p { font-size: 15.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 /* ⭐ 강조 위계 통일 (PremiumResult 패턴) — 2026-05-06 v5
    <strong> = 황금볼드 (일상 결론) · <u> = 황금밑줄 (시기·숫자·색) · <b> = 검정볼드 (한자) */
 .daily-mockup .body p strong,
@@ -981,7 +983,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
       onClick={() => toggleSection(id)}
       aria-expanded={isOpen(id)}
     >
-      <span className="sec-num">SECTION {num}</span>
+      <span className="sec-num">{hanjaNum(Number(num))}</span>
       <span className="sec-title">{title}{han && <span className="han">{han}</span>}</span>
       <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 12 15 18 9" />

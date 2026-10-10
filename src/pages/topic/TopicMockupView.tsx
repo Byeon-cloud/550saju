@@ -19,6 +19,7 @@
  */
 
 import { useCallback, useState, useMemo } from 'react';
+import { hanjaNum } from '@/components/hanji/Hanji';
 import type { SajuProfile } from '@/services/storage/localStore';
 import type { OhengType } from '@/types/saju';
 import { stripMd, sanitizeAiText } from '@/utils/format';
@@ -140,18 +141,19 @@ const safeHtmlEmph = (text: any): { __html: string } => ({
 const MOCKUP_CSS = `
 .topic-mockup * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 .topic-mockup {
-  font-family: 'Pretendard', sans-serif; color: #1A1A1A; letter-spacing: -0.01em; background: #F8F5EE;
-  --c-paper: #F8F5EE;
-  --c-surface: #FFFFFF;
-  --c-ink: #1A1A1A;
-  --c-ink-soft: #3D3D3D;
-  --c-mute: #7A7269;
+  font-family: 'Pretendard', sans-serif; color: #1A1612; letter-spacing: -0.01em; background: #F4EFE4;
+  /* 2026-10-10 v9 한지 톤 — 먹·종이 (src/styles/hanji.css 와 같은 값 · 보조 글자 대비 5:1) */
+  --c-paper: #F4EFE4;
+  --c-surface: #FFFDF8;
+  --c-ink: #1A1612;
+  --c-ink-soft: #4B4238;
+  --c-mute: #6F6557;
   --c-gold: #B8965A;
   --c-gold-deep: #8C6D3D;
   --c-gold-soft: rgba(184,150,90,0.10);
   --c-gold-line: rgba(184,150,90,0.40);
   --c-card-line: rgba(184,150,90,0.18);
-  --c-line: #E5DFD0;
+  --c-line: #E1D7C4;
   --c-mok: #2D8A4E; --c-hwa: #D32F2F; --c-to: #E8B82A; --c-geum: #4A4A4A; --c-su: #1565E0;
   --c-mok-soft: rgba(45,138,78,0.10); --c-hwa-soft: rgba(211,47,47,0.10);
   --c-to-soft: rgba(232,184,42,0.10); --c-geum-soft: rgba(74,74,74,0.10); --c-su-soft: rgba(21,101,224,0.10);
@@ -164,6 +166,7 @@ const MOCKUP_CSS = `
   padding: 20px 22px 30px; color: #F8F5EE;
 }
 .topic-mockup .hd::before {
+  display: none; /* 2026-10-10 v9 — 큰 한자 워터마크 제거 (AI 같은 장식) */
   content: attr(data-han);
   position: absolute; right: -20px; bottom: -50px;
   font-family: 'Noto Serif KR', serif; font-size: 240px; font-weight: 900;
@@ -287,15 +290,15 @@ const MOCKUP_CSS = `
 }
 .topic-mockup .section-header:hover { background: var(--c-paper); }
 .topic-mockup .section-header .sec-num {
-  font-family: 'Noto Serif KR', serif; font-size: 10px; font-weight: 700;
-  color: var(--c-gold); letter-spacing: 0.18em; margin-right: 6px;
+  font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900;
+  color: #A23A2A; letter-spacing: 0; min-width: 18px; margin-right: 2px;
 }
 .topic-mockup .section-header .sec-title {
-  font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700;
+  font-family: 'Noto Serif KR', serif; font-size: 17.5px; font-weight: 700;
   color: var(--c-ink); flex: 1;
 }
 .topic-mockup .section-header .sec-title .han {
-  color: var(--c-gold); font-weight: 500; margin-left: 6px; font-size: 13px;
+  color: var(--c-mute); font-weight: 500; margin-left: 8px; font-size: 13px; letter-spacing: .1em;
 }
 .topic-mockup .section-header .chevron {
   width: 20px; height: 20px; color: var(--c-mute); transition: transform 0.25s; flex-shrink: 0;
@@ -307,9 +310,9 @@ const MOCKUP_CSS = `
 .topic-mockup .section.open > *:last-child { padding-bottom: 18px; }
 .topic-mockup .section.open > .sec-lead:first-of-type { padding-top: 14px; }
 
-.topic-mockup .sec-lead { font-size: 12px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
+.topic-mockup .sec-lead { font-size: 13.5px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .topic-mockup .body p {
-  font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all;
+  font-size: 15.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all;
 }
 .topic-mockup .body p strong, .topic-mockup .body strong:not(.no-emph) {
   font-weight: 700; color: var(--c-gold-deep);
@@ -524,12 +527,13 @@ const MOCKUP_CSS = `
   font: inherit;
 }
 .topic-mockup .upsell::after {
+  display: none;
   content: '命'; position: absolute; right: -12px; bottom: -32px;
   font-family: 'Noto Serif KR', serif; font-size: 180px; font-weight: 900;
   color: rgba(184,150,90,0.08); line-height: 1; pointer-events: none;
 }
 .topic-mockup .upsell .lb {
-  font-size: 10px; color: #F4D166; letter-spacing: 0.15em;
+  font-size: 12.5px; color: #D3C7B4; letter-spacing: 0.04em;
   font-weight: 600; margin-bottom: 8px; position: relative;
 }
 .topic-mockup .upsell h3 {
@@ -607,7 +611,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
   const isOpen = (id: string) => openSections.has(id);
   const SectionHeader = ({ num, title, han, id }: { num: string; title: string; han?: string; id: string }) => (
     <button type="button" className="section-header" onClick={() => toggleSection(id)} aria-expanded={isOpen(id)}>
-      <span className="sec-num">SECTION {num}</span>
+      <span className="sec-num">{hanjaNum(Number(num))}</span>
       <span className="sec-title">{title}{han && <span className="han">{han}</span>}</span>
       <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="6 9 12 15 18 9" />
@@ -674,8 +678,8 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           className="hd"
           data-han={theme.hanja}
           style={{
-            background: theme.heroBaseGrad,
-            borderTop: `3px solid ${theme.accent}`,
+            // 2026-10-10 v9 — 주제별 색 그라데이션 → 먹 + 김홍도 「장안사」 (공유마당 만료 저작물) · 전 콘텐츠 같은 머리
+            background: "linear-gradient(180deg, rgba(26,22,18,.58) 0%, rgba(26,22,18,.84) 50%, #1A1612 100%), url('/art/jangansa.webp') 40% 45% / cover no-repeat, #1A1612",
           }}
         >
           <div className="top">
@@ -932,7 +936,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
         {/* Upsell — 종합사주 유도 */}
         {onUpsell && (
           <button type="button" className="upsell" onClick={onUpsell}>
-            <div className="lb">PREMIUM</div>
+            <div className="lb">종합사주 · 열 장</div>
             <h3>{upsellLine || '평생을 사주 전체로 보면'}</h3>
             <p>10가지 결을 한 번에 — 종합사주로 평생의 흐름을 펼쳐 봅니다.</p>
             <span className="cta">
