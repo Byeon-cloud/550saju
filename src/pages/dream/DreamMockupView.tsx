@@ -104,7 +104,7 @@ function autoEmphasize(input: string): string {
         // 종결 강조 (확장)
         '(?:게 좋아요|필수예요|필요해요|중요해요|좋습니다|중요합니다|필요합니다|효율적입니다|적절합니다|좋은 자리예요|어울려요|터뜨린 것입니다|준비됐다는 뜻입니다|준비가 되었다는 뜻입니다|살아있습니다|돌파의 전조입니다|결단의 시점입니다|받아들일 때입니다)',
       ];
-      const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9, ~()<>/'\"-]{8,50}(?:${endings.join('|')}))[.!?]?$`);
+      const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9~()<>/'\"-]{8,50}(?:${endings.join('|')}))[.!?]?$`);
       let added = 0;
       const replacements: Array<{ phrase: string }> = [];
       for (const sentence of sentences) {

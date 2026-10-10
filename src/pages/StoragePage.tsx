@@ -51,6 +51,7 @@ import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { getTopicPrice } from '@/constants/pricing';
 // Stage 7e-5: 보관함 카드에서 sajuData 즉시 계산 (모든 프로필 일주/오행 컬러 보장)
 import { calculateSaju } from '@/services/saju/calculator';
+import { stripDotsDeep } from '@/utils/noDot';
 
 /* ══════════════════════════════════════════════════════════════════
  * SSOT 토큰
@@ -332,7 +333,9 @@ export function StoragePage() {
       //   Daily/Dream/Daeun/Monthly/Tojung/Compat 모두 ?reportId 로도 복원 가능 (페이지 자체 useEffect).
       const separator = route.includes('?') ? '&' : '?';
       const routeWithId = `${route}${separator}reportId=${encodeURIComponent(r.id)}`;
-      navigate(routeWithId, { state: { savedResult: r.aiResult, savedReport: r } });
+      // 2026-10-11 — 예전 풀이의 가운뎃점은 보여 줄 사본에서만 뺀다 (보관함 원본 불변)
+      const shown = r.aiResult ? { ...r, aiResult: stripDotsDeep(r.aiResult) } : r;
+      navigate(routeWithId, { state: { savedResult: shown.aiResult, savedReport: shown } });
     } else if (LOCKDOWN_CONTENT.has(r.contentType as string)) {
       // 2026-05-28 — 출시 lockdown 4종은 페이지가 홈으로 redirect 됨. 안내 toast.
       toast.show('출시 후에 다시 열어볼 수 있어요', 'info');

@@ -437,9 +437,9 @@ export function TopicScoreCard({
 }) {
   const pct = Math.max(0, Math.min(100, score));
   // body 가 "길 · 좋은 기운의 흐름" generic 인지 체크 → generic 이면 rich phrase 로 대체
-  const isGeneric = /^(길|평|주의|흉)\s*·\s*(좋은|무난한|흔들리는|큰)/.test(body);
+  const isGeneric = /^(길|평|주의|흉)\s*[·,]\s*(좋은|무난한|흔들리는|큰)/.test(body);
   const rich = getRichScoreLabel(theme, pct);
-  const headline = isGeneric || !body ? rich.phrase : body.split(', ').slice(-1)[0].trim();
+  const headline = isGeneric || !body ? rich.phrase : body.replace(/^(길|평|주의|흉)\s*[·,]\s*/, '').trim();
 
   return (
     <div

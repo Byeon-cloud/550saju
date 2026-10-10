@@ -137,7 +137,7 @@ function autoEmphasize(input: string): string {
       // 종결형 + 서술 결론 (분석 본문)
       '(?:게 좋아요|필수예요|필요해요|중요해요|좋습니다|중요합니다|필요합니다|효율적입니다|적절합니다|좋은 자리예요|어울려요|솟아오릅니다|강화합니다|극대화됩니다|커집니다|높습니다|좋아집니다|수월합니다|핵심 과제입니다)',
     ];
-    const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9, ~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`);
+    const conclusionPattern = new RegExp(`([가-힣\\sA-Za-z0-9~()]{8,32}(?:${conclusionEndings.join('|')}))[.!?]?$`);
 
     let strongCount = 0;
     const maxStrong = 2;
