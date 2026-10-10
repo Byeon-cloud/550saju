@@ -66,6 +66,7 @@ import {
 import type { OhengType } from '@/types/saju';
 // v5 mockup (잠금 5섹션 + 아코디언 + 도식화 + 블러잠금 SSOT) — 2026-05-27 복원
 import { DreamMockupView } from './dream/DreamMockupView';
+import { ReviewAsk } from '@/components/common/ReviewAsk';
 
 /**
  * AI V3 schema → DreamMockupView v5 schema 어댑터 (2026-05-27).
@@ -979,6 +980,12 @@ export function DreamPage() {
                   });
                 }}
               />
+              {/* 2026-10-11 — 결과 끝 후기 (생성이 다 끝난 뒤에만, 결과 1건당 한 번) */}
+              {!isStreaming && (
+                <ReviewAsk contentType="dream" contentLabel="꿈해몽"
+                  reportKey={currentReportIdRef.current || reportIdFromUrl || ''}
+                  style={{ margin: '8px 16px 24px' }} />
+              )}
               {/* 2026-05-28 — 무료 꿈해몽 결과 하단 광고. 1운 결제로 unlock 시 자동 숨김. */}
               {!unlocked && (
                 <div style={{ padding: '0 16px 24px' }}>

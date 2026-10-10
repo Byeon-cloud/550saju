@@ -428,6 +428,7 @@ function KakaoLayout({
       <span
         aria-hidden
         style={{
+          display: 'none', // 2026-10-11 v9 — 큰 한자 워터마크 제거 (화면과 같게)
           position: 'absolute',
           right: 420,
           bottom: -160,
@@ -758,6 +759,7 @@ function FeedLayout({
         <span
           aria-hidden
           style={{
+            display: 'none', // 2026-10-11 v9 — 큰 한자 워터마크 제거 (화면과 같게)
             position: 'absolute',
             right: -40,
             bottom: -80,
@@ -992,6 +994,7 @@ function StoryLayout({
         <span
           aria-hidden
           style={{
+            display: 'none', // 2026-10-11 v9 — 큰 한자 워터마크 제거 (화면과 같게)
             position: 'absolute',
             right: -120,
             bottom: -200,

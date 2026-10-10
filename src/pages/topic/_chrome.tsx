@@ -994,12 +994,12 @@ export function TopicConclusionDark({
         borderRadius: 14,
         padding: '22px 22px 24px',
         margin: '14px 0 18px',
-        borderLeft: `5px solid ${theme.accent}`,
         position: 'relative',
         overflow: 'hidden',
         boxShadow: '0 4px 16px rgba(184,150,90,0.10)',
-        border: '1px solid rgba(184,150,90,0.18)',
-        borderLeftWidth: 5,
+        borderWidth: '1px 1px 1px 5px',
+        borderStyle: 'solid',
+        borderColor: `rgba(184,150,90,0.18) rgba(184,150,90,0.18) rgba(184,150,90,0.18) ${theme.accent}`,
       }}
     >
       {/* 한자 워터마크 — 우하단 큰 글자 (paper 톤이라 alpha 낮춤) */}
