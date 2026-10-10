@@ -127,6 +127,9 @@
     background: var(--bg-page);
     color: var(--text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
+    /* 2026-10-11 한국어는 단어 단위로 줄바꿈 ('사랑'이 '사/랑'으로 갈리지 않게). 아주 긴 낱말만 예외로 끊음 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   ::selection {
