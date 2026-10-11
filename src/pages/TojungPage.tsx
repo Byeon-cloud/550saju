@@ -321,7 +321,7 @@ export function TojungPage() {
         <FadeIn>
           <div className="text-center py-4">
             <p className="text-caption text-brand-gold font-semibold">{isLegacyTojung ? '2026년 토정비결' : `${resultYear}년 신년운세`}</p>
-            <p className="text-display text-text-primary">{selected?.name}님</p>
+            <p className="text-display text-text-primary">{selected?.name} 님</p>
           </div>
         </FadeIn>
 
@@ -510,8 +510,8 @@ export function TojungPage() {
           <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
-            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+            사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
             의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
           </p>

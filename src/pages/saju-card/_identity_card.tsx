@@ -202,7 +202,7 @@ export function IdentityCard({
   const gabjaIdx = getGabjaIndex(ilju);
 
   const meaningEntry = getIljuMeaning(ilju);
-  const identity = meaningEntry?.identity || '사주 8글자가 그려내는 결';
+  const identity = meaningEntry?.identity || '사주 8글자가 그려내는 흐름';
   const description = meaningEntry?.description || '명리학으로 짚어본 본인의 사주';
 
   const ilgan = sajuData.pillars[2]?.천간 || '';
@@ -417,7 +417,7 @@ export function IdentityCard({
               marginBottom: 4,
               padding: '2px 8px',
               border: `1px solid ${C.goldLine}`,
-              borderRadius: 999,
+              borderRadius: 2,
               background: C.goldSoft,
             }}
           >
@@ -450,7 +450,7 @@ export function IdentityCard({
                 padding: '3px 10px',
                 background: C.goldSoft,
                 border: `1px solid ${C.goldLine}`,
-                borderRadius: 999,
+                borderRadius: 2,
                 fontFamily: SERIF,
                 fontSize: 13,
                 color: C.goldDeep,
@@ -644,7 +644,7 @@ export function IdentityCard({
               padding: '6px 12px',
               background: C.surface,
               border: `1px solid ${C.goldLine}`,
-              borderRadius: 999,
+              borderRadius: 2,
               fontSize: 13,
             }}
           >

@@ -730,8 +730,8 @@ export function DailyFortunePage() {
           <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)' }}>
-            사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
+            사주는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
           </p>
         </div>
       </div>
@@ -746,7 +746,7 @@ export function DailyFortunePage() {
           <p style={{ fontSize: 14, color: '#3D3D3D', lineHeight: 1.65, marginBottom: 8, wordBreak: 'keep-all' }}>
             1운으로{' '}
             <strong style={{ color: '#A37A2E' }}>
-              {selectedProfile?.name ? `${selectedProfile.name}님의 ` : ''}오늘의 운세
+              {selectedProfile?.name ? `${selectedProfile.name} 님의 ` : ''}오늘의 운세
             </strong>
             를 볼까요?
           </p>
@@ -891,10 +891,10 @@ function SelectView({
               position: 'relative',
             }}
           >
-            <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 10px', borderRadius: 100, fontSize: 13, fontWeight: 600 }}>
+            <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 10px', borderRadius: 2, fontSize: 13, fontWeight: 600 }}>
               일진 운세
             </span>
-            <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 13 }}>
+            <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 2, fontSize: 13 }}>
               {tierChip}
             </span>
           </div>
@@ -909,7 +909,7 @@ function SelectView({
               position: 'relative',
             }}
           >
-            {profile?.name ?? '당신'}님의<br />
+            {profile?.name ? `${profile.name} 님의` : '나의'}<br />
             오늘 운세를 풀어드릴게요
           </h2>
           <div style={{ fontSize: 13.5, opacity: 0.85, marginTop: 4, position: 'relative' }}>
@@ -1094,9 +1094,9 @@ function ResultView({
                 fontSize: 17, fontWeight: 700, color: '#1A1A1A',
                 marginBottom: 4,
               }}>
-                {topicPicker === 'love' ? '관계 — 어떤 부분이 궁금하세요?'
-                  : topicPicker === 'career' ? '일 — 어떤 부분이 궁금하세요?'
-                  : '건강 — 어떤 부분이 궁금하세요?'}
+                {topicPicker === 'love' ? '관계: 어떤 부분이 궁금하세요?'
+                  : topicPicker === 'career' ? '일: 어떤 부분이 궁금하세요?'
+                  : '건강: 어떤 부분이 궁금하세요?'}
               </h3>
               <p style={{ fontSize: 13.5, color: '#7A7269', marginBottom: 16 }}>
                 고른 주제 화면으로 이동해요. 운이 차감되기 전에 한 번 더 확인해드려요.
@@ -1126,7 +1126,7 @@ function ResultView({
                     <span style={{
                       fontSize: 13, fontWeight: 700, color: '#B8965A',
                       background: 'rgba(184,150,90,0.12)',
-                      padding: '4px 10px', borderRadius: 100,
+                      padding: '4px 10px', borderRadius: 2,
                     }}>{formatPriceLabel(getTopicPrice(t.id))}</span>
                   </button>
                 ))}

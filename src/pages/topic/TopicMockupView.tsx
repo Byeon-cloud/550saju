@@ -30,6 +30,7 @@ import {
   type TimelineType,
 } from './_topic_themes';
 import { getPremiumPrice } from '@/constants/pricing';
+import { underlineMatches, splitAfter } from '@/utils/safeRegex';
 
 /* ══════════════════════════════════════════════════════════════════
  * Helpers — DailyMockupView 의 강조 자동 주입 패턴 재사용
@@ -47,23 +48,14 @@ function autoEmphasize(input: string): string {
   const hasUnderline = /<u>/i.test(text);
 
   if (!hasUnderline) {
-    text = text.replace(
-      /(?<!<u>)(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g,
-      '<u>$&</u>'
-    );
-    text = text.replace(/(?<!<u>)(?<!\d)\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g, '<u>$&</u>');
-    text = text.replace(
-      /(?<!<u>)(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g,
-      '<u>$1</u>'
-    );
-    text = text.replace(
-      /(?<!<u>)(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g,
-      '<u>$1</u>'
-    );
+    text = underlineMatches(text, /(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g);
+    text = underlineMatches(text, /\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g, true);
+    text = underlineMatches(text, /(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g);
+    text = underlineMatches(text, /(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g);
   }
 
   // 문장 분할 (strong·em 공유)
-  const splitSentences = (t: string) => t.split(/(?<=[다요네][.!?])\s+/);
+  const splitSentences = (t: string) => splitAfter(t, /([다요네][.!?])\s+/g);
 
   // 주의/경고 절 → <em> (번트오렌지). 2026-05-29 — DailyMockupView 와 1:1 동기화.
   if (!/<em>/i.test(text)) {
@@ -177,13 +169,13 @@ const MOCKUP_CSS = `
 .topic-mockup .hd .badge {
   background: rgba(184,150,90,0.20);
   border: 1px solid rgba(184,150,90,0.40);
-  padding: 4px 12px; border-radius: 100px;
+  padding: 4px 12px; border-radius: 2px;
   font-size: 13px; font-weight: 700; color: #F4D166;
   letter-spacing: 0.02em;
 }
 .topic-mockup .hd .tier {
   background: rgba(248,245,238,0.10);
-  padding: 4px 10px; border-radius: 100px;
+  padding: 4px 10px; border-radius: 2px;
   font-size: 12px; color: #F8F5EE; opacity: 0.85;
 }
 .topic-mockup .hd .name { margin-left: auto; font-size: 13px; opacity: 0.7; color: #E8DAB8; }
@@ -199,7 +191,7 @@ const MOCKUP_CSS = `
   font-feature-settings: 'tnum';
 }
 
-/* My Saju mini — DailyMockupView 패턴 동기화 (4-cell + 일주 강조) */
+/* My Saju mini — DailyMockupView 경향 동기화 (4-cell + 일주 강조) */
 .topic-mockup .my-saju {
   margin: 16px 16px 0; background: #FFFFFF;
   border: 1px solid var(--c-card-line); border-radius: 14px;
@@ -246,13 +238,14 @@ const MOCKUP_CSS = `
 .topic-mockup .gan.o-su,  .topic-mockup .ji.o-su  { color: var(--c-su); }
 
 /* 2026-05-28 — 결론박스 좌측 strip 제거 (AI 손톱 디자인). 한자 워터마크(::after) + 컬러 텍스트로 톤 표현. */
+/* 2026-10-11 결(結) — 사방 두 줄 테두리 + 판심 제목 (hanji.css .hj-verdict 와 같은 양식) */
 .topic-mockup .conclusion {
   margin: 14px 16px 0;
-  background: linear-gradient(135deg, #FFFEF8 0%, #FAF6EC 100%);
-  border-radius: 14px; padding: 20px 20px 22px;
-  border: 1px solid var(--c-card-line);
+  background: #FFFDF8;
+  border-radius: 2px; padding: 0 20px 20px;
+  border: 1px solid rgba(26,22,18,.58);
   position: relative; overflow: hidden;
-  box-shadow: 0 4px 16px rgba(184,150,90,0.10);
+  box-shadow: inset 0 0 0 3px #FFFDF8, inset 0 0 0 4px rgba(26,22,18,.24);
 }
 .topic-mockup .conclusion::after {
   display: none; /* 2026-10-10 v9 워터마크 제거 */
@@ -261,12 +254,19 @@ const MOCKUP_CSS = `
   color: var(--c-topic-accent); opacity: 0.06; line-height: 1; pointer-events: none;
 }
 .topic-mockup .conclusion .lb {
-  font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700;
-  color: var(--c-gold-deep); letter-spacing: 0.14em; margin-bottom: 10px; position: relative;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  margin: 0 -12px 16px; padding: 12px 0 10px; border-bottom: 1px solid rgba(26,22,18,.24);
+  font-family: 'Noto Serif KR', serif; font-size: 13.5px; font-weight: 700;
+  color: #4B4238; letter-spacing: 0.2em; position: relative;
 }
+.topic-mockup .conclusion .lb::before, .topic-mockup .conclusion .lb::after {
+  content: ''; flex-shrink: 0; width: 14px; height: 8px; background: #4B4238;
+  -webkit-clip-path: polygon(0 0, 100% 0, 100% 52%, 50% 100%, 0 52%); clip-path: polygon(0 0, 100% 0, 100% 52%, 50% 100%, 0 52%);
+}
+.topic-mockup .conclusion .lb::after { -webkit-clip-path: polygon(0 48%, 50% 0, 100% 48%, 100% 100%, 0 100%); clip-path: polygon(0 48%, 50% 0, 100% 48%, 100% 100%, 0 100%); }
 .topic-mockup .conclusion .body {
-  font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700;
-  color: var(--c-ink); line-height: 1.65; margin: 0; position: relative;
+  font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700;
+  color: var(--c-ink); line-height: 1.72; margin: 0; position: relative;
   word-break: keep-all; letter-spacing: -0.01em;
 }
 .topic-mockup .conclusion .ref {
@@ -275,7 +275,7 @@ const MOCKUP_CSS = `
   padding-top: 10px; border-top: 1px solid var(--c-card-line);
 }
 
-/* Body sections — DailyMockupView 동일 패턴 */
+/* Body sections — DailyMockupView 동일 경향 */
 .topic-mockup .body { padding: 22px 16px 0; }
 .topic-mockup .section {
   margin-top: 14px; background: var(--c-surface);
@@ -344,7 +344,7 @@ const MOCKUP_CSS = `
   background: var(--c-topic-accent-soft);
   border: 1px solid var(--c-topic-accent-soft);
   color: var(--c-topic-accent-dark);
-  padding: 5px 10px; border-radius: 100px;
+  padding: 5px 10px; border-radius: 2px;
   font-size: 13px; font-weight: 600;
   font-family: 'Noto Serif KR', serif;
 }
@@ -434,7 +434,7 @@ const MOCKUP_CSS = `
 /* 2026-05-28 — badge-orb 좌측 컬러 strip 제거 (AI 디자인 티). 컬러 톤은 .tag chip 으로 충분히 표현됨. */
 .topic-mockup .meet .ti-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .topic-mockup .meet .ti { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: var(--c-ink); }
-.topic-mockup .meet .tag { font-size: 13px; padding: 2px 8px; border-radius: 100px; font-weight: 700; }
+.topic-mockup .meet .tag { font-size: 13px; padding: 2px 8px; border-radius: 2px; font-weight: 700; }
 .topic-mockup .meet.boost .tag { background: var(--c-mok-soft); color: var(--c-mok); }
 .topic-mockup .meet.clash .tag { background: var(--c-hwa-soft); color: var(--c-hwa); }
 .topic-mockup .meet.calm  .tag { background: rgba(184,150,90,.14); color: var(--c-gold-deep); }
@@ -478,7 +478,7 @@ const MOCKUP_CSS = `
   font-size: 13.5px; font-weight: 700; color: var(--c-ink); margin-bottom: 4px;
 }
 .topic-mockup .do-list li .when {
-  display: inline-block; font-size: 13px; padding: 2px 7px; border-radius: 100px;
+  display: inline-block; font-size: 13px; padding: 2px 7px; border-radius: 2px;
   background: var(--c-topic-accent-soft); color: var(--c-topic-accent-dark);
   margin-left: 6px; font-weight: 600;
 }
@@ -701,7 +701,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
         {/* 사주 4기둥 미니 카드 */}
         {cells.length === 4 && (
           <div className="my-saju">
-            <div className="ttl">내 사주 — {profile?.name || '당신'}</div>
+            <div className="ttl">{profile?.name ? `${profile.name} 님의 사주` : '내 사주'}</div>
             <div className="saju-grid">
               {cells.map((c, idx) => {
                 const ganInfo = STEM_INFO[c.gan];
@@ -723,10 +723,10 @@ export function TopicMockupView(props: TopicMockupViewProps) {
         {/* 다크 결론박스 — §01 핵심 결 */}
         {oneLine && (
           <div className="conclusion" data-han={theme.hanja}>
-            <div className="lb">◇ 한 줄 결론</div>
+            <div className="lb">한 줄 풀이</div>
             <p className="body" dangerouslySetInnerHTML={safeHtml(oneLine)} />
             {conclusionRef && (
-              <p className="ref">— {conclusionRef}</p>
+              <p className="ref">{conclusionRef}</p>
             )}
           </div>
         )}
@@ -736,7 +736,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {/* §01 主柱 — default open */}
           <section className={`section ${isOpen('01') ? 'open' : ''}`}>
             <SectionHeader num="01" title={theme.sec01Title} han={theme.sec01Hanja} id="01" />
-            <div className="sec-lead">{theme.sajuRefPrefix} 중심으로 풀어낸 핵심 결</div>
+            <div className="sec-lead">{theme.sajuRefPrefix} 중심으로 풀어낸 핵심 흐름</div>
             {narrative.length > 0 ? (
               narrative.map((para, i) => (
                 <p key={i} dangerouslySetInnerHTML={safeHtmlEmph(para)} />
@@ -749,7 +749,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {/* §02 八字 — 사주 4기둥 + 주제 specific 인용 */}
           {sajuHighlights.length > 0 && (
             <section className={`section ${isOpen('02') ? 'open' : ''}`}>
-              <SectionHeader num="02" title="내 사주 안의 결" han="八字" id="02" />
+              <SectionHeader num="02" title="내 사주 안의 기운" han="八字" id="02" />
               <div className="sec-lead">{theme.label}에 직접 영향을 주는 사주 글자</div>
               <div className="saju-hl">
                 {sajuHighlights.map((hl, i) => (
@@ -763,7 +763,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {sipCells.length === 4 && (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title={`${theme.label} 십성 분포`} han="十神" id="03" />
-              <div className="sec-lead">{theme.label}에 직접 영향을 주는 4축 — {theme.sipsungAxes.main}, {theme.sipsungAxes.secondary}, {theme.sipsungAxes.resistance}, {theme.sipsungAxes.aux}</div>
+              <div className="sec-lead">{theme.label}에 직접 영향을 주는 4축: {theme.sipsungAxes.main}, {theme.sipsungAxes.secondary}, {theme.sipsungAxes.resistance}, {theme.sipsungAxes.aux}</div>
               <div className="sip-grid">
                 {sipCells.map((c: any, i: number) => (
                   <div key={i} className={`sip-cell lv-${c?.level || '보통'}`}>
@@ -822,7 +822,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {meet && (meet.boost || meet.clash || meet.calm) && (
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
               <SectionHeader num="05" title={`${theme.label} 인연`} han="人緣" id="05" />
-              <div className="sec-lead">도움, 충돌, 평온 — 세 가지 결</div>
+              <div className="sec-lead">도움, 충돌, 평온: 세 가지 흐름</div>
               <div className="meet-stack">
                 {(['boost', 'clash', 'calm'] as const).map((kind) => {
                   const m = meet[kind];
@@ -905,7 +905,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           {/* §07 吉物 — lucky 6 */}
           {lucky && (
             <section className={`section ${isOpen('07') ? 'open' : ''}`}>
-              <SectionHeader num="07" title={`${theme.label} 럭키 6`} han="吉物" id="07" />
+              <SectionHeader num="07" title={`${theme.label} 행운 여섯`} han="吉物" id="07" />
               <div className="sec-lead">색, 방위, 시간, 숫자, 단어, 음식</div>
               <div className="lucky-grid">
                 {luckyEntries.map((e) => {
@@ -939,7 +939,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
           <button type="button" className="upsell" onClick={onUpsell}>
             <div className="lb">종합사주 열 장</div>
             <h3>{upsellLine || '평생을 사주 전체로 보면'}</h3>
-            <p>10가지 결을 한 번에 — 종합사주로 평생의 흐름을 펼쳐 봅니다.</p>
+            <p>10가지 흐름을 한 번에: 종합사주로 평생의 흐름을 펼쳐 봅니다.</p>
             <span className="cta">
               종합사주로 보기 →
               <span className="cost">{getPremiumPrice().actualPrice}운</span>

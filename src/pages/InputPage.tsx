@@ -738,7 +738,7 @@ export function InputPage() {
         import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumCost)).catch(() => {});
 
         triggerPromotionEvent(PROMO_EVENTS.FIRST_SAJU);
-        toast.show(`${premiumCost}운 차감 — 종합 사주 시작`, 'success');
+        toast.show(`${premiumCost}운 차감: 종합 사주 시작`, 'success');
         const newId = generateId();
         navigate(`/result/${newId}?fresh=1&type=premium`, { replace: true });
         return;

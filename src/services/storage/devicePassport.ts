@@ -95,7 +95,7 @@ async function runDevicePassportCheckInner(): Promise<void> {
     if (migrated > 0) {
       await sync.syncFromCloud(uid, { reportsOnly: true });
       try { localStorage.setItem(NOTICE_KEY, String(migrated)); } catch { /* noop */ }
-      console.info(`[기기여권] uid 회전 감지 — 보관함 ${migrated}건 자동 복원`);
+      console.info(`[기기여권] uid 회전 감지: 보관함 ${migrated}건 자동 복원`);
     }
 
     // (b) 잔액 seed — 🚨 리포트 유무와 독립 (P0 fix). 회전이거나 미러 준비됐거나, 재시도 대기 상태면 시도.
@@ -112,7 +112,7 @@ async function runDevicePassportCheckInner(): Promise<void> {
           if (store.seedBalanceFromMirror(mirror)) {
             seededThisBoot = true;
             try { localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }
-            console.info(`[기기여권] 잔액 스냅샷 복원 — paid ${mirror.paid}, bonus ${mirror.bonus}, reward ${mirror.reward}`);
+            console.info(`[기기여권] 잔액 스냅샷 복원: paid ${mirror.paid}, bonus ${mirror.bonus}, reward ${mirror.reward}`);
           } else if (store.getBalance() > 1) {
             // 이미 의미있는 잔액 보유(정상 소비/충전 재개) → 재시도 무의미, 종결 (무한 재호출 방지)
             try { localStorage.removeItem(SEED_PENDING_KEY); } catch { /* noop */ }

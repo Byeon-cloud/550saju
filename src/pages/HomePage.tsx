@@ -71,7 +71,7 @@ const CONCERN_Q: Record<TopicId, string> = {
 };
 
 export function HomePage() {
-  usePageTitle('사주500, 무료로 시작');
+  usePageTitle('정통 명리학 사주 풀이');
   useSeoMeta({
     description:
       '600년 명리학 6대 원전 기반 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세와 꿈해몽 매일 1회 무료, 10가지 주제별 분석과 종합사주, 궁합, 신년운세.',
@@ -170,7 +170,7 @@ export function HomePage() {
         <div style={{ position: 'relative', marginTop: -64, padding: '0 22px' }}>
           <div className="flex items-center gap-2" style={{ fontSize: 14, color: HJ.ink2, fontWeight: 600 }}>
             <Seal size={36}>{tg.gz}</Seal>
-            <span>{todayLabel(today)}, {hasSaju ? `${displayName}님의 오늘` : `오늘은 ${tg.ko}일`}</span>
+            <span>{todayLabel(today)}, {hasSaju ? `${displayName} 님의 오늘` : `오늘은 ${tg.ko}일`}</span>
           </div>
 
           {hasSaju ? (
@@ -239,10 +239,10 @@ export function HomePage() {
           {facts?.year?.star ? (
             <>
               <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, lineHeight: 1.42, marginTop: 12 }}>
-                {NEW_YEAR_TARGET}년, {displayName}님에게<br />{facts.year.star}이 들어옵니다
+                {NEW_YEAR_TARGET}년, {displayName} 님에게<br />{facts.year.star}이 들어옵니다
               </h2>
               <p style={{ fontSize: 15, color: '#D3C7B4', lineHeight: 1.7, marginTop: 8 }}>
-                {ny.ko}년의 {facts.year.ch}({readingOf(facts.year.ch)}){josa(readingOf(facts.year.ch), '은', '는')} {displayName}님({dayGan})에게 {facts.year.star}이에요.
+                {ny.ko}년의 {facts.year.ch}({readingOf(facts.year.ch)}){josa(readingOf(facts.year.ch), '은', '는')} {displayName} 님({dayGan})에게 {facts.year.star}이에요.
                 {' '}열두 달 흐름과 달마다 좋은 날까지 짚어 드려요.
               </p>
             </>
@@ -263,14 +263,14 @@ export function HomePage() {
       </section>
 
       {/* ━━━ 3. 가까운 날 → 먼 날 ━━━ */}
-      <SecTitle k="가까운 날부터 먼 날까지" h={hasSaju ? `${displayName}님 운, 기간별로` : '내 운, 기간별로'} />
+      <SecTitle k="가까운 날부터 먼 날까지" h={hasSaju ? `${displayName} 님 운, 기간별로` : '내 운, 기간별로'} />
       <div style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 18 }}>
         <LadderRow hz="週" k={facts?.week ? `이번 주 ${facts.week.weekday}요일(${Number(facts.week.date.slice(8))}일) ${facts.week.gz}일` : '이번 주 7일'}
           t={facts?.week ? facts.week.text : '오늘부터 7일, 하루씩 짚어 드려요'}
           price={`${weekly}운`} onClick={() => navigate('/weekly', profileId ? { state: { profileId } } : undefined)} />
         <LadderRow hz="月"
           k={facts?.month ? `${yr(facts.month.month.start)}${facts.month.month.calMonth}월 ${facts.month.gzKo}월(${facts.month.month.gz})` : '원하는 달 하나'}
-          t={facts?.month ? `${facts.month.title}${facts.month.once ? ' — 1년에 한 번' : ''}` : '그 달의 돈, 일, 사람 흐름을 깊게'}
+          t={facts?.month ? `${facts.month.title}${facts.month.once ? ', 1년에 한 번' : ''}` : '그 달의 돈, 일, 사람 흐름을 깊게'}
           price={`${monthly}운`}
           onClick={() => navigate(withPid(facts?.month ? `/monthly?month=${facts.month.month.start.slice(0, 7)}` : '/monthly'))} />
         {facts?.love && (
@@ -288,7 +288,7 @@ export function HomePage() {
       </div>
 
       {/* ━━━ 5. 사주책 (종합사주) ━━━ */}
-      <SecTitle k="평생 한 번 읽는 종합사주" h={hasSaju ? `${displayName}님 인생이 한 권에` : '내 인생이 한 권에'} />
+      <SecTitle k="평생 한 번 읽는 종합사주" h={hasSaju ? `${displayName} 님 인생이 한 권에` : '내 인생이 한 권에'} />
       <div style={{ margin: '0 16px', borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD' }}>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.jangansa})`, backgroundSize: 'cover', backgroundPosition: '40% 55%', opacity: 0.42 }} />
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%)' }} />
@@ -296,17 +296,17 @@ export function HomePage() {
           <GoBook title={facts?.persona ? `${facts.persona.dayGz}命書` : '四柱命書'} />
         </div>
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 14, textAlign: 'center', fontSize: 13, color: HJ.ink2, fontWeight: 600 }}>
-          {facts?.persona ? `${displayName}, ${facts.persona.birthYearGz}生 — 8글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
+          {facts?.persona ? `${displayName}, ${facts.persona.birthYearGz}生: 8글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
         </div>
       </div>
       <section style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderTop: 0, borderRadius: '0 0 20px 20px', padding: 18 }}>
         {facts?.persona?.identity ? (
           <>
             <p style={{ fontFamily: SERIF, fontSize: 19.5, fontWeight: 700, lineHeight: 1.5, letterSpacing: '-.02em' }}>
-              {displayName}님은 <span style={{ color: HJ.goldText }}>{facts.persona.identity}</span>{josa(facts.persona.identity, '으로', '로')} 태어났어요.
+              {displayName} 님은 <span style={{ color: HJ.goldText }}>{facts.persona.identity}</span>{josa(facts.persona.identity, '으로', '로')} 태어났어요.
             </p>
             <p style={{ fontSize: 14, color: HJ.mute, marginTop: 6, lineHeight: 1.6 }}>
-              {facts.persona.dayGz}일주 — 이 한 줄에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
+              {facts.persona.dayGz}일주: 이 한 줄에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
             </p>
           </>
         ) : (
@@ -347,7 +347,7 @@ export function HomePage() {
         )}
 
         <Gwang title={facts?.persona ? `${facts.persona.dayGz}命書 目次` : '命書 目次'} style={{ marginTop: 16 }} bodyStyle={{ padding: '4px 14px 8px' }}>
-          <TocRow no={1} t="진짜 강점 3, 빠지기 쉬운 함정 3" pv={hasSaju ? <>첫 번째 함정 — <Redact w={110} /></> : '내 사주가 반복하는 패턴'} />
+          <TocRow no={1} t="진짜 강점 3, 빠지기 쉬운 함정 3" pv={hasSaju ? <>첫 번째 함정: <Redact w={110} /></> : '내 사주가 반복하는 경향'} />
           <TocRow no={2} t="돈, 사랑, 일, 건강, 사람, 공부 점수" pv={hasSaju ? <>가장 강한 영역 <Redact w={44} lock={false} /> 가장 약한 영역 <Redact w={44} /></> : '여섯 영역의 강약을 한눈에'} />
           <TocRow no={3} t="나에게 부족한 기운과 채우는 법" pv="색, 방위, 계절, 습관까지" />
           <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게, 할 일로 정리해 드려요" />

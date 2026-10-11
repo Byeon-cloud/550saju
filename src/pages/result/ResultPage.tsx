@@ -171,13 +171,14 @@ function PremiumDarkHeader({
       </div>
       <div
         style={{
-          background: 'linear-gradient(135deg, #E8D9B8 0%, #B8965A 100%)',
-          color: '#1a1a1a',
-          fontSize: 12,
+          background: 'transparent',
+          color: '#E2C98F',
+          border: '1px solid rgba(214,184,122,0.7)',
+          fontSize: 13,
           fontWeight: 700,
-          padding: '4px 10px',
-          borderRadius: 100,
-          letterSpacing: '0.08em',
+          padding: '3px 9px',
+          borderRadius: 2,
+          letterSpacing: '0.04em',
           flexShrink: 0,
         }}
       >
@@ -383,7 +384,7 @@ export function ResultPage(props: ResultPageProps = {}) {
     // 2026-06-24 — 180→120초 단축. 정상 종합사주 생성 상한 ~80-90초라 120초는 정상을 안 자르고 끊김 꼬리만 컷
     //   (토스 P99 로딩 150초 = 끊긴 채 워치독까지 매달린 값 → 천장을 120초로 낮춰 P99 직접 절감).
     watchdogRef.current = setTimeout(() => {
-      if (!streamSettledRef.current) handleStreamFailure('시간 초과 — 응답이 너무 오래 걸렸어요');
+      if (!streamSettledRef.current) handleStreamFailure('시간 초과: 응답이 너무 오래 걸렸어요');
     }, 120000);
     (async () => {
       try {
@@ -742,7 +743,7 @@ export function ResultPage(props: ResultPageProps = {}) {
         type={isPrem ? '종합 사주 분석' : '사주 리포트 분석'}
         sajuData={sajuData}
         estimatedSeconds={isPrem ? 100 : 85}
-        premiumNote={arrivedCount > 0 ? `정밀 분석 ${arrivedCount}/${isPrem ? 4 : 3} 단계 완료 — 마지막을 마무리하고 있어요` : undefined}
+        premiumNote={arrivedCount > 0 ? `정밀 분석 ${arrivedCount}/${isPrem ? 4 : 3} 단계 완료: 마지막을 마무리하고 있어요` : undefined}
         steps={isPrem ? [
           '사주 8자와 오행 구조를 분석하고 있어요',
           '십성과 용신과 조후를 도출하고 있어요',
@@ -898,7 +899,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                         className="text-right"
                         style={{ width: 32, fontSize: 13, fontWeight: 800, color: val === 0 ? '#c62828' : ecB.dark }}
                       >
-                        {val === 0 ? '없음!' : val}
+                        {val === 0 ? '없음' : val}
                       </span>
                     </div>
                   );
@@ -907,7 +908,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               {v4Elements.water === 0 && (
                 <div className="card-alert-warning mt-3">
                   <p className="text-caption text-func-warning font-semibold">
-                    수(水) 에너지 완전 부재 — 개운법에서 보충 방법을 꼭 확인하세요
+                    수(水) 기운 완전 부재: 개운법에서 보충 방법을 꼭 확인하세요
                   </p>
                 </div>
               )}
@@ -920,25 +921,25 @@ export function ResultPage(props: ResultPageProps = {}) {
             const GYEOKGUK_INFO: Record<string, { summary: string; personality: string; good: string; caution: string }> = {
               정인격: {
                 summary: '학문과 배움을 통해 성장하는 구조의 사주',
-                personality: '지적 호기심이 강하고 배움에 끌리는 타입이에요. 책, 강의, 자격증 등 공부를 통해 안정감을 얻고, 남에게 가르치는 일에서 보람을 느끼는 구조예요.',
+                personality: '지적 호기심이 강하고 배움에 끌리는 편이에요. 책, 강의, 자격증 등 공부를 통해 안정감을 얻고, 남에게 가르치는 일에서 보람을 느끼는 구조예요.',
                 good: '학습 능력이 뛰어나 전문직과 교육직에 유리하고, 어머니와 스승 같은 귀인이 잘 나타나요',
                 caution: '생각이 많아 행동이 느려질 수 있고, 너무 안전한 길만 선택하려는 경향 주의',
               },
               편인격: {
                 summary: '독특한 시각과 직관으로 승부하는 구조의 사주',
-                personality: '남들과 다른 감각이 있어요. 정석보다 독학, 체계보다 직관으로 움직이며, 예술, 기술, 영적 분야에서 두각을 나타내는 타입이에요.',
+                personality: '남들과 다른 감각이 있어요. 정석보다 독학, 체계보다 직관으로 움직이며, 예술, 기술, 영적 분야에서 두각을 나타내는 편이에요.',
                 good: '창의력과 직관이 뛰어나 남들이 못 보는 기회를 포착할 수 있어요',
                 caution: '끈기 부족과 변덕이 약점이 될 수 있어요. 한 가지에 집중하는 연습이 필요해요',
               },
               정관격: {
                 summary: '규칙과 질서 속에서 안정적으로 성장하는 구조의 사주',
-                personality: '책임감이 강하고 규칙을 중시해요. 조직에서 인정받으며 승진하는 정통 엘리트 코스가 잘 맞는 타입이에요. 공직, 대기업, 전문직과 인연이 깊어요.',
+                personality: '책임감이 강하고 규칙을 중시해요. 조직에서 인정받으며 승진하는 정통 엘리트 코스가 잘 맞는 편이에요. 공직, 대기업, 전문직과 인연이 깊어요.',
                 good: '사회적 신뢰와 지위를 자연스럽게 얻는 구조. 공직과 대기업에서 강점',
                 caution: '지나친 원칙주의가 관계를 딱딱하게 만들 수 있어요. 유연성을 의식적으로 키우세요',
               },
               편관격: {
-                summary: '강한 압박을 에너지로 전환하는 구조의 사주',
-                personality: '외부 압박과 경쟁 속에서 오히려 힘을 발휘하는 타입이에요. 위기 상황에서 진가를 보이며, 리더십과 추진력이 강해요. 군인, 경찰, 사업가 기질이 있어요.',
+                summary: '강한 압박을 기운으로 전환하는 구조의 사주',
+                personality: '외부 압박과 경쟁 속에서 오히려 힘을 발휘하는 편이에요. 위기 상황에서 진가를 보이며, 리더십과 추진력이 강해요. 군인, 경찰, 사업가 기질이 있어요.',
                 good: '위기관리 능력이 탁월하고, 강한 추진력으로 큰 성과를 낼 수 있어요',
                 caution: '스트레스를 받으면 공격적이 될 수 있어요. 감정 조절과 휴식이 중요해요',
               },
@@ -950,45 +951,45 @@ export function ResultPage(props: ResultPageProps = {}) {
               },
               상관격: {
                 summary: '기존 틀을 깨고 혁신하는 구조의 사주',
-                personality: '권위에 도전하고 새로운 방식을 만들어내는 반골 기질이에요. 기존 질서에 답답함을 느끼고, 남들이 생각 못한 방법으로 문제를 해결하는 타입이에요.',
+                personality: '권위에 도전하고 새로운 방식을 만들어내는 반골 기질이에요. 기존 질서에 답답함을 느끼고, 남들이 생각 못한 방법으로 문제를 해결하는 편이에요.',
                 good: '혁신적 아이디어로 새 시장을 개척하는 능력. 스타트업, 예술, IT에 강점',
                 caution: '말실수와 대인관계 충돌 주의. 특히 윗사람과의 갈등이 생기기 쉬워요',
               },
               정재격: {
                 summary: '꾸준한 노력으로 안정적 부를 쌓는 구조의 사주',
-                personality: '계획적이고 성실해요. 한방보다 꾸준한 축적을 선호하고, 정직한 노력이 재물로 연결되는 타입이에요. 저축과 장기 투자에 적합한 구조예요.',
+                personality: '계획적이고 성실해요. 한방보다 꾸준한 축적을 선호하고, 정직한 노력이 재물로 연결되는 편이에요. 저축과 장기 투자에 적합한 구조예요.',
                 good: '안정적 수입과 자산 축적에 유리. 장기적으로 부를 이루는 구조',
                 caution: '지나친 절약이 기회를 놓치게 할 수 있어요. 전략적 소비도 필요해요',
               },
               편재격: {
                 summary: '기회를 포착해 큰 재물을 다루는 구조의 사주',
-                personality: '투자 감각이 있고 기회를 보면 과감하게 움직이는 타입이에요. 사업, 무역, 투자에서 두각을 나타내며, 돈의 흐름을 읽는 감각이 남다른 구조예요.',
+                personality: '투자 감각이 있고 기회를 보면 과감하게 움직이는 편이에요. 사업, 무역, 투자에서 두각을 나타내며, 돈의 흐름을 읽는 감각이 남다른 구조예요.',
                 good: '사업 수완이 뛰어나고, 큰 돈을 다루는 능력이 있어요. 투자와 무역에 유리',
                 caution: '도박성 투자와 과소비 주의. 리스크 관리를 의식적으로 해야 해요',
               },
               비견격: {
                 summary: '독립적인 힘으로 자기 길을 개척하는 구조의 사주',
-                personality: '자존심이 강하고 남에게 기대지 않는 타입이에요. 독립심과 경쟁심이 강하며, 혼자서도 잘 해내는 추진력이 있어요. 독립 사업이나 1인 기업에 적합해요.',
+                personality: '자존심이 강하고 남에게 기대지 않는 편이에요. 독립심과 경쟁심이 강하며, 혼자서도 잘 해내는 추진력이 있어요. 독립 사업이나 1인 기업에 적합해요.',
                 good: '독립적으로 성취하는 능력이 탁월. 창업과 프리랜서에서 강점',
                 caution: '고집과 타협 부족이 약점. 협력하면 더 큰 성과를 낼 수 있어요',
               },
               겁재격: {
                 summary: '승부욕과 경쟁에서 힘을 발휘하는 구조의 사주',
-                personality: '지기 싫어하는 성격이에요. 경쟁 상황에서 폭발적인 에너지를 보이며, 위기를 기회로 바꾸는 힘이 있어요. 영업, 스포츠, 투자 분야와 인연이 깊어요.',
+                personality: '지기 싫어하는 성격이에요. 경쟁 상황에서 큰 기운을 보이며, 위기를 기회로 바꾸는 힘이 있어요. 영업, 스포츠, 투자 분야와 인연이 깊어요.',
                 good: '위기 상황에서 오히려 강해지는 구조. 경쟁이 치열한 분야에서 두각',
                 caution: '재물 손실과 인간관계 충돌 주의. 욕심을 조절하는 것이 핵심 과제',
               },
               건록격: {
                 summary: '본인의 힘이 충만해 자립형으로 성공하는 구조의 사주',
-                personality: '에너지가 넘치고 자기 확신이 강한 타입이에요. 남에게 의존하지 않고 자기 힘으로 일어서며, 실행력이 뛰어나요.',
+                personality: '활기가 넘치고 자기 확신이 강한 편이에요. 남에게 의존하지 않고 자기 힘으로 일어서며, 실행력이 뛰어나요.',
                 good: '자수성가형. 본인 역량으로 안정적 성공을 이루는 구조',
                 caution: '독선적이 되기 쉬움. 다른 사람 의견을 듣는 열린 태도가 중요',
               },
               양인격: {
-                summary: '강렬한 에너지를 어떻게 쓰느냐가 인생을 결정하는 구조의 사주',
-                personality: '에너지가 매우 강하고 카리스마가 있어요. 잘 쓰면 리더, 잘못 쓰면 갈등의 원인이 되는 양날의 검 같은 구조예요.',
+                summary: '강렬한 기운을 어떻게 쓰느냐가 인생을 결정하는 구조의 사주',
+                personality: '기운이 매우 강하고 카리스마가 있어요. 잘 쓰면 리더, 잘못 쓰면 갈등의 원인이 되는 양날의 검 같은 구조예요.',
                 good: '강한 리더십과 결단력. 군인, 경찰, 외과의와 사업가로 대성할 수 있어요',
-                caution: '분노 조절이 최대 과제. 에너지를 운동이나 사업으로 승화시키세요',
+                caution: '분노 조절이 최대 과제. 기운을 운동이나 사업으로 승화시키세요',
               },
             };
 
@@ -1004,22 +1005,22 @@ export function ResultPage(props: ResultPageProps = {}) {
             // 신강/신약 해석
             const gangYakDetail: Record<string, { meaning: string; good: string; caution: string; strategy: string }> = {
               신강: {
-                meaning: '일간(나)의 힘이 사주에서 강한 위치에 있어요. 주변 환경보다 내 에너지가 더 세서, 스스로 길을 개척하는 주도형 사주예요.',
+                meaning: '일간(나)의 힘이 사주에서 강한 위치에 있어요. 주변 환경보다 내 기운이 더 세서, 스스로 길을 개척하는 주도형 사주예요.',
                 good: '자기 주장이 뚜렷하고 추진력이 강해요. 리더십, 독립 사업, 자기 브랜드에 유리해요',
                 caution: '남의 말을 안 듣는 고집, 무리한 확장, 건강 과신이 약점이에요',
-                strategy: '용신(부족한 오행)을 채워 에너지를 분산시키고, 협력자를 두는 것이 핵심이에요',
+                strategy: '용신(부족한 오행)을 채워 기운을 분산시키고, 협력자를 두는 것이 핵심이에요',
               },
               신약: {
                 meaning: '일간(나)의 힘이 사주에서 약한 편이에요. 주변 환경의 영향을 많이 받지만, 그만큼 적응력과 관찰력이 뛰어난 구조예요.',
                 good: '눈치가 빠르고 겸손해서 귀인이 잘 나타나요. 팀워크, 조직, 파트너십에 유리해요',
                 caution: '우유부단함, 자신감 부족, 남 눈치 보기가 약점이에요',
-                strategy: '용신(나를 도와주는 오행)을 보강해 자신감과 에너지를 높이는 것이 핵심이에요',
+                strategy: '용신(나를 도와주는 오행)을 보강해 자신감과 기운을 높이는 것이 핵심이에요',
               },
               중화: {
                 meaning: '일간(나)의 힘이 적절히 균형 잡혀 있어요. 상황에 따라 유연하게 대처하는 능력이 있는 이상적 구조예요.',
                 good: '유연성이 높아 다양한 환경에 적응 가능. 치우침 없이 안정적 인생을 살 수 있어요',
                 caution: '특출난 강점이 없어 보일 수 있어요. 의식적으로 전문 분야를 정해 깊이 파는 것이 중요',
-                strategy: '용신으로 약간의 에너지 보정을 하면 더 큰 성과를 낼 수 있어요',
+                strategy: '용신으로 약간의 기운 보정을 하면 더 큰 성과를 낼 수 있어요',
               },
             };
 
@@ -1042,7 +1043,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 <div className="rounded-xl overflow-hidden mb-3" style={{ border: '1px solid #e8e0d4' }}>
                   <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, #f8f5ef, #f0ebe3)' }}>
                     <div>
-                      <p style={{ fontSize: 12, color: '#a0937f', fontWeight: 600 }}>격국 — 사주의 구조 유형</p>
+                      <p style={{ fontSize: 12, color: '#a0937f', fontWeight: 600 }}>격국: 사주의 구조 유형</p>
                       <p style={{ fontSize: 20, fontWeight: 900, color: '#3D3427', marginTop: 2 }}>{analysisBase.격국}</p>
                     </div>
                     <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #1A1612, #2A231C)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1067,7 +1068,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                   ) : (
                     <div className="px-4 py-3" style={{ background: '#fff' }}>
                       <p style={{ fontSize: 13, color: '#6b5b47', lineHeight: 1.7 }}>
-                        {analysisBase.격국} 구조의 사주예요. 사주의 핵심 에너지 흐름을 결정하는 구조로, 아래 용신과 함께 해석하면 전체 그림이 보여요.
+                        {analysisBase.격국} 구조의 사주예요. 사주의 핵심 기운 흐름을 결정하는 구조로, 아래 용신과 함께 해석하면 전체 그림이 보여요.
                       </p>
                     </div>
                   )}
@@ -1077,7 +1078,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 <div className="rounded-xl overflow-hidden mb-3" style={{ border: `1px solid ${gangYakColor}25` }}>
                   <div className="flex items-center justify-between px-4 py-3" style={{ background: `${gangYakColor}08` }}>
                     <div>
-                      <p style={{ fontSize: 12, color: '#a0937f', fontWeight: 600 }}>일간 강약 — 나의 에너지 세기</p>
+                      <p style={{ fontSize: 12, color: '#a0937f', fontWeight: 600 }}>일간 강약: 나의 기운 세기</p>
                       <p style={{ fontSize: 20, fontWeight: 900, color: gangYakColor, marginTop: 2 }}>{analysisBase.일간강약}</p>
                     </div>
                     <div style={{ width: 42, height: 42, borderRadius: 12, background: `${gangYakColor}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1107,7 +1108,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 <div className="rounded-xl overflow-hidden mb-3" style={{ border: '2px solid rgba(184,150,90,0.3)', boxShadow: '0 2px 12px rgba(184,150,90,0.1)' }}>
                   <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, rgba(184,150,90,0.1), rgba(140,109,61,0.15))' }}>
                     <div>
-                      <p style={{ fontSize: 12, color: '#B8965A', fontWeight: 600 }}>용신 — 사주 균형의 열쇠</p>
+                      <p style={{ fontSize: 12, color: '#B8965A', fontWeight: 600 }}>용신: 사주 균형의 열쇠</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p style={{ fontSize: 22, fontWeight: 900, color: yongOheng?.color || '#B8965A' }}>{analysisBase.용신}</p>
                         {yongOheng && <span style={{ fontSize: 13, color: '#8b7e6f' }}>{yongOheng.nature}</span>}
@@ -1122,12 +1123,12 @@ export function ResultPage(props: ResultPageProps = {}) {
                     <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #f5f0e8, #ede5d5)', border: '1px solid rgba(184,150,90,0.2)' }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: '#B8965A', marginBottom: 4 }}>이게 뭔 뜻이에요?</p>
                       <p style={{ fontSize: 13.5, color: '#6b5b47', lineHeight: 1.75 }}>
-                        당신의 사주에는 <b style={{ color: yongOheng?.color || '#B8965A' }}>{analysisBase.용신}({yongOheng?.name || analysisBase.용신})</b> 에너지가 가장 필요해요.
+                        내 사주에는 <b style={{ color: yongOheng?.color || '#B8965A' }}>{analysisBase.용신}({yongOheng?.name || analysisBase.용신})</b> 기운이 가장 필요해요.
                         {analysisBase.일간강약 === '신강'
-                          ? ` ${analysisBase.일간강약}(에너지 과잉) 사주이기 때문에, ${analysisBase.용신} 에너지로 넘치는 힘을 적절히 분산시켜야 균형이 잡혀요.`
+                          ? ` ${analysisBase.일간강약}(기운 과잉) 사주이기 때문에, ${analysisBase.용신} 기운으로 넘치는 힘을 적절히 분산시켜야 균형이 잡혀요.`
                           : analysisBase.일간강약 === '신약'
-                            ? ` ${analysisBase.일간강약}(에너지 부족) 사주이기 때문에, ${analysisBase.용신} 에너지가 나를 도와주고 힘을 채워줘요.`
-                            : ` ${analysisBase.용신} 에너지를 보충하면 사주의 균형이 더 완성돼요.`
+                            ? ` ${analysisBase.일간강약}(기운 부족) 사주이기 때문에, ${analysisBase.용신} 기운이 나를 도와주고 힘을 채워줘요.`
+                            : ` ${analysisBase.용신} 기운을 보충하면 사주의 균형이 더 완성돼요.`
                         }
                       </p>
                     </div>
@@ -1145,13 +1146,13 @@ export function ResultPage(props: ResultPageProps = {}) {
                       <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${yongOheng.color}25` }}>
                         <div className="px-3 py-2" style={{ background: `${yongOheng.color}08` }}>
                           <p style={{ fontSize: 12, fontWeight: 700, color: yongOheng.color }}>
-                            {analysisBase.용신}({yongOheng.name}) 에너지 보충법 — 이렇게 활용하세요
+                            {analysisBase.용신}({yongOheng.name}) 기운 보충법: 이렇게 활용하세요
                           </p>
                         </div>
                         <div className="px-3 py-2.5 space-y-1.5" style={{ background: '#fff' }}>
                           <div className="flex items-start gap-2">
                             <span style={{ fontSize: 12, fontWeight: 700, color: '#a0937f', width: 40, flexShrink: 0 }}>방위</span>
-                            <span style={{ fontSize: 13, color: '#6b5b47' }}>{yongOheng.direction} 방향이 유리 — 책상과 침대를 {yongOheng.direction}으로 배치</span>
+                            <span style={{ fontSize: 13, color: '#6b5b47' }}>{yongOheng.direction} 방향이 유리: 책상과 침대를 {yongOheng.direction}으로 배치</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <span style={{ fontSize: 12, fontWeight: 700, color: '#a0937f', width: 40, flexShrink: 0 }}>계절</span>
@@ -1177,7 +1178,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                     {analysisBase.희신 && (
                       <div className="flex-1 rounded-xl overflow-hidden" style={{ border: '1px solid #c8e6c9' }}>
                         <div className="px-3 py-2" style={{ background: '#E7EFE6' }}>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: '#4E7A57' }}>희신 — 용신을 돕는 오행</p>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: '#4E7A57' }}>희신: 용신을 돕는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span style={{ fontSize: 18, fontWeight: 900, color: huiOheng?.color || '#4E7A57' }}>{analysisBase.희신}</span>
                             {huiOheng && <span style={{ fontSize: 12, color: '#6E9776' }}>{(huiOheng as any).nature}</span>}
@@ -1185,7 +1186,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>
                           <p style={{ fontSize: 12, color: '#4E7A57', lineHeight: 1.6 }}>
-                            용신({analysisBase.용신})을 옆에서 돕는 오행이에요. {analysisBase.희신} 에너지가 많은 환경에 있으면 용신의 효과가 배가돼요.
+                            용신({analysisBase.용신})을 옆에서 돕는 오행이에요. {analysisBase.희신} 기운이 많은 환경에 있으면 용신의 효과가 배가돼요.
                           </p>
                         </div>
                       </div>
@@ -1193,7 +1194,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                     {analysisBase.기신 && (
                       <div className="flex-1 rounded-xl overflow-hidden" style={{ border: '1px solid #ffcdd2' }}>
                         <div className="px-3 py-2" style={{ background: '#F6E5E0' }}>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: '#c62828' }}>기신 — 균형을 깨는 오행</p>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: '#c62828' }}>기신: 균형을 깨는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span style={{ fontSize: 18, fontWeight: 900, color: giOheng?.color || '#B04A38' }}>{analysisBase.기신}</span>
                             {giOheng && <span style={{ fontSize: 12, color: '#ef5350' }}>{(giOheng as any).nature}</span>}
@@ -1201,7 +1202,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>
                           <p style={{ fontSize: 12, color: '#c62828', lineHeight: 1.6 }}>
-                            사주 균형을 무너뜨리는 오행이에요. {analysisBase.기신} 에너지가 과하면 건강, 재물, 관계에 부정적 영향이 생길 수 있어요.
+                            사주 균형을 무너뜨리는 오행이에요. {analysisBase.기신} 기운이 과하면 건강, 재물, 관계에 부정적 영향이 생길 수 있어요.
                           </p>
                         </div>
                       </div>
@@ -1211,13 +1212,13 @@ export function ResultPage(props: ResultPageProps = {}) {
 
                 {/* ────── 5. 종합 요약 — "그래서 나는?" ────── */}
                 <div className="p-3.5 rounded-xl" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)', boxShadow: '0 2px 12px rgba(40,28,14,0.15)' }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: '#E8D5A8', marginBottom: 6 }}>한 줄 요약 — 그래서 나는?</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#E8D5A8', marginBottom: 6 }}>한 줄 요약: 그래서 나는?</p>
                   <p style={{ fontSize: 13.5, color: '#fff', lineHeight: 1.8 }}>
                     {gyeokInfo
                       ? `${analysisBase.격국} + ${analysisBase.일간강약} = ${gyeokInfo.summary.replace('구조의 사주', '')}사주이며, `
                       : `${analysisBase.격국} 구조의 사주이며, `
                     }
-                    <b style={{ color: '#E8D5A8' }}>{analysisBase.용신}({yongOheng?.name || analysisBase.용신})</b> 에너지를 보충하면 부족한 부분이 채워져요.
+                    <b style={{ color: '#E8D5A8' }}>{analysisBase.용신}({yongOheng?.name || analysisBase.용신})</b> 기운을 보충하면 부족한 부분이 채워져요.
                     {analysisBase.희신 && <> <span style={{ color: '#a5d6a7' }}>{analysisBase.희신}(희신)</span>은 나를 돕고,</>}
                     {analysisBase.기신 && <> <span style={{ color: '#ef9a9a' }}>{analysisBase.기신}(기신)</span>은 조심해야 해요.</>}
                     {yongOheng && <> 일상에서 <b style={{ color: '#E8D5A8' }}>{yongOheng.direction} 방향, {yongOheng.season}철, {yongOheng.lifestyle.split(',')[0]}</b>을 의식하면 운이 좋아져요.</>}
@@ -1231,9 +1232,9 @@ export function ResultPage(props: ResultPageProps = {}) {
           {/* 12운성 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-1">12운성 — 에너지 상태</h2>
+              <h2 className="text-h3 text-text-primary mb-1">12운성: 기운 상태</h2>
               <p style={{ fontSize: 13, color: '#8b7e6f', marginBottom: 12, lineHeight: 1.6 }}>
-                인생 각 영역의 에너지 강도를 보여줘요. <span style={{ color: '#27ae60', fontWeight: 700 }}>높을수록 활발</span>하고, <span style={{ color: '#e74c3c', fontWeight: 700 }}>낮을수록 내면에 집중</span>하는 에너지예요.
+                인생 각 영역의 기운 강도를 보여줘요. <span style={{ color: '#27ae60', fontWeight: 700 }}>높을수록 활발</span>하고, <span style={{ color: '#e74c3c', fontWeight: 700 }}>낮을수록 내면에 집중</span>하는 기운이에요.
               </p>
 
               {/* 종합 해석 */}
@@ -1244,7 +1245,7 @@ export function ResultPage(props: ResultPageProps = {}) {
 
               {/* 에너지 레벨 한눈에 */}
               <div className="mb-4 p-3 rounded-xl" style={{ background: '#faf7f2' }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#8b7e6f', marginBottom: 8 }}>에너지 한눈에 보기</p>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#8b7e6f', marginBottom: 8 }}>기운 한눈에 보기</p>
                 <div className="space-y-2.5">
                   {v4Unyoung.map((u, i) => {
                     const level = getUnyoungEnergyLevel(u.kr);
@@ -1315,10 +1316,10 @@ export function ResultPage(props: ResultPageProps = {}) {
                   return (
                     <div className="space-y-1.5">
                       <p style={{ fontSize: 13.5, color: '#4E7A57', fontWeight: 600 }}>
-                        가장 강한 운: {labels[best[0]]} ({best[1]}점) — 이 영역에서 타고난 재능이 빛나요
+                        가장 강한 운: {labels[best[0]]} ({best[1]}점): 이 영역에서 타고난 재능이 빛나요
                       </p>
                       <p style={{ fontSize: 13.5, color: '#B04A38', fontWeight: 600 }}>
-                        보완이 필요한 운: {labels[worst[0]]} ({worst[1]}점) — 의식적인 노력이 도움돼요
+                        보완이 필요한 운: {labels[worst[0]]} ({worst[1]}점): 의식적인 노력이 도움돼요
                       </p>
                       <p style={{ fontSize: 13, color: '#8b7e6f' }}>
                         점수는 사주 원국의 오행 분포와 십성 관계를 기반으로 산출했어요
@@ -1348,7 +1349,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               <div className="mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid #e8e0d4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <div className="px-4 py-2.5" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: '#E8D5A8', letterSpacing: '0.5px' }}>인생 대운 타임라인</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>10년 단위 운의 큰 흐름 — 오행별 색상 구분</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>10년 단위 운의 큰 흐름: 오행별 색상 구분</p>
                 </div>
                 <div className="p-3" style={{ background: '#faf7f2' }}>
                   {/* 메인 바 차트 */}
@@ -1469,7 +1470,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 return (
                   <div className="mt-3 p-3 rounded-xl" style={{ background: `${curEc.main}08`, border: `1px solid ${curEc.main}30` }}>
                     <p style={{ fontSize: 13, fontWeight: 700, color: curEc.dark }}>
-                      현재 {cur.gz}({cur.kr}) 대운 — {(EKR as any)[cur.elem]} 에너지 시기
+                      현재 {cur.gz}({cur.kr}) 대운, {(EKR as any)[cur.elem]} 기운이 도는 시기
                     </p>
                     <p style={{ fontSize: 12, color: '#8b7e6f', marginTop: 2 }}>
                       {cur.label} ({cur.period})에 해당하는 시기로, {(EKR as any)[cur.elem]} 오행의 영향을 크게 받고 있어요.
@@ -1490,9 +1491,9 @@ export function ResultPage(props: ResultPageProps = {}) {
           {/* 납음 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-1">납음 — 근본 에너지</h2>
+              <h2 className="text-h3 text-text-primary mb-1">납음: 근본 기운</h2>
               <p style={{ fontSize: 13, color: '#8b7e6f', marginBottom: 12 }}>
-                사주의 가장 깊은 곳에 있는 근본 에너지예요. 각 기둥마다 고유한 에너지가 있고, <span style={{ fontWeight: 700, color: '#B8965A' }}>일주 납음이 가장 중요</span>해요.
+                사주의 가장 깊은 곳에 있는 근본 기운이에요. 각 기둥마다 고유한 기운이 있고, <span style={{ fontWeight: 700, color: '#B8965A' }}>일주 납음이 가장 중요</span>해요.
               </p>
 
               {/* 종합 해석 */}
@@ -1535,7 +1536,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: '#3949ab', marginBottom: 3 }}>이렇게 읽어요</p>
                 <p style={{ fontSize: 12, color: '#5c6bc0', lineHeight: 1.6 }}>
-                  납음은 당신의 '기본 성격 모드'예요. 일주 납음이 가장 중요 — 평소 자연스럽게 행동하는 방식이에요. 예를 들어 '역참의 넓은 땅'이면 사람을 모으고 연결하는 게 자연스러운 사람이에요. 이 성질을 살리는 방향으로 살면 인생이 편해져요.
+                  납음은 내 '기본 성격 모드'예요. 일주 납음이 가장 중요, 평소 자연스럽게 행동하는 방식이에요. 예를 들어 '역참의 넓은 땅'이면 사람을 모으고 연결하는 게 자연스러운 사람이에요. 이 성질을 살리는 방향으로 살면 인생이 편해져요.
                 </p>
               </div>
             </div>
@@ -1576,7 +1577,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 </div>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
                   {(['A', 'D', 'B', 'C'] as const).map((g) => (
-                    <div key={g} style={{ flex: 1, height: 4, borderRadius: 999, background: arrivedGroups[g] ? '#B8965A' : 'rgba(184,150,90,0.18)', transition: 'background 0.4s' }} />
+                    <div key={g} style={{ flex: 1, height: 4, borderRadius: 2, background: arrivedGroups[g] ? '#B8965A' : 'rgba(184,150,90,0.18)', transition: 'background 0.4s' }} />
                   ))}
                 </div>
                 <div style={{ fontSize: 13, color: '#8C6D3D', lineHeight: 1.5 }}>
@@ -1618,9 +1619,9 @@ export function ResultPage(props: ResultPageProps = {}) {
           {/* 신살 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-1">신살 — 타고난 별</h2>
+              <h2 className="text-h3 text-text-primary mb-1">신살: 타고난 별</h2>
               <p style={{ fontSize: 13, color: '#8b7e6f', marginBottom: 4 }}>
-                사주에 타고난 특별한 에너지예요. <span style={{ color: '#4E7A57', fontWeight: 700 }}>길신</span>은 타고난 재능과 행운, <span style={{ color: '#8A6226', fontWeight: 700 }}>흉살</span>은 주의하면 오히려 강점으로 바뀌는 에너지예요.
+                사주에 타고난 특별한 기운이에요. <span style={{ color: '#4E7A57', fontWeight: 700 }}>길신</span>은 타고난 재능과 행운, <span style={{ color: '#8A6226', fontWeight: 700 }}>흉살</span>은 주의하면 오히려 강점으로 바뀌는 기운이에요.
               </p>
               <p style={{ fontSize: 12, color: '#a0937f', marginBottom: 12 }}>
                 아래 신살은 <b style={{ color: '#6b5b47' }}>일주(日柱)</b> 기준으로 추출한 것으로, 본인의 핵심 성향에 직접 영향을 줍니다.
@@ -1640,7 +1641,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               </div>
 
               <div className="mb-4">
-                <div className="text-label text-func-success mb-2">길신 — 타고난 재능</div>
+                <div className="text-label text-func-success mb-2">길신: 타고난 재능</div>
                 <div className="space-y-2">
                   {v4Gilsin.map((g, i) => (
                     <div key={i} className="p-3 rounded-xl" style={{ background: '#E7EFE6', border: '1px solid #c8e6c9' }}>
@@ -1662,7 +1663,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                 </div>
               </div>
               <div>
-                <div className="text-label text-func-warning mb-2">흉살 — 주의하면 강점</div>
+                <div className="text-label text-func-warning mb-2">흉살: 주의하면 강점</div>
                 <div className="space-y-2">
                   {v4Hyungsal.map((h, i) => (
                     <div key={i} className="p-3 rounded-xl" style={{ background: '#fff3e0', border: '1px solid #ffe0b2' }}>
@@ -1696,7 +1697,7 @@ export function ResultPage(props: ResultPageProps = {}) {
           {/* 공망 */}
           <LocalFadeIn delay={80}>
             <div className="card">
-              <h2 className="text-h3 text-text-primary mb-1">공망 — 비어있는 에너지</h2>
+              <h2 className="text-h3 text-text-primary mb-1">공망: 비어있는 기운</h2>
               <p style={{ fontSize: 13, color: '#8b7e6f', marginBottom: 12 }}>
                 공망은 사주에서 '비어있는 자리'예요. 나쁜 게 아니라, <span style={{ fontWeight: 700, color: '#6a1b9a' }}>집착을 내려놓으면 오히려 자유롭고 창의적인 영역</span>이 돼요.
               </p>
@@ -1739,7 +1740,7 @@ export function ResultPage(props: ResultPageProps = {}) {
               <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: '#3949ab', marginBottom: 3 }}>이렇게 읽어요</p>
                 <p style={{ fontSize: 12, color: '#5c6bc0', lineHeight: 1.6 }}>
-                  공망의 영역은 사주의 일간({sajuData?.pillars?.[2]?.천간읽기} 일간)과 공망 지지의 오행 관계로 결정돼요. 예를 들어 재성 공망이면 '돈에 집착할수록 도망감', 관성 공망이면 '조직보다 자유로운 경로가 유리' — 비어있는 영역이기에 오히려 남들과 다른 강점이 돼요.
+                  공망의 영역은 사주의 일간({sajuData?.pillars?.[2]?.천간읽기} 일간)과 공망 지지의 오행 관계로 결정돼요. 예를 들어 재성 공망이면 '돈에 집착할수록 도망감', 관성 공망이면 '조직보다 자유로운 경로가 유리', 비어있는 영역이기에 오히려 남들과 다른 강점이 돼요.
                 </p>
               </div>
             </div>
@@ -1849,8 +1850,8 @@ export function ResultPage(props: ResultPageProps = {}) {
               <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
                 한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
               </p>
-              <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
-                사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+              <p className="text-[13px]" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+                사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
                 <br />
                 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
               </p>

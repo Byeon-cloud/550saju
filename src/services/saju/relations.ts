@@ -193,7 +193,7 @@ function detectCheonganRelations(gan: IndexedChar[]): Relation[] {
             hanja: '天干沖',
             chars: [a.char, b.char],
             positions: [`${a.pillarLabel}간`, `${b.pillarLabel}간`],
-            desc: `${a.char}${b.char}충 — 방위 충돌`,
+            desc: `${a.char}${b.char}충: 방위 충돌`,
             goodBad: '흉',
           });
         }
@@ -288,7 +288,7 @@ function detectJijiRelations(zhi: IndexedChar[]): Relation[] {
             hanja: '地支沖',
             chars: [a.char, b.char],
             positions: [`${a.pillarLabel}지`, `${b.pillarLabel}지`],
-            desc: `${a.char}${b.char}충 — 변동과 갈등`,
+            desc: `${a.char}${b.char}충: 변동과 갈등`,
             goodBad: '흉',
           });
         }
@@ -302,7 +302,7 @@ function detectJijiRelations(zhi: IndexedChar[]): Relation[] {
             hanja: '刑',
             chars: [a.char, b.char],
             positions: [`${a.pillarLabel}지`, `${b.pillarLabel}지`],
-            desc: `${a.char}${b.char}형 — ${name}`,
+            desc: `${a.char}${b.char}형: ${name}`,
             goodBad: '흉',
           });
         }
@@ -316,7 +316,7 @@ function detectJijiRelations(zhi: IndexedChar[]): Relation[] {
             hanja: '破',
             chars: [a.char, b.char],
             positions: [`${a.pillarLabel}지`, `${b.pillarLabel}지`],
-            desc: `${a.char}${b.char}파 — 결렬과 균열`,
+            desc: `${a.char}${b.char}파: 결렬과 균열`,
             goodBad: '흉',
           });
         }
@@ -330,7 +330,7 @@ function detectJijiRelations(zhi: IndexedChar[]): Relation[] {
             hanja: '害',
             chars: [a.char, b.char],
             positions: [`${a.pillarLabel}지`, `${b.pillarLabel}지`],
-            desc: `${a.char}${b.char}해 — 시기와 원망`,
+            desc: `${a.char}${b.char}해: 시기와 원망`,
             goodBad: '흉',
           });
         }
@@ -344,7 +344,7 @@ function detectJijiRelations(zhi: IndexedChar[]): Relation[] {
             hanja: '怨嗔',
             chars: [a.char, b.char],
             positions: [`${a.pillarLabel}지`, `${b.pillarLabel}지`],
-            desc: `${a.char}${b.char}원진 — 속앓이와 미움`,
+            desc: `${a.char}${b.char}원진: 속앓이와 미움`,
             goodBad: '흉',
           });
         }
@@ -382,7 +382,7 @@ function buildGongmangRelations(gongmang: GongMang[] | undefined, pillars: Pilla
         hanja: '空亡',
         chars: matched.map((m) => m.char),
         positions: matched.map((m) => `${m.pillar}지`),
-        desc: `${g.기준 || ''} 기준 공망 — ${targets.join(', ')} 자리에 해당`,
+        desc: `${g.기준 || ''} 기준 공망: ${targets.join(', ')} 자리에 해당`,
         goodBad: '흉',
       });
     } else {

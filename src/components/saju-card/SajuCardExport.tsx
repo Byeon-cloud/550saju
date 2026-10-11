@@ -388,6 +388,6 @@ export function buildShareTextAndUrl(
   const qs = params.toString();
   const url = `${origin}${basePath}${qs ? '?' + qs : ''}`;
 
-  const text = `${name}님의 사주 카드 — 사주500 에서 풀이 받기 (500원~)`;
+  const text = `${name} 님의 사주 카드, 사주500에서 풀이 받아 보세요`;
   return { text, url };
 }

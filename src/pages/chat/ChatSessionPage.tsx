@@ -90,7 +90,7 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
     summary = (
       <>
         {ctx.category && <div style={{ fontSize: 13, color: 'rgba(248,245,238,0.6)', marginTop: 6 }}>꿈 주제, {ctx.category}</div>}
-        {ctx.dreamText && <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 4, fontStyle: 'italic' }}>"{ctx.dreamText}"</div>}
+        {ctx.dreamText && <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 4, fontStyle: 'normal' }}>"{ctx.dreamText}"</div>}
         {ctx.concern && <div style={{ fontSize: 13.5, color: 'rgba(248,245,238,0.75)', marginTop: 4 }}>요새 고민, {ctx.concern}</div>}
       </>
     );
@@ -135,7 +135,7 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
 function buildContextPrompt(ctx: any, userName: string): string {
   if (!ctx || typeof ctx !== 'object') return '';
   const { type, label, dreamText, concern, category, fullResult } = ctx;
-  const lines: string[] = [`[CONTENT_CONTEXT] ${userName}님은 방금 "${label || type}" 풀이를 보고 채팅에 들어왔습니다.`];
+  const lines: string[] = [`[CONTENT_CONTEXT] ${userName} 님은 방금 "${label || type}" 풀이를 보고 채팅에 들어왔습니다.`];
   // 결과 데이터 줄이 실제로 들어갔는지 판정 기준점 — 라벨·기간 같은 메타 줄은 데이터로 세지 않음 (아래 지시문 분기용)
   let dataStart = lines.length;
   if (type === 'dream') {
@@ -248,7 +248,7 @@ function buildContextPrompt(ctx: any, userName: string): string {
         const head = [d.day, d.date, d.ganji].filter(Boolean).map((v: unknown) => plainText(v)).join(' ');
         const score = d.score != null ? ` ${d.score}점` : '';
         const tone = d.tone ? ` ${plainText(d.tone)}` : '';
-        const body = d.body ? ` — ${plainText(d.body).slice(0, 120)}` : '';
+        const body = d.body ? `: ${plainText(d.body).slice(0, 120)}` : '';
         const action = d.action ? ` (실천: ${plainText(d.action).slice(0, 60)})` : '';
         lines.push(`[${head}]${score}${tone}${body}${action}`);
       });
@@ -259,7 +259,7 @@ function buildContextPrompt(ctx: any, userName: string): string {
       if (!k) return;
       const kind = k.type === 'caution' ? '주의일' : '좋은 날';
       const when = [k.day, k.date].filter(Boolean).map((v: unknown) => plainText(v)).join(' ');
-      lines.push(`${kind}: ${when}${k.reason ? ` — ${plainText(k.reason).slice(0, 150)}` : ''}`);
+      lines.push(`${kind}: ${when}${k.reason ? `: ${plainText(k.reason).slice(0, 150)}` : ''}`);
     });
     if (keyDays.length === 0) {
       if (fullResult?.bestDay) lines.push(`좋은 날: ${plainText(fullResult.bestDay)}`);
@@ -281,7 +281,7 @@ function buildContextPrompt(ctx: any, userName: string): string {
         if (!p) return;
         const head = [p.phase, p.dateRange].filter(Boolean).map((v: unknown) => plainText(v)).join(' ');
         const score = p.score != null ? ` ${p.score}점` : '';
-        const body = p.body ? ` — ${plainText(p.body).slice(0, 150)}` : '';
+        const body = p.body ? `: ${plainText(p.body).slice(0, 150)}` : '';
         lines.push(`[${head}]${score}${body}`);
       });
     }
@@ -291,14 +291,14 @@ function buildContextPrompt(ctx: any, userName: string): string {
       const dm = fullResult?.[key];
       if (!dm || (dm.score == null && !dm.body)) return;
       const score = dm.score != null ? ` ${dm.score}점` : '';
-      const body = dm.body ? ` — ${plainText(dm.body).slice(0, 120)}` : '';
+      const body = dm.body ? `: ${plainText(dm.body).slice(0, 120)}` : '';
       lines.push(`이번 달 ${nm}${score}${body}`);
     });
     const dayNotes = (arr: unknown, kind: string) => {
       if (!Array.isArray(arr)) return;
       arr.slice(0, 3).forEach((d: any) => {
         if (!d?.date && !d?.reason) return;
-        lines.push(`${kind}: ${d?.date ? plainText(d.date) : ''}${d?.reason ? ` — ${plainText(d.reason).slice(0, 100)}` : ''}`);
+        lines.push(`${kind}: ${d?.date ? plainText(d.date) : ''}${d?.reason ? `: ${plainText(d.reason).slice(0, 100)}` : ''}`);
       });
     };
     dayNotes(fullResult?.luckyDays, '길일');
@@ -324,6 +324,7 @@ function buildContextPrompt(ctx: any, userName: string): string {
   return lines.join('\n');
 }
 import type { SajuData } from '@/types/saju';
+import { splitAfter } from '@/utils/safeRegex';
 import {
   C,
   ConvertUnModal,
@@ -613,34 +614,34 @@ export function ChatSessionPage() {
       const dtShort = dt.length > 30 ? `${dt.slice(0, 30)}…` : dt;
       const dreamPhrase = dt ? `"${dtShort}" 꿈을 꾸고 오셨군요.` : '꿈해몽 풀이를 보고 오셨네요.';
       const concernPhrase = cn ? ` ${cn.length > 25 ? cn.slice(0, 25) + '…' : cn}라는 고민과 함께 풀어드릴게요.` : ' 꿈과 사주를 종합해 풀어드릴게요.';
-      greeting = `${userName}님, ${dreamPhrase}${concernPhrase} 편하게 물어보세요.`;
+      greeting = `${userName} 님, ${dreamPhrase}${concernPhrase} 편하게 물어보세요.`;
       defaultQuestions = ['이 꿈이 예고하는 시기는?', '꿈이 가리키는 사람은 누구인가요?', '꿈 속 상징을 더 자세히 풀어주세요'];
     } else if (ctxType === 'daily') {
       const title = contentContext?.fullResult?.title ? String(contentContext.fullResult.title).trim() : '';
       const titlePhrase = title ? `"${title}" 풀이를 보고 오셨네요.` : '오늘의 운세 풀이를 보고 오셨네요.';
-      greeting = `${userName}님, ${titlePhrase} 오늘 하루를 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
+      greeting = `${userName} 님, ${titlePhrase} 오늘 하루를 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
       defaultQuestions = ['오늘 가장 조심할 시간대는?', '오늘의 행운 색과 방위는?', '내일 운세도 미리 알려주세요'];
     } else if (ctxType === 'topic' && ctxLabel) {
       const oneLine = contentContext?.fullResult?.oneLineSummary
         ? String(contentContext.fullResult.oneLineSummary).trim()
-        : (plainText(contentContext?.fullResult?.summary).split(/(?<=[.!?。])\s/)[0] || '').trim();
+        : (splitAfter(plainText(contentContext?.fullResult?.summary), /([.!?。])\s/g)[0] || '').trim();
       const oneLineShort = oneLine.length > 50 ? `${oneLine.slice(0, 50)}…` : oneLine;
       const summaryPhrase = oneLineShort ? ` "${oneLineShort}" 라는 풀이를 본 김에 ` : ' ';
-      greeting = `${userName}님,${summaryPhrase}${ctxLabel}에 대해 더 깊이 궁금한 점 편하게 물어보세요.`;
+      greeting = `${userName} 님,${summaryPhrase}${ctxLabel}에 대해 더 깊이 궁금한 점 편하게 물어보세요.`;
       defaultQuestions = [`${ctxLabel}이 가장 좋아지는 시기는?`, `${ctxLabel}에서 제가 조심할 점은?`, `${ctxLabel} 결과를 더 자세히 풀어주세요`];
     } else if (ctxType === 'premium') {
       const title = contentContext?.fullResult?.title ? String(contentContext.fullResult.title).trim() : '';
       greeting = title
-        ? `${userName}님, "${title}" 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`
-        : `${userName}님 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`;
+        ? `${userName} 님, "${title}" 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`
+        : `${userName} 님 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`;
       defaultQuestions = ['내 사주의 가장 강한 오행은?', '올해 가장 큰 변곡점은 언제?', '직업, 재물, 연애 중 어느 운세가 가장 좋아요?'];
     } else if (ctxType === 'weekly') {
       // 2026-09-17 — 주간운세 결과 → 사주대화 (한 줄 요약 인용)
       const head = plainText(contentContext?.fullResult?.weekHeadline);
       const headShort = head.length > 40 ? `${head.slice(0, 40)}…` : head;
       greeting = headShort
-        ? `${userName}님, "${headShort}" 주간운세를 보고 오셨네요. 이번 7일 중 더 깊이 살피고 싶은 날이나 일을 편하게 물어보세요.`
-        : `${userName}님, 주간운세를 보고 오셨네요. 이번 7일 중 더 깊이 살피고 싶은 날이나 일을 편하게 물어보세요.`;
+        ? `${userName} 님, "${headShort}" 주간운세를 보고 오셨네요. 이번 7일 중 더 깊이 살피고 싶은 날이나 일을 편하게 물어보세요.`
+        : `${userName} 님, 주간운세를 보고 오셨네요. 이번 7일 중 더 깊이 살피고 싶은 날이나 일을 편하게 물어보세요.`;
       defaultQuestions = ['이번 주 가장 좋은 날엔 뭘 하면 좋을까요?', '조심할 날은 어떻게 보내면 좋을까요?', '중요한 약속은 언제 잡는 게 좋아요?'];
     } else if (ctxType === 'monthly') {
       // 2026-09-17 — 월별 운세 결과 → 사주대화
@@ -648,16 +649,16 @@ export function ChatSessionPage() {
       const headShort = head.length > 40 ? `${head.slice(0, 40)}…` : head;
       const monthName = ctxLabel && /\d+월/.test(ctxLabel) ? ctxLabel.replace(/\s*운세$/, '') : '이 달';
       greeting = headShort
-        ? `${userName}님, "${headShort}" 풀이를 보고 오셨네요. ${monthName} 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`
-        : `${userName}님, ${monthName} 운세를 보고 오셨네요. 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
+        ? `${userName} 님, "${headShort}" 풀이를 보고 오셨네요. ${monthName} 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`
+        : `${userName} 님, ${monthName} 운세를 보고 오셨네요. 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
       defaultQuestions = ['이 달 가장 힘을 줘도 되는 시기는?', '길일에는 무엇을 하면 좋을까요?', '이 달 재물과 일 중 어디에 집중할까요?'];
     // compat/daeun/tojung 3종은 출시 lockdown → 인사 분기 없음 (공개 시 추가)
     } else if (fromTopicLabel) {
       // legacy fallback (Topic 페이지가 contentContext 보다 topicLabel 만 전달했을 때)
-      greeting = `${userName}님의 ${fromTopicLabel} 풀이를 보고 오셨네요. ${fromTopicLabel}에 대해 더 깊이 궁금한 점을 편하게 물어보세요.`;
+      greeting = `${userName} 님의 ${fromTopicLabel} 풀이를 보고 오셨네요. ${fromTopicLabel}에 대해 더 깊이 궁금한 점을 편하게 물어보세요.`;
       defaultQuestions = [`${fromTopicLabel}이 가장 좋아지는 시기는?`, `${fromTopicLabel}에서 제가 조심할 점은?`, `${fromTopicLabel} 결과를 더 자세히 풀어주세요`];
     } else if (hasProfile) {
-      greeting = `${userName}님 사주로 풀이해드릴게요. 편하게 물어보세요.`;
+      greeting = `${userName} 님 사주로 풀이해드릴게요. 편하게 물어보세요.`;
       defaultQuestions = ['올해 나에게 가장 좋은 달은?', '내 사주의 가장 강한 오행은?', '요즘 고민이 있어요'];
     } else {
       greeting = '편하게 물어보세요. 사주를 등록하면 더 정확한 맞춤 풀이가 가능해요.';
@@ -717,7 +718,7 @@ export function ChatSessionPage() {
     const handle = (_e: PopStateEvent) => {
       if (isLoading) {
         window.history.pushState(null, '', window.location.href);
-        toast.show('사주를 살피는 중이에요. 잠시만요!', 'info');
+        toast.show('사주를 살피는 중이에요. 잠시만 기다려 주세요', 'info');
       }
     };
     window.history.pushState(null, '', window.location.href);

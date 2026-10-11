@@ -23,10 +23,10 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
       <div style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47', marginBottom: 4 }}>
-        ▎오행 상생상극 — 이 사주의 핵심 구조
+        ▎오행 상생상극: 이 사주의 핵심 구조
       </div>
       <div style={{ fontSize: 12, color: '#a0937f', marginBottom: 10, lineHeight: 1.5 }}>
-        <span style={{ color: '#4E7A57', fontWeight: 700 }}>상생(→생→)</span>은 에너지를 키워주고, <span style={{ color: '#c62828', fontWeight: 700 }}>상극(→극→)</span>은 에너지를 억제해요
+        <span style={{ color: '#4E7A57', fontWeight: 700 }}>상생(→생→)</span>은 기운을 키워주고, <span style={{ color: '#c62828', fontWeight: 700 }}>상극(→극→)</span>은 기운을 억제해요
       </div>
       <div
         className="flex items-center justify-center gap-1 flex-wrap"
@@ -52,7 +52,7 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
         style={{ background: '#F6E5E0', border: '1px dashed #ef9a9a', fontSize: 13 }}
       >
         <div className="font-bold" style={{ color: '#c62828', marginBottom: 4 }}>
-          火 2026년 해결책: 화(火) 에너지 유입!
+          火 2026년 해결책: 화(火) 기운 유입!
         </div>
         <div
           className="flex items-center justify-center gap-1 flex-wrap"
@@ -73,10 +73,10 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
             토(나) ↑
           </span>
         </div>
-        <div style={{ color: '#8A6226', marginTop: 4 }}>목→화→토 순환 완성 = 압박이 풀림!</div>
+        <div style={{ color: '#8A6226', marginTop: 4 }}>목에서 화, 화에서 토로 이어지며 압박이 풀려요</div>
         {hasBirthTime && (
           <div style={{ color: '#8b7e6f', marginTop: 4, fontSize: 12 }}>
-            시주 납음이 노중화(炉中火)! 내면에 숨겨진 화의 씨앗이 있었어요.
+            시주 납음이 노중화(炉中火)예요. 내면에 숨겨진 화의 씨앗이 있었어요.
           </div>
         )}
       </div>
@@ -84,11 +84,11 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
       <div className="mt-3 p-3 rounded-xl" style={{ background: '#f0f4ff', border: '1px solid #c5cae9' }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: '#3949ab', marginBottom: 6 }}>쉽게 말하면?</p>
         <div style={{ fontSize: 13, color: '#5c6bc0', lineHeight: 1.7 }}>
-          <p>• <b>상생(→생→)</b>: A가 B에게 에너지를 주는 관계예요. 자연스럽게 도움이 되는 흐름</p>
+          <p>• <b>상생(→생→)</b>: A가 B에게 기운을 주는 관계예요. 자연스럽게 도움이 되는 흐름</p>
           <p>• <b>상극(→극→)</b>: A가 B를 누르는 관계예요. 압박이 되지만, 성장의 원동력이기도 해요</p>
           <p style={{ marginTop: 6, fontWeight: 600, color: '#3949ab' }}>
             위에서 가장 강한 오행이 나(토)를 극하고 있으면 → 외부 압박과 스트레스가 큰 구조예요.
-            해결책 영역의 오행이 중간에서 에너지를 전달해주면 이 압박이 풀려요!
+            해결책 영역의 오행이 중간에서 기운을 전달해주면 이 압박이 풀려요!
           </p>
         </div>
       </div>
@@ -162,48 +162,48 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
 
     const map: Record<string, { voice: string; trait: string }> = {
       비견: {
-        voice: `"${n}${nGa} ${n}${nReul} 만남 — 같이 가자"`,
-        trait: `같은 ${dayOheng} 에너지의 만남. ${me.adj} ${e}${eGa} 두 배가 되지만, 같은 자원을 나누는 구조라 협력과 배분의 지혜가 동시에 필요해요`,
+        voice: `"${n}${nGa} ${n}${nReul} 만남: 같이 가자"`,
+        trait: `같은 ${dayOheng} 기운의 만남. ${me.adj} ${e}${eGa} 두 배가 되지만, 같은 자원을 나누는 구조라 협력과 배분의 지혜가 동시에 필요해요`,
       },
       겁재: {
         voice: `"내 ${e}${eReul} 빼앗기면 안 돼"`,
-        trait: `${n}의 반대 극성 에너지 — ${e}${eReul} 지키려는 강한 방어본능. 승부욕이 강하고, 위기 상황에서 오히려 진가를 발휘하는 타입이에요`,
+        trait: `${n}의 반대 극성 기운: ${e}${eReul} 지키려는 강한 방어본능. 승부욕이 강하고, 위기 상황에서 오히려 진가를 발휘하는 편이에요`,
       },
       식신: {
         voice: `"${n}에서 태어난 것을 세상에 보여주고 싶어"`,
-        trait: `${dayOheng}${ohGa} 자연스럽게 만들어내는 에너지. 창작, 요리, 표현 등 무언가를 만들어내는 활동에서 기쁨과 충만함을 느끼는 구조예요`,
+        trait: `${dayOheng}${ohGa} 자연스럽게 만들어내는 기운. 창작, 요리, 표현 등 무언가를 만들어내는 활동에서 기쁨과 충만함을 느끼는 구조예요`,
       },
       상관: {
         voice: `"${n}의 틀을 깨고 새로운 형태를 만들겠어"`,
-        trait: `${dayOheng}${ohGa} 폭발적으로 분출되는 에너지. 기존 질서에 의문을 던지고, 남들이 생각 못한 방식으로 혁신하는 반골 기질이에요`,
+        trait: `${dayOheng}${ohGa} 크게 분출되는 기운. 기존 질서에 의문을 던지고, 남들이 생각 못한 방식으로 혁신하는 반골 기질이에요`,
       },
       편재: {
         voice: `"${n}${nGa} 지배하는 영역에서 기회를 잡자"`,
-        trait: `${dayOheng}${ohGa} 억누르는 대상 — 적극적 재물 추구 에너지. 투자 감각이 있고, 기회를 포착하면 과감하게 움직이는 행동파예요`,
+        trait: `${dayOheng}${ohGa} 억누르는 대상: 적극적 재물 추구 기운. 투자 감각이 있고, 기회를 포착하면 과감하게 움직이는 행동파예요`,
       },
       정재: {
         voice: `"${n}의 힘으로 꾸준히 쌓아가자"`,
-        trait: `${dayOheng}${ohGa} 안정적으로 관리하는 재물 에너지. 저축과 계획적 소비 성향이 강하고, 빠른 수익보다 꾸준한 축적을 선호해요`,
+        trait: `${dayOheng}${ohGa} 안정적으로 관리하는 재물 기운. 저축과 계획적 소비 성향이 강하고, 빠른 수익보다 꾸준한 축적을 선호해요`,
       },
       편관: {
-        voice: `"${n}${nReul} 단련시키는 압박 — 대충은 절대 안 돼"`,
-        trait: `${dayOheng}${ohReul} 극(剋)하는 에너지 — 외부 압박과 규율이 나를 단련시키는 구조. 스트레스가 되지만 이것이 성장의 원동력이에요`,
+        voice: `"${n}${nReul} 단련시키는 압박: 대충은 절대 안 돼"`,
+        trait: `${dayOheng}${ohReul} 극(剋)하는 기운: 외부 압박과 규율이 나를 단련시키는 구조. 스트레스가 되지만 이것이 성장의 원동력이에요`,
       },
       정관: {
-        voice: `"${n}${nReul} 올바르게 다듬는 힘 — 제대로 해야 해"`,
+        voice: `"${n}${nReul} 올바르게 다듬는 힘: 제대로 해야 해"`,
         trait: `${dayOheng}${ohReul} 규제하는 정통 질서의 힘. 규칙과 책임감을 중시하고, 사회적 인정과 신뢰를 얻는 데 유리한 구조예요`,
       },
       편인: {
         voice: `"${n}에게 영감을 주는 독특한 감각"`,
-        trait: `${dayOheng}${ohReul} 생(生)해주는 비정통 에너지. 직감이 강하고, 남들과 다른 시각으로 문제를 풀어내는 독창적 사고의 소유자예요`,
+        trait: `${dayOheng}${ohReul} 생(生)해주는 비정통 기운. 직감이 강하고, 남들과 다른 시각으로 문제를 풀어내는 독창적 사고의 소유자예요`,
       },
       정인: {
         voice: `"${n}${nReul} 키워주는 근본적인 배움의 힘"`,
-        trait: `${dayOheng}${ohReul} 생(生)해주는 정통 학습의 에너지. 학문, 지식, 자격에 끌리고, 공부할수록 내면이 단단해지는 구조예요`,
+        trait: `${dayOheng}${ohReul} 생(生)해주는 정통 학습의 기운. 학문, 지식, 자격에 끌리고, 공부할수록 내면이 단단해지는 구조예요`,
       },
       일주: {
-        voice: '"나 자신의 근본 에너지"',
-        trait: `${dayOheng} 일간(${dayGan}) — ${me.adj} ${e}${eGa} 당신의 본질. 모든 판단과 행동의 출발점이 되는 핵심 에너지예요`,
+        voice: '"나 자신의 근본 기운"',
+        trait: `${dayOheng} 일간(${dayGan}): ${me.adj} ${e}${eGa} 내 본질. 모든 판단과 행동의 출발점이 되는 핵심 기운이에요`,
       },
     };
     return map[sip] ?? null;
@@ -272,7 +272,7 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
   const topSipsung = Object.entries(sipsungCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const summaryParts = topSipsung.map(([sip, count]) => {
     const m = getSipsungPersonalized(sip);
-    return m ? `${m.voice} — ${m.trait.split('.')[0]} (${sip}${count >= 2 ? ' x' + count + ', 특히 강함' : ''})` : null;
+    return m ? `${m.voice}: ${m.trait.split('.')[0]} (${sip}${count >= 2 ? ' x' + count + ', 특히 강함' : ''})` : null;
   }).filter(Boolean);
 
   // 일지의 핵심 목소리
@@ -302,7 +302,7 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center gap-2 mb-1">
           <div style={{ width: 3, height: 16, borderRadius: 2, background: 'linear-gradient(180deg, #B8965A, #B8965A)' }} />
-          <span style={{ fontSize: 13, fontWeight: 800, color: '#3D3427', letterSpacing: '-0.3px' }}>지장간 — 내 안의 숨은 성격들</span>
+          <span style={{ fontSize: 13, fontWeight: 800, color: '#3D3427', letterSpacing: '-0.3px' }}>지장간: 내 안의 숨은 성격들</span>
         </div>
         <p style={{ fontSize: 13, color: '#a0937f', lineHeight: 1.7, marginLeft: 11 }}>
           각 기둥 속에 <b style={{ color: '#6b5b47' }}>2~3개의 숨은 성격</b>이 있어요.<br />
@@ -398,7 +398,7 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
                       }}>핵심</span>
                     )}
                   </div>
-                  <p style={{ fontSize: 12, color: '#8b7e6f', marginTop: 1 }}>{card.role} — {card.roleDesc}</p>
+                  <p style={{ fontSize: 12, color: '#8b7e6f', marginTop: 1 }}>{card.role}: {card.roleDesc}</p>
                 </div>
                 <span style={{
                   fontSize: 12, fontWeight: 700, color: card.isCore ? '#B8965A' : ec.main,
@@ -439,12 +439,12 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
                           <div style={{ marginTop: 4 }}>
                             <div className="flex items-start gap-0" style={{ marginBottom: 3 }}>
                               <div style={{ width: 2, minHeight: 14, borderRadius: 1, background: '#B8965A', marginTop: 3, marginRight: 6, flexShrink: 0 }} />
-                              <p style={{ fontSize: 13, color: '#B8965A', fontWeight: 700, lineHeight: 1.5, fontStyle: 'italic' }}>{e.meaning.voice}</p>
+                              <p style={{ fontSize: 13, color: '#B8965A', fontWeight: 700, lineHeight: 1.5, fontStyle: 'normal' }}>{e.meaning.voice}</p>
                             </div>
                             <p style={{ fontSize: 13, color: '#6b5b47', lineHeight: 1.65 }}>{e.meaning.trait}</p>
                           </div>
                         ) : e.sipsung ? (
-                          <p style={{ fontSize: 13, color: '#8b7e6f', marginTop: 3 }}>{e.sipsung} 에너지</p>
+                          <p style={{ fontSize: 13, color: '#8b7e6f', marginTop: 3 }}>{e.sipsung} 기운</p>
                         ) : null}
                       </div>
                     </div>
@@ -502,20 +502,20 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
     const CAREER_BY_SIPSUNG: Record<string, Record<OhengType, { job: string; reason: string }>> = {
       식상: {
         목: { job: '교육 콘텐츠 크리에이터 (유튜브/클래스101)', reason: '목 일간의 식상 = 나무가 꽃을 피우듯 지식을 콘텐츠로 변환하는 능력. 성장을 가르치는 교육 분야에서 표현력이 극대화' },
-        화: { job: '영상 PD / 숏폼 콘텐츠 디렉터', reason: '화 일간의 식상 = 불꽃이 빛으로 변하듯 시각적 표현에 천부적 감각. 미디어와 영상 분야에서 창작 에너지가 폭발' },
+        화: { job: '영상 PD / 숏폼 콘텐츠 디렉터', reason: '화 일간의 식상 = 불꽃이 빛으로 변하듯 시각적 표현에 천부적 감각. 미디어와 영상 분야에서 창작 기운이 크게 살아남' },
         토: { job: '요식업 프랜차이즈 오너 / 쿠킹클래스 운영', reason: '토 일간의 식상 = 대지가 열매를 맺듯 음식과 맛 관련 창작에 강점. 외식업과 푸드테크에서 안정적 수익 구조 설계 능력' },
         금: { job: '보석감정사 / 귀금속 디자이너', reason: '금 일간의 식상 = 쇠를 다듬어 작품으로 만드는 정교함. 정밀 공예와 디자인 분야에서 섬세한 표현력 발휘' },
-        수: { job: '데이터 기반 마케팅 전략가', reason: '수 일간의 식상 = 물이 흘러가며 길을 만들듯 데이터에서 인사이트를 뽑아내는 능력. 분석+표현 융합형 직무에 최적' },
+        수: { job: '데이터 기반 마케팅 전략가', reason: '수 일간의 식상 = 물이 흘러가며 길을 만들듯 자료에서 핵심을 뽑아내는 능력. 분석+표현 융합형 직무에 최적' },
       },
       재성: {
-        목: { job: '친환경 부동산 투자 컨설턴트', reason: '목 일간이 토를 극해 재성 = 성장 에너지로 부동산과 토지를 관리. ESG, 녹색 건축 분야에서 투자 안목이 뛰어남' },
+        목: { job: '친환경 부동산 투자 컨설턴트', reason: '목 일간이 토를 극해 재성 = 성장 기운으로 부동산과 토지를 관리. ESG, 녹색 건축 분야에서 투자 안목이 뛰어남' },
         화: { job: '핀테크 자산관리 플래너 (로보어드바이저)', reason: '화 일간이 금을 극해 재성 = 열정적 판단력으로 금융 자산을 다루는 능력. IT+금융 융합 분야에서 빠른 의사결정이 강점' },
         토: { job: '수산물 유통/해외 무역 사업가', reason: '토 일간이 수를 극해 재성 = 안정적 관리력으로 유통과 물류를 장악. 실물 거래에서 꼼꼼한 관리 능력이 수익으로 연결' },
         금: { job: '임업/목재 가공 스타트업 대표', reason: '금 일간이 목을 극해 재성 = 원재료를 가공해 가치를 만드는 구조. 제조, 가공, 원자재 분야에서 수익 창출 능력' },
-        수: { job: '전기차/신에너지 투자 애널리스트', reason: '수 일간이 화를 극해 재성 = 냉정한 분석력으로 에너지 시장을 읽는 능력. 신기술 투자에서 리스크 관리 탁월' },
+        수: { job: '전기차/신기운 투자 애널리스트', reason: '수 일간이 화를 극해 재성 = 냉정한 분석력으로 기운 시장을 읽는 능력. 신기술 투자에서 리스크 관리 탁월' },
       },
       관성: {
-        목: { job: '국가직 7급 교육행정 사무관', reason: '목 일간의 관성(금) = 나무를 다듬는 가위. 교육과 환경 분야 공직에서 조직력과 성장 마인드가 시너지' },
+        목: { job: '국가직 7급 교육행정 사무관', reason: '목 일간의 관성(금) = 나무를 다듬는 가위. 교육과 환경 분야 공직에서 조직력과 성장 마인드가 어울림' },
         화: { job: '소방방재청 안전정책 기획관', reason: '화 일간의 관성(수) = 불을 제어하는 물의 힘. 안전, 방재, 위기관리 분야 공직에서 열정과 규율의 균형이 강점' },
         토: { job: '도시계획 전문 건축행정 공무원', reason: '토 일간의 관성(목) = 땅 위에 나무를 심는 구조. 국토, 건축, 도시계획 분야에서 안정적 관리와 성장 비전 양립' },
         금: { job: '검찰/금융감독원 조사관', reason: '금 일간의 관성(화) = 불에 단련되는 쇠. 법집행과 금융감독 분야에서 날카로운 분석력과 강한 추진력 발휘' },
@@ -523,7 +523,7 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
       },
       인성: {
         목: { job: '대학교수 (교육학/심리학 전공)', reason: '목 일간의 인성(수) = 나무에게 물을 주는 근원. 교육과 연구 분야에서 학문적 깊이와 성장 지향성이 조화' },
-        화: { job: 'AI/머신러닝 연구원 (네이버/카카오급)', reason: '화 일간의 인성(목) = 불꽃에 장작을 더하듯 끊임없이 배우는 에너지. 첨단 기술 연구에서 열정+학습력 극대화' },
+        화: { job: 'AI/머신러닝 연구원 (네이버/카카오급)', reason: '화 일간의 인성(목) = 불꽃에 장작을 더하듯 끊임없이 배우는 기운. 첨단 기술 연구에서 열정+학습력 극대화' },
         토: { job: '한의사 / 전통의학 연구자', reason: '토 일간의 인성(화) = 대지를 데우는 햇볕. 전통 지식을 현대에 접목하는 분야에서 깊은 이해력과 실용성 발휘' },
         금: { job: '특허 전문 변리사 / 기술거래사', reason: '금 일간의 인성(토) = 쇠의 원광석. 기술과 지식재산 분야에서 정밀한 분석력과 체계적 학습 능력이 강점' },
         수: { job: '빅데이터 사이언티스트 (삼성SDS급)', reason: '수 일간의 인성(금) = 물을 정화하는 금속. 데이터와 통계 기반 연구에서 깊이 있는 분석력과 논리적 사고력 발휘' },
@@ -571,24 +571,24 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
       // 강한 오행 기반 보조 직업
       const OHENG_SUB: Record<OhengType, { job: string; reason: string }[]> = {
         목: [
-          { job: '환경/ESG 전문 컨설턴트', reason: `목 에너지가 강해(${strongElem[1]}%) 성장과 환경 분야에서 자연스러운 적성. 지속가능성 분야에서 장기적 커리어 유망` },
-          { job: '인테리어/공간 디자이너', reason: '목의 창조 에너지가 공간 설계에서 발현. 나무, 식물, 자연소재를 활용한 디자인에 감각이 있어요' },
+          { job: '환경/ESG 전문 컨설턴트', reason: `목 기운이 강해(${strongElem[1]}%) 성장과 환경 분야에서 자연스러운 적성. 지속가능성 분야에서 장기적 커리어 유망` },
+          { job: '인테리어/공간 디자이너', reason: '목의 창조 기운이 공간 설계에서 발현. 나무, 식물, 자연소재를 활용한 디자인에 감각이 있어요' },
         ],
         화: [
-          { job: 'UX/UI 디자이너 (토스/배민급)', reason: `화 에너지가 강해(${strongElem[1]}%) 시각적 표현과 사용자 경험 설계에 뛰어난 감각. 디지털 디자인 분야 천직` },
-          { job: '퍼포먼스 마케터 (CPA/ROAS 전문)', reason: '화의 확산 에너지가 마케팅에서 발현. 데이터 기반 광고 최적화에서 빠른 판단력 발휘' },
+          { job: 'UX/UI 디자이너 (토스/배민급)', reason: `화 기운이 강해(${strongElem[1]}%) 시각적 표현과 사용자 경험 설계에 뛰어난 감각. 디지털 디자인 분야 천직` },
+          { job: '퍼포먼스 마케터 (CPA/ROAS 전문)', reason: '화의 확산 기운이 마케팅에서 발현. 데이터 기반 광고 최적화에서 빠른 판단력 발휘' },
         ],
         토: [
-          { job: '프로젝트 매니저(PM) / 스크럼마스터', reason: `토 에너지가 강해(${strongElem[1]}%) 사람과 일을 조율하는 능력 탁월. 팀을 안정적으로 이끄는 관리형 리더` },
-          { job: '공인중개사 / 자산관리 전문가', reason: '토의 안정 에너지가 부동산과 자산 분야에서 발현. 장기적 자산 설계에 강점' },
+          { job: '프로젝트 매니저(PM) / 스크럼마스터', reason: `토 기운이 강해(${strongElem[1]}%) 사람과 일을 조율하는 능력 탁월. 팀을 안정적으로 이끄는 관리형 리더` },
+          { job: '공인중개사 / 자산관리 전문가', reason: '토의 안정 기운이 부동산과 자산 분야에서 발현. 장기적 자산 설계에 강점' },
         ],
         금: [
-          { job: 'CPA 세무사 / 관세사', reason: `금 에너지가 강해(${strongElem[1]}%) 숫자와 규칙에 정확한 분석력. 회계, 세무, 관세 분야에서 꼼꼼함이 무기` },
-          { job: '의료기기/바이오 전문 영업 (메드트로닉급)', reason: '금의 정밀 에너지가 의료 분야에서 발현. 전문 지식 기반 B2B 영업에 강점' },
+          { job: 'CPA 세무사 / 관세사', reason: `금 기운이 강해(${strongElem[1]}%) 숫자와 규칙에 정확한 분석력. 회계, 세무, 관세 분야에서 꼼꼼함이 무기` },
+          { job: '의료기기/바이오 전문 영업 (메드트로닉급)', reason: '금의 정밀 기운이 의료 분야에서 발현. 전문 지식 기반 B2B 영업에 강점' },
         ],
         수: [
-          { job: '심리상담사 / 코칭 전문가 (ICF 인증)', reason: `수 에너지가 강해(${strongElem[1]}%) 깊은 통찰력과 공감 능력. 상담과 코칭 분야에서 신뢰감 있는 전문가` },
-          { job: '국제무역/수출입 스페셜리스트', reason: '수의 유통 에너지가 무역에서 발현. 해외 시장 분석과 글로벌 네트워킹에 재능' },
+          { job: '심리상담사 / 코칭 전문가 (ICF 인증)', reason: `수 기운이 강해(${strongElem[1]}%) 깊은 안목과 공감 능력. 상담과 코칭 분야에서 신뢰감 있는 전문가` },
+          { job: '국제무역/수출입 스페셜리스트', reason: '수의 유통 기운이 무역에서 발현. 해외 시장 분석과 글로벌 네트워킹에 재능' },
         ],
       };
       const subs = OHENG_SUB[ohKey] || OHENG_SUB['토'];
@@ -636,7 +636,7 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
         <p style={{ fontSize: 13.5, color: '#6b5b47', lineHeight: 1.7 }}>
           <b>{topFit.label}</b> 분야와 궁합이 가장 좋아요 ({topFit.score}%).
           {strongFields.length > 1 && <> <b>{strongFields.slice(1).map(f => f.label).join(', ')}</b> 분야도 잘 맞는 편이에요.</>}
-          {weakFields.length > 0 && <> 반면 <b>{weakFields.map(f => f.label).join(', ')}</b>은 에너지 소모가 클 수 있어요 — 못한다는 게 아니라 더 힘이 드는 방향이에요.</>}
+          {weakFields.length > 0 && <> 반면 <b>{weakFields.map(f => f.label).join(', ')}</b>은 기운 소모가 클 수 있어요, 못한다는 게 아니라 더 힘이 드는 방향이에요.</>}
         </p>
       </div>
 
@@ -673,7 +673,7 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
                     background: isTop ? `${color}15` : isWeak ? '#fff3e0' : '#EEECE8',
                     color: isTop ? color : isWeak ? '#8A6226' : '#7D7870',
                   }}>
-                    {isTop ? '천직 수준' : isWeak ? '에너지 소모 큼' : f.score >= 65 ? '충분히 적합' : '보조 적성'}
+                    {isTop ? '천직 수준' : isWeak ? '기운 소모 큼' : f.score >= 65 ? '충분히 적합' : '보조 적성'}
                   </span>
                   {f.basis && (
                     <span className="rounded-full px-2 py-0.5" style={{ fontSize: 12, fontWeight: 600, background: '#f5f0e8', color: '#B8965A' }}>
@@ -698,9 +698,9 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
       <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#F5EBD9', border: '1px solid #ffe082' }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: '#B07F38', marginBottom: 3 }}>이렇게 읽어요</p>
         <p style={{ fontSize: 12, color: '#8b7e6f', lineHeight: 1.6 }}>
-          점수 기준: 80% 이상 = 사주의 에너지 흐름과 가장 잘 맞는 '천직' 수준.
+          점수 기준: 80% 이상 = 사주의 기운 흐름과 가장 잘 맞는 '천직' 수준.
           65~79% = 타고난 적성이 충분히 있어 잘 해낼 수 있는 분야.
-          55~64% = 노력하면 되지만 에너지가 더 드는 방향.
+          55~64% = 노력하면 되지만 기운이 더 드는 방향.
           55% 미만 = 이 방향보다 더 맞는 길이 있다는 신호.
           <b style={{ color: '#6b5b47' }}> 점수는 일간 오행({dayOheng}), 십성 분포, 오행 밸런스를 종합 산출한 결과예요.</b>
         </p>
@@ -731,7 +731,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
       detail: '해독 능력, 시력, 근육의 유연성을 관장',
       strong: '스트레스가 간에 쌓이기 쉬움. 분노 조절과 충분한 수면, 음주 절제가 핵심이에요',
       weak: '눈이 쉽게 피로하고 근육이 뻣뻣해질 수 있어요. 스트레칭, 녹색 채소, 간 해독에 신경 쓰세요',
-      fix: '산책과 등산(목 에너지 보충), 녹색 채소와 쑥차, 새벽 기상 습관',
+      fix: '산책과 등산(목 기운 보충), 녹색 채소와 쑥차, 새벽 기상 습관',
     },
     fire: {
       organ: '심장(心), 소장, 혈관, 혀',
@@ -742,7 +742,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
     },
     earth: {
       organ: '비장(脾), 위(胃), 소화기, 입',
-      detail: '소화 흡수, 면역력, 에너지 전환을 관장',
+      detail: '소화 흡수, 면역력, 기운 전환을 관장',
       strong: '과식과 폭식 주의. 위산 과다나 소화불량이 올 수 있어요. 규칙적 식사와 가벼운 식단이 중요해요',
       weak: '소화력이 약해 체력이 금방 떨어질 수 있어요. 따뜻한 음식, 잡곡밥, 규칙적 식사 시간이 핵심이에요',
       fix: '규칙적 식사, 단맛 음식(꿀과 고구마), 복부 마사지와 산책',
@@ -776,7 +776,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
     const aiDetail = aiHealth?.[elem]?.detail?.trim();
     // 사주 specific 접두 — "{ganRef}이 ${oheng} ${val}자라"
     const ohengKr = ({ wood: '목', fire: '화', earth: '토', metal: '금', water: '수' } as const)[elem];
-    const ganPrefix = dayGan ? `${ganRef}이 ${ohengKr} ${val}자 — ` : '';
+    const ganPrefix = dayGan ? `${ganRef}이 ${ohengKr} ${val}자, ` : '';
 
     if (val === 0) {
       status = '없음'; statusColor = '#c62828';
@@ -792,7 +792,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
       level = 3;
     } else if (val <= 35) {
       status = '강함'; statusColor = '#3E5F82';
-      advice = aiDetail || `${ganPrefix}에너지가 충분해요. 다만 과하면 ${info.organ.split(', ')[0]}에 부담이 갈 수 있으니 적당히 조절하세요`;
+      advice = aiDetail || `${ganPrefix}기운이 충분해요. 다만 과하면 ${info.organ.split(', ')[0]}에 부담이 갈 수 있으니 적당히 조절하세요`;
       level = 4;
     } else {
       status = '과다'; statusColor = '#c62828';
@@ -830,7 +830,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
         <p style={{ fontSize: 13, fontWeight: 800, color: '#B8965A', marginBottom: 4 }}>종합 건강 진단</p>
         <p style={{ fontSize: 13.5, color: '#6b5b47', lineHeight: 1.7 }}>
           가장 주의할 장기는 <b style={{ color: '#c62828' }}>{weakest.organ}</b>({EHAN[weakest.elem]}, {weakest.status})이에요.
-          {strongest.val > 35 && <> 반면 <b style={{ color: '#3E5F82' }}>{strongest.organ}</b>({EHAN[strongest.elem]})은 에너지가 과해 부담이 갈 수 있어요.</>}
+          {strongest.val > 35 && <> 반면 <b style={{ color: '#3E5F82' }}>{strongest.organ}</b>({EHAN[strongest.elem]})은 기운이 과해 부담이 갈 수 있어요.</>}
         </p>
         <p style={{ fontSize: 13, color: '#8b7e6f', marginTop: 6, lineHeight: 1.6 }}>
           {dayHealthTip[dayOheng]}
@@ -948,7 +948,7 @@ export function GaewoonVis({ elements }: { elements?: V4Elements }) {
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
       <div style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47', marginBottom: 10 }}>
-        ▎개운법 한눈에 — 약한 결 {w1}, {w2} 보강
+        ▎개운법 한눈에: 약한 기질 {w1}, {w2} 보강
       </div>
       <div className="grid grid-cols-2 gap-2">
         {items.map((it) => (
@@ -1058,17 +1058,17 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
             sideA: ['식상', '비겁'], sideB: ['인성', '관성', '재성'],
             tip: '중요한 결정은 최소 하루 묵혔다가 하세요. 48시간 규칙이 효과적',
             vH: '행동력은 빠르지만 조급해질 수 있는 사주예요. 뿌리를 깊이 내린 나무가 가장 오래 서 있어요. 의도적으로 천천히.',
-            vL: '신중한 편이지만, 때로는 빠른 결단이 기회를 만들어요. 70% 확신이면 GO. 완벽한 타이밍은 없어요.' },
+            vL: '신중한 편이지만, 때로는 빠른 결단이 기회를 만들어요. 70% 확신이면 움직이세요. 완벽한 타이밍은 없어요.' },
         ],
       },
       화: {
-        coreQ: '이 뜨거운 에너지를 태워버리지 않고, 어디에 비출 것인가?',
-        summary: '화(火) 일간의 인생 과제는 "열정의 방향 설정과 에너지 분배"입니다. 불꽃은 밝지만, 조절 없이 타면 스스로 꺼져요.',
+        coreQ: '이 뜨거운 기운을 태워버리지 않고, 어디에 비출 것인가?',
+        summary: '화(火) 일간의 인생 과제는 "열정의 방향 설정과 기운 분배"입니다. 불꽃은 밝지만, 조절 없이 타면 스스로 꺼져요.',
         themes: [
           { labelA: '열정', labelB: '절제',
             sideA: ['비겁', '식상'], sideB: ['관성', '인성', '재성'],
             tip: '번아웃 전조 증상(수면 장애, 의욕 저하)을 체크리스트로 만들어 관리하세요',
-            vH: '열정이 넘치는 사주예요. 100%로 달리다 갑자기 0%가 되는 패턴을 주의하세요. 70%가 가장 오래 가는 속도예요.',
+            vH: '열정이 넘치는 사주예요. 100%로 달리다 갑자기 0%가 되는 경향을 주의하세요. 70%가 가장 오래 가는 속도예요.',
             vL: '자기 조절력이 좋은 사주예요. 하지만 가끔은 열정을 더 풀어줘도 괜찮아요. 안전지대를 벗어나보세요.' },
           { labelA: '표현', labelB: '절제',
             sideA: ['식상', '비겁'], sideB: ['관성', '인성'],
@@ -1078,7 +1078,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
           { labelA: '즉흥', labelB: '계획',
             sideA: ['식상', '비겁'], sideB: ['재성', '관성', '인성'],
             tip: '분기별 목표 1개만 정해두세요. 나머지는 거기에 맞춰서 움직이면 돼요',
-            vH: '즉흥적 에너지가 강한 사주예요. 방향만 정하면 그 에너지가 레이저가 돼요. 전략이 불꽃의 방향을 잡아줘요.',
+            vH: '즉흥적 기운이 강한 사주예요. 방향만 정하면 그 기운이 레이저가 돼요. 전략이 불꽃의 방향을 잡아줘요.',
             vL: '계획적인 사주지만, 가끔 직감을 믿고 뛰어드는 용기도 필요해요. 모든 걸 계획할 순 없어요.' },
         ],
       },
@@ -1167,7 +1167,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
             </div>
           </div>
           <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(232,213,168,0.2)' }}>
-            <p style={{ fontSize: 14, color: '#E8D5A8', fontWeight: 700, lineHeight: 1.7, fontStyle: 'italic' }}>
+            <p style={{ fontSize: 14, color: '#E8D5A8', fontWeight: 700, lineHeight: 1.7, fontStyle: 'normal' }}>
               "{data.coreQ}"
             </p>
           </div>
@@ -1286,55 +1286,55 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
         now: '목 일간은 금(관성) 대운에서 가장 큰 시련과 성장을 겪고, 수(인성) 대운에서 학습과 지원을 받아요.',
         tip: '현재 대운의 오행이 나를 돕는지(인성과 비겁), 도전하는지(관성과 재성)를 파악하는 게 핵심이에요.',
         seasons: [
-          { elem: '목 대운', meaning: '비겁 — 독립과 경쟁 심화, 자아 확립기' },
-          { elem: '화 대운', meaning: '식상 — 표현과 창작 폭발, 재능 개화기' },
-          { elem: '토 대운', meaning: '재성 — 재물 기회, 적극적 투자 시기' },
-          { elem: '금 대운', meaning: '관성 — 시련과 성장, 사회적 압박기' },
-          { elem: '수 대운', meaning: '인성 — 학습과 귀인, 내면 충전기' },
+          { elem: '목 대운', meaning: '비겁: 독립과 경쟁 심화, 자아 확립기' },
+          { elem: '화 대운', meaning: '식상: 표현과 창작 폭발, 재능 개화기' },
+          { elem: '토 대운', meaning: '재성: 재물 기회, 적극적 투자 시기' },
+          { elem: '금 대운', meaning: '관성: 시련과 성장, 사회적 압박기' },
+          { elem: '수 대운', meaning: '인성: 학습과 귀인, 내면 충전기' },
         ],
       },
       화: {
-        now: '화 일간은 수(관성) 대운에서 가장 큰 시련과 성장을 겪고, 목(인성) 대운에서 에너지를 충전받아요.',
-        tip: '화 일간은 에너지 소모가 빠르므로, 대운 흐름에 따라 의식적으로 페이스 조절이 필요해요.',
+        now: '화 일간은 수(관성) 대운에서 가장 큰 시련과 성장을 겪고, 목(인성) 대운에서 기운을 충전받아요.',
+        tip: '화 일간은 기운 소모가 빠르므로, 대운 흐름에 따라 의식적으로 페이스 조절이 필요해요.',
         seasons: [
-          { elem: '화 대운', meaning: '비겁 — 열정 배가, 경쟁과 독립 강화기' },
-          { elem: '토 대운', meaning: '식상 — 안정적 표현, 결과물 축적기' },
-          { elem: '금 대운', meaning: '재성 — 재물 기회, 정밀한 판단 필요' },
-          { elem: '수 대운', meaning: '관성 — 감정 통제 시련, 성숙기' },
-          { elem: '목 대운', meaning: '인성 — 학습과 성장, 에너지 보충기' },
+          { elem: '화 대운', meaning: '비겁: 열정 배가, 경쟁과 독립 강화기' },
+          { elem: '토 대운', meaning: '식상: 안정적 표현, 결과물 축적기' },
+          { elem: '금 대운', meaning: '재성: 재물 기회, 정밀한 판단 필요' },
+          { elem: '수 대운', meaning: '관성: 감정 통제 시련, 성숙기' },
+          { elem: '목 대운', meaning: '인성: 학습과 성장, 기운 보충기' },
         ],
       },
       토: {
         now: '토 일간은 목(관성) 대운에서 외부 압박이 강해지고, 화(인성) 대운에서 안정적 지원을 받아요.',
         tip: '토 일간은 변화에 느리므로, 관성과 식상 대운에서 의식적으로 움직여야 정체를 피할 수 있어요.',
         seasons: [
-          { elem: '토 대운', meaning: '비겁 — 안정 강화, 자기 영역 확립기' },
-          { elem: '금 대운', meaning: '식상 — 표현력 향상, 정리와 정돈기' },
-          { elem: '수 대운', meaning: '재성 — 유동적 재물, 투자 기회기' },
-          { elem: '목 대운', meaning: '관성 — 변화 압박, 성장통 시기' },
-          { elem: '화 대운', meaning: '인성 — 열정 충전, 배움과 귀인기' },
+          { elem: '토 대운', meaning: '비겁: 안정 강화, 자기 영역 확립기' },
+          { elem: '금 대운', meaning: '식상: 표현력 향상, 정리와 정돈기' },
+          { elem: '수 대운', meaning: '재성: 유동적 재물, 투자 기회기' },
+          { elem: '목 대운', meaning: '관성: 변화 압박, 성장통 시기' },
+          { elem: '화 대운', meaning: '인성: 열정 충전, 배움과 귀인기' },
         ],
       },
       금: {
         now: '금 일간은 화(관성) 대운에서 가장 강한 단련을 받고, 토(인성) 대운에서 기반이 단단해져요.',
         tip: '금 일간은 완벽주의 때문에 관성 대운에서 특히 스트레스를 받아요. 유연함을 연습하세요.',
         seasons: [
-          { elem: '금 대운', meaning: '비겁 — 경쟁 심화, 전문성 승부기' },
-          { elem: '수 대운', meaning: '식상 — 지혜 표현, 창작과 소통기' },
-          { elem: '목 대운', meaning: '재성 — 재물 확장, 새 기회 포착기' },
-          { elem: '화 대운', meaning: '관성 — 뜨거운 단련, 변혁과 성장기' },
-          { elem: '토 대운', meaning: '인성 — 안정적 학습, 기반 축적기' },
+          { elem: '금 대운', meaning: '비겁: 경쟁 심화, 전문성 승부기' },
+          { elem: '수 대운', meaning: '식상: 지혜 표현, 창작과 소통기' },
+          { elem: '목 대운', meaning: '재성: 재물 확장, 새 기회 포착기' },
+          { elem: '화 대운', meaning: '관성: 뜨거운 단련, 변혁과 성장기' },
+          { elem: '토 대운', meaning: '인성: 안정적 학습, 기반 축적기' },
         ],
       },
       수: {
         now: '수 일간은 토(관성) 대운에서 방향이 잡히면서도 압박을 느끼고, 금(인성) 대운에서 지혜가 깊어져요.',
         tip: '수 일간은 생각이 많아 행동이 늦어지기 쉬워요. 재성과 비겁 대운에서 과감하게 움직이세요.',
         seasons: [
-          { elem: '수 대운', meaning: '비겁 — 유연함 극대화, 경쟁과 적응기' },
-          { elem: '목 대운', meaning: '식상 — 성장 에너지 분출, 창작기' },
-          { elem: '화 대운', meaning: '재성 — 열정적 재물 추구, 투자기' },
-          { elem: '토 대운', meaning: '관성 — 방향 설정 시련, 구조화기' },
-          { elem: '금 대운', meaning: '인성 — 깊은 학습, 지혜 축적기' },
+          { elem: '수 대운', meaning: '비겁: 유연함 극대화, 경쟁과 적응기' },
+          { elem: '목 대운', meaning: '식상: 성장 기운 분출, 창작기' },
+          { elem: '화 대운', meaning: '재성: 열정적 재물 추구, 투자기' },
+          { elem: '토 대운', meaning: '관성: 방향 설정 시련, 구조화기' },
+          { elem: '금 대운', meaning: '인성: 깊은 학습, 지혜 축적기' },
         ],
       },
     };
@@ -1346,7 +1346,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
       <div className="my-4 rounded-2xl overflow-hidden" style={{ border: '1px solid #e8e0d4' }}>
         <div className="px-4 py-3" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
           <p style={{ fontSize: 13.5, fontWeight: 700, color: '#E8D5A8' }}>대운 흐름 해석 가이드</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{dOheng} 일간이 각 대운에서 겪는 에너지 변화</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{dOheng} 일간이 각 대운에서 겪는 기운 변화</p>
         </div>
 
         <div className="p-4 space-y-3" style={{ background: '#faf7f2' }}>
@@ -1437,12 +1437,8 @@ export function ReportSection({ section, index, elements, hasBirthTime, jijangga
           >
             {/* 소름 포인트 — keyInsight 골드 하이라이트 */}
             {section.keyInsight && (
-              <div className="mb-4 p-3.5 rounded-xl relative overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, rgba(184,150,90,0.08), rgba(140,109,61,0.12))' }}>
-                <div className="absolute top-0 left-0 w-1 h-full rounded-r" style={{ background: 'linear-gradient(180deg, #B8965A, #8C6D3D)' }} />
-                <p className="text-body-sm font-semibold leading-relaxed pl-2.5" style={{ color: '#8B7355' }}>
-                  ✦ {section.keyInsight}
-                </p>
+              <div className="mb-4 hj-note">
+                <p className="nb" style={{ fontWeight: 700 }}>{section.keyInsight}</p>
               </div>
             )}
             <div className="text-body-sm text-text-secondary whitespace-pre-line leading-relaxed">

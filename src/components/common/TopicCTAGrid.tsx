@@ -47,11 +47,12 @@ export function TopicCTAGrid({ topics, onTopicTap, meta, title }: TopicCTAGridPr
             className="card-primary"
             style={{
               padding: 16,
-              border: 'none',
+              border: '1px solid #E1D7C4',
+              borderRadius: 6,
+              boxShadow: 'none',
               textAlign: 'left',
               cursor: 'pointer',
-              borderLeft: `3px solid ${t.color || 'var(--brand-gold)'}`,
-              background: '#FFFFFF',
+              background: '#FFFDF8',
               display: 'flex',
               flexDirection: 'column',
               gap: 6,
@@ -63,8 +64,8 @@ export function TopicCTAGrid({ topics, onTopicTap, meta, title }: TopicCTAGridPr
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
-                background: `${t.color || '#B8965A'}14`,
+                borderRadius: 3,
+                border: '1px solid rgba(26,22,18,.22)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -33,7 +33,7 @@ export function CTABlock({
   const isPrimary = variant === 'primary';
   const wrap = isPrimary
     ? 'bg-ink text-paper rounded-2xl p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.3)]'
-    : 'bg-gold-brown-soft/60 border-l-4 border-gold-brown rounded-lg p-5 text-ink';
+    : 'bg-paper border border-ink/40 rounded-[3px] p-5 text-ink';
   const eyebrowColor = isPrimary ? 'text-gold-brown-soft' : 'text-gold-brown';
   const descColor = isPrimary ? 'text-paper/80' : 'text-gray-700';
   const bulletColor = isPrimary ? 'text-paper/90' : 'text-ink';

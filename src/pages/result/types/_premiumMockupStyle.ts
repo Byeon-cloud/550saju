@@ -45,7 +45,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(135deg, #E8D9B8 0%, #B8965A 100%);
     color: #1a1a1a;
     font-size: 13px; font-weight: 700;
-    padding: 4px 10px; border-radius: 100px;
+    padding: 4px 10px; border-radius: 2px;
     letter-spacing: 0.08em;
   }/* ─── Hero (인물 정보 카드) ──────────────────────────── */
 
@@ -88,7 +88,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     display: inline-flex; align-items: center; gap: 8px;
     background: rgba(46, 125, 50, 0.08);
     border: 1px solid rgba(46, 125, 50, 0.2);
-    padding: 8px 14px; border-radius: 100px;
+    padding: 8px 14px; border-radius: 2px;
   }
   .premium-mockup .hero-card .ilgan .hanja {
     font-family: 'Noto Serif KR', serif;
@@ -312,10 +312,10 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-size: 13px; font-weight: 600;
   }
   .premium-mockup .ohaeng-bar .o-track {
-    background: #E5DFD0; height: 6px; border-radius: 100px; overflow: hidden;
+    background: #E5DFD0; height: 6px; border-radius: 2px; overflow: hidden;
   }
   .premium-mockup .ohaeng-bar .o-fill {
-    height: 100%; border-radius: 100px;
+    height: 100%; border-radius: 2px;
     transition: width .8s ease;
   }
   .premium-mockup .ohaeng-bar .o-count {
@@ -418,7 +418,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .shinsal-card .tag {
     margin-left: auto;
     background: rgba(184,150,90,.1); color: #B8965A;
-    font-size: 13px; padding: 2px 8px; border-radius: 100px; font-weight: 600;
+    font-size: 13px; padding: 2px 8px; border-radius: 2px; font-weight: 600;
   }
   .premium-mockup .shinsal-card p { font-size: 13.5px; color: #2a2520; line-height: 1.7; margin: 0; }/* ─── 7. 실천 액션 카드 ─────────────────────── */
 
@@ -565,7 +565,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .report-sources p { margin: 0; }
   .premium-mockup .report-sources p + p { margin-top: 8px; }
-  .premium-mockup .report-sources .notice-line { color: #9A8B70; font-style: italic; }
+  .premium-mockup .report-sources .notice-line { color: #9A8B70; font-style: normal; }
   .premium-mockup .report-sources .book {
     font-family: 'Noto Serif KR', serif;
     color: #7F6B4E;
@@ -703,7 +703,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
     background: #fff;
     border: 1px solid #E5DFD0;
-    border-radius: 100px;
+    border-radius: 2px;
     padding: 1px 7px;
     font-size: 13px; color: #7F6B4E;
     font-weight: 600; letter-spacing: 0.05em;
@@ -803,7 +803,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .ganji-flow .gf-arrow { color: #B8965A; font-size: 13px; }
   .premium-mockup .ganji-flow .gf-type {
-    margin-left: auto; padding: 2px 8px; border-radius: 100px;
+    margin-left: auto; padding: 2px 8px; border-radius: 2px;
     font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
   }
   .premium-mockup .ganji-flow .gf-type.hap   { background: rgba(78,122,87,.1);  color: #4E7A57; }
@@ -843,9 +843,9 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-size: 13px;
   }
   .premium-mockup .daewoon-scores .ds-age { color: #7F6B4E; letter-spacing: 0.03em; }
-  .premium-mockup .daewoon-scores .ds-track { background: #E5DFD0; height: 8px; border-radius: 100px; position: relative; }
+  .premium-mockup .daewoon-scores .ds-track { background: #E5DFD0; height: 8px; border-radius: 2px; position: relative; }
   .premium-mockup .daewoon-scores .ds-fill {
-    height: 100%; border-radius: 100px;
+    height: 100%; border-radius: 2px;
     background: linear-gradient(90deg, #E8D9B8, #B8965A);
   }
   .premium-mockup .daewoon-scores .ds-fill.peak { background: linear-gradient(90deg, #4E7A57, #6E9776); }
@@ -920,11 +920,11 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     letter-spacing: -0.01em;
   }
   .premium-mockup .topic-mini .tm-bar {
-    height: 6px; background: #F0EAD9; border-radius: 100px;
+    height: 6px; background: #F0EAD9; border-radius: 2px;
     overflow: hidden;
   }
   .premium-mockup .topic-mini .tm-fill {
-    height: 100%; border-radius: 100px;
+    height: 100%; border-radius: 2px;
     background: linear-gradient(90deg, #E8D9B8, #B8965A);
     transition: width 0.4s ease;
   }
@@ -1036,7 +1036,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(212,175,55,.10);
     border: 1px solid rgba(212,175,55,.32);
-    border-radius: 100px;
+    border-radius: 2px;
     color: #8a6e1f; font-size: 13.5px; font-weight: 600;
     padding: 8px 14px; letter-spacing: 0.04em;
     pointer-events: none; 
@@ -1114,7 +1114,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .rel6-tag {
     margin-left: auto;
     font-size: 13px; padding: 3px 10px;
-    border-radius: 100px; font-weight: 600;
+    border-radius: 2px; font-weight: 600;
     letter-spacing: 0.02em;
   }
   .premium-mockup .rel6-tag.t-warn  { background: rgba(198,40,40,.10); color: #c62828; }
@@ -1294,7 +1294,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .life-edge-card .le-tag {
     margin-left: auto; font-size: 13px;
-    padding: 2px 8px; border-radius: 100px;
+    padding: 2px 8px; border-radius: 2px;
     background: #E5DFD0; color: #5C4A2E; font-weight: 600;
   }
   .premium-mockup .life-edge-card .le-tag.s { background: rgba(78,122,87,.12); color: #4E7A57; }
@@ -1337,8 +1337,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     width: 10px; height: 10px; border-radius: 2px;
   }
   .premium-mockup .sip-donut .sd-name { font-weight: 600; }
-  .premium-mockup .sip-donut .sd-bar { background: #E5DFD0; height: 4px; border-radius: 100px; }
-  .premium-mockup .sip-donut .sd-fill { height: 100%; border-radius: 100px; }
+  .premium-mockup .sip-donut .sd-bar { background: #E5DFD0; height: 4px; border-radius: 2px; }
+  .premium-mockup .sip-donut .sd-fill { height: 100%; border-radius: 2px; }
   .premium-mockup .sip-donut .sd-pct { text-align: right; font-feature-settings: 'tnum'; color: #5C4A2E; }/* 대운 가로 시간선 */
 
   
@@ -1361,14 +1361,14 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
       #4E7A57 50%, #4E7A57 62%,
       #E8D9B8 75%, #E8D9B8 87%,
       #cfd8dc 87%, #cfd8dc 100%);
-    border-radius: 100px;
+    border-radius: 2px;
     margin: 14px 0 8px;
   }
   .premium-mockup .daewoon-line .dl-mark {
     position: absolute; top: -10px;
     transform: translateX(-50%);
     background: #1a1a1a; color: #E8D9B8;
-    padding: 3px 7px; border-radius: 100px;
+    padding: 3px 7px; border-radius: 2px;
     font-size: 13px; font-weight: 700;
     letter-spacing: 0.05em; white-space: nowrap;
     box-shadow: 0 2px 6px rgba(0,0,0,.15);
@@ -1417,7 +1417,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .life-stage-card .ls-glyph {
     font-family: 'Noto Serif KR', serif;
     font-size: 14px; color: #B8965A; margin-top: 2px;
-  }/* 12개월 인사이트 */
+  }/* 12개월 풀이 */
 
   
   .premium-mockup .month-insight-grid {
@@ -1444,7 +1444,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     display: flex; flex-direction: column; gap: 5px;
   }
   /* 2026-05-28 — 12개월 카드 좌측 strip 제거 (균일 grid 동일 strip = AI 손톱 디자인 티).
-     up/peak/warn/now 타입별 톤은 .mi-month, .mi-badge 컬러로 충분히 표현. */
+     up/peak/warn/now 유형별 톤은 .mi-month, .mi-badge 컬러로 충분히 표현. */
   /* 헤더 줄 — 월, 간지, 라벨 */
   .premium-mockup .month-insight-grid .mi .mi-head {
     display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px;
@@ -1467,7 +1467,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin-left: auto;
     font-size: 13px; font-weight: 800;
     padding: 2px 7px;
-    border-radius: 99px;
+    border-radius: 2px;
     letter-spacing: 0.06em;
     background: #F4EFE4;
     color: #7A7269;
@@ -1545,7 +1545,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .shinsal-meta .sm-pulse span.on { background: #B8965A; }
   .premium-mockup .shinsal-meta .sm-when {
     font-size: 13px; color: #7F6B4E;
-    padding: 2px 7px; border-radius: 100px;
+    padding: 2px 7px; border-radius: 2px;
     background: #F4EFE4;
     border: 1px solid #E5DFD0;
     letter-spacing: 0.03em;
@@ -1576,7 +1576,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .shinsal-refs .sr-tag {
     font-size: 13px;
-    padding: 4px 10px; border-radius: 100px;
+    padding: 4px 10px; border-radius: 2px;
     background: #fff; color: #2a2520;
     border: 1px solid #E5DFD0;
     display: inline-flex; gap: 6px; align-items: baseline;
@@ -1588,4 +1588,86 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .shinsal-refs .sr-tag .sr-note {
     font-size: 13px; color: #7F6B4E;
   }
+
+  /* ═══ 2026-10-11 프리미엄 고서 양식 (오너: "프리미엄은 통일감 있되 독보적으로") ═══
+   *   일반 콘텐츠 = 먹선 두 줄 테두리 / 프리미엄 = 금선 두 줄 테두리 + 결론은 감지금니(紺紙金泥, 먹지에 금선)
+   *   걷어낸 것: ◇ 글머리, 結 워터마크, 금빛 번짐 그라데이션, 알약 배지와 둥근 막대, ▼ 기호 */
+  .premium-mockup .header { background: #1E1A15; border-bottom: 1px solid rgba(214,184,122,.45); }
+  .premium-mockup .header .badge { background: transparent; color: #E2C98F; border: 1px solid rgba(214,184,122,.7); border-radius: 2px; }
+  .premium-mockup .hero { background: linear-gradient(180deg, #1E1A15 0%, #1E1A15 60%, #F4EFE4 60%, #F4EFE4 100%); }
+  .premium-mockup .hero-card {
+    background: #FFFDF8;
+    border-radius: 2px;
+    border: 1px solid rgba(140,109,61,.9);
+    box-shadow: inset 0 0 0 4px #FFFDF8, inset 0 0 0 5px rgba(184,150,90,.55), 0 14px 30px rgba(26,22,18,.24);
+  }
+  .premium-mockup .hero-card .ilgan { border-radius: 2px; }
+  .premium-mockup .header .badge, .premium-mockup .shinsal-card .tag, .premium-mockup .wongug-cell .sip-tag,
+  .premium-mockup .ganji-flow .gf-type, .premium-mockup .shinsal-refs .sr-tag { border-radius: 2px; }
+  .premium-mockup .ohaeng-bar .o-track, .premium-mockup .ohaeng-bar .o-fill,
+  .premium-mockup .daewoon-scores .ds-track, .premium-mockup .daewoon-scores .ds-fill,
+  .premium-mockup .topic-mini .tm-bar, .premium-mockup .topic-mini .tm-fill { border-radius: 0; }
+  .premium-mockup .upsell-card .cta { border-radius: 10px; }
+
+  /* 펼치기/접기 — 금빛 알약 + ▼ → 가는 먹선 네모 + 꺾쇠 */
+  .premium-mockup .sec-toggle { background: transparent; border: 1px solid rgba(26,22,18,.32); border-radius: 2px; color: #4B4238; font-weight: 700; }
+  .premium-mockup .sec-toggle .chev { font-size: 0; width: 7px; height: 7px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: translateY(-2px) rotate(45deg); }
+  .premium-mockup .sec-toggle.collapsed .chev { transform: rotate(-45deg); }
+
+  /* 장 결론 — 감지금니: 먹지 + 사방 금선 두 줄 + 판심 제목(어미 표시) */
+  .premium-mockup .section-conclusion {
+    padding: 0 20px 20px;
+    background: #1E1A15;
+    border-radius: 2px;
+    border: 1px solid rgba(214,184,122,.88);
+    box-shadow: inset 0 0 0 3px #1E1A15, inset 0 0 0 4px rgba(214,184,122,.4), 0 12px 26px rgba(26,22,18,.18);
+  }
+  .premium-mockup .section-conclusion::after { content: none; }
+  .premium-mockup .section-conclusion .sc-label {
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    margin: 0 -12px 16px; padding: 12px 0 10px;
+    font-size: 13.5px; font-weight: 700; letter-spacing: .2em; text-transform: none;
+    color: #E2C98F; border-bottom: 1px solid rgba(214,184,122,.3);
+  }
+  .premium-mockup .section-conclusion .sc-label::before,
+  .premium-mockup .section-conclusion .sc-label::after {
+    content: ''; flex-shrink: 0; width: 14px; height: 8px; background: #D6B87A; opacity: 1; margin: 0;
+    -webkit-clip-path: polygon(0 0, 100% 0, 100% 52%, 50% 100%, 0 52%);
+    clip-path: polygon(0 0, 100% 0, 100% 52%, 50% 100%, 0 52%);
+  }
+  .premium-mockup .section-conclusion .sc-label::after {
+    -webkit-clip-path: polygon(0 48%, 50% 0, 100% 48%, 100% 100%, 0 100%);
+    clip-path: polygon(0 48%, 50% 0, 100% 48%, 100% 100%, 0 100%);
+  }
+  .premium-mockup .section-conclusion p,
+  .premium-mockup .section-conclusion .sc-row { font-size: 15px; line-height: 1.8; }
+  .premium-mockup .section-conclusion strong {
+    color: #EBD39D !important;
+    background: none !important;
+    border-bottom: 1px solid rgba(214,184,122,.55);
+    border-radius: 0; padding: 0 1px;
+  }
+  .premium-mockup .section-conclusion .sc-num { color: #D6B87A; }
+  .premium-mockup .section-conclusion .sc-stamp { color: rgba(214,184,122,.72); border-top-color: rgba(214,184,122,.22); }
+
+  /* 실천 목록 — 금빛 그라데이션 동그라미 번호 + 그림자 카드 → 금선 괘선 목록 + 붉은 번호 */
+  .premium-mockup .action-list { gap: 0; border-top: 1px solid rgba(140,109,61,.85); border-bottom: 1px solid rgba(140,109,61,.85); }
+  .premium-mockup .action-card { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 14px 2px !important; }
+  .premium-mockup .action-card + .action-card { border-top: 1px dashed rgba(140,109,61,.32) !important; }
+  .premium-mockup .action-card .num { width: auto !important; height: auto !important; min-width: 22px; background: none !important; box-shadow: none !important; border-radius: 0 !important; color: #A23A2A !important; font-size: 19px !important; font-weight: 900; justify-content: flex-start !important; line-height: 1.3; }
+  .premium-mockup .action-card .body .ttl { font-size: 15.5px; font-weight: 700; }
+  .premium-mockup .action-card .body .desc { font-size: 15px; color: #4B4238; }
+
+  /* 신살 카드 — 둥근 그림자 카드 → 금선 두 줄 칸 */
+  .premium-mockup .shinsal-card { border-radius: 2px; border: 1px solid rgba(140,109,61,.42); box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3px rgba(184,150,90,.2); }
+  .premium-mockup .shinsal-card .tag { background: transparent; border: 1px solid rgba(162,58,42,.55); color: #A23A2A; }
+  .premium-mockup .shinsal-meta .sm-when, .premium-mockup .shinsal-meta .sm-when.always,
+  .premium-mockup .shinsal-meta .sm-when.dae, .premium-mockup .shinsal-meta .sm-when.year { background: transparent; }
+  .premium-mockup .shinsal-card .adv .adv-icon { background: none; border: 1.4px solid #A23A2A; color: #A23A2A; border-radius: 2px; }
+
+  /* 주제 미니 카드 — 둥근 카드 + 옅은 색 안내 → 금선 칸 + 점선 아래 안내 */
+  .premium-mockup .topic-mini { border-radius: 2px; border-color: rgba(140,109,61,.42); box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3px rgba(184,150,90,.18); }
+  .premium-mockup .topic-mini .tm-hook { background: transparent !important; border-radius: 0; border-top: 1px dashed rgba(140,109,61,.3); padding: 8px 0 0; }
+  .premium-mockup .topic-mini .tm-hook .tm-hook-label { border: 1px solid rgba(140,109,61,.6); border-radius: 2px; background: transparent !important; color: #7A5C2E !important; }
+  .premium-mockup .month-insight-grid .mi { border-radius: 2px; }
 `;

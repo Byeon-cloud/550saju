@@ -197,8 +197,8 @@ export function generateShareUrl(reportId: string, referrerCode?: string): strin
 /** 공유 데이터 구성 */
 export function getShareData(name: string, reportId: string) {
   return {
-    title: `${name}님의 사주 결과 — 사주500`,
-    text: `${name}님의 사주를 분석했어요. 나도 500원에 내 사주를 볼 수 있다는데?`,
+    title: `${name} 님의 사주 결과`,
+    text: `${name} 님의 사주를 분석했어요. 나도 500원에 내 사주를 볼 수 있다는데?`,
     url: generateShareUrl(reportId),
   };
 }

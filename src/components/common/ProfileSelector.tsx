@@ -101,7 +101,7 @@ export function ProfileSelector({
         onClick={() => setExpanded((v) => !v)}
         onKeyDown={handleKey}
         aria-expanded={expanded}
-        aria-label={`${title} — 현재 ${selected?.name ?? '미선택'}`}
+        aria-label={`${title}, 현재 ${selected?.name ?? '미선택'}`}
         className="card-primary w-full"
         style={{
           display: 'flex',

@@ -195,7 +195,7 @@ export function MonthTimeline({
             fontSize: 13,
             color: C.mute,
             marginBottom: 10,
-            fontStyle: 'italic',
+            fontStyle: 'normal',
             lineHeight: 1.5,
           }}
         >
@@ -222,7 +222,7 @@ export function MonthTimeline({
             <div
               key={c.month}
               role="gridcell"
-              aria-label={`${c.month}월${c.hint ? ` — ${c.hint}` : ''}${c.isCurrent ? ' (현재)' : ''}`}
+              aria-label={`${c.month}월${c.hint ? `, ${c.hint}` : ''}${c.isCurrent ? ' (현재)' : ''}`}
               title={c.hint || `${c.month}월`}
               style={{
                 position: 'relative',

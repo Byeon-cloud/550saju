@@ -20,6 +20,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import type { SajuProfile } from '@/services/storage/localStore';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { getDreamTopicRec } from './dreamTopicRec';
+import { underlineMatches, splitAfter } from '@/utils/safeRegex';
 
 /** AI 본문 강약 자동 보강 — 사주용어 b 태그 + 시간/방위/숫자 u 밑줄 + 결론 strong 형광펜 (꿈해몽 톤 확장) */
 function autoEmphasize(input: string): string {
@@ -40,27 +41,35 @@ function autoEmphasize(input: string): string {
   const usedB = new Set<string>();
   for (const term of sajuTerms) {
     if (usedB.has(term)) continue;
-    const re = new RegExp(`(?<!<b>)(?<!<strong>)${term.replace(/[()]/g, '\\$&')}`, 'g');
-    if (re.test(text)) {
-      text = text.replace(re, `<b>${term}</b>`);
+    // 바로 앞이 <b>, <strong> 이면 그대로 (lookbehind 없이, 구형 iOS 대응)
+    const re = new RegExp(term.replace(/[()]/g, '\\$&'), 'g');
+    let hit = false;
+    const next = text.replace(re, (m: string, off: number, all: string) => {
+      const before = all.slice(Math.max(0, off - 8), off);
+      if (before.endsWith('<b>') || before.endsWith('<strong>')) return m;
+      hit = true;
+      return `<b>${m}</b>`;
+    });
+    if (hit) {
+      text = next;
       usedB.add(term);
     }
   }
 
   // 2) 시간/방위/색상/기간 → <u> 골드 밑줄
   if (!/<u>/i.test(text)) {
-    text = text.replace(/(?<!<u>)(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g, '<u>$&</u>');
-    text = text.replace(/(?<!<u>)(?<!\d)\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g, '<u>$&</u>');
-    text = text.replace(/(?<!<u>)(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g, '<u>$1</u>');
-    text = text.replace(/(?<!<u>)(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g, '<u>$1</u>');
-    text = text.replace(/(?<!<u>)(\d{4}년\s*\d{1,2}월|\d{1,2}월\s*[~∼-]?\s*\d{1,2}월|\d{1,2}월(?!\s*월))/g, '<u>$1</u>');
-    text = text.replace(/(?<!<u>)(20대|30대|40대|50대|60대)\s*(초반|중반|후반)/g, '<u>$1 $2</u>');
+    text = underlineMatches(text, /(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g);
+    text = underlineMatches(text, /\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g, true);
+    text = underlineMatches(text, /(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g);
+    text = underlineMatches(text, /(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g);
+    text = underlineMatches(text, /(\d{4}년\s*\d{1,2}월|\d{1,2}월\s*[~∼-]?\s*\d{1,2}월|\d{1,2}월(?!\s*월))/g);
+    text = underlineMatches(text, /(20대|30대|40대|50대|60대)\s*(초반|중반|후반)/g, false, (_m, g) => `<u>${g[0]} ${g[1]}</u>`);
   }
 
   // 2.5) 주의/경고 절 → <em> 번트오렌지 (2026-05-29 — Daily/Topic 와 1:1 동기화). 최대 2회.
   if (!/<em>/i.test(text)) {
     const cautionTrigger = /주의|조심|피하|삼가|위험|긴장|갈등|충돌|불안|악화|심화|예민|상처|마찰|소진|과부하|무리|경계|흉/;
-    const sentences = text.split(/(?<=[다요네][.!?])\s+/);
+    const sentences = splitAfter(text, /([다요네][.!?])\s+/g);
     let emCount = 0;
     const emPhrases: string[] = [];
     for (const s of sentences) {
@@ -93,7 +102,7 @@ function autoEmphasize(input: string): string {
     const targetStrong = 3; // 한 필드당 최소 3개 강조 목표
     const need = Math.max(0, targetStrong - existingStrong);
     if (need > 0) {
-      const sentences = text.split(/(?<=[다요네][.!?])\s+/);
+      const sentences = splitAfter(text, /([다요네][.!?])\s+/g);
       const endings = [
         // 명사+종결 (확장)
         '(?:날|시간|자리|결|순간|것|점|곳|쪽|무기|핵심|정답|답|이유|방법|시점|구간|기회|신호|중심|기준|기억|감각|선택|순서|뜻|증거|징조|예고|선언|메시지|표현|상징|의미|시기|장면|이미지|징표|결과|구조|이야기|초점|기점|돌파구|전환점|기로|단서|약속|준비|반증|반박|확신|확률|징후|토대|기반|관문)\\s*(?:이에요|예요|입니다|이다|네요)',
@@ -242,7 +251,7 @@ const MOCKUP_CSS = `
 .dream-mockup .hd::before { display: none; content: '夢'; position: absolute; right: -20px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 220px; font-weight: 900; color: rgba(255,255,255,.05); line-height: 1; }
 .dream-mockup .hd::after { display: none; content: ''; position: absolute; top: 10px; right: 30px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(212,175,55,.3), transparent 70%); border-radius: 50%; }
 .dream-mockup .hd .top { display: flex; gap: 8px; font-size: 13.5px; opacity: .95; flex-wrap: wrap; align-items: center; }
-.dream-mockup .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
+.dream-mockup .hd .badge { background: rgba(255,255,255,.15); padding: 3px 10px; border-radius: 2px; font-size: 13px; }
 .dream-mockup .hd .badge.free { background: rgba(212,175,55,.22); color: #f2d678; }
 /* 2026-09-17 — 잠금 해제(1운) 결과 헤더: 무료 뱃지 대신 그린 톤 '잠금 해제' */
 .dream-mockup .hd .badge.open { background: rgba(140,109,61,.28); color: #cfe8dc; }
@@ -259,7 +268,7 @@ const MOCKUP_CSS = `
 .dream-mockup .ic .lb .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 .dream-mockup .ic .tx { font-size: 13px; line-height: 1.7; color: #2a2520; margin-top: 6px; word-break: keep-all; }
 .dream-mockup .ic.topic .tx { font-weight: 600; font-family: 'Noto Serif KR', serif; font-size: 14.5px; }
-.dream-mockup .ic.dream .tx { font-style: italic; }
+.dream-mockup .ic.dream .tx { font-style: normal; }
 
 /* Body */
 .dream-mockup .body { padding: 18px 20px 0; }
@@ -287,6 +296,12 @@ const MOCKUP_CSS = `
 .dream-mockup .sym .pic.fire { background: linear-gradient(135deg, #F6E5E0, #E8C3B9); color: #B04A38; }
 .dream-mockup .sym .pic.metal { background: linear-gradient(135deg, #ececec, #c8c8c8); color: #555; }
 .dream-mockup .sym .pic.leaf { background: linear-gradient(135deg, #e0eed5, #b8d99c); color: #4E7A57; }
+/* 2026-10-11 그라데이션 동그라미(AI 결과물 티) → 오행색 테두리 네모 낙관 */
+.dream-mockup .sym .pic, .dream-mockup .sym .pic.water, .dream-mockup .sym .pic.foot, .dream-mockup .sym .pic.ripple,
+.dream-mockup .sym .pic.shadow, .dream-mockup .sym .pic.fire, .dream-mockup .sym .pic.metal, .dream-mockup .sym .pic.leaf, .dream-mockup .sym .pic.mountain { background: #FFFDF8; border: 1.5px solid currentColor; border-radius: 3px; width: 48px; height: 48px; }
+.dream-mockup .sym .pic.mountain { background: #FFFDF8 !important; border: 1.5px solid currentColor; border-radius: 3px; color: #8A6A2E; }
+.dream-mockup .sym .pic.shadow { color: #1A1612; }
+.dream-mockup .sym .pic.metal { color: #6B665E; }
 .dream-mockup .sym .pic.mountain { background: linear-gradient(135deg, #efe5d4, #d8c89e); color: #7F6B4E; }
 .dream-mockup .sym .hd2 { display: flex; justify-content: flex-start; align-items: baseline; gap: 6px; }
 .dream-mockup .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
@@ -300,10 +315,10 @@ const MOCKUP_CSS = `
 .dream-mockup .quote-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
 .dream-mockup .qc { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 14px 14px 40px; position: relative; }
 .dream-mockup .qc::before { content: '"'; position: absolute; left: 14px; top: 8px; font-family: 'Noto Serif KR', serif; font-size: 42px; font-weight: 900; color: #1A1612; line-height: 1; }
-.dream-mockup .qc .src { font-family: 'Noto Serif KR', serif; font-size: 13.5px; line-height: 1.6; color: #1A1612; font-style: italic; font-weight: 500; word-break: keep-all; }
+.dream-mockup .qc .src { font-family: 'Noto Serif KR', serif; font-size: 13.5px; line-height: 1.6; color: #1A1612; font-style: normal; font-weight: 500; word-break: keep-all; }
 .dream-mockup .qc .src .hl { background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; font-weight: 600; }
 .dream-mockup .qc .interp { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5DFD0; font-size: 13.5px; line-height: 1.7; color: #2a2520; word-break: keep-all; }
-.dream-mockup .qc .interp .tag { display: inline-block; font-size: 13px; letter-spacing: 0.1em; font-weight: 600; color: #B8965A; background: rgba(184,150,90,.12); padding: 2px 7px; border-radius: 100px; margin-right: 6px; }
+.dream-mockup .qc .interp .tag { display: inline-block; font-size: 13px; letter-spacing: 0.1em; font-weight: 600; color: #B8965A; background: rgba(184,150,90,.12); padding: 2px 7px; border-radius: 2px; margin-right: 6px; }
 .dream-mockup .qc .interp strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; }
 
 /* Worry link (§04) */
@@ -424,7 +439,7 @@ const MOCKUP_CSS = `
 .dream-mockup .topic-rec .tr-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .dream-mockup .topic-rec .tr-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dream-mockup .topic-rec .tr-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
-.dream-mockup .topic-rec .tr-price { font-size: 13px; font-weight: 700; color: #8C6D3D; background: rgba(184,150,90,.12); padding: 2px 8px; border-radius: 100px; }
+.dream-mockup .topic-rec .tr-price { font-size: 13px; font-weight: 700; color: #8C6D3D; background: rgba(184,150,90,.12); padding: 2px 8px; border-radius: 2px; }
 .dream-mockup .topic-rec .tr-copy { font-size: 13.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
 .dream-mockup .topic-rec .tr-arrow { flex-shrink: 0; font-size: 20px; color: #B8965A; line-height: 1; }
 .dream-mockup .topic-rec .tr-sub { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 12px 4px; font-size: 13.5px; color: #7F6B4E; text-align: center; cursor: pointer; word-break: keep-all; }
@@ -490,10 +505,10 @@ const MOCKUP_CSS = `
 }
 .dream-mockup p b strong, .dream-mockup p strong b { background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%); color: #1a1a1a; padding: 1px 4px; }
 
-/* 섹션 시각 위계 — 무료 (open 상태에서 좌측 골드 라인), 잠금 (다크 헤더) */
+/* 섹션 시각 위계 — 2026-10-11 펼침 표시용 왼쪽 금빛 줄 제거 (AI 결과물 티) */
 .dream-mockup .section { padding-left: 0; border-left: 0; transition: padding .2s ease; }
 .dream-mockup .section .acc-head { padding: 14px 0 8px; }
-.dream-mockup .section.is-open { padding-left: 12px; border-left: 3px solid rgba(184,150,90,.55); margin-left: -4px; }
+.dream-mockup .section.is-open { padding-left: 0; border-left: 0; margin-left: 0; }
 .dream-mockup .section .sec-num { color: #A23A2A; font-weight: 900; }
 .dream-mockup .section + .section { border-top: 1px solid #EEE5D2; margin-top: 16px; }
 

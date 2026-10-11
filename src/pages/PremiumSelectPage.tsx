@@ -65,7 +65,7 @@ export function PremiumSelectPage() {
     // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
     import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumPricing.actualPrice)).catch(() => {});
 
-    toast.show(`${premiumPricing.actualPrice}운 차감 (잔액 ${getBalance()}운) — 종합 사주 시작`, 'success');
+    toast.show(`${premiumPricing.actualPrice}운 차감 (잔액 ${getBalance()}운): 종합 사주 시작`, 'success');
     sajuCtx.setInput(selected.input as any);
     sajuCtx.setSajuData(sajuData);
     // Phase 4 (2026-05-27) — LoadingPage 우회, 결과 페이지 직진 + fresh SSE
@@ -219,10 +219,10 @@ export function PremiumSelectPage() {
               position: 'relative',
             }}
           >
-            한 사주의 결을<br />처음부터 끝까지 풀어드립니다
+            한 사주의 기운을<br />처음부터 끝까지 풀어드립니다
           </h1>
           <div style={{ fontSize: 13.5, opacity: 0.85, marginTop: 4, position: 'relative' }}>
-            원국, 천간지지, 십성, 용신, 대운, 연운, 신살, 관계, 주제, 실천 — 10 섹션 깊이 풀이.
+            원국, 천간지지, 십성, 용신, 대운, 연운, 신살, 관계, 주제, 실천, 10 섹션 깊이 풀이.
           </div>
         </header>
       </FadeIn>

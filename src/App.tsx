@@ -406,7 +406,7 @@ export function App() {
           import('@/services/toss/tossPromotion').then(async (m) => {
             const r = pt === '7day' ? await m.test7DayPromotion() : await m.testLaunchPromotion();
             console.info(
-              `[promotest:${pt}] ${r.ok ? 'TEST_ 코드 호출 성공' : 'TEST_ 코드 호출 실패 — ' + m.describePromoFailure(r.reason)}`,
+              `[promotest:${pt}] ${r.ok ? 'TEST_ 코드 호출 성공' : 'TEST_ 코드 호출 실패: ' + m.describePromoFailure(r.reason)}`,
             );
           });
         }

@@ -84,14 +84,14 @@ const MOCKUP_CSS = `
 }
 .monthly-mockup .hd::before { display: none; content: '月'; position: absolute; right: -16px; bottom: -40px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
 .monthly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; opacity: .92; flex-wrap: wrap; }
-.monthly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
-.monthly-mockup .hd .month-tag { background: rgba(255,248,225,.22); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-left: auto; }
+.monthly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 2px; font-size: 13px; }
+.monthly-mockup .hd .month-tag { background: rgba(255,248,225,.22); color: #F5EBD9; padding: 3px 10px; border-radius: 2px; font-size: 13px; font-weight: 600; margin-left: auto; }
 .monthly-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 25px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; }
 .monthly-mockup .hd .sub { font-size: 13.5px; opacity: .85; margin-top: 6px; position: relative; }
 .monthly-mockup .hd .kw-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; position: relative; }
 .monthly-mockup .hd .kw {
   display: inline-flex; align-items: center;
-  padding: 4px 11px; border-radius: 100px;
+  padding: 4px 11px; border-radius: 2px;
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.24);
   font-size: 13px; color: rgba(255,255,255,0.95); font-weight: 600;
@@ -156,14 +156,14 @@ const MOCKUP_CSS = `
 .monthly-mockup .saju-cell.ilju .gan,
 .monthly-mockup .saju-cell.ilju .ji { box-shadow: 0 2px 4px rgba(0,0,0,0.10); }
 
-/* Oheng row — DailyMockupView chip 패턴 */
+/* Oheng row — DailyMockupView chip 경향 */
 .monthly-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
 .monthly-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
 .monthly-mockup .ohaeng-row .lead { font-size: 13.5px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
 .monthly-mockup .ohaeng-bal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .monthly-mockup .ob-item {
   display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 8px 0; border-radius: 100px;
+  padding: 8px 0; border-radius: 2px;
   background: var(--c-surface);
   border: 1.5px solid var(--c-card-line);
   font-family: 'Noto Serif KR', serif;
@@ -303,8 +303,8 @@ const MOCKUP_CSS = `
 .monthly-mockup .period .phase-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1.2; }
 .monthly-mockup .period .phase-range { font-size: 13px; color: var(--c-mute); margin-top: 2px; font-feature-settings: 'tnum'; }
 .monthly-mockup .period .phase-score { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 800; line-height: 1; }
-.monthly-mockup .period .score-bar { height: 6px; border-radius: 100px; overflow: hidden; background: rgba(0,0,0,0.06); margin-bottom: 10px; }
-.monthly-mockup .period .score-bar > span { display: block; height: 100%; border-radius: 100px; }
+.monthly-mockup .period .score-bar { height: 6px; border-radius: 2px; overflow: hidden; background: rgba(0,0,0,0.06); margin-bottom: 10px; }
+.monthly-mockup .period .score-bar > span { display: block; height: 100%; border-radius: 2px; }
 .monthly-mockup .period .period-body { font-size: 13px; line-height: 1.75; color: #2a2520; word-break: keep-all; }
 .monthly-mockup .period-body strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.30) 55%); padding: 0 2px; }
 .monthly-mockup .period-body u { text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 2px; color: #1a1a1a; font-weight: 600; }
@@ -324,7 +324,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .domain .sc-wrap { display: flex; align-items: center; gap: 6px; }
 .monthly-mockup .domain .sc-tag {
   font-size: 12px; font-weight: 700; color: var(--c-mute);
-  background: var(--c-paper); padding: 2px 7px; border-radius: 100px;
+  background: var(--c-paper); padding: 2px 7px; border-radius: 2px;
   border: 1px solid var(--c-card-line); white-space: nowrap; letter-spacing: 0.02em;
 }
 .monthly-mockup .domain .domain-cta {
@@ -338,12 +338,12 @@ const MOCKUP_CSS = `
 .monthly-mockup .domain .dot { width: 10px; height: 10px; border-radius: 50%; }
 .monthly-mockup .domain .han-chip {
   font-family: 'Noto Serif KR', serif; font-size: 13.5px; font-weight: 700;
-  padding: 2px 8px; border-radius: 100px;
+  padding: 2px 8px; border-radius: 2px;
 }
 .monthly-mockup .domain .nm { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 700; color: #1a1a1a; }
 .monthly-mockup .domain .sc { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 800; line-height: 1; }
-.monthly-mockup .domain .bar { height: 6px; border-radius: 100px; overflow: hidden; margin-bottom: 10px; }
-.monthly-mockup .domain .bar > span { display: block; height: 100%; border-radius: 100px; }
+.monthly-mockup .domain .bar { height: 6px; border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+.monthly-mockup .domain .bar > span { display: block; height: 100%; border-radius: 2px; }
 .monthly-mockup .domain .domain-body { font-size: 13px; line-height: 1.75; color: #2a2520; word-break: keep-all; }
 .monthly-mockup .domain-body strong { font-weight: 700; color: var(--c-gold-deep); background: linear-gradient(180deg, transparent 55%, rgba(184,150,90,.30) 55%); padding: 0 2px; }
 .monthly-mockup .domain-body u { text-decoration-color: var(--c-gold); text-decoration-thickness: 2px; text-underline-offset: 2px; color: #1a1a1a; font-weight: 600; }
@@ -357,7 +357,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .day-note.lucky { background: var(--c-accent-soft); border-color: var(--c-accent-line); }
 .monthly-mockup .day-note.caution { background: rgba(176,74,56,0.05); border-color: rgba(176,74,56,0.22); }
 .monthly-mockup .day-note .head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.monthly-mockup .day-note .pill { font-size: 13px; font-weight: 700; padding: 2px 9px; border-radius: 100px; color: #fff; }
+.monthly-mockup .day-note .pill { font-size: 13px; font-weight: 700; padding: 2px 9px; border-radius: 2px; color: #fff; }
 .monthly-mockup .day-note.lucky .pill { background: var(--c-accent); }
 .monthly-mockup .day-note.caution .pill { background: #B04A38; }
 .monthly-mockup .day-note .dt { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 800; font-feature-settings: 'tnum'; }
@@ -425,7 +425,7 @@ const MOCKUP_CSS = `
 
 /* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고, 내용 바뀜 혼란 차단) */
 .monthly-mockup .refining-pill {
-  margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
+  margin: 12px 20px 0; padding: 9px 14px; border-radius: 2px;
   background: var(--c-gold-soft); border: 1px solid var(--c-gold-line);
   display: flex; align-items: center; gap: 8px;
   font-size: 13.5px; font-weight: 600; color: var(--c-gold-deep);
@@ -573,7 +573,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         {/* 내 사주 미니 카드 */}
         {pillars.length === 4 && (
           <div className="my-saju">
-            <div className="ttl">내 사주 — {profile?.name || '당신'}</div>
+            <div className="ttl">{profile?.name ? `${profile.name} 님의 사주` : '내 사주'}</div>
             <div className="saju-grid">
               {cells.map((p, idx) => {
                 const ganInfo = STEM_INFO[p.gan];
@@ -602,7 +602,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         {ohengList.some((o) => o.qty > 0) && (
           <div className="ohaeng-row">
             <div className="ttl">내 사주 오행 균형</div>
-            <div className="lead">타고난 5기운의 분포 — 이 달의 흐름이 어느 기운을 건드리는지 함께 읽어보세요.</div>
+            <div className="lead">타고난 5기운의 분포: 이 달의 흐름이 어느 기운을 건드리는지 함께 읽어보세요.</div>
             <div className="ohaeng-bal">
               {ohengList.map((o) => {
                 const glyph = o.oheng === '목' ? '木' : o.oheng === '화' ? '火' : o.oheng === '토' ? '土' : o.oheng === '금' ? '金' : '水';
@@ -620,7 +620,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         <main className="body">
           {/* §01 이 달의 결 — theme */}
           <section className={`section ${isOpen('01') ? 'open' : ''}`}>
-            <SectionHeader num="01" title="이번 달의 결" han="月運" id="01" />
+            <SectionHeader num="01" title="이번 달의 기운" han="月運" id="01" />
             <p className="sec-lead">{profile?.name ? `${profile.name} 님에게 ` : ''}이번 달이 어떤 한 달인지, 핵심부터 짚어 드려요.</p>
             {theme ? (
               <div className="theme-body" dangerouslySetInnerHTML={safeHtmlEmph(theme)} />
@@ -812,7 +812,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
 
         <div className="service-notice">
           <p className="src">한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반</p>
-          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+          <p>사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
         </div>
       </div>
     </div>

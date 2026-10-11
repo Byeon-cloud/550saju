@@ -169,7 +169,7 @@ export function AILoading({
             letterSpacing: '-0.005em',
           }}
         >
-          {name ? `${name}님의 ` : ''}
+          {name ? `${name} 님의 ` : ''}
           <span style={{ color: C.goldDeep }}>{type}</span> 준비 중
         </p>
       </div>
@@ -455,7 +455,7 @@ export function AILoading({
             <motion.p
               key={noteIdx}
               className="text-[13px] text-center leading-relaxed mt-3 px-4 max-w-[280px]"
-              style={{ color: C.goldDeep, fontStyle: 'italic' }}
+              style={{ color: C.goldDeep, fontStyle: 'normal' }}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}

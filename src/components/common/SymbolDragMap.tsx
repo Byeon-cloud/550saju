@@ -179,7 +179,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
                 borderRadius: 12, cursor: placed ? 'default' : 'grab',
                 opacity: placed ? 0.5 : 1,
               }}
-              aria-label={`${s.keyword} ${placed ? `— ${placed}에 배치됨` : '— 탭하여 선택'}`}
+              aria-label={`${s.keyword} ${placed ? `, ${placed}에 배치됨` : '탭하여 선택'}`}
             >
               <Pictogram k={s.pictogram} size={24} color={placed ? OHENG_COLORS[placed] : '#1A1612'} />
               <span style={{ fontSize: 13, fontWeight: 700 }}>{s.keyword}</span>

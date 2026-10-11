@@ -48,7 +48,7 @@ export function stripMd(text: unknown): string {
   return decodeHtmlEntities(str)
     .replace(/<\/?[a-zA-Z][a-zA-Z0-9]*\b[^<>]*>/g, '') // 모든 HTML 태그 제거 (raw <strong> 노출 박멸)
     .replace(/\*\*/g, '')           // **bold**
-    .replace(/(?<!\w)\*(?!\*)/g, '') // *italic*
+    .replace(/(^|[^\w])\*(?!\*)/g, '$1') // *italic*
     .replace(/^#+\s*/gm, '')        // # heading
     .replace(/`/g, '')              // `code`
     .trim();
@@ -76,7 +76,7 @@ export function sanitizeAiText(text: string | undefined | null): string {
     })
     // 2) markdown bold/italic
     .replace(/\*\*/g, '')
-    .replace(/(?<!\w)\*(?!\*)/g, '')
+    .replace(/(^|[^\w])\*(?!\*)/g, '$1')
     .replace(/^#+\s*/gm, '')
     .replace(/`/g, '')
     .trim();

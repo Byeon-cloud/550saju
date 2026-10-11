@@ -226,7 +226,7 @@ export function MyPage() {
             cursor: 'pointer',
             boxShadow: '0 2px 8px rgba(184,150,90,0.12)',
           }}
-          aria-label="고객문의 — 궁금한 점이나 문제를 알려주세요"
+          aria-label="고객문의: 궁금한 점이나 문제를 알려주세요"
         >
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
@@ -585,7 +585,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
 
   // 사주 입력 안 된 경우 — fallback 헤더 (Stage 7e-7: 워딩 자연스럽게)
   if (!myProfile || !sajuSummary) {
-    const greeting = name ? `${name}님` : '환영합니다';
+    const greeting = name ? `${name} 님` : '환영합니다';
     return (
       <div className="relative overflow-hidden rounded-2xl mb-4"
         style={{ padding: '18px 20px', background: C.goldSoft, boxSizing: 'border-box' }}>
@@ -682,7 +682,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
       {/* 상단 row: name + 잔여 운 */}
       <div className="flex items-center justify-between mb-1 relative">
         <div style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 800, color: C.ink, letterSpacing: '-0.01em' }}>
-          {name ? `${name}님` : '나의 사주'}
+          {name ? `${name} 님` : '나의 사주'}
         </div>
         <div
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full"
@@ -984,7 +984,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.12em' }}>
-            명리학적 결
+            명리학적 흐름
           </div>
           {/* 2026-05-28 PM v5 — 정확한 명리학 용어: 일주 / 일간 / 일지 / 일간 강약 구분 */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
@@ -1075,7 +1075,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.12em' }}>
-            지금 흐르는 결
+            지금 흐르는 흐름
           </div>
           {(() => {
             // 한자 간지 → 한글 reading
@@ -1470,7 +1470,7 @@ function CsCode({ toast }: { toast: ReturnType<typeof useToast> }) {
       await navigator.clipboard.writeText(code);
       toast.show('고객센터 코드가 복사됐어요', 'success');
     } catch {
-      toast.show('복사에 실패했어요 — 길게 눌러 직접 복사해 주세요', 'warning');
+      toast.show('복사에 실패했어요, 길게 눌러 직접 복사해 주세요', 'warning');
     }
   };
   return (
@@ -1511,7 +1511,7 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
       const label = kind === '7day' ? '7일 완주' : '출시(무료 사주보기)';
       _toast.show(
         r.ok
-          ? `${label} TEST 호출 성공 — 콘솔에서 "시작하기" 가능`
+          ? `${label} TEST 호출 성공: 콘솔에서 "시작하기" 가능`
           : `${label} TEST 실패: ${m.describePromoFailure(r.reason)}`,
         r.ok ? 'success' : 'warning',
       );
@@ -1596,7 +1596,7 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
 
               <p className="text-[13.5px] font-bold mt-2 mb-2" style={{ color: C.gold }}>프로모션 TEST 호출 (출시 전)</p>
               <p className="text-[12px] mb-3" style={{ color: 'rgba(248,245,238,0.5)' }}>
-                TEST_ 코드로 호출돼요 (실지급 아님). 콘솔 "시작하기" 활성화 조건 —
+                TEST_ 코드로 호출돼요 (실지급 아님). 콘솔 "시작하기" 활성화 조건, 
                 각 1회 호출 후 콘솔에서 상태 확인. ⚠️ 토스앱(QR)에서만 동작.
               </p>
               <div className="flex gap-2 mb-3">

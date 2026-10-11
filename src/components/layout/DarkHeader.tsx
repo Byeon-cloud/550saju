@@ -38,14 +38,14 @@ export function DarkHeader({ title, subtitle, chip, chipVariant = 'gold', onBack
 
   const chipStyle = chipVariant === 'free'
     ? {
-        background: 'linear-gradient(135deg, rgba(232,217,184,0.20) 0%, rgba(184,150,90,0.30) 100%)',
+        background: 'transparent',
         color: '#E8D9B8',
-        border: '1px solid rgba(232,217,184,0.40)',
+        border: '1px solid rgba(232,217,184,0.45)',
       }
     : {
-        background: 'linear-gradient(135deg, #E8D9B8 0%, #B8965A 100%)',
-        color: '#1a1a1a',
-        border: 'none',
+        background: 'transparent',
+        color: '#E2C98F',
+        border: '1px solid rgba(214,184,122,0.7)',
       };
 
   return (
@@ -113,11 +113,11 @@ export function DarkHeader({ title, subtitle, chip, chipVariant = 'gold', onBack
         <div
           style={{
             ...chipStyle,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 700,
-            padding: '4px 10px',
-            borderRadius: 100,
-            letterSpacing: '0.08em',
+            padding: '3px 9px',
+            borderRadius: 2,
+            letterSpacing: '0.04em',
             flexShrink: 0,
           }}
         >

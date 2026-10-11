@@ -154,3 +154,124 @@ export function NeedSaju({ mark, title = '먼저 사주를 넣어 주세요', de
     </div>
   );
 }
+
+/* ═══ 2026-10-11 고서 문서 부품 — 왼쪽 색 띠 상자, 알약 배지, 슬라이더 게이지 대체 (규칙은 hanji.css '고서 문서 부품' 머리말) ═══
+ *   gold = 프리미엄(월운세, 신년운세 7운 · 종합사주 10운) 감지금니 양식 */
+
+/** 결(結) 한 줄 풀이 — 사방 두 줄 테두리 + 판심 제목 + 문장 끝 낙관 */
+export function Verdict({ label = '한 줄 풀이', children, html, seal, refText, gold, style }: {
+  label?: ReactNode; children?: ReactNode; html?: string; seal?: string; refText?: ReactNode; gold?: boolean; style?: CSSProperties;
+}) {
+  return (
+    <div className={`hj-verdict${gold ? ' gold' : ''}`} style={style}>
+      <Pansim>{label}</Pansim>
+      <p className="vt">
+        {html != null ? <span dangerouslySetInnerHTML={{ __html: html }} /> : children}
+        {seal && <Seal size={24} fontSize={13}>{seal}</Seal>}
+      </p>
+      {refText && <p className="vref">{refText}</p>}
+    </div>
+  );
+}
+
+/** 주(註) — 위아래 두 줄 괘선. 덧붙이는 풀이, 실천, 안내 */
+export function Note({ label, mark, children, html, gold, style }: {
+  label?: ReactNode; mark?: string; children?: ReactNode; html?: string; gold?: boolean; style?: CSSProperties;
+}) {
+  return (
+    <div className={`hj-note${gold ? ' gold' : ''}`} style={style}>
+      {label != null && <div className="nl">{mark && <Seal size={22} fontSize={12}>{mark}</Seal>}{label}</div>}
+      {html != null ? <div className="nb" dangerouslySetInnerHTML={{ __html: html }} /> : <div className="nb">{children}</div>}
+    </div>
+  );
+}
+
+/** 宜忌 — 책력의 '할 일(宜) / 삼갈 일(忌)' 표기로 좋은 점과 조심할 점 */
+export function YiGi({ good = [], bad = [], goodLabel = '살릴 점', badLabel = '조심할 점', html, style }: {
+  good?: string[]; bad?: string[]; goodLabel?: string; badLabel?: string; html?: boolean; style?: CSSProperties;
+}) {
+  const g = good.filter(Boolean);
+  const b = bad.filter(Boolean);
+  if (!g.length && !b.length) return null;
+  const item = (t: string, i: number) => (html ? <li key={i} dangerouslySetInnerHTML={{ __html: t }} /> : <li key={i}>{t}</li>);
+  return (
+    <div className="hj-yigi" style={style}>
+      {g.length > 0 && (
+        <div className="grp yi">
+          <div className="side"><b>宜</b><small>{goodLabel}</small></div>
+          <ul>{g.map(item)}</ul>
+        </div>
+      )}
+      {b.length > 0 && (
+        <div className="grp gi">
+          <div className="side"><b>忌</b><small>{badLabel}</small></div>
+          <ul>{b.map(item)}</ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 칸 — 두 줄 테두리 작은 칸 (수치, 시기). tone: good 송록 / warn 석간주 */
+export function Cell({ label, value, tone, big, style }: {
+  label: ReactNode; value: ReactNode; tone?: 'default' | 'good' | 'warn'; big?: boolean; style?: CSSProperties;
+}) {
+  return (
+    <div className="hj-cell" style={style}>
+      <span className="k">{label}</span>
+      <span className={`v${big ? ' big' : ''}${tone && tone !== 'default' ? ` ${tone}` : ''}`}>{value}</span>
+    </div>
+  );
+}
+
+/** 장부 — 이름칸(작은 붉은 한자) + 내용 줄 */
+export function Ledger({ rows, style }: {
+  rows: { mark?: string; label: ReactNode; value: ReactNode; swatch?: string }[]; style?: CSSProperties;
+}) {
+  return (
+    <div className="hj-ledger" style={style}>
+      {rows.map((r, i) => (
+        <div className="row" key={i}>
+          <span className="k">{r.mark && <b>{r.mark}</b>}{r.label}</span>
+          <span className="v">{r.swatch && <i className="sw" style={{ background: r.swatch }} />}{r.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 눈금 — 원고지 열 칸 점수 (동그란 손잡이 슬라이더 대체). 단계: 보강기 ~54 / 안정기 55~84 / 상승기 85~ */
+export function Grade({ label, score, unit = '점', phrase, foot, gold }: {
+  label: ReactNode; score: number; unit?: string; phrase?: ReactNode; foot?: ReactNode; gold?: boolean;
+}) {
+  const pct = Math.max(0, Math.min(100, Math.round(score)));
+  const band = pct >= 85 ? 2 : pct >= 55 ? 1 : 0;
+  return (
+    <div className={`hj-grade${gold ? ' gold' : ''}`}>
+      <div className="top">
+        <span className="lb">{label}</span>
+        <span className="num">{pct}<small>{unit}</small></span>
+      </div>
+      <div className="cells" aria-hidden="true">
+        {Array.from({ length: 10 }, (_, i) => (
+          <i key={i} style={{ ['--f' as string]: `${Math.max(0, Math.min(1, (pct - i * 10) / 10)) * 100}%` } as CSSProperties} />
+        ))}
+      </div>
+      <div className="scale">
+        {['보강기', '안정기', '상승기'].map((t, i) => <span key={t} className={i === band ? 'on' : undefined}>{t}</span>)}
+      </div>
+      {phrase && <p className="ph">{phrase}</p>}
+      {foot && <p className="ft">{foot}</p>}
+    </div>
+  );
+}
+
+/** 제첨 — 네모 딱지 (유형 이름, 단계) */
+export function Tag({ children, seal, onInk, style }: { children: ReactNode; seal?: boolean; onInk?: boolean; style?: CSSProperties }) {
+  return <span className={`hj-tag${seal ? ' seal' : ''}${onInk ? ' on-ink' : ''}`} style={style}>{children}</span>;
+}
+
+/** 카드 제목 앞 작은 낙관 (옅은 색 둥근 한자 타일 대체) */
+export function Mark({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return <span className="hj-mark" aria-hidden="true" style={style}>{children}</span>;
+}

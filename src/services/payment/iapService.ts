@@ -134,7 +134,7 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
               const total = product.paidUn + product.bonusUn;
               resolve({
                 success: true,
-                message: `${total}운이 충전되었습니다!`,
+                message: `${total}운이 충전됐어요`,
               });
             }
           },
@@ -207,7 +207,7 @@ export async function restoreCompletedPurchases(): Promise<{ granted: number; un
       //   서버 호출 자체는 위에서 이미 끝났으므로 payments 기록·멱등 마킹은 그대로 남는다(미래 재발 방지).
       const { wasBalanceSeededFromMirror } = await import('@/services/storage/devicePassport');
       if (wasBalanceSeededFromMirror()) {
-        console.info(`[IAP복구] 잔액 미러 seed 감지 — 로컬 가산 skip (+${paidUn + bonusUn}운 서버기록만)`);
+        console.info(`[IAP복구] 잔액 미러 seed 감지, 로컬 가산 skip (+${paidUn + bonusUn}운 서버기록만)`);
       } else {
         addPaidBalance(paidUn, bonusUn); // 서버가 승인한 금액만 로컬 반영
         try {

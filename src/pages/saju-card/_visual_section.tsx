@@ -58,7 +58,7 @@ export function Component12UnseongSection({
   const detail = meaning ? getUnseongDetail(meaning.ko) : null;
 
   return (
-    <SectionCard title="12운성 사이클" hanja="運星" intro="태어남부터 정리까지 — 인생의 12 단계 흐름.">
+    <SectionCard title="12운성 사이클" hanja="運星" intro="태어남부터 정리까지: 인생의 12 단계 흐름.">
       <div
         style={{
           display: 'flex',
@@ -80,7 +80,7 @@ export function Component12UnseongSection({
               marginBottom: 4,
             }}
           >
-            {name || '본인'}님의 인생 단계
+            {name ? `${name} 님의` : '나의'} 인생 단계
           </div>
           {meaning && (
             <div
@@ -97,7 +97,7 @@ export function Component12UnseongSection({
               에 있어요
             </div>
           )}
-          <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.6, fontStyle: 'italic' }}>
+          <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.6, fontStyle: 'normal' }}>
             12운성은 사람이 태어나서 자라고 활동하다 정리되는 순환을 12단계로 본 명리학 모델입니다.
             본인의 일주가 어느 단계에 놓였는지에 따라 살아가는 리듬이 다르게 나타납니다.
           </div>
@@ -164,7 +164,7 @@ export function Component12UnseongSection({
                 }}
               >
                 <span style={{ fontSize: 13.5 }}>道</span>
-                <span>이 결로 살아가려면</span>
+                <span>이 흐름으로 살아가려면</span>
               </div>
               <div style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.7 }}>
                 {detail.howToLive}
@@ -321,7 +321,7 @@ export function SinsalCardsSection({ sinsalAnalysis }: SinsalCardsSectionProps) 
             fontSize: 13.5,
             color: C.mute,
             lineHeight: 1.6,
-            fontStyle: 'italic',
+            fontStyle: 'normal',
           }}
         >
           신살은 사주에 따라 발현 여부가 달라요.
@@ -398,7 +398,7 @@ function SinsalCard({
             fontSize: 12,
             fontWeight: 800,
             padding: '2px 6px',
-            borderRadius: 999,
+            borderRadius: 2,
             background: has ? C.gold : 'rgba(122,114,105,0.12)',
             color: has ? C.paper : C.mute,
             letterSpacing: '0.04em',
@@ -707,7 +707,7 @@ export function UnFlowEntryLinks({
 }: UnFlowEntryLinksProps) {
   if (!onMoreDaeun && !onMoreMonthly) return null;
   return (
-    <SectionCard title="운의 흐름" hanja="運勢" intro="시간이 만드는 또 하나의 사주 — 대운(10년), 월운(12개월).">
+    <SectionCard title="운의 흐름" hanja="運勢" intro="시간이 만드는 또 하나의 사주: 대운(10년), 월운(12개월).">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {onMoreDaeun && (
           <button type="button" onClick={onMoreDaeun} style={linkBtnStyle}>
@@ -780,7 +780,7 @@ function SectionCard({
         <span style={{ fontSize: 13, color: C.mute, fontFamily: SERIF }}>{hanja}</span>
       </div>
       {intro && (
-        <div style={{ fontSize: 13, color: C.mute, marginBottom: 10, lineHeight: 1.5, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 13, color: C.mute, marginBottom: 10, lineHeight: 1.5, fontStyle: 'normal' }}>
           {intro}
         </div>
       )}

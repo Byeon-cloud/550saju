@@ -70,7 +70,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
     label: '대운 흐름',
-    heroH1: { line1: '인생을 흐르는', line2: '10년 단위의 결' },
+    heroH1: { line1: '인생을 흐르는', line2: '10년 단위의 기운' },
     // 2026-07-01 가격 fix — 대운 실제 차감 1운 (DaeunPage spendBalance(1)). 기존 '2운' stale.
     cost: '1운',
   },
@@ -106,7 +106,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
     label: '궁합',
-    heroH1: { line1: '두 사주의 결을 겹쳐', line2: '읽어 드립니다' },
+    heroH1: { line1: '두 사주의 기운을 겹쳐', line2: '읽어 드립니다' },
     // 2026-07-01 가격 fix — 궁합 실제 차감 1운 (CompatibilityPage spendBalance(1)). 기존 '3운' stale.
     cost: '1운',
   },
@@ -242,7 +242,7 @@ export function ExtensionHero({
           style={{
             background: 'rgba(255,255,255,0.22)',
             padding: '3px 10px',
-            borderRadius: 100,
+            borderRadius: 2,
             fontSize: 13,
             fontWeight: 600,
           }}
@@ -253,7 +253,7 @@ export function ExtensionHero({
           style={{
             background: 'rgba(255,255,255,0.14)',
             padding: '3px 10px',
-            borderRadius: 100,
+            borderRadius: 2,
             fontSize: 13,
           }}
         >
@@ -264,7 +264,7 @@ export function ExtensionHero({
             style={{
               background: 'rgba(255,255,255,0.28)',
               padding: '3px 9px',
-              borderRadius: 100,
+              borderRadius: 2,
               fontSize: 12,
               fontWeight: 800,
               letterSpacing: '0.02em',
@@ -503,7 +503,7 @@ export function ExtensionUpsellCard({
           background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
           color: '#1A1A1A',
           padding: '10px 18px',
-          borderRadius: 100,
+          borderRadius: 10,
           fontSize: 13,
           fontWeight: 700,
           position: 'relative',
@@ -914,20 +914,20 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
             : C.line;
         const bg =
           c.badge === 'now'
-            ? 'rgba(140,109,61,0.06)'
+            ? '#FFFDF8'
             : c.badge === 'peak'
-            ? 'rgba(162,58,42,0.06)'
+            ? '#FFFDF8'
             : c.badge === 'warn'
-            ? 'rgba(140,109,61,0.06)'
+            ? '#FFFDF8'
             : '#FFFFFF';
         return (
           <div
             key={i}
             style={{
               background: bg,
-              border: `1px solid ${accent}40`,
-              borderLeft: c.badge ? `3px solid ${accent}` : `1px solid ${C.line}`,
-              borderRadius: 10,
+              border: `1px solid ${c.badge ? accent : C.line}`,
+              boxShadow: c.badge ? `inset 0 0 0 2px ${bg}, inset 0 0 0 3px ${accent}55` : 'none',
+              borderRadius: 3,
               padding: '12px 14px',
             }}
           >
@@ -945,7 +945,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                   background: C.goldSoft,
                   color: C.goldDeep,
                   padding: '2px 8px',
-                  borderRadius: 100,
+                  borderRadius: 2,
                   fontSize: 13,
                   fontWeight: 700,
                 }}
@@ -1013,7 +1013,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                       background: '#F5F0E8',
                       color: C.inkSoft,
                       padding: '2px 8px',
-                      borderRadius: 100,
+                      borderRadius: 2,
                       fontSize: 13,
                       fontWeight: 600,
                     }}
@@ -1104,7 +1104,7 @@ export function MonthHero({
             background: 'rgba(162,58,42,0.10)',
             color: '#6E2A20',
             padding: '4px 10px',
-            borderRadius: 100,
+            borderRadius: 2,
             fontFamily: "'Noto Serif KR', serif",
             fontSize: 13.5,
             fontWeight: 700,
@@ -1672,7 +1672,7 @@ export function TojungHexagramCard({
           style={{
             fontFamily: "'Noto Serif KR', serif",
             fontSize: 13.5,
-            fontStyle: 'italic',
+            fontStyle: 'normal',
             color: '#1A1612',
             background: 'rgba(140,109,61,0.06)',
             borderRadius: 8,
@@ -1781,18 +1781,18 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
             : '#1A1612';
         const bg =
           m.variant === 'good'
-            ? 'rgba(140,109,61,0.06)'
+            ? '#FFFDF8'
             : m.variant === 'caution'
-            ? 'rgba(162,58,42,0.06)'
+            ? '#FFFDF8'
             : '#FFFFFF';
         return (
           <div
             key={m.month}
             style={{
               background: bg,
-              border: `1px solid ${accent}33`,
-              borderLeft: `3px solid ${accent}`,
-              borderRadius: 10,
+              border: `1px solid ${m.variant === 'good' || m.variant === 'caution' ? accent : C.line}`,
+              boxShadow: m.variant === 'good' || m.variant === 'caution' ? `inset 0 0 0 2px ${bg}, inset 0 0 0 3px ${accent}55` : 'none',
+              borderRadius: 3,
               padding: '12px 14px',
             }}
           >
@@ -1827,7 +1827,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
                     color: '#FFFFFF',
                     background: '#1A1612',
                     padding: '1px 6px',
-                    borderRadius: 100,
+                    borderRadius: 2,
                   }}
                 >
                   吉
@@ -1842,7 +1842,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
                     color: '#FFFFFF',
                     background: '#A23A2A',
                     padding: '1px 6px',
-                    borderRadius: 100,
+                    borderRadius: 2,
                   }}
                 >
                   注

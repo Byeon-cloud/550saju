@@ -232,7 +232,7 @@ export const REPORT_SECTIONS = [
   { id: 'daeun', title: '대운의 흐름', visual: 'daeunTimeline' },
   { id: 'mission', title: '인생의 핵심 과제', visual: null },
   { id: 'luck', title: '개운법', visual: 'gaewoonVis' },
-  { id: 'luckyProfile', title: '나만의 럭키 프로필', visual: 'luckyProfile' },
+  { id: 'luckyProfile', title: '나만의 행운 정리', visual: 'luckyProfile' },
 ] as const;
 
 /** 전체 서비스 목록 (런칭 버전) */

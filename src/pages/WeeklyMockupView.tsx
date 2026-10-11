@@ -82,8 +82,8 @@ const MOCKUP_CSS = `
 }
 .weekly-mockup .hd::before { display: none; content: '週'; position: absolute; right: -10px; bottom: -34px; font-family: 'Noto Serif KR', serif; font-size: 190px; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
 .weekly-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; opacity: .92; flex-wrap: wrap; }
-.weekly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
-.weekly-mockup .hd .span-tag { background: rgba(255,255,255,.22); color: #fff8ef; padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-left: auto; }
+.weekly-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 2px; font-size: 13px; }
+.weekly-mockup .hd .span-tag { background: rgba(255,255,255,.22); color: #fff8ef; padding: 3px 10px; border-radius: 2px; font-size: 13px; font-weight: 600; margin-left: auto; }
 .weekly-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.4; position: relative; word-break: keep-all; }
 .weekly-mockup .hd .date { font-size: 13.5px; opacity: .85; margin-top: 6px; font-feature-settings: 'tnum'; position: relative; }
 .weekly-mockup .hd .kw-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
@@ -92,12 +92,12 @@ const MOCKUP_CSS = `
   padding: 4px 10px;
   background: rgba(255,255,255,0.16);
   border: 1px solid rgba(255,255,255,0.22);
-  border-radius: 100px;
+  border-radius: 2px;
   font-size: 13px; font-weight: 600;
   color: rgba(255,255,255,0.95);
 }
 
-/* My Saju mini card — DailyMockupView 와 동일 패턴 */
+/* My Saju mini card — DailyMockupView 와 동일 경향 */
 .weekly-mockup .my-saju {
   margin: 16px 20px 0; background: var(--c-surface);
   border-radius: 14px; padding: 16px;
@@ -156,14 +156,14 @@ const MOCKUP_CSS = `
 .weekly-mockup .saju-cell.ilju .gan,
 .weekly-mockup .saju-cell.ilju .ji { box-shadow: 0 2px 4px rgba(0,0,0,0.10); }
 
-/* Oheng row — DailyMockupView chip 패턴 */
+/* Oheng row — DailyMockupView chip 경향 */
 .weekly-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
 .weekly-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-week-deep); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
 .weekly-mockup .ohaeng-row .lead { font-size: 13.5px; color: var(--c-mute); margin-bottom: 14px; line-height: 1.5; }
 .weekly-mockup .ohaeng-bal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .weekly-mockup .ob-item {
   display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 8px 0; border-radius: 100px;
+  padding: 8px 0; border-radius: 2px;
   background: var(--c-surface);
   border: 1.5px solid var(--c-card-line);
   font-family: 'Noto Serif KR', serif;
@@ -296,7 +296,7 @@ const MOCKUP_CSS = `
 .weekly-mockup .day-card .day-date { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
 .weekly-mockup .day-card .day-ganji { font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 600; color: var(--c-mute); }
 .weekly-mockup .day-card .day-when {
-  font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 100px; letter-spacing: 0.02em;
+  font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 2px; letter-spacing: 0.02em;
 }
 .weekly-mockup .day-card .day-when.past   { background: rgba(122,114,105,0.12); color: var(--c-mute); }
 .weekly-mockup .day-card .day-when.today   { background: var(--c-week); color: #fff; }
@@ -321,7 +321,7 @@ const MOCKUP_CSS = `
 .weekly-mockup .keyday.best    { background: var(--c-week-soft); border-color: rgba(140,109,61,0.26); }
 .weekly-mockup .keyday.caution { background: rgba(176,74,56,0.05); border-color: rgba(176,74,56,0.20); }
 .weekly-mockup .keyday .kd-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.weekly-mockup .keyday .kd-badge { font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 100px; color: #fff; letter-spacing: 0.04em; }
+.weekly-mockup .keyday .kd-badge { font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 2px; color: #fff; letter-spacing: 0.04em; }
 .weekly-mockup .keyday.best    .kd-badge { background: var(--c-week); }
 .weekly-mockup .keyday.caution .kd-badge { background: #B04A38; }
 .weekly-mockup .keyday .kd-day { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 800; }
@@ -360,7 +360,7 @@ const MOCKUP_CSS = `
 
 /* ⚡ async 2차리뷰 — "다듬는 중" 표시 (초안→최종 스왑 예고) */
 .weekly-mockup .refining-pill {
-  margin: 12px 20px 0; padding: 9px 14px; border-radius: 100px;
+  margin: 12px 20px 0; padding: 9px 14px; border-radius: 2px;
   background: rgba(140,109,61,0.10); border: 1px solid rgba(140,109,61,0.30);
   display: flex; align-items: center; gap: 8px;
   font-size: 13.5px; font-weight: 600; color: #a05a24;
@@ -474,7 +474,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
         {/* 내 사주 미니 카드 */}
         {pillars.length === 4 && (
           <div className="my-saju">
-            <div className="ttl">내 사주 — {profile?.name || '당신'}</div>
+            <div className="ttl">{profile?.name ? `${profile.name} 님의 사주` : '내 사주'}</div>
             <div className="saju-grid">
               {[
                 { ...cHour, lab: '시', ilju: false },
@@ -508,7 +508,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
         {ohengList.some((o) => o.qty > 0) && (
           <div className="ohaeng-row">
             <div className="ttl">내 사주 오행 균형</div>
-            <div className="lead">이번 7일의 흐름이 어느 기운 위에서 움직이는지 — 내 사주 5기운의 균형</div>
+            <div className="lead">이번 7일의 흐름이 어느 기운 위에서 움직이는지, 내 사주 5기운의 균형</div>
             <div className="ohaeng-bal">
               {ohengList.map((o) => {
                 const glyph = o.oheng === '목' ? '木' : o.oheng === '화' ? '火' : o.oheng === '토' ? '土' : o.oheng === '금' ? '金' : '水';
@@ -526,7 +526,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
         <main className="body">
           {/* §01 이번 7일의 결 — weekTheme */}
           <section className={`section ${isOpen('01') ? 'open' : ''}`}>
-            <SectionHeader num="01" title="이번 7일의 결" han="週運" id="01" />
+            <SectionHeader num="01" title="이번 7일의 기운" han="週運" id="01" />
             <div className="week-hook" dangerouslySetInnerHTML={safeHtml(weekHeadline)} />
             {weekTheme
               ? weekTheme.split('\n').filter(Boolean).map((para, i) => (
@@ -538,7 +538,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
           {/* §02 요일별 흐름 — 7일 그래프 + 요일별 카드 */}
           <section className={`section ${isOpen('02') ? 'open' : ''}`}>
             <SectionHeader num="02" title="요일별 흐름" han="日歷" id="02" />
-            <p className="sec-lead">오늘부터 7일을 하루씩 — 지난 날은 과거형으로, 다가올 날은 미리 짚어드려요.</p>
+            <p className="sec-lead">오늘부터 7일을 하루씩: 지난 날은 과거형으로, 다가올 날은 미리 짚어드려요.</p>
 
             {/* 주간 리듬 그래프 */}
             {chartData.length > 0 && (
@@ -656,7 +656,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
 
         <div className="service-notice">
           <p className="src">한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반</p>
-          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+          <p>사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
         </div>
       </div>
     </div>

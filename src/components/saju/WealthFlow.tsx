@@ -44,11 +44,11 @@ function getScoreBand(score: number): ScoreBand {
 function getEarningInterpretation(score: number, dayGan?: string, jaeCount?: number): string {
   const ganRef = ganRefStr(dayGan);
   const jaeRef = jaeCount !== undefined ? `, 재성 ${jaeCount}개` : '';
-  if (score >= 80) return `${ganRef}이 재물을 끌어당기는 힘이 아주 강한 사주예요${jaeRef}. 돈이 들어오는 결이 분명해요. 여러 통로에서 자연스럽게 재물이 들어와요.`;
+  if (score >= 80) return `${ganRef}이 재물을 끌어당기는 힘이 아주 강한 사주예요${jaeRef}. 돈이 들어오는 흐름이 분명해요. 여러 통로에서 자연스럽게 재물이 들어와요.`;
   if (score >= 65) return `${ganRef} 사주에 안정적인 수입 구조가 갖춰져 있어요${jaeRef}. 꾸준한 노력이 수입으로 이어지고, 본업에서의 성과가 재물로 연결돼요.`;
   if (score >= 50) return `${ganRef}의 수입 흐름은 평균 정도예요${jaeRef}. 큰 변동 없이 일정한 수입이 유지되지만, 부수입을 만들려면 따로 노력이 필요해요.`;
   if (score >= 35) return `${ganRef} 사주의 수입 흐름이 좀 약한 편이에요${jaeRef}. 돈이 들어오는 길이 좁거나 불규칙해요. 안정적인 수입원을 만드는 게 과제예요.`;
-  return `${ganRef}의 수입 에너지가 약한 사주예요${jaeRef}. 돈이 잘 들어오지 않아서, 기초부터 천천히 만들어야 해요.`;
+  return `${ganRef}의 수입 기운이 약한 사주예요${jaeRef}. 돈이 잘 들어오지 않아서, 기초부터 천천히 만들어야 해요.`;
 }
 
 function getEarningAction(score: number, dayGan?: string): string {
@@ -65,10 +65,10 @@ function getSpendingInterpretation(score: number, dayGan?: string, biCount?: num
   const ganRef = ganRefStr(dayGan);
   const biRef = biCount !== undefined ? `, 비겁 ${biCount}개` : '';
   if (score >= 80) return `${ganRef}의 소비 관리 능력이 아주 뛰어나요${biRef}. 불필요한 지출을 잘 걸러내고, 돈을 쓸 때도 가치를 따져 쓰는 사람이에요.`;
-  if (score >= 65) return `${ganRef}은 전반적으로 건전한 소비 패턴이에요${biRef}. 가끔 충동 소비가 있을 수 있지만, 큰 틀에서 균형 잡힌 지출을 하고 있어요.`;
+  if (score >= 65) return `${ganRef}은 전반적으로 건전한 소비 습관이에요${biRef}. 가끔 충동 소비가 있을 수 있지만, 큰 틀에서 균형 잡힌 지출을 하고 있어요.`;
   if (score >= 50) return `${ganRef}의 소비는 평균 정도예요${biRef}. 의식적으로 지출을 관리하면 문제없지만, 방심하면 새어나가는 돈이 생길 수 있어요.`;
   if (score >= 35) return `${ganRef} 사주에 지출 관리 보완이 필요해요${biRef}. 감정적 소비나 관계 유지를 위한 지출이 많아지는 경향이 있어요.`;
-  return `${ganRef}의 소비 에너지가 강해요${biRef}. 돈이 들어와도 빠르게 나가는 흐름이라, 지출 관리가 재물운의 핵심 과제예요.`;
+  return `${ganRef}의 소비 기운이 강해요${biRef}. 돈이 들어와도 빠르게 나가는 흐름이라, 지출 관리가 재물운의 핵심 과제예요.`;
 }
 
 function getSpendingAction(score: number, dayGan?: string): string {
@@ -76,7 +76,7 @@ function getSpendingAction(score: number, dayGan?: string): string {
   if (score >= 80) return `지금 습관을 유지하되, ${ganRef}이라면 너무 아끼다 기회를 놓치지 않도록 가치 있는 소비도 해보세요.`;
   if (score >= 65) return `월 예산을 정해두고, ${ganRef}답게 큰 지출은 48시간 규칙을 적용해보세요.`;
   if (score >= 50) return `${ganRef} 사주에는 고정비 재점검이 잘 맞아요. 구독 서비스나 정기 지출 중 불필요한 항목을 정리하면 효과가 커요.`;
-  if (score >= 35) return `가계부 쓰기가 ${ganRef}에게 가장 잘 맞아요. 일주일만 모든 지출을 기록해보면 패턴이 보여요.`;
+  if (score >= 35) return `가계부 쓰기가 ${ganRef}에게 가장 잘 맞아요. 일주일만 모든 지출을 기록해보면 경향이 보여요.`;
   return `${ganRef}이라면 자동이체로 저축을 먼저 빼고, 남은 금액 안에서만 쓰는 습관이 꼭 필요해요. 카드 대신 현금이나 체크카드를 써보세요.`;
 }
 
@@ -84,7 +84,7 @@ function getSpendingAction(score: number, dayGan?: string): string {
 function getSavingInterpretation(score: number, dayGan?: string, sikCount?: number): string {
   const ganRef = ganRefStr(dayGan);
   const sikRef = sikCount !== undefined ? `, 식상 ${sikCount}개` : '';
-  if (score >= 80) return `${ganRef}의 돈을 모으는 힘이 매우 강해요${sikRef}. 재물이 한번 들어오면 잘 쌓이는 결이며, 시간이 지날수록 자산이 불어나는 사주예요.`;
+  if (score >= 80) return `${ganRef}의 돈을 모으는 힘이 매우 강해요${sikRef}. 재물이 한번 들어오면 잘 쌓이는 흐름이며, 시간이 지날수록 자산이 불어나는 사주예요.`;
   if (score >= 65) return `${ganRef}은 저축과 자산 형성에 유리한 사주예요${sikRef}. 장기적인 계획을 세우면 꾸준히 자산을 늘릴 수 있습니다.`;
   if (score >= 50) return `${ganRef}의 돈을 모으는 힘은 보통이에요${sikRef}. 의지를 갖고 시스템을 만들면 충분히 모을 수 있지만, 자동으로 쌓이진 않습니다.`;
   if (score >= 35) return `${ganRef} 사주는 자산이 쌓이기 어려운 흐름이에요${sikRef}. 돈이 들어와도 각종 지출로 빠져나가기 쉬워, 강제 저축 장치가 필요합니다.`;
@@ -114,7 +114,7 @@ function getWealthType(earning: number, spending: number, saving: number): Wealt
   if (saving >= 65 && saving >= earning && saving >= spending) {
     return {
       name: '축적형',
-      description: '돈을 잘 모으고 지키는 사람이에요. 한번 들어온 재물이 빠져나가지 않으며, 시간이 자산을 불려주는 타입이에요.',
+      description: '돈을 잘 모으고 지키는 사람이에요. 한번 들어온 재물이 빠져나가지 않으며, 시간이 자산을 불려주는 편이에요.',
       advice: '저축에 강하니 이제 "불리기"에 집중할 때입니다. 안전한 투자 상품부터 시작해 자산 증식 속도를 높여보세요.',
     };
   }
@@ -142,7 +142,7 @@ function getWealthType(earning: number, spending: number, saving: number): Wealt
     return {
       name: '수성형',
       description: '있는 것을 잘 지키는 사람이에요. 큰돈을 벌기보다 가진 자산을 안정적으로 유지하는 데 강점이 있습니다.',
-      advice: '수입을 늘리는 데 에너지를 투자하세요. 지키는 능력은 이미 갖추고 있으니, 벌기 쪽만 보강하면 자산이 크게 늘어납니다.',
+      advice: '수입을 늘리는 데 기운을 투자하세요. 지키는 능력은 이미 갖추고 있으니, 벌기 쪽만 보강하면 자산이 크게 늘어납니다.',
     };
   }
 
@@ -159,7 +159,7 @@ function getWealthType(earning: number, spending: number, saving: number): Wealt
   if (avg < 50) {
     return {
       name: '잠재형',
-      description: '아직 재물 에너지가 완전히 발현되지 않은 상태입니다. 시기와 노력에 따라 큰 변화가 가능한 잠재력을 품고 있습니다.',
+      description: '아직 재물 기운이 완전히 발현되지 않은 상태입니다. 시기와 노력에 따라 큰 변화가 가능한 잠재력을 품고 있습니다.',
       advice: '지금은 실력과 기반을 다지는 시기입니다. 작은 성공 경험을 쌓으며 수입 구조를 만들어가세요. 때가 되면 빠르게 성장합니다.',
     };
   }
@@ -289,7 +289,7 @@ function ComparisonBars({ data }: { data: WealthFlowType }) {
 
 /* ─── 스테이지 카드 ─── */
 const STAGE_META = {
-  earning: { label: '벌기', sub: '수입 에너지', themeColor: '#B8965A' },
+  earning: { label: '벌기', sub: '수입 기운', themeColor: '#B8965A' },
   spending: { label: '소비관리', sub: '지출 통제력', themeColor: '#7A8BA0' },
   saving: { label: '모으기', sub: '돈 모으는 힘', themeColor: '#4E7A57' },
 } as const;

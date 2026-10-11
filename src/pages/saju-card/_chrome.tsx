@@ -197,7 +197,7 @@ export function SajuCardHero({
             background: theme.accent,
             color: '#0F0C09',
             padding: '4px 12px',
-            borderRadius: 100,
+            borderRadius: 2,
             fontSize: 13,
             fontWeight: 800,
             letterSpacing: '0.12em',
@@ -210,7 +210,7 @@ export function SajuCardHero({
           style={{
             background: 'rgba(255,255,255,0.12)',
             padding: '4px 12px',
-            borderRadius: 100,
+            borderRadius: 2,
             fontSize: 12,
             color: '#E8E2D4',
             border: `1px solid ${theme.accent}44`,
@@ -283,7 +283,7 @@ export function SajuCardHero({
         </div>
       </div>
 
-      {/* 시적 풀이 — 좌측 강한 accent 바 + 라이트 본문 */}
+      {/* 시적 풀이 — 2026-10-11 왼쪽 띠 → 위아래 가는 선 */}
       <h1
         style={{
           fontFamily: SERIF,
@@ -294,12 +294,10 @@ export function SajuCardHero({
           marginBottom: 0,
           letterSpacing: '-0.005em',
           position: 'relative',
-          padding: '14px 16px 14px 18px',
-          background: 'rgba(255,255,255,0.06)',
-          borderLeft: `4px solid ${theme.accent}`,
-          borderRadius: '0 8px 8px 0',
+          padding: '14px 2px',
+          borderTop: '1px solid rgba(255,255,255,0.24)',
+          borderBottom: '1px solid rgba(255,255,255,0.24)',
           color: 'rgba(255,255,255,0.94)',
-          fontStyle: 'italic',
         }}
       >
         {hint}
@@ -390,7 +388,7 @@ export function SajuCardSection({
             color: C.mute,
             marginTop: 6,
             lineHeight: 1.6,
-            fontStyle: 'italic',
+            fontStyle: 'normal',
           }}
         >
           {intro}
@@ -776,7 +774,7 @@ function PillarCardCol({
             fontSize: 12,
             color: C.mute,
             padding: '24px 0',
-            fontStyle: 'italic',
+            fontStyle: 'normal',
           }}
         >
           시간
@@ -835,7 +833,7 @@ function CharRow({
           style={{
             display: 'inline-block',
             padding: '2px 8px',
-            borderRadius: 999,
+            borderRadius: 2,
             background: sipsungColor,
             color: '#FFFFFF',
             fontSize: 12,
@@ -988,7 +986,7 @@ export function SajuMetaRow({
         marginTop: 6,
         fontSize: 13,
         color: C.mute,
-        fontStyle: 'italic',
+        fontStyle: 'normal',
         lineHeight: 1.55,
       }}
     >

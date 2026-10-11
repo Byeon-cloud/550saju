@@ -59,34 +59,34 @@ function getShareCopy(params: ShareParams): ShareCopy {
     case 'daily':
       return {
         title: '오늘의 운세 — 사주500',
-        text: '오늘의 운세를 사주로 받아봤어요. 당신의 오늘도 무료로 확인해보세요 — 사주500',
+        text: '오늘의 운세를 사주로 받아봤어요. 내 오늘도 무료로 확인해보세요',
         urlPath: `daily/${reportId}`,
       };
     case 'dream':
       return {
         title: '꿈해몽 — 사주500',
-        text: '간밤의 꿈을 사주로 풀어봤어요. 당신의 꿈도 무료로 해몽받아보세요 — 사주500',
+        text: '간밤의 꿈을 사주로 풀어봤어요. 내 꿈도 무료로 해몽받아보세요',
         urlPath: `dream/${reportId}`,
       };
     case 'topic': {
       const tl = topicLabel || '주제 분석';
       return {
         title: `${tl} — 사주500`,
-        text: `내 ${tl}을 사주로 깊이 있게 봤어요. 당신의 ${tl}도 사주로 확인해보세요 — 사주500`,
+        text: `내 ${tl}을 사주로 깊이 있게 봤어요. 내 ${tl}도 사주로 확인해보세요`,
         urlPath: `topic/${topicId || 'love'}/${reportId}`,
       };
     }
     case 'premium':
       return {
         title: '종합사주 — 사주500',
-        text: '평생 사주를 정통 명리학으로 풀어봤어요. 당신의 사주도 만나보세요 — 사주500',
+        text: '평생 사주를 정통 명리학으로 풀어봤어요. 내 사주도 만나보세요',
         urlPath: `premium/${reportId}`,
       };
     default:
       // 후방 호환 (type 없이 호출)
       return {
-        title: '사주500 — 정통 명리학 AI 사주 풀이',
-        text: '500원에 만나는 정통 사주 풀이. 당신의 사주도 받아보세요 — 사주500',
+        title: '사주500: 정통 명리학 AI 사주 풀이',
+        text: '500원에 만나는 정통 사주 풀이. 내 사주도 받아보세요',
         urlPath: `result/${reportId}`,
       };
   }
@@ -215,7 +215,7 @@ export async function generateOgImage(params: {
   // 메인 제목 (사람 이름 + 콘텐츠)
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '900 60px Pretendard, sans-serif';
-  const personPart = params.name && params.name !== '나' ? `${params.name}님의` : '';
+  const personPart = params.name && params.name !== '나' ? `${params.name} 님의` : '';
   if (personPart) ctx.fillText(personPart, 60, 200);
   ctx.font = '800 64px "Noto Serif KR", serif';
   ctx.fillText(theme.headline(params.topicLabel), 60, 280);
@@ -256,7 +256,7 @@ function getOgTheme(type?: ShareContentType): OgTheme {
       return {
         bgFrom: '#A23A2A', bgTo: '#7B2E15', accent: '#F4D166', hanja: '火',
         headline: () => '오늘 운세',
-        tagline: '500원에 만나는 정통 명리학 — 매일 무료',
+        tagline: '500원에 만나는 정통 명리학: 매일 무료',
       };
     case 'dream':
       return {
@@ -268,7 +268,7 @@ function getOgTheme(type?: ShareContentType): OgTheme {
       return {
         bgFrom: '#1A1612', bgTo: '#2A231C', accent: '#E8D5A8', hanja: '命',
         headline: (tl) => tl || '주제 분석',
-        tagline: '500원에 만나는 정통 명리학 — 깊이 있는 한 가지',
+        tagline: '500원에 만나는 정통 명리학: 깊이 있는 한 가지',
       };
     case 'premium':
       return {

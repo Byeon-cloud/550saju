@@ -350,7 +350,7 @@ function detectHyungChungHap(pillars: Pillar[], hasBirthTime: boolean): HyungChu
       // 형(刑)
       for (const [a, b, name] of JIJI_HYUNG_PAIRS) {
         if ((z1 === a && z2 === b) || (z1 === b && z2 === a)) {
-          results.push({ type: '형', target: '지지', positions: [`${posLabels[i]}지`, `${posLabels[j]}지`], chars: [z1, z2], desc: `${z1}${z2}형(刑) — ${name}` });
+          results.push({ type: '형', target: '지지', positions: [`${posLabels[i]}지`, `${posLabels[j]}지`], chars: [z1, z2], desc: `${z1}${z2}형(刑): ${name}` });
         }
       }
     }
@@ -496,7 +496,7 @@ function analyzeGyeokguk(
         관성: '종관격(從官格)',
         인성: '종강격',
       };
-      return { 격국: variantMap[k] || '종격', 격국근거: `${k} ${v}자 + 일간 극단(${isStrongSide ? '매우신강' : '매우신약'}) — 한쪽으로 완전히 쏠린 종격` };
+      return { 격국: variantMap[k] || '종격', 격국근거: `${k} ${v}자 + 일간 극단(${isStrongSide ? '매우신강' : '매우신약'}): 한쪽으로 완전히 쏠린 종격` };
     }
   }
 
@@ -505,7 +505,7 @@ function analyzeGyeokguk(
   const yangInJi: Record<string, string> = { 甲: '卯', 丙: '午', 戊: '午', 庚: '酉', 壬: '子' };
   const wolji = pillars[1]?.지지 || '';
   if (yangIlgan && yangInJi[ilgan] === wolji) {
-    return { 격국: '양인격(羊刃格)', 격국근거: `${ilgan} 일간 + 월지 ${wolji} (양인 자리) — 추진력과 전문성 강한 변격` };
+    return { 격국: '양인격(羊刃格)', 격국근거: `${ilgan} 일간 + 월지 ${wolji} (양인 자리): 추진력과 전문성 강한 변격` };
   }
 
   // 3) 건록격: 월지 = 일간 본기 (일간과 같은 오행, 같은 음양)
@@ -514,7 +514,7 @@ function analyzeGyeokguk(
     己: '午', 庚: '申', 辛: '酉', 壬: '亥', 癸: '子',
   };
   if (lookgokJi[ilgan] === wolji) {
-    return { 격국: '건록격(建祿格)', 격국근거: `월지 ${wolji} 가 ${ilgan} 일간의 본기 자리 — 자기 결로 사는 변격` };
+    return { 격국: '건록격(建祿格)', 격국근거: `월지 ${wolji} 가 ${ilgan} 일간의 본기 자리: 자기 기질로 사는 변격` };
   }
 
   // 4) 정격 8종 (월지 십성 → 격국명)
@@ -547,8 +547,8 @@ function analyzeGyeokguk(
     return {
       격국: formal,
       격국근거: tugan
-        ? `월지 ${wolji} 본기 ${woljiKorean} 천간 투간 — 정격 ${formal}`
-        : `월지 ${wolji} 본기 ${woljiKorean} 기반 (천간 투간 X) — ${formal} 경향`,
+        ? `월지 ${wolji} 본기 ${woljiKorean} 천간 투간: 정격 ${formal}`
+        : `월지 ${wolji} 본기 ${woljiKorean} 기반 (천간 투간 X): ${formal} 경향`,
     };
   }
 
@@ -593,18 +593,18 @@ function analyzeYongsin(
 
   if (winter && (cnt['화'] || 0) === 0) {
     용신 = '화'; 희신 = '목'; 기신 = '수';
-    용신근거 = `${wolji}월 겨울 출생 + 원국에 화(火) 전무 — 조후로 데우는 화가 용신`;
+    용신근거 = `${wolji}월 겨울 출생 + 원국에 화(火) 전무, 조후로 데우는 화가 용신`;
   } else if (summer && (cnt['수'] || 0) === 0) {
     용신 = '수'; 희신 = '금'; 기신 = '토';
-    용신근거 = `${wolji}월 여름 출생 + 원국에 수(水) 전무 — 조후로 식히는 수가 용신`;
+    용신근거 = `${wolji}월 여름 출생 + 원국에 수(水) 전무, 조후로 식히는 수가 용신`;
   } else {
     const strong = gangYak === '신강경향' || (gangYak === '중화' && strengthScore >= 0);
     if (strong) {
       용신 = 식상; 희신 = 재성; 기신 = 인성;
-      용신근거 = `${gangYak === '중화' ? '중화(약간 강)' : '신강'} — ${식상}(식상)으로 설기하고 ${재성}(재성)이 흐름을 잇는 것이 핵심`;
+      용신근거 = `${gangYak === '중화' ? '중화(약간 강)' : '신강'}: ${식상}(식상)으로 설기하고 ${재성}(재성)이 흐름을 잇는 것이 핵심`;
     } else {
       용신 = 인성; 희신 = SAENG_BY[인성]; 기신 = 재성;
-      용신근거 = `${gangYak === '중화' ? '중화(약간 약)' : '신약'} — ${인성}(인성)으로 일간을 생조해 받쳐주는 것이 1순위`;
+      용신근거 = `${gangYak === '중화' ? '중화(약간 약)' : '신약'}: ${인성}(인성)으로 일간을 생조해 받쳐주는 것이 1순위`;
     }
   }
 

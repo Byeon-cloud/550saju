@@ -54,7 +54,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
 
   async function copyToClipboard() {
     const url = `${window.location.origin}/share/${reportId}`;
-    const text = `${name}님의 사주 결과 — 사주500\n${url}`;
+    const text = `${name} 님의 사주 결과, 사주500에서 확인해 보세요\n${url}`;
     try {
       await navigator.clipboard.writeText(text);
       setPhase('copied');
@@ -104,7 +104,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
               <div className="px-5 pt-6 pb-5" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
                 <div className="text-center">
                   <p className="text-[12px] text-white/30 mb-1">사주500 분석 결과</p>
-                  <p className="text-h1 text-white">{name}님의 사주</p>
+                  <p className="text-h1 text-white">{name} 님의 사주</p>
                   {topScore && (
                     <div className="flex items-center justify-center gap-2 mt-3">
                       <div className="px-3 py-1 rounded-full" style={{ background: 'rgba(184,150,90,0.15)' }}>
@@ -147,7 +147,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                           <span className="text-[8px] font-black text-white">運</span>
                         </div>
                         <p className="text-caption text-text-primary">
-                          공유하면 <span className="font-bold text-brand-gold">1운</span> 적립!
+                          공유하면 <span className="font-bold text-brand-gold">1운</span>이 들어와요
                         </p>
                       </div>
                     )}
@@ -201,7 +201,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     </motion.div>
-                    <p className="text-h3 text-text-primary">공유 완료!</p>
+                    <p className="text-h3 text-text-primary">공유했어요</p>
                     {rewardAmount > 0 && (
                       <motion.p
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}

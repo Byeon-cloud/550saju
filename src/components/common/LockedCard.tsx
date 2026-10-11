@@ -44,7 +44,7 @@ export function LockedCard({
       whileTap={{ scale: 0.98 }}
       role="button"
       tabIndex={0}
-      aria-label={`${title} — 잠금 해제`}
+      aria-label={`${title}, 잠금 해제`}
       onClick={onUnlock}
       onKeyDown={handleKey}
       className={`card-locked ${className}`}

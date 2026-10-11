@@ -135,7 +135,7 @@ export function FooterCTA({ pageKey, backTo, primaryTo = '/premium', marginTop =
           background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
           border: '1px solid #B8965A',
         }}
-        aria-label={`${primaryLabel} — 프리미엄 10섹션 종합 리포트`}
+        aria-label={`${primaryLabel}, 프리미엄 10섹션 종합 리포트`}
       >
         {primaryLabel} →
       </button>

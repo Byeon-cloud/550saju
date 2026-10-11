@@ -28,15 +28,14 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
     <motion.button
       onClick={() => setExpanded(!expanded)}
       className="w-full text-left card transition-all"
-      style={{ borderLeft: `4px solid ${scoreColor}` }}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: `${scoreColor}12` }}>
+          <div className="w-10 h-10 flex items-center justify-center"
+            style={{ border: `1.5px solid ${scoreColor}`, borderRadius: 3 }}>
             <span className="text-h2 font-black" style={{ color: scoreColor }}>{month}</span>
           </div>
           <div>
@@ -67,13 +66,13 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
           >
             <div className="mt-4 space-y-3">
               {/* 괘 의미 */}
-              <p className="text-caption text-text-muted italic">{stripMd(괘의미)}</p>
+              <p className="text-caption text-text-muted">{stripMd(괘의미)}</p>
 
               {/* 전통 해석 — 고풍스러운 스타일 */}
               {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 배경 톤만 유지. */}
               <div className="px-4 py-3 rounded-xl" style={{ background: 'rgba(184,150,90,0.08)' }}>
                 <p className="text-caption text-text-hint mb-1">한 줄로</p>
-                <p className="text-body-sm text-text-secondary leading-relaxed" style={{ fontStyle: 'italic' }}>
+                <p className="text-body-sm text-text-secondary leading-relaxed" style={{ fontStyle: 'normal' }}>
                   {stripMd(전통해석)}
                 </p>
               </div>

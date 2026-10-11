@@ -136,7 +136,7 @@ export function FreeHero({
           style={{
             background: 'rgba(255,255,255,0.22)',
             padding: '3px 10px',
-            borderRadius: 100,
+            borderRadius: 2,
             fontSize: 13,
             fontWeight: 600,
           }}
@@ -149,7 +149,7 @@ export function FreeHero({
             marginLeft: userName ? 'auto' : 0,
             background: 'rgba(255,255,255,0.14)',
             padding: '3px 10px',
-            borderRadius: 100,
+            borderRadius: 2,
             fontSize: 12,
           }}
         >
@@ -371,7 +371,7 @@ export function FreeUpsellCard({
           background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
           color: '#1A1A1A',
           padding: '10px 18px',
-          borderRadius: 100,
+          borderRadius: 10,
           fontSize: 13,
           fontWeight: 700,
           position: 'relative',
@@ -731,7 +731,7 @@ export function TodayTopicGrid({ cards }: { cards: TodayTopicCard[] }) {
               position: 'relative',
               overflow: 'hidden',
             }}
-            aria-label={`${c.label} ${c.score}/10 — ${c.ctaText}`}
+            aria-label={`${c.label} ${c.score}/10, ${c.ctaText}`}
           >
             <div
               aria-hidden
@@ -912,7 +912,7 @@ export function TodayMeetStack({ items }: { items: TodayMeetItem[] }) {
                     color: accent,
                     background: `${accent}14`,
                     padding: '1px 7px',
-                    borderRadius: 100,
+                    borderRadius: 2,
                   }}
                 >
                   {it.tag}
@@ -1123,18 +1123,17 @@ export function DreamQuoteStack({ items }: { items: DreamQuoteItem[] }) {
         <div
           key={i}
           style={{
-            background: '#FFFFFF',
-            borderRadius: 12,
+            background: '#FFFDF8',
+            borderRadius: 2,
             padding: '14px 16px',
-            border: `1px solid ${C.line}`,
-            borderLeft: `3px solid ${C.goldDeep}`,
+            border: '1px solid rgba(26,22,18,.4)',
+            boxShadow: 'inset 0 0 0 3px #FFFDF8, inset 0 0 0 4px rgba(26,22,18,.14)',
           }}
         >
           <div
             style={{
-              fontSize: 13,
+              fontSize: 14,
               color: C.inkSoft,
-              fontStyle: 'italic',
               lineHeight: 1.7,
               marginBottom: 10,
               wordBreak: 'keep-all',
@@ -1159,7 +1158,7 @@ export function DreamQuoteStack({ items }: { items: DreamQuoteItem[] }) {
                 color: C.goldDeep,
                 background: C.goldSoft,
                 padding: '2px 8px',
-                borderRadius: 100,
+                borderRadius: 2,
                 marginTop: 2,
               }}
             >

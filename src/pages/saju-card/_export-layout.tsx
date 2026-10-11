@@ -314,7 +314,7 @@ function EightCharGridExport({
                 style={{
                   fontSize: spec.fsLabel,
                   color: '#999',
-                  fontStyle: 'italic',
+                  fontStyle: 'normal',
                   padding: `${spec.pad * 2}px 0`,
                 }}
               >
@@ -536,7 +536,7 @@ function KakaoLayout({
             >
               {(() => {
                 const m = getIljuMeaning(ilju);
-                return m?.identity || `${name}님의 사주`;
+                return m?.identity || `${name} 님의 사주`;
               })()}
             </div>
             {(() => {
@@ -561,19 +561,18 @@ function KakaoLayout({
             fontWeight: 500,
             lineHeight: 1.55,
             color: '#1A1A1A',
-            padding: '14px 18px',
+            padding: 3,
             background: '#FFFFFF',
-            borderLeft: `4px solid ${theme.accent}`,
-            border: `1px solid rgba(184,150,90,0.40)`,
-            borderLeftWidth: 4,
-            borderRadius: '0 10px 10px 0',
-            boxShadow: '0 4px 16px rgba(184,150,90,0.10)',
+            border: '1.5px solid rgba(26,22,18,0.6)',
+            borderRadius: 2,
           }}
         >
-          {(() => {
-            const m = getIljuMeaning(ilju);
-            return (m ? `${m.identity} — ${m.description.replace(/\n/g, ' ')}` : null) || animal?.hint || `${name}님의 사주 카드를 받아보세요`;
-          })()}
+          <div style={{ border: '1px solid rgba(26,22,18,0.22)', padding: '12px 16px' }}>
+            {(() => {
+              const m = getIljuMeaning(ilju);
+              return (m ? `${m.identity}, ${m.description.replace(/\n/g, ' ')}` : null) || animal?.hint || `${name} 님의 사주 카드를 받아보세요`;
+            })()}
+          </div>
         </div>
 
         {/* CTA — 골드 deep solid (사주500 시그니처) */}
@@ -755,9 +754,11 @@ function FeedLayout({
       <div
         style={{
           height: 240,
-          background: theme.heroGrad,
+          // 2026-10-11 — 앱 화면 머리(먹)와 같게. 오행 색은 아래 얇은 선으로만
+          background: 'linear-gradient(180deg, #2A241D 0%, #1A1612 100%)',
+          borderBottom: `4px solid ${theme.accent}`,
           padding: '40px 60px',
-          color: '#FFFFFF',
+          color: '#F5EDDF',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -809,7 +810,7 @@ function FeedLayout({
           {/* Stage 4 보강: 직관적 풀이 (시적 → 명료) */}
           {(() => {
             const m = getIljuMeaning(ilju);
-            return (m ? `${m.identity} — ${m.description.replace(/\n/g, ' ')}` : null) || animal?.hint || `${name}님의 사주 카드`;
+            return (m ? `${m.identity}, ${m.description.replace(/\n/g, ' ')}` : null) || animal?.hint || `${name} 님의 사주 카드`;
           })()}
         </h1>
         <div style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 600, opacity: 0.92, position: 'relative' }}>
@@ -1102,7 +1103,7 @@ function StoryLayout({
             >
               {(() => {
                 const m = getIljuMeaning(ilju);
-                return m?.identity || `${name}님의 사주`;
+                return m?.identity || `${name} 님의 사주`;
               })()}
             </div>
             {(() => {
@@ -1146,20 +1147,20 @@ function StoryLayout({
             lineHeight: 1.5,
             margin: '40px 0 0',
             position: 'relative',
-            padding: '20px 24px',
+            padding: 5,
             background: '#FFFFFF',
-            border: `1px solid rgba(184,150,90,0.30)`,
-            borderLeft: `6px solid ${theme.accent}`,
-            borderRadius: '0 12px 12px 0',
+            border: '2px solid rgba(26,22,18,0.6)',
+            borderRadius: 2,
             color: '#1A1A1A',
-            boxShadow: '0 4px 16px rgba(184,150,90,0.10)',
           }}
         >
-          {/* Stage 4 보강: 직관적 풀이 (시적 → 명료) */}
-          {(() => {
-            const m = getIljuMeaning(ilju);
-            return (m ? `${m.identity} — ${m.description.replace(/\n/g, ' ')}` : null) || animal?.hint || `${name}님의 사주 카드`;
-          })()}
+          {/* 2026-10-11 왼쪽 띠 → 두 줄 테두리 */}
+          <div style={{ border: '1.5px solid rgba(26,22,18,0.22)', padding: '16px 20px' }}>
+            {(() => {
+              const m = getIljuMeaning(ilju);
+              return (m ? `${m.identity}, ${m.description.replace(/\n/g, ' ')}` : null) || animal?.hint || `${name} 님의 사주 카드`;
+            })()}
+          </div>
         </h1>
       </div>
 

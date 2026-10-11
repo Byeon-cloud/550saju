@@ -6,20 +6,21 @@
  *   AI 가 이미 태그를 넣었으면(<strong>/<em>) 해당 패스는 skip — 중복/중첩 방지.
  *   sanitizeAiText 와 함께 사용: sanitizeAiText(autoEmphasize(text))
  */
+import { underlineMatches, splitAfter } from './safeRegex';
 export function autoEmphasize(input: string): string {
   if (!input) return input;
   let text = String(input);
 
   // 1) 시간·색·방위 → <u>
   if (!/<u>/i.test(text)) {
-    text = text.replace(/(?<!<u>)(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g, '<u>$&</u>');
-    text = text.replace(/(?<!<u>)(?<!\d)\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g, '<u>$&</u>');
-    text = text.replace(/(?<!<u>)(\d{1,2}월\s*[~∼-]?\s*\d{1,2}월|\d{1,2}월)/g, '<u>$1</u>');
-    text = text.replace(/(?<!<u>)(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g, '<u>$1</u>');
-    text = text.replace(/(?<!<u>)(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g, '<u>$1</u>');
+    text = underlineMatches(text, /(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g);
+    text = underlineMatches(text, /\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g, true);
+    text = underlineMatches(text, /(\d{1,2}월\s*[~∼-]?\s*\d{1,2}월|\d{1,2}월)/g);
+    text = underlineMatches(text, /(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g);
+    text = underlineMatches(text, /(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g);
   }
 
-  const splitSentences = (t: string) => t.split(/(?<=[다요네][.!?])\s+/);
+  const splitSentences = (t: string) => splitAfter(t, /([다요네][.!?])\s+/g);
 
   // 2) 주의·경고 절 → <em> (최대 2)
   if (!/<em>/i.test(text)) {

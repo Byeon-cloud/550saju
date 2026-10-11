@@ -225,7 +225,7 @@ const UPSELL_COPY: Record<UpsellContentType, UpsellCopy> = {
     path: '/charge?need=10',
   },
   dream_paid: {
-    title: '꿈 패턴의 뿌리, 사주로 더 깊게',
+    title: '꿈 경향의 뿌리, 사주로 더 깊게',
     cost: '종합 10운',
     path: '/charge?need=10',
   },

@@ -5,13 +5,13 @@ interface Props {
 }
 
 /**
- * 나만의 럭키 프로필 — PRD v2 독자 기능
+ * 나만의 행운 정리 — PRD v2 독자 기능
  * SNS 공유 트리거: 인스타 스토리에 올리기 좋은 카드 디자인
  */
 export function LuckyProfile({ data }: Props) {
   return (
     <div className="card-gold space-y-4">
-      <h3 className="text-h2 text-text-primary">나만의 럭키 프로필</h3>
+      <h3 className="text-h2 text-text-primary">나만의 행운 정리</h3>
 
       {/* 행운 컬러 */}
       <div>

@@ -75,7 +75,7 @@ export function SharePage() {
           <div className="card-navy py-7 px-5">
             <p className="text-[12px] text-white/30 mb-1">{typeLabel} 결과</p>
             <h1 className="text-display text-white leading-snug">
-              {sajuOwner ? `${sajuOwner}님의 ${typeLabel}\n결과가 도착했어요` : '누군가 당신에게\n사주 결과를 공유했어요'}
+              {sajuOwner ? `${sajuOwner} 님의 ${typeLabel}\n결과가 도착했어요` : '누군가 나에게\n사주 결과를 공유했어요'}
             </h1>
             <p className="text-body-sm text-white/45 mt-3 leading-relaxed">
               {report ? '핵심 일부만 미리 보고, 전체는 내 사주 분석 후에 만나보세요.' : '나도 내 사주를 분석하면 같은 깊이로 만날 수 있어요.'}
@@ -90,7 +90,7 @@ export function SharePage() {
               <div>
                 <p className="text-label text-brand-gold font-semibold mb-1">일간(日干)</p>
                 <p className="text-body-sm text-text-secondary leading-relaxed">
-                  {sajuOwner}님은 <b style={{ fontFamily: 'Noto Serif KR, serif' }}>{dayGanRaw}</b> 일간 — 이 기운을 중심으로 평생의 사주가 짜여 있어요.
+                  {sajuOwner} 님은 <b style={{ fontFamily: 'Noto Serif KR, serif' }}>{dayGanRaw}</b> 일간: 이 기운을 중심으로 평생의 사주가 짜여 있어요.
                 </p>
               </div>
               <div className="h-px bg-border-light" />

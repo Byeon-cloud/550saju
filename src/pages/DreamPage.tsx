@@ -1023,8 +1023,8 @@ export function DreamPage() {
           <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)' }}>
-            사주는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
+            사주는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
           </p>
         </div>
       </div>
@@ -1095,7 +1095,7 @@ function CategoryPhase({
                           fontSize: 13.5,
                           fontWeight: 700,
                           padding: '2px 7px',
-                          borderRadius: 999,
+                          borderRadius: 2,
                           color: '#7A5C2E',
                           background: '#F4EFE4',
                           border: '1px solid #E1D7C4',
@@ -1431,7 +1431,7 @@ function _FreeResultView_legacy({
                   display: 'inline-flex',
                   alignItems: 'center',
                   padding: '3px 10px',
-                  borderRadius: 999,
+                  borderRadius: 2,
                   background: `${gradeColor}18`,
                   color: gradeColor,
                   fontSize: 13.5,
@@ -1464,7 +1464,7 @@ function _FreeResultView_legacy({
         <FadeIn delay={0.04}>
           <section className="card-primary">
             <p className="sec-title" style={{ marginBottom: 4 }}>
-              {profile?.name ?? '당신'}님의 사주
+              {profile?.name ? `${profile.name} 님의` : '나의'} 사주
             </p>
             <p className="sec-caption" style={{ marginBottom: 14 }}>
               각 기둥을 탭하면 이 꿈과의 연결이 보여요
@@ -1489,7 +1489,7 @@ function _FreeResultView_legacy({
                   사주 연동 시 10배 깊어져요
                 </p>
                 <p className="text-body-sm" style={{ color: 'rgba(245,239,224,0.7)', marginTop: 6 }}>
-                  생년월일만 입력하면 이 꿈을 당신 사주와 교차 분석할 수 있어요. 무료입니다.
+                  생년월일만 입력하면 이 꿈을 내 사주와 교차 분석할 수 있어요. 무료입니다.
                 </p>
               </div>
             </div>
@@ -1755,7 +1755,7 @@ function _FreeResultView_legacy({
             {/* 2/3/4 — 잠금 */}
             <LockedCard
               title="행운의 숫자"
-              subtitle="오늘 당신에게 맞는 숫자"
+              subtitle="오늘 나에게 맞는 숫자"
               ctaText="숫자 보기 (1운)"
               onUnlock={onDeepAnalysis}
               height={144}
@@ -1791,8 +1791,8 @@ function _FreeResultView_legacy({
       {/* Phase D'-3 Bundle 2 — FreeUpsellCard 정렬 (단일 CTA, 작업 0 정책) */}
       <FadeIn delay={0.48}>
         <FreeUpsellCard
-          title="꿈 패턴의 뿌리, 사주로 더 깊게"
-          desc="오늘 꿈의 결을 사주 전체에서 풀어드립니다. 성격, 대인, 직업, 재물, 애정, 건강까지."
+          title="자꾸 꾸는 꿈의 뿌리, 사주로 더 깊게"
+          desc="오늘 꿈의 기운을 사주 전체에서 풀어드립니다. 성격, 대인, 직업, 재물, 애정, 건강까지."
           ctaLabel="사주 전체로"
           /* 2026-05-29 H1 — costLabel 제거 → FreeUpsellCard SSOT 기본값(세일가) 사용 */
           onTap={onFullReport}
@@ -1847,7 +1847,7 @@ function DeepResultView({
                 style={{
                   display: 'inline-block',
                   padding: '3px 10px',
-                  borderRadius: 999,
+                  borderRadius: 2,
                   background: `${gradeColor}18`,
                   color: gradeColor,
                   fontSize: 13.5,
@@ -1871,7 +1871,7 @@ function DeepResultView({
         <FadeIn delay={0.04}>
           <section className="card-primary">
             <p className="sec-title" style={{ marginBottom: 10 }}>
-              {profile?.name ?? '당신'}님 사주와 꿈의 교차
+              {profile?.name ? `${profile.name} 님` : '내'} 사주와 꿈의 교차
             </p>
             <p className="text-body-lg" style={{ color: 'var(--text-primary)', whiteSpace: 'pre-line' }}>
               {sajuConnection}
@@ -2039,7 +2039,7 @@ function LuckyColorCard({ color }: { color: any; height?: number }) {
         flexDirection: 'column',
         gap: 8,
       }}
-      aria-label={`행운의 색 — ${name}`}
+      aria-label={`행운의 색: ${name}`}
     >
       <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>행운의 색</p>
       <div
@@ -2062,7 +2062,7 @@ function LuckyColorCard({ color }: { color: any; height?: number }) {
           margin: 0,
         }}
       >
-        {reason || `${name} — 오늘 당신의 흐름과 가장 공명하는 결입니다.`}
+        {reason || `${name}, 오늘 내 흐름과 가장 공명하는 결입니다.`}
       </p>
     </div>
   );
@@ -2089,7 +2089,7 @@ function LuckyStatCard({
         flexDirection: 'column',
         gap: 6,
       }}
-      aria-label={`${title} — ${value}`}
+      aria-label={`${title}, ${value}`}
     >
       <p className="sec-meta" style={{ color: 'var(--brand-gold)' }}>{title}</p>
       <p
@@ -2113,7 +2113,7 @@ function LuckyStatCard({
           margin: 0,
         }}
       >
-        {reason || `${title} ${value} — 사주와 오늘 흐름이 만나는 지점입니다.`}
+        {reason || `${title} ${value}, 사주와 오늘 흐름이 만나는 지점입니다.`}
       </p>
     </div>
   );

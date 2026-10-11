@@ -329,7 +329,7 @@ function SectionB_ManseTable({
                   padding: '3px 9px',
                   background: isTop ? `${OHENG_HEX[o]}1A` : isZero ? '#F5F0E8' : '#FFFFFF',
                   border: `1.2px solid ${isTop ? OHENG_HEX[o] : isZero ? C.line : `${OHENG_HEX[o]}55`}`,
-                  borderRadius: 999,
+                  borderRadius: 2,
                   fontSize: 13.5,
                   fontWeight: isTop ? 900 : 700,
                   letterSpacing: '0.02em',
@@ -767,7 +767,7 @@ function BigEmptyCell() {
           justifyContent: 'center',
           color: C.mute,
           fontSize: 12,
-          fontStyle: 'italic',
+          fontStyle: 'normal',
           background: C.paperSoft,
         }}
       >
@@ -823,7 +823,7 @@ function SipsungCell({ value, isDay }: { value: string; isDay: boolean }) {
 function EmptyCell() {
   return (
     <td style={tdCell}>
-      <span style={{ fontSize: 10, color: C.mute, fontStyle: 'italic' }}>—</span>
+      <span style={{ fontSize: 10, color: C.mute, fontStyle: 'normal' }}>—</span>
     </td>
   );
 }

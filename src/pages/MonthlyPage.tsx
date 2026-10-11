@@ -272,7 +272,7 @@ export function MonthlyPage() {
               <FadeIn delay={0.1}>
                 <div className="card py-4 px-4" style={{ border: `1.5px solid ${ACCENT}` }}>
                   <p className="text-h3 text-text-primary mb-1">어느 달의 운세를 볼까요?</p>
-                  <p className="text-[13px] text-text-hint mb-3">지난 6개월부터 앞으로 6개월까지 — 원하는 달을 골라 깊게 풀어드려요. <span style={{ color: ACCENT, fontWeight: 700 }}>지난 달은 회고, 앞으로는 미래 흐름</span>으로 읽어드려요.</p>
+                  <p className="text-[13px] text-text-hint mb-3">지난 6개월부터 앞으로 6개월까지, 원하는 달을 골라 깊게 풀어드려요. <span style={{ color: ACCENT, fontWeight: 700 }}>지난 달은 회고, 앞으로는 미래 흐름</span>으로 읽어드려요.</p>
                   <div className="grid grid-cols-3 gap-2">
                     {monthOptions.map((o, i) => {
                       const active = i === monthIdx;

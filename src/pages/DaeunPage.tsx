@@ -219,21 +219,21 @@ export function DaeunPage() {
       const score = clamp100((careerScore + loveScore + wealthScore + healthScore) / 4);
       const ganji = `${d.천간}${d.지지}`;
       const themeText = d.isCurrent
-        ? `현재 ${ganji} 대운 — 내 일간(${dayHan})과 ${ganji}의 흐름이 맞물리는 시기`
-        : `${ganji} — ${d.시작나이}대의 큰 흐름`;
+        ? `현재 ${ganji} 대운: 내 일간(${dayHan})과 ${ganji}의 흐름이 맞물리는 시기`
+        : `${ganji} 대운: ${d.시작나이}대의 큰 흐름`;
       return {
         간지: ganji,
         시작나이: d.시작나이,
         끝나이: d.끝나이,
         isCurrent: !!d.isCurrent,
         theme: themeText,
-        career: `${ganji} 대운에서 일과 진로의 결은 ${sipDist.관성 >= 2 ? '책임과 자리가 따라오는 흐름' : '스스로 그림을 그려 나가는 흐름'}으로 풀립니다.`,
-        love: `관계는 ${sipDist.재성 >= 2 ? '교류의 폭이 자연스럽게 넓어지는 시기' : '깊이를 다지는 시기'} — 내 일간(${dayHan})의 결을 잃지 않는 게 핵심.`,
-        wealth: `재물 흐름은 ${sipDist.재성 >= 2 ? '들고 나는 폭이 큰' : '쌓아 가는'} 양상 — ${ganji}의 지지 ${d.지지}가 받쳐주는 자리.`,
-        health: `건강은 ${sipDist.인성 >= 2 ? '회복과 정비에 강한' : '꾸준한 관리가 필요한'} 흐름 — 무리한 변화는 한 박자 늦추는 게 좋습니다.`,
+        career: `${ganji} 대운에서 일과 진로의 기운은 ${sipDist.관성 >= 2 ? '책임과 자리가 따라오는 흐름' : '스스로 그림을 그려 나가는 흐름'}으로 풀립니다.`,
+        love: `관계는 ${sipDist.재성 >= 2 ? '교류의 폭이 자연스럽게 넓어지는 시기' : '깊이를 다지는 시기'}, 내 일간(${dayHan})의 기운을 잃지 않는 게 핵심.`,
+        wealth: `재물 흐름은 ${sipDist.재성 >= 2 ? '들고 나는 폭이 큰' : '쌓아 가는'} 양상: ${ganji}의 지지 ${d.지지}가 받쳐주는 자리.`,
+        health: `건강은 ${sipDist.인성 >= 2 ? '회복과 정비에 강한' : '꾸준한 관리가 필요한'} 흐름: 무리한 변화는 한 박자 늦추는 게 좋습니다.`,
         score,
         advice: d.isCurrent
-          ? `지금 ${ganji} 대운의 핵심은 "${dayHan}일간의 본 결을 지키며 ${d.지지}의 환경을 받아들이기".`
+          ? `지금 ${ganji} 대운의 핵심은 "${dayHan}일간의 본 흐름을 지키며 ${d.지지}의 환경을 받아들이기".`
           : `${ganji} 대운에서는 ${d.시작나이}세 시점의 큰 결정을 미리 그려두는 게 유리.`,
         careerScore,
         loveScore,
@@ -243,10 +243,10 @@ export function DaeunPage() {
     });
     const cur = sajuDaeun.find(d => d.isCurrent);
     return {
-      overview: `${selected.name}님의 일간 ${dayHan}을 기준으로 본 8개 대운의 큰 흐름입니다. 각 시기의 점수는 사주 원국과의 합과 충 관계에서 산출된 상대값이며, 현재 대운의 환경을 어떻게 풀어가느냐가 평생의 운을 좌우합니다.`,
+      overview: `${selected.name} 님의 일간 ${dayHan}을 기준으로 본 8개 대운의 큰 흐름입니다. 각 시기의 점수는 사주 원국과의 합과 충 관계에서 산출된 상대값이며, 현재 대운의 환경을 어떻게 풀어가느냐가 평생의 운을 좌우합니다.`,
       periods: periodsFb,
       currentHighlight: cur
-        ? `지금은 ${cur.천간}${cur.지지} 대운(${cur.시작나이}~${cur.끝나이}세) — 일간 ${dayHan}와 ${cur.천간}${cur.지지}의 만남이 만드는 흐름입니다. 이 시기의 환경을 받아들이는 태도가 다음 10년의 결을 결정합니다.`
+        ? `지금은 ${cur.천간}${cur.지지} 대운(${cur.시작나이}~${cur.끝나이}세): 일간 ${dayHan}와 ${cur.천간}${cur.지지}의 만남이 만드는 흐름입니다. 이 시기의 환경을 받아들이는 태도가 다음 10년의 기운을 결정합니다.`
         : `현재 진행 중인 대운 정보를 확인하세요.`,
       transitionAdvice: `대운 전환기(${cur ? cur.끝나이 : '?'}세 전후)에는 큰 결정을 한 박자 늦추세요. 환경이 바뀌는 자리이므로, 이전 대운의 관성으로 결정한 일은 새 대운에서 어긋나기 쉽습니다.`,
       lifePhaseMap: sajuDaeun.slice(0, 8).map((d, i) => ({
@@ -295,7 +295,7 @@ export function DaeunPage() {
         <FadeIn>
           {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). */}
           <div className="card py-6 px-5">
-            <p className="text-h2 text-text-primary mb-2">{selected?.name}님의 대운 흐름</p>
+            <p className="text-h2 text-text-primary mb-2">{selected?.name} 님의 대운 흐름</p>
             {(effectiveResult as any).keywords?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {(effectiveResult as any).keywords.map((kw: string, i: number) => (
@@ -441,8 +441,8 @@ export function DaeunPage() {
           <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
             한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
           </p>
-          <p className="text-[13px] italic" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
-            사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)', lineHeight: 1.65 }}>
+            사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
             <br />
             의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
           </p>

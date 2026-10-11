@@ -19,6 +19,7 @@ import { stripMd, sanitizeAiText } from '@/utils/format';
 import { STEM_INFO, BRANCH_INFO } from '@/utils/sajuStemBranch';
 import { getTopicPrice, getWeeklyPrice, getMonthlyPrice, type PricingInfo } from '@/constants/pricing';
 import type { TopicId } from '@/constants/topics';
+import { underlineMatches, splitAfter } from '@/utils/safeRegex';
 
 /**
  * §07 4영역 → 실제 주제 묶음 (2026-09-17) — 카드 가격 표기 · DailyFortunePage 선택창 공용 SSOT.
@@ -66,29 +67,17 @@ function autoEmphasize(input: string): string {
   // 1) 시간 패턴 → <u>...</u> (정밀 패턴만, 1글자 한자 매칭 금지)
   if (!hasUnderline) {
     // "오후 2~5시", "오전 9~11시", "저녁 7시 이후" — 시간대 + 숫자 + 시
-    text = text.replace(
-      /(?<!<u>)(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g,
-      '<u>$&</u>'
-    );
+    text = underlineMatches(text, /(오전|오후|저녁|밤|새벽|아침)\s*\d+(?:\s*[~∼-]\s*\d+)?\s*시(?:\s*이후)?/g);
     // "14~17시" 24h 표기
-    text = text.replace(
-      /(?<!<u>)(?<!\d)\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g,
-      '<u>$&</u>'
-    );
+    text = underlineMatches(text, /\d{1,2}\s*[~∼-]\s*\d{1,2}\s*시/g, true);
     // 방위 — 명확한 방향 표현만 (1글자 매칭 금지)
-    text = text.replace(
-      /(?<!<u>)(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g,
-      '<u>$1</u>'
-    );
+    text = underlineMatches(text, /(동남쪽|동북쪽|서남쪽|서북쪽|동쪽|서쪽|남쪽|북쪽|동남방|동북방|서남방|서북방)/g);
     // 색상 — 긴 단어를 먼저, 짧은 단어를 뒤로 (regex alternative 순서로 부분매칭 방지)
-    text = text.replace(
-      /(?<!<u>)(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g,
-      '<u>$1</u>'
-    );
+    text = underlineMatches(text, /(짙은 파란색|진한 파란색|연한 녹색|밝은 빨강|짙은 검은색|남보라|보라색|주황색|연두색|검은색|검정색|파란색|초록색|노란색|갈색|남색|회색|빨강|파랑|초록|노랑|검정|흰색|은색|금색)/g);
   }
 
   // 문장 분할 (strong·em 공유)
-  const splitSentences = (t: string) => t.split(/(?<=[다요네][.!?])\s+/);
+  const splitSentences = (t: string) => splitAfter(t, /([다요네][.!?])\s+/g);
 
   // 2) <em> 주의/경고 절 자동 주입 (2026-05-29 신규 · 최대 2회)
   //    분석 본문에서 "주의·조심·위험·충돌·긴장" 류 경고 절을 번트오렌지로 강조 → 결과 페이지 강약 부여.
@@ -246,8 +235,8 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .hd::before { display: none; content: '火'; position: absolute; right: -16px; bottom: -36px; font-family: 'Noto Serif KR', serif; font-size: 200px; font-weight: 900; color: rgba(255,255,255,.06); line-height: 1; }
 .daily-mockup .hd .top { display: flex; align-items: center; gap: 10px; font-size: 13.5px; opacity: .9; flex-wrap: wrap; }
-.daily-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 100px; font-size: 13px; }
-.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #F5EBD9; padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-left: auto; }
+.daily-mockup .hd .badge { background: rgba(255,255,255,.18); padding: 3px 10px; border-radius: 2px; font-size: 13px; }
+.daily-mockup .hd .free-tag { background: rgba(212,175,55,.25); color: #F5EBD9; padding: 3px 10px; border-radius: 2px; font-size: 13px; font-weight: 600; margin-left: auto; }
 .daily-mockup .hd h1 { font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700; margin-top: 14px; letter-spacing: -0.02em; line-height: 1.35; }
 .daily-mockup .hd .date { font-size: 13.5px; opacity: .8; margin-top: 4px; font-feature-settings: 'tnum'; }
 .daily-mockup .hd .time-chip {
@@ -256,7 +245,7 @@ const MOCKUP_CSS = `
   padding: 6px 12px;
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.22);
-  border-radius: 100px;
+  border-radius: 2px;
   font-size: 13px;
   color: rgba(255,255,255,0.92);
   font-weight: 600;
@@ -264,7 +253,7 @@ const MOCKUP_CSS = `
 .daily-mockup .hd .time-chip .ic { font-size: 13px; }
 .daily-mockup .hd .time-chip .sub { font-size: 13px; opacity: 0.8; font-weight: 500; }
 
-/* My Saju mini card — SajuCardPage 큰 색 블록 패턴 동기화 (2026-05-06 v4)
+/* My Saju mini card — SajuCardPage 큰 색 블록 경향 동기화 (2026-05-06 v4)
    _details_table.tsx 의 천간/지지 솔리드 컬러 블록 스타일 */
 .daily-mockup .my-saju {
   margin: 16px 20px 0; background: var(--c-surface);
@@ -353,7 +342,7 @@ const MOCKUP_CSS = `
   background: var(--c-paper);
 }
 .daily-mockup .rel-stem-card.me .lb { background: var(--c-gold-soft); color: var(--c-gold-deep); }
-/* 천간 큰 색 블록 (사주카드 패턴) */
+/* 천간 큰 색 블록 (사주카드 경향) */
 .daily-mockup .rel-stem-card .gan-block {
   font-family: 'Noto Serif KR', serif;
   font-size: 48px; font-weight: 800;
@@ -417,7 +406,7 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .rel-explain .tag {
   font-size: 13px; font-weight: 700;
-  padding: 3px 10px; border-radius: 100px;
+  padding: 3px 10px; border-radius: 2px;
   flex-shrink: 0; line-height: 1.4;
 }
 .daily-mockup .rel-explain .pros .tag {
@@ -431,7 +420,7 @@ const MOCKUP_CSS = `
 .daily-mockup .rel-explain .txt { flex: 1; color: var(--c-ink-soft); }
 .daily-mockup .rel-explain strong { color: var(--c-ink); font-weight: 700; }
 
-/* Oheng row — SajuCardPage 만세력 chip 패턴 (2026-05-06 v4)
+/* Oheng row — SajuCardPage 만세력 chip 경향 (2026-05-06 v4)
    "木 1목" / "火 3화" / "土 1토" / "金 2 +1 금" / "水 1수" pill chip */
 .daily-mockup .ohaeng-row { margin: 12px 20px 0; background: var(--c-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--c-card-line); }
 .daily-mockup .ohaeng-row .ttl { font-size: 13px; color: var(--c-gold); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 6px; }
@@ -441,7 +430,7 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .ob-item {
   display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 8px 0; border-radius: 100px;
+  padding: 8px 0; border-radius: 2px;
   background: var(--c-surface);
   border: 1.5px solid var(--c-card-line);
   font-family: 'Noto Serif KR', serif;
@@ -538,7 +527,7 @@ const MOCKUP_CSS = `
 .daily-mockup .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
 .daily-mockup .sec-lead { font-size: 13.5px; color: var(--c-mute); margin-top: 4px; line-height: 1.55; }
 .daily-mockup .body p { font-size: 15.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
-/* ⭐ 강조 위계 통일 (PremiumResult 패턴) — 2026-05-06 v5
+/* ⭐ 강조 위계 통일 (PremiumResult 경향) — 2026-05-06 v5
    <strong> = 황금볼드 (일상 결론), <u> = 황금밑줄 (시기, 숫자, 색), <b> = 검정볼드 (한자) */
 .daily-mockup .body p strong,
 .daily-mockup .body strong:not(.no-emph) {
@@ -603,7 +592,7 @@ const MOCKUP_CSS = `
    ② 카드 우상단 corner 의 미세한 radial wash (1-corner only — 균일 grid 아님) */
 .daily-mockup .topic-card::before {
   content: ''; position: absolute; top: 0; right: 0; width: 56px; height: 56px;
-  background: radial-gradient(circle at top right, var(--card-tone, rgba(184,150,90,0.10)), transparent 70%);
+  display: none; /* 2026-10-11 모서리 빛번짐 제거 */
   pointer-events: none;
 }
 .daily-mockup .topic-card.t-money  { --card-tone: rgba(184,150,90,0.14); }
@@ -614,7 +603,7 @@ const MOCKUP_CSS = `
 .daily-mockup .topic-card .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
 .daily-mockup .topic-card .han {
   font-family: 'Noto Serif KR', serif; font-size: 13.5px; font-weight: 700;
-  padding: 3px 8px; border-radius: 100px;
+  padding: 3px 8px; border-radius: 2px;
   background: var(--han-bg, rgba(184,150,90,0.12));
   color: var(--han-fg, #8C6D3D);
   line-height: 1.2;
@@ -657,7 +646,7 @@ const MOCKUP_CSS = `
 .daily-mockup .meet .badge-orb span { font-size: 14px; line-height: 1.15; }
 .daily-mockup .meet .ti-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .daily-mockup .meet .ti { font-family: 'Noto Serif KR', serif; font-size: 14.5px; font-weight: 700; color: #1a1a1a; }
-.daily-mockup .meet .tag { font-size: 13px; padding: 2px 8px; border-radius: 100px; font-weight: 700; letter-spacing: .03em; }
+.daily-mockup .meet .tag { font-size: 13px; padding: 2px 8px; border-radius: 2px; font-weight: 700; letter-spacing: .03em; }
 .daily-mockup .meet.boost .tag { background: var(--c-mok-soft); color: var(--c-mok); }
 .daily-mockup .meet.clash .tag { background: var(--c-hwa-soft); color: var(--c-hwa); }
 .daily-mockup .meet.calm  .tag { background: rgba(184,150,90,.14); color: #8C6D3D; }
@@ -737,7 +726,7 @@ const MOCKUP_CSS = `
   display: inline-block; font-size: 13px; color: var(--c-gold-deep);
   font-weight: 700;
   padding: 3px 10px; background: var(--c-gold-soft);
-  border-radius: 100px;
+  border-radius: 2px;
   margin-bottom: 8px;
   margin-left: 32px;
 }
@@ -771,16 +760,18 @@ const MOCKUP_CSS = `
 }
 /* 2026-05-28 — 6카드 상단 균일 골드 strip 제거 (AI grid 디자인 티).
    톤은 ico-wrap 원형 배경 + lab 골드 컬러로 충분. */
+/* 2026-10-11 옅은 금빛 동그라미 + 화살표, 시계, 커피 기호 → 붉은 테두리 네모 낙관 + 한자(方 時 數 食 字) */
 .daily-mockup .lucky .ico-wrap {
-  width: 36px; height: 36px;
+  width: 34px; height: 34px;
   margin: 0 auto 8px;
-  border-radius: 50%;
-  background: rgba(184, 150, 90, 0.10);
+  border-radius: 3px;
+  border: 1.5px solid #A23A2A;
+  background: #FFFDF8;
   display: flex; align-items: center; justify-content: center;
 }
-.daily-mockup .lucky .ico { font-size: 18px; line-height: 1; color: #B8965A; font-weight: 700; }
+.daily-mockup .lucky .ico { font-family: 'Noto Serif KR', serif; font-size: 16px; line-height: 1; color: #A23A2A; font-weight: 900; }
 .daily-mockup .lucky .swatch { display: block; width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.daily-mockup .lucky .lab { font-size: 13px; color: #B8965A; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase; }
+.daily-mockup .lucky .lab { font-size: 13px; color: #6F6557; letter-spacing: 0.04em; font-weight: 700; }
 .daily-mockup .lucky .vl { font-size: 14px; color: #1a1a1a; font-weight: 700; margin-top: 6px; line-height: 1.3; word-break: keep-all; }
 .daily-mockup .lucky .vl.han { font-family: 'Noto Serif KR', serif; font-size: 16px; }
 
@@ -796,7 +787,7 @@ const MOCKUP_CSS = `
 }
 .daily-mockup .tomorrow-v2 .tomorrow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .daily-mockup .tomorrow-v2 .lab { font-size: 13px; color: #B8965A; letter-spacing: 0.18em; font-weight: 700; }
-.daily-mockup .tomorrow-v2 .score-chip { background: rgba(184,150,90,0.14); border: 1px solid rgba(184,150,90,0.30); padding: 4px 10px; border-radius: 100px; display: inline-flex; align-items: baseline; gap: 2px; }
+.daily-mockup .tomorrow-v2 .score-chip { background: rgba(184,150,90,0.14); border: 1px solid rgba(184,150,90,0.30); padding: 4px 10px; border-radius: 2px; display: inline-flex; align-items: baseline; gap: 2px; }
 .daily-mockup .tomorrow-v2 .score-num { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: #B8965A; line-height: 1; }
 .daily-mockup .tomorrow-v2 .score-max { font-size: 13px; color: #B8965A; font-weight: 600; }
 .daily-mockup .tomorrow-v2 .tomorrow-date { font-size: 13px; color: #2a2520; font-weight: 600; line-height: 1.5; padding-bottom: 8px; border-bottom: 1px dashed rgba(184,150,90,0.30); margin-bottom: 8px; }
@@ -900,8 +891,8 @@ function getOhengRelation(my: OhengType, today: OhengType): {
     return {
       label: '동행',
       category: '동료 자리',
-      meaning: `오늘은 나와 같은 ${myK} 기운이 만나는 날이에요. 동료와 동반자처럼 같은 결의 사람과 함께하는 자리.`,
-      good: '협력, 연대, 공감대 형성에 유리. 같은 결의 사람과 만남이 의미 있어요.',
+      meaning: `오늘은 나와 같은 ${myK} 기운이 만나는 날이에요. 동료와 동반자처럼 같은 성향의 사람과 함께하는 자리.`,
+      good: '협력, 연대, 공감대 형성에 유리. 같은 성향의 사람과 만남이 의미 있어요.',
       watch: '경쟁과 자존심 부딪힘 주의. 한 박자 양보가 흐름을 부드럽게 합니다.',
       type: 'same',
     };
@@ -925,7 +916,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
       category: '표현과 나눔 자리',
       meaning: `내 ${myK} 기운이 오늘 ${todayK}을 살려주는 날이에요. 말, 글, 아이디어로 나누고 표현하는 자리.`,
       good: '말, 글, 아이디어가 잘 풀리는 날. 표현하고 나누는 자리에 유리.',
-      watch: '에너지 빼주는 자리라 피로감 누적 주의. 무리하지 말고 한 번에 몰아치지 마세요.',
+      watch: '기운 빼주는 자리라 피로감 누적 주의. 무리하지 말고 한 번에 몰아치지 마세요.',
       type: 'i-support',
     };
   }
@@ -1088,7 +1079,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
         {/* 내 사주 미니 카드 */}
         {pillars.length === 4 && (
           <div className="my-saju">
-            <div className="ttl">내 사주 — {profile?.name || '당신'}</div>
+            <div className="ttl">{profile?.name ? `${profile.name} 님의 사주` : '내 사주'}</div>
             <div className="saju-grid">
               {[
                 { gan: hourGan, ji: hourJi, ganO: hourGanO, jiO: hourJiO, lab: '시', ilju: false },
@@ -1204,7 +1195,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
         <main className="body">
           {/* §01 오늘의 결 — default open */}
           <section className={`section ${isOpen('01') ? 'open' : ''}`}>
-            <SectionHeader num="01" title="오늘의 결" han="日柱" id="01" />
+            <SectionHeader num="01" title="오늘의 기운" han="日柱" id="01" />
             {(scoreHeadline || myToday || todayNarrative.length > 0) ? (
               <>
                 {scoreHeadline && <div className="score-headline" dangerouslySetInnerHTML={safeHtml(scoreHeadline)} />}
@@ -1282,7 +1273,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {meetPeople.length === 0 ? (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title="오늘 만나는 사람" han="人緣" id="03" />
-              <p className="sec-lead">오행으로 본 오늘의 인연 결. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
+              <p className="sec-lead">오행으로 본 오늘의 인연 흐름. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
               {[0, 1, 2].map((i) => (
                 <div key={i} style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 12, padding: 14, marginTop: 12, display: 'flex', gap: 12 }}>
                   <div className="skeleton-block" style={{ width: 48, height: 48, borderRadius: '50%', flexShrink: 0 }} />
@@ -1297,7 +1288,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           ) : (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title="오늘 만나는 사람" han="人緣" id="03" />
-              <p className="sec-lead">오행으로 본 오늘의 인연 결. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
+              <p className="sec-lead">오행으로 본 오늘의 인연 흐름. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
               <div className="meet-stack">
                 {meetPeople.map((m, i) => {
                   const type = String(m?.type || 'boost');
@@ -1336,7 +1327,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {!(doList.length > 0 || dontList.length > 0) ? (
             <section className={`section ${isOpen('04') ? 'open' : ''}`}>
               <SectionHeader num="04" title="오늘의 행동 처방" han="處方" id="04" />
-              <p className="sec-lead">오늘 결에 맞춰 행동 단위로 정리한 처방. 가볍게 한 가지만 실천해도 흐름이 바뀝니다.</p>
+              <p className="sec-lead">오늘 흐름에 맞춰 행동 단위로 정리한 처방. 가볍게 한 가지만 실천해도 흐름이 바뀝니다.</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
                 {[0, 1].map((col) => (
                   <div key={col} style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 12, padding: 14 }}>
@@ -1351,7 +1342,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           ) : (
             <section className={`section ${isOpen('04') ? 'open' : ''}`}>
               <SectionHeader num="04" title="오늘의 행동 처방" han="處方" id="04" />
-              <p className="sec-lead">오늘 결에 맞춰 행동 단위로 정리한 처방. 가볍게 한 가지만 실천해도 흐름이 바뀝니다.</p>
+              <p className="sec-lead">오늘 흐름에 맞춰 행동 단위로 정리한 처방. 가볍게 한 가지만 실천해도 흐름이 바뀝니다.</p>
               <div className="do-grid">
                 <div className="do-col go">
                   <div className="ch">
@@ -1408,7 +1399,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {/* §06 럭키 6 — 데이터 없으면 skeleton */}
           {Object.keys(luckyProfile).length === 0 ? (
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
-              <SectionHeader num="05" title="오늘의 럭키" han="吉物" id="05" />
+              <SectionHeader num="05" title="오늘의 행운" han="吉物" id="05" />
               <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워집니다.</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 14 }}>
                 {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -1422,7 +1413,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             </section>
           ) : (
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
-              <SectionHeader num="05" title="오늘의 럭키" han="吉物" id="05" />
+              <SectionHeader num="05" title="오늘의 행운" han="吉物" id="05" />
               <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워집니다.</p>
               <div className="lucky-grid">
                 {luckyProfile?.color?.name && (
@@ -1434,28 +1425,28 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                 )}
                 {(luckyProfile?.direction?.value || luckyProfile?.direction) && (
                   <div className="lucky">
-                    <div className="ico-wrap"><div className="ico">↑</div></div>
+                    <div className="ico-wrap"><div className="ico">方</div></div>
                     <div className="lab">행운 방향</div>
                     <div className="vl">{stripAll(luckyProfile.direction?.value || luckyProfile.direction)}</div>
                   </div>
                 )}
                 {luckyProfile?.time?.range && (
                   <div className="lucky">
-                    <div className="ico-wrap"><div className="ico">⏱</div></div>
+                    <div className="ico-wrap"><div className="ico">時</div></div>
                     <div className="lab">행운 시간</div>
                     <div className="vl" style={{ fontFeatureSettings: "'tnum'" }}>{stripAll(luckyProfile.time.range)}</div>
                   </div>
                 )}
                 {(luckyProfile?.number?.value !== undefined || luckyProfile?.number !== undefined) && (
                   <div className="lucky">
-                    <div className="ico-wrap"><div className="ico">◉</div></div>
+                    <div className="ico-wrap"><div className="ico">數</div></div>
                     <div className="lab">행운 숫자</div>
                     <div className="vl">{stripAll(luckyProfile.number?.value ?? luckyProfile.number)}</div>
                   </div>
                 )}
                 {luckyProfile?.food?.name && (
                   <div className="lucky">
-                    <div className="ico-wrap"><div className="ico">☕</div></div>
+                    <div className="ico-wrap"><div className="ico">食</div></div>
                     <div className="lab">행운 음식</div>
                     <div className="vl">{stripAll(luckyProfile.food.name)}</div>
                   </div>
@@ -1500,7 +1491,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
               '더 깊이 보기' 진입이 사라지지 않게 */}
           {!hasSubScores && isGenerating && (
             <section className={`section ${isOpen('07') ? 'open' : ''}`}>
-              <SectionHeader num="07" title="오늘 4개의 결" han="四運" id="07" />
+              <SectionHeader num="07" title="오늘 4개의 기운" han="四運" id="07" />
               <div className="topic-grid">
                 {[0, 1, 2, 3].map((i) => (
                   <div key={i} className="skeleton-card" style={{ marginTop: 14, padding: 14 }}>
@@ -1514,7 +1505,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           )}
           {(hasSubScores || !isGenerating) && (
             <section className={`section ${isOpen('07') ? 'open' : ''}`}>
-              <SectionHeader num="07" title="오늘 4개의 결" han="四運" id="07" />
+              <SectionHeader num="07" title="오늘 4개의 기운" han="四運" id="07" />
               <p className="sec-lead">
                 {hasSubScores
                   ? '각 영역을 더 깊이 보고 싶다면 카드를 눌러주세요.'
@@ -1566,7 +1557,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                 </div>
                 <div>
                   <div className="closing-title">오늘 풀이는 여기까지예요</div>
-                  <div className="closing-sub">내일도 새로운 결로 다시 만나요.</div>
+                  <div className="closing-sub">내일도 새로운 기질로 다시 만나요.</div>
                 </div>
               </div>
               {tomorrow && (
@@ -1608,7 +1599,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             <div className="lab">이어서 보면 좋은 운세</div>
             <h3>오늘 하루를 봤다면,<br />이번 주 7일도 이어서 볼까요?</h3>
             <p>
-              {profile?.name ? `${stripAll(profile.name)}님 사주로` : '내 사주로'} 오늘부터 7일 중 힘을 실어도 좋은 날과
+              {profile?.name ? `${stripAll(profile.name)} 님 사주로` : '내 사주로'} 오늘부터 7일 중 힘을 실어도 좋은 날과
               한 템포 쉬어갈 날을 짚어드려요.
             </p>
             <div className="cta-row">
@@ -1645,7 +1636,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
         </div>
 
         <div className="service-notice">
-          <p>사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
+          <p>사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
         </div>
       </div>
     </div>

@@ -193,61 +193,44 @@
   }
 
   /* ===== 카드 — 깊이감 + 호버 ===== */
+  /* 2026-10-11 종이 한 장 + 가는 선 (떠오르는 그림자, 호버 들림 = 웹 템플릿 티 → 제거) */
   .card {
     background: var(--bg-card);
-    border-radius: 16px;
+    border-radius: 6px;
     padding: 16px;
-    box-shadow: var(--shadow-card);
-    border: none;
-    transition: all 0.25s var(--ease-out);
-  }
-  .card:hover {
-    box-shadow: var(--shadow-card-hover);
-    transform: translateY(-1px);
+    box-shadow: none;
+    border: 1px solid #E1D7C4;
   }
 
+  /* 2026-10-11 강조 카드 = 사방 두 줄 테두리(사주쌍변). 금색 테두리는 버튼과 헷갈려 먹선으로 */
   .card-emphasis {
     background: var(--bg-card);
-    border-radius: 20px;
+    border-radius: 3px;
     padding: 20px;
-    box-shadow: var(--shadow-lg);
-    border: 2px solid var(--brand-gold);
+    box-shadow: inset 0 0 0 3px var(--bg-card), inset 0 0 0 4px rgba(26,22,18,0.24);
+    border: 1px solid rgba(26,22,18,0.58);
     position: relative;
     overflow: hidden;
   }
   /* 2026-05-28 — .card-emphasis 상단 골드 strip 제거 (AI 손톱 디자인). 골드 ring border(2px)만으로 강조. */
 
+  /* 2026-10-11 금빛 번짐 그라데이션 카드 → 사방 두 줄 테두리 종이 */
   .card-gold {
-    background: var(--bg-gold);
-    border-radius: 20px;
+    background: var(--bg-card);
+    border-radius: 3px;
     padding: 20px;
-    box-shadow: var(--shadow-glow);
-    border: 1px solid rgba(184,150,90,0.2);
+    box-shadow: inset 0 0 0 3px var(--bg-card), inset 0 0 0 4px rgba(26,22,18,0.24);
+    border: 1px solid rgba(26,22,18,0.58);
     position: relative;
     overflow: hidden;
-    transition: all 0.25s var(--ease-out);
-  }
-  .card-gold::before {
-    content: '';
-    position: absolute;
-    top: -50%; right: -30%;
-    width: 80%; height: 80%;
-    background: radial-gradient(circle, rgba(184,150,90,0.08) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .card-gold:hover {
-    box-shadow: 0 8px 32px rgba(184,150,90,0.25);
-    transform: translateY(-2px);
   }
 
   .card-glass {
-    background: rgba(255,255,255,0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 20px;
+    background: var(--bg-card);
+    border-radius: 6px;
     padding: 20px;
-    border: 1px solid rgba(255,255,255,0.6);
-    box-shadow: var(--shadow-md);
+    border: 1px solid #E1D7C4;
+    box-shadow: none;
   }
 
   .card-dark {
@@ -267,14 +250,7 @@
     position: relative;
     overflow: hidden;
   }
-  .card-navy::before {
-    content: '';
-    position: absolute;
-    top: -40%; right: -20%;
-    width: 60%; height: 60%;
-    background: radial-gradient(circle, rgba(184,150,90,0.1) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  .card-navy::before { content: none; }
 
   /* === Alert cards (2026-05-28 — 좌측 strip 제거. 배경 그라데이션 + border 톤으로 표현) === */
   .card-alert-success {
@@ -812,15 +788,10 @@
   }
 
   /* ─── 2026-05-28 PM QA — 10주제 sweep 발견: TopicAnalysisPage 의 모든 .card 가 cream bg 통일 ─── */
-  .topic-analysis-page .card,
-  .topic-analysis-page .card-emphasis {
-    background: #F8F5EE;
-    border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  }
-  .topic-analysis-page .card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    transform: none;
+  .topic-analysis-page .card {
+    background: var(--bg-card);
+    border-radius: 6px;
+    box-shadow: none;
   }
 
   /* ─── 2026-05-28 PM — 본문 강조 위계 V2 (user 피드백: "강약 더 확실히") ─── */

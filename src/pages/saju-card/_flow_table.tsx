@@ -515,7 +515,7 @@ function FlowSection({
             fontSize: 13,
             color: '#7A7269',
             marginBottom: 10,
-            fontStyle: 'italic',
+            fontStyle: 'normal',
           }}
         >
           {sub}
@@ -553,7 +553,7 @@ function FlowEmptyCard({ label, msg }: { label: string; msg: string }) {
           textAlign: 'center',
           fontSize: 13,
           color: '#7A7269',
-          fontStyle: 'italic',
+          fontStyle: 'normal',
         }}
       >
         {msg}

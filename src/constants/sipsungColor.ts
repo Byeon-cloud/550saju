@@ -51,14 +51,14 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(78,122,87,0.10)',
     category: '비겁',
     hanja: '比肩',
-    meaning: '나와 같은 자리 — 동료와 경쟁자',
+    meaning: '나와 같은 자리: 동료와 경쟁자',
   },
   겁재: {
     color: '#355A3E',
     soft: 'rgba(53,90,62,0.10)',
     category: '비겁',
     hanja: '劫財',
-    meaning: '재물을 빼앗기는 결 — 양면적 동지',
+    meaning: '재물을 빼앗기는 흐름: 양면적 동지',
   },
   // 식상 (분)
   식신: {
@@ -66,14 +66,14 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(176,74,56,0.10)',
     category: '식상',
     hanja: '食神',
-    meaning: '내가 만들어내는 결 — 표현과 창작',
+    meaning: '내가 만들어내는 흐름: 표현과 창작',
   },
   상관: {
     color: '#8A3326',
     soft: 'rgba(138,51,38,0.10)',
     category: '식상',
     hanja: '傷官',
-    meaning: '재능과 반항의 결 — 날카로운 표현',
+    meaning: '재능과 반항의 기운: 날카로운 표현',
   },
   // 재성 (금)
   정재: {
@@ -81,14 +81,14 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(176,127,56,0.12)',
     category: '재성',
     hanja: '正財',
-    meaning: '꾸준한 재물 — 노력의 결과',
+    meaning: '꾸준한 재물: 노력의 결과',
   },
   편재: {
     color: '#8A6226',
     soft: 'rgba(138,98,38,0.12)',
     category: '재성',
     hanja: '偏財',
-    meaning: '큰 재물 흐름 — 사업과 투자',
+    meaning: '큰 재물 흐름: 사업과 투자',
   },
   // 관성 (청)
   정관: {
@@ -96,14 +96,14 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(62,95,130,0.10)',
     category: '관성',
     hanja: '正官',
-    meaning: '책임과 명예 — 안정된 자리',
+    meaning: '책임과 명예: 안정된 자리',
   },
   편관: {
     color: '#2A4560',
     soft: 'rgba(42,69,96,0.10)',
     category: '관성',
     hanja: '偏官',
-    meaning: '강한 압박 — 도전과 돌파',
+    meaning: '강한 압박: 도전과 돌파',
   },
   // 인성 (자)
   정인: {
@@ -111,14 +111,14 @@ export const SIPSUNG_COLOR: Record<SipsungName, SipsungColorMeta> = {
     soft: 'rgba(122,92,126,0.10)',
     category: '인성',
     hanja: '正印',
-    meaning: '받아들이는 결 — 학문과 어머니',
+    meaning: '받아들이는 흐름: 학문과 어머니',
   },
   편인: {
     color: '#5C4360',
     soft: 'rgba(92,67,96,0.10)',
     category: '인성',
     hanja: '偏印',
-    meaning: '독특한 직관 — 종교와 예술',
+    meaning: '독특한 직관: 종교와 예술',
   },
 };
 

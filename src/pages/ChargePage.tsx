@@ -244,7 +244,7 @@ export function ChargePage() {
     if (portoneLive || portoneTest) { setShowPgSheet(true); return; }
     // 웹 실결제 미오픈(test 키) — 헛결제 방지 안내. 앱인토스 IAP·live 키면 통과.
     if (!webPaymentReady) {
-      toast.show('웹 결제는 곧 오픈해요! 조금만 기다려 주세요 🙏', 'info');
+      toast.show('웹 결제는 곧 열려요. 조금만 기다려 주세요', 'info');
       return;
     }
     setPurchasing(true);
@@ -313,7 +313,7 @@ export function ChargePage() {
         onReward: (earned) => {
           setBalanceDisplay(getBalance());
           setRemainingShares(getRemainingShareRewards());
-          toast.show(`공유 완료! ${earned}운이 적립됐어요`, 'success');
+          toast.show(`공유했어요. ${earned}운이 들어왔어요`, 'success');
         },
         onShared: () => {
           setRemainingShares(getRemainingShareRewards());
@@ -812,7 +812,7 @@ export function ChargePage() {
 
                     {/* 테스트 안내 — 작게 (심사 기간 한정) */}
                     <p style={{ fontSize: 13, color: C.mute, margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
-                      지금은 결제 시스템 점검 중이에요 — 실제로 청구되지 않고 자동 취소됩니다
+                      지금은 결제 시스템 점검 중이에요, 실제로 청구되지 않고 자동 취소됩니다
                     </p>
                   </motion.div>
                 </>

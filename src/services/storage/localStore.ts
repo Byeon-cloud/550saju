@@ -158,7 +158,7 @@ export function getReport(id: string): LocalReport | null {
   // 2026-07 fix — 저장 리포트의 stale 현재대운 재계산 (대운 타임라인 등 시각화용. AI 본문은 불변)
   if (found?.sajuData) refreshCurrentDaeun(found.sajuData as SajuData);
   // 2026-10-11 — 예전 풀이의 가운뎃점은 보여 줄 사본에서만 뺀다 (보관함 원본 불변)
-  return found?.aiResult ? { ...found, aiResult: stripDotsDeep(found.aiResult) } : found;
+  return found?.aiResult ? { ...found, aiResult: stripDotsDeep(found.aiResult, found.name) } : found;
 }
 
 /**
@@ -828,7 +828,7 @@ export function reconcilePendingSpends(): number {
     } catch { /* noop */ }
   }
   writePendingSpends(list.filter(p => now - p.ts <= PENDING_EXPIRE_MS));
-  console.info(`[pendingSpend] 자동 환불: ${total}운 (${expired.length}건 — 생성 중 이탈 복구)`);
+  console.info(`[pendingSpend] 자동 환불: ${total}운 (${expired.length}건: 생성 중 이탈 복구)`);
   return total;
 }
 
@@ -864,7 +864,7 @@ export function removeTopicReports(topicIds: string[]): number {
       doomed.forEach(k => store.removeItem(k));
     } catch { /* noop */ }
   }
-  console.info(`[removeTopicReports] ${topicIds.join(',')} 정리 — 리포트 ${removed}건`);
+  console.info(`[removeTopicReports] ${topicIds.join(',')} 정리: 리포트 ${removed}건`);
   return removed;
 }
 
