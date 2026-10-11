@@ -1494,7 +1494,7 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
               >
                 {cat.hanja}
               </div>
-              <div style={{ fontSize: isEmpty ? 11 : 13, fontWeight: 700, color: '#1A1A1A' }}>
+              <div style={{ fontSize: isEmpty ? 13 : 13, fontWeight: 700, color: '#1A1A1A' }}>
                 {cat.label}
               </div>
             </div>
@@ -2150,7 +2150,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold mb-1" style={{ color: ohengText[myIlganOheng] || color }}>
-                        {myName ? `${myName} 님의 결` : '나의 결'} {myIlganOheng && <span className="opacity-70">, {myIlganOheng} 기운</span>}
+                        {myName ? `${myName} 님의 결` : '나의 결'}{myIlganOheng && <span className="opacity-70">, {myIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                         {pp.loveStyle || '내 사주의 연애 스타일을 분석 중'}
@@ -2175,7 +2175,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold mb-1" style={{ color: ohengText[ptIlganOheng] || color }}>
-                        {partnerName ? `${partnerName} 님의 결` : '상대의 결'} {ptIlganOheng && <span className="opacity-70">, {ptIlganOheng} 기운</span>}
+                        {partnerName ? `${partnerName} 님의 결` : '상대의 결'}{ptIlganOheng && <span className="opacity-70">, {ptIlganOheng} 기운</span>}
                       </p>
                       <p className="text-[13px] text-text-primary leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                         {pp.personality || '상대의 사주를 분석 중'}
@@ -4741,18 +4741,16 @@ export function TopicAnalysisPage() {
                     const pricing = getTopicPrice(topicId as TopicKey);
                     const actualPrice = pricing.isOnSale && pricing.salePrice != null ? pricing.salePrice : pricing.regularPrice;
                     return (
-                      <Button fullWidth size="lg" variant="gold" onClick={requestAnalyze}>
-                        {pricing.isOnSale && pricing.salePrice != null ? (
-                          <span>
-                            {topic.label} 분석하기 (
+                      <Button
+                        fullWidth size="lg" variant="gold" onClick={requestAnalyze}
+                        sub={pricing.isOnSale && pricing.salePrice != null ? (
+                          <>
                             <span style={{ textDecoration: 'line-through', opacity: 0.7, marginRight: 4 }}>{pricing.regularPrice}운</span>
-                            <span style={{ fontWeight: 800 }}>{actualPrice}운</span>
-                            <span style={{ marginLeft: 6, fontSize: '0.85em', color: '#FFD54F' }}>, {pricing.saleBadge}</span>
-                            )
-                          </span>
-                        ) : (
-                          `${topic.label} 분석하기 (${actualPrice}운)`
-                        )}
+                            {actualPrice}운{pricing.saleBadge ? ` ${pricing.saleBadge}` : ''}
+                          </>
+                        ) : `${actualPrice}운`}
+                      >
+                        {topic.label} 분석하기
                       </Button>
                     );
                   })()}
@@ -4915,7 +4913,7 @@ export function TopicAnalysisPage() {
                         : undefined
                     }
                     birthLabel={
-                      selected?.input
+                      selected?.input?.birthYear
                         ? `${selected.input.calendarType === 'lunar' ? '음력 ' : '양력 '}${selected.input.birthYear}년 ${selected.input.birthMonth}월 ${selected.input.birthDay}일`
                         : undefined
                     }

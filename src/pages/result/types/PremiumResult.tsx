@@ -709,7 +709,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
               marginBottom: 8,
             }}
           >
-            ◆ 인생 흐름 한 줄, 命途
+            ◆ 인생 흐름 한 줄 命途
           </div>
           {/* 4 stage 시각 timeline */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 10 }}>
@@ -2266,7 +2266,7 @@ function TopicTopRecommend({
                 </span>
                 <span
                   style={{
-                    fontSize: 8.5,
+                    fontSize: 12,
                     fontWeight: 800,
                     color: rank.color,
                     background: rank.bg,
@@ -2741,7 +2741,7 @@ export function PremiumResult({
   const today = new Date();
   const reportDateText = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')} 풀이`;
   // 출생 정보
-  const birthDateText = report.input
+  const birthDateText = report.input?.birthYear
     ? `${report.input.birthYear}년 ${report.input.birthMonth}월 ${report.input.birthDay}일`
     : '';
   const calendarText =
@@ -3594,7 +3594,7 @@ function YongsinChip({
       </div>
       <div
         style={{
-          fontSize: 8.5,
+          fontSize: 12,
           fontWeight: 600,
           color: color,
           opacity: 0.7,
@@ -3954,7 +3954,7 @@ function RelationCompassGrid({
           marginBottom: 4,
         }}
       >
-        올해 인연의 결, 緣
+        올해 인연의 결 緣
       </div>
       <div style={{ fontSize: 13, color: C.mute, marginBottom: 10, lineHeight: 1.55 }}>
         주변 사람의 <strong style={{ color: C.ink }}>일간 천간(태어난 날의 글자)</strong>을 알면 {userName} 님과 어떤 결인지 한눈에 보입니다.
@@ -3962,10 +3962,11 @@ function RelationCompassGrid({
         {' '}
         <button
           type="button"
+          className="tap-pad"
           onClick={() => navigate('/compat')}
           style={{ color: C.goldDeep, fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', padding: 0, fontSize: 13, cursor: 'pointer' }}
         >
-          특정 사람과는 궁합 보기(1운)
+          특정 사람과의 궁합 보기 <span style={{ opacity: 0.75 }}>1운</span>
         </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -4517,7 +4518,7 @@ function StrengthsCautionsCards({
                 letterSpacing: '0.06em',
               }}
             >
-              長, 강점
+              長 강점
             </span>
             <span style={{ color: '#3D3D3D', fontWeight: 600 }}>당신이 타고난 진짜 결</span>
           </div>
@@ -4588,7 +4589,7 @@ function StrengthsCautionsCards({
                 letterSpacing: '0.06em',
               }}
             >
-              短, 함정
+              短 함정
             </span>
             <span style={{ color: '#3D3D3D', fontWeight: 600 }}>의식적으로 다뤄야 할 패턴</span>
           </div>
@@ -6008,7 +6009,7 @@ function SipClusterHeader({ sipDist }: { sipDist: any }) {
             <div style={{ fontSize: 16, fontWeight: 800, color: cl.color, fontFeatureSettings: '"tnum"', marginTop: 4 }}>
               {v}
             </div>
-            <div style={{ fontSize: 8, color: C.mute, marginTop: 2 }}>{cl.meaning}</div>
+            <div style={{ fontSize: 12, color: C.mute, marginTop: 2 }}>{cl.meaning}</div>
           </div>
         );
       })}
@@ -6478,7 +6479,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
         <div className="head">
           <span className="nm">{krLabel}</span>
           <span className="han">{s.hanja}</span>
-          {fromText && <span className="han" style={{ fontSize: 13, color: '#7F6B4E' }}>, {fromText}</span>}
+          {fromText && <span className="han" style={{ fontSize: 13, color: '#7F6B4E' }}>{fromText}</span>}
           <span className="tag">{isFull ? '강하게 작동' : '은근히 작동'}</span>
         </div>
         {/* 2026-05-05: <strong> raw text 차단 */}
@@ -6867,14 +6868,14 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
               <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char1] || '#7F6B4E', lineHeight: 1 }}>
                 {r.char1}
               </span>
-              {kr1 && <span style={{ fontSize: 8.5, color: '#a08a5a', marginTop: 1 }}>{kr1}</span>}
+              {kr1 && <span style={{ fontSize: 12, color: '#a08a5a', marginTop: 1 }}>{kr1}</span>}
             </span>
             <span className="gf-arrow">{r.arrow}</span>
             <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', minWidth: 22 }}>
               <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char2] || '#7F6B4E', lineHeight: 1 }}>
                 {r.char2}
               </span>
-              {kr2 && <span style={{ fontSize: 8.5, color: '#a08a5a', marginTop: 1 }}>{kr2}</span>}
+              {kr2 && <span style={{ fontSize: 12, color: '#a08a5a', marginTop: 1 }}>{kr2}</span>}
             </span>
             <span style={{ color: '#5C4A2E', flex: 1 }}>{r.desc}</span>
             <span className={`gf-type ${r.type}`}>{tagLabel}</span>
@@ -7047,7 +7048,7 @@ function DaewoonLine60({ v4Daeun, sajuData: _sajuData }: { v4Daeun: V4Daeun[]; s
                 position: 'absolute',
                 left: `${leftPct}%`,
                 top: 44,
-                fontSize: 8,
+                fontSize: 11,
                 color: C.mute,
                 fontWeight: 600,
                 transform: 'translateX(-50%)',

@@ -240,6 +240,7 @@ export function MyPage() {
         >
           <button
             type="button"
+            className="tap-pad"
             onClick={() => navigate('/terms')}
             style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}
           >
@@ -248,6 +249,7 @@ export function MyPage() {
           <span aria-hidden="true" style={{ width: 1, height: 11, background: 'currentColor', opacity: 0.3 }} />
           <button
             type="button"
+            className="tap-pad"
             onClick={() => navigate('/privacy')}
             style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}
           >
@@ -1323,9 +1325,9 @@ function LoginModal({ open, onClose, toast, onLogin }: {
             {/* 하단 동의 캡션 (§2-2) */}
             <p className="text-center text-[13px] mt-5 leading-[1.6]" style={{ color: C.mute }}>
               로그인하면{' '}
-              <button type="button" className="underline" onClick={() => navigate('/terms')}>이용약관</button>
+              <button type="button" className="underline tap-pad" onClick={() => navigate('/terms')}>이용약관</button>
               과{' '}
-              <button type="button" className="underline" onClick={() => navigate('/privacy')}>개인정보처리방침</button>
+              <button type="button" className="underline tap-pad" onClick={() => navigate('/privacy')}>개인정보처리방침</button>
               에 동의한 것으로 간주합니다.
             </p>
           </motion.div>

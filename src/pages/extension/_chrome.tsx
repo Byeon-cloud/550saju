@@ -320,7 +320,7 @@ export function ExtensionHero({
           }}
         >
           {meta.map((m, i) => (
-            <span key={i}>, {m}</span>
+            <span key={i}>{i > 0 ? ', ' : ''}{m}</span>
           ))}
         </div>
       )}

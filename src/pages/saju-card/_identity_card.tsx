@@ -365,8 +365,8 @@ export function IdentityCard({
           >
             {birthLine}
             {ageLine && (
-              <span style={{ fontSize: 13, color: C.mute, fontWeight: 600, marginLeft: 6 }}>
-, {ageLine}
+              <span style={{ fontSize: 13, color: C.mute, fontWeight: 600, marginLeft: 8 }}>
+                {ageLine}
               </span>
             )}
           </div>
@@ -421,7 +421,7 @@ export function IdentityCard({
               background: C.goldSoft,
             }}
           >
-            일주(日柱), 나
+            나의 일주(日柱)
           </div>
           {/* Stage 7e — 일주 한자 세로 복원 (사용자 결정: 세로 임팩트 유지) */}
           <div
@@ -492,7 +492,7 @@ export function IdentityCard({
                     justifyContent: 'center',
                     background: C.paperSoft,
                     color: C.mute,
-                    fontSize: 8,
+                    fontSize: 12,
                     lineHeight: 1.2,
                     textAlign: 'center',
                   }}

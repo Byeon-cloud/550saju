@@ -25,7 +25,7 @@ export function BalanceBar() {
       <div className="flex items-center justify-between h-[52px] px-5 backdrop-blur-xl"
         style={{ background: 'rgba(244,239,228,0.94)', borderBottom: '1px solid #E1D7C4' }}>
         {/* 로고 */}
-        <button onClick={() => navigate('/')} className="flex items-center gap-1.5">
+        <button onClick={() => navigate('/')} className="flex items-center gap-1.5 tap-pad">
           <svg width="22" height="22" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="11" stroke="#1A1612" strokeWidth="1" fill="none" opacity="0.3" />
             <path d="M12 1a11 11 0 010 22c0-3 2-5.5 0-11S12 4 12 1z" fill="#1A1612" />

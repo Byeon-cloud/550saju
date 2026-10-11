@@ -204,7 +204,7 @@ function Row({
           {amountText}
         </span>
         <button type="button" onClick={onInfo} aria-label={`${label} 최근 10건 보기`}
-          className="w-5 h-5 rounded-full inline-flex items-center justify-center"
+          className="w-5 h-5 rounded-full inline-flex items-center justify-center tap-pad"
           style={{ border: '1px solid #E5DFD0', background: '#FFFFFF', color: '#8A7F6E' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

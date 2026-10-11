@@ -1522,7 +1522,7 @@ function BirthHourField({
 
       {/* 시(時)만 아는 사람용 fallback */}
       {!timeUnknown && (
-        <button
+        <button className="tap-pad"
           type="button"
           onClick={onOpenBlockSheet}
           style={{
@@ -1801,7 +1801,7 @@ function LoadPreviousHint({ onLoad }: { onLoad: () => void }) {
       <span style={{ fontSize: 13.5, color: C.inkSoft, flex: 1 }}>
         지난번 입력값이 있어요
       </span>
-      <button
+      <button className="tap-pad"
         type="button"
         onClick={onLoad}
         style={{

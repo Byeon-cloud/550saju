@@ -295,7 +295,7 @@ function FlowCell({
       {unseong && (
         <div
           style={{
-            fontSize: 8.5,
+            fontSize: 12,
             color: '#7A7269',
             fontFamily: SERIF,
             letterSpacing: '0.02em',

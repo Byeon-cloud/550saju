@@ -272,7 +272,7 @@ export function DaeunPage() {
     selected?.sajuData?.pillars?.[2]?.천간
       ? `${selected.sajuData.pillars[2].천간읽기 ?? ''}(${selected.sajuData.pillars[2].천간}) 일간`
       : undefined;
-  const birthLabel = selected?.input
+  const birthLabel = selected?.input?.birthYear
     ? `${selected.input.birthYear}년 ${selected.input.birthMonth}월 ${selected.input.birthDay}일`
     : '';
 

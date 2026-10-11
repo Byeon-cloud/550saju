@@ -533,7 +533,7 @@ export function SajuCardLabelRow({
           >
             <div
               style={{
-                fontSize: 8.5,
+                fontSize: 12,
                 color: it.isDay ? C.goldDeep : C.mute,
                 fontWeight: 700,
                 letterSpacing: '0.04em',
@@ -557,7 +557,7 @@ export function SajuCardLabelRow({
             {it.sub && (
               <div
                 style={{
-                  fontSize: 8.5,
+                  fontSize: 12,
                   color: C.mute,
                   marginTop: 2,
                 }}
@@ -759,7 +759,7 @@ function PillarCardCol({
           {unyoung && (
             <div
               style={{
-                fontSize: 8.5,
+                fontSize: 12,
                 color: C.mute,
                 marginTop: 4,
                 fontFamily: SERIF,

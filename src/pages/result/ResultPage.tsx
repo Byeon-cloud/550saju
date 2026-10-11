@@ -1368,14 +1368,14 @@ export function ResultPage(props: ResultPageProps = {}) {
                           transition: 'all 0.3s ease',
                         }}>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span style={{ fontSize: d.current ? 13 : 10, fontWeight: 900, color: d.current ? '#fff' : barEc.dark }}>
+                            <span style={{ fontSize: d.current ? 13 : 12, fontWeight: 900, color: d.current ? '#fff' : barEc.dark }}>
                               {d.gz}
                             </span>
-                            <span style={{ fontSize: d.current ? 8 : 7, color: d.current ? 'rgba(255,255,255,0.8)' : barEc.main, fontWeight: 600, marginTop: 1 }}>
+                            <span style={{ fontSize: d.current ? 11 : 11, color: d.current ? 'rgba(255,255,255,0.8)' : barEc.main, fontWeight: 600, marginTop: 1 }}>
                               {d.kr}
                             </span>
                             {d.current && (
-                              <span style={{ fontSize: 7, fontWeight: 800, color: '#E8D5A8', background: 'rgba(0,0,0,0.2)', borderRadius: 3, padding: '0 4px', marginTop: 2 }}>NOW</span>
+                              <span style={{ fontSize: 12, fontWeight: 800, color: '#E8D5A8', background: 'rgba(0,0,0,0.2)', borderRadius: 3, padding: '0 4px', marginTop: 2 }}>지금</span>
                             )}
                           </div>
                         </div>
@@ -1401,7 +1401,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                     {v4Daeun.map((d, i) => (
                       <div key={i} className="flex-1 text-center">
                         <span style={{
-                          fontSize: 8,
+                          fontSize: 12,
                           color: d.current ? EC[d.elem].dark : '#c9b99a',
                           fontWeight: d.current ? 700 : 400,
                         }}>
@@ -1421,7 +1421,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                       </div>
                     ))}
                   </div>
-                  <span style={{ fontSize: 8, color: '#c9b99a' }}>오행별 색상</span>
+                  <span style={{ fontSize: 12, color: '#c9b99a' }}>오행별 색상</span>
                 </div>
               </div>
 

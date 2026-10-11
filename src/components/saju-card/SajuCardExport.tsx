@@ -57,6 +57,12 @@ export async function captureSajuCardAsBlob(opts: CaptureOptions = {}): Promise<
   const mod = await import('html2canvas');
   const html2canvas = mod.default;
 
+  // 2026-10-11 — 이 기기에서 html2canvas 가 글자를 얼마나 아래로 밀어 그리는지 글꼴별로 먼저 잰다 (아래 measureTextShift)
+  const shifts = new Map<string, number>();
+  for (const fam of collectTextFamilies(target)) {
+    shifts.set(fam, await measureTextShift(html2canvas as unknown as H2C, fam));
+  }
+
   const canvas = await html2canvas(target, {
     scale: opts.scale ?? 2,
     backgroundColor: opts.backgroundColor ?? '#F8F5EE',
@@ -67,6 +73,8 @@ export async function captureSajuCardAsBlob(opts: CaptureOptions = {}): Promise<
     // 큰 카드(세로 ~1820px @scale 2) 캡처 시간 고려 — windowWidth 명시
     windowWidth: target.scrollWidth,
     windowHeight: target.scrollHeight,
+    // 2026-10-11 — 글자가 아래로 밀려 아래 칸을 덮거나 둥근 칸 밖으로 잘리던 문제 보정 (사본에서만, 화면은 그대로)
+    onclone: (_doc: Document, el: HTMLElement) => prepareCloneForCapture(el, shifts),
   });
 
   return await new Promise<Blob>((resolve, reject) => {
@@ -79,6 +87,113 @@ export async function captureSajuCardAsBlob(opts: CaptureOptions = {}): Promise<
       0.95,
     );
   });
+}
+
+type H2C = (el: HTMLElement, o: Record<string, unknown>) => Promise<HTMLCanvasElement>;
+
+/** 캡처 대상 안에서 글자에 쓰인 글꼴 목록 */
+function collectTextFamilies(root: HTMLElement): Set<string> {
+  const fams = new Set<string>();
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!(n.textContent || '').trim() || !n.parentElement) continue;
+    fams.add(getComputedStyle(n.parentElement).fontFamily);
+  }
+  return fams;
+}
+
+const shiftCache = new Map<string, number>();
+/**
+ * html2canvas 1.4 는 글꼴 기준선을 잘못 재서 모든 글자를 일정 비율 아래로 밀어 그린다
+ * (2026-10-11 측정: 명조 0.34em, 고딕 0.41em — 줄 높이와 무관, 기기 글꼴에 따라 달라짐).
+ * 그래서 이 기기에서 시험 글자 하나를 html2canvas 와 캔버스 fillText 로 각각 그려 잉크 윗선 차이를 잰다.
+ */
+async function measureTextShift(h2c: H2C, family: string): Promise<number> {
+  const hit = shiftCache.get(family);
+  if (hit != null) return hit;
+  const FS = 100;
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:0;top:0;z-index:-1;width:320px;padding:40px 0;margin:0;background:#fff;pointer-events:none;';
+  const t = document.createElement('div');
+  t.style.cssText = `font-family:${family};font-size:${FS}px;line-height:1.5;font-weight:700;color:#000;margin:0;padding:0;white-space:nowrap;`;
+  t.appendChild(document.createTextNode('가甲'));
+  const mark = document.createElement('span');
+  mark.style.cssText = 'display:inline-block;width:1px;height:0;vertical-align:baseline;';
+  t.appendChild(mark);
+  box.appendChild(t);
+  document.body.appendChild(box);
+  let ratio = 0;
+  try {
+    const br = box.getBoundingClientRect();
+    const base = mark.getBoundingClientRect().top - br.top;
+    const inkTop = (c: HTMLCanvasElement): number => {
+      const g = c.getContext('2d');
+      if (!g) return -1;
+      const { data, width, height } = g.getImageData(0, 0, c.width, c.height);
+      for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) if (data[(y * width + x) * 4] < 128) return y;
+      return -1;
+    };
+    const cv = await h2c(box, { scale: 1, backgroundColor: '#ffffff', logging: false });
+    const ref = document.createElement('canvas');
+    ref.width = Math.ceil(br.width);
+    ref.height = Math.ceil(br.height);
+    const g = ref.getContext('2d');
+    if (g) {
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, 0, ref.width, ref.height);
+      g.fillStyle = '#000000';
+      g.font = `700 ${FS}px ${family}`;
+      g.textBaseline = 'alphabetic';
+      g.fillText('가甲', 0, base);
+    }
+    const a = inkTop(cv);
+    const b = inkTop(ref);
+    if (a >= 0 && b >= 0) ratio = (a - b) / FS;
+  } catch {
+    ratio = 0;
+  } finally {
+    box.remove();
+  }
+  if (!(ratio > -0.2 && ratio < 0.8)) ratio = 0; // 이상값이면 보정하지 않는다
+  shiftCache.set(family, ratio);
+  return ratio;
+}
+
+/**
+ * 캡처용 사본 손질 (화면 자체는 그대로)
+ *  1) 흐린 그림자는 html2canvas 가 상자 위에 덮어 그려 테두리가 이중으로 보인다 → 빼고, 고리형(0 0 0 1px)은 얇은 테두리로
+ *  2) 글자만 위 측정값만큼 위로 올린다 — 글자 조각을 span 으로 감싸 relative top (상자, 배경은 제자리)
+ */
+function prepareCloneForCapture(root: HTMLElement, shifts: Map<string, number>): void {
+  const doc = root.ownerDocument;
+  const win = doc.defaultView;
+  if (!win) return;
+  root.querySelectorAll<HTMLElement>('*').forEach((el) => {
+    const shadow = win.getComputedStyle(el).boxShadow;
+    if (shadow && shadow !== 'none') {
+      const ring = shadow.match(/(rgba?\([^)]*\))\s+0px\s+0px\s+0px\s+1px(?!\s*inset)/);
+      el.style.boxShadow = 'none';
+      if (ring && win.getComputedStyle(el).borderStyle === 'none') el.style.border = `1px solid ${ring[1]}`;
+    }
+  });
+  const texts: Text[] = [];
+  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if ((n.textContent || '').trim() && n.parentElement) texts.push(n as Text);
+  }
+  for (const tn of texts) {
+    const pe = tn.parentElement;
+    if (!pe) continue;
+    const cs = win.getComputedStyle(pe);
+    const ratio = shifts.get(cs.fontFamily) ?? 0;
+    const dy = ratio * parseFloat(cs.fontSize);
+    if (!(dy > 0.5)) continue;
+    const span = doc.createElement('span');
+    span.style.position = 'relative';
+    span.style.top = `${(-dy).toFixed(1)}px`;
+    pe.insertBefore(span, tn);
+    span.appendChild(tn);
+  }
 }
 
 /**

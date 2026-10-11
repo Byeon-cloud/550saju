@@ -619,7 +619,7 @@ export function ChargePage() {
         )}
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: '6px 0 0' }}>
           결제와 세금 관련 안내는{' '}
-          <button
+          <button className="tap-pad"
             onClick={() => navigate('/terms')}
             style={{
               fontSize: 13.5, fontWeight: 600, color: C.goldDeep,
@@ -628,7 +628,7 @@ export function ChargePage() {
             }}
           >이용약관</button>
           과{' '}
-          <button
+          <button className="tap-pad"
             onClick={() => navigate('/privacy')}
             style={{
               fontSize: 13.5, fontWeight: 600, color: C.goldDeep,
@@ -704,10 +704,10 @@ export function ChargePage() {
                 onClick={handlePurchase}
                 disabled={purchasing}
                 style={{
-                  height: 48, minWidth: 140, padding: '0 18px',
-                  background: purchasing ? 'rgba(248,245,238,0.5)' : C.paper,
-                  color: C.ink, borderRadius: 12,
-                  fontSize: 15, fontWeight: 700,
+                  height: 50, minWidth: 140, padding: '0 18px',
+                  background: purchasing ? 'rgba(210,180,119,0.5)' : 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
+                  color: '#17110A', borderRadius: 14,
+                  fontSize: 16, fontWeight: 800,
                   cursor: purchasing ? 'not-allowed' : 'pointer',
                   border: 'none',
                   letterSpacing: '-0.01em',

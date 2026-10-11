@@ -288,7 +288,7 @@ export function GwiinSealCard({
         </div>
         <div
           style={{
-            fontSize: compact ? 11.5 : 12.5,
+            fontSize: compact ? 13 : 13.5,
             color: '#3D3D3D',
             lineHeight: 1.6,
             marginTop: 8,

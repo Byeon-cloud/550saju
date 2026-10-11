@@ -937,7 +937,7 @@ export function TopicMockupView(props: TopicMockupViewProps) {
         {/* Upsell — 종합사주 유도 */}
         {onUpsell && (
           <button type="button" className="upsell" onClick={onUpsell}>
-            <div className="lb">종합사주, 열 장</div>
+            <div className="lb">종합사주 열 장</div>
             <h3>{upsellLine || '평생을 사주 전체로 보면'}</h3>
             <p>10가지 결을 한 번에 — 종합사주로 평생의 흐름을 펼쳐 봅니다.</p>
             <span className="cta">

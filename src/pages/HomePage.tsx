@@ -439,11 +439,11 @@ export function HomePage() {
       {/* ━━━ 푸터 ━━━ */}
       <div style={{ margin: '26px 16px 0', textAlign: 'center' }}>
         <div className="flex items-center justify-center gap-3" style={{ fontSize: 13.5, color: HJ.mute }}>
-          <button type="button" onClick={() => navigate('/my')}>내 정보</button>
+          <button className="tap-pad" type="button" onClick={() => navigate('/my')}>내 정보</button>
           <span style={{ color: HJ.line }}>|</span>
-          <button type="button" onClick={() => navigate('/charge')}>충전</button>
+          <button className="tap-pad" type="button" onClick={() => navigate('/charge')}>충전</button>
           <span style={{ color: HJ.line }}>|</span>
-          <button type="button" onClick={() => navigate('/storage')}>보관함</button>
+          <button className="tap-pad" type="button" onClick={() => navigate('/storage')}>보관함</button>
         </div>
         <p style={{ marginTop: 12, fontSize: 13.5, color: HJ.mute, lineHeight: 1.6 }}>{ART_CREDIT}</p>
         <p style={{ marginTop: 6, fontSize: 13.5, color: HJ.mute }}>© 2026 사주500</p>

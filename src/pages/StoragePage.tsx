@@ -594,7 +594,7 @@ function ProfilesSection({
           >
             사주팔자 정보
           </h2>
-          <button
+          <button className="tap-pad"
             type="button"
             onClick={onAdd}
             style={{
@@ -1063,7 +1063,7 @@ function HistorySection({
             >
               <SortIcon flipped={!sortDesc} />
             </button>
-            <button
+            <button className="tap-pad"
               type="button"
               onClick={bulkMode ? onExitBulk : onEnterBulk}
               style={{

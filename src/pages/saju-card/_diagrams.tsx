@@ -992,7 +992,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
             </div>
             <div
               style={{
-                fontSize: 8.5,
+                fontSize: 12,
                 color: '#7A7269',
                 marginBottom: 6,
                 lineHeight: 1.3,

@@ -668,7 +668,7 @@ function Pill({
         fontWeight: 600,
         fontFamily: "'Noto Serif KR', serif",
         color,
-        fontSize: variant === 'score' ? 13 : 12,
+        fontSize: variant === 'score' ? 13 : 13.5,
       }}
     >
       {text}

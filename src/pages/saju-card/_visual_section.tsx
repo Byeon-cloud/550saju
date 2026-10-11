@@ -191,7 +191,7 @@ export function Component12UnseongSection({
                     marginBottom: 6,
                   }}
                 >
-                  강점, 長
+                  강점 長
                 </div>
                 <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.6 }}>
                   {detail.strength}
@@ -215,7 +215,7 @@ export function Component12UnseongSection({
                     marginBottom: 6,
                   }}
                 >
-                  주의, 短
+                  주의 短
                 </div>
                 <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.6 }}>
                   {detail.caution}

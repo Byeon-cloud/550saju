@@ -604,7 +604,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             {/* 2026-09-17 fix — 1운으로 연(해제·유료) 결과에도 '무료 · 오늘 1회 무료' 가 붙던 문제 */}
             {unlocked ? (
               <>
-                <span className="badge">꿈해몽, 전체 풀이</span>
+                <span className="badge">꿈해몽 전체 풀이</span>
                 <span className="badge open">잠금 해제</span>
               </>
             ) : (
@@ -1037,7 +1037,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 className="tr-sub"
                 onClick={() => topicRec.secondary && onTopic(topicRec.secondary.id)}
               >
-                {topicRec.secondary.lead} <span className="tr-sub-name">{topicRec.secondary.label} 보기</span>, {topicRec.secondary.price}
+                {topicRec.secondary.lead} <span className="tr-sub-name">{topicRec.secondary.label} 보기</span> {topicRec.secondary.price}
               </button>
             )}
           </section>

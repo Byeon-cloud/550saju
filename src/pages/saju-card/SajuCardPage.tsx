@@ -27,6 +27,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import '@/styles/hanji.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Solar } from 'lunar-javascript';
@@ -308,55 +309,25 @@ export function SajuCardPage() {
           <div style={{ marginTop: 24 }}>
             <button
               type="button"
+              className="hj-cta"
               onClick={() => navigate('/premium')}
-              style={{
-                width: '100%',
-                padding: '15px 20px',
-                background: `linear-gradient(135deg, ${C.goldDeep} 0%, ${C.gold} 100%)`,
-                color: C.paper,
-                border: 'none',
-                borderRadius: 12,
-                fontFamily: SERIF,
-                fontSize: 15,
-                fontWeight: 800,
-                cursor: 'pointer',
-                letterSpacing: '-0.005em',
-                boxShadow: `0 8px 22px ${C.goldDeep}44`,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 10,
-              }}
             >
-              <span>종합 사주 풀이 받기</span>
+              <span>종합사주 풀이 받기</span>
               {(() => {
                 const pp = getPremiumPrice();
                 return (
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      padding: '3px 10px',
-                      background: 'rgba(248,245,238,0.22)',
-                      borderRadius: 999,
-                      letterSpacing: '0.06em',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}
-                  >
+                  <small>
                     {pp.isOnSale && pp.salePrice != null ? (
                       <>
-                        <span style={{ textDecoration: 'line-through', opacity: 0.65 }}>{pp.regularPrice}운</span>
-                        <span style={{ fontWeight: 900 }}>{pp.salePrice}운</span>
+                        <span style={{ textDecoration: 'line-through', opacity: 0.65, marginRight: 4 }}>{pp.regularPrice}운</span>
+                        {pp.salePrice}운
                       </>
                     ) : (
-                      <span>{pp.regularPrice}운</span>
+                      `${pp.regularPrice}운`
                     )}
-                  </span>
+                  </small>
                 );
               })()}
-              <span style={{ fontSize: 16, fontWeight: 900 }}>→</span>
             </button>
           </div>
 
@@ -397,9 +368,9 @@ export function SajuCardPage() {
             aria-busy={exportBusy === 'save'}
             style={{
               flex: 1, height: 48, borderRadius: 12,
-              border: `1px solid ${C.goldLine}`,
-              background: C.surface, color: C.goldDeep,
-              fontSize: 14, fontWeight: 700,
+              border: '1.5px solid #1A1612',
+              background: 'transparent', color: '#1A1612',
+              fontSize: 15.5, fontWeight: 800,
               cursor: exportBusy ? 'wait' : 'pointer',
               opacity: exportBusy ? 0.6 : 1,
               transition: 'opacity 0.15s',
@@ -416,8 +387,8 @@ export function SajuCardPage() {
             style={{
               flex: 1, height: 48, borderRadius: 12,
               border: 'none',
-              background: C.goldDeep, color: '#fff',
-              fontSize: 14, fontWeight: 700,
+              background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)', color: '#17110A',
+              fontSize: 15.5, fontWeight: 800,
               cursor: exportBusy ? 'wait' : 'pointer',
               opacity: exportBusy ? 0.6 : 1,
               transition: 'opacity 0.15s',

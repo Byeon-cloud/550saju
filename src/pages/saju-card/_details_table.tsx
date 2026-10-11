@@ -368,7 +368,8 @@ function SectionB_ManseTable({
               type="button"
               onClick={() => flip(t.key)}
               style={{
-                padding: '3px 8px',
+                padding: '7px 10px',
+                minHeight: 34,
                 background: on ? C.goldSoftStrong : '#FFFFFF',
                 border: `1px solid ${on ? C.gold : C.line}`,
                 borderRadius: 999,
@@ -382,7 +383,7 @@ function SectionB_ManseTable({
               aria-pressed={on}
             >
               {t.ko}
-              <span style={{ fontSize: 8, marginLeft: 3, opacity: 0.6, fontFamily: SERIF, fontWeight: 500 }}>{t.han}</span>
+              <span style={{ fontSize: 12, marginLeft: 3, opacity: 0.6, fontFamily: SERIF, fontWeight: 500 }}>{t.han}</span>
             </button>
           );
         })}
@@ -400,7 +401,7 @@ function SectionB_ManseTable({
           }}
         >
           <colgroup>
-            <col style={{ width: 44 }} />
+            <col style={{ width: 54 }} />
             <col />
             <col />
             <col />
@@ -541,7 +542,7 @@ function SectionB_ManseTable({
                                   {ch}
                                 </span>
                                 {sipKo && (
-                                  <span style={{ fontSize: 8.5, color: C.mute, letterSpacing: '0.02em' }}>
+                                  <span style={{ fontSize: 12, color: C.mute, letterSpacing: '0.02em' }}>
                                     {sipKo.slice(0, 2)}
                                   </span>
                                 )}
@@ -569,7 +570,7 @@ function SectionB_ManseTable({
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                         <span style={{ fontSize: 13.5, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{u.ko}</span>
                         {u.han && (
-                          <span style={{ fontFamily: SERIF, fontSize: 8.5, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
+                          <span style={{ fontFamily: SERIF, fontSize: 12, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
                             {u.han}
                           </span>
                         )}
@@ -594,7 +595,7 @@ function SectionB_ManseTable({
                           {s.replace('살', '')}
                         </span>
                         {han && (
-                          <span style={{ fontSize: 8.5, color: C.mute, fontFamily: SERIF, fontWeight: 500, opacity: 0.85 }}>
+                          <span style={{ fontSize: 12, color: C.mute, fontFamily: SERIF, fontWeight: 500, opacity: 0.85 }}>
                             {han}
                           </span>
                         )}
@@ -616,7 +617,7 @@ function SectionB_ManseTable({
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                         <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{np.ko}</span>
                         {np.han && (
-                          <span style={{ fontFamily: SERIF, fontSize: 8.5, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
+                          <span style={{ fontFamily: SERIF, fontSize: 12, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
                             {np.han}
                           </span>
                         )}
@@ -634,7 +635,7 @@ function SectionB_ManseTable({
 }
 
 const thLabel: React.CSSProperties = {
-  width: 44,
+  width: 54,
   padding: '6px 4px',
   background: 'transparent',
   border: 'none',
@@ -669,16 +670,17 @@ function Row({
     <tr>
       <td
         style={{
-          width: 44,
+          width: 54,
           padding: big ? '6px 6px 6px 0' : '5px 6px 5px 0',
+          whiteSpace: 'nowrap',
           textAlign: 'right',
           verticalAlign: 'middle',
         }}
       >
-        <div style={{ fontSize: big ? 11.5 : 10.5, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.02em', lineHeight: 1.1 }}>
+        <div style={{ fontSize: big ? 13 : 13, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.02em', lineHeight: 1.1 }}>
           {label}
         </div>
-        <div style={{ fontFamily: SERIF, fontSize: big ? 9.5 : 9, color: C.mute, marginTop: 2, opacity: 0.8 }}>{hanja}</div>
+        <div style={{ fontFamily: SERIF, fontSize: big ? 12 : 12, color: C.mute, marginTop: 2, opacity: 0.8 }}>{hanja}</div>
       </td>
       {children}
     </tr>
@@ -809,7 +811,7 @@ function SipsungCell({ value, isDay }: { value: string; isDay: boolean }) {
           {text}
         </span>
         {hanja && (
-          <span style={{ fontSize: 8.5, color: isDay ? C.gold : C.mute, fontFamily: SERIF, fontWeight: 600, opacity: 0.85 }}>
+          <span style={{ fontSize: 12, color: isDay ? C.gold : C.mute, fontFamily: SERIF, fontWeight: 600, opacity: 0.85 }}>
             {hanja}
           </span>
         )}

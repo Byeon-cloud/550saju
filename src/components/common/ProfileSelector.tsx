@@ -68,7 +68,7 @@ export function ProfileSelector({
           <p className="sec-title" style={{ fontSize: 15 }}>{p.name}</p>
         </div>
         <button
-          className="sec-caption"
+          className="sec-caption tap-pad"
           onClick={onCreateNew}
           style={{
             background: 'transparent',

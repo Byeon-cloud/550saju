@@ -200,7 +200,8 @@ function EightCharGridExport({
                   style={{
                     fontSize: spec.fsLabel * 0.85,
                     color: '#7A7269',
-                    marginTop: 2,
+                    marginTop: spec.pad * 0.2,
+                    lineHeight: 1.3,
                   }}
                 >
                   {p?.천간읽기}
@@ -211,8 +212,9 @@ function EightCharGridExport({
                     style={{
                       display: 'inline-block',
                       marginTop: spec.pad * 0.3,
-                      padding: `${spec.pad * 0.15}px ${spec.pad * 0.4}px`,
+                      padding: `${spec.pad * 0.2}px ${spec.pad * 0.5}px`,
                       borderRadius: 999,
+                      lineHeight: 1.5,
                       background: `${ganSipMeta.color}1A`,
                       color: ganSipMeta.color,
                       fontSize: spec.fsLabel * 0.95,
@@ -228,16 +230,18 @@ function EightCharGridExport({
                     style={{
                       display: 'inline-block',
                       marginTop: spec.pad * 0.3,
-                      padding: `${spec.pad * 0.15}px ${spec.pad * 0.4}px`,
+                      padding: `${spec.pad * 0.2}px ${spec.pad * 0.5}px`,
                       borderRadius: 999,
+                      lineHeight: 1.5,
                       background: '#1A1A1A',
                       color: '#F8F5EE',
                       fontSize: spec.fsLabel * 0.9,
                       fontWeight: 800,
                       letterSpacing: '0.06em',
+                      marginBottom: spec.pad * 0.3,
                     }}
                   >
-                    日主, 나
+                    日主 나
                   </div>
                 )}
 
@@ -266,7 +270,8 @@ function EightCharGridExport({
                   style={{
                     fontSize: spec.fsLabel * 0.85,
                     color: '#7A7269',
-                    marginTop: 2,
+                    marginTop: spec.pad * 0.2,
+                    lineHeight: 1.3,
                   }}
                 >
                   {p?.지지읽기}
@@ -276,8 +281,9 @@ function EightCharGridExport({
                     style={{
                       display: 'inline-block',
                       marginTop: spec.pad * 0.3,
-                      padding: `${spec.pad * 0.15}px ${spec.pad * 0.4}px`,
+                      padding: `${spec.pad * 0.2}px ${spec.pad * 0.5}px`,
                       borderRadius: 999,
+                      lineHeight: 1.5,
                       background: `${zhiSipMeta.color}1A`,
                       color: zhiSipMeta.color,
                       fontSize: spec.fsLabel * 0.95,
@@ -516,7 +522,7 @@ function KakaoLayout({
                 marginBottom: 4,
               }}
             >
-              日柱, {iljuKo}
+              日柱 {iljuKo}
             </div>
             <div
               style={{
@@ -588,7 +594,7 @@ function KakaoLayout({
             boxShadow: `0 8px 20px rgba(140,109,61,0.30)`,
           }}
         >
-          이 사주 풀이 받기 (1운부터)
+          1운부터 이 사주 풀이 받기
           <span style={{ fontSize: 22, fontWeight: 900, color: '#B8965A' }}>→</span>
         </div>
       </div>
@@ -847,7 +853,7 @@ function FeedLayout({
       {/* 중앙 550pt — 8글자 그리드 */}
       <div
         style={{
-          padding: `40px 60px ${primaryGwiin ? '20px' : '40px'}`,
+          padding: `26px 60px ${primaryGwiin ? '16px' : '30px'}`,
         }}
       >
         <div
@@ -857,10 +863,10 @@ function FeedLayout({
             fontWeight: 700,
             color: '#8C6D3D',
             letterSpacing: '0.08em',
-            marginBottom: 16,
+            marginBottom: 10,
           }}
         >
-          四柱八字, 사주 8글자
+          四柱八字 사주 8글자
         </div>
         <EightCharGridExport
           pillars={sajuData.pillars}
@@ -870,7 +876,7 @@ function FeedLayout({
         />
 
         {/* Round 3 — 운의 흐름 mini (대운+세운+월운 — 현재 1칸씩) */}
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 14 }}>
           <MiniFlow sajuData={sajuData} birthYear={input.birthYear} />
         </div>
       </div>
@@ -940,7 +946,7 @@ function FeedLayout({
               gap: 10,
             }}
           >
-            사주500 앱에서 보기 (1운부터)
+            사주500 앱에서 1운부터 보기
             <span style={{ color: '#B8965A' }}>→</span>
           </div>
         </div>
@@ -981,9 +987,9 @@ function StoryLayout({
       {/* Stage 4 Hero band — 720pt SSOT 베이지 + accent halo */}
       <div
         style={{
-          height: 720,
+          height: 650,
           background: `linear-gradient(180deg, #FBF8F1 0%, ${theme.accent}0F 100%)`,
-          padding: '90px 70px 60px',
+          padding: '70px 70px 50px',
           color: '#1A1A1A',
           position: 'relative',
           overflow: 'hidden',
@@ -1082,7 +1088,7 @@ function StoryLayout({
                 marginBottom: 8,
               }}
             >
-              日柱, {iljuKo}
+              日柱 {iljuKo}
             </div>
             <div
               style={{
@@ -1158,7 +1164,7 @@ function StoryLayout({
       </div>
 
       {/* Stage 4 SSOT body — 베이지 배경 위 화이트 카드 (그림자만) */}
-      <div style={{ padding: '36px 60px 40px', position: 'relative' }}>
+      <div style={{ padding: '26px 60px 40px', position: 'relative' }}>
         {/* 8글자 컬러 박스 (두산 패턴 강한 원색 — 박스 내부만) */}
         <div
           style={{
@@ -1187,7 +1193,7 @@ function StoryLayout({
             pillars={sajuData.pillars}
             sipsung={sajuData.sipsung}
             unyoung12={sajuData.unyoung12 || []}
-            spec={{ fs: 80, pad: 18, fsLabel: 18, fsUnyung: 15 }}
+            spec={{ fs: 72, pad: 16, fsLabel: 18, fsUnyung: 15 }}
           />
         </div>
 
@@ -1283,10 +1289,10 @@ function StoryLayout({
                 marginBottom: 14,
               }}
             >
-              神煞, 핵심 신살
+              神煞 핵심 신살
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {keySinsals.slice(0, 3).map((hit, i) => (
+              {keySinsals.slice(0, 2).map((hit, i) => (
                 <KeySinsalChip key={i} hit={hit} fontSize={16} />
               ))}
             </div>
@@ -1301,8 +1307,8 @@ function StoryLayout({
           bottom: 0,
           left: 0,
           right: 0,
-          padding: '50px 60px 70px',
-          background: `linear-gradient(to top, #F8F5EE 70%, transparent)`,
+          padding: '30px 60px 60px',
+          background: `linear-gradient(to top, #F8F5EE 55%, transparent)`,
           textAlign: 'center',
         }}
       >
@@ -1323,7 +1329,7 @@ function StoryLayout({
             boxShadow: `0 12px 28px rgba(140,109,61,0.30), 0 0 0 1px rgba(255,255,255,0.10) inset`,
           }}
         >
-          이 사주 풀이 받기 (1운부터)
+          1운부터 이 사주 풀이 받기
           <span style={{ fontSize: 28, fontWeight: 900, color: '#B8965A' }}>→</span>
         </div>
         <div

@@ -170,7 +170,7 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
           </span>
           <span
             style={{
-              fontSize: isDay ? 9.5 : 8.5,
+              fontSize: isDay ? 12 : 11,
               fontWeight: 700,
               opacity: 0.85,
               letterSpacing: '0.04em',
