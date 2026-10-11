@@ -192,8 +192,55 @@ export function stripMiddleDots(s: string): string {
   return t.replace(/, ,/g, ',');
 }
 
+/** 긴 줄표(—, ―) 제거 (2026-10-11 오너: AI 말투) — 줄머리 글머리표는 삭제, 끝에 매달린 것은 삭제, 그 밖은 쉼표 */
+export function stripEmDashes(s: string): string {
+  if (!s || (s.indexOf('—') < 0 && s.indexOf('―') < 0)) return s;
+  let t = s.replace(/(^|\n)([ \t]*)[—―][ \t]+(?=\S)/g, '$1$2');
+  t = t.replace(/[ \t]*[—―][ \t]*(?=\n|$)/g, '');
+  t = t.replace(/[ \t]*[—―][ \t]*/g, ', ');
+  return t.replace(/, ,/g, ',').replace(/,\s*\./g, '.');
+}
+
+/* 2026-10-11 — AI 티 나는 외래어, 과장어를 우리말로 (오너: "ai스러운 말투 없지??")
+ *   에너지 → 기운 · 시너지 → 어울림 (모음 끝 → 받침 끝이라 조사를 함께 바꾼다)
+ *   ~하는 타입 → ~하는 편 · 그 밖의 타입 → 유형 · 생활/소비/연애… 패턴 → 습관 · 그 밖의 패턴 → 경향 · 아이템 → 물건
+ *   폭발합니다/폭발해요 → 크게 살아납니다/살아나요 · 폭발적으로 → 크게
+ *   (받침 있는 말끼리 바꾸는 패턴, 타입, 아이템은 조사가 그대로 맞는다) — 서버 sajuFacts, 클라 noDot 같은 규칙 */
+const VOWEL_TO_CONS_J: Record<string, string> = {
+  '가': '이', '를': '을', '는': '은', '와': '과', '로': '으로', '야': '이야', '예요': '이에요', '라': '이라', '라서': '이라서',
+  '라고': '이라고', '지만': '이지만', '여서': '이어서', '였': '이었', '며': '이며', '면': '이면', '나': '이나', '랑': '이랑', '든': '이든', '죠': '이죠', '다': '이다',
+};
+const J_ALT = '예요|라서|라고|지만|여서|가|를|는|와|로|야|라|였|며|면|나|랑|든|죠|다';
+const ENERGY_RE = new RegExp(`에너지(${J_ALT})?(?![가-힣])|에너지(?=[가-힣])`, 'g');
+const SYNERGY_RE = new RegExp(`시너지(${J_ALT})?(?![가-힣])|시너지(?=[가-힣])`, 'g');
+export function plainTone(s: string): string {
+  if (!s) return s;
+  let t = s;
+  if (t.indexOf('에너지') >= 0) {
+    t = t.replace(/에너지원/g, '힘의 원천').replace(/에너지(가)? (있는|넘치)/g, (_m: string, g?: string, w?: string) => `활기${g ? '가' : ''} ${w}`);
+    t = t.replace(ENERGY_RE, (_m: string, j?: string) => '기운' + (j ? (VOWEL_TO_CONS_J[j] ?? j) : ''));
+  }
+  if (t.indexOf('시너지') >= 0) t = t.replace(SYNERGY_RE, (_m: string, j?: string) => '어울림' + (j ? (VOWEL_TO_CONS_J[j] ?? j) : ''));
+  if (t.indexOf('타입') >= 0) {
+    t = t.replace(/(는|은|던|한|할|된|될|인|운|난|진) 타입/g, '$1 편');
+    t = t.replace(/타입/g, '유형');
+  }
+  if (t.indexOf('패턴') >= 0) {
+    t = t.replace(/(생활|수면|소비|지출|행동|연애|대화|식사|운동|업무|공부|학습) 패턴/g, '$1 습관');
+    t = t.replace(/패턴/g, '경향');
+  }
+  if (t.indexOf('아이템') >= 0) t = t.replace(/아이템/g, '물건');
+  if (t.indexOf('폭발') >= 0) {
+    t = t.replace(/폭발합니다/g, '크게 살아납니다').replace(/폭발해요/g, '크게 살아나요').replace(/폭발한다/g, '크게 살아난다')
+      .replace(/폭발하는/g, '크게 살아나는').replace(/폭발할/g, '크게 살아날').replace(/폭발했/g, '크게 살아났')
+      .replace(/폭발적으로/g, '크게').replace(/폭발적인/g, '큰').replace(/이 폭발(?![가-힣])/g, '이 크게 살아남')
+      .replace(/([가-힣]) 폭발(?![가-힣])/g, (_m: string, c: string) => `${c}${(c.charCodeAt(0) - 0xAC00) % 28 ? '이' : '가'} 크게 살아남`);
+  }
+  return t;
+}
+
 export function sanitizeText(s: string): string {
-  let t = stripMiddleDots(s.replace(SOURCE_RE, ''));
+  let t = plainTone(stripEmDashes(stripMiddleDots(s.replace(SOURCE_RE, ''))));
   for (const [re, to] of HANJA_FIX) t = t.replace(re, to);
   for (const [re, to] of GUARANTEE_FIX) t = t.replace(re, to);
   t = fixTime(t);
@@ -204,10 +251,37 @@ export function sanitizeText(s: string): string {
   });
   return t;
 }
+/* 2026-10-11 — '서윤님은' → '서윤 님은' (호칭은 '이름 님').
+ *   서버는 이름을 모르니 결과 전체에서 가장 자주 나온 'OO님' 하나만 이름으로 본다(2회 이상).
+ *   부모님, 선생님, 고객님 같은 보통 말과 직함(…사, …장)은 건드리지 않는다. */
+const NIM_RE = /(?<![가-힣])([가-힣]{2,4})님(?=[은이의을께과와도에게,.!?\s]|$)/g;
+const NIM_STOP = /^(부모|선생|고객|사장|회장|대표|원장|교수|부장|과장|팀장|실장|차장|이사|국장|어머|아버|할머|할아버|시어머|시아버|장모|장인|아드|사모|사부|스승|하느|하나|부처|공주|왕자|도련|서방|선배|조상|형수|고모|이모|숙모|삼촌|작가|기사|감독|코치|당신|여러분|어르신|손님|따님)$/;
+function topNameBeforeNim(strs: string[]): string | null {
+  const cnt: Record<string, number> = {};
+  for (const s of strs) {
+    if (s.indexOf('님') < 0) continue;
+    for (const m of s.matchAll(NIM_RE)) {
+      const w = m[1];
+      if (NIM_STOP.test(w) || /(사|장|생|객|독|치)$/.test(w)) continue;
+      cnt[w] = (cnt[w] || 0) + 1;
+    }
+  }
+  let best: string | null = null; let bc = 1;
+  for (const [w, c] of Object.entries(cnt)) if (c > bc) { best = w; bc = c; }
+  return best;
+}
 /** 결과 JSON 의 모든 문자열 정리 (키는 그대로) */
 export function sanitizeAiOutput<T>(obj: T): T {
+  const strs: string[] = [];
+  const collect = (v: any): void => {
+    if (typeof v === 'string') strs.push(v);
+    else if (Array.isArray(v)) v.forEach(collect);
+    else if (v && typeof v === 'object') Object.values(v).forEach(collect);
+  };
+  let nm: string | null = null;
+  try { collect(obj); nm = topNameBeforeNim(strs); } catch { nm = null; }
   const walk = (v: any): any => {
-    if (typeof v === 'string') return sanitizeText(v);
+    if (typeof v === 'string') { const t = sanitizeText(v); return nm ? t.split(nm + '님').join(nm + ' 님') : t; }
     if (Array.isArray(v)) return v.map(walk);
     if (v && typeof v === 'object') {
       const o: any = {};
