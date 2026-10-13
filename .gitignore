@@ -40,3 +40,7 @@ marketing_bundle/
 marketing_bundle.zip
 사주500_마케팅번들*.zip
 saju500.ait.zip
+
+# 2026-10-13 사주500과 무관한 작업물, 다른 도구 설정 (실수로 커밋 방지)
+output/
+.codex/
