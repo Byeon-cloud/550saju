@@ -122,7 +122,7 @@ function buildPrompt(d, days) {
             pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`;
     });
     const el = d.elements || {};
-    const sipsung = d.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+    const sipsung = d.sipsung?.map((s) => `${s.위치 || s.position || ''}: ${s.글자}(${s.십성})`).join(', ') || '';
     const ilgan = p[2]?.천간 || '미상';
     const weekTable = days
         .map((x) => `- ${x.day}요일 ${x.date}: 일진 ${x.ganji}(${x.ganjiRead || ''})`)
@@ -146,6 +146,7 @@ ${pillarsText}일간: ${ilgan}
 
 ## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
 ## 십성: ${sipsung || '미상'}
+${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 신년운세와 같은 값): 용신 ${d.myeongriAnalysis.용신}, 희신 ${d.myeongriAnalysis.희신 || '미상'}, 기신 ${d.myeongriAnalysis.기신 || '미상'}. 개운 처방과 행운 색, 방위는 이 용신으로만. 다른 오행을 용신이라고 쓰지 말 것.` : ''}
 
 ## 이 7일 일진 (오늘 전날부터 흐르는 rolling 7일, 정확 계산 — 이 간지를 그대로 인용, 절대 임의로 바꾸지 말 것)
 ${weekTable}
@@ -177,7 +178,7 @@ ${weekTable}
 🚨 **example 룰**: 위 예시의 간지(갑자와 신금 등)는 example. 실제로는 ## 사주 원국 의 진짜 8글자 + ## 7일 일진 의 진짜 간지를 인용. '{유저명}' 은 진짜 이름으로. 같은 사주+같은 주 = 같은 결과.
 
 {
-  "keywords": ["#이번주키워드1","#키워드2","#키워드3"],
+  "keywords": ["이번주키워드1","키워드2","키워드3"],
   "weekHeadline": "이 7일(오늘부터 7일)을 한 줄로 (25자 이내, 일상어 결론 + 후크)",
   "weekTheme": "180자 이상. 이 7일(오늘부터 7일)의 핵심 테마. 🚨 왜 이런 흐름인지 — 이 7일 일진 전반 흐름 + 일간 ${ilgan} 기준 specific 호명 (보일러플레이트 금지).",
   "bestDay": "요일(월~일 중)",

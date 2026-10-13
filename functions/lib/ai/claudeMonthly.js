@@ -96,7 +96,7 @@ async function generateMonthlyDraft(apiKey, sajuData, monthInfo) {
     const draft = JSON.parse(m[0]);
     draft.year = info.year;
     draft.month = info.month;
-    return draft;
+    return (0, sajuFacts_1.sanitizeAiOutput)(draft); // 2026-10-11 — 초안 경로가 정리기를 안 거쳐 '씨', 줄표, 외래어가 그대로 나갔음
 }
 /**
  * ⚡ async 2차리뷰 — refine (2차만). draft 를 받아 자가 점검·보정 → 최종본.
@@ -121,11 +121,11 @@ async function generateMonthlyRefine(apiKey, sajuData, monthInfo, draft) {
     const reviewText = review.content[0].text;
     const m = reviewText.match(/\{[\s\S]*\}/);
     if (!m)
-        return { ...draft, year: info.year, month: info.month }; // 리뷰 실패 → draft 유지
+        return (0, sajuFacts_1.sanitizeAiOutput)({ ...draft, year: info.year, month: info.month }); // 리뷰 실패 → draft 유지
     const refined = JSON.parse(m[0]);
     refined.year = info.year;
     refined.month = info.month;
-    return refined;
+    return (0, sajuFacts_1.sanitizeAiOutput)(refined);
 }
 /** monthInfo 누락/불완전 시 폴백 — 이번 달 기준(간지 미상). 정상 경로는 항상 클라가 간지 동봉. */
 function normalizeMonthInfo(monthInfo) {
@@ -149,7 +149,7 @@ function buildPrompt(d, info, group) {
             pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`;
     });
     const el = d.elements || {};
-    const sipsung = d.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+    const sipsung = d.sipsung?.map((s) => `${s.위치 || s.position || ''}: ${s.글자}(${s.십성})`).join(', ') || '';
     const ilgan = p[2]?.천간 || '미상';
     // 2026-06-26 — 대운 전체 흐름 명시(이전/현재/다음 간지+나이). 데이터 없이 추측 방지.
     const daeunList = Array.isArray(d.daeun) ? d.daeun : [];
@@ -183,7 +183,7 @@ function buildPrompt(d, info, group) {
     //   FULL=단일 콜(점진 OFF·검증됨) / M1=흐름(keywords·headline·theme·periods) / M2=분야(4영역·길흉일·개운).
     const m1Fields = `"year": ${info.year},
   "month": ${info.month},
-  "keywords": ["#이달핵심키워드1","#키워드2","#키워드3"],
+  "keywords": ["이달핵심키워드1","키워드2","키워드3"],
   "headline": "${info.label}을 한 줄로 (25자 이내, 일상어 결론 + 후크)",
   "theme": "180자 이상. 이 달의 핵심 테마. 🚨 왜 이런 달인지 — 월간지 ${info.wolGanji} × 일간 ${ilgan} 충/합 + 세운 ${info.yearGanji} 흐름 직접 호명 (보일러플레이트 금지).",
   "periods": [
@@ -230,6 +230,7 @@ ${pillarsText}일간: ${ilgan}
 
 ## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
 ## 십성: ${sipsung || '미상'}
+${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 신년운세와 같은 값): 용신 ${d.myeongriAnalysis.용신}, 희신 ${d.myeongriAnalysis.희신 || '미상'}, 기신 ${d.myeongriAnalysis.기신 || '미상'}. 개운 처방과 행운 색, 방위는 이 용신으로만. 다른 오행을 용신이라고 쓰지 말 것.` : ''}
 
 ## 선택한 달의 간지 (정확 계산 — 이 간지를 그대로 인용, 절대 임의로 바꾸지 말 것)
 - 월간지: ${info.wolGanji} (${info.label}의 월주)

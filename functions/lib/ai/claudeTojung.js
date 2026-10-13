@@ -136,12 +136,12 @@ JSON 만 출력 (코드블록 없이):
 {
   "headline": "${ty}년을 한 문장으로 (35~50자, 세운과 원국 관계 근거, 결론형)",
   "pullQuote": "기억에 남을 짧은 한마디 (20~30자)",
-  "keywords": ["#키워드1","#키워드2","#키워드3"],
+  "keywords": ["키워드1","키워드2","키워드3"],
   "fourBox": [
-    {"head": "상반기", "value": "6자 내외 핵심", "desc": "25자 내외 근거 (확정 월 기준점수와 판정 인용)"},
+    {"head": "상반기", "value": "6자 내외 핵심", "desc": "25자 내외 근거 (확정 월주의 도움, 부담 판정 인용, 점수 숫자는 쓰지 말 것)"},
     {"head": "하반기", "value": "6자 내외 핵심", "desc": "25자 내외 근거"},
-    {"head": "좋은 달", "value": "기준점수 상위 3~4개 달 (예: 2, 3, 11, 12월)", "desc": "25자 내외"},
-    {"head": "조심할 달", "value": "기준점수 하위 2개 달", "desc": "25자 내외"}
+    {"head": "좋은 달", "value": "점수가 높은 3~4개 달 (예: 2, 3, 11, 12월)", "desc": "25자 내외"},
+    {"head": "조심할 달", "value": "점수가 낮은 2개 달", "desc": "25자 내외"}
   ],
   "categoryScores": {"총운": 정수, "금전운": 정수, "건강운": 정수, "직장운": 정수, "애정운": 정수, "결혼운": 정수},
   "yearOverview": {
@@ -171,7 +171,7 @@ JSON 만 출력 (코드블록 없이):
     {"month": ${range[0]},
      "keyword": "4~6글자 (그 달의 핵심)",
      "score": "확정 '달 기준점수' ±4 안의 정수",
-     "전통해석": "그 달을 한 줄로 (25~40자, 읽기 쉬운 결론, 4자 성어 1개까지 OK)",
+     "전통해석": "그 달을 한 줄로 (25~40자, 읽기 쉬운 결론). 사자성어는 꼭 맞을 때만, 한국에서 흔히 쓰는 것(전화위복, 고진감래, 유비무환 등)만, 열두 달 통틀어 세 번까지, 같은 성어 반복 금지",
      "현대해석": "300~400자, ① 그 달 실제로 일어날 장면 2개(일, 돈, 관계, 몸 중 두드러진 것) ② 근거: 확정 월주와 원국의 관계 1회 호명(괄호로 쉬운 풀이) ③ 이 달 '좋은 날', '조심할 날'(확정값) 중 1~2개를 날짜로 언급하며 그날 무엇을 하면 좋은지",
      "todo": "이 달 꼭 할 일 한 문장 (40자 내외, 구체 행동)",
      "avoid": "이 달 피할 일 한 문장 (40자 내외)"
@@ -187,7 +187,7 @@ function buildPrompt(d, picks) {
     p.forEach((x, i) => { if (x.available !== false)
         pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`; });
     const el = d.elements || {};
-    const sipsung = d.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+    const sipsung = d.sipsung?.map((s) => `${s.위치 || s.position || ''}: ${s.글자}(${s.십성})`).join(', ') || '';
     // 2026-06-26 — 대운 전체 흐름 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
     //   대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그 fix (claudePremium.ts buildSajuBase 패턴 복제).
     const daeunList = Array.isArray(d.daeun) ? d.daeun : [];
@@ -207,7 +207,9 @@ function buildPrompt(d, picks) {
         const gz = monthPillar(ty, i + 1);
         const pm = picks?.perMonth?.[i + 1];
         const days = pm ? ` 좋은 날 ${pm.good.join(', ') || '없음'}, 조심할 날 ${pm.caution.join(', ') || '없음'}` : '';
-        return `- ${i + 1}월 ${gz}(${(0, sajuFacts_1.ganziKo)(gz)}) : ${(0, sajuFacts_1.ganziRoleText)(gz, d, '달')}, 달 기준점수 ${(0, sajuFacts_1.monthBaseScore)(gz, d)}${days}`;
+        const rel = (0, sajuFacts_1.natalRelations)(gz, d);
+        const relText = rel.gan ? `, 십성 천간 ${rel.gan} 지지 ${rel.ji}, 원국과 ${rel.links.length ? rel.links.join(', ') : '합과 충 없음'}` : '';
+        return `- ${i + 1}월 ${gz}(${(0, sajuFacts_1.ganziKo)(gz)}) : ${(0, sajuFacts_1.ganziRoleText)(gz, d, '달')}, 달 기준점수 ${(0, sajuFacts_1.monthBaseScore)(gz, d)}${relText}${days}`;
     }).join('\n');
     const keyDatesFact = (picks?.keyDates || []).map((k) => `${k.date} (${k.why})`).join(', ');
     const tyDaeun = daeunList.find((x) => Number(x?.시작년도) <= ty && ty <= Number(x?.끝년도));
@@ -235,6 +237,11 @@ ${ty}년 ${yko}(${ygz})년 신년운세 — 사주 원국 + ${ty}년 세운과 �
 ## 🚨 ${ty}년 확정값 (서버 계산, 직접 계산 금지, 이 값과 다른 간지와 역할 서술 금지)
 - ${ty}년 세운: ${(0, sajuFacts_1.ganziRoleText)(ygz, d, '해')}
 - ${ty}년의 대운: ${tyDaeun?.간지 ? `${tyDaeun.간지}(${(0, sajuFacts_1.ganziKo)(String(tyDaeun.간지))}) 대운, ${(0, sajuFacts_1.ganziRoleText)(String(tyDaeun.간지), d, '해')}` : '미상'}
+- 세운과 대운이 원국 여덟 글자와 만나는 십성과 합충 (서버 계산):
+${(0, sajuFacts_1.natalRelationsText)(ygz, d, `${ty}년 세운`)}
+${tyDaeun?.간지 ? (0, sajuFacts_1.natalRelationsText)(String(tyDaeun.간지), d, `${tyDaeun.간지} 대운`) : ''}
+- 🚨 십성 이름과 합, 충, 형, 해는 위 확정표와 아래 열두 달 줄에 적힌 것만 쓴다. 표에 없는 합이나 충, 표와 다른 십성 이름을 지어내지 말 것 (천간끼리 합과 충을 특히 주의).
+- '기준점수'라는 말과 그 숫자는 풀이에 쓰지 않는다 (점수 앵커일 뿐, 화면 점수와 다르다).
 - 열두 달 월주 (양력 달 기준, 1월은 寅월이 아니라 丑월):
 ${monthsFact}
 - 한 해 꼭 기억할 날 (서버 계산): ${keyDatesFact || '없음'}

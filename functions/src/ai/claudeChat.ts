@@ -187,7 +187,7 @@ export async function generateChatAnswerAI(
 
     const elements = sajuData.elements || {};
     const sipsung =
-      sajuData.sipsung?.map((s: any) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+      sajuData.sipsung?.map((s: any) => `${s.위치 || s.position || ''}: ${s.글자}(${s.십성})`).join(', ') || '';
     // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서,
     //   유저가 이전/다음 대운을 물으면 AI 가 데이터 없이 추측·뒤바꾸던 위험 fix. claudePremium.buildSajuBase 패턴 복제.
     const daeunList: any[] = Array.isArray(sajuData.daeun) ? sajuData.daeun : [];

@@ -515,7 +515,7 @@ function buildSajuBaseBlock(sajuData: any): string {
 
   const elements = sajuData.elements || {};
   const sipsung =
-    sajuData.sipsung?.map((s: any) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+    sajuData.sipsung?.map((s: any) => `${s.위치 || s.position || ''}: ${s.글자}(${s.십성})`).join(', ') || '';
   // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
   //   대운 간지를 추측하다 뒤바꾸던 버그(인플루언서 피드백: 차트는 맞는데 본문이 이전/다음 대운을 swap) fix.
   //   데이터(sajuData.daeun)에 전체가 있으니 결정론적으로 전달 → AI 가 추측·swap 불가.

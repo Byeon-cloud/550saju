@@ -31,7 +31,7 @@ function buildPrompt(d) {
             pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`;
     });
     const el = d.elements || {};
-    const sipsung = d.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+    const sipsung = d.sipsung?.map((s) => `${s.위치 || s.position || ''}: ${s.글자}(${s.십성})`).join(', ') || '';
     let daeunList = '';
     d.daeun?.forEach((x) => { daeunList += `- ${x.간지} (${x.시작나이 || x.나이범위 || ''}세~${x.끝나이 || ''}세)${x.isCurrent || x.현재 ? ' ★현재' : ''}\n`; });
     const currentDaeun = d.daeun?.find((x) => x.isCurrent || x.현재);
@@ -160,7 +160,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ⚠️ periods의 간지/시작나이/끝나이/isCurrent는 아래 값을 그대로 사용하세요.
 🚨 periods 각 항목의 career/love/wealth/health/advice — 대운간지와 원국 글자 직접 호명 mandatory (보일러플레이트 금지).
 {
-  "keywords": ["#사주핵심키워드1","#키워드2","#키워드3"],
+  "keywords": ["사주핵심키워드1","키워드2","키워드3"],
   "overview": "200자 이상. 전체 대운 흐름.",
   "periods": [
     ${periodsTemplate}

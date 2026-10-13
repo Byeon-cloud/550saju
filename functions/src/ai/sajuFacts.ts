@@ -244,6 +244,10 @@ export function sanitizeText(s: string): string {
   for (const [re, to] of HANJA_FIX) t = t.replace(re, to);
   for (const [re, to] of GUARANTEE_FIX) t = t.replace(re, to);
   t = fixTime(t);
+  // 2026-10-11 — '#오행보완' 같은 해시태그 키워드(SNS 티) → 낱말만
+  if (t.length <= 24 && /^#+(?=[가-힣])/.test(t)) t = t.replace(/^#+/, '').trim();
+  // 2026-10-11 — 서버 내부 앵커 '달 기준점수 91' 이 신년운세 본문에 샘 (화면 점수와도 다름) → 숫자째 지움
+  t = t.replace(/\s?\(?(?:달\s?)?기준\s?점수\s?\d+\s?점?\)?(?:으로|로)?/g, '');
   // 2026-10-11 — 호칭 통일: '서윤 씨는' → '서윤 님은' (띄어 쓴 '씨'만, '날씨', '솜씨' 등 붙은 말은 그대로)
   t = t.replace(/([가-힣]{2,4}) 씨(는|가|의|에게|께서|도|를|와|과|,|\.|!|\?|\s|$)/g, (_m, nm: string, j: string) => {
     const jj = j === '는' ? '은' : j === '가' ? '이' : j === '를' ? '을' : j === '와' ? '과' : j;
@@ -443,11 +447,24 @@ export function dayPicksForYear(year: number, sajuData: any): {
   // 한 해 꼭 기억할 날 — 점수 최상위, 달마다 1개까지, 최대 6
   const keyDates: Array<{ date: string; why: string }> = [];
   const usedMonth = new Set<number>();
-  for (const x of all.sort((a, b) => b.score - a.score)) {
-    if (keyDates.length >= 6) break;
-    if (x.score < 3 || usedMonth.has(x.m)) continue;
-    usedMonth.add(x.m);
-    keyDates.push({ date: x.label, why: x.why });
+  // 2026-10-11 — 같은 일진(60일마다 돌아옴)만 여섯 번 뽑혀 이유가 전부 같았음 → 같은 일진은 두 번까지, 모자라면 채움
+  //   같은 점수면 그 달 운(달 기준점수)이 좋은 달의 날을 먼저 — 풀이가 '최고의 달'로 꼽는 달이 빠지지 않게
+  const monthBase: Record<number, number> = {};
+  for (let m = 1; m <= 12; m++) {
+    try { monthBase[m] = monthBaseScore(Solar.fromYmd(year, m, 15).getLunar().getMonthInGanZhi(), sajuData); } catch { monthBase[m] = 66; }
+  }
+  const sorted = all.sort((a, b) => b.score - a.score || (monthBase[b.m] || 0) - (monthBase[a.m] || 0));
+  const gzCount: Record<string, number> = {};
+  for (const pass of [2, 99]) {
+    for (const x of sorted) {
+      if (keyDates.length >= 6) break;
+      if (x.score < 3 || usedMonth.has(x.m)) continue;
+      const gzKey = x.why.slice(0, 2);
+      if ((gzCount[gzKey] || 0) >= pass) continue;
+      gzCount[gzKey] = (gzCount[gzKey] || 0) + 1;
+      usedMonth.add(x.m);
+      keyDates.push({ date: x.label, why: x.why });
+    }
   }
   keyDates.sort((a, b) => {
     const [am, ad] = a.date.split('(')[0].split('/').map(Number); const [bm, bd] = b.date.split('(')[0].split('/').map(Number);
@@ -509,6 +526,72 @@ export function todayRelationsText(todayGanzi: string, sajuData: any): string {
     }
     return `### 오늘 오행 관계 확정표 (서버 계산, 생극 방향을 이 표와 반대로 쓰지 말 것)\n${lines.join('\n')}`;
   } catch { return ''; }
+}
+
+/* ── 원국과 만나는 글자의 십성, 합충 확정표 (2026-10-11) ──
+ *   신년운세 시식: 세운 丁과 년간 癸를 '정임합에 준하는 간합'으로 지어냄(실제는 丁癸충), 庚申 대운에 '칠살'을 붙임(申 본기 庚 = 乙 일간의 정관).
+ *   → 세운, 대운, 달 간지가 원국 여덟 글자와 맺는 합, 충, 형, 해와 십성을 서버가 정해 준다. 표에 없는 것은 쓰지 못하게. */
+const YANG_GAN = new Set(['甲', '丙', '戊', '庚', '壬']);
+const BR_MAIN: Record<string, string> = { 子: '癸', 丑: '己', 寅: '甲', 卯: '乙', 辰: '戊', 巳: '丙', 午: '丁', 未: '己', 申: '庚', 酉: '辛', 戌: '戊', 亥: '壬' };
+const GAN_HAP: Record<string, string> = { 甲: '己', 己: '甲', 乙: '庚', 庚: '乙', 丙: '辛', 辛: '丙', 丁: '壬', 壬: '丁', 戊: '癸', 癸: '戊' };
+const GAN_CHUNG: Record<string, string> = { 甲: '庚', 庚: '甲', 乙: '辛', 辛: '乙', 丙: '壬', 壬: '丙', 丁: '癸', 癸: '丁' };
+const JI_HAE: Record<string, string> = { 子: '未', 未: '子', 丑: '午', 午: '丑', 寅: '巳', 巳: '寅', 卯: '辰', 辰: '卯', 申: '亥', 亥: '申', 酉: '戌', 戌: '酉' };
+const JI_HYUNG = new Set(['寅巳', '巳寅', '巳申', '申巳', '寅申', '申寅', '丑戌', '戌丑', '戌未', '未戌', '丑未', '未丑', '子卯', '卯子']);
+const JA_HYUNG = new Set(['辰', '午', '酉', '亥']);
+const SAMHAP_OH: Array<{ g: string[]; oh: string }> = [
+  { g: ['申', '子', '辰'], oh: '수' }, { g: ['亥', '卯', '未'], oh: '목' }, { g: ['寅', '午', '戌'], oh: '화' }, { g: ['巳', '酉', '丑'], oh: '금' },
+];
+/** 일간 기준 십성 (편관은 '편관(칠살)') */
+export function tenGod(dayGan: string, other: string): string {
+  const d = GAN_OH[dayGan]; const o = GAN_OH[other];
+  if (!d || !o) return '';
+  const same = YANG_GAN.has(dayGan) === YANG_GAN.has(other);
+  if (d === o) return same ? '비견' : '겁재';
+  if (GEN[d] === o) return same ? '식신' : '상관';
+  if (CTRL[d] === o) return same ? '편재' : '정재';
+  if (CTRL[o] === d) return same ? '편관(칠살)' : '정관';
+  if (GEN[o] === d) return same ? '편인' : '정인';
+  return '';
+}
+const POS_NAME = ['년', '월', '일', '시'];
+/** 한자 한 글자 읽기의 받침으로 와/과 */
+const wa = (h: string): string => { const r = GAN_KO[h] || ZHI_KO[h] || ''; const c = r.charCodeAt(r.length - 1); return c >= 0xAC00 && (c - 0xAC00) % 28 ? '과' : '와'; };
+/** 간지 하나가 원국 여덟 글자와 맺는 관계 */
+export function natalRelations(gz: string, sajuData: any): { gan: string; ji: string; links: string[] } {
+  const out = { gan: '', ji: '', links: [] as string[] };
+  try {
+    if (!gz || gz.length < 2) return out;
+    const p: any[] = sajuData?.pillars || [];
+    const dayGan = String(p[2]?.천간 || '');
+    const g = gz[0]; const b = gz[1];
+    out.gan = `${g}(${GAN_KO[g] || ''}) ${tenGod(dayGan, g) || '?'}`;
+    out.ji = `${b}(${ZHI_KO[b] || ''}) ${tenGod(dayGan, BR_MAIN[b]) || '?'}`;
+    p.forEach((x: any, i: number) => {
+      if (!x || x.available === false) return;
+      const ng = String(x.천간 || ''); const nb = String(x.지지 || '');
+      const gpos = i === 2 ? '일간' : `${POS_NAME[i]}간`;
+      if (ng && GAN_HAP[g] === ng) out.links.push(`${g}${ng}합(${gpos} ${ng}${wa(ng)} 묶임)`);
+      if (ng && GAN_CHUNG[g] === ng) out.links.push(`${g}${ng}충(${gpos} ${ng}${wa(ng)} 부딪힘)`);
+      if (!nb) return;
+      const jpos = `${POS_NAME[i]}지`;
+      if (nb === b) {
+        out.links.push(`${b}${b} 겹침(${jpos}${JA_HYUNG.has(b) ? ', 자형' : ''})`);
+        return;
+      }
+      if (CHUNG_PAIR[nb] === b) out.links.push(`${nb}${b}충(${jpos}와 부딪힘)`);
+      if (JI_HAP6[nb] === b) out.links.push(`${nb}${b}합(${jpos}와 묶임)`);
+      const sh = SAMHAP_OH.find((s) => s.g.includes(nb) && s.g.includes(b) && (s.g[1] === nb || s.g[1] === b));
+      if (sh) out.links.push(`${nb}${b} 반합(${jpos}와 ${sh.oh} 기운으로 묶임)`);
+      if (JI_HYUNG.has(nb + b)) out.links.push(`${nb}${b}형(${jpos}와 형)`);
+      if (JI_HAE[nb] === b) out.links.push(`${nb}${b}해(${jpos}와 해)`);
+    });
+  } catch { /* noop */ }
+  return out;
+}
+export function natalRelationsText(gz: string, sajuData: any, label: string): string {
+  const r = natalRelations(gz, sajuData);
+  if (!r.gan) return '';
+  return `- ${label} ${gz}(${ganziKo(gz)}): 천간 ${r.gan}, 지지 ${r.ji}(지장간 본기 기준). 원국과 ${r.links.length ? r.links.join(', ') : '합과 충 없음'}`;
 }
 
 /** 오늘의 좋은 시간대·조심할 시간대 (한국 진태양시 :30 경계 시진 × 용신·희신·기신·일지충) */

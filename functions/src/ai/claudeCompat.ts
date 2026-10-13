@@ -168,7 +168,7 @@ function personDetail(label: string, d: any): string {
   let t = '';
   p.forEach((x: any, i: number) => { if (x.available !== false) t += `  ${labels[i]}: ${x.천간}(${x.천간읽기||''})${x.지지}(${x.지지읽기||''})\n`; });
   const el = d.elements || {};
-  const sip = d.sipsung?.map((s: any) => `${s.위치}:${s.십성}`).join(', ') || '';
+  const sip = d.sipsung?.map((s: any) => `${s.위치 || s.position || ''}:${s.십성}`).join(', ') || '';
   return `### ${label}: ${d.input?.name||'미상'} (${d.input?.gender==='male'?'남':'여'})\n${t}  일간: ${p[2]?.천간||'미상'}\n  오행: 목${el.목||0} 화${el.화||0} 토${el.토||0} 금${el.금||0} 수${el.수||0}\n  십성: ${sip}`;
 }
 
@@ -297,7 +297,7 @@ ${crossRelations}
 {
   "overallScore": 0-100,
   "relationshipType": "상호보완형/동지형/멘토형/열정형/안정형 중 하나",
-  "keywords": ["#궁합키워드1","#키워드2","#키워드3"],
+  "keywords": ["궁합키워드1","키워드2","키워드3"],
   "summary": "200자 이상. 두 사람의 관계 본질. 🚨 두 사주 cross-relations 1개 이상 직접 호명 mandatory.",
   "categories": [
     {"id": "personality", "name": "성격 궁합", "score": 0-100, "description": "150자 이상, 🚨 두 사람 일간/일지/십성 직접 호명"},

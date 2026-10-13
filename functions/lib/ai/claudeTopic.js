@@ -205,7 +205,7 @@ const TOPIC_CONFIGS = {
 - 상대방 정보가 없는 경우(솔로): 사주 원국에서 이상적 상대를 추론. partnerCompat은 null로.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"매력발산","value":"0-100 정수"},{"axis":"소통능력","value":"0-100 정수"},{"axis":"감성깊이","value":"0-100 정수"},{"axis":"안정감","value":"0-100 정수"},{"axis":"인연운","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["연애 강점 35~50자, 사주 글자 호명 1회","연애 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["연애 주의점 35~50자, 위기→기회 패턴","연애 주의점2 35~50자, 위기→기회 패턴"],
       "idealType": {"personality": "궁합 좋은 성격 경향 + 사주 근거 한마디 (35자)", "job": "궁합 좋은 직업군 경향 + 오행 근거 (25자)", "ageGap": "나이차 경향 — 반드시 양쪽 가능성 언급 (25자)", "meetPlace": "만남 장소 경향 15자", "appearance": "외모/분위기 경향 20자"},
@@ -285,7 +285,7 @@ const TOPIC_CONFIGS = {
 - 세운 = 식상 시기 → 콘텐츠와 기술 부업으로 부수입`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"수익력","value":"0-100 정수"},{"axis":"저축력","value":"0-100 정수"},{"axis":"투자감각","value":"0-100 정수"},{"axis":"사업운","value":"0-100 정수"},{"axis":"횡재운","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["재물 강점 35~50자, 사주 글자 호명 1회","재물 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["재물 주의점 35~50자, 위기→기회 패턴","재물 주의점2 35~50자, 위기→기회 패턴"],
       "wealthType": "정규직형/사업형/투자형/재테크형 중 하나",
@@ -365,7 +365,7 @@ const TOPIC_CONFIGS = {
         // subScores 도 "면접력/타이밍" 제거 → "직무적성/대인관계/리더십/지속력/성장운" 평생 적성 중심.
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"직무적성","value":"0-100 정수"},{"axis":"대인관계","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"지속력","value":"0-100 정수"},{"axis":"성장운","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["커리어 강점 35~50자, 사주 글자 호명 1회","커리어 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["커리어 주의점 35~50자, 위기→기회 패턴","커리어 주의점2 35~50자, 위기→기회 패턴"],
       "workStyle": "안정형/도전형/프리랜서형/창업형 중 하나",
@@ -400,7 +400,7 @@ const TOPIC_CONFIGS = {
 - 상대방 정보가 없는 경우(솔로): 사주 원국에서 배우자상을 추론. partnerCompat은 null로.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"배우자복","value":"0-100 정수"},{"axis":"결혼시기","value":"0-100 정수"},{"axis":"가정안정","value":"0-100 정수"},{"axis":"양가관계","value":"0-100 정수"},{"axis":"재물복","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["결혼 강점 35~50자, 사주 글자 호명 1회","결혼 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["결혼 주의점 35~50자, 위기→기회 패턴","결혼 주의점2 35~50자, 위기→기회 패턴"],
       "spouseProfile": {"personality": "성격 20자", "job": "직업군 15자", "ageGap": "나이차 10자", "meetStyle": "만남경로 10자"},
@@ -466,7 +466,7 @@ const TOPIC_CONFIGS = {
 → 사주 8글자 정확히 호명. 면피체 금지. 일반론 금지. 첫 문장에 일간+비겁/재성 카운트.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"사업감각","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"자금운용","value":"0-100 정수"},{"axis":"네트워크","value":"0-100 정수"},{"axis":"위기대응","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["사업 강점 35~50자, 사주 글자 호명 1회","사업 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["사업 주의점 35~50자, 위기→기회 패턴","사업 주의점2 35~50자, 위기→기회 패턴"],
       "businessType": "독립창업/프랜차이즈/동업/투자형 중 하나",
@@ -517,7 +517,7 @@ const TOPIC_CONFIGS = {
 → "혹시 ~에 통증이나 불편함이 있지 않나요?" 식 사주 specific 소름 포인트 1개 필수.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"체력","value":"0-100 정수"},{"axis":"정신건강","value":"0-100 정수"},{"axis":"면역력","value":"0-100 정수"},{"axis":"회복력","value":"0-100 정수"},{"axis":"장수운","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["건강 강점 35~50자, 사주 글자 호명 1회","건강 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["건강 주의점 35~50자, 위기→기회 패턴","건강 주의점2 35~50자, 위기→기회 패턴"],
       "organStatus": [
@@ -558,6 +558,8 @@ const TOPIC_CONFIGS = {
 - "혹시 ~하지 않았나요?" 형태의 소름 포인트 매 섹션마다 1개 이상 필수
 - 사주 전문 용어(한자 병기)를 자연스럽게 포함하되, 쉽게 설명
 - ⚠️ 각 섹션의 content는 핵심만 간결하게. 한 섹션 150~250자. 불필요한 반복/서론 금지.
+- 상대방의 지금 마음은 단정하지 않는다(2026-05-07 오너 승인). 상대 쪽은 두 사람 사주의 합, 충, 원진과 올해 세운이 상대 일지를 어떻게 건드리는지로 '사주로 보이는 흐름'만 말한다. 상대의 감정을 사실처럼 쓰는 문장은 금지.
+- 재회가 어려운 사주면 어렵다고 솔직하게 말한다. 다만 결과가 어떻든 글의 끝은 이 사람이 스스로 할 수 있는 것과 앞으로의 희망으로 맺는다(가능성을 부풀리지는 않는다). 이별을 겪은 사람이 위로받고 '내 얘기다' 하며 끝까지 읽게 쓴다.
 
 ## 섹션별 지침
 
@@ -632,12 +634,12 @@ const TOPIC_CONFIGS = {
 - 피해야 할 날짜/시간대`,
         topicDataSchema: `"topicData": {
       "// 서버 확정": "월별 에너지와 재회 적기와 첫 연락 달, 판정, 연락 판단과 감정 흐름과 두 사람 기둥 간지와 이별 단계 설명은 서버가 채운다 — 출력 금지",
-      "subScores": [{"axis":"재회가능성","value":"0-100 정수"},{"axis":"상대마음","value":"0-100 정수"},{"axis":"궁합구조","value":"0-100 정수"},{"axis":"타이밍","value":"0-100 정수"},{"axis":"관계성장","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4","#키워드5"],
+      "subScores": [{"axis":"재회가능성","value":"0-100 정수"},{"axis":"상대흐름","value":"0-100 정수"},{"axis":"궁합구조","value":"0-100 정수"},{"axis":"타이밍","value":"0-100 정수"},{"axis":"관계성장","value":"0-100 정수"}],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4","키워드5"],
       "strengths": ["재회 긍정 요인 35~50자, 사주 호명","긍정 요인2 35~50자","긍정 요인3 35~50자"],
       "cautions": ["재회 주의점 35~50자, 위기→기회 패턴","주의점2 35~50자, 위기→기회 패턴","주의점3 35~50자, 위기→기회"],
       "reunionProb": "0-100 정수",
-      "partnerFeeling": "상대 현재 감정 추론 30자",
+      "partnerFeeling": "두 사람 사주로 본 상대 쪽 흐름 25~40자. 상대 마음을 단정하지 말고 'OO의 흐름' 처럼 사주 흐름으로 말한다",
       "comparison": {
         "reunionPros": ["장점1 20자", "장점2 20자", "장점3 20자"],
         "reunionCons": ["단점1 20자", "단점2 20자"],
@@ -716,7 +718,7 @@ const TOPIC_CONFIGS = {
 - 같이 공부하면 좋은 사람의 사주적 특성`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"집중력","value":"0-100 정수"},{"axis":"이해력","value":"0-100 정수"},{"axis":"암기력","value":"0-100 정수"},{"axis":"시험운","value":"0-100 정수"},{"axis":"끈기","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["학업 강점 35~50자, 사주 글자 호명 1회","학업 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["학업 주의점 35~50자, 위기→기회 패턴","학업 주의점2 35~50자, 위기→기회 패턴"],
       "studyType": "암기형/이해형/직관형/반복형 중 하나",
@@ -746,7 +748,7 @@ const TOPIC_CONFIGS = {
 - "혹시 가까운 사람과 ~한 갈등을 겪은 적 있나요?" 소름 포인트`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"사교력","value":"0-100 정수"},{"axis":"리더십","value":"0-100 정수"},{"axis":"신뢰도","value":"0-100 정수"},{"axis":"인맥운","value":"0-100 정수"},{"axis":"귀인운","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["대인관계 강점 35~50자, 사주 글자 호명 1회","대인관계 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["대인관계 주의점 35~50자, 위기→기회 패턴","주의점2 35~50자, 위기→기회 패턴"],
       "socialStyle": "관계 스타일명 15자",
@@ -797,7 +799,7 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
 ⚠ 고전 근거는 내부 판단용 — 본문에 책 이름, 학파, '고서에 따르면' 언급 금지. 귀인 보유 여부는 아래 '귀인과 신살 확정표' 가 최우선.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"합격운","value":"0-100 정수"},{"axis":"이직운","value":"0-100 정수"},{"axis":"변동 leverage","value":"0-100 정수"},{"axis":"면접운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["변동 강점 35~50자, 사주 글자 호명 1회","변동 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["변동 주의점 35~50자, 위기→기회 패턴","변동 주의점2 35~50자, 위기→기회 패턴"],
       "changeMode": "합격 우선/이직 우선/양방 중 하나",
@@ -847,7 +849,7 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
 → 8글자 정확 호명. 면피체("~수도 있어요") 0건. 일반론 금지.`,
         topicDataSchema: `"topicData": {
       "subScores": [{"axis":"이동운","value":"0-100 정수"},{"axis":"방향운","value":"0-100 정수"},{"axis":"해외운","value":"0-100 정수"},{"axis":"정착운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
-      "keywords": ["#사주근거키워드1","#키워드2","#키워드3","#키워드4"],
+      "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["이동 강점 35~50자, 사주 글자 호명 1회","이동 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["이동 주의점 35~50자, 위기→기회 패턴","이동 주의점2 35~50자, 위기→기회 패턴"],
       "hasYeokmasal": true 또는 false,
@@ -876,13 +878,22 @@ const REUNION_DATA_ONLY = `
 ## ⚡ 이번 호출의 출력 범위
 {"topicData": { ... }} 한 키만 담은 JSON 객체 하나만 출력한다. 본문(summary, sections, timeline 등)은 다른 호출이 같은 확정표로 동시에 쓰고 있다 — 출력 금지.
 카드 문구도 본문과 같은 근거(재회 타이밍과 판정 확정표, 두 사람 객관 관계)로 쓴다. 서버가 채우는 항목은 출력하지 않는다.`;
+/** 재회운 출력 직전 점검 (2026-10-13 오너 승인 방향: 상대 마음 단정 금지, 끝은 희망, 연락 시간) */
+const REUNION_FINAL_CHECK = `
+
+## ✅ 재회운 출력 직전 점검
+1. 연락하기 좋은 시간은 오전 9시부터 밤 10시 사이에서만 고른다. 밤 10시 이후와 자정, 새벽 연락 권유가 있으면 그 범위 안의 시간으로 고친다.
+2. 상대의 지금 감정을 사실처럼 쓴 문장이 있으면 '사주로 보이는 상대 쪽 흐름'으로 고친다.
+3. 마지막 섹션의 마지막 문단은 이 사람이 스스로 할 수 있는 일과 앞으로의 희망으로 맺는다. 주의 사항으로 끝나면 그 뒤에 한두 문장을 더해 맺는다. 가능성을 부풀리지는 않는다.`;
 /** 주제 생성 공용 (SSE 스트림 · callable 폴백 같은 코드). 파싱 실패 시 temperature 낮춰 1회 재생성.
  *  split(재회운)이면 본문은 onDelta 로 실시간, 카드 데이터는 4초 뒤 병렬(프롬프트 캐시 읽기) → 합쳐서 반환. */
 async function runTopicGeneration(anthropic, call, via, hooks = {}) {
     const system = [{ type: 'text', text: call.system, cache_control: { type: 'ephemeral' } }];
+    // 2026-10-13 — 재회운 규칙이 시스템 지시만으로는 안 지켜져서(연락 시간 밤 11시 30분 권유, 끝이 '피하세요'로 맺음) user 끝 점검에 넣는다
+    const finalCheck = promptsV3_1.TONE_FINAL_CHECK + (call.normalizedId === 'reunion' ? REUNION_FINAL_CHECK : '');
     const content = (suffix) => (suffix
-        ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix + promptsV3_1.TONE_FINAL_CHECK }]
-        : call.prompt + promptsV3_1.TONE_FINAL_CHECK);
+        ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix + finalCheck }]
+        : call.prompt + finalCheck);
     const once = async (suffix, maxTokens, temperature, live) => {
         const t0 = Date.now();
         const stream = anthropic.messages.stream({
@@ -1313,7 +1324,7 @@ function buildPrompt(config, topicId, d, baseScore, partnerInfo, extraInfo, reun
     p.forEach((x, i) => { if (x.available !== false)
         pillarsText += `${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`; });
     const el = d.elements || {};
-    const sipsung = d.sipsung?.map((s) => `${s.위치}: ${s.글자}(${s.십성})`).join(', ') || '';
+    const sipsung = d.sipsung?.map((s) => `${s.위치 || s.position || ''}: ${s.글자}(${s.십성})`).join(', ') || '';
     // 2026-06-24 — 대운 전체 흐름을 명시(이전/현재/다음 간지+나이). 기존엔 '현재 대운'만 줘서 AI 가 이전/다음
     //   대운 간지를 데이터 없이 추측하다 뒤바꾸던 버그(차트는 맞는데 본문이 swap) fix. claudePremium.buildSajuBase 패턴 복제.
     const daeunList = Array.isArray(d.daeun) ? d.daeun : [];
@@ -1490,10 +1501,10 @@ ${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPil
    • confessionTiming: 사주에 좋은 고백 시기 (월 단위 1-3개) + 그 근거 (도화 활성과 합/충 패턴)
    • interestLevel: 상대방의 사주가 본인을 향한 호감 강도 (0-100% + 근거 2-3줄)
    • approachStrategy: 상대 일간 성향에 맞는 접근법 (직진 vs 천천히 vs 친구로 시작)
-   • signalReading: "지금 상대가 나에게 어떤 마음인가" 사주 신호 3가지 (말투와 연락 패턴과 만남 요청)`
+   • signalReading: 이 썸이 이어지는 신호 3가지 (내가 확인할 행동 기준 — 말투, 연락 패턴, 만남 요청. 상대 마음을 단정하는 문장 금지)`
             : `→ 연애중 핵심: '관계의 흐름과 안정성'을 짚으세요.
    • stabilityPhase: 현재 관계 단계 (밀월/안정/권태/위기 4단계 중 어디 + 사주 근거)
-   • longTermOutlook: 장기 전망 (앞으로 6/12개월 흐름 곡선 + 결혼 가능성 timing)
+   • longTermOutlook: 장기 전망 (앞으로 6/12개월 관계 흐름 곡선. 결혼 시기 단정은 결혼운 영역이라 쓰지 않는다 — 2026-05-07 오너 승인, TOPIC_BOUNDARIES love 와 같은 규칙)
    • riskMonth: 다툼/위기 주의 월 (12개월 중 2-3개)
    • deepenTip: 본인 일간 × 상대 일간 조합에 맞는 깊어지는 방법 (가치관 공유법)`;
         partnerSection = `
