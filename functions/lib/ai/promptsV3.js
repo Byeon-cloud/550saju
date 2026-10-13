@@ -971,6 +971,8 @@ ${data.category}
 exports.DREAM_FREE_USER_WITH_SAJU_V3 = DREAM_FREE_USER_WITH_SAJU_V3;
 const DREAM_FREE_USER_NO_SAJU_V3 = (data) => `## 유저 정보
 (사주 정보 없음 — 꿈 상징 중심으로 해석)
+🚨 호칭: 이 사람의 이름을 모른다. '당신'을 한 번도 쓰지 않는다. 주어를 빼거나 '꿈꾼 분'으로 쓴다.
+   형태 예: '당신이 가려는 방향' → '지금 가려는 방향', '당신의 일상 영역' → '일상 영역', '당신 편이라는 뜻' → '내 편이라는 뜻'
 
 ## 꿈 내용
 ${data.dreamContent}
