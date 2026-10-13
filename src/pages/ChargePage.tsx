@@ -372,15 +372,12 @@ export function ChargePage() {
         }}>
           운 충전
         </div>
-        {/* 잔액 뱃지 */}
+        {/* 잔액 (v9: 알약 배지, 장식 점, 금색 상태 표시 금지 → 먹색 글자) */}
         <div style={{
-          background: C.goldSoft, borderRadius: 999,
-          padding: '5px 11px', fontSize: 13, fontWeight: 700,
-          color: C.goldDeep, flexShrink: 0,
-          display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 13, fontWeight: 700,
+          color: C.ink, flexShrink: 0,
         }}>
-          <span style={{ fontSize: 9, lineHeight: 1 }}>●</span>
-          {balance}운
+          잔액 {balance}운
         </div>
       </div>
 
@@ -565,10 +562,9 @@ export function ChargePage() {
           display: 'flex', flexDirection: 'column',
           alignItems: 'flex-end', gap: 8, flexShrink: 0,
         }}>
-          {/* 카운터 pill */}
+          {/* 카운터 (v9: 알약 대신 먹색 글자, 상태 표시는 먹) */}
           <div style={{
-            background: C.goldSoft, borderRadius: 999,
-            padding: '4px 10px', fontSize: 13, fontWeight: 700, color: C.goldDeep,
+            padding: '2px 0', fontSize: 13, fontWeight: 700, color: '#6F6557',
           }}>
             오늘 {sharesUsed}/{MAX_DAILY_SHARES}회
           </div>

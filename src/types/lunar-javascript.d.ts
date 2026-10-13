@@ -10,6 +10,8 @@ declare module 'lunar-javascript' {
     getYearGan(): string;
     getYearZhi(): string;
     getYearShengXiao(): string;
+    /** 입춘 기준 띠 — 연주 지지와 일치 (2026-10-13 calculator v3) */
+    getYearShengXiaoExact(): string;
     getDayJiShen(): string[];
     getDayXiongSha(): string[];
     getYearXunKong(): string;

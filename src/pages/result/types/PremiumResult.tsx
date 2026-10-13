@@ -463,7 +463,7 @@ function ShinsalSummary({
     <div
       style={{
         marginTop: 14,
-        background: 'linear-gradient(135deg, #fff 0%, rgba(212,175,55,0.04) 100%)',
+        background: '#FFFDF8',
         border: `1px solid ${C.line}`,
         borderRadius: 12,
         padding: '16px 16px',
@@ -619,9 +619,9 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
 
   // 색상 — 강도별 그라데이션 (오행 색감과 톤 통일)
   function colorOf(kind: 'strong' | 'mid' | 'weak'): { c: string; bg: string; chip: string; chipBg: string; label: string } {
-    if (kind === 'strong') return { c: '#4E7A57', bg: 'linear-gradient(135deg, #fff 0%, rgba(78,122,87,0.06) 100%)', chip: '#fff', chipBg: 'linear-gradient(135deg, #4FAE6D, #4E7A57)', label: '강' };
-    if (kind === 'weak')   return { c: '#C62828', bg: 'linear-gradient(135deg, #fff 0%, rgba(198,40,40,0.05) 100%)', chip: '#fff', chipBg: 'linear-gradient(135deg, #EF5350, #C62828)', label: '약' };
-    return { c: '#B8965A', bg: 'linear-gradient(135deg, #fff 0%, rgba(184,150,90,0.07) 100%)', chip: '#fff', chipBg: 'linear-gradient(135deg, #B8965A, #8B6F3D)', label: '변' };
+    if (kind === 'strong') return { c: '#4E7A57', bg: '#FFFDF8', chip: '#fff', chipBg: '#4E7A57', label: '강' };
+    if (kind === 'weak')   return { c: '#A23A2A', bg: '#FFFDF8', chip: '#fff', chipBg: '#A23A2A', label: '약' };
+    return { c: '#B8965A', bg: '#FFFDF8', chip: '#fff', chipBg: '#8C6D3D', label: '변' };
   }
 
   return (
@@ -633,7 +633,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
             width: 38,
             height: 38,
             borderRadius: 9,
-            background: 'linear-gradient(135deg, #B8965A 0%, #8B6F3D 100%)',
+            background: '#8C6D3D',
             color: '#FFF',
             display: 'flex',
             alignItems: 'center',
@@ -684,7 +684,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
         사람이 <strong style={{ color: C.ink }}>태어나(장생) → 자라고 → 정점(제왕) → 저물고(쇠, 병, 사) → 다시 씨앗이 되는(태와 양)</strong> 인생 사이클 12단계입니다.
         내 사주 4 자리(년, 월, 일, 시)가 각각 어느 단계에 해당하는지 보면, <strong style={{ color: C.ink }}>인생 어느 시기가 강하고 약한지</strong> 가늠할 수 있어요.
         <span style={{ display: 'block', marginTop: 6, fontSize: 13, color: C.mute }}>
-          • <strong style={{ color: '#4E7A57', fontWeight: 700 }}>녹색</strong>은 강한 자리, <strong style={{ color: '#C62828', fontWeight: 700 }}>빨강</strong>은 약한 자리, <strong style={{ color: '#B8965A', fontWeight: 700 }}>골드</strong>는 변화의 자리예요.
+          • <strong style={{ color: '#4E7A57', fontWeight: 700 }}>녹색</strong>은 강한 자리, <strong style={{ color: '#A23A2A', fontWeight: 700 }}>빨강</strong>은 약한 자리, <strong style={{ color: '#B8965A', fontWeight: 700 }}>골드</strong>는 변화의 자리예요.
         </span>
       </div>
 
@@ -692,7 +692,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
       {lifeArc.length >= 3 && (
         <div
           style={{
-            background: 'linear-gradient(135deg, #FFFEF8 0%, #FAF6EC 100%)',
+            background: '#FFFDF8',
             border: '1px solid rgba(184,150,90,0.32)',
             borderRadius: 10,
             padding: '12px 14px',
@@ -791,7 +791,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                     transform: 'translateX(-50%)',
                     fontSize: 13,
                     fontWeight: 800,
-                    background: 'linear-gradient(135deg, #f4d166, #B8965A)',
+                    background: '#D6B87A',
                     color: '#1a1a1a',
                     padding: '2px 8px',
                     borderRadius: 10,
@@ -812,13 +812,13 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
                     transform: 'translateX(-50%)',
                     fontSize: 13,
                     fontWeight: 800,
-                    background: 'rgba(198,40,40,0.92)',
+                    background: 'rgba(162,58,42,0.92)',
                     color: '#fff',
                     padding: '2px 8px',
                     borderRadius: 2,
                     letterSpacing: '0.04em',
                     whiteSpace: 'nowrap',
-                    boxShadow: '0 2px 6px rgba(198,40,40,0.32)',
+                    boxShadow: '0 2px 6px rgba(162,58,42,0.32)',
                   }}
                 >
                   가장 약함
@@ -2078,7 +2078,7 @@ function TopicTopRecommend({
     if (score >= 75) return { label: '강함', bg: 'rgba(78,122,87,0.10)', color: '#4E7A57' };
     if (score >= 60) return { label: '안정', bg: 'rgba(184,150,90,0.14)', color: '#8B6F3D' };
     if (score >= 45) return { label: '평탄', bg: 'rgba(122,114,105,0.14)', color: '#5C4A2E' };
-    return { label: '주의', bg: 'rgba(198,40,40,0.10)', color: '#c62828' };
+    return { label: '주의', bg: 'rgba(162,58,42,0.10)', color: '#A23A2A' };
   }
 
   return (
@@ -2086,7 +2086,7 @@ function TopicTopRecommend({
       style={{
         marginTop: 24,
         padding: 0,
-        background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2520 50%, #1d1812 100%)',
+        background: '#1E1A15',
         border: '1.5px solid rgba(212,175,55,0.32)',
         borderRadius: 16,
         overflow: 'hidden',
@@ -2098,7 +2098,7 @@ function TopicTopRecommend({
         style={{
           padding: '18px 20px 14px',
           borderBottom: '1px solid rgba(244,209,102,0.18)',
-          background: 'radial-gradient(circle at top right, rgba(244,209,102,0.10) 0%, transparent 60%)',
+          background: 'none',
         }}
       >
         <div
@@ -2170,7 +2170,7 @@ function TopicTopRecommend({
                 gap: 6,
                 padding: '14px 9px 12px',
                 background: isFirst
-                  ? `linear-gradient(180deg, ${meta.color}24 0%, ${meta.color}08 100%)`
+                  ? `${meta.color}14`
                   : 'rgba(255,254,248,0.04)',
                 border: isFirst
                   ? `1.5px solid ${meta.color}`
@@ -2205,7 +2205,7 @@ function TopicTopRecommend({
                     transform: 'translateX(-50%)',
                     fontSize: 13,
                     fontWeight: 800,
-                    background: 'linear-gradient(135deg, #f4d166, #B8965A)',
+                    background: '#D6B87A',
                     color: '#1a1a1a',
                     padding: '2px 10px',
                     borderRadius: 10,
@@ -2266,7 +2266,7 @@ function TopicTopRecommend({
                 </span>
                 <span
                   style={{
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 800,
                     color: rank.color,
                     background: rank.bg,
@@ -2757,7 +2757,7 @@ export function PremiumResult({
   // 일간 오행 → hero-card .ilgan 박스 컬러 (목업: 양목=녹색, 양화=빨강 등)
   const ilganBoxColor: Record<string, { fg: string; bg: string; border: string }> = {
     목: { fg: '#4E7A57', bg: 'rgba(78,122,87,0.08)', border: 'rgba(78,122,87,0.20)' },
-    화: { fg: '#c62828', bg: 'rgba(198,40,40,0.08)', border: 'rgba(198,40,40,0.20)' },
+    화: { fg: '#B04A38', bg: 'rgba(176,74,56,0.08)', border: 'rgba(176,74,56,0.20)' },
     토: { fg: '#C18715', bg: 'rgba(176,127,56,0.10)', border: 'rgba(176,127,56,0.32)' },
     금: { fg: '#7D7870', bg: 'rgba(74,74,74,0.07)', border: 'rgba(74,74,74,0.28)' },
     수: { fg: '#3E5F82', bg: 'rgba(62,95,130,0.08)', border: 'rgba(62,95,130,0.20)' },
@@ -3371,7 +3371,7 @@ function YongsinBox({
   return (
     <div
       style={{
-        background: 'linear-gradient(180deg, #FFFEF8 0%, #FBF5E8 100%)',
+        background: '#FFFDF8',
         border: `1.5px solid ${C.goldLine}`,
         borderRadius: 16,
         padding: 0,
@@ -3383,7 +3383,7 @@ function YongsinBox({
       {/* 헤더 — 골드 그라데이션 + 한자 라벨 */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #B8965A 0%, #8B6F3D 100%)',
+          background: '#8C6D3D',
           padding: '10px 16px',
           display: 'flex',
           alignItems: 'center',
@@ -3593,7 +3593,7 @@ function YongsinChip({
       </div>
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           color: color,
           opacity: 0.7,
@@ -3824,8 +3824,8 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
             const x = xOf(i);
             const y = yOf(p.s);
             const labelY = y - 6;
-            const fillColor = isPeak ? '#4E7A57' : isLow ? '#c62828' : isNow ? '#B8965A' : '#fff';
-            const stroke = isPeak ? '#4E7A57' : isLow ? '#c62828' : '#B8965A';
+            const fillColor = isPeak ? '#4E7A57' : isLow ? '#A23A2A' : isNow ? '#B8965A' : '#fff';
+            const stroke = isPeak ? '#4E7A57' : isLow ? '#A23A2A' : '#B8965A';
             const r = isPeak || isLow || isNow ? 4 : 2.5;
             return (
               <g key={i}>
@@ -3836,7 +3836,7 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
                   textAnchor="middle"
                   fontSize={isPeak || isLow || isNow ? 9 : 7.5}
                   fontWeight={isPeak || isLow || isNow ? 800 : 600}
-                  fill={isPeak ? '#4E7A57' : isLow ? '#c62828' : isNow ? '#B8965A' : '#7F6B4E'}
+                  fill={isPeak ? '#4E7A57' : isLow ? '#A23A2A' : isNow ? '#B8965A' : '#7F6B4E'}
                 >
                   {p.s}
                 </text>
@@ -3937,7 +3937,7 @@ function RelationCompassGrid({
 
   const cards = [
     { label: '힘이 되는 사람', glyph: `${boostGan[0]}, ${boostGan[1]}`, desc: boostDesc, color: '#4E7A57', bg: 'rgba(78,122,87,.06)' },
-    { label: '부딪히는 사람', glyph: `${clashGan[0]}, ${clashGan[1]}`, desc: clashDesc, color: '#c62828', bg: 'rgba(198,40,40,.06)' },
+    { label: '부딪히는 사람', glyph: `${clashGan[0]}, ${clashGan[1]}`, desc: clashDesc, color: '#A23A2A', bg: 'rgba(162,58,42,.06)' },
     { label: '마음이 놓이는 사람', glyph: `${calmGan[0]}, ${calmGan[1]}`, desc: calmDesc, color: '#7F6B4E', bg: 'rgba(127,107,78,.06)' },
   ];
 
@@ -4300,7 +4300,7 @@ function LifeKeywordHero({
   return (
     <div
       style={{
-        background: 'linear-gradient(135deg, #FFFEF8 0%, #FBF5E8 100%)',
+        background: '#FFFDF8',
         border: '1.5px solid rgba(184,150,90,0.40)',
         borderRadius: 16,
         padding: '20px 18px',
@@ -4527,7 +4527,7 @@ function StrengthsCautionsCards({
                 key={`s-${i}`}
                 style={{
                   // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 그린 톤 배경만 유지.
-                  background: 'linear-gradient(135deg, #FFFFFF 0%, #F0F8F2 100%)',
+                  background: '#FFFFFF',
                   border: '1px solid rgba(78,122,87,0.30)',
                   borderRadius: 10,
                   padding: '12px 14px',
@@ -4583,7 +4583,7 @@ function StrengthsCautionsCards({
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: 4,
-                background: 'rgba(198,40,40,0.10)',
+                background: 'rgba(162,58,42,0.10)',
                 color: '#8B1A1A',
                 letterSpacing: '0.06em',
               }}
@@ -4598,8 +4598,8 @@ function StrengthsCautionsCards({
                 key={`c-${i}`}
                 style={{
                   // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 레드 톤 배경만 유지.
-                  background: 'linear-gradient(135deg, #FFFFFF 0%, #FCF3F3 100%)',
-                  border: '1px solid rgba(198,40,40,0.25)',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(162,58,42,0.25)',
                   borderRadius: 10,
                   padding: '12px 14px',
                 }}
@@ -5298,12 +5298,12 @@ function PracticeChecklist({
           style={{
             // 첫 카드 + 마지막 카드 강조 (가장 핵심 액션 + 마무리 액션)
             ...(i === 0 ? {
-              background: 'linear-gradient(135deg, rgba(232,217,184,0.22) 0%, rgba(184,150,90,0.08) 100%)',
+              background: 'rgba(232,217,184,0.18)',
               borderColor: '#B8965A',
               boxShadow: '0 4px 14px rgba(184,150,90,0.12)',
             } : {}),
             ...(i === actions.length - 1 ? {
-              background: 'linear-gradient(135deg, rgba(78,122,87,0.06) 0%, rgba(78,122,87,0.03) 100%)',
+              background: 'rgba(78,122,87,0.05)',
               borderColor: 'rgba(78,122,87,0.3)',
             } : {}),
           }}
@@ -5312,7 +5312,7 @@ function PracticeChecklist({
             className="num"
             style={{
               ...(i === 0 ? {
-                background: 'linear-gradient(135deg, #1a1a1a, #B8965A)',
+                background: '#1E1A15',
                 color: '#E8D9B8',
                 width: 32,
                 height: 32,
@@ -5765,8 +5765,8 @@ function LifeEdgeList({
       },
     },
     화: {
-      glyph: '火', name: '불: 표현력, 드러나는 힘', color: '#c62828', cls: 'hwa',
-      bg: 'rgba(198,40,40,.05)', border: '#c62828',
+      glyph: '火', name: '불: 표현력, 드러나는 힘', color: '#B04A38', cls: 'hwa',
+      bg: 'rgba(176,74,56,.05)', border: '#B04A38',
       head: {
         strong: `${u} 님의 가장 큰 무기입니다. 말, 글, 영상, 강의, 드러내는 영역에서 같은 노력으로 남보다 2배의 효과가 납니다.`,
         mid: `${u} 님은 표현이 자연스럽게 풀리는 사람입니다. 본인의 생각을 말로 정리하면서 더 명확해지는 흐름.`,
@@ -5892,7 +5892,7 @@ function LifeEdgeList({
                 <span style={{ color: '#2a2520' }} dangerouslySetInnerHTML={{ __html: saveText }} />
               </div>
               <div>
-                <strong style={{ color: '#8b1a1a', display: 'inline-block', minWidth: 56, fontSize: 13, padding: '2px 6px', background: 'rgba(198,40,40,0.10)', borderRadius: 4, marginRight: 6 }}>조심할 것</strong>
+                <strong style={{ color: '#8b1a1a', display: 'inline-block', minWidth: 56, fontSize: 13, padding: '2px 6px', background: 'rgba(162,58,42,0.10)', borderRadius: 4, marginRight: 6 }}>조심할 것</strong>
                 <span style={{ color: '#2a2520' }} dangerouslySetInnerHTML={{ __html: avoidText }} />
               </div>
             </div>
@@ -5911,7 +5911,7 @@ function LifeEdgeList({
  * ═════════════════════════════════════════════════════════════════ */
 function SipDonut({ sipDist }: { sipDist: SipDist }) {
   const ORDER: Array<{ key: keyof SipDist; label: string; color: string }> = [
-    { key: '식상', label: '식상', color: '#c62828' },
+    { key: '식상', label: '식상', color: '#B04A38' },
     { key: '비겁', label: '비겁', color: '#4E7A57' },
     { key: '재성', label: '재성', color: '#7F6B4E' },
     { key: '관성', label: '관성', color: '#7D7870' },
@@ -6008,7 +6008,7 @@ function SipClusterHeader({ sipDist }: { sipDist: any }) {
             <div style={{ fontSize: 16, fontWeight: 800, color: cl.color, fontFeatureSettings: '"tnum"', marginTop: 4 }}>
               {v}
             </div>
-            <div style={{ fontSize: 12, color: C.mute, marginTop: 2 }}>{cl.meaning}</div>
+            <div style={{ fontSize: 13, color: C.mute, marginTop: 2 }}>{cl.meaning}</div>
           </div>
         );
       })}
@@ -6110,7 +6110,7 @@ function YongsinLifeTable({ primary, lifestyle }: { primary: OhengType; lifestyl
       <div
         style={{
           padding: '12px 14px',
-          background: `linear-gradient(135deg, ${accent}1A 0%, ${accent}08 100%)`,
+          background: `${accent}12`,
           borderBottom: `1px solid ${accent}22`,
           display: 'flex',
           alignItems: 'center',
@@ -6279,7 +6279,7 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
     <div
       style={{
         // 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). 골드 톤 배경만 유지.
-        background: 'linear-gradient(135deg, #fff 0%, rgba(212,175,55,.07) 100%)',
+        background: '#FFFDF8',
         border: '1px solid #E5DFD0',
         borderRadius: 10,
         padding: '14px 14px',
@@ -6375,7 +6375,7 @@ function LifeStageGrid({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng?: O
               <div className="ls-key">{s.sub}</div>
             </>
           ) : (
-            <div style={{ fontSize: 11, color: '#7F6B4E', fontStyle: 'normal', padding: '12px 0' }}>—</div>
+            <div style={{ fontSize: 13, color: '#6F6557', padding: '12px 0' }}>없음</div>
           )}
         </div>
       ))}
@@ -6748,7 +6748,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
   // 한자 → 오행 컬러 매핑
   const HAN_OHENG_COLOR: Record<string, string> = {
     甲: '#4E7A57', 乙: '#4E7A57', 寅: '#4E7A57', 卯: '#4E7A57',
-    丙: '#c62828', 丁: '#c62828', 巳: '#c62828', 午: '#c62828',
+    丙: '#A23A2A', 丁: '#A23A2A', 巳: '#A23A2A', 午: '#A23A2A',
     戊: '#B07F38', 己: '#B07F38', 辰: '#B07F38', 戌: '#B07F38', 丑: '#B07F38', 未: '#B07F38',
     庚: '#7D7870', 辛: '#7D7870', 申: '#7D7870', 酉: '#7D7870',
     壬: '#3E5F82', 癸: '#3E5F82', 亥: '#3E5F82', 子: '#3E5F82',
@@ -6867,14 +6867,14 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
               <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char1] || '#7F6B4E', lineHeight: 1 }}>
                 {r.char1}
               </span>
-              {kr1 && <span style={{ fontSize: 12, color: '#a08a5a', marginTop: 1 }}>{kr1}</span>}
+              {kr1 && <span style={{ fontSize: 13, color: '#6F6557', marginTop: 1 }}>{kr1}</span>}
             </span>
             <span className="gf-arrow">{r.arrow}</span>
             <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', minWidth: 22 }}>
               <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char2] || '#7F6B4E', lineHeight: 1 }}>
                 {r.char2}
               </span>
-              {kr2 && <span style={{ fontSize: 12, color: '#a08a5a', marginTop: 1 }}>{kr2}</span>}
+              {kr2 && <span style={{ fontSize: 13, color: '#6F6557', marginTop: 1 }}>{kr2}</span>}
             </span>
             <span style={{ color: '#5C4A2E', flex: 1 }}>{r.desc}</span>
             <span className={`gf-type ${r.type}`}>{tagLabel}</span>
@@ -7047,7 +7047,7 @@ function DaewoonLine60({ v4Daeun, sajuData: _sajuData }: { v4Daeun: V4Daeun[]; s
                 position: 'absolute',
                 left: `${leftPct}%`,
                 top: 44,
-                fontSize: 11,
+                fontSize: 13,
                 color: C.mute,
                 fontWeight: 600,
                 transform: 'translateX(-50%)',
@@ -7408,7 +7408,7 @@ function TopicMiniGrid({
         const cardStyle: React.CSSProperties = {
           cursor: 'pointer',
           ...(isPeak ? { border: '2px solid #4E7A57', boxShadow: '0 4px 14px rgba(78,122,87,0.14)' } : {}),
-          ...(isLow ? { border: '2px solid #c62828', boxShadow: '0 4px 14px rgba(198,40,40,0.14)' } : {}),
+          ...(isLow ? { border: '2px solid #A23A2A', boxShadow: '0 4px 14px rgba(162,58,42,0.14)' } : {}),
         };
         // 2026-09-17 — 판매 주제로 이어지는 영역만 클릭 (인간관계는 표시만)
         const isClickable = !!t.topicId;
@@ -7424,12 +7424,12 @@ function TopicMiniGrid({
             style={{ ...cardStyle, cursor: isClickable ? 'pointer' : 'default' }}
           >
             <div className="tm-head">
-              <span className="tm-ttl" style={isPeak ? { color: '#4E7A57' } : isLow ? { color: '#c62828' } : undefined}>
+              <span className="tm-ttl" style={isPeak ? { color: '#4E7A57' } : isLow ? { color: '#A23A2A' } : undefined}>
                 {t.label}
                 {isPeak && <span style={{ marginLeft: 5, fontSize: 13, fontWeight: 800, color: '#4E7A57', background: 'rgba(78,122,87,0.12)', padding: '1px 5px', borderRadius: 4, verticalAlign: 'middle' }}>최강</span>}
-                {isLow && <span style={{ marginLeft: 5, fontSize: 13, fontWeight: 800, color: '#c62828', background: 'rgba(198,40,40,0.10)', padding: '1px 5px', borderRadius: 4, verticalAlign: 'middle' }}>주의</span>}
+                {isLow && <span style={{ marginLeft: 5, fontSize: 13, fontWeight: 800, color: '#A23A2A', background: 'rgba(162,58,42,0.10)', padding: '1px 5px', borderRadius: 4, verticalAlign: 'middle' }}>주의</span>}
               </span>
-              <span className="tm-score" style={isPeak ? { color: '#4E7A57' } : isLow ? { color: '#c62828' } : undefined}>
+              <span className="tm-score" style={isPeak ? { color: '#4E7A57' } : isLow ? { color: '#A23A2A' } : undefined}>
                 {t.score}
               </span>
             </div>
@@ -7438,8 +7438,8 @@ function TopicMiniGrid({
                 className="tm-fill"
                 style={{
                   width: `${t.score}%`,
-                  ...(isPeak ? { background: 'linear-gradient(90deg, #6E9776, #4E7A57)' } : {}),
-                  ...(isLow ? { background: 'linear-gradient(90deg, #ef5350, #c62828)' } : {}),
+                  ...(isPeak ? { background: '#4E7A57' } : {}),
+                  ...(isLow ? { background: '#A23A2A' } : {}),
                 }}
               />
             </div>
@@ -7455,7 +7455,7 @@ function TopicMiniGrid({
             {isClickable && (
               <div
                 className="tm-link"
-                style={isPeak ? { color: '#4E7A57', fontWeight: 700 } : isLow ? { color: '#c62828', fontWeight: 700 } : undefined}
+                style={isPeak ? { color: '#4E7A57', fontWeight: 700 } : isLow ? { color: '#A23A2A', fontWeight: 700 } : undefined}
               >
                 {getCtaLine(t.topicLabel, t.score, t.price)}
               </div>

@@ -897,7 +897,7 @@ export function ResultPage(props: ResultPageProps = {}) {
                       </div>
                       <span
                         className="text-right"
-                        style={{ width: 32, fontSize: 13, fontWeight: 800, color: val === 0 ? '#c62828' : ecB.dark }}
+                        style={{ width: 32, fontSize: 13, fontWeight: 800, color: val === 0 ? '#A23A2A' : ecB.dark }}
                       >
                         {val === 0 ? '없음' : val}
                       </span>
@@ -1194,14 +1194,14 @@ export function ResultPage(props: ResultPageProps = {}) {
                     {analysisBase.기신 && (
                       <div className="flex-1 rounded-xl overflow-hidden" style={{ border: '1px solid #ffcdd2' }}>
                         <div className="px-3 py-2" style={{ background: '#F6E5E0' }}>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: '#c62828' }}>기신: 균형을 깨는 오행</p>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: '#A23A2A' }}>기신: 균형을 깨는 오행</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span style={{ fontSize: 18, fontWeight: 900, color: giOheng?.color || '#B04A38' }}>{analysisBase.기신}</span>
-                            {giOheng && <span style={{ fontSize: 12, color: '#ef5350' }}>{(giOheng as any).nature}</span>}
+                            {giOheng && <span style={{ fontSize: 12, color: '#B04A38' }}>{(giOheng as any).nature}</span>}
                           </div>
                         </div>
                         <div className="px-3 py-2" style={{ background: '#fff' }}>
-                          <p style={{ fontSize: 12, color: '#c62828', lineHeight: 1.6 }}>
+                          <p style={{ fontSize: 12, color: '#A23A2A', lineHeight: 1.6 }}>
                             사주 균형을 무너뜨리는 오행이에요. {analysisBase.기신} 기운이 과하면 건강, 재물, 관계에 부정적 영향이 생길 수 있어요.
                           </p>
                         </div>

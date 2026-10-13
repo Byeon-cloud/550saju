@@ -95,7 +95,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
                   padding: 12,
                   background: 'var(--bg-card)',
                   borderRadius: 12,
-                  border: `0.5px solid ${correct ? '#2D8A4E33' : '#D32F2F33'}`,
+                  border: `0.5px solid ${correct ? '#4E7A5733' : '#A23A2A33'}`,
                 }}
               >
                 <div

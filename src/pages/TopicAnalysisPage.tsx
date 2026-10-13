@@ -203,7 +203,7 @@ const OHENG_COLORS: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', �
  *  AI 가 실제 heading 을 보내면 그걸 우선 사용, 없으면 이 제목으로 fallback. */
 const TOPIC_SECTION_TITLES: Record<string, string[]> = {
   love: ['나의 연애 스타일', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 경향', '올해 연애 흐름과 전략'],
-  wealth: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '새는 돈 경향', '올해 재물 전략'],
+  wealth: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '돈이 새는 길목', '올해 재물 전략'],
   career: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '일터에서 반복되는 관계 경향'],
   marriage: ['결혼 적기 분석', '미래 배우자의 성향', '결혼 후 생활 습관', '배우자 가족 관계', '결혼 준비 조언'],
   business: ['사업가 기질 분석', '맞는 업종', '창업과 확장 타이밍', '동업 궁합', '사업 리스크 관리'],
@@ -298,7 +298,7 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   진보라: '#4A148C', 자주: '#AD1457', 자주색: '#AD1457',
   // 분홍 계열
   분홍: '#8C6D3D', 분홍색: '#8C6D3D', 핑크: '#8C6D3D',
-  연분홍: '#F48FB1', 로즈: '#C62828', 장미: '#C62828',
+  연분홍: '#F48FB1', 로즈: '#A23A2A', 장미: '#A23A2A',
   // 주황 계열
   주황: '#8A6226', 주황색: '#8A6226', 오렌지: '#8A6226',
   살구: '#FF8A65', 살구색: '#FF8A65', 코랄: '#FF7043',
@@ -1237,7 +1237,7 @@ function DaewoonWealthRail({
           c.intensity >= 70 ? accentColor
           : c.intensity >= 50 ? '#E8D9B8'
           : c.intensity >= 35 ? '#E5DFD0'
-          : 'rgba(198,40,40,0.18)';
+          : 'rgba(162,58,42,0.18)';
         const fg = c.intensity >= 70 || c.intensity < 35 ? '#FFFFFF' : '#1A1A1A';
         return (
           <div
@@ -1293,7 +1293,7 @@ function DaewoonWealthRail({
             )}
             {/* 재물 강도 mini bar — 두께 늘려서 가독 */}
             <div style={{ height: 5, marginTop: 7, background: '#F0ECE1', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${c.intensity}%`, background: tone === 'rgba(198,40,40,0.18)' ? '#B04A38' : (c.intensity >= 70 ? accentColor : '#8C6D3D') }} />
+              <div style={{ height: '100%', width: `${c.intensity}%`, background: tone === 'rgba(162,58,42,0.18)' ? '#B04A38' : (c.intensity >= 70 ? accentColor : '#8C6D3D') }} />
             </div>
             {c.isCurrent && (
               <div style={{ fontSize: 13, fontWeight: 800, color: '#8C6D3D', marginTop: 4, letterSpacing: '0.05em' }}>
@@ -2101,17 +2101,17 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
 
             {/* 2026-05-28 — 나 vs 상대 2-카드 제거 (위 3-카드 스토리텔링에 통합됨) */}
 
-            {/* 상대 현재 감정 + 재회 욕구 */}
+            {/* 상대 쪽 흐름 + 다시 다가올 여지 (2026-10-13 상대 마음 단정 표현 제거, 재회운 프롬프트와 통일) */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               {pp.currentEmotion && (
                 <div className="hj-entry">
-                  <p className="text-[13px] text-text-hint mb-0.5">상대 현재 감정</p>
+                  <p className="text-[13px] text-text-hint mb-0.5">상대 쪽 지금 흐름</p>
                   <p className="text-[13px] font-semibold text-[#8A6226]">{pp.currentEmotion}</p>
                 </div>
               )}
               {pp.reunionDesire != null && (
                 <div className="hj-entry">
-                  <p className="text-[13px] text-text-hint mb-1">상대 재회 욕구</p>
+                  <p className="text-[13px] text-text-hint mb-1">다시 다가올 여지</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-[8px] overflow-hidden" style={{ background: `${color}12` }}>
                       <motion.div className="h-full" style={{ background: color }}
@@ -3897,7 +3897,7 @@ export function TopicAnalysisPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                               <span style={{ fontSize: 17, fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.01em' }}>{r.name}</span>
                               {isMe ? (
-                                <span style={{ padding: '2px 7px', borderRadius: 2, fontSize: 13, fontWeight: 800, background: '#8C6D3D', color: '#F8F5EE', letterSpacing: '0.04em' }}>본인</span>
+                                <span style={{ padding: '1px 6px', borderRadius: 2, fontSize: 13, fontWeight: 700, background: '#1A1612', color: '#F4EFE4', letterSpacing: '0.02em' }}>본인</span>
                               ) : (
                                 <span style={{ fontSize: 13, color: '#8C6D3D', fontWeight: 700, padding: '1px 7px', background: 'rgba(184,150,90,0.14)', borderRadius: 2 }}>{relation}</span>
                               )}
@@ -4665,7 +4665,7 @@ export function TopicAnalysisPage() {
           {phase === 'loading' && (() => {
             const TOPIC_NOTES: Record<string, string> = {
               love: '인연을 끌어당기는 글자와 결혼 자리를 확인하고 있어요.|내 연애 습관을 사주에서 읽고 있어요.|인연의 시기를 월 단위로 계산하고 있어요.|사주적으로 궁합이 맞는 이성을 찾고 있어요.',
-              wealth: '재성 구조로 돈 버는 스타일을 분석하고 있어요.|투자 적기를 대운 흐름으로 계산하고 있어요.|새는 돈 경향을 사주에서 찾고 있어요.|돈을 만드는 사주 구조를 확인하고 있어요.',
+              wealth: '재성 구조로 돈 버는 스타일을 분석하고 있어요.|투자 적기를 대운 흐름으로 계산하고 있어요.|돈이 새는 길목을 사주에서 찾고 있어요.|돈을 만드는 사주 구조를 확인하고 있어요.',
               career: '책임감과 표현력의 균형을 보고 있어요.|이직 최적 타이밍을 계산하고 있어요.|면접 유리 요일과 시간대를 확인하고 있어요.|딱 맞는 직종 TOP 5를 선정하고 있어요.',
               marriage: '배우자궁의 구조를 깊이 분석하고 있어요.|결혼 적기를 대운 흐름으로 계산하고 있어요.|만세력으로 배우자 성향을 읽고 있어요.|결혼 후 생활 습관까지 예측하고 있어요.',
               business: '사업 적성과 맞는 업종을 분석하고 있어요.|창업 최적 타이밍을 계산하고 있어요.|동업 궁합 구조를 확인하고 있어요.|사업가 기질의 사주 구조를 읽고 있어요.',

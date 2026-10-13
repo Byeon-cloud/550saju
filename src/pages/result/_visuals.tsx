@@ -26,7 +26,7 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
         ▎오행 상생상극: 이 사주의 핵심 구조
       </div>
       <div style={{ fontSize: 12, color: '#a0937f', marginBottom: 10, lineHeight: 1.5 }}>
-        <span style={{ color: '#4E7A57', fontWeight: 700 }}>상생(→생→)</span>은 기운을 키워주고, <span style={{ color: '#c62828', fontWeight: 700 }}>상극(→극→)</span>은 기운을 억제해요
+        <span style={{ color: '#4E7A57', fontWeight: 700 }}>상생(→생→)</span>은 기운을 키워주고, <span style={{ color: '#A23A2A', fontWeight: 700 }}>상극(→극→)</span>은 기운을 억제해요
       </div>
       <div
         className="flex items-center justify-center gap-1 flex-wrap"
@@ -35,7 +35,7 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
         <span className="px-2 py-1 rounded-lg font-bold" style={{ background: EC.wood.light, color: EC.wood.dark }}>
           木 목 {elements.wood}
         </span>
-        <span className="font-bold" style={{ color: '#c62828' }}>→극→</span>
+        <span className="font-bold" style={{ color: '#A23A2A' }}>→극→</span>
         <span className="px-2 py-1 rounded-lg font-bold" style={{ background: EC.earth.light, color: EC.earth.dark }}>
           土 토(나) {elements.earth}
         </span>
@@ -51,7 +51,7 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
         className="p-3 rounded-xl text-center"
         style={{ background: '#F6E5E0', border: '1px dashed #ef9a9a', fontSize: 13 }}
       >
-        <div className="font-bold" style={{ color: '#c62828', marginBottom: 4 }}>
+        <div className="font-bold" style={{ color: '#A23A2A', marginBottom: 4 }}>
           火 2026년 해결책: 화(火) 기운 유입!
         </div>
         <div
@@ -779,7 +779,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
     const ganPrefix = dayGan ? `${ganRef}이 ${ohengKr} ${val}자, ` : '';
 
     if (val === 0) {
-      status = '없음'; statusColor = '#c62828';
+      status = '없음'; statusColor = '#A23A2A';
       advice = aiDetail || `${ganPrefix}${info.weak}`;
       level = 0;
     } else if (val <= 10) {
@@ -795,7 +795,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
       advice = aiDetail || `${ganPrefix}기운이 충분해요. 다만 과하면 ${info.organ.split(', ')[0]}에 부담이 갈 수 있으니 적당히 조절하세요`;
       level = 4;
     } else {
-      status = '과다'; statusColor = '#c62828';
+      status = '과다'; statusColor = '#A23A2A';
       advice = aiDetail || `${ganPrefix}${info.strong}`;
       level = 4;
     }
@@ -829,7 +829,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
       <div className="p-3 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #F5F0E8, #EDE5D5)', border: '1px solid rgba(184,150,90,0.25)' }}>
         <p style={{ fontSize: 13, fontWeight: 800, color: '#B8965A', marginBottom: 4 }}>종합 건강 진단</p>
         <p style={{ fontSize: 13.5, color: '#6b5b47', lineHeight: 1.7 }}>
-          가장 주의할 장기는 <b style={{ color: '#c62828' }}>{weakest.organ}</b>({EHAN[weakest.elem]}, {weakest.status})이에요.
+          가장 주의할 장기는 <b style={{ color: '#A23A2A' }}>{weakest.organ}</b>({EHAN[weakest.elem]}, {weakest.status})이에요.
           {strongest.val > 35 && <> 반면 <b style={{ color: '#3E5F82' }}>{strongest.organ}</b>({EHAN[strongest.elem]})은 기운이 과해 부담이 갈 수 있어요.</>}
         </p>
         <p style={{ fontSize: 13, color: '#8b7e6f', marginTop: 6, lineHeight: 1.6 }}>

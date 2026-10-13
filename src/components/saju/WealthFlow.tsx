@@ -548,7 +548,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
         }}>
           <div style={{
             width: 2, height: 16, borderRadius: 1,
-            background: 'linear-gradient(180deg, #7A8BA040, #2D8A4E40)',
+            background: '#4E7A5726',
           }} />
         </div>
 

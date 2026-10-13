@@ -728,10 +728,10 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .yy-bar {
     display: flex; height: 24px; border-radius: 6px; overflow: hidden;
-    border: 1px solid #E5DFD0; font-size: 11px; font-weight: 600;
+    border: 1px solid #E5DFD0; font-size: 13px; font-weight: 600;
   }
   .premium-mockup .yy-bar .yang {
-    background: linear-gradient(90deg, #c62828, #e57373);
+    background: #B04A38;
     color: #fff; display: flex; align-items: center; justify-content: center;
   }
   .premium-mockup .yy-bar .yin {
@@ -753,7 +753,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     position: relative;
   }
   .premium-mockup .ohaeng-diag .od-cell.strong { border-color: #4E7A57; background: rgba(78,122,87,.05); }
-  .premium-mockup .ohaeng-diag .od-cell.weak   { border-color: #c62828; background: rgba(198,40,40,.04); }
+  .premium-mockup .ohaeng-diag .od-cell.weak   { border-color: #A23A2A; background: rgba(162,58,42,.04); }
   .premium-mockup .ohaeng-diag .od-han {
     font-family: 'Noto Serif KR', serif;
     font-size: 20px; font-weight: 700;
@@ -777,7 +777,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-weight: 600; letter-spacing: 0.05em;
   }
   .premium-mockup .ohaeng-diag .od-label.s { color: #4E7A57; }
-  .premium-mockup .ohaeng-diag .od-label.w { color: #c62828; }/* 천간-지지 합과 충 도식 */
+  .premium-mockup .ohaeng-diag .od-label.w { color: #A23A2A; }/* 천간-지지 합과 충 도식 */
 
   
   .premium-mockup .ganji-flow {
@@ -807,7 +807,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
   }
   .premium-mockup .ganji-flow .gf-type.hap   { background: rgba(78,122,87,.1);  color: #4E7A57; }
-  .premium-mockup .ganji-flow .gf-type.chung { background: rgba(198,40,40,.1);  color: #c62828; }
+  .premium-mockup .ganji-flow .gf-type.chung { background: rgba(162,58,42,.1);  color: #A23A2A; }
   .premium-mockup .ganji-flow .gf-type.hyeong{ background: rgba(184,150,90,.12); color: #B8965A; }/* 십성 카드 강도 막대 */
 
   
@@ -871,7 +871,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(135deg, #E8D9B8, #B8965A);
     color: #1a1a1a;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700;
+    font-size: 13px; font-weight: 700;
   }
   .premium-mockup .shinsal-card .adv .adv-text {
     font-size: 13px; color: #2a2520; line-height: 1.55;
@@ -975,15 +975,15 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   /* low 카드는 레드 톤 hook */
   .premium-mockup .topic-mini[style*="rgb(198, 40, 40)"] .tm-hook,
-  .premium-mockup .topic-mini[style*="#c62828"] .tm-hook {
-    background: rgba(198,40,40,0.05);
-    border-left-color: rgba(198,40,40,0.42);
+  .premium-mockup .topic-mini[style*="#A23A2A"] .tm-hook {
+    background: rgba(162,58,42,0.05);
+    border-left-color: rgba(162,58,42,0.42);
     color: #8b1a1a;
   }
   .premium-mockup .topic-mini[style*="rgb(198, 40, 40)"] .tm-hook .tm-hook-label,
-  .premium-mockup .topic-mini[style*="#c62828"] .tm-hook .tm-hook-label {
-    color: #c62828;
-    border-color: rgba(198,40,40,0.32);
+  .premium-mockup .topic-mini[style*="#A23A2A"] .tm-hook .tm-hook-label {
+    color: #A23A2A;
+    border-color: rgba(162,58,42,0.32);
   }
   .premium-mockup .topic-mini .tm-link {
     margin-top: auto;
@@ -1072,7 +1072,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel-card .rc-desc { font-size: 13px; color: #2a2520; line-height: 1.5; }
   .premium-mockup .rel-card.boost .rc-glyph { color: #4E7A57; }
-  .premium-mockup .rel-card.clash .rc-glyph { color: #c62828; }
+  .premium-mockup .rel-card.clash .rc-glyph { color: #A23A2A; }
   .premium-mockup .rel-card.calm  .rc-glyph { color: #3E5F82; }/* 관계의 결 (六親) — 6카드 상세 */
 
   
@@ -1090,7 +1090,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel6-card.c-parent  { --rel6-dot: #3E5F82; }
   .premium-mockup .rel6-card.c-sibling { --rel6-dot: #4E7A57; }
-  .premium-mockup .rel6-card.c-spouse  { --rel6-dot: #c62828; }
+  .premium-mockup .rel6-card.c-spouse  { --rel6-dot: #A23A2A; }
   .premium-mockup .rel6-card.c-child   { --rel6-dot: #7F6B4E; }
   .premium-mockup .rel6-card.c-friend  { --rel6-dot: #7D7870; }
   .premium-mockup .rel6-card.c-boss    { --rel6-dot: #5C4A2E; }
@@ -1104,7 +1104,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel6-card.c-parent  .rel6-name { color: #3E5F82; }
   .premium-mockup .rel6-card.c-sibling .rel6-name { color: #4E7A57; }
-  .premium-mockup .rel6-card.c-spouse  .rel6-name { color: #c62828; }
+  .premium-mockup .rel6-card.c-spouse  .rel6-name { color: #A23A2A; }
   .premium-mockup .rel6-card.c-child   .rel6-name { color: #7F6B4E; }
   .premium-mockup .rel6-card.c-friend  .rel6-name { color: #7D7870; }
   .premium-mockup .rel6-card.c-boss    .rel6-name { color: #5C4A2E; }
@@ -1117,7 +1117,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     border-radius: 2px; font-weight: 600;
     letter-spacing: 0.02em;
   }
-  .premium-mockup .rel6-tag.t-warn  { background: rgba(198,40,40,.10); color: #c62828; }
+  .premium-mockup .rel6-tag.t-warn  { background: rgba(162,58,42,.10); color: #A23A2A; }
   .premium-mockup .rel6-tag.t-neut  { background: rgba(212,175,55,.16); color: #B8965A; }
   .premium-mockup .rel6-tag.t-good  { background: rgba(78,122,87,.12); color: #4E7A57; }
 
@@ -1177,7 +1177,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(135deg, rgba(78,122,87,.10) 0%, rgba(78,122,87,.02) 100%);
   }
   .premium-mockup .rel6-dont{
-    background: linear-gradient(135deg, rgba(198,40,40,.09) 0%, rgba(198,40,40,.02) 100%);
+    background: linear-gradient(135deg, rgba(162,58,42,.09) 0%, rgba(162,58,42,.02) 100%);
   }
   .premium-mockup .rel6-do .ic,
   .premium-mockup .rel6-dont .ic {
@@ -1195,7 +1195,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   }
   .premium-mockup .rel6-dont .ic {
     color: #fff;
-    background: linear-gradient(135deg, #ef5350, #c62828);
+    background: #A23A2A;
   }
   .premium-mockup .rel6-do   .txt,
   .premium-mockup .rel6-dont .txt {
@@ -1271,7 +1271,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: linear-gradient(135deg, #fff 0%, #F4EFE4 100%);
   }
   .premium-mockup .life-edge-card.mok  { background: linear-gradient(135deg, #fff, rgba(78,122,87,.06)); }
-  .premium-mockup .life-edge-card.hwa  { background: linear-gradient(135deg, #fff, rgba(198,40,40,.06)); }
+  .premium-mockup .life-edge-card.hwa  { background: linear-gradient(135deg, #fff, rgba(162,58,42,.06)); }
   .premium-mockup .life-edge-card.to   { background: linear-gradient(135deg, #fff, rgba(176,127,56,.08)); }
   .premium-mockup .life-edge-card.geum { background: linear-gradient(135deg, #fff, rgba(74,74,74,.06)); }
   .premium-mockup .life-edge-card.su   { background: linear-gradient(135deg, #fff, rgba(62,95,130,.07)); }
@@ -1298,7 +1298,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     background: #E5DFD0; color: #5C4A2E; font-weight: 600;
   }
   .premium-mockup .life-edge-card .le-tag.s { background: rgba(78,122,87,.12); color: #4E7A57; }
-  .premium-mockup .life-edge-card .le-tag.w { background: rgba(198,40,40,.10); color: #c62828; }
+  .premium-mockup .life-edge-card .le-tag.w { background: rgba(162,58,42,.10); color: #A23A2A; }
   .premium-mockup .life-edge-card .le-desc {
     font-size: 13.5px; color: #2a2520; line-height: 1.65;
   }/* 십성 분류 헤더 */
@@ -1511,12 +1511,12 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .month-insight-grid .mi.peak .mi-text strong { color: #355A3E; }
   /* warn — 주의 (레드) */
   .premium-mockup .month-insight-grid .mi.warn {
-    background: linear-gradient(135deg, #fff 0%, rgba(198,40,40,0.04) 100%);
-    border-color: rgba(198,40,40,0.32);
+    background: linear-gradient(135deg, #fff 0%, rgba(162,58,42,0.04) 100%);
+    border-color: rgba(162,58,42,0.32);
   }
-  .premium-mockup .month-insight-grid .mi.warn .mi-month  { color: #c62828; }
-  .premium-mockup .month-insight-grid .mi.warn .mi-badge  { background: rgba(198,40,40,0.10); color: #c62828; border-color: rgba(198,40,40,0.32); }
-  .premium-mockup .month-insight-grid .mi.warn .mi-text strong { color: #c62828; }
+  .premium-mockup .month-insight-grid .mi.warn .mi-month  { color: #A23A2A; }
+  .premium-mockup .month-insight-grid .mi.warn .mi-badge  { background: rgba(162,58,42,0.10); color: #A23A2A; border-color: rgba(162,58,42,0.32); }
+  .premium-mockup .month-insight-grid .mi.warn .mi-text strong { color: #A23A2A; }
   /* now — 지금 (골드) */
   .premium-mockup .month-insight-grid .mi.now {
     background: linear-gradient(135deg, #fff 0%, rgba(184,150,90,0.10) 100%);
@@ -1670,4 +1670,41 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .topic-mini .tm-hook { background: transparent !important; border-radius: 0; border-top: 1px dashed rgba(140,109,61,.3); padding: 8px 0 0; }
   .premium-mockup .topic-mini .tm-hook .tm-hook-label { border: 1px solid rgba(140,109,61,.6); border-radius: 2px; background: transparent !important; color: #7A5C2E !important; }
   .premium-mockup .month-insight-grid .mi { border-radius: 2px; }
+
+  /* ═══ 2026-10-13 남은 그라데이션 정리 — v9: 그라데이션과 구 원색(#EF5350, #F9C849, #4FAE6D, #A23A2A 등) 금지 → 단색.
+   *   본문 형광펜(strong)과 밑줄(em)은 승인된 강조 양식이라 유지. 오행 막대는 새 오행색(송록, 석간주, 황토, 은회, 쪽빛) 단색. */
+  .premium-mockup .wongug { background: #FFFDF8; }
+  .premium-mockup .wongug-cell.ilju { background: rgba(184,150,90,.12); }
+  .premium-mockup .wongug-cell.ilju .sip-tag { background: transparent; border: 1px solid rgba(140,109,61,.7); color: #7A5C2E; }
+  .premium-mockup .o-mok  .o-fill { background: #4E7A57; }
+  .premium-mockup .o-hwa  .o-fill { background: #B04A38; }
+  .premium-mockup .o-to   .o-fill { background: #B07F38; }
+  .premium-mockup .o-geum .o-fill { background: #7D7870; }
+  .premium-mockup .o-su   .o-fill { background: #3E5F82; }
+  .premium-mockup .yy-bar { border-radius: 0; }
+  .premium-mockup .yy-bar .yang { background: #B04A38; }
+  .premium-mockup .yy-bar .yin { background: #3E5F82; }
+  .premium-mockup .daewoon-timeline { background: #FFFDF8; }
+  .premium-mockup .dw-cell.now { background: rgba(184,150,90,.14); }
+  .premium-mockup .pullquote { background: #FFFDF8; }
+  .premium-mockup .divider::after { background: rgba(140,109,61,.35); }
+  .premium-mockup .upsell-card { background: #1E1A15; }
+  .premium-mockup .upsell-card .cta { background: #D6B87A; border-radius: 2px; }
+  .premium-mockup .daewoon-scores .ds-fill { background: #B8965A; }
+  .premium-mockup .daewoon-scores .ds-fill.peak { background: #4E7A57; }
+  .premium-mockup .daewoon-scores .ds-fill.now { background: #8C6D3D; }
+  .premium-mockup .topic-mini .tm-fill { background: #B8965A; }
+  .premium-mockup .topic-mini.full { background: #FFFDF8; }
+  .premium-mockup .now-daewoon { background: rgba(184,150,90,.10); }
+  .premium-mockup .life-edge-card, .premium-mockup .life-edge-card.mok, .premium-mockup .life-edge-card.hwa,
+  .premium-mockup .life-edge-card.to, .premium-mockup .life-edge-card.geum, .premium-mockup .life-edge-card.su { background: #FFFDF8; }
+  .premium-mockup .daewoon-line .dl-bar {
+    background: linear-gradient(90deg, #E5DFD0 0 12%, #E8D9B8 12% 37%, #4E7A57 37% 62%, #E8D9B8 62% 87%, #E5DFD0 87% 100%);
+  }
+  .premium-mockup .life-stage-card.now { background: rgba(184,150,90,.12); }
+  .premium-mockup .month-insight-grid { background: #FFFDF8; }
+  .premium-mockup .month-insight-grid .mi.peak, .premium-mockup .month-insight-grid .mi.warn,
+  .premium-mockup .month-insight-grid .mi.now { background: #fff; }
+  .premium-mockup .month-insight-grid .mi.peak .mi-badge { background: #4E7A57; border-radius: 2px; }
+  .premium-mockup .month-insight-grid .mi.now .mi-badge { background: #8C6D3D; border-radius: 2px; }
 `;

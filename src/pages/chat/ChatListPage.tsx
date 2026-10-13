@@ -370,9 +370,10 @@ function TicketBalanceBanner({
               {tickets.free > 0 && (
                 <span
                   style={{
-                    fontSize: 12,
+                    // v9: 보조 글자 13px 이상, 상태 표시는 먹색(금색은 누르는 버튼에만)
+                    fontSize: 13,
                     fontWeight: 600,
-                    color: C.goldDeep,
+                    color: '#6F6557',
                     marginLeft: 6,
                   }}
                 >

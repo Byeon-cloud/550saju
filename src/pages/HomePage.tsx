@@ -353,11 +353,10 @@ export function HomePage() {
           <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게, 할 일로 정리해 드려요" />
           <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>+ 원국, 십성, 대운, 신살, 올해 흐름 등 여섯 장 더</p>
         </Gwang>
-        <div className="flex flex-wrap gap-1.5" style={{ marginTop: 14 }}>
-          {['한 번 사면 평생 보관', 'PDF로 저장', '다 읽고 궁금한 건 바로 질문'].map((t) => (
-            <span key={t} style={{ fontSize: 13, color: HJ.ink2, background: HJ.paper, borderRadius: 999, padding: '6px 11px', fontWeight: 600 }}>{t}</span>
-          ))}
-        </div>
+        {/* v9: 알약 칩 대신 고서 본문 한 줄 (2026-10-13) */}
+        <p style={{ marginTop: 14, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, textAlign: 'center', wordBreak: 'keep-all' }}>
+          한 번 사면 평생 보관하고 PDF로 저장할 수 있어요. 다 읽고 궁금한 건 바로 물어보세요.
+        </p>
         <GoldCta style={{ marginTop: 14 }} onClick={() => navigate('/premium')} sub={`${premium}운`}>
           {hasSaju ? '내 사주책 펼치기' : '내 사주책 만들기'}
         </GoldCta>

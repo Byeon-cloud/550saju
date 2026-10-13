@@ -217,13 +217,14 @@ function ProfileCardCompact({
           {isMe ? (
             <span
               style={{
-                padding: '2px 7px',
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 800,
-                background: '#8C6D3D',
-                color: '#F8F5EE',
-                letterSpacing: '0.04em',
+                // v9: 알약 배지와 금 배경 금지(금색은 누르는 버튼에만) → 먹 바탕 사각 표기, 보조 13px
+                padding: '1px 6px',
+                borderRadius: 2,
+                fontSize: 13,
+                fontWeight: 700,
+                background: '#1A1612',
+                color: '#F4EFE4',
+                letterSpacing: '0.02em',
               }}
             >
               본인
@@ -232,11 +233,11 @@ function ProfileCardCompact({
             <span
               style={{
                 fontSize: 13,
-                color: '#8C6D3D',
+                color: '#6F6557',
                 fontWeight: 700,
-                padding: '1px 7px',
-                background: 'rgba(184,150,90,0.14)',
-                borderRadius: 999,
+                padding: '0 6px',
+                border: '1px solid rgba(26,22,18,0.22)',
+                borderRadius: 2,
                 letterSpacing: '0.02em',
               }}
             >

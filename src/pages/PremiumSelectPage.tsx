@@ -169,7 +169,7 @@ export function PremiumSelectPage() {
               style={{
                 background: 'rgba(255,255,255,0.22)',
                 padding: '3px 10px',
-                borderRadius: 100,
+                borderRadius: 2,
                 fontSize: 13,
                 fontWeight: 600,
               }}
@@ -182,17 +182,17 @@ export function PremiumSelectPage() {
               if (p.isOnSale && p.salePrice != null) {
                 return (
                   <>
-                    <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: 100, fontSize: 12, textDecoration: 'line-through', opacity: 0.7 }}>
+                    <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: 2, fontSize: 13, textDecoration: 'line-through', opacity: 0.7 }}>
                       {p.regularPrice}운
                     </span>
-                    <span style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', padding: '3px 10px', borderRadius: 100, fontSize: 13, fontWeight: 800 }}>
+                    <span style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', padding: '3px 10px', borderRadius: 2, fontSize: 13, fontWeight: 800 }}>
                       {p.salePrice}운, {p.saleBadge}
                     </span>
                   </>
                 );
               }
               return (
-                <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 100, fontSize: 12 }}>
+                <span style={{ background: 'rgba(255,255,255,0.14)', padding: '3px 10px', borderRadius: 2, fontSize: 13 }}>
                   {p.regularPrice}운
                 </span>
               );
@@ -201,8 +201,8 @@ export function PremiumSelectPage() {
               style={{
                 background: 'rgba(255,255,255,0.14)',
                 padding: '3px 10px',
-                borderRadius: 100,
-                fontSize: 12,
+                borderRadius: 2,
+                fontSize: 13,
               }}
             >
               한국 명리학 6대 원전 기반

@@ -51,7 +51,7 @@ const C = {
 // 5오행 색 (SSOT D1 fix 정렬)
 export const OHENG_COLOR_FREE: Record<string, string> = {
   목: '#4E7A57',
-  화: '#C62828',
+  화: '#B04A38',
   토: '#B07F38',
   금: '#7D7870',
   수: '#3E5F82',
@@ -449,7 +449,7 @@ export function TodayRelationCard({
   relationLabel,
   explain,
   myColor = C.goldDeep,
-  todayColor = '#C62828',
+  todayColor = '#A23A2A',
 }: TodayRelationCardProps) {
   return (
     <div
@@ -656,14 +656,14 @@ export function TodayOhengRow({ items }: { items: OhengItem[] }) {
                   height: 4,
                   margin: '6px auto 4px',
                   borderRadius: '50%',
-                  background: it.lack ? '#C62828' : color,
+                  background: it.lack ? '#A23A2A' : color,
                 }}
               />
               <div
                 style={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: it.lack ? '#C62828' : color,
+                  color: it.lack ? '#A23A2A' : color,
                 }}
               >
                 {it.qty}

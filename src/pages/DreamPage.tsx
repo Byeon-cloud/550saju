@@ -1380,7 +1380,8 @@ function _FreeResultView_legacy({
   onReset: () => void;
 }) {
   const score: number = Math.max(0, Math.min(100, Number(result?.score ?? 0)));
-  const grade: string = String(result?.grade ?? 'B').toUpperCase();
+  // 2026-10-13 등급은 점수에서 결정 (AI 가 같은 88점에 A, S 를 섞어 주던 문제). 점수 없을 때만 AI 값
+  const grade: string = score > 0 ? gradeFromScore(score) : String(result?.grade ?? 'B').toUpperCase();
   const gradeColor = GRADE_V4[grade] ?? '#8C6D3D';
   const title: string = stripMd(String(result?.title ?? '꿈 해석'));
   const verdict: string = stripMd(String(result?.verdict ?? ''));
@@ -1822,9 +1823,9 @@ function DeepResultView({
 }) {
   const title = stripMd(String(result?.title ?? '심층 해석'));
   const verdict = stripMd(String(result?.verdict ?? ''));
-  const grade = String(result?.grade ?? 'A').toUpperCase();
-  const gradeColor = GRADE_V4[grade] ?? '#8C6D3D';
   const score = Math.max(0, Math.min(100, Number(result?.overallScore ?? 0)));
+  const grade = score > 0 ? gradeFromScore(score) : String(result?.grade ?? 'A').toUpperCase();
+  const gradeColor = GRADE_V4[grade] ?? '#8C6D3D';
   const sajuConnection = stripMd(String(result?.sajuConnection ?? ''));
   const interpretation = stripMd(String(result?.interpretation ?? ''));
   const timeline = stripMd(String(result?.timeline ?? ''));
@@ -2214,6 +2215,15 @@ function ohengHanja(oheng: OhengType): string {
 }
 
 /** DreamSajuContext 빌더 — 무료/심층 양쪽에서 사용 */
+/** 꿈 등급 = 점수 구간 (프롬프트 주석의 기준과 같음: S 85+, A 70~84, B 55~69, C 40~54, D 39 이하) */
+function gradeFromScore(score: number): string {
+  if (score >= 85) return 'S';
+  if (score >= 70) return 'A';
+  if (score >= 55) return 'B';
+  if (score >= 40) return 'C';
+  return 'D';
+}
+
 function buildSajuContext(profile: SajuProfile): any {
   const p = profile.sajuData?.pillars ?? [];
   const day = p[2] ?? {};

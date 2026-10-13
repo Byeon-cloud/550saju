@@ -378,16 +378,16 @@ const MOCKUP_CSS = `
 .dream-mockup .lk-diag.timeline .tl-months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
 .dream-mockup .lk-diag.timeline .tl-cell { height: 22px; background: #E5DFD0; border-radius: 2px; position: relative; }
 .dream-mockup .lk-diag.timeline .tl-cell.mark { background: #B8965A; }
-.dream-mockup .lk-diag.timeline .tl-cell.mark.strong { background: #c62828; }
+.dream-mockup .lk-diag.timeline .tl-cell.mark.strong { background: #A23A2A; }
 .dream-mockup .lk-diag.timeline .tl-lbls { display: flex; justify-content: space-between; font-size: 13px; color: #7F6B4E; margin-top: 4px; font-feature-settings: 'tnum'; }
 .dream-mockup .lk-diag.timeline .tl-cap { font-size: 13px; color: #5C4A2E; margin-top: 6px; }
-.dream-mockup .lk-diag.timeline .tl-cap strong { color: #c62828; font-weight: 600; }
+.dream-mockup .lk-diag.timeline .tl-cap strong { color: #A23A2A; font-weight: 600; }
 
 /* Warn list */
 .dream-mockup .warn-list { list-style: none; padding: 0; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 /* 2026-05-28 — 균일 list 좌측 strip 제거. 배경만으로 warn 톤 표현. */
-.dream-mockup .warn-list li { background: rgba(198,40,40,.05); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.65; color: #2a2520; word-break: keep-all; transition: filter .55s ease; }
-.dream-mockup .warn-list li strong { color: #c62828; font-weight: 600; }
+.dream-mockup .warn-list li { background: rgba(162,58,42,.05); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.65; color: #2a2520; word-break: keep-all; transition: filter .55s ease; }
+.dream-mockup .warn-list li strong { color: #A23A2A; font-weight: 600; }
 .dream-mockup .warn-list li.locked { filter: blur(4.5px); user-select: none; pointer-events: none; }
 .dream-mockup.unlocked .warn-list li.locked { filter: none; user-select: text; pointer-events: auto; }
 
@@ -397,7 +397,7 @@ const MOCKUP_CSS = `
 /* 2026-05-28 — 상단 컬러 strip 제거. .ch 라벨 컬러로 톤 표현. */
 .dream-mockup .db-col .ch { font-family: 'Noto Serif KR', serif; font-size: 13.5px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
 .dream-mockup .db-col.go .ch { color: #4E7A57; }
-.dream-mockup .db-col.no .ch { color: #c62828; }
+.dream-mockup .db-col.no .ch { color: #A23A2A; }
 .dream-mockup .db-col .lines { display: flex; flex-direction: column; gap: 6px; filter: blur(4.5px); transition: filter .55s ease; }
 .dream-mockup .db-col .line { height: 8px; background: #E5DFD0; border-radius: 2px; }
 .dream-mockup .db-col .line.short { width: 65%; }
@@ -529,7 +529,7 @@ const SYMBOL_PIC_CLASS: Record<string, string> = {
 };
 
 const OHENG_KANJI: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
-const OHENG_COLOR: Record<string, string> = { 수: '#3E5F82', 토: '#7F6B4E', 목: '#4E7A57', 화: '#c62828', 금: '#7D7870' };
+const OHENG_COLOR: Record<string, string> = { 수: '#3E5F82', 토: '#7F6B4E', 목: '#4E7A57', 화: '#B04A38', 금: '#7D7870' };
 
 export function DreamMockupView(props: DreamMockupViewProps) {
   const { result: raw, profile, hasSaju, category, dreamText, concern, unlocked = false, isStreaming = false, createdAt, categoryId, onUnlock, onShare, onChat, onTopic } = props;

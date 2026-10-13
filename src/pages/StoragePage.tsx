@@ -916,13 +916,14 @@ function ProfileCard({
             {isMe && (
               <span
                 style={{
-                  padding: '2px 7px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 800,
-                  background: C.goldDeep,
-                  color: C.paper,
-                  letterSpacing: '0.04em',
+                  // v9: 알약과 금 배경 금지 → 먹 바탕 사각 표기, 13px
+                  padding: '1px 6px',
+                  borderRadius: 2,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  background: '#1A1612',
+                  color: '#F4EFE4',
+                  letterSpacing: '0.02em',
                 }}
               >
                 본인
@@ -932,11 +933,11 @@ function ProfileCard({
               <span
                 style={{
                   fontSize: 13,
-                  color: C.goldDeep,
+                  color: '#6F6557',
                   fontWeight: 700,
-                  padding: '1px 7px',
-                  background: C.goldSoft,
-                  borderRadius: 999,
+                  padding: '0 6px',
+                  border: '1px solid rgba(26,22,18,0.22)',
+                  borderRadius: 2,
                   letterSpacing: '0.02em',
                 }}
               >

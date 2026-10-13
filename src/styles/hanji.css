@@ -134,7 +134,7 @@
 .hj-yigi .side { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 13px 0; border-right: 1px solid var(--hj-rule-2); }
 .hj-yigi .side b { font-family: 'Noto Serif KR', serif; font-size: 21px; font-weight: 900; line-height: 1; color: var(--hj-ink); }
 .hj-yigi .grp.gi .side b { color: var(--hj-seal); }
-.hj-yigi .side small { writing-mode: vertical-rl; font-size: 12.5px; font-weight: 700; letter-spacing: .14em; color: var(--hj-mute); }
+.hj-yigi .side small { writing-mode: vertical-rl; font-size: 13px; font-weight: 700; letter-spacing: .14em; color: var(--hj-mute); }
 .hj-yigi ul { list-style: none; margin: 0; padding: 2px 6px 2px 14px; }
 .hj-yigi li { padding: 11px 0; font-size: 15px; line-height: 1.68; color: var(--hj-ink); word-break: keep-all; }
 .hj-yigi li + li { border-top: 1px dashed var(--hj-rule-3); }
@@ -165,7 +165,7 @@
 .hj-grade .cells { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; margin-top: 12px; }
 .hj-grade .cells i { display: block; position: relative; height: 12px; border: 1px solid var(--hj-rule-2); overflow: hidden; }
 .hj-grade .cells i::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--f, 0%); background: var(--hj-ink); }
-.hj-grade .scale { display: grid; grid-template-columns: 5.5fr 3fr 1.5fr; margin-top: 6px; font-size: 12.5px; color: var(--hj-mute); }
+.hj-grade .scale { display: grid; grid-template-columns: 5.5fr 3fr 1.5fr; margin-top: 6px; font-size: 13px; color: var(--hj-mute); }
 .hj-grade .scale span { white-space: nowrap; }
 .hj-grade .scale span:last-child { text-align: right; }
 .hj-grade .scale span.on { color: var(--hj-ink); font-weight: 800; }

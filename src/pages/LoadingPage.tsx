@@ -497,23 +497,23 @@ export function LoadingPage() {
           <div
             className="rounded-2xl px-5 py-5 text-center"
             style={{
-              background: 'rgba(198,40,40,0.05)',
-              border: '1px solid rgba(198,40,40,0.30)',
+              background: 'rgba(162,58,42,0.05)',
+              border: '1px solid rgba(162,58,42,0.30)',
             }}
           >
             <div
               className="mx-auto mb-3"
               style={{
                 width: 40, height: 40, borderRadius: '50%',
-                background: 'rgba(198,40,40,0.12)',
+                background: 'rgba(162,58,42,0.12)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: "'Noto Serif KR', serif",
-                fontSize: 18, fontWeight: 900, color: '#c62828',
+                fontSize: 18, fontWeight: 900, color: '#A23A2A',
               }}
             >
               !
             </div>
-            <p className="text-body-sm font-bold mb-1" style={{ color: '#c62828' }}>분석에 실패했어요</p>
+            <p className="text-body-sm font-bold mb-1" style={{ color: '#A23A2A' }}>분석에 실패했어요</p>
             <p className="text-caption mb-4" style={{ color: '#7A7269', lineHeight: 1.6 }}>
               잠시 후 다시 시도해 주세요.<br />
               차감된 운은 자동으로 복구됩니다.

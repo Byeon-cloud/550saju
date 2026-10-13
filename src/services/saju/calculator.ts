@@ -10,7 +10,9 @@ export { findCurrentDaeun } from './daeunCurrent';
 /** 계산 기준 버전 — 시(時)·일주 산출 규칙이 바뀔 때만 +1 (2026-07-14 v2).
  *  v2 = 진태양시 -30분 통일(경계=시계 :30) + 87/88 서머타임 + 자시 일주=입력일.
  *  저장된 sajuData.calcVersion 이 이 값과 다르면 stale → getProfiles() 가 자동 재계산. */
-export const CALC_STANDARD_VERSION = 2;
+export const CALC_STANDARD_VERSION = 3;
+// v3 (2026-10-13) = 연주, 월주, 대운의 절입 판정을 실제 출생 순간 기준으로(이전엔 30분 일찍 전환),
+//   띠를 연주와 같은 입춘 기준으로.
 
 /**
  * lunar-javascript를 사용하여 사주 전체 데이터를 계산합니다.
@@ -21,11 +23,6 @@ export const CALC_STANDARD_VERSION = 2;
  *  · 출생시간 미입력 시 보정 X (시주 자체 미산출)
  */
 export function calculateSaju(input: SajuInput): SajuData {
-  // 대운(大運) 전용 solar — 대운수(시작 나이)는 '출생 순간 → 절기'의 거리로 계산되므로
-  //   crossed-midnight 케이스에서 pillars 용 solar(입력일 대표시각)와 순간이 다르다.
-  //   진태양시 실제 순간(전날 23:xx)을 대운 계산에만 별도로 넘겨 대운수 정확도를 보존한다.
-  //   (자정 미크로스면 null → pillars 용 ec 를 그대로 사용 → 회귀 0)
-  let daeunSolar: Solar | null = null;
   const solar = input.hasBirthTime
     ? (() => {
         // 한국 진태양시 보정 적용 (입력 KST → 진태양시)
@@ -46,8 +43,6 @@ export function calculateSaju(input: SajuInput): SajuData {
         const crossedMidnight =
           y !== input.birthYear || mo !== input.birthMonth || d !== input.birthDay;
         if (crossedMidnight) {
-          // 대운은 진태양시 실제 출생 순간(전날 23:xx)이 절기 거리 기준 — 대운 전용 solar 로 보존
-          daeunSolar = Solar.fromYmdHms(y, mo, d, h, mi, s);
           const zhiIdx = Math.floor((h + 1) / 2) % 12; // 子=0 … 亥=11 (진태양시 시각 기준)
           const REP_TIME: Array<[number, number]> = [
             [0, 30], [2, 0], [4, 0], [6, 0], [8, 0], [10, 0],
@@ -62,8 +57,15 @@ export function calculateSaju(input: SajuInput): SajuData {
 
   const lunar = solar.getLunar();
   const ec = lunar.getEightChar();
-  // 대운 전용 EightChar — crossed-midnight 시 진태양시 순간, 그 외엔 pillars 용 ec 재사용
-  const daeunEc = daeunSolar ? daeunSolar.getLunar().getEightChar() : ec;
+  // 2026-10-13 v3 절입(節入) 기준 통일 — 연주, 월주, 대운은 실제 출생 순간으로 절입과 비교한다.
+  //   lunar 의 절기 시각은 북경시간(UTC+8) 기준인데 진태양시(KST-30)를 그대로 넣어 왔기 때문에
+  //   절입이 실제보다 30분 일찍 바뀌었다(2024 입춘 KST 17:27 인데 16:57 부터 甲辰년으로 계산).
+  //   진태양시에서 30분을 더 빼면 북경시간 순간이 된다. 일주와 시주는 기존 기준 그대로.
+  const instantLunar = input.hasBirthTime ? beijingInstantSolar(input).getLunar() : null;
+  if (instantLunar) alignYearMonthToInstant(ec, instantLunar);
+  // 대운 전용 EightChar — 대운수는 '출생 순간에서 절입까지 거리'라 출생 순간(북경시간 환산) 기준.
+  //   자정을 넘긴 조자시도 여기서 실제 순간을 쓴다. 시간 미입력이면 pillars 용 ec 재사용
+  const daeunEc = instantLunar ? instantLunar.getEightChar() : ec;
 
   const pillars = extractPillars(ec, input.hasBirthTime);
   const elements = calculateElements(pillars);
@@ -92,10 +94,37 @@ export function calculateSaju(input: SajuInput): SajuData {
     gongmang,
     currentDaeun,
     yearlyUn: getYearlyUn(new Date().getFullYear()),
-    띠: lunar.getYearShengXiao(),
+    // 띠는 연주 지지와 같은 입춘 기준으로 (설날 기준이면 입춘과 설날 사이 출생자가 연주와 어긋남)
+    띠: (instantLunar ?? lunar).getYearShengXiaoExact(),
     myeongriAnalysis,
     calcVersion: CALC_STANDARD_VERSION,
   };
+}
+
+/** 출생 순간을 북경시간(lunar 절기 기준 시계)으로 — 진태양시(KST-30, 서머타임 반영)에서 30분 더 뺀다. */
+function beijingInstantSolar(input: SajuInput): Solar {
+  const [y, mo, d, h, mi, s] = correctKoreanSolarTime(
+    input.birthYear, input.birthMonth, input.birthDay, input.birthHour!, input.birthMinute ?? 0, 0,
+  );
+  const t = new Date(Date.UTC(y, mo - 1, d, h, mi, s) - 30 * 60 * 1000);
+  return Solar.fromYmdHms(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate(), t.getUTCHours(), t.getUTCMinutes(), t.getUTCSeconds());
+}
+
+/** ec 의 연주와 월주(와 거기서 파생되는 십성, 지장간, 12운성, 납음)를 출생 순간 기준 값으로 맞춘다.
+ *  일간은 ec 그대로라 십성과 12운성은 lunar 내부식이 그대로 일간 기준으로 다시 계산한다.
+ *  절입 30분 창 밖(대부분)은 두 값이 같아 아무것도 바꾸지 않는다. */
+function alignYearMonthToInstant(ec: EightChar, inst: Lunar): void {
+  const e = ec as any;
+  const L = inst as any;
+  if (e.getYear() === L.getYearInGanZhiExact() && e.getMonth() === L.getMonthInGanZhiExact()) return;
+  e.getYear = () => L.getYearInGanZhiExact();
+  e.getYearGan = () => L.getYearGanExact();
+  e.getYearZhi = () => L.getYearZhiExact();
+  e.getYearDiShi = function () { return this._getDiShi(L.getYearZhiIndexExact()); };
+  e.getMonth = () => L.getMonthInGanZhiExact();
+  e.getMonthGan = () => L.getMonthGanExact();
+  e.getMonthZhi = () => L.getMonthZhiExact();
+  e.getMonthDiShi = function () { return this._getDiShi(L.getMonthZhiIndexExact()); };
 }
 
 function extractPillars(ec: EightChar, hasBirthTime: boolean): Pillar[] {
