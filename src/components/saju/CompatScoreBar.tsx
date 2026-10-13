@@ -14,7 +14,7 @@ export function CompatScoreBar({ name, score, delay = 0 }: Props) {
       <div className="flex items-baseline justify-between mb-1.5">
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 15.5, fontWeight: 700, color: '#1A1612' }}>{name}</span>
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 18, fontWeight: 800, color: '#1A1612' }}>
-          {score}<small style={{ fontSize: 12, color: '#6F6557', marginLeft: 2, fontWeight: 700 }}>점</small>
+          {score}<small style={{ fontSize: 13, color: '#6F6557', marginLeft: 2, fontWeight: 700 }}>점</small>
         </span>
       </div>
       <div className="hj-bar">

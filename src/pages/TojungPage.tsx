@@ -353,7 +353,7 @@ export function TojungPage() {
                     <p className="flex-1" style={{ fontFamily: SERIF, fontSize: 17.5, fontWeight: 700, color: HJ.ink }}>{key}</p>
                     {catScore != null && (
                       <span style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 800, color: HJ.ink }}>
-                        {catScore}<small style={{ fontSize: 12.5, color: HJ.mute, marginLeft: 2, fontWeight: 700 }}>점</small>
+                        {catScore}<small style={{ fontSize: 13, color: HJ.mute, marginLeft: 2, fontWeight: 700 }}>점</small>
                       </span>
                     )}
                   </div>
@@ -386,8 +386,8 @@ export function TojungPage() {
                     </linearGradient>
                   </defs>
                   {/* 2026-10-07 — 점수는 1~100 인데 축이 0~10 이라 선이 위로 잘렸음 */}
-                  <XAxis dataKey="name" interval={0} tick={{ fontSize: 12, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" interval={0} tick={{ fontSize: 13, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 13, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
                   <Area type="monotone" dataKey="점수" stroke="#B8965A" strokeWidth={2}
                     fill="url(#tojungGrad)"
                     dot={{ r: 2.5, fill: '#B8965A', strokeWidth: 0 }} />

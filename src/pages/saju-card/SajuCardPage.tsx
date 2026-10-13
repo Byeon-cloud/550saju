@@ -336,7 +336,7 @@ export function SajuCardPage() {
             style={{
               marginTop: 16,
               padding: '14px 4px 8px',
-              fontSize: 12,
+              fontSize: 13,
               color: C.mute,
               lineHeight: 1.7,
               textAlign: 'center',
@@ -541,7 +541,7 @@ function ExportModeSheet({
               </div>
               <div
                 style={{
-                  fontSize: 12, color: C.goldDeep, fontWeight: 600,
+                  fontSize: 13, color: C.goldDeep, fontWeight: 600,
                   letterSpacing: '0.04em', flexShrink: 0,
                   fontFeatureSettings: '"tnum"',
                 }}

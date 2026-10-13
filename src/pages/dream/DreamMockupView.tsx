@@ -219,7 +219,7 @@ function DreamSection({
             {han && <span className="han">{han}</span>}
           </span>
           {lockIconSlot}
-          {!locked && <span className={`acc-caret${isOpen ? ' open' : ''}`} aria-hidden="true">▾</span>}
+          {!locked && <span className={`acc-caret${isOpen ? ' open' : ''}`} aria-hidden="true" />}
         </div>
       </button>
       {isOpen && (
@@ -501,7 +501,7 @@ const MOCKUP_CSS = `
   background: rgba(184,150,90,0.08);
   padding: 1px 4px;
   border-radius: 3px;
-  font-size: 0.96em;
+  font-size: 1em; /* 2026-10-13 — 0.96em 이 13px 칸에서 12.5px 로 줄던 것 */
 }
 .dream-mockup p b strong, .dream-mockup p strong b { background: linear-gradient(180deg, transparent 58%, rgba(184,150,90,.32) 58%); color: #1a1a1a; padding: 1px 4px; }
 
@@ -515,6 +515,15 @@ const MOCKUP_CSS = `
 /* §02 symbol 카드 hover 미세 강조 */
 .dream-mockup .sym { transition: transform .2s ease, box-shadow .2s ease; }
 .dream-mockup .sym:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(184,150,90,.12); }
+
+/* 2026-10-13 v9 마감 — 본문 15px, 보조 13px 이상 / 장식 그라데이션 박스 제거 / 금 버튼은 승인 양식(.hj-cta)과 같게 / ▾ 기호 대신 먹선 꺾쇠 */
+.dream-mockup .body p, .dream-mockup .sym .dc, .dream-mockup .qc .interp, .dream-mockup .lk-teaser, .dream-mockup .lk-full,
+.dream-mockup .db-list li, .dream-mockup .topic-rec .tr-copy, .dream-mockup .qc .src { font-size: 15px; }
+.dream-mockup .sym .dc b { font-size: 1em; }
+.dream-mockup .pullq { background: #FFFDF8; border: 1px solid rgba(140,109,61,.35); border-radius: 2px; font-size: 15.5px; }
+.dream-mockup .paid-cta .cta-btn { background: linear-gradient(180deg, var(--hj-gold-hi) 0%, var(--hj-gold) 100%); color: #17110A; border-radius: 14px; min-height: 52px; font-size: 16px; box-shadow: 0 8px 18px rgba(140,109,61,.22), inset 0 1px 0 rgba(255,255,255,.45); }
+.dream-mockup .acc-caret { font-size: 0; width: 7px; height: 7px; flex-shrink: 0; margin-right: 4px; border-right: 1.6px solid #6F6557; border-bottom: 1.6px solid #6F6557; transform: rotate(-45deg); }
+.dream-mockup .acc-caret.open { transform: translateY(-2px) rotate(45deg); }
 `;
 
 const SYMBOL_PIC_CLASS: Record<string, string> = {

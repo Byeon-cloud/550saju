@@ -265,7 +265,7 @@ export function ExtensionHero({
               background: 'rgba(255,255,255,0.28)',
               padding: '3px 9px',
               borderRadius: 2,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 800,
               letterSpacing: '0.02em',
               whiteSpace: 'nowrap',
@@ -737,7 +737,7 @@ export function DaeunBars({
                   {b.value}
                 </span>
               </div>
-              <span style={{ fontSize: 12, color: C.mute, fontWeight: 600 }}>
+              <span style={{ fontSize: 13, color: C.mute, fontWeight: 600 }}>
                 {b.age}
               </span>
               <span
@@ -817,7 +817,7 @@ export function DaeunHeatGrid({
           display: 'grid',
           gridTemplateColumns: `48px repeat(${yearCount}, 1fr)`,
           gap: 3,
-          fontSize: 12,
+          fontSize: 13,
         }}
       >
         <div></div>
@@ -861,7 +861,7 @@ export function DaeunHeatGrid({
       <div
         style={{
           marginTop: 10,
-          fontSize: 12,
+          fontSize: 13,
           color: C.mute,
           display: 'flex',
           gap: 4,
@@ -970,7 +970,7 @@ export function DaeunAccordion({ cards }: { cards: DaeunCard[] }) {
                 <span
                   style={{
                     marginLeft: 'auto',
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 800,
                     color: '#FFFFFF',
                     background: accent,
@@ -1322,7 +1322,7 @@ export function CalGrid({
             key={d}
             style={{
               textAlign: 'center',
-              fontSize: 12,
+              fontSize: 13,
               color: i === 0 ? '#A23A2A' : i === 6 ? '#3E5F82' : C.mute,
               fontWeight: 700,
               padding: '4px 0',
@@ -1723,7 +1723,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
                 <span
                   style={{
                     marginLeft: 'auto',
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: '#FFFFFF',
                     background: '#1A1612',
@@ -1738,7 +1738,7 @@ export function TojungMonthGrid({ months }: { months: TojungMonthItem[] }) {
                 <span
                   style={{
                     marginLeft: 'auto',
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: '#FFFFFF',
                     background: '#A23A2A',

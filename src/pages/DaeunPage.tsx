@@ -315,7 +315,7 @@ export function DaeunPage() {
           <FadeIn delay={0.03}>
             <div className="card">
               <p className="text-h3 text-text-primary mb-1">대운별 점수 흐름</p>
-              <p className="text-[12px] text-text-hint mb-3">10년 단위 운의 흐름</p>
+              <p className="text-[13px] text-text-hint mb-3">10년 단위 운의 흐름</p>
               <div className="h-36 -mx-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={periods.map((p: any) => ({ name: `${p.시작나이}세`, 점수: p.score || 50 }))} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -398,7 +398,7 @@ export function DaeunPage() {
                           <div className="flex items-center gap-2">
                             <p className="text-[13px] font-bold text-text-primary">{lp.phase}</p>
                             <span className="text-[13px] text-brand-gold font-semibold">{lp.daeun}</span>
-                            {isCurrent && <span className="text-[12px] font-bold text-white bg-brand-gold rounded px-1.5 py-0.5">NOW</span>}
+                            {isCurrent && <span className="text-[13px] font-bold text-white bg-brand-gold rounded px-1.5 py-0.5">NOW</span>}
                           </div>
                           <p className="text-[13px] text-text-muted mt-0.5" dangerouslySetInnerHTML={{ __html: sanitizeAiText(lp.theme) }} />
                         </div>
@@ -514,13 +514,13 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                     { label: '건강', score: (period as any).healthScore, color: '#4E7A57' },
                   ].map(a => (
                     <div key={a.label} className="text-center">
-                      <p className="text-[12px] text-text-hint mb-1">{a.label}</p>
+                      <p className="text-[13px] text-text-hint mb-1">{a.label}</p>
                       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: `${a.color}12` }}>
                         <motion.div className="h-full rounded-full" style={{ background: a.color }}
                           initial={{ width: 0 }} animate={{ width: `${Math.min(a.score || 0, 100)}%` }}
                           transition={{ duration: 0.8 }} />
                       </div>
-                      <p className="text-[12px] font-bold mt-0.5" style={{ color: a.color }}>{a.score}</p>
+                      <p className="text-[13px] font-bold mt-0.5" style={{ color: a.color }}>{a.score}</p>
                     </div>
                   ))}
                 </div>
@@ -532,7 +532,7 @@ function PeriodCard({ period }: { period: DaeunAnalysisResponse['periods'][0] })
                 { label: '건강',     value: period.health, color: '#4E7A57' },
               ].map(area => (
                 <div key={area.label}>
-                  <span className="inline-block px-1.5 py-0.5 rounded text-[12px] font-bold mb-1"
+                  <span className="inline-block px-1.5 py-0.5 rounded text-[13px] font-bold mb-1"
                     style={{ background: `${area.color}12`, color: area.color }}>{area.label}</span>
                   <p dangerouslySetInnerHTML={{ __html: sanitizeAiText(area.value) }} />
                 </div>

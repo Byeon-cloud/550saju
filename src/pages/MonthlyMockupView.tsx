@@ -323,7 +323,7 @@ const MOCKUP_CSS = `
 .monthly-mockup .domain .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .monthly-mockup .domain .sc-wrap { display: flex; align-items: center; gap: 6px; }
 .monthly-mockup .domain .sc-tag {
-  font-size: 12px; font-weight: 700; color: var(--c-mute);
+  font-size: 13px; font-weight: 700; color: var(--c-mute);
   background: var(--c-paper); padding: 2px 7px; border-radius: 2px;
   border: 1px solid var(--c-card-line); white-space: nowrap; letter-spacing: 0.02em;
 }

@@ -191,7 +191,7 @@ export function AILoading({
             <>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   letterSpacing: '0.1em',
                   color: 'rgba(248,245,238,0.55)',
                   fontWeight: 700,
@@ -233,7 +233,7 @@ export function AILoading({
               >
                 <div
                   style={{
-                    fontSize: 12,
+                    fontSize: 13,
                     color: 'rgba(248,245,238,0.55)',
                     fontWeight: 700,
                   }}
@@ -401,7 +401,7 @@ export function AILoading({
                 {isDone && (
                   <div
                     style={{
-                      fontSize: 12,
+                      fontSize: 13,
                       color: C.positive,
                       fontWeight: 600,
                       marginTop: 2,
@@ -433,7 +433,7 @@ export function AILoading({
         >
           <p
             style={{
-              fontSize: 12,
+              fontSize: 13,
               color: C.goldDeep,
               fontWeight: 800,
               letterSpacing: '0.16em',
@@ -470,7 +470,7 @@ export function AILoading({
       {/* 예상 소요 시간 */}
       <p
         style={{
-          fontSize: 12,
+          fontSize: 13,
           color: C.mute,
           marginTop: 12,
           letterSpacing: '0.04em',

@@ -326,7 +326,7 @@ export function IdentityCard({
         </span>
         <span
           style={{
-            fontSize: 12,
+            fontSize: 13,
             color: C.mute,
             letterSpacing: '0.16em',
           }}
@@ -410,7 +410,7 @@ export function IdentityCard({
           {/* "일주(日柱) · 나" 강조 라벨 */}
           <div
             style={{
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 800,
               color: C.gold,
               letterSpacing: '0.18em',
@@ -492,12 +492,12 @@ export function IdentityCard({
                     justifyContent: 'center',
                     background: C.paperSoft,
                     color: C.mute,
-                    fontSize: 12,
+                    fontSize: 13,
                     lineHeight: 1.2,
                     textAlign: 'center',
                   }}
                 >
-                  <span style={{ fontSize: 12, fontWeight: 700, marginBottom: 2 }}>{labelKo}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{labelKo}</span>
                   <span>모름</span>
                 </div>
               );
@@ -570,7 +570,7 @@ export function IdentityCard({
                   </span>
                 )}
                 <span style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.0 }}>{p.천간}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.85, marginTop: 1 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, marginTop: 1 }}>
                   {OHENG_HAN[ganOheng]}
                 </span>
               </div>
@@ -705,7 +705,7 @@ export function IdentityCard({
           style={{
             position: 'relative',
             textAlign: 'center',
-            fontSize: 12,
+            fontSize: 13,
             color: C.mute,
             letterSpacing: '0.18em',
             padding: '8px 22px 16px',

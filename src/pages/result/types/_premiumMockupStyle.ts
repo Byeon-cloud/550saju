@@ -1689,7 +1689,7 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .pullquote { background: #FFFDF8; }
   .premium-mockup .divider::after { background: rgba(140,109,61,.35); }
   .premium-mockup .upsell-card { background: #1E1A15; }
-  .premium-mockup .upsell-card .cta { background: #D6B87A; border-radius: 2px; }
+  .premium-mockup .upsell-card .cta { background: linear-gradient(180deg, var(--hj-gold-hi) 0%, var(--hj-gold) 100%); color: #17110A; border-radius: 10px; } /* 승인된 금 버튼 양식(.hj-cta)과 같게 */
   .premium-mockup .daewoon-scores .ds-fill { background: #B8965A; }
   .premium-mockup .daewoon-scores .ds-fill.peak { background: #4E7A57; }
   .premium-mockup .daewoon-scores .ds-fill.now { background: #8C6D3D; }

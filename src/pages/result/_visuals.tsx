@@ -25,7 +25,7 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
       <div style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47', marginBottom: 4 }}>
         ▎오행 상생상극: 이 사주의 핵심 구조
       </div>
-      <div style={{ fontSize: 12, color: '#a0937f', marginBottom: 10, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 13, color: '#a0937f', marginBottom: 10, lineHeight: 1.5 }}>
         <span style={{ color: '#4E7A57', fontWeight: 700 }}>상생(→생→)</span>은 기운을 키워주고, <span style={{ color: '#A23A2A', fontWeight: 700 }}>상극(→극→)</span>은 기운을 억제해요
       </div>
       <div
@@ -75,7 +75,7 @@ export function OhengFlowVis({ elements, hasBirthTime }: { elements: V4Elements;
         </div>
         <div style={{ color: '#8A6226', marginTop: 4 }}>목에서 화, 화에서 토로 이어지며 압박이 풀려요</div>
         {hasBirthTime && (
-          <div style={{ color: '#8b7e6f', marginTop: 4, fontSize: 12 }}>
+          <div style={{ color: '#8b7e6f', marginTop: 4, fontSize: 13 }}>
             시주 납음이 노중화(炉中火)예요. 내면에 숨겨진 화의 씨앗이 있었어요.
           </div>
         )}
@@ -312,7 +312,7 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
 
       {/* 성격 구성도 (Personality Composition Bar) */}
       <div className="mx-4 mb-3 p-3 rounded-xl" style={{ background: '#fff', border: '1px solid #e8e0d4' }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: '#B8965A', marginBottom: 8, letterSpacing: '0.5px' }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#B8965A', marginBottom: 8, letterSpacing: '0.5px' }}>
           성격 구성도
         </p>
         {/* Horizontal stacked bar */}
@@ -332,9 +332,9 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
             return (
               <div key={cat} className="flex items-center gap-1.5">
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: catColors[cat].main, opacity: cnt > 0 ? 1 : 0.25 }} />
-                <span style={{ fontSize: 12, color: cnt > 0 ? '#6b5b47' : '#c4bab0', fontWeight: cnt > 0 ? 600 : 400 }}>
-                  {cat}<span style={{ fontSize: 12, color: '#a0937f', marginLeft: 2 }}>{catColors[cat].label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: catColors[cat].main, marginLeft: 3 }}>{pct}%</span>
+                <span style={{ fontSize: 13, color: cnt > 0 ? '#6b5b47' : '#c4bab0', fontWeight: cnt > 0 ? 600 : 400 }}>
+                  {cat}<span style={{ fontSize: 13, color: '#a0937f', marginLeft: 2 }}>{catColors[cat].label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: catColors[cat].main, marginLeft: 3 }}>{pct}%</span>
                 </span>
               </div>
             );
@@ -391,17 +391,17 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
                     <span style={{ fontSize: 13.5, fontWeight: 700, color: '#3D3427' }}>{card.posKey}</span>
                     {card.isCore && (
                       <span style={{
-                        fontSize: 12, fontWeight: 800, color: '#fff', letterSpacing: '0.5px',
+                        fontSize: 13, fontWeight: 800, color: '#fff', letterSpacing: '0.5px',
                         background: 'linear-gradient(135deg, #B8965A, #b8965a)',
                         borderRadius: 6, padding: '2px 8px',
                         boxShadow: '0 1px 4px rgba(184,150,90,0.3)',
                       }}>핵심</span>
                     )}
                   </div>
-                  <p style={{ fontSize: 12, color: '#8b7e6f', marginTop: 1 }}>{card.role}: {card.roleDesc}</p>
+                  <p style={{ fontSize: 13, color: '#8b7e6f', marginTop: 1 }}>{card.role}: {card.roleDesc}</p>
                 </div>
                 <span style={{
-                  fontSize: 12, fontWeight: 700, color: card.isCore ? '#B8965A' : ec.main,
+                  fontSize: 13, fontWeight: 700, color: card.isCore ? '#B8965A' : ec.main,
                   background: card.isCore ? 'rgba(184,150,90,0.1)' : `${ec.light}`,
                   borderRadius: 6, padding: '2px 7px',
                   border: card.isCore ? '1px solid rgba(184,150,90,0.25)' : `1px solid ${ec.med}`,
@@ -428,7 +428,7 @@ export function JijangganVisComp({ jijanggan, pillars, hasBirthTime }: {
                           <span style={{ fontSize: 13.5, fontWeight: 700, color: '#3D3427' }}>{e.kr}</span>
                           {e.sipsung && (
                             <span style={{
-                              fontSize: 12, fontWeight: 700, color: eec.dark,
+                              fontSize: 13, fontWeight: 700, color: eec.dark,
                               background: `linear-gradient(135deg, ${eec.light}, ${eec.med}55)`,
                               borderRadius: 5, padding: '1.5px 6px',
                               border: `1px solid ${eec.med}88`,
@@ -626,7 +626,7 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
   return (
     <div className="my-4 p-4 rounded-2xl" style={{ background: '#faf7f2', border: '1px solid #e8e0d4' }}>
       <div style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47', marginBottom: 4 }}>▎직업 적성 매칭도</div>
-      <p style={{ fontSize: 12, color: '#8b7e6f', marginBottom: 12, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: '#8b7e6f', marginBottom: 12, lineHeight: 1.5 }}>
         일간 오행({dayOheng}), 십성 분포, 오행 밸런스를 종합 분석하여 적합한 직업을 도출했어요
       </p>
 
@@ -669,14 +669,14 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
                 {/* 점수 범위 해석 */}
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="rounded-full px-2 py-0.5" style={{
-                    fontSize: 12, fontWeight: 700,
+                    fontSize: 13, fontWeight: 700,
                     background: isTop ? `${color}15` : isWeak ? '#fff3e0' : '#EEECE8',
                     color: isTop ? color : isWeak ? '#8A6226' : '#7D7870',
                   }}>
                     {isTop ? '천직 수준' : isWeak ? '기운 소모 큼' : f.score >= 65 ? '충분히 적합' : '보조 적성'}
                   </span>
                   {f.basis && (
-                    <span className="rounded-full px-2 py-0.5" style={{ fontSize: 12, fontWeight: 600, background: '#f5f0e8', color: '#B8965A' }}>
+                    <span className="rounded-full px-2 py-0.5" style={{ fontSize: 13, fontWeight: 600, background: '#f5f0e8', color: '#B8965A' }}>
                       {f.basis}
                     </span>
                   )}
@@ -684,7 +684,7 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
                 {/* 사주 근거 */}
                 {f.reason && (
                   <div className="p-2.5 rounded-lg" style={{ background: '#faf7f2', border: '1px dashed #e8e0d4' }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color, marginBottom: 2 }}>왜 이 직업이 나왔을까?</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 2 }}>왜 이 직업이 나왔을까?</p>
                     <p style={{ fontSize: 13, color: '#6b5b47', lineHeight: 1.7 }}>{f.reason}</p>
                   </div>
                 )}
@@ -696,8 +696,8 @@ export function CareerFitVis({ aiCareerFit, dayOheng, elements, sipDist }: {
 
       {/* 해석 가이드 */}
       <div className="mt-3 p-2.5 rounded-xl" style={{ background: '#F5EBD9', border: '1px solid #ffe082' }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: '#B07F38', marginBottom: 3 }}>이렇게 읽어요</p>
-        <p style={{ fontSize: 12, color: '#8b7e6f', lineHeight: 1.6 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#B07F38', marginBottom: 3 }}>이렇게 읽어요</p>
+        <p style={{ fontSize: 13, color: '#8b7e6f', lineHeight: 1.6 }}>
           점수 기준: 80% 이상 = 사주의 기운 흐름과 가장 잘 맞는 '천직' 수준.
           65~79% = 타고난 적성이 충분히 있어 잘 해낼 수 있는 분야.
           55~64% = 노력하면 되지만 기운이 더 드는 방향.
@@ -821,7 +821,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
       <div style={{ fontSize: 13, fontWeight: 800, color: '#6b5b47', marginBottom: 4 }}>
         ▎오행별 건강 분석
       </div>
-      <p style={{ fontSize: 12, color: '#a0937f', marginBottom: 12, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: '#a0937f', marginBottom: 12, lineHeight: 1.5 }}>
         오행 분포를 기반으로 장기별 강약을 분석했어요. 부족한 오행의 장기를 의식적으로 관리하면 건강을 지킬 수 있어요.
       </p>
 
@@ -851,7 +851,7 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
                 <span style={{ fontSize: 20, fontWeight: 900, color: ec.dark }}>{EHAN[it.elem]}</span>
                 <div className="flex-1">
                   <span style={{ fontSize: 13.5, fontWeight: 700, color: '#6b5b47' }}>{it.organ}</span>
-                  <p style={{ fontSize: 12, color: '#a0937f' }}>{it.detail}</p>
+                  <p style={{ fontSize: 13, color: '#a0937f' }}>{it.detail}</p>
                 </div>
                 <div className="text-center">
                   <span style={{ fontSize: 13, fontWeight: 900, color: it.statusColor }}>{it.status}</span>
@@ -869,8 +869,8 @@ export function HealthVis({ elements, dayOheng, dayGan, aiHealth, pillars: _pill
               <div className="px-3 py-2.5" style={{ background: '#fff' }}>
                 <p style={{ fontSize: 13, color: '#6b5b47', lineHeight: 1.7 }}>{it.advice}</p>
                 <div className="mt-2 pt-2" style={{ borderTop: `1px dashed ${ec.med}` }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: ec.dark, marginBottom: 2 }}>보완법</p>
-                  <p style={{ fontSize: 12, color: '#8b7e6f', lineHeight: 1.6 }}>{it.fix}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: ec.dark, marginBottom: 2 }}>보완법</p>
+                  <p style={{ fontSize: 13, color: '#8b7e6f', lineHeight: 1.6 }}>{it.fix}</p>
                 </div>
               </div>
             </div>
@@ -1162,7 +1162,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
               <span style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>{SYM_C[dOheng]}</span>
             </div>
             <div>
-              <p style={{ fontSize: 12, color: '#E8D5A8', fontWeight: 600 }}>{NAT_C[dOheng]}의 과제</p>
+              <p style={{ fontSize: 13, color: '#E8D5A8', fontWeight: 600 }}>{NAT_C[dOheng]}의 과제</p>
               <p style={{ fontSize: 13, color: '#fff', fontWeight: 800, marginTop: 1 }}>{dOheng} 일간의 핵심 질문</p>
             </div>
           </div>
@@ -1202,7 +1202,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
                   </div>
                   <span style={{ fontSize: 14, fontWeight: 800, color: '#3D3427', flex: 1 }}>{t.labelA} vs {t.labelB}</span>
                   {i === 0 && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#B8965A', background: 'rgba(184,150,90,0.12)', borderRadius: 6, padding: '2px 8px' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#B8965A', background: 'rgba(184,150,90,0.12)', borderRadius: 6, padding: '2px 8px' }}>
                       핵심 과제
                     </span>
                   )}
@@ -1241,14 +1241,14 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
                       {(aWins || bWins) ? (
                         <div className="flex items-center gap-1.5">
                           <div style={{ width: 6, height: 6, borderRadius: '50%', background: ecC.main }} />
-                          <span style={{ fontSize: 12, color: ecC.main, fontWeight: 700 }}>
+                          <span style={{ fontSize: 13, color: ecC.main, fontWeight: 700 }}>
                             {aWins ? t.labelA : t.labelB} 쪽으로 기울어진 사주
                           </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#B8965A' }} />
-                          <span style={{ fontSize: 12, color: '#B8965A', fontWeight: 700 }}>양쪽 균형형 사주</span>
+                          <span style={{ fontSize: 13, color: '#B8965A', fontWeight: 700 }}>양쪽 균형형 사주</span>
                         </div>
                       )}
                     </div>
@@ -1256,13 +1256,13 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
 
                   {/* 사주 분석 (개인 해석) */}
                   <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: '#E8D5A8', marginBottom: 4 }}>나의 사주 분석</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#E8D5A8', marginBottom: 4 }}>나의 사주 분석</p>
                     <p style={{ fontSize: 13.5, color: '#fff', lineHeight: 1.75 }}>{verdict}</p>
                   </div>
 
                   {/* 실천 방법 */}
                   <div className="p-3 rounded-lg" style={{ background: '#faf7f2', border: '1px dashed #d4cbb8' }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: '#B8965A', marginBottom: 3 }}>실천 방법</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#B8965A', marginBottom: 3 }}>실천 방법</p>
                     <p style={{ fontSize: 13, color: '#6b5b47', lineHeight: 1.65 }}>{t.tip}</p>
                   </div>
                 </div>
@@ -1346,7 +1346,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
       <div className="my-4 rounded-2xl overflow-hidden" style={{ border: '1px solid #e8e0d4' }}>
         <div className="px-4 py-3" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
           <p style={{ fontSize: 13.5, fontWeight: 700, color: '#E8D5A8' }}>대운 흐름 해석 가이드</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{dOheng} 일간이 각 대운에서 겪는 기운 변화</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{dOheng} 일간이 각 대운에서 겪는 기운 변화</p>
         </div>
 
         <div className="p-4 space-y-3" style={{ background: '#faf7f2' }}>
@@ -1357,7 +1357,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
           </div>
 
           {/* 오행별 대운 의미 */}
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#B8965A', marginBottom: -4 }}>오행별 대운이 나에게 주는 의미</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#B8965A', marginBottom: -4 }}>오행별 대운이 나에게 주는 의미</p>
           <div className="space-y-2">
             {guide.seasons.map((s, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#fff', border: '1px solid #e8e0d4' }}>
@@ -1379,7 +1379,7 @@ export function SectionVis({ type, elements, hasBirthTime, jijanggan, pillars, a
 
           {/* 읽기 가이드 */}
           <div className="p-2.5 rounded-lg" style={{ background: '#f5f0e8', border: '1px dashed #d4cbb8' }}>
-            <p style={{ fontSize: 12, color: '#8b7e6f', lineHeight: 1.6 }}>
+            <p style={{ fontSize: 13, color: '#8b7e6f', lineHeight: 1.6 }}>
               위쪽 <b style={{ color: '#6b5b47' }}>대운 타임라인</b>에서 현재 대운의 오행을 확인하고, 이 가이드와 대조하면 지금 시기의 의미를 정확히 알 수 있어요.
             </p>
           </div>

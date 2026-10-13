@@ -54,14 +54,14 @@ export function TojungMonthCard({ month, 괘, 괘의미, 전통해석, 현대해
           aria-hidden="true"
           style={{ width: 46, height: 46, flexShrink: 0, display: 'grid', placeItems: 'center', border: `1.5px solid ${tone}`, borderRadius: 2, fontFamily: SERIF, fontWeight: 800, color: tone, lineHeight: 1 }}
         >
-          <span style={{ fontSize: 18 }}>{month}<small style={{ fontSize: 12, marginLeft: 1 }}>월</small></span>
+          <span style={{ fontSize: 18 }}>{month}<small style={{ fontSize: 13, marginLeft: 1 }}>월</small></span>
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ display: 'block', fontFamily: SERIF, fontSize: 16.5, fontWeight: 700, color: HJ.ink, lineHeight: 1.35, wordBreak: 'keep-all' }}>{stripMd(keyword)}</span>
           <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 3 }}>{괘}</span>
         </span>
         <span style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 800, color: tone, flexShrink: 0 }}>
-          {score}<small style={{ fontSize: 12.5, color: HJ.mute, marginLeft: 2, fontWeight: 700 }}>점</small>
+          {score}<small style={{ fontSize: 13, color: HJ.mute, marginLeft: 2, fontWeight: 700 }}>점</small>
         </span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={HJ.ink2} strokeWidth="2" strokeLinecap="round" aria-hidden="true"
           style={{ flexShrink: 0, transition: 'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }}>

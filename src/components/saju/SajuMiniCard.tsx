@@ -117,7 +117,7 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
         <span style={{ fontSize: 13, fontWeight: 700, color: C_GOLD_DEEP, letterSpacing: '0.04em' }}>
           {p.label}
         </span>
-        <span style={{ fontSize: 12, color: '#A8A097', marginTop: 2 }}>모름</span>
+        <span style={{ fontSize: 13, color: '#A8A097', marginTop: 2 }}>모름</span>
       </div>
     );
   }

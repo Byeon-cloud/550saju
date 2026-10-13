@@ -73,7 +73,7 @@ export function SharePage() {
         {/* 히어로 — 동적 (이름 알면 호명, 모르면 generic) */}
         <FadeIn delay={0.03}>
           <div className="card-navy py-7 px-5">
-            <p className="text-[12px] text-white/30 mb-1">{typeLabel} 결과</p>
+            <p className="text-[13px] text-white/30 mb-1">{typeLabel} 결과</p>
             <h1 className="text-display text-white leading-snug">
               {sajuOwner ? `${sajuOwner} 님의 ${typeLabel}\n결과가 도착했어요` : '누군가 나에게\n사주 결과를 공유했어요'}
             </h1>
@@ -146,7 +146,7 @@ export function SharePage() {
             <Button variant="gold" fullWidth size="lg" onClick={() => navigate('/input')}>
               나도 내 사주 알아보기
             </Button>
-            <p className="text-center text-[12px] text-text-hint">
+            <p className="text-center text-[13px] text-text-hint">
               1운으로 3분이면 깊이 있게 풀어 드려요
             </p>
             <button

@@ -176,7 +176,7 @@ const MOCKUP_CSS = `
 .topic-mockup .hd .tier {
   background: rgba(248,245,238,0.10);
   padding: 4px 10px; border-radius: 2px;
-  font-size: 12px; color: #F8F5EE; opacity: 0.85;
+  font-size: 13px; color: #F8F5EE; opacity: 0.85;
 }
 .topic-mockup .hd .name { margin-left: auto; font-size: 13px; opacity: 0.7; color: #E8DAB8; }
 .topic-mockup .hd h1 {
@@ -223,14 +223,14 @@ const MOCKUP_CSS = `
   display: flex; align-items: center; justify-content: center;
   line-height: 1;
 }
-.topic-mockup .saju-cell .lab { font-size: 12px; color: var(--c-mute); margin-bottom: 4px; }
+.topic-mockup .saju-cell .lab { font-size: 13px; color: var(--c-mute); margin-bottom: 4px; }
 .topic-mockup .saju-cell .gan, .topic-mockup .saju-cell .ji {
   font-family: 'Noto Serif KR', serif; font-weight: 700; line-height: 1.1;
 }
 .topic-mockup .saju-cell .gan { font-size: 18px; }
 .topic-mockup .saju-cell .ji { font-size: 14px; margin-top: 4px; }
-.topic-mockup .saju-cell .read { display: block; font-size: 12px; color: var(--c-mute); margin-top: 1px; font-weight: 500; font-family: 'Pretendard', sans-serif; }
-.topic-mockup .saju-cell .ten { font-size: 12px; color: var(--c-topic-accent-dark); margin-top: 4px; font-weight: 600; }
+.topic-mockup .saju-cell .read { display: block; font-size: 13px; color: var(--c-mute); margin-top: 1px; font-weight: 500; font-family: 'Pretendard', sans-serif; }
+.topic-mockup .saju-cell .ten { font-size: 13px; color: var(--c-topic-accent-dark); margin-top: 4px; font-weight: 600; }
 .topic-mockup .gan.o-mok, .topic-mockup .ji.o-mok { color: var(--c-mok); }
 .topic-mockup .gan.o-hwa, .topic-mockup .ji.o-hwa { color: var(--c-hwa); }
 .topic-mockup .gan.o-to,  .topic-mockup .ji.o-to  { color: var(--c-to); }
@@ -366,7 +366,7 @@ const MOCKUP_CSS = `
   color: var(--c-topic-accent-dark); line-height: 1;
 }
 .topic-mockup .sip-cell .lvl {
-  font-size: 12px; font-weight: 600; color: var(--c-gold-deep);
+  font-size: 13px; font-weight: 600; color: var(--c-gold-deep);
   margin-top: 4px; letter-spacing: 0.04em;
 }
 .topic-mockup .sip-cell.lv-강함 .lvl { color: var(--c-mok); }
@@ -471,7 +471,7 @@ const MOCKUP_CSS = `
 .topic-mockup .do-list li .num {
   width: 22px; height: 22px; border-radius: 50%;
   background: var(--c-gold-soft); color: var(--c-gold-deep);
-  font-family: 'Noto Serif KR', serif; font-size: 11px; font-weight: 700;
+  font-family: 'Noto Serif KR', serif; font-size: 13px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
 }
 .topic-mockup .do-list li .ti {

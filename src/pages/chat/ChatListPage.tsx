@@ -490,7 +490,7 @@ function SessionCard({
             {room.completed && (
               <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 700,
                   color: C.mute,
                   background: C.line,

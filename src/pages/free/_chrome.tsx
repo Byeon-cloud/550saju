@@ -150,7 +150,7 @@ export function FreeHero({
             background: 'rgba(255,255,255,0.14)',
             padding: '3px 10px',
             borderRadius: 2,
-            fontSize: 12,
+            fontSize: 13,
           }}
         >
           {freeTagLabel}
@@ -464,7 +464,7 @@ export function TodayRelationCard({
     >
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           color: C.goldDeep,
           letterSpacing: '0.15em',
           fontWeight: 600,
@@ -568,7 +568,7 @@ function RelOrbBlock({
       </div>
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           color: C.mute,
           marginTop: 6,
           fontWeight: 600,
@@ -609,7 +609,7 @@ export function TodayOhengRow({ items }: { items: OhengItem[] }) {
     >
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           color: C.goldDeep,
           letterSpacing: '0.15em',
           fontWeight: 600,
@@ -668,7 +668,7 @@ export function TodayOhengRow({ items }: { items: OhengItem[] }) {
               >
                 {it.qty}
                 {it.todayBonus && (
-                  <span style={{ fontSize: 12, marginLeft: 2, color: C.goldDeep }}>
+                  <span style={{ fontSize: 13, marginLeft: 2, color: C.goldDeep }}>
                     {it.todayBonus}
                   </span>
                 )}
@@ -818,7 +818,7 @@ export function TodayTopicGrid({ cards }: { cards: TodayTopicCard[] }) {
                   color: col.accent,
                   padding: '2px 8px',
                   borderRadius: 100,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 700,
                 }}
               >
@@ -907,7 +907,7 @@ export function TodayMeetStack({ items }: { items: TodayMeetItem[] }) {
                 </span>
                 <span
                   style={{
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: accent,
                     background: `${accent}14`,
@@ -973,7 +973,7 @@ export function DreamInputStack({ items }: { items: DreamInputItem[] }) {
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 12,
+              fontSize: 13,
               color: C.goldDeep,
               fontWeight: 700,
               letterSpacing: '0.1em',
@@ -1153,7 +1153,7 @@ export function DreamQuoteStack({ items }: { items: DreamQuoteItem[] }) {
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
                 color: C.goldDeep,
                 background: C.goldSoft,

@@ -310,7 +310,7 @@ function SectionB_ManseTable({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.16em' }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: C.goldDeep, letterSpacing: '0.16em' }}>
             오행 분포
           </span>
         </div>
@@ -339,7 +339,7 @@ function SectionB_ManseTable({
                 <span style={{ color: isZero ? C.mute : C.ink, fontFeatureSettings: '"tnum"' }}>
                   {v}
                 </span>
-                <span style={{ fontSize: 12, color: C.mute, fontWeight: 600 }}>{o}</span>
+                <span style={{ fontSize: 13, color: C.mute, fontWeight: 600 }}>{o}</span>
               </div>
             );
           })}
@@ -357,7 +357,7 @@ function SectionB_ManseTable({
           marginBottom: 10,
         }}
       >
-        <span style={{ fontSize: 12, color: C.mute, alignSelf: 'center', marginRight: 4, letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 13, color: C.mute, alignSelf: 'center', marginRight: 4, letterSpacing: '0.04em' }}>
           정보
         </span>
         {TOGGLE_LABELS.map((t) => {
@@ -383,7 +383,7 @@ function SectionB_ManseTable({
               aria-pressed={on}
             >
               {t.ko}
-              <span style={{ fontSize: 12, marginLeft: 3, opacity: 0.6, fontFamily: SERIF, fontWeight: 500 }}>{t.han}</span>
+              <span style={{ fontSize: 13, marginLeft: 3, opacity: 0.6, fontFamily: SERIF, fontWeight: 500 }}>{t.han}</span>
             </button>
           );
         })}
@@ -426,9 +426,9 @@ function SectionB_ManseTable({
                   >
                     <div style={{ fontSize: 13.5, fontWeight: 800, letterSpacing: '0.04em' }}>
                       {labelsKo[i]}
-                      {isDay && <span style={{ marginLeft: 3, fontSize: 12, color: C.gold }}>(나)</span>}
+                      {isDay && <span style={{ marginLeft: 3, fontSize: 13, color: C.gold }}>(나)</span>}
                     </div>
-                    <div style={{ fontFamily: SERIF, fontSize: 12, marginTop: 2, fontWeight: 600, opacity: 0.75 }}>
+                    <div style={{ fontFamily: SERIF, fontSize: 13, marginTop: 2, fontWeight: 600, opacity: 0.75 }}>
                       {labelsHanja[i]}
                     </div>
                   </th>
@@ -542,7 +542,7 @@ function SectionB_ManseTable({
                                   {ch}
                                 </span>
                                 {sipKo && (
-                                  <span style={{ fontSize: 12, color: C.mute, letterSpacing: '0.02em' }}>
+                                  <span style={{ fontSize: 13, color: C.mute, letterSpacing: '0.02em' }}>
                                     {sipKo.slice(0, 2)}
                                   </span>
                                 )}
@@ -570,7 +570,7 @@ function SectionB_ManseTable({
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                         <span style={{ fontSize: 13.5, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{u.ko}</span>
                         {u.han && (
-                          <span style={{ fontFamily: SERIF, fontSize: 12, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
+                          <span style={{ fontFamily: SERIF, fontSize: 13, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
                             {u.han}
                           </span>
                         )}
@@ -595,7 +595,7 @@ function SectionB_ManseTable({
                           {s.replace('살', '')}
                         </span>
                         {han && (
-                          <span style={{ fontSize: 12, color: C.mute, fontFamily: SERIF, fontWeight: 500, opacity: 0.85 }}>
+                          <span style={{ fontSize: 13, color: C.mute, fontFamily: SERIF, fontWeight: 500, opacity: 0.85 }}>
                             {han}
                           </span>
                         )}
@@ -617,7 +617,7 @@ function SectionB_ManseTable({
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                         <span style={{ fontSize: 13, color: C.inkSoft, fontWeight: 700, lineHeight: 1.1 }}>{np.ko}</span>
                         {np.han && (
-                          <span style={{ fontFamily: SERIF, fontSize: 12, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
+                          <span style={{ fontFamily: SERIF, fontSize: 13, color: C.mute, fontWeight: 500, opacity: 0.85 }}>
                             {np.han}
                           </span>
                         )}
@@ -734,7 +734,7 @@ function BigCharCell({
         </span>
         <span
           style={{
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 600,
             opacity: 0.85,
             letterSpacing: '0.04em',
@@ -743,7 +743,7 @@ function BigCharCell({
           {OHENG_HAN[oheng]}
         </span>
       </div>
-      <div style={{ fontSize: 12, color: C.mute, marginTop: 3, textAlign: 'center', fontWeight: 600 }}>
+      <div style={{ fontSize: 13, color: C.mute, marginTop: 3, textAlign: 'center', fontWeight: 600 }}>
         {chRead}
       </div>
     </td>
@@ -766,7 +766,7 @@ function BigEmptyCell() {
           alignItems: 'center',
           justifyContent: 'center',
           color: C.mute,
-          fontSize: 12,
+          fontSize: 13,
           fontStyle: 'normal',
           background: C.paperSoft,
         }}
@@ -811,7 +811,7 @@ function SipsungCell({ value, isDay }: { value: string; isDay: boolean }) {
           {text}
         </span>
         {hanja && (
-          <span style={{ fontSize: 12, color: isDay ? C.gold : C.mute, fontFamily: SERIF, fontWeight: 600, opacity: 0.85 }}>
+          <span style={{ fontSize: 13, color: isDay ? C.gold : C.mute, fontFamily: SERIF, fontWeight: 600, opacity: 0.85 }}>
             {hanja}
           </span>
         )}

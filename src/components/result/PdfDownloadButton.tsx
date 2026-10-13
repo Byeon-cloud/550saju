@@ -194,7 +194,7 @@ export function PdfDownloadButton({
         </p>
       )}
 
-      <p style={{ fontSize: 12, color: C.mute, marginTop: 10, opacity: 0.75 }}>
+      <p style={{ fontSize: 13, color: C.mute, marginTop: 10, opacity: 0.75 }}>
         ※ 서버에서 안전하게 생성된 PDF 입니다. 다운로드 링크는 24시간 유효합니다.
       </p>
     </div>

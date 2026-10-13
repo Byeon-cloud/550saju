@@ -709,7 +709,7 @@ const MOCKUP_CSS = `
   background: var(--c-gold-soft);
   color: var(--c-gold-deep);
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800;
+  font-size: 13px; font-weight: 800;
   flex-shrink: 0;
   font-family: 'Pretendard', sans-serif;
 }

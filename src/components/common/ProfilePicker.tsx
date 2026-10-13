@@ -179,7 +179,7 @@ function ProfileCardCompact({
                 position: 'absolute',
                 top: -6,
                 right: -4,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 800,
                 padding: '1px 5px',
                 borderRadius: 999,

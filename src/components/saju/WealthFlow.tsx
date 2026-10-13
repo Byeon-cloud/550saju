@@ -344,7 +344,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
               {meta.label}
             </span>
             <span style={{
-              fontSize: 12, color: '#a0937f', fontWeight: 500,
+              fontSize: 13, color: '#a0937f', fontWeight: 500,
             }}>
               {meta.sub}
             </span>
@@ -352,7 +352,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
           <div style={{
             display: 'inline-block', marginTop: 4,
             padding: '2px 8px', borderRadius: 6,
-            background: band.bg, fontSize: 12, fontWeight: 700, color: band.color,
+            background: band.bg, fontSize: 13, fontWeight: 700, color: band.color,
           }}>
             {band.label}
           </div>
@@ -366,7 +366,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
           borderBottom: '1px solid #f0ebe3',
         }}>
           <p style={{
-            fontSize: 12, fontWeight: 700, color: '#B8965A',
+            fontSize: 13, fontWeight: 700, color: '#B8965A',
             marginBottom: 3, letterSpacing: 0.3,
           }}>
             사주 분석
@@ -383,7 +383,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
         borderBottom: '1px solid #f0ebe3',
       }}>
         <p style={{
-          fontSize: 12, fontWeight: 700, color: '#B8965A',
+          fontSize: 13, fontWeight: 700, color: '#B8965A',
           marginBottom: 3, letterSpacing: 0.3,
         }}>
           이 점수의 의미
@@ -399,7 +399,7 @@ function StageCard({ stageKey, score, style, interpretation, action, dayGan, jae
         background: '#faf7f2',
       }}>
         <p style={{
-          fontSize: 12, fontWeight: 700, color: meta.themeColor,
+          fontSize: 13, fontWeight: 700, color: meta.themeColor,
           marginBottom: 3, letterSpacing: 0.3,
         }}>
           실천 조언
@@ -451,7 +451,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
           </div>
           <div>
             <p style={{
-              fontSize: 12, color: '#B8965A', fontWeight: 600,
+              fontSize: 13, color: '#B8965A', fontWeight: 600,
               marginBottom: 1,
             }}>
               나의 재물 체질
@@ -471,7 +471,7 @@ export function WealthFlow({ data, dayGan, jaeCount, sikCount, biCount }: Props)
           border: '1px solid #B8965A18',
         }}>
           <p style={{
-            fontSize: 12, fontWeight: 700, color: '#B8965A',
+            fontSize: 13, fontWeight: 700, color: '#B8965A',
             marginBottom: 3,
           }}>
             핵심 전략

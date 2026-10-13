@@ -211,7 +211,7 @@ export function SajuCardHero({
             background: 'rgba(255,255,255,0.12)',
             padding: '4px 12px',
             borderRadius: 2,
-            fontSize: 12,
+            fontSize: 13,
             color: '#E8E2D4',
             border: `1px solid ${theme.accent}44`,
           }}
@@ -221,7 +221,7 @@ export function SajuCardHero({
         <span
           style={{
             marginLeft: 'auto',
-            fontSize: 12,
+            fontSize: 13,
             color: theme.accent,
             fontWeight: 700,
             letterSpacing: '0.06em',
@@ -492,7 +492,7 @@ export function SajuCardLabelRow({
         </div>
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13,
             color: theme.accentDark,
             marginTop: 4,
             fontWeight: 600,
@@ -531,7 +531,7 @@ export function SajuCardLabelRow({
           >
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 color: it.isDay ? C.goldDeep : C.mute,
                 fontWeight: 700,
                 letterSpacing: '0.04em',
@@ -555,7 +555,7 @@ export function SajuCardLabelRow({
             {it.sub && (
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   color: C.mute,
                   marginTop: 2,
                 }}
@@ -709,7 +709,7 @@ function PillarCardCol({
       {/* 라벨 (한자 + 한국어) */}
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 700,
           color: isDay ? C.goldDeep : C.mute,
           letterSpacing: '0.04em',
@@ -757,7 +757,7 @@ function PillarCardCol({
           {unyoung && (
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 color: C.mute,
                 marginTop: 4,
                 fontFamily: SERIF,
@@ -771,7 +771,7 @@ function PillarCardCol({
       ) : (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13,
             color: C.mute,
             padding: '24px 0',
             fontStyle: 'normal',
@@ -836,7 +836,7 @@ function CharRow({
             borderRadius: 2,
             background: sipsungColor,
             color: '#FFFFFF',
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 800,
             letterSpacing: '0.03em',
             lineHeight: 1.3,
@@ -874,7 +874,7 @@ function CharRow({
       >
         {ch}
       </div>
-      <div style={{ fontSize: 12, color: C.mute, marginTop: 3, fontWeight: 600 }}>{chRead}</div>
+      <div style={{ fontSize: 13, color: C.mute, marginTop: 3, fontWeight: 600 }}>{chRead}</div>
     </div>
   );
 }

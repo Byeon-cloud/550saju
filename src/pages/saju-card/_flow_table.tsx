@@ -255,7 +255,7 @@ function FlowCell({
       {/* 시점 라벨 */}
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 700,
           color: highlighted ? ringColor : '#7A7269',
           letterSpacing: '0.04em',
@@ -277,7 +277,7 @@ function FlowCell({
       {sipsung && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 700,
             color: sipMeta?.color ?? '#7A7269',
             background: sipMeta?.soft ?? 'rgba(122,114,105,0.06)',
@@ -295,7 +295,7 @@ function FlowCell({
       {unseong && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13,
             color: '#7A7269',
             fontFamily: SERIF,
             letterSpacing: '0.02em',
@@ -691,7 +691,7 @@ function MiniFlowCell({
     >
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 700,
           color: '#8C6D3D',
           letterSpacing: '0.06em',
@@ -709,7 +709,7 @@ function MiniFlowCell({
       {sipsung && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 700,
             color: sipMeta?.color ?? '#7A7269',
             background: sipMeta?.soft ?? 'rgba(122,114,105,0.06)',
@@ -720,7 +720,7 @@ function MiniFlowCell({
           {sipsung}
         </div>
       )}
-      <div style={{ fontSize: 12, color: '#7A7269' }}>{bottomLabel}</div>
+      <div style={{ fontSize: 13, color: '#7A7269' }}>{bottomLabel}</div>
     </div>
   );
 }

@@ -220,7 +220,7 @@ function ProfileRow({
               style={{
                 padding: '1px 6px',
                 borderRadius: 4,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 800,
                 background: C.ink,
                 color: C.paper,

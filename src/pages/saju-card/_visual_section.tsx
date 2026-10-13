@@ -389,13 +389,13 @@ function SinsalCard({
           >
             {ko}
           </span>
-          <span style={{ fontFamily: SERIF, fontSize: 12, color: C.mute, fontWeight: 600 }}>
+          <span style={{ fontFamily: SERIF, fontSize: 13, color: C.mute, fontWeight: 600 }}>
             ({card.hanja})
           </span>
         </div>
         <span
           style={{
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 800,
             padding: '2px 6px',
             borderRadius: 2,
@@ -438,7 +438,7 @@ function SinsalCard({
         <div
           style={{
             marginTop: 'auto',
-            fontSize: 12,
+            fontSize: 13,
             color: tone,
             fontWeight: 700,
             letterSpacing: '0.04em',

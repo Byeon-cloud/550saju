@@ -2014,7 +2014,7 @@ function ScoreDonut({ score, color }: { score: number; color: string }) {
         <span style={{ fontSize: 24, fontWeight: 900, color, letterSpacing: '-0.03em' }}>
           {score}
         </span>
-        <span className="sec-caption" style={{ fontSize: 12 }}>점</span>
+        <span className="sec-caption" style={{ fontSize: 13 }}>점</span>
       </div>
     </div>
   );

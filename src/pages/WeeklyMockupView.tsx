@@ -554,8 +554,8 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
                           <stop offset="95%" stopColor={ACCENT} stopOpacity={0.02} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#7A7269' }} axisLine={false} tickLine={false} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#B5AC9E' }} axisLine={false} tickLine={false} width={36} />
+                      <XAxis dataKey="name" tick={{ fontSize: 13, fill: '#7A7269' }} axisLine={false} tickLine={false} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 13, fill: '#B5AC9E' }} axisLine={false} tickLine={false} width={36} />
                       <Area type="monotone" dataKey="점수" stroke={ACCENT} strokeWidth={2}
                         fill="url(#weeklyMockupGrad)"
                         dot={{ r: 2.5, fill: ACCENT, strokeWidth: 0 }}

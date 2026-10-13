@@ -228,7 +228,7 @@ export function CompatResultPage() {
                   fullMark: 100,
                 }))}>
                   <PolarGrid strokeOpacity={0.15} />
-                  <PolarAngleAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                  <PolarAngleAxis dataKey="name" tick={{ fontSize: 13, fill: 'var(--text-secondary)' }} />
                   <Radar dataKey="점수" stroke="#B8965A" fill="#B8965A" fillOpacity={0.2} strokeWidth={2}
                     dot={{ r: 3, fill: '#B8965A', strokeWidth: 0 }} />
                 </RadarChart>

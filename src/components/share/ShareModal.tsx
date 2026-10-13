@@ -103,7 +103,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
               {/* 프리뷰 카드 */}
               <div className="px-5 pt-6 pb-5" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
                 <div className="text-center">
-                  <p className="text-[12px] text-white/30 mb-1">사주500 분석 결과</p>
+                  <p className="text-[13px] text-white/30 mb-1">사주500 분석 결과</p>
                   <p className="text-h1 text-white">{name} 님의 사주</p>
                   {topScore && (
                     <div className="flex items-center justify-center gap-2 mt-3">
@@ -126,7 +126,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                         <rect x="4" y="11" width="16" height="10" rx="2" />
                         <path d="M8 11V7a4 4 0 018 0v4" />
                       </svg>
-                      <p className="text-[12px] font-bold" style={{ color: '#E8D5A8' }}>
+                      <p className="text-[13px] font-bold" style={{ color: '#E8D5A8' }}>
                         잠금 해제하고 전체 보기 →
                       </p>
                     </div>

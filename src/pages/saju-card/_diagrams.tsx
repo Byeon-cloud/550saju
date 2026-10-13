@@ -347,7 +347,7 @@ export function SipsungLegend({ sipsung }: { sipsung: SipSung[] }) {
             }}
           />
           <span style={{ fontWeight: 700, color: '#1A1A1A', minWidth: 32 }}>{cat}</span>
-          <span style={{ color: '#7A7269', fontSize: 12 }}>{meanings[cat]}</span>
+          <span style={{ color: '#7A7269', fontSize: 13 }}>{meanings[cat]}</span>
           <span
             style={{
               marginLeft: 'auto',
@@ -981,7 +981,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
           >
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
                 color: isDay ? '#8C6D3D' : '#7A7269',
                 letterSpacing: '0.05em',
@@ -992,7 +992,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
             </div>
             <div
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 color: '#7A7269',
                 marginBottom: 6,
                 lineHeight: 1.3,
@@ -1027,7 +1027,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
                 </div>
                 <div
                   style={{
-                    fontSize: 12,
+                    fontSize: 13,
                     color: '#7A7269',
                     marginTop: 4,
                     lineHeight: 1.3,
@@ -1039,7 +1039,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
             ) : (
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   color: '#999',
                   fontStyle: 'normal',
                   padding: '12px 0',

@@ -80,7 +80,7 @@ export function OhengCompareBar({
                 {emphasized && (
                   <span
                     style={{
-                      fontSize: 12,
+                      fontSize: 13,
                       marginLeft: 4,
                       padding: '1px 4px',
                       borderRadius: 3,

@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
           {/* ErrorBoundary 는 클래스 컴포넌트 (Hook 불가) — React state corrupt 가능성 → 의도적 풀 리로드 */}
           {/* 2026-05-07 — 디버그용 에러 메시지 노출 (출시 후 제거) */}
           {this.state.error?.message && (
-            <p className="text-tiny text-text-hint mb-6 max-w-[300px] break-all" style={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <p className="text-tiny text-text-hint mb-6 max-w-[300px] break-all" style={{ fontFamily: 'monospace', fontSize: 13 }}>
               {String(this.state.error.message).slice(0, 200)}
             </p>
           )}

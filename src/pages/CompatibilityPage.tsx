@@ -251,7 +251,7 @@ export function CompatibilityPage() {
         {/* 향후 서비스 예고 — 확장 가능 구조 */}
         {/*
         <div className="mt-3 space-y-2">
-          <p className="text-[11px] text-text-disabled text-center">추가 서비스 (준비 중)</p>
+          <p className="text-[13px] text-text-disabled text-center">추가 서비스 (준비 중)</p>
           <button disabled className="w-full card text-left py-3 px-4 opacity-50">
             <p className="text-label text-text-muted">재회운 분석</p>
             <p className="text-caption text-text-hint">이별 후 다시 만날 가능성을 분석해요</p>

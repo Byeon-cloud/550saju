@@ -88,7 +88,7 @@ export function ScoreRing({ label, score, color, delay = 0, topicId }: {
         </div>
       </div>
       <span style={{ color: '#8b7e6f', fontSize: 13 }}>{label}</span>
-      {topicId && <span style={{ color, fontSize: 12, fontWeight: 700, marginTop: -2 }}>심층분석 →</span>}
+      {topicId && <span style={{ color, fontSize: 13, fontWeight: 700, marginTop: -2 }}>심층분석 →</span>}
     </div>
   );
 }
@@ -109,14 +109,14 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
           <div style={{ fontSize: 13, color: '#a0937f', fontWeight: 600 }}>
             {p.label} <span style={{ color: '#c9b99a' }}>{p.sub}</span>
           </div>
-          <div style={{ fontSize: 12, color: '#c9b99a', marginBottom: 8 }}>{p.desc}</div>
+          <div style={{ fontSize: 13, color: '#c9b99a', marginBottom: 8 }}>{p.desc}</div>
           <div style={{ fontSize: 28, color: '#d4ccc0', fontWeight: 900 }}>?</div>
-          <div style={{ fontSize: 12, color: '#c9b99a', marginTop: 4 }}>미입력</div>
+          <div style={{ fontSize: 13, color: '#c9b99a', marginTop: 4 }}>미입력</div>
         </div>
         <div className="w-full h-px" style={{ background: '#e8e0d4' }} />
         <div className="w-full py-2 px-2 text-center">
           <div style={{ fontSize: 28, color: '#d4ccc0', fontWeight: 900 }}>?</div>
-          <div style={{ fontSize: 12, color: '#c9b99a', marginTop: 4 }}>미입력</div>
+          <div style={{ fontSize: 13, color: '#c9b99a', marginTop: 4 }}>미입력</div>
         </div>
         <div
           className="absolute inset-0 flex items-center justify-center"
@@ -124,7 +124,7 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
         >
           <div className="text-center px-2">
             <div style={{ fontSize: 14, fontWeight: 900, color: '#a0937f' }}>時</div>
-            <div style={{ fontSize: 12, color: '#a0937f', marginTop: 4, lineHeight: 1.4, fontWeight: 600 }}>
+            <div style={{ fontSize: 13, color: '#a0937f', marginTop: 4, lineHeight: 1.4, fontWeight: 600 }}>
               출생시간<br />미입력
             </div>
           </div>
@@ -156,13 +156,13 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
       {/* 기둥 라벨 */}
       <div className="w-full pt-3 pb-1 px-2 text-center"
         style={{ background: p.isMe ? 'rgba(184,150,90,0.15)' : '#F8F4EC' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: p.isMe ? '#E8D5A8' : '#6F6557' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: p.isMe ? '#E8D5A8' : '#6F6557' }}>
           {p.label} {p.sub}
         </div>
-        <div style={{ fontSize: 12, color: p.isMe ? 'rgba(255,255,255,0.4)' : '#8B8070' }}>{p.desc}</div>
+        <div style={{ fontSize: 13, color: p.isMe ? 'rgba(255,255,255,0.4)' : '#8B8070' }}>{p.desc}</div>
         {p.isMe && (
           <div className="inline-block rounded-full mt-1 px-2 py-0.5"
-            style={{ background: '#B8965A', fontSize: 12, fontWeight: 800, color: '#fff' }}>
+            style={{ background: '#B8965A', fontSize: 13, fontWeight: 800, color: '#fff' }}>
             나
           </div>
         )}
@@ -178,7 +178,7 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
           <span style={{ fontSize: 13, fontWeight: 700, color: p.isMe ? '#E8D5A8' : gc.main }}>{p.gKr}, {p.gM}</span>
         </div>
         <div className="inline-block rounded-full mt-1.5"
-          style={{ padding: '2px 8px', background: p.isMe ? 'rgba(255,255,255,0.1)' : gc.main + '12', color: p.isMe ? '#E8D5A8' : gc.dark, fontSize: 12, fontWeight: 600 }}>
+          style={{ padding: '2px 8px', background: p.isMe ? 'rgba(255,255,255,0.1)' : gc.main + '12', color: p.isMe ? '#E8D5A8' : gc.dark, fontSize: 13, fontWeight: 600 }}>
           {p.gSip}
         </div>
       </div>
@@ -196,7 +196,7 @@ export function PillarCard({ p, index, total }: { p: V4Pillar; index: number; to
           <span style={{ fontSize: 13, fontWeight: 700, color: p.isMe ? '#E8D5A8' : jc.main }}>{p.jKr}, {p.jM}</span>
         </div>
         <div className="inline-block rounded-full mt-1.5"
-          style={{ padding: '2px 8px', background: p.isMe ? 'rgba(255,255,255,0.1)' : jc.main + '12', color: p.isMe ? '#E8D5A8' : jc.dark, fontSize: 12, fontWeight: 600 }}>
+          style={{ padding: '2px 8px', background: p.isMe ? 'rgba(255,255,255,0.1)' : jc.main + '12', color: p.isMe ? '#E8D5A8' : jc.dark, fontSize: 13, fontWeight: 600 }}>
           {p.jSip}
         </div>
       </div>

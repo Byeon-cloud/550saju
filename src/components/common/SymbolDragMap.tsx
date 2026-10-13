@@ -218,7 +218,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
               }}
             >
               <p style={{ fontSize: 13, fontWeight: 800, color: OHENG_COLORS[oh] }}>{oh}</p>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                 {count > 0 ? `${count}개` : '비어있음'}
               </p>
             </div>

@@ -833,7 +833,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
           if (!p?.available) {
             return (
               <div key={idx} style={{ textAlign: 'center', opacity: 0.4 }}>
-                <div style={{ fontSize: 12, color: C.mute, marginBottom: 4 }}>{labelKo}</div>
+                <div style={{ fontSize: 13, color: C.mute, marginBottom: 4 }}>{labelKo}</div>
                 <div style={{ height: 60, border: `1px dashed ${C.line}`, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: C.mute }}>—</div>
               </div>
             );
@@ -1582,7 +1582,7 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
               {DEBUG_TOOLS && (
                 <>
                   <p className="text-[13.5px] font-bold mt-5 mb-2" style={{ color: C.gold }}>테스트 운 충전 (QA 전용)</p>
-                  <p className="text-[12px] mb-2" style={{ color: 'rgba(248,245,238,0.5)' }}>
+                  <p className="text-[13px] mb-2" style={{ color: 'rgba(248,245,238,0.5)' }}>
                     현재 {getBalance()}운, 누를 때마다 +100운 (로컬). VITE_DEBUG_TOOLS=1 빌드에서만 노출.
                   </p>
                   <button type="button"
@@ -1595,7 +1595,7 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
               )}
 
               <p className="text-[13.5px] font-bold mt-2 mb-2" style={{ color: C.gold }}>프로모션 TEST 호출 (출시 전)</p>
-              <p className="text-[12px] mb-3" style={{ color: 'rgba(248,245,238,0.5)' }}>
+              <p className="text-[13px] mb-3" style={{ color: 'rgba(248,245,238,0.5)' }}>
                 TEST_ 코드로 호출돼요 (실지급 아님). 콘솔 "시작하기" 활성화 조건, 
                 각 1회 호출 후 콘솔에서 상태 확인. ⚠️ 토스앱(QR)에서만 동작.
               </p>

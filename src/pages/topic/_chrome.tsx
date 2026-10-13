@@ -1087,7 +1087,7 @@ export function TopicSajuMini({
     >
       <div
         style={{
-          fontSize: 12,
+          fontSize: 13,
           color: theme.accentDark,
           letterSpacing: '0.15em',
           fontWeight: 600,
@@ -1166,12 +1166,12 @@ export function TopicSajuMini({
                 </span>
               )}
               {/* 시/일/월/년 col-header */}
-              <div style={{ fontSize: 12, color: '#B8965A', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>
+              <div style={{ fontSize: 13, color: '#B8965A', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>
                 {c.label}
               </div>
               {/* 십성 sip-tag (인성/관성/재성/일간 등) — 종합사주 SSOT */}
               {c.ganSip && (
-                <div style={{ fontSize: 12, color: c.ilju ? '#8C6D3D' : theme.accentDark, fontWeight: 600, marginBottom: 4, letterSpacing: '0.02em' }}>
+                <div style={{ fontSize: 13, color: c.ilju ? '#8C6D3D' : theme.accentDark, fontWeight: 600, marginBottom: 4, letterSpacing: '0.02em' }}>
                   {c.ganSip}
                 </div>
               )}
@@ -1202,7 +1202,7 @@ export function TopicSajuMini({
                 </div>
               )}
               {c.ganYum && (
-                <div style={{ fontSize: 12, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
+                <div style={{ fontSize: 13, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
                   {c.ganYum}
                 </div>
               )}
@@ -1234,17 +1234,17 @@ export function TopicSajuMini({
                 </div>
               )}
               {c.jiYum && (
-                <div style={{ fontSize: 12, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
+                <div style={{ fontSize: 13, color: '#9C9C9C', marginTop: 1, fontWeight: 500 }}>
                   {c.jiYum}
                 </div>
               )}
               {/* 일주 라벨 또는 십성 (ganSip 없는 경우 fallback) */}
               {c.ilju && !c.ganSip ? (
-                <div style={{ fontSize: 12, color: '#8C6D3D', marginTop: 4, fontWeight: 700 }}>
+                <div style={{ fontSize: 13, color: '#8C6D3D', marginTop: 4, fontWeight: 700 }}>
                   일간
                 </div>
               ) : c.ten && !c.ganSip ? (
-                <div style={{ fontSize: 12, color: theme.accentDark, marginTop: 4, fontWeight: 600 }}>
+                <div style={{ fontSize: 13, color: theme.accentDark, marginTop: 4, fontWeight: 600 }}>
                   {c.ten}
                 </div>
               ) : null}
@@ -1389,7 +1389,7 @@ export function TopicOhengBalance({
                     top: -10,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 800,
                     color: '#FFFFFF',
                     background: theme.accentDark,

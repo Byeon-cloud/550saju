@@ -368,7 +368,7 @@ function SubScoreRadar({ subScores, color }: { subScores: { axis: string; value:
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={subScores.map(s => ({ name: s.axis, value: s.value, fullMark: 100 }))}>
               <PolarGrid strokeOpacity={0.12} />
-              <PolarAngleAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+              <PolarAngleAxis dataKey="name" tick={{ fontSize: 13, fill: 'var(--text-secondary)' }} />
               <Radar dataKey="value" stroke={color} fill={color} fillOpacity={0.15} strokeWidth={2}
                 dot={{ r: 3, fill: color, strokeWidth: 0 }} />
             </RadarChart>
@@ -918,9 +918,9 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
                       <stop offset="100%" stopColor={color} stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false}
+                  <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#999' }} tickLine={false} axisLine={false}
                     tickFormatter={(v: string) => v.replace('월', '')} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 13, fill: '#999' }} tickLine={false} axisLine={false} />
                   <Area type="monotone" dataKey="score" stroke={color} fill="url(#wealthGrad)"
                     strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
                 </AreaChart>
@@ -1257,7 +1257,7 @@ function DaewoonWealthRail({
             title={`${c.startAge}~${c.endAge}세, ${c.ganji}, ${c.sipsung || '—'} (재물 ${c.intensity})`}
           >
             {isPeak && (
-              <span aria-hidden style={{ position: 'absolute', top: -6, right: -2, fontSize: 12, color: accentColor }}>
+              <span aria-hidden style={{ position: 'absolute', top: -6, right: -2, fontSize: 13, color: accentColor }}>
                 ★
               </span>
             )}
@@ -1579,7 +1579,7 @@ function CareerViz({ data, color }: { data: any; color: string }) {
                   <div className="flex items-center justify-between mb-0.5">
                     <p className="text-[13px] font-bold" style={{ color: p.isCurrent ? color : '#5C4A2E' }}>
                       {p.label || p.age || `단계 ${i + 1}`}
-                      {p.isCurrent && <Tag seal style={{ marginLeft: 8, fontSize: 12.5, padding: '0 6px' }}>지금</Tag>}
+                      {p.isCurrent && <Tag seal style={{ marginLeft: 8, fontSize: 13, padding: '0 6px' }}>지금</Tag>}
                     </p>
                     {p.score != null && <span className="text-[13.5px] font-black" style={{ color: p.isCurrent ? color : '#7A7269' }}>{p.score}</span>}
                   </div>
@@ -2160,7 +2160,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={ca.axes.map((a: any) => ({ axis: a.axis, score: a.score }))}>
                   <PolarGrid stroke="rgba(0,0,0,0.06)" />
-                  <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11, fill: '#8D7B68' }} />
+                  <PolarAngleAxis dataKey="axis" tick={{ fontSize: 13, fill: '#8D7B68' }} />
                   <Radar dataKey="score" stroke={color} fill={color} fillOpacity={0.15} strokeWidth={2} dot={{ r: 3, fill: color }} />
                 </RadarChart>
               </ResponsiveContainer>
@@ -2269,9 +2269,9 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                       <stop offset="100%" stopColor="#8C6D3D" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false}
+                  <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#999' }} tickLine={false} axisLine={false}
                     tickFormatter={(v: string) => v.replace('월', '')} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#999' }} tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 13, fill: '#999' }} tickLine={false} axisLine={false} />
                   <Area type="monotone" dataKey="reunionChance" stroke={color} fill="url(#reunionGrad)"
                     strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} />
                   <Area type="monotone" dataKey="myEnergy" stroke="#8C6D3D" fill="url(#myEnergyGrad)"
@@ -2483,7 +2483,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="grid grid-cols-2 gap-3">
               <div className="hj-entry">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
                     style={{ background: color }}>R</span>
                   <p className="text-[13px] font-bold" style={{ color }}>재회</p>
                 </div>
@@ -2500,7 +2500,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
               </div>
               <div className="hj-entry">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
                     style={{ background: '#3E5F82' }}>N</span>
                   <p className="text-[13px] font-bold text-[#3E5F82]">새 인연</p>
                 </div>
@@ -2979,7 +2979,7 @@ function TopicCollapsibleCard({
         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
       >
         <span
-          className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black text-white flex-shrink-0"
+          className="w-6 h-6 rounded-lg flex items-center justify-center text-[13px] font-black text-white flex-shrink-0"
           style={{ background: color }}
         >
           {index}
@@ -5039,8 +5039,8 @@ export function TopicAnalysisPage() {
                               <stop offset="95%" stopColor={topic.color} stopOpacity={0.02} />
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
-                          <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 13, fill: 'var(--text-hint)' }} axisLine={false} tickLine={false} />
+                          <YAxis domain={[0, 10]} tick={{ fontSize: 13, fill: 'var(--text-disabled)' }} axisLine={false} tickLine={false} />
                           <Area type="monotone" dataKey="점수" stroke={topic.color} strokeWidth={2}
                             fill={`url(#topicGrad-${topicId})`}
                             dot={{ r: 3, fill: topic.color, strokeWidth: 0 }}
