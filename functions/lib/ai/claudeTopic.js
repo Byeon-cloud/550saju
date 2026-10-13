@@ -1018,7 +1018,7 @@ function buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo) {
 }
 /** 2026-09-17 — 사주 산출 점수를 AI 응답에 강제 반영. 프롬프트로 '반드시 이 점수'를 지시하지만 AI 가 어기면
  *  종합사주 추천 카드 점수(같은 computeTopicBaseScore)와 주제 페이지 점수가 달라진다 → 파싱 후 덮어쓴다. */
-function enforceTopicBaseScore(parsed, effectiveBaseScore) {
+function enforceTopicBaseScore(parsed, effectiveBaseScore, partnerName) {
     if (parsed && typeof parsed === 'object' && typeof effectiveBaseScore === 'number' && Number.isFinite(effectiveBaseScore)) {
         parsed.overallScore = effectiveBaseScore;
         // 2026-10-04 — 재회운: 상단 점수 73 · 본문 '재회 가능성 68점' 처럼 한 화면에 두 숫자가 나오던 모순.
@@ -1037,8 +1037,8 @@ function enforceTopicBaseScore(parsed, effectiveBaseScore) {
             parsed = walk(parsed);
         }
     }
-    // 출처 언급·오기 한자·'오후 14시' 표기 정리 (sajuFacts.sanitizeAiOutput)
-    return (0, sajuFacts_1.sanitizeAiOutput)(parsed);
+    // 출처 언급·오기 한자·'오후 14시' 표기 정리 (sajuFacts.sanitizeAiOutput) + 상대 이름 호칭 '이름 님'
+    return (0, sajuFacts_1.addNimToPartnerName)((0, sajuFacts_1.sanitizeAiOutput)(parsed), partnerName);
 }
 async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, partnerInfo, extraInfo) {
     const anthropic = new sdk_1.default({ apiKey });
@@ -1052,7 +1052,7 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
     const SELF_REVIEW_ON = process.env.TOPIC_SELF_REVIEW === '1';
     if (!SELF_REVIEW_ON || call.split) {
         console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선, TOPIC_SELF_REVIEW!=1)`);
-        return enforceTopicBaseScore(await runTopicGeneration(anthropic, call, 'callable'), effectiveBaseScore);
+        return enforceTopicBaseScore(await runTopicGeneration(anthropic, call, 'callable'), effectiveBaseScore, partnerInfo?.name);
     }
     // (TOPIC_SELF_REVIEW=1 전용) 1차 생성 (파싱 실패 시 temperature 0.05 로 1회 재시도)
     let firstText;
@@ -1104,11 +1104,11 @@ async function generateTopicAnalysisAI(apiKey, topicId, sajuData, baseScore, par
     (0, aiUsageLog_1.logAnthropicUsage)('topic', model, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
     const reviewText = review.content[0].text;
     try {
-        return enforceTopicBaseScore((0, promptsV3_1.parseJsonResponse)(reviewText), effectiveBaseScore);
+        return enforceTopicBaseScore((0, promptsV3_1.parseJsonResponse)(reviewText), effectiveBaseScore, partnerInfo?.name);
     }
     catch {
         // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
-        return enforceTopicBaseScore(firstJson, effectiveBaseScore);
+        return enforceTopicBaseScore(firstJson, effectiveBaseScore, partnerInfo?.name);
     }
 }
 /* 🚨 2026-09-15 — 주제 점수를 서버에서 결정론적으로 산출 (지연 0).

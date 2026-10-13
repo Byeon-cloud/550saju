@@ -234,7 +234,7 @@ export function plainTone(s: string): string {
   if (t.indexOf('폭발') >= 0) {
     t = t.replace(/폭발합니다/g, '크게 살아납니다').replace(/폭발해요/g, '크게 살아나요').replace(/폭발한다/g, '크게 살아난다')
       .replace(/폭발하는/g, '크게 살아나는').replace(/폭발할/g, '크게 살아날').replace(/폭발했/g, '크게 살아났')
-      .replace(/폭발적으로/g, '크게').replace(/폭발적인/g, '큰').replace(/이 폭발(?![가-힣])/g, '이 크게 살아남')
+      .replace(/폭발하듯/g, '터지듯').replace(/폭발적으로/g, '크게').replace(/폭발적인/g, '큰').replace(/이 폭발(?![가-힣])/g, '이 크게 살아남')
       .replace(/([가-힣]) 폭발(?![가-힣])/g, (_m: string, c: string) => `${c}${(c.charCodeAt(0) - 0xAC00) % 28 ? '이' : '가'} 크게 살아남`);
   }
   return t;
@@ -274,6 +274,19 @@ function topNameBeforeNim(strs: string[]): string | null {
   let best: string | null = null; let bc = 1;
   for (const [w, c] of Object.entries(cnt)) if (c > bc) { best = w; bc = c; }
   return best;
+}
+/** 2026-10-13 — 상대방 이름 호칭: 결과 안의 '도현의', '도현이' 처럼 님 없이 쓴 상대 이름을 '도현 님의', '도현 님이'로.
+ *  이름을 아는 경우(주제분석 상대 정보)에만 쓰고, 이름 바로 뒤가 조사일 때만 바꾼다(다른 낱말 일부는 건드리지 않음).
+ *  '님'은 받침이 있으니 가→이, 는→은, 를→을, 와→과, 야→이야 로 맞춘다. */
+export function addNimToPartnerName<T>(obj: T, name?: string): T {
+  const nm = String(name || '').trim();
+  if (!/^[가-힣]{2,4}$/.test(nm)) return obj;
+  const J: Record<string, string> = { 가: '이', 는: '은', 를: '을', 와: '과', 야: '이야', 의: '의', 이: '이', 은: '은', 을: '을', 과: '과', 에게: '에게', 도: '도', 께서: '께서', 한테: '한테', 과의: '과의', 와의: '과의' };
+  const re = new RegExp(`(^|[^가-힣])${nm}(와의|과의|에게|께서|한테|가|는|를|와|야|의|이|은|을|과|도)(?=[^가-힣]|$)`, 'g');
+  const fix = (t: string) => t.replace(re, (_m, pre: string, j: string) => `${pre}${nm} 님${J[j] ?? j}`);
+  const walk = (v: any): any => typeof v === 'string' ? fix(v)
+    : Array.isArray(v) ? v.map(walk) : (v && typeof v === 'object') ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : v;
+  try { return walk(obj); } catch { return obj; }
 }
 /** 결과 JSON 의 모든 문자열 정리 (키는 그대로) */
 export function sanitizeAiOutput<T>(obj: T): T {

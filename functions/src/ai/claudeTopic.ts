@@ -12,7 +12,7 @@ import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, TONE_FINAL
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
 import { correctKoreanSolarTime } from '../utils/timeCorrection';
-import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData } from './sajuFacts';
+import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData, addNimToPartnerName } from './sajuFacts';
 
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
@@ -1046,7 +1046,7 @@ export function buildTopicCall(
 
 /** 2026-09-17 — 사주 산출 점수를 AI 응답에 강제 반영. 프롬프트로 '반드시 이 점수'를 지시하지만 AI 가 어기면
  *  종합사주 추천 카드 점수(같은 computeTopicBaseScore)와 주제 페이지 점수가 달라진다 → 파싱 후 덮어쓴다. */
-export function enforceTopicBaseScore(parsed: any, effectiveBaseScore?: number): any {
+export function enforceTopicBaseScore(parsed: any, effectiveBaseScore?: number, partnerName?: string): any {
   if (parsed && typeof parsed === 'object' && typeof effectiveBaseScore === 'number' && Number.isFinite(effectiveBaseScore)) {
     parsed.overallScore = effectiveBaseScore;
     // 2026-10-04 — 재회운: 상단 점수 73 · 본문 '재회 가능성 68점' 처럼 한 화면에 두 숫자가 나오던 모순.
@@ -1064,8 +1064,8 @@ export function enforceTopicBaseScore(parsed: any, effectiveBaseScore?: number):
       parsed = walk(parsed);
     }
   }
-  // 출처 언급·오기 한자·'오후 14시' 표기 정리 (sajuFacts.sanitizeAiOutput)
-  return sanitizeAiOutput(parsed);
+  // 출처 언급·오기 한자·'오후 14시' 표기 정리 (sajuFacts.sanitizeAiOutput) + 상대 이름 호칭 '이름 님'
+  return addNimToPartnerName(sanitizeAiOutput(parsed), partnerName);
 }
 
 export async function generateTopicAnalysisAI(
@@ -1088,7 +1088,7 @@ export async function generateTopicAnalysisAI(
   const SELF_REVIEW_ON = process.env.TOPIC_SELF_REVIEW === '1';
   if (!SELF_REVIEW_ON || call.split) {
     console.info(`[claudeTopic:${topicId}] 2차 자기리뷰 SKIP (속도 우선, TOPIC_SELF_REVIEW!=1)`);
-    return enforceTopicBaseScore(await runTopicGeneration(anthropic, call, 'callable'), effectiveBaseScore);
+    return enforceTopicBaseScore(await runTopicGeneration(anthropic, call, 'callable'), effectiveBaseScore, partnerInfo?.name);
   }
 
   // (TOPIC_SELF_REVIEW=1 전용) 1차 생성 (파싱 실패 시 temperature 0.05 로 1회 재시도)
@@ -1140,10 +1140,10 @@ export async function generateTopicAnalysisAI(
   logAnthropicUsage('topic', model, review, _t3, 'callable'); // C7 best-effort (truncated·cache 포함)
   const reviewText = (review.content[0] as { type: string; text: string }).text;
   try {
-    return enforceTopicBaseScore(parseJsonResponse(reviewText), effectiveBaseScore);
+    return enforceTopicBaseScore(parseJsonResponse(reviewText), effectiveBaseScore, partnerInfo?.name);
   } catch {
     // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
-    return enforceTopicBaseScore(firstJson, effectiveBaseScore);
+    return enforceTopicBaseScore(firstJson, effectiveBaseScore, partnerInfo?.name);
   }
 }
 

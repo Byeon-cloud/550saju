@@ -2622,7 +2622,7 @@ export const generateTopicAnalysisStream = onRequest(
         },
       });
       // 사주 산출 점수 강제 (callable 과 동일 · 종합사주 추천 카드 점수와 일치 보장)
-      parsed = enforceTopicBaseScore(parsed, call.effectiveBaseScore);
+      parsed = enforceTopicBaseScore(parsed, call.effectiveBaseScore, partnerInfo?.name);
 
       // Firestore 저장 (callable 과 동일 구조)
       const reportRef = db.collection('reports').doc();

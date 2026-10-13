@@ -2212,10 +2212,11 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                         {icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-[13.5px] font-bold text-text-primary">{name}</p>
-                          <span className="text-[13px] text-text-hint">({hanja})</span>
-                          <span className="text-[13px] px-1.5 py-0.5 rounded-[3px] bg-[rgba(0,0,0,0.04)] text-text-hint">{subject}</span>
+                        {/* 2026-10-13 — 320px 에서 '두 사람 사이'가 34px 폭에 세 줄로 눌리던 것: 줄 넘김 허용 + 표기 단위로 안 쪼갬 */}
+                        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                          <p className="text-[13.5px] font-bold text-text-primary whitespace-nowrap">{name}</p>
+                          <span className="text-[13px] text-text-hint whitespace-nowrap">({hanja})</span>
+                          <span className="text-[13px] px-1.5 py-0.5 rounded-[3px] bg-[rgba(0,0,0,0.04)] text-text-hint whitespace-nowrap">{subject}</span>
                         </div>
                         <p className="text-[13px] text-text-muted">{summary}</p>
                       </div>
