@@ -11,6 +11,13 @@ const sajuFacts_1 = require("./sajuFacts");
 const promptsV3_1 = require("./promptsV3"); // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 const kstTime_1 = require("../utils/kstTime");
 const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
+/** 2026-10-13 — 다른 콘텐츠와 같은 복구 파서(코드블록 제거, 문자열 안 줄바꿈 이스케이프, jsonrepair). 실패 시 null */
+const tryParse = (text) => { try {
+    return (0, promptsV3_1.parseJsonResponse)(text);
+}
+catch {
+    return null;
+} };
 /**
  * 월별 운세 (2026-07-01).
  *  - onGroup 없음(progressId 미전달·점진 OFF) → 🛡️ 기존 검증된 단일 콜(FULL) 그대로 = 회귀 위험 0.
@@ -68,10 +75,10 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
-    const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch)
+    const parsed = tryParse(reviewText) ?? tryParse(firstText);
+    if (!parsed)
         throw new Error(`월별 운세 ${group} JSON 파싱 실패`);
-    return (0, sajuFacts_1.sanitizeAiOutput)(JSON.parse(jsonMatch[0]));
+    return (0, sajuFacts_1.sanitizeAiOutput)(parsed);
 }
 /**
  * ⚡ async 2차리뷰 — draft (1차만). 로딩 반토막용: 1차 결과를 즉시 클라에 반환 → 유저 조기 열람.
@@ -90,10 +97,9 @@ async function generateMonthlyDraft(apiKey, sajuData, monthInfo) {
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
-    const m = firstText.match(/\{[\s\S]*\}/);
-    if (!m)
+    const draft = tryParse(firstText);
+    if (!draft)
         throw new Error('월별 운세 draft JSON 파싱 실패');
-    const draft = JSON.parse(m[0]);
     draft.year = info.year;
     draft.month = info.month;
     return (0, sajuFacts_1.sanitizeAiOutput)(draft); // 2026-10-11 — 초안 경로가 정리기를 안 거쳐 '씨', 줄표, 외래어가 그대로 나갔음
@@ -119,10 +125,9 @@ async function generateMonthlyRefine(apiKey, sajuData, monthInfo, draft) {
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
-    const m = reviewText.match(/\{[\s\S]*\}/);
-    if (!m)
+    const refined = tryParse(reviewText);
+    if (!refined)
         return (0, sajuFacts_1.sanitizeAiOutput)({ ...draft, year: info.year, month: info.month }); // 리뷰 실패 → draft 유지
-    const refined = JSON.parse(m[0]);
     refined.year = info.year;
     refined.month = info.month;
     return (0, sajuFacts_1.sanitizeAiOutput)(refined);

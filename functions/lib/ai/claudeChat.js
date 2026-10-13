@@ -23,6 +23,8 @@ exports.GUARD_TOKEN = void 0;
 exports.generateChatAnswerAI = generateChatAnswerAI;
 const promptsV3_1 = require("./promptsV3");
 const sajuFacts_1 = require("./sajuFacts");
+/** 2026-10-13 — 답변도 결과 화면과 같은 정리기(이름 님 띄어쓰기 포함) */
+const cleanAnswer = (t) => (0, sajuFacts_1.sanitizeAiOutput)({ a: t }).a;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const parseJson_1 = require("./parseJson");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
@@ -254,14 +256,14 @@ ${question}
     catch (e) {
         // JSON 파싱 실패 → 안전한 fallback (가드는 false, 답변은 원문)
         return {
-            answer: text ? (0, sajuFacts_1.sanitizeText)(text) : '잠시 풀이가 막혔습니다. 다시 한 번 물어봐 주세요.',
+            answer: text ? cleanAnswer(text) : '잠시 풀이가 막혔습니다. 다시 한 번 물어봐 주세요.',
             keywords: ['올해 재물운은?', '연애운 궁금합니다', '건강 쪽도 봐주세요'],
             guarded: false,
             guardCategory: 'none',
         };
     }
     return {
-        answer: typeof parsed.answer === 'string' ? (0, sajuFacts_1.sanitizeText)(parsed.answer) : '', // 2026-10-04 출처·오기 한자·시간 표기 정리
+        answer: typeof parsed.answer === 'string' ? cleanAnswer(parsed.answer) : '', // 2026-10-04 출처·오기 한자·시간 표기 정리
         keywords: Array.isArray(parsed.keywords) && parsed.keywords.length > 0
             ? parsed.keywords.slice(0, 3).map((k) => (0, sajuFacts_1.sanitizeText)(String(k)))
             : ['올해 재물운은?', '연애운 궁금합니다', '건강 쪽도 봐주세요'],

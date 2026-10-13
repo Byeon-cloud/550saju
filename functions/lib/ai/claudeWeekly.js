@@ -11,6 +11,13 @@ const sajuFacts_1 = require("./sajuFacts");
 const promptsV3_1 = require("./promptsV3"); // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 const kstTime_1 = require("../utils/kstTime");
 const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
+/** 2026-10-13 — 다른 콘텐츠와 같은 복구 파서(코드블록 제거, 문자열 안 줄바꿈 이스케이프, jsonrepair). 실패 시 null */
+const tryParse = (text) => { try {
+    return (0, promptsV3_1.parseJsonResponse)(text);
+}
+catch {
+    return null;
+} };
 /**
  * 주간운세 (이번 주 7일) — Claude Sonnet 4.6
  * 2026-06-29 NEW 출시 (5운). 오늘운세(1일)·월운(12개월 거시)와 시간 해상도로 분리된 "이번 주 7일 미시 흐름".
@@ -49,10 +56,10 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
-    const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch)
+    const parsed = tryParse(reviewText) ?? tryParse(firstText);
+    if (!parsed)
         throw new Error('JSON 파싱 실패');
-    return (0, sajuFacts_1.sanitizeAiOutput)(JSON.parse(jsonMatch[0]));
+    return (0, sajuFacts_1.sanitizeAiOutput)(parsed);
 }
 /**
  * ⚡ async 2차리뷰 — draft (1차만). 주간 로딩 반토막: 1차 결과 즉시 반환.
@@ -71,10 +78,10 @@ async function generateWeeklyDraft(apiKey, sajuData, weekDays) {
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
-    const m = firstText.match(/\{[\s\S]*\}/);
-    if (!m)
+    const draft = tryParse(firstText);
+    if (!draft)
         throw new Error('주간운세 draft JSON 파싱 실패');
-    return (0, sajuFacts_1.sanitizeAiOutput)(JSON.parse(m[0]));
+    return (0, sajuFacts_1.sanitizeAiOutput)(draft);
 }
 /**
  * ⚡ async 2차리뷰 — refine (2차만). draft 를 받아 자가 점검·보정 → 최종본.
@@ -97,10 +104,10 @@ async function generateWeeklyRefine(apiKey, sajuData, weekDays, draft) {
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
-    const m = reviewText.match(/\{[\s\S]*\}/);
-    if (!m)
+    const refined = tryParse(reviewText);
+    if (!refined)
         return draft; // 리뷰 실패 → draft 유지
-    return (0, sajuFacts_1.sanitizeAiOutput)(JSON.parse(m[0]));
+    return (0, sajuFacts_1.sanitizeAiOutput)(refined);
 }
 /** weekDays 누락 시 폴백 — 구매일 전날부터 7일(요일 라벨만, 간지 미상). 정상 경로는 항상 클라가 7일 간지 동봉. */
 function fallbackWeek() {

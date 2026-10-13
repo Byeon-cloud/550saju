@@ -195,7 +195,7 @@ async function generateDreamDeep(apiKey, args) {
     }
     catch {
         // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
-        return firstJson;
+        return (0, sajuFacts_1.sanitizeAiOutput)(firstJson); // 2026-10-13 — 리뷰 실패 폴백도 같은 정리기(가운뎃점, 씨, 줄표, 외래어)
     }
 }
 //# sourceMappingURL=claudeDream.js.map
