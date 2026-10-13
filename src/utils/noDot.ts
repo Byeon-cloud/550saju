@@ -134,6 +134,7 @@ export function stripDotsDeep<T>(v: T, name?: string): T {
   const nmKeys = nm && /^[가-힣]{2,4}$/.test(nm) ? (nm.length === 3 ? [nm, nm.slice(1)] : [nm]) : guessed ? [guessed] : [];
   const fix = (s: string): string => {
     let t = plainTone(stripEmDashes(stripMiddleDots(s)));
+    if (t.length <= 24 && /^#+(?=[가-힣])/.test(t)) t = t.replace(/^#+/, '').trim();
     if (nm && t.indexOf('당신') >= 0) t = t.replace(/당신/g, `${nm} 님`);
     // 호칭은 '이름 님' (예전 풀이의 '서윤님은' → '서윤 님은'). 성까지 쓴 이름이면 이름만 쓴 경우도 함께
     if (nmKeys.length && t.indexOf('님') >= 0) for (const n of nmKeys) t = t.split(`${n}님`).join(`${n} 님`);

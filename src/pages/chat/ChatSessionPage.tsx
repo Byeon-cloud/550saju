@@ -15,6 +15,7 @@
 //   - 답변은 일괄 렌더
 
 import type { ReactNode } from 'react';
+import '@/styles/hanji.css';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { hasNativeNavBack } from '@/lib/env';
@@ -107,17 +108,16 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
       </>
     );
   }
+  // 2026-10-13 v9 정리 — 콘텐츠별 색 그라데이션과 큰 한자 워터마크(금지 패턴) 제거 → 먹 바탕 한 장 + 작은 낙관
+  void color;
   return (
     <div style={{
-      background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
-      color: '#F5EFE0', borderRadius: 14, padding: '14px 16px', marginBottom: 8,
-      position: 'relative', overflow: 'hidden',
+      background: '#1A1612',
+      color: '#F5EFE0', borderRadius: 6, padding: '14px 16px', marginBottom: 8,
+      position: 'relative',
     }}>
-      <div style={{
-        position: 'absolute', right: -8, bottom: -18, fontSize: 80, fontWeight: 900,
-        fontFamily: "'Noto Serif KR', serif", color: 'rgba(248,245,238,0.08)', lineHeight: 1,
-      }} aria-hidden>{han}</div>
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', paddingRight: 34 }}>
+        <span className="hj-mark" aria-hidden style={{ position: 'absolute', right: 0, top: 0, borderColor: 'rgba(245,237,223,0.55)', color: '#F5EDDF', background: 'transparent' }}>{han}</span>
         <div style={{ fontSize: 13, letterSpacing: '0.15em', fontWeight: 700, color: 'rgba(248,245,238,0.75)' }}>
           이 풀이를 보고 오셨어요
         </div>
@@ -232,6 +232,45 @@ function buildContextPrompt(ctx: any, userName: string): string {
         }
       });
     }
+  } else if (type === 'compat') {
+    // 2026-10-13 — 궁합(10-07 공개) 결과를 대화로 넘김. 전엔 분기가 없어 AI 가 제목 한 줄만 받았다
+    if (ctx.partnerName) lines.push(`상대: ${plainText(ctx.partnerName)}`);
+    if (ctx.relation) lines.push(`관계: ${plainText(ctx.relation)}`);
+    dataStart = lines.length;
+    if (fullResult?.overallScore != null) lines.push(`궁합 점수: ${fullResult.overallScore}점 / 100`);
+    if (fullResult?.relationshipType) lines.push(`관계 유형: ${plainText(fullResult.relationshipType)}`);
+    if (fullResult?.summary) lines.push(`요약: ${plainText(fullResult.summary).slice(0, 400)}`);
+    if (Array.isArray(fullResult?.categories)) {
+      fullResult.categories.slice(0, 6).forEach((c: any) => {
+        if (!c) return;
+        lines.push(`[${plainText(c.name)} ${c.score != null ? `${c.score}점` : ''}] ${plainText(c.description).slice(0, 100)}`);
+      });
+    }
+    if (Array.isArray(fullResult?.strengths) && fullResult.strengths.length) lines.push(`잘 맞는 점: ${fullResult.strengths.slice(0, 3).map((x: unknown) => plainText(x)).join(' / ')}`);
+    if (Array.isArray(fullResult?.challenges) && fullResult.challenges.length) lines.push(`주의할 점: ${fullResult.challenges.slice(0, 3).map((x: unknown) => plainText(x)).join(' / ')}`);
+    if (fullResult?.ohengHarmony?.description) lines.push(`오행 조화: ${plainText(fullResult.ohengHarmony.relation)} ${plainText(fullResult.ohengHarmony.description).slice(0, 150)}`);
+    if (fullResult?.advice) lines.push(`조언: ${plainText(fullResult.advice).slice(0, 200)}`);
+    if (fullResult?.futureOutlook) lines.push(`앞으로의 흐름: ${plainText(fullResult.futureOutlook).slice(0, 200)}`);
+  } else if (type === 'tojung') {
+    // 2026-10-13 — 신년운세(10-07 공개) 결과를 대화로 넘김
+    if (fullResult?.targetYear) lines.push(`대상 연도: ${fullResult.targetYear}년`);
+    dataStart = lines.length;
+    if (Array.isArray(fullResult?.keywords) && fullResult.keywords.length) lines.push(`핵심 키워드: ${fullResult.keywords.slice(0, 5).map((k: unknown) => plainText(k)).join(' ')}`);
+    const yo = fullResult?.yearOverview || {};
+    if (yo.총운) lines.push(`한 해 총운: ${plainText(yo.총운).slice(0, 300)}`);
+    (['금전운', '직장운', '애정운', '건강운', '결혼운'] as const).forEach((k) => { if (yo[k]) lines.push(`${k}: ${plainText(yo[k]).slice(0, 120)}`); });
+    if (Array.isArray(fullResult?.months)) {
+      fullResult.months.slice(0, 12).forEach((m: any) => {
+        if (!m) return;
+        const sc = m.score != null ? ` ${m.score}점` : '';
+        const kw = m.keyword ? ` ${plainText(m.keyword)}` : '';
+        lines.push(`[${m.month}월${sc}${kw}] ${plainText(m.현대해석 || m.전통해석).slice(0, 90)}`);
+      });
+    }
+    if (Array.isArray(fullResult?.keyDates)) {
+      fullResult.keyDates.slice(0, 6).forEach((k: any) => { if (k?.date) lines.push(`꼭 기억할 날 ${plainText(k.date)}: ${plainText(k.why).slice(0, 80)}`); });
+    }
+    if (fullResult?.luckyAdvice) lines.push(`개운 조언: ${plainText(fullResult.luckyAdvice).slice(0, 150)}`);
   } else if (type === 'weekly') {
     // 2026-09-17 — 주간운세 (WeeklyDetailResponse · 구매일 전날부터 롤링 7일)
     if (ctx.periodLabel) lines.push(`기간: ${ctx.periodLabel} (구매일 전날부터 7일)`);
@@ -652,7 +691,19 @@ export function ChatSessionPage() {
         ? `${userName} 님, "${headShort}" 풀이를 보고 오셨네요. ${monthName} 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`
         : `${userName} 님, ${monthName} 운세를 보고 오셨네요. 한 달 중 더 깊이 살피고 싶은 부분 편하게 물어보세요.`;
       defaultQuestions = ['이 달 가장 힘을 줘도 되는 시기는?', '길일에는 무엇을 하면 좋을까요?', '이 달 재물과 일 중 어디에 집중할까요?'];
-    // compat/daeun/tojung 3종은 출시 lockdown → 인사 분기 없음 (공개 시 추가)
+    } else if (ctxType === 'compat') {
+      // 2026-10-13 — 궁합 결과 → 사주대화 (10-07 공개 후 빠져 있던 인사 분기)
+      const pn = contentContext?.partnerName ? String(contentContext.partnerName) : '그분';
+      const sc = contentContext?.fullResult?.overallScore;
+      greeting = `${userName} 님, ${pn} 님과의 궁합${sc != null ? `(${sc}점)` : ''} 풀이를 보고 오셨네요. 두 분 사이에서 더 깊이 궁금한 점 편하게 물어보세요.`;
+      defaultQuestions = [`${pn} 님과 가장 잘 맞는 시기는?`, '두 사람이 자주 부딪히는 이유는?', '관계를 오래 가게 하려면 무엇을 조심할까요?'];
+    } else if (ctxType === 'tojung') {
+      // 2026-10-13 — 신년운세 결과 → 사주대화
+      const ty = contentContext?.fullResult?.targetYear;
+      greeting = `${userName} 님, ${ty ? `${ty}년 ` : ''}신년운세를 보고 오셨네요. 한 해 중 더 깊이 살피고 싶은 달이나 일을 편하게 물어보세요.`;
+      const yr = ty ? `${ty}년` : '올해';
+      defaultQuestions = [`${yr}에 가장 힘을 줘도 되는 달은?`, '조심해야 할 달은 어떻게 보내면 좋을까요?', `${yr}에는 재물과 일 중 어디에 집중할까요?`];
+    // daeun 은 비공개(lockdown) → 인사 분기 없음 (공개 시 추가)
     } else if (fromTopicLabel) {
       // legacy fallback (Topic 페이지가 contentContext 보다 topicLabel 만 전달했을 때)
       greeting = `${userName} 님의 ${fromTopicLabel} 풀이를 보고 오셨네요. ${fromTopicLabel}에 대해 더 깊이 궁금한 점을 편하게 물어보세요.`;

@@ -11,12 +11,13 @@ import { generateCompatibilityAnalysis } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AILoading } from '@/components/common/AILoading';
-import { FooterCTA } from '@/components/common/FooterCTA';
 import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import type { CompatibilityResponse } from '@/types/report';
 import { sanitizeAiText } from '@/utils/format';
 import { OHENG_MAP } from '@/constants/oheng';
+import { YiGi, Tag, GhostButton } from '@/components/hanji/Hanji';
+import { openChatWithResult } from '@/components/common/NextStepsCard';
 // Phase D'-4 Bundle 2 후속 (#54) — mockup 진본 시각 정렬 (CompatResultPage)
 import {
   EXTENSION_THEME,
@@ -178,16 +179,10 @@ export function CompatResultPage() {
         <FadeIn delay={0.03}>
           <div className="flex flex-wrap items-center justify-center gap-1.5">
             {(result as any).relationshipType && (
-              <span className="text-[13px] font-bold px-3 py-1.5 rounded-full text-white"
-                style={{ background: '#B8965A' }}>
-                {(result as any).relationshipType}
-              </span>
+              <Tag gold>{(result as any).relationshipType}</Tag>
             )}
             {(result as any).keywords?.map((kw: string, i: number) => (
-              <span key={i} className="text-[13px] font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(184,150,90,0.1)', color: '#8C6D3D', border: '1px solid rgba(184,150,90,0.2)' }}>
-                {kw}
-              </span>
+              <Tag key={i}>{String(kw).replace(/^#+/, '')}</Tag>
             ))}
           </div>
         </FadeIn>
@@ -209,12 +204,7 @@ export function CompatResultPage() {
                 <p className="text-h2 text-brand-gold">{result.ohengHarmony.person1Element}</p>
                 <p className="text-caption text-text-muted">{state.person1.name}</p>
               </div>
-              <div className="px-3 py-1.5 rounded-full" style={{
-                background: result.ohengHarmony.relation === '상생' ? 'rgba(78,122,87,0.1)' : 'rgba(176,74,56,0.1)',
-                color: result.ohengHarmony.relation === '상생' ? '#4E7A57' : '#B04A38',
-              }}>
-                <span className="text-label font-bold">{result.ohengHarmony.relation}</span>
-              </div>
+              <Tag seal={result.ohengHarmony.relation !== '상생'}>{result.ohengHarmony.relation}</Tag>
               <div className="text-center">
                 <p className="text-h2 text-brand-gold">{result.ohengHarmony.person2Element}</p>
                 <p className="text-caption text-text-muted">{state.person2.name}</p>
@@ -256,41 +246,24 @@ export function CompatResultPage() {
                     delay={i * 0.1}
                   />
                   {/* 2026-05-04 ml-[76px] 제거 — 모바일에서 한 줄당 12-15자 좁아 가독성 손상 */}
-                  <p className="text-caption text-text-muted mt-1 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeAiText(cat.description) }} />
+                  <p className="mt-2" style={{ fontSize: 14.5, lineHeight: 1.75, color: '#4B4238', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(cat.description) }} />
                 </div>
               ))}
             </div>
           </div>
         </FadeIn>
 
-        {/* 잘 맞는 점 */}
+        {/* 잘 맞는 점 / 주의할 점 — 2026-10-11 금빛, 빨강 동그라미 글머리 두 카드 → 책력의 宜忌 표 하나 */}
         <FadeIn delay={0.2}>
-          <div className="card-gold">
-            <p className="text-h3 text-text-primary mb-3">잘 맞는 점</p>
-            <ul className="space-y-2">
-              {result.strengths.map((s, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-brand-gold mt-0.5">●</span>
-                  <span className="text-body-sm text-text-secondary" dangerouslySetInnerHTML={{ __html: sanitizeAiText(s) }} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </FadeIn>
-
-        {/* 주의할 점 */}
-        <FadeIn delay={0.25}>
-          {/* 2026-05-28 — 좌측 strip 제거 (AI 손톱 디자인). */}
           <div className="card">
-            <p className="text-h3 text-text-primary mb-3">주의할 점</p>
-            <ul className="space-y-2">
-              {result.challenges.map((c, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-func-danger mt-0.5">●</span>
-                  <span className="text-body-sm text-text-secondary" dangerouslySetInnerHTML={{ __html: sanitizeAiText(c) }} />
-                </li>
-              ))}
-            </ul>
+            <p className="text-h3 text-text-primary mb-3">두 사람이 살릴 점과 조심할 점</p>
+            <YiGi
+              good={(result.strengths || []).map((s) => sanitizeAiText(s))}
+              bad={(result.challenges || []).map((c) => sanitizeAiText(c))}
+              goodLabel="잘 맞는 점"
+              badLabel="주의할 점"
+              html
+            />
           </div>
         </FadeIn>
 
@@ -366,8 +339,15 @@ export function CompatResultPage() {
           </p>
         </div>
 
-        {/* 3-part Footer CTA (diff v3 §6) */}
-        <FooterCTA pageKey="compat" backTo="/compat" />
+        {/* 2026-10-13 — 'OO 전체로' + '종합사주 N운' 하단 버튼 제거(05-21 오너: 뜻이 불명확, 업셀은 위 카드 하나) → 이 궁합을 들고 사주대화로 */}
+        <div style={{ marginTop: 24 }}>
+          <GhostButton
+            onClick={() => { void openChatWithResult({ navigate, name: state.person1?.name || '나', profile: state.person1, ctx: { type: 'compat', label: `${state.person1.name} × ${state.person2.name} 궁합`, relation: state.relation, partnerName: state.person2.name, fullResult: result } }); }}
+            ariaLabel="이 궁합으로 사주대화 이어가기"
+          >
+            이 궁합으로 사주대화 이어가기
+          </GhostButton>
+        </div>
       </div>
 
       <ShareModal

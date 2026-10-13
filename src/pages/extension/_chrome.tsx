@@ -20,7 +20,7 @@
 //   - mount는 Bundle 2
 
 import type { ReactNode } from 'react';
-import { INK_HERO_BG } from '@/components/hanji/Hanji';
+import { INK_HERO_BG, Pansim, SERIF } from '@/components/hanji/Hanji';
 // 2026-05-29 H1 fix — 업셀 "10운" 하드코딩 → SSOT 세일가.
 import { getPremiumPrice } from '@/constants/pricing';
 
@@ -1610,79 +1610,17 @@ export function TojungHexagramCard({
   oneLine: string;
   pullQuote?: string;
 }) {
+  // 2026-10-11 — 옅은 그라데이션 카드 → 감지금니 표지 (먹지 + 사방 금선 두 줄 + 판심 + 금빛 세운 글자)
   return (
-    <section
-      style={{
-        margin: '12px 20px 0',
-        background: 'linear-gradient(135deg, #FFFFFF, rgba(140,109,61,0.04))',
-        border: '1px solid rgba(140,109,61,0.30)',
-        borderRadius: 14,
-        padding: '20px 22px',
-        textAlign: 'center',
-        boxShadow: '0 4px 16px rgba(140,109,61,0.06)',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 13,
-          color: '#1A1612',
-          letterSpacing: '0.2em',
-          fontWeight: 700,
-          marginBottom: 12,
-        }}
-      >
-        {yearLabel}
-      </div>
-      <div
-        style={{
-          fontFamily: "'Noto Serif KR', serif",
-          fontSize: 36,
-          fontWeight: 800,
-          color: '#1A1612',
-          letterSpacing: '0.05em',
-          marginBottom: 8,
-          lineHeight: 1.1,
-        }}
-      >
+    <section className="hj-verdict gold" style={{ margin: '14px 20px 0', textAlign: 'center' }}>
+      <Pansim>{yearLabel}</Pansim>
+      <div style={{ fontFamily: SERIF, fontSize: 46, fontWeight: 800, color: '#E2C98F', letterSpacing: '0.12em', lineHeight: 1.1, margin: '4px 0 8px' }}>
         {glyph}
       </div>
-      <div
-        style={{
-          fontSize: 14,
-          color: C.ink,
-          fontWeight: 700,
-          marginBottom: 8,
-        }}
-      >
-        {name}
-      </div>
-      <div
-        style={{
-          fontSize: 13.5,
-          color: C.inkSoft,
-          lineHeight: 1.7,
-          marginBottom: pullQuote ? 16 : 0,
-          wordBreak: 'keep-all',
-        }}
-      >
-        {oneLine}
-      </div>
+      <div style={{ fontSize: 14.5, color: '#D8CCB4', fontWeight: 700, marginBottom: 16 }}>{name}</div>
+      <p className="vt" style={{ textAlign: 'center' }}>{oneLine}</p>
       {pullQuote && (
-        <div
-          style={{
-            fontFamily: "'Noto Serif KR', serif",
-            fontSize: 13.5,
-            fontStyle: 'normal',
-            color: '#1A1612',
-            background: 'rgba(140,109,61,0.06)',
-            borderRadius: 8,
-            padding: '10px 14px',
-            lineHeight: 1.65,
-            wordBreak: 'keep-all',
-          }}
-        >
-          {pullQuote}
-        </div>
+        <p className="vref" style={{ textAlign: 'center', fontFamily: SERIF, fontSize: 15, color: '#E2C98F' }}>{pullQuote}</p>
       )}
     </section>
   );
@@ -1698,51 +1636,14 @@ export interface TojungFourItem {
 }
 
 export function TojungFourBox({ items }: { items: TojungFourItem[] }) {
+  // 2026-10-11 — 둥근 흰 카드 → 금선 두 줄 칸 (프리미엄)
   return (
-    <div
-      style={{
-        margin: '12px 20px 0',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: 8,
-      }}
-    >
+    <div style={{ margin: '12px 20px 0', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
       {items.map((it, i) => (
-        <div
-          key={i}
-          style={{
-            background: '#FFFFFF',
-            border: '1px solid rgba(140,109,61,0.20)',
-            borderRadius: 10,
-            padding: '12px 14px',
-            textAlign: 'center',
-          }}
-        >
-          <div
-            style={{
-              fontSize: 13,
-              color: '#1A1612',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              marginBottom: 6,
-            }}
-          >
-            {it.head}
-          </div>
-          <div
-            style={{
-              fontFamily: "'Noto Serif KR', serif",
-              fontSize: 16,
-              fontWeight: 700,
-              color: C.ink,
-              marginBottom: 4,
-            }}
-          >
-            {it.value}
-          </div>
-          <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.5 }}>
-            {it.desc}
-          </div>
+        <div key={i} className="hj-cell gold">
+          <span className="k" style={{ fontWeight: 700, color: C.ink }}>{it.head}</span>
+          <span className="v big">{it.value}</span>
+          <span className="d">{it.desc}</span>
         </div>
       ))}
     </div>

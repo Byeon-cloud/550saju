@@ -15,6 +15,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import '@/styles/hanji.css';
 import { getPremiumPrice } from '@/constants/pricing'; // 종합사주 가격 SSOT (세일 자동 반영)
 
 // SSOT v1 정렬 (2026-04-22): 'topic:move' / 'topic:exam' 추가. 한자도 SSOT v1 (緣/復/婚/進/學) 기준으로 정렬.
@@ -89,55 +90,37 @@ export function FooterCTA({ pageKey, backTo, primaryTo = '/premium', marginTop =
   const premiumPrice = getPremiumPrice();
   const primaryLabel = `종합사주 ${premiumPrice.actualPrice}운으로 보기`;
 
+  // 2026-10-11 — 한 줄 세 칸(옅은 원 + 알약 둘)이 320px 폰에서 넘쳤음 → 두 줄: [낙관 + 전체로 보기] / [주 버튼]
   return (
-    <div
-      className="mx-auto flex items-center gap-3 px-4"
-      style={{ marginTop, maxWidth: 520 }}
-      data-footer-cta={pageKey}
-    >
-      {/* [1] emblem */}
-      <span
-        className="flex items-center justify-center flex-shrink-0 text-[22px] font-black leading-none rounded-full"
-        style={{
-          width: 44,
-          height: 44,
-          color: cfg.emblemColor,
-          background: 'rgba(184,150,90,0.08)',
-          border: `1px solid ${cfg.emblemColor}33`,
-          fontFamily: "'Noto Serif KR', serif",
-        }}
-        aria-hidden="true"
-      >
-        {cfg.emblem}
-      </span>
-
-      {/* [2] 전체로 보기 */}
-      <button
-        type="button"
-        onClick={onOverview}
-        className="flex-1 h-[44px] rounded-full text-[13px] font-semibold"
-        style={{
-          color: '#3D3D3D',
-          background: '#FFFFFF',
-          border: '1px solid #E5DFD0',
-        }}
-      >
-        {cfg.overviewLabel} →
-      </button>
-
-      {/* [3] 10운으로 시작 (프리미엄 업셀) */}
+    <div className="mx-auto px-4" style={{ marginTop, maxWidth: 520 }} data-footer-cta={pageKey}>
+      <div className="flex items-center gap-2.5">
+        {/* [1] 낙관 */}
+        <span
+          className="hj-mark"
+          style={{ width: 44, height: 44, fontSize: 19, color: cfg.emblemColor, borderColor: cfg.emblemColor }}
+          aria-hidden="true"
+        >
+          {cfg.emblem}
+        </span>
+        {/* [2] 전체로 보기 */}
+        <button
+          type="button"
+          onClick={onOverview}
+          className="hj-ghost"
+          style={{ flex: 1, minWidth: 0, minHeight: 44, fontSize: 14.5 }}
+        >
+          <span>{cfg.overviewLabel}</span>
+        </button>
+      </div>
+      {/* [3] 10운으로 시작 (프리미엄 업셀) — 금색은 누르는 곳에만 */}
       <button
         type="button"
         onClick={onPrimary}
-        className="flex-shrink-0 h-[44px] px-4 rounded-full text-[13px] font-extrabold"
-        style={{
-          color: '#1A1A1A',
-          background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
-          border: '1px solid #B8965A',
-        }}
+        className="hj-cta"
+        style={{ marginTop: 10, minHeight: 50, fontSize: 15.5 }}
         aria-label={`${primaryLabel}, 프리미엄 10섹션 종합 리포트`}
       >
-        {primaryLabel} →
+        <span>{primaryLabel}</span>
       </button>
     </div>
   );

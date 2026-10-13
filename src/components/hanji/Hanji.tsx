@@ -267,8 +267,8 @@ export function Grade({ label, score, unit = '점', phrase, foot, gold }: {
 }
 
 /** 제첨 — 네모 딱지 (유형 이름, 단계) */
-export function Tag({ children, seal, onInk, style }: { children: ReactNode; seal?: boolean; onInk?: boolean; style?: CSSProperties }) {
-  return <span className={`hj-tag${seal ? ' seal' : ''}${onInk ? ' on-ink' : ''}`} style={style}>{children}</span>;
+export function Tag({ children, seal, gold, onInk, style }: { children: ReactNode; seal?: boolean; gold?: boolean; onInk?: boolean; style?: CSSProperties }) {
+  return <span className={`hj-tag${seal ? ' seal' : ''}${gold ? ' gold' : ''}${onInk ? ' on-ink' : ''}`} style={style}>{children}</span>;
 }
 
 /** 카드 제목 앞 작은 낙관 (옅은 색 둥근 한자 타일 대체) */
