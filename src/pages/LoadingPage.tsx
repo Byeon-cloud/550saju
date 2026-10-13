@@ -483,9 +483,9 @@ export function LoadingPage() {
       </AnimatePresence>
 
       {/* ===== 진행바 ===== */}
-      <div className="w-[280px] h-1 bg-border-light rounded-full overflow-hidden">
+      <div className="w-[280px] h-1 bg-border-light overflow-hidden">{/* 2026-10-13 v9 — 둥근 진행바 금지 */}
         <motion.div
-          className="h-full bg-brand-gold rounded-full"
+          className="h-full bg-brand-gold"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -530,8 +530,8 @@ export function LoadingPage() {
                 onClick={() => window.location.reload()}
                 className="flex-1 h-11 rounded-xl text-caption font-semibold"
                 style={{
-                  background: 'linear-gradient(135deg, #B8965A, #8C6D3D)',
-                  color: '#fff',
+                  background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)', // 승인 금 버튼 양식
+                  color: '#17110A',
                 }}
               >
                 다시 시도

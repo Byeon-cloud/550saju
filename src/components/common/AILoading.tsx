@@ -371,15 +371,15 @@ export function AILoading({
                       marginTop: 4,
                       height: 3,
                       background: 'rgba(184,150,90,0.12)',
-                      borderRadius: 999,
+                      borderRadius: 0, // 2026-10-13 v9 — 둥근 진행바 금지
                       overflow: 'hidden',
                     }}
                   >
                     <motion.div
                       style={{
                         height: '100%',
-                        background: `linear-gradient(90deg, ${C.gold}, ${C.goldDeep})`,
-                        borderRadius: 999,
+                        background: C.goldDeep,
+                        borderRadius: 0,
                       }}
                       animate={{ width: ['10%', '85%', '60%', '90%'] }}
                       transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -393,7 +393,7 @@ export function AILoading({
                       marginTop: 4,
                       height: 3,
                       background: 'rgba(0,0,0,0.04)',
-                      borderRadius: 999,
+                      borderRadius: 0,
                     }}
                   />
                 )}
