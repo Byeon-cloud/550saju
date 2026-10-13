@@ -196,7 +196,7 @@ ${Object.entries(elements).filter(([, v]) => v === 0).map(([k]) => `→ ${k} 없
 ${Object.entries(elements).filter(([, v]) => v >= 3).map(([k, v]) => `→ ${k} ${v}개 과다`).join('\n')}
 
 ## 십성: ${sipsung || '미상'}
-## 대운 흐름 (10년 단위, 나이는 만 나이 기준)
+## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 목록의 값을 그대로 인용 — 사용자가 이전/다음/특정 시기 대운을 물어도 위 목록에 있는 간지만 쓰고, 목록에 없는 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지.` : ''}
 ## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}`;

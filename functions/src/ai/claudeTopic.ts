@@ -31,10 +31,15 @@ function computePartnerPillars(p: { birthYear: number; birthMonth: number; birth
   try {
     const hasHour = p.birthHour != null && p.birthHour >= 0;
     let s: Solar;
+    let instant: Solar | null = null;
     if (hasHour) {
       const [cy, cmo, cd, ch, cmi, cs] = correctKoreanSolarTime(
         p.birthYear, p.birthMonth, p.birthDay, p.birthHour as number, p.birthMinute ?? 0, 0,
       );
+      // 2026-10-13 절입 기준 통일 (클라 calculator v3 와 동일) — lunar 절기 시각은 북경시간 기준이라
+      //   연주와 월주는 진태양시에서 30분 더 뺀 북경시간 순간으로 판정. 일주와 시주는 그대로.
+      const bt = new Date(Date.UTC(cy, cmo - 1, cd, ch, cmi, cs) - 30 * 60 * 1000);
+      instant = Solar.fromYmdHms(bt.getUTCFullYear(), bt.getUTCMonth() + 1, bt.getUTCDate(), bt.getUTCHours(), bt.getUTCMinutes(), bt.getUTCSeconds());
       // 2026-07-03 자시(子時) 일주 fix — 클라 calculateSaju 와 동일 정책.
       //   진태양시 보정이 자정을 넘긴 조자시(자정 직후) 는 일주가 전날로 밀리므로,
       //   자정을 넘긴 경우에만 일주=입력일(표준시) 로 되돌리고 시진은 대표 시각으로 재배치
@@ -57,7 +62,12 @@ function computePartnerPillars(p: { birthYear: number; birthMonth: number; birth
     }
     const ec = s.getLunar().getEightChar();
     const day = ec.getDay();
-    return { year: ec.getYear(), month: ec.getMonth(), day, time: hasHour ? ec.getTime() : null, ilgan: day.charAt(0) };
+    const ym = instant ? instant.getLunar() : null;
+    return {
+      year: ym ? ym.getYearInGanZhiExact() : ec.getYear(),
+      month: ym ? ym.getMonthInGanZhiExact() : ec.getMonth(),
+      day, time: hasHour ? ec.getTime() : null, ilgan: day.charAt(0),
+    };
   } catch {
     return null;
   }
@@ -134,7 +144,7 @@ const TOPIC_BOUNDARIES: Record<string, { scope: string; excludes: string[] }> = 
               excludes: ['결혼 timing/배우자 결 단정 (→ 결혼운 영역)', '헤어진 특정인과의 재회 가능성 (→ 재회운 영역)'] },
   reunion:  { scope: '헤어진 사람과의 재결합 가능성, timing, 접촉 방향',
               excludes: ['일반 새 만남 (→ 연애운)', '결혼 결정 (→ 결혼운)'] },
-  marriage: { scope: '결혼 timing, 배우자 결, 결혼 후 생활 패턴',
+  marriage: { scope: '결혼 timing, 배우자 결, 결혼 후 생활 습관',
               excludes: ['연애 일반/썸 (→ 연애운)', '재회 결정 (→ 재회운)'] },
   wealth:   { scope: '돈의 결, 투자, 현금흐름, 재물 timing',
               excludes: ['사업 결정/창업 판단 (→ 사업운)', '직장 수입 구조/승진 (→ 직업운)'] },
@@ -175,7 +185,7 @@ function normalizeTopicIdServer(raw: string): string {
 const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   love: {
     label: '연애운',
-    sections: ['나의 연애 스타일', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 패턴', '올해 연애 흐름과 전략'],
+    sections: ['나의 연애 스타일', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 경향', '올해 연애 흐름과 전략'],
     specificPrompt: `⭐ "와 진짜 내 얘기다" 반응이 나올 정도로 구체적으로.
 
 ## 🚨 일지 배우자궁 4-step 분석 mandate (P1 명리학 정확도)
@@ -247,7 +257,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   },
   wealth: {
     label: '재물운',
-    sections: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '새는 돈 패턴', '올해 재물 전략'],
+    sections: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '돈이 새는 길목', '올해 재물 전략'],
     specificPrompt: `⭐ 돈에 대한 깊이 있는 자기 인식이 가능한 통찰. 사주 8글자 근거 기반.
 
 - 재성(正財/偏財) 위치와 강약으로 "정규직형 vs 사업형 vs 투자형" 판별
@@ -332,7 +342,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     //   user: "직업운 = 어떤 직업이 잘 맞는지 + 왜 명리학적으로 그런지가 핵심".
     //   면접/이직/연봉/면접요일 등 시기성 정보는 exam (합격·이직운) 으로 완전 이전.
     label: '직업운',
-    sections: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '직장 내 인간관계 패턴'],
+    sections: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '직장 내 인간관계 경향'],
     specificPrompt: `⭐ 핵심 = "왜 이 사주에 이 직업이 잘 맞는지" 명리학적 근거 + 평생 적성. 시기성(이직 적기와 면접 요일 등)은 다루지 마 — 그건 합격 이직운 영역.
 
 - 일간 오행 → 기본 성향 (예: "병화 일간 — 밝고 활달, 사람 앞에 서는 자리에 강함")
@@ -384,7 +394,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   },
   marriage: {
     label: '결혼운',
-    sections: ['결혼 적기 분석', '배우자 성향', '결혼 후 생활 패턴', '배우자 가족 관계', '결혼 준비 조언'],
+    sections: ['결혼 적기 분석', '배우자 성향', '결혼 후 생활 습관', '배우자 가족 관계', '결혼 준비 조언'],
     specificPrompt: `결혼을 고민하는 사람에게 사주 specific 깊이 있는 분석의 구체적 조언.
 
 ## 🚨 성별 인지 강제 (2026-05-28)
@@ -488,7 +498,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   },
   health: {
     label: '건강운',
-    sections: ['오행별 취약 장기', '체질 분석', '올해 건강 주의 시기', '정신 건강 패턴', '건강 개선 전략'],
+    sections: ['오행별 취약 장기', '체질 분석', '올해 건강 주의 시기', '정신 건강 경향', '건강 개선 전략'],
     specificPrompt: `오행, 12운성과 신살 기반 건강 결을 깊이 분석. 사주 8글자 + 격국 직접 호명 mandate.
 
 ## 오행-장기 매핑 (정통 명리학)
@@ -547,10 +557,10 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       '두 사람의 오행 궁합 구조',
       '전통 연애 신살(神殺) 분석',
       '재회 가능성과 적기',
-      '월별 재회 에너지 흐름',
+      '월별 재회 기운 흐름',
       '재회 실전 전략',
       '재회 후 관계 변화 예측',
-      '새 인연 vs 재회 — 냉정한 비교',
+      '새 인연 vs 재회: 냉정한 비교',
       '재회 성공을 위한 개운법',
     ],
     specificPrompt: `⭐ 이 분석은 깊이 있는 자기 인식이 가능한 최고 퀄리티여야 합니다.
@@ -572,13 +582,13 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 이별 시점의 대운 변화가 관계에 미친 영향
 - 원진살(怨嗔殺) 해당 여부 → 감정적 소원함의 근본 원인
 - 구체적 상황 묘사: "당시 서로 ~한 상황에서 ~했을 거예요"
-- 헤어진 기간이 주어지면: 그 기간 동안의 에너지 변화도 분석
+- 헤어진 기간이 주어지면: 그 기간 동안의 기운 변화도 분석
 
 2. "상대방의 사주 성향 분석"
 - 상대방 사주는 🔒 서버 확정 간지 블록의 값만 사용 (생년월일로 직접 계산과 추론 절대 금지)
-- 연애/이별에서의 성격 패턴: "이 사람은 ~한 상황에서 ~하는 타입"
-- 현재 감정 상태를 대운/세운 흐름으로 추론
-- 상대방이 재회를 원하는 정도를 사주적으로 분석
+- 연애와 이별에서의 성향: "이 사람은 OO한 상황에서 OO하는 편입니다" 꼴 (OO 은 상대 확정 간지에서 나온 내용)
+- 상대 쪽 지금 흐름은 대운과 세운이 상대 일지를 어떻게 건드리는지로만 말한다 (상대 마음과 감정을 사실처럼 단정 금지)
+- 상대 쪽에서 다시 다가올 여지를 두 사람 사주의 합, 충, 원진과 올해 운으로 짚는다 (상대가 재회를 원한다, 원하지 않는다고 단정 금지)
 
 3. "두 사람의 오행 궁합 구조"
 - 두 사람의 오행 비율 비교 → 보완 관계인지 충돌 관계인지
@@ -607,7 +617,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 양력 월 단위: "양력 O월~O월, 연락의 문이 열립니다"
 - 어떤 계기로 재회가 시작될지 구체적 시나리오
 
-6. "월별 재회 에너지 흐름"
+6. "월별 재회 기운 흐름"
 - 이번 달부터 12개월 — 확정표의 나의 에너지/상대 에너지/재회 기운 수치를 그대로 인용해 흐름을 풀이
 - 에너지가 높은 달에 무엇을 해야 하는지
 - 에너지가 낮은 달에 피해야 할 것
@@ -624,7 +634,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 대운 변화로 인한 관계 개선 포인트
 - 재회 후 3/6/12개월 시나리오
 
-9. "새 인연 vs 재회 — 냉정한 비교"
+9. "새 인연 vs 재회: 냉정한 비교"
 - 감정을 배제한 사주 구조적 비교
 - 재회의 장단점 3개씩 / 새 인연의 장단점 3개씩
 - 새 인연이 더 좋은 경우 솔직하게 말하기
@@ -654,8 +664,8 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
       "partnerProfile": {
         "dominantOheng": "목/화/토/금/수 중 하나 — 제공된 상대방 확정 간지 기준 (재추론 금지)",
         "personality": "상대방 연애 성향 요약 30~45자",
-        "currentEmotion": "현재 감정 상태 15자",
-        "reunionDesire": "0-100 정수 (상대방의 재회 욕구 추정)",
+        "currentEmotion": "두 사람 사주로 본 상대 쪽 지금 흐름 15자. 상대 마음을 단정하지 말고 'OO한 흐름' 꼴로",
+        "reunionDesire": "0-100 정수 (두 사람 사주와 지금 운의 흐름으로 본, 상대 쪽에서 다시 다가올 여지. 상대 마음 추정이 아니다)",
         "loveStyle": "상대 연애 스타일 10자",
         "myVsPartner": "두 사람의 사주 핵심 비교 요약 35자 (예: '목 일간의 유연함이 금 일간의 단호함을 감싸는 상생 구조')",
         "matchPoints": ["잘 맞는 점 + 사주 근거 30자", "잘 맞는 점2 + 근거 30자", "잘 맞는 점3 + 근거 30자"],
@@ -765,7 +775,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   },
   exam: {
     label: '합격 이직운',
-    sections: ['변동의 timing — 올해 합격 이직 기운', '합격 이직 유리 방향과 분야', '면접과 자격시험 결정 시기', '이직 후 3개월 적응 전망', '올해 변동 실전 전략'],
+    sections: ['올해 합격과 변동 기운', '유리한 방향과 분야', '시험, 면접, 결정 시기', '변동 후 적응 전망', '올해 실전 전략'],
     specificPrompt: `⭐ "이 시기에 움직여라/버텨라"를 사주 근거로 단정. 시험, 자격증, 이직, 전직의 변동 timing 과 방향에 집중.
 평생 직업 적성이나 창업은 다루지 않음 (→ 직업운 / 사업운 영역).
 
@@ -1226,7 +1236,7 @@ export function computeTopicBaseScore(topicId: string, d: any): number | undefin
 
 /** 2026-10-09 — 주제 × 상황 섹션 제목 SSOT. buildPrompt 와 스트림 'outline' 이벤트(앱 로딩 스켈레톤 제목)가 같이 쓴다.
  *  상황과 어긋난 제목은 신뢰를 바로 깎는다 — 실측(전체 주제 결과): 썸·연애중 34건이 '인연이 시작되는 시기와 장소'·'사주 궁합이 잘 맞는 이성',
- *  구직중 12건이 '직장 내 인간관계 패턴', 사업 운영중 5건이 '창업 타이밍', 주거 이사 7건이 '이사/이직/유학 전망'. 섹션 개수는 유지. */
+ *  구직중 12건이 '직장 내 인간관계 경향', 사업 운영중 5건이 '창업 타이밍', 주거 이사 7건이 '이사/이직/유학 전망'. 섹션 개수는 유지. */
 /** 2026-10-09 — 다음 주제 연결(nextHooks.topics) 허용 id = 출시 주제 10종 */
 const HOOK_TOPIC_IDS = ['love', 'reunion', 'marriage', 'wealth', 'exam', 'business', 'health', 'move', 'study', 'career'];
 function hookIdList(current: string): string {
@@ -1282,28 +1292,28 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
     case 'love': {
       const ls = String(extraInfo?.loveStatus || '');
       if (ls === 'some' || ls === '썸') {
-        return ['나의 연애 스타일', hasPartner ? '그 사람과 나의 사주 궁합' : '내 사주가 끌리는 사람의 결', '썸이 연애로 이어지는 시기', '썸에서 반복되는 나의 패턴', '올해 연애 흐름과 고백 타이밍'];
+        return ['나의 연애 스타일', hasPartner ? '그 사람과 나의 사주 궁합' : '내 사주가 끌리는 사람', '썸이 연애로 이어지는 시기', '썸에서 되풀이되는 나의 모습', '올해 연애 흐름과 고백 타이밍'];
       }
       if (ls === 'dating' || ls === '연애중') {
-        return ['나의 연애 스타일', hasPartner ? '두 사람의 사주 궁합' : '내 사주로 본 지금 관계의 결', '관계가 깊어지는 시기와 고비', '연애 중 반복되는 패턴', '올해 두 사람의 흐름과 전략'];
+        return ['나의 연애 스타일', hasPartner ? '두 사람의 사주 궁합' : '내 사주로 본 지금 관계', '관계가 깊어지는 시기와 고비', '연애 중 반복되는 경향', '올해 두 사람의 흐름과 전략'];
       }
       return base;
     }
     case 'marriage': {
       if (extraInfo?.relationStatus === 'dating') {
         // 기혼 — 결혼 적기·준비는 무의미 → 부부생활 관점
-        return swap({ '결혼 적기 분석': '올해 부부운의 흐름', '결혼 후 생활 패턴': '부부 생활 패턴', '결혼 준비 조언': '결혼 생활 개선 조언' });
+        return swap({ '결혼 적기 분석': '올해 부부운의 흐름', '결혼 후 생활 습관': '부부 생활 습관', '결혼 준비 조언': '결혼 생활 개선 조언' });
       }
       if (hasPartner) return swap({ '결혼 적기 분석': '두 사람의 결혼 적기', '배우자 성향': '그 사람의 배우자 성향' });
       return swap({ '배우자 성향': '미래 배우자의 성향' });
     }
     case 'career': {
       const js = String(extraInfo?.jobStatus || '');
-      if (js === 'student') return swap({ '직장 내 인간관계 패턴': '첫 직장에서 만날 관계의 결' });
-      if (js === 'jobseeking') return swap({ '직장 내 인간관계 패턴': '입사 후 만날 관계의 결' });
+      if (js === 'student') return swap({ '직장 내 인간관계 경향': '첫 직장에서 만날 사람들' });
+      if (js === 'jobseeking') return swap({ '직장 내 인간관계 경향': '입사 후 만날 사람들' });
       if (js === 'employed') return swap({ '사주가 부르는 직종 TOP 5': '지금 직종과 내 사주의 궁합' });
       // 상황 미선택(실측 절반) — 재직 여부를 모르니 '직장 내'로 단정하지 않는다
-      return swap({ '직장 내 인간관계 패턴': '일터에서 반복되는 관계 패턴' });
+      return swap({ '직장 내 인간관계 경향': '일터에서 반복되는 관계 경향' });
     }
     case 'business': {
       if (extraInfo?.bizStatus === 'running') return swap({ '맞는 업종': '지금 업종과 사주의 궁합', '창업 타이밍': '확장과 전환 타이밍' });
@@ -1312,7 +1322,7 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
     }
     case 'move': {
       const mp = String(extraInfo?.movePurpose || '');
-      if (mp === 'house') return swap({ '이사/이직/유학 전망': '지금 옮겨도 되는가 — 이사 전망', '해외운': '이사 후 생활의 변화' });
+      if (mp === 'house') return swap({ '이사/이직/유학 전망': '지금 옮겨도 되는가, 이사 전망', '해외운': '이사 후 생활의 변화' });
       if (mp === 'study') return swap({ '이사/이직/유학 전망': '유학과 학업 이동 전망', '해외운': '타지에서의 적응운' });
       if (mp === 'abroad') return swap({ '이사/이직/유학 전망': '해외 이주 전망', '해외운': '이주 후 정착운' });
       return swap({ '이사/이직/유학 전망': '이사, 유학, 이주 전망' }); // 이직은 합격·이직운 영역
@@ -1323,9 +1333,9 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
     }
     case 'exam': {
       const ct = String(extraInfo?.changeType || '');
-      if (ct === 'exam') return ['시험 합격운 — 올해 흐름', '합격에 유리한 분야와 방향', '시험과 면접 결정 시기', '학습 컨디션과 슬럼프 관리', '올해 합격 실전 전략'];
-      if (ct === 'jobchange') return ['이직운 — 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정과 면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
-      if (ct === 'career_pivot') return ['직무 전환운 — 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
+      if (ct === 'exam') return ['시험 합격운, 올해 흐름', '합격에 유리한 분야와 방향', '시험과 면접 결정 시기', '학습 컨디션과 슬럼프 관리', '올해 합격 실전 전략'];
+      if (ct === 'jobchange') return ['이직운, 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정과 면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
+      if (ct === 'career_pivot') return ['직무 전환운, 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
       // 미선택(실측 44/51건) — 시험 준비생에게 '이직 후 3개월 적응'이 나가던 문제 → 변동 종류를 단정하지 않는 제목
       return ['올해 합격과 변동 기운', '유리한 방향과 분야', '시험, 면접, 결정 시기', '변동 후 적응 전망', '올해 실전 전략'];
     }
@@ -1692,7 +1702,7 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ${Object.entries(el).filter(([,v]) => v === 0).map(([k]) => `→ ${k} 없음`).join('\n')}
 
 ## 십성: ${sipsung || '미상'}
-## 대운 흐름 (10년 단위, 나이는 만 나이 기준)
+## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 대운 흐름의 값을 그대로 인용 — 이전/다음 대운 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지. 시기 계산은 위 '현재 대운' 간지를 기준으로 하되, 본문에 이전과 다음 대운을 언급할 땐 반드시 위 목록의 간지를 그대로 쓸 것.` : ''}
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}

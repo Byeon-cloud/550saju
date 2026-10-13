@@ -102,13 +102,14 @@ export function gwiinFactsText(args: {
   lines.push(`- 문창귀인(${MUNCHANG[dayGan]}): ${where([MUNCHANG[dayGan]])}`);
   lines.push(`- 학당귀인(${HAKDANG[dayGan]}): ${where([HAKDANG[dayGan]])}`);
   lines.push(`- 태극귀인(${TAEGEUK[dayGan].join(', ')}): ${where(TAEGEUK[dayGan])}`);
+  // 2026-10-13 도화, 역마, 화개는 일지 삼합 기준 하나로 — 앱 신살 카드(src/services/saju/sinsal.ts
+  //   compute12Sinsal, 일지 기준)와 통일. 이전엔 년지 기준도 함께 넣어 화면 카드에 없는 도화를 AI 가 말했다.
   const dayBr = natal.find((n) => n.pos === '일지')?.br;
-  const yearBr = natal.find((n) => n.pos === '년지')?.br;
-  const bases = Array.from(new Set([dayBr, yearBr].filter(Boolean) as string[]));
+  const bases = dayBr ? [dayBr] : [];
   for (const base of bases) {
     const s = samhapOf(base);
     if (!s) continue;
-    const label = base === dayBr && base === yearBr ? '일지와 년지' : base === dayBr ? '일지' : '년지';
+    const label = '일지';
     lines.push(`- 도화(${label} ${base} 기준 → ${s.dohwa}): ${where([s.dohwa])}`);
     lines.push(`- 역마(${label} ${base} 기준 → ${s.yeokma}): ${where([s.yeokma])}`);
     lines.push(`- 화개(${label} ${base} 기준 → ${s.hwagae}): ${where([s.hwagae])}`);

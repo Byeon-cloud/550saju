@@ -8,7 +8,7 @@ exports.generateMonthlyDraft = generateMonthlyDraft;
 exports.generateMonthlyRefine = generateMonthlyRefine;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const sajuFacts_1 = require("./sajuFacts");
-const promptsV3_1 = require("./promptsV3");
+const promptsV3_1 = require("./promptsV3"); // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 const kstTime_1 = require("../utils/kstTime");
 const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
 /**
@@ -50,7 +50,7 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
         model: 'claude-sonnet-4-6',
         max_tokens: maxTokens,
         temperature: 0.1, // 결정론적 — 같은 사주 + 같은 달 = 같은 결과
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -61,9 +61,9 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
         max_tokens: maxTokens,
         temperature: 0.1,
         messages: [
-            { role: 'user', content: prompt },
+            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
             { role: 'assistant', content: firstText },
-            { role: 'user', content: buildReviewPrompt(info, group) },
+            { role: 'user', content: buildReviewPrompt(info, group) + promptsV3_1.TONE_FINAL_CHECK },
         ],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
@@ -86,7 +86,7 @@ async function generateMonthlyDraft(apiKey, sajuData, monthInfo) {
         model: 'claude-sonnet-4-6',
         max_tokens: 10000,
         temperature: 0.1,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -112,9 +112,9 @@ async function generateMonthlyRefine(apiKey, sajuData, monthInfo, draft) {
         max_tokens: 10000,
         temperature: 0.1,
         messages: [
-            { role: 'user', content: prompt },
+            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
             { role: 'assistant', content: JSON.stringify(draft) },
-            { role: 'user', content: buildReviewPrompt(info, 'FULL') },
+            { role: 'user', content: buildReviewPrompt(info, 'FULL') + promptsV3_1.TONE_FINAL_CHECK },
         ],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
@@ -236,7 +236,7 @@ ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 
 - 월간지: ${info.wolGanji} (${info.label}의 월주)
 - 세운간지(올해): ${info.yearGanji}
 
-## 대운 흐름 (10년 단위, 나이는 만 나이 기준)
+## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지와 순서를 절대 바꾸지 말 것.` : ''}
 
@@ -266,8 +266,8 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 🚨 **한자 풀이 형식 강제 (2026-05-05 PD 결단 — '라는 뜻' 같은 회피 X)**:
 한자 등장 시 괄호 안에 **실제 일상어 풀이 텍스트** 동반:
-✅ '병화(丙火, 밝고 활달한 성격)' / '갑오월(甲午月, 추진력이 강하게 도는 달)' / '축미충(丑未沖, 가치관이 자주 흔들리는 자리)'
-✅ '정관(正官, 책임감과 규범을 중요시하는 결)' / '도화살(桃花殺, 사람을 끌어당기는 매력)'
+✅ '병화(丙火, 밝고 활달한 성격)' / '갑오월(甲午月, 추진력이 강하게 도는 달)' / '축미충(丑未沖, 가치관이 자주 흔들리는 때)'
+✅ '정관(正官, 책임감과 규범을 중요시하는 성향)' / '도화살(桃花殺, 사람을 끌어당기는 매력)'
 ❌ '병화(丙火)' 단독 — 풀이 X
 ❌ '병화(丙火, 라는 뜻)' / '병화(丙火, 한자 그대로)' — 추상적 회피 X. 진짜 풀이 텍스트.
 검증법: 한자 (괄호) 부분만 빼고 일상어만 읽었을 때 자연스러운 한국어 문장이 되어야 함.
@@ -291,7 +291,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 동적 작용해야 하는 콘텐츠 = 사주 8글자마다 매번 다른 문장.
 
 ❌ 'X한 달이 됩니다' / '재물운이 좋습니다' (근거 없는 일반론).
-✅ 사주 글자 + 월간지(${info.wolGanji}), 세운간지(${info.yearGanji}) 충돌과 합 직접 호명 — '${info.wolGanji} + 일간 ${ilgan} (~한 작용)', '${info.wolGanji} 월에 일지와 충돌해 ~'.
+✅ 사주 글자 + 월간지(${info.wolGanji}), 세운간지(${info.yearGanji}) 충돌과 합 직접 호명 예: '${info.wolGanji}월이 일간 ${ilgan}과 만나 OO합니다', '${info.wolGanji}월이 일지와 부딪쳐 OO합니다' (OO 은 이 사주에서 실제로 생기는 일로 채운다).
 ✅ ${fieldList} 전부에 사주 8글자 specific 데이터(개수, 자리, 충형, 신살) 또는 월간지/세운간지를 1회 이상 직접 호명 mandatory.
 
 🚨 **example 사용 룰 (회귀 금지)**:

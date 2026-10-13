@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { MYEONGRI_GROUNDS_BLOCK } from './promptsV3';
+import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3';
+import { sanitizeAiOutput } from './sajuFacts';
 import { kstNow } from '../utils/kstTime';
 
 export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Promise<any> {
@@ -10,13 +11,12 @@ export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Prom
     model: 'claude-sonnet-4-6',
     max_tokens: 14000, // 2026-09-16 — 8192 에서 상향. 대운 8~10구간 상세 서술이 8192 를 넘겨 JSON 이 배열 중간에 잘림(2/2 재현). 천장 상향은 출력 내용을 바꾸지 않음.
     temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
-    messages: [{ role: 'user', content: prompt }],
+    messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
   });
 
+  // 2026-10-13 — 다른 콘텐츠와 같은 어조 점검, 같은 복구 파서, 같은 출력 정리기(가운뎃점, '씨', 줄표, 외래어)
   const text = (msg.content[0] as any).text;
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('JSON 파싱 실패');
-  return JSON.parse(jsonMatch[0]);
+  return sanitizeAiOutput(parseJsonResponse(text));
 }
 
 function buildPrompt(d: any): string {
@@ -65,14 +65,14 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ## 십성: ${sipsung || '미상'}
 ## 대운 리스트
 ${daeunList}
-## 대운 흐름 (10년 단위, 나이는 만 나이 기준, 이전→현재→다음 전부 명시)
+## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것, 이전→현재→다음 전부 명시)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunArr[curIdx].간지}(${daeunAge(daeunArr[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}.
 🚨 위 대운 흐름의 간지를 그대로 인용. 임의 생성, swap 절대 금지 — 이전/다음 대운 간지를 데이터 없이 추측하거나 순서를 뒤바꾸지 말고 위 목록 그대로 쓸 것.` : ''}
 ## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
 
 ## ⭐ 소름 포인트
-- 과거 대운: "~했을 가능성이 높습니다"
+- 과거 대운: "OO했을 겁니다"
 - 현재 대운: "지금 느끼시는 ~한 감정은 이 대운 때문입니다"
 - 미래 대운: "~세 무렵에 변화가"
 
@@ -94,16 +94,16 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 📚 **"사주아이" 톤 레퍼 (참고, 모방 X, 우리 특색 살림)**:
 1. **각 섹션 시작 = 일상어 결론 한 줄** (제목 후크 톤)
-   ✅ '겉으로는 차분해 보이지만 속에는 따뜻함을 찾는 마음이 늘 움직이는 분입니다'
+   ✅ 형태: '겉으로는 OO해 보이지만 속은 OO한 분입니다' (OO 은 이 사주에서 나온 내용)
 2. **사주 근거는 두 번째 문장부터, 한자는 1회만** + 즉시 일상어 풀이
 3. **공감 + 위로 + 행동 처방** (가장 강력)
-   ✅ '<strong>본인에게는 가혹한 잣대를 들이대요</strong>. 이제는 본인 행복을 위해 그 섬세함을 써보세요. <strong>완벽하지 않아도 충분히 가치 있는 사람입니다</strong>.'
+   ✅ 형태: '<strong>OO하는 분입니다</strong>. 이제는 OO을 위해 그 OO을 써 보세요.' (공감 한 줄, 행동 한 줄. 예시 문장을 그대로 옮기지 말 것)
 4. **마무리 = 응원 + 구체 행동** (행운 색, 방위, 시기 등 구체)
 
 🚨 **한자 풀이 형식 강제 (2026-05-05 PD 결단 — '라는 뜻' 같은 회피 X)**:
 한자 등장 시 괄호 안에 **실제 일상어 풀이 텍스트** 동반:
-✅ '병화(丙火, 밝고 활달한 성격)' / '신금(辛金, 깔끔하고 단정한 사람)' / '축미충(丑未沖, 가치관이 자주 흔들리는 자리)'
-✅ '정관(正官, 책임감과 규범을 중요시하는 결)' / '도화살(桃花殺, 사람을 끌어당기는 매력)'
+✅ '병화(丙火, 밝고 활달한 성격)' / '신금(辛金, 깔끔하고 단정한 사람)' / '축미충(丑未沖, 가치관이 자주 흔들리는 때)'
+✅ '정관(正官, 책임감과 규범을 중요시하는 성향)' / '도화살(桃花殺, 사람을 끌어당기는 매력)'
 ❌ '병화(丙火)' 단독 — 풀이 X
 ❌ '병화(丙火, 라는 뜻)' / '병화(丙火, 한자 그대로)' — 추상적 회피 X. 진짜 풀이 텍스트.
 검증법: 한자 (괄호) 부분만 빼고 일상어만 읽었을 때 자연스러운 한국어 문장이 되어야 함.
@@ -114,7 +114,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 이 상품은 대운이 핵심이라 특히 단정과 정확해야 합니다. 모든 텍스트 필드(overview, periods의 career/love/wealth/health/advice, currentHighlight, transitionAdvice 등)에 빠짐없이 적용:
 
 1. **애매와 면피 표현 전면 금지 (0건)**: '~일 수 있습니다 / ~인 편입니다 / ~경향이 있습니다 / ~듯합니다 / ~것 같습니다 / ~수도 있습니다' 류 단 한 번도 쓰지 말 것. 모든 문장을 확신 있는 단정형으로 끝낼 것.
-2. **단정형으로**: '당신은 ~한 사람입니다.' '이 대운은 ~한 때입니다.' '이 시기에 ~합니다.'
+2. **단정형으로**: '{유저명} 님은 OO한 사람입니다.' '이 대운은 ~한 때입니다.' '이 시기에 ~합니다.'
 3. **과거 적중(소름 훅)**: '혹시 예전 OO세 무렵에 ~한 일이 있지 않았나요?' '유독 ~할 때 ~하지 않으셨나요?' — 독자가 "어? 내 얘기네?" 하게.
 4. **명령형 솔루션**: '앞으로는 이렇게 하세요.' '~는 피하고 ~를 선택하세요.' — 애매한 권유(X), 분명한 지시(O).
 5. **루즈함 차단**: 같은 메시지를 앞, 중간, 끝에서 반복 금지. 각 단락과 각 필드는 새 정보. 구구절절과 동어반복 금지.
@@ -133,12 +133,12 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ✅ **풀이 작성 규칙**:
 - **첫 문장은 결론** ('{유저명} 님은 ~한 사람입니다')
 - **비유는 한 번만, 즉시 결론 풀이** ('겨울에 태어난 태양 → 즉, ~한 사람')
-- **한자 등장 직후 일상어 풀이 동반** ('병화(丙火) — 즉 밝고 활달한 성격')
+- **한자 등장 직후 일상어 풀이 동반** ('병화(丙火, 밝고 활달한 성격)')
 - 단정 X / 모호 X / 중의 X — 그냥 직접 말하기.
 
 ✅ **변환 예시**:
 - ❌ '도화살(桃花殺)이 강하게 작용합니다.'
-- ✅ '<b>도화살(桃花殺)</b> — 즉 <strong>사람을 끌어당기는 매력</strong>이 강해요.'
+- ✅ '<b>도화살(桃花殺)</b>, 즉 <strong>사람을 끌어당기는 매력</strong>이 강합니다.'
 
 
 🚨 **보일러플레이트 절대 금지 (2026-05-05 audit, 회귀 금지)**

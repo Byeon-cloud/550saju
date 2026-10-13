@@ -8,7 +8,7 @@ exports.generateWeeklyDraft = generateWeeklyDraft;
 exports.generateWeeklyRefine = generateWeeklyRefine;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const sajuFacts_1 = require("./sajuFacts");
-const promptsV3_1 = require("./promptsV3");
+const promptsV3_1 = require("./promptsV3"); // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 const kstTime_1 = require("../utils/kstTime");
 const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
 /**
@@ -31,7 +31,7 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
         model: 'claude-sonnet-4-6',
         max_tokens: 12000,
         temperature: 0.1, // 결정론적 — 같은 사주 + 같은 주 = 같은 결과
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -42,9 +42,9 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
         max_tokens: 12000,
         temperature: 0.1,
         messages: [
-            { role: 'user', content: prompt },
+            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
             { role: 'assistant', content: firstText },
-            { role: 'user', content: buildReviewPrompt(days) },
+            { role: 'user', content: buildReviewPrompt(days) + promptsV3_1.TONE_FINAL_CHECK },
         ],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
@@ -67,7 +67,7 @@ async function generateWeeklyDraft(apiKey, sajuData, weekDays) {
         model: 'claude-sonnet-4-6',
         max_tokens: 12000,
         temperature: 0.1,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -90,9 +90,9 @@ async function generateWeeklyRefine(apiKey, sajuData, weekDays, draft) {
         max_tokens: 12000,
         temperature: 0.1,
         messages: [
-            { role: 'user', content: prompt },
+            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
             { role: 'assistant', content: JSON.stringify(draft) },
-            { role: 'user', content: buildReviewPrompt(days) },
+            { role: 'user', content: buildReviewPrompt(days) + promptsV3_1.TONE_FINAL_CHECK },
         ],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
@@ -137,8 +137,9 @@ function buildPrompt(d, days) {
 - 🚨 **시제(時制) 룰 — 절대 준수**: 이 7일은 '어제(첫날)'부터 시작한다. 즉 dailyBreakdown 의 **첫 항목(어제)과 오늘 이전의 날들은 이미 지나간 날**이다.
   **지난 날(어제~오늘 이전)** → body, action 을 **반드시 과거형**으로: "~였을 겁니다 / ~한 기운이 흘렀어요 / ~을 조심했어야 합니다 / ~하면 좋았어요 / ~한 하루였습니다". 절대 "~하세요 / ~을 조심하세요" 같은 미래와 명령형 X (이미 지난 날에게 명령할 수 없다).
   **오늘 이후(오늘 포함)** → **미래, 현재, 명령형**으로: "~하세요 / ~을 조심하세요 / ~한 기운이 흐릅니다 / ~한 날입니다".
-  예시 — 어제(첫날, 과거형): "어제는 일진과 일지가 부딪쳐 마음이 들떴을 겁니다. 무리한 결정은 피했어야 좋았어요."
-  예시 — 모레(미래형): "모레는 새 출발 기운이 강한 날입니다. 미뤄둔 연락을 먼저 건네 보세요."
+  형태 예시 — 어제(첫날, 과거형): "어제는 OO했을 겁니다. OO은 피했어야 좋았어요."
+  형태 예시 — 모레(미래형): "모레는 OO한 날입니다. OO을 먼저 해 보세요."
+  (OO 은 그날 일진과 이 사주에서 실제로 나오는 내용으로 채운다. 예시 문장을 그대로 옮기지 말 것)
   7일 표에서 어느 날이 '오늘'인지: 첫 항목이 어제이므로 **두 번째 항목(index 1)이 오늘**. 그 앞은 과거형, 그날부터는 미래와 명령형.
 
 ## 사주 원국
@@ -162,7 +163,7 @@ ${weekTable}
 🚨 **독자 = 사주를 1도 모르는 일반인.** 명리 용어(십성, 격국, 충, 합 등)를 문장의 주어/핵심으로 쓰지 말 것 — 주어는 항상 '쉬운 일상 결론'. 괄호 한자는 한 body 당 2개 이하(누적 금지). 누가 읽어도 한 번에 이해되는 짧고 단호한 문장으로.
 
 🚨 **한자 풀이 강제**: 한자 등장 시 괄호 안에 실제 일상어 풀이.
-✅ '갑자일(甲子日, 새 출발 기운이 강한 날)' / '신금(辛金, 깔끔하고 단정한 성격)' / '자오충(子午沖, 마음이 들뜨고 충돌이 잦은 자리)'
+✅ '갑자일(甲子日, 새 출발 기운이 강한 날)' / '신금(辛金, 깔끔하고 단정한 성격)' / '자오충(子午沖, 마음이 들뜨고 충돌이 잦은 때)'
 ❌ '갑자일(甲子日)' 단독 / '(라는 뜻)' 같은 회피 금지.
 
 🚨 **어조 (인플루언서 피드백)**
@@ -173,7 +174,7 @@ ${weekTable}
 5. 동어반복 금지 — 7일이 서로 다른 정보.
 
 🚨 **보일러플레이트 절대 금지** — 7일 각 body 는 그날 일진 간지 × 일간(${ilgan}) 충/합과 생극을 직접 호명. 근거 없는 일반론('좋은 날입니다') 금지.
-✅ 예: '수요일 갑자일(甲子日) — 일간 ${ilgan}과 만나 ~한 기운', '금요일 일진과 일지가 충돌해 ~'.
+✅ 예: '수요일 갑자일(甲子日)은 일간 ${ilgan}과 만나 OO합니다', '금요일은 일진이 일지와 부딪쳐 OO합니다' (OO 은 그날 실제로 생기는 일).
 
 🚨 **example 룰**: 위 예시의 간지(갑자와 신금 등)는 example. 실제로는 ## 사주 원국 의 진짜 8글자 + ## 7일 일진 의 진짜 간지를 인용. '{유저명}' 은 진짜 이름으로. 같은 사주+같은 주 = 같은 결과.
 
