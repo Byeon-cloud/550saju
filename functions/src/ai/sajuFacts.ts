@@ -234,7 +234,7 @@ export function plainTone(s: string): string {
   if (t.indexOf('폭발') >= 0) {
     t = t.replace(/폭발합니다/g, '크게 살아납니다').replace(/폭발해요/g, '크게 살아나요').replace(/폭발한다/g, '크게 살아난다')
       .replace(/폭발하는/g, '크게 살아나는').replace(/폭발할/g, '크게 살아날').replace(/폭발했/g, '크게 살아났')
-      .replace(/폭발하듯/g, '터지듯').replace(/폭발적으로/g, '크게').replace(/폭발적인/g, '큰').replace(/이 폭발(?![가-힣])/g, '이 크게 살아남')
+      .replace(/감정 폭발로/g, '감정이 터져').replace(/감정 폭발/g, '감정 터짐').replace(/폭발하듯/g, '터지듯').replace(/폭발적으로/g, '크게').replace(/폭발적인/g, '큰').replace(/이 폭발(?![가-힣])/g, '이 크게 살아남')
       .replace(/([가-힣]) 폭발(?![가-힣])/g, (_m: string, c: string) => `${c}${(c.charCodeAt(0) - 0xAC00) % 28 ? '이' : '가'} 크게 살아남`);
   }
   return t;
