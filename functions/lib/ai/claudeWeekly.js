@@ -152,6 +152,10 @@ ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 
 ## 이 7일 일진 (오늘 전날부터 흐르는 rolling 7일, 정확 계산 — 이 간지를 그대로 인용, 절대 임의로 바꾸지 말 것)
 ${weekTable}
 
+## 날마다 일진과 원국의 관계 (서버 확정. 합, 충, 형, 해는 아래에 있는 것만 사실이다)
+${days.map((x) => (0, sajuFacts_1.natalRelationsText)(x.ganji, d, `${x.day}요일 ${x.date}`)).filter(Boolean).join(String.fromCharCode(10))}
+→ 위에 없는 합, 충, 형, 해를 지어내지 말 것. '부딪힌다'는 충이나 형으로 확정된 날에만, '묶인다'는 합으로 확정된 날에만 쓴다.
+
 ## 이름: ${d.input?.name || '미상'}, 성별: ${d.input?.gender === 'male' ? '남' : '여'}
 
 ## 출력 (JSON만, 코드블록 없이)

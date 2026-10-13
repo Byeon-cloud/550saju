@@ -236,6 +236,11 @@ ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 
 - 월간지: ${info.wolGanji} (${info.label}의 월주)
 - 세운간지(올해): ${info.yearGanji}
 
+## 이 달 간지와 원국의 관계 (서버 확정. 합, 충, 형, 해는 아래에 있는 것만 사실이다)
+${(0, sajuFacts_1.natalRelationsText)(info.wolGanji, d, '이 달')}
+${(0, sajuFacts_1.natalRelationsText)(info.yearGanji, d, '올해 세운')}
+→ 위에 없는 합, 충, 형, 해를 지어내지 말 것. '부딪힌다'는 충이나 형으로 확정된 것에만, '묶인다'는 합으로 확정된 것에만 쓴다. (2026-10-13 卯戌합을 '부딪힘'으로 쓴 사례)
+
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지와 순서를 절대 바꾸지 말 것.` : ''}

@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { sanitizeAiOutput } from './sajuFacts';
+import { sanitizeAiOutput, natalRelationsText } from './sajuFacts';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 import { kstNow } from '../utils/kstTime';
 import { logAnthropicUsage } from '../shared/aiUsageLog'; // C7 원가 기록 (fire-and-forget)
@@ -249,6 +249,11 @@ ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 
 ## 선택한 달의 간지 (정확 계산 — 이 간지를 그대로 인용, 절대 임의로 바꾸지 말 것)
 - 월간지: ${info.wolGanji} (${info.label}의 월주)
 - 세운간지(올해): ${info.yearGanji}
+
+## 이 달 간지와 원국의 관계 (서버 확정. 합, 충, 형, 해는 아래에 있는 것만 사실이다)
+${natalRelationsText(info.wolGanji, d, '이 달')}
+${natalRelationsText(info.yearGanji, d, '올해 세운')}
+→ 위에 없는 합, 충, 형, 해를 지어내지 말 것. '부딪힌다'는 충이나 형으로 확정된 것에만, '묶인다'는 합으로 확정된 것에만 쓴다. (2026-10-13 卯戌합을 '부딪힘'으로 쓴 사례)
 
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
