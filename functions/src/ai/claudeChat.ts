@@ -16,7 +16,9 @@
 //   - 반환 타입 동일: { answer, keywords, guarded?, guardCategory? }
 
 import { TONE_FINAL_CHECK } from './promptsV3';
-import { sanitizeText } from './sajuFacts';
+import { sanitizeText, sanitizeAiOutput } from './sajuFacts';
+/** 2026-10-13 — 답변도 결과 화면과 같은 정리기(이름 님 띄어쓰기 포함) */
+const cleanAnswer = (t: string): string => sanitizeAiOutput({ a: t }).a;
 import Anthropic from '@anthropic-ai/sdk';
 import { safeParseJson } from './parseJson';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
@@ -272,7 +274,7 @@ ${question}
   } catch (e) {
     // JSON 파싱 실패 → 안전한 fallback (가드는 false, 답변은 원문)
     return {
-      answer: text ? sanitizeText(text) : '잠시 풀이가 막혔습니다. 다시 한 번 물어봐 주세요.',
+      answer: text ? cleanAnswer(text) : '잠시 풀이가 막혔습니다. 다시 한 번 물어봐 주세요.',
       keywords: ['올해 재물운은?', '연애운 궁금합니다', '건강 쪽도 봐주세요'],
       guarded: false,
       guardCategory: 'none',
@@ -280,7 +282,7 @@ ${question}
   }
 
   return {
-    answer: typeof parsed.answer === 'string' ? sanitizeText(parsed.answer) : '', // 2026-10-04 출처·오기 한자·시간 표기 정리
+    answer: typeof parsed.answer === 'string' ? cleanAnswer(parsed.answer) : '', // 2026-10-04 출처·오기 한자·시간 표기 정리
     keywords:
       Array.isArray(parsed.keywords) && parsed.keywords.length > 0
         ? parsed.keywords.slice(0, 3).map((k: any) => sanitizeText(String(k)))

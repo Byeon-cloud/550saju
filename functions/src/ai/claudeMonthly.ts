@@ -1,8 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { sanitizeAiOutput, natalRelationsText } from './sajuFacts';
-import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
+import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 import { kstNow } from '../utils/kstTime';
 import { logAnthropicUsage } from '../shared/aiUsageLog'; // C7 원가 기록 (fire-and-forget)
+
+/** 2026-10-13 — 다른 콘텐츠와 같은 복구 파서(코드블록 제거, 문자열 안 줄바꿈 이스케이프, jsonrepair). 실패 시 null */
+const tryParse = (text: string): any | null => { try { return parseJsonResponse(text) as any; } catch { return null; } };
 
 /**
  * 월별 운세 — 단일월 심층 (2026-06-30 재작업) · Claude Sonnet 4.6
@@ -77,9 +80,9 @@ async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnT
   logAnthropicUsage('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
 
-  const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error(`월별 운세 ${group} JSON 파싱 실패`);
-  return sanitizeAiOutput(JSON.parse(jsonMatch[0]));
+  const parsed = tryParse(reviewText) ?? tryParse(firstText);
+  if (!parsed) throw new Error(`월별 운세 ${group} JSON 파싱 실패`);
+  return sanitizeAiOutput(parsed);
 }
 
 /**
@@ -99,9 +102,8 @@ export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthI
   });
   logAnthropicUsage('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
-  const m = firstText.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error('월별 운세 draft JSON 파싱 실패');
-  const draft = JSON.parse(m[0]);
+  const draft = tryParse(firstText);
+  if (!draft) throw new Error('월별 운세 draft JSON 파싱 실패');
   draft.year = info.year;
   draft.month = info.month;
   return sanitizeAiOutput(draft); // 2026-10-11 — 초안 경로가 정리기를 안 거쳐 '씨', 줄표, 외래어가 그대로 나갔음
@@ -128,9 +130,8 @@ export async function generateMonthlyRefine(apiKey: string, sajuData: any, month
   });
   logAnthropicUsage('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
-  const m = reviewText.match(/\{[\s\S]*\}/);
-  if (!m) return sanitizeAiOutput({ ...draft, year: info.year, month: info.month }); // 리뷰 실패 → draft 유지
-  const refined = JSON.parse(m[0]);
+  const refined = tryParse(reviewText);
+  if (!refined) return sanitizeAiOutput({ ...draft, year: info.year, month: info.month }); // 리뷰 실패 → draft 유지
   refined.year = info.year;
   refined.month = info.month;
   return sanitizeAiOutput(refined);

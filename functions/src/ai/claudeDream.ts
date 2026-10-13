@@ -252,6 +252,6 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
     return sanitizeAiOutput(parseJsonResponse(reviewText));
   } catch {
     // 리뷰 파싱 실패 시 1차 결과 반환 (안전 fallback)
-    return firstJson;
+    return sanitizeAiOutput(firstJson); // 2026-10-13 — 리뷰 실패 폴백도 같은 정리기(가운뎃점, 씨, 줄표, 외래어)
   }
 }

@@ -1,8 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { sanitizeAiOutput, natalRelationsText } from './sajuFacts';
-import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
+import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 import { kstNowDate } from '../utils/kstTime';
 import { logAnthropicUsage } from '../shared/aiUsageLog'; // C7 원가 기록 (fire-and-forget)
+
+/** 2026-10-13 — 다른 콘텐츠와 같은 복구 파서(코드블록 제거, 문자열 안 줄바꿈 이스케이프, jsonrepair). 실패 시 null */
+const tryParse = (text: string): any | null => { try { return parseJsonResponse(text) as any; } catch { return null; } };
 
 /**
  * 주간운세 (이번 주 7일) — Claude Sonnet 4.6
@@ -45,9 +48,9 @@ export async function generateWeeklyFortune(apiKey: string, sajuData: any, weekD
   logAnthropicUsage('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
 
-  const jsonMatch = reviewText.match(/\{[\s\S]*\}/) || firstText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('JSON 파싱 실패');
-  return sanitizeAiOutput(JSON.parse(jsonMatch[0]));
+  const parsed = tryParse(reviewText) ?? tryParse(firstText);
+  if (!parsed) throw new Error('JSON 파싱 실패');
+  return sanitizeAiOutput(parsed);
 }
 
 /**
@@ -67,9 +70,9 @@ export async function generateWeeklyDraft(apiKey: string, sajuData: any, weekDay
   });
   logAnthropicUsage('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
-  const m = firstText.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error('주간운세 draft JSON 파싱 실패');
-  return sanitizeAiOutput(JSON.parse(m[0]));
+  const draft = tryParse(firstText);
+  if (!draft) throw new Error('주간운세 draft JSON 파싱 실패');
+  return sanitizeAiOutput(draft);
 }
 
 /**
@@ -93,9 +96,9 @@ export async function generateWeeklyRefine(apiKey: string, sajuData: any, weekDa
   });
   logAnthropicUsage('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
-  const m = reviewText.match(/\{[\s\S]*\}/);
-  if (!m) return draft; // 리뷰 실패 → draft 유지
-  return sanitizeAiOutput(JSON.parse(m[0]));
+  const refined = tryParse(reviewText);
+  if (!refined) return draft; // 리뷰 실패 → draft 유지
+  return sanitizeAiOutput(refined);
 }
 
 /** weekDays 누락 시 폴백 — 구매일 전날부터 7일(요일 라벨만, 간지 미상). 정상 경로는 항상 클라가 7일 간지 동봉. */
