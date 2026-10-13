@@ -43,7 +43,7 @@ export function NextStepsCard({ topics, questions, onTopic, onAsk, title = '이 
     <section
       aria-label={title}
       style={{
-        background: 'linear-gradient(180deg, #FFFDF8 0%, #FBF6EA 100%)',
+        background: '#FFFDF8',
         border: `1px solid ${C.line}`,
         borderRadius: 16,
         padding: '18px 16px 14px',

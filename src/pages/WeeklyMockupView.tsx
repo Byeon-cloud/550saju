@@ -282,7 +282,7 @@ const MOCKUP_CSS = `
   padding: 14px; transition: all .2s; position: relative;
 }
 .weekly-mockup .day-card.is-today { border: 2px solid var(--c-week); box-shadow: 0 2px 10px rgba(140,109,61,0.16); }
-.weekly-mockup .day-card.is-past { opacity: 0.78; background: linear-gradient(180deg, #fff 0%, #FBF8F2 100%); }
+.weekly-mockup .day-card.is-past { opacity: 0.78; background: #FBF8F2; }
 .weekly-mockup .day-card .day-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .weekly-mockup .day-card .day-head-left { display: flex; align-items: center; gap: 10px; }
 .weekly-mockup .day-card .day-orb {
@@ -332,12 +332,12 @@ const MOCKUP_CSS = `
 
 /* §04 이번 주 교훈 (pullquote 톤) */
 .weekly-mockup .lesson {
-  background: linear-gradient(135deg, rgba(140,109,61,.07), rgba(184,150,90,.08));
-  border-radius: 10px; padding: 30px 20px 18px; margin-top: 14px;
-  font-family: 'Noto Serif KR', serif; font-size: 14.5px; line-height: 1.8; color: #1a1a1a;
+  background: #FFFDF8; border: 1px solid rgba(140,109,61,.35); /* 2026-10-13 v9 — 그라데이션 상자 대신 종이와 가는 선 */
+  border-radius: 2px; padding: 20px 20px 18px; margin-top: 14px;
+  font-family: 'Noto Serif KR', serif; font-size: 15.5px; line-height: 1.8; color: #1a1a1a;
   font-weight: 500; word-break: keep-all; position: relative;
 }
-.weekly-mockup .lesson::before { content: '"'; position: absolute; top: 6px; left: 14px; font-family: 'Noto Serif KR', serif; font-size: 42px; line-height: 1; color: rgba(140,109,61,0.30); font-weight: 700; }
+.weekly-mockup .lesson::before { display: none; content: '"'; position: absolute; top: 6px; left: 14px; font-family: 'Noto Serif KR', serif; font-size: 42px; line-height: 1; color: rgba(140,109,61,0.30); font-weight: 700; }
 .weekly-mockup .lesson strong { color: var(--c-week-deep); font-weight: 700; background: linear-gradient(180deg, transparent 55%, rgba(140,109,61,.22) 55%); padding: 0 3px; }
 
 /* Actions + notice (DailyMockupView 동일) */
@@ -350,9 +350,9 @@ const MOCKUP_CSS = `
 
 .weekly-mockup .share-btn {
   margin: 16px 20px 0; width: calc(100% - 40px);
-  background: linear-gradient(135deg, var(--c-week) 0%, var(--c-week-deep) 100%);
-  color: #fff; border: none; border-radius: 12px; padding: 14px;
-  font-size: 14px; font-weight: 700; cursor: pointer; appearance: none; font-family: inherit;
+  background: linear-gradient(180deg, var(--hj-gold-hi, #D2B477) 0%, var(--hj-gold, #B8965A) 100%); /* 2026-10-13 승인 금 버튼 양식 */
+  color: #17110A; border: none; border-radius: 14px; padding: 15px;
+  font-size: 15px; font-weight: 800; cursor: pointer; appearance: none; font-family: inherit;
 }
 
 .weekly-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed var(--c-card-line); font-size: 13px; line-height: 1.65; color: #9A8B70; text-align: center; letter-spacing: .01em; }
@@ -451,7 +451,7 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
         <header className="hd">
           <div className="top">
             <span className="badge">주간운세</span>
-            <span>{profile?.name || '당신'} 님</span>
+            <span>{profile?.name ? `${profile.name} 님` : '내 사주'}</span>
             <span className="span-tag">오늘부터 7일</span>
           </div>
           <h1 dangerouslySetInnerHTML={safeHtml(weekHeadline)} />

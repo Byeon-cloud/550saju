@@ -111,7 +111,7 @@ function PremiumDarkHeader({
   return (
     <header
       style={{
-        background: 'linear-gradient(180deg, #1a1a1a 0%, #2a2520 100%)',
+        background: '#1A1612', // 2026-10-13 v9 먹 단색
         color: '#fff',
         padding: '14px 20px 12px',
         display: 'flex',

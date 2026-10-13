@@ -90,7 +90,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
       <section
         className="mx-4 mt-4 rounded-2xl p-6"
         style={{
-          background: 'linear-gradient(180deg, #FFFFFF 0%, #F8F5EE 100%)',
+          background: '#FFFDF8',
           border: '1px solid #EDEAE0',
           boxShadow: '0 1px 2px rgba(47,42,35,0.04), 0 8px 24px rgba(47,42,35,0.04)',
         }}

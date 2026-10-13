@@ -121,7 +121,7 @@ export function SymbolDragMap({ symbols, onComplete }: SymbolDragMapProps) {
                       {s.correctOheng}({s.correctOheng === '목' ? '木' : s.correctOheng === '화' ? '火' : s.correctOheng === '토' ? '土' : s.correctOheng === '금' ? '金' : '水'})
                     </span>
                     {correct ? (
-                      <span style={{ fontSize: 13, color: '#4E7A57', fontWeight: 700 }}>✓ 맞음</span>
+                      <span style={{ fontSize: 13, color: '#4E7A57', fontWeight: 700 }}>맞음</span>
                     ) : (
                       <span style={{ fontSize: 13, color: '#6F6557', fontWeight: 700 }}>
                         (선택: {userMap[s.id]})

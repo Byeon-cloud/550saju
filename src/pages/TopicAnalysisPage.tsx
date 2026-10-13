@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import '@/styles/hanji.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
@@ -2988,15 +2989,9 @@ function TopicCollapsibleCard({
         <p className="text-h3 text-text-primary flex-1 text-left">{title}</p>
         <span
           aria-hidden="true"
-          className="flex-shrink-0 text-[13px]"
-          style={{
-            color,
-            transform: open ? 'rotate(180deg)' : 'none',
-            transition: 'transform 0.2s ease',
-          }}
-        >
-          ▾
-        </span>
+          className={`hj-chev${open ? ' up' : ''}`}
+          style={{ color, marginRight: 4 }}
+        />
       </button>
       {open && (
         <div className="mt-3">

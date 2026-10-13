@@ -1,3 +1,4 @@
+import './devQaRaf'; // 개발 서버 전용 점검 보조 (배포 빌드에서는 빠짐)
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';

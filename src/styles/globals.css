@@ -242,8 +242,8 @@
   }
 
   .card-navy {
-    background: linear-gradient(135deg, #1A1612 0%, #2A231C 100%);
-    border-radius: 20px;
+    background: #1A1612; /* 2026-10-13 v9 — 먹 단색 */
+    border-radius: 6px;
     padding: 20px;
     color: white;
     box-shadow: var(--shadow-navy);
@@ -334,7 +334,7 @@
   /* ===== 구분선 ===== */
   .divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-default), transparent);
+    background: var(--border-default); /* 2026-10-13 v9 — 양 끝이 흐려지는 선 대신 괘선 */
   }
 
   /* ===== 스켈레톤 ===== */
@@ -419,7 +419,7 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
   .hover-lift { transition: all 0.25s var(--ease-out); }
-  .hover-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .hover-lift:hover { transform: none; box-shadow: none; } /* 2026-10-13 v9 — 호버 들림 그림자 금지(클래스는 남김) */
 
   .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
   .floating { animation: float 3s ease-in-out infinite; }
@@ -605,13 +605,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #C9B08A 0%, #B8965A 100%);
-    color: #FFFFFF;
+    background: linear-gradient(180deg, #D2B477 0%, #B8965A 100%); /* 2026-10-13 승인 금 버튼(.hj-cta)과 같은 양식 */
+    color: #17110A;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -0.015em;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     cursor: pointer;
     transition: transform 0.12s ease, box-shadow 0.2s ease;
     box-shadow: 0 2px 6px rgba(184, 150, 90, 0.3);

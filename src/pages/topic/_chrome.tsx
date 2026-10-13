@@ -25,6 +25,7 @@
 //   - SSOT 토큰만 사용 (banned: #A08B6A/#F0E8D9/#7F6B4E/#B8965A/#8C6D3D)
 
 import { useState, useEffect, useRef, type ReactNode } from 'react';
+import '@/styles/hanji.css';
 import { INK_HERO_BG, HJ, SERIF, hanjaNum, Verdict, Note, Grade, Tag } from '@/components/hanji/Hanji';
 
 /* ══════════════════════════════════════════════════════════════════
@@ -568,12 +569,10 @@ export function TopicSection({
               flexShrink: 0,
               fontSize: 13,
               color: HJ.ink2,
-              transform: open ? 'rotate(180deg)' : 'none',
-              transition: 'transform 0.2s ease',
+              marginRight: 4,
             }}
-          >
-            ▾
-          </span>
+            className={`hj-chev${open ? ' up' : ''}`}
+          />
         )}
       </div>
       {sub && (
@@ -1128,7 +1127,7 @@ export function TopicSajuMini({
               key={i}
               style={{
                 background: c.ilju
-                  ? 'linear-gradient(180deg, rgba(184,150,90,0.18) 0%, rgba(184,150,90,0.08) 100%)'
+                  ? 'rgba(184,150,90,0.12)'
                   : '#fff',
                 borderRadius: 10,
                 padding: '10px 4px 8px',

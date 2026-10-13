@@ -373,7 +373,7 @@ export function DailyFortunePage() {
       // STEP 2A — 종합사주 base 점수 (subScores ±2 한도 강제용)
       const baseScores100 = computeDailyBase100(profile.sajuData);
       const callPayload = {
-        name: profile.name || '당신',
+        name: profile.name || '',
         sajuData: profile.sajuData,
         date: dayInfo.date,
         weekday: dayInfo.weekday,
@@ -671,7 +671,7 @@ export function DailyFortunePage() {
           {hasAnyProfile && phase === 'loading' && (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <AILoading
-                name={selectedProfile?.name ?? '당신'}
+                name={selectedProfile?.name ?? ''}
                 type="오늘의 운세"
                 sajuData={selectedProfile?.sajuData}
                 steps={[

@@ -2575,7 +2575,7 @@ function CollapsibleSection({
           {hint && <div className="section-sub">{hint}</div>}
         </div>
         <div className={`sec-toggle${open ? '' : ' collapsed'}`} aria-hidden>
-          <span className="chev">▼</span> {open ? '접기' : '펼치기'}
+          <span className="chev" aria-hidden="true" /> {open ? '접기' : '펼치기'}
         </div>
       </div>
       <div className={`section-body${open ? '' : ' collapsed'}`}>
@@ -4396,7 +4396,7 @@ function deriveStrengthsCautions(
     }),
     식상: (n) => ({
       title: '표현과 창의',
-      desc: `${ganRef}이 <u>식상 ${n}개</u>로 풀어내는 ${grade(n)} 표현력이에요. <strong>본인 색을 자연스럽게 드러내는 흐름</strong>이라, 같은 일도 당신만의 톤으로 옮겨집니다.`,
+      desc: `${ganRef}이 <u>식상 ${n}개</u>로 풀어내는 ${grade(n)} 표현력이에요. <strong>본인 색을 자연스럽게 드러내는 흐름</strong>이라, 같은 일도 자기만의 톤으로 옮겨집니다.`,
     }),
     재성: (n) => ({
       title: '현실 감각',
@@ -4427,7 +4427,7 @@ function deriveStrengthsCautions(
     }),
     관성: () => ({
       title: '과부하',
-      desc: `책임을 다 떠안다 <strong>혼자 무너지는 순간</strong>이 옵니다. ${ganMeta ? `${ganMeta.ko} 일간` : '당신'}답게 거절하는 연습이 약점을 강점으로 바꿉니다.`,
+      desc: `책임을 다 떠안다 <strong>혼자 무너지는 순간</strong>이 옵니다. ${ganMeta ? `${ganMeta.ko} 일간` : '자기'}답게 거절하는 연습이 약점을 강점으로 바꿉니다.`,
     }),
     인성: () => ({
       title: '실행 지연',
@@ -4443,7 +4443,7 @@ function deriveStrengthsCautions(
   if (dayOheng && strengths.length < 3) {
     const ohengStrength: Record<OhengType, StrengthCautionItem> = {
       목: { title: '성장 의지', desc: `${ganRef}의 뻗어나가려는 <strong>본능적 추진력</strong>이 있어요. 한 자리에 머무는 것보다 새 자리를 여는 결입니다.` },
-      화: { title: '밝은 기운', desc: `${ganRef}이 주변을 <strong>환하게 만드는 흐름</strong>이에요. 사람들이 당신 옆에서 기운을 얻습니다.` },
+      화: { title: '밝은 기운', desc: `${ganRef}이 주변을 <strong>환하게 만드는 흐름</strong>이에요. 사람들이 곁에서 기운을 얻습니다.` },
       토: { title: '안정감', desc: `${ganRef}이 주변에 <strong>믿고 기댈 수 있는 흐름</strong>을 만듭니다. 흔들리는 사람들에게 중심이 되는 사람이에요.` },
       금: { title: '정돈된 기질', desc: `${ganRef} 특유의 <strong>깔끔하고 또렷한 기질</strong>이 있어요. 디테일에서 신뢰를 얻는 사주입니다.` },
       수: { title: '깊은 사고', desc: `${ganRef}이 만드는 <strong>안에서 흘러가는 깊이</strong>가 있어요. 한 번 판단한 것은 쉽게 흔들리지 않습니다.` },
@@ -6787,7 +6787,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
     pushOnce({
       char1: r.chars[0],
       char2: r.chars[1],
-      arrow: '↔',
+      arrow: '合',
       desc: r.resultOheng ? `서로 끌어당겨 ${r.resultOheng} 기운으로 뭉쳐요, 협력과 어울림이 나는 짝` : '서로 끌어당겨 하나로 묶이는 짝',
       type: 'hap',
     }, '천간합');
@@ -6797,7 +6797,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
     pushOnce({
       char1: r.chars[0],
       char2: r.chars[1],
-      arrow: isBan ? '+' : '↔',
+      arrow: '合',
       desc: r.resultOheng ? `${isBan ? '반쯤 ' : ''}끌어당겨 ${r.resultOheng} 기운으로 뭉쳐요` : `${isBan ? '반쯤 ' : ''}끌어당기는 짝`,
       type: 'hap',
     }, isBan ? '지지반합' : '지지합');
@@ -6807,7 +6807,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
     pushOnce({
       char1: r.chars[0],
       char2: r.chars[1],
-      arrow: '↔',
+      arrow: '沖',
       desc: '마음이 정면으로 부딪혀요, 결단이 빠른 만큼 충돌도 잦아요',
       type: 'chung',
     }, '천간충');
@@ -6816,7 +6816,7 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
     pushOnce({
       char1: r.chars[0],
       char2: r.chars[1],
-      arrow: '↔',
+      arrow: '沖',
       desc: '행동 방향이 엇갈려요, 환경 변화가 잦은 자리',
       type: 'chung',
     }, '지지충');
@@ -6831,10 +6831,10 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
       : t.includes('원진') ? '원진'
       : t;
     const arrow =
-      t.includes('형') ? '↔' :
-      t.includes('파') ? '/' :
-      t.includes('해') ? '✕' :
-      t.includes('원진') ? '↺' : '↔';
+      t.includes('형') ? '刑' :
+      t.includes('파') ? '破' :
+      t.includes('해') ? '害' :
+      t.includes('원진') ? '怨' : '對'; // 2026-10-13 — 화살표, ✕ 기호 대신 관계 한자(v9 '기호 대신 한자')
     pushOnce({
       char1: r.chars[0],
       char2: r.chars[1] || r.chars[0],

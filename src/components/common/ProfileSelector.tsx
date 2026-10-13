@@ -1,5 +1,6 @@
 import { useState, useMemo, type KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import '@/styles/hanji.css';
 import type { SajuProfile } from '@/services/storage/localStore';
 
 interface ProfileSelectorProps {
@@ -127,17 +128,10 @@ export function ProfileSelector({
           </p>
         </div>
         <span
-          style={{
-            fontSize: 18,
-            color: 'var(--text-muted)',
-            transition: 'transform 0.2s',
-            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-            display: 'inline-block',
-          }}
+          className={`hj-chev${expanded ? ' up' : ''}`}
+          style={{ color: 'var(--text-muted)', marginRight: 4 }}
           aria-hidden="true"
-        >
-          ▾
-        </span>
+        />
       </motion.button>
 
       {/* 펼침 — 프로필 목록 + 새 사주 CTA */}

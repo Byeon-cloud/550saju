@@ -3,6 +3,7 @@
 // 0 behavior change vs original
 
 import { useState } from 'react';
+import '@/styles/hanji.css';
 import { motion } from 'framer-motion';
 import { CHEONGAN_OHENG, CHEONGAN_KO, CHEONGAN_EUMYANG, JIJI_OHENG, JIJI_KO } from '@/constants/oheng';
 import { LuckyProfile } from '@/components/saju/LuckyProfile';
@@ -1424,9 +1425,7 @@ export function ReportSection({ section, index, elements, hasBirthTime, jijangga
             <div className="w-2 h-2 rounded-full bg-brand-gold" />
           </div>
           <span className="flex-1 text-h3 text-text-primary">{section.title}</span>
-          <span className={`text-brand-gold text-sm transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}>
-            ▾
-          </span>
+          <span className={`hj-chev${expanded ? ' up' : ''}`} style={{ color: '#6F6557', marginRight: 4 }} aria-hidden="true" />
         </button>
         {expanded && (
           <motion.div

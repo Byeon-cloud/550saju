@@ -274,7 +274,7 @@ export function FreeSection({
 export function FreeUpsellCard({
   title,
   desc,
-  ctaLabel = '사주 전체로',
+  ctaLabel = '종합사주 보기', // 2026-10-13 — '사주 전체로'는 뜻이 불명확(05-21 오너), 화살표 기호 제거
   costLabel,
   onTap,
 }: {
@@ -297,9 +297,9 @@ export function FreeUpsellCard({
       onClick={onTap}
       style={{
         margin: '28px 0 0',
-        background: 'linear-gradient(135deg, #1A1A1A, #2A2520)',
+        background: '#1A1612', // 2026-10-13 v9 — 먹 단색, 종이 한 장 모서리
         color: '#FFFFFF',
-        borderRadius: 14,
+        borderRadius: 6,
         padding: '22px 20px',
         position: 'relative',
         overflow: 'hidden',
@@ -368,26 +368,25 @@ export function FreeUpsellCard({
         style={{
           display: 'inline-flex',
           gap: 6,
-          background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
-          color: '#1A1A1A',
-          padding: '10px 18px',
+          background: 'linear-gradient(180deg, var(--hj-gold-hi, #D2B477) 0%, var(--hj-gold, #B8965A) 100%)', // 승인된 금 버튼 양식(.hj-cta)
+          color: '#17110A',
+          padding: '11px 18px',
           borderRadius: 10,
-          fontSize: 13,
-          fontWeight: 700,
+          fontSize: 15,
+          fontWeight: 800,
           position: 'relative',
           alignItems: 'center',
         }}
       >
-        {ctaLabel} →
+        {ctaLabel}
         <span
           style={{
-            background: 'rgba(255,255,255,0.10)',
-            padding: '3px 10px',
-            borderRadius: 100,
-            fontSize: 13,
-            color: '#5C4A2E',
-            marginLeft: 6,
-            fontWeight: 600,
+            paddingLeft: 10,
+            borderLeft: '1px solid rgba(23,17,10,0.3)',
+            fontSize: 13.5,
+            color: '#3A2C18',
+            marginLeft: 4,
+            fontWeight: 700,
           }}
         >
           {costLabel}

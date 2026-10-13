@@ -882,7 +882,7 @@ export function DreamPage() {
           {phase === 'result' && isLoading && (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <AILoading
-                name={profile?.name ?? '당신'}
+                name={profile?.name ?? ''}
                 type="꿈해몽"
                 sajuData={profile?.sajuData}
                 steps={[
@@ -1794,7 +1794,7 @@ function _FreeResultView_legacy({
         <FreeUpsellCard
           title="자꾸 꾸는 꿈의 뿌리, 사주로 더 깊게"
           desc="오늘 꿈의 기운을 사주 전체에서 풀어드립니다. 성격, 대인, 직업, 재물, 애정, 건강까지."
-          ctaLabel="사주 전체로"
+          ctaLabel="종합사주 보기"
           /* 2026-05-29 H1 — costLabel 제거 → FreeUpsellCard SSOT 기본값(세일가) 사용 */
           onTap={onFullReport}
         />

@@ -51,7 +51,7 @@ export function TierBModal({ open, kind, onClose, autoCloseMs = 3000 }: TierBMod
             transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
             className="w-full max-w-[340px] rounded-3xl px-7 py-9 text-center"
             style={{
-              background: 'linear-gradient(135deg, #FFFEF9 0%, #F5EADB 100%)',
+              background: '#FFFDF8',
               border: '1px solid rgba(184,150,90,0.35)',
               boxShadow: '0 24px 72px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,217,184,0.5)',
             }}

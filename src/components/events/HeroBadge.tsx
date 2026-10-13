@@ -8,7 +8,7 @@ export function HeroBadge() {
     <section
       className="mx-4 mt-3 rounded-2xl px-[18px] py-[18px] flex items-center gap-3.5"
       style={{
-        background: 'linear-gradient(135deg, #F8F5EE 0%, #F5EADB 100%)',
+        background: '#FFFDF8',
         border: '1px solid #F5EADB',
       }}
     >

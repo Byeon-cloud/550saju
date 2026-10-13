@@ -394,9 +394,9 @@ const MOCKUP_CSS = `
 .monthly-mockup .share-row { margin: 14px 20px 0; }
 .monthly-mockup .share-row button {
   width: 100%; appearance: none; border: none; cursor: pointer; font: inherit;
-  background: linear-gradient(135deg, var(--c-gold), var(--c-gold-deep));
-  color: #fff; border-radius: 12px; padding: 14px;
-  font-size: 14px; font-weight: 700; letter-spacing: 0.02em;
+  background: linear-gradient(180deg, var(--hj-gold-hi, #D2B477) 0%, var(--hj-gold, #B8965A) 100%); /* 2026-10-13 승인 금 버튼 양식 */
+  color: #17110A; border-radius: 14px; padding: 15px;
+  font-size: 15px; font-weight: 800; letter-spacing: 0;
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .monthly-mockup .share-row button svg { width: 18px; height: 18px; }
@@ -546,7 +546,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         <header className="hd">
           <div className="top">
             <span className="badge">월별 운세</span>
-            <span>{profile?.name || '당신'} 님</span>
+            <span>{profile?.name ? `${profile.name} 님` : '내 사주'}</span>
             {monthLabel && <span className="month-tag">{monthLabel}</span>}
           </div>
           <h1>{headline}</h1>

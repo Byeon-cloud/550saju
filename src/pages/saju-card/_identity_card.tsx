@@ -261,7 +261,7 @@ export function IdentityCard({
     <div
       style={{
         position: 'relative',
-        background: `linear-gradient(180deg, ${C.paperSoft} 0%, ${C.paper} 60%, ${accent.soft} 100%)`,
+        background: C.paperSoft, // 2026-10-13 v9 — 아래로 번지는 오행색 대신 종이 한 장
         padding: asExport ? 0 : '0 0 24px',
         overflow: 'hidden',
       }}
@@ -297,7 +297,7 @@ export function IdentityCard({
           width: 280,
           height: 280,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${accentColor}1A 0%, transparent 70%)`,
+          background: 'none', // 2026-10-13 v9 — 빛번짐 제거
           pointerEvents: 'none',
         }}
       />
@@ -672,7 +672,7 @@ export function IdentityCard({
           position: 'relative',
           margin: '14px 22px 0',
           height: 1,
-          background: `linear-gradient(90deg, transparent 0%, ${C.goldLine} 50%, transparent 100%)`,
+          background: C.goldLine, // 2026-10-13 v9 — 흐려지는 선 대신 괘선
           opacity: 0.6,
         }}
       />
@@ -689,7 +689,7 @@ export function IdentityCard({
           position: 'relative',
           margin: '4px 22px 0',
           height: 1,
-          background: `linear-gradient(90deg, transparent 0%, ${C.goldLine} 50%, transparent 100%)`,
+          background: C.goldLine, // 2026-10-13 v9 — 흐려지는 선 대신 괘선
           opacity: 0.6,
         }}
       />

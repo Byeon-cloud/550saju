@@ -302,7 +302,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sym .pic.mountain { background: #FFFDF8 !important; border: 1.5px solid currentColor; border-radius: 3px; color: #8A6A2E; }
 .dream-mockup .sym .pic.shadow { color: #1A1612; }
 .dream-mockup .sym .pic.metal { color: #6B665E; }
-.dream-mockup .sym .pic.mountain { background: linear-gradient(135deg, #efe5d4, #d8c89e); color: #7F6B4E; }
+.dream-mockup .sym .pic.mountain { color: #7F6B4E; }
 .dream-mockup .sym .hd2 { display: flex; justify-content: flex-start; align-items: baseline; gap: 6px; }
 .dream-mockup .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
 .dream-mockup .sym .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 13.5px; }
@@ -514,16 +514,18 @@ const MOCKUP_CSS = `
 
 /* §02 symbol 카드 hover 미세 강조 */
 .dream-mockup .sym { transition: transform .2s ease, box-shadow .2s ease; }
-.dream-mockup .sym:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(184,150,90,.12); }
+.dream-mockup .sym:hover { transform: none; box-shadow: none; } /* 2026-10-13 v9 — 호버 들림 그림자 금지 */
 
 /* 2026-10-13 v9 마감 — 본문 15px, 보조 13px 이상 / 장식 그라데이션 박스 제거 / 금 버튼은 승인 양식(.hj-cta)과 같게 / ▾ 기호 대신 먹선 꺾쇠 */
 .dream-mockup .body p, .dream-mockup .sym .dc, .dream-mockup .qc .interp, .dream-mockup .lk-teaser, .dream-mockup .lk-full,
 .dream-mockup .db-list li, .dream-mockup .topic-rec .tr-copy, .dream-mockup .qc .src { font-size: 15px; }
 .dream-mockup .sym .dc b { font-size: 1em; }
 .dream-mockup .pullq { background: #FFFDF8; border: 1px solid rgba(140,109,61,.35); border-radius: 2px; font-size: 15.5px; }
-.dream-mockup .paid-cta .cta-btn { background: linear-gradient(180deg, var(--hj-gold-hi) 0%, var(--hj-gold) 100%); color: #17110A; border-radius: 14px; min-height: 52px; font-size: 16px; box-shadow: 0 8px 18px rgba(140,109,61,.22), inset 0 1px 0 rgba(255,255,255,.45); }
+.dream-mockup .paid-cta .cta-btn { background: linear-gradient(180deg, var(--hj-gold-hi, #D2B477) 0%, var(--hj-gold, #B8965A) 100%); color: #17110A; border-radius: 14px; min-height: 52px; font-size: 16px; box-shadow: 0 8px 18px rgba(140,109,61,.22), inset 0 1px 0 rgba(255,255,255,.45); }
 .dream-mockup .acc-caret { font-size: 0; width: 7px; height: 7px; flex-shrink: 0; margin-right: 4px; border-right: 1.6px solid #6F6557; border-bottom: 1.6px solid #6F6557; transform: rotate(-45deg); }
 .dream-mockup .acc-caret.open { transform: translateY(-2px) rotate(45deg); }
+.dream-mockup .locked-header, .dream-mockup .paid-cta { background: #1A1612; }
+.dream-mockup .worry-link { background: #FFFDF8; }
 `;
 
 const SYMBOL_PIC_CLASS: Record<string, string> = {
@@ -637,7 +639,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 {isTodayRecord && <span className="badge free">오늘 1회 무료</span>}
               </>
             )}
-            <span>{profile?.name || '당신'} 님</span>
+            <span>{profile?.name ? `${profile.name} 님` : '내 사주'}</span>
           </div>
           <h1>{title}</h1>
           <div className="date">{dateLabel}{ilganLabel}</div>
@@ -801,8 +803,8 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <div className="lab">{unlocked ? '사주와 함께 본 깊은 풀이' : '사주와 함께 보는 깊은 풀이'}</div>
                 <div className="ttl">
                   {unlocked
-                    ? `${profile?.name ?? '당신'} 님 사주와 꿈을 함께 읽은 심층 풀이`
-                    : `이 아래는 ${profile?.name ?? '당신'} 님 사주와 꿈을 함께 읽습니다`}
+                    ? `${profile?.name ? `${profile.name} 님` : '내'} 사주와 꿈을 함께 읽은 심층 풀이`
+                    : `이 아래는 ${profile?.name ? `${profile.name} 님` : '내'} 사주와 꿈을 함께 읽습니다`}
                 </div>
               </div>
             </div>
@@ -972,7 +974,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                         <p className="lk-teaser" dangerouslySetInnerHTML={safeHtml(lockedAction.teaser)} />
                         <div className="dual-blind">
                           <div className="db-col go">
-                            <div className="ch">✓ 해야 할 것 3</div>
+                            <div className="ch">해야 할 것 3</div>
                             <div className="lines">
                               <div className="line" /><div className="line mid" /><div className="line short" />
                             </div>
@@ -983,7 +985,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                             )}
                           </div>
                           <div className="db-col no">
-                            <div className="ch">✕ 피할 것 3</div>
+                            <div className="ch">피할 것 3</div>
                             <div className="lines">
                               <div className="line mid" /><div className="line" /><div className="line short" />
                             </div>
@@ -1011,7 +1013,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <div className="lab">사주와 함께 보는 깊은 풀이</div>
                 <h3>같은 꿈도 사주 일간에 따라<br />의미가 달라집니다.</h3>
                 <p className="hook">
-                  {profile?.name ?? '당신'} 님은 <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방)을 전부 열어드립니다.
+                  {profile?.name ? `${profile.name} 님은` : '이 사주는'} <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방)을 전부 열어드립니다.
                 </p>
                 {/* 2026-09-17 — 스트리밍 중 결제 race 차단 (잠금 본문이 다 쓰이기 전 1운 차감 → 해제 저장 누락·자동환불 꼬임) */}
                 <button

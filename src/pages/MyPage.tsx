@@ -217,14 +217,13 @@ export function MyPage() {
           style={{
             padding: '15px 16px',
             borderRadius: 14,
-            background: 'linear-gradient(135deg, rgba(184,150,90,0.14) 0%, rgba(184,150,90,0.07) 100%)',
-            border: `1.5px solid ${C.gold}`,
-            color: C.goldDeep,
+            background: '#FFFDF8', // 2026-10-13 v9 — 보조 버튼은 먹선(금색은 주 버튼에만), 그라데이션과 그림자 제거
+            border: '1px solid rgba(26,22,18,0.28)',
+            color: '#1A1612',
             fontSize: 16,
             fontWeight: 800,
             fontFamily: SERIF,
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(184,150,90,0.12)',
           }}
           aria-label="고객문의: 궁금한 점이나 문제를 알려주세요"
         >
@@ -637,7 +636,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
       className="w-full text-left relative overflow-hidden rounded-2xl mb-4"
       style={{
         padding: '20px 18px 16px',
-        background: `linear-gradient(135deg, #FFFFFF 0%, ${C.goldSoft} 50%, ${accentColor}1F 100%)`,
+        background: '#FFFDF8', // 2026-10-13 v9 — 3색 그라데이션 대신 종이 한 장
         border: `1.5px solid ${accentColor}55`,
         cursor: 'pointer',
         boxShadow: `0 8px 24px ${accentColor}1F, 0 2px 6px rgba(0,0,0,0.04)`,
@@ -674,7 +673,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
           width: 180,
           height: 180,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${accentColor}1F 0%, transparent 70%)`,
+          background: 'none', // 2026-10-13 v9 — 모서리 빛번짐 제거
           pointerEvents: 'none',
         }}
       />

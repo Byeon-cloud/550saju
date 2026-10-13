@@ -1687,9 +1687,10 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .daewoon-timeline { background: #FFFDF8; }
   .premium-mockup .dw-cell.now { background: rgba(184,150,90,.14); }
   .premium-mockup .pullquote { background: #FFFDF8; }
-  .premium-mockup .divider::after { background: rgba(140,109,61,.35); }
+  .premium-mockup .divider { background: none; height: auto; } /* 전역 .divider 의 선 배경이 글자 칸 전체에 깔리던 것 */
+  .premium-mockup .divider::before, .premium-mockup .divider::after { background: rgba(140,109,61,.35); }
   .premium-mockup .upsell-card { background: #1E1A15; }
-  .premium-mockup .upsell-card .cta { background: linear-gradient(180deg, var(--hj-gold-hi) 0%, var(--hj-gold) 100%); color: #17110A; border-radius: 10px; } /* 승인된 금 버튼 양식(.hj-cta)과 같게 */
+  .premium-mockup .upsell-card .cta { background: linear-gradient(180deg, var(--hj-gold-hi, #D2B477) 0%, var(--hj-gold, #B8965A) 100%); color: #17110A; border-radius: 10px; } /* 승인된 금 버튼 양식(.hj-cta)과 같게 */
   .premium-mockup .daewoon-scores .ds-fill { background: #B8965A; }
   .premium-mockup .daewoon-scores .ds-fill.peak { background: #4E7A57; }
   .premium-mockup .daewoon-scores .ds-fill.now { background: #8C6D3D; }
@@ -1707,4 +1708,5 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
   .premium-mockup .month-insight-grid .mi.now { background: #fff; }
   .premium-mockup .month-insight-grid .mi.peak .mi-badge { background: #4E7A57; border-radius: 2px; }
   .premium-mockup .month-insight-grid .mi.now .mi-badge { background: #8C6D3D; border-radius: 2px; }
+  .premium-mockup .ganji-flow .gf-arrow { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #6F6557; } /* 관계 한자(合 沖 刑 破 害 怨) */
 `;

@@ -204,3 +204,7 @@
 .hj-cell.gold::before { border-color: rgba(184,150,90,.3); }
 .hj-cell .d { display: block; margin-top: 6px; font-size: 13.5px; color: var(--hj-ink-2); line-height: 1.55; word-break: keep-all; }
 .hj-tag.gold { border-color: rgba(140,109,61,.75); color: #7A5C2E; }
+
+/* 2026-10-13 펼치기 꺾쇠 — ▾ ▼ 기호 대신 먹선 꺾쇠(장식 기호 금지). .up = 펼친 상태 */
+.hj-chev { display: inline-block; flex-shrink: 0; width: 7px; height: 7px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .2s ease; }
+.hj-chev.up { transform: translateY(1px) rotate(-135deg); }

@@ -1058,7 +1058,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
         <header className="hd">
           <div className="top">
             <span className="badge">오늘의 운세</span>
-            <span>{profile?.name || '당신'} 님</span>
+            <span>{profile?.name ? `${profile.name} 님` : '내 사주'}</span>
             <span className="free-tag">{priceTag}</span>
           </div>
           <h1>{stripAll(title)}</h1>

@@ -9,6 +9,7 @@
  *       법적 노출 의무가 직결되는 화면에 우선 배치.)
  */
 import { useState } from 'react';
+import '@/styles/hanji.css';
 import { useNavigate } from 'react-router-dom';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { isAppintosBuild } from '@/lib/env';
@@ -94,7 +95,7 @@ export function LegalFooter() {
             fontSize: 13, fontWeight: 600, color: C.mute,
           }}
         >
-          {b.companyName} 사업자 정보 {bizOpen ? '▴' : '▾'}
+          {b.companyName} 사업자 정보 <span className={`hj-chev${bizOpen ? ' up' : ''}`} style={{ marginLeft: 6 }} aria-hidden="true" />
         </button>
         {bizOpen && (
           <div
