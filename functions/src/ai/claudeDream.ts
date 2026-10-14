@@ -1,9 +1,10 @@
 // Migrated from geminiDream.ts on 2026-04-19 (Sonnet 4.6 v3).
 // See commit 926ead2 + docs/prd/AI프롬프트_v3_Sonnet4.6.md
 
-import { TONE_FINAL_CHECK } from './promptsV3';
+import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
-import { sanitizeAiOutput } from './sajuFacts';
+import { sanitizeAiOutput, lifeTimelineFactsText } from './sajuFacts';
+import { kstNowDate } from '../utils/kstTime';
 import {
   DREAM_FREE_SYSTEM_V3,
   DREAM_FREE_USER_WITH_SAJU_V3,
@@ -111,6 +112,25 @@ export function buildDreamFreeGroupCall(args: DreamFreeArgs, group: DreamFreeGro
  * 스트리밍 SSE(generateDreamFreeStream)와 callable 이 동일 파라미터 공유 —
  * 프롬프트·모델·출력 100% 동일, 전송 방식만 다름 (콘텐츠 변경 위험 0).
  */
+/** 2026-10-14 — 요즘 짚기 근거 (짚어 주는 풀이). 꿈 인자에는 간지 문자열만 오므로 원국 네 기둥을 다시 세워 계산한다.
+ *  태어난 해를 모르면 지난 해 목록은 빠지고, 지금 대운, 올해, 최근 석 달만 들어간다. */
+function dreamTimelineBlock(saju: DreamSajuContext): string {
+  try {
+    const full: any = saju.fullSajuData;
+    const toP = (gz: string) => (gz && gz.length >= 2 && !gz.includes('미상') ? { 천간: gz[0], 지지: gz[1] } : { available: false });
+    const sd = full?.pillars ? full : {
+      pillars: [toP(saju.yearGanzi), toP(saju.monthGanzi), toP(saju.dayGanzi), toP(saju.timeGanzi)],
+      currentDaeun: saju.currentDaeun && /^[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/.test(saju.currentDaeun) ? { 간지: saju.currentDaeun.slice(0, 2) } : undefined,
+    };
+    const tl = lifeTimelineFactsText(sd, kstNowDate());
+    if (!tl) return '';
+    return `
+
+${tl}
+→ 짚기 자리: sajuTone 첫머리에서 위 표의 최근 석 달이나 이번 달로 '요즘 짚기'를 한 번 한다(요즘 어느 영역에 마음이 쓰였는지, 그 마음이 꿈에 어떤 모습으로 나왔는지). 다른 필드에서는 다시 묻지 않는다.${READING_VOICE_BLOCK}`;
+  } catch { return ''; }
+}
+
 export function buildDreamFreeCall(args: DreamFreeArgs): {
   system: string; user: string; model: string; maxTokens: number;
 } {
@@ -130,7 +150,7 @@ export function buildDreamFreeCall(args: DreamFreeArgs): {
         dreamContent: args.dreamContent,
         userConcern: args.userConcern,
         category: args.category,
-      })
+      }) + dreamTimelineBlock(args.saju)
     : DREAM_FREE_USER_NO_SAJU_V3({
         dreamContent: args.dreamContent,
         userConcern: args.userConcern,

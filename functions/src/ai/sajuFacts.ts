@@ -821,3 +821,121 @@ export function fillReunionTopicData(td: any, plan: ReunionPlan | null, mine: Ar
   }
   return out;
 }
+
+/* ── 지난 시기와 지금 시기 확정표 (2026-10-14) ──
+ *   오너 지시: 애매한 말보다 "혹시 요즘 이런 일 있지 않았나요? 그건 이 기운이 들어와서 그래요"처럼 짚어 주는 풀이가
+ *   와닿는다. 단 짚는 근거는 서버가 계산한 시기에서만 나와야 한다(지어내기 금지). 지난 해 중 원국 자리(특히 일지, 월지)를
+ *   크게 건드린 해, 대운이 바뀐 해, 최근 석 달과 이번 달의 월운을 십성 뜻(삶의 영역)과 자리 뜻과 함께 준다. */
+const PALACE_MEANING = ['바깥 사회와 집안 어른', '직장과 부모, 생활 기반', '배우자나 연인, 집, 내 몸과 마음', '자녀와 아랫사람, 앞날 계획'];
+function sipAreas(sip: string, female: boolean): string {
+  const base: Record<string, string> = {
+    비견: '친구와 동료, 형제, 경쟁, 내 고집과 독립',
+    겁재: '경쟁자, 돈이 새는 일, 동업, 승부',
+    식신: '하고 싶은 일, 먹고 즐기는 일, 표현',
+    상관: '말과 표현, 윗사람과의 마찰, 그만두고 싶은 마음, 재능',
+    편재: '큰돈의 들고 남, 사업과 바깥 활동',
+    정재: '월급과 고정 수입, 살림',
+    '편관(칠살)': '압박과 책임, 갑작스러운 변화, 몸의 피로',
+    정관: '직장과 평판, 규칙, 승진',
+    편인: '생각이 많아짐, 혼자 있고 싶은 마음, 공부와 자격',
+    정인: '문서와 계약, 시험, 어머니, 도와주는 사람',
+  };
+  let a = base[sip] || '';
+  if (female && (sip === '정관' || sip === '편관(칠살)')) a += ', 이성 인연';
+  if (!female && (sip === '정재' || sip === '편재')) a += ', 이성 인연';
+  if (female && (sip === '식신' || sip === '상관')) a += ', 자녀';
+  return a;
+}
+/** 간지 하나가 원국 자리를 얼마나 크게 건드리는지 (점수, 사람이 읽을 근거) */
+function periodHits(gz: string, p: any[]): { score: number; hits: string[] } {
+  const hits: string[] = []; let score = 0;
+  if (!gz || gz.length < 2) return { score, hits };
+  const g = gz[0]; const b = gz[1];
+  const W = [1, 2, 3, 1]; // 년, 월, 일, 시 자리 무게
+  const EFFECT: Record<string, string> = { 충: '변동, 이동, 갈등', 합: '새 인연, 약속, 붙잡힘', 형: '마찰, 서류나 절차 문제, 바로잡는 일', 겹침: '이미 있던 일이 더 커짐' };
+  // 같은 글자가 두 자리에 있으면(예: 년지와 월지 寅) 한 줄로 묶는다
+  const groups = new Map<string, { nb: string; pos: number[]; rels: string[] }>();
+  p.forEach((x: any, i: number) => {
+    if (!x || x.available === false) return;
+    const ng = String(x.천간 || ''); const nb = String(x.지지 || '');
+    if (i === 2 && ng && GAN_CHUNG[g] === ng) { score += 2; hits.push(`일간 ${ng}${wa(ng)} 천간이 부딪힘(${g}${ng}충): 내 마음과 뜻이 흔들림`); }
+    if (i === 2 && ng && GAN_HAP[g] === ng) { score += 2; hits.push(`일간 ${ng}${wa(ng)} 천간이 묶임(${g}${ng}합): 누군가와 엮이거나 마음이 한쪽으로 쏠림`); }
+    if (!nb) return;
+    const rels: string[] = [];
+    if (CHUNG_PAIR[nb] === b) { rels.push('충'); score += W[i] + 1; }
+    if (JI_HAP6[nb] === b) { rels.push('합'); score += W[i]; }
+    if (JI_HYUNG.has(nb + b)) { rels.push('형'); score += W[i]; }
+    if (nb === b && i === 2) { rels.push('겹침'); score += 1; }
+    if (!rels.length) return;
+    const key = nb + rels.join('');
+    const gr = groups.get(key) || { nb, pos: [], rels };
+    gr.pos.push(i); groups.set(key, gr);
+  });
+  for (const gr of groups.values()) {
+    const where = `${gr.pos.map((i) => `${POS_NAME[i]}지`).join('와 ')} ${gr.nb}(${gr.pos.map((i) => PALACE_MEANING[i]).join(', ')})`;
+    const tag = gr.rels.map((r) => (r === '겹침' ? '같은 글자 겹침' : `${gr.nb}${b}${r}`)).join(', ');
+    hits.push(`${where}와 ${tag}: 그 자리에 ${gr.rels.map((r) => EFFECT[r]).join(', ')}`);
+  }
+  const natalJi = p.map((x: any) => (x && x.available !== false ? String(x.지지 || '') : '')).filter(Boolean);
+  const full = SAMHAP_OH.find((s) => s.g.includes(b) && s.g.filter((ch) => ch !== b).every((ch) => natalJi.includes(ch)));
+  if (full) { score += 2; hits.push(`${full.g.join('')} 삼합 완성(${full.oh} 기운이 크게 모임)`); }
+  return { score, hits };
+}
+const yearGz = (y: number): string => { try { return Solar.fromYmd(y, 6, 15).getLunar().getEightChar().getYear(); } catch { return ''; } };
+const monthGz = (y: number, m: number): string => { try { return Solar.fromYmd(y, m, 15).getLunar().getEightChar().getMonth(); } catch { return ''; } };
+
+/** now 는 KST 값을 담은 Date (kstNowDate) */
+export function lifeTimelineFactsText(sajuData: any, now: Date): string {
+  try {
+    const p: any[] = sajuData?.pillars || [];
+    const dayGan = String(p[2]?.천간 || '');
+    if (!dayGan) return '';
+    const female = (sajuData?.input?.gender || '') !== 'male';
+    const by = Number(sajuData?.input?.birthYear) || 0;
+    const Y = now.getFullYear(); const M = now.getMonth() + 1;
+    const desc = (gz: string): string => {
+      const s1 = tenGod(dayGan, gz[0]); const s2 = tenGod(dayGan, BR_MAIN[gz[1]]);
+      return `들어온 기운 ${gz[0]} ${s1}(${sipAreas(s1, female)}), ${gz[1]} ${s2}(${sipAreas(s2, female)})`;
+    };
+    const lines: string[] = [];
+
+    // 1) 현재 대운과 올해
+    const dy: any[] = Array.isArray(sajuData?.daeun) ? sajuData.daeun : [];
+    const cur = dy.find((d) => d?.시작년도 && d?.끝년도 && Y >= d.시작년도 && Y <= d.끝년도) || sajuData?.currentDaeun;
+    if (cur?.간지) {
+      const h = periodHits(String(cur.간지), p);
+      lines.push(`- 지금 대운 ${cur.간지}(${ganziKo(String(cur.간지))})${cur.시작년도 ? ` ${cur.시작년도}~${cur.끝년도}년` : ''}: ${desc(String(cur.간지))}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`);
+    }
+    const ygz = yearGz(Y);
+    if (ygz) { const h = periodHits(ygz, p); lines.push(`- 올해 ${Y}년 ${ygz}(${ganziKo(ygz)}): ${desc(ygz)}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`); }
+
+    // 2) 최근 석 달과 이번 달 (월운) — "요즘"을 짚는 근거
+    const recent: string[] = [];
+    for (let k = 3; k >= 0; k--) {
+      const mm = ((M - 1 - k + 120) % 12) + 1; const yy = Y - (M - k <= 0 ? 1 : 0);
+      const gz = monthGz(yy, mm); if (!gz) continue;
+      const h = periodHits(gz, p);
+      recent.push(`  - ${yy}년 ${mm}월 ${gz}(${ganziKo(gz)})${k === 0 ? ' 이번 달' : ''}: ${desc(gz)}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`);
+    }
+    if (recent.length) lines.push(`- 최근 석 달과 이번 달 (월운, 각 달 절기 기준):\n${recent.join('\n')}`);
+
+    // 3) 지난 해 중 원국 자리를 크게 건드린 해 + 대운이 바뀐 해 (과거 짚기 근거)
+    if (by > 0) {
+      const from = Math.max(by + 14, Y - 12);
+      const cand: Array<{ y: number; gz: string; score: number; hits: string[] }> = [];
+      for (let y = from; y < Y; y++) {
+        const gz = yearGz(y); if (!gz) continue;
+        const h = periodHits(gz, p);
+        if (h.score >= 3) cand.push({ y, gz, score: h.score, hits: h.hits });
+      }
+      cand.sort((a, b) => b.score - a.score || b.y - a.y);
+      const pick = cand.slice(0, 4).sort((a, b) => a.y - b.y);
+      const past = pick.map((c) => `  - ${c.y}년 ${c.gz}(${ganziKo(c.gz)}) 세운, 그해 생일 뒤 만 ${c.y - by}세: ${desc(c.gz)}. ${c.hits.join(', ')}`);
+      const turns = dy.filter((d) => d?.시작년도 && d.시작년도 >= from && d.시작년도 <= Y)
+        .map((d) => `  - ${d.시작년도}년 대운이 ${d.간지}(${ganziKo(String(d.간지))})로 바뀜, 그해 만 ${d.시작년도 - by}세: 10년 흐름이 갈린 해`);
+      if (past.length || turns.length) lines.push(`- 지난 해들 중 크게 움직였을 해 (원국 자리를 세게 건드린 세운, 대운 교체):\n${[...past, ...turns].join('\n')}`);
+    }
+    if (!lines.length) return '';
+    return `### 지난 시기와 지금 시기 확정표 (서버 계산. '혹시 ~ 무렵 ~하지 않았나요?'로 짚는 근거는 이 표의 시기에서만 고른다)\n${lines.join('\n')}`;
+  } catch { return ''; }
+}

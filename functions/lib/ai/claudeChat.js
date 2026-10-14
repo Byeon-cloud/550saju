@@ -214,6 +214,13 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ## 지금 (서버 계산, 한국 시간. 달이나 해를 짚을 때 이 값만 인용)
 오늘: ${kn.year}년 ${kn.month}월 ${kn.day}일, 올해 세운 ${yearGz}
 이번 달부터 12개월 월주: ${(0, sajuFacts_1.upcomingMonthPillarsText)((0, kstTime_1.kstNowDate)(), 12)}`;
+        // 2026-10-14 — 지난 시기와 요즘을 짚는 근거 (짚어 주는 풀이). 첫 답에서만 한 번 묻는다
+        const tl = sajuData ? (0, sajuFacts_1.lifeTimelineFactsText)(sajuData, (0, kstTime_1.kstNowDate)()) : '';
+        if (tl)
+            nowContext += `
+
+${tl}
+→ 짚기 자리: ${chatHistory.length === 0 ? '이 대화의 첫 답이다. 질문과 맞닿은 영역이 걸린 시기가 위 표에 있으면 답 첫머리에서 짚기를 한 번 한다. 없으면 하지 않는다.' : '이미 대화 중이다. 다시 묻지 말고 표의 시기는 근거로만 쓴다.'}`;
     }
     catch { /* 계산 실패 시 생략 — 시기 언급은 대운 근거로만 */ }
     // ── 이전 대화 (최근 6턴)
@@ -260,7 +267,7 @@ ${question}
                 cache_control: { type: 'ephemeral' },
             },
         ],
-        messages: [{ role: 'user', content: userPrompt + promptsV3_1.TONE_FINAL_CHECK }],
+        messages: [{ role: 'user', content: userPrompt + promptsV3_1.READING_VOICE_BLOCK + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('chat', model, msg, _t1, 'callable'); // C7 best-effort (truncated·cache 포함)
     const text = msg.content[0].text || '';

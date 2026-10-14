@@ -9,11 +9,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { Solar } from 'lunar-javascript';
-import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, TONE_FINAL_CHECK, type ParseJsonMeta } from './promptsV3';
+import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, TONE_FINAL_CHECK, READING_VOICE_BLOCK, type ParseJsonMeta } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
 import { correctKoreanSolarTime } from '../utils/timeCorrection';
-import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData, addNimToPartnerName } from './sajuFacts';
+import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData, addNimToPartnerName, lifeTimelineFactsText } from './sajuFacts';
 
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
@@ -921,6 +921,10 @@ const REUNION_FINAL_CHECK = `
 2. 상대의 지금 감정을 사실처럼 쓴 문장이 있으면 '사주로 보이는 상대 쪽 흐름'으로 고친다.
 3. 마지막 섹션의 마지막 문단은 이 사람이 스스로 할 수 있는 일과 앞으로의 희망으로 맺는다. 주의 사항으로 끝나면 그 뒤에 한두 문장을 더해 맺는다. 가능성을 부풀리지는 않는다.`;
 
+/** 2026-10-14 — 주제운 짚기 자리 (시스템 쪽 지시만으로는 성격 질문으로 새서 user 끝에 둔다) */
+const TOPIC_HOOK_CHECK = `
+- 첫 섹션의 둘째 문단은 '{연도}년 무렵' 또는 '지난 {N}월부터'로 시작하는 짚기 질문으로 연다. 연도와 달은 확정표의 값에서 고르고, 이 주제와 맞닿은 시기를 먼저 고른다(연애, 결혼, 재회는 연인의 별이나 일지 자리가 걸린 해, 재물은 재성이 들어온 해, 직업과 합격은 관성, 인성, 월지 자리가 걸린 해). 연도 없는 성격 질문('~라는 말을 들은 적 있지 않나요')은 짚기로 치지 않는다.`;
+
 /** 주제 생성 공용 (SSE 스트림 · callable 폴백 같은 코드). 파싱 실패 시 1회 재생성.
  *  split(재회운)이면 본문은 onDelta 로 실시간, 카드 데이터는 4초 뒤 병렬(프롬프트 캐시 읽기) → 합쳐서 반환. */
 export async function runTopicGeneration(
@@ -931,7 +935,7 @@ export async function runTopicGeneration(
 ): Promise<any> {
   const system = [{ type: 'text' as const, text: call.system, cache_control: { type: 'ephemeral' as const } }];
   // 2026-10-13 — 재회운 규칙이 시스템 지시만으로는 안 지켜져서(연락 시간 밤 11시 30분 권유, 끝이 '피하세요'로 맺음) user 끝 점검에 넣는다
-  const finalCheck = TONE_FINAL_CHECK + (call.normalizedId === 'reunion' ? REUNION_FINAL_CHECK : '');
+  const finalCheck = READING_VOICE_BLOCK + TOPIC_HOOK_CHECK + TONE_FINAL_CHECK + (call.normalizedId === 'reunion' ? REUNION_FINAL_CHECK : '');
   const content = (suffix?: string): any => (suffix
     ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix + finalCheck }]
     : call.prompt + finalCheck);
@@ -1731,6 +1735,8 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ### 귀인과 신살 확정표 (서버 계산, 여기 '원국 없음'인 신살을 '있다'고 쓰지 말 것)
 ${gwiinText || '미산출'}
 ### 시간대 오행 (시진): ${SIJIN_OHENG_LINE}
+${lifeTimelineFactsText(d, today)}
+### 짚기 자리 (2026-10-14): 첫 섹션 첫 문단에서 위 확정표 중 이 주제와 맞닿은 영역(이 주제의 핵심 십성, 일지나 월지 자리)이 걸린 시기 하나로 '지난 일 짚기'나 '요즘 짚기'를 한 번 한다. 맞닿은 시기가 표에 없으면 올해나 이번 달로 짚는다. 다른 섹션에서는 다시 묻지 않는다.
 ### 숫자 날조 금지: '합격률 두 배', '확률 N%', '3개월간 좋은 결과' 같은 검증 불가 수치와 보장 금지 (점수 필드 제외).
 
 ## 🚨 시기(월) 판정 룰 — 반드시 위 월건 간지로 계산 (2026-09-15 신설)

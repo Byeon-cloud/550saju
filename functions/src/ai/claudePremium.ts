@@ -19,7 +19,7 @@
 //   · Promise.all 로 90s → 30s (가장 긴 그룹 시간만큼)
 //   · 퀄리티 보존: 모든 그룹이 sajuData 풀 컨텍스트 + 동일 모델
 
-import { TONE_FINAL_CHECK } from './promptsV3';
+import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { safeParseJson } from './parseJson';
@@ -27,7 +27,7 @@ import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNow, kstNowDate } from '../utils/kstTime';
 import { Solar } from 'lunar-javascript';
-import { upcomingMonthPillarsText, sanitizeAiOutput } from './sajuFacts';
+import { upcomingMonthPillarsText, sanitizeAiOutput, lifeTimelineFactsText } from './sajuFacts';
 import { computeTopicBaseScore } from './claudeTopic';
 
 const DEFAULT_PREMIUM_MODEL = CLAUDE_MODEL.opus;
@@ -53,6 +53,7 @@ const GROUP_FOCUS: Record<GroupKey, string> = {
    <b>검정볼드 — 한자 용어 첫 등장 시각 인식</b> (예: "<b>병화(丙火)</b>는 한낮의 태양")
    <u>황금밑줄 — 시기, 숫자, 구체 행동</u> (예: "<u>3~4년 주기</u>로 큰 전환")
 ⚠️ 소름 포인트 1~2개 + 긍정 강조 1~2개 + 명확한 방향성
+⚠️ 짚기 자리 (2026-10-14): §01 원국 본문(summary 와 sections[0])은 첫 문장에서 이 사주만의 구조를 단정하고, 둘째 문단 첫머리에서 '지난 일 짚기'를 한 번 한다(확정표의 지난 해 중 가장 센 해). 천간지지 본문에서는 묻지 않는다.
 
 JSON 1개로 응답:
 {
@@ -107,7 +108,7 @@ JSON 1개로 응답:
   "tier": "premium",
   "sections": [
     {"id": "daeun", "title": "대운", "content": "<현재 대운 위주 + 60년 강줄기 핵심. 500~650자>"},
-    {"id": "yearly", "title": "연운", "content": "<[현재 연도] 키워드 + 상/하반기 핵심 충형 1~2개. 400~550자>"},
+    {"id": "yearly", "title": "연운", "content": "<첫머리에서 확정표의 최근 석 달로 '요즘 짚기' 한 번(언제부터 무엇이, 언제까지 가고 언제 풀리는지) + [현재 연도] 키워드 + 상/하반기 핵심 충형 1~2개. 400~550자>"},
     {"id": "practice", "title": "실천", "content": "<핵심 액션 위주. 400~550자. 늘어지지 말 것>"}
   ],
   "monthlyWarnings": [{"month": "<예: 9월>", "title": "...", "desc": "<80~120자>"}],
@@ -253,7 +254,7 @@ async function callGroup(
       // 2차 캐시 — 사주 base (모든 그룹 공통)
       { type: 'text', text: sajuBase, cache_control: { type: 'ephemeral' } },
     ],
-    messages: [{ role: 'user', content: userSituation + TONE_FINAL_CHECK }],
+    messages: [{ role: 'user', content: userSituation + (group === 'A' || group === 'B' ? READING_VOICE_BLOCK : '') + TONE_FINAL_CHECK }],
   });
   logAnthropicUsage('premium', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
 
@@ -563,7 +564,9 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ## 길신: ${gilsin}
 ## 흉살: ${hyungsal}
 
-## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}`;
+## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}
+
+${lifeTimelineFactsText(sajuData, kstNowDate())}`;
 }
 
 /** T3 · 사용자 상황 (캐시 X — 매번 다름) + T2 그룹 focus 추가 */

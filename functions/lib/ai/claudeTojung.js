@@ -49,7 +49,7 @@ async function callNyGroup(anthropic, shared, group, ty) {
             model: NEWYEAR_MODEL,
             max_tokens: MAX[group],
             system: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
+            messages: [{ role: 'user', content: user + (group === 'A' ? promptsV3_1.READING_VOICE_BLOCK : '') + promptsV3_1.TONE_FINAL_CHECK }],
         });
         try {
             (0, aiUsageLog_1.logAnthropicUsage)('tojung', NEWYEAR_MODEL, msg, t0);
@@ -130,7 +130,7 @@ function nyGroupInstruction(group, ty) {
         return `## 이번 응답 = 그룹 A (한 해 총평) 만. months 는 출력하지 마세요 (다른 그룹이 씀).
 JSON 만 출력 (코드블록 없이):
 {
-  "headline": "${ty}년을 한 문장으로 (35~50자, 세운과 원국 관계 근거, 결론형)",
+  "headline": "${ty}년을 한 문장으로 (35~50자, '${ty}년은 ~하는 해입니다'처럼 그해에 이름을 붙이는 결론형, 세운과 원국 관계 근거)",
   "pullQuote": "기억에 남을 짧은 한마디 (20~30자)",
   "keywords": ["키워드1","키워드2","키워드3"],
   "fourBox": [
@@ -141,7 +141,7 @@ JSON 만 출력 (코드블록 없이):
   ],
   "categoryScores": {"총운": 정수, "금전운": 정수, "건강운": 정수, "직장운": 정수, "애정운": 정수, "결혼운": 정수},
   "yearOverview": {
-    "총운": "400~500자, 첫 문장 결론 → 세운과 그 해 대운이 원국과 만나는 구조(근거 1~2개) → 상반기/하반기 흐름(구체 월) → 올해 가장 중요한 행동 1개",
+    "총운": "400~500자, 첫 문장 결론 → 둘째 문장에서 확정표의 올해나 최근 석 달로 '지난 일 짚기' 한 번(그 흐름이 ${ty}년에 어떻게 바뀌는지로 잇는다) → 세운과 그 해 대운이 원국과 만나는 구조(근거 1~2개) → 상반기/하반기 흐름(구체 월) → 올해 가장 중요한 행동 1개",
     "금전운": "350~450자, 돈이 들어오고 나가는 구체 장면 + 좋은 달과 조심할 달(확정값) + 해야 할 것/피할 것",
     "건강운": "300~400자, 약해지기 쉬운 몸과 컨디션 패턴 + 조심할 달 + 생활 습관 1~2개 (의학적 진단 단정 금지)",
     "직장운": "350~450자, 일, 이직, 평가, 인간관계 장면 + 움직이기 좋은 달/버틸 달",
@@ -236,6 +236,7 @@ ${ty}년 ${yko}(${ygz})년 신년운세 — 사주 원국 + ${ty}년 세운과 �
 - 세운과 대운이 원국 여덟 글자와 만나는 십성과 합충 (서버 계산):
 ${(0, sajuFacts_1.natalRelationsText)(ygz, d, `${ty}년 세운`)}
 ${tyDaeun?.간지 ? (0, sajuFacts_1.natalRelationsText)(String(tyDaeun.간지), d, `${tyDaeun.간지} 대운`) : ''}
+${(0, sajuFacts_1.lifeTimelineFactsText)(d, (0, kstTime_1.kstNowDate)())}
 - 🚨 십성 이름과 합, 충, 형, 해는 위 확정표와 아래 열두 달 줄에 적힌 것만 쓴다. 표에 없는 합이나 충, 표와 다른 십성 이름을 지어내지 말 것 (천간끼리 합과 충을 특히 주의).
 - '기준점수'라는 말과 그 숫자는 풀이에 쓰지 않는다 (점수 앵커일 뿐, 화면 점수와 다르다).
 - 열두 달 월주 (양력 달 기준, 1월은 寅월이 아니라 丑월):

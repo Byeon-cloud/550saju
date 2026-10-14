@@ -237,6 +237,9 @@ ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 
 ## 이 달 간지와 원국의 관계 (서버 확정. 합, 충, 형, 해는 아래에 있는 것만 사실이다)
 ${(0, sajuFacts_1.natalRelationsText)(info.wolGanji, d, '이 달')}
 ${(0, sajuFacts_1.natalRelationsText)(info.yearGanji, d, '올해 세운')}
+${group !== 'M2' ? `
+${(0, sajuFacts_1.lifeTimelineFactsText)(d, (0, kstTime_1.kstNowDate)())}
+→ 짚기 자리 (2026-10-14): theme 첫머리에서 위 확정표의 최근 석 달로 '요즘 짚기'를 한 번 한다(언제부터 어느 영역이 마음 쓰였는지, 그 흐름이 이 달에 어떻게 이어지거나 풀리는지). 다른 필드에서는 다시 묻지 않는다.` : ''}
 → 위에 없는 합, 충, 형, 해를 지어내지 말 것. '부딪힌다'는 충이나 형으로 확정된 것에만, '묶인다'는 합으로 확정된 것에만 쓴다. (2026-10-13 卯戌합을 '부딪힘'으로 쓴 사례)
 
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
@@ -304,7 +307,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 ${schemaBlock}
 
-${tailRule}`;
+${tailRule}${group !== 'M2' ? promptsV3_1.READING_VOICE_BLOCK : ''}`;
 }
 function buildReviewPrompt(info, group) {
     const daysInMonth = new Date(info.year, info.month, 0).getDate();

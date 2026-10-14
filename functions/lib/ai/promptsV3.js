@@ -7,7 +7,7 @@
  * 기준 PRD: `docs/prd/AI프롬프트_v3_Sonnet4.6.md`.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TONE_FINAL_CHECK = exports.SELF_REVIEW_V3 = exports.TOPIC_ANALYSIS_SYSTEM_V3 = exports.DAILY_FORTUNE_USER_V3_GROUP_B = exports.DAILY_FORTUNE_USER_V3_GROUP_A2 = exports.DAILY_FORTUNE_USER_V3_GROUP_A1 = exports.DAILY_FORTUNE_USER_V3 = exports.DAILY_FORTUNE_SYSTEM_V3 = exports.DREAM_DEEP_USER_V3 = exports.DREAM_DEEP_SYSTEM_V3 = exports.DREAM_FREE_USER_NO_SAJU_V3 = exports.DREAM_FREE_USER_WITH_SAJU_V3 = exports.DREAM_FREE_USER_GROUP_B_V3 = exports.DREAM_FREE_USER_GROUP_A_V3 = exports.DREAM_FREE_SYSTEM_V3 = exports.MYEONGRI_GROUNDS_BLOCK = exports.GOOSEBUMP_BLOCK = void 0;
+exports.READING_VOICE_BLOCK = exports.TONE_FINAL_CHECK = exports.SELF_REVIEW_V3 = exports.TOPIC_ANALYSIS_SYSTEM_V3 = exports.DAILY_FORTUNE_USER_V3_GROUP_B = exports.DAILY_FORTUNE_USER_V3_GROUP_A2 = exports.DAILY_FORTUNE_USER_V3_GROUP_A1 = exports.DAILY_FORTUNE_USER_V3 = exports.DAILY_FORTUNE_SYSTEM_V3 = exports.DREAM_DEEP_USER_V3 = exports.DREAM_DEEP_SYSTEM_V3 = exports.DREAM_FREE_USER_NO_SAJU_V3 = exports.DREAM_FREE_USER_WITH_SAJU_V3 = exports.DREAM_FREE_USER_GROUP_B_V3 = exports.DREAM_FREE_USER_GROUP_A_V3 = exports.DREAM_FREE_SYSTEM_V3 = exports.MYEONGRI_GROUNDS_BLOCK = exports.GOOSEBUMP_BLOCK = void 0;
 exports.parseJsonResponse = parseJsonResponse;
 /** 🚨 행운·개운 색/방위/음식/숫자 SSOT (2026-06-26 · 콘텐츠 간 모순 박멸 · 회귀 금지)
  *  버그: 같은 사람인데 종합사주는 용신=화(붉은·남), 오늘운세는 대운기준 수(검은·북),
@@ -2053,4 +2053,24 @@ exports.TONE_FINAL_CHECK = `
 - 사람은 '이름 님'으로만 부른다. '씨', '당신', '귀하'는 쓰지 않는다 (예: 서윤 님은, 서윤 님의). 이름을 모르면 호칭 없이 쓴다(주어를 빼거나 '이 꿈은', '이 사주는'처럼).
 - 긴 줄표(—)를 쓰지 않는다. 덧붙이는 말은 쉼표로 잇거나 문장을 끊는다. '~의 결' 같은 말버릇도 피한다.
 - '에너지', '패턴', '타입', '아이템', '시너지' 대신 '기운', '경향', '편', '물건', '어울림'을 쓴다. '폭발', '완벽', '놀라운' 같은 과장어와 '지금 당장 ~하세요' 같은 명령조 첫머리도 쓰지 않는다.`;
+/* ── 짚어 주는 풀이 (2026-10-14, 오너 지시 + 리서치 3건) ──
+ *   오너: 애매한 말보다 '혹시 요새 이러지 않았냐, 그건 이게 들어오는 시기라서 그렇다'처럼 짚어 줄 때 사람들이 신기해하고
+ *   믿고 공유한다. 리서치(국내 앱 후기, 신점과 철학관 후기, 해외 Co-Star, The Pattern, ゲッターズ飯田): '소름'은
+ *   ① 지난 일을 시기와 함께 맞힐 때 ② 막연한 느낌을 말로 정리해 줄 때 ③ 내 편을 들어 줄 때 나오고, 불만은 누구에게나
+ *   맞는 말, 친구와 똑같은 결과, 좋은 말만, 겁주기에서 나온다. 근거는 반드시 서버 확정표(lifeTimelineFactsText)의 시기. */
+exports.READING_VOICE_BLOCK = `
+
+## 짚어 주는 풀이 (읽는 사람이 자기 일을 대입해 '이걸 어떻게 알았지' 하게)
+근거는 위 '지난 시기와 지금 시기 확정표'와 원국 글자뿐이다. 표에 없는 해, 달, 사건은 쓰지 않는다.
+1. 지난 일 짚기: 표에서 원국 자리를 가장 세게 건드린 해나 달 하나를 골라, 그 시기와 그 자리의 생활 영역 두세 가지를 묶어 묻는다. 사건은 질문으로 묻고, 원인은 단정으로 말한다.
+   형태: '{연도}년 무렵 {영역 두세 가지} 쪽에서 크게 흔들린 일이 있었나요? 그해 들어온 {글자}가 태어난 {자리}의 {글자}와 부딪혀서 생긴 일입니다.'
+   짚는 질문에는 반드시 확정표의 연도나 달이 들어간다. 성격이나 버릇을 묻는 질문은 짚기가 아니다. 질문은 한 편에 한두 번까지, 질문 뒤에는 바로 풀이를 잇는다. 지난 일은 그 질문 하나로만 묻고, 다른 지난 달을 '~했고, ~였습니다'처럼 일어난 사실로 늘어놓지 않는다(그 달은 '~가 걸린 달이었습니다'처럼 기운으로만). 이혼, 사고, 병, 누군가의 죽음 같은 구체 사건을 지어 단정하지 않는다. 입력하지 않은 사실(가족 구성, 직업, 외모)을 아는 척하지 않는다.
+2. 요즘 짚기: 최근 석 달 중 원국과 합충이 걸린 달이 있으면 '지난 N월부터'처럼 시작 시점을 대고 마음 쓰이는 영역을 짚은 뒤, 그 흐름이 언제까지 가고 언제부터 풀리는지 달로 말한다. 끝이 있다는 걸 알려 준다.
+3. 원인은 세 걸음: 들어온 글자, 그래서 생긴 일, 그 사람이 부족해서 생긴 일이 아니라는 한마디.
+4. 시기는 근거와 함께 콕 집는다('N월(○○월)', '입동 무렵', '대운이 바뀌는 N년'처럼 표의 값으로). 이유 없는 나이, '언젠가', '조만간', '때가 되면'은 쓰지 않는다.
+5. 성향과 판단은 단정한다. 장점과 그 그림자를 한 문장에 묶되 이 사주 글자를 근거로 붙인다. 반대 사주를 넣어도 맞는 문장, 누구에게나 맞는 문장은 지운다.
+6. 십성은 생활 장면 하나로 옮긴다(재성이면 정산하는 날과 계약서, 관성이면 회의실과 윗사람의 한마디).
+7. 좋은 말만 하지 않는다. 조심할 것 하나는 꼭 말하고 대비책을 붙인다.
+8. 처방은 작고 날짜가 있는 행동 한두 개. 돈이 드는 해결책(부적, 굿, 개명), 겁주는 말, 결제를 권하며 불운을 엮는 말은 쓰지 않는다.
+9. '보인다', '느껴진다', '기운이 감지된다' 같은 신점 말투, 반말, 사주에 등급을 매기는 말은 쓰지 않는다. 존댓말로, 단호하되 내 편인 어른처럼.`;
 //# sourceMappingURL=promptsV3.js.map
