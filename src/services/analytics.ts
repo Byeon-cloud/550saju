@@ -162,7 +162,9 @@ const FIRESTORE_TRACKED = new Set<string>([
   // 2026-10-15 띠별 오늘의 운세 (혜택탭 유입 → 입력 전환 측정)
   'tti_open',           // {tti, src: hero|family}
   'tti_year',           // {year, src}
-  'tti_input',          // {src} — 띠 화면에서 '생일 넣고 내 사주로 보기'
+  'tti_input',          // {src, step: grid|panel|card|family} — 띠 화면에서 생일 넣기
+  'tti_newyear',        // {tti} — 내 운세 칸의 내년 띠 운 → 신년운세
+  'tti_compat',         // {tti} — 가족 띠 칸의 나와 궁합
   // 대시보드 v2 (2026-06-10) — 콘텐츠 구매 + AI 품질 + 광고
   'content_purchase',   // {type, amount(운), topic?} — 운 차감 성공 직후
   'ai_done',            // {type, ms, mode: sse|callable}

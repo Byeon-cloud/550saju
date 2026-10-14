@@ -1,31 +1,56 @@
 /**
  * 띠별 오늘의 운세 (2026-10-15 · 1.5.6) — 띠를 누르면 바로 읽힌다 (입력 0)
  *   혜택탭으로 들어온 50~60대가 생년월일 입력 앞에서 나가던 문제 → 신문 띠별 운세처럼 한 번 누르면 끝.
- *   내 해를 누르면 표시해 두고(기기에만), 홈은 그 해로 세대를 알아 고민 목록을 맞춘다.
+ *
+ *   흐름 (10-15 오너: '한 줄 보고 끝이면 전환이 안 된다')
+ *     띠 표 → 띠 카드(띠 한 줄 + 연도별 한 줄) → 내 해를 누르면 '내 운세' 칸
+ *       (오늘 한 줄, 좋은 시간, 조심할 시간, 이번 달 띠 운)
+ *       → 생일을 넣으면 열리는 것(실제 오늘의 운세 항목만: 돈 흐름, 끌어주는 사람, 할 일과 피할 일, 행운 색과 방위)
+ *       → [생일 넣고 무료로 보기] → 내년 띠 운 맛보기 → 신년운세
+ *     가족 칸(사주 있는 사람)은 읽기만 + 가족 생일 넣기, 나와 궁합 보기.
+ *   내 해는 기기에만 기억하고, 홈은 그 해로 세대를 알아 고민 목록을 맞춘다.
  */
-import { useEffect, useRef, useState } from 'react';
-import { HJ, SERIF, Seal } from '@/components/hanji/Hanji';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { HJ, SERIF, Seal, GoldCta, Redact } from '@/components/hanji/Hanji';
 import { trackEvent } from '@/services/analytics';
+import { currentSajuMonth, monthDayLabel } from '@/services/saju/hookFacts';
 import {
-  TTI, ttiName, ttiYears, yearLabel, fallbackHead, fallbackYearLine, loadTtiDay, getMyTti, setMyTti, type TtiDay,
+  TTI, ttiName, ttiYears, yearLabel, fallbackHead, fallbackYearLine, loadTtiDay, getMyTti, setMyTti,
+  goodHourOf, badHour, monthTtiLine, yearTtiLine, type TtiDay,
 } from '@/services/tti/ttiFortune';
 
-export function TtiFortune({ today, dayGz, dayKo, src, preselect, onYearPick }: {
+const GAN_KO = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
+const ZHI_KO = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+const yearKo = (y: number): string => GAN_KO[(((y - 4) % 10) + 10) % 10] + ZHI_KO[(((y - 4) % 12) + 12) % 12];
+
+/** 생일을 넣으면 열리는 것 — 오늘의 운세 결과에 실제로 있는 항목만 (미끼 금지) */
+const LOCKED = ['오늘 돈 흐름', '나를 끌어주는 사람', '오늘 할 일과 피할 일', '행운의 색과 방위'];
+
+export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newYear, onNewYear, compatPrice, onCompat }: {
   /** YYYY-MM-DD (KST) */
   today: string;
   /** 오늘 일진 한자 두 글자 */
   dayGz: string;
   /** 오늘 일진 한글 (임술) */
   dayKo: string;
-  /** 기록용 — 홈 첫 화면(hero) 또는 가족 띠 영역(family) */
+  /** 홈 첫 화면(hero) 또는 가족 띠 칸(family) */
   src: 'hero' | 'family';
-  /** 처음 열어 둘 띠 (없으면 기기에 기억한 띠) */
-  preselect?: string | null;
-  onYearPick?: (year: number) => void;
+  onYearPick?: (year: number | undefined) => void;
+  /** 생일 넣기 (hero: 내 사주, family: 가족 사주) */
+  onInput: () => void;
+  /** 내년 신년운세 맛보기 */
+  newYear?: { year: number; gz: string; ko: string; price: number; badge?: string };
+  onNewYear?: () => void;
+  compatPrice?: number;
+  onCompat?: () => void;
 }) {
   const mine = getMyTti();
-  const [sel, setSel] = useState<string | null>(preselect ?? (src === 'hero' ? mine?.ji ?? null : null));
-  const [myYear, setMyYear] = useState<number | undefined>(mine?.year);
+  const hero = src === 'hero';
+  const [sel, setSel] = useState<string | null>(hero ? mine?.ji ?? null : null);
+  const [myYear, setMyYear] = useState<number | undefined>(hero ? mine?.year : undefined);
+  const [showOthers, setShowOthers] = useState(false);
+  /** 내 해를 기억해 둔 재방문자는 띠 표를 접고 내 운세 칸부터 */
+  const [gridOpen, setGridOpen] = useState(() => !(hero && mine?.ji && mine?.year));
   const [day, setDay] = useState<TtiDay | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -38,27 +63,64 @@ export function TtiFortune({ today, dayGz, dayKo, src, preselect, onYearPick }: 
   const pick = (ji: string) => {
     const next = sel === ji ? null : ji;
     setSel(next);
+    setShowOthers(false);
     if (!next) return;
     trackEvent('tti_open', { tti: ji, src });
-    if (src === 'hero') setMyTti(ji, myYear && ttiYears(ji).includes(myYear) ? myYear : undefined);
-    // 카드가 화면 아래에 열리면 보이게 (첫 화면에서 띠 표가 화면을 다 쓰는 폰)
+    if (hero) setMyTti(ji, myYear && ttiYears(ji).includes(myYear) ? myYear : undefined);
+    // 카드가 화면 아래에 열리면 보이게
     setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
   };
   const pickYear = (ji: string, y: number) => {
-    const next = myYear === y ? undefined : y;
-    setMyYear(next);
-    setMyTti(ji, next);
-    if (next) { trackEvent('tti_year', { year: next, src }); onYearPick?.(next); }
+    setMyYear(y);
+    setMyTti(ji, y);
+    setShowOthers(false);
+    setGridOpen(false);
+    trackEvent('tti_year', { year: y, src });
+    onYearPick?.(y);
+    setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
+  const goInput = (step: string) => { trackEvent('tti_input', { src, step }); onInput(); };
 
   const t = sel ? day?.tti?.[sel] : null;
   const head = (t?.head && t.head.trim()) || (sel ? fallbackHead(dayGz, sel) : '');
+  const lineOf = (y: number) => (t?.years?.[String(y)] || '').trim() || fallbackYearLine(dayGz, y);
+  const years = sel ? ttiYears(sel) : [];
+  const chosen = hero && sel && myYear && years.includes(myYear) ? myYear : null;
+  const month = currentSajuMonth(today);
+  const monthLabel = `${month.ko}월`;
+
+  const yearRow = (y: number, i: number, clickable: boolean) => {
+    const style = {
+      display: 'flex', gap: 12, alignItems: 'flex-start', padding: '11px 0', width: '100%',
+      borderTop: i === 0 ? 0 : `1px solid ${HJ.line}`, background: 'transparent',
+    } as const;
+    const inner = (
+      <>
+        <span style={{ width: 58, flexShrink: 0, fontSize: 14.5, fontWeight: 800, color: HJ.ink, lineHeight: 1.6 }}>{yearLabel(y)}</span>
+        <span style={{ flex: 1, fontSize: 15, lineHeight: 1.6, color: HJ.ink2 }}>{lineOf(y)}</span>
+        {clickable && <span aria-hidden="true" style={{ fontSize: 15, color: HJ.mute, lineHeight: 1.6 }}>›</span>}
+      </>
+    );
+    return clickable
+      ? <button key={y} type="button" onClick={() => pickYear(sel!, y)} className="text-left" style={style}>{inner}</button>
+      : <div key={y} style={style}>{inner}</div>;
+  };
 
   return (
     <div>
+      {/* ── 띠 표 (내 해를 고른 뒤에는 접는다) ── */}
+      {!gridOpen && sel ? (
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <button type="button" onClick={() => setGridOpen(true)}
+            style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0, padding: '8px 0' }}>
+            다른 띠 보기 ›
+          </button>
+        </div>
+      ) : (
       <div className="grid grid-cols-4 gap-2">
         {TTI.map(({ ji, name }) => {
           const on = sel === ji;
+          const yy = ttiYears(ji).slice(1, 5).map((y) => String(y % 100).padStart(2, '0'));
           return (
             <button key={ji} type="button" onClick={() => pick(ji)} aria-pressed={on}
               style={{
@@ -70,52 +132,136 @@ export function TtiFortune({ today, dayGz, dayKo, src, preselect, onYearPick }: 
               <span style={{ fontFamily: SERIF, fontSize: name.length > 3 ? 14.5 : 16, fontWeight: 700, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{name}</span>
               {/* 출생 연도 넷을 두 줄에 둘씩 — 칸마다 줄바꿈이 들쭉날쭉하지 않게 */}
               <span style={{ fontSize: 13, lineHeight: 1.35, color: on ? '#CFC6B6' : HJ.mute, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
-                {(() => { const yy = ttiYears(ji).slice(1, 5).map((y) => String(y % 100).padStart(2, '0')); return <>{yy.slice(0, 2).join(' ')}<br />{yy.slice(2).join(' ')}</>; })()}
+                {yy.slice(0, 2).join(' ')}<br />{yy.slice(2).join(' ')}
               </span>
             </button>
           );
         })}
       </div>
+      )}
+
+      {/* 띠를 아직 안 고른 첫 화면 — 금색 버튼은 띠 카드 안에서만, 여기는 글자 버튼 */}
+      {hero && !sel && (
+        <button type="button" onClick={() => goInput('grid')} className="w-full"
+          style={{ marginTop: 14, padding: 12, fontSize: 15, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+          생일을 넣으면 내 사주로 바로 볼 수 있어요 ›
+        </button>
+      )}
 
       {sel && (
-        <div ref={cardRef} style={{ marginTop: 12, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '16px 16px 12px', scrollMarginBottom: 24 }}>
+        <div ref={cardRef} style={{ marginTop: 12, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '16px 16px 14px', scrollMarginTop: 72 }}>
           <div className="flex items-center gap-2.5">
             <Seal size={34} fontSize={18}>{sel}</Seal>
             <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700 }}>{ttiName(sel)} 오늘의 운세</span>
             <span style={{ marginLeft: 'auto', fontSize: 13, color: HJ.mute }}>{dayKo}일</span>
           </div>
           <p style={{ fontFamily: SERIF, fontSize: 16.5, fontWeight: 600, lineHeight: 1.65, marginTop: 12, color: HJ.ink }}>{head}</p>
-          {src === 'hero' && <p style={{ fontSize: 13, color: HJ.mute, marginTop: 12 }}>태어난 해를 누르면 다음에도 바로 보여 드려요</p>}
-          <div style={{ marginTop: 6 }}>
-            {ttiYears(sel).map((y, i) => {
-              const line = (t?.years?.[String(y)] || '').trim() || fallbackYearLine(dayGz, y);
-              // 가족 칸은 읽기만 (일반 줄) — 가족 띠의 해를 눌러 '내 해'가 바뀌면 안 된다
-              const on = src === 'hero' && myYear === y;
-              const rowStyle = {
-                display: 'flex', gap: 12, alignItems: 'flex-start', padding: '11px 8px', margin: '0 -8px', width: 'calc(100% + 16px)',
-                borderTop: i === 0 ? 0 : `1px solid ${HJ.line}`, background: on ? HJ.hanji : 'transparent', borderRadius: on ? 10 : 0,
-              } as const;
-              const inner = (
-                <>
-                  <span style={{ width: 58, flexShrink: 0, fontSize: 14.5, fontWeight: 800, color: HJ.ink, lineHeight: 1.6 }}>
-                    {yearLabel(y)}
-                    {on && <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: HJ.goldText }}>내 해</span>}
+
+          {chosen ? (
+            <>
+              {/* ── 내 운세 칸 ── */}
+              <div style={{ marginTop: 14, background: HJ.hanji, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '14px 14px 6px' }}>
+                <div className="flex items-baseline" style={{ gap: 8 }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink }}>{yearLabel(chosen)} {ttiName(sel)}</span>
+                  <span style={{ fontSize: 13, color: HJ.mute }}>{yearKo(chosen)}생, 내 해</span>
+                  <button type="button" onClick={() => { setMyYear(undefined); setMyTti(sel); onYearPick?.(undefined); }}
+                    style={{ marginLeft: 'auto', fontSize: 13, color: HJ.mute, background: 'transparent', border: 0, padding: '4px 0' }}>
+                    해 바꾸기
+                  </button>
+                </div>
+                <p style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, lineHeight: 1.6, marginTop: 8, color: HJ.ink }}>{lineOf(chosen)}</p>
+                <dl style={{ marginTop: 10 }}>
+                  <Fact k="좋은 시간">{goodHourOf(sel)}</Fact>
+                  {badHour(sel) && <Fact k="조심할 시간">{badHour(sel)}</Fact>}
+                  <Fact k="이번 달">{monthTtiLine(month.gz, sel, monthLabel)} <span style={{ color: HJ.mute }}>({monthDayLabel(month.lastDay)}까지)</span></Fact>
+                </dl>
+              </div>
+
+              {/* ── 생일을 넣으면 열리는 것 ── */}
+              <div style={{ marginTop: 18 }}>
+                <div style={{ fontFamily: SERIF, fontSize: 16.5, fontWeight: 700, color: HJ.ink }}>생일을 넣으면 이만큼 더 보여요</div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>
+                  {LOCKED.map((l, i) => (
+                    <li key={l} className="flex items-center" style={{ gap: 10, padding: '10px 0', borderTop: i === 0 ? 0 : `1px solid ${HJ.line}` }}>
+                      <span style={{ flex: 1, fontSize: 15, color: HJ.ink2 }}>{l}</span>
+                      <Redact w={92} lock={false} />
+                    </li>
+                  ))}
+                </ul>
+                <GoldCta style={{ marginTop: 12 }} onClick={() => goInput('panel')} sub="무료">생일 넣고 무료로 보기</GoldCta>
+                <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>결제 없이 바로 열려요. 한 번 넣으면 계속 써요</p>
+              </div>
+
+              {/* ── 내년 띠 운 맛보기 → 신년운세 ── */}
+              {newYear && onNewYear && (
+                <button type="button" onClick={() => { trackEvent('tti_newyear', { tti: sel }); onNewYear(); }} className="w-full text-left"
+                  style={{ marginTop: 16, background: HJ.ink, color: '#F1ECE1', borderRadius: 14, padding: '14px 14px 13px', border: 0, display: 'block' }}>
+                  <span className="flex items-center" style={{ gap: 8 }}>
+                    <Seal size={26} fontSize={14}>歲</Seal>
+                    <span style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 700 }}>{newYear.year}년 {newYear.ko}년, {ttiName(sel)}는?</span>
                   </span>
-                  <span style={{ flex: 1, fontSize: 15, lineHeight: 1.6, color: HJ.ink2 }}>{line}</span>
-                </>
-              );
-              return src === 'hero' ? (
-                <button key={y} type="button" onClick={() => pickYear(sel, y)} aria-pressed={on} className="w-full text-left" style={rowStyle}>{inner}</button>
-              ) : (
-                <div key={y} style={rowStyle}>{inner}</div>
-              );
-            })}
-          </div>
-          <p style={{ fontSize: 13, lineHeight: 1.55, color: HJ.mute, marginTop: 10 }}>
-            양력 2월 4일 무렵(입춘) 전에 태어났다면 앞 해의 띠로 보세요.
-          </p>
+                  <span style={{ display: 'block', fontSize: 14.5, lineHeight: 1.6, color: '#E2D9C8', marginTop: 8 }}>
+                    {yearTtiLine(newYear.gz, sel, `${newYear.year}년 ${newYear.ko}년`)}
+                  </span>
+                  <span style={{ display: 'block', fontSize: 14, fontWeight: 800, color: '#D2B477', marginTop: 8, textAlign: 'right' }}>
+                    달마다 좋은 날까지 신년운세 {newYear.badge ? `${newYear.badge} ` : ''}{newYear.price}운 ›
+                  </span>
+                </button>
+              )}
+
+              {/* ── 다른 해 ── */}
+              <button type="button" onClick={() => setShowOthers((v) => !v)} className="w-full"
+                style={{ marginTop: 12, padding: 10, fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+                {showOthers ? '다른 해 접기' : `${ttiName(sel)} 다른 해도 보기 ›`}
+              </button>
+              {showOthers && <div>{years.filter((y) => y !== chosen).map((y, i) => yearRow(y, i, true))}</div>}
+            </>
+          ) : (
+            <>
+              {hero && (
+                <p style={{ fontSize: 14.5, fontWeight: 700, color: HJ.goldText, marginTop: 14 }}>
+                  태어난 해를 누르면 내 운세를 자세히 보여 드려요
+                </p>
+              )}
+              <div style={{ marginTop: hero ? 4 : 10 }}>{years.map((y, i) => yearRow(y, i, hero))}</div>
+              <p style={{ fontSize: 13, lineHeight: 1.55, color: HJ.mute, marginTop: 8 }}>
+                양력 2월 4일 무렵(입춘) 전에 태어났다면 앞 해의 띠로 보세요.
+              </p>
+              {hero && (
+                <button type="button" onClick={() => goInput('card')} className="w-full"
+                  style={{ marginTop: 6, padding: 10, fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+                  생일을 넣으면 내 사주로 바로 볼 수 있어요 ›
+                </button>
+              )}
+              {!hero && (
+                <div className="grid grid-cols-2 gap-2" style={{ marginTop: 12 }}>
+                  <SubBtn onClick={() => goInput('family')} t="가족 생일 넣고" s="오늘 운세 무료로 보기 ›" />
+                  {onCompat && <SubBtn onClick={() => { trackEvent('tti_compat', { tti: sel }); onCompat(); }} t="나와 궁합" s={`잘 맞는 점과 부딪히는 점 ${compatPrice ?? ''}운 ›`} />}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function Fact({ k, children }: { k: string; children: ReactNode }) {
+  return (
+    <div className="flex" style={{ gap: 10, padding: '9px 0', borderTop: `1px solid ${HJ.line}` }}>
+      <dt style={{ width: 74, flexShrink: 0, fontSize: 14, fontWeight: 800, color: HJ.ink, lineHeight: 1.55 }}>{k}</dt>
+      <dd style={{ flex: 1, margin: 0, fontSize: 14.5, lineHeight: 1.55, color: HJ.ink2 }}>{children}</dd>
+    </div>
+  );
+}
+
+function SubBtn({ onClick, t, s }: { onClick: () => void; t: string; s: string }) {
+  return (
+    <button type="button" onClick={onClick} className="text-left"
+      style={{ background: HJ.paper, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <span style={{ fontFamily: SERIF, fontSize: 15.5, fontWeight: 700, color: HJ.ink }}>{t}</span>
+      <span style={{ fontSize: 13.5, lineHeight: 1.45, color: HJ.ink2 }}>{s}</span>
+    </button>
   );
 }

@@ -29,8 +29,7 @@ import {
 } from '@/services/saju/hookFacts';
 import type { SajuData } from '@/types/saju';
 import { TtiFortune } from '@/components/home/TtiFortune';
-import { getMyTti } from '@/services/tti/ttiFortune';
-import { trackEvent } from '@/services/analytics';
+import { getMyTti, ttiOfYear, ttiName, yearLabel } from '@/services/tti/ttiFortune';
 import {
   HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
 } from '@/components/hanji/Hanji';
@@ -230,16 +229,20 @@ export function HomePage() {
             <>
               {/* 2026-10-15 — 혜택탭 50~60대가 입력 앞에서 나가던 문제: 띠만 누르면 바로 읽히게 (신문 띠별 운세) */}
               <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 27, lineHeight: 1.4, letterSpacing: '-.03em', marginTop: 14 }}>
-                내 띠를 누르면<br />
-                <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세가 바로 보여요.</span>
+                {ttiYear ? (
+                  <>{yearLabel(ttiYear)} {ttiName(ttiOfYear(ttiYear))},<br />
+                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세예요.</span></>
+                ) : (
+                  <>내 띠를 누르면<br />
+                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세가 바로 보여요.</span></>
+                )}
               </h1>
               <div style={{ marginTop: 16 }}>
-                <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="hero" onYearPick={setTtiYear} />
+                <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="hero" onYearPick={setTtiYear}
+                  onInput={() => navigate('/input?from=daily')}
+                  newYear={{ year: NEW_YEAR_TARGET, gz: ny.gz, ko: ny.ko, price: tojung, badge: tojungInfo.launch?.badge }}
+                  onNewYear={() => navigate('/tojung')} />
               </div>
-              <GoldCta style={{ marginTop: 18 }} onClick={() => { trackEvent('tti_input', { src: 'hero' }); navigate('/input?from=daily'); }} sub="무료">
-                생일 넣고 내 사주로 보기
-              </GoldCta>
-              <p style={{ textAlign: 'center', fontSize: 13.5, lineHeight: 1.55, color: HJ.mute, marginTop: 10 }}>몇 시에 움직이면 좋은지, 오늘 만나면 좋은 사람까지 알려 드려요</p>
             </>
           )}
         </div>
@@ -276,7 +279,8 @@ export function HomePage() {
         <>
           <SecTitle k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" />
           <div style={{ margin: '0 16px' }}>
-            <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="family" />
+            <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="family"
+              onInput={() => navigate('/input?new=1&from=daily')} compatPrice={compat} onCompat={() => navigate('/compat')} />
           </div>
         </>
       )}

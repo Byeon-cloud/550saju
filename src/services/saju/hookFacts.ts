@@ -278,6 +278,13 @@ export function yearFact(s: SajuData, year: number): YearFact | null {
   return { year, gz, gzKo: ganziKo(gz), star: top ? STAR_NAME[top.st.cat] : '', ch: top?.ch || '', cat: top?.st.cat };
 }
 /** 사주 없이도 쓰는 세운 간지 */
+/** 오늘이 든 사주 달(절기 달)과 그 달이 끝나는 날 — 띠 카드 '이번 달' */
+export function currentSajuMonth(today: string): { gz: string; ko: string; lastDay: string } {
+  const [y, m, d] = kstParts(today);
+  const gz = monthGzAtEnd(y, m, d);
+  const next = upcomingSajuMonths(today, 1)[0];
+  return { gz, ko: ganziKo(gz), lastDay: next ? addDays(next.start, -1) : today };
+}
 export function yearGz(year: number): { gz: string; ko: string } {
   const gz = Solar.fromYmd(year, 6, 1).getLunar().getYearInGanZhiExact();
   return { gz, ko: ganziKo(gz) };

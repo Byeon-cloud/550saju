@@ -129,3 +129,53 @@ export function getMyTti(): { ji: string; year?: number } | null {
 export function setMyTti(ji: string, year?: number): void {
   try { localStorage.setItem(MY_KEY, JSON.stringify({ ji, ...(year ? { year } : {}) })); } catch { /* noop */ }
 }
+
+/** 띠별 조심할 시간 (충 시진, 깨어 있는 때만) */
+export function badHour(ji: string): string | null {
+  const c = CHUNG[ji];
+  return AWAKE.includes(c) ? HOUR_LABEL[c] : null;
+}
+export const goodHourOf = goodHour;
+
+type Rel = '충' | '형' | '원진' | '해' | '육합' | '삼합' | '같은 띠' | '무난';
+/** 기간(달, 해)의 지지와 띠의 관계 하나 — 부딪힘을 먼저 알린다 */
+function mainRel(br: string, ji: string): Rel {
+  if (CHUNG[ji] === br) return '충';
+  if (HYUNG.has(ji + br)) return '형';
+  if (WONJIN[ji] === br) return '원진';
+  if (HAE[ji] === br) return '해';
+  if (HAP6[ji] === br) return '육합';
+  if (br !== ji && SAMHAP.some((g) => g.includes(br) && g.includes(ji))) return '삼합';
+  if (br === ji) return '같은 띠';
+  return '무난';
+}
+
+/** 이번 달(절기 달) 띠 운 한 줄 — label 예: '이번 달(무술월)' */
+export function monthTtiLine(monthGz: string, ji: string, label: string): string {
+  const nm = ttiName(ji);
+  switch (mainRel(monthGz[1], ji)) {
+    case '충': return `${label}은 ${nm}와 정면으로 부딪히는 달입니다. 이사, 계약, 큰돈 쓰는 일은 서두르지 마세요.`;
+    case '형': return `${label}은 ${nm}와 서로 깎이는 달입니다. 서류와 몸을 한 번 더 챙기세요.`;
+    case '원진': return `${label}은 ${nm}에게 괜히 서운한 일이 생기는 달입니다. 섭섭한 말은 하루 묵혔다가 하세요.`;
+    case '해': return `${label}은 ${nm}와 은근히 어긋나는 달입니다. 가까운 사람에게 하는 말을 아끼세요.`;
+    case '육합': return `${label}은 ${nm}와 짝이 맞는 달입니다. 사람 덕을 보고, 미뤄 둔 약속이 잘 풀립니다.`;
+    case '삼합': return `${label}은 ${nm}와 한 무리로 묶이는 달입니다. 여럿이 함께 하는 일이 잘 맞물립니다.`;
+    case '같은 띠': return `${label}은 ${nm}와 같은 띠의 달이라 고집이 세집니다. 혼자 정하지 말고 한 번 더 물어보세요.`;
+    default: return `${label}은 ${nm}에게 크게 부딪히는 것 없는 무난한 달입니다.`;
+  }
+}
+
+/** 내년 띠 운 한 줄 — label 예: '2027년 정미년' (신년운세로 잇는 맛보기) */
+export function yearTtiLine(yearGzStr: string, ji: string, label: string): string {
+  const nm = ttiName(ji);
+  switch (mainRel(yearGzStr[1], ji)) {
+    case '충': return `${label}은 ${nm}와 정면으로 부딪히는 해입니다. 이사나 일의 큰 변화가 따르니 언제 움직일지 달마다 미리 보세요.`;
+    case '형': return `${label}은 ${nm}와 서로 깎이는 해입니다. 서류와 다툼, 몸을 다른 해보다 꼼꼼히 챙기세요.`;
+    case '원진': return `${label}은 ${nm}에게 괜히 서운한 일이 생기는 해입니다. 마음 상하는 일은 길게 끌지 마세요.`;
+    case '해': return `${label}은 ${nm}와 은근히 어긋나는 해입니다. 가까운 사람과의 오해를 조심하세요.`;
+    case '육합': return `${label}은 ${nm}와 짝이 맞는 해입니다. 사람 덕으로 일이 풀립니다.`;
+    case '삼합': return `${label}은 ${nm}와 한 무리로 묶이는 해입니다. 함께 하는 일과 사람 사이가 잘 맞물립니다.`;
+    case '같은 띠': return `${label}은 ${nm}의 해입니다. 한 해 동안 변화가 많아 달마다 흐름을 알아 두면 좋습니다.`;
+    default: return `${label}은 ${nm}에게 크게 부딪히는 것 없는 무난한 해입니다. 그래도 좋은 달과 조심할 달은 따로 있습니다.`;
+  }
+}
