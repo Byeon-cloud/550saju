@@ -403,7 +403,7 @@ export function HomePage() {
             ? `재물의 별 ${facts.wealth.count}개, ${facts.wealth.pyeon && !facts.wealth.jeong ? '큰돈이 오가는 별(편재)' : facts.wealth.jeong && !facts.wealth.pyeon ? '꾸준히 쌓는 별(정재)' : '쌓는 별과 오가는 별이 함께'}`
             : '재물의 별이 들어오는 때와 새는 곳') : '재물운: 새는 구멍과 들어오는 시기'}
           price={`${getTopicPrice('wealth').actualPrice}운`} onClick={() => goTopic('wealth')} />
-        <ConcernRow hz="合" q="그 사람과 나, 잘 맞을까" b="궁합: 두 사람 8글자를 겹쳐 봐요" price={`${compat}운`} onClick={() => navigate('/compat')} />
+        <ConcernRow hz="合" q="그 사람과 나, 잘 맞을까" b="궁합: 잘 맞는 점과 자주 부딪히는 점" price={`${compat}운`} onClick={() => navigate('/compat')} />
         <ConcernRow id="marriage" q={CONCERN_Q.marriage} b={facts ? facts.spouse : '결혼운: 결혼 적기와 배우자 성향'} price={`${getTopicPrice('marriage').actualPrice}운`} onClick={() => goTopic('marriage')} />
         {showAllTopics && (['career', 'business', 'health', 'move', 'study'] as TopicId[]).map((id) => (
           <ConcernRow key={id} id={id} q={CONCERN_Q[id]} b={`${TOPIC_REGISTRY[id].label}: ${TOPIC_REGISTRY[id].subCopy}`} price={`${getTopicPrice(id).actualPrice}운`} onClick={() => goTopic(id)} />
@@ -419,7 +419,7 @@ export function HomePage() {
       {/* ━━━ 6-1. 지금 많이 보는 풀이 (실제 집계만 · 3개 미만이면 숨김) ━━━ */}
       {liveBest.length >= 3 && (
         <>
-          <SecTitle k="사람들이 지금 보는 것" h="최근 하루, 많이 열어 본 풀이" />
+          <SecTitle k="실시간 인기" h="지금 많이 보는 풀이" />
           <ol style={{ margin: '0 16px', borderTop: `1px solid ${HJ.line}`, listStyle: 'none', padding: 0 }}>
             {liveBest.map((it, i) => (
               <li key={it.id} style={{ borderBottom: `1px solid ${HJ.line}` }}>

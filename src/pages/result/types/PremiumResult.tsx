@@ -2423,7 +2423,7 @@ function PremiumResultFooter({
             <line x1={15.41} y1={6.51} x2={8.59} y2={10.49} />
           </svg>
           <div className="ti">친구에게 공유하기</div>
-          <div className="sb">결과 카드 송출</div>
+          <div className="sb">결과 카드로 보내기</div>
         </div>
         {/* 2026-07-03 준기 결정 — PDF 버튼 비노출 ("완벽 아니면 없앤다").
             근거: 실검증 결과 ① 본문 강조 태그(<strong> 등)가 esc 되어 문자 그대로 노출(전 섹션 오염)

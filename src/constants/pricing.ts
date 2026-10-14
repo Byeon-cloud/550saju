@@ -89,7 +89,6 @@ export function findPackageById(id: string): ChargePackage | undefined {
 
 /** 상품별 운 비용 (정가) — 세일 적용된 실제 차감가는 getTopicPrice/getPremiumPrice 사용 */
 export const PRODUCT_COST: Record<string, number> = {
-  basic: 1,
   compatibility: 1,
   daeun: 1,
   monthly: 7,   // 2026-06-29 NEW 출시 — 월운세 정가 7운 (getMonthlyPrice SSOT)
@@ -219,37 +218,6 @@ export function formatPriceLabel(p: PricingInfo): string {
   }
   return `${p.regularPrice}운`;
 }
-
-/** 리포트 11섹션 메타 (PRD v2 기준 · 2026-05-28 social 제거 — SSOT 10주제 정렬) */
-export const REPORT_SECTIONS = [
-  { id: 'summary', title: '사주 총평', visual: 'ohengFlow' },
-  { id: 'personality', title: '타고난 성격과 기질', visual: 'jijanggan' },
-  { id: 'career', title: '직업운과 적성', visual: 'careerFit' },
-  { id: 'wealth', title: '재물운', visual: 'wealthFlow' },
-  { id: 'love', title: '애정운과 연애 스타일', visual: null },
-  { id: 'health', title: '건강 주의사항', visual: 'healthVis' },
-  { id: 'year2026', title: '2026년 운세', visual: 'monthlyFortune' },
-  { id: 'daeun', title: '대운의 흐름', visual: 'daeunTimeline' },
-  { id: 'mission', title: '인생의 핵심 과제', visual: null },
-  { id: 'luck', title: '개운법', visual: 'gaewoonVis' },
-  { id: 'luckyProfile', title: '나만의 행운 정리', visual: 'luckyProfile' },
-] as const;
-
-/** 전체 서비스 목록 (런칭 버전) */
-export const ALL_SERVICES = [
-  // 무료
-  { id: 'daily', title: '오늘의 운세', desc: '매일 달라지는 나만의 운세', price: 0, label: '무료' },
-  { id: 'dream', title: '꿈해몽', desc: '간밤에 꾼 꿈, 무슨 의미일까요', price: 0, label: '무료' },
-  // 유료 (1운 = 500원)
-  { id: 'saju', title: '내 사주 풀이', desc: '성격, 직업, 연애, 재물, 건강 상세 분석', price: 1, label: '1운' },
-  { id: 'chat', title: '사주 상담', desc: '대화로 주고받는 1:1 맞춤 사주 상담', price: 1, label: '1운 = 3회' },
-  { id: 'compatibility', title: '궁합 분석', desc: '두 사람의 사주 비교, 연애/결혼/직장', price: 1, label: '500원' },
-  { id: 'daeun', title: '대운 해설', desc: '10년 단위 운의 흐름과 전환점', price: 1, label: '500원' },
-  { id: 'monthly', title: '2026 월별 운세', desc: '올해 12개월, 좋은 달과 조심할 달', price: 1, label: '500원' },
-  { id: 'tojung', title: '신년운세', desc: '내 사주로 미리 보는 한 해 열두 달, 좋은 날까지', price: 7, label: '3,500원' },
-  // 프리미엄 (10운 = 5,000원) — Phase 2에서 활성화
-  // { id: 'premium', title: '프리미엄 심층 분석', desc: '기본 12항목 + PDF + 월운 상세 + 궁합 + 전문가 코멘트', price: 10, label: '5,000원' },
-] as const;
 
 /**
  * 프리미엄 티어 설계 — 2026-04-27 정정 (15운 묶음 = 5,000원)

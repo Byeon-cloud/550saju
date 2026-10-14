@@ -191,10 +191,28 @@ export async function exchangeTossToken(
       lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   } else {
+    /* 2026-10-14 — 탈퇴나 연결 끊기 뒤 다시 토스로 로그인하면 다시 가입한 것으로 본다.
+     *   토스 키를 다시 붙이고(다음 탈퇴 콜백이 찾을 수 있게), 5일 뒤 파기 예약을 지우고, 잠근 계정을 푼다.
+     *   예전 코드는 name 이 빈 값이면 undefined 를 써서 Firestore 가 거부했다. */
+    const prev = userDoc.data() as Record<string, unknown>;
+    const rejoin = prev.status === 'disconnected' || !!prev.purgedAt || prev.tossUserKey !== userKey;
     await userRef.update({
       lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
-      name: userName || undefined,
+      ...(userName ? { name: userName } : {}),
+      ...(rejoin
+        ? {
+            tossUserKey: userKey,
+            status: 'active',
+            reactivatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            deleteScheduledAt: admin.firestore.FieldValue.delete(),
+            ...(userBirthday ? { birthday: userBirthday } : {}),
+            ...(userGender ? { gender: userGender } : {}),
+          }
+        : {}),
     });
+    if (rejoin) {
+      await admin.auth().updateUser(uid, { disabled: false }).catch(() => undefined);
+    }
   }
 
   // 5. Firebase Custom Token 생성

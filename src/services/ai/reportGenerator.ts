@@ -97,7 +97,7 @@ async function callWithAuth(name: string, data: any): Promise<any> {
 export async function generateReport(
   sajuData: SajuData,
   situation?: Situation,
-  reportType: 'basic' | 'premium' = 'basic',
+  reportType: 'premium' = 'premium', // 2026-10-14 — 1운 기본 리포트 생성 제거, 서버도 premium 만 받는다
   /** 2026-10-09 — 점진 표시 좌표 (서버가 그룹 완성마다 progress/{id} 에 write) */
   progressId?: string,
 ): Promise<{ reportId: string; content: AIReportResponse }> {
@@ -228,95 +228,6 @@ export async function generatePremiumReportStream(
     //   토스 웹뷰·Cloud Run/프록시 idle-timeout 등으로 연결이 '조용히' 끊김). 기존: 그냥 break →
     //   onDone/onError 둘 다 미발화 → ResultPage '분석 중' 배너가 영원히 + 환불·에러·복구 0 (무한로딩 직접 원인).
     //   이제 강제 onError → handleStreamFailure 로 환불 + 에러카드 정상 전환.
-    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
-  } catch (e: any) {
-    callbacks.onError(e?.message || '네트워크 오류');
-  }
-}
-
-/**
- * Phase 1 (2026-05-27) · 1운 리포트 SSE 스트리밍 — generatePremiumReportStream 패턴 미러링.
- *   서버: generateReportStream (onRequest SSE · 3 그룹 병렬 · 1운 차감)
- *   onGroup: 그룹 A/B/C 도착 (각각 ~25-30s)
- *   onDone: 머지된 최종 content + reportId
- *   결과 페이지가 첫 그룹 도착 시 즉시 진입 → 점진 렌더 (오늘의 운세 패턴).
- */
-export interface ReportStreamCallbacks {
-  onStart?: () => void;
-  onGroup?: (group: 'A' | 'B' | 'C', data: any, elapsedMs: number) => void;
-  onDone: (result: { reportId: string; content: AIReportResponse }) => void;
-  onError: (message: string) => void;
-}
-
-export async function generateReportStream(
-  sajuData: SajuData,
-  situation: Situation | undefined,
-  callbacks: ReportStreamCallbacks,
-): Promise<void> {
-  refreshCurrentDaeun(sajuData); // 2026-07 fix — SSE 경로도 stale 현재대운 재계산
-  callbacks = wrapStreamCallbacks('report', callbacks); // C3 측정 (로직 무변경)
-  await ensureFunctionsTarget();
-  await ensureAuth();
-
-  const { getAuth } = await import('firebase/auth');
-  const idToken = await getAuth().currentUser?.getIdToken();
-  if (!idToken) {
-    callbacks.onError('인증 토큰을 가져올 수 없습니다');
-    return;
-  }
-
-  const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
-  if (!projectId) { callbacks.onError('Firebase 프로젝트 설정 오류'); return; }
-  const useEmulator =
-    import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
-  const url = useEmulator
-    ? `http://localhost:5001/${projectId}/us-central1/generateReportStream`
-    : `https://us-central1-${projectId}.cloudfunctions.net/generateReportStream`;
-
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({ sajuData, situation }),
-    });
-    if (!res.ok || !res.body) { callbacks.onError(`서버 오류 ${res.status}`); return; }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const events = buffer.split('\n\n');
-      buffer = events.pop() || '';
-      for (const ev of events) {
-        if (!ev.trim()) continue;
-        let eventName = 'message';
-        let dataLine = '';
-        for (const line of ev.split('\n')) {
-          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
-          else if (line.startsWith('data: ')) dataLine = line.slice(6);
-        }
-        if (!dataLine) continue;
-        let payload: any = null;
-        try { payload = JSON.parse(dataLine); } catch { continue; }
-
-        if (eventName === 'start') callbacks.onStart?.();
-        else if (eventName === 'group') callbacks.onGroup?.(payload.group, payload.data, payload.elapsedMs);
-        else if (eventName === 'done') {
-          callbacks.onDone({ reportId: payload.reportId, content: payload.content as AIReportResponse });
-          return;
-        } else if (eventName === 'error' || eventName === 'groupError') {
-          callbacks.onError(payload.message || '알 수 없는 오류');
-          return;
-        }
-      }
-    }
-    // 🚨 2026-06-22 CRITICAL — done/error 없이 스트림 종료(연결 silent-break) → 강제 onError (무한로딩 차단)
     callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
   } catch (e: any) {
     callbacks.onError(e?.message || '네트워크 오류');

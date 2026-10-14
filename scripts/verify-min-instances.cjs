@@ -2,7 +2,7 @@
 const CONFIG_PATH = 'C:/Users/quswn/.config/configstore/firebase-tools.json';
 const PROJECT = 'appintoss-saju';
 const REGION = 'us-central1';
-const FNS = ['generatePremiumReportStream', 'generateReportStream', 'generateDreamFreeStream', 'generateTopicAnalysisStream', 'generateDailyFortuneStream'];
+const FNS = ['generatePremiumReportStream', 'generateDreamFreeStream', 'generateTopicAnalysisStream', 'generateDailyFortuneStream'];
 
 (async () => {
   const cfg = require(CONFIG_PATH);

@@ -15,7 +15,6 @@ import { HomePage } from '@/pages/HomePage';
 
 // Lazy-loaded pages (코드 스플리팅)
 const InputPage = lazyWithReload(() => import('@/pages/InputPage').then(m => ({ default: m.InputPage })));
-const LoadingPage = lazyWithReload(() => import('@/pages/LoadingPage').then(m => ({ default: m.LoadingPage })));
 const ResultPage = lazyWithReload(() => import('@/pages/result/ResultPage').then(m => ({ default: m.ResultPage })));
 const DailyFortunePage = lazyWithReload(() => import('@/pages/DailyFortunePage').then(m => ({ default: m.DailyFortunePage })));
 // 2026-05-07: 출시 후 공개 — import 보존 (관련 페이지 향후 복원용)
@@ -155,7 +154,8 @@ function AnimatedRoutes() {
           <Routes location={location}>
             <Route path="/" element={<HomePage />} />
             <Route path="/input" element={<InputPage />} />
-            <Route path="/loading" element={<LoadingPage />} />
+            {/* 2026-10-14 — 쓰이지 않던 LoadingPage(생성은 결과 화면이 직접) 삭제. 옛 주소는 홈으로 */}
+            <Route path="/loading" element={<Navigate to="/" replace />} />
             <Route path="/result/:id" element={<ResultRouteGuard />} />
             <Route path="/daily" element={<DailyFortunePage />} />
             {/* 2026-06-29: 월운세·주간운세 NEW 출시. 나머지 3종(대운/궁합/토정)은 lockdown 유지 */}

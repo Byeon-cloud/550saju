@@ -1,7 +1,7 @@
 // Charge Page — #55 Sprint 2 UI 개편 (2026-04-24)
 // 스펙: docs/mockups/사주500_UI개편_07_운충전.md §1-§15 · 핸드오버 §2-8
 // 골격: TopBar 56 → HeroBar 104 → RedirectHint 60(조건) → ChargePackages 2col → Notice → CheckoutBar 80 sticky
-// 보존(E13): confirmTossPayment / grantPurchase 분기 토스트, IAP processProductGrant
+// 보존(E13): grantPurchase 분기 토스트, IAP processProductGrant (웹 토스페이먼츠 복귀 처리는 2026-10-14 제거, 웹 결제는 포트원)
 // SSOT 토큰 적용 · 광고 없음 · 원화 노출 허용 유일 페이지
 
 import { useState, useEffect } from 'react';
@@ -126,9 +126,7 @@ export function ChargePage() {
   const portoneTest = !isAppintosBuild && !portoneLive && isPortoneTestEnabled();
   // 2026-06-18 웹 런칭 — 웹 실결제 게이트. 앱인토스 IAP 는 항상 라이브.
   //   2026-07-02 — 포트원 실결제(VITE_PORTONE_LIVE=1)도 오픈 조건에 추가 (준기 결정: 웹 PG = 포트원).
-  const webPaymentReady = isAppintosBuild
-    || portoneLive
-    || String(import.meta.env.VITE_TOSS_PAYMENTS_CLIENT_KEY || '').startsWith('live_');
+  const webPaymentReady = isAppintosBuild || portoneLive;
 
   // p15 → CHARGE_PACKAGES[3] (4 패키지 정정 후 마지막 인덱스)
   const selectedPkg =
@@ -136,7 +134,7 @@ export function ChargePage() {
     CHARGE_PACKAGES.find((p) => p.id === 'p15') ??
     CHARGE_PACKAGES[CHARGE_PACKAGES.length - 1];
 
-  // ── E13 · Toss Payment 리다이렉트 복귀 처리 (보존)
+  // ── 결제 리다이렉트 복귀 처리 — 포트원 실결제 (토스페이먼츠 복귀는 2026-10-14 제거)
   useEffect(() => {
     // 포트원 실결제 리다이렉트 복귀 (모바일) — 서버 검증·지급 재개 (2026-07-02)
     const portonePid = searchParams.get('portone_pid');
@@ -167,59 +165,6 @@ export function ChargePage() {
           setSearchParams({}, { replace: true });
         });
       return;
-    }
-
-    const pgStatus = searchParams.get('pg');
-    const paymentKey = searchParams.get('paymentKey');
-    const orderId = searchParams.get('orderId');
-    const amount = searchParams.get('amount');
-
-    if (pgStatus === 'fail') {
-      const errMsg = searchParams.get('message') || '결제가 취소됐어요';
-      // 2026-06-18 — 결제 실패/취소 트래킹 (결제 퍼널 drop-off 분석 · 기존 미트래킹)
-      import('@/services/analytics').then((a) => a.trackEvent('charge_failed', { pg: 'toss', reason: errMsg.slice(0, 60) })).catch(() => {});
-      toast.show(errMsg, 'warning');
-      setSearchParams({}, { replace: true });
-      return;
-    }
-
-    if (paymentKey && orderId && amount) {
-      setPurchasing(true);
-
-      import('@/services/payment/tossPayments').then(({ confirmTossPayment }) => {
-        confirmTossPayment(paymentKey, orderId, Number(amount))
-          .then((result) => {
-            if (result.success && result.paidUn != null) {
-              addPaidBalance(result.paidUn, result.bonusUn || 0);
-              setBalanceDisplay(getBalance());
-              toast.show(result.message, 'success');
-              // 2026-05-29 — 어드민 매출 퍼널: 충전 완료 이벤트 (2026-06-24 source 추가 — 결제 결심 출처)
-              import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: Number(amount) || 0, source: chargeSource }));
-              if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
-            } else {
-              toast.show(result.message || '결제 처리에 실패했어요', 'warning');
-            }
-          })
-          .catch((err) => {
-            // E13 · 서버 에러 유형별 분기 (보존)
-            const raw = err?.message || '';
-            let userMsg: string;
-            if (raw.includes('고객센터')) {
-              userMsg = raw; // needs_reconciliation
-            } else if (raw.includes('이미 처리된')) {
-              userMsg = '이미 처리된 결제예요. 잔액을 확인해주세요.';
-            } else if (raw.includes('결제 승인 실패')) {
-              userMsg = '결제가 취소됐어요. 다시 시도해주세요.';
-            } else {
-              userMsg = '결제 확인 중 오류가 발생했어요. 다시 시도해주세요.';
-            }
-            toast.show(userMsg, 'warning');
-          })
-          .finally(() => {
-            setPurchasing(false);
-            setSearchParams({}, { replace: true });
-          });
-      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

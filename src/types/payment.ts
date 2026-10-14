@@ -2,7 +2,7 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type PaymentType = 'charge' | 'spend' | 'refund' | 'bonus';
 export type PaymentStatus = 'completed' | 'refunded' | 'failed';
-export type PgProvider = 'toss' | 'iap';
+export type PgProvider = 'toss' | 'iap' | 'portone'; // 'toss' = 2026-10 이전 웹 토스페이먼츠 기록 (경로는 제거)
 
 export interface Payment {
   payid: string;

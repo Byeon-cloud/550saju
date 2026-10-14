@@ -416,7 +416,7 @@ const MOCKUP_CSS = `
 .dream-mockup .paid-cta .hook { font-size: 13px; color: #c4baa0; line-height: 1.7; position: relative; margin-bottom: 14px; word-break: keep-all; }
 .dream-mockup .paid-cta .hook strong { color: #f2d678; font-weight: 600; }
 .dream-mockup .paid-cta .cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 13px 18px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; position: relative; text-align: center; border: none; width: 100%; }
-.dream-mockup .paid-cta .cta-btn .cost { background: rgba(26,26,26,.12); padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 700; }
+.dream-mockup .paid-cta .cta-btn .cost { margin-left: 8px; font-size: 14px; font-weight: 700; opacity: .72; } /* 2026-10-14 v9: 알약 대신 글자 (GoldCta sub 와 같게) */
 /* 2026-09-17 — 스트리밍 중 결제 race 차단: 잠금 풀이가 다 쓰일 때까지 CTA 비활성 */
 .dream-mockup .paid-cta .cta-btn:disabled { opacity: .55; cursor: default; }
 .dream-mockup .paid-cta .sub { font-size: 13px; color: #7F6B4E; text-align: center; margin-top: 8px; position: relative; }
@@ -1078,7 +1078,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
             <div className="ti">친구에게 공유하기</div>
-            <div className="sb">결과 카드 송출</div>
+            <div className="sb">결과 카드로 보내기</div>
           </div>
           <div className="btn" onClick={onChat} role="button" tabIndex={0}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

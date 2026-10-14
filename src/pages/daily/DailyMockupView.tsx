@@ -1628,7 +1628,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
             <div className="ti">친구에게 공유하기</div>
-            <div className="sb">결과 카드 송출</div>
+            <div className="sb">결과 카드로 보내기</div>
           </button>
           <button type="button" className="btn" onClick={onChat}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

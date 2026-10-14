@@ -289,17 +289,10 @@ export async function restorePendingPurchases(): Promise<void> {
   }
 }
 
-/** 웹 브라우저 — 토스페이먼츠 PG 결제 */
-async function purchaseViaWeb(pkg: ChargePackage): Promise<{ success: boolean; message: string }> {
-  try {
-    const { requestTossPayment } = await import('@/services/payment/tossPayments');
-    await requestTossPayment(pkg);
-    // requestTossPayment은 리다이렉트 발생 — 여기 도달하면 취소된 것
-    return { success: false, message: '결제가 취소됐어요' };
-  } catch (err: any) {
-    console.error('[Web Payment]', err);
-    return { success: false, message: err.message || '결제 처리 중 오류가 발생했어요' };
-  }
+/** 웹 브라우저 — 웹 결제는 포트원(ChargePage 의 포트원 결제수단 시트). 2026-10-14 토스페이먼츠 예비 경로 제거
+ *   (실행될 수 없던 경로: 포트원 심사/실결제가 먼저 잡고, 토스페이먼츠 키는 test_ 라 막혀 있었다) */
+async function purchaseViaWeb(_pkg: ChargePackage): Promise<{ success: boolean; message: string }> {
+  return { success: false, message: '웹 결제는 곧 열려요' };
 }
 
 /** 운 사용 — reward → bonus → paid 순으로 차감 */

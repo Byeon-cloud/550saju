@@ -5266,7 +5266,7 @@ export function TopicAnalysisPage() {
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                   </svg>
                   <span style={{ fontSize: 13.5, fontWeight: 600 }}>친구에게 공유하기</span>
-                  <span style={{ fontSize: 13, color: '#7A7269' }}>결과 카드 송출</span>
+                  <span style={{ fontSize: 13, color: '#7A7269' }}>결과 카드로 보내기</span>
                 </button>
                 <button
                   type="button"

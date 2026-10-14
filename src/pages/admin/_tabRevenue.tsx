@@ -19,7 +19,7 @@ function purchaseLabel(key: string): string {
 }
 
 function pgLabel(pg: string): string {
-  return pg === 'iap' ? '앱인토스 IAP' : pg === 'toss' ? '토스페이먼츠(웹)' : pg === 'unknown' ? '기타/미상' : pg;
+  return pg === 'iap' ? '앱인토스 IAP' : pg === 'portone' ? '포트원(웹)' : pg === 'toss' ? '토스페이먼츠(웹, 이전)' : pg === 'unknown' ? '기타/미상' : pg;
 }
 
 // 결제 직전 진입경로(source) → 사람이 읽기 좋은 라벨

@@ -12,7 +12,6 @@ import { kstNow } from './utils/kstTime';
 /** 2026-10-10 — 스트림 완료본도 콜러블과 같은 정리(출처·한자·보장·시각·가운뎃점) — 여러 번 걸어도 같은 결과 */
 const cleanAiOut = async <T,>(v: T): Promise<T> => (await import('./ai/sajuFacts')).sanitizeAiOutput(v);
 // AI 모듈은 호출 시 동적 import — 초기화 타임아웃 방지
-const lazyClaudeReport = () => import('./ai/claudeReport');
 
 // ── 하반기 시작 이벤트 세일 (pricing.ts SSOT 와 동기) — 서버가 직접 KST 세일 계산(클라 미신뢰).
 //    차감액이 클라 actualPrice 와 항상 일치 → 로컬/Firestore 잔액 정합 + 세일종료(7/15) 자동 정가복귀.
@@ -44,7 +43,6 @@ const TOSS_MTLS_CERT = defineSecret('TOSS_MTLS_CERT');
 const TOSS_MTLS_KEY = defineSecret('TOSS_MTLS_KEY');
 const TOSS_DECRYPT_KEY = defineSecret('TOSS_DECRYPT_KEY');
 const TOSS_DECRYPT_AAD = defineSecret('TOSS_DECRYPT_AAD');
-const TOSS_PAYMENTS_SECRET = defineSecret('TOSS_PAYMENTS_SECRET_KEY');
 const PORTONE_V2_API_SECRET = defineSecret('PORTONE_V2_API_SECRET');
 
 /** 금액 → 패키지 매핑 (서버에서 검증용) */
@@ -380,147 +378,12 @@ export const generatePremiumReportStream = onRequest(
   }
 );
 
-/* ══════════════════════════════════════════════════════════════════
- * generateReportStream — 1운 리포트 SSE 스트리밍 (Phase 1 · 2026-05-27)
- *
- * 종합사주 SSE 와 동일 패턴: 3 그룹(A·B·C) 병렬 호출 + 도착 즉시 송출.
- * callable generateReport 와 프롬프트·모델·머지 100% 동일 (전송만 SSE).
- * 클라가 첫 그룹 도착(~25-30s) 시 결과 페이지 진입 → 점진 렌더 가능.
- *
- * 잔액 차감 1운 (premium 의 10운 과 차이) · 환불·Firestore 저장은 callable 과 동일.
- * ═════════════════════════════════════════════════════════════════ */
-export const generateReportStream = onRequest(
-  {
-    secrets: [ANTHROPIC_KEY],
-    timeoutSeconds: 540,
-    memory: '1GiB',
-    minInstances: 0, // 2026-06-15→2026-09-03 비용 fix: 1→0. 상시대기 5함수(스트리밍) 월 ~₩9~10만원 → 제거. cold start 는 로딩 UX 로 흡수.
-    cors: true,
-    invoker: 'public',
-  },
-  async (req, res) => {
-    if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.set('Access-Control-Max-Age', '3600');
-      res.status(204).send('');
-      return;
-    }
-    if (req.method !== 'POST') { res.status(405).send('Method not allowed'); return; }
-
-    res.set({
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no',
-      'Access-Control-Allow-Origin': '*',
-    });
-    res.flushHeaders?.();
-    const sendEvent = (event: string, data: any) => {
-      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-    };
-
-    let uid = 'anonymous';
-    let isAnonymous = true;
-    const authHeader = req.headers.authorization || '';
-    if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      try {
-        const decoded = await admin.auth().verifyIdToken(token);
-        uid = decoded.uid;
-        isAnonymous = decoded.firebase?.sign_in_provider === 'anonymous';
-      } catch { /* anonymous */ }
-    }
-
-    const { sajuData, situation } = req.body || {};
-    if (!sajuData) {
-      sendEvent('error', { message: '사주 데이터가 없습니다' });
-      res.end();
-      return;
-    }
-
-    // 잔액 차감 (1운 · basic 1운 리포트)
-    let deductedAmount = 0;
-    if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
-      const cost = 1;
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        try {
-          // 2026-05-28 — schema 통일 helper
-          await db.runTransaction(async (tx) => {
-            const doc = await tx.get(userRef);
-            const result = computeBalanceDeduction(doc.data(), cost);
-            if (!result) throw new Error('운이 부족합니다');
-            tx.update(userRef, result.updates);
-          });
-          deductedAmount = cost;
-        } catch (e: any) {
-          sendEvent('error', { message: e.message || '잔액 차감 실패' });
-          res.end();
-          return;
-        }
-      }
-    }
-
-    sendEvent('start', { ts: Date.now() });
-    // 2026-06-24 — premium 과 동일 SSE heartbeat(5s). 1운 리포트 스트림도 무음끊김(idle-timeout·iOS WKWebView 버퍼링) 방어.
-    const heartbeat = setInterval(() => { try { res.write(': hb\n\n'); } catch { /* 연결 종료됨 */ } }, 5000);
-    const groups: Array<'A' | 'B' | 'C'> = ['A', 'B', 'C'];
-    const results: Record<string, any> = {};
-
-    try {
-      const mod = await import('./ai/claudeReport');
-      const apiKey = ANTHROPIC_KEY.value();
-
-      // 그룹별 병렬 — 도착 즉시 송출 (Promise.all 대신 then 패턴)
-      const groupPromises = groups.map(async (g) => {
-        const t0 = Date.now();
-        try {
-          const result = await mod.generateReportGroup(apiKey, sajuData, situation, g);
-          results[g] = result;
-          sendEvent('group', { group: g, data: result, elapsedMs: Date.now() - t0 });
-        } catch (e: any) {
-          sendEvent('groupError', { group: g, message: e.message || 'unknown' });
-          throw e;
-        }
-      });
-      await Promise.all(groupPromises);
-      clearInterval(heartbeat);
-
-      const merged = mod.mergeReportGroups(results.A, results.B, results.C);
-
-      // Firestore 저장 (callable 과 동일 패턴)
-      const reportRef = db.collection('reports').doc();
-      try {
-        await reportRef.set({
-          uid,
-          type: 'basic',
-          aiModel: CLAUDE_MODEL.opus,
-          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          shareEnabled: false,
-        });
-      } catch { /* silent */ }
-      // 2026-06-18 결과복구 — content+사주 별도 best-effort write (메타 저장과 분리, 색인예외 필드).
-      try { await reportRef.set({ recovery: JSON.stringify({ content: merged, sajuData }) }, { merge: true }); } catch { /* 색인/용량 초과 — 복구 미지원 */ }
-
-      sendEvent('done', { reportId: reportRef.id, content: await cleanAiOut(merged) });
-      res.end();
-    } catch (error: any) {
-      clearInterval(heartbeat);
-      console.error('generateReportStream error:', error);
-      if (deductedAmount > 0) {
-        await refundBalance(uid, deductedAmount, 'generateReportStream failed');
-      }
-      sendEvent('error', { message: error?.message || 'AI 분석 실패' });
-      res.end();
-    }
-  }
-);
+/* 2026-10-14 — 1운 기본 리포트(basic) 생성 경로 제거: generateReportStream(SSE) 삭제, generateReport 는 종합사주(premium) 전용.
+   1운 리포트는 실사용자에게 판매된 적 없는 상품(07-01 폐기). claudeReport.ts 도 삭제 */
 
 /**
- * 사주 리포트 생성 — Claude Opus 4.6 (env SAJU_REPORT_MODEL로 오버라이드 가능)
+ * 종합사주 생성 (callable) — 앱인토스 경로. 웹은 generatePremiumReportStream(SSE).
+ *   2026-10-14 — premium 전용. 그 밖의 reportType 은 차감 전에 거절 (예전엔 basic 으로 빠져 1운 리포트를 만들었다)
  */
 export const generateReport = onCall(
   // 2026-05-29 PM 비용 fix — minInstances: 1→0. 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
@@ -528,13 +391,14 @@ export const generateReport = onCall(
   async (request) => {
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData) throw new HttpsError('invalid-argument', '사주 데이터가 없습니다');
+    if (reportType !== 'premium') throw new HttpsError('invalid-argument', '종합사주만 만들 수 있어요');
 
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;  // 환불용 차감 기록
 
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const cost = reportType === 'premium' ? premiumCost() : 1;
+      const cost = premiumCost();
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
@@ -550,13 +414,9 @@ export const generateReport = onCall(
     }
 
     try {
-      console.log(`[generateReport] Starting Claude call... reportType=${reportType}`);
-      // ✅ 핵심 수정 (2026-05) — reportType 별 정확한 분기
-      //   premium → generatePremiumReport (T2 병렬 + lifeEdge/sipCluster/shinsalCards/topicMini/monthlyInsight 풀 schema)
-      //   basic   → generateSajuReport    (1운 기본 schema)
-      // 이전 버그: 무조건 generateSajuReport 호출 → premium 결제 시에도 basic schema 반환 → 클라 PremiumResult 렌더 깨짐
+      console.log('[generateReport] Starting Claude call... reportType=premium');
       let result: any;
-      if (reportType === 'premium') {
+      {
         const premMod = await import('./ai/claudePremium');
         // 2026-10-09 — 점진 표시 (앱인토스 callable 경로): progressId 가 오면 그룹 완성마다 progress/{id} 에 write → 앱이 구독해
         //   도착한 섹션부터 보여주고 나머지는 스켈레톤. 결과 전달·차감·환불 경로는 그대로 (write 는 best-effort).
@@ -569,14 +429,6 @@ export const generateReport = onCall(
           situation,
           progressId && uid !== 'anonymous' ? (g, data) => writeGroupProgress(db, progressId, uid, g, data) : undefined,
         );
-      } else {
-        const mod = await lazyClaudeReport();
-        result = await mod.generateSajuReport(
-          ANTHROPIC_KEY.value(),
-          sajuData,
-          situation,
-          reportType || 'basic',
-        );
       }
       console.log('[generateReport] Claude response received, keys:', Object.keys(result?.content || {}));
 
@@ -585,7 +437,7 @@ export const generateReport = onCall(
       try {
         await reportRef.set({
           uid,
-          type: reportType || 'basic',
+          type: 'premium',
           aiModel: CLAUDE_MODEL.opus,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
           shareEnabled: false,
@@ -2082,139 +1934,7 @@ export const grantShareReward = onCall(
   }
 );
 
-/**
- * 토스페이먼츠 결제 확인 — 웹 PG 결제 승인 + 잔액 지급
- *
- * E13 · 결제 원자성 (2026-04-22)
- * status 전이: pending → confirmed | failed | needs_reconciliation
- *   - pending: Toss 승인 API 호출 직전 기록 (감사 추적용 선기록)
- *   - confirmed: Toss 승인 + Firestore 잔액 증가 모두 성공
- *   - failed: Toss 승인 실패 (유저 취소/카드사 거절 등). 동일 orderId 재시도 가능
- *   - needs_reconciliation: Toss 는 승인됐으나 DB 트랜잭션 실패 → 수동 복구 대상
- * 중복 지급 방지: status === 'confirmed' 만 차단 (pending/failed 는 재시도 허용).
- * 근거: docs/prd/P2_Path_E_티켓_트래커.md E13.
- */
-export const confirmPayment = onCall(
-  { secrets: [TOSS_PAYMENTS_SECRET], timeoutSeconds: 15, memory: '256MiB', cors: true },
-  async (request) => {
-    const { paymentKey, orderId, amount } = request.data;
-    if (!paymentKey || !orderId || !amount) {
-      throw new HttpsError('invalid-argument', '필수 파라미터 누락');
-    }
-
-    const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', '로그인 필요');
-
-    // 1. E13 · 중복 지급 방지 — confirmed/needs_reconciliation 만 차단
-    // pending·failed 는 재시도 허용 (유저가 같은 orderId 로 돌아오는 경우)
-    const paymentRef = db.collection(`users/${uid}/payments`).doc(orderId);
-    const existing = await paymentRef.get();
-    if (existing.exists) {
-      const s = existing.data()?.status;
-      if (s === 'confirmed') {
-        return { success: true, message: '이미 처리된 결제예요' };
-      }
-      if (s === 'needs_reconciliation') {
-        throw new HttpsError('failed-precondition', '결제가 승인됐지만 지급이 완료되지 않았어요. 고객센터로 문의해주세요.');
-      }
-      // status === 'pending' | 'failed' | undefined → 재시도 허용, 아래로 진행
-    }
-
-    // 2. 금액 → 패키지 검증
-    const pkg = PACKAGE_MAP[amount];
-    if (!pkg) throw new HttpsError('invalid-argument', `유효하지 않은 금액: ${amount}`);
-
-    // 3. E13 · pending 레코드 선기록 — 감사 추적용 (Toss 승인 전)
-    await paymentRef.set({
-      type: 'charge', orderId, amount,
-      packageName: pkg.name,
-      paidUn: pkg.paidUn, bonusUn: pkg.bonusUn,
-      pgProvider: 'toss',
-      pgPaymentKey: paymentKey,
-      status: 'pending',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    // 4. 토스페이먼츠 결제 승인 API
-    const secretKey = TOSS_PAYMENTS_SECRET.value();
-    let tossResult: any;
-    try {
-      const confirmRes = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${Buffer.from(secretKey + ':').toString('base64')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ paymentKey, orderId, amount }),
-      });
-
-      if (!confirmRes.ok) {
-        const errBody = await confirmRes.json().catch(() => ({}));
-        console.error('[confirmPayment] 토스 승인 실패:', errBody);
-        // E13 · pending → failed 전이 (재시도 가능)
-        await paymentRef.update({
-          status: 'failed',
-          failReason: errBody.message || `http_${confirmRes.status}`,
-          failedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        throw new HttpsError('internal', `결제 승인 실패: ${errBody.message || confirmRes.status}`);
-      }
-      tossResult = await confirmRes.json();
-    } catch (err: any) {
-      if (err instanceof HttpsError) throw err;
-      // 네트워크/타임아웃
-      console.error('[confirmPayment] 네트워크 에러:', err);
-      await paymentRef.update({
-        status: 'failed',
-        failReason: 'network_error: ' + (err.message || 'unknown'),
-        failedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      throw new HttpsError('internal', `결제 승인 실패: ${err.message || '네트워크 오류'}`);
-    }
-
-    // 5. Firestore 트랜잭션 — 잔액 지급 + pending → confirmed 전이
-    const totalUn = pkg.paidUn + pkg.bonusUn;
-
-    try {
-      await db.runTransaction(async (tx) => {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await tx.get(userRef);
-        const data = userDoc.data() || {};
-
-        tx.update(userRef, {
-          'balance.paid': (data.balance?.paid ?? 0) + pkg.paidUn,
-          'balance.bonus': (data.balance?.bonus ?? 0) + pkg.bonusUn,
-          totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
-        });
-
-        tx.update(paymentRef, {
-          unChange: totalUn,
-          tossStatus: tossResult.status,
-          tossMethod: tossResult.method,
-          status: 'confirmed',
-          confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      });
-    } catch (err: any) {
-      // E13 · Toss 는 승인됐는데 DB 트랜잭션 실패 — 수동 복구 필요
-      console.error('[confirmPayment] needs_reconciliation (토스 승인 + DB 실패):', err);
-      await paymentRef.update({
-        status: 'needs_reconciliation',
-        failReason: 'db_transaction_failed: ' + (err.message || 'unknown'),
-        tossStatus: tossResult.status,
-        tossMethod: tossResult.method,
-        tossApprovedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      throw new HttpsError(
-        'internal',
-        '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.'
-      );
-    }
-
-    return { success: true, message: `${totalUn}운이 충전됐어요!`, totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
-  }
-);
+/* 2026-10-14 — 웹 토스페이먼츠 승인 함수(confirmPayment) 제거. 웹 결제는 포트원(confirmPortonePayment). 이전 'toss' 결제 기록은 users/{uid}/payments 에 그대로 보존 */
 
 /**
  * confirmPortonePayment — 포트원 V2 웹 실결제 검증·지급 (2026-07-02 선구현)
@@ -2440,7 +2160,7 @@ export const disconnectToss = onRequest(
           tossUserKey: admin.firestore.FieldValue.delete(),
           ...(isWithdrawal
             // 탈퇴: 5일 후 파기 예약 (개인정보보호법)
-            //   ⚠️ deleteScheduledAt 을 소비하는 스케줄러는 아직 미구현 — 별도 티켓 필요(예약만 되고 파기 X)
+            //   파기는 purgeWithdrawnUsers(매일 04:20 KST)가 한다 (2026-10-14)
             ? { deleteScheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) }
             : {}),
         });
@@ -2666,6 +2386,7 @@ export { onInviteReceived } from './invite/onInviteReceived';
  * Firestore 유저 개인정보 삭제 + Auth 계정 삭제. payments 는 전자상거래법 5년 보존.
  */
 export { deleteAccount } from './auth/deleteAccount';
+export { purgeWithdrawnUsers } from './auth/purgeWithdrawn'; // 2026-10-14 토스 탈퇴 5일 뒤 개인정보 파기 (payments 보존)
 
 // CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
 export { claimCompensation } from './admin/claimCompensation';

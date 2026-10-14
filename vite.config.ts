@@ -8,8 +8,7 @@ import aitDevtools from "@apps-in-toss/devtools/unplugin";
 
 // 빌드 타겟 분기 (2026-05-09 — 앱인토스 심사 반려 fix)
 // `vite build --mode ait` 또는 `process.env.BUILD_TARGET=ait` 일 때:
-// 토스페이먼츠 PG SDK 를 stub 으로 대체 (번들에서 완전 제거).
-// 기본 (web): 토스페이먼츠 SDK 정상 import.
+// 외부 PG SDK(포트원)를 stub 으로 대체 (번들에서 완전 제거). 토스페이먼츠는 2026-10-14 코드째 제거.
 
 export default defineConfig(({ mode }) => {
   const isAitBuild = mode === 'ait' || process.env.BUILD_TARGET === 'ait';
@@ -29,12 +28,10 @@ export default defineConfig(({ mode }) => {
   resolve: {
     // Array form 으로 specific alias 먼저 매칭. (object 면 '@' 가 먼저 매칭되어 '@/services/...' 가 안 잡힘)
     alias: [
-      // 앱인토스 빌드: 외부 PG SDK(토스페이먼츠·포트원)를 stub 으로 대체.
+      // 앱인토스 빌드: 외부 PG SDK(포트원)를 stub 으로 대체.
       // 외부 PG SDK 가 번들에 포함되면 앱인토스 정책 위반 → 심사 반려.
       //   2026-06-17 — 포트원(@portone) 추가 누락으로 .ait 에 포함 → 토스 반려. 토스페이먼츠와 동일 처리.
       ...(isAitBuild ? [
-        { find: '@/services/payment/tossPayments', replacement: path.resolve(__dirname, './src/stubs/tossPaymentsStub.ts') },
-        { find: '@tosspayments/tosspayments-sdk', replacement: path.resolve(__dirname, './src/stubs/tossPaymentsSdkStub.ts') },
         { find: '@/services/payment/portonePayment', replacement: path.resolve(__dirname, './src/stubs/portonePaymentStub.ts') },
         { find: '@portone/browser-sdk/v2', replacement: path.resolve(__dirname, './src/stubs/portoneSdkStub.ts') },
       ] : []),
