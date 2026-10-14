@@ -11,14 +11,7 @@ import { BalanceBar } from '@/components/layout/BalanceBar';
 import { ToastProvider } from '@/components/common/Toast';
 import { HomePage } from '@/pages/HomePage';
 
-/**
- * Home v5 Path 분기 env flag (2026-04-22)
- *   근거: docs/prd/홈v5_Path분기_레이아웃diff.md v3 §11 (a)
- *   기본 OFF — QA 통과 후 1% ramp, 준기 승인 후 100%
- *   `.env`: VITE_HOME_V5_ENABLED=1 로 ON
- */
-const HOME_V5_ENABLED = import.meta.env.VITE_HOME_V5_ENABLED === '1';
-const HomePageV5 = lazyWithReload(() => import('@/pages/HomePageV5').then(m => ({ default: m.HomePageV5 })));
+/* 2026-10-13 — 홈 v5 시안(HomePageV5, env flag OFF 로 한 번도 켜지지 않음)은 v9 홈으로 대체되어 삭제 */
 
 // Lazy-loaded pages (코드 스플리팅)
 const InputPage = lazyWithReload(() => import('@/pages/InputPage').then(m => ({ default: m.InputPage })));
@@ -160,7 +153,7 @@ function AnimatedRoutes() {
       >
         <Suspense fallback={<PageFallback />}>
           <Routes location={location}>
-            <Route path="/" element={HOME_V5_ENABLED ? <HomePageV5 /> : <HomePage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/input" element={<InputPage />} />
             <Route path="/loading" element={<LoadingPage />} />
             <Route path="/result/:id" element={<ResultRouteGuard />} />

@@ -410,7 +410,7 @@ function KakaoLayout({
         width: 1200,
         height: 630,
         position: 'relative',
-        background: `linear-gradient(180deg, #FBF8F1 0%, #F8F5EE 50%, ${theme.accent}10 100%)`,
+        background: '#FBF8F1', // 2026-10-13 v9 — 아래로 번지는 오행색 대신 종이 한 장
         boxSizing: 'border-box',
         fontFamily: SANS,
         overflow: 'hidden',
@@ -426,7 +426,7 @@ function KakaoLayout({
           width: 360,
           height: 360,
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${theme.accent}1A 0%, transparent 70%)`,
+          background: 'none', // 2026-10-13 v9 — 빛번짐 제거
         }}
       />
 
@@ -755,7 +755,7 @@ function FeedLayout({
         style={{
           height: 240,
           // 2026-10-11 — 앱 화면 머리(먹)와 같게. 오행 색은 아래 얇은 선으로만
-          background: 'linear-gradient(180deg, #2A241D 0%, #1A1612 100%)',
+          background: '#1A1612', // 2026-10-13 v9 — 먹 단색
           borderBottom: `4px solid ${theme.accent}`,
           padding: '40px 60px',
           color: '#F5EDDF',
@@ -978,7 +978,7 @@ function StoryLayout({
       style={{
         width: 1080,
         height: 1920,
-        background: `linear-gradient(180deg, #FBF8F1 0%, #F8F5EE 50%, ${theme.accent}10 100%)`,
+        background: '#FBF8F1', // 2026-10-13 v9 — 아래로 번지는 오행색 대신 종이 한 장
         position: 'relative',
         boxSizing: 'border-box',
         fontFamily: SANS,
@@ -989,7 +989,7 @@ function StoryLayout({
       <div
         style={{
           height: 650,
-          background: `linear-gradient(180deg, #FBF8F1 0%, ${theme.accent}0F 100%)`,
+          background: '#FBF8F1',
           padding: '70px 70px 50px',
           color: '#1A1A1A',
           position: 'relative',
@@ -1027,7 +1027,7 @@ function StoryLayout({
             width: 520,
             height: 520,
             borderRadius: '50%',
-            background: `radial-gradient(circle, ${theme.accent}1F 0%, transparent 70%)`,
+            background: 'none', // 2026-10-13 v9 — 빛번짐 제거
           }}
         />
 
