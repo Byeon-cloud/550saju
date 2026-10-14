@@ -26,7 +26,7 @@ export const CHARGE_PACKAGES: ChargePackage[] = [
     price: 500,
     pricePerUn: 500,
     discount: 0,
-    guide: '주제 하나 가볍게',
+    guide: '꿈해몽 깊은 풀이나 사주대화 세 번',
   },
   {
     id: 'p4',
@@ -37,7 +37,7 @@ export const CHARGE_PACKAGES: ChargePackage[] = [
     price: 1500,
     pricePerUn: 375, // 1500 / 4
     discount: 25,    // 2000 → 1500 (500원 절약 — 1운당 500원 → 375원)
-    guide: '주제 3~4개 가볍게',
+    guide: '연애운이나 재물운 한 번',
   },
   {
     id: 'p7',
@@ -48,7 +48,7 @@ export const CHARGE_PACKAGES: ChargePackage[] = [
     price: 2500,
     pricePerUn: 357, // 2500 / 7
     discount: 28,    // 3500 → 2500 (1000원 절약)
-    guide: '주제별 골고루 보기 좋아요',
+    guide: '월운세나 신년운세 한 번',
   },
   {
     id: 'p15',
@@ -60,7 +60,7 @@ export const CHARGE_PACKAGES: ChargePackage[] = [
     pricePerUn: 333, // 5000 / 15
     discount: 33,    // 7500 → 5000 (2500원 절약)
     label: '가장 인기',
-    guide: '프리미엄 1번 + 5운 보너스로 자유롭게',
+    guide: '종합사주 한 번에 5운이 더 남아요',
   },
 ];
 
@@ -89,7 +89,7 @@ export function findPackageById(id: string): ChargePackage | undefined {
 
 /** 상품별 운 비용 (정가) — 세일 적용된 실제 차감가는 getTopicPrice/getPremiumPrice 사용 */
 export const PRODUCT_COST: Record<string, number> = {
-  compatibility: 1,
+  compatibility: 2, // 2026-10-14 1 → 2운 (두 사람 사주를 겹쳐 보는 풀이, 서버 compatCost 와 일치)
   daeun: 1,
   monthly: 7,   // 2026-06-29 NEW 출시 — 월운세 정가 7운 (getMonthlyPrice SSOT)
   weekly: 5,    // 2026-06-29 NEW 출시 — 주간운세 정가 5운 (getWeeklyPrice SSOT)
@@ -154,10 +154,16 @@ function resolvePricing(def: PricingDef): PricingInfo {
 /** 주제운별 가격 raw 정의 (10주제) — 정의 안 된 토픽은 default 1운 */
 const TOPIC_PRICING_RAW: Record<string, PricingDef> = {
   // 2026-06-27 준기: 재물·연애·재회운 = 정가 3운 (사용량 최상위 핵심 유료 콘텐츠).
-  //   나머지 7주제는 DEFAULT_TOPIC_PRICING 1운. 세일 도입 시 salePrice + isOnSale:true 만 추가.
-  love: { regularPrice: 3, isOnSale: false },
-  wealth: { regularPrice: 3, isOnSale: false },
-  reunion: { regularPrice: 3, isOnSale: false },
+  // 2026-10-14 오너 "연애운 4운으로, 많이 쓰고 비싸도 살 것은 올리자(지금 충분히 싸다)" — 최근 60일 유료 실측
+  //   (연애 25, 재회 17, 합격이직 15, 결혼 13, 직업 13, 재물 8) 기준으로 조정. 서버 index.ts TOPIC_COST 와 일치시킬 것.
+  //   건강, 이사, 공부는 첫 결제용으로 1운 유지.
+  love: { regularPrice: 4, isOnSale: false },
+  wealth: { regularPrice: 4, isOnSale: false },
+  reunion: { regularPrice: 5, isOnSale: false },
+  marriage: { regularPrice: 3, isOnSale: false },
+  exam: { regularPrice: 2, isOnSale: false },
+  career: { regularPrice: 2, isOnSale: false },
+  business: { regularPrice: 2, isOnSale: false },
 };
 
 const DEFAULT_TOPIC_PRICING: PricingDef = { regularPrice: 1, isOnSale: false };

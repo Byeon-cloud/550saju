@@ -1,6 +1,7 @@
 // HomePage v9 (2026-10-10) — 수묵·고서 시안 적용 (docs/mockups/사주500_v9_고서시안.html)
-//   순서: 오늘 예고(히어로) → 신년운세(제철) → 가까운 날→먼 날(주·월·인연 D-day) → 오늘 무료(꿈·대화)
-//         → 사주책(종합사주) → 고민(주제운) → 실제 후기(있을 때만) → 강점 → 푸터
+//   순서 (2026-10-14 홈 강조 개편, 시안 artifact 2zsAF1fJrFmpcHzQE3mrA3): 오늘 예고(히어로) → 오늘 무료(먹 꿈, 한지 대화)
+//         → 사주책(종합사주) → 신년운세(그림 띠) → 기간별(달력 장 두 장) → 고민(연애 D-day, 빨간 도장 셋, 목록)
+//         → 실시간 인기 → 실제 후기(있을 때만) → 다른 점(먹 띠) → 푸터
 //   원칙
 //   - 화면의 사주 문장은 전부 hookFacts(만세력 계산 사실)에서 온다. AI 가 정하는 값(가장 좋은 날·점수)은 미리 말하지 않는다.
 //   - 잠긴 내용은 가짜 글자 블러가 아니라 가림막(<Redact/>) — 결제 후 다른 말이 나오는 미끼 금지.
@@ -23,12 +24,12 @@ import { getPublicReviews, type PublicReview } from '@/services/reviews';
 import { getTopicTop5 } from '@/services/liveBest';
 import {
   todayHook, todayGz, weekFact, nextMonthFact, loveDday, yearFact, yearGz, loveStars, wealthStars,
-  examFact, spouseSeatFact, persona, monthDayLabel, josa,
+  examFact, spouseSeatFact, persona, monthDayLabel, josa, nextStarMonth, STAR_LUCK,
+  type WeekFact, type MonthFact,
 } from '@/services/saju/hookFacts';
-import { CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
 import type { SajuData } from '@/types/saju';
 import {
-  HJ, SERIF, ART, ART_CREDIT, GoldCta, GhostButton, Seal, Redact, Gwang, GoBook, hanjaNum,
+  HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
 } from '@/components/hanji/Hanji';
 
 /** 신년운세 대상 연도 — 10월부터 내년 (TojungPage·서버와 같은 규칙) */
@@ -42,7 +43,6 @@ function todayLabel(dateKey: string): string {
   const wd = ['일', '월', '화', '수', '목', '금', '토'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
   return `${m}월 ${d}일 ${wd}요일`;
 }
-function readingOf(ch: string): string { return CHEONGAN_KO[ch] || JIJI_KO[ch] || ''; }
 
 /** 오늘 이 사람의 오늘의 운세를 이미 받았는지 (홈 훅과 같은 판정) */
 function receivedDailyToday(profile: any, today: string): boolean {
@@ -56,20 +56,6 @@ function receivedDailyToday(profile: any, today: string): boolean {
     });
   } catch { return false; }
 }
-
-/** 고민 문장 — 주제 SSOT(라벨·한자·경로)에 '사람이 실제로 하는 질문'만 얹는다 */
-const CONCERN_Q: Record<TopicId, string> = {
-  love: '그 사람, 내 사람일까',
-  reunion: '헤어진 그 사람, 다시 올까',
-  exam: '이번엔 붙을까, 옮겨도 될까',
-  wealth: '왜 돈이 안 모일까',
-  marriage: '이 사람과 결혼해도 될까',
-  career: '지금 일, 계속해도 될까',
-  business: '시작해도 될까, 넓혀도 될까',
-  health: '요즘 몸이 보내는 신호',
-  move: '옮기면 나아질까',
-  study: '공부가 잘 붙는 때는 언제일까',
-};
 
 export function HomePage() {
   usePageTitle('정통 명리학 사주 풀이');
@@ -150,10 +136,11 @@ export function HomePage() {
       };
     } catch { return null; }
   }, [hasSaju, sajuData, today]);
+  const wealthMonth = useMemo(() => (hasSaju && sajuData ? nextStarMonth(sajuData, today, ['재성']) : null), [hasSaju, sajuData, today]);
+  const examMonth = useMemo(() => (hasSaju && sajuData ? nextStarMonth(sajuData, today, ['관성', '인성']) : null), [hasSaju, sajuData, today]);
   const tg = useMemo(() => todayGz(today), [today]);
   const ny = useMemo(() => yearGz(NEW_YEAR_TARGET), []);
   const gotDaily = hasSaju && receivedDailyToday(profile, today);
-  const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
 
   const premium = getPremiumPrice().actualPrice;
   const weekly = getWeeklyPrice().actualPrice;
@@ -165,12 +152,14 @@ export function HomePage() {
   const yr = (dateKey: string) => (Number(dateKey.slice(0, 4)) > Number(today.slice(0, 4)) ? '내년 ' : '');
   const goTopic = (id: string) => navigate(`/topic/${id}`, profileId ? { state: { profileId } } : undefined);
   const liveBest = liveIds.map((id) => {
-    if (id === 'premium') return { id, label: '종합사주', sub: '열 장으로 엮은 내 사주책', price: `${premium}운`, go: () => navigate('/premium') };
-    if (id === 'daily') return { id, label: '오늘의 운세', sub: '오늘 시간대와 할 일, 하루 한 번 무료', price: dailyFree ? '무료' : '1운', go: () => navigate('/daily') };
-    if (id === 'dream') return { id, label: '꿈해몽', sub: '꾼 꿈을 내 사주와 맞춰 풀어요, 하루 한 번 무료', price: dreamFree ? '무료' : '1운', go: () => navigate('/dream') };
+    if (id === 'premium') return { id, label: '종합사주', sub: '타고난 성격부터 10년 대운까지', price: `${premium}운`, go: () => navigate('/premium') };
+    if (id === 'daily') return { id, label: '오늘의 운세', sub: '오늘 좋은 시간과 조심할 일, 하루 한 번 무료', price: dailyFree ? '무료' : '1운', go: () => navigate('/daily') };
+    if (id === 'dream') return { id, label: '꿈해몽', sub: '어젯밤 꾼 꿈 풀이, 하루 한 번 무료', price: dreamFree ? '무료' : '1운', go: () => navigate('/dream') };
     const t = (TOPIC_REGISTRY as Record<string, { label: string; subCopy: string } | undefined>)[id];
     return t ? { id, label: t.label, sub: t.subCopy, price: `${getTopicPrice(id as TopicId).actualPrice}운`, go: () => goTopic(id) } : null;
   }).filter((x): x is NonNullable<typeof x> => !!x).slice(0, 5);
+  /** '다른 점' 예시 — 이 사람 실제 날짜가 있으면 그걸로 (없으면 보기 값) */
+  const whyExample = `${facts?.month ? `${facts.month.month.calMonth}월` : '11월'}, ${facts?.week ? `${Number(facts.week.date.slice(8))}일 ${facts.week.weekday}요일` : '18일 일요일'}, ${facts?.today ? facts.today.peak.split('~')[0] : '저녁 7시 반'}`;
   const withPid = (path: string) => (profileId ? `${path}${path.includes('?') ? '&' : '?'}profileId=${encodeURIComponent(profileId)}` : path);
 
   return (
@@ -187,7 +176,7 @@ export function HomePage() {
         <div style={{ position: 'relative', marginTop: -64, padding: '0 22px' }}>
           <div className="flex items-center gap-2" style={{ fontSize: 14, color: HJ.ink2, fontWeight: 600 }}>
             <Seal size={36}>{tg.gz}</Seal>
-            <span>{todayLabel(today)}, {hasSaju ? `${displayName} 님의 오늘` : `오늘은 ${tg.ko}일`}</span>
+            <span>{todayLabel(today)}, {hasSaju ? `${displayName} 님 오늘의 운세` : `오늘은 ${tg.ko}일`}</span>
           </div>
 
           {hasSaju ? (
@@ -203,8 +192,8 @@ export function HomePage() {
               <>
                 {facts?.today ? (
                   <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 29, lineHeight: 1.38, letterSpacing: '-.03em', marginTop: 14 }}>
-                    {facts.today.avoid},<br />
-                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>큰 결정은 미루세요.</span>
+                    {facts.today.avoid}에는<br />
+                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>큰 결정을 미루세요.</span>
                   </h1>
                 ) : (
                   <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 24, lineHeight: 1.45, letterSpacing: '-.02em', marginTop: 14 }}>
@@ -214,7 +203,7 @@ export function HomePage() {
                 {facts?.today && (
                   <div style={{ marginTop: 16, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '13px 15px', fontSize: 15, lineHeight: 1.65, color: HJ.ink2 }}>
                     <b style={{ color: HJ.ink }}>가장 좋은 시간은 {facts.today.peak}</b>이에요.
-                    {' '}이 시간에 할 일, 만나면 좋은 사람은 오늘 운세에 있어요.
+                    {' '}오늘 할 일과 피할 일도 같이 확인해 보세요.
                   </div>
                 )}
                 <GoldCta style={{ marginTop: 16 }} onClick={() => navigate('/daily')} sub={dailyFree ? '무료' : '1운'}>
@@ -232,7 +221,7 @@ export function HomePage() {
                 <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 내 하루가 보여요.</span>
               </h1>
               <p style={{ marginTop: 12, fontSize: 15.5, lineHeight: 1.7, color: HJ.ink2 }}>
-                몇 시에 움직이고 몇 시에 쉬어야 하는지, 오늘 만나면 좋은 사람까지 내 사주로 짚어 드려요.
+                몇 시에 움직이고 몇 시에 쉬면 좋은지, 오늘 만나면 좋은 사람까지 내 사주로 알려 드려요.
               </p>
               <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/input?from=daily')} sub="무료">
                 내 사주 넣고 오늘 운세 보기
@@ -243,69 +232,32 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ━━━ 2. 신년운세 (10월~ 내년) ━━━ */}
-      <section style={{ margin: '30px 16px 0', borderRadius: 18, overflow: 'hidden', background: HJ.ink, color: '#EFE6D6' }}>
-        <div aria-hidden="true" style={{ height: 140, position: 'relative', backgroundImage: `url(${ART.inwang})`, backgroundSize: '190% auto', backgroundPosition: '30% 40%', backgroundRepeat: 'no-repeat' }}>
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(26,22,18,.05) 0%, rgba(26,22,18,.4) 55%, ${HJ.ink} 100%)` }} />
+      {/* ━━━ 2. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게) ━━━ */}
+      <div style={{ padding: '32px 16px 0' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: HJ.mute, padding: '0 6px' }}>오늘 무료로 볼 수 있어요</div>
+        <div className="grid grid-cols-2 gap-2.5" style={{ marginTop: 10 }}>
+          <button type="button" onClick={() => navigate('/dream')} className="text-left"
+            style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, padding: '16px 15px', minHeight: 200, background: HJ.ink, color: '#F1ECE1', display: 'flex', flexDirection: 'column', gap: 8, border: 0 }}>
+            <svg width="70" height="70" viewBox="0 0 70 70" aria-hidden="true" style={{ position: 'absolute', right: 8, top: 10 }}>
+              <path d="M44 12a24 24 0 1 0 14 40A20 20 0 1 1 44 12z" fill="none" stroke={HJ.gold} strokeWidth="1.6" />
+            </svg>
+            <Seal size={32} fontSize={18}>夢</Seal>
+            <span style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.35, marginTop: 4 }}>어젯밤 꿈,<br />무슨 뜻일까</span>
+            <span style={{ fontSize: 13.5, lineHeight: 1.5, color: '#CFC6B6', flex: 1 }}>어젯밤 꾼 꿈을 적어 보세요</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#D2B477' }}>꿈해몽 {dreamFree ? '무료' : '1운'} ›</span>
+          </button>
+          <button type="button" onClick={() => navigate('/chat')} className="text-left"
+            style={{ borderRadius: 16, padding: '16px 15px', minHeight: 200, background: HJ.card, border: `1px solid ${HJ.line}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Seal size={32} fontSize={18}>問</Seal>
+            <span style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.35, marginTop: 4, color: HJ.ink }}>“이직해도<br />될까요?”</span>
+            <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>고민을 물어보면 내 사주로 답해 드려요</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>첫 질문 무료 ›</span>
+          </button>
         </div>
-        <div style={{ padding: '0 20px 20px', marginTop: -34, position: 'relative' }}>
-          <div className="flex items-end gap-2.5">
-            <b style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 42, lineHeight: 0.9, color: '#FBF4E6' }}>{ny.gz}</b>
-            <span style={{ fontSize: 14, color: '#C9BDAA', paddingBottom: 3 }}>{NEW_YEAR_TARGET}년 {ny.ko}년</span>
-          </div>
-          {facts?.year?.star ? (
-            <>
-              <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, lineHeight: 1.42, marginTop: 12 }}>
-                {NEW_YEAR_TARGET}년, {displayName} 님에게<br />{facts.year.star}이 들어옵니다
-              </h2>
-              <p style={{ fontSize: 15, color: '#D3C7B4', lineHeight: 1.7, marginTop: 8 }}>
-                {ny.ko}년의 {facts.year.ch}({readingOf(facts.year.ch)}){josa(readingOf(facts.year.ch), '은', '는')} {displayName} 님({dayGan})에게 {facts.year.star}이에요.
-                {' '}열두 달 흐름과 달마다 좋은 날까지 짚어 드려요.
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, lineHeight: 1.42, marginTop: 12 }}>
-                {NEW_YEAR_TARGET}년, 나에게는<br />어떤 해일까요
-              </h2>
-              <p style={{ fontSize: 15, color: '#D3C7B4', lineHeight: 1.7, marginTop: 8 }}>
-                {ny.ko}년이 내 사주에 무엇을 들이는지, 열두 달 흐름과 달마다 좋은 날까지 짚어 드려요.
-              </p>
-            </>
-          )}
-          <GhostButton onInk style={{ marginTop: 16 }} onClick={() => navigate('/tojung')} sub={`${tojung}운`}>
-            {NEW_YEAR_TARGET} 신년운세 보기
-          </GhostButton>
-        </div>
-      </section>
-
-      {/* ━━━ 3. 가까운 날 → 먼 날 ━━━ */}
-      <SecTitle k="가까운 날부터 먼 날까지" h={hasSaju ? `${displayName} 님 운, 기간별로` : '내 운, 기간별로'} />
-      <div style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 18 }}>
-        <LadderRow hz="週" k={facts?.week ? `이번 주 ${facts.week.weekday}요일(${Number(facts.week.date.slice(8))}일) ${facts.week.gz}일` : '이번 주 7일'}
-          t={facts?.week ? facts.week.text : '오늘부터 7일, 하루씩 짚어 드려요'}
-          price={`${weekly}운`} onClick={() => navigate('/weekly', profileId ? { state: { profileId } } : undefined)} />
-        <LadderRow hz="月"
-          k={facts?.month ? `${yr(facts.month.month.start)}${facts.month.month.calMonth}월 ${facts.month.gzKo}월(${facts.month.month.gz})` : '원하는 달 하나'}
-          t={facts?.month ? `${facts.month.title}${facts.month.once ? ', 1년에 한 번' : ''}` : '그 달의 돈, 일, 사람 흐름을 깊게'}
-          price={`${monthly}운`}
-          onClick={() => navigate(withPid(facts?.month ? `/monthly?month=${facts.month.month.start.slice(0, 7)}` : '/monthly'))} />
-        {facts?.love && (
-          <LadderRow hz={TOPIC_REGISTRY.love.kanji}
-            k={`${yr(facts.love.month.start)}${monthDayLabel(facts.love.month.start)}부터 D-${facts.love.days}`}
-            t={facts.love.hap ? '연인의 별이 짝(合)으로 들어오는 달' : '연인의 별이 들어오는 달'}
-            price={`연애운 ${getTopicPrice('love').actualPrice}운`} onClick={() => goTopic('love')} last />
-        )}
       </div>
 
-      {/* ━━━ 4. 오늘 무료 ━━━ */}
-      <div className="grid grid-cols-2 gap-2.5" style={{ margin: '12px 16px 0' }}>
-        <MiniCard f={dreamFree ? '오늘 무료' : '1운'} h={<>어젯밤 꿈,<br />무슨 뜻일까</>} s="꿈 단어만 적으면 내 사주로 풀어요" go="꿈 풀기" onClick={() => navigate('/dream')} />
-        <MiniCard f="오늘 1번 무료" h={<>내 사주에게<br />직접 물어보기</>} s={'"그 사람 연락 올까요?" 같은 질문도'} go="물어보기" onClick={() => navigate('/chat')} />
-      </div>
-
-      {/* ━━━ 5. 사주책 (종합사주) ━━━ */}
-      <SecTitle k="평생 한 번 읽는 종합사주" h={hasSaju ? `${displayName} 님 인생이 한 권에` : '내 인생이 한 권에'} />
+      {/* ━━━ 3. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
+      <SecTitle k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" />
       <div style={{ margin: '0 16px', borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD' }}>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.jangansa})`, backgroundSize: 'cover', backgroundPosition: '40% 55%', opacity: 0.42 }} />
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%)' }} />
@@ -323,12 +275,12 @@ export function HomePage() {
               {displayName} 님은 <span style={{ color: HJ.goldText }}>{facts.persona.identity}</span>{josa(facts.persona.identity, '으로', '로')} 태어났어요.
             </p>
             <p style={{ fontSize: 14, color: HJ.mute, marginTop: 6, lineHeight: 1.6 }}>
-              {facts.persona.dayGz}일주: 이 한 줄에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
+              {facts.persona.dayGz}일주에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
             </p>
           </>
         ) : (
           <p style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.5 }}>
-            태어난 날의 8글자에서 시작해 돈, 사랑, 일, 건강까지, 열 장으로 처음부터 끝까지 풀어요.
+            태어난 날의 8글자에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
           </p>
         )}
 
@@ -364,50 +316,149 @@ export function HomePage() {
         )}
 
         <Gwang title={facts?.persona ? `${facts.persona.dayGz}命書 目次` : '命書 目次'} style={{ marginTop: 16 }} bodyStyle={{ padding: '4px 14px 8px' }}>
-          <TocRow no={1} t="진짜 강점 3, 빠지기 쉬운 함정 3" pv={hasSaju ? <>첫 번째 함정: <Redact w={110} /></> : '내 사주가 반복하는 경향'} />
+          <TocRow no={1} t="진짜 강점 3, 빠지기 쉬운 함정 3" pv={hasSaju ? <>첫 번째 함정: <Redact w={110} /></> : '내 사주가 자꾸 되풀이하는 습관'} />
           <TocRow no={2} t="돈, 사랑, 일, 건강, 사람, 공부 점수" pv={hasSaju ? <>가장 강한 영역 <Redact w={44} lock={false} /> 가장 약한 영역 <Redact w={44} /></> : '여섯 영역의 강약을 한눈에'} />
           <TocRow no={3} t="나에게 부족한 기운과 채우는 법" pv="색, 방위, 계절, 습관까지" />
-          <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게, 할 일로 정리해 드려요" />
+          <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게 할 일로 정리해 드려요" />
           <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>+ 원국, 십성, 대운, 신살, 올해 흐름 등 여섯 장 더</p>
         </Gwang>
-        {/* v9: 알약 칩 대신 고서 본문 한 줄 (2026-10-13) */}
         <p style={{ marginTop: 14, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, textAlign: 'center', wordBreak: 'keep-all' }}>
           한 번 사면 평생 보관하고 PDF로 저장할 수 있어요. 다 읽고 궁금한 건 바로 물어보세요.
         </p>
         <GoldCta style={{ marginTop: 14 }} onClick={() => navigate('/premium')} sub={`${premium}운`}>
-          {hasSaju ? '내 사주책 펼치기' : '내 사주책 만들기'}
+          {hasSaju ? '내 종합사주 보기' : '종합사주 보기'}
         </GoldCta>
-        <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 9 }}>
-          열 장 한 권, 장마다 {Math.round((premium / 10) * 10) / 10}운 꼴
-        </p>
       </section>
 
-      {/* ━━━ 6. 고민 (주제운) ━━━ */}
-      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
-        <SecTitle k="요즘 많이 찾는 고민" h="지금 마음에 걸리는 게 있다면" />
+      {/* ━━━ 4. 신년운세 (그림 띠) ━━━ */}
+      <button type="button" onClick={() => navigate('/tojung')} className="text-left"
+        style={{ display: 'block', margin: '14px 16px 0', width: 'calc(100% - 32px)', borderRadius: 18, overflow: 'hidden', position: 'relative', border: 0, background: HJ.ink, color: '#F1ECE1', padding: 0 }}>
+        <div aria-hidden="true" style={{ height: 168, backgroundImage: `url(${ART.inwang})`, backgroundSize: '190% auto', backgroundPosition: '30% 40%', backgroundRepeat: 'no-repeat' }} />
+        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(26,22,18,.9) 0%, rgba(26,22,18,.6) 62%, rgba(26,22,18,.25) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>
+          <div className="flex items-center gap-2">
+            <Seal size={28} fontSize={15}>歲</Seal>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#D2B477' }}>{NEW_YEAR_TARGET} 신년운세, {ny.ko}년</span>
+          </div>
+          <div style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, lineHeight: 1.4 }}>
+            {facts?.year?.cat
+              ? <>{NEW_YEAR_TARGET}년에는<br />{STAR_LUCK[facts.year.cat]}{josa(STAR_LUCK[facts.year.cat], '이', '가')} 들어와요</>
+              : <>{NEW_YEAR_TARGET}년은 나에게<br />어떤 해일까요</>}
+          </div>
+          <div style={{ fontSize: 14, color: '#E2D9C8' }}>달마다 좋은 날까지 알려 드려요 <b style={{ color: '#F1ECE1' }}>{tojung}운 ›</b></div>
+        </div>
+      </button>
+
+      {/* ━━━ 5. 기간별 (달력 장 두 장 — 큰 숫자로 읽기 전에 보이게) ━━━ */}
+      <SecTitle k="기간별 운세" h="이번 주와 다음 달 미리 보기" />
+      <div className="grid grid-cols-2 gap-2.5" style={{ margin: '0 16px' }}>
+        <button type="button" onClick={() => navigate('/weekly', profileId ? { state: { profileId } } : undefined)} className="text-left"
+          style={{ borderRadius: 14, background: HJ.card, border: `1px solid ${HJ.line}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 }}>
+          <CalHead l="週 이번 주" r={`${weekly}운`} />
+          <span style={{ padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+            {facts?.week ? (
+              <>
+                <span className="flex items-center gap-2.5">
+                  <span style={{ width: 56, height: 56, borderRadius: 28, boxShadow: `inset 0 0 0 2px ${HJ.seal}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 30, fontWeight: 900, color: HJ.seal, flexShrink: 0 }}>
+                    {Number(facts.week.date.slice(8))}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.45, color: HJ.ink }}>{facts.week.weekday}요일<br /><span style={{ fontFamily: SERIF }}>{facts.week.gz}일</span></span>
+                </span>
+                <span style={{ fontSize: 14, lineHeight: 1.5, color: HJ.ink2, marginTop: 4 }}>{weekLine(facts.week)}</span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontFamily: SERIF, fontSize: 34, fontWeight: 900, lineHeight: 1, color: HJ.ink }}>7<span style={{ fontSize: 18 }}>일</span></span>
+                <span style={{ fontSize: 14, lineHeight: 1.5, color: HJ.ink2 }}>오늘부터 7일, 날마다 좋은 일과 조심할 일을 알려 드려요</span>
+              </>
+            )}
+          </span>
+        </button>
+        <button type="button" onClick={() => navigate(withPid(facts?.month ? `/monthly?month=${facts.month.month.start.slice(0, 7)}` : '/monthly'))} className="text-left"
+          style={{ borderRadius: 14, background: HJ.card, border: `1px solid ${HJ.line}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 }}>
+          <CalHead l="月 다음 달" r={`${monthly}운`} />
+          <span style={{ padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+            {facts?.month ? (
+              <>
+                <span style={{ fontFamily: SERIF, fontSize: 42, fontWeight: 900, lineHeight: 1, color: HJ.ink }}>
+                  {facts.month.month.calMonth}<span style={{ fontSize: 20 }}>월</span>
+                </span>
+                <span style={{ fontFamily: SERIF, fontSize: 13, fontWeight: 700, color: HJ.ink }}>{yr(facts.month.month.start)}{facts.month.month.gz}월, {monthDayLabel(facts.month.month.start)}부터</span>
+                <span style={{ fontSize: 14, lineHeight: 1.5, color: HJ.ink2 }}>{monthLine(facts.month)}</span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontFamily: SERIF, fontSize: 34, fontWeight: 900, lineHeight: 1, color: HJ.ink }}>한 달</span>
+                <span style={{ fontSize: 14, lineHeight: 1.5, color: HJ.ink2 }}>원하는 달 하나의 돈, 일, 사람 흐름을 깊게 풀어요</span>
+              </>
+            )}
+          </span>
+        </button>
       </div>
-      <div className="flex flex-col gap-2.5" style={{ margin: '0 16px' }}>
-        <ConcernCard id="love" q={CONCERN_Q.love} b="연애운: 인연이 오는 달과 알아보는 법" onClick={() => goTopic('love')}
-          fact={facts ? <>
-            {facts.loveStars.count > 0
-              ? <>연인의 별이 <b style={{ color: HJ.ink }}>{facts.loveStars.count}개({facts.loveStars.chars.join('')})</b> 있어요. </>
-              : <>사주에 연인의 별이 드러나 있지 않아요. </>}
-            {facts.love && <><b style={{ color: HJ.ink }}>{yr(facts.love.month.start)}{facts.love.month.calMonth}월</b>에 {facts.loveStars.count > 0 ? '하나가 더' : '그 별이'} 들어와요.</>}
-          </> : undefined} />
-        <ConcernCard id="reunion" q={CONCERN_Q.reunion} b="재회운: 재회 가능성 판정과 연락할 달" onClick={() => goTopic('reunion')}
-          factTag="함께 넣으면" fact={<>그 사람 생일을 넣으면 <b style={{ color: HJ.ink }}>두 사주를 같이</b> 놓고, 다시 닿는 달을 짚어 드려요.</>} />
-        <ConcernCard id="exam" q={CONCERN_Q.exam} b="합격 이직운: 결과가 나오는 달" onClick={() => goTopic('exam')}
-          fact={facts ? <>{facts.exam}</> : undefined} />
-        <ConcernRow id="wealth" q={CONCERN_Q.wealth}
-          b={facts ? (facts.wealth.count > 0
-            ? `재물의 별 ${facts.wealth.count}개, ${facts.wealth.pyeon && !facts.wealth.jeong ? '큰돈이 오가는 별(편재)' : facts.wealth.jeong && !facts.wealth.pyeon ? '꾸준히 쌓는 별(정재)' : '쌓는 별과 오가는 별이 함께'}`
-            : '재물의 별이 들어오는 때와 새는 곳') : '재물운: 새는 구멍과 들어오는 시기'}
-          price={`${getTopicPrice('wealth').actualPrice}운`} onClick={() => goTopic('wealth')} />
-        <ConcernRow hz="合" q="그 사람과 나, 잘 맞을까" b="궁합: 잘 맞는 점과 자주 부딪히는 점" price={`${compat}운`} onClick={() => navigate('/compat')} />
-        <ConcernRow id="marriage" q={CONCERN_Q.marriage} b={facts ? facts.spouse : '결혼운: 결혼 적기와 배우자 성향'} price={`${getTopicPrice('marriage').actualPrice}운`} onClick={() => goTopic('marriage')} />
-        {showAllTopics && (['career', 'business', 'health', 'move', 'study'] as TopicId[]).map((id) => (
-          <ConcernRow key={id} id={id} q={CONCERN_Q[id]} b={`${TOPIC_REGISTRY[id].label}: ${TOPIC_REGISTRY[id].subCopy}`} price={`${getTopicPrice(id).actualPrice}운`} onClick={() => goTopic(id)} />
-        ))}
+
+      {/* ━━━ 6. 고민 (주제운) — 많이 찾는 셋은 빨간 도장, 나머지는 먹 테두리 ━━━ */}
+      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
+        <SecTitle k="요즘 많이 찾는 고민" h="어떤 고민이 있으세요?" />
+      </div>
+      <div style={{ margin: '0 16px' }}>
+        <button type="button" onClick={() => goTopic('love')} className="w-full text-left"
+          style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 16 }}>
+          <SealBox size={52} fontSize={28}>{TOPIC_REGISTRY.love.kanji}</SealBox>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: HJ.ink }}>연애운</span>
+            <span style={{ display: 'block', fontSize: 14.5, lineHeight: 1.55, color: HJ.ink2, marginTop: 4 }}>
+              {facts?.love ? '새 인연이 들어오는 날까지' : facts ? '사주에 있는 연인의 별' : '새 인연이 들어오는 날을 D-day로 알려 드려요'}
+            </span>
+            <span className="flex justify-between items-baseline" style={{ marginTop: 6 }}>
+              <span style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 900, color: HJ.seal, lineHeight: 1.1 }}>
+                {facts?.love ? `D-${facts.love.days}` : facts ? `${facts.loveStars.count}개` : 'D-?'}
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>{getTopicPrice('love').actualPrice}운 ›</span>
+            </span>
+            {facts?.love && (
+              <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 4 }}>
+                {yr(facts.love.month.start)}{monthDayLabel(facts.love.month.start)}부터 연인의 별이 들어와요
+              </span>
+            )}
+          </span>
+        </button>
+        <div className="grid grid-cols-2 gap-2.5" style={{ marginTop: 10 }}>
+          <button type="button" onClick={() => goTopic('wealth')} className="text-left"
+            style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 15, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 168 }}>
+            <SealBox size={40} fontSize={22}>{TOPIC_REGISTRY.wealth.kanji}</SealBox>
+            <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>재물운</span>
+            {wealthMonth ? (
+              <>
+                <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2 }}>재물의 별이 들어오는 달</span>
+                <span style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 900, color: HJ.seal, lineHeight: 1.1, flex: 1 }}>
+                  {yr(wealthMonth.month.start)}{wealthMonth.month.calMonth}<span style={{ fontSize: 15 }}>월</span>
+                </span>
+              </>
+            ) : (
+              <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>돈이 <b style={{ color: HJ.ink }}>들어오는 달</b>과 새는 곳</span>
+            )}
+            <span style={{ fontSize: 14, fontWeight: 800, textAlign: 'right', color: HJ.ink }}>{getTopicPrice('wealth').actualPrice}운 ›</span>
+          </button>
+          <button type="button" onClick={() => goTopic('reunion')} className="text-left"
+            style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 15, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 168 }}>
+            <SealBox size={40} fontSize={22}>{TOPIC_REGISTRY.reunion.kanji}</SealBox>
+            <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>재회운</span>
+            <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>그 사람과 <b style={{ color: HJ.ink }}>다시 연락이 닿을 때</b>를 두 사람 사주로 봐요</span>
+            <span style={{ fontSize: 14, fontWeight: 800, textAlign: 'right', color: HJ.ink }}>{getTopicPrice('reunion').actualPrice}운 ›</span>
+          </button>
+        </div>
+        <div style={{ marginTop: 10, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, overflow: 'hidden' }}>
+          <TopicLine hz={TOPIC_REGISTRY.exam.kanji} t="합격 이직운"
+            s={examMonth ? `시험과 자리의 별이 ${yr(examMonth.month.start)}${examMonth.month.calMonth}월에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날'}
+            price={`${getTopicPrice('exam').actualPrice}운`} onClick={() => goTopic('exam')} />
+          <TopicLine hz="合" t="궁합" s="잘 맞는 점과 자주 부딪히는 점" price={`${compat}운`} onClick={() => navigate('/compat')} />
+          <TopicLine hz={TOPIC_REGISTRY.marriage.kanji} t="결혼운" s={facts ? facts.spouse : '결혼하기 좋은 해와 배우자 성향'}
+            price={`${getTopicPrice('marriage').actualPrice}운`} onClick={() => goTopic('marriage')} last={!showAllTopics} />
+          {showAllTopics && (['career', 'business', 'health', 'move', 'study'] as TopicId[]).map((id, i, arr) => (
+            <TopicLine key={id} hz={TOPIC_REGISTRY[id].kanji} t={TOPIC_REGISTRY[id].label} s={TOPIC_REGISTRY[id].subCopy}
+              price={`${getTopicPrice(id).actualPrice}운`} onClick={() => goTopic(id)} last={i === arr.length - 1} />
+          ))}
+        </div>
       </div>
       {!showAllTopics && (
         <button type="button" onClick={() => setShowAllTopics(true)}
@@ -456,23 +507,24 @@ export function HomePage() {
         </>
       )}
 
-      {/* ━━━ 8. 강점 — 확인 가능한 사실만 ━━━ */}
-      <div id="voices-section" style={{ scrollMarginTop: 72 }}>
-        <SecTitle k="사주500을 고르는 이유" h="제대로 본 사주는, 다릅니다" />
-      </div>
-      <p style={{ margin: '-4px 22px 0', fontSize: 15, color: HJ.ink2, lineHeight: 1.65 }}>600년 원전 명리학의 깊이 그대로, 문턱은 500원으로.</p>
-      <ul style={{ margin: '12px 16px 0', borderTop: `1px solid ${HJ.line}`, listStyle: 'none', padding: 0 }}>
-        {[
-          ['태어난 시간을 30분 단위로 보정해요.', '서울과 표준시의 차이까지 맞춰 8글자를 세웁니다.'],
-          ['달과 시간대는 만세력으로 계산해요.', '오늘의 일진, 이번 달 간지를 내 8글자와 직접 맞춰 봅니다.'],
-          ['한 번 산 풀이는 평생 보관돼요.', '보관함에서 다시 열 때 운이 들지 않아요.'],
-        ].map(([b, s], i) => (
-          <li key={i} className="flex gap-3" style={{ padding: '14px 2px', borderBottom: `1px solid ${HJ.line}`, fontSize: 15, lineHeight: 1.6 }}>
-            <span style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.seal, width: 18, flexShrink: 0 }}>{hanjaNum(i + 1)}</span>
-            <span><b style={{ fontWeight: 800 }}>{b}</b> <span style={{ color: HJ.ink2 }}>{s}</span></span>
-          </li>
-        ))}
-      </ul>
+      {/* ━━━ 8. 사주500이 다른 점 (먹 띠) ━━━ */}
+      <section id="voices-section" style={{ margin: '36px 0 0', background: HJ.ink, color: '#F1ECE1', padding: '30px 22px 32px', scrollMarginTop: 72 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#D2B477' }}>사주500이 다른 점</div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 25, fontWeight: 700, lineHeight: 1.38, letterSpacing: '-.025em', marginTop: 6 }}>
+          <span style={{ color: '#D2B477' }}>언제</span> 좋아지는지까지<br />알려 드려요
+        </h2>
+        <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <Why no={1} b="날짜와 시간까지 알려 드려요">
+            운이 좋아지는 달, 조심해야 할 날, 좋은 시간대를 <span style={{ color: '#F1ECE1' }}>{whyExample}</span>처럼 콕 집어 드려요.
+          </Why>
+          <Why no={2} b="내 사주를 근거로 풀어요">
+            누구에게나 해당되는 뻔한 말은 쓰지 않아요. <span style={{ color: '#F1ECE1' }}>왜 그렇게 보는지</span> 내 사주 글자로 보여 드려요.
+          </Why>
+          <Why no={3} b="읽다가 궁금하면 바로 물어보세요">
+            풀이를 읽다가 생긴 궁금증은 사주대화에서 이어서 물어볼 수 있어요.
+          </Why>
+        </div>
+      </section>
 
       {/* ━━━ 푸터 ━━━ */}
       <div style={{ margin: '26px 16px 0', textAlign: 'center' }}>
@@ -502,36 +554,74 @@ function SecTitle({ k, h }: { k: string; h: string }) {
   );
 }
 
-function HzBox({ children, size = 44 }: { children: ReactNode; size?: number }) {
+/** 이번 주 하루 — 구조 사실을 생활 말로 (hookFacts.weekFact 의 kind 기준, 사실과 다른 말 금지) */
+function weekLine(w: WeekFact): string {
+  switch (w.kind) {
+    case 'love-hap': return '이번 주 인연운이 가장 좋은 날이에요';
+    case 'star-hap': { const l = w.cat ? STAR_LUCK[w.cat] : '운'; return `이번 주 ${l}${josa(l, '이', '가')} 가장 좋은 날이에요`; }
+    case 'love': return '연애운이 들어오는 날이에요';
+    case 'ji-hap': return '가까운 사람과 마음이 잘 맞는 날이에요';
+    case 'ji-chung': return '이번 주 가장 조심해야 하는 날이에요';
+    default: return w.text;
+  }
+}
+/** 다음 달 — 구조 사실을 생활 말로 (hookFacts.nextMonthFact 의 kind 기준) */
+function monthLine(m: MonthFact): string {
+  const l = m.cat ? STAR_LUCK[m.cat] : '';
+  switch (m.kind) {
+    case 'samhap': return '1년에 한 번, 사주에 기운이 크게 모이는 달이에요';
+    case 'ji-hap': return '가까운 사람과 일이 잘 풀리는 달이에요';
+    case 'ji-chung': return '큰 변화가 오는 달이에요. 미리 준비하면 좋아요';
+    case 'star-hap': return `${l}${josa(l, '이', '가')} 크게 열리는 달이에요`;
+    case 'yongsin': return '내 사주에 가장 필요한 기운이 들어오는 달이에요';
+    case 'star': return `${l}${josa(l, '이', '가')} 들어오는 달이에요`;
+    default: return m.title;
+  }
+}
+
+/** 달력 장 머리 (먹 띠) */
+function CalHead({ l, r }: { l: string; r: string }) {
   return (
-    <span style={{ width: size, height: size, borderRadius: 10, border: `1.5px solid ${HJ.ink}`, display: 'grid', placeItems: 'center', fontFamily: SERIF, fontWeight: 900, fontSize: Math.round(size * 0.43), flexShrink: 0, color: HJ.ink }}>
+    <span style={{ height: 32, background: HJ.ink, color: '#F1ECE1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', fontSize: 13, fontWeight: 800 }}>
+      <span>{l}</span><span style={{ color: '#D2B477' }}>{r}</span>
+    </span>
+  );
+}
+
+/** 빨간 도장 칸 (많이 찾는 고민) */
+function SealBox({ children, size, fontSize }: { children: ReactNode; size: number; fontSize: number }) {
+  return (
+    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 6, background: HJ.seal, color: HJ.paper, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize, fontWeight: 900, flexShrink: 0, boxShadow: 'inset 0 0 0 1.5px rgba(244,239,228,.25)' }}>
       {children}
     </span>
   );
 }
 
-function LadderRow({ hz, k, t, price, onClick, last }: { hz: string; k: string; t: string; price: string; onClick: () => void; last?: boolean }) {
+/** 고민 목록 한 줄 (먹 테두리 도장) */
+function TopicLine({ hz, t, s, price, onClick, last }: { hz: string; t: string; s: string; price: string; onClick: () => void; last?: boolean }) {
   return (
-    <button type="button" onClick={onClick} className="w-full text-left"
-      style={{ display: 'grid', gridTemplateColumns: '44px 1fr auto', gap: 12, alignItems: 'center', padding: 16, borderBottom: last ? 0 : `1px solid ${HJ.line}`, background: 'transparent' }}>
-      <HzBox>{hz}</HzBox>
-      <span>
-        <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: HJ.mute }}>{k}</span>
-        <span style={{ display: 'block', fontFamily: SERIF, fontSize: 16.5, fontWeight: 700, lineHeight: 1.45, marginTop: 2, letterSpacing: '-.02em', color: HJ.ink }}>{t}</span>
+    <button type="button" onClick={onClick} className="w-full text-left flex items-center gap-3"
+      style={{ padding: '13px 15px', borderBottom: last ? 0 : '1px solid #EDE6D8', background: 'transparent', minHeight: 60 }}>
+      <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: 5, boxShadow: `inset 0 0 0 1.5px ${HJ.ink}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 17, fontWeight: 900, color: HJ.ink, flexShrink: 0 }}>{hz}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 15.5, fontWeight: 700, color: HJ.ink }}>{t}</span>
+        <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, lineHeight: 1.5, marginTop: 1 }}>{s}</span>
       </span>
-      <span style={{ fontSize: 14, fontWeight: 800, color: HJ.goldText, whiteSpace: 'nowrap' }}>{price} ›</span>
+      <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{price}</span>
     </button>
   );
 }
 
-function MiniCard({ f, h, s, go, onClick }: { f: string; h: ReactNode; s: string; go: string; onClick: () => void }) {
+/** '다른 점' 한 줄 (먹 띠 위) */
+function Why({ no, b, children }: { no: number; b: string; children: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="text-left" style={{ background: HJ.card, borderRadius: 16, padding: '16px 14px 14px', border: `1px solid ${HJ.line}` }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: HJ.goldText }}>{f}</div>
-      <div style={{ fontSize: 16.5, fontWeight: 800, marginTop: 6, lineHeight: 1.38, letterSpacing: '-.02em', color: HJ.ink }}>{h}</div>
-      <div style={{ fontSize: 13.5, color: HJ.mute, marginTop: 6, lineHeight: 1.5 }}>{s}</div>
-      <div style={{ marginTop: 12, fontSize: 14.5, fontWeight: 800, color: HJ.ink }}>{go} ›</div>
-    </button>
+    <div className="flex gap-3.5">
+      <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 900, color: '#D2B477', width: 22, flexShrink: 0 }}>{hanjaNum(no)}</span>
+      <span>
+        <b style={{ display: 'block', fontSize: 16 }}>{b}</b>
+        <span style={{ display: 'block', marginTop: 4, fontSize: 14.5, lineHeight: 1.65, color: '#CFC6B6' }}>{children}</span>
+      </span>
+    </div>
   );
 }
 
@@ -544,43 +634,6 @@ function TocRow({ no, t, pv }: { no: number; t: string; pv: ReactNode }) {
         <span style={{ display: 'block', fontSize: 14, color: HJ.ink2, marginTop: 2, lineHeight: 1.55 }}>{pv}</span>
       </span>
     </div>
-  );
-}
-
-function ConcernCard({ id, q, b, fact, factTag = '내 사주', onClick }: { id: TopicId; q: string; b: string; fact?: ReactNode; factTag?: string; onClick: () => void }) {
-  const price = getTopicPrice(id).actualPrice;
-  return (
-    <button type="button" onClick={onClick} className="w-full text-left" style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '16px 16px 14px' }}>
-      <span className="flex items-start gap-3">
-        <HzBox size={40}>{TOPIC_REGISTRY[id].kanji}</HzBox>
-        <span>
-          <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.4, color: HJ.ink }}>{q}</span>
-          <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 3 }}>{b}</span>
-        </span>
-      </span>
-      {fact && (
-        <span style={{ display: 'block', marginTop: 12, background: HJ.paper, borderRadius: 10, padding: '10px 12px', fontSize: 14.5, lineHeight: 1.65, color: HJ.ink2 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 800, color: HJ.goldText, marginRight: 6 }}>{factTag}</span>{fact}
-        </span>
-      )}
-      <span className="flex justify-between items-center" style={{ marginTop: 12 }}>
-        <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink }}>{price}운</span>
-        <span style={{ fontSize: 15, fontWeight: 800, color: HJ.goldText }}>{TOPIC_REGISTRY[id].label} 보기 ›</span>
-      </span>
-    </button>
-  );
-}
-
-function ConcernRow({ id, hz, q, b, price, onClick }: { id?: TopicId; hz?: string; q: string; b: string; price: string; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="w-full text-left flex items-center gap-3" style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '14px 16px' }}>
-      <HzBox size={40}>{hz || (id ? TOPIC_REGISTRY[id].kanji : '')}</HzBox>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontFamily: SERIF, fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.4, color: HJ.ink }}>{q}</span>
-        <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 3, lineHeight: 1.5 }}>{b}</span>
-      </span>
-      <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{price}</span>
-    </button>
   );
 }
 

@@ -92,6 +92,20 @@ function migrateSessionToLocal(): void {
 }
 migrateSessionToLocal();
 
+// ─── 프로필 변경 알림 (2026-10-14) ───
+//   홈은 본인 사주를 화면이 열릴 때 한 번만 읽었다. 기기 여권과 서버 미러 복원이 부팅 뒤에 프로필을 채워도
+//   홈이 그대로 '내 사주 넣기'에 머물렀다(오너 제보: 기존 유저에게도 사주 입력 안내). 쓰기마다 알린다.
+export const PROFILES_CHANGED_EVENT = 'saju500:profiles-changed';
+let profilesEventQueued = false;
+function emitProfilesChanged(): void {
+  if (typeof window === 'undefined' || profilesEventQueued) return;
+  profilesEventQueued = true;
+  queueMicrotask(() => {
+    profilesEventQueued = false;
+    try { window.dispatchEvent(new Event(PROFILES_CHANGED_EVENT)); } catch { /* noop */ }
+  });
+}
+
 // ─── 리포트 ───
 
 export function saveReport(report: LocalReport): void {
@@ -109,6 +123,7 @@ export function saveReport(report: LocalReport): void {
   if (dupIdx >= 0) reports.splice(dupIdx, 1);
   reports.unshift(report);
   if (reports.length > 500) reports.pop(); // 유료 리포트 영구 보관 (localStorage ~2.5MB)
+  emitProfilesChanged(); // 본인 사주는 리포트에서도 찾는다 (저장 실패 분기도 아래에서 같은 목록을 다시 쓴다)
   try {
     localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
   } catch (e) {
@@ -265,6 +280,7 @@ export function getMyProfile(): LocalReport | null {
  *  (silent demotion 은 강제 정합성 회복용 — 명시적 confirm modal 통과 후 호출되는 가정) */
 export function setMyProfile(reportId: string): void {
   localStorage.setItem(MY_PROFILE_KEY, reportId);
+  emitProfilesChanged();
   // 다른 '본인' 프로필 자동 강등 — uniqueness 강제
   try {
     const reports = getReports();
@@ -707,6 +723,7 @@ function profileKey(p: { name?: string; input?: Partial<SajuInput> | null }): st
 let profilesMirrorTimer: ReturnType<typeof setTimeout> | null = null;
 function writeProfiles(profiles: SajuProfile[]): void {
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  emitProfilesChanged();
   if (profilesMirrorTimer) clearTimeout(profilesMirrorTimer);
   profilesMirrorTimer = setTimeout(() => {
     profilesMirrorTimer = null;

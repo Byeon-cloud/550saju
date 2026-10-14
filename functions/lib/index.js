@@ -38,6 +38,7 @@ exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuC
 //   CLI 는 소스 해시만 비교해 런타임 변경만으론 전 함수를 skip — 이 주석이 해시를 바꿔 재배포를 트리거함.
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
+const genGuard_1 = require("./shared/genGuard"); // 2026-10-14 익명 생성 하루 상한
 const params_1 = require("firebase-functions/params");
 const aiFailureLog_1 = require("./shared/aiFailureLog");
 const claudeClient_1 = require("./shared/claudeClient");
@@ -55,6 +56,11 @@ const onHalfEvent = () => Date.now() <= HALF_EVENT_END_MS;
 const premiumCost = () => (onHalfEvent() ? 5 : 10);
 const monthlyCost = () => (onHalfEvent() ? 5 : 7);
 const weeklyCost = () => (onHalfEvent() ? 3 : 5);
+// 2026-10-14 주제운과 궁합 가격 (클라 src/constants/pricing.ts TOPIC_PRICING_RAW, PRODUCT_COST 와 일치).
+//   예전 서버는 주제를 가리지 않고 1운만 깎았다(재회운 3운 때도). 로그인 계정만 서버 차감한다.
+const TOPIC_COST = { love: 4, wealth: 4, reunion: 5, marriage: 3, exam: 2, career: 2, business: 2 };
+const topicCost = (topicId) => TOPIC_COST[String(topicId)] ?? 1;
+const COMPAT_COST = 2;
 const lazyClaudeDaeun = () => Promise.resolve().then(() => __importStar(require('./ai/claudeDaeun')));
 const lazyClaudeMonthly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeMonthly')));
 const lazyClaudeWeekly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeWeekly')));
@@ -274,6 +280,11 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
         res.end();
         return;
     }
+    if (!(await (0, genGuard_1.guardHttp)(req, uid === 'anonymous' ? null : uid, isAnonymous, 'premium'))) {
+        sendEvent('error', { message: genGuard_1.GEN_LIMIT_MESSAGE });
+        res.end();
+        return;
+    }
     // 잔액 차감 (premium · 하반기 세일 자동반영) — 실명 로그인만
     let deductedAmount = 0;
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
@@ -406,6 +417,7 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
 exports.generateReport = (0, https_1.onCall)(
 // 2026-05-29 PM 비용 fix — minInstances: 1→0. 1GiB 상시대기 (월 ₩12K) → 0. cold start UX 로 흡수.
 { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'premium'); // 익명 하루 상한 (genGuard)
     const { sajuData, situation, reportType } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -483,6 +495,7 @@ exports.generateReport = (0, https_1.onCall)(
 exports.generateDailyFortune = (0, https_1.onCall)(
 // minInstances: 0 — warm 비용 대신 로딩 UX 로 Cold start 흡수 (feedback_quality_over_speed 원칙)
 { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'daily'); // 익명 하루 상한 (genGuard)
     const { name, sajuData, date, weekday, todayGanzi, jeolgi, dayJiShen, dayXiongSha } = request.data || {};
     if (!sajuData || !date || !todayGanzi) {
         throw new https_1.HttpsError('invalid-argument', '사주, 날짜, 오늘 간지가 필요합니다');
@@ -662,6 +675,11 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     const { name, sajuData, date, weekday, todayGanzi, jeolgi, dayJiShen, dayXiongSha, baseScores100, tomorrowGanzi, tomorrowDate, } = req.body || {};
     if (!sajuData || !date || !todayGanzi) {
         sendEvent('error', { message: '사주, 날짜, 오늘 간지가 필요합니다' });
+        res.end();
+        return;
+    }
+    if (!(await (0, genGuard_1.guardHttp)(req, uid === 'anonymous' ? null : uid, isAnonymous, 'daily'))) {
+        sendEvent('error', { message: genGuard_1.GEN_LIMIT_MESSAGE });
         res.end();
         return;
     }
@@ -939,6 +957,7 @@ exports.generateChatAnswer = (0, https_1.onCall)(
 // 2026-04-21 사주대화 Sonnet 4.6 전환 → secrets 키도 ANTHROPIC_KEY 로 교체
 // 2026-05-29 PM 비용 fix — minInstances: 1→0. 512MiB 상시대기 (월 ₩7K) → 0. cold start UX 로 흡수.
 { secrets: [ANTHROPIC_KEY], timeoutSeconds: 120, memory: '512MiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'chat'); // 익명 하루 상한 (genGuard)
     const { question, sajuData, chatHistory, timeSlot } = request.data;
     if (!question)
         throw new https_1.HttpsError('invalid-argument', '질문이 없습니다');
@@ -1014,6 +1033,7 @@ exports.generateDream = (0, https_1.onCall)(
 // minInstances: 0 — Phase C 이후 client 호출 0건 (legacy dispatch, dead code).
 // D7 백로그: wrapper + endpoint 자체 제거 예정. 영향 분석 후.
 { secrets: [ANTHROPIC_KEY], timeoutSeconds: 180, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'dream'); // 익명 하루 상한 (genGuard)
     const { category, dreamText, sajuData, mode, saju, freeResultSummary, userConcern } = request.data || {};
     if (!category)
         throw new https_1.HttpsError('invalid-argument', '카테고리가 없습니다');
@@ -1074,6 +1094,7 @@ function buildLegacySajuContext(sajuData) {
 exports.generateDreamFree = (0, https_1.onCall)(
 // minInstances: 0 — warm 비용 대신 로딩 UX 로 Cold start 흡수 (feedback_quality_over_speed 원칙)
 { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'dream'); // 익명 하루 상한 (genGuard)
     const { saju, dreamContent, category, userConcern, paid } = request.data || {};
     if (!category)
         throw new https_1.HttpsError('invalid-argument', '카테고리가 없습니다');
@@ -1165,6 +1186,11 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
     const { saju, dreamContent, category, userConcern, paid } = req.body || {};
     if (!category) {
         sendEvent('error', { message: '카테고리가 없습니다' });
+        res.end();
+        return;
+    }
+    if (!(await (0, genGuard_1.guardHttp)(req, uid ?? null, isAnon, 'dream'))) {
+        sendEvent('error', { message: genGuard_1.GEN_LIMIT_MESSAGE });
         res.end();
         return;
     }
@@ -1308,6 +1334,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
  * 꿈해몽 심층 (신규 v3, 유료 1운) — Claude Sonnet 4.6 + 2차 자기 리뷰.
  */
 exports.generateDreamDeep = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'dreamDeep'); // 익명 하루 상한 (genGuard)
     const { saju, dreamContent, category, freeResultSummary } = request.data || {};
     if (!saju)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 필요합니다');
@@ -1430,6 +1457,7 @@ exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256Mi
  * 대운 해설 — Claude Sonnet 4.6
  */
 exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'daeun'); // 익명 하루 상한 (genGuard)
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -1471,6 +1499,7 @@ exports.generateDaeun = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutS
  * 2026 월별 운세 — Claude Sonnet 4.6
  */
 exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'monthly'); // 익명 하루 상한 (genGuard)
     // 2026-06-30 재작업 — 단일월 심층. monthInfo = 클라가 lunar 로 계산한 선택월 정보
     //   { year, month, label, wolGanji, yearGanji }. 서버는 간지 추측 X (만세력 정확성).
     const { sajuData, monthInfo, progressId } = request.data;
@@ -1525,6 +1554,7 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
  *   2차 보정은 generateMonthlyRefine(백그라운드·무차감)에서.
  */
 exports.generateMonthlyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'monthly'); // 익명 하루 상한 (genGuard)
     const { sajuData, monthInfo } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -1570,6 +1600,7 @@ exports.generateMonthlyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], t
  *   같은 reportId 리포트를 최종본으로 갱신(draft:false).
  */
 exports.generateMonthlyRefine = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'monthly'); // 익명 하루 상한 (genGuard)
     const { sajuData, monthInfo, draft, reportId } = request.data;
     if (!sajuData || !draft)
         throw new https_1.HttpsError('invalid-argument', '보정할 데이터가 없습니다');
@@ -1595,6 +1626,7 @@ exports.generateMonthlyRefine = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
  * 2026-06-29 NEW (5운). weekDays = 클라(WeeklyPage)가 lunar-javascript 로 계산한 7일 일진.
  */
 exports.generateWeekly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'weekly'); // 익명 하루 상한 (genGuard)
     const { sajuData, weekDays } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -1638,6 +1670,7 @@ exports.generateWeekly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
  * ⚡ 주간운세 초안 (draft·1차만) — async 2차리뷰용. 로딩 반토막. 차감 1회(weeklyCost).
  */
 exports.generateWeeklyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'weekly'); // 익명 하루 상한 (genGuard)
     const { sajuData, weekDays } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -1680,6 +1713,7 @@ exports.generateWeeklyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], ti
  *   실패해도 draft 반환(유저는 이미 draft 봤음·환불 X). 같은 reportId 최종본 갱신.
  */
 exports.generateWeeklyRefine = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'weekly'); // 익명 하루 상한 (genGuard)
     const { sajuData, weekDays, draft, reportId } = request.data;
     if (!sajuData || !draft)
         throw new https_1.HttpsError('invalid-argument', '보정할 데이터가 없습니다');
@@ -1703,6 +1737,7 @@ exports.generateWeeklyRefine = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], t
  * 궁합 분석 — Claude Sonnet 4.6
  */
 exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'compat'); // 익명 하루 상한 (genGuard)
     const { sajuData1, sajuData2, relation } = request.data;
     if (!sajuData1 || !sajuData2)
         throw new https_1.HttpsError('invalid-argument', '두 사람의 사주 데이터가 필요합니다');
@@ -1715,12 +1750,12 @@ exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
             // 2026-05-28 — schema 통일 helper
             await db.runTransaction(async (tx) => {
                 const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), 1);
+                const result = computeBalanceDeduction(doc.data(), COMPAT_COST);
                 if (!result)
                     throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
                 tx.update(userRef, result.updates);
             });
-            deductedAmount = 1;
+            deductedAmount = COMPAT_COST;
         }
     }
     try {
@@ -1744,6 +1779,7 @@ exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
  * 토정비결 — Claude Sonnet 4.6
  */
 exports.generateTojung = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'newyear'); // 익명 하루 상한 (genGuard)
     const { sajuData } = request.data;
     if (!sajuData)
         throw new https_1.HttpsError('invalid-argument', '사주 데이터가 없습니다');
@@ -2053,6 +2089,7 @@ exports.disconnectToss = (0, https_1.onRequest)({ secrets: [TOSS_DISCONNECT_AUTH
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
  */
 exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
+    await (0, genGuard_1.guardCallable)(request, 'topic'); // 익명 하루 상한 (genGuard)
     const { topicId, sajuData, baseScore, partnerInfo, extraInfo } = request.data;
     if (!topicId || !sajuData)
         throw new https_1.HttpsError('invalid-argument', 'topicId, sajuData 필요');
@@ -2063,15 +2100,16 @@ exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
         const userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
         if (userDoc.exists) {
+            const cost = topicCost(topicId);
             // 2026-05-28 — schema 통일 helper
             await db.runTransaction(async (tx) => {
                 const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), 1);
+                const result = computeBalanceDeduction(doc.data(), cost);
                 if (!result)
                     throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
                 tx.update(userRef, result.updates);
             });
-            deductedAmount = 1;
+            deductedAmount = cost;
         }
     }
     try {
@@ -2156,6 +2194,11 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
         res.end();
         return;
     }
+    if (!(await (0, genGuard_1.guardHttp)(req, uid === 'anonymous' ? null : uid, isAnonymous, 'topic'))) {
+        sendEvent('error', { message: genGuard_1.GEN_LIMIT_MESSAGE });
+        res.end();
+        return;
+    }
     // 잔액 차감 (1운) — callable 과 동일 (실명 유저만)
     let deductedAmount = 0;
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
@@ -2164,14 +2207,15 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
         if (userDoc.exists) {
             try {
                 // 2026-05-28 — schema 통일 helper
+                const cost = topicCost(topicId);
                 await db.runTransaction(async (tx) => {
                     const doc = await tx.get(userRef);
-                    const result = computeBalanceDeduction(doc.data(), 1);
+                    const result = computeBalanceDeduction(doc.data(), cost);
                     if (!result)
                         throw new Error('운이 부족합니다');
                     tx.update(userRef, result.updates);
                 });
-                deductedAmount = 1;
+                deductedAmount = cost;
             }
             catch (e) {
                 sendEvent('error', { message: e.message || '잔액 차감 실패' });

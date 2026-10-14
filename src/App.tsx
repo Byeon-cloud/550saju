@@ -348,6 +348,11 @@ export function App() {
     //   어드민이 운을 나중에 넣어도 재열람 시 수령이 안 되던 문제. → 포그라운드 복귀마다 재확인(아래 visibility effect).
     //   2026-08-13 — passportDone 이후로 이동: 미러 잔액이 먼저 복원되고 그 위에 보상이 가산돼야 정확.
     passportDone.then(() => runCsCompensationCheck());
+    // 0-a4b. 로컬 사주가 비었으면 서버 미러에서 되살리기 (2026-10-14 · 계정은 그대로인데 저장소만 빈 경우)
+    passportDone
+      .then(() => import('@/services/storage/firestoreSync'))
+      .then((m) => m.restoreProfilesIfEmpty())
+      .catch(() => { /* noop */ });
 
     // 0-b. 2026-05-28 PM — 본인 프로필 중복 cleanup (1회 마이그레이션).
     //   기존: 새 사주 '본인' 추가 시 silent 로 myProfile 교체 → 본인 N명 누적.

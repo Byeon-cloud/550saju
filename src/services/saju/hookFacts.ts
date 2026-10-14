@@ -37,6 +37,10 @@ const CAT: Record<SipsungKo, StarCat> = {
 const STAR_NAME: Record<StarCat, string> = {
   재성: '재물의 별', 관성: '자리와 명예의 별', 인성: '배움과 도움의 별', 식상: '표현과 재능의 별', 비겁: '사람과 경쟁의 별',
 };
+/** 별 → 생활에서 쓰는 운 이름 (홈 카드 한 줄, 2026-10-14) */
+export const STAR_LUCK: Record<StarCat, string> = {
+  재성: '재물운', 관성: '직장운', 인성: '공부운', 식상: '재능운', 비겁: '사람 운',
+};
 
 /* ── 작은 도구 ── */
 /** 받침 있으면 a, 없으면 b — 한글 아닌 끝 글자(한자 등)는 b */
@@ -186,13 +190,14 @@ export function todayGz(today: string): { gz: string; ko: string } {
   return { gz, ko: ganziKo(gz) };
 }
 
-export interface WeekFact { date: string; weekday: string; gz: string; text: string }
+export type WeekKind = 'love-hap' | 'star-hap' | 'love' | 'ji-hap' | 'ji-chung';
+export interface WeekFact { date: string; weekday: string; gz: string; text: string; kind: WeekKind; cat?: StarCat }
 /** 이번 주(내일~6일 뒤) 가운데 구조 사실이 뚜렷한 하루 — 일간 합(연인의 별) > 일간 합 > 연인의 별 > 일지 합 > 일지 충 */
 export function weekFact(s: SajuData, today: string): WeekFact | null {
   const dg = dayGanOf(s); const dj = dayJiOf(s);
   if (!dg) return null;
   const lc = loveCat(s);
-  type Cand = { rank: number; date: string; gz: string; text: string };
+  type Cand = { rank: number; date: string; gz: string; text: string; kind: WeekKind; cat?: StarCat };
   const cands: Cand[] = [];
   for (let i = 1; i <= 6; i++) {
     const date = addDays(today, i);
@@ -200,21 +205,22 @@ export function weekFact(s: SajuData, today: string): WeekFact | null {
     const st = starOf(dg, gz[0]);
     if (st && GAN_HAP[dg] === gz[0]) {
       cands.push(st.cat === lc
-        ? { rank: 1, date, gz, text: '연인의 별과 짝(合)이 맞는 날' }
-        : { rank: 2, date, gz, text: `${STAR_NAME[st.cat]}과 짝(合)이 맞는 날` });
+        ? { rank: 1, date, gz, text: '연인의 별과 짝(合)이 맞는 날', kind: 'love-hap' }
+        : { rank: 2, date, gz, text: `${STAR_NAME[st.cat]}과 짝(合)이 맞는 날`, kind: 'star-hap', cat: st.cat });
     } else if (st?.cat === lc) {
-      cands.push({ rank: 3, date, gz, text: '연인의 별이 들어오는 날' });
+      cands.push({ rank: 3, date, gz, text: '연인의 별이 들어오는 날', kind: 'love' });
     }
-    if (dj && JI_HAP[dj] === gz[1]) cands.push({ rank: 4, date, gz, text: `태어난 날의 ${dj}${josa(JIJI_KO[dj] || '', '과', '와')} 짝(合)이 드는 날` });
-    if (dj && CHUNG[dj] === gz[1]) cands.push({ rank: 5, date, gz, text: `태어난 날의 ${dj}${josa(JIJI_KO[dj] || '', '과', '와')} 부딪히는(沖) 날` });
+    if (dj && JI_HAP[dj] === gz[1]) cands.push({ rank: 4, date, gz, text: `태어난 날의 ${dj}${josa(JIJI_KO[dj] || '', '과', '와')} 짝(合)이 드는 날`, kind: 'ji-hap' });
+    if (dj && CHUNG[dj] === gz[1]) cands.push({ rank: 5, date, gz, text: `태어난 날의 ${dj}${josa(JIJI_KO[dj] || '', '과', '와')} 부딪히는(沖) 날`, kind: 'ji-chung' });
   }
   if (cands.length === 0) return null;
   cands.sort((a, b) => a.rank - b.rank || a.date.localeCompare(b.date));
   const c = cands[0];
-  return { date: c.date, weekday: weekdayOf(c.date), gz: c.gz, text: c.text };
+  return { date: c.date, weekday: weekdayOf(c.date), gz: c.gz, text: c.text, kind: c.kind, cat: c.cat };
 }
 
-export interface MonthFact { month: SajuMonth; gzKo: string; title: string; once: boolean }
+export type MonthKind = 'samhap' | 'ji-hap' | 'ji-chung' | 'star-hap' | 'yongsin' | 'star';
+export interface MonthFact { month: SajuMonth; gzKo: string; title: string; once: boolean; kind: MonthKind; cat?: StarCat }
 /** 다음 사주 달의 구조 사실 — 삼합 완성 > 일지 합 > 일지 충 > 일간 합 > 용신 > 별 */
 export function nextMonthFact(s: SajuData, today: string): MonthFact | null {
   const dg = dayGanOf(s); const dj = dayJiOf(s);
@@ -227,20 +233,20 @@ export function nextMonthFact(s: SajuData, today: string): MonthFact | null {
   for (const sh of SAMHAP) {
     if (!sh.set.includes(mb)) continue;
     if (sh.set.filter((b) => b !== mb).every((b) => branches.includes(b))) {
-      return { month: mo, gzKo, once: true, title: `사주에 삼합(${sh.set.join('')})이 완성되는 달` };
+      return { month: mo, gzKo, once: true, title: `사주에 삼합(${sh.set.join('')})이 완성되는 달`, kind: 'samhap' };
     }
   }
   const jk = JIJI_KO[dj] || '';
-  if (dj && JI_HAP[dj] === mb) return { month: mo, gzKo, once: true, title: `태어난 날의 ${dj}${josa(jk, '과', '와')} 짝(合)이 드는 달` };
-  if (dj && CHUNG[dj] === mb) return { month: mo, gzKo, once: true, title: `태어난 날의 ${dj}${josa(jk, '과', '와')} 부딪히는(沖) 달` };
+  if (dj && JI_HAP[dj] === mb) return { month: mo, gzKo, once: true, title: `태어난 날의 ${dj}${josa(jk, '과', '와')} 짝(合)이 드는 달`, kind: 'ji-hap' };
+  if (dj && CHUNG[dj] === mb) return { month: mo, gzKo, once: true, title: `태어난 날의 ${dj}${josa(jk, '과', '와')} 부딪히는(沖) 달`, kind: 'ji-chung' };
   const st = starOf(dg, mg);
-  if (st && GAN_HAP[dg] === mg) return { month: mo, gzKo, once: false, title: `${STAR_NAME[st.cat]}과 짝(合)이 맞는 달` };
+  if (st && GAN_HAP[dg] === mg) return { month: mo, gzKo, once: false, title: `${STAR_NAME[st.cat]}과 짝(合)이 맞는 달`, kind: 'star-hap', cat: st.cat };
   const ma: any = s.myeongriAnalysis || {};
   if (ma.용신 && (BR_OH[mb] === ma.용신 || GAN_OH[mg] === ma.용신)) {
-    return { month: mo, gzKo, once: false, title: `내 사주에 가장 필요한 기운(${OH_HANJA[ma.용신] || ma.용신})이 들어오는 달` };
+    return { month: mo, gzKo, once: false, title: `내 사주에 가장 필요한 기운(${OH_HANJA[ma.용신] || ma.용신})이 들어오는 달`, kind: 'yongsin' };
   }
   const sb = starOf(dg, mb);
-  if (sb) return { month: mo, gzKo, once: false, title: `${STAR_NAME[sb.cat]}이 들어오는 달` };
+  if (sb) return { month: mo, gzKo, once: false, title: `${STAR_NAME[sb.cat]}이 들어오는 달`, kind: 'star', cat: sb.cat };
   return null;
 }
 
@@ -257,7 +263,7 @@ export function loveDday(s: SajuData, today: string): LoveDday | null {
   return { month: pick, days: daysBetween(today, pick.start), gzKo: ganziKo(pick.gz), hap: GAN_HAP[dg] === pick.gz[0], star: pick.gz[0] };
 }
 
-export interface YearFact { year: number; gz: string; gzKo: string; star: string; ch: string }
+export interface YearFact { year: number; gz: string; gzKo: string; star: string; ch: string; cat?: StarCat }
 /** 대상 연도의 세운 — 지지 본기 / 천간 중 우선순위 높은 별 (재성 > 관성 > 인성 > 식상 > 비겁) */
 export function yearFact(s: SajuData, year: number): YearFact | null {
   const dg = dayGanOf(s);
@@ -269,12 +275,23 @@ export function yearFact(s: SajuData, year: number): YearFact | null {
     .filter((x): x is { ch: string; st: { sip: SipsungKo; cat: StarCat } } => !!x.st);
   cands.sort((a, b) => order.indexOf(a.st.cat) - order.indexOf(b.st.cat));
   const top = cands[0];
-  return { year, gz, gzKo: ganziKo(gz), star: top ? STAR_NAME[top.st.cat] : '', ch: top?.ch || '' };
+  return { year, gz, gzKo: ganziKo(gz), star: top ? STAR_NAME[top.st.cat] : '', ch: top?.ch || '', cat: top?.st.cat };
 }
 /** 사주 없이도 쓰는 세운 간지 */
 export function yearGz(year: number): { gz: string; ko: string } {
   const gz = Solar.fromYmd(year, 6, 1).getLunar().getYearInGanZhiExact();
   return { gz, ko: ganziKo(gz) };
+}
+
+/** 앞으로 12달 안에 이 별(들)이 천간이나 지지 본기로 처음 들어오는 사주 달 (홈 재물운, 합격이직운 카드) */
+export function nextStarMonth(s: SajuData, today: string, cats: StarCat[]): { month: SajuMonth; days: number; cat: StarCat } | null {
+  const dg = dayGanOf(s);
+  if (!dg) return null;
+  for (const m of upcomingSajuMonths(today, 12)) {
+    const c = [starOf(dg, m.gz[0])?.cat, starOf(dg, m.gz[1])?.cat].find((x): x is StarCat => !!x && cats.includes(x));
+    if (c) return { month: m, days: daysBetween(today, m.start), cat: c };
+  }
+  return null;
 }
 
 export function loveStars(s: SajuData): { count: number; chars: string[] } {

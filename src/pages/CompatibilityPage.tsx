@@ -6,6 +6,9 @@ import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
 import { getProfiles, getMyProfile, type LocalReport } from '@/services/storage/localStore';
 import { spendBalance, markPendingSpend } from '@/services/storage/localStore';
+import { PRODUCT_COST } from '@/constants/pricing';
+
+const COMPAT_COST = PRODUCT_COST.compatibility;
 import { addRecentPartner, getRecentPartnerIds } from '@/services/storage/compatRecents';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -97,21 +100,21 @@ export function CompatibilityPage() {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
-      if (!spendBalance(1)) {
+      if (!spendBalance(COMPAT_COST)) {
         toast.show('잔액이 부족해요', 'warning');
-        navigate('/charge', { state: { from: 'compat', message: '궁합 분석에 1운이 필요해요' } });
+        navigate('/charge', { state: { from: 'compat', message: `궁합 분석에 ${COMPAT_COST}운이 필요해요` } });
         return;
       }
       // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
-      import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: 1 })).catch(() => {});
+      import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: COMPAT_COST })).catch(() => {});
       // 2026-06-18 머니세이프 — 결과 페이지 이동/생성 중 앱 종료 시 부팅 reconcile 이 5분 후 자동환불.
       //   (CompatResultPage 가 결과 저장/실패환불 시 clearPendingSpendByType('compat') 로 해제)
-      markPendingSpend('compat', 1);
-      toast.show('1운이 차감됐어요', 'info');
+      markPendingSpend('compat', COMPAT_COST);
+      toast.show(`${COMPAT_COST}운이 차감됐어요`, 'info');
       const rel = relation === '기타' ? customRelation || '기타' : relation;
       // P2-3 · 궁합 상대방 최근 목록 기록 (person2 = 상대방). MRU 최상단.
       if (person2?.id) addRecentPartner(person2.id);
-      navigate('/compat/result', { state: { person1, person2, relation: rel } });
+      navigate('/compat/result', { state: { person1, person2, relation: rel, cost: COMPAT_COST } });
     } finally {
       // 네비게이션 후 페이지 전환되므로 ref만 300ms 뒤 풀어줌 (뒤로 돌아올 때 재시도 가능)
       setTimeout(() => { isSubmittingRef.current = false; setIsSubmitting(false); }, 300);
@@ -239,7 +242,7 @@ export function CompatibilityPage() {
           disabled={!canSubmit || isSubmitting}
           loading={isSubmitting}
           onClick={handleSubmit}
-          sub="1운"
+          sub={`${COMPAT_COST}운`}
         >
           궁합 보기
         </Button>

@@ -24,7 +24,7 @@ import { hanjaNum } from '@/components/hanji/Hanji';
 import React, { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
-import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
+import { getTopicPrice, formatPriceLabel, PRODUCT_COST } from '@/constants/pricing';
 import { getProfiles, type LocalReport, type SajuProfile } from '@/services/storage/localStore';
 import { TOPIC_IDS, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import type { OhengType, SajuData } from '@/types/saju';
@@ -3971,7 +3971,7 @@ function RelationCompassGrid({
           onClick={() => navigate('/compat')}
           style={{ color: C.goldDeep, fontWeight: 700, textDecoration: 'underline', background: 'none', border: 'none', padding: 0, fontSize: 13, cursor: 'pointer' }}
         >
-          특정 사람과의 궁합 보기 <span style={{ opacity: 0.75 }}>1운</span>
+          특정 사람과의 궁합 보기 <span style={{ opacity: 0.75 }}>{PRODUCT_COST.compatibility}운</span>
         </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>

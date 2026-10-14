@@ -2,7 +2,7 @@
 // 근거: 목업 "변준기 · 1995" ProfileSwitcher + 잔액·프로필 기반.
 
 import { useEffect, useState } from 'react';
-import { getProfiles, type SajuProfile, getMyProfile, getBalance, getReports } from '@/services/storage/localStore';
+import { getProfiles, type SajuProfile, getMyProfile, getBalance, getReports, PROFILES_CHANGED_EVENT } from '@/services/storage/localStore';
 import { buildTodayHeadline, dayPillarOf } from '@/services/saju/todayHeadline';
 import { kstToday } from '@/utils/kstDate';
 
@@ -13,34 +13,45 @@ export interface HomeActiveProfile {
   hasProfile: boolean;
 }
 
-/** 현재 활성 프로필(본인 우선) + 존재 여부. */
+function readActiveProfile(): HomeActiveProfile {
+  try {
+    const my = getMyProfile();
+    if (my) {
+      return { profile: my as unknown as SajuProfile, name: my.name || '사용자', birthYear: my.input?.birthYear, hasProfile: true };
+    }
+    const ps = getProfiles();
+    if (ps && ps.length > 0) {
+      const p = ps[0];
+      return { profile: p, name: p.name || '사용자', birthYear: p.input?.birthYear, hasProfile: true };
+    }
+  } catch { /* noop */ }
+  return { profile: null, name: '', hasProfile: false };
+}
+
+/** 현재 활성 프로필(본인 우선) + 존재 여부.
+ *  2026-10-14 — 첫 화면부터 바로 읽고(예전엔 빈 상태로 한 번 그린 뒤 채움), 부팅 뒤 복원이나 다른 화면에서
+ *  사주를 넣으면 다시 읽는다. 예전엔 화면이 열릴 때 한 번만 읽어서, 기기 여권이 사주를 복원해도 홈이
+ *  '내 사주 넣기'에 머물렀다. */
 export function useActiveProfile(): HomeActiveProfile {
-  const [state, setState] = useState<HomeActiveProfile>({
-    profile: null, name: '', hasProfile: false,
-  });
+  const [state, setState] = useState<HomeActiveProfile>(readActiveProfile);
 
   useEffect(() => {
-    try {
-      const my = getMyProfile();
-      if (my) {
-        setState({
-          profile: my as unknown as SajuProfile,
-          name: my.name || '사용자',
-          birthYear: my.input?.birthYear,
-          hasProfile: true,
-        });
-        return;
-      }
-      const ps = getProfiles();
-      if (ps && ps.length > 0) {
-        const p = ps[0];
-        setState({ profile: p, name: p.name || '사용자', birthYear: p.input?.birthYear, hasProfile: true });
-        return;
-      }
-      setState({ profile: null, name: '', hasProfile: false });
-    } catch {
-      setState({ profile: null, name: '', hasProfile: false });
-    }
+    const refresh = () => setState((prev) => {
+      const next = readActiveProfile();
+      const same = prev.hasProfile === next.hasProfile && prev.profile?.id === next.profile?.id && prev.name === next.name
+        && (prev.profile as any)?.sajuData?.pillars?.[2]?.천간 === (next.profile as any)?.sajuData?.pillars?.[2]?.천간;
+      return same ? prev : next;
+    });
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener(PROFILES_CHANGED_EVENT, refresh);
+    window.addEventListener('storage', refresh);
+    document.addEventListener('visibilitychange', onVisible);
+    refresh();
+    return () => {
+      window.removeEventListener(PROFILES_CHANGED_EVENT, refresh);
+      window.removeEventListener('storage', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   return state;

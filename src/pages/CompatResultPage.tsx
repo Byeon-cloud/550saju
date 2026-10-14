@@ -125,10 +125,12 @@ export function CompatResultPage() {
       console.error('궁합 분석 실패:', e);
       // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
       const { refundBalance, clearPendingSpendByType } = await import('@/services/storage/localStore');
-      refundBalance(1);
+      // 2026-10-14 — 가격 변경(1 → 2운) 뒤에도 실제로 낸 만큼 돌려준다 (예전 화면에서 넘어온 상태는 1운)
+      const paid = Number((state as any)?.cost) || 1;
+      refundBalance(paid);
       clearPendingSpendByType('compat'); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
       const errMsg = e?.message || '알 수 없는 오류';
-      toast.show(`분석에 실패해서 1운을 돌려드렸어요 (${errMsg})`, 'warning');
+      toast.show(`분석에 실패해서 ${paid}운을 돌려드렸어요 (${errMsg})`, 'warning');
       setTimeout(() => navigate('/compat'), 3000);
     }).finally(() => clearInterval(interval));
   }, []);

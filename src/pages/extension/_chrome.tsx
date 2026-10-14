@@ -70,7 +70,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
     label: '대운 흐름',
-    heroH1: { line1: '인생을 흐르는', line2: '10년 단위의 기운' },
+    heroH1: { line1: '10년마다 바뀌는 운,', line2: '지금은 어디쯤일까요' },
     // 2026-07-01 가격 fix — 대운 실제 차감 1운 (DaeunPage spendBalance(1)). 기존 '2운' stale.
     cost: '1운',
   },
@@ -82,7 +82,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
     label: '이번 달 월운',
-    heroH1: { line1: '이번 달의 결과', line2: '시기를 살핍니다' },
+    heroH1: { line1: '한 달 동안 좋은 날과', line2: '조심할 날을 알려 드려요' },
     // 2026-07-01 가격 fix — 월운 정가 7운 (getMonthlyPrice SSOT). 세일가는 호출부 costLabel 로.
     cost: '7운',
   },
@@ -95,7 +95,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
     label: '이번 주 운세',
-    heroH1: { line1: '이번 주 7일의', line2: '흐름을 짚어 드립니다' },
+    heroH1: { line1: '오늘부터 7일,', line2: '날마다 무엇을 할지 알려 드려요' },
     cost: '5운' as ExtensionTheme['cost'],
   },
   compat: {
@@ -106,9 +106,9 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
     label: '궁합',
-    heroH1: { line1: '두 사주의 기운을 겹쳐', line2: '읽어 드립니다' },
-    // 2026-07-01 가격 fix — 궁합 실제 차감 1운 (CompatibilityPage spendBalance(1)). 기존 '3운' stale.
-    cost: '1운',
+    heroH1: { line1: '두 사람이 잘 맞는 점과', line2: '부딪히는 점을 알려 드려요' },
+    // 2026-10-14 궁합 2운 (PRODUCT_COST.compatibility)
+    cost: '2운',
   },
   tojung: {
     heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#1A1612 60%,#1A1612 100%)',

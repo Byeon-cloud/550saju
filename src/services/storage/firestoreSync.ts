@@ -386,6 +386,23 @@ export async function pullProfilesMirror(uid: string): Promise<any[]> {
   } catch { return []; }
 }
 
+/** 로컬에 사주가 하나도 없는데 서버 미러에는 있으면 되살린다 (2026-10-14).
+ *  기기 여권은 계정이 바뀐 경우만 복원해서, 계정은 그대로인데 저장소만 비워진 경우(웹뷰 정리 등)엔
+ *  기존 유저가 홈에서 '내 사주 넣기'를 다시 보게 됐다. 로컬이 비었을 때만 한 번 읽는다(문서 1건). */
+export async function restoreProfilesIfEmpty(): Promise<number> {
+  try {
+    const store = await import('./localStore');
+    if (store.getProfiles().length > 0 || store.getMyProfile()) return 0;
+    const { ensureAuth } = await import('@/services/auth/authService');
+    await ensureAuth();
+    const uid = auth.currentUser?.uid;
+    if (!uid) return 0;
+    const items = await pullProfilesMirror(uid);
+    if (!items.length) return 0;
+    return store.mergeProfiles(items);
+  } catch { return 0; }
+}
+
 /* ── 사주대화 서버 백업 (2026-10-04) ── */
 const CHAT_SIG_KEY = 'saju500:chat_mirror_sig';
 const chatSig = (r: ChatRoom): string =>

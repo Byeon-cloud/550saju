@@ -15,7 +15,9 @@ const TABS = [
 // 2026-05-29 — /saju-card 추가: 페이지 자체 sticky 액션바(이미지 저장/공유하기)가 있어
 //   전역 TabBar 가 그 위를 덮으면 두 버튼이 가려져 스크롤해도 안 보이는 버그 fix.
 // 2026-09-17 — /weekly 추가: 월간(/monthly)과 동일 처리. 하단 sticky CTA(주간운세 보기)를 TabBar 가 덮던 문제 fix.
-const HIDDEN = ['/loading', '/result', '/charge', '/compat', '/share', '/dream', '/input', '/terms', '/privacy', '/daeun', '/monthly', '/weekly', '/tojung', '/daily', '/saju-card', '/admin'];
+// 2026-10-14 — /topic 추가: 다른 콘텐츠 화면(꿈해몽, 오늘의 운세, 월운, 궁합)처럼 탭 바를 숨긴다.
+//   주제운 첫 화면은 상황 입력칸이 있어, 키보드가 뜬 상태로 끌면 고정된 탭 바가 아이폰에서 흔들렸다(오너 제보).
+const HIDDEN = ['/loading', '/result', '/charge', '/compat', '/share', '/dream', '/input', '/terms', '/privacy', '/daeun', '/monthly', '/weekly', '/tojung', '/daily', '/saju-card', '/admin', '/topic'];
 
 export function TabBar() {
   const location = useLocation();

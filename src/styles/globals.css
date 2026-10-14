@@ -980,3 +980,13 @@
 /* 2026-10-11 누르기 작은 글자형 버튼 — 모양은 그대로, 눌리는 영역만 세로 44px 안팎으로 */
 .tap-pad { position: relative; }
 .tap-pad::after { content: ''; position: absolute; left: -6px; right: -6px; top: 50%; height: 44px; transform: translateY(-50%); }
+
+
+/* ── 화면 흔들림 막기 (2026-10-14, 오너 제보: 주제운 화면을 끌면 흔들림) ──
+ *   모바일 웹뷰에서 화면이 옆으로 조금씩 밀리거나, 위아래 끝에서 튕기며 흔들려 보이지 않게 한다.
+ *   데스크톱 폰 프레임 셸(1240px 이상)은 자체 스크롤이라 건드리지 않는다. */
+@media (max-width: 1239px) {
+  html { overflow-x: hidden; overscroll-behavior: none; }
+  @supports (overflow-x: clip) { html { overflow-x: clip; } }
+  body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+}
