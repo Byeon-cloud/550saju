@@ -163,7 +163,7 @@ guarded 판정:
  * @param timeSlot 현재 시간대 (latenight/dawn/morning/...)
  */
 async function generateChatAnswerAI(apiKey, question, sajuData, chatHistory, timeSlot) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const model = process.env.SAJU_CHAT_MODEL || DEFAULT_CHAT_MODEL;
     // ── 사주 컨텍스트
     let sajuContext = '사주 정보가 없습니다. 일반 명리학 상식으로 답변하세요.';

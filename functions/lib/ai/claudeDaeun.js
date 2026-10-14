@@ -9,7 +9,7 @@ const promptsV3_1 = require("./promptsV3");
 const sajuFacts_1 = require("./sajuFacts");
 const kstTime_1 = require("../utils/kstTime");
 async function generateDaeunAnalysis(apiKey, sajuData) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const prompt = buildPrompt(sajuData);
     const msg = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',

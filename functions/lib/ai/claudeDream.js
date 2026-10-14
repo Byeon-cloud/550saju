@@ -83,7 +83,7 @@ function buildDreamFreeCall(args) {
 }
 /** 무료 꿈해몽 — 사주 있으면 withSaju, 없으면 noSaju */
 async function generateDreamFree(apiKey, args) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const { system, user } = buildDreamFreeCall(args);
     // ── 단일 호출 (작동 검증본 — 2그룹 분할은 무료 콘텐츠 누락 회귀로 롤백) ──
     // max_tokens 14000: 잠금 본문(lockedXxx.full)까지 무료 호출에서 전부 생성.
@@ -125,7 +125,7 @@ async function generateDreamFree(apiKey, args) {
 }
 /** 심층 꿈해몽 (유료 1운) — 1차 생성 후 2차 자기 리뷰 */
 async function generateDreamDeep(apiKey, args) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const system = promptsV3_2.DREAM_DEEP_SYSTEM_V3;
     const user = (0, promptsV3_2.DREAM_DEEP_USER_V3)({
         name: args.saju.name,

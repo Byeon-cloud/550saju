@@ -422,7 +422,7 @@ function mergeGroups(a, d, b, c) {
 async function generatePremiumReport(apiKey, sajuData, situation, 
 /** 2026-10-09 — 점진 표시: 그룹 완성 즉시 호출 (progress/{id} write 용 · best-effort, 결과 전달 경로와 무관) */
 onGroup) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
     const staticSystem = STATIC_SYSTEM_PROMPT;
     const dynamicSystem = buildDynamicSystemContext(sajuData);
@@ -474,7 +474,7 @@ function computeTopicBaseScores(sajuData) {
  *  · generateGroupA·B·C 를 외부에서 직접 호출 가능
  */
 async function generateGroup(apiKey, sajuData, group, situation) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
     const staticSystem = STATIC_SYSTEM_PROMPT;
     const dynamicSystem = buildDynamicSystemContext(sajuData);

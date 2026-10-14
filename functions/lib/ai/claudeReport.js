@@ -72,7 +72,7 @@ async function callReportGroup(anthropic, model, sajuData, situation, group) {
  *  · 클라이언트/SSE/배포 변경 0 — 기존 callable 경로가 그대로 빨라짐
  */
 async function generateSajuReport(apiKey, sajuData, situation, _reportType) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const model = process.env.SAJU_REPORT_MODEL || DEFAULT_REPORT_MODEL;
     const t0 = Date.now();
     const [groupA, groupB, groupC] = await Promise.all([
@@ -119,7 +119,7 @@ async function generateSajuReport(apiKey, sajuData, situation, _reportType) {
  * generateSajuReport 와 동일 프롬프트·모델·재시도 로직 — 그룹 1개만.
  */
 async function generateReportGroup(apiKey, sajuData, situation, group) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const model = process.env.SAJU_REPORT_MODEL || DEFAULT_REPORT_MODEL;
     return callReportGroup(anthropic, model, sajuData, situation, group);
 }

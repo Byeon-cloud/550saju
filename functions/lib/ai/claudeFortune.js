@@ -14,7 +14,7 @@ const sajuFacts_1 = require("./sajuFacts");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const MODEL = 'claude-sonnet-4-6';
 async function generateDailyFortuneAnalysis(apiKey, args) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const system = promptsV3_2.DAILY_FORTUNE_SYSTEM_V3;
     const user = (0, promptsV3_2.DAILY_FORTUNE_USER_V3)(args);
     // 1차 호출

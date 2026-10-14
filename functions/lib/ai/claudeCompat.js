@@ -164,7 +164,7 @@ function computeCrossRelations(d1, d2) {
         : '  - 두 사주 간 합, 충, 삼합 모두 없음 (중성적 관계 — 적당한 거리)';
 }
 async function generateCompatibilityAnalysis(apiKey, sajuData1, sajuData2, relation) {
-    const anthropic = new sdk_1.default({ apiKey });
+    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
     const prompt = buildPrompt(sajuData1, sajuData2, relation);
     const msg = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',

@@ -857,7 +857,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
          *   A/B 시식(같은 사주·같은 날): Haiku 는 명리 용어 주어·병렬 그룹 간 시간대 모순·처방형 미신·성별 설명 문장이 남고,
          *   Sonnet 은 일상어 장면·일관성이 뚜렷이 우수. 원가 ~190→~320원/건 (공유 캐시라 같은 사주·같은 날은 1회만). */
         const GROUP_MODEL = { A1: 'claude-haiku-4-5', A2: 'claude-sonnet-4-6', B: 'claude-sonnet-4-6' };
-        const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
+        const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value(), maxRetries: 5 });
         const system = DAILY_FORTUNE_SYSTEM_V3;
         const userA1 = DAILY_FORTUNE_USER_V3_GROUP_A1({
             name: name || '사용자', sajuData, date, weekday: weekday || '',
@@ -1342,7 +1342,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
         const { default: Anthropic } = await Promise.resolve().then(() => __importStar(require('@anthropic-ai/sdk')));
         const { buildDreamFreeCall, buildDreamFreeGroupCall } = await lazyClaudeDream();
         const { parseJsonResponse, TONE_FINAL_CHECK } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
-        const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
+        const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value(), maxRetries: 5 });
         const t0 = Date.now();
         // 2026-05-27 v8 — 2-그룹 병렬 (사주 있을 때만, 없으면 단일 호출)
         const hasSaju = !!saju;
@@ -2447,7 +2447,7 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
         const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
         // 2026-10-09 — 상황별 섹션 제목을 먼저 보냄 → 앱 로딩 스켈레톤이 서버와 같은 제목 (구버전 앱은 무시)
         sendEvent('outline', { headings: call.sections });
-        const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value() });
+        const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value(), maxRetries: 5 });
         const t0 = Date.now();
         // 2026-10-08 — 생성은 claudeTopic.runTopicGeneration 공용 (callable 폴백과 같은 코드 · 시스템 프롬프트 캐시).
         //   재회운은 본문(아래 chunk 로 실시간)과 카드 데이터(병렬)를 나눠 생성 → 클라 계약(start·chunk·retry·done) 그대로.
