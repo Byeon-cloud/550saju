@@ -93,6 +93,8 @@ export function plainTone(s: string): string {
     t = t.replace(/패턴/g, '경향');
   }
   if (t.indexOf('아이템') >= 0) t = t.replace(/아이템/g, '물건');
+  // 2026-10-14 — 5.5 세대가 '작은 리추얼로 삼으세요' 같은 외래어를 쓴다. 받침 있는 말끼리라 조사는 그대로
+  if (t.indexOf('리추얼') >= 0 || t.indexOf('루틴') >= 0) t = t.replace(/리추얼|루틴/g, '습관');
   if (t.indexOf('폭발') >= 0) {
     t = t.replace(/폭발합니다/g, '크게 살아납니다').replace(/폭발해요/g, '크게 살아나요').replace(/폭발한다/g, '크게 살아난다')
       .replace(/폭발하는/g, '크게 살아나는').replace(/폭발할/g, '크게 살아날').replace(/폭발했/g, '크게 살아났')

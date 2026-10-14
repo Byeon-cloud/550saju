@@ -50,10 +50,6 @@ import {
   useInputDraft,
   type InputDraftSnapshot,
 } from '@/hooks/useInputDraft';
-import {
-  triggerPromotionEvent,
-  PROMO_EVENTS,
-} from '@/services/toss/tossPromotion';
 
 /* ══════════════════════════════════════════════════════════════════
  * SSOT 토큰 (D1 fix 정렬)
@@ -737,7 +733,6 @@ export function InputPage() {
         // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
         import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumCost)).catch(() => {});
 
-        triggerPromotionEvent(PROMO_EVENTS.FIRST_SAJU);
         toast.show(`${premiumCost}운 차감: 종합 사주 시작`, 'success');
         const newId = generateId();
         navigate(`/result/${newId}?fresh=1&type=premium`, { replace: true });

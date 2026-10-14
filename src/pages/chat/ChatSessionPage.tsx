@@ -827,9 +827,6 @@ export function ChatSessionPage() {
     if (!roomNameSet) {
       updateRoomName(sessionId!, autoRoomName(text.trim()));
       setRoomNameSet(true);
-      import('@/services/toss/tossPromotion').then((m) =>
-        m.triggerPromotionEvent(m.PROMO_EVENTS.CHAT_START),
-      );
     }
 
     const userMsg: ChatMessage = {

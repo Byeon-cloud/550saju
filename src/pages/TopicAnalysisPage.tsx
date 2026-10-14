@@ -3239,9 +3239,6 @@ export function TopicAnalysisPage() {
       return;
     }
     const timer = setTimeout(() => setContentReady(true), 1200);
-    // 2026-05-29 — 출시 프로모션(50원): 첫 콘텐츠 결과 도달 시 자동 지급 (무료/유료 무관).
-    //   grantPromotion 이 코드 단위 localStorage dedupe → 어느 콘텐츠든 첫 1회만 실제 지급. 앱인토스 only.
-    import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
       // 2026-06-02 — 출석 적립 + 일일/연속 보상 자동 지급 (콘텐츠 이용 시, 클라 잔액 적립)
       import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
       // LIVE BEST 조회 기록 (24h 디듀프) — 주제 canonical id

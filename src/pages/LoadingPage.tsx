@@ -178,7 +178,6 @@ export function LoadingPage() {
                   createdAt: new Date().toISOString(),
                   aiResult: { ...(result.content as any), tier: 'premium' as const },
                 });
-                import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
                 navigate(`/result/${rid}`, { replace: true });
                 streamSucceeded = true;
                 resolve();
@@ -248,7 +247,6 @@ export function LoadingPage() {
             ? { ...(result.content as any), tier: 'premium' as const }
             : result.content,
         });
-        import('@/services/toss/tossPromotion').then(m => m.triggerPromotionEvent(m.PROMO_EVENTS.FIRST_SAJU));
         navigate(`/result/${rid}`, { replace: true });
       } catch (err) {
         console.warn('[LoadingPage] 서버 호출 실패:', err);

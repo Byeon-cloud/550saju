@@ -20,6 +20,7 @@ import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, PRODUC
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { getReports } from '@/services/storage/localStore';
 import { getPublicReviews, type PublicReview } from '@/services/reviews';
+import { getTopicTop5 } from '@/services/liveBest';
 import {
   todayHook, todayGz, weekFact, nextMonthFact, loveDday, yearFact, yearGz, loveStars, wealthStars,
   examFact, spouseSeatFact, persona, monthDayLabel, josa,
@@ -122,6 +123,15 @@ export function HomePage() {
   }, []);
   const [showAllTopics, setShowAllTopics] = useState(false);
 
+  /* 지금 많이 보는 풀이 — 서버 매시 집계(최근 24시간 실제 조회, 1인 1주제 하루 1회)만. 숫자는 보여 주지 않고 순서만.
+   *   예전 홈은 데이터가 모자라면 종합사주 1위 고정 + 날짜 셔플로 채웠다(가짜 순위) → 3개 미만이면 섹션을 숨긴다. */
+  const [liveIds, setLiveIds] = useState<string[]>([]);
+  useEffect(() => {
+    let alive = true;
+    getTopicTop5(1).then((c) => { if (alive) setLiveIds(c?.ids ?? []); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
   /* ── 사실 계산 (사주 있을 때만 · 결정론) ── */
   const facts = useMemo(() => {
     if (!hasSaju || !sajuData) return null;
@@ -154,6 +164,13 @@ export function HomePage() {
   /** 올해가 아닌 날짜엔 '내년 ' — '2월'만 쓰면 올해 2월로 읽힌다 */
   const yr = (dateKey: string) => (Number(dateKey.slice(0, 4)) > Number(today.slice(0, 4)) ? '내년 ' : '');
   const goTopic = (id: string) => navigate(`/topic/${id}`, profileId ? { state: { profileId } } : undefined);
+  const liveBest = liveIds.map((id) => {
+    if (id === 'premium') return { id, label: '종합사주', sub: '열 장으로 엮은 내 사주책', price: `${premium}운`, go: () => navigate('/premium') };
+    if (id === 'daily') return { id, label: '오늘의 운세', sub: '오늘 시간대와 할 일, 하루 한 번 무료', price: dailyFree ? '무료' : '1운', go: () => navigate('/daily') };
+    if (id === 'dream') return { id, label: '꿈해몽', sub: '꾼 꿈을 내 사주와 맞춰 풀어요, 하루 한 번 무료', price: dreamFree ? '무료' : '1운', go: () => navigate('/dream') };
+    const t = (TOPIC_REGISTRY as Record<string, { label: string; subCopy: string } | undefined>)[id];
+    return t ? { id, label: t.label, sub: t.subCopy, price: `${getTopicPrice(id as TopicId).actualPrice}운`, go: () => goTopic(id) } : null;
+  }).filter((x): x is NonNullable<typeof x> => !!x).slice(0, 5);
   const withPid = (path: string) => (profileId ? `${path}${path.includes('?') ? '&' : '?'}profileId=${encodeURIComponent(profileId)}` : path);
 
   return (
@@ -397,6 +414,28 @@ export function HomePage() {
           style={{ display: 'block', width: 'calc(100% - 32px)', margin: '10px 16px 0', padding: 14, fontSize: 15, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
           고민 {listTopics().length}가지 전부 보기 ›
         </button>
+      )}
+
+      {/* ━━━ 6-1. 지금 많이 보는 풀이 (실제 집계만 · 3개 미만이면 숨김) ━━━ */}
+      {liveBest.length >= 3 && (
+        <>
+          <SecTitle k="사람들이 지금 보는 것" h="최근 하루, 많이 열어 본 풀이" />
+          <ol style={{ margin: '0 16px', borderTop: `1px solid ${HJ.line}`, listStyle: 'none', padding: 0 }}>
+            {liveBest.map((it, i) => (
+              <li key={it.id} style={{ borderBottom: `1px solid ${HJ.line}` }}>
+                <button type="button" onClick={it.go} className="w-full text-left flex items-center gap-3" style={{ padding: '14px 2px', minHeight: 56, background: 'transparent', border: 0 }}>
+                  <span style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.seal, width: 18, flexShrink: 0 }}>{hanjaNum(i + 1)}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontFamily: SERIF, fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: HJ.ink }}>{it.label}</span>
+                    <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 2, lineHeight: 1.5 }}>{it.sub}</span>
+                  </span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{it.price}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+          <p style={{ margin: '8px 22px 0', fontSize: 13, color: HJ.mute, lineHeight: 1.5 }}>최근 24시간 동안 실제로 열어 본 순서예요. 한 사람이 같은 풀이를 여러 번 열어도 하루 한 번으로 세요.</p>
+        </>
       )}
 
       {/* ━━━ 7. 실제 후기 (승인된 것만 · 없으면 숨김) ━━━ */}

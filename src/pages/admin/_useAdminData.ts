@@ -18,6 +18,10 @@ export const TOKEN_PRICE_PER_M: Record<string, { in: number; out: number }> = {
   sonnet: { in: 3, out: 15 },
   haiku: { in: 1, out: 5 },     // 2026-06-12 — 누락돼 오늘운세(Haiku)가 0원 또는 Sonnet 단가로 오계산되던 것
   gemini: { in: 0.15, out: 0.6 }, // Flash 급 근사 — 무시 가능 수준이지만 0 보다는 정직
+  // 2026-10-14 — 5.5 세대 전환 (claude-opus-5-5 등). 같은 이름표라 모델 ID 의 '-5-' 로 가른다
+  opus55: { in: 4, out: 20 },
+  sonnet55: { in: 2, out: 10 },
+  haiku55: { in: 0.1, out: 0.5 },
 };
 
 // ─── KST 날짜 유틸 ───
@@ -490,9 +494,10 @@ function accumulateUsage(agg: PeriodAgg, u: any): void {
   const model = String(u.model || '');
   const i = Number(u.inputTokens) || 0;
   const o = Number(u.outputTokens) || 0;
-  const price = model.includes('opus') ? TOKEN_PRICE_PER_M.opus
-    : model.includes('sonnet') ? TOKEN_PRICE_PER_M.sonnet
-    : model.includes('haiku') ? TOKEN_PRICE_PER_M.haiku
+  const g55 = /-5-\d/.test(model) ? '55' : '';
+  const price = model.includes('opus') ? TOKEN_PRICE_PER_M['opus' + g55]
+    : model.includes('sonnet') ? TOKEN_PRICE_PER_M['sonnet' + g55]
+    : model.includes('haiku') ? TOKEN_PRICE_PER_M['haiku' + g55]
     : model.includes('gemini') ? TOKEN_PRICE_PER_M.gemini
     : null;
   const krw = price ? ((i * price.in + o * price.out) / 1_000_000) * USD_KRW : 0;

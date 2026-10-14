@@ -164,10 +164,9 @@ export function DailyFortunePage() {
       import('@/services/analytics').then((a) => a.trackEvent('content_result', { type: 'daily' })).catch(() => {});
     }
   }, [result]);
-  // 2026-05-29 — 출시 프로모션(50원): 무료 오늘운세 결과 도달도 첫 콘텐츠로 인정 (코드 단위 dedupe · 앱인토스 only).
+  // 결과 도달 시 출석 적립과 조회 기록 (출시 프로모션 50원은 2026-10 종료로 지급 호출 제거)
   useEffect(() => {
     if (phase === 'result') {
-      import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
       // 2026-06-02 — 출석 적립 + 일일/연속 보상 자동 지급 (콘텐츠 이용 시, 클라 잔액 적립)
       import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
       // LIVE BEST 조회 기록 (24h 디듀프)

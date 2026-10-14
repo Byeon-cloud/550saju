@@ -1498,7 +1498,8 @@ function Section1Body({
     금: '잘 다듬어진 칼날, 결단의 상',
     수: '깊고 흐르는 강물, 유연하게 길을 찾는 상',
   };
-  const ilganLine = `<span class="han">${ilgan}</span>은 ${ILGAN_SYM[dayOheng]}입니다.`;
+  // 2026-10-14 — 천간별 상징(ILGAN_SYMBOL)이 우선. 오행 표(ILGAN_SYM)는 甲 문장이라 乙에도 '곧게 뻗는 큰 나무'가 나갔다
+  const ilganLine = `<span class="han">${ilgan}</span>은 ${ILGAN_SYMBOL[ilgan] || ILGAN_SYM[dayOheng]}입니다.`;
   // 월지 + 계절
   const monthZhi = sajuData.pillars[1]?.지지 || '';
   const monthRead = sajuData.pillars[1]?.지지읽기 || '';
@@ -1548,7 +1549,7 @@ function Section1Body({
     ? `${userName} 님 사주는 ${dominantPhrase}로 한쪽이 매우 두텁습니다. 그 흐름을 활용하되 다른 영역도 의식적으로 만들어두는 게 평생 자산이 됩니다.`
     : `${userName} 님 일간은 ${HAN[dayOheng]}(${KR[dayOheng]})이고, 가장 두꺼운 ${HAN[strongest[0]]}(${KR[strongest[0]]})이 일간을 ${SANGSAENG_LOCAL[strongest[0]] === dayOheng ? '도와주는' : SANGSAENG_LOCAL[dayOheng] === strongest[0] ? '소모시키는' : '눌러내리는'} 흐름이라 ${weakObj} 채우는 일이 평생 작동하는 결입니다.`;
 
-  const para1 = `${userName} 님의 일간은 <strong>${ilgan}(${KR[dayOheng]})</strong>입니다. ${ilganLine} 흔들리지 않으려 뿌리부터 다잡는 사람의 기운입니다. 크게 목소리를 내지 않아도 옆에 있는 사람이 <strong>"이 사람은 자기만의 기운이 있구나"</strong> 하고 느끼게 만드는, 그런 흐름을 타고납니다.`;
+  const para1 = `${userName} 님의 일간은 <strong>${ilgan}(${KR[dayOheng]})</strong>입니다. ${ilganLine} 크게 목소리를 내지 않아도 옆에 있는 사람이 <strong>"이 사람은 자기만의 기운이 있구나"</strong> 하고 느끼게 만드는, 그런 흐름을 타고납니다.`;
 
   const flowTrim = season.flow.replace(/(이|가|은|는|을|를|로|으로)$/, '');
   const flowLastJong = (() => {
@@ -2713,6 +2714,11 @@ export function PremiumResult({
     금: '金',
     수: '水',
   };
+  // 2026-10-14 — 일간 상징은 천간마다 다르다 (乙을 '큰 나무', 癸를 '흐르는 물', 辛을 '쇠'로 쓰던 것). 오행 표는 천간을 모를 때만
+  const stemSymbol: Record<string, string> = {
+    甲: '큰 나무의 기운', 乙: '풀과 덩굴의 기운', 丙: '한낮 태양의 기운', 丁: '등불의 기운', 戊: '큰 산의 기운',
+    己: '논밭 흙의 기운', 庚: '강철의 기운', 辛: '보석의 기운', 壬: '큰 강의 기운', 癸: '빗물의 기운',
+  };
   const ohengSymbol: Record<string, string> = {
     목: '큰 나무의 기운',
     화: '번지는 불의 기운',
@@ -2802,7 +2808,7 @@ export function PremiumResult({
                 }}>
                   〔{ohengHan[ilganOhengKr] || '土'}〕
                 </span>
-                {ohengSymbol[ilganOhengKr] || '본연의 기운'}
+                {stemSymbol[ilgan] || ohengSymbol[ilganOhengKr] || '본연의 기운'}
               </span>
               <span aria-hidden="true" style={{ width: 1, height: 10, background: 'currentColor', opacity: 0.3, alignSelf: 'center' }} />
               <span>{seasonText}</span>

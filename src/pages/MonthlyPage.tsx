@@ -49,15 +49,16 @@ function buildMonthOptions(): { year: number; month: number; label: string; isPa
  * 선택월의 월간지·세운간지 — lunar-javascript 로 정확 계산.
  * ★월주는 절기 기준이라 그 달 15일로 계산(절기 경계 안전).
  *   const s = Solar.fromYmd(year, month, 15).getLunar();
- *   월간지 = s.getMonthInGanZhi(); 세운간지 = s.getYearInGanZhi();
+ *   월간지 = s.getMonthInGanZhiExact(); 세운간지 = s.getYearInGanZhiExact();
+ *   (2026-10-14 — Exact 없는 getYearInGanZhi 는 설날 기준이라 입춘과 설날 사이(예: 2026년 2월 15일)에 전년 간지가 나갔다)
  */
 function computeMonthInfo(year: number, month: number): MonthInfo {
   let wolGanji = '';
   let yearGanji = '';
   try {
     const s = Solar.fromYmd(year, month, 15).getLunar();
-    wolGanji = s.getMonthInGanZhi();
-    yearGanji = s.getYearInGanZhi();
+    wolGanji = s.getMonthInGanZhiExact();
+    yearGanji = s.getYearInGanZhiExact();
   } catch {
     wolGanji = '';
     yearGanji = '';

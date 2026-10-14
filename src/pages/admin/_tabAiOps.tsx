@@ -147,7 +147,7 @@ export function TabAiOps({ d }: { d: AdminData }) {
 
       <Section
         title="토큰 원가 (aiUsage 실측)"
-        caption={`· 단가: Opus $5/$25 · Sonnet $3/$15 · Haiku $1/$5 · Gemini Flash 근사 (per 1M tok) · 환율 ₩${USD_KRW}/$ · 캐시 할인 미반영(실청구는 이보다 낮음) — ⚠️ QA·테스트 호출 포함이라 합계보다 '1건당 원가'를 보세요. 실청구는 Anthropic 콘솔 교차검증.`}
+        caption={`· 단가: 10-14 부터 Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.1/$0.5 (이전 기록은 4.6 세대 $5/$25, $3/$15, $1/$5) (per 1M tok) · 환율 ₩${USD_KRW}/$ · 캐시 할인 미반영(실청구는 이보다 낮음) — ⚠️ QA·테스트 호출 포함이라 합계보다 '1건당 원가'를 보세요. 실청구는 Anthropic 콘솔 교차검증.`}
       >
         <DataTable columns={costCols} rows={costRows} initialSortKey="costKrw" />
       </Section>

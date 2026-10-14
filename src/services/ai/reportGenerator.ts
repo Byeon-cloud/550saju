@@ -530,8 +530,10 @@ export async function generateDailyFortuneStream(
           callbacks.onProgress?.(payload);
         } else if (eventName === 'done') {
           callbacks.onDone({ result: payload.result, cached: payload.cached, elapsedMs: payload.elapsedMs });
+          return; // 2026-10-14 — 다른 스트림과 같게. 없으면 아래 끊김 가드가 성공 뒤에도 onError 를 한 번 더 불렀다
         } else if (eventName === 'error') {
           callbacks.onError(payload.message || '알 수 없는 오류');
+          return;
         }
       }
     }

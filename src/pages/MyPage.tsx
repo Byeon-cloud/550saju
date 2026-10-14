@@ -1497,17 +1497,15 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
   //   `.env VITE_PROMO_LIVE=1` 때문에 **실제 LIVE 코드로 실지급(50원 차감)** 이 나갔다.
   //   정작 공식 문서가 요구하는 `TEST_{promotionCode}` 호출은 한 번도 수행되지 않아
   //   콘솔에서 "프로모션 시작하기" 를 누를 수 없는 상태였다.
-  //   → testLaunchPromotion / test7DayPromotion 은 LIVE 플래그와 무관하게 항상 TEST_ 코드를 쓴다.
-  //   현재 대상: TEST_01KYM4E5PJ4FP2ZFEG5JPDV6PZ (50원 · 콘솔 2026-07-28 승인)
-  const runPromoTest = async (kind: '7day' | 'launch') => {
+  //   → test7DayPromotion 은 LIVE 플래그와 무관하게 항상 TEST_ 코드를 쓴다.
+  //   현재 대상: 7일 완주 100원 (출시 50원 TEST_01KYM4… 는 2026-10 프로모션 종료로 제거)
+  const runPromoTest = async () => {
     if (promoBusy) return;
     setPromoBusy(true);
     try {
       const m = await import('@/services/toss/tossPromotion');
-      const r = kind === '7day'
-        ? await m.test7DayPromotion()
-        : await m.testLaunchPromotion();
-      const label = kind === '7day' ? '7일 완주' : '출시(무료 사주보기)';
+      const r = await m.test7DayPromotion();
+      const label = '7일 완주';
       _toast.show(
         r.ok
           ? `${label} TEST 호출 성공: 콘솔에서 "시작하기" 가능`
@@ -1600,16 +1598,10 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
               </p>
               <div className="flex gap-2 mb-3">
                 <button type="button" disabled={promoBusy}
-                  onClick={() => runPromoTest('7day')}
+                  onClick={() => runPromoTest()}
                   className="flex-1 py-3 rounded-xl text-[13px] font-bold"
                   style={{ background: C.gold, color: C.ink, opacity: promoBusy ? 0.5 : 1 }}>
                   7일 완주 100원
-                </button>
-                <button type="button" disabled={promoBusy}
-                  onClick={() => runPromoTest('launch')}
-                  className="flex-1 py-3 rounded-xl text-[13px] font-bold"
-                  style={{ background: C.gold, color: C.ink, opacity: promoBusy ? 0.5 : 1 }}>
-                  무료 사주보기 50원
                 </button>
               </div>
               <button type="button" onClick={() => setShowDebug(false)}

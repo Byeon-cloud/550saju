@@ -198,9 +198,6 @@ export function ChargePage() {
               toast.show(result.message, 'success');
               // 2026-05-29 — 어드민 매출 퍼널: 충전 완료 이벤트 (2026-06-24 source 추가 — 결제 결심 출처)
               import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: Number(amount) || 0, source: chargeSource }));
-              import('@/services/toss/tossPromotion').then(m =>
-                m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { amount: String(amount) })
-              );
               if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
             } else {
               toast.show(result.message || '결제 처리에 실패했어요', 'warning');
@@ -253,9 +250,6 @@ export function ChargePage() {
     if (result.success) {
       setBalanceDisplay(getBalance());
       toast.show(result.message, 'success');
-      import('@/services/toss/tossPromotion').then(m =>
-        m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { package: selectedPkg.name })
-      );
       if (redirectTo) {
         setTimeout(() => navigate(redirectTo), 1400);
       } else {
@@ -279,9 +273,6 @@ export function ChargePage() {
       setBalanceDisplay(getBalance());
       toast.show(r.message, 'success');
       import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: selectedPkg.price, source: chargeSource, pg: 'portone' })).catch(() => {});
-      import('@/services/toss/tossPromotion').then(m =>
-        m.triggerPromotionEvent(m.PROMO_EVENTS.CHARGE, { amount: String(selectedPkg.price) })
-      );
       if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
     } else if (r.cancelled) {
       toast.show('결제가 취소됐어요', 'info');

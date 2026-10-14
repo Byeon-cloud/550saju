@@ -18,9 +18,9 @@ declare module 'lunar-javascript' {
     getDayXunKong(): string;
     /** 일진 간지 (예: "甲子") — 날짜 기반, 시간 보정 불필요 (2026-06-29 주간운세) */
     getDayInGanZhi(): string;
-    /** 월간지 (예: "甲午") — 절기 기준, 그 달 15일로 계산 권장 (2026-06-30 월별운세 단일월) */
+    /** 월간지 (예: "甲午") — 절입 날짜 기준(시각 무시). 절기 시각까지 맞추려면 getMonthInGanZhiExact */
     getMonthInGanZhi(): string;
-    /** 세운 간지 (예: "丙午") — 입춘 기준 연주 (2026-06-30 월별운세 단일월) */
+    /** 연 간지 — ⚠️ 설날(음력 1월 1일) 기준. 사주의 세운은 입춘 기준이므로 getYearInGanZhiExact 를 쓴다 */
     getYearInGanZhi(): string;
     /** 절기(입춘·절입 시각) 기준 정확한 간지 — 2026-10-10 hookFacts 사용 */
     getYearInGanZhiExact(): string;

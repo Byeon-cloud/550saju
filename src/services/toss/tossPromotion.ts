@@ -30,7 +30,8 @@ import { isAppsInToss } from '@/services/payment/iapService';
  * (토스 developer 콘솔 → 프로모션 → 각 항목의 "프로모션 코드")
  */
 export const PROMO = {
-  /** 사주 프로모션 50원 — 미션 "무료 사주보기" · 콘솔 2026-07-28 승인 (예산 10만원 = 2,000건 상한)
+  /** 2026-10 종료 (오너 확인 10-14) — 지급 호출은 전부 제거, 이벤트 탭 '받은 토스포인트' 과거 기록 라벨과 장부 이관에만 쓴다.
+   *  사주 프로모션 50원 — 미션 "무료 사주보기" · 콘솔 2026-07-28 승인 (예산 10만원 = 2,000건 상한)
    *
    *  2026-07-14 준기 결정: 10원 → 50원 상향. 근거: 구 프로모(01KTRSZ...) 가 한 달 누적 273건
    *   (2,730원)에 그쳐 토스 혜택탭 가시성 자체가 낮다고 판단. 비용 리스크(273건 기준 월 13,650원)가
@@ -40,7 +41,7 @@ export const PROMO = {
    *   .ait 재빌드·재심사. 코드/금액은 반드시 콘솔 값과 일치해야 하며 어긋나면 errorCode 반환.
    *  ⚠️ 구 코드(01KTRSZ5JQ8ETHH3QQD9S3QSEX, 10원)는 심사 통과 전 구버전 앱이 계속 호출하므로
    *   콘솔에서 먼저 종료하지 말 것 (종료 시 그 기간 지급 0). 신버전 배포 확인 후 종료.
-   *  검증: MyPage 디버그 시트 "프로모 TEST" 또는 개발 서버 `?_promotest=launch` (TEST_ 코드 전용). */
+   *  (종료 전 검증 경로였던 MyPage 디버그 버튼과 `?_promotest=launch` 도 제거) */
   LAUNCH_SAJU: { code: '01KYM4E5PJ4FP2ZFEG5JPDV6PZ', amount: 50 },
   /** 사주500 · 7일 출석 완주 리워드 — 요일 무관 7일 연속 출석마다 반복 지급 (100원, 토스 콘솔 고정형)
    *  ⚠️ 반복 지급이므로 콘솔의 1인당 지급 횟수 제한·예산이 반복 지급을 허용하는지 확인 필요. */
@@ -193,22 +194,6 @@ export async function grantPromotion(
   }
 }
 
-/**
- * 출시 프로모션 — "무료 사주보기" 미션 (토스포인트 50원 · 기기당 1회).
- * 콘텐츠 결과 첫 도달 시점에 호출 (여러 결과 화면에서 불러도 코드 단위 1회).
- * 지급 성공 시 기기 보상 장부(이벤트 탭 "받은 토스포인트")에 기록.
- */
-export async function grantLaunchPromotion(): Promise<GrantResult> {
-  const r = await grantPromotion(PROMO.LAUNCH_SAJU);
-  if (r.ok && PROMO_LIVE) {
-    const realCode = resolveCode(PROMO.LAUNCH_SAJU.code);
-    import('@/services/storage/dailyReward')
-      .then((m) => m.appendRewardLog('launch_promo', PROMO.LAUNCH_SAJU.amount, `launch_promo:${realCode}`))
-      .catch(() => {});
-  }
-  return r;
-}
-
 /** 토스 프로모션 에러코드 → 사람이 읽는 진단 (공식 문서 기준) */
 const PROMO_ERROR_HINT: Record<string, string> = {
   '4100': '콘솔에 없는 프로모션 코드예요 (코드 불일치)',
@@ -282,11 +267,6 @@ export async function grantPromotionTest(
   }
 }
 
-/** 출시 프로모션 TEST 호출 (콘솔 "시작하기" 활성화용) */
-export async function testLaunchPromotion(force = true): Promise<GrantResult> {
-  return grantPromotionTest(PROMO.LAUNCH_SAJU, force);
-}
-
 /** 7일 완주 프로모션 TEST 호출 */
 export async function test7DayPromotion(force = true): Promise<GrantResult> {
   return grantPromotionTest(PROMO.ATTEND_7DAY, force);
@@ -345,38 +325,4 @@ export async function seedLegacyPromoLedger(): Promise<void> {
     }
     window.localStorage.setItem(LEGACY_PROMO_SEED_FLAG, '1');
   } catch { /* noop — 다음 진입 때 재시도 (id 중복 방지로 안전) */ }
-}
-
-/* ─────────────────────────────────────────────────────────────
- * 레거시 호환 — 기존 triggerPromotionEvent / PROMO_EVENTS 사용처 보존.
- *   ChargePage·ChatSessionPage·InputPage·LoadingPage 가 import 중.
- *   FIRST_SAJU 이벤트만 실제 프로모션(출시 — 무료 사주보기)으로 매핑.
- *   나머지(CHARGE·CHAT_START·DAILY_FORTUNE)는 콘솔에 매칭 프로모션 없으면 no-op.
- * ──────────────────────────────────────────────────────────── */
-
-export const PROMO_EVENTS = {
-  FIRST_SAJU: 'first_saju_complete',
-  SHARE_RESULT: 'share_result',
-  DAILY_FORTUNE: 'daily_fortune_view',
-  CHARGE: 'charge_complete',
-  CHAT_START: 'chat_first_message',
-} as const;
-
-/**
- * @deprecated analytics.logEvent 방식은 프로모션 활성화 X.
- *   호환 유지용 — FIRST_SAJU 만 실제 grantPromotion 으로 매핑.
- *   신규 코드는 grantLaunchPromotion() 직접 사용 권장 (7일 완주는 dailyReward.processAttendanceRewards 가 처리).
- */
-export async function triggerPromotionEvent(
-  eventName: string,
-  _params?: Record<string, string>,
-): Promise<void> {
-  if (!isAppsInToss()) return;
-
-  // 첫 사주 완료 → 출시 프로모션 "무료 사주보기" 지급
-  if (eventName === PROMO_EVENTS.FIRST_SAJU) {
-    await grantLaunchPromotion();
-  }
-  // CHARGE / CHAT_START / DAILY_FORTUNE / SHARE_RESULT —
-  // 현재 콘솔에 매칭 프로모션 없음. 추후 콘솔 등록 시 PROMO 에 코드 추가 + 매핑.
 }

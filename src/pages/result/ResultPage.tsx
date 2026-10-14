@@ -490,14 +490,13 @@ export function ResultPage(props: ResultPageProps = {}) {
     aiResult: streamingAiResult,
   } as unknown as LocalReport) : null);
 
-  // 결과가 실제로 있을 때 1회 — 출석 마커 + 출시 프로모션(50원·앱인토스) + 일일/연속 보상.
+  // 결과가 실제로 있을 때 1회 — 출석 마커 + 일일/연속 보상 (출시 프로모션 50원은 2026-10 종료).
   //   fresh 생성은 전 그룹 도착 후(중도 실패·환불 건 제외). 보관함 재진입 등 모든 결과 도달 커버.
   const hasRealResult = !!storedReport && (!isFreshMode || allGroupsArrived);
   useEffect(() => {
     if (!hasRealResult || attendanceFiredRef.current) return;
     attendanceFiredRef.current = true;
     markAttendance().catch(() => {/* non-blocking */});
-    import('@/services/toss/tossPromotion').then(m => m.grantLaunchPromotion());
     import('@/services/storage/dailyReward').then(m => m.processAttendanceRewards());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasRealResult]);

@@ -387,7 +387,7 @@ export function App() {
       .catch(() => { /* noop */ });
 
     // 1-b. 출시 전 프로모션 테스트 트리거 (?_promotest=7day | launch) — 개발 서버 전용
-    //   토스 정책: 출시 전 TEST_ 코드로 1회 호출해야 콘솔 "시작하기" 활성화.
+    //   토스 정책: 출시 전 TEST_ 코드로 1회 호출해야 콘솔 "시작하기" 활성화. (launch 50원은 2026-10 종료로 제거)
     //   2026-09-17 보안 fix: 이 블록이 실서비스 번들에 그대로 있어 누구나 쿼리 하나로
     //   launch=LIVE 코드 실지급(50원) · 7day=출석 없이 실지급(100원) + 실제 출석 기록 삭제가 가능했고, alert() 도 썼다.
     //   → import.meta.env.DEV 상수 폴딩으로 프로덕션 번들에서 경로 자체 제거 + TEST_ 코드 전용 함수만 호출
@@ -395,9 +395,9 @@ export function App() {
     if (import.meta.env.DEV) {
       try {
         const pt = new URLSearchParams(window.location.search).get('_promotest');
-        if (pt === '7day' || pt === 'launch') {
+        if (pt === '7day') {
           import('@/services/toss/tossPromotion').then(async (m) => {
-            const r = pt === '7day' ? await m.test7DayPromotion() : await m.testLaunchPromotion();
+            const r = await m.test7DayPromotion();
             console.info(
               `[promotest:${pt}] ${r.ok ? 'TEST_ 코드 호출 성공' : 'TEST_ 코드 호출 실패: ' + m.describePromoFailure(r.reason)}`,
             );
