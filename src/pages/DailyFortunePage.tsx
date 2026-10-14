@@ -71,6 +71,7 @@ import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { stripMd } from '@/utils/format';
 import type { OhengType } from '@/types/saju';
+import { CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
 // 점수 SSOT + AI 프롬프트 baseScores100 전달
 import { NextStepsCard, openChatWithResult } from '@/components/common/NextStepsCard';
 import { computeDailyBase100 } from '@/utils/sajuScores';
@@ -1017,7 +1018,9 @@ function ResultView({
       const yy = d.getFullYear();
       const mm = d.getMonth() + 1;
       const dd = d.getDate();
-      const ganziLabel = dateInfo?.ganzi ? ` ${todayGanReading}일(${dateInfo.ganzi})` : '';
+      // 2026-10-14 — 천간만 읽어 '신일(辛酉)'로 나오던 것 → 두 글자 모두 '신유일(辛酉)'
+      const gzKo = dateInfo?.ganzi ? `${CHEONGAN_KO[dateInfo.ganzi[0]] ?? ''}${JIJI_KO[dateInfo.ganzi[1]] ?? ''}` : '';
+      const ganziLabel = dateInfo?.ganzi ? ` ${gzKo || todayGanReading}일(${dateInfo.ganzi})` : '';
       return `${yy}년 ${mm}월 ${dd}일 ${dateInfo?.weekday || ''}요일${ganziLabel}`;
     } catch {
       return dateInfo?.label || '';

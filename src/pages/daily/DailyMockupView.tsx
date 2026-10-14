@@ -841,6 +841,10 @@ const MOCKUP_CSS = `
   color: #E8D9B8; font: inherit; font-size: 13.5px; font-weight: 600; text-align: left; cursor: pointer; word-break: keep-all;
 }
 .daily-mockup .upsell .sub-link .sub-cost { font-size: 13px; color: #c4baa0; white-space: nowrap; }
+/* 2026-10-14 v9 — 업셀: 먹 단색 상자, 승인 금 버튼(.hj-cta), 알약 가격 표시 대신 글자 */
+.daily-mockup .upsell { background: #1A1612; border-radius: 6px; }
+.daily-mockup .upsell .cta { background: linear-gradient(180deg, var(--hj-gold-hi, #D2B477) 0%, var(--hj-gold, #B8965A) 100%); color: #17110A; border-radius: 10px; font-size: 15px; font-weight: 800; }
+.daily-mockup .upsell .cost { background: none; padding: 0; border-radius: 0; font-size: 13.5px; color: #E8D9B8; }
 
 .daily-mockup .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid var(--c-card-line); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .daily-mockup .actions .btn { background: #fff; border: 1px solid var(--c-card-line); border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
