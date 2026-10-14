@@ -4,6 +4,8 @@ import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { logAiFailure } from './shared/aiFailureLog';
+import { createClaude, CLAUDE_MODEL, CONVERSATIONAL } from './shared/claudeClient';
+import { fsSafe, setReportSafe } from './shared/firestoreSafe';
 import { logAnthropicUsage } from './shared/aiUsageLog'; // C7 원가 기록 (fire-and-forget · 생성 로직 무관)
 import { writeGroupProgress } from './shared/progressWrite'; // 점진 로딩 — 그룹별 증분 write(best-effort·머니 무관)
 import { kstNow } from './utils/kstTime';
@@ -350,7 +352,7 @@ export const generatePremiumReportStream = onRequest(
         await reportRef.set({
           uid,
           type: 'premium',
-          aiModel: 'claude-opus-4-6',
+          aiModel: CLAUDE_MODEL.opus,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
           shareEnabled: false,
         });
@@ -495,7 +497,7 @@ export const generateReportStream = onRequest(
         await reportRef.set({
           uid,
           type: 'basic',
-          aiModel: 'claude-opus-4-6',
+          aiModel: CLAUDE_MODEL.opus,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
           shareEnabled: false,
         });
@@ -584,7 +586,7 @@ export const generateReport = onCall(
         await reportRef.set({
           uid,
           type: reportType || 'basic',
-          aiModel: 'claude-opus-4-6',
+          aiModel: CLAUDE_MODEL.opus,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
           shareEnabled: false,
         });
@@ -657,8 +659,8 @@ export const generateDailyFortune = onCall(
       if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
         const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(dailyCacheId);
         await cacheRef.set({
-          content: result,
-          aiModel: 'claude-sonnet-4-6',
+          content: fsSafe(result),
+          aiModel: CLAUDE_MODEL.sonnet,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       }
@@ -880,7 +882,6 @@ export const generateDailyFortuneStream = onRequest(
     // 3-way 병렬: max(A1=5s, A2=18s, B=18s) ≈ 18s
     // 각 그룹 sanity check (글자수 + 핵심 필드) → 누락 시 Sonnet 단일 fallback
     try {
-      const { default: Anthropic } = await import('@anthropic-ai/sdk');
       const {
         DAILY_FORTUNE_SYSTEM_V3,
         DAILY_FORTUNE_USER_V3,
@@ -895,8 +896,8 @@ export const generateDailyFortuneStream = onRequest(
       /* 2026-10-08 — 그룹별 모델: A1(헤더·점수 · 첫 화면 ~5초)은 Haiku 유지, 해석 본문 A2·시간대/사람/행운 B 는 Sonnet.
        *   A/B 시식(같은 사주·같은 날): Haiku 는 명리 용어 주어·병렬 그룹 간 시간대 모순·처방형 미신·성별 설명 문장이 남고,
        *   Sonnet 은 일상어 장면·일관성이 뚜렷이 우수. 원가 ~190→~320원/건 (공유 캐시라 같은 사주·같은 날은 1회만). */
-      const GROUP_MODEL: Record<'A1' | 'A2' | 'B', string> = { A1: 'claude-haiku-4-5', A2: 'claude-sonnet-4-6', B: 'claude-sonnet-4-6' };
-      const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value(), maxRetries: 5 });
+      const GROUP_MODEL: Record<'A1' | 'A2' | 'B', string> = { A1: CLAUDE_MODEL.haiku, A2: CLAUDE_MODEL.sonnet, B: CLAUDE_MODEL.sonnet };
+      const anthropic = createClaude(ANTHROPIC_KEY.value());
       const system = DAILY_FORTUNE_SYSTEM_V3;
 
       const userA1 = DAILY_FORTUNE_USER_V3_GROUP_A1({
@@ -940,8 +941,9 @@ export const generateDailyFortuneStream = onRequest(
         let chunkCount = 0;
         const stream = anthropic.messages.stream({
           model: groupModel,
+          // 2026-10-14 — 본문(Sonnet)은 생각 켬 + medium (같은 사주 A/B: 29초→14초, 장면 묘사 유지). 머리(Haiku)는 생각 끔 기본값
+          ...(groupModel === CLAUDE_MODEL.sonnet ? CONVERSATIONAL : {}),
           max_tokens: maxTokens,
-          temperature: 0.4,
           system: [{
             type: 'text',
             text: system,
@@ -1036,9 +1038,8 @@ export const generateDailyFortuneStream = onRequest(
         const tFb = Date.now();
         let fbAcc = '';
         const fbStream = anthropic.messages.stream({
-          model: 'claude-sonnet-4-6',
+          model: CLAUDE_MODEL.sonnet,
           max_tokens: 8000,
-          temperature: 0.4,
           system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral', ttl: '1h' } as any }],
           messages: [{ role: 'user', content: fbUser + TONE_FINAL_CHECK }],
         });
@@ -1049,7 +1050,7 @@ export const generateDailyFortuneStream = onRequest(
           }
         }
         // C7 원가 기록 — 루프 종료 시점엔 finalMessage 가 즉시 resolve(usage·stop_reason). 실패해도 생성 흐름 영향 0.
-        try { logAnthropicUsage('daily', 'claude-sonnet-4-6', await fbStream.finalMessage(), tFb, 'fallback'); } catch { /* best-effort */ }
+        try { logAnthropicUsage('daily', CLAUDE_MODEL.sonnet, await fbStream.finalMessage(), tFb, 'fallback'); } catch { /* best-effort */ }
         try {
           const fbParsed: any = parseJsonResponse(fbAcc, { repairUsed: false }) || {};
           // 정상 그룹은 유지, 누락된 부분만 Sonnet 결과로 채움
@@ -1076,7 +1077,7 @@ export const generateDailyFortuneStream = onRequest(
       // ── L1 · Shared Cache 저장 (uid 무관) ──
       try {
         await sharedCacheRef.set({
-          content: merged,
+          content: fsSafe(merged),
           aiModel: 'haiku-a1+sonnet-a2b',
           schemaVersion: SCHEMA_VERSION,
           sajuKey,
@@ -1100,7 +1101,7 @@ export const generateDailyFortuneStream = onRequest(
         try {
           const userCacheRef = db.doc(`users/${uid}/dailyFortune/${date}_${SCHEMA_VERSION}`);
           await userCacheRef.set({
-            content: merged,
+            content: fsSafe(merged),
             aiModel: 'haiku-a1+sonnet-a2b',
             schemaVersion: SCHEMA_VERSION,
             sharedKey: sharedCacheKey,
@@ -1404,10 +1405,9 @@ export const generateDreamFreeStream = onRequest(
     sendEvent('start', { ts: Date.now() });
 
     try {
-      const { default: Anthropic } = await import('@anthropic-ai/sdk');
       const { buildDreamFreeCall, buildDreamFreeGroupCall } = await lazyClaudeDream();
       const { parseJsonResponse, TONE_FINAL_CHECK } = await import('./ai/promptsV3');
-      const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value(), maxRetries: 5 });
+      const anthropic = createClaude(ANTHROPIC_KEY.value());
       const t0 = Date.now();
 
       // 2026-05-27 v8 — 2-그룹 병렬 (사주 있을 때만, 없으면 단일 호출)
@@ -1421,12 +1421,12 @@ export const generateDreamFreeStream = onRequest(
             { saju, dreamContent: dreamContent || '', category, userConcern },
             group,
           );
-          const runStream = async (temperature: number): Promise<string> => {
+          const runStream = async (): Promise<string> => {
             let acc = '';
             let idx = 0;
             const _t0 = Date.now(); // C7
             const stream = anthropic.messages.stream({
-              model, max_tokens: maxTokens, temperature, system,
+              model, max_tokens: maxTokens, system,
               messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
             });
             for await (const event of stream as any) {
@@ -1441,14 +1441,14 @@ export const generateDreamFreeStream = onRequest(
             try { logAnthropicUsage('dream', model, await stream.finalMessage(), _t0, 'stream'); } catch { /* best-effort */ }
             return acc;
           };
-          let text = await runStream(0.7);
+          let text = await runStream();
           let parsed: any;
           try {
             parsed = parseJsonResponse(text, { repairUsed: false });
           } catch (e1: any) {
-            console.warn(`[dreamFreeStream:${group}] 1차 파싱 실패 → temp 0.5 재시도:`, e1?.message);
+            console.warn(`[dreamFreeStream:${group}] 1차 파싱 실패 → 재시도:`, e1?.message);
             sendEvent('retry', { group, reason: 'parse_fail' });
-            text = await runStream(0.5);
+            text = await runStream();
             parsed = parseJsonResponse(text, { repairUsed: false });
           }
           const elapsedMs = Date.now() - tg0;
@@ -1474,12 +1474,12 @@ export const generateDreamFreeStream = onRequest(
       const { system, user, model, maxTokens } = buildDreamFreeCall({
         saju, dreamContent: dreamContent || '', category, userConcern,
       });
-      const runStream = async (temperature: number): Promise<string> => {
+      const runStream = async (): Promise<string> => {
         let acc = '';
         let idx = 0;
         const _t0 = Date.now(); // C7
         const stream = anthropic.messages.stream({
-          model, max_tokens: maxTokens, temperature, system,
+          model, max_tokens: maxTokens, system,
           messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
         });
         for await (const event of stream as any) {
@@ -1493,14 +1493,14 @@ export const generateDreamFreeStream = onRequest(
         try { logAnthropicUsage('dream', model, await stream.finalMessage(), _t0, 'stream'); } catch { /* best-effort */ }
         return acc;
       };
-      let text = await runStream(0.7);
+      let text = await runStream();
       let parsed: any;
       try {
         parsed = parseJsonResponse(text, { repairUsed: false });
       } catch (e1: any) {
-        console.warn('[dreamFreeStream] 1차 파싱 실패 → temp 0.5 재시도:', e1?.message);
+        console.warn('[dreamFreeStream] 1차 파싱 실패 → 재시도:', e1?.message);
         sendEvent('retry', { reason: 'parse_fail' });
-        text = await runStream(0.5);
+        text = await runStream();
         parsed = parseJsonResponse(text, { repairUsed: false });
       }
       console.log(`[dreamFreeStream] single-call done in ${Date.now() - t0}ms`);
@@ -1550,9 +1550,9 @@ export const generateDreamDeep = onCall(
       });
 
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'deepDream', content: result,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: result };
@@ -1678,9 +1678,9 @@ export const generateDaeun = onCall(
       const { generateDaeunAnalysis } = await lazyClaudeDaeun();
       const result = await generateDaeunAnalysis(ANTHROPIC_KEY.value(), sajuData);
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'daeun', content: result,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: result };
@@ -1733,12 +1733,12 @@ export const generateMonthly = onCall(
         progressId ? (key, data) => { void writeGroupProgress(db, progressId, authUid, key, data); } : undefined,
       );
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'monthly', content: result,
         // 선택월 메타 — 보관함 재진입·구분용 (monthInfo 없으면 result 의 year/month 폴백)
         targetYear: monthInfo?.year ?? result?.year ?? null,
         targetMonth: monthInfo?.month ?? result?.month ?? null,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: result };
@@ -1782,11 +1782,11 @@ export const generateMonthlyDraft = onCall(
       const cm = await lazyClaudeMonthly();
       const draft = await cm.generateMonthlyDraft(ANTHROPIC_KEY.value(), sajuData, monthInfo);
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'monthly', content: draft, draft: true,
         targetYear: monthInfo?.year ?? draft?.year ?? null,
         targetMonth: monthInfo?.month ?? draft?.month ?? null,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: draft };
@@ -1813,7 +1813,7 @@ export const generateMonthlyRefine = onCall(
       const refined = await cm.generateMonthlyRefine(ANTHROPIC_KEY.value(), sajuData, monthInfo, draft);
       if (reportId && typeof reportId === 'string') {
         try {
-          await db.collection('reports').doc(reportId).set(
+          await setReportSafe(db.collection('reports').doc(reportId),
             { content: refined, draft: false, refinedAt: admin.firestore.FieldValue.serverTimestamp() },
             { merge: true },
           );
@@ -1861,9 +1861,9 @@ export const generateWeekly = onCall(
       const { generateWeeklyFortune } = await lazyClaudeWeekly();
       const result = await generateWeeklyFortune(ANTHROPIC_KEY.value(), sajuData, weekDays);
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'weekly', content: result,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: result };
@@ -1905,9 +1905,9 @@ export const generateWeeklyDraft = onCall(
       const cw = await lazyClaudeWeekly();
       const draft = await cw.generateWeeklyDraft(ANTHROPIC_KEY.value(), sajuData, weekDays);
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'weekly', content: draft, draft: true,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: draft };
@@ -1933,7 +1933,7 @@ export const generateWeeklyRefine = onCall(
       const refined = await cw.generateWeeklyRefine(ANTHROPIC_KEY.value(), sajuData, weekDays, draft);
       if (reportId && typeof reportId === 'string') {
         try {
-          await db.collection('reports').doc(reportId).set(
+          await setReportSafe(db.collection('reports').doc(reportId),
             { content: refined, draft: false, refinedAt: admin.firestore.FieldValue.serverTimestamp() },
             { merge: true },
           );
@@ -1979,9 +1979,9 @@ export const generateCompatibility = onCall(
         ANTHROPIC_KEY.value(), sajuData1, sajuData2, relation || '연인'
       );
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'compatibility', content: result,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: result };
@@ -2031,9 +2031,9 @@ export const generateTojung = onCall(
         progressId && uid !== 'anonymous' ? (g, data) => writeGroupProgress(db, progressId, uid, g, data) : undefined,
       );
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
+      await setReportSafe(reportRef, {
         uid, type: 'tojung', content: result,
-        aiModel: 'claude-sonnet-4-6',
+        aiModel: CLAUDE_MODEL.opus, // 2026-10-14 — 신년운세는 Opus 인데 이름표가 sonnet 이었다
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { reportId: reportRef.id, content: result };
@@ -2501,13 +2501,17 @@ export const generateTopicAnalysis = onCall(
       const result = await generateTopicAnalysisAI(ANTHROPIC_KEY.value(), topicId, sajuData, baseScore, partnerInfo, extraInfo);
 
       const reportRef = db.collection('reports').doc();
-      await reportRef.set({
-        uid, topicId, ...result, type: 'topic',
-        // 2026-06-12 — 소분류 분포용 입력 메타 (loveStatus/bizStatus 등 + 상대방 유무)
-        inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
-        aiModel: 'claude-sonnet-4-6',
-        generatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      try { // 2026-10-14 — 사본 저장 실패가 생성 실패와 환불이 되지 않게 (스트림 경로와 같게)
+        await reportRef.set({
+          uid, topicId, ...fsSafe(result), type: 'topic',
+          // 2026-06-12 — 소분류 분포용 입력 메타 (loveStatus/bizStatus 등 + 상대방 유무)
+          inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
+          aiModel: CLAUDE_MODEL.sonnet,
+          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch (fsErr: any) {
+        console.warn(`[topic:${topicId}] Firestore 저장 실패:`, fsErr?.message);
+      }
 
       return { reportId: reportRef.id, content: result };
     } catch (error: any) {
@@ -2604,12 +2608,11 @@ export const generateTopicAnalysisStream = onRequest(
     sendEvent('start', { ts: Date.now() });
 
     try {
-      const { default: Anthropic } = await import('@anthropic-ai/sdk');
       const { buildTopicCall, enforceTopicBaseScore, runTopicGeneration } = await lazyClaudeTopic();
       const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
       // 2026-10-09 — 상황별 섹션 제목을 먼저 보냄 → 앱 로딩 스켈레톤이 서버와 같은 제목 (구버전 앱은 무시)
       sendEvent('outline', { headings: call.sections });
-      const anthropic = new Anthropic({ apiKey: ANTHROPIC_KEY.value(), maxRetries: 5 });
+      const anthropic = createClaude(ANTHROPIC_KEY.value());
       const t0 = Date.now();
       // 2026-10-08 — 생성은 claudeTopic.runTopicGeneration 공용 (callable 폴백과 같은 코드 · 시스템 프롬프트 캐시).
       //   재회운은 본문(아래 chunk 로 실시간)과 카드 데이터(병렬)를 나눠 생성 → 클라 계약(start·chunk·retry·done) 그대로.
@@ -2628,9 +2631,9 @@ export const generateTopicAnalysisStream = onRequest(
       const reportRef = db.collection('reports').doc();
       try {
         await reportRef.set({
-          uid, topicId, ...parsed, type: 'topic',
+          uid, topicId, ...fsSafe(parsed), type: 'topic',
           inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
-          aiModel: 'claude-sonnet-4-6',
+          aiModel: CLAUDE_MODEL.sonnet,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       } catch (fsErr: any) {

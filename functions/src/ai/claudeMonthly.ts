@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput, natalRelationsText } from './sajuFacts';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 import { kstNow } from '../utils/kstTime';
@@ -50,34 +50,32 @@ export async function generateMonthlyFortune(
 
 /** 그룹 1개(M1/M2/FULL) — 1차 생성 + 2차 자기리뷰 → 파싱 */
 async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnType<typeof normalizeMonthInfo>, group: MonthGroup): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const prompt = buildPrompt(sajuData, info, group);
   const maxTokens = group === 'FULL' ? 10000 : group === 'M1' ? 6000 : 7000;
 
   // ── 1차 생성 ──
   const _t1 = Date.now(); // C7
   const first = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: maxTokens,
-    temperature: 0.1, // 결정론적 — 같은 사주 + 같은 달 = 같은 결과
     messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
   });
-  logAnthropicUsage('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
+  logAnthropicUsage('monthly', CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
 
   // ── 2차 자기리뷰 (퀄리티 레버) ──
   const _t2 = Date.now(); // C7
   const review = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: maxTokens,
-    temperature: 0.1,
     messages: [
       { role: 'user', content: prompt + TONE_FINAL_CHECK },
       { role: 'assistant', content: firstText },
       { role: 'user', content: buildReviewPrompt(info, group) + TONE_FINAL_CHECK },
     ],
   });
-  logAnthropicUsage('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
+  logAnthropicUsage('monthly', CLAUDE_MODEL.sonnet, review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
 
   const parsed = tryParse(reviewText) ?? tryParse(firstText);
@@ -90,17 +88,16 @@ async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnT
  *  FULL 스키마로 1차 생성. 2차 리뷰는 별도 refine 콜(백그라운드)에서. 머지·year/month 보정 동일.
  */
 export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthInfo?: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const info = normalizeMonthInfo(monthInfo);
   const prompt = buildPrompt(sajuData, info, 'FULL');
   const _t1 = Date.now(); // C7
   const first = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 10000,
-    temperature: 0.1,
     messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
   });
-  logAnthropicUsage('monthly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
+  logAnthropicUsage('monthly', CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
   const draft = tryParse(firstText);
   if (!draft) throw new Error('월별 운세 draft JSON 파싱 실패');
@@ -114,21 +111,20 @@ export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthI
  *  🛡️ best-effort: 리뷰 파싱 실패 시 draft 그대로 반환(유저는 이미 draft 를 봤으므로 무해).
  */
 export async function generateMonthlyRefine(apiKey: string, sajuData: any, monthInfo: any, draft: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const info = normalizeMonthInfo(monthInfo);
   const prompt = buildPrompt(sajuData, info, 'FULL');
   const _t2 = Date.now(); // C7
   const review = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 10000,
-    temperature: 0.1,
     messages: [
       { role: 'user', content: prompt + TONE_FINAL_CHECK },
       { role: 'assistant', content: JSON.stringify(draft) },
       { role: 'user', content: buildReviewPrompt(info, 'FULL') + TONE_FINAL_CHECK },
     ],
   });
-  logAnthropicUsage('monthly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
+  logAnthropicUsage('monthly', CLAUDE_MODEL.sonnet, review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
   const refined = tryParse(reviewText);
   if (!refined) return sanitizeAiOutput({ ...draft, year: info.year, month: info.month }); // 리뷰 실패 → draft 유지

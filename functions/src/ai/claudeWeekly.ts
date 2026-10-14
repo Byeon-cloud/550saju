@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput, natalRelationsText } from './sajuFacts';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 import { kstNowDate } from '../utils/kstTime';
@@ -18,34 +18,32 @@ const tryParse = (text: string): any | null => { try { return parseJsonResponse(
  * 퀄리티 레버(준기 결정): 1차 생성 → 2차 자기리뷰(체크리스트 자가 보정) → 반환.
  */
 export async function generateWeeklyFortune(apiKey: string, sajuData: any, weekDays?: any[]): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
   const prompt = buildPrompt(sajuData, days);
 
   // ── 1차 생성 ──
   const _t1 = Date.now(); // C7
   const first = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 12000,
-    temperature: 0.1, // 결정론적 — 같은 사주 + 같은 주 = 같은 결과
     messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
   });
-  logAnthropicUsage('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
+  logAnthropicUsage('weekly', CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
 
   // ── 2차 자기리뷰 (퀄리티 레버) ──
   const _t2 = Date.now(); // C7
   const review = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 12000,
-    temperature: 0.1,
     messages: [
       { role: 'user', content: prompt + TONE_FINAL_CHECK },
       { role: 'assistant', content: firstText },
       { role: 'user', content: buildReviewPrompt(days) + TONE_FINAL_CHECK },
     ],
   });
-  logAnthropicUsage('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
+  logAnthropicUsage('weekly', CLAUDE_MODEL.sonnet, review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
 
   const parsed = tryParse(reviewText) ?? tryParse(firstText);
@@ -58,17 +56,16 @@ export async function generateWeeklyFortune(apiKey: string, sajuData: any, weekD
  *   2차 보정은 별도 refine 콜(백그라운드)에서.
  */
 export async function generateWeeklyDraft(apiKey: string, sajuData: any, weekDays?: any[]): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
   const prompt = buildPrompt(sajuData, days);
   const _t1 = Date.now(); // C7
   const first = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 12000,
-    temperature: 0.1,
     messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
   });
-  logAnthropicUsage('weekly', 'claude-sonnet-4-6', first, _t1, 'callable'); // C7 best-effort
+  logAnthropicUsage('weekly', CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
   const draft = tryParse(firstText);
   if (!draft) throw new Error('주간운세 draft JSON 파싱 실패');
@@ -80,21 +77,20 @@ export async function generateWeeklyDraft(apiKey: string, sajuData: any, weekDay
  *   🛡️ best-effort: 리뷰 파싱 실패 시 draft 그대로 반환(유저는 이미 draft 봤음·무해).
  */
 export async function generateWeeklyRefine(apiKey: string, sajuData: any, weekDays: any[] | undefined, draft: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
   const prompt = buildPrompt(sajuData, days);
   const _t2 = Date.now(); // C7
   const review = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 12000,
-    temperature: 0.1,
     messages: [
       { role: 'user', content: prompt + TONE_FINAL_CHECK },
       { role: 'assistant', content: JSON.stringify(draft) },
       { role: 'user', content: buildReviewPrompt(days) + TONE_FINAL_CHECK },
     ],
   });
-  logAnthropicUsage('weekly', 'claude-sonnet-4-6', review, _t2, 'callable'); // C7 best-effort
+  logAnthropicUsage('weekly', CLAUDE_MODEL.sonnet, review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
   const refined = tryParse(reviewText);
   if (!refined) return draft; // 리뷰 실패 → draft 유지

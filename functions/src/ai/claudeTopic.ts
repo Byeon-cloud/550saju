@@ -7,6 +7,7 @@
 //   - normalizeTopicIdServer() 로 legacy 호출 'moving'/'reconciliation'/'job' 등 호환
 
 import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { Solar } from 'lunar-javascript';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, TONE_FINAL_CHECK, type ParseJsonMeta } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
@@ -920,7 +921,7 @@ const REUNION_FINAL_CHECK = `
 2. 상대의 지금 감정을 사실처럼 쓴 문장이 있으면 '사주로 보이는 상대 쪽 흐름'으로 고친다.
 3. 마지막 섹션의 마지막 문단은 이 사람이 스스로 할 수 있는 일과 앞으로의 희망으로 맺는다. 주의 사항으로 끝나면 그 뒤에 한두 문장을 더해 맺는다. 가능성을 부풀리지는 않는다.`;
 
-/** 주제 생성 공용 (SSE 스트림 · callable 폴백 같은 코드). 파싱 실패 시 temperature 낮춰 1회 재생성.
+/** 주제 생성 공용 (SSE 스트림 · callable 폴백 같은 코드). 파싱 실패 시 1회 재생성.
  *  split(재회운)이면 본문은 onDelta 로 실시간, 카드 데이터는 4초 뒤 병렬(프롬프트 캐시 읽기) → 합쳐서 반환. */
 export async function runTopicGeneration(
   anthropic: Anthropic,
@@ -934,10 +935,10 @@ export async function runTopicGeneration(
   const content = (suffix?: string): any => (suffix
     ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix + finalCheck }]
     : call.prompt + finalCheck);
-  const once = async (suffix: string | undefined, maxTokens: number, temperature: number, live: boolean): Promise<string> => {
+  const once = async (suffix: string | undefined, maxTokens: number, live: boolean): Promise<string> => {
     const t0 = Date.now();
     const stream = anthropic.messages.stream({
-      model: call.model, max_tokens: maxTokens, temperature, system,
+      model: call.model, max_tokens: maxTokens, system,
       messages: [{ role: 'user', content: content(suffix) }],
     });
     let acc = '';
@@ -953,13 +954,13 @@ export async function runTopicGeneration(
     return acc;
   };
   const gen = async (suffix: string | undefined, maxTokens: number, live: boolean, label: string): Promise<any> => {
-    const text = await once(suffix, maxTokens, 0.1, live);
+    const text = await once(suffix, maxTokens, live);
     try {
       return parseJsonResponse(text, { repairUsed: false });
     } catch (e: any) {
       console.warn(`[claudeTopic:${call.normalizedId}] ${label} 파싱 실패 → 재시도:`, e?.message);
       if (live) hooks.onRetry?.('parse_fail');
-      return parseJsonResponse(await once(suffix, maxTokens, 0.05, live), { repairUsed: false });
+      return parseJsonResponse(await once(suffix, maxTokens, live), { repairUsed: false });
     }
   };
   const fin = (r: any) => (call.finalize ? call.finalize(r) : r);
@@ -1019,7 +1020,7 @@ export function buildTopicCall(
     };
   }
   const prompt = buildPrompt(config, normalizedId, sajuData, effectiveBaseScore, partnerInfo, extraInfo, reunionText);
-  const model = 'claude-sonnet-4-6';
+  const model = CLAUDE_MODEL.sonnet;
   // 2026-10-03 상한 상향 16000/8192 → 20000/12000 — 운영 실측: callable 67건 중 20건이 cap 95%↑·3건 정확히 8192 도달(잘림),
   //   재회운 출력 13.6~14.7K(16000 근접). 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만 생김.
   const maxTokens = normalizedId === 'reunion' ? 16000 : 12000; // 재회운 16000 유지(2026-10-04): 실측 최대 출력 14.7K 로 잘림 0 · 20000 은 ~66tok/s 기준 서버 timeoutSeconds 300 초과 위험
@@ -1076,7 +1077,7 @@ export async function generateTopicAnalysisAI(
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number; birthMinute?: number },
   extraInfo?: Record<string, any>,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (운영 결정).
   const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
   const { prompt, model, maxTokens, effectiveBaseScore } = call;
@@ -1091,7 +1092,7 @@ export async function generateTopicAnalysisAI(
     return enforceTopicBaseScore(await runTopicGeneration(anthropic, call, 'callable'), effectiveBaseScore, partnerInfo?.name);
   }
 
-  // (TOPIC_SELF_REVIEW=1 전용) 1차 생성 (파싱 실패 시 temperature 0.05 로 1회 재시도)
+  // (TOPIC_SELF_REVIEW=1 전용) 1차 생성 (파싱 실패 시 1회 재시도)
   let firstText: string;
   let firstJson: any;
   try {
@@ -1100,7 +1101,6 @@ export async function generateTopicAnalysisAI(
     const first = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
-      temperature: 0.1,
       system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
@@ -1115,7 +1115,6 @@ export async function generateTopicAnalysisAI(
     const retry = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
-      temperature: 0.05,
       system: [{ type: 'text', text: TOPIC_ANALYSIS_SYSTEM_V3, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
@@ -1129,7 +1128,6 @@ export async function generateTopicAnalysisAI(
   const review = await anthropic.messages.create({
     model,
     max_tokens: maxTokens,
-    temperature: 0.1, // 결정론적
     system: TOPIC_ANALYSIS_SYSTEM_V3,
     messages: [
       { role: 'user', content: prompt },
@@ -1924,7 +1922,7 @@ subScores 각 축도 그 축의 핵심 십성으로 같은 산식을 적용해 *
 
 
 {
-  "title": "${d.input?.name||''}님의 ${config.label} 심층분석",
+  "title": "${d.input?.name ? `${d.input.name} 님의 ` : ''}${config.label} 심층분석",
   "overallScore": ${baseScore ? baseScore : '"0-100 정수"'},
   "sajuBasis": "사주 근거 한 줄 (40~60자). 2026-05-28 두괄식+일상어 강제. 형식: '[일상어 결론 한 마디]. [한자(풀이) 사주 근거]' (줄표 쓰지 않음). ✅ 좋은 예: '결혼 인연은 분명하나 시기가 늦어져요. 정관(正官, 책임감 있는 인연)이 합으로 묶여있어요.' / '돈은 잘 들어오는데 빠르게 빠져요. 재성(財星, 돈 자리)이 식상(食傷, 활동 에너지)에 밀려요.' ❌ 나쁜 예: '일지 자수(子水)에 정관이 자리하고 축자합(丑子合)으로 관성이 묶이는 구조' (한자 폭격과 풀이 X, 두괄식 X). 한자 첫 등장 시 반드시 괄호 안 일상어 풀이. 마크다운 금지.",
   "sajuConnection": "분석 메모 (화면에 표시되지 않음, 150~250자, 문장 다듬지 말고 근거만 촘촘히) — sections 를 쓰기 전에 근거를 압축 정리: 원국 핵심 구조, 현재 대운, 올해 세운, 이 주제에 작용하는 글자와 그 작용. 이후 summary, sections, timeline 은 이 메모와 모순 없이 쓴다. 마크다운 금지.",

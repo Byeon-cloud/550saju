@@ -2,7 +2,7 @@
 // See commit 926ead2 + docs/prd/AI프롬프트_v3_Sonnet4.6.md
 
 import { TONE_FINAL_CHECK } from './promptsV3';
-import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput } from './sajuFacts';
 import {
   DREAM_FREE_SYSTEM_V3,
@@ -57,7 +57,7 @@ export interface DreamDeepArgs {
   freeResultSummary: { title: string; verdict: string; symbols: string[] };
 }
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = CLAUDE_MODEL.sonnet;
 
 /**
  * 2026-05-27 v8 — 2-그룹 병렬용 빌더.
@@ -141,7 +141,7 @@ export function buildDreamFreeCall(args: DreamFreeArgs): {
 
 /** 무료 꿈해몽 — 사주 있으면 withSaju, 없으면 noSaju */
 export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Promise<unknown> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const { system, user } = buildDreamFreeCall(args);
 
   // ── 단일 호출 (작동 검증본 — 2그룹 분할은 무료 콘텐츠 누락 회귀로 롤백) ──
@@ -153,7 +153,6 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 14000,
-      temperature: 0.7,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
@@ -163,13 +162,12 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     if (meta1.repairUsed) console.info('[claudeDreamFree] jsonrepair 1차 발동 — 복구 성공');
     return sanitizeAiOutput(result);
   } catch (e1: any) {
-    console.warn('[claudeDreamFree] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
+    console.warn('[claudeDreamFree] 1차 실패 → 재시도:', e1?.message);
     const meta2: ParseJsonMeta = { repairUsed: false };
     const _t2 = Date.now(); // C7
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 14000,
-      temperature: 0.5,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
@@ -183,7 +181,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
 
 /** 심층 꿈해몽 (유료 1운) — 1차 생성 후 2차 자기 리뷰 */
 export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Promise<unknown> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const system = DREAM_DEEP_SYSTEM_V3;
   const user = DREAM_DEEP_USER_V3({
     name: args.saju.name,
@@ -193,7 +191,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
     freeResultSummary: args.freeResultSummary,
   });
 
-  // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
+  // 1차 생성 (파싱 실패 시 1회 재시도)
   let firstText: string;
   let firstJson: unknown;
   try {
@@ -202,7 +200,6 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
     const first = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 16384,
-      temperature: 0.7,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
@@ -217,7 +214,6 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
     const retry = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 16384,
-      temperature: 0.5,
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });

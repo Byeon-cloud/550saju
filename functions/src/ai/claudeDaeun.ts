@@ -1,16 +1,15 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3';
 import { sanitizeAiOutput } from './sajuFacts';
 import { kstNow } from '../utils/kstTime';
 
 export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const prompt = buildPrompt(sajuData);
 
   const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 14000, // 2026-09-16 — 8192 에서 상향. 대운 8~10구간 상세 서술이 8192 를 넘겨 JSON 이 배열 중간에 잘림(2/2 재현). 천장 상향은 출력 내용을 바꾸지 않음.
-    temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
     messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
   });
 

@@ -21,6 +21,7 @@
 
 import { TONE_FINAL_CHECK } from './promptsV3';
 import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { safeParseJson } from './parseJson';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
@@ -29,7 +30,7 @@ import { Solar } from 'lunar-javascript';
 import { upcomingMonthPillarsText, sanitizeAiOutput } from './sajuFacts';
 import { computeTopicBaseScore } from './claudeTopic';
 
-const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
+const DEFAULT_PREMIUM_MODEL = CLAUDE_MODEL.opus;
 
 /**
  * T2 · 그룹별 출력 필드 정의
@@ -244,8 +245,6 @@ async function callGroup(
   const msg = await anthropic.messages.create({
     model,
     max_tokens: MAX_TOKENS_BY_GROUP[group],
-    // temperature 0.1 — 같은 사주 = 같은 결과 (결정론적, 신뢰성 보장)
-    temperature: 0.1,
     system: [
       // 1차 캐시 — 정적 instruction (모든 그룹 공통)
       { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
@@ -406,7 +405,7 @@ export async function generatePremiumReport(
   /** 2026-10-09 — 점진 표시: 그룹 완성 즉시 호출 (progress/{id} write 용 · best-effort, 결과 전달 경로와 무관) */
   onGroup?: (group: 'A' | 'D' | 'B' | 'C', data: any) => Promise<void> | void,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
 
   const staticSystem = STATIC_SYSTEM_PROMPT;
@@ -466,7 +465,7 @@ export async function generateGroup(
   group: GroupKey,
   situation?: any,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
   const staticSystem = STATIC_SYSTEM_PROMPT;
   const dynamicSystem = buildDynamicSystemContext(sajuData);

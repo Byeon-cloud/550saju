@@ -21,7 +21,7 @@ import * as admin from 'firebase-admin';
 export interface AiUsageEntry {
   /** 콘텐츠 타입 (premium|report|topic|dream|deepDream|daily|chat|monthly|weekly 등) */
   type: string;
-  /** 모델 ID (claude-opus-4-6 / claude-sonnet-4-6 / gemini-* 등) */
+  /** 모델 ID (claude-opus-5-5 / claude-sonnet-5-5 / claude-haiku-5-5, 10-14 이전 기록은 4.6 세대) */
   model: string;
   inputTokens: number;
   outputTokens: number;

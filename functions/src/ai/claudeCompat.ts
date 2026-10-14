@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { TONE_FINAL_CHECK } from './promptsV3';
 import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
 import { kstNow } from '../utils/kstTime';
@@ -147,13 +147,12 @@ function computeCrossRelations(d1: any, d2: any): string {
 }
 
 export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: any, sajuData2: any, relation: string): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const prompt = buildPrompt(sajuData1, sajuData2, relation);
 
   const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL.sonnet,
     max_tokens: 12000, // 2026-09-16 — 8192 는 잘림 위험 구간(대운이 동일 값에서 파손). 천장만 상향(내용 불변).
-    temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
     messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
   });
 

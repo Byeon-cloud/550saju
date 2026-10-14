@@ -231,6 +231,8 @@ export function plainTone(s: string): string {
     t = t.replace(/패턴/g, '경향');
   }
   if (t.indexOf('아이템') >= 0) t = t.replace(/아이템/g, '물건');
+  // 2026-10-14 — 5.5 세대가 '작은 리추얼로 삼으세요' 같은 외래어를 쓴다. 받침 있는 말끼리라 조사는 그대로
+  if (t.indexOf('리추얼') >= 0 || t.indexOf('루틴') >= 0) t = t.replace(/리추얼|루틴/g, '습관');
   if (t.indexOf('폭발') >= 0) {
     t = t.replace(/폭발합니다/g, '크게 살아납니다').replace(/폭발해요/g, '크게 살아나요').replace(/폭발한다/g, '크게 살아난다')
       .replace(/폭발하는/g, '크게 살아나는').replace(/폭발할/g, '크게 살아날').replace(/폭발했/g, '크게 살아났')
@@ -241,7 +243,9 @@ export function plainTone(s: string): string {
 }
 
 export function sanitizeText(s: string): string {
-  let t = plainTone(stripEmDashes(stripMiddleDots(s.replace(SOURCE_RE, ''))));
+  // 2026-10-14 — 5.5 세대 모델은 문단을 '\n\n' 대신 '<br><br>' 로 나눈다 → 기존 화면, 공유 이미지, PDF 가 쓰는 줄바꿈으로 통일
+  const nl = s.replace(/(?:\s*<br\s*\/?>\s*){2,}/gi, '\n\n').replace(/\s*<br\s*\/?>\s*/gi, '\n');
+  let t = plainTone(stripEmDashes(stripMiddleDots(nl.replace(SOURCE_RE, ''))));
   for (const [re, to] of HANJA_FIX) t = t.replace(re, to);
   for (const [re, to] of GUARANTEE_FIX) t = t.replace(re, to);
   t = fixTime(t);
@@ -599,6 +603,16 @@ export function natalRelations(gz: string, sajuData: any): { gan: string; ji: st
       if (JI_HYUNG.has(nb + b)) out.links.push(`${nb}${b}형(${jpos}와 형)`);
       if (JI_HAE[nb] === b) out.links.push(`${nb}${b}해(${jpos}와 해)`);
     });
+    // 2026-10-14 — 원국 두 글자와 이 지지가 셋을 다 채우면 삼합 완성. 반합만 적으면 '亥卯未 다 모인 달'을 놓친다
+    //   (실측: 乙未 일주, 己卯 시주 사주의 2026년 11월 己亥 월운이 '卯亥 반합'만 받고 삼합을 빠뜨림)
+    const natalJi = p.map((x: any, i: number) => (x && x.available !== false && x.지지 ? { j: String(x.지지), pos: `${POS_NAME[i]}지` } : null))
+      .filter((x): x is { j: string; pos: string } => !!x);
+    const full = SAMHAP_OH.find((s) => s.g.includes(b) && s.g.filter((ch) => ch !== b).every((ch) => natalJi.some((n) => n.j === ch)));
+    if (full) {
+      const withPos = full.g.filter((ch) => ch !== b).map((ch) => natalJi.find((n) => n.j === ch)!.pos);
+      out.links = out.links.filter((l) => !(l.includes('반합') && full.g.some((ch) => l.startsWith(ch))));
+      out.links.push(`${full.g.join('')} 삼합(${withPos.join(', ')}와 함께 ${full.oh} 기운으로 완성)`);
+    }
   } catch { /* noop */ }
   return out;
 }

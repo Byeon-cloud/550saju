@@ -3,7 +3,7 @@
 // v4.2 (2026-04-19): jsonrepair + retry-once (prod Daily JSON malformation 대응)
 
 import { TONE_FINAL_CHECK } from './promptsV3';
-import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import {
   DAILY_FORTUNE_SYSTEM_V3,
   DAILY_FORTUNE_USER_V3,
@@ -20,9 +20,9 @@ import { logAnthropicUsage } from '../shared/aiUsageLog';
  *   일일 재방문 훅. 톤 일관성·깊이 둘 다 필요.
  *
  *   v4.2 재시도 정책:
- *   1) 1차 호출 temperature 0.7 (default)
+ *   1) 1차 호출
  *   2) parseJsonResponse 실패 → jsonrepair 자동 발동
- *   3) 그래도 실패 → temperature 0.5 로 1회 재호출 → 동일 파서
+ *   3) 그래도 실패 → 1회 재호출 → 동일 파서
  *   4) 2차도 실패 → throw (클라이언트 ErrorState, 운 차감 전 단계)
  */
 
@@ -40,13 +40,13 @@ export interface DailyFortuneArgs {
   dayXiongSha?: string[];
 }
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = CLAUDE_MODEL.sonnet;
 
 export async function generateDailyFortuneAnalysis(
   apiKey: string,
   args: DailyFortuneArgs,
 ): Promise<unknown> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const system = DAILY_FORTUNE_SYSTEM_V3;
   const user = DAILY_FORTUNE_USER_V3(args);
 
@@ -59,7 +59,6 @@ export async function generateDailyFortuneAnalysis(
       // 2026-10-03 5000→8000 — 운영 실측: callable 폴백 21/21 건이 5000 에서 잘림(stop_reason=max_tokens).
       //   index.ts 스트림 Sonnet 폴백(8000)과 일치. 과금은 실제 출력 토큰만 → 원가 변화는 잘리던 건에서만.
       max_tokens: 8000,
-      temperature: 0.7,
       system,
       messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });
@@ -69,14 +68,13 @@ export async function generateDailyFortuneAnalysis(
     if (meta1.repairUsed) console.info('[claudeFortune] jsonrepair 1차 발동 — 복구 성공');
     return sanitizeAiOutput(applyDailyMeetGlyphs(result, (args as any).sajuData)); // 2026-10-04 확정 글자 + 출력 정리
   } catch (e1: any) {
-    console.warn('[claudeFortune] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
-    // 2차 호출 — temperature 만 낮춰 sampling 변동성 감소
+    console.warn('[claudeFortune] 1차 실패 → 재시도:', e1?.message);
+    // 2차 호출 — 같은 요청으로 1회 재생성
     const meta2: ParseJsonMeta = { repairUsed: false };
     const _t2 = Date.now(); // C7
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 8000, // 2026-10-03 5000→8000 (위 1차 호출 주석 참조)
-      temperature: 0.5,
       system,
       messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
     });

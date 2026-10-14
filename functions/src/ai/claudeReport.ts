@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput } from './sajuFacts';
 import { TONE_FINAL_CHECK } from './promptsV3';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
@@ -9,9 +10,9 @@ import { logAnthropicUsage } from '../shared/aiUsageLog';
  * 사주 리포트 — Claude Opus 4.6 (기본, 프리미엄 품질)
  *
  * 모델 정책 (CLAUDE.md + 전략기획서 v3.1):
- *   - 메인: claude-opus-4-6  (기본 — 500원 핵심 유료 상품 품질 유지)
- *   - 검증: claude-sonnet-4-6 (A/B 비교, 선택적 2차 자기 리뷰)
- *   - 보조: claude-haiku-4-5-20251001 (일일운세·꿈해몽 등 경량)
+ *   - 메인: CLAUDE_MODEL.opus (2026-10-14 Opus 5.5, shared/claudeClient.ts)
+ *   - 검증: CLAUDE_MODEL.sonnet (A/B 비교, 선택적 2차 자기 리뷰)
+ *   - 보조: CLAUDE_MODEL.haiku (경량)
  *
  * ⚠️ PD 결단: 퀄리티 다운그레이드 절대 불가.
  *   Sonnet 전환은 반드시 A/B 비교 후 품질 벤치 통과 시에만.
@@ -20,7 +21,7 @@ import { logAnthropicUsage } from '../shared/aiUsageLog';
  * 핵심 유료 상품. 명리학 정통 분석 프레임워크 적용.
  * 격국→용신→각 영역 해석 순서로 구조화.
  */
-const DEFAULT_REPORT_MODEL = 'claude-opus-4-6';
+const DEFAULT_REPORT_MODEL = CLAUDE_MODEL.opus;
 
 const GROUP_FOCUS: Record<ReportGroup, string> = {
   A: '\n\n## 이번 호출 범위\n위 출력 형식(JSON)에 명시된 필드 **만** 생성하세요 (정체성과 구조 그룹: summary, structure, personality, social 섹션 + analysisBase). 다른 섹션과 필드는 절대 출력하지 마세요. STEP1~5 분석은 전부 수행하되 결과는 이 그룹 필드에만 담습니다.',
@@ -44,12 +45,11 @@ async function callReportGroup(
 ): Promise<any> {
   const systemPrompt = buildSystemPrompt(sajuData, group);
   const userPrompt = buildUserPrompt(sajuData, situation) + GROUP_FOCUS[group];
-  const call = async (temperature?: number) => {
+  const call = async () => {
     const _t0 = Date.now(); // C7 — 토큰 로깅용 (생성 로직 무관)
     const msg = await anthropic.messages.create({
       model,
       max_tokens: 7000, // 그룹당 4섹션+부가 필드 — 16384 단일 → 3분할
-      ...(temperature != null ? { temperature } : {}),
       // 프롬프트 캐싱 — 시스템(프레임워크+스키마)은 호출마다 동일 → 캐시 hit 시 TTFT·비용 절감 (품질 무관)
       system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: userPrompt + TONE_FINAL_CHECK }],
@@ -58,12 +58,12 @@ async function callReportGroup(
     return (msg.content[0] as any).text as string;
   };
   // 3그룹 병렬 + Promise.all 은 한 그룹만 파싱 실패해도 리포트 전체가 죽음.
-  // → 그룹별 파싱 실패 시 temperature 0.3 으로 1회 재시도 (단일 호출 대비 견고성 회복).
+  // → 그룹별 파싱 실패 시 1회 재시도 (단일 호출 대비 견고성 회복).
   try {
     return parseJsonResponse(await call());
   } catch (e1: any) {
     console.warn(`[claudeReport:group${group}] 1차 파싱 실패 → 재시도:`, e1?.message);
-    return parseJsonResponse(await call(0.3));
+    return parseJsonResponse(await call());
   }
 }
 
@@ -74,7 +74,7 @@ async function callReportGroup(
  *  · 클라이언트/SSE/배포 변경 0 — 기존 callable 경로가 그대로 빨라짐
  */
 export async function generateSajuReport(apiKey: string, sajuData: any, situation: any, _reportType: string): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const model = process.env.SAJU_REPORT_MODEL || DEFAULT_REPORT_MODEL;
 
   const t0 = Date.now();
@@ -131,7 +131,7 @@ export async function generateReportGroup(
   situation: any,
   group: ReportGroup,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+  const anthropic = createClaude(apiKey);
   const model = process.env.SAJU_REPORT_MODEL || DEFAULT_REPORT_MODEL;
   return callReportGroup(anthropic, model, sajuData, situation, group);
 }
