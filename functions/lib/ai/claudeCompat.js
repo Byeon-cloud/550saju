@@ -1,10 +1,7 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCompatibilityAnalysis = generateCompatibilityAnalysis;
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const claudeClient_1 = require("../shared/claudeClient");
 const promptsV3_1 = require("./promptsV3");
 const promptsV3_2 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
@@ -164,12 +161,11 @@ function computeCrossRelations(d1, d2) {
         : '  - 두 사주 간 합, 충, 삼합 모두 없음 (중성적 관계 — 적당한 거리)';
 }
 async function generateCompatibilityAnalysis(apiKey, sajuData1, sajuData2, relation) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const prompt = buildPrompt(sajuData1, sajuData2, relation);
     const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 12000, // 2026-09-16 — 8192 는 잘림 위험 구간(대운이 동일 값에서 파손). 천장만 상향(내용 불변).
-        temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
         messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     const text = msg.content[0].text;

@@ -1,20 +1,16 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDaeunAnalysis = generateDaeunAnalysis;
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const claudeClient_1 = require("../shared/claudeClient");
 const promptsV3_1 = require("./promptsV3");
 const sajuFacts_1 = require("./sajuFacts");
 const kstTime_1 = require("../utils/kstTime");
 async function generateDaeunAnalysis(apiKey, sajuData) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const prompt = buildPrompt(sajuData);
     const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 14000, // 2026-09-16 — 8192 에서 상향. 대운 8~10구간 상세 서술이 8192 를 넘겨 JSON 이 배열 중간에 잘림(2/2 재현). 천장 상향은 출력 내용을 바꾸지 않음.
-        temperature: 0.1, // 결정론적 — 같은 사주 = 같은 결과
         messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
     });
     // 2026-10-13 — 다른 콘텐츠와 같은 어조 점검, 같은 복구 파서, 같은 출력 정리기(가운뎃점, '씨', 줄표, 외래어)

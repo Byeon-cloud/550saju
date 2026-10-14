@@ -15,20 +15,19 @@
 //   - 함수명 동일: generateChatAnswerAI(apiKey, question, sajuData, chatHistory, timeSlot)
 //   - GUARD_TOKEN export 동일
 //   - 반환 타입 동일: { answer, keywords, guarded?, guardCategory? }
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GUARD_TOKEN = void 0;
 exports.generateChatAnswerAI = generateChatAnswerAI;
 const promptsV3_1 = require("./promptsV3");
 const sajuFacts_1 = require("./sajuFacts");
+const lunar_javascript_1 = require("lunar-javascript");
+const kstTime_1 = require("../utils/kstTime");
 /** 2026-10-13 — 답변도 결과 화면과 같은 정리기(이름 님 띄어쓰기 포함) */
 const cleanAnswer = (t) => (0, sajuFacts_1.sanitizeAiOutput)({ a: t }).a;
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const claudeClient_1 = require("../shared/claudeClient");
 const parseJson_1 = require("./parseJson");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
-const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-6';
+const DEFAULT_CHAT_MODEL = claudeClient_1.CLAUDE_MODEL.sonnet;
 /* ─── Safety Guard 시스템 프롬프트 (2026-04-21 앱인토스 검수 §1-1) ───
  * geminiChat.ts 와 동일 정책. Claude system prompt 형태 + JSON 강제 + 격식체 60% + 한자 3개 이내 + 3턴 결론.
  * answer 필드 맨 앞 [GUARD] 토큰 = 서버 onCall 감지 → 잔액 환원 + guard_hits 로깅 + consumed=0.
@@ -163,7 +162,7 @@ guarded 판정:
  * @param timeSlot 현재 시간대 (latenight/dawn/morning/...)
  */
 async function generateChatAnswerAI(apiKey, question, sajuData, chatHistory, timeSlot) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const model = process.env.SAJU_CHAT_MODEL || DEFAULT_CHAT_MODEL;
     // ── 사주 컨텍스트
     let sajuContext = '사주 정보가 없습니다. 일반 명리학 상식으로 답변하세요.';
@@ -203,6 +202,20 @@ ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 목록의 값을 그대로 인용 — 사용자가 이전/다음/특정 시기 대운을 물어도 위 목록에 있는 간지만 쓰고, 목록에 없는 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지.` : ''}
 ## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}`;
     }
+    /* 2026-10-14 — 오늘 날짜, 올해 세운, 앞으로 12개월 월주 (서버 계산, KST).
+     *   5.5 세대 시험에서 "조심할 달" 질문에 '세운 간지가 주어진 자료에 없어 달을 못 집는다'고 답했다 —
+     *   예전 모델은 이 자리를 지어냈을 수 있다. 다른 콘텐츠(종합사주, 주제)와 같은 계산값을 넣는다. */
+    let nowContext = '';
+    try {
+        const kn = (0, kstTime_1.kstNow)();
+        const yearGz = lunar_javascript_1.Solar.fromYmd(kn.year, kn.month, kn.day).getLunar().getEightChar().getYear();
+        nowContext = `
+
+## 지금 (서버 계산, 한국 시간. 달이나 해를 짚을 때 이 값만 인용)
+오늘: ${kn.year}년 ${kn.month}월 ${kn.day}일, 올해 세운 ${yearGz}
+이번 달부터 12개월 월주: ${(0, sajuFacts_1.upcomingMonthPillarsText)((0, kstTime_1.kstNowDate)(), 12)}`;
+    }
+    catch { /* 계산 실패 시 생략 — 시기 언급은 대운 근거로만 */ }
     // ── 이전 대화 (최근 6턴)
     const historyText = chatHistory.length > 0
         ? '## 이전 대화\n' +
@@ -222,7 +235,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
         night: '밤',
     };
     const userPrompt = `## 현재 시간: ${timeLabels[timeSlot || ''] || '불명'}
-${sajuContext}
+${sajuContext}${nowContext}
 
 ${historyText}## 사용자 질문
 ${question}
@@ -237,6 +250,8 @@ ${question}
     const _t1 = Date.now(); // C7
     const msg = await anthropic.messages.create({
         model,
+        // 2026-10-14 — 생각 켬 + medium (같은 질문 A/B: 18초→7초, 문단 나눔과 깊이 유지. 생각 끔+high 는 한 덩어리 문단)
+        ...claudeClient_1.CONVERSATIONAL,
         max_tokens: 2048,
         system: [
             {

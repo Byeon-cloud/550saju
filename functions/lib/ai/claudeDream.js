@@ -1,20 +1,17 @@
 "use strict";
 // Migrated from geminiDream.ts on 2026-04-19 (Sonnet 4.6 v3).
 // See commit 926ead2 + docs/prd/AI프롬프트_v3_Sonnet4.6.md
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildDreamFreeGroupCall = buildDreamFreeGroupCall;
 exports.buildDreamFreeCall = buildDreamFreeCall;
 exports.generateDreamFree = generateDreamFree;
 exports.generateDreamDeep = generateDreamDeep;
 const promptsV3_1 = require("./promptsV3");
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const claudeClient_1 = require("../shared/claudeClient");
 const sajuFacts_1 = require("./sajuFacts");
 const promptsV3_2 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = claudeClient_1.CLAUDE_MODEL.sonnet;
 function buildDreamFreeGroupCall(args, group) {
     const system = promptsV3_2.DREAM_FREE_SYSTEM_V3;
     if (!args.saju) {
@@ -83,7 +80,7 @@ function buildDreamFreeCall(args) {
 }
 /** 무료 꿈해몽 — 사주 있으면 withSaju, 없으면 noSaju */
 async function generateDreamFree(apiKey, args) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const { system, user } = buildDreamFreeCall(args);
     // ── 단일 호출 (작동 검증본 — 2그룹 분할은 무료 콘텐츠 누락 회귀로 롤백) ──
     // max_tokens 14000: 잠금 본문(lockedXxx.full)까지 무료 호출에서 전부 생성.
@@ -94,7 +91,6 @@ async function generateDreamFree(apiKey, args) {
         const msg = await anthropic.messages.create({
             model: MODEL,
             max_tokens: 14000,
-            temperature: 0.7,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
@@ -106,13 +102,12 @@ async function generateDreamFree(apiKey, args) {
         return (0, sajuFacts_1.sanitizeAiOutput)(result);
     }
     catch (e1) {
-        console.warn('[claudeDreamFree] 1차 실패 → temperature 0.5 로 재시도:', e1?.message);
+        console.warn('[claudeDreamFree] 1차 실패 → 재시도:', e1?.message);
         const meta2 = { repairUsed: false };
         const _t2 = Date.now(); // C7
         const msg = await anthropic.messages.create({
             model: MODEL,
             max_tokens: 14000,
-            temperature: 0.5,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
@@ -125,7 +120,7 @@ async function generateDreamFree(apiKey, args) {
 }
 /** 심층 꿈해몽 (유료 1운) — 1차 생성 후 2차 자기 리뷰 */
 async function generateDreamDeep(apiKey, args) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const system = promptsV3_2.DREAM_DEEP_SYSTEM_V3;
     const user = (0, promptsV3_2.DREAM_DEEP_USER_V3)({
         name: args.saju.name,
@@ -134,7 +129,7 @@ async function generateDreamDeep(apiKey, args) {
         category: args.category,
         freeResultSummary: args.freeResultSummary,
     });
-    // 1차 생성 (파싱 실패 시 temperature 0.5 로 1회 재시도)
+    // 1차 생성 (파싱 실패 시 1회 재시도)
     let firstText;
     let firstJson;
     try {
@@ -143,7 +138,6 @@ async function generateDreamDeep(apiKey, args) {
         const first = await anthropic.messages.create({
             model: MODEL,
             max_tokens: 16384,
-            temperature: 0.7,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
@@ -160,7 +154,6 @@ async function generateDreamDeep(apiKey, args) {
         const retry = await anthropic.messages.create({
             model: MODEL,
             max_tokens: 16384,
-            temperature: 0.5,
             system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });

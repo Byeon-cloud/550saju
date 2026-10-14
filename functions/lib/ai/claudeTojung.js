@@ -1,11 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tojungTargetYear = tojungTargetYear;
 exports.generateTojungBigyeol = generateTojungBigyeol;
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const claudeClient_1 = require("../shared/claudeClient");
 const promptsV3_1 = require("./promptsV3");
 const promptsV3_2 = require("./promptsV3");
 const kstTime_1 = require("../utils/kstTime");
@@ -42,7 +39,7 @@ function yearPillar(y) {
  *     A = 한 해 총평(헤드라인·4박스·6분야 심층·결정 타이밍·개운) · B = 1~6월 · C = 7~12월
  *   달마다 '좋은 날·조심할 날'(일진 × 용신·희신·기신·천을귀인·일지충)과 달 기준 점수는 서버 확정값 →
  *   그룹 간 점수·판정이 엇갈리지 않고, 날짜는 만세력 그대로. */
-const NEWYEAR_MODEL = process.env.SAJU_PREMIUM_MODEL || 'claude-opus-4-6';
+const NEWYEAR_MODEL = process.env.SAJU_PREMIUM_MODEL || claudeClient_1.CLAUDE_MODEL.opus;
 async function callNyGroup(anthropic, shared, group, ty) {
     const user = nyGroupInstruction(group, ty);
     const MAX = { A: 9000, B: 9000, C: 9000 };
@@ -51,7 +48,6 @@ async function callNyGroup(anthropic, shared, group, ty) {
         const msg = await anthropic.messages.create({
             model: NEWYEAR_MODEL,
             max_tokens: MAX[group],
-            temperature: attempt === 0 ? 0.2 : 0.1,
             system: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: user + promptsV3_1.TONE_FINAL_CHECK }],
         });
@@ -76,7 +72,7 @@ async function callNyGroup(anthropic, shared, group, ty) {
 async function generateTojungBigyeol(apiKey, sajuData, 
 /** 2026-10-09 — 점진 표시: 그룹 완성 즉시 (A=총평 · B=1~6월 · C=7~12월) — best-effort */
 onGroup) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const ty = tojungTargetYear();
     const ygz = yearPillar(ty);
     const picks = (0, sajuFacts_1.dayPicksForYear)(ty, sajuData);

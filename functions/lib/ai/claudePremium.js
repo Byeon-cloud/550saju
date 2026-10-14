@@ -19,15 +19,12 @@
 //   · 모든 그룹이 동일 Opus 모델 + 동일 STATIC_SYSTEM_PROMPT (캐시 hit)
 //   · Promise.all 로 90s → 30s (가장 긴 그룹 시간만큼)
 //   · 퀄리티 보존: 모든 그룹이 sajuData 풀 컨텍스트 + 동일 모델
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generatePremiumReport = generatePremiumReport;
 exports.computeTopicBaseScores = computeTopicBaseScores;
 exports.generateGroup = generateGroup;
 const promptsV3_1 = require("./promptsV3");
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const claudeClient_1 = require("../shared/claudeClient");
 const parseJson_1 = require("./parseJson");
 const promptsV3_2 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
@@ -35,7 +32,7 @@ const kstTime_1 = require("../utils/kstTime");
 const lunar_javascript_1 = require("lunar-javascript");
 const sajuFacts_1 = require("./sajuFacts");
 const claudeTopic_1 = require("./claudeTopic");
-const DEFAULT_PREMIUM_MODEL = 'claude-opus-4-6';
+const DEFAULT_PREMIUM_MODEL = claudeClient_1.CLAUDE_MODEL.opus;
 const GROUP_FOCUS = {
     A: `## Group A — 원국과 천간지지 (이 그룹 필드만 출력)
 
@@ -227,8 +224,6 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
     const msg = await anthropic.messages.create({
         model,
         max_tokens: MAX_TOKENS_BY_GROUP[group],
-        // temperature 0.1 — 같은 사주 = 같은 결과 (결정론적, 신뢰성 보장)
-        temperature: 0.1,
         system: [
             // 1차 캐시 — 정적 instruction (모든 그룹 공통)
             { type: 'text', text: staticSystem, cache_control: { type: 'ephemeral' } },
@@ -422,7 +417,7 @@ function mergeGroups(a, d, b, c) {
 async function generatePremiumReport(apiKey, sajuData, situation, 
 /** 2026-10-09 — 점진 표시: 그룹 완성 즉시 호출 (progress/{id} write 용 · best-effort, 결과 전달 경로와 무관) */
 onGroup) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
     const staticSystem = STATIC_SYSTEM_PROMPT;
     const dynamicSystem = buildDynamicSystemContext(sajuData);
@@ -474,7 +469,7 @@ function computeTopicBaseScores(sajuData) {
  *  · generateGroupA·B·C 를 외부에서 직접 호출 가능
  */
 async function generateGroup(apiKey, sajuData, group, situation) {
-    const anthropic = new sdk_1.default({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
+    const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
     const staticSystem = STATIC_SYSTEM_PROMPT;
     const dynamicSystem = buildDynamicSystemContext(sajuData);
