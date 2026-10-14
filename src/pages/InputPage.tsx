@@ -26,7 +26,7 @@ import { hasNativeNavBack } from '@/lib/env';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
-import { calculateSaju } from '@/services/saju/calculator';
+import { calculateSaju, lunarMonthDays, toSolarInput } from '@/services/saju/calculator';
 import { previewSiji, bandCenterHourForDate } from '@/services/saju/sijiPreview';
 import { useSajuContext } from '@/contexts/SajuContext';
 import type { CalendarType, Gender, SajuInput } from '@/types/saju';
@@ -309,6 +309,11 @@ export function InputPage() {
   const profileIdParam = searchParams.get('profileId');
   const editParam = searchParams.get('edit') === '1';
   const isForceNew = searchParams.get('new') === '1';
+  // 2026-10-15 — 홈 띠 카드에서 고른 태어난 해(?y=1964) → 생년월일 앞 네 자리를 미리 채운다
+  const prefillYear = (() => {
+    const y = Number(searchParams.get('y'));
+    return Number.isInteger(y) && y >= 1900 && y <= new Date().getFullYear() ? y : undefined;
+  })();
 
   // 진입 의도 (IntentHint + SubmitBar 라벨)
   const intent = useMemo(() => getIntent(fromRaw), [fromRaw]);
@@ -410,7 +415,7 @@ export function InputPage() {
     if (!trimmed) out.name = '이름을 입력해주세요';
     else if (trimmed.length > 12) out.name = '이름은 12자 이내로 입력해주세요';
     if (!gender) out.gender = '성별을 선택해주세요';
-    if (!birthDate) out.birthDate = '생년월일을 선택해주세요';
+    if (!birthDate) out.birthDate = '생년월일 8자리를 넣어 주세요 (예: 19640315)';
     else if (birthDate > today)
       out.birthDate = '오늘 이후 날짜는 선택할 수 없어요';
     if (!timeUnknown && birthTime === '')
@@ -818,6 +823,7 @@ export function InputPage() {
             setTouched((t) => ({ ...t, birthDate: true }));
           }}
           maxDate={today}
+          prefillYear={initFromProfile ? undefined : prefillYear}
           error={touched.birthDate ? errors.birthDate : undefined}
         />
 
@@ -1232,6 +1238,7 @@ function BirthDateField({
   birthDate,
   onBirthDateChange,
   maxDate,
+  prefillYear,
   error,
 }: {
   calendarSimple: 'solar' | 'lunar';
@@ -1241,8 +1248,36 @@ function BirthDateField({
   birthDate: string;
   onBirthDateChange: (v: string) => void;
   maxDate: string;
+  prefillYear?: number;
   error?: string;
 }) {
+  /* 2026-10-15 — 휴대폰 날짜 선택기 → '생년월일 8자리' 숫자 입력.
+   *   혜택탭 유입 50~60대(안드로이드 91%)가 날짜 선택기에서 60년을 거슬러 넘기다 나갔다.
+   *   은행 앱처럼 숫자 여덟 개(19640315)면 끝, 음력 30일도 넣을 수 있다. 입력 중엔 오류를 띄우지 않는다. */
+  const toDigits = (d: string) => d.replace(/-/g, '');
+  const [digits, setDigits] = useState<string>(() => (birthDate ? toDigits(birthDate) : prefillYear ? String(prefillYear) : ''));
+  const [focused, setFocused] = useState(false);
+  /** 칸을 한 번 거쳐 간 뒤에만 '8자리' 안내 — 띠 카드에서 1964 를 채워 온 첫 화면에 빨간 글씨가 뜨지 않게 */
+  const [blurred, setBlurred] = useState(false);
+  const parsed = parseBirthDigits(digits, calendarSimple, maxDate, isLeapMonth);
+  // 이어쓰기, 프로필 수정처럼 밖에서 날짜가 바뀌면 칸도 맞춘다
+  useEffect(() => {
+    if (birthDate && toDigits(birthDate) !== digits) setDigits(toDigits(birthDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [birthDate]);
+  // 양력과 음력, 윤달을 바꾸면 같은 숫자를 다시 검사 (음력 2월 30일은 양력에선 없는 날)
+  useEffect(() => {
+    const next = parsed.iso;
+    if (next !== birthDate) onBirthDateChange(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarSimple, isLeapMonth]);
+  const onDigits = (raw: string) => {
+    const v = raw.replace(/\D/g, '').slice(0, 8);
+    setDigits(v);
+    const next = parseBirthDigits(v, calendarSimple, maxDate, isLeapMonth).iso;
+    if (next !== birthDate) onBirthDateChange(next);
+  };
+  const shownError = focused ? '' : (digits.length === 8 && parsed.msg) ? parsed.msg : (blurred && digits.length > 0 && digits.length < 8) ? '생년월일 8자리를 넣어 주세요 (예: 19640315)' : error;
   return (
     <div style={{ marginBottom: 24 }}>
       <label
@@ -1255,7 +1290,7 @@ function BirthDateField({
           marginBottom: 8,
         }}
       >
-        생년월일
+        생년월일 8자리
       </label>
 
       {/* 양력/음력 토글 */}
@@ -1303,28 +1338,41 @@ function BirthDateField({
         </p>
       )}
 
-      {/* native HTML5 date picker (스펙 §6-2) */}
       <input
         id="input-birth-date"
-        type="date"
-        value={birthDate}
-        max={maxDate}
-        min="1900-01-01"
-        onChange={(e) => onBirthDateChange(e.target.value)}
-        aria-invalid={!!error}
-        aria-describedby={error ? 'input-birth-error' : undefined}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="off"
+        maxLength={8}
+        placeholder="예: 19640315"
+        value={digits}
+        onChange={(e) => onDigits(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => { setFocused(false); setBlurred(true); }}
+        aria-invalid={!!shownError}
+        aria-describedby={shownError ? 'input-birth-error' : parsed.iso ? 'input-birth-preview' : undefined}
         style={{
           width: '100%',
           height: 52,
           background: C.surface,
-          border: `1px solid ${error ? C.danger : C.line}`,
+          border: `1px solid ${shownError ? C.danger : C.line}`,
           borderRadius: 12,
           padding: '0 16px',
-          fontSize: 16,
+          fontSize: 18,
+          letterSpacing: '.06em',
+          fontVariantNumeric: 'tabular-nums',
           color: C.ink,
           outline: 'none',
         }}
       />
+      {parsed.iso && (
+        <p id="input-birth-preview" style={{ fontSize: 14.5, fontWeight: 700, color: C.ink, margin: '8px 2px 0' }}>
+          {calendarSimple === 'lunar'
+            ? <>{isLeapMonth ? '음력 윤달' : '음력'} {parsed.y}년 {parsed.m}월 {parsed.d}일{parsed.solar ? <span style={{ fontWeight: 500, color: C.inkSoft }}>, 양력으로 {parsed.solar}</span> : null}</>
+            : <>양력 {parsed.y}년 {parsed.m}월 {parsed.d}일</>}
+        </p>
+      )}
 
       {/* 윤달 체크박스 — 음력일 때만 (스펙 §6-3) */}
       {calendarSimple === 'lunar' && (
@@ -1352,16 +1400,42 @@ function BirthDateField({
         </label>
       )}
 
-      {error && (
+      {shownError && (
         <p
           id="input-birth-error"
           style={{ fontSize: 13.5, color: C.danger, marginTop: 6 }}
         >
-          {error}
+          {shownError}
         </p>
       )}
     </div>
   );
+}
+
+/** '19640315' → 날짜 검사. 8자리가 안 되면 iso '' (입력 중), 날짜가 틀리면 msg */
+function parseBirthDigits(digits: string, cal: 'solar' | 'lunar', maxDate: string, leap = false): { iso: string; y?: number; m?: number; d?: number; msg?: string; solar?: string } {
+  if (digits.length !== 8) return { iso: '' };
+  const y = Number(digits.slice(0, 4));
+  const m = Number(digits.slice(4, 6));
+  const d = Number(digits.slice(6, 8));
+  const maxY = Number(maxDate.slice(0, 4));
+  if (y < 1900 || y > maxY) return { iso: '', msg: `태어난 해를 다시 확인해 주세요 (1900~${maxY})` };
+  if (m < 1 || m > 12) return { iso: '', msg: '월은 01부터 12까지예요' };
+  // 음력은 만세력의 그 달 날 수(29 또는 30)와 그해 윤달로 검사 (2026-10-15)
+  const last = cal === 'lunar' ? lunarMonthDays(y, m, leap) : new Date(Date.UTC(y, m, 0)).getUTCDate();
+  if (last == null) return { iso: '', msg: `${y}년에는 윤${m}월이 없어요. 윤달 체크를 풀어 주세요` };
+  if (d < 1 || d > last) return { iso: '', msg: cal === 'lunar' ? `음력 ${y}년 ${m}월은 ${last}일까지예요` : `${m}월은 ${last}일까지예요` };
+  const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  let solar: string | undefined;
+  if (cal === 'lunar') {
+    try {
+      const s = toSolarInput({ birthYear: y, birthMonth: m, birthDay: d, calendarType: leap ? 'lunar_leap' : 'lunar' } as SajuInput);
+      solar = `${s.birthYear}년 ${s.birthMonth}월 ${s.birthDay}일`;
+      const sIso = `${s.birthYear}-${String(s.birthMonth).padStart(2, '0')}-${String(s.birthDay).padStart(2, '0')}`;
+      if (sIso > maxDate) return { iso: '', msg: '오늘 이후 날짜는 넣을 수 없어요' };
+    } catch { return { iso: '', msg: '날짜를 다시 확인해 주세요' }; }
+  } else if (iso > maxDate) return { iso: '', msg: '오늘 이후 날짜는 넣을 수 없어요' };
+  return { iso, y, m, d, solar };
 }
 
 /* ══════════════════════════════════════════════════════════════════

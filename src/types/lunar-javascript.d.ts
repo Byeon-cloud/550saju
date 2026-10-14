@@ -3,9 +3,28 @@ declare module 'lunar-javascript' {
     static fromYmd(year: number, month: number, day: number): Solar;
     static fromYmdHms(year: number, month: number, day: number, hour: number, minute: number, second: number): Solar;
     getLunar(): Lunar;
+    getYear(): number;
+    getMonth(): number;
+    getDay(): number;
+    toYmd(): string;
+  }
+
+  /** 음력 달 — 윤달은 음수 month (2026-10-15 음력 입력 양력 변환) */
+  export class LunarMonth {
+    static fromYm(year: number, month: number): LunarMonth | null;
+    getDayCount(): number;
+  }
+
+  export class LunarYear {
+    static fromYear(year: number): LunarYear;
+    /** 그해 윤달 (없으면 0) */
+    getLeapMonth(): number;
   }
 
   export class Lunar {
+    /** 음력 날짜 → Lunar (윤달은 음수 month). 그 달에 없는 날이면 throw */
+    static fromYmd(year: number, month: number, day: number): Lunar;
+    getSolar(): Solar;
     getEightChar(): EightChar;
     getYearGan(): string;
     getYearZhi(): string;

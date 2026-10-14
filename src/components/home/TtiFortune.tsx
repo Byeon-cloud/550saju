@@ -36,8 +36,8 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
   /** 홈 첫 화면(hero) 또는 가족 띠 칸(family) */
   src: 'hero' | 'family';
   onYearPick?: (year: number | undefined) => void;
-  /** 생일 넣기 (hero: 내 사주, family: 가족 사주) */
-  onInput: () => void;
+  /** 생일 넣기 (hero: 내 사주, family: 가족 사주) — 고른 해가 있으면 넘겨 생년월일 앞 네 자리를 채운다 */
+  onInput: (year?: number) => void;
   /** 내년 신년운세 맛보기 */
   newYear?: { year: number; gz: string; ko: string; price: number; badge?: string };
   onNewYear?: () => void;
@@ -79,7 +79,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
     onYearPick?.(y);
     setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
-  const goInput = (step: string) => { trackEvent('tti_input', { src, step }); onInput(); };
+  const goInput = (step: string) => { trackEvent('tti_input', { src, step }); onInput(hero && myYear && sel && ttiYears(sel).includes(myYear) ? myYear : undefined); };
 
   const t = sel ? day?.tti?.[sel] : null;
   const head = (t?.head && t.head.trim()) || (sel ? fallbackHead(dayGz, sel) : '');

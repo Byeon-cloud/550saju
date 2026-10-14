@@ -1,4 +1,4 @@
-import { Solar, type EightChar, type Lunar } from 'lunar-javascript';
+import { Solar, Lunar, LunarMonth, LunarYear, type EightChar } from 'lunar-javascript';
 import type { SajuInput, SajuData, Pillar, OhengDistribution, SipSung, JiJangGan, UnYoung, DaeUn, NaPeum, SinSal, GongMang, HyungChungHap, SipSungDistribution, MyeongriAnalysis, OhengType } from '@/types/saju';
 import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG, JIJI_EUMYANG } from '@/constants/oheng';
 import { correctKoreanSolarTime } from './timeCorrection';
@@ -10,9 +10,33 @@ export { findCurrentDaeun } from './daeunCurrent';
 /** 계산 기준 버전 — 시(時)·일주 산출 규칙이 바뀔 때만 +1 (2026-07-14 v2).
  *  v2 = 진태양시 -30분 통일(경계=시계 :30) + 87/88 서머타임 + 자시 일주=입력일.
  *  저장된 sajuData.calcVersion 이 이 값과 다르면 stale → getProfiles() 가 자동 재계산. */
-export const CALC_STANDARD_VERSION = 3;
+export const CALC_STANDARD_VERSION = 4;
 // v3 (2026-10-13) = 연주, 월주, 대운의 절입 판정을 실제 출생 순간 기준으로(이전엔 30분 일찍 전환),
 //   띠를 연주와 같은 입춘 기준으로.
+// v4 (2026-10-15) = 음력 생일을 양력으로 바꿔 계산. 첫 커밋부터 calendarType 을 읽지 않아
+//   음력으로 넣은 사람(서버 사본 프로필의 28%)이 그 숫자를 양력 날짜로 계산한 사주를 받아 왔다
+//   (음력 1964-03-15 를 양력 03-15 로 계산, 실제는 04-26). 판을 올려 저장된 프로필 전부 자동 재계산.
+
+/** 그 음력 달의 마지막 날 (29 또는 30). 그해에 없는 윤달이면 null */
+export function lunarMonthDays(year: number, month: number, leap: boolean): number | null {
+  try {
+    if (leap && LunarYear.fromYear(year).getLeapMonth() !== month) return null;
+    const lm = LunarMonth.fromYm(year, leap ? -month : month);
+    return lm ? lm.getDayCount() : null;
+  } catch { return null; }
+}
+
+/** 계산용 입력 — 음력이면 양력 날짜로 바꾼다. 저장된 옛 입력에 그해 없는 날(29일 달의 30일)이나
+ *  없는 윤달이 있으면 그 달 마지막 날, 평달로 맞춘다 (입력 화면은 이런 날짜를 받지 않는다). */
+export function toSolarInput(input: SajuInput): SajuInput {
+  if (input.calendarType !== 'lunar' && input.calendarType !== 'lunar_leap') return input;
+  let leap = input.calendarType === 'lunar_leap';
+  if (leap && lunarMonthDays(input.birthYear, input.birthMonth, true) == null) leap = false;
+  const last = lunarMonthDays(input.birthYear, input.birthMonth, leap) ?? 29;
+  const day = Math.min(input.birthDay, last);
+  const s = Lunar.fromYmd(input.birthYear, leap ? -input.birthMonth : input.birthMonth, day).getSolar();
+  return { ...input, birthYear: s.getYear(), birthMonth: s.getMonth(), birthDay: s.getDay(), calendarType: 'solar' };
+}
 
 /**
  * lunar-javascript를 사용하여 사주 전체 데이터를 계산합니다.
@@ -22,7 +46,9 @@ export const CALC_STANDARD_VERSION = 3;
  *  · 서머타임 기간(1948-51, 55-60, 87-88) 추가 -60분
  *  · 출생시간 미입력 시 보정 X (시주 자체 미산출)
  */
-export function calculateSaju(input: SajuInput): SajuData {
+export function calculateSaju(rawInput: SajuInput): SajuData {
+  // 계산은 양력 날짜로, 돌려주는 input 은 사용자가 넣은 그대로(음력 표시 유지)
+  const input = toSolarInput(rawInput);
   const solar = input.hasBirthTime
     ? (() => {
         // 한국 진태양시 보정 적용 (입력 KST → 진태양시)
@@ -81,7 +107,7 @@ export function calculateSaju(input: SajuInput): SajuData {
   const myeongriAnalysis = analyzeMyeongri(pillars, sipsung, input.hasBirthTime);
 
   return {
-    input,
+    input: rawInput,
     pillars,
     elements,
     sipsung,

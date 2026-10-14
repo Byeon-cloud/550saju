@@ -81,6 +81,9 @@ export function HomePage() {
       if (n) { localStorage.removeItem('saju500:refund_notice'); toast.show(`이전에 생성 중 앱이 닫혀 결과를 받지 못한 ${n}운을 돌려드렸어요`, 'success'); }
       const comp = localStorage.getItem('saju500:comp_notice');
       if (comp) { localStorage.removeItem('saju500:comp_notice'); toast.show(`고객센터 보상 ${comp}운이 적립됐어요. 불편을 드려 죄송합니다`, 'success'); }
+      // 2026-10-15 — 음력 생일 계산 정정(계산 기준 v4) 안내 한 번
+      const lunarFix = localStorage.getItem('saju500:lunar_fix_notice');
+      if (lunarFix) { localStorage.removeItem('saju500:lunar_fix_notice'); toast.show('음력 생일을 양력으로 바꿔 계산하도록 바로잡았어요. 음력으로 넣은 사주가 새로 계산됐어요', 'info'); }
       const prem = localStorage.getItem('saju500:premium_recovered');
       if (prem) { localStorage.removeItem('saju500:premium_recovered'); toast.show('이전에 받지 못한 종합사주 결과를 보관함에 저장했어요', 'success'); }
     } catch { /* noop */ }
@@ -239,7 +242,7 @@ export function HomePage() {
               </h1>
               <div style={{ marginTop: 16 }}>
                 <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="hero" onYearPick={setTtiYear}
-                  onInput={() => navigate('/input?from=daily')}
+                  onInput={(y) => navigate(`/input?from=daily${y ? `&y=${y}` : ''}`)}
                   newYear={{ year: NEW_YEAR_TARGET, gz: ny.gz, ko: ny.ko, price: tojung, badge: tojungInfo.launch?.badge }}
                   onNewYear={() => navigate('/tojung')} />
               </div>
