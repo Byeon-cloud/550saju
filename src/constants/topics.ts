@@ -125,7 +125,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '進',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
-    subCopy: '합격 소식이 오는 달과 옮길 때',
+    subCopy: '합격, 취업, 이직이 풀리는 달',
     lens: '시험, 자격증, 이직, 전직 변동의 timing 과 방향',
     excludedScope: [
       { reason: '평생 직업 적성', redirectTo: 'career' },

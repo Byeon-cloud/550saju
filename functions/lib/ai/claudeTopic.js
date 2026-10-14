@@ -1268,6 +1268,10 @@ function topicSectionTitles(topicId, partnerInfo, extraInfo) {
             return base;
         }
         case 'marriage': {
+            if (extraInfo?.relationStatus === 'again') {
+                // 2026-10-15 — 이혼이나 사별 뒤 다시 시작 (50~60대 새 출발)
+                return swap({ '결혼 적기 분석': '다시 인연이 들어오는 시기', '배우자 성향': '다시 만날 사람의 성향', '결혼 후 생활 습관': '함께 살 때 지킬 생활 습관', '배우자 가족 관계': '양쪽 자녀와 가족 관계', '결혼 준비 조언': '새 출발 준비 조언' });
+            }
             if (extraInfo?.relationStatus === 'dating') {
                 // 기혼 — 결혼 적기·준비는 무의미 → 부부생활 관점
                 return swap({ '결혼 적기 분석': '올해 부부운의 흐름', '결혼 후 생활 습관': '부부 생활 습관', '결혼 준비 조언': '결혼 생활 개선 조언' });
@@ -1317,6 +1321,11 @@ function topicSectionTitles(topicId, partnerInfo, extraInfo) {
                 return ['이직운, 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정과 면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
             if (ct === 'career_pivot')
                 return ['직무 전환운, 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
+            // 2026-10-15 오너: 20대 취준생만 보던 문구 → 첫 취업과 50~60대 재취업, 새 일도 고를 수 있게
+            if (ct === 'first_job')
+                return ['첫 취업운, 올해 흐름', '나에게 맞는 분야와 방향', '지원과 면접 시기', '첫 직장 적응 전망', '올해 취업 실전 전략'];
+            if (ct === 'reemploy')
+                return ['다시 일을 시작하는 운, 올해 흐름', '지금 나이에 맞는 일과 방향', '구직과 시작 시기', '새 일터 적응 전망', '올해 재취업 실전 전략'];
             // 미선택(실측 44/51건) — 시험 준비생에게 '이직 후 3개월 적응'이 나가던 문제 → 변동 종류를 단정하지 않는 제목
             return ['올해 합격과 변동 기운', '유리한 방향과 분야', '시험, 면접, 결정 시기', '변동 후 적응 전망', '올해 실전 전략'];
         }
@@ -1489,6 +1498,16 @@ ${buildPartnerPillarsBlock(partnerInfo)}${(() => { const _pp = computePartnerPil
 → 배우자 정보를 넣으면 궁합까지 본다는 안내를 말미에 1회 덧붙인다.
 `;
     }
+    else if (topicId === 'marriage' && !partnerInfo && extraInfo?.relationStatus === 'again') {
+        /* 2026-10-15 오너: 50~60대는 이혼하고 새로 시작하려는 사람도 있다 → '다시 시작' 선택지 */
+        partnerSection = `
+## 현재 결혼 상태: 다시 시작 (이혼이나 사별 뒤 새 인연, 재혼을 생각하는 사람)
+→ 지난 결혼이 왜 끝났는지 묻거나 단정하지 마라. 이혼인지 사별인지도 단정하지 마라. 지난 일을 탓하는 말을 쓰지 않는다.
+→ 원국의 배우자궁(일지)과 재성, 관성 상태로 '다시 함께할 사람'의 성향과 들어오는 시기를 대운, 세운, 월 단위로 짚는다.
+→ 자녀가 있을 수 있는 나이라면 양쪽 자녀와 가족 관계, 재산과 생활 방식을 맞추는 조언을 구체로 쓴다(자녀가 있다고 단정하지는 않는다).
+→ partnerCompat 은 null. '첫 결혼 적기' 류 서술은 쓰지 않는다.
+`;
+    }
     else if (topicId === 'marriage' && !partnerInfo) {
         partnerSection = `
 ## 현재 연애 상태: 솔로
@@ -1658,8 +1677,10 @@ ${purposeSpecific[extraInfo.movePurpose] || '→ 사주 원국 기반 이동운 
             const examDate = extraInfo.examYear ? `\n예정 시기: ${extraInfo.examYear}년 ${extraInfo.examMonth}월` : '';
             const changeTypeMap = {
                 exam: '시험과 자격증',
+                first_job: '첫 취업',
                 jobchange: '이직',
                 career_pivot: '직무 전환',
+                reemploy: '재취업과 새 일 (퇴직이나 쉬던 뒤에 다시 일을 시작)',
             };
             const targetLabel = extraInfo.examName || (extraInfo.changeType ? changeTypeMap[extraInfo.changeType] || '변동' : '변동');
             extraSection = `

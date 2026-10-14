@@ -28,6 +28,9 @@ import {
   type WeekFact, type MonthFact,
 } from '@/services/saju/hookFacts';
 import type { SajuData } from '@/types/saju';
+import { TtiFortune } from '@/components/home/TtiFortune';
+import { getMyTti } from '@/services/tti/ttiFortune';
+import { trackEvent } from '@/services/analytics';
 import {
   HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
 } from '@/components/hanji/Hanji';
@@ -108,6 +111,9 @@ export function HomePage() {
     return () => { alive = false; };
   }, []);
   const [showAllTopics, setShowAllTopics] = useState(false);
+  /* 세대 (2026-10-15 오너: 20대 취준생 말투만 있으면 50~60대의 재취업, 창업, 재혼, 새 출발이 빠진다)
+   *   나이 근거: 사주가 있으면 출생 연도, 없으면 띠 운세에서 고른 '내 해'. 둘 다 없으면 누구에게나 맞는 말. */
+  const [ttiYear, setTtiYear] = useState<number | undefined>(() => getMyTti()?.year);
 
   /* 지금 많이 보는 풀이 — 서버 매시 집계(최근 24시간 실제 조회, 1인 1주제 하루 1회)만. 숫자는 보여 주지 않고 순서만.
    *   예전 홈은 데이터가 모자라면 종합사주 1위 고정 + 날짜 셔플로 채웠다(가짜 순위) → 3개 미만이면 섹션을 숨긴다. */
@@ -141,6 +147,10 @@ export function HomePage() {
   const tg = useMemo(() => todayGz(today), [today]);
   const ny = useMemo(() => yearGz(NEW_YEAR_TARGET), []);
   const gotDaily = hasSaju && receivedDailyToday(profile, today);
+  const birthYear = hasSaju ? Number((profile as any)?.input?.birthYear) || undefined : ttiYear;
+  const age = birthYear ? Number(today.slice(0, 4)) - birthYear : null;
+  /** young 34세까지, mid 35~49세, senior 50세부터, null 모름 */
+  const gen: 'young' | 'mid' | 'senior' | null = age == null ? null : age >= 50 ? 'senior' : age >= 35 ? 'mid' : 'young';
 
   const premium = getPremiumPrice().actualPrice;
   const weekly = getWeeklyPrice().actualPrice;
@@ -169,7 +179,8 @@ export function HomePage() {
       {/* ━━━ 1. 오늘 예고 ━━━ */}
       <section style={{ position: 'relative' }}>
         <div aria-hidden="true" style={{
-          height: 330, position: 'relative', backgroundColor: '#ECE4D3',
+          // 사주 없는 첫 화면은 띠 표와 운세 카드가 한 화면에 들어오게 그림을 낮춘다 (2026-10-15)
+          height: hasSaju ? 330 : 214, position: 'relative', backgroundColor: '#ECE4D3',
           backgroundImage: `url(${ART.gaehwasa})`, backgroundRepeat: 'no-repeat', backgroundSize: '128% auto', backgroundPosition: '40% 0',
         }}>
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(244,239,228,.0) 0%, rgba(244,239,228,0) 48%, rgba(244,239,228,.85) 82%, ${HJ.paper} 100%)` }} />
@@ -217,17 +228,18 @@ export function HomePage() {
             )
           ) : (
             <>
-              <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 28, lineHeight: 1.4, letterSpacing: '-.03em', marginTop: 14 }}>
-                태어난 날만 넣으면,<br />
-                <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 내 하루가 보여요.</span>
+              {/* 2026-10-15 — 혜택탭 50~60대가 입력 앞에서 나가던 문제: 띠만 누르면 바로 읽히게 (신문 띠별 운세) */}
+              <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 27, lineHeight: 1.4, letterSpacing: '-.03em', marginTop: 14 }}>
+                내 띠를 누르면<br />
+                <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세가 바로 보여요.</span>
               </h1>
-              <p style={{ marginTop: 12, fontSize: 15.5, lineHeight: 1.7, color: HJ.ink2 }}>
-                몇 시에 움직이고 몇 시에 쉬면 좋은지, 오늘 만나면 좋은 사람까지 내 사주로 알려 드려요.
-              </p>
-              <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/input?from=daily')} sub="무료">
-                내 사주 넣고 오늘 운세 보기
+              <div style={{ marginTop: 16 }}>
+                <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="hero" onYearPick={setTtiYear} />
+              </div>
+              <GoldCta style={{ marginTop: 18 }} onClick={() => { trackEvent('tti_input', { src: 'hero' }); navigate('/input?from=daily'); }} sub="무료">
+                생일 넣고 내 사주로 보기
               </GoldCta>
-              <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>결제 없이 바로, 한 번 넣으면 계속 써요</p>
+              <p style={{ textAlign: 'center', fontSize: 13.5, lineHeight: 1.55, color: HJ.mute, marginTop: 10 }}>몇 시에 움직이면 좋은지, 오늘 만나면 좋은 사람까지 알려 드려요</p>
             </>
           )}
         </div>
@@ -250,12 +262,24 @@ export function HomePage() {
           <button type="button" onClick={() => navigate('/chat')} className="text-left"
             style={{ borderRadius: 16, padding: '16px 15px', minHeight: 200, background: HJ.card, border: `1px solid ${HJ.line}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Seal size={32} fontSize={18}>問</Seal>
-            <span style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.35, marginTop: 4, color: HJ.ink }}>“이직해도<br />될까요?”</span>
+            <span style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.35, marginTop: 4, color: HJ.ink }}>
+              {gen === 'young' ? <>“이직해도<br />될까요?”</> : gen === 'mid' ? <>“지금 옮겨도<br />될까요?”</> : <>“새로 시작해도<br />될까요?”</>}
+            </span>
             <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>고민을 물어보면 내 사주로 답해 드려요</span>
             <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>첫 질문 무료 ›</span>
           </button>
         </div>
       </div>
+
+      {/* ━━━ 2-1. 가족 띠 운세 (사주 있는 사람) — 배우자, 자녀, 부모님 띠도 오늘 운세를 한 번에 ━━━ */}
+      {hasSaju && (
+        <>
+          <SecTitle k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" />
+          <div style={{ margin: '0 16px' }}>
+            <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="family" />
+          </div>
+        </>
+      )}
 
       {/* ━━━ 3. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
       <SecTitle k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" />
@@ -456,16 +480,38 @@ export function HomePage() {
           </button>
         </div>
         <div style={{ marginTop: 10, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, overflow: 'hidden' }}>
-          <TopicLine hz={TOPIC_REGISTRY.exam.kanji} t="합격 이직운"
-            s={examMonth ? `시험과 자리의 별이 ${yr(examMonth.month.start)}${examMonth.month.calMonth}월에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날'}
-            price={`${getTopicPrice('exam').actualPrice}운`} onClick={() => goTopic('exam')} />
-          <TopicLine hz="合" t="궁합" s="잘 맞는 점과 자주 부딪히는 점" price={`${compat}운`} onClick={() => navigate('/compat')} />
-          <TopicLine hz={TOPIC_REGISTRY.marriage.kanji} t="결혼운" s={facts ? facts.spouse : '결혼하기 좋은 해와 배우자 성향'}
-            price={`${getTopicPrice('marriage').actualPrice}운`} onClick={() => goTopic('marriage')} last={!showAllTopics} />
-          {showAllTopics && (['career', 'business', 'health', 'move', 'study'] as TopicId[]).map((id, i, arr) => (
-            <TopicLine key={id} hz={TOPIC_REGISTRY[id].kanji} t={TOPIC_REGISTRY[id].label} s={TOPIC_REGISTRY[id].subCopy}
-              price={`${getTopicPrice(id).actualPrice}운`} onClick={() => goTopic(id)} last={i === arr.length - 1} />
-          ))}
+          {/* 2026-10-15 세대별 — 50대부터는 재취업, 창업, 재혼, 건강을 앞에. 나이를 모르면 누구에게나 맞는 말 */}
+          {(() => {
+            const em = examMonth ? `${yr(examMonth.month.start)}${examMonth.month.calMonth}월` : '';
+            const rows: Array<{ key: string; hz: string; t: string; s: string; price: string; go: () => void }> = [];
+            const topicRow = (id: TopicId, t: string, s2: string) => ({ key: id, hz: TOPIC_REGISTRY[id].kanji, t, s: s2, price: `${getTopicPrice(id).actualPrice}운`, go: () => goTopic(id) });
+            const exam = gen === 'senior'
+              ? topicRow('exam', '재취업 이직운', em ? `일자리의 별이 ${em}에 들어와요` : '다시 일을 구하거나 옮기기 좋은 달')
+              : gen === 'mid'
+                ? topicRow('exam', '이직운', em ? `옮길 자리의 별이 ${em}에 들어와요` : '옮기기 좋은 달과 버텨야 할 때')
+                : gen === 'young'
+                  ? topicRow('exam', '합격 이직운', em ? `시험과 자리의 별이 ${em}에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날')
+                  : topicRow('exam', '합격 이직운', em ? `시험과 자리의 별이 ${em}에 들어와요` : '시험, 취업, 이직, 다시 일할 때가 풀리는 달');
+            const business = topicRow('business', gen === 'senior' ? '창업운' : '사업운', gen === 'senior' ? '가게나 내 일을 차리기 좋은 때' : '내 일을 시작하거나 넓히기 좋은 때');
+            const marriage = gen === 'senior'
+              ? topicRow('marriage', '결혼, 재혼운', '다시 함께할 사람이 들어오는 해')
+              : topicRow('marriage', '결혼운', facts ? facts.spouse : '결혼하기 좋은 해와 배우자 성향');
+            const compatRow = { key: 'compat', hz: '合', t: '궁합', s: gen === 'senior' ? '배우자, 자녀와 잘 맞는 점과 부딪히는 점' : '잘 맞는 점과 자주 부딪히는 점', price: `${compat}운`, go: () => navigate('/compat') };
+            const health = topicRow('health', '건강운', '약한 곳과 조심할 달');
+            const main = gen === 'senior' ? [exam, business, marriage, compatRow, health]
+              : gen === 'young' ? [exam, compatRow, marriage]
+              : [exam, business, compatRow, marriage];
+            rows.push(...main);
+            if (showAllTopics) {
+              const shown = new Set(main.map((r) => r.key));
+              for (const id of ['career', 'business', 'health', 'move', 'study'] as TopicId[]) {
+                if (!shown.has(id)) rows.push(topicRow(id, TOPIC_REGISTRY[id].label, TOPIC_REGISTRY[id].subCopy));
+              }
+            }
+            return rows.map((r, i) => (
+              <TopicLine key={r.key} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={r.go} last={i === rows.length - 1} />
+            ));
+          })()}
         </div>
       </div>
       {!showAllTopics && (

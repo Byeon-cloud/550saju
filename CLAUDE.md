@@ -23,6 +23,7 @@
 - **짚어 주는 풀이 (10-14, 오너 지시)**: "혹시 N년 무렵 ~ 있었나요? 그건 ~ 기운이 ~ 자리와 부딪혀서"처럼 지난 일과 요즘을 짚는다. 근거는 서버 확정표 `sajuFacts.lifeTimelineFactsText` 의 시기만, 규칙은 `promptsV3.READING_VOICE_BLOCK`. 종합사주, 주제운, 월운세, 신년운세, 사주대화, 꿈해몽에 적용. 리서치와 시험 결과는 `docs/handoff/2026-10-14_짚어주는풀이_리서치와_적용.md`.
 - **익명 생성 하루 상한 (10-14)**: 익명 계정은 서버가 운을 깎지 않아 생성 함수를 직접 부르면 공짜였다. `functions/src/shared/genGuard.ts` 가 계정과 IP 하루 상한(종합사주 계정 8, IP 40 등)을 걸고, 하루 전체 경보선은 backofficeAlerts 에 남긴다. 로그인 계정은 제외. 서버 주제운과 궁합 차감가는 index.ts `TOPIC_COST`, `COMPAT_COST` 로 클라 pricing.ts 와 맞춘다.
 - **탈퇴와 파기 (10-14)**: 지우는 범위 정본은 `functions/src/auth/purgeUser.ts`(payments 만 5년 보존). 웹 탈퇴는 즉시, 토스 탈퇴는 5일 뒤 `purgeWithdrawnUsers`(매일 04:20). 1운 기본 리포트 코드와 웹 토스페이먼츠 코드는 10-14 삭제.
+- **띠별 오늘의 운세와 세대별 홈 (10-15, 1.5.6)**: 사주 없는 첫 화면은 띠 표(입력 0). 서버 `functions/src/tti/ttiFortune.ts`(`ensureTtiFortune` 30분마다)가 `ttiFortune/{날짜}` 를 하루 한 번 만들고 화면(`src/components/home/TtiFortune.tsx`)은 읽기만. 관계표와 시간표는 서버와 `src/services/tti/ttiFortune.ts` 두 곳에 같게. 홈 고민 목록과 대화 카드는 나이(사주 출생 연도, 없으면 띠 카드의 내 해)로 세대별, 50세부터 재취업, 창업, 재혼, 건강. 합격이직운에 첫 취업, 재취업, 결혼운에 다시 시작.
 - **낡은 문서**: `docs/CLAUDE.md`(3월판), `docs/SETUP_GUIDE.md`(다른 앱), PRD 대부분의 가격과 색과 스키마. 수치는 코드가 기준.
 
 ---

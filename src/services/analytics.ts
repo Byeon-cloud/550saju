@@ -159,6 +159,10 @@ const FIRESTORE_TRACKED = new Set<string>([
   'share_click',        // {type, page, balance} — 공유 '시도' (버튼 클릭 시점)
   'share_complete',     // {type, method, rewarded} — 공유 '성사' (2026-07-03 바이럴 퍼널 — method: toss_viral|toss_share|web_share|clipboard|web_share_file)
   'reward_earned',      // {kind, amount}
+  // 2026-10-15 띠별 오늘의 운세 (혜택탭 유입 → 입력 전환 측정)
+  'tti_open',           // {tti, src: hero|family}
+  'tti_year',           // {year, src}
+  'tti_input',          // {src} — 띠 화면에서 '생일 넣고 내 사주로 보기'
   // 대시보드 v2 (2026-06-10) — 콘텐츠 구매 + AI 품질 + 광고
   'content_purchase',   // {type, amount(운), topic?} — 운 차감 성공 직후
   'ai_done',            // {type, ms, mode: sse|callable}

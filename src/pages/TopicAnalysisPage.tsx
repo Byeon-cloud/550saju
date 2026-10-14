@@ -191,7 +191,7 @@ const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> =
   health:   { label: '건강운',       color: '#8C6D3D', desc: '체질, 기운, 주의 시기' },
   reunion:  { label: '재회운',       color: '#8C6D3D', desc: '헤어진 사람과의 흐름' },
   study:    { label: '학업운',       color: '#8C6D3D', desc: '집중력, 지식 흡수, 학습 습관' },
-  exam:     { label: '합격 이직운', color: '#8C6D3D', desc: '시험과 이직 결정 시기' }, // SSOT v1 신규
+  exam:     { label: '합격 이직운', color: '#8C6D3D', desc: '시험, 취업, 이직, 재취업이 풀리는 때' }, // SSOT v1 신규
   move:     { label: '이사 이동운', color: '#8C6D3D', desc: '이사 이동 길흉 방향' }, // SSOT v1 canonical
   social:   { label: '대인관계운',   color: '#8C6D3D', desc: '귀인운, 구설수 주의, 관계 경향' }, // legacy 유지
   moving:   { label: '이사 이동운', color: '#8C6D3D', desc: '이사 이동 길흉 방향' }, // legacy — 'move' alias
@@ -3268,7 +3268,7 @@ export function TopicAnalysisPage() {
   // 2026-05-07 — partner 시간 선택 sheet (네이티브 select → bottom sheet 통일)
   const [hourSheetOpen, setHourSheetOpen] = useState(false);
   // 결혼운/연애운: 연애 상태
-  const [relationStatus, setRelationStatus] = useState<'solo' | 'dating'>('solo');
+  const [relationStatus, setRelationStatus] = useState<'solo' | 'dating' | 'again'>('solo');
   // 연애운: 솔로/썸/연애중
   const [loveStatus, setLoveStatus] = useState<'solo' | 'some' | 'dating'>('solo');
   // 사업운/취업운/이사운/학업운/합격이직운: 추가 상태 정보
@@ -3291,7 +3291,7 @@ export function TopicAnalysisPage() {
     examYear: new Date().getFullYear(),
     examMonth: 6,
     // 2026-05-28 — 합격·이직운(exam) 입력 분기 신설 (이전엔 UI 폼 부재)
-    changeType: '' as '' | 'exam' | 'jobchange' | 'career_pivot',
+    changeType: '' as '' | 'exam' | 'first_job' | 'jobchange' | 'career_pivot' | 'reemploy',
     // 연애운: 솔로/썸/연애중 명시 (이전엔 loveStatus 만)
     loveStatus: '' as '' | 'solo' | 'some' | 'dating',
   });
@@ -4046,7 +4046,7 @@ export function TopicAnalysisPage() {
                           </svg>
                           <div>
                             <p className="text-h3 text-text-primary">결혼 상태</p>
-                            <p className="text-[13px] text-text-hint">상태에 따라 분석 방향이 달라져요 (미혼/기혼)</p>
+                            <p className="text-[13px] text-text-hint">상태에 따라 풀이 방향이 달라져요</p>
                           </div>
                         </div>
 
@@ -4055,11 +4055,12 @@ export function TopicAnalysisPage() {
                           {[
                             { v: 'solo' as const, l: '미혼', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 10-16 0" /></svg> },
                             { v: 'dating' as const, l: '기혼', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4a4 4 0 11-3 6.5" /><path d="M8 4a4 4 0 103 6.5" /><path d="M22 21a8 8 0 00-6-7.75" /><path d="M2 21a8 8 0 016-7.75" /></svg> },
+                            { v: 'again' as const, l: '다시 시작', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /></svg> },
                           ].map(s => (
                             <button key={s.v}
                               className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 ${relationStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
                               style={relationStatus === s.v ? { background: topic.color } : {}}
-                              onClick={() => { setRelationStatus(s.v); if (s.v === 'solo') setShowPartner(false); else setShowPartner(true); }}>
+                              onClick={() => { setRelationStatus(s.v); setShowPartner(s.v === 'dating'); }}>
                               {s.icon} {s.l}
                             </button>
                           ))}
@@ -4323,8 +4324,10 @@ export function TopicAnalysisPage() {
                             <div className="flex gap-2 flex-wrap">
                               {[
                                 { v: 'exam', l: '시험과 자격증' },
+                                { v: 'first_job', l: '첫 취업' },
                                 { v: 'jobchange', l: '이직' },
                                 { v: 'career_pivot', l: '직무 전환' },
+                                { v: 'reemploy', l: '재취업과 새 일' },
                               ].map((s) => {
                                 const active = extraInfo.changeType === s.v;
                                 return (
@@ -4345,7 +4348,7 @@ export function TopicAnalysisPage() {
                           </div>
                           <div>
                             <label className="text-[13px] text-text-hint mb-1 block">시험명 또는 목표 <span className="text-[13px] opacity-60">(선택)</span></label>
-                            <input type="text" placeholder="예: 7급 공무원, 변호사시험, 대기업 이직..."
+                            <input type="text" placeholder="예: 공무원 시험, 경력직 이직, 퇴직 뒤 재취업"
                               className="w-full h-11 px-3 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary outline-none focus:border-2"
                               value={extraInfo.examName}
                               onChange={e => setExtraInfo(p => ({ ...p, examName: e.target.value }))} />
@@ -4947,7 +4950,7 @@ export function TopicAnalysisPage() {
                  *   서버가 실제 heading 을 보내면 그때 채운다. 슬롯 수·진행 표시는 그대로 유지. */
                 const situationDynamic =
                   (lookupKey === 'exam' && !!extraInfo.changeType) ||
-                  (lookupKey === 'marriage' && (relationStatus === 'dating' || !!(showPartner && partnerInfo.name))) ||
+                  (lookupKey === 'marriage' && (relationStatus === 'dating' || relationStatus === 'again' || !!(showPartner && partnerInfo.name))) ||
                   (lookupKey === 'reunion' && !(showPartner && partnerInfo.name)) ||
                   (lookupKey === 'career' && !!extraInfo.jobStatus) ||
                   (lookupKey === 'business' && !!extraInfo.bizStatus) ||
@@ -5327,7 +5330,7 @@ export function TopicAnalysisPage() {
           const lookupKey = topicId === 'moving' ? 'move' : (topicId || '');
           const dyn =
             (lookupKey === 'exam' && !!extraInfo.changeType) ||
-            (lookupKey === 'marriage' && (relationStatus === 'dating' || !!(showPartner && partnerInfo.name))) ||
+            (lookupKey === 'marriage' && (relationStatus === 'dating' || relationStatus === 'again' || !!(showPartner && partnerInfo.name))) ||
             (lookupKey === 'reunion' && !(showPartner && partnerInfo.name)) ||
             (lookupKey === 'career' && !!extraInfo.jobStatus) ||
             (lookupKey === 'business' && !!extraInfo.bizStatus) ||

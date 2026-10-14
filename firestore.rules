@@ -56,6 +56,11 @@ service cloud.firestore {
       allow read: if true;       // HomePage 공개 읽기
       allow write: if false;     // 서버(admin SDK)만 — recordTopicView/aggregateTopicTop5
     }
+    // 띠별 오늘의 운세 (2026-10-15) — 서버가 하루 한 번 만들고, 홈은 공개 읽기만.
+    match /ttiFortune/{day} {
+      allow read: if true;
+      allow write: if false;
+    }
     match /liveBestCounts/{doc} {
       allow read, write: if false; // 서버 전용 (어뷰징 방어 — 클라 직접 증가 차단)
     }

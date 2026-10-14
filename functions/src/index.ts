@@ -2424,6 +2424,7 @@ export { onInviteReceived } from './invite/onInviteReceived';
  */
 export { deleteAccount } from './auth/deleteAccount';
 export { purgeWithdrawnUsers } from './auth/purgeWithdrawn'; // 2026-10-14 토스 탈퇴 5일 뒤 개인정보 파기 (payments 보존)
+export { ensureTtiFortune } from './tti/ttiFortune'; // 2026-10-15 띠별 오늘의 운세 (하루 한 번 미리 생성, 화면은 읽기만)
 
 // CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
 export { claimCompensation } from './admin/claimCompensation';
