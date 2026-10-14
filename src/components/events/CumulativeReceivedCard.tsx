@@ -38,6 +38,9 @@ const DETAIL_TITLE: Record<DeviceRewardType, string> = {
 
 const isTossPoint = (t: DeviceRewardType) => t === 'attend7' || t === 'launch_promo';
 
+/** 끝난 보상 (2026-10-14: 공유 보상, 첫 콘텐츠 50원 프로모) — 받은 기록이 있을 때만 줄을 보인다 */
+const ENDED = new Set<DeviceRewardType>(['invite', 'share', 'launch_promo']);
+
 /** 0.1 단위 운 표시 (정수면 소수점 없이) */
 function fmtUn(n: number): string {
   const v = Math.round(n * 10) / 10;
@@ -108,7 +111,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
         <p className="mt-2 text-[13.5px]" style={{ color: '#8A7F6E' }}>{status}</p>
 
         <div className="mt-5 pt-4 space-y-2" style={{ borderTop: '1px solid #EDEAE0' }}>
-          {UN_ROWS.map((row) => (
+          {UN_ROWS.filter((row) => !ENDED.has(row.type) || ledger.totals[row.type] > 0).map((row) => (
             <Row
               key={row.type}
               label={row.label}
@@ -121,7 +124,7 @@ export function CumulativeReceivedCard({ showTossPoint = false }: CumulativeRece
         {tossPointVisible ? (
           <div className="mt-4 pt-3 space-y-2" style={{ borderTop: '1px solid #EDEAE0' }}>
             <p className="text-[13.5px] font-medium" style={{ color: '#8A7F6E' }}>받은 토스포인트</p>
-            {TOSSPOINT_ROWS.map((row) => (
+            {TOSSPOINT_ROWS.filter((row) => !ENDED.has(row.type) || ledger.counts[row.type] > 0).map((row) => (
               <Row
                 key={row.type}
                 label={row.label}

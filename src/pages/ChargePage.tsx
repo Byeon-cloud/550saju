@@ -1,6 +1,6 @@
 // Charge Page — #55 Sprint 2 UI 개편 (2026-04-24)
 // 스펙: docs/mockups/사주500_UI개편_07_운충전.md §1-§15 · 핸드오버 §2-8
-// 골격: TopBar 56 → HeroBar 104 → RedirectHint 60(조건) → ChargePackages 2col → Divider → ShareRewardCard 140 → Notice → CheckoutBar 80 sticky
+// 골격: TopBar 56 → HeroBar 104 → RedirectHint 60(조건) → ChargePackages 2col → Notice → CheckoutBar 80 sticky
 // 보존(E13): confirmTossPayment / grantPurchase 분기 토스트, IAP processProductGrant
 // SSOT 토큰 적용 · 광고 없음 · 원화 노출 허용 유일 페이지
 
@@ -12,7 +12,6 @@ import { getBalance, addPaidBalance } from '@/services/storage/localStore';
 import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { isAppintosBuild, hasNativeNavBack } from '@/lib/env';
 import { isPortoneTestEnabled, isPortoneLiveEnabled, requestPortoneTestPayment, requestPortoneLivePayment, confirmPortonePaymentServer } from '@/services/payment/portonePayment';
 import type { PortonePgMethod } from '@/services/payment/portonePayment';
@@ -33,7 +32,6 @@ const C = {
   success: '#4E7A57',
 } as const;
 
-const MAX_DAILY_SHARES = 3;
 
 // ── 인라인 SVG 아이콘 (lucide 의존 회피)
 function ArrowLeftIcon() {
@@ -131,7 +129,6 @@ export function ChargePage() {
   const webPaymentReady = isAppintosBuild
     || portoneLive
     || String(import.meta.env.VITE_TOSS_PAYMENTS_CLIENT_KEY || '').startsWith('live_');
-  const [remainingShares, setRemainingShares] = useState(() => getRemainingShareRewards());
 
   // p15 → CHARGE_PACKAGES[3] (4 패키지 정정 후 마지막 인덱스)
   const selectedPkg =
@@ -296,34 +293,10 @@ export function ChargePage() {
     toast.show(r.message, r.ok ? 'success' : r.cancelled ? 'info' : 'warning');
   };
 
-  // ── 공유 핸들러 — 전 앱 통합 (inviteFriendsViaToss SSOT)
-  const handleShare = async () => {
-    try {
-      const { inviteFriendsViaToss } = await import('@/services/share/shareReward');
-      await inviteFriendsViaToss({
-        onReward: (earned) => {
-          setBalanceDisplay(getBalance());
-          setRemainingShares(getRemainingShareRewards());
-          toast.show(`공유했어요. ${earned}운이 들어왔어요`, 'success');
-        },
-        onShared: () => {
-          setRemainingShares(getRemainingShareRewards());
-          toast.show('오늘 공유 보상은 다 받았어요 (하루 3회)', 'info');
-        },
-        onCancel: () => toast.show('공유가 취소됐어요', 'info'),
-      });
-    } catch (e) {
-      console.warn('[Share]', e);
-      toast.show('다시 시도해주세요', 'info');
-    }
-  };
-
   const goBack = () => {
     if (redirectTo) navigate(redirectTo);
     else navigate(-1);
   };
-
-  const sharesUsed = MAX_DAILY_SHARES - remainingShares;
 
   return (
     <div style={{
@@ -518,66 +491,6 @@ export function ChargePage() {
         </div>
       </div>
 
-      {/* ─── §6. Divider "또는" ─── */}
-      <div style={{
-        height: 40, display: 'flex', alignItems: 'center',
-        padding: '0 16px', gap: 12, marginTop: 16,
-      }}>
-        <div style={{ flex: 1, height: 1, background: C.line }} />
-        <span style={{ fontSize: 13.5, color: C.mute, fontWeight: 500, flexShrink: 0 }}>또는</span>
-        <div style={{ flex: 1, height: 1, background: C.line }} />
-      </div>
-
-      {/* ─── §7. ShareRewardCard (140px · gold border · 상시 노출) ─── */}
-      <div style={{
-        margin: '0 16px',
-        height: 140, background: C.paper,
-        border: `1px solid ${C.gold}`, borderRadius: 16,
-        padding: '18px 20px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-        boxShadow: '0 1px 0 rgba(184,150,90,0.05)',
-      }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 16, fontWeight: 700, color: C.ink,
-            letterSpacing: '-0.01em',
-          }}>
-            친구에게 공유하고 1운 받기
-          </div>
-          <div style={{ marginTop: 6, fontSize: 13.5, color: C.mute, lineHeight: 1.55 }}>
-            하루 3번까지, 총 3운(=1,500원치)까지<br />
-            받을 수 있어요
-          </div>
-        </div>
-        <div style={{
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'flex-end', gap: 8, flexShrink: 0,
-        }}>
-          {/* 카운터 (v9: 알약 대신 먹색 글자, 상태 표시는 먹) */}
-          <div style={{
-            padding: '2px 0', fontSize: 13, fontWeight: 700, color: '#6F6557',
-          }}>
-            오늘 {sharesUsed}/{MAX_DAILY_SHARES}회
-          </div>
-          {/* 공유하기 버튼 (40×96) */}
-          <button
-            onClick={handleShare}
-            style={{
-              height: 40, width: 96,
-              background: C.ink, color: C.paper,
-              borderRadius: 10, fontSize: 13, fontWeight: 700,
-              border: 'none', cursor: 'pointer',
-              transition: 'opacity 0.15s',
-            }}
-            onMouseDown={(e) => (e.currentTarget.style.opacity = '0.85')}
-            onMouseUp={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-          >
-            공유하기
-          </button>
-        </div>
-      </div>
-
       {/* ─── §8. Notice (이용 정책) ─── */}
       <div style={{ padding: '20px 20px 8px', marginTop: 12 }}>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
@@ -588,9 +501,6 @@ export function ChargePage() {
         </p>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           운은 사주500 앱 안에서만 사용할 수 있어요.
-        </p>
-        <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          공유 리워드 어뷰징 감지 시 적립이 취소될 수 있어요.
         </p>
         {/* 환불·청약철회 고지 — 웹/앱 분기.
             앱(앱인토스): 토스 IAP/토스페이 우산. 웹: 전자상거래법 제17조 디지털콘텐츠 청약철회 직접 고지. */}

@@ -46,7 +46,6 @@ import {
   deleteChatRoom,
   type ChatRoom,
 } from '@/services/storage/chatStore';
-import { getRemainingShareRewards } from '@/services/share/shareReward';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { getTopicPrice } from '@/constants/pricing';
 // Stage 7e-5: 보관함 카드에서 sajuData 즉시 계산 (모든 프로필 일주/오행 컬러 보장)
@@ -70,7 +69,6 @@ const C = {
   dangerSoft: 'rgba(192,57,43,0.10)',
 } as const;
 
-const MAX_DAILY_SHARES = 3;
 const SWIPE_THRESHOLD = 80; // px
 const LAST_INPUT_KEY = 'saju500.lastInput';
 
@@ -165,10 +163,6 @@ export function StoragePage() {
   );
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
-  // 공유 리워드
-  const [remainingShares, setRemainingShares] = useState(() =>
-    getRemainingShareRewards(),
-  );
 
   function reloadAll() {
     setProfiles(getProfiles());
@@ -425,22 +419,6 @@ export function StoragePage() {
     reloadAll();
   }
 
-  /* ─── 공유 리워드 — 전 앱 통합 (inviteFriendsViaToss SSOT) ─── */
-  async function handleShare() {
-    const { inviteFriendsViaToss } = await import('@/services/share/shareReward');
-    await inviteFriendsViaToss({
-      onReward: (earned) => {
-        setRemainingShares(getRemainingShareRewards());
-        toast.show(`공유했어요. ${earned}운이 들어왔어요`, 'success');
-      },
-      onShared: () => {
-        setRemainingShares(getRemainingShareRewards());
-        toast.show('오늘 공유 보상은 다 받았어요 (하루 3회)', 'info');
-      },
-      onCancel: () => toast.show('공유가 취소됐어요', 'info'),
-    });
-  }
-
   return (
     <div
       style={{
@@ -486,13 +464,6 @@ export function StoragePage() {
           onOpenChatRoom={openChatRoom}
         />
 
-        {/* ═══ Section C — 친구 공유 리워드 ═══ */}
-        <FadeIn delay={0.16}>
-          <ShareRewardCard
-            remaining={remainingShares}
-            onShare={handleShare}
-          />
-        </FadeIn>
       </div>
 
       {/* ─── 일괄 액션 바 (sticky 56px) ─── */}
@@ -1907,94 +1878,6 @@ function SimpleConfirmModal({
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════
- * Section C — ShareRewardCard (스펙 §4)
- * ═════════════════════════════════════════════════════════════════ */
-function ShareRewardCard({
-  remaining,
-  onShare,
-}: {
-  remaining: number;
-  onShare: () => void;
-}) {
-  const used = MAX_DAILY_SHARES - remaining;
-  return (
-    <div
-      style={{
-        marginBottom: 24,
-        height: 116,
-        background: C.goldSoft,
-        borderRadius: 16,
-        padding: '18px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        border: '1px solid rgba(184,150,90,0.3)',
-      }}
-    >
-      <div
-        aria-hidden
-        style={{
-          width: 40,
-          height: 40,
-          flexShrink: 0,
-          borderRadius: 999,
-          background: C.gold,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#FFFFFF',
-          fontSize: 18,
-          fontWeight: 800,
-          fontFamily: "'Noto Serif KR', serif",
-        }}
-      >
-        運
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: C.ink,
-            margin: 0,
-            letterSpacing: '-0.01em',
-          }}
-        >
-          공유하고 1운 받기
-        </p>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: C.inkSoft,
-            margin: '3px 0 0',
-          }}
-        >
-          오늘 {used}/{MAX_DAILY_SHARES}회 사용 (남은 {remaining}회)
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onShare}
-        style={{
-          height: 40,
-          width: 80,
-          background: C.ink,
-          color: C.paper,
-          border: 'none',
-          borderRadius: 10,
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: 'pointer',
-          flexShrink: 0,
-        }}
-      >
-        공유
-      </button>
-    </div>
   );
 }
 

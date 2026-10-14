@@ -269,7 +269,7 @@ export function ConvertUnModal({
     mode === 'quota_exceeded' && !noBalance
       ? '1운으로 대화 3회를 이어갈 수 있어요. 아니면 내일 다시 만나요.'
       : noBalance
-      ? '운을 충전하거나 친구에게 공유하고 받을 수 있어요.'
+      ? '운을 충전하면 대화를 이어갈 수 있어요.'
       : '슬라이더로 변환할 운의 수를 정해주세요.';
 
   return (

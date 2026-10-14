@@ -4,14 +4,14 @@
 //   1. HeroBadge (출석 방법)
 //   2. StreakWidget (3일 연속 · 이동윈도우)
 //   3. 7일 연속 출석 7칸 (7일 연속마다 → 토스포인트 100원 · 앱인토스만)
-//   4. InviteBlock (하루 3회 · 초대당 운 1)
+//   4. InviteBlock (보상 없는 토스 공유 · 2026-10-14 공유 리워드 종료)
 //   5. CumulativeReceivedCard (지금까지 받은 운)
 // v3 하단 CTA(오늘의 운세/꿈해몽) 완전 제거.
 //
 // 2026-09-17 — 장부 통일 (준기 "원래 기획대로"):
 //   실제 운 지급이 기기(localStorage)에서 일어나므로 이 페이지의 모든 숫자는 기기 장부에서 읽는다.
 //   · 연속 출석·7일 진행: dailyReward.getAttendanceSnapshot()
-//   · 초대 남은 횟수: shareReward.getRemainingShareRewards() (결과 공유와 하루 3회 한도 공유)
+//   · 친구 초대: services/share/invite.shareInvite (보상 없음)
 //   · 누적 받은 운: dailyReward.getRewardLedger()
 //   구 동작: 서버 STUB 장부(streakAttendance · attendance 월~일 · inviteEvents · rewardClaims)를 읽어
 //   7칸이 차면 실제 지급 여부와 무관하게 "지급 완료" 로 고정 표시됐다 (실측 11주 허위 표시).
@@ -35,11 +35,7 @@ import {
   getRewardLedger,
   retryPendingAttend7Reward,
 } from '@/services/storage/dailyReward';
-import {
-  MAX_DAILY_SHARE_REWARDS,
-  getRemainingShareRewards,
-  inviteFriendsViaToss,
-} from '@/services/share/shareReward';
+import { shareInvite } from '@/services/share/invite';
 import { PROMO, seedLegacyPromoLedger } from '@/services/toss/tossPromotion';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { trackEvent } from '@/services/analytics';
@@ -68,7 +64,6 @@ export function EventsPage() {
 
   const [snapshot, setSnapshot] = useState(() => getAttendanceSnapshot());
   const [attend7PaidCount, setAttend7PaidCount] = useState(() => getRewardLedger().counts.attend7);
-  const [remainingInvites, setRemainingInvites] = useState(() => getRemainingShareRewards());
   const [streakPulsing, setStreakPulsing] = useState(false);
 
   const [tierAOpen, setTierAOpen] = useState(false);
@@ -80,7 +75,6 @@ export function EventsPage() {
   const refresh = useCallback(() => {
     setSnapshot(getAttendanceSnapshot());
     setAttend7PaidCount(getRewardLedger().counts.attend7);
-    setRemainingInvites(getRemainingShareRewards());
   }, []);
 
   useEffect(() => {
@@ -105,34 +99,11 @@ export function EventsPage() {
     retryPendingAttend7Reward().catch(() => {});
   }, []);
 
-  const invitesUsed = MAX_DAILY_SHARE_REWARDS - remainingInvites;
-  const invitesDone = remainingInvites <= 0;
-
-  /** 공유 버튼 핸들러 — 전 앱 통합 (inviteFriendsViaToss SSOT · 토스 contactsViral) */
+  /** 친구에게 사주500 알리기 — 보상 없는 토스 공유 (2026-10-14 앱인토스 공유 리워드 10-23 종료, services/share/invite.ts) */
   const onShareInvite = async () => {
-    if (getRemainingShareRewards() <= 0) {
-      refresh();
-      toast.show('오늘 초대는 끝났어요, 내일 다시 참여해주세요', 'info');
-      return;
-    }
-    // 2026-06-24 — 이벤트 페이지 친구초대 CTA 클릭 계측 (바이럴 트리거 · 전역 cta_click 과 별개로 의미화)
     trackEvent('share_click', { type: 'event_invite' });
-    await inviteFriendsViaToss({
-      // 친구 공유 실제 완료(sendViral · navigator.share 완료) 시 기기 장부에 운 적립 — 친구마다 1회씩 (하루 3회 한도)
-      onReward: (earned) => {
-        refresh();
-        setTierAMsg(`운 ${earned} 들어왔어요`);
-        setTierAOpen(true);
-      },
-      onShared: () => {
-        refresh();
-        toast.show(
-          getRemainingShareRewards() <= 0
-            ? '오늘 초대 보상은 끝났어요, 내일 다시 참여해주세요'
-            : '공유 링크를 준비했어요, 친구에게 보내주세요',
-          'info',
-        );
-      },
+    await shareInvite({
+      onShared: () => toast.show('공유 링크를 보냈어요', 'success'),
       onCancel: () => { /* 유저 취소 — 무시 */ },
     });
   };
@@ -260,30 +231,26 @@ export function EventsPage() {
             </h3>
           </header>
           <p className="text-[13.5px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
-            친구 한 명 초대할 때마다 1운, 결과 공유와 합쳐 하루 {MAX_DAILY_SHARE_REWARDS}회까지
+            링크를 받은 친구는 토스에서 바로 사주500을 열 수 있어요
           </p>
 
           <button type="button" onClick={onShareInvite}
-            disabled={invitesDone}
             className="w-full flex items-center justify-center gap-2.5 py-[18px] rounded-[14px] font-semibold text-[16px] transition"
             style={{
-              background: invitesDone ? '#EFE9DA' : 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
-              color: invitesDone ? C.muted : '#17110A',
-              boxShadow: invitesDone ? 'none' : '0 8px 18px rgba(140,109,61,.22)',
-              cursor: invitesDone ? 'default' : 'pointer',
+              background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
+              color: '#17110A',
+              boxShadow: '0 8px 18px rgba(140,109,61,.22)',
+              cursor: 'pointer',
             }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke={invitesDone ? C.muted : '#17110A'} strokeWidth="1.75"
+              stroke="#17110A" strokeWidth="1.75"
               strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
-            <span>{invitesDone ? '오늘 초대는 끝났어요' : '친구에게 공유하기'}</span>
+            <span>친구에게 공유하기</span>
           </button>
-          <p className="text-[13.5px] text-center mt-3" style={{ color: C.muted }}>
-            오늘 <strong style={{ color: C.ink }}>{invitesUsed}/{MAX_DAILY_SHARE_REWARDS}</strong>회, 일 {MAX_DAILY_SHARE_REWARDS}회 한도
-          </p>
         </section>
 
         {/* 블록 5 — 누적 운 카드 (하단 CTA 교체) */}

@@ -1028,7 +1028,7 @@ function ResultView({
 
   // 공유 핸들러 — 결과 페이지 공유 = OG 바이럴 (앱 홍보용 · 보상 X).
   //   2026-05-28 PM 정책 분리: 결과 페이지 공유는 shareResult (OG 이미지 송출).
-  //   공유 리워드 (1운 보상) 는 이벤트/보관함/충전 페이지 surface 만 사용 (inviteFriendsViaToss).
+  //   친구 초대는 이벤트 탭 surface 만 사용 (services/share/invite.shareInvite · 2026-10-14 공유 보상 종료).
   const handleShare = async () => {
     const { shareResult } = await import('@/utils/share');
     await shareResult({

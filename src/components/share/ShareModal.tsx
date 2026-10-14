@@ -2,10 +2,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/common/Button';
 import { isAppsInToss } from '@/services/payment/iapService';
-import {
-  canEarnShareReward,
-  claimShareReward,
-} from '@/services/share/shareReward';
 import { shareResult } from '@/utils/share';
 
 interface ShareModalProps {
@@ -19,16 +15,11 @@ interface ShareModalProps {
 /**
  * 공유 모달
  *
- * 앱인토스: 토스 share SDK → 공유 리워드 1운 (친구 초대와 합쳐 하루 3회)
- * 웹: Web Share API (카카오/인스타 등) → 리워드 없음
- * 웹 폴백: 클립보드 복사 → 리워드 없음
- *
- * 2026-09-17 — 리워드는 기기 claimShareReward('share') 한 경로만. 구 코드는 여기에 더해 서버 grantShareReward 를
- *   호출해 서버 balance.reward 에 운 1 이 별도로 쌓였다(이중 지급 경로) → 서버 호출 제거.
+ * 앱인토스: 토스 공유 링크 + 공유 시트 / 웹: Web Share API, 안 되면 클립보드 복사
+ * 2026-10-14 — 공유 보상(1운) 종료. 앱인토스 공유 리워드 서비스가 10-23 종료되고 share() 는 실제 전송을 알려 주지 않는다 (services/share/invite.ts)
  */
 export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareModalProps) {
   const [phase, setPhase] = useState<'ready' | 'copied' | 'shared'>('ready');
-  const [rewardAmount, setRewardAmount] = useState(0);
   const inToss = isAppsInToss();
 
   async function handleShare() {
@@ -36,11 +27,6 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
       const success = await shareResult({ name, reportId, topScore });
 
       if (success) {
-        // 앱인토스에서만 리워드
-        if (inToss && canEarnShareReward()) {
-          // 기기 장부 한 경로 — 하루 3회 한도·보상 기록(이벤트 탭 누적 카드) 포함
-          setRewardAmount(claimShareReward('share'));
-        }
         setPhase('shared');
         return;
       }
@@ -75,7 +61,6 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
   // 모달 닫을 때 상태 초기화
   function handleClose() {
     setPhase('ready');
-    setRewardAmount(0);
     onClose();
   }
 
@@ -138,20 +123,6 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
               <div className="px-5 py-5">
                 {phase === 'ready' && (
                   <>
-                    {/* 앱인토스에서만 리워드 안내 */}
-                    {inToss && canEarnShareReward() && (
-                      <div className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl"
-                        style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.12)' }}>
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: 'linear-gradient(135deg, #B8965A, #8C6D3D)' }}>
-                          <span className="text-[8px] font-black text-white">運</span>
-                        </div>
-                        <p className="text-caption text-text-primary">
-                          공유하면 <span className="font-bold text-brand-gold">1운</span>이 들어와요
-                        </p>
-                      </div>
-                    )}
-
                     <Button fullWidth size="lg" variant="gold" onClick={handleShare}>
                       친구에게 공유하기
                     </Button>
@@ -202,15 +173,6 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                       </svg>
                     </motion.div>
                     <p className="text-h3 text-text-primary">공유했어요</p>
-                    {rewardAmount > 0 && (
-                      <motion.p
-                        initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-caption text-brand-gold font-bold mt-1"
-                      >
-                        +{rewardAmount}운 적립되었어요
-                      </motion.p>
-                    )}
                     <Button fullWidth size="lg" onClick={handleClose} className="mt-4">확인</Button>
                   </div>
                 )}

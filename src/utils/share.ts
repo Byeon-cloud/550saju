@@ -118,7 +118,7 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', {
       type: params.type || 'result',
       method,
-      rewarded: 0, // 콘텐츠 공유는 리워드 무관 (리워드형은 shareReward.inviteFriendsViaToss)
+      rewarded: 0, // 공유 보상 없음 (2026-10-14 앱인토스 공유 리워드 종료)
     })).catch(() => {});
   };
   if (isAppsInToss()) {
