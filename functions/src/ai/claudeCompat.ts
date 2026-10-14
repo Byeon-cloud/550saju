@@ -147,7 +147,7 @@ function computeCrossRelations(d1: any, d2: any): string {
 }
 
 export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: any, sajuData2: any, relation: string): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const prompt = buildPrompt(sajuData1, sajuData2, relation);
 
   const msg = await anthropic.messages.create({

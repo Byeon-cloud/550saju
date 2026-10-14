@@ -46,7 +46,7 @@ export async function generateDailyFortuneAnalysis(
   apiKey: string,
   args: DailyFortuneArgs,
 ): Promise<unknown> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const system = DAILY_FORTUNE_SYSTEM_V3;
   const user = DAILY_FORTUNE_USER_V3(args);
 

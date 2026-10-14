@@ -1076,7 +1076,7 @@ export async function generateTopicAnalysisAI(
   partnerInfo?: { name: string; birthYear: number; birthMonth: number; birthDay: number; gender: string; birthHour?: number; birthMinute?: number },
   extraInfo?: Record<string, any>,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   // 전 주제 Sonnet 4.6 통일 — 유료 1운 콘텐츠는 최소 Sonnet급 품질 유지 (운영 결정).
   const call = buildTopicCall(topicId, sajuData, baseScore, partnerInfo, extraInfo);
   const { prompt, model, maxTokens, effectiveBaseScore } = call;

@@ -18,7 +18,7 @@ const tryParse = (text: string): any | null => { try { return parseJsonResponse(
  * 퀄리티 레버(준기 결정): 1차 생성 → 2차 자기리뷰(체크리스트 자가 보정) → 반환.
  */
 export async function generateWeeklyFortune(apiKey: string, sajuData: any, weekDays?: any[]): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
   const prompt = buildPrompt(sajuData, days);
 
@@ -58,7 +58,7 @@ export async function generateWeeklyFortune(apiKey: string, sajuData: any, weekD
  *   2차 보정은 별도 refine 콜(백그라운드)에서.
  */
 export async function generateWeeklyDraft(apiKey: string, sajuData: any, weekDays?: any[]): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
   const prompt = buildPrompt(sajuData, days);
   const _t1 = Date.now(); // C7
@@ -80,7 +80,7 @@ export async function generateWeeklyDraft(apiKey: string, sajuData: any, weekDay
  *   🛡️ best-effort: 리뷰 파싱 실패 시 draft 그대로 반환(유저는 이미 draft 봤음·무해).
  */
 export async function generateWeeklyRefine(apiKey: string, sajuData: any, weekDays: any[] | undefined, draft: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const days = Array.isArray(weekDays) && weekDays.length === 7 ? weekDays : fallbackWeek();
   const prompt = buildPrompt(sajuData, days);
   const _t2 = Date.now(); // C7

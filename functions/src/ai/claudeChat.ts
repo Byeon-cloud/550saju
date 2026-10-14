@@ -172,7 +172,7 @@ export async function generateChatAnswerAI(
   guarded?: boolean;
   guardCategory?: 'self_harm' | 'drugs' | 'crime' | 'investment' | 'medical_legal' | 'none';
 }> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const model = process.env.SAJU_CHAT_MODEL || DEFAULT_CHAT_MODEL;
 
   // ── 사주 컨텍스트

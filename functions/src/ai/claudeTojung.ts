@@ -61,7 +61,7 @@ export async function generateTojungBigyeol(
   /** 2026-10-09 — 점진 표시: 그룹 완성 즉시 (A=총평 · B=1~6월 · C=7~12월) — best-effort */
   onGroup?: (group: 'A' | 'B' | 'C', data: any) => Promise<void> | void,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const ty = tojungTargetYear();
   const ygz = yearPillar(ty);
   const picks = dayPicksForYear(ty, sajuData);

@@ -50,7 +50,7 @@ export async function generateMonthlyFortune(
 
 /** 그룹 1개(M1/M2/FULL) — 1차 생성 + 2차 자기리뷰 → 파싱 */
 async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnType<typeof normalizeMonthInfo>, group: MonthGroup): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const prompt = buildPrompt(sajuData, info, group);
   const maxTokens = group === 'FULL' ? 10000 : group === 'M1' ? 6000 : 7000;
 
@@ -90,7 +90,7 @@ async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnT
  *  FULL 스키마로 1차 생성. 2차 리뷰는 별도 refine 콜(백그라운드)에서. 머지·year/month 보정 동일.
  */
 export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthInfo?: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const info = normalizeMonthInfo(monthInfo);
   const prompt = buildPrompt(sajuData, info, 'FULL');
   const _t1 = Date.now(); // C7
@@ -114,7 +114,7 @@ export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthI
  *  🛡️ best-effort: 리뷰 파싱 실패 시 draft 그대로 반환(유저는 이미 draft 를 봤으므로 무해).
  */
 export async function generateMonthlyRefine(apiKey: string, sajuData: any, monthInfo: any, draft: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const info = normalizeMonthInfo(monthInfo);
   const prompt = buildPrompt(sajuData, info, 'FULL');
   const _t2 = Date.now(); // C7

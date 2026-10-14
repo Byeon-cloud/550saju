@@ -4,7 +4,7 @@ import { sanitizeAiOutput } from './sajuFacts';
 import { kstNow } from '../utils/kstTime';
 
 export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const prompt = buildPrompt(sajuData);
 
   const msg = await anthropic.messages.create({

@@ -141,7 +141,7 @@ export function buildDreamFreeCall(args: DreamFreeArgs): {
 
 /** 무료 꿈해몽 — 사주 있으면 withSaju, 없으면 noSaju */
 export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Promise<unknown> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const { system, user } = buildDreamFreeCall(args);
 
   // ── 단일 호출 (작동 검증본 — 2그룹 분할은 무료 콘텐츠 누락 회귀로 롤백) ──
@@ -183,7 +183,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
 
 /** 심층 꿈해몽 (유료 1운) — 1차 생성 후 2차 자기 리뷰 */
 export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Promise<unknown> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const system = DREAM_DEEP_SYSTEM_V3;
   const user = DREAM_DEEP_USER_V3({
     name: args.saju.name,

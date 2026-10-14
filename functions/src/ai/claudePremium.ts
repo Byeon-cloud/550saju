@@ -406,7 +406,7 @@ export async function generatePremiumReport(
   /** 2026-10-09 — 점진 표시: 그룹 완성 즉시 호출 (progress/{id} write 용 · best-effort, 결과 전달 경로와 무관) */
   onGroup?: (group: 'A' | 'D' | 'B' | 'C', data: any) => Promise<void> | void,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
 
   const staticSystem = STATIC_SYSTEM_PROMPT;
@@ -466,7 +466,7 @@ export async function generateGroup(
   group: GroupKey,
   situation?: any,
 ): Promise<any> {
-  const anthropic = new Anthropic({ apiKey });
+  const anthropic = new Anthropic({ apiKey, maxRetries: 5 }) /* 2026-10-14 요청이 몰릴 때 429 대비 재시도 5회(기본 2회는 1.5초뿐) */;
   const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
   const staticSystem = STATIC_SYSTEM_PROMPT;
   const dynamicSystem = buildDynamicSystemContext(sajuData);
