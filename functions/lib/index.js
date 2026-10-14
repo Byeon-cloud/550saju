@@ -55,12 +55,15 @@ const HALF_EVENT_END_MS = Date.UTC(2026, 6, 15, 14, 59, 59); // 2026-07-15 23:59
 const onHalfEvent = () => Date.now() <= HALF_EVENT_END_MS;
 const premiumCost = () => (onHalfEvent() ? 5 : 10);
 const monthlyCost = () => (onHalfEvent() ? 5 : 7);
-const weeklyCost = () => (onHalfEvent() ? 3 : 5);
+const weeklyCost = () => 3; // 2026-10-15 정가 5 → 3운 (클라 getWeeklyPrice 와 일치)
 // 2026-10-14 주제운과 궁합 가격 (클라 src/constants/pricing.ts TOPIC_PRICING_RAW, PRODUCT_COST 와 일치).
 //   예전 서버는 주제를 가리지 않고 1운만 깎았다(재회운 3운 때도). 로그인 계정만 서버 차감한다.
-const TOPIC_COST = { love: 4, wealth: 4, reunion: 5, marriage: 3, exam: 2, career: 2, business: 2 };
+const TOPIC_COST = { love: 4, wealth: 4, marriage: 4, reunion: 5, exam: 5, career: 3, business: 3 };
 const topicCost = (topicId) => TOPIC_COST[String(topicId)] ?? 1;
-const COMPAT_COST = 2;
+const COMPAT_COST = 3;
+// 신년운세: 정가 9운, 2026-11-30 23:59 KST 까지 얼리버드 7운 (클라 getTojungPrice 와 같은 날짜)
+const TOJUNG_LAUNCH_END_MS = Date.UTC(2026, 10, 30, 14, 59, 59);
+const tojungCost = () => (Date.now() <= TOJUNG_LAUNCH_END_MS ? 7 : 9);
 const lazyClaudeDaeun = () => Promise.resolve().then(() => __importStar(require('./ai/claudeDaeun')));
 const lazyClaudeMonthly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeMonthly')));
 const lazyClaudeWeekly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeWeekly')));
@@ -1792,12 +1795,12 @@ exports.generateTojung = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
             // 2026-05-28 — schema 통일 helper
             await db.runTransaction(async (tx) => {
                 const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), 7); // 2026-10-08 신년운세 7운 프리미엄
+                const result = computeBalanceDeduction(doc.data(), tojungCost()); // 2026-10-15 정가 9운, 얼리버드 7운
                 if (!result)
                     throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
                 tx.update(userRef, result.updates);
             });
-            deductedAmount = 7;
+            deductedAmount = tojungCost();
         }
     }
     try {

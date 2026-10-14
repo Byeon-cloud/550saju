@@ -65,7 +65,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '桃',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
-    subCopy: '만남, 관계, 인연 흐름',
+    subCopy: '새 인연이 오는 때와 지금 관계',
     lens: '일반 만남, 관계 흐름, 매력 발산, 연애 습관',
     excludedScope: [
       { reason: '결혼 timing/배우자 성향', redirectTo: 'marriage' },
@@ -80,7 +80,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '復',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
-    subCopy: '헤어진 사람과의 흐름',
+    subCopy: '헤어진 그 사람과 다시 닿을 때',
     lens: '헤어진 사람과의 재결합 가능성, timing, 접촉 방향',
     excludedScope: [
       { reason: '일반 새 만남', redirectTo: 'love' },
@@ -95,7 +95,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '婚',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
-    subCopy: '인연 시기와 배우자 성향',
+    subCopy: '결혼하기 좋은 해와 배우자 성향',
     lens: '결혼 timing, 배우자 성향, 결혼 후 생활 습관',
     excludedScope: [
       { reason: '연애 일반', redirectTo: 'love' },
@@ -110,7 +110,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '財',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '추천',
-    subCopy: '돈, 투자, 현금흐름 변곡',
+    subCopy: '돈이 들어오는 달과 새는 곳',
     lens: '돈의 기운, 투자, 현금흐름, 재물 timing',
     excludedScope: [
       { reason: '사업 결정', redirectTo: 'business' },
@@ -125,7 +125,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '進',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '인기',
-    subCopy: '시험과 이직 결정 시기',
+    subCopy: '합격 소식이 오는 달과 옮길 때',
     lens: '시험, 자격증, 이직, 전직 변동의 timing 과 방향',
     excludedScope: [
       { reason: '평생 직업 적성', redirectTo: 'career' },
@@ -140,7 +140,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '業',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: '추천',
-    subCopy: '창업과 자영업 흐름과 시기',
+    subCopy: '시작하거나 넓히기 좋은 때',
     lens: '자영업과 창업의 기운, 재무 리스크, 사업 timing',
     excludedScope: [
       { reason: '직장인 커리어', redirectTo: 'career' },
@@ -155,7 +155,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '壽',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
-    subCopy: '체질, 기운, 주의 시기',
+    subCopy: '약한 곳과 조심할 달',
     lens: '체질, 기운, 올해 주의 시기, 생활 습관',
     excludedScope: [],
     path: '/topic/health',
@@ -167,7 +167,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '移',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
-    subCopy: '이사 이동 길흉 방향',
+    subCopy: '옮기기 좋은 때와 방향',
     lens: '주거 이전, 이동, 여행 timing 과 방향',
     excludedScope: [
       { reason: '직장 이직', redirectTo: 'exam' },
@@ -181,7 +181,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '學',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
-    subCopy: '시험, 집중력, 지식 흡수',
+    subCopy: '공부가 잘 붙는 때',
     lens: '학업, 집중력, 지식 흡수, 학습 습관',
     excludedScope: [
       { reason: '시험 합격 timing', redirectTo: 'exam' },
@@ -196,7 +196,7 @@ export const TOPIC_REGISTRY: Record<TopicId, TopicMeta> = {
     kanji: '官',
     color: '#8C6D3D', // 2026-10-10 v9 — 주제별 색 폐기 (금 하나)
     badge: null,
-    subCopy: '커리어, 승진, 평생 흐름',
+    subCopy: '지금 일이 맞는지, 오를 때',
     lens: '평생의 일의 기운, 적성, 승진 흐름, 조직 내 경향',
     excludedScope: [
       { reason: '시험과 이직 timing', redirectTo: 'exam' },

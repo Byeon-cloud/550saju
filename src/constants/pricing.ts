@@ -48,7 +48,7 @@ export const CHARGE_PACKAGES: ChargePackage[] = [
     price: 2500,
     pricePerUn: 357, // 2500 / 7
     discount: 28,    // 3500 → 2500 (1000원 절약)
-    guide: '월운세나 신년운세 한 번',
+    guide: '월운세나 재회운 한 번',
   },
   {
     id: 'p15',
@@ -89,12 +89,12 @@ export function findPackageById(id: string): ChargePackage | undefined {
 
 /** 상품별 운 비용 (정가) — 세일 적용된 실제 차감가는 getTopicPrice/getPremiumPrice 사용 */
 export const PRODUCT_COST: Record<string, number> = {
-  compatibility: 2, // 2026-10-14 1 → 2운 (두 사람 사주를 겹쳐 보는 풀이, 서버 compatCost 와 일치)
+  compatibility: 3, // 2026-10-15 3운 (두 사람 풀이, 서버 COMPAT_COST 와 일치 · 가격 전략 docs/handoff/2026-10-15_운_가격전략.md)
   daeun: 1,
   monthly: 7,   // 2026-06-29 NEW 출시 — 월운세 정가 7운 (getMonthlyPrice SSOT)
   weekly: 5,    // 2026-06-29 NEW 출시 — 주간운세 정가 5운 (getWeeklyPrice SSOT)
   yearly: 1,
-  tojung: 7, // 2026-10-08 신년운세 7운 프리미엄 (Opus 3그룹) — 클라 TojungPage·서버 generateTojung 과 일치
+  tojung: 9, // 2026-10-15 신년운세 정가 9운, 11월 30일까지 얼리버드 7운 — 실제 차감은 getTojungPrice().actualPrice (서버 tojungCost 와 일치)
   premium: 10,
 };
 
@@ -119,6 +119,8 @@ export interface PricingInfo {
   saleEndDate?: string;
   /** 실제 차감되는 가격 (자동 계산) */
   actualPrice: number;
+  /** 출시가 기간이면 — 화면은 '7운, 12월 1일부터 9운'처럼 (취소선 없음) */
+  launch?: { price: number; badge: string; note: string };
 }
 
 interface PricingDef {
@@ -127,6 +129,13 @@ interface PricingDef {
   isOnSale: boolean;
   saleBadge?: string;
   saleEndDate?: string;
+  /** 출시가(얼리버드) — 정가로 판 적이 없는 기간의 첫 가격. '할인'이 아니라 '언제부터 정가'로만 알린다 (2026-10-15).
+   *  공정위 「부당한 표시·광고행위의 유형 및 기준 지정고시」: 할인 표시는 직전 약 20일 실제 판매가가 기준이라,
+   *  팔아 본 적 없는 정가에 취소선을 긋지 않는다. */
+  launchPrice?: number;
+  /** 출시가 마지막 날 (KST, 'YYYY-MM-DD' 포함) */
+  launchUntil?: string;
+  launchBadge?: string;
 }
 
 function isStillOnSale(saleEndDate: string | undefined): boolean {
@@ -138,7 +147,24 @@ function isStillOnSale(saleEndDate: string | undefined): boolean {
   }
 }
 
+function kstTodayKey(): string {
+  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+}
+function dayAfterLabel(dateKey: string): string {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + 1));
+  return `${t.getUTCMonth() + 1}월 ${t.getUTCDate()}일`;
+}
+
 function resolvePricing(def: PricingDef): PricingInfo {
+  if (def.launchPrice != null && def.launchUntil && kstTodayKey() <= def.launchUntil) {
+    return {
+      regularPrice: def.regularPrice,
+      isOnSale: false,
+      actualPrice: def.launchPrice,
+      launch: { price: def.launchPrice, badge: def.launchBadge || '출시가', note: `${dayAfterLabel(def.launchUntil)}부터 ${def.regularPrice}운` },
+    };
+  }
   const isOnSaleNow = def.isOnSale && isStillOnSale(def.saleEndDate);
   const actualPrice = isOnSaleNow && def.salePrice != null ? def.salePrice : def.regularPrice;
   return {
@@ -157,13 +183,14 @@ const TOPIC_PRICING_RAW: Record<string, PricingDef> = {
   // 2026-10-14 오너 "연애운 4운으로, 많이 쓰고 비싸도 살 것은 올리자(지금 충분히 싸다)" — 최근 60일 유료 실측
   //   (연애 25, 재회 17, 합격이직 15, 결혼 13, 직업 13, 재물 8) 기준으로 조정. 서버 index.ts TOPIC_COST 와 일치시킬 것.
   //   건강, 이사, 공부는 첫 결제용으로 1운 유지.
+  //   2026-10-15 재조정(오너: 공고 시즌엔 합격이직 5운이어도 본다, 올렸다 내렸다 말고 정가 + 시즌 행사로) — 가격 전략 문서 참조.
   love: { regularPrice: 4, isOnSale: false },
   wealth: { regularPrice: 4, isOnSale: false },
+  marriage: { regularPrice: 4, isOnSale: false },
   reunion: { regularPrice: 5, isOnSale: false },
-  marriage: { regularPrice: 3, isOnSale: false },
-  exam: { regularPrice: 2, isOnSale: false },
-  career: { regularPrice: 2, isOnSale: false },
-  business: { regularPrice: 2, isOnSale: false },
+  exam: { regularPrice: 5, isOnSale: false },
+  career: { regularPrice: 3, isOnSale: false },
+  business: { regularPrice: 3, isOnSale: false },
 };
 
 const DEFAULT_TOPIC_PRICING: PricingDef = { regularPrice: 1, isOnSale: false };
@@ -205,12 +232,23 @@ export function getMonthlyPrice(): PricingInfo {
 
 /** 주간운세(이번 주 7일) raw 정의 — 2026-06-29 NEW 출시(준기), 정가 5운. */
 const WEEKLY_PRICING_RAW: PricingDef = {
-  regularPrice: 5,
-  salePrice: 3,
-  isOnSale: true,
-  saleBadge: '하반기 시작 이벤트',
-  saleEndDate: '2026-07-15', // 2026-07-01 준기: 주간 5→3운 이벤트 세일
+  // 2026-10-15 5 → 3운: 최근 60일 유료 1건. 7일 풀이가 월운(7운)과 가격 차이가 작아 안 팔렸다. 정가 인하라 할인 표시 없음.
+  regularPrice: 3,
+  isOnSale: false,
 };
+
+/** 신년운세 — 정가 9운, 11월 30일까지 얼리버드 7운 ('12월 1일부터 9운'으로 알림, 취소선 없음).
+ *  성수기(12월~설)는 정가. 설 이후 행사는 정가를 20일 넘게 판 뒤에만 할인 표시 가능. 서버 index.ts tojungCost 와 같은 날짜. */
+const TOJUNG_PRICING_RAW: PricingDef = {
+  regularPrice: 9,
+  isOnSale: false,
+  launchPrice: 7,
+  launchUntil: '2026-11-30',
+  launchBadge: '얼리버드',
+};
+export function getTojungPrice(): PricingInfo {
+  return resolvePricing(TOJUNG_PRICING_RAW);
+}
 
 /** 주간운세 가격 조회 — 항상 actualPrice 포함 */
 export function getWeeklyPrice(): PricingInfo {
@@ -219,6 +257,7 @@ export function getWeeklyPrice(): PricingInfo {
 
 /** "1운" / "3운 → 1운 출시 세일" 형식 — chip pill */
 export function formatPriceLabel(p: PricingInfo): string {
+  if (p.launch) return `${p.launch.price}운, ${p.launch.note}`;
   if (p.isOnSale && p.salePrice != null) {
     return `${p.regularPrice}운 → ${p.salePrice}운 ${p.saleBadge || 'SALE'}`;
   }

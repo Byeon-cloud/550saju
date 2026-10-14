@@ -22,7 +22,7 @@
 import type { ReactNode } from 'react';
 import { INK_HERO_BG, Pansim, SERIF } from '@/components/hanji/Hanji';
 // 2026-05-29 H1 fix — 업셀 "10운" 하드코딩 → SSOT 세일가.
-import { getPremiumPrice } from '@/constants/pricing';
+import { getPremiumPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
 
 /* ══════════════════════════════════════════════════════════════════
  * 공용 토큰
@@ -56,7 +56,7 @@ export interface ExtensionTheme {
   /** Hero h1 메인 카피 (mockup 진본) */
   heroH1: { line1: string; line2: string };
   /** 운 비용 (페이지별) */
-  cost: '1운' | '2운' | '3운' | '5운' | '7운';
+  cost: string;
 }
 
 // 2026-10-10 v9 — 콘텐츠별 강조색(대운 초록·월간 주홍·궁합 보라·신년 남청) 폐기 → 금(라벨·칩) + 먹(제목) 하나로.
@@ -96,7 +96,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     hint: '#4B4238',
     label: '이번 주 운세',
     heroH1: { line1: '오늘부터 7일,', line2: '날마다 무엇을 할지 알려 드려요' },
-    cost: '5운' as ExtensionTheme['cost'],
+    cost: `${getWeeklyPrice().actualPrice}운`,
   },
   compat: {
     heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#1A1612 60%,#1A1612 100%)',
@@ -107,8 +107,8 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     hint: '#4B4238',
     label: '궁합',
     heroH1: { line1: '두 사람이 잘 맞는 점과', line2: '부딪히는 점을 알려 드려요' },
-    // 2026-10-14 궁합 2운 (PRODUCT_COST.compatibility)
-    cost: '2운',
+    // 2026-10-15 궁합 3운 (PRODUCT_COST.compatibility)
+    cost: `${PRODUCT_COST.compatibility}운`,
   },
   tojung: {
     heroGrad: 'linear-gradient(135deg,#8C6D3D 0%,#1A1612 60%,#1A1612 100%)',
@@ -120,7 +120,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     // 2026-10-08 — 신년운세 7운 프리미엄 (TojungPage NEWYEAR_PRICE=7 · 서버 generateTojung 7운)
     label: '신년운세',
     heroH1: { line1: '다가올 한 해를', line2: '날짜까지 미리 봅니다' },
-    cost: '7운',
+    cost: `${getTojungPrice().actualPrice}운`,
   },
 };
 

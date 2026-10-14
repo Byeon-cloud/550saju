@@ -17,7 +17,7 @@ import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { listTopics, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
-import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, PRODUCT_COST } from '@/constants/pricing';
+import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { getReports } from '@/services/storage/localStore';
 import { getPublicReviews, type PublicReview } from '@/services/reviews';
@@ -145,7 +145,8 @@ export function HomePage() {
   const premium = getPremiumPrice().actualPrice;
   const weekly = getWeeklyPrice().actualPrice;
   const monthly = getMonthlyPrice().actualPrice;
-  const tojung = PRODUCT_COST.tojung;
+  const tojungInfo = getTojungPrice();
+  const tojung = tojungInfo.actualPrice;
   const compat = PRODUCT_COST.compatibility;
 
   /** 올해가 아닌 날짜엔 '내년 ' — '2월'만 쓰면 올해 2월로 읽힌다 */
@@ -346,6 +347,7 @@ export function HomePage() {
               : <>{NEW_YEAR_TARGET}년은 나에게<br />어떤 해일까요</>}
           </div>
           <div style={{ fontSize: 14, color: '#E2D9C8' }}>달마다 좋은 날까지 알려 드려요 <b style={{ color: '#F1ECE1' }}>{tojung}운 ›</b></div>
+          {tojungInfo.launch && <div style={{ fontSize: 13, color: '#D2B477' }}>{tojungInfo.launch.badge} 가격, {tojungInfo.launch.note}</div>}
         </div>
       </button>
 

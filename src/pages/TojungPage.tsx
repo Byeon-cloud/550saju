@@ -1,3 +1,4 @@
+import { getTojungPrice } from '@/constants/pricing';
 import { useState, useMemo, useRef } from 'react';
 import { NeedSaju, HJ, SERIF, Mark, Note, Tag, GhostButton } from '@/components/hanji/Hanji';
 import { openChatWithResult } from '@/components/common/NextStepsCard';
@@ -65,7 +66,8 @@ function NySkeleton({ label, lines = 3, height = 12 }: { label: string; lines?: 
 /* 2026-10-07 — '토정비결' → '신년운세' 재출시 (경로 /tojung · contentType 'tojung' 유지).
  *   대상 연도 = 10월부터 내년 (서버 claudeTojung.tojungTargetYear 와 같은 규칙).
  *   2026-10-08 오너 "7운 · 퀄리티 좋게" → 7운 프리미엄 (Opus 3그룹 · 달마다 좋은 날/조심할 날 · 결정 타이밍). */
-const NEWYEAR_PRICE = 7;
+/* 2026-10-15 — 정가 9운, 11월 30일까지 얼리버드 7운 (getTojungPrice SSOT · 서버 tojungCost 와 같은 날짜) */
+const newYearPrice = () => getTojungPrice();
 function newYearTarget(): number {
   const [y, m] = kstToday().split('-').map(Number);
   return m >= 10 ? y + 1 : y;
@@ -131,6 +133,7 @@ export function TojungPage() {
       return;
     }
 
+    const NEWYEAR_PRICE = newYearPrice().actualPrice; // 이번 결제에 실제로 낸 운 (환불도 이 값)
     if (!spendBalance(NEWYEAR_PRICE)) {
       toast.show('잔액이 부족해요', 'warning');
       navigate('/charge', { state: { message: `${TY} 신년운세에 ${NEWYEAR_PRICE}운이 필요해요` } });
@@ -232,7 +235,12 @@ export function TojungPage() {
         </div>
         {selected && (
           <div className="sticky-cta-bottom">
-            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth sub={`${NEWYEAR_PRICE}운`}>{TY} 신년운세 보기</Button>
+            <Button onClick={startAnalysis} variant="gold" size="lg" fullWidth sub={`${newYearPrice().actualPrice}운`}>{TY} 신년운세 보기</Button>
+            {newYearPrice().launch && (
+              <p style={{ textAlign: 'center', fontSize: 13.5, color: '#6F6557', marginTop: 8 }}>
+                {newYearPrice().launch!.badge} {newYearPrice().launch!.price}운, {newYearPrice().launch!.note}
+              </p>
+            )}
           </div>
         )}
       </div>
