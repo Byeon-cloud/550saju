@@ -259,7 +259,9 @@ export function HomePage() {
 
       {/* ━━━ 3. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
       <SecTitle k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" />
-      <div style={{ margin: '0 16px', borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD' }}>
+      {/* 2026-10-15 오너: 책을 눌러도 종합사주로 — 책 그림, 소개, 대운 띠, 목차 어디를 눌러도 같은 곳으로 */}
+      <button type="button" onClick={() => navigate('/premium')} aria-label="종합사주 보기"
+        style={{ display: 'block', width: 'calc(100% - 32px)', margin: '0 16px', padding: 0, border: 0, borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD', cursor: 'pointer' }}>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.jangansa})`, backgroundSize: 'cover', backgroundPosition: '40% 55%', opacity: 0.42 }} />
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%)' }} />
         <div style={{ position: 'absolute', left: '50%', top: 18, transform: 'translateX(-50%)' }}>
@@ -268,8 +270,11 @@ export function HomePage() {
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 14, textAlign: 'center', fontSize: 13, color: HJ.ink2, fontWeight: 600 }}>
           {facts?.persona ? `${displayName}, ${facts.persona.birthYearGz}生: 8글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
         </div>
-      </div>
+      </button>
       <section style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderTop: 0, borderRadius: '0 0 20px 20px', padding: 18 }}>
+        <div role="link" tabIndex={0} aria-label="종합사주 자세히 보기" style={{ cursor: 'pointer' }}
+          onClick={() => navigate('/premium')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/premium'); } }}>
         {facts?.persona?.identity ? (
           <>
             <p style={{ fontFamily: SERIF, fontSize: 19.5, fontWeight: 700, lineHeight: 1.5, letterSpacing: '-.02em' }}>
@@ -323,6 +328,7 @@ export function HomePage() {
           <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게 할 일로 정리해 드려요" />
           <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>+ 원국, 십성, 대운, 신살, 올해 흐름 등 여섯 장 더</p>
         </Gwang>
+        </div>
         <p style={{ marginTop: 14, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, textAlign: 'center', wordBreak: 'keep-all' }}>
           한 번 사면 평생 보관하고 PDF로 저장할 수 있어요. 다 읽고 궁금한 건 바로 물어보세요.
         </p>
