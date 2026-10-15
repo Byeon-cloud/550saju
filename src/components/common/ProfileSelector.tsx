@@ -44,10 +44,10 @@ export function ProfileSelector({
           아직 저장된 사주가 없어요
         </p>
         <p className="text-body-sm" style={{ color: 'rgba(245,239,224,0.7)', marginTop: 6 }}>
-          생년월일만 있으면 1분. 무료입니다.
+          생년월일만 넣으면 바로 볼 수 있어요. 무료예요.
         </p>
         <button className="cta-gold" onClick={onCreateNew} style={{ marginTop: 12 }}>
-          사주 무료 입력 →
+          사주 무료로 넣기 ›
         </button>
       </div>
     );
@@ -230,7 +230,6 @@ const OHENG_BOX_AVATAR: Record<string, { bg: string; fg: string; outline: string
   금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C' },
   수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D' },
 };
-const OHENG_HAN_AVATAR: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
 
 function Avatar({ profile, name }: { profile?: SajuProfile; name?: string }) {
   // 일주 천간/오행 추출
@@ -284,24 +283,7 @@ function Avatar({ profile, name }: { profile?: SajuProfile; name?: string }) {
       aria-hidden="true"
     >
       {ilgan}
-      <span
-        style={{
-          position: 'absolute',
-          top: -5,
-          right: -4,
-          fontSize: 8.5,
-          fontWeight: 800,
-          padding: '1px 4px',
-          borderRadius: 999,
-          background: '#FFFFFF',
-          color: box.bg === '#FFFFFF' ? box.outline : box.bg === '#1A1A1A' ? '#1A1A1A' : box.bg,
-          border: `1.2px solid ${box.bg === '#FFFFFF' ? box.outline : box.bg === '#1A1A1A' ? '#1A1A1A' : box.bg}`,
-          lineHeight: 1.2,
-          letterSpacing: '0.04em',
-        }}
-      >
-        {OHENG_HAN_AVATAR[ohengKr]}
-      </span>
+      {/* 2026-10-15 — 모서리 8.5px 오행 한자 알약 배지 삭제 (13px 미만 + 알약 금지). 오행은 칸 색으로 이미 보인다 */}
     </div>
   );
 }

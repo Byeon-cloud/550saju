@@ -78,7 +78,7 @@ const LOADING_STEPS = [
   `${TY}년 세운과 사주를 맞춰보고 있어요...`,
   '365일 일진에서 좋은 날과 조심할 날을 고르고 있어요...',
   '열두 달 흐름을 달마다 풀고 있어요...',
-  '결정 타이밍과 개운 조언을 정리하고 있어요...',
+  '결정하기 좋은 때와 운을 여는 방법을 정리하고 있어요...',
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -177,7 +177,7 @@ export function TojungPage() {
       setResult(res.content);
       setArrivedNy({ A: true, B: true, C: true });
       const rid = res.reportId || generateId();
-      saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', aiResult: res.content, createdAt: new Date().toISOString() });
+      saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'tojung', spentUn: NEWYEAR_PRICE, aiResult: res.content, createdAt: new Date().toISOString() });
       clearPendingSpendByType('tojung'); // 결과 저장 완료 → 자동환불 대상 제외
       setShareReportId(rid);
       setPhase('result');
@@ -216,7 +216,7 @@ export function TojungPage() {
         <FadeIn>
           <ExtensionHero
             theme={EXTENSION_THEME.tojung}
-            sub={`${TY}년 한 해를 내 사주로 열두 달 미리 봅니다`}
+            sub={`${TY}년 한 해를 내 사주로 열두 달 미리 봐요`}
             rightLabel={`歲 ${TY}`}
           />
         </FadeIn>

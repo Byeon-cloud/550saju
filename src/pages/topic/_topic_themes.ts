@@ -296,7 +296,7 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     hanja: '官',
     sec01Hanja: '官星',
     sec01Title: '직업운 핵심 흐름',
-    heroH1: { line1: '쌓아올리는 자리와', line2: '커리어의 기운' },
+    heroH1: { line1: '쌓아올리는 자리와', line2: '일의 기운' },
     accent: '#8C6D3D', // 2026-10-10 v9 주제별 색 폐기 (금 하나)
     accentDark: '#7A5C2E',
     accentSoft: 'rgba(140,109,61,0.10)',
@@ -317,7 +317,7 @@ export const TOPIC_THEMES: Record<TopicKey, TopicTheme> = {
     dontFocus: '식상 폭주 시기 충돌 금지, 충돌기 사직 금지, 정관 약함 시기 자만 금지',
     luckyFocus: 'amplify',
     pullQuoteHint: '직업 변곡점과 자리의 기운을 한 줄로',
-    upsellHint: '평생 커리어 흐름을 사주 전체로 보면',
+    upsellHint: '평생 일의 흐름을 사주 전체로 보면',
     heroBaseGrad: 'linear-gradient(135deg, #1A1A1A 0%, #1F2530 50%, #14181F 100%)',
     ohengAffinity: ['금', '토'],
   },

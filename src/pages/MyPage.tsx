@@ -35,7 +35,7 @@ const C = {
   paper:    '#F8F5EE',
   ink:      '#1A1A1A',
   inkSoft:  '#3D3D3D',
-  mute:     '#7A7269',
+  mute:     '#6F6557',
   gold:     '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -141,14 +141,17 @@ export function MyPage() {
     }
   };
 
-  /* 비로그인 → 로그인 모달 즉시 노출 (§2-1) */
+  /* 비로그인 → 로그인 모달 즉시 노출 (§2-1) — 웹 전용.
+   *  2026-10-15 — 앱인토스는 토스 로그인만 허용. 익명 로그인이 늦거나 실패하면 앱에서 카카오, 네이버, 구글, Apple
+   *  시트가 뜨던 구멍 → 앱 빌드와 토스 안에서는 절대 열지 않는다 (렌더도 아래에서 게이트). */
   useEffect(() => {
+    if (inAppsInToss) { setShowLoginModal(false); return; }
     if (!loading && !realLoggedIn) {
       setShowLoginModal(true);
     } else {
       setShowLoginModal(false);
     }
-  }, [loading, realLoggedIn]);
+  }, [inAppsInToss, loading, realLoggedIn]);
 
   const onMenuClick = (item: MenuItem) => {
     if (item.id === 'contact') { setShowContact(true); return; }
@@ -287,13 +290,15 @@ export function MyPage() {
         <LegalFooter />
       </div>
 
-      {/* ── LoginModal (§2-2) ── */}
-      <LoginModal
-        open={showLoginModal}
-        onClose={onCloseLoginModal}
-        toast={toast}
-        onLogin={login}
-      />
+      {/* ── LoginModal (§2-2) — 웹 전용 (앱인토스는 토스 로그인만) ── */}
+      {!inAppsInToss && (
+        <LoginModal
+          open={showLoginModal}
+          onClose={onCloseLoginModal}
+          toast={toast}
+          onLogin={login}
+        />
+      )}
 
       {/* ── ContactSheet (§4-4) ── */}
       <ContactSheet
@@ -312,7 +317,7 @@ export function MyPage() {
           탈퇴하면 사주 분석 기록, 프로필, 대화 기록이 모두 삭제되며 되돌릴 수 없어요.
         </p>
         <p className="text-caption text-text-muted leading-relaxed mb-5">
-          단, 전자상거래법에 따라 결제 기록은 5년간 별도 보관됩니다.
+          단, 전자상거래법에 따라 결제 기록은 5년 동안 따로 보관해요.
         </p>
         <div className="flex gap-2">
           <button
@@ -584,7 +589,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
 
   // 사주 입력 안 된 경우 — fallback 헤더 (Stage 7e-7: 워딩 자연스럽게)
   if (!myProfile || !sajuSummary) {
-    const greeting = name ? `${name} 님` : '환영합니다';
+    const greeting = name ? `${name} 님` : '반가워요';
     return (
       <div className="relative overflow-hidden rounded-2xl mb-4"
         style={{ padding: '18px 20px', background: C.goldSoft, boxSizing: 'border-box' }}>
@@ -617,7 +622,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
               padding: '8px 14px', fontSize: 13.5, fontWeight: 800, cursor: 'pointer',
             }}
           >
-            사주 입력 →
+            사주 입력 ›
           </button>
         </div>
       </div>
@@ -683,18 +688,9 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
         <div style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 800, color: C.ink, letterSpacing: '-0.01em' }}>
           {name ? `${name} 님` : '나의 사주'}
         </div>
-        <div
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full"
-          style={{
-            background: '#FFFFFF',
-            border: `1px solid rgba(184,150,90,0.40)`,
-            boxShadow: '0 2px 4px rgba(184,150,90,0.10)',
-          }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.gold }} />
-          <span style={{ fontSize: 13, fontWeight: 800, color: C.goldDeep }}>
-            잔여 운 {balance}운
-          </span>
+        {/* 2026-10-15 — 알약 배지(흰 바탕, 금색 점과 금색 글자) → 먹 글자만 (금색은 누르는 버튼에만) */}
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.mute }}>
+          남은 운 <b style={{ fontWeight: 800, color: C.ink }}>{balance}운</b>
         </div>
       </div>
 
@@ -723,12 +719,8 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
               fontSize: 13,
               fontWeight: 800,
               color: accentColor,
-              letterSpacing: '0.14em',
+              letterSpacing: '0.04em',
               marginBottom: 6,
-              padding: '3px 10px',
-              border: `1.2px solid ${accentColor}77`,
-              borderRadius: 999,
-              background: '#FFFFFF',
             }}
           >
             나의 일주
@@ -793,15 +785,9 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
           {sajuSummary.personality && (
             <div
               style={{
-                display: 'inline-block',
-                fontSize: 13.5,
-                color: accentColor,
-                fontWeight: 800,
-                letterSpacing: '0.02em',
-                padding: '3px 9px',
-                background: '#FFFFFF',
-                border: `1px solid ${accentColor}66`,
-                borderRadius: 999,
+                fontSize: 14,
+                color: C.ink,
+                fontWeight: 700,
                 marginBottom: 10,
               }}
             >
@@ -952,7 +938,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
                 padding: '4px 6px',
                 background: '#FFFFFF',
                 border: `1.5px solid ${isStrong ? box.outline : isMissing ? C.line : `${box.outline}55`}`,
-                borderRadius: 100,
+                borderRadius: 2,
                 opacity: isMissing ? 0.5 : 1,
               }}
             >
@@ -990,8 +976,6 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
             <span style={{ fontSize: 13.5, color: C.mute, fontWeight: 700, minWidth: 44 }}>일주</span>
             <span style={{
               fontSize: 14, fontWeight: 800, color: '#1A1A1A',
-              background: `${accentColor}15`, padding: '3px 9px', borderRadius: 100,
-              border: `1px solid ${accentColor}50`,
             }}>
               {sajuSummary.ilgan && sajuSummary.ilji ? `${({ 甲:'갑', 乙:'을', 丙:'병', 丁:'정', 戊:'무', 己:'기', 庚:'경', 辛:'신', 壬:'임', 癸:'계' } as any)[sajuSummary.ilgan] || ''}${({ 子:'자', 丑:'축', 寅:'인', 卯:'묘', 辰:'진', 巳:'사', 午:'오', 未:'미', 申:'신', 酉:'유', 戌:'술', 亥:'해' } as any)[sajuSummary.ilji] || ''}` : ''}
               <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 13.5, fontWeight: 600, opacity: 0.72 }}>
@@ -1018,24 +1002,15 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
           {sajuSummary.knownSinsal.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13.5, color: C.mute, fontWeight: 700, minWidth: 44 }}>신살</span>
-              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', flex: 1 }}>
+              {/* 2026-10-15 — 종류별 색 바탕 알약 → 글자만 (길성 송록, 흉살 석간주, 그 밖 먹), 쉼표로 나열 */}
+              <div style={{ flex: 1, fontSize: 14, lineHeight: 1.6 }}>
                 {sajuSummary.knownSinsal.slice(0, 4).map((s, i) => {
-                  // 길성 = 녹색 / neutral = 골드 / 살 = 갈색-주황 (너무 빨갛지 않게)
                   const isGil = s.category === 'gilsin';
                   const isHyung = s.category === 'hyungsal';
-                  const styling = isGil
-                    ? { color: '#1B5E2C', border: 'rgba(78,122,87,0.45)', bg: 'rgba(78,122,87,0.08)' }
-                    : isHyung
-                      ? { color: '#A14A14', border: 'rgba(180,80,30,0.40)', bg: 'rgba(180,80,30,0.06)' }
-                      : { color: C.goldDeep, border: `${C.gold}55`, bg: '#FFFFFF' };
+                  const color = isGil ? '#4E7A57' : isHyung ? '#B04A38' : C.ink;
                   return (
-                    <span key={i} style={{
-                      fontSize: 13.5, fontWeight: 700,
-                      color: styling.color,
-                      background: styling.bg,
-                      padding: '3px 10px', borderRadius: 100,
-                      border: `1px solid ${styling.border}`,
-                    }}>
+                    <span key={i} style={{ fontWeight: 700, color }}>
+                      {i > 0 && <span style={{ color: C.mute, fontWeight: 400 }}>, </span>}
                       {s.name}
                       {s.hanja && s.hanja !== s.name && (
                         <span style={{ marginLeft: 3, fontSize: 13, opacity: 0.72, fontWeight: 600 }}>({s.hanja})</span>
@@ -1051,7 +1026,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
               <span style={{ fontSize: 13.5, color: C.mute, fontWeight: 700, minWidth: 44 }}>공망</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>
                 {sajuSummary.ilGongmang.hangul}
-                <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 13.5, fontWeight: 600, color: '#7A7269' }}>
+                <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 13.5, fontWeight: 600, color: '#6F6557' }}>
                   ({sajuSummary.ilGongmang.공망})
                 </span>
               </span>
@@ -1089,12 +1064,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
                     <span style={{ fontSize: 13.5, color: '#3D3427', fontWeight: 600 }}>
                       {sajuSummary.currentDaeun.시작나이}~{sajuSummary.currentDaeun.끝나이}세
                     </span>
-                    <span style={{
-                      fontSize: 14, fontWeight: 800, color: '#1A1A1A',
-                      background: '#FFFFFF', padding: '2px 10px', borderRadius: 100,
-                      border: `1.5px solid ${C.gold}`,
-                      boxShadow: `0 1px 3px ${C.gold}33`,
-                    }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A' }}>
                       {toHangulGanji(sajuSummary.currentDaeun.천간, sajuSummary.currentDaeun.지지)}
                       <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 13.5, opacity: 0.72, fontWeight: 600 }}>
                         ({sajuSummary.currentDaeun.간지})
@@ -1108,11 +1078,7 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
                     <span style={{ fontSize: 13.5, color: '#3D3427', fontWeight: 600 }}>
                       {sajuSummary.currentYear}년
                     </span>
-                    <span style={{
-                      fontSize: 14, fontWeight: 800, color: '#1A1A1A',
-                      background: '#FFFFFF', padding: '2px 10px', borderRadius: 100,
-                      border: `1.5px solid ${C.gold}77`,
-                    }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A' }}>
                       {toHangulGanji(sajuSummary.yearlyUn.천간, sajuSummary.yearlyUn.지지)}
                       <span style={{ marginLeft: 4, fontFamily: SERIF, fontSize: 13.5, opacity: 0.72, fontWeight: 600 }}>
                         ({sajuSummary.yearlyUn.간지})
@@ -1193,7 +1159,7 @@ function LoginModal({ open, onClose, toast, onLogin }: {
       // Apple Service ID 미설정 시 Firebase가 auth/operation-not-supported-in-this-environment 등 반환
       const code: string = err?.code || '';
       if (provider === 'apple' && (code.includes('operation-not-supported') || code.includes('configuration-not-found'))) {
-        toast.show('Apple 로그인은 곧 활성화됩니다', 'info');
+        toast.show('지금은 Apple 로그인을 쓸 수 없어요. 다른 방법으로 로그인해 주세요', 'info');
       } else {
         toast.show('로그인에 실패했어요. 다시 시도해 주세요.', 'warning');
       }
@@ -1327,7 +1293,7 @@ function LoginModal({ open, onClose, toast, onLogin }: {
               <button type="button" className="underline tap-pad" onClick={() => navigate('/terms')}>이용약관</button>
               과{' '}
               <button type="button" className="underline tap-pad" onClick={() => navigate('/privacy')}>개인정보처리방침</button>
-              에 동의한 것으로 간주합니다.
+              에 동의한 것으로 봐요.
             </p>
           </motion.div>
         </>

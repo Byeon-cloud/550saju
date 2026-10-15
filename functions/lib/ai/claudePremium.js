@@ -30,9 +30,14 @@ const promptsV3_2 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
 const kstTime_1 = require("../utils/kstTime");
 const lunar_javascript_1 = require("lunar-javascript");
+const sinsal_1 = require("./sinsal");
 const sajuFacts_1 = require("./sajuFacts");
 const claudeTopic_1 = require("./claudeTopic");
 const DEFAULT_PREMIUM_MODEL = claudeClient_1.CLAUDE_MODEL.opus;
+/** 짚기 질문을 맡지 않은 그룹에 붙이는 한 줄 (10-15) */
+const NO_HOOK_LINE = `
+
+## 이 그룹에서는 '혹시 ~했나요?' 같은 짚는 질문을 쓰지 않는다. 지난 일은 다른 장에서 이미 물었다. 확정표의 시기는 단정 문장의 근거로만 쓴다.`;
 const GROUP_FOCUS = {
     A: `## Group A — 원국과 천간지지 (이 그룹 필드만 출력)
 
@@ -46,7 +51,7 @@ const GROUP_FOCUS = {
    <b>검정볼드 — 한자 용어 첫 등장 시각 인식</b> (예: "<b>병화(丙火)</b>는 한낮의 태양")
    <u>황금밑줄 — 시기, 숫자, 구체 행동</u> (예: "<u>3~4년 주기</u>로 큰 전환")
 ⚠️ 소름 포인트 1~2개 + 긍정 강조 1~2개 + 명확한 방향성
-⚠️ 짚기 자리 (2026-10-14): §01 원국 본문(summary 와 sections[0])은 첫 문장에서 이 사주만의 구조를 단정하고, 둘째 문단 첫머리에서 '지난 일 짚기'를 한 번 한다(확정표의 지난 해 중 가장 센 해). 천간지지 본문에서는 묻지 않는다.
+⚠️ 짚기 자리 (2026-10-14, 10-15 정리): 지난 일 짚기 질문은 §01 원국 본문 sections[0] 의 둘째 문단 첫머리에서 딱 한 번(확정표의 지난 해 중 가장 센 해). summary 와 천간지지 본문, 대운 장, 그 밖의 모든 필드에서는 '혹시 ~했나요?' 질문을 쓰지 않는다(한 편에 같은 해를 세 번 물은 실측).
 
 JSON 1개로 응답:
 {
@@ -233,7 +238,8 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
             // 2차 캐시 — 사주 base (모든 그룹 공통)
             { type: 'text', text: sajuBase, cache_control: { type: 'ephemeral' } },
         ],
-        messages: [{ role: 'user', content: userSituation + (group === 'A' || group === 'B' ? promptsV3_1.READING_VOICE_BLOCK : '') + promptsV3_1.TONE_FINAL_CHECK }],
+        // 2026-10-15 — 짚기 질문은 A(§01 원국)와 B(연운 첫머리 '요즘')에서 한 번씩만. C, D 는 같은 확정표를 받아도 묻지 않게 막는다
+        messages: [{ role: 'user', content: userSituation + (group === 'A' || group === 'B' ? promptsV3_1.READING_VOICE_BLOCK : NO_HOOK_LINE) + promptsV3_1.TONE_FINAL_CHECK }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('premium', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
     const text = msg.content[0].text || '';
@@ -531,8 +537,6 @@ function buildSajuBaseBlock(sajuData) {
         : '미상';
     const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
     const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
-    const gilsin = sajuData.gilsin?.map((s) => s.이름한자 || s.이름).join(', ') || '없음';
-    const hyungsal = sajuData.hyungsal?.map((s) => s.이름한자 || s.이름).join(', ') || '없음';
     // ── 명리학 SSOT 주입 (2026-06-26 회귀금지) — premium 이 십성분포/강약/득령을 0개 주입받아 천간-only 로
     //   재계산 → "관성 0개"(천간만) vs 오늘운세 "관성 1개"(지장간 포함) 콘텐츠 간 카운트 모순(무속 신호).
     //   claudeReport 와 동일하게 calculator.myeongriAnalysis 를 주입해 십성 개수·강약을 단일화. ──
@@ -555,14 +559,13 @@ ${pillarsText}
 ## 오행 분포
 목 ${elements.목 || 0}, 화 ${elements.화 || 0}, 토 ${elements.토 || 0}, 금 ${elements.금 || 0}, 수 ${elements.수 || 0}
 
-## 십성: ${sipsung || '미상'}${myeongriSection}
+${(0, sajuFacts_1.sajuCoreFactsText)(sajuData)}${myeongriSection}${(0, sajuFacts_1.daeunScoreText)(sajuData)}
 
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지와 순서를 절대 바꾸지 말 것 — 이전/다음 대운 간지를 임의로 만들거나 뒤바꾸지 말고 위 목록 그대로 인용.` : ''}
 
-## 길신: ${gilsin}
-## 흉살: ${hyungsal}
+${(0, sinsal_1.myeongriSinsalText)(p)}
 
 ## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}
 

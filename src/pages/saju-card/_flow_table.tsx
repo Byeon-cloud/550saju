@@ -257,7 +257,7 @@ function FlowCell({
         style={{
           fontSize: 13,
           fontWeight: 700,
-          color: highlighted ? ringColor : '#7A7269',
+          color: highlighted ? ringColor : '#6F6557',
           letterSpacing: '0.04em',
         }}
       >
@@ -279,7 +279,7 @@ function FlowCell({
           style={{
             fontSize: 13,
             fontWeight: 700,
-            color: sipMeta?.color ?? '#7A7269',
+            color: sipMeta?.color ?? '#6F6557',
             background: sipMeta?.soft ?? 'rgba(122,114,105,0.06)',
             padding: '1px 6px',
             borderRadius: 4,
@@ -296,7 +296,7 @@ function FlowCell({
         <div
           style={{
             fontSize: 13,
-            color: '#7A7269',
+            color: '#6F6557',
             fontFamily: SERIF,
             letterSpacing: '0.02em',
           }}
@@ -486,7 +486,7 @@ function FlowSection({
         >
           {title}
         </span>
-        <span style={{ fontSize: 13, color: '#7A7269', fontFamily: SERIF }}>
+        <span style={{ fontSize: 13, color: '#6F6557', fontFamily: SERIF }}>
           {hanja}
         </span>
         {onMore && (
@@ -505,7 +505,7 @@ function FlowSection({
               borderRadius: 4,
             }}
           >
-            더 자세히 →
+            더 자세히 ›
           </button>
         )}
       </div>
@@ -513,7 +513,7 @@ function FlowSection({
         <div
           style={{
             fontSize: 13,
-            color: '#7A7269',
+            color: '#6F6557',
             marginBottom: 10,
             fontStyle: 'normal',
           }}
@@ -552,7 +552,7 @@ function FlowEmptyCard({ label, msg }: { label: string; msg: string }) {
           padding: '20px 0',
           textAlign: 'center',
           fontSize: 13,
-          color: '#7A7269',
+          color: '#6F6557',
           fontStyle: 'normal',
         }}
       >
@@ -711,7 +711,7 @@ function MiniFlowCell({
           style={{
             fontSize: 13,
             fontWeight: 700,
-            color: sipMeta?.color ?? '#7A7269',
+            color: sipMeta?.color ?? '#6F6557',
             background: sipMeta?.soft ?? 'rgba(122,114,105,0.06)',
             padding: '1px 6px',
             borderRadius: 4,
@@ -720,7 +720,7 @@ function MiniFlowCell({
           {sipsung}
         </div>
       )}
-      <div style={{ fontSize: 13, color: '#7A7269' }}>{bottomLabel}</div>
+      <div style={{ fontSize: 13, color: '#6F6557' }}>{bottomLabel}</div>
     </div>
   );
 }

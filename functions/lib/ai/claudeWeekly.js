@@ -7,6 +7,9 @@ const claudeClient_1 = require("../shared/claudeClient");
 const sajuFacts_1 = require("./sajuFacts");
 const promptsV3_1 = require("./promptsV3"); // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 const kstTime_1 = require("../utils/kstTime");
+/** 2026-10-15 프롬프트 캐싱 — 2차 다듬기 호출이 1차 프롬프트를 그대로 다시 보내므로, 첫 사용자 메시지를
+ *  캐시해 두 번째 호출이 5% 값으로 읽게 한다(Sonnet 5.5 캐시 읽기 0.05배). 내용은 그대로. 운영 기록상 월운과 주간은 캐시 0%였다. */
+const cachedPrompt = (prompt) => [{ type: 'text', text: prompt + promptsV3_1.TONE_FINAL_CHECK, cache_control: { type: 'ephemeral' } }];
 const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
 /** 2026-10-13 — 다른 콘텐츠와 같은 복구 파서(코드블록 제거, 문자열 안 줄바꿈 이스케이프, jsonrepair). 실패 시 null */
 const tryParse = (text) => { try {
@@ -34,7 +37,7 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
     const first = await anthropic.messages.create({
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 12000,
-        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
+        messages: [{ role: 'user', content: cachedPrompt(prompt) }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', claudeClient_1.CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -44,7 +47,7 @@ async function generateWeeklyFortune(apiKey, sajuData, weekDays) {
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 12000,
         messages: [
-            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
+            { role: 'user', content: cachedPrompt(prompt) },
             { role: 'assistant', content: firstText },
             { role: 'user', content: buildReviewPrompt(days) + promptsV3_1.TONE_FINAL_CHECK },
         ],
@@ -68,7 +71,7 @@ async function generateWeeklyDraft(apiKey, sajuData, weekDays) {
     const first = await anthropic.messages.create({
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 12000,
-        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
+        messages: [{ role: 'user', content: cachedPrompt(prompt) }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('weekly', claudeClient_1.CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -90,7 +93,7 @@ async function generateWeeklyRefine(apiKey, sajuData, weekDays, draft) {
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 12000,
         messages: [
-            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
+            { role: 'user', content: cachedPrompt(prompt) },
             { role: 'assistant', content: JSON.stringify(draft) },
             { role: 'user', content: buildReviewPrompt(days) + promptsV3_1.TONE_FINAL_CHECK },
         ],
@@ -135,18 +138,18 @@ function buildPrompt(d, days) {
 ⚠️ 운세 기간: ${rangeStr} (구매일 전날부터 7일, 아래 '7일 일진' 표의 날짜, 요일, 간지를 그대로 사용)
 - 🚨 이 운세는 달력상 월~일 한 주가 아니라 '오늘(전날 포함) 기준으로 흘러가는 7일'(rolling 7일)이다. '이번 주(달력 주)'가 아니라 '이 7일' / '오늘부터 7일' 흐름으로 서술하라.
 - 🚨 **시제(時制) 룰 — 절대 준수**: 이 7일은 '어제(첫날)'부터 시작한다. 즉 dailyBreakdown 의 **첫 항목(어제)과 오늘 이전의 날들은 이미 지나간 날**이다.
-  **지난 날(어제~오늘 이전)** → body, action 을 **반드시 과거형**으로: "~였을 겁니다 / ~한 기운이 흘렀어요 / ~을 조심했어야 합니다 / ~하면 좋았어요 / ~한 하루였습니다". 절대 "~하세요 / ~을 조심하세요" 같은 미래와 명령형 X (이미 지난 날에게 명령할 수 없다).
+  **지난 날(어제~오늘 이전)** → body, action 을 **반드시 과거형**으로: "~한 기운이 흐른 날이었습니다 / ~가 걸린 하루였습니다" 처럼 담담하게. '~했어야 합니다, ~했어야 좋았어요, ~미뤘어야' 같은 핀잔투는 쓰지 않는다(지난 날을 탓하지 않는다). 절대 "~하세요 / ~을 조심하세요" 같은 미래와 명령형 X (이미 지난 날에게 명령할 수 없다).
   **오늘 이후(오늘 포함)** → **미래, 현재, 명령형**으로: "~하세요 / ~을 조심하세요 / ~한 기운이 흐릅니다 / ~한 날입니다".
-  형태 예시 — 어제(첫날, 과거형): "어제는 OO했을 겁니다. OO은 피했어야 좋았어요."
+  형태 예시 — 어제(첫날, 과거형): "어제는 OO한 기운이 흐른 날이었습니다. 그 흐름은 오늘 OO으로 이어집니다."
   형태 예시 — 모레(미래형): "모레는 OO한 날입니다. OO을 먼저 해 보세요."
   (OO 은 그날 일진과 이 사주에서 실제로 나오는 내용으로 채운다. 예시 문장을 그대로 옮기지 말 것)
-  7일 표에서 어느 날이 '오늘'인지: 첫 항목이 어제이므로 **두 번째 항목(index 1)이 오늘**. 그 앞은 과거형, 그날부터는 미래와 명령형.
+  7일 표에서 어느 날이 '오늘'인지: 첫 항목이 어제이므로 **두 번째 항목(index 1)이 오늘(${days[1]?.date || ''} ${days[1]?.day || ''}요일)**. 그 앞 하루만 과거형, 오늘부터는 현재와 미래형. 오늘을 '지난 ${days[1]?.day || ''}요일'처럼 지난 날로 쓰지 않는다.
 
 ## 사주 원국
 ${pillarsText}일간: ${ilgan}
 
 ## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
-## 십성: ${sipsung || '미상'}
+${(0, sajuFacts_1.sajuCoreFactsText)(d)}
 ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 신년운세와 같은 값): 용신 ${d.myeongriAnalysis.용신}, 희신 ${d.myeongriAnalysis.희신 || '미상'}, 기신 ${d.myeongriAnalysis.기신 || '미상'}. 개운 처방과 행운 색, 방위는 이 용신으로만. 다른 오행을 용신이라고 쓰지 말 것.` : ''}
 
 ## 이 7일 일진 (오늘 전날부터 흐르는 rolling 7일, 정확 계산 — 이 간지를 그대로 인용, 절대 임의로 바꾸지 말 것)
@@ -189,10 +192,10 @@ ${days.map((x) => (0, sajuFacts_1.natalRelationsText)(x.ganji, d, `${x.day}요�
   "bestDay": "요일(월~일 중)",
   "cautionDay": "요일(월~일 중)",
   "keyDays": [
-    {"day":"요일","date":"M/D","type":"best 또는 caution","reason":"80자 이상, 🚨 해당일 일진 간지 × 일간 ${ilgan} 직접 호명 + 구체 행동. 🚨 시제: 지난 날(어제~오늘 이전)을 가리키면 과거형('~였습니다 / ~했어야 합니다'), 오늘 이후면 미래와 명령형('~하세요')."}
+    {"day":"요일","date":"M/D","type":"best 또는 caution","reason":"80자 이상, 🚨 해당일 일진 간지 × 일간 ${ilgan} 직접 호명 + 구체 행동. 🚨 시제: 어제를 가리키면 담담한 과거형('~한 날이었습니다', 핀잔투 금지), 오늘 이후면 미래와 권유형('~하세요')."}
   ],
   "dailyBreakdown": [
-    {"day":"월","date":"M/D","ganji":"해당일 일진 간지(위 표 그대로)","score":1-100,"tone":"한 줄 요약(15자 이내)","body":"150자 이상, 🚨 그날 일진 간지 × 일간 ${ilgan} 충/합 직접 호명. 🚨 시제: 첫 항목(어제), 오늘 이전 날은 과거형('~였을 겁니다 / ~한 기운이 흘렀어요'), 오늘 이후는 미래와 현재형('~한 날입니다 / ~한 기운이 흐릅니다').","action":"행동팁 1가지, 🚨 지난 날이면 과거형('~했어야 좋았어요 / ~을 조심했어야 합니다'), 오늘 이후면 명령형('~하세요 / ~을 조심하세요')"}
+    {"day":"월","date":"M/D","ganji":"해당일 일진 간지(위 표 그대로)","score":1-100,"tone":"한 줄 요약(15자 이내)","body":"150자 이상, 🚨 그날 일진 간지 × 일간 ${ilgan} 충/합 직접 호명. 🚨 시제: 첫 항목(어제), 오늘 이전 날은 과거형('~였을 겁니다 / ~한 기운이 흘렀어요'), 오늘 이후는 미래와 현재형('~한 날입니다 / ~한 기운이 흐릅니다').","action":"행동팁 1가지, 🚨 어제 칸이면 그 흐름을 오늘 어떻게 이어 갈지('오늘은 ~하세요'), 오늘 이후면 권유형('~하세요 / ~을 조심하세요'). '~했어야' 금지"}
   ],
   "weekLesson": "150자 이상. 이 7일(오늘부터 7일) 전체를 관통하는 교훈 + 실천 1가지(명령형). 🚨 시제: 지난 날(어제~오늘 이전)의 흐름을 짚을 땐 과거형('이번 7일 초반엔 ~한 기운이 흘렀습니다'), 실천 제안은 오늘 이후를 향한 명령형('남은 날엔 ~하세요')."
 }
@@ -211,7 +214,7 @@ function buildReviewPrompt(days) {
 6. score 7일이 5의 배수 반복 없이 서로 다른 자연수로 굴곡지는가?
 7. weekHeadline 이 일상어 결론 + 후크인가? 시적 비유와 외계어 0건?
 8. bestDay/cautionDay 가 월~일 중 하나이고 dailyBreakdown 점수와 모순 없는가?
-9. 🚨 시제(時制): dailyBreakdown 의 **첫 항목(어제), 오늘 이전 날**의 body, action 이 모두 **과거형**('~였을 겁니다 / ~한 기운이 흘렀어요 / ~했어야 합니다 / ~하면 좋았어요')인가? 지난 날에 '~하세요 / ~을 조심하세요' 같은 미래와 명령형을 쓰지 않았는가? **오늘 이후**는 미래와 명령형인가? keyDays.reason, weekLesson 도 지난 날 언급 시 과거형인가?
+9. 🚨 시제(時制): dailyBreakdown 의 **첫 항목(어제), 오늘 이전 날**의 body, action 이 모두 **담담한 과거형**('~한 날이었습니다')이고 '~했어야' 같은 핀잔투가 없는가? 오늘을 지난 날로 쓰지 않았는가? 지난 날에 '~하세요 / ~을 조심하세요' 같은 미래와 명령형을 쓰지 않았는가? **오늘 이후**는 미래와 명령형인가? keyDays.reason, weekLesson 도 지난 날 언급 시 과거형인가?
 
 고칠 게 없으면 그대로, 있으면 보정해서 최종 JSON 출력.`;
 }

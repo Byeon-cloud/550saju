@@ -18,7 +18,7 @@ import { BUSINESS_INFO } from '@/constants/businessInfo';
 const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   line: '#E5DFD0',

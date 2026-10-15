@@ -26,7 +26,7 @@ import { useSajuContext } from '@/contexts/SajuContext';
 import { calculateSaju } from '@/services/saju/calculator';
 
 export function PremiumSelectPage() {
-  usePageTitle('종합 사주 풀이');
+  usePageTitle('종합사주');
   useSeoMeta({
     description: '10개 운으로 보는 인생 전체 풀이. 정통 명리학 6대 원전 기반 종합사주 프리미엄 리포트, 사주500.',
   });
@@ -65,7 +65,7 @@ export function PremiumSelectPage() {
     // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
     import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumPricing.actualPrice)).catch(() => {});
 
-    toast.show(`${premiumPricing.actualPrice}운 차감 (잔액 ${getBalance()}운): 종합 사주 시작`, 'success');
+    toast.show(`${premiumPricing.actualPrice}운 차감 (잔액 ${getBalance()}운): 종합사주를 시작해요`, 'success');
     sajuCtx.setInput(selected.input as any);
     sajuCtx.setSajuData(sajuData);
     // Phase 4 (2026-05-27) — LoadingPage 우회, 결과 페이지 직진 + fresh SSE
@@ -77,7 +77,7 @@ export function PremiumSelectPage() {
   if (profiles.length === 0) {
     return (
       <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
-        <Header title="종합 사주" />
+        <Header title="종합사주" />
         <NeedSaju mark="命" desc="태어난 날과 시간으로 열 장을 엮어요. 사주를 먼저 넣어 주세요." onClick={() => navigate('/input?from=home_body_premium')} />
       </div>
     );
@@ -90,7 +90,7 @@ export function PremiumSelectPage() {
 
   return (
     <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
-      <Header title="종합 사주" />
+      <Header title="종합사주" />
 
       {/* Hero — ExtensionHero 패턴 통일 (gradient + 한자 워터마크 + seal + crumb + tier 칩) */}
       <FadeIn>
@@ -174,7 +174,7 @@ export function PremiumSelectPage() {
                 fontWeight: 600,
               }}
             >
-              종합 사주
+              종합사주
             </span>
             {/* 2026-05-28 PM — 세일 chip (10운 → 5운 런칭 세일 ~ 2026-06-15) */}
             {(() => {
@@ -219,10 +219,10 @@ export function PremiumSelectPage() {
               position: 'relative',
             }}
           >
-            한 사주의 기운을<br />처음부터 끝까지 풀어드립니다
+            한 사주의 기운을<br />처음부터 끝까지 풀어 드려요
           </h1>
           <div style={{ fontSize: 13.5, opacity: 0.85, marginTop: 4, position: 'relative' }}>
-            원국, 천간지지, 십성, 용신, 대운, 연운, 신살, 관계, 주제, 실천, 10 섹션 깊이 풀이.
+            원국, 천간과 지지, 십성, 용신, 대운, 연운, 신살, 관계, 주제, 실천까지 열 장으로 깊이 풀어요.
           </div>
         </header>
       </FadeIn>

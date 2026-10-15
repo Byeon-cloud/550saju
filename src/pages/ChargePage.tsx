@@ -23,7 +23,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -439,7 +439,7 @@ export function ChargePage() {
       {/* ─── §8. Notice (이용 정책) ─── */}
       <div style={{ padding: '20px 20px 8px', marginTop: 12 }}>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          보너스 운은 환불 대상에서 제외됩니다 (본 운만 환불 가능).
+          보너스 운은 환불되지 않아요. 결제한 운만 환불할 수 있어요.
         </p>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           구매한 운은 계정 종료 시 소멸돼요.
@@ -654,7 +654,7 @@ export function ChargePage() {
 
                     {/* 테스트 안내 — 작게 (심사 기간 한정) */}
                     <p style={{ fontSize: 13, color: C.mute, margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
-                      지금은 결제 시스템 점검 중이에요, 실제로 청구되지 않고 자동 취소됩니다
+                      지금은 결제 시스템을 점검하고 있어요. 실제로 청구되지 않고 자동으로 취소돼요
                     </p>
                   </motion.div>
                 </>

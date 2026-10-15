@@ -27,7 +27,7 @@ export const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -270,7 +270,7 @@ export function ConvertUnModal({
       ? '1운으로 대화 3회를 이어갈 수 있어요. 아니면 내일 다시 만나요.'
       : noBalance
       ? '운을 충전하면 대화를 이어갈 수 있어요.'
-      : '슬라이더로 변환할 운의 수를 정해주세요.';
+      : '바꿀 운을 골라 주세요. 1운에 대화 3번이에요.';
 
   return (
     <AnimatePresence>
@@ -377,44 +377,49 @@ export function ConvertUnModal({
                       marginBottom: 8,
                     }}
                   >
-                    <span style={{ fontSize: 13.5, color: C.inkSoft }}>
-                      변환할 운
+                    <span style={{ fontSize: 14, color: C.inkSoft }}>
+                      바꿀 운
                     </span>
-                    <span
+                    <span style={{ fontSize: 14, color: C.mute }}>
+                      대화 {ticketsGain}번
+                    </span>
+                  </div>
+                  {/* 2026-10-15 — 운이 움직이는 조작이라 슬라이더(손가락이 미끄러지면 최댓값) 대신 한 칸씩 고르는 버튼 */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <button
+                      type="button"
+                      onClick={() => setAmount(Math.max(1, safeAmount - 1))}
+                      disabled={safeAmount <= 1}
+                      aria-label="1운 줄이기"
                       style={{
-                        fontSize: 16,
-                        fontWeight: 800,
-                        color: C.goldDeep,
+                        width: 48, height: 48, borderRadius: 12, border: `1px solid ${C.line}`,
+                        background: '#FFFFFF', color: C.ink, fontSize: 22, fontWeight: 700,
+                        cursor: safeAmount <= 1 ? 'default' : 'pointer', opacity: safeAmount <= 1 ? 0.35 : 1,
                       }}
                     >
-                      {safeAmount}운 → {ticketsGain}대화권
+                      −
+                    </button>
+                    <span aria-live="polite" style={{ fontSize: 22, fontWeight: 800, color: C.ink }}>
+                      {safeAmount}운
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setAmount(Math.min(Math.max(1, maxConvertible), safeAmount + 1))}
+                      disabled={safeAmount >= Math.max(1, maxConvertible)}
+                      aria-label="1운 늘리기"
+                      style={{
+                        width: 48, height: 48, borderRadius: 12, border: `1px solid ${C.line}`,
+                        background: '#FFFFFF', color: C.ink, fontSize: 22, fontWeight: 700,
+                        cursor: safeAmount >= Math.max(1, maxConvertible) ? 'default' : 'pointer',
+                        opacity: safeAmount >= Math.max(1, maxConvertible) ? 0.35 : 1,
+                      }}
+                    >
+                      +
+                    </button>
                   </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={Math.max(1, maxConvertible)}
-                    value={safeAmount}
-                    onChange={(e) => setAmount(Number(e.target.value))}
-                    aria-label="변환할 운 수"
-                    style={{
-                      width: '100%',
-                      accentColor: C.gold,
-                      cursor: 'pointer',
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 13,
-                      color: C.mute,
-                      marginTop: 4,
-                    }}
-                  >
-                    <span>1</span>
-                    <span>{Math.max(1, maxConvertible)}</span>
-                  </div>
+                  <p style={{ fontSize: 13, color: C.mute, marginTop: 8, textAlign: 'center' }}>
+                    지금 바꿀 수 있는 운은 {Math.max(1, maxConvertible)}운까지예요
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -434,7 +439,7 @@ export function ConvertUnModal({
                     boxShadow: '0 10px 22px rgba(140,109,61,.26), inset 0 1px 0 rgba(255,255,255,.45)',
                   }}
                 >
-                  {safeAmount}운 → {ticketsGain}대화권 바꾸기
+                  {safeAmount}운을 대화 {ticketsGain}번으로 바꾸기
                 </button>
               </>
             )}
@@ -457,7 +462,7 @@ export function ConvertUnModal({
                   marginBottom: 8,
                 }}
               >
-                대화권 {reverseBlocks * CREDITS_PER_UN}개 → {reverseBlocks}운으로
+                대화권 {reverseBlocks * CREDITS_PER_UN}개를 {reverseBlocks}운으로
                 되돌리기
               </button>
             )}
@@ -515,7 +520,7 @@ export function ConvertUnModal({
                   lineHeight: 1.55,
                 }}
               >
-                환원된 운은 결제 환불 대상이 아니에요 (어뷰징 방지)
+                대화권에서 되돌린 운은 결제 환불이 되지 않아요
               </p>
             )}
           </motion.div>

@@ -40,6 +40,12 @@ function yearPillar(y) {
  *   달마다 '좋은 날·조심할 날'(일진 × 용신·희신·기신·천을귀인·일지충)과 달 기준 점수는 서버 확정값 →
  *   그룹 간 점수·판정이 엇갈리지 않고, 날짜는 만세력 그대로. */
 const NEWYEAR_MODEL = process.env.SAJU_PREMIUM_MODEL || claudeClient_1.CLAUDE_MODEL.opus;
+const NY_NO_HOOK_LINE = `
+
+## 이 그룹에서는 '혹시 ~했나요?' 같은 짚는 질문을 쓰지 않는다(총운에서 한 번 했다). 확정표의 시기는 단정 문장의 근거로만 쓴다.`;
+const NY_ABS_TIME_LINE = `
+
+## 시점 표기: '작년', '올해', '내년' 같은 상대 표현 대신 '2026년 8월', '2027년 3월'처럼 연도를 붙여 쓴다. 독자는 지금(현재 날짜) 이 글을 읽는다. '장면이 보여요' 같은 신점 말투는 쓰지 않는다.`;
 async function callNyGroup(anthropic, shared, group, ty) {
     const user = nyGroupInstruction(group, ty);
     const MAX = { A: 9000, B: 9000, C: 9000 };
@@ -49,7 +55,8 @@ async function callNyGroup(anthropic, shared, group, ty) {
             model: NEWYEAR_MODEL,
             max_tokens: MAX[group],
             system: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: user + (group === 'A' ? promptsV3_1.READING_VOICE_BLOCK : '') + promptsV3_1.TONE_FINAL_CHECK }],
+            // 2026-10-15 — 짚기 질문은 A 의 총운 한 곳만. 월별 그룹(B, C)은 묻지 않고, 시기는 '작년, 올해' 대신 연도로 쓴다(독자는 2026년에 2027년 운세를 읽는다)
+            messages: [{ role: 'user', content: user + (group === 'A' ? promptsV3_1.READING_VOICE_BLOCK : NY_NO_HOOK_LINE) + NY_ABS_TIME_LINE + promptsV3_1.TONE_FINAL_CHECK }],
         });
         try {
             (0, aiUsageLog_1.logAnthropicUsage)('tojung', NEWYEAR_MODEL, msg, t0);
@@ -251,7 +258,7 @@ ${gwiin || '미산출'}
 ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 
 ## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
-## 십성: ${sipsung || '미상'}
+${(0, sajuFacts_1.sajuCoreFactsText)(d)}
 
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}

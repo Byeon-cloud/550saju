@@ -21,7 +21,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',

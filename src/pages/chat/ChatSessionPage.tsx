@@ -325,7 +325,7 @@ function buildContextPrompt(ctx: any, userName: string): string {
       });
     }
     // 영역별 (재물·직업·애정·건강) — 이번 달 점수
-    const DOMAINS: [string, string][] = [['wealth', '재물운'], ['career', '직업운'], ['love', '애정운'], ['health', '건강운']];
+    const DOMAINS: [string, string][] = [['wealth', '재물운'], ['career', '직업운'], ['love', '연애운'], ['health', '건강운']];
     DOMAINS.forEach(([key, nm]) => {
       const dm = fullResult?.[key];
       if (!dm || (dm.score == null && !dm.body)) return;
@@ -671,8 +671,8 @@ export function ChatSessionPage() {
     } else if (ctxType === 'premium') {
       const title = contentContext?.fullResult?.title ? String(contentContext.fullResult.title).trim() : '';
       greeting = title
-        ? `${userName} 님, "${title}" 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`
-        : `${userName} 님 종합 사주 풀이를 보고 오셨네요. 10섹션 중 더 깊이 풀고 싶은 부분 편하게 물어보세요.`;
+        ? `${userName} 님, "${title}" 종합사주 풀이를 보고 오셨네요. 열 장 가운데 더 깊이 알고 싶은 부분을 편하게 물어보세요.`
+        : `${userName} 님 종합사주 풀이를 보고 오셨네요. 열 장 가운데 더 깊이 알고 싶은 부분을 편하게 물어보세요.`;
       defaultQuestions = ['내 사주의 가장 강한 오행은?', '올해 가장 큰 변곡점은 언제?', '직업, 재물, 연애 중 어느 운세가 가장 좋아요?'];
     } else if (ctxType === 'weekly') {
       // 2026-09-17 — 주간운세 결과 → 사주대화 (한 줄 요약 인용)
@@ -713,7 +713,7 @@ export function ChatSessionPage() {
       defaultQuestions = ['올해 나에게 가장 좋은 달은?', '내 사주의 가장 강한 오행은?', '요즘 고민이 있어요'];
     } else {
       greeting = '편하게 물어보세요. 사주를 등록하면 더 정확한 맞춤 풀이가 가능해요.';
-      defaultQuestions = ['내 연애 스타일이 궁금해요', '올해 운세가 궁금해요', '사주로 뭘 알 수 있나요?'];
+      defaultQuestions = ['내 연애 성향이 궁금해요', '올해 운세가 궁금해요', '사주로 뭘 알 수 있나요?'];
     }
     // 2026-10-09 — 결과가 만든 맞춤 질문(주제·오늘 nextHooks.chatQuestions / 종합 chatQuestions) 우선 — 일반 질문보다 클릭이 붙는다
     {
@@ -863,7 +863,7 @@ export function ChatSessionPage() {
         id: Date.now().toString(36) + '_ai',
         role: 'assistant',
         content: result.answer,
-        keywords: result.keywords || ['더 자세히 알려줘', '다른 질문할게'],
+        keywords: result.keywords || ['더 자세히 알려 주세요', '다른 걸 물어볼게요'],
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMsg]);
@@ -882,7 +882,7 @@ export function ChatSessionPage() {
         id: Date.now().toString(36) + '_ai',
         role: 'assistant',
         content: '잠시 풀이가 막혔어요. 다시 한번 물어봐주세요. (대화권은 차감되지 않았어요)',
-        keywords: ['다시 질문할게'],
+        keywords: ['다시 물어볼게요'],
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMsg]);

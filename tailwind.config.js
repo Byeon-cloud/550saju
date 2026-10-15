@@ -15,7 +15,7 @@ export default {
           'gold-light': '#E8D9B8', // 라이트 골드 — SSOT --brand-gold-light
           'gold-vivid': '#8C6D3D', // 딥 골드 (호버/프레스) — SSOT --gold-deep
           hover: '#8C6D3D',        // 골드 호버 — SSOT --gold-deep
-          muted: '#8B8070',        // 뮤트
+          muted: '#6F6557',        // 뮤트 (2026-10-15 v9 보조 글자색)
         },
         bg: {
           page: '#F4EFE4',
@@ -26,7 +26,7 @@ export default {
           primary: '#1A1612',
           secondary: '#4B4238',
           muted: '#6F6557',
-          hint: '#8B8070',
+          hint: '#6F6557',         // 2026-10-15 #8B8070 → #6F6557 (종이 위 대비 3.4:1 → 5:1 이상, v9 보조 글자색)
           disabled: '#CFC6B6',
         },
         border: {

@@ -112,7 +112,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                         <path d="M8 11V7a4 4 0 018 0v4" />
                       </svg>
                       <p className="text-[13px] font-bold" style={{ color: '#E8D5A8' }}>
-                        잠금 해제하고 전체 보기 →
+                        잠금 풀고 전체 보기 ›
                       </p>
                     </div>
                   </div>

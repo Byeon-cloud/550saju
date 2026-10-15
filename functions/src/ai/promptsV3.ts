@@ -306,12 +306,8 @@ SELF_REVIEW_V3 에서 reject → 사주 인용 보강 후 재출력.
 - ✅ "{이름} 님은 OO한 사람입니다." / "이 시기는 OO한 때입니다." / "지금 {이름} 님은 OO하고 있습니다."
 - 사주 근거를 짧게 붙이면 단정이 더 설득력 있어진다. 근거 < 결론.
 
-**③ 과거 적중 훅 (소름 — 주요 섹션마다 1회 이상)**
-독자가 "어? 내 얘기네?" 하고 멈추게 만드는, 과거를 콕 집는 질문을 박아라.
-- ✅ "혹시 예전에 ~한 일이 있지 않았나요?"
-- ✅ "유독 ~할 때 ~하지 않으셨나요?"
-- ✅ "지난 몇 년, ~ 때문에 마음고생 하셨죠?"
-공식: [사주 글자 근거] → [그 사람만 겪었을 구체적 과거 장면]. 누구에게나 맞는 일반론(X).
+**③ 짚어 주는 질문 (한 편에 한두 번까지)**
+짚는 질문은 '지난 시기와 지금 시기 확정표'(사용자 프롬프트에 있을 때)의 연도나 달이 들어갈 때만, 한 편에 한두 번까지 쓴다. 날짜 없이 성격이나 버릇을 짐작해 묻는 질문('유독 ~하지 않으셨나요?', '혹시 예전에 ~한 일이 있지 않았나요?')은 누구에게나 맞는 말이라 쓰지 않는다. 확정표가 없으면 질문 없이 사주 글자를 근거로 단정해서 짚는다. (2026-10-15 정리: 예전 '주요 섹션마다 1회 이상' 규칙은 폐기)
 
 **④ 명령형 솔루션 — 분명한 지시 (애매한 권유 X)**
 - ✅ "앞으로는 이렇게 하세요." / "~는 피하고 ~를 선택하세요." / "9월에 움직이세요."
@@ -430,7 +426,7 @@ export const GOOSEBUMP_BLOCK = `
    공식: **[사주 글자와 구조 근거] + [무엇이] + [언제/어떻게]** — 셋 중 하나라도 빠지면 무내용 단정이다.
    시기는 '몇 월'까지, 대상은 '무엇이'까지 좁혀라. 넓은 범위로 도망치지 마라.
 2. **단정형** — "{이름} 님은 OO한 사람입니다." "이 시기는 ~한 때입니다." 사주 근거를 짧게 붙이면 단정이 더 설득력 있어진다 (근거 < 결론).
-3. **과거 적중 훅 (소름, 주요 섹션마다 1회+)** — 독자가 "어? 내 얘기네?" 하고 멈추게: "혹시 예전에 ~한 일이 있지 않았나요?" / "유독 ~할 때 ~하지 않으셨나요?" 공식: [사주 글자 근거] → [그 사람만 겪었을 구체 과거 장면]. 누구에게나 맞는 일반론 X.
+3. **짚어 주는 질문 (한 편에 한두 번까지)** — 짚는 질문은 '지난 시기와 지금 시기 확정표'(사용자 프롬프트에 있을 때)의 연도나 달이 들어갈 때만, 한 편에 한두 번까지 쓴다. 날짜 없이 성격이나 버릇을 짐작해 묻는 질문('유독 ~하지 않으셨나요?', '혹시 예전에 ~한 일이 있지 않았나요?')은 누구에게나 맞는 말이라 쓰지 않는다. 확정표가 없으면 질문 없이 사주 글자를 근거로 단정해서 짚는다. (2026-10-15 정리: 예전 '주요 섹션마다 1회 이상' 규칙은 폐기)
 4. **명령형 솔루션** — 분명한 지시: "앞으로는 이렇게 하세요." "~는 피하고 ~를 선택하세요." 애매한 권유("~하는 것도 좋습니다", "~를 고려해보세요", "상황에 따라 다릅니다") 금지. 방향은 분명하게, 말투는 내 편인 어른처럼.
 5. **루즈함 차단 (동어반복 0)** — 같은 메시지를 앞, 중간, 끝에서 반복 금지. 각 단락은 새 정보. 구구절절, 동어반복, "앞서 말했듯" 류 금지. 분량은 사주 근거와 구체 장면과 실천 지시로 채운다 (같은 말 늘려쓰기 X).
 `;
@@ -655,8 +651,8 @@ ${data.name} 님 사주(${data.ilgan} 일간)와 꿈을 1:1로 연결해 풀이.
 ## 🔴 절대 금지 (위반=reject)
 
 **A. 한자와 사주용어 단독 노출** — 반드시 [일상어] 먼저, (한자) 보조
-- ❌ "지지에 유(酉), 신(申) 금 기운 두 개" → ✅ "<b>쇠 기운 두 개(유와 신)</b>가 박혀 있어요"
-- ❌ "토생금으로 에너지 내보내는 구조" → ✅ "흙이 쇠를 만드는 흐름이라 <strong>주는 것에 익숙해요</strong>"
+- ❌ "지지에 유(酉), 신(申) 금 기운 두 개" → ✅ "<b>쇠 기운 두 개(유와 신)</b>가 들어 있습니다"
+- ❌ "토생금으로 에너지 내보내는 구조" → ✅ "흙이 쇠를 만드는 흐름이라 <strong>주는 것에 익숙합니다</strong>"
 - ❌ "정사(丁巳) 대운" → ✅ "<b>불 기운이 강한 시기(정사 대운)</b>"
 - ❌ "정관 3개", "식신생재", "충/합" → 풀어쓰기 ("나를 누르는 기운 3개" "재능이 돈을 만드는 구조")
 
@@ -685,7 +681,7 @@ ${data.name} 님 사주 = 불 ${data.ohengDistribution.화 ?? 0}, 흙 ${data.ohe
 ### B. 출력 JSON 스키마
 
 {
-  "title": "꿈의 시적 제목 10~20자",
+  "title": "이 꿈이 무엇을 말하는지 평범한 말로 쓴 제목 10~20자 (비유 금지)",
   "score": 0~100 정수,
   "grade": "S|A|B|C|D (점수 구간과 일치: S 85+, A 70~84, B 55~69, C 40~54, D 39 이하)",
   "verdict": "판정 2~3문장, 총 80~120자",
@@ -855,7 +851,7 @@ ${data.category}
 ### B. 출력 JSON 스키마 v4.1 (엄수, 총 2800자+ 하한)
 
 {
-  "title": "꿈의 시적 제목 10~20자",
+  "title": "이 꿈이 무엇을 말하는지 평범한 말로 쓴 제목 10~20자 (비유 금지)",
   "score": 0~100 정수,
   "grade": "S|A|B|C|D",
   //  ↑ S=85+, A=70-84, B=55-69, C=40-54, D=0-39 엄격 연동
@@ -1174,7 +1170,7 @@ export const DREAM_DEEP_USER_V3 = (data: {
   freeResultSummary: { title: string; verdict: string; symbols: string[] };
 }): string => `## 유저 정보
 (사주 풀 데이터 — 십성 테이블, 지장간, 용신, 대운과 세운 3년 포함)
-${JSON.stringify(data.sajuData, null, 2)}
+${JSON.stringify(data.sajuData, null, 2)}${sajuCoreFactsText(data.sajuData)}
 
 이름: ${data.name}
 
@@ -1282,7 +1278,7 @@ export const DAILY_FORTUNE_USER_V3 = (data: {
   tomorrowDate?: string;
 }): string => `## 유저 정보
 이름: ${data.name}
-사주: ${JSON.stringify(data.sajuData, null, 2)}
+사주: ${JSON.stringify(data.sajuData, null, 2)}${sajuCoreFactsText(data.sajuData)}
 ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT, 결정론 산출 — 종합사주와 주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신}, 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'}, 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색, 방위, 음식, 숫자, 글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
@@ -1376,8 +1372,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
 
   // ── §01 헤더 + 오늘의 결 ──────────────────────────────
   "title": "12자 내외, 오늘 핵심 톤 한 줄 (헤드라인 용)
-    예: '나무에 햇살이 닿는 날.' 'mockup §01 의 h1 톤'
-    한자 0, 일상어, 시적 표현 OK",
+    오늘 무엇을 하면 좋은지 평범한 말로. 한자 0, 일상어, 비유 금지 (예시 문장을 그대로 옮기지 말 것)",
   "grade": "S|A|B|C|D",
   "overallScore": 0~100 정수,
   //  ↑ S=85+, A=70-84, B=55-69, C=40-54, D=0-39, 4축 평균 ±5 한도
@@ -1462,7 +1457,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
       "type": "boost",
       "glyphs": ${dailyMeetGlyphJson(data.sajuData, 'boost')},
       "title": "끌어주는 사람",
-      "tag": "+ 보완",
+      "tag": "도움",
       "desc": "120자+, 첫 문장 = 분위기/행동/옷차림. 형태: '<u>OO한 분위기</u>의 사람, <u>OO색 계열</u> 옷을 자주 입는 사람이 오늘 {이름} 님을 채워줍니다. OO한 대화를 좋아하는 편. <strong>이런 사람을 만나면 OO이 자연스럽게 정리</strong>됩니다. (근거 한 줄은 B-2 확정 오행 기준)' (OO 은 이 사주와 오늘 일진에서 나온 내용, 예시 문장 그대로 옮기지 말 것)",
       "ohengHint": "수|목|화|토|금"
     },
@@ -1470,7 +1465,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
       "type": "clash",
       "glyphs": ${dailyMeetGlyphJson(data.sajuData, 'clash')},
       "title": "부딪힐 수 있는 사람",
-      "tag": "⚠ 주의",
+      "tag": "부딪힘",
       "desc": "120자+, 첫 문장 = 분위기/행동/옷차림. 형태: '<u>OO한 톤</u>의 사람, <u>OO색 계열</u> 옷을 즐겨 입는 사람과는 오늘 마찰이 생깁니다. OO하는 편. <strong>OO은 한 박자 늦추는 게 낫습니다</strong>. (근거 한 줄은 B-2 확정 오행 기준)' (OO 은 이 사주와 오늘 일진에서 나온 내용, 예시 문장 그대로 옮기지 말 것)",
       "ohengHint": "..."
     },
@@ -1478,7 +1473,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
       "type": "calm",
       "glyphs": ${dailyMeetGlyphJson(data.sajuData, 'calm')},
       "title": "편안한 사람",
-      "tag": "≈ 평행",
+      "tag": "편안함",
       "desc": "120자+, 첫 문장 = 분위기/행동/옷차림. 형태: '<u>OO색</u> 옷차림에 OO한 사람이 가장 편합니다. OO한 대화를 좋아하는 편. <strong>OO 같은 가벼운 만남에 맞습니다</strong>. (근거 한 줄은 B-2 확정 오행 기준)' (OO 은 이 사주와 오늘 일진에서 나온 내용, 예시 문장 그대로 옮기지 말 것)",
       "ohengHint": "..."
     }
@@ -1516,8 +1511,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
   },
 
   // ── §07 한 문장 + 내일 미리보기 (mockup §07) ──────────────────────────────
-  "dailyQuote": "60~80자, pullquote 톤. 시적과 여운 있는 한 문장. 명리 한자 노출 금지 (일상어).
-    예: '햇살이 좋은 날일수록, 그림자에서 결정을 내려라.'",
+  "dailyQuote": "60~80자, 오늘 하루에 붙잡을 평범한 조언 한 문장. 비유, 격언투, 명령조 금지. 명리 한자 금지 (일상어). 형태: '~하는 날입니다. ~하세요.'",
   "tomorrow": {
     "date": "${data.tomorrowDate || ''}",
     "ganzi": "${data.tomorrowGanzi || ''}",
@@ -1605,7 +1599,7 @@ export const DAILY_FORTUNE_USER_V3_GROUP_A1 = (data: {
   baseScores100?: { wealth: number; love: number; career: number; health: number };
 }): string => `## 유저 정보
 이름: ${data.name}
-사주: ${JSON.stringify(data.sajuData, null, 2)}
+사주: ${JSON.stringify(data.sajuData, null, 2)}${sajuCoreFactsText(data.sajuData)}
 ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT, 결정론 산출 — 종합사주와 주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신}, 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'}, 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색, 방위, 음식, 숫자, 글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
@@ -1628,7 +1622,7 @@ overallScore 는 4축 평균 ±5 한도.
 이 호출은 mockup §01 헤더 + §02 4영역 점수 1줄 카피 만 책임집니다. 나머지 (todayNarrative, pillarMessages, timeSlots, meetPeople 등) 는 별도 병렬 호출에서 생성되니 **이 응답에 포함하지 마세요**.
 
 ### A. 톤 핵심 (위반 시 재작성)
-- **title 한자 0개**. 일상어 + 시적 표현.
+- **title 한자 0개**. 일상어, 비유 금지.
 - **출처 mention 0건**.
 - **이름은 1~2회만**.
 
@@ -1640,7 +1634,7 @@ overallScore 는 4축 평균 ±5 한도.
   "title": "12자 내외, 오늘 핵심 톤 한 줄, 한자 0",
   "grade": "S|A|B|C|D",
   "overallScore": 0~100,
-  "scoreHeadline": "30자 내외, 왜 이 점수인지",
+  "scoreHeadline": "30자 내외, 왜 이 점수인지 생활 말로. 용신, 천간, 지지, 십성 같은 명리 용어 금지",
   "myToday": "30자 내외, ${data.name}님에게 오늘이 어떤 날인지",
   "keywords": ["2~4자 명사 × 5"],
   "subScores": {"wealth": 0~100, "love": 0~100, "career": 0~100, "health": 0~100},
@@ -1674,7 +1668,7 @@ export const DAILY_FORTUNE_USER_V3_GROUP_A2 = (data: {
   baseScores100?: { wealth: number; love: number; career: number; health: number };
 }): string => `## 유저 정보
 이름: ${data.name}
-사주: ${JSON.stringify(data.sajuData, null, 2)}
+사주: ${JSON.stringify(data.sajuData, null, 2)}${sajuCoreFactsText(data.sajuData)}
 ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT, 결정론 산출 — 종합사주와 주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신}, 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'}, 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색, 방위, 음식, 숫자, 글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
@@ -1762,7 +1756,7 @@ export const DAILY_FORTUNE_USER_V3_GROUP_B = (data: {
   tomorrowDate?: string;
 }): string => `## 유저 정보
 이름: ${data.name}
-사주: ${JSON.stringify(data.sajuData, null, 2)}
+사주: ${JSON.stringify(data.sajuData, null, 2)}${sajuCoreFactsText(data.sajuData)}
 ${(data.sajuData as any)?.myeongriAnalysis?.용신 ? `\n## 용신 (SSOT, 결정론 산출 — 종합사주와 주제운과 동일 소스): 용신 ${(data.sajuData as any).myeongriAnalysis.용신}, 희신 ${(data.sajuData as any).myeongriAnalysis.희신 || '-'}, 기신 ${(data.sajuData as any).myeongriAnalysis.기신 || '-'}\n  ※ luckyProfile(색, 방위, 음식, 숫자, 글자)는 전부 이 용신(${(data.sajuData as any).myeongriAnalysis.용신}) 오행 하나로 도출. 오늘 일진/대운/결손 오행으로 색 뽑지 말 것 — 재계산 금지.\n` : ''}
 ## 오늘 정보
 - 날짜: ${data.date} (${data.weekday})
@@ -1818,7 +1812,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
       "type": "boost",
       "glyphs": ${dailyMeetGlyphJson(data.sajuData, 'boost')},
       "title": "끌어주는 사람",
-      "tag": "+ 보완",
+      "tag": "도움",
       "desc": "120자+, 부족한 오행을 채워주는 인연. 일간 호명 + 행동/옷차림 단서.",
       "ohengHint": "수|목|화|토|금"
     },
@@ -1826,7 +1820,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
       "type": "clash",
       "glyphs": ${dailyMeetGlyphJson(data.sajuData, 'clash')},
       "title": "부딪힐 수 있는 사람",
-      "tag": "⚠ 주의",
+      "tag": "부딪힘",
       "desc": "120자+, 일간을 압박하는 자리. 회의/협상에서 부딪히기 쉬운 인연.",
       "ohengHint": "..."
     },
@@ -1834,7 +1828,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
       "type": "calm",
       "glyphs": ${dailyMeetGlyphJson(data.sajuData, 'calm')},
       "title": "편안한 사람",
-      "tag": "≈ 평행",
+      "tag": "편안함",
       "desc": "120자+, 안정감을 주는 인연. 잡담/식사/산책 상대.",
       "ohengHint": "..."
     }
@@ -1952,11 +1946,9 @@ ${context.floors ? `## 필드별 글자수 하한 (floor — 미달 시 reject)\
       발견 시 해당 문장 **단정형 + 사주 근거**로 교체.
       (허용 예외: 조언 필드 — doList/actionAdvice/rituals의 "~해 볼 수 있습니다",
        "~추천드립니다"는 OK)
-- [ ] **과거 적중 훅 1회+ (소름)**:
-      주요 서사 섹션(narrative, sajuTone, interpretation, sections 등)마다
-      "혹시 예전에 ~한 일이 있지 않았나요?" / "유독 ~할 때 ~하지 않으셨나요?" 류
-      **과거를 콕 집는 훅이 1회 이상** 들어갔는가? (사주 글자 근거 → 그 사람만의 구체 과거 장면)
-      누구에게나 맞는 일반론이면 Fail — 그 사람만의 장면으로 재작성.
+- [ ] **짚는 질문 (한 편에 한두 번)**:
+      지난 일을 묻는 질문에 확정표의 연도나 달이 들어갔는가? 날짜 없이 성격을 짐작하는 질문은
+      단정 문장으로 바꾼다. 같은 해를 두 번 묻지 않는다. 질문이 세 번 이상이면 줄인다.
 - [ ] **명령형 솔루션 (분명한 지시)**:
       실천과 조언 문장이 "앞으로는 ~하세요" / "~는 피하고 ~를 선택하세요" 처럼
       **분명한 지시**인가? "~하는 것도 좋습니다" / "~를 고려해보세요" /
@@ -2058,7 +2050,7 @@ ${context.kind === 'topic' ? `
  * 실패 시 throw — 호출부에서 재시도 여부 결정.
  */
 import { jsonrepair } from 'jsonrepair';
-import { dailyMeetGlyphJson, dailyMeetPromptBlock, todayYongsinLine, todayRelationsText, todayHourWindows } from './sajuFacts';
+import { dailyMeetGlyphJson, dailyMeetPromptBlock, todayYongsinLine, todayRelationsText, todayHourWindows, sajuCoreFactsText } from './sajuFacts';
 
 /** parseJsonResponse 호출부에서 "jsonrepair 가 발동했는가" 관측용 플래그. */
 export interface ParseJsonMeta {
@@ -2149,7 +2141,10 @@ export const TONE_FINAL_CHECK = `
 - 가운뎃점(·)을 한 번도 쓰지 않는다. 나열은 쉼표(돈, 사랑, 일)나 '과/와'(변동과 갈등)로, 짧은 두 말도 문장으로 풀어 쓴다. 제목, 라벨, 본문 모두.
 - 사람은 '이름 님'으로만 부른다. '씨', '당신', '귀하'는 쓰지 않는다 (예: 서윤 님은, 서윤 님의). 이름을 모르면 호칭 없이 쓴다(주어를 빼거나 '이 꿈은', '이 사주는'처럼).
 - 긴 줄표(—)를 쓰지 않는다. 덧붙이는 말은 쉼표로 잇거나 문장을 끊는다. '~의 결' 같은 말버릇도 피한다.
-- '에너지', '패턴', '타입', '아이템', '시너지' 대신 '기운', '경향', '편', '물건', '어울림'을 쓴다. '폭발', '완벽', '놀라운' 같은 과장어와 '지금 당장 ~하세요' 같은 명령조 첫머리도 쓰지 않는다.`;
+- 풀이와 판단 문장이 '~예요, ~이에요, ~거든요, ~죠'로 끝나면 '~입니다, ~합니다'로 고친다. 해요체는 권유('~하세요'), 공감, 질문('~했나요?')에만 쓴다.
+- '~이 아니라 ~입니다', '~가 아니라 ~예요' 꼴의 문장을 쓰지 않는다. 하고 싶은 말만 바로 쓴다.
+- 시주(시간과 시지)를 하루 중 시간대로 풀지 않는다. 시주는 자녀와 아랫사람, 앞날 계획의 자리다.
+- '에너지', '패턴', '타입', '아이템', '시너지', '타이밍', '템포', '컨디션', '스트레스', '스타일' 대신 '기운', '경향', '편', '물건', '어울림', '시기', '속도', '몸 상태', '부담', '방식'을 쓴다. '폭발', '완벽', '놀라운' 같은 과장어와 '지금 당장 ~하세요' 같은 명령조 첫머리도 쓰지 않는다.`;
 
 
 /* ── 짚어 주는 풀이 (2026-10-14, 오너 지시 + 리서치 3건) ──
@@ -2161,11 +2156,11 @@ export const READING_VOICE_BLOCK = `
 
 ## 짚어 주는 풀이 (읽는 사람이 자기 일을 대입해 '이걸 어떻게 알았지' 하게)
 근거는 위 '지난 시기와 지금 시기 확정표'와 원국 글자뿐이다. 표에 없는 해, 달, 사건은 쓰지 않는다.
-1. 지난 일 짚기: 표에서 원국 자리를 가장 세게 건드린 해나 달 하나를 골라, 그 시기와 그 자리의 생활 영역 두세 가지를 묶어 묻는다. 사건은 질문으로 묻고, 원인은 단정으로 말한다.
-   형태: '{연도}년 무렵 {영역 두세 가지} 쪽에서 크게 흔들린 일이 있었나요? 그해 들어온 {글자}가 태어난 {자리}의 {글자}와 부딪혀서 생긴 일입니다.'
+1. 지난 일 짚기: 표에서 이 콘텐츠의 주제와 맞닿은 자리를 건드린 해나 달 하나를 고른다(표의 첫 줄만 고집하지 않는다). 그 시기와 그 자리의 생활 영역 두세 가지를 묶어 묻는다. 사건은 질문으로 묻고, 원인은 단정으로 말한다.
+   질문 문장은 매번 이 사람의 영역과 글자로 새로 쓴다. '크게 흔들린 일이 있었나요' 같은 정해진 틀을 되풀이하지 않는다. 담을 것은 시기(표의 연도나 달), 영역(두세 가지), 근거(들어온 글자와 부딪힌 자리)다.
    짚는 질문에는 반드시 확정표의 연도나 달이 들어간다. 성격이나 버릇을 묻는 질문은 짚기가 아니다. 질문은 한 편에 한두 번까지, 질문 뒤에는 바로 풀이를 잇는다. 지난 일은 그 질문 하나로만 묻고, 다른 지난 달을 '~했고, ~였습니다'처럼 일어난 사실로 늘어놓지 않는다(그 달은 '~가 걸린 달이었습니다'처럼 기운으로만). 이혼, 사고, 병, 누군가의 죽음 같은 구체 사건을 지어 단정하지 않는다. 입력하지 않은 사실(가족 구성, 직업, 외모)을 아는 척하지 않는다.
 2. 요즘 짚기: 최근 석 달 중 원국과 합충이 걸린 달이 있으면 '지난 N월부터'처럼 시작 시점을 대고 마음 쓰이는 영역을 짚은 뒤, 그 흐름이 언제까지 가고 언제부터 풀리는지 달로 말한다. 끝이 있다는 걸 알려 준다.
-3. 원인은 세 걸음: 들어온 글자, 그래서 생긴 일, 그 사람이 부족해서 생긴 일이 아니라는 한마디.
+3. 원인은 들어온 글자와 그래서 생긴 일로 말한다. 원인 문장 하나로 끝내고, '~가 아니라', '~탓이 아니라', '~해서가 아니라' 꼴의 위로를 덧붙이지 않는다(이 꼴은 어디에도 쓰지 않는다).
 4. 시기는 근거와 함께 콕 집는다('N월(○○월)', '입동 무렵', '대운이 바뀌는 N년'처럼 표의 값으로). 이유 없는 나이, '언젠가', '조만간', '때가 되면'은 쓰지 않는다.
 5. 성향과 판단은 단정한다. 장점과 그 그림자를 한 문장에 묶되 이 사주 글자를 근거로 붙인다. 반대 사주를 넣어도 맞는 문장, 누구에게나 맞는 문장은 지운다.
 6. 십성은 생활 장면 하나로 옮긴다(재성이면 정산하는 날과 계약서, 관성이면 회의실과 윗사람의 한마디).

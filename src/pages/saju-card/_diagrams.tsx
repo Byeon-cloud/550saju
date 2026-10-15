@@ -234,7 +234,7 @@ export function SipsungDonut({
     return (
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(184,150,90,0.18)" strokeWidth={stroke} />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={11} fill="#7A7269">
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={11} fill="#6F6557">
           데이터 없음
         </text>
       </svg>
@@ -304,7 +304,7 @@ export function SipsungDonut({
         textAnchor="middle"
         dominantBaseline="middle"
         fontSize={9}
-        fill="#7A7269"
+        fill="#6F6557"
         letterSpacing="0.05em"
       >
         十神 합계
@@ -347,7 +347,7 @@ export function SipsungLegend({ sipsung }: { sipsung: SipSung[] }) {
             }}
           />
           <span style={{ fontWeight: 700, color: '#1A1A1A', minWidth: 32 }}>{cat}</span>
-          <span style={{ color: '#7A7269', fontSize: 13 }}>{meanings[cat]}</span>
+          <span style={{ color: '#6F6557', fontSize: 13 }}>{meanings[cat]}</span>
           <span
             style={{
               marginLeft: 'auto',
@@ -441,7 +441,7 @@ export const UNSEONG_12_DETAILS: Record<string, Unseong12Detail> = {
   '목욕': {
     hanja: '沐浴', ko: '목욕',
     everyday: '사춘기: 흔들리고 매력이 피어나는 시기',
-    howToLive: '변화, 이동, 매력이 두드러지는 흐름. 한곳에 오래 머무는 게 답답하니 의식적으로 안정 루틴(운동, 취미, 관계) 한 가지는 잡아두세요.',
+    howToLive: '변화, 이동, 매력이 두드러지는 흐름. 한곳에 오래 머무는 게 답답하니 의식적으로 안정 습관(운동, 취미, 관계) 한 가지는 잡아두세요.',
     strength: '매력과 표현력, 사람들이 끌리는 흐름, 변화 적응',
     caution: '변동성 커서 결정 흔들림, 한 자리에 머무는 인내 필요',
   },
@@ -454,7 +454,7 @@ export const UNSEONG_12_DETAILS: Record<string, Unseong12Detail> = {
   },
   '건록': {
     hanja: '建祿', ko: '건록',
-    everyday: '커리어 안정기: 자기 발로 서서 월급 받는 시기',
+    everyday: '일의 안정기: 자기 발로 서서 월급 받는 시기',
     howToLive: '자기 발로 서는 가장 안정된 자리. 노력한 만큼 결실이 또렷하게 돌아오니, 꾸준한 실력 다지기와 자기 영역 구축에 집중하세요.',
     strength: '독립, 실력, 꾸준함, 책임감 강한 기질',
     caution: '너무 자기 결대로만 가면 외로워짐, 협업과 열린 자세 의식',
@@ -588,7 +588,7 @@ export function Component12Unseong({
     if (idx <= 5) return '#8C6D3D';      // 장생·목욕·관대 (성장) — 그린
     if (idx <= 7) return '#B8965A';      // 건록·제왕 (절정) — 골드
     if (idx <= 9) return '#D08F5A';      // 쇠·병 (쇠퇴) — 주황
-    return '#7A7269';                     // 사·묘 (정리) — 회색
+    return '#6F6557';                     // 사·묘 (정리) — 회색
   };
   const STAGE_PHASE_LABEL = (idx: number): string => {
     if (idx <= 1) return '시작 전';
@@ -739,10 +739,10 @@ export function Component12Unseong({
             )}
             <text
               x={s.labelX}
-              y={s.labelY - 5}
+              y={s.labelY - 8}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={s.hanja.length === 2 ? 11 : 14}
+              fontSize={s.hanja.length === 2 ? 13 : 15}
               fontWeight={isDayStage ? 900 : 600}
               fill={isDayStage ? '#8C6D3D' : phaseColor}
               fontFamily="'Noto Serif KR', serif"
@@ -752,12 +752,12 @@ export function Component12Unseong({
             </text>
             <text
               x={s.labelX}
-              y={s.labelY + 10}
+              y={s.labelY + 9}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={9}
+              fontSize={13}
               fontWeight={isDayStage ? 800 : 500}
-              fill={isDayStage ? '#8C6D3D' : '#7A7269'}
+              fill={isDayStage ? '#8C6D3D' : '#6F6557'}
               letterSpacing="0.02em"
             >
               {s.ko}
@@ -783,7 +783,7 @@ export function Component12Unseong({
                 <circle
                   cx={p.x}
                   cy={p.y}
-                  r={14}
+                  r={16}
                   fill="none"
                   stroke={dotColor}
                   strokeWidth={1}
@@ -792,7 +792,7 @@ export function Component12Unseong({
                 <circle
                   cx={p.x}
                   cy={p.y}
-                  r={11}
+                  r={13.5}
                   fill="none"
                   stroke={dotColor}
                   strokeWidth={1.8}
@@ -803,7 +803,7 @@ export function Component12Unseong({
             <circle
               cx={p.x}
               cy={p.y}
-              r={p.isDay ? 8 : 5.5}
+              r={p.isDay ? 11 : 9.5}
               fill={dotColor}
               stroke="#FFFFFF"
               strokeWidth={1.8}
@@ -813,7 +813,7 @@ export function Component12Unseong({
               y={p.y}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={p.isDay ? 9 : 7.5}
+              fontSize={13}
               fontWeight={900}
               fill="#FFFFFF"
               fontFamily="'Noto Serif KR', serif"
@@ -832,41 +832,31 @@ export function Component12Unseong({
         return (
           <g>
             {/* 중앙 박스 배경 */}
+            {/* 2026-10-15 — 13px 이상으로 키우며 상자를 넓히고, 왼쪽 색 띠(strip)는 삭제 (고서 디자인 규칙) */}
             <rect
-              x={cx - 56}
-              y={cy - 38}
-              width={112}
-              height={76}
+              x={cx - 64}
+              y={cy - 44}
+              width={128}
+              height={88}
               rx={14}
               fill="rgba(255,255,255,0.85)"
               stroke="rgba(184,150,90,0.40)"
               strokeWidth={1.2}
             />
-            {/* phase 컬러 strip 좌측 */}
-            <rect
-              x={cx - 56}
-              y={cy - 38}
-              width={4}
-              height={76}
-              rx={2}
-              fill={phaseColor}
-              opacity={0.85}
-            />
             <text
-              x={cx + 2}
-              y={cy - 26}
+              x={cx}
+              y={cy - 30}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={8.5}
+              fontSize={13}
               fill={phaseColor}
               fontWeight={800}
-              letterSpacing="0.16em"
             >
-              {phaseLabel.toUpperCase()}
+              {phaseLabel}
             </text>
             <text
-              x={cx + 2}
-              y={cy - 6}
+              x={cx}
+              y={cy - 8}
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={26}
@@ -877,25 +867,24 @@ export function Component12Unseong({
               {dayUnseong.hanja}
             </text>
             <text
-              x={cx + 2}
+              x={cx}
               y={cy + 14}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={11}
+              fontSize={13}
               fontWeight={800}
               fill="#1A1A1A"
-              letterSpacing="0.04em"
             >
               {dayUnseong.ko}
             </text>
             <text
-              x={cx + 2}
-              y={cy + 28}
+              x={cx}
+              y={cy + 31}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={9}
+              fontSize={13}
               fontWeight={500}
-              fill="#7A7269"
+              fill="#6F6557"
             >
               {dayUnseong.meaning}
             </text>
@@ -908,8 +897,8 @@ export function Component12Unseong({
           y={cy + 4}
           textAnchor="middle"
           dominantBaseline="central"
-          fontSize={11}
-          fill="#7A7269"
+          fontSize={13}
+          fill="#6F6557"
         >
           데이터 없음
         </text>
@@ -983,7 +972,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
               style={{
                 fontSize: 13,
                 fontWeight: 700,
-                color: isDay ? '#8C6D3D' : '#7A7269',
+                color: isDay ? '#8C6D3D' : '#6F6557',
                 letterSpacing: '0.05em',
                 marginBottom: 4,
               }}
@@ -993,7 +982,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
             <div
               style={{
                 fontSize: 13,
-                color: '#7A7269',
+                color: '#6F6557',
                 marginBottom: 6,
                 lineHeight: 1.3,
               }}
@@ -1028,7 +1017,7 @@ export function PillarSeasonRail({ pillars }: { pillars: Pillar[] }) {
                 <div
                   style={{
                     fontSize: 13,
-                    color: '#7A7269',
+                    color: '#6F6557',
                     marginTop: 4,
                     lineHeight: 1.3,
                   }}

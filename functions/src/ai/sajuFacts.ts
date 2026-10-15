@@ -133,6 +133,10 @@ const HANJA_FIX: Array<[RegExp, string]> = [
   [/财/g, '財'], [/伤/g, '傷'], [/杀/g, '殺'], [/临/g, '臨'], [/带/g, '帶'], [/长/g, '長'], [/绝/g, '絕'],
   [/养/g, '養'], [/驿/g, '驛'], [/贵/g, '貴'], [/华/g, '華'], [/马/g, '馬'], [/阳/g, '陽'], [/阴/g, '陰'],
   [/冲/g, '沖'], [/库/g, '庫'], [/禄/g, '祿'], [/门/g, '門'], [/关/g, '關'], [/贼/g, '賊'], [/时/g, '時'], [/败/g, '敗'],
+  // 2026-10-15 품질 점검 — 종합사주 신살 카드에 '月厌' 이 샜다. 납음(剑锋金, 山头火, 覆灯火, 炉中火 등)과 신살, 띠(鸡) 간체 추가
+  [/厌/g, '厭'], [/剑/g, '劍'], [/锋/g, '鋒'], [/头/g, '頭'], [/鸡/g, '鷄'], [/鸣/g, '鳴'], [/涧/g, '澗'], [/蜡/g, '蠟'], [/杨/g, '楊'],
+  [/雳/g, '靂'], [/灯/g, '燈'], [/钗/g, '釵'], [/钏/g, '釧'], [/炉/g, '爐'], [/罗/g, '羅'], [/岁/g, '歲'], [/学/g, '學'], [/将/g, '將'],
+  [/红/g, '紅'], [/艳/g, '艶'], [/归/g, '歸'], [/龙/g, '龍'], [/丧/g, '喪'], [/吊/g, '弔'], [/书/g, '書'], [/气/g, '氣'],
 ];
 /* 검증 불가 보장 문구 — 프롬프트로 금지해도 경량 모델이 가끔 쓰는 상투구 (10-07 운영 실측: 배포 후 오늘의 운세 2건) */
 const GUARANTEE_FIX: Array<[RegExp, string]> = [
@@ -144,7 +148,9 @@ function fixTime(s: string): string {
   return s
     // '오후 14~17시' → '오후 2~5시' (2026-10-08 실측 잔존)
     .replace(/(오전|오후)\s?(1[3-9]|2[0-3])\s?~\s?(1[3-9]|2[0-4])시/g, (_m, _ap, a, b) => `오후 ${Number(a) - 12}~${Number(b) - 12}시`)
-    .replace(/(오전|오후)\s?(1[3-9]|2[0-3])시/g, (_m, _ap, h) => `오후 ${Number(h) - 12}시`);
+    .replace(/(오전|오후)\s?(1[3-9]|2[0-3])시/g, (_m, _ap, h) => `오후 ${Number(h) - 12}시`)
+    // 2026-10-15 — '저녁 21시 30분', '밤 22시' 같은 섞인 표기 → 12시간제
+    .replace(/(저녁|밤)\s?(1[3-9]|2[0-3])시/g, (_m, w, h) => `${w} ${Number(h) - 12}시`);
 }
 /* ── 가운뎃점(·) 제거 (2026-10-10 오너: "· 는 AI만 쓰는 문장 구조, 다 빼라") ──
  *   클라 utils/noDot.ts 와 같은 본문 (10-11 v3: 나열 사슬은 쉼표, 홀로 붙인 짝만 과/와) /
@@ -218,6 +224,17 @@ const VOWEL_TO_CONS_J: Record<string, string> = {
 };
 const J_ALT = '예요|라서|라고|지만|여서|가|를|는|와|로|야|라|였|며|면|나|랑|든|죠|다';
 const ENERGY_RE = new RegExp(`에너지(${J_ALT})?(?![가-힣])|에너지(?=[가-힣])`, 'g');
+/** 받침 있는 말 → 받침 없는 말로 바꿀 때 조사 (타이밍이 → 시기가) */
+const CONS_TO_VOWEL_J: Record<string, string> = {
+  '이': '가', '을': '를', '은': '는', '과': '와', '으로': '로', '이야': '야', '이에요': '예요', '이라': '라', '이라서': '라서',
+  '이라고': '라고', '이지만': '지만', '이어서': '여서', '이었': '였', '이며': '며', '이면': '면', '이나': '나', '이랑': '랑', '이든': '든', '이죠': '죠', '이다': '다',
+};
+const C_ALT = '이에요|이라서|이라고|이지만|이어서|으로|이야|이라|이었|이며|이면|이나|이랑|이든|이죠|이다|이|을|은|과';
+const TIMING_RE = new RegExp(`타이밍(${C_ALT})?(?![가-힣])|타이밍(?=[가-힣])`, 'g');
+const CONDITION_RE = new RegExp(`컨디션(${C_ALT})?(?![가-힣])|컨디션(?=[가-힣])`, 'g');
+const STRESS_RE = new RegExp(`스트레스(${J_ALT})?(?![가-힣])|스트레스(?=[가-힣])`, 'g');
+const SENSE_RE = new RegExp(`센스(${J_ALT})?(?![가-힣])|센스(?=[가-힣])`, 'g');
+const KEYWORD_RE = new RegExp(`키워드(${J_ALT})?(?![가-힣])|키워드(?=[가-힣])`, 'g');
 const SYNERGY_RE = new RegExp(`시너지(${J_ALT})?(?![가-힣])|시너지(?=[가-힣])`, 'g');
 export function plainTone(s: string): string {
   if (!s) return s;
@@ -236,6 +253,14 @@ export function plainTone(s: string): string {
     t = t.replace(/패턴/g, '경향');
   }
   if (t.indexOf('아이템') >= 0) t = t.replace(/아이템/g, '물건');
+  // 2026-10-15 품질 점검 — 정리기에 안 걸리던 외래어. 받침이 달라지는 말은 조사를 함께 바꾼다
+  if (t.indexOf('타이밍') >= 0) t = t.replace(TIMING_RE, (_m: string, j?: string) => '시기' + (j ? (CONS_TO_VOWEL_J[j] ?? j) : ''));
+  if (t.indexOf('컨디션') >= 0) t = t.replace(CONDITION_RE, (_m: string, j?: string) => '몸 상태' + (j ? (CONS_TO_VOWEL_J[j] ?? j) : ''));
+  if (t.indexOf('스트레스') >= 0) t = t.replace(STRESS_RE, (_m: string, j?: string) => '부담' + (j ? (VOWEL_TO_CONS_J[j] ?? j) : ''));
+  if (t.indexOf('센스') >= 0) t = t.replace(SENSE_RE, (_m: string, j?: string) => '감각' + (j ? (VOWEL_TO_CONS_J[j] ?? j) : ''));
+  if (t.indexOf('키워드') >= 0) t = t.replace(KEYWORD_RE, (_m: string, j?: string) => '핵심' + (j ? (VOWEL_TO_CONS_J[j] ?? j) : ''));
+  if (t.indexOf('템포') >= 0) t = t.replace(/템포/g, '속도'); // 둘 다 받침 없음
+  if (t.indexOf('스타일') >= 0) t = t.replace(/스타일로(?![가-힣])/g, '방식으로').replace(/스타일/g, '방식'); // ㄹ받침 → ㄱ받침, '로'만 달라짐
   // 2026-10-14 — 5.5 세대가 '작은 리추얼로 삼으세요' 같은 외래어를 쓴다. 받침 있는 말끼리라 조사는 그대로
   if (t.indexOf('리추얼') >= 0 || t.indexOf('루틴') >= 0) t = t.replace(/리추얼|루틴/g, '습관');
   if (t.indexOf('폭발') >= 0) {
@@ -312,7 +337,8 @@ export function sanitizeAiOutput<T>(obj: T): T {
     if (Array.isArray(v)) return v.map(walk);
     if (v && typeof v === 'object') {
       const o: any = {};
-      for (const [k, x] of Object.entries(v)) o[k] = walk(x);
+      // 2026-10-15 — 스키마 주석 키('// 행운과 개운 SSOT' 등)를 모델이 그대로 출력하던 것 제거
+      for (const [k, x] of Object.entries(v)) { if (k.startsWith('//')) continue; o[k] = walk(x); }
       return o;
     }
     return v;
@@ -428,6 +454,48 @@ export function ganziRoleText(gz: string, sajuData: any, unit: '해' | '달' | '
 const CHUNG_PAIR: Record<string, string> = { 子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳' };
 const WEEK_KO = ['일', '월', '화', '수', '목', '금', '토'];
 /** 그 해 각 달의 좋은 날(최대 3)·조심할 날(최대 2) + 한 해 꼭 기억할 날(최대 6) — 일진 × 용신·희신·기신·천을귀인·일지충 */
+/** 그 달 하루하루의 일진 점수 — 용신 +2, 희신 +1, 기신 -2 (천간, 지지 각각), 천을귀인 +1, 일지 충 -2 */
+function scoreDaysOfMonth(year: number, m: number, sajuData: any): Array<{ label: string; score: number; why: string; chung: boolean }> {
+  const ma = sajuData?.myeongriAnalysis || {};
+  const y = ma.용신; const h = ma.희신; const k = ma.기신;
+  const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
+  const dayJi = String(sajuData?.pillars?.[2]?.지지 || '');
+  const cheoneul = CHEONEUL[dayGan] || [];
+  const role = (o: string) => (o === y ? 2 : o === h ? 1 : o === k ? -2 : 0);
+  const roleName = (o: string) => (o === y ? `용신(${o})` : o === h ? `희신(${o})` : '');
+  const days: Array<{ label: string; score: number; why: string; chung: boolean }> = [];
+  const last = new Date(year, m, 0).getDate();
+  for (let d = 1; d <= last; d++) {
+    const s = Solar.fromYmd(year, m, d);
+    const gz = s.getLunar().getDayInGanZhi();
+    const go = GAN_OH[gz[0]]; const bo = BR_OHENG[gz[1]];
+    let score = role(go) + role(bo);
+    const why: string[] = [];
+    const helpers = Array.from(new Set([roleName(go), roleName(bo)].filter(Boolean)));
+    if (helpers.length) why.push(`${helpers.join(', ')} 기운이 들어오는 날`);
+    if (cheoneul.includes(gz[1])) { score += 1; why.push('천을귀인 날'); }
+    const chung = !!dayJi && CHUNG_PAIR[dayJi] === gz[1];
+    if (chung) { score -= 2; why.push(`일지 ${dayJi}와 부딪히는 날`); }
+    if (go === k || bo === k) why.push(`기신(${k}) 기운이 강한 날`);
+    days.push({ label: `${m}/${d}(${WEEK_KO[s.getWeek()]})`, score, why: [`${gz}(${ganziKo(gz)})일`, ...why].join(', '), chung });
+  }
+  return days;
+}
+
+/** 월운 좋은 날(최대 4), 조심할 날(최대 3) — 신년운세와 같은 채점. 날짜순 */
+export function monthDayPicks(year: number, month: number, sajuData: any): { good: Array<{ date: string; why: string }>; caution: Array<{ date: string; why: string }> } {
+  try {
+    const days = scoreDaysOfMonth(year, month, sajuData);
+    const dnum = (l: string) => Number(l.split('/')[1].split('(')[0]);
+    let good = days.filter((x) => !x.chung && x.score >= 3);
+    if (good.length < 2) good = days.filter((x) => !x.chung && x.score >= 2);
+    good = good.sort((a, b) => b.score - a.score).slice(0, 4).sort((a, b) => dnum(a.label) - dnum(b.label));
+    const caution = days.filter((x) => x.score <= -3 || (x.chung && x.score <= -1)).sort((a, b) => a.score - b.score).slice(0, 3).sort((a, b) => dnum(a.label) - dnum(b.label));
+    const pick = (x: { label: string; why: string }) => ({ date: x.label.replace(/\(.\)$/, ''), why: `${x.label}, ${x.why}` });
+    return { good: good.map(pick), caution: caution.map(pick) };
+  } catch { return { good: [], caution: [] }; }
+}
+
 export function dayPicksForYear(year: number, sajuData: any): {
   perMonth: Record<number, { good: string[]; caution: string[] }>;
   keyDates: Array<{ date: string; why: string }>;
@@ -435,30 +503,8 @@ export function dayPicksForYear(year: number, sajuData: any): {
   const out: Record<number, { good: string[]; caution: string[] }> = {};
   const all: Array<{ m: number; label: string; score: number; why: string }> = [];
   try {
-    const ma = sajuData?.myeongriAnalysis || {};
-    const y = ma.용신; const h = ma.희신; const k = ma.기신;
-    const dayGan = String(sajuData?.pillars?.[2]?.천간 || '');
-    const dayJi = String(sajuData?.pillars?.[2]?.지지 || '');
-    const cheoneul = CHEONEUL[dayGan] || [];
-    const role = (o: string) => (o === y ? 2 : o === h ? 1 : o === k ? -2 : 0);
-    const roleName = (o: string) => (o === y ? `용신(${o})` : o === h ? `희신(${o})` : '');
     for (let m = 1; m <= 12; m++) {
-      const days: Array<{ label: string; score: number; why: string; chung: boolean }> = [];
-      const last = new Date(year, m, 0).getDate();
-      for (let d = 1; d <= last; d++) {
-        const s = Solar.fromYmd(year, m, d);
-        const gz = s.getLunar().getDayInGanZhi();
-        const go = GAN_OH[gz[0]]; const bo = BR_OHENG[gz[1]];
-        let score = role(go) + role(bo);
-        const why: string[] = [];
-        const helpers = Array.from(new Set([roleName(go), roleName(bo)].filter(Boolean)));
-        if (helpers.length) why.push(`${helpers.join(', ')} 기운이 들어오는 날`);
-        if (cheoneul.includes(gz[1])) { score += 1; why.push('천을귀인 날'); }
-        const chung = !!dayJi && CHUNG_PAIR[dayJi] === gz[1];
-        if (chung) { score -= 2; why.push(`일지 ${dayJi}와 부딪히는 날`); }
-        if (go === k || bo === k) why.push(`기신(${k}) 기운이 강한 날`);
-        days.push({ label: `${m}/${d}(${WEEK_KO[s.getWeek()]})`, score, why: [`${gz}(${ganziKo(gz)})일`, ...why].join(', '), chung });
-      }
+      const days = scoreDaysOfMonth(year, m, sajuData);
       const good = days.filter((x) => !x.chung && x.score >= 3).sort((a, b) => b.score - a.score).slice(0, 3);
       const goodFallback = good.length ? good : days.filter((x) => !x.chung && x.score >= 2).sort((a, b) => b.score - a.score).slice(0, 3);
       const caution = days.filter((x) => x.score <= -3 || (x.chung && x.score <= -1)).sort((a, b) => a.score - b.score).slice(0, 2);
@@ -494,6 +540,23 @@ export function dayPicksForYear(year: number, sajuData: any): {
     return am - bm || ad - bd;
   });
   return { perMonth: out, keyDates };
+}
+
+/** 대운별 기본 점수 (2026-10-15) — 대운 상품이 '성장기, 도약기, 전성기, 수확기'를 나이 순서로 채워 가장 압박이 센 대운을
+ *  전성기로 찍고, 종합사주의 '가장 좋은 10년'과 엇갈렸다. 달 기준 점수와 같은 식(용신 희신 기신, 일지 충, 천을귀인)으로 서버가 정한다. */
+export function daeunScoreText(d: any): string {
+  try {
+    const list = (Array.isArray(d?.daeun) ? d.daeun : []).filter((x: any) => typeof x?.간지 === 'string' && x.간지.length >= 2);
+    if (!list.length) return '';
+    const age = (x: any) => (x?.시작나이 != null && x?.끝나이 != null ? `${x.시작나이}~${x.끝나이}세` : '');
+    const scored = list.map((x: any) => ({ gz: x.간지, age: age(x), s: monthBaseScore(x.간지, d) }));
+    const best = scored.reduce((a: any, b: any) => (b.s > a.s ? b : a));
+    return `
+## 대운별 기본 점수 (서버 계산, 용신, 희신, 기신과 일지 관계 기준. 대운 풀이와 점수는 이 순위와 어긋나지 않게)
+${scored.map((x: any) => `- ${x.age} ${x.gz}: ${x.s}`).join('\n')}
+→ 점수가 가장 높은 대운: ${best.age} ${best.gz}. '전성기', '인생에서 가장 좋은 10년'은 이 대운에만 붙인다.
+`;
+  } catch { return ''; }
 }
 
 /** 달 기준 점수 (월주 × 용신·희신·기신 · 일지충·천을귀인) — 병렬 그룹 간 점수 일관성 앵커 */
@@ -565,6 +628,40 @@ const SAMHAP_OH: Array<{ g: string[]; oh: string }> = [
   { g: ['申', '子', '辰'], oh: '수' }, { g: ['亥', '卯', '未'], oh: '목' }, { g: ['寅', '午', '戌'], oh: '화' }, { g: ['巳', '酉', '丑'], oh: '금' },
 ];
 /** 일간 기준 십성 (편관은 '편관(칠살)') */
+/* 2026-10-15 품질 점검 — 연애운이 월간 丁을 상관으로(실제 식신), 대운이 신약을 '약하지 않은 몸'으로, 未 속에 없는 정재를,
+ *   꿈해몽이 '인성이 천간에 없다'(년간 癸 편인)로 썼다. 프롬프트가 간체 십성 원문만 주고 강약과 지장간 십성을 안 줬다.
+ *   → 서버가 자리별 십성, 지지 속 글자, 강약, 격국, 용신, 기둥 자리 뜻을 한국어로 확정해 모든 풀이에 넣는다. */
+const HIDDEN_STEMS: Record<string, string[]> = {
+  子: ['癸'], 丑: ['己', '癸', '辛'], 寅: ['甲', '丙', '戊'], 卯: ['乙'], 辰: ['戊', '乙', '癸'], 巳: ['丙', '庚', '戊'],
+  午: ['丁', '己'], 未: ['己', '丁', '乙'], 申: ['庚', '壬', '戊'], 酉: ['辛'], 戌: ['戊', '辛', '丁'], 亥: ['壬', '甲'],
+};
+export function sajuCoreFactsText(d: any): string {
+  const p: any[] = d?.pillars || [];
+  const dg = String(p[2]?.천간 || '');
+  if (!dg) return '';
+  const sip = (g: string) => tenGod(dg, g).replace('(칠살)', '');
+  const ganPos = ['년간', '월간', '', '시간'];
+  const jiPos = ['년지', '월지', '일지', '시지'];
+  const gans: string[] = [];
+  const jis: string[] = [];
+  p.forEach((x: any, i: number) => {
+    if (!x || x.available === false) return;
+    if (i !== 2 && x.천간) gans.push(`${ganPos[i]} ${x.천간} ${sip(x.천간)}`);
+    if (x.지지) jis.push(`${jiPos[i]} ${x.지지} = ${(HIDDEN_STEMS[x.지지] || []).map((g) => `${g} ${sip(g)}`).join(', ')}`);
+  });
+  const ma = d?.myeongriAnalysis || {};
+  const noTime = p[3]?.available === false;
+  const noTimeLine = noTime ? '\n- 태어난 시간을 몰라 시주가 없다. 시주 풀이를 하지 말 것.' : '';
+  return `
+## 원국 확정표 (서버 계산, 이 표와 다른 십성, 강약, 지장간을 쓰지 말 것)
+- 일간: ${dg}(${GAN_KO[dg] || ''}${GAN_OH[dg] || ''})
+- 천간 십성: ${gans.join(', ')}
+- 지지 속 글자와 십성(앞 글자가 본기): ${jis.join(' / ')}
+${[ma.일간강약 ? `일간 강약: ${ma.일간강약}` : '', ma.격국 ? `격국: ${ma.격국}` : '', ma.용신 ? `용신 ${ma.용신}${ma.희신 ? `, 희신 ${ma.희신}` : ''}${ma.기신 ? `, 기신 ${ma.기신}` : ''}` : ''].filter(Boolean).map((x, i) => (i === 0 ? '- ' : ' / ') + x).join('')}
+- 기둥 자리 뜻: 년주는 바깥 인연과 어린 시절, 월주는 부모와 직장과 생활 기반, 일주는 나와 배우자, 시주는 자녀와 아랫사람, 앞날 계획. 시주는 하루 중 시간대가 아니다.${noTimeLine}
+`;
+}
+
 export function tenGod(dayGan: string, other: string): string {
   const d = GAN_OH[dayGan]; const o = GAN_OH[other];
   if (!d || !o) return '';
@@ -889,6 +986,75 @@ function periodHits(gz: string, p: any[]): { score: number; hits: string[] } {
 const yearGz = (y: number): string => { try { return Solar.fromYmd(y, 6, 15).getLunar().getEightChar().getYear(); } catch { return ''; } };
 const monthGz = (y: number, m: number): string => { try { return Solar.fromYmd(y, m, 15).getLunar().getEightChar().getMonth(); } catch { return ''; } };
 
+/** 지난 해 중 원국 자리를 세게 건드린 해 (확정표 3번 줄과 같은 후보) */
+function pastYearCandidates(sajuData: any, now: Date): Array<{ y: number; gz: string; score: number; hits: string[] }> {
+  const p: any[] = sajuData?.pillars || [];
+  const by = Number(sajuData?.input?.birthYear) || 0;
+  if (!by || !p[2]?.천간) return [];
+  const Y = now.getFullYear();
+  const from = Math.max(by + 14, Y - 12);
+  const cand: Array<{ y: number; gz: string; score: number; hits: string[] }> = [];
+  for (let y = from; y < Y; y++) {
+    const gz = yearGz(y); if (!gz) continue;
+    const h = periodHits(gz, p);
+    if (h.score >= 3) cand.push({ y, gz, score: h.score, hits: h.hits });
+  }
+  cand.sort((a, b) => b.score - a.score || b.y - a.y);
+  return cand.slice(0, 4).sort((a, b) => a.y - b.y);
+}
+
+/** 주제운 짚기 연도 (2026-10-15) — 모델에게 '주제와 맞닿은 해를 골라라'만 주면 연도 없는 성격 질문으로 빠졌다(연애운 5번 중 4번).
+ *  확정표에 실린 해 가운데 이 주제의 십성이나 자리가 걸린 해를 서버가 하나 고른다. */
+export function topicHookPick(sajuData: any, now: Date, topicId: string): { y: number; gz: string; why: string } | null {
+  try {
+    const p: any[] = sajuData?.pillars || [];
+    const dayGan = String(p[2]?.천간 || '');
+    const cand = pastYearCandidates(sajuData, now);
+    if (!dayGan || !cand.length) return null;
+    const female = (sajuData?.input?.gender || '') !== 'male';
+    const LOVE = female ? ['정관', '편관(칠살)'] : ['정재', '편재'];
+    const rel = (c: { gz: string; hits: string[] }): { pts: number; why: string } => {
+      const sips = [tenGod(dayGan, c.gz[0]), tenGod(dayGan, BR_MAIN[c.gz[1]])];
+      const h = c.hits.join(' ');
+      const day = /일지|일간/.test(h); const month = /월지/.test(h); const chung = /충/.test(h);
+      const has = (list: string[]) => { const f = sips.find((s) => list.includes(s)); return f ? f.replace('(칠살)', '') + ' 기운' : undefined; };
+      switch (topicId) {
+        case 'love': case 'marriage': case 'reunion': {
+          const s = has(LOVE);
+          if (day && s) return { pts: 4, why: `배우자 자리(일지)가 움직이고 ${s}(이성 인연)이 들어온 해` };
+          if (day) return { pts: 3, why: '배우자 자리(일지)가 움직인 해' };
+          if (s) return { pts: 2, why: `${s}(이성 인연)이 들어온 해` };
+          return { pts: 0, why: '' };
+        }
+        case 'wealth': case 'business': {
+          const s = has(['정재', '편재', '겁재']);
+          return s ? { pts: 3, why: `${s}(돈의 들고 남)이 들어온 해` } : { pts: month ? 1 : 0, why: month ? '생활 기반 자리(월지)가 움직인 해' : '' };
+        }
+        case 'career': case 'exam': {
+          const s = has(['정관', '편관(칠살)', '정인', '편인']);
+          if (s && month) return { pts: 4, why: `${s}이 들어오고 직장 자리(월지)가 움직인 해` };
+          if (s) return { pts: 3, why: `${s}이 들어온 해` };
+          return { pts: month ? 2 : 0, why: month ? '직장 자리(월지)가 움직인 해' : '' };
+        }
+        case 'study': {
+          const s = has(['정인', '편인', '식신']);
+          return s ? { pts: 3, why: `${s}이 들어온 해` } : { pts: 0, why: '' };
+        }
+        case 'health': {
+          const s = has(['편관(칠살)']);
+          if (day) return { pts: 3, why: '내 몸 자리(일지)가 움직인 해' };
+          return s ? { pts: 2, why: '편관(압박과 몸의 피로)이 들어온 해' } : { pts: 0, why: '' };
+        }
+        case 'move': return chung ? { pts: 3, why: '원국 자리가 부딪혀 움직임이 생긴 해' } : { pts: 0, why: '' };
+        default: return { pts: 0, why: '' };
+      }
+    };
+    const ranked = cand.map((c) => ({ c, r: rel(c) })).sort((a, b) => (b.r.pts - a.r.pts) || (b.c.score - a.c.score) || (b.c.y - a.c.y));
+    const best = ranked[0];
+    return { y: best.c.y, gz: best.c.gz, why: best.r.why || '원국 자리를 크게 건드린 해' };
+  } catch { return null; }
+}
+
 /** now 는 KST 값을 담은 Date (kstNowDate) */
 export function lifeTimelineFactsText(sajuData: any, now: Date): string {
   try {
@@ -927,20 +1093,13 @@ export function lifeTimelineFactsText(sajuData: any, now: Date): string {
     // 3) 지난 해 중 원국 자리를 크게 건드린 해 + 대운이 바뀐 해 (과거 짚기 근거)
     if (by > 0) {
       const from = Math.max(by + 14, Y - 12);
-      const cand: Array<{ y: number; gz: string; score: number; hits: string[] }> = [];
-      for (let y = from; y < Y; y++) {
-        const gz = yearGz(y); if (!gz) continue;
-        const h = periodHits(gz, p);
-        if (h.score >= 3) cand.push({ y, gz, score: h.score, hits: h.hits });
-      }
-      cand.sort((a, b) => b.score - a.score || b.y - a.y);
-      const pick = cand.slice(0, 4).sort((a, b) => a.y - b.y);
+      const pick = pastYearCandidates(sajuData, now);
       const past = pick.map((c) => `  - ${c.y}년 ${c.gz}(${ganziKo(c.gz)}) 세운, 그해 생일 뒤 만 ${c.y - by}세: ${desc(c.gz)}. ${c.hits.join(', ')}`);
       const turns = dy.filter((d) => d?.시작년도 && d.시작년도 >= from && d.시작년도 <= Y)
         .map((d) => `  - ${d.시작년도}년 대운이 ${d.간지}(${ganziKo(String(d.간지))})로 바뀜, 그해 만 ${d.시작년도 - by}세: 10년 흐름이 갈린 해`);
       if (past.length || turns.length) lines.push(`- 지난 해들 중 크게 움직였을 해 (원국 자리를 세게 건드린 세운, 대운 교체):\n${[...past, ...turns].join('\n')}`);
     }
     if (!lines.length) return '';
-    return `### 지난 시기와 지금 시기 확정표 (서버 계산. '혹시 ~ 무렵 ~하지 않았나요?'로 짚는 근거는 이 표의 시기에서만 고른다)\n${lines.join('\n')}`;
+    return `### 지난 시기와 지금 시기 확정표 (서버 계산. 지난 일과 요즘을 말할 때 시기는 이 표에서만 고른다. 짚는 질문은 지시받은 자리에서만 한다)\n${lines.join('\n')}`;
   } catch { return ''; }
 }

@@ -7,6 +7,9 @@ const claudeClient_1 = require("../shared/claudeClient");
 const sajuFacts_1 = require("./sajuFacts");
 const promptsV3_1 = require("./promptsV3"); // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 const kstTime_1 = require("../utils/kstTime");
+/** 2026-10-15 프롬프트 캐싱 — 2차 다듬기 호출이 1차 프롬프트를 그대로 다시 보내므로, 첫 사용자 메시지를
+ *  캐시해 두 번째 호출이 5% 값으로 읽게 한다(Sonnet 5.5 캐시 읽기 0.05배). 내용은 그대로. 운영 기록상 월운과 주간은 캐시 0%였다. */
+const cachedPrompt = (prompt) => [{ type: 'text', text: prompt + promptsV3_1.TONE_FINAL_CHECK, cache_control: { type: 'ephemeral' } }];
 const aiUsageLog_1 = require("../shared/aiUsageLog"); // C7 원가 기록 (fire-and-forget)
 /** 2026-10-13 — 다른 콘텐츠와 같은 복구 파서(코드블록 제거, 문자열 안 줄바꿈 이스케이프, jsonrepair). 실패 시 null */
 const tryParse = (text) => { try {
@@ -28,7 +31,7 @@ async function generateMonthlyFortune(apiKey, sajuData, monthInfo, onGroup) {
     if (!onGroup) {
         // 점진 미사용 — 기존 단일 콜 경로(검증됨). year/month 만 권위값 보정.
         const full = await generateMonthlyGroup(apiKey, sajuData, info, 'FULL');
-        return { ...(full || {}), year: info.year, month: info.month };
+        return enforceDayPicks({ ...(full || {}), year: info.year, month: info.month }, (0, sajuFacts_1.monthDayPicks)(info.year, info.month, sajuData));
     }
     const [m1, m2] = await Promise.all([
         generateMonthlyGroup(apiKey, sajuData, info, 'M1').then((r) => { try {
@@ -41,7 +44,45 @@ async function generateMonthlyFortune(apiKey, sajuData, monthInfo, onGroup) {
         catch { /* noop */ } return r; }),
     ]);
     // year/month 는 서버 권위값으로 강제 (AI 가 임의로 바꿔도 보정)
-    return { ...(m1 || {}), ...(m2 || {}), year: info.year, month: info.month };
+    return enforceDayPicks({ ...(m1 || {}), ...(m2 || {}), year: info.year, month: info.month }, (0, sajuFacts_1.monthDayPicks)(info.year, info.month, sajuData));
+}
+/* 2026-10-15 품질 점검 — 좋은 날, 조심할 날의 근거를 모델이 지어냈다(11/22 庚子 를 '상관 기운의 날'로, 실제는 그달 가장 좋은 날).
+ *   서버가 신년운세와 같은 일진 채점으로 고르고(monthDayPicks), 모델은 이유만 생활 말로 푼다. 표와 다른 날짜가 나오면 서버 값으로 덮어쓴다. */
+function plainWhy(why) {
+    return why
+        .replace(/^\d+\/\d+\(.\),\s*/, '')
+        .replace(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]\(([가-힣]{2})\)일/, '$1일')
+        .replace(/용신\(([목화토금수])\)/g, '나에게 필요한 $1')
+        .replace(/희신\(([목화토금수])\)/g, '도움이 되는 $1')
+        .replace(/기신\(([목화토금수])\) 기운이 강한 날/g, '나와 맞지 않는 $1 기운이 강한 날')
+        .replace(/천을귀인 날/g, '귀인의 도움이 닿는 날')
+        .replace(/일지 .와 부딪히는 날/g, '태어난 날 글자와 부딪히는 날');
+}
+function enforceDayPicks(res, picks) {
+    if (!res || typeof res !== 'object')
+        return res;
+    const norm = (x) => String(x || '').replace(/\s/g, '').replace(/\(.\)/g, '');
+    const ok = (arr, allowed) => Array.isArray(arr) && arr.length > 0
+        && arr.every((it) => norm(it?.date).split(/[~,]/).every((part) => allowed.has(part)));
+    const r = res;
+    if (picks.good.length && (r.luckyDays !== undefined || r.cautionDays !== undefined)) {
+        if (!ok(r.luckyDays, new Set(picks.good.map((x) => x.date))))
+            r.luckyDays = picks.good.map((x) => ({ date: x.date, reason: plainWhy(x.why) }));
+        if (picks.caution.length && !ok(r.cautionDays, new Set(picks.caution.map((x) => x.date))))
+            r.cautionDays = picks.caution.map((x) => ({ date: x.date, reason: plainWhy(x.why) }));
+    }
+    return res;
+}
+function dayPicksBlock(info, d) {
+    const pk = (0, sajuFacts_1.monthDayPicks)(info.year, info.month, d);
+    if (!pk.good.length && !pk.caution.length)
+        return '';
+    return `
+
+## 이 달 좋은 날과 조심할 날 (서버 계산, 그날 일진과 이 사주의 용신, 기신, 일지 관계로 골랐다)
+- 좋은 날: ${pk.good.map((x) => x.why).join(' / ') || '없음'}
+- 조심할 날: ${pk.caution.map((x) => x.why).join(' / ') || '없음'}
+→ luckyDays, cautionDays 의 date 는 위 날짜만, 하루씩(범위 금지) 쓴다. reason 은 위 이유를 생활 말로 풀고 그날 할 일이나 피할 일 하나를 붙인다. 다른 날짜와 다른 일진을 지어내지 않는다. 상순, 중순, 하순 본문에서 날짜를 말할 때도 이 표의 날짜만 쓴다.`;
 }
 /** 그룹 1개(M1/M2/FULL) — 1차 생성 + 2차 자기리뷰 → 파싱 */
 async function generateMonthlyGroup(apiKey, sajuData, info, group) {
@@ -53,7 +94,7 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
     const first = await anthropic.messages.create({
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
+        messages: [{ role: 'user', content: cachedPrompt(prompt) }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', claudeClient_1.CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -63,7 +104,7 @@ async function generateMonthlyGroup(apiKey, sajuData, info, group) {
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: maxTokens,
         messages: [
-            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
+            { role: 'user', content: cachedPrompt(prompt) },
             { role: 'assistant', content: firstText },
             { role: 'user', content: buildReviewPrompt(info, group) + promptsV3_1.TONE_FINAL_CHECK },
         ],
@@ -87,7 +128,7 @@ async function generateMonthlyDraft(apiKey, sajuData, monthInfo) {
     const first = await anthropic.messages.create({
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 10000,
-        messages: [{ role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK }],
+        messages: [{ role: 'user', content: cachedPrompt(prompt) }],
     });
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', claudeClient_1.CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
     const firstText = first.content[0].text;
@@ -96,7 +137,7 @@ async function generateMonthlyDraft(apiKey, sajuData, monthInfo) {
         throw new Error('월별 운세 draft JSON 파싱 실패');
     draft.year = info.year;
     draft.month = info.month;
-    return (0, sajuFacts_1.sanitizeAiOutput)(draft); // 2026-10-11 — 초안 경로가 정리기를 안 거쳐 '씨', 줄표, 외래어가 그대로 나갔음
+    return enforceDayPicks((0, sajuFacts_1.sanitizeAiOutput)(draft), (0, sajuFacts_1.monthDayPicks)(info.year, info.month, sajuData)); // 2026-10-11 — 초안 경로가 정리기를 안 거쳐 '씨', 줄표, 외래어가 그대로 나갔음
 }
 /**
  * ⚡ async 2차리뷰 — refine (2차만). draft 를 받아 자가 점검·보정 → 최종본.
@@ -111,7 +152,7 @@ async function generateMonthlyRefine(apiKey, sajuData, monthInfo, draft) {
         model: claudeClient_1.CLAUDE_MODEL.sonnet,
         max_tokens: 10000,
         messages: [
-            { role: 'user', content: prompt + promptsV3_1.TONE_FINAL_CHECK },
+            { role: 'user', content: cachedPrompt(prompt) },
             { role: 'assistant', content: JSON.stringify(draft) },
             { role: 'user', content: buildReviewPrompt(info, 'FULL') + promptsV3_1.TONE_FINAL_CHECK },
         ],
@@ -119,11 +160,12 @@ async function generateMonthlyRefine(apiKey, sajuData, monthInfo, draft) {
     (0, aiUsageLog_1.logAnthropicUsage)('monthly', claudeClient_1.CLAUDE_MODEL.sonnet, review, _t2, 'callable'); // C7 best-effort
     const reviewText = review.content[0].text;
     const refined = tryParse(reviewText);
+    const picks = (0, sajuFacts_1.monthDayPicks)(info.year, info.month, sajuData);
     if (!refined)
-        return (0, sajuFacts_1.sanitizeAiOutput)({ ...draft, year: info.year, month: info.month }); // 리뷰 실패 → draft 유지
+        return enforceDayPicks((0, sajuFacts_1.sanitizeAiOutput)({ ...draft, year: info.year, month: info.month }), picks); // 리뷰 실패 → draft 유지
     refined.year = info.year;
     refined.month = info.month;
-    return (0, sajuFacts_1.sanitizeAiOutput)(refined);
+    return enforceDayPicks((0, sajuFacts_1.sanitizeAiOutput)(refined), picks);
 }
 /** monthInfo 누락/불완전 시 폴백 — 이번 달 기준(간지 미상). 정상 경로는 항상 클라가 간지 동봉. */
 function normalizeMonthInfo(monthInfo) {
@@ -227,7 +269,7 @@ ${info.label} 한 달 심층 운세 — 사주 원국 일간과 그 달의 월�
 ${pillarsText}일간: ${ilgan}
 
 ## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
-## 십성: ${sipsung || '미상'}
+${(0, sajuFacts_1.sajuCoreFactsText)(d)}${dayPicksBlock(info, d)}
 ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 신년운세와 같은 값): 용신 ${d.myeongriAnalysis.용신}, 희신 ${d.myeongriAnalysis.희신 || '미상'}, 기신 ${d.myeongriAnalysis.기신 || '미상'}. 개운 처방과 행운 색, 방위는 이 용신으로만. 다른 오행을 용신이라고 쓰지 말 것.` : ''}
 
 ## 선택한 달의 간지 (정확 계산 — 이 간지를 그대로 인용, 절대 임의로 바꾸지 말 것)

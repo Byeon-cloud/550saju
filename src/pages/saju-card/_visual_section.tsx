@@ -30,7 +30,7 @@ const C = {
   surface: '#FFFFFF',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.10)',
@@ -98,8 +98,8 @@ export function Component12UnseongSection({
             </div>
           )}
           <div style={{ fontSize: 13, color: C.mute, lineHeight: 1.6, fontStyle: 'normal' }}>
-            12운성은 사람이 태어나서 자라고 활동하다 정리되는 순환을 12단계로 본 명리학 모델입니다.
-            본인의 일주가 어느 단계에 놓였는지에 따라 살아가는 리듬이 다르게 나타납니다.
+            12운성은 사람이 태어나서 자라고 활동하다 정리되는 순환을 12단계로 본 명리학의 틀이에요.
+            본인의 일주가 어느 단계에 놓였는지에 따라 살아가는 흐름이 다르게 나타나요.
           </div>
         </div>
 
@@ -294,8 +294,8 @@ export function SinsalCardsSection({ sinsalAnalysis }: SinsalCardsSectionProps) 
       hanja="神煞"
       intro={
         cards.length > 0
-          ? `내 사주에 발현된 ${cards.length}개의 신살이에요. 인생의 결과 흐름을 짚어주는 단서입니다.`
-          : '이번 사주에 강하게 발현된 핵심 신살이 없어요. 12운성 흐름이 더 또렷하게 작용합니다.'
+          ? `내 사주에 발현된 ${cards.length}개의 신살이에요. 인생의 흐름을 짚어 주는 단서예요.`
+          : '이번 사주에 강하게 발현된 핵심 신살이 없어요. 12운성 흐름이 더 또렷하게 작용해요.'
       }
     >
       {cards.length > 0 ? (
@@ -326,7 +326,7 @@ export function SinsalCardsSection({ sinsalAnalysis }: SinsalCardsSectionProps) 
         >
           신살은 사주에 따라 발현 여부가 달라요.
           <br />
-          본인 사주는 신살 영향이 약한 대신, 12운성 단계의 흐름이 더 강하게 작용합니다.
+          이 사주는 신살 영향이 약하고, 12운성 단계의 흐름이 더 강하게 작용해요.
         </div>
       )}
     </SectionCard>
@@ -364,19 +364,9 @@ function SinsalCard({
         overflow: 'hidden',
       }}
     >
-      {/* 좌측 강조 바 (보유 시) */}
-      {has && (
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            left: 0, top: 0, bottom: 0,
-            width: 4,
-            background: tone,
-          }}
-        />
-      )}
-      {/* 헤더 + 보유/미보유 배지 */}
+      {/* 2026-10-15 — 왼쪽 금색 띠(강조 바)와 금색 바탕 '보유' 라벨 삭제 (지금은 보유한 신살만 보여 줘 라벨이 뜻이 없고,
+          금색은 누르는 버튼에만). 보유 여부는 테두리 색과 흐림으로만 */}
+      {/* 헤더 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 5 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
           <span
@@ -393,20 +383,9 @@ function SinsalCard({
             ({card.hanja})
           </span>
         </div>
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 800,
-            padding: '2px 6px',
-            borderRadius: 2,
-            background: has ? C.gold : 'rgba(122,114,105,0.12)',
-            color: has ? C.paper : C.mute,
-            letterSpacing: '0.04em',
-            flexShrink: 0,
-          }}
-        >
-          {has ? '보유' : '미보유'}
-        </span>
+        {!has && (
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.mute, flexShrink: 0 }}>없음</span>
+        )}
       </div>
       {/* 픽토그램 */}
       <div
@@ -712,13 +691,13 @@ export function UnFlowEntryLinks({
         {onMoreDaeun && (
           <button type="button" onClick={onMoreDaeun} style={linkBtnStyle}>
             대운 자세히 보기 (10년 단위)
-            <span style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 900, color: C.gold }}>→</span>
+            <span style={{ marginLeft: 'auto', fontSize: 16, fontWeight: 700, color: C.mute }}>›</span>
           </button>
         )}
         {onMoreMonthly && (
           <button type="button" onClick={onMoreMonthly} style={linkBtnStyle}>
             월운 자세히 보기 (12개월)
-            <span style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 900, color: C.gold }}>→</span>
+            <span style={{ marginLeft: 'auto', fontSize: 16, fontWeight: 700, color: C.mute }}>›</span>
           </button>
         )}
       </div>

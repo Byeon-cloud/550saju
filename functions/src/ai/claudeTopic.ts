@@ -8,12 +8,13 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
-import { Solar } from 'lunar-javascript';
+import { Solar, Lunar, LunarMonth, LunarYear } from 'lunar-javascript';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, TONE_FINAL_CHECK, READING_VOICE_BLOCK, type ParseJsonMeta } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
 import { correctKoreanSolarTime } from '../utils/timeCorrection';
-import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData, addNimToPartnerName, lifeTimelineFactsText } from './sajuFacts';
+import { myeongriSinsalText } from './sinsal';
+import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData, addNimToPartnerName, lifeTimelineFactsText, sajuCoreFactsText, topicHookPick } from './sajuFacts';
 
 /**
  * 상대방 만세력 서버 계산 — 2026-06-11 P0 CS fix.
@@ -27,8 +28,22 @@ import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiO
  *   correctKoreanSolarTime(-30분 + 서머타임)을 반드시 적용 (본인/상대방 시주 계산 기준 일치).
  *   구 클라 페이로드(분 없음·중앙값)는 보정해도 같은 시진 → 하위호환 안전.
  */
-function computePartnerPillars(p: { birthYear: number; birthMonth: number; birthDay: number; birthHour?: number; birthMinute?: number }):
+/** 상대방 생일이 음력이면 양력 날짜로 (2026-10-15 — 그 전엔 상대 입력이 양력만 받았다). 없는 날은 그 달 마지막 날, 없는 윤달은 평달 */
+function partnerSolarDate<T extends { birthYear: number; birthMonth: number; birthDay: number; calendar?: string; isLeap?: boolean }>(p: T): T {
+  if (p?.calendar !== 'lunar') return p;
+  try {
+    let leap = !!p.isLeap;
+    if (leap && LunarYear.fromYear(p.birthYear).getLeapMonth() !== p.birthMonth) leap = false;
+    const lm = LunarMonth.fromYm(p.birthYear, leap ? -p.birthMonth : p.birthMonth);
+    const day = Math.min(p.birthDay, lm ? lm.getDayCount() : 29);
+    const s = Lunar.fromYmd(p.birthYear, leap ? -p.birthMonth : p.birthMonth, day).getSolar();
+    return { ...p, birthYear: s.getYear(), birthMonth: s.getMonth(), birthDay: s.getDay(), calendar: 'solar' };
+  } catch { return p; }
+}
+
+function computePartnerPillars(raw: { birthYear: number; birthMonth: number; birthDay: number; birthHour?: number; birthMinute?: number; calendar?: string; isLeap?: boolean }):
   { year: string; month: string; day: string; time: string | null; ilgan: string } | null {
+  const p = partnerSolarDate(raw);
   try {
     const hasHour = p.birthHour != null && p.birthHour >= 0;
     let s: Solar;
@@ -141,7 +156,7 @@ interface TopicConfig {
  * 각 주제 프롬프트 끝에 "다루지 않는 것 + 다른 주제로 보낼 영역" 을 명시 주입.
  */
 const TOPIC_BOUNDARIES: Record<string, { scope: string; excludes: string[] }> = {
-  love:     { scope: '일반 만남, 관계 흐름, 매력 발산, 연애 패턴',
+  love:     { scope: '일반 만남, 관계 흐름, 매력 발산, 연애 습관',
               excludes: ['결혼 timing/배우자 결 단정 (→ 결혼운 영역)', '헤어진 특정인과의 재회 가능성 (→ 재회운 영역)'] },
   reunion:  { scope: '헤어진 사람과의 재결합 가능성, timing, 접촉 방향',
               excludes: ['일반 새 만남 (→ 연애운)', '결혼 결정 (→ 결혼운)'] },
@@ -151,15 +166,15 @@ const TOPIC_BOUNDARIES: Record<string, { scope: string; excludes: string[] }> = 
               excludes: ['사업 결정/창업 판단 (→ 사업운)', '직장 수입 구조/승진 (→ 직업운)'] },
   exam:     { scope: '시험, 자격증, 이직, 전직 변동의 timing 과 방향',
               excludes: ['평생 직업 적성/정체성 (→ 직업운)', '창업과 자영업 결정 (→ 사업운)'] },
-  business: { scope: '자영업과 창업의 결, 재무 리스크, 사업 timing',
+  business: { scope: '자영업과 창업의 결, 재무 위험, 사업 시기',
               excludes: ['직장인 커리어/승진 (→ 직업운)', '단기 시험과 이직 timing (→ 합격이직운)'] },
   health:   { scope: '체질, 기운, 올해 주의 시기, 생활 습관',
               excludes: [] },
   move:     { scope: '주거 이전, 이동, 여행 timing 과 방향',
               excludes: ['직장 이직 (→ 합격이직운)'] },
-  study:    { scope: '학업, 집중력, 지식 흡수, 학습 패턴',
+  study:    { scope: '학업, 집중력, 지식 흡수, 공부 습관',
               excludes: ['시험 합격 timing 단정 (→ 합격이직운)', '평생 직업 결 (→ 직업운)'] },
-  career:   { scope: '평생의 일의 결, 적성, 승진 흐름, 조직 내 패턴',
+  career:   { scope: '평생의 일의 결, 적성, 승진 흐름, 조직 안에서 되풀이되는 경향',
               excludes: ['시험과 이직 timing (→ 합격이직운)', '자영업과 창업 (→ 사업운)'] },
 };
 
@@ -186,7 +201,7 @@ function normalizeTopicIdServer(raw: string): string {
 const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   love: {
     label: '연애운',
-    sections: ['나의 연애 스타일', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 경향', '올해 연애 흐름과 전략'],
+    sections: ['나의 연애 성향', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 경향', '올해 연애 흐름과 전략'],
     specificPrompt: `⭐ "와 진짜 내 얘기다" 반응이 나올 정도로 구체적으로.
 
 ## 🚨 일지 배우자궁 4-step 분석 mandate (P1 명리학 정확도)
@@ -258,7 +273,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   },
   wealth: {
     label: '재물운',
-    sections: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '돈이 새는 길목', '올해 재물 전략'],
+    sections: ['돈 버는 방식', '재물 흐름 분석', '투자 성향과 적기', '돈이 새는 길목', '올해 재물 전략'],
     specificPrompt: `⭐ 돈에 대한 깊이 있는 자기 인식이 가능한 통찰. 사주 8글자 근거 기반.
 
 - 재성(正財/偏財) 위치와 강약으로 "정규직형 vs 사업형 vs 투자형" 판별
@@ -343,7 +358,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     //   user: "직업운 = 어떤 직업이 잘 맞는지 + 왜 명리학적으로 그런지가 핵심".
     //   면접/이직/연봉/면접요일 등 시기성 정보는 exam (합격·이직운) 으로 완전 이전.
     label: '직업운',
-    sections: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '직장 내 인간관계 경향'],
+    sections: ['타고난 직업 적성', '사주에 맞는 직종 다섯 가지', '평생 일의 흐름', '명리학적 직업 근거', '직장 내 인간관계 경향'],
     specificPrompt: `⭐ 핵심 = "왜 이 사주에 이 직업이 잘 맞는지" 명리학적 근거 + 평생 적성. 시기성(이직 적기와 면접 요일 등)은 다루지 마 — 그건 합격 이직운 영역.
 
 - 일간 오행 → 기본 성향 (예: "병화 일간 — 밝고 활달, 사람 앞에 서는 자리에 강함")
@@ -453,7 +468,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   },
   business: {
     label: '사업운',
-    sections: ['사업가 기질 분석', '맞는 업종', '창업 타이밍', '동업 궁합', '사업 리스크 관리'],
+    sections: ['사업가 기질 분석', '맞는 업종', '창업하기 좋은 때', '동업 궁합', '사업 위험 관리'],
     specificPrompt: `사업을 꿈꾸는 사람에게 현실적이고 구체적인 조언. 사주 8글자 + 격국과 용신 직접 호명 mandate.
 
 ## 격국과 용신 기반 사업가 결 (자평진전 §10 적용)
@@ -649,7 +664,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - 피해야 할 날짜/시간대`,
     topicDataSchema: `"topicData": {
       "// 서버 확정": "월별 에너지와 재회 적기와 첫 연락 달, 판정, 연락 판단과 감정 흐름과 두 사람 기둥 간지와 이별 단계 설명은 서버가 채운다 — 출력 금지",
-      "subScores": [{"axis":"재회가능성","value":"0-100 정수"},{"axis":"상대흐름","value":"0-100 정수"},{"axis":"궁합구조","value":"0-100 정수"},{"axis":"타이밍","value":"0-100 정수"},{"axis":"관계성장","value":"0-100 정수"}],
+      "subScores": [{"axis":"재회가능성","value":"0-100 정수"},{"axis":"상대흐름","value":"0-100 정수"},{"axis":"궁합구조","value":"0-100 정수"},{"axis":"시기","value":"0-100 정수"},{"axis":"관계성장","value":"0-100 정수"}],
       "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4","키워드5"],
       "strengths": ["재회 긍정 요인 35~50자, 사주 호명","긍정 요인2 35~50자","긍정 요인3 35~50자"],
       "cautions": ["재회 주의점 35~50자, 위기→기회 패턴","주의점2 35~50자, 위기→기회 패턴","주의점3 35~50자, 위기→기회"],
@@ -719,7 +734,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
     // 시험 합격 timing 은 exam (합격·이직운) 영역. study 는 학업·집중력·학습 패턴.
     label: '학업운',
     // 2026-10-09 — 경계(시험 합격 timing 은 합격·이직운)와 충돌하던 '합격 가능성과 시기'·'올해 합격 로드맵' 교체
-    sections: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '슬럼프 극복법', '올해 공부 로드맵'],
+    sections: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '공부가 막힐 때 넘는 법', '올해 공부 계획'],
     specificPrompt: `⭐ 시험/취업 준비생에게 "이거 보고 힘 얻었다" 반응이 나올 정도로 구체적으로.
 
 - 인성(정인/편인) 강약 → 학습 체질: 암기형/이해형/직관형/반복형 판별 + 구체적 공부법
@@ -753,7 +768,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
   },
   social: {
     label: '대인관계운',
-    sections: ['관계 스타일 분석', '귀인운', '구설수 주의 시기', '인간관계 갈등 패턴', '올해 관계 전략'],
+    sections: ['사람을 대하는 방식', '귀인운', '구설수 주의 시기', '사람 사이에서 되풀이되는 갈등', '올해 관계 전략'],
     specificPrompt: `⭐ 인간관계에 대한 깊은 통찰. "내 주변 사람들이 딱 이래..." 반응.
 
 - 비겁 강약 → 친구/동료 관계 스타일
@@ -789,7 +804,7 @@ const TOPIC_CONFIGS: Record<string, TopicConfig> = {
 - ⚠️ 직업 정체성과 평생 적성 (→ 직업운) 이나 창업 판단 (→ 사업운) 은 언급 금지. 이 섹션은 '변동 timing, 방향'만.
 
 🚨 **합격 길성 일간별 매핑 (P1 명리학 정확도 — 사주 데이터 ## 일주 길신 직접 인용)**:
-sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 mention 금지 — 가짜 길성 fabricate X):
+위 '명리 신살' 목록에 다음 길성이 있는지 확인 후 명시 (없으면 mention 금지 — 가짜 길성 fabricate X):
 
 - **문창귀인(文昌貴人)** — 일간별 위치 (일간마다 한 글자):
   甲: 巳 / 乙: 午 / 丙: 申 / 丁: 酉 / 戊: 申 / 己: 酉 / 庚: 亥 / 辛: 子 / 壬: 寅 / 癸: 卯
@@ -813,7 +828,7 @@ sajuData.gilsin 에 다음 길성이 있는지 확인 후 명시 (없으면 ment
 
 ⚠ 고전 근거는 내부 판단용 — 본문에 책 이름, 학파, '고서에 따르면' 언급 금지. 귀인 보유 여부는 아래 '귀인과 신살 확정표' 가 최우선.`,
     topicDataSchema: `"topicData": {
-      "subScores": [{"axis":"합격운","value":"0-100 정수"},{"axis":"이직운","value":"0-100 정수"},{"axis":"변동 leverage","value":"0-100 정수"},{"axis":"면접운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
+      "subScores": [{"axis":"합격운","value":"0-100 정수"},{"axis":"이직운","value":"0-100 정수"},{"axis":"변동운","value":"0-100 정수"},{"axis":"면접운","value":"0-100 정수"},{"axis":"적응력","value":"0-100 정수"}],
       "keywords": ["사주근거키워드1","키워드2","키워드3","키워드4"],
       "strengths": ["변동 강점 35~50자, 사주 글자 호명 1회","변동 강점2 35~50자, 사주 글자 호명 1회"],
       "cautions": ["변동 주의점 35~50자, 위기→기회 패턴","변동 주의점2 35~50자, 위기→기회 패턴"],
@@ -899,6 +914,8 @@ export interface TopicCall {
   sections: string[];
   /** 생성 후 서버 확정값 덧입히기 (예: 연애 상태) */
   finalize?: (r: any) => any;
+  /** 짚기 연도 지시 (서버가 고른 해, user 끝 점검에 붙임) */
+  hookLine?: string;
   /** 재회운 — 본문/카드 데이터 병렬 분할 (공유 prompt 뒤에 각자 suffix) */
   split?: { mainSuffix: string; dataSuffix: string; mainMaxTokens: number; dataMaxTokens: number; fill: (td: any) => any };
 }
@@ -923,7 +940,7 @@ const REUNION_FINAL_CHECK = `
 
 /** 2026-10-14 — 주제운 짚기 자리 (시스템 쪽 지시만으로는 성격 질문으로 새서 user 끝에 둔다) */
 const TOPIC_HOOK_CHECK = `
-- 첫 섹션의 둘째 문단은 '{연도}년 무렵' 또는 '지난 {N}월부터'로 시작하는 짚기 질문으로 연다. 연도와 달은 확정표의 값에서 고르고, 이 주제와 맞닿은 시기를 먼저 고른다(연애, 결혼, 재회는 연인의 별이나 일지 자리가 걸린 해, 재물은 재성이 들어온 해, 직업과 합격은 관성, 인성, 월지 자리가 걸린 해). 연도 없는 성격 질문('~라는 말을 들은 적 있지 않나요')은 짚기로 치지 않는다.`;
+- 첫 섹션의 둘째 문단은 '{연도}년 무렵' 또는 '지난 {N}월부터'로 시작하는 짚기 질문으로 연다(아래에 서버가 고른 해가 있으면 그 해로). 연도와 달은 확정표의 값에서 고르고, 이 주제와 맞닿은 시기를 먼저 고른다(연애, 결혼, 재회는 연인의 별이나 일지 자리가 걸린 해, 재물은 재성이 들어온 해, 직업과 합격은 관성, 인성, 월지 자리가 걸린 해). 연도 없는 성격 질문('~라는 말을 들은 적 있지 않나요')은 짚기로 치지 않는다.`;
 
 /** 주제 생성 공용 (SSE 스트림 · callable 폴백 같은 코드). 파싱 실패 시 1회 재생성.
  *  split(재회운)이면 본문은 onDelta 로 실시간, 카드 데이터는 4초 뒤 병렬(프롬프트 캐시 읽기) → 합쳐서 반환. */
@@ -935,7 +952,7 @@ export async function runTopicGeneration(
 ): Promise<any> {
   const system = [{ type: 'text' as const, text: call.system, cache_control: { type: 'ephemeral' as const } }];
   // 2026-10-13 — 재회운 규칙이 시스템 지시만으로는 안 지켜져서(연락 시간 밤 11시 30분 권유, 끝이 '피하세요'로 맺음) user 끝 점검에 넣는다
-  const finalCheck = READING_VOICE_BLOCK + TOPIC_HOOK_CHECK + TONE_FINAL_CHECK + (call.normalizedId === 'reunion' ? REUNION_FINAL_CHECK : '');
+  const finalCheck = READING_VOICE_BLOCK + TOPIC_HOOK_CHECK + (call.hookLine || '') + TONE_FINAL_CHECK + (call.normalizedId === 'reunion' ? REUNION_FINAL_CHECK : '');
   const content = (suffix?: string): any => (suffix
     ? [{ type: 'text', text: call.prompt, cache_control: { type: 'ephemeral' } }, { type: 'text', text: suffix + finalCheck }]
     : call.prompt + finalCheck);
@@ -1043,9 +1060,14 @@ export function buildTopicCall(
     }
     return r;
   };
+  const hook = topicHookPick(sajuData, kstNowDate(), normalizedId);
+  const hookLine = hook
+    ? `
+- 이 주제의 짚기 해는 서버가 골랐다: ${hook.y}년(${hook.gz}, ${hook.why}). 첫 섹션 둘째 문단을 '${hook.y}년 무렵'으로 시작하는 질문으로 열고, 그 해에 걸린 자리의 생활 영역 두세 가지를 묶어 묻는다. 바로 뒤에 그 해 들어온 글자로 원인을 단정해 풀이한다. 다른 섹션에서는 지난 일을 다시 묻지 않는다.`
+    : '';
   return {
     system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore, split,
-    sections: topicSectionTitles(normalizedId, partnerInfo, extraInfo), finalize,
+    sections: topicSectionTitles(normalizedId, partnerInfo, extraInfo), finalize, hookLine,
   };
 }
 
@@ -1238,7 +1260,7 @@ export function computeTopicBaseScore(topicId: string, d: any): number | undefin
 
 /** 2026-10-09 — 주제 × 상황 섹션 제목 SSOT. buildPrompt 와 스트림 'outline' 이벤트(앱 로딩 스켈레톤 제목)가 같이 쓴다.
  *  상황과 어긋난 제목은 신뢰를 바로 깎는다 — 실측(전체 주제 결과): 썸·연애중 34건이 '인연이 시작되는 시기와 장소'·'사주 궁합이 잘 맞는 이성',
- *  구직중 12건이 '직장 내 인간관계 경향', 사업 운영중 5건이 '창업 타이밍', 주거 이사 7건이 '이사/이직/유학 전망'. 섹션 개수는 유지. */
+ *  구직중 12건이 '직장 내 인간관계 경향', 사업 운영중 5건이 '창업하기 좋은 때', 주거 이사 7건이 '이사/이직/유학 전망'. 섹션 개수는 유지. */
 /** 2026-10-09 — 다음 주제 연결(nextHooks.topics) 허용 id = 출시 주제 10종 */
 const HOOK_TOPIC_IDS = ['love', 'reunion', 'marriage', 'wealth', 'exam', 'business', 'health', 'move', 'study', 'career'];
 function hookIdList(current: string): string {
@@ -1294,10 +1316,10 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
     case 'love': {
       const ls = String(extraInfo?.loveStatus || '');
       if (ls === 'some' || ls === '썸') {
-        return ['나의 연애 스타일', hasPartner ? '그 사람과 나의 사주 궁합' : '내 사주가 끌리는 사람', '썸이 연애로 이어지는 시기', '썸에서 되풀이되는 나의 모습', '올해 연애 흐름과 고백 타이밍'];
+        return ['나의 연애 성향', hasPartner ? '그 사람과 나의 사주 궁합' : '내 사주가 끌리는 사람', '썸이 연애로 이어지는 시기', '썸에서 되풀이되는 나의 모습', '올해 연애 흐름과 고백 시기'];
       }
       if (ls === 'dating' || ls === '연애중') {
-        return ['나의 연애 스타일', hasPartner ? '두 사람의 사주 궁합' : '내 사주로 본 지금 관계', '관계가 깊어지는 시기와 고비', '연애 중 반복되는 경향', '올해 두 사람의 흐름과 전략'];
+        return ['나의 연애 성향', hasPartner ? '두 사람의 사주 궁합' : '내 사주로 본 지금 관계', '관계가 깊어지는 시기와 고비', '연애 중 반복되는 경향', '올해 두 사람의 흐름과 전략'];
       }
       return base;
     }
@@ -1317,14 +1339,14 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
       const js = String(extraInfo?.jobStatus || '');
       if (js === 'student') return swap({ '직장 내 인간관계 경향': '첫 직장에서 만날 사람들' });
       if (js === 'jobseeking') return swap({ '직장 내 인간관계 경향': '입사 후 만날 사람들' });
-      if (js === 'employed') return swap({ '사주가 부르는 직종 TOP 5': '지금 직종과 내 사주의 궁합' });
+      if (js === 'employed') return swap({ '사주에 맞는 직종 다섯 가지': '지금 직종과 내 사주의 궁합' });
       // 상황 미선택(실측 절반) — 재직 여부를 모르니 '직장 내'로 단정하지 않는다
       return swap({ '직장 내 인간관계 경향': '일터에서 반복되는 관계 경향' });
     }
     case 'business': {
-      if (extraInfo?.bizStatus === 'running') return swap({ '맞는 업종': '지금 업종과 사주의 궁합', '창업 타이밍': '확장과 전환 타이밍' });
+      if (extraInfo?.bizStatus === 'running') return swap({ '맞는 업종': '지금 업종과 사주의 궁합', '창업하기 좋은 때': '확장과 전환 시기' });
       if (extraInfo?.bizStatus === 'preparing') return base;
-      return swap({ '창업 타이밍': '창업과 확장 타이밍' }); // 미선택 — 운영 중일 수도
+      return swap({ '창업하기 좋은 때': '창업과 확장 시기' }); // 미선택 — 운영 중일 수도
     }
     case 'move': {
       const mp = String(extraInfo?.movePurpose || '');
@@ -1339,7 +1361,7 @@ export function topicSectionTitles(topicId: string, partnerInfo?: unknown, extra
     }
     case 'exam': {
       const ct = String(extraInfo?.changeType || '');
-      if (ct === 'exam') return ['시험 합격운, 올해 흐름', '합격에 유리한 분야와 방향', '시험과 면접 결정 시기', '학습 컨디션과 슬럼프 관리', '올해 합격 실전 전략'];
+      if (ct === 'exam') return ['시험 합격운, 올해 흐름', '합격에 유리한 분야와 방향', '시험과 면접 결정 시기', '공부 몸 상태와 막힐 때 관리', '올해 합격 실전 전략'];
       if (ct === 'jobchange') return ['이직운, 올해 변동 기운', '이직에 유리한 방향과 분야', '이직 결정과 면접 시기', '이직 후 3개월 적응 전망', '올해 이직 실전 전략'];
       if (ct === 'career_pivot') return ['직무 전환운, 올해 변동 기운', '전환에 유리한 직무 방향', '전환 결정 시기', '전환 초기 적응 전망', '올해 전환 실전 전략'];
       // 2026-10-15 오너: 20대 취준생만 보던 문구 → 첫 취업과 50~60대 재취업, 새 일도 고를 수 있게
@@ -1721,7 +1743,7 @@ ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 ## 오행: 목${el.목||0} 화${el.화||0} 토${el.토||0} 금${el.금||0} 수${el.수||0}
 ${Object.entries(el).filter(([,v]) => v === 0).map(([k]) => `→ ${k} 없음`).join('\n')}
 
-## 십성: ${sipsung || '미상'}
+${sajuCoreFactsText(d)}
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 대운 흐름의 값을 그대로 인용 — 이전/다음 대운 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지. 시기 계산은 위 '현재 대운' 간지를 기준으로 하되, 본문에 이전과 다음 대운을 언급할 땐 반드시 위 목록의 간지를 그대로 쓸 것.` : ''}
@@ -1742,8 +1764,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 - ✅ 반드시: 위 격국(${gyeokguk || '판정 보류'}) + 일간강약(${myeongri.일간강약 || '미산출'}) + 용신(${yongsin || '추론'}) 을 **그대로 전제**로 깔고 해석. 격국명, 강약, 용신을 본문에 쓸 때 위 값과 100% 일치해야 함.
 ## 형충합(刑沖合): ${hyungchunghapText || '없음'}
 ## 지장간: ${jijangganText || '없음'}
-## 일주 길신(吉神): ${gilsinText || '없음'}
-## 일주 흉살(凶殺): ${hyungsalText || '없음'}
+${myeongriSinsalText(p)}
 ## 공망(空亡): ${gongmangText || '없음'}
 ## 12운성: ${unyoung12Text || '미산출'}
 ## 납음(納音): ${napeumText || '미산출'}
@@ -1754,7 +1775,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 ${gwiinText || '미산출'}
 ### 시간대 오행 (시진): ${SIJIN_OHENG_LINE}
 ${lifeTimelineFactsText(d, today)}
-### 짚기 자리 (2026-10-14): 첫 섹션 첫 문단에서 위 확정표 중 이 주제와 맞닿은 영역(이 주제의 핵심 십성, 일지나 월지 자리)이 걸린 시기 하나로 '지난 일 짚기'나 '요즘 짚기'를 한 번 한다. 맞닿은 시기가 표에 없으면 올해나 이번 달로 짚는다. 다른 섹션에서는 다시 묻지 않는다.
+### 짚기 자리 (2026-10-14, 10-15 둘째 문단으로 맞춤): 첫 섹션 둘째 문단에서 위 확정표 중 이 주제와 맞닿은 영역(이 주제의 핵심 십성, 일지나 월지 자리)이 걸린 시기 하나로 '지난 일 짚기'나 '요즘 짚기'를 한 번 한다. 맞닿은 시기가 표에 없으면 올해나 이번 달로 짚는다. 다른 섹션에서는 다시 묻지 않는다.
 ### 숫자 날조 금지: '합격률 두 배', '확률 N%', '3개월간 좋은 결과' 같은 검증 불가 수치와 보장 금지 (점수 필드 제외).
 
 ## 🚨 시기(월) 판정 룰 — 반드시 위 월건 간지로 계산 (2026-09-15 신설)

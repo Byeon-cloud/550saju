@@ -58,7 +58,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -209,18 +209,18 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
     routeAfterSave: (id) => `/weekly?profileId=${encodeURIComponent(id)}`,
   },
   monthly: {
-    hint: '월별 운세를 보려면 사주 정보가 필요해요',
-    submitLabel: '월별 운세 보러 가기',
+    hint: '월운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '월운세 보러 가기',
     routeAfterSave: (id) => `/monthly?profileId=${encodeURIComponent(id)}`,
   },
   home_body_monthly: {
-    hint: '월별 운세를 보려면 사주 정보가 필요해요',
-    submitLabel: '월별 운세 보러 가기',
+    hint: '월운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '월운세 보러 가기',
     routeAfterSave: (id) => `/monthly?profileId=${encodeURIComponent(id)}`,
   },
   home_body_premium: {
-    hint: '종합 사주를 위해 정보를 입력해주세요',
-    submitLabel: `종합 사주 시작하기 (${getPremiumPrice().actualPrice}운)`,
+    hint: '종합사주를 보려면 정보를 넣어 주세요',
+    submitLabel: `종합사주 시작하기 (${getPremiumPrice().actualPrice}운)`,
     // 잔액 확인은 handleSubmit 의 별도 로직에서 처리. home_body_premium 분기가 먼저 처리하므로 이 경로는 실사용 X.
     // 안전 fallback: Phase 4 (2026-05-27) 결과 페이지 직진 패턴 유지.
     routeAfterSave: (id) => `/result/${id}?fresh=1&type=premium`,
@@ -234,15 +234,15 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   home_body_daewoon: LOCKED_FALLBACK_INTENT,
   // 월운은 /monthly 로 출시됨 → 구 /topic/wolun(없는 주제) 대신 월별 운세로
   home_body_wolun: {
-    hint: '월별 운세를 보려면 사주 정보가 필요해요',
-    submitLabel: '월별 운세 보러 가기',
+    hint: '월운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '월운세 보러 가기',
     routeAfterSave: (id) => `/monthly?profileId=${encodeURIComponent(id)}`,
   },
   home_body_gunghap: LOCKED_FALLBACK_INTENT,
   home_body_tojeong: LOCKED_FALLBACK_INTENT,
   home_body_tojung: { hint: '신년운세를 볼 사주 정보를 입력해주세요', submitLabel: '저장하고 신년운세 보러 가기', routeAfterSave: () => '/tojung' },
   storage: {
-    hint: '새로운 사주를 등록합니다',
+    hint: '새 사주를 넣어요',
     submitLabel: '사주 저장하기',
     routeAfterSave: () => '/storage',
   },
@@ -264,7 +264,7 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
     routeAfterSave: (id) => `/chat?profileId=${id}`,
   },
   result_other: {
-    hint: '또 다른 분의 사주를 등록합니다',
+    hint: '다른 분의 사주를 넣어요',
     submitLabel: '사주 카드 만들기',
     // Stage 7e-8: 사주풀이 폐기 — 미정의 fallback 도 사주카드 진입으로 통일
     routeAfterSave: (id) => `/saju-card/${id}`,
@@ -727,9 +727,9 @@ export function InputPage() {
         if (!spendBalance(premiumCost)) {
           // 2026-06-18 — 잔액부족 = 충전 유도 직전(전환 모멘트) 트래킹
           import('@/services/analytics').then((a) => a.trackEvent('insufficient_balance', { type: 'premium', needed: premiumCost })).catch(() => {});
-          toast.show(`${premiumCost}운이 부족해요. 충전 페이지로 이동합니다`, 'warning');
+          toast.show(`${premiumCost}운이 부족해요. 충전 화면으로 갈게요`, 'warning');
           navigate(`/charge?need=${premiumCost}`, {
-            state: { from: 'input', message: `종합 사주에 ${premiumCost}운이 필요해요` },
+            state: { from: 'input', message: `종합사주에 ${premiumCost}운이 필요해요` },
           });
           return;
         }
@@ -738,7 +738,7 @@ export function InputPage() {
         // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
         import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumCost)).catch(() => {});
 
-        toast.show(`${premiumCost}운 차감: 종합 사주 시작`, 'success');
+        toast.show(`${premiumCost}운을 써서 종합사주를 시작해요`, 'success');
         const newId = generateId();
         navigate(`/result/${newId}?fresh=1&type=premium`, { replace: true });
         return;
@@ -925,7 +925,7 @@ export function InputPage() {
             <p className="text-body-sm text-text-muted leading-relaxed" style={{ wordBreak: 'keep-all' }}>
               이미 본인 사주로 <strong style={{ color: '#1A1A1A' }}>{ownerDupModal.existingName}</strong> 님이 저장되어 있어요.
               <br />
-              본인 사주는 한 명만 가질 수 있습니다. <strong style={{ color: '#1A1A1A' }}>운 잔액과 결제 내역은 그대로 유지</strong>됩니다.
+              본인 사주는 한 명만 둘 수 있어요. <strong style={{ color: '#1A1A1A' }}>운 잔액과 결제 내역은 그대로 남아요</strong>.
             </p>
             <div className="flex flex-col gap-2">
               <Button
@@ -1824,7 +1824,7 @@ function HourSheet({
                     모름
                   </div>
                   <div style={{ fontSize: 13.5, color: C.mute, marginTop: 2 }}>
-                    시주 제외 풀이 (약 20% 간소화)
+                    태어난 시를 빼고 풀어요
                   </div>
                 </div>
               </button>
@@ -1904,7 +1904,7 @@ function NoticeBlock() {
           margin: 0,
         }}
       >
-        입력한 정보는 풀이와 저장에만 사용되며 외부 공유되지 않아요.
+        입력한 정보는 풀이를 만들고 보관하는 데만 써요. 자세한 처리는 개인정보처리방침에 있어요.
       </p>
       <p
         style={{

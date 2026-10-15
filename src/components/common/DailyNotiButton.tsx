@@ -16,7 +16,7 @@ import { useToast } from '@/components/common/Toast';
 const TEMPLATE_CODE = import.meta.env.VITE_TOSS_NOTI_TEMPLATE_CODE as string | undefined;
 const AGREED_KEY = 'saju500:daily_noti_agreed';
 
-const C = { gold: '#B8965A', goldDeep: '#8C6D3D', ink: '#1A1A1A', mute: '#7A7269' } as const;
+const C = { gold: '#B8965A', goldDeep: '#8C6D3D', ink: '#1A1A1A', mute: '#6F6557' } as const;
 
 export function DailyNotiButton({ className }: { className?: string }) {
   const toast = useToast();

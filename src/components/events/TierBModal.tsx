@@ -107,7 +107,7 @@ export function TierBModal({ open, kind, onClose, autoCloseMs = 3000 }: TierBMod
                   운 2
                 </div>
                 <div className="mt-1 text-[13px] font-semibold" style={{ color: '#9A3D1A' }}>
-                  임시 폴백 지급
+                  토스포인트 대신 먼저 드린 운
                 </div>
               </>
             )}

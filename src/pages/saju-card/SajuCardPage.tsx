@@ -28,11 +28,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import '@/styles/hanji.css';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Solar } from 'lunar-javascript';
 import { Header } from '@/components/layout/Header';
 import { useToast } from '@/components/common/Toast';
+import { HJ, SERIF as HJ_SERIF, GoldCta, GhostButton } from '@/components/hanji/Hanji';
+import { isAppsInToss } from '@/services/payment/iapService';
 // Stage 4: OHENG_MAP — IdentityCard 가 자체 OHENG_ACCENT 매핑 사용, 미사용
 // import { OHENG_MAP } from '@/constants/oheng';
 import { getIljuAnimal } from '@/constants/iljuAnimal';
@@ -47,6 +49,7 @@ import {
   captureSajuCardAsBlob,
   downloadBlob,
   shareSajuCardImage,
+  shareSajuCardViaToss,
   buildSajuCardFilename,
   buildShareTextAndUrl,
 } from '@/components/saju-card/SajuCardExport';
@@ -75,7 +78,7 @@ const C = {
   surface: '#FFFFFF',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.10)',
@@ -103,6 +106,7 @@ function formatHourKo(hour?: number): string {
 export function SajuCardPage() {
   const { profileId } = useParams<{ profileId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
 
   const profile = useMemo(() => loadProfile(profileId), [profileId]);
@@ -130,7 +134,20 @@ export function SajuCardPage() {
     if (!profileId) navigate('/storage', { replace: true });
   }, [profileId, navigate]);
 
-  if (!profile) return <NotFoundView onBack={() => navigate('/storage')} />;
+  if (!profile) {
+    // 2026-10-15 — 공유 링크로 들어온 사람은 그 프로필이 기기에 없다. 막다른 '프로필을 찾을 수 없어요' 대신 안내와 다음 행동.
+    const q = new URLSearchParams(location.search);
+    const shared = q.has('i') || q.get('ref') === 'share';
+    return (
+      <NotFoundView
+        shared={shared}
+        ilju={(q.get('i') || '').slice(0, 2)}
+        onInput={() => navigate('/input?new=1')}
+        onHome={() => navigate('/', { replace: true })}
+        onStorage={() => navigate('/storage')}
+      />
+    );
+  }
   if (!sajuData) {
     return (
       <div style={{ background: C.paper, minHeight: '100vh' }}>
@@ -161,7 +178,8 @@ export function SajuCardPage() {
       });
     } catch (err: any) {
       console.error('[SajuCard] capture failed:', err);
-      toast.show(err?.message || '이미지 생성에 실패했어요', 'warning');
+      // 2026-10-15 — 원본 오류 문구(영문)는 로그로만
+      toast.show('이미지를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
       return null;
     }
   }
@@ -205,6 +223,17 @@ export function SajuCardPage() {
     if (exportBusy) return;
     if (!profile) return;
     setExportBusy('share');
+    // 2026-10-15 — 앱(토스)에서는 다른 결과 공유처럼 토스 공유(공유 링크 + 공유 시트). 웹 방식(navigator.share,
+    //   클립보드, 강제 다운로드)을 앱에서 쓰면 미니앱 주소가 박힌 링크가 나갔다. 카드 이미지는 '이미지 저장'으로.
+    if (isAppsInToss()) {
+      try {
+        const ok = await shareSajuCardViaToss(profile.id, ilju || undefined);
+        if (!ok) toast.show('공유를 열지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
+      } finally {
+        setExportBusy(null);
+      }
+      return;
+    }
     try {
       // 카톡 호환 사이즈 export DOM 렌더
       setRenderedExportMode('kakao-share');
@@ -571,23 +600,37 @@ function ExportModeSheet({
 /* ══════════════════════════════════════════════════════════════════
  * Sub: NotFoundView
  * ═════════════════════════════════════════════════════════════════ */
-function NotFoundView({ onBack }: { onBack: () => void }) {
+function NotFoundView({ shared, ilju, onInput, onHome, onStorage }: {
+  /** 공유 링크로 들어왔는지 (?i= 또는 ?ref=share) */
+  shared: boolean;
+  /** 보낸 사람 일주 한자 두 글자 (공유 링크에 있을 때만) */
+  ilju: string;
+  onInput: () => void;
+  onHome: () => void;
+  onStorage: () => void;
+}) {
+  const animal = shared && ilju ? getIljuAnimal(ilju) : null;
   return (
-    <div style={{ background: C.paper, minHeight: '100vh' }}>
+    <div style={{ background: HJ.paper, minHeight: '100vh' }}>
       <Header title="사주 카드" />
-      <div style={{ padding: 40, textAlign: 'center', color: C.mute }}>
-        프로필을 찾을 수 없어요.
-        <button
-          type="button"
-          onClick={onBack}
-          style={{
-            display: 'block', margin: '20px auto 0', padding: '10px 20px',
-            borderRadius: 8, border: `1px solid ${C.line}`, background: C.surface,
-            color: C.inkSoft, fontSize: 14, cursor: 'pointer',
-          }}
-        >
-          보관함으로
-        </button>
+      <div style={{ padding: '40px 20px', maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
+        <h2 style={{ fontFamily: HJ_SERIF, fontSize: 21, fontWeight: 700, color: HJ.ink, lineHeight: 1.45 }}>
+          {shared ? '공유받은 사주 카드예요' : '이 사주 카드를 찾을 수 없어요'}
+        </h2>
+        {animal && (
+          <p style={{ fontSize: 15, color: HJ.ink2, marginTop: 10 }}>
+            보낸 분은 {animal.ko}({animal.hanja}) 일주예요.
+          </p>
+        )}
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: HJ.ink2, marginTop: 12 }}>
+          {shared
+            ? '사주 카드는 만든 사람 기기에만 저장돼 있어서 여기서는 열리지 않아요. 내 생년월일을 넣으면 내 사주 카드를 바로 볼 수 있어요.'
+            : '보관함에서 이 사주를 지웠을 수 있어요. 보관함에서 다른 사주를 고르거나 새로 넣어 주세요.'}
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
+          <GoldCta onClick={onInput} sub="무료">생년월일 넣고 내 사주 보기</GoldCta>
+          <GhostButton onClick={shared ? onHome : onStorage}>{shared ? '홈으로' : '보관함으로'}</GhostButton>
+        </div>
       </div>
     </div>
   );

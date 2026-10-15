@@ -84,7 +84,7 @@ export function ProfilePicker({ onSelect, onNew, title = '누구의 사주를 �
           <p style={{ fontSize: 15, fontWeight: 800, color: '#1A1A1A', letterSpacing: '-0.01em' }}>
             새 사주 입력하기
           </p>
-          <p style={{ fontSize: 13.5, color: '#7A7269', marginTop: 2 }}>
+          <p style={{ fontSize: 13.5, color: '#6F6557', marginTop: 2 }}>
             새로운 사람의 사주를 분석해요
           </p>
         </div>
@@ -245,7 +245,7 @@ function ProfileCardCompact({
             </span>
           )}
         </div>
-        <div style={{ fontSize: 13.5, color: '#7A7269', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 13.5, color: '#6F6557', lineHeight: 1.5 }}>
           {profile.input.birthYear}.
           {String(profile.input.birthMonth).padStart(2, '0')}.
           {String(profile.input.birthDay).padStart(2, '0')} ({calLabel}), {hourLabel}

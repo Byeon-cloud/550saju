@@ -262,7 +262,7 @@ const MOCKUP_CSS = `
 .dream-mockup .input-stack { margin: 16px 20px 0; display: flex; flex-direction: column; gap: 10px; }
 /* 2026-05-28 — 3카드 좌측 컬러 strip 제거 (AI grid 디자인 티). 톤은 .lb 의 dot + 컬러 텍스트로 표현. */
 .dream-mockup .ic { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 3px 10px rgba(0,0,0,.05); border: 1px solid rgba(0,0,0,0.04); }
-.dream-mockup .ic .lb { font-size: 13px; color: #7F6B4E; letter-spacing: 0.18em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.dream-mockup .ic .lb { font-size: 13px; color: #6F6557; letter-spacing: 0.18em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .dream-mockup .ic.topic .lb { color: #B8965A; }
 .dream-mockup .ic.dream .lb { color: #1A1612; }
 .dream-mockup .ic .lb .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
@@ -276,7 +276,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sec-num { display: inline-block; font-family: 'Noto Serif KR', serif; font-size: 17px; font-weight: 900; color: #A23A2A; letter-spacing: 0; margin-bottom: 4px; } /* 2026-10-10 v9 — SECTION 01 → 一 */
 .dream-mockup .sec-title { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; color: #1a1a1a; }
 .dream-mockup .sec-title .han { color: #B8965A; font-weight: 500; margin-left: 6px; font-size: 14px; }
-.dream-mockup .sec-lead { font-size: 13.5px; color: #7F6B4E; margin-top: 4px; line-height: 1.55; }
+.dream-mockup .sec-lead { font-size: 13.5px; color: #6F6557; margin-top: 4px; line-height: 1.55; }
 .dream-mockup .body p { font-size: 14.5px; line-height: 1.85; color: #2a2520; margin: 10px 0 0; word-break: keep-all; }
 .dream-mockup .body p strong { font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(184,150,90,.32) 60%); padding: 0 2px; color: #1a1a1a; }
 /* <em> = 주의와 경고 (번트오렌지) — 2026-05-29. font-style normal (한글 가독). */
@@ -302,7 +302,7 @@ const MOCKUP_CSS = `
 .dream-mockup .sym .pic.mountain { background: #FFFDF8 !important; border: 1.5px solid currentColor; border-radius: 3px; color: #8A6A2E; }
 .dream-mockup .sym .pic.shadow { color: #1A1612; }
 .dream-mockup .sym .pic.metal { color: #6B665E; }
-.dream-mockup .sym .pic.mountain { color: #7F6B4E; }
+.dream-mockup .sym .pic.mountain { color: #6F6557; }
 .dream-mockup .sym .hd2 { display: flex; justify-content: flex-start; align-items: baseline; gap: 6px; }
 .dream-mockup .sym .nm { font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 700; color: #1a1a1a; }
 .dream-mockup .sym .han { font-family: 'Noto Serif KR', serif; color: #B8965A; font-size: 13.5px; }
@@ -379,7 +379,7 @@ const MOCKUP_CSS = `
 .dream-mockup .lk-diag.timeline .tl-cell { height: 22px; background: #E5DFD0; border-radius: 2px; position: relative; }
 .dream-mockup .lk-diag.timeline .tl-cell.mark { background: #B8965A; }
 .dream-mockup .lk-diag.timeline .tl-cell.mark.strong { background: #A23A2A; }
-.dream-mockup .lk-diag.timeline .tl-lbls { display: flex; justify-content: space-between; font-size: 13px; color: #7F6B4E; margin-top: 4px; font-feature-settings: 'tnum'; }
+.dream-mockup .lk-diag.timeline .tl-lbls { display: flex; justify-content: space-between; font-size: 13px; color: #6F6557; margin-top: 4px; font-feature-settings: 'tnum'; }
 .dream-mockup .lk-diag.timeline .tl-cap { font-size: 13px; color: #5C4A2E; margin-top: 6px; }
 .dream-mockup .lk-diag.timeline .tl-cap strong { color: #A23A2A; font-weight: 600; }
 
@@ -419,7 +419,7 @@ const MOCKUP_CSS = `
 .dream-mockup .paid-cta .cta-btn .cost { margin-left: 8px; font-size: 14px; font-weight: 700; opacity: .72; } /* 2026-10-14 v9: 알약 대신 글자 (GoldCta sub 와 같게) */
 /* 2026-09-17 — 스트리밍 중 결제 race 차단: 잠금 풀이가 다 쓰일 때까지 CTA 비활성 */
 .dream-mockup .paid-cta .cta-btn:disabled { opacity: .55; cursor: default; }
-.dream-mockup .paid-cta .sub { font-size: 13px; color: #7F6B4E; text-align: center; margin-top: 8px; position: relative; }
+.dream-mockup .paid-cta .sub { font-size: 13px; color: #6F6557; text-align: center; margin-top: 8px; position: relative; }
 
 /* Actions */
 .dream-mockup .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid #E5DFD0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -427,11 +427,11 @@ const MOCKUP_CSS = `
 .dream-mockup .actions .btn:hover { border-color: #B8965A; }
 .dream-mockup .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
 .dream-mockup .actions .btn .ti { font-size: 13.5px; font-weight: 600; }
-.dream-mockup .actions .btn .sb { font-size: 13px; color: #7F6B4E; }
+.dream-mockup .actions .btn .sb { font-size: 13px; color: #6F6557; }
 
 /* 꿈 종류 → 주제 추천 (2026-09-17) — 카드 1장 + 보조 링크 */
 .dream-mockup .topic-rec { margin: 22px 20px 0; }
-.dream-mockup .topic-rec .tr-lab { font-size: 13px; color: #7F6B4E; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+.dream-mockup .topic-rec .tr-lab { font-size: 13px; color: #6F6557; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
 .dream-mockup .topic-rec .tr-card { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #E5DFD0; border-radius: 16px; padding: 14px 14px 14px 16px; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease; }
 .dream-mockup .topic-rec .tr-card:hover { border-color: #B8965A; box-shadow: 0 4px 12px rgba(184,150,90,.12); }
 .dream-mockup .topic-rec .tr-card:focus-visible, .dream-mockup .topic-rec .tr-sub:focus-visible { outline: 2px solid #B8965A; outline-offset: 2px; }
@@ -442,7 +442,7 @@ const MOCKUP_CSS = `
 .dream-mockup .topic-rec .tr-price { font-size: 13px; font-weight: 700; color: #8C6D3D; background: rgba(184,150,90,.12); padding: 2px 8px; border-radius: 2px; }
 .dream-mockup .topic-rec .tr-copy { font-size: 13.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
 .dream-mockup .topic-rec .tr-arrow { flex-shrink: 0; font-size: 20px; color: #B8965A; line-height: 1; }
-.dream-mockup .topic-rec .tr-sub { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 12px 4px; font-size: 13.5px; color: #7F6B4E; text-align: center; cursor: pointer; word-break: keep-all; }
+.dream-mockup .topic-rec .tr-sub { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 12px 4px; font-size: 13.5px; color: #6F6557; text-align: center; cursor: pointer; word-break: keep-all; }
 .dream-mockup .topic-rec .tr-sub .tr-sub-name { color: #5C4A2E; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Notice */
@@ -540,7 +540,7 @@ const SYMBOL_PIC_CLASS: Record<string, string> = {
 };
 
 const OHENG_KANJI: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
-const OHENG_COLOR: Record<string, string> = { 수: '#3E5F82', 토: '#7F6B4E', 목: '#4E7A57', 화: '#B04A38', 금: '#7D7870' };
+const OHENG_COLOR: Record<string, string> = { 수: '#3E5F82', 토: '#B07F38', 목: '#4E7A57', 화: '#B04A38', 금: '#7D7870' };
 
 export function DreamMockupView(props: DreamMockupViewProps) {
   const { result: raw, profile, hasSaju, category, dreamText, concern, unlocked = false, isStreaming = false, createdAt, categoryId, onUnlock, onShare, onChat, onTopic } = props;
@@ -679,7 +679,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             {firstImpression?.narrative && (
               <>
                 {Array.isArray(firstImpression.strongImages) && firstImpression.strongImages.length >= 1 && (
-                  <p style={{ marginTop: 6, fontSize: 13.5, color: '#7F6B4E' }}>
+                  <p style={{ marginTop: 6, fontSize: 13.5, color: '#6F6557' }}>
                     가장 세게 남은 이미지: {firstImpression.strongImages.slice(0, 2).map((s: string) => `"${s}"`).join(', ')}
                   </p>
                 )}
@@ -749,7 +749,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               defaultOpen={false}
               hasData={quotes.length > 0}
             >
-              <p className="sec-lead">꿈을 적을 때 쓴 문장 안에 이미 해석이 반쯤 담겨 있습니다.</p>
+              <p className="sec-lead">꿈을 적을 때 쓴 문장 안에 이미 풀이가 반쯤 담겨 있어요.</p>
               <div className="quote-stack">
                 {quotes.map((q, i) => (
                   <div key={i} className="qc">
@@ -776,7 +776,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
           >
             {worry?.narrative && (
               <>
-                <p className="sec-lead">적어주신 고민과 꿈의 장면이 어떻게 맞물리는지 짚습니다.</p>
+                <p className="sec-lead">적어 주신 고민과 꿈의 장면이 어떻게 맞물리는지 짚어 봐요.</p>
                 <div className="worry-link">
                   <div className="h">
                     <span className="lab">요새 고민</span>
@@ -804,7 +804,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <div className="ttl">
                   {unlocked
                     ? `${profile?.name ? `${profile.name} 님` : '내'} 사주와 꿈을 함께 읽은 심층 풀이`
-                    : `이 아래는 ${profile?.name ? `${profile.name} 님` : '내'} 사주와 꿈을 함께 읽습니다`}
+                    : `이 아래는 ${profile?.name ? `${profile.name} 님` : '내'} 사주와 꿈을 함께 읽어요`}
                 </div>
               </div>
             </div>
@@ -825,8 +825,8 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                       <>
                         <p className="lk-teaser" dangerouslySetInnerHTML={safeHtml(lockedDayganRead.teaser)} />
                         <div className="lk-blurred">
-                          <p>일간이 갖는 고유한 의미를 깊이 풀어드립니다. 결정적인 풀이는 잠금 해제 후에 보여드립니다.</p>
-                          <p>월간과 연간 배치와 어떻게 맞물려 지금의 머뭇거림을 만드는지 이어서 풀이합니다.</p>
+                          <p>일간이 가진 고유한 뜻을 깊이 풀어 드려요. 핵심 풀이는 잠금을 풀면 보여 드려요.</p>
+                          <p>월간과 연간 배치와 어떻게 맞물려 지금의 머뭇거림을 만드는지 이어서 풀어 드려요.</p>
                         </div>
                         {lockedDayganRead.full && <div className="lk-full" dangerouslySetInnerHTML={safeHtml(lockedDayganRead.full)} />}
                       </>
@@ -871,7 +871,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                         )}
                         <p className="lk-teaser" style={{ marginTop: 10 }} dangerouslySetInnerHTML={safeHtml(lockedOhengFlow.teaser)} />
                         <div className="lk-blurred">
-                          <p>이 오행 분포가 사주 원국과 현재 운세와 어떻게 맞물리는지를 이어서 풀이합니다.</p>
+                          <p>이 오행 분포가 사주 원국과 현재 운세와 어떻게 맞물리는지 이어서 풀어 드려요.</p>
                         </div>
                         {lockedOhengFlow.full && <div className="lk-full" dangerouslySetInnerHTML={safeHtml(lockedOhengFlow.full)} />}
                       </>
@@ -945,7 +945,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                         )}
                         <p className="lk-teaser" style={{ marginTop: 10 }} dangerouslySetInnerHTML={safeHtml(lockedTimeline.teaser)} />
                         <div className="lk-blurred">
-                          <p>이 시기가 사주 대운과 어떻게 맞물려 있는지를 이어서 풀이합니다.</p>
+                          <p>이 시기가 사주 대운과 어떻게 맞물려 있는지 이어서 풀어 드려요.</p>
                         </div>
                         {lockedTimeline.full && <div className="lk-full" dangerouslySetInnerHTML={safeHtml(lockedTimeline.full)} />}
                       </>
@@ -974,7 +974,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                         <p className="lk-teaser" dangerouslySetInnerHTML={safeHtml(lockedAction.teaser)} />
                         <div className="dual-blind">
                           <div className="db-col go">
-                            <div className="ch">해야 할 것 3</div>
+                            <div className="ch">해 볼 것 세 가지</div>
                             <div className="lines">
                               <div className="line" /><div className="line mid" /><div className="line short" />
                             </div>
@@ -985,7 +985,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                             )}
                           </div>
                           <div className="db-col no">
-                            <div className="ch">피할 것 3</div>
+                            <div className="ch">피할 것 세 가지</div>
                             <div className="lines">
                               <div className="line mid" /><div className="line" /><div className="line short" />
                             </div>
@@ -1011,7 +1011,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             {!unlocked && (
               <div className="paid-cta">
                 <div className="lab">사주와 함께 보는 깊은 풀이</div>
-                <h3>같은 꿈도 사주 일간에 따라<br />의미가 달라집니다.</h3>
+                <h3>같은 꿈도 사주 일간에 따라<br />뜻이 달라져요.</h3>
                 <p className="hook">
                   {profile?.name ? `${profile.name} 님은` : '이 사주는'} <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방)을 전부 열어드립니다.
                 </p>
@@ -1029,7 +1029,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <div className="sub">
                   {isStreaming
                     ? '잠금 풀이까지 다 쓰이면 바로 열 수 있어요'
-                    : '풀이는 즉시 열립니다, 결과는 보관함에 자동 저장'}
+                    : '풀이는 바로 열리고, 결과는 보관함에 저장돼요'}
                 </div>
               </div>
             )}

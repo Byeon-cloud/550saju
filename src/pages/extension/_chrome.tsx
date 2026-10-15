@@ -31,7 +31,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -81,7 +81,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     accentDark: '#1A1612',
     accentSoft: 'rgba(140,109,61,0.10)',
     hint: '#4B4238',
-    label: '이번 달 월운',
+    label: '월운세',
     heroH1: { line1: '한 달 동안 좋은 날과', line2: '조심할 날을 알려 드려요' },
     // 2026-07-01 가격 fix — 월운 정가 7운 (getMonthlyPrice SSOT). 세일가는 호출부 costLabel 로.
     cost: '7운',
@@ -119,7 +119,7 @@ export const EXTENSION_THEME: Record<ExtensionPageKey, ExtensionTheme> = {
     hint: '#4B4238',
     // 2026-10-08 — 신년운세 7운 프리미엄 (TojungPage NEWYEAR_PRICE=7 · 서버 generateTojung 7운)
     label: '신년운세',
-    heroH1: { line1: '다가올 한 해를', line2: '날짜까지 미리 봅니다' },
+    heroH1: { line1: '다가올 한 해를', line2: '날짜까지 미리 봐요' },
     cost: `${getTojungPrice().actualPrice}운`,
   },
 };
@@ -1309,7 +1309,7 @@ export function CalGrid({
             fontWeight: 700,
           }}
         >
-          {monthLabel ?? '캘린더, 일별 강도'}
+          {monthLabel ?? '날마다의 흐름'}
         </div>
         {hint && (
           <div style={{ fontSize: 13, color: C.mute }}>{hint}</div>

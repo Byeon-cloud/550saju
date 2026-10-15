@@ -66,7 +66,7 @@ export function CompatibilityPage() {
           </div>
           <p className="text-caption text-text-muted">{slot === 1 ? '본인 선택' : '상대방 선택'}</p>
           {profiles.length === 0 && (
-            <p className="text-[13px] text-text-hint">사주 분석 먼저 필요</p>
+            <p className="text-[13px] text-text-hint">먼저 사주를 넣어 주세요</p>
           )}
         </button>
       );
@@ -132,7 +132,7 @@ export function CompatibilityPage() {
         <ExtensionHero
           theme={compatTheme}
           crumb="두 사람 궁합"
-          sub="생년월일과 시 두 분의 자료를 5가지 관점에서 비교합니다."
+          sub="두 분의 생년월일과 태어난 시로 다섯 가지를 견줘 봐요."
           seal="合"
         />
       </FadeIn>

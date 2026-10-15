@@ -577,6 +577,7 @@ export function DailyFortunePage() {
           aiResult: { ...res, __fortuneDate: dateKey },
           createdAt: new Date().toISOString(),
           profileId: profile.id,
+          spentUn: existing?.type === 'paid' || tier === 'paid' ? 1 : 0, // 2026-10-15 보관함 장부 (하루 1회 무료, 두 번째부터 1운)
         });
         if (pendingId) clearPendingSpend(pendingId); // 저장 완료 → 자동환불 대상 제외
       } catch {
@@ -611,7 +612,7 @@ export function DailyFortunePage() {
     <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
       {isResultPhase ? (
         <DarkHeader
-          title={`${selectedProfile?.name || '내'} 님의 오늘의 운세`}
+          title={selectedProfile?.name ? `${selectedProfile.name} 님의 오늘의 운세` : '내 오늘의 운세'}
           subtitle={resultTier === 'paid' ? '오늘 하루를 일곱 장으로' : '무료로 읽는 오늘 하루 일곱 장'}
           chip={resultTier === 'paid' ? '1운' : '무료'}
           chipVariant={resultTier === 'paid' ? 'gold' : 'free'}
@@ -648,7 +649,7 @@ export function DailyFortunePage() {
                 className="text-body-sm"
                 style={{ color: 'var(--text-muted)', textAlign: 'center' }}
               >
-                오늘의 운세는 사주 기반이에요. 생년월일만 입력하면 1분.
+                오늘의 운세는 사주 기반이에요. 생년월일만 넣으면 1분이면 돼요.
               </p>
             </motion.div>
           )}
@@ -1096,11 +1097,11 @@ function ResultView({
                 fontSize: 17, fontWeight: 700, color: '#1A1A1A',
                 marginBottom: 4,
               }}>
-                {topicPicker === 'love' ? '관계: 어떤 부분이 궁금하세요?'
-                  : topicPicker === 'career' ? '일: 어떤 부분이 궁금하세요?'
-                  : '건강: 어떤 부분이 궁금하세요?'}
+                {topicPicker === 'love' ? '사람 관계에서 어떤 부분이 궁금하세요?'
+                  : topicPicker === 'career' ? '일에서 어떤 부분이 궁금하세요?'
+                  : '건강에서 어떤 부분이 궁금하세요?'}
               </h3>
-              <p style={{ fontSize: 13.5, color: '#7A7269', marginBottom: 16 }}>
+              <p style={{ fontSize: 13.5, color: '#6F6557', marginBottom: 16 }}>
                 고른 주제 화면으로 이동해요. 운이 차감되기 전에 한 번 더 확인해드려요.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1123,13 +1124,12 @@ function ResultView({
                         fontFamily: "'Noto Serif KR', serif",
                         fontSize: 15, fontWeight: 700, color: '#1A1A1A',
                       }}>{t.label}</div>
-                      <div style={{ fontSize: 13.5, color: '#7A7269', marginTop: 2 }}>{t.desc}</div>
+                      <div style={{ fontSize: 13.5, color: '#6F6557', marginTop: 2 }}>{t.desc}</div>
                     </div>
-                    <span style={{
-                      fontSize: 13, fontWeight: 700, color: '#B8965A',
-                      background: 'rgba(184,150,90,0.12)',
-                      padding: '4px 10px', borderRadius: 2,
-                    }}>{formatPriceLabel(getTopicPrice(t.id))}</span>
+                    {/* 2026-10-15 — 금색 글자 + 금색 바탕 가격 칸 → 먹 글자 (금색은 누르는 버튼에만) */}
+                    <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1A1612', flexShrink: 0, marginLeft: 10 }}>
+                      {formatPriceLabel(getTopicPrice(t.id))}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -1139,7 +1139,7 @@ function ResultView({
                 style={{
                   marginTop: 12, width: '100%',
                   background: 'transparent', border: 'none',
-                  fontSize: 13, color: '#7A7269', padding: 12,
+                  fontSize: 13, color: '#6F6557', padding: 12,
                   cursor: 'pointer',
                 }}
               >
@@ -1206,10 +1206,13 @@ function ResultView({
           setTopicPicker(topicId);
         }}
       />
-      {/* 2026-05-28 — 무료 콘텐츠 결과 페이지 하단 광고 (앱인토스 빌드 + tier='free' 자동 게이트) */}
-      <div style={{ padding: '0 16px 24px' }}>
-        <AdSlot />
-      </div>
+      {/* 2026-05-28 — 무료 콘텐츠 결과 페이지 하단 광고 (앱인토스 빌드 게이트는 AdSlot 안)
+          2026-10-15 — AdSlot 에는 tier 게이트가 없어 1운을 내고 본 결과에도 광고가 붙었다 → 무료로 본 결과만 */}
+      {tier !== 'paid' && (
+        <div style={{ padding: '0 16px 24px' }}>
+          <AdSlot />
+        </div>
+      )}
     </motion.div>
   );
 }

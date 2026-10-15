@@ -47,7 +47,8 @@ import {
   type ChatRoom,
 } from '@/services/storage/chatStore';
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
-import { getTopicPrice } from '@/constants/pricing';
+import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
+import { TOPIC_REGISTRY, normalizeTopicId } from '@/constants/topics';
 // Stage 7e-5: 보관함 카드에서 sajuData 즉시 계산 (모든 프로필 일주/오행 컬러 보장)
 import { calculateSaju } from '@/services/saju/calculator';
 import { stripDotsDeep } from '@/utils/noDot';
@@ -59,7 +60,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -84,12 +85,12 @@ const FILTER_TABS: { key: FilterKey; label: string }[] = [
   { key: 'report',  label: '종합사주' },   // report (1운 + 10운)
   { key: 'topic',   label: '주제별' },     // topic (10주제)
   // 2026-06-29: 월운·주간 NEW 출시. 대운/궁합/토정은 출시 후 공개 (코드 보존)
-  { key: 'monthly', label: '월운' },
-  { key: 'weekly',  label: '주간' },
+  { key: 'monthly', label: '월운세' },
+  { key: 'weekly',  label: '주간운세' },
   { key: 'compat',  label: '궁합' },     // 2026-10-04 공개
   { key: 'tojung',  label: '신년운세' }, // 2026-10-07 토정비결 → 신년운세 재출시
   // { key: 'daeun',   label: '대운' },
-  { key: 'daily',   label: '오늘운세' },   // daily
+  { key: 'daily',   label: '오늘의 운세' }, // daily
   { key: 'dream',   label: '꿈해몽' },     // dream + deepDream 합침
   { key: 'chat',    label: '사주대화' },   // chatRooms
 ];
@@ -108,31 +109,43 @@ const TAB_TO_CONTENT_TYPES: Record<Exclude<FilterKey, 'all' | 'chat'>, ContentTy
 };
 
 const CONTENT_LABEL: Record<string, string> = {
-  report: '종합 사주',           // 1운 또는 10운(프리미엄) — tier로 분기
+  report: '종합사주',
   daily: '오늘의 운세',
   daeun: '대운',
-  monthly: '월운',
+  monthly: '월운세',
   weekly: '주간운세',
   compat: '궁합',
-  tojung: '토정비결',
-  topic: '주제별 운세',          // 10주제 (연애·재물·취업·결혼·재회·학업·이사·건강·사업·인간관계)
+  tojung: '신년운세',              // 2026-10-07 토정비결 → 신년운세
+  topic: '주제별 운세',            // 세부 라벨은 TOPIC_REGISTRY.label
   dream: '꿈해몽',
-  deepDream: '꿈해몽 심층',
+  deepDream: '꿈해몽 전체 풀이',
 };
 
-/** 운(運) 단위 — 콘텐츠별 결제 금액 (1운 = 500원 기준) */
-const CONTENT_COST: Record<string, number> = {
-  report: 1,        // basic 1운 (tier='premium' 이면 10으로 override)
-  daily: 0,         // 무료
-  daeun: 1,
-  monthly: 7,   // 2026-06-29 NEW
-  weekly: 5,    // 2026-06-29 NEW
-  compat: 1,
-  tojung: 1,
-  topic: 1,
-  dream: 0,         // 무료
-  deepDream: 1,     // 유료 1운
-};
+/** 주제운 라벨 — constants/topics.ts 상품명 SSOT. 옛 id(moving 등)는 normalizeTopicId 로 맞춘다. */
+function topicLabelOf(topicId: string | undefined): string {
+  if (!topicId) return '주제별 운세';
+  if (topicId === 'social') return '대인관계운'; // 상품 제외(2026-05-28). 이미 결제한 옛 기록 라벨만
+  const id = normalizeTopicId(topicId);
+  return (id && TOPIC_REGISTRY[id]?.label) || '주제별 운세';
+}
+
+/** 기록에 낸 운이 저장돼 있지 않은 옛 기록용 — 지금 가격(pricing.ts SSOT)으로 보여 준다 (2026-10-15).
+ *  고정 숫자 표를 두지 않는다(궁합 1, 신년 1, 주간 5 처럼 가격이 바뀔 때마다 틀려지던 문제). */
+function currentCostOf(ct: string, topicId: string | undefined, isPremium: boolean): number {
+  switch (ct) {
+    case 'report': return isPremium ? getPremiumPrice().actualPrice : 1; // 비프리미엄은 07-01 폐기된 옛 1운 풀이
+    case 'topic': return topicId ? getTopicPrice(topicId).actualPrice : 1;
+    case 'monthly': return getMonthlyPrice().actualPrice;
+    case 'weekly': return getWeeklyPrice().actualPrice;
+    case 'compat': return PRODUCT_COST.compatibility;
+    case 'tojung': return getTojungPrice().actualPrice;
+    case 'daeun': return PRODUCT_COST.daeun;
+    case 'daily': return 1;      // 하루 1회 무료, 두 번째부터 1운
+    case 'dream':
+    case 'deepDream': return 1;  // 잠금 해제 1운
+    default: return 1;
+  }
+}
 
 /* ══════════════════════════════════════════════════════════════════
  * Page
@@ -332,7 +345,7 @@ export function StoragePage() {
       navigate(routeWithId, { state: { savedResult: shown.aiResult, savedReport: shown } });
     } else if (LOCKDOWN_CONTENT.has(r.contentType as string)) {
       // 2026-05-28 — 출시 lockdown 4종은 페이지가 홈으로 redirect 됨. 안내 toast.
-      toast.show('출시 후에 다시 열어볼 수 있어요', 'info');
+      toast.show('지금은 열 수 없는 기록이에요. 다시 열리면 알려 드릴게요', 'info');
     }
   }
 
@@ -494,7 +507,7 @@ export function StoragePage() {
       <SimpleConfirmModal
         open={!!reportToDelete}
         title="기록을 삭제할까요?"
-        message="사주 정보는 그대로 유지됩니다. 삭제한 기록은 복구할 수 없어요."
+        message="사주 정보는 그대로 남아요. 삭제한 기록은 되살릴 수 없어요."
         confirmLabel="삭제하기"
         confirmVariant="danger"
         onConfirm={confirmDeleteReport}
@@ -513,8 +526,8 @@ export function StoragePage() {
         message={
           bulkSelectionStats().selected === bulkSelectionStats().total &&
           bulkSelectionStats().selected > 0
-            ? '사주 정보는 그대로 유지됩니다. 입력 캐시도 함께 정리돼요.'
-            : '사주 정보는 그대로 유지됩니다.'
+            ? '사주 정보는 그대로 남아요. 마지막에 입력한 내용도 함께 지워져요.'
+            : '사주 정보는 그대로 남아요.'
         }
         confirmLabel="삭제하기"
         confirmVariant="danger"
@@ -1172,36 +1185,22 @@ function HistoryCard({
   const isOrphan = !profileMatched;
 
   const ct = report.contentType ?? 'report';
-  const baseLabel = CONTENT_LABEL[ct] ?? '종합 사주';
-  // topic 세부 라벨
-  const topicId = (report as any).aiResult?.topicId;
-  const TOPIC_LABEL: Record<string, string> = {
-    love: '연애운',
-    wealth: '재물운',
-    career: '취업운',
-    marriage: '결혼운',
-    business: '사업운',
-    health: '건강운',
-    reunion: '재회운',
-    study: '학업운',
-    social: '대인관계운', // 2026-05-28 — legacy 보존 (이미 결제한 user 보관함 라벨용 — 진입은 X)
-    moving: '이사운',
-    exam: '시험운',
-    move: '이사운',
-  };
-  // 종합사주는 tier 로 1운/10운(프리미엄) 분기
+  const baseLabel = CONTENT_LABEL[ct] ?? '종합사주';
+  // topic 세부 라벨 — 상품명 SSOT(constants/topics.ts)
+  const topicId = (report as any).aiResult?.topicId as string | undefined;
+  // 종합사주는 tier 로 옛 1운 풀이 / 10운(프리미엄) 분기
   const aiTier = (report as any)?.aiResult?.tier;
   const isPremium = ct === 'report' && aiTier === 'premium';
-  // 2026-09-17 — 꿈해몽은 CONTENT_COST 0(무료)이라 1운으로 잠금 해제·생성한 꿈도 '무료'로 표기되던 버그.
-  //   type 'paid' 또는 aiResult.__unlocked 면 '전체 풀이' 라벨 + '1운 사용'.
+  // 2026-09-17 — 꿈해몽은 기본이 무료라 1운으로 잠금 해제한 꿈도 '무료'로 표기되던 버그.
+  //   type 'paid' 또는 aiResult.__unlocked 면 '전체 풀이' 라벨 + 운 사용 표기.
   const isUnlockedDream = ct === 'dream'
     && (report.type === 'paid' || !!(report as any).aiResult?.__unlocked);
   const label = ct === 'topic'
-    ? (TOPIC_LABEL[topicId] ?? '주제별 운세')
-    : isPremium
-    ? '종합 사주, 프리미엄'
+    ? topicLabelOf(topicId)
+    : ct === 'report' && !isPremium
+    ? '사주 풀이'
     : isUnlockedDream
-    ? '꿈해몽, 전체 풀이'
+    ? '꿈해몽 전체 풀이'
     : baseLabel;
 
   const dateStr = new Date(report.createdAt).toLocaleDateString('ko-KR', {
@@ -1209,21 +1208,12 @@ function HistoryCard({
     month: '2-digit',
     day: '2-digit',
   });
-  // 운 사용 표기 — paid 면 실제 결제 가격(SSOT), free 면 "무료"
-  // topic 콘텐츠는 getTopicPrice(topicId).actualPrice 가 진짜 가격(재물/연애/재회=3운, 나머지=1운).
-  const actualCost = isPremium
-    ? 10
-    : ct === 'topic' && topicId
-    ? getTopicPrice(topicId).actualPrice
-    // 2026-09-17 — 오늘의 운세 '하루 1회 무료, 이후 1운': paid 기록은 CONTENT_COST 0(무료)이 아니라 1운
-    : ct === 'daily'
-    ? 1
-    : (CONTENT_COST[ct] ?? 1);
-  const unCost = isUnlockedDream
-    ? '1운 사용'
-    : report.type === 'paid'
-    ? (actualCost === 0 ? '무료' : `${actualCost}운 사용`)
-    : '무료';
+  // 운 사용 표기 (2026-10-15) — 기록에 실제로 낸 운(spentUn)이 있으면 그 값, 없는 옛 기록은 지금 가격 SSOT.
+  const isPaidRecord = report.type === 'paid' || isUnlockedDream;
+  const spent = typeof report.spentUn === 'number' && report.spentUn >= 0
+    ? report.spentUn
+    : (isPaidRecord ? currentCostOf(ct, topicId, isPremium) : 0);
+  const unCost = isPaidRecord && spent > 0 ? `${spent}운 사용` : '무료';
 
   // 스와이프
   const draggedRef = useRef(false);
@@ -1464,14 +1454,14 @@ function HistoryEmpty({ filterKey }: { filterKey: FilterKey }) {
   // 2026-05-04 4 탭 매핑 (전체·사주·궁합·기타)
   const messages: Record<FilterKey, { title: string; sub: string }> = {
     all:     { title: '아직 풀이가 없어요',         sub: '오늘의 운세부터 가볍게 시작해보세요' },
-    report:  { title: '종합사주 기록이 없어요',     sub: '500원 1운으로 본격 사주 풀이를 받아보세요' },
+    report:  { title: '종합사주 기록이 없어요',     sub: `타고난 성격부터 10년 대운까지 ${getPremiumPrice().actualPrice}운으로 열 장을 풀어 드려요` },
     topic:   { title: '주제별 분석 기록이 없어요', sub: '연애, 재물, 직업 등 궁금한 한 주제를 깊이 보세요' },
     compat:  { title: '궁합 기록이 없어요',         sub: '관심 있는 사람과의 궁합을 봐볼까요?' },
     daeun:   { title: '대운 기록이 없어요',         sub: '10년 단위 인생의 큰 흐름을 확인해보세요' },
-    monthly: { title: '월운 기록이 없어요',         sub: '원하는 달을 골라 그 달을 깊이 풀어드려요' },
-    weekly:  { title: '주간운세 기록이 없어요',     sub: '이번 주 7일의 흐름을 요일별로 짚어드려요' },
-    tojung:  { title: '토정비결 기록이 없어요',     sub: '한 해의 흐름을 사주 전체에서 풀어드려요' },
-    daily:   { title: '오늘운세 기록이 없어요',     sub: '오늘 하루를 사주로 가볍게 살펴보세요' },
+    monthly: { title: '월운세 기록이 없어요',       sub: '원하는 달을 골라 그 달을 깊이 풀어 드려요' },
+    weekly:  { title: '주간운세 기록이 없어요',     sub: '이번 주 7일의 흐름을 요일별로 짚어 드려요' },
+    tojung:  { title: '신년운세 기록이 없어요',     sub: '한 해의 흐름을 사주 전체에서 풀어 드려요' },
+    daily:   { title: '오늘의 운세 기록이 없어요',     sub: '오늘 하루를 사주로 가볍게 살펴보세요' },
     dream:   { title: '꿈해몽 기록이 없어요',       sub: '간밤에 꾼 꿈을 풀어보세요 (하루 1회 무료)' },
     chat:    { title: '사주대화 기록이 없어요',     sub: '사주에 대한 궁금증을 자유롭게 물어보세요' },
   };
@@ -1704,7 +1694,7 @@ function DeleteProfileSheet({
                 margin: 0,
               }}
             >
-              사주 정보만 삭제됩니다. 지금까지 본{' '}
+              사주 정보만 지워져요. 지금까지 본{' '}
               <strong style={{ color: C.ink }}>풀이 {counts.reading}건</strong>
               과{' '}
               <strong style={{ color: C.ink }}>대화 {counts.chat}건</strong>은

@@ -278,7 +278,7 @@ export function GwiinSealCard({
             style={{
               fontSize: 13,
               fontWeight: 500,
-              color: '#7A7269',
+              color: '#6F6557',
               marginLeft: 6,
               letterSpacing: '0.04em',
             }}
@@ -303,7 +303,7 @@ export function GwiinSealCard({
             flexDirection: 'column',
             gap: 3,
             fontSize: 13,
-            color: '#7A7269',
+            color: '#6F6557',
             lineHeight: 1.5,
           }}
         >

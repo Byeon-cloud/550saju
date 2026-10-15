@@ -621,7 +621,8 @@ const MOCKUP_CSS = `
 .daily-mockup .topic-card.t-work .score   { color: #8C6D3D; }
 .daily-mockup .topic-card.t-health .score { color: #8C6D3D; }
 .daily-mockup .topic-card .cta-text { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--c-card-line); font-size: 13px; color: #B8965A; font-weight: 600; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-.daily-mockup .topic-card .cost-pill { background: rgba(184,148,31,.1); color: #B8965A; padding: 2px 8px; border-radius: 100px; font-size: 13px; font-weight: 600; }
+/* 2026-10-15 — 머스타드 rgba(184,148,31) 바탕의 금색 알약 → 먹 글자만 (금색은 누르는 버튼에만) */
+.daily-mockup .topic-card .cost-pill { color: #1A1612; font-size: 13px; font-weight: 700; }
 
 /* Hour chart (§03) */
 .daily-mockup .hour-chart { margin: 14px 0 0; background: #fff; border-radius: 12px; padding: 14px; border: 1px solid var(--c-card-line); }
@@ -948,7 +949,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
     label: '일상',
     category: '평이한 흐름',
     meaning: `${myK} 기운과 ${todayK} 기운이 만나는 평이한 날이에요.`,
-    good: '평이한 흐름. 일상 루틴 유지에 좋습니다.',
+    good: '평이한 흐름이에요. 하던 일을 꾸준히 이어 가기 좋아요.',
     watch: '특별한 변화 신호는 약합니다.',
     type: 'same',
   };
@@ -1120,8 +1121,8 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           const todayStem = STEM_INFO[todayGanzi?.[0] || ''];
           return (
           <div className="ohaeng-row">
-            <div className="ttl">내 사주 오행 + 오늘의 보충</div>
-            <div className="lead">사주 5기운 균형 + 오늘 일진의 추가 기운</div>
+            <div className="ttl">내 사주 오행과 오늘 더해진 기운</div>
+            <div className="lead">사주 다섯 기운의 균형에 오늘 일진이 더한 기운</div>
             <div className="ohaeng-bal">
               {ohengList.map((o) => {
                 const glyph = o.oheng === '목' ? '木' : o.oheng === '화' ? '火' : o.oheng === '토' ? '土' : o.oheng === '금' ? '金' : '水';
@@ -1136,7 +1137,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             </div>
             {bonusItem && todayStem && (
               <div className="ohaeng-bonus-note">
-                오늘 <strong>{todayStem.reading}({todayGanzi?.[0]})</strong> 기운이 들어와서 <strong>{bonusItem.oheng}</strong> 자리에 +1 보충됩니다.
+                오늘 <strong>{todayStem.reading}({todayGanzi?.[0]})</strong> 기운이 들어와서 <strong>{bonusItem.oheng}</strong> 자리에 하나가 더해져요.
               </div>
             )}
           </div>
@@ -1226,7 +1227,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {!(timeSlots.length === 4 && hourSvgPath) ? (
             <section className={`section ${isOpen('02') ? 'open' : ''}`}>
               <SectionHeader num="02" title="오늘의 시간 흐름" han="時運" id="02" />
-              <p className="sec-lead">하루 24시간 중 어느 시간대가 가장 운이 강하고, 어느 시간대를 조심해야 하는지 한눈에.</p>
+              <p className="sec-lead">하루 24시간 중 어느 시간대가 가장 운이 강하고, 어느 시간대를 조심해야 하는지 한눈에 볼 수 있어요.</p>
               <div style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 12, padding: 18, marginTop: 14 }}>
                 <div className="skeleton-block" style={{ width: '100%', height: 120, borderRadius: 8 }} />
                 <div className="skeleton-block skeleton-line w-60" style={{ marginTop: 14 }} />
@@ -1236,10 +1237,12 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           ) : (
             <section className={`section ${isOpen('02') ? 'open' : ''}`}>
               <SectionHeader num="02" title="오늘의 시간 흐름" han="時運" id="02" />
-              <p className="sec-lead">하루 24시간 중 어느 시간대가 가장 운이 강하고, 어느 시간대를 조심해야 하는지 한눈에.</p>
+              <p className="sec-lead">하루 24시간 중 어느 시간대가 가장 운이 강하고, 어느 시간대를 조심해야 하는지 한눈에 볼 수 있어요.</p>
               <div className="hour-chart">
                 <div className="ttl">시간대별 활력 지수</div>
-                <svg className="hour-svg" viewBox="0 0 320 120" preserveAspectRatio="none">
+                {/* 2026-10-15 — 글자는 SVG 밖 HTML 로 (13px). preserveAspectRatio="none" 이라 SVG 안 9px 글자가 가로로 늘어났다 */}
+                <div style={{ position: 'relative', width: '100%', height: 120 }}>
+                <svg className="hour-svg" viewBox="0 0 320 120" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, height: '100%' }} aria-hidden>
                   <defs>
                     <linearGradient id="dailyGrad" x1="0" x2="0" y1="0" y2="1">
                       <stop offset="0%" stopColor="#B8965A" stopOpacity=".4" />
@@ -1247,22 +1250,23 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                     </linearGradient>
                   </defs>
                   <path d={`${hourSvgPath.path} L320,120 L0,120 Z`} fill="url(#dailyGrad)" />
-                  <path d={hourSvgPath.path} stroke="#B8965A" strokeWidth="2" fill="none" />
+                  <path d={hourSvgPath.path} stroke="#B8965A" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
                   <circle cx={hourSvgPath.peakX} cy={hourSvgPath.peakY} r="5" fill="#fff" stroke="#B8965A" strokeWidth="2" />
-                  <text x={hourSvgPath.peakX} y={hourSvgPath.peakY - 11} textAnchor="middle" fontSize="9" fill="#B8965A" fontWeight="700">가장 좋음</text>
-                  {timeSlots.map((s, i) => (
-                    <text key={i} x={[0, 80, 160, 240][i]} y="115" fontSize="9" fill="#7A7269">
-                      {String(s?.slot || '').replace(/[()]/g, '').split(' ')[0] || ''}
-                    </text>
-                  ))}
                 </svg>
+                <span style={{ position: 'absolute', left: `${Math.min(88, Math.max(12, (Number(hourSvgPath.peakX) / 320) * 100))}%`, top: `${((Number(hourSvgPath.peakY) - 9) / 120) * 100}%`, transform: 'translate(-50%, -100%)', fontSize: 13, lineHeight: 1, fontWeight: 700, color: '#7A5C2E', whiteSpace: 'nowrap', pointerEvents: 'none' }}>가장 좋음</span>
+                {timeSlots.map((s, i) => (
+                  <span key={i} style={{ position: 'absolute', left: `${[0, 25, 50, 75][i]}%`, bottom: 0, fontSize: 13, lineHeight: 1, color: '#6F6557', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+                    {String(s?.slot || '').replace(/[()]/g, '').split(' ')[0] || ''}
+                  </span>
+                ))}
+                </div>
                 {(hourlyPeak?.range || hourlyAvoid?.range) && (
                   <div className="hour-legend">
                     {hourlyPeak?.range && (
-                      <><span className="sw" style={{ background: '#B8965A' }} /><span>피크 {hourlyPeak.range}</span></>
+                      <><span className="sw" style={{ background: '#B8965A' }} /><span>가장 좋은 때 {hourlyPeak.range}</span></>
                     )}
                     {hourlyAvoid?.range && (
-                      <><span className="sw" style={{ background: '#7A7269' }} /><span>주의 {hourlyAvoid.range}</span></>
+                      <><span className="sw" style={{ background: '#6F6557' }} /><span>주의 {hourlyAvoid.range}</span></>
                     )}
                   </div>
                 )}
@@ -1277,7 +1281,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {meetPeople.length === 0 ? (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title="오늘 만나는 사람" han="人緣" id="03" />
-              <p className="sec-lead">오행으로 본 오늘의 인연 흐름. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
+              <p className="sec-lead">오행으로 오늘의 인연 흐름을 봤어요. 일간을 몰라도 행동과 분위기로 가늠할 수 있어요.</p>
               {[0, 1, 2].map((i) => (
                 <div key={i} style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 12, padding: 14, marginTop: 12, display: 'flex', gap: 12 }}>
                   <div className="skeleton-block" style={{ width: 48, height: 48, borderRadius: '50%', flexShrink: 0 }} />
@@ -1292,7 +1296,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           ) : (
             <section className={`section ${isOpen('03') ? 'open' : ''}`}>
               <SectionHeader num="03" title="오늘 만나는 사람" han="人緣" id="03" />
-              <p className="sec-lead">오행으로 본 오늘의 인연 흐름. 일간이 무엇인지 모르더라도 행동과 분위기로 가늠할 수 있습니다.</p>
+              <p className="sec-lead">오행으로 오늘의 인연 흐름을 봤어요. 일간을 몰라도 행동과 분위기로 가늠할 수 있어요.</p>
               <div className="meet-stack">
                 {meetPeople.map((m, i) => {
                   const type = String(m?.type || 'boost');
@@ -1331,7 +1335,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {!(doList.length > 0 || dontList.length > 0) ? (
             <section className={`section ${isOpen('04') ? 'open' : ''}`}>
               <SectionHeader num="04" title="오늘의 행동 처방" han="處方" id="04" />
-              <p className="sec-lead">오늘 흐름에 맞춰 행동 단위로 정리한 처방. 가볍게 한 가지만 실천해도 흐름이 바뀝니다.</p>
+              <p className="sec-lead">오늘 흐름에 맞춰 할 일을 정리했어요. 한 가지만 해도 흐름이 바뀌어요.</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
                 {[0, 1].map((col) => (
                   <div key={col} style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 12, padding: 14 }}>
@@ -1346,7 +1350,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           ) : (
             <section className={`section ${isOpen('04') ? 'open' : ''}`}>
               <SectionHeader num="04" title="오늘의 행동 처방" han="處方" id="04" />
-              <p className="sec-lead">오늘 흐름에 맞춰 행동 단위로 정리한 처방. 가볍게 한 가지만 실천해도 흐름이 바뀝니다.</p>
+              <p className="sec-lead">오늘 흐름에 맞춰 할 일을 정리했어요. 한 가지만 해도 흐름이 바뀌어요.</p>
               <div className="do-grid">
                 <div className="do-col go">
                   <div className="ch">
@@ -1404,7 +1408,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           {Object.keys(luckyProfile).length === 0 ? (
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
               <SectionHeader num="05" title="오늘의 행운" han="吉物" id="05" />
-              <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워집니다.</p>
+              <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워져요.</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 14 }}>
                 {[0, 1, 2, 3, 4, 5].map((i) => (
                   <div key={i} style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 10, padding: 12, textAlign: 'center' }}>
@@ -1418,7 +1422,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           ) : (
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
               <SectionHeader num="05" title="오늘의 행운" han="吉物" id="05" />
-              <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워집니다.</p>
+              <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워져요.</p>
               <div className="lucky-grid">
                 {luckyProfile?.color?.name && (
                   <div className="lucky">
@@ -1561,7 +1565,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                 </div>
                 <div>
                   <div className="closing-title">오늘 풀이는 여기까지예요</div>
-                  <div className="closing-sub">내일도 새로운 기질로 다시 만나요.</div>
+                  <div className="closing-sub">내일 운세로 다시 만나요.</div>
                 </div>
               </div>
               {tomorrow && (
@@ -1604,7 +1608,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             <h3>오늘 하루를 봤다면,<br />이번 주 7일도 이어서 볼까요?</h3>
             <p>
               {profile?.name ? `${stripAll(profile.name)} 님 사주로` : '내 사주로'} 오늘부터 7일 중 힘을 실어도 좋은 날과
-              한 템포 쉬어갈 날을 짚어드려요.
+              한 박자 쉬어 갈 날을 짚어 드려요.
             </p>
             <div className="cta-row">
               <button type="button" className="cta" onClick={onUpsell}>주간운세 보기</button>
@@ -1612,7 +1616,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             </div>
             {onMonthly && (
               <button type="button" className="sub-link" onClick={onMonthly}>
-                <span>한 달 흐름이 궁금하다면, 월별 운세 보기</span>
+                <span>한 달 흐름이 궁금하다면 월운세 보기</span>
                 <span className="sub-cost">{extensionCostLabel(getMonthlyPrice())}</span>
               </button>
             )}

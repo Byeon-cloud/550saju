@@ -3,7 +3,7 @@
 
 import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
-import { sanitizeAiOutput, lifeTimelineFactsText } from './sajuFacts';
+import { sanitizeAiOutput, lifeTimelineFactsText, sajuCoreFactsText } from './sajuFacts';
 import { kstNowDate } from '../utils/kstTime';
 import {
   DREAM_FREE_SYSTEM_V3,
@@ -96,9 +96,12 @@ export function buildDreamFreeGroupCall(args: DreamFreeArgs, group: DreamFreeGro
     userConcern: args.userConcern,
     category: args.category,
   };
+  // 2026-10-15 품질 점검 — 앱 기본 경로(이 2그룹)에 짚기 블록과 십성 정보가 빠져 '인성이 천간에 없다'(년간 癸 편인) 같은 오류가 났다.
+  //   두 그룹 모두 원국 확정표, 짚기 시기표와 규칙은 sajuTone 이 있는 A 에만(한 편에 한 번), B 는 짚기 질문 금지.
+  const facts = dreamFactsBlock(args.saju);
   const user = group === 'A'
-    ? DREAM_FREE_USER_GROUP_A_V3(headerData)
-    : DREAM_FREE_USER_GROUP_B_V3(headerData);
+    ? DREAM_FREE_USER_GROUP_A_V3(headerData) + facts + dreamTimelineBlock(args.saju)
+    : DREAM_FREE_USER_GROUP_B_V3(headerData) + facts + "\n→ 이 그룹에서는 '혹시 ~했나요?' 같은 짚기 질문을 쓰지 않는다(다른 그룹이 한 번 했다).";
   // 그룹별 토큰 분할 (2026-05-27 v10 — 안전 복원):
   //   v9 의 5500/5000 은 AI 가 JSON 못 끝내고 잘림 → 파싱 실패 → callable 폴백 → 1분 대기 회귀.
   //   A=7500 (무료 4섹션 + 충분한 안전 마진) · B=7000 (잠금 5섹션 + 안전 마진).
@@ -114,6 +117,20 @@ export function buildDreamFreeGroupCall(args: DreamFreeArgs, group: DreamFreeGro
  */
 /** 2026-10-14 — 요즘 짚기 근거 (짚어 주는 풀이). 꿈 인자에는 간지 문자열만 오므로 원국 네 기둥을 다시 세워 계산한다.
  *  태어난 해를 모르면 지난 해 목록은 빠지고, 지금 대운, 올해, 최근 석 달만 들어간다. */
+/** 꿈해몽은 간지 글자만 받는다 → 기둥을 다시 세워 원국 확정표(십성, 지지 속 글자, 기둥 자리 뜻)를 만든다 */
+function dreamFactsBlock(saju: DreamSajuContext): string {
+  try {
+    const full: any = saju.fullSajuData;
+    if (full?.pillars) return sajuCoreFactsText(full);
+    const toP = (gz: string) => (gz && gz.length >= 2 && !gz.includes('미상') ? { 천간: gz[0], 지지: gz[1] } : { available: false });
+    const yong = String(saju.yongsin || '').match(/[목화토금수]/)?.[0];
+    return sajuCoreFactsText({
+      pillars: [toP(saju.yearGanzi), toP(saju.monthGanzi), toP(saju.dayGanzi), toP(saju.timeGanzi)],
+      myeongriAnalysis: yong ? { 용신: yong } : {},
+    });
+  } catch { return ''; }
+}
+
 function dreamTimelineBlock(saju: DreamSajuContext): string {
   try {
     const full: any = saju.fullSajuData;
@@ -150,7 +167,7 @@ export function buildDreamFreeCall(args: DreamFreeArgs): {
         dreamContent: args.dreamContent,
         userConcern: args.userConcern,
         category: args.category,
-      }) + dreamTimelineBlock(args.saju)
+      }) + dreamFactsBlock(args.saju) + dreamTimelineBlock(args.saju)
     : DREAM_FREE_USER_NO_SAJU_V3({
         dreamContent: args.dreamContent,
         userConcern: args.userConcern,

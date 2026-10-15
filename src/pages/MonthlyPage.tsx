@@ -79,7 +79,7 @@ function resolveProfileId(p: LocalReport | null): string | undefined {
 }
 
 export function MonthlyPage() {
-  usePageTitle('월별 운세');
+  usePageTitle('월운세');
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -152,7 +152,7 @@ export function MonthlyPage() {
     if (!spendBalance(price)) {
       toast.show('잔액이 부족해요', 'warning');
       // 충전 복귀 시 선택 사주 유지 — ChargePage 는 state 를 넘기지 않으므로 query 로 (?profileId 미리 선택)
-      navigate(`/charge?need=${price}`, { state: { message: `월별 운세에 ${price}운이 필요해요`, returnTo: `/monthly?profileId=${encodeURIComponent((selected as any).id)}` } });
+      navigate(`/charge?need=${price}`, { state: { message: `월운세에 ${price}운이 필요해요`, returnTo: `/monthly?profileId=${encodeURIComponent((selected as any).id)}` } });
       isAnalyzingRef.current = false;
       return;
     }
@@ -188,7 +188,7 @@ export function MonthlyPage() {
         const draftRes = await generateMonthlyDraft2026(selected.sajuData, monthInfo);
         const rid = draftRes.reportId || generateId();
         setResult(draftRes.content);
-        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: draftRes.content, createdAt: new Date().toISOString() });
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', spentUn: price, aiResult: draftRes.content, createdAt: new Date().toISOString() });
         clearPendingSpendByType('monthly'); // draft = 결과 커밋(부팅 자동환불 제외)
         setShareReportId(rid);
         setRefining(true);
@@ -200,7 +200,7 @@ export function MonthlyPage() {
           .then((ref) => {
             if (ref?.content) {
               setResult(ref.content);
-              saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: ref.content, createdAt: new Date().toISOString() });
+              saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', spentUn: price, aiResult: ref.content, createdAt: new Date().toISOString() });
             }
           })
           .catch((err) => console.warn('월별 보정 실패(초안 유지):', err))
@@ -209,7 +209,7 @@ export function MonthlyPage() {
         const res = await generateMonthlyFortune2026(selected.sajuData, monthInfo, progressId);
         setResult(res.content);
         const rid = res.reportId || generateId();
-        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', aiResult: res.content, createdAt: new Date().toISOString() });
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'monthly', spentUn: price, aiResult: res.content, createdAt: new Date().toISOString() });
         clearPendingSpendByType('monthly'); // 결과 저장 완료 → 자동환불 대상 제외
         setShareReportId(rid);
         setPhase('result');
@@ -235,7 +235,7 @@ export function MonthlyPage() {
     if (reports.length === 0) {
       return (
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
-          <Header title="월별 운세" />
+          <Header title="월운세" />
           <NeedSaju mark="月" desc="한 달의 흐름을 내 사주로 짚어 드려요. 태어난 날과 시간만 있으면 돼요." onClick={() => navigate('/input?from=home_body_monthly')} />
         </div>
       );
@@ -243,7 +243,7 @@ export function MonthlyPage() {
 
     return (
       <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
-        <Header title="월별 운세" />
+        <Header title="월운세" />
         <FadeIn>
           <ExtensionHero
             theme={EXTENSION_THEME.monthly}
@@ -257,7 +257,7 @@ export function MonthlyPage() {
           {/* 프로필 미선택 시에만 피커 — 선택하면 월 선택이 메인 콘텐츠가 되어 눈에 확 띄게 */}
           {!selected && (
             <FadeIn delay={0.05}>
-              <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월별 운세를 볼까요?" />
+              <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월운세를 볼까요?" />
             </FadeIn>
           )}
           {selected && (
@@ -318,7 +318,7 @@ export function MonthlyPage() {
 
   // ─── 로딩 ───
   if (phase === 'loading') {
-    return <AILoading name={selected?.name} type="월별 운세" sajuData={selected?.sajuData} steps={['선택한 달의 월간지를 짚고 있어요', '상순, 중순, 하순 흐름을 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} estimatedSeconds={60} />;
+    return <AILoading name={selected?.name} type="월운세" sajuData={selected?.sajuData} steps={['선택한 달의 월간지를 짚고 있어요', '상순, 중순, 하순 흐름을 계산하고 있어요', '맞춤 조언을 작성하고 있어요']} estimatedSeconds={60} />;
   }
 
   // ─── 결과 (단일월 심층 — 오늘운세급 MonthlyMockupView) ───
@@ -334,7 +334,7 @@ export function MonthlyPage() {
 
   return (
     <div className="min-h-screen pb-20" style={{ background: 'var(--bg-page-gradient)' }}>
-      <Header title="월별 운세" />
+      <Header title="월운세" />
       <FadeIn>
         <MonthlyMockupView
           result={view}
@@ -349,7 +349,7 @@ export function MonthlyPage() {
             const { createChatRoom } = await import('@/services/storage/chatStore');
             const ctx = {
               type: 'monthly' as const,
-              label: monthLabel ? `${monthLabel} 운세` : '월별 운세',
+              label: monthLabel ? `${monthLabel} 운세` : '월운세',
               fullResult: (result ?? view),
             };
             const room = createChatRoom(selected?.name || '나', 'free', ctx);
@@ -364,7 +364,7 @@ export function MonthlyPage() {
       </FadeIn>
       {/* 2026-10-10 — 실제 후기 수집 (최종 결과 + 저장된 뒤) */}
       {result && !refining && shareReportId && (
-        <ReviewAsk contentType="monthly" contentLabel="월간 운세" reportKey={shareReportId} />
+        <ReviewAsk contentType="monthly" contentLabel="월운세" reportKey={shareReportId} />
       )}
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'monthly'} />

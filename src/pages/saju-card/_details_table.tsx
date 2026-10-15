@@ -39,7 +39,7 @@ const C = {
   surface: '#FFFFFF',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.10)',
@@ -327,7 +327,7 @@ function SectionB_ManseTable({
                   alignItems: 'baseline',
                   gap: 4,
                   padding: '3px 9px',
-                  background: isTop ? `${OHENG_HEX[o]}1A` : isZero ? '#F5F0E8' : '#FFFFFF',
+                  background: isTop ? `${OHENG_HEX[o]}1A` : isZero ? '#F4EFE4' : '#FFFFFF', // 2026-10-15 옛 #F5F0E8 → v9 종이
                   border: `1.2px solid ${isTop ? OHENG_HEX[o] : isZero ? C.line : `${OHENG_HEX[o]}55`}`,
                   borderRadius: 2,
                   fontSize: 13.5,
@@ -550,7 +550,7 @@ function SectionB_ManseTable({
                             );
                           })
                         ) : (
-                          <span style={{ fontSize: 10, color: C.mute }}>—</span>
+                          <span style={{ fontSize: 13, color: C.mute }}>—</span>
                         )}
                       </div>
                     </td>
@@ -823,7 +823,7 @@ function SipsungCell({ value, isDay }: { value: string; isDay: boolean }) {
 function EmptyCell() {
   return (
     <td style={tdCell}>
-      <span style={{ fontSize: 10, color: C.mute, fontStyle: 'normal' }}>—</span>
+      <span style={{ fontSize: 13, color: C.mute, fontStyle: 'normal' }}>—</span>
     </td>
   );
 }
@@ -850,7 +850,7 @@ function SectionF_FlowLinks({
             style={linkBtnStyle}
           >
             대운 자세히 보기 (10년 단위)
-            <span style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 900, color: C.gold }}>→</span>
+            <span style={{ marginLeft: 'auto', fontSize: 16, fontWeight: 700, color: C.mute }}>›</span>
           </button>
         )}
         {onMoreMonthly && (
@@ -859,8 +859,8 @@ function SectionF_FlowLinks({
             onClick={onMoreMonthly}
             style={linkBtnStyle}
           >
-            월운 자세히 보기 (12개월)
-            <span style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 900, color: C.gold }}>→</span>
+            월운세 자세히 보기 (12개월)
+            <span style={{ marginLeft: 'auto', fontSize: 16, fontWeight: 700, color: C.mute }}>›</span>
           </button>
         )}
       </div>

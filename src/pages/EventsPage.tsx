@@ -46,7 +46,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   navy: '#1A1612',
-  muted: '#7A7269',              // SSOT --mute — D1 fix (2026-04-23)
+  muted: '#6F6557',              // SSOT --mute — D1 fix (2026-04-23)
   gold: '#B8965A',
   goldDark: '#8C6D3D',          // SSOT --gold-deep — D1 fix (2026-04-23)
   goldLight: 'rgba(184,150,90,0.14)', // SSOT soft gold — D1 fix (2026-04-23)
@@ -231,7 +231,7 @@ export function EventsPage() {
             </h3>
           </header>
           <p className="text-[13.5px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
-            링크를 받은 친구는 토스에서 바로 사주500을 열 수 있어요
+            {inToss ? '링크를 받은 친구는 토스에서 바로 사주500을 열 수 있어요' : '링크를 받은 친구는 바로 사주500을 열 수 있어요'}
           </p>
 
           <button type="button" onClick={onShareInvite}

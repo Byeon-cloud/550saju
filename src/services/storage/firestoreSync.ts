@@ -155,6 +155,7 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
           contentType: data.contentType ?? undefined,
           type: data.type ?? undefined,
           profileId: data.profileId ?? undefined,
+          spentUn: typeof data.spentUn === 'number' ? data.spentUn : undefined,
           aiResult,
         } as LocalReport;
         saveReport(restored);
@@ -257,6 +258,7 @@ export async function restoreLibraryFromServer(): Promise<number> {
         contentType: rep.contentType as LocalReport['contentType'],
         aiResult: rep.aiResult,
         profileId: rep.profileId as string | undefined,
+        spentUn: typeof rep.spentUn === 'number' ? rep.spentUn : undefined,
         createdAt: (rep.createdAt as string) || new Date().toISOString(),
       });
       n++;
@@ -289,6 +291,7 @@ export async function backupReport(report: LocalReport): Promise<void> {
       contentType: report.contentType ?? null,
       type: report.type ?? null,
       profileId: report.profileId ?? null,
+      spentUn: typeof report.spentUn === 'number' ? report.spentUn : null,
       aiResultJson: JSON.stringify(report.aiResult),
       backedUpAt: new Date(),
     }, { merge: true });

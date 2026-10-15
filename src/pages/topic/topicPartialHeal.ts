@@ -428,6 +428,7 @@ export async function recoverPendingTopic(args: {
     name: profile.name, input: profile.input, sajuData: profile.sajuData,
     type: 'paid', contentType: 'topic', createdAt: new Date().toISOString(),
     aiResult: { topicId, ...content }, profileId: profile.id,
+    spentUn: pend.amount, // 2026-10-15 보관함 'N운 사용' 장부
   };
   try { saveReport(rec); } catch { return null; }
   try {

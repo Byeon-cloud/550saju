@@ -92,7 +92,7 @@ export const PRODUCT_COST: Record<string, number> = {
   compatibility: 3, // 2026-10-15 3운 (두 사람 풀이, 서버 COMPAT_COST 와 일치 · 가격 전략 docs/handoff/2026-10-15_운_가격전략.md)
   daeun: 1,
   monthly: 7,   // 2026-06-29 NEW 출시 — 월운세 정가 7운 (getMonthlyPrice SSOT)
-  weekly: 5,    // 2026-06-29 NEW 출시 — 주간운세 정가 5운 (getWeeklyPrice SSOT)
+  weekly: 3,    // 2026-10-15 정가 3운 — getWeeklyPrice() 와 서버 weeklyCost 와 같은 값 (이 표는 표시용, 실제 차감은 getWeeklyPrice().actualPrice)
   yearly: 1,
   tojung: 9, // 2026-10-15 신년운세 정가 9운, 11월 30일까지 얼리버드 7운 — 실제 차감은 getTojungPrice().actualPrice (서버 tojungCost 와 일치)
   premium: 10,
@@ -244,7 +244,7 @@ const TOJUNG_PRICING_RAW: PricingDef = {
   isOnSale: false,
   launchPrice: 7,
   launchUntil: '2026-11-30',
-  launchBadge: '얼리버드',
+  launchBadge: '출시 기념가',
 };
 export function getTojungPrice(): PricingInfo {
   return resolvePricing(TOJUNG_PRICING_RAW);

@@ -13,7 +13,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
-  mute: '#7A7269',
+  mute: '#6F6557',
   line: '#E5DFD0',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',

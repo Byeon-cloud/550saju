@@ -4,6 +4,7 @@ import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getReport, type LocalReport } from '@/services/storage/localStore';
+import { TOPIC_REGISTRY, normalizeTopicId } from '@/constants/topics';
 
 /**
  * 공유 수신 페이지 — 비회원 진입 (2026-05-07 동적화)
@@ -20,7 +21,7 @@ import { getReport, type LocalReport } from '@/services/storage/localStore';
 export function SharePage() {
   usePageTitle('사주 결과 미리보기');
   const navigate = useNavigate();
-  const { id: shareId } = useParams<{ id: string }>();
+  const { id: shareId, type: urlType, topicId: urlTopicId } = useParams<{ id: string; type?: string; topicId?: string }>();
   const [report, setReport] = useState<LocalReport | null>(null);
 
   useEffect(() => {
@@ -38,19 +39,26 @@ export function SharePage() {
   // 사주 데이터가 있으면 동적 미리보기, 없으면 generic
   const dayGanRaw = (report?.sajuData?.pillars?.[2] as any)?.['천간'] ?? (report?.sajuData?.pillars?.[2] as any)?.gan ?? '';
   const sajuOwner = report?.name || '';
-  const contentType = report?.contentType || 'report';
+  // 2026-10-15 — 받는 사람 기기엔 그 기록이 없으니 공유 주소(/share/{type}/...)의 종류로도 상품명을 맞춘다
+  const contentType = report?.contentType || (urlTopicId ? 'topic' : urlType) || 'report';
+  const topicKey = (report?.aiResult as any)?.topicId || urlTopicId;
 
-  /** 콘텐츠 타입별 라벨 (정적 더미 X — SSOT 룩업) */
+  /** 콘텐츠 종류별 상품명 (지금 상품 이름 SSOT: 종합사주, 월운세, 주간운세, 신년운세, 궁합, 꿈해몽, 오늘의 운세) */
   const TYPE_LABEL: Record<string, string> = {
-    report: '사주 분석',
-    topic: '주제 분석',
-    daeun: '대운 해설',
-    monthly: '월별 운세',
-    compat: '궁합 분석',
-    tojung: '토정비결',
-    deepDream: '꿈 심층 해석',
+    report: '종합사주',
+    premium: '종합사주',
+    result: '사주 풀이',
+    daeun: '대운',
+    monthly: '월운세',
+    weekly: '주간운세',
+    compat: '궁합',
+    tojung: '신년운세',
+    daily: '오늘의 운세',
+    dream: '꿈해몽',
+    deepDream: '꿈해몽',
   };
-  const typeLabel = TYPE_LABEL[contentType] || '사주 분석';
+  const topicNorm = contentType === 'topic' ? normalizeTopicId(topicKey) : null;
+  const typeLabel = topicNorm ? TOPIC_REGISTRY[topicNorm].label : contentType === 'topic' ? '주제별 운세' : (TYPE_LABEL[contentType] || '사주 풀이');
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
@@ -90,7 +98,7 @@ export function SharePage() {
               <div>
                 <p className="text-label text-brand-gold font-semibold mb-1">일간(日干)</p>
                 <p className="text-body-sm text-text-secondary leading-relaxed">
-                  {sajuOwner} 님은 <b style={{ fontFamily: 'Noto Serif KR, serif' }}>{dayGanRaw}</b> 일간: 이 기운을 중심으로 평생의 사주가 짜여 있어요.
+                  {sajuOwner} 님은 <b style={{ fontFamily: 'Noto Serif KR, serif' }}>{dayGanRaw}</b> 일간이에요. 이 기운을 중심으로 평생의 사주가 짜여 있어요.
                 </p>
               </div>
               <div className="h-px bg-border-light" />
@@ -130,14 +138,10 @@ export function SharePage() {
 
         {/* 포함 항목 미리보기 — SSOT 라벨 (보일러플레이트 X) */}
         <FadeIn delay={0.12}>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {/* 2026-05-28 — 미출시 4종(대운/월운/궁합/토정) 제거. 현재 출시 라인업으로만 표시 */}
-            {['직업', '재물', '연애', '건강', '공부', '결혼', '시험', '개운'].map((item) => (
-              <span key={item} className="px-3 py-1.5 rounded-full text-[13px] text-text-muted bg-bg-surface border border-border-light">
-                {item}
-              </span>
-            ))}
-          </div>
+          {/* 2026-10-15 — 알약 칩 대신 글자 한 줄 (고서 디자인 규칙) */}
+          <p className="text-center text-[14px] text-text-muted leading-relaxed">
+            연애와 결혼, 재물, 직업, 합격과 이직, 건강, 공부까지<br />주제별로 깊이 볼 수 있어요
+          </p>
         </FadeIn>
 
         {/* CTA */}
@@ -147,7 +151,7 @@ export function SharePage() {
               나도 내 사주 알아보기
             </Button>
             <p className="text-center text-[13px] text-text-hint">
-              1운으로 3분이면 깊이 있게 풀어 드려요
+              오늘의 운세와 꿈해몽은 하루 한 번 무료예요
             </p>
             <button
               onClick={() => navigate('/')}

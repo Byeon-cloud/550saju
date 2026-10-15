@@ -39,7 +39,7 @@ const DREAM_TOPIC_RULES: Record<string, DreamTopicRule> = {
   water: {
     primary: 'wealth',
     copy: '꿈풀이에서 물은 재물이 흘러드는 길로 읽혀요. 돈이 모이는 때와 새기 쉬운 때를 이어서 확인해보세요.',
-    secondary: { id: 'health', lead: '몸 컨디션이 신경 쓰인다면' },
+    secondary: { id: 'health', lead: '몸 상태가 신경 쓰인다면' },
   },
   flying: {
     primary: 'career',
@@ -51,7 +51,7 @@ const DREAM_TOPIC_RULES: Record<string, DreamTopicRule> = {
   },
   nature: {
     primary: 'health',
-    copy: '자연과 날씨의 꿈은 몸과 마음의 컨디션을 비추는 경우가 많아요. 사주로 보는 건강 리듬을 함께 확인해보세요.',
+    copy: '자연과 날씨의 꿈은 몸과 마음의 상태를 비추는 경우가 많아요. 사주로 보는 건강 흐름을 함께 확인해보세요.',
   },
   other: {
     primary: 'love',

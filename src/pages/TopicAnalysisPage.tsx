@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { lunarMonthDays } from '@/services/saju/calculator';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import '@/styles/hanji.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -128,7 +129,7 @@ import { TopicMockupView } from './topic/TopicMockupView';
 import { TOPIC_THEMES, normalizeTopicKey, type TopicResultV2 } from './topic/_topic_themes';
 // 2026-10-04 — 주제 반쪽(__partial) 자가치유 · 스트림 마감 정책 · 폴백 전 서버 완성본 채택
 import * as topicHeal from './topic/topicPartialHeal';
-import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
+import { getTopicPrice, formatPriceLabel, PRODUCT_COST } from '@/constants/pricing';
 import { NextStepsCard, openChatWithResult } from '@/components/common/NextStepsCard';
 import { ReviewAsk } from '@/components/common/ReviewAsk';
 
@@ -185,7 +186,7 @@ const TOPICS: Record<TopicKey, { label: string; color: string; desc: string }> =
   // SSOT v1 컬러 정렬 (2026-04-22 · @/constants/topics)
   love:     { label: '연애운',       color: '#8C6D3D', desc: '만남, 관계, 인연 흐름' },
   wealth:   { label: '재물운',       color: '#8C6D3D', desc: '돈, 투자, 현금흐름 변곡' },
-  career:   { label: '직업운',       color: '#8C6D3D', desc: '커리어, 승진, 평생 흐름' },
+  career:   { label: '직업운',       color: '#8C6D3D', desc: '일, 승진, 평생 흐름' },
   marriage: { label: '결혼운',       color: '#8C6D3D', desc: '인연 시기와 배우자 성향' },
   business: { label: '사업운',       color: '#8C6D3D', desc: '창업과 자영업 흐름과 시기' },
   health:   { label: '건강운',       color: '#8C6D3D', desc: '체질, 기운, 주의 시기' },
@@ -203,13 +204,13 @@ const OHENG_COLORS: Record<string, string> = { 목: '#4E7A57', 화: '#B04A38', �
  *  스트리밍 중 결과 페이지가 "빈 화면 → 갑툭튀" 하지 않도록, 도착 전 섹션 헤더 + 스켈레톤 스캐폴드를 미리 렌더.
  *  AI 가 실제 heading 을 보내면 그걸 우선 사용, 없으면 이 제목으로 fallback. */
 const TOPIC_SECTION_TITLES: Record<string, string[]> = {
-  love: ['나의 연애 스타일', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 경향', '올해 연애 흐름과 전략'],
-  wealth: ['돈 버는 스타일', '재물 흐름 분석', '투자 성향과 적기', '돈이 새는 길목', '올해 재물 전략'],
-  career: ['타고난 직업 적성', '사주가 부르는 직종 TOP 5', '평생 커리어 흐름', '명리학적 직업 근거', '일터에서 반복되는 관계 경향'],
+  love: ['나의 연애 성향', '사주 궁합이 잘 맞는 이성', '인연이 시작되는 시기와 장소', '연애 중 반복되는 경향', '올해 연애 흐름과 전략'],
+  wealth: ['돈 버는 방식', '재물 흐름 분석', '투자 성향과 적기', '돈이 새는 길목', '올해 재물 전략'],
+  career: ['타고난 직업 적성', '사주에 맞는 직종 다섯 가지', '평생 일의 흐름', '명리학적 직업 근거', '일터에서 반복되는 관계 경향'],
   marriage: ['결혼 적기 분석', '미래 배우자의 성향', '결혼 후 생활 습관', '배우자 가족 관계', '결혼 준비 조언'],
-  business: ['사업가 기질 분석', '맞는 업종', '창업과 확장 타이밍', '동업 궁합', '사업 리스크 관리'],
+  business: ['사업가 기질 분석', '맞는 업종', '창업과 확장 시기', '동업 궁합', '사업 위험 관리'],
   health: ['오행별 취약 장기', '체질 분석', '올해 건강 주의 시기', '정신 건강 경향', '건강 개선 전략'],
-  study: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '슬럼프 극복법', '올해 공부 로드맵'],
+  study: ['나의 학습 체질 분석', '집중이 잘 되는 시간과 환경', '실력이 오르는 시기', '공부가 막힐 때 넘는 법', '올해 공부 계획'],
   exam: ['올해 합격과 변동 기운', '유리한 방향과 분야', '시험, 면접, 결정 시기', '변동 후 적응 전망', '올해 실전 전략'],
   move: ['이동 적기 분석', '좋은 방향', '이사, 유학, 이주 전망', '해외운', '올해 이동 전략'],
   reunion: ['이별의 사주적 원인 분석', '상대방의 사주 성향 분석', '두 사람의 오행 궁합 구조', '전통 연애 신살(神殺) 분석', '재회 가능성과 적기', '월별 재회 기운 흐름', '재회 실전 전략', '재회 후 관계 변화 예측', '새 인연 vs 재회: 냉정한 비교', '재회 성공을 위한 개운법'],
@@ -357,9 +358,13 @@ function TypeBadge({ label }: { label: string; color: string }) {
    공통 시각화 컴포넌트 (전 주제 공통)
    ════════════════════════════════════════════════ */
 
+/** 2026-10-15 — 예전 합격이직운 저장본의 영어 축 이름('변동 leverage')과 외래어 축('타이밍')을 보여 줄 때 우리말로 */
+const axisKo = (a: string): string => String(a || '').replace(/변동\s*leverage/i, '변동운').replace(/^\s*타이밍\s*$/, '시기');
+
 /** 5축 레이더 차트 */
-function SubScoreRadar({ subScores, color }: { subScores: { axis: string; value: number }[]; color: string }) {
-  if (!subScores?.length) return null;
+function SubScoreRadar({ subScores: raw, color }: { subScores: { axis: string; value: number }[]; color: string }) {
+  if (!raw?.length) return null;
+  const subScores = raw.map((s) => ({ ...s, axis: axisKo(s.axis) }));
   return (
     <FadeIn delay={0.15}>
       <div className="card">
@@ -574,7 +579,7 @@ function LoveViz({ data, color, myName, partnerName }: { data: any; color: strin
           )}
           {data.charmPoint && (
             <div className="hj-entry mt-2">
-              <p className="text-[13px] font-semibold mb-0.5" style={{ color }}>나의 매력 포인트</p>
+              <p className="text-[13px] font-semibold mb-0.5" style={{ color }}>나의 매력</p>
               <p className="text-[13.5px] text-text-primary leading-snug">{data.charmPoint}</p>
             </div>
           )}
@@ -742,7 +747,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
       return [
         { key: 'main',    label: '본업',    hanja: '本業', value: Number(s.main ?? 0),    color: '#B8965A' },
         { key: 'invest',  label: '투자',    hanja: '投資', value: Number(s.invest ?? 0),  color: '#3E5F82' },
-        { key: 'side',    label: '사이드',   hanja: '副業', value: Number(s.side ?? 0),    color: '#4E7A57' },
+        { key: 'side',    label: '부업',   hanja: '副業', value: Number(s.side ?? 0),    color: '#4E7A57' },
         { key: 'inherit', label: '상속과 기타', hanja: '其他', value: Number(s.inherit ?? 0), color: '#8C6D3D' },
       ];
     }
@@ -757,7 +762,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
     return [
       { key: 'main',    label: '본업',    hanja: '本業', value: dist.main,    color: '#B8965A' },
       { key: 'invest',  label: '투자',    hanja: '投資', value: dist.invest,  color: '#3E5F82' },
-      { key: 'side',    label: '사이드',   hanja: '副業', value: dist.side,    color: '#4E7A57' },
+      { key: 'side',    label: '부업',   hanja: '副業', value: dist.side,    color: '#4E7A57' },
       { key: 'inherit', label: '상속과 기타', hanja: '其他', value: dist.inherit, color: '#8C6D3D' },
     ];
   }, [data.incomeSources, data.wealthType]);
@@ -966,7 +971,7 @@ function WealthViz({ data, color, sajuData, birthYear }: { data: any; color: str
             {isInferredDist && (
               <span
                 className="text-[13px] font-bold px-2.5 py-1 rounded-[3px]"
-                style={{ background: 'rgba(122,114,105,0.10)', color: '#7A7269', border: '1px solid rgba(122,114,105,0.20)' }}
+                style={{ background: 'rgba(122,114,105,0.10)', color: '#6F6557', border: '1px solid rgba(122,114,105,0.20)' }}
                 title="재물 유형 기반 기본 구성으로 보여드려요"
               >
                 참고
@@ -1096,10 +1101,10 @@ function IncomeDonut({
         {dominant && (
           <>
             <text
-              x={cx} y={cy - 8}
+              x={cx} y={cy - 15}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={11}
+              fontSize={13}
               fontWeight={700}
               fill={dominant.color}
               fontFamily="'Noto Serif KR', serif"
@@ -1108,7 +1113,7 @@ function IncomeDonut({
               {dominant.label}
             </text>
             <text
-              x={cx} y={cy + 10}
+              x={cx} y={cy + 5}
               textAnchor="middle"
               dominantBaseline="middle"
               fontSize={20}
@@ -1119,12 +1124,11 @@ function IncomeDonut({
               {dominant.pct}%
             </text>
             <text
-              x={cx} y={cy + 26}
+              x={cx} y={cy + 25}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={8}
-              fill="#7A7269"
-              letterSpacing="0.05em"
+              fontSize={13}
+              fill="#6F6557"
             >
               주력 통로
             </text>
@@ -1139,7 +1143,7 @@ function IncomeDonut({
             <div key={s.key} className="flex items-center gap-2 text-[13px]">
               <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: s.color, flexShrink: 0 }} />
               <span style={{ fontWeight: 700, color: '#1A1A1A', minWidth: 40 }}>{s.label}</span>
-              <span style={{ fontSize: 13, color: '#7A7269', fontFamily: "'Noto Serif KR', serif" }}>{s.hanja}</span>
+              <span style={{ fontSize: 13, color: '#6F6557', fontFamily: "'Noto Serif KR', serif" }}>{s.hanja}</span>
               <span style={{ marginLeft: 'auto', fontWeight: 800, color: s.color, fontFeatureSettings: '"tnum"' }}>
                 {s.pct}%
               </span>
@@ -1262,7 +1266,7 @@ function DaewoonWealthRail({
                 ★
               </span>
             )}
-            <div style={{ fontSize: 13, fontWeight: 700, color: c.isCurrent ? '#8C6D3D' : '#7A7269', marginBottom: 5 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: c.isCurrent ? '#8C6D3D' : '#6F6557', marginBottom: 5 }}>
               {c.startAge}~{c.endAge}세
             </div>
             <div
@@ -1411,9 +1415,9 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               {isEmpty ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 13, color: '#7A7269', wordBreak: 'keep-all', lineHeight: 1.4, flex: 1 }}>{cat.desc}</span>
+                  <span style={{ fontSize: 13, color: '#6F6557', wordBreak: 'keep-all', lineHeight: 1.4, flex: 1 }}>{cat.desc}</span>
                   <span style={{
-                    fontSize: 13, fontWeight: 700, color: '#7A7269',
+                    fontSize: 13, fontWeight: 700, color: '#6F6557',
                     background: 'rgba(0,0,0,0.04)', padding: '2px 8px', borderRadius: 2, flexShrink: 0,
                   }}>
                     없음
@@ -1429,7 +1433,7 @@ function RelflowCards({ sipsung }: { sipsung: any[] }) {
                     <span style={{ fontSize: 22, fontWeight: 800, color: cat.color, fontFeatureSettings: '"tnum"', lineHeight: 1 }}>
                       {total}
                     </span>
-                    <span style={{ fontSize: 13.5, color: '#7A7269' }}>자</span>
+                    <span style={{ fontSize: 13.5, color: '#6F6557' }}>자</span>
                     <span style={{
                       fontSize: 13, fontWeight: 700, color: cat.color,
                       background: '#fff', border: `1px solid ${cat.color}40`,
@@ -1461,7 +1465,7 @@ function CareerViz({ data, color }: { data: any; color: string }) {
         {hasCareerFit && (
           <div className="card">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-h3 text-text-primary">사주가 부르는 직종 TOP 5</p>
+              <p className="text-h3 text-text-primary">사주에 맞는 직종 다섯 가지</p>
               {data.workStyle && <TypeBadge label={data.workStyle} color={color} />}
             </div>
             <p className="text-[13px] text-text-hint mb-3">일간 오행, 격국, 십성 비중 분석, 잘 맞는 5직종</p>
@@ -1582,7 +1586,7 @@ function CareerViz({ data, color }: { data: any; color: string }) {
                       {p.label || p.age || `단계 ${i + 1}`}
                       {p.isCurrent && <Tag seal style={{ marginLeft: 8, fontSize: 13, padding: '0 6px' }}>지금</Tag>}
                     </p>
-                    {p.score != null && <span className="text-[13.5px] font-black" style={{ color: p.isCurrent ? color : '#7A7269' }}>{p.score}</span>}
+                    {p.score != null && <span className="text-[13.5px] font-black" style={{ color: p.isCurrent ? color : '#6F6557' }}>{p.score}</span>}
                   </div>
                   {p.description && (
                     <p className="text-[13.5px] text-text-primary leading-snug" dangerouslySetInnerHTML={{ __html: sanitizeAiText(String(p.description)) }} />
@@ -1798,7 +1802,7 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
         {/* 업종 적합도 */}
         <div className="card">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-h3 text-text-primary">업종 적합도 TOP 5</p>
+            <p className="text-h3 text-text-primary">잘 맞는 업종 다섯 가지</p>
             {data.businessType && <TypeBadge label={data.businessType} color={color} />}
           </div>
           {data.fitIndustries?.length > 0 && (
@@ -1844,7 +1848,7 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
           // 동적 제목 — 실제 채워진 영역 기준
           const parts: string[] = [];
           if (data.startupReadiness != null) parts.push('준비도');
-          if (data.riskLevel) parts.push('리스크');
+          if (data.riskLevel) parts.push('위험');
           if (data.bestPartnerOheng || data.partnerAdvice) parts.push('동업');
           const dynamicTitle = parts.length === 1
             ? `사업 ${parts[0]} 진단`
@@ -1861,7 +1865,7 @@ function BusinessViz({ data, color }: { data: any; color: string }) {
               <StatTile label="창업 준비도" value={<>{data.startupReadiness}<span className="text-[13px] font-normal">점</span></>} color={color} big />
             )}
             {data.riskLevel && (
-              <StatTile label="리스크 수준" value={data.riskLevel} color={color} tone={data.riskLevel === '높음' ? 'warn' : 'default'} />
+              <StatTile label="위험 정도" value={data.riskLevel} color={color} tone={data.riskLevel === '높음' ? 'warn' : 'default'} />
             )}
             {data.bestPartnerOheng && (
               <StatTile label="동업자 오행" value={data.bestPartnerOheng} color={color} />
@@ -1931,7 +1935,7 @@ function HealthViz({ data, color }: { data: any; color: string }) {
         {/* 건강 관리 카드 — 2026-06-02 fix: 항목 하나라도 있을 때만 (빈 카드 방지) */}
         {(data.cautionMonths || data.bestSleepTime || data.mentalStressType || data.dietAdvice) && (
         <div className="card">
-          <p className="text-h3 text-text-primary mb-3">건강 관리 포인트</p>
+          <p className="text-h3 text-text-primary mb-3">건강 관리할 곳</p>
           <div className="grid grid-cols-2 gap-2">
             {data.cautionMonths && (
               <StatTile label="건강 주의 월" value={data.cautionMonths} color={color} tone="warn" />
@@ -2069,7 +2073,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                   {/* 두 사람의 만남 (가운데) — 합/충/생/극 일상어로 */}
                   {dayType && (
                     <div className="hj-cell">
-                      <p className="text-[13px] font-bold mb-1" style={{ color: isPositive ? '#4E7A57' : isNegative ? '#8A6226' : '#7A7269' }}>
+                      <p className="text-[13px] font-bold mb-1" style={{ color: isPositive ? '#4E7A57' : isNegative ? '#8A6226' : '#6F6557' }}>
                         {isPositive ? '잘 맞물리는 흐름' : isNegative ? '부딪히는 흐름' : '두 사람의 만남'}
                       </p>
                       <p className="text-[13px] font-bold text-text-primary mb-1.5" style={{ wordBreak: 'keep-all' }}>
@@ -2181,7 +2185,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
         {sinsalList && (
           <div className="card">
             <p className="text-h3 text-text-primary mb-1">타고난 6 가지 연애 특질</p>
-            <p className="text-[13px] text-text-hint mb-3">사주에 숨겨진 연애 DNA를 하나씩 짚어봤어요</p>
+            <p className="text-[13px] text-text-hint mb-3">타고난 연애 성향을 하나씩 짚어 봤어요</p>
             <div className="space-y-3">
               {[
                 { key: 'doHwaSal', name: '도화살', hanja: '桃花殺', summary: '타고난 연애 매력', subject: '나의 사주',
@@ -2309,20 +2313,20 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
                     initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.1 }}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0"
-                          style={{ background: `${barColor}15`, color: barColor }}>
-                          {isFav ? '+' : '!'}
+                        {/* 2026-10-15 — 8px '+', '!' 동그라미 기호 → 13px 글자 */}
+                        <span className="text-[13px] font-bold flex-shrink-0" style={{ color: barColor }}>
+                          {isFav ? '도움' : '주의'}
                         </span>
                         <p className="text-[13.5px] font-bold text-text-primary">{f.factor}</p>
                       </div>
                       <span className="text-[13px] font-bold flex-shrink-0" style={{ color: barColor }}>{impact}%</span>
                     </div>
-                    <div className="h-[6px] overflow-hidden ml-7" style={{ background: `${barColor}10` }}>
+                    <div className="h-[6px] overflow-hidden" style={{ background: `${barColor}10` }}>
                       <motion.div className="h-full" style={{ background: barColor }}
                         initial={{ width: 0 }} animate={{ width: `${impact}%` }}
                         transition={{ duration: 0.8, delay: 0.3 + i * 0.1 }} />
                     </div>
-                    {f.desc && <p className="text-[13px] text-text-muted mt-1 ml-7 leading-snug">{f.desc}</p>}
+                    {f.desc && <p className="text-[13px] text-text-muted mt-1 leading-snug">{f.desc}</p>}
                   </motion.div>
                 );
               })}
@@ -2337,9 +2341,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
             <div className="grid grid-cols-2 gap-3">
               {data.greenFlags?.length > 0 && (
                 <div className="hj-entry">
-                  <p className="text-[13px] font-bold text-[#4E7A57] mb-2 flex items-center gap-1">
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
-                      style={{ background: 'rgba(78,122,87,0.15)' }}>+</span>
+                  <p className="text-[13px] font-bold text-[#4E7A57] mb-2">
                     긍정 신호
                   </p>
                   {data.greenFlags.map((f: string, i: number) => (
@@ -2352,9 +2354,7 @@ function ReunionViz({ data, color, myName, partnerName }: { data: any; color: st
               )}
               {data.redFlags?.length > 0 && (
                 <div className="hj-entry">
-                  <p className="text-[13px] font-bold text-[#B04A38] mb-2 flex items-center gap-1">
-                    <span className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
-                      style={{ background: 'rgba(176,74,56,0.12)' }}>!</span>
+                  <p className="text-[13px] font-bold text-[#B04A38] mb-2">
                     경고 신호
                   </p>
                   {data.redFlags.map((f: string, i: number) => (
@@ -2598,7 +2598,7 @@ function StudyViz({ data, color }: { data: any; color: string }) {
               <StatTile label="최적 공부 시간대" value={data.bestStudyTime} color={color} />
             )}
             {data.focusPeakHour && (
-              <StatTile label="집중력 피크" value={data.focusPeakHour} color={color} />
+              <StatTile label="집중이 잘 되는 때" value={data.focusPeakHour} color={color} />
             )}
             {data.seatDirection && (
               <StatTile label="유리한 좌석 방향" value={data.seatDirection} color={color} />
@@ -2609,7 +2609,7 @@ function StudyViz({ data, color }: { data: any; color: string }) {
           </div>
           {data.slumpPeriod && (
             <div className="hj-entry mt-2.5">
-              <p className="text-[13px] text-text-primary">슬럼프 주의 시기: <strong className="text-[#8A6226]">{data.slumpPeriod}</strong></p>
+              <p className="text-[13px] text-text-primary">공부가 막히기 쉬운 때: <strong className="text-[#8A6226]">{data.slumpPeriod}</strong></p>
             </div>
           )}
         </div>
@@ -3263,7 +3263,15 @@ export function TopicAnalysisPage() {
     breakupYear: new Date().getFullYear(), breakupMonth: 1,
     birthHour: -1, // -1 = 미상 (시계 시각 그대로 — 진태양시 보정은 서버 computePartnerPillars)
     birthMinute: 0, // 2026-07 — 분 단위 입력 (본인 입력과 통일, 3:30 경계 자동 판정)
+    calendar: 'solar' as 'solar' | 'lunar', // 2026-10-15 — 상대 생일 음력 입력 (서버 computePartnerPillars 가 양력으로 바꿔 계산)
+    isLeap: false,
   });
+  /** 상대 생일 일자 칸의 마지막 날 — 양력은 달력, 음력은 만세력의 그 달 날 수 (그전엔 달과 상관없이 31일까지) */
+  const partnerDayMax = useMemo(() => {
+    if (partnerInfo.calendar === 'lunar') return lunarMonthDays(partnerInfo.birthYear, partnerInfo.birthMonth, !!partnerInfo.isLeap) ?? 30;
+    return new Date(partnerInfo.birthYear, partnerInfo.birthMonth, 0).getDate();
+  }, [partnerInfo.calendar, partnerInfo.birthYear, partnerInfo.birthMonth, partnerInfo.isLeap]);
+  const partnerNoLeap = partnerInfo.calendar === 'lunar' && !!partnerInfo.isLeap && lunarMonthDays(partnerInfo.birthYear, partnerInfo.birthMonth, true) == null;
   const [showPartner, setShowPartner] = useState(false);
   // 2026-05-07 — partner 시간 선택 sheet (네이티브 select → bottom sheet 통일)
   const [hourSheetOpen, setHourSheetOpen] = useState(false);
@@ -3524,6 +3532,7 @@ export function TopicAnalysisPage() {
       const partner = needsPartner
         ? {
             ...partnerInfo,
+            birthDay: Math.min(partnerInfo.birthDay, partnerDayMax),
             birthHour: partnerInfo.birthHour >= 0 ? partnerInfo.birthHour : undefined,
             // 2026-07 — 분 단위 (서버 computePartnerPillars 가 진태양시 보정에 사용)
             birthMinute: partnerInfo.birthHour >= 0 ? (partnerInfo.birthMinute ?? 0) : undefined,
@@ -3724,6 +3733,7 @@ export function TopicAnalysisPage() {
         createdAt: new Date().toISOString(),
         aiResult: { topicId, ...contentFinal },
         profileId: selected.id, // 보관함 삭제 시 topic_<id>_<profileId> 캐시 동반 제거용 (2026-06-17)
+        spentUn: actualPrice, // 2026-10-15 보관함 'N운 사용' 장부 (결제 때 낸 운)
       });
 
       // 2026-07-03 P0 — partial 박제 시 pending 유지: 서버 완성본으로 승격될 때 clear.
@@ -3771,7 +3781,6 @@ export function TopicAnalysisPage() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 70 }, (_, i) => currentYear - 15 - i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
     <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
@@ -3982,7 +3991,19 @@ export function TopicAnalysisPage() {
 
                                 {/* 생년월일 */}
                                 <div>
-                                  <label className="text-[13px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="text-[13px] text-text-hint block">생년월일</label>
+                                    <div className="flex gap-1">
+                                      {(['solar', 'lunar'] as const).map((c) => (
+                                        <button key={c} type="button" aria-pressed={partnerInfo.calendar === c}
+                                          onClick={() => setPartnerInfo(p => ({ ...p, calendar: c, isLeap: c === 'lunar' ? p.isLeap : false }))}
+                                          className="h-8 px-3 rounded-lg text-[13px] font-semibold"
+                                          style={partnerInfo.calendar === c ? { background: '#1A1612', color: '#F4EFE4', border: '1px solid #1A1612' } : { background: 'transparent', color: '#4B4238', border: '1px solid #E1D7C4' }}>
+                                          {c === 'solar' ? '양력' : '음력'}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
                                   <div className="flex gap-2">
                                     <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
@@ -3995,11 +4016,18 @@ export function TopicAnalysisPage() {
                                       {months.map(m => <option key={m} value={m}>{m}월</option>)}
                                     </select>
                                     <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
-                                      value={partnerInfo.birthDay}
+                                      value={Math.min(partnerInfo.birthDay, partnerDayMax)}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
-                                      {days.map(d => <option key={d} value={d}>{d}일</option>)}
+                                      {Array.from({ length: partnerDayMax }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}일</option>)}
                                     </select>
                                   </div>
+                                  {partnerInfo.calendar === 'lunar' && (
+                                    <label className="inline-flex items-center gap-2 mt-2 text-[13px] text-text-primary">
+                                      <input type="checkbox" checked={!!partnerInfo.isLeap} onChange={e => setPartnerInfo(p => ({ ...p, isLeap: e.target.checked }))} style={{ width: 18, height: 18 }} />
+                                      윤달 (해당하는 달일 때만)
+                                    </label>
+                                  )}
+                                  {partnerNoLeap && <p className="text-[13px] mt-1" style={{ color: '#A23A2A' }}>{partnerInfo.birthYear}년에는 윤{partnerInfo.birthMonth}월이 없어요. 평달로 계산해요</p>}
                                 </div>
 
                                 {/* 성별 */}
@@ -4085,7 +4113,19 @@ export function TopicAnalysisPage() {
 
                                 {/* 생년월일 */}
                                 <div>
-                                  <label className="text-[13px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="text-[13px] text-text-hint block">생년월일</label>
+                                    <div className="flex gap-1">
+                                      {(['solar', 'lunar'] as const).map((c) => (
+                                        <button key={c} type="button" aria-pressed={partnerInfo.calendar === c}
+                                          onClick={() => setPartnerInfo(p => ({ ...p, calendar: c, isLeap: c === 'lunar' ? p.isLeap : false }))}
+                                          className="h-8 px-3 rounded-lg text-[13px] font-semibold"
+                                          style={partnerInfo.calendar === c ? { background: '#1A1612', color: '#F4EFE4', border: '1px solid #1A1612' } : { background: 'transparent', color: '#4B4238', border: '1px solid #E1D7C4' }}>
+                                          {c === 'solar' ? '양력' : '음력'}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
                                   <div className="flex gap-2">
                                     <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
@@ -4098,11 +4138,18 @@ export function TopicAnalysisPage() {
                                       {months.map(m => <option key={m} value={m}>{m}월</option>)}
                                     </select>
                                     <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
-                                      value={partnerInfo.birthDay}
+                                      value={Math.min(partnerInfo.birthDay, partnerDayMax)}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
-                                      {days.map(d => <option key={d} value={d}>{d}일</option>)}
+                                      {Array.from({ length: partnerDayMax }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}일</option>)}
                                     </select>
                                   </div>
+                                  {partnerInfo.calendar === 'lunar' && (
+                                    <label className="inline-flex items-center gap-2 mt-2 text-[13px] text-text-primary">
+                                      <input type="checkbox" checked={!!partnerInfo.isLeap} onChange={e => setPartnerInfo(p => ({ ...p, isLeap: e.target.checked }))} style={{ width: 18, height: 18 }} />
+                                      윤달 (해당하는 달일 때만)
+                                    </label>
+                                  )}
+                                  {partnerNoLeap && <p className="text-[13px] mt-1" style={{ color: '#A23A2A' }}>{partnerInfo.birthYear}년에는 윤{partnerInfo.birthMonth}월이 없어요. 평달로 계산해요</p>}
                                 </div>
 
                                 {/* 성별 */}
@@ -4381,7 +4428,7 @@ export function TopicAnalysisPage() {
                                     {availableMonths.map(m => <option key={m} value={m}>{m}월</option>)}
                                   </select>
                                 </div>
-                                <p className="text-[13px] text-text-hint mt-1">예정 시기의 합격과 변동운을 정밀 분석합니다</p>
+                                <p className="text-[13px] text-text-hint mt-1">예정 시기의 합격과 변동운을 자세히 살펴봐요</p>
                               </div>
                             );
                           })()}
@@ -4484,7 +4531,19 @@ export function TopicAnalysisPage() {
 
                                 {/* 생년월일 */}
                                 <div>
-                                  <label className="text-[13px] text-text-hint mb-1 block">생년월일 (양력)</label>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="text-[13px] text-text-hint block">생년월일</label>
+                                    <div className="flex gap-1">
+                                      {(['solar', 'lunar'] as const).map((c) => (
+                                        <button key={c} type="button" aria-pressed={partnerInfo.calendar === c}
+                                          onClick={() => setPartnerInfo(p => ({ ...p, calendar: c, isLeap: c === 'lunar' ? p.isLeap : false }))}
+                                          className="h-8 px-3 rounded-lg text-[13px] font-semibold"
+                                          style={partnerInfo.calendar === c ? { background: '#1A1612', color: '#F4EFE4', border: '1px solid #1A1612' } : { background: 'transparent', color: '#4B4238', border: '1px solid #E1D7C4' }}>
+                                          {c === 'solar' ? '양력' : '음력'}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
                                   <div className="flex gap-2">
                                     <select className="flex-1 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
                                       value={partnerInfo.birthYear}
@@ -4497,11 +4556,18 @@ export function TopicAnalysisPage() {
                                       {months.map(m => <option key={m} value={m}>{m}월</option>)}
                                     </select>
                                     <select className="w-20 h-11 px-2 rounded-xl bg-bg-page border border-border-light text-body-sm text-text-primary"
-                                      value={partnerInfo.birthDay}
+                                      value={Math.min(partnerInfo.birthDay, partnerDayMax)}
                                       onChange={e => setPartnerInfo(p => ({ ...p, birthDay: +e.target.value }))}>
-                                      {days.map(d => <option key={d} value={d}>{d}일</option>)}
+                                      {Array.from({ length: partnerDayMax }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}일</option>)}
                                     </select>
                                   </div>
+                                  {partnerInfo.calendar === 'lunar' && (
+                                    <label className="inline-flex items-center gap-2 mt-2 text-[13px] text-text-primary">
+                                      <input type="checkbox" checked={!!partnerInfo.isLeap} onChange={e => setPartnerInfo(p => ({ ...p, isLeap: e.target.checked }))} style={{ width: 18, height: 18 }} />
+                                      윤달 (해당하는 달일 때만)
+                                    </label>
+                                  )}
+                                  {partnerNoLeap && <p className="text-[13px] mt-1" style={{ color: '#A23A2A' }}>{partnerInfo.birthYear}년에는 윤{partnerInfo.birthMonth}월이 없어요. 평달로 계산해요</p>}
                                 </div>
 
                                 {/* 성별 */}
@@ -4578,9 +4644,9 @@ export function TopicAnalysisPage() {
                   {selected && (
                     <div style={{ background: '#FFFFFF', border: '1px solid #E8E2D6', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
                       <label htmlFor="topic-concern" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>
-                        지금 상황을 한 줄로 알려주세요 <span style={{ fontWeight: 500, color: '#7A7269' }}>(선택)</span>
+                        지금 상황을 한 줄로 알려주세요 <span style={{ fontWeight: 500, color: '#6F6557' }}>(선택)</span>
                       </label>
-                      <p style={{ fontSize: 13.5, color: '#7A7269', lineHeight: 1.5, marginBottom: 8 }}>
+                      <p style={{ fontSize: 13.5, color: '#6F6557', lineHeight: 1.5, marginBottom: 8 }}>
                         적어주시면 그 상황에 맞춰 풀어드려요. 비워둬도 괜찮아요.
                       </p>
                       <textarea
@@ -4595,7 +4661,7 @@ export function TopicAnalysisPage() {
                           color: '#1A1A1A', background: '#F8F5EE', border: '1px solid #E8E2D6', borderRadius: 10, padding: '10px 12px',
                         }}
                       />
-                      <div style={{ textAlign: 'right', fontSize: 13, color: '#7A7269', marginTop: 4 }}>{concern.length}/200</div>
+                      <div style={{ textAlign: 'right', fontSize: 13, color: '#6F6557', marginTop: 4 }}>{concern.length}/200</div>
                     </div>
                   )}
 
@@ -4661,13 +4727,13 @@ export function TopicAnalysisPage() {
           {phase === 'loading' && (() => {
             const TOPIC_NOTES: Record<string, string> = {
               love: '인연을 끌어당기는 글자와 결혼 자리를 확인하고 있어요.|내 연애 습관을 사주에서 읽고 있어요.|인연의 시기를 월 단위로 계산하고 있어요.|사주적으로 궁합이 맞는 이성을 찾고 있어요.',
-              wealth: '재성 구조로 돈 버는 스타일을 분석하고 있어요.|투자 적기를 대운 흐름으로 계산하고 있어요.|돈이 새는 길목을 사주에서 찾고 있어요.|돈을 만드는 사주 구조를 확인하고 있어요.',
-              career: '책임감과 표현력의 균형을 보고 있어요.|이직 최적 타이밍을 계산하고 있어요.|면접 유리 요일과 시간대를 확인하고 있어요.|딱 맞는 직종 TOP 5를 선정하고 있어요.',
+              wealth: '재성 구조로 돈 버는 방식을 살피고 있어요.|투자 적기를 대운 흐름으로 계산하고 있어요.|돈이 새는 길목을 사주에서 찾고 있어요.|돈을 만드는 사주 구조를 확인하고 있어요.',
+              career: '책임감과 표현력의 균형을 보고 있어요.|이직하기 좋은 때를 계산하고 있어요.|면접 유리 요일과 시간대를 확인하고 있어요.|잘 맞는 직종 다섯 가지를 고르고 있어요.',
               marriage: '배우자궁의 구조를 깊이 분석하고 있어요.|결혼 적기를 대운 흐름으로 계산하고 있어요.|만세력으로 배우자 성향을 읽고 있어요.|결혼 후 생활 습관까지 예측하고 있어요.',
-              business: '사업 적성과 맞는 업종을 분석하고 있어요.|창업 최적 타이밍을 계산하고 있어요.|동업 궁합 구조를 확인하고 있어요.|사업가 기질의 사주 구조를 읽고 있어요.',
-              health: '오행 균형으로 체질을 정밀 분석하고 있어요.|취약 장기와 주의 시기를 확인하고 있어요.|사주에서 건강 리스크를 찾고 있어요.|맞춤 건강 보완법을 만들고 있어요.',
+              business: '사업 적성과 맞는 업종을 분석하고 있어요.|창업하기 좋은 때를 계산하고 있어요.|동업 궁합 구조를 확인하고 있어요.|사업가 기질의 사주 구조를 읽고 있어요.',
+              health: '오행 균형으로 체질을 정밀 분석하고 있어요.|취약 장기와 주의 시기를 확인하고 있어요.|사주에서 건강에 조심할 곳을 찾고 있어요.|맞춤 건강 보완법을 만들고 있어요.',
               reunion: '두 사람의 사주를 교차 분석하고 있어요.|상대방의 숨은 마음까지 읽고 있어요.|궁합 구조와 신살을 정밀 분석 중이에요.|재회 전략까지 세우고 있어요.',
-              study: '인성 구조로 학습 체질을 분석하고 있어요.|합격 운과 최적 시기를 계산하고 있어요.|집중력 피크 시간대를 찾고 있어요.|시험 당일 전략까지 세우고 있어요.',
+              study: '인성 구조로 학습 체질을 분석하고 있어요.|합격 운과 최적 시기를 계산하고 있어요.|집중이 잘 되는 시간대를 찾고 있어요.|시험 당일 전략까지 세우고 있어요.',
               // audit 2 P1 B1 — exam 키 신규 추가 (TOPICS 에 등록됐지만 NOTES 누락이었음)
               exam: '합격 이직 좋은 달을 사주에서 찾고 있어요.|면접 유리한 시간대를 보고 있어요.|변동 운이 강한 시기를 짚고 있어요.|합격 신살(문창, 학당, 태극)을 확인하고 있어요.',
               move: '이동과 변화의 글자를 확인하고 있어요.|오행 방위로 좋은 방향을 계산하고 있어요.|이사 최적 시기를 확인하고 있어요.|해외운까지 분석하고 있어요.',
@@ -5160,7 +5226,7 @@ export function TopicAnalysisPage() {
                     <span style={{ width: 20, textAlign: 'center', fontWeight: 900, color: '#8C6D3D', fontFamily: "'Noto Serif KR', serif" }}>合</span>
                     <span className="flex flex-col items-start text-left" style={{ minWidth: 0 }}>
                       <span className="text-[14px] font-semibold text-text-primary">그 사람과의 궁합 보기</span>
-                      <span className="text-[13px] text-text-hint">두 사람 사주가 맞물리는 자리, 1운</span>
+                      <span className="text-[13px] text-text-hint">두 사람 사주가 어떻게 맞는지 {PRODUCT_COST.compatibility}운으로 봐요</span>
                     </span>
                   </button>
                 )}
@@ -5269,7 +5335,7 @@ export function TopicAnalysisPage() {
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                   </svg>
                   <span style={{ fontSize: 13.5, fontWeight: 600 }}>친구에게 공유하기</span>
-                  <span style={{ fontSize: 13, color: '#7A7269' }}>결과 카드로 보내기</span>
+                  <span style={{ fontSize: 13, color: '#6F6557' }}>결과 카드로 보내기</span>
                 </button>
                 <button
                   type="button"
@@ -5310,7 +5376,7 @@ export function TopicAnalysisPage() {
                     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                   </svg>
                   <span style={{ fontSize: 13.5, fontWeight: 600 }}>이 주제로 상담 이어가기</span>
-                  <span style={{ fontSize: 13, color: '#7A7269' }}>사주대화</span>
+                  <span style={{ fontSize: 13, color: '#6F6557' }}>사주대화</span>
                 </button>
               </div>
             </motion.div>
@@ -5412,7 +5478,7 @@ export function TopicAnalysisPage() {
               <strong style={{ color: '#A37A2E' }}>{topic.label}</strong> 분석에는 {need}운이 필요해요.
             </p>
             <p style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.6 }}>
-              지금까지 입력한 내용은 그대로 저장돼 있어요. 충전 후 돌아오면 이어서 분석할 수 있습니다.
+              지금까지 입력한 내용은 그대로 저장돼 있어요. 충전하고 돌아오면 이어서 볼 수 있어요.
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>

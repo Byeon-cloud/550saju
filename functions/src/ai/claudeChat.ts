@@ -16,7 +16,7 @@
 //   - 반환 타입 동일: { answer, keywords, guarded?, guardCategory? }
 
 import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
-import { sanitizeText, sanitizeAiOutput, upcomingMonthPillarsText, lifeTimelineFactsText } from './sajuFacts';
+import { sanitizeText, sanitizeAiOutput, upcomingMonthPillarsText, lifeTimelineFactsText, sajuCoreFactsText } from './sajuFacts';
 import { Solar } from 'lunar-javascript';
 import { kstNow, kstNowDate } from '../utils/kstTime';
 /** 2026-10-13 — 답변도 결과 화면과 같은 정리기(이름 님 띄어쓰기 포함) */
@@ -212,7 +212,7 @@ ${pillarsText}
 ${Object.entries(elements).filter(([, v]) => v === 0).map(([k]) => `→ ${k} 없음`).join('\n')}
 ${Object.entries(elements).filter(([, v]) => (v as number) >= 3).map(([k, v]) => `→ ${k} ${v}개 과다`).join('\n')}
 
-## 십성: ${sipsung || '미상'}
+${sajuCoreFactsText(sajuData)}
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 목록의 값을 그대로 인용 — 사용자가 이전/다음/특정 시기 대운을 물어도 위 목록에 있는 간지만 쓰고, 목록에 없는 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지.` : ''}

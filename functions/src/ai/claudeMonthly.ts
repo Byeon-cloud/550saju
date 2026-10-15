@@ -1,5 +1,5 @@
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
-import { sanitizeAiOutput, natalRelationsText, lifeTimelineFactsText } from './sajuFacts';
+import { sanitizeAiOutput, natalRelationsText, lifeTimelineFactsText, monthDayPicks, sajuCoreFactsText } from './sajuFacts';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, READING_VOICE_BLOCK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 import { kstNow, kstNowDate } from '../utils/kstTime';
 
@@ -43,14 +43,49 @@ export async function generateMonthlyFortune(
   if (!onGroup) {
     // 점진 미사용 — 기존 단일 콜 경로(검증됨). year/month 만 권위값 보정.
     const full = await generateMonthlyGroup(apiKey, sajuData, info, 'FULL');
-    return { ...(full || {}), year: info.year, month: info.month };
+    return enforceDayPicks({ ...(full || {}), year: info.year, month: info.month }, monthDayPicks(info.year, info.month, sajuData));
   }
   const [m1, m2] = await Promise.all([
     generateMonthlyGroup(apiKey, sajuData, info, 'M1').then((r) => { try { onGroup('M1', r); } catch { /* noop */ } return r; }),
     generateMonthlyGroup(apiKey, sajuData, info, 'M2').then((r) => { try { onGroup('M2', r); } catch { /* noop */ } return r; }),
   ]);
   // year/month 는 서버 권위값으로 강제 (AI 가 임의로 바꿔도 보정)
-  return { ...(m1 || {}), ...(m2 || {}), year: info.year, month: info.month };
+  return enforceDayPicks({ ...(m1 || {}), ...(m2 || {}), year: info.year, month: info.month }, monthDayPicks(info.year, info.month, sajuData));
+}
+
+/* 2026-10-15 품질 점검 — 좋은 날, 조심할 날의 근거를 모델이 지어냈다(11/22 庚子 를 '상관 기운의 날'로, 실제는 그달 가장 좋은 날).
+ *   서버가 신년운세와 같은 일진 채점으로 고르고(monthDayPicks), 모델은 이유만 생활 말로 푼다. 표와 다른 날짜가 나오면 서버 값으로 덮어쓴다. */
+function plainWhy(why: string): string {
+  return why
+    .replace(/^\d+\/\d+\(.\),\s*/, '')
+    .replace(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]\(([가-힣]{2})\)일/, '$1일')
+    .replace(/용신\(([목화토금수])\)/g, '나에게 필요한 $1')
+    .replace(/희신\(([목화토금수])\)/g, '도움이 되는 $1')
+    .replace(/기신\(([목화토금수])\) 기운이 강한 날/g, '나와 맞지 않는 $1 기운이 강한 날')
+    .replace(/천을귀인 날/g, '귀인의 도움이 닿는 날')
+    .replace(/일지 .와 부딪히는 날/g, '태어난 날 글자와 부딪히는 날');
+}
+function enforceDayPicks<T extends Record<string, any>>(res: T, picks: ReturnType<typeof monthDayPicks>): T {
+  if (!res || typeof res !== 'object') return res;
+  const norm = (x: any) => String(x || '').replace(/\s/g, '').replace(/\(.\)/g, '');
+  const ok = (arr: any, allowed: Set<string>) => Array.isArray(arr) && arr.length > 0
+    && arr.every((it: any) => norm(it?.date).split(/[~,]/).every((part) => allowed.has(part)));
+  const r: any = res;
+  if (picks.good.length && (r.luckyDays !== undefined || r.cautionDays !== undefined)) {
+    if (!ok(r.luckyDays, new Set(picks.good.map((x) => x.date)))) r.luckyDays = picks.good.map((x) => ({ date: x.date, reason: plainWhy(x.why) }));
+    if (picks.caution.length && !ok(r.cautionDays, new Set(picks.caution.map((x) => x.date)))) r.cautionDays = picks.caution.map((x) => ({ date: x.date, reason: plainWhy(x.why) }));
+  }
+  return res;
+}
+function dayPicksBlock(info: { year: number; month: number }, d: any): string {
+  const pk = monthDayPicks(info.year, info.month, d);
+  if (!pk.good.length && !pk.caution.length) return '';
+  return `
+
+## 이 달 좋은 날과 조심할 날 (서버 계산, 그날 일진과 이 사주의 용신, 기신, 일지 관계로 골랐다)
+- 좋은 날: ${pk.good.map((x) => x.why).join(' / ') || '없음'}
+- 조심할 날: ${pk.caution.map((x) => x.why).join(' / ') || '없음'}
+→ luckyDays, cautionDays 의 date 는 위 날짜만, 하루씩(범위 금지) 쓴다. reason 은 위 이유를 생활 말로 풀고 그날 할 일이나 피할 일 하나를 붙인다. 다른 날짜와 다른 일진을 지어내지 않는다. 상순, 중순, 하순 본문에서 날짜를 말할 때도 이 표의 날짜만 쓴다.`;
 }
 
 /** 그룹 1개(M1/M2/FULL) — 1차 생성 + 2차 자기리뷰 → 파싱 */
@@ -108,7 +143,7 @@ export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthI
   if (!draft) throw new Error('월별 운세 draft JSON 파싱 실패');
   draft.year = info.year;
   draft.month = info.month;
-  return sanitizeAiOutput(draft); // 2026-10-11 — 초안 경로가 정리기를 안 거쳐 '씨', 줄표, 외래어가 그대로 나갔음
+  return enforceDayPicks(sanitizeAiOutput(draft), monthDayPicks(info.year, info.month, sajuData)); // 2026-10-11 — 초안 경로가 정리기를 안 거쳐 '씨', 줄표, 외래어가 그대로 나갔음
 }
 
 /**
@@ -132,10 +167,11 @@ export async function generateMonthlyRefine(apiKey: string, sajuData: any, month
   logAnthropicUsage('monthly', CLAUDE_MODEL.sonnet, review, _t2, 'callable'); // C7 best-effort
   const reviewText = (review.content[0] as any).text;
   const refined = tryParse(reviewText);
-  if (!refined) return sanitizeAiOutput({ ...draft, year: info.year, month: info.month }); // 리뷰 실패 → draft 유지
+  const picks = monthDayPicks(info.year, info.month, sajuData);
+  if (!refined) return enforceDayPicks(sanitizeAiOutput({ ...draft, year: info.year, month: info.month }), picks); // 리뷰 실패 → draft 유지
   refined.year = info.year;
   refined.month = info.month;
-  return sanitizeAiOutput(refined);
+  return enforceDayPicks(sanitizeAiOutput(refined), picks);
 }
 
 /** monthInfo 누락/불완전 시 폴백 — 이번 달 기준(간지 미상). 정상 경로는 항상 클라가 간지 동봉. */
@@ -245,7 +281,7 @@ ${info.label} 한 달 심층 운세 — 사주 원국 일간과 그 달의 월�
 ${pillarsText}일간: ${ilgan}
 
 ## 오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}
-## 십성: ${sipsung || '미상'}
+${sajuCoreFactsText(d)}${dayPicksBlock(info, d)}
 ${d.myeongriAnalysis?.용신 ? `## 용신 (SSOT, 서버 확정, 종합사주와 신년운세와 같은 값): 용신 ${d.myeongriAnalysis.용신}, 희신 ${d.myeongriAnalysis.희신 || '미상'}, 기신 ${d.myeongriAnalysis.기신 || '미상'}. 개운 처방과 행운 색, 방위는 이 용신으로만. 다른 오행을 용신이라고 쓰지 말 것.` : ''}
 
 ## 선택한 달의 간지 (정확 계산 — 이 간지를 그대로 인용, 절대 임의로 바꾸지 말 것)

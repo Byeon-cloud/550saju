@@ -1,5 +1,5 @@
 /**
- * DailyRewardBadge — 데일리 리워드 배지 (P2-5)
+ * DailyRewardBadge — 출석 운 배지 (P2-5)
  *
  * 근거: `docs/prd/P2_Path_E_티켓_트래커.md` P2-5 · 인수인계 §7.P2-5
  *
@@ -105,7 +105,7 @@ export function DailyRewardBadge({ className = '' }: DailyRewardBadgeProps) {
       type="button"
       whileTap={{ scale: 0.98 }}
       onClick={handleClaim}
-      aria-label={`데일리 리워드 ${DAILY_REWARD_UN}운 받기`}
+      aria-label={`출석 운 ${DAILY_REWARD_UN}운 받기`}
       className={`rounded-2xl px-4 py-3 flex items-center gap-3 w-full text-left ${className}`}
       style={{
         background: 'linear-gradient(135deg, rgba(184,150,90,0.14), rgba(184,150,90,0.06))',
@@ -123,7 +123,7 @@ export function DailyRewardBadge({ className = '' }: DailyRewardBadgeProps) {
         </svg>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-body-sm font-bold text-text-primary">오늘의 리워드</p>
+        <p className="text-body-sm font-bold text-text-primary">오늘의 출석 운</p>
         <p className="text-caption text-text-muted mt-0.5">
           하루 한 번 {DAILY_REWARD_UN}운 드려요
         </p>

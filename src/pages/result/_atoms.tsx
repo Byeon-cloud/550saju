@@ -88,7 +88,7 @@ export function ScoreRing({ label, score, color, delay = 0, topicId }: {
         </div>
       </div>
       <span style={{ color: '#8b7e6f', fontSize: 13 }}>{label}</span>
-      {topicId && <span style={{ color, fontSize: 13, fontWeight: 700, marginTop: -2 }}>심층분석 →</span>}
+      {topicId && <span style={{ color, fontSize: 13, fontWeight: 700, marginTop: -2 }}>자세히 보기 ›</span>}
     </div>
   );
 }

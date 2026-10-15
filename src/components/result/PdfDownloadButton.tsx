@@ -26,7 +26,7 @@ const C = {
   goldLine: 'rgba(184,150,90,0.40)',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   paper: '#F8F5EE',
   line: '#E5DFD0',
   surface: '#FFFFFF',

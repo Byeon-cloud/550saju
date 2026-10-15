@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { HJ, SERIF, Seal, GoldCta, Redact } from '@/components/hanji/Hanji';
 import { trackEvent } from '@/services/analytics';
+import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { currentSajuMonth, monthDayLabel } from '@/services/saju/hookFacts';
 import {
   TTI, ttiName, ttiYears, yearLabel, fallbackHead, fallbackYearLine, loadTtiDay, getMyTti, setMyTti,
@@ -53,6 +54,9 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
   const [gridOpen, setGridOpen] = useState(() => !(hero && mine?.ji && mine?.year));
   const [day, setDay] = useState<TtiDay | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  /** 오늘의 운세 무료 한 번(기기 하루 1회)이 남았는지 — 다 썼으면 '무료'라고 말하지 않는다 (2026-10-15) */
+  const [freeDaily, setFreeDaily] = useState(() => hasFreePass('daily'));
+  useEffect(() => subscribeFreePass(() => setFreeDaily(hasFreePass('daily'))), []);
 
   useEffect(() => {
     let alive = true;
@@ -163,7 +167,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
               <div style={{ marginTop: 14, background: HJ.hanji, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '14px 14px 6px' }}>
                 <div className="flex items-baseline" style={{ gap: 8 }}>
                   <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink }}>{yearLabel(chosen)} {ttiName(sel)}</span>
-                  <span style={{ fontSize: 13, color: HJ.mute }}>{yearKo(chosen)}생, 내 해</span>
+                  <span style={{ fontSize: 13, color: HJ.mute }}>{yearKo(chosen)}생 (내 해)</span>
                   <button type="button" onClick={() => { setMyYear(undefined); setMyTti(sel); onYearPick?.(undefined); }}
                     style={{ marginLeft: 'auto', fontSize: 13, color: HJ.mute, background: 'transparent', border: 0, padding: '4px 0' }}>
                     해 바꾸기
@@ -188,8 +192,12 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
                     </li>
                   ))}
                 </ul>
-                <GoldCta style={{ marginTop: 12 }} onClick={() => goInput('panel')} sub="무료">생일 넣고 무료로 보기</GoldCta>
-                <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>결제 없이 바로 열려요. 한 번 넣으면 계속 써요</p>
+                <GoldCta style={{ marginTop: 12 }} onClick={() => goInput('panel')} sub={freeDaily ? '무료' : '1운'}>
+                  {freeDaily ? '생일 넣고 무료로 보기' : '생일 넣고 오늘 운세 보기'}
+                </GoldCta>
+                <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>
+                  {freeDaily ? '오늘 한 번은 결제 없이 열려요. 생일은 한 번 넣으면 계속 써요' : '오늘 무료 한 번은 이미 썼어요. 내일 다시 무료로 열려요'}
+                </p>
               </div>
 
               {/* ── 내년 띠 운 맛보기 → 신년운세 ── */}
@@ -235,7 +243,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
               )}
               {!hero && (
                 <div className="grid grid-cols-2 gap-2" style={{ marginTop: 12 }}>
-                  <SubBtn onClick={() => goInput('family')} t="가족 생일 넣고" s="오늘 운세 무료로 보기 ›" />
+                  <SubBtn onClick={() => goInput('family')} t="가족 생일 넣고" s={freeDaily ? '오늘 운세 무료로 보기 ›' : '오늘 운세 1운으로 보기 ›'} />
                   {onCompat && <SubBtn onClick={() => { trackEvent('tti_compat', { tti: sel }); onCompat(); }} t="나와 궁합" s={`잘 맞는 점과 부딪히는 점 ${compatPrice ?? ''}운 ›`} />}
                 </div>
               )}

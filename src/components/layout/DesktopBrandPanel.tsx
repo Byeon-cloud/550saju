@@ -10,23 +10,21 @@
 import { isAppintosBuild } from '@/lib/env';
 
 const POINTS = [
-  { emblem: '値', title: '오프라인 사주값의 1/100', desc: '그런데 내용은 10배: 한 권 분량으로 처음부터 끝까지' },
+  { emblem: '値', title: '처음부터 끝까지 한 권 분량', desc: '타고난 성격부터 10년 대운까지 차례대로 풀어 드려요' },
   { emblem: '典', title: '아무 말 운세가 아니에요', desc: '연해자평과 자평진전 등 600년 고전 원전 기반 풀이' },
-  { emblem: '日', title: '매일 공짜로 시작해요', desc: '오늘의 운세와 꿈해몽은 늘 무료' },
+  { emblem: '日', title: '매일 무료로 시작해요', desc: '오늘의 운세와 꿈해몽은 하루 한 번 무료예요' },
 ];
 
-const KEYWORDS = ['오늘의 운세', '꿈해몽', '연애운', '재회운', '종합사주', '사주 상담'];
+const KEYWORDS = ['오늘의 운세', '꿈해몽', '연애운', '재회운', '종합사주', '사주대화'];
 
 export function DesktopBrandPanel() {
   if (isAppintosBuild) return null;
   return (
     <aside className="desktop-brand-panel" aria-hidden="true">
-      {/* 배경 레이어 — 크림 + 잉크 대각 밴드 + 골드 라인 + 한자 워터마크 */}
+      {/* 배경 레이어 — 크림 + 잉크 대각 밴드 + 골드 라인 (2026-10-15 큰 한자 워터마크 命, 運 삭제 · v9 규칙) */}
       <div className="dbp-bg-base" />
-      <span className="dbp-watermark">命</span>
       <div className="dbp-bg-ink" />
       <div className="dbp-bg-gold" />
-      <span className="dbp-watermark dbp-watermark--ink">運</span>
 
       <div className="dbp-inner">
         <div className="dbp-brandrow">
@@ -36,7 +34,7 @@ export function DesktopBrandPanel() {
 
         <h1 className="dbp-title">
           내 사주,<br />
-          <span className="dbp-title-gold">처음부터 끝까지</span> 읽어드립니다
+          <span className="dbp-title-gold">처음부터 끝까지</span> 읽어 드려요
         </h1>
 
         <div className="dbp-points">
@@ -61,7 +59,7 @@ export function DesktopBrandPanel() {
           <span className="dbp-cta-emblem">運</span>
           <span>
             설치 없이 <b>오른쪽 화면에서 바로</b> 시작하세요<br />
-            <span className="dbp-cta-sub">토스 앱에서 “사주 500”을 검색해도 만날 수 있어요</span>
+            <span className="dbp-cta-sub">토스 앱에서 “사주500”을 검색해도 만날 수 있어요</span>
           </span>
         </div>
       </div>

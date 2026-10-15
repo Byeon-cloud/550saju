@@ -363,13 +363,13 @@ export function buildSajuCardFilename(name: string, birthDate?: string): string 
 
 /**
  * 공유 텍스트 빌더.
- *  - 호스트 도메인 (Firebase Hosting): https://saju500.app
- *  - profileId 가 있으면 /saju-card/{id} 딥링크
- *  - Stage 4 OG: name + ilju 한자를 query string 으로 전달 → 서버 SSR OG 가 동적 미리보기 PNG 생성
+ *  - profileId 가 있으면 /saju-card/{id} 링크 (id 는 기기 안 무작위 값. 받는 사람 기기엔 없어서 SajuCardPage 가 '공유받은 카드' 안내로 받는다)
+ *  - 2026-10-15 — 링크 주소에 보낸 사람 이름(n)을 넣지 않는다(개인정보). 일주 한자(i)만 넘겨 서버 OG 미리보기와 받는 화면 안내에 쓴다.
+ *    서버 renderSajuCardOg 는 n 이 없으면 이름 없이 미리보기를 만든다.
  *
- * @param name      - 사용자 이름 (필수)
- * @param profileId - localStorage 프로필 UUID (없으면 홈 link)
- * @param ilju      - 일주 한자 2글자 (예: "辛亥") — OG 이미지 personalization
+ * @param name      - 사용자 이름 (공유 문구에만 씀, 주소에는 안 넣음)
+ * @param profileId - localStorage 프로필 id (없으면 홈 link)
+ * @param ilju      - 일주 한자 2글자 (예: "辛亥")
  */
 export function buildShareTextAndUrl(
   name: string,
@@ -380,14 +380,39 @@ export function buildShareTextAndUrl(
     (typeof window !== 'undefined' && window.location?.origin) ||
     'https://saju500.app';
   const basePath = profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '';
-
-  // Stage 4 OG personalization query — 서버 renderSajuCardOg/renderSajuCardOgImage 가 읽음
-  const params = new URLSearchParams();
-  if (name) params.set('n', name);
-  if (ilju) params.set('i', ilju);
-  const qs = params.toString();
-  const url = `${origin}${basePath}${qs ? '?' + qs : ''}`;
-
-  const text = `${name} 님의 사주 카드, 사주500에서 풀이 받아 보세요`;
+  const url = `${origin}${basePath}?${sajuCardShareQuery(ilju)}`;
+  const text = name ? `${name} 님의 사주 카드예요. 사주500에서 내 사주도 볼 수 있어요` : '사주500에서 만든 사주 카드예요';
   return { text, url };
+}
+
+function sajuCardShareQuery(ilju?: string): string {
+  const params = new URLSearchParams();
+  if (ilju) params.set('i', ilju);
+  params.set('ref', 'share');
+  return params.toString();
+}
+
+/**
+ * 앱(토스) 안 사주 카드 공유 (2026-10-15) — 결과 공유(utils/share.ts)와 같은 토스 공유 링크 + 공유 시트.
+ *   웹 방식(navigator.share files, 클립보드, 강제 다운로드)은 앱에서 쓰지 않는다(앱인토스, 웹 혼용 금지).
+ *   이미지는 보낼 수 없어서 링크만 보낸다. 받는 사람은 SajuCardPage 의 '공유받은 사주 카드' 안내로 들어온다.
+ * @returns 공유 시트를 열었으면 true
+ */
+export async function shareSajuCardViaToss(profileId: string | undefined, ilju?: string): Promise<boolean> {
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', {
+    type: 'card',
+    page: typeof window !== 'undefined' ? window.location.pathname : '',
+  })).catch(() => {});
+  try {
+    const { share, getTossShareLink } = await import('@apps-in-toss/web-framework');
+    const path = `${profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '/'}?${sajuCardShareQuery(ilju)}`;
+    const link = await getTossShareLink(`intoss://saju-500${path}`, `${window.location.origin}/og-image.png`);
+    await share({ message: ['사주500에서 만든 내 사주 카드예요. 내 사주도 볼 수 있어요', link].join('\n') });
+    import('@/services/analytics').then((a) => a.trackEvent('share_complete', {
+      type: 'card', method: 'toss_share', rewarded: 0,
+    })).catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -39,7 +39,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -615,7 +615,7 @@ export function TodayOhengRow({ items }: { items: OhengItem[] }) {
           marginBottom: 10,
         }}
       >
-        내 사주 오행 + 오늘의 보충
+        내 사주 오행과 오늘 더해진 기운
       </div>
       <div
         style={{

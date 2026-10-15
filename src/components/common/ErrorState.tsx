@@ -40,7 +40,7 @@ export function ErrorState({
   backLabel = '뒤로가기',
   showRefundNote = true,
 }: ErrorStateProps) {
-  const sub = subtitle ?? description ?? '잠시 후 다시 시도해주세요';
+  const sub = subtitle ?? description ?? '잠시 뒤 다시 시도해 주세요';
 
   function handleKey(
     e: KeyboardEvent<HTMLButtonElement>,
@@ -111,7 +111,7 @@ export function ErrorState({
             marginTop: -4,
           }}
         >
-          운은 차감되지 않았습니다.
+          운은 차감되지 않았어요.
         </p>
       )}
 

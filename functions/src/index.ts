@@ -1301,6 +1301,9 @@ export const generateDreamFreeStream = onRequest(
         console.log('[dreamFreeStream] 2-group parallel mode');
 
         const runGroup = async (group: 'A' | 'B'): Promise<{ group: 'A' | 'B'; parsed: any; elapsedMs: number }> => {
+          // 2026-10-15 — 두 그룹이 같은 시스템 프롬프트(약 1만 토큰대)를 캐시 없이 각자 정가로 보냈다(꿈해몽 1건 195원).
+          //   A 가 캐시를 쓰고, 잠금 칸인 B 는 3초 늦게 출발해 캐시로 읽는다.
+          if (group === 'B') await new Promise((r) => setTimeout(r, 3000));
           const tg0 = Date.now();
           const { system, user, model, maxTokens } = buildDreamFreeGroupCall(
             { saju, dreamContent: dreamContent || '', category, userConcern },
@@ -1311,7 +1314,8 @@ export const generateDreamFreeStream = onRequest(
             let idx = 0;
             const _t0 = Date.now(); // C7
             const stream = anthropic.messages.stream({
-              model, max_tokens: maxTokens, system,
+              model, max_tokens: maxTokens,
+              system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
               messages: [{ role: 'user', content: user + TONE_FINAL_CHECK }],
             });
             for await (const event of stream as any) {

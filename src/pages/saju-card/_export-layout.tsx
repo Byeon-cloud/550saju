@@ -46,6 +46,11 @@ import { GwiinSeal, getGwiinMeta } from './_gwiin_seal';
 import { MiniFlow } from './_flow_table';
 // Stage 4 보강 — 60갑자 직관적 풀이 (export 모드 톤 정렬)
 import { getIljuMeaning } from '@/constants/iljuMeaning';
+import { isAppintosBuild } from '@/lib/env';
+
+/** 이미지 아래 출처 표기 — 앱(토스)에서 만든 이미지엔 웹 주소를 찍지 않는다 (앱 밖 유도 표기 방지, 2026-10-15) */
+const BRAND_STAMP = isAppintosBuild ? '사주500' : 'saju500.app';
+const BRAND_STAMP_FULL = isAppintosBuild ? '사주500' : '사주500  saju500.app';
 
 const OHENG_HEX: Record<OhengType, string> = {
   목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82',
@@ -174,7 +179,7 @@ function EightCharGridExport({
               style={{
                 fontSize: spec.fsLabel * 1.0,
                 fontWeight: 700,
-                color: isDay ? '#8C6D3D' : '#7A7269',
+                color: isDay ? '#8C6D3D' : '#6F6557',
                 letterSpacing: '0.05em',
                 marginBottom: spec.pad * 0.6,
               }}
@@ -199,7 +204,7 @@ function EightCharGridExport({
                 <div
                   style={{
                     fontSize: spec.fsLabel * 0.85,
-                    color: '#7A7269',
+                    color: '#6F6557',
                     marginTop: spec.pad * 0.2,
                     lineHeight: 1.3,
                   }}
@@ -269,7 +274,7 @@ function EightCharGridExport({
                 <div
                   style={{
                     fontSize: spec.fsLabel * 0.85,
-                    color: '#7A7269',
+                    color: '#6F6557',
                     marginTop: spec.pad * 0.2,
                     lineHeight: 1.3,
                   }}
@@ -299,7 +304,7 @@ function EightCharGridExport({
                   <div
                     style={{
                       fontSize: spec.fsUnyung,
-                      color: '#7A7269',
+                      color: '#6F6557',
                       marginTop: spec.pad * 0.4,
                       fontFamily: SERIF,
                       letterSpacing: '0.02em',
@@ -341,7 +346,7 @@ function KeySinsalChip({
   const toneColor =
     hit.category === 'gilsin' ? '#B8965A'
     : hit.category === 'hyungsal' ? '#A63030'
-    : '#7A7269';
+    : '#6F6557';
   const toneSoft =
     hit.category === 'gilsin' ? 'rgba(184,150,90,0.08)'
     : hit.category === 'hyungsal' ? 'rgba(166,48,48,0.06)'
@@ -370,7 +375,7 @@ function KeySinsalChip({
         >
           {hit.name}
         </span>
-        <span style={{ fontSize: fontSize * 0.85, color: '#7A7269', fontFamily: SERIF }}>
+        <span style={{ fontSize: fontSize * 0.85, color: '#6F6557', fontFamily: SERIF }}>
           {hit.hanja}
         </span>
       </div>
@@ -479,7 +484,7 @@ function KakaoLayout({
               boxShadow: `0 4px 12px rgba(140,109,61,0.25)`,
             }}
           >
-            사주 500
+            사주500
           </span>
           <span
             style={{
@@ -547,7 +552,7 @@ function KakaoLayout({
                 </div>
               ) : null;
             })()}
-            <div style={{ fontSize: 12, color: '#7A7269', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: '#6F6557', marginTop: 4 }}>
               {birthLabel}
             </div>
           </div>
@@ -649,7 +654,7 @@ function KakaoLayout({
                 <span
                   style={{
                     fontSize: 11,
-                    color: '#7A7269',
+                    color: '#6F6557',
                     marginLeft: 6,
                     fontWeight: 500,
                   }}
@@ -680,12 +685,12 @@ function KakaoLayout({
         <div
           style={{
             fontSize: 13,
-            color: '#7A7269',
+            color: '#6F6557',
             letterSpacing: '0.08em',
             fontWeight: 500,
           }}
         >
-          saju500.app
+          {BRAND_STAMP}
         </div>
       </div>
 
@@ -782,7 +787,7 @@ function FeedLayout({
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
           <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 22, letterSpacing: '0.3em' }}>
-            사주 500
+            사주500
           </span>
           <span
             style={{
@@ -928,9 +933,9 @@ function FeedLayout({
                 marginBottom: 4,
               }}
             >
-              사주 500
+              사주500
             </div>
-            <div style={{ fontSize: 13, color: '#7A7269' }}>
+            <div style={{ fontSize: 13, color: '#6F6557' }}>
               정통 명리학 사주 풀이, {birthLabel}
             </div>
           </div>
@@ -1046,7 +1051,7 @@ function StoryLayout({
               boxShadow: `0 4px 16px rgba(140,109,61,0.30)`,
             }}
           >
-            사주 500
+            사주500
           </span>
           <span
             style={{
@@ -1127,7 +1132,7 @@ function StoryLayout({
               style={{
                 fontFamily: SERIF,
                 fontSize: 18,
-                color: '#7A7269',
+                color: '#6F6557',
                 marginTop: 8,
                 letterSpacing: '0.04em',
                 fontWeight: 600,
@@ -1228,7 +1233,7 @@ function StoryLayout({
                     marginBottom: 6,
                   }}
                 >
-                  만세력 시그니처, 핵심 귀인
+                  내 사주의 핵심 귀인
                 </div>
                 <div
                   style={{
@@ -1241,7 +1246,7 @@ function StoryLayout({
                   }}
                 >
                   {meta?.name || primaryGwiin.name}
-                  <span style={{ fontSize: 16, color: '#7A7269', marginLeft: 8, fontWeight: 500 }}>
+                  <span style={{ fontSize: 16, color: '#6F6557', marginLeft: 8, fontWeight: 500 }}>
                     {primaryGwiin.hanja}
                   </span>
                 </div>
@@ -1249,7 +1254,7 @@ function StoryLayout({
                   {meta?.meaning || primaryGwiin.meaning}
                 </div>
                 <div style={{ fontSize: 11, color: '#8C6D3D', fontWeight: 600, letterSpacing: '0.06em' }}>
-                  출처, {meta?.source || '명리학 원전'}
+                  ({meta?.source || '명리학 원전'})
                 </div>
               </div>
             </div>
@@ -1342,7 +1347,7 @@ function StoryLayout({
             opacity: 0.85,
           }}
         >
-          사주 500  saju500.app
+          {BRAND_STAMP_FULL}
         </div>
       </div>
     </div>

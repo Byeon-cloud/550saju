@@ -59,7 +59,7 @@ const MOCKUP_CSS = `
   --c-surface: #FFFFFF;
   --c-ink: #1A1A1A;
   --c-ink-soft: #3D3D3D;
-  --c-mute: #7A7269;
+  --c-mute: #6F6557;
   --c-gold: #B8965A;
   --c-gold-deep: #8C6D3D;
   --c-gold-soft: rgba(184,150,90,0.10);
@@ -523,7 +523,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
   const domains: { key: string; topicId: string; nm: string; han: string; color: string; data?: MonthlyDomain }[] = [
     { key: 'wealth', topicId: 'wealth', nm: '재물운', han: '財', color: '#B8965A', data: result?.wealth },
     { key: 'career', topicId: 'career', nm: '직업운', han: '官', color: '#8C6D3D', data: result?.career },
-    { key: 'love', topicId: 'love', nm: '애정운', han: '緣', color: '#8C6D3D', data: result?.love },
+    { key: 'love', topicId: 'love', nm: '연애운', han: '緣', color: '#8C6D3D', data: result?.love },
     { key: 'health', topicId: 'health', nm: '건강운', han: '壽', color: '#8C6D3D', data: result?.health },
   ].filter((d) => d.data && (d.data.body || typeof d.data.score === 'number'));
 
@@ -627,7 +627,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
             ) : loading ? (
               <div className="skel-body"><div className="skel-note"><span className="dot-pulse" />분석을 불러오는 중이에요</div><div className="skel-line w80" /><div className="skel-line w100" /><div className="skel-line w60" /></div>
             ) : (
-              <p className="sec-lead">이 달의 테마를 준비 중이에요.</p>
+              <p className="sec-lead">이 달의 흐름을 준비하고 있어요.</p>
             )}
           </section>
 
@@ -635,13 +635,15 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           {periods.length > 0 ? (
             <section className={`section ${isOpen('02') ? 'open' : ''}`}>
               <SectionHeader num="02" title="상순, 중순, 하순 흐름" han="旬" id="02" />
-              <p className="sec-lead">한 달을 셋으로 나눠, 상순, 중순, 하순 중 어느 구간이 강하고 어디를 다스려야 하는지 한눈에.</p>
+              <p className="sec-lead">한 달을 셋으로 나눠, 상순, 중순, 하순 중 어느 구간이 강하고 어디를 다스려야 하는지 한눈에 볼 수 있어요.</p>
 
               {/* timeline 인포그래픽 (점수 3개 → 곡선) */}
               {periodSvgPath && (
                 <div className="period-chart">
                   <div className="ttl">한 달의 활력 흐름</div>
-                  <svg className="period-svg" viewBox="0 0 320 110" preserveAspectRatio="none">
+                  {/* 2026-10-15 — 글자는 SVG 밖 HTML 로 (13px, 늘어남 없음) */}
+                  <div style={{ position: 'relative', width: '100%' }}>
+                  <svg className="period-svg" viewBox="0 0 320 110" preserveAspectRatio="none" aria-hidden>
                     <defs>
                       <linearGradient id="monthlyGrad" x1="0" x2="0" y1="0" y2="1">
                         <stop offset="0%" stopColor={ACCENT} stopOpacity=".35" />
@@ -649,17 +651,18 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
                       </linearGradient>
                     </defs>
                     <path d={`${periodSvgPath.path} L320,110 L0,110 Z`} fill="url(#monthlyGrad)" />
-                    <path d={periodSvgPath.path} stroke={ACCENT} strokeWidth="2" fill="none" />
+                    <path d={periodSvgPath.path} stroke={ACCENT} strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
                     {periodSvgPath.xs.map((x, i) => (
                       <circle key={i} cx={x} cy={periodSvgPath.ys[i]} r="4" fill="#fff" stroke={ACCENT} strokeWidth="2" />
                     ))}
                     <circle cx={periodSvgPath.peakX} cy={periodSvgPath.peakY} r="5.5" fill={ACCENT} stroke="#fff" strokeWidth="2" />
-                    {periods.map((p, i) => (
-                      <text key={i} x={periodSvgPath.xs[i]} y="106" fontSize="10" fill="#7A7269" textAnchor="middle" fontWeight="600">
-                        {stripAll(p.phase).slice(0, 2)}
-                      </text>
-                    ))}
                   </svg>
+                  {periods.map((p, i) => (
+                    <span key={i} style={{ position: 'absolute', left: `${(Number(periodSvgPath.xs[i]) / 320) * 100}%`, bottom: 2, transform: 'translateX(-50%)', fontSize: 13, lineHeight: 1, color: '#6F6557', fontWeight: 600, whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+                      {stripAll(p.phase).slice(0, 2)}
+                    </span>
+                  ))}
+                  </div>
                 </div>
               )}
 
@@ -739,7 +742,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           {(luckyDays.length > 0 || cautionDays.length > 0) ? (
             <section className={`section ${isOpen('04') ? 'open' : ''}`}>
               <SectionHeader num="04" title="길일과 주의일" han="吉凶日" id="04" />
-              <p className="sec-lead">이 달 안에서 손 내밀기 좋은 날과, 한 박자 늦추는 게 좋은 날.</p>
+              <p className="sec-lead">이 달 안에서 손 내밀기 좋은 날과 한 박자 늦추면 좋은 날을 골랐어요.</p>
               <div className="day-stack">
                 {luckyDays.map((d, i) => (
                   <div key={`lucky-${i}`} className="day-note lucky">

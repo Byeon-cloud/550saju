@@ -153,7 +153,7 @@ export function WeeklyPage() {
         const draftRes = await generateWeeklyDraft2026(selected.sajuData, weekDays);
         const rid = draftRes.reportId || generateId();
         setResult(draftRes.content);
-        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', aiResult: draftRes.content, createdAt: new Date().toISOString() });
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', spentUn: price, aiResult: draftRes.content, createdAt: new Date().toISOString() });
         clearPendingSpendByType('weekly'); // draft = 결과 커밋(부팅 자동환불 제외)
         setShareReportId(rid);
         setRefining(true);
@@ -165,7 +165,7 @@ export function WeeklyPage() {
           .then((ref) => {
             if (ref?.content) {
               setResult(ref.content);
-              saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', aiResult: ref.content, createdAt: new Date().toISOString() });
+              saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', spentUn: price, aiResult: ref.content, createdAt: new Date().toISOString() });
             }
           })
           .catch((err) => console.warn('주간 보정 실패(초안 유지):', err))
@@ -174,7 +174,7 @@ export function WeeklyPage() {
         const res = await generateWeeklyFortune(selected.sajuData, weekDays);
         setResult(res.content);
         const rid = res.reportId || generateId();
-        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', aiResult: res.content, createdAt: new Date().toISOString() });
+        saveReport({ id: rid, name: selected.name, input: selected.input, sajuData: selected.sajuData, type: 'paid', contentType: 'weekly', spentUn: price, aiResult: res.content, createdAt: new Date().toISOString() });
         clearPendingSpendByType('weekly'); // 결과 저장 완료 → 자동환불 대상 제외
         setShareReportId(rid);
         setPhase('result');
@@ -281,7 +281,7 @@ export function WeeklyPage() {
       />
       {/* 2026-10-10 — 실제 후기 수집 (최종 결과 + 저장된 뒤) */}
       {result && !refining && shareReportId && (
-        <ReviewAsk contentType="weekly" contentLabel="주간 운세" reportKey={shareReportId} />
+        <ReviewAsk contentType="weekly" contentLabel="주간운세" reportKey={shareReportId} />
       )}
 
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} name={selected?.name || ''} reportId={shareReportId || 'weekly'} />

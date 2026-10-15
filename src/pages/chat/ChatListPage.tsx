@@ -247,7 +247,7 @@ export function ChatListPage() {
                   margin: '0 0 20px',
                 }}
               >
-                삭제한 대화는 복구할 수 없어요. 사주 정보는 그대로 유지됩니다.
+                삭제한 대화는 복구할 수 없어요. 사주 정보는 그대로 남아요.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -382,7 +382,7 @@ function TicketBalanceBanner({
               )}
             </p>
             <p style={{ fontSize: 13, color: C.inkSoft, margin: '2px 0 0' }}>
-              1운 → {CREDITS_PER_UN}대화권으로 바꿀 수 있어요
+              1운을 대화권 {CREDITS_PER_UN}개로 바꿀 수 있어요
             </p>
           </>
         )}

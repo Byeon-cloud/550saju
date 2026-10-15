@@ -118,7 +118,7 @@ export function FooterCTA({ pageKey, backTo, primaryTo = '/premium', marginTop =
         onClick={onPrimary}
         className="hj-cta"
         style={{ marginTop: 10, minHeight: 50, fontSize: 15.5 }}
-        aria-label={`${primaryLabel}, 프리미엄 10섹션 종합 리포트`}
+        aria-label={`${primaryLabel}, 종합사주 열 장 풀이`}
       >
         <span>{primaryLabel}</span>
       </button>

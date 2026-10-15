@@ -86,7 +86,7 @@ function NotFoundPage() {
         <span className="text-h1" style={{ color: '#B8965A' }}>?</span>
       </div>
       <h2 className="text-h2 text-text-primary mb-2">페이지를 찾을 수 없어요</h2>
-      <p className="text-body-sm text-text-muted mb-6">주소가 잘못되었거나, 삭제된 페이지입니다.</p>
+      <p className="text-body-sm text-text-muted mb-6">주소가 잘못됐거나 지워진 페이지예요.</p>
       <button
         type="button"
         onClick={() => navigate('/', { replace: true })}
@@ -327,6 +327,7 @@ export function App() {
           contentType: 'report',
           createdAt: new Date().toISOString(),
           aiResult: data.reportType === 'premium' ? { ...data.content, tier: 'premium' } : data.content,
+          spentUn: pend.amount, // 2026-10-15 보관함 'N운 사용' 장부
         });
         m.clearPendingSpendByType('premium'); // 결과 복구됨 → 환불 대신 결과 전달
         try { localStorage.setItem('saju500:premium_recovered', '1'); } catch { /* noop */ }

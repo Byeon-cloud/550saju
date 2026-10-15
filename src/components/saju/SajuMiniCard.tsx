@@ -236,14 +236,14 @@ function renderCell(p: PillarData, isDay: boolean): ReactNode {
           aria-hidden
           style={{
             position: 'absolute',
-            top: 18,
-            left: 4,
-            width: 18,
-            height: 18,
+            top: 16,
+            left: 2,
+            width: 22,
+            height: 22,
             borderRadius: '50%',
             background: C_GOLD_DEEP,
             color: C_PAPER,
-            fontSize: 9,
+            fontSize: 13, // 2026-10-15 9 → 13 (보조 13px 이상)
             fontWeight: 900,
             display: 'flex',
             alignItems: 'center',

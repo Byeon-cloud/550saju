@@ -14,7 +14,7 @@ import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useToast } from '@/components/common/Toast';
 import { AILoading } from '@/components/common/AILoading';
 import {
-  getReport, getReports, getMyProfile, saveReport, refundBalance,
+  getReport, getReports, getMyProfile, saveReport, refundBalance, getPendingSpends,
   type LocalReport,
 } from '@/services/storage/localStore';
 // 2026-05-29 C1 fix — 프리미엄 SSE 실패 시 환불 금액 산정 (세일 반영).
@@ -271,7 +271,7 @@ export function ResultPage(props: ResultPageProps = {}) {
   if (!sajuData) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
-        <Header title="사주 리포트" />
+        <Header title="종합사주" />
         <ErrorState
           title="데이터를 불러올 수 없어요"
           description="사주 입력 후 다시 시도해주세요"
@@ -322,6 +322,11 @@ export function ResultPage(props: ResultPageProps = {}) {
         contentType: 'report',
         createdAt: new Date().toISOString(),
         aiResult: finalAi as any,
+        // 2026-10-15 보관함 'N운 사용' 장부 — 결제 때 장부에 남긴 금액, 없으면 지금 가격
+        spentUn: (() => {
+          try { const p = getPendingSpends().find((x) => x.type === 'premium'); if (p && p.amount >= 0) return p.amount; } catch { /* noop */ }
+          return getPremiumPrice().actualPrice;
+        })(),
       });
       // 결과 영속 완료 → premium pending 해제 (부팅 자동환불 대상 제외)
       import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
@@ -625,7 +630,7 @@ export function ResultPage(props: ResultPageProps = {}) {
 
   // 최고 점수 항목 (공유 카드에 표시)
   const topScoreEntry = Object.entries(scores).reduce((a, b) => a[1] > b[1] ? a : b);
-  const topScoreLabel = { career: '직업운', love: '애정운', wealth: '재물운', health: '건강운', potential: '잠재력' }[topScoreEntry[0]] || '';
+  const topScoreLabel = { career: '직업운', love: '연애운', wealth: '재물운', health: '건강운', potential: '잠재력' }[topScoreEntry[0]] || '';
 
   // Premium 결과는 line 1197 의 <PremiumResult /> 가 담당 (props 기반 React JSX 진본)
   // 폐기 이력: ResultPagePremiumV2.tsx (iframe srcDoc + regex string-replace) → _archive_/ 로 이동
@@ -639,7 +644,7 @@ export function ResultPage(props: ResultPageProps = {}) {
   if (streamError) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
-        <Header title="사주 리포트" />
+        <Header title="종합사주" />
         <ErrorState
           title="분석에 실패했어요"
           description={streamError}
@@ -667,7 +672,7 @@ export function ResultPage(props: ResultPageProps = {}) {
   if (reportMissing) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
-        <Header title="사주 리포트" />
+        <Header title="종합사주" />
         <ErrorState
           title="결과를 불러오지 못했어요"
           description="이 기기에 저장된 풀이가 사라졌어요. 아래에서 복구를 시도하거나 보관함에서 다시 열어보세요. 결제하신 운은 그대로 남아 있고, 결과가 끝내 복구되지 않으면 고객문의로 알려주시면 바로 도와드릴게요."
@@ -701,7 +706,7 @@ export function ResultPage(props: ResultPageProps = {}) {
     return (
       <AILoading
         name={name}
-        type="종합 사주 분석"
+        type="종합사주"
         sajuData={sajuData}
         estimatedSeconds={100}
         steps={[
@@ -741,9 +746,9 @@ export function ResultPage(props: ResultPageProps = {}) {
           {!isPremiumLayout && !hasBirthTime && (
             <LocalFadeIn>
               <div className="card-alert-warning">
-                <p className="text-h3 text-func-warning">출생시간이 입력되지 않았습니다</p>
+                <p className="text-h3 text-func-warning">태어난 시를 넣지 않았어요</p>
                 <p className="text-caption text-text-secondary mt-1 leading-relaxed">
-                  현재 3기둥 6글자로 분석 중이에요. 출생시간을 입력하면 <b>시주(時柱)</b>가 추가되어 더 정밀한 분석이 가능합니다.
+                  현재 3기둥 6글자로 분석 중이에요. 출생시간을 입력하면 <b>시주(時柱)</b>가 추가되어 더 자세히 풀 수 있어요.
                 </p>
               </div>
             </LocalFadeIn>

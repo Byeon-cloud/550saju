@@ -134,7 +134,7 @@ const DREAM_CATEGORIES: Array<{
   { id: 'people', label: '사람이 나오는 꿈', color: '#B04A38', examples: '가족, 연인, 낯선 사람, 유명인' },
   { id: 'chase', label: '쫓기는 꿈', color: '#B04A38', examples: '쫓기기, 도망, 숨기, 위험' },
   { id: 'nature', label: '자연, 날씨 꿈', color: '#B07F38', examples: '꽃, 산, 불, 지진, 눈' },
-  { id: 'other', label: '직접 적을게요', color: '#7A7269', examples: '위 항목에 없는 꿈을 자유롭게' },
+  { id: 'other', label: '직접 적을게요', color: '#6F6557', examples: '위 항목에 없는 꿈을 자유롭게' },
 ];
 
 const OHENG_PICTOGRAM_KEY: Record<OhengType, PictogramKey> = {
@@ -377,6 +377,7 @@ export function DreamPage() {
       type: p.type,
       contentType: 'dream',
       createdAt: p.createdAt,
+      spentUn: p.type === 'paid' ? 1 : 0, // 2026-10-15 보관함 장부 (하루 1회 무료, 두 번째와 잠금 해제는 1운)
       aiResult: {
         ...(p.result || {}),
         ...(p.type === 'paid' ? { __unlocked: true } : {}),
@@ -416,9 +417,7 @@ export function DreamPage() {
       saveDreamDraft({ category: selectedCategory, dreamText, concern });
       toast.show('잔액이 부족해요', 'warning');
       goCharge(
-        reason === 'quota'
-          ? '이번 달 무료 꿈해몽을 다 썼어요. 새 꿈 풀이에 1운이 필요해요'
-          : '오늘 무료 꿈해몽을 사용했어요. 새 꿈 풀이에 1운이 필요해요',
+        '오늘 무료 꿈해몽은 이미 썼어요. 두 번째 꿈부터 1운이 필요해요',
         '/dream',
       );
       return;
@@ -495,7 +494,6 @@ export function DreamPage() {
 
     const runId = ++runIdRef.current;
     const userInput = currentUserInput();
-    let switchToPaid = false; // 서버 월 무료 한도 소진 시 1운 흐름으로 전환
     clearDreamDraft();
     currentReportIdRef.current = null; // 새 꿈 = 새 보관함 레코드
     setRecordCreatedAt(null);
@@ -656,44 +654,31 @@ export function DreamPage() {
       }
     } catch (e: any) {
       console.error('[DreamPage:analyze] API 실패:', e);
-      const isQuota = e?.code === 'resource-exhausted' || e?.code === 'quota' || String(e?.message).includes('쿼터');
+      // 2026-10-15 — 서버의 꿈해몽 '월 무료 한도'는 09-17 에 없어졌다(집계만). 지금 서버가 거절하는 경우는
+      //   하루 생성 상한(genGuard, 1운을 내도 같이 막힘)뿐이라, 예전처럼 1운 결제 흐름으로 넘기면 돈을 받고 또 실패했다.
+      //   → 상한이면 '오늘은 더 만들 수 없어요' 안내만 하고, 낸 운과 무료권은 아래에서 그대로 되돌린다.
+      const isDailyLimit = /resource-exhausted/.test(String(e?.code ?? ''))
+        || e?.code === 'quota'
+        || /더 만들 수 없어요|쿼터/.test(String(e?.message ?? ''));
       applyUnlocked(false);
       setAiResult(null);
-      if (isQuota && passUsed && !charged) {
-        // 2026-09-17 — 서버 월 무료 한도 소진(무료 경로): 무료권을 복구하면 다시 무료 시도 → 또 거절 무한 반복.
-        //   오늘 무료권은 소진 처리로 두고 1운 흐름으로 전환 (1운 생성은 paid:true 로 서버 쿼터 제외).
-        switchToPaid = true;
-        setFreeAvailable(false);
-        setApiError('');
-      } else {
-        // 결과를 못 받았으면 선차감 되돌림 — 1운은 환불, 무료권은 복구 (오늘 무료 1회 보존)
-        if (charged) {
-          refundBalance(1);
-          if (pendingId) clearPendingSpend(pendingId);
-          setRestoreNote('차감된 1운은 돌려드렸어요.');
-        } else if (passUsed) {
-          restoreFreePass('dream', passUsedOn); // 그날 쓴 무료권만 복구 (자정 넘김 실패 시 다음 날 무료권 보호)
-          setFreeAvailable(hasFreePass('dream'));
-          setRestoreNote('오늘 무료 1회는 그대로 남아 있어요.');
-        }
-        if (isQuota) {
-          // 쿼터 소진 전용 메시지
-          setApiError('이번 달 꿈해몽 무료 쿼터가 소진됐어요. 다음 달에 다시 만나요.');
-        } else {
-          // 2026-05-29 — e.message(영문 기술오류) 노출 금지. 항상 친절 카피.
-          setApiError('꿈을 살피는 데 잠시 문제가 생겼어요. 잠시 후 다시 시도해주세요.');
-        }
+      // 결과를 못 받았으면 선차감 되돌림 — 1운은 환불, 무료권은 복구 (오늘 무료 1회 보존)
+      if (charged) {
+        refundBalance(1);
+        if (pendingId) clearPendingSpend(pendingId);
+        setRestoreNote('차감된 1운은 돌려드렸어요.');
+      } else if (passUsed) {
+        restoreFreePass('dream', passUsedOn); // 그날 쓴 무료권만 복구 (자정 넘김 실패 시 다음 날 무료권 보호)
+        setFreeAvailable(hasFreePass('dream'));
+        setRestoreNote('오늘 무료 1회는 그대로 남아 있어요.');
       }
+      // 2026-05-29 — e.message(영문 기술오류) 노출 금지. 항상 친절 카피.
+      setApiError(isDailyLimit ? DREAM_DAILY_LIMIT_ERROR : '꿈을 살피는 데 잠시 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.');
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
-      // 월 한도 소진 → 입력 화면으로 돌아가 1운 안내 모달 (적은 꿈 그대로)
-      setPhase(switchToPaid ? 'detail' : 'result');
+      setPhase('result');
       isAnalyzingRef.current = false;
-    }
-    if (switchToPaid) {
-      toast.show('이번 달 무료 꿈해몽을 다 썼어요. 1운으로 풀 수 있어요', 'info');
-      askPaidStart('quota');
     }
   }
 
@@ -894,7 +879,7 @@ export function DreamPage() {
           )}
 
           {phase === 'result' && !isLoading && !aiResult && (
-            <ErrorView key="error" apiError={apiError} restoreNote={restoreNote} onBack={() => setPhase('detail')} />
+            <ErrorView key="error" apiError={apiError} restoreNote={restoreNote} onBack={() => setPhase('detail')} onHome={() => navigate('/')} />
           )}
 
           {/* 레거시 'deepDream' 보관함 기록 (2026-05-27 이전 AI 재호출 심층본) — 하위호환 렌더.
@@ -986,7 +971,7 @@ export function DreamPage() {
         {/* 1운 차감 확인 모달 — 오늘 무료권 소진 후 새 꿈 (2026-09-17 · 잠금 섹션까지 한 번에) */}
         {showPaidStartConfirm && (
           <DreamConfirmModal
-            title={paidStartReason === 'quota' ? '이번 달 무료 꿈해몽을 다 썼어요' : '오늘 무료 꿈해몽을 사용했어요'}
+            title="오늘 무료 꿈해몽은 이미 썼어요"
             confirmLabel="1운으로 풀기"
             onCancel={() => setShowPaidStartConfirm(false)}
             onConfirm={confirmPaidStart}
@@ -1163,7 +1148,7 @@ function DetailPhase({
         )}
         <h2 className="sec-title-lg">꿈의 내용을<br />자유롭게 적어주세요</h2>
         <p className="text-body-md" style={{ color: 'var(--text-muted)', marginTop: 8 }}>
-          더 자세히 적을수록 정확한 해몽이 가능해요.<br />건너뛰고 바로 결과를 볼 수도 있어요.
+          더 자세히 적을수록 꿈을 정확하게 풀 수 있어요.
         </p>
       </FadeIn>
       <div className="space-y-4">
@@ -1238,19 +1223,23 @@ function DetailPhase({
 /* ══════════════════════════════════════════════════════════════════
  * 오류 화면 (generateDreamFree 실패) — v4.1 ErrorState 공용
  * ═════════════════════════════════════════════════════════════════ */
+/** 하루 생성 상한(서버 genGuard)에 걸렸을 때의 안내 — 1운을 내도 오늘은 같이 막히므로 결제로 넘기지 않는다 */
+const DREAM_DAILY_LIMIT_ERROR = '오늘 만들 수 있는 꿈 풀이 횟수를 넘었어요. 내일 다시 풀어 드릴게요.';
+
 function ErrorView({
   apiError,
   restoreNote = '',
   onBack,
+  onHome,
 }: {
   apiError: string;
-  /** 생성 실패 시 되돌림 안내 (1운 환불 / 오늘 무료 1회 복구) — 있으면 공용 '운은 차감되지 않았습니다' 대신 노출 */
+  /** 생성 실패 시 되돌림 안내 (1운 환불 / 오늘 무료 1회 복구) — 있으면 공용 '운은 차감되지 않았어요' 대신 노출 */
   restoreNote?: string;
   onBack: () => void;
+  onHome: () => void;
 }) {
-  // 쿼터 소진은 운 차감 자체가 없으므로 refund 안내 불필요
-  const isQuotaExhausted =
-    apiError.includes('쿼터') || apiError.includes('resource-exhausted');
+  // 2026-10-15 — 하루 상한이면 '다시 시도'를 눌러도 같은 결과라 버튼을 '홈으로'로 (실제로 할 수 있는 행동만)
+  const isDailyLimit = apiError === DREAM_DAILY_LIMIT_ERROR;
   const withNote = (s: string) => (restoreNote ? `${s} ${restoreNote}` : s);
 
   return (
@@ -1259,17 +1248,13 @@ function ErrorView({
       animate={{ opacity: 1, y: 0 }}
     >
       <ErrorState
-        title={isQuotaExhausted ? '이번 달 무료 쿼터가 소진됐어요' : '해석을 가져오지 못했어요'}
-        subtitle={withNote(
-          isQuotaExhausted
-            ? '다음 달에 다시 만나요. 그동안은 사주 리포트로 더 깊은 분석도 가능해요.'
-            : apiError || '잠시 후 다시 시도해주세요',
-        )}
-        onRetry={isQuotaExhausted ? undefined : onBack}
-        onBack={onBack}
-        retryLabel="다시 시도"
-        backLabel="꿈 다시 적기"
-        showRefundNote={!isQuotaExhausted && !restoreNote}
+        title={isDailyLimit ? '오늘은 꿈 풀이를 더 만들 수 없어요' : '해석을 가져오지 못했어요'}
+        subtitle={withNote(apiError || '잠시 뒤 다시 시도해 주세요')}
+        onRetry={isDailyLimit ? onHome : onBack}
+        onBack={isDailyLimit ? undefined : onHome}
+        retryLabel={isDailyLimit ? '홈으로' : '꿈 다시 적기'}
+        backLabel="홈으로"
+        showRefundNote={!restoreNote}
       />
     </motion.div>
   );

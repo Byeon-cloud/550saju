@@ -96,7 +96,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     badgeOn: '#FFFFFF',
     quoteBorder: '#3F5A7C',
     label: '직업운',
-    heroH1: { line1: '쌓아올리는 자리와', line2: '커리어의 기운' },
+    heroH1: { line1: '쌓아올리는 자리와', line2: '일의 기운' },
     heroHint: '천천히 읽어보세요, 일의 기운은 시간이 만들어가요',
   },
   health: {
@@ -123,7 +123,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7A5C2E',
     label: '학업운',
     heroH1: { line1: '집중이 흐르는', line2: '시간과 자리' },
-    heroHint: '천천히 읽어보세요, 공부의 기운은 리듬에서 나와요',
+    heroHint: '천천히 읽어보세요, 공부의 기운은 꾸준함에서 나와요',
   },
   // 2026-05-28 — SSOT 10주제 chrome 확장. TOPIC_REGISTRY 색상 기반 (topics.ts) — 디자인 양극화 해소.
   reunion: {
@@ -176,7 +176,7 @@ export const TOPIC_CHROME: Record<TopicChromeKey, TopicChromeTheme> = {
     quoteBorder: '#7A5820',
     label: '사업운',
     heroH1: { line1: '창업과 자영업', line2: '흐름과 시기' },
-    heroHint: '천천히 읽어보세요, 사업의 기운은 타이밍에서 갈려요',
+    heroHint: '천천히 읽어보세요, 사업의 기운은 때를 고르는 데서 갈려요',
   },
   move: {
     heroGrad: 'linear-gradient(135deg,#7AA5A6 0%,#8C6D3D 55%,#7A5C2E 100%)',
@@ -345,7 +345,7 @@ function getRichScoreLabel(theme: TopicChromeTheme, score: number): { grade: str
     grade: '보강기',
     phrase: `${topicLabel} 흐름이 잠시 약해진 시기예요`,
     band: '보강기',
-    reassurance: '점수가 인생 전체를 말하지 않아요. 보강 포인트만 짚어도 흐름은 바뀌어요.',
+    reassurance: '점수가 인생 전체를 말하지 않아요. 채울 곳만 짚어도 흐름은 바뀌어요.',
   };
 }
 
@@ -937,7 +937,7 @@ export function TopicUpsellCard({
           alignItems: 'center',
         }}
       >
-        {ctaLabel} →
+        {ctaLabel} ›
         <span
           style={{
             background: 'rgba(255,255,255,0.08)',
@@ -1146,15 +1146,15 @@ export function TopicSajuMini({
                   aria-hidden
                   style={{
                     position: 'absolute',
-                    top: -6,
-                    right: -2,
+                    top: -9,
+                    right: -6,
                     background: theme.accentDark,
                     color: '#FFFFFF',
                     fontFamily: "'Noto Serif KR', serif",
-                    fontSize: 9,
+                    fontSize: 13, // 2026-10-15 9 → 13 (보조 13px 이상)
                     fontWeight: 700,
-                    width: 14,
-                    height: 14,
+                    width: 20,
+                    height: 20,
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -1324,7 +1324,7 @@ export function TopicOhengBalance({
       <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>
         내 사주 오행 + {theme.label} 핵심
       </div>
-      <div style={{ fontSize: 13, color: '#7A7269', marginBottom: 12 }}>
+      <div style={{ fontSize: 13, color: '#6F6557', marginBottom: 12 }}>
         사주 5기운 균형 + {theme.label} 분석 핵심 기운
       </div>
       <div

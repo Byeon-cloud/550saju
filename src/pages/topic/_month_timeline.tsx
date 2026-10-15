@@ -105,7 +105,7 @@ const C = {
   surface: '#FFFFFF',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   goldDeep: '#8C6D3D',
   cardLine: 'rgba(184,150,90,0.18)',
 } as const;

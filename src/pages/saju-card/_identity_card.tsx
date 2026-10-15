@@ -23,6 +23,7 @@ import type { SinsalHit, SinsalAnalysis } from '@/services/saju/sinsal';
 import { getManAge, getKoreanAge, getHourBranch } from '@/utils/saju-format';
 import { SajuDetailsTable } from './_details_table';
 import { SinsalCardsSection } from './_visual_section';
+import { isAppintosBuild } from '@/lib/env';
 
 const C = {
   paper: '#F8F5EE',
@@ -30,7 +31,7 @@ const C = {
   surface: '#FFFFFF',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.10)',
@@ -95,7 +96,7 @@ const KEYWORD_CATEGORY: Record<string, 'gwiin' | 'flow' | 'gongmang'> = {
 
 const CATEGORY_LABEL: Record<KeywordChip['category'], string> = {
   gwiin: '주요 귀인',
-  flow: '운명의 흐름',
+  flow: '타고난 흐름',
   gongmang: '비어 있는 자리',
 };
 
@@ -376,7 +377,7 @@ export function IdentityCard({
               fontSize: 13,
               color: hasBirthTime ? C.goldDeep : C.mute,
               fontWeight: hasBirthTime ? 700 : 500,
-              fontStyle: hasBirthTime ? 'normal' : 'italic',
+              fontStyle: 'normal', // 2026-10-15 출생시간 미입력 기울임 → 보통 + 회색 (기울임 금지)
               letterSpacing: '0.02em',
             }}
           >
@@ -529,15 +530,14 @@ export function IdentityCard({
                   zIndex: isDay ? 2 : 1,
                 }}
               >
+                {/* 2026-10-15 — 모서리 7.5px 글자 → 칸 안 첫 줄 13px (60대 가독) */}
                 <span
                   style={{
-                    position: 'absolute',
-                    top: 3,
-                    left: 5,
-                    fontSize: 7.5,
+                    fontSize: 13,
                     fontWeight: 700,
-                    opacity: 0.7,
-                    letterSpacing: '0.04em',
+                    opacity: 0.75,
+                    lineHeight: 1,
+                    marginBottom: 2,
                   }}
                   title={labelHan}
                 >
@@ -549,14 +549,14 @@ export function IdentityCard({
                     aria-hidden
                     style={{
                       position: 'absolute',
-                      top: -8,
-                      right: -8,
-                      width: 18,
-                      height: 18,
+                      top: -10,
+                      right: -10,
+                      width: 22,
+                      height: 22,
                       borderRadius: '50%',
                       background: C.goldDeep,
                       color: C.paper,
-                      fontSize: 9,
+                      fontSize: 13,
                       fontWeight: 900,
                       display: 'flex',
                       alignItems: 'center',
@@ -569,8 +569,8 @@ export function IdentityCard({
                     나
                   </span>
                 )}
-                <span style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.0 }}>{p.천간}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, marginTop: 1 }}>
+                <span style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.0 }}>{p.천간}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, marginTop: 2, lineHeight: 1 }}>
                   {OHENG_HAN[ganOheng]}
                 </span>
               </div>
@@ -713,7 +713,7 @@ export function IdentityCard({
             zIndex: 1,
           }}
         >
-          saju500.app
+          {isAppintosBuild ? '사주500' : 'saju500.app'}
         </div>
       )}
     </div>

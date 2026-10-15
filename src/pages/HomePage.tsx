@@ -357,7 +357,7 @@ export function HomePage() {
           <TocRow no={2} t="돈, 사랑, 일, 건강, 사람, 공부 점수" pv={hasSaju ? <>가장 강한 영역 <Redact w={44} lock={false} /> 가장 약한 영역 <Redact w={44} /></> : '여섯 영역의 강약을 한눈에'} />
           <TocRow no={3} t="나에게 부족한 기운과 채우는 법" pv="색, 방위, 계절, 습관까지" />
           <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게 할 일로 정리해 드려요" />
-          <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>+ 원국, 십성, 대운, 신살, 올해 흐름 등 여섯 장 더</p>
+          <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>원국, 십성, 대운, 신살, 올해 흐름까지 여섯 장이 더 있어요</p>
         </Gwang>
         </div>
         <p style={{ marginTop: 14, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, textAlign: 'center', wordBreak: 'keep-all' }}>
@@ -561,7 +561,7 @@ export function HomePage() {
                   {'★'.repeat(r.rating)}<span style={{ color: HJ.line }}>{'★'.repeat(5 - r.rating)}</span>
                 </div>
                 <p style={{ fontSize: 15.5, lineHeight: 1.65, marginTop: 8, color: HJ.ink }}>“{r.text}”</p>
-                <p style={{ fontSize: 13, color: HJ.mute, marginTop: 10 }}>구매자, {r.contentLabel}{r.month ? ` ${r.month}월` : ''}</p>
+                <p style={{ fontSize: 13, color: HJ.mute, marginTop: 10 }}>{reviewByline(r)}</p>
               </div>
             ))}
           </div>
@@ -606,6 +606,18 @@ export function HomePage() {
 }
 
 /* ─── 작은 부품 (홈 전용) ─── */
+/** 후기 아래 한 줄 (2026-10-15) — 무료로도 볼 수 있는 오늘의 운세, 꿈해몽 후기에는 '구매자'라고 쓰지 않는다.
+ *  상품명은 지금 이름으로 맞춘다(예전에 저장된 '월간 운세' 등). */
+const REVIEW_PAID_TYPES = new Set(['premium', 'topic', 'tojung', 'monthly', 'weekly', 'compat']);
+const REVIEW_LABEL: Record<string, string> = {
+  premium: '종합사주', tojung: '신년운세', monthly: '월운세', weekly: '주간운세', compat: '궁합', daily: '오늘의 운세', dream: '꿈해몽',
+};
+function reviewByline(r: PublicReview): string {
+  const label = REVIEW_LABEL[r.contentType] || r.contentLabel;
+  const who = REVIEW_PAID_TYPES.has(r.contentType) ? '구매자' : '이용자';
+  return `${label} ${who}${r.month ? ` (${r.month}월)` : ''}`;
+}
+
 function SecTitle({ k, h }: { k: string; h: string }) {
   return (
     <div style={{ padding: '34px 22px 12px' }}>

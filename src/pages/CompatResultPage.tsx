@@ -116,6 +116,7 @@ export function CompatResultPage() {
         contentType: 'compat',
         aiResult: res.content,
         ...({ partner: { name: state!.person2.name, sajuData: state!.person2.sajuData, input: state!.person2.input }, relation: state!.relation } as any),
+        spentUn: Number((state as any)?.cost) || undefined, // 2026-10-15 보관함 'N운 사용' 장부 (궁합 화면이 넘긴 실제 차감액)
         createdAt: new Date().toISOString(),
       });
       clearPendingSpendByType('compat'); // 결과 저장 완료 → 자동환불 대상 제외
@@ -129,8 +130,8 @@ export function CompatResultPage() {
       const paid = Number((state as any)?.cost) || 1;
       refundBalance(paid);
       clearPendingSpendByType('compat'); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
-      const errMsg = e?.message || '알 수 없는 오류';
-      toast.show(`분석에 실패해서 ${paid}운을 돌려드렸어요 (${errMsg})`, 'warning');
+      // 2026-10-15 — 원본 오류 문구(영문 코드 등)는 로그로만, 화면은 사람 말로
+      toast.show(`풀이를 만들지 못해서 ${paid}운을 돌려드렸어요. 잠시 뒤 다시 시도해 주세요.`, 'warning');
       setTimeout(() => navigate('/compat'), 3000);
     }).finally(() => clearInterval(interval));
   }, []);

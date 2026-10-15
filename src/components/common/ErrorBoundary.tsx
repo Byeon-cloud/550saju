@@ -55,16 +55,10 @@ export class ErrorBoundary extends Component<Props, State> {
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-          <h2 className="text-h2 text-text-primary mb-2">오류가 발생했습니다</h2>
-          <p className="text-body-sm text-text-muted mb-2">잠시 후 다시 시도해주세요</p>
+          <h2 className="text-h2 text-text-primary mb-2">화면을 여는 중에 문제가 생겼어요</h2>
+          <p className="text-body-sm text-text-muted mb-6">홈에서 다시 열어 주세요.</p>
           {/* ErrorBoundary 는 클래스 컴포넌트 (Hook 불가) — React state corrupt 가능성 → 의도적 풀 리로드 */}
-          {/* 2026-05-07 — 디버그용 에러 메시지 노출 (출시 후 제거) */}
-          {this.state.error?.message && (
-            <p className="text-tiny text-text-hint mb-6 max-w-[300px] break-all" style={{ fontFamily: 'monospace', fontSize: 13 }}>
-              {String(this.state.error.message).slice(0, 200)}
-            </p>
-          )}
-          {!this.state.error?.message && <div className="mb-6" />}
+          {/* 2026-10-15 — 디버그용 원본 오류 문구 노출 제거 (영문 기술 문구가 사용자에게 보였다). 원문은 componentDidCatch 로그로 */}
           <Button onClick={() => window.location.assign('/')}>홈으로 돌아가기</Button>
         </div>
       );

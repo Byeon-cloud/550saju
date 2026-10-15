@@ -1,6 +1,6 @@
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3';
-import { sanitizeAiOutput } from './sajuFacts';
+import { sanitizeAiOutput, sajuCoreFactsText, daeunScoreText } from './sajuFacts';
 import { kstNow } from '../utils/kstTime';
 
 export async function generateDaeunAnalysis(apiKey: string, sajuData: any): Promise<any> {
@@ -61,7 +61,7 @@ function buildPrompt(d: any): string {
 ${pillarsText}일간: ${p[2]?.천간 || '미상'}
 
 ## 오행: 목${el.목||0} 화${el.화||0} 토${el.토||0} 금${el.금||0} 수${el.수||0}
-## 십성: ${sipsung || '미상'}
+${sajuCoreFactsText(d)}${daeunScoreText(d)}
 ## 대운 리스트
 ${daeunList}
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것, 이전→현재→다음 전부 명시)
@@ -166,10 +166,8 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
   "currentHighlight": "200자 이상. 현재 대운 소름 포인트. 현재 대운 간지는 위 ## 대운 흐름 의 '현재 대운' 간지를 그대로 인용 (임의 생성, swap 금지).",
   "transitionAdvice": "100자 이상. 다음 대운 준비 조언. 🚨 '다음 대운'은 반드시 위 ## 대운 흐름 의 '다음 대운' 간지를 그대로 인용 — 데이터 없이 추측과 생성 금지, 현재/이전 대운과 뒤바꾸지 말 것. 다음 대운이 '없음'이면 마지막 대운임을 전제로 작성.",
   "lifePhaseMap": [
-    {"phase":"성장기","daeun":"간지","theme":"키워드"},
-    {"phase":"도약기","daeun":"간지","theme":"키워드"},
-    {"phase":"전성기","daeun":"간지","theme":"키워드"},
-    {"phase":"수확기","daeun":"간지","theme":"키워드"}
+    {"phase":"그 대운에 맞는 단계 이름","daeun":"간지","theme":"키워드"}
+    // 4칸, 나이 순서. 단계 이름은 위 '대운별 기본 점수'에 맞게 고른다(예: 다지는 때, 뻗어 가는 때, 가장 좋은 때, 지키는 때, 쉬어 가는 때). '가장 좋은 때'는 점수가 가장 높은 대운 하나에만 쓴다. 정해진 순서로 채우지 않는다
   ]
 }
 ⚠️ lifePhaseMap 의 daeun 간지도 위 ## 대운 흐름 목록에 실제로 존재하는 간지만 사용 (목록에 없는 간지 임의 생성 금지).

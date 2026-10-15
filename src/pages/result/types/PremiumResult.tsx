@@ -4,11 +4,11 @@
 //
 // 10섹션 (목업 v2 진본):
 //   §0  HeroCard (命 워터마크 + 일간 배지) — 페이지 최상단
-//   01. 원국 (原局) — 태어난 순간 하늘과 땅이 그려낸 여덟 글자 + 오행 레이더 + 인생의 결 5카드
+//   01. 원국 (原局) — 태어난 해, 달, 날, 시의 여덟 글자 + 오행 레이더 + 인생의 결 5카드
 //   02. 천간지지 (天干地支) — 위로 드러난 마음과 아래에 깔린 본능
-//   03. 십성 (十神) — 관계와 욕망을 그리는 열 개의 키 (도넛 차트)
+//   03. 십성 (十神) — 사람과 돈, 일을 대하는 방식 열 가지 (도넛 차트)
 //   04. 용신·조후 (用神·調候) — 사주가 가장 갈증을 느끼는 것 ★ 신규
-//   05. 대운 (大運) — 10년 단위로 흐르는 인생의 큰 강줄기 (60년 가로선 + 인생단계 3카드)
+//   05. 대운 (大運) — 10년마다 바뀌는 큰 운 (60년 가로선 + 인생단계 3카드)
 //   06. 연운 (年運) — 올해의 흐름 (12개월 grid + 시기별 경고)
 //   07. 신살 (神殺) — 길신·흉살 (3 tier + 풀이)
 //   08. 관계의 결 (六親) — 부모·형제·배우자·자녀·친구·상사
@@ -75,7 +75,7 @@ const C = {
   paper: '#F8F5EE',
   ink: '#1A1A1A',
   inkSoft: '#3D3D3D',
-  mute: '#7A7269',
+  mute: '#6F6557',
   gold: '#B8965A',
   goldDeep: '#8C6D3D',
   goldSoft: 'rgba(184,150,90,0.14)',
@@ -113,7 +113,7 @@ const OHENG_LIFESTYLE: Record<OhengType, LifestyleSet> = {
     people: '일간 甲 乙(木) 또는 壬 癸(水) 인 사람이 흐름을 살려줍니다',
   },
   화: {
-    color: '빨강과 주황 포인트',
+    color: '빨강과 주황 소품',
     direction: '남쪽',
     season: '여름',
     hobby: '유산소 운동, 사교 활동, 요리, 발표',
@@ -549,7 +549,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
       everyday: '사회 첫 출근: 자격, 옷, 이름값을 갖추는 시기',
       pillarPhrase: (p) => `${p}에 관대면, <strong>형식, 자격, 이름값</strong>이 자리잡는 흐름. 자격증, 학위, 직함이 장점을 살리는 자리예요.` },
     건록: { intensity: 5, kind: 'strong', short: '봉록을 받는 흐름: 안정된 자리',
-      everyday: '커리어 안정기: 자기 발로 서서 월급 받는 시기',
+      everyday: '일의 안정기: 자기 발로 서서 월급 받는 시기',
       pillarPhrase: (p) => `${p}에 건록이면, <strong>자기 발로 서는 가장 안정된 자리</strong>. 노력한 만큼 결실이 또렷하게 돌아옵니다.` },
     제왕: { intensity: 5, kind: 'strong', short: '정점에 오른 기질: 가장 강한 자리',
       everyday: '인생 정점: 권력과 영향력이 가장 큰 시기',
@@ -661,7 +661,7 @@ function _Unyoung12Grid({ sajuData }: { sajuData: SajuData }) {
             12운성 <span style={{ color: C.goldDeep, fontWeight: 700, marginLeft: 2 }}>十二運星</span>
           </div>
           <div style={{ fontSize: 13.5, color: C.mute, lineHeight: 1.5, marginTop: 2 }}>
-            인생을 12단계로 나눠, 어느 자리(시기)가 강하고 약한지 한 눈에 봅니다
+            인생을 12단계로 나눠, 어느 시기가 강하고 약한지 한눈에 볼 수 있어요
           </div>
         </div>
       </div>
@@ -1050,7 +1050,7 @@ function Section2Conclusion({
   userName: string; sajuData: SajuData; ilgan: string; aiText: string;
 }) {
   if (aiText && aiText.length >= 30) {
-    return <SectionConclusion label="그래서 뭘 얻고 뭘 해야 하나">{aiText}</SectionConclusion>;
+    return <SectionConclusion label="이 장에서 챙길 것">{aiText}</SectionConclusion>;
   }
   // sipsung 분포 기반 ① ② ③
   const dayOh = (sajuData.pillars[2]?.천간오행 ?? '토') as OhengType;
@@ -1071,7 +1071,7 @@ function Section2Conclusion({
   const top = (Object.entries(sipDist) as [string, number][]).sort((a, b) => b[1] - a[1])[0];
   const TOP_DESC: Record<string, string> = {
     비겁: `<strong>"내가 끌고 가야지"의 본능</strong>이 평생 작동합니다. <strong>책임져야 할 대상은 '한두 개'로 의도적으로 좁혀야</strong> 본인이 무너지지 않습니다.`,
-    식상: `<strong>표현과 창작이 본인 기질의 핵심</strong>입니다. <strong>본인 이름이 붙는 채널을 1년 이상</strong> 끊김 없이 굴려야 결과가 모입니다.`,
+    식상: `<strong>표현과 창작이 본인 기질의 핵심</strong>입니다. <strong>본인 이름이 붙는 활동을 1년 이상</strong> 끊김 없이 굴려야 결과가 모입니다.`,
     재성: `<strong>실리와 자원을 다루는 흐름</strong>이 강합니다. 다만 <strong>한 자리에 너무 깊이 들어가면</strong> 빠르게 잃을 수 있어 분산이 평생 원칙입니다.`,
     관성: `<strong>책임과 평가의 기운</strong>이 짙습니다. <strong>판단과 재량이 보장된 자리</strong>에서 가장 빛나며, 단단한 위계는 5년 이상 권하지 않습니다.`,
     인성: `<strong>받아들이고 익히는 흐름</strong>이 강합니다. 배움 안에서만 머물지 말고 <strong>배운 즉시 산출</strong>로 이어주세요.`,
@@ -1083,7 +1083,7 @@ function Section2Conclusion({
     `<p><span class="sc-num">③</span> 천간(마음)과 지지(행동)의 짜임이 <strong>${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '일치' : '미세하게 어긋'}</strong>합니다. ${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '본인 결과 행동이 자연스럽게 맞물리는 강점.' : '"보여지는 모습과 실제 행동이 다르다"는 흐름이 있어, 자기 일치도를 의식적으로 점검하세요.'}</p>`;
   return (
     <div className="section-conclusion">
-      <div className="sc-label">그래서 뭘 얻고 뭘 해야 하나</div>
+      <div className="sc-label">이 장에서 챙길 것</div>
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );
@@ -1114,7 +1114,7 @@ function Section3Conclusion({
   const text = [
     `① <strong>${ONE_LINE[top]}</strong>, 본인이 <strong>${top}(${pct(top)}%)이 가장 두꺼운 기질</strong>. 이 장점을 살리는 자리에 가야 본인이 살아납니다.`,
     sipDist.식상 >= 2 && sipDist.관성 >= 1
-      ? `② 직장 안에서 답답하다면, 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>1인 프로젝트와 사업</strong> 쪽이 사주에 더 맞아요.`
+      ? `② 직장 안에서 답답하다면, 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>혼자 맡는 일과 사업</strong> 쪽이 사주에 더 맞아요.`
       : `② ${userName} 님 사주는 한쪽으로 치우치지 않은 <strong>균형 잡힌 흐름</strong>. 어느 자리에서도 적응하지만 본인 결정 권한을 의식적으로 잡아두세요.`,
     sipDist.비겁 >= 2 && sipDist.재성 >= 1
       ? `③ 돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong>, 동업과 지인 투자는 사주에 박힌 취약점입니다.`
@@ -1129,7 +1129,7 @@ function Section4Conclusion({
   userName: string; primary: OhengType; lifestyle: LifestyleSet; aiText: string;
 }) {
   if (aiText && aiText.length >= 30) {
-    return <SectionConclusion label="오늘부터 못 박을 것">{aiText}</SectionConclusion>;
+    return <SectionConclusion label="오늘부터 지킬 것">{aiText}</SectionConclusion>;
   }
   void userName;
   const HAN: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
@@ -1140,7 +1140,7 @@ function Section4Conclusion({
     `<p>→ 매일 <strong>${HAN[primary]}(${primary === '수' ? '물 2L' : primary === '화' ? '햇빛 1시간' : primary === '목' ? '식물과 나무 만지기' : primary === '금' ? '미니멀 정리' : '잡곡과 도자기 활용'})</strong>를 보급하세요. 의지가 아니라 보급입니다.</p>`;
   return (
     <div className="section-conclusion">
-      <div className="sc-label">오늘부터 못 박을 것</div>
+      <div className="sc-label">오늘부터 지킬 것</div>
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );
@@ -1152,7 +1152,7 @@ function Section5Conclusion({
   userName: string; v4Daeun: V4Daeun[]; dayOheng: OhengType; aiText: string;
 }) {
   if (aiText && aiText.length >= 30) {
-    return <SectionConclusion label="큰 강줄기 한 줄">{aiText}</SectionConclusion>;
+    return <SectionConclusion label="10년 흐름 정리">{aiText}</SectionConclusion>;
   }
   const cur = v4Daeun.find((d) => d.current);
   const curIdx = v4Daeun.findIndex((d) => d.current);
@@ -1162,7 +1162,7 @@ function Section5Conclusion({
   const html = `${userName} 님은 지금 <strong>${cur.gz}(${cur.kr || ''}) 대운 ${cur.age}</strong>의 한가운데: <strong>${cur.label || '결과를 받을 그릇을 굽는'} 10년</strong>입니다. ${next ? `다음 <strong>${next.gz}(${next.kr || ''}) 대운 ${next.age}</strong>이 큰 전환점이니, 지금 무리해서 결과를 빨리 보려 하지 마세요.` : '지금의 기운을 잘 굳히는 게 평생 자산입니다.'} <strong>"30대에 깎인 모양이 40대에 빛을 받는다"</strong>, 그게 ${userName} 님 사주의 큰 강줄기입니다.`;
   return (
     <div className="section-conclusion">
-      <div className="sc-label">큰 강줄기 한 줄</div>
+      <div className="sc-label">10년 흐름 정리</div>
       <p dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );
@@ -1305,9 +1305,9 @@ function _Section3Body({
   // 상관견관 (식상 + 관성 동시 두꺼움)
   let para2 = '';
   if (sipDist.식상 >= 2 && sipDist.관성 >= 1) {
-    para2 = `특히 <strong>상관과 정관이 같이 있는 구조</strong>는 명리에서 자주 다루어지는 자리입니다. 옛 책에서는 <strong>"상관견관(傷官見官)"</strong>, 표현하고 싶은 마음과 규율이 부딪히는 자리라 하였습니다. ${userName} 님이 직장 안에서 답답함을 자주 느낀다면, 능력 부족이 아니라 <strong>구조적으로 충돌이 짜여 있는</strong> 문제입니다. 이 글자가 도리어 본인의 사업이나 1인 프로젝트에서는 가장 큰 무기가 됩니다.`;
+    para2 = `특히 <strong>상관과 정관이 같이 있는 구조</strong>는 명리에서 자주 다루어지는 자리입니다. 옛 책에서는 <strong>"상관견관(傷官見官)"</strong>, 표현하고 싶은 마음과 규율이 부딪히는 자리라 하였습니다. ${userName} 님이 직장 안에서 답답함을 자주 느낀다면, 능력 부족이 아니라 <strong>구조적으로 충돌이 짜여 있는</strong> 문제입니다. 이 글자가 도리어 본인의 사업이나 혼자 맡는 일에서는 가장 큰 무기가 됩니다.`;
   } else if (sipDist.인성 >= 3) {
-    para2 = `<strong>인성이 두꺼운 사주</strong>는 받아들이고 익히는 흐름이 강한데, 너무 두꺼우면 <strong>배움 안에서만 머물기 쉬운</strong> 자리이기도 합니다. 배운 즉시 글, 발표, 작품으로 산출하는 루틴을 두면 인성의 기운이 진짜 자산이 됩니다.`;
+    para2 = `<strong>인성이 두꺼운 사주</strong>는 받아들이고 익히는 흐름이 강한데, 너무 두꺼우면 <strong>배움 안에서만 머물기 쉬운</strong> 자리이기도 합니다. 배운 즉시 글, 발표, 작품으로 내놓는 습관을 두면 인성의 기운이 진짜 자산이 됩니다.`;
   } else if (sipDist.관성 >= 3) {
     para2 = `<strong>관성이 두꺼운 사주</strong>는 사회적 평가와 책임의 기운이 강합니다. 다만 위계가 단단한 조직에서 <strong>판단과 재량이 좁게 묶이면</strong> 답답해집니다. 본인 판단이 보장된 자리에서 가장 빛납니다.`;
   } else if (sipDist.재성 >= 3) {
@@ -1323,9 +1323,9 @@ function _Section3Body({
   } else if (sipDist.비겁 >= 3) {
     para3 = `<strong>비겁이 매우 두꺼운 사주</strong>는 자기 결정권이 단단한 만큼, 같은 성향의 사람과 협업할 때 의도가 서로 부딪히기 쉽습니다. <strong>역할과 지분을 시작 전에 명문화</strong>하는 것이 평생의 원칙이 되어야 합니다.`;
   } else if (sipDist.식상 >= 3) {
-    para3 = `<strong>식상이 매우 두꺼운 사주</strong>는 표현과 창작 흐름이 핵심이라, 본인 이름이 붙는 채널 (글, 영상, 강의, 발표)을 1년 이상 끊김 없이 굴리면 <strong>다음 대운에서 큰 빛</strong>이 됩니다.`;
+    para3 = `<strong>식상이 매우 두꺼운 사주</strong>는 표현과 창작 흐름이 핵심이라, 본인 이름이 붙는 활동(글, 영상, 강의, 발표)을 1년 이상 끊김 없이 굴리면 <strong>다음 대운에서 큰 빛</strong>이 됩니다.`;
   } else if (sipDist.재성 >= 3) {
-    para3 = `재성이 두꺼운 사주는 <strong>본업과 사이드 자산을 함께 굴리는</strong> 흐름이 강점입니다. 다만 한 자리에 너무 깊이 들어가면 빠르게 쌓아도 빠르게 잃을 수 있어, <strong>분산</strong>이 평생 원칙이 되어야 합니다.`;
+    para3 = `재성이 두꺼운 사주는 <strong>본업과 부수입을 함께 굴리는</strong> 흐름이 강점입니다. 다만 한 자리에 너무 깊이 들어가면 빠르게 쌓아도 빠르게 잃을 수 있어, <strong>분산</strong>이 평생 원칙이 되어야 합니다.`;
   } else {
     para3 = `${userName} 님 사주는 십성 분포가 균형 잡혀 어느 영역에서도 무너지지 않습니다. 단, 한 영역의 기운을 깊이 파는 의식적 노력이 없다면 <strong>"여러 가지를 조금씩"</strong> 경향에 갇힐 수 있습니다.`;
   }
@@ -1878,7 +1878,7 @@ function deriveTopicHook(
     }
     case 'health': {
       const n = sip.인성;
-      if (tier === 'high') return `${ganRef} 일간의 지치지 않는 결과 회복 리듬`;
+      if (tier === 'high') return `${ganRef} 일간의 지치지 않는 힘과 회복하는 법`;
       if (tier === 'mid')  return `인성 ${n}개의 체력 관리 흐름`;
       return `${ganRef} 일간: 약한 부위와 예방의 기운`;
     }
@@ -1893,7 +1893,7 @@ function deriveTopicHook(
       const g = sip.관성;
       const i = sip.인성;
       if (tier === 'high') return `관성 ${g}, 인성 ${i}개: 붙는 시기와 원서 넣을 달`;
-      if (tier === 'mid')  return `관과 인 ${g + i}자리: 시험과 이직 타이밍 고르기`;
+      if (tier === 'mid')  return `관과 인 ${g + i}자리: 시험과 이직 시기 고르기`;
       return `관과 인 ${g + i}자리: 한 번에 안 풀리는 이유와 뚫는 시기`;
     }
     case 'business': {
@@ -1906,7 +1906,7 @@ function deriveTopicHook(
     case 'study': {
       const n = sip.인성;
       if (tier === 'high') return `${ganRef} 일간에 인성 ${n}개: 배움이 성과로 바뀌는 시기`;
-      if (tier === 'mid')  return `인성 ${n}개의 집중 리듬과 공부 시기`;
+      if (tier === 'mid')  return `인성 ${n}개의 집중하는 때와 공부 시기`;
       return `인성 ${n}개: 집중이 흩어지는 이유와 공부법`;
     }
     case 'marriage': {
@@ -1917,13 +1917,13 @@ function deriveTopicHook(
     }
     case 'reunion': {
       const n = sip.재성 + sip.관성;
-      if (tier === 'high') return `관과 재 ${n}자리: 다시 이어질 시기와 연락 타이밍`;
+      if (tier === 'high') return `관과 재 ${n}자리: 다시 이어질 시기와 연락할 때`;
       if (tier === 'mid')  return `관과 재 ${n}자리: 재회 가능성과 다가갈 방향`;
       return `관과 재 ${n}자리: 붙잡기 전에 볼 흐름`;
     }
     default:
       // 기존 '1운에서 깊이 보기' — 3운 주제(연애·재물·재회)에서 가격 오표기 → 가격 없는 카피
-      return '시기, 자리, 결정 포인트까지 깊이 보기';
+      return '시기와 자리, 결정할 때까지 깊이 보기';
   }
 }
 
@@ -2139,7 +2139,7 @@ function TopicTopRecommend({
             : <>지금 흐름을 가장 살려볼 만한 <span style={{ color: '#f4d166' }}>{top3.length} 영역</span></>}
         </div>
         <div style={{ fontSize: 13.5, color: 'rgba(244,236,216,0.66)', lineHeight: 1.6, letterSpacing: '0.01em' }}>
-          점수가 가장 높은 {top3.length}갈래를 깊게 풀어드립니다, 시기, 자리, 결정 포인트까지.
+          점수가 가장 높은 {top3.length}가지를 골라 시기와 자리, 결정할 때까지 깊이 풀어 드려요.
           {topicBaseScores && ' 카드 점수는 주제별 풀이에서도 같은 기준으로 이어져요.'}
         </div>
       </div>
@@ -2307,7 +2307,7 @@ function TopicTopRecommend({
                   letterSpacing: '0.06em',
                 }}
               >
-                {priceLabel}으로 보기 →
+                {priceLabel}으로 보기 ›
               </span>
             </button>
           );
@@ -2325,7 +2325,7 @@ function TopicTopRecommend({
           letterSpacing: '0.04em',
         }}
       >
-        주제당 <strong style={{ color: '#f4d166', fontWeight: 800 }}>{top3MinPrice}운</strong>부터, 시기, 자리, 결정 포인트까지
+        주제당 <strong style={{ color: '#f4d166', fontWeight: 800 }}>{top3MinPrice}운</strong>부터 시기와 자리, 결정할 때까지
       </div>
     </div>
   );
@@ -2384,10 +2384,12 @@ function PremiumResultFooter({
         window.open(r.url, '_blank');
         toast.show(inToss ? '브라우저에서 PDF가 열려요. 저장해 주세요' : 'PDF 다운로드를 시작했어요', 'success');
       } else {
-        toast.show('PDF 생성에 실패했어요', 'warning');
+        toast.show('PDF를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
       }
     } catch (e: any) {
-      toast.show(e?.message || 'PDF 생성 실패', 'warning');
+      // 2026-10-15 — 원본 오류 문구(영문 코드 등)는 로그로만, 화면은 사람 말로
+      console.warn('[PDF] 생성 실패:', e?.code || '', e?.message || e);
+      toast.show('PDF를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
     } finally {
       setPdfBusy(false);
     }
@@ -2446,7 +2448,7 @@ function PremiumResultFooter({
             <line x1={9} y1={18} x2={13} y2={18} />
           </svg>
           <div className="ti">{pdfBusy ? 'PDF 생성 중…' : 'PDF 파일 저장'}</div>
-          <div className="sb">A4 풀리포트</div>
+          <div className="sb">A4 전체 풀이</div>
         </div>
         )}
       </div>
@@ -2829,7 +2831,7 @@ export function PremiumResult({
           pendingPreview={<><WongugTable v4Pillars={v4Pillars} sajuData={sajuData} sipDist={sipDist} /><OhaengRadarSVG elements={sajuData.elements} /></>}
           title="원국"
           hanja="原局"
-          hint="태어난 순간 하늘과 땅이 그려낸 여덟 글자"
+          hint="태어난 해, 달, 날, 시의 여덟 글자"
           defaultOpen
         >
           {/* 목업 §1 진본 — wongug-table (8글자 grid + 십성 tag) + ohaeng-chart (5 horizontal bars) */}
@@ -2928,7 +2930,7 @@ export function PremiumResult({
 
       {/* ═════════════ 03 십성 (十神) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={3} pending={pendingOf('D')} title="십성" hanja="十神" hint="관계와 욕망을 그리는 열 개의 키">
+        <CollapsibleSection step={3} pending={pendingOf('D')} title="십성" hanja="十神" hint="사람과 돈, 일을 대하는 방식 열 가지">
           {/* mockup §3 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             <strong>십성(十神)</strong>은 사주가 사람의 욕망과 관계를 풀어내는 언어입니다. 다섯 무리(<strong>비겁, 식상, 재성, 관성, 인성</strong>)로 묶이며, {report.name || '회원'} 님 사주에서는 가장 두꺼운 무리가 본인의 핵심 흐름을 만듭니다.
@@ -2959,7 +2961,7 @@ export function PremiumResult({
 
       {/* ═════════════ 04 용신·조후 (用神·調候) — 신규 ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={4} pending={pendingOf('A', 'D')} title="용신과 조후" hanja="用神 調候" hint="사주가 가장 갈증을 느끼는 것: 색, 방위, 계절, 물건, 습관까지">
+        <CollapsibleSection step={4} pending={pendingOf('A', 'D')} title="용신과 조후" hanja="用神 調候" hint="내 사주에 모자라 채워야 할 것: 색, 방위, 계절, 물건, 습관까지">
           {/* mockup §4 도입 paragraph */}
           <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             사주 풀이의 진짜 가치는 여기서 나옵니다. 원국에서 무엇이 부족한지를 알아냈다면, 그것을 일상에서 어떻게 채울지가 다음 단계입니다. 명리에서 이 자리를 <strong>용신(用神)</strong>이라 부릅니다. {report.name || '회원'} 님 사주의 용신은 두 글자로 못 박을 수 있습니다.
@@ -2991,7 +2993,7 @@ export function PremiumResult({
 
       {/* ═════════════ 05 대운 (大運) ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={5} pending={pendingOf('B')} title="대운" hanja="大運" hint="10년 단위로 흐르는 인생의 큰 강줄기">
+        <CollapsibleSection step={5} pending={pendingOf('B')} title="대운" hanja="大運" hint="10년마다 바뀌는 큰 운">
           <DaeunTimeline v4Daeun={v4Daeun} />
           {/* Stage 2C-2#2: daewoon-scores 8 row (mockup daewoon-scores 진본 — 정점/현재 강조) */}
           <DaewoonScores v4Daeun={v4Daeun} dayOheng={dayOheng} />
@@ -3082,7 +3084,7 @@ export function PremiumResult({
           - 이후: 본인 사주 통합 메타 (한 줄 키워드 + 강점·함정) — 모든 사람에게 의미 있음
           - AI schema 신규: lifeKeyword (한 줄) + strengths[3] + cautions[3] */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={8} pending={pendingOf('C')} title="내 사주의 기운" hanja="本質" hint="사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3, 함정 3">
+        <CollapsibleSection step={8} pending={pendingOf('C')} title="내 사주의 기운" hanja="本質" hint="여덟 글자를 한 줄로 정리하고 강점 세 가지와 조심할 점 세 가지">
           <LifeKeywordHero aiResult={aiResult} userName={report.name || '회원'} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
           <StrengthsCautionsCards aiResult={aiResult} sipDist={sipDist} dayOheng={dayOheng} sajuData={sajuData} />
         </CollapsibleSection>
@@ -3124,7 +3126,7 @@ export function PremiumResult({
       {/* word-count 마커 (mockup §word-count 진본) — "完 · 10섹션 풀이 완료" */}
       {!anyPending && (
       <div className="word-count">
-        <span className="han">完</span> 10섹션 풀이 완료
+        <span className="han">完</span> 열 장 풀이를 모두 마쳤어요
       </div>
       )}
 
@@ -3242,7 +3244,7 @@ function PremiumUpsellCard({
 
     // q1: worst topic 호명 → "내 ${가장 약한 영역}이 왜 약해?"
     const q1 = worstKey
-      ? `"내 ${TOPIC_KR[worstKey]}운이 ${worstScore}점인데 왜 약한 거야? 어떻게 보강해?"`
+      ? `"내 ${TOPIC_KR[worstKey]}운이 ${worstScore}점인데 왜 약한가요? 어떻게 채우면 좋을까요?"`
       : userName
       ? `"${userName} 님 사주에서 가장 먼저 손볼 부분이 어디야?"`
       : '"내 사주에서 가장 먼저 손볼 부분이 어디야?"';
@@ -3285,7 +3287,7 @@ function PremiumUpsellCard({
         <p>{q1}, {q2} 풀이를 보며 떠오른 질문을, 사주를 살피며 답해드려요.</p>
       )}
       <a href="/chat/new" onClick={handleChat} className="cta" style={{ textDecoration: 'none' }}>
-        사주대화로 이어가기 →
+        사주대화로 이어가기 ›
       </a>
     </div>
   );
@@ -3311,27 +3313,27 @@ function ReportSources() {
     >
       <p style={{ margin: 0 }}>
         본 리포트는{' '}
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
           『연해자평(淵海子平)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
           『자평진전(子平眞詮)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
           『적천수(滴天髓)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
           『궁통보감(窮通寶鑑)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
           『명리약언(命理約言)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#7F6B4E' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
           『삼명통회(三命通會)』
         </span>
         를 비롯한 사주명리 6대 원전과 김만태 「한국 사주명리의 수용양상과 전개」(2011)를 포함한 현대 명리학 논문과 통계 자료를 지식 기반으로, 고성능 인공지능 응용 프로그램 인터페이스(API)가 내 원국, 대운, 연운에 맞춰 개인별로 생성한 풀이입니다.
@@ -3435,7 +3437,7 @@ function YongsinBox({
             textAlign: 'center',
           }}
         >
-          {userName ? <strong style={{ color: C.ink }}>{userName} 님</strong> : ''} 사주가 가장 갈증을 느끼는 흐름을
+          {userName ? <strong style={{ color: C.ink }}>{userName} 님</strong> : ''} 사주에 가장 모자란 흐름을
           <br />
           <strong style={{ color: C.goldDeep }}>두 글자(二字)</strong>로 못 박았습니다.
         </p>
@@ -3808,7 +3810,10 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
           padding: '14px 10px 8px',
         }}
       >
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: 140 }}>
+        {/* 2026-10-15 — 글자는 SVG 밖 HTML 로 (13px 이상). SVG 가 preserveAspectRatio="none" 이라 안에 둔 글자가
+            가로로 늘어나고 7.5~9px 로 작았다. 선, 면, 점만 SVG 에 남긴다. 'NOW' → '지금'. */}
+        <div style={{ position: 'relative', width: '100%', height: H }}>
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden>
           <defs>
             <linearGradient id="ye-grad" x1="0" x2="0" y1="0" y2="1">
               <stop offset="0%" stopColor="#E8D9B8" stopOpacity={0.6} />
@@ -3818,50 +3823,84 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
           {/* 가이드라인 (50/75 점) */}
           <line x1={PAD_X} y1={yOf(50)} x2={W - PAD_X} y2={yOf(50)} stroke="#E5DFD0" strokeWidth={0.5} strokeDasharray="2 3" />
           <line x1={PAD_X} y1={yOf(75)} x2={W - PAD_X} y2={yOf(75)} stroke="#E5DFD0" strokeWidth={0.5} strokeDasharray="2 3" />
-          <text x={PAD_X - 4} y={yOf(50) + 3} fontSize={7.5} fill="#a89c7f" textAnchor="end">50</text>
-          <text x={PAD_X - 4} y={yOf(75) + 3} fontSize={7.5} fill="#a89c7f" textAnchor="end">75</text>
           <path d={areaPath} fill="url(#ye-grad)" />
-          <path d={linePath} stroke="#B8965A" strokeWidth={2} fill="none" />
-          {/* 모든 점에 점수 라벨 */}
+          <path d={linePath} stroke="#B8965A" strokeWidth={2} fill="none" vectorEffect="non-scaling-stroke" />
           {scores.map((p, i) => {
             const isPeak = i === peakIdx;
             const isLow = i === lowIdx && p.s !== scores[peakIdx].s;
             const isNow = i === nowIdx;
-            const x = xOf(i);
-            const y = yOf(p.s);
-            const labelY = y - 6;
             const fillColor = isPeak ? '#4E7A57' : isLow ? '#A23A2A' : isNow ? '#B8965A' : '#fff';
             const stroke = isPeak ? '#4E7A57' : isLow ? '#A23A2A' : '#B8965A';
             const r = isPeak || isLow || isNow ? 4 : 2.5;
             return (
-              <g key={i}>
-                <circle cx={x} cy={y} r={r} fill={fillColor} stroke={stroke} strokeWidth={isPeak || isLow || isNow ? 2 : 1} />
-                <text
-                  x={x}
-                  y={labelY}
-                  textAnchor="middle"
-                  fontSize={isPeak || isLow || isNow ? 9 : 7.5}
-                  fontWeight={isPeak || isLow || isNow ? 800 : 600}
-                  fill={isPeak ? '#4E7A57' : isLow ? '#A23A2A' : isNow ? '#B8965A' : '#7F6B4E'}
-                >
-                  {p.s}
-                </text>
-              </g>
+              <circle key={i} cx={xOf(i)} cy={yOf(p.s)} r={r} fill={fillColor} stroke={stroke} strokeWidth={isPeak || isLow || isNow ? 2 : 1} />
             );
           })}
-          {/* NOW 텍스트 */}
-          {nowIdx >= 0 && (
-            <text x={xOf(nowIdx)} y={yOf(scores[nowIdx].s) + 14} textAnchor="middle" fontSize={8} fill="#B8965A" fontWeight={700}>
-              NOW
-            </text>
-          )}
-          {/* 모든 12개월 라벨 */}
-          {scores.map((p, i) => (
-            <text key={`m-${i}`} x={xOf(i)} y={H - 4} textAnchor="middle" fontSize={8} fill="#7F6B4E" fontWeight={600}>
-              {p.m}월
-            </text>
-          ))}
         </svg>
+        {/* 모든 점에 점수 라벨 (HTML) */}
+        {scores.map((p, i) => {
+          const isPeak = i === peakIdx;
+          const isLow = i === lowIdx && p.s !== scores[peakIdx].s;
+          const isNow = i === nowIdx;
+          const strong = isPeak || isLow || isNow;
+          return (
+            <span
+              key={`s-${i}`}
+              style={{
+                position: 'absolute',
+                left: `${(xOf(i) / W) * 100}%`,
+                top: `${((yOf(p.s) - 6) / H) * 100}%`,
+                transform: 'translate(-50%, -100%)',
+                fontSize: 13,
+                lineHeight: 1,
+                fontWeight: strong ? 800 : 600,
+                color: isPeak ? '#4E7A57' : isLow ? '#A23A2A' : isNow ? '#8C6D3D' : '#6F6557',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+              }}
+            >
+              {p.s}
+            </span>
+          );
+        })}
+        {nowIdx >= 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              left: `${(xOf(nowIdx) / W) * 100}%`,
+              top: `${((yOf(scores[nowIdx].s) + 7) / H) * 100}%`,
+              transform: 'translateX(-50%)',
+              fontSize: 13,
+              lineHeight: 1,
+              fontWeight: 700,
+              color: '#8C6D3D',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+            }}
+          >
+            지금
+          </span>
+        )}
+        {/* 12개월 라벨 (HTML) — 머리글에 '1~12월'이 있어 숫자만 */}
+        {scores.map((p, i) => (
+          <span
+            key={`m-${i}`}
+            style={{
+              position: 'absolute',
+              left: `${(xOf(i) / W) * 100}%`,
+              bottom: 0,
+              transform: 'translateX(-50%)',
+              fontSize: 13,
+              lineHeight: 1,
+              fontWeight: 600,
+              color: '#6F6557',
+              pointerEvents: 'none',
+            }}
+          >
+            {p.m}
+          </span>
+        ))}
+        </div>
       </div>
     </div>
   );
@@ -3944,7 +3983,7 @@ function RelationCompassGrid({
   const cards = [
     { label: '힘이 되는 사람', glyph: `${boostGan[0]}, ${boostGan[1]}`, desc: boostDesc, color: '#4E7A57', bg: 'rgba(78,122,87,.06)' },
     { label: '부딪히는 사람', glyph: `${clashGan[0]}, ${clashGan[1]}`, desc: clashDesc, color: '#A23A2A', bg: 'rgba(162,58,42,.06)' },
-    { label: '마음이 놓이는 사람', glyph: `${calmGan[0]}, ${calmGan[1]}`, desc: calmDesc, color: '#7F6B4E', bg: 'rgba(127,107,78,.06)' },
+    { label: '마음이 놓이는 사람', glyph: `${calmGan[0]}, ${calmGan[1]}`, desc: calmDesc, color: '#6F6557', bg: 'rgba(127,107,78,.06)' },
   ];
 
   return (
@@ -4263,7 +4302,7 @@ function deriveLifeKeyword(sipDist?: SipDist, dayOheng?: OhengType, sajuData?: S
     const head = ganMeta
       ? `<b>${ganMeta.ko}(${dayGan})</b> 일간으로, ${ganMeta.vibe} <strong>균형 잡힌 흐름</strong>의 사주예요`
       : `<strong>어느 한쪽으로 치우치지 않은 균형 잡힌 흐름</strong>이에요`;
-    return `${head}. ${persona} 상황에 맞춰 풀어가며, 본인만의 리듬으로 천천히 자기 자리를 다지는 사람입니다.`;
+    return `${head}. ${persona} 상황에 맞춰 풀어가며, 본인만의 속도로 천천히 자기 자리를 다지는 사람입니다.`;
   }
 
   // 동적 조합 — top frame + bot grow + persona + gan reference
@@ -4317,23 +4356,7 @@ function LifeKeywordHero({
         overflow: 'hidden',
       }}
     >
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          right: -10,
-          top: -10,
-          fontFamily: "'Noto Serif KR', serif",
-          fontSize: 80,
-          fontWeight: 900,
-          color: 'rgba(184,150,90,0.07)',
-          lineHeight: 1,
-          pointerEvents: 'none',
-          letterSpacing: '-0.05em',
-        }}
-      >
-        本質
-      </div>
+      {/* 2026-10-15 — 오른쪽 위 '本質' 80px 금색 워터마크 삭제 (큰 한자 워터마크 금지, v9) */}
       <div
         style={{
           fontFamily: "'Noto Serif KR', serif",
@@ -5088,16 +5111,16 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
       desc: `${ilganPrefix}목(木) ${weakest.n}자라 자기 시작과 결정의 기운이 약한 사주. 새벽과 이른 아침 30분 산책, 푸른 잎 식물 한 그루, 신맛 음식(매실, 식초, 녹차)을 일상에 두면 결정력이 자랍니다.`,
     },
     화: {
-      title: `${HAN.화}(화) 흐름을 채우는 표현 채널`,
+      title: `${HAN.화}(화) 흐름을 채우는 표현 활동`,
       desc: `${ilganPrefix}화(火) ${weakest.n}자라 표현과 발표의 기운이 약한 사주. 한낮 11~13시 햇볕 쬐기, 붉은 색 인테리어 한 곳, 매주 한 번 사람들 앞에 의견 내는 자리(미팅 발표와 후기 작성)를 의도적으로 만드세요.`,
     },
     토: {
       title: `${HAN.토}(토) 흐름을 채우는 진득함`,
-      desc: `${ilganPrefix}토(土) ${weakest.n}자라 자리 잡는 힘이 얇은 사주. 한 자리, 한 가게, 한 사람에게 1년 이상 머무는 약속을 캘린더에 못 박으세요. 단맛(곡물과 꿀)과 황토색 물건이 기운을 받쳐줍니다.`,
+      desc: `${ilganPrefix}토(土) ${weakest.n}자라 자리 잡는 힘이 얇은 사주. 한 자리, 한 가게, 한 사람에게 1년 이상 머무는 약속을 달력에 적어 두세요. 단맛(곡물과 꿀)과 황토색 물건이 기운을 받쳐줍니다.`,
     },
     금: {
       title: `${HAN.금}(금) 흐름을 채우는 마감의 힘`,
-      desc: `${ilganPrefix}금(金) ${weakest.n}자라 다듬고 끝내는 기운이 약한 사주. 시작한 일을 끝까지 마무리하는 체크리스트, 매운맛(마늘과 생강) 음식, 흰색과 은색 소품을 늘리면 결정력이 또렷해집니다.`,
+      desc: `${ilganPrefix}금(金) ${weakest.n}자라 다듬고 끝내는 기운이 약한 사주. 시작한 일을 끝까지 마무리하는 점검표, 매운맛(마늘과 생강) 음식, 흰색과 은색 소품을 늘리면 결정력이 또렷해집니다.`,
     },
     수: {
       title: `${HAN.수}(수) 흐름을 채우는 침묵의 5분`,
@@ -5110,19 +5133,19 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   const STRONG_RESTRAIN: Record<OhengType, { title: string; desc: string }> = {
     목: {
       title: `${HAN.목}(목) ${strongest.n}자: 멈춤의 연습`,
-      desc: `${ilganPrefix}목 ${strongest.n}자: 시작 욕구가 강한 사주라 새 일을 한꺼번에 벌이기 쉽습니다. "한 분기에 새 프로젝트는 1개" 룰을 정하세요. 멈춰서 결과를 거두는 시간이 장점을 살립니다.`,
+      desc: `${ilganPrefix}목 ${strongest.n}자: 시작 욕구가 강한 사주라 새 일을 한꺼번에 벌이기 쉽습니다. "한 분기에 새로 벌이는 일은 하나" 원칙을 정하세요. 멈춰서 결과를 거두는 시간이 장점을 살립니다.`,
     },
     화: {
       title: `${HAN.화}(화) ${strongest.n}자: 한 박자 늦추기`,
-      desc: `${ilganPrefix}화 ${strongest.n}자: 즉각 표현과 결정 욕구가 강한 사주. 중요한 메시지, 계약, 답변은 "보내기 전 1시간 묵히기" 룰을 적용하세요. 식은 결정이 더 정확합니다.`,
+      desc: `${ilganPrefix}화 ${strongest.n}자: 즉각 표현과 결정 욕구가 강한 사주. 중요한 메시지, 계약, 답변은 "보내기 전 1시간 묵히기" 원칙을 지키세요. 식은 결정이 더 정확합니다.`,
     },
     토: {
       title: `${HAN.토}(토) ${strongest.n}자: 떠나는 연습`,
-      desc: `${ilganPrefix}토 ${strongest.n}자: 머물려는 힘이 강한 사주라 변화를 미루기 쉽습니다. 분기마다 한 번은 새 환경(여행, 이사, 부서 이동) 노출을 캘린더에 못 박으세요. 흐름을 흔들어주는 자극이 필요합니다.`,
+      desc: `${ilganPrefix}토 ${strongest.n}자: 머물려는 힘이 강한 사주라 변화를 미루기 쉽습니다. 분기마다 한 번은 새 환경(여행, 이사, 부서 이동) 노출을 달력에 적어 두세요. 흐름을 흔들어주는 자극이 필요합니다.`,
     },
     금: {
       title: `${HAN.금}(금) ${strongest.n}자: 부드럽게 넘기기`,
-      desc: `${ilganPrefix}금 ${strongest.n}자: 정확, 원칙, 자르는 힘이 강한 사주라 사람을 깎기 쉽습니다. 비판하기 전 "긍정 한 줄 → 본론" 순서를 의식하세요. 칼은 칼집에 있을 때 가장 단단합니다.`,
+      desc: `${ilganPrefix}금 ${strongest.n}자: 정확, 원칙, 자르는 힘이 강한 사주라 사람을 깎기 쉽습니다. 비판하기 전 "좋은 점 한 줄, 그다음 본론" 순서를 의식하세요. 칼은 칼집에 있을 때 가장 단단합니다.`,
     },
     수: {
       title: `${HAN.수}(수) ${strongest.n}자: 표현으로 풀기`,
@@ -5139,8 +5162,8 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
       desc: `비겁 ${sipCountFor('비겁')}자: ${dayGanLabel || dayGan} 일간을 함께 받쳐줄 동등한 결의 사람이 얇은 사주. 같은 분야 모임, 동호회, 스터디 한 군데를 1년 이상 꾸준히 다니세요. 만들지 않으면 외로워지는 결입니다.`,
     },
     식상: {
-      title: '표현하는 한 채널 1년 이상',
-      desc: `식상 ${sipCountFor('식상')}자: ${dayGanLabel || dayGan} 일간이 만들어내고 표현하는 기운이 약한 사주. 글, 영상, 강의, SNS 형식은 자유, 한 채널만 1년 이상 끊김 없이 굴리세요. 이게 다음 대운의 빛이 됩니다.`,
+      title: '표현 활동 하나를 1년 이상',
+      desc: `식상 ${sipCountFor('식상')}자: ${dayGanLabel || dayGan} 일간이 만들어내고 표현하는 기운이 약한 사주. 글, 영상, 강의, SNS 형식은 자유롭게, 한 가지만 1년 이상 끊김 없이 굴리세요. 이게 다음 대운의 빛이 됩니다.`,
     },
     재성: {
       title: '실리와 자원을 의식의 자리에',
@@ -5148,7 +5171,7 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
     },
     관성: {
       title: '책임과 자리를 의식적으로 받기',
-      desc: `관성 ${sipCountFor('관성')}자: 자리와 책임이 자연발생하지 않는 사주. 본인 판단과 재량이 보장되는 자리(1인 프로젝트, 창업, 임원, 핵심 PM)를 5년 단위로 의식적으로 설계하세요.`,
+      desc: `관성 ${sipCountFor('관성')}자: 자리와 책임이 자연발생하지 않는 사주. 본인 판단과 재량이 보장되는 자리(혼자 맡는 일, 창업, 임원, 핵심 책임자)를 5년 단위로 의식적으로 설계하세요.`,
     },
     인성: {
       title: '학습과 기록을 평생 자산으로',
@@ -5167,7 +5190,7 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
     },
     화: {
       title: `${dayGanLabel || dayGan} 일간: 한낮의 빛 다스리기`,
-      desc: `${dayGanLabel || dayGan} 일간은 비추는 힘이 강점이지만 자기를 태우기도 쉬운 기질. 식사와 수면 리듬이 무너지면 가장 먼저 무너집니다. 한 끼만이라도 같은 시간에.${curDaeunSuffix}`,
+      desc: `${dayGanLabel || dayGan} 일간은 비추는 힘이 강점이지만 자기를 태우기도 쉬운 기질. 식사와 수면 시간이 무너지면 가장 먼저 무너집니다. 한 끼만이라도 같은 시간에.${curDaeunSuffix}`,
     },
     토: {
       title: `${dayGanLabel || dayGan} 일간: 산과 들의 기운 살리기`,
@@ -5200,9 +5223,9 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   // 4. 가장 강한 십성 활용
   const TOP_SIP_ACTION: Record<keyof typeof sip, { title: string; desc: string }> = {
     비겁: { title: `비겁 ${topSip[1]}자: 같은 성향 사람과의 협업`, desc: '같은 분야 동료가 장점을 살리는 사주. 단 금전 거래와 공동 투자는 시작 전 역할과 지분을 명문화한 뒤 시작하세요. 깨지면 크게 깨지는 자리입니다.' },
-    식상: { title: `식상 ${topSip[1]}자: 표현 채널 키우기`, desc: '만들어내는 힘이 강한 사주. 글, 영상, 강의, 요리, 디자인, 무엇이든 한 분야를 1년 이상 끌고 가세요. 다음 대운에서 빛이 되는 자리입니다.' },
+    식상: { title: `식상 ${topSip[1]}자: 표현 활동 키우기`, desc: '만들어내는 힘이 강한 사주. 글, 영상, 강의, 요리, 디자인, 무엇이든 한 분야를 1년 이상 끌고 가세요. 다음 대운에서 빛이 되는 자리입니다.' },
     재성: { title: `재성 ${topSip[1]}자: 실리의 흐름 잡기`, desc: '돈과 자원이 손에 잡히는 사주. 큰 돈은 천천히 굴리는 자산(부동산과 장기 적립)으로, 빠른 회전은 작게. 재성이 두꺼우면 선택지가 너무 많아 결정을 미루는 함정.' },
-    관성: { title: `관성 ${topSip[1]}자: 책임 자리 받기`, desc: '책임과 평가가 따라오는 사주. 위계 조직보다는 본인 판단과 재량이 보장되는 자리(임원, 핵심 PM, 1인 프로젝트)에서 가장 빛납니다.' },
+    관성: { title: `관성 ${topSip[1]}자: 책임 자리 받기`, desc: '책임과 평가가 따라오는 사주. 위계 조직보다는 본인 판단과 재량이 보장되는 자리(임원, 핵심 책임자, 혼자 맡는 일)에서 가장 빛납니다.' },
     인성: { title: `인성 ${topSip[1]}자: 학습으로 흐름 다지기`, desc: '받아들이고 익히는 흐름이 강한 사주. 매년 자격증, 학위, 전문 도서 한 가지씩 쌓아두세요. 받침이 평생 자산이 되는 자리입니다.' },
   };
   actions.push(TOP_SIP_ACTION[topSip[0]]);
@@ -5240,7 +5263,7 @@ function buildDynamicActions(sajuData?: SajuData, sipDist?: any): Array<{ title:
   } else if (hasBaekho) {
     actions.push({
       title: '백호와 괴강의 기운: 추진력 + 건강 점검',
-      desc: '백호살과 괴강이 사주에 자리잡아 추진력이 강한 만큼 건강 부담도 따라옵니다. 매년 같은 달 종합검진을 캘린더에 고정하세요. 간 수치, 혈압, 심박 추적이 다음 대운의 정점을 받쳐줍니다.',
+      desc: '백호살과 괴강이 사주에 자리잡아 추진력이 강한 만큼 건강 부담도 따라옵니다. 매년 같은 달 종합검진을 달력에 적어 두세요. 간 수치, 혈압, 심박 추적이 다음 대운의 정점을 받쳐줍니다.',
     });
   } else if (hasCheonul) {
     actions.push({
@@ -5664,7 +5687,7 @@ function OhaengRadarSVG({ elements }: { elements: any }) {
           ))}
         </g>
         {/* 데이터 값 라벨 */}
-        <g fontSize="9.5" fill="#a08a5a" fontWeight="700">
+        <g fontSize="13" fill="#7A5C2E" fontWeight="700">{/* 2026-10-15 9.5 → 13 (svg 최대 260px = 실제 크기) */}
           {dataPts.map((p, i) => {
             const d = dirs[i];
             // 좌측 (금·수)는 dx -12, 우측 (화·토)는 dx +7, 상단 (목)은 dx +7
@@ -5760,13 +5783,13 @@ function LifeEdgeList({
         weak: `${u} 님은 주변의 의견과 분위기를 흡수하면서 결정하는 결입니다. 부드러운 강함, 다만 본인의 욕구를 자주 뒷자리에 두는 경향이 있습니다.`,
       },
       save: {
-        strong: '본인이 결정 주도권을 쥐는 자리. 1인 프로젝트, 창업, 프리랜서는 사주가 밀어줍니다.',
+        strong: '본인이 결정 주도권을 쥐는 자리. 혼자 맡는 일, 창업, 프리랜서는 사주가 밀어줍니다.',
         mid: '본인 색깔이 분명히 묻어나는 자리. 의견 내는 회의, 기획 주도, 중간 리더 자리에서 강합니다.',
         weak: '주체성을 키우는 환경: 1:1 코칭, 의사결정 훈련, 취미라도 "내가 고른다"는 감각을 자주 만들어두세요.',
       },
       avoid: {
         strong: '같은 성향의 사람이 많아 동업과 공동창업은 반드시 지분과 의사결정 구조를 먼저 못 박아야 깨집니다. 그냥 하면 깨져요.',
-        mid: '지나치게 "내가 맞다"는 자세로 굳어지면 옆이 떠납니다. 정기적으로 다른 시선을 들이는 루틴을 두세요.',
+        mid: '지나치게 "내가 맞다"는 자세로 굳어지면 옆이 떠납니다. 정기적으로 다른 시선을 듣는 습관을 두세요.',
         weak: '결정의 책임을 남에게 미루는 경향. "그냥 알아서 해줘"라는 말을 본인이 자주 하고 있다면 신호입니다.',
       },
     },
@@ -5776,12 +5799,12 @@ function LifeEdgeList({
       head: {
         strong: `${u} 님의 가장 큰 무기입니다. 말, 글, 영상, 강의, 드러내는 영역에서 같은 노력으로 남보다 2배의 효과가 납니다.`,
         mid: `${u} 님은 표현이 자연스럽게 풀리는 사람입니다. 본인의 생각을 말로 정리하면서 더 명확해지는 흐름.`,
-        weak: `${u} 님은 안에 담아두는 결입니다. 표현이 부족한 게 아니라, 다듬어서 한 번에 내놓는 스타일.`,
+        weak: `${u} 님은 안에 담아두는 결입니다. 말을 다듬어서 한 번에 내놓는 편입니다.`,
       },
       save: {
-        strong: '직업과 사업의 축에 반드시 "드러내는 채널"이 들어가 있어야 합니다. 뒷작업만 하는 자리에 가면 재능이 새요.',
+        strong: '직업과 사업의 축에 반드시 "드러내는 활동"이 들어가 있어야 합니다. 뒷작업만 하는 자리에 가면 재능이 새요.',
         mid: '발표, 강의, 콘텐츠: 본인 이름이 붙는 일에서 강합니다. 익명/뒷작업 비중이 너무 높으면 활기가 죽습니다.',
-        weak: '표현 채널을 의식적으로 한두 개 굴려두세요. 글, 영상, 뉴스레터, 드러나는 횟수 자체를 늘려야 자라납니다.',
+        weak: '표현 활동을 의식적으로 한두 개 굴려두세요. 글, 영상, 뉴스레터, 드러나는 횟수 자체를 늘려야 자라납니다.',
       },
       avoid: {
         strong: '불이 많아 감정 기복이 또렷합니다. 화가 올라오는 날은 중요한 결정을 다음 날로 미루세요.',
@@ -5838,8 +5861,8 @@ function LifeEdgeList({
       },
       save: {
         strong: '관찰, 기획, 전략: 한 발 떨어져서 판을 보는 자리에서 강합니다. 깊게 생각하는 시간을 자산으로 쓰세요.',
-        mid: '쉼과 일의 리듬이 잡혀 있는 게 강점. 이 리듬을 무너뜨릴만한 일정은 의식적으로 거절하세요.',
-        weak: '"안 하는 시간"을 캘린더에 먼저 박을 것. 분기마다 2박 이상의 온전한 휴식. 즉흥으로 두면 절대 만들어지지 않습니다.',
+        mid: '쉼과 일의 균형이 잡혀 있는 게 강점입니다. 이 균형을 무너뜨릴 만한 일정은 의식적으로 거절하세요.',
+        weak: '"아무것도 안 하는 시간"을 달력에 먼저 적어 두세요. 분기마다 2박 이상의 온전한 휴식. 즉흥으로 두면 절대 만들어지지 않습니다.',
       },
       avoid: {
         strong: '생각이 깊어 행동을 미루는 경향. 일정 시점엔 "분석 그만, 실행"으로 끊어주세요.',
@@ -5919,7 +5942,7 @@ function SipDonut({ sipDist }: { sipDist: SipDist }) {
   const ORDER: Array<{ key: keyof SipDist; label: string; color: string }> = [
     { key: '식상', label: '식상', color: '#B04A38' },
     { key: '비겁', label: '비겁', color: '#4E7A57' },
-    { key: '재성', label: '재성', color: '#7F6B4E' },
+    { key: '재성', label: '재성', color: '#6F6557' },
     { key: '관성', label: '관성', color: '#7D7870' },
     { key: '인성', label: '인성', color: '#3E5F82' },
   ];
@@ -6279,7 +6302,7 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
     ? `같은 성향이 겹쳐 자기 결정권이 강해지는 만큼 옆 의견을 의식적으로 듣는 연습.`
     : ganSip.includes('관성')
     ? `위계와 평가가 까다로워지는 시기. 정면 충돌보다 시간차로 풀어내기.`
-    : `흐름이 빨라질수록 한 박자 늦추는 룰을 본인 캘린더에 박아두세요.`;
+    : `흐름이 빨라질수록 한 박자 늦추는 원칙을 달력에 적어 두세요.`;
 
   return (
     <div
@@ -6311,22 +6334,22 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {ganSip && (
           <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
-            <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>천간 {ganHan}</span>
+            <span style={{ fontWeight: 700, color: '#6F6557', minWidth: 50 }}>천간 {ganHan}</span>
             <span style={{ color: C.inkSoft, flex: 1 }}>{ganSip}</span>
           </div>
         )}
         {jiSip && (
           <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
-            <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>지지 {jiHan}</span>
+            <span style={{ fontWeight: 700, color: '#6F6557', minWidth: 50 }}>지지 {jiHan}</span>
             <span style={{ color: C.inkSoft, flex: 1 }}>{jiSip}</span>
           </div>
         )}
         <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
-          <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>키 사건</span>
+          <span style={{ fontWeight: 700, color: '#6F6557', minWidth: 50 }}>키 사건</span>
           <span style={{ color: C.inkSoft, flex: 1 }}>{keyEvents}</span>
         </div>
         <div style={{ display: 'flex', gap: 8, fontSize: 13, lineHeight: 1.55 }}>
-          <span style={{ fontWeight: 700, color: '#7F6B4E', minWidth: 50 }}>조심</span>
+          <span style={{ fontWeight: 700, color: '#6F6557', minWidth: 50 }}>조심</span>
           <span style={{ color: C.inkSoft, flex: 1 }}>{cautions}</span>
         </div>
       </div>
@@ -6434,7 +6457,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
   // 신살별 실천 팁 (mockup 패턴 — 한 줄 액션)
   const ACTION_TIP: Record<string, string> = {
     도화살: '한 달에 하루는 약속 없이 혼자 보낼 것. 도화는 적당히 거리를 두는 사람에게 가장 강하게 작동합니다.',
-    문창귀인: '"쓰는 채널" 한 곳을 5년 단위로 굴릴 것. 직업 선택 시 글과 강의가 들어가는 자리가 무조건 유리합니다.',
+    문창귀인: '"글 쓰는 자리" 한 곳을 5년 단위로 굴릴 것. 직업 선택 시 글과 강의가 들어가는 자리가 무조건 유리합니다.',
     천을귀인: '결정적 순간에 도와줄 사람이 나타납니다. 평소 인연을 가벼이 보지 마세요.',
     역마살: '3년 이상 같은 자리에 묶이지 않도록 의식적으로 영역을 넓힐 것. 한 회사에서도 직무 전환을 활용합니다.',
     홍염살: '결혼과 동거의 큰 결정은 36~38세에 안정됩니다. 그 전에는 강도보다 다양성을 경험하세요.',
@@ -6460,7 +6483,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
     if (/살|殺|煞/.test(s.hanja)) return `${fromLabel}강한 기질이라 의식적으로 거리를 둘 자리. 큰 결정은 24시간 보류 룰을 두세요.`;
     if (/귀인|貴人|덕|德|희|喜|은|恩|생기|生氣|요안|要安|천을|天乙/.test(s.hanja)) return `${fromLabel}도와줄 인연과 기회가 들어오는 흐름. 어려울 때 주변에 먼저 손 내밀면 풀립니다.`;
     if (/공망|空亡/.test(s.hanja)) return `${fromLabel}해당 글자가 들어오는 해엔 새 일보다 학습, 자격, 관계 정비에 시간을 투자하세요.`;
-    if (/사|死/.test(s.hanja)) return `${fromLabel}활기가 약해지는 자리. 충분한 휴식과 회복 루틴이 필요합니다.`;
+    if (/사|死/.test(s.hanja)) return `${fromLabel}활기가 약해지는 자리. 충분한 휴식과 회복 습관이 필요합니다.`;
     if (/효|孝|모|母/.test(s.hanja)) return `${fromLabel}돌봄, 양육, 후배 멘토링 자리에서 흐름이 살아납니다.`;
     return ''; // 2026-06-13 — 제네릭 필러('강점 살리고 약점 다루세요') 제거: 신살마다 동일 반복 = AI 템플릿 느낌. 액션 없으면 실천줄 미노출
   }
@@ -6484,7 +6507,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
         <div className="head">
           <span className="nm">{krLabel}</span>
           <span className="han">{s.hanja}</span>
-          {fromText && <span className="han" style={{ fontSize: 13, color: '#7F6B4E' }}>{fromText}</span>}
+          {fromText && <span className="han" style={{ fontSize: 13, color: '#6F6557' }}>{fromText}</span>}
           <span className="tag">{isFull ? '강하게 작동' : '은근히 작동'}</span>
         </div>
         {/* 2026-05-05: <strong> raw text 차단 */}
@@ -6529,7 +6552,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
         }}
       >
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 800, color: '#1A1A1A', minWidth: 36 }}>{krLabel}</span>
-        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13.5, color: '#7F6B4E', minWidth: 28 }}>{s.hanja}</span>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13.5, color: '#6F6557', minWidth: 28 }}>{s.hanja}</span>
         {/* 2026-05-05: <strong> raw text 차단 */}
         <span style={{ flex: 1, fontSize: 13.5, color: '#3D3D3D', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(desc) }} />
         <span style={{
@@ -6562,7 +6585,7 @@ function SinsalThreeTier({ gilsin, hyungsal, aiCards }: { gilsin: V4SinSal[]; hy
       {/* 중 + 참고 — 한 줄 카드 (이름·한자·한 줄·작동 시기) */}
       {(mid.length > 0 || ref.length > 0) && (
         <>
-          <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13.5, color: '#7A7269', fontWeight: 700, margin: '18px 0 8px', letterSpacing: '0.02em' }}>
+          <h4 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 13.5, color: '#6F6557', fontWeight: 700, margin: '18px 0 8px', letterSpacing: '0.02em' }}>
             그 외 신살 <span style={{ fontSize: 13, color: '#A8A097', fontWeight: 600, marginLeft: 4 }}>부수적과 시기별 작동</span>
           </h4>
           <div>
@@ -6636,7 +6659,7 @@ function _RelationSixCards({ sipDist, aiCards }: { sipDist: any; aiCards?: AiRel
         ? `<strong>관성 ${sip.관성}자</strong>로 상사와 권위 흐름이 매우 강한 자리. 자리와 평가가 빠르게 따라오지만, <strong>위에서 내려오는 압력</strong>도 그만큼 큽니다.`
         : sip.관성 >= 1
         ? `<strong>관성 ${sip.관성}자</strong>로 조직과 권위 흐름이 자리잡고 있습니다. 책임과 평가의 기운이 본인을 단단하게 만듭니다.`
-        : `<strong>관성 0자</strong>로 상사와 위계의 기운이 약한 자리. <strong>본인 판단과 재량이 보장되는 자리</strong>(1인 프로젝트, 창업, 임원)에서 가장 빛납니다.`,
+        : `<strong>관성 0자</strong>로 상사와 위계의 기운이 약한 자리. <strong>본인 판단과 재량이 보장되는 자리</strong>(혼자 맡는 일, 창업, 임원)에서 가장 빛납니다.`,
   };
 
   // sixBase — 6 카드 메타 (한자/한글/sipsung/save/careful — 사주별 동적)
@@ -6672,11 +6695,11 @@ function _RelationSixCards({ sipDist, aiCards }: { sipDist: any; aiCards?: AiRel
     },
     { relKey: 'friend', cls: 'c-friend', name: '朋 友', label: '친구와 동료', sipsung: '비겁',
       save: `${sip.비겁 >= 2 ? '<strong>인연의 달에 만난 사람</strong>은 한 해 내내 이어집니다. 작은 정성이 다음 운의 다리.' : '<strong>깊은 한두 명</strong>에게 정성을 모으세요. 넓게보다 깊게가 사주의 답.'}`,
-      careful: `${sip.비겁 >= 3 ? '사람이 많아지면 자기 기질을 잃기 쉽습니다. <strong>한 달에 하루는 약속 없는 날</strong>을 캘린더에 못 박으세요.' : '얕은 자리에 정성을 흩지 마세요. <strong>받기보다 주는 자리</strong>를 미리 정해두는 편이 안전합니다.'}`,
+      careful: `${sip.비겁 >= 3 ? '사람이 많아지면 자기 기질을 잃기 쉽습니다. <strong>한 달에 하루는 약속 없는 날</strong>을 달력에 적어 두세요.' : '얕은 자리에 정성을 흩지 마세요. <strong>받기보다 주는 자리</strong>를 미리 정해두는 편이 안전합니다.'}`,
       why: `비겁은 친구, 동료, 동등한 결의 자리. ${sip.비겁}자 분포가 인연의 폭과 깊이를 결정합니다.`,
     },
     { relKey: 'boss', cls: 'c-boss', name: '上 司', label: '상사와 권위', sipsung: '관성',
-      save: `${sip.관성 >= 2 ? '본인의 <strong>판단과 재량이 보장되는 자리</strong>(임원, 핵심 PM, 1인 프로젝트)에서 빛납니다.' : '본인의 <strong>판단과 재량이 보장되는 자리</strong>(1인 프로젝트와 창업)에서 가장 빛납니다.'}`,
+      save: `${sip.관성 >= 2 ? '본인의 <strong>판단과 재량이 보장되는 자리</strong>(임원, 핵심 책임자, 혼자 맡는 일)에서 빛납니다.' : '본인의 <strong>판단과 재량이 보장되는 자리</strong>(혼자 맡는 일과 창업)에서 가장 빛납니다.'}`,
       careful: `${sip.관성 >= 3 ? '책임이 몰리는 흐름. <strong>위에서 내려오는 평가에 자기 기질을 잃지 않도록</strong> 분기마다 본인 우선순위 점검.' : '위계가 단단한 조직에서 오래 버티려 하면 본인 사주를 거스르는 일. <strong>5년 이상은 권하지 않습니다.</strong>'}`,
       why: `관성은 책임, 평가, 위계의 자리. ${sip.관성}자 분포가 조직 내 입지의 기운을 결정합니다.`,
     },
@@ -6870,14 +6893,14 @@ function GanjiFlow({ sajuData }: { sajuData: SajuData }) {
         return (
           <div key={i} className="gf-row">
             <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', minWidth: 22 }}>
-              <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char1] || '#7F6B4E', lineHeight: 1 }}>
+              <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char1] || '#6F6557', lineHeight: 1 }}>
                 {r.char1}
               </span>
               {kr1 && <span style={{ fontSize: 13, color: '#6F6557', marginTop: 1 }}>{kr1}</span>}
             </span>
             <span className="gf-arrow">{r.arrow}</span>
             <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', minWidth: 22 }}>
-              <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char2] || '#7F6B4E', lineHeight: 1 }}>
+              <span className="gf-glyph" style={{ color: HAN_OHENG_COLOR[r.char2] || '#6F6557', lineHeight: 1 }}>
                 {r.char2}
               </span>
               {kr2 && <span style={{ fontSize: 13, color: '#6F6557', marginTop: 1 }}>{kr2}</span>}
@@ -7292,7 +7315,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
   }
   // 라벨 한자 매핑
   const BADGE_TEXT: Record<string, string> = {
-    peak: '정점', up: '상승', warn: '주의', now: 'NOW',
+    peak: '정점', up: '상승', warn: '주의', now: '지금', // 2026-10-15 영문 'NOW' → '지금'
   };
   return (
     <div className="month-insight-grid">
@@ -7318,8 +7341,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
               )}
             </div>
             <div className="mi-text" dangerouslySetInnerHTML={{ __html: c.text }} />
-            {/* 2026-06-13 — 배지와 동일한 #태그 중복 제거 (상승 배지 + #상승 = AI 느낌). 배지와 다를 때만 노출 */}
-            {c.tag && c.tag !== '평탄' && c.tag !== BADGE_TEXT[c.cls || ''] && <span className="mi-tag">#{c.tag}</span>}
+            {/* 2026-10-15 — '#태그' 해시태그 줄 삭제 (배지 'NOW' 와 '#지금' 이 겹쳐 보였고, 해시태그 자체가 AI 티) */}
           </div>
         );
       })}

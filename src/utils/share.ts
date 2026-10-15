@@ -85,7 +85,7 @@ function getShareCopy(params: ShareParams): ShareCopy {
     default:
       // 후방 호환 (type 없이 호출)
       return {
-        title: '사주500: 정통 명리학 AI 사주 풀이',
+        title: '사주500 정통 사주 풀이',
         text: '500원에 만나는 정통 사주 풀이. 내 사주도 받아보세요',
         urlPath: `result/${reportId}`,
       };
