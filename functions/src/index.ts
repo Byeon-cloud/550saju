@@ -802,7 +802,10 @@ export const generateDailyFortuneStream = onRequest(
         `\n\n## ⚡⚡ 이번 호출의 최종 출력 범위 (위 스키마 중 이 키들만): ${SUB_KEYS[sub].join(', ')}\n` +
         `이 키들만 담은 JSON 객체 하나만 출력. 다른 키는 다른 호출이 쓰므로 출력 금지. 위 '오늘 시간대와 오행 관계 확정표'를 그대로 따를 것.`;
 
-      const runSub = async (sub: DailySub, userPrompt: string, maxTokens: number, streamAs: 'A1' | 'A2' | 'B' | null, delayMs = 0) => {
+      /* 2026-10-15 프롬프트 캐싱 — 짝 호출(A2a와 A2b, B1과 B2)은 같은 사용자 프롬프트(userA2, userB, 1건 약 8,500토큰)에
+       *   출력 범위(subOnly)만 다르다. 공유 부분을 캐시 블록으로 떼어 먼저 출발한 호출이 쓰고 늦게 출발한 호출이 5% 값으로 읽는다.
+       *   운영 실측(5.5 전환 뒤): Sonnet 호출 1건 약 65원 중 캐시 밖 입력 24원. 글은 그대로(블록만 나눔). */
+      const runSub = async (sub: DailySub, userPrompt: string, maxTokens: number, streamAs: 'A1' | 'A2' | 'B' | null, delayMs = 0, suffix = '') => {
         if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
         const groupModel = SUB_MODEL[sub];
         const tg0 = Date.now();
@@ -819,7 +822,15 @@ export const generateDailyFortuneStream = onRequest(
             // 2026-10-08 — 1h TTL(쓰기 2배)은 하루 수 건 트래픽에선 재사용이 거의 없어 손해 → 기본 5분(쓰기 1.25배)
             cache_control: { type: 'ephemeral' },
           }],
-          messages: [{ role: 'user', content: userPrompt + TONE_FINAL_CHECK }],
+          messages: [{
+            role: 'user',
+            content: suffix
+              ? [
+                  { type: 'text', text: userPrompt, cache_control: { type: 'ephemeral' } },
+                  { type: 'text', text: suffix + TONE_FINAL_CHECK },
+                ]
+              : userPrompt + TONE_FINAL_CHECK,
+          }],
         });
         for await (const event of stream as any) {
           if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
@@ -848,16 +859,17 @@ export const generateDailyFortuneStream = onRequest(
         return data;
       });
       const pA2 = Promise.all([
-        runSub('A2a', userA2 + subOnly('A2a'), 4000, 'A2'),
-        runSub('A2b', userA2 + subOnly('A2b'), 4000, null, 4000),
+        runSub('A2a', userA2, 4000, 'A2', 0, subOnly('A2a')),
+        runSub('A2b', userA2, 4000, null, 4000, subOnly('A2b')),
       ]).then(([x, y]) => {
         const data = sanitizeAiOutput({ ...y.parsed, ...x.parsed });
         sendEvent('group', { group: 'A2', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs + 4000) });
         return data;
       });
       const pB = Promise.all([
-        runSub('B1', userB + subOnly('B1'), 4000, 'B', 4000),
-        runSub('B2', userB + subOnly('B2'), 4000, null, 4000),
+        runSub('B1', userB, 4000, 'B', 4000, subOnly('B1')),
+        // B2 는 B1 의 캐시가 쓰인 뒤(응답 시작 뒤) 출발해야 읽는다 — 2.5초 늦춤 (B 묶음은 화면에서 마지막에 오는 부분)
+        runSub('B2', userB, 4000, null, 6500, subOnly('B2')),
       ]).then(([x, y]) => {
         let data: any = { ...y.parsed, ...x.parsed };
         // 2026-10-04 — 만나는 사람 글자 = 용신·희신·기신 확정값 (예시 복사 방지) / 10-08 시간대 서버 확정값
@@ -875,7 +887,7 @@ export const generateDailyFortuneStream = onRequest(
           };
         }
         data = sanitizeAiOutput(data);
-        sendEvent('group', { group: 'B', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs) + 4000 });
+        sendEvent('group', { group: 'B', data, elapsedMs: Math.max(x.elapsedMs + 4000, y.elapsedMs + 6500) });
         return data;
       });
       const [resA1, resA2, resB] = await Promise.all([pA1, pA2, pB]);

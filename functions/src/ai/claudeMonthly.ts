@@ -2,6 +2,11 @@ import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput, natalRelationsText, lifeTimelineFactsText } from './sajuFacts';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, READING_VOICE_BLOCK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
 import { kstNow, kstNowDate } from '../utils/kstTime';
+
+/** 2026-10-15 프롬프트 캐싱 — 2차 다듬기 호출이 1차 프롬프트를 그대로 다시 보내므로, 첫 사용자 메시지를
+ *  캐시해 두 번째 호출이 5% 값으로 읽게 한다(Sonnet 5.5 캐시 읽기 0.05배). 내용은 그대로. 운영 기록상 월운과 주간은 캐시 0%였다. */
+const cachedPrompt = (prompt: string) => [{ type: 'text' as const, text: prompt + TONE_FINAL_CHECK, cache_control: { type: 'ephemeral' as const } }];
+
 import { logAnthropicUsage } from '../shared/aiUsageLog'; // C7 원가 기록 (fire-and-forget)
 
 /** 2026-10-13 — 다른 콘텐츠와 같은 복구 파서(코드블록 제거, 문자열 안 줄바꿈 이스케이프, jsonrepair). 실패 시 null */
@@ -59,7 +64,7 @@ async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnT
   const first = await anthropic.messages.create({
     model: CLAUDE_MODEL.sonnet,
     max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
+    messages: [{ role: 'user', content: cachedPrompt(prompt) }],
   });
   logAnthropicUsage('monthly', CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
@@ -70,7 +75,7 @@ async function generateMonthlyGroup(apiKey: string, sajuData: any, info: ReturnT
     model: CLAUDE_MODEL.sonnet,
     max_tokens: maxTokens,
     messages: [
-      { role: 'user', content: prompt + TONE_FINAL_CHECK },
+      { role: 'user', content: cachedPrompt(prompt) },
       { role: 'assistant', content: firstText },
       { role: 'user', content: buildReviewPrompt(info, group) + TONE_FINAL_CHECK },
     ],
@@ -95,7 +100,7 @@ export async function generateMonthlyDraft(apiKey: string, sajuData: any, monthI
   const first = await anthropic.messages.create({
     model: CLAUDE_MODEL.sonnet,
     max_tokens: 10000,
-    messages: [{ role: 'user', content: prompt + TONE_FINAL_CHECK }],
+    messages: [{ role: 'user', content: cachedPrompt(prompt) }],
   });
   logAnthropicUsage('monthly', CLAUDE_MODEL.sonnet, first, _t1, 'callable'); // C7 best-effort
   const firstText = (first.content[0] as any).text;
@@ -119,7 +124,7 @@ export async function generateMonthlyRefine(apiKey: string, sajuData: any, month
     model: CLAUDE_MODEL.sonnet,
     max_tokens: 10000,
     messages: [
-      { role: 'user', content: prompt + TONE_FINAL_CHECK },
+      { role: 'user', content: cachedPrompt(prompt) },
       { role: 'assistant', content: JSON.stringify(draft) },
       { role: 'user', content: buildReviewPrompt(info, 'FULL') + TONE_FINAL_CHECK },
     ],
