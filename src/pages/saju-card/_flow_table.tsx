@@ -109,7 +109,7 @@ interface Ganji {
 }
 
 /** 년도 → 60갑자 (Solar.fromYmd 6/1 기준) */
-function yearGanji(year: number): Ganji | null {
+export function yearGanji(year: number): Ganji | null {
   try {
     const lunar = Solar.fromYmd(year, 6, 1).getLunar();
     const gan = lunar.getYearGan();
@@ -125,7 +125,7 @@ function yearGanji(year: number): Ganji | null {
 
 /** 년/월 → 60갑자 (절기 기반 — Solar.fromYmd 15일 기준 = 절기 안정 영역)
  *  lunar-javascript Lunar 타입 정의 누락 — any 캐스트 (런타임 메서드 모두 존재) */
-function monthGanji(year: number, month: number): Ganji | null {
+export function monthGanji(year: number, month: number): Ganji | null {
   try {
     const lunar = Solar.fromYmd(year, month, 15).getLunar() as any;
     const gan = lunar.getMonthGan();

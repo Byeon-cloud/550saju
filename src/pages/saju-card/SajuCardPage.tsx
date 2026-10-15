@@ -62,7 +62,7 @@ import { Component12UnseongSection } from './_visual_section';
 // Stage 4-3: 기존 다이어그램 / SajuCardLabelRow / DiagramHeader 등 helper 들은
 // SajuDetailsTable 이 흡수했으므로 미사용. 코드 정리 위해 import 제거.
 // Round 2 — Export 전용 layout
-import { SajuCardExportLayout, type ExportMode } from './_export-layout';
+import { SajuCardExportLayout, EXPORT_SCALE, type ExportMode } from './_export-layout';
 // Round 2 ⭐ — 천을귀인 인장 (시그니처 시각 자산)
 // Stage 4: GwiinSealCard — IdentityCard 안에 인장이 통합돼서 미사용 (pickPrimaryGwiin 만 사용)
 import { pickPrimaryGwiin } from './_gwiin_seal';
@@ -173,7 +173,7 @@ export function SajuCardPage() {
     try {
       return await captureSajuCardAsBlob({
         element: element ?? undefined,
-        scale: element ? 1 : 2, // export-only DOM 은 이미 1080+ 로 구성, 페이지 그대로는 2x
+        scale: element ? EXPORT_SCALE : 2, // 2026-10-15 공유 이미지 v2 — 폰 크기(360)로 짜고 3배로 찍어 1080. 페이지 그대로는 2x
         backgroundColor: C.paper,
       });
     } catch (err: any) {
