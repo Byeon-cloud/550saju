@@ -172,6 +172,53 @@ async function generateCompatibilityAnalysis(apiKey, sajuData1, sajuData2, relat
     // 2026-10-04 궁합 공개 — 공용 파서(코드블록·잘린 JSON 복구) + 출처·오기 한자·시간 표기 정리
     return (0, sajuFacts_1.sanitizeAiOutput)((0, promptsV3_2.parseJsonResponse)(text));
 }
+/* 2026-10-15 궁합 품질 점검(50대 부부 시험)에서 나온 흠 수리
+ *   ① 십성이 간체 한자(正财, 伤官)로 넘어가 본문에 그대로 나왔다 → 한글 십성으로 넘긴다
+ *   ② 용신을 안 넘겨 '두 사주 모두 불기운이 강하니 흰색'처럼 한쪽 기신 색을 권했다 → 사람별 강약, 용신, 희신, 기신
+ *   ③ 배우자 별 위치를 모델이 찾다 틀렸다(년지에만 있는 편재를 '일지와 월지 속') → 서버가 위치를 계산해 넘긴다 */
+const SIP_KO = {
+    比肩: '비견', 劫財: '겁재', 劫财: '겁재', 食神: '식신', 傷官: '상관', 伤官: '상관',
+    正財: '정재', 正财: '정재', 偏財: '편재', 偏财: '편재', 正官: '정관',
+    偏官: '편관', 七殺: '편관', 七杀: '편관', 正印: '정인', 偏印: '편인',
+};
+const sipKo = (raw) => String(raw || '').split('/').map((x) => SIP_KO[x.trim()] || x.trim()).filter((x) => x && x !== '일주' && x !== '日主').join('/');
+const GAN_OH = { 甲: '목', 乙: '목', 丙: '화', 丁: '화', 戊: '토', 己: '토', 庚: '금', 辛: '금', 壬: '수', 癸: '수' };
+const OH_GEN = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
+const OH_CTRL = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+const YANG_GAN = new Set(['甲', '丙', '戊', '庚', '壬']);
+void OH_GEN;
+/** 배우자 별(여성: 관성, 남성: 재성)이 원국 어디에 있는지 — 천간과 지장간 */
+function spouseStarText(d) {
+    const p = d.pillars || [];
+    const dayGan = p[2]?.천간;
+    const dOh = GAN_OH[dayGan];
+    if (!dOh)
+        return '';
+    const female = d.input?.gender !== 'male';
+    const starOh = female ? Object.keys(OH_CTRL).find((k) => OH_CTRL[k] === dOh) : OH_CTRL[dOh];
+    if (!starOh)
+        return '';
+    const kind = (g) => (YANG_GAN.has(g) === YANG_GAN.has(dayGan) ? (female ? '편관' : '편재') : (female ? '정관' : '정재'));
+    const ganPos = ['년간', '월간', '', '시간'];
+    const jiPos = ['년지', '월지', '일지', '시지'];
+    const hits = [];
+    p.forEach((x, i) => {
+        if (x?.available === false)
+            return;
+        if (i !== 2 && GAN_OH[x?.천간] === starOh)
+            hits.push(`${ganPos[i]} ${x.천간}(${kind(x.천간)}, 드러남)`);
+    });
+    const jj = Array.isArray(d.jijanggan) ? d.jijanggan : [];
+    p.forEach((x, i) => {
+        if (x?.available === false)
+            return;
+        const ent = jj.find((e, k) => k === i && e?.지지 === x?.지지) || jj.find((e) => e?.지지 === x?.지지);
+        for (const g of (ent?.지장간 || []))
+            if (GAN_OH[g] === starOh)
+                hits.push(`${jiPos[i]} ${x.지지} 속 ${g}(${kind(g)}, 숨음)`);
+    });
+    return `  ${female ? '남편과 연인의 별(관성' : '아내와 연인의 별(재성'}, ${starOh}) 위치: ${hits.length ? hits.join(', ') : '원국에 없음'} — 이 표에 없는 자리에 있다고 쓰지 말 것`;
+}
 function personDetail(label, d) {
     const p = d.pillars || [];
     const labels = ['년주', '월주', '일주', '시주'];
@@ -179,8 +226,22 @@ function personDetail(label, d) {
     p.forEach((x, i) => { if (x.available !== false)
         t += `  ${labels[i]}: ${x.천간}(${x.천간읽기 || ''})${x.지지}(${x.지지읽기 || ''})\n`; });
     const el = d.elements || {};
-    const sip = d.sipsung?.map((s) => `${s.위치 || s.position || ''}:${s.십성}`).join(', ') || '';
-    return `### ${label}: ${d.input?.name || '미상'} (${d.input?.gender === 'male' ? '남' : '여'})\n${t}  일간: ${p[2]?.천간 || '미상'}\n  오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}\n  십성: ${sip}`;
+    const sip = d.sipsung?.map((s) => `${s.위치 || s.position || ''}:${sipKo(s.십성)}`).filter((x) => !x.endsWith(':')).join(', ') || '';
+    const ma = d.myeongriAnalysis || {};
+    const yong = ma.용신 ? `\n  일간 강약: ${ma.일간강약 || '미상'} / 용신(SSOT): ${ma.용신}, 희신: ${ma.희신 || '-'}, 기신: ${ma.기신 || '-'}` : '';
+    const spouse = spouseStarText(d);
+    return `### ${label}: ${d.input?.name || '미상'} (${d.input?.gender === 'male' ? '남' : '여'})\n${t}  일간: ${p[2]?.천간 || '미상'}\n  오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}\n  십성: ${sip}${yong}${spouse ? `\n${spouse}` : ''}`;
+}
+/** 두 사람이 함께 쓰는 공간의 색과 방위 — 둘 중 누구에게도 기신이 아닌 오행 (서버 확정, 없으면 빈 문자열) */
+const OH_COLOR = { 목: '초록과 청록, 동쪽', 화: '빨강과 주황, 남쪽', 토: '노랑과 베이지, 중앙', 금: '흰색과 은색, 서쪽', 수: '검정과 남색, 북쪽' };
+function sharedLuckyText(d1, d2) {
+    const a = d1?.myeongriAnalysis || {};
+    const b = d2?.myeongriAnalysis || {};
+    const bad = new Set([a.기신, b.기신].filter(Boolean));
+    const pick = [a.용신, b.용신, a.희신, b.희신].find((o) => o && !bad.has(o));
+    return pick
+        ? `\n함께 쓰는 공간의 색과 방위(서버 확정, 두 사람 모두에게 기신이 아닌 오행 ${pick}): ${OH_COLOR[pick]}. 거실이나 침실처럼 둘이 같이 쓰는 곳을 말할 땐 이 값만 쓴다.`
+        : '\n함께 쓰는 공간의 색과 방위: 두 사람 모두에게 맞는 오행이 없으니 공용 색은 권하지 않는다(사람별로만).';
 }
 function buildPrompt(d1, d2, rel) {
     const relLabels = { lover: '연인/배우자', friend: '친구', colleague: '직장동료', family: '가족', business: '사업파트너' };
@@ -219,10 +280,18 @@ function buildPrompt(d1, d2, rel) {
 
 ${personDetail('사람 1', d1)}
 
-${personDetail('사람 2', d2)}
+${personDetail('사람 2', d2)}${sharedLuckyText(d1, d2)}
 
 ## ⚠️ 두 사주 간 정통 명리학 산출 결과 (반드시 이 결과를 근거로 분석)
 ${crossRelations}
+
+## 🚨 사람별 기준 (2026-10-15 — 한 사람의 값을 다른 사람에게 덮어씌우지 말 것)
+- 강약과 용신은 위 사람별 값 그대로 쓴다. '두 사주 모두 불기운이 강하다'처럼 한 사람의 강약을 두 사람에게 같이 붙이지 않는다.
+- 색, 방위, 소품을 권할 때는 사람별 용신만 쓴다. 두 사람 용신이 다르면 사람별로 나눠 말한다(예: '{사람1} 님에게는 초록, {사람2} 님에게는 노랑'). 한 사람의 기신 오행 색이나 방위를 두 사람이 함께 쓰는 공간에 권하지 않는다.
+  오행 색: 목 초록, 화 빨강과 주황, 토 노랑과 베이지, 금 흰색과 은색, 수 검정과 남색. 방위: 목 동, 화 남, 토 중앙, 금 서, 수 북.
+- 배우자 별(남편, 아내, 연인의 별) 자리는 위 '별 위치' 줄만 근거로 쓴다.
+- 시주(시간, 시지)는 하루 중 시간대가 아니다. 자녀와 아랫사람, 말년과 앞날 계획의 자리다. '시주가 부딪혀서 밤늦은 대화가 날카롭다' 같은 시간대 풀이를 하지 않는다.
+- 한자는 한국 한자(財, 傷, 殺)로 쓴다. 중국 간체(财, 伤, 杀)를 쓰지 않는다.
 
 ## 위 자동 산출 결과 활용 규칙:
 - ★ 표시 (합, 삼합, 오행보완): 강점과 강한 인연으로 강조
