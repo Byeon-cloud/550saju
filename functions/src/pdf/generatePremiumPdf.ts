@@ -65,6 +65,12 @@ const PREMIUM_PDF_BUCKET = 'appintoss-saju-premium-pdf';
  * 프리미엄 결제 검증 — users/{uid}/payments 에 confirmed 5000원 결제 1건 이상.
  * 어뷰징 방지 (무료 사용자가 자기 사주를 PDF 추출하는 시도 차단).
  */
+/** 이 계정이 서버에서 종합사주를 받은 적이 있는가 (generateReport, generatePremiumReportStream 이 reports 에 uid, type 'premium' 을 남긴다) */
+async function hasPremiumReport(db: admin.firestore.Firestore, uid: string): Promise<boolean> {
+  const snap = await db.collection('reports').where('uid', '==', uid).where('type', '==', 'premium').limit(1).get();
+  return !snap.empty;
+}
+
 async function verifyPremiumPaid(db: admin.firestore.Firestore, uid: string): Promise<boolean> {
   const snap = await db.collection(`users/${uid}/payments`)
     .where('status', '==', 'confirmed')
@@ -202,21 +208,24 @@ export async function handleGeneratePremiumPdf(
     throw new HttpsError('invalid-argument', 'AI 분석 결과가 필요합니다');
   }
 
-  // ── 1. ownership (reportId 제공 시) ──
+  // ── 1~2. 종합사주를 받은 계정인지 (2026-10-16 수리) ──
+  //   화면은 자기 쪽 결과 번호(base36)를 보내는데 서버 reports 문서는 자동 번호라 '리포트를 찾을 수 없음'으로 늘 거절됐고,
+  //   한 번에 5,000원 결제 기록이 있어야만 통과해 운을 나눠 충전했거나 보너스로 산 사람도 막혔다.
+  //   → 서버 번호와 맞으면 그 결과의 주인인지, 아니면 이 계정이 서버에서 종합사주를 받은 적 있는지(reports uid+premium)로 본다.
+  let allowed = false;
   if (reportId) {
-    const ownership = await verifyReportOwnership(db, reportId, uid);
-    if (!ownership.valid) {
-      throw new HttpsError('permission-denied', ownership.reason || '권한이 없습니다');
+    const exists = (await db.collection('reports').doc(reportId).get()).exists;
+    if (exists) {
+      const ownership = await verifyReportOwnership(db, reportId, uid);
+      if (!ownership.valid) {
+        throw new HttpsError('permission-denied', ownership.reason || '권한이 없습니다');
+      }
+      allowed = true;
     }
   }
-
-  // ── 2. 결제 검증 — 프리미엄 5000원 confirmed 1건 이상 (E13) ──
-  const paid = await verifyPremiumPaid(db, uid);
-  if (!paid) {
-    throw new HttpsError(
-      'permission-denied',
-      '프리미엄 결제 후 PDF 다운로드가 가능합니다',
-    );
+  if (!allowed) allowed = (await hasPremiumReport(db, uid)) || (await verifyPremiumPaid(db, uid));
+  if (!allowed) {
+    throw new HttpsError('permission-denied', '종합사주를 받은 계정에서만 PDF를 만들 수 있어요');
   }
 
   // ── 3. HTML 빌드 ──

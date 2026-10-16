@@ -44,7 +44,7 @@ export async function sendPremiumPdfMail(opts: {
   });
 
   let pass = '';
-  try { pass = MAIL_APP_PASSWORD.value(); } catch { pass = ''; } // 함수에 시크릿이 묶이기 전에는 비어 있다
+  try { pass = MAIL_APP_PASSWORD.value().replace(/\s+/g, ''); } catch { pass = ''; } // 구글 앱 비밀번호는 4자씩 띄어 보여 주지만 실제로는 16자
   if (!pass) throw new HttpsError('failed-precondition', '메일 보내기가 아직 준비되지 않았어요');
   const transport = nodemailer.createTransport({ service: 'gmail', auth: { user: FROM_ADDR, pass } });
   const who = name ? `${name} 님` : '고객님';

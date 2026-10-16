@@ -53,7 +53,7 @@ const TOSS_MTLS_KEY = defineSecret('TOSS_MTLS_KEY');
 const TOSS_DECRYPT_KEY = defineSecret('TOSS_DECRYPT_KEY');
 const TOSS_DECRYPT_AAD = defineSecret('TOSS_DECRYPT_AAD');
 const PORTONE_V2_API_SECRET = defineSecret('PORTONE_V2_API_SECRET');
-// const MAIL_APP_PASSWORD = defineSecret('MAIL_APP_PASSWORD'); // 2026-10-16 PDF 메일 (시크릿 생긴 뒤 generatePremiumPdf secrets 와 함께 켠다)
+const MAIL_APP_PASSWORD = defineSecret('MAIL_APP_PASSWORD'); // 2026-10-17 PDF 메일 (mailPdf.ts 와 같은 이름, nodemailer 를 모든 함수에 싣지 않으려고 여기서 따로 선언)
 
 /** 금액 → 패키지 매핑 (서버에서 검증용) */
 const PACKAGE_MAP: Record<number, { name: string; paidUn: number; bonusUn: number }> = {
@@ -2499,8 +2499,7 @@ const lazyPremiumPdf = () => import('./pdf/generatePremiumPdf');
 // asia-northeast3 는 client functionsClient.ts 가 us-central1 고정이라 미사용 — 추후 멀티리전 분리 시 검토
 export const generatePremiumPdf = onCall(
   {
-    // 2026-10-16 PDF 메일: 시크릿 MAIL_APP_PASSWORD 를 오너가 만든 뒤에 아래 줄을 켠다. 시크릿 없이 켜 두면 어떤 함수를 배포해도 실패한다.
-    // secrets: [MAIL_APP_PASSWORD],
+    secrets: [MAIL_APP_PASSWORD], // 2026-10-17 PDF 메일 (시크릿 v5). 이 시크릿을 지우면 모든 함수 배포가 실패하니 지우지 말 것
     timeoutSeconds: 120,
     memory: '1GiB',
     minInstances: 0,
