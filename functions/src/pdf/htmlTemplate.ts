@@ -174,7 +174,7 @@ function pillarSlot(sajuData: any, idx: number): { gan: string; ji: string; ganR
 }
 
 const OHENG_COLOR: Record<string, string> = {
-  목: '#2D8A4E', 화: '#D32F2F', 토: '#F57F17', 금: '#757575', 수: '#1565C0',
+  목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82', // v9 전통 안료 (2026-10-17, 원색 폐기)
 };
 const OHENG_HANJA: Record<string, string> = {
   목: '木', 화: '火', 토: '土', 금: '金', 수: '水',
@@ -196,11 +196,12 @@ function getSection(aiResult: any, ids: string[]): string {
  * 공통 조립 헬퍼
  * ═════════════════════════════════════════════════════════════════ */
 
-/** 섹션 헤더 — SECTION NN + 타이틀 + 한자 + 힌트 */
+/** 섹션 헤더 — 붉은 낙관 번호(一~十) + 타이틀 + 한자 + 힌트 (2026-10-17 v9: 영문 SECTION 머리 폐기) */
+const SEAL_NUM = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 function sectionHead(step: number, title: string, hanja: string, hint: string): string {
   return `
   <div class="section-head">
-    <span class="section-step">SECTION ${String(step).padStart(2, '0')}</span>
+    <span class="section-step">${SEAL_NUM[step] || step}</span>
     <h2 class="section-title">${esc(title)}</h2>
     <span class="section-hanja">${esc(hanja)}</span>
   </div>
@@ -217,7 +218,7 @@ function subBlock(title: string, innerHtml: string): string {
  * 섹션 결론 다크박스 — 앱 .section-conclusion 진본 미러
  *  ① ② ③ 패턴은 raw 단계에서 줄 분리 (분리 후 각 줄 richText → 태그 밸런스 보장)
  */
-function conclusionBox(raw: unknown, label = '이 섹션의 결론'): string {
+function conclusionBox(raw: unknown, label = '이 장의 결론'): string {
   const s = plainKeepTags(raw);
   if (!s) return '';
   const rows = s.split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).map((r) => r.trim()).filter(Boolean);
@@ -247,7 +248,8 @@ function strengthDots(n: unknown): string {
   const k = Math.max(0, Math.min(5, Number(n) || 0));
   let dots = '';
   for (let i = 1; i <= 5; i++) dots += `<i class="dt${i <= k ? ' on' : ''}"></i>`;
-  return `<span class="dots">${dots}</span>`;
+  void dots; // 2026-10-17 v9 — 점 다섯 개 별점은 AI 결과물 티라 그리지 않는다
+  return '';
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -389,8 +391,8 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
           <span class="edge-name">${esc(k)} <span class="edge-count">${count}개</span></span>
         </div>
         ${c.head ? `<p class="edge-body">${richText(c.head)}</p>` : ''}
-        ${c.save ? `<div class="edge-row save"><span class="edge-tag">살릴 것</span><span>${richText(c.save)}</span></div>` : ''}
-        ${c.avoid ? `<div class="edge-row avoid"><span class="edge-tag">조심할 것</span><span>${richText(c.avoid)}</span></div>` : ''}
+        ${c.save ? `<div class="edge-row save"><span class="edge-tag">살릴 일</span><span>${richText(c.save)}</span></div>` : ''}
+        ${c.avoid ? `<div class="edge-row avoid"><span class="edge-tag">조심할 일</span><span>${richText(c.avoid)}</span></div>` : ''}
       </div>`;
     }).join('');
 
@@ -507,7 +509,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
       </div>
       ${c.from ? `<div class="ss-from">${txt(c.from)}</div>` : ''}
       ${c.desc ? `<p class="ss-desc">${richText(c.desc)}</p>` : ''}
-      ${c.action ? `<div class="ss-action"><span class="ss-action-tag">이렇게</span>${richText(c.action)}</div>` : ''}
+      ${c.action ? `<div class="ss-action"><span class="ss-action-tag">이렇게 하세요</span>${richText(c.action)}</div>` : ''}
       ${c.when ? `<div class="ss-when">${txt(c.when)}</div>` : ''}
     </div>`).join('');
 
@@ -543,7 +545,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   const lifeKeywordHtml = lifeKeyword
     ? `
     <div class="keyword-hero">
-      <div class="kh-label">◇ ${esc(profile.name)} 님의 인생 한 줄</div>
+      <div class="kh-label">${esc(profile.name)} 님의 인생 한 줄</div>
       <p class="kh-text">${richText(lifeKeyword)}</p>
     </div>`
     : '';
@@ -574,8 +576,8 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
           <div class="edge-card">
             <div class="edge-head"><span class="edge-name">${esc(m.label)}</span>${c.tag ? `<span class="edge-count">${txt(c.tag)}</span>` : ''}</div>
             ${c.summary ? `<p class="edge-body">${richText(c.summary)}</p>` : ''}
-            ${c.save ? `<div class="edge-row save"><span class="edge-tag">살릴 것</span><span>${richText(c.save)}</span></div>` : ''}
-            ${c.avoid ? `<div class="edge-row avoid"><span class="edge-tag">조심할 것</span><span>${richText(c.avoid)}</span></div>` : ''}
+            ${c.save ? `<div class="edge-row save"><span class="edge-tag">살릴 일</span><span>${richText(c.save)}</span></div>` : ''}
+            ${c.avoid ? `<div class="edge-row avoid"><span class="edge-tag">조심할 일</span><span>${richText(c.avoid)}</span></div>` : ''}
           </div>`;
         }).join('')
     : '';
@@ -608,7 +610,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
           return `
           <div class="topic-cell${cls}">
             <div class="topic-head">
-              <span class="topic-ttl">${esc(t.label)}${isPeak ? '<span class="topic-badge pk">최강</span>' : ''}${isLow ? '<span class="topic-badge lw">주의</span>' : ''}</span>
+              <span class="topic-ttl">${esc(t.label)}${isPeak ? '<span class="topic-badge pk">가장 강함</span>' : ''}${isLow ? '<span class="topic-badge lw">가장 약함</span>' : ''}</span>
               ${t.score > 0 ? `<span class="topic-score">${t.score}</span>` : ''}
             </div>
             ${t.score > 0 ? `<div class="topic-track"><div class="topic-fill" style="width:${t.score}%"></div></div>` : ''}
@@ -636,7 +638,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   const yongsinBoxHtml = yongsin
     ? `
     <div class="yongsin-box">
-      <div class="yb-label">用神 — 이 사주가 가장 반기는 기운</div>
+      <div class="yb-label">용신(用神), 이 사주가 가장 반기는 기운</div>
       <div class="yb-main">
         <span class="yb-el" style="color:${OHENG_COLOR[String(yongsin).slice(0, 1)] || '#8C6D3D'}">${esc(String(yongsin))}</span>
         ${huisin ? `<span class="yb-sub">희신(喜神) ${esc(huisin)}</span>` : ''}
@@ -649,12 +651,9 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
 
   // ── 디스클레이머 (DailyFortune/Dream/PremiumResult 통일 패턴) ──
   const disclaimer = `
-    <p class="disclaimer-source">
-      한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
-    </p>
     <p class="disclaimer-body">
-      사주 풀이는 삶의 결을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.<br/>
-      의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
+      이 풀이는 명리학의 원리로 사주를 살핀 참고 자료예요. 중요한 결정은 스스로 내리시고,<br/>
+      의료, 법률, 재정처럼 전문 판단이 필요한 일은 그 분야 전문가와 상의하세요.
     </p>`;
 
   // ═════════════ 섹션 블록 조립 (내용 있는 섹션만 — 빈 섹션 0 정책) ═════════════
@@ -677,7 +676,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   ${sectionHead(2, '천간지지', '天干地支', '위로 드러난 마음과 아래에 깔린 본능')}
   ${secStructure ? `<div class="body-text">${paragraphs(secStructure)}</div>` : ''}
   ${subBlock('4기둥이 각각 말하는 것', pillarMessagesHtml)}
-  ${lifeEdgeCards ? subBlock('오행별 인생의 결 — 나에게 뭐가 있고 뭐가 비는가', lifeEdgeCards) : ''}
+  ${lifeEdgeCards ? subBlock('오행마다 있는 것과 비는 것', lifeEdgeCards) : ''}
   ${conclusionBox(conclusion('structure', 1))}
 </div>`);
   }
@@ -687,7 +686,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
     sections.push(`
 <div class="section">
   ${sectionHead(3, '십성', '十神', '관계와 욕망을 그리는 열 개의 키')}
-  ${sipClusterHtml ? subBlock('다섯 무리 — 비겁, 식상, 재성, 관성, 인성', sipClusterHtml) : ''}
+  ${sipClusterHtml ? subBlock('다섯 무리: 비겁, 식상, 재성, 관성, 인성', sipClusterHtml) : ''}
   ${secSipsung ? `<div class="body-text">${paragraphs(secSipsung)}</div>` : ''}
   ${conclusionBox(conclusion('sipsung', 2))}
 </div>`);
@@ -697,11 +696,11 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   if (yongsinBoxHtml || secYongsin || lifestyleAdvice) {
     sections.push(`
 <div class="section">
-  ${sectionHead(4, '용신과 조후', '用神 調候', '사주가 가장 갈증을 느끼는 것 — 색, 방위, 계절, 물건, 습관까지')}
+  ${sectionHead(4, '용신과 조후', '用神 調候', '사주가 가장 반기는 기운과 색, 방위, 계절, 물건, 습관')}
   ${yongsinBoxHtml}
   ${gyeokguk || gangyak ? `<div class="base-row-line">${gyeokguk ? `격국(格局) <b>${txt(gyeokguk)}</b>` : ''}${gyeokguk && gangyak ? ', ' : ''}${gangyak ? `일간 강약 <b>${txt(gangyak)}</b>` : ''}</div>` : ''}
   ${secYongsin ? `<div class="body-text">${paragraphs(secYongsin)}</div>` : ''}
-  ${lifestyleAdvice ? subBlock('일상 처방 — 용신 기반 라이프스타일', `<div class="body-text">${paragraphs(lifestyleAdvice)}</div>`) : ''}
+  ${lifestyleAdvice ? subBlock('일상에서 할 일', `<div class="body-text">${paragraphs(lifestyleAdvice)}</div>`) : ''}
   ${conclusionBox(conclusion('yongsin', 3))}
 </div>`);
   }
@@ -721,7 +720,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   if (secYearly || monthlyHtml || warningsHtml) {
     sections.push(`
 <div class="section">
-  ${sectionHead(6, '연운', '年運', `${now.year}년 ${yearGzKo}(${yearGz}) 해 — 올해의 흐름`)}
+  ${sectionHead(6, '연운', '年運', `${now.year}년 ${yearGzKo}(${yearGz}) 해의 흐름`)}
   ${secYearly ? `<div class="body-text">${paragraphs(secYearly)}</div>` : ''}
   ${monthlyHtml ? subBlock('12개월 흐름', monthlyHtml) : ''}
   ${warningsHtml ? subBlock('시기별 주의', warningsHtml) : ''}
@@ -733,10 +732,10 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   if (shinsalCards.length > 0) {
     sections.push(`
 <div class="section">
-  ${sectionHead(7, '신살', '神殺', `사주에 자리한 길신과 흉살 — ${shinsalCards.length}개 (강 ${strongShinsal.length}, 중 ${midShinsal.length}, 참고 ${refShinsal.length})`)}
+  ${sectionHead(7, '신살', '神殺', `사주에 자리한 길신과 흉살 ${shinsalCards.length}개 (강 ${strongShinsal.length}, 중 ${midShinsal.length}, 참고 ${refShinsal.length})`)}
   ${strongShinsalHtml}
   ${midShinsalHtml}
-  ${refShinsalHtml ? subBlock('참고 — 명목상 자리만 잡은 신살', refShinsalHtml) : ''}
+  ${refShinsalHtml ? subBlock('참고로 자리만 잡은 신살', refShinsalHtml) : ''}
   ${conclusionBox(conclusion('shinsal', 6))}
 </div>`);
   }
@@ -745,7 +744,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   if (lifeKeywordHtml || strengthsHtml || cautionsHtml || rel6Html) {
     sections.push(`
 <div class="section">
-  ${sectionHead(8, '내 사주의 결', '本質', '사주 8글자가 빚는 통합 한 줄 + 진짜 강점 3, 함정 3')}
+  ${sectionHead(8, '내 사주의 결', '本質', '사주 여덟 글자가 빚는 한 줄과 강점 셋, 함정 셋')}
   ${lifeKeywordHtml}
   ${strengthsHtml ? subBlock('진짜 강점 3', strengthsHtml) : ''}
   ${cautionsHtml ? subBlock('의식할 함정 3', cautionsHtml) : ''}
@@ -758,7 +757,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   if (topicHtml) {
     sections.push(`
 <div class="section">
-  ${sectionHead(9, '여섯 영역 한눈에', '主題', '재물, 사랑, 직업, 건강, 인간관계, 잠재력 — 강과 약 점수')}
+  ${sectionHead(9, '여섯 영역 한눈에', '主題', '재물, 사랑, 직업, 건강, 인간관계, 잠재력의 강약')}
   ${topicHtml}
   ${conclusionBox(conclusion('topic', 8))}
 </div>`);
@@ -771,7 +770,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   ${sectionHead(10, '실천', '實踐', '사주를 안 다음, 오늘부터 바꾸어볼 것들')}
   ${secPractice ? `<div class="body-text">${paragraphs(secPractice)}</div>` : ''}
   ${actionHtml ? subBlock('오늘부터의 실천', actionHtml) : ''}
-  ${conclusionBox(conclusion('practice', 9), '이 섹션의 결론 — 평생 가져갈 한 줄')}
+  ${conclusionBox(conclusion('practice', 9), '평생 가져갈 한 줄')}
 </div>`);
   }
 
@@ -780,10 +779,10 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
-<title>사주500 프리미엄 — ${esc(profile.name)}</title>
+<title>사주500 종합사주, ${esc(profile.name)} 님</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 <style>
   /* ══════ A4 인쇄 기본 ══════ */
   @page {
@@ -1005,7 +1004,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
     padding-bottom: 2mm;
     border-bottom: 1px solid rgba(244,209,102,0.32);
   }
-  .conclusion .sc-label::before { content: '◇  '; opacity: 0.7; }
+  .conclusion .sc-label::before { content: none; }
   .conclusion .sc-row {
     color: #F4ECD8;
     font-size: 10pt;
@@ -1325,15 +1324,51 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
     color: #B8965A;
     letter-spacing: 0.1em;
   }
+
+  /* ══════ v9 수묵 고서 덮어쓰기 (2026-10-17 오너: PDF 품질 낮음) ══════
+     빈 쪽(장마다 새 쪽 + 쪼개지지 않는 결론 상자)과 옛 디자인(왼쪽 색 띠, 알약 배지, 별점, 기울임, 원색, 금빛 그라데이션)을 걷어낸다. */
+  html, body { color: #1A1612; }
+  * { font-style: normal !important; }
+  strong, b, .sc-ttl { font-weight: 700 !important; }
+  h1, h2, h3, h4, .section-title, .cover-title { font-weight: 700 !important; }
+  .section { page-break-before: auto !important; break-before: auto !important; margin-top: 11mm; }
+  .cover + .section { page-break-before: always !important; break-before: page !important; margin-top: 0; }
+  .section-head, .sub-title { page-break-after: avoid; break-after: avoid; }
+  .section-step { display: inline-grid; place-items: center; width: 7.5mm; height: 7.5mm; border: 1.4px solid #A23A2A; color: #A23A2A; border-radius: 1.2mm; font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 11pt; letter-spacing: 0 !important; line-height: 1; }
+  .section-title { color: #1A1612 !important; }
+  .section-hanja { color: #6F6557 !important; }
+  .section-hint, .cover-sub, .disclaimer-body { color: #6F6557 !important; }
+  .cover-logo { color: #1A1612 !important; letter-spacing: 0.08em !important; }
+  .cover-title { font-size: 26pt !important; }
+  .cover-base-note { color: #4B4238; font-size: 9.5pt; }
+  .sub-title { color: #1A1612 !important; }
+  .sip-card, .warn-card, .sc-card, .sc-card.st, .sc-card.ca, .edge-card, .ss-card, .mi-cell, .topic-cell, .action-item, .yongsin-box, .keyword-hero {
+    border: 1px solid #E1D7C4 !important; border-left: 1px solid #E1D7C4 !important; border-radius: 2mm !important; background: #FFFFFF !important; box-shadow: none !important;
+  }
+  .topic-cell.peak, .topic-cell.low, .mi-cell.peak, .mi-cell.warn, .mi-cell.nowm { border-color: #C9BBA0 !important; }
+  .warn-card .warn-ttl, .sc-card.ca .sc-ttl { color: #A23A2A !important; }
+  .sc-card.st .sc-ttl { color: #1A1612 !important; }
+  .edge-tag, .ss-action-tag, .ss-tier, .ss-tier.t-strong, .ss-tier.t-mid, .ss-tier.t-ref, .topic-badge, .mi-label, .mi-cell.peak .mi-label {
+    background: none !important; border: 0 !important; padding: 0 !important; border-radius: 0 !important; color: #7A5C2E !important; font-weight: 700 !important;
+  }
+  .edge-row.avoid .edge-tag, .mi-cell.warn .mi-label, .topic-badge.lw { color: #A23A2A !important; }
+  .dots { display: none !important; }
+  .da-fill, .topic-fill, .topic-cell.peak .topic-fill, .topic-cell.low .topic-fill { background: #8C6D3D !important; }
+  .da-track, .topic-track, .oheng-track { background: #EFE8DA !important; }
+  .conclusion { page-break-inside: avoid !important; break-inside: avoid !important; background: #1A1612 !important; border: 0 !important; }
+  .section-hint { page-break-after: avoid; break-after: avoid; }
+  .topic-cell.peak .topic-score, .topic-cell.low .topic-score { color: #1A1612 !important; }
+  .footer-meta { color: #6F6557 !important; letter-spacing: 0 !important; }
+  .disclaimer { page-break-before: auto !important; margin-top: 12mm; }
 </style>
 </head>
 <body>
 
 <!-- ─────────── 표지 ─────────── -->
 <div class="cover">
-  <div class="cover-logo">사주500, SAJU500</div>
-  <h1 class="cover-title">프리미엄 명리 분석</h1>
-  <div class="cover-sub">한국 명리학 6대 원전 기반 정통 풀이</div>
+  <div class="cover-logo">사주500</div>
+  <h1 class="cover-title">종합사주 풀이</h1>
+  <div class="cover-sub">사주 여덟 글자를 열 장에 걸쳐 풀었어요</div>
 
   <div class="cover-name-block">
     <div class="cover-name">${esc(profile.name)}</div>
@@ -1351,7 +1386,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
     <div class="cover-base-row"><span class="k">일간(日干)</span>${esc(ilgan)}${ilganRead ? ` (${esc(ilganRead)})` : ''}${ilganOheng ? ` ${esc(ilganOheng)} 오행` : ''}</div>
     ${gyeokguk ? `<div class="cover-base-row"><span class="k">격국(格局)</span>${txt(gyeokguk)}</div>` : ''}
     ${gangyak ? `<div class="cover-base-row"><span class="k">일간 강약</span>${txt(gangyak)}</div>` : ''}
-    ${yongsin ? `<div class="cover-base-row"><span class="k">용신(用神)</span>${txt(yongsin)}${yongsinReason ? ` — ${txt(yongsinReason)}` : ''}</div>` : ''}
+    ${yongsin ? `<div class="cover-base-row"><span class="k">용신(用神)</span>${txt(yongsin)}${yongsinReason ? `<br/><span class="cover-base-note">${txt(yongsinReason)}</span>` : ''}</div>` : ''}
     ${huisin ? `<div class="cover-base-row"><span class="k">희신(喜神)</span>${txt(huisin)}</div>` : ''}
     ${gisin ? `<div class="cover-base-row"><span class="k">기신(忌神)</span>${txt(gisin)}</div>` : ''}
   </div>
@@ -1367,7 +1402,7 @@ ${sections.join('\n')}
 <div class="disclaimer">
   ${disclaimer}
   <div class="footer-meta">
-    SAJU500, ${esc(profile.name)}, 발급 ${esc(issuedFmt)}, No.${esc(issueId)}
+    사주500, ${esc(profile.name)} 님, 발급 ${esc(issuedFmt)}, 발급번호 ${esc(issueId)}
   </div>
 </div>
 
