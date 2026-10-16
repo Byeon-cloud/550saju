@@ -158,11 +158,17 @@ function dayAfterLabel(dateKey: string): string {
 
 function resolvePricing(def: PricingDef): PricingInfo {
   if (def.launchPrice != null && def.launchUntil && kstTodayKey() <= def.launchUntil) {
+    // 2026-10-17 마감 열흘 전부터 남은 날을 함께 알린다 (시험 A6 · 실제 기한이라 표시 가능, 취소선과 할인율은 여전히 쓰지 않는다)
+    const [ty, tm, td] = kstTodayKey().split('-').map(Number);
+    const [uy, um, ud] = def.launchUntil.split('-').map(Number);
+    const left = Math.round((Date.UTC(uy, um - 1, ud) - Date.UTC(ty, tm - 1, td)) / 864e5);
+    const after = `${dayAfterLabel(def.launchUntil)}부터 ${def.regularPrice}운`;
+    const note = left === 0 ? `오늘까지, ${after}` : left <= 10 ? `${um}월 ${ud}일까지, ${left}일 남았어요` : after;
     return {
       regularPrice: def.regularPrice,
       isOnSale: false,
       actualPrice: def.launchPrice,
-      launch: { price: def.launchPrice, badge: def.launchBadge || '출시가', note: `${dayAfterLabel(def.launchUntil)}부터 ${def.regularPrice}운` },
+      launch: { price: def.launchPrice, badge: def.launchBadge || '출시가', note },
     };
   }
   const isOnSaleNow = def.isOnSale && isStillOnSale(def.saleEndDate);
