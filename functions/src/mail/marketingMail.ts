@@ -95,10 +95,17 @@ export const unsubscribeMail = onRequest(
       return;
     }
     try {
-      const ref = admin.firestore().doc(`emailLeads/${uid}`);
+      // k=daily 는 아침 일주 운세 메일(ilju/iljuDaily.ts), 없으면 광고 소식
+      const daily = req.query.k === 'daily';
+      const ref = admin.firestore().doc(`${daily ? 'dailyMailSubs' : 'emailLeads'}/${uid}`);
       const snap = await ref.get();
       if (!snap.exists || snap.data()?.unsubToken !== t) {
         res.status(200).send(unsubPage('이미 처리됐거나 받을 메일이 없어요.'));
+        return;
+      }
+      if (daily) {
+        await ref.set({ active: false, withdrawnAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        res.status(200).send(unsubPage('수신 거부가 처리됐어요. 내일부터 아침 운세 메일을 보내지 않아요.'));
         return;
       }
       await ref.set({ marketingConsent: false, marketingWithdrawnAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });

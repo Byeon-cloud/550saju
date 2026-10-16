@@ -37,8 +37,9 @@ export function mailTransport() {
 export function newUnsubToken(): string {
   return require('crypto').randomBytes(16).toString('hex');
 }
-export function unsubUrl(uid: string, token: string): string {
-  return `https://saju500.app/mail/unsub?u=${encodeURIComponent(uid)}&t=${token}`;
+/** kind: 없으면 광고 소식(emailLeads), 'daily' 면 아침 일주 운세(dailyMailSubs) */
+export function unsubUrl(uid: string, token: string, kind?: 'daily'): string {
+  return `https://saju500.app/mail/unsub?u=${encodeURIComponent(uid)}&t=${token}${kind ? `&k=${kind}` : ''}`;
 }
 
 export async function sendPremiumPdfMail(opts: {

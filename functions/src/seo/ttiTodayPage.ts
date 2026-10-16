@@ -56,7 +56,7 @@ function render(doc: any, dateKey: string, isToday: boolean): string {
 <nav class="jump">${ORDER.map((z) => `<a href="#${SLUG[z]}">${NAME[z]}</a>`).join('')}</nav>
 ${blocks}
 <section class="cta"><h3>같은 띠라도 생일과 태어난 시간에 따라 하루가 달라요</h3><p>생일을 넣으면 내 사주로 오늘 하루를 풀어 드려요. 하루 한 번 무료예요.</p>
-<a class="btn" href="/daily?${utm('daily')}">내 사주로 오늘의 운세 보기</a><a class="sub" href="/unse/2027/?${utm('newyear')}">2027년 띠별 신년운세 보기</a></section>
+<a class="btn" href="/daily?${utm('daily')}">내 사주로 오늘의 운세 보기</a><a class="sub" href="/daily?${utm('mail')}#daily-mail">매일 아침 내 일주 운세 메일로 받기 (무료)</a><a class="sub" href="/unse/2027/?${utm('newyear')}">2027년 띠별 신년운세 보기</a></section>
 <p class="note">띠(태어난 해의 지지)와 오늘 일진의 관계, 태어난 해의 천간을 명리학 원리로 본 참고용 풀이예요.</p>
 </main>
 <nav class="wrap" style="margin-top:26px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/2027/">2027년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a></nav>

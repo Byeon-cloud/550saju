@@ -97,6 +97,7 @@ export async function purgeUserData(uid: string, reason: string): Promise<PurgeR
   // 4) 결과지 메일 주소와 광고 수신 동의 (2026-10-16 PDF 메일 보내기)
   try {
     await db.doc(`emailLeads/${uid}`).delete();
+    await db.doc(`dailyMailSubs/${uid}`).delete(); // 2026-10-17 아침 일주 운세 메일
   } catch (e: any) {
     result.errors.push(`emailLeads:${e?.message || e}`);
   }

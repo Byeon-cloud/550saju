@@ -158,5 +158,16 @@
   "status": "진행",
   "cost": "0원",
   "next": "11/28 10:00 sendNewYearDeadlineMail 자동 발송(동의자만, (광고) 표시, 수신 거부 링크). mailCampaigns/newyear2027_deadline 에 결과"
+ },
+ {
+  "id": "E15",
+  "name": "매일 아침 일주 운세 메일",
+  "hypothesis": "40~60대 웹 방문자는 메일로 매일 붙잡을 수 있고, 아침 메일을 받은 사람이 무료 오늘의 운세와 유료로 다시 들어온다",
+  "start": "2026-10-17",
+  "metric": "신청 수(mail_subscribe daily_*), 메일 클릭(utm_campaign=ilju_daily), 구독자의 7일 재방문, 결제",
+  "target": "신청 주 50명, 클릭률 15%, 구독자 결제 비율 5%",
+  "status": "진행",
+  "cost": "구독 0명이면 0원, 있으면 하루 약 400원(60일주 하루 한 번, 한 달 약 1.2만 원 고정)",
+  "next": "웹 /daily 와 /unse/today/ 에서 신청. 구글 워크스페이스 하루 2,000통 한도라 1,500명에서 신청을 멈추고 경보 → 그 전에 대량 발송 서비스로 옮긴다"
  }
 ]

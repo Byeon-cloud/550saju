@@ -38,6 +38,7 @@ import { ProfileSelector } from '@/components/common/ProfileSelector';
 import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
+import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
@@ -607,6 +608,13 @@ export function DailyFortunePage() {
 
   // 결과 phase 일 때 DarkHeader (PremiumResult 패턴 통일), 그 외 기본 Header
   const isResultPhase = phase === 'result' && !!selectedProfile;
+  // 2026-10-17 웹 아침 일주 운세 메일 (앱은 DailyNotiButton 토스 알림) — 고른 사주의 생일로 미리 채운다
+  const mailPrefill = (() => {
+    const inp: any = (selectedProfile as any)?.input;
+    if (!inp?.birthYear) return undefined;
+    const p2 = (n: number) => String(n).padStart(2, '0');
+    return { birth: `${inp.birthYear}${p2(inp.birthMonth)}${p2(inp.birthDay)}`, calendar: (inp.calendarType === 'lunar' ? 'lunar' : 'solar') as 'solar' | 'lunar', name: (selectedProfile as any)?.name || '' };
+  })();
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
@@ -651,6 +659,8 @@ export function DailyFortunePage() {
               >
                 오늘의 운세는 사주 기반이에요. 생년월일만 넣으면 1분이면 돼요.
               </p>
+              {/* 2026-10-17 웹 아침 일주 운세 메일 — 무료 사주 넣기 아래 (앱은 그리지 않음) */}
+              <DailyMailSignup source="daily_empty" style={{ marginTop: 8 }} />
             </motion.div>
           )}
 
@@ -722,6 +732,9 @@ export function DailyFortunePage() {
         {/* 2026-10-16 — 다 읽은 끝에서 내일 아침 알림 권하기 (동의했으면 안 보임) */}
         {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
           <DailyNotiButton variant="closing" className="mt-6" />
+        )}
+        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
+          <div className="px-5"><DailyMailSignup prefill={mailPrefill} source="daily_result" style={{ marginTop: 24 }} /></div>
         )}
 
         {/* 2026-10-10 — 실제 후기 수집 (생성 끝난 뒤 · 사람·날짜당 한 번) */}
