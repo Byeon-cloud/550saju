@@ -93,6 +93,8 @@ export interface PortoneLiveResult {
   totalUn?: number;
   paidUn?: number;
   bonusUn?: number;
+  /** 결제 번호 (환불 요청 메일에 채우려고 기기에 적어 둔다, 2026-10-16) */
+  paymentId?: string;
 }
 
 /** paymentId — 서버 confirmPortonePayment 의 uid 바인딩 검증(접두사 uid 8자)과 반드시 일치 */
@@ -146,7 +148,7 @@ export async function requestPortoneLivePayment(
       return { ok: false, cancelled, message: resp.message || '결제가 완료되지 않았어요' };
     }
     // 데스크톱(팝업/iframe) — 결제창 완료 즉시 서버 검증·지급
-    return await confirmPortonePaymentServer(paymentId, pkg.price);
+    return { ...(await confirmPortonePaymentServer(paymentId, pkg.price)), paymentId };
   } catch (e: any) {
     return { ok: false, cancelled: false, message: e?.message || '결제창을 열지 못했어요' };
   }

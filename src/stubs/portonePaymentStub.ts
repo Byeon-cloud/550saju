@@ -39,6 +39,7 @@ export interface PortoneLiveResult {
   totalUn?: number;
   paidUn?: number;
   bonusUn?: number;
+  paymentId?: string;
 }
 
 export function isPortoneLiveEnabled(): boolean {

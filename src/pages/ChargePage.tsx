@@ -19,6 +19,7 @@ import { trackEvent } from '@/services/analytics';
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useAuth } from '@/hooks/useAuth';
 import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
+import { rememberWebPayment, openRefundRequest } from '@/services/payment/refundRequest';
 
 // ── SSOT 토큰 (D1 fix 2026-04-23 / #55)
 const C = {
@@ -169,6 +170,7 @@ export function ChargePage() {
         .then((r) => {
           if (r.ok && r.paidUn != null) {
             addPaidBalance(r.paidUn, r.bonusUn || 0);
+            rememberWebPayment(portonePid, portoneAmount);
             setBalanceDisplay(getBalance());
             toast.show(r.message, 'success');
             import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: portoneAmount, source: chargeSource, pg: 'portone' })).catch(() => {});
@@ -238,6 +240,7 @@ export function ChargePage() {
     setPurchasing(false);
     if (r.ok && r.paidUn != null) {
       addPaidBalance(r.paidUn, r.bonusUn || 0);
+      if (r.paymentId) rememberWebPayment(r.paymentId, selectedPkg.price);
       setBalanceDisplay(getBalance());
       toast.show(r.message, 'success');
       import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: selectedPkg.price, source: chargeSource, pg: 'portone' })).catch(() => {});
@@ -273,7 +276,7 @@ export function ChargePage() {
     <div style={{
       minHeight: '100vh',
       background: C.paper,
-      paddingBottom: 'calc(96px + env(safe-area-inset-bottom))', // CheckoutBar 80 + 여유
+      paddingBottom: isAppintosBuild ? 'calc(96px + env(safe-area-inset-bottom))' : 'calc(150px + env(safe-area-inset-bottom))', // CheckoutBar 80 + 여유 (웹은 청약철회 고지 줄까지 136px — 2026-10-16 사업자 정보 끝줄이 가리던 것)
     }}>
 
       {/* ─── §2. TopBar (56px · sticky) ─── */}
@@ -482,7 +485,12 @@ export function ChargePage() {
           </p>
         ) : (
           <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-            충전한 운을 분석에 사용(생성)하면 해당 운은 환불되지 않아요. 미사용 운은 결제 후 7일 이내 환불 가능하며, 청약철회일로부터 3영업일 이내 환급돼요. (디지털콘텐츠, 전자상거래법 제17조)
+            충전한 운을 분석에 사용(생성)하면 해당 운은 환불되지 않아요. 미사용 운은 결제 후 7일 이내 환불 가능하며, 청약철회일로부터 3영업일 이내 환급돼요. (디지털콘텐츠, 전자상거래법 제17조){' '}
+            {/* 2026-10-16 — 환불 요청 길 (눈에 띄지 않게 본문 속 작은 링크) */}
+            <button type="button" onClick={() => { void openRefundRequest(); }} className="tap-pad"
+              style={{ background: 'none', border: 0, padding: 0, color: C.mute, textDecoration: 'underline', fontSize: 13, cursor: 'pointer' }}>
+              환불 요청
+            </button>
           </p>
         )}
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: '6px 0 0' }}>
