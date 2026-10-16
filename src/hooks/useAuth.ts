@@ -8,6 +8,8 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(!DEV_MODE);
   const [devLoggedIn] = useState(DEV_MODE);
+  // 익명 → 소셜 '연결'은 uid 와 User 객체가 그대로라 onAuthStateChanged 도 setUser 도 다시 그리지 않는다 → 직접 한 번 다시 그린다 (2026-10-16)
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     if (DEV_MODE) return;
@@ -49,12 +51,16 @@ export function useAuth() {
   const login = useCallback(async (provider?: WebLoginProvider) => {
     try {
       const u = await signIn(provider);
+      setUser(u);
+      setTick((n) => n + 1);
       import('@/services/storage/firestoreSync').then(({ syncFromCloud, syncToCloud }) => {
         syncToCloud(u.uid);
         syncFromCloud(u.uid);
       });
+      return u;
     } catch {
       // 로그인 취소/실패 — 무시
+      return null;
     }
   }, []);
 

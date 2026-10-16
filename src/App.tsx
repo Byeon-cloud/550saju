@@ -130,6 +130,7 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
     // PC 폰프레임 모드 — 스트립이 자체 스크롤 컨테이너라 컨테이너도 상단 복원 (2026-06-12)
     document.querySelector('.app-container')?.scrollTo?.(0, 0);
+    document.querySelector('.app-scroll')?.scrollTo?.(0, 0); // 2026-10-16 PC 는 안쪽이 스크롤된다
     // 2026-06-12 P0 — trackPageView 호출부가 0건이라 page_view/content_open/content_result 퍼널 전멸이던 fix
     import('@/services/analytics').then(a => a.trackPageView(pathname)).catch(() => {});
   }, [pathname]);
@@ -484,8 +485,13 @@ export function App() {
           <RouteFlags />
           <DesktopBrandPanel />
           <div className="app-container">
-            <BalanceBar />
-            <AnimatedRoutes />
+            {/* 2026-10-16 — PC 폰 프레임에서 스크롤은 안쪽(app-scroll)만. 바깥 틀(app-container)이 transform 으로
+                fixed 기준이 되고 스크롤되지 않아, 하단 탭바와 결제바가 화면 아래에 붙어 있다 (오너: 하단바가 안 움직임).
+                모바일에서는 app-scroll 이 평범한 div 라 지금과 같다. */}
+            <div className="app-scroll">
+              <BalanceBar />
+              <AnimatedRoutes />
+            </div>
             <TabBar />
           </div>
         </ToastProvider>

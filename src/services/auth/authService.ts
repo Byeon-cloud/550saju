@@ -3,6 +3,10 @@ import {
   signInWithCustomToken,
   signInWithRedirect,
   getRedirectResult,
+  linkWithPopup,
+  linkWithRedirect,
+  signInWithCredential,
+  type AuthCredential,
   signInAnonymously,
   GoogleAuthProvider,
   OAuthProvider,
@@ -73,7 +77,10 @@ export async function signIn(provider?: WebLoginProvider): Promise<User> {
   return signInWithWeb(provider || 'google');
 }
 
-/** 웹 로그인 — Google/카카오/네이버 */
+/** 웹 로그인 — Google/카카오/네이버
+ *  2026-10-16 — 지금 계정이 익명이면 새 계정으로 갈아타지 않고 익명 계정에 소셜 계정을 '연결'한다(uid 그대로).
+ *    갈아타면 로그인 전에 충전한 운, 보관함, 결제 기록이 익명 uid 에 남아 새 계정에서 안 보였다(오너: 로그인 없이 결제됨).
+ *    그 소셜 계정이 이미 다른 사주500 계정에 쓰이고 있으면(credential-already-in-use) 그 계정으로 로그인한다. */
 async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
   const providers: Record<WebLoginProvider, GoogleAuthProvider | OAuthProvider> = {
     google: googleProvider,
@@ -81,35 +88,58 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
     naver: naverProvider,
     apple: appleProvider,
   };
+  const p = providers[provider];
+  const cur = auth.currentUser;
+  const linkAnon = !!cur && cur.isAnonymous;
 
   try {
-    // 모바일에서는 redirect 방식이 더 안정적
+    // 모바일에서는 redirect 방식이 더 안정적 (페이지가 떠났다가 돌아오면 checkRedirectResult 가 마무리)
     const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
     if (isMobile) {
-      await signInWithRedirect(auth, providers[provider]);
-      // 리다이렉트 후 복귀 시 getRedirectResult로 처리
-      const result = await getRedirectResult(auth);
-      if (result) return result.user;
-      throw new Error('로그인이 취소됐어요');
+      if (linkAnon) await linkWithRedirect(cur!, p);
+      else await signInWithRedirect(auth, p);
+      throw new Error('로그인 화면으로 이동해요');
     }
 
     // PC에서는 popup
-    const result = await signInWithPopup(auth, providers[provider]);
-    import('@/services/analytics').then((a) => a.trackEvent('login_success', { provider })).catch(() => {});
+    const result = linkAnon ? await linkWithPopup(cur!, p) : await signInWithPopup(auth, p);
+    import('@/services/analytics').then((a) => a.trackEvent('login_success', { provider, linked: linkAnon ? 1 : 0 })).catch(() => {});
     return result.user;
   } catch (err: any) {
+    const switched = await signInIfAlreadyInUse(err);
+    if (switched) {
+      import('@/services/analytics').then((a) => a.trackEvent('login_success', { provider, linked: 0, existing: 1 })).catch(() => {});
+      return switched;
+    }
     console.error(`[Auth] ${provider} 로그인 실패:`, err);
     throw err;
   }
 }
 
-/** 리다이렉트 복귀 시 결과 확인 (App.tsx에서 호출) */
+/** 연결하려던 소셜 계정이 이미 다른 계정에 붙어 있으면 그 계정으로 로그인 (익명 계정은 두고 간다) */
+async function signInIfAlreadyInUse(err: any): Promise<User | null> {
+  const code: string = err?.code || '';
+  if (!/credential-already-in-use|email-already-in-use|account-exists-with-different-credential/.test(code)) return null;
+  let cred: AuthCredential | null = null;
+  try { cred = OAuthProvider.credentialFromError(err); } catch { /* noop */ }
+  if (!cred) { try { cred = GoogleAuthProvider.credentialFromError(err); } catch { /* noop */ } }
+  if (!cred) return null;
+  try {
+    const r = await signInWithCredential(auth, cred);
+    return r.user;
+  } catch (e) {
+    console.error('[Auth] 기존 계정 로그인 실패:', e);
+    return null;
+  }
+}
+
+/** 리다이렉트 복귀 시 결과 확인 (App.tsx에서 호출) — 연결 복귀도 같은 함수로 마무리 */
 export async function checkRedirectResult(): Promise<User | null> {
   try {
     const result = await getRedirectResult(auth);
     return result?.user || null;
-  } catch {
-    return null;
+  } catch (err) {
+    return signInIfAlreadyInUse(err);
   }
 }
 

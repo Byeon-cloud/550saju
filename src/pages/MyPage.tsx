@@ -25,6 +25,7 @@ import { AD_BANNER_GROUP_ID } from '@/constants/config';
 // 웹 단독 출시 법적 컴플라이언스 (앱인토스 비노출)
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { ConsentModal, type ConsentResult } from '@/components/auth/ConsentModal';
+import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
 import { hasConsentRecord, saveConsent } from '@/services/auth/consent';
 import { signOut } from '@/services/auth/authService';
 import { Modal } from '@/components/common/Modal';
@@ -292,7 +293,7 @@ export function MyPage() {
 
       {/* ── LoginModal (§2-2) — 웹 전용 (앱인토스는 토스 로그인만) ── */}
       {!inAppsInToss && (
-        <LoginModal
+        <WebLoginSheet
           open={showLoginModal}
           onClose={onCloseLoginModal}
           toast={toast}
@@ -1136,171 +1137,6 @@ function ProfileHeader({ user, balance }: { user: any; balance: number }) {
 }
 
 void OHENG_HAN_MY; // 향후 오행 라벨 노출 여지 보존
-
-/* ══════════════════════════════════════════
-   LoginModal — §2-2 (80vh 풀스크린 시트)
-══════════════════════════════════════════ */
-function LoginModal({ open, onClose, toast, onLogin }: {
-  open: boolean;
-  onClose: () => void;
-  toast: ReturnType<typeof useToast>;
-  onLogin: (provider?: 'kakao' | 'naver' | 'apple' | 'google') => Promise<any>;
-}) {
-  const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
-
-  const handleLogin = async (provider: 'kakao' | 'naver' | 'apple' | 'google') => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await onLogin(provider);
-      onClose(); // 성공 시 모달 닫기
-    } catch (err: any) {
-      // Apple Service ID 미설정 시 Firebase가 auth/operation-not-supported-in-this-environment 등 반환
-      const code: string = err?.code || '';
-      if (provider === 'apple' && (code.includes('operation-not-supported') || code.includes('configuration-not-found'))) {
-        toast.show('지금은 Apple 로그인을 쓸 수 없어요. 다른 방법으로 로그인해 주세요', 'info');
-      } else {
-        toast.show('로그인에 실패했어요. 다시 시도해 주세요.', 'warning');
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* 딤드 배경 */}
-          <motion.div
-            key="login-dim"
-            className="fixed inset-0 z-40"
-            style={{ background: 'rgba(0,0,0,0.5)' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          {/* 시트 본체 — 80vh, radius-top 24 */}
-          <motion.div
-            key="login-sheet"
-            className="fixed bottom-0 inset-x-0 z-50 flex flex-col"
-            style={{
-              height: '80vh',
-              background: C.paper,
-              borderRadius: '24px 24px 0 0',
-              maxWidth: 520,
-              margin: '0 auto',
-              padding: '24px 24px 40px',
-              overflow: 'hidden',
-            }}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-          >
-            {/* 닫기 버튼 */}
-            <button type="button" onClick={onClose}
-              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full"
-              style={{ background: 'rgba(0,0,0,0.06)' }}
-              aria-label="닫기">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke={C.inkSoft} strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-
-            {/* 상단 심볼 */}
-            <div className="flex justify-center mb-5 mt-2">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                style={{ background: C.goldSoft }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-                  stroke={C.gold} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  <circle cx="12" cy="16" r="1.5" fill={C.gold} />
-                </svg>
-              </div>
-            </div>
-
-            {/* 헤더 (§2-2) */}
-            <h1 className="text-center text-[22px] font-bold leading-[1.35] mb-2"
-              style={{ color: C.ink, fontFamily: SERIF }}>
-              내 사주를 안전하게<br />보관해요
-            </h1>
-            <p className="text-center text-[14px] leading-[1.6] mb-8" style={{ color: C.mute }}>
-              로그인하면 운 잔액, 풀이 기록, 결제 내역을<br />안전하게 관리할 수 있어요
-            </p>
-
-            {/* CTA 버튼 3개 (§2-2) */}
-            <div className="flex flex-col gap-3 flex-1">
-              {/* 카카오 — signIn('kakao') 실제 연결 */}
-              <button type="button"
-                onClick={() => handleLogin('kakao')}
-                disabled={busy}
-                className="w-full flex items-center justify-center gap-3 rounded-2xl font-semibold text-[16px]"
-                style={{ height: 52, background: '#FEE500', color: C.ink, opacity: busy ? 0.6 : 1 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill={C.ink} aria-hidden>
-                  <path d="M12 3C6.477 3 2 6.477 2 10.9c0 2.789 1.698 5.24 4.29 6.73l-.89 3.27 3.78-2.49A11.5 11.5 0 0 0 12 18.8c5.523 0 10-3.477 10-7.9C22 6.477 17.523 3 12 3z" />
-                </svg>
-                카카오 계속하기
-              </button>
-
-              {/* 네이버 — signIn('naver') 실제 연결 */}
-              <button type="button"
-                onClick={() => handleLogin('naver')}
-                disabled={busy}
-                className="w-full flex items-center justify-center gap-3 rounded-2xl font-semibold text-[16px]"
-                style={{ height: 52, background: '#03C75A', color: '#fff', opacity: busy ? 0.6 : 1 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <text x="3" y="18" fontSize="16" fontWeight="900" fill="#fff">N</text>
-                </svg>
-                네이버 계속하기
-              </button>
-
-              {/* 구글 — GoogleAuthProvider (2026-06-12 추가 — 모달에 구글만 빠져 있던 것) */}
-              <button type="button"
-                onClick={() => handleLogin('google')}
-                disabled={busy}
-                className="w-full flex items-center justify-center gap-3 rounded-2xl font-semibold text-[16px]"
-                style={{ height: 52, background: '#FFFFFF', color: C.ink, border: '1px solid rgba(26,26,26,0.15)', opacity: busy ? 0.6 : 1 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
-                  <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.57 5.57 0 0 1-2.4 3.58v2.98h3.87c2.26-2.09 3.55-5.17 3.55-8.8z" />
-                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.94-2.93l-3.87-2.98c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.07A11.99 11.99 0 0 0 12 24z" />
-                  <path fill="#FBBC05" d="M5.27 14.29A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.29V6.64H1.29a11.99 11.99 0 0 0 0 10.72l3.98-3.07z" />
-                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.94 1.19 15.23 0 12 0A11.99 11.99 0 0 0 1.29 6.64l3.98 3.07C6.22 6.86 8.87 4.75 12 4.75z" />
-                </svg>
-                구글 계속하기
-              </button>
-
-              {/* Apple — OAuthProvider('apple.com') 정식 연결 (#auth-apple) */}
-              <button type="button"
-                onClick={() => handleLogin('apple')}
-                disabled={busy}
-                className="w-full flex items-center justify-center gap-3 rounded-2xl font-semibold text-[16px]"
-                style={{ height: 52, background: C.ink, color: '#fff', opacity: busy ? 0.6 : 1 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" aria-hidden>
-                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.44c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.39-1.32 2.76-2.53 3.95zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                </svg>
-                Apple 계속하기
-              </button>
-            </div>
-
-            {/* 하단 동의 캡션 (§2-2) */}
-            <p className="text-center text-[13px] mt-5 leading-[1.6]" style={{ color: C.mute }}>
-              로그인하면{' '}
-              <button type="button" className="underline tap-pad" onClick={() => navigate('/terms')}>이용약관</button>
-              과{' '}
-              <button type="button" className="underline tap-pad" onClick={() => navigate('/privacy')}>개인정보처리방침</button>
-              에 동의한 것으로 봐요.
-            </p>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
 
 /* ══════════════════════════════════════════
    ContactSheet — §4-4 (고객문의 바텀 시트)

@@ -17,6 +17,8 @@ import { isPortoneTestEnabled, isPortoneLiveEnabled, isPortoneLiveMethod, reques
 import type { PortonePgMethod } from '@/services/payment/portonePayment';
 import { trackEvent } from '@/services/analytics';
 import { LegalFooter } from '@/components/layout/LegalFooter';
+import { useAuth } from '@/hooks/useAuth';
+import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
 
 // ── SSOT 토큰 (D1 fix 2026-04-23 / #55)
 const C = {
@@ -75,6 +77,9 @@ export function ChargePage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
+  // 2026-10-16 — 웹 실결제는 로그인한 계정만 (오너: 로그인 없이 결제됨). 익명이면 로그인 시트 → 익명 계정에 연결(uid 그대로)
+  const { login } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
 
   // 2026-05-07 fix — 다른 페이지가 보낸 returnTo state 도 redirect 로 인식
   // (잔액 부족 모달 → 충전 → 원래 페이지 자동 복귀 UX 일관성)
@@ -191,6 +196,15 @@ export function ChargePage() {
   // ── 결제 핸들러
   const handlePurchase = async () => {
     if (!selectedPkg || purchasing) return;
+    // 웹 실결제 전 로그인 — 익명으로 결제하면 브라우저 저장소가 지워질 때 운과 결제 기록을 찾을 길이 없다
+    if (portoneLive && !pgReview) {
+      const { auth } = await import('@/services/auth/firebase');
+      if (!auth.currentUser || auth.currentUser.isAnonymous) {
+        trackEvent('charge_login_gate', { source: chargeSource });
+        setShowLogin(true);
+        return;
+      }
+    }
     // 포트원 결제수단 선택 시트 — live(실결제) 또는 심사용 테스트 (live 우선)
     if (portoneLive || portoneTest) { setShowPgSheet(true); return; }
     // 웹 실결제 미오픈(test 키) — 헛결제 방지 안내. 앱인토스 IAP·live 키면 통과.
@@ -674,6 +688,19 @@ export function ChargePage() {
                 </>
               )}
             </AnimatePresence>
+
+            {/* 웹 결제 전 로그인 시트 (2026-10-16) — 앱 빌드에서는 렌더하지 않는다 */}
+            {!isAppintosBuild && (
+              <WebLoginSheet
+                open={showLogin}
+                onClose={() => setShowLogin(false)}
+                onSuccess={() => { setShowLogin(false); setShowPgSheet(true); }}
+                toast={toast}
+                onLogin={login}
+                title={['결제 전에', '로그인해 주세요']}
+                desc={['충전한 운과 결제 내역을 계정에 지켜 둬요', '다른 기기에서도 그대로 쓸 수 있어요']}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
