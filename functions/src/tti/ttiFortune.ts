@@ -208,6 +208,19 @@ function kstDateKey(offsetDays = 0): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** 2026-10-17 오늘 운세가 새로 만들어지면 검색엔진(네이버, 빙)에 IndexNow 로 알린다. 열쇠는 사이트에 공개로 올린 파일(비밀 아님).
+ *  scripts/seo/indexnow.cjs 와 같은 열쇠. 실패해도 운세 저장에는 영향 없음 */
+const INDEXNOW_KEY = 'ac2c01bdca09a9ffa4ee6ee05f6eaa2c';
+async function pingIndexNow(urlList: string[]): Promise<void> {
+  const body = JSON.stringify({ host: 'saju500.app', key: INDEXNOW_KEY, keyLocation: `https://saju500.app/${INDEXNOW_KEY}.txt`, urlList });
+  for (const ep of ['https://searchadvisor.naver.com/indexnow', 'https://www.bing.com/indexnow']) {
+    try {
+      const r = await fetch(ep, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body });
+      console.log('[indexnow]', ep, r.status);
+    } catch (e: any) { console.warn('[indexnow] 실패', ep, e?.message); }
+  }
+}
+
 /** 하루 최대 시도 — 매번 한두 줄씩 빠져도 30분마다 끝없이 다시 만들지 않게 (빠진 줄은 화면이 계산 문장으로 채운다) */
 const MAX_TRIES = 4;
 
@@ -223,6 +236,7 @@ async function ensureDoc(apiKey: string, dateKey: string): Promise<void> {
     const doc = await generateTtiFortune(apiKey, dateKey);
     await ref.set({ ...doc, model: MODEL, tries: tries + 1, createdAt: admin.firestore.FieldValue.serverTimestamp() });
     console.log(`[ttiFortune] saved ${dateKey} ${doc.dayGz} complete=${complete(doc)}`);
+    if (dateKey === kstDateKey(0)) await pingIndexNow(['https://saju500.app/unse/today/']);
   } catch (e: any) {
     await ref.set({ date: dateKey, tries: tries + 1, lastError: String(e?.message || e).slice(0, 200) }, { merge: true });
     throw e;
