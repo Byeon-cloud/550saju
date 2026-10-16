@@ -59,6 +59,7 @@ ${blocks}
 <a class="btn" href="/daily?${utm('daily')}">내 사주로 오늘의 운세 보기</a><a class="sub" href="/unse/2027/?${utm('newyear')}">2027년 띠별 신년운세 보기</a></section>
 <p class="note">띠(태어난 해의 지지)와 오늘 일진의 관계, 태어난 해의 천간을 명리학 원리로 본 참고용 풀이예요.</p>
 </main>
+<nav class="wrap" style="margin-top:26px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/2027/">2027년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a></nav>
 <footer class="wrap foot"><div><a href="/terms">이용약관</a><a class="b" href="/privacy">개인정보처리방침</a><a href="/business">사업자정보</a></div>
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div><div>© ${y} 사주500</div></footer>
 </body></html>`;
