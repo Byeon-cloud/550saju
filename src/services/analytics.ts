@@ -192,13 +192,23 @@ const FIRESTORE_TRACKED = new Set<string>([
  *   저장 → 세션 내 모든 Firestore 이벤트에 utm 첨부 (있을 때만). fire-and-forget. */
 const UTM_KEY = 'saju500:utm';
 
+/** 토스 referrer 파싱 — '캠페인.소재.채널.형식.-' 꼴. 채널(PUSH 등)을 medium 으로, 원문을 campaign 으로 */
+function parseTossReferrer(raw: string | null): { source: string; medium: string; campaign: string } {
+  if (!raw) return { source: '', medium: '', campaign: '' };
+  const parts = raw.split('.');
+  const ch = (parts[2] || '').toLowerCase();
+  return { source: 'toss_ref', medium: ch || 'unknown', campaign: raw.slice(0, 80) };
+}
+
 function captureUtm(): void {
   try {
     if (sessionStorage.getItem(UTM_KEY)) return; // 세션 최초 1회만 (이후 내부 네비게이션은 무시)
     const q = new URLSearchParams(window.location.search);
-    const source = q.get('utm_source') || q.get('ref') || '';
-    const medium = q.get('utm_medium') || '';
-    const campaign = q.get('utm_campaign') || '';
+    // 2026-10-16 — 토스가 광고 푸시, 프로모션 링크에 붙이는 referrer(예: 34866.181660.PUSH.TEXT_PUSH.-)도 출처로 (그전엔 전부 'toss_app' 하나로 뭉쳤다)
+    const tref = parseTossReferrer(q.get('referrer'));
+    const source = q.get('utm_source') || q.get('ref') || tref.source;
+    const medium = q.get('utm_medium') || tref.medium;
+    const campaign = q.get('utm_campaign') || tref.campaign;
     if (!source && !medium && !campaign) return;
     sessionStorage.setItem(UTM_KEY, JSON.stringify({
       ...(source ? { source } : {}),
@@ -233,9 +243,10 @@ async function captureTossSchemeUtm(): Promise<void> {
     const uri: string = typeof mod?.getSchemeUri === 'function' ? (mod.getSchemeUri() || '') : '';
     const qi = uri.indexOf('?');
     const q = new URLSearchParams(qi >= 0 ? uri.slice(qi + 1) : '');
-    const source = q.get('utm_source') || q.get('ref') || '';
-    const medium = q.get('utm_medium') || '';
-    const campaign = q.get('utm_campaign') || '';
+    const tref = parseTossReferrer(q.get('referrer'));
+    const source = q.get('utm_source') || q.get('ref') || tref.source;
+    const medium = q.get('utm_medium') || tref.medium;
+    const campaign = q.get('utm_campaign') || tref.campaign;
     sessionStorage.setItem(UTM_KEY, JSON.stringify({
       ...existing,
       // utm 태그 있으면 그 출처, 없으면 'toss_app'(토스 내부 discovery/검색/추천 or 무태그 딥링크) — 웹 direct 와 구분
