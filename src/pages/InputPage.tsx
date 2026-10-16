@@ -574,6 +574,15 @@ export function InputPage() {
 
   // ── 제출
   const isSubmittingRef = useRef(false);
+  // 2026-10-17 입력을 끝내지 않고 나간 사람이 어느 칸까지 채웠는지 (입력 41% 이탈 진단, analytics input_leave)
+  const leaveRef = useRef({ name: '', gender: '', birthDate: '', time: false });
+  leaveRef.current = { name: name.trim(), gender: String(gender || ''), birthDate, time: timeUnknown || birthTime !== '' };
+  useEffect(() => () => {
+    if (isSubmittingRef.current) return;
+    const f = leaveRef.current;
+    const filled = [f.name && 'name', f.gender && 'gender', f.birthDate && 'birth', f.time && 'time'].filter(Boolean).join(',');
+    import('@/services/analytics').then((a) => a.trackEvent('input_leave', { filled: filled || 'none' })).catch(() => {});
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // 2026-05-28 PM — 본인 중복 modal state
   const [ownerDupModal, setOwnerDupModal] = useState<null | { existingName: string; existingId: string }>(null);
@@ -622,7 +631,19 @@ export function InputPage() {
       birthDate: true,
       hourCode: true,
     });
-    if (!isValid) return;
+    if (!isValid) {
+      // 2026-10-17 퍼널 실측: 입력 화면을 연 324명 중 132명만 끝냈다(41%). 예전엔 빈 칸이 있으면 버튼이 그냥 안 눌려
+      //   무엇이 빠졌는지 몰랐다. 이제 첫 빈 칸으로 내려가고 알려 주며, 어떤 칸에서 막히는지 남긴다.
+      const order: Array<[keyof typeof errors, string]> = [['name', 'input-name'], ['gender', 'input-gender'], ['birthDate', 'input-birth-date'], ['hourCode', 'input-hour']];
+      const first = order.find(([k]) => errors[k]);
+      if (first) {
+        const el = document.getElementById(first[1]) || document.querySelector(`[data-field="${String(first[0])}"]`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        toast.show(String(errors[first[0]] || '빠진 칸을 채워 주세요'), 'info');
+      }
+      import('@/services/analytics').then((a) => a.trackEvent('input_blocked', { missing: Object.keys(errors).join(',') })).catch(() => {});
+      return;
+    }
 
     // 2026-05-28 PM — 본인 중복 가드. relation === '본인' 이고 기존 본인이 있고, 수정 모드 X 일 때만.
     //   확인: 기존 본인 != 현재 입력자 (이름+생일 일치는 같은 사람으로 본다 → 그냥 진행).
@@ -1175,7 +1196,7 @@ function GenderSelector({
       >
         성별
       </label>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div id="input-gender" style={{ display: 'flex', gap: 8 }}>
         {(
           [
             { value: 'female' as Gender, label: '여성', hanja: '坤' },
@@ -1460,7 +1481,7 @@ function BirthHourField({
 }) {
   const hasTime = !timeUnknown && birthTime !== '';
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div id="input-hour" style={{ marginBottom: 24 }}>
       <label
         style={{
           display: 'block',
@@ -1986,7 +2007,7 @@ function SubmitBar({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={blocked}
+          disabled={loading}
           aria-disabled={blocked}
           style={{
             flex: 1,
@@ -1998,8 +2019,8 @@ function SubmitBar({
             fontSize: 15,
             fontWeight: 700,
             letterSpacing: '-0.01em',
-            cursor: blocked ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.6 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.6 : 1, // 2026-10-17 빈 칸이 있어도 눌린다 (눌러서 빠진 칸을 알려 준다)
             transition: 'opacity 0.15s',
           }}
         >
