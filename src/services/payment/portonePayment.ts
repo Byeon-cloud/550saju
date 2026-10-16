@@ -18,15 +18,24 @@ export type PortonePgMethod = 'card' | 'kakaopay';
 const STORE_ID = import.meta.env.VITE_PORTONE_STORE_ID as string | undefined;
 const CHANNEL_INICIS = import.meta.env.VITE_PORTONE_CHANNEL_INICIS as string | undefined;
 const CHANNEL_KAKAOPAY = import.meta.env.VITE_PORTONE_CHANNEL_KAKAOPAY as string | undefined;
+/** 실연동 채널 키 (2026-10-16) — 테스트 키와 따로 둔다. PG 계약이 끝난 결제수단만 채운다(카카오페이 완료, 이니시스와 KPN 은 심사 중) */
+const LIVE_CHANNEL_INICIS = import.meta.env.VITE_PORTONE_LIVE_CHANNEL_INICIS as string | undefined;
+const LIVE_CHANNEL_KAKAOPAY = import.meta.env.VITE_PORTONE_LIVE_CHANNEL_KAKAOPAY as string | undefined;
+const liveChannelOf = (m: PortonePgMethod): string | undefined => (m === 'kakaopay' ? LIVE_CHANNEL_KAKAOPAY : LIVE_CHANNEL_INICIS) || undefined;
 
 /** 포트원 테스트 모드 활성 여부 (웹 전용 — 앱인토스는 토스 IAP 고정) */
 export function isPortoneTestEnabled(): boolean {
   return import.meta.env.VITE_PORTONE_TEST === '1' && !!STORE_ID && !!CHANNEL_INICIS;
 }
 
-/** 포트원 실결제 활성 여부 — PG 계약 승인 후 VITE_PORTONE_LIVE=1 + 실연동 채널키 교체 시 ON */
+/** 포트원 실결제 활성 여부 — VITE_PORTONE_LIVE=1 이고 실연동 채널이 하나라도 있으면 ON */
 export function isPortoneLiveEnabled(): boolean {
-  return import.meta.env.VITE_PORTONE_LIVE === '1' && !!STORE_ID && !!CHANNEL_INICIS;
+  return import.meta.env.VITE_PORTONE_LIVE === '1' && !!STORE_ID && (!!LIVE_CHANNEL_KAKAOPAY || !!LIVE_CHANNEL_INICIS);
+}
+
+/** 이 결제수단에 실연동 채널이 있는가 (없으면 화면이 '곧 열려요' 안내) */
+export function isPortoneLiveMethod(m: PortonePgMethod): boolean {
+  return isPortoneLiveEnabled() && !!liveChannelOf(m);
 }
 
 export interface PortoneTestResult {
@@ -105,7 +114,8 @@ export async function requestPortoneLivePayment(
   const user = auth.currentUser;
   if (!user) return { ok: false, cancelled: false, message: '로그인이 필요해요' };
   if (!STORE_ID) return { ok: false, cancelled: false, message: '결제 설정이 아직 준비되지 않았어요' };
-  const channelKey = method === 'kakaopay' ? CHANNEL_KAKAOPAY : CHANNEL_INICIS;
+  // 실결제는 실연동 채널 키만 (테스트 키로 실결제창을 열면 서버가 지급을 거부해 돈만 나간 것처럼 보인다)
+  const channelKey = liveChannelOf(method);
   if (!channelKey) return { ok: false, cancelled: false, message: '해당 결제수단이 아직 준비되지 않았어요' };
 
   const paymentId = generateLivePaymentId(user.uid, pkg.id);

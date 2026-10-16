@@ -13,7 +13,7 @@ import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { isAppintosBuild, hasNativeNavBack } from '@/lib/env';
-import { isPortoneTestEnabled, isPortoneLiveEnabled, requestPortoneTestPayment, requestPortoneLivePayment, confirmPortonePaymentServer } from '@/services/payment/portonePayment';
+import { isPortoneTestEnabled, isPortoneLiveEnabled, isPortoneLiveMethod, requestPortoneTestPayment, requestPortoneLivePayment, confirmPortonePaymentServer } from '@/services/payment/portonePayment';
 import type { PortonePgMethod } from '@/services/payment/portonePayment';
 import { trackEvent } from '@/services/analytics';
 import { LegalFooter } from '@/components/layout/LegalFooter';
@@ -127,6 +127,18 @@ export function ChargePage() {
   // 2026-06-18 웹 런칭 — 웹 실결제 게이트. 앱인토스 IAP 는 항상 라이브.
   //   2026-07-02 — 포트원 실결제(VITE_PORTONE_LIVE=1)도 오픈 조건에 추가 (준기 결정: 웹 PG = 포트원).
   const webPaymentReady = isAppintosBuild || portoneLive;
+  // 2026-10-16 — 실결제는 계약이 끝난 결제수단만(카카오페이). 카드는 이니시스 심사가 끝날 때까지 안내만.
+  //   PG 심사관 확인용 시험 결제창은 ?pgreview=1 로만 연다(실사용자가 시험창에서 결제하는 일이 없게).
+  const pgReview = !isAppintosBuild && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('pgreview') === '1' && isPortoneTestEnabled();
+  const payWith = (method: PortonePgMethod) => {
+    if (pgReview) return handlePgTest(method);
+    if (portoneLive) {
+      if (isPortoneLiveMethod(method)) return handlePgLive(method);
+      toast.show('카드 결제는 곧 열려요. 지금은 카카오페이로 충전할 수 있어요', 'info');
+      return;
+    }
+    return handlePgTest(method);
+  };
 
   // p15 → CHARGE_PACKAGES[3] (4 패키지 정정 후 마지막 인덱스)
   const selectedPkg =
@@ -616,7 +628,7 @@ export function ChargePage() {
                     )}
 
                     {/* 결제 수단 — 아이콘 + 라벨 리스트 행 (토스·배민 문법). live 활성 시 실결제 라우팅 */}
-                    <button onClick={() => (portoneLive ? handlePgLive : handlePgTest)('card')} style={{
+                    <button onClick={() => payWith('card')} style={{
                       display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
                       padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 8,
                       border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',
@@ -631,10 +643,10 @@ export function ChargePage() {
                           <rect x="5.5" y="14.4" width="6" height="1.8" rx="0.9" fill="#1A1A1A" />
                         </svg>
                       </span>
-                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용과 체크카드</span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용과 체크카드{portoneLive && !pgReview && !isPortoneLiveMethod('card') && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>곧 열려요</span>}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
-                    <button onClick={() => (portoneLive ? handlePgLive : handlePgTest)('kakaopay')} style={{
+                    <button onClick={() => payWith('kakaopay')} style={{
                       display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
                       padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 14,
                       border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',
@@ -652,9 +664,11 @@ export function ChargePage() {
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
 
-                    {/* 테스트 안내 — 작게 (심사 기간 한정) */}
+                    {/* 안내 — 시험 결제창일 때만 '청구되지 않아요', 실결제일 때는 처리 주체 */}
                     <p style={{ fontSize: 13, color: C.mute, margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
-                      지금은 결제 시스템을 점검하고 있어요. 실제로 청구되지 않고 자동으로 취소돼요
+                      {portoneLive && !pgReview
+                        ? '결제는 포트원과 카카오페이가 처리해요. 결제한 운은 바로 들어와요'
+                        : '지금은 결제 시스템을 점검하고 있어요. 실제로 청구되지 않고 자동으로 취소돼요'}
                     </p>
                   </motion.div>
                 </>

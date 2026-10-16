@@ -48,7 +48,7 @@ export function TermsPage() {
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">제9조 (결제 및 결제대행)</p>
-              <p>운(運) 충전 결제는 토스페이먼츠(주)의 전자결제 대행 서비스를 통해 처리돼요. 결제 과정에서 필요한 정보는 결제대행사에 전달되며, 결제 승인과 취소는 결제대행사의 정책을 따라요. 앱(토스) 내 결제는 토스 인앱결제(IAP) 정책을 따라요.</p>
+              <p>웹에서 운(運)을 충전하는 결제는 포트원(주)의 결제 연동 서비스를 통해 카카오페이(주) 등 결제대행사가 처리해요. 결제 과정에서 필요한 정보는 결제대행사에 전달되며, 결제 승인과 취소는 결제대행사의 정책을 따라요. 앱(토스) 내 결제는 토스 인앱결제(IAP) 정책을 따라요.</p>
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">제10조 (이용 자격)</p>
@@ -64,7 +64,7 @@ export function TermsPage() {
               <p className="mt-1">바뀐 약관에 동의하지 않으시면 이용을 멈추고 미사용 운의 환불을 요청할 수 있어요.</p>
             </div>
           </div>
-          <p className="text-caption text-text-hint mt-6">시행일: 2026년 10월 4일 (개정), 이전 약관 시행일: 2026년 6월 3일</p>
+          <p className="text-caption text-text-hint mt-6">시행일: 2026년 10월 16일 (개정: 제9조 결제대행사 표기), 이전 약관 시행일: 2026년 10월 4일</p>
         </div>
       </div>
     </div>
