@@ -124,7 +124,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
       <div className="grid grid-cols-4 gap-2">
         {TTI.map(({ ji, name }) => {
           const on = sel === ji;
-          const yy = ttiYears(ji).slice(0, 6).map((y) => String(y % 100).padStart(2, '0'));
+          const yy = ttiYears(ji).map((y) => String(y % 100).padStart(2, '0'));
           return (
             <button key={ji} type="button" onClick={() => pick(ji)} aria-pressed={on}
               style={{
@@ -134,9 +134,9 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
               }}>
               <span style={{ fontFamily: SERIF, fontSize: name.length > 3 ? 14.5 : 16, fontWeight: 700, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{name}</span>
-              {/* 출생 연도 여섯(1930년대~1990년대)을 세 줄에 둘씩 — 칸마다 줄바꿈이 들쭉날쭉하지 않게. 2000년대생은 띠를 누르면 고르는 목록에 있다 */}
-              <span style={{ fontSize: 13, lineHeight: 1.35, color: on ? '#CFC6B6' : HJ.mute, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
-                {yy.slice(0, 2).join(' ')}<br />{yy.slice(2, 4).join(' ')}<br />{yy.slice(4).join(' ')}
+              {/* 출생 연도 일곱(1929~2012년생, 띠마다 정확히 일곱)을 셋, 둘, 둘로 — 2000년대생이 빠지지 않게(10-16 오너 지적: 37년생은 있는데 07년생이 없다) */}
+              <span style={{ fontSize: 13, lineHeight: 1.35, color: on ? '#CFC6B6' : HJ.mute, textAlign: 'center', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                {yy.slice(0, 3).join(' ')}<br />{yy.slice(3, 5).join(' ')}<br />{yy.slice(5).join(' ')}
               </span>
             </button>
           );
