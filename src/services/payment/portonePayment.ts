@@ -124,7 +124,8 @@ export async function requestPortoneLivePayment(
       storeId: STORE_ID,
       channelKey,
       paymentId,
-      orderName: `사주500 ${pkg.name} (${pkg.un + pkg.bonusUn}운)`,
+      // pkg.un 이 보너스까지 더한 받는 운이다(4, 7, 15). 예전 식(name + un+bonusUn)은 '3운+1운 보너스 (5운)'처럼 더 많게 보였다
+      orderName: `사주500 ${pkg.un}운 충전`,
       totalAmount: pkg.price,
       currency: 'CURRENCY_KRW',
       payMethod: method === 'kakaopay' ? 'EASY_PAY' : 'CARD',

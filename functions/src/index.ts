@@ -2115,11 +2115,15 @@ export const confirmPortonePayment = onCall(
         const userDoc = await tx.get(userRef);
         const data = userDoc.data() || {};
 
-        tx.update(userRef, {
-          'balance.paid': (data.balance?.paid ?? 0) + pkg.paidUn,
-          'balance.bonus': (data.balance?.bonus ?? 0) + pkg.bonusUn,
+        // 2026-10-16 — update() 는 users/{uid} 문서가 없는 계정(웹 익명)에서 NOT_FOUND → 돈은 나가고 운은 안 들어가
+        //   needs_reconciliation 으로 빠진다(6월 IAP 19건과 같은 원인). grantPurchase 처럼 set(merge) 로 문서가 없어도 만든다.
+        tx.set(userRef, {
+          balance: {
+            paid: (data.balance?.paid ?? 0) + pkg.paidUn,
+            bonus: (data.balance?.bonus ?? 0) + pkg.bonusUn,
+          },
           totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
-        });
+        }, { merge: true });
 
         tx.update(paymentRef, {
           unChange: totalUn,
