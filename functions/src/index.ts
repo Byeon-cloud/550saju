@@ -2446,6 +2446,7 @@ export { onInviteReceived } from './invite/onInviteReceived';
 export { deleteAccount } from './auth/deleteAccount';
 export { purgeWithdrawnUsers } from './auth/purgeWithdrawn'; // 2026-10-14 토스 탈퇴 5일 뒤 개인정보 파기 (payments 보존)
 export { syncPortoneCancellations } from './payment/portoneCancelSync'; // 2026-10-16 포트원에서 취소된 웹 결제 → 결제 기록 refunded + 운 회수 지시(balanceAdjustments)
+export { renderTtiToday } from './seo/ttiTodayPage'; // 2026-10-17 오늘의 띠별 운세 공개 검색 페이지 /unse/today/ (시험 E9)
 export { ensureTtiFortune } from './tti/ttiFortune'; // 2026-10-15 띠별 오늘의 운세 (하루 한 번 미리 생성, 화면은 읽기만)
 
 // CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}

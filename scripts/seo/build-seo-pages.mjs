@@ -190,7 +190,7 @@ for (const z of ORDER) {
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];
-const urls = [...appUrls.map(([u, p]) => ({ u, p })), ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` ? '0.9' : '0.8' }))];
+const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` ? '0.9' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(({ u, p }) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${p}</priority></url>`).join('\n')}\n</urlset>\n`;
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap);
 console.log(`검색용 페이지 ${out.length}개, sitemap ${urls.length}개 주소`);
