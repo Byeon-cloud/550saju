@@ -5,7 +5,7 @@
  *   광고성 정보라 수신 동의(필수 체크)를 받고, 신청하면 바로 '동의 확인' 메일이 간다. 11월 28일부터는 보이지 않는다.
  *   앱인토스 빌드에서는 그리지 않는다(앱 사용자는 화면 안 마감 표시로 알린다, pricing.ts).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import { isAppsInToss } from '@/services/payment/iapService';
@@ -21,6 +21,12 @@ export function DeadlineMailSignup({ source = 'tojung' }: { source?: string }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
+  // 검색 페이지의 '마감 전에 메일로 알림 받기'(#deadline-mail)로 왔으면 신청란까지 내려간다
+  useEffect(() => {
+    if (window.location.hash !== '#deadline-mail') return;
+    const t = window.setTimeout(() => document.getElementById('deadline-mail')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 500);
+    return () => window.clearTimeout(t);
+  }, []);
   if (isAppsInToss() || kstDay() > SHOW_UNTIL) return null;
   const valid = EMAIL_RE.test(email.trim());
 
