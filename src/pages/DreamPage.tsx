@@ -217,7 +217,13 @@ export function DreamPage() {
     : (stateNav?.savedReport ? stateNav : undefined);
   // 충전 페이지에서 돌아온 경우 적던 꿈 복원 (보관함 결과 복원이 우선)
   const [draft] = useState<DreamDraft | null>(() => (navState?.savedReport ? null : readDreamDraft()));
-  const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : (draft ? 'detail' : 'category'));
+  // 2026-10-17 검색 페이지(/kkum/{꿈}/, 시험 E10)에서 온 경우 꿈 갈래와 꿈 내용을 미리 채운다 (?c=animal&q=뱀이 나오는 꿈)
+  const [urlPrefill] = useState<{ category: DreamCategory; dreamText: string } | null>(() => {
+    if (navState?.savedReport || draft) return null;
+    const cat = DREAM_CATEGORIES.find((x) => x.id === searchParams.get('c'))?.id;
+    return cat ? { category: cat, dreamText: (searchParams.get('q') || '').slice(0, 200) } : null;
+  });
+  const [phase, setPhase] = useState<Phase>(navState?.savedReport ? 'result' : (draft || urlPrefill ? 'detail' : 'category'));
   // 결과 도달 시 출석 적립과 조회 기록 (출시 프로모션 50원은 2026-10 종료로 지급 호출 제거)
   useEffect(() => {
     if (phase === 'result' || phase === 'deepResult') {
@@ -233,8 +239,8 @@ export function DreamPage() {
   const _restoredCategoryId = _restoredInput?.category
     ? (DREAM_CATEGORIES.find((c) => c.label === _restoredInput.category)?.id ?? null)
     : null;
-  const [selectedCategory, setSelectedCategory] = useState<DreamCategory | null>(_restoredCategoryId ?? draft?.category ?? null);
-  const [dreamText, setDreamText] = useState(_restoredInput?.dreamText ?? draft?.dreamText ?? '');
+  const [selectedCategory, setSelectedCategory] = useState<DreamCategory | null>(_restoredCategoryId ?? draft?.category ?? urlPrefill?.category ?? null);
+  const [dreamText, setDreamText] = useState(_restoredInput?.dreamText ?? draft?.dreamText ?? urlPrefill?.dreamText ?? '');
   const [concern, setConcern] = useState(_restoredInput?.concern ?? draft?.concern ?? '');
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -803,7 +809,11 @@ export function DreamPage() {
     return (
       <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
         <Header title="꿈해몽" />
-        <NeedSaju mark="夢" desc="꿈해몽은 사주와 꿈을 함께 봐요. 일간, 오행, 대운이 있어야 내 꿈이 무슨 뜻인지 짚어 드릴 수 있어요." cta="사주 넣고 꿈 풀기" onClick={() => navigate('/input?from=dream')} />
+        <NeedSaju mark="夢" desc="꿈해몽은 사주와 꿈을 함께 봐요. 일간, 오행, 대운이 있어야 내 꿈이 무슨 뜻인지 짚어 드릴 수 있어요." cta="사주 넣고 꿈 풀기" onClick={() => {
+          // 검색 페이지에서 채워 온 꿈은 사주 입력 뒤 /dream 으로 돌아와도 남게 (주소의 ?q 는 입력 화면을 거치며 사라진다)
+          if (urlPrefill) saveDreamDraft({ category: urlPrefill.category, dreamText: urlPrefill.dreamText, concern: '' });
+          navigate('/input?from=dream');
+        }} />
       </div>
     );
   }

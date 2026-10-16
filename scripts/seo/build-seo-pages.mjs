@@ -5,11 +5,14 @@
  *   /unse/2027/{띠}/     띠마다 한 장 (총운, 좋은 달, 조심할 달, 출생 연도별 여섯 줄)
  *   내용은 src/data/seo/tti-2027.json (scripts/seo/gen-tti-year.cjs 가 확정표로 만든 것). 네이버는 JS 를 거의 안 돌려
  *   SPA 첫 화면이 비어 보이므로 글이 HTML 에 그대로 있어야 색인된다. 화면의 버튼은 앱(SPA)으로 utm 을 달아 보낸다.
+ *   /kkum/               꿈해몽 모음, /kkum/{꿈}/ 꿈마다 한 장 (2026-10-17, 시험 E10). 내용은 src/data/seo/kkum.json
+ *                        (scripts/seo/gen-kkum.cjs, 목록은 kkum-symbols.cjs). 버튼은 무료 꿈해몽으로 꿈 내용을 채워 보낸다.
  *   sitemap.xml 도 여기서 다시 쓴다(기존 주소 + 이 페이지들).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIST = path.join(ROOT, 'dist');
@@ -69,6 +72,13 @@ a{color:inherit}
 .note{font-size:13.5px;color:#6F6557;margin-top:18px}
 .foot{margin-top:34px;border-top:1px solid #E1D7C4;padding:16px 0 30px;text-align:center;font-size:12px;color:#A69C8E;line-height:1.7}
 .foot a{color:#A69C8E;margin:0 6px;text-decoration:none}.foot a.b{font-weight:700}
+.gr{font-weight:800;color:#7A5C2E}.gr.warn{color:#A23A2A}
+.case{padding:14px 0;border-top:1px solid #E1D7C4}.case:first-child{border-top:0;padding-top:0}
+.case h3{font-size:16.5px;font-weight:800;margin-bottom:3px;display:flex;justify-content:space-between;gap:10px}.case h3 .gr{font-size:14px;flex-shrink:0}
+.case p{font-size:15.5px;color:#2E2720}.case a{font-size:14px;font-weight:700;color:#7A5C2E;text-decoration:none}
+.txt{font-size:15.5px;color:#2E2720}.txt+.txt{margin-top:10px}
+.faq dt{font-weight:800;font-size:16px;margin-top:14px}.faq dt:first-child{margin-top:0}.faq dd{font-size:15.5px;color:#2E2720;margin-top:2px}
+.links{display:flex;flex-wrap:wrap;gap:8px}.links a{background:#FFFDF8;border:1px solid #E1D7C4;border-radius:12px;padding:8px 12px;font-size:15px;font-weight:700;text-decoration:none}
 `;
 
 function page({ title, desc, canonical, body, jsonld }) {
@@ -90,7 +100,7 @@ function page({ title, desc, canonical, body, jsonld }) {
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&display=swap">
 <style>${CSS}</style>
-<script type="application/ld+json">${JSON.stringify(jsonld)}</script>
+${(Array.isArray(jsonld) ? jsonld : [jsonld]).map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('')}
 </head><body>
 <header class="wrap top"><a class="brand" href="/">사주<b>500</b></a><a class="go" href="/?${utm('top')}">오늘의 운세 보기</a></header>
 ${body}
@@ -187,10 +197,88 @@ for (const z of ORDER) {
   write(`unse/${YEAR}`, page({ title, desc, canonical, body, jsonld }));
 }
 
+// ── 꿈해몽 (2026-10-17, 시험 E10)
+{
+  const require = createRequire(import.meta.url);
+  const SYMBOLS = require(path.join(ROOT, 'scripts/seo/kkum-symbols.cjs'));
+  const K = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/seo/kkum.json'), 'utf8')).items;
+  const CAT = [
+    ['animal', '동물이 나오는 꿈'], ['water', '물과 관련된 꿈'], ['death', '죽음과 이별의 꿈'], ['people', '사람이 나오는 꿈'],
+    ['flying', '하늘을 나는 꿈과 떨어지는 꿈'], ['chase', '쫓기는 꿈과 헤매는 꿈'], ['money', '돈과 재물의 꿈'], ['nature', '자연과 날씨 꿈'], ['other', '몸과 물건, 그 밖의 꿈'],
+  ];
+  const kutm = (slug) => `utm_source=seo&utm_medium=organic&utm_campaign=kkum_${slug}`;
+  const grade = (g) => `<span class="gr${g === '주의' || g === '흉몽' ? ' warn' : ''}">${esc(g)}</span>`;
+  const dreamLink = (sym, text, tag) => `/dream?c=${sym.cat}&amp;q=${encodeURIComponent(`${text}을 꿨어요. `)}&amp;${kutm(sym.slug + (tag ? '_' + tag : '')).replace(/&/g, '&amp;')}`;
+  const syms = SYMBOLS.filter((s) => K[s.slug]);
+  for (const sym of syms) {
+    const x = K[sym.slug];
+    const canonical = `${SITE}/kkum/${sym.slug}/`;
+    const caseNames = x.cases.slice(0, 3).map((c) => c.title.replace(/ 꿈$/, '')).join(', ');
+    const title = `${sym.name} 해몽 | ${caseNames} 꿈 풀이 - 사주500`;
+    const desc = `${firstSentence(x.summary)} ${x.cases.map((c) => c.title).slice(0, 5).join(', ')} 등 상황별 ${x.cases.length}가지 풀이와 사주로 보는 법까지.`;
+    const cases = x.cases.map((c, i) => `<div class="case"><h3>${esc(c.title)}${grade(c.grade)}</h3><p>${esc(c.text)}</p><a href="${dreamLink(sym, c.title, 'c' + (i + 1))}">이 꿈을 내 사주로 풀어 보기 ›</a></div>`).join('');
+    const same = syms.filter((s) => s.cat === sym.cat && s.slug !== sym.slug);
+    const others = (same.length >= 4 ? same : [...same, ...syms.filter((s) => s.cat !== sym.cat)]).slice(0, 8);
+    const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">꿈해몽</div>
+<h1>${esc(sym.name)} 해몽</h1>
+<p>${esc(x.summary)}</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><h2><span class="seal">一</span>${esc(sym.name)}의 뜻</h2><div class="card"><p class="lead">판정 ${grade(x.grade)}</p><p class="txt" style="margin-top:6px">${esc(x.meaning)}</p></div></section>
+<section class="sec"><h2><span class="seal">二</span>상황별 ${esc(sym.name)} 풀이</h2><div class="card">${cases}</div></section>
+<section class="sec"><h2><span class="seal">三</span>사주로 보면</h2><div class="card"><p class="txt">${esc(x.saju)}</p><p class="txt"><b>꿈을 꾼 날</b> ${esc(x.todo)}</p></div></section>
+<section class="cta">
+<h3>내가 꾼 ${esc(sym.name)}, 내 사주로는 어떻게 읽힐까요</h3>
+<p>꿈 내용을 적으면 내 사주 여덟 글자와 엮어 풀어 드려요. 하루 한 번 무료예요.</p>
+<a class="btn" href="${dreamLink(sym, sym.name, 'main')}">내 꿈 무료로 풀어 보기</a>
+<a class="sub" href="/kkum/?${kutm(sym.slug + '_hub').replace(/&/g, '&amp;')}">다른 꿈해몽 보기</a>
+</section>
+<section class="sec"><h2><span class="seal">四</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${x.faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<section class="sec"><h2>비슷한 꿈해몽</h2><div class="links">${others.map((s) => `<a href="/kkum/${s.slug}/">${esc(s.name)}</a>`).join('')}</div></section>
+<p class="note">오래 전해 온 해몽과 명리학의 오행 원리로 본 참고용 풀이예요. 같은 꿈도 꾼 사람과 요즘 형편에 따라 다르게 읽혀요.</p>
+</main>`;
+    const jsonld = [
+      { '@context': 'https://schema.org', '@type': 'Article', headline: `${sym.name} 해몽`, description: desc, inLanguage: 'ko', mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE }, datePublished: '2026-10-17', dateModified: (x.generatedAt || '2026-10-17').slice(0, 10) },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: x.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ];
+    write(`kkum/${sym.slug}`, page({ title, desc, canonical, body, jsonld }));
+  }
+  // 모음
+  const canonical = `${SITE}/kkum/`;
+  const title = '꿈해몽 모음 | 뱀 꿈, 돼지꿈, 이빨 빠지는 꿈, 똥꿈 풀이 - 사주500';
+  const desc = `뱀 꿈, 돼지꿈, 이빨 빠지는 꿈, 똥꿈, 죽는 꿈, 돈 꿈까지 꿈 ${syms.length}가지를 상황별로 풀었어요. 길몽인지 흉몽인지, 꿈을 꾼 날 무엇을 하면 좋은지 알려 드려요.`;
+  const cats = CAT.map(([id, label]) => {
+    const list = syms.filter((s) => s.cat === id);
+    if (!list.length) return '';
+    return `<section class="sec"><h2>${esc(label)}</h2><div class="card list">${list.map((s) => `<div class="item"><h3>${esc(s.name)}<small>${esc(K[s.slug].grade)}</small></h3><p>${esc(firstSentence(K[s.slug].summary))}</p><a class="more" href="/kkum/${s.slug}/">${esc(s.name)} 상황별 풀이 보기 ›</a></div>`).join('')}</div></section>`;
+  }).join('');
+  const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">꿈해몽</div>
+<h1>꿈해몽 모음</h1>
+<p>간밤에 꾼 꿈이 좋은 꿈인지 궁금할 때 찾아보세요. 꿈 ${syms.length}가지를 상황별로 풀었어요.</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><div class="links">${syms.slice(0, 12).map((s) => `<a href="/kkum/${s.slug}/">${esc(s.name)}</a>`).join('')}</div></section>
+${cats}
+<section class="cta">
+<h3>목록에 없는 꿈도 풀어 드려요</h3>
+<p>꿈 내용을 그대로 적으면 내 사주와 엮어 풀어 드려요. 하루 한 번 무료예요.</p>
+<a class="btn" href="/dream?${kutm('hub').replace(/&/g, '&amp;')}">내 꿈 무료로 풀어 보기</a>
+<a class="sub" href="/unse/today/?${kutm('hub_today').replace(/&/g, '&amp;')}">오늘의 띠별 운세 보기</a>
+</section>
+<p class="note">오래 전해 온 해몽과 명리학의 오행 원리로 본 참고용 풀이예요.</p>
+</main>`;
+  const jsonld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: '꿈해몽 모음', description: desc, inLanguage: 'ko', url: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
+  write('kkum', page({ title, desc, canonical, body, jsonld }));
+}
+
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];
-const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` ? '0.9' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
+const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' ? '0.9' : u.startsWith('/kkum/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(({ u, p }) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${p}</priority></url>`).join('\n')}\n</urlset>\n`;
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap);
 console.log(`검색용 페이지 ${out.length}개, sitemap ${urls.length}개 주소`);
