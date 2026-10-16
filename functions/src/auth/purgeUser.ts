@@ -94,6 +94,13 @@ export async function purgeUserData(uid: string, reason: string): Promise<PurgeR
     result.errors.push(`progress:${e?.message || e}`);
   }
 
+  // 4) 결과지 메일 주소와 광고 수신 동의 (2026-10-16 PDF 메일 보내기)
+  try {
+    await db.doc(`emailLeads/${uid}`).delete();
+  } catch (e: any) {
+    result.errors.push(`emailLeads:${e?.message || e}`);
+  }
+
   // 5) users 문서 덮어쓰기 — 남길 필드만 골라서 set (merge 없이)
   try {
     const snap = await userRef.get();

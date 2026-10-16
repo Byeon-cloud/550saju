@@ -17,18 +17,21 @@ export function PrivacyPage() {
               <p className="mt-1">필수: 이름, 생년월일, 성별, 출생시간(선택)</p>
               <p>자동 수집: 서비스 이용 기록, 결제 기록, 접속 로그, 쿠키, Google Analytics(GA4) 분석 데이터</p>
               <p>로그인 시: 소셜 계정(구글, 카카오, 네이버, 애플) 또는 토스 계정 식별자와 이메일</p>
+              <p>결과지를 메일로 받을 때(요청한 경우만): 받을 메일 주소, 광고성 정보 수신 동의 여부(선택)</p>
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">2. 수집 목적</p>
               <p>사주 분석 서비스 제공</p>
               <p>운(運) 잔액 관리 및 결제 처리</p>
               <p>서비스 개선 및 통계 분석</p>
+              <p>요청한 결과지(PDF)를 메일로 보내기, 수신에 동의한 경우에만 신년운세와 할인 소식 안내</p>
             </div>
             <div>
               <p className="text-label text-text-primary font-bold mb-1">3. 보유 기간</p>
               <p>사주 분석 결과: 계정 생존 기간 동안 보관</p>
               <p>결제 기록: 전자상거래법에 따라 5년</p>
               <p>채팅 기록: 90일 후 자동 삭제</p>
+              <p>결과지 메일 주소: 계정 삭제 또는 수신 동의 철회 시까지</p>
               <p>계정 삭제 시: 5일 이내 파기</p>
             </div>
             <div>

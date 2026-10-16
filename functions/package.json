@@ -18,9 +18,11 @@
     "firebase-functions": "^7.2.5",
     "jsonrepair": "^3.14.0",
     "lunar-javascript": "^1.7.7",
+    "nodemailer": "^6.9.16",
     "puppeteer-core": "^23.0.0"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
     "typescript": "^5.5.0"
   }
 }

@@ -22,6 +22,10 @@ export interface GeneratePdfArgs {
   profile: PdfProfile;
   sajuData: any;
   aiResult: any;
+  /** 2026-10-16 — 주면 서버가 PDF 를 이 주소로 첨부해 보낸다 */
+  email?: string;
+  /** 광고성 안내 메일 수신 동의 (선택) */
+  marketingConsent?: boolean;
 }
 
 export interface GeneratePdfResult {
@@ -29,6 +33,7 @@ export interface GeneratePdfResult {
   expiresAt: string;
   issueId: string;
   bytes: number;
+  emailed?: boolean;
 }
 
 export async function generatePremiumPdf(args: GeneratePdfArgs): Promise<GeneratePdfResult> {

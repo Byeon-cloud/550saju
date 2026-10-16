@@ -45,6 +45,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ShareModal } from '@/components/share/ShareModal';
 import { generatePremiumPdf, type PdfProfile } from '@/services/pdf/premiumPdfClient';
+import { PdfMailSheet } from '@/components/pdf/PdfMailSheet';
 import { useToast } from '@/components/common/Toast';
 import type { SajuInput } from '@/types/saju';
 // Stage 2C-2: 합·충·형 시각용 (relations.ts 활용 — 데이터 0 변경)
@@ -2357,6 +2358,9 @@ function PremiumResultFooter({
   const toast = useToast();
   const [shareOpen, setShareOpen] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
+  // 2026-10-16 — PDF 메일로 받기 (서버 메일 계정 연결 뒤 VITE_PDF_EMAIL=1 로 켠다)
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailBusy, setMailBusy] = useState(false);
   const profile: PdfProfile = {
     name: report.name,
     birthDate: formatBirthDate(report.input),
@@ -2400,6 +2404,27 @@ function PremiumResultFooter({
       toast.show('PDF를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
     } finally {
       setPdfBusy(false);
+    }
+  }
+  async function handleMail(email: string, marketingConsent: boolean) {
+    if (mailBusy) return;
+    setMailBusy(true);
+    try {
+      const r = await generatePremiumPdf({ reportId, profile, sajuData, aiResult, email, marketingConsent });
+      if (r?.emailed) {
+        setMailOpen(false);
+        toast.show('메일로 보냈어요. 받은편지함을 확인해 주세요', 'success');
+        import('@/services/analytics').then((a) => a.trackEvent('pdf_email', { result: 'sent', marketing: marketingConsent ? 1 : 0 })).catch(() => {});
+      } else {
+        toast.show('메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
+      }
+    } catch (e: any) {
+      console.warn('[PDF 메일] 실패:', e?.code || '', e?.message || e);
+      const msg = String(e?.message || '');
+      toast.show(/메일|오늘/.test(msg) ? msg : '메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
+      import('@/services/analytics').then((a) => a.trackEvent('pdf_email', { result: 'fail' })).catch(() => {});
+    } finally {
+      setMailBusy(false);
     }
   }
   return (
@@ -2460,6 +2485,13 @@ function PremiumResultFooter({
         </div>
         )}
       </div>
+      {PDF_ENABLED && import.meta.env.VITE_PDF_EMAIL === '1' && (
+        <button type="button" className="tap-pad" onClick={() => setMailOpen(true)}
+          style={{ display: 'block', margin: '12px auto 0', background: 'transparent', border: 0, fontSize: 15, fontWeight: 700, color: '#4B4238', textDecoration: 'underline' }}>
+          PDF를 메일로 받기
+        </button>
+      )}
+      <PdfMailSheet open={mailOpen} onClose={() => setMailOpen(false)} onSend={handleMail} busy={mailBusy} />
       <ShareModal
         isOpen={shareOpen}
         onClose={() => setShareOpen(false)}

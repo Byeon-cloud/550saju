@@ -53,6 +53,7 @@ const TOSS_MTLS_KEY = defineSecret('TOSS_MTLS_KEY');
 const TOSS_DECRYPT_KEY = defineSecret('TOSS_DECRYPT_KEY');
 const TOSS_DECRYPT_AAD = defineSecret('TOSS_DECRYPT_AAD');
 const PORTONE_V2_API_SECRET = defineSecret('PORTONE_V2_API_SECRET');
+const MAIL_APP_PASSWORD = defineSecret('MAIL_APP_PASSWORD'); // 2026-10-16 PDF 메일 (mailPdf.ts 와 같은 이름, nodemailer 를 모든 함수에 싣지 않으려고 여기서 따로 선언)
 
 /** 금액 → 패키지 매핑 (서버에서 검증용) */
 const PACKAGE_MAP: Record<number, { name: string; paidUn: number; bonusUn: number }> = {
@@ -2498,6 +2499,7 @@ const lazyPremiumPdf = () => import('./pdf/generatePremiumPdf');
 // asia-northeast3 는 client functionsClient.ts 가 us-central1 고정이라 미사용 — 추후 멀티리전 분리 시 검토
 export const generatePremiumPdf = onCall(
   {
+    secrets: [MAIL_APP_PASSWORD], // 2026-10-16 PDF 메일 보내기 (시크릿이 만들어진 뒤에만 배포할 것 — 없으면 배포 실패)
     timeoutSeconds: 120,
     memory: '1GiB',
     minInstances: 0,

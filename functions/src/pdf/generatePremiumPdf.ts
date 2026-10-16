@@ -27,12 +27,17 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { buildPremiumPdfHtml, type PdfTemplateInput } from './htmlTemplate';
+import { normalizeEmail, sendPremiumPdfMail } from './mailPdf';
 
 interface GeneratePdfRequest {
   reportId?: string;
   profile?: PdfTemplateInput['profile'];
   sajuData?: any;
   aiResult?: any;
+  /** 2026-10-16 — 주면 PDF 를 이 주소로 첨부해 보낸다 (mailPdf.ts) */
+  email?: string;
+  /** 광고성 안내 메일 수신 동의 (선택, 기본 아니오) */
+  marketingConsent?: boolean;
 }
 
 interface GeneratePdfResponse {
@@ -40,6 +45,8 @@ interface GeneratePdfResponse {
   expiresAt: string;   // ISO 8601
   issueId: string;
   bytes: number;
+  /** 메일로 보냈으면 true */
+  emailed?: boolean;
 }
 
 /** Signed URL 유효 시간 — 24시간 (#61 스펙) */
@@ -180,6 +187,11 @@ export async function handleGeneratePremiumPdf(
   }
 
   const { reportId, profile, sajuData, aiResult } = request.data ?? {};
+  const wantEmail = request.data?.email != null && request.data.email !== '';
+  const email = wantEmail ? normalizeEmail(request.data.email) : null;
+  if (wantEmail && !email) {
+    throw new HttpsError('invalid-argument', '메일 주소를 다시 확인해 주세요');
+  }
   if (!profile?.name) {
     throw new HttpsError('invalid-argument', '이름 정보가 필요합니다');
   }
@@ -286,10 +298,18 @@ export async function handleGeneratePremiumPdf(
     console.warn('[generatePremiumPdf] 발급 로그 기록 실패:', logErr?.message);
   }
 
+  // ── 8. 메일로 보내기 (요청했을 때만) ──
+  let emailed = false;
+  if (email) {
+    await sendPremiumPdfMail({ db, uid, email, name: profile.name, pdf: pdfBuffer, issueId, marketingConsent: !!request.data?.marketingConsent });
+    emailed = true;
+  }
+
   return {
     url: signedUrl,
     expiresAt: new Date(expiresAtMs).toISOString(),
     issueId,
     bytes: pdfBuffer.length,
+    emailed,
   };
 }
