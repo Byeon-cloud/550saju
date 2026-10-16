@@ -9,6 +9,7 @@
  *                        (scripts/seo/gen-kkum.cjs, 목록은 kkum-symbols.cjs). 버튼은 무료 꿈해몽으로 꿈 내용을 채워 보낸다.
  *   /gunghap/            띠별 궁합표, /gunghap/{띠}-{띠}/ 78쌍 (2026-10-17, 시험 W4). 내용은 src/data/seo/gunghap.json
  *                        (scripts/seo/gen-gunghap.cjs, 관계는 계산). 버튼은 두 사람 생일 궁합(/compat)으로 보낸다.
+ *   /ilju/               60일주 모음, /ilju/{slug}/ 일주마다 한 장 (2026-10-17). 확정표 scripts/seo/ilju-facts.cjs, 글 src/data/seo/ilju.json
  *   sitemap.xml 도 여기서 다시 쓴다(기존 주소 + 이 페이지들).
  */
 import fs from 'node:fs';
@@ -106,7 +107,7 @@ ${(Array.isArray(jsonld) ? jsonld : [jsonld]).map((j) => `<script type="applicat
 </head><body>
 <header class="wrap top"><a class="brand" href="/">사주<b>500</b></a><a class="go" href="/?${utm('top')}">오늘의 운세 보기</a></header>
 ${body}
-<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a></nav>
+<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
 <footer class="wrap foot">
 <div><a href="/terms">이용약관</a><a class="b" href="/privacy">개인정보처리방침</a><a href="/business">사업자정보</a></div>
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div>
@@ -373,10 +374,94 @@ ${secs}
   write('gunghap', page({ title, desc, canonical, body, jsonld }));
 }
 
+// ── 60일주 (2026-10-17) — '갑자일주', '병오일주 특징' 검색
+{
+  const require = createRequire(import.meta.url);
+  const { GAPJA, iljuFacts, OH_PLAIN, GAN_KO, ZHI_KO } = require(path.join(ROOT, 'scripts/seo/ilju-facts.cjs'));
+  const J = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/seo/ilju.json'), 'utf8')).items;
+  const iutm = (c) => `utm_source=seo&amp;utm_medium=organic&amp;utm_campaign=ilju_${c}`;
+  const F = Object.fromEntries(GAPJA.map((g) => [g, iljuFacts(g)]));
+  const list = GAPJA.filter((g) => J[g]);
+  const SIP_PLAIN = { 비견: '나와 같은 기운', 겁재: '나와 같은 기운(경쟁)', 식신: '내가 내는 기운(재주, 여유)', 상관: '내가 내는 기운(말과 표현)', 편재: '내가 다스리는 기운(바깥 돈)', 정재: '내가 다스리는 기운(정해진 돈)', 편관: '나를 단련하는 기운', 정관: '나를 바르게 하는 기운', 편인: '나를 돕는 기운(생각)', 정인: '나를 돕는 기운(배움)' };
+  for (const g of list) {
+    const f = F[g]; const x = J[g];
+    const name = `${f.ko}일주`;
+    const canonical = `${SITE}/ilju/${f.slug}/`;
+    const title = `${name} 특징 | ${name} 성격, 연애, 배우자, 직업, 잘 맞는 일주 - 사주500`;
+    const desc = `${firstSentence(x.summary)} ${name}(${g})의 성격과 연애, 배우자 자리, 일과 재물, 조심할 점, 잘 맞는 일주까지 명리학으로 풀었어요.`;
+    const p2 = F[f.hapPartner];
+    const rows = [
+      ['일간', `${GAN_KO[g[0]]}(${g[0]}), ${f.yang ? '양' : '음'}의 ${OH_PLAIN[f.ganOh]}`],
+      ['일지', `${ZHI_KO[g[1]]}(${g[1]}), ${OH_PLAIN[f.zhiOh]}`],
+      ['배우자 자리', `${f.spouseSip}, ${SIP_PLAIN[f.spouseSip] || ''}`],
+      ['12운성', `${f.stage}, ${f.stagePlain}`],
+      ['일주 신살', f.sinsal.length ? f.sinsal.join(', ') : '없음'],
+      ['잘 맞는 일주', `<a href="/ilju/${p2.slug}/" style="color:#7A5C2E;font-weight:700">${esc(p2.ko)}일주</a> (천간합과 지지육합이 함께 맞는 짝)`],
+      ['부딪히는 글자', `${f.chungZhiKo}(${f.chungZhi}), 이 글자가 오는 해와 달에는 큰 결정을 천천히`],
+    ].map(([k, v]) => `<div class="row"><div class="k">${esc(k)}</div><div class="v">${k === '잘 맞는 일주' ? v : esc(v)}</div></div>`).join('');
+    const sameGan = list.filter((y) => y[0] === g[0] && y !== g);
+    const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">일주론</div>
+<h1>${esc(name)} (${g})</h1>
+<p>${esc(x.summary)}</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><h2><span class="seal">一</span>${esc(name)}의 바탕</h2><div class="card">${rows}</div></section>
+<section class="sec"><h2><span class="seal">二</span>성격과 장단점</h2><div class="card"><p class="txt">${esc(x.personality)}</p></div></section>
+<section class="sec"><h2><span class="seal">三</span>연애와 배우자</h2><div class="card"><p class="txt">${esc(x.love)}</p></div></section>
+<section class="sec"><h2><span class="seal">四</span>일과 재물</h2><div class="card"><p class="txt">${esc(x.work)}</p></div></section>
+<section class="sec"><h2><span class="seal">五</span>조심할 점</h2><div class="card"><p class="txt">${esc(x.care)}</p>${x.sinsal ? `<p class="txt"><b>${esc(f.sinsal.join(', '))}</b> ${esc(x.sinsal)}</p>` : ''}</div></section>
+<section class="cta">
+<h3>같은 ${esc(name)}라도 태어난 달과 시간이 다르면 사주가 달라요</h3>
+<p>생일과 태어난 시간을 넣으면 여덟 글자 전체로 오늘 하루를 풀어 드려요. 하루 한 번 무료예요.</p>
+<a class="btn" href="/daily?${iutm(f.slug)}">내 사주로 오늘의 운세 무료로 보기</a>
+<a class="sub" href="/daily?${iutm(f.slug + '_mail')}#daily-mail">매일 아침 ${esc(name)} 운세 메일로 받기</a>
+<a class="sub" href="/premium?${iutm(f.slug + '_premium')}">평생 사주 풀이(종합사주) 보기</a>
+</section>
+<section class="sec"><h2><span class="seal">六</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${x.faq.map((q) => `<dt>${esc(q.q)}</dt><dd>${esc(q.a)}</dd>`).join('')}</dl></div></section>
+<section class="sec"><h2>같은 ${esc(GAN_KO[g[0]])}${esc(f.ganOh)} 일간의 다른 일주</h2><div class="links">${sameGan.map((y) => `<a href="/ilju/${F[y].slug}/">${esc(F[y].ko)}일주</a>`).join('')}<a href="/ilju/">60일주 전체</a></div></section>
+<p class="note">일주(태어난 날의 간지)만 본 참고용 풀이예요. 사주는 태어난 해, 달, 날, 시간의 여덟 글자와 대운을 함께 봐야 정확해요.</p>
+</main>`;
+    const jsonld = [
+      { '@context': 'https://schema.org', '@type': 'Article', headline: `${name} 특징`, description: desc, inLanguage: 'ko', mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE }, datePublished: '2026-10-17', dateModified: (x.generatedAt || '2026-10-17').slice(0, 10) },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: x.faq.map((q) => ({ '@type': 'Question', name: q.q, acceptedAnswer: { '@type': 'Answer', text: q.a } })) },
+    ];
+    write(`ilju/${f.slug}`, page({ title, desc, canonical, body, jsonld }));
+  }
+  // 60일주 모음
+  const canonical = `${SITE}/ilju/`;
+  const title = '60일주 총정리 | 일주별 성격, 연애, 배우자, 직업 특징 - 사주500';
+  const desc = '갑자일주부터 계해일주까지 60일주의 성격과 연애, 배우자 자리, 일과 재물, 잘 맞는 일주를 명리학으로 정리했어요. 내 일주를 눌러 보세요.';
+  const groups = '甲乙丙丁戊己庚辛壬癸'.split('').map((gan) => {
+    const ys = list.filter((y) => y[0] === gan);
+    return `<section class="sec"><h2><span class="seal">${gan}</span>${esc(GAN_KO[gan])}${esc(F[ys[0]]?.ganOh || '')} 일간</h2><div class="card list">${ys.map((y) => `<div class="item"><h3>${esc(F[y].ko)}일주<small>${y}</small></h3><p>${esc(firstSentence(J[y].summary))}</p><a class="more" href="/ilju/${F[y].slug}/">${esc(F[y].ko)}일주 특징 보기 ›</a></div>`).join('')}</div></section>`;
+  }).join('');
+  const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">일주론</div>
+<h1>60일주 총정리</h1>
+<p>일주는 태어난 날의 간지예요. 사주에서 나 자신을 뜻하는 자리라 성격과 배우자 자리를 볼 때 가장 먼저 봐요.</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><div class="links">${list.map((y) => `<a href="/ilju/${F[y].slug}/">${esc(F[y].ko)}</a>`).join('')}</div></section>
+${groups}
+<section class="cta">
+<h3>내 일주를 모르겠다면</h3>
+<p>생일만 넣으면 내 일주와 여덟 글자로 오늘 하루를 풀어 드려요. 하루 한 번 무료예요.</p>
+<a class="btn" href="/daily?${iutm('hub')}">생일 넣고 내 일주 보기</a>
+<a class="sub" href="/daily?${iutm('hub_mail')}#daily-mail">매일 아침 내 일주 운세 메일로 받기</a>
+</section>
+<p class="note">일주만 본 참고용 풀이예요. 사주는 여덟 글자와 대운을 함께 봐야 정확해요.</p>
+</main>`;
+  const jsonld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: '60일주 총정리', description: desc, inLanguage: 'ko', url: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
+  write('ilju', page({ title, desc, canonical, body, jsonld }));
+}
+
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];
-const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' || u === '/gunghap/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
+const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' || u === '/gunghap/' || u === '/ilju/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') || u.startsWith('/ilju/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(({ u, p }) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${p}</priority></url>`).join('\n')}\n</urlset>\n`;
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap);
 console.log(`검색용 페이지 ${out.length}개, sitemap ${urls.length}개 주소`);
