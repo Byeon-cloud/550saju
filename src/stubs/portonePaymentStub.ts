@@ -45,6 +45,10 @@ export function isPortoneLiveEnabled(): boolean {
   return false; // 앱인토스: 포트원 실결제 비활성 (토스 IAP 고정)
 }
 
+export function isPortoneLiveMethod(_m: PortonePgMethod): boolean {
+  return false; // 앱인토스: 결제수단별 실결제도 전부 비활성 (2026-10-16 portonePayment.ts 와 시그니처 동기)
+}
+
 export async function requestPortoneLivePayment(
   _pkg: unknown,
   _method: PortonePgMethod,
