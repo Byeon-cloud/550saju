@@ -186,7 +186,7 @@ export function PremiumSelectPage() {
                       {p.regularPrice}운
                     </span>
                     <span style={{ background: 'rgba(244,209,102,0.30)', color: '#F4D166', padding: '3px 10px', borderRadius: 2, fontSize: 13, fontWeight: 800 }}>
-                      {p.salePrice}운, {p.saleBadge}
+                      {p.saleBadge} {p.salePrice}운
                     </span>
                   </>
                 );

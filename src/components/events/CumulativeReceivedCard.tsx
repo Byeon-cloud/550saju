@@ -32,8 +32,8 @@ const DETAIL_TITLE: Record<DeviceRewardType, string> = {
   streak3: '3일 연속 출석',
   invite: '친구 초대',
   share: '결과 공유',
-  launch_promo: '토스포인트, 첫 콘텐츠 이용',
-  attend7: '토스포인트, 7일 연속 출석',
+  launch_promo: '첫 콘텐츠 이용 토스포인트',
+  attend7: '7일 연속 출석 토스포인트',
 };
 
 const isTossPoint = (t: DeviceRewardType) => t === 'attend7' || t === 'launch_promo';

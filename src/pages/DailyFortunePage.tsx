@@ -628,8 +628,8 @@ export function DailyFortunePage() {
         {/* P2-5 · 데일리 리워드 배지 — result phase 에서는 숨김 (2026-05-06)
             DarkHeader 아래 중복 정보 제거. select phase 에서만 노출. */}
         {hasAnyProfile && !isResultPhase && <DailyRewardBadge className="mb-4" />}
-        {/* 매일 아침 운세 알림 동의 (2026-06-13 · 앱인토스 + templateCode 설정 시에만 노출) */}
-        {hasAnyProfile && <DailyNotiButton className="mb-4" />}
+        {/* 매일 아침 운세 알림 동의 (2026-06-13 · 앱인토스 + templateCode 설정 시에만 노출). 2026-10-16 — 결과 화면에선 위 대신 끝에 */}
+        {hasAnyProfile && !isResultPhase && <DailyNotiButton className="mb-4" />}
 
         <AnimatePresence mode="wait">
           {!hasAnyProfile && (
@@ -718,6 +718,11 @@ export function DailyFortunePage() {
             />
           )}
         </AnimatePresence>
+
+        {/* 2026-10-16 — 다 읽은 끝에서 내일 아침 알림 권하기 (동의했으면 안 보임) */}
+        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
+          <DailyNotiButton variant="closing" className="mt-6" />
+        )}
 
         {/* 2026-10-10 — 실제 후기 수집 (생성 끝난 뒤 · 사람·날짜당 한 번) */}
         {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (

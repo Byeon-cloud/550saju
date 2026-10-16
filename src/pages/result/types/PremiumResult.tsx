@@ -2119,7 +2119,7 @@ function TopicTopRecommend({
             marginBottom: 12,
           }}
         >
-          주제별로 깊이 보기, 深 度
+          주제별로 깊이 보기
         </div>
         <div
           style={{
@@ -2381,7 +2381,15 @@ function PremiumResultFooter({
           const fname = `사주500_${(report?.name || '내')}_종합사주.pdf`;
           if (await tryOpenNativePdf(r.url, fname, (r as any).bytes)) return; // 뷰어가 앱 안에서 열림
         }
-        window.open(r.url, '_blank');
+        // 2026-10-16 — 토스 웹뷰는 window.open 이 무동작일 수 있어 SDK openURL(기기 브라우저)로 먼저 연다
+        let opened = false;
+        if (inToss) {
+          try {
+            const mod: any = await import('@apps-in-toss/web-framework');
+            if (typeof mod.openURL === 'function') { await mod.openURL(r.url); opened = true; }
+          } catch { /* 아래 window.open 으로 */ }
+        }
+        if (!opened) window.open(r.url, '_blank');
         toast.show(inToss ? '브라우저에서 PDF가 열려요. 저장해 주세요' : 'PDF 다운로드를 시작했어요', 'success');
       } else {
         toast.show('PDF를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
@@ -6325,7 +6333,7 @@ function NowDaewoonCard({ v4Daeun, dayOheng }: { v4Daeun: V4Daeun[]; dayOheng: O
           </span>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, color: C.mute, marginBottom: 2 }}>현재 대운, {cur.age}</div>
+          <div style={{ fontSize: 13, color: C.mute, marginBottom: 2 }}>지금 대운 ({cur.age})</div>
           <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>
             {cur.gz}({cur.kr || ''}): {cur.label || '진행 중'}의 10년
           </div>

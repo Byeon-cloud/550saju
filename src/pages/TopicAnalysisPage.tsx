@@ -123,55 +123,12 @@ import {
   type TopicSajuMiniCell,
   type TopicActionItem,
 } from './topic/_chrome';
-// 2026-05-07 Option A — JDS_Topic_IA 신규 통합 view (8섹션 골격)
-// AI prompt 재작성 (Phase 4) 까지 USE_TOPIC_MOCKUP_VIEW=false 로 leg스 보존
-import { TopicMockupView } from './topic/TopicMockupView';
-import { TOPIC_THEMES, normalizeTopicKey, type TopicResultV2 } from './topic/_topic_themes';
 // 2026-10-04 — 주제 반쪽(__partial) 자가치유 · 스트림 마감 정책 · 폴백 전 서버 완성본 채택
 import * as topicHeal from './topic/topicPartialHeal';
 import { getTopicPrice, formatPriceLabel, PRODUCT_COST } from '@/constants/pricing';
 import { NextStepsCard, openChatWithResult } from '@/components/common/NextStepsCard';
 import { ReviewAsk } from '@/components/common/ReviewAsk';
 
-/** Phase 4 (AI prompt 재작성) 완료 후 true 로 flip — JDS_Topic_IA 통합 결과 페이지 활성화 */
-const USE_TOPIC_MOCKUP_VIEW = false;
-
-/** 현재 AI 응답 → TopicResultV2 best-effort 매핑 (AI prompt 재작성 전 임시 어댑터) */
-function adaptToTopicResultV2(result: any, topicId: string): TopicResultV2 {
-  const key = normalizeTopicKey(topicId);
-  const theme = TOPIC_THEMES[key];
-  return {
-    topicId: key,
-    title: result?.title || theme.sec01Title,
-    oneLineConclusion: result?.oneLineSummary || result?.oneLineConclusion || result?.summary || '',
-    conclusionSajuRef: result?.sajuBasis || result?.conclusionSajuRef,
-    narrative: Array.isArray(result?.sections)
-      ? result.sections.map((s: any) => s?.body || s?.content || '').filter(Boolean).join('\n\n')
-      : (result?.deepAnalysis || result?.narrative || ''),
-    sajuHighlights: result?.sajuHighlights || result?.topicData?.highlights,
-    topicSipsung: result?.topicSipsung || {
-      main: { name: theme.sipsungAxes.main, count: 0, level: '보통' },
-      secondary: { name: theme.sipsungAxes.secondary, count: 0, level: '보통' },
-      resistance: { name: theme.sipsungAxes.resistance, count: 0, level: '보통' },
-      aux: { name: theme.sipsungAxes.aux, count: 0, level: '보통' },
-      interpretation: '',
-    },
-    timeline: result?.timeline || { type: theme.timelineType, items: [] },
-    meet: result?.meet || { boost: { who: '', why: '' }, clash: { who: '', why: '' }, calm: { who: '', why: '' } },
-    doList: Array.isArray(result?.doList) ? result.doList : [],
-    dontList: Array.isArray(result?.dontList) ? result.dontList : [],
-    lucky: result?.lucky || result?.luckyProfile || {
-      color: { value: '', reason: '' },
-      direction: { value: '', reason: '' },
-      hour: { value: '', reason: '' },
-      number: { value: '', reason: '' },
-      word: { value: '', reason: '' },
-      food: { value: '', reason: '' },
-    },
-    pullQuote: result?.pullQuote || result?.actionAdvice || '',
-    upsellLine: result?.upsellLine,
-  };
-}
 
 /* ─── 주제 설정 — 이모지 제거, 브랜드 픽토그램 사용.
  *    key가 PictogramRegistry의 topic:* 와 1:1 매핑. (브랜드픽토그램_시스템.md)
@@ -4763,41 +4720,6 @@ export function TopicAnalysisPage() {
 
           {/* ====== 결과 ====== */}
           {phase === 'result' && result && (() => {
-            // 2026-05-07 Option A — JDS_Topic_IA 통합 view 사용 시 early return
-            // (USE_TOPIC_MOCKUP_VIEW=true 로 flip 시 AI prompt v2 schema 가 필요)
-            if (USE_TOPIC_MOCKUP_VIEW && selected && topicId) {
-              const v2Theme = TOPIC_THEMES[normalizeTopicKey(topicId)];
-              const v2Result = adaptToTopicResultV2(result, topicId);
-              const pricing = getTopicPrice(topicId as TopicKey);
-              return (
-                <motion.div key="result-v2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                  <TopicMockupView
-                    theme={v2Theme}
-                    profile={selected}
-                    result={v2Result}
-                    nameLabel={selected.name ? `${selected.name} 님` : undefined}
-                    tierLabel={formatPriceLabel(pricing)}
-                    onShare={() => { /* ShareModal trigger TBD */ }}
-                    onChat={async () => {
-                      const { createChatRoom } = await import('@/services/storage/chatStore');
-                      const room = createChatRoom(selected?.name || '나');
-                      navigate(`/chat/${room.id}`, {
-                        state: {
-                          profile: selected,
-                          contentContext: {
-                            type: 'topic',
-                            label: topic?.label || '주제 분석',
-                            fullResult: v2Result,
-                          },
-                        },
-                      });
-                    }}
-                    onUpsell={() => navigate('/input', { state: { returnTo: '/result' } })}
-                  />
-                </motion.div>
-              );
-            }
-
             // 2026-05-28 — SSOT 10주제 chrome 매핑 (5 → 10 확장). 디자인 양극화 해소.
             const chromeKey = (
               ['love', 'wealth', 'career', 'health', 'study', 'reunion', 'marriage', 'exam', 'business', 'move'].includes(topicId || '')

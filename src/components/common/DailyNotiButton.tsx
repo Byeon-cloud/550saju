@@ -1,24 +1,37 @@
 /**
  * DailyNotiButton — 매일 아침 운세 알림 동의 버튼 (2026-06-13 · 앱인토스 전용)
  *
- * 기능성 스마트발송 체인의 클라 측: 콘솔 알림 동의문("오늘의 운세 매일 알림" · 매일 9시)에
- * 유저 동의를 받는 토스 SDK 동의창 호출. 동의자에게만 "운세 도착" 정기 푸시가 발송됨.
+ * 기능성 정기 푸시의 앱 쪽: 콘솔 알림 동의문('오늘의 운세 매일 오전 9시 알림', termsId 130317)에
+ * 사용자 동의를 받는 토스 동의 창을 띄운다. 동의한 사람에게만 매일 9시 '오늘의 운세가 준비됐어요.' 푸시가 간다.
  *
  * - SDK: requestNotificationAgreement({ options: { templateCode }, onEvent, onError })
- *   onEvent type: newAgreement | alreadyAgreed | agreementRejected · cleanup 반환(호출 필수)
- * - templateCode 는 콘솔 동의문 상세의 코드 — VITE_TOSS_NOTI_TEMPLATE_CODE (비우면 비노출 · 안전)
- * - 동의 완료 시 localStorage 플래그로 상태 칩 전환 (재진입 시 중복 유도 X)
+ *   onEvent type: newAgreement | alreadyAgreed | agreementRejected. 실기기 반환값은 함수가 아닐 수 있어 cleanup 은 try 로
+ * - templateCode 는 스마트발송 템플릿 코드(동의문 코드 아님) — VITE_TOSS_NOTI_TEMPLATE_CODE (비우면 비노출)
+ * - 동의하면 기기에 기록해 다시 권하지 않는다
+ *
+ * 2026-10-16 (1.5.8) — 알림은 돈이 들지 않는 재방문 장치라 자리를 늘림:
+ *   variant 'card'    오늘의 운세 고르는 화면 위 (동의 뒤엔 '받고 있어요' 한 줄)
+ *   variant 'closing' 오늘의 운세를 다 읽은 끝 ('내일 아침 9시에 알려 드릴까요?', 동의 뒤엔 숨김)
+ *   variant 'slim'    홈 첫 화면 한 줄 (동의 뒤엔 숨김)
+ *   v9 규칙대로 금색을 빼고 먹과 종이 색만 쓴다(금색은 누르는 주 버튼에만).
  */
 import { useState } from 'react';
 import { isAppintosBuild } from '@/lib/env';
 import { useToast } from '@/components/common/Toast';
+import { HJ, SERIF } from '@/components/hanji/Hanji';
 
 const TEMPLATE_CODE = import.meta.env.VITE_TOSS_NOTI_TEMPLATE_CODE as string | undefined;
 const AGREED_KEY = 'saju500:daily_noti_agreed';
 
-const C = { gold: '#B8965A', goldDeep: '#8C6D3D', ink: '#1A1A1A', mute: '#6F6557' } as const;
+type Variant = 'card' | 'closing' | 'slim';
 
-export function DailyNotiButton({ className }: { className?: string }) {
+const COPY: Record<Variant, { title: string; sub: string }> = {
+  card: { title: '매일 아침 운세 알림 받기', sub: '아침 9시, 오늘의 운세가 도착해요' },
+  closing: { title: '내일 아침 9시에 알려 드릴까요?', sub: '내일 운세가 나오면 토스 알림으로 보내 드려요' },
+  slim: { title: '매일 아침 9시 운세 알림 받기', sub: '' },
+};
+
+export function DailyNotiButton({ className, variant = 'card' }: { className?: string; variant?: Variant }) {
   const toast = useToast();
   const [agreed, setAgreed] = useState(() => {
     try { return localStorage.getItem(AGREED_KEY) === '1'; } catch { return false; }
@@ -26,6 +39,7 @@ export function DailyNotiButton({ className }: { className?: string }) {
   const [busy, setBusy] = useState(false);
 
   if (!isAppintosBuild || !TEMPLATE_CODE) return null;
+  if (agreed && variant !== 'card') return null;
 
   const markAgreed = () => {
     try { localStorage.setItem(AGREED_KEY, '1'); } catch { /* noop */ }
@@ -50,14 +64,14 @@ export function DailyNotiButton({ className }: { className?: string }) {
           setBusy(false);
           if (type === 'newAgreement') {
             markAgreed();
-            toast.show('내일 아침부터 운세 알림을 보내드릴게요', 'success');
+            toast.show('내일 아침부터 운세 알림을 보내 드릴게요', 'success');
           } else if (type === 'alreadyAgreed') {
             markAgreed();
             toast.show('이미 알림을 받고 계세요', 'info');
           } else {
             toast.show('알림은 언제든 다시 신청할 수 있어요', 'info');
           }
-          import('@/services/analytics').then((a) => a.trackEvent('noti_agree', { result: type })).catch(() => {});
+          import('@/services/analytics').then((a) => a.trackEvent('noti_agree', { result: type, src: variant })).catch(() => {});
         },
         onError: () => {
           try { cleanup?.(); } catch { /* noop */ }
@@ -75,35 +89,48 @@ export function DailyNotiButton({ className }: { className?: string }) {
     return (
       <div className={className} style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '10px 14px', borderRadius: 12,
-        background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.22)',
-        fontSize: 13.5, fontWeight: 600, color: C.goldDeep,
+        padding: '10px 14px', borderRadius: 12, background: HJ.card, border: `1px solid ${HJ.line}`,
+        fontSize: 14, fontWeight: 600, color: HJ.ink2,
       }}>
-        <span style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 900 }}>日</span>
+        <span style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.ink }}>日</span>
         매일 아침 9시, 운세 알림을 받고 있어요
       </div>
     );
   }
 
+  if (variant === 'slim') {
+    return (
+      <button type="button" onClick={onAsk} disabled={busy} className={className} style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+        minHeight: 44, padding: '10px 12px', background: 'transparent', border: 0,
+        fontSize: 14.5, fontWeight: 700, color: HJ.ink2, cursor: busy ? 'wait' : 'pointer',
+      }}>
+        <span aria-hidden="true" style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.ink }}>日</span>
+        {COPY.slim.title}
+        <span aria-hidden="true" style={{ color: HJ.mute }}>›</span>
+      </button>
+    );
+  }
+
+  const copy = COPY[variant];
   return (
     <button type="button" onClick={onAsk} disabled={busy} className={className} style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-      width: '100%', padding: '13px 16px', borderRadius: 14, cursor: busy ? 'wait' : 'pointer',
-      background: '#FFFFFF', border: `1px solid rgba(184,150,90,0.35)`,
-      boxShadow: '0 2px 10px rgba(26,26,26,0.05)', textAlign: 'left',
+      width: '100%', padding: '14px 16px', borderRadius: 12, cursor: busy ? 'wait' : 'pointer',
+      background: HJ.card, border: `1px solid ${HJ.line}`, textAlign: 'left',
     }}>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{
-          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-          background: 'rgba(184,150,90,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'Noto Serif KR', serif", fontSize: 16, fontWeight: 900, color: C.goldDeep,
+      <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span aria-hidden="true" style={{
+          width: 36, height: 36, borderRadius: 8, flexShrink: 0, border: `1px solid ${HJ.line}`, background: HJ.paper,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: SERIF, fontSize: 17, fontWeight: 900, color: HJ.ink,
         }}>日</span>
         <span>
-          <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: C.ink }}>매일 아침 운세 알림 받기</span>
-          <span style={{ display: 'block', fontSize: 13, color: C.mute, marginTop: 1 }}>아침 9시, 오늘의 운세가 도착해요</span>
+          <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: HJ.ink }}>{copy.title}</span>
+          <span style={{ display: 'block', fontSize: 13, color: HJ.mute, marginTop: 2 }}>{copy.sub}</span>
         </span>
       </span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <span aria-hidden="true" style={{ fontSize: 18, color: HJ.mute }}>›</span>
     </button>
   );
 }

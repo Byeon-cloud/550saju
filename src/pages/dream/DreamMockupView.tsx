@@ -325,7 +325,7 @@ const MOCKUP_CSS = `
 .dream-mockup .worry-link { margin-top: 14px; background: linear-gradient(135deg, rgba(106,93,63,.06), rgba(26,22,18,.04)); border: 1px solid #E5DFD0; border-radius: 12px; padding: 14px 16px; }
 .dream-mockup .worry-link .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .dream-mockup .worry-link .h .lab { font-size: 13px; letter-spacing: 0.15em; color: #5C4A2E; font-weight: 600; }
-.dream-mockup .worry-link .h .arrow { color: #B8965A; font-size: 13.5px; }
+.dream-mockup .worry-link .h .arrow { color: #6F6557; font-size: 13.5px; }
 .dream-mockup .worry-link .h .lab.dream { color: #1A1612; }
 .dream-mockup .worry-link p { font-size: 13px; line-height: 1.75; color: #2a2520; margin: 0; word-break: keep-all; }
 .dream-mockup .worry-link p strong { color: #1a1a1a; font-weight: 600; background: linear-gradient(180deg, transparent 60%, rgba(26,22,18,.15) 60%); padding: 0 2px; }
@@ -779,8 +779,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                 <p className="sec-lead">적어 주신 고민과 꿈의 장면이 어떻게 맞물리는지 짚어 봐요.</p>
                 <div className="worry-link">
                   <div className="h">
-                    <span className="lab">요새 고민</span>
-                    <span className="arrow">→</span>
+                    <span className="lab">요새 고민과</span>
                     <span className="lab dream">꿈 속 장면</span>
                   </div>
                   <p dangerouslySetInnerHTML={safeHtml(worry.narrative || '')} />

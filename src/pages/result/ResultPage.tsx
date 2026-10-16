@@ -362,7 +362,7 @@ export function ResultPage(props: ResultPageProps = {}) {
     try { refundBalance(refundAmount); } catch { /* noop */ }
     // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
     import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
-    setStreamError(`분석에 실패해서 ${refundAmount}운을 돌려드렸어요. 잠시 후 다시 시도해주세요.`);
+    setStreamError(`풀이를 만들지 못해서 ${refundAmount}운을 돌려드렸어요. 잠시 뒤 다시 만들어 주세요.`);
   }, [sajuData, deliverReport]);
 
   useEffect(() => {
@@ -646,11 +646,22 @@ export function ResultPage(props: ResultPageProps = {}) {
       <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
         <Header title="종합사주" />
         <ErrorState
-          title="분석에 실패했어요"
+          title="풀이를 만들지 못했어요"
           description={streamError}
-          onRetry={() => navigate('/', { replace: true })}
-          retryLabel="홈으로"
+          onRetry={() => navigate('/premium', { replace: true })}
+          retryLabel="다시 만들기"
         />
+        {/* 2026-10-16 — 막다른 화면이던 것: 다시 만들기(운은 이미 돌려받음) + 홈, 고객문의 */}
+        <div className="max-w-mobile mx-auto px-5 pb-10 flex gap-2">
+          <button type="button" onClick={() => navigate('/', { replace: true })}
+            className="flex-1 py-3 rounded-xl text-h3 font-semibold" style={{ background: '#FFFDF8', border: '1px solid #E1D7C4', color: '#4B4238' }}>
+            홈으로
+          </button>
+          <button type="button" onClick={() => navigate('/my')}
+            className="flex-1 py-3 rounded-xl text-h3 font-semibold" style={{ background: '#FFFDF8', border: '1px solid #E1D7C4', color: '#4B4238' }}>
+            고객문의
+          </button>
+        </div>
       </div>
     );
   }

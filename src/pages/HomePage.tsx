@@ -29,6 +29,7 @@ import {
 } from '@/services/saju/hookFacts';
 import type { SajuData } from '@/types/saju';
 import { TtiFortune } from '@/components/home/TtiFortune';
+import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import { getMyTti, ttiOfYear, ttiName, yearLabel } from '@/services/tti/ttiFortune';
 import {
   HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
@@ -201,6 +202,7 @@ export function HomePage() {
                 </h1>
                 <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/daily')}>오늘 운세 다시 보기</GoldCta>
                 <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>오늘 받은 풀이를 그대로 다시 열어요</p>
+                <DailyNotiButton variant="slim" className="mt-1" />
               </>
             ) : (
               <>
@@ -226,6 +228,7 @@ export function HomePage() {
                 <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>
                   {dailyFree ? '오늘 1회 무료, 결제 없이 바로 열려요' : '오늘 무료 1회는 썼어요, 두 번째부터 1운'}
                 </p>
+                <DailyNotiButton variant="slim" className="mt-1" />
               </>
             )
           ) : (

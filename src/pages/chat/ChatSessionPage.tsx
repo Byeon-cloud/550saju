@@ -90,9 +90,9 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
   if (ctx.type === 'dream') {
     summary = (
       <>
-        {ctx.category && <div style={{ fontSize: 13, color: 'rgba(248,245,238,0.6)', marginTop: 6 }}>꿈 주제, {ctx.category}</div>}
+        {ctx.category && <div style={{ fontSize: 13, color: 'rgba(248,245,238,0.6)', marginTop: 6 }}>꿈 주제는 {ctx.category}</div>}
         {ctx.dreamText && <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 4, fontStyle: 'normal' }}>"{ctx.dreamText}"</div>}
-        {ctx.concern && <div style={{ fontSize: 13.5, color: 'rgba(248,245,238,0.75)', marginTop: 4 }}>요새 고민, {ctx.concern}</div>}
+        {ctx.concern && <div style={{ fontSize: 13.5, color: 'rgba(248,245,238,0.75)', marginTop: 4 }}>요즘 고민은 {ctx.concern}</div>}
       </>
     );
   } else if (ctx.fullResult?.title) {
@@ -104,7 +104,7 @@ function ResultContextBanner({ ctx }: { ctx: any }) {
         <div style={{ fontSize: 13, color: '#F5EFE0', marginTop: 6, fontFamily: "'Noto Serif KR', serif", fontWeight: 600 }}>
           {plainText(ctx.fullResult.weekHeadline || ctx.fullResult.headline)}
         </div>
-        {ctx.periodLabel && <div style={{ fontSize: 13, color: 'rgba(248,245,238,0.7)', marginTop: 4 }}>기간, {ctx.periodLabel}</div>}
+        {ctx.periodLabel && <div style={{ fontSize: 13, color: 'rgba(248,245,238,0.7)', marginTop: 4 }}>보는 기간은 {ctx.periodLabel}</div>}
       </>
     );
   }
