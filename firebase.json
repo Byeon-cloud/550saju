@@ -52,6 +52,14 @@
         "function": "unsubscribeMail"
       },
       {
+        "source": "/unse/today/ilju",
+        "function": "renderIljuToday"
+      },
+      {
+        "source": "/unse/today/ilju/**",
+        "function": "renderIljuToday"
+      },
+      {
         "source": "/unse/today",
         "function": "renderTtiToday"
       },

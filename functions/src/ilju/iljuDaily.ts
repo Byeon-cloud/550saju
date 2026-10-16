@@ -18,7 +18,7 @@ import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { parseJsonResponse, TONE_FINAL_CHECK } from '../ai/promptsV3';
 import { tenGod, sanitizeAiOutput } from '../ai/sajuFacts';
-import { branchRelations, ttiHours } from '../tti/ttiFortune';
+import { branchRelations, ttiHours, pingIndexNow } from '../tti/ttiFortune';
 import { MAIL_APP_PASSWORD, FROM_ADDR, BIZ_LINE, mailTransport, newUnsubToken, normalizeEmail, unsubUrl } from '../pdf/mailPdf';
 
 const ANTHROPIC_KEY = defineSecret('ANTHROPIC_API_KEY');
@@ -87,7 +87,7 @@ const SYSTEM = `당신은 사주500 의 명리 풀이가입니다. 아침 메일
 
 ## 근거
 - 근거는 확정표뿐입니다. 일주마다 적힌 오늘 천간의 십성, 일지와 오늘 지지의 관계, 좋은 시간만 씁니다. 표에 없는 길흉을 지어내지 않습니다.
-- 같은 십성이나 같은 관계가 여러 일주에 나와도 같은 첫마디와 같은 문장을 쓰지 않습니다. 일주마다 다르게 씁니다.
+- 한 번에 받는 여섯 일주는 일간이 같아 오늘 천간의 십성도 같습니다. 그래서 일지와 오늘 지지의 관계(부딪힘, 짝, 한편, 깎임, 무난함)와 좋은 시간으로 첫마디부터 서로 다르게 씁니다. '오늘은 내 몫을'처럼 같은 말로 시작하는 줄이 둘 이상 나오면 안 됩니다.
 
 ## 쓰는 법
 - head: 한 문장, 30~50자. '오늘은 ~한 날입니다.' 꼴로 그 일주에게 어떤 날인지.
@@ -114,8 +114,8 @@ export async function generateIljuDaily(apiKey: string, dateKey: string): Promis
   const [y, m, d] = dateKey.split('-').map(Number);
   const head = `오늘: ${y}년 ${m}월 ${d}일 ${WEEK[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}요일, 일진 ${dayGz}(${ko(dayGz)})일`;
   const out: Record<string, IljuEntry> = {};
-  const chunks: typeof rows[] = [];
-  for (let i = 0; i < 60; i += 10) chunks.push(rows.slice(i, i + 10));
+  // 같은 일간 여섯 일주를 한 묶음으로 (십성이 같아 흩어 놓으면 첫마디가 겹친다, 10-17 실측) → 일지 관계로 서로 다르게 쓰게
+  const chunks: typeof rows[] = GAN.split('').map((g) => rows.filter((r) => r.ilju[0] === g));
   const one = async (chunk: typeof rows) => {
     for (let attempt = 0; attempt < 2; attempt++) {
       const t0 = Date.now();
@@ -257,10 +257,11 @@ ${p.entry ? `<p>${esc(p.entry.body)}</p>
 export const ensureIljuDaily = onSchedule(
   { schedule: '30 6 * * *', timeZone: 'Asia/Seoul', secrets: [ANTHROPIC_KEY], timeoutSeconds: 540, memory: '512MiB', retryCount: 0 },
   async () => {
+    // 2026-10-17 공개 페이지 /unse/today/ilju/ (seo/iljuTodayPage.ts) 도 이 글을 쓰므로 구독자가 없어도 만든다 (하루 약 400원)
     const db = admin.firestore();
-    if ((await activeSubCount(db)) === 0) { console.log('[ilju] 구독자 0, 만들지 않음'); return; }
     const doc = await ensureIlju(db, ANTHROPIC_KEY.value(), kstKey(0));
     console.log('[ilju] 오늘 일주', Object.keys(doc?.ilju || {}).length, '/ 60');
+    if (Object.keys(doc?.ilju || {}).length >= 30) await pingIndexNow(['https://saju500.app/unse/today/ilju/']);
   },
 );
 

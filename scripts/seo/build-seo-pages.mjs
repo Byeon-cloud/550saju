@@ -416,6 +416,7 @@ ${secs}
 <h3>같은 ${esc(name)}라도 태어난 달과 시간이 다르면 사주가 달라요</h3>
 <p>생일과 태어난 시간을 넣으면 여덟 글자 전체로 오늘 하루를 풀어 드려요. 하루 한 번 무료예요.</p>
 <a class="btn" href="/daily?${iutm(f.slug)}">내 사주로 오늘의 운세 무료로 보기</a>
+<a class="sub" href="/unse/today/ilju/?${iutm(f.slug + '_today')}#${f.slug}">오늘의 ${esc(name)} 운세 보기</a>
 <a class="sub" href="/daily?${iutm(f.slug + '_mail')}#daily-mail">매일 아침 ${esc(name)} 운세 메일로 받기</a>
 <a class="sub" href="/premium?${iutm(f.slug + '_premium')}">평생 사주 풀이(종합사주) 보기</a>
 </section>
@@ -461,7 +462,7 @@ ${groups}
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];
-const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' || u === '/gunghap/' || u === '/ilju/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') || u.startsWith('/ilju/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
+const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, { u: '/unse/today/ilju/', p: '0.8' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' || u === '/gunghap/' || u === '/ilju/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') || u.startsWith('/ilju/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(({ u, p }) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${p}</priority></url>`).join('\n')}\n</urlset>\n`;
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap);
 console.log(`검색용 페이지 ${out.length}개, sitemap ${urls.length}개 주소`);

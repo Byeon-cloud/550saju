@@ -2476,6 +2476,7 @@ export { renderShareOg } from './share/renderShareOg';
 export { createCompatShare, cleanupCompatShares } from './share/compatShare'; // 2026-10-17 궁합 보내기 (시험 E7)
 export { subscribeMarketingMail, unsubscribeMail, sendNewYearDeadlineMail } from './mail/marketingMail'; // 2026-10-17 신년운세 마감 안내 메일 (시험 E14)
 export { subscribeDailyMail, ensureIljuDaily, sendDailyMail } from './ilju/iljuDaily'; // 2026-10-17 매일 아침 일주 운세 메일 (시험 E15)
+export { renderIljuToday } from './seo/iljuTodayPage'; // 2026-10-17 오늘의 일주별 운세 공개 페이지 /unse/today/ilju/
 
 /* ─── #saju-card-share Stage 4 · 사주 카드 OG SSR (2026-04-27) ───
  * 만세력 카드 카톡 공유 시 미리보기 이미지 노출. E32 패턴 응용.

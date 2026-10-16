@@ -211,7 +211,7 @@ function kstDateKey(offsetDays = 0): string {
 /** 2026-10-17 오늘 운세가 새로 만들어지면 검색엔진(네이버, 빙)에 IndexNow 로 알린다. 열쇠는 사이트에 공개로 올린 파일(비밀 아님).
  *  scripts/seo/indexnow.cjs 와 같은 열쇠. 실패해도 운세 저장에는 영향 없음 */
 const INDEXNOW_KEY = 'ac2c01bdca09a9ffa4ee6ee05f6eaa2c';
-async function pingIndexNow(urlList: string[]): Promise<void> {
+export async function pingIndexNow(urlList: string[]): Promise<void> {
   const body = JSON.stringify({ host: 'saju500.app', key: INDEXNOW_KEY, keyLocation: `https://saju500.app/${INDEXNOW_KEY}.txt`, urlList });
   for (const ep of ['https://searchadvisor.naver.com/indexnow', 'https://www.bing.com/indexnow']) {
     try {
