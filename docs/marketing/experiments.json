@@ -74,12 +74,12 @@
   "id": "E7",
   "name": "궁합, 띠 운세 보내기",
   "hypothesis": "결과를 친구에게 보내면 받은 사람이 자기 사주를 넣는다",
-  "start": "",
+  "start": "2026-10-17",
   "metric": "보내기 수, 받은 사람 입력",
   "target": "보낸 10명 중 1명 입력",
-  "status": "대기",
+  "status": "진행",
   "cost": "0원",
-  "next": "받는 사람은 보낸 사람 기기의 결과를 볼 수 없어 받는 화면부터 설계 필요. 토스 새 공유 기능(10월 말~11월 초) 공개 때 같이"
+  "next": "1.5.9 와 웹: 궁합 결과 보내기 → 받는 사람 /share/compat/{id}. 지표 share_complete(type=compat), share_view, 받은 사람의 사주 입력"
  },
  {
   "id": "E8",
@@ -147,5 +147,16 @@
   "status": "진행",
   "cost": "AI 원가 약 2천 원",
   "next": "검색엔진 등록(오너 로그인) 뒤 색인. 2주 뒤 유입 상위 쌍을 보고 궁합 화면 첫 문구를 띠 궁합에서 이어지게 다듬는다"
+ },
+ {
+  "id": "E14",
+  "name": "신년운세 마감 안내 메일",
+  "hypothesis": "출시 기념가 마감(11/30)을 미리 알려 주면 망설이던 사람이 마감 전에 산다. 웹 신년운세 화면과 검색 페이지에서 알림 신청을 받는다",
+  "start": "2026-10-17",
+  "metric": "알림 신청 수(mail_subscribe), 11/28 메일 클릭(utm_campaign=newyear_deadline), 신년운세 결제",
+  "target": "신청 100명, 메일 클릭률 20%, 결제 10건",
+  "status": "진행",
+  "cost": "0원",
+  "next": "11/28 10:00 sendNewYearDeadlineMail 자동 발송(동의자만, (광고) 표시, 수신 거부 링크). mailCampaigns/newyear2027_deadline 에 결과"
  }
 ]

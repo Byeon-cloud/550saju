@@ -1,6 +1,7 @@
 import { getTojungPrice } from '@/constants/pricing';
 import { useState, useMemo, useRef } from 'react';
 import { NeedSaju, HJ, SERIF, Mark, Note, Tag, GhostButton } from '@/components/hanji/Hanji';
+import { DeadlineMailSignup } from '@/components/newyear/DeadlineMailSignup';
 import { openChatWithResult } from '@/components/common/NextStepsCard';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -205,6 +206,8 @@ export function TojungPage() {
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
           <Header title="신년운세" />
           <NeedSaju mark="歲" desc={`${TY}년 열두 달을 내 사주로 미리 봐요. 태어난 날과 시간만 있으면 돼요.`} onClick={() => navigate('/input?from=home_body_tojung')} />
+          {/* 2026-10-17 웹 전용 마감 전 메일 알림 (시험 E14) */}
+          <div className="px-5 pb-8"><DeadlineMailSignup source="tojung_empty" /></div>
         </div>
       );
     }
@@ -224,6 +227,7 @@ export function TojungPage() {
           <FadeIn delay={0.05}>
             <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title={`누구의 ${TY} 신년운세를 볼까요?`} />
           </FadeIn>
+          {!selected && <DeadlineMailSignup source="tojung" />}
           {selected && (
             <FadeIn delay={0.1}>
               <div className="card-gold py-3 px-4 flex items-center justify-between">

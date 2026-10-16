@@ -48,6 +48,10 @@
         "function": "renderShareOg"
       },
       {
+        "source": "/mail/unsub",
+        "function": "unsubscribeMail"
+      },
+      {
         "source": "/unse/today",
         "function": "renderTtiToday"
       },

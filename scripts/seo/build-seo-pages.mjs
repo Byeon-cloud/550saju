@@ -161,6 +161,7 @@ for (const z of ORDER) {
 <p>내 사주 여덟 글자로 ${YEAR}년 열두 달을 날짜까지 풀어 드려요.</p>
 <a class="btn" href="/tojung?${utm(slug)}">내 생일로 ${YEAR} 신년운세 보기</a>
 <a class="sub" href="/?${utm(slug + '_today')}">오늘의 ${name} 운세는 무료로 보기</a>
+<a class="sub" href="/tojung?${utm(slug + '_mail')}#deadline-mail">출시 기념가 마감 전에 메일로 알림 받기</a>
 </section>
 <section class="sec"><h2>다른 띠 ${YEAR}년 운세</h2>${ttiGrid(z)}</section>
 <p class="note">이 풀이는 띠(태어난 해의 지지)와 ${YEAR}년 ${gzKo(yearGz)}년의 관계, 태어난 해의 천간을 명리학 원리에 따라 본 참고용 풀이예요. 달은 절기 기준이라 양력 4~8일 무렵에 바뀌어요.</p>
@@ -193,6 +194,7 @@ for (const z of ORDER) {
 <p>생일과 태어난 시간을 넣으면 내 사주로 ${YEAR}년 열두 달을 날짜까지 풀어 드려요.</p>
 <a class="btn" href="/tojung?${utm('hub')}">내 생일로 ${YEAR} 신년운세 보기</a>
 <a class="sub" href="/?${utm('hub_today')}">오늘의 띠 운세는 무료로 보기</a>
+<a class="sub" href="/tojung?${utm('hub_mail')}#deadline-mail">출시 기념가 마감 전에 메일로 알림 받기</a>
 </section>
 <p class="note">띠(태어난 해의 지지)와 ${YEAR}년 ${gzKo(yearGz)}년의 관계, 태어난 해의 천간을 명리학 원리에 따라 본 참고용 풀이예요.</p>
 </main>`;

@@ -2474,6 +2474,7 @@ export { recordTopicView, aggregateTopicTop5 } from './livebest/topicViews';
  */
 export { renderShareOg } from './share/renderShareOg';
 export { createCompatShare, cleanupCompatShares } from './share/compatShare'; // 2026-10-17 궁합 보내기 (시험 E7)
+export { subscribeMarketingMail, unsubscribeMail, sendNewYearDeadlineMail } from './mail/marketingMail'; // 2026-10-17 신년운세 마감 안내 메일 (시험 E14)
 
 /* ─── #saju-card-share Stage 4 · 사주 카드 OG SSR (2026-04-27) ───
  * 만세력 카드 카톡 공유 시 미리보기 이미지 노출. E32 패턴 응용.
