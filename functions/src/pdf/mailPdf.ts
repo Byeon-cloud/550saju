@@ -43,7 +43,8 @@ export async function sendPremiumPdfMail(opts: {
     tx.set(limRef, { count: n + 1, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   });
 
-  const pass = MAIL_APP_PASSWORD.value();
+  let pass = '';
+  try { pass = MAIL_APP_PASSWORD.value(); } catch { pass = ''; } // 함수에 시크릿이 묶이기 전에는 비어 있다
   if (!pass) throw new HttpsError('failed-precondition', '메일 보내기가 아직 준비되지 않았어요');
   const transport = nodemailer.createTransport({ service: 'gmail', auth: { user: FROM_ADDR, pass } });
   const who = name ? `${name} 님` : '고객님';
