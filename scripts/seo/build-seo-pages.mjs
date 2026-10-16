@@ -7,6 +7,8 @@
  *   SPA 첫 화면이 비어 보이므로 글이 HTML 에 그대로 있어야 색인된다. 화면의 버튼은 앱(SPA)으로 utm 을 달아 보낸다.
  *   /kkum/               꿈해몽 모음, /kkum/{꿈}/ 꿈마다 한 장 (2026-10-17, 시험 E10). 내용은 src/data/seo/kkum.json
  *                        (scripts/seo/gen-kkum.cjs, 목록은 kkum-symbols.cjs). 버튼은 무료 꿈해몽으로 꿈 내용을 채워 보낸다.
+ *   /gunghap/            띠별 궁합표, /gunghap/{띠}-{띠}/ 78쌍 (2026-10-17, 시험 W4). 내용은 src/data/seo/gunghap.json
+ *                        (scripts/seo/gen-gunghap.cjs, 관계는 계산). 버튼은 두 사람 생일 궁합(/compat)으로 보낸다.
  *   sitemap.xml 도 여기서 다시 쓴다(기존 주소 + 이 페이지들).
  */
 import fs from 'node:fs';
@@ -275,10 +277,103 @@ ${cats}
   write('kkum', page({ title, desc, canonical, body, jsonld }));
 }
 
+// ── 띠 궁합 (2026-10-17, 시험 W4)
+{
+  const require = createRequire(import.meta.url);
+  const { pairs, REL_PLAIN } = require(path.join(ROOT, 'scripts/seo/gen-gunghap.cjs'));
+  const G = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/seo/gunghap.json'), 'utf8')).items;
+  const PS = pairs().filter((p) => G[p.key]);
+  const gutm = (c) => `utm_source=seo&amp;utm_medium=organic&amp;utm_campaign=gunghap_${c}`;
+  const nm = (z) => T[z][1];
+  const keyOf = (a, b) => (ORDER.indexOf(a) <= ORDER.indexOf(b) ? `${T[a][0]}-${T[b][0]}` : `${T[b][0]}-${T[a][0]}`);
+  const yearsOf = (z) => { const o = []; for (let y = 1941; y <= 2012; y++) if (ZHI[(((y - 4) % 12) + 12) % 12] === z) o.push(y); return o; };
+  const isGood = (p) => p.rels.includes('육합') || p.rels.includes('삼합');
+  const isHard = (p) => p.rels.includes('충') || p.rels.includes('원진');
+  const relLine = (p) => (p.a === p.b ? (p.selfHyung ? '같은 띠끼리(같은 기운이 겹쳐 고집이 부딪히기도 함)' : '같은 띠끼리(서로를 잘 알지만 같은 약점도 겹침)')
+    : p.rels.length ? p.rels.map((r) => REL_PLAIN[r]).join(', ') : '특별한 관계 없음(크게 끌리지도 부딪히지도 않아 노력한 만큼 가까워짐)');
+  const chips = (z, cur) => `<div class="links">${ORDER.map((x) => { const k = keyOf(z, x); return `<a href="/gunghap/${k}/"${k === cur ? ' style="background:#1A1612;color:#F4EFE4;border-color:#1A1612"' : ''}>${esc(nm(z))} ${esc(nm(x))}</a>`; }).join('')}</div>`;
+  for (const p of PS) {
+    const x = G[p.key];
+    const na = nm(p.a); const nb = nm(p.b); const same = p.a === p.b;
+    const canonical = `${SITE}/gunghap/${p.key}/`;
+    const title = same ? `${na} ${na} 궁합 | 같은 ${na}끼리 연애, 결혼, 친구 궁합 - 사주500` : `${na} ${nb} 궁합 | ${na}와 ${nb} 연애, 결혼, 친구 궁합 - 사주500`;
+    const yy = (z) => yearsOf(z).map((y) => String(y % 100).padStart(2, '0')).join(', ');
+    const desc = `${firstSentence(x.head)} 연인과 부부로 만났을 때, 친구와 동료로 만났을 때, 잘 지내는 법까지 풀었어요. ${na}(${yy(p.a)}년생)${same ? '' : `, ${nb}(${yy(p.b)}년생)`}.`;
+    const faqs = [x.faq, ...(same ? [] : [{ q: `남자 ${na} 여자 ${nb}와 남자 ${nb} 여자 ${na}는 궁합이 다른가요?`, a: '띠 궁합은 두 띠의 관계라 남녀를 바꿔도 같게 봅니다. 남녀에 따라 달라지는 부분은 두 사람의 생일과 태어난 시간으로 보는 사주 궁합에서 드러납니다.' }])];
+    const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">띠 궁합</div>
+<h1>${esc(na)} ${esc(nb)} 궁합</h1>
+<p>${esc(x.head)}</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><h2><span class="seal">一</span>두 띠의 관계</h2><div class="card">
+<div class="row"><div class="k">궁합</div><div class="v"><span class="gr${isHard(p) ? ' warn' : ''}">${esc(x.label)}</span></div></div>
+<div class="row"><div class="k">관계</div><div class="v">${esc(relLine(p))}</div></div>
+<div class="row"><div class="k">오행</div><div class="v">${esc(x.oheng)}</div></div>
+<div class="row"><div class="k">${esc(na)}<small>출생 연도</small></div><div class="v">${yearsOf(p.a).join(', ')}년생</div></div>
+${same ? '' : `<div class="row"><div class="k">${esc(nb)}<small>출생 연도</small></div><div class="v">${yearsOf(p.b).join(', ')}년생</div></div>`}
+</div></section>
+<section class="sec"><h2><span class="seal">二</span>연인과 부부로 만나면</h2><div class="card"><p class="txt">${esc(x.love)}</p></div></section>
+<section class="sec"><h2><span class="seal">三</span>친구와 동료로 만나면</h2><div class="card"><p class="txt">${esc(x.friend)}</p></div></section>
+<section class="sec"><h2><span class="seal">四</span>잘 지내는 법</h2><div class="card"><p class="txt">${esc(x.tip)}</p></div></section>
+<section class="cta">
+<h3>같은 띠라도 생일이 다르면 궁합이 달라요</h3>
+<p>두 사람의 생일로 사주 여덟 글자를 맞춰 보면 누가 무엇을 채워 주는지, 언제 부딪히는지까지 보여요.</p>
+<a class="btn" href="/compat?${gutm(p.key)}">두 사람 생일로 궁합 보기</a>
+<a class="sub" href="/gunghap/?${gutm(p.key + '_hub')}">띠별 궁합표 보기</a>
+</section>
+<section class="sec"><h2><span class="seal">五</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${faqs.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<section class="sec"><h2>${esc(na)}와 다른 띠 궁합</h2>${chips(p.a, p.key)}</section>
+${same ? '' : `<section class="sec"><h2>${esc(nb)}와 다른 띠 궁합</h2>${chips(p.b, p.key)}</section>`}
+<p class="note">띠(태어난 해의 지지)끼리의 관계와 오행을 명리학 원리로 본 참고용 풀이예요. 띠 궁합은 태어난 해 하나만 본 큰 흐름이에요.</p>
+</main>`;
+    const jsonld = [
+      { '@context': 'https://schema.org', '@type': 'Article', headline: `${na} ${nb} 궁합`, description: desc, inLanguage: 'ko', mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE }, datePublished: '2026-10-17', dateModified: (x.generatedAt || '2026-10-17').slice(0, 10) },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ];
+    write(`gunghap/${p.key}`, page({ title, desc, canonical, body, jsonld }));
+  }
+  // 띠별 궁합표
+  const canonical = `${SITE}/gunghap/`;
+  const title = '띠별 궁합표 | 12띠 잘 맞는 띠와 부딪히는 띠 총정리 - 사주500';
+  const desc = '쥐띠부터 돼지띠까지 12띠마다 잘 맞는 띠, 부딪히는 띠, 서운한 띠를 한눈에 정리했어요. 띠 궁합 78쌍의 연애, 결혼, 친구 궁합도 볼 수 있어요.';
+  const secs = ORDER.map((z) => {
+    const mine = ORDER.map((o) => PS.find((p) => p.key === keyOf(z, o))).filter(Boolean);
+    const list = (f) => mine.filter((p) => p.a !== p.b && f(p)).map((p) => nm(p.a === z ? p.b : p.a));
+    const good = list(isGood); const hard = list((p) => p.rels.includes('충')); const sad = list((p) => p.rels.includes('원진') && !p.rels.includes('충'));
+    return `<section class="sec" id="${T[z][0]}"><h2><span class="seal">${z}</span>${esc(nm(z))} 궁합</h2><div class="card">
+<div class="row"><div class="k">잘 맞는 띠</div><div class="v">${esc(good.join(', ') || '없음')}</div></div>
+<div class="row"><div class="k">부딪히는 띠</div><div class="v">${esc(hard.join(', ') || '없음')}</div></div>
+<div class="row"><div class="k">서운한 띠</div><div class="v">${esc(sad.join(', ') || '없음')}</div></div>
+<div class="row"><div class="k">출생 연도</div><div class="v">${yearsOf(z).join(', ')}년생</div></div>
+</div><div style="margin-top:10px">${chips(z, null)}</div></section>`;
+  }).join('');
+  const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">띠 궁합</div>
+<h1>띠별 궁합표</h1>
+<p>내 띠를 찾아 잘 맞는 띠와 부딪히는 띠를 보세요. 띠 이름을 누르면 두 띠의 연애, 결혼, 친구 궁합이 나와요.</p>
+</div></section>
+<main class="wrap">
+<nav class="sec"><div class="grid">${ORDER.map((z) => `<a href="#${T[z][0]}">${esc(nm(z))}</a>`).join('')}</div></nav>
+${secs}
+<section class="cta">
+<h3>띠 궁합은 태어난 해 하나만 본 큰 흐름이에요</h3>
+<p>두 사람의 생일과 태어난 시간으로 보면 누가 무엇을 채워 주는지, 언제 부딪히는지까지 보여요.</p>
+<a class="btn" href="/compat?${gutm('hub')}">두 사람 생일로 궁합 보기</a>
+<a class="sub" href="/unse/2027/?${gutm('hub_newyear')}">2027년 띠별 신년운세 보기</a>
+</section>
+<p class="note">잘 맞는 띠는 짝을 이루거나 한편이 되는 띠, 부딪히는 띠는 정면으로 맞서는 띠, 서운한 띠는 괜히 밉다가도 정이 드는 띠예요. 명리학의 지지 관계로 본 참고용 풀이예요.</p>
+</main>`;
+  const jsonld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: '띠별 궁합표', description: desc, inLanguage: 'ko', url: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
+  write('gunghap', page({ title, desc, canonical, body, jsonld }));
+}
+
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];
-const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' ? '0.9' : u.startsWith('/kkum/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
+const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' || u === '/gunghap/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(({ u, p }) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${p}</priority></url>`).join('\n')}\n</urlset>\n`;
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap);
 console.log(`검색용 페이지 ${out.length}개, sitemap ${urls.length}개 주소`);
