@@ -191,6 +191,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'insufficient_balance', // {type, needed} — 잔액부족 감지(충전 유도 직전 — 전환 모멘트)
   'share_view',         // {type} — 공유 받은 사람이 받은 화면을 열었다 (2026-10-17 궁합 보내기 E7)
   'mail_subscribe',     // {source} — 신년운세 마감 전 메일 알림 신청 (2026-10-17 시험 E14, 웹)
+  'charge_free_first',  // {} — 사주 없는 사람이 충전 화면에서 무료 오늘의 운세로 (2026-10-17)
   'input_leave',        // {filled} — 입력을 끝내지 않고 나감, 채운 칸 (2026-10-17)
   'input_blocked',      // {missing} — 입력 화면에서 빈 칸이 있는데 시작을 눌렀다 (2026-10-17 입력 41% 이탈 진단)
   'review_request',     // {result: shown|unsupported|error, n} — 토스 별점 창 요청 (2026-10-17 시험 E12)

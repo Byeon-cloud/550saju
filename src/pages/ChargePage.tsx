@@ -20,6 +20,7 @@ import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useAuth } from '@/hooks/useAuth';
 import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
 import { rememberWebPayment, openRefundRequest } from '@/services/payment/refundRequest';
+import { useActiveProfile } from '@/hooks/useHomeData';
 
 // ── SSOT 토큰 (D1 fix 2026-04-23 / #55)
 const C = {
@@ -73,6 +74,8 @@ function InfoIcon({ color }: { color: string }) {
 
 // ── Main
 export function ChargePage() {
+  // 2026-10-17 퍼널: 충전 화면을 연 230명 중 184명이 사주를 넣은 적이 없었다(158명은 첫 화면에서 바로). 그 사람들에게 무료 길을 먼저
+  const { hasProfile } = useActiveProfile();
   usePageTitle('운(運) 충전');
   const navigate = useNavigate();
   const location = useLocation();
@@ -318,6 +321,21 @@ export function ChargePage() {
           잔액 {balance}운
         </div>
       </div>
+
+      {/* 사주를 넣은 적 없는 사람 → 충전보다 무료 오늘의 운세 먼저 (운이 모자라 넘어온 사람에겐 안 보임) */}
+      {!hasProfile && !redirectTo && (
+        <div style={{ margin: '14px 16px 0', background: '#FFFDF8', border: `1px solid ${C.line}`, borderRadius: 14, padding: '16px 16px 14px' }}>
+          <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 17, fontWeight: 700, color: C.ink }}>충전하기 전에 무료로 먼저 보세요</div>
+          <div style={{ marginTop: 6, fontSize: 14.5, color: C.inkSoft, lineHeight: 1.65 }}>생년월일만 넣으면 내 사주로 오늘의 운세를 풀어 드려요. 하루 한 번 무료예요.</div>
+          <button
+            type="button"
+            onClick={() => { trackEvent('charge_free_first', {}); navigate('/input?from=daily'); }}
+            style={{ marginTop: 12, width: '100%', minHeight: 48, borderRadius: 12, border: `1px solid ${C.ink}`, background: 'transparent', color: C.ink, fontWeight: 800, fontSize: 15.5, cursor: 'pointer' }}
+          >
+            무료로 오늘의 운세 보기
+          </button>
+        </div>
+      )}
 
       {/* ─── §3. HeroBar (104px · 1운=500원 환율 명시 · 원화 노출 유일 진입점) ─── */}
       <div style={{
