@@ -583,6 +583,26 @@ export function refundBalance(amount: number): number {
   return amount;
 }
 
+/**
+ * 결제 취소로 지급했던 운 회수 (2026-10-16 — 포트원 취소 → 서버 balanceAdjustments → balanceAdjust.ts 가 호출).
+ *   결제분은 paid 에서, 보너스는 bonus 에서 빼고, 그 칸이 모자라면 나머지 칸(reward 포함)에서 뺀다. 0 아래로는 내리지 않는다.
+ * @returns 실제로 뺀 운
+ */
+export function reclaimBalance(paidUn: number, bonusUn: number): number {
+  const d = getBalanceDetail();
+  const r1 = (n: number) => Math.round(n * 10) / 10;
+  let short = 0;
+  const takeP = Math.min(d.paid, Math.max(0, paidUn)); d.paid = r1(d.paid - takeP); short += Math.max(0, paidUn) - takeP;
+  const takeB = Math.min(d.bonus, Math.max(0, bonusUn)); d.bonus = r1(d.bonus - takeB); short += Math.max(0, bonusUn) - takeB;
+  let taken = takeP + takeB;
+  for (const k of ['bonus', 'paid', 'reward'] as const) {
+    if (short <= 0) break;
+    const t = Math.min(d[k], short); d[k] = r1(d[k] - t); short -= t; taken += t;
+  }
+  setBalanceDetail(d);
+  return r1(taken);
+}
+
 /** 단순 잔액 설정 (레거시 호환, paid로 설정) */
 export function setBalance(balance: number): void {
   const d = getBalanceDetail();

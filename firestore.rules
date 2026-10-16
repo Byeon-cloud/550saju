@@ -133,6 +133,16 @@ service cloud.firestore {
         allow read: if (request.auth != null && request.auth.uid == uid) || isOwner();
         allow write: if false;
       }
+      // 2026-10-16 운 회수 지시 (포트원 취소 → syncPortoneCancellations 가 작성). 기기가 읽고 반영한 뒤
+      //   applied 를 true 로만 바꿀 수 있다 (차감량, 사유는 못 고침, 되돌리기(false)와 생성과 삭제는 금지).
+      match /balanceAdjustments/{aid} {
+        allow read: if (request.auth != null && request.auth.uid == uid) || isOwner();
+        allow update: if request.auth != null && request.auth.uid == uid
+          && resource.data.applied == false
+          && request.resource.data.applied == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['applied', 'appliedAt']);
+        allow create, delete: if false;
+      }
       match /dailyFortune/{date} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
