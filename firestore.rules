@@ -57,6 +57,11 @@ service cloud.firestore {
       allow write: if false;     // 서버(admin SDK)만 — recordTopicView/aggregateTopicTop5
     }
     // 띠별 오늘의 운세 (2026-10-15) — 서버가 하루 한 번 만들고, 홈은 공개 읽기만.
+    // 2026-10-17 궁합 보내기 — 링크(id)를 아는 사람만 한 건씩 읽는다. 목록 조회와 클라이언트 쓰기는 막는다(createCompatShare 함수만 쓴다)
+    match /compatShares/{id} {
+      allow get: if true;
+      allow list, write: if false;
+    }
     match /ttiFortune/{day} {
       allow read: if true;
       allow write: if false;

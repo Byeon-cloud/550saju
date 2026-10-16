@@ -5,6 +5,8 @@ import { Button } from '@/components/common/Button';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getReport, type LocalReport } from '@/services/storage/localStore';
 import { TOPIC_REGISTRY, normalizeTopicId } from '@/constants/topics';
+import { CompatShareView } from '@/pages/share/CompatShareView';
+import { fetchCompatShare, type CompatShareDoc } from '@/services/share/compatShare';
 
 /**
  * 공유 수신 페이지 — 비회원 진입 (2026-05-07 동적화)
@@ -23,6 +25,17 @@ export function SharePage() {
   const navigate = useNavigate();
   const { id: shareId, type: urlType, topicId: urlTopicId } = useParams<{ id: string; type?: string; topicId?: string }>();
   const [report, setReport] = useState<LocalReport | null>(null);
+  // 2026-10-17 궁합 보내기 (시험 E7) — /share/compat/{id} 는 서버에 남긴 일부를 읽어 받은 궁합 화면을 보여 준다
+  const isCompatLink = urlType === 'compat';
+  const [compat, setCompat] = useState<CompatShareDoc | null>(null);
+  const [compatLoaded, setCompatLoaded] = useState(!isCompatLink);
+
+  useEffect(() => {
+    if (!isCompatLink || !shareId) return;
+    let alive = true;
+    fetchCompatShare(shareId).then((d) => { if (alive) { setCompat(d); setCompatLoaded(true); } });
+    return () => { alive = false; };
+  }, [isCompatLink, shareId]);
 
   useEffect(() => {
     if (!shareId) return;
@@ -59,6 +72,9 @@ export function SharePage() {
   };
   const topicNorm = contentType === 'topic' ? normalizeTopicId(topicKey) : null;
   const typeLabel = topicNorm ? TOPIC_REGISTRY[topicNorm].label : contentType === 'topic' ? '주제별 운세' : (TYPE_LABEL[contentType] || '사주 풀이');
+
+  if (isCompatLink && !compatLoaded) return <div className="min-h-screen" style={{ background: '#F4EFE4' }} />;
+  if (compat) return <CompatShareView data={compat} />;
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>

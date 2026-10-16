@@ -131,6 +131,26 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
   return via !== null;
 }
 
+/** 궁합 보내기 (2026-10-17, 시험 E7) — 받는 사람이 점수와 총평을 직접 열어 보는 링크 (/share/compat/{id}).
+ *  링크 id 는 services/share/compatShare.ts 의 createCompatShareId 가 서버에 만든다.
+ *  @returns 성사 여부 ('clipboard' 면 화면에서 '복사했어요'를 알린다) */
+export async function shareCompatLink(p: { id: string; n1: string; n2: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'compat', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
+  const text = `${p.n1} 님과 ${p.n2} 님의 궁합을 사주로 봤어요. 점수와 총평을 열어 보세요`;
+  const path = `/share/compat/${p.id}?ref=share`;
+  const done = (method: string) => {
+    import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'compat', method, rewarded: 0 })).catch(() => {});
+  };
+  if (isAppsInToss()) {
+    const ok = await shareViaToss(path, text, `${window.location.origin}/og-image.png`);
+    if (ok) done('toss_share');
+    return ok ? 'toss_share' : null;
+  }
+  const via = await shareViaWeb('궁합 — 사주500', text, `${window.location.origin}${path}`);
+  if (via) done(via);
+  return via;
+}
+
 /** 공유 링크 생성 (레거시 호환 — type 없이 호출 시 result/) */
 export function createShareUrl(shareId: string, type?: ShareContentType, topicId?: string): string {
   const prefix = type === 'topic' && topicId ? `topic/${topicId}` : (type || 'result');

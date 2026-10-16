@@ -25,11 +25,14 @@
  */
 
 import { onRequest } from 'firebase-functions/v2/https';
+import * as admin from 'firebase-admin';
 
 /** 봇 UA 식별 — 주요 messenger/SNS 크롤러 */
 const BOT_UA_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|slackbot|linkedinbot|kakaotalk|telegrambot|discordbot|whatsapp|line-poker|google|bing|yandex|baidu/i;
 
-type ShareType = 'daily' | 'dream' | 'topic' | 'premium' | 'result';
+// 2026-10-17 — result, compat, monthly, tojung, weekly, daeun 추가. 공유 모달(ShareModal)은 종류 없이 /share/result/{id} 를 만드는데
+//   여기서 모양을 몰라 웹 링크가 전부 404 였다(월운세, 신년운세, 주간운세, 궁합, 대운). 앱 안 링크는 SPA 라우트라 괜찮았다.
+type ShareType = 'daily' | 'dream' | 'topic' | 'premium' | 'result' | 'compat' | 'monthly' | 'tojung' | 'weekly' | 'daeun';
 
 interface ParsedShare {
   type: ShareType;
@@ -62,7 +65,7 @@ function parseSharePath(path: string): ParsedShare | null {
   let m = path.match(/^\/share\/topic\/([a-z]{3,16})\/([A-Za-z0-9_-]{4,64})\/?$/);
   if (m) return { type: 'topic', topicId: m[1], reportId: m[2] };
   // /share/{type}/{id}
-  m = path.match(/^\/share\/(daily|dream|premium)\/([A-Za-z0-9_-]{4,64})\/?$/);
+  m = path.match(/^\/share\/(daily|dream|premium|result|compat|monthly|tojung|weekly|daeun)\/([A-Za-z0-9_-]{4,64})\/?$/);
   if (m) return { type: m[1] as ShareType, reportId: m[2] };
   // /share/{id} (레거시)
   m = path.match(/^\/share\/([A-Za-z0-9_-]{4,64})\/?$/);
@@ -89,8 +92,23 @@ const TOPIC_LABEL_MAP: Record<string, string> = {
  *    현존 og-image.png 1종으로 폴백. (Phase 2: 콘텐츠별 동적 OG PNG 생성)
  *  설명도 share.ts 초대형 카피와 일관 ("당신도 받아보세요" — 받는 사람 본인 사주가 주인공). */
 const OG_IMAGE_FALLBACK = '/og-image.png';
-function getOgMeta(parsed: ParsedShare): { title: string; description: string; image: string } {
+const TYPE_TITLE: Record<string, [string, string]> = {
+  compat: ['궁합', '두 사람의 사주로 궁합을 봤어요. 점수와 총평을 볼 수 있어요.'],
+  monthly: ['월운세', '이번 달 흐름을 사주로 날짜까지 봤어요. 내 한 달도 사주로 확인해 보세요.'],
+  tojung: ['신년운세', '새해 열두 달을 사주로 봤어요. 내 새해 운세도 확인해 보세요.'],
+  weekly: ['주간운세', '이번 주 흐름을 사주로 봤어요. 내 한 주도 확인해 보세요.'],
+  daeun: ['대운', '십 년마다 바뀌는 큰 흐름을 사주로 봤어요. 내 대운도 확인해 보세요.'],
+};
+function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null): { title: string; description: string; image: string } {
   const { type, topicId } = parsed;
+  if (type === 'compat' && compat) {
+    return {
+      title: `${compat.n1} 님과 ${compat.n2} 님의 궁합 ${compat.score}점 | 사주500`,
+      description: compat.head || '두 사람의 사주로 궁합을 봤어요. 점수와 총평을 볼 수 있어요.',
+      image: OG_IMAGE_FALLBACK,
+    };
+  }
+  if (TYPE_TITLE[type]) return { title: `${TYPE_TITLE[type][0]} | 사주500`, description: TYPE_TITLE[type][1], image: OG_IMAGE_FALLBACK };
   switch (type) {
     case 'daily':
       return {
@@ -128,9 +146,19 @@ function getOgMeta(parsed: ParsedShare): { title: string; description: string; i
 }
 
 /** 봇 대상 SSR HTML — 콘텐츠 타입별 OG 메타 */
-function buildBotHtml(params: { origin: string; parsed: ParsedShare }): string {
+interface CompatShareDoc { n1: string; n2: string; score: number; head?: string }
+async function readCompatShare(id: string): Promise<CompatShareDoc | null> {
+  try {
+    const snap = await admin.firestore().doc(`compatShares/${id}`).get();
+    if (!snap.exists) return null;
+    const d = snap.data() as any;
+    return { n1: String(d.n1 || '나'), n2: String(d.n2 || '상대'), score: Number(d.score) || 0, head: String(d.head || '') };
+  } catch { return null; }
+}
+
+function buildBotHtml(params: { origin: string; parsed: ParsedShare; compat?: CompatShareDoc | null }): string {
   const { origin, parsed } = params;
-  const meta = getOgMeta(parsed);
+  const meta = getOgMeta(parsed, params.compat);
   const shareUrl = `${origin}${
     parsed.type === 'result'
       ? `/share/${parsed.reportId}`
@@ -209,7 +237,8 @@ export const renderShareOg = onRequest(
       if (BOT_UA_RE.test(ua)) {
         res.set('Content-Type', 'text/html; charset=utf-8');
         res.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // 5분 CDN 캐시
-        res.status(200).send(buildBotHtml({ origin, parsed }));
+        const compat = parsed.type === 'compat' ? await readCompatShare(parsed.reportId) : null;
+        res.status(200).send(buildBotHtml({ origin, parsed, compat }));
         return;
       }
 

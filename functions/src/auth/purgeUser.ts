@@ -101,6 +101,14 @@ export async function purgeUserData(uid: string, reason: string): Promise<PurgeR
     result.errors.push(`emailLeads:${e?.message || e}`);
   }
 
+  // 4-1) 보낸 궁합 링크 (2026-10-17 궁합 보내기, share/compatShare.ts)
+  try {
+    const { deleteCompatSharesOf } = await import('../share/compatShare');
+    await deleteCompatSharesOf(db, uid);
+  } catch (e: any) {
+    result.errors.push(`compatShares:${e?.message || e}`);
+  }
+
   // 5) users 문서 덮어쓰기 — 남길 필드만 골라서 set (merge 없이)
   try {
     const snap = await userRef.get();

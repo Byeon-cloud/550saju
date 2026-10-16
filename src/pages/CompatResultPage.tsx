@@ -84,6 +84,7 @@ export function CompatResultPage() {
   );
   const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
+  const [sending, setSending] = useState(false);
   // 2026-05-07 fix — 동적 reportId
   const [shareReportId, setShareReportId] = useState<string>(replayReport?.id || '');
   const called = useRef(isReplay);
@@ -135,6 +136,41 @@ export function CompatResultPage() {
       setTimeout(() => navigate('/compat'), 3000);
     }).finally(() => clearInterval(interval));
   }, []);
+
+  /** 2026-10-17 궁합 보내기 (시험 E7) — 받는 사람이 점수와 총평을 직접 열어 보는 링크. 서버에 일부만 남긴다(생일 없음).
+   *  링크를 만들지 못하면 예전 공유 창으로 돌아간다. */
+  async function handleSend() {
+    if (!state || !result || sending) return;
+    setSending(true);
+    try {
+      const yearZhi = (sd: any) => {
+        const z = String(sd?.pillars?.[0]?.지지 || '');
+        const KO: Record<string, string> = { 자: '子', 축: '丑', 인: '寅', 묘: '卯', 진: '辰', 사: '巳', 오: '午', 미: '未', 신: '申', 유: '酉', 술: '戌', 해: '亥' };
+        return '子丑寅卯辰巳午未申酉戌亥'.includes(z) ? z : (KO[z] || '');
+      };
+      const { createCompatShareId } = await import('@/services/share/compatShare');
+      const id = await createCompatShareId({
+        n1: state.person1.name,
+        n2: state.person2.name,
+        rel: state.relation,
+        score: result.overallScore,
+        rtype: (result as any).relationshipType || '',
+        summary: result.summary,
+        cats: (result.categories || []).map((c) => ({ n: c.name, s: c.score })),
+        good: (result.strengths || [])[0] || '',
+        tti1: yearZhi(state.person1.sajuData),
+        tti2: yearZhi(state.person2.sajuData),
+      }, shareReportId || `${state.person1.name}-${state.person2.name}-${result.overallScore}`);
+      const { shareCompatLink } = await import('@/utils/share');
+      const via = await shareCompatLink({ id, n1: state.person1.name, n2: state.person2.name });
+      if (via === 'clipboard') toast.show('링크를 복사했어요. 카카오톡이나 문자에 붙여 넣어 보내세요', 'success');
+    } catch (e) {
+      console.warn('[compat] 보내기 링크 실패, 예전 공유로', e);
+      setShowShare(true);
+    } finally {
+      setSending(false);
+    }
+  }
 
   if (!state) return null;
 
@@ -300,9 +336,12 @@ export function CompatResultPage() {
         {/* CTA — 공유 (가장 강조) */}
         <FadeIn delay={0.4}>
           <div className="space-y-3">
-            <Button onClick={() => setShowShare(true)} variant="gold" size="lg" fullWidth>
-              궁합 결과 공유하기
+            <Button onClick={handleSend} variant="gold" size="lg" fullWidth disabled={sending}>
+              {sending ? '링크를 만드는 중이에요' : '궁합 결과 보내기'}
             </Button>
+            <p className="text-center" style={{ fontSize: 13, color: '#6F6557', marginTop: -4 }}>
+              받는 사람은 점수와 총평, 잘 맞는 점을 볼 수 있어요. 생일은 보내지 않아요.
+            </p>
             <Button onClick={() => navigate('/compat')} variant="secondary" size="lg" fullWidth>
               다른 궁합 보기
             </Button>

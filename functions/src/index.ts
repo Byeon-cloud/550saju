@@ -2473,6 +2473,7 @@ export { recordTopicView, aggregateTopicTop5 } from './livebest/topicViews';
  * 봇 UA 는 OG HTML, 사람 UA 는 index.html self-fetch 로 SPA 전달.
  */
 export { renderShareOg } from './share/renderShareOg';
+export { createCompatShare, cleanupCompatShares } from './share/compatShare'; // 2026-10-17 궁합 보내기 (시험 E7)
 
 /* ─── #saju-card-share Stage 4 · 사주 카드 OG SSR (2026-04-27) ───
  * 만세력 카드 카톡 공유 시 미리보기 이미지 노출. E32 패턴 응용.
