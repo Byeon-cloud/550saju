@@ -90,6 +90,11 @@ export function HomePage() {
     } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // 2026-10-17 결과를 보고 홈으로 돌아온 순간에만 토스 별점 창 (앱인토스만, 60일 한 번, 평생 세 번 — reviewPrompt.ts)
+  useEffect(() => {
+    const t = window.setTimeout(() => { import('@/services/review/reviewPrompt').then((m) => m.maybeAskReview()).catch(() => {}); }, 900);
+    return () => window.clearTimeout(t);
+  }, []);
   // 다른 화면의 '주제별 운세 더 보기'(/#home-topics) 진입 시 고민 섹션으로
   useEffect(() => {
     if (window.location.hash !== '#home-topics') return;

@@ -36,6 +36,10 @@ export function trackEvent(eventName: string, params?: Record<string, string | n
   logToFirestore(eventName, params);
   // 토스 자체 analytics 미러 (D) — 앱인토스 콘솔 네이티브 유입/퍼널 (토스 내부 유입 attribution)
   mirrorToTossAnalytics(eventName, params);
+  // 2026-10-17 별점 요청 후보 (앱인토스만, 시험 E12) — 결과 도달과 운 차감 성공만 본다
+  if (eventName === 'content_result' || eventName === 'content_purchase') {
+    import('@/services/review/reviewPrompt').then((m) => m.noteReviewSignal(eventName, params)).catch(() => {});
+  }
 }
 
 export function trackPageView(pagePath: string) {
@@ -185,6 +189,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'invite_received',    // {granted, reason} — 공유링크 수신 전환 (바이럴 K-factor)
   'login_success',      // {provider} — 소셜/토스 로그인 성공
   'insufficient_balance', // {type, needed} — 잔액부족 감지(충전 유도 직전 — 전환 모멘트)
+  'review_request',     // {result: shown|unsupported|error, n} — 토스 별점 창 요청 (2026-10-17 시험 E12)
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───

@@ -133,9 +133,9 @@
   "start": "",
   "metric": "새 별점 수",
   "target": "주 20개",
-  "status": "대기",
+  "status": "준비",
   "cost": "0원",
-  "next": "1.5.9(Claude)"
+  "next": "코드 완료(reviewPrompt.ts, 결과 뒤 홈 복귀 때 토스 별점 창, 60일 한 번). 1.5.9 .ait 에 실려 나간다. 지표는 review_request 이벤트와 콘솔 별점 수"
  },
  {
   "id": "E13",
