@@ -21,10 +21,10 @@ export const TTI: Array<{ ji: string; name: string }> = [
 export const ttiName = (ji: string): string => TTI.find((t) => t.ji === ji)?.name ?? '';
 
 const yearGz = (y: number): string => GAN[(((y - 4) % 10) + 10) % 10] + ZHI[(((y - 4) % 12) + 12) % 12];
-/** 띠마다 출생 연도 7개 (1929~2012) — 서버와 같은 범위. 10-15 오너 지시로 1930년대까지 */
+/** 띠마다 출생 연도 6개 (1941~2012) — 서버와 같은 범위. 10-16 오너 지시로 29~40년생 줄은 뺐다 */
 export function ttiYears(ji: string): number[] {
   const out: number[] = [];
-  for (let y = 1929; y <= 2012; y++) if (yearGz(y)[1] === ji) out.push(y);
+  for (let y = 1941; y <= 2012; y++) if (yearGz(y)[1] === ji) out.push(y);
   return out;
 }
 export const ttiOfYear = (y: number): string => yearGz(y)[1];

@@ -128,15 +128,15 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
           return (
             <button key={ji} type="button" onClick={() => pick(ji)} aria-pressed={on}
               style={{
-                minHeight: 92, borderRadius: 12, padding: '9px 4px 8px',
+                minHeight: 80, borderRadius: 12, padding: '9px 4px 8px',
                 background: on ? HJ.ink : HJ.card, color: on ? '#F1ECE1' : HJ.ink,
                 border: `1px solid ${on ? HJ.ink : HJ.line}`,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
               }}>
               <span style={{ fontFamily: SERIF, fontSize: name.length > 3 ? 14.5 : 16, fontWeight: 700, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{name}</span>
-              {/* 출생 연도 일곱(1929~2012년생, 띠마다 정확히 일곱)을 셋, 둘, 둘로 — 2000년대생이 빠지지 않게(10-16 오너 지적: 37년생은 있는데 07년생이 없다) */}
+              {/* 출생 연도 여섯(1941~2012년생)을 두 줄에 셋씩 — 2000년대생까지 다 보이게(10-16 오너: 07년생 빠짐, 29~40년생 줄은 빼고 여섯) */}
               <span style={{ fontSize: 13, lineHeight: 1.35, color: on ? '#CFC6B6' : HJ.mute, textAlign: 'center', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                {yy.slice(0, 3).join(' ')}<br />{yy.slice(3, 5).join(' ')}<br />{yy.slice(5).join(' ')}
+                {yy.slice(0, 3).join(' ')}<br />{yy.slice(3).join(' ')}
               </span>
             </button>
           );
