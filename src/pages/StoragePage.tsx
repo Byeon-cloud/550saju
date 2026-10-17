@@ -277,7 +277,8 @@ export function StoragePage() {
       const key = profileKey(p);
       map.set(key, { reading: 0, chat: 0 });
     }
-    for (const r of reports) {
+    // 2026-10-17 — 목록에 보이는 기록만 센다 (숨긴 예전 1운 풀이까지 세서 '풀이 N건'이 목록과 달랐다, 오너: 숨긴 채로 둠)
+    for (const r of cleanedReports) {
       if (!r.input?.birthYear || !r.name) continue;
       const key = `${r.name}_${r.input.birthYear}_${r.input.birthMonth}_${r.input.birthDay}`;
       const cnt = map.get(key);
@@ -295,7 +296,7 @@ export function StoragePage() {
       }
     }
     return map;
-  }, [profiles, reports, chatRooms]);
+  }, [profiles, cleanedReports, chatRooms]);
 
   /* ─── 프로필 네비게이션 ─── */
   function openProfile(profile: SajuProfile) {
