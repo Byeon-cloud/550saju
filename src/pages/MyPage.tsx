@@ -64,6 +64,7 @@ type MenuItem = { id: string; label: string; path: string; icon: string };
 // Stage 7e-4: 고객문의 제거, 이용약관/개인정보처리방침은 footer 영역으로 이동
 const MENU_ITEMS_AIT: MenuItem[] = [
   { id: 'charge',  label: '운 충전',         path: '/charge',  icon: 'wallet'       },
+  { id: 'invite',  label: '친구 초대하고 운 받기', path: '/invite', icon: 'users' }, // 2026-10-18 친구 초대
   // 2026-09-16 제거: '결제·사용 내역' → '/billing' 라우트·페이지·데이터가 전부 없어 404(NotFound)로 떨어졌음.
   //   토스 심사 재제출 전 깨진 메뉴 차단. 내역 페이지를 실제로 만들 때 App.tsx 라우트와 함께 복귀할 것.
 ];
@@ -1481,6 +1482,13 @@ function MenuIcon({ name }: { name: string }) {
       <svg viewBox="0 0 24 24" {...s}>
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         <path d="M9 12l2 2 4-4" />
+      </svg>
+    );
+    case 'users': return (
+      <svg viewBox="0 0 24 24" {...s}>
+        <circle cx="9" cy="8" r="3.2" />
+        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+        <path d="M16 4.6a3.2 3.2 0 0 1 0 6.3M18 14.3c1.8.8 3 2.9 3 5.7" />
       </svg>
     );
     case 'archive': return (

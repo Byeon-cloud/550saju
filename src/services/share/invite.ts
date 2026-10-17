@@ -14,16 +14,22 @@ function track(name: string, params?: Record<string, string | number>) {
   import('@/services/analytics').then((a) => a.trackEvent(name, params)).catch(() => {});
 }
 
-const INVITE_TEXT = '나도 500원에 내 사주 볼 수 있대! 한번 해봐';
+/** 친구에게 보내는 말 (보내는 사람이 친구에게 하는 말이라 반말). 2026-10-18 친구 초대 보상이 생겨 받는 운을 적는다 */
+const inviteText = (n?: number) => (n && n > 0
+  ? `사주500에서 내 사주를 봤어. 이 링크로 들어와서 생일을 넣으면 너도 ${n}운을 받아. 오늘의 운세는 무료야`
+  : '사주500에서 내 사주를 봤어. 생일만 넣으면 오늘의 운세는 무료야');
 
 /** 공유 시트를 연다. 보낸 것으로 확인되면 onShared, 취소나 실패면 onCancel */
-export async function shareInvite(opts?: { onShared?: () => void; onCancel?: () => void }): Promise<void> {
+export async function shareInvite(opts?: { onShared?: () => void; onCancel?: () => void; inviteeUn?: number }): Promise<void> {
   track('share_click', { type: 'invite', page: typeof window !== 'undefined' ? window.location.pathname : '' });
+  const INVITE_TEXT = inviteText(opts?.inviteeUn);
   const { isAppsInToss } = await import('@/services/payment/iapService');
   if (isAppsInToss()) {
     try {
       const { share, getTossShareLink } = await import('@apps-in-toss/web-framework');
-      const link = await getTossShareLink('intoss://saju-500/?ref=share', 'https://saju500.app/og-image.png');
+      const { withInv, ensureInviteCode } = await import('@/services/referral/referral');
+      await ensureInviteCode();
+      const link = await getTossShareLink(`intoss://saju-500${withInv('/?ref=share')}`, 'https://saju500.app/og-image.png');
       await share({ message: `${INVITE_TEXT}\n${link}` });
       track('share_complete', { type: 'invite', method: 'toss_share', rewarded: 0 });
       opts?.onShared?.();
@@ -33,7 +39,9 @@ export async function shareInvite(opts?: { onShared?: () => void; onCancel?: () 
     return;
   }
   // 웹
-  const url = `${window.location.origin}/?ref=share`;
+  const { withInv, ensureInviteCode } = await import('@/services/referral/referral');
+  await ensureInviteCode();
+  const url = withInv(`${window.location.origin}/?ref=share`);
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
     try {
       await navigator.share({ title: '사주500', text: INVITE_TEXT, url });

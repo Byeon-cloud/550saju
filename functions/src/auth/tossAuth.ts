@@ -94,6 +94,29 @@ function decryptUserData(
   }
 }
 
+/**
+ * 토스 회원 확인만 (2026-10-18 친구 초대) — authorizationCode → userKey. 우리 계정(uid)은 바꾸지 않고, users 문서도 쓰지 않는다.
+ *   친구 초대 보상을 '본인 확인된 토스 회원 한 명당 한 번'으로 묶으려고 쓴다 (referral/referral.ts verifyTossIdentity).
+ */
+export async function fetchTossUserKey(authorizationCode: string, mtlsCert: string, mtlsKey: string): Promise<number> {
+  const agent = createMtlsAgent(mtlsCert, mtlsKey);
+  const fetchOptions: any = { agent };
+  const tokenRes = await fetch(TOSS_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ authorizationCode, referrer: 'DEFAULT' }),
+    ...fetchOptions,
+  });
+  if (!tokenRes.ok) throw new Error(`토스 토큰 교환 실패: ${tokenRes.status}`);
+  const tokenData: TossTokenResponse = await tokenRes.json();
+  if (tokenData.resultType !== 'SUCCESS' || !tokenData.success) throw new Error('토스 토큰 교환 실패');
+  const userRes = await fetch(TOSS_USER_URL, { headers: { Authorization: `Bearer ${tokenData.success.accessToken}` }, ...fetchOptions });
+  if (!userRes.ok) throw new Error(`토스 유저 정보 조회 실패: ${userRes.status}`);
+  const userData: TossUserResponse = await userRes.json();
+  if (userData.resultType !== 'SUCCESS' || !userData.success?.userKey) throw new Error('토스 유저 정보 실패');
+  return userData.success.userKey;
+}
+
 export async function exchangeTossToken(
   authorizationCode: string,
   mtlsCert: string,

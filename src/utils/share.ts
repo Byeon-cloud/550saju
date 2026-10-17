@@ -15,6 +15,7 @@
  */
 
 import { isAppsInToss } from '@/services/payment/iapService';
+import { withInv, ensureInviteCode } from '@/services/referral/referral';
 import { getBalance } from '@/services/storage/localStore';
 
 export type ShareContentType = 'daily' | 'dream' | 'topic' | 'premium';
@@ -105,10 +106,11 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
   const copy = getShareCopy(params);
   // 2026-06-22 마케팅 측정 — 공유 URL 에 ref=share 부착. 수신자 진입 시 captureUtm 이 utm.source='share' 로
   //   태깅 + App 부팅이 invite_received 발화 → "공유가 신규 방문/전환을 데려오는지(바이럴 K-factor)" 측정.
-  const webUrl = `${window.location.origin}/share/${copy.urlPath}?ref=share`;
+  await ensureInviteCode();
+  const webUrl = withInv(`${window.location.origin}/share/${copy.urlPath}?ref=share`); // inv: 친구 초대 코드 (2026-10-18)
   // 2026-07-03 CS fix ("공유 링크가 시스템 에러") — 토스 딥링크가 /share/ 프리픽스 없이 결과 페이지로
   //   직행 → 수신자 기기엔 그 리포트가 없어 에러. 웹과 동일하게 공유 수신 페이지(SharePage: 미리보기+초대 CTA)로.
-  const deepLinkPath = `/share/${copy.urlPath}?ref=share`;
+  const deepLinkPath = withInv(`/share/${copy.urlPath}?ref=share`);
 
   // 2026-05-29 — 토스 공유 시 ogImageUrl 미전달 → 토스 기본 OG 노출 버그 fix.
   //   현재 정적 OG 1종(og-image.png)만 존재 → 기본값으로 항상 전달. (Phase 2: 콘텐츠별 동적 OG)
@@ -141,7 +143,8 @@ const ogFor = (kind: 'dream' | 'compat' | 'daily' | 'premium' | 'tojung' | 'mont
 export async function shareDreamLink(p: { id: string; title: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
   import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'dream', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
   const text = `간밤 꿈을 사주로 풀어 봤어요. ${p.title ? `'${p.title}' ` : ''}풀이를 열어 보세요`;
-  const path = `/share/dream/${p.id}?ref=share`;
+  await ensureInviteCode();
+  const path = withInv(`/share/dream/${p.id}?ref=share`);
   const done = (method: string) => {
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'dream', method, rewarded: 0 })).catch(() => {});
   };
@@ -161,7 +164,8 @@ export async function shareDreamLink(p: { id: string; title: string }): Promise<
 export async function shareCompatLink(p: { id: string; n1: string; n2: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
   import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'compat', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
   const text = `${p.n1} 님과 ${p.n2} 님의 궁합을 사주로 봤어요. 점수와 총평을 열어 보세요`;
-  const path = `/share/compat/${p.id}?ref=share`;
+  await ensureInviteCode();
+  const path = withInv(`/share/compat/${p.id}?ref=share`);
   const done = (method: string) => {
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'compat', method, rewarded: 0 })).catch(() => {});
   };
@@ -179,7 +183,8 @@ export async function shareCompatLink(p: { id: string; n1: string; n2: string })
 export async function shareNewYearLink(p: { id: string; name: string; year: number }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
   import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'newyear', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
   const text = `${p.name} 님의 ${p.year}년을 사주로 미리 봤어요. 힘을 줄 달과 쉬어 갈 달을 열어 보세요`;
-  const path = `/share/newyear/${p.id}?ref=share`;
+  await ensureInviteCode();
+  const path = withInv(`/share/newyear/${p.id}?ref=share`);
   const done = (method: string) => {
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'newyear', method, rewarded: 0 })).catch(() => {});
   };

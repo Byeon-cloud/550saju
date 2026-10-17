@@ -202,6 +202,12 @@ const FIRESTORE_TRACKED = new Set<string>([
   'birthday_card_click',// {to: tojung|premium} — 생일 달 카드에서 상품으로
   'suneung_card_view',  // {who: parent|student} — 수능 시즌 홈 카드가 보였다 (2026-10-17, 11/1~11/19)
   'suneung_card_click', // {who} — 수능 카드에서 합격이직운으로
+  'inv_visit',          // {isNew, ok, manual?} — 친구 초대 링크로 들어온 기록이 서버에 남았다 (2026-10-18)
+  'inv_complete',       // {status} — 초대받은 친구가 받기를 눌렀다 (granted, need_login, not_new 등)
+  'inv_claim',          // {amount} — 적립 대기 운을 받아 잔액에 더했다
+  'inv_page_view',      // {hasSaju} — 친구 초대 화면
+  'inv_welcome_view',   // {hasSaju} — 초대받은 친구 카드가 보였다
+  'inv_welcome_click',  // {app} — 초대받은 친구 카드 버튼
   'tojung_preview_view', // {y, v} — 신년운세 결제 전 무료 미리 보기가 보였다 (2026-10-17, 10일 48명 보고 0명 구매 대응)
   'web_intro_view',     // {} — 웹 첫 손님 소개 카드가 보였다 (2026-10-17, 웹 전용)
 ]);

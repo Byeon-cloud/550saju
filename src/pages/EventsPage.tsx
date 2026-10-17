@@ -20,7 +20,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Header } from '@/components/layout/Header';
-import { useToast } from '@/components/common/Toast';
 import { HeroBadge } from '@/components/events/HeroBadge';
 import { StreakWidget } from '@/components/events/StreakWidget';
 import { CumulativeReceivedCard } from '@/components/events/CumulativeReceivedCard';
@@ -35,7 +34,8 @@ import {
   getRewardLedger,
   retryPendingAttend7Reward,
 } from '@/services/storage/dailyReward';
-import { shareInvite } from '@/services/share/invite';
+import { cachedInviteRules } from '@/services/referral/referral';
+import { useNavigate } from 'react-router-dom';
 import { PROMO, seedLegacyPromoLedger } from '@/services/toss/tossPromotion';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { trackEvent } from '@/services/analytics';
@@ -58,7 +58,7 @@ const TOSSPOINT_7DAY = PROMO.ATTEND_7DAY.amount;
 
 export function EventsPage() {
   usePageTitle('이벤트');
-  const toast = useToast();
+  const navigate = useNavigate();
   // 토스포인트는 토스 앱(앱인토스)에서만 지급 가능 — 웹에서는 7일 블록 숨김 (지급 판정과 같은 기준)
   const inToss = useMemo(() => isAppsInToss(), []);
 
@@ -99,14 +99,8 @@ export function EventsPage() {
     retryPendingAttend7Reward().catch(() => {});
   }, []);
 
-  /** 친구에게 사주500 알리기 — 보상 없는 토스 공유 (2026-10-14 앱인토스 공유 리워드 10-23 종료, services/share/invite.ts) */
-  const onShareInvite = async () => {
-    trackEvent('share_click', { type: 'event_invite' });
-    await shareInvite({
-      onShared: () => toast.show('공유 링크를 보냈어요', 'success'),
-      onCancel: () => { /* 유저 취소 — 무시 */ },
-    });
-  };
+  /** 친구 초대 (2026-10-18) — 보상 있는 초대는 /invite (services/referral). 금액은 서버 규칙, 없으면 기본값 */
+  const inviteRules = cachedInviteRules() || { referrerUn: 2, inviteeUn: 3 };
 
   /* ─── 7일 연속 출석 (토스포인트) 표시 — 실제 판정(연속 일수)과 같은 기준 ─── */
   const filled7 = snapshot.cycle7Filled;
@@ -227,14 +221,14 @@ export function EventsPage() {
               <path d="M8.5 10.5l7-3.5M8.5 13.5l7 3.5" />
             </svg>
             <h3 className="text-[16px] font-bold" style={{ color: C.navy, fontFamily: SERIF }}>
-              친구에게 사주500 소개하기
+              친구 초대하고 운 받기
             </h3>
           </header>
           <p className="text-[13.5px] mb-4" style={{ color: C.muted, lineHeight: 1.5 }}>
-            {inToss ? '링크를 받은 친구는 토스에서 바로 사주500을 열 수 있어요' : '링크를 받은 친구는 바로 사주500을 열 수 있어요'}
+            {`친구가 내 링크로 들어와 사주를 넣으면 나 ${inviteRules.referrerUn}운, 친구 ${inviteRules.inviteeUn}운을 드려요. 친구가 처음 충전하면 더 드려요.`}
           </p>
 
-          <button type="button" onClick={onShareInvite}
+          <button type="button" onClick={() => { trackEvent('cta_click', { label: '이벤트 친구 초대', page: '/events' }); navigate('/invite'); }}
             className="w-full flex items-center justify-center gap-2.5 py-[18px] rounded-[14px] font-semibold text-[16px] transition"
             style={{
               background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
@@ -249,7 +243,7 @@ export function EventsPage() {
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
-            <span>친구에게 공유하기</span>
+            <span>친구 초대하러 가기</span>
           </button>
         </section>
 

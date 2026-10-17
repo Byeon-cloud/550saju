@@ -40,6 +40,7 @@ import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import { MonthGoodDays } from '@/components/home/MonthGoodDays';
 import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
+import { InviteWelcomeCard } from '@/components/invite/InviteWelcomeCard';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
@@ -735,6 +736,10 @@ export function DailyFortunePage() {
           )}
         </AnimatePresence>
 
+        {/* 2026-10-18 친구 초대로 처음 온 사람 — 첫 운세를 받은 바로 이 자리에서 초대 선물 받기 */}
+        {hasAnyProfile && phase === 'result' && result && !isGenerating && !(result as any).__partial && (
+          <InviteWelcomeCard padding="24px 20px 0" />
+        )}
         {/* 2026-10-16 — 다 읽은 끝에서 내일 아침 알림 권하기 (동의했으면 안 보임) */}
         {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
           <DailyNotiButton variant="closing" className="mt-6" />

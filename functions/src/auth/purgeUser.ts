@@ -110,6 +110,14 @@ export async function purgeUserData(uid: string, reason: string): Promise<PurgeR
     result.errors.push(`compatShares:${e?.message || e}`);
   }
 
+  // 4-2) 친구 초대 기록 (2026-10-18, referral/referral.ts)
+  try {
+    const { purgeReferralOf } = await import('../referral/referral');
+    await purgeReferralOf(uid);
+  } catch (e: any) {
+    result.errors.push(`referral:${e?.message || e}`);
+  }
+
   // 5) users 문서 덮어쓰기 — 남길 필드만 골라서 set (merge 없이)
   try {
     const snap = await userRef.get();

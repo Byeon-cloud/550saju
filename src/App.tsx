@@ -42,6 +42,7 @@ const TopicAnalysisPage = lazyWithReload(() => import('@/pages/TopicAnalysisPage
 const TermsPage = lazyWithReload(() => import('@/pages/TermsPage').then(m => ({ default: m.TermsPage })));
 const PrivacyPage = lazyWithReload(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const EventsPage = lazyWithReload(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
+const InvitePage = lazyWithReload(() => import('@/pages/InvitePage').then(m => ({ default: m.InvitePage }))); // 2026-10-18 친구 초대
 // 웹 단독 출시 — 사업자정보 공개페이지 (전자상거래법 제10조 · 앱인토스 진입 시 홈 redirect)
 const BusinessInfoPage = lazyWithReload(() => import('@/pages/BusinessInfoPage').then(m => ({ default: m.BusinessInfoPage })));
 // #saju-card-share Stage 2 — 만세력 카드 페이지 (lazy)
@@ -193,6 +194,7 @@ function AnimatedRoutes() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/events" element={<EventsPage />} />
+            <Route path="/invite" element={<InvitePage />} />
             {/* 웹 단독 출시 — 사업자정보 공개페이지 (BusinessInfoPage 내부에서 앱인토스 시 홈 redirect) */}
             <Route path="/business" element={<BusinessInfoPage />} />
             {/* #saju-card-share — 만세력 카드 (프로필 단위) */}
@@ -245,7 +247,12 @@ export function App() {
   const backUnsubRef = useRef<(() => void) | null>(null);
   // 포그라운드 복귀마다 CS 보상 재확인 (어드민이 나중에 넣은 운도 앱 재열람 때 수령)
   useEffect(() => {
-    const onVis = () => { if (document.visibilityState === 'visible') runCsCompensationCheck(); };
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return;
+      runCsCompensationCheck();
+      // 친구 초대 적립 대기 운 (2026-10-18) — 친구가 그사이 인정되면 돌아올 때 받는다 (30초에 한 번)
+      import('@/services/referral/referral').then((m) => m.claimInviteRewards()).catch(() => {});
+    };
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
   }, []);
@@ -350,6 +357,17 @@ export function App() {
     //   어드민이 운을 나중에 넣어도 재열람 시 수령이 안 되던 문제. → 포그라운드 복귀마다 재확인(아래 visibility effect).
     //   2026-08-13 — passportDone 이후로 이동: 미러 잔액이 먼저 복원되고 그 위에 보상이 가산돼야 정확.
     passportDone.then(() => runCsCompensationCheck());
+    // 0-a3b. 친구 초대 (2026-10-18) — 주소의 초대 코드를 서버에 남기고, 적립 대기 운을 받는다 (앱, 웹 모두 · 미러 복원 뒤)
+    passportDone
+      .then(() => import('@/services/referral/referral'))
+      .then(async (m) => {
+        await m.captureInvite();
+        await m.claimInviteRewards();
+        // 사주를 넣은 사람만 내 초대 코드를 미리 받아 둔다 (보낼 때 기다리지 않게, 웹 공유는 누른 직후여야 열린다)
+        const { getProfiles, getMyProfile } = await import('@/services/storage/localStore');
+        if (getProfiles().length > 0) m.warmInviteCode((getMyProfile() as any)?.name || '');
+      })
+      .catch(() => { /* noop — 다음 부팅에 다시 */ });
     // 0-a4b. 로컬 사주가 비었으면 서버 미러에서 되살리기 (2026-10-14 · 계정은 그대로인데 저장소만 빈 경우)
     passportDone
       .then(() => import('@/services/storage/firestoreSync'))

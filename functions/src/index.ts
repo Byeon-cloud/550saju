@@ -1535,6 +1535,9 @@ export const grantPurchase = onCall(
       throw new HttpsError('internal', '결제는 완료됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
     }
 
+    // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
+    const { referralOnPurchase } = await import('./referral/referral');
+    await referralOnPurchase(effectiveUid, paidUn, totalUn);
     return { success: true };
   }
 );
@@ -2147,6 +2150,9 @@ export const confirmPortonePayment = onCall(
       throw new HttpsError('internal', '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
     }
 
+    // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
+    const { referralOnPurchase } = await import('./referral/referral');
+    await referralOnPurchase(uid, pkg.paidUn, totalUn);
     return { success: true, message: `${totalUn}운이 충전됐어요!`, totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
   }
 );
@@ -2487,6 +2493,7 @@ export { renderShareOg } from './share/renderShareOg';
 export { createCompatShare, cleanupCompatShares } from './share/compatShare'; // 2026-10-17 궁합 보내기 (시험 E7)
 export { createDreamShare } from './share/dreamShare'; // 2026-10-17 꿈해몽 보내기
 export { createNewYearShare } from './share/newYearShare'; // 2026-10-18 신년운세 미리 보기 보내기
+export { getMyReferral, recordReferralVisit, completeReferral, claimRewards, verifyTossIdentity } from './referral/referral'; // 2026-10-18 친구 초대
 export { subscribeMarketingMail, unsubscribeMail, sendNewYearDeadlineMail } from './mail/marketingMail'; // 2026-10-17 신년운세 마감 안내 메일 (시험 E14)
 export { subscribeDailyMail, ensureIljuDaily, sendDailyMail } from './ilju/iljuDaily'; // 2026-10-17 매일 아침 일주 운세 메일 (시험 E15)
 export { renderIljuToday } from './seo/iljuTodayPage'; // 2026-10-17 오늘의 일주별 운세 공개 페이지 /unse/today/ilju/

@@ -19,6 +19,8 @@ import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { MonthGoodDays } from '@/components/home/MonthGoodDays';
 import { BirthdayMonth } from '@/components/home/BirthdayMonth';
 import { SuneungCard } from '@/components/home/SuneungCard';
+import { InviteWelcomeCard } from '@/components/invite/InviteWelcomeCard';
+import { InviteRow } from '@/components/invite/InviteRow';
 import { WebIntro } from '@/components/home/WebIntro';
 import { listTopics, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
@@ -92,6 +94,11 @@ export function HomePage() {
     try {
       const n = localStorage.getItem('saju500:refund_notice');
       if (n) { localStorage.removeItem('saju500:refund_notice'); toast.show(`이전에 생성 중 앱이 닫혀 결과를 받지 못한 ${n}운을 돌려드렸어요`, 'success'); }
+      // 2026-10-18 친구 초대 보상 받음 안내 (App 부팅의 claimInviteRewards 가 남긴 것)
+      import('@/services/referral/referral').then(({ takeInviteNotice }) => {
+        const n = takeInviteNotice();
+        if (n && n.amount > 0) toast.show(n.kinds?.invitee ? `친구 초대 선물 ${n.amount}운을 받았어요` : `친구 초대 보상 ${n.amount}운을 받았어요. 친구가 사주를 넣었어요`, 'success');
+      }).catch(() => {});
       const comp = localStorage.getItem('saju500:comp_notice');
       if (comp) { localStorage.removeItem('saju500:comp_notice'); toast.show(`고객센터 보상 ${comp}운이 적립됐어요. 불편을 드려 죄송합니다`, 'success'); }
       // 2026-10-15 — 음력 생일 계산 정정(계산 기준 v4) 안내 한 번
@@ -198,6 +205,8 @@ export function HomePage() {
   return (
     <div style={{ background: HJ.paper, minHeight: '100vh', paddingBottom: 112, color: HJ.ink }}>
 
+      {/* 2026-10-18 초대 링크로 처음 온 친구(사주 없음) — 맨 위에 초대 선물 안내 */}
+      {!hasSaju && <InviteWelcomeCard padding="14px 16px 0" />}
       {/* ━━━ 1. 오늘 예고 ━━━ */}
       <section style={{ position: 'relative' }}>
         <div aria-hidden="true" style={{
@@ -281,6 +290,9 @@ export function HomePage() {
       {hasSaju && <BirthdayMonth sajuData={sajuData as any} name={displayName} premiumPrice={premium} newYearPrice={tojung} />}
       {/* 2026-10-17 수능 시즌(11/1~11/19) — 40~59세는 자녀 합격운, 17~21세는 내 합격운 */}
       {hasSaju && <SuneungCard sajuData={sajuData as any} name={displayName} age={age} today={today} price={getTopicPrice('exam' as TopicId).actualPrice} profileId={profileId} />}
+      {/* 2026-10-18 친구 초대 — 초대받은 친구는 받기 카드, 사주를 넣은 사람은 초대 한 줄 */}
+      {hasSaju && <InviteWelcomeCard padding="28px 16px 0" />}
+      {hasSaju && <InviteRow />}
       {/* 2026-10-17 웹 전용 첫 손님 소개 (앱 빌드와 토스 안에서는 안 보임) */}
       {!hasSaju && <WebIntro premiumPrice={premium} />}
 
