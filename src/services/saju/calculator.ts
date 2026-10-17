@@ -3,6 +3,7 @@ import type { SajuInput, SajuData, Pillar, OhengDistribution, SipSung, JiJangGan
 import { CHEONGAN_OHENG, JIJI_OHENG, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG, JIJI_EUMYANG } from '@/constants/oheng';
 import { correctKoreanSolarTime } from './timeCorrection';
 import { findCurrentDaeun } from './daeunCurrent';
+import { krLunarMonthDays, krLunarToSolar } from './koreanLunar';
 
 // 현재 대운 판정 SSOT 재노출 — 기존 import 경로 호환
 export { findCurrentDaeun } from './daeunCurrent';
@@ -10,15 +11,20 @@ export { findCurrentDaeun } from './daeunCurrent';
 /** 계산 기준 버전 — 시(時)·일주 산출 규칙이 바뀔 때만 +1 (2026-07-14 v2).
  *  v2 = 진태양시 -30분 통일(경계=시계 :30) + 87/88 서머타임 + 자시 일주=입력일.
  *  저장된 sajuData.calcVersion 이 이 값과 다르면 stale → getProfiles() 가 자동 재계산. */
-export const CALC_STANDARD_VERSION = 4;
+export const CALC_STANDARD_VERSION = 5;
 // v3 (2026-10-13) = 연주, 월주, 대운의 절입 판정을 실제 출생 순간 기준으로(이전엔 30분 일찍 전환),
 //   띠를 연주와 같은 입춘 기준으로.
 // v4 (2026-10-15) = 음력 생일을 양력으로 바꿔 계산. 첫 커밋부터 calendarType 을 읽지 않아
 //   음력으로 넣은 사람(서버 사본 프로필의 28%)이 그 숫자를 양력 날짜로 계산한 사주를 받아 왔다
 //   (음력 1964-03-15 를 양력 03-15 로 계산, 실제는 04-26). 판을 올려 저장된 프로필 전부 자동 재계산.
+// v5 (2026-10-17) = 음력을 한국 음력으로. lunar-javascript 는 중국 음력이라 1930~2050년 1,496달 중
+//   54달(1955, 1958, 1966, 1968, 1970, 1972, 1973, 1976, 1978년 등)이 하루 어긋나 일주가 바뀌었고,
+//   2012, 2017년은 윤달 자리부터 달랐다. koreanLunar.ts(한국천문연구원 자료 기반 표, 1900~2049년)로 바꾼다.
 
-/** 그 음력 달의 마지막 날 (29 또는 30). 그해에 없는 윤달이면 null */
+/** 그 음력 달의 마지막 날 (29 또는 30). 그해에 없는 윤달이면 null. 한국 음력 기준(표 밖 해만 lunar-javascript) */
 export function lunarMonthDays(year: number, month: number, leap: boolean): number | null {
+  const kr = krLunarMonthDays(year, month, leap);
+  if (kr != null) return kr || null;
   try {
     if (leap && LunarYear.fromYear(year).getLeapMonth() !== month) return null;
     const lm = LunarMonth.fromYm(year, leap ? -month : month);
@@ -34,6 +40,8 @@ export function toSolarInput(input: SajuInput): SajuInput {
   if (leap && lunarMonthDays(input.birthYear, input.birthMonth, true) == null) leap = false;
   const last = lunarMonthDays(input.birthYear, input.birthMonth, leap) ?? 29;
   const day = Math.min(input.birthDay, last);
+  const kr = krLunarToSolar(input.birthYear, input.birthMonth, day, leap);
+  if (kr) return { ...input, birthYear: kr.year, birthMonth: kr.month, birthDay: kr.day, calendarType: 'solar' };
   const s = Lunar.fromYmd(input.birthYear, leap ? -input.birthMonth : input.birthMonth, day).getSolar();
   return { ...input, birthYear: s.getYear(), birthMonth: s.getMonth(), birthDay: s.getDay(), calendarType: 'solar' };
 }

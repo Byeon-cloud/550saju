@@ -93,6 +93,8 @@ export function HomePage() {
       // 2026-10-15 — 음력 생일 계산 정정(계산 기준 v4) 안내 한 번
       const lunarFix = localStorage.getItem('saju500:lunar_fix_notice');
       if (lunarFix) { localStorage.removeItem('saju500:lunar_fix_notice'); toast.show('음력 생일을 양력으로 바꿔 계산하도록 바로잡았어요. 음력으로 넣은 사주가 새로 계산됐어요', 'info'); }
+      const lunarKr = localStorage.getItem('saju500:lunar_kr_notice');
+      if (lunarKr && !lunarFix) { localStorage.removeItem('saju500:lunar_kr_notice'); toast.show('음력 생일을 한국 음력 달력에 맞춰 다시 계산했어요. 태어난 날이 하루 어긋나던 달이라 사주가 새로 바뀌었어요', 'info'); }
       const prem = localStorage.getItem('saju500:premium_recovered');
       if (prem) { localStorage.removeItem('saju500:premium_recovered'); toast.show('이전에 받지 못한 종합사주 결과를 보관함에 저장했어요', 'success'); }
     } catch { /* noop */ }

@@ -637,12 +637,17 @@ export function getProfiles(): SajuProfile[] {
         if (p?.input?.birthYear && (p.sajuData as any)?.calcVersion !== CALC_STANDARD_VERSION) {
           try {
             const oldVer = Number((p.sajuData as any)?.calcVersion) || 0;
+            const pillarKey = (sd: any) => (sd?.pillars || []).map((x: any) => `${x?.천간 ?? ''}${x?.지지 ?? ''}`).join('');
+            const oldKey = pillarKey(p.sajuData);
             const fresh = calculateSaju(p.input);
             if (fresh?.pillars?.length) {
               p.sajuData = fresh; migrated = true;
               // 2026-10-15 v4 — 음력 생일을 양력으로 잘못 계산하던 사주가 바뀐 사람에게 홈에서 한 번 알린다
               if (oldVer < 4 && String(p.input.calendarType || '').startsWith('lunar')) {
                 try { localStorage.setItem('saju500:lunar_fix_notice', p.name || '1'); } catch { /* noop */ }
+              } else if (oldVer === 4 && String(p.input.calendarType || '').startsWith('lunar') && oldKey && oldKey !== pillarKey(fresh)) {
+                // 2026-10-17 v5 — 한국 음력과 하루 어긋나던 달에 태어난 사람만 (사주가 실제로 바뀐 경우)
+                try { localStorage.setItem('saju500:lunar_kr_notice', p.name || '1'); } catch { /* noop */ }
               }
             }
           } catch { /* 재계산 실패 시 기존 sajuData 유지 (다음 로드에서 재시도) */ }

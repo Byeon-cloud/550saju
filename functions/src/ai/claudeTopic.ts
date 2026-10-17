@@ -9,6 +9,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { Solar, Lunar, LunarMonth, LunarYear } from 'lunar-javascript';
+import { krLunarMonthDays, krLunarToSolar } from '../shared/koreanLunar';
 import { TOPIC_ANALYSIS_SYSTEM_V3, SELF_REVIEW_V3, parseJsonResponse, TONE_FINAL_CHECK, READING_VOICE_BLOCK, type ParseJsonMeta } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
@@ -33,6 +34,13 @@ function partnerSolarDate<T extends { birthYear: number; birthMonth: number; bir
   if (p?.calendar !== 'lunar') return p;
   try {
     let leap = !!p.isLeap;
+    // 2026-10-17 한국 음력 우선 (중국 음력과 하루 어긋나는 달, 2012/2017 윤달 자리가 다름)
+    if (leap && krLunarMonthDays(p.birthYear, p.birthMonth, true) === 0) leap = false;
+    const krLen = krLunarMonthDays(p.birthYear, p.birthMonth, leap);
+    if (krLen) {
+      const kr = krLunarToSolar(p.birthYear, p.birthMonth, Math.min(p.birthDay, krLen), leap);
+      if (kr) return { ...p, birthYear: kr.year, birthMonth: kr.month, birthDay: kr.day, calendar: 'solar' };
+    }
     if (leap && LunarYear.fromYear(p.birthYear).getLeapMonth() !== p.birthMonth) leap = false;
     const lm = LunarMonth.fromYm(p.birthYear, leap ? -p.birthMonth : p.birthMonth);
     const day = Math.min(p.birthDay, lm ? lm.getDayCount() : 29);

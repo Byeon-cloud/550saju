@@ -14,6 +14,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import { Solar, Lunar } from 'lunar-javascript';
+import { krLunarToSolar } from '../shared/koreanLunar';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { parseJsonResponse, TONE_FINAL_CHECK } from '../ai/promptsV3';
@@ -46,8 +47,12 @@ export function iljuOfBirth(birth: string, calendar: 'solar' | 'lunar', leap = f
   try {
     let sy = y; let sm = m; let sd = d;
     if (calendar === 'lunar') {
-      const s = Lunar.fromYmd(y, leap ? -m : m, d).getSolar();
-      sy = s.getYear(); sm = s.getMonth(); sd = s.getDay();
+      // 2026-10-17 한국 음력 우선 (calculator.toSolarInput 과 같은 표)
+      const kr = krLunarToSolar(y, m, d, leap);
+      if (kr) { sy = kr.year; sm = kr.month; sd = kr.day; } else {
+        const s = Lunar.fromYmd(y, leap ? -m : m, d).getSolar();
+        sy = s.getYear(); sm = s.getMonth(); sd = s.getDay();
+      }
     } else {
       const t = new Date(Date.UTC(y, m - 1, d));
       if (t.getUTCMonth() !== m - 1) return null;
