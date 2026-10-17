@@ -5,6 +5,7 @@
  *   토스 앱은 PDF 내려받기가 브라우저로 넘어가 불편해서, 메일이 보관하기 쉬운 길이다.
  */
 import { useState } from 'react';
+import { EmailDomainPicks } from '@/components/common/EmailDomainPicks';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HJ, SERIF } from '@/components/hanji/Hanji';
 
@@ -35,8 +36,9 @@ export function PdfMailSheet({ open, onClose, onSend, busy }: {
             <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.6, marginTop: 6 }}>종합사주 풀이 전체를 PDF로 만들어 아래 주소로 보내 드려요. 만드는 데 1분쯤 걸려요.</p>
             <label htmlFor="pdfmail-email" style={{ display: 'block', fontSize: 14, fontWeight: 700, color: HJ.ink, marginTop: 16 }}>받을 메일 주소</label>
             <input id="pdfmail-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@gmail.com" disabled={busy}
+              placeholder="example@naver.com" disabled={busy}
               style={{ width: '100%', marginTop: 6, height: 50, borderRadius: 12, border: `1.5px solid ${email && !valid ? HJ.seal : HJ.line}`, padding: '0 14px', fontSize: 16, background: '#fff', color: HJ.ink }} />
+            <EmailDomainPicks value={email} onPick={setEmail} />
             {email && !valid && <p style={{ fontSize: 13, color: HJ.seal, marginTop: 6 }}>메일 주소를 다시 확인해 주세요</p>}
             <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 16, fontSize: 14, color: HJ.ink, lineHeight: 1.55, cursor: 'pointer' }}>
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} disabled={busy} style={{ width: 20, height: 20, marginTop: 1, flexShrink: 0 }} />

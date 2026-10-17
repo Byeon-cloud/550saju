@@ -6,6 +6,7 @@
  *   앱인토스 빌드에서는 그리지 않는다(앱 사용자는 화면 안 마감 표시로 알린다, pricing.ts).
  */
 import { useEffect, useState } from 'react';
+import { EmailDomainPicks } from '@/components/common/EmailDomainPicks';
 import { httpsCallable } from 'firebase/functions';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import { isAppsInToss } from '@/services/payment/iapService';
@@ -68,6 +69,7 @@ export function DeadlineMailSignup({ source = 'tojung' }: { source?: string }) {
             onChange={(e) => setEmail(e.target.value)}
             style={{ width: '100%', marginTop: 12, height: 48, borderRadius: 12, border: `1px solid ${HJ.line}`, padding: '0 14px', fontSize: 16, background: '#fff', color: HJ.ink }}
           />
+          <EmailDomainPicks value={email} onPick={setEmail} />
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 10, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, cursor: 'pointer' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
             <span>(필수) 사주500 신년운세와 할인 소식 메일(광고성 정보)을 받는 데 동의해요. 메일 안의 수신 거부로 언제든 그만 받을 수 있어요.</span>

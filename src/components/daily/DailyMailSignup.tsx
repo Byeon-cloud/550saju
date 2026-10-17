@@ -6,6 +6,7 @@
  *   매일 아침 7시, 60일주별로 하루 한 번 만든 글을 보낸다(사람마다 AI 를 부르지 않아 구독자가 늘어도 원가가 그대로다).
  */
 import { useEffect, useState } from 'react';
+import { EmailDomainPicks } from '@/components/common/EmailDomainPicks';
 import { httpsCallable } from 'firebase/functions';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import { isAppsInToss } from '@/services/payment/iapService';
@@ -69,6 +70,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style }: {
           </p>
           <input type="email" inputMode="email" autoComplete="email" placeholder="메일 주소" aria-label="운세 받을 메일 주소"
             value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginTop: 12 }} />
+          <EmailDomainPicks value={email} onPick={setEmail} />
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <input inputMode="numeric" placeholder="생년월일 8자리 (예: 19640315)" aria-label="생년월일 8자리"
               value={birth} onChange={(e) => setBirth(e.target.value.replace(/\D/g, '').slice(0, 8))} style={{ ...inputStyle, flex: 1 }} />
