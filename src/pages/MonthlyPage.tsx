@@ -257,14 +257,14 @@ export function MonthlyPage() {
           {/* 프로필 미선택 시에만 피커 — 선택하면 월 선택이 메인 콘텐츠가 되어 눈에 확 띄게 */}
           {!selected && (
             <FadeIn delay={0.05}>
-              <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 월운세를 볼까요?" />
+              <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1&from=monthly')} title="누구의 월운세를 볼까요?" />
             </FadeIn>
           )}
           {selected && (
             <>
               <FadeIn delay={0.05}>
                 <div className="card-gold py-3 px-4 flex items-center justify-between">
-                  <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span>님 선택됨</p>
+                  <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span> 님 선택됨</p>
                   <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
                 </div>
               </FadeIn>

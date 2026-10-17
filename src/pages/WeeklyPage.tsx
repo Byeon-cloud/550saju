@@ -217,12 +217,12 @@ export function WeeklyPage() {
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
           <FadeIn delay={0.05}>
-            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title="누구의 주간운세를 볼까요?" />
+            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1&from=weekly')} title="누구의 주간운세를 볼까요?" />
           </FadeIn>
           {selected && (
             <FadeIn delay={0.1}>
               <div className="card-gold py-3 px-4 flex items-center justify-between">
-                <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span>님 선택됨</p>
+                <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span> 님 선택됨</p>
                 <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
               </div>
             </FadeIn>

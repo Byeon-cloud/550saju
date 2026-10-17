@@ -138,6 +138,9 @@ export function DailyFortunePage() {
         || profiles.find(sameBirth);
       if (matched) return matched.id;
     }
+    // 2026-10-17 — 가족 사주를 새로 넣고 돌아오면(?profileId=) 그 사람으로
+    const qp = searchParams.get('profileId');
+    if (qp && profiles.some((p) => p.id === qp)) return qp;
     const self = profiles.find((p) => !p.relation || p.relation === '본인');
     return (self ?? profiles[0])?.id ?? null;
   });
@@ -673,7 +676,7 @@ export function DailyFortunePage() {
               profiles={profiles}
               selectedProfileId={selectedProfileId}
               onProfileChange={setSelectedProfileId}
-              onCreateNew={() => navigate('/input?new=1')}
+              onCreateNew={() => navigate('/input?new=1&from=daily')}
               profile={selectedProfile}
               dateInfo={dateInfo}
               ctaLabel={todayReport ? '오늘의 운세 다시 보기' : dailyInProgress ? '오늘의 운세를 만드는 중이에요' : freePassAvailable ? '무료로 오늘의 운세 보기' : '1운으로 오늘의 운세 보기'}
@@ -719,7 +722,7 @@ export function DailyFortunePage() {
               profiles={profiles}
               selectedProfileId={selectedProfileId}
               onProfileChange={setSelectedProfileId}
-              onCreateNew={() => navigate('/input?new=1')}
+              onCreateNew={() => navigate('/input?new=1&from=daily')}
               dateInfo={resultDateInfo}
               tier={resultTier}
               isGenerating={isGenerating}

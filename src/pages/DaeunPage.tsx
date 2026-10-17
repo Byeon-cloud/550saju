@@ -160,7 +160,7 @@ export function DaeunPage() {
             <FadeIn delay={0.1}>
               <div className="card-gold py-3 px-4 flex items-center justify-between mb-2">
                 <p className="text-body-sm text-text-primary">
-                  <span className="font-bold">{selected.name}</span>님 선택됨
+                  <span className="font-bold">{selected.name}</span> 님 선택됨
                 </p>
                 <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
               </div>

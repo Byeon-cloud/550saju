@@ -3889,8 +3889,8 @@ export function TopicAnalysisPage() {
                     })}
                   </div>
 
-                  {/* ─── 다른 사람 사주 입력 ─── */}
-                  <button onClick={() => navigate('/input')}
+                  {/* ─── 다른 사람 사주 입력 ─── 2026-10-17 넣고 나면 이 주제로 돌아와 그 사람이 골라져 있게 (전엔 사주 카드로 갔다) */}
+                  <button onClick={() => navigate('/input?new=1', { state: { returnTo: `/topic/${topicId}` } })}
                     className="card w-full text-left py-3.5 px-4 flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-dashed"
                       style={{ borderColor: `${topic.color}40` }}>

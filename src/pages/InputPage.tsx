@@ -144,6 +144,7 @@ type FromKey =
   | 'home_body_gunghap'
   | 'home_body_tojeong'
   | 'home_body_tojung' /* TojungPage 빈상태 (lockdown) */
+  | 'tojung' /* 신년운세 사람 고르기의 '새 사주 입력하기' (부모님 등) */
   | 'home_body_weekly' /* WeeklyPage 빈상태 */
   | 'home_body_monthly' /* MonthlyPage 빈상태 */
   | 'weekly'
@@ -189,7 +190,8 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   daily: {
     hint: '오늘의 운세를 보려면 사주 정보가 필요해요',
     submitLabel: '오늘의 운세 보기',
-    routeAfterSave: () => '/daily',
+    // 2026-10-17 — 가족을 새로 넣으면 그 사람으로 열리게 (?profileId · DailyFortunePage 가 처리)
+    routeAfterSave: (id) => `/daily?profileId=${encodeURIComponent(id)}`,
   },
   dream: {
     hint: '꿈을 사주와 함께 풀려면 사주 정보가 필요해요',
@@ -239,7 +241,9 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   },
   home_body_gunghap: LOCKED_FALLBACK_INTENT,
   home_body_tojeong: LOCKED_FALLBACK_INTENT,
-  home_body_tojung: { hint: '신년운세를 볼 사주 정보를 입력해주세요', submitLabel: '저장하고 신년운세 보러 가기', routeAfterSave: () => '/tojung' },
+  home_body_tojung: { hint: '신년운세를 볼 사주 정보를 입력해주세요', submitLabel: '저장하고 신년운세 보러 가기', routeAfterSave: (id) => `/tojung?profileId=${encodeURIComponent(id)}` },
+  // 2026-10-17 — '부모님 함께 보세요' 동선: 새 사주를 넣으면 신년운세로 돌아가 그 사람이 골라져 있게 (전엔 사주 카드로 갔다)
+  tojung: { hint: '신년운세를 볼 분의 사주 정보를 넣어 주세요', submitLabel: '저장하고 신년운세 보러 가기', routeAfterSave: (id) => `/tojung?profileId=${encodeURIComponent(id)}` },
   storage: {
     hint: '새 사주를 넣어요',
     submitLabel: '사주 저장하기',
@@ -315,7 +319,12 @@ export function InputPage() {
   })();
 
   // 진입 의도 (IntentHint + SubmitBar 라벨)
-  const intent = useMemo(() => getIntent(fromRaw), [fromRaw]);
+  // 2026-10-17 — returnTo 로 들어오면(주제운의 '다른 사람 사주') 저장 뒤 그 화면으로 돌아가므로 버튼 글도 그렇게
+  const returnToState = (location.state as any)?.returnTo as string | undefined;
+  const intent = useMemo<FromIntent>(() => {
+    const base = getIntent(fromRaw);
+    return returnToState && !fromRaw ? { ...base, hint: '풀이를 볼 분의 사주 정보를 넣어 주세요', submitLabel: '저장하고 돌아가기' } : base;
+  }, [fromRaw, returnToState]);
 
   // 레거시: 보관함이 location.state로 프로필 전달
   const stateProfile = (location.state as any)?.selectedProfile as
@@ -732,7 +741,8 @@ export function InputPage() {
       const returnTo = (location.state as any)?.returnTo as string | undefined;
       if (returnTo) {
         toast.show('사주가 등록됐어요', 'success');
-        navigate(returnTo, { replace: true });
+        // 2026-10-17 — 방금 넣은 사주를 미리 고른 채로 돌아간다 (주제운의 '다른 사람 사주 입력')
+        navigate(returnTo, { replace: true, state: { profileId: reportId } });
         return;
       }
 

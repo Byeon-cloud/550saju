@@ -94,7 +94,7 @@ export function TojungPage() {
   const toast = useToast();
 
   // 보관함에서 저장된 결과를 넘겨받은 경우
-  const rawNavState = location.state as { savedResult?: TojungResponse; savedReport?: LocalReport } | undefined;
+  const rawNavState = location.state as { savedResult?: TojungResponse; savedReport?: LocalReport; profileId?: string } | undefined;
   // 2026-05-28 — URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
   const [searchParams] = useSearchParams();
   const reportIdFromUrl = searchParams.get('reportId');
@@ -107,7 +107,16 @@ export function TojungPage() {
     : (reportFromUrl ? { savedResult: reportFromUrl.aiResult as TojungResponse, savedReport: reportFromUrl } : undefined);
 
   const [phase, setPhase] = useState<Phase>(navState?.savedResult ? 'result' : 'select');
-  const [selected, setSelected] = useState<LocalReport | null>(navState?.savedReport || null);
+  // 2026-10-17 — 새 사주 입력 복귀(?profileId=)나 다른 화면에서 넘어온 state.profileId 면 그 사람을 미리 고른다
+  const [selected, setSelected] = useState<LocalReport | null>(() => {
+    if (navState?.savedReport) return navState.savedReport;
+    const preId = rawNavState?.profileId || searchParams.get('profileId');
+    if (!preId) return null;
+    try {
+      const p = getProfiles().find((x) => x.id === preId);
+      return p ? (p as unknown as LocalReport) : null;
+    } catch { return null; }
+  });
   const [result, setResult] = useState<TojungResponse | null>(navState?.savedResult || null);
   const [, setLoadingStep] = useState(0);
   const [showShare, setShowShare] = useState(false);
@@ -226,7 +235,7 @@ export function TojungPage() {
         </FadeIn>
         <div className="px-5 pt-5 space-y-5">
           <FadeIn delay={0.05}>
-            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title={`누구의 ${TY} 신년운세를 볼까요?`} />
+            <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1&from=tojung')} title={`누구의 ${TY} 신년운세를 볼까요?`} />
             {/* 2026-10-17 — 돈을 내는 사람은 주로 20대, 50~60대는 직접 입력을 잘 안 한다 → 부모님 것도 함께 */}
             <p style={{ fontSize: 14, lineHeight: 1.7, color: '#6F6557', marginTop: 10 }}>
               부모님 {TY}년도 함께 보세요. '새 사주 입력하기'로 부모님 생일을 넣으면 돼요.
@@ -236,7 +245,7 @@ export function TojungPage() {
           {selected && (
             <FadeIn delay={0.1}>
               <div className="card-gold py-3 px-4 flex items-center justify-between">
-                <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span>님 선택됨</p>
+                <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span> 님 선택됨</p>
                 <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
               </div>
             </FadeIn>
