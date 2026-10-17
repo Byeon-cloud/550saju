@@ -252,6 +252,8 @@ function grantDailyIfEligible(): boolean {
   }
   writeMonthCount(st.monthCount + 1);
   addRewardBalance(DAILY_REWARD_UN);
+  // 2026-10-18 로그인 계정은 서버 장부에도 (서버가 하루 한 번 확인) — serverRewardMirror
+  import('./serverRewardMirror').then((m) => m.queueServerReward('daily')).catch(() => {});
   appendRewardLog('daily', DAILY_REWARD_UN, `daily:${today}`);
   trackReward('daily', DAILY_REWARD_UN);
   return true;
@@ -408,6 +410,7 @@ export function processAttendanceRewards(): AttendanceRewardResult {
       st.cycle7Pending = next.cycle7Pending;
       if (give3) {
         addRewardBalance(STREAK_REWARD_UN);
+        import('./serverRewardMirror').then((m) => m.queueServerReward('streak3')).catch(() => {}); // 로그인 계정 서버 장부 (서버 출석 기록으로 확인)
         // 알림 플래그를 장부 기록(변경 이벤트 발행)보다 먼저 — 이벤트 탭이 이벤트를 받자마자 플래그를 읽을 수 있게
         setPendingEventNotice(EVENTS_PENDING_TIER_A_KEY, `운 ${STREAK_REWARD_UN} 들어왔어요, ${next.streak}일 연속 출석`);
         appendRewardLog('streak3', STREAK_REWARD_UN, `streak3:${today}`);

@@ -386,7 +386,25 @@ export const claimRewards = onCall(
         }
       }
     }
-    return { amount: total, kinds };
+    // 로그인한 계정(소셜 등, 토큰이 익명이 아님)은 서버가 users/{uid}.balance 에서 운을 깎는다(computeBalanceDeduction).
+    //   기기 잔액에만 더하면 받은 운을 쓸 때 '운이 부족합니다'가 난다 → 서버 장부에도 같이 넣는다. 익명은 서버가 깎지 않으니 넣지 않는다
+    //   (넣으면 서버가 기기보다 커져 syncFromCloud 가 한 번 더 채운다).
+    const anon = String(request.auth?.token?.firebase?.sign_in_provider || '').includes('anonymous');
+    if (total > 0 && !anon) {
+      try {
+        const userRef = db().doc(`users/${uid}`);
+        await db().runTransaction(async (tx) => {
+          const u = await tx.get(userRef);
+          const bal = u.data()?.balance;
+          if (typeof bal === 'number') tx.set(userRef, { balance: { paid: bal, bonus: 0, reward: total } }, { merge: true });
+          else tx.set(userRef, { balance: { reward: FV.increment(total) } }, { merge: true });
+        });
+      } catch (e: any) {
+        console.error('[claimRewards] 서버 잔액 반영 실패', uid, total, e?.message);
+        alert('referral_server_balance_fail', { uid, total });
+      }
+    }
+    return { amount: total, kinds, serverCredited: !anon };
   },
 );
 
@@ -455,3 +473,50 @@ export async function purgeReferralOf(uid: string): Promise<void> {
     await b.commit();
   }
 }
+
+/**
+ * 기기에서 준 출석 운을 로그인 계정의 서버 장부에도 (2026-10-18)
+ *   로그인한 계정은 서버가 users/{uid}.balance 에서 깎는데, 출석 0.1운과 3일 연속 1운은 기기 잔액에만 들어가
+ *   그 운으로 콘텐츠를 열면 '운이 부족합니다'가 났다. 서버가 직접 확인한 만큼만 넣는다.
+ *   - daily: 하루(KST) 한 번 0.1운, 달마다 31번까지
+ *   - streak3: 서버 출석 기록(users/{uid}/attendance/{날짜})으로 오늘 포함 3일 연속이고, 앞 이틀에 받은 적이 없을 때 1운
+ *   익명 계정은 서버가 깎지 않으니 넣지 않는다.
+ */
+export const creditLocalReward = onCall(
+  { timeoutSeconds: 15, memory: '256MiB', minInstances: 0, cors: true, invoker: 'public' },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', '잠시 뒤 다시 시도해 주세요');
+    if (String(request.auth?.token?.firebase?.sign_in_provider || '').includes('anonymous')) return { ok: false, reason: 'anon' };
+    const kind = String(request.data?.kind || '');
+    const day = kstDay();
+    const addDays = (d: string, n: number) => { const t = new Date(`${d}T00:00:00Z`); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+    const userRef = db().doc(`users/${uid}`);
+    let amount = 0;
+    let key = '';
+    if (kind === 'daily') { amount = 0.1; key = `daily_${day}`; }
+    else if (kind === 'streak3') {
+      const days = [day, addDays(day, -1), addDays(day, -2)];
+      const snaps = await Promise.all(days.map((d) => db().doc(`users/${uid}/attendance/${d}`).get()));
+      if (!snaps.every((x) => x.exists)) return { ok: false, reason: 'not_yet' };
+      const prev = await Promise.all([1, 2].map((n) => db().doc(`users/${uid}/rewardClaims/streak3_${addDays(day, -n)}`).get()));
+      if (prev.some((x) => x.exists)) return { ok: false, reason: 'too_soon' };
+      amount = 1; key = `streak3_${day}`;
+    } else return { ok: false, reason: 'bad_kind' };
+    const claimRef = db().doc(`users/${uid}/rewardClaims/${key}`);
+    const monthRef = db().doc(`users/${uid}/rewardClaims/dailyMonth_${day.slice(0, 7)}`);
+    const r = await db().runTransaction(async (tx) => {
+      const [c, m, u] = await Promise.all([tx.get(claimRef), tx.get(monthRef), tx.get(userRef)]);
+      if (c.exists) return { ok: false, reason: 'already' };
+      if (kind === 'daily' && (Number(m.data()?.n) || 0) >= 31) return { ok: false, reason: 'month_cap' };
+      tx.create(claimRef, { kind, amount, at: FV.serverTimestamp(), source: 'local_reward_mirror' });
+      if (kind === 'daily') tx.set(monthRef, { n: FV.increment(1) }, { merge: true });
+      const bal = u.data()?.balance;
+      if (typeof bal === 'number') tx.set(userRef, { balance: { paid: bal, bonus: 0, reward: amount } }, { merge: true });
+      else tx.set(userRef, { balance: { reward: FV.increment(amount) } }, { merge: true });
+      return { ok: true, amount };
+    });
+    return r;
+  },
+);
+

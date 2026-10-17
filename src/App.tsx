@@ -363,6 +363,7 @@ export function App() {
       .then(async (m) => {
         await m.captureInvite();
         await m.claimInviteRewards();
+        import('@/services/storage/serverRewardMirror').then((r) => r.flushServerRewards()).catch(() => {}); // 로그인 계정 출석 운 서버 반영 재시도
         // 사주를 넣은 사람만 내 초대 코드를 미리 받아 둔다 (보낼 때 기다리지 않게, 웹 공유는 누른 직후여야 열린다)
         const { getProfiles, getMyProfile } = await import('@/services/storage/localStore');
         if (getProfiles().length > 0) m.warmInviteCode((getMyProfile() as any)?.name || '');
