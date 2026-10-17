@@ -10,6 +10,7 @@ import { EmailDomainPicks } from '@/components/common/EmailDomainPicks';
 import { httpsCallable } from 'firebase/functions';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import { HJ, SERIF } from '@/components/hanji/Hanji';
 
 const SHOW_UNTIL = '2026-11-27';
@@ -28,7 +29,7 @@ export function DeadlineMailSignup({ source = 'tojung' }: { source?: string }) {
     const t = window.setTimeout(() => document.getElementById('deadline-mail')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 500);
     return () => window.clearTimeout(t);
   }, []);
-  if (isAppsInToss() || kstDay() > SHOW_UNTIL) return null;
+  if (isAppintosBuild || isAppsInToss() || kstDay() > SHOW_UNTIL) return null;
   const valid = EMAIL_RE.test(email.trim());
 
   async function submit() {

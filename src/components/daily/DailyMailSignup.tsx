@@ -10,6 +10,7 @@ import { EmailDomainPicks } from '@/components/common/EmailDomainPicks';
 import { httpsCallable } from 'firebase/functions';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import { HJ, SERIF } from '@/components/hanji/Hanji';
 
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$/;
@@ -37,14 +38,17 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
     const t = window.setTimeout(() => document.getElementById('daily-mail')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 500);
     return () => window.clearTimeout(t);
   }, []);
-  if (isAppsInToss()) return null;
+  if (isAppintosBuild || isAppsInToss()) return null; // 웹 전용 (앱 번들을 브라우저로 열어도 숨김)
   if (compact && done) return null; // 이미 받고 있으면 홈에는 굳이 다시 보이지 않는다
   if (compact && !open) {
     return (
       <button type="button" onClick={() => { setOpen(true); import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '아침 운세 메일 펼치기', page: window.location.pathname })).catch(() => {}); }}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 44, padding: '10px 12px', background: 'transparent', border: 0, fontSize: 14.5, fontWeight: 700, color: HJ.ink2, cursor: 'pointer', ...style }}>
-        <span aria-hidden="true" style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.ink }}>日</span>
-        매일 아침 7시 내 일주 운세 메일로 받기
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', minHeight: 44, padding: '10px 12px', background: 'transparent', border: 0, cursor: 'pointer', textAlign: 'left', ...style }}>
+        <span aria-hidden="true" style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 900, color: HJ.ink }}>日</span>
+        <span>
+          <span style={{ display: 'block', fontSize: 14.5, fontWeight: 700, color: HJ.ink2 }}>아침 7시마다 내 일주 운세를 메일로 받아 볼까요?</span>
+          <span style={{ display: 'block', fontSize: 13, color: HJ.mute, marginTop: 2 }}>무료예요. 메일 아래 버튼 하나로 바로 그만 받을 수 있어요</span>
+        </span>
         <span aria-hidden="true" style={{ color: HJ.mute }}>›</span>
       </button>
     );
@@ -73,7 +77,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
   const inputStyle: React.CSSProperties = { width: '100%', height: 48, borderRadius: 12, border: `1px solid ${HJ.line}`, padding: '0 14px', fontSize: 16, background: '#fff', color: HJ.ink };
   return (
     <div id="daily-mail" style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '16px 16px 18px', ...style }}>
-      <p style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>매일 아침 7시, 내 일주 운세를 메일로</p>
+      <p style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>아침 7시마다 내 일주 운세를 메일로 보내 드려요</p>
       {done ? (
         <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.75, marginTop: 8 }}>
           {done}로 신청했어요. 확인 메일을 보냈어요. 내일 아침부터 보내 드려요.
@@ -81,7 +85,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
       ) : (
         <>
           <p style={{ fontSize: 14.5, color: HJ.mute, lineHeight: 1.7, marginTop: 6 }}>
-            태어난 날의 간지(일주)로 오늘 하루를 짧게 풀어 드려요. 무료예요.
+            태어난 날의 간지(일주)로 그날 하루를 짧게 풀어 드려요. 무료이고, 그만 받고 싶으면 메일 아래 버튼 하나면 돼요.
           </p>
           <input type="email" inputMode="email" autoComplete="email" placeholder="메일 주소" aria-label="운세 받을 메일 주소"
             value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginTop: 12 }} />
@@ -105,7 +109,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
           {err && <p style={{ fontSize: 13.5, color: HJ.seal, marginTop: 8 }}>{err}</p>}
           <button type="button" onClick={submit} disabled={!ok || busy}
             style={{ width: '100%', marginTop: 12, minHeight: 48, borderRadius: 12, border: `1px solid ${HJ.ink}`, background: ok ? HJ.ink : 'transparent', color: ok ? '#F4EFE4' : HJ.mute, fontWeight: 800, fontSize: 15.5 }}>
-            {busy ? '신청하는 중이에요' : '아침 운세 메일 받기'}
+            {busy ? '신청하는 중이에요' : '무료로 받아 보기'}
           </button>
         </>
       )}

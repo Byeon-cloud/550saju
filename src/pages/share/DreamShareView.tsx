@@ -10,11 +10,12 @@ import { useNavigate } from 'react-router-dom';
 import { FadeIn } from '@/components/common/FadeIn';
 import { GoldCta, GhostButton, Verdict, Note, SectionHead, INK_HERO_BG, SERIF, HJ } from '@/components/hanji/Hanji';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import type { DreamShareDoc } from '@/services/share/dreamShare';
 
 export function DreamShareView({ data }: { data: DreamShareDoc }) {
   const navigate = useNavigate();
-  const inToss = isAppsInToss();
+  const inToss = isAppintosBuild || isAppsInToss(); // 앱 번들에는 /kkum/ 정적 페이지가 없다
   useEffect(() => {
     import('@/services/analytics').then((a) => a.trackEvent('share_view', { type: 'dream' })).catch(() => {});
   }, []);

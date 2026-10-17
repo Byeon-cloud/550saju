@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { FadeIn } from '@/components/common/FadeIn';
 import { GoldCta, GhostButton, Verdict, Note, SectionHead, Redact, INK_HERO_BG, SERIF, HJ } from '@/components/hanji/Hanji';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import { PRODUCT_COST } from '@/constants/pricing';
 import type { CompatShareDoc } from '@/services/share/compatShare';
 
@@ -21,7 +22,7 @@ const ORDER = '子丑寅卯辰巳午未申酉戌亥';
 
 export function CompatShareView({ data }: { data: CompatShareDoc }) {
   const navigate = useNavigate();
-  const inToss = isAppsInToss();
+  const inToss = isAppintosBuild || isAppsInToss();
   useEffect(() => {
     import('@/services/analytics').then((a) => a.trackEvent('share_view', { type: 'compat' })).catch(() => {});
   }, []);

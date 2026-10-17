@@ -26,9 +26,9 @@ const AGREED_KEY = 'saju500:daily_noti_agreed';
 type Variant = 'card' | 'closing' | 'slim';
 
 const COPY: Record<Variant, { title: string; sub: string }> = {
-  card: { title: '매일 아침 운세 알림 받기', sub: '아침 9시, 오늘의 운세가 도착해요' },
-  closing: { title: '내일 아침 9시에 알려 드릴까요?', sub: '내일 운세가 나오면 토스 알림으로 보내 드려요' },
-  slim: { title: '매일 아침 9시 운세 알림 받기', sub: '' },
+  card: { title: '아침 9시마다 그날 운세를 알려 드릴까요?', sub: '무료예요. 필요 없으면 언제든 끌 수 있어요' },
+  closing: { title: '내일 운세도 아침 9시에 알려 드릴까요?', sub: '무료예요. 토스 알림으로 보내 드리고, 언제든 끌 수 있어요' },
+  slim: { title: '아침 9시마다 그날 운세를 알려 드릴까요?', sub: '무료예요. 필요 없으면 언제든 끌 수 있어요' },
 };
 
 export function DailyNotiButton({ className, variant = 'card' }: { className?: string; variant?: Variant }) {
@@ -101,12 +101,15 @@ export function DailyNotiButton({ className, variant = 'card' }: { className?: s
   if (variant === 'slim') {
     return (
       <button type="button" onClick={onAsk} disabled={busy} className={className} style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%',
         minHeight: 44, padding: '10px 12px', background: 'transparent', border: 0,
-        fontSize: 14.5, fontWeight: 700, color: HJ.ink2, cursor: busy ? 'wait' : 'pointer',
+        gap: 10, textAlign: 'left', cursor: busy ? 'wait' : 'pointer',
       }}>
-        <span aria-hidden="true" style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.ink }}>日</span>
-        {COPY.slim.title}
+        <span aria-hidden="true" style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 900, color: HJ.ink }}>日</span>
+        <span>
+          <span style={{ display: 'block', fontSize: 14.5, fontWeight: 700, color: HJ.ink2 }}>{COPY.slim.title}</span>
+          <span style={{ display: 'block', fontSize: 13, color: HJ.mute, marginTop: 2 }}>{COPY.slim.sub}</span>
+        </span>
         <span aria-hidden="true" style={{ color: HJ.mute }}>›</span>
       </button>
     );
