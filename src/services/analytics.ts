@@ -200,6 +200,8 @@ const FIRESTORE_TRACKED = new Set<string>([
   'storage_full',       // {evicted, saved, kb} — 기기 저장 공간이 차서 옛 기록을 지웠다 (2026-10-17 보관함 점검)
   'birthday_card_view', // {m, ny} — 생일 달 카드가 보였다 (2026-10-17 단골 장치 2번)
   'birthday_card_click',// {to: tojung|premium} — 생일 달 카드에서 상품으로
+  'suneung_card_view',  // {who: parent|student} — 수능 시즌 홈 카드가 보였다 (2026-10-17, 11/1~11/19)
+  'suneung_card_click', // {who} — 수능 카드에서 합격이직운으로
   'tojung_preview_view', // {y, v} — 신년운세 결제 전 무료 미리 보기가 보였다 (2026-10-17, 10일 48명 보고 0명 구매 대응)
   'web_intro_view',     // {} — 웹 첫 손님 소개 카드가 보였다 (2026-10-17, 웹 전용)
 ]);

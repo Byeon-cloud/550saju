@@ -18,6 +18,7 @@ import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { MonthGoodDays } from '@/components/home/MonthGoodDays';
 import { BirthdayMonth } from '@/components/home/BirthdayMonth';
+import { SuneungCard } from '@/components/home/SuneungCard';
 import { WebIntro } from '@/components/home/WebIntro';
 import { listTopics, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
@@ -278,6 +279,8 @@ export function HomePage() {
       {hasSaju && <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />}
       {/* 2026-10-17 생일 달 — 종합사주 또는 신년운세(11~2월) */}
       {hasSaju && <BirthdayMonth sajuData={sajuData as any} name={displayName} premiumPrice={premium} newYearPrice={tojung} />}
+      {/* 2026-10-17 수능 시즌(11/1~11/19) — 40~59세는 자녀 합격운, 17~21세는 내 합격운 */}
+      {hasSaju && <SuneungCard sajuData={sajuData as any} name={displayName} age={age} today={today} price={getTopicPrice('exam' as TopicId).actualPrice} profileId={profileId} />}
       {/* 2026-10-17 웹 전용 첫 손님 소개 (앱 빌드와 토스 안에서는 안 보임) */}
       {!hasSaju && <WebIntro premiumPrice={premium} />}
 
