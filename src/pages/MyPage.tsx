@@ -24,6 +24,8 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import { AD_BANNER_GROUP_ID } from '@/constants/config';
 // 웹 단독 출시 법적 컴플라이언스 (앱인토스 비노출)
 import { LegalFooter } from '@/components/layout/LegalFooter';
+import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
+import { useActiveProfile } from '@/hooks/useHomeData';
 import { ConsentModal, type ConsentResult } from '@/components/auth/ConsentModal';
 import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
 import { hasConsentRecord, saveConsent } from '@/services/auth/consent';
@@ -87,6 +89,14 @@ export function MyPage() {
   //   동의 모달부터 뜨던 버그. 웹은 진짜 계정(비익명)만 로그인으로 인정. 앱인토스는 토스 신원 우산 유지.
   const realLoggedIn = isLoggedIn && (inAppsInToss || (!!user && !user.isAnonymous));
   const MENU_ITEMS = inAppsInToss ? MENU_ITEMS_AIT : MENU_ITEMS_WEB;
+  // 2026-10-17 웹 내 정보의 아침 일주 운세 메일 (앱은 그리지 않음, 토스 9시 알림이 같은 역할)
+  const { profile: activeProfile, name: activeName } = useActiveProfile();
+  const mailPrefill = (() => {
+    const inp: any = (activeProfile as any)?.input;
+    if (!inp?.birthYear) return undefined;
+    const p2 = (n: number) => String(n).padStart(2, '0');
+    return { birth: `${inp.birthYear}${p2(inp.birthMonth)}${p2(inp.birthDay)}`, calendar: (inp.calendarType === 'lunar' ? 'lunar' : 'solar') as 'solar' | 'lunar', name: activeName || '' };
+  })();
 
   const [balance, setBalance] = useState(0);
   const [showContact, setShowContact] = useState(false);
@@ -206,6 +216,8 @@ export function MyPage() {
             </motion.button>
           ))}
         </div>
+
+        {!inAppsInToss && <DailyMailSignup prefill={mailPrefill} source="my" style={{ marginBottom: 12 }} />}
 
         {/* ── AppMeta (§8) ── */}
         <AppMeta toast={toast} />

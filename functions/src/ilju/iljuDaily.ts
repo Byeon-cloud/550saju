@@ -198,7 +198,19 @@ export const subscribeDailyMail = onCall(
     // 신청 확인 메일 (오늘 글이 이미 있으면 첫 운세를 바로 넣는다)
     const today = (await db.doc(`iljuDaily/${day}`).get()).data() as any;
     const entry: IljuEntry | undefined = today?.ilju?.[got.ilju];
-    const m = mailFor({ uid, token, name, ilju: got.ilju, dateKey: day, dayGz: today?.dayGz || '', entry, welcome: true, consentDay: day });
+    // 2026-10-17 (선택) 신년운세와 할인 소식(광고성) 수신 동의를 같이 받으면 emailLeads 에도 남기고, 신청 메일에 동의 사실과 그만 받기를 적는다
+    let adLine = '';
+    if (request.data?.adConsent === true) {
+      const leadRef = db.doc(`emailLeads/${uid}`);
+      const prevLead = (await leadRef.get()).data() || {};
+      const adToken: string = prevLead.unsubToken || newUnsubToken();
+      await leadRef.set({
+        email, unsubToken: adToken, marketingConsent: true, marketingConsentAt: admin.firestore.FieldValue.serverTimestamp(), marketingConsentDay: day,
+        topics: admin.firestore.FieldValue.arrayUnion('newyear2027'), lastSource: 'daily_mail', updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      adLine = `${day}에 신년운세와 할인 소식 메일(광고성 정보) 수신에도 동의하셨어요. 그 소식만 그만 받으려면: ${unsubUrl(uid, adToken)}`;
+    }
+    const m = mailFor({ uid, token, name, ilju: got.ilju, dateKey: day, dayGz: today?.dayGz || '', entry, welcome: true, consentDay: day, adLine });
     try {
       await mailTransport().sendMail({ from: `"사주500" <${FROM_ADDR}>`, to: email, subject: m.subject, text: m.text, html: m.html, headers: m.headers });
     } catch (e: any) {
@@ -209,7 +221,7 @@ export const subscribeDailyMail = onCall(
   },
 );
 
-function mailFor(p: { uid: string; token: string; name: string; ilju: string; dateKey: string; dayGz: string; entry?: IljuEntry; welcome?: boolean; consentDay: string }) {
+function mailFor(p: { uid: string; token: string; name: string; ilju: string; dateKey: string; dayGz: string; entry?: IljuEntry; welcome?: boolean; consentDay: string; adLine?: string }) {
   const [y, mo, d] = p.dateKey.split('-').map(Number);
   const wd = WEEK[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()];
   const who = p.name ? `${p.name} 님` : '';
@@ -236,6 +248,7 @@ function mailFor(p: { uid: string; token: string; name: string; ilju: string; da
     `오늘의 띠별 운세: ${tti}`,
     '',
     `${p.consentDay}에 사주500 아침 운세 메일을 신청하셔서 보내 드려요. 그만 받으려면: ${unsub}`,
+    ...(p.adLine ? [p.adLine] : []),
     BIZ_LINE,
   ].join('\n');
   const html = `<div style="font-family:Pretendard,-apple-system,sans-serif;font-size:15.5px;line-height:1.8;color:#1A1612;max-width:560px">
@@ -248,7 +261,7 @@ ${p.entry ? `<p>${esc(p.entry.body)}</p>
 <p style="margin:22px 0 6px;font-size:14.5px;color:#4B4238">같은 일주라도 태어난 달과 시간이 다르면 하루가 달라요.</p>
 <p style="margin:0 0 10px"><a href="${link}" style="display:inline-block;background:#B8965A;color:#17110A;font-weight:800;text-decoration:none;padding:12px 20px;border-radius:12px">내 사주로 오늘 전체 풀이 보기 (하루 한 번 무료)</a></p>
 <p style="margin:0"><a href="${tti}" style="color:#7A5C2E;font-weight:700">오늘의 띠별 운세 보기</a></p>
-<p style="font-size:12px;color:#8A8073;margin-top:28px;line-height:1.7">${esc(p.consentDay)}에 사주500 아침 운세 메일을 신청하셔서 보내 드려요. 더 받지 않으려면 <a href="${unsub}" style="color:#8A8073">수신 거부</a>를 눌러 주세요.<br>${esc(BIZ_LINE)}</p>
+<p style="font-size:12px;color:#8A8073;margin-top:28px;line-height:1.7">${esc(p.consentDay)}에 사주500 아침 운세 메일을 신청하셔서 보내 드려요. 더 받지 않으려면 <a href="${unsub}" style="color:#8A8073">수신 거부</a>를 눌러 주세요.${p.adLine ? `<br>${esc(p.adLine)}` : ''}<br>${esc(BIZ_LINE)}</p>
 </div>`;
   return { subject, text, html, headers: { 'List-Unsubscribe': `<${unsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } };
 }

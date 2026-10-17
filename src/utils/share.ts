@@ -112,7 +112,8 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
 
   // 2026-05-29 — 토스 공유 시 ogImageUrl 미전달 → 토스 기본 OG 노출 버그 fix.
   //   현재 정적 OG 1종(og-image.png)만 존재 → 기본값으로 항상 전달. (Phase 2: 콘텐츠별 동적 OG)
-  const ogImage = params.ogImageUrl || `${window.location.origin}/og-image.png`;
+  // 2026-10-17 — 앱 안에서는 origin 이 토스 미니앱 주소라 그 /og-image.png 를 카카오톡이 못 읽어 미리보기 그림이 비었다 → 공개 웹 주소로
+  const ogImage = params.ogImageUrl || OG_IMAGE;
   // 2026-07-03 바이럴 퍼널 — 공유 '성사' 측정 (share_click=시도와 짝. method 로 경로 분해)
   const trackComplete = (method: string) => {
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', {
@@ -131,6 +132,27 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
   return via !== null;
 }
 
+/** 공유 미리보기 그림 — 공개 웹 주소 (앱 안 origin 은 카카오톡이 못 읽는다, 2026-10-17 오너 캡처) */
+const OG_IMAGE = 'https://saju500.app/og-image.png';
+
+/** 꿈해몽 보내기 (2026-10-17) — 받는 사람이 꿈 풀이 첫 장을 직접 열어 보는 링크 (/share/dream/{id}) */
+export async function shareDreamLink(p: { id: string; title: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'dream', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
+  const text = `간밤 꿈을 사주로 풀어 봤어요. ${p.title ? `'${p.title}' ` : ''}풀이를 열어 보세요`;
+  const path = `/share/dream/${p.id}?ref=share`;
+  const done = (method: string) => {
+    import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'dream', method, rewarded: 0 })).catch(() => {});
+  };
+  if (isAppsInToss()) {
+    const ok = await shareViaToss(path, text, OG_IMAGE);
+    if (ok) done('toss_share');
+    return ok ? 'toss_share' : null;
+  }
+  const via = await shareViaWeb('꿈해몽 | 사주500', text, `https://saju500.app${path}`);
+  if (via) done(via);
+  return via;
+}
+
 /** 궁합 보내기 (2026-10-17, 시험 E7) — 받는 사람이 점수와 총평을 직접 열어 보는 링크 (/share/compat/{id}).
  *  링크 id 는 services/share/compatShare.ts 의 createCompatShareId 가 서버에 만든다.
  *  @returns 성사 여부 ('clipboard' 면 화면에서 '복사했어요'를 알린다) */
@@ -142,11 +164,11 @@ export async function shareCompatLink(p: { id: string; n1: string; n2: string })
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'compat', method, rewarded: 0 })).catch(() => {});
   };
   if (isAppsInToss()) {
-    const ok = await shareViaToss(path, text, `${window.location.origin}/og-image.png`);
+    const ok = await shareViaToss(path, text, OG_IMAGE);
     if (ok) done('toss_share');
     return ok ? 'toss_share' : null;
   }
-  const via = await shareViaWeb('궁합 — 사주500', text, `${window.location.origin}${path}`);
+  const via = await shareViaWeb('궁합 | 사주500', text, `https://saju500.app${path}`);
   if (via) done(via);
   return via;
 }

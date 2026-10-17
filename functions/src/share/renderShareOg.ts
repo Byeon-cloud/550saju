@@ -99,8 +99,15 @@ const TYPE_TITLE: Record<string, [string, string]> = {
   weekly: ['주간운세', '이번 주 흐름을 사주로 봤어요. 내 한 주도 확인해 보세요.'],
   daeun: ['대운', '십 년마다 바뀌는 큰 흐름을 사주로 봤어요. 내 대운도 확인해 보세요.'],
 };
-function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null): { title: string; description: string; image: string } {
+function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: DreamShareDoc | null): { title: string; description: string; image: string } {
   const { type, topicId } = parsed;
+  if (type === 'dream' && dream) {
+    return {
+      title: `${dream.name ? `${dream.name} 님의 ` : ''}꿈 풀이: ${dream.title || '꿈해몽'} | 사주500`,
+      description: (dream.quote || '간밤의 꿈을 사주로 풀었어요. 풀이를 열어 보세요.').slice(0, 120),
+      image: OG_IMAGE_FALLBACK,
+    };
+  }
   if (type === 'compat' && compat) {
     return {
       title: `${compat.n1} 님과 ${compat.n2} 님의 궁합 ${compat.score}점 | 사주500`,
@@ -147,6 +154,17 @@ function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null): { title
 
 /** 봇 대상 SSR HTML — 콘텐츠 타입별 OG 메타 */
 interface CompatShareDoc { n1: string; n2: string; score: number; head?: string }
+interface DreamShareDoc { name: string; title: string; quote?: string }
+async function readDreamShare(id: string): Promise<DreamShareDoc | null> {
+  if (!/^[A-Za-z0-9]{14}$/.test(id)) return null; // 예전 꿈 공유 주소는 날짜(YYYY-MM-DD)라 서버 문서가 없다
+  try {
+    const snap = await admin.firestore().doc(`dreamShares/${id}`).get();
+    if (!snap.exists) return null;
+    const d = snap.data() as any;
+    return { name: String(d.name || ''), title: String(d.title || ''), quote: String(d.quote || d.narrative || '') };
+  } catch { return null; }
+}
+
 async function readCompatShare(id: string): Promise<CompatShareDoc | null> {
   try {
     const snap = await admin.firestore().doc(`compatShares/${id}`).get();
@@ -156,9 +174,9 @@ async function readCompatShare(id: string): Promise<CompatShareDoc | null> {
   } catch { return null; }
 }
 
-function buildBotHtml(params: { origin: string; parsed: ParsedShare; compat?: CompatShareDoc | null }): string {
+function buildBotHtml(params: { origin: string; parsed: ParsedShare; compat?: CompatShareDoc | null; dream?: DreamShareDoc | null }): string {
   const { origin, parsed } = params;
-  const meta = getOgMeta(parsed, params.compat);
+  const meta = getOgMeta(parsed, params.compat, params.dream);
   const shareUrl = `${origin}${
     parsed.type === 'result'
       ? `/share/${parsed.reportId}`
@@ -238,7 +256,8 @@ export const renderShareOg = onRequest(
         res.set('Content-Type', 'text/html; charset=utf-8');
         res.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // 5분 CDN 캐시
         const compat = parsed.type === 'compat' ? await readCompatShare(parsed.reportId) : null;
-        res.status(200).send(buildBotHtml({ origin, parsed, compat }));
+        const dream = parsed.type === 'dream' ? await readDreamShare(parsed.reportId) : null;
+        res.status(200).send(buildBotHtml({ origin, parsed, compat, dream }));
         return;
       }
 

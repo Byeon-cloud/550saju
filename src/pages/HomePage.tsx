@@ -30,6 +30,7 @@ import {
 import type { SajuData } from '@/types/saju';
 import { TtiFortune } from '@/components/home/TtiFortune';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
+import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
 import { getMyTti, ttiOfYear, ttiName, yearLabel } from '@/services/tti/ttiFortune';
 import {
   HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
@@ -74,6 +75,13 @@ export function HomePage() {
   const sajuData = (profile?.sajuData || null) as SajuData | null;
   const hasSaju = !!(hasProfile && sajuData?.pillars?.[2]?.천간);
   const profileId = (profile as any)?.id as string | undefined;
+  // 2026-10-17 웹 홈의 아침 일주 운세 메일 한 줄 (앱은 같은 자리에 토스 9시 알림) — 활성 사주 생일로 미리 채운다
+  const mailPrefill = (() => {
+    const inp: any = (profile as any)?.input;
+    if (!inp?.birthYear) return undefined;
+    const p2 = (n: number) => String(n).padStart(2, '0');
+    return { birth: `${inp.birthYear}${p2(inp.birthMonth)}${p2(inp.birthDay)}`, calendar: (inp.calendarType === 'lunar' ? 'lunar' : 'solar') as 'solar' | 'lunar', name: name || '' };
+  })();
 
   // 부팅 자동환불·보상·복구 안내 (App 이 플래그 저장 → 홈에서 1회)
   useEffect(() => {
@@ -208,6 +216,7 @@ export function HomePage() {
                 <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/daily')}>오늘 운세 다시 보기</GoldCta>
                 <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>오늘 받은 풀이를 그대로 다시 열어요</p>
                 <DailyNotiButton variant="slim" className="mt-1" />
+                <DailyMailSignup compact prefill={mailPrefill} source="home" style={{ marginTop: 4 }} />
               </>
             ) : (
               <>
@@ -234,6 +243,7 @@ export function HomePage() {
                   {dailyFree ? '오늘 1회 무료, 결제 없이 바로 열려요' : '오늘 무료 1회는 썼어요, 두 번째부터 1운'}
                 </p>
                 <DailyNotiButton variant="slim" className="mt-1" />
+                <DailyMailSignup compact prefill={mailPrefill} source="home" style={{ marginTop: 4 }} />
               </>
             )
           ) : (

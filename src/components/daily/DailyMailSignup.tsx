@@ -15,15 +15,19 @@ import { HJ, SERIF } from '@/components/hanji/Hanji';
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$/;
 const LS_DONE = 'saju500:daily_mail_done';
 
-export function DailyMailSignup({ prefill, source = 'daily', style }: {
+export function DailyMailSignup({ prefill, source = 'daily', style, compact = false }: {
   prefill?: { birth?: string; calendar?: 'solar' | 'lunar'; name?: string };
   source?: string;
   style?: React.CSSProperties;
+  /** 2026-10-17 홈 한 줄 — 앱의 DailyNotiButton slim 과 같은 자리. 누르면 펼쳐진다 */
+  compact?: boolean;
 }) {
+  const [open, setOpen] = useState(!compact);
   const [email, setEmail] = useState('');
   const [birth, setBirth] = useState(prefill?.birth || '');
   const [calendar, setCalendar] = useState<'solar' | 'lunar'>(prefill?.calendar || 'solar');
   const [agree, setAgree] = useState(false);
+  const [adAgree, setAdAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(() => { try { return localStorage.getItem(LS_DONE); } catch { return null; } });
   const [err, setErr] = useState('');
@@ -34,6 +38,17 @@ export function DailyMailSignup({ prefill, source = 'daily', style }: {
     return () => window.clearTimeout(t);
   }, []);
   if (isAppsInToss()) return null;
+  if (compact && done) return null; // 이미 받고 있으면 홈에는 굳이 다시 보이지 않는다
+  if (compact && !open) {
+    return (
+      <button type="button" onClick={() => { setOpen(true); import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '아침 운세 메일 펼치기', page: window.location.pathname })).catch(() => {}); }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 44, padding: '10px 12px', background: 'transparent', border: 0, fontSize: 14.5, fontWeight: 700, color: HJ.ink2, cursor: 'pointer', ...style }}>
+        <span aria-hidden="true" style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.ink }}>日</span>
+        매일 아침 7시 내 일주 운세 메일로 받기
+        <span aria-hidden="true" style={{ color: HJ.mute }}>›</span>
+      </button>
+    );
+  }
   const birthOk = /^\d{8}$/.test(birth);
   const ok = EMAIL_RE.test(email.trim()) && birthOk && agree;
 
@@ -43,7 +58,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style }: {
     try {
       await ensureFunctionsTarget();
       const fn = httpsCallable<any, { ok: boolean; iljuKo: string }>(functions, 'subscribeDailyMail', { timeout: 30000 });
-      const r = await fn({ email: email.trim(), birth, calendar, name: prefill?.name || '', consent: true, source });
+      const r = await fn({ email: email.trim(), birth, calendar, name: prefill?.name || '', consent: true, adConsent: adAgree, source });
       const label = `${r.data.iljuKo} 일주`;
       setDone(label);
       try { localStorage.setItem(LS_DONE, label); } catch { /* noop */ }
@@ -82,6 +97,10 @@ export function DailyMailSignup({ prefill, source = 'daily', style }: {
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 10, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, cursor: 'pointer' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
             <span>(필수) 아침 운세 메일을 받으려고 메일 주소와 일주(생일로 계산)를 맡겨요. 생일 전체는 남기지 않고, 메일 안의 수신 거부로 언제든 그만 받을 수 있어요.</span>
+          </label>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 8, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, cursor: 'pointer' }}>
+            <input type="checkbox" checked={adAgree} onChange={(e) => setAdAgree(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
+            <span>(선택) 2027 신년운세 출시 기념가 마감(11월 30일)과 할인 소식도 받을래요. 광고성 정보예요.</span>
           </label>
           {err && <p style={{ fontSize: 13.5, color: HJ.seal, marginTop: 8 }}>{err}</p>}
           <button type="button" onClick={submit} disabled={!ok || busy}

@@ -88,14 +88,17 @@ export const createCompatShare = onCall(
 /** 탈퇴 파기용 — 그 사람이 보낸 궁합 링크 전부 */
 export async function deleteCompatSharesOf(db: admin.firestore.Firestore, uid: string): Promise<number> {
   let n = 0;
-  for (;;) {
-    const snap = await db.collection('compatShares').where('uid', '==', uid).limit(300).get();
-    if (snap.empty) return n;
-    const batch = db.batch();
-    snap.docs.forEach((doc) => batch.delete(doc.ref));
-    await batch.commit();
-    n += snap.size;
+  for (const col of ['compatShares', 'dreamShares']) { // 2026-10-17 꿈해몽 보내기(dreamShare.ts)도 같이
+    for (;;) {
+      const snap = await db.collection(col).where('uid', '==', uid).limit(300).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      n += snap.size;
+    }
   }
+  return n;
 }
 
 /** 120일 지난 궁합 링크 정리 (매일 04:40 KST) */
@@ -104,13 +107,15 @@ export const cleanupCompatShares = onSchedule(
   async () => {
     const db = admin.firestore();
     let n = 0;
-    for (let round = 0; round < 20; round++) {
-      const snap = await db.collection('compatShares').where('expireAt', '<', admin.firestore.Timestamp.now()).limit(300).get();
-      if (snap.empty) break;
-      const batch = db.batch();
-      snap.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-      n += snap.size;
+    for (const col of ['compatShares', 'dreamShares']) {
+      for (let round = 0; round < 20; round++) {
+        const snap = await db.collection(col).where('expireAt', '<', admin.firestore.Timestamp.now()).limit(300).get();
+        if (snap.empty) break;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+        n += snap.size;
+      }
     }
     console.log('[cleanupCompatShares] 지움', n);
   },

@@ -7,6 +7,8 @@ import { getReport, type LocalReport } from '@/services/storage/localStore';
 import { TOPIC_REGISTRY, normalizeTopicId } from '@/constants/topics';
 import { CompatShareView } from '@/pages/share/CompatShareView';
 import { fetchCompatShare, type CompatShareDoc } from '@/services/share/compatShare';
+import { DreamShareView } from '@/pages/share/DreamShareView';
+import { fetchDreamShare, isDreamShareId, type DreamShareDoc } from '@/services/share/dreamShare';
 
 /**
  * 공유 수신 페이지 — 비회원 진입 (2026-05-07 동적화)
@@ -29,6 +31,17 @@ export function SharePage() {
   const isCompatLink = urlType === 'compat';
   const [compat, setCompat] = useState<CompatShareDoc | null>(null);
   const [compatLoaded, setCompatLoaded] = useState(!isCompatLink);
+  // 2026-10-17 꿈해몽 보내기 — /share/dream/{14자 id} 는 서버에 남긴 꿈 풀이 첫 장 (예전 날짜 주소는 그대로 초대 화면)
+  const isDreamLink = urlType === 'dream' && isDreamShareId(shareId);
+  const [dream, setDream] = useState<DreamShareDoc | null>(null);
+  const [dreamLoaded, setDreamLoaded] = useState(!isDreamLink);
+
+  useEffect(() => {
+    if (!isDreamLink || !shareId) return;
+    let alive = true;
+    fetchDreamShare(shareId).then((d) => { if (alive) { setDream(d); setDreamLoaded(true); } });
+    return () => { alive = false; };
+  }, [isDreamLink, shareId]);
 
   useEffect(() => {
     if (!isCompatLink || !shareId) return;
@@ -75,6 +88,8 @@ export function SharePage() {
 
   if (isCompatLink && !compatLoaded) return <div className="min-h-screen" style={{ background: '#F4EFE4' }} />;
   if (compat) return <CompatShareView data={compat} />;
+  if (isDreamLink && !dreamLoaded) return <div className="min-h-screen" style={{ background: '#F4EFE4' }} />;
+  if (dream) return <DreamShareView data={dream} />;
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>

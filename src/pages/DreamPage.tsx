@@ -889,13 +889,33 @@ export function DreamPage() {
                 onUnlock={startDeepAnalysis}
                 onTopic={openTopic}
                 onShare={async () => {
-                  // 2026-05-28 PM — 결과 페이지 공유 = OG 바이럴 (보상 X). shareResult 사용.
-                  const { shareResult } = await import('@/utils/share');
-                  await shareResult({
-                    type: 'dream',
-                    name: profile?.name || '나',
-                    reportId: kstToday(), // KST (2026-07-03 UTC 날짜 fix)
-                  });
+                  // 2026-10-17 오너 캡처: 카톡으로 받은 친구가 '안 보이는데 뭐래?' → 받는 사람이 풀이 첫 장을 직접 보는 링크.
+                  //   서버에 일부만 남긴다(services/share/dreamShare.ts). 만들지 못하면 예전 초대형 공유로.
+                  try {
+                    const r: any = aiResult || {};
+                    const para = String(r.firstImpression?.narrative || r.narrative || '').split('\n').filter(Boolean)[0] || '';
+                    const syms = (Array.isArray(r.symbols) ? r.symbols : [])
+                      .map((s: any) => ({ k: String(s?.keyword || ''), m: String(s?.meaning || s?.meaningWithSaju || '') }))
+                      .filter((s: { k: string; m: string }) => s.k && s.m.length >= 20)
+                      .slice(0, 3);
+                    const { createDreamShareId } = await import('@/services/share/dreamShare');
+                    const id = await createDreamShareId({
+                      name: profile?.name || '',
+                      cat: DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '',
+                      dream: dreamText,
+                      title: String(r.title || ''),
+                      quote: String(r.dreamQuote || r.verdict || ''),
+                      narrative: para,
+                      symbols: syms,
+                    }, `${dreamText.slice(0, 40)}-${String(r.title || '')}`);
+                    const { shareDreamLink } = await import('@/utils/share');
+                    const via = await shareDreamLink({ id, title: String(r.title || '').replace(/<[^>]*>/g, '').slice(0, 30) });
+                    if (via === 'clipboard') toast.show('링크를 복사했어요. 카카오톡이나 문자에 붙여 넣어 보내세요', 'success');
+                  } catch (e) {
+                    console.warn('[dream] 보내기 링크 실패, 예전 공유로', e);
+                    const { shareResult } = await import('@/utils/share');
+                    await shareResult({ type: 'dream', name: profile?.name || '나', reportId: kstToday() });
+                  }
                 }}
                 onChat={async () => {
                   // 새 채팅방 생성 후 /chat/{id} 진입 — ChatSessionPage 가 contentContext 받음
