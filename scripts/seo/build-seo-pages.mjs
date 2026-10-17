@@ -107,7 +107,7 @@ ${(Array.isArray(jsonld) ? jsonld : [jsonld]).map((j) => `<script type="applicat
 </head><body>
 <header class="wrap top"><a class="brand" href="/">사주<b>500</b></a><a class="go" href="/?${utm('top')}">오늘의 운세 보기</a></header>
 ${body}
-<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/unse/2027/samjae/">2027년 삼재</a><a href="/unse/2027/tojeong/">2027 토정비결</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
+<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/unse/2027/samjae/">2027년 삼재</a><a href="/unse/2027/tojeong/">2027 토정비결</a><a href="/unse/suneung/">수능 날 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
 <footer class="wrap foot">
 <div><a href="/terms">이용약관</a><a class="b" href="/privacy">개인정보처리방침</a><a href="/business">사업자정보</a></div>
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div>
@@ -563,10 +563,74 @@ ${ctaNewYear('tojeong')}
   }
 }
 
+// ── 수능 날 운세 (2026-10-17) — 2027학년도 수능 2026-11-19(목) 정유일. 띠와 그날 지지의 관계, 문창귀인 일간은 계산(표)으로만.
+//   결과를 약속하지 않는다. 수험생과 부모가 찾는 말이라 합격이직운(/topic/exam)과 무료 오늘의 운세로 잇는다.
+{
+  const D = { y: 2026, m: 11, d: 19, week: '목', gz: '丁酉' };
+  const dz = D.gz[1];
+  const LIU = { 子: '丑', 丑: '子', 寅: '亥', 亥: '寅', 卯: '戌', 戌: '卯', 辰: '酉', 酉: '辰', 巳: '申', 申: '巳', 午: '未', 未: '午' };
+  const SAMHAP = [['申', '子', '辰'], ['寅', '午', '戌'], ['巳', '酉', '丑'], ['亥', '卯', '未']];
+  const CHUNG = { 子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳' };
+  const HAE = { 子: '未', 未: '子', 丑: '午', 午: '丑', 寅: '巳', 巳: '寅', 卯: '辰', 辰: '卯', 申: '亥', 亥: '申', 酉: '戌', 戌: '酉' };
+  const PA = { 子: '酉', 酉: '子', 卯: '午', 午: '卯', 辰: '丑', 丑: '辰', 未: '戌', 戌: '未', 寅: '亥', 亥: '寅', 巳: '申', 申: '巳' };
+  const MUNCHANG = { 甲: '巳', 乙: '午', 丙: '申', 丁: '酉', 戊: '申', 己: '酉', 庚: '亥', 辛: '子', 壬: '寅', 癸: '卯' };
+  const GAN_NAME = { 甲: '갑목', 乙: '을목', 丙: '병화', 丁: '정화', 戊: '무토', 己: '기토', 庚: '경금', 辛: '신금', 壬: '임수', 癸: '계수' };
+  const rel = (z) => {
+    if (z === dz) return ['같은 기운', '그날 지지와 띠가 같아요. 같은 글자가 겹치면 스스로를 다그치기 쉬우니, 평소 풀던 속도를 그대로 지키면 좋아요.'];
+    if (LIU[z] === dz) return ['짝이 맞는 날', '그날 지지와 띠가 짝(육합)을 이뤄요. 마음이 덜 흔들리고 흐름이 순한 편이에요.'];
+    if (SAMHAP.some((g) => g.includes(z) && g.includes(dz))) return ['같은 편 기운', '그날 지지와 띠가 한 무리(삼합)예요. 힘이 모이는 쪽이라 아는 문제를 끝까지 밀고 가기 좋아요.'];
+    if (CHUNG[z] === dz) return ['부딪히는 날', '그날 지지와 띠가 마주 부딪혀요(충). 긴장이 커지기 쉬우니 전날 일찍 자고, 쉬는 시간마다 숨을 고르면 좋아요.'];
+    if (HAE[z] === dz) return ['살짝 엇갈리는 날', '그날 지지와 띠가 서로 거슬려요(해). 답안 옮겨 적기와 수험표, 신분증을 한 번 더 확인하면 좋아요.'];
+    if (PA[z] === dz) return ['살짝 어긋나는 날', '그날 지지와 띠가 조금 어긋나요(파). 시간 배분을 미리 정해 두고 그대로 지키면 좋아요.'];
+    return ['무난한 날', '그날 지지와 띠 사이에 크게 걸리는 관계가 없어요. 준비한 만큼 그대로 보면 돼요.'];
+  };
+  const mcGan = Object.keys(MUNCHANG).filter((g) => MUNCHANG[g] === dz);
+  const sutm = (slug) => `utm_source=seo&utm_medium=organic&utm_campaign=suneung2026_${slug}`.replace(/&/g, '&amp;');
+  const canonical = `${SITE}/unse/suneung/`;
+  const title = `2027학년도 수능 날 운세 (11월 19일 ${gzKo(D.gz)}일), 띠별 흐름과 합격운 | 사주500`;
+  const desc = `2027학년도 수능은 2026년 11월 19일 목요일 ${gzKo(D.gz)}(${D.gz})일이에요. 띠마다 그날 흐름과 시험 전 챙길 것, 이날이 문창귀인 날인 사람, 내 사주로 보는 합격운까지 정리했어요.`;
+  const rows = ORDER.map((z) => {
+    const [label, text] = rel(z);
+    return `<div class="row"><div class="k">${T[z][1]}<small>${esc(label)}</small></div><div class="v">${esc(text)}</div></div>`;
+  }).join('');
+  const faq = [
+    { q: '2027학년도 수능은 언제인가요?', a: `2026년 11월 19일 목요일이에요. 간지로는 ${gzKo(D.gz)}(${D.gz})일이에요.` },
+    { q: '문창귀인이 뭔가요?', a: '사주에서 공부와 글, 시험을 돕는다고 보는 별이에요. 태어난 날의 천간(일간)마다 정해진 지지가 있어서, 그 지지가 든 날을 문창귀인 날로 봐요.' },
+    { q: '부딪히는 날이면 시험을 망치나요?', a: '그렇게 보지 않아요. 띠 하나로 보는 흐름이라 같은 띠라도 사람마다 달라요. 긴장이 커지기 쉬운 날이니 잠과 식사를 평소대로 지키라는 뜻으로 읽으면 돼요.' },
+    { q: '내 사주로 합격운을 더 자세히 볼 수 있나요?', a: '합격이직운에서 내 사주의 시험 기운, 합격하기 좋은 때, 면접에 강한 시간까지 볼 수 있어요. 오늘의 운세는 하루 한 번 무료예요.' },
+  ];
+  const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">2027학년도 수능</div>
+<h1>수능 날은<br>11월 19일 ${gzKo(D.gz)}일</h1>
+<p>2026년 11월 19일 목요일, ${gzKo(D.gz)}(${D.gz})일이에요. 띠마다 그날 흐름과 시험 전에 챙길 것을 정리했어요.</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><h2><span class="seal">一</span>수능 날의 기운</h2><div class="card">
+<p class="txt">${gzKo(D.gz)}일은 천간 丁(정화, 촛불처럼 밝게 비추는 불)과 지지 酉(유금, 가을의 단단한 쇠)로 이뤄진 날이에요. 차분하게 집중하고 꼼꼼하게 마무리하는 데 힘이 실리는 날로 봐요.</p>
+<p class="txt">일간이 ${mcGan.map((g) => `${g}(${GAN_NAME[g]})`).join('이나 ')}인 사람에게는 이날 지지 ${dz}가 문창귀인이에요. 공부와 시험을 돕는 별이 드는 날이에요.</p>
+</div></section>
+<section class="sec"><h2><span class="seal">二</span>띠별 수능 날 흐름</h2><div class="card"><p class="txt">올해 수험생은 대부분 2008년생 쥐띠이고, 재수생은 2007년생 돼지띠가 많아요. 띠는 입춘(2월 4일 무렵)에 바뀌어서 1월생과 2월 초에 태어난 사람은 앞 해의 띠로 봐요.</p>${rows}</div></section>
+<section class="cta">
+<h3>우리 아이, 내 사주로 보는 합격운</h3>
+<p>띠는 태어난 해 한 글자만 봐요. 합격이직운에서 사주 여덟 글자로 시험 기운, 합격하기 좋은 때, 면접에 강한 시간까지 풀어 드려요. 수험생 사주를 넣어 부모님이 대신 볼 수도 있어요.</p>
+<a class="btn" href="/topic/exam?${sutm('main')}">내 사주로 합격운 보기</a>
+<a class="sub" href="/daily?${sutm('daily')}">수능 날 오늘의 운세 무료로 보기</a>
+</section>
+<section class="sec"><h2><span class="seal">三</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<p class="note">띠와 그날 간지의 관계로 본 참고용 흐름이에요. 시험 결과는 그동안의 준비가 정해요. 수험생 모두 준비한 만큼 보길 바라요.</p>
+</main>`;
+  const jsonld = [
+    { '@context': 'https://schema.org', '@type': 'Article', headline: '2027학년도 수능 날 운세', description: desc, inLanguage: 'ko', mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE }, datePublished: '2026-10-17', dateModified: '2026-10-17' },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ];
+  write('unse/suneung', page({ title, desc, canonical, body, jsonld }));
+}
+
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];
-const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, { u: '/unse/today/ilju/', p: '0.8' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/kkum/' || u === '/gunghap/' || u === '/ilju/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') || u.startsWith('/ilju/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
+const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, { u: '/unse/today/ilju/', p: '0.8' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/unse/suneung/' || u === '/kkum/' || u === '/gunghap/' || u === '/ilju/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') || u.startsWith('/ilju/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(({ u, p }) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${p}</priority></url>`).join('\n')}\n</urlset>\n`;
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap);
 console.log(`검색용 페이지 ${out.length}개, sitemap ${urls.length}개 주소`);
