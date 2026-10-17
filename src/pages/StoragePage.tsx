@@ -27,6 +27,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { useAuth } from '@/hooks/useAuth';
+import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
+import { isAppintosBuild } from '@/lib/env';
+import { isAppsInToss } from '@/services/payment/iapService';
 import { useSajuContext } from '@/contexts/SajuContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getHourBranch } from '@/utils/saju-format';
@@ -160,7 +163,11 @@ export function StoragePage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { setInput, setSajuData } = useSajuContext();
-  useAuth();
+  const { user, login } = useAuth();
+  // 2026-10-17 웹 전용 — 익명으로 기록을 쌓은 사람에게 '로그인해 두면 기록이 지켜져요'.
+  //   앱은 계정이 바뀌어도 기기 여권이 보관함을 옮기지만, 웹 익명은 브라우저를 지우면 되찾을 길이 없다.
+  const webAnon = !isAppintosBuild && !isAppsInToss() && (!user || user.isAnonymous);
+  const [showKeepLogin, setShowKeepLogin] = useState(false);
 
   const [profiles, setProfiles] = useState<SajuProfile[]>([]);
   const [reports, setReports] = useState<LocalReport[]>([]);
@@ -485,6 +492,17 @@ export function StoragePage() {
         className="mx-auto"
         style={{ maxWidth: 520, padding: '12px 16px 0' }}
       >
+        {webAnon && (reports.length > 0 || chatRooms.length > 0) && (
+          <button type="button" onClick={() => {
+            setShowKeepLogin(true);
+            import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '보관함 로그인 안내', page: '/storage' })).catch(() => {});
+          }} style={{ display: 'block', width: '100%', textAlign: 'left', background: '#FFFDF8', border: '1px solid #E1D7C4', borderRadius: 14, padding: '14px 16px', marginBottom: 14, cursor: 'pointer' }}>
+            <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: '#1A1612' }}>로그인해 두면 이 기록이 지켜져요 ›</span>
+            <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.6, color: '#6F6557', marginTop: 3 }}>
+              지금은 이 브라우저에만 저장돼 있어요. 카카오, 네이버, 구글로 로그인하면 브라우저를 지워도, 다른 기기에서도 그대로 볼 수 있어요.
+            </span>
+          </button>
+        )}
         {/* ═══ Section A — 사주팔자 정보 ═══ */}
         <ProfilesSection
           profiles={profiles}
@@ -571,6 +589,18 @@ export function StoragePage() {
         onConfirm={confirmBulkDelete}
         onClose={() => setBulkDeleteOpen(false)}
       />
+      {/* 2026-10-17 웹 전용 로그인 시트 — 앱 빌드와 토스 안에서는 렌더하지 않는다 */}
+      {webAnon && (
+        <WebLoginSheet
+          open={showKeepLogin}
+          onClose={() => setShowKeepLogin(false)}
+          onSuccess={() => { setShowKeepLogin(false); toast.show('로그인했어요. 이제 이 기록이 계정에 지켜져요', 'success'); }}
+          toast={toast}
+          onLogin={login}
+          title={['기록을 계정에', '지켜 둘게요']}
+          desc={['브라우저를 지워도 그대로 남아요', '다른 기기에서도 이어서 볼 수 있어요']}
+        />
+      )}
     </div>
   );
 }
