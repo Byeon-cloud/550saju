@@ -175,6 +175,24 @@ export async function shareCompatLink(p: { id: string; n1: string; n2: string })
   return via;
 }
 
+/** 신년운세 미리 보기 보내기 (2026-10-18) — 받는 사람이 그 사람의 새해 미리 보기를 열어 보는 링크 (/share/newyear/{id}) */
+export async function shareNewYearLink(p: { id: string; name: string; year: number }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'newyear', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
+  const text = `${p.name} 님의 ${p.year}년을 사주로 미리 봤어요. 힘을 줄 달과 쉬어 갈 달을 열어 보세요`;
+  const path = `/share/newyear/${p.id}?ref=share`;
+  const done = (method: string) => {
+    import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'newyear', method, rewarded: 0 })).catch(() => {});
+  };
+  if (isAppsInToss()) {
+    const ok = await shareViaToss(path, text, ogFor('tojung'));
+    if (ok) done('toss_share');
+    return ok ? 'toss_share' : null;
+  }
+  const via = await shareViaWeb(`${p.year} 신년운세 미리 보기 | 사주500`, text, `https://saju500.app${path}`);
+  if (via) done(via);
+  return via;
+}
+
 /** 공유 링크 생성 (레거시 호환 — type 없이 호출 시 result/) */
 export function createShareUrl(shareId: string, type?: ShareContentType, topicId?: string): string {
   const prefix = type === 'topic' && topicId ? `topic/${topicId}` : (type || 'result');

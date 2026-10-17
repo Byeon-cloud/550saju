@@ -2486,6 +2486,7 @@ export { recordTopicView, aggregateTopicTop5 } from './livebest/topicViews';
 export { renderShareOg } from './share/renderShareOg';
 export { createCompatShare, cleanupCompatShares } from './share/compatShare'; // 2026-10-17 궁합 보내기 (시험 E7)
 export { createDreamShare } from './share/dreamShare'; // 2026-10-17 꿈해몽 보내기
+export { createNewYearShare } from './share/newYearShare'; // 2026-10-18 신년운세 미리 보기 보내기
 export { subscribeMarketingMail, unsubscribeMail, sendNewYearDeadlineMail } from './mail/marketingMail'; // 2026-10-17 신년운세 마감 안내 메일 (시험 E14)
 export { subscribeDailyMail, ensureIljuDaily, sendDailyMail } from './ilju/iljuDaily'; // 2026-10-17 매일 아침 일주 운세 메일 (시험 E15)
 export { renderIljuToday } from './seo/iljuTodayPage'; // 2026-10-17 오늘의 일주별 운세 공개 페이지 /unse/today/ilju/

@@ -88,7 +88,7 @@ export const createCompatShare = onCall(
 /** 탈퇴 파기용 — 그 사람이 보낸 궁합 링크 전부 */
 export async function deleteCompatSharesOf(db: admin.firestore.Firestore, uid: string): Promise<number> {
   let n = 0;
-  for (const col of ['compatShares', 'dreamShares']) { // 2026-10-17 꿈해몽 보내기(dreamShare.ts)도 같이
+  for (const col of ['compatShares', 'dreamShares', 'newYearShares']) { // 2026-10-17 꿈해몽 보내기(dreamShare.ts), 10-18 신년 미리 보기 보내기(newYearShare.ts)도 같이
     for (;;) {
       const snap = await db.collection(col).where('uid', '==', uid).limit(300).get();
       if (snap.empty) break;
@@ -107,7 +107,7 @@ export const cleanupCompatShares = onSchedule(
   async () => {
     const db = admin.firestore();
     let n = 0;
-    for (const col of ['compatShares', 'dreamShares']) {
+    for (const col of ['compatShares', 'dreamShares', 'newYearShares']) {
       for (let round = 0; round < 20; round++) {
         const snap = await db.collection(col).where('expireAt', '<', admin.firestore.Timestamp.now()).limit(300).get();
         if (snap.empty) break;

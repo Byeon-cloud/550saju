@@ -9,6 +9,8 @@ import { CompatShareView } from '@/pages/share/CompatShareView';
 import { fetchCompatShare, type CompatShareDoc } from '@/services/share/compatShare';
 import { DreamShareView } from '@/pages/share/DreamShareView';
 import { fetchDreamShare, isDreamShareId, type DreamShareDoc } from '@/services/share/dreamShare';
+import { NewYearShareView } from '@/pages/share/NewYearShareView';
+import { fetchNewYearShare, isNewYearShareId, type NewYearShareDoc } from '@/services/share/newYearShare';
 
 /**
  * 공유 수신 페이지 — 비회원 진입 (2026-05-07 동적화)
@@ -35,6 +37,17 @@ export function SharePage() {
   const isDreamLink = urlType === 'dream' && isDreamShareId(shareId);
   const [dream, setDream] = useState<DreamShareDoc | null>(null);
   const [dreamLoaded, setDreamLoaded] = useState(!isDreamLink);
+  // 2026-10-18 신년운세 미리 보기 보내기 — /share/newyear/{14자 id}
+  const isNewYearLink = urlType === 'newyear' && isNewYearShareId(shareId);
+  const [newYear, setNewYear] = useState<NewYearShareDoc | null>(null);
+  const [newYearLoaded, setNewYearLoaded] = useState(!isNewYearLink);
+
+  useEffect(() => {
+    if (!isNewYearLink || !shareId) return;
+    let alive = true;
+    fetchNewYearShare(shareId).then((d) => { if (alive) { setNewYear(d); setNewYearLoaded(true); } });
+    return () => { alive = false; };
+  }, [isNewYearLink, shareId]);
 
   useEffect(() => {
     if (!isDreamLink || !shareId) return;
@@ -79,6 +92,7 @@ export function SharePage() {
     weekly: '주간운세',
     compat: '궁합',
     tojung: '신년운세',
+    newyear: '신년운세',
     daily: '오늘의 운세',
     dream: '꿈해몽',
     deepDream: '꿈해몽',
@@ -90,6 +104,8 @@ export function SharePage() {
   if (compat) return <CompatShareView data={compat} />;
   if (isDreamLink && !dreamLoaded) return <div className="min-h-screen" style={{ background: '#F4EFE4' }} />;
   if (dream) return <DreamShareView data={dream} />;
+  if (isNewYearLink && !newYearLoaded) return <div className="min-h-screen" style={{ background: '#F4EFE4' }} />;
+  if (newYear) return <NewYearShareView data={newYear} />;
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
