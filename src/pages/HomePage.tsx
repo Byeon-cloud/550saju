@@ -18,6 +18,7 @@ import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
 import { MonthGoodDays } from '@/components/home/MonthGoodDays';
 import { BirthdayMonth } from '@/components/home/BirthdayMonth';
+import { WebIntro } from '@/components/home/WebIntro';
 import { listTopics, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
@@ -277,6 +278,8 @@ export function HomePage() {
       {hasSaju && <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />}
       {/* 2026-10-17 생일 달 — 종합사주 또는 신년운세(11~2월) */}
       {hasSaju && <BirthdayMonth sajuData={sajuData as any} name={displayName} premiumPrice={premium} newYearPrice={tojung} />}
+      {/* 2026-10-17 웹 전용 첫 손님 소개 (앱 빌드와 토스 안에서는 안 보임) */}
+      {!hasSaju && <WebIntro premiumPrice={premium} />}
 
       {/* ━━━ 2. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게) ━━━ */}
       <div style={{ padding: '32px 16px 0' }}>

@@ -134,6 +134,8 @@ export async function shareResult(params: ShareParams): Promise<boolean> {
 
 /** 공유 미리보기 그림 — 공개 웹 주소 (앱 안 origin 은 카카오톡이 못 읽는다, 2026-10-17 오너 캡처) */
 const OG_IMAGE = 'https://saju500.app/og-image.png';
+/** 2026-10-17 콘텐츠별 공유 그림 (public/og/*.jpg, scripts/og/make-og.cjs) */
+const ogFor = (kind: 'dream' | 'compat' | 'daily' | 'premium' | 'tojung' | 'monthly' | 'weekly' | 'tti') => `https://saju500.app/og/${kind}.jpg`;
 
 /** 꿈해몽 보내기 (2026-10-17) — 받는 사람이 꿈 풀이 첫 장을 직접 열어 보는 링크 (/share/dream/{id}) */
 export async function shareDreamLink(p: { id: string; title: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
@@ -144,7 +146,7 @@ export async function shareDreamLink(p: { id: string; title: string }): Promise<
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'dream', method, rewarded: 0 })).catch(() => {});
   };
   if (isAppsInToss()) {
-    const ok = await shareViaToss(path, text, OG_IMAGE);
+    const ok = await shareViaToss(path, text, ogFor('dream'));
     if (ok) done('toss_share');
     return ok ? 'toss_share' : null;
   }
@@ -164,7 +166,7 @@ export async function shareCompatLink(p: { id: string; n1: string; n2: string })
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'compat', method, rewarded: 0 })).catch(() => {});
   };
   if (isAppsInToss()) {
-    const ok = await shareViaToss(path, text, OG_IMAGE);
+    const ok = await shareViaToss(path, text, ogFor('compat'));
     if (ok) done('toss_share');
     return ok ? 'toss_share' : null;
   }

@@ -97,7 +97,7 @@ function page({ title, desc, canonical, body, jsonld }) {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${canonical}">
-<meta property="og:image" content="${SITE}/og-image.png">
+<meta property="og:image" content="${SITE}/og/${/\/kkum\//.test(canonical) ? 'dream' : /\/gunghap\//.test(canonical) ? 'compat' : /\/ilju\//.test(canonical) ? 'premium' : /\/unse\/\d{4}\//.test(canonical) ? 'tojung' : 'default'}.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">

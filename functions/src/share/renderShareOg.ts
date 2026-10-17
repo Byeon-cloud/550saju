@@ -92,6 +92,11 @@ const TOPIC_LABEL_MAP: Record<string, string> = {
  *    현존 og-image.png 1종으로 폴백. (Phase 2: 콘텐츠별 동적 OG PNG 생성)
  *  설명도 share.ts 초대형 카피와 일관 ("당신도 받아보세요" — 받는 사람 본인 사주가 주인공). */
 const OG_IMAGE_FALLBACK = '/og-image.png';
+/** 공유 종류 → public/og/{파일}.jpg (2026-10-17) */
+const OG_FILE: Record<string, string> = {
+  daily: 'daily', dream: 'dream', compat: 'compat', premium: 'premium', result: 'premium', daeun: 'premium',
+  monthly: 'monthly', weekly: 'weekly', tojung: 'tojung', topic: 'premium',
+};
 const TYPE_TITLE: Record<string, [string, string]> = {
   compat: ['궁합', '두 사람의 사주로 궁합을 봤어요. 점수와 총평을 볼 수 있어요.'],
   monthly: ['월운세', '이번 달 흐름을 사주로 날짜까지 봤어요. 내 한 달도 사주로 확인해 보세요.'],
@@ -145,8 +150,8 @@ function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: 
       };
     default:
       return {
-        title: '사주500 — 정통 명리학 AI 사주 풀이',
-        description: '500원에 만나는 정통 사주 풀이. 당신의 사주도 받아보세요.',
+        title: '사주500 | 정통 명리학 사주 풀이',
+        description: '내 사주 여덟 글자로 오늘과 한 해를 풀어 드려요. 오늘의 운세와 꿈해몽은 하루 한 번 무료예요.',
         image: OG_IMAGE_FALLBACK,
       };
   }
@@ -184,9 +189,8 @@ function buildBotHtml(params: { origin: string; parsed: ParsedShare; compat?: Co
         ? `/share/topic/${parsed.topicId}/${parsed.reportId}`
         : `/share/${parsed.type}/${parsed.reportId}`
   }`;
-  // og:image — 콘텐츠별 정적 이미지 (Phase 2: 동적 PNG)
-  // Phase 1 fallback — 콘텐츠별 OG 이미지 미존재 시 default /og-image.png
-  const ogImage = `${origin}${meta.image}`;
+  // og:image — 2026-10-17 콘텐츠별 수묵 고서 그림 (scripts/og/make-og.cjs 로 만든 public/og/*.jpg). 예전 og-image.png 는 옛 디자인이었다
+  const ogImage = `${origin}/og/${OG_FILE[parsed.type] || 'default'}.jpg`;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -204,7 +208,7 @@ function buildBotHtml(params: { origin: string; parsed: ParsedShare; compat?: Co
 <meta property="og:description" content="${escapeHtml(meta.description)}">
 <meta property="og:image" content="${escapeHtml(ogImage)}">
 <meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="600">
+<meta property="og:image:height" content="630">
 <meta property="og:locale" content="ko_KR">
 
 <!-- Twitter -->

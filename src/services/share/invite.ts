@@ -23,7 +23,7 @@ export async function shareInvite(opts?: { onShared?: () => void; onCancel?: () 
   if (isAppsInToss()) {
     try {
       const { share, getTossShareLink } = await import('@apps-in-toss/web-framework');
-      const link = await getTossShareLink('intoss://saju-500/?ref=share', `${window.location.origin}/og-image.png`);
+      const link = await getTossShareLink('intoss://saju-500/?ref=share', 'https://saju500.app/og-image.png');
       await share({ message: `${INVITE_TEXT}\n${link}` });
       track('share_complete', { type: 'invite', method: 'toss_share', rewarded: 0 });
       opts?.onShared?.();

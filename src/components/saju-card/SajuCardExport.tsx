@@ -406,7 +406,7 @@ export async function shareSajuCardViaToss(profileId: string | undefined, ilju?:
   try {
     const { share, getTossShareLink } = await import('@apps-in-toss/web-framework');
     const path = `${profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '/'}?${sajuCardShareQuery(ilju)}`;
-    const link = await getTossShareLink(`intoss://saju-500${path}`, `${window.location.origin}/og-image.png`);
+    const link = await getTossShareLink(`intoss://saju-500${path}`, 'https://saju500.app/og-image.png');
     await share({ message: ['사주500에서 만든 내 사주 카드예요. 내 사주도 볼 수 있어요', link].join('\n') });
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', {
       type: 'card', method: 'toss_share', rewarded: 0,

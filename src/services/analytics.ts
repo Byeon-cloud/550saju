@@ -201,6 +201,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'birthday_card_view', // {m, ny} — 생일 달 카드가 보였다 (2026-10-17 단골 장치 2번)
   'birthday_card_click',// {to: tojung|premium} — 생일 달 카드에서 상품으로
   'tojung_preview_view', // {y, v} — 신년운세 결제 전 무료 미리 보기가 보였다 (2026-10-17, 10일 48명 보고 0명 구매 대응)
+  'web_intro_view',     // {} — 웹 첫 손님 소개 카드가 보였다 (2026-10-17, 웹 전용)
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───
