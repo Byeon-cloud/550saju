@@ -227,6 +227,10 @@ export function TojungPage() {
         <div className="px-5 pt-5 space-y-5">
           <FadeIn delay={0.05}>
             <ProfilePicker onSelect={p => setSelected(p as unknown as LocalReport)} onNew={() => navigate('/input?new=1')} title={`누구의 ${TY} 신년운세를 볼까요?`} />
+            {/* 2026-10-17 — 돈을 내는 사람은 주로 20대, 50~60대는 직접 입력을 잘 안 한다 → 부모님 것도 함께 */}
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: '#6F6557', marginTop: 10 }}>
+              부모님 {TY}년도 함께 보세요. '새 사주 입력하기'로 부모님 생일을 넣으면 돼요.
+            </p>
           </FadeIn>
           {!selected && <DeadlineMailSignup source="tojung" />}
           {selected && (

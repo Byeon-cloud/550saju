@@ -107,7 +107,7 @@ ${(Array.isArray(jsonld) ? jsonld : [jsonld]).map((j) => `<script type="applicat
 </head><body>
 <header class="wrap top"><a class="brand" href="/">사주<b>500</b></a><a class="go" href="/?${utm('top')}">오늘의 운세 보기</a></header>
 ${body}
-<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
+<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/unse/2027/samjae/">2027년 삼재</a><a href="/unse/2027/tojeong/">2027 토정비결</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
 <footer class="wrap foot">
 <div><a href="/terms">이용약관</a><a class="b" href="/privacy">개인정보처리방침</a><a href="/business">사업자정보</a></div>
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div>
@@ -457,6 +457,110 @@ ${groups}
 </main>`;
   const jsonld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: '60일주 총정리', description: desc, inLanguage: 'ko', url: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
   write('ilju', page({ title, desc, canonical, body, jsonld }));
+}
+
+// ── 2027 신년 시즌 검색어 (2026-10-17) — '2027 삼재', '2027 토정비결'. 겁주는 말 없이 차분하게, 내 사주로 보는 신년운세로 잇는다.
+{
+  const nutm = (slug) => `utm_source=seo&utm_medium=organic&utm_campaign=newyear${YEAR}_${slug}`.replace(/&/g, '&amp;');
+  const tLink = (z) => `<a href="/unse/${YEAR}/${T[z][0]}/">${T[z][1]} ${YEAR}년 운세</a>`;
+  const ctaNewYear = (slug) => `<section class="cta">
+<h3>띠만으로는 알 수 없는 내 ${YEAR}년</h3>
+<p>사람을 고르면 결제 전에 내 사주로 본 ${YEAR}년이 어떤 해인지, 힘을 줄 달과 쉬어 갈 달을 무료로 먼저 보여 드려요. 부모님 사주도 넣어 두면 함께 볼 수 있어요.</p>
+<a class="btn" href="/tojung?${nutm(slug)}">내 사주로 ${YEAR} 신년운세 미리 보기</a>
+<a class="sub" href="/unse/${YEAR}/?${nutm(slug + '_hub')}">${YEAR}년 띠별 신년운세 보기</a>
+</section>`;
+
+  // 삼재 — 띠 묶음(삼합)마다 세 해. 신자진 띠는 인묘진 해, 사유축 띠는 해자축 해, 인오술 띠는 신유술 해, 해묘미 띠는 사오미 해
+  const SAMJAE = [
+    { tti: ['亥', '卯', '未'], years: [2025, 2026, 2027] },
+    { tti: ['寅', '午', '戌'], years: [2028, 2029, 2030] },
+    { tti: ['巳', '酉', '丑'], years: [2031, 2032, 2033] },
+    { tti: ['申', '子', '辰'], years: [2034, 2035, 2036] },
+  ];
+  const STEP = ['들삼재', '눌삼재', '날삼재'];
+  const names = (arr) => arr.map((z) => T[z][1]).join(', ');
+  {
+    const canonical = `${SITE}/unse/${YEAR}/samjae/`;
+    const title = `${YEAR}년 삼재 띠는 돼지띠, 토끼띠, 양띠 (날삼재) | 사주500`;
+    const desc = `${YEAR}년 ${gzKo(yearGz)}년 삼재는 돼지띠, 토끼띠, 양띠의 날삼재예요. 들삼재, 눌삼재, 날삼재의 차이와 띠별 삼재 연도, ${YEAR + 1}년부터 삼재가 드는 띠까지 정리했어요.`;
+    const rows = SAMJAE.map((g) => `<div class="row"><div class="k">${names(g.tti)}</div><div class="v">${g.years.map((y, i) => `${y}년 ${gzKo(gzOf(y))}(${gzOf(y)}) ${STEP[i]}`).join('<br>')}</div></div>`).join('');
+    const faq = [
+      { q: `${YEAR}년 삼재인 띠는 무엇인가요?`, a: `돼지띠, 토끼띠, 양띠예요. ${YEAR - 2}년 들삼재, ${YEAR - 1}년 눌삼재에 이어 ${YEAR}년이 날삼재, 곧 삼재가 끝나는 해예요.` },
+      { q: '날삼재는 어떤 해인가요?', a: '삼재 세 해 가운데 마지막 해예요. 옛 풀이에서는 그동안 쌓인 짐을 내려놓고 정리하는 해로 봐요. 새로 크게 벌이는 일보다 마무리할 일을 먼저 끝내라고 권해요.' },
+      { q: `${YEAR + 1}년에 삼재가 드는 띠는요?`, a: `호랑이띠, 말띠, 개띠예요. ${YEAR + 1}년 ${gzKo(gzOf(YEAR + 1))}년이 들삼재, ${YEAR + 2}년이 눌삼재, ${YEAR + 3}년이 날삼재예요.` },
+      { q: '삼재에는 이사나 결혼을 피해야 하나요?', a: '삼재는 태어난 해의 띠 한 글자만 보는 풀이라 같은 띠라도 사람마다 그 해 흐름이 달라요. 큰일을 앞두고 있다면 내 사주 여덟 글자로 그 해와 그 달이 나에게 어떤지 보고 정하는 편이 좋아요.' },
+    ];
+    const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">${YEAR} ${gzKo(yearGz)}년 삼재</div>
+<h1>${YEAR}년 삼재는<br>돼지띠, 토끼띠, 양띠</h1>
+<p>${YEAR}년은 해묘미(亥卯未) 띠가 삼재를 마치는 날삼재 해예요.</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><h2><span class="seal">一</span>삼재란</h2><div class="card">
+<p class="txt">삼재(三災)는 띠를 세 개씩 묶은 무리(삼합)마다 기운이 약해진다고 보는 세 해를 이르는 옛 풀이예요. 해묘미 띠(돼지, 토끼, 양)는 사오미(巳午未) 해, 인오술 띠(호랑이, 말, 개)는 신유술(申酉戌) 해, 사유축 띠(뱀, 닭, 소)는 해자축(亥子丑) 해, 신자진 띠(원숭이, 쥐, 용)는 인묘진(寅卯辰) 해가 삼재예요.</p>
+<p class="txt">세 해를 차례로 들삼재(들어오는 해), 눌삼재(머무는 해), 날삼재(나가는 해)라고 불러요.</p>
+</div></section>
+<section class="sec"><h2><span class="seal">二</span>띠별 삼재 연도</h2><div class="card">${rows}</div></section>
+<section class="sec"><h2><span class="seal">三</span>${YEAR}년 날삼재 띠</h2><div class="card">
+<p class="txt">${YEAR}년 ${gzKo(yearGz)}(${yearGz})년은 돼지띠, 토끼띠, 양띠의 날삼재예요. 옛 풀이에서는 삼재가 빠져나가는 해라 지난 두 해 동안 미뤄 둔 일을 정리하고 마무리하기 좋은 때로 봐요.</p>
+<p class="txt">띠별 ${YEAR}년 흐름은 여기서 볼 수 있어요.</p>
+<div class="links" style="margin-top:10px">${['亥', '卯', '未'].map(tLink).join('')}</div>
+</div></section>
+<section class="sec"><h2><span class="seal">四</span>내 사주로 보면</h2><div class="card">
+<p class="txt">삼재는 태어난 해의 띠 한 글자만 봐요. 명리에서는 한 해 흐름을 그 해의 간지와 내 사주 여덟 글자, 특히 나에게 필요한 기운(용신)이 어떻게 만나는지로 봐요. 그래서 같은 돼지띠라도 ${YEAR}년이 힘을 줄 해인 사람도 있고 쉬어 갈 해인 사람도 있어요.</p>
+</div></section>
+${ctaNewYear('samjae')}
+<section class="sec"><h2><span class="seal">五</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<p class="note">삼재는 띠로 보는 옛 풀이를 소개한 참고용 글이에요. 한 해 흐름은 사람마다 사주에 따라 달라요.</p>
+</main>`;
+    const jsonld = [
+      { '@context': 'https://schema.org', '@type': 'Article', headline: `${YEAR}년 삼재 띠`, description: desc, inLanguage: 'ko', mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE }, datePublished: '2026-10-17', dateModified: '2026-10-17' },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ];
+    write(`unse/${YEAR}/samjae`, page({ title, desc, canonical, body, jsonld }));
+  }
+
+  // 토정비결 — 무엇이고, 사주 신년운세와 무엇이 다른지. 사주500 신년운세는 토정비결 괘를 쓰지 않는다고 그대로 적는다
+  {
+    const canonical = `${SITE}/unse/${YEAR}/tojeong/`;
+    const title = `${YEAR} 토정비결과 사주 신년운세, 무엇이 다를까 | 사주500`;
+    const desc = `${YEAR}년 토정비결을 찾는 분께. 토정비결이 어떤 풀이인지, 태어난 시까지 보는 사주 신년운세와 무엇이 다른지, 내 사주로 ${YEAR}년 달마다 흐름을 미리 보는 법을 정리했어요.`;
+    const faq = [
+      { q: '토정비결은 무엇인가요?', a: '조선 중기 토정 이지함이 지었다고 전하는 한 해 운세 풀이예요. 태어난 해, 달, 날을 음력으로 셈해 괘를 하나 뽑고, 그 괘의 글로 한 해와 달마다 흐름을 봐요.' },
+      { q: '사주 신년운세는 무엇이 다른가요?', a: '사주는 태어난 해, 달, 날, 시의 여덟 글자를 써요. 그 사람에게 필요한 기운(용신)을 먼저 찾고, 그 해와 각 달의 간지가 그 기운을 돕는지 막는지로 달마다 흐름을 봐요.' },
+      { q: '사주500 신년운세는 토정비결인가요?', a: `토정비결 괘를 쓰지 않는 사주 방식이에요. ${YEAR}년 열두 달의 간지와 내 사주 여덟 글자로 힘을 줄 달, 쉬어 갈 달, 좋은 날과 조심할 날 날짜를 알려 드려요.` },
+      { q: '태어난 시간을 모르면요?', a: '시간을 모르면 시주(태어난 시의 두 글자)를 빼고 여섯 글자로 봐요. 한 해 흐름은 대부분 그대로 볼 수 있어요.' },
+    ];
+    const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">${YEAR} ${gzKo(yearGz)}년 한 해 운세</div>
+<h1>${YEAR} 토정비결과<br>사주 신년운세</h1>
+<p>한 해를 미리 보는 두 가지 풀이가 어떻게 다른지 정리했어요.</p>
+</div></section>
+<main class="wrap">
+<section class="sec"><h2><span class="seal">一</span>토정비결</h2><div class="card">
+<p class="txt">토정비결은 태어난 해, 달, 날을 음력으로 셈해 괘를 뽑고 그 괘의 글로 한 해를 보는 옛 풀이예요. 새해가 되면 집안 어른들이 한 해 운을 볼 때 많이 찾았어요.</p>
+</div></section>
+<section class="sec"><h2><span class="seal">二</span>사주 신년운세</h2><div class="card">
+<p class="txt">사주 신년운세는 태어난 시까지 여덟 글자를 써요. 그 사람에게 필요한 기운을 먼저 찾고, ${YEAR}년 ${gzKo(yearGz)}년과 열두 달의 간지가 그 기운을 돕는지 막는지 봐서 달마다 흐름을 읽어요. 같은 해에 태어난 사람도 태어난 달, 날, 시가 다르면 풀이가 달라져요.</p>
+</div></section>
+<section class="sec"><h2><span class="seal">三</span>사주500 신년운세로 보는 것</h2><div class="card">
+<div class="row"><div class="k">한 해</div><div class="v">${YEAR}년이 내 사주에 어떤 해인지, 일, 돈, 사람, 건강의 흐름</div></div>
+<div class="row"><div class="k">열두 달</div><div class="v">달마다 힘을 줄지 쉬어 갈지, 그 달에 할 일</div></div>
+<div class="row"><div class="k">날짜</div><div class="v">달마다 좋은 날과 조심할 날, 한 해 꼭 기억할 날</div></div>
+</div></section>
+${ctaNewYear('tojeong')}
+<section class="sec"><h2><span class="seal">四</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<section class="sec"><h2>함께 보면 좋은 글</h2><div class="links"><a href="/unse/${YEAR}/samjae/">${YEAR}년 삼재 띠</a><a href="/unse/${YEAR}/">${YEAR}년 띠별 신년운세</a></div></section>
+<p class="note">토정비결은 옛 풀이를 소개한 내용이고, 사주500의 신년운세는 사주 여덟 글자로 봐요.</p>
+</main>`;
+    const jsonld = [
+      { '@context': 'https://schema.org', '@type': 'Article', headline: `${YEAR} 토정비결과 사주 신년운세`, description: desc, inLanguage: 'ko', mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE }, datePublished: '2026-10-17', dateModified: '2026-10-17' },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ];
+    write(`unse/${YEAR}/tojeong`, page({ title, desc, canonical, body, jsonld }));
+  }
 }
 
 // ── sitemap (앱 주요 주소 + 이 페이지들)
