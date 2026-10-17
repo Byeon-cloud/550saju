@@ -1,5 +1,5 @@
 /**
- * 친구 궁합 초대장 (2026-10-18, 시험 E16) — 서버: functions/src/compat/compatInvite.ts
+ * 친구 궁합 초대장 (2026-10-18, 시험 E21) — 서버: functions/src/compat/compatInvite.ts
  *   보내는 사람: createInvite → 링크 /share/cjoin/{id} (inv 초대 코드도 붙는다)
  *   받은 사람: getInvite → answerInvite(내 사주) → 두 사람 모두 무료 궁합 점수와 한 줄 풀이
  *   전체 풀이는 지금 궁합 결과 화면 그대로(상대 사주는 서버가 생년월일을 빼고 넘겨준다)

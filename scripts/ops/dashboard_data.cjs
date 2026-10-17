@@ -14,7 +14,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const kstDay = (offset) => new Date(Date.now() + 9 * 3600e3 - offset * 864e5).toISOString().slice(0, 10);
 const N = 35;
 const days = []; for (let i = N - 1; i >= 0; i--) days.push(kstDay(i));
-const NAMES = ['app_open', 'page_view', 'profile_created', 'content_result', 'insufficient_balance', 'charge_open', 'charge_complete', 'noti_agree', 'share_complete'];
+const NAMES = ['app_open', 'page_view', 'profile_created', 'content_result', 'insufficient_balance', 'charge_open', 'charge_complete', 'noti_agree', 'share_complete', 'inv_visit', 'inv_complete', 'cjoin_answer'];
 
 (async () => {
   const rows = [];
@@ -107,6 +107,19 @@ const NAMES = ['app_open', 'page_view', 'profile_created', 'content_result', 'in
     seo_opens: (e) => `${sinceSum(e.start, 'seoOpens')}명`,
     noti_agree: (e) => `${sinceSum(e.start, 'notiAgree')}명`,
     payers_since: (e) => `${sinceSum(e.start, 'payers')}명`,
+    // 2026-10-18 E15 친구 초대, E16 궁합 초대장
+    inv_visit: (e) => {
+      const since = rows.filter((x) => x.day >= e.start);
+      const visits = new Set(since.filter((x) => x.name === 'inv_visit' && Number(x.props?.isNew) === 1).map(who)).size;
+      const granted = new Set(since.filter((x) => x.name === 'inv_complete' && x.props?.status === 'granted').map(who)).size;
+      return `링크로 온 새 손님 ${visits}명, 인정 ${granted}명`;
+    },
+    cjoin: (e) => {
+      const since = rows.filter((x) => x.day >= e.start);
+      const sent = since.filter((x) => x.name === 'share_complete' && x.props?.type === 'cjoin').length;
+      const answered = new Set(since.filter((x) => x.name === 'cjoin_answer').map(who)).size;
+      return `보낸 초대장 ${sent}장, 답한 사람 ${answered}명`;
+    },
     channel_payers: (e) => { const c = channels.find((c) => c.source === e.channel); return c ? `최근 7일 ${c.opens}명, 충전 ${c.payers}명` : '아직 없음'; },
   };
   const experiments = exps.map((e) => ({ ...e, now: NOW[e.metricKey] ? NOW[e.metricKey](e) : (e.now || '—') }));

@@ -179,7 +179,7 @@ export async function shareCompatLink(p: { id: string; n1: string; n2: string })
   return via;
 }
 
-/** 친구 궁합 초대장 (2026-10-18, E16) — 받은 사람이 자기 생일을 넣으면 두 사람 모두 무료 궁합 점수를 본다 (/share/cjoin/{id}) */
+/** 친구 궁합 초대장 (2026-10-18, E21) — 받은 사람이 자기 생일을 넣으면 두 사람 모두 무료 궁합 점수를 본다 (/share/cjoin/{id}) */
 export async function shareCompatInviteLink(p: { id: string; n1: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
   import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'cjoin', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
   // 보내는 사람이 상대에게 하는 말이라 반말
