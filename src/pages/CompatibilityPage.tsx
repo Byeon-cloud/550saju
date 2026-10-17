@@ -15,6 +15,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { CHEONGAN_OHENG } from '@/constants/oheng';
 // Phase D'-4 Bundle 2 (#54) — mockup 진본 시각 정렬
 import { EXTENSION_THEME, ExtensionHero } from './extension/_chrome';
+import { CompatInviteBox } from '@/components/compat/CompatInviteBox';
 
 const RELATIONS = ['연인', '배우자', '썸', '이별', '친구', '동료', '부모-자녀', '형제와 자매', '기타'] as const;
 
@@ -162,6 +163,11 @@ export function CompatibilityPage() {
 
             <PersonCard person={person2} slot={2} />
           </div>
+        </FadeIn>
+
+        {/* 2026-10-18 친구 궁합 초대장 (E16) — 상대 생일을 몰라도 시작, 보낸 초대장과 결과 */}
+        <FadeIn delay={0.08}>
+          <CompatInviteBox me={person1} relation={relation === '기타' ? customRelation || '기타' : relation || ''} />
         </FadeIn>
 
         {/* 관계 선택 */}

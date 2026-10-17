@@ -179,6 +179,28 @@ export async function shareCompatLink(p: { id: string; n1: string; n2: string })
   return via;
 }
 
+/** 친구 궁합 초대장 (2026-10-18, E16) — 받은 사람이 자기 생일을 넣으면 두 사람 모두 무료 궁합 점수를 본다 (/share/cjoin/{id}) */
+export async function shareCompatInviteLink(p: { id: string; n1: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
+  import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'cjoin', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
+  // 보내는 사람이 상대에게 하는 말이라 반말
+  const last = p.n1.charCodeAt(p.n1.length - 1);
+  const ga = last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 !== 0 ? '이' : '가'; // 받침이 있으면 '이'
+  const text = `${p.n1}${ga} 우리 궁합을 보고 싶대. 이 링크에서 생일만 넣으면 둘 다 궁합 점수를 무료로 볼 수 있어. 생일은 나한테 안 보여`;
+  await ensureInviteCode();
+  const path = withInv(`/share/cjoin/${p.id}?ref=share`);
+  const done = (method: string) => {
+    import('@/services/analytics').then((a) => a.trackEvent('share_complete', { type: 'cjoin', method, rewarded: 0 })).catch(() => {});
+  };
+  if (isAppsInToss()) {
+    const ok = await shareViaToss(path, text, ogFor('compat'));
+    if (ok) done('toss_share');
+    return ok ? 'toss_share' : null;
+  }
+  const via = await shareViaWeb('궁합 초대장 | 사주500', text, `https://saju500.app${path}`);
+  if (via) done(via);
+  return via;
+}
+
 /** 신년운세 미리 보기 보내기 (2026-10-18) — 받는 사람이 그 사람의 새해 미리 보기를 열어 보는 링크 (/share/newyear/{id}) */
 export async function shareNewYearLink(p: { id: string; name: string; year: number }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
   import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'newyear', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});

@@ -98,6 +98,17 @@ export async function deleteCompatSharesOf(db: admin.firestore.Firestore, uid: s
       n += snap.size;
     }
   }
+  // 2026-10-18 친구 궁합 초대장 — 보낸 것과 답한 것 (compat/compatInvite.ts)
+  for (const field of ['fromUid', 'toUid']) {
+    for (;;) {
+      const snap = await db.collection('compatInvites').where(field, '==', uid).limit(300).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      n += snap.size;
+    }
+  }
   return n;
 }
 
@@ -107,7 +118,7 @@ export const cleanupCompatShares = onSchedule(
   async () => {
     const db = admin.firestore();
     let n = 0;
-    for (const col of ['compatShares', 'dreamShares', 'newYearShares']) {
+    for (const col of ['compatShares', 'dreamShares', 'newYearShares', 'compatInvites']) { // compatInvites 는 30일
       for (let round = 0; round < 20; round++) {
         const snap = await db.collection(col).where('expireAt', '<', admin.firestore.Timestamp.now()).limit(300).get();
         if (snap.empty) break;

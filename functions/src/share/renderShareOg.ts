@@ -32,7 +32,7 @@ const BOT_UA_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|slackbot|li
 
 // 2026-10-17 — result, compat, monthly, tojung, weekly, daeun 추가. 공유 모달(ShareModal)은 종류 없이 /share/result/{id} 를 만드는데
 //   여기서 모양을 몰라 웹 링크가 전부 404 였다(월운세, 신년운세, 주간운세, 궁합, 대운). 앱 안 링크는 SPA 라우트라 괜찮았다.
-type ShareType = 'daily' | 'dream' | 'topic' | 'premium' | 'result' | 'compat' | 'monthly' | 'tojung' | 'weekly' | 'daeun' | 'newyear'; // newyear: 10-18 신년 미리 보기 보내기
+type ShareType = 'daily' | 'dream' | 'topic' | 'premium' | 'result' | 'compat' | 'monthly' | 'tojung' | 'weekly' | 'daeun' | 'newyear' | 'cjoin'; // newyear: 10-18 신년 미리 보기 보내기, cjoin: 10-18 친구 궁합 초대장
 
 interface ParsedShare {
   type: ShareType;
@@ -65,7 +65,7 @@ function parseSharePath(path: string): ParsedShare | null {
   let m = path.match(/^\/share\/topic\/([a-z]{3,16})\/([A-Za-z0-9_-]{4,64})\/?$/);
   if (m) return { type: 'topic', topicId: m[1], reportId: m[2] };
   // /share/{type}/{id}
-  m = path.match(/^\/share\/(daily|dream|premium|result|compat|monthly|tojung|weekly|daeun|newyear)\/([A-Za-z0-9_-]{4,64})\/?$/);
+  m = path.match(/^\/share\/(daily|dream|premium|result|compat|monthly|tojung|weekly|daeun|newyear|cjoin)\/([A-Za-z0-9_-]{4,64})\/?$/);
   if (m) return { type: m[1] as ShareType, reportId: m[2] };
   // /share/{id} (레거시)
   m = path.match(/^\/share\/([A-Za-z0-9_-]{4,64})\/?$/);
@@ -95,7 +95,7 @@ const OG_IMAGE_FALLBACK = '/og-image.png';
 /** 공유 종류 → public/og/{파일}.jpg (2026-10-17) */
 const OG_FILE: Record<string, string> = {
   daily: 'daily', dream: 'dream', compat: 'compat', premium: 'premium', result: 'premium', daeun: 'premium',
-  monthly: 'monthly', weekly: 'weekly', tojung: 'tojung', topic: 'premium', newyear: 'tojung',
+  monthly: 'monthly', weekly: 'weekly', tojung: 'tojung', topic: 'premium', newyear: 'tojung', cjoin: 'compat',
 };
 const TYPE_TITLE: Record<string, [string, string]> = {
   compat: ['궁합', '두 사람의 사주로 궁합을 봤어요. 점수와 총평을 볼 수 있어요.'],
@@ -103,10 +103,14 @@ const TYPE_TITLE: Record<string, [string, string]> = {
   tojung: ['신년운세', '새해 열두 달을 사주로 봤어요. 내 새해 운세도 확인해 보세요.'],
   weekly: ['주간운세', '이번 주 흐름을 사주로 봤어요. 내 한 주도 확인해 보세요.'],
   daeun: ['대운', '십 년마다 바뀌는 큰 흐름을 사주로 봤어요. 내 대운도 확인해 보세요.'],
+  cjoin: ['궁합 초대장', '생일을 넣으면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 볼 수 있어요.'],
   newyear: ['신년운세 미리 보기', '새해 힘을 줄 달과 쉬어 갈 달을 사주로 미리 봤어요. 내 새해도 무료로 미리 볼 수 있어요.'],
 };
-function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: DreamShareDoc | null, ny?: NewYearShareDoc | null): { title: string; description: string; image: string } {
+function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: DreamShareDoc | null, ny?: NewYearShareDoc | null, cj?: { n1: string } | null): { title: string; description: string; image: string } {
   const { type, topicId } = parsed;
+  if (type === 'cjoin' && cj?.n1) {
+    return { title: `${cj.n1} 님이 두 분 궁합을 보고 싶어 해요 | 사주500`, description: '내 생일을 넣으면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 볼 수 있어요. 생일은 상대에게 보이지 않아요.', image: OG_IMAGE_FALLBACK };
+  }
   if (type === 'newyear' && ny) {
     const mm = (a: number[]) => a.map((m) => `${m}월`).join(', ');
     return {
@@ -205,9 +209,9 @@ async function readCompatShare(id: string): Promise<CompatShareDoc | null> {
   } catch { return null; }
 }
 
-function buildBotHtml(params: { origin: string; parsed: ParsedShare; compat?: CompatShareDoc | null; dream?: DreamShareDoc | null; ny?: NewYearShareDoc | null }): string {
+function buildBotHtml(params: { origin: string; parsed: ParsedShare; compat?: CompatShareDoc | null; dream?: DreamShareDoc | null; ny?: NewYearShareDoc | null; cj?: { n1: string } | null }): string {
   const { origin, parsed } = params;
-  const meta = getOgMeta(parsed, params.compat, params.dream, params.ny);
+  const meta = getOgMeta(parsed, params.compat, params.dream, params.ny, params.cj);
   const shareUrl = `${origin}${
     parsed.type === 'result'
       ? `/share/${parsed.reportId}`
@@ -288,7 +292,11 @@ export const renderShareOg = onRequest(
         const compat = parsed.type === 'compat' ? await readCompatShare(parsed.reportId) : null;
         const dream = parsed.type === 'dream' ? await readDreamShare(parsed.reportId) : null;
         const ny = parsed.type === 'newyear' ? await readNewYearShare(parsed.reportId) : null;
-        res.status(200).send(buildBotHtml({ origin, parsed, compat, dream, ny }));
+        let cj: { n1: string } | null = null;
+        if (parsed.type === 'cjoin' && /^[A-Za-z0-9]{14}$/.test(parsed.reportId)) {
+          try { const s = await admin.firestore().doc(`compatInvites/${parsed.reportId}`).get(); cj = s.exists ? { n1: String(s.data()?.n1 || '') } : null; } catch { cj = null; }
+        }
+        res.status(200).send(buildBotHtml({ origin, parsed, compat, dream, ny, cj }));
         return;
       }
 

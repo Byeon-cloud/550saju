@@ -2493,6 +2493,7 @@ export { renderShareOg } from './share/renderShareOg';
 export { createCompatShare, cleanupCompatShares } from './share/compatShare'; // 2026-10-17 궁합 보내기 (시험 E7)
 export { createDreamShare } from './share/dreamShare'; // 2026-10-17 꿈해몽 보내기
 export { createNewYearShare } from './share/newYearShare'; // 2026-10-18 신년운세 미리 보기 보내기
+export { createCompatInvite, getCompatInvite, answerCompatInvite, listMyCompatInvites } from './compat/compatInvite'; // 2026-10-18 친구 궁합 초대장 (E16)
 export { getMyReferral, recordReferralVisit, completeReferral, claimRewards, verifyTossIdentity, creditLocalReward } from './referral/referral'; // 2026-10-18 친구 초대 + 로그인 계정 출석 운 서버 반영
 export { subscribeMarketingMail, unsubscribeMail, sendNewYearDeadlineMail } from './mail/marketingMail'; // 2026-10-17 신년운세 마감 안내 메일 (시험 E14)
 export { subscribeDailyMail, ensureIljuDaily, sendDailyMail } from './ilju/iljuDaily'; // 2026-10-17 매일 아침 일주 운세 메일 (시험 E15)

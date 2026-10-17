@@ -10,6 +10,8 @@ import { fetchCompatShare, type CompatShareDoc } from '@/services/share/compatSh
 import { DreamShareView } from '@/pages/share/DreamShareView';
 import { fetchDreamShare, isDreamShareId, type DreamShareDoc } from '@/services/share/dreamShare';
 import { NewYearShareView } from '@/pages/share/NewYearShareView';
+import { CompatJoinView } from '@/pages/share/CompatJoinView';
+import { isCompatInviteId } from '@/services/share/compatInvite';
 import { fetchNewYearShare, isNewYearShareId, type NewYearShareDoc } from '@/services/share/newYearShare';
 
 /**
@@ -93,6 +95,7 @@ export function SharePage() {
     compat: '궁합',
     tojung: '신년운세',
     newyear: '신년운세',
+    cjoin: '궁합',
     daily: '오늘의 운세',
     dream: '꿈해몽',
     deepDream: '꿈해몽',
@@ -100,6 +103,8 @@ export function SharePage() {
   const topicNorm = contentType === 'topic' ? normalizeTopicId(topicKey) : null;
   const typeLabel = topicNorm ? TOPIC_REGISTRY[topicNorm].label : contentType === 'topic' ? '주제별 운세' : (TYPE_LABEL[contentType] || '사주 풀이');
 
+  // 2026-10-18 친구 궁합 초대장 (E16) — /share/cjoin/{14자}
+  if (urlType === 'cjoin' && isCompatInviteId(shareId)) return <CompatJoinView id={shareId!} />;
   if (isCompatLink && !compatLoaded) return <div className="min-h-screen" style={{ background: '#F4EFE4' }} />;
   if (compat) return <CompatShareView data={compat} />;
   if (isDreamLink && !dreamLoaded) return <div className="min-h-screen" style={{ background: '#F4EFE4' }} />;
