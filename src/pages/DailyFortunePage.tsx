@@ -129,11 +129,13 @@ export function DailyFortunePage() {
     // navState 의 savedReport 가 있으면 그 input 으로 매칭되는 프로필 우선
     if (navState?.savedReport?.input) {
       const r = navState.savedReport.input;
-      const matched = profiles.find(
-        (p) => p.input?.birthYear === r.birthYear &&
-               p.input?.birthMonth === r.birthMonth &&
-               p.input?.birthDay === r.birthDay,
-      );
+      // 2026-10-17 — 생일만 보면 생일이 같은 가족이 있을 때 다른 사람으로 열렸다 → 기록의 프로필 id, 이름+생일 순
+      const pid = (navState.savedReport as any)?.profileId;
+      const byId = pid ? profiles.find((p) => p.id === pid) : undefined;
+      const sameBirth = (p: SajuProfile) => p.input?.birthYear === r.birthYear && p.input?.birthMonth === r.birthMonth && p.input?.birthDay === r.birthDay;
+      const matched = byId
+        || profiles.find((p) => sameBirth(p) && p.name === navState.savedReport?.name)
+        || profiles.find(sameBirth);
       if (matched) return matched.id;
     }
     const self = profiles.find((p) => !p.relation || p.relation === '본인');
@@ -213,11 +215,11 @@ export function DailyFortunePage() {
       setResultTier(r.type === 'paid' ? 'paid' : 'free');
       setPhase('result');
       // 해당 리포트의 프로필로 selectedProfileId 도 정렬 (없으면 무시)
-      const matchingProfile = profiles.find(
-        (p) => p.input?.birthYear === r.input?.birthYear &&
-               p.input?.birthMonth === r.input?.birthMonth &&
-               p.input?.birthDay === r.input?.birthDay,
-      );
+      // 2026-10-17 — 프로필 id, 이름+생일, 생일 순 (생일이 같은 가족 구분)
+      const sameBirthR = (p: SajuProfile) => p.input?.birthYear === r.input?.birthYear && p.input?.birthMonth === r.input?.birthMonth && p.input?.birthDay === r.input?.birthDay;
+      const matchingProfile = (r.profileId ? profiles.find((p) => p.id === r.profileId) : undefined)
+        || profiles.find((p) => sameBirthR(p) && p.name === r.name)
+        || profiles.find(sameBirthR);
       if (matchingProfile && matchingProfile.id !== selectedProfileId) {
         setSelectedProfileId(matchingProfile.id);
       }
