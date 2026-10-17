@@ -2,6 +2,7 @@ import { getTojungPrice } from '@/constants/pricing';
 import { useState, useMemo, useRef } from 'react';
 import { NeedSaju, HJ, SERIF, Mark, Note, Tag, GhostButton } from '@/components/hanji/Hanji';
 import { DeadlineMailSignup } from '@/components/newyear/DeadlineMailSignup';
+import { NewYearPreviewCard } from '@/components/newyear/NewYearPreviewCard';
 import { openChatWithResult } from '@/components/common/NextStepsCard';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -234,6 +235,12 @@ export function TojungPage() {
                 <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span>님 선택됨</p>
                 <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
               </div>
+            </FadeIn>
+          )}
+          {/* 2026-10-17 — 결제 전 무료 미리 보기 (10일 동안 48명이 보고 0명이 샀다: 사기 전에 볼 것이 없었다). 결제 뒤 풀이와 같은 계산 */}
+          {selected && (
+            <FadeIn delay={0.14}>
+              <NewYearPreviewCard year={TY} name={selected.name} sajuData={selected.sajuData} />
             </FadeIn>
           )}
         </div>
