@@ -16,6 +16,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
+import { MonthGoodDays } from '@/components/home/MonthGoodDays';
 import { listTopics, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
@@ -270,6 +271,9 @@ export function HomePage() {
           )}
         </div>
       </section>
+
+      {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 월운세와 같은 채점, AI 0원 */}
+      {hasSaju && <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />}
 
       {/* ━━━ 2. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게) ━━━ */}
       <div style={{ padding: '32px 16px 0' }}>

@@ -195,6 +195,8 @@ const FIRESTORE_TRACKED = new Set<string>([
   'input_leave',        // {filled} — 입력을 끝내지 않고 나감, 채운 칸 (2026-10-17)
   'input_blocked',      // {missing} — 입력 화면에서 빈 칸이 있는데 시작을 눌렀다 (2026-10-17 입력 41% 이탈 진단)
   'review_request',     // {result: shown|unsupported|error, n} — 토스 별점 창 요청 (2026-10-17 시험 E12)
+  'month_picks_view',   // {n, day} — 월초 홈 '이번 달 좋은 날' 카드가 보였다 (2026-10-17 단골 장치)
+  'month_picks_click',  // {day} — 그 카드에서 월운세로 (2026-10-17)
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───

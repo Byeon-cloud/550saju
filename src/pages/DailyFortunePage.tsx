@@ -38,6 +38,7 @@ import { ProfileSelector } from '@/components/common/ProfileSelector';
 import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
+import { MonthGoodDays } from '@/components/home/MonthGoodDays';
 import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -68,7 +69,7 @@ import {
   subscribeFreePass,
 } from '@/services/storage/dailyFreePass';
 import { generateDailyFortune, generateDailyFortuneStream } from '@/services/ai/reportGenerator';
-import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
+import { getTopicPrice, formatPriceLabel, getMonthlyPrice } from '@/constants/pricing';
 import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { stripMd } from '@/utils/format';
 import type { OhengType } from '@/types/saju';
@@ -732,6 +733,11 @@ export function DailyFortunePage() {
         {/* 2026-10-16 — 다 읽은 끝에서 내일 아침 알림 권하기 (동의했으면 안 보임) */}
         {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
           <DailyNotiButton variant="closing" className="mt-6" />
+        )}
+        {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 아침 알림으로 바로 여기 오는 사람에게도 */}
+        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
+          <MonthGoodDays sajuData={selectedProfile.sajuData} name={selectedProfile.name || '나'} price={getMonthlyPrice().actualPrice}
+            profileId={selectedProfile.id} source="daily" padding="24px 20px 0" />
         )}
         {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
           <div className="px-5"><DailyMailSignup prefill={mailPrefill} source="daily_result" style={{ marginTop: 24 }} /></div>
