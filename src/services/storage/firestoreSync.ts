@@ -21,7 +21,7 @@ import { mergeRestoredChatRooms, getDeletedChatIds, type ChatRoom } from './chat
  * 로컬 → 클라우드 동기화
  * 로그인 후 로컬에만 있는 데이터를 Firestore에 업로드
  */
-export async function syncToCloud(uid: string): Promise<void> {
+export async function syncToCloud(uid: string): Promise<boolean> {
   try {
     const batch = writeBatch(db);
 
@@ -52,25 +52,51 @@ export async function syncToCloud(uid: string): Promise<void> {
       const reportRef = doc(db, `users/${uid}/reports`, report.id);
       const existing = await getDoc(reportRef);
       const contentMissing = !existing.exists() || existing.data().aiResultJson == null;
-      if (!existing.exists() || (report.aiResult && contentMissing)) {
+      // 2026-10-17 — 예전 궁합 백업에는 상대방이 빠져 있다 → 로컬에 있으면 채워 올린다
+      const partnerMissing = !!report.partner && existing.exists() && existing.data().partnerJson == null;
+      if (partnerMissing && !contentMissing) {
+        batch.set(reportRef, extraFields(report), { merge: true });
+      } else if (!existing.exists() || (report.aiResult && contentMissing)) {
         batch.set(reportRef, {
           name: report.name,
-          input: report.input,
-          sajuData: report.sajuData,
+          input: plainCopy(report.input),
+          sajuData: plainCopy(report.sajuData),
           situation: report.situation || null,
           createdAt: report.createdAt,
           contentType: report.contentType ?? null,
           type: report.type ?? null,
           profileId: report.profileId ?? null,
+          ...extraFields(report),
           ...(report.aiResult ? { aiResultJson: JSON.stringify(report.aiResult) } : {}),
         }, { merge: true });
       }
     }
 
     await batch.commit();
+    return true;
   } catch (err) {
     console.warn('[Sync] 클라우드 업로드 실패:', err);
+    return false;
   }
+}
+
+/** Firestore 는 undefined 필드가 있으면 쓰기 전체를 거절한다 → JSON 왕복으로 걷어 낸다 (2026-10-17 백업이 조용히 실패하던 원인 후보) */
+function plainCopy<T>(v: T): T | null {
+  if (v == null) return null;
+  try { return JSON.parse(JSON.stringify(v)) as T; } catch { return null; }
+}
+/** 궁합 상대방과 관계 — 예전 백업은 이 둘을 빼먹어서 복원한 궁합의 상대 칸에 내 사주가 들어갔다 (2026-10-17) */
+function extraFields(report: LocalReport): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (report.partner) { try { out.partnerJson = JSON.stringify(report.partner); } catch { /* noop */ } }
+  if (report.relation) out.relation = report.relation;
+  return out;
+}
+function readExtraFields(data: Record<string, any>): Partial<LocalReport> {
+  const out: Partial<LocalReport> = {};
+  if (typeof data.partnerJson === 'string') { try { out.partner = JSON.parse(data.partnerJson); } catch { /* noop */ } }
+  if (typeof data.relation === 'string' && data.relation) out.relation = data.relation;
+  return out;
 }
 
 // P0-1 (2026-06-22) — 부팅 동기화 'uid당 1회' module-level 가드.
@@ -156,6 +182,7 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
           type: data.type ?? undefined,
           profileId: data.profileId ?? undefined,
           spentUn: typeof data.spentUn === 'number' ? data.spentUn : undefined,
+          ...readExtraFields(data),
           aiResult,
         } as LocalReport;
         saveReport(restored);
@@ -231,7 +258,6 @@ export async function restoreLibraryFromServer(): Promise<number> {
     const r = await fn({});
     const reports = ((r?.data as { reports?: unknown[] })?.reports ?? []) as Array<Record<string, unknown>>;
     const localReports = getReports();
-    const existingIds = new Set(localReports.map((x) => x.id));
     // twin 지문 필터 (2026-08-13) — 서버가 이미 dedupe 하지만 ±60s 경계 누락 대비 이중 방어.
     //   contentType + 분단위 + 내용 크기 버킷 (같은 분 다른 리포트 오탐 방지, syncFromCloud 와 동일 규칙).
     const lenOf = (ai: unknown) => { try { return JSON.stringify(ai ?? '').length; } catch { return 0; } };
@@ -243,22 +269,26 @@ export async function restoreLibraryFromServer(): Promise<number> {
     let n = 0;
     for (const rep of reports) {
       if (!rep || !rep.aiResult) continue;
-      if (rep.id && existingIds.has(rep.id as string)) continue; // 이미 보관함에 있으면 skip
+      // 2026-10-17 — 이미 보관함에 있어도 본문이 비어 있으면(옛 백업에서 내려온 빈 기록) 서버 본문으로 채운다
+      const local = rep.id ? localReports.find((x) => x.id === rep.id) : undefined;
+      if (local && local.aiResult) continue; // 이미 보관함에 있으면 skip
       const fp = fpOf(rep.contentType, rep.createdAt, lenOf(rep.aiResult));
-      if (fp && localFps.has(fp)) continue; // 같은 리포트의 다른 id 사본 — 재저장 안 함
+      if (!local && fp && localFps.has(fp)) continue; // 같은 리포트의 다른 id 사본 — 재저장 안 함
       if (fp) localFps.add(fp);
       const t = rep.type === 'free' ? 'free' : 'paid';
+      const hasPillars = (x: unknown) => !!(x as any)?.pillars?.length;
       saveReport({
         id: (rep.id as string) || generateId(),
-        name: (rep.name as string) || '복원된 분석',
-        input: (rep.input ?? {}) as LocalReport['input'],
-        sajuData: (rep.sajuData ?? {}) as LocalReport['sajuData'],
+        name: (local?.name && local.name !== '복원된 분석' ? local.name : (rep.name as string)) || '복원된 분석',
+        input: ((local?.input as any)?.birthYear ? local!.input : (rep.input ?? {})) as LocalReport['input'],
+        sajuData: (hasPillars(local?.sajuData) ? local!.sajuData : (rep.sajuData ?? {})) as LocalReport['sajuData'],
         situation: rep.situation as LocalReport['situation'],
         type: t,
         contentType: rep.contentType as LocalReport['contentType'],
         aiResult: rep.aiResult,
         profileId: rep.profileId as string | undefined,
         spentUn: typeof rep.spentUn === 'number' ? rep.spentUn : undefined,
+        ...readExtraFields(rep),
         createdAt: (rep.createdAt as string) || new Date().toISOString(),
       });
       n++;
@@ -284,14 +314,15 @@ export async function backupReport(report: LocalReport): Promise<void> {
     const reportRef = doc(db, `users/${uid}/reports`, report.id);
     await setDoc(reportRef, {
       name: report.name,
-      input: report.input,
-      sajuData: report.sajuData,
+      input: plainCopy(report.input),
+      sajuData: plainCopy(report.sajuData),
       situation: report.situation ?? null,
       createdAt: report.createdAt,
       contentType: report.contentType ?? null,
       type: report.type ?? null,
       profileId: report.profileId ?? null,
       spentUn: typeof report.spentUn === 'number' ? report.spentUn : null,
+      ...extraFields(report),
       aiResultJson: JSON.stringify(report.aiResult),
       backedUpAt: new Date(),
     }, { merge: true });

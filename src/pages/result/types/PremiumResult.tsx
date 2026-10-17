@@ -3238,7 +3238,7 @@ function PremiumUpsellCard({
         import('@/services/storage/chatStore'),
       ]);
       const rep = getReport(reportId);
-      const ctx = { type: 'premium' as const, label: '종합사주', fullResult: rep?.aiResult };
+      const ctx = { type: 'premium' as const, label: '종합사주', fullResult: rep?.aiResult, reportId }; // 2026-10-17 결과 번호 — 같은 결과면 같은 방, 대화에서 원래 결과로
       const room = createChatRoom(userName || '나', 'free', ctx);
       // 🚨 2026-09-17 B-3 — profile 미전달 시 ChatSessionPage 가 기기 '내 프로필'로 폴백 →
       //   가족 사주 종합사주에서 넘어가도 내 사주로 대화하던 버그. 리포트 주인 프로필을 state 로 전달.

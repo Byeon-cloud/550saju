@@ -30,8 +30,11 @@ const db = admin.firestore();
 
 /** 한 번의 이관에서 복사할 리포트 상한 (조혜미 47건 대비 여유) */
 const MIGRATE_LIMIT = 300;
-/** 기기당 등록 uid 상한 — 초과는 비정상 기기로 보고 등록만 받고 이관은 중단 */
+/** 기증자로 쓰는 최근 uid 수 (최근 것부터) */
 const MAX_UIDS_PER_DEVICE = 12;
+/** 이 이상 uid 가 쌓인 기기만 비정상으로 보고 이관을 멈춘다 (2026-10-17 — 예전엔 12개에서 멈춰,
+ *  저장소가 자주 비는 기기는 여섯 번쯤 비워진 뒤 복원이 영구히 끊겼다. 기증자는 위 최근 12개만 쓴다) */
+const ABNORMAL_UIDS_PER_DEVICE = 60;
 
 export const registerDevicePassport = onCall(
   { timeoutSeconds: 60, memory: '256MiB', cors: true },
@@ -105,7 +108,7 @@ export const registerDevicePassport = onCall(
     // 잔액은 '같은 기기'에서 이어지는 계정(기기 등록 uid·보상이력 uid)에게서만 받는다 — 익명키로만 이어진
     //   다른 기기의 잔액을 복사하면 두 기기에서 같은 운을 쓰게 된다(복제). 리포트·인물은 공유해도 무해.
     const deviceDonors = donors.filter((d) => known.includes(d) || d === compDonor);
-    if (donors.length > 0 && known.length < MAX_UIDS_PER_DEVICE) {
+    if (donors.length > 0 && known.length < ABNORMAL_UIDS_PER_DEVICE) {
       if (!alreadyRegistered && deviceDonors.length > 0) rotated = true;
       try {
         // 현재 uid 의 문서 id — listDocuments 는 본문을 읽지 않아 저렴

@@ -69,6 +69,10 @@ export const restoreLibrary = onCall(
           id: doc.id, name: d.name ?? '복원된 분석', input: d.input ?? null, sajuData: d.sajuData ?? null,
           situation: d.situation ?? null, createdAt: typeof d.createdAt === 'string' ? d.createdAt : tsToIso(d.createdAt),
           contentType: d.contentType ?? null, type: d.type ?? 'paid', profileId: d.profileId ?? null, aiResult,
+          // 2026-10-17 궁합 상대방과 관계 (예전엔 빠져서 복원한 궁합의 상대 칸에 내 사주가 들어갔다)
+          ...(typeof d.partnerJson === 'string' ? { partnerJson: d.partnerJson } : {}),
+          ...(typeof d.relation === 'string' ? { relation: d.relation } : {}),
+          ...(typeof d.spentUn === 'number' ? { spentUn: d.spentUn } : {}),
         });
         seen.add(doc.id);
         const fp = fpOf(d.contentType ?? null, typeof d.createdAt === 'string' ? d.createdAt : tsToIso(d.createdAt), d.name ?? null);
@@ -103,9 +107,10 @@ export const restoreLibrary = onCall(
           } catch { /* noop */ }
         } else if (d.type === 'topic' && d.topicId) {
           // topic — { topicId, ...result } 스프레드. (sajuData 는 원본에 없어 null — 내용은 살아남)
-          const { uid: _u, type: _t, topicId: _ti, generatedAt: _g, inputMeta: _im, aiModel: _am, ...content } = d as Record<string, unknown>;
+          const { uid: _u, type: _t, topicId: _ti, generatedAt: _g, inputMeta: _im, aiModel: _am, owner: _ow, ...content } = d as Record<string, unknown>;
+          const owner = (d.owner && typeof d.owner === 'object') ? d.owner as Record<string, unknown> : null; // 2026-10-17~ 생성분만 있음
           out.push({
-            id: doc.id, name: '복원된 분석', input: null, sajuData: null, createdAt,
+            id: doc.id, name: (owner?.name as string) || '복원된 분석', input: owner, sajuData: null, createdAt,
             contentType: 'topic', type: 'paid', profileId: null, aiResult: { topicId: d.topicId, ...content },
           });
           seen.add(doc.id);

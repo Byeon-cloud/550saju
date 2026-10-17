@@ -38,7 +38,6 @@ import {
   saveProfileDirect,
   spendBalance,
   setMyProfile,
-  deleteReport,
   findExistingOwnerProfile,
   updateProfileRelation,
   deleteProfile,
@@ -689,9 +688,10 @@ export function InputPage() {
       setInput(sajuInput);
       setSajuData(data);
 
-      // P2-2 · 수정 모드 — 기존 report 삭제 후 신규 ID로 재저장 (보존)
+      // P2-2 · 수정 모드 — 2026-10-17: 예전엔 deleteReport(editingProfileId) 로 같은 id 의 리포트를 서버까지 지웠다.
+      //   복원으로 생긴 프로필은 id 가 리포트 id 와 같아서, 사주를 고치면 결제한 기록이 영구 삭제될 수 있었다.
+      //   프로필 갱신은 saveProfileDirect 가 이름과 생일로 덮어쓰므로 리포트는 건드리지 않는다.
       if (editingProfileId) {
-        deleteReport(editingProfileId);
         setEditingProfileId(null);
       }
 

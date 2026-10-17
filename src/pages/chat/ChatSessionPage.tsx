@@ -25,6 +25,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   getMyProfile,
   getProfiles,
+  getReports,
   type LocalReport,
   type SajuProfile,
 } from '@/services/storage/localStore';
@@ -36,6 +37,7 @@ import {
   deleteChatRoom,
   createChatRoom,
   setChatRoomProfileId,
+  setChatRoomProfileSnap,
   type ChatMessage,
 } from '@/services/storage/chatStore';
 import { hasFreePass, useFreePass, restoreFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
@@ -542,11 +544,15 @@ export function ChatSessionPage() {
   const myProfile = useMemo<SajuProfile | LocalReport | null>(() => {
     if (stateProfile) return stateProfile;
     try {
-      const pid = getChatRoom(sessionId)?.profileId;
+      const room = getChatRoom(sessionId);
+      const pid = room?.profileId;
       if (pid) {
         const p = getProfiles().find((x) => x.id === pid);
         if (p) return p;
       }
+      // 2026-10-17 — 프로필이 지워졌거나 id 가 바뀌어도 이 방을 시작한 사람의 사주로 (본인 사주로 넘어가던 문제)
+      const snap = room?.profileSnap;
+      if (snap?.sajuData?.pillars) return { id: pid || `chat-${sessionId}`, name: snap.name || '', input: snap.input || {}, sajuData: snap.sajuData } as any;
     } catch { /* noop */ }
     return getMyProfile();
   }, [stateProfile, sessionId]);
@@ -555,6 +561,7 @@ export function ChatSessionPage() {
     if (!stateProfile) return;
     const pid = resolveProfileId(stateProfile);
     if (pid) setChatRoomProfileId(sessionId, pid);
+    setChatRoomProfileSnap(sessionId, { name: (stateProfile as any)?.name, sajuData: (stateProfile as any)?.sajuData, input: (stateProfile as any)?.input });
   }, [stateProfile, sessionId]);
   const sajuData: SajuData | undefined = myProfile?.sajuData;
   const hasProfile = !!myProfile;
@@ -603,7 +610,13 @@ export function ChatSessionPage() {
       try {
         const room = getChatRoom(sessionId);
         if (room?.contentContext && typeof room.contentContext.type === 'string') {
-          return room.contentContext;
+          // 2026-10-17 — 오래된 방은 저장 공간을 아끼려고 결과 사본을 빼 둔다 → 보관함 기록에서 다시 찾는다
+          const c = room.contentContext;
+          if (!c.fullResult && c.reportId) {
+            const rep = getReports().find((r) => r.id === c.reportId);
+            if (rep?.aiResult) return { ...c, fullResult: rep.aiResult };
+          }
+          return c;
         }
       } catch { /* noop */ }
     }
@@ -825,7 +838,8 @@ export function ChatSessionPage() {
     trackEvent('content_open', { type: 'chat' });
 
     if (!roomNameSet) {
-      updateRoomName(sessionId!, autoRoomName(text.trim()));
+      // 2026-10-17 — 방 이름에 사람을 남긴다 ('연애 상담'만 남아 보관함에서 누구 대화인지 사라졌다)
+      updateRoomName(sessionId!, userName ? `${userName} 님 ${autoRoomName(text.trim())}` : autoRoomName(text.trim()));
       setRoomNameSet(true);
     }
 
@@ -1241,8 +1255,9 @@ export function ChatSessionPage() {
             <button
               type="button"
               onClick={() => {
+                // 2026-10-17 — 마무리된 방의 새 풀이도 같은 사람의 사주로 (친구 대화에서 누르면 내 사주로 바뀌던 문제)
                 const room = createChatRoom(userName || '새 풀이');
-                navigate(`/chat/${room.id}`, { replace: true });
+                navigate(`/chat/${room.id}`, { replace: true, state: myProfile ? { profile: myProfile } : undefined });
               }}
               style={{
                 padding: '12px 22px',

@@ -48,6 +48,10 @@ export interface LocalReport {
   /** 이 기록을 만들 때 실제로 낸 운 (2026-10-15~). 보관함 'N운 사용' 표시는 이 값이 있으면 이 값,
    *  없는 옛 기록은 지금 가격(pricing.ts)으로 보여 준다. 무료로 본 기록은 0 또는 비움. */
   spentUn?: number;
+  /** 궁합 상대방 (이름, sajuData, input) — 궁합 결과를 다시 열 때 상대 칸에 쓴다 (2026-10-17 서버 백업과 복원에도 실음) */
+  partner?: { name?: string; sajuData?: SajuData; input?: SajuInput } | null;
+  /** 궁합 관계 (연인, 친구 등) */
+  relation?: string;
 }
 
 /** 사주 프로필 — 리포트와 독립적으로 저장 (삭제해도 프로필 유지) */
@@ -157,11 +161,44 @@ export function saveReport(report: LocalReport): void {
       working.splice(evictIdx, 1);
       try {
         localStorage.setItem(REPORTS_KEY, JSON.stringify(working));
+        reportStorageFull(attempt + 1, true);
         return; // 성공
       } catch { /* 계속 제거 */ }
     }
-    throw e; // 끝내 실패 → 호출부가 사용자에게 경고 (결과는 화면엔 떠 있음)
+    // 2026-10-17 — 예전엔 여기서 throw 해서 월운세, 주제운, 궁합 등이 '생성 실패, 환불'로 처리되고 방금 받은 결과 화면이
+    //   사라졌다(서버 백업은 이미 나가 나중에 기록이 다시 보였다). 결과는 화면에 그대로 두고, 서버 백업으로 보관한다.
+    console.warn('[saveReport] 저장 공간 부족, 서버 백업만 남김', e);
+    reportStorageFull(8, false);
   }
+}
+
+/** 기기 저장 공간이 찼다는 기록 (얼마나 자주 생기는지 재기 위해, 2026-10-17) */
+function reportStorageFull(evicted: number, saved: boolean): void {
+  try {
+    let kb = 0;
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i) || ''; kb += (k.length + (localStorage.getItem(k) || '').length) * 2 / 1024; }
+    import('@/services/analytics').then((a) => a.trackEvent('storage_full', { evicted, saved: saved ? 1 : 0, kb: Math.round(kb) })).catch(() => {});
+  } catch { /* noop */ }
+}
+
+/** 주제운 결과 캐시(topic_<주제>_<프로필>[_상대])가 결과 전체를 한 벌 더 갖고 있던 것을 보관함 기록 번호로 바꾼다 (2026-10-17, 부팅 때 한 번).
+ *  같은 주제, 같은 프로필의 보관함 기록이 없으면(유일한 사본) 그대로 둔다. */
+export function slimTopicCaches(): number {
+  let n = 0;
+  try {
+    const reports = getReports().filter((r) => r.contentType === 'topic' && r.aiResult?.topicId && r.profileId);
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('topic_')) keys.push(k); }
+    for (const k of keys) {
+      let v: any = null;
+      try { v = JSON.parse(localStorage.getItem(k) || 'null'); } catch { continue; }
+      if (!v || v.__ref || v.__partial) continue;
+      const rep = reports.find((r) => k === `topic_${r.aiResult.topicId}_${r.profileId}` || k.startsWith(`topic_${r.aiResult.topicId}_${r.profileId}_`));
+      if (!rep) continue;
+      try { localStorage.setItem(k, JSON.stringify({ __ref: rep.id })); n++; } catch { /* noop */ }
+    }
+  } catch { /* noop */ }
+  return n;
 }
 
 export function getReports(): LocalReport[] {
@@ -721,6 +758,7 @@ export function deleteProfile(profileId: string): void {
 /* 삭제 기록(tombstone) — 지운 결과·인물이 동기화/복원으로 되살아나지 않게 (2026-10-03) */
 const DELETED_REPORTS_KEY = 'saju500_deleted_report_ids';
 const DELETED_PROFILES_KEY = 'saju500_deleted_profile_keys';
+const DELETED_PROFILE_KEYS_ALIAS = DELETED_PROFILES_KEY;
 const TOMBSTONE_CAP = 500;
 function readTombstones(key: string): string[] {
   try {
@@ -893,17 +931,14 @@ export function removeTopicReports(topicIds: string[]): number {
   if (!Array.isArray(topicIds) || topicIds.length === 0) return 0;
   let removed = 0;
   try {
-    const reports = getReports();
-    const keep = reports.filter((r: any) => {
+    // 2026-10-17 — 예전엔 그 주제의 기록을 모든 프로필, 모든 날짜에 걸쳐 지우고 삭제 기록을 안 남겨 다음 동기화 때 되살아났다.
+    //   최근 30일 기록만, 삭제 기록과 서버 삭제가 남는 deleteReport 로 지운다.
+    const cutoff = Date.now() - 30 * 86400000;
+    const targets = getReports().filter((r: any) => {
       const tid = r?.aiResult?.topicId;
-      const isTarget = r?.contentType === 'topic' && tid && topicIds.includes(tid);
-      if (isTarget) removed++;
-      return !isTarget;
+      return r?.contentType === 'topic' && tid && topicIds.includes(tid) && (+new Date(r.createdAt) || 0) >= cutoff;
     });
-    if (removed > 0) {
-      localStorage.setItem(REPORTS_KEY, JSON.stringify(keep));
-      try { sessionStorage.setItem(REPORTS_KEY, JSON.stringify(keep)); } catch { /* noop */ }
-    }
+    for (const r of targets) { try { deleteReport(r.id); removed++; } catch { /* noop */ } }
   } catch { /* noop */ }
   // topic_{id}_* 결과 캐시 제거 (양쪽 스토리지)
   for (const store of [localStorage, sessionStorage]) {
@@ -923,4 +958,22 @@ export function removeTopicReports(topicIds: string[]): number {
 /** type prefix 로 pending 일괄 해제 — cross-page 플로우(종합사주: 차감→로딩→결과)용 */
 export function clearPendingSpendByType(typePrefix: string): void {
   writePendingSpends(readPendingSpends().filter(p => !p.type.startsWith(typePrefix)));
+}
+
+
+/** 웹 로그아웃, 탈퇴 때 이 기기의 보관함을 비운다 (2026-10-17).
+ *  예전엔 남겨 둬서 다음에 생긴 익명 계정이 그 기록을 서버에 다시 올렸다(다른 계정 기록과 섞이고, 탈퇴 파기 약속과도 어긋남).
+ *  로그아웃은 서버에 진본이 있어 다시 로그인하면 돌아온다. withBalance 는 탈퇴 때만. 앱인토스에서는 부르지 않는다. */
+export function clearLocalLibrary(opts?: { withBalance?: boolean }): void {
+  try {
+    const fixed = [REPORTS_KEY, MY_PROFILE_KEY, PROFILES_KEY, DELETED_REPORTS_KEY, DELETED_PROFILE_KEYS_ALIAS, 'saju500_chats', 'saju500_deleted_chat_ids', PENDING_SPENDS_KEY];
+    if (opts?.withBalance) fixed.push(BALANCE_KEY, BALANCE_LEGACY_KEY);
+    const dynamic: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('topic_') || k === 'saju500:daily_mail_done')) dynamic.push(k);
+    }
+    for (const k of [...fixed, ...dynamic]) { try { localStorage.removeItem(k); } catch { /* noop */ } }
+  } catch { /* noop */ }
+  emitProfilesChanged();
 }

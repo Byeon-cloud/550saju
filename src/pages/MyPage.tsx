@@ -129,6 +129,12 @@ export function MyPage() {
 
   const onLogout = async () => {
     try {
+      // 2026-10-17 — 서버에 다 올린 뒤 이 기기 보관함을 비운다 (남겨 두면 다음 익명 계정이 다시 올려 섞였다). 다시 로그인하면 서버에서 돌아온다
+      try {
+        const uid = user?.uid;
+        const backedUp = uid ? await (await import('@/services/storage/firestoreSync')).syncToCloud(uid) : false;
+        if (backedUp) (await import('@/services/storage/localStore')).clearLocalLibrary();
+      } catch { /* 백업이 실패하면 지우지 않는 편이 안전 — 그대로 로그아웃 */ }
       await signOut();
       toast.show('로그아웃 됐어요', 'info');
     } catch {
@@ -141,6 +147,8 @@ export function MyPage() {
     setWithdrawing(true);
     try {
       await callDeleteAccount();
+      // 2026-10-17 — 탈퇴하면 이 기기의 보관함, 사주, 대화, 운 잔액도 지운다 (서버는 purgeUser 가 파기)
+      try { (await import('@/services/storage/localStore')).clearLocalLibrary({ withBalance: true }); } catch { /* noop */ }
       await signOut();
       setShowWithdraw(false);
       toast.show('회원탈퇴가 완료됐어요', 'info');

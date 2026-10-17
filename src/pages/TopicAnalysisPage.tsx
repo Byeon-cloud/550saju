@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
-import { getProfiles, saveReport, generateId, spendBalance, refundBalance, getBalance, getReport, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, saveReport, generateId, spendBalance, refundBalance, getBalance, getReport, getReports, type LocalReport } from '@/services/storage/localStore';
 import { CHEONGAN_OHENG, OHENG_MAP, CHEONGAN_KO, JIJI_KO, CHEONGAN_EUMYANG, JIJI_EUMYANG } from '@/constants/oheng';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
@@ -3272,7 +3272,14 @@ export function TopicAnalysisPage() {
     const key = `topic_${topicId}_${selected.id}`;
     try {
       const raw = localStorage.getItem(key);
-      const parsed = raw ? JSON.parse(raw) : null;
+      let parsed = raw ? JSON.parse(raw) : null;
+      // 2026-10-17 — 캐시는 보관함 기록 번호만 가리킨다(결과 전체를 한 벌 더 저장해 저장 공간이 빨리 찼다)
+      if (parsed?.__ref) {
+        const rep = getReports().find((r) => r.id === parsed.__ref);
+        if (!rep?.aiResult) return null;
+        const { topicId: _t, ...content } = rep.aiResult as Record<string, unknown>;
+        parsed = content;
+      }
       // 2026-07-03 P0 — partial 박제 캐시는 자동 로드하지 않음 (없는 셈 → 아래 recover 가 서버 완성본으로 치유)
       if (parsed?.__partial) return null;
       return parsed;
@@ -3676,10 +3683,10 @@ export function TopicAnalysisPage() {
       const cacheKey = hasPartnerName
         ? `topic_${topicId}_${selected.id}_${partnerInfo.name}`
         : `topic_${topicId}_${selected.id}`;
-      localStorage.setItem(cacheKey, JSON.stringify(contentFinal));
-
       // 보관함 저장
       const savedId = res.reportId || generateId();
+      // 2026-10-17 — 캐시에는 기록 번호만 (결과 본문은 보관함 기록 한 곳에만). 저장 공간이 차도 생성 실패로 번지지 않게
+      try { localStorage.setItem(cacheKey, JSON.stringify({ __ref: savedId })); } catch { /* noop */ }
       saveReport({
         id: savedId,
         name: selected.name,
@@ -5269,6 +5276,8 @@ export function TopicAnalysisPage() {
                       type: 'topic' as const,
                       label: topic.label,
                       fullResult: result,
+                      ...(savedReportId ? { reportId: savedReportId } : {}), // 2026-10-17 결과 번호
+                      ...((result as any)?.partnerName ? { partnerName: (result as any).partnerName } : {}),
                     };
                     const room = createChatRoom(selected?.name || '나', 'free', ctx);
                     navigate(`/chat/${room.id}`, {

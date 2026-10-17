@@ -37,6 +37,7 @@ import {
   deleteProfile,
   getReports,
   deleteReport,
+  PROFILES_CHANGED_EVENT,
   type SajuProfile,
   type LocalReport,
   type ContentType,
@@ -44,8 +45,12 @@ import {
 import {
   getChatRooms,
   deleteChatRoom,
+  CHATS_CHANGED_EVENT,
   type ChatRoom,
 } from '@/services/storage/chatStore';
+
+/** 서버 보관함 복원은 앱을 켠 뒤 한 번만 (보관함을 열 때마다 서버를 부르지 않게) */
+let restoreTriedThisSession = false;
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
 import { TOPIC_REGISTRY, normalizeTopicId } from '@/constants/topics';
@@ -185,12 +190,18 @@ export function StoragePage() {
 
   useEffect(() => {
     reloadAll();
-    // 2026-06-19 — 보관함이 비어있으면 서버에서 자동 복원 (토스 웹뷰 데이터 비워진 고객 자동 회복).
+    // 2026-10-17 — 서버 동기화(부팅), 대화 복원, 치유가 화면이 열린 뒤에 끝나도 바로 보이게 바뀔 때마다 다시 읽는다
+    const onChange = () => reloadAll();
+    window.addEventListener(PROFILES_CHANGED_EVENT, onChange);
+    window.addEventListener(CHATS_CHANGED_EVENT, onChange);
+    // 2026-06-19 — 서버에서 자동 복원 (토스 웹뷰 데이터 비워진 고객 자동 회복).
     //   users/{uid}/reports 백업 + top-level reports 원본에서 내용까지 끌어와 채움.
-    if (getReports().length === 0) {
+    //   2026-10-17 — 예전엔 보관함이 '0건'일 때만 불러서 일부만 빠진 경우는 복원하지 않았다 → 화면을 열 때 세션당 한 번
+    if (!restoreTriedThisSession) {
+      restoreTriedThisSession = true;
       import('@/services/storage/firestoreSync')
         .then(({ restoreLibraryFromServer }) => restoreLibraryFromServer())
-        .then((n) => { if (n > 0) { reloadAll(); toast.show(`${n}개 분석을 서버에서 복원했어요`, 'success'); } })
+        .then((n) => { if (n > 0) { reloadAll(); toast.show(`${n}개 분석을 서버에서 되찾았어요`, 'success'); } })
         .catch(() => { /* noop */ });
     }
     // 2026-10-04 — 반쪽(__partial)으로 저장된 주제 결과를 서버 완성본으로 치유 (같은 기록 id · 재차감 0)
@@ -198,6 +209,10 @@ export function StoragePage() {
       .then((m) => m.healPartialTopicReports())
       .then((h) => { if (Array.isArray(h) && h.length > 0) reloadAll(); })
       .catch(() => { /* noop */ });
+    return () => {
+      window.removeEventListener(PROFILES_CHANGED_EVENT, onChange);
+      window.removeEventListener(CHATS_CHANGED_EVENT, onChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -269,8 +284,10 @@ export function StoragePage() {
       if (cnt) cnt.reading += 1;
     }
     for (const cr of chatRooms) {
-      // chat은 name 기반 약매칭만 (profileId FK 없음)
-      const matches = profiles.filter((p) => p.name === cr.name);
+      // 2026-10-17 — 방에 저장된 profileId, 사람 사본 이름 순으로 찾고, 없을 때만 방 이름으로
+      const byId = cr.profileId ? profiles.filter((p) => p.id === cr.profileId) : [];
+      const who = cr.profileSnap?.name || cr.name;
+      const matches = byId.length ? byId : profiles.filter((p) => p.name === who || cr.name.startsWith(`${p.name} 님`));
       if (matches.length === 1) {
         const key = profileKey(matches[0]);
         const cnt = map.get(key);
@@ -330,7 +347,26 @@ export function StoragePage() {
       toggleSelect(r.id);
       return;
     }
-    if (r.sajuData) {
+    // 2026-10-17 — 본문이 없는 옛 서버 기록은 엉뚱한 화면(연애운 입력, 선택 화면, 빈 화면, 홈)으로 갔다.
+    //   먼저 서버에서 본문을 찾아 채우고, 끝내 없으면 열지 않고 알린다. 종합사주는 결과 화면이 스스로 복구한다.
+    if (!r.aiResult && r.contentType && r.contentType !== 'report') {
+      toast.show('기록 내용을 찾는 중이에요', 'info');
+      import('@/services/storage/firestoreSync')
+        .then(({ restoreLibraryFromServer }) => restoreLibraryFromServer())
+        .then(() => {
+          const fresh = getReports().find((x) => x.id === r.id);
+          if (fresh?.aiResult) { reloadAll(); openReport(fresh); return; }
+          toast.show('이 기록은 내용이 남아 있지 않아요. 고객문의로 알려 주시면 찾아 드릴게요', 'warning');
+        })
+        .catch(() => toast.show('지금은 기록을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요', 'warning'));
+      return;
+    }
+    if (r.contentType === 'topic' && !(r as any).aiResult?.topicId) {
+      toast.show('이 기록은 어떤 주제인지 남아 있지 않아 열 수 없어요. 고객문의로 알려 주세요', 'warning');
+      return;
+    }
+    // 빈 사주({})로 앱이 기억하는 사주를 덮지 않는다 (2026-10-17)
+    if (r.sajuData?.pillars?.length) {
       setInput(r.input);
       setSajuData(r.sajuData);
     }
@@ -1116,33 +1152,30 @@ function HistorySection({
               overflow: 'hidden',
             }}
           >
-            {visibleReports.map((r, idx) => (
+            {/* 2026-10-17 — 기록과 대화를 한 시간 줄로 섞는다 (예전엔 대화가 '전체' 맨 아래에 몰려 안 보이는 것처럼 느껴졌다) */}
+            {mergeByTime(visibleReports, visibleChatRooms, sortDesc).map((it, idx, arr) => (it.kind === 'r' ? (
               <HistoryCard
-                key={r.id}
-                report={r}
+                key={it.r.id}
+                report={it.r}
                 profiles={profiles}
-                isLast={
-                  idx === visibleReports.length - 1 &&
-                  visibleChatRooms.length === 0
-                }
+                isLast={idx === arr.length - 1}
                 bulkMode={bulkMode}
-                selected={selectedIds.has(r.id)}
-                onToggleSelect={() => onSelect(r.id)}
-                onOpen={() => onOpenReport(r)}
-                onAskDelete={() => onAskDeleteReport(r)}
+                selected={selectedIds.has(it.r.id)}
+                onToggleSelect={() => onSelect(it.r.id)}
+                onOpen={() => onOpenReport(it.r)}
+                onAskDelete={() => onAskDeleteReport(it.r)}
               />
-            ))}
-            {visibleChatRooms.map((cr, idx) => (
+            ) : (
               <ChatRoomCard
-                key={cr.id}
-                room={cr}
-                isLast={idx === visibleChatRooms.length - 1}
+                key={it.c.id}
+                room={it.c}
+                isLast={idx === arr.length - 1}
                 bulkMode={bulkMode}
-                selected={selectedIds.has(cr.id)}
-                onToggleSelect={() => onSelect(cr.id)}
-                onOpen={() => onOpenChatRoom(cr)}
+                selected={selectedIds.has(it.c.id)}
+                onToggleSelect={() => onSelect(it.c.id)}
+                onOpen={() => onOpenChatRoom(it.c)}
               />
-            ))}
+            )))}
           </div>
         )}
       </section>
@@ -1172,17 +1205,25 @@ function HistoryCard({
   onOpen: () => void;
   onAskDelete: () => void;
 }) {
-  // 프로필 매칭 (이름 + birthYMD)
+  // 프로필 매칭 (이름 + birthYMD). 2026-10-17 — 궁합은 'A × B' 이름이라 늘 못 찾아 '(삭제된 사주)'로 보였다 → 첫 사람 이름으로,
+  //   기록에 프로필 id 가 있으면 그것부터.
+  const isCompat = report.contentType === 'compat';
+  const personName = isCompat ? String(report.name || '').split(' × ')[0] : report.name;
   const profileMatched = profiles.find(
     (p) =>
-      p.name === report.name &&
-      p.input.birthYear === report.input?.birthYear &&
-      p.input.birthMonth === report.input?.birthMonth &&
-      p.input.birthDay === report.input?.birthDay,
+      (!!report.profileId && p.id === report.profileId) ||
+      (p.name === personName &&
+        p.input.birthYear === report.input?.birthYear &&
+        p.input.birthMonth === report.input?.birthMonth &&
+        p.input.birthDay === report.input?.birthDay),
   );
+  // 생일이 남아 있지 않은 복원 기록은 지워진 사주인지 알 수 없다 → '(삭제된 사주)'라고 단정하지 않는다
+  const unknownOwner = !(report.input as any)?.birthYear;
   // 매칭 안 되면 "(삭제된 사주)" 라벨 (스펙 §2-4 / §5-2)
-  const displayName = profileMatched ? report.name : '(삭제된 사주)';
-  const isOrphan = !profileMatched;
+  const displayName = isCompat || profileMatched
+    ? report.name
+    : unknownOwner ? (report.name && report.name !== '복원된 분석' ? report.name : '예전 기록') : '(삭제된 사주)';
+  const isOrphan = !profileMatched && !isCompat && !unknownOwner;
 
   const ct = report.contentType ?? 'report';
   const baseLabel = CONTENT_LABEL[ct] ?? '종합사주';
@@ -2005,6 +2046,16 @@ function formatHourCode(hour: number): string {
 const LOCKDOWN_CONTENT = new Set(['daeun']); // 2026-10-04 궁합 · 10-07 신년운세 공개
 
 /** 콘텐츠 유형별 결과 페이지 라우트 (스펙 §3-3 탭 시 결과 이동) */
+type MergedItem = { kind: 'r'; t: number; r: LocalReport } | { kind: 'c'; t: number; c: ChatRoom };
+/** 기록(만든 때)과 대화(마지막으로 쓴 때)를 한 줄로 */
+function mergeByTime(reports: LocalReport[], rooms: ChatRoom[], desc: boolean): MergedItem[] {
+  const items: MergedItem[] = [
+    ...reports.map((r) => ({ kind: 'r' as const, t: +new Date(r.createdAt) || 0, r })),
+    ...rooms.map((c) => ({ kind: 'c' as const, t: +new Date(c.updatedAt) || 0, c })),
+  ];
+  return items.sort((a, b) => (desc ? b.t - a.t : a.t - b.t));
+}
+
 function routeForReport(r: LocalReport): string | null {
   const ct = r.contentType;
   if (ct === 'dream' || ct === 'deepDream') return '/dream';
@@ -2017,8 +2068,8 @@ function routeForReport(r: LocalReport): string | null {
   //   보관함에서 클릭 시 무한 redirect 사이클 방지 위해 null 반환. openReport 에서 안내 toast.
   if (LOCKDOWN_CONTENT.has(ct as string)) return null;
   if (ct === 'topic') {
-    const topicId = (r as any).aiResult?.topicId || 'love';
-    return `/topic/${topicId}`;
+    const topicId = (r as any).aiResult?.topicId;
+    return topicId ? `/topic/${topicId}` : null; // 2026-10-17 'love' 기본값 제거 — 주제를 모르면 열지 않는다
   }
   // 기본 사주 리포트
   if (r.sajuData?.pillars?.length) return `/result/${r.id}`;

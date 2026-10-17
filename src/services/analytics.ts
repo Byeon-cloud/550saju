@@ -197,6 +197,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'review_request',     // {result: shown|unsupported|error, n} — 토스 별점 창 요청 (2026-10-17 시험 E12)
   'month_picks_view',   // {n, day} — 월초 홈 '이번 달 좋은 날' 카드가 보였다 (2026-10-17 단골 장치)
   'month_picks_click',  // {day} — 그 카드에서 월운세로 (2026-10-17)
+  'storage_full',       // {evicted, saved, kb} — 기기 저장 공간이 차서 옛 기록을 지웠다 (2026-10-17 보관함 점검)
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───

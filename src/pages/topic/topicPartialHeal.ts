@@ -237,7 +237,7 @@ export function upgradePartialTopicRecord(
     try {
       const raw = localStorage.getItem(key);
       const cur = raw ? JSON.parse(raw) : null;
-      if (!cur || cur.__partial) localStorage.setItem(key, JSON.stringify(healedContent));
+      if (!cur || cur.__partial) localStorage.setItem(key, JSON.stringify({ __ref: healed.id })); // 2026-10-17 캐시는 기록 번호만
     } catch { /* noop */ }
   }
 
@@ -433,7 +433,7 @@ export async function recoverPendingTopic(args: {
   try { saveReport(rec); } catch { return null; }
   try {
     const key = partnerName ? `topic_${topicId}_${profile.id}_${partnerName}` : `topic_${topicId}_${profile.id}`;
-    localStorage.setItem(key, JSON.stringify(content));
+    localStorage.setItem(key, JSON.stringify({ __ref: rec.id })); // 2026-10-17 캐시는 기록 번호만
   } catch { /* noop */ }
   clearPendingSpend(pend.id); // 결과 전달 → 환불 대신
   return rec;

@@ -2243,6 +2243,15 @@ export const disconnectToss = onRequest(
  * 주제별 심층분석 — Claude Sonnet 4.6 (1운)
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
  */
+/** 주제운 원본(top-level reports)에 남기는 사주 주인 — 이름, 생년월일, 양음력, 성별만 (2026-10-17 보관함 복원용) */
+function topicOwnerMeta(sd: any): Record<string, unknown> | null {
+  const i = sd?.input;
+  if (!i || !i.birthYear) return null;
+  const pick: Record<string, unknown> = {};
+  for (const k of ['name', 'birthYear', 'birthMonth', 'birthDay', 'calendarType', 'gender', 'hasBirthTime']) if (i[k] !== undefined) pick[k] = i[k];
+  return pick;
+}
+
 export const generateTopicAnalysis = onCall(
   { secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' },
   async (request) => {
@@ -2280,6 +2289,7 @@ export const generateTopicAnalysis = onCall(
           uid, topicId, ...fsSafe(result), type: 'topic',
           // 2026-06-12 — 소분류 분포용 입력 메타 (loveStatus/bizStatus 등 + 상대방 유무)
           inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
+          owner: topicOwnerMeta(sajuData), // 2026-10-17 보관함 복원 때 '복원된 분석' 대신 원래 이름과 생일로
           aiModel: CLAUDE_MODEL.sonnet,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -2411,6 +2421,7 @@ export const generateTopicAnalysisStream = onRequest(
         await reportRef.set({
           uid, topicId, ...fsSafe(parsed), type: 'topic',
           inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
+          owner: topicOwnerMeta(sajuData), // 2026-10-17 보관함 복원 때 '복원된 분석' 대신 원래 이름과 생일로
           aiModel: CLAUDE_MODEL.sonnet,
           generatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

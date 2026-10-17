@@ -1197,6 +1197,7 @@ function ResultView({
             type: 'daily' as const,
             label: '오늘의 운세',
             fullResult: result,
+            date: new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10), // 2026-10-17 같은 날 다시 물으면 같은 방
           };
           const room = createChatRoom(profile?.name || '나', 'free', ctx);
           navigate(`/chat/${room.id}`, {

@@ -251,6 +251,13 @@ export function ResultPage(props: ResultPageProps = {}) {
   }, [toast]);
 
   const sajuData = useMemo(() => {
+    // 0. 2026-10-17 — 이미 저장된 기록을 다시 여는 경우(새로 만든 직후가 아님)는 그 기록의 사주가 먼저.
+    //    예전엔 앱이 기억하는 사주(ctx)가 먼저라, 뒤로 가기로 돌아오면 본문은 A 인데 이름과 팔자는 다른 사람이 나왔다.
+    const freshNow = typeof window !== 'undefined' && /[?&]fresh=1/.test(window.location.search);
+    if (!freshNow && reportId && reportId !== 'local') {
+      const own = getReport(reportId);
+      if (own?.sajuData?.pillars?.length) return own.sajuData;
+    }
     // 1. Context에 데이터 있으면 사용 (InputPage → Loading → Result 플로우)
     if (ctxData) return ctxData;
     // 2. URL의 리포트 ID로 localStorage에서 조회 (보관함에서 클릭 등)
@@ -562,8 +569,10 @@ export function ResultPage(props: ResultPageProps = {}) {
     }
   }, [shouldRedirectLegacy, navigate]);
 
-  const name = ctxInput?.name || storedReport?.name || sajuData.input?.name || '사용자';
-  const input = ctxInput || storedReport?.input || sajuData.input;
+  // 2026-10-17 — 다시 여는 기록은 그 기록의 이름과 입력이 먼저 (위 sajuData 와 같은 기준)
+  const ownInput = !isFreshMode && (storedReport?.input as any)?.birthYear ? storedReport!.input : null;
+  const name = (!isFreshMode && storedReport?.name) || ctxInput?.name || storedReport?.name || sajuData.input?.name || '사용자';
+  const input = ownInput || ctxInput || storedReport?.input || sajuData.input;
   const hasBirthTime = input.hasBirthTime;
   // 2026-05-07: dateStr/genderStr/zodiac/birthTimeStr — basic UI 삭제로 미사용 (PremiumResult가 자체 처리)
   const _dateStr = `${input.birthYear}년 ${input.birthMonth}월 ${input.birthDay}일`;

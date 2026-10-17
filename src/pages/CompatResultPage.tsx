@@ -73,7 +73,8 @@ export function CompatResultPage() {
   const state = isReplay
     ? {
         person1: { name: replayReport?.name?.split(' × ')?.[0] || '나', sajuData: replayReport?.sajuData, input: replayReport?.input },
-        person2: replayPartner || { name: replayReport?.name?.split(' × ')?.[1] || '상대', sajuData: replayReport?.sajuData, input: replayReport?.input },
+        // 2026-10-17 — 상대방 정보가 없는 옛 복원본에 내 사주를 넣지 않는다(두 칸에 같은 팔자가 나왔다). 상대 칸은 비워 둔다
+        person2: replayPartner || { name: replayReport?.name?.split(' × ')?.[1] || '상대', sajuData: null, input: null, missing: true },
         relation: replayReport?.relation || '연인',
       }
     : (rawState as { person1: any; person2: any; relation: string } | undefined);
@@ -206,12 +207,19 @@ export function CompatResultPage() {
 
         {/* 프로필 페어 + 종합 점수 */}
         <FadeIn>
-          <CompatProfilePair
-            person1={{ name: state.person1.name, pillars: state.person1.sajuData.pillars, elements: state.person1.sajuData.elements }}
-            person2={{ name: state.person2.name, pillars: state.person2.sajuData.pillars, elements: state.person2.sajuData.elements }}
-            overallScore={result.overallScore}
-            relation={state.relation}
-          />
+          {state.person1?.sajuData?.pillars && state.person2?.sajuData?.pillars ? (
+            <CompatProfilePair
+              person1={{ name: state.person1.name, pillars: state.person1.sajuData.pillars, elements: state.person1.sajuData.elements }}
+              person2={{ name: state.person2.name, pillars: state.person2.sajuData.pillars, elements: state.person2.sajuData.elements }}
+              overallScore={result.overallScore}
+              relation={state.relation}
+            />
+          ) : (
+            <div style={{ background: '#FFFDF8', border: '1px solid #E1D7C4', borderRadius: 14, padding: '16px', fontSize: 15, lineHeight: 1.7, color: '#4B4238' }}>
+              <p style={{ fontSize: 26, fontWeight: 700, color: '#1A1612' }}>{result.overallScore}점</p>
+              <p style={{ marginTop: 4 }}>이 기록은 예전에 다른 기기에서 옮겨 와서 상대방 사주 칸이 남아 있지 않아요. 점수와 풀이는 그대로예요.</p>
+            </div>
+          )}
         </FadeIn>
 
         {/* 키워드 + 관계유형 */}

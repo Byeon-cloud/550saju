@@ -38,7 +38,7 @@ export const recoverTopicResult = onCall(
     if (!best || Date.now() - bestTs > 60 * 60 * 1000) return { found: false };
 
     // 메타 제거 → 순수 content (클라가 보관함/캐시에 저장)
-    const { uid: _u, type: _t, topicId: _ti, inputMeta: _im, aiModel: _am, generatedAt: _g, ...content } = best as Record<string, unknown>;
+    const { uid: _u, type: _t, topicId: _ti, inputMeta: _im, aiModel: _am, generatedAt: _g, owner: _ow, ...content } = best as Record<string, unknown>;
     return { found: true, reportId: bestId, content };
   },
 );

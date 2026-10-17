@@ -17,6 +17,7 @@ import {
   deleteChatRoom,
   createChatRoom,
   setChatRoomProfileId,
+  CHATS_CHANGED_EVENT,
   type ChatRoom,
 } from '@/services/storage/chatStore';
 import { getProfiles } from '@/services/storage/localStore';
@@ -64,6 +65,10 @@ export function ChatListPage() {
 
   useEffect(() => {
     reloadAll();
+    // 2026-10-17 — 서버에서 대화가 뒤늦게 내려와도 바로 보이게
+    const onChange = () => setRooms(getChatRooms());
+    window.addEventListener(CHATS_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(CHATS_CHANGED_EVENT, onChange);
   }, []);
 
   // 무료권 변화(자정 KST 넘김·앱 복귀·다른 화면 사용) 시 잔여 대화권 배너 재계산

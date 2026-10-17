@@ -355,11 +355,21 @@ export function App() {
       .then(() => import('@/services/storage/firestoreSync'))
       .then((m) => m.restoreProfilesIfEmpty())
       .catch(() => { /* noop */ });
+    // 0-a4c. 보관함과 사주대화 서버 동기화 (2026-10-17) — 예전엔 보관함, 마이, 충전, 어드민 화면을 열 때만 돌아
+    //   홈이나 사주대화 목록만 쓰는 사람은 서버 기록이 내려오지 않았다. 여권 이관 뒤 부팅마다 한 번.
+    passportDone
+      .then(() => import('@/services/auth/authService'))
+      .then(({ ensureAuth }) => ensureAuth())
+      .then(() => Promise.all([import('@/services/auth/firebase'), import('@/services/storage/firestoreSync')]))
+      .then(([{ auth }, m]) => { const uid = auth.currentUser?.uid; return uid ? m.bootSync(uid) : undefined; })
+      .catch(() => { /* noop — 다음 부팅에서 재시도 */ });
 
     // 0-b. 2026-05-28 PM — 본인 프로필 중복 cleanup (1회 마이그레이션).
     //   기존: 새 사주 '본인' 추가 시 silent 로 myProfile 교체 → 본인 N명 누적.
     //   해결: 활성 myProfile 만 '본인' 유지, 나머지는 '가족' 자동 강등.
-    import('@/services/storage/localStore').then(({ migrateOwnerDuplicates, dedupeTwinReports }) => {
+    import('@/services/storage/localStore').then(({ migrateOwnerDuplicates, dedupeTwinReports, slimTopicCaches }) => {
+      // 2026-10-17 — 주제운 캐시의 결과 사본을 보관함 기록 번호로 (저장 공간 절약)
+      try { const s = slimTopicCaches(); if (s > 0) console.info(`[migrate] 주제운 캐시 ${s}개를 기록 번호로`); } catch { /* noop */ }
       const { migrated } = migrateOwnerDuplicates();
       if (migrated > 0) {
         // eslint-disable-next-line no-console
