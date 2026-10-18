@@ -72,7 +72,7 @@ export function TtiBoardPage() {
     const message = `${dateLabel} 오늘의 띠별 운세예요. 우리 가족 띠도 한번 보세요`;
     try {
       const r = await shareBoard({
-        boardEl: boardRef.current, inAppPath: '/tti', ogImage: 'https://saju500.app/og/tti.jpg', message,
+        boardEl: boardRef.current, inAppPath: '/tti', ogImage: `https://saju500.app/og/tti/${today}.jpg`, message,
         fileName: `오늘의_띠별_운세_${today.replace(/-/g, '')}.png`,
         webUrl: 'https://saju500.app/tti?utm_source=share&utm_medium=image&utm_campaign=tti_board', type: 'tti_board',
       });

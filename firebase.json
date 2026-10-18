@@ -68,6 +68,10 @@
         "function": "renderTtiToday"
       },
       {
+        "source": "/og/tti/**",
+        "function": "ttiOgImage"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
