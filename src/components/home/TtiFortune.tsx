@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HJ, SERIF, Seal, GoldCta, Redact } from '@/components/hanji/Hanji';
+import { TtiAnimal } from '@/components/tti/TtiAnimal';
 import { trackEvent } from '@/services/analytics';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { currentSajuMonth, monthDayLabel } from '@/services/saju/hookFacts';
@@ -135,6 +136,8 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
                 border: `1px solid ${on ? HJ.ink : HJ.line}`,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
               }}>
+              {/* 2026-10-19 사주500 띠 그림 (고른 칸은 먹 바탕이라 그림을 종이색으로 뒤집는다) */}
+              <TtiAnimal ji={ji} size={26} ink={on ? '#F1ECE1' : undefined} paper={on ? HJ.ink : undefined} />
               <span style={{ fontFamily: SERIF, fontSize: name.length > 3 ? 14.5 : 16, fontWeight: 700, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{name}</span>
               {/* 출생 연도 여섯(1941~2012년생)을 두 줄에 셋씩 — 2000년대생까지 다 보이게(10-16 오너: 07년생 빠짐, 29~40년생 줄은 빼고 여섯) */}
               <span style={{ fontSize: 13, lineHeight: 1.35, color: on ? '#CFC6B6' : HJ.mute, textAlign: 'center', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
@@ -164,7 +167,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
       {sel && (
         <div ref={cardRef} style={{ marginTop: 12, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '16px 16px 14px', scrollMarginTop: 72 }}>
           <div className="flex items-center gap-2.5">
-            <Seal size={34} fontSize={18}>{sel}</Seal>
+            <TtiAnimal ji={sel} size={36} />
             <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700 }}>{ttiName(sel)} 오늘의 운세</span>
             <span style={{ marginLeft: 'auto', fontSize: 13, color: HJ.mute }}>{dayKo}일</span>
           </div>
