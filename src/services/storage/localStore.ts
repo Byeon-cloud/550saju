@@ -524,8 +524,12 @@ function getBalanceDetail(): BalanceDetail {
   }
 }
 
+/** 2026-10-18 잔액이 바뀌면 알린다 — 상단 잔액 칩이 늘어난 만큼 '+N운' 으로 반응 (BalanceBar) */
+export const BALANCE_CHANGED_EVENT = 'saju500:balance-changed';
+
 function setBalanceDetail(detail: BalanceDetail): void {
   localStorage.setItem(BALANCE_KEY, JSON.stringify(detail));
+  try { window.dispatchEvent(new Event(BALANCE_CHANGED_EVENT)); } catch { /* noop */ }
   // 잔액 미러 — 모든 변경을 서버 스냅샷으로 (2026-08-13 기기 여권 · 소실 복원용)
   pushBalanceMirrorDebounced(detail);
 }

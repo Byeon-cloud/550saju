@@ -637,7 +637,8 @@ export function TopicSection({
               `}</style>
             </div>
           ) : (
-            children
+            // 2026-10-18 스켈레톤이 걷히면 본문이 두루마리처럼 위에서 아래로 (motion.css mo-unroll)
+            <div className="mo-unroll">{children}</div>
           )}
         </div>
       )}

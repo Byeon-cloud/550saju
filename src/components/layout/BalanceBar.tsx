@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getBalance } from '@/services/storage/localStore';
-import { useMemo } from 'react';
+import { getBalance, BALANCE_CHANGED_EVENT } from '@/services/storage/localStore';
+import { useEffect, useRef, useState } from 'react';
 
 /** 보여줄 페이지 — 탭 네비게이션이 있는 메인 페이지들만 */
 const SHOW = ['/', '/storage', '/my', '/daily'];
@@ -14,7 +14,29 @@ const SHOW = ['/', '/storage', '/my', '/daily'];
 export function BalanceBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const balance = useMemo(() => getBalance(), [location.pathname]);
+  // 2026-10-18 잔액이 늘면 칩이 한 번 부풀고 '+N운' 이 떠오른다 (motion.css mo-pop, mo-float-up)
+  const [balance, setBal] = useState(() => getBalance());
+  const [gain, setGain] = useState<{ n: number; k: number } | null>(null);
+  const prev = useRef(balance);
+  useEffect(() => {
+    const sync = () => {
+      // 칩이 안 보이는 화면(충전 등)에선 기억만 두고, 보이는 화면에 돌아왔을 때 늘어난 만큼 보여 준다
+      if (!SHOW.some((p) => location.pathname === p)) return;
+      const next = getBalance();
+      const diff = Math.round((next - prev.current) * 10) / 10;
+      prev.current = next;
+      setBal(next);
+      if (diff > 0) setGain({ n: diff, k: Date.now() });
+    };
+    sync();
+    window.addEventListener(BALANCE_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(BALANCE_CHANGED_EVENT, sync);
+  }, [location.pathname]);
+  useEffect(() => {
+    if (!gain) return;
+    const t = setTimeout(() => setGain(null), 1300);
+    return () => clearTimeout(t);
+  }, [gain]);
 
   // 메인 탭 페이지에서만 표시
   if (!SHOW.some((p) => location.pathname === p)) return null;
@@ -52,14 +74,20 @@ export function BalanceBar() {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/charge')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full min-h-[36px]"
+            className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-full min-h-[36px]"
             style={{ background: '#FFFDF8', border: '1px solid #E1D7C4' }}
           >
+            {gain && (
+              <span key={gain.k} aria-hidden="true" className="mo-float-up"
+                style={{ position: 'absolute', left: 0, right: 0, top: 'calc(100% + 2px)', textAlign: 'center', fontSize: 14, fontWeight: 800, color: '#8C6D3D', whiteSpace: 'nowrap', textShadow: '0 0 6px #F4EFE4, 0 0 2px #F4EFE4' }}>
+                +{gain.n}운
+              </span>
+            )}
             <div className="w-5 h-5 rounded-full flex items-center justify-center"
               style={{ background: '#8C6D3D' }}>
               <span className="text-[13px] font-black text-white">運</span>
             </div>
-            <span className="text-[14px] font-bold" style={{ color: '#1A1612' }}>{balance}운</span>
+            <span key={gain?.k ?? 0} className={`text-[14px] font-bold inline-block${gain ? ' mo-pop' : ''}`} style={{ color: '#1A1612' }}>{balance}운</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />

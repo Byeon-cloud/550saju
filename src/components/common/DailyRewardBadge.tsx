@@ -81,8 +81,9 @@ export function DailyRewardBadge({ className = '' }: DailyRewardBadgeProps) {
         style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.20)' }}
         aria-live="polite"
       >
+        {/* 2026-10-18 방금 받았으면 도장 찍듯 (motion.css mo-stamp) */}
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0${pressed ? ' mo-stamp' : ''}`}
           style={{ background: '#B8965A' }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

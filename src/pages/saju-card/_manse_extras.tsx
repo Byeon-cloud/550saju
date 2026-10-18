@@ -12,6 +12,7 @@ import { HJ, SERIF } from '@/components/hanji/Hanji';
 import { inspectKoreanSolarTime } from '@/services/saju/timeCorrection';
 import { toSolarInput } from '@/services/saju/calculator';
 import { deriveSipsung, yearGanji, DaeunTable } from './_flow_table';
+import { MotionScope, moVars } from '@/components/motion/Motion';
 import type { SajuData, SajuInput } from '@/types/saju';
 
 const GAN_KO: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계' };
@@ -97,10 +98,10 @@ export function FlowNow({ sajuData }: { sajuData: SajuData }) {
   }
   if (!rows.length) return null;
   return (
-    <div style={{ ...box, marginTop: 16 }}>
+    <MotionScope style={{ ...box, marginTop: 16 }}>
       <p style={head}>운의 흐름</p>
       {rows.map((r, i) => (
-        <div key={r.k} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: i ? `1px solid ${HJ.line}` : 0 }}>
+        <div key={r.k} className="mo-rise" style={{ ...moVars({ i, d: 80 }), display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: i ? `1px solid ${HJ.line}` : 0 }}>
           <div style={{ width: 66, flexShrink: 0 }}>
             <p style={{ fontSize: 13.5, fontWeight: 700, color: HJ.mute }}>{r.k}</p>
             <p style={{ fontSize: 13, color: HJ.mute }}>{r.sub}</p>
@@ -118,11 +119,11 @@ export function FlowNow({ sajuData }: { sajuData: SajuData }) {
             style={{ marginTop: 6, fontSize: 14, fontWeight: 700, color: HJ.goldText, background: 'none', border: 0, padding: '6px 0' }}>
             {open ? '대운 전체 접기' : '대운 전체 펼치기 (10년 단위)'}
           </button>
-          {open && <div style={{ marginTop: 8 }}><DaeunTable daeun={sajuData.daeun} ilgan={ilgan} birthYear={sajuData.input?.birthYear} /></div>}
+          {open && <div className="mo-unroll" style={{ marginTop: 8 }}><DaeunTable daeun={sajuData.daeun} ilgan={ilgan} birthYear={sajuData.input?.birthYear} /></div>}
         </div>
       )}
       <p style={{ fontSize: 13, color: HJ.mute, lineHeight: 1.6, marginTop: 8 }}>대운은 10년마다, 올해 운(세운)은 해마다 바뀌어요. 내 일간과 그 해 글자의 관계로 쉬운 말을 붙였어요.</p>
-    </div>
+    </MotionScope>
   );
 }
 

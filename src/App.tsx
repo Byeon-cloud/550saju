@@ -55,7 +55,8 @@ const AdminPage = lazyWithReload(() => import('@/pages/AdminPage').then(m => ({ 
 const pageVariants = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -4 },
+  // 2026-10-18 나가는 화면은 짧게 (기다리는 느낌 줄이기) — 들어오는 화면만 0.25초
+  exit: { opacity: 0, y: -4, transition: { duration: 0.12, ease: [0.4, 0, 1, 1] } },
 };
 
 const pageTransition = {

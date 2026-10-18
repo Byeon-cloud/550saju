@@ -22,6 +22,7 @@ import type { SajuData, OhengType, SajuInput } from '@/types/saju';
 import type { SinsalAnalysis } from '@/services/saju/sinsal';
 import { analyzeRelations, type RelationsAnalysis } from '@/services/saju/relations';
 import { lookupSipsung } from '@/constants/sipsungColor';
+import { MotionScope, moVars } from '@/components/motion/Motion';
 
 /** lunar-javascript 간체 → 정체 (만세력 표 표시용 · 12운성·납음에 나오는 글자만) */
 const SIMP_TO_TRAD: Record<string, string> = {
@@ -390,7 +391,8 @@ function SectionB_ManseTable({
       </div>
 
       {/* Stage 7e: minWidth/overflowX 제거 — 모바일 360~390px 폭 안에서 자연 fit */}
-      <div>
+      {/* 2026-10-18 표가 보이면 천간, 지지 칸이 년주부터 차례로 뒤집혀 내려온다 (motion.css mo-deal) */}
+      <MotionScope>
         <table
           style={{
             width: '100%',
@@ -480,6 +482,7 @@ function SectionB_ManseTable({
                     chRead={p.천간읽기}
                     oheng={p.천간오행 as OhengType}
                     isDay={idx === 2}
+                    seq={3 - i}
                   />
                 );
               })}
@@ -497,6 +500,8 @@ function SectionB_ManseTable({
                     chRead={p.지지읽기}
                     oheng={p.지지오행 as OhengType}
                     isDay={idx === 2}
+                    seq={3 - i}
+                    lower
                   />
                 );
               })}
@@ -629,7 +634,7 @@ function SectionB_ManseTable({
             )}
           </tbody>
         </table>
-      </div>
+      </MotionScope>
     </DetailCard>
   );
 }
@@ -692,17 +697,24 @@ function BigCharCell({
   chRead,
   oheng,
   isDay,
+  seq = 0,
+  lower = false,
 }: {
   ch: string;
   chRead: string;
   oheng: OhengType;
   isDay: boolean;
+  /** 2026-10-18 펼침 순서 (년주 0 → 시주 3), 지지는 천간보다 조금 늦게 */
+  seq?: number;
+  lower?: boolean;
 }) {
   const style = OHENG_BOX_DETAIL[oheng];
   return (
     <td style={{ padding: '3px 2px', background: 'transparent', border: 'none', verticalAlign: 'middle' }}>
       <div
+        className="mo-deal"
         style={{
+          ...moVars({ i: seq, d: lower ? 110 : 0 }),
           width: '100%',
           minWidth: 0,
           maxWidth: 76,

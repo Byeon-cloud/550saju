@@ -5,6 +5,7 @@ import { App } from './App';
 import { migrateStorageV1 } from '@/lib/storage';
 import { isAppintosBuild } from '@/lib/env';
 import './styles/globals.css';
+import './styles/motion.css'; // 2026-10-18 움직임 (먹과 종이)
 
 // P0-1 · 민감 필드(이름·생년월일·시간) sessionStorage 이주 — 앱 부팅 1회만 실행.
 // 기존 localStorage 잔존 데이터를 sessionStorage로 옮기고 원본 삭제.

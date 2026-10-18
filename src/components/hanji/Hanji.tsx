@@ -6,6 +6,7 @@
  */
 import type { CSSProperties, ReactNode } from 'react';
 import '@/styles/hanji.css';
+import { moVars, useCountUp } from '@/components/motion/Motion';
 
 export const HJ = {
   paper: '#F4EFE4',
@@ -56,9 +57,13 @@ export function GhostButton({ children, sub, onClick, onInk, ariaLabel, style }:
   );
 }
 
-export function Seal({ children, size = 34, fontSize }: { children: ReactNode; size?: number; fontSize?: number }) {
+export function Seal({ children, size = 34, fontSize, stamp, delay }: {
+  children: ReactNode; size?: number; fontSize?: number;
+  /** 2026-10-18 도장 찍듯 등장 (motion.css mo-stamp) */ stamp?: boolean; delay?: number;
+}) {
   return (
-    <span className="hj-seal" style={{ width: size, height: size, fontSize: fontSize ?? Math.round(size * 0.36) }}>
+    <span className={`hj-seal${stamp ? ' mo-stamp' : ''}`}
+      style={{ width: size, height: size, fontSize: fontSize ?? Math.round(size * 0.36), ...(stamp && delay ? moVars({ d: delay }) : null) }}>
       {children}
     </span>
   );
@@ -163,11 +168,11 @@ export function Verdict({ label = '한 줄 풀이', children, html, seal, refTex
   label?: ReactNode; children?: ReactNode; html?: string; seal?: string; refText?: ReactNode; gold?: boolean; style?: CSSProperties;
 }) {
   return (
-    <div className={`hj-verdict${gold ? ' gold' : ''}`} style={style}>
+    <div className={`hj-verdict mo-ink${gold ? ' gold' : ''}`} style={style}>
       <Pansim>{label}</Pansim>
       <p className="vt">
         {html != null ? <span dangerouslySetInnerHTML={{ __html: html }} /> : children}
-        {seal && <Seal size={24} fontSize={13}>{seal}</Seal>}
+        {seal && <Seal size={24} fontSize={13} stamp delay={520}>{seal}</Seal>}
       </p>
       {refText && <p className="vref">{refText}</p>}
     </div>
@@ -246,15 +251,16 @@ export function Grade({ label, score, unit = '점', phrase, foot, gold }: {
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(score)));
   const band = pct >= 85 ? 2 : pct >= 55 ? 1 : 0;
+  const shown = useCountUp(pct); // 2026-10-18 숫자가 차오르고 칸이 하나씩 찬다 (motion.css mo-fill)
   return (
     <div className={`hj-grade${gold ? ' gold' : ''}`}>
       <div className="top">
         <span className="lb">{label}</span>
-        <span className="num">{pct}<small>{unit}</small></span>
+        <span className="num" style={{ fontVariantNumeric: 'tabular-nums' }} aria-label={`${pct}${unit}`}>{shown}<small>{unit}</small></span>
       </div>
       <div className="cells" aria-hidden="true">
         {Array.from({ length: 10 }, (_, i) => (
-          <i key={i} style={{ ['--f' as string]: `${Math.max(0, Math.min(1, (pct - i * 10) / 10)) * 100}%` } as CSSProperties} />
+          <i key={i} style={{ ['--f' as string]: `${Math.max(0, Math.min(1, (pct - i * 10) / 10)) * 100}%`, ['--n' as string]: i } as CSSProperties} />
         ))}
       </div>
       <div className="scale">

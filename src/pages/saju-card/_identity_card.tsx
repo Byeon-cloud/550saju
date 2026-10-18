@@ -24,6 +24,7 @@ import { getManAge, getKoreanAge, getHourBranch } from '@/utils/saju-format';
 import { SajuDetailsTable } from './_details_table';
 import { SinsalCardsSection } from './_visual_section';
 import { isAppintosBuild } from '@/lib/env';
+import { moVars } from '@/components/motion/Motion';
 
 const C = {
   paper: '#F8F5EE',
@@ -442,8 +443,9 @@ export function IdentityCard({
               marginTop: 4,
             }}
           >
-            <span>{ilgan || '命'}</span>
-            <span>{ilji || ''}</span>
+            {/* 2026-10-18 일주 두 글자가 먹 스미듯 (motion.css) */}
+            <span className="mo-ink" style={moVars({ d: 60 })}>{ilgan || '命'}</span>
+            <span className="mo-ink" style={moVars({ d: 200 })}>{ilji || ''}</span>
           </div>
           {iljuKo && (
             <div
@@ -479,11 +481,15 @@ export function IdentityCard({
             const labelKo = ['년주', '월주', '일주', '시주'][idx];
             const labelHan = ['年', '月', '日', '時'][idx];
             const isDay = idx === 2;
+            // 2026-10-18 촤라락 — 년, 월, 시 다음 마지막에 일주(나)가 내려앉는다
+            const deal = moVars({ i: ({ 0: 0, 1: 1, 3: 2, 2: 3 } as Record<number, number>)[idx], d: 180, to: isDay ? 'scale(1.06)' : undefined });
             if (!p?.available) {
               return (
                 <div
                   key={idx}
+                  className="mo-deal"
                   style={{
+                    ...deal,
                     width: 56,
                     height: 56,
                     border: `1.5px dashed ${C.line}`,
@@ -509,7 +515,9 @@ export function IdentityCard({
             return (
               <div
                 key={idx}
+                className="mo-deal"
                 style={{
+                  ...deal,
                   width: 56,
                   height: 56,
                   background: box.bg,

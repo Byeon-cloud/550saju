@@ -41,6 +41,7 @@ import { isAppsInToss } from '@/services/payment/iapService';
 import { trackEvent } from '@/services/analytics';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { AD_BANNER_GROUP_ID } from '@/constants/config';
+import { moVars } from '@/components/motion/Motion';
 
 const C = {
   paper: '#F8F5EE',
@@ -177,8 +178,10 @@ export function EventsPage() {
                         fontWeight: isToday ? 600 : 500 }}>
                       {isToday ? '오늘' : `${i + 1}일`}
                     </span>
-                    <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center"
+                    {/* 2026-10-18 채운 칸은 차례로 떠오르고, 오늘 칸은 마지막에 도장 찍듯 (motion.css) */}
+                    <div className={`w-[28px] h-[28px] rounded-full flex items-center justify-center${done ? (snapshot.attendedToday && i === filled7 - 1 ? ' mo-stamp' : ' mo-rise') : ''}`}
                       style={{
+                        ...(done ? (snapshot.attendedToday && i === filled7 - 1 ? moVars({ d: filled7 * 50 + 160 }) : moVars({ i })) : null),
                         background: done ? C.ink : isToday ? C.goldLight : '#FFFFFF', // 2026-10-10 v9 상태 표시는 먹
                         border: done ? `2px solid ${C.ink}` : isToday ? `2px solid ${C.goldDark}` : `2px dashed ${C.line}`,
                       }}>
@@ -196,7 +199,7 @@ export function EventsPage() {
 
             {/* 진행바 */}
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.line }}>
-              <div className="h-full transition-all" style={{ width: `${weekPct}%`, background: C.ink }} />
+              <div className="h-full transition-all mo-grow" style={{ width: `${weekPct}%`, background: C.ink }} />
             </div>
             <p className="text-[13.5px] mt-2.5" style={{ color: C.muted }} aria-live="polite">
               <strong style={{ color: C.ink }}>{filled7}/{ATTEND_CYCLE_DAYS}</strong>, {weekStatusCopy}

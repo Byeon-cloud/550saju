@@ -67,8 +67,12 @@ function receivedDailyToday(profile: any, today: string): boolean {
   } catch { return false; }
 }
 
+/** 2026-10-18 홈 첫 화면 움직임(오늘 간지 도장, 제목 먹 스밈, 밑줄 붓질)은 앱을 연 뒤 처음 한 번만 */
+let homeHeroSeen = false;
+
 export function HomePage() {
   usePageTitle('정통 명리학 사주 풀이');
+  const [heroMo] = useState(() => { const v = !homeHeroSeen; homeHeroSeen = true; return v; });
   useSeoMeta({
     description:
       '600년 명리학 6대 원전 기반 사주 풀이. 500원으로 만나는 깊이 있는 사주, 오늘의 운세와 꿈해몽 매일 1회 무료, 10가지 주제별 분석과 종합사주, 궁합, 신년운세.',
@@ -218,14 +222,14 @@ export function HomePage() {
         </div>
         <div style={{ position: 'relative', marginTop: -64, padding: '0 22px' }}>
           <div className="flex items-center gap-2" style={{ fontSize: 14, color: HJ.ink2, fontWeight: 600 }}>
-            <Seal size={36}>{tg.gz}</Seal>
+            <Seal size={36} stamp={heroMo} delay={80}>{tg.gz}</Seal>
             <span>{todayLabel(today)}, {hasSaju ? `${displayName} 님 오늘의 운세` : `오늘은 ${tg.ko}일`}</span>
           </div>
 
           {hasSaju ? (
             gotDaily ? (
               <>
-                <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 26, lineHeight: 1.42, letterSpacing: '-.03em', marginTop: 14 }}>
+                <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 26, lineHeight: 1.42, letterSpacing: '-.03em', marginTop: 14 }}>
                   {todayLine}
                 </h1>
                 <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/daily')}>오늘 운세 다시 보기</GoldCta>
@@ -236,12 +240,12 @@ export function HomePage() {
             ) : (
               <>
                 {facts?.today ? (
-                  <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 29, lineHeight: 1.38, letterSpacing: '-.03em', marginTop: 14 }}>
+                  <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 29, lineHeight: 1.38, letterSpacing: '-.03em', marginTop: 14 }}>
                     {facts.today.avoid}에는<br />
-                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>큰 결정을 미루세요.</span>
+                    <span className={heroMo ? 'mo-brush' : undefined} style={{ backgroundImage: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>큰 결정을 미루세요.</span>
                   </h1>
                 ) : (
-                  <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 24, lineHeight: 1.45, letterSpacing: '-.02em', marginTop: 14 }}>
+                  <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 24, lineHeight: 1.45, letterSpacing: '-.02em', marginTop: 14 }}>
                     {todayLine}
                   </h1>
                 )}
@@ -264,13 +268,13 @@ export function HomePage() {
           ) : (
             <>
               {/* 2026-10-15 — 혜택탭 50~60대가 입력 앞에서 나가던 문제: 띠만 누르면 바로 읽히게 (신문 띠별 운세) */}
-              <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 27, lineHeight: 1.4, letterSpacing: '-.03em', marginTop: 14 }}>
+              <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 27, lineHeight: 1.4, letterSpacing: '-.03em', marginTop: 14 }}>
                 {ttiYear ? (
                   <>{yearLabel(ttiYear)} {ttiName(ttiOfYear(ttiYear))},<br />
-                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세예요.</span></>
+                    <span className={heroMo ? 'mo-brush' : undefined} style={{ backgroundImage: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세예요.</span></>
                 ) : (
                   <>내 띠를 누르면<br />
-                    <span style={{ background: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세가 바로 보여요.</span></>
+                    <span className={heroMo ? 'mo-brush' : undefined} style={{ backgroundImage: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 운세가 바로 보여요.</span></>
                 )}
               </h1>
               <div style={{ marginTop: 16 }}>

@@ -2972,7 +2972,7 @@ function TopicCollapsibleCard({
                 }
               `}</style>
             </div>
-          ) : children}
+          ) : <div className="mo-unroll">{children}</div>}
         </div>
       )}
     </div>

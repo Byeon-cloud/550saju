@@ -168,6 +168,12 @@ function prepareCloneForCapture(root: HTMLElement, shifts: Map<string, number>):
   const doc = root.ownerDocument;
   const win = doc.defaultView;
   if (!win) return;
+  // 2026-10-18 사본에서 움직임이 처음부터 다시 돌면 글자 칸이 투명하게 찍힌다 — 사본은 움직임을 전부 끈다 (motion.css)
+  try {
+    const st = doc.createElement('style');
+    st.textContent = '*,*::before,*::after{animation:none!important;transition:none!important}';
+    doc.head.appendChild(st);
+  } catch { /* noop */ }
   root.querySelectorAll<HTMLElement>('*').forEach((el) => {
     const shadow = win.getComputedStyle(el).boxShadow;
     if (shadow && shadow !== 'none') {
