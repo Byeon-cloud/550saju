@@ -43,6 +43,7 @@ const TermsPage = lazyWithReload(() => import('@/pages/TermsPage').then(m => ({ 
 const PrivacyPage = lazyWithReload(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })));
 const EventsPage = lazyWithReload(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
 const InvitePage = lazyWithReload(() => import('@/pages/InvitePage').then(m => ({ default: m.InvitePage }))); // 2026-10-18 친구 초대
+const ManseQuickPage = lazyWithReload(() => import('@/pages/ManseQuickPage').then(m => ({ default: m.ManseQuickPage }))); // 2026-10-18 무료 만세력 바로 보기
 // 웹 단독 출시 — 사업자정보 공개페이지 (전자상거래법 제10조 · 앱인토스 진입 시 홈 redirect)
 const BusinessInfoPage = lazyWithReload(() => import('@/pages/BusinessInfoPage').then(m => ({ default: m.BusinessInfoPage })));
 // #saju-card-share Stage 2 — 만세력 카드 페이지 (lazy)
@@ -195,6 +196,7 @@ function AnimatedRoutes() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/invite" element={<InvitePage />} />
+            <Route path="/manse/view" element={<ManseQuickPage />} />
             {/* 웹 단독 출시 — 사업자정보 공개페이지 (BusinessInfoPage 내부에서 앱인토스 시 홈 redirect) */}
             <Route path="/business" element={<BusinessInfoPage />} />
             {/* #saju-card-share — 만세력 카드 (프로필 단위) */}

@@ -209,6 +209,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'inv_welcome_view',   // {hasSaju} — 초대받은 친구 카드가 보였다
   'inv_welcome_click',  // {app} — 초대받은 친구 카드 버튼
   'cjoin_answer',       // {score} — 받은 궁합 초대장에 내 사주로 답했다 (2026-10-18 E21)
+  'manse_view',         // {ok, cal, hour, rel | why} — 검색 페이지 /manse/ 입력 칸에서 바로 만세력을 펼쳤다 (2026-10-18 E22)
   'tojung_preview_view', // {y, v} — 신년운세 결제 전 무료 미리 보기가 보였다 (2026-10-17, 10일 48명 보고 0명 구매 대응)
   'web_intro_view',     // {} — 웹 첫 손님 소개 카드가 보였다 (2026-10-17, 웹 전용)
 ]);

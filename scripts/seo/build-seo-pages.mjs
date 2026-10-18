@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { skySvg, SKY_CSS } from './sky.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIST = path.join(ROOT, 'dist');
@@ -98,7 +99,7 @@ function page({ title, desc, canonical, body, jsonld }) {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${canonical}">
-<meta property="og:image" content="${SITE}/og/${/\/kkum\//.test(canonical) ? 'dream' : /\/gunghap\//.test(canonical) ? 'compat' : /\/ilju\//.test(canonical) ? 'premium' : /\/unse\/\d{4}\//.test(canonical) ? 'tojung' : 'default'}.jpg">
+<meta property="og:image" content="${SITE}/og/${/\/manse\//.test(canonical) ? 'manse' : /\/kkum\//.test(canonical) ? 'dream' : /\/gunghap\//.test(canonical) ? 'compat' : /\/ilju\//.test(canonical) ? 'premium' : /\/unse\/\d{4}\//.test(canonical) ? 'tojung' : 'default'}.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -628,14 +629,37 @@ ${ctaNewYear('tojeong')}
   write('unse/suneung', page({ title, desc, canonical, body, jsonld }));
 }
 
-// ── 무료 만세력 (2026-10-18) — '만세력'은 운세 쪽에서 검색이 가장 많은 말 중 하나. 계산은 앱 입력(/input?from=manse → 사주 카드)에서.
+// ── 무료 만세력 (2026-10-18 v2) — '만세력'은 운세 쪽에서 검색이 가장 많은 말 중 하나. 오너: "퀄리티 좋으면 바이럴, 심혈을 기울여 보자"
+//   이 페이지에서 바로 입력 → /manse/view (ManseQuickPage) 가 계산하고 보관함에 저장한 뒤 사주 카드로. 입력 화면을 한 번 더 거치지 않는다.
+//   머리 그림은 조선 천문도(천상열차분야지도)처럼 28수와 12지지가 도는 별자리 판을 직접 그린 SVG(저작권 걱정 없음, 파일 0).
 //   사주500 만세력이 맞추는 것(코드 기준): 서울 기준 30분 시간 보정(timeCorrection.ts, 시 경계 :30), 옛 서머타임 1948~1951, 1955~1960, 1987~1988,
 //   한국 음력(koreanLunar.ts, 한국천문연구원 자료 기반). 이 문구를 바꾸려면 계산 코드와 같이 본다.
 {
-  const mutm = (slug) => `utm_source=seo&utm_medium=organic&utm_campaign=manse_${slug}`.replace(/&/g, '&amp;');
+  const mutm = (slug) => `utm_source=seo&utm_medium=organic&utm_campaign=manse_${slug}`;
   const canonical = `${SITE}/manse/`;
   const title = '무료 만세력, 생년월일로 사주 여덟 글자 보기 (시간 보정, 한국 음력) | 사주500';
-  const desc = '생년월일과 태어난 시간만 넣으면 사주 여덟 글자와 오행을 바로 보여 드려요. 서울 기준 30분 시간 보정, 옛 서머타임, 한국천문연구원 자료로 만든 한국 음력까지 맞춰 계산해요. 무료예요.';
+  const desc = '생년월일과 태어난 시간만 넣으면 사주 여덟 글자와 오행, 지금 대운까지 바로 보여 드려요. 서울 기준 30분 시간 보정, 옛 서머타임, 한국천문연구원 자료로 만든 한국 음력까지 맞춰 계산해요. 무료예요.';
+
+  // 별자리 판 (결정적 난수 — 빌드마다 같은 그림)
+  const sky = skySvg();
+
+  // 예시 만세력 — 1993-05-14 06:30 양력 여성 (앱 사주 카드 계산과 같음: 癸酉 丁巳 乙未 己卯, 오행 목2 화2 토2 금1 수1)
+  const OHC = { 목: '#4E7A57', 화: '#B04A38', 토: '#B07F38', 금: '#7D7870', 수: '#3E5F82' };
+  const ex = [
+    ['시주', '己', '토', '기', '卯', '목', '묘'],
+    ['일주', '乙', '목', '을', '未', '토', '미'],
+    ['월주', '丁', '화', '정', '巳', '화', '사'],
+    ['년주', '癸', '수', '계', '酉', '금', '유'],
+  ];
+  const cell = (h, oh, k, me) => `<div class="mc${me ? ' me' : ''}" style="--c:${OHC[oh]}"><b>${h}</b><span>${k}, ${oh}</span></div>`;
+  const sample = `<div class="mtable">${ex.map(([lab, g, go, gk, z, zo, zk]) => `<div class="mcol"><div class="mlab">${lab}</div>${cell(g, go, gk, lab === '일주')}${cell(z, zo, zk)}</div>`).join('')}</div>`;
+
+  const look = [
+    ['일간', '일주의 위 글자예요. 나를 나타내는 글자라, 이 글자를 기준으로 나머지 일곱 글자와의 관계(십성)를 봐요.'],
+    ['오행 균형', '나무, 불, 흙, 쇠, 물이 몇 개씩 있는지 봐요. 많은 기운은 잘 쓰는 힘, 없는 기운은 채우면 좋은 힘으로 읽어요.'],
+    ['대운', '10년마다 바뀌는 큰 흐름이에요. 지금 몇 살부터 몇 살까지의 대운인지 보면 요즘 흐름을 짐작할 수 있어요.'],
+    ['올해 운', `해마다 들어오는 글자(세운)예요. 2026년은 병오(丙午)년, 2027년은 정미(丁未)년이에요.`],
+  ].map(([k, v]) => `<div class="row"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join('');
   const rows = [
     ['년주', '태어난 해의 간지예요. 띠가 여기서 나와요. 집안과 어린 시절의 자리로 봐요.'],
     ['월주', '태어난 달의 간지예요. 계절의 기운이라 사주에서 힘이 가장 커요. 부모와 사회의 자리로 봐요.'],
@@ -647,34 +671,93 @@ ${ctaNewYear('tojeong')}
     { q: '왜 태어난 시간을 30분 늦춰 보나요?', a: '한국 표준시는 동경 135도를 기준으로 하는데 서울은 동경 127도쯤이라 해가 실제로 30분쯤 늦게 떠요. 그래서 시가 바뀌는 때를 30분 늦춰 봐요. 예를 들어 새벽 3시 30분부터 인시예요.' },
     { q: '서머타임 때 태어났으면 어떻게 하나요?', a: '1948~1951년, 1955~1960년, 1987~1988년 여름에는 시계를 한 시간 앞당겼어요. 이때 태어났다면 따로 고치지 않아도 사주500이 한 시간을 되돌려 계산해요.' },
     { q: '음력 생일도 되나요?', a: '돼요. 음력 생일은 한국천문연구원 자료로 만든 한국 음력 달력으로 양력 날짜를 찾은 뒤 계산해요. 중국 음력과 하루 다른 달이 있어서, 중국 음력을 쓰는 만세력과 일주가 달라질 수 있어요.' },
-    { q: '태어난 시간을 모르면요?', a: '시간을 모름으로 두면 시주를 빼고 여섯 글자로 보여 드려요. 시는 모르고 자시, 축시처럼 시만 알면 그걸로 넣을 수도 있어요.' },
-    { q: '정말 무료인가요?', a: '만세력과 오늘의 운세는 무료예요. 사주 여덟 글자를 처음부터 끝까지 풀어 주는 종합사주만 운을 써요.' },
+    { q: '태어난 시간을 모르면요?', a: '시간을 몰라요에 표시하면 시주를 빼고 여섯 글자로 보여 드려요.' },
+    { q: '넣은 생일은 어디에 저장되나요?', a: '이 기기의 보관함에 저장돼요. 다음에 오면 홈에서 바로 내 사주로 오늘의 운세를 볼 수 있고, 보관함에서 언제든 지울 수 있어요.' },
+    { q: '정말 무료인가요?', a: '만세력은 무료예요. 오늘의 운세와 꿈해몽도 하루 한 번 무료로 볼 수 있어요.' },
   ];
-  const body = `
-<section class="hero"><div class="wrap">
+  const seg = (name, opts, def) => `<div class="seg" role="radiogroup">${opts.map(([v, t]) => `<label><input type="radio" name="${name}" value="${v}"${v === def ? ' checked' : ''}><span>${t}</span></label>`).join('')}</div>`;
+  const pageCss = `
+.mhero{position:relative;overflow:hidden;background:#15110E;color:#F4EFE4;padding:34px 0 120px}
+.mhero .sky{position:absolute;width:560px;height:560px;right:-150px;top:-90px;opacity:.95}
+${SKY_CSS}
+.mhero .wrap{position:relative}.mhero .lab{font-size:14px;font-weight:700;color:#D2B477}
+.mhero h1{font-family:'Noto Serif KR',serif;font-size:30px;line-height:1.38;margin:8px 0 10px;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.mhero p{font-size:15.5px;color:#E4DCCD;max-width:330px;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.mform{margin-top:-96px;position:relative}
+.mform form{background:#FFFDF8;border:1px solid #E1D7C4;border-radius:16px;padding:20px 18px 16px;box-shadow:0 14px 34px rgba(26,22,18,.16)}
+.mform h2{font-family:'Noto Serif KR',serif;font-size:20px;margin-bottom:12px}
+.mform .f{margin-top:12px}.mform .f>span{display:block;font-size:14px;font-weight:700;color:#4B4238;margin-bottom:6px}
+.mform .f small{font-weight:500;color:#6F6557}
+.mform input[type=text],.mform input[type=tel],.mform input[type=time]{width:100%;height:50px;border:1px solid #D9CDB8;border-radius:12px;padding:0 14px;font-size:17px;background:#fff;color:#1A1612;font-family:inherit}
+.mform input#mb{letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.seg{display:flex;gap:6px}.seg label{flex:1;position:relative}.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;text-align:center;height:44px;line-height:42px;border:1px solid #D9CDB8;border-radius:12px;font-size:15px;font-weight:700;color:#4B4238;background:#fff;cursor:pointer}
+.seg input:checked+span{background:#1A1612;border-color:#1A1612;color:#F4EFE4}
+.seg input:focus-visible+span{outline:2px solid #B8965A;outline-offset:2px}
+.mform .tr{display:flex;gap:8px;align-items:center}.mform .tr input[type=time]{flex:1}
+.mform .chk{display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:700;color:#4B4238;white-space:nowrap}
+.mform .chk input{width:20px;height:20px;accent-color:#1A1612}
+.mform input:disabled{background:#F1ECE2;color:#A69C8E}
+.mform .err{min-height:20px;margin-top:10px;font-size:14px;font-weight:700;color:#A23A2A}
+.mform button{width:100%;height:56px;border:0;border-radius:14px;background:linear-gradient(180deg,#D2B477 0%,#B8965A 100%);color:#17110A;font-size:17px;font-weight:800;margin-top:4px;cursor:pointer;font-family:inherit}
+.mform .note2{font-size:13px;color:#6F6557;text-align:center;margin-top:10px}
+.mtable{display:flex;gap:6px}.mcol{flex:1;display:flex;flex-direction:column;gap:6px}
+.mlab{text-align:center;font-size:13px;font-weight:700;color:#6F6557}
+.mc{border-radius:12px;background:var(--c);color:#fff;text-align:center;padding:10px 0 8px}
+.mc b{display:block;font-family:'Noto Serif KR',serif;font-size:30px;line-height:1.1}.mc span{font-size:12.5px;opacity:.9}
+.mc.me{box-shadow:0 0 0 3px #FFFDF8,0 0 0 5px #B8965A}
+.excap{font-size:13.5px;color:#6F6557;margin-top:10px}
+@media (max-width:420px){.mhero .sky{width:460px;height:460px;right:-170px;top:-60px;opacity:.7}.mhero h1{font-size:27px}}
+`;
+  const script = `<script>(function(){var f=document.getElementById('mf');if(!f)return;var e=document.getElementById('mferr');
+var tu=f.querySelector('input[name=tu]'),tt=f.querySelector('input[name=t]');tu.addEventListener('change',function(){tt.disabled=tu.checked;if(tu.checked)tt.value='';});
+f.querySelector('#mb').addEventListener('input',function(ev){ev.target.value=ev.target.value.replace(/[^0-9]/g,'').slice(0,8);});
+f.addEventListener('submit',function(ev){ev.preventDefault();e.textContent='';
+var b=f.b.value.replace(/[^0-9]/g,'');if(b.length!==8){e.textContent='생년월일 8자리를 넣어 주세요. 예: 19930514';f.b.focus();return;}
+var y=+b.slice(0,4),m=+b.slice(4,6),d=+b.slice(6,8),now=new Date().getFullYear();var c=(f.querySelector('input[name=c]:checked')||{}).value||'solar';
+if(y<1900||y>now||m<1||m>12||d<1||d>31){e.textContent='날짜를 다시 확인해 주세요.';f.b.focus();return;}
+if(c==='solar'){var dt=new Date(y,m-1,d);if(dt.getMonth()!==m-1||dt.getDate()!==d){e.textContent='없는 날짜예요. 다시 확인해 주세요.';f.b.focus();return;}}else if(d>30){e.textContent='음력은 30일까지 있어요.';f.b.focus();return;}
+var g=(f.querySelector('input[name=g]:checked')||{}).value;if(!g){e.textContent='성별을 골라 주세요.';return;}
+var t='';if(!tu.checked){if(!tt.value){e.textContent='태어난 시각을 넣거나 시간을 몰라요에 표시해 주세요.';tt.focus();return;}t=tt.value.replace(':','');}
+var r=(f.querySelector('input[name=r]:checked')||{}).value||'self';var n=(f.n.value||'').trim().slice(0,12);
+var q='b='+b+'&c='+c+'&g='+g+'&r='+r+(t?'&t='+t:'')+(n?'&n='+encodeURIComponent(n):'')+'&${mutm('form')}';
+location.href='/manse/view?'+q;});})();</script>`;
+  const body = `<style>${pageCss}</style>
+<section class="mhero">${sky}<div class="wrap">
 <div class="lab">무료 만세력</div>
-<h1>생년월일만 넣으면<br>사주 여덟 글자가 바로 나와요</h1>
+<h1>생년월일만 넣으면<br>사주 여덟 글자가<br>바로 펼쳐져요</h1>
 <p>서울 기준 30분 시간 보정, 옛 서머타임, 한국 음력까지 맞춰 계산해요.</p>
 </div></section>
 <main class="wrap">
-<section class="cta">
-<h3>내 만세력 보기</h3>
-<p>이름과 생년월일, 태어난 시간을 넣으면 네 기둥 여덟 글자와 오행, 지금 지나는 대운까지 한 장으로 보여 드려요.</p>
-<a class="btn" href="/input?from=manse&amp;${mutm('main')}">무료 만세력 보기</a>
-<a class="sub" href="/daily?${mutm('daily')}">내 사주로 오늘의 운세 무료로 보기</a>
-</section>
-<section class="sec"><h2><span class="seal">一</span>사주500 만세력이 맞추는 세 가지</h2><div class="card">
+<section class="mform"><form id="mf" novalidate autocomplete="off">
+<h2>내 만세력 펼치기</h2>
+<div class="f"><span>누구의 만세력인가요</span>${seg('r', [['self', '나'], ['family', '가족'], ['friend', '친구'], ['lover', '연인']], 'self')}</div>
+<div class="f"><span>이름 <small>(선택, 비워 두면 '나')</small></span><input type="text" name="n" maxlength="12" placeholder="이름이나 별명"></div>
+<div class="f"><span>성별</span>${seg('g', [['f', '여성'], ['m', '남성']], '')}</div>
+<div class="f"><span>생년월일 8자리</span><input type="tel" id="mb" name="b" inputmode="numeric" maxlength="8" placeholder="예: 19930514"></div>
+<div class="f">${seg('c', [['solar', '양력'], ['lunar', '음력'], ['leap', '음력 윤달']], 'solar')}</div>
+<div class="f"><span>태어난 시각</span><div class="tr"><input type="time" name="t"><label class="chk"><input type="checkbox" name="tu">시간을 몰라요</label></div></div>
+<p class="err" id="mferr" role="alert"></p>
+<button type="submit">만세력 펼치기</button>
+<p class="note2">무료예요. 생일은 이 기기의 보관함에만 저장되고 언제든 지울 수 있어요.</p>
+</form></section>
+<section class="sec"><h2><span class="seal">一</span>이렇게 나와요</h2><div class="card">${sample}
+<p class="excap">예시: 1993년 5월 14일 오전 6시 30분(양력, 여성). 금테를 두른 일주의 위 글자 乙(을목)이 나예요. 오행은 나무 2, 불 2, 흙 2, 쇠 1, 물 1이에요.</p>
+<p class="txt" style="margin-top:10px">실제 결과에는 십성, 지장간, 12운성, 신살, 지금 대운과 올해 운까지 한 장에 나오고, 이미지로 저장하거나 친구에게 보낼 수 있어요.</p>
+</div></section>
+<section class="sec"><h2><span class="seal">二</span>사주500 만세력이 맞추는 세 가지</h2><div class="card">
 <p class="txt"><b>태어난 시각 30분 보정.</b> 한국 표준시와 서울의 실제 해 시간은 30분쯤 차이가 나요. 시가 바뀌는 때를 30분 늦춰 봐서, 새벽 3시 30분부터 인시로 계산해요.</p>
 <p class="txt"><b>옛 서머타임.</b> 1948~1951년, 1955~1960년, 1987~1988년 여름에 태어났다면 시계가 한 시간 빨랐던 것을 되돌려 계산해요.</p>
 <p class="txt"><b>한국 음력.</b> 음력 생일은 한국천문연구원 자료로 만든 한국 음력 달력으로 바꿔요. 중국 음력과 하루씩 다른 달이 있어서 이걸 맞추지 않으면 일주가 하루 밀릴 수 있어요.</p>
 </div></section>
-<section class="sec"><h2><span class="seal">二</span>여덟 글자 읽는 법</h2><div class="card">${rows}
-<p class="txt" style="margin-top:12px">위 글자는 천간 열 가지, 아래 글자는 지지 열두 가지예요. 글자마다 나무, 불, 흙, 쇠, 물 다섯 기운(오행) 중 하나를 띠고, 이 기운이 얼마나 고르게 있는지가 사주 풀이의 출발점이에요.</p>
+<section class="sec"><h2><span class="seal">三</span>만세력에서 꼭 볼 네 가지</h2><div class="card">${look}</div></section>
+<section class="sec"><h2><span class="seal">四</span>네 기둥 읽는 법</h2><div class="card">${rows}
+<p class="txt" style="margin-top:12px">위 글자는 천간 열 가지, 아래 글자는 지지 열두 가지예요. 글자마다 나무, 불, 흙, 쇠, 물 다섯 기운(오행) 중 하나를 띠어요.</p>
 </div></section>
-<section class="sec"><h2><span class="seal">三</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
-<section class="sec"><h2>함께 보면 좋은 글</h2><div class="links"><a href="/ilju/">60일주 총정리</a><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/${YEAR}/">${YEAR}년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a></div></section>
-<p class="note">만세력은 사주를 보는 기본 달력이에요. 같은 날 태어나도 태어난 시와 음력 계산에 따라 글자가 달라질 수 있어서, 시간과 음력 여부를 정확히 넣을수록 좋아요.</p>
-</main>`;
+<section class="sec"><h2><span class="seal">五</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<section class="sec"><h2>함께 보면 좋은 글</h2><div class="links"><a href="/ilju/">60일주 총정리</a><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/${YEAR}/">${YEAR}년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a></div></section>
+<p class="note">같은 날 태어나도 태어난 시와 음력 계산에 따라 글자가 달라질 수 있어요. 시간과 음력 여부를 정확히 넣을수록 좋아요.</p>
+</main>${script}`;
   const jsonld = [
     { '@context': 'https://schema.org', '@type': 'WebApplication', name: '사주500 무료 만세력', url: canonical, applicationCategory: 'LifestyleApplication', operatingSystem: 'Web', inLanguage: 'ko', offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' }, description: desc },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },

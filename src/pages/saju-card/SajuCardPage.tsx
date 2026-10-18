@@ -35,6 +35,8 @@ import { Header } from '@/components/layout/Header';
 import { useToast } from '@/components/common/Toast';
 import { HJ, SERIF as HJ_SERIF, GoldCta, GhostButton } from '@/components/hanji/Hanji';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
+import { CalcNote, ShareRow, FlowNow, NextSteps } from './_manse_extras';
 // Stage 4: OHENG_MAP — IdentityCard 가 자체 OHENG_ACCENT 매핑 사용, 미사용
 // import { OHENG_MAP } from '@/constants/oheng';
 import { getIljuAnimal } from '@/constants/iljuAnimal';
@@ -323,6 +325,13 @@ export function SajuCardPage() {
           }}
         />
 
+        {/* 2026-10-18 무료 만세력 디벨롭 — 계산 근거, 보내기, 운의 흐름(대운, 올해, 내년) */}
+        <div style={{ padding: '0 18px' }}>
+          <CalcNote input={profile.input} />
+          <ShareRow onShare={handleShare} onSave={() => setShowExportSheet(true)} busy={exportBusy !== null} />
+          <FlowNow sajuData={sajuData} />
+        </div>
+
         {/* ═════ Stage 7e — 자세히 영역 슬림화 ═════
              · 핵심 신살 → IdentityCard 안으로 이동 (키워드 자리)
              · 운의 흐름 (FlowTables / UnFlowEntryLinks) 폐지
@@ -333,6 +342,9 @@ export function SajuCardPage() {
           <div style={{ marginTop: 16 }}>
             <Component12UnseongSection name={profile.name} sajuData={sajuData} />
           </div>
+
+          {/* 2026-10-18 무료로 이어 보기 (유료 종합사주보다 먼저) */}
+          <NextSteps profileId={profile.id} ilju={ilju || ''} web={!isAppintosBuild && !isAppsInToss()} />
 
           {/* 2. CTA — 종합 사주 풀이 받기 (Stage 7e: 페이지 맨 밑으로 이동) */}
           <div style={{ marginTop: 24 }}>

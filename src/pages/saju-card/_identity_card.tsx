@@ -332,7 +332,8 @@ export function IdentityCard({
             letterSpacing: '0.16em',
           }}
         >
-          본인의 사주
+          {/* 2026-10-18 — 가족, 친구 만세력도 이 카드로 나와서 '본인의 사주' 대신 이름 (이미지 저장, 보내기에도 그대로 찍힌다) */}
+          {name && name.trim() && name.trim() !== '나' ? `${name.trim()} 님의 사주` : '나의 사주'}
         </span>
       </div>
 

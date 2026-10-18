@@ -24,8 +24,11 @@ const CARDS = [
   { id: 'monthly', seal: '月', kicker: '월운세', title: '한 달 흐름을\n날짜까지 미리 봐요', sub: '좋은 날과 조심할 날을 알려 드려요' },
   { id: 'weekly', seal: '週', kicker: '주간운세', title: '이번 주 7일을\n내 사주로 봐요', sub: '중요한 약속을 언제 잡을지 알려 드려요' },
   { id: 'tti', seal: '支', kicker: '띠별 운세', title: '띠만 눌러도\n오늘 운세가 보여요', sub: '가족 띠도 함께 볼 수 있어요' },
+  { id: 'manse', sky: true, seal: '曆', kicker: '무료 만세력', title: '생년월일만 넣으면\n여덟 글자가 펼쳐져요', sub: '30분 시간 보정, 옛 서머타임, 한국 음력까지 맞춰요' },
 ];
 
+// 만세력은 산수화 대신 페이지 머리와 같은 천문도 별자리 판 (scripts/seo/sky.mjs)
+let SKY = null;
 const html = (c) => `<!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
@@ -42,7 +45,11 @@ h1{margin-top:14px;font-family:'Noto Serif KR',serif;font-weight:700;font-size:7
 .sub{margin-top:auto;font-size:30px;color:#E4DCCD}
 .seal{position:absolute;right:84px;top:72px;width:92px;height:92px;border:4px solid #B5463A;color:#C9594C;border-radius:10px;display:grid;place-items:center;font-family:'Noto Serif KR',serif;font-weight:900;font-size:54px;background:rgba(26,22,18,.35)}
 .rule{width:64px;height:3px;background:#B8965A;margin-top:26px}
-</style></head><body><div class="c"><div class="in">
+.c.sk{background:radial-gradient(circle at 80% 48%,#2A221B 0%,#15110E 64%)}
+.c.sk .sky{position:absolute;width:760px;height:760px;right:-170px;top:-65px}
+.c.sk .seal{display:none}
+${c.sky && SKY ? SKY.SKY_CSS : ''}
+</style></head><body><div class="c${c.sky ? ' sk' : ''}">${c.sky && SKY ? SKY.skySvg() : ''}<div class="in">
 <div class="brand">사주<b>500</b></div>
 <div class="kick">${c.kicker}</div>
 <h1>${c.title}</h1>
@@ -52,10 +59,13 @@ h1{margin-top:14px;font-family:'Noto Serif KR',serif;font-weight:700;font-size:7
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
+  SKY = await import(require('url').pathToFileURL(path.join(__dirname, '../seo/sky.mjs')).href);
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--allow-file-access-from-files'] });
   const page = await browser.newPage();
   await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 1 });
-  for (const c of CARDS) {
+  // ONLY=manse,tti 처럼 주면 그 그림만 다시 찍는다
+  const only = (process.env.ONLY || '').split(',').filter(Boolean);
+  for (const c of CARDS.filter((x) => !only.length || only.includes(x.id))) {
     const file = path.join(OUT, `_${c.id}.html`);
     fs.writeFileSync(file, html(c));
     await page.goto('file:///' + file.replace(/\\/g, '/'), { waitUntil: 'networkidle0', timeout: 60000 });
