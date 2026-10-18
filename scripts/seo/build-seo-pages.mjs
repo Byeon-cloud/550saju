@@ -197,7 +197,7 @@ for (const z of ORDER) {
 <p>${YEAR}년은 ${gzKo(yearGz)}년, 붉은 양의 해예요. 입춘(양력 2월 4일 무렵)부터 한 해가 바뀌어요. 내 띠를 눌러 자세히 보세요.</p>
 </div></section>
 <main class="wrap">
-<section class="sec">${ttiGrid(null)}</section>
+<section class="sec">${ttiGrid(null)}<a class="btn" style="margin-top:12px" href="/tti/${YEAR}?utm_source=seo&amp;utm_medium=organic&amp;utm_campaign=tti_board_${YEAR}">열두 띠 한 장으로 보고 가족에게 보내기</a></section>
 <section class="sec"><h2><span class="seal">一</span>12띠 ${YEAR}년 총운</h2><div class="card list">${items}</div></section>
 <section class="cta">
 <h3>띠 운세는 같은 해에 태어난 모두의 이야기예요</h3>

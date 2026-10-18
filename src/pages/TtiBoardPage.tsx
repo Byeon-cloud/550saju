@@ -12,16 +12,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { HJ, SERIF, Seal, GoldCta } from '@/components/hanji/Hanji';
-import { moVars } from '@/components/motion/Motion';
 import { TtiAnimal } from '@/components/tti/TtiAnimal';
+import { TtiBoardCard, shareBoard } from '@/components/tti/TtiBoardCard';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import { useToast } from '@/components/common/Toast';
 import { trackEvent } from '@/services/analytics';
 import { kstToday } from '@/utils/kstDate';
 import { todayGz } from '@/services/saju/hookFacts';
-import { isAppsInToss } from '@/services/payment/iapService';
 import {
-  TTI, ttiYears, loadTtiDay, fallbackHead, goodHourOf, badHour, dayTone, setMyTti, getMyTti, type TtiDay, type DayMark,
+  TTI, ttiYears, loadTtiDay, fallbackHead, goodHourOf, badHour, dayTone, setMyTti, getMyTti, type TtiDay,
 } from '@/services/tti/ttiFortune';
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
@@ -35,14 +34,6 @@ function shortFromHead(head: string): string | null {
   if (s.length < 6 || s.length > 18 || /[一-鿿()]|합충|육합|삼합|원진|충|형살/.test(s)) return null;
   return `${s}이에요`;
 }
-const MARK_COLOR: Record<DayMark, string> = { 좋음: HJ.ink, 보통: HJ.mute, 조심: '#A23A2A' };
-/** 칸 바탕 — 좋은 날은 따뜻한 종이, 조심할 날은 옅은 낙관 빛 (금색은 버튼에만이라 쓰지 않는다) */
-const CELL_TONE: Record<DayMark, { bg: string; line: string }> = {
-  좋음: { bg: '#F4ECD8', line: '#DCCBA6' },
-  보통: { bg: '#FFFDF8', line: '#E1D7C4' },
-  조심: { bg: '#F8EAE5', line: '#E6C6BC' },
-};
-
 export function TtiBoardPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -78,26 +69,14 @@ export function TtiBoardPage() {
   const share = async () => {
     if (busy) return;
     setBusy(true);
-    trackEvent('cta_click', { label: '띠별 운세 한 장 보내기', page: '/tti' });
+    const message = `${dateLabel} 오늘의 띠별 운세예요. 우리 가족 띠도 한번 보세요`;
     try {
-      if (isAppsInToss()) {
-        // 앱(토스)은 이미지를 바로 보낼 수 없어 토스 공유 링크 (사주 카드와 같은 방식)
-        const { share: tossShare, getTossShareLink } = await import('@apps-in-toss/web-framework');
-        const link = await getTossShareLink('intoss://saju-500/tti', 'https://saju500.app/og/tti.jpg');
-        await tossShare({ message: [`${dateLabel} 오늘의 띠별 운세예요. 우리 가족 띠도 한번 보세요`, link].join('\n') });
-        trackEvent('share_complete', { type: 'tti_board', method: 'toss_share', rewarded: 0 });
-        return;
-      }
-      const { captureSajuCardAsBlob, shareSajuCardImage } = await import('@/components/saju-card/SajuCardExport');
-      const blob = await captureSajuCardAsBlob({ element: boardRef.current ?? undefined, scale: 3, backgroundColor: HJ.paper });
-      const r = await shareSajuCardImage(
-        blob,
-        `오늘의_띠별_운세_${today.replace(/-/g, '')}.png`,
-        `${dateLabel} 오늘의 띠별 운세예요. 우리 가족 띠도 한번 보세요`,
-        'https://saju500.app/tti?utm_source=share&utm_medium=image&utm_campaign=tti_board',
-        'tti_board',
-      );
-      if (r.via !== 'canceled') toast.show(r.message, r.ok ? 'success' : 'warning');
+      const r = await shareBoard({
+        boardEl: boardRef.current, inAppPath: '/tti', ogImage: 'https://saju500.app/og/tti.jpg', message,
+        fileName: `오늘의_띠별_운세_${today.replace(/-/g, '')}.png`,
+        webUrl: 'https://saju500.app/tti?utm_source=share&utm_medium=image&utm_campaign=tti_board', type: 'tti_board',
+      });
+      if (r.message && !r.canceled) toast.show(r.message, r.ok ? 'success' : 'warning');
     } catch {
       toast.show('보내기를 열지 못했어요. 화면을 캡처해서 보내도 돼요', 'warning');
     } finally {
@@ -113,47 +92,8 @@ export function TtiBoardPage() {
       <Header title="오늘의 띠별 운세" />
 
       {/* ── 한 장 (캡처, 보내기 대상) ── */}
-      <div ref={boardRef} style={{ background: HJ.paper, padding: '6px 12px 4px' }}>
-        <div style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '12px 14px 8px' }}>
-          <div className="flex items-center" style={{ gap: 10 }}>
-            <Seal size={36} fontSize={15} stamp>{tg.gz}</Seal>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, lineHeight: 1.25 }}>오늘의 띠별 운세</div>
-              <div style={{ fontSize: 13.5, color: HJ.ink2, marginTop: 2 }}>{dateLabel}, {tg.ko}({tg.gz})일</div>
-            </div>
-            <div style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 900, color: HJ.ink, flexShrink: 0 }}>
-              사주<span style={{ color: '#8C6D3D' }}>500</span>
-            </div>
-          </div>
-
-          {/* 3 x 4 칸 (10-19 오너: 우리 스타일 동물 그림, 좋은지 조심할지 바로, 한 문장은 눈에 잘 띄게) */}
-          <div className="grid grid-cols-3" style={{ gap: 5, marginTop: 8 }}>
-            {rows.map((r, i) => {
-              const tone = CELL_TONE[r.mark];
-              return (
-                <button key={r.ji} type="button" onClick={() => pick(r.ji)} className="mo-rise"
-                  aria-pressed={sel === r.ji} aria-label={`${r.name} ${r.mark}, ${r.line}`}
-                  style={{
-                    ...moVars({ i, d: 80 }),
-                    position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    padding: '5px 4px 7px', borderRadius: 12, textAlign: 'center',
-                    background: tone.bg, border: `${sel === r.ji ? 2 : 1}px solid ${sel === r.ji ? HJ.ink : tone.line}`,
-                  }}>
-                  <span style={{ position: 'absolute', top: 5, right: 7, fontSize: 13, fontWeight: 800, color: MARK_COLOR[r.mark] }}>{r.mark}</span>
-                  <TtiAnimal ji={r.ji} size={40} />
-                  <span style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700, color: HJ.ink, marginTop: 2, whiteSpace: 'nowrap' }}>{r.name}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35, color: '#2E2720', marginTop: 3, wordBreak: 'keep-all' }}>{r.line}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* 출처는 머리의 '사주500' 하나로 (10-19 오너: 아래 주소 줄은 필요 없다) */}
-          <div style={{ paddingTop: 8, fontSize: 13, color: HJ.mute, textAlign: 'center' }}>
-            양력 2월 4일 무렵(입춘) 전에 태어났다면 앞 해의 띠로 보세요
-          </div>
-        </div>
-      </div>
+      <TtiBoardCard ref={boardRef} seal={<Seal size={36} fontSize={15} stamp>{tg.gz}</Seal>}
+        title="오늘의 띠별 운세" sub={`${dateLabel}, ${tg.ko}(${tg.gz})일`} rows={rows} sel={sel} onPick={pick} />
 
       {/* ── 고른 띠 자세히 (캡처 밖) ── */}
       <div ref={detailRef} style={{ padding: '0 12px', scrollMarginTop: 72 }}>
@@ -183,6 +123,10 @@ export function TtiBoardPage() {
           {busy ? '준비 중이에요' : '가족 단톡방에 보내기'}
         </GoldCta>
         <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>화면을 그대로 캡처해서 보내도 돼요</p>
+        <button type="button" className="w-full" onClick={() => { trackEvent('cta_click', { label: '오늘 띠 한 장에서 2027', page: '/tti' }); navigate('/tti/2027'); }}
+          style={{ marginTop: 6, padding: '8px 0', fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+          2027년 띠별 신년운세도 한 장으로 보기 ›
+        </button>
         {/* 2026-10-19 띠 운세를 보러 온 사람이 내일도 오게 — 아침 9시 알림 (앱에서만, 동의하면 숨김) */}
         <DailyNotiButton variant="slim" className="mt-3" />
 

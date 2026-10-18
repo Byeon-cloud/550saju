@@ -450,6 +450,11 @@ export function HomePage() {
           {tojungInfo.launch && <div style={{ fontSize: 13, color: '#D2B477' }}>{tojungInfo.launch.badge} 가격, {tojungInfo.launch.note}</div>}
         </div>
       </button>
+      {/* 2026-10-19 열두 띠 2027년 한 장 (가족 단톡방용, 무료) → 내 사주 신년운세로 */}
+      <button type="button" onClick={() => { import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '홈 2027 띠 한 장', page: '/' })).catch(() => {}); navigate('/tti/2027'); }}
+        className="w-full" style={{ marginTop: 6, padding: '8px 16px', fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+        열두 띠 {NEW_YEAR_TARGET}년 운세 한 장으로 보기 ›
+      </button>
 
       {/* ━━━ 5. 기간별 (달력 장 두 장 — 큰 숫자로 읽기 전에 보이게) ━━━ */}
       <SecTitle k="기간별 운세" h="이번 주와 다음 달 미리 보기" />
