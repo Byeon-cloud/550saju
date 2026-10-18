@@ -46,6 +46,7 @@ const InvitePage = lazyWithReload(() => import('@/pages/InvitePage').then(m => (
 const ManseQuickPage = lazyWithReload(() => import('@/pages/ManseQuickPage').then(m => ({ default: m.ManseQuickPage }))); // 2026-10-18 무료 만세력 바로 보기
 const TtiBoardPage = lazyWithReload(() => import('@/pages/TtiBoardPage').then(m => ({ default: m.TtiBoardPage }))); // 2026-10-19 오늘의 띠별 운세 한 장
 const TtiYearBoardPage = lazyWithReload(() => import('@/pages/TtiYearBoardPage').then(m => ({ default: m.TtiYearBoardPage }))); // 2026-10-19 2027 띠별 신년운세 한 장
+const DailyCardPage = lazyWithReload(() => import('@/pages/daily/DailyCardPage').then(m => ({ default: m.DailyCardPage }))); // 2026-10-19 오늘 운세 한 장
 // 웹 단독 출시 — 사업자정보 공개페이지 (전자상거래법 제10조 · 앱인토스 진입 시 홈 redirect)
 const BusinessInfoPage = lazyWithReload(() => import('@/pages/BusinessInfoPage').then(m => ({ default: m.BusinessInfoPage })));
 // #saju-card-share Stage 2 — 만세력 카드 페이지 (lazy)
@@ -202,6 +203,7 @@ function AnimatedRoutes() {
             <Route path="/manse/view" element={<ManseQuickPage />} />
             <Route path="/tti" element={<TtiBoardPage />} />
             <Route path="/tti/2027" element={<TtiYearBoardPage />} />
+            <Route path="/daily/card" element={<DailyCardPage />} />
             {/* 웹 단독 출시 — 사업자정보 공개페이지 (BusinessInfoPage 내부에서 앱인토스 시 홈 redirect) */}
             <Route path="/business" element={<BusinessInfoPage />} />
             {/* #saju-card-share — 만세력 카드 (프로필 단위) */}

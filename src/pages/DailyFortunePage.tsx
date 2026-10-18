@@ -1064,13 +1064,10 @@ function ResultView({
   // 공유 핸들러 — 결과 페이지 공유 = OG 바이럴 (앱 홍보용 · 보상 X).
   //   2026-05-28 PM 정책 분리: 결과 페이지 공유는 shareResult (OG 이미지 송출).
   //   친구 초대는 이벤트 탭 surface 만 사용 (services/share/invite.shareInvite · 2026-10-14 공유 보상 종료).
+  // 2026-10-19 — '친구에게 공유하기'는 먼저 '오늘 운세 한 장'(폰 한 화면, 캡처용)으로. 그 화면에서 링크나 이미지로 보낸다
+  //   (오너: 퍼지는 건 한 캡처). 결과 화면 목업은 그대로.
   const handleShare = async () => {
-    const { shareResult } = await import('@/utils/share');
-    await shareResult({
-      type: 'daily',
-      name: profile?.name || '나',
-      reportId: kstToday(), // YYYY-MM-DD (KST — 2026-07-03 UTC 날짜 fix)
-    });
+    navigate('/daily/card', { state: { result, name: profile?.name || '나', dateLabel: dateInfo.label || dateLabel, ganzi: dateInfo.ganzi || '', ganziKo: '' } });
   };
 
   // §07 4영역 카드 클릭 → 관계/일/건강 sub-picker bottom sheet (2026-05-07)
