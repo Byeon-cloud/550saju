@@ -20,6 +20,11 @@ import { skySvg, SKY_CSS } from './sky.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIST = path.join(ROOT, 'dist');
+
+// 2026-10-19 사주500 띠 동물 그림 — 앱과 같은 원본(src/components/tti/ttiAnimalSvg.ts)을 esbuild 로 읽어 쓴다 (그림은 한 곳에서만 고친다)
+const { transformSync } = await import('esbuild');
+const animalJs = transformSync(fs.readFileSync(path.join(ROOT, 'src/components/tti/ttiAnimalSvg.ts'), 'utf8'), { loader: 'ts', format: 'esm' }).code;
+const { ttiAnimalSvg } = await import('data:text/javascript;base64,' + Buffer.from(animalJs).toString('base64'));
 const SITE = 'https://saju500.app';
 const YEAR = 2027;
 const data = JSON.parse(fs.readFileSync(path.join(ROOT, `src/data/seo/tti-${YEAR}.json`), 'utf8'));
@@ -82,6 +87,7 @@ a{color:inherit}
 .case p{font-size:15.5px;color:#2E2720}.case a{font-size:14px;font-weight:700;color:#7A5C2E;text-decoration:none}
 .txt{font-size:15.5px;color:#2E2720}.txt+.txt{margin-top:10px}
 .faq dt{font-weight:800;font-size:16px;margin-top:14px}.faq dt:first-child{margin-top:0}.faq dd{font-size:15.5px;color:#2E2720;margin-top:2px}
+.ani{display:flex;gap:10px;margin-bottom:8px}.ani svg{display:block}.ani-s{display:inline-block;vertical-align:-6px;margin-right:6px}.grid a svg{display:block;margin:0 auto 2px}
 .links{display:flex;flex-wrap:wrap;gap:8px}.links a{background:#FFFDF8;border:1px solid #E1D7C4;border-radius:12px;padding:8px 12px;font-size:15px;font-weight:700;text-decoration:none}
 `;
 
@@ -122,7 +128,7 @@ function ttiGrid(current) {
   return `<div class="grid">${ORDER.map((z) => {
     const [slug, name] = T[z];
     const yy = Object.keys(data.tti[z].years).map((y) => String(Number(y) % 100).padStart(2, '0'));
-    return `<a href="/unse/${YEAR}/${slug}/"${z === current ? ' class="on"' : ''}>${name}<small>${yy.slice(0, 3).join(' ')}<br>${yy.slice(3).join(' ')}</small></a>`;
+    return `<a href="/unse/${YEAR}/${slug}/"${z === current ? ' class="on"' : ''}>${ttiAnimalSvg(z, 28, z === current ? '#F4EFE4' : undefined, z === current ? '#1A1612' : undefined)}${name}<small>${yy.slice(0, 3).join(' ')}<br>${yy.slice(3).join(' ')}</small></a>`;
   }).join('')}</div>`;
 }
 
@@ -148,6 +154,7 @@ for (const z of ORDER) {
   const desc = `${YEAR}년 ${gzKo(yearGz)}년 ${name} 신년운세. ${firstSentence(t.head)} 좋은 달은 ${m.good.join(', ') || '없음'}, 조심할 달은 ${m.care.join(', ') || '없음'}. ${Object.keys(t.years).map((y) => `${String(Number(y) % 100).padStart(2, '0')}년생`).join(', ')} 운세까지.`;
   const body = `
 <section class="hero"><div class="wrap">
+<div class="ani">${ttiAnimalSvg(z, 60, '#F4EFE4', '#1A1612', '#D0705E')}</div>
 <div class="lab">${YEAR} ${gzKo(yearGz)}(${yearGz})년 신년운세</div>
 <h1>${YEAR}년 ${name} 운세</h1>
 <p>입춘(양력 2월 4일 무렵)부터 ${YEAR + 1}년 입춘 전까지, ${name}의 한 해 흐름이에요.</p>
@@ -181,7 +188,7 @@ for (const z of ORDER) {
   const items = ORDER.map((z) => {
     const [slug, name] = T[z];
     const ys = Object.keys(data.tti[z].years).map((y) => `${String(Number(y) % 100).padStart(2, '0')}`).join(', ');
-    return `<div class="item"><h3>${name}<small>${ys}년생</small></h3><p>${esc(data.tti[z].head)}</p><a class="more" href="/unse/${YEAR}/${slug}/">${name} 좋은 달과 출생 연도별 운세 보기 ›</a></div>`;
+    return `<div class="item"><h3><span class="ani-s">${ttiAnimalSvg(z, 26)}</span>${name}<small>${ys}년생</small></h3><p>${esc(data.tti[z].head)}</p><a class="more" href="/unse/${YEAR}/${slug}/">${name} 좋은 달과 출생 연도별 운세 보기 ›</a></div>`;
   }).join('');
   const body = `
 <section class="hero"><div class="wrap">
@@ -308,6 +315,7 @@ ${cats}
     const faqs = [x.faq, ...(same ? [] : [{ q: `남자 ${na} 여자 ${nb}와 남자 ${nb} 여자 ${na}는 궁합이 다른가요?`, a: '띠 궁합은 두 띠의 관계라 남녀를 바꿔도 같게 봅니다. 남녀에 따라 달라지는 부분은 두 사람의 생일과 태어난 시간으로 보는 사주 궁합에서 드러납니다.' }])];
     const body = `
 <section class="hero"><div class="wrap">
+<div class="ani">${ttiAnimalSvg(p.a, 56, '#F4EFE4', '#1A1612', '#D0705E')}${same ? '' : ttiAnimalSvg(p.b, 56, '#F4EFE4', '#1A1612', '#D0705E')}</div>
 <div class="lab">띠 궁합</div>
 <h1>${esc(na)} ${esc(nb)} 궁합</h1>
 <p>${esc(x.head)}</p>

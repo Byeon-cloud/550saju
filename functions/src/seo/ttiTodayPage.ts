@@ -7,6 +7,7 @@
  */
 import * as admin from 'firebase-admin';
 import { onRequest } from 'firebase-functions/v2/https';
+import { ttiAnimalSvg } from '../tti/ttiAnimalSvg'; // 2026-10-19 사주500 띠 그림
 
 const ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 const NAME: Record<string, string> = { 子: '쥐띠', 丑: '소띠', 寅: '호랑이띠', 卯: '토끼띠', 辰: '용띠', 巳: '뱀띠', 午: '말띠', 未: '양띠', 申: '원숭이띠', 酉: '닭띠', 戌: '개띠', 亥: '돼지띠' };
@@ -42,7 +43,7 @@ function render(doc: any, dateKey: string, isToday: boolean): string {
     const t = doc.tti?.[z] || {};
     const years = Object.entries(t.years || {}).sort(([a], [b]) => Number(a) - Number(b))
       .map(([yr, line]) => `<div class="yr"><b>${String(Number(yr) % 100).padStart(2, '0')}년생</b><span>${esc(line)}</span></div>`).join('');
-    return `<section class="tti" id="${SLUG[z]}"><h2><span class="seal">${z}</span>${NAME[z]} 오늘의 운세</h2>${t.head ? `<p class="head">${esc(t.head)}</p>` : ''}${years}</section>`;
+    return `<section class="tti" id="${SLUG[z]}"><h2>${ttiAnimalSvg(z, 32)}${NAME[z]} 오늘의 운세</h2>${t.head ? `<p class="head">${esc(t.head)}</p>` : ''}${years}</section>`;
   }).join('');
   const jsonld = { '@context': 'https://schema.org', '@type': 'Article', headline: `오늘의 띠별 운세 ${m}월 ${d}일`, description: desc, inLanguage: 'ko', datePublished: dateKey, dateModified: dateKey, mainEntityOfPage: `${SITE}/unse/today/`, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
