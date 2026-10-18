@@ -324,6 +324,20 @@ export function HomePage() {
             <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>첫 질문 무료 ›</span>
           </button>
         </div>
+        {/* 2026-10-18 무료 만세력 입구 — 홈에 없어서 '내 정보', '보관함'으로만 들어갔다. 토스 검색 키워드 '만세력'과 짝 */}
+        <button type="button" className="w-full text-left mo-press"
+          onClick={() => {
+            import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '홈 무료 만세력', page: '/' })).catch(() => {});
+            navigate(hasSaju && profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '/input?from=manse');
+          }}
+          style={{ marginTop: 10, borderRadius: 16, padding: '14px 15px', background: HJ.card, border: `1px solid ${HJ.line}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Seal size={32} fontSize={18}>曆</Seal>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>{hasSaju ? '내 만세력' : '무료 만세력'}</span>
+            <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, marginTop: 2 }}>사주 여덟 글자와 오행, 지금 대운을 한 장으로</span>
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink, flexShrink: 0 }}>무료 ›</span>
+        </button>
       </div>
 
       {/* ━━━ 2-1. 가족 띠 운세 (사주 있는 사람) — 배우자, 자녀, 부모님 띠도 오늘 운세를 한 번에 ━━━ */}
