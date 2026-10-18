@@ -108,7 +108,7 @@ ${(Array.isArray(jsonld) ? jsonld : [jsonld]).map((j) => `<script type="applicat
 </head><body>
 <header class="wrap top"><a class="brand" href="/">사주<b>500</b></a><a class="go" href="/?${utm('top')}">오늘의 운세 보기</a></header>
 ${body}
-<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/unse/2027/samjae/">2027년 삼재</a><a href="/unse/2027/tojeong/">2027 토정비결</a><a href="/unse/suneung/">수능 날 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
+<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/manse/">무료 만세력</a><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/unse/2027/samjae/">2027년 삼재</a><a href="/unse/2027/tojeong/">2027 토정비결</a><a href="/unse/suneung/">수능 날 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
 <footer class="wrap foot">
 <div><a href="/terms">이용약관</a><a class="b" href="/privacy">개인정보처리방침</a><a href="/business">사업자정보</a></div>
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div>
@@ -628,10 +628,64 @@ ${ctaNewYear('tojeong')}
   write('unse/suneung', page({ title, desc, canonical, body, jsonld }));
 }
 
+// ── 무료 만세력 (2026-10-18) — '만세력'은 운세 쪽에서 검색이 가장 많은 말 중 하나. 계산은 앱 입력(/input?from=manse → 사주 카드)에서.
+//   사주500 만세력이 맞추는 것(코드 기준): 서울 기준 30분 시간 보정(timeCorrection.ts, 시 경계 :30), 옛 서머타임 1948~1951, 1955~1960, 1987~1988,
+//   한국 음력(koreanLunar.ts, 한국천문연구원 자료 기반). 이 문구를 바꾸려면 계산 코드와 같이 본다.
+{
+  const mutm = (slug) => `utm_source=seo&utm_medium=organic&utm_campaign=manse_${slug}`.replace(/&/g, '&amp;');
+  const canonical = `${SITE}/manse/`;
+  const title = '무료 만세력, 생년월일로 사주 여덟 글자 보기 (시간 보정, 한국 음력) | 사주500';
+  const desc = '생년월일과 태어난 시간만 넣으면 사주 여덟 글자와 오행을 바로 보여 드려요. 서울 기준 30분 시간 보정, 옛 서머타임, 한국천문연구원 자료로 만든 한국 음력까지 맞춰 계산해요. 무료예요.';
+  const rows = [
+    ['년주', '태어난 해의 간지예요. 띠가 여기서 나와요. 집안과 어린 시절의 자리로 봐요.'],
+    ['월주', '태어난 달의 간지예요. 계절의 기운이라 사주에서 힘이 가장 커요. 부모와 사회의 자리로 봐요.'],
+    ['일주', '태어난 날의 간지예요. 위 글자(일간)가 바로 나 자신이고, 아래 글자는 배우자의 자리예요.'],
+    ['시주', '태어난 시의 간지예요. 자녀와 앞날의 자리로 봐요. 태어난 시간을 모르면 비워 두고 여섯 글자로 봐요.'],
+  ].map(([k, v]) => `<div class="row"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join('');
+  const faq = [
+    { q: '만세력이 뭔가요?', a: '태어난 해, 달, 날, 시를 60갑자 간지로 바꿔 적어 둔 달력이에요. 네 기둥마다 위아래 두 글자씩, 모두 여덟 글자가 나와서 사주팔자라고 불러요.' },
+    { q: '왜 태어난 시간을 30분 늦춰 보나요?', a: '한국 표준시는 동경 135도를 기준으로 하는데 서울은 동경 127도쯤이라 해가 실제로 30분쯤 늦게 떠요. 그래서 시가 바뀌는 때를 30분 늦춰 봐요. 예를 들어 새벽 3시 30분부터 인시예요.' },
+    { q: '서머타임 때 태어났으면 어떻게 하나요?', a: '1948~1951년, 1955~1960년, 1987~1988년 여름에는 시계를 한 시간 앞당겼어요. 이때 태어났다면 따로 고치지 않아도 사주500이 한 시간을 되돌려 계산해요.' },
+    { q: '음력 생일도 되나요?', a: '돼요. 음력 생일은 한국천문연구원 자료로 만든 한국 음력 달력으로 양력 날짜를 찾은 뒤 계산해요. 중국 음력과 하루 다른 달이 있어서, 중국 음력을 쓰는 만세력과 일주가 달라질 수 있어요.' },
+    { q: '태어난 시간을 모르면요?', a: '시간을 모름으로 두면 시주를 빼고 여섯 글자로 보여 드려요. 시는 모르고 자시, 축시처럼 시만 알면 그걸로 넣을 수도 있어요.' },
+    { q: '정말 무료인가요?', a: '만세력과 오늘의 운세는 무료예요. 사주 여덟 글자를 처음부터 끝까지 풀어 주는 종합사주만 운을 써요.' },
+  ];
+  const body = `
+<section class="hero"><div class="wrap">
+<div class="lab">무료 만세력</div>
+<h1>생년월일만 넣으면<br>사주 여덟 글자가 바로 나와요</h1>
+<p>서울 기준 30분 시간 보정, 옛 서머타임, 한국 음력까지 맞춰 계산해요.</p>
+</div></section>
+<main class="wrap">
+<section class="cta">
+<h3>내 만세력 보기</h3>
+<p>이름과 생년월일, 태어난 시간을 넣으면 네 기둥 여덟 글자와 오행, 지금 지나는 대운까지 한 장으로 보여 드려요.</p>
+<a class="btn" href="/input?from=manse&amp;${mutm('main')}">무료 만세력 보기</a>
+<a class="sub" href="/daily?${mutm('daily')}">내 사주로 오늘의 운세 무료로 보기</a>
+</section>
+<section class="sec"><h2><span class="seal">一</span>사주500 만세력이 맞추는 세 가지</h2><div class="card">
+<p class="txt"><b>태어난 시각 30분 보정.</b> 한국 표준시와 서울의 실제 해 시간은 30분쯤 차이가 나요. 시가 바뀌는 때를 30분 늦춰 봐서, 새벽 3시 30분부터 인시로 계산해요.</p>
+<p class="txt"><b>옛 서머타임.</b> 1948~1951년, 1955~1960년, 1987~1988년 여름에 태어났다면 시계가 한 시간 빨랐던 것을 되돌려 계산해요.</p>
+<p class="txt"><b>한국 음력.</b> 음력 생일은 한국천문연구원 자료로 만든 한국 음력 달력으로 바꿔요. 중국 음력과 하루씩 다른 달이 있어서 이걸 맞추지 않으면 일주가 하루 밀릴 수 있어요.</p>
+</div></section>
+<section class="sec"><h2><span class="seal">二</span>여덟 글자 읽는 법</h2><div class="card">${rows}
+<p class="txt" style="margin-top:12px">위 글자는 천간 열 가지, 아래 글자는 지지 열두 가지예요. 글자마다 나무, 불, 흙, 쇠, 물 다섯 기운(오행) 중 하나를 띠고, 이 기운이 얼마나 고르게 있는지가 사주 풀이의 출발점이에요.</p>
+</div></section>
+<section class="sec"><h2><span class="seal">三</span>자주 묻는 질문</h2><div class="card"><dl class="faq">${faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<section class="sec"><h2>함께 보면 좋은 글</h2><div class="links"><a href="/ilju/">60일주 총정리</a><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/${YEAR}/">${YEAR}년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a></div></section>
+<p class="note">만세력은 사주를 보는 기본 달력이에요. 같은 날 태어나도 태어난 시와 음력 계산에 따라 글자가 달라질 수 있어서, 시간과 음력 여부를 정확히 넣을수록 좋아요.</p>
+</main>`;
+  const jsonld = [
+    { '@context': 'https://schema.org', '@type': 'WebApplication', name: '사주500 무료 만세력', url: canonical, applicationCategory: 'LifestyleApplication', operatingSystem: 'Web', inLanguage: 'ko', offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' }, description: desc },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ];
+  write('manse', page({ title, desc, canonical, body, jsonld }));
+}
+
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];
-const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, { u: '/unse/today/ilju/', p: '0.8' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/unse/suneung/' || u === '/kkum/' || u === '/gunghap/' || u === '/ilju/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') || u.startsWith('/ilju/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
+const urls = [...appUrls.map(([u, p]) => ({ u, p })), { u: '/unse/today/', p: '0.9' }, { u: '/unse/today/ilju/', p: '0.8' }, ...out.map((u) => ({ u, p: u === `/unse/${YEAR}/` || u === '/unse/suneung/' || u === '/manse/' || u === '/kkum/' || u === '/gunghap/' || u === '/ilju/' ? '0.9' : u.startsWith('/kkum/') || u.startsWith('/gunghap/') || u.startsWith('/ilju/') ? '0.7' : '0.8' }))]; // /unse/today/ 는 함수가 매일 그린다(renderTtiToday)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(({ u, p }) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><priority>${p}</priority></url>`).join('\n')}\n</urlset>\n`;
 fs.writeFileSync(path.join(DIST, 'sitemap.xml'), sitemap);
 console.log(`검색용 페이지 ${out.length}개, sitemap ${urls.length}개 주소`);

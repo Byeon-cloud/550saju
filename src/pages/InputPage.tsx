@@ -145,6 +145,7 @@ type FromKey =
   | 'home_body_tojeong'
   | 'home_body_tojung' /* TojungPage 빈상태 (lockdown) */
   | 'tojung' /* 신년운세 사람 고르기의 '새 사주 입력하기' (부모님 등) */
+  | 'manse' /* 검색 페이지 /manse/ 무료 만세력 (2026-10-18) */
   | 'home_body_weekly' /* WeeklyPage 빈상태 */
   | 'home_body_monthly' /* MonthlyPage 빈상태 */
   | 'weekly'
@@ -244,6 +245,12 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   home_body_tojung: { hint: '신년운세를 볼 사주 정보를 입력해주세요', submitLabel: '저장하고 신년운세 보러 가기', routeAfterSave: (id) => `/tojung?profileId=${encodeURIComponent(id)}` },
   // 2026-10-17 — '부모님 함께 보세요' 동선: 새 사주를 넣으면 신년운세로 돌아가 그 사람이 골라져 있게 (전엔 사주 카드로 갔다)
   tojung: { hint: '신년운세를 볼 분의 사주 정보를 넣어 주세요', submitLabel: '저장하고 신년운세 보러 가기', routeAfterSave: (id) => `/tojung?profileId=${encodeURIComponent(id)}` },
+  // 2026-10-18 무료 만세력 검색 페이지 → 입력 → 사주 카드(만세력 한 장)
+  manse: {
+    hint: '생년월일과 태어난 시간을 넣으면 만세력이 바로 나와요',
+    submitLabel: '내 만세력 보기',
+    routeAfterSave: (id) => `/saju-card/${id}`,
+  },
   storage: {
     hint: '새 사주를 넣어요',
     submitLabel: '사주 저장하기',
