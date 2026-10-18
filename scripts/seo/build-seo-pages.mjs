@@ -89,6 +89,7 @@ function page({ title, desc, canonical, body, jsonld }) {
 <html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="naver-site-verification" content="191f536a7d2aa759d8892f3c4b69667a84b7d708">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${canonical}">
