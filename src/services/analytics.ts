@@ -11,7 +11,9 @@
 /** 토스 자체 analytics(@apps-in-toss web-analytics)로 핵심 이벤트 미러 (2026-06-27 · D).
  *  토스 콘솔에 screen/click 네이티브 이벤트 전송 → 토스가 유입 컨텍스트(discovery/검색/추천)로 귀속.
  *  utm 으로 못 잡는 '토스 내부 유입' attribution 을 토스 콘솔에서 보기 위함. best-effort · 앱인토스에서만. */
-const TOSS_MIRROR = new Set(['page_view', 'cta_click', 'content_open', 'content_purchase', 'charge_complete']);
+// 2026-10-18 — 결과 도달, 사주 입력, 보내기를 더한다. 토스 추천 미니앱 평가(10-22 노출 정책)가 콘솔 '핵심 지표'의
+//   전환 지표를 보는데, 토스에 오는 이벤트로만 지표를 만들 수 있어 '운세 결과 받은 사람'을 걸 수 없었다.
+const TOSS_MIRROR = new Set(['page_view', 'cta_click', 'content_open', 'content_purchase', 'charge_complete', 'content_result', 'profile_created', 'share_complete']);
 function mirrorToTossAnalytics(eventName: string, params?: Record<string, string | number>): void {
   if (!TOSS_MIRROR.has(eventName)) return;
   try {
