@@ -14,6 +14,7 @@ import { Header } from '@/components/layout/Header';
 import { HJ, SERIF, Seal, GoldCta } from '@/components/hanji/Hanji';
 import { moVars } from '@/components/motion/Motion';
 import { TtiAnimal } from '@/components/tti/TtiAnimal';
+import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import { useToast } from '@/components/common/Toast';
 import { trackEvent } from '@/services/analytics';
 import { kstToday } from '@/utils/kstDate';
@@ -182,6 +183,8 @@ export function TtiBoardPage() {
           {busy ? '준비 중이에요' : '가족 단톡방에 보내기'}
         </GoldCta>
         <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>화면을 그대로 캡처해서 보내도 돼요</p>
+        {/* 2026-10-19 띠 운세를 보러 온 사람이 내일도 오게 — 아침 9시 알림 (앱에서만, 동의하면 숨김) */}
+        <DailyNotiButton variant="slim" className="mt-3" />
 
         <button type="button" className="w-full text-left mo-press"
           onClick={() => { trackEvent('cta_click', { label: '띠 한 장에서 내 사주로', page: '/tti' }); navigate('/input?from=daily'); }}
