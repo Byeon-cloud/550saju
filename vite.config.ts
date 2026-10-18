@@ -15,8 +15,19 @@ export default defineConfig(({ mode }) => {
   // 빌드 식별자 — 빌드마다 실제 시각 주입 (디버그 시트에서 새 코드 적용 여부 확인용)
   const buildId = new Date().toISOString().replace('T', ' ').slice(0, 16);
 
+  // 2026-10-18 — index.html 은 웹과 앱이 같이 쓴다. 웹 전용 애드센스 로더가 6월부터 .ait 에도 들어가 있었다
+  //   (앱 광고는 TossAds 만, 로더가 recaptcha, sodar iframe 을 만들어 앱인토스 iframe 금지에 걸릴 수 있음). 앱 빌드에서만 뺀다.
+  const stripWebOnlyHtml = {
+    name: 'saju500-strip-web-only-html',
+    transformIndexHtml(html: string) {
+      return html
+        .replace(/<!-- Google AdSense[^\n]*-->\s*/g, '')
+        .replace(/<script[^>]*googlesyndication\.com[^>]*><\/script>\s*/g, '');
+    },
+  };
+
   return {
-  plugins: [aitDevtools.vite(), react()],
+  plugins: [aitDevtools.vite(), react(), ...(isAitBuild ? [stripWebOnlyHtml] : [])],
   define: {
     __APP_BUILD_ID__: JSON.stringify(buildId),
     __APP_VERSION__: JSON.stringify(pkg.version),
