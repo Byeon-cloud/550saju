@@ -52,7 +52,8 @@ export function CalcNote({ input }: { input: SajuInput }) {
     return out;
   }, [input]);
   return (
-    <div style={{ ...box, marginTop: 14 }}>
+    // 저장 이미지(전체 보관용)에는 안 찍는다 — 카드 한 장의 내용이 아니라 화면 안내라서
+    <div data-html2canvas-ignore="true" style={{ ...box, marginTop: 14 }}>
       <p style={{ fontSize: 13, fontWeight: 700, color: HJ.mute }}>이렇게 계산했어요</p>
       {lines.map((l) => <p key={l} style={{ fontSize: 14.5, lineHeight: 1.7, color: HJ.ink2, marginTop: 4 }}>{l}</p>)}
       {/* 검색 페이지에서 바로 펼친 경우: 저장된 걸 알려 준다 (ManseQuickPage → ?from=manse) */}
