@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { HJ, SERIF, Seal, GoldCta } from '@/components/hanji/Hanji';
 import { moVars } from '@/components/motion/Motion';
+import { TtiAnimal } from '@/components/tti/TtiAnimal';
 import { useToast } from '@/components/common/Toast';
 import { trackEvent } from '@/services/analytics';
 import { kstToday } from '@/utils/kstDate';
@@ -34,6 +35,12 @@ function shortFromHead(head: string): string | null {
   return `${s}이에요`;
 }
 const MARK_COLOR: Record<DayMark, string> = { 좋음: HJ.ink, 보통: HJ.mute, 조심: '#A23A2A' };
+/** 칸 바탕 — 좋은 날은 따뜻한 종이, 조심할 날은 옅은 낙관 빛 (금색은 버튼에만이라 쓰지 않는다) */
+const CELL_TONE: Record<DayMark, { bg: string; line: string }> = {
+  좋음: { bg: '#F4ECD8', line: '#DCCBA6' },
+  보통: { bg: '#FFFDF8', line: '#E1D7C4' },
+  조심: { bg: '#F8EAE5', line: '#E6C6BC' },
+};
 
 export function TtiBoardPage() {
   const navigate = useNavigate();
@@ -118,27 +125,30 @@ export function TtiBoardPage() {
             </div>
           </div>
 
-          <div style={{ marginTop: 6 }}>
-            {rows.map((r, i) => (
-              <button key={r.ji} type="button" onClick={() => pick(r.ji)} className="w-full text-left mo-rise"
-                aria-pressed={sel === r.ji}
-                style={{
-                  ...moVars({ i, d: 80 }),
-                  display: 'block', padding: '4px 2px 3px', borderTop: `1px solid ${HJ.line}`,
-                  background: sel === r.ji ? HJ.hanji : 'transparent', borderLeft: 0, borderRight: 0, borderBottom: 0,
-                }}>
-                <span className="flex items-baseline" style={{ gap: 8, lineHeight: 1.3 }}>
-                  <span style={{ fontFamily: SERIF, fontSize: 15.5, fontWeight: 700, color: HJ.ink, whiteSpace: 'nowrap' }}>{r.name}</span>
-                  <span style={{ fontSize: 13, color: HJ.mute, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.years}</span>
-                  <span style={{ marginLeft: 'auto', fontSize: 13.5, fontWeight: 800, color: MARK_COLOR[r.mark], flexShrink: 0 }}>{r.mark}</span>
-                </span>
-                <span style={{ display: 'block', fontSize: 15, lineHeight: 1.3, color: HJ.ink2 }}>{r.line}</span>
-              </button>
-            ))}
+          {/* 3 x 4 칸 (10-19 오너: 우리 스타일 동물 그림, 좋은지 조심할지 바로, 한 문장은 눈에 잘 띄게) */}
+          <div className="grid grid-cols-3" style={{ gap: 5, marginTop: 8 }}>
+            {rows.map((r, i) => {
+              const tone = CELL_TONE[r.mark];
+              return (
+                <button key={r.ji} type="button" onClick={() => pick(r.ji)} className="mo-rise"
+                  aria-pressed={sel === r.ji} aria-label={`${r.name} ${r.mark}, ${r.line}`}
+                  style={{
+                    ...moVars({ i, d: 80 }),
+                    position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    padding: '5px 4px 7px', borderRadius: 12, textAlign: 'center',
+                    background: tone.bg, border: `${sel === r.ji ? 2 : 1}px solid ${sel === r.ji ? HJ.ink : tone.line}`,
+                  }}>
+                  <span style={{ position: 'absolute', top: 5, right: 7, fontSize: 13, fontWeight: 800, color: MARK_COLOR[r.mark] }}>{r.mark}</span>
+                  <TtiAnimal ji={r.ji} size={40} />
+                  <span style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700, color: HJ.ink, marginTop: 2, whiteSpace: 'nowrap' }}>{r.name}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35, color: '#2E2720', marginTop: 3, wordBreak: 'keep-all' }}>{r.line}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* 출처는 머리의 '사주500' 하나로 (10-19 오너: 아래 주소 줄은 필요 없다) */}
-          <div style={{ borderTop: `1px solid ${HJ.line}`, paddingTop: 6, fontSize: 13, color: HJ.mute }}>
+          <div style={{ paddingTop: 8, fontSize: 13, color: HJ.mute, textAlign: 'center' }}>
             양력 2월 4일 무렵(입춘) 전에 태어났다면 앞 해의 띠로 보세요
           </div>
         </div>
@@ -149,8 +159,9 @@ export function TtiBoardPage() {
         {selRow ? (
           <div className="mo-unroll" key={selRow.ji} style={{ marginTop: 12, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '14px 16px' }}>
             <div className="flex items-center" style={{ gap: 10 }}>
-              <Seal size={30} fontSize={16}>{selRow.ji}</Seal>
+              <TtiAnimal ji={selRow.ji} size={34} />
               <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700 }}>{selRow.name} 오늘의 운세</span>
+              <span style={{ marginLeft: 'auto', fontSize: 13, color: HJ.mute, fontVariantNumeric: 'tabular-nums' }}>{selRow.years}년생</span>
             </div>
             <p style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 600, lineHeight: 1.65, marginTop: 10 }}>{selHead}</p>
             <div style={{ marginTop: 8, fontSize: 14.5, lineHeight: 1.6, color: HJ.ink2 }}>
