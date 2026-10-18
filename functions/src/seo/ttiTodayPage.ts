@@ -54,6 +54,7 @@ function render(doc: any, dateKey: string, isToday: boolean): string {
 <section class="hero"><div class="wrap"><div class="lab">${esc(dayLabel)}</div><h1>오늘의 띠별 운세</h1><p>${isToday ? '매일 아침 새로 풀어요.' : '오늘 풀이를 준비하는 중이라 어제 풀이를 보여 드려요.'} 내 띠를 눌러 출생 연도별 한 줄을 보세요.</p></div></section>
 <main class="wrap">
 <nav class="jump">${ORDER.map((z) => `<a href="#${SLUG[z]}">${NAME[z]}</a>`).join('')}</nav>
+<a class="btn" style="margin-top:12px" href="/tti?${utm('board')}">열두 띠 한 장으로 보고 가족에게 보내기</a>
 ${blocks}
 <section class="cta"><h3>같은 띠라도 생일과 태어난 시간에 따라 하루가 달라요</h3><p>생일을 넣으면 내 사주로 오늘 하루를 풀어 드려요. 하루 한 번 무료예요.</p>
 <a class="btn" href="/daily?${utm('daily')}">내 사주로 오늘의 운세 보기</a><a class="sub" href="/unse/today/ilju/?${utm('ilju')}">태어난 날로 보는 오늘의 일주별 운세</a><a class="sub" href="/daily?${utm('mail')}#daily-mail">매일 아침 내 일주 운세 메일로 받기 (무료)</a><a class="sub" href="/unse/2027/?${utm('newyear')}">2027년 띠별 신년운세 보기</a></section>

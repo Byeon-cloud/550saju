@@ -101,7 +101,8 @@ export function fallbackYearLine(dayGz: string, year: number): string {
 export interface TtiDay {
   date: string;
   dayGz: string;
-  tti: Record<string, { head: string; years: Record<string, string> }>;
+  /** short 는 10-19 부터 서버가 같이 만드는 한 문장(띠별 운세 한 장용). 예전 문서에는 없다 */
+  tti: Record<string, { head: string; short?: string; years: Record<string, string> }>;
 }
 
 const mem: Record<string, Promise<TtiDay | null>> = {};
@@ -148,6 +149,21 @@ function mainRel(br: string, ji: string): Rel {
   if (br !== ji && SAMHAP.some((g) => g.includes(br) && g.includes(ji))) return '삼합';
   if (br === ji) return '같은 띠';
   return '무난';
+}
+
+/** 2026-10-19 띠별 운세 한 장 — 오늘 일진과 띠의 관계로 좋음, 보통, 조심과 한 문장 (서버 short 가 없을 때 이 문장) */
+export type DayMark = '좋음' | '보통' | '조심';
+export function dayTone(dayGzStr: string, ji: string): { mark: DayMark; line: string } {
+  switch (mainRel(dayGzStr[1], ji)) {
+    case '충': return { mark: '조심', line: '정면으로 부딪히기 쉬운 날이에요' };
+    case '형': return { mark: '조심', line: '서로 깎이기 쉬운 날이에요' };
+    case '원진': return { mark: '조심', line: '괜히 서운해지기 쉬운 날이에요' };
+    case '해': return { mark: '조심', line: '은근히 어긋나기 쉬운 날이에요' };
+    case '육합': return { mark: '좋음', line: '사람과 잘 맞는 날이에요' };
+    case '삼합': return { mark: '좋음', line: '일이 맞물려 풀리는 날이에요' };
+    case '같은 띠': return { mark: '보통', line: '했던 일을 다시 하게 되는 날이에요' };
+    default: return { mark: '보통', line: '큰 탈 없이 흘러가는 날이에요' };
+  }
 }
 
 /** 이번 달(절기 달) 띠 운 한 줄 — label 예: '이번 달(무술월)' */

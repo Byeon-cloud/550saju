@@ -249,15 +249,17 @@ export async function shareSajuCardImage(
   filename: string,
   text: string,
   url: string,
+  /** 2026-10-19 기록 종류 — 띠별 운세 한 장(tti_board)도 같은 공유 길을 쓴다 */
+  type = 'card',
 ): Promise<ShareResult> {
   // 2026-07-03 바이럴 퍼널 — 사주 카드 이미지 공유도 시도/성사 계측 (기존 미트래킹 → 유령이었음)
   import('@/services/analytics').then((a) => a.trackEvent('share_click', {
-    type: 'card',
+    type,
     page: typeof window !== 'undefined' ? window.location.pathname : '',
   })).catch(() => {});
   const trackCardComplete = (method: string) => {
     import('@/services/analytics').then((a) => a.trackEvent('share_complete', {
-      type: 'card', method, rewarded: 0,
+      type, method, rewarded: 0,
     })).catch(() => {});
   };
   // File 객체 (Web Share API 가 File 만 허용)

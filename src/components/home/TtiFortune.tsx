@@ -11,6 +11,7 @@
  *   내 해는 기기에만 기억하고, 홈은 그 해로 세대를 알아 고민 목록을 맞춘다.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HJ, SERIF, Seal, GoldCta, Redact } from '@/components/hanji/Hanji';
 import { trackEvent } from '@/services/analytics';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
@@ -45,6 +46,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
   compatPrice?: number;
   onCompat?: () => void;
 }) {
+  const navigate = useNavigate();
   const mine = getMyTti();
   const hero = src === 'hero';
   const [sel, setSel] = useState<string | null>(hero ? mine?.ji ?? null : null);
@@ -142,6 +144,13 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
           );
         })}
       </div>
+      )}
+      {/* 2026-10-19 열두 띠를 폰 한 화면에 — 가족 단톡방에 캡처해 보내기 좋게 (/tti) */}
+      {gridOpen && (
+        <button type="button" onClick={() => { trackEvent('cta_click', { label: '열두 띠 한 장으로', page: '/', src }); navigate('/tti'); }}
+          className="w-full" style={{ marginTop: 8, padding: '8px 0', fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+          열두 띠 한 장으로 보고 가족에게 보내기 ›
+        </button>
       )}
 
       {/* 띠를 아직 안 고른 첫 화면 — 금색 버튼은 띠 카드 안에서만, 여기는 글자 버튼 */}
