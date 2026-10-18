@@ -30,6 +30,8 @@ function mirrorToTossAnalytics(eventName: string, params?: Record<string, string
   } catch { /* noop */ }
 }
 
+const AD_EVENTS = new Set(['page_view', 'profile_created', 'content_result', 'charge_open', 'charge_complete']);
+
 export function trackEvent(eventName: string, params?: Record<string, string | number>) {
   if (typeof window !== 'undefined' && 'gtag' in window) {
     (window as unknown as { gtag: (...args: unknown[]) => void }).gtag('event', eventName, params);
@@ -38,6 +40,10 @@ export function trackEvent(eventName: string, params?: Record<string, string | n
   logToFirestore(eventName, params);
   // 토스 자체 analytics 미러 (D) — 앱인토스 콘솔 네이티브 유입/퍼널 (토스 내부 유입 attribution)
   mirrorToTossAnalytics(eventName, params);
+  // 2026-10-19 웹 유료광고 전환 추적 (메타, 네이버, 구글) — 앱 빌드에서는 코드째 빠진다(빌드 상수), 번호가 없으면 아무것도 안 함
+  if (import.meta.env.VITE_BUILD_TARGET !== 'appintos' && AD_EVENTS.has(eventName)) {
+    import('@/services/ads/adPixels').then((m) => m.adEvent(eventName, params)).catch(() => {});
+  }
   // 2026-10-17 별점 요청 후보 (앱인토스만, 시험 E12) — 결과 도달과 운 차감 성공만 본다
   if (eventName === 'content_result' || eventName === 'content_purchase') {
     import('@/services/review/reviewPrompt').then((m) => m.noteReviewSignal(eventName, params)).catch(() => {});
