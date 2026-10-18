@@ -174,7 +174,7 @@ async function htmlToPdfBuffer(html: string): Promise<Buffer> {
       margin: { top: '15mm', right: '15mm', bottom: '18mm', left: '15mm' },
       preferCSSPageSize: true,
     });
-    return pdfBuf;
+    return Buffer.from(pdfBuf); // 2026-10-19 puppeteer 23 은 Uint8Array — 메일 첨부(nodemailer)는 Buffer 여야 안 깨진다
   } finally {
     try { await browser.close(); } catch { /* noop */ }
   }
