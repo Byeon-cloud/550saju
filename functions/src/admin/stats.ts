@@ -15,7 +15,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { assertOwner, OWNER_UIDS } from './owner';
 
-const STATS_VERSION = 4; // 2: 오너 시험 결제 제외 / 3: 이벤트별 건수(events), 재방문(retention) / 4: 홈 클릭과 결제 경로
+const STATS_VERSION = 5; // 5: 홈 버튼 글자에서 날짜, 숫자 나열 제거 | // 2: 오너 시험 결제 제외 / 3: 이벤트별 건수(events), 재방문(retention) / 4: 홈 클릭과 결제 경로
 const RAW_KEEP_DAYS = 400;
 
 export const kstDayOf = (ms: number): string => new Date(ms + 9 * 3600e3).toISOString().slice(0, 10);
@@ -334,7 +334,11 @@ export async function computeDay(day: string, ledger: Ledger): Promise<DayStats>
     for (const e of list) {
       const pr = e.props || {};
       if (e.name === 'cta_click' && (pr.page === '/' || pr.page === '')) {
-        const label = String(pr.label || '').replace(/\s+/g, ' ').trim().slice(0, 24) || '(글자 없음)';
+        // 버튼 글자에 날짜나 해 목록이 섞이면 날마다 다른 줄이 된다 → 날짜, 숫자 나열을 지운다 ('1운' 같은 한 숫자는 남긴다)
+        const label = String(pr.label || '')
+          .replace(/\d{1,2}월\s?\d{1,2}일(\s?[월화수목금토일]요일)?/g, '')
+          .replace(/\d+(\s+\d+)+/g, '')
+          .replace(/\s+/g, ' ').trim().slice(0, 24) || '(글자 없음)';
         const hc = (homeClicks[label] ??= emptyHC());
         hc[p].clicks += 1;
         if (!clicked.has(label)) { clicked.add(label); hc[p].sess += 1; }
