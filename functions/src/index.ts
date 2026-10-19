@@ -1047,13 +1047,17 @@ export const generateChatAnswer = onCall(
     // ─── Layer 2: AI 호출 + guarded 필드 / [GUARD] 토큰 검사 ───
     //   2026-04-21 모델 재할당: Gemini 2.5 Pro → Claude Sonnet 4.6
     const { generateChatAnswerAI, GUARD_TOKEN } = await lazyClaudeChat();
-    const raw = await generateChatAnswerAI(
-      ANTHROPIC_KEY.value(),
-      q,
-      sajuData,
-      chatHistory || [],
-      timeSlot,
-    );
+    const ask = () => generateChatAnswerAI(ANTHROPIC_KEY.value(), q, sajuData, chatHistory || [], timeSlot);
+    let raw = await ask();
+    // 2026-10-19 CS — 빈 답이 consumed:1 로 나가 대화권만 빠졌다. 한 번 더 묻고, 그래도 비면 오류로 돌려
+    //   클라 catch 가 쓴 대화권, 무료권을 복구한다 (앱 번들 수정 없이 서버만으로 막힘).
+    if (!String(raw?.answer ?? '').trim() && raw?.guarded !== true) {
+      console.warn(`[generateChatAnswer] 빈 답 → 재시도 uid=${uid ?? 'anon'}`);
+      raw = await ask();
+      if (!String(raw?.answer ?? '').trim() && raw?.guarded !== true) {
+        throw new HttpsError('unavailable', '답변을 만들지 못했어요');
+      }
+    }
 
     const rawAnswer: string = raw?.answer ?? '';
     const llmSaidGuarded = raw?.guarded === true;

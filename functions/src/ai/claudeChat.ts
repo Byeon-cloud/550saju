@@ -299,13 +299,18 @@ ${question}
   } catch (e) {
     // JSON 파싱 실패 → 안전한 fallback (가드는 false, 답변은 원문)
     return {
-      answer: text ? cleanAnswer(text) : '잠시 풀이가 막혔습니다. 다시 한 번 물어봐 주세요.',
+      // 빈 본문은 '' 로 돌려 호출부가 재시도, 실패 시 복구하게 한다 (안내 문구로 채우면 대화권이 그대로 빠졌다)
+      answer: text ? cleanAnswer(text) : '',
       keywords: ['올해 재물운은?', '연애운 궁금합니다', '건강 쪽도 봐주세요'],
       guarded: false,
       guardCategory: 'none',
     };
   }
 
+  // 2026-10-19 CS — 본문이 빈 답이 차감된 채 화면에 나갔다. 원인 추적용으로 응답 모양을 남긴다 (호출부가 재시도, 실패 시 복구)
+  if (typeof parsed.answer !== 'string' || !parsed.answer.trim()) {
+    console.warn('[generateChatAnswerAI] 빈 answer', JSON.stringify({ stop: msg.stop_reason, blocks: msg.content.length, keys: Object.keys(parsed || {}), head: text.slice(0, 300) }));
+  }
   return {
     answer: typeof parsed.answer === 'string' ? cleanAnswer(parsed.answer) : '', // 2026-10-04 출처·오기 한자·시간 표기 정리
     keywords:

@@ -867,6 +867,8 @@ export function ChatSessionPage() {
       // 2026-09-17 — 서버 안전가드 응답(consumed: 0 · 의료·법률·투자 등 답변 불가 안내)은 차감하지 않음 → 소비분 복구.
       //   서버 계약: functions/src/index.ts generateChatAnswer 반환 { answer, keywords, consumed: 0|1, guard }.
       //   클라 타입(reportGenerator)엔 consumed 가 없어 교차 타입으로 읽기만 함.
+      // 2026-10-19 CS — 빈 답은 실패로 본다 (아래 catch 가 쓴 대화권, 무료권을 돌려준다)
+      if (!String(result?.answer ?? '').trim()) throw new Error('empty answer');
       const serverConsumed = (result as typeof result & { consumed?: number }).consumed;
       if (serverConsumed === 0) {
         if (consumed === 'credit') addChatCredits(1);
