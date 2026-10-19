@@ -6,6 +6,7 @@
  *   Firestore `analytics/{autoId}` 에 경량 append (name, uid, sessionId, ts, props).
  *   비용: 이벤트당 1 write (출시 초기 저트래픽 OK). fire-and-forget — 실패해도 UX 영향 0.
  */
+import { isAppintosBuild } from '@/lib/env';
 
 /** GA4 (외부 대시보드용 — 유입경로·유저플로우·체류시간) */
 /** 토스 자체 analytics(@apps-in-toss web-analytics)로 핵심 이벤트 미러 (2026-06-27 · D).
@@ -241,6 +242,12 @@ function parseTossReferrer(raw: string | null): { source: string; medium: string
   return { source: 'toss_ref', medium: ch || 'unknown', campaign: raw.slice(0, 80) };
 }
 
+/* 2026-10-20 — 웹은 태그 없이 다시 온 방문도 30일 안의 마지막 태그 출처로 본다.
+ *   광고로 처음 온 손님이 다음 날 바로 들어와 결제하면 '출처 없음'이 돼 광고 성과를 못 읽었다.
+ *   앱(토스)은 토스 홈 유입(toss_app)과 섞이지 않게 넘기지 않는다. */
+const UTM_LAST_KEY = 'saju500:utm_last';
+const UTM_CARRY_MS = 30 * 24 * 60 * 60 * 1000;
+
 function captureUtm(): void {
   try {
     if (sessionStorage.getItem(UTM_KEY)) return; // 세션 최초 1회만 (이후 내부 네비게이션은 무시)
@@ -250,12 +257,26 @@ function captureUtm(): void {
     const source = q.get('utm_source') || q.get('ref') || tref.source;
     const medium = q.get('utm_medium') || tref.medium;
     const campaign = q.get('utm_campaign') || tref.campaign;
-    if (!source && !medium && !campaign) return;
-    sessionStorage.setItem(UTM_KEY, JSON.stringify({
+    // 2026-10-20 — 광고 소재(utm_content)와 노출 위치(utm_term)도 남긴다 (소재별 판정용)
+    const content = (q.get('utm_content') || '').slice(0, 60);
+    const term = (q.get('utm_term') || '').slice(0, 60);
+    if (!source && !medium && !campaign) {
+      if (isAppintosBuild) return;
+      const last = JSON.parse(localStorage.getItem(UTM_LAST_KEY) || 'null');
+      if (last?.u?.source && Date.now() - Number(last.at || 0) < UTM_CARRY_MS) {
+        sessionStorage.setItem(UTM_KEY, JSON.stringify({ ...last.u, carried: '1' }));
+      }
+      return;
+    }
+    const u = {
       ...(source ? { source } : {}),
       ...(medium ? { medium } : {}),
       ...(campaign ? { campaign } : {}),
-    }));
+      ...(content ? { content } : {}),
+      ...(term ? { term } : {}),
+    };
+    sessionStorage.setItem(UTM_KEY, JSON.stringify(u));
+    if (!isAppintosBuild && source) localStorage.setItem(UTM_LAST_KEY, JSON.stringify({ u, at: Date.now() }));
   } catch { /* noop */ }
 }
 
