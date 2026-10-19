@@ -1852,7 +1852,7 @@ ${dailyMeetPromptBlock(data.sajuData)}
     "food":      { "name": "용신 오행 음식(국과 차 등)", "reason": "60자+" },
     "glyph":     { "value": "용신 오행 한자 1~3자 (예: 용신 화 → 丙 午)", "reason": "60자+" }
   },
-  "dailyQuote": "60~80자, 시적 한 문장. 사주 인용 1회+",
+  "dailyQuote": "60~80자, 오늘 하루에 붙잡을 평범한 조언 한 문장. 비유, 격언투, 명령조 금지. 명리 한자 금지 (일상어). 형태: '~하는 날입니다. ~하세요.' (2026-10-19 전체 프롬프트와 맞춤 — 이 묶음만 '시적 한 문장'이 남아 있었다)",
   "tomorrow": {
     "date": "${data.tomorrowDate || ''}",
     "ganzi": "${data.tomorrowGanzi || ''}",

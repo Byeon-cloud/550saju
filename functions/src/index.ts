@@ -517,6 +517,12 @@ export const generateDailyFortune = onCall(
         dayJiShen,
         dayXiongSha,
       });
+      // 2026-10-19 — 행운은 용신 고정표 (스트림 경로와 같은 값)
+      try {
+        const [{ dailyLuckyProfile }, { todayHourWindows }] = await Promise.all([import('./ai/dailyLucky'), import('./ai/sajuFacts')]);
+        const lucky = dailyLuckyProfile(sajuData, String(date || ''), todayHourWindows(String(date || ''), sajuData).peak);
+        if (lucky && result && typeof result === 'object') (result as any).luckyProfile = lucky;
+      } catch { /* 행운만 AI 값 그대로 */ }
 
       // 캐싱 (실명 유저만) — 키 = 날짜 + 사주 8글자 (위 조회와 동일)
       if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
@@ -710,7 +716,8 @@ export const generateDailyFortuneStream = onRequest(
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v14'; // v14 — nextHooks(다음 주제·사주대화 질문)
+    const SCHEMA_VERSION = 'v15'; // v15 (10-19) — 5호출→3호출: 화면에 안 쓰는 항목(분야별 이유, 오행 분포, 행운 이유) 생성 중단, 행운은 용신 고정표(dailyLucky)
+    // v14 — nextHooks(다음 주제·사주대화 질문)
     // v13 // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
     // v12 // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
     const sajuKey = buildSajuKey(sajuData);
@@ -758,6 +765,7 @@ export const generateDailyFortuneStream = onRequest(
         TONE_FINAL_CHECK,
       } = await import('./ai/promptsV3');
       const { applyDailyMeetGlyphs, sanitizeAiOutput, todayHourWindows } = await import('./ai/sajuFacts');
+      const { dailyLuckyProfile } = await import('./ai/dailyLucky');
       const hourWin = todayHourWindows(String(date || ''), sajuData);
       /* 2026-10-08 — 그룹별 모델: A1(헤더·점수 · 첫 화면 ~5초)은 Haiku 유지, 해석 본문 A2·시간대/사람/행운 B 는 Sonnet.
        *   A/B 시식(같은 사주·같은 날): Haiku 는 명리 용어 주어·병렬 그룹 간 시간대 모순·처방형 미신·성별 설명 문장이 남고,
@@ -789,11 +797,15 @@ export const generateDailyFortuneStream = onRequest(
       const SUB_MODEL: Record<DailySub, string> = {
         A1: GROUP_MODEL.A1, A2a: GROUP_MODEL.A2, A2b: GROUP_MODEL.A2, B1: GROUP_MODEL.B, B2: GROUP_MODEL.B,
       };
+      /* 2026-10-19 — 5호출(A1, A2a, A2b, B1, B2) → 3호출(A1, A2a, B1).
+       *   화면(DailyMockupView)에 안 쓰는 항목은 더 만들지 않는다: subScoreReasons(4×150자), ohengDistribution, todayOhengEmphasis,
+       *   행운 이유. 행운 값은 용신 고정표(ai/dailyLucky.ts)로 코드가 채운다. pillarMessages 는 A2a 로, B2 의 나머지는 B1 으로 합쳤다.
+       *   화면에 보이는 내용은 같다. (A2b, B2 이름은 남겨 두되 부르지 않는다) */
       const SUB_KEYS: Record<Exclude<DailySub, 'A1'>, string[]> = {
-        A2a: ['todayNarrative', 'sajuTone'],
-        A2b: ['pillarMessages', 'ohengDistribution', 'todayOhengEmphasis', 'subScoreReasons'],
-        B1: ['timeSlots', 'hourlyPeak', 'hourlyAvoid', 'doList', 'dontList'],
-        B2: ['meetPeople', 'luckyProfile', 'dailyQuote', 'tomorrow', 'nextHooks'],
+        A2a: ['todayNarrative', 'sajuTone', 'pillarMessages'],
+        A2b: [],
+        B1: ['timeSlots', 'hourlyPeak', 'hourlyAvoid', 'doList', 'dontList', 'meetPeople', 'dailyQuote', 'tomorrow', 'nextHooks'],
+        B2: [],
       };
       const subOnly = (sub: Exclude<DailySub, 'A1'>) =>
         `\n\n## ⚡⚡ 이번 호출의 최종 출력 범위 (위 스키마 중 이 키들만): ${SUB_KEYS[sub].join(', ')}\n` +
@@ -823,7 +835,8 @@ export const generateDailyFortuneStream = onRequest(
             role: 'user',
             content: suffix
               ? [
-                  { type: 'text', text: userPrompt, cache_control: { type: 'ephemeral' } },
+                  // 10-19 — 짝 호출(A2b, B2)이 없어져 사용자 프롬프트 캐시는 읽을 쪽이 없다(쓰기 1.25배만 낸다) → 시스템 프롬프트만 캐시
+                  { type: 'text', text: userPrompt },
                   { type: 'text', text: suffix + TONE_FINAL_CHECK },
                 ]
               : userPrompt + TONE_FINAL_CHECK,
@@ -855,20 +868,17 @@ export const generateDailyFortuneStream = onRequest(
         sendEvent('group', { group: 'A1', data, elapsedMs: r.elapsedMs });
         return data;
       });
-      const pA2 = Promise.all([
-        runSub('A2a', userA2, 4000, 'A2', 0, subOnly('A2a')),
-        runSub('A2b', userA2, 4000, null, 4000, subOnly('A2b')),
-      ]).then(([x, y]) => {
-        const data = sanitizeAiOutput({ ...y.parsed, ...x.parsed });
-        sendEvent('group', { group: 'A2', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs + 4000) });
+      const pA2 = runSub('A2a', userA2, 6000, 'A2', 0, subOnly('A2a')).then((x) => {
+        const data = sanitizeAiOutput({ ...x.parsed });
+        sendEvent('group', { group: 'A2', data, elapsedMs: x.elapsedMs });
         return data;
       });
-      const pB = Promise.all([
-        runSub('B1', userB, 4000, 'B', 4000, subOnly('B1')),
-        // B2 는 B1 의 캐시가 쓰인 뒤(응답 시작 뒤) 출발해야 읽는다 — 2.5초 늦춤 (B 묶음은 화면에서 마지막에 오는 부분)
-        runSub('B2', userB, 4000, null, 6500, subOnly('B2')),
-      ]).then(([x, y]) => {
-        let data: any = { ...y.parsed, ...x.parsed };
+      // B1 은 A2a 가 시스템 프롬프트 캐시를 쓴 뒤 출발해 읽는다 (4초)
+      const pB = runSub('B1', userB, 6500, 'B', 4000, subOnly('B1')).then((x) => {
+        let data: any = { ...x.parsed };
+        // 2026-10-19 — 행운은 용신 고정표 (색, 방위, 숫자 고정, 음식과 글자는 같은 오행 안에서 날짜마다)
+        const lucky = dailyLuckyProfile(sajuData, String(date || ''), hourWin.peak);
+        if (lucky) data.luckyProfile = lucky;
         // 2026-10-04 — 만나는 사람 글자 = 용신·희신·기신 확정값 (예시 복사 방지) / 10-08 시간대 서버 확정값
         data = applyDailyMeetGlyphs(data, sajuData);
         if (hourWin.peak && data?.hourlyPeak) data.hourlyPeak.range = hourWin.peak;
@@ -884,7 +894,7 @@ export const generateDailyFortuneStream = onRequest(
           };
         }
         data = sanitizeAiOutput(data);
-        sendEvent('group', { group: 'B', data, elapsedMs: Math.max(x.elapsedMs + 4000, y.elapsedMs + 6500) });
+        sendEvent('group', { group: 'B', data, elapsedMs: x.elapsedMs + 4000 });
         return data;
       });
       const [resA1, resA2, resB] = await Promise.all([pA1, pA2, pB]);
@@ -896,10 +906,10 @@ export const generateDailyFortuneStream = onRequest(
       // 강력한 sanity check (글자수 + 핵심 필드)
       const a1OK = !!(a1.title && a1.subScores && a1.subScoreOneLines &&
                        Object.keys(a1.subScoreOneLines).length >= 4);
-      const a2OK = !!(a2.todayNarrative && a2.todayNarrative.length >= 600 &&
-                       a2.pillarMessages && a2.subScoreReasons);
+      const a2OK = !!(a2.todayNarrative && a2.todayNarrative.length >= 600 && a2.pillarMessages);
       const bOK = !!(Array.isArray(b.timeSlots) && b.timeSlots.length >= 3 &&
                       Array.isArray(b.doList) && b.doList.length >= 2 &&
+                      Array.isArray(b.meetPeople) && b.meetPeople.length >= 2 &&
                       b.luckyProfile && Object.keys(b.luckyProfile).length >= 4);
       console.log(`[dailyFortuneStream] sanity: A1=${a1OK} A2=${a2OK} B=${bOK}`);
 
@@ -944,6 +954,7 @@ export const generateDailyFortuneStream = onRequest(
         }
       }
 
+      { const lucky = dailyLuckyProfile(sajuData, String(date || ''), hourWin.peak); if (lucky) merged.luckyProfile = lucky; } // 폴백 경로도 고정표
       merged = sanitizeAiOutput(applyDailyMeetGlyphs(merged, sajuData)); // 폴백 경로 포함 최종 정리
       console.log('[dailyFortuneStream] complete', {
         totalElapsedMs: Date.now() - t0,
