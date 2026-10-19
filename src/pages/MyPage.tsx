@@ -216,7 +216,11 @@ export function MyPage() {
 
         {/* ── ProfileHeader (§3) ── */}
         {realLoggedIn && user ? (
-          <ProfileHeader user={user} balance={balance} />
+          <>
+            <ProfileHeader user={user} balance={balance} />
+            {/* 10-19 — 웹: 어느 계정으로 로그인했는지 (네이버 로그인 검수의 '이메일 활용처', 문의 때 계정 확인) */}
+            {!inAppsInToss && <LoginAccountLine user={user} />}
+          </>
         ) : (
           /* 비로그인 skeleton — 로그인 모달이 위에 뜨므로 시각적 자리만 */
           <div className="rounded-2xl mb-4" style={{ height: 140, background: C.goldSoft }} />
@@ -435,6 +439,19 @@ const OHENG_BOX_MY: Record<OhengType, { bg: string; fg: string; outline: string 
   금: { bg: '#FFFFFF', fg: '#1A1A1A', outline: '#9C9C9C' },
   수: { bg: '#1A1A1A', fg: '#FFFFFF', outline: '#3D3D3D' },
 };
+
+/** 웹 로그인 계정 한 줄 — '네이버 계정으로 로그인했어요, abc@naver.com' */
+function LoginAccountLine({ user }: { user: any }) {
+  const pid = String(user?.providerData?.[0]?.providerId || '');
+  const label = pid === 'oidc.naver' ? '네이버' : pid === 'oidc.kakao' ? '카카오' : pid === 'google.com' ? '구글' : pid === 'apple.com' ? '애플' : '';
+  const email = String(user?.email || user?.providerData?.[0]?.email || '');
+  if (!label && !email) return null;
+  return (
+    <p style={{ fontSize: 13.5, color: C.mute, margin: '-6px 4px 14px', lineHeight: 1.6, wordBreak: 'break-all' }}>
+      {label ? `${label} 계정으로 로그인했어요` : '로그인했어요'}{email ? `, ${email}` : ''}
+    </p>
+  );
+}
 
 function ProfileHeader({ user, balance }: { user: any; balance: number }) {
   const navigate = useNavigate();
