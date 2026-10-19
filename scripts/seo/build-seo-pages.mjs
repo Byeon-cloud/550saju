@@ -676,7 +676,7 @@ ${ctaNewYear('tojeong')}
   ].map(([k, v]) => `<div class="row"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join('');
   const faq = [
     { q: '만세력이 뭔가요?', a: '태어난 해, 달, 날, 시를 60갑자 간지로 바꿔 적어 둔 달력이에요. 네 기둥마다 위아래 두 글자씩, 모두 여덟 글자가 나와서 사주팔자라고 불러요.' },
-    { q: '왜 태어난 시간을 30분 늦춰 보나요?', a: '한국 표준시는 동경 135도를 기준으로 하는데 서울은 동경 127도쯤이라 해가 실제로 30분쯤 늦게 떠요. 그래서 시가 바뀌는 때를 30분 늦춰 봐요. 예를 들어 새벽 3시 30분부터 인시예요.' },
+    { q: '왜 시가 바뀌는 때를 30분 늦춰 보나요?', a: '한국 표준시는 동경 135도를 기준으로 하는데 서울은 동경 127도쯤이라 해가 실제로 30분쯤 늦게 떠요. 그래서 시가 바뀌는 때를 30분 늦춰 봐요. 예를 들어 새벽 3시 30분부터 인시예요.' },
     { q: '서머타임 때 태어났으면 어떻게 하나요?', a: '1948~1951년, 1955~1960년, 1987~1988년 여름에는 시계를 한 시간 앞당겼어요. 이때 태어났다면 따로 고치지 않아도 사주500이 한 시간을 되돌려 계산해요.' },
     { q: '음력 생일도 되나요?', a: '돼요. 음력 생일은 한국천문연구원 자료로 만든 한국 음력 달력으로 양력 날짜를 찾은 뒤 계산해요. 중국 음력과 하루 다른 달이 있어서, 중국 음력을 쓰는 만세력과 일주가 달라질 수 있어요.' },
     { q: '태어난 시간을 모르면요?', a: '시간을 몰라요에 표시하면 시주를 빼고 여섯 글자로 보여 드려요.' },
@@ -728,8 +728,9 @@ if(c==='solar'){var dt=new Date(y,m-1,d);if(dt.getMonth()!==m-1||dt.getDate()!==
 var g=(f.querySelector('input[name=g]:checked')||{}).value;if(!g){e.textContent='성별을 골라 주세요.';return;}
 var t='';if(!tu.checked){if(!tt.value){e.textContent='태어난 시각을 넣거나 시간을 몰라요에 표시해 주세요.';tt.focus();return;}t=tt.value.replace(':','');}
 var r=(f.querySelector('input[name=r]:checked')||{}).value||'self';var n=(f.n.value||'').trim().slice(0,12);
-var q='b='+b+'&c='+c+'&g='+g+'&r='+r+(t?'&t='+t:'')+(n?'&n='+encodeURIComponent(n):'')+'&${mutm('form')}';
-location.href='/manse/view?'+q;});})();</script>`;
+var d={b:b,c:c,g:g,r:r,t:t,n:n};var q='';
+try{sessionStorage.setItem('saju500:manse_form',JSON.stringify(d));}catch(_){q='b='+b+'&c='+c+'&g='+g+'&r='+r+(t?'&t='+t:'')+(n?'&n='+encodeURIComponent(n):'')+'&';}
+location.href='/manse/view?'+q+'${mutm('form')}';});})();</script>`;
   const body = `<style>${pageCss}</style>
 <section class="mhero">${sky}<div class="wrap">
 <div class="lab">무료 만세력</div>

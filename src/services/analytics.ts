@@ -63,7 +63,7 @@ export function trackPageView(pagePath: string) {
 }
 
 function contentTypeFromPath(p: string): string | null {
-  if (/^\/daily\b/.test(p)) return 'daily';
+  if (/^\/daily\/?$/.test(p)) return 'daily'; // 10-19 /daily/card(오늘 운세 한 장)는 열람으로 세지 않는다
   if (/^\/dream\b/.test(p)) return 'dream';
   if (/^\/topic\b/.test(p)) return 'topic';
   if (/^\/premium\b/.test(p)) return 'premium';

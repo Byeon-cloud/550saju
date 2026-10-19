@@ -15,7 +15,7 @@ import { useToast } from '@/components/common/Toast';
 import { trackEvent } from '@/services/analytics';
 import { stripMd } from '@/utils/format';
 
-export interface DailyCardState { result: any; name: string; dateLabel: string; ganzi: string; ganziKo: string }
+export interface DailyCardState { result: any; name: string; dateLabel: string; ganzi: string; ganziKo: string; savedReport?: any }
 
 const GAN_KO: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계' };
 const ZHI_KO: Record<string, string> = { 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
@@ -140,7 +140,12 @@ export function DailyCardPage() {
         <GoldCta style={{ marginTop: 16 }} onClick={share}>{busy ? '준비 중이에요' : '가족, 친구에게 보내기'}</GoldCta>
         <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>화면을 그대로 캡처해서 보내도 돼요</p>
         <button type="button" className="w-full"
-          onClick={() => { trackEvent('cta_click', { label: '오늘 한 장에서 결과로', page: '/daily/card' }); navigate(-1); }}
+          onClick={() => {
+            trackEvent('cta_click', { label: '오늘 한 장에서 결과로', page: '/daily/card' });
+            // 10-19 검토: 뒤로 가기만 하면 /daily 가 고르는 화면으로 열렸다 → 오늘 기록을 넘겨 결과로 바로
+            if (st.savedReport) navigate('/daily', { replace: true, state: { savedResult: st.result, savedReport: st.savedReport } });
+            else navigate(-1);
+          }}
           style={{ marginTop: 10, padding: '10px 0', fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
           오늘 운세 전체로 돌아가기 ›
         </button>

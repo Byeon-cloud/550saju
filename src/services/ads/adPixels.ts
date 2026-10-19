@@ -52,7 +52,7 @@ export function initAdPixels(): boolean {
     if (!w.gtag) w.gtag = function () { w.dataLayer.push(arguments); };
     loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GADS_ID)}`);
     w.gtag('js', new Date());
-    w.gtag('config', GADS_ID);
+    w.gtag('config', GADS_ID, { send_page_view: false }); // 주소를 자동으로 보내지 않는다(전환만)
   }
   state = 'on';
   return true;
@@ -66,10 +66,18 @@ function naver(fn: (wcs: any) => void, tries = 0): void {
 }
 
 /** analytics.trackEvent 에서 부른다 — 우리 이벤트 이름을 광고 쪽 표준 이벤트로 */
+const lastSent: Record<string, number> = {};
+
 export function adEvent(name: string, params?: Record<string, string | number>): void {
   if (state === 'off' || (state === 'idle' && !initAdPixels())) return;
   const w = window as any;
   const amount = Number(params?.amount) || 0;
+  // 10-19 검토: 충전 화면은 진입 기록이 두 번 난다(경로 파생 + 화면 마운트) → 같은 이벤트는 3초 안에 한 번만 (결제 완료는 금액이 있어 예외)
+  const now = Date.now();
+  if (name !== 'charge_complete' && now - (lastSent[name] || 0) < 3000) return;
+  lastSent[name] = now;
+  // 무료 만세력 바로 보기 주소(/manse/view?b=생일...)는 광고 쪽으로 보내지 않는다(픽셀이 주소를 그대로 수집함)
+  if (name === 'page_view' && /^\/manse\/view/.test(window.location.pathname)) return;
   try {
     switch (name) {
       case 'page_view':

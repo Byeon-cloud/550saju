@@ -56,7 +56,8 @@ export function TtiBoardPage() {
 
   const rows = TTI.map(({ ji, name }) => {
     const tone = dayTone(tg.gz, ji);
-    const short = (day?.tti?.[ji]?.short || '').trim() || shortFromHead((day?.tti?.[ji]?.head || '').trim());
+    // 관계가 겹치는 날은 계산 문장으로 (AI 문장이 한쪽만 말할 수 있어서)
+    const short = tone.mixed ? '' : ((day?.tti?.[ji]?.short || '').trim() || shortFromHead((day?.tti?.[ji]?.head || '').trim()));
     return { ji, name, mark: tone.mark, line: short || tone.line, years: ttiYears(ji).map((yy) => String(yy % 100).padStart(2, '0')).join(' ') };
   });
 
@@ -72,7 +73,7 @@ export function TtiBoardPage() {
     const message = `${dateLabel} 오늘의 띠별 운세예요. 우리 가족 띠도 한번 보세요`;
     try {
       const r = await shareBoard({
-        boardEl: boardRef.current, inAppPath: '/tti', ogImage: `https://saju500.app/og/tti/${today}.jpg`, message,
+        boardEl: boardRef.current, inAppPath: '/tti', ogImage: `https://saju500.app/og/tti/${today}.jpg?v=${day?.tries ?? 0}`, message,
         fileName: `오늘의_띠별_운세_${today.replace(/-/g, '')}.png`,
         webUrl: 'https://saju500.app/tti?utm_source=share&utm_medium=image&utm_campaign=tti_board', type: 'tti_board',
       });

@@ -103,6 +103,8 @@ export interface TtiDay {
   dayGz: string;
   /** short 는 10-19 부터 서버가 같이 만드는 한 문장(띠별 운세 한 장용). 예전 문서에는 없다 */
   tti: Record<string, { head: string; short?: string; years: Record<string, string> }>;
+  /** 서버가 그날 문서를 몇 번째로 만들었는지 — 미리보기 그림 주소의 판 번호(?v=) */
+  tries?: number;
 }
 
 const mem: Record<string, Promise<TtiDay | null>> = {};
@@ -112,7 +114,7 @@ export function loadTtiDay(dateKey: string): Promise<TtiDay | null> {
     mem[dateKey] = getDoc(doc(db, 'ttiFortune', dateKey))
       .then((snap) => {
         const d = snap.exists() ? (snap.data() as any) : null;
-        return d?.tti ? ({ date: dateKey, dayGz: String(d.dayGz || ''), tti: d.tti } as TtiDay) : null;
+        return d?.tti ? ({ date: dateKey, dayGz: String(d.dayGz || ''), tti: d.tti, tries: Number(d.tries) || 0 } as TtiDay) : null;
       })
       .catch(() => null);
   }
@@ -153,8 +155,13 @@ function mainRel(br: string, ji: string): Rel {
 
 /** 2026-10-19 띠별 운세 한 장 — 오늘 일진과 띠의 관계로 좋음, 보통, 조심과 한 문장 (서버 short 가 없을 때 이 문장) */
 export type DayMark = '좋음' | '보통' | '조심';
-export function dayTone(dayGzStr: string, ji: string): { mark: DayMark; line: string } {
-  switch (mainRel(dayGzStr[1], ji)) {
+export function dayTone(dayGzStr: string, ji: string): { mark: DayMark; line: string; mixed?: boolean } {
+  // 10-19 검토: 巳申처럼 육합이면서 형인 날은 좋음과 나쁨이 겹친다 → 보통 (표시와 AI 문장이 반대로 찍히지 않게, 서버 ttiOgImage 와 같은 규칙)
+  const br = dayGzStr[1];
+  const bad = CHUNG[ji] === br || HYUNG.has(ji + br) || WONJIN[ji] === br || HAE[ji] === br;
+  const good = HAP6[ji] === br || (br !== ji && SAMHAP.some((g) => g.includes(br) && g.includes(ji)));
+  if (bad && good) return { mark: '보통', line: '좋은 일과 걸리는 일이 함께 오는 날이에요', mixed: true };
+  switch (mainRel(br, ji)) {
     case '충': return { mark: '조심', line: '정면으로 부딪히기 쉬운 날이에요' };
     case '형': return { mark: '조심', line: '서로 깎이기 쉬운 날이에요' };
     case '원진': return { mark: '조심', line: '괜히 서운해지기 쉬운 날이에요' };

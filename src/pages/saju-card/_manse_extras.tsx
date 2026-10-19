@@ -41,7 +41,7 @@ export function CalcNote({ input }: { input: SajuInput }) {
       out.push(`음력 ${input.birthMonth}월 ${input.birthDay}일${input.calendarType === 'lunar_leap' ? '(윤달)' : ''}은 한국 음력 달력으로 양력 ${solar.birthYear}년 ${solar.birthMonth}월 ${solar.birthDay}일이에요.`);
     }
     if (input.hasBirthTime && input.birthHour != null) {
-      out.push('태어난 시각을 서울 기준으로 30분 늦춰 계산했어요.');
+      out.push('서울은 해가 30분쯤 늦게 떠서, 시가 바뀌는 때를 30분 늦춰 봤어요.'); // 10-19 검토: 실제 계산은 시각에서 30분을 뺀다(06:30 → 06:00), 검색 페이지 FAQ 와 같은 표현
       try {
         const r = inspectKoreanSolarTime(solar.birthYear, solar.birthMonth, solar.birthDay, input.birthHour, input.birthMinute || 0);
         if (r.isDst) out.push('그해 여름 서머타임으로 앞당겨졌던 한 시간도 되돌렸어요.');

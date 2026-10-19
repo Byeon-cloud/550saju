@@ -8,7 +8,7 @@
  */
 import * as admin from 'firebase-admin';
 import { onRequest } from 'firebase-functions/v2/https';
-import { branchRelations, TTI_NAME } from './ttiFortune';
+import { branchRelations, TTI_NAME, ttiFactsTable } from './ttiFortune';
 import { ttiAnimalSvg } from './ttiAnimalSvg';
 
 const ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -17,9 +17,13 @@ const ZHI_KO: Record<string, string> = { 子: '자', 丑: '축', 寅: '인', 卯
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 
 type Mark = '좋음' | '보통' | '조심';
-/** 화면 dayTone 과 같은 순서: 충 > 형 > 원진 > 해 > 육합 > 삼합 > 같은 띠 > 무난 */
-function tone(dayZhi: string, ji: string): { mark: Mark; line: string } {
+/** 화면 dayTone 과 같은 규칙: 좋은 관계(육합, 삼합)와 나쁜 관계(충, 형, 원진, 해)가 겹치면 보통(巳申 형합 등),
+ *  아니면 충 > 형 > 원진 > 해 > 육합 > 삼합 > 같은 띠 > 무난 */
+function tone(dayZhi: string, ji: string): { mark: Mark; line: string; mixed?: boolean } {
   const r = branchRelations(dayZhi, ji);
+  const bad = r.some((x) => ['충', '형', '원진', '해'].includes(x));
+  const good = r.some((x) => ['육합', '삼합'].includes(x));
+  if (bad && good) return { mark: '보통', line: '좋은 일과 걸리는 일이 함께 오는 날이에요', mixed: true };
   if (r.includes('충')) return { mark: '조심', line: '정면으로 부딪히기 쉬운 날이에요' };
   if (r.includes('형')) return { mark: '조심', line: '서로 깎이기 쉬운 날이에요' };
   if (r.includes('원진')) return { mark: '조심', line: '괜히 서운해지기 쉬운 날이에요' };
@@ -47,7 +51,8 @@ function buildHtml(dateKey: string, dayGz: string, tti: Record<string, { head?: 
   const gzKo = `${GAN_KO[dayGz[0]] || ''}${ZHI_KO[dayGz[1]] || ''}`;
   const cells = ORDER.map((z) => {
     const t = tone(dayGz[1], z);
-    const line = (tti[z]?.short || '').trim() || shortFromHead((tti[z]?.head || '').trim()) || t.line;
+    // 관계가 겹치는 날은 AI 문장이 한쪽만 말할 수 있어 계산 문장으로 (표시와 문장이 반대로 찍히지 않게)
+    const line = t.mixed ? t.line : ((tti[z]?.short || '').trim() || shortFromHead((tti[z]?.head || '').trim()) || t.line);
     const [bg, bd] = BG[t.mark];
     return `<div class="c" style="background:${bg};border-color:${bd}"><b class="mk" style="color:${MC[t.mark]}">${t.mark}</b>${ttiAnimalSvg(z, 58)}<div class="nm">${TTI_NAME[z]}</div><div class="ln">${esc(line)}</div></div>`;
   }).join('');
@@ -98,27 +103,41 @@ export const ttiOgImage = onRequest({ timeoutSeconds: 60, memory: '1GiB', minIns
     const m = String(req.path || '').match(/(\d{4}-\d{2}-\d{2})/);
     if (!m) { fallback(); return; }
     const dateKey = m[1];
+    // 오늘 앞뒤 이틀만 그린다(아무 날짜나 넣어 크롬을 돌리게 하지 않게). 그 밖은 기본 그림
+    const dayMs = Date.parse(`${dateKey}T00:00:00Z`) - Date.parse(`${new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)}T00:00:00Z`);
+    if (!Number.isFinite(dayMs) || Math.abs(dayMs) > 2 * 864e5) { fallback(); return; }
     const snap = await admin.firestore().doc(`ttiFortune/${dateKey}`).get();
     const doc = snap.exists ? (snap.data() as any) : null;
-    if (!doc?.tti || !doc?.dayGz) { fallback(); return; }
+    // 10-19 검토: 문서가 아직 없을 때 기본 그림(302)을 주면 호스팅 캐시 규칙 때문에 하루 내내 기본 그림이 남는다
+    //   → 문서가 없어도 그날 일진과 띠 관계로 계산한 표를 그린다(좋음/보통/조심과 계산 문장은 그대로 맞다)
+    const dayGz = String(doc?.dayGz || ttiFactsTable(dateKey).dayGz);
+    const html = buildHtml(dateKey, dayGz, doc?.tti || {});
     const pup = await loadPuppeteer();
-    if (!pup) { fallback(); return; }
-    const browser = await pup.launch();
-    try {
-      const page = await browser.newPage();
-      await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 1 });
-      await page.setContent(buildHtml(dateKey, String(doc.dayGz), doc.tti), { waitUntil: 'networkidle0', timeout: 30000 });
-      await page.evaluateHandle('document.fonts.ready');
-      const buf: Buffer = await page.screenshot({ type: 'jpeg', quality: 88, clip: { x: 0, y: 0, width: 1200, height: 630 } });
-      if (!buf || buf.length < 2048) { fallback(); return; }
-      res.set('Content-Type', 'image/jpeg');
-      res.set('Cache-Control', 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800');
-      res.status(200).send(Buffer.from(buf)); // 2026-10-19 puppeteer 23 은 Uint8Array 를 돌려줘서 그대로 보내면 JSON 숫자 목록이 나갔다
-    } finally {
-      try { await browser.close(); } catch { /* noop */ }
+    if (!pup) { res.set('Retry-After', '60'); res.status(503).send('busy'); return; }
+    let buf: Buffer | null = null;
+    for (let attempt = 0; attempt < 2 && !buf; attempt++) {
+      const browser = await pup.launch();
+      try {
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 1 });
+        await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.evaluateHandle('document.fonts.ready');
+        const out = await page.screenshot({ type: 'jpeg', quality: 88, clip: { x: 0, y: 0, width: 1200, height: 630 } });
+        if (out && out.length >= 2048) buf = Buffer.from(out); // puppeteer 23 은 Uint8Array — 그대로 보내면 JSON 숫자 목록이 나간다
+      } catch (e: any) {
+        console.warn('[ttiOgImage] 그리기 실패', attempt, e?.message);
+      } finally {
+        try { await browser.close(); } catch { /* noop */ }
+      }
     }
+    // 두 번 다 실패하면 503 (캐시에 남지 않게 기본 그림 302 를 쓰지 않는다)
+    if (!buf) { res.set('Retry-After', '60'); res.status(503).send('busy'); return; }
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(buf);
   } catch (err: any) {
     console.error('[ttiOgImage]', err?.message);
-    try { fallback(); } catch { res.status(500).send('error'); }
+    // 예상 못 한 오류도 503 — 기본 그림 302 는 호스팅 캐시 규칙 때문에 하루 남는다
+    try { res.set('Retry-After', '60'); res.status(503).send('busy'); } catch { /* noop */ }
   }
 });

@@ -237,8 +237,11 @@ async function ensureDoc(apiKey: string, dateKey: string): Promise<void> {
     await ref.set({ ...doc, model: MODEL, tries: tries + 1, createdAt: admin.firestore.FieldValue.serverTimestamp() });
     console.log(`[ttiFortune] saved ${dateKey} ${doc.dayGz} complete=${complete(doc)}`);
     if (dateKey === kstDateKey(0)) await pingIndexNow(['https://saju500.app/unse/today/']);
-    // 2026-10-19 미리보기 그림을 한 번 불러 CDN 에 올려 둔다 (처음 링크를 받은 사람이 그림 없는 미리보기를 보지 않게)
-    await fetch(`https://saju500.app/og/tti/${dateKey}.jpg`).then((r) => r.arrayBuffer()).catch(() => undefined);
+    // 2026-10-19 미리보기 그림을 한 번 불러 CDN 에 올려 둔다 (처음 링크를 받은 사람이 그림 없는 미리보기를 보지 않게).
+    //   주소에 판 번호(v=tries)를 붙여 다시 만들면 새 그림이 된다(og:image 와 앱 공유도 같은 번호). 완성본이나 마지막 시도일 때만
+    if (complete(doc) || tries + 1 >= MAX_TRIES) {
+      await fetch(`https://saju500.app/og/tti/${dateKey}.jpg?v=${tries + 1}`).then((r) => r.arrayBuffer()).catch(() => undefined);
+    }
   } catch (e: any) {
     await ref.set({ date: dateKey, tries: tries + 1, lastError: String(e?.message || e).slice(0, 200) }, { merge: true });
     throw e;
