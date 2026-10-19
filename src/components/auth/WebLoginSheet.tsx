@@ -138,19 +138,19 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
                 <svg width="20" height="20" viewBox="0 0 24 24" fill={C.ink} aria-hidden>
                   <path d="M12 3C6.477 3 2 6.477 2 10.9c0 2.789 1.698 5.24 4.29 6.73l-.89 3.27 3.78-2.49A11.5 11.5 0 0 0 12 18.8c5.523 0 10-3.477 10-7.9C22 6.477 17.523 3 12 3z" />
                 </svg>
-                카카오 계속하기
+                카카오 로그인
               </button>
 
-              {/* 네이버 — signIn('naver') 실제 연결 */}
+              {/* 네이버 — signIn('naver') 실제 연결. 10-19 네이버 검수용으로 공식 N 모양과 '네이버 로그인' 문구(버튼 가이드) */}
               <button type="button"
                 onClick={() => handleLogin('naver')}
                 disabled={busy}
                 className="w-full flex items-center justify-center gap-3 rounded-2xl font-semibold text-[16px]"
                 style={{ height: 52, background: '#03C75A', color: '#fff', opacity: busy ? 0.6 : 1 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <text x="3" y="18" fontSize="16" fontWeight="900" fill="#fff">N</text>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" aria-hidden>
+                  <path d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845Z" />
                 </svg>
-                네이버 계속하기
+                네이버 로그인
               </button>
 
               {/* 구글 — GoogleAuthProvider (2026-06-12 추가 — 모달에 구글만 빠져 있던 것). 앱 안 화면에서는 숨김(10-19) */}
@@ -165,7 +165,7 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
                   <path fill="#FBBC05" d="M5.27 14.29A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.29V6.64H1.29a11.99 11.99 0 0 0 0 10.72l3.98-3.07z" />
                   <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.94 1.19 15.23 0 12 0A11.99 11.99 0 0 0 1.29 6.64l3.98 3.07C6.22 6.86 8.87 4.75 12 4.75z" />
                 </svg>
-                구글 계속하기
+                구글 로그인
               </button>}
               {inApp && (
                 <p className="text-center text-[13px] leading-[1.6] mt-1" style={{ color: C.mute }}>
