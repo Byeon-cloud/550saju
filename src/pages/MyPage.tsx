@@ -151,6 +151,8 @@ export function MyPage() {
         const backedUp = uid ? await (await import('@/services/storage/firestoreSync')).syncToCloud(uid) : false;
         if (backedUp) (await import('@/services/storage/localStore')).clearLocalLibrary();
       } catch { /* 백업이 실패하면 지우지 않는 편이 안전 — 그대로 로그아웃 */ }
+      // 10-19 — 잔액은 백업과 상관없이 지운다(로그인 계정의 운은 서버에 있다). 남기면 로그아웃 뒤에도 그 운이 보이고 쓰였다
+      try { (await import('@/services/storage/localStore')).clearLocalBalance(); } catch { /* noop */ }
       await signOut();
       toast.show('로그아웃 됐어요', 'info');
     } catch {

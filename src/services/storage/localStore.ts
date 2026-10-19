@@ -527,6 +527,14 @@ function getBalanceDetail(): BalanceDetail {
 /** 2026-10-18 잔액이 바뀌면 알린다 — 상단 잔액 칩이 늘어난 만큼 '+N운' 으로 반응 (BalanceBar) */
 export const BALANCE_CHANGED_EVENT = 'saju500:balance-changed';
 
+/** 웹 로그아웃 때 이 기기 잔액만 지운다 (10-19 오너: 로그아웃했는데 운 4개가 그대로).
+ *  로그인 계정의 운은 서버(users.balance)에 있어 다시 로그인하면 syncFromCloud 가 돌려놓는다.
+ *  남겨 두면 로그인 안 한 상태로 그 운을 쓰고(익명은 서버가 깎지 않는다) 다시 로그인하면 운이 되살아났다. 미러는 보내지 않는다 */
+export function clearLocalBalance(): void {
+  try { localStorage.removeItem(BALANCE_KEY); localStorage.removeItem(BALANCE_LEGACY_KEY); } catch { /* noop */ }
+  try { window.dispatchEvent(new Event(BALANCE_CHANGED_EVENT)); } catch { /* noop */ }
+}
+
 function setBalanceDetail(detail: BalanceDetail): void {
   localStorage.setItem(BALANCE_KEY, JSON.stringify(detail));
   try { window.dispatchEvent(new Event(BALANCE_CHANGED_EVENT)); } catch { /* noop */ }
