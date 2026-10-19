@@ -26,6 +26,10 @@ export interface DayStats {
   cs: { granted: number; grantedUn: number; claimed: number; claimedUn: number };
   alerts: { total: number; byKind: Record<string, number> };
   packages: Record<string, number>;
+  /** 이벤트 이름별 기록 수 (STATS_VERSION 3부터) */
+  events?: Record<string, { app: number; web: number }>;
+  /** 그날 처음 온 기기 중 다음 날, 7일 안에 다시 온 기기 (아직 그날이 안 지났으면 null) */
+  retention?: Record<Plat, { cohort: number; d1: number | null; w1: number | null }>;
 }
 
 export async function callAdmin<T = any>(name: string, data: Record<string, unknown>): Promise<T> {

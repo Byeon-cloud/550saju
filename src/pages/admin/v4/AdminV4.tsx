@@ -11,14 +11,16 @@ import { Overview } from './Overview';
 import { Customer } from './Customer';
 import { Revenue, Channels, ContentAi } from './Tables';
 import { TabReviews } from '../_tabReviews';
+import { Tracking } from './Tracking';
 
-type Tab = 'overview' | 'customer' | 'revenue' | 'channels' | 'content' | 'reviews';
+type Tab = 'overview' | 'customer' | 'revenue' | 'channels' | 'content' | 'tracking' | 'reviews';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: '한눈에' },
   { id: 'customer', label: '고객 찾기와 운 넣기' },
   { id: 'revenue', label: '매출' },
   { id: 'channels', label: '들어온 곳' },
   { id: 'content', label: '콘텐츠와 AI' },
+  { id: 'tracking', label: '기록 점검' },
   { id: 'reviews', label: '후기' },
 ];
 
@@ -74,6 +76,7 @@ export function AdminV4() {
         {tab === 'revenue' && data && <Revenue days={days} plat={plat} />}
         {tab === 'channels' && data && <Channels days={days} plat={plat} />}
         {tab === 'content' && data && <ContentAi days={days} plat={plat} />}
+        {tab === 'tracking' && data && <Tracking days={days} />}
         {tab === 'customer' && <Customer />}
         {tab === 'reviews' && <TabReviews />}
       </div>

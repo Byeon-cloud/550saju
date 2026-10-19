@@ -15,7 +15,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { assertOwner, OWNER_UIDS } from './owner';
 
-const STATS_VERSION = 2; // 2: 오너 계정 결제(시험 결제)를 매출에서 뺀다
+const STATS_VERSION = 3; // 2: 오너 시험 결제 제외 / 3: 이벤트별 건수(events), 재방문(retention)
 const RAW_KEEP_DAYS = 400;
 
 export const kstDayOf = (ms: number): string => new Date(ms + 9 * 3600e3).toISOString().slice(0, 10);
@@ -72,6 +72,10 @@ export interface DayStats {
   cs: { granted: number; grantedUn: number; claimed: number; claimedUn: number };
   alerts: { total: number; byKind: Record<string, number> };
   packages: Record<string, number>; // '앱 5000' → 건수
+  /** 이벤트 이름별 건수 (사람 수가 아니라 기록 수) — 관리자 '기록 점검'이 끊긴 기록을 찾는 데 쓴다 */
+  events: Record<string, { app: number; web: number }>;
+  /** 그날 처음 온 기기(signup) 중 다음 날, 7일 안에 다시 온 기기. 미래 날이 아직이면 null */
+  retention: Record<Plat, { cohort: number; d1: number | null; w1: number | null }>;
 }
 
 /** 하루치 계산에 공통으로 쓰는 작은 장부들 (여러 날을 만들 때 한 번만 읽는다) */
@@ -81,6 +85,26 @@ interface Ledger {
   comps: { createdDay: string; amount: number; claimedDay: string | null; target: string }[];
   compLog: { day: string; amount: number }[];
   alerts: { day: string; kind: string }[];
+  /** 날짜 → (기기 → plat) 메모 (재방문 계산용, 한 번의 실행 안에서만) */
+  whoMemo?: Map<string, Promise<Map<string, Plat>>>;
+}
+
+function whoOfDay(day: string, ledger: Ledger): Promise<Map<string, Plat>> {
+  ledger.whoMemo ??= new Map();
+  const hit = ledger.whoMemo.get(day);
+  if (hit) return hit;
+  const p = admin.firestore().collection('analytics').where('day', '==', day).select('uid', 'did', 'sid', 'plat', 'internal').get().then((snap) => {
+    const m = new Map<string, Plat>();
+    for (const d of snap.docs) {
+      const e = d.data() as any;
+      if (e.internal) continue;
+      const who = String(e.did || e.uid || e.sid || '');
+      if (who && !m.has(who)) m.set(who, e.plat === 'ait' ? 'app' : 'web');
+    }
+    return m;
+  });
+  ledger.whoMemo.set(day, p);
+  return p;
 }
 
 async function loadLedger(): Promise<Ledger> {
@@ -282,13 +306,49 @@ export async function computeDay(day: string, ledger: Ledger): Promise<DayStats>
   const cl = ledger.comps.filter((c) => c.claimedDay === day);
   cs.claimed = cl.length; cs.claimedUn = cl.reduce((s, c) => s + c.amount, 0);
 
+  // 이벤트별 건수
+  const events: DayStats['events'] = {};
+  for (const e of evs) {
+    const p: Plat = e.plat === 'ait' ? 'app' : 'web';
+    const n = String(e.name || '?').slice(0, 40);
+    (events[n] ??= { app: 0, web: 0 })[p] += 1;
+  }
+
+  // 재방문: 그날 처음 온 기기(signup) → 다음 날, 그 뒤 7일 안
+  const today = kstToday();
+  const cohort: Record<Plat, Set<string>> = { app: new Set(), web: new Set() };
+  for (const e of evs) if (e.name === 'signup') { const who = String(e.did || e.uid || e.sid || ''); if (who) cohort[e.plat === 'ait' ? 'app' : 'web'].add(who); }
+  const retention: DayStats['retention'] = { app: { cohort: cohort.app.size, d1: null, w1: null }, web: { cohort: cohort.web.size, d1: null, w1: null } };
+  if (cohort.app.size + cohort.web.size > 0) {
+    const next = addDays(day, 1);
+    if (next < today) {
+      const seen1 = await whoOfDay(next, ledger);
+      for (const p of ['app', 'web'] as Plat[]) retention[p].d1 = [...cohort[p]].filter((w) => seen1.has(w)).length;
+    }
+    if (addDays(day, 7) < today) {
+      const weekSets = await Promise.all([1, 2, 3, 4, 5, 6, 7].map((i) => whoOfDay(addDays(day, i), ledger)));
+      for (const p of ['app', 'web'] as Plat[]) retention[p].w1 = [...cohort[p]].filter((w) => weekSets.some((m) => m.has(w))).length;
+    }
+  }
+
   const alerts = { total: 0, byKind: {} as Record<string, number> };
   for (const a of ledger.alerts) if (a.day === day) { alerts.total += 1; alerts.byKind[a.kind] = (alerts.byKind[a.kind] || 0) + 1; }
 
   return {
     day, v: STATS_VERSION, builtAt: Date.now(), ...(day === kstToday() ? { partial: true } : {}),
-    app: S.app, web: S.web, content, channels, ai, aiFailures, cs, alerts, packages,
+    app: S.app, web: S.web, content, channels, ai, aiFailures, cs, alerts, packages, events, retention,
   };
+}
+
+/** 저장된 요약을 다시 만들어야 하나: 옛 계산 판이거나, 재방문 칸이 비었는데 이제 채울 수 있게 된 날 */
+function stale(d: any, day: string): boolean {
+  if (!d || (d.v || 0) < STATS_VERSION) return true;
+  const today = kstToday();
+  const r = d.retention || {};
+  const has = (r.app?.cohort || 0) + (r.web?.cohort || 0) > 0;
+  if (has && addDays(day, 7) < today && (r.app?.w1 == null || r.web?.w1 == null)) return true;
+  if (has && addDays(day, 1) < today && (r.app?.d1 == null || r.web?.d1 == null)) return true;
+  return false;
 }
 
 async function buildAndSave(days: string[]): Promise<number> {
@@ -314,8 +374,9 @@ export const buildDailyStats = onSchedule(
     const back: string[] = [];
     for (let i = 3; i <= 120; i += 1) back.push(addDays(t, -i));
     const snaps = await db.getAll(...back.map((d) => db.collection('statsDaily').doc(d)));
-    const missing = back.filter((d, i) => !snaps[i].exists || ((snaps[i].data() as any).v || 0) < STATS_VERSION).slice(0, 40);
-    const n = await buildAndSave([...missing.reverse(), addDays(t, -2), addDays(t, -1)]);
+    const missing = back.filter((d, i) => !snaps[i].exists || stale(snaps[i].data() as any, d)).slice(0, 40);
+    // 8일 전은 '7일 안 재방문'이 이제 확정된다 → 다시 만든다
+    const n = await buildAndSave([...new Set([...missing.reverse(), addDays(t, -8), addDays(t, -2), addDays(t, -1)])]);
     console.info(`[buildDailyStats] ${n}일 저장 (밀린 날 ${missing.length})`);
   },
 );
@@ -390,7 +451,7 @@ export const adminStats = onCall(
     const snaps = refs.length ? await db.getAll(...refs) : [];
     const have = new Map<string, DayStats>();
     snaps.forEach((s) => { if (s.exists) have.set(s.id, s.data() as DayStats); });
-    const missing = past.filter((d) => !have.has(d) || (have.get(d)!.v || 0) < STATS_VERSION);
+    const missing = past.filter((d) => !have.has(d) || stale(have.get(d), d));
     const ledger = await loadLedger();
     for (const d of missing) {
       const st = await computeDay(d, ledger);

@@ -5,6 +5,7 @@
 import { fmt, won, pct, sideOf, CONTENT_NAME, AI_NAME, SOURCE_NAME } from './api';
 import type { DayStats, PlatFilter, ChannelRow } from './api';
 import { Box, Table, K } from './ui';
+import { DayColumns, PLAT_COLOR } from './charts';
 
 function csv(name: string, head: string[], rows: (string | number)[][]) {
   const body = [head, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -29,7 +30,14 @@ export function Revenue({ days, plat }: { days: DayStats[]; plat: PlatFilter }) 
   const fmtRow = (r: (string | number)[]) => r.map((v, i) => (i === 0 ? v : [2, 4, 5, 8].includes(i) ? won(Number(v)) : fmt(Number(v))));
   return (
     <div>
-      <Box title="날짜별 매출" right={<Down onClick={() => csv('매출', head, rows as any)} />} note="매출은 결제 장부 기준이에요(같은 주문은 한 번, 확정된 날). 환불은 환불된 날에 잡혀요. 토스 앱 결제의 환불은 아직 토스 콘솔에서만 보여요.">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 10, marginBottom: 18 }}>
+        <DayColumns title="날짜별 매출" days={days} fmt={won} series={[
+          ...(plat !== 'web' ? [{ key: 'app', label: '앱', color: PLAT_COLOR.app, get: (d: DayStats) => d.app.revenue }] : []),
+          ...(plat !== 'app' ? [{ key: 'web', label: '웹', color: PLAT_COLOR.web, get: (d: DayStats) => d.web.revenue }] : []),
+        ]} />
+        <DayColumns title="날짜별 AI 비용" days={days} fmt={won} series={[{ key: 'ai', label: 'AI 비용', color: '#7A6F60', get: (d: DayStats) => d.ai?.costKrw || 0 }]} />
+      </div>
+      <Box title="날짜별 표" right={<Down onClick={() => csv('매출', head, rows as any)} />} note="매출은 결제 장부 기준이에요(같은 주문은 한 번, 확정된 날). 환불은 환불된 날에 잡혀요(웹은 15분, 토스 앱 결제는 30분마다 확인해 운과 보너스를 거둬요).">
         <Table head={head} align={['l', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r']} rows={[fmtRow(tot), ...rows.map(fmtRow)]} />
       </Box>
       <Box title="팔린 묶음">
