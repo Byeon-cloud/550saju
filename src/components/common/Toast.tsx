@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ToastMessage {
@@ -28,6 +28,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => [...prev, { id, text, type }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2500);
   }, []);
+
+  // 2026-10-19 — 화면 밖(App 부팅 코드)에서도 알림을 띄운다: window 에 'saju500:toast' {text, type}. 받으면 detail.handled = true
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent).detail || {};
+      if (!d.text) return;
+      d.handled = true;
+      show(String(d.text), d.type === 'warning' || d.type === 'info' ? d.type : 'success');
+    };
+    window.addEventListener('saju500:toast', on);
+    return () => window.removeEventListener('saju500:toast', on);
+  }, [show]);
 
   return (
     <ToastContext.Provider value={{ show }}>

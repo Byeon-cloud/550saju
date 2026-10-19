@@ -251,7 +251,10 @@ async function runCsCompensationCheck(): Promise<void> {
       addPaidBalance(amount, 0);
       // 잘못 생성됐던 주제 결과 동반 정리 (보관함 + 캐시) — 재열람 시 혼란 방지
       if (wipeTopics.length > 0) removeTopicReports(wipeTopics);
-      try { localStorage.setItem('saju500:comp_notice', String(amount)); } catch { /* noop */ }
+      // 받은 그 자리에서 바로 알린다(어느 화면이든). 알림 틀이 아직 없으면 홈에서 다음에 알린다
+      const detail: { text: string; type: string; handled?: boolean } = { text: `고객센터 보상 ${amount}운이 적립됐어요. 불편을 드려 죄송합니다`, type: 'success' };
+      window.dispatchEvent(new CustomEvent('saju500:toast', { detail }));
+      if (!detail.handled) { try { localStorage.setItem('saju500:comp_notice', String(amount)); } catch { /* noop */ } }
     }
   } catch { /* noop — 다음 기회 재시도 */ }
 }
