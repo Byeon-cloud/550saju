@@ -121,6 +121,8 @@ ${body}
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div>
 <div>© ${new Date().getFullYear()} 사주500</div>
 </footer>
+<script>(function(){try{var q=new URLSearchParams(location.search);if(!q.get('utm_source'))return;var K=['utm_source','utm_medium','utm_campaign','utm_content','utm_term'],keep=[];K.forEach(function(k){var v=q.get(k);if(v)keep.push(k+'='+encodeURIComponent(v));});window.__adUtm=keep.join('&');
+document.querySelectorAll('a[href^="/"]').forEach(function(a){var u=new URL(a.getAttribute('href'),location.origin);if(!u.searchParams.get('utm_source'))return;K.forEach(function(k){u.searchParams.delete(k);});K.forEach(function(k){var v=q.get(k);if(v)u.searchParams.set(k,v);});a.setAttribute('href',u.pathname+u.search+u.hash);});}catch(e){}})();</script>
 </body></html>`;
 }
 
@@ -730,7 +732,7 @@ var t='';if(!tu.checked){if(!tt.value){e.textContent='태어난 시각을 넣거
 var r=(f.querySelector('input[name=r]:checked')||{}).value||'self';var n=(f.n.value||'').trim().slice(0,12);
 var d={b:b,c:c,g:g,r:r,t:t,n:n};var q='';
 try{sessionStorage.setItem('saju500:manse_form',JSON.stringify(d));}catch(_){q='b='+b+'&c='+c+'&g='+g+'&r='+r+(t?'&t='+t:'')+(n?'&n='+encodeURIComponent(n):'')+'&';}
-location.href='/manse/view?'+q+'${mutm('form')}';});})();</script>`;
+location.href='/manse/view?'+q+(window.__adUtm||'${mutm('form')}');});})();</script>`;
   const body = `<style>${pageCss}</style>
 <section class="mhero">${sky}<div class="wrap">
 <div class="lab">무료 만세력</div>

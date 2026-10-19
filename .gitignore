@@ -45,3 +45,6 @@ saju500.ait.zip
 output/
 .codex/
 public/__qa/
+
+# 광고 API 키 등 로컬 비밀 파일 (2026-10-19, 절대 커밋 금지)
+.secrets/
