@@ -18,6 +18,8 @@ export function NaverCallbackPage() {
       try {
         const { finishNaverLogin } = await import('@/services/auth/authService');
         const { returnTo } = await finishNaverLogin(params);
+        // 로그인 성공 기록이 저장될 틈을 준다 (바로 새로 열면 기록이 사라졌다, 10-19 첫 성공 때 확인)
+        await new Promise((r) => setTimeout(r, 900));
         if (alive) window.location.replace(returnTo);
       } catch (e: any) {
         const code = String(e?.code || 'error');
