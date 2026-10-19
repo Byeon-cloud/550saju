@@ -1,6 +1,16 @@
 import { Header } from '@/components/layout/Header';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { BUSINESS_INFO } from '@/constants/businessInfo';
+import { isAppintosBuild } from '@/lib/env';
+
+/* 웹 광고 전환 추적(src/services/ads/adPixels.ts)을 켠 경우에만 '행태정보' 항목을 보인다 (2026-10-19).
+ *   개인정보보호위원회 맞춤형 광고 행태정보 보호 가이드라인의 공개 항목(수집 항목, 방법, 목적, 보유, 수집 사업자, 거부 방법).
+ *   앱(토스 안)은 추적하지 않으므로 앱 번들에서는 보이지 않는다. 켠 날은 VITE_AD_TRACKING_SINCE(예: 2026년 10월 25일). */
+const AD_META = !!import.meta.env.VITE_META_PIXEL_ID;
+const AD_NAVER = !!import.meta.env.VITE_NAVER_WA_ID;
+const AD_GOOGLE = !!import.meta.env.VITE_GADS_ID;
+const AD_ON = !isAppintosBuild && (AD_META || AD_NAVER || AD_GOOGLE);
+const AD_SINCE = String(import.meta.env.VITE_AD_TRACKING_SINCE || '');
 
 export function PrivacyPage() {
   usePageTitle('개인정보처리방침');
@@ -69,6 +79,17 @@ export function PrivacyPage() {
               <p>다만 전자상거래법 등 관계 법령에 따라 보존이 필요한 결제 기록은 5년간 분리 보관 후 파기해요.</p>
               <p>전자적 파일은 복구할 수 없는 방법으로 영구 삭제하고, 출력물은 분쇄와 소각해요.</p>
             </div>
+            {AD_ON && (
+              <div>
+                <p className="text-label text-text-primary font-bold mb-1">6-1. 웹 광고를 위한 행태정보의 수집과 거부</p>
+                <p>웹(saju500.app)에서 광고 성과를 재고 관심에 맞는 광고를 보여 주기 위해, 아래 광고 사업자의 도구(쿠키와 스크립트)가 이용 기록을 자동으로 수집해요. 토스 앱 안에서는 수집하지 않아요.</p>
+                <p className="mt-1">수집하는 행태정보: 본 화면, 사주 입력 완료, 풀이 결과 확인, 충전 화면 진입, 충전 완료와 금액. 이름, 생년월일, 출생시간 같은 사주 정보와 메일 주소는 보내지 않아요.</p>
+                <p>수집하는 사업자: {[AD_META && 'Meta Platforms, Inc.(메타 픽셀)', AD_NAVER && '네이버 주식회사(네이버 검색광고 전환 추적)', AD_GOOGLE && 'Google LLC(Google 광고 전환 추적)'].filter(Boolean).join(', ')}</p>
+                <p>보유 기간: 사주500은 이 기록을 따로 저장하지 않아요. 각 사업자가 자사 정책에 따라 보관해요.</p>
+                <p>거부 방법: 브라우저 설정에서 다른 사이트 쿠키를 막거나(크롬은 설정, 개인정보 및 보안, 서드 파티 쿠키 / 사파리는 설정, Safari, 크로스 사이트 추적 방지), 휴대폰에서 광고 개인화를 끄면(안드로이드는 설정, Google, 광고 / 아이폰은 설정, 개인정보 보호 및 보안, 추적) 수집되지 않거나 맞춤형 광고에 쓰이지 않아요. 거부해도 서비스는 그대로 쓸 수 있어요.</p>
+                <p>문의: 아래 개인정보 보호책임자에게 연락해 주세요.{AD_SINCE ? ` 이 항목은 ${AD_SINCE}부터 적용해요.` : ''}</p>
+              </div>
+            )}
             <div>
               <p className="text-label text-text-primary font-bold mb-1">7. 개인정보 보호책임자</p>
               <p>개인정보 보호책임자: {BUSINESS_INFO.ceoName} ({BUSINESS_INFO.companyName})</p>
