@@ -151,8 +151,18 @@ export function MyPage() {
         const backedUp = uid ? await (await import('@/services/storage/firestoreSync')).syncToCloud(uid) : false;
         if (backedUp) (await import('@/services/storage/localStore')).clearLocalLibrary();
       } catch { /* 백업이 실패하면 지우지 않는 편이 안전 — 그대로 로그아웃 */ }
-      // 10-19 — 잔액은 백업과 상관없이 지운다(로그인 계정의 운은 서버에 있다). 남기면 로그아웃 뒤에도 그 운이 보이고 쓰였다
-      try { (await import('@/services/storage/localStore')).clearLocalBalance(); } catch { /* noop */ }
+      // 10-19 — 서버에 이 계정 운이 다 있으면 이 기기 잔액을 지운다(다시 로그인하면 syncFromCloud 가 돌려놓는다).
+      //   남기면 로그아웃 뒤 로그인 없이 그 운을 쓰고, 다시 로그인하면 서버 운으로 되살아났다.
+      //   서버 기록이 없거나 이 기기 운이 더 많으면(로그인 전에 받은 운 등) 지우지 않는다 — 지우면 그 운이 사라진다.
+      try {
+        const uid = user?.uid;
+        if (uid) {
+          const [{ doc, getDoc }, { db }, store] = await Promise.all([import('firebase/firestore'), import('@/services/auth/firebase'), import('@/services/storage/localStore')]);
+          const b: any = (await getDoc(doc(db, 'users', uid))).data()?.balance;
+          const cloud = typeof b === 'number' ? b : (Number(b?.paid) || 0) + (Number(b?.bonus) || 0) + (Number(b?.reward) || 0);
+          if (cloud > 0 && cloud + 1e-6 >= store.getBalance()) store.clearLocalBalance();
+        }
+      } catch { /* 못 읽으면 지우지 않는다 */ }
       await signOut();
       toast.show('로그아웃 됐어요', 'info');
     } catch {
