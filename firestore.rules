@@ -6,7 +6,8 @@ service cloud.firestore {
     function isOwner() {
       // 영구 오너 — 구글 로그인 이메일 (익명 uid 회전 문제 해결 · 2026-06-12)
       return request.auth != null && (
-        request.auth.token.email == 'quswnsrl202@naver.com' ||
+        // 10-19 — 이메일은 확인된 것만 (서버 functions/src/admin/owner.ts 와 같은 기준). 오너 uid 는 아래 목록으로 따로 맞는다
+        (request.auth.token.email == 'quswnsrl202@naver.com' && request.auth.token.email_verified == true) ||
         request.auth.uid in [
         '6C4MSgYY5UMLBpsth0ehx3Pyj0K3', // 준기 · quswnsrl202@naver.com (구글 웹)
         '8Nda5XA4GwQfyjOLJk54i0ADdTb2', // 준기 · PC 웹 익명 세션 (편의)
