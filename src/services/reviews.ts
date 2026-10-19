@@ -26,7 +26,7 @@ const DONE_PREFIX = 'saju500:review_done:';
 export function reviewHandled(key: string): boolean {
   try { return !!localStorage.getItem(DONE_PREFIX + key); } catch { return false; }
 }
-export function markReviewHandled(key: string, how: 'sent' | 'later'): void {
+export function markReviewHandled(key: string, how: 'sent' | 'later' | 'toss'): void {
   try { localStorage.setItem(DONE_PREFIX + key, `${how}:${Date.now()}`); } catch { /* noop */ }
 }
 
