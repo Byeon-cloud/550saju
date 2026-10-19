@@ -107,7 +107,8 @@ export function MyPage() {
   })();
 
   const [balance, setBalance] = useState(0);
-  const [showContact, setShowContact] = useState(false);
+  // 앱에서 결과 화면 '고객문의'로 오면(?inquiry=) 웹 양식 대신 고객문의 창(토스 문의 안내)을 바로 연다
+  const [showContact, setShowContact] = useState(() => (isAppintosBuild || isAppsInToss()) && new URLSearchParams(location.search).has('inquiry'));
   // 2026-10-19 — 웹 문의 양식 (?inquiry=분류&rid=결과 로 바로 열 수도 있다: 결과 화면 '고객문의')
   const [cameForInquiry] = useState(() => new URLSearchParams(location.search).has('inquiry'));
   const [inquiry, setInquiry] = useState<{ open: boolean; cat?: InquiryCategory; rid?: string }>(() => {
