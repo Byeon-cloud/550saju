@@ -24,6 +24,7 @@
  */
 
 import { onRequest } from 'firebase-functions/v2/https';
+import { realName } from '../shared/personName';
 import { ttiAnimalSvg } from '../tti/ttiAnimalSvg';
 
 /* ══════════════════════════════════════════════════════════════════
@@ -50,7 +51,8 @@ function buildOgHtml(name: string, ilju: string): string {
   const zhi = ilju.charAt(1);
   const meta = GAN_OHENG_COLOR[gan];
   const color = meta?.color ?? '#1A1612';
-  const safeName = esc((name || '').trim() || '나');
+  const realNm = realName(name);
+  const safeName = esc(realNm || '나');
   const iljuKo = `${GAN_KO[gan] || ''}${ZHI_KO[zhi] || ''}`;
   const animal = zhi ? ttiAnimalSvg(zhi, 92) : '';
   return `<!doctype html><html><head><meta charset="utf-8">
@@ -71,7 +73,7 @@ h1{margin-top:58px;font-family:'Noto Serif KR',serif;font-weight:700;font-size:6
 .an svg{display:block}
 </style></head><body><div class="w">
 <div class="l"><div class="br">사주<b>500</b></div>
-<h1>${safeName} 님의<br>사주 카드</h1>
+<h1>${realNm ? `${safeName} 님의` : '나의'}<br>사주 카드</h1>
 <div class="sub">${iljuKo ? `${iljuKo}(${esc(ilju)}) 일주, ${meta?.oheng ?? ''} 기운의 일간` : '사주 여덟 글자와 오행, 지금 대운'}</div>
 <div class="ft">생일만 넣으면 내 사주 카드도 무료로 만들어요</div></div>
 <div class="r"><div class="box"><span>${esc(gan) || '命'}</span><span>${esc(zhi)}</span></div><div class="an">${animal}</div></div>

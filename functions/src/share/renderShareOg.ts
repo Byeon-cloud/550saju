@@ -24,6 +24,7 @@
  *     - { source: "**", destination: "/index.html" }
  */
 
+import { realName } from '../shared/personName';
 import { onRequest } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 
@@ -109,12 +110,12 @@ const TYPE_TITLE: Record<string, [string, string]> = {
 function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: DreamShareDoc | null, ny?: NewYearShareDoc | null, cj?: { n1: string } | null): { title: string; description: string; image: string } {
   const { type, topicId } = parsed;
   if (type === 'cjoin' && cj?.n1) {
-    return { title: `${cj.n1} 님이 두 분 궁합을 보고 싶어 해요 | 사주500`, description: '내 생일을 넣으면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 볼 수 있어요. 생일은 상대에게 보이지 않아요.', image: OG_IMAGE_FALLBACK };
+    return { title: `${realName(cj.n1) ? `${realName(cj.n1)} 님이` : '친구가'} 두 분 궁합을 보고 싶어 해요 | 사주500`, description: '내 생일을 넣으면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 볼 수 있어요. 생일은 상대에게 보이지 않아요.', image: OG_IMAGE_FALLBACK };
   }
   if (type === 'newyear' && ny) {
     const mm = (a: number[]) => a.map((m) => `${m}월`).join(', ');
     return {
-      title: `${ny.name} 님의 ${ny.y} ${ny.gzKo}년 미리 보기 | 사주500`,
+      title: `${realName(ny.name) ? `${realName(ny.name)} 님의 ` : ''}${ny.y} ${ny.gzKo}년 미리 보기 | 사주500`,
       description: `${ny.good.length ? `힘을 줄 달 ${mm(ny.good)}. ` : ''}${ny.hard.length ? `쉬어 갈 달 ${mm(ny.hard)}. ` : ''}내 새해도 무료로 미리 볼 수 있어요.`.slice(0, 120),
       image: OG_IMAGE_FALLBACK,
     };
@@ -128,7 +129,7 @@ function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: 
   }
   if (type === 'compat' && compat) {
     return {
-      title: `${compat.n1} 님과 ${compat.n2} 님의 궁합 ${compat.score}점 | 사주500`,
+      title: `${realName(compat.n1) ? `${realName(compat.n1)} 님과` : '친구와'} ${realName(compat.n2) ? `${realName(compat.n2)} 님의` : '상대의'} 궁합 ${compat.score}점 | 사주500`,
       description: compat.head || '두 사람의 사주로 궁합을 봤어요. 점수와 총평을 볼 수 있어요.',
       image: OG_IMAGE_FALLBACK,
     };

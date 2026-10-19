@@ -24,6 +24,7 @@ import {
   ExtensionHero,
 } from './extension/_chrome';
 
+import { realName } from '@/utils/personName';
 type Phase = 'select' | 'loading' | 'result';
 
 const ACCENT = '#A23A2A'; // 월운 확장색 (CLAUDE.md 톤 SSOT)
@@ -264,7 +265,7 @@ export function MonthlyPage() {
             <>
               <FadeIn delay={0.05}>
                 <div className="card-gold py-3 px-4 flex items-center justify-between">
-                  <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span> 님 선택됨</p>
+                  <p className="text-body-sm text-text-primary">{realName(selected.name) ? <><span className="font-bold">{realName(selected.name)}</span> 님 선택됨</> : <><span className="font-bold">내 사주</span> 선택됨</>}</p>
                   <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
                 </div>
               </FadeIn>

@@ -1,3 +1,4 @@
+import { promptName } from '../shared/personName';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput, natalRelationsText, lifeTimelineFactsText, monthDayPicks, sajuCoreFactsText } from './sajuFacts';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, READING_VOICE_BLOCK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
@@ -300,7 +301,7 @@ ${lifeTimelineFactsText(d, kstNowDate())}
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지와 순서를 절대 바꾸지 말 것.` : ''}
 
-## 이름: ${d.input?.name || '미상'}, 성별: ${d.input?.gender === 'male' ? '남' : '여'}
+## 이름: ${promptName(d.input?.name)}, 성별: ${d.input?.gender === 'male' ? '남' : '여'}
 
 ## 출력 (JSON만, 코드블록 없이)
 ⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (periods, wealth, love, career, health) 는 **5의 배수만 반복 금지**. 65, 70, 75, 80 같은 fake 신호 X. 67, 73, 81, 88 같이 자연수로. 같은 응답 안 점수가 모두 다른 값이어야 함.

@@ -1,3 +1,4 @@
+import { promptName, realName } from '../shared/personName';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
@@ -102,7 +103,7 @@ export async function generateTojungBigyeol(
     h.hexagram = {
       yearLabel: `${ty} ${ganziKo(ygz)}년, 신년운세`,
       glyph: ygz,
-      name: `${ganziKo(ygz)}년의 ${sajuData?.input?.name || '나'}`,
+      name: `${ganziKo(ygz)}년의 ${realName(sajuData?.input?.name) || '나'}`,
       oneLine: String(a.headline || ''),
       pullQuote: a.pullQuote ? String(a.pullQuote) : undefined,
     };
@@ -253,7 +254,7 @@ ${sajuCoreFactsText(d)}
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 이 간지와 순서를 절대 바꾸지 말 것 — 이전/다음 대운 간지를 임의로 만들거나 뒤바꾸지 말고 위 대운 흐름 목록의 간지를 그대로 인용. swap 절대 금지.` : ''}
 
-## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}, ${d.input?.birthYear||''}년생${d.띠 ? `, ${d.띠}띠` : ''}
+## 이름: ${promptName(d.input?.name)}, ${d.input?.gender==='male'?'남':'여'}, ${d.input?.birthYear||''}년생${d.띠 ? `, ${d.띠}띠` : ''}
 
 ## 출력 형식은 user 메시지의 그룹 지시를 따른다 (JSON만, 코드블록 없이)
 ⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores, subScores, overallScore, monthlyScore, compatScore, careerScore 등) 는 **5의 배수만 반복 금지**. 65, 70, 75, 80 같은 fake 신호 X. 67, 73, 81, 88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.

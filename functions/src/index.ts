@@ -1,5 +1,6 @@
 // 2026-07-03: 런타임 Node 20 → 22 (firebase.json "runtime": "nodejs22" · Node 20 은 2026-10-30 지원 종료).
 //   CLI 는 소스 해시만 비교해 런타임 변경만으론 전 함수를 skip — 이 주석이 해시를 바꿔 재배포를 트리거함.
+import { realName } from './shared/personName';
 import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { guardCallable, guardHttp, GEN_LIMIT_MESSAGE } from './shared/genGuard'; // 2026-10-14 익명 생성 하루 상한
@@ -512,7 +513,7 @@ export const generateDailyFortune = onCall(
       console.log('[generateDailyFortune] Starting Sonnet 4.6 call...');
       const { generateDailyFortuneAnalysis } = await lazyClaudeFortune();
       const result = await generateDailyFortuneAnalysis(ANTHROPIC_KEY.value(), {
-        name: name || '사용자',
+        name: realName(name) || '사용자',
         sajuData,
         date,
         weekday: weekday || '',
@@ -771,15 +772,15 @@ export const generateDailyFortuneStream = onRequest(
       const system = DAILY_FORTUNE_SYSTEM_V3;
 
       const userA1 = DAILY_FORTUNE_USER_V3_GROUP_A1({
-        name: name || '사용자', sajuData, date, weekday: weekday || '',
+        name: realName(name) || '사용자', sajuData, date, weekday: weekday || '',
         todayGanzi, jeolgi, baseScores100,
       });
       const userA2 = DAILY_FORTUNE_USER_V3_GROUP_A2({
-        name: name || '사용자', sajuData, date, weekday: weekday || '',
+        name: realName(name) || '사용자', sajuData, date, weekday: weekday || '',
         todayGanzi, jeolgi, dayJiShen, dayXiongSha, baseScores100,
       });
       const userB = DAILY_FORTUNE_USER_V3_GROUP_B({
-        name: name || '사용자', sajuData, date, weekday: weekday || '',
+        name: realName(name) || '사용자', sajuData, date, weekday: weekday || '',
         todayGanzi, jeolgi, dayJiShen, dayXiongSha, tomorrowGanzi, tomorrowDate,
       });
 
@@ -913,7 +914,7 @@ export const generateDailyFortuneStream = onRequest(
       if (!a1OK || !a2OK || !bOK) {
         console.warn('[dailyFortuneStream] missing fields → Sonnet 단일 fallback');
         const fbUser = DAILY_FORTUNE_USER_V3({
-          name: name || '사용자', sajuData, date, weekday: weekday || '',
+          name: realName(name) || '사용자', sajuData, date, weekday: weekday || '',
           todayGanzi, jeolgi, dayJiShen, dayXiongSha,
           baseScores100, tomorrowGanzi, tomorrowDate,
         });
@@ -1142,7 +1143,7 @@ function buildLegacySajuContext(sajuData: any): any {
   const dayPillar = pillars[2] ?? {};
   const ohengDist = sajuData?.ohengDistribution ?? sajuData?.elements ?? {};
   return {
-    name: sajuData?.name ?? '사용자',
+    name: realName(sajuData?.name) || '사용자',
     yearGanzi: pillars[0]?.간지 ?? '',
     monthGanzi: pillars[1]?.간지 ?? '',
     dayGanzi: pillars[2]?.간지 ?? '',

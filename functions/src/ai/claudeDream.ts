@@ -1,6 +1,7 @@
 // Migrated from geminiDream.ts on 2026-04-19 (Sonnet 4.6 v3).
 // See commit 926ead2 + docs/prd/AI프롬프트_v3_Sonnet4.6.md
 
+import { realName } from '../shared/personName';
 import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput, lifeTimelineFactsText, sajuCoreFactsText } from './sajuFacts';
@@ -82,7 +83,7 @@ export function buildDreamFreeGroupCall(args: DreamFreeArgs, group: DreamFreeGro
     return { system, user, model: MODEL, maxTokens: 14000 };
   }
   const headerData = {
-    name: args.saju.name,
+    name: realName(args.saju.name) || '사용자',
     yearGanzi: args.saju.yearGanzi,
     monthGanzi: args.saju.monthGanzi,
     dayGanzi: args.saju.dayGanzi,
@@ -154,7 +155,7 @@ export function buildDreamFreeCall(args: DreamFreeArgs): {
   const system = DREAM_FREE_SYSTEM_V3;
   const user = args.saju
     ? DREAM_FREE_USER_WITH_SAJU_V3({
-        name: args.saju.name,
+        name: realName(args.saju.name) || '사용자',
         yearGanzi: args.saju.yearGanzi,
         monthGanzi: args.saju.monthGanzi,
         dayGanzi: args.saju.dayGanzi,
@@ -221,7 +222,7 @@ export async function generateDreamDeep(apiKey: string, args: DreamDeepArgs): Pr
   const anthropic = createClaude(apiKey);
   const system = DREAM_DEEP_SYSTEM_V3;
   const user = DREAM_DEEP_USER_V3({
-    name: args.saju.name,
+    name: realName(args.saju.name) || '사용자',
     sajuData: args.saju.fullSajuData ?? args.saju,
     dreamContent: args.dreamContent,
     category: args.category,

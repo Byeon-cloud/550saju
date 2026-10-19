@@ -26,6 +26,7 @@ import { autoEmphasize } from '@/utils/emphasis';
 import { STEM_INFO, BRANCH_INFO } from '@/utils/sajuStemBranch';
 import { getTopicPrice, formatPriceLabel } from '@/constants/pricing';
 
+import { realName } from '@/utils/personName';
 /** sanitizeAiText + autoEmphasize 결합 — 모든 AI 본문 출력 통과 */
 const safeHtmlEmph = (text: any): { __html: string } => ({
   __html: sanitizeAiText(autoEmphasize(String(text ?? ''))),
@@ -546,7 +547,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         <header className="hd">
           <div className="top">
             <span className="badge">월별 운세</span>
-            <span>{profile?.name ? `${profile.name} 님` : '내 사주'}</span>
+            <span>{realName(profile?.name) ? `${realName(profile?.name)} 님` : '내 사주'}</span>
             {monthLabel && <span className="month-tag">{monthLabel}</span>}
           </div>
           <h1>{headline}</h1>
@@ -573,7 +574,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
         {/* 내 사주 미니 카드 */}
         {pillars.length === 4 && (
           <div className="my-saju">
-            <div className="ttl">{profile?.name ? `${profile.name} 님의 사주` : '내 사주'}</div>
+            <div className="ttl">{realName(profile?.name) ? `${realName(profile?.name)} 님의 사주` : '내 사주'}</div>
             <div className="saju-grid">
               {cells.map((p, idx) => {
                 const ganInfo = STEM_INFO[p.gan];
@@ -621,7 +622,7 @@ export function MonthlyMockupView(props: MonthlyMockupViewProps) {
           {/* §01 이 달의 결 — theme */}
           <section className={`section ${isOpen('01') ? 'open' : ''}`}>
             <SectionHeader num="01" title="이번 달의 기운" han="月運" id="01" />
-            <p className="sec-lead">{profile?.name ? `${profile.name} 님에게 ` : ''}이번 달이 어떤 한 달인지, 핵심부터 짚어 드려요.</p>
+            <p className="sec-lead">{realName(profile?.name) ? `${realName(profile?.name)} 님에게 ` : ''}이번 달이 어떤 한 달인지, 핵심부터 짚어 드려요.</p>
             {theme ? (
               <div className="theme-body" dangerouslySetInnerHTML={safeHtmlEmph(theme)} />
             ) : loading ? (

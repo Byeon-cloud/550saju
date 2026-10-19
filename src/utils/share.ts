@@ -18,6 +18,7 @@ import { isAppsInToss } from '@/services/payment/iapService';
 import { withInv, ensureInviteCode } from '@/services/referral/referral';
 import { getBalance } from '@/services/storage/localStore';
 
+import { realName } from '@/utils/personName';
 export type ShareContentType = 'daily' | 'dream' | 'topic' | 'premium';
 
 interface ShareParams {
@@ -163,7 +164,8 @@ export async function shareDreamLink(p: { id: string; title: string }): Promise<
  *  @returns 성사 여부 ('clipboard' 면 화면에서 '복사했어요'를 알린다) */
 export async function shareCompatLink(p: { id: string; n1: string; n2: string }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
   import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'compat', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
-  const text = `${p.n1} 님과 ${p.n2} 님의 궁합을 사주로 봤어요. 점수와 총평을 열어 보세요`;
+  const a = realName(p.n1), b = realName(p.n2);
+  const text = `${a ? `${a} 님과` : '나와'} ${b ? `${b} 님의` : '상대의'} 궁합을 사주로 봤어요. 점수와 총평을 열어 보세요`;
   await ensureInviteCode();
   const path = withInv(`/share/compat/${p.id}?ref=share`);
   const done = (method: string) => {
@@ -185,7 +187,10 @@ export async function shareCompatInviteLink(p: { id: string; n1: string }): Prom
   // 보내는 사람이 상대에게 하는 말이라 반말
   const last = p.n1.charCodeAt(p.n1.length - 1);
   const ga = last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 !== 0 ? '이' : '가'; // 받침이 있으면 '이'
-  const text = `${p.n1}${ga} 우리 궁합을 보고 싶대. 이 링크에서 생일만 넣으면 둘 다 궁합 점수를 무료로 볼 수 있어. 생일은 나한테 안 보여`;
+  // 이름이 '나'처럼 이름이 아니면 '나가 우리 궁합을…'이 되므로 보내는 사람 말로 바꾼다 (10-19)
+  const text = realName(p.n1)
+    ? `${p.n1}${ga} 우리 궁합을 보고 싶대. 이 링크에서 생일만 넣으면 둘 다 궁합 점수를 무료로 볼 수 있어. 생일은 나한테 안 보여`
+    : '우리 궁합 보고 싶어서 보내. 이 링크에서 생일만 넣으면 둘 다 궁합 점수를 무료로 볼 수 있어. 생일은 나한테 안 보여';
   await ensureInviteCode();
   const path = withInv(`/share/cjoin/${p.id}?ref=share`);
   const done = (method: string) => {
@@ -304,7 +309,7 @@ export async function generateOgImage(params: {
   // 메인 제목 (사람 이름 + 콘텐츠)
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '900 60px Pretendard, sans-serif';
-  const personPart = params.name && params.name !== '나' ? `${params.name} 님의` : '';
+  const personPart = realName(params.name) ? `${realName(params.name)} 님의` : '';
   if (personPart) ctx.fillText(personPart, 60, 200);
   ctx.font = '800 64px "Noto Serif KR", serif';
   ctx.fillText(theme.headline(params.topicLabel), 60, 280);

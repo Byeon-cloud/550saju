@@ -55,6 +55,7 @@ function mergePremiumGroup(prev: any, data: any): any {
 }
 import { ResultErrorBoundary } from '@/components/common/ResultErrorBoundary';
 
+import { realName } from '@/utils/personName';
 /* ══════════════════════════════════════════════════════════════════
  * Phase C — Props 시그니처 + 결과 게이트 도출 (서버 기반, 클라이언트 임시 unlock 금지)
  * ═════════════════════════════════════════════════════════════════ */
@@ -150,7 +151,7 @@ function PremiumDarkHeader({
             textOverflow: 'ellipsis',
           }}
         >
-          {name ? `${name} 님의 사주 풀이` : '사주 풀이'}
+          {realName(name) ? `${realName(name)} 님의 사주 풀이` : '사주 풀이'}
         </div>
         <div
           style={{

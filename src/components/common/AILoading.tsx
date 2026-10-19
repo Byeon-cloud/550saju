@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { SajuData } from '@/types/saju';
 import { LOADING_TIPS } from '@/constants/loadingTips';
 
+import { realName } from '@/utils/personName';
 // 2026-05-05 SSOT 통합 — LoadingPage 와 같은 풀 (`src/constants/loadingTips.ts`) 소비
 const TIPS = LOADING_TIPS;
 
@@ -169,7 +170,7 @@ export function AILoading({
             letterSpacing: '-0.005em',
           }}
         >
-          {name ? `${name} 님의 ` : ''}
+          {realName(name) ? `${realName(name)} 님의 ` : ''}
           <span style={{ color: C.goldDeep }}>{type}</span> 준비 중
         </p>
       </div>
@@ -198,7 +199,7 @@ export function AILoading({
                   textTransform: 'uppercase',
                 }}
               >
-                {name ? `${name} 님 사주` : '내 사주'}
+                {realName(name) ? `${realName(name)} 님 사주` : '내 사주'}
               </div>
               <div
                 style={{

@@ -52,6 +52,7 @@ import type { SajuInput } from '@/types/saju';
 import { analyzeRelations } from '@/services/saju/relations';
 import { splitAfter } from '@/utils/safeRegex';
 
+import { realName } from '@/utils/personName';
 /* #61 · PDF profile 헬퍼 — SajuInput 의 분리된 birthYear/Month/Day → 'YYYY-MM-DD' */
 function formatBirthDate(input?: SajuInput): string | undefined {
   if (!input) return undefined;
@@ -3100,8 +3101,8 @@ export function PremiumResult({
               const strong = Math.min(2, n);
               const mid = Math.min(2, Math.max(0, n - 2));
               const ref = Math.max(0, n - 4);
-              const name = report.name || '회원';
-              return `사주마다 0~10개까지 다릅니다, ${name} 님께는 ${n}개가 자리합니다 (강 ${strong}, 중 ${mid}, 참고 ${ref})`;
+              const nm = realName(report.name);
+              return `사주마다 0~10개까지 다릅니다, ${nm ? `${nm} 님께는` : '이 사주에는'} ${n}개가 자리합니다 (강 ${strong}, 중 ${mid}, 참고 ${ref})`;
             })()}>
           {/* Stage 2C-#4: 신살 3 tier (강·중·참고) — mockup shinsal-3tier 진본
               AI shinsalCards 우선 + V4SinSal fallback */}

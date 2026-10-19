@@ -15,6 +15,7 @@ import { PRODUCT_COST } from '@/constants/pricing';
 import { getCompatInvite, answerCompatInvite, type InviteView, type QuickCompat } from '@/services/share/compatInvite';
 import { InviteWelcomeCard } from '@/components/invite/InviteWelcomeCard';
 
+import { realName } from '@/utils/personName';
 export function CompatJoinView({ id }: { id: string }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,7 +69,7 @@ export function CompatJoinView({ id }: { id: string }) {
     }
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: cost, via: 'cjoin' })).catch(() => {});
     markPendingSpend('compat', cost);
-    const n1 = view?.n1 || other?.input?.name || '상대';
+    const n1 = realName(view?.n1) || realName(other?.input?.name) || '상대';
     navigate('/compat/result', {
       state: {
         person1: me,
@@ -89,9 +90,9 @@ export function CompatJoinView({ id }: { id: string }) {
       <div style={{ background: INK_HERO_BG, color: '#F4EFE4', padding: '30px 20px 26px' }}>
         <p style={{ fontSize: 14, color: '#CFC6B6', fontWeight: 700 }}>받은 궁합 초대장</p>
         <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 25, lineHeight: 1.45, margin: '8px 0 6px', wordBreak: 'keep-all' }}>
-          {view?.ok ? `${n1} 님이 두 분 ${relText}궁합을 보고 싶어 해요` : '궁합 초대장을 찾지 못했어요'}
+          {view?.ok ? `${realName(n1) ? `${realName(n1)} 님이` : '친구가'} 두 분 ${relText}궁합을 보고 싶어 해요` : '궁합 초대장을 찾지 못했어요'}
         </h1>
-        {view?.ok && !result && <p style={{ fontSize: 15, color: '#E4DCCD', lineHeight: 1.6 }}>내 사주를 고르면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 봐요. 내 생일은 {n1} 님에게 보이지 않아요.</p>}
+        {view?.ok && !result && <p style={{ fontSize: 15, color: '#E4DCCD', lineHeight: 1.6 }}>내 사주를 고르면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 봐요. 내 생일은 {realName(n1) ? `${realName(n1)} 님에게` : '상대에게'} 보이지 않아요.</p>}
       </div>
 
       <div className="px-5 pt-5 pb-12 space-y-5">
@@ -138,7 +139,7 @@ export function CompatJoinView({ id }: { id: string }) {
               </div>
             ) : (
               <div style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '16px 18px' }}>
-                <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.7 }}>생년월일만 넣으면 돼요. 넣은 생일은 이 기기에 저장되고, {n1} 님에게는 보이지 않아요.</p>
+                <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.7 }}>생년월일만 넣으면 돼요. 넣은 생일은 이 기기에 저장되고, {realName(n1) ? `${realName(n1)} 님에게는` : '상대에게는'} 보이지 않아요.</p>
                 <GoldCta style={{ marginTop: 12 }} sub="무료" onClick={() => navigate('/input?new=1', { state: { returnTo: `/share/cjoin/${id}` } })}>내 생일 넣기</GoldCta>
               </div>
             )}
@@ -148,7 +149,7 @@ export function CompatJoinView({ id }: { id: string }) {
         {result && (
           <FadeIn>
             <div style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '20px 18px 16px', textAlign: 'center' }}>
-              <p style={{ fontSize: 13.5, color: HJ.mute, fontWeight: 700 }}>{view?.mine ? `${view?.n2 || '상대'} 님과의 궁합` : `${n1} 님과의 궁합`}</p>
+              <p style={{ fontSize: 13.5, color: HJ.mute, fontWeight: 700 }}>{view?.mine ? `${view?.n2 || '상대'} 님과의 궁합` : `${realName(n1) ? `${realName(n1)} 님과의` : '친구와의'} 궁합`}</p>
               <p style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 900, color: HJ.ink, lineHeight: 1.2, marginTop: 4 }}>
                 {result.score}<span style={{ fontSize: 20, marginLeft: 3 }}>점</span>
               </p>

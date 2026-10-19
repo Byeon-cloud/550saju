@@ -11,6 +11,7 @@ import { useToast } from '@/components/common/Toast';
 import { newYearPreview, ganziKo } from '@/services/saju/newYearPreview';
 import type { SajuData } from '@/types/saju';
 
+import { realName } from '@/utils/personName';
 export const ROLE_PLAIN: Record<string, string> = {
   용신: '나에게 필요한 기운', 희신: '도움이 되는 기운', 기신: '부담이 되는 기운', 중립: '크게 상관없는 기운',
 };
@@ -75,10 +76,10 @@ export function NewYearPreviewCard({ year, name, sajuData }: { year: number; nam
     <div ref={boxRef} style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '18px 18px 16px', marginBottom: 120 }}>
       <p style={{ fontSize: 13, fontWeight: 700, color: HJ.mute }}>무료 미리 보기</p>
       <h3 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, lineHeight: 1.45, marginTop: 4, color: HJ.ink }}>
-        {name} 님의 {year} {ganziKo(yearGz)}({yearGz})년
+        {realName(name) ? `${realName(name)} 님의 ` : '나의 '}{year} {ganziKo(yearGz)}({yearGz})년
       </h3>
       <p style={{ fontSize: 15, lineHeight: 1.75, color: HJ.ink2, marginTop: 8 }}>
-        {year}년은 {name} 님에게 {yearSentence(yv.verdict)}
+        {year}년은 {realName(name) ? `${realName(name)} 님에게 ` : ''}{yearSentence(yv.verdict)}
       </p>
       <p style={{ fontSize: 13.5, lineHeight: 1.7, color: HJ.mute, marginTop: 6 }}>
         {yearGz[0]}({yv.g}){topic(yv.g)} {ROLE_PLAIN[yv.r1]}이고, {yearGz[1]}({yv.b}){topic(yv.b)} {ROLE_PLAIN[yv.r2]}이에요.

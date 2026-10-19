@@ -130,6 +130,7 @@ import { NextStepsCard, openChatWithResult } from '@/components/common/NextSteps
 import { ReviewAsk } from '@/components/common/ReviewAsk';
 
 
+import { realName } from '@/utils/personName';
 /* ─── 주제 설정 — 이모지 제거, 브랜드 픽토그램 사용.
  *    key가 PictogramRegistry의 topic:* 와 1:1 매핑. (브랜드픽토그램_시스템.md)
  *
@@ -4793,7 +4794,7 @@ export function TopicAnalysisPage() {
                 <div style={{ margin: '0 -20px 0' }}>
                   <TopicHero
                     theme={theme}
-                    personName={selected?.input?.name ? `${selected.input.name} 님` : undefined}
+                    personName={realName(selected?.input?.name) ? `${realName(selected?.input?.name)} 님` : undefined}
                     bottomHint={theme.heroHint}
                     ilganLabel={
                       selected?.sajuData?.pillars?.[2]?.천간
@@ -5320,7 +5321,7 @@ export function TopicAnalysisPage() {
           무엇을 받는지(실제 장 제목) → 내 사주 사실 한 줄 → 걸리는 시간 → 잔액 → 버튼 하나.
           잔액이 모자라면 여기서 바로 '충전하고 바로 열기'(입력값 보존 · 돌아오면 이어서). */}
       <Modal isOpen={showConfirm} onClose={() => { setShowConfirm(false); isAnalyzingRef.current = false; }}
-        title={`${selected?.name ? `${selected.name} 님 ` : ''}${topic.label}${josa(topic.label, '을', '를')} 열까요?`}>
+        title={`${realName(selected?.name) ? `${realName(selected?.name)} 님 ` : ''}${topic.label}${josa(topic.label, '을', '를')} 열까요?`}>
         {(() => {
           const pricing = getTopicPrice(topicId as TopicKey);
           const actualPrice = pricing.isOnSale && pricing.salePrice != null ? pricing.salePrice : pricing.regularPrice;

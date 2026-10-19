@@ -1,3 +1,4 @@
+import { promptName } from '../shared/personName';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { TONE_FINAL_CHECK } from './promptsV3';
 import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
@@ -213,7 +214,7 @@ function personDetail(label: string, d: any): string {
   const ma = d.myeongriAnalysis || {};
   const yong = ma.용신 ? `\n  일간 강약: ${ma.일간강약 || '미상'} / 용신(SSOT): ${ma.용신}, 희신: ${ma.희신 || '-'}, 기신: ${ma.기신 || '-'}` : '';
   const spouse = spouseStarText(d);
-  return `### ${label}: ${d.input?.name||'미상'} (${d.input?.gender==='male'?'남':'여'})\n${t}  일간: ${p[2]?.천간||'미상'}\n  오행: 목${el.목||0} 화${el.화||0} 토${el.토||0} 금${el.금||0} 수${el.수||0}\n  십성: ${sip}${yong}${spouse ? `\n${spouse}` : ''}`;
+  return `### ${label}: ${promptName(d.input?.name)} (${d.input?.gender==='male'?'남':'여'})\n${t}  일간: ${p[2]?.천간||'미상'}\n  오행: 목${el.목||0} 화${el.화||0} 토${el.토||0} 금${el.금||0} 수${el.수||0}\n  십성: ${sip}${yong}${spouse ? `\n${spouse}` : ''}`;
 }
 
 /** 두 사람이 함께 쓰는 공간의 색과 방위 — 둘 중 누구에게도 기신이 아닌 오행 (서버 확정, 없으면 빈 문자열) */

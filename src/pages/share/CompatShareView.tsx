@@ -14,6 +14,7 @@ import { isAppintosBuild } from '@/lib/env';
 import { PRODUCT_COST } from '@/constants/pricing';
 import type { CompatShareDoc } from '@/services/share/compatShare';
 
+import { realName } from '@/utils/personName';
 const TTI_SLUG: Record<string, [string, string]> = {
   子: ['rat', '쥐띠'], 丑: ['ox', '소띠'], 寅: ['tiger', '호랑이띠'], 卯: ['rabbit', '토끼띠'], 辰: ['dragon', '용띠'], 巳: ['snake', '뱀띠'],
   午: ['horse', '말띠'], 未: ['goat', '양띠'], 申: ['monkey', '원숭이띠'], 酉: ['rooster', '닭띠'], 戌: ['dog', '개띠'], 亥: ['pig', '돼지띠'],
@@ -38,7 +39,7 @@ export function CompatShareView({ data }: { data: CompatShareDoc }) {
       <div style={{ background: INK_HERO_BG, color: '#F4EFE4', padding: '30px 20px 26px' }}>
         <p style={{ fontSize: 14, color: '#CFC6B6', fontWeight: 700 }}>받은 궁합{data.rel ? `, ${data.rel}` : ''}</p>
         <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 26, lineHeight: 1.4, margin: '8px 0 6px', wordBreak: 'keep-all' }}>
-          {data.n1} 님과 {data.n2} 님의 궁합
+          {realName(data.n1) ? `${realName(data.n1)} 님과` : '친구와'} {realName(data.n2) ? `${realName(data.n2)} 님의` : '상대의'} 궁합
         </h1>
         <p style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 900, lineHeight: 1.2 }}>
           {data.score}<span style={{ fontSize: 20, marginLeft: 3 }}>점</span>

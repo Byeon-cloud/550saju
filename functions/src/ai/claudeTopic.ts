@@ -6,6 +6,7 @@
 //   - TOPIC_BOUNDARIES 인접 주제 경계 프롬프트 주입 (모순 방지)
 //   - normalizeTopicIdServer() 로 legacy 호출 'moving'/'reconciliation'/'job' 등 호환
 
+import { promptName, realName } from '../shared/personName';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { Solar, Lunar, LunarMonth, LunarYear } from 'lunar-javascript';
@@ -1755,7 +1756,7 @@ ${sajuCoreFactsText(d)}
 ## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 대운 흐름의 값을 그대로 인용 — 이전/다음 대운 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지. 시기 계산은 위 '현재 대운' 간지를 기준으로 하되, 본문에 이전과 다음 대운을 언급할 땐 반드시 위 목록의 간지를 그대로 쓸 것.` : ''}
-## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
+## 이름: ${promptName(d.input?.name)}, ${d.input?.gender==='male'?'남':'여'}
 
 ## 🔥 명리학 구조 분석 (audit 1 P0-1 — 반드시 해석에 활용)
 ## 일간 강약: ${myeongri.일간강약 || '미산출'}${myeongri.강약근거 ? ` (${myeongri.강약근거})` : ''}
@@ -1975,7 +1976,7 @@ subScores 각 축도 그 축의 핵심 십성으로 같은 산식을 적용해 *
 
 
 {
-  "title": "${d.input?.name ? `${d.input.name} 님의 ` : ''}${config.label} 심층분석",
+  "title": "${realName(d.input?.name) ? `${realName(d.input?.name)} 님의 ` : ''}${config.label} 심층분석",
   "overallScore": ${baseScore ? baseScore : '"0-100 정수"'},
   "sajuBasis": "사주 근거 한 줄 (40~60자). 2026-05-28 두괄식+일상어 강제. 형식: '[일상어 결론 한 마디]. [한자(풀이) 사주 근거]' (줄표 쓰지 않음). ✅ 좋은 예: '결혼 인연은 분명하나 시기가 늦어져요. 정관(正官, 책임감 있는 인연)이 합으로 묶여있어요.' / '돈은 잘 들어오는데 빠르게 빠져요. 재성(財星, 돈 자리)이 식상(食傷, 활동 에너지)에 밀려요.' ❌ 나쁜 예: '일지 자수(子水)에 정관이 자리하고 축자합(丑子合)으로 관성이 묶이는 구조' (한자 폭격과 풀이 X, 두괄식 X). 한자 첫 등장 시 반드시 괄호 안 일상어 풀이. 마크다운 금지.",
   "sajuConnection": "분석 메모 (화면에 표시되지 않음, 150~250자, 문장 다듬지 말고 근거만 촘촘히) — sections 를 쓰기 전에 근거를 압축 정리: 원국 핵심 구조, 현재 대운, 올해 세운, 이 주제에 작용하는 글자와 그 작용. 이후 summary, sections, timeline 은 이 메모와 모순 없이 쓴다. 마크다운 금지.",

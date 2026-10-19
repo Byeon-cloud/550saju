@@ -1,3 +1,4 @@
+import { promptName } from '../shared/personName';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { sanitizeAiOutput, natalRelationsText, sajuCoreFactsText } from './sajuFacts';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3'; // 2026-10-13 어조 마지막 점검 부착 (다른 콘텐츠와 통일)
@@ -158,7 +159,7 @@ ${weekTable}
 ${days.map((x) => natalRelationsText(x.ganji, d, `${x.day}요일 ${x.date}`)).filter(Boolean).join(String.fromCharCode(10))}
 → 위에 없는 합, 충, 형, 해를 지어내지 말 것. '부딪힌다'는 충이나 형으로 확정된 날에만, '묶인다'는 합으로 확정된 날에만 쓴다.
 
-## 이름: ${d.input?.name || '미상'}, 성별: ${d.input?.gender === 'male' ? '남' : '여'}
+## 이름: ${promptName(d.input?.name)}, 성별: ${d.input?.gender === 'male' ? '남' : '여'}
 
 ## 출력 (JSON만, 코드블록 없이)
 ⚠️ **점수 룰 (PD 결단)**: 모든 score 는 5의 배수만 반복 금지. 67, 73, 81, 88 처럼 자연수. 7일 score 가 전부 다른 값이어야 함(평평한 그래프 X — 요일별 일진에 따라 굴곡).

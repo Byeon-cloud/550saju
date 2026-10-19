@@ -25,6 +25,7 @@ import {
 import { useSajuContext } from '@/contexts/SajuContext';
 import { calculateSaju } from '@/services/saju/calculator';
 
+import { realName } from '@/utils/personName';
 export function PremiumSelectPage() {
   usePageTitle('종합사주');
   useSeoMeta({
@@ -265,7 +266,7 @@ export function PremiumSelectPage() {
           <FadeIn delay={0.1}>
             <div className="card-gold py-3 px-4 flex items-center justify-between">
               <p className="text-body-sm text-text-primary">
-                <span className="font-bold">{selected.name}</span> 님 선택됨
+                {realName(selected.name) ? <><span className="font-bold">{realName(selected.name)}</span> 님 선택됨</> : <><span className="font-bold">내 사주</span> 선택됨</>}
               </p>
               <button
                 onClick={() => setSelected(null)}

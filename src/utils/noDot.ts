@@ -1,3 +1,4 @@
+import { realName } from '@/utils/personName';
 /**
  * 가운뎃점(·) 제거 (2026-10-11, 오너: "· 는 AI만 쓰는 문장 구조, 다 빼라")
  *   서버 functions/src/ai/sajuFacts.ts stripMiddleDots 와 같은 규칙.
@@ -131,7 +132,7 @@ function guessNameBeforeNim(v: unknown): string | null {
 /** 객체 안의 모든 문자열 값에 적용한 '새 사본'을 돌려준다 (키는 그대로, 원본 불변)
  *  name 을 주면 예전 풀이의 '당신'을 '이름 님'으로 (당신, 님 모두 받침으로 끝나 조사가 그대로 맞는다) */
 export function stripDotsDeep<T>(v: T, name?: string): T {
-  const nm = name && name.length <= 10 && !/복원|×|분석/.test(name) ? name : '';
+  const nm = realName(name) && name!.length <= 10 && !/복원|×|분석/.test(name!) ? name!.trim() : '';
   const guessed = nm ? null : guessNameBeforeNim(v);
   const nmKeys = nm && /^[가-힣]{2,4}$/.test(nm) ? (nm.length === 3 ? [nm, nm.slice(1)] : [nm]) : guessed ? [guessed] : [];
   const fix = (s: string): string => {

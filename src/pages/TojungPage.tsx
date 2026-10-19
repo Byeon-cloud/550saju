@@ -32,6 +32,7 @@ import {
   type TojungFourItem,
 } from './extension/_chrome';
 
+import { realName } from '@/utils/personName';
 type Phase = 'select' | 'loading' | 'result';
 
 /** 2026-10-09 — 점진 표시: 그룹(A 총평 · B 1~6월 · C 7~12월) 도착분 머지 */
@@ -247,7 +248,7 @@ export function TojungPage() {
           {selected && (
             <FadeIn delay={0.1}>
               <div className="card-gold py-3 px-4 flex items-center justify-between">
-                <p className="text-body-sm text-text-primary"><span className="font-bold">{selected.name}</span> 님 선택됨</p>
+                <p className="text-body-sm text-text-primary">{realName(selected.name) ? <><span className="font-bold">{realName(selected.name)}</span> 님 선택됨</> : <><span className="font-bold">내 사주</span> 선택됨</>}</p>
                 <button onClick={() => setSelected(null)} className="text-caption text-text-muted">변경</button>
               </div>
             </FadeIn>
@@ -351,7 +352,7 @@ export function TojungPage() {
         <FadeIn>
           <div className="text-center py-4">
             <p style={{ fontSize: 13.5, fontWeight: 700, color: '#7A5C2E', letterSpacing: '0.08em' }}>{isLegacyTojung ? '2026년 토정비결' : `${resultYear}년 신년운세`}</p>
-            <p style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 700, color: HJ.ink, marginTop: 4 }}>{selected?.name} 님</p>
+            <p style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 700, color: HJ.ink, marginTop: 4 }}>{realName(selected?.name) ? `${realName(selected?.name)} 님` : '나의 한 해'}</p>
           </div>
         </FadeIn>
 

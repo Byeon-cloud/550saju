@@ -25,6 +25,7 @@
  *   본문 strong #A37A2E · 결론박스 strong #F4D166 (다크 배경)
  */
 
+import { realName } from '../shared/personName';
 import { kstNow } from '../utils/kstTime';
 
 export interface PdfTemplateInput {
@@ -545,7 +546,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   const lifeKeywordHtml = lifeKeyword
     ? `
     <div class="keyword-hero">
-      <div class="kh-label">${esc(profile.name)} 님의 인생 한 줄</div>
+      <div class="kh-label">${realName(profile.name) ? `${esc(realName(profile.name))} 님의 ` : ''}인생 한 줄</div>
       <p class="kh-text">${richText(lifeKeyword)}</p>
     </div>`
     : '';
@@ -779,7 +780,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
-<title>사주500 종합사주, ${esc(profile.name)} 님</title>
+<title>사주500 종합사주${realName(profile.name) ? `, ${esc(realName(profile.name))} 님` : ''}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -1371,7 +1372,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
   <div class="cover-sub">사주 여덟 글자를 열 장에 걸쳐 풀었어요</div>
 
   <div class="cover-name-block">
-    <div class="cover-name">${esc(profile.name)}</div>
+    <div class="cover-name">${esc(realName(profile.name) || '나의 사주')}</div>
     <div class="cover-birth">
       ${esc(profile.birthDate || '')}${profile.birthTime ? ' ' + esc(profile.birthTime) : ''}${profile.gender ? ', ' + (profile.gender === 'male' ? '남' : '여') : ''}
     </div>
@@ -1402,7 +1403,7 @@ ${sections.join('\n')}
 <div class="disclaimer">
   ${disclaimer}
   <div class="footer-meta">
-    사주500, ${esc(profile.name)} 님, 발급 ${esc(issuedFmt)}, 발급번호 ${esc(issueId)}
+    사주500${realName(profile.name) ? `, ${esc(realName(profile.name))} 님` : ''}, 발급 ${esc(issuedFmt)}, 발급번호 ${esc(issueId)}
   </div>
 </div>
 

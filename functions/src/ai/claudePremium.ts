@@ -19,6 +19,7 @@
 //   · Promise.all 로 90s → 30s (가장 긴 그룹 시간만큼)
 //   · 퀄리티 보존: 모든 그룹이 sajuData 풀 컨텍스트 + 동일 모델
 
+import { promptName } from '../shared/personName';
 import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
@@ -565,7 +566,7 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 ${myeongriSinsalText(p)}
 
-## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}
+## 이름/성별: ${promptName(sajuData.input?.name)}, ${sajuData.input?.gender === 'male' ? '남' : '여'}
 
 ${lifeTimelineFactsText(sajuData, kstNowDate())}`;
 }

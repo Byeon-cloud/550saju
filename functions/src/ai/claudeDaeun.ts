@@ -1,3 +1,4 @@
+import { promptName } from '../shared/personName';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { MYEONGRI_GROUNDS_BLOCK, TONE_FINAL_CHECK, parseJsonResponse } from './promptsV3';
 import { sanitizeAiOutput, sajuCoreFactsText, daeunScoreText } from './sajuFacts';
@@ -68,7 +69,7 @@ ${daeunList}
 ${daeunFlow}
 ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunArr[curIdx].간지}(${daeunAge(daeunArr[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}.
 🚨 위 대운 흐름의 간지를 그대로 인용. 임의 생성, swap 절대 금지 — 이전/다음 대운 간지를 데이터 없이 추측하거나 순서를 뒤바꾸지 말고 위 목록 그대로 쓸 것.` : ''}
-## 이름: ${d.input?.name||'미상'}, ${d.input?.gender==='male'?'남':'여'}
+## 이름: ${promptName(d.input?.name)}, ${d.input?.gender==='male'?'남':'여'}
 
 ## ⭐ 소름 포인트
 - 과거 대운: "OO했을 겁니다"
