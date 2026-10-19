@@ -56,13 +56,8 @@ const TOSS_DECRYPT_AAD = defineSecret('TOSS_DECRYPT_AAD');
 const PORTONE_V2_API_SECRET = defineSecret('PORTONE_V2_API_SECRET');
 const MAIL_APP_PASSWORD = defineSecret('MAIL_APP_PASSWORD'); // 2026-10-17 PDF 메일 (mailPdf.ts 와 같은 이름, nodemailer 를 모든 함수에 싣지 않으려고 여기서 따로 선언)
 
-/** 금액 → 패키지 매핑 (서버에서 검증용) */
-const PACKAGE_MAP: Record<number, { name: string; paidUn: number; bonusUn: number }> = {
-  500:  { name: '한 번만',     paidUn: 1,  bonusUn: 0 },
-  1500: { name: '좀 더 보자',  paidUn: 3,  bonusUn: 1 },
-  2500: { name: '제대로 보자', paidUn: 5,  bonusUn: 2 },
-  5000: { name: '올해 다 보자', paidUn: 10, bonusUn: 5 },
-};
+/** 금액 → 패키지 매핑 (서버에서 검증용) — 10-19 공용 파일로 옮김(환불 회수도 같은 표) */
+import { PACKAGE_MAP } from './shared/chargePackages';
 const TOSS_DISCONNECT_AUTH = defineSecret('TOSS_DISCONNECT_AUTH');
 
 // 개발 중: 인증 없이도 동작
@@ -2482,6 +2477,8 @@ export { adminGrantCompensation } from './admin/adminGrantCompensation';
 // 관리자 v4 (2026-10-19) — 하루 요약(statsDaily), 고객 찾기, 원본 400일 보관
 export { adminStats, buildDailyStats, pruneRawAnalytics } from './admin/stats';
 export { adminLookup } from './admin/customer';
+// 토스 앱 결제 환불 회수 (2026-10-19)
+export { syncIapRefunds, syncIapRefundsDeep } from './payment/syncIapRefunds';
 // 유입/구매 폭증 서버 집계 (2026-06-27) — onRequest+secret(INFLOW_KEY). source·plat·시간대·구매 분해 JSON.
 export { adminInflowReport } from './admin/inflowReport';
 export { adminAiUsageReport } from './admin/aiUsageReport';

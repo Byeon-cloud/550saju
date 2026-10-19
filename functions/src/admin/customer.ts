@@ -9,6 +9,7 @@ import * as admin from 'firebase-admin';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { assertOwner } from './owner';
 import { kstDayOf } from './stats';
+import { PACKAGE_MAP } from '../shared/chargePackages';
 
 const tsMs = (v: any): number => {
   if (!v) return 0;
@@ -112,7 +113,9 @@ async function card(uid: string) {
     const p = d.data() as any;
     return {
       id: d.id, plat: p.pgProvider === 'iap' ? '앱' : '웹', amount: Number(p.amount) || 0, status: String(p.status || ''),
-      un: (Number(p.paidUn) || 0) + (Number(p.bonusUn) || 0), at: tsMs(p.confirmedAt) || tsMs(p.createdAt),
+      un: (Number(p.paidUn) || 0) + (Number(p.bonusUn) || 0),
+      paidUn: PACKAGE_MAP[Number(p.amount)]?.paidUn ?? (Number(p.paidUn) || 0), bonusUn: PACKAGE_MAP[Number(p.amount)]?.bonusUn ?? (Number(p.bonusUn) || 0),
+      at: tsMs(p.confirmedAt) || tsMs(p.createdAt),
       refundedAt: tsMs(p.refundedAt), recovered: !!p.recoveredFromIapHistory, fail: String(p.failReason || p.reconcileNote || '').slice(0, 120),
     };
   }).sort((a, b) => b.at - a.at);

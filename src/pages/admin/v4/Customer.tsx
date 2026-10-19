@@ -12,7 +12,7 @@ import type { CSSProperties } from 'react';
 import { callAdmin, fmt, won, timeText, CONTENT_NAME } from './api';
 import { Box, Table, K } from './ui';
 
-interface Pay { id: string; plat: string; amount: number; status: string; un: number; at: number; refundedAt: number; recovered: boolean; fail: string }
+interface Pay { id: string; plat: string; amount: number; status: string; un: number; paidUn?: number; bonusUn?: number; at: number; refundedAt: number; recovered: boolean; fail: string }
 interface Lib { id: string; type: string; topic: string; un: number; at: number; name: string }
 interface CardData {
   uid: string; login: string; email: string; createdAt: number; lastSignInAt: number; lastSeenDay: string; plats: string[]; firstSource: string;
@@ -122,8 +122,12 @@ export function CustomerCard({ c, devices, onRefresh }: { c: CardData; devices: 
       )}
 
       <h3 style={h3}>결제</h3>
-      <Table head={['언제', '앱/웹', '금액', '운', '상태', '메모']} align={['l', 'l', 'r', 'r', 'l', 'l']}
-        rows={c.payments.map((p) => [timeText(p.at), p.plat, won(p.amount), fmt(p.un), STATUS[p.status] || p.status, [p.recovered ? '결제이력 복구' : '', p.refundedAt ? `환불 ${timeText(p.refundedAt)}` : '', p.fail].filter(Boolean).join(', ')])} />
+      <Table head={['언제', '앱/웹', '금액', '운', '상태', '환불하면', '메모']} align={['l', 'l', 'r', 'r', 'l', 'l', 'l']}
+        rows={c.payments.map((p) => [timeText(p.at), p.plat, won(p.amount), fmt(p.un), STATUS[p.status] || p.status, refundAdvice(p, bal), [p.recovered ? '결제이력 복구' : '', p.refundedAt ? `환불 ${timeText(p.refundedAt)}` : '', p.fail].filter(Boolean).join(', ')])} />
+      <p style={{ fontSize: 12.5, color: K.mute, margin: '6px 0 0', lineHeight: 1.6 }}>
+        환불하면: 약관대로 쓴 운은 빼고, 보너스는 먼저 쓰이니 이 결제의 보너스만큼도 빼서 돌려줄 금액이에요. 기기 잔액 기준 대략값이고 다른 결제의 운과 섞여 있을 수 있어요.
+        환불이 끝나면 운과 보너스는 서버가 자동으로 거둬요(웹 15분, 토스 앱 30분 안).
+      </p>
 
       <h3 style={h3}>쓴 운과 풀이 (보관함)</h3>
       <Table head={['언제', '콘텐츠', '주제', '쓴 운', '이름']} align={['l', 'l', 'l', 'r', 'l']}
@@ -154,6 +158,18 @@ export function CustomerCard({ c, devices, onRefresh }: { c: CardData; devices: 
         rows={c.recent.slice(0, 20).map((e) => [timeText(e.at), e.plat, EVENT_NAME[e.name] || e.name, e.detail])} />
     </div>
   );
+}
+
+/** 이 결제를 지금 환불하면 돌려줘도 되는 금액 (약관 제6조: 쓴 운 제외, 보너스 회수, 7일 안) */
+function refundAdvice(p: Pay, bal: CardData['deviceBalance']): string {
+  if (p.status !== 'confirmed') return '';
+  if (Date.now() - p.at > 7 * 864e5) return '7일 지남(약관상 환불 대상 아님)';
+  const paidUn = p.paidUn ?? p.un; const bonusUn = p.bonusUn ?? 0;
+  if (!bal || !paidUn) return '잔액 정보 없음';
+  const left = (bal.paid || 0) + (bal.bonus || 0);
+  const refundUn = Math.max(0, Math.min(paidUn, left - bonusUn));
+  const krw = Math.floor((refundUn * p.amount) / paidUn / 100) * 100;
+  return refundUn >= paidUn ? `전액 ${won(p.amount)}` : refundUn <= 0 ? '0원(이미 다 씀)' : `${won(krw)} (${fmt(refundUn)}운분)`;
 }
 
 const h3: CSSProperties = { fontSize: 14.5, fontWeight: 800, color: K.ink, margin: '16px 0 6px' };

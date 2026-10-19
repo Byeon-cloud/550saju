@@ -32,6 +32,10 @@ export function useAuth() {
         // 2026-10-16 — 결제 취소(환불)로 회수할 운이 있으면 기기 잔액에서 뺀다 (서버 balanceAdjustments)
         import('@/services/storage/balanceAdjust')
           .then(({ applyBalanceAdjustments }) => applyBalanceAdjustments(u.uid))
+          .then((n) => {
+            // 2026-10-19 — 말없이 잔액이 줄면 놀란다. 거둔 만큼 알린다 (토스 앱 결제 환불도 이제 거둔다)
+            if (n > 0) window.dispatchEvent(new CustomEvent('saju500:toast', { detail: { text: `환불된 결제의 운 ${n}운(보너스 포함)을 잔액에서 뺐어요`, type: 'info' } }));
+          })
           .catch(() => { /* 무해 — 다음 부팅에서 재시도 */ });
         // P1 엔드게임 — 익명→토스 안정 uid 승격(플래그 OFF 기본, 내부에서 게이팅).
         maybeUpgradeToTossIdentity().catch(() => { /* 무해 — 익명 유지 */ });

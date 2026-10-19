@@ -549,7 +549,7 @@ export function ChargePage() {
       {/* ─── §8. Notice (이용 정책) ─── */}
       <div style={{ padding: '20px 20px 8px', marginTop: 12 }}>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          보너스 운은 돈으로 환불되지 않아요. 결제를 환불하면 그 결제로 받은 보너스 운도 함께 회수돼요.
+          보너스 운은 돈으로 환불되지 않아요. 결제를 환불하면 그 결제로 받은 보너스 운도 함께 회수돼요. 보너스 운은 먼저 쓰여서, 이미 썼다면 그만큼 빼고 환불해요.
         </p>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           구매한 운은 계정 종료 시 소멸돼요.
