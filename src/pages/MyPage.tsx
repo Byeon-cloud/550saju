@@ -442,9 +442,16 @@ const OHENG_BOX_MY: Record<OhengType, { bg: string; fg: string; outline: string 
 
 /** 웹 로그인 계정 한 줄 — '네이버 계정으로 로그인했어요, abc@naver.com' */
 function LoginAccountLine({ user }: { user: any }) {
-  const pid = String(user?.providerData?.[0]?.providerId || '');
+  let pid = String(user?.providerData?.[0]?.providerId || '');
+  let email = String(user?.email || user?.providerData?.[0]?.email || '');
+  // 웹 네이버 로그인(10-19)은 서버 맞춤 토큰이라 providerData 가 비어 있다 → 로그인할 때 남긴 표시
+  if (!pid) {
+    try {
+      const n = JSON.parse(localStorage.getItem('saju500:login_provider') || 'null');
+      if (n?.provider === 'naver' && n.uid === user?.uid) { pid = 'oidc.naver'; email = email || String(n.email || ''); }
+    } catch { /* noop */ }
+  }
   const label = pid === 'oidc.naver' ? '네이버' : pid === 'oidc.kakao' ? '카카오' : pid === 'google.com' ? '구글' : pid === 'apple.com' ? '애플' : '';
-  const email = String(user?.email || user?.providerData?.[0]?.email || '');
   if (!label && !email) return null;
   return (
     <p style={{ fontSize: 13.5, color: C.mute, margin: '-6px 4px 14px', lineHeight: 1.6, wordBreak: 'break-all' }}>

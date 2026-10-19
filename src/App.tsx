@@ -23,6 +23,7 @@ void CompatibilityPage;
 const StoragePage = lazyWithReload(() => import('@/pages/StoragePage').then(m => ({ default: m.StoragePage })));
 const ChargePage = lazyWithReload(() => import('@/pages/ChargePage').then(m => ({ default: m.ChargePage })));
 const MyPage = lazyWithReload(() => import('@/pages/MyPage').then(m => ({ default: m.MyPage })));
+const NaverCallbackPage = lazyWithReload(() => import('@/pages/NaverCallbackPage').then(m => ({ default: m.NaverCallbackPage })));
 const SharePage = lazyWithReload(() => import('@/pages/SharePage').then(m => ({ default: m.SharePage })));
 const DreamPage = lazyWithReload(() => import('@/pages/DreamPage').then(m => ({ default: m.DreamPage })));
 // #51 Sprint 2 — ChatPage 3-route 분리
@@ -185,6 +186,8 @@ function AnimatedRoutes() {
             <Route path="/storage" element={<StoragePage />} />
             <Route path="/charge" element={<ChargePage />} />
             <Route path="/my" element={<MyPage />} />
+            {/* 2026-10-19 웹 네이버 로그인 돌아오는 곳 (서버 loginWithNaver) */}
+            <Route path="/auth/naver" element={<NaverCallbackPage />} />
             {/* 2026-05-29 — type-aware 공유 URL 매칭 fix. shareResult 는 /share/{type}/{id} ·
                 /share/topic/{topicId}/{id} 를 생성하는데 기존 /share/:id (1세그먼트) 만 있어 사람 클릭 시 404.
                 topic(4세그)·일반(3세그)·legacy(2세그) 모두 SharePage 로. (renderShareOg 가 봇 OG 별도 처리) */}

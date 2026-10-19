@@ -32,6 +32,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(() => { try { return localStorage.getItem(LS_DONE); } catch { return null; } });
   const [err, setErr] = useState('');
+  const [justDone, setJustDone] = useState(false); // 이번에 신청했으면 확인 문구를 보여 주고, 다음에 열 때는 숨긴다
   useEffect(() => { if (prefill?.birth && !birth) setBirth(prefill.birth); }, [prefill?.birth]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (window.location.hash !== '#daily-mail') return;
@@ -39,7 +40,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
     return () => window.clearTimeout(t);
   }, []);
   if (isAppintosBuild || isAppsInToss()) return null; // 웹 전용 (앱 번들을 브라우저로 열어도 숨김)
-  if (compact && done) return null; // 이미 받고 있으면 홈에는 굳이 다시 보이지 않는다
+  if (done && !justDone) return null; // 10-19 오너: 이미 신청한 사람에게는 홈, 내 정보 어디서도 다시 보이지 않는다
   if (compact && !open) {
     return (
       <button type="button" onClick={() => { setOpen(true); import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '아침 운세 메일 펼치기', page: window.location.pathname })).catch(() => {}); }}
@@ -65,6 +66,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
       const r = await fn({ email: email.trim(), birth, calendar, name: prefill?.name || '', consent: true, adConsent: adAgree, source });
       const label = `${r.data.iljuKo} 일주`;
       setDone(label);
+      setJustDone(true);
       try { localStorage.setItem(LS_DONE, label); } catch { /* noop */ }
       import('@/services/analytics').then((a) => a.trackEvent('mail_subscribe', { source: `daily_${source}` })).catch(() => {});
     } catch (e: any) {
@@ -104,7 +106,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
           </label>
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 8, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, cursor: 'pointer' }}>
             <input type="checkbox" checked={adAgree} onChange={(e) => setAdAgree(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
-            <span>(선택) 2027 신년운세 출시 기념가 마감(11월 30일)과 할인 소식도 받을래요. 광고성 정보예요.</span>
+            <span>(선택) 할인이나 이벤트가 있으면 메일로 알려 드려요. 광고성 정보 수신에 동의해요.</span>
           </label>
           {err && <p style={{ fontSize: 13.5, color: HJ.seal, marginTop: 8 }}>{err}</p>}
           <button type="button" onClick={submit} disabled={!ok || busy}

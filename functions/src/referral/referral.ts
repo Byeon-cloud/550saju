@@ -102,7 +102,13 @@ async function identityOf(uid: string): Promise<{ key: string; kind: 'toss' | 's
   try {
     const u = await admin.auth().getUser(uid);
     const p = u.providerData.find((x) => SOCIAL.includes(x.providerId));
-    return p ? { key: `${p.providerId}:${p.uid}`, kind: 'social' } : null;
+    if (p) return { key: `${p.providerId}:${p.uid}`, kind: 'social' };
+  } catch { /* 아래로 */ }
+  // 웹 네이버 로그인(2026-10-19)은 맞춤 토큰이라 providerData 가 비어 있다 → users.naverId (auth/naverAuth.ts)
+  try {
+    const d = await db().doc(`users/${uid}`).get();
+    const nid = d.exists ? String((d.data() as any)?.naverId || '') : '';
+    return nid ? { key: `naver:${nid}`, kind: 'social' } : null;
   } catch {
     return null;
   }

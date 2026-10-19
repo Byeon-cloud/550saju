@@ -88,6 +88,12 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
     naver: naverProvider,
     apple: appleProvider,
   };
+  // 2026-10-19 — 네이버는 Firebase OIDC 로 늘 실패했다(네이버 UserInfo 형식이 달라 sub 비교 실패, 로그인 0명).
+  //   네이버 로그인 화면으로 보내고 /auth/naver 에서 서버(loginWithNaver)가 마무리한다.
+  if (provider === 'naver') {
+    startNaverLogin();
+    throw new Error('로그인 화면으로 이동해요');
+  }
   const p = providers[provider];
   const cur = auth.currentUser;
   const linkAnon = !!cur && cur.isAnonymous;
@@ -165,6 +171,60 @@ export async function checkRedirectResult(): Promise<User | null> {
     else report('login_fail', { code: String(err?.code || 'error').slice(0, 60) });
     return u;
   }
+}
+
+/* ── 웹 네이버 로그인 (2026-10-19) ──
+ *   1) startNaverLogin: state 를 남기고 네이버 로그인 화면으로 이동
+ *   2) 네이버가 https://<사이트>/auth/naver?code&state 로 돌려보냄 (네이버 개발자센터 Callback URL 에 등록 필요)
+ *   3) finishNaverLogin: state 확인 → 서버 loginWithNaver → 맞춤 토큰으로 로그인 → 보던 화면으로 */
+const NAVER_KEY = 'saju500:naver_login';
+export const NAVER_LOGIN_INFO = 'saju500:login_provider';
+
+function startNaverLogin(): void {
+  const clientId = String(import.meta.env.VITE_NAVER_CLIENT_ID || '');
+  if (!clientId) throw new Error('네이버 로그인을 준비 중이에요');
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const state = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  const returnTo = `${location.pathname}${location.search}`;
+  try { localStorage.setItem(NAVER_KEY, JSON.stringify({ state, returnTo, at: Date.now() })); } catch { /* noop */ }
+  const redirectUri = `${location.origin}/auth/naver`;
+  const q = new URLSearchParams({ response_type: 'code', client_id: clientId, redirect_uri: redirectUri, state });
+  location.assign(`https://nid.naver.com/oauth2.0/authorize?${q.toString()}`);
+}
+
+/** /auth/naver 화면이 부른다. 돌아갈 주소를 돌려준다 */
+export async function finishNaverLogin(params: URLSearchParams): Promise<{ returnTo: string; email: string }> {
+  let saved: { state?: string; returnTo?: string; at?: number } = {};
+  try { saved = JSON.parse(localStorage.getItem(NAVER_KEY) || '{}'); localStorage.removeItem(NAVER_KEY); } catch { /* noop */ }
+  try { sessionStorage.removeItem(REDIRECT_MARK); } catch { /* noop */ }
+  const returnTo = saved.returnTo && saved.returnTo.startsWith('/') && !saved.returnTo.startsWith('/auth/') ? saved.returnTo : '/my';
+  const err = params.get('error');
+  if (err) throw Object.assign(new Error(err === 'access_denied' ? '네이버 로그인을 취소했어요' : `네이버 로그인 오류: ${err}`), { code: `naver/${err}`, returnTo });
+  const code = params.get('code') || '';
+  const state = params.get('state') || '';
+  if (!code || !state || state !== saved.state || Date.now() - Number(saved.at || 0) > 30 * 60e3) {
+    throw Object.assign(new Error('로그인 정보가 맞지 않아요. 다시 시도해 주세요'), { code: 'naver/state', returnTo });
+  }
+  // 지금 쓰던 계정(익명 포함)이 서버 요청에 같이 가야 그 계정에 붙는다. 부팅의 익명 로그인이 아직이면 잠깐 기다린다
+  //   (기다리지 않으면 맞춤 토큰 로그인 뒤에 부팅의 익명 로그인이 덮어쓸 수 있다)
+  await auth.authStateReady();
+  if (!auth.currentUser) {
+    await new Promise<void>((resolve) => {
+      let off: () => void = () => {};
+      const t = window.setTimeout(() => { off(); resolve(); }, 4000);
+      off = onAuthStateChanged(auth, (u) => { if (u) { window.clearTimeout(t); setTimeout(() => off(), 0); resolve(); } });
+    });
+  }
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const { app: firebaseApp } = await import('./firebase');
+  const fn = httpsCallable(getFunctions(firebaseApp, 'us-central1'), 'loginWithNaver');
+  const r = await fn({ code, state, redirectUri: `${location.origin}/auth/naver` });
+  const { customToken, email, switched } = r.data as { customToken: string; email: string; switched: boolean };
+  await signInWithCustomToken(auth, customToken);
+  try { localStorage.setItem(NAVER_LOGIN_INFO, JSON.stringify({ provider: 'naver', email: email || '', uid: auth.currentUser?.uid || '' })); } catch { /* noop */ }
+  import('@/services/analytics').then((a) => a.trackEvent('login_success', { provider: 'naver', via: 'redirect', linked: switched ? 0 : 1, ...(switched ? { existing: 1 } : {}) })).catch(() => {});
+  return { returnTo, email: email || '' };
 }
 
 /** 앱인토스 토스 로그인 */

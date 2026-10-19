@@ -118,6 +118,14 @@ export async function purgeUserData(uid: string, reason: string): Promise<PurgeR
     result.errors.push(`referral:${e?.message || e}`);
   }
 
+  // 4-3) 웹 네이버 로그인 연결 (2026-10-19, auth/naverAuth.ts). users.naverId, naverEmail 은 5) 에서 지워진다
+  try {
+    const { purgeNaverLinksOf } = await import('./naverAuth');
+    await purgeNaverLinksOf(uid);
+  } catch (e: any) {
+    result.errors.push(`authLinks:${e?.message || e}`);
+  }
+
   // 5) users 문서 덮어쓰기 — 남길 필드만 골라서 set (merge 없이)
   try {
     const snap = await userRef.get();

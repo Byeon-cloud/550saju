@@ -212,9 +212,9 @@ export function ConsentModal({ open, onAgree }: ConsentModalProps) {
               >
                 <CheckBox checked={marketing} />
                 <span className="flex-1" style={{ fontSize: 14, color: C.inkSoft }}>
-                  <span style={{ color: C.mute, fontWeight: 700 }}>[선택]</span> 마케팅 정보 수신 동의
+                  <span style={{ color: C.mute, fontWeight: 700 }}>[선택]</span> 할인, 이벤트 소식 받기
                   <span className="block" style={{ fontSize: 13, color: C.mute, fontWeight: 400, marginTop: 2 }}>
-                    이벤트와 혜택 소식을 이메일로 받아요. 미동의해도 서비스 이용에 제한이 없어요.
+                    할인이나 이벤트가 있으면 메일로 알려 드려요(광고성 정보 수신 동의). 동의하지 않아도 모두 쓸 수 있어요.
                   </span>
                 </span>
               </button>

@@ -100,6 +100,22 @@ export const loginWithToss = onCall(
   }
 );
 
+/**
+ * 웹 네이버 로그인 (2026-10-19) — Firebase oidc.naver 는 네이버 UserInfo 형식이 달라 늘 실패했다(로그인 0명).
+ *   서버가 네이버와 직접 코드를 바꾸고 맞춤 토큰을 준다. 지금 계정(익명 포함)에 붙여 운과 기록을 그대로 둔다. auth/naverAuth.ts
+ */
+export const loginWithNaver = onCall({ timeoutSeconds: 20, memory: '256MiB', cors: true }, async (request) => {
+  const { code, state, redirectUri } = (request.data || {}) as { code?: string; state?: string; redirectUri?: string };
+  if (!code || !state || !redirectUri) throw new HttpsError('invalid-argument', 'code, state, redirectUri 필요');
+  try {
+    const { loginWithNaverCode } = await import('./auth/naverAuth');
+    return await loginWithNaverCode({ code: String(code), state: String(state), redirectUri: String(redirectUri), callerUid: request.auth?.uid });
+  } catch (error: any) {
+    console.error('[loginWithNaver]', error?.message || error);
+    throw new HttpsError('internal', `네이버 로그인 실패: ${String(error?.message || error).slice(0, 120)}`);
+  }
+});
+
 // 2026-06-22 엔드게임 P1 — 익명→토스 안정 uid 보관함 병합 (uid 회전 CS 근절용). 클라 플래그 OFF 시 미호출.
 export { mergeAnonIntoToss } from './auth/mergeAccount';
 

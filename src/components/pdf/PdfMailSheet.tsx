@@ -46,7 +46,7 @@ export function PdfMailSheet({ open, onClose, onSend, busy }: {
             </label>
             <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 10, fontSize: 14, color: HJ.ink2, lineHeight: 1.55, cursor: 'pointer' }}>
               <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} disabled={busy} style={{ width: 20, height: 20, marginTop: 1, flexShrink: 0 }} />
-              <span>(선택) 신년운세와 할인 소식을 메일로 받을래요. 언제든 메일 안의 안내로 그만 받을 수 있어요.</span>
+              <span>(선택) 할인이나 이벤트가 있으면 메일로 알려 드려요. 광고성 정보 수신에 동의하고, 메일 안의 안내로 언제든 그만 받을 수 있어요.</span>
             </label>
             <button type="button" className="hj-cta" disabled={!canSend} onClick={() => onSend(email.trim(), marketing)}
               style={{ marginTop: 18, opacity: canSend ? 1 : 0.5 }}>

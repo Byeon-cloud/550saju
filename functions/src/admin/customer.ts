@@ -56,6 +56,9 @@ async function resolveUids(q: string, kind: Kind): Promise<{ uids: string[]; dev
       const s = await db.collection(col).where('email', '==', q.toLowerCase()).limit(5).get().catch(() => null);
       s?.docs.forEach((d) => uids.add(d.id));
     }
+    // 웹 네이버 로그인(10-19)은 Auth 이메일이 없다 → users.naverEmail
+    const nv = await db.collection('users').where('naverEmail', '==', q.toLowerCase()).limit(5).get().catch(() => null);
+    nv?.docs.forEach((d) => uids.add(d.id));
   }
   if (kind === 'invite') {
     const s = await db.collection('referralCodes').doc(q).get();
@@ -96,6 +99,7 @@ async function card(uid: string) {
   const u = userSnap.exists ? (userSnap.data() as any) : null;
   const providers = (authUser?.providerData || []).map((p) => p.providerId);
   const isToss = uid.startsWith('toss_');
+  if (u?.naverId && !providers.includes('oidc.naver')) providers.push('oidc.naver'); // 웹 네이버 로그인(맞춤 토큰)
   const login = isToss ? '토스 로그인' : providers.length ? providers.map((p) => (p === 'google.com' ? '구글' : p === 'oidc.kakao' ? '카카오' : p === 'oidc.naver' ? '네이버' : p)).join(', ') : '로그인 안 함(익명)';
 
   const evRows = (evs?.docs || []).map((d) => d.data() as any).sort((a, b) => tsMs(b.ts) - tsMs(a.ts));
@@ -137,7 +141,7 @@ async function card(uid: string) {
   return {
     uid,
     login,
-    email: authUser?.email || (lead?.exists ? (lead.data() as any).email : '') || (mailSub?.exists ? (mailSub.data() as any).email : '') || '',
+    email: authUser?.email || u?.naverEmail || (lead?.exists ? (lead.data() as any).email : '') || (mailSub?.exists ? (mailSub.data() as any).email : '') || '',
     createdAt: tsMs(authUser?.metadata?.creationTime) || tsMs(u?.createdAt),
     lastSignInAt: tsMs(authUser?.metadata?.lastSignInTime),
     lastSeenDay: evRows[0]?.day || '',
