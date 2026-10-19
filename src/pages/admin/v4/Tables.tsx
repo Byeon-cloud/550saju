@@ -2,7 +2,7 @@
  * 관리자 v4 — 매출, 유입, 콘텐츠와 AI 표 (2026-10-19)
  *   모두 하루 요약(statsDaily)을 기간만큼 더한 값. 표 아래 '내려받기'로 그대로 엑셀에 붙일 수 있다.
  */
-import { fmt, won, pct, sideOf, CONTENT_NAME, AI_NAME } from './api';
+import { fmt, won, pct, sideOf, CONTENT_NAME, AI_NAME, SOURCE_NAME } from './api';
 import type { DayStats, PlatFilter, ChannelRow } from './api';
 import { Box, Table, K } from './ui';
 
@@ -48,7 +48,7 @@ export function Channels({ days, plat }: { days: DayStats[]; plat: PlatFilter })
   }
   const list = Object.entries(sum).sort((a, b) => b[1].visitors - a[1].visitors);
   const head = ['처음 들어온 곳', '앱/웹', '방문', '사주 입력', '입력 비율', '결과', '결제', '결제 비율', '매출'];
-  const rows = list.map(([src, r]) => [src, r.plat === 'app' ? '앱' : '웹', r.visitors, r.inputs, pct(r.inputs, r.visitors), r.results, r.payers, pct(r.payers, r.visitors), r.revenue]);
+  const rows = list.map(([src, r]) => [SOURCE_NAME[src] || (src.startsWith('토스 ') ? `토스 ${src.slice(3).toLowerCase() === 'push' ? '푸시' : src.slice(3)}` : src), r.plat === 'app' ? '앱' : '웹', r.visitors, r.inputs, pct(r.inputs, r.visitors), r.results, r.payers, pct(r.payers, r.visitors), r.revenue]);
   return (
     <Box title="들어온 곳별" right={<Down onClick={() => csv('유입', head, rows as any)} />}
       note="기기가 그날 처음 utm(광고 주소 꼬리표)을 달고 들어온 곳으로 묶어요. 광고 주소에는 utm_source(naver, meta 등)를 꼭 붙여요. 날마다 센 것을 더한 값이라 같은 사람이 여러 날 오면 여러 번 세요. 매출은 충전 완료 이벤트 기준이라 매출 탭과 조금 다를 수 있어요.">

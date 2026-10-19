@@ -70,9 +70,9 @@ export function Overview({ days, prev, plat }: { days: DayStats[]; prev: DayStat
         ]} />
       </Box>
 
-      <Box title="단계별 전환 (앱과 웹)" note="앞 단계 대비 비율이에요. 결제한 사람은 결제 장부 기준이에요.">
-        <Table head={['단계', '앱', '앱 비율', '웹', '웹 비율']} align={['l', 'r', 'r', 'r', 'r']}
-          rows={steps.map(([name, a, w], i) => [name, fmt(a), i ? pct(a, steps[i - 1][1]) : '', fmt(w), i ? pct(w, steps[i - 1][2]) : ''])} />
+      <Box title="단계별 전환 (앱과 웹)" note="방문한 기기 대비 비율이에요. 결과 받음에는 예전에 사주를 넣어 둔 사람도 들어가서 사주 입력보다 클 수 있어요. 결제한 사람은 결제 장부 기준이에요.">
+        <Table head={['단계', '앱', '앱 방문 대비', '웹', '웹 방문 대비']} align={['l', 'r', 'r', 'r', 'r']}
+          rows={steps.map(([name, a, w], i) => [name, fmt(a), i ? pct(a, steps[0][1]) : '', fmt(w), i ? pct(w, steps[0][2]) : ''])} />
       </Box>
 
       <AlertsBox days={days} />

@@ -90,7 +90,7 @@ export function Customer() {
   );
 }
 
-function CustomerCard({ c, devices, onRefresh }: { c: CardData; devices: string[]; onRefresh: () => void }) {
+export function CustomerCard({ c, devices, onRefresh }: { c: CardData; devices: string[]; onRefresh: () => void }) {
   const [copied, setCopied] = useState(false);
   const pendingComp = c.compensations.filter((x) => !x.claimed);
   const bal = c.deviceBalance;
@@ -137,8 +137,14 @@ function CustomerCard({ c, devices, onRefresh }: { c: CardData; devices: string[
       <h3 style={h3}>보상 내역</h3>
       <Table head={['언제', '운', '사유', '받았나']} align={['l', 'r', 'l', 'l']}
         rows={[
-          ...c.grantLog.map((g) => [timeText(g.at), fmt(g.amount), g.note || g.reason, '']),
-          ...c.compensations.map((x) => [timeText(x.at), fmt(x.amount), x.note || x.reason, x.claimed ? `받음 ${timeText(x.claimedAt)}` : '아직']),
+          // 지급 기록(10-19부터) 한 줄씩. 받았는지는 그 장부가 그 뒤에 수령됐는지로
+          ...c.grantLog.map((g) => {
+            const comp = c.compensations.find((x) => x.key === g.target);
+            const got = comp && comp.claimed && comp.claimedAt >= g.at;
+            return [timeText(g.at), fmt(g.amount), g.note || g.reason, got ? `받음 ${timeText(comp!.claimedAt)}` : '아직'];
+          }),
+          // 지급 기록이 없던 예전 장부
+          ...c.compensations.filter((x) => !c.grantLog.some((g) => g.target === x.key)).map((x) => [timeText(x.at), fmt(x.amount), x.note || x.reason, x.claimed ? `받음 ${timeText(x.claimedAt)}` : '아직']),
         ]} />
 
       <GrantForm target={c.uid} targetLabel="회원 ID" card={c} onDone={onRefresh} devices={devices} />

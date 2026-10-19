@@ -78,7 +78,11 @@ export function useStats(days: number, enabled: boolean) {
 
 export const fmt = (n: number): string => Math.round(n).toLocaleString('ko-KR');
 export const won = (n: number): string => `${Math.round(n).toLocaleString('ko-KR')}원`;
-export const pct = (a: number, b: number): string => (b > 0 ? `${Math.round((a / b) * 1000) / 10}%` : '-');
+export const pct = (a: number, b: number): string => {
+  if (!(b > 0)) return '-';
+  const v = (a / b) * 100;
+  return `${v > 0 && v < 1 ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10}%`; // 1% 아래는 소수 둘째 자리까지
+};
 export const shortDay = (d: string): string => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 export const timeText = (ms: number): string => {
   if (!ms) return '-';
@@ -90,6 +94,11 @@ export const CONTENT_NAME: Record<string, string> = {
   daily: '오늘의 운세', dream: '꿈해몽', deepDream: '꿈해몽 깊은 풀이', topic: '주제운', premium: '종합사주', report: '종합사주',
   chat: '사주대화', daeun: '대운', monthly: '월운세', weekly: '주간운세', compat: '궁합', compatibility: '궁합', tojung: '신년운세',
   manse: '만세력', tti: '띠별 운세', etc: '기타',
+};
+/** 들어온 곳 이름 (utm_source 값 → 읽기 쉬운 말) */
+export const SOURCE_NAME: Record<string, string> = {
+  toss_app: '토스 앱 (출처 표시 없음)', '출처 없음': '출처 표시 없음', seo: '검색 페이지', share: '공유 링크', naver: '네이버 광고', meta: '메타 광고', instagram: '인스타그램',
+  google: '구글 광고', kakao: '카카오 광고', threads: '스레드', mail: '메일', invite: '친구 초대',
 };
 export const AI_NAME: Record<string, string> = {
   ...CONTENT_NAME, dailyHead: '오늘의 운세 머리', ttiFortune: '띠별 운세', iljuDaily: '일주 아침 메일',
