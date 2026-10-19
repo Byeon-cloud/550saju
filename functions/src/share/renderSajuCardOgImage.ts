@@ -17,11 +17,10 @@
  *   - Noto Serif KR Google Fonts CDN (preconnect + display=swap)
  *   - networkidle0 + document.fonts.ready 대기 (puppeteer #61 패턴 차용)
  *
- * 디자인 (1200×630):
- *   - 배경 SSOT paper #F8F5EE
- *   - 좌측: SAJU 500 로고 + 타이틀 + 부제 + CTA 카피
- *   - 우측: 일주 한자 큰 박스 (오행 컬러 배경)
- *   - 푸터: 도메인
+ * 디자인 (1200×630, 2026-10-19 v9):
+ *   - 종이 #F4EFE4 바탕, 먹 두 줄 테두리(사주쌍변)
+ *   - 왼쪽: 사주500, 'OO 님의 사주 카드', 일주와 일간 오행, '생일만 넣으면 내 사주 카드도 무료로'
+ *   - 오른쪽: 일주 두 글자 칸(전통 오행색) + 일주 지지의 사주500 띠 그림
  */
 
 import { onRequest } from 'firebase-functions/v2/https';
