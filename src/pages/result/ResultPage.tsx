@@ -667,7 +667,7 @@ export function ResultPage(props: ResultPageProps = {}) {
             className="flex-1 py-3 rounded-xl text-h3 font-semibold" style={{ background: '#FFFDF8', border: '1px solid #E1D7C4', color: '#4B4238' }}>
             홈으로
           </button>
-          <button type="button" onClick={() => navigate('/my')}
+          <button type="button" onClick={() => navigate(`/my?inquiry=ai_fail${reportId ? `&rid=${encodeURIComponent(reportId)}` : ''}`)}
             className="flex-1 py-3 rounded-xl text-h3 font-semibold" style={{ background: '#FFFDF8', border: '1px solid #E1D7C4', color: '#4B4238' }}>
             고객문의
           </button>
@@ -711,7 +711,7 @@ export function ResultPage(props: ResultPageProps = {}) {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/my')}
+            onClick={() => navigate(`/my?inquiry=ai_fail${reportId ? `&rid=${encodeURIComponent(reportId)}` : ''}`)}
             className="flex-1 py-3 rounded-xl text-h3 font-semibold"
             style={{ background: 'rgba(184,150,90,0.12)', color: '#8C6D3D' }}
           >

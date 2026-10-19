@@ -38,7 +38,7 @@ const CATALOG: { group: string; items: [name: string, label: string, where: Wher
     ['inv_complete', '초대받은 친구가 받기를 눌렀다', 'both'], ['inv_claim', '초대 보상 운을 받았다', 'both'], ['cjoin_answer', '받은 궁합 초대장에 답했다', 'both'],
   ] },
   { group: '알림, 메일, 별점, 보상', items: [
-    ['noti_agree', '매일 9시 알림 동의', 'app'], ['review_request', '토스 별점 창 요청', 'app'], ['mail_subscribe', '메일 알림 신청', 'web'], ['reward_earned', '보상 운 적립(출석 등)', 'both'],
+    ['noti_agree', '매일 9시 알림 동의', 'app'], ['review_request', '토스 별점 창 요청', 'app'], ['mail_subscribe', '메일 알림 신청', 'web'], ['reward_earned', '보상 운 적립(출석 등)', 'both'], ['inquiry_sent', '웹 문의 양식으로 문의', 'web'],
   ] },
   { group: 'AI와 오류', items: [
     ['ai_done', 'AI 생성 끝', 'both'], ['ai_error', 'AI 생성 실패', 'both'], ['client_error', '화면 오류', 'both'], ['storage_full', '기기 저장 공간이 차서 옛 기록을 지움', 'both'],

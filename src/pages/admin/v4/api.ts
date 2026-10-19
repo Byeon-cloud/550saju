@@ -30,6 +30,12 @@ export interface DayStats {
   events?: Record<string, { app: number; web: number }>;
   /** 그날 처음 온 기기 중 다음 날, 7일 안에 다시 온 기기 (아직 그날이 안 지났으면 null) */
   retention?: Record<Plat, { cohort: number; d1: number | null; w1: number | null }>;
+  /** 홈에서 누른 버튼 (STATS_VERSION 4부터) */
+  homeClicks?: Record<string, Record<Plat, { clicks: number; sess: number; conv: number }>>;
+  /** 운을 쓴 건의 시작점 */
+  purchaseFrom?: Record<string, Record<Plat, { n: number; un: number }>>;
+  /** 충전이 시작된 화면 */
+  chargeFrom?: Record<string, Record<Plat, { n: number; amount: number }>>;
 }
 
 export async function callAdmin<T = any>(name: string, data: Record<string, unknown>): Promise<T> {

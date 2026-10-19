@@ -3,7 +3,7 @@
  *   예전 화면(v3, 원본을 브라우저에서 전부 읽음)은 /admin?old=1 로 당분간 남겨 둔다.
  *   설계 문서: docs/handoff/2026-10-19_관리자_재설계.md
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useStats } from './api';
 import type { PlatFilter } from './api';
 import { K, Seg } from './ui';
@@ -12,10 +12,15 @@ import { Customer } from './Customer';
 import { Revenue, Channels, ContentAi } from './Tables';
 import { TabReviews } from '../_tabReviews';
 import { Tracking } from './Tracking';
+import { Inbox } from './Inbox';
+import { Paths } from './Paths';
+import { callAdmin } from './api';
 
-type Tab = 'overview' | 'customer' | 'revenue' | 'channels' | 'content' | 'tracking' | 'reviews';
+type Tab = 'overview' | 'paths' | 'inbox' | 'customer' | 'revenue' | 'channels' | 'content' | 'tracking' | 'reviews';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: '한눈에' },
+  { id: 'paths', label: '어디서 사나' },
+  { id: 'inbox', label: '웹 문의함' },
   { id: 'customer', label: '고객 찾기와 운 넣기' },
   { id: 'revenue', label: '매출' },
   { id: 'channels', label: '들어온 곳' },
@@ -30,7 +35,10 @@ export function AdminV4() {
   });
   const [range, setRange] = useState<7 | 14 | 30 | 60>(14);
   const [plat, setPlat] = useState<PlatFilter>('all');
-  const needStats = tab !== 'customer' && tab !== 'reviews';
+  const needStats = tab !== 'customer' && tab !== 'reviews' && tab !== 'inbox';
+  // 새 웹 문의 수 (탭 이름 옆에)
+  const [newInq, setNewInq] = useState(0);
+  useEffect(() => { callAdmin<{ items: { status: string }[] }>('adminInquiries', { action: 'list' }).then((r) => setNewInq(r.items.filter((x) => x.status === 'new').length)).catch(() => {}); }, []);
   // 증감 비교용으로 두 배를 받는다 (60일은 120일)
   const { data, busy, error, reload, builtNow } = useStats(range * 2, needStats);
   const { days, prev } = useMemo(() => {
@@ -60,7 +68,7 @@ export function AdminV4() {
           {TABS.map((t) => (
             <button key={t.id} type="button" onClick={() => go(t.id)}
               style={{ padding: '8px 12px', borderRadius: 8, border: 0, cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 14.5, fontWeight: 800, background: tab === t.id ? K.ink : 'transparent', color: tab === t.id ? '#F4EFE4' : K.mute }}>
-              {t.label}
+              {t.label}{t.id === 'inbox' && newInq > 0 ? ` ${newInq}` : ''}
             </button>
           ))}
           <a href="/admin?old=1" style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 13, color: K.mute, whiteSpace: 'nowrap' }}>예전 화면</a>
@@ -77,7 +85,9 @@ export function AdminV4() {
         {tab === 'channels' && data && <Channels days={days} plat={plat} />}
         {tab === 'content' && data && <ContentAi days={days} plat={plat} />}
         {tab === 'tracking' && data && <Tracking days={days} />}
+        {tab === 'paths' && data && <Paths days={days} plat={plat} />}
         {tab === 'customer' && <Customer />}
+        {tab === 'inbox' && <Inbox onCount={setNewInq} />}
         {tab === 'reviews' && <TabReviews />}
       </div>
     </div>

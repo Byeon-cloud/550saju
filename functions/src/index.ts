@@ -2490,6 +2490,8 @@ export { adminStats, buildDailyStats, pruneRawAnalytics } from './admin/stats';
 export { adminLookup } from './admin/customer';
 // 토스 앱 결제 환불 회수 (2026-10-19)
 export { syncIapRefunds, syncIapRefundsDeep } from './payment/syncIapRefunds';
+// 웹 문의함 (2026-10-19)
+export { submitInquiry, adminInquiries } from './support/inquiry';
 // 유입/구매 폭증 서버 집계 (2026-06-27) — onRequest+secret(INFLOW_KEY). source·plat·시간대·구매 분해 JSON.
 export { adminInflowReport } from './admin/inflowReport';
 export { adminAiUsageReport } from './admin/aiUsageReport';

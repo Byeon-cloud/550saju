@@ -32,6 +32,8 @@ import { hasConsentRecord, saveConsent } from '@/services/auth/consent';
 import { signOut } from '@/services/auth/authService';
 import { Modal } from '@/components/common/Modal';
 import { callDeleteAccount } from '@/services/auth/deleteAccount';
+import { InquirySheet } from '@/components/support/InquirySheet';
+import type { InquiryCategory } from '@/services/support/inquiry';
 
 /* ─ SSOT 토큰 — PC_인수인계 §5 (2026-04-23) ─ */
 const C = {
@@ -62,16 +64,21 @@ const KAKAO_CHANNEL_URL = 'https://open.kakao.com/o/pa01C1ri';
 type MenuItem = { id: string; label: string; path: string; icon: string };
 
 // Stage 7e-4: 고객문의 제거, 이용약관/개인정보처리방침은 footer 영역으로 이동
-const MENU_ITEMS_AIT: MenuItem[] = [
+const MENU_COMMON: MenuItem[] = [
   { id: 'charge',  label: '운 충전',         path: '/charge',  icon: 'wallet'       },
   { id: 'invite',  label: '친구 초대하고 운 받기', path: '/invite', icon: 'users' }, // 2026-10-18 친구 초대
+];
+const MENU_ITEMS_AIT: MenuItem[] = [
+  ...MENU_COMMON,
+  // 2026-10-19 — 토스 별점과 후기는 토스 추천 미니앱 선정 기준(오너). 토스 공식 별점 창(Review.request)을 여는 메뉴. 앱 전용
+  { id: 'toss_review', label: '토스에 별점 남기기', path: '', icon: 'star' },
   // 2026-09-16 제거: '결제·사용 내역' → '/billing' 라우트·페이지·데이터가 전부 없어 404(NotFound)로 떨어졌음.
   //   토스 심사 재제출 전 깨진 메뉴 차단. 내역 페이지를 실제로 만들 때 App.tsx 라우트와 함께 복귀할 것.
 ];
 
 const MENU_ITEMS_WEB: MenuItem[] = [
   { id: 'storage', label: '분석 기록',        path: '/storage', icon: 'archive'      },
-  ...MENU_ITEMS_AIT,
+  ...MENU_COMMON,
 ];
 
 /* ══════════════════════════════════════════
@@ -101,6 +108,13 @@ export function MyPage() {
 
   const [balance, setBalance] = useState(0);
   const [showContact, setShowContact] = useState(false);
+  // 2026-10-19 — 웹 문의 양식 (?inquiry=분류&rid=결과 로 바로 열 수도 있다: 결과 화면 '고객문의')
+  const [cameForInquiry] = useState(() => new URLSearchParams(location.search).has('inquiry'));
+  const [inquiry, setInquiry] = useState<{ open: boolean; cat?: InquiryCategory; rid?: string }>(() => {
+    const q = new URLSearchParams(location.search);
+    const cat = q.get('inquiry') as InquiryCategory | null;
+    return { open: !!cat && !(isAppintosBuild || isAppsInToss()), cat: cat || undefined, rid: q.get('rid') || undefined };
+  });
   const [showLoginModal, setShowLoginModal] = useState(false);
   // 웹 단독 출시 — 개인정보 동의 모달 + 회원탈퇴 (앱인토스 비노출)
   const [showConsent, setShowConsent] = useState(false);
@@ -166,15 +180,23 @@ export function MyPage() {
    *  시트가 뜨던 구멍 → 앱 빌드와 토스 안에서는 절대 열지 않는다 (렌더도 아래에서 게이트). */
   useEffect(() => {
     if (inAppsInToss) { setShowLoginModal(false); return; }
+    if (inquiry.open || cameForInquiry) { setShowLoginModal(false); return; } // 문의하러 온 사람은 로그인 없이 바로 양식, 닫은 뒤에도 로그인 창을 띄우지 않는다 (10-19)
     if (!loading && !realLoggedIn) {
       setShowLoginModal(true);
     } else {
       setShowLoginModal(false);
     }
-  }, [inAppsInToss, loading, realLoggedIn]);
+  }, [inAppsInToss, loading, realLoggedIn, inquiry.open, cameForInquiry]);
 
   const onMenuClick = (item: MenuItem) => {
     if (item.id === 'contact') { setShowContact(true); return; }
+    if (item.id === 'toss_review') {
+      import('@/services/review/reviewPrompt').then((m) => m.askTossReview('my')).then((r) => {
+        if (r === 'unsupported') toast.show('토스 앱을 최신으로 업데이트하면 별점을 남길 수 있어요', 'info');
+        else if (r === 'error') toast.show('지금은 별점 창을 열지 못했어요. 오른쪽 위 점 세 개 메뉴의 이용 후기 남기기로도 남길 수 있어요', 'info');
+      }).catch(() => {});
+      return;
+    }
     if (item.path) navigate(item.path);
   };
 
@@ -328,7 +350,11 @@ export function MyPage() {
         onClose={() => setShowContact(false)}
         userId={user?.uid}
         toast={toast}
+        onInquiry={inAppsInToss ? undefined : () => { setShowContact(false); setInquiry({ open: true }); }}
       />
+      {!inAppsInToss && (
+        <InquirySheet open={inquiry.open} initialCategory={inquiry.cat} reportId={inquiry.rid} onClose={() => setInquiry({ open: false })} />
+      )}
 
       {/* ── 웹 전용 개인정보 동의 모달 (첫 로그인 · 앱인토스 비노출) ── */}
       <ConsentModal open={showConsent} onAgree={onConsentAgree} />
@@ -1162,11 +1188,13 @@ void OHENG_HAN_MY; // 향후 오행 라벨 노출 여지 보존
 /* ══════════════════════════════════════════
    ContactSheet — §4-4 (고객문의 바텀 시트)
 ══════════════════════════════════════════ */
-function ContactSheet({ open, onClose, userId, toast: _toast }: {
+function ContactSheet({ open, onClose, userId, toast: _toast, onInquiry }: {
   open: boolean;
   onClose: () => void;
   userId?: string;
   toast: ReturnType<typeof useToast>;
+  /** 웹 전용 — 회원 번호와 보던 화면이 같이 가는 양식 (2026-10-19) */
+  onInquiry?: () => void;
 }) {
   const subject = encodeURIComponent(`사주500 문의${userId ? ` [회원ID:${userId}]` : ''}`);
   const mailtoUrl = `mailto:${CONTACT_EMAIL}?subject=${subject}`;
@@ -1238,6 +1266,16 @@ function ContactSheet({ open, onClose, userId, toast: _toast }: {
             <p className="text-[13.5px] mb-5" style={{ color: C.mute }}>{CONTACT_EMAIL}</p>
 
             <div className="flex flex-col gap-2.5">
+              {onInquiry && (
+                <button type="button" onClick={onInquiry}
+                  className="w-full flex items-center gap-3 px-5 rounded-xl"
+                  style={{ height: 56, background: C.ink, border: `1px solid ${C.ink}` }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F4EFE4" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                  </svg>
+                  <span className="text-[15px] font-semibold" style={{ color: '#F4EFE4' }}>여기에 바로 남기기 (가장 빨라요)</span>
+                </button>
+              )}
               <button type="button" onClick={onMail}
                 className="w-full flex items-center gap-3 px-5 rounded-xl"
                 style={{ height: 56, background: '#FFFFFF', border: `1px solid ${C.line}` }}>
@@ -1260,6 +1298,11 @@ function ContactSheet({ open, onClose, userId, toast: _toast }: {
                 <span className="text-[15px] font-semibold" style={{ color: C.ink }}>카카오 오픈채팅</span>
               </button>
             </div>
+            {onInquiry && userId && (
+              <p className="text-[13.5px] mt-4" style={{ color: C.mute, lineHeight: 1.6 }}>
+                카카오로 문의할 때는 고객센터 코드 <span style={{ fontFamily: 'monospace' }}>{userId.slice(0, 6)}…{userId.slice(-4)}</span>를 같이 보내 주세요. 내 정보 맨 아래에서 눌러 복사할 수 있어요.
+              </p>
+            )}
           </motion.div>
         </>
       )}
@@ -1489,6 +1532,11 @@ function MenuIcon({ name }: { name: string }) {
         <circle cx="9" cy="8" r="3.2" />
         <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
         <path d="M16 4.6a3.2 3.2 0 0 1 0 6.3M18 14.3c1.8.8 3 2.9 3 5.7" />
+      </svg>
+    );
+    case 'star': return (
+      <svg viewBox="0 0 24 24" {...s}>
+        <path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.3L12 17.1l-5.7 3.1 1.2-6.3L2.8 9.5l6.4-.8z" />
       </svg>
     );
     case 'archive': return (

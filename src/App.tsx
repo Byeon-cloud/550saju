@@ -139,6 +139,8 @@ function ScrollToTop() {
     document.querySelector('.app-scroll')?.scrollTo?.(0, 0); // 2026-10-16 PC 는 안쪽이 스크롤된다
     // 2026-06-12 P0 — trackPageView 호출부가 0건이라 page_view/content_open/content_result 퍼널 전멸이던 fix
     import('@/services/analytics').then(a => a.trackPageView(pathname)).catch(() => {});
+    // 2026-10-19 — 최근 본 화면 10개 (웹 문의에 붙여 '무슨 화면에서 무슨 일이' 를 바로 알게)
+    try { const k = 'saju500:paths'; const h: string[] = JSON.parse(sessionStorage.getItem(k) || '[]'); h.push(pathname); sessionStorage.setItem(k, JSON.stringify(h.slice(-10))); } catch { /* noop */ }
   }, [pathname]);
   return null;
 }

@@ -54,7 +54,9 @@ export function LegalFooter() {
         <button type="button" className="tap-pad" onClick={() => navigate('/terms')} style={linkStyle}>이용약관</button>
         <button type="button" className="tap-pad" onClick={() => navigate('/privacy')} style={{ ...linkStyle, fontWeight: 700 }}>개인정보처리방침</button>
         <button type="button" className="tap-pad" onClick={() => navigate('/business')} style={linkStyle}>사업자정보</button>
-        <button type="button" className="tap-pad" onClick={() => { void import('@/services/payment/refundRequest').then((m) => m.openRefundRequest()); }} style={linkStyle}>환불 요청</button>
+        {/* 2026-10-19 — 웹 문의 양식(회원 번호, 보던 화면이 같이 간다). 환불도 양식으로 받는다(메일 창은 문의함에 안 남았다) */}
+        <button type="button" className="tap-pad" onClick={() => navigate('/my?inquiry=other')} style={linkStyle}>문의하기</button>
+        <button type="button" className="tap-pad" onClick={() => navigate('/my?inquiry=refund')} style={linkStyle}>환불 요청</button>
       </div>
       <p style={{ fontSize: 12, lineHeight: 1.7, color: C.faint, margin: 0, wordBreak: 'keep-all' }}>
         {info.join(' | ')}

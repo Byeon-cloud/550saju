@@ -15,7 +15,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { assertOwner, OWNER_UIDS } from './owner';
 
-const STATS_VERSION = 3; // 2: 오너 시험 결제 제외 / 3: 이벤트별 건수(events), 재방문(retention)
+const STATS_VERSION = 4; // 2: 오너 시험 결제 제외 / 3: 이벤트별 건수(events), 재방문(retention) / 4: 홈 클릭과 결제 경로
 const RAW_KEEP_DAYS = 400;
 
 export const kstDayOf = (ms: number): string => new Date(ms + 9 * 3600e3).toISOString().slice(0, 10);
@@ -76,6 +76,12 @@ export interface DayStats {
   events: Record<string, { app: number; web: number }>;
   /** 그날 처음 온 기기(signup) 중 다음 날, 7일 안에 다시 온 기기. 미래 날이 아직이면 null */
   retention: Record<Plat, { cohort: number; d1: number | null; w1: number | null }>;
+  /** 홈(/)에서 누른 버튼: 누른 수, 누른 세션, 그 세션에서 그 뒤 결제(운 사용이나 충전)까지 간 세션 */
+  homeClicks: Record<string, Record<Plat, { clicks: number; sess: number; conv: number }>>;
+  /** 운을 쓴 건(content_purchase)의 시작점: '홈: 버튼 글자' 또는 '처음 화면: 경로' */
+  purchaseFrom: Record<string, Record<Plat, { n: number; un: number }>>;
+  /** 충전 완료(charge_complete)가 시작된 화면(그 세션의 마지막 charge_open source) */
+  chargeFrom: Record<string, Record<Plat, { n: number; amount: number }>>;
 }
 
 /** 하루치 계산에 공통으로 쓰는 작은 장부들 (여러 날을 만들 때 한 번만 읽는다) */
@@ -306,6 +312,55 @@ export async function computeDay(day: string, ledger: Ledger): Promise<DayStats>
   const cl = ledger.comps.filter((c) => c.claimedDay === day);
   cs.claimed = cl.length; cs.claimedUn = cl.reduce((s, c) => s + c.amount, 0);
 
+  // 홈 클릭과 결제 경로 — 세션(sid)별로 시간순
+  const homeClicks: DayStats['homeClicks'] = {};
+  const purchaseFrom: DayStats['purchaseFrom'] = {};
+  const chargeFrom: DayStats['chargeFrom'] = {};
+  const emptyHC = () => ({ app: { clicks: 0, sess: 0, conv: 0 }, web: { clicks: 0, sess: 0, conv: 0 } });
+  const normPath = (raw: unknown) => {
+    const pth = String(raw || '').split('?')[0];
+    return pth.replace(/\/(result|share|saju-card|report)\/[^/]+.*/, '/$1/…').replace(/\/[A-Za-z0-9_-]{16,}/g, '/…').slice(0, 40) || '/';
+  };
+  const bySid = new Map<string, any[]>();
+  for (const e of evs) { const sid = String(e.sid || e.did || ''); if (!sid) continue; (bySid.get(sid) || bySid.set(sid, []).get(sid)!).push(e); }
+  for (const list of bySid.values()) {
+    const p: Plat = list[0]?.plat === 'ait' ? 'app' : 'web';
+    const clicked = new Set<string>();
+    const converted = new Set<string>();
+    let lastHome = '';
+    let lastChargeSrc = '';
+    const landing = list.find((e) => e.name === 'page_view');
+    const landingKey = `처음 화면: ${normPath(landing?.props?.page_path || landing?.props?.path)}`;
+    for (const e of list) {
+      const pr = e.props || {};
+      if (e.name === 'cta_click' && (pr.page === '/' || pr.page === '')) {
+        const label = String(pr.label || '').replace(/\s+/g, ' ').trim().slice(0, 24) || '(글자 없음)';
+        const hc = (homeClicks[label] ??= emptyHC());
+        hc[p].clicks += 1;
+        if (!clicked.has(label)) { clicked.add(label); hc[p].sess += 1; }
+        lastHome = label;
+      }
+      if (e.name === 'charge_open' && pr.source) lastChargeSrc = String(pr.source).slice(0, 30);
+      const isBuy = e.name === 'content_purchase' || e.name === 'charge_complete';
+      if (isBuy) {
+        for (const l of clicked) if (!converted.has(l)) { converted.add(l); homeClicks[l][p].conv += 1; }
+      }
+      if (e.name === 'content_purchase') {
+        const key = lastHome ? `홈: ${lastHome}` : landingKey;
+        const r = ((purchaseFrom[key] ??= { app: { n: 0, un: 0 }, web: { n: 0, un: 0 } })[p]);
+        r.n += 1; r.un += Number(pr.amount) || 0;
+      }
+      if (e.name === 'charge_complete') {
+        const key = String(pr.source || lastChargeSrc || 'direct');
+        const r = ((chargeFrom[key] ??= { app: { n: 0, amount: 0 }, web: { n: 0, amount: 0 } })[p]);
+        r.n += 1; r.amount += Number(pr.amount) || 0;
+      }
+    }
+  }
+  // 홈 버튼은 많이 눌린 40개만 남긴다 (글자가 매번 조금씩 달라 꼬리가 길다)
+  const topHome = Object.entries(homeClicks).sort((a, b) => (b[1].app.clicks + b[1].web.clicks) - (a[1].app.clicks + a[1].web.clicks)).slice(0, 40);
+  const homeClicksTop: DayStats['homeClicks'] = Object.fromEntries(topHome);
+
   // 이벤트별 건수
   const events: DayStats['events'] = {};
   for (const e of evs) {
@@ -337,6 +392,7 @@ export async function computeDay(day: string, ledger: Ledger): Promise<DayStats>
   return {
     day, v: STATS_VERSION, builtAt: Date.now(), ...(day === kstToday() ? { partial: true } : {}),
     app: S.app, web: S.web, content, channels, ai, aiFailures, cs, alerts, packages, events, retention,
+    homeClicks: homeClicksTop, purchaseFrom, chargeFrom,
   };
 }
 
