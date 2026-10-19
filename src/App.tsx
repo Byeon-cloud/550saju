@@ -217,7 +217,7 @@ function AnimatedRoutes() {
 }
 
 /**
- * CS 보상 자동 수령 (앱인토스 전용) — compensations/{deviceId} 장부 기반.
+ * CS 보상 자동 수령 — compensations/{deviceId 또는 회원 ID} 장부 기반. 앱은 기기 ID + 회원 ID, 웹은 회원 ID (10-19).
  *   어드민이 deviceId 로 운을 지급 → 고객 앱이 이걸 호출해 paid 잔액에 적립.
  *   2026-06-15 — 부팅 1회 가드를 12초 throttle 로 교체 + 포그라운드 복귀마다 호출.
  *   (토스 웹뷰가 백그라운드→복귀 시 살아있어, 어드민이 나중에 넣은 운도 재열람 때 받게.)
@@ -225,20 +225,25 @@ function AnimatedRoutes() {
 async function runCsCompensationCheck(): Promise<void> {
   try {
     const { isAppsInToss } = await import('@/services/payment/iapService');
-    if (!isAppsInToss()) return;
+    const inApp = isAppsInToss();
     const w = window as unknown as { __saju500CompCheckedAt?: number };
     const now = Date.now();
-    if (w.__saju500CompCheckedAt && now - w.__saju500CompCheckedAt < 12000) return; // 12초 throttle
+    // 웹(2026-10-19): 회원 ID 로 넣은 보상을 웹에서도 받는다. 예전엔 앱에서만 불러 웹 회원은 영영 대기였다.
+    //   웹은 부르는 횟수를 줄이려고 한 시간에 한 번만 (앱은 그대로 12초)
+    if (w.__saju500CompCheckedAt && now - w.__saju500CompCheckedAt < (inApp ? 12000 : 3600e3)) return;
     w.__saju500CompCheckedAt = now;
-    const mod: any = await import('@apps-in-toss/web-framework');
-    const deviceId: string | undefined = mod?.getDeviceId?.();
-    if (!deviceId) return;
+    let deviceId: string | undefined;
+    if (inApp) {
+      const mod: any = await import('@apps-in-toss/web-framework');
+      deviceId = mod?.getDeviceId?.();
+      if (!deviceId) return;
+    }
     const { getFunctions, httpsCallable } = await import('firebase/functions');
     const { app } = await import('@/services/auth/firebase');
     const { ensureAuth } = await import('@/services/auth/authService');
     await ensureAuth();
     const fn = httpsCallable(getFunctions(app, 'us-central1'), 'claimCompensation');
-    const r: any = await fn({ deviceId });
+    const r: any = await fn(deviceId ? { deviceId } : {});
     const amount = Number(r?.data?.amount) || 0;
     const wipeTopics: string[] = Array.isArray(r?.data?.wipeTopics) ? r.data.wipeTopics : [];
     if (amount > 0) {

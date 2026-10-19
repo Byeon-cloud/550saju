@@ -1275,11 +1275,11 @@ function ContactSheet({ open, onClose, userId, toast: _toast }: {
    이미 문의 메일 제목([회원ID:...])에 노출되는 값이라 CS 워크플로 그대로. deviceId 는 기기 내부 전용. */
 function CsCode({ toast }: { toast: ReturnType<typeof useToast> }) {
   const [code, setCode] = useState<string | null>(null);
+  // 2026-10-19 — 웹도 보인다(웹 회원도 이 코드로 보상을 받을 수 있게 됐다. 카카오 오픈채팅 문의엔 코드가 자동으로 안 붙는다)
   useEffect(() => {
-    import('@/services/payment/iapService').then(async ({ isAppsInToss }) => {
-      if (!isAppsInToss()) return;
+    import('@/services/auth/firebase').then(async ({ auth }) => {
       try {
-        const { auth } = await import('@/services/auth/firebase');
+        await auth.authStateReady();
         const uid = auth.currentUser?.uid;
         if (uid) setCode(uid);
       } catch { /* noop */ }

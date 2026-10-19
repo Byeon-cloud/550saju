@@ -21,6 +21,7 @@ import { TabAdsPromo } from '@/pages/admin/_tabAdsPromo';
 import { TabAcquisition } from '@/pages/admin/_tabAcquisition';
 import { TabCsGrant } from '@/pages/admin/_tabCsGrant';
 import { TabReviews } from '@/pages/admin/_tabReviews';
+import { AdminV4 } from '@/pages/admin/v4/AdminV4';
 
 type TabId = 'overview' | 'revenue' | 'content' | 'users' | 'aiops' | 'ads' | 'acquisition' | 'csgrant' | 'reviews';
 
@@ -50,7 +51,9 @@ export function AdminPage() {
   const [range, setRange] = useState<RangeDays>(14);
   const [plat, setPlat] = useState<PlatFilter>('all'); // 웹/토스앱 분리 (2026-06-12)
   const [tab, setTab] = useState<TabId>('overview');
-  const { data, busy, error, reload } = useAdminData(range, owner && !loading, plat);
+  // 2026-10-19 — 새 관리자(v4)가 기본. 예전 화면은 ?old=1 (원본을 브라우저에서 전부 읽어 느리다 — v4 에서만 쓰면 안 읽는다)
+  const old = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('old') === '1';
+  const { data, busy, error, reload } = useAdminData(range, owner && !loading && old, plat);
 
   // ─── 비오너 — uid 노출 (등록용 · 기존 동작 보존) ───
   if (!loading && !owner) {
@@ -88,6 +91,11 @@ export function AdminPage() {
         </button>
       </div>
     );
+  }
+
+  if (!old) {
+    if (loading) return <div style={{ minHeight: '100vh', background: C.paper, padding: 40, fontSize: 14, color: C.mute }}>확인하는 중이에요</div>;
+    return <AdminV4 />;
   }
 
   const activeTab = TABS.find((t) => t.id === tab) ?? TABS[0];

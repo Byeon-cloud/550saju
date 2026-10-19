@@ -2479,6 +2479,9 @@ export { auditOrphanAccounts } from './storage/orphanAudit'; // 2026-10-04 매�
 export { restoreLibrary } from './storage/restoreLibrary';
 // 어드민 CS 지급 (2026-06-12) — /admin 'CS 지급' 탭에서 디바이스 ID 로 즉시 장부 기록 (오너 전용)
 export { adminGrantCompensation } from './admin/adminGrantCompensation';
+// 관리자 v4 (2026-10-19) — 하루 요약(statsDaily), 고객 찾기, 원본 400일 보관
+export { adminStats, buildDailyStats, pruneRawAnalytics } from './admin/stats';
+export { adminLookup } from './admin/customer';
 // 유입/구매 폭증 서버 집계 (2026-06-27) — onRequest+secret(INFLOW_KEY). source·plat·시간대·구매 분해 JSON.
 export { adminInflowReport } from './admin/inflowReport';
 export { adminAiUsageReport } from './admin/aiUsageReport';
