@@ -15,6 +15,14 @@ import type {
 // Functions 엔드포인트(emulator vs prod) 는 functionsClient.ts 에서 ping 후 결정.
 // emulator 죽어 있으면 자동으로 prod fallback (2026-04-22 hardening).
 
+/** 2026-10-19 — 첫 오늘의 운세 반값으로 산 종합사주면 서버에 알린다(서버는 계정마다 한 번만 5운으로 깎는다) */
+function premiumOfferField(): { offer?: string } {
+  try {
+    const v = JSON.parse(sessionStorage.getItem('saju500:premium_offer_spent') || 'null');
+    return v && Date.now() - Number(v.at) < 30 * 60e3 ? { offer: String(v.id) } : {};
+  } catch { return {}; }
+}
+
 /** httpsCallable with extended timeout for AI calls */
 function aiCallable(name: string) {
   return httpsCallable(functions, name, { timeout: 300000 }); // 5분
@@ -101,7 +109,7 @@ export async function generateReport(
   /** 2026-10-09 — 점진 표시 좌표 (서버가 그룹 완성마다 progress/{id} 에 write) */
   progressId?: string,
 ): Promise<{ reportId: string; content: AIReportResponse }> {
-  const result = await callWithAuth('generateReport', { sajuData, situation, reportType, ...(progressId ? { progressId } : {}) });
+  const result = await callWithAuth('generateReport', { sajuData, situation, reportType, ...(progressId ? { progressId } : {}), ...premiumOfferField() });
   return result.data as { reportId: string; content: AIReportResponse };
 }
 
@@ -173,7 +181,7 @@ export async function generatePremiumReportStream(
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ sajuData, situation }),
+      body: JSON.stringify({ sajuData, situation, ...premiumOfferField() }),
     });
 
     if (!res.ok || !res.body) {

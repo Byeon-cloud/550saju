@@ -6,7 +6,8 @@
 
 import { useState, useMemo } from 'react';
 import { INK_HERO_BG, NeedSaju } from '@/components/hanji/Hanji';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { firstDailyOfferActive, markFirstDailyOfferUsed, OFFER as FIRST_DAILY_OFFER } from '@/services/offers/firstDailyOffer';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
@@ -36,7 +37,13 @@ export function PremiumSelectPage() {
   const sajuCtx = useSajuContext();
 
   const profiles = useMemo(() => getProfiles(), []);
-  const [selected, setSelected] = useState<SajuProfile | null>(null);
+  // 2026-10-19 — ?profileId= 로 오면 그 사람을 미리 고른다 (오늘의 운세 반값 카드, 충전 뒤 돌아오기). ?autostart=1 이면 '바로 시작' 안내
+  const [searchParams] = useSearchParams();
+  const [selected, setSelected] = useState<SajuProfile | null>(() => {
+    const id = searchParams.get('profileId');
+    return id ? (getProfiles().find((x) => x.id === id) || null) : null;
+  });
+  const autostart = searchParams.get('autostart') === '1';
   const [balance] = useState<number>(getBalance());
 
   function startPremium() {
@@ -58,11 +65,15 @@ export function PremiumSelectPage() {
     const spent = spendBalance(premiumPricing.actualPrice);
     if (!spent) {
       toast.show('잔액이 부족해요', 'warning');
-      navigate(`/charge?need=${premiumPricing.actualPrice}`);
+      // 10-19 — 충전을 마치면 이 사람으로 돌아와 '바로 시작' (반값이면 need=5 → 2,500원 묶음이 미리 골라진다)
+      navigate(`/charge?need=${premiumPricing.actualPrice}`, { state: { message: `종합사주에 ${premiumPricing.actualPrice}운이 필요해요`, returnTo: `/premium?profileId=${encodeURIComponent(selected.id)}&autostart=1` } });
       return;
     }
+    // 10-19 — 첫 오늘의 운세 반값으로 샀으면 표시 (다시 반값 안 되게, 서버 요청에 offer 가 붙게)
+    const usedOffer = premiumPricing.actualPrice === FIRST_DAILY_OFFER.price && firstDailyOfferActive();
+    if (usedOffer) markFirstDailyOfferUsed();
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
-    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'premium', amount: premiumPricing.actualPrice })).catch(() => {});
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'premium', amount: premiumPricing.actualPrice, ...(usedOffer ? { offer: FIRST_DAILY_OFFER.id } : {}) })).catch(() => {});
     // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
     import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumPricing.actualPrice)).catch(() => {});
 
@@ -282,6 +293,9 @@ export function PremiumSelectPage() {
       {/* 하단 sticky CTA — 부족 시에만 충전 안내 (직접 충전 페이지 버튼은 제거) */}
       {selected && (
         <div className="sticky-cta-bottom">
+          {autostart && enough && (
+            <p style={{ fontSize: 14.5, fontWeight: 700, color: '#1A1A1A', textAlign: 'center', margin: '0 0 8px' }}>충전됐어요. 아래를 누르면 바로 풀어 드려요.</p>
+          )}
           <Button
             onClick={startPremium}
             variant="gold"

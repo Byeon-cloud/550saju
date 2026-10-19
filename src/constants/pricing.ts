@@ -1,4 +1,5 @@
 import type { ChargePackage } from '@/types/payment';
+import { firstDailyOfferActive, OFFER as FIRST_DAILY_OFFER } from '@/services/offers/firstDailyOffer';
 
 /**
  * 충전 패키지 — #55 정정 (2026-04-27)
@@ -216,9 +217,14 @@ const PREMIUM_PRICING_RAW: PricingDef = {
   saleEndDate: '2026-07-15', // 2026-07-01 준기: 15일까지 연장
 };
 
-/** 종합사주 가격 조회 */
+/** 종합사주 가격 조회
+ *  2026-10-19 — 이 기기에서 처음 오늘의 운세를 받은 뒤 24시간은 5운 (services/offers/firstDailyOffer.ts, 서버도 계정마다 한 번 5운) */
 export function getPremiumPrice(): PricingInfo {
-  return resolvePricing(PREMIUM_PRICING_RAW);
+  const base = resolvePricing(PREMIUM_PRICING_RAW);
+  if (typeof window !== 'undefined' && firstDailyOfferActive() && FIRST_DAILY_OFFER.price < base.actualPrice) {
+    return { ...base, launch: undefined, isOnSale: true, salePrice: FIRST_DAILY_OFFER.price, saleBadge: '첫 오늘의 운세 기념', saleEndDate: undefined, actualPrice: FIRST_DAILY_OFFER.price };
+  }
+  return base;
 }
 
 /** 월운세(2026 12개월) raw 정의 — 2026-06-29 NEW 출시(준기), 정가 7운.

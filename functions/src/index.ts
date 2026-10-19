@@ -20,6 +20,11 @@ const cleanAiOut = async <T,>(v: T): Promise<T> => (await import('./ai/sajuFacts
 const HALF_EVENT_END_MS = Date.UTC(2026, 6, 15, 14, 59, 59); // 2026-07-15 23:59:59 KST
 const onHalfEvent = (): boolean => Date.now() <= HALF_EVENT_END_MS;
 const premiumCost = (): number => (onHalfEvent() ? 5 : 10);
+/** 2026-10-19 첫 오늘의 운세 반값 — 클라가 offer:'first_daily' 를 붙이면 계정마다 한 번만 5운 (users.premiumOfferUsed). 클라 services/offers/firstDailyOffer.ts */
+const premiumCostFor = (userData: any, offer: unknown): { cost: number; useOffer: boolean } => {
+  const useOffer = offer === 'first_daily' && !userData?.premiumOfferUsed && premiumCost() > 5;
+  return { cost: useOffer ? 5 : premiumCost(), useOffer };
+};
 const monthlyCost = (): number => (onHalfEvent() ? 5 : 7);
 const weeklyCost = (): number => 3; // 2026-10-15 정가 5 → 3운 (클라 getWeeklyPrice 와 일치)
 // 2026-10-14 주제운과 궁합 가격 (클라 src/constants/pricing.ts TOPIC_PRICING_RAW, PRODUCT_COST 와 일치).
@@ -257,7 +262,7 @@ export const generatePremiumReportStream = onRequest(
       }
     }
 
-    const { sajuData, situation } = req.body || {};
+    const { sajuData, situation, offer } = req.body || {};
     if (!sajuData) {
       sendEvent('error', { message: '사주 데이터가 없습니다' });
       res.end();
@@ -270,17 +275,19 @@ export const generatePremiumReportStream = onRequest(
     // 잔액 차감 (premium · 하반기 세일 자동반영) — 실명 로그인만
     let deductedAmount = 0;
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
-      const cost = premiumCost();
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
         try {
           // 2026-05-28 — schema 통일 helper (객체/숫자 양쪽 지원)
+          let cost = premiumCost();
           await db.runTransaction(async (tx) => {
             const doc = await tx.get(userRef);
+            const pc = premiumCostFor(doc.data(), offer);
+            cost = pc.cost;
             const result = computeBalanceDeduction(doc.data(), cost);
             if (!result) throw new Error('운이 부족합니다');
-            tx.update(userRef, result.updates);
+            tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
           });
           deductedAmount = cost;
         } catch (e: any) {
@@ -408,16 +415,18 @@ export const generateReport = onCall(
 
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const cost = premiumCost();
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
         // 2026-05-28 — schema 통일 helper
+        let cost = premiumCost();
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
+          const pc = premiumCostFor(doc.data(), request.data?.offer);
+          cost = pc.cost;
           const result = computeBalanceDeduction(doc.data(), cost);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, result.updates);
+          tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
         });
         deductedAmount = cost;
       }

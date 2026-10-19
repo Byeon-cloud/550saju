@@ -198,6 +198,8 @@ interface DailyMockupViewProps {
   onChat: () => void;
   /** 2026-10-09 — 오늘 풀이에서 이어지는 주제·사주대화 질문 카드 (생성 끝난 뒤 §07 아래) */
   nextSteps?: ReactNode;
+  /** 2026-10-19 — 첫 오늘의 운세 기념 종합사주 반값 카드 (top: 첫 단락 아래, end: 결과 끝) */
+  offerCard?: (pos: 'top' | 'end') => ReactNode;
   /** §02 4영역 카드 클릭 — topicId: 'wealth'|'love'|'career'|'health' (2026-05-06 v6) */
   onTopicClick?: (topicId: 'wealth' | 'love' | 'career' | 'health') => void;
 }
@@ -956,7 +958,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
 }
 
 export function DailyMockupView(props: DailyMockupViewProps) {
-  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell, onMonthly, priceTag = '오늘 1회 무료', isGenerating = false, onShare, onChat, onTopicClick, nextSteps } = props;
+  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell, onMonthly, priceTag = '오늘 1회 무료', isGenerating = false, onShare, onChat, onTopicClick, nextSteps, offerCard } = props;
 
   // ── 섹션 접기/펼치기 (§01 default open · 2026-05-06 v6) ──
   // 2026-06-13 통일 정책 (준기 결정) — 01·02 만 펼침, 03+ 접힘.
@@ -1220,6 +1222,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
               </>
             )}
           </section>
+          {offerCard && todayNarrative.length > 0 ? offerCard('top') : null}
 
           {/* §02 (4영역 점수)는 §07 closing 직전으로 이동 (CTA = 마지막) — 2026-05-06 v6 */}
 
@@ -1595,6 +1598,8 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             </section>
           )}
         </main>
+
+        {!isGenerating && offerCard ? offerCard('end') : null}
 
         {!isGenerating && nextSteps && (
           <div style={{ margin: '4px 16px 22px' }}>{nextSteps}</div>

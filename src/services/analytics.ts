@@ -197,6 +197,9 @@ const FIRESTORE_TRACKED = new Set<string>([
   'invite_received',    // {granted, reason} — 공유링크 수신 전환 (바이럴 K-factor)
   'login_success',      // {provider} — 소셜/토스 로그인 성공
   'login_fail',         // {provider, via: popup|redirect, code} — 웹 소셜 로그인 실패 (2026-10-19 모바일 리다이렉트 결과 유실 진단)
+  'daily_offer_start',  // {} — 첫 오늘의 운세로 종합사주 반값 24시간이 열렸다 (2026-10-19 시험 E25)
+  'daily_offer_view',   // {pos: top|end} — 반값 카드가 보였다
+  'daily_offer_click',  // {pos, short} — 반값 카드를 눌렀다 (short=운이 모자람)
   'inquiry_sent',       // {category} — 웹 문의 양식으로 문의를 남겼다 (2026-10-19 웹 문의함)
   'charge_login_gate',  // {source} — 웹 결제 전 로그인 시트가 떴다 (2026-10-16 추가했으나 기록 목록에 없어 버려지던 것, 10-19)
   'insufficient_balance', // {type, needed} — 잔액부족 감지(충전 유도 직전 — 전환 모멘트)

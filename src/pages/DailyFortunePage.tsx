@@ -81,6 +81,8 @@ import { computeDailyBase100 } from '@/utils/sajuScores';
 // DailyMockupView 단일 호출 (legacy chrome 폐기 · 2026-05-06)
 import { DailyMockupView, DAILY_TOPIC_GROUPS } from './daily/DailyMockupView';
 
+import { FirstDailyOfferCard } from '@/components/offers/FirstDailyOfferCard';
+import { realName } from '@/utils/personName';
 /* ══════════════════════════════════════════════════════════════════
  * 토큰 / 매핑
  * ═════════════════════════════════════════════════════════════════ */
@@ -170,6 +172,8 @@ export function DailyFortunePage() {
     if (result && !dailyResultTrackedRef.current) {
       dailyResultTrackedRef.current = true;
       import('@/services/analytics').then((a) => a.trackEvent('content_result', { type: 'daily' })).catch(() => {});
+      // 2026-10-19 — 이 기기의 첫 오늘의 운세면 24시간 종합사주 반값 (services/offers/firstDailyOffer.ts)
+      import('@/services/offers/firstDailyOffer').then((m) => m.startFirstDailyOffer()).catch(() => {});
     }
   }, [result]);
   // 결과 도달 시 출석 적립과 조회 기록 (출시 프로모션 50원은 2026-10 종료로 지급 호출 제거)
@@ -1218,6 +1222,7 @@ function ResultView({
             },
           });
         }}
+        offerCard={(pos) => <FirstDailyOfferCard profileId={(profile as any)?.id} name={realName(profile?.name) || undefined} pos={pos} />}
         nextSteps={(() => {
           // 2026-10-09 — 오늘 풀이에서 이어지는 주제 1 + 사주대화 질문 3 (서버 nextHooks)
           const nh = (result as any)?.nextHooks;

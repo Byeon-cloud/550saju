@@ -24,6 +24,7 @@ const CATALOG: { group: string; items: [name: string, label: string, where: Wher
     ['tti_open', '띠별 운세를 열었다', 'both'], ['tti_year', '띠의 해를 골랐다', 'both'], ['tti_input', '띠 화면에서 생일을 넣었다', 'both'], ['tti_newyear', '띠 칸에서 신년운세로', 'both'], ['tti_compat', '띠 칸에서 궁합으로', 'both'],
   ] },
   { group: '홈 시즌 카드', items: [
+    ['daily_offer_start', '첫 오늘의 운세 종합사주 반값이 열렸다', 'both'], ['daily_offer_view', '반값 카드가 보였다', 'both'], ['daily_offer_click', '반값 카드를 눌렀다', 'both'],
     ['month_picks_view', '이번 달 좋은 날 카드가 보였다', 'both'], ['month_picks_click', '그 카드에서 월운세로', 'both'],
     ['birthday_card_view', '생일 달 카드가 보였다', 'both'], ['birthday_card_click', '생일 카드에서 상품으로', 'both'],
     ['suneung_card_view', '수능 카드가 보였다(11/1~11/19)', 'both'], ['suneung_card_click', '수능 카드에서 합격이직운으로', 'both'],
