@@ -70,7 +70,8 @@ export function useAuth() {
       // 2026-10-19 — 스스로 닫은 것은 조용히, 팝업 막힘 같은 실패는 시트가 안내하도록 넘긴다(그전엔 전부 삼켜서 눌러도 아무 일이 없어 보였다)
       const code: string = err?.code || '';
       if (/popup-closed-by-user|cancelled-popup-request|user-cancelled/.test(code) || err?.message === '로그인 화면으로 이동해요') return null;
-      import('@/services/analytics').then((a) => a.trackEvent('login_fail', { provider: String(provider || ''), via: 'popup', code: (code || String(err?.message || 'error')).slice(0, 60) })).catch(() => {});
+      // msg: 오류 문장 앞부분(10-19 네이버 invalid-credential 원인 진단 — 코드만으로는 제공자 쪽 이유를 모른다)
+      import('@/services/analytics').then((a) => a.trackEvent('login_fail', { provider: String(provider || ''), via: 'popup', code: (code || String(err?.message || 'error')).slice(0, 60), msg: String(err?.message || '').replace(/^Firebase:\s*/, '').slice(0, 180) })).catch(() => {});
       throw err;
     }
   }, []);
