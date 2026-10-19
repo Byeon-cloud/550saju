@@ -3,7 +3,7 @@
  *
  *   미리 보기는 보낸 사람 기기에서 사주로 계산해서(services/saju/newYearPreview.ts) 받는 사람 기기에는 없다.
  *   궁합 보내기(compatShare.ts)와 같은 방식으로 받는 사람에게 보여 줄 만큼만 남긴다: 이름, 대상 연도와 간지,
- *   그 해 판정, 천간과 지지의 오행과 역할, 힘을 줄 달, 쉬어 갈 달, 꼭 기억할 날 첫 날과 개수. 생일과 사주 여덟 글자는 남기지 않는다.
+ *   그 해 판정, 천간과 지지의 오행과 역할, 좋은 달, 조심할 달, 꼭 기억할 날 첫 날과 개수. 생일과 사주 여덟 글자는 남기지 않는다.
  *   newYearShares/{id} 는 id 를 아는 사람만 읽는다(규칙: get 만). 120일 뒤 cleanupCompatShares 가 같이 지우고, 탈퇴하면 purgeUser 가 지운다.
  */
 import * as admin from 'firebase-admin';

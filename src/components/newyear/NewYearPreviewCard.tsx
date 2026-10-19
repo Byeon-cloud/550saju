@@ -21,7 +21,7 @@ export function yearSentence(verdict: string): string {
     case '도움 기운이 강한 해': return '도움 기운이 강하게 들어오는 해예요. 미뤄 둔 일을 시작하기 좋아요.';
     case '도움과 부담이 섞인 해': return '도움과 부담이 함께 오는 해예요. 어느 달에 힘을 줄지가 중요해요.';
     case '도움 기운이 들어오는 해': return '도움 기운이 들어오는 해예요. 좋은 달에 맞춰 움직이면 힘을 덜 들이고 갈 수 있어요.';
-    case '부담 기운이 강한 해': return '부담 기운이 강한 해예요. 그래서 힘을 줄 달과 쉬어 갈 달을 미리 알아 두면 좋아요.';
+    case '부담 기운이 강한 해': return '부담 기운이 강한 해예요. 그래서 좋은 달과 조심할 달을 미리 알아 두면 좋아요.';
     default: return '크게 기울지 않는 무난한 해예요. 달마다 흐름을 보고 움직이면 좋아요.';
   }
 }
@@ -85,8 +85,8 @@ export function NewYearPreviewCard({ year, name, sajuData }: { year: number; nam
         {yearGz[0]}({yv.g}){topic(yv.g)} {ROLE_PLAIN[yv.r1]}이고, {yearGz[1]}({yv.b}){topic(yv.b)} {ROLE_PLAIN[yv.r2]}이에요.
       </p>
       <div style={{ marginTop: 12, borderTop: `1px solid ${HJ.line}` }}>
-        {goodMonths.length > 0 && <Row label={goodLabel === '도움 기운이 강한 달' ? '힘을 줄 달' : '도움이 오는 달'} value={months(goodMonths)} />}
-        <Row label="쉬어 갈 달" value={hardMonths.length ? months(hardMonths) : '크게 조심할 달은 없어요'} />
+        {goodMonths.length > 0 && <Row label={goodLabel === '도움 기운이 강한 달' ? '좋은 달' : '도움이 오는 달'} value={months(goodMonths)} />}
+        <Row label="조심할 달" value={hardMonths.length ? months(hardMonths) : '크게 조심할 달은 없어요'} />
         {first && <Row label="꼭 기억할 날" value={`${first.m}월 ${first.d}일${keyDates.length > 1 ? ` 외 ${keyDates.length - 1}일` : ''}`} />}
       </div>
       <p style={{ fontSize: 13.5, lineHeight: 1.7, color: HJ.mute, marginTop: 10 }}>

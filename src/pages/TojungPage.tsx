@@ -218,7 +218,7 @@ export function TojungPage() {
       return (
         <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
           <Header title="신년운세" />
-          <NeedSaju mark="歲" desc={`${TY}년 열두 달을 내 사주로 미리 봐요. 생일만 넣으면 힘을 줄 달과 쉬어 갈 달을 무료로 먼저 보여 드려요.`} onClick={() => navigate('/input?from=home_body_tojung')} />
+          <NeedSaju mark="歲" desc={`${TY}년 열두 달을 내 사주로 미리 봐요. 생일만 넣으면 좋은 달과 조심할 달을 무료로 먼저 보여 드려요.`} onClick={() => navigate('/input?from=home_body_tojung')} />
           {/* 2026-10-17 웹 전용 마감 전 메일 알림 (시험 E14) */}
           <div className="px-5 pb-8"><DeadlineMailSignup source="tojung_empty" /></div>
         </div>

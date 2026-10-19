@@ -209,7 +209,7 @@ export async function shareCompatInviteLink(p: { id: string; n1: string }): Prom
 /** 신년운세 미리 보기 보내기 (2026-10-18) — 받는 사람이 그 사람의 새해 미리 보기를 열어 보는 링크 (/share/newyear/{id}) */
 export async function shareNewYearLink(p: { id: string; name: string; year: number }): Promise<'toss_share' | 'web_share' | 'clipboard' | null> {
   import('@/services/analytics').then((a) => a.trackEvent('share_click', { type: 'newyear', page: window.location.pathname, balance: Math.round(getBalance()) })).catch(() => {});
-  const text = `${p.name} 님의 ${p.year}년을 사주로 미리 봤어요. 힘을 줄 달과 쉬어 갈 달을 열어 보세요`;
+  const text = `${p.name} 님의 ${p.year}년을 사주로 미리 봤어요. 좋은 달과 조심할 달을 열어 보세요`;
   await ensureInviteCode();
   const path = withInv(`/share/newyear/${p.id}?ref=share`);
   const done = (method: string) => {

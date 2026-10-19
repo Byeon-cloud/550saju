@@ -130,7 +130,7 @@ export function TtiYearBoardPage() {
           <Seal size={30} fontSize={16}>歲</Seal>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: 'block', fontFamily: SERIF, fontSize: 16.5, fontWeight: 700 }}>내 사주로 보는 {YEAR}년</span>
-            <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.5, color: '#D9CFBE', marginTop: 2 }}>힘을 줄 달, 쉬어 갈 달, 꼭 기억할 날까지 내 사주로 골라 드려요</span>
+            <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.5, color: '#D9CFBE', marginTop: 2 }}>좋은 달, 조심할 달, 꼭 기억할 날까지 내 사주로 골라 드려요</span>
           </span>
           <span style={{ fontSize: 14, fontWeight: 800, color: '#D2B477', flexShrink: 0 }}>{price.launch ? `${price.launch.badge} ` : ''}{price.actualPrice}운 ›</span>
         </button>

@@ -105,7 +105,7 @@ const TYPE_TITLE: Record<string, [string, string]> = {
   weekly: ['주간운세', '이번 주 흐름을 사주로 봤어요. 내 한 주도 확인해 보세요.'],
   daeun: ['대운', '십 년마다 바뀌는 큰 흐름을 사주로 봤어요. 내 대운도 확인해 보세요.'],
   cjoin: ['궁합 초대장', '생일을 넣으면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 볼 수 있어요.'],
-  newyear: ['신년운세 미리 보기', '새해 힘을 줄 달과 쉬어 갈 달을 사주로 미리 봤어요. 내 새해도 무료로 미리 볼 수 있어요.'],
+  newyear: ['신년운세 미리 보기', '새해 좋은 달과 조심할 달을 사주로 미리 봤어요. 내 새해도 무료로 미리 볼 수 있어요.'],
 };
 function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: DreamShareDoc | null, ny?: NewYearShareDoc | null, cj?: { n1: string } | null): { title: string; description: string; image: string } {
   const { type, topicId } = parsed;
@@ -116,7 +116,7 @@ function getOgMeta(parsed: ParsedShare, compat?: CompatShareDoc | null, dream?: 
     const mm = (a: number[]) => a.map((m) => `${m}월`).join(', ');
     return {
       title: `${realName(ny.name) ? `${realName(ny.name)} 님의 ` : ''}${ny.y} ${ny.gzKo}년 미리 보기 | 사주500`,
-      description: `${ny.good.length ? `힘을 줄 달 ${mm(ny.good)}. ` : ''}${ny.hard.length ? `쉬어 갈 달 ${mm(ny.hard)}. ` : ''}내 새해도 무료로 미리 볼 수 있어요.`.slice(0, 120),
+      description: `${ny.good.length ? `좋은 달 ${mm(ny.good)}. ` : ''}${ny.hard.length ? `조심할 달 ${mm(ny.hard)}. ` : ''}내 새해도 무료로 미리 볼 수 있어요.`.slice(0, 120),
       image: OG_IMAGE_FALLBACK,
     };
   }

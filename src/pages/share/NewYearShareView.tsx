@@ -1,7 +1,7 @@
 /**
  * 받은 신년운세 미리 보기 (2026-10-18) — /share/newyear/{id}
  *
- *   보낸 사람이 '이 미리 보기 보내기'로 서버에 남긴 표(그 해 판정, 힘을 줄 달, 쉬어 갈 달, 꼭 기억할 날 첫 날)를
+ *   보낸 사람이 '이 미리 보기 보내기'로 서버에 남긴 표(그 해 판정, 좋은 달, 조심할 달, 꼭 기억할 날 첫 날)를
  *   보낸 사람 화면의 미리 보기 카드와 같은 문장으로 보여 주고, 받는 사람을 '내 새해도 무료로 미리 보기'로 잇는다.
  *   웹에서는 띠별 신년운세 검색 페이지(/unse/{연도}/)도 잇는다(앱 번들에는 그 정적 페이지가 없다).
  */
@@ -52,12 +52,12 @@ export function NewYearShareView({ data }: { data: NewYearShareDoc }) {
               </p>
             )}
             <div style={{ marginTop: 12, borderTop: `1px solid ${HJ.line}` }}>
-              {data.good.length > 0 && <Row label={data.goodLabel === '도움 기운이 들어오는 달' ? '도움이 오는 달' : '힘을 줄 달'} value={months(data.good)} />}
-              <Row label="쉬어 갈 달" value={data.hard.length ? months(data.hard) : '크게 조심할 달은 없어요'} />
+              {data.good.length > 0 && <Row label={data.goodLabel === '도움 기운이 들어오는 달' ? '도움이 오는 달' : '좋은 달'} value={months(data.good)} />}
+              <Row label="조심할 달" value={data.hard.length ? months(data.hard) : '크게 조심할 달은 없어요'} />
               {data.km > 0 && data.kd > 0 && <Row label="꼭 기억할 날" value={`${data.km}월 ${data.kd}일${data.kn > 1 ? ` 외 ${data.kn - 1}일` : ''}`} />}
             </div>
             <p style={{ fontSize: 13.5, lineHeight: 1.7, color: HJ.mute, marginTop: 10 }}>
-              {data.name} 님 사주로 계산한 표예요. 같은 해라도 사람마다 힘을 줄 달이 달라요.
+              {data.name} 님 사주로 계산한 표예요. 같은 해라도 사람마다 좋은 달이 달라요.
             </p>
           </div>
         </FadeIn>
