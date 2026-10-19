@@ -147,7 +147,9 @@ export function TojungPage() {
     const NEWYEAR_PRICE = newYearPrice().actualPrice; // 이번 결제에 실제로 낸 운 (환불도 이 값)
     if (!spendBalance(NEWYEAR_PRICE)) {
       toast.show('잔액이 부족해요', 'warning');
-      navigate('/charge', { state: { message: `${TY} 신년운세에 ${NEWYEAR_PRICE}운이 필요해요` } });
+      // 10-19 — 충전을 마치면 이 사람의 신년운세로 돌아오게(returnTo). 그전엔 충전 화면에 남았다.
+      //   ?need 는 넣지 않는다 — 넣으면 기본 선택이 15운(5,000원)에서 7운(2,500원)으로 바뀐다(가격 판단이라 오너 결정 대기)
+      navigate('/charge', { state: { message: `${TY} 신년운세에 ${NEWYEAR_PRICE}운이 필요해요`, returnTo: `/tojung?profileId=${encodeURIComponent((selected as any).id || '')}` } });
       isAnalyzingRef.current = false;
       return;
     }

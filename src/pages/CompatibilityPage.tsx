@@ -103,7 +103,7 @@ export function CompatibilityPage() {
     try {
       if (!spendBalance(COMPAT_COST)) {
         toast.show('잔액이 부족해요', 'warning');
-        navigate('/charge', { state: { from: 'compat', message: `궁합 분석에 ${COMPAT_COST}운이 필요해요` } });
+        navigate('/charge', { state: { from: 'compat', message: `궁합 분석에 ${COMPAT_COST}운이 필요해요`, returnTo: '/compat' } });
         return;
       }
       // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)

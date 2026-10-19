@@ -14,7 +14,7 @@ import {
   onAuthStateChanged,
   type User,
 } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, authDomainIsSelf } from './firebase';
 import { isAppsInToss } from '@/services/payment/iapService';
 
 /**
@@ -93,15 +93,18 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
   const linkAnon = !!cur && cur.isAnonymous;
 
   try {
-    // 모바일에서는 redirect 방식이 더 안정적 (페이지가 떠났다가 돌아오면 checkRedirectResult 가 마무리)
+    // 2026-10-19 — 모바일 리다이렉트는 로그인 도메인이 사이트와 같을 때만 쓴다.
+    //   다르면(appintoss-saju.firebaseapp.com) 크롬 115+, 사파리 16.1+ 가 돌아온 결과를 읽지 못해
+    //   로그인하고 돌아와도 익명 그대로였다(결제 전 로그인 시트가 다시 뜨는 반복). 그때는 팝업(새 탭)으로 한다.
     const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-    if (isMobile) {
+    if (isMobile && authDomainIsSelf) {
+      markRedirectLogin(provider);
       if (linkAnon) await linkWithRedirect(cur!, p);
       else await signInWithRedirect(auth, p);
       throw new Error('로그인 화면으로 이동해요');
     }
 
-    // PC에서는 popup
+    // PC, 그리고 로그인 도메인이 다른 모바일은 팝업
     const result = linkAnon ? await linkWithPopup(cur!, p) : await signInWithPopup(auth, p);
     import('@/services/analytics').then((a) => a.trackEvent('login_success', { provider, linked: linkAnon ? 1 : 0 })).catch(() => {});
     return result.user;
@@ -133,13 +136,34 @@ async function signInIfAlreadyInUse(err: any): Promise<User | null> {
   }
 }
 
+/** 리다이렉트 로그인을 떠나기 직전에 남긴다 — 돌아와서 성공, 실패를 집계하려고 (2026-10-19) */
+const REDIRECT_MARK = 'saju500:login_redirect';
+function markRedirectLogin(provider: WebLoginProvider): void {
+  try { sessionStorage.setItem(REDIRECT_MARK, JSON.stringify({ provider, at: Date.now() })); } catch { /* noop */ }
+}
+
 /** 리다이렉트 복귀 시 결과 확인 (App.tsx에서 호출) — 연결 복귀도 같은 함수로 마무리 */
 export async function checkRedirectResult(): Promise<User | null> {
+  let mark: { provider?: string; at?: number } | null = null;
+  try {
+    const raw = sessionStorage.getItem(REDIRECT_MARK);
+    if (raw) { mark = JSON.parse(raw); sessionStorage.removeItem(REDIRECT_MARK); }
+  } catch { /* noop */ }
+  const fresh = !!mark && Date.now() - Number(mark.at || 0) < 15 * 60e3;
+  const report = (name: 'login_success' | 'login_fail', extra: Record<string, string | number>) => {
+    if (!fresh) return;
+    import('@/services/analytics').then((a) => a.trackEvent(name, { provider: String(mark?.provider || ''), via: 'redirect', ...extra })).catch(() => {});
+  };
   try {
     const result = await getRedirectResult(auth);
+    if (result?.user) report('login_success', {});
+    else if (auth.currentUser?.isAnonymous) report('login_fail', { code: 'no_result' });
     return result?.user || null;
-  } catch (err) {
-    return signInIfAlreadyInUse(err);
+  } catch (err: any) {
+    const u = await signInIfAlreadyInUse(err);
+    if (u) report('login_success', { existing: 1 });
+    else report('login_fail', { code: String(err?.code || 'error').slice(0, 60) });
+    return u;
   }
 }
 

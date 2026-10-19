@@ -196,6 +196,8 @@ const FIRESTORE_TRACKED = new Set<string>([
   'profile_created',    // {relation, hourKnown} — 사주 프로필 첫 생성 (활성화 onboarding)
   'invite_received',    // {granted, reason} — 공유링크 수신 전환 (바이럴 K-factor)
   'login_success',      // {provider} — 소셜/토스 로그인 성공
+  'login_fail',         // {provider, via: popup|redirect, code} — 웹 소셜 로그인 실패 (2026-10-19 모바일 리다이렉트 결과 유실 진단)
+  'charge_login_gate',  // {source} — 웹 결제 전 로그인 시트가 떴다 (2026-10-16 추가했으나 기록 목록에 없어 버려지던 것, 10-19)
   'insufficient_balance', // {type, needed} — 잔액부족 감지(충전 유도 직전 — 전환 모멘트)
   'share_view',         // {type} — 공유 받은 사람이 받은 화면을 열었다 (2026-10-17 궁합 보내기 E7)
   'mail_subscribe',     // {source} — 신년운세 마감 전 메일 알림 신청 (2026-10-17 시험 E14, 웹)

@@ -47,7 +47,7 @@ export function CompatInviteBox({ me, relation }: { me: any | null; relation: st
   function full(it: MyInvite) {
     if (!me?.sajuData || !it.other) { toast.show('먼저 왼쪽에서 내 사주를 골라 주세요', 'info'); return; }
     if (!spendBalance(cost)) {
-      navigate('/charge', { state: { from: 'compat', message: `궁합 분석에 ${cost}운이 필요해요` } });
+      navigate('/charge', { state: { from: 'compat', message: `궁합 분석에 ${cost}운이 필요해요`, returnTo: window.location.pathname + window.location.search } });
       return;
     }
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: cost, via: 'cjoin_sender' })).catch(() => {});

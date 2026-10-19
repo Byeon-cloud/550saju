@@ -85,7 +85,7 @@ export function DaeunPage() {
 
     if (!spendBalance(1)) {
       toast.show('잔액이 부족해요', 'warning');
-      navigate('/charge', { state: { message: '대운 해설에 1운이 필요해요' } });
+      navigate('/charge', { state: { message: '대운 해설에 1운이 필요해요', returnTo: window.location.pathname + window.location.search } });
       isAnalyzingRef.current = false;
       return;
     }

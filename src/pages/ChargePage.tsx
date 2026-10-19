@@ -73,6 +73,31 @@ function InfoIcon({ color }: { color: string }) {
 }
 
 // ── Main
+/**
+ * 충전하러 온 이유 기억 (2026-10-19, 웹 유료광고 준비)
+ *   다른 화면은 '무엇을 사러 왔는지(returnTo, message, need)'를 화면 이동 state 로 넘긴다. 그런데 웹 결제는
+ *   로그인(모바일 리다이렉트)과 카카오페이(모바일 리다이렉트)에서 페이지가 통째로 떠났다 돌아와 state 가 사라졌다
+ *   → 결제를 마쳐도 신년운세로 돌아가지 못하고 충전 화면에 남았다. 탭 안 저장소(sessionStorage)에 30분 동안 둔다.
+ *   되살리는 건 페이지를 새로 연 경우(location.key === 'default')뿐 — 홈에서 충전을 누른 경우까지 옛 목적지로 보내지 않게.
+ */
+const CHARGE_CTX_KEY = 'saju500:charge_ctx';
+type ChargeCtx = { returnTo?: string; message?: string; need?: number; selected?: string; loginThenPay?: number; at: number };
+function readChargeCtx(): ChargeCtx | null {
+  try {
+    const raw = sessionStorage.getItem(CHARGE_CTX_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw) as ChargeCtx;
+    if (!c || Date.now() - Number(c.at || 0) > 30 * 60e3) { sessionStorage.removeItem(CHARGE_CTX_KEY); return null; }
+    return c;
+  } catch { return null; }
+}
+function writeChargeCtx(patch: Partial<ChargeCtx> | null): void {
+  try {
+    if (!patch) { sessionStorage.removeItem(CHARGE_CTX_KEY); return; }
+    sessionStorage.setItem(CHARGE_CTX_KEY, JSON.stringify({ ...(readChargeCtx() || {}), ...patch, at: Date.now() }));
+  } catch { /* noop */ }
+}
+
 export function ChargePage() {
   // 2026-10-17 퍼널: 충전 화면을 연 230명 중 184명이 사주를 넣은 적이 없었다(158명은 첫 화면에서 바로). 그 사람들에게 무료 길을 먼저
   const { hasProfile } = useActiveProfile();
@@ -87,12 +112,27 @@ export function ChargePage() {
 
   // 2026-05-07 fix — 다른 페이지가 보낸 returnTo state 도 redirect 로 인식
   // (잔액 부족 모달 → 충전 → 원래 페이지 자동 복귀 UX 일관성)
-  const stateReturnTo = (location.state as any)?.returnTo as string | undefined;
+  // 2026-10-19 — 로그인, 카카오페이에서 돌아온 경우엔 저장해 둔 목적을 되살린다 (위 readChargeCtx 설명)
+  const [ctx] = useState<ChargeCtx | null>(() => {
+    const st = (location.state as any) || {};
+    const q = new URLSearchParams(window.location.search);
+    const qNeed = Number(q.get('need')) || 0;
+    if (st.returnTo || st.message || qNeed > 0 || q.get('redirect')) {
+      const c: ChargeCtx = { returnTo: st.returnTo || q.get('redirect') || undefined, message: st.message || undefined, need: qNeed || undefined, at: Date.now() };
+      writeChargeCtx(null);
+      writeChargeCtx(c);
+      return c;
+    }
+    if (location.key === 'default') return readChargeCtx(); // 페이지를 새로 연 경우(돌아온 경우)만
+    writeChargeCtx(null);
+    return null;
+  });
+  const stateReturnTo = ((location.state as any)?.returnTo as string | undefined) || ctx?.returnTo;
   const redirectTo = searchParams.get('redirect') || stateReturnTo || null;
-  const needRaw = searchParams.get('need');
+  const needRaw = searchParams.get('need') || (ctx?.need ? String(ctx.need) : null);
   const needUn = needRaw && !Number.isNaN(Number(needRaw)) ? Number(needRaw) : null;
   // 2026-05-29 — 잔액부족 모달 등이 보낸 안내 메시지 (왜 충전 화면에 왔는지). 기존엔 어디서도 표시 안 됨.
-  const stateMessage = (location.state as any)?.message as string | undefined;
+  const stateMessage = ((location.state as any)?.message as string | undefined) || ctx?.message;
 
   // 2026-06-24 — '어떤 콘텐츠에서 결제를 결심했나' 트래킹용 source 파생.
   //   returnTo/redirect 경로에서 콘텐츠 type 우선, 없으면 need 값, 둘 다 없으면 'direct'.
@@ -114,6 +154,7 @@ export function ChargePage() {
    * 2026-04-27 4 패키지 정정: 구 p10 → 신 p15.
    */
   const initialSelected = (() => {
+    if (ctx?.selected && CHARGE_PACKAGES.some((p) => p.id === ctx.selected)) return ctx.selected; // 로그인하고 돌아오면 고른 패키지 그대로
     if (needUn !== null && needUn > 0) {
       const sorted = [...CHARGE_PACKAGES].sort((a, b) => a.un - b.un);
       const fit = sorted.find((p) => p.un >= needUn);
@@ -177,7 +218,8 @@ export function ChargePage() {
             setBalanceDisplay(getBalance());
             toast.show(r.message, 'success');
             import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: portoneAmount, source: chargeSource, pg: 'portone' })).catch(() => {});
-            if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
+            writeChargeCtx(null);
+            if (redirectTo) setTimeout(() => navigate(redirectTo, { replace: true }), 1400);
           } else {
             toast.show(r.message || '결제 확인에 실패했어요. 잔액이 안 늘었다면 고객센터로 문의해주세요.', 'warning');
           }
@@ -206,6 +248,8 @@ export function ChargePage() {
       const { auth } = await import('@/services/auth/firebase');
       if (!auth.currentUser || auth.currentUser.isAnonymous) {
         trackEvent('charge_login_gate', { source: chargeSource });
+        // 모바일 리다이렉트 로그인으로 페이지가 떠났다 돌아와도 결제 창을 이어서 연다
+        writeChargeCtx({ selected: selectedPkg.id, loginThenPay: Date.now(), returnTo: redirectTo || undefined, message: stateMessage, need: needUn || undefined });
         setShowLogin(true);
         return;
       }
@@ -247,6 +291,7 @@ export function ChargePage() {
       setBalanceDisplay(getBalance());
       toast.show(r.message, 'success');
       import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: selectedPkg.price, source: chargeSource, pg: 'portone' })).catch(() => {});
+      writeChargeCtx(null);
       if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
     } else if (r.cancelled) {
       toast.show('결제가 취소됐어요', 'info');
@@ -271,9 +316,27 @@ export function ChargePage() {
   };
 
   const goBack = () => {
+    writeChargeCtx(null);
     if (redirectTo) navigate(redirectTo);
     else navigate(-1);
   };
+
+  // 2026-10-19 — 결제하려다 로그인하러 떠났다 돌아왔으면(모바일 리다이렉트), 로그인이 확인되는 대로 결제 창을 연다
+  useEffect(() => {
+    if (isAppintosBuild || !ctx?.loginThenPay || Date.now() - ctx.loginThenPay > 15 * 60e3) return;
+    let off: (() => void) | undefined;
+    let done = false;
+    import('@/services/auth/firebase').then(({ auth }) => {
+      off = auth.onAuthStateChanged((u) => {
+        if (done || !u || u.isAnonymous) return;
+        done = true;
+        writeChargeCtx({ loginThenPay: 0 });
+        setShowPgSheet(true);
+      });
+    }).catch(() => {});
+    return () => { off?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div style={{
@@ -492,7 +555,7 @@ export function ChargePage() {
           구매한 운은 계정 종료 시 소멸돼요.
         </p>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
-          운은 사주500 앱 안에서만 사용할 수 있어요.
+          운은 사주500 안에서만 쓸 수 있어요.
         </p>
         {/* 환불·청약철회 고지 — 웹/앱 분기.
             앱(앱인토스): 토스 IAP/토스페이 우산. 웹: 전자상거래법 제17조 디지털콘텐츠 청약철회 직접 고지. */}
@@ -720,7 +783,7 @@ export function ChargePage() {
               <WebLoginSheet
                 open={showLogin}
                 onClose={() => setShowLogin(false)}
-                onSuccess={() => { setShowLogin(false); setShowPgSheet(true); }}
+                onSuccess={() => { writeChargeCtx({ loginThenPay: 0 }); setShowLogin(false); setShowPgSheet(true); }}
                 toast={toast}
                 onLogin={login}
                 title={['결제 전에', '로그인해 주세요']}

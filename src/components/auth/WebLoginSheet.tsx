@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { useToast } from '@/components/common/Toast';
+import { inAppBrowserName } from '@/utils/inAppBrowser';
 
 const C = {
   paper:    '#F8F5EE',
@@ -33,6 +34,8 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
 }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  // 2026-10-19 — 인스타그램, 카카오톡 같은 앱 안 화면에서는 구글이 로그인을 막는다 → 구글 버튼을 숨기고 안내를 한 줄 둔다
+  const inApp = inAppBrowserName();
 
   const handleLogin = async (provider: 'kakao' | 'naver' | 'apple' | 'google') => {
     if (busy) return;
@@ -47,6 +50,10 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
       const code: string = err?.code || '';
       if (provider === 'apple' && (code.includes('operation-not-supported') || code.includes('configuration-not-found'))) {
         toast.show('지금은 Apple 로그인을 쓸 수 없어요. 다른 방법으로 로그인해 주세요', 'info');
+      } else if (code.includes('popup-blocked')) {
+        toast.show('로그인 창이 열리지 않았어요. 버튼을 한 번 더 눌러 주세요', 'warning');
+      } else if (inApp && (code.includes('operation-not-supported') || code.includes('web-storage-unsupported') || code.includes('network-request-failed'))) {
+        toast.show(`${inApp} 안에서는 로그인이 안 될 때가 있어요. 오른쪽 위 메뉴에서 다른 브라우저로 열어 주세요`, 'warning');
       } else {
         toast.show('로그인에 실패했어요. 다시 시도해 주세요.', 'warning');
       }
@@ -146,8 +153,8 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
                 네이버 계속하기
               </button>
 
-              {/* 구글 — GoogleAuthProvider (2026-06-12 추가 — 모달에 구글만 빠져 있던 것) */}
-              <button type="button"
+              {/* 구글 — GoogleAuthProvider (2026-06-12 추가 — 모달에 구글만 빠져 있던 것). 앱 안 화면에서는 숨김(10-19) */}
+              {!inApp && <button type="button"
                 onClick={() => handleLogin('google')}
                 disabled={busy}
                 className="w-full flex items-center justify-center gap-3 rounded-2xl font-semibold text-[16px]"
@@ -159,7 +166,12 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
                   <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.94 1.19 15.23 0 12 0A11.99 11.99 0 0 0 1.29 6.64l3.98 3.07C6.22 6.86 8.87 4.75 12 4.75z" />
                 </svg>
                 구글 계속하기
-              </button>
+              </button>}
+              {inApp && (
+                <p className="text-center text-[13px] leading-[1.6] mt-1" style={{ color: C.mute }}>
+                  구글 계정은 {inApp} 안에서 로그인할 수 없어요.<br />구글로 하려면 오른쪽 위 메뉴에서 다른 브라우저로 열어 주세요.
+                </p>
+              )}
 
             </div>
 
