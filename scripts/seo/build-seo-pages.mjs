@@ -115,7 +115,7 @@ ${(Array.isArray(jsonld) ? jsonld : [jsonld]).map((j) => `<script type="applicat
 </head><body>
 <header class="wrap top"><a class="brand" href="/">사주<b>500</b></a><a class="go" href="/?${utm('top')}">오늘의 운세 보기</a></header>
 ${body}
-<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/manse/">무료 만세력</a><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/unse/2027/samjae/">2027년 삼재</a><a href="/unse/2027/tojeong/">2027 토정비결</a><a href="/unse/suneung/">수능 날 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
+<nav class="wrap" style="margin-top:30px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/manse/">무료 만세력</a><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/unse/2027/samjae/">2027년 삼재</a><a href="/unse/2027/tojeong/">2027 토정비결</a><a href="/unse/suneung/">수능 날 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/tti-age/">띠별 나이표</a><a href="/kkum/">꿈해몽 모음</a><a href="/ilju/">60일주 총정리</a></nav>
 <footer class="wrap foot">
 <div><a href="/terms">이용약관</a><a class="b" href="/privacy">개인정보처리방침</a><a href="/business">사업자정보</a></div>
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div>
@@ -774,6 +774,61 @@ location.href='/manse/view?'+q+(window.__adUtm||'${mutm('form')}');});})();</scr
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ];
   write('manse', page({ title, desc, canonical, body, jsonld }));
+}
+
+// ── 띠별 나이표 /tti-age/, /tti-age/{띠}/ (2026-10-20) — '용띠 나이' 월 1.1만에 경쟁 낮음(docs/marketing/data). 해마다 빌드 때 올해 기준으로 다시 계산
+{
+  const THIS = new Date(Date.now() + 9 * 3600e3).getUTCFullYear();
+  const thisGz = gzOf(THIS);
+  const ageUtm = (c) => `utm_source=seo&utm_medium=organic&utm_campaign=tti_age_${c}`;
+  const yearsOf = (z) => { const ys = []; for (let y = THIS; y >= 1930; y -= 1) if (gzOf(y)[1] === z) ys.push(y); return ys; };
+  const ageTxt = (y) => { const a = THIS - y; return a <= 0 ? '올해 태어난 아기' : `만 ${a}살, 생일 전이면 ${a - 1}살`; };
+  const ipchun = '사주에서는 띠가 1월 1일이 아니라 입춘(양력 2월 4일 무렵)에 바뀌어요. 1월이나 2월 초에 태어났다면 앞 해의 띠로 보세요.';
+  const hubRows = ORDER.map((z) => {
+    const [slug, name] = T[z];
+    const ys = yearsOf(z).filter((y) => y >= 1940).slice(0, 8);
+    return `<div class="row"><div class="k"><a href="/tti-age/${slug}/" style="text-decoration:none">${ttiAnimalSvg(z, 22)}${name}</a></div><div class="v" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px">${ys.map((y) => `<span style="white-space:nowrap">${y}년생 <small style="color:#6F6557">만 ${THIS - y}살</small></span>`).join('')}</div></div>`;
+  }).join('');
+  {
+    const title = `띠별 나이표 ${THIS} | 쥐띠부터 돼지띠까지 년생과 만 나이 - 사주500`;
+    const desc = `${THIS}년(${gzKo(thisGz)}년) 기준 띠별 나이표. 쥐띠, 소띠, 호랑이띠, 토끼띠, 용띠, 뱀띠, 말띠, 양띠, 원숭이띠, 닭띠, 개띠, 돼지띠가 몇 년생이고 올해 만 몇 살인지 한눈에 봐요.`;
+    const canonical = `${SITE}/tti-age/`;
+    const body = `<section class="hero"><div class="wrap"><div class="lab">${THIS}년 ${gzKo(thisGz)}(${thisGz})년 기준</div><h1>띠별 나이표</h1><p>내 띠가 몇 년생인지, 올해 만 몇 살인지 봐요. 띠를 누르면 1930년생부터 전부 나와요.</p></div></section>
+<main class="wrap">
+<section class="sec"><div class="card">${hubRows}</div><p class="note">${ipchun}</p></section>
+<section class="cta"><h3>띠는 같아도 생일과 태어난 시간에 따라 사주가 달라요</h3><p>생일을 넣으면 내 사주 여덟 글자와 오늘의 운세가 바로 나와요. 하루 한 번 무료예요.</p>
+<a class="btn" href="/daily?${ageUtm('hub_daily')}">내 사주로 오늘의 운세 보기</a><a class="sub" href="/unse/today/?${ageUtm('hub_today')}">오늘의 띠별 운세</a><a class="sub" href="/unse/${YEAR}/?${ageUtm('hub_newyear')}">${YEAR}년 띠별 신년운세</a></section>
+</main>`;
+    const jsonld = { '@context': 'https://schema.org', '@type': 'Article', headline: `띠별 나이표 ${THIS}`, description: desc, inLanguage: 'ko', dateModified: new Date().toISOString().slice(0, 10), mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
+    write('tti-age', page({ title, desc, canonical, body, jsonld }));
+  }
+  for (const z of ORDER) {
+    const [slug, name] = T[z];
+    const ys = yearsOf(z);
+    const recent = ys.filter((y) => y >= 1940).slice(0, 8);
+    const title = `${name} 나이 ${THIS} | ${name} 년생과 올해 만 나이 - 사주500`;
+    const desc = `${name}는 ${recent.join(', ')}년생이에요. ${THIS}년 기준 만 나이와 간지, 입춘 무렵에 태어났을 때 띠 보는 법을 정리했어요.`;
+    const canonical = `${SITE}/tti-age/${slug}/`;
+    const rows = ys.map((y) => { const gz = gzOf(y); return `<div class="row"><div class="k">${y}년생<small>${gzKo(gz)}(${gz})년</small></div><div class="v">${ageTxt(y)}</div></div>`; }).join('');
+    const faq = [
+      { q: `${name}는 몇 년생인가요?`, a: `${recent.join(', ')}년생이 ${name}예요. 12년마다 돌아와요.` },
+      { q: `${name}는 올해 몇 살인가요?`, a: recent.slice(0, 4).map((y) => `${y}년생은 만 ${THIS - y}살`).join(', ') + `이에요(${THIS}년 생일이 지났을 때).` },
+      { q: '1월이나 2월 초에 태어났으면 무슨 띠인가요?', a: ipchun },
+    ];
+    const body = `<section class="hero"><div class="wrap"><div class="lab">${THIS}년 ${gzKo(thisGz)}(${thisGz})년 기준</div><h1>${ttiAnimalSvg(z, 40, '#F4EFE4')} ${name} 나이</h1><p>${name} 년생과 올해 만 나이를 정리했어요.</p></div></section>
+<main class="wrap">
+<section class="sec"><div class="card">${rows}</div><p class="note">${ipchun}</p></section>
+<section class="cta"><h3>${name}의 오늘과 ${YEAR}년이 궁금하다면</h3><p>출생 연도별 한 줄과 좋은 시간을 매일 아침 새로 풀어요.</p>
+<a class="btn" href="/unse/today/${slug}/?${ageUtm(slug + '_today')}">${name} 오늘의 운세 보기</a><a class="sub" href="/unse/${YEAR}/${slug}/?${ageUtm(slug + '_newyear')}">${YEAR}년 ${name} 신년운세</a><a class="sub" href="/daily?${ageUtm(slug + '_daily')}">내 사주로 오늘의 운세 보기 (하루 한 번 무료)</a></section>
+<section class="sec"><h2>자주 묻는 질문</h2><div class="card"><dl class="faq">${faq.map((f) => `<dt>${esc(f.q)}</dt><dd>${esc(f.a)}</dd>`).join('')}</dl></div></section>
+<section class="sec"><h2>다른 띠 나이</h2><div class="links">${ORDER.filter((o) => o !== z).map((o) => `<a href="/tti-age/${T[o][0]}/">${T[o][1]}</a>`).join('')}<a href="/tti-age/">띠별 나이표</a></div></section>
+</main>`;
+    const jsonld = [
+      { '@context': 'https://schema.org', '@type': 'Article', headline: `${name} 나이 ${THIS}`, description: desc, inLanguage: 'ko', dateModified: new Date().toISOString().slice(0, 10), mainEntityOfPage: canonical, publisher: { '@type': 'Organization', name: '사주500', url: SITE } },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ];
+    write(`tti-age/${slug}`, page({ title, desc, canonical, body, jsonld }));
+  }
 }
 
 // ── sitemap (앱 주요 주소 + 이 페이지들)
