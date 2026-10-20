@@ -1,0 +1,1173 @@
+{
+  "meta": {
+    "builtAt": "2026-10-19T17:21:21.178Z",
+    "from": {
+      "naverKeywords": "naver_keywords_20261020.json",
+      "naverTrend": "naver_trend_20261020.json",
+      "googleTrends": "google_trends_20261020.json"
+    },
+    "collectedDateKst": "2026-10-20"
+  },
+  "status": {
+    "naverKeywords": "ok",
+    "naverTrend": "blocked",
+    "googleTrends": "ok",
+    "naverTrendOwnerAction": "오너가 developers.naver.com 내 애플리케이션 > 사주500(네이버 로그인 앱) > API 설정 > 사용 API 에서 데이터랩(검색어트렌드) 추가 필요. 추가 뒤 `node scripts/marketing/naver_datalab.cjs` 를 다시 돌리면 된다."
+  },
+  "categories": [
+    {
+      "id": "today",
+      "name": "오늘운세",
+      "keywords": 34,
+      "mobile": 8729830,
+      "pc": 814595,
+      "total": 9544425,
+      "top": "오늘의운세"
+    },
+    {
+      "id": "saju",
+      "name": "사주",
+      "keywords": 38,
+      "mobile": 352300,
+      "pc": 57000,
+      "total": 409300,
+      "top": "만세력"
+    },
+    {
+      "id": "newyear",
+      "name": "신년",
+      "keywords": 34,
+      "mobile": 59135,
+      "pc": 12960,
+      "total": 72095,
+      "top": "삼재"
+    },
+    {
+      "id": "compat",
+      "name": "궁합",
+      "keywords": 20,
+      "mobile": 57300,
+      "pc": 6425,
+      "total": 63725,
+      "top": "이름궁합"
+    },
+    {
+      "id": "dream",
+      "name": "꿈",
+      "keywords": 31,
+      "mobile": 204340,
+      "pc": 9960,
+      "total": 214300,
+      "top": "꿈해몽"
+    },
+    {
+      "id": "love",
+      "name": "연애",
+      "keywords": 28,
+      "mobile": 46540,
+      "pc": 7670,
+      "total": 54210,
+      "top": "인연"
+    },
+    {
+      "id": "work",
+      "name": "일과돈",
+      "keywords": 30,
+      "mobile": 92550,
+      "pc": 20125,
+      "total": 112675,
+      "top": "손없는날"
+    },
+    {
+      "id": "season",
+      "name": "시즌",
+      "keywords": 17,
+      "mobile": 28975,
+      "pc": 6485,
+      "total": 35460,
+      "top": "동지"
+    },
+    {
+      "id": "rival",
+      "name": "경쟁",
+      "keywords": 15,
+      "mobile": 315115,
+      "pc": 27300,
+      "total": 342415,
+      "top": "사주아이"
+    },
+    {
+      "id": "brand",
+      "name": "브랜드",
+      "keywords": 8,
+      "mobile": 100,
+      "pc": 40,
+      "total": 140,
+      "top": "토스운세"
+    }
+  ],
+  "top30": [
+    {
+      "keyword": "오늘의운세",
+      "category": "오늘운세",
+      "mobile": 4757000,
+      "pc": 345900,
+      "compIdx": "중간",
+      "plAvgDepth": 8,
+      "mobileBid": {
+        "1": 1250,
+        "2": 430,
+        "3": 270,
+        "4": 230,
+        "5": 210
+      }
+    },
+    {
+      "keyword": "운세",
+      "category": "오늘운세",
+      "mobile": 1651900,
+      "pc": 132600,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 1840,
+        "2": 1640,
+        "3": 1410,
+        "4": 1250,
+        "5": 1110
+      }
+    },
+    {
+      "keyword": "띠별운세",
+      "category": "오늘운세",
+      "mobile": 1173300,
+      "pc": 123900,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 270,
+        "2": 120,
+        "3": 90,
+        "4": 90,
+        "5": 80
+      }
+    },
+    {
+      "keyword": "오늘운세",
+      "category": "오늘운세",
+      "mobile": 478800,
+      "pc": 74300,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 440,
+        "2": 250,
+        "3": 210,
+        "4": 200,
+        "5": 190
+      }
+    },
+    {
+      "keyword": "무료운세",
+      "category": "오늘운세",
+      "mobile": 155800,
+      "pc": 6930,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 450,
+        "2": 440,
+        "3": 400,
+        "4": 350,
+        "5": 320
+      }
+    },
+    {
+      "keyword": "만세력",
+      "category": "사주",
+      "mobile": 114800,
+      "pc": 17900,
+      "compIdx": "높음",
+      "plAvgDepth": 9,
+      "mobileBid": {
+        "1": 400,
+        "2": 400,
+        "3": 400,
+        "4": 390,
+        "5": 370
+      }
+    },
+    {
+      "keyword": "사주",
+      "category": "사주",
+      "mobile": 84300,
+      "pc": 11300,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 11450,
+        "2": 10040,
+        "3": 8190,
+        "4": 6120,
+        "5": 3970
+      }
+    },
+    {
+      "keyword": "손없는날",
+      "category": "일과돈",
+      "mobile": 75600,
+      "pc": 13100,
+      "compIdx": "중간",
+      "plAvgDepth": 3,
+      "mobileBid": {
+        "1": 3950,
+        "2": 2390,
+        "3": 1560,
+        "4": 1420,
+        "5": 1100
+      }
+    },
+    {
+      "keyword": "꿈해몽",
+      "category": "꿈",
+      "mobile": 57600,
+      "pc": 3490,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 380,
+        "2": 360,
+        "3": 300,
+        "4": 270,
+        "5": 250
+      }
+    },
+    {
+      "keyword": "돼지띠운세",
+      "category": "오늘운세",
+      "mobile": 35800,
+      "pc": 10600,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 870,
+        "2": 830,
+        "3": 540,
+        "4": 430,
+        "5": 400
+      }
+    },
+    {
+      "keyword": "쥐띠운세",
+      "category": "오늘운세",
+      "mobile": 33700,
+      "pc": 11100,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 420,
+        "2": 400,
+        "3": 370,
+        "4": 360,
+        "5": 350
+      }
+    },
+    {
+      "keyword": "닭띠운세",
+      "category": "오늘운세",
+      "mobile": 35500,
+      "pc": 9250,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 320,
+        "2": 300,
+        "3": 280,
+        "4": 270,
+        "5": 220
+      }
+    },
+    {
+      "keyword": "용띠운세",
+      "category": "오늘운세",
+      "mobile": 34500,
+      "pc": 10000,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 350,
+        "2": 300,
+        "3": 290,
+        "4": 290,
+        "5": 280
+      }
+    },
+    {
+      "keyword": "원숭이띠운세",
+      "category": "오늘운세",
+      "mobile": 33600,
+      "pc": 9890,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 500,
+        "2": 470,
+        "3": 380,
+        "4": 350,
+        "5": 330
+      }
+    },
+    {
+      "keyword": "말띠운세",
+      "category": "오늘운세",
+      "mobile": 33200,
+      "pc": 9930,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 530,
+        "2": 510,
+        "3": 450,
+        "4": 440,
+        "5": 420
+      }
+    },
+    {
+      "keyword": "소띠운세",
+      "category": "오늘운세",
+      "mobile": 32700,
+      "pc": 9930,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 670,
+        "2": 570,
+        "3": 500,
+        "4": 470,
+        "5": 460
+      }
+    },
+    {
+      "keyword": "토끼띠운세",
+      "category": "오늘운세",
+      "mobile": 32200,
+      "pc": 10300,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 580,
+        "2": 490,
+        "3": 400,
+        "4": 370,
+        "5": 350
+      }
+    },
+    {
+      "keyword": "뱀띠운세",
+      "category": "오늘운세",
+      "mobile": 31800,
+      "pc": 10100,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 820,
+        "2": 510,
+        "3": 350,
+        "4": 330,
+        "5": 280
+      }
+    },
+    {
+      "keyword": "오늘의띠별운세",
+      "category": "오늘운세",
+      "mobile": 38100,
+      "pc": 3230,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 290,
+        "2": 220,
+        "3": 160,
+        "4": 140,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "개띠운세",
+      "category": "오늘운세",
+      "mobile": 31900,
+      "pc": 9370,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 390,
+        "2": 380,
+        "3": 350,
+        "4": 320,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "양띠운세",
+      "category": "오늘운세",
+      "mobile": 29400,
+      "pc": 9150,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 500,
+        "2": 370,
+        "3": 290,
+        "4": 270,
+        "5": 190
+      }
+    },
+    {
+      "keyword": "이빨빠지는꿈",
+      "category": "꿈",
+      "mobile": 32900,
+      "pc": 930,
+      "compIdx": "높음",
+      "plAvgDepth": 3,
+      "mobileBid": {
+        "1": 700,
+        "2": 90,
+        "3": 90,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "무료사주",
+      "category": "사주",
+      "mobile": 25700,
+      "pc": 4260,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 1110,
+        "2": 850,
+        "3": 610,
+        "4": 500,
+        "5": 460
+      }
+    },
+    {
+      "keyword": "범띠운세",
+      "category": "오늘운세",
+      "mobile": 26300,
+      "pc": 1690,
+      "compIdx": "높음",
+      "plAvgDepth": 3,
+      "mobileBid": {
+        "1": 720,
+        "2": 560,
+        "3": 460,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "삼재",
+      "category": "신년",
+      "mobile": 22700,
+      "pc": 3440,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 9480,
+        "2": 1830,
+        "3": 1060,
+        "4": 920,
+        "5": 830
+      }
+    },
+    {
+      "keyword": "생년월일운세",
+      "category": "오늘운세",
+      "mobile": 19500,
+      "pc": 2770,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 580,
+        "2": 570,
+        "3": 490,
+        "4": 460,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "내일운세",
+      "category": "오늘운세",
+      "mobile": 20800,
+      "pc": 1380,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 790,
+        "2": 700,
+        "3": 560,
+        "4": 480,
+        "5": 380
+      }
+    },
+    {
+      "keyword": "내일의운세",
+      "category": "오늘운세",
+      "mobile": 19400,
+      "pc": 1520,
+      "compIdx": "높음",
+      "plAvgDepth": 10,
+      "mobileBid": {
+        "1": 650,
+        "2": 580,
+        "3": 480,
+        "4": 450,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "도화살",
+      "category": "사주",
+      "mobile": 18200,
+      "pc": 2510,
+      "compIdx": "높음",
+      "plAvgDepth": 7,
+      "mobileBid": {
+        "1": 4310,
+        "2": 1810,
+        "3": 1300,
+        "4": 1100,
+        "5": 780
+      }
+    },
+    {
+      "keyword": "동지",
+      "category": "시즌",
+      "mobile": 16200,
+      "pc": 3730,
+      "compIdx": "낮음",
+      "plAvgDepth": 2,
+      "mobileBid": {
+        "1": 280,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "keyword": "동지",
+      "kind": "hint",
+      "category": "season",
+      "categoryName": "시즌",
+      "mobile": 16200,
+      "pc": 3730,
+      "total": 19930,
+      "compIdx": "낮음",
+      "plAvgDepth": 2,
+      "mobileClk": 7.5,
+      "mobileCtr": 0.06,
+      "mobileBid": {
+        "1": 280,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "이름궁합테스트",
+      "kind": "related",
+      "category": "today",
+      "categoryName": "오늘운세",
+      "mobile": 18400,
+      "pc": 880,
+      "total": 19280,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 2450,
+        "2": 680,
+        "3": 520,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "용띠나이",
+      "kind": "related",
+      "category": "today",
+      "categoryName": "오늘운세",
+      "mobile": 11300,
+      "pc": 570,
+      "total": 11870,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 140,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "퇴사",
+      "kind": "hint",
+      "category": "work",
+      "categoryName": "일과돈",
+      "mobile": 4650,
+      "pc": 1550,
+      "total": 6200,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 350,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "오행",
+      "kind": "hint",
+      "category": "saju",
+      "categoryName": "사주",
+      "mobile": 4560,
+      "pc": 860,
+      "total": 5420,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 990,
+        "2": 290,
+        "3": 140,
+        "4": 110,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "운",
+      "kind": "related",
+      "category": "saju",
+      "categoryName": "사주",
+      "mobile": 4700,
+      "pc": 580,
+      "total": 5280,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 500,
+        "2": 400,
+        "3": 280,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "정미년운세",
+      "kind": "hint",
+      "category": "newyear",
+      "categoryName": "신년",
+      "mobile": 1070,
+      "pc": 360,
+      "total": 1430,
+      "compIdx": "낮음",
+      "plAvgDepth": 2,
+      "mobileClk": 17.2,
+      "mobileCtr": 2.12,
+      "mobileBid": {
+        "1": 330,
+        "2": 200,
+        "3": 90,
+        "4": 80,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "혈액형궁합",
+      "kind": "hint",
+      "category": "compat",
+      "categoryName": "궁합",
+      "mobile": 1140,
+      "pc": 80,
+      "total": 1220,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 70,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "용신",
+      "kind": "hint",
+      "category": "saju",
+      "categoryName": "사주",
+      "mobile": 1010,
+      "pc": 120,
+      "total": 1130,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 70,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "연애궁합",
+      "kind": "hint",
+      "category": "compat",
+      "categoryName": "궁합",
+      "mobile": 580,
+      "pc": 50,
+      "total": 630,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 5950,
+        "2": 5530,
+        "3": 3360,
+        "4": 3290,
+        "5": 2430
+      }
+    },
+    {
+      "keyword": "격국",
+      "kind": "hint",
+      "category": "saju",
+      "categoryName": "사주",
+      "mobile": 140,
+      "pc": 30,
+      "total": 170,
+      "compIdx": "낮음",
+      "plAvgDepth": 0,
+      "mobileClk": 0,
+      "mobileCtr": 0,
+      "mobileBid": {
+        "1": 70,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "오늘의운세",
+      "kind": "hint",
+      "category": "today",
+      "categoryName": "오늘운세",
+      "mobile": 4757000,
+      "pc": 345900,
+      "total": 5102900,
+      "compIdx": "중간",
+      "plAvgDepth": 8,
+      "mobileClk": 2192.4,
+      "mobileCtr": 0.05,
+      "mobileBid": {
+        "1": 1250,
+        "2": 430,
+        "3": 270,
+        "4": 230,
+        "5": 210
+      }
+    },
+    {
+      "keyword": "손없는날",
+      "kind": "hint",
+      "category": "work",
+      "categoryName": "일과돈",
+      "mobile": 75600,
+      "pc": 13100,
+      "total": 88700,
+      "compIdx": "중간",
+      "plAvgDepth": 3,
+      "mobileClk": 49.3,
+      "mobileCtr": 0.08,
+      "mobileBid": {
+        "1": 3950,
+        "2": 2390,
+        "3": 1560,
+        "4": 1420,
+        "5": 1100
+      }
+    },
+    {
+      "keyword": "불나는꿈",
+      "kind": "hint",
+      "category": "dream",
+      "categoryName": "꿈",
+      "mobile": 12000,
+      "pc": 360,
+      "total": 12360,
+      "compIdx": "중간",
+      "plAvgDepth": 1,
+      "mobileClk": 0.7,
+      "mobileCtr": 0.02,
+      "mobileBid": {
+        "1": 80,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "오행팔찌",
+      "kind": "related",
+      "category": "today",
+      "categoryName": "오늘운세",
+      "mobile": 10000,
+      "pc": 1070,
+      "total": 11070,
+      "compIdx": "중간",
+      "plAvgDepth": 8,
+      "mobileClk": 958.8,
+      "mobileCtr": 10.23,
+      "mobileBid": {
+        "1": 730,
+        "2": 600,
+        "3": 440,
+        "4": 410,
+        "5": 390
+      }
+    },
+    {
+      "keyword": "오늘의무료운세",
+      "kind": "related",
+      "category": "today",
+      "categoryName": "오늘운세",
+      "mobile": 9700,
+      "pc": 510,
+      "total": 10210,
+      "compIdx": "중간",
+      "plAvgDepth": 6,
+      "mobileClk": 26.3,
+      "mobileCtr": 0.3,
+      "mobileBid": {
+        "1": 160,
+        "2": 150,
+        "3": 130,
+        "4": 110,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "쫓기는꿈",
+      "kind": "hint",
+      "category": "dream",
+      "categoryName": "꿈",
+      "mobile": 4640,
+      "pc": 190,
+      "total": 4830,
+      "compIdx": "중간",
+      "plAvgDepth": 2,
+      "mobileClk": 5.6,
+      "mobileCtr": 0.14,
+      "mobileBid": {
+        "1": 70,
+        "2": 70,
+        "3": 70,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "썸",
+      "kind": "hint",
+      "category": "love",
+      "categoryName": "연애",
+      "mobile": 3510,
+      "pc": 440,
+      "total": 3950,
+      "compIdx": "중간",
+      "plAvgDepth": 2,
+      "mobileClk": 1.8,
+      "mobileCtr": 0.17,
+      "mobileBid": {
+        "1": 690,
+        "2": 320,
+        "3": 190,
+        "4": 70,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "이번주운세",
+      "kind": "hint",
+      "category": "today",
+      "categoryName": "오늘운세",
+      "mobile": 3180,
+      "pc": 510,
+      "total": 3690,
+      "compIdx": "중간",
+      "plAvgDepth": 8,
+      "mobileClk": 7.5,
+      "mobileCtr": 0.25,
+      "mobileBid": {
+        "1": 260,
+        "2": 260,
+        "3": 240,
+        "4": 200,
+        "5": 70
+      }
+    },
+    {
+      "keyword": "길몽",
+      "kind": "hint",
+      "category": "dream",
+      "categoryName": "꿈",
+      "mobile": 2040,
+      "pc": 370,
+      "total": 2410,
+      "compIdx": "중간",
+      "plAvgDepth": 1,
+      "mobileClk": 4,
+      "mobileCtr": 0.21,
+      "mobileBid": {
+        "1": 140,
+        "2": 90,
+        "3": 80,
+        "4": 70,
+        "5": 70
+      }
+    }
+  ],
+  "season": {
+    "source": "구글 트렌드 (google_trends_20261020.json, 묶음 season: 신년운세, 토정비결, 삼재)",
+    "rule": "오르기 시작=정점 10% 이상 연속 첫 주, 크게 오름=25%, 내려옴=정점 뒤 25% 아래 첫 주, 평소로=시즌 끝까지 10% 아래 첫 주",
+    "byKeyword": {
+      "신년운세": [
+        {
+          "season": "2022~2023",
+          "from": "2022-08-01",
+          "to": "2023-04-30",
+          "baseline": 0,
+          "peak": "2023-01-01",
+          "peakValue": 51,
+          "startCut": true,
+          "rise10": null,
+          "rise25": null,
+          "fall25": "2023-01-29",
+          "back10": "2023-02-12"
+        },
+        {
+          "season": "2023~2024",
+          "from": "2023-08-01",
+          "to": "2024-04-30",
+          "baseline": 0,
+          "peak": "2023-12-31",
+          "peakValue": 52,
+          "startCut": false,
+          "rise10": "2023-11-26",
+          "rise25": "2023-12-17",
+          "fall25": "2024-01-14",
+          "back10": "2024-02-25"
+        },
+        {
+          "season": "2024~2025",
+          "from": "2024-08-01",
+          "to": "2025-04-30",
+          "baseline": 0,
+          "peak": "2024-12-29",
+          "peakValue": 62,
+          "startCut": false,
+          "rise10": "2024-11-24",
+          "rise25": "2024-12-15",
+          "fall25": "2025-01-19",
+          "back10": "2025-02-23"
+        },
+        {
+          "season": "2025~2026",
+          "from": "2025-08-01",
+          "to": "2026-04-30",
+          "baseline": 0,
+          "peak": "2025-12-28",
+          "peakValue": 53,
+          "startCut": false,
+          "rise10": "2025-11-09",
+          "rise25": "2025-11-23",
+          "fall25": "2026-01-18",
+          "back10": "2026-02-22"
+        },
+        {
+          "season": "2026~2027",
+          "from": "2026-08-01",
+          "to": "2027-04-30",
+          "inProgress": true,
+          "latest": {
+            "date": "2026-10-18",
+            "v": 2
+          },
+          "sameWeekLastYear": {
+            "date": "2025-10-19",
+            "v": 3
+          }
+        }
+      ],
+      "토정비결": [
+        {
+          "season": "2022~2023",
+          "from": "2022-08-01",
+          "to": "2023-04-30",
+          "baseline": 4,
+          "peak": "2023-01-01",
+          "peakValue": 37,
+          "startCut": true,
+          "rise10": null,
+          "rise25": null,
+          "fall25": "2023-02-12",
+          "back10": null
+        },
+        {
+          "season": "2023~2024",
+          "from": "2023-08-01",
+          "to": "2024-04-30",
+          "baseline": 4,
+          "peak": "2023-12-31",
+          "peakValue": 30,
+          "startCut": false,
+          "rise10": "2023-10-29",
+          "rise25": "2023-11-19",
+          "fall25": "2024-01-21",
+          "back10": "2024-03-10"
+        },
+        {
+          "season": "2024~2025",
+          "from": "2024-08-01",
+          "to": "2025-04-30",
+          "baseline": 4,
+          "peak": "2024-12-29",
+          "peakValue": 30,
+          "startCut": false,
+          "rise10": "2024-11-17",
+          "rise25": "2024-11-17",
+          "fall25": "2025-02-09",
+          "back10": "2025-03-16"
+        },
+        {
+          "season": "2025~2026",
+          "from": "2025-08-01",
+          "to": "2026-04-30",
+          "baseline": 5,
+          "peak": "2025-12-28",
+          "peakValue": 32,
+          "startCut": false,
+          "rise10": "2025-11-16",
+          "rise25": "2025-11-23",
+          "fall25": "2026-02-01",
+          "back10": null
+        },
+        {
+          "season": "2026~2027",
+          "from": "2026-08-01",
+          "to": "2027-04-30",
+          "inProgress": true,
+          "latest": {
+            "date": "2026-10-18",
+            "v": 3
+          },
+          "sameWeekLastYear": {
+            "date": "2025-10-19",
+            "v": 5
+          }
+        }
+      ],
+      "삼재": [
+        {
+          "season": "2022~2023",
+          "from": "2022-08-01",
+          "to": "2023-04-30",
+          "baseline": 8,
+          "peak": "2023-01-01",
+          "peakValue": 37,
+          "startCut": true,
+          "rise10": null,
+          "rise25": null,
+          "fall25": "2023-02-12",
+          "back10": "2023-04-30"
+        },
+        {
+          "season": "2023~2024",
+          "from": "2023-08-01",
+          "to": "2024-04-30",
+          "baseline": 8,
+          "peak": "2023-12-24",
+          "peakValue": 52,
+          "startCut": false,
+          "rise10": "2023-10-29",
+          "rise25": "2023-12-10",
+          "fall25": "2024-01-14",
+          "back10": "2024-02-18"
+        },
+        {
+          "season": "2024~2025",
+          "from": "2024-08-01",
+          "to": "2025-04-30",
+          "baseline": 9,
+          "peak": "2024-12-29",
+          "peakValue": 100,
+          "startCut": false,
+          "rise10": "2024-11-03",
+          "rise25": "2024-12-08",
+          "fall25": "2025-02-09",
+          "back10": "2025-02-23"
+        },
+        {
+          "season": "2025~2026",
+          "from": "2025-08-01",
+          "to": "2026-04-30",
+          "baseline": 15,
+          "peak": "2025-12-28",
+          "peakValue": 80,
+          "startCut": false,
+          "rise10": "2025-11-09",
+          "rise25": "2025-11-30",
+          "fall25": "2026-01-25",
+          "back10": "2026-03-29"
+        },
+        {
+          "season": "2026~2027",
+          "from": "2026-08-01",
+          "to": "2027-04-30",
+          "inProgress": true,
+          "latest": {
+            "date": "2026-10-18",
+            "v": 25
+          },
+          "sameWeekLastYear": {
+            "date": "2025-10-19",
+            "v": 16
+          }
+        }
+      ]
+    }
+  }
+}
