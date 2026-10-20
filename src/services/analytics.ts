@@ -259,7 +259,7 @@ function captureUtm(): void {
     const campaign = q.get('utm_campaign') || tref.campaign;
     // 2026-10-20 — 광고 소재(utm_content)와 노출 위치(utm_term)도 남긴다 (소재별 판정용)
     const content = (q.get('utm_content') || '').slice(0, 60);
-    const term = (q.get('utm_term') || '').slice(0, 60);
+    const term = (q.get('utm_term') || q.get('n_keyword') || '').slice(0, 60); // n_keyword = 네이버 검색광고 자동 추적의 검색어
     if (!source && !medium && !campaign) {
       if (isAppintosBuild) return;
       const last = JSON.parse(localStorage.getItem(UTM_LAST_KEY) || 'null');
