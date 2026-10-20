@@ -8,6 +8,7 @@
 import * as admin from 'firebase-admin';
 import { onRequest } from 'firebase-functions/v2/https';
 import { ttiAnimalSvg } from '../tti/ttiAnimalSvg'; // 2026-10-19 사주500 띠 그림
+import { ttiHours } from '../tti/ttiFortune';
 
 const ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 const NAME: Record<string, string> = { 子: '쥐띠', 丑: '소띠', 寅: '호랑이띠', 卯: '토끼띠', 辰: '용띠', 巳: '뱀띠', 午: '말띠', 未: '양띠', 申: '원숭이띠', 酉: '닭띠', 戌: '개띠', 亥: '돼지띠' };
@@ -43,7 +44,7 @@ function render(doc: any, dateKey: string, isToday: boolean): string {
     const t = doc.tti?.[z] || {};
     const years = Object.entries(t.years || {}).sort(([a], [b]) => Number(a) - Number(b))
       .map(([yr, line]) => `<div class="yr"><b>${String(Number(yr) % 100).padStart(2, '0')}년생</b><span>${esc(line)}</span></div>`).join('');
-    return `<section class="tti" id="${SLUG[z]}"><h2>${ttiAnimalSvg(z, 32)}${NAME[z]} 오늘의 운세</h2>${t.head ? `<p class="head">${esc(t.head)}</p>` : ''}${years}</section>`;
+    return `<section class="tti" id="${SLUG[z]}"><h2>${ttiAnimalSvg(z, 32)}<a href="/unse/today/${SLUG[z]}/" style="text-decoration:none">${NAME[z]} 오늘의 운세</a></h2>${t.head ? `<p class="head">${esc(t.head)}</p>` : ''}${years}</section>`;
   }).join('');
   const jsonld = { '@context': 'https://schema.org', '@type': 'Article', headline: `오늘의 띠별 운세 ${m}월 ${d}일`, description: desc, inLanguage: 'ko', datePublished: dateKey, dateModified: dateKey, mainEntityOfPage: `${SITE}/unse/today/`, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -67,8 +68,58 @@ ${blocks}
 </body></html>`;
 }
 
+/* 2026-10-20 띠 하나만 담은 페이지 /unse/today/{slug}/ — '용띠운세', '쥐띠운세' 같은 띠 이름 검색이 띠마다 월 3만 안팎
+ *   (네이버 키워드 도구 10-20, docs/marketing/data). 한 장에 열두 띠가 다 있는 /unse/today/ 로는 띠 이름 검색에 잘 잡히지 않는다 */
+const SEARCH_NAME: Record<string, string> = { 寅: '호랑이띠(범띠)' };
+export const TTI_SLUGS = ORDER.map((z) => SLUG[z]);
+
+function renderOne(doc: any, dateKey: string, isToday: boolean, z: string): string {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const wd = WEEK[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  const gz = String(doc.dayGz || '');
+  const gzKo = gz ? `${GAN_KO[gz[0]] || ''}${ZHI_KO[gz[1]] || ''}` : '';
+  const dayLabel = `${m}월 ${d}일 ${wd}요일${gz ? `, ${gzKo}(${gz})일` : ''}`;
+  const name = NAME[z];
+  const searchName = SEARCH_NAME[z] || name;
+  const t = doc.tti?.[z] || {};
+  const yrs = Object.entries(t.years || {}).sort(([a], [b]) => Number(a) - Number(b));
+  const yrList = yrs.map(([yr]) => `${String(Number(yr) % 100).padStart(2, '0')}년생`).join(', ');
+  const h = ttiHours(z);
+  const title = `${searchName} 오늘의 운세 ${m}월 ${d}일 | ${yrList || '출생 연도별'} - 사주500`;
+  const desc = `${y}년 ${dayLabel} ${searchName} 운세. ${t.head ? String(t.head).slice(0, 70) : ''} ${yrList ? `${yrList} 출생 연도별 한 줄과` : ''} 좋은 시간을 매일 아침 새로 풀어요.`.replace(/\s+/g, ' ').trim();
+  const slug = SLUG[z];
+  const url = `${SITE}/unse/today/${slug}/`;
+  const years = yrs.map(([yr, line]) => `<div class="yr"><b>${String(Number(yr) % 100).padStart(2, '0')}년생</b><span>${esc(line)}</span></div>`).join('');
+  const others = ORDER.filter((o) => o !== z).map((o) => `<a href="/unse/today/${SLUG[o]}/">${NAME[o]}</a>`).join('');
+  const jsonld = { '@context': 'https://schema.org', '@type': 'Article', headline: `${searchName} 오늘의 운세 ${m}월 ${d}일`, description: desc, inLanguage: 'ko', datePublished: dateKey, dateModified: dateKey, mainEntityOfPage: url, publisher: { '@type': 'Organization', name: '사주500', url: SITE } };
+  const u = (c: string) => `utm_source=seo&utm_medium=organic&utm_campaign=tti_today_${slug}_${c}`;
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+<meta property="og:type" content="article"><meta property="og:site_name" content="사주500"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/og/tti/${dateKey}.jpg?v=${Number(doc?.tries) || 0}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&display=swap">
+<style>${CSS}.hours{display:flex;gap:10px;margin-top:10px;font-size:15px}.hours div{flex:1;background:#F4EFE4;border-radius:10px;padding:8px 12px}.hours b{display:block;font-size:13.5px;color:#6F6557;font-weight:700}.jump.all{grid-template-columns:repeat(4,1fr)}</style><script type="application/ld+json">${JSON.stringify(jsonld)}</script></head><body>
+<header class="wrap top"><a class="brand" href="/?${u('top')}">사주<b>500</b></a><a class="go" href="/?${u('top_go')}">내 사주로 보기</a></header>
+<section class="hero"><div class="wrap"><div class="lab">${esc(dayLabel)}</div><h1>${ttiAnimalSvg(z, 40)} ${esc(searchName)} 오늘의 운세</h1><p>${isToday ? '매일 아침 새로 풀어요.' : '오늘 풀이를 준비하는 중이라 어제 풀이를 보여 드려요.'} 태어난 해마다 한 줄씩 풀었어요.</p></div></section>
+<main class="wrap">
+<section class="tti" id="${slug}">${t.head ? `<p class="head">${esc(t.head)}</p>` : ''}<div class="hours"><div><b>좋은 시간</b>${esc(h.good)}</div>${h.bad ? `<div><b>조심할 시간</b>${esc(h.bad)}</div>` : ''}</div>${years}</section>
+<section class="cta"><h3>같은 ${esc(name)}라도 생일과 태어난 시간에 따라 하루가 달라요</h3><p>생일을 넣으면 내 사주로 오늘 하루를 풀어 드려요. 하루 한 번 무료예요.</p>
+<a class="btn" href="/daily?${u('daily')}">내 사주로 오늘의 운세 보기</a><a class="sub" href="/tti?${u('board')}">열두 띠 한 장으로 보고 가족에게 보내기</a><a class="sub" href="/unse/2027/?${u('newyear')}">2027년 ${esc(name)} 신년운세 보기</a></section>
+<h2 style="font-family:'Noto Serif KR',serif;font-size:17px;margin:22px 0 4px">다른 띠 오늘의 운세</h2>
+<nav class="jump all">${others}<a href="/unse/today/">열두 띠 모두</a></nav>
+<p class="note">띠(태어난 해의 지지)와 오늘 일진의 관계, 태어난 해의 천간을 명리학 원리로 본 참고용 풀이예요.</p>
+</main>
+<nav class="wrap" style="margin-top:26px;font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 14px"><a href="/unse/today/">오늘의 띠별 운세</a><a href="/unse/2027/">2027년 띠별 운세</a><a href="/gunghap/">띠별 궁합표</a><a href="/kkum/">꿈해몽 모음</a></nav>
+<footer class="wrap foot"><div><a href="/terms">이용약관</a><a class="b" href="/privacy">개인정보처리방침</a><a href="/business">사업자정보</a></div>
+<div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div><div>© ${y} 사주500</div></footer>
+</body></html>`;
+}
+
 export const renderTtiToday = onRequest({ memory: '256MiB', maxInstances: 5, timeoutSeconds: 20 }, async (req, res) => {
   try {
+    // /unse/today/{slug}/ 이면 그 띠 하나만, 모르는 하위 주소는 전체 페이지로 돌려보낸다
+    const sub = String(req.path || '').replace(/^\/unse\/today\/?/, '').replace(/\/+$/, '');
+    const one = sub ? ORDER.find((z) => SLUG[z] === sub.toLowerCase()) : undefined;
+    if (sub && !one) { res.redirect(301, '/unse/today/'); return; }
     const db = admin.firestore();
     const today = kstKey(0);
     let snap = await db.doc(`ttiFortune/${today}`).get();
@@ -84,7 +135,7 @@ export const renderTtiToday = onRequest({ memory: '256MiB', maxInstances: 5, tim
     }
     res.set('Cache-Control', isToday ? 'public, max-age=600, s-maxage=1800' : 'public, max-age=120, s-maxage=300');
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.status(200).send(render(snap.data(), key, isToday));
+    res.status(200).send(one ? renderOne(snap.data(), key, isToday, one) : render(snap.data(), key, isToday));
   } catch (e: any) {
     console.error('[renderTtiToday]', e?.message || e);
     res.status(500).set('Cache-Control', 'no-store').send('잠시 뒤 다시 열어 주세요');

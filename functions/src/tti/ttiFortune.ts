@@ -236,7 +236,7 @@ async function ensureDoc(apiKey: string, dateKey: string): Promise<void> {
     const doc = await generateTtiFortune(apiKey, dateKey);
     await ref.set({ ...doc, model: MODEL, tries: tries + 1, createdAt: admin.firestore.FieldValue.serverTimestamp() });
     console.log(`[ttiFortune] saved ${dateKey} ${doc.dayGz} complete=${complete(doc)}`);
-    if (dateKey === kstDateKey(0)) await pingIndexNow(['https://saju500.app/unse/today/']);
+    if (dateKey === kstDateKey(0)) await pingIndexNow(['https://saju500.app/unse/today/', ...['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig'].map((t) => `https://saju500.app/unse/today/${t}/`)]); // 2026-10-20 띠별 페이지(ttiTodayPage renderOne)도
     // 2026-10-19 미리보기 그림을 한 번 불러 CDN 에 올려 둔다 (처음 링크를 받은 사람이 그림 없는 미리보기를 보지 않게).
     //   주소에 판 번호(v=tries)를 붙여 다시 만들면 새 그림이 된다(og:image 와 앱 공유도 같은 번호). 완성본이나 마지막 시도일 때만
     if (complete(doc) || tries + 1 >= MAX_TRIES) {
