@@ -5,7 +5,7 @@
 //   ✗ 잔액 부족: 부족 안내 (충전 직접 유도 UI 는 토스 정책 회피로 제거)
 
 import { useState, useMemo } from 'react';
-import { INK_HERO_BG, NeedSaju } from '@/components/hanji/Hanji';
+import { INK_HERO_BG, GoldCta, GhostButton, Seal, SectionHead, HJ, SERIF, hanjaNum } from '@/components/hanji/Hanji';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { firstDailyOfferActive, markFirstDailyOfferUsed, OFFER as FIRST_DAILY_OFFER } from '@/services/offers/firstDailyOffer';
 import { Header } from '@/components/layout/Header';
@@ -85,12 +85,19 @@ export function PremiumSelectPage() {
     navigate(`/result/${newId}?fresh=1&type=premium`, { replace: true });
   }
 
-  // 등록된 사주 0건 → 입력 페이지로 유도
+  // 등록된 사주 0건 → 무엇을 받는지 먼저 보여 주고 입력으로 (2026-10-20 — 메타 광고 V4 가 처음 온 사람을 이 화면으로 보낸다.
+  //   예전에는 '먼저 사주를 넣어 주세요' 한 줄뿐이라 광고에서 본 '열 장'이 무엇인지 알 수 없었다)
   if (profiles.length === 0) {
+    const p = getPremiumPrice();
     return (
       <div className="min-h-screen pb-tab-safe" style={{ background: 'var(--bg-page-gradient)' }}>
         <Header title="종합사주" />
-        <NeedSaju mark="命" desc="태어난 날과 시간으로 열 장을 엮어요. 사주를 먼저 넣어 주세요." onClick={() => navigate('/input?from=home_body_premium')} />
+        <PremiumIntro
+          price={p.regularPrice}
+          offerPrice={FIRST_DAILY_OFFER.enabled ? FIRST_DAILY_OFFER.price : null}
+          onStart={() => navigate('/input?from=home_body_premium')}
+          onDaily={() => navigate('/daily?from=premium_intro')}
+        />
       </div>
     );
   }
@@ -311,6 +318,60 @@ export function PremiumSelectPage() {
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* 종합사주 열 장 — 결과 화면(PremiumResult.tsx CollapsibleSection 의 title, hint)과 같은 말. 장을 바꾸면 여기도 같이 */
+const CHAPTERS: [string, string][] = [
+  ['원국', '태어난 해, 달, 날, 시의 여덟 글자'],
+  ['천간과 지지', '위로 드러난 마음과 아래에 깔린 본능'],
+  ['십성', '사람과 돈, 일을 대하는 방식 열 가지'],
+  ['용신과 조후', '내 사주에 모자라 채워야 할 색, 방위, 계절, 습관'],
+  ['대운', '10년마다 바뀌는 큰 운과 지금 지나는 대운'],
+  ['연운', '올해와 다가오는 해의 흐름'],
+  ['신살', '사주에 자리한 신살과 그 쓰임'],
+  ['내 사주의 기운', '여덟 글자를 한 줄로, 강점 세 가지와 조심할 점 세 가지'],
+  ['여섯 영역 한눈에', '재물, 사랑, 직업, 건강, 인간관계, 학업'],
+  ['실천', '오늘부터 바꾸어 볼 다섯 가지'],
+];
+
+/** 사주를 아직 넣지 않은 사람에게 — 무엇을 받는지, 얼마인지, 무료로 먼저 맛보는 길 */
+function PremiumIntro({ price, offerPrice, onStart, onDaily }: { price: number; offerPrice: number | null; onStart: () => void; onDaily: () => void }) {
+  return (
+    <div>
+      <header style={{ padding: '26px 20px 28px', color: '#F4EFE4', background: INK_HERO_BG }}>
+        <div style={{ fontSize: 13.5, color: '#CFC6B6', fontWeight: 700 }}>종합사주는 평생 한 번 읽으면 돼요</div>
+        <h1 style={{ fontFamily: SERIF, fontSize: 25, fontWeight: 700, lineHeight: 1.4, marginTop: 8, letterSpacing: '-0.02em' }}>
+          타고난 성격부터 10년 대운까지<br />열 장으로 풀어 드려요
+        </h1>
+        <p style={{ fontSize: 15, color: '#E4DCCD', marginTop: 8, lineHeight: 1.7 }}>
+          생일과 태어난 시간으로 내 사주를 처음부터 끝까지 봐요. {price}운이에요.
+        </p>
+      </header>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '20px 20px 120px' }}>
+        <GoldCta onClick={onStart} sub="1분이면 끝나요">생일 넣고 시작하기</GoldCta>
+        <SectionHead title="열 장에 이런 걸 풀어 드려요" style={{ marginTop: 28 }} />
+        <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+          {CHAPTERS.map(([t, d], i) => (
+            <li key={t} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderTop: `1px solid ${HJ.line}` }}>
+              <Seal size={26} fontSize={13}>{hanjaNum(i + 1)}</Seal>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: HJ.ink }}>{t}</div>
+                <div style={{ fontSize: 14.5, color: HJ.ink2, lineHeight: 1.6, marginTop: 2 }}>{d}</div>
+              </div>
+            </li>
+          ))}
+        </ol>
+        {offerPrice != null && (
+          <div style={{ marginTop: 24 }}>
+            <p style={{ fontSize: 15, color: HJ.ink, lineHeight: 1.7, marginBottom: 12 }}>
+              처음이라면 오늘의 운세를 먼저 무료로 받아 보세요. 받은 뒤 24시간 동안은 종합사주를 {offerPrice}운에 볼 수 있어요.
+            </p>
+            <GhostButton onClick={onDaily} sub="하루 한 번 무료">오늘의 운세 먼저 보기</GhostButton>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
