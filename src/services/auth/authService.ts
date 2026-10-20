@@ -180,13 +180,15 @@ export async function checkRedirectResult(): Promise<User | null> {
 const NAVER_KEY = 'saju500:naver_login';
 export const NAVER_LOGIN_INFO = 'saju500:login_provider';
 
-function startNaverLogin(): void {
+const NAVER_RETRY = 'saju500:naver_retry';
+
+function startNaverLogin(returnToOverride?: string): void {
   const clientId = String(import.meta.env.VITE_NAVER_CLIENT_ID || '');
   if (!clientId) throw new Error('네이버 로그인을 준비 중이에요');
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   const state = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  const returnTo = `${location.pathname}${location.search}`;
+  const returnTo = returnToOverride || `${location.pathname}${location.search}`;
   try { localStorage.setItem(NAVER_KEY, JSON.stringify({ state, returnTo, at: Date.now() })); } catch { /* noop */ }
   const redirectUri = `${location.origin}/auth/naver`;
   const q = new URLSearchParams({ response_type: 'code', client_id: clientId, redirect_uri: redirectUri, state });
@@ -204,8 +206,19 @@ export async function finishNaverLogin(params: URLSearchParams): Promise<{ retur
   const code = params.get('code') || '';
   const state = params.get('state') || '';
   if (!code || !state || state !== saved.state || Date.now() - Number(saved.at || 0) > 30 * 60e3) {
+    // 2026-10-20 — 휴대폰에서 네이버 앱이나 다른 브라우저를 거쳐 돌아오면 이 브라우저에 시작 기록(state)이 없어 늘 실패했다
+    //   (오너 기기 10-20, 네이버 검수 '로그인을 이용할 수 없음'). 이 브라우저에서 한 번만 다시 시작해 같은 곳으로 돌아오게 한다
+    let last = 0;
+    try { last = Number(sessionStorage.getItem(NAVER_RETRY) || 0); } catch { /* noop */ }
+    if (Date.now() - last > 2 * 60e3) {
+      try { sessionStorage.setItem(NAVER_RETRY, String(Date.now())); } catch { /* noop */ }
+      import('@/services/analytics').then((a) => a.trackEvent('login_fail', { provider: 'naver', via: 'redirect', code: 'naver/state_retry', msg: saved.state ? 'mismatch' : 'no_local_state' })).catch(() => {});
+      startNaverLogin(returnTo);
+      return new Promise<never>(() => {}); // 네이버로 다시 이동하는 중
+    }
     throw Object.assign(new Error('로그인 정보가 맞지 않아요. 다시 시도해 주세요'), { code: 'naver/state', returnTo });
   }
+  try { sessionStorage.removeItem(NAVER_RETRY); } catch { /* noop */ }
   // 지금 쓰던 계정(익명 포함)이 서버 요청에 같이 가야 그 계정에 붙는다. 부팅의 익명 로그인이 아직이면 잠깐 기다린다
   //   (기다리지 않으면 맞춤 토큰 로그인 뒤에 부팅의 익명 로그인이 덮어쓸 수 있다)
   await auth.authStateReady();
