@@ -121,19 +121,22 @@ export function TtiYearBoardPage() {
           <p style={{ textAlign: 'center', fontSize: 14, color: HJ.mute, marginTop: 12 }}>띠를 누르면 좋은 달과 조심할 달이 나와요</p>
         )}
 
-        <GoldCta style={{ marginTop: 16 }} onClick={share}>{busy ? '준비 중이에요' : '가족 단톡방에 보내기'}</GoldCta>
-        <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>화면을 그대로 캡처해서 보내도 돼요</p>
-
+        {/* 2026-10-21 — 광고 손님 대부분이 이 화면에서 띠 표만 보고 나갔다(메타 V3, 사주 입력 3.5%).
+         *   내 사주 입구를 표 바로 아래로 올리고 무료 미리 보기를 앞세운다(미리 보기는 좋은 달, 조심할 달, 기억할 날 수를 무료로 보여 준다) */}
         <button type="button" className="w-full text-left mo-press"
           onClick={() => { trackEvent('cta_click', { label: '2027 한 장에서 신년운세', page: '/tti/2027' }); navigate('/tojung'); }}
-          style={{ marginTop: 18, borderRadius: 16, padding: '14px 15px', background: HJ.ink, color: '#F1ECE1', border: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+          style={{ marginTop: 16, borderRadius: 16, padding: '15px 15px', background: HJ.ink, color: '#F1ECE1', border: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
           <Seal size={30} fontSize={16}>歲</Seal>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontFamily: SERIF, fontSize: 16.5, fontWeight: 700 }}>내 사주로 보는 {YEAR}년</span>
-            <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.5, color: '#D9CFBE', marginTop: 2 }}>좋은 달, 조심할 달, 꼭 기억할 날까지 내 사주로 골라 드려요</span>
+            <span style={{ display: 'block', fontFamily: SERIF, fontSize: 16.5, fontWeight: 700 }}>내 생일로 보는 {YEAR}년</span>
+            <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.5, color: '#D9CFBE', marginTop: 2 }}>띠가 같아도 생일마다 좋은 달이 달라요. 좋은 달과 조심할 달은 무료로 미리 볼 수 있어요</span>
           </span>
-          <span style={{ fontSize: 14, fontWeight: 800, color: '#D2B477', flexShrink: 0 }}>{price.launch ? `${price.launch.badge} ` : ''}{price.actualPrice}운 ›</span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: '#D2B477', flexShrink: 0 }}>미리 보기 ›</span>
         </button>
+        <p style={{ textAlign: 'center', fontSize: 13, color: HJ.mute, marginTop: 6 }}>날짜까지 다 보는 {YEAR} 신년운세는 {price.actualPrice}운이에요</p>
+
+        <GoldCta style={{ marginTop: 18 }} onClick={share}>{busy ? '준비 중이에요' : '가족 단톡방에 보내기'}</GoldCta>
+        <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 8 }}>화면을 그대로 캡처해서 보내도 돼요</p>
       </div>
     </div>
   );

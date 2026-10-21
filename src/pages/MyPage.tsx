@@ -154,15 +154,18 @@ export function MyPage() {
       // 10-19 — 서버에 이 계정 운이 다 있으면 이 기기 잔액을 지운다(다시 로그인하면 syncFromCloud 가 돌려놓는다).
       //   남기면 로그아웃 뒤 로그인 없이 그 운을 쓰고, 다시 로그인하면 서버 운으로 되살아났다.
       //   서버 기록이 없거나 이 기기 운이 더 많으면(로그인 전에 받은 운 등) 지우지 않는다 — 지우면 그 운이 사라진다.
+      //   10-21 — 서버에 없는 몫(보상 등)이 조금이라도 있으면 지우지 않아 로그아웃 뒤에도 운이 보였다(오너 지적).
+      //   이제 출석 운을 서버에 먼저 반영하고, 이 기기 잔액 전부를 이 계정 사본(state/balance, 로그아웃 표시)에 남긴 뒤 지운다.
+      //   다시 로그인하면 syncFromCloud 가 그 사본으로 되살린다. 사본 저장이 실패하면 지우지 않는다(운이 사라지지 않게).
       try {
         const uid = user?.uid;
         if (uid) {
-          const [{ doc, getDoc }, { db }, store] = await Promise.all([import('firebase/firestore'), import('@/services/auth/firebase'), import('@/services/storage/localStore')]);
-          const b: any = (await getDoc(doc(db, 'users', uid))).data()?.balance;
-          const cloud = typeof b === 'number' ? b : (Number(b?.paid) || 0) + (Number(b?.bonus) || 0) + (Number(b?.reward) || 0);
-          if (cloud > 0 && cloud + 1e-6 >= store.getBalance()) store.clearLocalBalance();
+          try { await (await import('@/services/storage/serverRewardMirror')).flushServerRewards(); } catch { /* 다음에 */ }
+          const [store, sync] = await Promise.all([import('@/services/storage/localStore'), import('@/services/storage/firestoreSync')]);
+          const saved = await sync.pushBalanceMirror(store.getBalanceBreakdown(), { logout: true });
+          if (saved) store.clearLocalBalance();
         }
-      } catch { /* 못 읽으면 지우지 않는다 */ }
+      } catch { /* 못 남기면 지우지 않는다 */ }
       await signOut();
       toast.show('로그아웃 됐어요', 'info');
     } catch {

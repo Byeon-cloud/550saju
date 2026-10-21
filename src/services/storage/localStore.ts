@@ -529,9 +529,10 @@ export const BALANCE_CHANGED_EVENT = 'saju500:balance-changed';
 
 /** 웹 로그아웃 때 이 기기 잔액만 지운다 (10-19 오너: 로그아웃했는데 운 4개가 그대로).
  *  로그인 계정의 운은 서버(users.balance)에 있어 다시 로그인하면 syncFromCloud 가 돌려놓는다.
- *  남겨 두면 로그인 안 한 상태로 그 운을 쓰고(익명은 서버가 깎지 않는다) 다시 로그인하면 운이 되살아났다. 미러는 보내지 않는다 */
+ *  남겨 두면 로그인 안 한 상태로 그 운을 쓰고(익명은 서버가 깎지 않는다) 다시 로그인하면 운이 되살아났다. 미러는 보내지 않는다
+ *  10-21 — 키를 지우면 다음 읽기에서 처음 온 손님 기본값(1운)이 생겨 로그아웃할 때마다 1운이 생겼다 → 0으로 적는다(미러 push 없이 직접) */
 export function clearLocalBalance(): void {
-  try { localStorage.removeItem(BALANCE_KEY); localStorage.removeItem(BALANCE_LEGACY_KEY); } catch { /* noop */ }
+  try { localStorage.setItem(BALANCE_KEY, JSON.stringify({ paid: 0, bonus: 0, reward: 0 })); localStorage.removeItem(BALANCE_LEGACY_KEY); } catch { /* noop */ }
   try { window.dispatchEvent(new Event(BALANCE_CHANGED_EVENT)); } catch { /* noop */ }
 }
 

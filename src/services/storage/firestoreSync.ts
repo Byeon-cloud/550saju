@@ -236,6 +236,27 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
         }
       }
     }
+
+    // 3. 2026-10-21 — 로그아웃 직전 스냅샷으로 되살리기. 로그아웃은 이 기기 잔액을 지우고 그 값을 이 계정 사본에 남긴다(MyPage onLogout).
+    //   서버 잔액에 없던 몫(예전 보상 등)도 다시 로그인하면 돌아오게, 기기 잔액이 스냅샷보다 적을 때만 모자란 만큼 채운다.
+    //   로그인한 계정만, 스냅샷은 한 번 쓰면 표시를 지운다(되풀이 채우기 방지).
+    if (auth.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.uid === uid) {
+      const snap = await getDoc(doc(db, `users/${uid}/state`, 'balance')).catch(() => null);
+      const m = snap?.exists() ? (snap.data() as Record<string, unknown>) : null;
+      if (m && m.logoutAt) {
+        const localRaw = localStorage.getItem('saju500_balance_v2');
+        const local: BalanceDetail = localRaw ? JSON.parse(localRaw) : { paid: 0, bonus: 0, reward: 0 };
+        const want = { paid: Math.max(0, Number(m.paid) || 0), bonus: Math.max(0, Number(m.bonus) || 0), reward: Math.max(0, Number(m.reward) || 0) };
+        const localTotal = (local.paid || 0) + (local.bonus || 0) + (local.reward || 0);
+        const wantTotal = want.paid + want.bonus + want.reward;
+        if (wantTotal > localTotal + 1e-6) {
+          // 스냅샷은 로그아웃 순간의 이 계정 잔액 전부(서버 잔액 포함)라 칸별로 그대로 되돌린다(칸마다 큰 값을 고르면 합이 부풀 수 있다)
+          localStorage.setItem('saju500_balance_v2', JSON.stringify(want));
+          try { window.dispatchEvent(new Event('saju500:balance-changed')); } catch { /* noop */ }
+        }
+        await setDoc(doc(db, `users/${uid}/state`, 'balance'), { logoutAt: null }, { merge: true }).catch(() => {});
+      }
+    }
   } catch (err) {
     console.warn('[Sync] 클라우드 다운로드 실패:', err);
   }
@@ -339,17 +360,21 @@ export async function backupReport(report: LocalReport): Promise<void> {
  *   ⚠️ users 문서의 금전 필드(balance 등)는 rules 로 클라 차단 유지 — 미러는 별도 서브컬렉션
  *   (state/balance) 이며 '클라 자기신고 스냅샷' 성격. 서버 지급 판정(grantPurchase 등)에는 절대 안 쓴다.
  */
-export async function pushBalanceMirror(detail: BalanceDetail): Promise<void> {
+export async function pushBalanceMirror(detail: BalanceDetail, opts?: { logout?: boolean }): Promise<boolean> {
   try {
     const uid = auth.currentUser?.uid;
-    if (!uid) return;
+    if (!uid) return false;
     await setDoc(doc(db, `users/${uid}/state`, 'balance'), {
       paid: Math.max(0, Number(detail.paid) || 0),
       bonus: Math.max(0, Number(detail.bonus) || 0),
       reward: Math.max(0, Number(detail.reward) || 0),
       updatedAt: new Date(),
+      // 2026-10-21 — 로그아웃 직전 스냅샷 표시. 다시 로그인하면 이 값으로 기기 잔액을 되살린다(syncFromCloud).
+      //   평소 저장은 이 표시를 건드리지 않는다(늦게 도착한 저장이 표시를 지우면 되살리기가 빠진다)
+      ...(opts?.logout ? { logoutAt: new Date() } : {}),
     }, { merge: true });
-  } catch { /* noop — 다음 잔액 변경에서 재시도 */ }
+    return true;
+  } catch { return false; /* 다음 잔액 변경에서 재시도 */ }
 }
 
 /**

@@ -121,7 +121,10 @@ ${body}
 <div>주라벨 주식회사 | 대표 변준기 | 사업자등록번호 228-88-03113 | 통신판매업 제 2025-부산사하-0235호 | info@juulabel.com</div>
 <div>© ${new Date().getFullYear()} 사주500</div>
 </footer>
-<script>(function(){try{var q=new URLSearchParams(location.search);if(!q.get('utm_source'))return;var K=['utm_source','utm_medium','utm_campaign','utm_content','utm_term'],keep=[];K.forEach(function(k){var v=q.get(k);if(v)keep.push(k+'='+encodeURIComponent(v));});window.__adUtm=keep.join('&');
+<script>(function(){try{var q=new URLSearchParams(location.search);var src=q.get('utm_source');if(!src)return;var K=['utm_source','utm_medium','utm_campaign','utm_content','utm_term','n_keyword'],keep=[];K.forEach(function(k){var v=q.get(k);if(v)keep.push(k+'='+encodeURIComponent(v));});window.__adUtm=keep.join('&');
+var m=q.get('utm_medium'),c=q.get('utm_campaign'),ct=(q.get('utm_content')||'').slice(0,60),t=(q.get('utm_term')||q.get('n_keyword')||'').slice(0,60),u={source:src};if(m)u.medium=m;if(c)u.campaign=c;if(ct)u.content=ct;if(t)u.term=t;
+try{if(!sessionStorage.getItem('saju500:utm'))sessionStorage.setItem('saju500:utm',JSON.stringify(u));localStorage.setItem('saju500:utm_last',JSON.stringify({u:u,at:Date.now()}));}catch(e){}
+try{var did=localStorage.getItem('saju500:did');if(!did){did='d_'+Date.now().toString(36)+Math.floor(Math.random()*1e9).toString(36);localStorage.setItem('saju500:did',did);}var body=JSON.stringify({source:src,medium:m,campaign:c,content:ct,term:t,did:did,path:location.pathname});if(navigator.sendBeacon){navigator.sendBeacon('/api/seo-hit',new Blob([body],{type:'application/json'}));}else{fetch('/api/seo-hit',{method:'POST',headers:{'Content-Type':'application/json'},body:body,keepalive:true});}}catch(e){}
 document.querySelectorAll('a[href^="/"]').forEach(function(a){var u=new URL(a.getAttribute('href'),location.origin);if(!u.searchParams.get('utm_source'))return;K.forEach(function(k){u.searchParams.delete(k);});K.forEach(function(k){var v=q.get(k);if(v)u.searchParams.set(k,v);});a.setAttribute('href',u.pathname+u.search+u.hash);});}catch(e){}})();</script>
 </body></html>`;
 }

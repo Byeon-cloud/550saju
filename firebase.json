@@ -36,6 +36,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/seo-hit",
+        "function": "seoHit"
+      },
+      {
         "source": "/api/saju-card-og.png",
         "function": "renderSajuCardOgImage"
       },

@@ -30,6 +30,11 @@ export const claimCompensation = onCall(
       uid,
     ].filter(Boolean)) as string[]));
 
+    // 2026-10-21 — 로그인 계정은 유료 풀이 값을 서버 잔액(users/{uid}.balance)에서 깎는다. 보상이 기기 잔액에만 들어가면
+    //   화면에는 운이 있는데 서버가 '운이 부족합니다'로 막고, 로그아웃하면 그 운이 기기에만 남았다 → 서버 잔액에도 같이 더한다.
+    //   익명 계정은 서버가 잔액을 깎지 않으므로 지금처럼 기기 잔액만.
+    const isAnon = request.auth?.token?.firebase?.sign_in_provider === 'anonymous';
+    const userRef = db.collection('users').doc(uid);
     let total = 0;
     let note = '';
     const wipeTopics: string[] = [];
@@ -38,6 +43,7 @@ export const claimCompensation = onCall(
       try {
         const r = await db.runTransaction(async (tx) => {
           const snap = await tx.get(ref);
+          const userSnap = isAnon ? null : await tx.get(userRef);
           if (!snap.exists) return { amount: 0 };
           const d = snap.data() as { amount?: number; note?: string; claimed?: boolean; wipeTopics?: string[] };
           if (d.claimed) return { amount: 0 };
@@ -48,6 +54,11 @@ export const claimCompensation = onCall(
             claimedAt: admin.firestore.FieldValue.serverTimestamp(),
             claimedByUid: uid,
           });
+          if (userSnap?.exists) {
+            const b = userSnap.data()?.balance;
+            const cur = typeof b === 'number' ? { paid: b, bonus: 0, reward: 0 } : { paid: Number(b?.paid) || 0, bonus: Number(b?.bonus) || 0, reward: Number(b?.reward) || 0 };
+            tx.update(userRef, { balance: { ...cur, paid: cur.paid + amount } }); // 기기 쪽(App.tsx addPaidBalance)과 같은 칸
+          }
           return { amount, note: d.note || '', wipeTopics: Array.isArray(d.wipeTopics) ? d.wipeTopics : [] };
         });
         if (r.amount > 0) {

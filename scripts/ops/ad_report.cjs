@@ -8,8 +8,8 @@ const { query } = require('./fs.cjs');
 const [from, to, spendArg] = process.argv.slice(2);
 if (!from || !to) { console.log('사용: node ad_report.cjs 시작일 끝일 [{"meta":70000}]'); process.exit(1); }
 const spend = spendArg ? JSON.parse(spendArg) : {};
-const AD_SOURCES = new Set(['meta', 'naver', 'instagram', 'facebook']);
-const NAMES = ['app_open', 'page_view', 'profile_created', 'content_result', 'content_purchase', 'charge_complete', 'manse_view', 'tti_open'];
+const AD_SOURCES = new Set(['meta', 'naver', 'tossads', 'instagram', 'facebook']);
+const NAMES = ['app_open', 'page_view', 'profile_created', 'content_result', 'content_purchase', 'charge_complete', 'manse_view', 'tti_open', 'seo_view', 'tojung_preview_view', 'charge_open'];
 const days = [];
 for (let d = new Date(from + 'T00:00:00Z'); d <= new Date(to + 'T00:00:00Z'); d = new Date(d.getTime() + 864e5)) days.push(d.toISOString().slice(0, 10));
 
@@ -41,7 +41,8 @@ for (let d = new Date(from + 'T00:00:00Z'); d <= new Date(to + 'T00:00:00Z'); d 
     const g = m.get(k) || { opens: new Set(), inputs: new Set(), results: new Set(), payers: new Set(), revenue: 0 };
     g.opens.add(w);
     if (x.name === 'profile_created') g.inputs.add(w);
-    if (x.name === 'content_result') g.results.add(w);
+    if (x.name === 'content_result' || x.name === 'manse_view' || x.name === 'tojung_preview_view') g.results.add(w); // 2026-10-21 무료 결과(만세력, 신년 미리 보기)도 결과로
+    if (x.name === 'charge_open') (g.charge ||= new Set()).add(w);
     if (x.name === 'charge_complete') { g.payers.add(w); g.revenue += Number(x.props?.amount) || 0; }
     m.set(k, g);
   };
@@ -57,9 +58,9 @@ for (let d = new Date(from + 'T00:00:00Z'); d <= new Date(to + 'T00:00:00Z'); d 
   const won = (n) => `${Math.round(n).toLocaleString('ko-KR')}원`;
   console.log(`광고 성과 ${from} ~ ${to} (오너 기기 제외, 기기 수)`);
   for (const [title, m] of [['출처', groups.source], ['소재', groups.content], ['노출 위치', groups.term], ['나이대(본인 사주)', groups.age]]) {
-    console.log(`\n[${title}]  연 사람 / 사주 입력 / 결과 / 충전 / 매출`);
+    console.log(`\n[${title}]  연 사람 / 사주 입력 / 결과(무료 포함) / 충전 화면 / 충전 / 매출`);
     for (const [k, g] of [...m.entries()].sort((a, b) => b[1].opens.size - a[1].opens.size)) {
-      console.log(`  ${k}: ${g.opens.size} / ${g.inputs.size} (${pct(g.inputs.size, g.opens.size)}) / ${g.results.size} / ${g.payers.size} / ${won(g.revenue)}`);
+      console.log(`  ${k}: ${g.opens.size} / ${g.inputs.size} (${pct(g.inputs.size, g.opens.size)}) / ${g.results.size} / ${g.charge ? g.charge.size : 0} / ${g.payers.size} / ${won(g.revenue)}`);
     }
   }
   if (Object.keys(spend).length) {
