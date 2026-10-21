@@ -69,6 +69,8 @@ function naver(fn: (wcs: any) => void, tries = 0): void {
 const lastSent: Record<string, number> = {};
 
 export function adEvent(name: string, params?: Record<string, string | number>): void {
+  // 2026-10-21 — 오너 기기(관리자 화면을 연 기기, analytics 의 internal 표시와 같은 기준)는 광고 학습에 섞이지 않게 보내지 않는다
+  try { if (localStorage.getItem('saju500:internal') === '1') return; } catch { /* noop */ }
   if (state === 'off' || (state === 'idle' && !initAdPixels())) return;
   const w = window as any;
   const amount = Number(params?.amount) || 0;
