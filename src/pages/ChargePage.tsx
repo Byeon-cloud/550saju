@@ -129,10 +129,14 @@ export function ChargePage() {
   });
   const stateReturnTo = ((location.state as any)?.returnTo as string | undefined) || ctx?.returnTo;
   const redirectTo = searchParams.get('redirect') || stateReturnTo || null;
-  const needRaw = searchParams.get('need') || (ctx?.need ? String(ctx.need) : null);
-  const needUn = needRaw && !Number.isNaN(Number(needRaw)) ? Number(needRaw) : null;
   // 2026-05-29 — 잔액부족 모달 등이 보낸 안내 메시지 (왜 충전 화면에 왔는지). 기존엔 어디서도 표시 안 됨.
   const stateMessage = ((location.state as any)?.message as string | undefined) || ctx?.message;
+  // 2026-10-21 — 신년운세, 궁합, 대운은 need 없이 메시지만 넘겨 기본 묶음(15운, 5,000원)이 골라져 있었다.
+  //   광고 손님이 7운짜리를 사려다 5,000원을 보고 몇 초 만에 나갔다 → 메시지의 'N운이 필요'에서 N 을 읽는다.
+  const needFromMsg = stateMessage?.match(/(\d+)운이 필요/)?.[1] || null;
+  const needRaw = searchParams.get('need') || (ctx?.need ? String(ctx.need) : null) || needFromMsg;
+  const needUn = needRaw && !Number.isNaN(Number(needRaw)) ? Number(needRaw) : null;
+  const buyIntent = needUn !== null && needUn > 0;
 
   // 2026-06-24 — '어떤 콘텐츠에서 결제를 결심했나' 트래킹용 source 파생.
   //   returnTo/redirect 경로에서 콘텐츠 type 우선, 없으면 need 값, 둘 다 없으면 'direct'.
@@ -385,8 +389,8 @@ export function ChargePage() {
         </div>
       </div>
 
-      {/* 사주를 넣은 적 없는 사람 → 충전보다 무료 오늘의 운세 먼저 (운이 모자라 넘어온 사람에겐 안 보임) */}
-      {!hasProfile && !redirectTo && (
+      {/* 사주를 넣은 적 없는 사람 → 충전보다 무료 오늘의 운세 먼저 (운이 모자라 넘어온 사람, 살 풀이를 정하고 온 사람에겐 안 보임) */}
+      {!hasProfile && !redirectTo && !buyIntent && (
         <div style={{ margin: '14px 16px 0', background: '#FFFDF8', border: `1px solid ${C.line}`, borderRadius: 14, padding: '16px 16px 14px' }}>
           <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 17, fontWeight: 700, color: C.ink }}>충전하기 전에 무료로 먼저 보세요</div>
           <div style={{ marginTop: 6, fontSize: 14.5, color: C.inkSoft, lineHeight: 1.65 }}>생년월일만 넣으면 내 사주로 오늘의 운세를 풀어 드려요. 하루 한 번 무료예요.</div>
@@ -400,8 +404,27 @@ export function ChargePage() {
         </div>
       )}
 
+      {/* 2026-10-21 — 살 풀이를 정하고 온 사람에겐 화폐 설명보다 '무엇을 얼마에'를 먼저 (광고 손님 7명이 충전 화면에서 2~8초 만에 나감) */}
+      {buyIntent && (
+        <div style={{ margin: '14px 16px 0', background: '#FFFDF8', border: `1px solid ${C.goldLine}`, borderRadius: 14, padding: '18px 18px 16px' }}>
+          <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 18, fontWeight: 700, color: C.ink, lineHeight: 1.45 }}>
+            {stateMessage || `이 풀이에 ${needUn}운이 필요해요`}
+          </div>
+          <div style={{ marginTop: 8, fontSize: 16, color: C.ink, lineHeight: 1.55 }}>
+            <strong style={{ color: C.goldDeep, fontWeight: 800 }}>{selectedPkg.price.toLocaleString('ko-KR')}원</strong>이면 바로 볼 수 있어요
+          </div>
+          <div style={{ marginTop: 4, fontSize: 14, color: C.inkSoft, lineHeight: 1.6 }}>
+            {selectedPkg.bonusUn > 0
+              ? `${selectedPkg.paidUn}운에 보너스 ${selectedPkg.bonusUn}운을 더해 ${selectedPkg.un}운이 들어와요. `
+              : `${selectedPkg.un}운이 들어와요. `}
+            {redirectTo ? '결제하면 바로 풀이로 돌아가요.' : '남은 운은 다음 풀이에 쓸 수 있어요.'}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 13, color: C.mute }}>1운은 500원이에요</div>
+        </div>
+      )}
+
       {/* ─── §3. HeroBar (104px · 1운=500원 환율 명시 · 원화 노출 유일 진입점) ─── */}
-      <div style={{
+      {!buyIntent && <div style={{
         height: 104, background: C.goldSoft,
         padding: '0 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -432,10 +455,10 @@ export function ChargePage() {
             fontFamily="'Noto Serif KR', serif"
           >運</text>
         </svg>
-      </div>
+      </div>}
 
-      {/* ─── §4. RedirectHint (URL ?need=N 또는 state.message — 왜 충전 화면에 왔는지 안내) ─── */}
-      {(needUn !== null && needUn > 0) || stateMessage ? (
+      {/* ─── §4. RedirectHint (state.message — 왜 충전 화면에 왔는지 안내. 살 풀이가 정해진 경우는 위 요약이 대신한다) ─── */}
+      {!buyIntent && stateMessage ? (
         <div style={{
           margin: '12px 16px 0',
           minHeight: 60, background: '#FFFFFF',
