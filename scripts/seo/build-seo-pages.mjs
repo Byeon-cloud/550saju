@@ -43,6 +43,15 @@ const gzKo = (gz) => GAN_KO[gz[0]] + ZHI_KO[gz[1]];
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const firstSentence = (s) => (String(s).match(/^.*?(니다|요)\./) || [s])[0];
 const utm = (slug) => `utm_source=seo&utm_medium=organic&utm_campaign=tti${YEAR}_${slug}`;
+// 2026-10-21 — 얼리버드 마감 메일 신청은 11/27 까지(DeadlineMailSignup SHOW_UNTIL). 그 뒤에도 '출시 기념가' 문구가 남으면
+//   표시 가격과 실제 가격이 어긋난다. 11/28 0시(KST) 이후 빌드는 아예 빼고, 그 전 빌드는 페이지 안 시계로 무료 미리 보기 문구로 바꾼다.
+const MAIL_UNTIL_MS = Date.UTC(2026, 10, 27, 15, 0, 0);
+const deadlineMailLink = (slug) => {
+  const free = `<a class="sub ny-free" href="/tojung?${utm(slug + '_free')}"${Date.now() >= MAIL_UNTIL_MS ? '' : ' style="display:none"'}>${YEAR}년 좋은 달과 조심할 달은 무료로 미리 보기</a>`;
+  if (Date.now() >= MAIL_UNTIL_MS) return free;
+  return `<a class="sub ny-mail" href="/tojung?${utm(slug + '_mail')}#deadline-mail">출시 기념가 마감 전에 메일로 알림 받기</a>${free}`
+    + `<script>(function(){if(Date.now()<${MAIL_UNTIL_MS})return;var s=document.currentScript.parentNode;var m=s.querySelector('.ny-mail'),f=s.querySelector('.ny-free');if(m)m.parentNode.removeChild(m);if(f)f.style.display='';})();</script>`;
+};
 const yearGz = data.yearGz; // 丁未
 
 const CSS = `
@@ -176,7 +185,7 @@ for (const z of ORDER) {
 <p>내 사주 여덟 글자로 ${YEAR}년 열두 달을 날짜까지 풀어 드려요.</p>
 <a class="btn" href="/tojung?${utm(slug)}">내 생일로 ${YEAR} 신년운세 보기</a>
 <a class="sub" href="/?${utm(slug + '_today')}">오늘의 ${name} 운세는 무료로 보기</a>
-<a class="sub" href="/tojung?${utm(slug + '_mail')}#deadline-mail">출시 기념가 마감 전에 메일로 알림 받기</a>
+${deadlineMailLink(slug)}
 </section>
 <section class="sec"><h2>다른 띠 ${YEAR}년 운세</h2>${ttiGrid(z)}</section>
 <p class="note">이 풀이는 띠(태어난 해의 지지)와 ${YEAR}년 ${gzKo(yearGz)}년의 관계, 태어난 해의 천간을 명리학 원리에 따라 본 참고용 풀이예요. 달은 절기 기준이라 양력 4~8일 무렵에 바뀌어요.</p>
@@ -209,7 +218,7 @@ for (const z of ORDER) {
 <p>생일과 태어난 시간을 넣으면 내 사주로 ${YEAR}년 열두 달을 날짜까지 풀어 드려요.</p>
 <a class="btn" href="/tojung?${utm('hub')}">내 생일로 ${YEAR} 신년운세 보기</a>
 <a class="sub" href="/?${utm('hub_today')}">오늘의 띠 운세는 무료로 보기</a>
-<a class="sub" href="/tojung?${utm('hub_mail')}#deadline-mail">출시 기념가 마감 전에 메일로 알림 받기</a>
+${deadlineMailLink('hub')}
 </section>
 <p class="note">띠(태어난 해의 지지)와 ${YEAR}년 ${gzKo(yearGz)}년의 관계, 태어난 해의 천간을 명리학 원리에 따라 본 참고용 풀이예요.</p>
 </main>`;

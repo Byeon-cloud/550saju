@@ -186,7 +186,7 @@ export function TojungPage() {
     } catch { /* 점진 표시는 부가 기능 */ }
 
     try {
-      const res = await generateTojungBigyeol(selected.sajuData, progressId);
+      const res = await generateTojungBigyeol(selected.sajuData, progressId, NEWYEAR_PRICE);
       settled = true;
       setResult(res.content);
       setArrivedNy({ A: true, B: true, C: true });

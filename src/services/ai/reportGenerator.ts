@@ -966,7 +966,9 @@ export async function generateTojungBigyeol(
   sajuData: SajuData,
   /** 2026-10-09 — 점진 표시 좌표 (서버가 총평·1~6월·7~12월 완성마다 progress/{id} 에 write) */
   progressId?: string,
+  /** 2026-10-21 — 화면이 이번에 낸 운. 서버가 11/30 자정 경계 15분 동안 7운 결제를 7운으로 받는 데 쓴다 */
+  priceUn?: number,
 ): Promise<{ reportId: string; content: TojungResponse }> {
-  const result = await callWithAuth('generateTojung', { sajuData, ...(progressId ? { progressId } : {}) });
+  const result = await callWithAuth('generateTojung', { sajuData, ...(progressId ? { progressId } : {}), ...(priceUn ? { priceUn } : {}) });
   return result.data as { reportId: string; content: TojungResponse };
 }

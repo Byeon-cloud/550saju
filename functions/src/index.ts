@@ -35,6 +35,14 @@ const COMPAT_COST = 3;
 // 신년운세: 정가 9운, 2026-11-30 23:59 KST 까지 얼리버드 7운 (클라 getTojungPrice 와 같은 날짜)
 const TOJUNG_LAUNCH_END_MS = Date.UTC(2026, 10, 30, 14, 59, 59);
 const tojungCost = (): number => (Date.now() <= TOJUNG_LAUNCH_END_MS ? 7 : 9);
+// 2026-10-21 — 화면은 누른 순간 기기 시계로 값을 정하고 서버는 실행 시각으로 정해서, 11/30 자정 직전에 7운으로 누른 손님이
+//   서버에서 9운을 낼 수 있다(화면 기록과 2운 어긋남). 마감 뒤 15분까지는 화면이 7운으로 냈다고 알려 온 결제만 7운으로 받는다.
+const TOJUNG_GRACE_MS = 15 * 60 * 1000;
+const tojungCostFor = (clientPriceUn: unknown): number => {
+  const cost = tojungCost();
+  if (cost === 9 && Number(clientPriceUn) === 7 && Date.now() <= TOJUNG_LAUNCH_END_MS + TOJUNG_GRACE_MS) return 7;
+  return cost;
+};
 const lazyClaudeDaeun = () => import('./ai/claudeDaeun');
 const lazyClaudeMonthly = () => import('./ai/claudeMonthly');
 const lazyClaudeWeekly = () => import('./ai/claudeWeekly');
@@ -1947,14 +1955,15 @@ export const generateTojung = onCall(
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
       if (userDoc.exists) {
+        const cost = tojungCostFor(request.data?.priceUn); // 2026-10-15 정가 9운, 얼리버드 7운, 10-21 자정 경계 15분
         // 2026-05-28 — schema 통일 helper
         await db.runTransaction(async (tx) => {
           const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), tojungCost()); // 2026-10-15 정가 9운, 얼리버드 7운
+          const result = computeBalanceDeduction(doc.data(), cost);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, result.updates);
         });
-        deductedAmount = tojungCost();
+        deductedAmount = cost;
       }
     }
 
