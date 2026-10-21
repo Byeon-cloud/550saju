@@ -190,7 +190,7 @@ export function ChargePage() {
     if (pgReview) return handlePgTest(method);
     if (portoneLive) {
       if (isPortoneLiveMethod(method)) return handlePgLive(method);
-      toast.show('카드번호로 바로 내는 결제는 곧 열려요. 지금은 카카오페이에 등록한 카드로 낼 수 있어요', 'info');
+      toast.show('카드 결제는 곧 열려요. 지금은 카카오페이로 결제하거나, 토스 앱의 사주500에서 앱스토어나 구글 플레이 결제로 낼 수 있어요', 'info');
       return;
     }
     return handlePgTest(method);
@@ -773,7 +773,7 @@ export function ChargePage() {
                           <rect x="5.5" y="14.4" width="6" height="1.8" rx="0.9" fill="#1A1A1A" />
                         </svg>
                       </span>
-                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용과 체크카드{cardSoon && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>카드번호로 바로 내기는 곧 열려요</span>}</span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용과 체크카드{cardSoon && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>곧 열려요</span>}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                     <button onClick={() => payWith('kakaopay')} style={{
@@ -790,12 +790,12 @@ export function ChargePage() {
                           <path d="M12 1C5.92 1 1 4.93 1 9.78c0 3.07 1.97 5.77 4.95 7.33l-1.2 4.45c-.1.4.35.72.7.49l5.23-3.48c.44.04.88.07 1.32.07 6.08 0 11-3.93 11-8.86C23 4.93 18.08 1 12 1z" fill="#1A1A1A" />
                         </svg>
                       </span>
-                      {/* 2026-10-21 — 카드 줄이 '곧 열려요'라 50대 손님이 카드로는 못 낸다고 보고 나갈 수 있다. 카카오페이 안에서 등록한 카드로 낼 수 있음을 적는다 */}
-                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>카카오페이{cardSoon && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>등록한 신용카드, 체크카드로도 낼 수 있어요</span>}</span>
+                      {/* 2026-10-21 — 카카오페이 안의 카드 결제는 카카오페이 사용자에게만 해당하고 우리 가맹점에서 확인 전이라 적지 않는다(오너). 카카오페이가 없는 손님은 아래 토스 앱 안내로 */}
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>카카오페이{cardSoon && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>카카오톡으로 결제해요</span>}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                     {/* 2026-10-21 — 카드 계약 전 웹 실결제는 카카오페이뿐이다. 카카오페이를 안 쓰는 손님이 그냥 나가지 않게
-                     *   같은 사주500이 있는 토스 앱(토스 결제로 카드, 토스머니)을 알려 준다. 누른 수로 카카오페이 없는 손님 규모를 본다 */}
+                     *   같은 사주500이 있는 토스 앱(앱스토어, 구글 플레이 결제)을 알려 준다. 누른 수로 카카오페이 없는 손님 규모를 본다 */}
                     {cardSoon && (
                       <button type="button" onClick={() => setNoKakaoOpen((v) => !v)} style={{
                         order: 3, width: '100%', padding: '12px 16px', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
@@ -804,7 +804,7 @@ export function ChargePage() {
                         <span style={{ display: 'block', fontSize: 14.5, fontWeight: 700, color: C.ink }}>카카오페이를 안 쓰세요?</span>
                         {noKakaoOpen && (
                           <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.6, color: C.mute, marginTop: 6 }}>
-                            토스 앱에서 '사주500'을 검색하면 같은 풀이를 카드나 토스머니로 결제할 수 있어요. 여기서 넣은 생일은 토스 앱에서 한 번 더 넣어 주세요. 카드 결제는 이 화면에도 곧 열려요.
+                            토스 앱에서 '사주500'을 검색하면 같은 풀이를 볼 수 있어요. 토스 앱에서는 휴대폰에 등록된 앱스토어나 구글 플레이 결제로 내요. 여기서 넣은 생일은 토스 앱에서 한 번 더 넣어 주세요. 카드 결제는 이 화면에도 곧 열려요.
                           </span>
                         )}
                       </button>
