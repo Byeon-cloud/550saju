@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { useToast } from '@/components/common/Toast';
-import { inAppBrowserName } from '@/utils/inAppBrowser';
+import { inAppBrowserName, openInExternalBrowser } from '@/utils/inAppBrowser';
 
 const C = {
   paper:    '#F8F5EE',
@@ -87,7 +87,9 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
               maxWidth: 520,
               margin: '0 auto',
               padding: '24px 24px 40px',
-              overflow: 'hidden',
+              // 2026-10-21 — 키 작은 화면(인스타그램 안 등)에서 아래 약관 문구가 잘려 넘치면 스크롤
+              overflowX: 'hidden',
+              overflowY: 'auto',
             }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -168,9 +170,21 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
                 구글 로그인
               </button>}
               {inApp && (
-                <p className="text-center text-[13px] leading-[1.6] mt-1" style={{ color: C.mute }}>
-                  구글 계정은 {inApp} 안에서 로그인할 수 없어요.<br />구글로 하려면 오른쪽 위 메뉴에서 다른 브라우저로 열어 주세요.
-                </p>
+                <>
+                  <p className="text-center text-[13px] leading-[1.6] mt-1" style={{ color: C.mute }}>
+                    구글 계정은 {inApp} 안에서 로그인할 수 없어요
+                  </p>
+                  {/* 2026-10-21 — 메뉴를 찾지 못하는 손님용. 막힌 곳(아이폰 인스타그램 등)은 위 안내대로 오른쪽 위 메뉴 */}
+                  <button type="button"
+                    onClick={() => { if (!openInExternalBrowser()) toast.show('오른쪽 위 메뉴에서 다른 브라우저로 열기를 눌러 주세요', 'info'); }}
+                    className="w-full rounded-2xl font-semibold text-[15px]"
+                    style={{ height: 48, background: 'transparent', color: C.ink, border: '1px solid rgba(26,26,26,0.2)' }}>
+                    기본 브라우저로 열기
+                  </button>
+                  <p className="text-center text-[13px] leading-[1.6]" style={{ color: C.mute }}>
+                    열리지 않으면 오른쪽 위 메뉴에서 다른 브라우저로 열기를 눌러 주세요
+                  </p>
+                </>
               )}
 
             </div>
