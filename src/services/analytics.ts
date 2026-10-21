@@ -7,6 +7,7 @@
  *   비용: 이벤트당 1 write (출시 초기 저트래픽 OK). fire-and-forget — 실패해도 UX 영향 0.
  */
 import { isAppintosBuild } from '@/lib/env';
+import { inAppBrowserName } from '@/utils/inAppBrowser';
 
 /** GA4 (외부 대시보드용 — 유입경로·유저플로우·체류시간) */
 /** 토스 자체 analytics(@apps-in-toss web-analytics)로 핵심 이벤트 미러 (2026-06-27 · D).
@@ -379,6 +380,8 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
       const uid = getAuth().currentUser?.uid ?? null;
       const utm = getUtm();
       const demo = getDemo();
+      // 2026-10-21 — 웹 결제가 어디서 끊기는지 인스타그램, 카카오톡 같은 앱 안 브라우저별로 보려고 (앱 빌드는 기록 안 함)
+      const iab = isAppintosBuild ? null : inAppBrowserName();
       await addDoc(collection(db, 'analytics'), {
         name: eventName,
         uid,
@@ -387,6 +390,7 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
         props: params ?? {},
         ...(utm ? { utm } : {}), // 유입 채널 (있을 때만 — C5)
         ...(demo ? { demo } : {}), // 성별·연령대 (본인 프로필 파생 — 2026-06-12)
+        ...(iab ? { iab } : {}), // 앱 안 브라우저 이름 (웹만, 2026-10-21)
         ...(internal === 'owner' ? { internal: true } : {}), // 오너 기기 — 집계 제외 마킹
         plat: await getPlat(), // 웹/토스앱 분리 (2026-06-12)
         ts: serverTimestamp(),
