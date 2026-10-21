@@ -29,9 +29,9 @@ const NAMES = ['charge_open', 'cta_click', 'login_success', 'login_fail', 'charg
 
   const STEPS = ['충전 화면', '결제하기 누름', '로그인 성공(또는 이미 로그인)', '결제 수단 누름', '결제 완료'];
   const groups = new Map();
-  const add = (g, reached, failed) => {
-    if (!groups.has(g)) groups.set(g, { n: STEPS.map(() => 0), failed: 0 });
-    const o = groups.get(g); for (let i = 0; i < reached; i++) o.n[i]++; o.failed += failed ? 1 : 0;
+  const add = (g, reached, failed, noKakao) => {
+    if (!groups.has(g)) groups.set(g, { n: STEPS.map(() => 0), failed: 0, noKakao: 0 });
+    const o = groups.get(g); for (let i = 0; i < reached; i++) o.n[i]++; o.failed += failed ? 1 : 0; o.noKakao += noKakao ? 1 : 0;
   };
   for (const ev of byDev.values()) {
     const i0 = ev.findIndex((x) => x.name === 'charge_open');
@@ -43,6 +43,8 @@ const NAMES = ['charge_open', 'cta_click', 'login_success', 'login_fail', 'charg
     const login = after.findIndex((x) => x.name === 'login_success');
     const done = after.some((x) => x.name === 'charge_complete');
     const failed = after.some((x) => x.name === 'charge_failed');
+    // 10-21 결제 수단 화면의 '카카오페이를 안 쓰세요?'(토스 앱 안내) 누름
+    const noKakao = after.some((x) => x.name === 'cta_click' && /^카카오페이를 안 쓰세요/.test(label(x)));
     let reached = 1;
     if (payClick >= 0) reached = 2;
     if (reached === 2 && (login >= 0 || methodClick >= 0)) reached = 3;
@@ -50,10 +52,10 @@ const NAMES = ['charge_open', 'cta_click', 'login_success', 'login_fail', 'charg
     if (done) reached = 5;
     const src = String((ev.find((x) => x.utm?.source) || {}).utm?.source || '').toLowerCase();
     const iab = (ev.find((x) => x.iab) || {}).iab || '일반 브라우저(또는 10-21 전 기록)';
-    add('전체', reached, failed);
-    add('출처: ' + (ADS.has(src) ? '광고 ' + src : src ? '기타 ' + src : '출처 없음'), reached, failed);
-    add('브라우저: ' + iab, reached, failed);
+    add('전체', reached, failed, noKakao);
+    add('출처: ' + (ADS.has(src) ? '광고 ' + src : src ? '기타 ' + src : '출처 없음'), reached, failed, noKakao);
+    add('브라우저: ' + iab, reached, failed, noKakao);
   }
-  console.log(`웹 결제 단계 ${from} ~ ${to} (기기 수, 오너 기기와 앱 제외)\n[묶음] ${STEPS.join(' / ')} / 결제 실패 기록`);
-  for (const [g, o] of [...groups.entries()].sort((a, b) => b[1].n[0] - a[1].n[0])) console.log(`  ${g}: ${o.n.join(' / ')} / ${o.failed}`);
+  console.log(`웹 결제 단계 ${from} ~ ${to} (기기 수, 오너 기기와 앱 제외)\n[묶음] ${STEPS.join(' / ')} / 결제 실패 기록 / 카카오페이 없음 누름`);
+  for (const [g, o] of [...groups.entries()].sort((a, b) => b[1].n[0] - a[1].n[0])) console.log(`  ${g}: ${o.n.join(' / ')} / ${o.failed} / ${o.noKakao}`);
 })().catch((e) => { console.error('ERR', e.message); process.exit(1); });

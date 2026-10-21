@@ -109,6 +109,7 @@ export function ChargePage() {
   // 2026-10-16 — 웹 실결제는 로그인한 계정만 (오너: 로그인 없이 결제됨). 익명이면 로그인 시트 → 익명 계정에 연결(uid 그대로)
   const { login } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [noKakaoOpen, setNoKakaoOpen] = useState(false);
 
   // 2026-05-07 fix — 다른 페이지가 보낸 returnTo state 도 redirect 로 인식
   // (잔액 부족 모달 → 충전 → 원래 페이지 자동 복귀 UX 일관성)
@@ -793,6 +794,21 @@ export function ChargePage() {
                       <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>카카오페이{cardSoon && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>등록한 신용카드, 체크카드로도 낼 수 있어요</span>}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
+                    {/* 2026-10-21 — 카드 계약 전 웹 실결제는 카카오페이뿐이다. 카카오페이를 안 쓰는 손님이 그냥 나가지 않게
+                     *   같은 사주500이 있는 토스 앱(토스 결제로 카드, 토스머니)을 알려 준다. 누른 수로 카카오페이 없는 손님 규모를 본다 */}
+                    {cardSoon && (
+                      <button type="button" onClick={() => setNoKakaoOpen((v) => !v)} style={{
+                        order: 3, width: '100%', padding: '12px 16px', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
+                        border: '1px dashed rgba(26,26,26,0.18)', background: 'transparent',
+                      }}>
+                        <span style={{ display: 'block', fontSize: 14.5, fontWeight: 700, color: C.ink }}>카카오페이를 안 쓰세요?</span>
+                        {noKakaoOpen && (
+                          <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.6, color: C.mute, marginTop: 6 }}>
+                            토스 앱에서 '사주500'을 검색하면 같은 풀이를 카드나 토스머니로 결제할 수 있어요. 여기서 넣은 생일은 토스 앱에서 한 번 더 넣어 주세요. 카드 결제는 이 화면에도 곧 열려요.
+                          </span>
+                        )}
+                      </button>
+                    )}
                     </div>
 
                     {/* 안내 — 시험 결제창일 때만 '청구되지 않아요', 실결제일 때는 처리 주체 */}
