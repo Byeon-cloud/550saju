@@ -2170,6 +2170,8 @@ export const confirmPortonePayment = onCall(
           portoneStatus: pay.status,
           portoneMethod: pay?.method?.type || null,
           portoneChannel: pay?.channel?.type || null,
+          // 2026-10-21 — 카카오페이 안에서 머니로 냈는지 등록 카드로 냈는지 (화면에 '등록한 카드로도' 안내를 넣어 첫 카드 결제로 확인)
+          portoneEasyPayMethod: pay?.method?.easyPayMethod?.type || null,
           status: 'confirmed',
           confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

@@ -184,11 +184,12 @@ export function ChargePage() {
   // 2026-10-16 — 실결제는 계약이 끝난 결제수단만(카카오페이). 카드는 이니시스 심사가 끝날 때까지 안내만.
   //   PG 심사관 확인용 시험 결제창은 ?pgreview=1 로만 연다(실사용자가 시험창에서 결제하는 일이 없게).
   const pgReview = !isAppintosBuild && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('pgreview') === '1' && isPortoneTestEnabled();
+  const cardSoon = portoneLive && !pgReview && !isPortoneLiveMethod('card');
   const payWith = (method: PortonePgMethod) => {
     if (pgReview) return handlePgTest(method);
     if (portoneLive) {
       if (isPortoneLiveMethod(method)) return handlePgLive(method);
-      toast.show('카드 결제는 곧 열려요. 지금은 카카오페이로 충전할 수 있어요', 'info');
+      toast.show('카드번호로 바로 내는 결제는 곧 열려요. 지금은 카카오페이에 등록한 카드로 낼 수 있어요', 'info');
       return;
     }
     return handlePgTest(method);
@@ -753,10 +754,12 @@ export function ChargePage() {
                       </div>
                     )}
 
-                    {/* 결제 수단 — 아이콘 + 라벨 리스트 행 (토스·배민 문법). live 활성 시 실결제 라우팅 */}
+                    {/* 결제 수단 — 아이콘 + 라벨 리스트 행 (토스·배민 문법). live 활성 시 실결제 라우팅
+                     *   2026-10-21 — 카드 계약 전에는 되는 카카오페이를 위로 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
                     <button onClick={() => payWith('card')} style={{
                       display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
-                      padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 8,
+                      padding: '0 16px', borderRadius: 14, cursor: 'pointer', order: cardSoon ? 2 : 1,
                       border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',
                     }}>
                       <span style={{
@@ -769,12 +772,12 @@ export function ChargePage() {
                           <rect x="5.5" y="14.4" width="6" height="1.8" rx="0.9" fill="#1A1A1A" />
                         </svg>
                       </span>
-                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용과 체크카드{portoneLive && !pgReview && !isPortoneLiveMethod('card') && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>곧 열려요</span>}</span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>신용과 체크카드{cardSoon && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>카드번호로 바로 내기는 곧 열려요</span>}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                     <button onClick={() => payWith('kakaopay')} style={{
                       display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 60,
-                      padding: '0 16px', borderRadius: 14, cursor: 'pointer', marginBottom: 14,
+                      padding: '0 16px', borderRadius: 14, cursor: 'pointer', order: cardSoon ? 1 : 2,
                       border: '1px solid rgba(26,26,26,0.10)', background: '#FFFFFF', textAlign: 'left',
                     }}>
                       <span style={{
@@ -786,9 +789,11 @@ export function ChargePage() {
                           <path d="M12 1C5.92 1 1 4.93 1 9.78c0 3.07 1.97 5.77 4.95 7.33l-1.2 4.45c-.1.4.35.72.7.49l5.23-3.48c.44.04.88.07 1.32.07 6.08 0 11-3.93 11-8.86C23 4.93 18.08 1 12 1z" fill="#1A1A1A" />
                         </svg>
                       </span>
-                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>카카오페이</span>
+                      {/* 2026-10-21 — 카드 줄이 '곧 열려요'라 50대 손님이 카드로는 못 낸다고 보고 나갈 수 있다. 카카오페이 안에서 등록한 카드로 낼 수 있음을 적는다 */}
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.ink }}>카카오페이{cardSoon && <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: C.mute }}>등록한 신용카드, 체크카드로도 낼 수 있어요</span>}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#B9B2A8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
+                    </div>
 
                     {/* 안내 — 시험 결제창일 때만 '청구되지 않아요', 실결제일 때는 처리 주체 */}
                     <p style={{ fontSize: 13, color: C.mute, margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
