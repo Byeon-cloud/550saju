@@ -229,9 +229,10 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
     const yearGz = Solar.fromYmd(kn.year, kn.month, kn.day).getLunar().getEightChar().getYear();
     nowContext = `
 
-## 지금 (서버 계산, 한국 시간. 달이나 해를 짚을 때 이 값만 인용)
+## 지금 (서버 계산, 한국 시간. 달이나 해를 짚을 때 이 값만 인용. 이런 표가 있다는 것, 표의 범위, '주어진 자료' 같은 말은 답에 쓰지 않는다)
 오늘: ${kn.year}년 ${kn.month}월 ${kn.day}일, 올해 세운 ${yearGz}
-이번 달부터 12개월 월주: ${upcomingMonthPillarsText(kstNowDate(), 12)}`;
+이번 달부터 내년 12월까지 월주: ${upcomingMonthPillarsText(kstNowDate(), 25 - kn.month)}`;
+    // 2026-10-21 — 12개월만 넣었더니 '내년 이직' 질문에 "월운표는 주어진 범위(9월까지)에서"라고 내부 사정을 말했다 → 내년 끝까지 넣고 표 언급 금지
     // 2026-10-14 — 지난 시기와 요즘을 짚는 근거 (짚어 주는 풀이). 첫 답에서만 한 번 묻는다
     const tl = sajuData ? lifeTimelineFactsText(sajuData, kstNowDate()) : '';
     if (tl) nowContext += `

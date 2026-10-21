@@ -45,6 +45,7 @@ import {
 } from '@/services/storage/localStore';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { hasFreePass } from '@/services/storage/dailyFreePass';
 import {
   useInputDraft,
   type InputDraftSnapshot,
@@ -330,6 +331,8 @@ export function InputPage() {
   const returnToState = (location.state as any)?.returnTo as string | undefined;
   const intent = useMemo<FromIntent>(() => {
     const base = getIntent(fromRaw);
+    // 2026-10-21 — 사주대화 광고('생일만 넣고 고민 하나 무료로 물어보세요')로 온 손님에게 약속한 말을 바로 보이게. 오늘 무료권이 있을 때만
+    if (fromRaw === 'chat' && hasFreePass('chat')) return { ...base, hint: '생일을 넣으면 내 사주로 고민에 답해 드려요. 오늘 첫 질문은 무료예요', submitLabel: '무료로 첫 질문하기' };
     return returnToState && !fromRaw ? { ...base, hint: '풀이를 볼 분의 사주 정보를 넣어 주세요', submitLabel: '저장하고 돌아가기' } : base;
   }, [fromRaw, returnToState]);
 
