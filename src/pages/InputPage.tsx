@@ -37,6 +37,7 @@ import {
   getProfiles,
   saveProfileDirect,
   spendBalance,
+  getBalance,
   setMyProfile,
   findExistingOwnerProfile,
   updateProfileRelation,
@@ -765,6 +766,14 @@ export function InputPage() {
         // 2026-05-28 PM — SSOT 가격 (10운 정가, 5운 세일 ~2026-06-15)
         const premiumPricing = getPremiumPrice();
         const premiumCost = premiumPricing.actualPrice;
+        // 2026-10-21 — 처음인 손님은 바로 충전으로 보내지 않고 종합사주 화면의 갈림길(무료 오늘의 운세 먼저, 받으면 24시간 반값)로
+        //   (광고 손님 9명이 생일을 넣자마자 5,000원 충전 화면으로 가서 아무도 결제하지 않았다)
+        const offerGate = await import('@/services/offers/firstDailyOffer');
+        if (getBalance() < premiumCost && offerGate.firstDailyOfferEligible()) {
+          import('@/services/analytics').then((a) => a.trackEvent('insufficient_balance', { type: 'premium', needed: premiumCost, gate: 1 })).catch(() => {});
+          navigate(`/premium?profileId=${encodeURIComponent(reportId)}&gate=1`, { replace: true });
+          return;
+        }
         if (!spendBalance(premiumCost)) {
           // 2026-06-18 — 잔액부족 = 충전 유도 직전(전환 모멘트) 트래킹
           import('@/services/analytics').then((a) => a.trackEvent('insufficient_balance', { type: 'premium', needed: premiumCost })).catch(() => {});

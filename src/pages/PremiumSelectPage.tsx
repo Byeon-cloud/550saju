@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react';
 import { INK_HERO_BG, GoldCta, GhostButton, Seal, SectionHead, HJ, SERIF, hanjaNum } from '@/components/hanji/Hanji';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { firstDailyOfferActive, markFirstDailyOfferUsed, OFFER as FIRST_DAILY_OFFER } from '@/services/offers/firstDailyOffer';
+import { firstDailyOfferActive, firstDailyOfferEligible, markFirstDailyOfferUsed, OFFER as FIRST_DAILY_OFFER } from '@/services/offers/firstDailyOffer';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
@@ -45,10 +45,25 @@ export function PremiumSelectPage() {
   });
   const autostart = searchParams.get('autostart') === '1';
   const [balance] = useState<number>(getBalance());
+  // 2026-10-21 — 광고 손님 9명이 생일을 넣자마자 5,000원 충전 화면으로 가서 아무도 결제하지 않았다(풀이를 한 줄도 못 봄).
+  //   처음인 손님은 운이 모자랄 때 바로 충전으로 보내지 않고, 무료 오늘의 운세(받으면 24시간 반값)와 지금 보기 중 고르게 한다
+  const [gate, setGate] = useState(() =>
+    searchParams.get('gate') === '1' && !!selected && getBalance() < getPremiumPrice().actualPrice && firstDailyOfferEligible());
+
+  function goCharge() {
+    if (!selected) return;
+    const premiumPricing = getPremiumPrice();
+    // 10-19 — 충전을 마치면 이 사람으로 돌아와 '바로 시작' (반값이면 need=5 → 2,500원 묶음이 미리 골라진다)
+    navigate(`/charge?need=${premiumPricing.actualPrice}`, { state: { message: `종합사주에 ${premiumPricing.actualPrice}운이 필요해요`, returnTo: `/premium?profileId=${encodeURIComponent(selected.id)}&autostart=1` } });
+  }
 
   function startPremium() {
     if (!selected) {
       toast.show('사주를 먼저 선택해주세요', 'info');
+      return;
+    }
+    if (getBalance() < getPremiumPrice().actualPrice && firstDailyOfferEligible()) {
+      setGate(true);
       return;
     }
     // 🚨 2026-07-14 기준 v2 — 유료 생성은 반드시 '현행 기준' 재계산 우선. 저장 캐시(sajuData)는
@@ -65,8 +80,7 @@ export function PremiumSelectPage() {
     const spent = spendBalance(premiumPricing.actualPrice);
     if (!spent) {
       toast.show('잔액이 부족해요', 'warning');
-      // 10-19 — 충전을 마치면 이 사람으로 돌아와 '바로 시작' (반값이면 need=5 → 2,500원 묶음이 미리 골라진다)
-      navigate(`/charge?need=${premiumPricing.actualPrice}`, { state: { message: `종합사주에 ${premiumPricing.actualPrice}운이 필요해요`, returnTo: `/premium?profileId=${encodeURIComponent(selected.id)}&autostart=1` } });
+      goCharge();
       return;
     }
     // 10-19 — 첫 오늘의 운세 반값으로 샀으면 표시 (다시 반값 안 되게, 서버 요청에 offer 가 붙게)
@@ -318,6 +332,27 @@ export function PremiumSelectPage() {
           </Button>
         </div>
       )}
+
+      {/* 2026-10-21 — 처음인 손님의 결제 전 갈림길 (위 startPremium 설명) */}
+      {gate && selected && (
+        <div role="dialog" aria-modal="true" onClick={() => setGate(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 520, background: HJ.paper, borderRadius: '20px 20px 0 0', padding: '22px 20px 30px' }}>
+            <div style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, color: HJ.ink }}>처음이라면 무료로 먼저 받아 보세요</div>
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: HJ.ink2, marginTop: 8 }}>
+              오늘의 운세를 무료로 받으면 24시간 동안 종합사주를 {FIRST_DAILY_OFFER.price}운에 볼 수 있어요. 지금 바로 보려면 {premiumPrice}운이에요.
+            </p>
+            <GoldCta style={{ marginTop: 16 }} sub="하루 한 번 무료"
+              onClick={() => navigate(`/daily?profileId=${encodeURIComponent(selected.id)}&from=premium_gate`)}>
+              무료 오늘의 운세 받기
+            </GoldCta>
+            <GhostButton style={{ marginTop: 10 }} sub={`${premiumPrice}운`} onClick={() => { setGate(false); goCharge(); }}>
+              지금 종합사주 보기
+            </GhostButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -350,7 +385,18 @@ function PremiumIntro({ price, offerPrice, onStart, onDaily }: { price: number; 
         </p>
       </header>
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '20px 20px 120px' }}>
-        <GoldCta onClick={onStart} sub="1분이면 끝나요">생일 넣고 시작하기</GoldCta>
+        {/* 2026-10-21 — 처음 온 광고 손님에게는 무료를 앞에 (생일을 넣자마자 5,000원 화면으로 간 9명이 모두 나감) */}
+        {offerPrice != null ? (
+          <>
+            <p style={{ fontSize: 15, color: HJ.ink, lineHeight: 1.7, marginBottom: 12 }}>
+              처음이라면 오늘의 운세를 먼저 무료로 받아 보세요. 받은 뒤 24시간 동안은 종합사주를 {offerPrice}운에 볼 수 있어요.
+            </p>
+            <GoldCta onClick={onDaily} sub="하루 한 번 무료">무료 오늘의 운세부터 받기</GoldCta>
+            <GhostButton style={{ marginTop: 10 }} onClick={onStart} sub={`${price}운`}>바로 종합사주 시작하기</GhostButton>
+          </>
+        ) : (
+          <GoldCta onClick={onStart} sub="1분이면 끝나요">생일 넣고 시작하기</GoldCta>
+        )}
         <SectionHead title="열 장에 이런 걸 풀어 드려요" style={{ marginTop: 28 }} />
         <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {CHAPTERS.map(([t, d], i) => (
@@ -363,14 +409,6 @@ function PremiumIntro({ price, offerPrice, onStart, onDaily }: { price: number; 
             </li>
           ))}
         </ol>
-        {offerPrice != null && (
-          <div style={{ marginTop: 24 }}>
-            <p style={{ fontSize: 15, color: HJ.ink, lineHeight: 1.7, marginBottom: 12 }}>
-              처음이라면 오늘의 운세를 먼저 무료로 받아 보세요. 받은 뒤 24시간 동안은 종합사주를 {offerPrice}운에 볼 수 있어요.
-            </p>
-            <GhostButton onClick={onDaily} sub="하루 한 번 무료">오늘의 운세 먼저 보기</GhostButton>
-          </div>
-        )}
       </div>
     </div>
   );

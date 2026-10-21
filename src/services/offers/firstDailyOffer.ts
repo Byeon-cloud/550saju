@@ -52,6 +52,11 @@ export function firstDailyOfferActive(): boolean {
   return !!s && !s.used && Date.now() < s.until && !boughtPremium();
 }
 
+/** 아직 혜택을 열지 않았고 종합사주를 산 적 없는 기기 — 오늘의 운세를 먼저 받으면 반값이 열린다 (2026-10-21, 종합사주 결제 전 안내) */
+export function firstDailyOfferEligible(): boolean {
+  return OFFER.enabled && !read() && !boughtPremium();
+}
+
 /** 남은 시간 글자: '23시간 10분 남았어요' */
 export function firstDailyOfferLeft(): string {
   const s = read();
