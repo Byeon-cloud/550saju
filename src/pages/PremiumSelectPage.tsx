@@ -264,7 +264,7 @@ export function PremiumSelectPage() {
             {premiumPriceInfo.isOnSale && premiumPriceInfo.salePrice != null
               ? <>지금은 <b style={{ color: '#F4EFE4' }}>{premiumPriceInfo.salePrice}운</b>이에요(정가 <s>{premiumPriceInfo.regularPrice}운</s>, {premiumPriceInfo.saleBadge}). </>
               : <><b style={{ color: '#F4EFE4' }}>{premiumPriceInfo.regularPrice}운</b>이에요. </>}
-            한 번 사면 평생 다시 볼 수 있어요.
+            한 번 사면 보관함에서 다시 볼 수 있어요.
           </div>
         </header>
       </FadeIn>
