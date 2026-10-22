@@ -6,6 +6,10 @@ import { fmt, won, pct, sideOf, CONTENT_NAME, AI_NAME, SOURCE_NAME } from './api
 import type { DayStats, PlatFilter, ChannelRow } from './api';
 import { Box, Table, K } from './ui';
 import { DayColumns, PLAT_COLOR } from './charts';
+import { CHARGE_PACKAGES } from '@/constants/pricing';
+
+/** 결제 금액 → 충전 묶음 이름 (2026-10-23, 오너 '그날 어떤 묶음이 몇 개 팔렸는지'). 지금 묶음 표에 없는 금액은 금액 그대로 */
+const pkgName = (amount: number) => { const p = CHARGE_PACKAGES.find((x) => x.price === amount); return p ? `${p.un}운(${won(amount)})` : won(amount); };
 
 function csv(name: string, head: string[], rows: (string | number)[][]) {
   const body = [head, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -40,10 +44,27 @@ export function Revenue({ days, plat }: { days: DayStats[]; plat: PlatFilter }) 
       <Box title="날짜별 표" right={<Down onClick={() => csv('매출', head, rows as any)} />} note="매출은 결제 장부 기준이에요(같은 주문은 한 번, 확정된 날). 환불은 환불된 날에 잡혀요(웹은 15분, 토스 앱 결제는 30분마다 확인해 운과 보너스를 거둬요).">
         <Table head={head} align={['l', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r']} rows={[fmtRow(tot), ...rows.map(fmtRow)]} />
       </Box>
-      <Box title="팔린 묶음">
-        <Table head={['묶음', '건수']} align={['l', 'r']} rows={Object.entries(pk).sort((a, b) => b[1] - a[1]).map(([k, v]) => [`${k.split(' ')[0]} ${won(Number(k.split(' ')[1]))}`, fmt(v)])} />
+      <Box title="팔린 묶음 (기간 합계)">
+        <Table head={['묶음', '건수']} align={['l', 'r']} rows={Object.entries(pk).sort((a, b) => b[1] - a[1]).map(([k, v]) => [`${k.split(' ')[0]} ${pkgName(Number(k.split(' ')[1]))}`, fmt(v)])} />
       </Box>
+      <PackagesByDay days={days} plat={plat} />
     </div>
+  );
+}
+
+/** 날짜별 팔린 묶음 (2026-10-23) — 하루 요약의 packages('앱 2500' → 건수)를 묶음 이름 칸으로 펼친다. 앱, 웹 거르기를 따른다 */
+function PackagesByDay({ days, plat }: { days: DayStats[]; plat: PlatFilter }) {
+  const want = (k: string) => plat === 'all' || (plat === 'app' ? k.startsWith('앱 ') : k.startsWith('웹 '));
+  const amounts = Array.from(new Set(days.flatMap((d) => Object.keys(d.packages || {}).filter(want).map((k) => Number(k.split(' ')[1]) || 0)))).sort((a, b) => a - b);
+  const head = ['날짜', ...amounts.map(pkgName), '합계'];
+  const rows = [...days].reverse().map((d) => {
+    const per = amounts.map((a) => Object.entries(d.packages || {}).filter(([k]) => want(k) && Number(k.split(' ')[1]) === a).reduce((t, [, v]) => t + v, 0));
+    return [d.day + (d.partial ? ' (진행 중)' : ''), ...per, per.reduce((t, v) => t + v, 0)];
+  }).filter((r) => Number(r[r.length - 1]) > 0);
+  return (
+    <Box title="날짜별 팔린 묶음" right={<Down onClick={() => csv('날짜별_묶음', head, rows as any)} />} note="결제 장부 기준(같은 주문은 한 번, 확정된 날). 판 묶음이 없는 날은 빼고 보여요. 위의 앱, 웹 거르기를 따라요.">
+      <Table head={head} align={['l', ...amounts.map(() => 'r' as const), 'r']} rows={rows.map((r) => r.map((v, i) => (i === 0 ? v : fmt(Number(v)))))} />
+    </Box>
   );
 }
 

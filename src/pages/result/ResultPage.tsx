@@ -393,14 +393,14 @@ export function ResultPage(props: ResultPageProps = {}) {
     //   실패처리(환불 + 에러카드) → "로딩만 길고 결과 안 나옴" 영구 멈춤을 근본 차단.
     // 2026-06-24 — 180→120초 단축. 정상 종합사주 생성 상한 ~80-90초라 120초는 정상을 안 자르고 끊김 꼬리만 컷
     //   (토스 P99 로딩 150초 = 끊긴 채 워치독까지 매달린 값 → 천장을 120초로 낮춰 P99 직접 절감).
-    //   2026-10-23 — 120→240초, 그룹이 도착할 때마다 다시 잰다(아래 onGroup). 5.5 세대 종합사주는 113~147초 걸린다.
+    //   2026-10-23 — 120→300초, 그룹이 도착할 때마다 다시 잰다(아래 onGroup). 5.5 세대 종합사주는 113~147초 걸린다.
     const armWatchdog = (ms: number) => {
       if (watchdogRef.current) clearTimeout(watchdogRef.current);
       watchdogRef.current = setTimeout(() => {
         if (!streamSettledRef.current) handleStreamFailure('시간 초과: 응답이 너무 오래 걸렸어요');
       }, ms);
     };
-    armWatchdog(240000);
+    armWatchdog(300000);
     (async () => {
       try {
         const mod = await import('@/services/ai/reportGenerator');
@@ -413,7 +413,7 @@ export function ResultPage(props: ResultPageProps = {}) {
           if (watchdogRef.current) clearTimeout(watchdogRef.current);
           watchdogRef.current = setTimeout(() => {
             if (!streamSettledRef.current) handleStreamFailure('시간 초과(callable)');
-          }, 240000);
+          }, 300000); // 2026-10-23 240→300초 (callable 자체 제한 300초와 같게, 5.5 세대 p90 124~147초)
           // 2026-10-09 — 점진 표시: 서버가 그룹 완성마다 progress/{id} 에 쓰고, 여기서 구독해 도착한 섹션부터 보여준다
           //   (나머지는 '작성 중' 스켈레톤). 완성본 전달·환불 경로는 그대로 — 구독 실패해도 기존처럼 완성본으로.
           let progressSub: { unsubscribe: () => void } | null = null;
