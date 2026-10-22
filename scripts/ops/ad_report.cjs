@@ -9,7 +9,7 @@ const [from, to, spendArg] = process.argv.slice(2);
 if (!from || !to) { console.log('사용: node ad_report.cjs 시작일 끝일 [{"meta":70000}]'); process.exit(1); }
 const spend = spendArg ? JSON.parse(spendArg) : {};
 const AD_SOURCES = new Set(['meta', 'naver', 'tossads', 'instagram', 'facebook']);
-const NAMES = ['app_open', 'page_view', 'profile_created', 'content_result', 'content_purchase', 'charge_complete', 'manse_view', 'tti_open', 'seo_view', 'tojung_preview_view', 'charge_open'];
+const NAMES = ['app_open', 'page_view', 'profile_created', 'content_result', 'content_purchase', 'charge_complete', 'manse_view', 'tti_open', 'seo_view', 'ad_boot', 'tojung_preview_view', 'charge_open'];
 const days = [];
 for (let d = new Date(from + 'T00:00:00Z'); d <= new Date(to + 'T00:00:00Z'); d = new Date(d.getTime() + 864e5)) days.push(d.toISOString().slice(0, 10));
 

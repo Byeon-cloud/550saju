@@ -310,18 +310,48 @@ async function captureTossSchemeUtm(): Promise<void> {
     const source = q.get('utm_source') || q.get('ref') || tref.source;
     const medium = q.get('utm_medium') || tref.medium;
     const campaign = q.get('utm_campaign') || tref.campaign;
+    const content = (q.get('utm_content') || '').slice(0, 60); // 2026-10-22 — 스킴으로 들어온 광고도 소재별로 읽게
+    const term = (q.get('utm_term') || '').slice(0, 60);
     sessionStorage.setItem(UTM_KEY, JSON.stringify({
       ...existing,
       // utm 태그 있으면 그 출처, 없으면 'toss_app'(토스 내부 discovery/검색/추천 or 무태그 딥링크) — 웹 direct 와 구분
       source: source || 'toss_app',
       ...(medium ? { medium } : {}),
       ...(campaign ? { campaign } : {}),
+      ...(content ? { content } : {}),
+      ...(term ? { term } : {}),
     }));
+    sendAdBoot();
   } catch { /* noop — 출처 캡처는 fire-and-forget */ }
 }
 
+/* 2026-10-22 — 광고로 들어와 몇 초 만에 나간 손님도 남긴다.
+ *   logToFirestore 는 익명 로그인(최대 6초)을 기다린 뒤 저장해서, 토스애즈 E29 첫날 앱을 연 179명 중 105명이 기록에 없었다.
+ *   광고 꼬리표가 있는 첫 진입 한 번만 로그인 없이 sendBeacon 으로 /api/seo-hit 에 보낸다(웹은 같은 주소, 앱은 saju500.app).
+ *   받는 쪽은 functions/src/seo/seoHit.ts(kind 'boot' → 'ad_boot'). 경로, 꼬리표, 기기 ID 만 보낸다. */
+const AD_BOOT_SOURCES = new Set(['meta', 'naver', 'tossads', 'instagram', 'facebook', 'google', 'kakao', 'creator', 'blog']);
+const AD_BOOT_KEY = 'saju500:ad_boot';
+function sendAdBoot(): void {
+  try {
+    if (internalKind()) return;
+    if (sessionStorage.getItem(AD_BOOT_KEY)) return;
+    const u = getUtm();
+    const source = String(u?.source || '').toLowerCase();
+    if (!AD_BOOT_SOURCES.has(source) || u?.carried) return; // 30일 이어 보기로 붙은 출처는 새 광고 진입이 아님
+    sessionStorage.setItem(AD_BOOT_KEY, '1');
+    const body = JSON.stringify({
+      kind: 'boot', plat: isAppintosBuild ? 'ait' : 'web', source,
+      medium: u?.medium || '', campaign: u?.campaign || '', content: u?.content || '', term: u?.term || '',
+      did: getLocalDeviceId(), path: window.location.pathname || '/',
+    });
+    const url = isAppintosBuild ? 'https://saju500.app/api/seo-hit' : '/api/seo-hit';
+    const sent = typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' }));
+    if (!sent) fetch(url, { method: 'POST', body, keepalive: true, mode: 'no-cors' }).catch(() => { /* noop */ });
+  } catch { /* noop */ }
+}
+
 // 모듈 init 시 1회 캡처 (SSR 안전 가드) + 전역 CTA 클릭 수집 시작
-if (typeof window !== 'undefined') { captureUtm(); captureTossSchemeUtm(); initCtaTracking(); }
+if (typeof window !== 'undefined') { captureUtm(); sendAdBoot(); captureTossSchemeUtm(); initCtaTracking(); }
 
 /** 2026-06-12 P0 — 부팅 이벤트가 익명 로그인 완료 전에 발사되면 rules(auth 필수)에 막혀
  *  조용히 버려지던 레이스 fix. 첫 auth 상태 확정까지 최대 6초 대기 후 기록. */
