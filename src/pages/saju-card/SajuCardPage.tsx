@@ -36,7 +36,7 @@ import { useToast } from '@/components/common/Toast';
 import { HJ, SERIF as HJ_SERIF, GoldCta, GhostButton } from '@/components/hanji/Hanji';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { isAppintosBuild } from '@/lib/env';
-import { CalcNote, ShareRow, FlowNow, NextSteps } from './_manse_extras';
+import { CalcNote, ShareRow, FlowNow, NextSteps, TodayNextStep } from './_manse_extras';
 // Stage 4: OHENG_MAP — IdentityCard 가 자체 OHENG_ACCENT 매핑 사용, 미사용
 // import { OHENG_MAP } from '@/constants/oheng';
 import { getIljuAnimal } from '@/constants/iljuAnimal';
@@ -330,6 +330,8 @@ export function SajuCardPage() {
           <CalcNote input={profile.input} />
           <ShareRow onShare={handleShare} onSave={() => setShowExportSheet(true)} busy={exportBusy !== null} />
           <FlowNow sajuData={sajuData} />
+          {/* 2026-10-22 P1-9 다음 단계 한 칸 — 카드와 운의 흐름 아래에만 (첫 화면 위 X, 캡처 제외) */}
+          <TodayNextStep profileId={profile.id} name={profile.name} sajuData={sajuData} />
         </div>
 
         {/* ═════ Stage 7e — 자세히 영역 슬림화 ═════
@@ -344,14 +346,15 @@ export function SajuCardPage() {
           </div>
 
           {/* 2026-10-18 무료로 이어 보기 (유료 종합사주보다 먼저) */}
-          <NextSteps profileId={profile.id} ilju={ilju || ''} web={!isAppintosBuild && !isAppsInToss()} />
+          <NextSteps ilju={ilju || ''} web={!isAppintosBuild && !isAppsInToss()} />
 
           {/* 2. CTA — 종합 사주 풀이 받기 (Stage 7e: 페이지 맨 밑으로 이동) */}
           <div style={{ marginTop: 24 }}>
+            {/* 10-22 — 이 사람을 미리 골라 둔 채로 (종합사주 화면에 이 사람 이야기와 目次가 바로 보이게, 운이 모자란 처음 손님은 무료 먼저 갈림길) */}
             <button
               type="button"
               className="hj-cta"
-              onClick={() => navigate('/premium')}
+              onClick={() => navigate(`/premium?profileId=${encodeURIComponent(profile.id)}`)}
             >
               <span>종합사주 풀이 받기</span>
               {(() => {

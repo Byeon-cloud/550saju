@@ -239,6 +239,12 @@ const FIRESTORE_TRACKED = new Set<string>([
   'manse_view',         // {ok, cal, hour, rel | why} — 검색 페이지 /manse/ 입력 칸에서 바로 만세력을 펼쳤다 (2026-10-18 E22)
   'tojung_preview_view', // {y, v} — 신년운세 결제 전 무료 미리 보기가 보였다 (2026-10-17, 10일 48명 보고 0명 구매 대응)
   'web_intro_view',     // {} — 웹 첫 손님 소개 카드가 보였다 (2026-10-17, 웹 전용)
+  // 2026-10-22 P1-2, P1-9 — 종합사주 고르기 화면과 사주 카드 다음 단계 (들어온 곳별 시작 누름 비율)
+  'premium_view',       // {src, has: 0|1, ad?} — 종합사주 화면을 열었다 (has = 고를 사주가 있음)
+  'premium_start_click', // {src, step: intro|select, enough: 0|1, ad?} — 종합사주 시작 버튼을 눌렀다
+  'premium_free_first', // {src, from: intro|gate, ad?} — 종합사주 화면에서 무료 오늘의 운세 먼저를 골랐다
+  'saju_next_view',     // {ad?} — 사주 카드 아래 다음 단계 칸이 화면에 보였다
+  'saju_next_click',    // {to: daily|주제 id, ad?} — 다음 단계 칸에서 눌렀다
 ]);
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───
@@ -301,6 +307,13 @@ function getUtm(): Record<string, string> | null {
   } catch {
     return null;
   }
+}
+
+/** 2026-10-22 P1-9 — 이번 방문이 광고 꼬리표로 들어왔으면 그 출처 이름(meta, naver, tossads 등), 아니면 ''.
+ *  웹의 30일 이어 보기로 붙은 출처도 광고 손님으로 본다. 화면 길을 고르고 이벤트에 붙이는 데 쓴다. */
+export function adVisitSource(): string {
+  const s = String(getUtm()?.source || '').toLowerCase();
+  return AD_BOOT_SOURCES.has(s) ? s : '';
 }
 
 /* ─── 앱인토스 진입 출처 캡처 (2026-06-27 · A) ───

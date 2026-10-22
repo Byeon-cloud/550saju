@@ -3,16 +3,26 @@
  *   CalcNote   이렇게 계산했어요 — 30분 보정, 서머타임, 한국 음력 (계산 코드 기준 그대로)
  *   ShareRow   내 만세력 보내기, 이미지 저장 — 결과 바로 아래 (전엔 맨 아래에만)
  *   FlowNow    운의 흐름 — 지금 대운, 올해, 내년 (예전에 빠졌던 대운과 세운) + 대운 전체 펼치기
- *   NextSteps  무료로 이어 보기 — 오늘의 운세, 꿈해몽, 내 일주(웹), 다른 사람 만세력, 궁합 초대장
+ *   NextSteps  무료로 이어 보기 — 꿈해몽, 내 일주(웹), 다른 사람 만세력, 궁합 초대장 (오늘의 운세는 10-22 TodayNextStep 으로)
+ *   TodayNextStep 다음 단계 한 칸 (2026-10-22 P1-9) — 카드와 운의 흐름 바로 아래. 오늘의 운세 먼저, 나이대별 고민 두 개
  *   캡처(이미지 저장)에는 버튼이 찍히지 않게 data-html2canvas-ignore.
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HJ, SERIF } from '@/components/hanji/Hanji';
+import { HJ, SERIF, GoldCta } from '@/components/hanji/Hanji';
 import { inspectKoreanSolarTime } from '@/services/saju/timeCorrection';
 import { toSolarInput } from '@/services/saju/calculator';
 import { deriveSipsung, yearGanji, DaeunTable } from './_flow_table';
 import { MotionScope, moVars } from '@/components/motion/Motion';
+import { todayHook, todayHourWindows, loveDday, nextStarMonth, monthDayLabel } from '@/services/saju/hookFacts';
+import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
+import { getTopicPrice } from '@/constants/pricing';
+import { hasFreePass } from '@/services/storage/dailyFreePass';
+import { getReports } from '@/services/storage/localStore';
+import { firstDailyOfferEligible, OFFER as FIRST_DAILY_OFFER } from '@/services/offers/firstDailyOffer';
+import { adVisitSource, trackEvent } from '@/services/analytics';
+import { kstToday } from '@/utils/kstDate';
+import { realName } from '@/utils/personName';
 import type { SajuData, SajuInput } from '@/types/saju';
 
 const GAN_KO: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계' };
@@ -128,15 +138,15 @@ export function FlowNow({ sajuData }: { sajuData: SajuData }) {
   );
 }
 
-export function NextSteps({ profileId, ilju, web }: { profileId: string; ilju: string; web: boolean }) {
+export function NextSteps({ ilju, web }: { ilju: string; web: boolean }) {
   const navigate = useNavigate();
   const go = (label: string, fn: () => void) => () => {
     import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label, page: '/saju-card' })).catch(() => {});
     fn();
   };
   const slug = ilju.length >= 2 && GAN_RO[ilju[0]] && ZHI_RO[ilju[1]] ? `${GAN_RO[ilju[0]]}-${ZHI_RO[ilju[1]]}` : '';
+  // 10-22 — '내 사주로 오늘의 운세' 줄은 위 TodayNextStep(카드와 운의 흐름 바로 아래)으로 옮겼다 (한 화면에 같은 길 두 번 X)
   const items: Array<{ k: string; v: string; tag: string; on: () => void }> = [
-    { k: '내 사주로 오늘의 운세', v: '좋은 시간과 조심할 일까지', tag: '무료', on: go('만세력 다음 오늘의 운세', () => navigate(`/daily?profileId=${encodeURIComponent(profileId)}`)) },
     { k: '꿈해몽', v: '간밤 꿈을 내 사주와 엮어서', tag: '하루 한 번 무료', on: go('만세력 다음 꿈해몽', () => navigate('/dream')) },
     ...(web && slug ? [{ k: `${ko(ilju)}일주 자세히`, v: '성격, 일, 사랑, 잘 맞는 일주까지', tag: '무료', on: go('만세력 다음 일주', () => { window.location.href = `/ilju/${slug}/`; }) }] : []),
     { k: '가족, 친구 만세력도 보기', v: '생일만 넣으면 한 장 더', tag: '무료', on: go('만세력 다음 다른 사람', () => navigate('/input?new=1&from=manse')) },
@@ -156,5 +166,121 @@ export function NextSteps({ profileId, ilju, web }: { profileId: string; ilju: s
         </button>
       ))}
     </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * TodayNextStep — 사주를 넣은 직후 다음 단계 한 칸 (2026-10-22 P1-9, 점검 문서 5-2)
+ *   왜: 다음 행동이 '내 만세력 보내기'와 '이미지 저장'뿐이라, 광고 손님은 풀이를 한 줄도 못 보고 5,000원 화면으로 갔다(결제 0).
+ *   무엇: 카드와 운의 흐름 바로 아래(첫 화면 위에는 끼우지 않는다, 한 캡처 원칙)에 무료 오늘의 운세 먼저, 그 아래 나이대별 고민 두 개.
+ *   문장: 오늘 조심할 시간은 hookFacts.todayHook(오늘의 운세 본문과 같은 계산), 고민 줄은 홈 고민 목록과 같은 말과 같은 사실.
+ *   캡처 제외(data-html2canvas-ignore). 기록: saju_next_view, saju_next_click {to, ad?}
+ * ═════════════════════════════════════════════════════════════════ */
+export function TodayNextStep({ profileId, name, sajuData }: { profileId: string; name: string; sajuData: SajuData }) {
+  const navigate = useNavigate();
+  const today = kstToday();
+  const nm = realName(name);
+  const who = nm ? `${nm} 님` : '내';
+  const ad = adVisitSource();
+  // 오늘 조심할 시간 — 이미 지난 시간이면 말하지 않는다 (밤에 '오전 9시 반~11시 반에는 미루세요'가 되지 않게)
+  const hook = useMemo(() => {
+    try {
+      const w = todayHourWindows(today, sajuData);
+      if (!w) return null;
+      const k = new Date(Date.now() + 9 * 3600e3);
+      const now = `${String(k.getUTCHours()).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}`;
+      return now < w.avoid[1] ? todayHook(sajuData, today) : null;
+    } catch { return null; }
+  }, [sajuData, today]);
+  const free = hasFreePass('daily');
+  const gotToday = (() => {
+    try {
+      return getReports().some((r: any) => r?.contentType === 'daily' && r.profileId === profileId && !r.aiResult?.__partial && r.aiResult?.__fortuneDate === today);
+    } catch { return false; }
+  })();
+  const offer = !gotToday && FIRST_DAILY_OFFER.enabled && firstDailyOfferEligible();
+
+  /* 나이대별 고민 두 개 — 홈 고민 목록(2026-10-15 세대별)과 같은 나눔: 34세까지, 35~49세, 50세부터 */
+  const rows = useMemo(() => {
+    const thisYear = Number(today.slice(0, 4));
+    const by = Number(sajuData?.input?.birthYear) || 0;
+    const age = by ? thisYear - by : null;
+    const yr = (dk: string) => (Number(dk.slice(0, 4)) > thisYear ? '내년 ' : '');
+    const safe = <T,>(f: () => T): T | null => { try { return f(); } catch { return null; } };
+    const em = safe(() => nextStarMonth(sajuData, today, ['관성', '인성']));
+    const emText = em ? `${yr(em.month.start)}${em.month.calMonth}월` : '';
+    const row = (id: TopicId, t: string, s: string) => ({ id, t, s, hz: TOPIC_REGISTRY[id].kanji, price: `${getTopicPrice(id).actualPrice}운` });
+    if (age != null && age >= 50) {
+      return [
+        row('exam', '재취업 이직운', emText ? `일자리의 별이 ${emText}에 들어와요` : '다시 일을 구하거나 옮기기 좋은 달'),
+        row('business', '창업운', '가게나 내 일을 차리기 좋은 때'),
+      ];
+    }
+    if (age != null && age >= 35) {
+      const wm = safe(() => nextStarMonth(sajuData, today, ['재성']));
+      return [
+        row('exam', '이직운', emText ? `옮길 자리의 별이 ${emText}에 들어와요` : '옮기기 좋은 달과 버텨야 할 때'),
+        row('wealth', '재물운', wm ? `재물의 별이 ${yr(wm.month.start)}${wm.month.calMonth}월에 들어와요` : '돈이 들어오는 달과 새는 곳'),
+      ];
+    }
+    const love = safe(() => loveDday(sajuData, today));
+    return [
+      row('love', '연애운', love ? `${yr(love.month.start)}${monthDayLabel(love.month.start)}부터 연인의 별이 들어와요` : '새 인연이 들어오는 달을 짚어요'),
+      row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날'),
+    ];
+  }, [sajuData, today]);
+
+  const withAd = (p: Record<string, string | number>) => (ad ? { ...p, ad } : p);
+  const viewed = useRef(false);
+  const seenRef = useCallback((el: HTMLElement | null) => {
+    if (!el || viewed.current || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver((ents) => {
+      if (viewed.current || !ents.some((e) => e.isIntersecting)) return;
+      viewed.current = true;
+      io.disconnect();
+      trackEvent('saju_next_view', ad ? { ad } : {});
+    }, { threshold: 0.5 });
+    io.observe(el);
+  }, [ad]);
+
+  const goDaily = () => {
+    trackEvent('saju_next_click', withAd({ to: 'daily' }));
+    navigate(`/daily?profileId=${encodeURIComponent(profileId)}`);
+  };
+  const goTopic = (id: TopicId) => {
+    trackEvent('saju_next_click', withAd({ to: id }));
+    navigate(`/topic/${id}`, { state: { profileId } });
+  };
+
+  return (
+    <section ref={seenRef} data-html2canvas-ignore="true" style={{ ...box, marginTop: 16, padding: '16px 16px 6px' }}>
+      <p style={{ ...head, fontSize: 18, lineHeight: 1.5, wordBreak: 'keep-all' }}>{who} 사주로 오늘 하루를 바로 풀어 드려요</p>
+      <p style={{ fontSize: 15, lineHeight: 1.7, color: HJ.ink2, wordBreak: 'keep-all' }}>
+        {hook
+          ? <>오늘 <b style={{ color: HJ.ink }}>{hook.avoid}</b>에는 큰 결정을 미루세요. 가장 좋은 시간은 오늘의 운세에서 바로 짚어 드려요.</>
+          : <>오늘 가장 좋은 시간과 조심할 시간을 {who} 사주로 짚어 드려요.</>}
+      </p>
+      {offer && (
+        <p style={{ fontSize: 13.5, lineHeight: 1.6, color: HJ.mute, marginTop: 4, wordBreak: 'keep-all' }}>
+          오늘의 운세를 받으면 24시간 동안 종합사주를 {FIRST_DAILY_OFFER.price}운에 볼 수 있어요.
+        </p>
+      )}
+      <GoldCta style={{ marginTop: 14 }} onClick={goDaily} sub={gotToday || free ? undefined : '1운'}>
+        {gotToday ? '오늘의 운세 다시 보기' : free ? '오늘의 운세 무료로 받기' : '오늘의 운세 받기'}
+      </GoldCta>
+      <div style={{ marginTop: 12, borderTop: `1px solid ${HJ.line}` }}>
+        {rows.map((r, i) => (
+          <button key={r.id} type="button" onClick={() => goTopic(r.id)} className="w-full text-left"
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', minHeight: 60, background: 'none', border: 0, borderTop: i ? `1px solid ${HJ.line}` : 0 }}>
+            <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: 5, boxShadow: `inset 0 0 0 1.5px ${HJ.ink}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 17, fontWeight: 900, color: HJ.ink, flexShrink: 0 }}>{r.hz}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 15.5, fontWeight: 700, color: HJ.ink }}>{r.t}</span>
+              <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, lineHeight: 1.5, marginTop: 1 }}>{r.s}</span>
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{r.price} ›</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
