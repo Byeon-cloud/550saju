@@ -31,8 +31,9 @@ export const claimWelcomeUn = onCall(
       if (log.exists) return { ok: false, why: 'already' };
       if (!snap.exists) return { ok: false, why: 'nodoc' };
       const bal = snap.data()?.balance;
-      if (typeof bal === 'number') {
-        tx.update(ref, { balance: { paid: Math.max(0, bal), bonus: 1, reward: 0 }, welcomeUnAt: admin.firestore.FieldValue.serverTimestamp() });
+      if (bal == null || typeof bal !== 'object') {
+        // 숫자형(옛 잔액)이나 비어 있는 칸은 칸별 잔액으로 바꿔 넣는다(점 경로 증가는 칸이 맵이 아니면 실패)
+        tx.update(ref, { balance: { paid: Math.max(0, Number(bal) || 0), bonus: 1, reward: 0 }, welcomeUnAt: admin.firestore.FieldValue.serverTimestamp() });
       } else {
         tx.update(ref, { 'balance.bonus': admin.firestore.FieldValue.increment(1), welcomeUnAt: admin.firestore.FieldValue.serverTimestamp() });
       }
