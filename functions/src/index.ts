@@ -2536,6 +2536,7 @@ export { adminGrantCompensation } from './admin/adminGrantCompensation';
 export { adminStats, buildDailyStats, pruneRawAnalytics } from './admin/stats';
 export { adminLookup } from './admin/customer';
 export { adminMailReport } from './admin/mailReport'; // 2026-10-22 관리자 '메일' 판 (아침 운세 메일 구독, 보낸 수, 링크로 온 사람, 구독자 결제)
+export { alertPaidBlocked } from './admin/paidBlockAlert'; // 2026-10-23 돈을 낸 손님이 막히면 10분 안에 관리자 경보와 오너 메일
 // 토스 앱 결제 환불 회수 (2026-10-19)
 export { syncIapRefunds, syncIapRefundsDeep } from './payment/syncIapRefunds';
 // 웹 문의함 (2026-10-19)
