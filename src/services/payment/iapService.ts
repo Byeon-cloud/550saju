@@ -91,6 +91,8 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
       // 동적 import — 런타임에만 로드 (Vite 정적분석 우회)
       import('@apps-in-toss/web-framework').then((mod: any) => {
         const IAP = mod.IAP;
+        // 2026-10-22 결제창을 실제로 여는 순간 (충전 화면 진입 charge_open 과 따로, 토스 픽셀 결제 시작)
+        import('@/services/analytics').then((a) => a.trackEvent('pay_sheet_open', { pg: 'iap', amount: pkg.price, package: resolvedId })).catch(() => {});
         IAP.createOneTimePurchaseOrder({
           options: {
             sku: product.sku,
@@ -101,7 +103,7 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
                 // 1. 로컬 즉시 적립 (UX 빠르게)
                 addPaidBalance(product.paidUn, product.bonusUn);
                 // 측정 — IAP 충전 완료 (2026-06-12: 웹 PG만 찍히고 IAP 누락이던 갭 fix)
-                import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: pkg.price, package: resolvedId, pg: 'iap' })).catch(() => {});
+                import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: pkg.price, package: resolvedId, pg: 'iap', order: String(orderId || '').slice(0, 64) })).catch(() => {});
 
                 // 2. 서버에 비동기 기록 (실패해도 return true — restorePendingPurchases 가 복구)
                 // 2026-05-28 — silent fail 보강: 실패 시 console.error + pending orderId 로컬 큐 적재

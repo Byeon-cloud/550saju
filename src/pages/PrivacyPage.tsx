@@ -11,6 +11,11 @@ const AD_NAVER = !!import.meta.env.VITE_NAVER_WA_ID;
 const AD_GOOGLE = !!import.meta.env.VITE_GADS_ID;
 const AD_ON = !isAppintosBuild && (AD_META || AD_NAVER || AD_GOOGLE);
 const AD_SINCE = String(import.meta.env.VITE_AD_TRACKING_SINCE || '');
+/* 2026-10-22 — 토스 앱 안(앱인토스)의 토스애즈 전환 추적(토스 픽셀, src/services/ads/tossPixel.ts). 코드가 있으면 웹과 앱 둘 다에 6-2 를 보인다
+ *   (앱인토스 콘솔에 등록한 처리방침이 이 웹 화면이라 웹에서도 앱의 수집을 알린다). 적용일은 VITE_TOSS_PIXEL_SINCE, 알린 날은 VITE_TOSS_PIXEL_NOTICE. */
+const TOSS_PX = !!import.meta.env.VITE_TOSS_PIXEL_CODE;
+const TOSS_PX_SINCE = String(import.meta.env.VITE_TOSS_PIXEL_SINCE || '');
+const TOSS_PX_NOTICE = String(import.meta.env.VITE_TOSS_PIXEL_NOTICE || '');
 
 export function PrivacyPage() {
   usePageTitle('개인정보처리방침');
@@ -82,12 +87,23 @@ export function PrivacyPage() {
             {AD_ON && (
               <div>
                 <p className="text-label text-text-primary font-bold mb-1">6-1. 웹 광고를 위한 행태정보의 수집과 거부</p>
-                <p>웹(saju500.app)에서 광고 성과를 재고 관심에 맞는 광고를 보여 주기 위해, 아래 광고 사업자의 도구(쿠키와 스크립트)가 이용 기록을 자동으로 수집해요. 토스 앱 안에서는 수집하지 않아요.</p>
+                <p>웹(saju500.app)에서 광고 성과를 재고 관심에 맞는 광고를 보여 주기 위해, 아래 광고 사업자의 도구(쿠키와 스크립트)가 이용 기록을 자동으로 수집해요. {TOSS_PX ? '토스 앱 안에서는 이 도구들을 쓰지 않고, 아래 6-2 의 토스애즈 전환 추적만 써요.' : '토스 앱 안에서는 수집하지 않아요.'}</p>
                 <p className="mt-1">수집하는 행태정보: 본 화면, 사주 입력 완료, 풀이 결과 확인, 충전 화면 진입, 충전 완료와 금액. 이름, 생년월일, 출생시간 같은 사주 정보와 메일 주소는 보내지 않아요.</p>
                 <p>수집하는 사업자: {[AD_META && 'Meta Platforms, Inc.(메타 픽셀)', AD_NAVER && '네이버 주식회사(네이버 검색광고 전환 추적)', AD_GOOGLE && 'Google LLC(Google 광고 전환 추적)'].filter(Boolean).join(', ')}</p>
                 <p>보유 기간: 사주500은 이 기록을 따로 저장하지 않아요. 각 사업자가 자사 정책에 따라 보관해요.</p>
                 <p>거부 방법: 브라우저 설정에서 다른 사이트 쿠키를 막거나(크롬은 설정, 개인정보 및 보안, 서드 파티 쿠키 / 사파리는 설정, Safari, 크로스 사이트 추적 방지), 휴대폰에서 광고 개인화를 끄면(안드로이드는 설정, Google, 광고 / 아이폰은 설정, 개인정보 보호 및 보안, 추적) 수집되지 않거나 맞춤형 광고에 쓰이지 않아요. 거부해도 서비스는 그대로 쓸 수 있어요.</p>
                 <p>문의: 아래 개인정보 보호책임자에게 연락해 주세요.{AD_SINCE ? ` 이 항목은 ${AD_SINCE}부터 적용해요.` : ''}</p>
+              </div>
+            )}
+            {TOSS_PX && (
+              <div>
+                <p className="text-label text-text-primary font-bold mb-1">6-2. 토스 앱 안 광고 성과 측정을 위한 행태정보의 수집과 거부</p>
+                <p>토스 앱 안에서 사주500을 쓸 때, 토스 광고를 보고 들어온 분이 실제로 결제까지 했는지 재려고 비바리퍼블리카 주식회사(토스)의 토스애즈 전환 추적 도구(토스 픽셀)가 이용 기록을 자동으로 수집해요.</p>
+                <p className="mt-1">수집하는 행태정보: 본 화면의 주소, 유료 풀이 화면 열기, 충전 화면 진입, 결제창 열기, 결제 완료와 금액, 주문번호, 첫 결제 여부, 사주 입력 완료, 토스 로그인 완료, 토스 광고 클릭 표시(tcid). 이름, 생년월일, 출생시간 같은 사주 정보와 메일 주소는 보내지 않아요.</p>
+                <p>수집하는 사업자: 비바리퍼블리카 주식회사(토스애즈)</p>
+                <p>보유 기간: 사주500은 이 기록을 따로 저장하지 않아요. 비바리퍼블리카가 자사 정책에 따라 보관해요.</p>
+                <p>거부 방법: 토스 앱 안 사주500의 내 정보 화면에서 '광고 성과 측정'의 끄기를 누르면 그 기기에서는 바로 보내지 않아요. 휴대폰 설정에서 광고 개인화를 끄면(안드로이드는 설정, Google, 광고 / 아이폰은 설정, 개인정보 보호 및 보안, 추적) 맞춤형 광고에 쓰이지 않아요. 거부해도 서비스는 그대로 쓸 수 있어요.</p>
+                <p>문의: 아래 개인정보 보호책임자에게 연락해 주세요.{TOSS_PX_SINCE ? ` 이 항목은 ${TOSS_PX_NOTICE ? `${TOSS_PX_NOTICE}에 알리고 ` : ''}${TOSS_PX_SINCE}부터 적용해요.` : ''}</p>
               </div>
             )}
             <div>

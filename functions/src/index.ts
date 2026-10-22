@@ -2533,6 +2533,7 @@ export { adminGrantCompensation } from './admin/adminGrantCompensation';
 // 관리자 v4 (2026-10-19) — 하루 요약(statsDaily), 고객 찾기, 원본 400일 보관
 export { adminStats, buildDailyStats, pruneRawAnalytics } from './admin/stats';
 export { adminLookup } from './admin/customer';
+export { adminMailReport } from './admin/mailReport'; // 2026-10-22 관리자 '메일' 판 (아침 운세 메일 구독, 보낸 수, 링크로 온 사람, 구독자 결제)
 // 토스 앱 결제 환불 회수 (2026-10-19)
 export { syncIapRefunds, syncIapRefundsDeep } from './payment/syncIapRefunds';
 // 웹 문의함 (2026-10-19)

@@ -289,6 +289,7 @@ export function ChargePage() {
     if (!selectedPkg || purchasing) return;
     setShowPgSheet(false);
     setPurchasing(true);
+    trackEvent('pay_sheet_open', { pg: 'portone', amount: selectedPkg.price, package: selectedPkg.id, method: String(method) });
     const r = await requestPortoneLivePayment(selectedPkg, method);
     setPurchasing(false);
     if (r.ok && r.paidUn != null) {

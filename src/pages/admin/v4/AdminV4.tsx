@@ -14,9 +14,10 @@ import { TabReviews } from '../_tabReviews';
 import { Tracking } from './Tracking';
 import { Inbox } from './Inbox';
 import { Paths } from './Paths';
+import { Mail } from './Mail';
 import { callAdmin } from './api';
 
-type Tab = 'overview' | 'paths' | 'inbox' | 'customer' | 'revenue' | 'channels' | 'content' | 'tracking' | 'reviews';
+type Tab = 'overview' | 'paths' | 'inbox' | 'customer' | 'revenue' | 'channels' | 'content' | 'mail' | 'tracking' | 'reviews';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: '한눈에' },
   { id: 'paths', label: '어디서 사나' },
@@ -25,6 +26,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'revenue', label: '매출' },
   { id: 'channels', label: '들어온 곳' },
   { id: 'content', label: '콘텐츠와 AI' },
+  { id: 'mail', label: '메일' },
   { id: 'tracking', label: '기록 점검' },
   { id: 'reviews', label: '후기' },
 ];
@@ -35,7 +37,7 @@ export function AdminV4() {
   });
   const [range, setRange] = useState<7 | 14 | 30 | 60>(14);
   const [plat, setPlat] = useState<PlatFilter>('all');
-  const needStats = tab !== 'customer' && tab !== 'reviews' && tab !== 'inbox';
+  const needStats = tab !== 'customer' && tab !== 'reviews' && tab !== 'inbox' && tab !== 'mail';
   // 새 웹 문의 수 (탭 이름 옆에)
   const [newInq, setNewInq] = useState(0);
   useEffect(() => { callAdmin<{ items: { status: string }[] }>('adminInquiries', { action: 'list' }).then((r) => setNewInq(r.items.filter((x) => x.status === 'new').length)).catch(() => {}); }, []);
@@ -89,6 +91,7 @@ export function AdminV4() {
         {tab === 'customer' && <Customer />}
         {tab === 'inbox' && <Inbox onCount={setNewInq} />}
         {tab === 'reviews' && <TabReviews />}
+        {tab === 'mail' && <Mail />}
       </div>
     </div>
   );

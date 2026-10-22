@@ -5,7 +5,7 @@
  *   서버: functions/src/ilju/iljuDaily.ts (생일로 일주를 계산해 dailyMailSubs/{uid} 에 메일과 일주만 남긴다).
  *   매일 아침 7시, 60일주별로 하루 한 번 만든 글을 보낸다(사람마다 AI 를 부르지 않아 구독자가 늘어도 원가가 그대로다).
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { EmailDomainPicks } from '@/components/common/EmailDomainPicks';
 import { httpsCallable } from 'firebase/functions';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
@@ -39,11 +39,23 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
     const t = window.setTimeout(() => document.getElementById('daily-mail')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 500);
     return () => window.clearTimeout(t);
   }, []);
+  // 2026-10-22 관리자 메일 판 — 신청 칸이 화면에 보였는지(한 번), 눌렀는지, 실패했는지를 남긴다
+  const viewed = useRef(false);
+  const seenRef = useCallback((el: HTMLElement | null) => {
+    if (!el || viewed.current || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver((ents) => {
+      if (viewed.current || !ents.some((e) => e.isIntersecting)) return;
+      viewed.current = true;
+      io.disconnect();
+      import('@/services/analytics').then((a) => a.trackEvent('mail_signup_view', { source })).catch(() => {});
+    }, { threshold: 0.5 });
+    io.observe(el);
+  }, [source]);
   if (isAppintosBuild || isAppsInToss()) return null; // 웹 전용 (앱 번들을 브라우저로 열어도 숨김)
   if (done && !justDone) return null; // 10-19 오너: 이미 신청한 사람에게는 홈, 내 정보 어디서도 다시 보이지 않는다
   if (compact && !open) {
     return (
-      <button type="button" onClick={() => { setOpen(true); import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '아침 운세 메일 펼치기', page: window.location.pathname })).catch(() => {}); }}
+      <button type="button" ref={seenRef} onClick={() => { setOpen(true); import('@/services/analytics').then((a) => { a.trackEvent('cta_click', { label: '아침 운세 메일 펼치기', page: window.location.pathname }); a.trackEvent('mail_signup_open', { source }); }).catch(() => {}); }}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', minHeight: 44, padding: '10px 12px', background: 'transparent', border: 0, cursor: 'pointer', textAlign: 'left', ...style }}>
         <span aria-hidden="true" style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 900, color: HJ.ink }}>日</span>
         <span>
@@ -60,6 +72,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
   async function submit() {
     if (!ok || busy) return;
     setBusy(true); setErr('');
+    import('@/services/analytics').then((a) => a.trackEvent('mail_signup_submit', { source, ad: adAgree ? 1 : 0 })).catch(() => {});
     try {
       await ensureFunctionsTarget();
       const fn = httpsCallable<any, { ok: boolean; iljuKo: string }>(functions, 'subscribeDailyMail', { timeout: 30000 });
@@ -70,7 +83,9 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
       try { localStorage.setItem(LS_DONE, label); } catch { /* noop */ }
       import('@/services/analytics').then((a) => a.trackEvent('mail_subscribe', { source: `daily_${source}` })).catch(() => {});
     } catch (e: any) {
-      setErr(String(e?.message || '').replace(/^.*?:\s*/, '') || '신청하지 못했어요. 잠시 뒤 다시 시도해 주세요');
+      const why = String(e?.message || '').replace(/^.*?:\s*/, '');
+      setErr(why || '신청하지 못했어요. 잠시 뒤 다시 시도해 주세요');
+      import('@/services/analytics').then((a) => a.trackEvent('mail_signup_fail', { source, why: why.slice(0, 40) || 'unknown' })).catch(() => {});
     } finally {
       setBusy(false);
     }
@@ -78,7 +93,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
 
   const inputStyle: React.CSSProperties = { width: '100%', height: 48, borderRadius: 12, border: `1px solid ${HJ.line}`, padding: '0 14px', fontSize: 16, background: '#fff', color: HJ.ink };
   return (
-    <div id="daily-mail" style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '16px 16px 18px', ...style }}>
+    <div id="daily-mail" ref={seenRef} style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '16px 16px 18px', ...style }}>
       <p style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>아침 7시마다 내 일주 운세를 메일로 보내 드려요</p>
       {done ? (
         <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.75, marginTop: 8 }}>

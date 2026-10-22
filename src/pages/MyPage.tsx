@@ -25,6 +25,7 @@ import { AD_BANNER_GROUP_ID } from '@/constants/config';
 // 웹 단독 출시 법적 컴플라이언스 (앱인토스 비노출)
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
+import { AdMeasureToggle } from '@/components/my/AdMeasureToggle';
 import { useActiveProfile } from '@/hooks/useHomeData';
 import { ConsentModal, type ConsentResult } from '@/components/auth/ConsentModal';
 import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
@@ -269,6 +270,7 @@ export function MyPage() {
         </div>
 
         {!inAppsInToss && <DailyMailSignup prefill={mailPrefill} source="my" style={{ marginBottom: 12 }} />}
+        {inAppsInToss && <AdMeasureToggle style={{ marginBottom: 12 }} />}
 
         {/* ── AppMeta (§8) ── */}
         <AppMeta toast={toast} />

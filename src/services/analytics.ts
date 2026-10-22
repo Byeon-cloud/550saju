@@ -33,6 +33,7 @@ function mirrorToTossAnalytics(eventName: string, params?: Record<string, string
 }
 
 const AD_EVENTS = new Set(['page_view', 'profile_created', 'content_result', 'charge_open', 'charge_complete']);
+const TOSS_PX_EVENTS = new Set(['page_view', 'content_open', 'charge_open', 'pay_sheet_open', 'charge_complete', 'profile_created', 'login_success']);
 
 export function trackEvent(eventName: string, params?: Record<string, string | number>) {
   if (typeof window !== 'undefined' && 'gtag' in window) {
@@ -45,6 +46,10 @@ export function trackEvent(eventName: string, params?: Record<string, string | n
   // 2026-10-19 웹 유료광고 전환 추적 (메타, 네이버, 구글) — 앱 빌드에서는 코드째 빠진다(빌드 상수), 번호가 없으면 아무것도 안 함
   if (import.meta.env.VITE_BUILD_TARGET !== 'appintos' && AD_EVENTS.has(eventName)) {
     import('@/services/ads/adPixels').then((m) => m.adEvent(eventName, params)).catch(() => {});
+  }
+  // 2026-10-22 토스애즈 전환 추적(토스 픽셀) — 앱 번들에서만, VITE_TOSS_PIXEL_CODE 가 있을 때만(tossPixel.ts)
+  if (import.meta.env.VITE_BUILD_TARGET === 'appintos' && TOSS_PX_EVENTS.has(eventName)) {
+    import('@/services/ads/tossPixel').then((m) => m.tossPixelEvent(eventName, params)).catch(() => {});
   }
   // 2026-10-17 별점 요청 후보 (앱인토스만, 시험 E12) — 결과 도달과 운 차감 성공만 본다
   if (eventName === 'content_result' || eventName === 'content_purchase') {
@@ -169,6 +174,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'topic_select',       // {topic} — 결제 확정 시
   'topic_open',         // {topic} — 주제 페이지 진입 (2026-06-12)
   'charge_open',        // 충전 페이지 진입
+  'pay_sheet_open',     // {pg, amount, package} — 결제창을 실제로 여는 순간(앱 IAP 요청 직전, 웹 포트원 호출 직전, 2026-10-22)
   'charge_complete',    // {amount, package}
   'share_click',        // {type, page, balance} — 공유 '시도' (버튼 클릭 시점)
   'share_complete',     // {type, method, rewarded} — 공유 '성사' (2026-07-03 바이럴 퍼널 — method: toss_viral|toss_share|web_share|clipboard|web_share_file)
@@ -207,6 +213,10 @@ const FIRESTORE_TRACKED = new Set<string>([
   'insufficient_balance', // {type, needed} — 잔액부족 감지(충전 유도 직전 — 전환 모멘트)
   'share_view',         // {type} — 공유 받은 사람이 받은 화면을 열었다 (2026-10-17 궁합 보내기 E7)
   'mail_subscribe',     // {source} — 신년운세 마감 전 메일 알림 신청 (2026-10-17 시험 E14, 웹)
+  'mail_signup_view',   // {source} — 아침 운세 메일 신청 칸이 화면에 보였다(한 화면 한 번, 2026-10-22 관리자 메일 판)
+  'mail_signup_open',   // {source} — 홈의 한 줄짜리 신청 칸을 펼쳤다
+  'mail_signup_submit', // {source, ad} — 신청 버튼을 눌렀다
+  'mail_signup_fail',   // {source, why} — 신청이 실패했다(서버 오류 문구 앞부분)
   'charge_free_first',  // {} — 사주 없는 사람이 충전 화면에서 무료 오늘의 운세로 (2026-10-17)
   'input_leave',        // {filled} — 입력을 끝내지 않고 나감, 채운 칸 (2026-10-17)
   'input_blocked',      // {missing} — 입력 화면에서 빈 칸이 있는데 시작을 눌렀다 (2026-10-17 입력 41% 이탈 진단)
@@ -351,7 +361,11 @@ function sendAdBoot(): void {
 }
 
 // 모듈 init 시 1회 캡처 (SSR 안전 가드) + 전역 CTA 클릭 수집 시작
-if (typeof window !== 'undefined') { captureUtm(); sendAdBoot(); captureTossSchemeUtm(); initCtaTracking(); }
+if (typeof window !== 'undefined') {
+  captureUtm(); sendAdBoot(); captureTossSchemeUtm(); initCtaTracking();
+  // 토스 픽셀은 첫 화면 보기보다 먼저 띄워 tcid 를 잡는다(앱 번들만, 코드가 없으면 아무것도 안 함)
+  if (import.meta.env.VITE_BUILD_TARGET === 'appintos') import('@/services/ads/tossPixel').then((m) => m.initTossPixel()).catch(() => {});
+}
 
 /** 2026-06-12 P0 — 부팅 이벤트가 익명 로그인 완료 전에 발사되면 rules(auth 필수)에 막혀
  *  조용히 버려지던 레이스 fix. 첫 auth 상태 확정까지 최대 6초 대기 후 기록. */
