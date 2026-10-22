@@ -18,6 +18,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GUARD_TOKEN = void 0;
 exports.generateChatAnswerAI = generateChatAnswerAI;
+const personName_1 = require("../shared/personName");
 const promptsV3_1 = require("./promptsV3");
 const sajuFacts_1 = require("./sajuFacts");
 const lunar_javascript_1 = require("lunar-javascript");
@@ -33,12 +34,17 @@ const DEFAULT_CHAT_MODEL = claudeClient_1.CLAUDE_MODEL.sonnet;
  * answer 필드 맨 앞 [GUARD] 토큰 = 서버 onCall 감지 → 잔액 환원 + guard_hits 로깅 + consumed=0.
  */
 exports.GUARD_TOKEN = '[GUARD]';
+// 2026-10-22 — 아래 지시문 세 군데 수리(점검 P0-4). 시험 답에 '최종 선택은 서윤 님의 몫입니다', '먼저 짚어 볼 일이 있어요'가
+//   그대로 나왔고(옛 '최종 선택은 본인의 몫 자세 유지' 줄이 가르침), 한 답에 간지가 열다섯 개 넘었고, 두 답이 같은 2022년을 짚었다.
+//   → [해석 원칙] 2항을 '맺음과 머리말 금지, 질문 하나로 맺기'로, [톤]에 간지 세 개 한도, [답변 구조]에 이미 짚은 시기 재질문 금지.
+//   ✅ 예시도 문장 끝 괄호 간지 꼴을 문장 안 풀이로 바꿨다(모델은 예문을 따라 한다).
 const GUARD_SYSTEM_INSTRUCTION = `당신은 40년 경력의 베테랑 사주 상담가입니다. 『적천수』, 김만태 논문, 박청화 『춘하추동 신사주학』을 비롯한 한국 명리학 문헌을 지식 기반으로, 사용자의 원국, 대운, 연운 맥락에 맞춰 사주 관점의 해석을 제공합니다.
 40년 베테랑의 태도: 호들갑 없이 차분하고, 과장 없이 정확하며, 무서운 이야기로 겁주지 않고, 모르는 것은 모른다고 합니다. 수천 명의 사주를 본 사람의 여유 — 짧은 말에 깊은 통찰을 담고, 의뢰인의 마음을 먼저 읽습니다. 장난스럽거나 엉뚱한 질문에도 품위를 잃지 않고 자연스럽게 사주 이야기로 끌어옵니다.
 
 [톤]
 - 격식체 60% 이상, 친근체 30~40% 보조. 어조는 차분하고 단정.
-- 한자는 한 답변에 2개 이하. 한자 등장 즉시 괄호 일상어 풀이를 병기한다 ("편재(偏財) 기운").
+- 간지 밖의 한자 용어(편재, 정관 같은 십성 이름)는 한 답변에 2개 이하. 한자 등장 즉시 괄호 일상어 풀이를 병기한다 ("편재(偏財) 기운").
+- 간지(庚寅, 2027년 10월의 庚戌 같은 두 글자 묶음)는 한 답에 세 개까지만 쓴다. 네 번째부터는 한자 없이 "2027년 10월", "흙 기운이 들어오는 달"처럼 숫자와 뜻으로 풀어 쓴다. 달은 숫자로 부른다.
 - 독자는 사주를 1도 모르는 일반인이다. 명리 용어를 문장의 주어로 쓰지 말 것 — ❌"편재가 사업 감각을 줍니다" → ✅"사업 감각이 있으신데, 이건 편재(偏財) 기운에서 나와요".
 - "반드시", "100%", "확실히 일어납니다" 같은 단정 표현 금지.
 
@@ -46,8 +52,9 @@ const GUARD_SYSTEM_INSTRUCTION = `당신은 40년 경력의 베테랑 사주 상
 - 매 답변은 "결론 1문장(질문에 대한 답 + 그 사주 근거를 일상어로) → 핵심 해석 1~2문단 → 실생활 조언 + 후속 질문 1개" 3턴 구조.
 - 답변 길이는 400~600자. 모호한 되물음, "좋은 질문이에요" 같은 사족 금지.
 - 첫 문장은 질문에 대한 답(결론)으로 시작하고, 근거는 사주에서 일상어로 붙인다 — 명리 용어는 괄호로만 (2026-10-04).
-  ❌ "현재 대운 경신(庚申)은 을목 일간에게 부담이 되는…" 으로 시작 / ✅ "이번 주말 연락은 조금 미루시는 게 좋겠어요. 지금은 마음이 앞서기 쉬운 시기(庚申 대운)라서요."
+  ❌ "현재 대운 경신(庚申)은 을목 일간에게 부담이 되는…" 으로 시작 / ✅ "이번 주말 연락은 조금 미루시는 게 좋겠어요. 지금 지나는 경신(庚申) 대운은 마음이 앞서기 쉬운 10년이라서요."
 - 마지막에 자연스러운 후속 질문 1개를 둡니다. 본문에 책 이름과 학자 이름(출처)은 쓰지 않는다.
+- 이 대화에서 이미 짚은 지난 시기("혹시 2022년 무렵 ~ 있었나요?"로 물은 해)는 다시 묻지 않는다. 지난 일을 짚는 질문은 대화 전체에서 한 번이다.
 
 [답변 범위]
 - 사주, 운세, 시기, 관계, 직업, 재물, 건강 일반 조언은 가능.
@@ -104,7 +111,7 @@ guarded 판정:
 
 [🚨 해석 원칙 — 40년 베테랑의 품격 (2026-06-12, 회귀 금지)]
 1. 부정 단정 절대 금지 — "사주가 나쁘다", 죽음, 중병, 파산, 이혼, 실패를 단정하거나 암시로 겁주는 해석 금지. 흉(凶)한 요소를 언급할 때는 반드시 "주의가 필요한 시기 + 구체적인 대처법" 세트로만. 겁을 줘서 다음 결제를 유도하는 점집 화법은 이 서비스의 정반대다.
-2. 치우친 의견 금지 — 퇴사, 이혼, 결혼, 이사, 큰 투자 같은 인생 중대 결정을 한쪽으로 밀어붙이지 않는다. 사주가 보여주는 흐름과 양면을 제시하고, "최종 선택은 본인의 몫"이라는 자세를 유지한다. 단호한 어조는 좋지만 단정적 지시("무조건 하세요/헤어지세요")는 금지.
+2. 치우친 의견 금지 — 퇴사, 이혼, 결혼, 이사, 큰 투자 같은 인생 중대 결정을 한쪽으로 밀어붙이지 않는다. 사주가 보여주는 흐름과 양면을 제시한다. 이 균형은 내용으로 지키고 문장으로 말하지 않는다. "선택은 본인의 몫", "참고만 하세요", "먼저 짚어 볼 일이 있어요" 같은 맺음과 머리말은 쓰지 않는다. 답은 손님에게 묻는 질문 하나로 맺는다. 단호한 어조는 좋지만 단정적 지시("무조건 하세요/헤어지세요")는 금지.
 3. 지어내기 금지 — 주어진 원국, 대운, [CONTENT_CONTEXT] 데이터에 없는 것을 점치듯 창작하지 않는다 ("내년 3월 14일에 귀인을 만난다", "전 애인이 지금 당신 생각 중" 류 금지). 시기 언급은 대운과 세운 간지 근거가 있을 때만, "~한 흐름이 들어오는 시기" 수준으로.
 4. 균형 잡힌 읽기 — 어떤 사주든 강점과 보완점이 공존한다. 한 답변 안에서 좋은 결과 과장도, 나쁜 면 과장도 금지. 같은 원국에 대해 이전 턴과 모순되는 해석 금지 (history 안에서 일관성 유지).
 5. 범위 정직 — 사주로 답할 수 없는 질문(타인의 속마음 단정, 사실관계 확인, 일반 상식 퀴즈 등)은 아는 척하지 말고 "사주가 보여주는 것은 기운과 흐름까지"라고 선을 긋고, 사주로 풀 수 있는 부분만 풀어준다.
@@ -182,8 +189,12 @@ async function generateChatAnswerAI(apiKey, question, sajuData, chatHistory, tim
         const daeunList = Array.isArray(sajuData.daeun) ? sajuData.daeun : [];
         const curIdx = daeunList.findIndex((d) => d.isCurrent || d.현재);
         const daeunAge = (d) => (d?.시작나이 != null && d?.끝나이 != null) ? `${d.시작나이}~${d.끝나이}세` : (d?.나이범위 != null ? `${d.나이범위}세~` : '');
+        // 2026-10-22 — 나이만 넘겨 모델이 연도를 직접 셌다. 시험 답이 '2028년 이후 기축'(실제 2029년, 종합사주와 홈도 2029년)으로 어긋남(점검 P0-4)
+        //   → 서버 계산값 시작년도, 끝년도를 같이 넘긴다. 첫 칸(대운 들기 전, 간지 빈칸)은 '대운 전'으로 적어 빈 간지가 나가지 않게 한다.
+        const daeunYears = (d) => (Number(d?.시작년도) > 0 && Number(d?.끝년도) > 0) ? `${d.시작년도}~${d.끝년도}년` : '';
+        const daeunSpan = (d) => [daeunYears(d), daeunAge(d)].filter(Boolean).join(', ');
         const daeunFlow = daeunList.length > 0
-            ? daeunList.map((d, i) => `- ${daeunAge(d)} ${d.간지}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
+            ? daeunList.map((d, i) => `- ${daeunSpan(d)} ${d.간지 || '대운 전'}${i === curIdx ? ' ← 현재 대운' : ''}`).join('\n')
             : '미상';
         const prevDae = curIdx > 0 ? daeunList[curIdx - 1] : null;
         const nextDae = (curIdx >= 0 && curIdx < daeunList.length - 1) ? daeunList[curIdx + 1] : null;
@@ -197,10 +208,11 @@ ${Object.entries(elements).filter(([, v]) => v === 0).map(([k]) => `→ ${k} 없
 ${Object.entries(elements).filter(([, v]) => v >= 3).map(([k, v]) => `→ ${k} ${v}개 과다`).join('\n')}
 
 ${(0, sajuFacts_1.sajuCoreFactsText)(sajuData)}
-## 대운 흐름 (10년 단위, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
+## 대운 흐름 (10년 단위, 연도는 서버 계산값, 나이는 한국식 세는나이 기준(태어난 해가 1세, 화면 표기와 같은 숫자). 연도와 나이를 다시 계산하지 말고 이 숫자를 그대로 쓸 것)
 ${daeunFlow}
-${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunAge(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunAge(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 목록의 값을 그대로 인용 — 사용자가 이전/다음/특정 시기 대운을 물어도 위 목록에 있는 간지만 쓰고, 목록에 없는 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지.` : ''}
-## 이름/성별: ${sajuData.input?.name || '미상'}, ${sajuData.input?.gender === 'male' ? '남' : '여'}`;
+대운이 바뀌는 해는 이 목록의 연도만 쓴다. 다음 대운은 그 시작 연도부터 시작된다.
+${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지 || '대운 전'}(${daeunSpan(prevDae)})` : '없음'}, 현재 대운=${daeunList[curIdx].간지}(${daeunSpan(daeunList[curIdx])}), 다음 대운=${nextDae ? `${nextDae.간지}(${daeunSpan(nextDae)})` : '없음'}. 🚨 이 간지, 순서, 나이는 위 목록의 값을 그대로 인용 — 사용자가 이전/다음/특정 시기 대운을 물어도 위 목록에 있는 간지만 쓰고, 목록에 없는 간지를 임의 생성하거나 뒤바꾸지(swap) 절대 금지.` : ''}
+## 이름/성별: ${(0, personName_1.promptName)(sajuData.input?.name)}, ${sajuData.input?.gender === 'male' ? '남' : '여'}`;
     }
     /* 2026-10-14 — 오늘 날짜, 올해 세운, 앞으로 12개월 월주 (서버 계산, KST).
      *   5.5 세대 시험에서 "조심할 달" 질문에 '세운 간지가 주어진 자료에 없어 달을 못 집는다'고 답했다 —
@@ -211,9 +223,10 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
         const yearGz = lunar_javascript_1.Solar.fromYmd(kn.year, kn.month, kn.day).getLunar().getEightChar().getYear();
         nowContext = `
 
-## 지금 (서버 계산, 한국 시간. 달이나 해를 짚을 때 이 값만 인용)
+## 지금 (서버 계산, 한국 시간. 달이나 해를 짚을 때 이 값만 인용. 이런 표가 있다는 것, 표의 범위, '주어진 자료' 같은 말은 답에 쓰지 않는다)
 오늘: ${kn.year}년 ${kn.month}월 ${kn.day}일, 올해 세운 ${yearGz}
-이번 달부터 12개월 월주: ${(0, sajuFacts_1.upcomingMonthPillarsText)((0, kstTime_1.kstNowDate)(), 12)}`;
+이번 달부터 내년 12월까지 월주: ${(0, sajuFacts_1.upcomingMonthPillarsText)((0, kstTime_1.kstNowDate)(), 25 - kn.month)}`;
+        // 2026-10-21 — 12개월만 넣었더니 '내년 이직' 질문에 "월운표는 주어진 범위(9월까지)에서"라고 내부 사정을 말했다 → 내년 끝까지 넣고 표 언급 금지
         // 2026-10-14 — 지난 시기와 요즘을 짚는 근거 (짚어 주는 풀이). 첫 답에서만 한 번 묻는다
         const tl = sajuData ? (0, sajuFacts_1.lifeTimelineFactsText)(sajuData, (0, kstTime_1.kstNowDate)()) : '';
         if (tl)
@@ -221,6 +234,21 @@ ${curIdx >= 0 ? `→ 이전 대운=${prevDae ? `${prevDae.간지}(${daeunAge(pre
 
 ${tl}
 → 짚기 자리: ${chatHistory.length === 0 ? '이 대화의 첫 답이다. 질문과 맞닿은 영역이 걸린 시기가 위 표에 있으면 답 첫머리에서 짚기를 한 번 한다. 없으면 하지 않는다.' : '이미 대화 중이다. 다시 묻지 말고 표의 시기는 근거로만 쓴다.'}`;
+        // 2026-10-22 — 둘째 답이 첫 답과 같은 2022년을 또 짚었다(점검 P0-4). 앞선 답에 나온 지난 해(출생 연도~작년)를 서버가 뽑아 한 줄로 넘긴다
+        const birthY = Number(sajuData?.input?.birthYear) || 0;
+        const pastYears = new Set();
+        for (const h of chatHistory) {
+            if (h.role === 'user' || typeof h.content !== 'string')
+                continue;
+            for (const m of h.content.matchAll(/((?:19|20)\d{2})(?=년)/g)) {
+                const y = Number(m[1]);
+                if (y < kn.year && y >= birthY)
+                    pastYears.add(y);
+            }
+        }
+        if (pastYears.size > 0)
+            nowContext += `
+→ 이미 짚은 시기: ${[...pastYears].sort((a, b) => a - b).map((y) => `${y}년`).join(', ')}. 이 해들은 다시 묻지 않고, 같은 일을 다시 꺼내지 않는다.`;
     }
     catch { /* 계산 실패 시 생략 — 시기 언급은 대운 근거로만 */ }
     // ── 이전 대화 (최근 6턴)
@@ -278,11 +306,16 @@ ${question}
     catch (e) {
         // JSON 파싱 실패 → 안전한 fallback (가드는 false, 답변은 원문)
         return {
-            answer: text ? cleanAnswer(text) : '잠시 풀이가 막혔습니다. 다시 한 번 물어봐 주세요.',
+            // 빈 본문은 '' 로 돌려 호출부가 재시도, 실패 시 복구하게 한다 (안내 문구로 채우면 대화권이 그대로 빠졌다)
+            answer: text ? cleanAnswer(text) : '',
             keywords: ['올해 재물운은?', '연애운 궁금합니다', '건강 쪽도 봐주세요'],
             guarded: false,
             guardCategory: 'none',
         };
+    }
+    // 2026-10-19 CS — 본문이 빈 답이 차감된 채 화면에 나갔다. 원인 추적용으로 응답 모양을 남긴다 (호출부가 재시도, 실패 시 복구)
+    if (typeof parsed.answer !== 'string' || !parsed.answer.trim()) {
+        console.warn('[generateChatAnswerAI] 빈 answer', JSON.stringify({ stop: msg.stop_reason, blocks: msg.content.length, keys: Object.keys(parsed || {}), head: text.slice(0, 300) }));
     }
     return {
         answer: typeof parsed.answer === 'string' ? cleanAnswer(parsed.answer) : '', // 2026-10-04 출처·오기 한자·시간 표기 정리

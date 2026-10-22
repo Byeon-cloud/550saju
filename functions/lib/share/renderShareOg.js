@@ -24,9 +24,44 @@
  *     - { source: "/share/**", function: "renderShareOg" }
  *     - { source: "**", destination: "/index.html" }
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.renderShareOg = void 0;
+const personName_1 = require("../shared/personName");
 const https_1 = require("firebase-functions/v2/https");
+const admin = __importStar(require("firebase-admin"));
 /** 봇 UA 식별 — 주요 messenger/SNS 크롤러 */
 const BOT_UA_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|slackbot|linkedinbot|kakaotalk|telegrambot|discordbot|whatsapp|line-poker|google|bing|yandex|baidu/i;
 function escapeHtml(s) {
@@ -53,7 +88,7 @@ function parseSharePath(path) {
     if (m)
         return { type: 'topic', topicId: m[1], reportId: m[2] };
     // /share/{type}/{id}
-    m = path.match(/^\/share\/(daily|dream|premium)\/([A-Za-z0-9_-]{4,64})\/?$/);
+    m = path.match(/^\/share\/(daily|dream|premium|result|compat|monthly|tojung|weekly|daeun|newyear|cjoin)\/([A-Za-z0-9_-]{4,64})\/?$/);
     if (m)
         return { type: m[1], reportId: m[2] };
     // /share/{id} (레거시)
@@ -80,8 +115,49 @@ const TOPIC_LABEL_MAP = {
  *    현존 og-image.png 1종으로 폴백. (Phase 2: 콘텐츠별 동적 OG PNG 생성)
  *  설명도 share.ts 초대형 카피와 일관 ("당신도 받아보세요" — 받는 사람 본인 사주가 주인공). */
 const OG_IMAGE_FALLBACK = '/og-image.png';
-function getOgMeta(parsed) {
+/** 공유 종류 → public/og/{파일}.jpg (2026-10-17) */
+const OG_FILE = {
+    daily: 'daily', dream: 'dream', compat: 'compat', premium: 'premium', result: 'premium', daeun: 'premium',
+    monthly: 'monthly', weekly: 'weekly', tojung: 'tojung', topic: 'premium', newyear: 'tojung', cjoin: 'compat',
+};
+const TYPE_TITLE = {
+    compat: ['궁합', '두 사람의 사주로 궁합을 봤어요. 점수와 총평을 볼 수 있어요.'],
+    monthly: ['월운세', '이번 달 흐름을 사주로 날짜까지 봤어요. 내 한 달도 사주로 확인해 보세요.'],
+    tojung: ['신년운세', '새해 열두 달을 사주로 봤어요. 내 새해 운세도 확인해 보세요.'],
+    weekly: ['주간운세', '이번 주 흐름을 사주로 봤어요. 내 한 주도 확인해 보세요.'],
+    daeun: ['대운', '십 년마다 바뀌는 큰 흐름을 사주로 봤어요. 내 대운도 확인해 보세요.'],
+    cjoin: ['궁합 초대장', '생일을 넣으면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 볼 수 있어요.'],
+    newyear: ['신년운세 미리 보기', '새해 좋은 달과 조심할 달을 사주로 미리 봤어요. 내 새해도 무료로 미리 볼 수 있어요.'],
+};
+function getOgMeta(parsed, compat, dream, ny, cj) {
     const { type, topicId } = parsed;
+    if (type === 'cjoin' && cj?.n1) {
+        return { title: `${(0, personName_1.realName)(cj.n1) ? `${(0, personName_1.realName)(cj.n1)} 님이` : '친구가'} 두 분 궁합을 보고 싶어 해요 | 사주500`, description: '내 생일을 넣으면 두 분 모두 궁합 점수와 한 줄 풀이를 무료로 볼 수 있어요. 생일은 상대에게 보이지 않아요.', image: OG_IMAGE_FALLBACK };
+    }
+    if (type === 'newyear' && ny) {
+        const mm = (a) => a.map((m) => `${m}월`).join(', ');
+        return {
+            title: `${(0, personName_1.realName)(ny.name) ? `${(0, personName_1.realName)(ny.name)} 님의 ` : ''}${ny.y} ${ny.gzKo}년 미리 보기 | 사주500`,
+            description: `${ny.good.length ? `좋은 달 ${mm(ny.good)}. ` : ''}${ny.hard.length ? `조심할 달 ${mm(ny.hard)}. ` : ''}내 새해도 무료로 미리 볼 수 있어요.`.slice(0, 120),
+            image: OG_IMAGE_FALLBACK,
+        };
+    }
+    if (type === 'dream' && dream) {
+        return {
+            title: `${dream.name ? `${dream.name} 님의 ` : ''}꿈 풀이: ${dream.title || '꿈해몽'} | 사주500`,
+            description: (dream.quote || '간밤의 꿈을 사주로 풀었어요. 풀이를 열어 보세요.').slice(0, 120),
+            image: OG_IMAGE_FALLBACK,
+        };
+    }
+    if (type === 'compat' && compat) {
+        return {
+            title: `${(0, personName_1.realName)(compat.n1) ? `${(0, personName_1.realName)(compat.n1)} 님과` : '친구와'} ${(0, personName_1.realName)(compat.n2) ? `${(0, personName_1.realName)(compat.n2)} 님의` : '상대의'} 궁합 ${compat.score}점 | 사주500`,
+            description: compat.head || '두 사람의 사주로 궁합을 봤어요. 점수와 총평을 볼 수 있어요.',
+            image: OG_IMAGE_FALLBACK,
+        };
+    }
+    if (TYPE_TITLE[type])
+        return { title: `${TYPE_TITLE[type][0]} | 사주500`, description: TYPE_TITLE[type][1], image: OG_IMAGE_FALLBACK };
     switch (type) {
         case 'daily':
             return {
@@ -111,24 +187,68 @@ function getOgMeta(parsed) {
             };
         default:
             return {
-                title: '사주500 — 정통 명리학 AI 사주 풀이',
-                description: '500원에 만나는 정통 사주 풀이. 당신의 사주도 받아보세요.',
+                title: '사주500 | 정통 명리학 사주 풀이',
+                description: '내 사주 여덟 글자로 오늘과 한 해를 풀어 드려요. 오늘의 운세와 꿈해몽은 하루 한 번 무료예요.',
                 image: OG_IMAGE_FALLBACK,
             };
     }
 }
-/** 봇 대상 SSR HTML — 콘텐츠 타입별 OG 메타 */
+async function readDreamShare(id) {
+    if (!/^[A-Za-z0-9]{14}$/.test(id))
+        return null; // 예전 꿈 공유 주소는 날짜(YYYY-MM-DD)라 서버 문서가 없다
+    try {
+        const snap = await admin.firestore().doc(`dreamShares/${id}`).get();
+        if (!snap.exists)
+            return null;
+        const d = snap.data();
+        return { name: String(d.name || ''), title: String(d.title || ''), quote: String(d.quote || d.narrative || '') };
+    }
+    catch {
+        return null;
+    }
+}
+const GAN_KO = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계' };
+const ZHI_KO = { 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
+async function readNewYearShare(id) {
+    if (!/^[A-Za-z0-9]{14}$/.test(id))
+        return null;
+    try {
+        const snap = await admin.firestore().doc(`newYearShares/${id}`).get();
+        if (!snap.exists)
+            return null;
+        const d = snap.data();
+        const gz = String(d.gz || '');
+        return {
+            name: String(d.name || '보낸 분'), y: Number(d.y) || 0, gzKo: `${GAN_KO[gz[0]] || ''}${ZHI_KO[gz[1]] || ''}`,
+            good: Array.isArray(d.good) ? d.good.map(Number) : [], hard: Array.isArray(d.hard) ? d.hard.map(Number) : [],
+        };
+    }
+    catch {
+        return null;
+    }
+}
+async function readCompatShare(id) {
+    try {
+        const snap = await admin.firestore().doc(`compatShares/${id}`).get();
+        if (!snap.exists)
+            return null;
+        const d = snap.data();
+        return { n1: String(d.n1 || '나'), n2: String(d.n2 || '상대'), score: Number(d.score) || 0, head: String(d.head || '') };
+    }
+    catch {
+        return null;
+    }
+}
 function buildBotHtml(params) {
     const { origin, parsed } = params;
-    const meta = getOgMeta(parsed);
+    const meta = getOgMeta(parsed, params.compat, params.dream, params.ny, params.cj);
     const shareUrl = `${origin}${parsed.type === 'result'
         ? `/share/${parsed.reportId}`
         : parsed.type === 'topic'
             ? `/share/topic/${parsed.topicId}/${parsed.reportId}`
             : `/share/${parsed.type}/${parsed.reportId}`}`;
-    // og:image — 콘텐츠별 정적 이미지 (Phase 2: 동적 PNG)
-    // Phase 1 fallback — 콘텐츠별 OG 이미지 미존재 시 default /og-image.png
-    const ogImage = `${origin}${meta.image}`;
+    // og:image — 2026-10-17 콘텐츠별 수묵 고서 그림 (scripts/og/make-og.cjs 로 만든 public/og/*.jpg). 예전 og-image.png 는 옛 디자인이었다
+    const ogImage = `${origin}/og/${OG_FILE[parsed.type] || 'default'}.jpg`;
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -145,7 +265,7 @@ function buildBotHtml(params) {
 <meta property="og:description" content="${escapeHtml(meta.description)}">
 <meta property="og:image" content="${escapeHtml(ogImage)}">
 <meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="600">
+<meta property="og:image:height" content="630">
 <meta property="og:locale" content="ko_KR">
 
 <!-- Twitter -->
@@ -189,7 +309,20 @@ exports.renderShareOg = (0, https_1.onRequest)({ timeoutSeconds: 10, memory: '25
         if (BOT_UA_RE.test(ua)) {
             res.set('Content-Type', 'text/html; charset=utf-8');
             res.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // 5분 CDN 캐시
-            res.status(200).send(buildBotHtml({ origin, parsed }));
+            const compat = parsed.type === 'compat' ? await readCompatShare(parsed.reportId) : null;
+            const dream = parsed.type === 'dream' ? await readDreamShare(parsed.reportId) : null;
+            const ny = parsed.type === 'newyear' ? await readNewYearShare(parsed.reportId) : null;
+            let cj = null;
+            if (parsed.type === 'cjoin' && /^[A-Za-z0-9]{14}$/.test(parsed.reportId)) {
+                try {
+                    const s = await admin.firestore().doc(`compatInvites/${parsed.reportId}`).get();
+                    cj = s.exists ? { n1: String(s.data()?.n1 || '') } : null;
+                }
+                catch {
+                    cj = null;
+                }
+            }
+            res.status(200).send(buildBotHtml({ origin, parsed, compat, dream, ny, cj }));
             return;
         }
         // 사람: SPA index.html self-fetch

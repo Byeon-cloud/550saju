@@ -482,8 +482,16 @@ function scoreDaysOfMonth(year: number, m: number, sajuData: any): Array<{ label
   return days;
 }
 
+/* 2026-10-22 — 신년운세가 '1/10(일)', '8/7(토)'에 계약과 면접을 붙였다(점검 P0-6). 고르는 날은 그대로 두고(홈 MonthGoodDays 클라 사본과 같은 날)
+ *   요일과 주말 표시를 따로 붙인다. 프롬프트는 fact 줄이나 WEEKEND_DAY_RULE 을 넣어 주말에 계약, 면접, 서명을 붙이지 않게 한다. */
+export const WEEKEND_DAY_RULE = '주말(토, 일)로 표시된 날에는 계약, 면접, 결재, 서명을 할 일로 붙이지 않는다. 주말에는 만남, 정리, 계획 적기, 쉬기를 붙인다. 계약과 서명은 평일인 날에만 붙인다.';
+/** 'm/d(요일)' 꼴 날짜가 토요일이나 일요일인지 */
+export function isWeekendLabel(label: string): boolean {
+  return /\((토|일)\)/.test(String(label || ''));
+}
+type DayPick = { date: string; why: string; weekday: string; weekend: boolean; fact: string };
 /** 월운 좋은 날(최대 4), 조심할 날(최대 3) — 신년운세와 같은 채점. 날짜순 */
-export function monthDayPicks(year: number, month: number, sajuData: any): { good: Array<{ date: string; why: string }>; caution: Array<{ date: string; why: string }> } {
+export function monthDayPicks(year: number, month: number, sajuData: any): { good: DayPick[]; caution: DayPick[] } {
   try {
     const days = scoreDaysOfMonth(year, month, sajuData);
     const dnum = (l: string) => Number(l.split('/')[1].split('(')[0]);
@@ -491,7 +499,13 @@ export function monthDayPicks(year: number, month: number, sajuData: any): { goo
     if (good.length < 2) good = days.filter((x) => !x.chung && x.score >= 2);
     good = good.sort((a, b) => b.score - a.score).slice(0, 4).sort((a, b) => dnum(a.label) - dnum(b.label));
     const caution = days.filter((x) => x.score <= -3 || (x.chung && x.score <= -1)).sort((a, b) => a.score - b.score).slice(0, 3).sort((a, b) => dnum(a.label) - dnum(b.label));
-    const pick = (x: { label: string; why: string }) => ({ date: x.label.replace(/\(.\)$/, ''), why: `${x.label}, ${x.why}` });
+    // 2026-10-22 — date, why 는 예전 그대로(claudeMonthly enforceDayPicks, plainWhy 가 기대는 꼴). weekday, weekend, fact 를 더함(점검 P0-6)
+    const pick = (x: { label: string; why: string }): DayPick => {
+      const weekday = (x.label.match(/\((.)\)$/) || [])[1] || '';
+      const weekend = weekday === '토' || weekday === '일';
+      const why = `${x.label}, ${x.why}`;
+      return { date: x.label.replace(/\(.\)$/, ''), why, weekday, weekend, fact: weekend ? `${why}, 주말(계약, 면접, 서명은 붙이지 않음)` : `${why}, 평일` };
+    };
     return { good: good.map(pick), caution: caution.map(pick) };
   } catch { return { good: [], caution: [] }; }
 }
@@ -499,6 +513,8 @@ export function monthDayPicks(year: number, month: number, sajuData: any): { goo
 export function dayPicksForYear(year: number, sajuData: any): {
   perMonth: Record<number, { good: string[]; caution: string[] }>;
   keyDates: Array<{ date: string; why: string }>;
+  /** 2026-10-22 — perMonth, keyDates 에 실린 날 가운데 토요일, 일요일인 날의 'm/d(요일)' 목록(점검 P0-6). 라벨은 화면에도 나가서 그대로 두고 따로 준다 */
+  weekendDates: string[];
 } {
   const out: Record<number, { good: string[]; caution: string[] }> = {};
   const all: Array<{ m: number; label: string; score: number; why: string }> = [];
@@ -539,7 +555,12 @@ export function dayPicksForYear(year: number, sajuData: any): {
     const [am, ad] = a.date.split('(')[0].split('/').map(Number); const [bm, bd] = b.date.split('(')[0].split('/').map(Number);
     return am - bm || ad - bd;
   });
-  return { perMonth: out, keyDates };
+  // 2026-10-22 — 주말 날짜 목록(점검 P0-6). claudeTojung 이 이 목록과 WEEKEND_DAY_RULE 을 프롬프트에 넣는다
+  const weekendDates = Array.from(new Set([
+    ...Object.values(out).flatMap((v) => [...v.good, ...v.caution]),
+    ...keyDates.map((k) => k.date),
+  ].filter(isWeekendLabel)));
+  return { perMonth: out, keyDates, weekendDates };
 }
 
 /** 대운별 기본 점수 (2026-10-15) — 대운 상품이 '성장기, 도약기, 전성기, 수확기'를 나이 순서로 채워 가장 압박이 센 대운을
@@ -1049,7 +1070,10 @@ export function topicHookPick(sajuData: any, now: Date, topicId: string): { y: n
         default: return { pts: 0, why: '' };
       }
     };
-    const ranked = cand.map((c) => ({ c, r: rel(c) })).sort((a, b) => (b.r.pts - a.r.pts) || (b.c.score - a.c.score) || (b.c.y - a.c.y));
+    // 2026-10-22 — 같은 점수면 만 18~19세, 22~24세가 아닌 해를 먼저(점검 P0-2). 확정표 머리의 '전환이 많은 나이' 규칙과 서버가 고른 해가 부딪히지 않게
+    const by = Number(sajuData?.input?.birthYear) || 0;
+    const commonTurn = (y: number): number => { const a = y - by; return by > 0 && ((a >= 18 && a <= 19) || (a >= 22 && a <= 24)) ? 1 : 0; };
+    const ranked = cand.map((c) => ({ c, r: rel(c) })).sort((a, b) => (b.r.pts - a.r.pts) || (commonTurn(a.c.y) - commonTurn(b.c.y)) || (b.c.score - a.c.score) || (b.c.y - a.c.y));
     const best = ranked[0];
     return { y: best.c.y, gz: best.c.gz, why: best.r.why || '원국 자리를 크게 건드린 해' };
   } catch { return null; }
@@ -1077,8 +1101,18 @@ export function lifeTimelineFactsText(sajuData: any, now: Date): string {
       const h = periodHits(String(cur.간지), p);
       lines.push(`- 지금 대운 ${cur.간지}(${ganziKo(String(cur.간지))})${cur.시작년도 ? ` ${cur.시작년도}~${cur.끝년도}년` : ''}: ${desc(String(cur.간지))}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`);
     }
+    // 2026-10-22 — 시기 줄마다 만 나이를 붙이고, 지난 해 중 만 18~19세, 22~24세(진학, 졸업, 취업)는 표시한다(점검 P0-2).
+    //   그 나이엔 누구나 큰일을 겪어 짚기가 떠보는 말로 읽힌다. 올해와 최근 달은 '요즘' 근거라 나이만 붙이고 표시는 하지 않는다.
+    const bm = Number(sajuData?.input?.birthMonth) || 0; const bd = Number(sajuData?.input?.birthDay) || 0;
+    const COMMON_TURN = ' (누구나 전환이 많은 나이)';
+    const turnTag = (a: number): string => ((a >= 18 && a <= 19) || (a >= 22 && a <= 24) ? COMMON_TURN : '');
+    const monthAge = (yy: number, mm: number): string => {
+      if (!(by > 0)) return '';
+      const before = bm > 0 && (mm < bm || (mm === bm && bd > 15)); // 그달 중순 기준, 생일 전이면 한 살 적게
+      return `, 그달 만 ${yy - by - (before ? 1 : 0)}세`;
+    };
     const ygz = yearGz(Y);
-    if (ygz) { const h = periodHits(ygz, p); lines.push(`- 올해 ${Y}년 ${ygz}(${ganziKo(ygz)}): ${desc(ygz)}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`); }
+    if (ygz) { const h = periodHits(ygz, p); lines.push(`- 올해 ${Y}년 ${ygz}(${ganziKo(ygz)})${by > 0 ? `, 그해 생일 뒤 만 ${Y - by}세` : ''}: ${desc(ygz)}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`); }
 
     // 2) 최근 석 달과 이번 달 (월운) — "요즘"을 짚는 근거
     const recent: string[] = [];
@@ -1086,7 +1120,7 @@ export function lifeTimelineFactsText(sajuData: any, now: Date): string {
       const mm = ((M - 1 - k + 120) % 12) + 1; const yy = Y - (M - k <= 0 ? 1 : 0);
       const gz = monthGz(yy, mm); if (!gz) continue;
       const h = periodHits(gz, p);
-      recent.push(`  - ${yy}년 ${mm}월 ${gz}(${ganziKo(gz)})${k === 0 ? ' 이번 달' : ''}: ${desc(gz)}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`);
+      recent.push(`  - ${yy}년 ${mm}월 ${gz}(${ganziKo(gz)})${k === 0 ? ' 이번 달' : ''}${monthAge(yy, mm)}: ${desc(gz)}. ${h.hits.join(', ') || '원국 자리와 큰 합충 없음'}`);
     }
     if (recent.length) lines.push(`- 최근 석 달과 이번 달 (월운, 각 달 절기 기준):\n${recent.join('\n')}`);
 
@@ -1094,12 +1128,62 @@ export function lifeTimelineFactsText(sajuData: any, now: Date): string {
     if (by > 0) {
       const from = Math.max(by + 14, Y - 12);
       const pick = pastYearCandidates(sajuData, now);
-      const past = pick.map((c) => `  - ${c.y}년 ${c.gz}(${ganziKo(c.gz)}) 세운, 그해 생일 뒤 만 ${c.y - by}세: ${desc(c.gz)}. ${c.hits.join(', ')}`);
+      const past = pick.map((c) => `  - ${c.y}년 ${c.gz}(${ganziKo(c.gz)}) 세운, 그해 생일 뒤 만 ${c.y - by}세${turnTag(c.y - by)}: ${desc(c.gz)}. ${c.hits.join(', ')}`);
       const turns = dy.filter((d) => d?.시작년도 && d.시작년도 >= from && d.시작년도 <= Y)
-        .map((d) => `  - ${d.시작년도}년 대운이 ${d.간지}(${ganziKo(String(d.간지))})로 바뀜, 그해 만 ${d.시작년도 - by}세: 10년 흐름이 갈린 해`);
+        .map((d) => `  - ${d.시작년도}년 대운이 ${d.간지}(${ganziKo(String(d.간지))})로 바뀜, 그해 만 ${d.시작년도 - by}세${turnTag(d.시작년도 - by)}: 10년 흐름이 갈린 해`);
       if (past.length || turns.length) lines.push(`- 지난 해들 중 크게 움직였을 해 (원국 자리를 세게 건드린 세운, 대운 교체):\n${[...past, ...turns].join('\n')}`);
     }
     if (!lines.length) return '';
-    return `### 지난 시기와 지금 시기 확정표 (서버 계산. 지난 일과 요즘을 말할 때 시기는 이 표에서만 고른다. 짚는 질문은 지시받은 자리에서만 한다)\n${lines.join('\n')}`;
+    // 2026-10-22 — 표시 붙은 해는 다른 해가 있으면 짚지 않게 머리에 한 줄(점검 P0-2)
+    return `### 지난 시기와 지금 시기 확정표 (서버 계산. 지난 일과 요즘을 말할 때 시기는 이 표에서만 고른다. 짚는 질문은 지시받은 자리에서만 한다. '누구나 전환이 많은 나이' 표시가 붙은 해는 표에 다른 해가 있으면 짚지 않는다)\n${lines.join('\n')}`;
+  } catch { return ''; }
+}
+
+/* 2026-10-22 — 배우자성 확정표(점검 P0-7). 연애운이 여성 사주의 일지 亥 속 甲(정재)을 '인연의 별'로 풀었고, 같은 날 오늘의 운세는
+ *   관성을 연인의 별로 써서 두 결과가 어긋났다. 여성은 관성(정관, 편관), 남성은 재성(정재, 편재)으로 서버가 자리와 글자를 정한다.
+ *   claudeTopic(love, marriage, reunion)이 이 이름으로 가져다 쓴다. 궁합(claudeCompat)은 자체 사본이 있다. */
+export function spouseStarText(sajuData: any): string {
+  try {
+    const p: any[] = sajuData?.pillars || [];
+    const dg = String(p[2]?.천간 || '');
+    const me = GAN_OH[dg];
+    if (!me) return '';
+    const female = (sajuData?.input?.gender || '') !== 'male';
+    const STAR = female ? ['정관', '편관(칠살)'] : ['정재', '편재'];
+    const starOh = female ? Object.keys(CTRL).find((k) => CTRL[k] === me) : CTRL[me];
+    const isStar = (g: string): string => { const s = tenGod(dg, g); return STAR.includes(s) ? s.replace('(칠살)', '') : ''; };
+    const ganPos = ['년간', '월간', '', '시간'];
+    const jiPos = ['년지', '월지', '일지', '시지'];
+    const hits: string[] = [];
+    p.forEach((x: any, i: number) => {
+      if (!x || x.available === false) return;
+      const g = String(x.천간 || '');
+      if (i !== 2 && g && isStar(g)) hits.push(`${ganPos[i]} ${g}(${GAN_KO[g] || ''}) ${isStar(g)}, 천간에 드러남`);
+    });
+    p.forEach((x: any, i: number) => {
+      if (!x || x.available === false) return;
+      const b = String(x.지지 || '');
+      (HIDDEN_STEMS[b] || []).forEach((g, k) => {
+        const s = isStar(g);
+        if (s) hits.push(`${jiPos[i]} ${b}(${ZHI_KO[b] || ''}) 속 ${g} ${s}, ${k === 0 ? '지지의 본기' : '지지 속에 숨음'}`);
+      });
+    });
+    const lines: string[] = [];
+    lines.push(`- 배우자성: ${female ? '여성은 관성(정관, 편관)' : '남성은 재성(정재, 편재)'}. 일간 ${dg}(${GAN_KO[dg] || ''}${me}) 기준 배우자성의 오행: ${starOh || '미상'}.`);
+    if (hits.length) {
+      lines.push(`- 원국에서 배우자성이 있는 자리: ${hits.join(' / ')}`);
+    } else {
+      lines.push('- 원국에 배우자성 없음, 대운과 세운에서 들어오는 때를 본다.');
+      const Y = new Date(Date.now() + 9 * 3600 * 1000).getUTCFullYear(); // KST 연도
+      const dy: any[] = Array.isArray(sajuData?.daeun) ? sajuData.daeun : [];
+      const comes = dy.filter((d) => typeof d?.간지 === 'string' && d.간지.length >= 2 && Number(d?.끝년도) >= Y)
+        .filter((d) => isStar(d.간지[0]) || isStar(BR_MAIN[d.간지[1]] || ''))
+        .map((d) => `${d.시작년도}~${d.끝년도}년 ${d.간지}(${ganziKo(d.간지)}) 대운`);
+      if (comes.length) lines.push(`- 배우자성이 들어오는 대운: ${comes.join(', ')}`);
+    }
+    const dj = String(p[2]?.지지 || '');
+    if (dj) lines.push(`- 배우자 자리: 일지 ${dj}(${ZHI_KO[dj] || ''}). 일지는 배우자 자리다. 배우자와 함께 사는 집의 모습은 이 자리로 보고, 배우자성은 위 줄의 글자만 쓴다.`);
+    lines.push(`- ${female ? '여성 사주에서 재성(정재, 편재)은 배우자성으로 부르지 않는다.' : '남성 사주에서 관성(정관, 편관)은 배우자성으로 부르지 않는다.'} 위 줄에 없는 일지 속 십성도 배우자성으로 부르지 않는다.`);
+    return `### 배우자성 확정표 (서버 계산. 배우자와 연인의 별은 이 표만 쓴다. 표에 없는 자리에 배우자성이 있다고 쓰지 않는다)\n${lines.join('\n')}`;
   } catch { return ''; }
 }

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCompatibilityAnalysis = generateCompatibilityAnalysis;
+const personName_1 = require("../shared/personName");
 const claudeClient_1 = require("../shared/claudeClient");
 const promptsV3_1 = require("./promptsV3");
 const promptsV3_2 = require("./promptsV3");
@@ -230,7 +231,7 @@ function personDetail(label, d) {
     const ma = d.myeongriAnalysis || {};
     const yong = ma.용신 ? `\n  일간 강약: ${ma.일간강약 || '미상'} / 용신(SSOT): ${ma.용신}, 희신: ${ma.희신 || '-'}, 기신: ${ma.기신 || '-'}` : '';
     const spouse = spouseStarText(d);
-    return `### ${label}: ${d.input?.name || '미상'} (${d.input?.gender === 'male' ? '남' : '여'})\n${t}  일간: ${p[2]?.천간 || '미상'}\n  오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}\n  십성: ${sip}${yong}${spouse ? `\n${spouse}` : ''}`;
+    return `### ${label}: ${(0, personName_1.promptName)(d.input?.name)} (${d.input?.gender === 'male' ? '남' : '여'})\n${t}  일간: ${p[2]?.천간 || '미상'}\n  오행: 목${el.목 || 0} 화${el.화 || 0} 토${el.토 || 0} 금${el.금 || 0} 수${el.수 || 0}\n  십성: ${sip}${yong}${spouse ? `\n${spouse}` : ''}`;
 }
 /** 두 사람이 함께 쓰는 공간의 색과 방위 — 둘 중 누구에게도 기신이 아닌 오행 (서버 확정, 없으면 빈 문자열) */
 const OH_COLOR = { 목: '초록과 청록, 동쪽', 화: '빨강과 주황, 남쪽', 토: '노랑과 베이지, 중앙', 금: '흰색과 은색, 서쪽', 수: '검정과 남색, 북쪽' };

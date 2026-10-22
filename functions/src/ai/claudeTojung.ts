@@ -24,6 +24,80 @@ function yearPillar(y: number): string {
   try { return Solar.fromYmd(y, 6, 1).getLunar().getEightChar().getYear(); } catch { return ''; }
 }
 
+/* 2026-10-22 — 좋은 달 셋, 조심할 달 둘을 생성 전에 서버가 정한다(점검 P0-6).
+ *   전엔 fourBox 의 좋은 달(1, 6, 7, 8월)과 조심할 달, 금전운의 좋은 달, 달 점수(10월 81 > 1월 77)가 서로 어긋났다.
+ *   달 기준점수 순서(같으면 앞 달)로 고르고, finishMonths 가 최종 점수도 이 순서를 지키게 묶는다
+ *   → 제목, 네 칸, 달 카드 점수가 처음 보이는 순간부터 같은 달을 가리킨다. 기준점수가 너무 평평하면(ok=false) 묶지 않는다. */
+type MonthRank = { base: Record<number, number>; good: number[]; caution: number[]; gMin: number; cMax: number; ok: boolean };
+function planMonthRank(ty: number, d: any): MonthRank {
+  const base: Record<number, number> = {};
+  for (let m = 1; m <= 12; m++) { const gz = monthPillar(ty, m); base[m] = gz ? monthBaseScore(gz, d) : 66; }
+  const all = Array.from({ length: 12 }, (_, i) => i + 1);
+  const good = [...all].sort((a, b) => base[b] - base[a] || a - b).slice(0, 3);
+  const caution = all.filter((m) => !good.includes(m)).sort((a, b) => base[a] - base[b] || a - b).slice(0, 2);
+  const gMin = Math.min(...good.map((m) => base[m]));
+  const cMax = Math.max(...caution.map((m) => base[m]));
+  return { base, good: good.sort((a, b) => a - b), caution: caution.sort((a, b) => a - b), gMin, cMax, ok: gMin - cMax >= 2 };
+}
+/** 최종 달 점수로 좋은 달(상위 3), 조심할 달(하위 2) — 같은 점수면 기준점수 높은 달, 그다음 앞 달 */
+function rankFromScores(ms: any[], rank: MonthRank): { good: number[]; caution: number[] } {
+  const rows = ms.map((m: any) => ({ m: Number(m.month), s: Number(m.score) })).filter((x) => x.m >= 1 && x.m <= 12 && Number.isFinite(x.s));
+  if (rows.length < 12) return { good: rank.good, caution: rank.caution };
+  const good = [...rows].sort((a, b) => b.s - a.s || (rank.base[b.m] || 0) - (rank.base[a.m] || 0) || a.m - b.m).slice(0, 3).map((x) => x.m);
+  const caution = rows.filter((x) => !good.includes(x.m)).sort((a, b) => a.s - b.s || (rank.base[a.m] || 0) - (rank.base[b.m] || 0) || a.m - b.m).slice(0, 2).map((x) => x.m);
+  return { good: good.sort((a, b) => a - b), caution: caution.sort((a, b) => a - b) };
+}
+/* 2026-10-22 — 네 칸 desc 에 명리 용어, 한자, 달 숫자가 들어오면 서버 문장으로 바꾼다(점검 P0-6, 8-1 #3: 50대는 네 칸만 읽고 나간다) */
+const FOURBOX_BANNED = /용신|희신|기신|구신|한신|비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인|비겁|식상|재성|관성|인성|십성|신약|신강|천간|지지|기운|[一-鿿]|\d{1,2}\s*월/;
+function fixFourBox(raw: any, sel: { good: number[]; caution: number[] }): any[] {
+  const list: any[] = Array.isArray(raw) ? raw : [];
+  const find = (re: RegExp) => list.find((x: any) => re.test(String(x?.head || '')));
+  const clean = (s: any, fallback: string, tag: string): string => {
+    const t = String(s || '').trim();
+    if (t && !FOURBOX_BANNED.test(t)) return t;
+    console.warn(`[newyear] fourBox ${tag} 서버 문장으로 교체: ${t.slice(0, 40)}`);
+    return fallback;
+  };
+  const half = (from: number, to: number, head: string, re: RegExp) => {
+    const ai = find(re);
+    const gIn = sel.good.filter((m) => m >= from && m <= to);
+    const cIn = sel.caution.filter((m) => m >= from && m <= to);
+    const fbDesc = gIn.length ? `${gIn.join(', ')}월에 힘을 모으면 일이 잘 풀려요`
+      : cIn.length ? `${cIn.join(', ')}월에는 큰 결정을 미뤄 두세요`
+      : '서두르지 않으면 무난하게 지나가요';
+    const fbValue = gIn.length > cIn.length ? '풀리는 시기' : gIn.length < cIn.length ? '다지는 시기' : '고른 시기';
+    return { head, value: clean(ai?.value, fbValue, `${head} value`), desc: clean(ai?.desc, fbDesc, `${head} desc`) };
+  };
+  const g = find(/좋은|길월/); const c = find(/조심|주의/);
+  return [
+    half(1, 6, '상반기', /상반기/),
+    half(7, 12, '하반기', /하반기/),
+    { head: '좋은 달', value: `${sel.good.join(', ')}월`, desc: clean(g?.desc, '계약과 큰 결정은 이 달들에 잡아 보세요', '좋은 달 desc') },
+    { head: '조심할 달', value: `${sel.caution.join(', ')}월`, desc: clean(c?.desc, '큰 지출과 서명은 좋은 달로 미뤄요', '조심할 달 desc') },
+  ];
+}
+/** 2026-10-22 — 날짜 뒤에 주말 표시(점검 P0-6: '1/10(일)', '8/7(토)'에 계약과 면접을 잡으라고 했다). sajuFacts 가 이미 붙였으면 그대로 */
+function markWeekend(label: string): string {
+  return /주말/.test(label) ? label : String(label).replace(/\((토|일)\)/, '($1, 주말)');
+}
+/** 2026-10-22 — 측정용 로그: 주말 날짜와 계약, 면접, 결재, 서명이 한 문장에 붙은 수(점검 P0-6 측정) */
+function countWeekendDeals(ty: number, ms: any[]): number {
+  let n = 0;
+  for (const m of ms) {
+    const text = [m?.현대해석, m?.todo, m?.avoid].map((x) => String(x || '')).join(' ');
+    for (const sent of text.split(/[.!?]\s*/)) {
+      if (!/계약|면접|결재|서명/.test(sent)) continue;
+      const re = /(\d{1,2})\s*(?:월\s*|\/)(\d{1,2})\s*일?/g;
+      let hit: RegExpExecArray | null;
+      while ((hit = re.exec(sent))) {
+        const wd = new Date(ty, Number(hit[1]) - 1, Number(hit[2])).getDay();
+        if (wd === 0 || wd === 6) { n++; break; }
+      }
+    }
+  }
+  return n;
+}
+
 /* 2026-10-08 — 신년운세 7운 프리미엄화 (오너: "7운 · 퀄리티 좋게").
  *   Sonnet 단일 → Opus 3그룹 병렬 (종합사주와 같은 모델·패턴):
  *     A = 한 해 총평(헤드라인·4박스·6분야 심층·결정 타이밍·개운) · B = 1~6월 · C = 7~12월
@@ -35,11 +109,11 @@ const NY_NO_HOOK_LINE = `
 ## 이 그룹에서는 '혹시 ~했나요?' 같은 짚는 질문을 쓰지 않는다(총운에서 한 번 했다). 확정표의 시기는 단정 문장의 근거로만 쓴다.`;
 const NY_ABS_TIME_LINE = `
 
-## 시점 표기: '작년', '올해', '내년' 같은 상대 표현 대신 '2026년 8월', '2027년 3월'처럼 연도를 붙여 쓴다. 독자는 지금(현재 날짜) 이 글을 읽는다. '장면이 보여요' 같은 신점 말투는 쓰지 않는다.`;
+## 시점 표기: 시기는 '2026년 8월', '2027년 3월'처럼 연도를 붙여 쓴다. '작년', '올해', '내년' 같은 상대 표현은 쓰지 않는다. 독자는 지금(현재 날짜) 이 글을 읽는다. '장면이 보여요' 같은 신점 말투는 쓰지 않는다.`;
 type NyGroup = 'A' | 'B' | 'C';
 
-async function callNyGroup(anthropic: Anthropic, shared: string, group: NyGroup, ty: number): Promise<any> {
-  const user = nyGroupInstruction(group, ty);
+async function callNyGroup(anthropic: Anthropic, shared: string, group: NyGroup, ty: number, rank: MonthRank): Promise<any> {
+  const user = nyGroupInstruction(group, ty, rank);
   const MAX: Record<NyGroup, number> = { A: 9000, B: 9000, C: 9000 };
   for (let attempt = 0; attempt < 2; attempt++) {
     const t0 = Date.now();
@@ -73,7 +147,9 @@ export async function generateTojungBigyeol(
   const ty = tojungTargetYear();
   const ygz = yearPillar(ty);
   const picks = dayPicksForYear(ty, sajuData);
-  const shared = buildPrompt(sajuData, picks);
+  // 2026-10-22 — 좋은 달과 조심할 달을 먼저 정해 세 그룹에 같이 넘긴다(점검 P0-6)
+  const rank = planMonthRank(ty, sajuData);
+  const shared = buildPrompt(sajuData, picks, rank);
 
   // 2026-10-08 원가 — 세 그룹이 같은 공유 프롬프트(~1.2만 토큰)를 동시에 보내면 서로 캐시를 못 읽고 셋 다 '캐시 쓰기'(입력가 1.25배)로
   //   과금됐다(실측 755원/건, cacheRead 0). A 가 먼저 프롬프트를 캐시하도록 B·C 를 5초 늦게 출발 → B·C 는 캐시 읽기(0.1배).
@@ -92,14 +168,28 @@ export async function generateTojungBigyeol(
         const base = monthBaseScore(gz, sajuData);
         const sc = Number(m.score);
         m.score = Number.isFinite(sc) ? Math.max(base - 6, Math.min(base + 6, Math.round(sc))) : base;
+        // 2026-10-22 — 서버가 정한 좋은 달은 다른 달보다 높게, 조심할 달은 낮게 묶는다(점검 P0-6). 모든 경계가 기준점수 ±6 안이다
+        if (rank.ok) {
+          const isG = rank.good.includes(mm); const isC = rank.caution.includes(mm);
+          m.score = isG ? Math.max(m.score, rank.gMin) : Math.min(m.score, rank.gMin - 1);
+          if (isC) m.score = Math.min(m.score, rank.cMax);
+          else if (!isG) m.score = Math.max(m.score, rank.cMax + 1);
+        }
+      }
+      // 2026-10-22 — 첫 문장이 '2027년 N월은', 'N월의'로 시작하면 그 머리를 뗀다(점검 P0-6, 3-1 #18: 달 이름은 카드 머리에 이미 있다)
+      if (typeof m.현대해석 === 'string') {
+        const lead = new RegExp(`^\\s*(?:${ty}년\\s*)?${mm}월(?:은|의|에는|엔|에)?\\s+`);
+        if (lead.test(m.현대해석)) { console.warn(`[newyear] ${mm}월 첫머리 제거`); m.현대해석 = m.현대해석.replace(lead, ''); }
       }
       m.goodDays = picks.perMonth[mm]?.good || [];
       m.cautionDays = picks.perMonth[mm]?.caution || [];
     });
     return ms;
   };
-  const head = (a: any): any => {
+  const head = (a: any, sel?: { good: number[]; caution: number[] }): any => {
     const h: any = { ...a, keyDates: picks.keyDates, targetYear: ty, schemaVersion: 2 };
+    // 2026-10-22 — 네 칸의 좋은 달과 조심할 달 value 는 서버 값으로 덮어쓴다(점검 P0-6). A 먼저 보일 때는 미리 정한 달, 합칠 때는 최종 점수
+    h.fourBox = fixFourBox(a?.fourBox, sel || { good: rank.good, caution: rank.caution });
     h.hexagram = {
       yearLabel: `${ty} ${ganziKo(ygz)}년, 신년운세`,
       glyph: ygz,
@@ -113,30 +203,39 @@ export async function generateTojungBigyeol(
     if (onGroup) Promise.resolve(onGroup(g, sanitizeAiOutput(data))).catch(() => { /* best-effort */ });
   };
   const [a, b, c] = await Promise.all([
-    callNyGroup(anthropic, shared, 'A', ty).then((x) => { emit('A', head(x)); return x; }),
-    later(5000, () => callNyGroup(anthropic, shared, 'B', ty)).then((x) => { emit('B', { months: finishMonths(x?.months) }); return x; }),
-    later(5000, () => callNyGroup(anthropic, shared, 'C', ty)).then((x) => { emit('C', { months: finishMonths(x?.months) }); return x; }),
+    callNyGroup(anthropic, shared, 'A', ty, rank).then((x) => { emit('A', head(x)); return x; }),
+    later(5000, () => callNyGroup(anthropic, shared, 'B', ty, rank)).then((x) => { emit('B', { months: finishMonths(x?.months) }); return x; }),
+    later(5000, () => callNyGroup(anthropic, shared, 'C', ty, rank)).then((x) => { emit('C', { months: finishMonths(x?.months) }); return x; }),
   ]);
 
   const months: any[] = finishMonths([...(b.months || []), ...(c.months || [])]);
-  const merged: any = { ...head(a), months };
+  // 2026-10-22 — 합친 뒤 최종 달 점수로 좋은 달(상위 3), 조심할 달(하위 2)을 다시 정해 네 칸에 덮어쓴다(점검 P0-6)
+  const sel = rankFromScores(months, rank);
+  if (sel.good.join() !== rank.good.join() || sel.caution.join() !== rank.caution.join()) {
+    console.warn(`[newyear] 미리 정한 달과 최종 점수가 다름: 좋은 ${rank.good}→${sel.good}, 조심 ${rank.caution}→${sel.caution}`);
+  }
+  try { const wk = countWeekendDeals(ty, months); if (wk) console.warn(`[newyear] 주말 날짜에 계약, 면접, 서명이 붙은 문장 ${wk}개`); } catch { /* 측정용 */ }
+  const merged: any = { ...head(a, sel), months };
   return sanitizeAiOutput(merged);
 }
 
 /** 그룹별 출력 지시 — 공유 컨텍스트(사주·확정값·톤)는 system 에 캐시 */
-function nyGroupInstruction(group: NyGroup, ty: number): string {
+function nyGroupInstruction(group: NyGroup, ty: number, rank: MonthRank): string {
+  const goodStr = `${rank.good.join(', ')}월`;
+  const cautionStr = `${rank.caution.join(', ')}월`;
   if (group === 'A') {
+    // 2026-10-22 — headline 은 서버가 정한 좋은 달을 넣은 25~35자, fourBox desc 는 용어 없는 쉬운 말 20~30자(점검 P0-6)
     return `## 이번 응답 = 그룹 A (한 해 총평) 만. months 는 출력하지 마세요 (다른 그룹이 씀).
 JSON 만 출력 (코드블록 없이):
 {
-  "headline": "${ty}년을 한 문장으로 (35~50자, '${ty}년은 ~하는 해입니다'처럼 그해에 이름을 붙이는 결론형, 세운과 원국 관계 근거)",
+  "headline": "${ty}년을 한 문장으로 (25~35자). 서버가 정한 좋은 달(${goodStr}) 가운데 한 달을 숫자로 넣고, 그달부터 무엇이 풀리는지 쓰고, '~해입니다'로 맺는다",
   "pullQuote": "기억에 남을 짧은 한마디 (20~30자)",
   "keywords": ["키워드1","키워드2","키워드3"],
   "fourBox": [
-    {"head": "상반기", "value": "6자 내외 핵심", "desc": "25자 내외 근거 (확정 월주의 도움, 부담 판정 인용, 점수 숫자는 쓰지 말 것)"},
-    {"head": "하반기", "value": "6자 내외 핵심", "desc": "25자 내외 근거"},
-    {"head": "좋은 달", "value": "점수가 높은 3~4개 달 (예: 2, 3, 11, 12월)", "desc": "25자 내외"},
-    {"head": "조심할 달", "value": "점수가 낮은 2개 달", "desc": "25자 내외"}
+    {"head": "상반기", "value": "6자 내외 핵심 (쉬운 말)", "desc": "1~6월이 어떤지 20~30자, ~해요로 끝나는 쉬운 말"},
+    {"head": "하반기", "value": "6자 내외 핵심 (쉬운 말)", "desc": "7~12월이 어떤지 20~30자, ~해요로 끝나는 쉬운 말"},
+    {"head": "좋은 달", "value": "${goodStr}", "desc": "이 달들에 무엇이 잘 되는지 20~30자, ~해요로 끝나는 쉬운 말"},
+    {"head": "조심할 달", "value": "${cautionStr}", "desc": "이 달들에 무엇을 미루면 좋은지 20~30자, ~해요로 끝나는 쉬운 말"}
   ],
   "categoryScores": {"총운": 정수, "금전운": 정수, "건강운": 정수, "직장운": 정수, "애정운": 정수, "결혼운": 정수},
   "yearOverview": {
@@ -145,7 +244,7 @@ JSON 만 출력 (코드블록 없이):
     "건강운": "300~400자, 약해지기 쉬운 몸과 컨디션 패턴 + 조심할 달 + 생활 습관 1~2개 (의학적 진단 단정 금지)",
     "직장운": "350~450자, 일, 이직, 평가, 인간관계 장면 + 움직이기 좋은 달/버틸 달",
     "애정운": "350~450자, 성별 기준(여성=관성, 남성=재성이 연인의 별), 솔로/연애 중 둘 다 읽히게, 인연이 들어오는 달",
-    "결혼운": "300~400자, 결혼, 동거, 관계 진전 흐름, 단정 대신 조건과 시기"
+    "결혼운": "300~400자, 결혼, 동거, 관계 진전 흐름, 조건과 시기로 쓴다"
   },
   "turningPoints": [
     {"when": "예: 2~3월", "title": "15자 내외 (결정, 이동, 관계 중 하나)", "desc": "120~180자, 왜 이때인지(확정 월주 근거) + 무엇을 하면 좋은지"},
@@ -155,10 +254,21 @@ JSON 만 출력 (코드블록 없이):
   "luckyAdvice": "300~400자, 용신 기준 개운 습관 (색, 방위, 숫자는 상징으로 가볍게) + 꼭 기억할 날(확정값) 활용법"
 }
 점수 규칙: 0~100 정수, 5의 배수만 반복 금지, 분야마다 다른 값.
-성별은 해석에만 반영 — '○○ 님은 여성이므로/남성이라' 같은 성별 설명 문장은 쓰지 말 것.`;
+성별은 해석에만 반영 — '○○ 님은 여성이므로/남성이라' 같은 성별 설명 문장은 쓰지 말 것.
+네 칸(fourBox) 규칙: 50대 손님은 이 네 칸만 읽고 나가는 일이 많다. desc 에는 용신, 희신, 기신, 십성 이름(정관, 식신 같은 말), 신약, 신강, 천간, 지지, '기운', 한자, 달 숫자를 쓰지 않는다. 일, 돈, 사람, 몸에서 실제로 생기는 일로 쓴다. 말투 예: '서류와 계약이 술술 풀려요', '큰돈 나갈 일은 좋은 달로 미뤄요'. 좋은 달과 조심할 달의 value 는 위 값 그대로 쓴다(서버가 다시 맞춘다).
+총운과 분야별 풀이에서 '좋은 달', '가장 좋은 달'로 부르는 달은 ${goodStr}, '조심할 달'로 부르는 달은 ${cautionStr}뿐이다. 분야별로 다른 달을 말할 때는 그 달에 할 일로 쓴다.`;
   }
   const range = group === 'B' ? [1, 6] : [7, 12];
   const monthsList = Array.from({ length: range[1] - range[0] + 1 }, (_, i) => range[0] + i).join(', ');
+  // 2026-10-22 — 이 그룹에 든 좋은 달, 조심할 달(서버가 정함). 좋은 달 첫 문장은 좋은 일로(점검 P0-6, 7-2 #5: 86점 7월이 '무거운 책임'으로 시작했다)
+  const gIn = rank.good.filter((m) => m >= range[0] && m <= range[1]);
+  const cIn = rank.caution.filter((m) => m >= range[0] && m <= range[1]);
+  const rankLine = [
+    gIn.length ? `- 서버가 정한 좋은 달 가운데 이 그룹 달: ${gIn.join(', ')}월. 이 달들은 score 를 기준점수 이상으로 주고, 현대해석 첫 문장을 그달에 생길 좋은 일로 시작한다. 첫 문장에 '버티', '무거운', '부담', '잠그', '조심' 같은 말을 쓰지 않는다.` : '',
+    cIn.length ? `- 서버가 정한 조심할 달 가운데 이 그룹 달: ${cIn.join(', ')}월. 이 달들은 score 를 기준점수 이하로 준다.` : '',
+  ].filter(Boolean).join('\n');
+  // 2026-10-22 — 현대해석: 첫 문장은 장면, 세 요소 순서는 달마다 바꿈, 괄호 풀이 처음 한 번, '기운' 한 달 한 번, 보장 말 금지, 주말 규칙(점검 P0-6)
+  //   사자성어 예에서 '고진감래'를 뺐다(점검 3-2: 명언식 맺음 금지 목록에 든다)
   return `## 이번 응답 = 그룹 ${group} (${monthsList}월) 만. 총평과 다른 달은 출력하지 마세요 (다른 그룹이 씀).
 JSON 만 출력 (코드블록 없이):
 {
@@ -166,17 +276,24 @@ JSON 만 출력 (코드블록 없이):
     {"month": ${range[0]},
      "keyword": "4~6글자 (그 달의 핵심)",
      "score": "확정 '달 기준점수' ±4 안의 정수",
-     "전통해석": "그 달을 한 줄로 (25~40자, 읽기 쉬운 결론). 사자성어는 꼭 맞을 때만, 한국에서 흔히 쓰는 것(전화위복, 고진감래, 유비무환 등)만, 열두 달 통틀어 세 번까지, 같은 성어 반복 금지",
-     "현대해석": "300~400자, ① 그 달 실제로 일어날 장면 2개(일, 돈, 관계, 몸 중 두드러진 것) ② 근거: 확정 월주와 원국의 관계 1회 호명(괄호로 쉬운 풀이) ③ 이 달 '좋은 날', '조심할 날'(확정값) 중 1~2개를 날짜로 언급하며 그날 무엇을 하면 좋은지",
+     "전통해석": "그 달을 한 줄로 (25~40자, 읽기 쉬운 결론). 사자성어는 꼭 맞을 때만, 한국에서 흔히 쓰는 것(전화위복, 유비무환 등)만, 열두 달 통틀어 세 번까지, 같은 성어 반복 금지",
+     "현대해석": "300~400자. 세 가지를 담는다. 장면: 그 달에 실제로 생길 일 2개(일, 돈, 관계, 몸 중 두드러진 것). 근거: 확정 월주와 원국의 관계 한 번. 날짜: 이 달 좋은 날과 조심할 날(확정값) 가운데 1~2개와 그날 할 일. 세 가지의 순서는 달마다 바꾼다. 첫 문장은 그달에 생길 장면으로 시작한다",
      "todo": "이 달 꼭 할 일 한 문장 (40자 내외, 구체 행동)",
      "avoid": "이 달 피할 일 한 문장 (40자 내외)"
     }, ... ${monthsList}월 모두 (${range[1] - range[0] + 1}개)
   ]
 }
-규칙: 달마다 다른 장면과 다른 조언 (같은 문장 반복 금지), 날짜는 확정값에 있는 것만, 점수는 기준점수 ±4.`;
+${rankLine ? `${rankLine}\n` : ''}규칙:
+- 달마다 다른 장면과 다른 조언 (같은 문장 반복 금지), 날짜는 확정값에 있는 것만, 점수는 기준점수 ±4.
+- 현대해석 첫 문장을 '${ty}년 N월은', 'N월은', 'N월의'로 시작하지 않는다. 달 이름은 화면 카드 머리에 이미 있다.
+- 달마다 같은 틀로 맺지 않는다. 날짜 두 개를 '~하세요', '~마세요'로 나란히 놓는 끝맺음은 이 응답의 여섯 달 가운데 한 달까지.
+- 한자 용어의 괄호 풀이는 이 응답에서 그 용어가 처음 나올 때 한 번만 붙인다. 다시 나오면 한글 읽기만 쓴다.
+- '기운'이라는 말은 한 달 풀이(전통해석, 현대해석, todo, avoid 합쳐서)에 한 번까지 쓴다.
+- 결과를 보장하는 말('반드시', '틀림없이', '무조건', '뒤탈이 없다')은 쓰지 않는다. 날짜에는 그날 무엇이 잘 정리되는지와 할 일을 쓴다. 예: 'N월 D일(월)은 서류가 깔끔하게 정리되는 날입니다. 서명할 일이 있으면 이날로 잡으세요.'
+- 확정값에서 '주말' 표시가 붙은 날(토, 일)에는 계약, 면접, 결재, 서명을 붙이지 않는다. 주말에는 계획 적기, 만남, 정리, 쉬기를 붙인다. 계약과 서명은 평일인 좋은 날에 붙인다. 본문에 날짜를 쓸 때는 '1월 10일(일)'처럼 요일만 괄호에 쓴다.`;
 }
 
-function buildPrompt(d: any, picks?: ReturnType<typeof dayPicksForYear>): string {
+function buildPrompt(d: any, picks?: ReturnType<typeof dayPicksForYear>, rank?: MonthRank): string {
   const p = d.pillars || [];
   const labels = ['년주', '월주', '일주', '시주'];
   let pillarsText = '';
@@ -201,12 +318,24 @@ function buildPrompt(d: any, picks?: ReturnType<typeof dayPicksForYear>): string
   const monthsFact = Array.from({ length: 12 }, (_, i) => {
     const gz = monthPillar(ty, i + 1);
     const pm = picks?.perMonth?.[i + 1];
-    const days = pm ? ` 좋은 날 ${pm.good.join(', ') || '없음'}, 조심할 날 ${pm.caution.join(', ') || '없음'}` : '';
+    // 2026-10-22 — 토, 일 날짜에 '주말' 표시를 붙여 넘긴다(점검 P0-6 주말 규칙). 화면의 goodDays 값은 그대로
+    const days = pm ? ` 좋은 날 ${pm.good.map(markWeekend).join(', ') || '없음'}, 조심할 날 ${pm.caution.map(markWeekend).join(', ') || '없음'}` : '';
     const rel = natalRelations(gz, d);
     const relText = rel.gan ? `, 십성 천간 ${rel.gan} 지지 ${rel.ji}, 원국과 ${rel.links.length ? rel.links.join(', ') : '합과 충 없음'}` : '';
     return `- ${i + 1}월 ${gz}(${ganziKo(gz)}) : ${ganziRoleText(gz, d, '달')}, 달 기준점수 ${monthBaseScore(gz, d)}${relText}${days}`;
   }).join('\n');
-  const keyDatesFact = (picks?.keyDates || []).map((k) => `${k.date} (${k.why})`).join(', ');
+  const keyDatesFact = (picks?.keyDates || []).map((k) => `${markWeekend(k.date)} (${k.why})`).join(', ');
+  // 2026-10-22 — 서버가 정한 좋은 달, 조심할 달, 반기별 요약(점검 P0-6). 세 그룹이 같은 달을 말하게 공유 프롬프트에 둔다
+  //   같은 때 월주 안내 줄의 '~이 아니라' 꼴, 시점 표기 줄과 결혼운 칸의 '대신' 꼴도 바로 적는 꼴로 고쳤다(점검 3장: 모델은 본문 꼴을 따라 한다)
+  const halfLine = (from: number, to: number, name: string) => {
+    if (!rank) return '';
+    const g = rank.good.filter((m) => m >= from && m <= to); const c = rank.caution.filter((m) => m >= from && m <= to);
+    return `${name}(${from}~${to}월) 좋은 달 ${g.length ? g.join(', ') + '월' : '없음'}, 조심할 달 ${c.length ? c.join(', ') + '월' : '없음'}`;
+  };
+  const rankFact = rank
+    ? `- 서버가 정한 좋은 달(열두 달 점수 상위 셋): ${rank.good.join(', ')}월, 조심할 달(하위 둘): ${rank.caution.join(', ')}월. 화면의 달 점수 순서도 이와 같다.
+- ${halfLine(1, 6, '상반기')} / ${halfLine(7, 12, '하반기')}`
+    : '';
   const tyDaeun = daeunList.find((x: any) => Number(x?.시작년도) <= ty && ty <= Number(x?.끝년도));
   const gwiin = (() => {
     try {
@@ -236,10 +365,11 @@ ${tyDaeun?.간지 ? natalRelationsText(String(tyDaeun.간지), d, `${tyDaeun.간
 ${lifeTimelineFactsText(d, kstNowDate())}
 - 🚨 십성 이름과 합, 충, 형, 해는 위 확정표와 아래 열두 달 줄에 적힌 것만 쓴다. 표에 없는 합이나 충, 표와 다른 십성 이름을 지어내지 말 것 (천간끼리 합과 충을 특히 주의).
 - '기준점수'라는 말과 그 숫자는 풀이에 쓰지 않는다 (점수 앵커일 뿐, 화면 점수와 다르다).
-- 열두 달 월주 (양력 달 기준, 1월은 寅월이 아니라 丑월):
+- 열두 달 월주 (양력 달 기준. 양력 1월의 월주는 丑월, 2월부터 寅월):
 ${monthsFact}
-- 한 해 꼭 기억할 날 (서버 계산): ${keyDatesFact || '없음'}
+${rankFact ? `${rankFact}\n` : ''}- 한 해 꼭 기억할 날 (서버 계산): ${keyDatesFact || '없음'}
 - 날짜 판정 기준: 그날 일진이 용신과 희신이면 좋은 날, 기신이 강하거나 일지와 충이면 조심할 날 (천을귀인 날 가점). 날짜는 위 값만 인용 — 새 날짜를 만들지 말 것.
+- 날짜 뒤 '주말' 표시는 토요일과 일요일이다. 주말인 날에는 계약, 면접, 결재, 서명을 붙이지 않고 계획 적기, 만남, 정리, 쉬기를 붙인다.
 - 귀인과 신살이 걸리는 달 (원국에 '없음'인 신살은 '있다'고 쓰지 말 것):
 ${gwiin || '미산출'}
 → 각 달 score, keyword, 풀이는 위 '도움/부담' 판정과 원국 형충합을 근거로. 판정이 '부담'인 달을 최고점으로 쓰지 말 것.

@@ -1337,6 +1337,7 @@ export const generateDreamFreeStream = onRequest(
     try {
       const { buildDreamFreeCall, buildDreamFreeGroupCall } = await lazyClaudeDream();
       const { parseJsonResponse, TONE_FINAL_CHECK } = await import('./ai/promptsV3');
+      const { repairAniraSentences } = await import('./shared/toneRepair');
       const anthropic = createClaude(ANTHROPIC_KEY.value());
       const t0 = Date.now();
 
@@ -1385,6 +1386,8 @@ export const generateDreamFreeStream = onRequest(
             text = await runStream();
             parsed = parseJsonResponse(text, { repairUsed: false });
           }
+          // 2026-10-22 — 'X가 아니라 Y' 문장만 고쳐 끼움(점검 P0-1). 그룹 칸은 손님에게 바로 보이므로 보내기 전에 고친다(실패하면 원문)
+          await repairAniraSentences(ANTHROPIC_KEY.value(), parsed, 'dream');
           const elapsedMs = Date.now() - tg0;
           console.log(`[dreamFreeStream:${group}] done in ${elapsedMs}ms`);
           // 그룹 완료 즉시 emit (client 가 빠르게 도착하는 그룹부터 머지)
@@ -1437,6 +1440,7 @@ export const generateDreamFreeStream = onRequest(
         text = await runStream();
         parsed = parseJsonResponse(text, { repairUsed: false });
       }
+      await repairAniraSentences(ANTHROPIC_KEY.value(), parsed, 'dream'); // 2026-10-22 — 점검 P0-1
       console.log(`[dreamFreeStream] single-call done in ${Date.now() - t0}ms`);
       sendEvent('done', { content: await cleanAiOut(parsed), elapsedMs: Date.now() - t0, mode: 'single-call' });
       res.end();

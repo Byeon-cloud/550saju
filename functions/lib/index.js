@@ -33,9 +33,11 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminGrantCompensation = exports.restoreLibrary = exports.auditOrphanAccounts = exports.registerDevicePassport = exports.recoverIapOrders = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.ensureTtiFortune = exports.purgeWithdrawnUsers = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPortonePayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeeklyRefine = exports.generateWeeklyDraft = exports.generateWeekly = exports.generateMonthlyRefine = exports.generateMonthlyDraft = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithToss = void 0;
+exports.syncIapRefunds = exports.adminLookup = exports.pruneRawAnalytics = exports.buildDailyStats = exports.adminStats = exports.adminGrantCompensation = exports.restoreLibrary = exports.auditOrphanAccounts = exports.registerDevicePassport = exports.recoverIapOrders = exports.recoverPremiumResult = exports.recoverTopicResult = exports.claimCompensation = exports.ttiOgImage = exports.ensureTtiFortune = exports.renderTtiToday = exports.seoHit = exports.syncPortoneCancellations = exports.purgeWithdrawnUsers = exports.deleteAccount = exports.onInviteReceived = exports.markAttendance = exports.generateTopicAnalysisStream = exports.generateTopicAnalysis = exports.disconnectToss = exports.confirmPortonePayment = exports.grantShareReward = exports.generateTojung = exports.generateCompatibility = exports.generateWeeklyRefine = exports.generateWeeklyDraft = exports.generateWeekly = exports.generateMonthlyRefine = exports.generateMonthlyDraft = exports.generateMonthly = exports.generateDaeun = exports.grantPurchase = exports.generateDreamDeep = exports.generateDreamFreeStream = exports.generateDreamFree = exports.generateDream = exports.generateChatAnswer = exports.generateDailyFortuneStream = exports.generateDailyFortune = exports.generateReport = exports.generatePremiumReportStream = exports.warmupGenerateReport = exports.mergeAnonIntoToss = exports.loginWithNaver = exports.loginWithToss = void 0;
+exports.generatePremiumPdf = exports.renderSajuCardOgImage = exports.renderSajuCardOg = exports.renderIljuToday = exports.sendDailyMail = exports.ensureIljuDaily = exports.subscribeDailyMail = exports.sendNewYearDeadlineMail = exports.unsubscribeMail = exports.subscribeMarketingMail = exports.creditLocalReward = exports.verifyTossIdentity = exports.claimRewards = exports.completeReferral = exports.recordReferralVisit = exports.getMyReferral = exports.listMyCompatInvites = exports.answerCompatInvite = exports.getCompatInvite = exports.createCompatInvite = exports.createNewYearShare = exports.createDreamShare = exports.cleanupCompatShares = exports.createCompatShare = exports.renderShareOg = exports.aggregateTopicTop5 = exports.recordTopicView = exports.adminAiUsageReport = exports.adminInflowReport = exports.adminInquiries = exports.submitInquiry = exports.syncIapRefundsDeep = void 0;
 // 2026-07-03: 런타임 Node 20 → 22 (firebase.json "runtime": "nodejs22" · Node 20 은 2026-10-30 지원 종료).
 //   CLI 는 소스 해시만 비교해 런타임 변경만으론 전 함수를 skip — 이 주석이 해시를 바꿔 재배포를 트리거함.
+const personName_1 = require("./shared/personName");
 const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const genGuard_1 = require("./shared/genGuard"); // 2026-10-14 익명 생성 하루 상한
@@ -54,6 +56,11 @@ const cleanAiOut = async (v) => (await Promise.resolve().then(() => __importStar
 const HALF_EVENT_END_MS = Date.UTC(2026, 6, 15, 14, 59, 59); // 2026-07-15 23:59:59 KST
 const onHalfEvent = () => Date.now() <= HALF_EVENT_END_MS;
 const premiumCost = () => (onHalfEvent() ? 5 : 10);
+/** 2026-10-19 첫 오늘의 운세 반값 — 클라가 offer:'first_daily' 를 붙이면 계정마다 한 번만 5운 (users.premiumOfferUsed). 클라 services/offers/firstDailyOffer.ts */
+const premiumCostFor = (userData, offer) => {
+    const useOffer = offer === 'first_daily' && !userData?.premiumOfferUsed && premiumCost() > 5;
+    return { cost: useOffer ? 5 : premiumCost(), useOffer };
+};
 const monthlyCost = () => (onHalfEvent() ? 5 : 7);
 const weeklyCost = () => 3; // 2026-10-15 정가 5 → 3운 (클라 getWeeklyPrice 와 일치)
 // 2026-10-14 주제운과 궁합 가격 (클라 src/constants/pricing.ts TOPIC_PRICING_RAW, PRODUCT_COST 와 일치).
@@ -64,6 +71,15 @@ const COMPAT_COST = 3;
 // 신년운세: 정가 9운, 2026-11-30 23:59 KST 까지 얼리버드 7운 (클라 getTojungPrice 와 같은 날짜)
 const TOJUNG_LAUNCH_END_MS = Date.UTC(2026, 10, 30, 14, 59, 59);
 const tojungCost = () => (Date.now() <= TOJUNG_LAUNCH_END_MS ? 7 : 9);
+// 2026-10-21 — 화면은 누른 순간 기기 시계로 값을 정하고 서버는 실행 시각으로 정해서, 11/30 자정 직전에 7운으로 누른 손님이
+//   서버에서 9운을 낼 수 있다(화면 기록과 2운 어긋남). 마감 뒤 15분까지는 화면이 7운으로 냈다고 알려 온 결제만 7운으로 받는다.
+const TOJUNG_GRACE_MS = 15 * 60 * 1000;
+const tojungCostFor = (clientPriceUn) => {
+    const cost = tojungCost();
+    if (cost === 9 && Number(clientPriceUn) === 7 && Date.now() <= TOJUNG_LAUNCH_END_MS + TOJUNG_GRACE_MS)
+        return 7;
+    return cost;
+};
 const lazyClaudeDaeun = () => Promise.resolve().then(() => __importStar(require('./ai/claudeDaeun')));
 const lazyClaudeMonthly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeMonthly')));
 const lazyClaudeWeekly = () => Promise.resolve().then(() => __importStar(require('./ai/claudeWeekly')));
@@ -86,13 +102,9 @@ const TOSS_MTLS_KEY = (0, params_1.defineSecret)('TOSS_MTLS_KEY');
 const TOSS_DECRYPT_KEY = (0, params_1.defineSecret)('TOSS_DECRYPT_KEY');
 const TOSS_DECRYPT_AAD = (0, params_1.defineSecret)('TOSS_DECRYPT_AAD');
 const PORTONE_V2_API_SECRET = (0, params_1.defineSecret)('PORTONE_V2_API_SECRET');
-/** 금액 → 패키지 매핑 (서버에서 검증용) */
-const PACKAGE_MAP = {
-    500: { name: '한 번만', paidUn: 1, bonusUn: 0 },
-    1500: { name: '좀 더 보자', paidUn: 3, bonusUn: 1 },
-    2500: { name: '제대로 보자', paidUn: 5, bonusUn: 2 },
-    5000: { name: '올해 다 보자', paidUn: 10, bonusUn: 5 },
-};
+const MAIL_APP_PASSWORD = (0, params_1.defineSecret)('MAIL_APP_PASSWORD'); // 2026-10-17 PDF 메일 (mailPdf.ts 와 같은 이름, nodemailer 를 모든 함수에 싣지 않으려고 여기서 따로 선언)
+/** 금액 → 패키지 매핑 (서버에서 검증용) — 10-19 공용 파일로 옮김(환불 회수도 같은 표) */
+const chargePackages_1 = require("./shared/chargePackages");
 const TOSS_DISCONNECT_AUTH = (0, params_1.defineSecret)('TOSS_DISCONNECT_AUTH');
 // 개발 중: 인증 없이도 동작
 // 런칭 시: DEV_MODE = false
@@ -117,6 +129,23 @@ exports.loginWithToss = (0, https_1.onCall)({
     catch (error) {
         console.error('[loginWithToss]', error);
         throw new https_1.HttpsError('internal', `로그인 실패: ${error.message}`);
+    }
+});
+/**
+ * 웹 네이버 로그인 (2026-10-19) — Firebase oidc.naver 는 네이버 UserInfo 형식이 달라 늘 실패했다(로그인 0명).
+ *   서버가 네이버와 직접 코드를 바꾸고 맞춤 토큰을 준다. 지금 계정(익명 포함)에 붙여 운과 기록을 그대로 둔다. auth/naverAuth.ts
+ */
+exports.loginWithNaver = (0, https_1.onCall)({ timeoutSeconds: 20, memory: '256MiB', cors: true }, async (request) => {
+    const { code, state, redirectUri } = (request.data || {});
+    if (!code || !state || !redirectUri)
+        throw new https_1.HttpsError('invalid-argument', 'code, state, redirectUri 필요');
+    try {
+        const { loginWithNaverCode } = await Promise.resolve().then(() => __importStar(require('./auth/naverAuth')));
+        return await loginWithNaverCode({ code: String(code), state: String(state), redirectUri: String(redirectUri), callerUid: request.auth?.uid });
+    }
+    catch (error) {
+        console.error('[loginWithNaver]', error?.message || error);
+        throw new https_1.HttpsError('internal', `네이버 로그인 실패: ${String(error?.message || error).slice(0, 120)}`);
     }
 });
 // 2026-06-22 엔드게임 P1 — 익명→토스 안정 uid 보관함 병합 (uid 회전 CS 근절용). 클라 플래그 OFF 시 미호출.
@@ -277,7 +306,7 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
             // 토큰 invalid — anonymous 처리
         }
     }
-    const { sajuData, situation } = req.body || {};
+    const { sajuData, situation, offer } = req.body || {};
     if (!sajuData) {
         sendEvent('error', { message: '사주 데이터가 없습니다' });
         res.end();
@@ -291,18 +320,20 @@ exports.generatePremiumReportStream = (0, https_1.onRequest)({
     // 잔액 차감 (premium · 하반기 세일 자동반영) — 실명 로그인만
     let deductedAmount = 0;
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
-        const cost = premiumCost();
         const userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
         if (userDoc.exists) {
             try {
                 // 2026-05-28 — schema 통일 helper (객체/숫자 양쪽 지원)
+                let cost = premiumCost();
                 await db.runTransaction(async (tx) => {
                     const doc = await tx.get(userRef);
+                    const pc = premiumCostFor(doc.data(), offer);
+                    cost = pc.cost;
                     const result = computeBalanceDeduction(doc.data(), cost);
                     if (!result)
                         throw new Error('운이 부족합니다');
-                    tx.update(userRef, result.updates);
+                    tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
                 });
                 deductedAmount = cost;
             }
@@ -430,17 +461,19 @@ exports.generateReport = (0, https_1.onCall)(
     let deductedAmount = 0; // 환불용 차감 기록
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const cost = premiumCost();
         const userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
         if (userDoc.exists) {
             // 2026-05-28 — schema 통일 helper
+            let cost = premiumCost();
             await db.runTransaction(async (tx) => {
                 const doc = await tx.get(userRef);
+                const pc = premiumCostFor(doc.data(), request.data?.offer);
+                cost = pc.cost;
                 const result = computeBalanceDeduction(doc.data(), cost);
                 if (!result)
                     throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
+                tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
             });
             deductedAmount = cost;
         }
@@ -523,7 +556,7 @@ exports.generateDailyFortune = (0, https_1.onCall)(
         console.log('[generateDailyFortune] Starting Sonnet 4.6 call...');
         const { generateDailyFortuneAnalysis } = await lazyClaudeFortune();
         const result = await generateDailyFortuneAnalysis(ANTHROPIC_KEY.value(), {
-            name: name || '사용자',
+            name: (0, personName_1.realName)(name) || '사용자',
             sajuData,
             date,
             weekday: weekday || '',
@@ -532,6 +565,14 @@ exports.generateDailyFortune = (0, https_1.onCall)(
             dayJiShen,
             dayXiongSha,
         });
+        // 2026-10-19 — 행운은 용신 고정표 (스트림 경로와 같은 값)
+        try {
+            const [{ dailyLuckyProfile }, { todayHourWindows }] = await Promise.all([Promise.resolve().then(() => __importStar(require('./ai/dailyLucky'))), Promise.resolve().then(() => __importStar(require('./ai/sajuFacts')))]);
+            const lucky = dailyLuckyProfile(sajuData, String(date || ''), todayHourWindows(String(date || ''), sajuData).peak);
+            if (lucky && result && typeof result === 'object')
+                result.luckyProfile = lucky;
+        }
+        catch { /* 행운만 AI 값 그대로 */ }
         // 캐싱 (실명 유저만) — 키 = 날짜 + 사주 8글자 (위 조회와 동일)
         if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
             const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(dailyCacheId);
@@ -690,7 +731,8 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
     // 2026-10-04 v6→v7 — 만나는 사람 글자 확정값·용어 주어 금지·성별 해석 프롬프트 개편 (옛 공유캐시 재사용 방지)
     // 2026-10-08 v9 — A2·B Sonnet 승격 + 오행 관계·시간대 확정표 (오너: 무료여도 고퀄리티 명리 해석)
-    const SCHEMA_VERSION = 'v14'; // v14 — nextHooks(다음 주제·사주대화 질문)
+    const SCHEMA_VERSION = 'v15'; // v15 (10-19) — 5호출→3호출: 화면에 안 쓰는 항목(분야별 이유, 오행 분포, 행운 이유) 생성 중단, 행운은 용신 고정표(dailyLucky)
+    // v14 — nextHooks(다음 주제·사주대화 질문)
     // v13 // v13 — 어조 점검 예시를 내용 없는 패턴(OO)으로 (v12 패널: ✓예시 '돈이 새는 날'을 3/6명이 복사)
     // v12 // 10-08 단정 어조(~하기 쉬워요·~할 수 있어요 금지)·무색무취 문장 금지 / 10-09 출력 직전 어조 점검(user 끝)
     const sajuKey = buildSajuKey(sajuData);
@@ -729,6 +771,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
     try {
         const { DAILY_FORTUNE_SYSTEM_V3, DAILY_FORTUNE_USER_V3, DAILY_FORTUNE_USER_V3_GROUP_A1, DAILY_FORTUNE_USER_V3_GROUP_A2, DAILY_FORTUNE_USER_V3_GROUP_B, parseJsonResponse, TONE_FINAL_CHECK, } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
         const { applyDailyMeetGlyphs, sanitizeAiOutput, todayHourWindows } = await Promise.resolve().then(() => __importStar(require('./ai/sajuFacts')));
+        const { dailyLuckyProfile } = await Promise.resolve().then(() => __importStar(require('./ai/dailyLucky')));
         const hourWin = todayHourWindows(String(date || ''), sajuData);
         /* 2026-10-08 — 그룹별 모델: A1(헤더·점수 · 첫 화면 ~5초)은 Haiku 유지, 해석 본문 A2·시간대/사람/행운 B 는 Sonnet.
          *   A/B 시식(같은 사주·같은 날): Haiku 는 명리 용어 주어·병렬 그룹 간 시간대 모순·처방형 미신·성별 설명 문장이 남고,
@@ -737,26 +780,30 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
         const anthropic = (0, claudeClient_1.createClaude)(ANTHROPIC_KEY.value());
         const system = DAILY_FORTUNE_SYSTEM_V3;
         const userA1 = DAILY_FORTUNE_USER_V3_GROUP_A1({
-            name: name || '사용자', sajuData, date, weekday: weekday || '',
+            name: (0, personName_1.realName)(name) || '사용자', sajuData, date, weekday: weekday || '',
             todayGanzi, jeolgi, baseScores100,
         });
         const userA2 = DAILY_FORTUNE_USER_V3_GROUP_A2({
-            name: name || '사용자', sajuData, date, weekday: weekday || '',
+            name: (0, personName_1.realName)(name) || '사용자', sajuData, date, weekday: weekday || '',
             todayGanzi, jeolgi, dayJiShen, dayXiongSha, baseScores100,
         });
         const userB = DAILY_FORTUNE_USER_V3_GROUP_B({
-            name: name || '사용자', sajuData, date, weekday: weekday || '',
+            name: (0, personName_1.realName)(name) || '사용자', sajuData, date, weekday: weekday || '',
             todayGanzi, jeolgi, dayJiShen, dayXiongSha, tomorrowGanzi, tomorrowDate,
         });
         const t0 = Date.now();
         const SUB_MODEL = {
             A1: GROUP_MODEL.A1, A2a: GROUP_MODEL.A2, A2b: GROUP_MODEL.A2, B1: GROUP_MODEL.B, B2: GROUP_MODEL.B,
         };
+        /* 2026-10-19 — 5호출(A1, A2a, A2b, B1, B2) → 3호출(A1, A2a, B1).
+         *   화면(DailyMockupView)에 안 쓰는 항목은 더 만들지 않는다: subScoreReasons(4×150자), ohengDistribution, todayOhengEmphasis,
+         *   행운 이유. 행운 값은 용신 고정표(ai/dailyLucky.ts)로 코드가 채운다. pillarMessages 는 A2a 로, B2 의 나머지는 B1 으로 합쳤다.
+         *   화면에 보이는 내용은 같다. (A2b, B2 이름은 남겨 두되 부르지 않는다) */
         const SUB_KEYS = {
-            A2a: ['todayNarrative', 'sajuTone'],
-            A2b: ['pillarMessages', 'ohengDistribution', 'todayOhengEmphasis', 'subScoreReasons'],
-            B1: ['timeSlots', 'hourlyPeak', 'hourlyAvoid', 'doList', 'dontList'],
-            B2: ['meetPeople', 'luckyProfile', 'dailyQuote', 'tomorrow', 'nextHooks'],
+            A2a: ['todayNarrative', 'sajuTone', 'pillarMessages'],
+            A2b: [],
+            B1: ['timeSlots', 'hourlyPeak', 'hourlyAvoid', 'doList', 'dontList', 'meetPeople', 'dailyQuote', 'tomorrow', 'nextHooks'],
+            B2: [],
         };
         const subOnly = (sub) => `\n\n## ⚡⚡ 이번 호출의 최종 출력 범위 (위 스키마 중 이 키들만): ${SUB_KEYS[sub].join(', ')}\n` +
             `이 키들만 담은 JSON 객체 하나만 출력. 다른 키는 다른 호출이 쓰므로 출력 금지. 위 '오늘 시간대와 오행 관계 확정표'를 그대로 따를 것.`;
@@ -785,7 +832,8 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                         role: 'user',
                         content: suffix
                             ? [
-                                { type: 'text', text: userPrompt, cache_control: { type: 'ephemeral' } },
+                                // 10-19 — 짝 호출(A2b, B2)이 없어져 사용자 프롬프트 캐시는 읽을 쪽이 없다(쓰기 1.25배만 낸다) → 시스템 프롬프트만 캐시
+                                { type: 'text', text: userPrompt },
                                 { type: 'text', text: suffix + TONE_FINAL_CHECK },
                             ]
                             : userPrompt + TONE_FINAL_CHECK,
@@ -821,20 +869,18 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
             sendEvent('group', { group: 'A1', data, elapsedMs: r.elapsedMs });
             return data;
         });
-        const pA2 = Promise.all([
-            runSub('A2a', userA2, 4000, 'A2', 0, subOnly('A2a')),
-            runSub('A2b', userA2, 4000, null, 4000, subOnly('A2b')),
-        ]).then(([x, y]) => {
-            const data = sanitizeAiOutput({ ...y.parsed, ...x.parsed });
-            sendEvent('group', { group: 'A2', data, elapsedMs: Math.max(x.elapsedMs, y.elapsedMs + 4000) });
+        const pA2 = runSub('A2a', userA2, 6000, 'A2', 0, subOnly('A2a')).then((x) => {
+            const data = sanitizeAiOutput({ ...x.parsed });
+            sendEvent('group', { group: 'A2', data, elapsedMs: x.elapsedMs });
             return data;
         });
-        const pB = Promise.all([
-            runSub('B1', userB, 4000, 'B', 4000, subOnly('B1')),
-            // B2 는 B1 의 캐시가 쓰인 뒤(응답 시작 뒤) 출발해야 읽는다 — 2.5초 늦춤 (B 묶음은 화면에서 마지막에 오는 부분)
-            runSub('B2', userB, 4000, null, 6500, subOnly('B2')),
-        ]).then(([x, y]) => {
-            let data = { ...y.parsed, ...x.parsed };
+        // B1 은 A2a 가 시스템 프롬프트 캐시를 쓴 뒤 출발해 읽는다 (4초)
+        const pB = runSub('B1', userB, 6500, 'B', 4000, subOnly('B1')).then((x) => {
+            let data = { ...x.parsed };
+            // 2026-10-19 — 행운은 용신 고정표 (색, 방위, 숫자 고정, 음식과 글자는 같은 오행 안에서 날짜마다)
+            const lucky = dailyLuckyProfile(sajuData, String(date || ''), hourWin.peak);
+            if (lucky)
+                data.luckyProfile = lucky;
             // 2026-10-04 — 만나는 사람 글자 = 용신·희신·기신 확정값 (예시 복사 방지) / 10-08 시간대 서버 확정값
             data = applyDailyMeetGlyphs(data, sajuData);
             if (hourWin.peak && data?.hourlyPeak)
@@ -852,7 +898,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                 };
             }
             data = sanitizeAiOutput(data);
-            sendEvent('group', { group: 'B', data, elapsedMs: Math.max(x.elapsedMs + 4000, y.elapsedMs + 6500) });
+            sendEvent('group', { group: 'B', data, elapsedMs: x.elapsedMs + 4000 });
             return data;
         });
         const [resA1, resA2, resB] = await Promise.all([pA1, pA2, pB]);
@@ -862,10 +908,10 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
         // 강력한 sanity check (글자수 + 핵심 필드)
         const a1OK = !!(a1.title && a1.subScores && a1.subScoreOneLines &&
             Object.keys(a1.subScoreOneLines).length >= 4);
-        const a2OK = !!(a2.todayNarrative && a2.todayNarrative.length >= 600 &&
-            a2.pillarMessages && a2.subScoreReasons);
+        const a2OK = !!(a2.todayNarrative && a2.todayNarrative.length >= 600 && a2.pillarMessages);
         const bOK = !!(Array.isArray(b.timeSlots) && b.timeSlots.length >= 3 &&
             Array.isArray(b.doList) && b.doList.length >= 2 &&
+            Array.isArray(b.meetPeople) && b.meetPeople.length >= 2 &&
             b.luckyProfile && Object.keys(b.luckyProfile).length >= 4);
         console.log(`[dailyFortuneStream] sanity: A1=${a1OK} A2=${a2OK} B=${bOK}`);
         let merged = { ...a1, ...a2, ...b };
@@ -873,7 +919,7 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
         if (!a1OK || !a2OK || !bOK) {
             console.warn('[dailyFortuneStream] missing fields → Sonnet 단일 fallback');
             const fbUser = DAILY_FORTUNE_USER_V3({
-                name: name || '사용자', sajuData, date, weekday: weekday || '',
+                name: (0, personName_1.realName)(name) || '사용자', sajuData, date, weekday: weekday || '',
                 todayGanzi, jeolgi, dayJiShen, dayXiongSha,
                 baseScores100, tomorrowGanzi, tomorrowDate,
             });
@@ -911,6 +957,11 @@ exports.generateDailyFortuneStream = (0, https_1.onRequest)({
                 console.error('[dailyFortuneStream] Sonnet fallback parse failed:', e?.message);
             }
         }
+        {
+            const lucky = dailyLuckyProfile(sajuData, String(date || ''), hourWin.peak);
+            if (lucky)
+                merged.luckyProfile = lucky;
+        } // 폴백 경로도 고정표
         merged = sanitizeAiOutput(applyDailyMeetGlyphs(merged, sajuData)); // 폴백 경로 포함 최종 정리
         console.log('[dailyFortuneStream] complete', {
             totalElapsedMs: Date.now() - t0,
@@ -996,7 +1047,17 @@ exports.generateChatAnswer = (0, https_1.onCall)(
     // ─── Layer 2: AI 호출 + guarded 필드 / [GUARD] 토큰 검사 ───
     //   2026-04-21 모델 재할당: Gemini 2.5 Pro → Claude Sonnet 4.6
     const { generateChatAnswerAI, GUARD_TOKEN } = await lazyClaudeChat();
-    const raw = await generateChatAnswerAI(ANTHROPIC_KEY.value(), q, sajuData, chatHistory || [], timeSlot);
+    const ask = () => generateChatAnswerAI(ANTHROPIC_KEY.value(), q, sajuData, chatHistory || [], timeSlot);
+    let raw = await ask();
+    // 2026-10-19 CS — 빈 답이 consumed:1 로 나가 대화권만 빠졌다. 한 번 더 묻고, 그래도 비면 오류로 돌려
+    //   클라 catch 가 쓴 대화권, 무료권을 복구한다 (앱 번들 수정 없이 서버만으로 막힘).
+    if (!String(raw?.answer ?? '').trim() && raw?.guarded !== true) {
+        console.warn(`[generateChatAnswer] 빈 답 → 재시도 uid=${uid ?? 'anon'}`);
+        raw = await ask();
+        if (!String(raw?.answer ?? '').trim() && raw?.guarded !== true) {
+            throw new https_1.HttpsError('unavailable', '답변을 만들지 못했어요');
+        }
+    }
     const rawAnswer = raw?.answer ?? '';
     const llmSaidGuarded = raw?.guarded === true;
     const tokenGuarded = rawAnswer.trimStart().startsWith(GUARD_TOKEN);
@@ -1086,7 +1147,7 @@ function buildLegacySajuContext(sajuData) {
     const dayPillar = pillars[2] ?? {};
     const ohengDist = sajuData?.ohengDistribution ?? sajuData?.elements ?? {};
     return {
-        name: sajuData?.name ?? '사용자',
+        name: (0, personName_1.realName)(sajuData?.name) || '사용자',
         yearGanzi: pillars[0]?.간지 ?? '',
         monthGanzi: pillars[1]?.간지 ?? '',
         dayGanzi: pillars[2]?.간지 ?? '',
@@ -1238,6 +1299,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
     try {
         const { buildDreamFreeCall, buildDreamFreeGroupCall } = await lazyClaudeDream();
         const { parseJsonResponse, TONE_FINAL_CHECK } = await Promise.resolve().then(() => __importStar(require('./ai/promptsV3')));
+        const { repairAniraSentences } = await Promise.resolve().then(() => __importStar(require('./shared/toneRepair')));
         const anthropic = (0, claudeClient_1.createClaude)(ANTHROPIC_KEY.value());
         const t0 = Date.now();
         // 2026-05-27 v8 — 2-그룹 병렬 (사주 있을 때만, 없으면 단일 호출)
@@ -1286,6 +1348,8 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
                     text = await runStream();
                     parsed = parseJsonResponse(text, { repairUsed: false });
                 }
+                // 2026-10-22 — 'X가 아니라 Y' 문장만 고쳐 끼움(점검 P0-1). 그룹 칸은 손님에게 바로 보이므로 보내기 전에 고친다(실패하면 원문)
+                await repairAniraSentences(ANTHROPIC_KEY.value(), parsed, 'dream');
                 const elapsedMs = Date.now() - tg0;
                 console.log(`[dreamFreeStream:${group}] done in ${elapsedMs}ms`);
                 // 그룹 완료 즉시 emit (client 가 빠르게 도착하는 그룹부터 머지)
@@ -1340,6 +1404,7 @@ exports.generateDreamFreeStream = (0, https_1.onRequest)({
             text = await runStream();
             parsed = parseJsonResponse(text, { repairUsed: false });
         }
+        await repairAniraSentences(ANTHROPIC_KEY.value(), parsed, 'dream'); // 2026-10-22 — 점검 P0-1
         console.log(`[dreamFreeStream] single-call done in ${Date.now() - t0}ms`);
         sendEvent('done', { content: await cleanAiOut(parsed), elapsedMs: Date.now() - t0, mode: 'single-call' });
         res.end();
@@ -1471,6 +1536,9 @@ exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256Mi
         });
         throw new https_1.HttpsError('internal', '결제는 완료됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
     }
+    // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
+    const { referralOnPurchase } = await Promise.resolve().then(() => __importStar(require('./referral/referral')));
+    await referralOnPurchase(effectiveUid, paidUn, totalUn);
     return { success: true };
 });
 /**
@@ -1809,15 +1877,16 @@ exports.generateTojung = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
         const userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
         if (userDoc.exists) {
+            const cost = tojungCostFor(request.data?.priceUn); // 2026-10-15 정가 9운, 얼리버드 7운, 10-21 자정 경계 15분
             // 2026-05-28 — schema 통일 helper
             await db.runTransaction(async (tx) => {
                 const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), tojungCost()); // 2026-10-15 정가 9운, 얼리버드 7운
+                const result = computeBalanceDeduction(doc.data(), cost);
                 if (!result)
                     throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
                 tx.update(userRef, result.updates);
             });
-            deductedAmount = tojungCost();
+            deductedAmount = cost;
         }
     }
     try {
@@ -1917,7 +1986,7 @@ exports.confirmPortonePayment = (0, https_1.onCall)({ secrets: [PORTONE_V2_API_S
         }
     }
     // 2. 금액 → 패키지 사전 검증 (최종 검증은 포트원 API 응답 금액으로 재수행)
-    const pkg = PACKAGE_MAP[amount];
+    const pkg = chargePackages_1.PACKAGE_MAP[amount];
     if (!pkg)
         throw new https_1.HttpsError('invalid-argument', `유효하지 않은 금액: ${amount}`);
     // 3. E13 · pending 선기록
@@ -1974,7 +2043,7 @@ exports.confirmPortonePayment = (0, https_1.onCall)({ secrets: [PORTONE_V2_API_S
         await failVerify(`status_${pay?.status || 'unknown'}`, '결제가 완료되지 않았어요. 다시 시도해주세요.');
     }
     const apiAmount = pay?.amount?.total;
-    if (apiAmount !== amount || !PACKAGE_MAP[apiAmount]) {
+    if (apiAmount !== amount || !chargePackages_1.PACKAGE_MAP[apiAmount]) {
         await failVerify(`amount_mismatch_${apiAmount}_vs_${amount}`, '결제 금액이 일치하지 않아요. 고객센터로 문의해주세요.');
     }
     if (pay?.currency && pay.currency !== 'KRW') {
@@ -1999,16 +2068,22 @@ exports.confirmPortonePayment = (0, https_1.onCall)({ secrets: [PORTONE_V2_API_S
             const userRef = db.collection('users').doc(uid);
             const userDoc = await tx.get(userRef);
             const data = userDoc.data() || {};
-            tx.update(userRef, {
-                'balance.paid': (data.balance?.paid ?? 0) + pkg.paidUn,
-                'balance.bonus': (data.balance?.bonus ?? 0) + pkg.bonusUn,
+            // 2026-10-16 — update() 는 users/{uid} 문서가 없는 계정(웹 익명)에서 NOT_FOUND → 돈은 나가고 운은 안 들어가
+            //   needs_reconciliation 으로 빠진다(6월 IAP 19건과 같은 원인). grantPurchase 처럼 set(merge) 로 문서가 없어도 만든다.
+            tx.set(userRef, {
+                balance: {
+                    paid: (data.balance?.paid ?? 0) + pkg.paidUn,
+                    bonus: (data.balance?.bonus ?? 0) + pkg.bonusUn,
+                },
                 totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
-            });
+            }, { merge: true });
             tx.update(paymentRef, {
                 unChange: totalUn,
                 portoneStatus: pay.status,
                 portoneMethod: pay?.method?.type || null,
                 portoneChannel: pay?.channel?.type || null,
+                // 2026-10-21 — 카카오페이 안에서 머니로 냈는지 등록 카드로 냈는지 (화면에 '등록한 카드로도' 안내를 넣어 첫 카드 결제로 확인)
+                portoneEasyPayMethod: pay?.method?.easyPayMethod?.type || null,
                 status: 'confirmed',
                 confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
@@ -2025,6 +2100,9 @@ exports.confirmPortonePayment = (0, https_1.onCall)({ secrets: [PORTONE_V2_API_S
         });
         throw new https_1.HttpsError('internal', '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
     }
+    // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
+    const { referralOnPurchase } = await Promise.resolve().then(() => __importStar(require('./referral/referral')));
+    await referralOnPurchase(uid, pkg.paidUn, totalUn);
     return { success: true, message: `${totalUn}운이 충전됐어요!`, totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
 });
 /**
@@ -2108,6 +2186,17 @@ exports.disconnectToss = (0, https_1.onRequest)({ secrets: [TOSS_DISCONNECT_AUTH
  * 주제별 심층분석 — Claude Sonnet 4.6 (1운)
  * 10개 주제: love/wealth/career/marriage/business/health/reunion/study/social/moving
  */
+/** 주제운 원본(top-level reports)에 남기는 사주 주인 — 이름, 생년월일, 양음력, 성별만 (2026-10-17 보관함 복원용) */
+function topicOwnerMeta(sd) {
+    const i = sd?.input;
+    if (!i || !i.birthYear)
+        return null;
+    const pick = {};
+    for (const k of ['name', 'birthYear', 'birthMonth', 'birthDay', 'calendarType', 'gender', 'hasBirthTime'])
+        if (i[k] !== undefined)
+            pick[k] = i[k];
+    return pick;
+}
 exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
     await (0, genGuard_1.guardCallable)(request, 'topic'); // 익명 하루 상한 (genGuard)
     const { topicId, sajuData, baseScore, partnerInfo, extraInfo } = request.data;
@@ -2141,6 +2230,7 @@ exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
                 uid, topicId, ...(0, firestoreSafe_1.fsSafe)(result), type: 'topic',
                 // 2026-06-12 — 소분류 분포용 입력 메타 (loveStatus/bizStatus 등 + 상대방 유무)
                 inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
+                owner: topicOwnerMeta(sajuData), // 2026-10-17 보관함 복원 때 '복원된 분석' 대신 원래 이름과 생일로
                 aiModel: claudeClient_1.CLAUDE_MODEL.sonnet,
                 generatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
@@ -2270,6 +2360,7 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
             await reportRef.set({
                 uid, topicId, ...(0, firestoreSafe_1.fsSafe)(parsed), type: 'topic',
                 inputMeta: { hasPartner: !!partnerInfo, ...(extraInfo && typeof extraInfo === 'object' ? extraInfo : {}) },
+                owner: topicOwnerMeta(sajuData), // 2026-10-17 보관함 복원 때 '복원된 분석' 대신 원래 이름과 생일로
                 aiModel: claudeClient_1.CLAUDE_MODEL.sonnet,
                 generatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
@@ -2306,8 +2397,16 @@ var deleteAccount_1 = require("./auth/deleteAccount");
 Object.defineProperty(exports, "deleteAccount", { enumerable: true, get: function () { return deleteAccount_1.deleteAccount; } });
 var purgeWithdrawn_1 = require("./auth/purgeWithdrawn"); // 2026-10-14 토스 탈퇴 5일 뒤 개인정보 파기 (payments 보존)
 Object.defineProperty(exports, "purgeWithdrawnUsers", { enumerable: true, get: function () { return purgeWithdrawn_1.purgeWithdrawnUsers; } });
+var portoneCancelSync_1 = require("./payment/portoneCancelSync"); // 2026-10-16 포트원에서 취소된 웹 결제 → 결제 기록 refunded + 운 회수 지시(balanceAdjustments)
+Object.defineProperty(exports, "syncPortoneCancellations", { enumerable: true, get: function () { return portoneCancelSync_1.syncPortoneCancellations; } });
+var seoHit_1 = require("./seo/seoHit"); // 2026-10-21 검색용 정적 페이지의 광고 방문 기록 (/api/seo-hit)
+Object.defineProperty(exports, "seoHit", { enumerable: true, get: function () { return seoHit_1.seoHit; } });
+var ttiTodayPage_1 = require("./seo/ttiTodayPage"); // 2026-10-17 오늘의 띠별 운세 공개 검색 페이지 /unse/today/ (시험 E9)
+Object.defineProperty(exports, "renderTtiToday", { enumerable: true, get: function () { return ttiTodayPage_1.renderTtiToday; } });
 var ttiFortune_1 = require("./tti/ttiFortune"); // 2026-10-15 띠별 오늘의 운세 (하루 한 번 미리 생성, 화면은 읽기만)
 Object.defineProperty(exports, "ensureTtiFortune", { enumerable: true, get: function () { return ttiFortune_1.ensureTtiFortune; } });
+var ttiOgImage_1 = require("./tti/ttiOgImage"); // 2026-10-19 오늘의 띠별 운세 미리보기 그림 /og/tti/{날짜}.jpg
+Object.defineProperty(exports, "ttiOgImage", { enumerable: true, get: function () { return ttiOgImage_1.ttiOgImage; } });
 // CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
 var claimCompensation_1 = require("./admin/claimCompensation");
 Object.defineProperty(exports, "claimCompensation", { enumerable: true, get: function () { return claimCompensation_1.claimCompensation; } });
@@ -2327,6 +2426,21 @@ Object.defineProperty(exports, "restoreLibrary", { enumerable: true, get: functi
 // 어드민 CS 지급 (2026-06-12) — /admin 'CS 지급' 탭에서 디바이스 ID 로 즉시 장부 기록 (오너 전용)
 var adminGrantCompensation_1 = require("./admin/adminGrantCompensation");
 Object.defineProperty(exports, "adminGrantCompensation", { enumerable: true, get: function () { return adminGrantCompensation_1.adminGrantCompensation; } });
+// 관리자 v4 (2026-10-19) — 하루 요약(statsDaily), 고객 찾기, 원본 400일 보관
+var stats_1 = require("./admin/stats");
+Object.defineProperty(exports, "adminStats", { enumerable: true, get: function () { return stats_1.adminStats; } });
+Object.defineProperty(exports, "buildDailyStats", { enumerable: true, get: function () { return stats_1.buildDailyStats; } });
+Object.defineProperty(exports, "pruneRawAnalytics", { enumerable: true, get: function () { return stats_1.pruneRawAnalytics; } });
+var customer_1 = require("./admin/customer");
+Object.defineProperty(exports, "adminLookup", { enumerable: true, get: function () { return customer_1.adminLookup; } });
+// 토스 앱 결제 환불 회수 (2026-10-19)
+var syncIapRefunds_1 = require("./payment/syncIapRefunds");
+Object.defineProperty(exports, "syncIapRefunds", { enumerable: true, get: function () { return syncIapRefunds_1.syncIapRefunds; } });
+Object.defineProperty(exports, "syncIapRefundsDeep", { enumerable: true, get: function () { return syncIapRefunds_1.syncIapRefundsDeep; } });
+// 웹 문의함 (2026-10-19)
+var inquiry_1 = require("./support/inquiry");
+Object.defineProperty(exports, "submitInquiry", { enumerable: true, get: function () { return inquiry_1.submitInquiry; } });
+Object.defineProperty(exports, "adminInquiries", { enumerable: true, get: function () { return inquiry_1.adminInquiries; } });
 // 유입/구매 폭증 서버 집계 (2026-06-27) — onRequest+secret(INFLOW_KEY). source·plat·시간대·구매 분해 JSON.
 var inflowReport_1 = require("./admin/inflowReport");
 Object.defineProperty(exports, "adminInflowReport", { enumerable: true, get: function () { return inflowReport_1.adminInflowReport; } });
@@ -2343,6 +2457,35 @@ Object.defineProperty(exports, "aggregateTopicTop5", { enumerable: true, get: fu
  */
 var renderShareOg_1 = require("./share/renderShareOg");
 Object.defineProperty(exports, "renderShareOg", { enumerable: true, get: function () { return renderShareOg_1.renderShareOg; } });
+var compatShare_1 = require("./share/compatShare"); // 2026-10-17 궁합 보내기 (시험 E7)
+Object.defineProperty(exports, "createCompatShare", { enumerable: true, get: function () { return compatShare_1.createCompatShare; } });
+Object.defineProperty(exports, "cleanupCompatShares", { enumerable: true, get: function () { return compatShare_1.cleanupCompatShares; } });
+var dreamShare_1 = require("./share/dreamShare"); // 2026-10-17 꿈해몽 보내기
+Object.defineProperty(exports, "createDreamShare", { enumerable: true, get: function () { return dreamShare_1.createDreamShare; } });
+var newYearShare_1 = require("./share/newYearShare"); // 2026-10-18 신년운세 미리 보기 보내기
+Object.defineProperty(exports, "createNewYearShare", { enumerable: true, get: function () { return newYearShare_1.createNewYearShare; } });
+var compatInvite_1 = require("./compat/compatInvite"); // 2026-10-18 친구 궁합 초대장 (E16)
+Object.defineProperty(exports, "createCompatInvite", { enumerable: true, get: function () { return compatInvite_1.createCompatInvite; } });
+Object.defineProperty(exports, "getCompatInvite", { enumerable: true, get: function () { return compatInvite_1.getCompatInvite; } });
+Object.defineProperty(exports, "answerCompatInvite", { enumerable: true, get: function () { return compatInvite_1.answerCompatInvite; } });
+Object.defineProperty(exports, "listMyCompatInvites", { enumerable: true, get: function () { return compatInvite_1.listMyCompatInvites; } });
+var referral_1 = require("./referral/referral"); // 2026-10-18 친구 초대 + 로그인 계정 출석 운 서버 반영
+Object.defineProperty(exports, "getMyReferral", { enumerable: true, get: function () { return referral_1.getMyReferral; } });
+Object.defineProperty(exports, "recordReferralVisit", { enumerable: true, get: function () { return referral_1.recordReferralVisit; } });
+Object.defineProperty(exports, "completeReferral", { enumerable: true, get: function () { return referral_1.completeReferral; } });
+Object.defineProperty(exports, "claimRewards", { enumerable: true, get: function () { return referral_1.claimRewards; } });
+Object.defineProperty(exports, "verifyTossIdentity", { enumerable: true, get: function () { return referral_1.verifyTossIdentity; } });
+Object.defineProperty(exports, "creditLocalReward", { enumerable: true, get: function () { return referral_1.creditLocalReward; } });
+var marketingMail_1 = require("./mail/marketingMail"); // 2026-10-17 신년운세 마감 안내 메일 (시험 E14)
+Object.defineProperty(exports, "subscribeMarketingMail", { enumerable: true, get: function () { return marketingMail_1.subscribeMarketingMail; } });
+Object.defineProperty(exports, "unsubscribeMail", { enumerable: true, get: function () { return marketingMail_1.unsubscribeMail; } });
+Object.defineProperty(exports, "sendNewYearDeadlineMail", { enumerable: true, get: function () { return marketingMail_1.sendNewYearDeadlineMail; } });
+var iljuDaily_1 = require("./ilju/iljuDaily"); // 2026-10-17 매일 아침 일주 운세 메일 (시험 E15)
+Object.defineProperty(exports, "subscribeDailyMail", { enumerable: true, get: function () { return iljuDaily_1.subscribeDailyMail; } });
+Object.defineProperty(exports, "ensureIljuDaily", { enumerable: true, get: function () { return iljuDaily_1.ensureIljuDaily; } });
+Object.defineProperty(exports, "sendDailyMail", { enumerable: true, get: function () { return iljuDaily_1.sendDailyMail; } });
+var iljuTodayPage_1 = require("./seo/iljuTodayPage"); // 2026-10-17 오늘의 일주별 운세 공개 페이지 /unse/today/ilju/
+Object.defineProperty(exports, "renderIljuToday", { enumerable: true, get: function () { return iljuTodayPage_1.renderIljuToday; } });
 /* ─── #saju-card-share Stage 4 · 사주 카드 OG SSR (2026-04-27) ───
  * 만세력 카드 카톡 공유 시 미리보기 이미지 노출. E32 패턴 응용.
  *  - renderSajuCardOg: /saju-card/:profileId 봇 UA 시 SSR OG 메타 HTML
@@ -2368,6 +2511,7 @@ const lazyPremiumPdf = () => Promise.resolve().then(() => __importStar(require('
 // region 미지정 = us-central1 (다른 함수와 일치)
 // asia-northeast3 는 client functionsClient.ts 가 us-central1 고정이라 미사용 — 추후 멀티리전 분리 시 검토
 exports.generatePremiumPdf = (0, https_1.onCall)({
+    secrets: [MAIL_APP_PASSWORD], // 2026-10-17 PDF 메일 (시크릿 v5). 이 시크릿을 지우면 모든 함수 배포가 실패하니 지우지 말 것
     timeoutSeconds: 120,
     memory: '1GiB',
     minInstances: 0,
