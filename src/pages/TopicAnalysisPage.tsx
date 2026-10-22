@@ -22,7 +22,8 @@ import { HourPickerSheet } from '@/components/common/HourPickerSheet';
 import { normalizeTopicId, TOPIC_REGISTRY, TOPIC_IDS, type TopicId } from '@/constants/topics';
 import { kstToday } from '@/utils/kstDate';
 import { loveStars, loveDday, wealthStars, examFact, spouseSeatFact, josa } from '@/services/saju/hookFacts';
-import { HJ, GoldCta, Pansim, hanjaNum, INK_HERO_BG, NeedSaju, YiGi, Cell, Tag, Mark, Ledger } from '@/components/hanji/Hanji';
+import { fetchTopicPreview, type TopicPreview } from '@/services/saju/topicPreview';
+import { HJ, GoldCta, Pansim, hanjaNum, INK_HERO_BG, NeedSaju, YiGi, Cell, Tag, Mark, Ledger, Choice } from '@/components/hanji/Hanji';
 
 /** 2026-10-10 — 결제 확인 시트의 '내 사주' 한 줄 (만세력 사실만 · 홈 고민 카드와 같은 문장) */
 function confirmFact(key: string, sd: any): string | null {
@@ -3262,6 +3263,27 @@ export function TopicAnalysisPage() {
     loveStatus: '' as '' | 'solo' | 'some' | 'dating',
   });
 
+  // 2026-10-23 1.6.3 P1-6 — 결제 전 미리 보기 (서버 확정 계산: 짚을 해, 앞으로 가장 좋은 달, AI 0원).
+  //   callable topicPreview 가 없거나(배포 전) 실패하면 null 그대로 → 칸을 그리지 않고 예전 화면과 같다.
+  const [preview, setPreview] = useState<TopicPreview | null>(null);
+  const previewSeenRef = useRef<string>('');
+  const previewSajuData = (selected as any)?.sajuData;
+  const previewProfileId = selected ? ((selected as any).profileId || selected.id) : '';
+  useEffect(() => {
+    setPreview(null);
+    if (phase !== 'select' || !previewSajuData || !topicId) return;
+    let alive = true;
+    fetchTopicPreview(topicId, previewSajuData).then((pv) => {
+      if (!alive) return;
+      setPreview(pv);
+      const seenKey = `${topicId}:${previewProfileId}`;
+      if (previewSeenRef.current === seenKey) return;
+      previewSeenRef.current = seenKey;
+      import('@/services/analytics').then((a) => a.trackEvent('topic_preview_view', { topic: topicId, ok: pv ? 1 : 0 })).catch(() => {});
+    });
+    return () => { alive = false; };
+  }, [topicId, previewProfileId, previewSajuData, phase]);
+
   // 프로필 목록 (독립 저장소)
   const profiles = useMemo(() => getProfiles(), []);
 
@@ -3919,21 +3941,18 @@ export function TopicAnalysisPage() {
                           </div>
                         </div>
 
-                        {/* 솔로 / 썸 / 연애중 토글 */}
-                        <div className="flex gap-2 mb-3">
-                          {[
-                            { v: 'solo' as const, l: '솔로', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 10-16 0" /></svg> },
-                            { v: 'some' as const, l: '썸', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21C7 17 2 13 2 8.5a5.5 5.5 0 0110-3.08A5.5 5.5 0 0122 8.5C22 13 17 17 12 21z" strokeDasharray="3 3" /></svg> },
-                            { v: 'dating' as const, l: '연애중', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4a4 4 0 11-3 6.5" /><path d="M8 4a4 4 0 103 6.5" /><path d="M22 21a8 8 0 00-6-7.75" /><path d="M2 21a8 8 0 016-7.75" /></svg> },
-                          ].map(s => (
-                            <button key={s.v}
-                              className={`flex-1 h-11 rounded-xl text-body-sm font-semibold transition-all flex items-center justify-center gap-2 ${loveStatus === s.v ? 'text-white shadow-md' : 'bg-bg-page border border-border-light text-text-muted'}`}
-                              style={loveStatus === s.v ? { background: '#1A1612' } : {}}
-                              onClick={() => setLoveStatus(s.v)}>
-                              {s.icon} {s.l}
-                            </button>
-                          ))}
-                        </div>
+                        {/* 솔로 / 썸 / 연애중 — 2026-10-23 1.6.3 P1-11 아이콘 붙은 알약 버튼 → 가로 세 칸 장부 칸(고른 칸만 먹 바탕) */}
+                        <Choice
+                          ariaLabel="현재 연애 상태"
+                          value={loveStatus}
+                          onChange={setLoveStatus}
+                          options={[
+                            { v: 'solo' as const, label: '솔로' },
+                            { v: 'some' as const, label: '썸' },
+                            { v: 'dating' as const, label: '연애중' },
+                          ]}
+                          style={{ marginBottom: 12 }}
+                        />
 
                         {/* 썸/연애중 → 상대방 입력 */}
                         <AnimatePresence>
@@ -4662,13 +4681,36 @@ export function TopicAnalysisPage() {
                     </div>
                   )}
 
+                  {/* 2026-10-23 1.6.3 P1-6 — 결제 전 미리 보기 두 줄 (서버 확정값을 틀에 넣는다. 못 불러오면 그리지 않는다) */}
+                  {selected && preview && (() => {
+                    const hook = preview.hook;
+                    // 재회운의 달은 상대 정보 없이 계산한 값 → 상대 생일을 넣고 열면 풀이의 달이 달라질 수 있어 숨긴다
+                    const partnerOn = topicId === 'reunion' && showPartner && !!partnerInfo.name;
+                    const month = preview.month && !(preview.month.noPartnerOnly && partnerOn) ? preview.month : null;
+                    if (!hook && !month) return null;
+                    const rows: { mark: string; label: string; value: string }[] = [];
+                    if (hook) rows.push({ mark: '年', label: '짚을 해', value: `사주로 보면 ${hook.y}년에 ${hook.place}${josa(hook.place, '이', '가')} 크게 움직였어요. 풀이 첫 장에서 그해 일을 짚어 드려요.` });
+                    if (month) rows.push({ mark: '月', label: '좋은 달', value: `앞으로 열두 달 중 ${topic.label}${josa(topic.label, '이', '가')} 가장 좋은 달은 ${month.y}년 ${month.m}월이에요.` });
+                    return (
+                      <div aria-live="polite" style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '14px 16px 4px', marginBottom: 12 }}>
+                        <p style={{ fontSize: 13.5, color: HJ.mute, lineHeight: 1.55, wordBreak: 'keep-all' }}>열기 전에 내 사주 계산으로 먼저 알려 드려요.</p>
+                        <Ledger rows={rows} style={{ marginTop: 8, borderBottom: 0 }} />
+                      </div>
+                    );
+                  })()}
+
                   {selected && (() => {
                     // 2026-05-28 PM — 토픽별 가격 SSOT. 재회운 세일 1운 (정가 3운).
                     const pricing = getTopicPrice(topicId as TopicKey);
                     const actualPrice = pricing.isOnSale && pricing.salePrice != null ? pricing.salePrice : pricing.regularPrice;
                     return (
                       <Button
-                        fullWidth size="lg" variant="gold" onClick={requestAnalyze}
+                        fullWidth size="lg" variant="gold"
+                        onClick={() => {
+                          // 2026-10-23 측정 — 입력 화면에서 '분석하기'를 누름 (topic_open 대비 시작 비율, 결제 확인 창 열기 전)
+                          if (!isAnalyzingRef.current) import('@/services/analytics').then((a) => a.trackEvent('topic_start', { topic: topicId! })).catch(() => {});
+                          requestAnalyze();
+                        }}
                         sub={pricing.isOnSale && pricing.salePrice != null ? (
                           <>
                             <span style={{ textDecoration: 'line-through', opacity: 0.7, marginRight: 4 }}>{pricing.regularPrice}운</span>

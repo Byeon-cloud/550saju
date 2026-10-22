@@ -245,6 +245,19 @@ export function Ledger({ rows, style }: {
   );
 }
 
+/** 고르기 칸 — 가로 장부 칸, 고른 칸만 먹 바탕 (아이콘 붙은 알약 토글 대체, 2026-10-23 1.6.3 P1-11) */
+export function Choice<T extends string>({ options, value, onChange, ariaLabel, style }: {
+  options: { v: T; label: ReactNode }[]; value: T; onChange: (v: T) => void; ariaLabel?: string; style?: CSSProperties;
+}) {
+  return (
+    <div className="hj-choice" role="group" aria-label={ariaLabel} style={style}>
+      {options.map((o) => (
+        <button key={o.v} type="button" aria-pressed={value === o.v} onClick={() => onChange(o.v)}>{o.label}</button>
+      ))}
+    </div>
+  );
+}
+
 /** 눈금 — 원고지 열 칸 점수 (동그란 손잡이 슬라이더 대체). 단계: 보강기 ~54 / 안정기 55~84 / 상승기 85~ */
 export function Grade({ label, score, unit = '점', phrase, foot, gold }: {
   label: ReactNode; score: number; unit?: string; phrase?: ReactNode; foot?: ReactNode; gold?: boolean;

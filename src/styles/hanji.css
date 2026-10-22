@@ -208,3 +208,10 @@
 /* 2026-10-13 펼치기 꺾쇠 — ▾ ▼ 기호 대신 먹선 꺾쇠(장식 기호 금지). .up = 펼친 상태 */
 .hj-chev { display: inline-block; flex-shrink: 0; width: 7px; height: 7px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .2s ease; }
 .hj-chev.up { transform: translateY(1px) rotate(-135deg); }
+
+/* 2026-10-23 고르기 칸 (1.6.3 P1-11) — 가로 장부 칸, 고른 칸만 먹 바탕. 아이콘 붙은 알약 토글 대체 (금색은 쓰지 않는다) */
+.hj-choice { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); background: var(--hj-card); border: 1px solid var(--hj-rule); border-radius: 2px; box-shadow: inset 0 0 0 2px var(--hj-card), inset 0 0 0 3px var(--hj-rule-3); }
+.hj-choice button { position: relative; min-height: 48px; padding: 10px 6px; border: 0; background: transparent; font-size: 15px; font-weight: 600; color: var(--hj-ink-2); line-height: 1.35; word-break: keep-all; cursor: pointer; }
+.hj-choice button + button { border-left: 1px solid var(--hj-rule-2); }
+.hj-choice button[aria-pressed="true"] { background: var(--hj-ink); color: #F5EDDF; font-weight: 700; }
+.hj-choice button:focus-visible { outline: 2px solid var(--hj-ink-2); outline-offset: 2px; z-index: 1; }

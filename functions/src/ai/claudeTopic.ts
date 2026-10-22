@@ -16,7 +16,7 @@ import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNowDate } from '../utils/kstTime';
 import { correctKoreanSolarTime } from '../utils/timeCorrection';
 import { myeongriSinsalText } from './sinsal';
-import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData, addNimToPartnerName, lifeTimelineFactsText, sajuCoreFactsText, topicHookPick, spouseStarText } from './sajuFacts';
+import { upcomingMonthPillarsText, gwiinFactsText, SIJIN_OHENG_LINE, sanitizeAiOutput, reunionPlan, fillReunionTopicData, addNimToPartnerName, lifeTimelineFactsText, sajuCoreFactsText, topicHookPick, topicBestMonth, spouseStarText } from './sajuFacts';
 // 2026-10-22 — spouseStarText: 배우자성(여성 관성, 남성 재성) 자리 확정 줄. 연애, 결혼, 재회에만 넣는다(점검 P0-7)
 
 /**
@@ -1115,10 +1115,17 @@ export function buildTopicCall(
   const hookAsk = normalizedId === 'love'
     ? '그 해의 장면 하나를 묻는다(연락이 끊기거나 다시 이어진 일, 사는 자리가 바뀐 일, 내 마음이 먼저 식은 일 중 하나)'
     : '그 해에 걸린 자리의 생활 영역 두세 가지를 묶어 묻는다';
-  const hookLine = hook
+  // 2026-10-23 — 결제 전 미리 보기(topicPreview)가 '앞으로 가장 좋은 달'을 보여 준다(1.6.3 P1-6). 풀이가 다른 달을 최고로 꼽으면 어긋나므로
+  //   같은 계산(topicBestMonth)을 여기서도 준다. 재회운은 재회 확정표(reunionText)가 이미 같은 달을 정한다.
+  const bestMonth = normalizedId === 'reunion' ? null : topicBestMonth(sajuData, kstNowDate(), normalizedId);
+  const monthLine = bestMonth
+    ? `
+- 이 주제의 앞으로 열두 달 중 가장 좋은 달은 서버가 골랐다: ${bestMonth.y}년 ${bestMonth.m}월(${bestMonth.gz}, ${bestMonth.why}). 가장 좋은 달, 적기, 유력 시기를 하나로 꼽을 때는 이 달을 꼽고, 다른 달을 이 달보다 좋은 달로 쓰지 않는다.`
+    : '';
+  const hookLine = (hook
     ? `
 - 이 주제의 짚기 해는 서버가 골랐다: ${hook.y}년(${hook.gz}, ${hook.why}). 첫 섹션 둘째 문단을 '${hook.y}년 무렵'으로 시작하는 질문으로 열고, ${hookAsk}. 바로 뒤에 그 해 들어온 글자로 원인을 단정해 풀이한다. 다른 섹션에서는 지난 일을 다시 묻지 않는다.`
-    : '';
+    : '') + monthLine;
   return {
     system: TOPIC_ANALYSIS_SYSTEM_V3, prompt, model, maxTokens, normalizedId, effectiveBaseScore, split,
     sections: topicSectionTitles(normalizedId, partnerInfo, extraInfo), finalize, hookLine,

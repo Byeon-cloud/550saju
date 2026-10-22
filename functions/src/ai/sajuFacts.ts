@@ -1079,6 +1079,56 @@ export function topicHookPick(sajuData: any, now: Date, topicId: string): { y: n
   } catch { return null; }
 }
 
+/** 주제운 앞으로 열두 달 중 가장 좋은 달 (2026-10-23, 1.6.3 P1-6) — 결제 전 미리 보기(topicPreview)와 풀이(claudeTopic)가 같은 달을 말하게 서버가 고른다.
+ *  달 기준 점수(monthBaseScore: 용신, 희신, 기신, 일지 충, 천을귀인)에 이 주제의 십성이 그달 천간(+4)이나 지지 본기(+3)로 들어오면 더한다
+ *  (재회 확정표의 '연인의 별' 가산과 같은 크기). 건강은 편관이 들면 뺀다, 이사는 역마 달을 더한다. 다음 달부터 열두 달, 같은 점수면 빠른 달.
+ *  재회운은 재회 확정표(reunionPlan, 상대 정보 없이)의 재회 기운이 가장 높은 달(=첫 연락 최적 달)을 그대로 쓴다. 용신이 없으면 null. */
+export function topicBestMonth(sajuData: any, now: Date, topicId: string): { y: number; m: number; gz: string; why: string } | null {
+  try {
+    const p: any[] = sajuData?.pillars || [];
+    const dayGan = String(p[2]?.천간 || '');
+    const dayJi = String(p[2]?.지지 || '');
+    if (!GAN_OH[dayGan] || !sajuData?.myeongriAnalysis?.용신) return null;
+    const y0 = now.getFullYear(); const m0 = now.getMonth() + 1;
+    if (topicId === 'reunion') {
+      const plan = reunionPlan({ sajuData, partnerDay: null, now });
+      if (!plan || !plan.monthly.length) return null;
+      let ci = 0;
+      plan.monthly.forEach((r, i) => { if (r.chance > plan.monthly[ci].chance) ci = i; });
+      const y = y0 + Math.floor((m0 - 1 + ci) / 12); const m = ((m0 - 1 + ci) % 12) + 1;
+      return { y, m, gz: monthGz(y, m), why: `재회 확정표 첫 연락 최적 달(재회 기운 ${plan.monthly[ci].chance})` };
+    }
+    const female = (sajuData?.input?.gender || '') !== 'male';
+    const STARS: Record<string, { list: string[]; name: string }> = {
+      love: female ? { list: ['정관', '편관(칠살)'], name: '이성 인연의 별(관성)' } : { list: ['정재', '편재'], name: '이성 인연의 별(재성)' },
+      wealth: { list: ['정재', '편재'], name: '재성(돈의 들고 남)' },
+      career: { list: ['정관', '편관(칠살)', '정인', '편인'], name: '관성, 인성(직장과 자격)' },
+      study: { list: ['정인', '편인', '식신'], name: '인성, 식신(배움과 집중)' },
+    };
+    STARS.marriage = STARS.love; STARS.business = STARS.wealth; STARS.exam = STARS.career;
+    const star = STARS[topicId];
+    const yeokma = [dayJi, String(p[0]?.지지 || '')].map((b) => samhapOf(b)?.yeokma).filter(Boolean) as string[];
+    let best: { y: number; m: number; gz: string; s: number; why: string } | null = null;
+    for (let i = 1; i <= 12; i++) {
+      const y = y0 + Math.floor((m0 - 1 + i) / 12); const m = ((m0 - 1 + i) % 12) + 1;
+      const gz = monthGz(y, m); if (!gz || gz.length < 2) continue;
+      const base = monthBaseScore(gz, sajuData);
+      const sg = tenGod(dayGan, gz[0]); const sb = tenGod(dayGan, BR_MAIN[gz[1]]);
+      let s = base; const why: string[] = [`달 기준점수 ${base}`];
+      if (star) {
+        const add = (star.list.includes(sg) ? 4 : 0) + (star.list.includes(sb) ? 3 : 0);
+        if (add) { s += add; why.push(`${star.name} 들어옴`); }
+      } else if (topicId === 'health') {
+        if (sg === '편관(칠살)' || sb === '편관(칠살)') { s -= 3; why.push('편관(압박과 피로) 들어옴'); }
+      } else if (topicId === 'move') {
+        if (yeokma.includes(gz[1])) { s += 3; why.push(`역마(${gz[1]}, 움직임) 달`); }
+      }
+      if (!best || s > best.s) best = { y, m, gz, s, why: why.join(', ') };
+    }
+    return best ? { y: best.y, m: best.m, gz: best.gz, why: best.why } : null;
+  } catch { return null; }
+}
+
 /** now 는 KST 값을 담은 Date (kstNowDate) */
 export function lifeTimelineFactsText(sajuData: any, now: Date): string {
   try {

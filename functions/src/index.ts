@@ -2523,6 +2523,7 @@ export { ttiOgImage } from './tti/ttiOgImage'; // 2026-10-19 오늘의 띠별 �
 export { claimCompensation } from './admin/claimCompensation';
 export { claimWelcomeUn } from './auth/claimWelcomeUn'; // 2026-10-23 로그인 계정의 기본 1운을 서버 잔액에도 한 번 (기기에만 있어 '운이 부족합니다'로 막히던 일)
 export { recoverTopicResult } from './topic/recoverTopicResult';
+export { topicPreview } from './topic/topicPreview'; // 2026-10-23 주제운 결제 전 미리 보기 (짚을 해, 앞으로 가장 좋은 달, AI 0원, uid 하루 30회)
 export { recoverPremiumResult } from './premium/recoverPremiumResult';
 // 2026-08-07 — IAP 주문 이력 기반 잔액 복구 (기기 초기화로 운이 사라진 CS 대응)
 export { recoverIapOrders } from './payment/recoverIapOrders';

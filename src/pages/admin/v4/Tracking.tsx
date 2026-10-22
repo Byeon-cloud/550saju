@@ -20,7 +20,8 @@ const CATALOG: { group: string; items: [name: string, label: string, where: Wher
   ] },
   { group: '콘텐츠', items: [
     ['content_open', '콘텐츠를 열었다', 'both'], ['content_result', '결과를 받았다', 'both'], ['content_purchase', '운을 써서 샀다', 'both'],
-    ['topic_open', '주제운 화면을 열었다', 'both'], ['topic_select', '주제운 결제를 확정했다', 'both'], ['tojung_preview_view', '신년운세 무료 미리 보기가 보였다', 'both'],
+    ['topic_open', '주제운 화면을 열었다', 'both'], ['topic_preview_view', '주제운 결제 전 미리 보기를 불렀다(ok 1 보임, 0 숨김)', 'both'], ['topic_start', '주제운 분석하기를 눌렀다', 'both'],
+    ['topic_select', '주제운 결제를 확정했다', 'both'], ['tojung_preview_view', '신년운세 무료 미리 보기가 보였다', 'both'],
     ['tti_open', '띠별 운세를 열었다', 'both'], ['tti_year', '띠의 해를 골랐다', 'both'], ['tti_input', '띠 화면에서 생일을 넣었다', 'both'], ['tti_newyear', '띠 칸에서 신년운세로', 'both'], ['tti_compat', '띠 칸에서 궁합으로', 'both'],
   ] },
   { group: '홈 시즌 카드', items: [
