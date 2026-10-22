@@ -2521,6 +2521,7 @@ export { ttiOgImage } from './tti/ttiOgImage'; // 2026-10-19 오늘의 띠별 �
 
 // CS 보상 운 지급 (디바이스ID 장부 · 2026-06-11) — 운영: Firebase Console compensations/{deviceId}
 export { claimCompensation } from './admin/claimCompensation';
+export { claimWelcomeUn } from './auth/claimWelcomeUn'; // 2026-10-23 로그인 계정의 기본 1운을 서버 잔액에도 한 번 (기기에만 있어 '운이 부족합니다'로 막히던 일)
 export { recoverTopicResult } from './topic/recoverTopicResult';
 export { recoverPremiumResult } from './premium/recoverPremiumResult';
 // 2026-08-07 — IAP 주문 이력 기반 잔액 복구 (기기 초기화로 운이 사라진 CS 대응)
