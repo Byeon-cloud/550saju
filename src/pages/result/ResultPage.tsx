@@ -14,7 +14,7 @@ import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useToast } from '@/components/common/Toast';
 import { AILoading } from '@/components/common/AILoading';
 import {
-  getReport, getReports, getMyProfile, saveReport, refundBalance, getPendingSpends,
+  getReport, getReports, getMyProfile, saveReport, refundBalance, getPendingSpends, spendBalance,
   type LocalReport,
 } from '@/services/storage/localStore';
 // 2026-05-29 C1 fix — 프리미엄 SSE 실패 시 환불 금액 산정 (세일 반영).
@@ -309,6 +309,8 @@ export function ResultPage(props: ResultPageProps = {}) {
   const streamStartedRef = useRef(false);
   const streamSettledRef = useRef(false); // 2026-06-22 — onDone(성공)·환불(실패) 중 settle 됐는지 (워치독 가드)
   const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 2026-10-23 — 실패로 보고 돌려준 운(실제로 낸 값). 그 뒤에 풀이가 늦게 도착하면 결과를 주고 이만큼 다시 거둔다
+  const refundedAmountRef = useRef(0);
   // streamingAiResult 최신값을 effect 의 async 클로저에서 안전하게 읽기 위한 ref 미러
   const streamingAiResultRef = useRef<any>(streamingAiResult);
   useEffect(() => { streamingAiResultRef.current = streamingAiResult; }, [streamingAiResult]);
@@ -346,9 +348,12 @@ export function ResultPage(props: ResultPageProps = {}) {
   // 차감액 산정: 세일 반영 actualPrice. 1회만 환불 (refundedRef 가드).
   // 🚨 2026-07-01 — 환불 전에 recovery 먼저: 서버가 이미 완성·저장(generatePremiumReportStream recovery 블롭)했으면
   //   재생성 0 으로 그대로 전달 → "서버 성공·전달 실패 → 환불+'분석실패'+토큰낭비" 근본 차단(준기 지적).
+  //   2026-10-23 — 서버가 아직 만드는 중일 수 있어 완성본 찾기를 한 번이 아니라 15초 간격 다섯 번(약 1분) 한다.
+  //   10-14 모델 교체 뒤 종합사주가 113~147초 걸리는데 화면은 120초에 실패로 보고 운을 돌려줘, 서버는 끝까지 만들고 깎았다
+  //   (10-23 웹 손님 둘: 실패로 보여 '다시 만들기'로 10운을 또 쓰거나, 부푼 화면 잔액으로 다음 풀이가 '운이 부족합니다'로 막힘).
   const handleStreamFailure = useCallback(async (_msg: string) => {
     if (streamSettledRef.current || refundedRef.current) return;
-    {
+    for (let i = 0; i < 5; i++) {
       try {
         const { recoverPremiumResult } = await import('@/services/ai/reportGenerator');
         const rec = await recoverPremiumResult();
@@ -360,13 +365,20 @@ export function ResultPage(props: ResultPageProps = {}) {
           deliverReport({ ...(rec.content as any), tier: 'premium' as const });
           return; // 환불 X — 유저는 이미 만든 결과를 받음 (토큰 회수)
         }
-      } catch { /* noop → 환불로 진행 */ }
+      } catch { /* noop → 다시 찾기 */ }
+      if (streamSettledRef.current || refundedRef.current) return; // 그사이 스트림이 끝났다
+      if (i < 4) await new Promise((r) => setTimeout(r, 15000));
     }
     if (streamSettledRef.current || refundedRef.current) return;
     refundedRef.current = true;
     streamSettledRef.current = true;
     if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
-    const refundAmount = getPremiumPrice().actualPrice;
+    // 2026-10-23 — 돌려줄 값은 결제 때 장부에 남긴 실제 금액(반값 5운으로 샀으면 5운). 예전엔 지금 정가(10운)를 돌려줘 화면 잔액이 부풀었다
+    const refundAmount = (() => {
+      try { const pend = getPendingSpends().find((x) => x.type === 'premium'); if (pend && pend.amount > 0) return pend.amount; } catch { /* noop */ }
+      return getPremiumPrice().actualPrice;
+    })();
+    refundedAmountRef.current = refundAmount;
     try { refundBalance(refundAmount); } catch { /* noop */ }
     // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
     import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
@@ -381,9 +393,14 @@ export function ResultPage(props: ResultPageProps = {}) {
     //   실패처리(환불 + 에러카드) → "로딩만 길고 결과 안 나옴" 영구 멈춤을 근본 차단.
     // 2026-06-24 — 180→120초 단축. 정상 종합사주 생성 상한 ~80-90초라 120초는 정상을 안 자르고 끊김 꼬리만 컷
     //   (토스 P99 로딩 150초 = 끊긴 채 워치독까지 매달린 값 → 천장을 120초로 낮춰 P99 직접 절감).
-    watchdogRef.current = setTimeout(() => {
-      if (!streamSettledRef.current) handleStreamFailure('시간 초과: 응답이 너무 오래 걸렸어요');
-    }, 120000);
+    //   2026-10-23 — 120→240초, 그룹이 도착할 때마다 다시 잰다(아래 onGroup). 5.5 세대 종합사주는 113~147초 걸린다.
+    const armWatchdog = (ms: number) => {
+      if (watchdogRef.current) clearTimeout(watchdogRef.current);
+      watchdogRef.current = setTimeout(() => {
+        if (!streamSettledRef.current) handleStreamFailure('시간 초과: 응답이 너무 오래 걸렸어요');
+      }, ms);
+    };
+    armWatchdog(240000);
     (async () => {
       try {
         const mod = await import('@/services/ai/reportGenerator');
@@ -428,11 +445,21 @@ export function ResultPage(props: ResultPageProps = {}) {
         }
         await mod.generatePremiumReportStream(sajuData as any, undefined, {
           onGroup: (_g: 'A' | 'D' | 'B' | 'C', data: any) => {
+            if (!streamSettledRef.current) armWatchdog(180000); // 진행 중이면 다시 잰다(진짜 멈춤만 자른다)
             // 그룹 단위 머지 (필드 누적). tier='premium' 표식은 final 에서 박음
             setStreamingAiResult((prev: any) => mergePremiumGroup(prev, data));
             setArrivedGroups((prev) => (prev[_g] ? prev : { ...prev, [_g]: true }));
           },
           onDone: ({ content }: { reportId: string; content: any }) => {
+            // 2026-10-23 — 이미 실패로 보고 운을 돌려준 뒤 늦게 도착했으면: 결과를 주고 돌려준 운을 다시 거둔다(서버는 이미 깎았다)
+            if (refundedRef.current && refundedAmountRef.current > 0) {
+              const back = refundedAmountRef.current;
+              refundedAmountRef.current = 0;
+              try { spendBalance(back); } catch { /* noop */ }
+              streamSettledRef.current = false;
+              setStreamError(null);
+              import('@/services/analytics').then((a) => a.trackEvent('premium_late_done', { amount: back })).catch(() => {});
+            }
             deliverReport({ ...(content as any), tier: 'premium' as const }); // 완성본 전달(영속·pending해제·URL정리 공통)
           },
           onError: (msg: string) => {
