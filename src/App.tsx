@@ -9,8 +9,7 @@ import { SajuProvider } from '@/contexts/SajuContext';
 import { TabBar } from '@/components/layout/TabBar';
 import { BalanceBar } from '@/components/layout/BalanceBar';
 import { ToastProvider } from '@/components/common/Toast';
-import { useToast } from '@/components/common/Toast';
-import { INSUFFICIENT_EVENT, claimWelcomeIfPhantom } from '@/services/storage/balanceReconcile';
+import { claimWelcomeIfPhantom } from '@/services/storage/balanceReconcile';
 import { HomePage } from '@/pages/HomePage';
 
 /* 2026-10-13 — 홈 v5 시안(HomePageV5, env flag OFF 로 한 번도 켜지지 않음)은 v9 홈으로 대체되어 삭제 */
@@ -132,34 +131,21 @@ function RouteFlags() {
   return null;
 }
 
-/** 2026-10-23 잔액 지킴이 — 서버가 '운이 부족합니다'로 막으면 모자란 만큼 골라 둔 충전 화면으로, 로그인 계정의 기본 1운을 서버에도 한 번 (balanceReconcile.ts) */
+/** 2026-10-23 로그인 계정의 기본 1운을 서버에도 한 번 (balanceReconcile.ts). 인증 구독은 처음 한 번만, 확인은 세션마다 계정당 한 번 */
 function BalanceGuard() {
-  const navigate = useNavigate();
-  const toast = useToast();
   useEffect(() => {
-    const on = (ev: Event) => {
-      const d = ((ev as CustomEvent).detail || {}) as { type?: string; server?: number | null };
-      if (/^\/charge/.test(window.location.pathname)) return;
-      Promise.all([import('@/services/payment/chargeContent'), import('@/services/storage/localStore')]).then(([cc, ls]) => {
-        const here = window.location.pathname;
-        const content = cc.resolveChargeContent(null, here, null);
-        const have = typeof d.server === 'number' ? d.server : ls.getBalance();
-        const need = content ? Math.max(1, Math.ceil(content.cost - have)) : 0;
-        toast.show(need ? `운이 ${need}운 모자라요. 충전하면 바로 이어서 볼 수 있어요` : '운이 모자라요. 충전하면 바로 이어서 볼 수 있어요', 'info');
-        const q = new URLSearchParams();
-        if (need) q.set('need', String(need));
-        if (content) q.set('src', content.key);
-        q.set('redirect', here.startsWith('/result') ? '/premium' : here + window.location.search);
-        navigate(`/charge?${q.toString()}`);
-      }).catch(() => {});
-    };
-    window.addEventListener(INSUFFICIENT_EVENT, on);
     let unsub: (() => void) | undefined;
+    let timer: number | undefined;
+    let alive = true;
     import('@/services/auth/firebase').then(({ auth }) => {
-      unsub = auth.onAuthStateChanged((u) => { if (u && !u.isAnonymous) window.setTimeout(() => { void claimWelcomeIfPhantom(); }, 4000); });
+      if (!alive) return;
+      unsub = auth.onAuthStateChanged((u) => {
+        if (timer) window.clearTimeout(timer);
+        if (u && !u.isAnonymous) timer = window.setTimeout(() => { void claimWelcomeIfPhantom(); }, 4000);
+      });
     }).catch(() => {});
-    return () => { window.removeEventListener(INSUFFICIENT_EVENT, on); unsub?.(); };
-  }, [navigate, toast]);
+    return () => { alive = false; if (timer) window.clearTimeout(timer); unsub?.(); };
+  }, []);
   return null;
 }
 

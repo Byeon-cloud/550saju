@@ -1,5 +1,4 @@
 import { httpsCallable } from 'firebase/functions';
-import { isInsufficientError, handleInsufficient } from '@/services/storage/balanceReconcile';
 import { ensureAuth } from '@/services/auth/authService';
 import { functions, ensureFunctionsTarget } from '@/services/firebase/functionsClient';
 import type { SajuData, Situation } from '@/types/saju';
@@ -70,8 +69,6 @@ function wrapStreamCallbacks<C extends { onDone: (arg: any) => void; onError: (.
     onError: (...args: any[]) => {
       // 2026-06-30 — 실패 원인 추적: SSE 실패 reason(에러 메시지) 까지 기록 → 근본 원인 진단.
       if (!settled) { settled = true; trackAi('ai_error', { type, mode: 'sse', ms: Date.now() - t0, reason: String(args[0] ?? '').slice(0, 140) }); }
-      // 2026-10-23 — 서버가 '운이 부족합니다'로 막으면 기기 잔액을 서버 값으로 맞추고 충전 화면으로 (balanceReconcile.ts)
-      if (isInsufficientError(args[0])) handleInsufficient(type);
       (callbacks.onError as any)(...args);
     },
   } as C;
@@ -95,7 +92,6 @@ async function callWithAuth(name: string, data: any): Promise<any> {
     return result;
   } catch (e) {
     if (type) trackAi('ai_error', { type, mode: 'callable', ms: Date.now() - t0, reason: String((e as any)?.message || '').slice(0, 140) });
-    if (isInsufficientError(e)) handleInsufficient(type || name);
     throw e;
   }
 }

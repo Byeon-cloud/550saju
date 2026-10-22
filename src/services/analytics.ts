@@ -177,7 +177,6 @@ const FIRESTORE_TRACKED = new Set<string>([
   'topic_start',        // {topic} — 주제운 입력 화면에서 '분석하기'를 눌렀다 (결제 확인 창 열기 전, topic_open 대비 시작 비율)
   'charge_open',        // 충전 페이지 진입
   'charge_view',        // {src, defaultPkg, firstPayer: 1|0} — 충전 화면 진입 한 번, 기본으로 골라 둔 묶음과 첫 결제 손님 여부 (2026-10-22 1.6.3 P1-1)
-  'balance_reconciled', // {local, server} — 서버가 '운이 부족합니다'로 막아 기기 잔액을 서버 값으로 낮췄다(2026-10-23 balanceReconcile)
   'welcome_un_claim',   // {ok, why} — 로그인 계정의 기본 1운을 서버에 한 번 넣어 달라고 했다
   'pay_sheet_open',     // {pg, amount, package} — 결제창을 실제로 여는 순간(앱 IAP 요청 직전, 웹 포트원 호출 직전, 2026-10-22)
   'charge_complete',    // {amount, package}
