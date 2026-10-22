@@ -4,11 +4,16 @@
 // 보존(E13): grantPurchase 분기 토스트, IAP processProductGrant (웹 토스페이먼츠 복귀 처리는 2026-10-14 제거, 웹 결제는 포트원)
 // SSOT 토큰 적용 · 광고 없음 · 원화 노출 허용 유일 페이지
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CHARGE_PACKAGES } from '@/constants/pricing';
-import { getBalance, addPaidBalance } from '@/services/storage/localStore';
+import { CHARGE_PACKAGES, PRODUCT_COST, getPremiumPrice, getTojungPrice, getTopicPrice, getMonthlyPrice, getWeeklyPrice } from '@/constants/pricing';
+import { TOPIC_REGISTRY, normalizeTopicId } from '@/constants/topics';
+import { kstToday } from '@/utils/kstDate';
+import type { ChargePackage } from '@/types/payment';
+import { getBalance, addPaidBalance, getMyProfile } from '@/services/storage/localStore';
+import { markPaidOnce, hasPaidLocally, hasPaidOnServer } from '@/services/payment/payerHistory';
+import { Seal } from '@/components/hanji/Hanji';
 import { purchasePackage } from '@/services/payment/iapService';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -34,6 +39,11 @@ const C = {
   goldLine: 'rgba(184,150,90,0.28)',
   line: '#E5DFD0',
   success: '#4E7A57',
+  // 2026-10-22 v9 고서 부품 (충전 카드) — 먹, 먹 보조, 종이 카드, 먹선 두 줄
+  sumi: '#1A1612',
+  sumi2: '#4B4238',
+  card: '#FFFDF8',
+  rule2: 'rgba(26,22,18,.24)',
 } as const;
 
 
@@ -81,7 +91,7 @@ function InfoIcon({ color }: { color: string }) {
  *   되살리는 건 페이지를 새로 연 경우(location.key === 'default')뿐 — 홈에서 충전을 누른 경우까지 옛 목적지로 보내지 않게.
  */
 const CHARGE_CTX_KEY = 'saju500:charge_ctx';
-type ChargeCtx = { returnTo?: string; message?: string; need?: number; selected?: string; loginThenPay?: number; at: number };
+type ChargeCtx = { returnTo?: string; message?: string; need?: number; src?: string; selected?: string; loginThenPay?: number; at: number };
 function readChargeCtx(): ChargeCtx | null {
   try {
     const raw = sessionStorage.getItem(CHARGE_CTX_KEY);
@@ -96,6 +106,55 @@ function writeChargeCtx(patch: Partial<ChargeCtx> | null): void {
     if (!patch) { sessionStorage.removeItem(CHARGE_CTX_KEY); return; }
     sessionStorage.setItem(CHARGE_CTX_KEY, JSON.stringify({ ...(readChargeCtx() || {}), ...patch, at: Date.now() }));
   } catch { /* noop */ }
+}
+
+/**
+ * 무엇을 보러 충전하러 왔나 (2026-10-22, 1.6.3 P1-1)
+ *   맨 위 요약('2027 신년운세에 7운이 필요해요')과 기본으로 골라 둔 묶음 설명('2027 신년운세 한 번')에 콘텐츠 이름을 쓰려고.
+ *   예전엔 메시지 없이 ?need= 만 오면 '이 풀이에 7운이 필요해요'로만 나왔다.
+ *   찾는 순서: ?src= (tojung, premium, topic:love 또는 love, compat, monthly, weekly, dream, chat, daily, daeun)
+ *     → 돌아갈 경로(/tojung, /premium, /result, /topic/연애 id, /compat, /share/cjoin, /monthly, /weekly, /dream, /chat, /daily, /daeun)
+ *     → 메시지 속 이름. 값(cost)은 pricing.ts 의 지금 가격이라 신년운세가 12월 1일 9운이 되어도 맞다.
+ */
+type ChargeContent = { key: string; name: string; cost: number };
+function newYearTargetYear(): number {
+  const [y, m] = kstToday().split('-').map(Number);
+  return m >= 10 ? y + 1 : y; // TojungPage newYearTarget, 서버 tojungTargetYear 와 같은 규칙
+}
+function chargeContentByKey(raw: string | null | undefined): ChargeContent | null {
+  if (!raw) return null;
+  const k = String(raw).trim().toLowerCase();
+  switch (k) {
+    case 'tojung': case 'newyear': return { key: 'tojung', name: `${newYearTargetYear()} 신년운세`, cost: getTojungPrice().actualPrice };
+    case 'premium': case 'result': case 'report': return { key: 'premium', name: '종합사주', cost: getPremiumPrice().actualPrice };
+    case 'compat': case 'cjoin': return { key: 'compat', name: '궁합', cost: PRODUCT_COST.compatibility };
+    case 'monthly': return { key: 'monthly', name: '월운세', cost: getMonthlyPrice().actualPrice };
+    case 'weekly': return { key: 'weekly', name: '주간운세', cost: getWeeklyPrice().actualPrice };
+    case 'dream': return { key: 'dream', name: '꿈해몽 깊은 풀이', cost: 1 };
+    case 'chat': return { key: 'chat', name: '사주대화', cost: 1 };
+    case 'daily': return { key: 'daily', name: '오늘의 운세', cost: 1 };
+    case 'daeun': return { key: 'daeun', name: '대운 해설', cost: PRODUCT_COST.daeun };
+    default: break;
+  }
+  const t = normalizeTopicId(k.startsWith('topic:') || k.startsWith('topic/') ? k.slice(6) : k);
+  return t ? { key: `topic:${t}`, name: TOPIC_REGISTRY[t].label, cost: getTopicPrice(t).actualPrice } : null;
+}
+function resolveChargeContent(src: string | null | undefined, path: string | null | undefined, message: string | null | undefined): ChargeContent | null {
+  const bySrc = chargeContentByKey(src);
+  if (bySrc) return bySrc;
+  const p = path || '';
+  const tm = p.match(/^\/topic\/([a-z_]+)/);
+  if (tm) return chargeContentByKey(tm[1]);
+  const pm = p.match(/^\/(tojung|premium|result|compat|monthly|weekly|dream|chat|daily|daeun)\b/);
+  if (pm) return chargeContentByKey(pm[1]);
+  if (/^\/share\/cjoin\b/.test(p)) return chargeContentByKey('compat');
+  const m = message || '';
+  if (/신년운세/.test(m)) return chargeContentByKey('tojung');
+  if (/종합사주/.test(m)) return chargeContentByKey('premium');
+  if (/궁합/.test(m)) return chargeContentByKey('compat');
+  if (/월운세/.test(m)) return chargeContentByKey('monthly');
+  if (/주간운세/.test(m)) return chargeContentByKey('weekly');
+  return null;
 }
 
 export function ChargePage() {
@@ -119,7 +178,7 @@ export function ChargePage() {
     const q = new URLSearchParams(window.location.search);
     const qNeed = Number(q.get('need')) || 0;
     if (st.returnTo || st.message || qNeed > 0 || q.get('redirect')) {
-      const c: ChargeCtx = { returnTo: st.returnTo || q.get('redirect') || undefined, message: st.message || undefined, need: qNeed || undefined, at: Date.now() };
+      const c: ChargeCtx = { returnTo: st.returnTo || q.get('redirect') || undefined, message: st.message || undefined, need: qNeed || undefined, src: q.get('src') || undefined, at: Date.now() };
       writeChargeCtx(null);
       writeChargeCtx(c);
       return c;
@@ -138,9 +197,13 @@ export function ChargePage() {
   const needRaw = searchParams.get('need') || (ctx?.need ? String(ctx.need) : null) || needFromMsg;
   const needUn = needRaw && !Number.isNaN(Number(needRaw)) ? Number(needRaw) : null;
   const buyIntent = needUn !== null && needUn > 0;
+  // 2026-10-22 — 보러 온 콘텐츠 (위 resolveChargeContent). 첫 화면 값 그대로 둔다(결제 복귀 때 주소 꼬리표를 지워도 바뀌지 않게)
+  const srcParam = searchParams.get('src') || ctx?.src || null;
+  const [content] = useState<ChargeContent | null>(() => resolveChargeContent(srcParam, redirectTo, stateMessage));
 
   // 2026-06-24 — '어떤 콘텐츠에서 결제를 결심했나' 트래킹용 source 파생.
   //   returnTo/redirect 경로에서 콘텐츠 type 우선, 없으면 need 값, 둘 다 없으면 'direct'.
+  //   2026-10-22 — 경로가 없고 ?src= 로 콘텐츠를 알려 온 경우만 그 콘텐츠로 (예전 값은 그대로)
   const chargeSource = (() => {
     const path = redirectTo || '';
     if (/^\/topic\/([a-z]+)/.test(path)) return `topic:${path.match(/^\/topic\/([a-z]+)/)![1]}`;
@@ -149,26 +212,65 @@ export function ChargePage() {
     if (/^\/dream\b/.test(path)) return 'dream';
     if (/^\/daily\b/.test(path)) return 'daily';
     if (/^\/(daeun|monthly|compat|tojung)\b/.test(path)) return path.replace(/^\/([a-z]+).*/, '$1');
+    if (!path && srcParam && content) return content.key;
     if (needUn !== null && needUn > 0) return `need:${needUn}`;
     return 'direct';
   })();
 
   /**
-   * 기본 선택 — `?need=N` 있으면 N 이상 충전되는 가장 작은 패키지 자동 선택,
-   * 없으면 p15 (가장 인기 / 프리미엄 라인 / 5,000원).
-   * 2026-04-27 4 패키지 정정: 구 p10 → 신 p15.
+   * 기본 선택 (2026-10-22 1.6.3 P1-1, docs/strategy/2026-10-22_UIUX_콘텐츠_점검.md 5-8)
+   *   예전엔 need 가 없으면 늘 15운(5,000원)이 골라져 있었다. 충전 화면 287기기 중 결제 14, 5,000원이 먼저 보이는 것이 첫 장벽.
+   *   ① 로그인하고 돌아오면 고른 묶음 그대로
+   *   ② 필요한 운(?need=N, 메시지의 'N운이 필요')이 있으면 그만큼 들어오는 가장 작은 묶음 (10-21 수리 그대로)
+   *   ③ 종합사주나 신년운세에서 왔는데 need 가 없으면 지금 그 풀이 값이 들어오는 가장 작은 묶음
+   *      (종합사주 10운과 12월부터 신년운세 9운은 15운, 첫 오늘의 운세 반값 5운과 11월 30일까지 신년운세 7운은 7운)
+   *   ④ 그 밖(홈 충전 버튼, 마이페이지, 잔액 막대, 주제운에서 need 없이)은 7운(5운 + 보너스 2운, 2,500원)
+   *   가격은 pricing.ts 가 기준이라 여기서 숫자를 적지 않는다.
    */
-  const initialSelected = (() => {
-    if (ctx?.selected && CHARGE_PACKAGES.some((p) => p.id === ctx.selected)) return ctx.selected; // 로그인하고 돌아오면 고른 패키지 그대로
-    if (needUn !== null && needUn > 0) {
-      const sorted = [...CHARGE_PACKAGES].sort((a, b) => a.un - b.un);
-      const fit = sorted.find((p) => p.un >= needUn);
-      if (fit) return fit.id;
-    }
-    return 'p15';
-  })();
+  const [defaultPkg] = useState<string>(() => {
+    const byUn = [...CHARGE_PACKAGES].sort((a, b) => a.un - b.un);
+    const fit = (n: number) => (byUn.find((p) => p.un >= n) ?? byUn[byUn.length - 1]).id;
+    if (ctx?.selected && CHARGE_PACKAGES.some((p) => p.id === ctx.selected)) return ctx.selected;
+    if (needUn !== null && needUn > 0) return fit(needUn);
+    if (content && (content.key === 'premium' || content.key === 'tojung')) return fit(content.cost);
+    return CHARGE_PACKAGES.some((p) => p.id === 'p7') ? 'p7' : fit(1);
+  });
 
-  const [selected, setSelected] = useState(initialSelected);
+  const [selected, setSelected] = useState(defaultPkg);
+
+  // 2026-10-22 — 처음 결제하는 손님인가. 이 기기 기록으로 바로 보고, 없으면 서버 결제 기록(totalCharged)을 한 번 읽어 고친다 (payerHistory.ts)
+  const [firstPayer, setFirstPayer] = useState<boolean>(() => !hasPaidLocally());
+  // 7운 카드의 안내 (5-8, 6절). 처음 결제하는 손님이 7운을 기본으로 받을 때만 '처음이면 이걸로 시작해요'
+  const firstHint = firstPayer && defaultPkg === 'p7';
+  // 40대부터는 가족 몫까지 (6절 '충전 7운 묶음 둘째 줄(40~60대)'). 본인 사주의 출생 연도와 성별이 있을 때만, 값은 pricing.ts 로 확인
+  const spouseWord = useMemo<string | null>(() => {
+    try {
+      const me = getMyProfile() as unknown as { input?: { birthYear?: number; gender?: string } } | null;
+      const by = Number(me?.input?.birthYear) || 0;
+      const g = me?.input?.gender;
+      if (!by || (g !== 'male' && g !== 'female')) return null;
+      const age = new Date(Date.now() + 9 * 3600e3).getUTCFullYear() - by;
+      if (age < 40) return null;
+      return g === 'female' ? '남편' : '아내';
+    } catch { return null; }
+  }, []);
+  const guideFor = (pkg: ChargePackage): string => {
+    // 보러 온 콘텐츠가 있으면 기본으로 골라 둔 묶음 설명을 그 콘텐츠로 ('2027 신년운세 한 번'). 그 값이 들어오는 묶음일 때만
+    if (content && pkg.id === defaultPkg && content.cost > 0 && pkg.un >= content.cost) {
+      if (content.key === 'chat') return pkg.un === 1 ? '사주대화 세 번' : `사주대화 ${pkg.un * 3}번`; // 1운에 세 번
+      const left = pkg.un - content.cost;
+      return left > 0 ? `${content.name} 한 번에 ${left}운이 더 남아요` : `${content.name} 한 번`;
+    }
+    if (pkg.id !== 'p7') return pkg.guide || '';
+    const love = getTopicPrice('love').actualPrice;
+    const reunion = getTopicPrice('reunion').actualPrice;
+    const career = getTopicPrice('career').actualPrice;
+    const family = spouseWord && love + career <= pkg.un ? `딸 연애운과 ${spouseWord} 직업운 한 번씩` : null;
+    const base = firstHint && !family && love <= pkg.un && reunion <= pkg.un ? '연애운이나 재회운 한 번' : (pkg.guide || '');
+    if (!family) return base;
+    return base ? `${base}, 또는 ${family}` : family;
+  };
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const [balance, setBalanceDisplay] = useState(() => getBalance());
   const [purchasing, setPurchasing] = useState(false);
   // PG 입점심사용 포트원 결제창 (2026-06-12) — 웹 전용 · 운 적립 없음 · 자동취소
@@ -196,10 +298,10 @@ export function ChargePage() {
     return handlePgTest(method);
   };
 
-  // p15 → CHARGE_PACKAGES[3] (4 패키지 정정 후 마지막 인덱스)
+  // 고른 묶음을 못 찾으면 기본 묶음, 그것도 없으면 마지막 묶음
   const selectedPkg =
     CHARGE_PACKAGES.find((p) => p.id === selected) ??
-    CHARGE_PACKAGES.find((p) => p.id === 'p15') ??
+    CHARGE_PACKAGES.find((p) => p.id === defaultPkg) ??
     CHARGE_PACKAGES[CHARGE_PACKAGES.length - 1];
 
   // ── 결제 리다이렉트 복귀 처리 — 포트원 실결제 (토스페이먼츠 복귀는 2026-10-14 제거)
@@ -220,6 +322,7 @@ export function ChargePage() {
         .then((r) => {
           if (r.ok && r.paidUn != null) {
             addPaidBalance(r.paidUn, r.bonusUn || 0);
+            markPaidOnce();
             rememberWebPayment(portonePid, portoneAmount);
             setBalanceDisplay(getBalance());
             toast.show(r.message, 'success');
@@ -243,6 +346,31 @@ export function ChargePage() {
   //   source 를 담아 '어떤 콘텐츠에서 결제를 결심했나' 파악. 마운트 1회.
   useEffect(() => {
     trackEvent('charge_open', { source: chargeSource });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2026-10-22 1.6.3 P1-1 — 충전 화면 진입 한 번: 어디서 왔고(src, charge_open 의 source 와 같은 값), 무엇이 기본으로 골라졌고,
+  //   처음 결제하는 손님인지. charge_open(진입), pay_sheet_open(결제창 열기)과 따로 남겨 src 별 열기율과 결제율을 본다.
+  //   이 기기 기록이 없으면 서버 결제 기록을 1.5초까지 기다린다. 그 전에 화면을 떠나면 그때까지 아는 값으로 남긴다.
+  const viewSent = useRef(false);
+  useEffect(() => {
+    const send = (fp: boolean) => {
+      if (viewSent.current) return;
+      viewSent.current = true;
+      trackEvent('charge_view', { src: chargeSource, defaultPkg, firstPayer: fp ? 1 : 0 });
+    };
+    if (!firstPayer) { send(false); return; }
+    let alive = true;
+    const timer = window.setTimeout(() => send(true), 1500);
+    hasPaidOnServer().then((paid) => {
+      if (paid === true) {
+        if (alive) setFirstPayer(false);
+        send(false);
+      } else {
+        send(true);
+      }
+    }).catch(() => send(true));
+    return () => { alive = false; window.clearTimeout(timer); send(true); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -271,6 +399,7 @@ export function ChargePage() {
     const result = await purchasePackage(selectedPkg);
     setPurchasing(false);
     if (result.success) {
+      markPaidOnce();
       setBalanceDisplay(getBalance());
       toast.show(result.message, 'success');
       if (redirectTo) {
@@ -294,6 +423,7 @@ export function ChargePage() {
     setPurchasing(false);
     if (r.ok && r.paidUn != null) {
       addPaidBalance(r.paidUn, r.bonusUn || 0);
+      markPaidOnce();
       if (r.paymentId) rememberWebPayment(r.paymentId, selectedPkg.price);
       setBalanceDisplay(getBalance());
       toast.show(r.message, 'success');
@@ -409,12 +539,14 @@ export function ChargePage() {
 
       {/* 2026-10-21 — 살 풀이를 정하고 온 사람에겐 화폐 설명보다 '무엇을 얼마에'를 먼저 (광고 손님 7명이 충전 화면에서 2~8초 만에 나감) */}
       {buyIntent && (
-        <div style={{ margin: '14px 16px 0', background: '#FFFDF8', border: `1px solid ${C.goldLine}`, borderRadius: 14, padding: '18px 18px 16px' }}>
+        <div style={{ margin: '14px 16px 0', background: C.card, border: `1px solid ${C.rule2}`, borderRadius: 14, padding: '18px 18px 16px' }}>
           <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 18, fontWeight: 700, color: C.ink, lineHeight: 1.45 }}>
-            {stateMessage || `이 풀이에 ${needUn}운이 필요해요`}
+            {/* 2026-10-22 — 메시지 없이 ?need= 만 와도 콘텐츠 이름으로 ('2027 신년운세에 7운이 필요해요') */}
+            {stateMessage || (content ? `${content.name}에 ${needUn}운이 필요해요` : `이 풀이에 ${needUn}운이 필요해요`)}
           </div>
           <div style={{ marginTop: 8, fontSize: 16, color: C.ink, lineHeight: 1.55 }}>
-            <strong style={{ color: C.goldDeep, fontWeight: 800 }}>{selectedPkg.price.toLocaleString('ko-KR')}원</strong>이면 바로 볼 수 있어요
+            {/* v9 강조는 먹 글자와 형광펜 (금색 글자 대신) */}
+            <strong className="hj-hl" style={{ fontWeight: 800 }}>{selectedPkg.price.toLocaleString('ko-KR')}원</strong>이면 바로 볼 수 있어요
           </div>
           <div style={{ marginTop: 4, fontSize: 14, color: C.inkSoft, lineHeight: 1.6 }}>
             {selectedPkg.bonusUn > 0
@@ -427,11 +559,12 @@ export function ChargePage() {
       )}
 
       {/* ─── §3. HeroBar (104px · 1운=500원 환율 명시 · 원화 노출 유일 진입점) ─── */}
+      {/* 2026-10-22 v9 — 금빛 면과 옅은 금빛 둥근 한자 타일 대신 종이 면과 작은 낙관 (금색은 누르는 버튼에만) */}
       {!buyIntent && <div style={{
-        height: 104, background: C.goldSoft,
+        height: 104, background: C.card,
         padding: '0 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: `1px solid ${C.goldLine}`,
+        borderBottom: `1px solid ${C.line}`,
       }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
@@ -440,24 +573,16 @@ export function ChargePage() {
           }}>
             운으로 사주를 봐요
           </div>
-          <div style={{ marginTop: 4, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.4 }}>
-            <strong style={{ color: C.goldDeep, fontWeight: 700 }}>1운 = 500원</strong>으로 충전돼요
+          <div style={{ marginTop: 4, fontSize: 14, color: C.inkSoft, lineHeight: 1.4 }}>
+            <strong className="hj-hl">1운 = 500원</strong>으로 충전돼요
           </div>
           <div style={{ marginTop: 2, fontSize: 13, color: C.mute }}>
             사주 풀이는 모두 운(運)으로 결제해요
           </div>
         </div>
-        {/* "運" SVG 64×64 */}
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden style={{ flexShrink: 0, marginLeft: 12 }}>
-          <circle cx="32" cy="32" r="30" fill="rgba(184,150,90,0.22)" />
-          <circle cx="32" cy="32" r="30" stroke={C.gold} strokeWidth="0.8" opacity="0.5" fill="none" />
-          <text
-            x="32" y="42" textAnchor="middle"
-            fontSize="28" fontWeight="700"
-            fill={C.goldDeep}
-            fontFamily="'Noto Serif KR', serif"
-          >運</text>
-        </svg>
+        <span aria-hidden="true" style={{ marginLeft: 12, display: 'inline-flex' }}>
+          <Seal size={40} fontSize={19}>運</Seal>
+        </span>
       </div>}
 
       {/* ─── §4. RedirectHint (state.message — 왜 충전 화면에 왔는지 안내. 살 풀이가 정해진 경우는 위 요약이 대신한다) ─── */}
@@ -485,86 +610,72 @@ export function ChargePage() {
           aria-label="충전 패키지 선택"
           style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
         >
+          {/* 2026-10-22 1.6.3 P1-1, P1-11 — 검은 알약 배지('+1운 보너스')를 지우고 카드 둘째 줄에 먹 글자로 '보너스 1운 더'.
+           *   고른 카드는 금빛 면과 금 테두리 대신 먹선 두 줄(고서 사주쌍변). '가장 인기'는 실제 판매 비율을 확인하기 전까지 쓰지 않는다
+           *   (pricing.ts label 은 그대로 두고 화면에서만 뺀다, 점검 문서 5-8과 10절). */}
           {CHARGE_PACKAGES.map((pkg) => {
             const isSelected = selected === pkg.id;
             const hasBonus = pkg.bonusUn > 0;
+            const hint = firstHint && pkg.id === 'p7' ? '처음이면 이걸로 시작해요' : '';
+            const guide = guideFor(pkg);
             return (
               <motion.button
                 key={pkg.id}
                 role="radio"
                 aria-checked={isSelected}
-                aria-label={`${pkg.un}운 패키지${hasBonus ? ` (본 ${pkg.paidUn}운 + 보너스 ${pkg.bonusUn}운)` : ''}, ${pkg.price.toLocaleString()}원${pkg.label ? ', ' + pkg.label : ''}`}
+                aria-label={`${pkg.paidUn}운${hasBonus ? `, 보너스 ${pkg.bonusUn}운 더, 모두 ${pkg.un}운` : ''}, ${pkg.price.toLocaleString()}원${hint ? `, ${hint}` : ''}, ${guide}`}
                 onClick={() => setSelected(pkg.id)}
                 whileTap={{ scale: 0.98 }}
                 style={{
                   minHeight: 138,
-                  background: isSelected ? C.goldSoft : '#FFFFFF',
-                  border: isSelected ? `2px solid ${C.gold}` : `1px solid ${C.line}`,
-                  borderRadius: 16,
-                  padding: isSelected ? '11px 11px' : '12px',
+                  background: C.card,
+                  border: isSelected ? `1.5px solid ${C.sumi}` : `1px solid ${C.line}`,
+                  boxShadow: isSelected ? `inset 0 0 0 3px ${C.card}, inset 0 0 0 4px ${C.rule2}` : 'none',
+                  borderRadius: 14,
+                  padding: isSelected ? '11.5px' : '12px',
                   textAlign: 'left',
                   display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                   cursor: 'pointer',
                   position: 'relative',
-                  transition: 'background 0.18s ease',
                   gap: 6,
                 }}
               >
-                {/* 상단: 라벨 + 보너스/체크 */}
+                {/* 상단: 처음 결제 안내(7운) + 고른 표시 */}
                 <div style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                  minHeight: 18,
+                  gap: 6, minHeight: 18,
                 }}>
-                  <span style={{
-                    fontSize: 13.5, fontWeight: 700, color: C.goldDeep,
-                    letterSpacing: '-0.01em',
-                  }}>
-                    {pkg.label || ' '}
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.sumi, lineHeight: 1.4, wordBreak: 'keep-all' }}>
+                    {hint}
                   </span>
-                  {hasBonus ? (
-                    <span style={{
-                      fontSize: 13.5, fontWeight: 700, color: '#FFFFFF',
-                      background: '#1A1612', padding: '2px 8px', borderRadius: 999, // 2026-10-10 v9 상태 표시는 먹
-                      flexShrink: 0, lineHeight: 1.4,
-                    }}>
-                      +{pkg.bonusUn}운 보너스
-                    </span>
-                  ) : isSelected ? (
-                    <CheckCircleIcon color={C.goldDeep} />
-                  ) : null}
+                  {isSelected ? <CheckCircleIcon color={C.sumi} /> : null}
                 </div>
 
-                {/* 중단: Stage 7e-7 — "3운+1운 보너스" 형식 노출 (사용자 요청) */}
+                {/* 중단: 운, 보너스(먹 글자 둘째 줄), 값 */}
                 <div>
                   <div style={{
-                    fontSize: 17, fontWeight: 800, color: C.ink, lineHeight: 1.25,
+                    fontSize: 19, fontWeight: 800, color: C.sumi, lineHeight: 1.25,
                     letterSpacing: '-0.01em',
                   }}>
-                    {hasBonus ? (
-                      <>
-                        {pkg.paidUn}운
-                        <span style={{ color: C.gold, margin: '0 2px' }}>+</span>
-                        {pkg.bonusUn}운
-                        <span style={{ fontSize: 13, color: C.goldDeep, fontWeight: 700, marginLeft: 4 }}>
-                          보너스
-                        </span>
-                      </>
-                    ) : (
-                      `${pkg.un}운`
-                    )}
+                    {pkg.paidUn}운
                   </div>
+                  {hasBonus && (
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.sumi, marginTop: 3, lineHeight: 1.4 }}>
+                      보너스 {pkg.bonusUn}운 더
+                    </div>
+                  )}
                   <div style={{
-                    fontSize: 14, fontWeight: 600, color: C.goldDeep, marginTop: 4,
+                    fontSize: 15, fontWeight: 700, color: C.sumi2, marginTop: 4,
                   }}>
                     {pkg.price.toLocaleString()}원
                   </div>
                 </div>
 
-                {/* 하단: 유도 문구 */}
+                {/* 하단: 무엇을 볼 수 있나 */}
                 <div style={{
-                  fontSize: 13, color: C.inkSoft, lineHeight: 1.4, fontWeight: 500,
+                  fontSize: 13.5, color: C.inkSoft, lineHeight: 1.45, fontWeight: 500, wordBreak: 'keep-all',
                 }}>
-                  {pkg.guide}
+                  {guide}
                 </div>
               </motion.button>
             );
@@ -572,8 +683,29 @@ export function ChargePage() {
         </div>
       </div>
 
-      {/* ─── §8. Notice (이용 정책) ─── */}
+      {/* ─── §8. Notice (이용 정책) ───
+       *   2026-10-22 1.6.3 P1-1 — 화면 가운데를 차지하던 환불 문단 6줄을 한 줄과 접힘으로 줄인다(점검 문서 5-8).
+       *   토스페이 환불 고지(앱인토스 검수 §1-12)와 웹 청약철회 고지, 환불 요청 길은 지우지 않고 접힘 안에 그대로 둔다.
+       *   접힌 상태가 앱 검수 기준에 맞는지는 1.6.3 검수 전에 확인한다. */}
       <div style={{ padding: '20px 20px 8px', marginTop: 12 }}>
+        <p style={{ fontSize: 14, color: C.inkSoft, lineHeight: 1.7, margin: 0 }}>
+          쓰지 않은 운은 결제 후 7일 안에 환불받을 수 있어요.
+        </p>
+        <button
+          type="button"
+          onClick={() => setNoticeOpen((v) => !v)}
+          aria-expanded={noticeOpen}
+          aria-controls="charge-refund-notice"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44,
+            padding: '4px 0', background: 'none', border: 0, cursor: 'pointer',
+            fontSize: 14, fontWeight: 700, color: C.ink,
+          }}
+        >
+          환불과 보너스 운 안내
+          <span className={`hj-chev${noticeOpen ? ' up' : ''}`} aria-hidden="true" />
+        </button>
+        {noticeOpen && <div id="charge-refund-notice" style={{ paddingBottom: 4 }}>
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: 0 }}>
           보너스 운은 돈으로 환불되지 않아요. 결제를 환불하면 그 결제로 받은 보너스 운도 함께 회수돼요. 보너스 운은 먼저 쓰여서, 이미 썼다면 그만큼 빼고 환불해요.
         </p>
@@ -600,6 +732,7 @@ export function ChargePage() {
             </button>
           </p>
         )}
+        </div>}
         <p style={{ fontSize: 13, color: C.mute, lineHeight: 1.75, margin: '6px 0 0' }}>
           결제와 세금 관련 안내는{' '}
           <button className="tap-pad"

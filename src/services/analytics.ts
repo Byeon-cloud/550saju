@@ -174,6 +174,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'topic_select',       // {topic} — 결제 확정 시
   'topic_open',         // {topic} — 주제 페이지 진입 (2026-06-12)
   'charge_open',        // 충전 페이지 진입
+  'charge_view',        // {src, defaultPkg, firstPayer: 1|0} — 충전 화면 진입 한 번, 기본으로 골라 둔 묶음과 첫 결제 손님 여부 (2026-10-22 1.6.3 P1-1)
   'pay_sheet_open',     // {pg, amount, package} — 결제창을 실제로 여는 순간(앱 IAP 요청 직전, 웹 포트원 호출 직전, 2026-10-22)
   'charge_complete',    // {amount, package}
   'share_click',        // {type, page, balance} — 공유 '시도' (버튼 클릭 시점)

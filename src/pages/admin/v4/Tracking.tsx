@@ -30,7 +30,7 @@ const CATALOG: { group: string; items: [name: string, label: string, where: Wher
     ['suneung_card_view', '수능 카드가 보였다(11/1~11/19)', 'both'], ['suneung_card_click', '수능 카드에서 합격이직운으로', 'both'],
   ] },
   { group: '결제', items: [
-    ['insufficient_balance', '운이 모자라 충전으로 넘어갔다', 'both'], ['charge_open', '충전 화면을 열었다', 'both'], ['charge_free_first', '사주 없이 충전 화면에 와서 무료로', 'both'],
+    ['insufficient_balance', '운이 모자라 충전으로 넘어갔다', 'both'], ['charge_open', '충전 화면을 열었다', 'both'], ['charge_view', '충전 화면 기본 묶음과 첫 결제 여부', 'both'],['charge_free_first', '사주 없이 충전 화면에 와서 무료로', 'both'],
     ['charge_login_gate', '웹 결제 전 로그인 창이 떴다', 'web'], ['charge_complete', '충전이 끝났다(금액)', 'both'], ['charge_failed', '결제가 실패하거나 취소됐다', 'both'],
   ] },
   { group: '보내기와 초대', items: [
