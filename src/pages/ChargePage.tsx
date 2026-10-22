@@ -251,7 +251,7 @@ export function ChargePage() {
       if (!by || (g !== 'male' && g !== 'female')) return null;
       const age = new Date(Date.now() + 9 * 3600e3).getUTCFullYear() - by;
       if (age < 40) return null;
-      return g === 'female' ? '남편' : '아내';
+      return g; // 40대부터 가족 몫 안내(누구인지는 짐작하지 않는다)
     } catch { return null; }
   }, []);
   const guideFor = (pkg: ChargePackage): string => {
@@ -265,7 +265,7 @@ export function ChargePage() {
     const love = getTopicPrice('love').actualPrice;
     const reunion = getTopicPrice('reunion').actualPrice;
     const career = getTopicPrice('career').actualPrice;
-    const family = spouseWord && love + career <= pkg.un ? `딸 연애운과 ${spouseWord} 직업운 한 번씩` : null;
+    const family = spouseWord && love + career <= pkg.un ? `가족 연애운과 직업운 한 번씩` : null;
     const base = firstHint && !family && love <= pkg.un && reunion <= pkg.un ? '연애운이나 재회운 한 번' : (pkg.guide || '');
     if (!family) return base;
     return base ? `${base}, 또는 ${family}` : family;
