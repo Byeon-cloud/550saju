@@ -10,6 +10,18 @@ import { HJ, SERIF, GoldCta } from '@/components/hanji/Hanji';
 import { firstDailyOfferActive, firstDailyOfferLeft, OFFER } from '@/services/offers/firstDailyOffer';
 import { getBalance } from '@/services/storage/localStore';
 
+/** 반값 카드가 지금 보이는지 (2026-10-23 1.6.3 P1-4) — 보이는 동안 오늘의 운세 끝의 주간, 월운 카드를 숨겨 연결 카드를 하나로 줄인다 */
+export function useFirstDailyOfferActive(): boolean {
+  const [active, setActive] = useState(() => firstDailyOfferActive());
+  useEffect(() => {
+    const sync = () => setActive(firstDailyOfferActive());
+    const t = window.setInterval(sync, 30000);
+    window.addEventListener('saju500:offer-change', sync);
+    return () => { window.clearInterval(t); window.removeEventListener('saju500:offer-change', sync); };
+  }, []);
+  return active;
+}
+
 export function FirstDailyOfferCard({ profileId, name, pos }: { profileId?: string; name?: string; pos: 'top' | 'end' }) {
   const navigate = useNavigate();
   const [active, setActive] = useState(() => firstDailyOfferActive());
@@ -29,7 +41,11 @@ export function FirstDailyOfferCard({ profileId, name, pos }: { profileId?: stri
   if (!active) return null;
   const short = getBalance() < OFFER.price;
   const go = () => {
-    import('@/services/analytics').then((a) => a.trackEvent('daily_offer_click', { pos, short: short ? 1 : 0 })).catch(() => {});
+    import('@/services/analytics').then((a) => {
+      a.trackEvent('daily_offer_click', { pos, short: short ? 1 : 0 });
+      // 2026-10-23 1.6.3 P1-4 — 오늘의 운세 결과의 연결 카드 공통 측정
+      a.trackEvent('bridge_click', { from: 'daily', to: 'premium', pos: `offer_${pos}` });
+    }).catch(() => {});
     navigate(`/premium?${profileId ? `profileId=${encodeURIComponent(profileId)}&` : ''}from=daily_offer`);
   };
   return (

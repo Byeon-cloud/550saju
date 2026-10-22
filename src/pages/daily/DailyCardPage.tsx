@@ -55,7 +55,7 @@ export function DailyCardPage() {
   const lp = r?.luckyProfile || {};
   const lucky: Array<{ k: string; v: string; hex?: string }> = [
     { k: '색', v: plain(lp?.color?.name), hex: typeof lp?.color?.hex === 'string' ? lp.color.hex : undefined },
-    { k: '숫자', v: plain(lp?.number?.value ?? lp?.number) },
+    // 2026-10-23 1.6.3 P1-4 — 행운 숫자는 결과 화면과 같이 뺀다 (서버 스키마는 옛 앱을 위해 남김)
     { k: '방위', v: plain(lp?.direction?.value ?? lp?.direction) },
   ].filter((x) => x.v);
 

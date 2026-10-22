@@ -200,6 +200,10 @@ interface DailyMockupViewProps {
   nextSteps?: ReactNode;
   /** 2026-10-19 — 첫 오늘의 운세 기념 종합사주 반값 카드 (top: 첫 단락 아래, end: 결과 끝) */
   offerCard?: (pos: 'top' | 'end') => ReactNode;
+  /** 2026-10-23 1.6.3 P1-4 — 반값 카드가 보이는 동안 끝의 주간, 월운 카드를 숨긴다 (연결 카드를 하나로) */
+  offerActive?: boolean;
+  /** 2026-10-23 1.6.3 P1-4 — 풀이를 다 읽은 바로 아래 (앱 9시 알림 동의, 출석 카드). 생성이 끝난 뒤에만 그린다 */
+  afterReading?: ReactNode;
   /** §02 4영역 카드 클릭 — topicId: 'wealth'|'love'|'career'|'health' (2026-05-06 v6) */
   onTopicClick?: (topicId: 'wealth' | 'love' | 'career' | 'health') => void;
 }
@@ -958,7 +962,7 @@ function getOhengRelation(my: OhengType, today: OhengType): {
 }
 
 export function DailyMockupView(props: DailyMockupViewProps) {
-  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell, onMonthly, priceTag = '오늘 1회 무료', isGenerating = false, onShare, onChat, onTopicClick, nextSteps, offerCard } = props;
+  const { result, profile, dateLabel, todayGanzi, todayGanReading, todayOheng, myGan, myGanReading, myOheng, relationLabel: _relationLabel, onUpsell, onMonthly, priceTag = '오늘 1회 무료', isGenerating = false, onShare, onChat, onTopicClick, nextSteps, offerCard, offerActive = false, afterReading } = props;
 
   // ── 섹션 접기/펼치기 (§01 default open · 2026-05-06 v6) ──
   // 2026-06-13 통일 정책 (준기 결정) — 01·02 만 펼침, 03+ 접힘.
@@ -1044,6 +1048,15 @@ export function DailyMockupView(props: DailyMockupViewProps) {
   const dontList: any[] = Array.isArray(result?.dontList) ? result.dontList.slice(0, 3) : [];
 
   const luckyProfile = result?.luckyProfile || {};
+  // 2026-10-23 1.6.3 P1-4 — 행운 숫자와 행운 글자 칸은 화면에서 뺀다(처방형 미신 선). 서버 스키마는 옛 앱을 위해 남긴다.
+  //   남는 칸은 색, 방향, 시간, 음식 넷이라 두 줄 두 칸으로 맞춘다.
+  const luckyShown = [
+    luckyProfile?.color?.name,
+    luckyProfile?.direction?.value || luckyProfile?.direction,
+    luckyProfile?.time?.range,
+    luckyProfile?.food?.name,
+  ].filter(Boolean).length;
+  const luckyCols = luckyShown === 3 ? 3 : luckyShown === 1 ? 1 : 2;
   const dailyQuote = stripMd(String(result?.dailyQuote || ''));
   const tomorrow = result?.tomorrow;
 
@@ -1412,8 +1425,8 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
               <SectionHeader num="05" title="오늘의 행운" han="吉物" id="05" />
               <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워져요.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 14 }}>
-                {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginTop: 14 }}>
+                {[0, 1, 2, 3].map((i) => (
                   <div key={i} style={{ background: '#fff', border: '1px solid #E5DFD0', borderRadius: 10, padding: 12, textAlign: 'center' }}>
                     <div className="skeleton-block" style={{ width: 24, height: 24, borderRadius: '50%', margin: '0 auto' }} />
                     <div className="skeleton-block skeleton-line w-60" style={{ margin: '8px auto 0', height: 10 }} />
@@ -1426,7 +1439,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             <section className={`section ${isOpen('05') ? 'open' : ''}`}>
               <SectionHeader num="05" title="오늘의 행운" han="吉物" id="05" />
               <p className="sec-lead">한 가지만 곁에 둬도 흐름이 부드러워져요.</p>
-              <div className="lucky-grid">
+              <div className="lucky-grid" style={{ gridTemplateColumns: `repeat(${luckyCols}, 1fr)` }}>
                 {luckyProfile?.color?.name && (
                   <div className="lucky">
                     <div className="ico-wrap"><span className="swatch" style={{ background: luckyProfile.color.hex || '#B8965A' }} /></div>
@@ -1448,25 +1461,11 @@ export function DailyMockupView(props: DailyMockupViewProps) {
                     <div className="vl" style={{ fontFeatureSettings: "'tnum'" }}>{stripAll(luckyProfile.time.range)}</div>
                   </div>
                 )}
-                {(luckyProfile?.number?.value !== undefined || luckyProfile?.number !== undefined) && (
-                  <div className="lucky">
-                    <div className="ico-wrap"><div className="ico">數</div></div>
-                    <div className="lab">행운 숫자</div>
-                    <div className="vl">{stripAll(luckyProfile.number?.value ?? luckyProfile.number)}</div>
-                  </div>
-                )}
                 {luckyProfile?.food?.name && (
                   <div className="lucky">
                     <div className="ico-wrap"><div className="ico">食</div></div>
                     <div className="lab">행운 음식</div>
                     <div className="vl">{stripAll(luckyProfile.food.name)}</div>
-                  </div>
-                )}
-                {luckyProfile?.glyph?.value && (
-                  <div className="lucky">
-                    <div className="ico-wrap"><div className="ico">字</div></div>
-                    <div className="lab">행운 글자</div>
-                    <div className="vl han">{stripAll(luckyProfile.glyph.value)}</div>
                   </div>
                 )}
               </div>
@@ -1599,6 +1598,9 @@ export function DailyMockupView(props: DailyMockupViewProps) {
           )}
         </main>
 
+        {/* 2026-10-23 1.6.3 P1-4 — 다 읽은 바로 아래: 앱 9시 알림 동의, 그 아래 출석 카드 */}
+        {!isGenerating && afterReading ? afterReading : null}
+
         {!isGenerating && offerCard ? offerCard('end') : null}
 
         {!isGenerating && nextSteps && (
@@ -1606,8 +1608,9 @@ export function DailyMockupView(props: DailyMockupViewProps) {
         )}
 
         {/* 주간·월간 추천 — 2026-09-17 복구 (2026-05-27 월운 미출시로 제거했으나 주간 5운·월간 7운 2026-06-29 출시).
-            오늘 하루 → 이번 주 7일 → 한 달 흐름으로 이어보기. 가격은 pricing SSOT. 생성이 끝난 뒤에만 노출. */}
-        {!isGenerating && (
+            오늘 하루 → 이번 주 7일 → 한 달 흐름으로 이어보기. 가격은 pricing SSOT. 생성이 끝난 뒤에만 노출.
+            2026-10-23 1.6.3 P1-4 — 반값 카드가 보이는 동안에는 숨긴다(연결 카드를 하나로). */}
+        {!isGenerating && !offerActive && (
           <section className="upsell upsell-weekly" aria-label="이어서 볼 만한 운세">
             <div className="lab">이어서 보면 좋은 운세</div>
             <h3>오늘 하루를 봤다면,<br />이번 주 7일도 이어서 볼까요?</h3>
@@ -1647,10 +1650,7 @@ export function DailyMockupView(props: DailyMockupViewProps) {
             <div className="sb">사주대화</div>
           </button>
         </div>
-
-        <div className="service-notice">
-          <p>사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.</p>
-        </div>
+        {/* 2026-10-23 1.6.3 P1-4 — 면책 문장은 결과 화면 맨 아래 한 줄로만 (DailyFortunePage) */}
       </div>
     </div>
   );

@@ -81,7 +81,7 @@ import { computeDailyBase100 } from '@/utils/sajuScores';
 // DailyMockupView 단일 호출 (legacy chrome 폐기 · 2026-05-06)
 import { DailyMockupView, DAILY_TOPIC_GROUPS } from './daily/DailyMockupView';
 
-import { FirstDailyOfferCard } from '@/components/offers/FirstDailyOfferCard';
+import { FirstDailyOfferCard, useFirstDailyOfferActive } from '@/components/offers/FirstDailyOfferCard';
 import { realName } from '@/utils/personName';
 /* ══════════════════════════════════════════════════════════════════
  * 토큰 / 매핑
@@ -120,6 +120,8 @@ export function DailyFortunePage() {
   const location = useLocation();
   const { mark } = useAttendanceOnResult();
   const toast = useToast();
+  // 2026-10-23 1.6.3 P1-4 — 반값 카드가 보이는 동안 결과 끝의 주간, 월운 연결 카드를 숨긴다
+  const offerActive = useFirstDailyOfferActive();
 
   // 2026-05-07 fix — 보관함 → /daily 진입 시 location.state 로 savedResult/savedReport 전달
   // (Daeun/Monthly/Tojung/Compat 와 동일 패턴. 이전엔 ?reportId query 만 봐서 입력화면 떨어졌음)
@@ -644,11 +646,8 @@ export function DailyFortunePage() {
         className={isResultPhase ? 'pb-[120px] mx-auto' : 'px-5 pt-4 pb-[120px] mx-auto'}
         style={{ maxWidth: 520 }}
       >
-        {/* P2-5 · 데일리 리워드 배지 — result phase 에서는 숨김 (2026-05-06)
-            DarkHeader 아래 중복 정보 제거. select phase 에서만 노출. */}
-        {hasAnyProfile && !isResultPhase && <DailyRewardBadge className="mb-4" />}
-        {/* 매일 아침 운세 알림 동의 (2026-06-13 · 앱인토스 + templateCode 설정 시에만 노출). 2026-10-16 — 결과 화면에선 위 대신 끝에 */}
-        {hasAnyProfile && !isResultPhase && <DailyNotiButton className="mb-4" />}
+        {/* 2026-10-23 1.6.3 P1-4 — 출석 운 배지와 9시 알림 동의는 받기 전 화면에서 빼고
+            결과를 다 읽은 바로 아래로 옮겼다 (ResultView afterReading). 받기 버튼까지 거치는 칸을 줄인다. */}
 
         <AnimatePresence mode="wait">
           {!hasAnyProfile && (
@@ -736,6 +735,7 @@ export function DailyFortunePage() {
               onWeeklyUpsell={() => navigate(`/weekly?profileId=${encodeURIComponent(selectedProfile.id)}`)}
               onMonthlyUpsell={() => navigate(`/monthly?profileId=${encodeURIComponent(selectedProfile.id)}`)}
               onRetry={requestAnalyze}
+              offerActive={offerActive}
             />
           )}
         </AnimatePresence>
@@ -744,12 +744,10 @@ export function DailyFortunePage() {
         {hasAnyProfile && phase === 'result' && result && !isGenerating && !(result as any).__partial && (
           <InviteWelcomeCard padding="24px 20px 0" />
         )}
-        {/* 2026-10-16 — 다 읽은 끝에서 내일 아침 알림 권하기 (동의했으면 안 보임) */}
-        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
-          <DailyNotiButton variant="closing" className="mt-6" />
-        )}
-        {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 아침 알림으로 바로 여기 오는 사람에게도 */}
-        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
+        {/* 2026-10-16 내일 아침 알림 권하기 → 2026-10-23 1.6.3 P1-4 풀이를 다 읽은 바로 아래로 옮김 (ResultView afterReading) */}
+        {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 아침 알림으로 바로 여기 오는 사람에게도
+            2026-10-23 1.6.3 P1-4 — 반값 카드가 보이는 동안에는 월운 연결 카드라 숨긴다 (연결 카드를 하나로) */}
+        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && !offerActive && (
           <MonthGoodDays sajuData={selectedProfile.sajuData} name={selectedProfile.name || '나'} price={getMonthlyPrice().actualPrice}
             profileId={selectedProfile.id} source="daily" padding="24px 20px 0" />
         )}
@@ -764,15 +762,13 @@ export function DailyFortunePage() {
             style={{ margin: '28px 0 0' }} />
         )}
 
-        {/* P0-D · 출처 + 디스클레이머 (앱인토스 검수 §6-05) */}
-        <div className="mt-10 text-center space-y-1">
-          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
-            한국 명리학 6대 원전(연해자평, 자평진전, 적천수, 궁통보감, 명리약언, 삼명통회) 기반
-          </p>
-          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
+        {/* P0-D 디스클레이머 (앱인토스 검수 §6-05)
+            2026-10-23 1.6.3 P1-4 — 받기 전 화면에서는 빼고, 결과 화면 맨 아래 13px 한 줄만 남긴다 */}
+        {hasAnyProfile && phase === 'result' && result && (
+          <p className="mt-10 px-5 text-center text-[13px]" style={{ color: 'var(--text-muted)' }}>
             사주는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다.
           </p>
-        </div>
+        )}
       </div>
 
       {/* 2026-09-17 — 무료 1회 소진 후 1운 확인 (앱인토스: window.confirm 금지 → Modal · Topic 결제확인과 동일 스타일) */}
@@ -952,7 +948,8 @@ function SelectView({
             오늘 운세를 풀어드릴게요
           </h2>
           <div style={{ fontSize: 13.5, opacity: 0.85, marginTop: 4, position: 'relative' }}>
-            일주와 오늘 간지의 작용, 용신과 대운 흐름까지 함께 살펴볼게요.
+            {/* 2026-10-23 1.6.3 P1-4 — 받을 내용을 쉬운 말로 (옛 문구: 일주와 오늘 간지의 작용, 용신과 대운 흐름) */}
+            오늘 가장 좋은 시간과 조심할 시간을 {realName(profile?.name) ? `${realName(profile?.name)} 님 사주로` : '내 사주로'} 짚어 드려요.
           </div>
         </header>
       </FadeIn>
@@ -1010,6 +1007,7 @@ function ResultView({
   onWeeklyUpsell,
   onMonthlyUpsell,
   onRetry: _onRetry,
+  offerActive = false,
 }: {
   result: any;
   profile: SajuProfile;
@@ -1025,10 +1023,39 @@ function ResultView({
   onWeeklyUpsell: () => void;
   onMonthlyUpsell: () => void;
   onRetry: () => void;
+  /** 2026-10-23 1.6.3 P1-4 — 반값 카드가 보이는 중 (끝의 주간, 월운 카드 숨김) */
+  offerActive?: boolean;
 }) {
   const navigate = useNavigate();
   // 2026-10-19 — 생성 중 공유를 막을 때 안내용
   const toast = useToast();
+
+  // 2026-10-23 1.6.3 P1-4 측정 — 결과의 연결 카드를 누르면 어디로(to) 어느 자리에서(pos) 넘어갔는지
+  const bridge = (to: string, pos: string) => {
+    import('@/services/analytics').then((a) => a.trackEvent('bridge_click', { from: 'daily', to, pos })).catch(() => {});
+  };
+
+  // 2026-10-23 1.6.3 P1-4 측정 — 결과 화면을 어디까지 내려 읽었는지 (25, 50, 75, 100 을 결과 하나에 한 번씩).
+  //   생성이 끝난 뒤 실제로 스크롤할 때만 잰다 (그리는 중에는 화면 길이가 계속 바뀜)
+  const scrollKey = `${profile?.id || ''}:${(result as any)?.__fortuneDate || dateInfo?.date || ''}`;
+  const scrollFired = useRef<Set<number>>(new Set());
+  useEffect(() => { scrollFired.current = new Set(); }, [scrollKey]);
+  useEffect(() => {
+    if (isGenerating) return;
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const total = Math.max(doc.scrollHeight, document.body?.scrollHeight || 0);
+      if (!total) return;
+      const seen = (((window.scrollY || doc.scrollTop || 0) + window.innerHeight) / total) * 100;
+      for (const pct of [25, 50, 75, 100]) {
+        if (scrollFired.current.has(pct) || seen < (pct === 100 ? 99 : pct)) continue;
+        scrollFired.current.add(pct);
+        import('@/services/analytics').then((a) => a.trackEvent('daily_scroll', { pct })).catch(() => {});
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isGenerating, scrollKey]);
 
   // 오늘 일진 → 한글 읽기 + 오행
   const dayStem = dateInfo.ganzi?.[0] ?? '';
@@ -1148,7 +1175,7 @@ function ResultView({
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => { closePicker(); goTopic(t.id); }}
+                    onClick={() => { bridge(t.id, 'grid_menu'); closePicker(); goTopic(t.id); }}
                     style={{
                       background: '#FAF7EE',
                       border: '1px solid rgba(184,150,90,0.18)',
@@ -1202,10 +1229,19 @@ function ResultView({
         myOheng={myOheng}
         priceTag={tier === 'paid' ? '1운 추가 이용' : '오늘 1회 무료'}
         isGenerating={isGenerating}
-        onUpsell={onWeeklyUpsell}
-        onMonthly={onMonthlyUpsell}
+        onUpsell={() => { bridge('weekly', 'upsell'); onWeeklyUpsell(); }}
+        onMonthly={() => { bridge('monthly', 'upsell_sub'); onMonthlyUpsell(); }}
+        offerActive={offerActive}
+        afterReading={!(result as any)?.__partial ? (
+          // 2026-10-23 1.6.3 P1-4 — 풀이를 다 읽은 바로 아래: 9시 알림 동의(앱 빌드만, 컴포넌트 안 게이트), 그 아래 출석 운
+          <div style={{ margin: '22px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <DailyNotiButton variant="closing" />
+            <DailyRewardBadge />
+          </div>
+        ) : undefined}
         onShare={handleShare}
         onChat={async () => {
+          bridge('chat', 'actions');
           // 2026-05-28 PM — contentContext 영구 저장 (보관함 재진입에도 복원)
           const { createChatRoom } = await import('@/services/storage/chatStore');
           const ctx = {
@@ -1232,8 +1268,8 @@ function ResultView({
               title="오늘 풀이에서 이어지는 이야기"
               topics={nh.topic && nh.topic.id ? [nh.topic] : []}
               questions={Array.isArray(nh.chatQuestions) ? nh.chatQuestions : []}
-              onTopic={(id) => goTopic(id)}
-              onAsk={(q) => { void openChatWithResult({ navigate, name: profile?.name || '나', profile, ctx: { type: 'daily', label: '오늘의 운세', fullResult: result }, question: q }); }}
+              onTopic={(id) => { bridge(id, 'next_topic'); goTopic(id); }}
+              onAsk={(q) => { bridge('chat', 'next_chat'); void openChatWithResult({ navigate, name: profile?.name || '나', profile, ctx: { type: 'daily', label: '오늘의 운세', fullResult: result }, question: q }); }}
             />
           );
         })()}
@@ -1241,9 +1277,12 @@ function ResultView({
           // 4영역 클릭 → sub-picker (관계/일/건강) 또는 직접 (재물)
           // wealth: 직접 / love(관계): 연애·결혼·재회·궁합 / career(일): 직업·시험·사업 / health(건강): 체질·이사
           if (topicId === 'wealth') {
+            bridge('wealth', 'grid');
             goTopic('wealth');
             return;
           }
+          // 묶음 카드는 먼저 고르기 창을 연다 (to = menu_묶음, 창에서 고른 주제는 pos grid_menu 로 한 번 더)
+          bridge(`menu_${topicId}`, 'grid');
           setTopicPicker(topicId);
         }}
       />

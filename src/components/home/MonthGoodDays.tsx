@@ -53,7 +53,11 @@ export function MonthGoodDays({ sajuData, name, price, profileId, source = 'home
         </p>
         <GhostButton style={{ marginTop: 12 }} sub={`${price}운`}
           onClick={() => {
-            import('@/services/analytics').then((a) => a.trackEvent('month_picks_click', { day: today, src: source })).catch(() => {});
+            import('@/services/analytics').then((a) => {
+              a.trackEvent('month_picks_click', { day: today, src: source });
+              // 2026-10-23 1.6.3 P1-4 — 오늘의 운세 결과의 연결 카드 공통 측정
+              if (source === 'daily') a.trackEvent('bridge_click', { from: 'daily', to: 'monthly', pos: 'month_picks' });
+            }).catch(() => {});
             navigate(`/monthly?from=${source}_month_picks${profileId ? `&profileId=${encodeURIComponent(profileId)}` : ''}`);
           }}>
           좋은 날에 할 일과 조심할 날까지 보기
