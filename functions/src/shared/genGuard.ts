@@ -6,6 +6,7 @@
  *   정상 유저는 하루에 몇 번 안 만드니 넉넉한 하루 상한을 계정과 IP 두 곳에 걸어 둔다.
  *
  * - 로그인 계정(토스, 웹 소셜)은 서버가 운을 깎으므로 상한을 걸지 않는다.
+ *   단, users/{uid} 문서가 없는 로그인 계정은 생성 함수들이 차감을 건너뛰므로(index.ts 'if (userDoc.exists)') 익명과 같은 상한을 건다(2026-10-23).
  * - 세는 단위는 '생성 호출'이다. 스트림이 끊겨 callable 로 다시 부르면 두 번으로 센다 → 상한을 넉넉하게 잡았다.
  * - IP 상한은 통신사 공유 IP(여러 사람이 한 IP)를 생각해 계정 상한의 다섯 배 안팎.
  * - 하루 전체 건수가 경보선을 넘으면 backofficeAlerts 에 한 번 남긴다(막지는 않는다).
@@ -49,9 +50,15 @@ function clientIp(raw: any): string {
 
 /** true = 허용, false = 상한 초과. 장부 실패는 허용으로 처리. */
 export async function checkGenQuota(args: { type: GenType; uid?: string | null; anonymous: boolean; ip?: string }): Promise<boolean> {
-  if (!args.anonymous) return true; // 로그인 계정은 서버 차감
-  const [perKey, perIp, alertAt] = LIMITS[args.type];
   const db = admin.firestore();
+  if (!args.anonymous) {
+    // 로그인 계정은 서버 차감. 서버 문서가 없으면 차감이 없어 직접 부르면 공짜라 아래 상한으로 간다
+    if (!args.uid) return true;
+    try {
+      if ((await db.doc(`users/${args.uid}`).get()).exists) return true;
+    } catch { return true; }
+  }
+  const [perKey, perIp, alertAt] = LIMITS[args.type];
   const day = today();
   const keyRef = db.doc(`genQuota/${day}_${args.uid ? 'u_' + hash(args.uid) : 'noauth_' + hash(args.ip || 'unknown')}`);
   const ipRef = args.ip ? db.doc(`genQuota/${day}_ip_${hash(args.ip)}`) : null;
