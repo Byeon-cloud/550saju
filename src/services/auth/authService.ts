@@ -52,6 +52,9 @@ const googleProvider = new GoogleAuthProvider();
 
 // 카카오 — Firebase OpenID Connect (프로바이더 ID: oidc.kakao)
 const kakaoProvider = new OAuthProvider('oidc.kakao');
+// 2026-10-23 — 카카오계정(이메일)을 선택 동의로 켰다(카카오 개발자 '사주500' 앱을 비즈 앱으로 전환). 결제한 웹 손님에게
+//   결제, 환불, 보상 안내를 보낼 길이 없던 일(10-23 종합사주 사고 손님 둘) 대응. 동의하지 않아도 로그인은 된다.
+kakaoProvider.addScope('account_email');
 
 // 네이버 — Firebase OpenID Connect (프로바이더 ID: oidc.naver)
 const naverProvider = new OAuthProvider('oidc.naver');
