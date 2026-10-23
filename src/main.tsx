@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { migrateStorageV1 } from '@/lib/storage';
 import { isAppintosBuild } from '@/lib/env';
+import { initPwa } from '@/lib/pwa';
 import './styles/globals.css';
 import './styles/motion.css'; // 2026-10-18 움직임 (먹과 종이)
 
@@ -19,11 +20,15 @@ try {
   }
 } catch { /* 저장소를 못 쓰면 초대 기록 없이 */ }
 
-// 앱인토스 빌드 또는 환경 — PWA manifest link 제거 (이미 앱 안 → 설치 prompt 차단)
+// 앱인토스 빌드 또는 환경 — 홈 화면 추가 태그 제거 (이미 앱 안 → 설치 prompt 차단).
+//   앱 빌드 index.html 에서는 vite.config.ts stripWebOnlyHtml 이 먼저 걷어낸다. 여기는 웹 번들을 토스 안에서 열었을 때의 두 번째 겹.
 if (isAppintosBuild) {
-  const manifestLink = document.querySelector('link[rel="manifest"]');
-  manifestLink?.parentNode?.removeChild(manifestLink);
+  document.querySelectorAll('link[rel="manifest"], link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"], meta[name^="apple-mobile-web-app-"]')
+    .forEach((el) => el.parentNode?.removeChild(el));
 }
+
+// 2026-10-23 웹 홈 화면 추가(PWA) — 설치 창 잡기, 방문 날짜, 홈 화면 앱 열림 기록. 웹 빌드만 (App.tsx 는 건드리지 않는다)
+if (import.meta.env.VITE_BUILD_TARGET !== 'appintos' && !isAppintosBuild) initPwa();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

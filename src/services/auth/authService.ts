@@ -16,6 +16,7 @@ import {
 } from 'firebase/auth';
 import { auth, authDomainIsSelf } from './firebase';
 import { isAppsInToss } from '@/services/payment/iapService';
+import { isIosStandalone } from '@/lib/displayMode';
 
 /**
  * 익명 로그인 — 앱 시작 시 자동 수행
@@ -91,6 +92,13 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
     naver: naverProvider,
     apple: appleProvider,
   };
+  // 2026-10-23 — 아이폰, 아이패드 홈 화면 앱: 팝업은 결과가 돌아오지 않아 끝없이 기다렸고(Firebase 10.14.1),
+  //   로그인 도메인이 사이트와 다르면 리다이렉트도 결과를 못 읽는다. 사이트가 VITE_AUTH_SELF_HOSTS(saju500.app)가 아니면
+  //   여기서 멈추고 로그인 시트가 '사파리에서 saju500.app 으로 열어 주세요'를 보여 준다(WebLoginSheet).
+  const iosStandalone = isIosStandalone();
+  if (iosStandalone && !authDomainIsSelf) {
+    throw Object.assign(new Error('사파리에서 saju500.app 으로 열어 로그인해 주세요'), { code: 'saju500/standalone-host' });
+  }
   // 2026-10-19 — 네이버는 Firebase OIDC 로 늘 실패했다(네이버 UserInfo 형식이 달라 sub 비교 실패, 로그인 0명).
   //   네이버 로그인 화면으로 보내고 /auth/naver 에서 서버(loginWithNaver)가 마무리한다.
   if (provider === 'naver') {
@@ -105,7 +113,8 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
     // 2026-10-19 — 모바일 리다이렉트는 로그인 도메인이 사이트와 같을 때만 쓴다.
     //   다르면(appintoss-saju.firebaseapp.com) 크롬 115+, 사파리 16.1+ 가 돌아온 결과를 읽지 못해
     //   로그인하고 돌아와도 익명 그대로였다(결제 전 로그인 시트가 다시 뜨는 반복). 그때는 팝업(새 탭)으로 한다.
-    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    //   2026-10-23 — 아이폰, 아이패드 홈 화면 앱은 리다이렉트(아이패드는 UA 가 Macintosh 라 UA 판정에서 빠졌다. 로그인 도메인이 다르면 위에서 멈춘다)
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent) || iosStandalone;
     if (isMobile && authDomainIsSelf) {
       markRedirectLogin(provider);
       if (linkAnon) await linkWithRedirect(cur!, p);

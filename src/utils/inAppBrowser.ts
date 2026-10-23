@@ -4,8 +4,13 @@
  *   구글은 이런 화면에서 로그인을 막는다(403 disallowed_useragent) → 로그인 시트에서 구글 버튼을 숨긴다.
  *   토스 앱 안(앱인토스)은 여기서 다루지 않는다(토스 로그인만 쓴다).
  */
+import { isStandaloneDisplay } from '@/lib/displayMode';
+
 export function inAppBrowserName(ua: string = typeof navigator !== 'undefined' ? navigator.userAgent : ''): string | null {
   if (!ua || /TossApp/i.test(ua)) return null;
+  // 2026-10-23 — 홈 화면에 추가한 사주500(홈 화면 앱)은 UA 에 'Safari/' 가 없어 아래 마지막 줄이 '앱'으로 잘못 보고
+  //   로그인 시트에서 구글 버튼을 숨겼다. 지금 이 기기의 UA 를 볼 때 홈 화면 앱이면 앱 안 브라우저가 아니다.
+  if (typeof navigator !== 'undefined' && ua === navigator.userAgent && isStandaloneDisplay()) return null;
   if (/KAKAOTALK/i.test(ua)) return '카카오톡';
   if (/Instagram/i.test(ua)) return '인스타그램';
   if (/Barcelona/i.test(ua)) return '스레드';

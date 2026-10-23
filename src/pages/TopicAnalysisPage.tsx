@@ -24,6 +24,7 @@ import { kstToday } from '@/utils/kstDate';
 import { loveStars, loveDday, wealthStars, examFact, spouseSeatFact, josa } from '@/services/saju/hookFacts';
 import { fetchTopicPreview, type TopicPreview } from '@/services/saju/topicPreview';
 import { HJ, GoldCta, Pansim, hanjaNum, INK_HERO_BG, NeedSaju, YiGi, Cell, Tag, Mark, Ledger, Choice } from '@/components/hanji/Hanji';
+import { StandaloneBackButton, standaloneBackVisible } from '@/components/pwa/StandaloneBackButton';
 
 /** 2026-10-10 — 결제 확인 시트의 '내 사주' 한 줄 (만세력 사실만 · 홈 고민 카드와 같은 문장) */
 function confirmFact(key: string, sd: any): string | null {
@@ -3779,8 +3780,10 @@ export function TopicAnalysisPage() {
         {phase !== 'result' && (
           <FadeIn>
             {/* 2026-10-10 v9 — 다른 콘텐츠(주간·월간·궁합·종합사주)와 같은 먹 + 그림 머리 */}
-            <header style={{ margin: '-16px -20px 0', padding: '20px 22px 26px', color: '#FFFFFF', background: INK_HERO_BG }}>
+            {/* 2026-10-23 — 홈 화면 앱에는 브라우저 뒤로가 없고 /topic 은 탭 바도 숨긴다 → 홈 화면 앱에서만 뒤로 버튼(토스 안은 숨김), 위쪽 안전 여백 */}
+            <header style={{ margin: '-16px -20px 0', padding: 'calc(20px + env(safe-area-inset-top, 0px)) 22px 26px', color: '#FFFFFF', background: INK_HERO_BG }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#D3C7B4', fontWeight: 600 }}>
+                <StandaloneBackButton onInk />
                 <span className="hj-seal" style={{ width: 30, height: 30, fontSize: 14, color: '#E7B9AC', borderColor: 'rgba(231,185,172,.7)', background: 'transparent' }}>
                   {TOPIC_REGISTRY[(normalizeTopicId(topicId || '') || topicId) as TopicId]?.kanji || '命'}
                 </span>
@@ -4834,6 +4837,12 @@ export function TopicAnalysisPage() {
                   : `${pricing.regularPrice}운`;
                 return (
                 <div style={{ margin: '0 -20px 0' }}>
+                  {/* 2026-10-23 홈 화면 앱에서만 결과 머리 위 뒤로 버튼 (웹 브라우저와 토스 안에서는 그리지 않는다) */}
+                  {standaloneBackVisible() && (
+                    <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px', marginTop: -10, paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+                      <StandaloneBackButton />
+                    </div>
+                  )}
                   <TopicHero
                     theme={theme}
                     personName={realName(selected?.input?.name) ? `${realName(selected?.input?.name)} 님` : undefined}

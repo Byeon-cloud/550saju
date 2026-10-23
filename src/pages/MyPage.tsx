@@ -4,7 +4,7 @@
 // 보존: MENU_ITEMS_AIT/WEB 분기 로직 (Sprint 1 — 삭제 금지)
 // 광고: 페이지 맨 아래 1개 (AdSlot · 앱인토스 빌드 한정 · 2026-05-05 정책 변경 — 준기 결정)
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,6 +35,12 @@ import { Modal } from '@/components/common/Modal';
 import { callDeleteAccount } from '@/services/auth/deleteAccount';
 import { InquirySheet } from '@/components/support/InquirySheet';
 import type { InquiryCategory } from '@/services/support/inquiry';
+
+/* 2026-10-23 웹 홈 화면 추가 안내 시트 — 앱 빌드에는 코드째 넣지 않는다 (못 불러오면 시트만 안 뜬다) */
+const WEB_PWA = import.meta.env.VITE_BUILD_TARGET !== 'appintos';
+const A2hsGuideSheet = WEB_PWA
+  ? lazy(() => import('@/components/pwa/A2hsGuideSheet').then((m) => ({ default: m.A2hsGuideSheet })).catch(() => ({ default: () => null })))
+  : null;
 
 /* ─ SSOT 토큰 — PC_인수인계 §5 (2026-04-23) ─ */
 const C = {
@@ -81,6 +87,9 @@ const MENU_ITEMS_WEB: MenuItem[] = [
   { id: 'storage', label: '분석 기록',        path: '/storage', icon: 'archive'      },
   ...MENU_COMMON,
 ];
+// 2026-10-23 웹만 — 홈 화면에 추가하는 법 (이미 홈 화면 앱이면 숨김, PC 는 크롬 설치 창을 잡았을 때만)
+//   앱 빌드에는 문구째 넣지 않는다 (WEB_PWA 가 빌드 때 false 로 정해진다)
+const MENU_A2HS: MenuItem | null = WEB_PWA ? { id: 'a2hs', label: '홈 화면에 추가하기', path: '', icon: 'home-add' } : null;
 
 /* ══════════════════════════════════════════
    메인 페이지
@@ -97,7 +106,23 @@ export function MyPage() {
   // 2026-06-12 fix — 익명 세션(부팅 자동 로그인)이 '로그인됨'으로 취급돼 로그인 모달을 건너뛰고
   //   동의 모달부터 뜨던 버그. 웹은 진짜 계정(비익명)만 로그인으로 인정. 앱인토스는 토스 신원 우산 유지.
   const realLoggedIn = isLoggedIn && (inAppsInToss || (!!user && !user.isAnonymous));
-  const MENU_ITEMS = inAppsInToss ? MENU_ITEMS_AIT : MENU_ITEMS_WEB;
+  // 2026-10-23 웹 홈 화면 추가 — /my?a2hs=1 로 오면 안내 시트를 바로 연다(로그인 시트는 띄우지 않는다, 시트 맨 위에 로그인 안내가 있다)
+  const [cameForA2hs] = useState(() => WEB_PWA && !(isAppintosBuild || isAppsInToss()) && new URLSearchParams(location.search).get('a2hs') === '1');
+  const [showA2hs, setShowA2hs] = useState(cameForA2hs);
+  const [a2hsMenu, setA2hsMenu] = useState(false);
+  useEffect(() => {
+    if (!WEB_PWA || inAppsInToss) return;
+    let alive = true;
+    let off: () => void = () => {};
+    import('@/lib/pwa').then((m) => {
+      if (!alive) return;
+      const update = () => { if (alive) setA2hsMenu(m.a2hsMenuVisible()); };
+      update();
+      off = m.subscribeInstallPrompt(update);
+    }).catch(() => { /* 항목만 안 보인다 */ });
+    return () => { alive = false; off(); };
+  }, [inAppsInToss]);
+  const MENU_ITEMS = inAppsInToss ? MENU_ITEMS_AIT : (a2hsMenu && MENU_A2HS ? [...MENU_ITEMS_WEB, MENU_A2HS] : MENU_ITEMS_WEB);
   // 2026-10-17 웹 내 정보의 아침 일주 운세 메일 (앱은 그리지 않음, 토스 9시 알림이 같은 역할)
   const { profile: activeProfile, name: activeName } = useActiveProfile();
   const mailPrefill = (() => {
@@ -198,15 +223,17 @@ export function MyPage() {
   useEffect(() => {
     if (inAppsInToss) { setShowLoginModal(false); return; }
     if (inquiry.open || cameForInquiry) { setShowLoginModal(false); return; } // 문의하러 온 사람은 로그인 없이 바로 양식, 닫은 뒤에도 로그인 창을 띄우지 않는다 (10-19)
+    if (cameForA2hs) { setShowLoginModal(false); return; } // 홈 화면 추가 안내로 온 사람도 같다 (안내 시트 맨 위에 로그인 버튼, 10-23)
     if (!loading && !realLoggedIn) {
       setShowLoginModal(true);
     } else {
       setShowLoginModal(false);
     }
-  }, [inAppsInToss, loading, realLoggedIn, inquiry.open, cameForInquiry]);
+  }, [inAppsInToss, loading, realLoggedIn, inquiry.open, cameForInquiry, cameForA2hs]);
 
   const onMenuClick = (item: MenuItem) => {
     if (item.id === 'contact') { setShowContact(true); return; }
+    if (item.id === 'a2hs') { setShowA2hs(true); return; }
     if (item.id === 'toss_review') {
       import('@/services/review/reviewPrompt').then((m) => m.askTossReview('my')).then((r) => {
         if (r === 'unsupported') toast.show('토스 앱을 최신으로 업데이트하면 별점을 남길 수 있어요', 'info');
@@ -364,6 +391,13 @@ export function MyPage() {
           toast={toast}
           onLogin={login}
         />
+      )}
+
+      {/* ── 홈 화면에 추가하는 법 (웹만, 2026-10-23) ── */}
+      {A2hsGuideSheet && !inAppsInToss && (
+        <Suspense fallback={null}>
+          <A2hsGuideSheet open={showA2hs} onClose={() => setShowA2hs(false)} src={cameForA2hs ? 'link' : 'my'} />
+        </Suspense>
       )}
 
       {/* ── ContactSheet (§4-4) ── */}
@@ -1586,6 +1620,13 @@ function MenuIcon({ name }: { name: string }) {
         <rect x="2" y="4" width="20" height="5" rx="1" />
         <path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9" />
         <path d="M10 13h4" />
+      </svg>
+    );
+    case 'home-add': return (
+      <svg viewBox="0 0 24 24" {...s}>
+        <rect x="6" y="2" width="12" height="20" rx="2.5" />
+        <path d="M12 8.5v6M9 11.5h6" />
+        <path d="M10.5 18.5h3" />
       </svg>
     );
     default: return null;

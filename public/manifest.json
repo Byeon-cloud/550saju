@@ -1,16 +1,18 @@
 {
+  "id": "/",
   "name": "사주500",
   "short_name": "사주500",
-  "description": "600년 명리학 원전 기반, 500원으로 만나는 깊이 있는 사주 풀이",
+  "description": "정통 명리학으로 띠별 오늘의 운세부터 종합사주, 궁합, 신년운세까지 풀어 드려요.",
+  "lang": "ko",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F4F5F8",
-  "theme_color": "#1B2A4A",
+  "background_color": "#F4EFE4",
+  "theme_color": "#F4EFE4",
   "icons": [
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

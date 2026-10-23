@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
 // 2026-05-29 — 앱 버전 SSOT = package.json. 빌드 시 주입 → MyPage 등에 자동 반영 (드리프트 박멸).
 import pkg from './package.json';
 
@@ -17,12 +18,34 @@ export default defineConfig(({ mode }) => {
 
   // 2026-10-18 — index.html 은 웹과 앱이 같이 쓴다. 웹 전용 애드센스 로더가 6월부터 .ait 에도 들어가 있었다
   //   (앱 광고는 TossAds 만, 로더가 recaptcha, sodar iframe 을 만들어 앱인토스 iframe 금지에 걸릴 수 있음). 앱 빌드에서만 뺀다.
+  // 2026-10-23 — 웹 홈 화면 추가(PWA) 태그도 앱 빌드에서 뺀다. 토스 안에서 '홈 화면에 추가'는 토스 밖으로 나가는 길이라
+  //   심사 반려 위험이 있다. manifest 링크, apple-touch-icon, apple-mobile-web-app-* 를 지우고(속성 순서와 따옴표가 달라도 잡는다)
+  //   theme-color 는 앱이 쓰던 예전 값으로 되돌린다. 하나라도 남으면 빌드를 멈춘다.
+  //   public 에서 복사된 manifest.json, 아이콘 파일도 빌드가 끝난 뒤 앱 결과물에서 지운다(closeBundle).
+  let aitOutDir = '';
   const stripWebOnlyHtml = {
     name: 'saju500-strip-web-only-html',
+    configResolved(c: { root: string; build: { outDir: string } }) {
+      aitOutDir = path.resolve(c.root, c.build.outDir);
+    },
     transformIndexHtml(html: string) {
-      return html
+      const out = html
         .replace(/<!-- Google AdSense[^\n]*-->\s*/g, '')
-        .replace(/<script[^>]*googlesyndication\.com[^>]*><\/script>\s*/g, '');
+        .replace(/<script[^>]*googlesyndication\.com[^>]*><\/script>\s*/g, '')
+        .replace(/<!-- 웹 홈 화면 추가[^\n]*-->\s*/g, '')
+        .replace(/<link\b(?=[^>]*\brel\s*=\s*["']?(?:manifest|apple-touch-icon(?:-precomposed)?|apple-touch-startup-image)["'\s>])[^>]*>\s*/gi, '')
+        .replace(/<meta\b(?=[^>]*\bname\s*=\s*["']?(?:apple-mobile-web-app-[a-z-]+|mobile-web-app-capable)["'\s>])[^>]*>\s*/gi, '')
+        .replace(/(<meta\b[^>]*\bname\s*=\s*["']theme-color["'][^>]*\bcontent\s*=\s*["'])[^"']*(["'])/i, '$1#F4F5F8$2');
+      if (/rel\s*=\s*["']?(?:manifest|apple-touch-icon)|apple-mobile-web-app-|mobile-web-app-capable/i.test(out)) {
+        throw new Error('[saju500] 앱 빌드 index.html 에 홈 화면 추가 태그가 남았어요 (vite.config.ts stripWebOnlyHtml)');
+      }
+      return out;
+    },
+    closeBundle() {
+      if (!aitOutDir) return;
+      for (const rel of ['manifest.json', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'icons']) {
+        try { fs.rmSync(path.join(aitOutDir, rel), { recursive: true, force: true }); } catch { /* 없으면 그대로 */ }
+      }
     },
   };
 

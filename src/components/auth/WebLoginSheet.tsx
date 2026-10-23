@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { useToast } from '@/components/common/Toast';
 import { inAppBrowserName, openInExternalBrowser } from '@/utils/inAppBrowser';
+import { isIosStandalone } from '@/lib/displayMode';
+import { authDomainIsSelf } from '@/services/auth/firebase';
 
 const C = {
   paper:    '#F8F5EE',
@@ -36,6 +38,8 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
   const [busy, setBusy] = useState(false);
   // 2026-10-19 — 인스타그램, 카카오톡 같은 앱 안 화면에서는 구글이 로그인을 막는다 → 구글 버튼을 숨기고 안내를 한 줄 둔다
   const inApp = inAppBrowserName();
+  // 2026-10-23 — 아이폰 홈 화면 앱인데 사이트 주소가 saju500.app 이 아니면(web.app 등) 로그인 결과가 돌아오지 않는다 → 버튼 대신 안내
+  const standaloneBlocked = isIosStandalone() && !authDomainIsSelf;
 
   const handleLogin = async (provider: 'kakao' | 'naver' | 'apple' | 'google') => {
     if (busy) return;
@@ -48,7 +52,9 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
     } catch (err: any) {
       // Apple Service ID 미설정 시 Firebase가 auth/operation-not-supported-in-this-environment 등 반환
       const code: string = err?.code || '';
-      if (provider === 'apple' && (code.includes('operation-not-supported') || code.includes('configuration-not-found'))) {
+      if (code === 'saju500/standalone-host') {
+        toast.show('홈 화면 앱에서는 이 주소로 로그인할 수 없어요. 사파리에서 saju500.app 으로 열어 주세요', 'info');
+      } else if (provider === 'apple' && (code.includes('operation-not-supported') || code.includes('configuration-not-found'))) {
         toast.show('지금은 Apple 로그인을 쓸 수 없어요. 다른 방법으로 로그인해 주세요', 'info');
       } else if (code.includes('popup-blocked')) {
         toast.show('로그인 창이 열리지 않았어요. 버튼을 한 번 더 눌러 주세요', 'warning');
@@ -129,8 +135,19 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
               {(desc || ['로그인하면 운 잔액, 풀이 기록, 결제 내역을', '안전하게 관리할 수 있어요'])[0]}<br />{(desc || ['로그인하면 운 잔액, 풀이 기록, 결제 내역을', '안전하게 관리할 수 있어요'])[1]}
             </p>
 
+            {standaloneBlocked && (
+              <div className="flex flex-col gap-3 flex-1">
+                <p className="text-center text-[15px] leading-[1.7]" style={{ color: C.ink }}>
+                  홈 화면 앱에서는 이 주소로 로그인할 수 없어요.<br />사파리에서 saju500.app 으로 열고 로그인해 주세요.
+                </p>
+                <p className="text-center text-[13px] leading-[1.6]" style={{ color: C.mute }}>
+                  사파리에서 saju500.app 을 연 뒤 홈 화면에 다시 추가하면 새 아이콘에서는 로그인할 수 있어요
+                </p>
+              </div>
+            )}
+
             {/* 카카오, 네이버, 구글 (Apple 은 Firebase 에 설정이 없어 눌러도 실패 → 2026-10-16 숨김) */}
-            <div className="flex flex-col gap-3 flex-1">
+            {!standaloneBlocked && <div className="flex flex-col gap-3 flex-1">
               {/* 카카오 — signIn('kakao') 실제 연결 */}
               <button type="button"
                 onClick={() => handleLogin('kakao')}
@@ -187,7 +204,7 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
                 </>
               )}
 
-            </div>
+            </div>}
 
             {/* 하단 동의 캡션 (§2-2) */}
             <p className="text-center text-[13px] mt-5 leading-[1.6]" style={{ color: C.mute }}>

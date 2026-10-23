@@ -53,7 +53,8 @@ export function DarkHeader({ title, subtitle, chip, chipVariant = 'gold', onBack
       style={{
         background: '#1A1612', // 2026-10-13 v9 — 먹 단색
         color: '#fff',
-        padding: '14px 20px 12px',
+        // 2026-10-23 — 홈 화면 앱에서 상태 막대와 겹치지 않게 위쪽 안전 여백 (웹 브라우저 세로 화면은 0 이라 그대로)
+        padding: 'calc(14px + env(safe-area-inset-top, 0px)) 20px 12px',
         display: 'flex',
         alignItems: 'center',
         gap: 12,

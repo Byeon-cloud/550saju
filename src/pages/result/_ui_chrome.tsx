@@ -7,12 +7,16 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShareModal } from '@/components/share/ShareModal';
 import { isAppintosBuild } from '@/lib/env';
+import { isStandaloneDisplay } from '@/lib/displayMode';
 import { AD_BANNER_GROUP_ID } from '@/constants/config';
 import { AdSlot } from '@/components/ads/AdSlot';
 // 2026-05-29 H1 fix — 업셀 "종합 10운" 하드코딩 → SSOT 세일가 반영 (런칭세일 중 5운).
 // 2026-06-29 — report 업셀 "주제별 1운" 하드코딩 → SSOT 최저가 파생 (love/wealth/reunion 3운과 모순 제거).
 import { getPremiumPrice, getTopicPrice } from '@/constants/pricing';
 import { listTopics } from '@/constants/topics';
+
+/** 홈 화면 앱으로 열렸나 (2026-10-23, 토스 안과 앱 빌드는 false) — 결제 막대의 아래 여백만 바꾼다 */
+const STANDALONE_DISPLAY = isStandaloneDisplay();
 
 /* ══════════════════════════════════════════════════════════════════
  * SSOT 토큰 (D1 정렬)
@@ -84,7 +88,8 @@ export function PaywallBar({
           aria-label="유료 풀이 안내"
           style={{
             position: 'fixed',
-            bottom: 64, // TabBar 높이만큼 위
+            // TabBar 높이만큼 위. 2026-10-23 — 홈 화면 앱에서는 아래 홈 막대 여백만큼 더 올린다 (웹 브라우저는 그대로 64)
+            bottom: STANDALONE_DISPLAY ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : 64,
             left: 0,
             right: 0,
             height: 72,

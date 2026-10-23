@@ -8,6 +8,7 @@
  */
 import { isAppintosBuild } from '@/lib/env';
 import { inAppBrowserName } from '@/utils/inAppBrowser';
+import { displayModeLabel } from '@/lib/displayMode';
 
 /** GA4 (외부 대시보드용 — 유입경로·유저플로우·체류시간) */
 /** 토스 자체 analytics(@apps-in-toss web-analytics)로 핵심 이벤트 미러 (2026-06-27 · D).
@@ -254,6 +255,14 @@ const FIRESTORE_TRACKED = new Set<string>([
   'chat_view',          // {has: 0|1, rooms: 0|1, free: 0|1, gen} — 사주대화 첫 화면(/chat)을 열었다
   'chat_starter_click', // {i: 0|1|2, gen, has} — 첫 화면 질문 버튼을 눌렀다 (사주가 있으면 바로 보낸다)
   'tti_view',           // {src: hero|family, ab?} — 띠 표가 보였다 (ab = 고른 해로 본 연령대, demo.ab 와 같은 이름)
+  // 2026-10-23 웹 홈 화면 추가(PWA). 모든 문서의 disp(standalone|browser)로 홈 화면 앱 손님을 따로 본다
+  'a2hs_guide_open',    // {src: my|home|link, plat} — 홈 화면에 추가하는 법 안내 시트를 열었다
+  'a2hs_card_view',     // {plat, days} — 홈의 홈 화면 추가 안내 칸이 보였다 (다시 온 손님, 한 화면 한 번)
+  'a2hs_card_click',    // {plat, act: guide|prompt} — 그 칸에서 눌렀다
+  'a2hs_card_close',    // {plat} — 그 칸을 닫았다 (30일 안 보임)
+  'a2hs_prompt_result', // {outcome: accepted|dismissed|unavailable|error|installed, src, plat} — 크롬 설치 창 결과, installed 는 appinstalled
+  'pwa_open',           // {first: 0|1, os} — 홈 화면 앱으로 열었다 (세션당 한 번, first = 이 저장 공간에서 처음)
+  'pwa_login_notice',   // {act: view|login|close} — 아이폰 홈 화면 앱의 '로그인하면 이어져요' 안내 칸
 ]);
 
 /** 출생 연도 → 연령대 이름 (demo.ab 와 같은 규칙: 10대, 20대, 30대, 40대, 50대, 60대+) */
@@ -468,6 +477,7 @@ function logToFirestore(eventName: string, params?: Record<string, string | numb
         ...(iab ? { iab } : {}), // 앱 안 브라우저 이름 (웹만, 2026-10-21)
         ...(internal === 'owner' ? { internal: true } : {}), // 오너 기기 — 집계 제외 마킹
         plat: await getPlat(), // 웹/토스앱 분리 (2026-06-12)
+        disp: displayModeLabel(), // 홈 화면 앱(standalone)과 브라우저 분리 (2026-10-23, 토스 앱 안과 앱 빌드는 browser)
         ts: serverTimestamp(),
         // 날짜 버킷 (집계 쿼리 효율) — KST 기준 YYYY-MM-DD
         day: kstDay(),

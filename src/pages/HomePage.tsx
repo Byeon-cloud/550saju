@@ -11,7 +11,7 @@
 //   - 금색은 누르는 곳에만 · 색은 먹·종이 · 글자는 그림 위에 올리지 않는다 (가독성).
 //   - 후기는 실제 구매자 후기(노출 동의 + 오너 승인)만. 없으면 섹션째 숨김 (구 HOME_REVIEWS 시드는 노출 중단).
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { kstToday } from '@/utils/kstDate';
 import { useToast } from '@/components/common/Toast';
@@ -47,6 +47,11 @@ import { getMyTti, ttiOfYear, ttiName, yearLabel } from '@/services/tti/ttiFortu
 import {
   HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
 } from '@/components/hanji/Hanji';
+
+/** 웹 홈 화면 앱 안내 (2026-10-23) — 앱 빌드에는 코드째 넣지 않는다. 못 불러오면 그 칸만 빈다 */
+const HomePwaSlot = import.meta.env.VITE_BUILD_TARGET !== 'appintos'
+  ? lazy(() => import('@/components/pwa/HomePwaSlot').then((m) => ({ default: m.HomePwaSlot })).catch(() => ({ default: () => null })))
+  : null;
 
 /** 신년운세 대상 연도 — 10월부터 내년 (TojungPage·서버와 같은 규칙) */
 const NEW_YEAR_TARGET = (() => {
@@ -315,6 +320,10 @@ export function HomePage() {
           )}
         </div>
       </section>
+
+      {/* 2026-10-23 웹 홈 화면 앱(PWA) 안내 한 자리 — 아이폰 홈 화면 앱 로그인 전 '로그인하면 이어져요', 다시 온 휴대폰 손님에게 홈 화면에 추가.
+           첫 화면 아래, 아침 운세 메일 줄 다음. 앱 빌드와 토스 안에서는 아무것도 그리지 않는다 (components/pwa/HomePwaSlot) */}
+      {HomePwaSlot && <Suspense fallback={null}><HomePwaSlot /></Suspense>}
 
       {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 월운세와 같은 채점, AI 0원 */}
       {hasSaju && <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />}

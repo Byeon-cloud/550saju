@@ -117,6 +117,10 @@ function page({ title, desc, canonical, body, jsonld }) {
 <meta property="og:image" content="${SITE}/og/${/\/manse\//.test(canonical) ? 'manse' : /\/kkum\//.test(canonical) ? 'dream' : /\/gunghap\//.test(canonical) ? 'compat' : /\/ilju\//.test(canonical) ? 'premium' : /\/unse\/\d{4}\//.test(canonical) ? 'tojung' : 'default'}.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="사주500">
+<meta name="theme-color" content="#F4EFE4">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&display=swap">
 <style>${CSS}</style>
