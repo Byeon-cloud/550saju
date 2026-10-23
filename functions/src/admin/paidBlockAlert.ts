@@ -63,7 +63,14 @@ export const alertPaidBlocked = onSchedule(
       const bal = u.data()?.balance;
       const balText = typeof bal === 'number' ? `${bal}운` : bal ? `유료 ${bal.paid || 0} 보너스 ${bal.bonus || 0} 리워드 ${bal.reward || 0}` : '없음';
       await ref.set({ kind: 'paid_user_blocked', uid, day, whys: [...prevWhys, ...fresh], totalCharged: charged, balance: balText, at: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      lines.push(`회원 ID ${uid.slice(0, 8)}… (누적 결제 ${charged}운, 서버 잔액 ${balText})\n  - ${fresh.join('\n  - ')}`);
+      // 2026-10-23 — 연락 메일(카카오 account_email 선택 동의, 구글, 네이버). 오너 메일함으로만 보낸다
+      let contact = '연락 메일 없음';
+      try {
+        const au = await admin.auth().getUser(uid);
+        const mail = au.email || au.providerData.map((p) => p.email).find(Boolean);
+        if (mail) contact = `연락 메일 ${mail}`;
+      } catch { /* noop */ }
+      lines.push(`회원 ID ${uid.slice(0, 8)}… (누적 결제 ${charged}운, 서버 잔액 ${balText}, ${contact})\n  - ${fresh.join('\n  - ')}`);
     }
     if (!lines.length) return;
     try {
