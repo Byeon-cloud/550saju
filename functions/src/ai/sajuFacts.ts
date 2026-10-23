@@ -431,6 +431,7 @@ const ZHI_KO: Record<string, string> = { 子: '자', 丑: '축', 寅: '인', 卯
 export function ganziKo(gz: string): string {
   return gz && gz.length >= 2 ? `${GAN_KO[gz[0]] || ''}${ZHI_KO[gz[1]] || ''}` : '';
 }
+// 규칙을 바꾸면 src/services/saju/newYearPreview.ts 도 같이 (신년운세 무료 미리 보기 사본, roleVerdict)
 /** '丁未 = 丁(화·중립) + 未(토·기신) → 부담 기운이 강한 해' 형태 (sajuData.myeongriAnalysis 용신·희신·기신 기준) */
 export function ganziRoleText(gz: string, sajuData: any, unit: '해' | '달' | '날' = '달'): string {
   try {
@@ -454,6 +455,7 @@ export function ganziRoleText(gz: string, sajuData: any, unit: '해' | '달' | '
 const CHUNG_PAIR: Record<string, string> = { 子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳' };
 const WEEK_KO = ['일', '월', '화', '수', '목', '금', '토'];
 /** 그 해 각 달의 좋은 날(최대 3)·조심할 날(최대 2) + 한 해 꼭 기억할 날(최대 6) — 일진 × 용신·희신·기신·천을귀인·일지충 */
+// 규칙을 바꾸면 src/services/saju/newYearPreview.ts 도 같이 (신년운세 무료 미리 보기 사본, scoreDays)
 /** 그 달 하루하루의 일진 점수 — 용신 +2, 희신 +1, 기신 -2 (천간, 지지 각각), 천을귀인 +1, 일지 충 -2 */
 function scoreDaysOfMonth(year: number, m: number, sajuData: any): Array<{ label: string; score: number; why: string; chung: boolean }> {
   const ma = sajuData?.myeongriAnalysis || {};
@@ -510,6 +512,7 @@ export function monthDayPicks(year: number, month: number, sajuData: any): { goo
   } catch { return { good: [], caution: [] }; }
 }
 
+// 규칙을 바꾸면 src/services/saju/newYearPreview.ts 도 같이 (신년운세 무료 미리 보기 사본, yearKeyDates)
 export function dayPicksForYear(year: number, sajuData: any): {
   perMonth: Record<number, { good: string[]; caution: string[] }>;
   keyDates: Array<{ date: string; why: string }>;
@@ -580,6 +583,7 @@ ${scored.map((x: any) => `- ${x.age} ${x.gz}: ${x.s}`).join('\n')}
   } catch { return ''; }
 }
 
+// 규칙을 바꾸면 src/services/saju/newYearPreview.ts 도 같이 (신년운세 무료 미리 보기 사본, monthBaseScore)
 /** 달 기준 점수 (월주 × 용신·희신·기신 · 일지충·천을귀인) — 병렬 그룹 간 점수 일관성 앵커 */
 export function monthBaseScore(gz: string, sajuData: any): number {
   try {
@@ -791,6 +795,7 @@ const ROLE_PALACE: Array<{ idx: number; name: string; area: string }> = [
   { idx: 2, name: '일지', area: '배우자 자리와 집' },
   { idx: 1, name: '월지', area: '일터와 생활 기반' },
 ];
+// 규칙을 바꾸면 src/services/saju/newYearPreview.ts 도 같이 (신년운세 무료 미리 보기 사본, monthVerdict)
 /** 양력 y년 m월 한 달의 판정 (용신이 없으면 null) */
 export function monthVerdictRow(y: number, m: number, sajuData: any): MonthVerdictRow | null {
   try {

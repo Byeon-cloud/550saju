@@ -14,6 +14,7 @@ import { logAnthropicUsage } from '../shared/aiUsageLog';
  *   달마다 고르게 함 — 실제 토정비결은 144괘 산식이라 근거 없는 '전통' 연출이었다.
  *   현재: 대상 연도 = 10월부터 내년(그 전엔 올해) · 세운·12개월 월주·용신 역할·그 해 대운·귀인 달을 서버가 계산.
  *   응답 키(months[].괘/괘의미/전통해석/현대해석)는 유지 — 예전 보관함 결과·화면 호환. 괘 자리엔 실제 월주가 들어간다. */
+// 규칙을 바꾸면 src/pages/TojungPage.tsx newYearTarget 과 src/services/saju/newYearPreview.ts 도 같이 (무료 미리 보기 대상 연도)
 export function tojungTargetYear(): number {
   const n = kstNow();
   return n.month >= 10 ? n.year + 1 : n.year;
@@ -34,11 +35,12 @@ function yearPillar(y: number): string {
  *   달 점수(base)도 판정표 점수(monthBaseScore + 합충형 가감)라 화면의 달 점수 순서가 판정과 같은 쪽을 가리킨다.
  *   결정해도 되는 달이 한 해에 하나도 없으면 서명 피함이 아닌 달 가운데 점수 높은 둘(goodIsDecide=false, 계약을 붙이지 않는다).
  *   용신이 없는 옛 사주 데이터(hasTable=false)는 10-22 방식(달 기준점수 상위 셋, 하위 둘) 그대로. */
-type MonthRank = {
+export type MonthRank = {
   base: Record<number, number>; good: number[]; caution: number[]; gMin: number; cMax: number; ok: boolean;
   rows: Record<number, MonthVerdictRow | null>; hasTable: boolean; firstDecide: number | null; goodIsDecide: boolean;
 };
-function planMonthRank(ty: number, d: any): MonthRank {
+// 규칙을 바꾸면 src/services/saju/newYearPreview.ts planMonths 도 같이 (무료 미리 보기의 좋은 달, 조심할 달). export 는 대조 시험용(scripts/test/newyear_preview_parity.ts)
+export function planMonthRank(ty: number, d: any): MonthRank {
   const rows: Record<number, MonthVerdictRow | null> = {};
   for (let m = 1; m <= 12; m++) rows[m] = monthVerdictRow(ty, m, d);
   const hasTable = Object.values(rows).every((r) => !!r);
