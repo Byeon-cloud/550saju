@@ -112,7 +112,7 @@ export const watchPortonePaid = onSchedule(
       }
       if (prev.exists) continue; // 결제당 한 번만 알린다
 
-      const mismatch = await db.collection('backofficeAlerts').doc(`portone_uid_mismatch_${paymentId}`).get().catch(() => null);
+      const mismatch = await db.collection('portoneUidMismatch').doc(paymentId).get().catch(() => null);
       const mm = mismatch?.exists ? mismatch.data() : null;
       try {
         await alertRef.create({

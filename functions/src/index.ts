@@ -2068,7 +2068,8 @@ export const confirmPortonePayment = onCall(
     // 방어 ① — paymentId 는 클라가 `${uid8}_...` 로 생성. 다른 계정 결제 컨펌 시도 차단.
     if (!paymentId.startsWith(uid.slice(0, 8))) {
       // 2026-10-23 — 거부는 그대로. 결제한 계정과 돌아온 화면의 계정이 다른 일을 남긴다(watchPortonePaid 가 미지급 경보에 같이 적는다)
-      if (/^[A-Za-z0-9]{8}_[A-Za-z0-9_]{1,60}$/.test(paymentId)) await db.collection('backofficeAlerts').doc(`portone_uid_mismatch_${paymentId}`).set({ kind: 'portone_confirm_uid_mismatch', paymentId, payerUid8: paymentId.slice(0, 8), callerUid8: uid.slice(0, 8), callerAnon: request.auth?.token?.firebase?.sign_in_provider === 'anonymous', amount: Number(amount) || 0, attempts: admin.firestore.FieldValue.increment(1), at: admin.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => undefined);
+      //   10-24 검수 — 손님이 보낸 값으로 문서를 만들므로 관리자 경보 목록(backofficeAlerts) 밖 전용 컬렉션에, 있는 묶음 금액일 때만 남긴다
+      if (/^[A-Za-z0-9]{8}_[A-Za-z0-9_]{1,60}$/.test(paymentId) && PACKAGE_MAP[amount]) await db.collection('portoneUidMismatch').doc(paymentId).set({ expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + 14 * 864e5), kind: 'portone_confirm_uid_mismatch', paymentId, payerUid8: paymentId.slice(0, 8), callerUid8: uid.slice(0, 8), callerAnon: request.auth?.token?.firebase?.sign_in_provider === 'anonymous', amount: Number(amount) || 0, attempts: admin.firestore.FieldValue.increment(1), at: admin.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => undefined);
       throw new HttpsError('permission-denied', '본인 결제만 확인할 수 있어요');
     }
 
