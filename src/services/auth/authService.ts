@@ -95,7 +95,7 @@ async function signInWithWeb(provider: WebLoginProvider): Promise<User> {
   // 2026-10-23 — 아이폰, 아이패드 홈 화면 앱: 팝업은 결과가 돌아오지 않아 끝없이 기다렸고(Firebase 10.14.1),
   //   로그인 도메인이 사이트와 다르면 리다이렉트도 결과를 못 읽는다. 사이트가 VITE_AUTH_SELF_HOSTS(saju500.app)가 아니면
   //   여기서 멈추고 로그인 시트가 '사파리에서 saju500.app 으로 열어 주세요'를 보여 준다(WebLoginSheet).
-  const iosStandalone = isIosStandalone();
+  const iosStandalone = import.meta.env.VITE_BUILD_TARGET !== 'appintos' && isIosStandalone(); // 앱 빌드에서는 통째로 빠진다
   if (iosStandalone && !authDomainIsSelf) {
     throw Object.assign(new Error('사파리에서 saju500.app 으로 열어 로그인해 주세요'), { code: 'saju500/standalone-host' });
   }

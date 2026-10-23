@@ -81,10 +81,10 @@ function StandaloneLoginNotice() {
           setClosed(true);
         }} />
         <h2 style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700, lineHeight: 1.5, color: HJ.ink, paddingRight: 34, wordBreak: 'keep-all' }}>
-          사파리에서 넣은 사주와 운은 로그인하면 이어져요
+          사파리에서 로그인해 두었다면 여기서도 이어 볼 수 있어요
         </h2>
         <p style={{ fontSize: 15, lineHeight: 1.7, color: HJ.ink2, marginTop: 6, wordBreak: 'keep-all' }}>
-          홈 화면 앱은 사파리와 기록을 따로 보관해요. 사파리에서 로그인한 계정과 같은 계정으로 로그인해 주세요.
+          홈 화면 앱은 사파리와 기록을 따로 보관해요. 사파리에서 쓰던 계정으로 로그인하면 사주와 운, 보관함이 돌아와요. 사파리에서 로그인한 적이 없다면 사파리에서 먼저 로그인해 주세요.
         </p>
         <GoldCta style={{ marginTop: 12 }} onClick={() => {
           track('pwa_login_notice', { act: 'login' });
@@ -100,7 +100,7 @@ function StandaloneLoginNotice() {
           onClose={() => setLoginOpen(false)}
           onSuccess={() => { setLoginOpen(false); setLoggedIn(true); }}
           title={['사파리에서 쓰던 기록을', '이어서 볼 수 있어요']}
-          desc={['사파리에서 로그인한 계정으로 로그인하면', '사주와 운, 보관함이 돌아와요']}
+          desc={['사파리에서 쓰던 계정으로 로그인하면', '사주와 운, 보관함이 돌아와요']}
         />
       )}
     </div>

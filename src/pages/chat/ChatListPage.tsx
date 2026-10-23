@@ -101,7 +101,9 @@ export function ChatListPage() {
   const profileStartRef = useRef(false);
   useEffect(() => {
     const pid = searchParams.get('profileId');
-    if (!pid || profileStartRef.current) return;
+    // 10-24 검수 — 질문 버튼으로 입력 화면에 갔다가 그냥 돌아온 경우, 보류한 질문은 버린다(뒤에 다른 길로 사주를 넣을 때 저절로 보내지지 않게)
+    if (!pid) { try { sessionStorage.removeItem(CHAT_PENDING_ASK_KEY); } catch { /* noop */ } return; }
+    if (profileStartRef.current) return;
     profileStartRef.current = true;
     const profile = getProfiles().find((p) => p.id === pid);
     if (!profile) return;

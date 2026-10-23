@@ -14,6 +14,12 @@ const CATALOG: { group: string; items: [name: string, label: string, where: Wher
     ['app_open', '앱이나 웹을 열었다', 'both'], ['signup', '이 기기에서 처음 열었다', 'both'], ['page_view', '화면을 봤다', 'both'], ['cta_click', '버튼을 눌렀다', 'both'],
     ['web_intro_view', '웹 첫 손님 소개 카드가 보였다', 'web'],
   ] },
+  { group: '홈 화면 추가 (웹)', items: [
+    ['pwa_open', '홈 화면 앱으로 열었다(first 1 은 그 저장소에서 처음)', 'web'], ['pwa_login_notice', '홈 화면 앱 로그인 안내(보임, 닫기, 로그인)', 'web'],
+    ['a2hs_guide_open', '홈 화면 추가 안내 시트를 열었다', 'web'], ['a2hs_card_view', '홈의 홈 화면 추가 칸이 보였다', 'web'],
+    ['a2hs_card_click', '홈의 홈 화면 추가 칸을 눌렀다', 'web'], ['a2hs_card_close', '홈의 홈 화면 추가 칸을 닫았다', 'web'],
+    ['a2hs_prompt_result', '안드로이드 설치 창 결과(outcome)', 'web'],
+  ] },
   { group: '사주 입력과 계정', items: [
     ['profile_created', '사주를 처음 넣었다', 'both'], ['input_leave', '입력을 끝내지 않고 나갔다', 'both'], ['input_blocked', '빈 칸이 있는데 시작을 눌렀다', 'both'],
     ['manse_view', '검색 페이지 만세력 칸에서 바로 펼쳤다', 'web'], ['login_success', '로그인했다', 'both'], ['login_fail', '웹 로그인이 실패했다', 'web'],

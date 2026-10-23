@@ -1581,7 +1581,7 @@ function BirthHourField({
       <p style={{ fontSize: 15, lineHeight: 1.6, color: C.ink, marginTop: 10, marginBottom: 0, wordBreak: 'keep-all' }}>
         {timeUnknown
           ? '모름으로 넣었어요. 시간만 빼고 다 풀어 드려요.'
-          : `${relation === '가족' ? '가족 ' : ''}태어난 시간을 몰라도 괜찮아요. 모름을 누르면 시간만 빼고 다 풀어 드려요.`}
+          : `${relation === '가족' ? '가족이 ' : ''}태어난 시간을 몰라도 괜찮아요. 모름을 누르면 시간만 빼고 다 풀어 드려요.`}
       </p>
 
       {/* 실시간 시(時) 표시 — 진태양시 자동 판정 결과를 눈으로 확인 */}

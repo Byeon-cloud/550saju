@@ -86,8 +86,11 @@ export function premiumStory(s: SajuData, who: string, thisYear: number): Premiu
       const a = c ? POS_WORD[c.positions[0]] : '';
       const b = c ? POS_WORD[c.positions[1]] : '';
       if (c && a && b) {
-        const ko = `${JIJI_KO[c.chars[0]] || ''}${JIJI_KO[c.chars[1]] || ''}`;
-        first = `${subj}태어난 ${a}${josa(a, '과', '와')} ${b}의 글자가 ${c.chars[0]}${c.chars[1]}(${ko})${josa(ko, '으로', '로')} 부딪혀 있어요.`;
+        // 10-24 검수 — 충 두 글자는 관례 순서(子丑寅卯辰巳午未申酉戌亥)로: 묘유충, 축미충 (서버 jiPair 와 같게)
+        const ORD = '子丑寅卯辰巳午未申酉戌亥';
+        const [x, y] = [c.chars[0], c.chars[1]].sort((p, q) => ORD.indexOf(p) - ORD.indexOf(q));
+        const ko = `${JIJI_KO[x] || ''}${JIJI_KO[y] || ''}`;
+        first = `${subj}태어난 ${a}${josa(a, '과', '와')} ${b}의 글자가 ${x}${y}(${ko})${josa(ko, '으로', '로')} 부딪혀 있어요.`;
       }
     }
 

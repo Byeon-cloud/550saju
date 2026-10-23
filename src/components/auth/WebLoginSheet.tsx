@@ -39,7 +39,8 @@ export function WebLoginSheet({ open, onClose, toast, onLogin, title, desc, onSu
   // 2026-10-19 — 인스타그램, 카카오톡 같은 앱 안 화면에서는 구글이 로그인을 막는다 → 구글 버튼을 숨기고 안내를 한 줄 둔다
   const inApp = inAppBrowserName();
   // 2026-10-23 — 아이폰 홈 화면 앱인데 사이트 주소가 saju500.app 이 아니면(web.app 등) 로그인 결과가 돌아오지 않는다 → 버튼 대신 안내
-  const standaloneBlocked = isIosStandalone() && !authDomainIsSelf;
+  //   10-24 검수 — 앱 빌드에서는 분기와 문구가 통째로 빠지게 빌드 상수를 앞에 둔다
+  const standaloneBlocked = import.meta.env.VITE_BUILD_TARGET !== 'appintos' && isIosStandalone() && !authDomainIsSelf;
 
   const handleLogin = async (provider: 'kakao' | 'naver' | 'apple' | 'google') => {
     if (busy) return;

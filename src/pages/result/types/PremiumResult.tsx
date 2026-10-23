@@ -3261,7 +3261,7 @@ function PremiumUpsellCard({
     // worst topic — 점수 가장 낮은 영역 (2026-05-28 social 제거 — SSOT 정렬)
     const TOPIC_KR: Record<string, string> = {
       career: '직업', love: '사랑', wealth: '재물',
-      health: '건강', potential: '학업과 잠재력',
+      health: '건강', potential: '잠재력', // 10-24 — §09 카드 이름과 같게(학업운 연결은 10-23 에 뗐음)
     };
     let worstKey = '';
     let worstScore = 101;
@@ -3292,17 +3292,17 @@ function PremiumUpsellCard({
 
     // q1: worst topic 호명 → "내 ${가장 약한 영역}이 왜 약해?"
     const q1 = worstKey
-      ? `"내 ${TOPIC_KR[worstKey]}운이 ${worstScore}점인데 왜 약한가요? 어떻게 채우면 좋을까요?"`
+      ? `"내 ${TOPIC_KR[worstKey]}${worstKey === 'potential' ? '이' : '운이'} ${worstScore}점인데 왜 약한가요? 어떻게 채우면 좋을까요?"`
       : userName
-      ? `"${userName} 님 사주에서 가장 먼저 손볼 부분이 어디야?"`
-      : '"내 사주에서 가장 먼저 손볼 부분이 어디야?"';
+      ? `"${userName} 님 사주에서 가장 먼저 손볼 부분이 어디인가요?"`
+      : '"내 사주에서 가장 먼저 손볼 부분이 어디인가요?"';
 
     // q2: 가까운 대운 변곡점 호명 → "내가 ${age}세에 들어가는 대운은 어떤 흐름이야?"
     const q2 = nextDaeunAge > 0
-      ? `"내가 ${nextDaeunAge}세에 바뀌는 대운, 어떤 흐름이야?"`
+      ? `"내가 ${nextDaeunAge}세에 들어가는 대운은 어떤 흐름인가요?"`
       : dayGanLabel
-      ? `"${dayGanLabel} 일간인 내 장점을 살리는 사람은 어떤 일간이야?"`
-      : '"내 장점을 살리는 사람은 어떤 결의 사람이야?"';
+      ? `"${dayGanLabel} 일간인 내 장점을 살려 주는 사람은 어떤 일간인가요?"`
+      : '"내 장점을 살려 주는 사람은 어떤 사람인가요?"';
 
     return { q1, q2 };
   }
@@ -7439,7 +7439,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
         <button
           type="button"
           onClick={() => navigate('/tojung')}
-          style={{ background: 'none', border: 0, padding: 0, font: 'inherit', color: C.goldDeep, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}
+          style={{ background: 'none', border: 0, padding: 0, font: 'inherit', color: '#4B4238', fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}
         >
           {nyTarget}년 열두 달은 신년운세에서 날짜까지 봐요
         </button>
