@@ -745,6 +745,163 @@ export function natalRelationsText(gz: string, sajuData: any, label: string): st
   return `- ${label} ${gz}(${ganziKo(gz)}): 천간 ${r.gan}, 지지 ${r.ji}(지장간 본기 기준). 원국과 ${r.links.length ? r.links.join(', ') : '합과 충 없음'}`;
 }
 
+/* ── 달별 판정표 (2026-10-23, 1.6.3 P1-8) ──
+ *   종합사주 monthlyWarnings 는 '2027년 5월, 큰 결정은 4월 안에'라 하고, 신년운세 총운은 '큰 결정은 6월 이후로'라 하면서
+ *   같은 신년운세 안에서 '4월 19일 서명', '5월 10일 이사 일정 확정'을 권했다(점검 7-1 #1). 두 상품의 호출이 달마다 따로 판단한 탓이다.
+ *   서버가 달마다 두 가지를 한 번 정해 종합사주(네 그룹)와 신년운세(세 그룹)에 같은 표로 준다.
+ *   ① 판정(도움, 부담, 섞임): 그 달 월건의 천간과 지지가 용신, 희신(도움)인지 기신(부담)인지. 일지 충은 부담 하나로 센다.
+ *      한쪽만 있으면 그쪽, 둘 다 있으면 합(용신 +2, 희신 +1, 기신 -2, 일지 충 -2)이 +2 이상 도움, -2 이하 부담, 그 사이 섞임.
+ *      둘 다 없으면 섞임(무난).
+ *   ② 행동 등급(결정해도 됨, 준비만, 서명 피함): 그 달 월건이 원국의 핵심 자리(일간, 일지, 월지)와 그 해 대운, 그 달 세운과 맺는 합충형.
+ *      서명 피함 = 일지 충(배우자 자리와 집), 일지나 월지와 형(서류와 절차의 마찰, 형이면서 합인 巳申은 흔들림으로),
+ *                 월건 천간이 일간을 치는 천간충, 또는 판정이 부담이고 합이 -3 이하.
+ *      흔들림(하나라도 있으면 결정해도 됨이 될 수 없음) = 월지 충(일터와 생활 기반), 일지나 월지와 巳申 형합, 일지나 월지와 자형 겹침,
+ *                 그 해 대운 지지와 충, 그 달 세운 지지와 충.
+ *      결정해도 됨 = 판정이 도움이고 서명 피함 사유와 흔들림이 하나도 없을 때. 그 밖은 준비만.
+ *   ③ 달 점수 = monthBaseScore(용신 역할, 일지 충 -4, 천을귀인 +2) + 서명 피함 사유(일지 충 제외) 하나에 -3, 흔들림 하나에 -2, 일지 육합 +2.
+ *   세운은 그 달 15일의 년주(입춘 기준), 대운은 그 해가 든 대운. 년지와 시지의 합충은 넣지 않는다(바깥 인연, 앞날 계획의 자리라 결정 시기와 거리가 멀다).
+ *   용신이 없는 옛 사주 데이터는 빈 표(호출부가 예전 동작으로 돌아간다). */
+export type MonthVerdict = '도움' | '부담' | '섞임';
+export type MonthAction = '결정해도 됨' | '준비만' | '서명 피함';
+export interface MonthVerdictRow {
+  y: number;
+  m: number;
+  /** 그 달 월건 (15일 기준) */
+  gz: string;
+  /** 그 달 세운 (15일의 년주, 입춘 기준) */
+  yearGz: string;
+  /** 그 해 대운 ('' 이면 미상) */
+  daeunGz: string;
+  /** ganziRoleText 의 판정 말 ('도움 기운이 강한 달' 등, 신년운세 괘의미와 같은 말) */
+  roleText: string;
+  verdict: MonthVerdict;
+  action: MonthAction;
+  score: number;
+  /** 행동 등급을 정한 근거 (합충형), 사람이 읽는 말 */
+  why: string[];
+}
+/** 한자 한 글자 읽기의 받침으로 이/가, 을/를 (위 wa 와 같은 방식) */
+const hasBatchim = (h: string): boolean => { const r = GAN_KO[h] || ZHI_KO[h] || ''; const c = r.charCodeAt(r.length - 1); return c >= 0xAC00 && (c - 0xAC00) % 28 !== 0; };
+const iga = (h: string): string => (hasBatchim(h) ? '이' : '가');
+const eulreul = (h: string): string => (hasBatchim(h) ? '을' : '를');
+/** 지지 두 글자를 관례 순서(子丑寅卯… 순)로: 子午충, 寅巳형, 寅亥합 */
+const JI_ORDER = '子丑寅卯辰巳午未申酉戌亥';
+const jiPair = (a: string, b: string): string => (JI_ORDER.indexOf(a) <= JI_ORDER.indexOf(b) ? a + b : b + a);
+const ROLE_PALACE: Array<{ idx: number; name: string; area: string }> = [
+  { idx: 2, name: '일지', area: '배우자 자리와 집' },
+  { idx: 1, name: '월지', area: '일터와 생활 기반' },
+];
+/** 양력 y년 m월 한 달의 판정 (용신이 없으면 null) */
+export function monthVerdictRow(y: number, m: number, sajuData: any): MonthVerdictRow | null {
+  try {
+    const ma = sajuData?.myeongriAnalysis || {};
+    const yong = ma.용신; const hee = ma.희신; const gi = ma.기신;
+    if (!yong) return null;
+    const p: any[] = sajuData?.pillars || [];
+    const dayGan = String(p[2]?.천간 || '');
+    const ec = Solar.fromYmd(y, m, 15).getLunar().getEightChar();
+    const gz = ec.getMonth(); const yearGz = ec.getYear();
+    if (!gz || gz.length < 2) return null;
+    const g = gz[0]; const b = gz[1];
+    const roleVal = (o: string) => (o === yong ? 2 : o === hee ? 1 : o === gi ? -2 : 0);
+    const rg = roleVal(GAN_OH[g]); const rb = roleVal(BR_OHENG[b]);
+    const help = (rg > 0 ? 1 : 0) + (rb > 0 ? 1 : 0);
+    let burden = (rg < 0 ? 1 : 0) + (rb < 0 ? 1 : 0);
+    let net = rg + rb;
+    const strong: string[] = []; const shake: string[] = []; const notes: string[] = [];
+    let dayHap = false; let dayChung = false;
+    for (const pal of ROLE_PALACE) {
+      const x = p[pal.idx];
+      if (!x || x.available === false || !x.지지) continue;
+      const nb = String(x.지지);
+      const chung = CHUNG_PAIR[nb] === b;
+      const hyung = JI_HYUNG.has(nb + b);
+      const hap = JI_HAP6[nb] === b;
+      if (chung && pal.idx === 2) {
+        dayChung = true; burden++; net -= 2;
+        strong.push(`${pal.name} ${nb}${wa(nb)} ${jiPair(nb, b)}충(${pal.area}이 흔들림)`);
+      } else if (chung) {
+        shake.push(`${pal.name} ${nb}${wa(nb)} ${jiPair(nb, b)}충(${pal.area}이 흔들림)`);
+      } else if (hyung && hap) {
+        shake.push(`${pal.name} ${nb}${wa(nb)} ${jiPair(nb, b)} 형합(묶이면서 어긋남)`);
+      } else if (hyung) {
+        strong.push(`${pal.name} ${nb}${wa(nb)} ${jiPair(nb, b)}형(서류와 절차에서 마찰)`);
+      } else if (hap) {
+        if (pal.idx === 2) dayHap = true;
+        notes.push(`${pal.name} ${nb}${wa(nb)} ${jiPair(nb, b)}합(약속과 인연이 묶임)`);
+      } else if (nb === b && JA_HYUNG.has(b)) {
+        shake.push(`${pal.name} ${nb}${wa(nb)} 같은 글자 겹침, 자형(스스로 일을 키움)`);
+      }
+    }
+    if (dayGan && GAN_CHUNG[g] === dayGan) strong.push(`월건 천간 ${g}${iga(g)} 일간 ${dayGan}${eulreul(dayGan)} 침(${g}${dayGan}충, 판단이 흔들림)`);
+    else if (dayGan && GAN_HAP[g] === dayGan) notes.push(`월건 천간 ${g}${wa(g)} 일간 ${dayGan}${iga(dayGan)} 묶임(${g}${dayGan}합)`);
+    const dy: any[] = Array.isArray(sajuData?.daeun) ? sajuData.daeun : [];
+    const cur = dy.find((d) => typeof d?.간지 === 'string' && d.간지.length >= 2 && Number(d?.시작년도) <= y && y <= Number(d?.끝년도));
+    const daeunGz = cur ? String(cur.간지) : '';
+    if (daeunGz && CHUNG_PAIR[daeunGz[1]] === b) shake.push(`그 해 대운 ${daeunGz}의 ${daeunGz[1]}${wa(daeunGz[1])} ${jiPair(daeunGz[1], b)}충(10년 흐름과 부딪힘)`);
+    if (yearGz && yearGz.length >= 2 && CHUNG_PAIR[yearGz[1]] === b) shake.push(`세운 ${yearGz}의 ${yearGz[1]}${wa(yearGz[1])} ${jiPair(yearGz[1], b)}충(그 해 흐름과 부딪힘)`);
+    if ((CHEONEUL[dayGan] || []).includes(b)) notes.push('천을귀인 달(도와주는 사람)');
+    const verdict: MonthVerdict = help > 0 && burden === 0 ? '도움'
+      : burden > 0 && help === 0 ? '부담'
+      : help > 0 && burden > 0 ? (net >= 2 ? '도움' : net <= -2 ? '부담' : '섞임')
+      : '섞임';
+    const action: MonthAction = strong.length || (verdict === '부담' && net <= -3) ? '서명 피함'
+      : verdict === '도움' && !shake.length ? '결정해도 됨'
+      : '준비만';
+    let score = monthBaseScore(gz, sajuData);
+    score -= 3 * strong.filter((s) => !(dayChung && s.startsWith('일지') && s.includes('충'))).length;
+    score -= 2 * shake.length;
+    if (dayHap) score += 2;
+    score = Math.max(30, Math.min(95, score));
+    if (score % 5 === 0) score += 1;
+    const role = ganziRoleText(gz, sajuData, '달');
+    const roleText = role.includes('→') ? role.split('→')[1].trim() : '';
+    const why = [...strong, ...shake, ...notes];
+    if (verdict === '부담' && net <= -3 && !strong.length) why.unshift('버거운 기운이 겹친 달');
+    return { y, m, gz, yearGz, daeunGz, roleText, verdict, action, score, why };
+  } catch { return null; }
+}
+/** start(그 달, KST)부터 count 개월 판정표. 용신이 없으면 [] */
+export function monthVerdictTable(sajuData: any, start: { year: number; month: number }, count = 18): MonthVerdictRow[] {
+  const out: MonthVerdictRow[] = [];
+  for (let i = 0; i < count; i++) {
+    const y = start.year + Math.floor((start.month - 1 + i) / 12);
+    const m = ((start.month - 1 + i) % 12) + 1;
+    const r = monthVerdictRow(y, m, sajuData);
+    if (!r) return [];
+    out.push(r);
+  }
+  return out;
+}
+/** 종합사주 달 칸(monthlyInsight) 표시 말 — 첫 칸은 '지금', 결정해도 됨 '상승'(그 가운데 점수가 가장 높은 달 '정점'), 서명 피함 '주의', 준비만 '평탄' */
+export function monthInsightLabels(rows: MonthVerdictRow[]): string[] {
+  const labels: string[] = rows.map((r, i) => (i === 0 ? '지금' : r.action === '결정해도 됨' ? '상승' : r.action === '서명 피함' ? '주의' : '평탄'));
+  let peak = -1;
+  rows.forEach((r, i) => { if (i > 0 && labels[i] === '상승' && r.score >= 78 && (peak < 0 || r.score > rows[peak].score)) peak = i; });
+  if (peak > 0) labels[peak] = '정점';
+  return labels;
+}
+/** 달별 판정표 본문 — 종합사주와 신년운세가 같은 글을 받는다 (같은 사람, 같은 날이면 글자까지 같다) */
+export function monthVerdictTableText(sajuData: any, start: { year: number; month: number }, count = 18): string {
+  const rows = monthVerdictTable(sajuData, start, count);
+  if (!rows.length) return '';
+  const lab = (r: MonthVerdictRow) => `${r.y}년 ${r.m}월`;
+  const list = (a: MonthVerdictRow[]) => (a.length ? a.map(lab).join(', ') : '없음');
+  return `### 달별 판정표 (서버 계산, 오늘이 든 달부터 ${count}개월. 이 사람의 달은 어느 풀이에서나 이 표 하나로 말한다)
+- 판정: 도움(필요한 기운이 들어오는 달), 부담(버거운 기운이 들어오는 달), 섞임(두 기운이 섞이거나 크게 기울지 않는 달)
+- 행동 등급: 결정해도 됨(계약, 서명, 확정, 이사 결정을 권해도 되는 달), 준비만(알아보기, 비교, 상담, 정리만 권하는 달), 서명 피함(계약, 서명, 확정, 이사 결정을 미루라고 하는 달)
+${rows.map((r, i) => `- ${lab(r)} ${r.gz}(${ganziKo(r.gz)}): ${r.verdict}, ${r.action}, 점수 ${r.score}. 오행: ${r.roleText || '미상'}. 근거: ${r.why.length ? r.why.join(', ') : '원국의 일간, 일지, 월지와 대운, 세운에 걸리는 충과 형 없음'}${i === 0 ? ' ← 이번 달' : ''}`).join('\n')}
+→ 결정해도 되는 달: ${list(rows.filter((r) => r.action === '결정해도 됨'))}
+→ 준비만 하는 달: ${list(rows.filter((r) => r.action === '준비만'))}
+→ 서명 피하는 달: ${list(rows.filter((r) => r.action === '서명 피함'))}
+이 표를 쓰는 규칙:
+- '준비만'인 달과 '서명 피함'인 달에는 서명, 계약, 확정, 이사 결정을 권하지 않는다. 그 달의 할 일은 알아보기, 비교, 상담, 정리, 쉬기로 쓴다. 그 달의 좋은 날도 같다.
+- 서명, 계약, 확정, 이사 결정을 권하는 달과 날은 '결정해도 됨'인 달 안에서만 고른다. 일을 미루라고 할 때 옮겨 갈 달도 '결정해도 됨'인 달로 쓴다.
+- 좋은 달, 힘을 실을 달은 '결정해도 됨'인 달에서, 조심할 달과 피할 달은 '서명 피함'인 달에서 고른다.
+- 총운이나 한 해의 한 줄 결론에 달을 넣을 때는 이 표에서 결정해도 되는 첫 달을 쓴다. '큰 결정은 ~월부터' 같은 말의 달도 결정해도 되는 달이어야 한다.
+- 이 표의 낱말(판정, 행동 등급, 점수, 근거)과 '표'라는 말은 본문에 쓰지 않는다. 생활 말로 쓴다.`;
+}
+
 /** 오늘의 좋은 시간대·조심할 시간대 (한국 진태양시 :30 경계 시진 × 용신·희신·기신·일지충) */
 export function todayHourWindows(date: string, sajuData: any): { peak: string; avoid: string; text: string } {
   try {

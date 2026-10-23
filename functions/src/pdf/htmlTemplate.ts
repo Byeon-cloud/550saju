@@ -466,10 +466,13 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
           // month: 0/누락/범위밖(13 등) 방어 — 유효(1~12)면 그대로, 아니면 배열 인덱스+1 로 대체
           const rawM = Math.round(Number(mi.month));
           const m = Number.isFinite(rawM) && rawM >= 1 && rawM <= 12 ? rawM : idx + 1;
+          // 2026-10-23 — 새 결과는 이번 달부터 6개월(year 있음, 1.6.3 P1-7). 해가 바뀌는 첫 칸에만 연도를 붙인다
+          const yr = Number(mi.year); const prevYr = idx > 0 ? Number(monthlyInsight[idx - 1]?.year) : NaN;
+          const yearTag = Number.isInteger(yr) && yr > 2000 && idx > 0 && yr !== prevYr ? `${yr}년 ` : '';
           return `
           <div class="mi-cell ${cls}">
             <div class="mi-top">
-              <span class="mi-month">${m}월</span>
+              <span class="mi-month">${yearTag}${m}월</span>
               ${mi.ganzi ? `<span class="mi-ganzi">${txt(mi.ganzi)}</span>` : ''}
               ${mi.label ? `<span class="mi-label">${txt(mi.label)}</span>` : ''}
             </div>
@@ -723,7 +726,7 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
 <div class="section">
   ${sectionHead(6, '연운', '年運', `${now.year}년 ${yearGzKo}(${yearGz}) 해의 흐름`)}
   ${secYearly ? `<div class="body-text">${paragraphs(secYearly)}</div>` : ''}
-  ${monthlyHtml ? subBlock('12개월 흐름', monthlyHtml) : ''}
+  ${monthlyHtml ? subBlock(monthlyInsight.some((mi: any) => Number(mi?.year) > 2000) ? `앞으로 ${monthlyInsight.length}개월 흐름` : '12개월 흐름', monthlyHtml) : ''}
   ${warningsHtml ? subBlock('시기별 주의', warningsHtml) : ''}
   ${conclusionBox(conclusion('yearly', 5))}
 </div>`);

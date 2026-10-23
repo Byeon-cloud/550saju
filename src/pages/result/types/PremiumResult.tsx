@@ -1054,7 +1054,7 @@ function Section2Conclusion({
   if (aiText && aiText.length >= 30) {
     return <SectionConclusion label="이 장에서 챙길 것">{aiText}</SectionConclusion>;
   }
-  // sipsung 분포 기반 ① ② ③
+  // sipsung 분포 기반 세 문단 (2026-10-23 원문자 제거)
   const dayOh = (sajuData.pillars[2]?.천간오행 ?? '토') as OhengType;
   const SS: Record<OhengType, OhengType> = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
   const SG: Record<OhengType, OhengType> = { 목: '토', 화: '금', 토: '수', 금: '목', 수: '화' };
@@ -1080,9 +1080,9 @@ function Section2Conclusion({
   };
   const isStrong = ['甲', '丙', '戊', '庚', '壬'].includes(ilgan);
   const html =
-    `<p><span class="sc-num">①</span> ${TOP_DESC[top[0]]}</p>` +
-    `<p><span class="sc-num">②</span> ${userName} 님은 일간 <strong>${ilgan}</strong>의 ${isStrong ? '양적과 외향' : '음적과 내향'} 흐름을 평생 따라갑니다. <strong>본인 기질을 거스르는 자리에 오래 두지 마세요</strong>.</p>` +
-    `<p><span class="sc-num">③</span> 천간(마음)과 지지(행동)의 짜임이 <strong>${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '일치' : '미세하게 어긋'}</strong>합니다. ${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '본인 결과 행동이 자연스럽게 맞물리는 강점.' : '"보여지는 모습과 실제 행동이 다르다"는 흐름이 있어, 자기 일치도를 의식적으로 점검하세요.'}</p>`;
+    `<p>${TOP_DESC[top[0]]}</p>` +
+    `<p>${userName} 님은 일간 <strong>${ilgan}</strong>의 ${isStrong ? '양적과 외향' : '음적과 내향'} 흐름을 평생 따라갑니다. <strong>본인 기질을 거스르는 자리에 오래 두지 마세요</strong>.</p>` +
+    `<p>천간(마음)과 지지(행동)의 짜임이 <strong>${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '일치' : '미세하게 어긋'}</strong>합니다. ${sajuData.pillars[2]?.천간오행 === sajuData.pillars[2]?.지지오행 ? '본인 결과 행동이 자연스럽게 맞물리는 강점.' : '"보여지는 모습과 실제 행동이 다르다"는 흐름이 있어, 자기 일치도를 의식적으로 점검하세요.'}</p>`;
   return (
     <div className="section-conclusion">
       <div className="sc-label">이 장에서 챙길 것</div>
@@ -1100,7 +1100,7 @@ function Section3Conclusion({
   if (aiText && aiText.length >= 30) {
     return <SectionConclusion label={`한 줄로 ${userName} 님은`}>{aiText}</SectionConclusion>;
   }
-  // fallback — sipDist 기반 동적 한 줄 (① ② ③ 패턴으로 SectionConclusion 에 위임)
+  // fallback — sipDist 기반 동적 줄 (줄바꿈으로 나눠 SectionConclusion 에 위임, 2026-10-23 원문자 제거)
   const sorted = (Object.entries(sipDist) as [keyof SipDist, number][]).sort((a, b) => b[1] - a[1]);
   const top = sorted[0][0];
   const total = sorted.reduce((a, b) => a + b[1], 0) || 1;
@@ -1112,14 +1112,14 @@ function Section3Conclusion({
     관성: '"책임과 평가를 받쳐주는 사람"',
     인성: '"받아들이고 익히는 사람"',
   };
-  // ① ② ③ 패턴으로 묶음 → SectionConclusion 의 numSplit 분기에서 동일 디자인 렌더
+  // 줄바꿈으로 묶음 → SectionConclusion 의 numSplit 분기에서 번호 없는 문단으로 렌더
   const text = [
-    `① <strong>${ONE_LINE[top]}</strong>, 본인이 <strong>${top}(${pct(top)}%)이 가장 두꺼운 기질</strong>. 이 장점을 살리는 자리에 가야 본인이 살아납니다.`,
+    `<strong>${ONE_LINE[top]}</strong>, 본인이 <strong>${top}(${pct(top)}%)이 가장 두꺼운 기질</strong>. 이 장점을 살리는 자리에 가야 본인이 살아납니다.`,
     sipDist.식상 >= 2 && sipDist.관성 >= 1
-      ? `② 직장 안에서 답답하다면, 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>혼자 맡는 일과 사업</strong> 쪽이 사주에 더 맞아요.`
-      : `② ${userName} 님 사주는 한쪽으로 치우치지 않은 <strong>균형 잡힌 흐름</strong>. 어느 자리에서도 적응하지만 본인 결정 권한을 의식적으로 잡아두세요.`,
+      ? `직장 안에서 답답하다면, 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>혼자 맡는 일과 사업</strong> 쪽이 사주에 더 맞아요.`
+      : `${userName} 님 사주는 한쪽으로 치우치지 않은 <strong>균형 잡힌 흐름</strong>. 어느 자리에서도 적응하지만 본인 결정 권한을 의식적으로 잡아두세요.`,
     sipDist.비겁 >= 2 && sipDist.재성 >= 1
-      ? `③ 돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong>, 동업과 지인 투자는 사주에 박힌 취약점입니다.`
+      ? `돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong>, 동업과 지인 투자는 사주에 박힌 취약점입니다.`
       : ''
   ].filter(Boolean).join('\n');
   return <SectionConclusion label={`한 줄로 ${userName} 님은`}>{text}</SectionConclusion>;
@@ -1948,23 +1948,30 @@ function readTopicBaseScores(aiResult: any): TopicBaseScores | null {
   return Object.keys(out).length >= 3 ? out : null;
 }
 
-/** §09 영역 키(AI topicMini·scores 키) → 이어지는 판매 주제. 인간관계는 판매 주제 없음 → 표시만. */
+/** §09 영역 키(AI topicMini·scores 키) → 이어지는 판매 주제. 인간관계는 판매 주제 없음 → 표시만.
+ *  2026-10-23 (1.6.3 P1-7) — 잠재력(potential)의 학업운(study) 연결을 뗐다. 화면은 공부운 41점을 보이는데 본문 topicMini.potential 은
+ *  재능 86점에 맞춰 '크게 피어납니다'라고 칭찬했다. 잠재력은 이제 본문과 같은 AI 점수를 보이고 주제 페이지로 잇지 않는다.
+ *  ⚠️ 서버 claudePremium AREA_FIXED_TOPIC(영역 점수 확정값)과 같은 짝으로 바꾼다. */
 const AREA_TOPIC: Record<string, TopicId | undefined> = {
   wealth: 'wealth',
   love: 'love',
   career: 'career',
   health: 'health',
   social: undefined,
-  potential: 'study',
+  potential: undefined,
 };
 
-/** 영역 점수 — 주제 페이지로 이어지는 영역은 topicBaseScores 우선 (§09·사주대화 예시 질문이 같은 점수를 말하도록). */
-function resolveAreaScores(scores: Record<string, number>, base: TopicBaseScores | null): Record<string, number> {
+/** 영역 점수 — 주제 페이지로 이어지는 영역은 topicBaseScores 우선 (§09·사주대화 예시 질문이 같은 점수를 말하도록).
+ *  2026-10-23 — 나머지 영역(인간관계, 잠재력, 주제 점수가 없는 건강)은 AI scores 를 그대로 (본문 topicMini 가 그 점수에 맞춰 쓰였다).
+ *  예전엔 computeTopicScores 가 여섯 점수 중 하나라도 40 미만이면 여섯 다 공식 점수로 바꿔 본문과 어긋났다. */
+function resolveAreaScores(scores: Record<string, number>, base: TopicBaseScores | null, aiScores?: Record<string, unknown> | null): Record<string, number> {
   if (!base) return scores;
   const out: Record<string, number> = { ...scores };
   for (const [area, topicId] of Object.entries(AREA_TOPIC)) {
     const v = topicId ? base[topicId] : undefined;
+    const ai = Number(aiScores?.[area]);
     if (typeof v === 'number') out[area] = v;
+    else if (Number.isFinite(ai) && ai > 0 && ai <= 100) out[area] = Math.round(ai);
   }
   return out;
 }
@@ -1996,7 +2003,7 @@ function pickTopRecommendations(scores: Record<string, number>, base: TopicBaseS
     for (const it of skipped) { if (picked.length >= 3) break; picked.push(it); }
     return picked;
   }
-  // 구 리포트 폴백 — 기존 5영역 (potential → 학업운)
+  // 구 리포트 폴백 — 판매 주제로 이어지는 영역만 (2026-10-23 잠재력은 학업운 연결을 뗌)
   return (Object.entries(scores) as Array<[string, number]>)
     .filter(([k, v]) => AREA_TOPIC[k] && Number(v) > 0)
     .sort((a, b) => b[1] - a[1])
@@ -2670,7 +2677,7 @@ export function PremiumResult({
   const sipDist = buildSipDist(sajuData);
   // 2026-09-17 C-2 — 서버 주제 점수(주제 페이지와 동일) · 영역 표시 점수 · B-3 리포트 주인 프로필
   const topicBaseScores = readTopicBaseScores(aiResult);
-  const areaScores = resolveAreaScores(scores, topicBaseScores);
+  const areaScores = resolveAreaScores(scores, topicBaseScores, aiResult?.scores);
   const reportProfile = React.useMemo(
     () => resolveReportProfile(report, sajuData),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3137,7 +3144,7 @@ export function PremiumResult({
           2026-05-05 6 카드 복원 (잠재력·인간관계 추가) → 제목 "주제별 한눈에" → "여섯 영역 한눈에"
           ═════════════ */}
       <LocalFadeIn delay={50}>
-        <CollapsibleSection step={9} pending={pendingOf('C')} title="여섯 영역 한눈에" hanja="主題" hint="재물, 사랑, 직업, 건강, 인간관계, 학업잠재력, 강과 약 점수와 주제별 깊이 보기">
+        <CollapsibleSection step={9} pending={pendingOf('C')} title="여섯 영역 한눈에" hanja="主題" hint="재물, 사랑, 직업, 건강, 인간관계, 잠재력, 강과 약 점수와 주제별 깊이 보기">
           {/* Stage 2C-2#6: 여섯 영역 점수 topic-mini grid (mockup topic-mini 진본) */}
           <TopicMiniGrid scores={areaScores} aiTopics={aiResult.topicMini} sipDist={sipDist} dayGan={sajuData?.pillars?.[2]?.천간 as string | undefined} profileId={reportProfile.profileId} />
           {conclusionAt(8) && (
@@ -3755,6 +3762,23 @@ function realMonthGanzi(y: number, m: number): string {
   try { const ec = Solar.fromYmd(y, m, 15).getLunar().getEightChar(); return ec.getMonthGan() + ec.getMonthZhi(); } catch { return ''; }
 }
 
+/** 2026-10-23 (1.6.3 P1-7) — 서버가 '이번 달부터 앞으로 6개월'로 보낸 달 칸 (칸마다 year 가 있다). 날짜순.
+ *  옛 결과(1~12월 12칸, year 없음)는 null → 예전 1~12월 그리기 그대로. */
+function upcomingInsight(aiResult: any): Array<{ y: number; m: number; item: any }> | null {
+  const arr = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : null;
+  if (!arr || !arr.length) return null;
+  const rows = arr
+    .map((it: any) => ({ y: Number(it?.year), m: Number(it?.month), item: it }))
+    .filter((r: { y: number; m: number }) => Number.isInteger(r.y) && r.y > 2000 && Number.isInteger(r.m) && r.m >= 1 && r.m <= 12);
+  if (rows.length !== arr.length) return null;
+  return rows.sort((a: { y: number; m: number }, b: { y: number; m: number }) => a.y * 12 + a.m - (b.y * 12 + b.m));
+}
+/** 신년운세 대상 연도 (서버 claudeTojung.tojungTargetYear 와 같은 규칙: 10월부터 내년) */
+function newYearTargetOfToday(): number {
+  const d = new Date();
+  return d.getMonth() + 1 >= 10 ? d.getFullYear() + 1 : d.getFullYear();
+}
+
 /**
  * YeonunLineChart — §06 mockup yeonun-chart 진본
  *  · 12개월 활력 지수 SVG line + area + now/peak markers
@@ -3767,9 +3791,17 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
   // 12개월 모두 강제 — AI 데이터 비어도 사주 기반 fallback
   const scores: Array<{ m: number; s: number; label?: string }> = [];
   const LABEL_TO_SCORE: Record<string, number> = { 정점: 92, 상승: 78, 지금: 70, 평탄: 60, 주의: 38 };
+  // 2026-10-23 — 새 결과는 이번 달부터 6개월 (서버 판정표 점수 score 를 그대로 그림, 1.6.3 P1-7)
+  const up = upcomingInsight(aiResult);
 
   // AI 우선
-  if (insight && insight.length > 0) {
+  if (up) {
+    for (const r of up) {
+      const label = String(r.item?.label ?? '평탄').trim();
+      const sc = Number(r.item?.score);
+      scores.push({ m: r.m, s: Number.isFinite(sc) && sc > 0 ? Math.round(sc) : (LABEL_TO_SCORE[label] ?? 60), label });
+    }
+  } else if (insight && insight.length > 0) {
     for (let m = 1; m <= 12; m++) {
       const item = insight.find((i: any) => Number(i?.month) === m);
       if (item) {
@@ -3797,6 +3829,7 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
   };
   const lineYear = new Date().getFullYear();
   for (let m = 1; m <= 12; m++) {
+    if (up) break; // 새 결과는 서버가 보낸 달만 (빈 달을 공식 점수로 채우지 않음)
     if (scores.find((s) => s.m === m)) continue;
     const monthZhi = realMonthGanzi(lineYear, m).slice(1) || MONTH_ZHI[(m - 1) % 12]; // 2026-10-04 실제 월지
     const monthOh = HAN_OH[monthZhi];
@@ -3809,8 +3842,8 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
     else if (SG[monthOh] === dayOheng) { score = 50; label = '평탄'; }
     scores.push({ m, s: score, label });
   }
-  scores.sort((a, b) => a.m - b.m);
-  if (scores.length < 12) return null;
+  if (!up) scores.sort((a, b) => a.m - b.m); // 새 결과는 해를 넘기므로 서버 순서(날짜순) 그대로
+  if (up ? scores.length < 2 : scores.length < 12) return null;
 
   const W = 320, H = 140, PAD_X = 12, TOP = 24, BOT = 100;
   const xOf = (i: number) => PAD_X + (i / Math.max(1, scores.length - 1)) * (W - PAD_X * 2);
@@ -3838,9 +3871,9 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
           justifyContent: 'space-between',
         }}
       >
-        <span>월별 흐름: 1~12월 활력 지수</span>
+        <span>{up ? `앞으로 ${scores.length}개월 흐름` : '월별 흐름: 1~12월 활력 지수'}</span>
         <span style={{ fontSize: 13, color: C.mute, fontWeight: 500 }}>
-          평탄 60 / 상승 75+ / 정점 90+ / 주의 40-
+          {up ? '높을수록 움직이기 좋은 달' : '평탄 60 / 상승 75+ / 정점 90+ / 주의 40-'}
         </span>
       </div>
       <div
@@ -3938,7 +3971,7 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
               pointerEvents: 'none',
             }}
           >
-            {p.m}
+            {up ? `${p.m}월` : p.m}
           </span>
         ))}
         </div>
@@ -4202,10 +4235,12 @@ function SectionConclusion({
   label?: string;
   children: ReactNode;
 }) {
-  // children 이 string 인 경우 — 줄바꿈/번호 패턴 자동 인식 + sc-num 적용 (mockup 진본 형식)
+  // children 이 string 인 경우 — 줄바꿈/화살표 패턴 자동 인식 (mockup 진본 형식)
+  // 2026-10-23 (1.6.3 P1-7) — 원문자 ①②③④ 를 지우고 렌더한다. 줄마다 번호가 붙은 결론 상자가 슬라이드 요약처럼 보였다(점검 7-1 #7).
+  //   옛 결과의 원문자도 같이 지운다. 줄바꿈으로 나뉜 줄은 번호 없는 문단으로.
   if (typeof children === 'string') {
-    const text = children.trim();
-    // ①②③ 또는 줄바꿈 + → 패턴 split
+    const text = children.trim().replace(/[①-⑳]\s*/g, '').trim();
+    // 줄바꿈 + → 패턴 split
     const arrowSplit = text.split(/\n\s*→\s*/).map((s) => s.trim()).filter(Boolean);
     const numSplit = text.split(/\n+/).map((s) => s.trim()).filter(Boolean);
     if (arrowSplit.length >= 2) {
@@ -4224,20 +4259,13 @@ function SectionConclusion({
       );
     }
     if (numSplit.length >= 2) {
-      // ① ② ③ 패턴 (mockup §2 결론)
+      // 여러 줄 — 번호 없이 문단으로 (2026-10-23 원문자 제거)
       return (
         <div className="section-conclusion">
           <div className="sc-label">{label}</div>
-          {numSplit.map((s, i) => {
-            const nums = ['①', '②', '③', '④', '⑤'];
-            const stripped = s.replace(/^[①②③④⑤]\s*/, '');
-            return (
-              <p key={i}>
-                <span className="sc-num">{nums[i] || ', '}</span>
-                <span dangerouslySetInnerHTML={{ __html: stripped }} />
-              </p>
-            );
-          })}
+          {numSplit.map((s, i) => (
+            <p key={i} dangerouslySetInnerHTML={{ __html: s }} />
+          ))}
         </div>
       );
     }
@@ -5050,7 +5078,7 @@ function YearlyForecast({
   const baseText =
     typeof aiYearly === 'string' && aiYearly.length > 0
       ? sanitizeAiText(autoEmphasize(aiYearly))
-      : `올해 ${thisYear}년은 ${yearKr}(${yearGz}) 해입니다. ${EHAN[OHENG_TO_ELEM[dayOheng]]}(${EKR[OHENG_TO_ELEM[dayOheng]]}) 일간을 기준으로 한 흐름이 12개월에 걸쳐 어떻게 작동하는지 아래에서 한 달씩 따라가세요.`;
+      : `올해 ${thisYear}년은 ${yearKr}(${yearGz}) 해입니다. ${EHAN[OHENG_TO_ELEM[dayOheng]]}(${EKR[OHENG_TO_ELEM[dayOheng]]}) 일간을 기준으로 한 흐름이 달마다 어떻게 작동하는지 아래에서 한 달씩 따라가세요.`;
   void dayOheng;
 
   return (
@@ -7155,11 +7183,16 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
   // monthlyInsight (label) 우선, fallback monthlyFortune (score), 둘 다 없을 때 12달 자동 fallback
   const insight = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : null;
   const fortune = Array.isArray(aiResult?.monthlyFortune) ? aiResult.monthlyFortune : null;
-  type Cell = { month: number; ganzi: string; text: string; tag: string; cls: '' | 'up' | 'peak' | 'warn' | 'now' };
-  // 12개월 빈 셀 시작
-  const cells: Cell[] = Array.from({ length: 12 }, (_, i) => ({
-    month: i + 1, ganzi: '', text: '', tag: '', cls: '' as Cell['cls'],
-  }));
+  const navigate = useNavigate();
+  // 2026-10-23 (1.6.3 P1-7) — 새 결과는 이번 달부터 앞으로 6개월 (year 있음). 옛 결과는 예전처럼 1~12월 12칸
+  const up = upcomingInsight(aiResult);
+  type Cell = { month: number; year?: number; ganzi: string; text: string; tag: string; cls: '' | 'up' | 'peak' | 'warn' | 'now' };
+  // 12개월(옛 결과) 또는 서버가 보낸 달(새 결과) 빈 셀 시작
+  const cells: Cell[] = up
+    ? up.map((r) => ({ month: r.m, year: r.y, ganzi: String(r.item?.ganzi || '') || realMonthGanzi(r.y, r.m), text: '', tag: '', cls: '' as Cell['cls'] }))
+    : Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1, ganzi: '', text: '', tag: '', cls: '' as Cell['cls'],
+    }));
   // 60갑자 — 올해 + 월 간지
   const SIXTY = ['甲子','乙丑','丙寅','丁卯','戊辰','己巳','庚午','辛未','壬申','癸酉','甲戌','乙亥','丙子','丁丑','戊寅','己卯','庚辰','辛巳','壬午','癸未','甲申','乙酉','丙戌','丁亥','戊子','己丑','庚寅','辛卯','壬辰','癸巳','甲午','乙未','丙申','丁酉','戊戌','己亥','庚子','辛丑','壬寅','癸卯','甲辰','乙巳','丙午','丁未','戊申','己酉','庚戌','辛亥','壬子','癸丑','甲寅','乙卯','丙辰','丁巳','戊午','己未','庚申','辛酉','壬戌','癸亥'];
   const thisYear = new Date().getFullYear();
@@ -7176,6 +7209,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
   // 2026-10-04 — '양력 1월=寅월' 단순화가 한 칸씩 밀려 있었음 (실제 1월=丑월, 寅월은 입춘 이후 2월).
   //   만세력(lunar) 실값 사용 — 실패 시에만 기존 근사치.
   for (let m = 1; m <= 12; m++) {
+    if (up) break; // 새 결과는 칸마다 서버 월주
     const real = realMonthGanzi(thisYear, m);
     if (real) { cells[m - 1].ganzi = real; continue; }
     const monthIdx = (m - 1) % 12;
@@ -7183,7 +7217,14 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
     cells[m - 1].ganzi = ALL_GAN[ganIdx] + MONTH_ZHI[monthIdx];
   }
   // AI insight 적용
-  if (insight) {
+  if (up) {
+    up.forEach((r, i) => {
+      const cell = cells[i];
+      const label = String(r.item?.label ?? '').trim();
+      cell.cls = label === '정점' ? 'peak' : label === '주의' ? 'warn' : label === '상승' ? 'up' : label === '지금' ? 'now' : '';
+      if (r.item?.text) cell.text = stripMd(String(r.item.text));
+    });
+  } else if (insight) {
     for (const item of insight) {
       const m = Number(item?.month) || 0;
       if (m < 1 || m > 12) continue;
@@ -7358,9 +7399,14 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
   const BADGE_TEXT: Record<string, string> = {
     peak: '정점', up: '상승', warn: '주의', now: '지금', // 2026-10-15 영문 'NOW' → '지금'
   };
+  // 새 결과: 해가 바뀌는 첫 칸에만 연도를 붙인다 (10월, 11월, 12월, 2027년 1월, 2월, 3월)
+  const monthHead = (c: Cell, i: number) =>
+    `${up && c.year && i > 0 && cells[i - 1].year !== c.year ? `${c.year}년 ` : ''}${c.month}월`;
+  const nyTarget = newYearTargetOfToday();
   return (
+    <>
     <div className="month-insight-grid">
-      {cells.map((c) => {
+      {cells.map((c, i) => {
         const ganHan = c.ganzi.charAt(0);
         const jiHan = c.ganzi.charAt(1);
         const ganKr: Record<string, string> = {
@@ -7375,7 +7421,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
         return (
           <div key={c.month} className={`mi${c.cls ? ' ' + c.cls : ''}`}>
             <div className="mi-head">
-              <span className="mi-month">{c.month}월</span>
+              <span className="mi-month">{monthHead(c, i)}</span>
               <span className="mi-ganzi">{c.ganzi}{ganziKr ? ` (${ganziKr})` : ''}</span>
               {c.cls && BADGE_TEXT[c.cls] && (
                 <span className="mi-badge">{BADGE_TEXT[c.cls]}</span>
@@ -7387,6 +7433,19 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
         );
       })}
     </div>
+    {/* 2026-10-23 — 여섯 달 뒤는 신년운세로 (1.6.3 P1-7, 점검 7-1 #3) */}
+    {up && (
+      <p style={{ fontSize: 14, lineHeight: 1.6, color: C.mute, margin: '10px 2px 4px' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/tojung')}
+          style={{ background: 'none', border: 0, padding: 0, font: 'inherit', color: C.goldDeep, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}
+        >
+          {nyTarget}년 열두 달은 신년운세에서 날짜까지 봐요
+        </button>
+      </p>
+    )}
+    </>
   );
 }
 
@@ -7417,7 +7476,7 @@ function TopicMiniGrid({
    *   social·potential 키 → score 0 필터로 2칸 증발 + AI 인간관계·잠재력 풀이가 버려짐.
    *   수정: 카드 키 = AI/점수 키 6개(제목·힌트 "재물·사랑·직업·건강·인간관계·잠재력"과 일치).
    *   판매 주제로 이어지는 영역만 클릭·가격 CTA — 인간관계는 판매 주제가 없어 카드 안 표시만
-   *   (AI 스키마 '외부 라우팅 X' 와 일치). 잠재력은 학업운으로 이어짐(점수도 학업운 기준 · resolveAreaScores). */
+   *   (AI 스키마 '외부 라우팅 X' 와 일치). 2026-10-23 — 잠재력도 표시만(학업운 연결 뗌, 점수는 본문과 같은 AI 점수 · resolveAreaScores). */
   type AreaMeta = { key: string; label: string };
   const topics: AreaMeta[] = [
     { key: 'wealth',    label: '재물' },
@@ -7425,7 +7484,7 @@ function TopicMiniGrid({
     { key: 'career',    label: '직업' },
     { key: 'health',    label: '건강' },
     { key: 'social',    label: '인간관계' },
-    { key: 'potential', label: '학업과 잠재력' },
+    { key: 'potential', label: '잠재력' }, // 2026-10-23 학업운 연결을 떼어 '학업과' 를 뺌 (1.6.3 P1-7)
   ];
 
   // 2026-05-05 6 카드 → 2-col grid 균일 (마지막 .full 카드 제거)

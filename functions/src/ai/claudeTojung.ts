@@ -5,7 +5,8 @@ import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
 import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
 import { kstNow, kstNowDate } from '../utils/kstTime';
 import { Solar } from 'lunar-javascript';
-import { ganziRoleText, ganziKo, gwiinFactsText, sanitizeAiOutput, dayPicksForYear, monthBaseScore, natalRelations, natalRelationsText, lifeTimelineFactsText, sajuCoreFactsText } from './sajuFacts';
+import { ganziRoleText, ganziKo, gwiinFactsText, sanitizeAiOutput, dayPicksForYear, monthBaseScore, natalRelations, natalRelationsText, lifeTimelineFactsText, sajuCoreFactsText, monthVerdictRow, monthVerdictTableText } from './sajuFacts';
+import type { MonthVerdictRow } from './sajuFacts';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
 
 /* 2026-10-07 — '토정비결' → '신년운세' 재출시.
@@ -28,16 +29,43 @@ function yearPillar(y: number): string {
  *   전엔 fourBox 의 좋은 달(1, 6, 7, 8월)과 조심할 달, 금전운의 좋은 달, 달 점수(10월 81 > 1월 77)가 서로 어긋났다.
  *   달 기준점수 순서(같으면 앞 달)로 고르고, finishMonths 가 최종 점수도 이 순서를 지키게 묶는다
  *   → 제목, 네 칸, 달 카드 점수가 처음 보이는 순간부터 같은 달을 가리킨다. 기준점수가 너무 평평하면(ok=false) 묶지 않는다. */
-type MonthRank = { base: Record<number, number>; good: number[]; caution: number[]; gMin: number; cMax: number; ok: boolean };
+/* 2026-10-23 — 달별 판정표(sajuFacts.monthVerdictRow, 1.6.3 P1-8)로 고른다. 종합사주와 같은 표라 두 상품의 좋은 달과 조심할 달이 같은 근거를 쓴다.
+ *   좋은 달 = '결정해도 됨'인 달 가운데 점수 높은 순 셋까지, 조심할 달 = '서명 피함'인 달 가운데 점수 낮은 순 셋까지.
+ *   달 점수(base)도 판정표 점수(monthBaseScore + 합충형 가감)라 화면의 달 점수 순서가 판정과 같은 쪽을 가리킨다.
+ *   결정해도 되는 달이 한 해에 하나도 없으면 서명 피함이 아닌 달 가운데 점수 높은 둘(goodIsDecide=false, 계약을 붙이지 않는다).
+ *   용신이 없는 옛 사주 데이터(hasTable=false)는 10-22 방식(달 기준점수 상위 셋, 하위 둘) 그대로. */
+type MonthRank = {
+  base: Record<number, number>; good: number[]; caution: number[]; gMin: number; cMax: number; ok: boolean;
+  rows: Record<number, MonthVerdictRow | null>; hasTable: boolean; firstDecide: number | null; goodIsDecide: boolean;
+};
 function planMonthRank(ty: number, d: any): MonthRank {
+  const rows: Record<number, MonthVerdictRow | null> = {};
+  for (let m = 1; m <= 12; m++) rows[m] = monthVerdictRow(ty, m, d);
+  const hasTable = Object.values(rows).every((r) => !!r);
   const base: Record<number, number> = {};
-  for (let m = 1; m <= 12; m++) { const gz = monthPillar(ty, m); base[m] = gz ? monthBaseScore(gz, d) : 66; }
+  for (let m = 1; m <= 12; m++) { const gz = monthPillar(ty, m); base[m] = hasTable ? rows[m]!.score : gz ? monthBaseScore(gz, d) : 66; }
   const all = Array.from({ length: 12 }, (_, i) => i + 1);
-  const good = [...all].sort((a, b) => base[b] - base[a] || a - b).slice(0, 3);
-  const caution = all.filter((m) => !good.includes(m)).sort((a, b) => base[a] - base[b] || a - b).slice(0, 2);
+  const byHigh = (a: number, b: number) => base[b] - base[a] || a - b;
+  const byLow = (a: number, b: number) => base[a] - base[b] || a - b;
+  let good: number[]; let caution: number[]; let goodIsDecide = true;
+  if (hasTable) {
+    const decide = all.filter((m) => rows[m]!.action === '결정해도 됨');
+    if (decide.length) good = [...decide].sort(byHigh).slice(0, 3);
+    else { goodIsDecide = false; good = all.filter((m) => rows[m]!.action !== '서명 피함').sort(byHigh).slice(0, 2); }
+    if (!good.length) good = [...all].sort(byHigh).slice(0, 1);
+    const avoid = all.filter((m) => rows[m]!.action === '서명 피함' && !good.includes(m));
+    caution = avoid.length ? [...avoid].sort(byLow).slice(0, 3) : all.filter((m) => !good.includes(m)).sort(byLow).slice(0, 1);
+  } else {
+    good = [...all].sort(byHigh).slice(0, 3);
+    caution = all.filter((m) => !good.includes(m)).sort(byLow).slice(0, 2);
+  }
   const gMin = Math.min(...good.map((m) => base[m]));
   const cMax = Math.max(...caution.map((m) => base[m]));
-  return { base, good: good.sort((a, b) => a - b), caution: caution.sort((a, b) => a - b), gMin, cMax, ok: gMin - cMax >= 2 };
+  const firstDecide = hasTable ? (all.find((m) => rows[m]!.action === '결정해도 됨') ?? null) : null;
+  return {
+    base, good: good.sort((a, b) => a - b), caution: caution.sort((a, b) => a - b), gMin, cMax, ok: gMin - cMax >= 2,
+    rows, hasTable, firstDecide, goodIsDecide,
+  };
 }
 /** 최종 달 점수로 좋은 달(상위 3), 조심할 달(하위 2) — 같은 점수면 기준점수 높은 달, 그다음 앞 달 */
 function rankFromScores(ms: any[], rank: MonthRank): { good: number[]; caution: number[] } {
@@ -49,7 +77,7 @@ function rankFromScores(ms: any[], rank: MonthRank): { good: number[]; caution: 
 }
 /* 2026-10-22 — 네 칸 desc 에 명리 용어, 한자, 달 숫자가 들어오면 서버 문장으로 바꾼다(점검 P0-6, 8-1 #3: 50대는 네 칸만 읽고 나간다) */
 const FOURBOX_BANNED = /용신|희신|기신|구신|한신|비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인|비겁|식상|재성|관성|인성|십성|신약|신강|천간|지지|기운|[一-鿿]|\d{1,2}\s*월/;
-function fixFourBox(raw: any, sel: { good: number[]; caution: number[] }): any[] {
+function fixFourBox(raw: any, sel: { good: number[]; caution: number[] }, goodIsDecide = true): any[] {
   const list: any[] = Array.isArray(raw) ? raw : [];
   const find = (re: RegExp) => list.find((x: any) => re.test(String(x?.head || '')));
   const clean = (s: any, fallback: string, tag: string): string => {
@@ -72,7 +100,7 @@ function fixFourBox(raw: any, sel: { good: number[]; caution: number[] }): any[]
   return [
     half(1, 6, '상반기', /상반기/),
     half(7, 12, '하반기', /하반기/),
-    { head: '좋은 달', value: `${sel.good.join(', ')}월`, desc: clean(g?.desc, '계약과 큰 결정은 이 달들에 잡아 보세요', '좋은 달 desc') },
+    { head: '좋은 달', value: `${sel.good.join(', ')}월`, desc: clean(g?.desc, goodIsDecide ? '계약과 큰 결정은 이 달들에 잡아 보세요' : '준비해 둔 일을 하나씩 꺼내기 좋아요', '좋은 달 desc') },
     { head: '조심할 달', value: `${sel.caution.join(', ')}월`, desc: clean(c?.desc, '큰 지출과 서명은 좋은 달로 미뤄요', '조심할 달 desc') },
   ];
 }
@@ -84,7 +112,8 @@ function markWeekend(label: string): string {
 function countWeekendDeals(ty: number, ms: any[]): number {
   let n = 0;
   for (const m of ms) {
-    const text = [m?.현대해석, m?.todo, m?.avoid].map((x) => String(x || '')).join(' ');
+    // 2026-10-23 — 칸 사이를 마침표로 끊는다. todo 가 마침표 없이 끝나 avoid 의 주말 날짜를 계약 문장으로 세던 오탐(서윤 실측 5건 모두 오탐)
+    const text = [m?.현대해석, m?.todo, m?.avoid].map((x) => String(x || '')).join('. ');
     for (const sent of text.split(/[.!?]\s*/)) {
       if (!/계약|면접|결재|서명/.test(sent)) continue;
       const re = /(\d{1,2})\s*(?:월\s*|\/)(\d{1,2})\s*일?/g;
@@ -94,6 +123,21 @@ function countWeekendDeals(ty: number, ms: any[]): number {
         if (wd === 0 || wd === 6) { n++; break; }
       }
     }
+  }
+  return n;
+}
+
+/** 2026-10-23 — 측정용 로그: 판정표가 '준비만', '서명 피함'인 달의 현대해석과 todo 에서 서명, 계약, 확정, 이사를 권한 문장 수(1.6.3 P1-8 측정) */
+const SIGN_WORD_RE = /서명|계약|확정|도장|이사 (?:결정|날짜|일정)/;
+const HOLD_WORD_RE = /미루|미뤄|피하|피해|하지 마|말고|넘기|넘겨|멈추|멈춰|삼가|보류|않/;
+function countUnreadySigning(ms: any[], rank: MonthRank): number {
+  if (!rank.hasTable) return 0;
+  let n = 0;
+  for (const m of ms) {
+    const row = rank.rows[Number(m?.month)];
+    if (!row || row.action === '결정해도 됨') continue;
+    const text = [m?.현대해석, m?.todo].map((x) => String(x || '')).join('. ');
+    for (const sent of text.split(/[.!?]\s*/)) if (SIGN_WORD_RE.test(sent) && !HOLD_WORD_RE.test(sent)) n++;
   }
   return n;
 }
@@ -165,7 +209,10 @@ export async function generateTojungBigyeol(
       if (gz) {
         m.괘 = `${gz}(${ganziKo(gz)})월`;
         m.괘의미 = ganziRoleText(gz, sajuData, '달');
-        const base = monthBaseScore(gz, sajuData);
+        // 2026-10-23 — 점수 기준은 판정표 점수(합충형 가감 포함, 1.6.3 P1-8). 판정과 행동 등급은 필드로 더한다(옛 화면은 읽지 않음)
+        const row = rank.rows[mm];
+        const base = rank.hasTable && row ? row.score : monthBaseScore(gz, sajuData);
+        if (rank.hasTable && row) { m.verdict = row.verdict; m.action = row.action; }
         const sc = Number(m.score);
         m.score = Number.isFinite(sc) ? Math.max(base - 6, Math.min(base + 6, Math.round(sc))) : base;
         // 2026-10-22 — 서버가 정한 좋은 달은 다른 달보다 높게, 조심할 달은 낮게 묶는다(점검 P0-6). 모든 경계가 기준점수 ±6 안이다
@@ -189,7 +236,7 @@ export async function generateTojungBigyeol(
   const head = (a: any, sel?: { good: number[]; caution: number[] }): any => {
     const h: any = { ...a, keyDates: picks.keyDates, targetYear: ty, schemaVersion: 2 };
     // 2026-10-22 — 네 칸의 좋은 달과 조심할 달 value 는 서버 값으로 덮어쓴다(점검 P0-6). A 먼저 보일 때는 미리 정한 달, 합칠 때는 최종 점수
-    h.fourBox = fixFourBox(a?.fourBox, sel || { good: rank.good, caution: rank.caution });
+    h.fourBox = fixFourBox(a?.fourBox, sel || { good: rank.good, caution: rank.caution }, rank.goodIsDecide);
     h.hexagram = {
       yearLabel: `${ty} ${ganziKo(ygz)}년, 신년운세`,
       glyph: ygz,
@@ -210,10 +257,13 @@ export async function generateTojungBigyeol(
 
   const months: any[] = finishMonths([...(b.months || []), ...(c.months || [])]);
   // 2026-10-22 — 합친 뒤 최종 달 점수로 좋은 달(상위 3), 조심할 달(하위 2)을 다시 정해 네 칸에 덮어쓴다(점검 P0-6)
-  const sel = rankFromScores(months, rank);
-  if (sel.good.join() !== rank.good.join() || sel.caution.join() !== rank.caution.join()) {
-    console.warn(`[newyear] 미리 정한 달과 최종 점수가 다름: 좋은 ${rank.good}→${sel.good}, 조심 ${rank.caution}→${sel.caution}`);
+  // 2026-10-23 — 판정표가 있으면 네 칸은 판정표가 정한 달 그대로(1.6.3 P1-8: 종합사주와 같은 달). 최종 점수 순위는 비교 로그로만
+  const byScore = rankFromScores(months, rank);
+  const sel = rank.hasTable ? { good: rank.good, caution: rank.caution } : byScore;
+  if (byScore.good.join() !== rank.good.join() || byScore.caution.join() !== rank.caution.join()) {
+    console.warn(`[newyear] 미리 정한 달과 최종 점수 순위가 다름: 좋은 ${rank.good}→${byScore.good}, 조심 ${rank.caution}→${byScore.caution}`);
   }
+  try { const bad = countUnreadySigning(months, rank); if (bad) console.warn(`[newyear] 준비만, 서명 피함 달에 서명, 계약, 확정, 이사를 권한 문장 ${bad}개`); } catch { /* 측정용 */ }
   try { const wk = countWeekendDeals(ty, months); if (wk) console.warn(`[newyear] 주말 날짜에 계약, 면접, 서명이 붙은 문장 ${wk}개`); } catch { /* 측정용 */ }
   const merged: any = { ...head(a, sel), months };
   return sanitizeAiOutput(merged);
@@ -223,23 +273,36 @@ export async function generateTojungBigyeol(
 function nyGroupInstruction(group: NyGroup, ty: number, rank: MonthRank): string {
   const goodStr = `${rank.good.join(', ')}월`;
   const cautionStr = `${rank.caution.join(', ')}월`;
+  // 2026-10-23 — 달별 판정표의 행동 등급(1.6.3 P1-8). 종합사주와 같은 표라 두 상품이 같은 달에 반대로 권하지 않는다
+  const actMonths = (a: string) => Array.from({ length: 12 }, (_, i) => i + 1).filter((m) => rank.rows[m]?.action === a);
+  const decideStr = rank.hasTable && actMonths('결정해도 됨').length ? `${actMonths('결정해도 됨').join(', ')}월` : '';
+  const holdStr = rank.hasTable && actMonths('준비만').length ? `${actMonths('준비만').join(', ')}월` : '';
+  const avoidStr = rank.hasTable && actMonths('서명 피함').length ? `${actMonths('서명 피함').join(', ')}월` : '';
+  const actionRule = rank.hasTable
+    ? `\n${ty}년 행동 등급(달별 판정표): 결정해도 되는 달 ${decideStr || '없음'}, 준비만 하는 달 ${holdStr || '없음'}, 서명 피하는 달 ${avoidStr || '없음'}. 계약, 서명, 확정, 이사 결정, 이직 확정, 결혼 날짜 잡기를 권하는 달과 날은 결정해도 되는 달 안에서만 고른다. 준비만 하는 달과 서명 피하는 달에는 이런 결정을 권하지 않고 알아보기, 비교, 상담, 정리를 할 일로 쓴다. 일을 미루라고 할 때 옮겨 갈 달은 결정해도 되는 달로 쓴다.`
+    : '';
   if (group === 'A') {
     // 2026-10-22 — headline 은 서버가 정한 좋은 달을 넣은 25~35자, fourBox desc 는 용어 없는 쉬운 말 20~30자(점검 P0-6)
+    // 2026-10-23 — headline 의 달은 결정해도 되는 첫 달(1.6.3 P1-8 '총운 한 줄 결론은 결정해도 되는 첫 달')
+    const headlineMonth = rank.firstDecide
+      ? `결정해도 되는 첫 달인 ${rank.firstDecide}월을 숫자로 넣고, 그달에 무엇을 정하거나 시작하면 좋은지 쓰고, '~해입니다'로 맺는다`
+      : `서버가 정한 좋은 달(${goodStr}) 가운데 한 달을 숫자로 넣고, 그달부터 무엇이 풀리는지 쓰고, '~해입니다'로 맺는다`;
+    const goodDesc = rank.goodIsDecide ? '이 달들에 무엇을 정하거나 시작하면 좋은지' : '이 달들에 무엇을 준비하고 정리하면 좋은지(계약, 서명은 붙이지 않는다)';
     return `## 이번 응답 = 그룹 A (한 해 총평) 만. months 는 출력하지 마세요 (다른 그룹이 씀).
 JSON 만 출력 (코드블록 없이):
 {
-  "headline": "${ty}년을 한 문장으로 (25~35자). 서버가 정한 좋은 달(${goodStr}) 가운데 한 달을 숫자로 넣고, 그달부터 무엇이 풀리는지 쓰고, '~해입니다'로 맺는다",
+  "headline": "${ty}년을 한 문장으로 (25~35자). ${headlineMonth}",
   "pullQuote": "기억에 남을 짧은 한마디 (20~30자)",
   "keywords": ["키워드1","키워드2","키워드3"],
   "fourBox": [
     {"head": "상반기", "value": "6자 내외 핵심 (쉬운 말)", "desc": "1~6월이 어떤지 20~30자, ~해요로 끝나는 쉬운 말"},
     {"head": "하반기", "value": "6자 내외 핵심 (쉬운 말)", "desc": "7~12월이 어떤지 20~30자, ~해요로 끝나는 쉬운 말"},
-    {"head": "좋은 달", "value": "${goodStr}", "desc": "이 달들에 무엇이 잘 되는지 20~30자, ~해요로 끝나는 쉬운 말"},
+    {"head": "좋은 달", "value": "${goodStr}", "desc": "${goodDesc} 20~30자, ~해요로 끝나는 쉬운 말"},
     {"head": "조심할 달", "value": "${cautionStr}", "desc": "이 달들에 무엇을 미루면 좋은지 20~30자, ~해요로 끝나는 쉬운 말"}
   ],
   "categoryScores": {"총운": 정수, "금전운": 정수, "건강운": 정수, "직장운": 정수, "애정운": 정수, "결혼운": 정수},
   "yearOverview": {
-    "총운": "400~500자, 첫 문장 결론 → 둘째 문장에서 확정표의 올해나 최근 석 달로 '지난 일 짚기' 한 번(그 흐름이 ${ty}년에 어떻게 바뀌는지로 잇는다) → 세운과 그 해 대운이 원국과 만나는 구조(근거 1~2개) → 상반기/하반기 흐름(구체 월) → 올해 가장 중요한 행동 1개",
+    "총운": "400~500자, 첫 문장 결론 → 둘째 문장에서 확정표의 올해나 최근 석 달로 '지난 일 짚기' 한 번(그 흐름이 ${ty}년에 어떻게 바뀌는지로 잇는다) → 세운과 그 해 대운이 원국과 만나는 구조(근거 1~2개) → 상반기/하반기 흐름(구체 월, 결정해도 되는 달과 준비만 하는 달을 갈라서) → 올해 가장 중요한 행동 1개${rank.firstDecide ? `. 첫 문장 결론에 달을 넣으면 결정해도 되는 첫 달 ${rank.firstDecide}월을 쓴다` : ''}",
     "금전운": "350~450자, 돈이 들어오고 나가는 구체 장면 + 좋은 달과 조심할 달(확정값) + 해야 할 것/피할 것",
     "건강운": "300~400자, 약해지기 쉬운 몸과 컨디션 패턴 + 조심할 달 + 생활 습관 1~2개 (의학적 진단 단정 금지)",
     "직장운": "350~450자, 일, 이직, 평가, 인간관계 장면 + 움직이기 좋은 달/버틸 달",
@@ -247,25 +310,30 @@ JSON 만 출력 (코드블록 없이):
     "결혼운": "300~400자, 결혼, 동거, 관계 진전 흐름, 조건과 시기로 쓴다"
   },
   "turningPoints": [
-    {"when": "예: 2~3월", "title": "15자 내외 (결정, 이동, 관계 중 하나)", "desc": "120~180자, 왜 이때인지(확정 월주 근거) + 무엇을 하면 좋은지"},
+    {"when": "예: 2~3월", "title": "15자 내외 (결정, 이동, 관계 중 하나)", "desc": "120~180자, 왜 이때인지(확정 월주 근거) + 무엇을 하면 좋은지. 결정과 이동을 권하는 전환점의 when 은 결정해도 되는 달로, 멈추고 미루는 전환점의 when 은 서명 피하는 달로"},
     {"when": "...", "title": "...", "desc": "..."},
     {"when": "...", "title": "...", "desc": "..."}
   ],
-  "luckyAdvice": "300~400자, 용신 기준 개운 습관 (색, 방위, 숫자는 상징으로 가볍게) + 꼭 기억할 날(확정값) 활용법"
+  "luckyAdvice": "300~400자, 용신 기준 개운 습관 (색, 방위, 숫자는 상징으로 가볍게) + 꼭 기억할 날(확정값) 활용법. 꼭 기억할 날 뒤에 '준비만'이나 '서명 피함'이 붙은 날은 계획, 상담, 정리, 만남에 쓰고 서명, 제출, 계약은 붙이지 않는다"
 }
 점수 규칙: 0~100 정수, 5의 배수만 반복 금지, 분야마다 다른 값.
 성별은 해석에만 반영 — '○○ 님은 여성이므로/남성이라' 같은 성별 설명 문장은 쓰지 말 것.
 네 칸(fourBox) 규칙: 50대 손님은 이 네 칸만 읽고 나가는 일이 많다. desc 에는 용신, 희신, 기신, 십성 이름(정관, 식신 같은 말), 신약, 신강, 천간, 지지, '기운', 한자, 달 숫자를 쓰지 않는다. 일, 돈, 사람, 몸에서 실제로 생기는 일로 쓴다. 말투 예: '서류와 계약이 술술 풀려요', '큰돈 나갈 일은 좋은 달로 미뤄요'. 좋은 달과 조심할 달의 value 는 위 값 그대로 쓴다(서버가 다시 맞춘다).
-총운과 분야별 풀이에서 '좋은 달', '가장 좋은 달'로 부르는 달은 ${goodStr}, '조심할 달'로 부르는 달은 ${cautionStr}뿐이다. 분야별로 다른 달을 말할 때는 그 달에 할 일로 쓴다.`;
+총운과 분야별 풀이에서 '좋은 달', '가장 좋은 달'로 부르는 달은 ${goodStr}, '조심할 달'로 부르는 달은 ${cautionStr}뿐이다. 분야별로 다른 달을 말할 때는 그 달에 할 일로 쓴다.${actionRule}`;
   }
   const range = group === 'B' ? [1, 6] : [7, 12];
   const monthsList = Array.from({ length: range[1] - range[0] + 1 }, (_, i) => range[0] + i).join(', ');
   // 2026-10-22 — 이 그룹에 든 좋은 달, 조심할 달(서버가 정함). 좋은 달 첫 문장은 좋은 일로(점검 P0-6, 7-2 #5: 86점 7월이 '무거운 책임'으로 시작했다)
   const gIn = rank.good.filter((m) => m >= range[0] && m <= range[1]);
   const cIn = rank.caution.filter((m) => m >= range[0] && m <= range[1]);
+  // 2026-10-23 — 이 그룹 달마다 행동 등급(달별 판정표, 1.6.3 P1-8). 날짜 예문의 '서명할 일이 있으면 이날로'는 결정해도 되는 달에만
+  const groupActs = rank.hasTable
+    ? Array.from({ length: range[1] - range[0] + 1 }, (_, i) => range[0] + i).map((m) => `${m}월 ${rank.rows[m]?.action || '준비만'}`).join(', ')
+    : '';
   const rankLine = [
     gIn.length ? `- 서버가 정한 좋은 달 가운데 이 그룹 달: ${gIn.join(', ')}월. 이 달들은 score 를 기준점수 이상으로 주고, 현대해석 첫 문장을 그달에 생길 좋은 일로 시작한다. 첫 문장에 '버티', '무거운', '부담', '잠그', '조심' 같은 말을 쓰지 않는다.` : '',
     cIn.length ? `- 서버가 정한 조심할 달 가운데 이 그룹 달: ${cIn.join(', ')}월. 이 달들은 score 를 기준점수 이하로 준다.` : '',
+    groupActs ? `- 이 그룹 달의 행동 등급: ${groupActs}. '결정해도 됨'인 달만 todo 와 현대해석에 계약, 서명, 확정, 이사 결정, 이직 확정, 결혼 날짜 잡기를 붙인다. '준비만'인 달은 그 달의 좋은 날에도 이런 결정을 붙이지 않고 알아보기, 비교, 상담, 정리를 할 일로 쓴다. '서명 피함'인 달은 avoid 에 서명과 계약을 미루는 일을 쓰고, 미룰 곳은 결정해도 되는 달(${decideStr || '다음 결정해도 되는 달'})로 쓴다.` : '',
   ].filter(Boolean).join('\n');
   // 2026-10-22 — 현대해석: 첫 문장은 장면, 세 요소 순서는 달마다 바꿈, 괄호 풀이 처음 한 번, '기운' 한 달 한 번, 보장 말 금지, 주말 규칙(점검 P0-6)
   //   사자성어 예에서 '고진감래'를 뺐다(점검 3-2: 명언식 맺음 금지 목록에 든다)
@@ -289,7 +357,7 @@ ${rankLine ? `${rankLine}\n` : ''}규칙:
 - 달마다 같은 틀로 맺지 않는다. 날짜 두 개를 '~하세요', '~마세요'로 나란히 놓는 끝맺음은 이 응답의 여섯 달 가운데 한 달까지.
 - 한자 용어의 괄호 풀이는 이 응답에서 그 용어가 처음 나올 때 한 번만 붙인다. 다시 나오면 한글 읽기만 쓴다.
 - '기운'이라는 말은 한 달 풀이(전통해석, 현대해석, todo, avoid 합쳐서)에 한 번까지 쓴다.
-- 결과를 보장하는 말('반드시', '틀림없이', '무조건', '뒤탈이 없다')은 쓰지 않는다. 날짜에는 그날 무엇이 잘 정리되는지와 할 일을 쓴다. 예: 'N월 D일(월)은 서류가 깔끔하게 정리되는 날입니다. 서명할 일이 있으면 이날로 잡으세요.'
+- 결과를 보장하는 말('반드시', '틀림없이', '무조건', '뒤탈이 없다')은 쓰지 않는다. 날짜에는 그날 무엇이 잘 정리되는지와 할 일을 쓴다. 결정해도 되는 달의 예: 'N월 D일(월)은 서류가 깔끔하게 정리되는 날입니다. 서명할 일이 있으면 이날로 잡으세요.' 준비만 하는 달의 예: 'N월 D일(목)은 조건을 나란히 놓고 비교하기 좋은 날입니다. 마음을 정하는 일은 다음 좋은 달로 넘기세요.'
 - 확정값에서 '주말' 표시가 붙은 날(토, 일)에는 계약, 면접, 결재, 서명을 붙이지 않는다. 주말에는 계획 적기, 만남, 정리, 쉬기를 붙인다. 계약과 서명은 평일인 좋은 날에 붙인다. 본문에 날짜를 쓸 때는 '1월 10일(일)'처럼 요일만 괄호에 쓴다.`;
 }
 
@@ -322,9 +390,20 @@ function buildPrompt(d: any, picks?: ReturnType<typeof dayPicksForYear>, rank?: 
     const days = pm ? ` 좋은 날 ${pm.good.map(markWeekend).join(', ') || '없음'}, 조심할 날 ${pm.caution.map(markWeekend).join(', ') || '없음'}` : '';
     const rel = natalRelations(gz, d);
     const relText = rel.gan ? `, 십성 천간 ${rel.gan} 지지 ${rel.ji}, 원국과 ${rel.links.length ? rel.links.join(', ') : '합과 충 없음'}` : '';
-    return `- ${i + 1}월 ${gz}(${ganziKo(gz)}) : ${ganziRoleText(gz, d, '달')}, 달 기준점수 ${monthBaseScore(gz, d)}${relText}${days}`;
+    // 2026-10-23 — 달 기준점수는 판정표 점수, 판정과 행동 등급을 같은 줄에(1.6.3 P1-8). 달별 판정표와 같은 값이다
+    const row = rank?.rows?.[i + 1];
+    const baseScore = rank?.hasTable && row ? row.score : monthBaseScore(gz, d);
+    const act = rank?.hasTable && row ? `, 판정 ${row.verdict}, 행동 ${row.action}` : '';
+    return `- ${i + 1}월 ${gz}(${ganziKo(gz)}) : ${ganziRoleText(gz, d, '달')}, 달 기준점수 ${baseScore}${act}${relText}${days}`;
   }).join('\n');
-  const keyDatesFact = (picks?.keyDates || []).map((k) => `${markWeekend(k.date)} (${k.why})`).join(', ');
+  // 2026-10-23 — 꼭 기억할 날 뒤에 그 달의 행동 등급(준비만, 서명 피함 달의 날에는 서명을 붙이지 않게)
+  const keyDatesFact = (picks?.keyDates || []).map((k) => {
+    const km = Number(String(k.date).split('/')[0]);
+    const ka = rank?.hasTable ? rank.rows[km]?.action : undefined;
+    return `${markWeekend(k.date)} (${k.why}${ka ? `, 그 달 ${ka}` : ''})`;
+  }).join(', ');
+  // 2026-10-23 — 달별 판정표(오늘이 든 달부터 18개월). 종합사주가 받는 글과 같다(1.6.3 P1-8)
+  const verdictTable = rank?.hasTable ? monthVerdictTableText(d, { year: nowKst.year, month: nowKst.month }, 18) : '';
   // 2026-10-22 — 서버가 정한 좋은 달, 조심할 달, 반기별 요약(점검 P0-6). 세 그룹이 같은 달을 말하게 공유 프롬프트에 둔다
   //   같은 때 월주 안내 줄의 '~이 아니라' 꼴, 시점 표기 줄과 결혼운 칸의 '대신' 꼴도 바로 적는 꼴로 고쳤다(점검 3장: 모델은 본문 꼴을 따라 한다)
   const halfLine = (from: number, to: number, name: string) => {
@@ -363,12 +442,13 @@ ${ty}년 ${yko}(${ygz})년 신년운세 — 사주 원국 + ${ty}년 세운과 �
 ${natalRelationsText(ygz, d, `${ty}년 세운`)}
 ${tyDaeun?.간지 ? natalRelationsText(String(tyDaeun.간지), d, `${tyDaeun.간지} 대운`) : ''}
 ${lifeTimelineFactsText(d, kstNowDate())}
-- 🚨 십성 이름과 합, 충, 형, 해는 위 확정표와 아래 열두 달 줄에 적힌 것만 쓴다. 표에 없는 합이나 충, 표와 다른 십성 이름을 지어내지 말 것 (천간끼리 합과 충을 특히 주의).
+${verdictTable ? `${verdictTable}\n- 아래 ${ty}년 열두 달 줄의 판정과 행동은 위 달별 판정표와 같은 값이다. ${ty}년이 아닌 달은 지난 일 짚기나 이어지는 흐름을 말할 때만 쓴다.\n` : ''}- 🚨 십성 이름과 합, 충, 형, 해는 위 확정표와 아래 열두 달 줄에 적힌 것만 쓴다. 표에 없는 합이나 충, 표와 다른 십성 이름을 지어내지 말 것 (천간끼리 합과 충을 특히 주의).
 - '기준점수'라는 말과 그 숫자는 풀이에 쓰지 않는다 (점수 앵커일 뿐, 화면 점수와 다르다).
 - 열두 달 월주 (양력 달 기준. 양력 1월의 월주는 丑월, 2월부터 寅월):
 ${monthsFact}
 ${rankFact ? `${rankFact}\n` : ''}- 한 해 꼭 기억할 날 (서버 계산): ${keyDatesFact || '없음'}
 - 날짜 판정 기준: 그날 일진이 용신과 희신이면 좋은 날, 기신이 강하거나 일지와 충이면 조심할 날 (천을귀인 날 가점). 날짜는 위 값만 인용 — 새 날짜를 만들지 말 것.
+- 좋은 날이라도 그 달의 행동이 '준비만'이나 '서명 피함'이면 그날에 서명, 계약, 확정, 이사 결정을 붙이지 않는다. 그날은 알아보기, 비교, 상담, 정리, 만남에 쓴다.
 - 날짜 뒤 '주말' 표시는 토요일과 일요일이다. 주말인 날에는 계약, 면접, 결재, 서명을 붙이지 않고 계획 적기, 만남, 정리, 쉬기를 붙인다.
 - 귀인과 신살이 걸리는 달 (원국에 '없음'인 신살은 '있다'고 쓰지 말 것):
 ${gwiin || '미산출'}
