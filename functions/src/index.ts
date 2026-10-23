@@ -2089,8 +2089,19 @@ export const confirmPortonePayment = onCall(
     const pkg = PACKAGE_MAP[amount];
     if (!pkg) throw new HttpsError('invalid-argument', `유효하지 않은 금액: ${amount}`);
 
+    // 2026-10-24 — 같은 결제를 동시에 두 번 확인하면 운이 두 번 들어갈 수 있었다(1번 확인은 트랜잭션 밖, pending 과 failed 기록이 confirmed 를 덮음).
+    //   상태 기록은 지급이 끝난 결제(confirmed 또는 confirmedAt)를 덮지 않고, 지급 트랜잭션은 결제 문서를 다시 읽는다
+    const ALREADY = { success: true, message: '이미 처리된 결제예요' };
+    const isGranted = (d?: admin.firestore.DocumentData) => !!d && (d.status === 'confirmed' || !!d.confirmedAt);
+    const writeUnlessGranted = (fields: Record<string, unknown>) => db.runTransaction(async (tx) => {
+      const d = await tx.get(paymentRef);
+      if (isGranted(d.data())) return false;
+      tx.set(paymentRef, fields, { merge: true });
+      return true;
+    });
+
     // 3. E13 · pending 선기록
-    await paymentRef.set({
+    const pendingWritten = await writeUnlessGranted({
       type: 'charge', orderId: paymentId, amount,
       packageName: pkg.name,
       paidUn: pkg.paidUn, bonusUn: pkg.bonusUn,
@@ -2098,7 +2109,8 @@ export const confirmPortonePayment = onCall(
       status: 'pending',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    });
+    if (!pendingWritten) return ALREADY;
 
     // 4. 포트원 V2 결제 조회 API — 결제 사실·상태·금액을 서버가 직접 확인
     const apiSecret = PORTONE_V2_API_SECRET.value();
@@ -2111,7 +2123,7 @@ export const confirmPortonePayment = onCall(
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
         console.error('[confirmPortonePayment] 포트원 조회 실패:', res.status, errBody);
-        await paymentRef.update({
+        await writeUnlessGranted({
           status: 'failed',
           failReason: (errBody as any)?.message || `portone_http_${res.status}`,
           failedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2122,7 +2134,7 @@ export const confirmPortonePayment = onCall(
     } catch (err: any) {
       if (err instanceof HttpsError) throw err;
       console.error('[confirmPortonePayment] 네트워크 에러:', err);
-      await paymentRef.update({
+      await writeUnlessGranted({
         status: 'failed',
         failReason: 'network_error: ' + (err.message || 'unknown'),
         failedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2133,7 +2145,7 @@ export const confirmPortonePayment = onCall(
     // 5. 결제 검증 — 상태 PAID + 금액 일치 + uid 바인딩(customData) + LIVE 채널
     const failVerify = async (reason: string, userMsg: string) => {
       console.error('[confirmPortonePayment] 검증 실패:', reason, { paymentId, uid });
-      await paymentRef.update({
+      await writeUnlessGranted({
         status: 'failed', failReason: reason,
         failedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -2164,10 +2176,12 @@ export const confirmPortonePayment = onCall(
 
     // 6. Firestore 트랜잭션 — 잔액 지급 + pending → confirmed (confirmPayment 동일)
     const totalUn = pkg.paidUn + pkg.bonusUn;
+    let alreadyGranted = false;
     try {
       await db.runTransaction(async (tx) => {
         const userRef = db.collection('users').doc(uid);
-        const userDoc = await tx.get(userRef);
+        const [userDoc, payDoc] = await Promise.all([tx.get(userRef), tx.get(paymentRef)]);
+        if (isGranted(payDoc.data())) { alreadyGranted = true; return; }
         const data = userDoc.data() || {};
 
         // 2026-10-16 — update() 는 users/{uid} 문서가 없는 계정(웹 익명)에서 NOT_FOUND → 돈은 나가고 운은 안 들어가
@@ -2194,14 +2208,15 @@ export const confirmPortonePayment = onCall(
     } catch (err: any) {
       // E13 · 포트원은 PAID 인데 DB 실패 — 수동 복구 대상
       console.error('[confirmPortonePayment] needs_reconciliation:', err);
-      await paymentRef.update({
+      await writeUnlessGranted({
         status: 'needs_reconciliation',
         failReason: 'db_transaction_failed: ' + (err.message || 'unknown'),
         portoneStatus: pay.status,
         portoneApprovedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      }).catch(() => false);
       throw new HttpsError('internal', '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
     }
+    if (alreadyGranted) return ALREADY;
 
     // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
     const { referralOnPurchase } = await import('./referral/referral');

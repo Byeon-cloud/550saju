@@ -428,6 +428,12 @@ export async function pushProfilesMirror(profiles: SajuProfile[]): Promise<void>
       if (!r.ok) return; // 계정 사본을 못 읽었으면 덮어쓰지 않는다 (다음 쓰기에서 다시)
       if (auth.currentUser?.uid !== uid) return;
       profiles = (await import('./localStore')).getProfiles(); // 합친 뒤의 목록으로
+      // 2026-10-24 — 로그아웃이 기기 프로필을 비운 직후 예약된 쓰기가 터지면 계정 사본이 빈 목록으로 덮였다.
+      //   기기 목록이 비었는데 계정 사본에 이 기기가 지우지 않은 사람이 있으면 쓰지 않는다
+      if (!profiles.length) {
+        const del = getDeletedProfileKeys();
+        if (r.remoteKeys.some((k) => !del.has(k))) return;
+      }
     }
     const items = (profiles || []).slice(0, 100).map((p) => ({
       id: p.id,
@@ -455,7 +461,12 @@ async function readProfilesMirror(uid: string): Promise<any[]> {
   const data = snap.exists() ? (snap.data() as any) : null;
   const items = Array.isArray(data?.items) ? data.items : [];
   const deleted = new Set<string>(Array.isArray(data?.deletedKeys) ? data.deletedKeys : []);
-  return items.filter((p: any) => !deleted.has(`${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`));
+  return items.filter((p: any) => !deleted.has(profileMirrorKey(p)));
+}
+
+/** 삭제 장부와 같은 키 (이름_년_월_일) */
+function profileMirrorKey(p: any): string {
+  return `${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`;
 }
 
 /* ── 로그인 계정의 사주원국 사본 합치기 (2026-10-23, 웹만) ──
@@ -463,7 +474,7 @@ async function readProfilesMirror(uid: string): Promise<any[]> {
  *   (보관함 기록이 없는 사람)는 로그인해도 이 기기에 돌아오지 않았다. 로그인 계정은 페이지마다 한 번 그 계정 사본을 읽어
  *   이 기기에 없는 사람만 합친다(mergeProfiles: 이미 있는 사람은 덮어쓰지 않고, 이 기기에서 지운 사람은 되살리지 않는다).
  *   앱인토스는 기기 여권(devicePassport)이 같은 일을 하므로 하지 않는다. */
-const _accountProfilePull = new Map<string, Promise<{ ok: boolean; added: number }>>();
+const _accountProfilePull = new Map<string, Promise<{ ok: boolean; added: number; remoteKeys: string[] }>>();
 
 /** 웹이고 익명이 아닌 지금 로그인 계정인가 */
 async function isWebAccount(uid: string): Promise<boolean> {
@@ -476,18 +487,19 @@ async function isWebAccount(uid: string): Promise<boolean> {
   } catch { return false; }
 }
 
-function pullAccountProfilesOnce(uid: string): Promise<{ ok: boolean; added: number }> {
+function pullAccountProfilesOnce(uid: string): Promise<{ ok: boolean; added: number; remoteKeys: string[] }> {
   const cur = _accountProfilePull.get(uid);
   if (cur) return cur;
   const run = (async () => {
     try {
       const items = await readProfilesMirror(uid);
-      if (!items.length) return { ok: true, added: 0 };
+      const remoteKeys = items.map((p: any) => profileMirrorKey(p));
+      if (!items.length) return { ok: true, added: 0, remoteKeys };
       const store = await import('./localStore');
-      return { ok: true, added: store.mergeProfiles(items) };
+      return { ok: true, added: store.mergeProfiles(items), remoteKeys };
     } catch {
       _accountProfilePull.delete(uid); // 읽기 실패 — 다음 호출에서 다시 읽는다
-      return { ok: false, added: 0 };
+      return { ok: false, added: 0, remoteKeys: [] };
     }
   })();
   _accountProfilePull.set(uid, run);
