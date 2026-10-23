@@ -94,6 +94,30 @@ export function getTimeGreeting(): TimeGreeting {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+ * 첫 화면 질문 버튼 세 개 (2026-10-23 1.6.3 P1-10, 점검 문서 5-9)
+ *   나이 기준은 홈 고민 목록과 같다(worryTopics.genOfAge: 34세까지, 35~49세, 50세부터). 나이를 모르면 34세까지 묶음.
+ *   20~30대와 50대 이상 묶음은 점검 문서 그대로, 35~49세는 홈 고민 목록의 이직, 재물, 사업 순서를 따른다.
+ * ═════════════════════════════════════════════════════════════════ */
+export type ChatGen = 'young' | 'mid' | 'senior';
+
+/** 올해 남은 계절로 '올겨울' (3~5월 올봄, 6~8월 올여름, 9월 올가을, 10~2월 올겨울) */
+function seasonWord(month: number): string {
+  if (month >= 3 && month <= 5) return '올봄';
+  if (month >= 6 && month <= 8) return '올여름';
+  if (month === 9) return '올가을';
+  return '올겨울';
+}
+
+export function chatStarterQuestions(gen: ChatGen, kstMonth: number): string[] {
+  if (gen === 'senior') return ['다시 일을 시작해도 될까요?', '자식 결혼은 언제쯤일까요?', `${seasonWord(kstMonth)} 건강은 괜찮을까요?`];
+  if (gen === 'mid') return ['지금 회사를 옮겨도 될까요?', '돈이 언제 모일까요?', '내 일을 시작해도 될까요?'];
+  return ['내년에 이직해도 될까요?', '올해 안에 인연이 있을까요?', '돈이 언제 모일까요?'];
+}
+
+/** 사주가 없을 때 고른 질문 — 생일을 넣고 돌아오면(/chat?profileId=) 그 질문을 바로 보낸다 */
+export const CHAT_PENDING_ASK_KEY = 'saju500:chat_pending_ask';
+
+/* ══════════════════════════════════════════════════════════════════
  * TaegukAvatar — 사주풀이 화자 아바타
  * ═════════════════════════════════════════════════════════════════ */
 export function TaegukAvatar({ size = 32 }: { size?: number }) {

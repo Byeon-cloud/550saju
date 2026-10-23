@@ -9,12 +9,15 @@
  *       → [생일 넣고 무료로 보기] → 내년 띠 운 맛보기 → 신년운세
  *     가족 칸(사주 있는 사람)은 읽기만 + 가족 생일 넣기, 나와 궁합 보기.
  *   내 해는 기기에만 기억하고, 홈은 그 해로 세대를 알아 고민 목록을 맞춘다.
+ *   2026-10-23 1.6.3 P1-10 — 생일 넣는 길을 회색 글자 한 줄에서 테두리 있는 흰 카드 버튼으로(금색 아님),
+ *     띠 아래 숫자는 행운 숫자로 읽혀서 '숫자는 태어난 해예요' 한 줄과 14px 진한 글자로.
+ *     측정: tti_view {src, ab?}, tti_input {src, step, ab?} (ab = 고른 해의 연령대)
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HJ, SERIF, Seal, GoldCta, Redact } from '@/components/hanji/Hanji';
 import { TtiAnimal } from '@/components/tti/TtiAnimal';
-import { trackEvent } from '@/services/analytics';
+import { ageBandOfYear, trackEvent } from '@/services/analytics';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { currentSajuMonth, monthDayLabel } from '@/services/saju/hookFacts';
 import {
@@ -66,6 +69,13 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
     loadTtiDay(today).then((d) => { if (alive) setDay(d && (!d.dayGz || d.dayGz === dayGz) ? d : null); });
     return () => { alive = false; };
   }, [today, dayGz]);
+  /** 고른 해로 본 연령대 (사주 없는 첫 화면은 프로필 연령대가 없어서 이걸로 나눠 본다) */
+  const abOf = (y?: number): Record<string, string> => { const ab = y ? ageBandOfYear(y) : undefined; return ab ? { ab } : {}; };
+  // 띠 표 화면 진입 한 번 (입력 시작 비율의 분모)
+  useEffect(() => {
+    trackEvent('tti_view', { src, ...abOf(hero ? mine?.year : undefined) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const pick = (ji: string) => {
     const next = sel === ji ? null : ji;
@@ -86,7 +96,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
     onYearPick?.(y);
     setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
-  const goInput = (step: string) => { trackEvent('tti_input', { src, step }); onInput(hero && myYear && sel && ttiYears(sel).includes(myYear) ? myYear : undefined); };
+  const goInput = (step: string) => { trackEvent('tti_input', { src, step, ...abOf(hero ? myYear : undefined) }); onInput(hero && myYear && sel && ttiYears(sel).includes(myYear) ? myYear : undefined); };
 
   const t = sel ? day?.tti?.[sel] : null;
   const head = (t?.head && t.head.trim()) || (sel ? fallbackHead(dayGz, sel) : '');
@@ -124,6 +134,9 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
           </button>
         </div>
       ) : (
+      <>
+      {/* 2026-10-23 P1-10 — 띠 아래 숫자가 행운 숫자처럼 보여서 (40~60대 점검) */}
+      <p style={{ fontSize: 13, lineHeight: 1.5, color: HJ.mute, margin: '0 2px 8px' }}>숫자는 태어난 해예요. 1984년생은 84를 찾으세요.</p>
       <div className="grid grid-cols-4 gap-2">
         {TTI.map(({ ji, name }) => {
           const on = sel === ji;
@@ -140,13 +153,15 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
               <TtiAnimal ji={ji} size={26} ink={on ? '#F1ECE1' : undefined} paper={on ? HJ.ink : undefined} />
               <span style={{ fontFamily: SERIF, fontSize: name.length > 3 ? 14.5 : 16, fontWeight: 700, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{name}</span>
               {/* 출생 연도 여섯(1941~2012년생)을 두 줄에 셋씩 — 2000년대생까지 다 보이게(10-16 오너: 07년생 빠짐, 29~40년생 줄은 빼고 여섯) */}
-              <span style={{ fontSize: 13, lineHeight: 1.35, color: on ? '#CFC6B6' : HJ.mute, textAlign: 'center', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+              {/* 10-23 P1-10 — 14px, 보조색보다 진하게 (13px #6F6557 은 50~60대에게 흐렸다) */}
+              <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35, color: on ? '#E2D9C8' : HJ.ink2, textAlign: 'center', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                 {yy.slice(0, 3).join(' ')}<br />{yy.slice(3).join(' ')}
               </span>
             </button>
           );
         })}
       </div>
+      </>
       )}
       {/* 2026-10-19 열두 띠를 폰 한 화면에 — 가족 단톡방에 캡처해 보내기 좋게 (/tti) */}
       {gridOpen && (
@@ -156,13 +171,8 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
         </button>
       )}
 
-      {/* 띠를 아직 안 고른 첫 화면 — 금색 버튼은 띠 카드 안에서만, 여기는 글자 버튼 */}
-      {hero && !sel && (
-        <button type="button" onClick={() => goInput('grid')} className="w-full"
-          style={{ marginTop: 14, padding: 12, fontSize: 15, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
-          생일을 넣으면 내 사주로 바로 볼 수 있어요 ›
-        </button>
-      )}
+      {/* 띠를 아직 안 고른 첫 화면 — 금색 버튼은 띠 카드 안에서만, 여기는 테두리 있는 흰 카드 버튼 (2026-10-23 P1-10, 글자 링크 한 줄은 50~60대가 지나쳤다) */}
+      {hero && !sel && <InputCardBtn free={freeDaily} onClick={() => goInput('grid')} style={{ marginTop: 14 }} />}
 
       {sel && (
         <div ref={cardRef} style={{ marginTop: 12, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '16px 16px 14px', scrollMarginTop: 72 }}>
@@ -247,12 +257,7 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
               <p style={{ fontSize: 13, lineHeight: 1.55, color: HJ.mute, marginTop: 8 }}>
                 양력 2월 4일 무렵(입춘) 전에 태어났다면 앞 해의 띠로 보세요.
               </p>
-              {hero && (
-                <button type="button" onClick={() => goInput('card')} className="w-full"
-                  style={{ marginTop: 6, padding: 10, fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
-                  생일을 넣으면 내 사주로 바로 볼 수 있어요 ›
-                </button>
-              )}
+              {hero && <InputCardBtn free={freeDaily} onClick={() => goInput('card')} style={{ marginTop: 12 }} />}
               {!hero && (
                 <div className="grid grid-cols-2 gap-2" style={{ marginTop: 12 }}>
                   <SubBtn onClick={() => goInput('family')} t="가족 생일 넣고" s={freeDaily ? '오늘 운세 무료로 보기 ›' : '오늘 운세 1운으로 보기 ›'} />
@@ -273,6 +278,24 @@ function Fact({ k, children }: { k: string; children: ReactNode }) {
       <dt style={{ width: 74, flexShrink: 0, fontSize: 14, fontWeight: 800, color: HJ.ink, lineHeight: 1.55 }}>{k}</dt>
       <dd style={{ flex: 1, margin: 0, fontSize: 14.5, lineHeight: 1.55, color: HJ.ink2 }}>{children}</dd>
     </div>
+  );
+}
+
+/** 생일 넣기 카드 버튼 (2026-10-23 P1-10) — 흰 카드에 먹 테두리, 금색 아님.
+ *  '무료예요'는 오늘의 운세 무료 한 번이 남았을 때만 (10-15 규칙: 다 썼으면 무료라고 말하지 않는다).
+ *  '매일 아침 따로 알려 드려요'는 넣지 않는다 — 9시 알림은 가족 사주를 따로 보내지 않는다. */
+function InputCardBtn({ free, onClick, style }: { free: boolean; onClick: () => void; style?: React.CSSProperties }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full text-left mo-press"
+      style={{ display: 'flex', alignItems: 'center', gap: 10, background: HJ.card, border: `1.5px solid ${HJ.ink}`, borderRadius: 14, padding: '14px 14px 13px 16px', ...style }}>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 15.5, fontWeight: 700, lineHeight: 1.55, color: HJ.ink, wordBreak: 'keep-all' }}>
+          내 생일을 넣으면 오늘 좋은 시간까지 볼 수 있어요. 가족 생일도 넣어 둘 수 있어요.{free ? ' 무료예요.' : ''}
+        </span>
+        <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.5, color: HJ.mute, marginTop: 4 }}>태어난 시간을 몰라도 돼요</span>
+      </span>
+      <span aria-hidden="true" style={{ fontSize: 20, fontWeight: 700, color: HJ.ink, flexShrink: 0 }}>›</span>
+    </button>
   );
 }
 

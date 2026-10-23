@@ -370,7 +370,10 @@ import {
   C,
   ConvertUnModal,
   getTotalTickets,
+  chatStarterQuestions,
 } from './_shared';
+import { genOfAge } from '@/services/saju/worryTopics';
+import { realName } from '@/utils/personName';
 
 /* ══════════════════════════════════════════════════════════════════
  * 추천 콘텐츠 카드 매핑 (스펙 §8) — 세션당 최대 2개
@@ -722,8 +725,12 @@ export function ChatSessionPage() {
       greeting = `${userName} 님의 ${fromTopicLabel} 풀이를 보고 오셨네요. ${fromTopicLabel}에 대해 더 깊이 궁금한 점을 편하게 물어보세요.`;
       defaultQuestions = [`${fromTopicLabel}이 가장 좋아지는 시기는?`, `${fromTopicLabel}에서 제가 조심할 점은?`, `${fromTopicLabel} 결과를 더 자세히 풀어주세요`];
     } else if (hasProfile) {
-      greeting = `${userName} 님 사주로 풀이해드릴게요. 편하게 물어보세요.`;
-      defaultQuestions = ['올해 나에게 가장 좋은 달은?', '내 사주의 가장 강한 오행은?', '요즘 고민이 있어요'];
+      // 2026-10-23 1.6.3 P1-10 — 첫 화면(/chat)과 같은 인사, 같은 나이대별 질문 세 개
+      const nm = realName(userName);
+      const today = kstToday();
+      const by = Number((myProfile as any)?.input?.birthYear) || 0;
+      greeting = `${nm ? `${nm} 님` : '내'} 사주로 무엇이든 물어보세요.${hasFreePass('chat') ? ' 첫 질문은 오늘 무료예요.' : ''}`;
+      defaultQuestions = chatStarterQuestions(genOfAge(by ? Number(today.slice(0, 4)) - by : null) ?? 'young', Number(today.slice(5, 7)));
     } else {
       greeting = '편하게 물어보세요. 사주를 등록하면 더 정확한 맞춤 풀이가 가능해요.';
       defaultQuestions = ['내 연애 성향이 궁금해요', '올해 운세가 궁금해요', '사주로 뭘 알 수 있나요?'];
@@ -835,7 +842,7 @@ export function ChatSessionPage() {
     }
 
     // 2026-06-24 — 사주대화 사용량 계측 (메시지 단위 · 무료패스/대화권 차감 성공 직후 1회)
-    trackEvent('content_open', { type: 'chat' });
+    trackEvent('content_open', { type: 'chat', free: consumed === 'freepass' ? 1 : 0 }); // free: 오늘 무료 첫 질문으로 보냈다 (2026-10-23 P1-10, 첫 화면 대비 첫 질문 비율)
 
     if (!roomNameSet) {
       // 2026-10-17 — 방 이름에 사람을 남긴다 ('연애 상담'만 남아 보관함에서 누구 대화인지 사라졌다)

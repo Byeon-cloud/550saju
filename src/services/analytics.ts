@@ -125,13 +125,7 @@ function getDemo(): { g?: string; ab?: string } | null {
       const input = p?.input;
       if (input) {
         const g = input.gender === 'male' ? 'M' : input.gender === 'female' ? 'F' : undefined;
-        let ab: string | undefined;
-        const year = Number(input.birthYear);
-        if (year > 1900 && year < 2030) {
-          const age = new Date().getFullYear() - year;
-          ab = age < 20 ? '10대' : age < 30 ? '20대' : age < 40 ? '30대'
-            : age < 50 ? '40대' : age < 60 ? '50대' : '60대+';
-        }
+        const ab = ageBandOfYear(Number(input.birthYear));
         if (g || ab) v = { ...(g ? { g } : {}), ...(ab ? { ab } : {}) };
       }
     }
@@ -252,7 +246,23 @@ const FIRESTORE_TRACKED = new Set<string>([
   // 2026-10-23 1.6.3 P1-4 — 오늘의 운세 결과 끝 (결과가 다음 콘텐츠로 이어지는지)
   'bridge_click',       // {from: daily, to: premium|weekly|monthly|chat|주제 id|menu_묶음, pos: offer_top|offer_end|next_topic|next_chat|grid|grid_menu|upsell|upsell_sub|actions|month_picks} — 결과의 연결 카드를 눌렀다
   'daily_scroll',       // {pct: 25|50|75|100} — 오늘의 운세 결과 화면을 그만큼 내려 읽었다(결과 하나에 한 번씩)
+  // 2026-10-23 1.6.3 P1-3 — 홈 순서(고민을 종합사주 위로, 위 두 개만) 2주 비교: 종합사주 누름과 주제운 누름
+  'home_topic_click',   // {topic: 주제 id|compat, pos: top|more, rank, gen: young|mid|senior|none, has: 0|1} — 홈 고민 블록에서 눌렀다
+  'home_topics_more',   // {gen, has} — 홈 '고민 더 보기'를 펼쳤다
+  'home_premium_click', // {pos: book|card|cta, has} — 홈 종합사주 책, 소개, 버튼 중 하나를 눌렀다
+  // 2026-10-23 1.6.3 P1-10 — 사주대화 첫 화면 진입 대비 첫 질문, 띠 표에서 입력 시작(나이대별)
+  'chat_view',          // {has: 0|1, rooms: 0|1, free: 0|1, gen} — 사주대화 첫 화면(/chat)을 열었다
+  'chat_starter_click', // {i: 0|1|2, gen, has} — 첫 화면 질문 버튼을 눌렀다 (사주가 있으면 바로 보낸다)
+  'tti_view',           // {src: hero|family, ab?} — 띠 표가 보였다 (ab = 고른 해로 본 연령대, demo.ab 와 같은 이름)
 ]);
+
+/** 출생 연도 → 연령대 이름 (demo.ab 와 같은 규칙: 10대, 20대, 30대, 40대, 50대, 60대+) */
+export function ageBandOfYear(year: number): string | undefined {
+  if (!(year > 1900 && year < 2030)) return undefined;
+  const age = new Date().getFullYear() - year;
+  return age < 20 ? '10대' : age < 30 ? '20대' : age < 40 ? '30대'
+    : age < 50 ? '40대' : age < 60 ? '50대' : '60대+';
+}
 
 /* ─── UTM/유입 채널 (C5 · 2026-06-10) ───
  *   첫 진입 시 location.search 의 utm_source/utm_medium/utm_campaign + ref 를 sessionStorage 에

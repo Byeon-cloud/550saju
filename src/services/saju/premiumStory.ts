@@ -23,6 +23,8 @@ export interface PremiumStory {
   first: string;
   /** 대운 사실 한 줄 (없을 수 있음) */
   second: string | null;
+  /** 둘째 줄 종류 — bring: 빠진 오행이 대운으로 들어옴, daeun: 지금 대운과 다음 10년이 열리는 해(홈은 대운 띠에 같은 말이 있어 뺀다) */
+  secondKind: 'bring' | 'daeun' | null;
   /** 일주 간지 (目次 판심 제목용) */
   dayGz: string;
 }
@@ -53,6 +55,7 @@ export function premiumStory(s: SajuData, who: string, thisYear: number): Premiu
 
     let first = '';
     let second: string | null = null;
+    let secondKind: 'bring' | 'daeun' | null = null;
 
     // 1) 빠진 오행 — 시간을 모르면 시주에 있을 수 있어 말하지 않는다
     if (hasTime) {
@@ -71,6 +74,7 @@ export function premiumStory(s: SajuData, who: string, thisYear: number): Premiu
         if (d) {
           if (p.currentIdx >= 0 && d === p.daeun[p.currentIdx]) second = `지금 지나는 ${d.gz}(${ganziKo(d.gz)}) 대운에 그 ${w}${josa(w, '이', '가')} 들어와 있어요.`;
           else if (d.year) second = `${d.year}년부터 그 ${w}${josa(w, '이', '가')} 들어오는 10년이 열려요.`;
+          if (second) secondKind = 'bring';
         }
       }
     }
@@ -113,9 +117,10 @@ export function premiumStory(s: SajuData, who: string, thisYear: number): Premiu
       if (cur && p.nextYear) second = `지금은 ${cur.gz}(${ganziKo(cur.gz)}) 대운이고, ${p.nextYear}년에 다음 10년이 열려요.`;
       else if (cur) second = `지금은 ${cur.gz}(${ganziKo(cur.gz)}) 대운을 지나고 있어요.`;
       else if (p.daeun[0]?.year && p.daeun[0].year > thisYear) second = `첫 대운은 ${p.daeun[0].year}년에 시작돼요.`;
+      if (second) secondKind = 'daeun';
     }
 
-    return { first, second, dayGz: p.dayGz };
+    return { first, second, secondKind, dayGz: p.dayGz };
   } catch {
     return null;
   }

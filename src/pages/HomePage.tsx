@@ -1,7 +1,10 @@
 // HomePage v9 (2026-10-10) — 수묵·고서 시안 적용 (docs/mockups/사주500_v9_고서시안.html)
-//   순서 (2026-10-14 홈 강조 개편, 시안 artifact 2zsAF1fJrFmpcHzQE3mrA3): 오늘 예고(히어로) → 오늘 무료(먹 꿈, 한지 대화)
-//         → 사주책(종합사주) → 신년운세(그림 띠) → 기간별(달력 장 두 장) → 고민(연애 D-day, 빨간 도장 셋, 목록)
-//         → 실시간 인기 → 실제 후기(있을 때만) → 다른 점(먹 띠) → 푸터
+//   순서 (2026-10-14 홈 강조 개편, 시안 artifact 2zsAF1fJrFmpcHzQE3mrA3 → 2026-10-23 1.6.3 P1-3 고민을 종합사주 위로):
+//         오늘 예고(히어로) → 오늘 무료(먹 꿈, 한지 대화) → 가족 띠
+//         → 고민(나이대별 위 두 개만 빨간 도장 카드, 나머지는 '고민 더 보기') → 사주책(종합사주) → 신년운세(그림 띠)
+//         → 기간별(달력 장 두 장) → 실시간 인기 → 실제 후기(있을 때만) → 다른 점(먹 띠) → 푸터
+//   P1-3 근거: 충전이 가장 잘 되는 주제운이 띠 표, 종합사주, 기간별 아래에 있었다(docs/strategy/2026-10-22_UIUX_콘텐츠_점검.md 5-3).
+//     종합사주 카드 첫 문장은 일주 고정 문구(iljuMeaning.ts, 5월생에게 '겨울')를 빼고 만세력 사실(premiumStory.ts)로.
 //   원칙
 //   - 화면의 사주 문장은 전부 hookFacts(만세력 계산 사실)에서 온다. AI 가 정하는 값(가장 좋은 날·점수)은 미리 말하지 않는다.
 //   - 잠긴 내용은 가짜 글자 블러가 아니라 가림막(<Redact/>) — 결제 후 다른 말이 나오는 미끼 금지.
@@ -22,17 +25,20 @@ import { SuneungCard } from '@/components/home/SuneungCard';
 import { InviteWelcomeCard } from '@/components/invite/InviteWelcomeCard';
 import { InviteRow } from '@/components/invite/InviteRow';
 import { WebIntro } from '@/components/home/WebIntro';
-import { listTopics, TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
+import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { getReports } from '@/services/storage/localStore';
 import { getPublicReviews, type PublicReview } from '@/services/reviews';
 import { getTopicTop5 } from '@/services/liveBest';
 import {
-  todayHook, todayGz, weekFact, nextMonthFact, loveDday, yearFact, yearGz, loveStars, wealthStars,
-  examFact, spouseSeatFact, persona, monthDayLabel, josa, nextStarMonth, STAR_LUCK,
+  todayHook, todayGz, weekFact, nextMonthFact, yearFact, yearGz, persona, monthDayLabel, josa, STAR_LUCK,
   type WeekFact, type MonthFact,
 } from '@/services/saju/hookFacts';
+import { premiumStory } from '@/services/saju/premiumStory';
+import { genOfAge, worryRows, type WorryRow } from '@/services/saju/worryTopics';
+import { trackEvent } from '@/services/analytics';
+import { realName } from '@/utils/personName';
 import type { SajuData } from '@/types/saju';
 import { TtiFortune } from '@/components/home/TtiFortune';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
@@ -120,9 +126,10 @@ export function HomePage() {
     const t = window.setTimeout(() => { import('@/services/review/reviewPrompt').then((m) => m.maybeAskReview()).catch(() => {}); }, 900);
     return () => window.clearTimeout(t);
   }, []);
-  // 다른 화면의 '주제별 운세 더 보기'(/#home-topics) 진입 시 고민 섹션으로
+  // 다른 화면의 '주제별 운세 더 보기'(/#home-topics) 진입 시 고민 섹션으로 (고민 전부를 보러 온 것이라 펼쳐 둔다)
   useEffect(() => {
     if (window.location.hash !== '#home-topics') return;
+    setShowAllTopics(true);
     const t = setTimeout(() => document.getElementById('home-topics')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 180);
     return () => clearTimeout(t);
   }, []);
@@ -165,25 +172,28 @@ export function HomePage() {
         today: todayHook(sajuData, today),
         week: weekFact(sajuData, today),
         month: nextMonthFact(sajuData, today),
-        love: loveDday(sajuData, today),
         year: yearFact(sajuData, NEW_YEAR_TARGET),
-        loveStars: loveStars(sajuData),
-        wealth: wealthStars(sajuData),
-        exam: examFact(sajuData),
-        spouse: spouseSeatFact(sajuData),
         persona: persona(sajuData),
       };
     } catch { return null; }
   }, [hasSaju, sajuData, today]);
-  const wealthMonth = useMemo(() => (hasSaju && sajuData ? nextStarMonth(sajuData, today, ['재성']) : null), [hasSaju, sajuData, today]);
-  const examMonth = useMemo(() => (hasSaju && sajuData ? nextStarMonth(sajuData, today, ['관성', '인성']) : null), [hasSaju, sajuData, today]);
+  /** 종합사주 카드 첫 문장 — 만세력 사실(빠진 오행, 원국의 충 등)과 대운 사실. 종합사주 고르기 화면과 같은 문장 (2026-10-23 P1-3) */
+  const story = useMemo(() => {
+    if (!hasSaju || !sajuData) return null;
+    const nm = realName(name);
+    return premiumStory(sajuData, nm ? `${nm} 님` : '', Number(today.slice(0, 4)));
+  }, [hasSaju, sajuData, name, today]);
+  /** 시주까지 있는 사주인지 (시간 모름이면 여섯 글자) */
+  const hasTime = !!(sajuData?.pillars?.[3] && sajuData.pillars[3].available !== false && sajuData.input?.hasBirthTime);
+  /** 첫 화면 둘째 줄이 다음 대운 연도를 이미 말했으면 대운 띠 문장에서 그 연도를 되풀이하지 않는다 */
+  const nextYearSaid = !!(story?.secondKind === 'bring' && facts?.persona?.nextYear && story.second?.includes(`${facts.persona.nextYear}년`));
   const tg = useMemo(() => todayGz(today), [today]);
   const ny = useMemo(() => yearGz(NEW_YEAR_TARGET), []);
   const gotDaily = hasSaju && receivedDailyToday(profile, today);
   const birthYear = hasSaju ? Number((profile as any)?.input?.birthYear) || undefined : ttiYear;
   const age = birthYear ? Number(today.slice(0, 4)) - birthYear : null;
   /** young 34세까지, mid 35~49세, senior 50세부터, null 모름 */
-  const gen: 'young' | 'mid' | 'senior' | null = age == null ? null : age >= 50 ? 'senior' : age >= 35 ? 'mid' : 'young';
+  const gen = genOfAge(age);
 
   const premium = getPremiumPrice().actualPrice;
   const weekly = getWeeklyPrice().actualPrice;
@@ -195,6 +205,24 @@ export function HomePage() {
   /** 올해가 아닌 날짜엔 '내년 ' — '2월'만 쓰면 올해 2월로 읽힌다 */
   const yr = (dateKey: string) => (Number(dateKey.slice(0, 4)) > Number(today.slice(0, 4)) ? '내년 ' : '');
   const goTopic = (id: string) => navigate(`/topic/${id}`, profileId ? { state: { profileId } } : undefined);
+  /* 고민 목록 (2026-10-23 P1-3) — 나이대별 순서, 앞 두 개만 먼저 보이고 나머지는 '고민 더 보기'.
+   *   사주 카드 아래 다음 단계 칸의 고민 두 개와 같은 목록(worryTopics.ts).
+   *   측정: home_topic_click {topic, pos: top|more, rank, gen, has}, home_topics_more {gen, has}, home_premium_click {pos, has} */
+  const worries = useMemo(() => worryRows(hasSaju ? sajuData : null, today, gen, compat), [hasSaju, sajuData, today, gen, compat]);
+  const evGen = gen ?? 'none';
+  const goWorry = (r: WorryRow, pos: 'top' | 'more', rank: number) => {
+    trackEvent('home_topic_click', { topic: r.key, pos, rank, gen: evGen, has: hasSaju ? 1 : 0 });
+    if (r.key === 'compat') navigate('/compat');
+    else goTopic(r.key);
+  };
+  const openMoreTopics = () => {
+    trackEvent('home_topics_more', { gen: evGen, has: hasSaju ? 1 : 0 });
+    setShowAllTopics(true);
+  };
+  const goPremium = (pos: 'book' | 'card' | 'cta') => {
+    trackEvent('home_premium_click', { pos, has: hasSaju ? 1 : 0 });
+    navigate('/premium');
+  };
   const liveBest = liveIds.map((id) => {
     if (id === 'premium') return { id, label: '종합사주', sub: '타고난 성격부터 10년 대운까지', price: `${premium}운`, go: () => navigate('/premium') };
     if (id === 'daily') return { id, label: '오늘의 운세', sub: '오늘 좋은 시간과 조심할 일, 하루 한 번 무료', price: dailyFree ? '무료' : '1운', go: () => navigate('/daily') };
@@ -351,10 +379,33 @@ export function HomePage() {
         </>
       )}
 
-      {/* ━━━ 3. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
+      {/* ━━━ 3. 고민 (주제운) — 2026-10-23 P1-3 종합사주 위로. 나이대별 위 두 개만 빨간 도장 카드, 나머지는 '고민 더 보기' ━━━ */}
+      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
+        <SecTitle k="요즘 많이 찾는 고민" h="어떤 고민이 있으세요?" />
+      </div>
+      <div style={{ margin: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {worries.slice(0, 2).map((r, i) => (
+          <TopicCard key={r.key} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={() => goWorry(r, 'top', i + 1)} />
+        ))}
+        {showAllTopics && (
+          <div style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, overflow: 'hidden' }}>
+            {worries.slice(2).map((r, i, arr) => (
+              <TopicLine key={r.key} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={() => goWorry(r, 'more', i + 3)} last={i === arr.length - 1} />
+            ))}
+          </div>
+        )}
+      </div>
+      {!showAllTopics && (
+        <button type="button" onClick={openMoreTopics}
+          style={{ display: 'block', width: 'calc(100% - 32px)', margin: '6px 16px 0', padding: 14, fontSize: 15, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+          고민 더 보기 ›
+        </button>
+      )}
+
+      {/* ━━━ 4. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
       <SecTitle k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" />
       {/* 2026-10-15 오너: 책을 눌러도 종합사주로 — 책 그림, 소개, 대운 띠, 목차 어디를 눌러도 같은 곳으로 */}
-      <button type="button" onClick={() => navigate('/premium')} aria-label="종합사주 보기"
+      <button type="button" onClick={() => goPremium('book')} aria-label="종합사주 보기"
         style={{ display: 'block', width: 'calc(100% - 32px)', margin: '0 16px', padding: 0, border: 0, borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD', cursor: 'pointer' }}>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.jangansa})`, backgroundSize: 'cover', backgroundPosition: '40% 55%', opacity: 0.42 }} />
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%)' }} />
@@ -362,20 +413,26 @@ export function HomePage() {
           <GoBook title={facts?.persona ? `${facts.persona.dayGz}命書` : '四柱命書'} />
         </div>
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 14, textAlign: 'center', fontSize: 13, color: HJ.ink2, fontWeight: 600 }}>
-          {facts?.persona ? `${displayName}, ${facts.persona.birthYearGz}生: 8글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
+          {/* 10-23 — 시간을 모르면 여섯 글자 (아래 첫 문장이 '여섯 글자'라고 말해 한 카드 안에서 어긋났다) */}
+          {facts?.persona ? `${displayName}, ${facts.persona.birthYearGz}生: ${hasTime ? '8' : '6'}글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
         </div>
       </button>
       <section style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderTop: 0, borderRadius: '0 0 20px 20px', padding: 18 }}>
         <div role="link" tabIndex={0} aria-label="종합사주 자세히 보기" style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/premium')}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/premium'); } }}>
-        {facts?.persona?.identity ? (
+          onClick={() => goPremium('card')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goPremium('card'); } }}>
+        {/* 2026-10-23 P1-3 — 첫 문장은 만세력 사실. 예전 일주 고정 문구는 5월생에게 '겨울 밤하늘의 별'이라고 했다.
+             둘째 줄은 빠진 오행이 대운으로 들어올 때만 (지금 대운과 다음 10년은 아래 대운 띠가 이미 말한다) */}
+        {story ? (
           <>
-            <p style={{ fontFamily: SERIF, fontSize: 19.5, fontWeight: 700, lineHeight: 1.5, letterSpacing: '-.02em' }}>
-              {displayName} 님은 <span style={{ color: HJ.goldText }}>{facts.persona.identity}</span>{josa(facts.persona.identity, '으로', '로')} 태어났어요.
+            <p style={{ fontFamily: SERIF, fontSize: 19.5, fontWeight: 700, lineHeight: 1.5, letterSpacing: '-.02em', wordBreak: 'keep-all' }}>
+              {story.first}
             </p>
+            {story.secondKind === 'bring' && story.second && (
+              <p style={{ fontSize: 15, color: HJ.ink2, marginTop: 6, lineHeight: 1.65, wordBreak: 'keep-all' }}>{story.second}</p>
+            )}
             <p style={{ fontSize: 14, color: HJ.mute, marginTop: 6, lineHeight: 1.6 }}>
-              {facts.persona.dayGz}일주에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
+              {story.dayGz}일주에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
             </p>
           </>
         ) : (
@@ -408,7 +465,7 @@ export function HomePage() {
             {facts.persona.current && (
               <p style={{ fontSize: 15, color: HJ.ink2, marginTop: 10, lineHeight: 1.65 }}>
                 지금은 <b style={{ color: HJ.ink }}>{facts.persona.current.gz} 대운</b>({facts.persona.current.from}~{facts.persona.current.to}세)
-                {facts.persona.nextYear ? <>, 다음 10년이 바뀌는 해는 <b style={{ color: HJ.ink }}>{facts.persona.nextYear}년</b>이에요.</> : '이에요.'}
+                {facts.persona.nextYear && !nextYearSaid ? <>, 다음 10년이 바뀌는 해는 <b style={{ color: HJ.ink }}>{facts.persona.nextYear}년</b>이에요.</> : '이에요.'}
                 {' '}인생에서 가장 좋은 10년은 <Redact w={92} />
               </p>
             )}
@@ -424,9 +481,9 @@ export function HomePage() {
         </Gwang>
         </div>
         <p style={{ marginTop: 14, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, textAlign: 'center', wordBreak: 'keep-all' }}>
-          한 번 사면 평생 보관하고 PDF로 저장할 수 있어요. 다 읽고 궁금한 건 바로 물어보세요.
+          보관함에서 다시 볼 수 있고 PDF로 저장할 수 있어요. 다 읽고 궁금한 건 바로 물어보세요.
         </p>
-        <GoldCta style={{ marginTop: 14 }} onClick={() => navigate('/premium')} sub={`${premium}운`}>
+        <GoldCta style={{ marginTop: 14 }} onClick={() => goPremium('cta')} sub={`${premium}운`}>
           {hasSaju ? '내 종합사주 보기' : '종합사주 보기'}
         </GoldCta>
       </section>
@@ -502,99 +559,6 @@ export function HomePage() {
           </span>
         </button>
       </div>
-
-      {/* ━━━ 6. 고민 (주제운) — 많이 찾는 셋은 빨간 도장, 나머지는 먹 테두리 ━━━ */}
-      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
-        <SecTitle k="요즘 많이 찾는 고민" h="어떤 고민이 있으세요?" />
-      </div>
-      <div style={{ margin: '0 16px' }}>
-        <button type="button" onClick={() => goTopic('love')} className="w-full text-left"
-          style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 16 }}>
-          <SealBox size={52} fontSize={28}>{TOPIC_REGISTRY.love.kanji}</SealBox>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: HJ.ink }}>연애운</span>
-            <span style={{ display: 'block', fontSize: 14.5, lineHeight: 1.55, color: HJ.ink2, marginTop: 4 }}>
-              {facts?.love ? '새 인연이 들어오는 날까지' : facts ? '사주에 있는 연인의 별' : '새 인연이 들어오는 날을 D-day로 알려 드려요'}
-            </span>
-            <span className="flex justify-between items-baseline" style={{ marginTop: 6 }}>
-              <span style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 900, color: HJ.seal, lineHeight: 1.1 }}>
-                {facts?.love ? `D-${facts.love.days}` : facts ? `${facts.loveStars.count}개` : 'D-?'}
-              </span>
-              <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>{getTopicPrice('love').actualPrice}운 ›</span>
-            </span>
-            {facts?.love && (
-              <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, marginTop: 4 }}>
-                {yr(facts.love.month.start)}{monthDayLabel(facts.love.month.start)}부터 연인의 별이 들어와요
-              </span>
-            )}
-          </span>
-        </button>
-        <div className="grid grid-cols-2 gap-2.5" style={{ marginTop: 10 }}>
-          <button type="button" onClick={() => goTopic('wealth')} className="text-left"
-            style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 15, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 168 }}>
-            <SealBox size={40} fontSize={22}>{TOPIC_REGISTRY.wealth.kanji}</SealBox>
-            <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>재물운</span>
-            {wealthMonth ? (
-              <>
-                <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2 }}>재물의 별이 들어오는 달</span>
-                <span style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 900, color: HJ.seal, lineHeight: 1.1, flex: 1 }}>
-                  {yr(wealthMonth.month.start)}{wealthMonth.month.calMonth}<span style={{ fontSize: 15 }}>월</span>
-                </span>
-              </>
-            ) : (
-              <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>돈이 <b style={{ color: HJ.ink }}>들어오는 달</b>과 새는 곳</span>
-            )}
-            <span style={{ fontSize: 14, fontWeight: 800, textAlign: 'right', color: HJ.ink }}>{getTopicPrice('wealth').actualPrice}운 ›</span>
-          </button>
-          <button type="button" onClick={() => goTopic('reunion')} className="text-left"
-            style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 15, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 168 }}>
-            <SealBox size={40} fontSize={22}>{TOPIC_REGISTRY.reunion.kanji}</SealBox>
-            <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>재회운</span>
-            <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>그 사람과 <b style={{ color: HJ.ink }}>다시 연락이 닿을 때</b>를 두 사람 사주로 봐요</span>
-            <span style={{ fontSize: 14, fontWeight: 800, textAlign: 'right', color: HJ.ink }}>{getTopicPrice('reunion').actualPrice}운 ›</span>
-          </button>
-        </div>
-        <div style={{ marginTop: 10, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, overflow: 'hidden' }}>
-          {/* 2026-10-15 세대별 — 50대부터는 재취업, 창업, 재혼, 건강을 앞에. 나이를 모르면 누구에게나 맞는 말 */}
-          {(() => {
-            const em = examMonth ? `${yr(examMonth.month.start)}${examMonth.month.calMonth}월` : '';
-            const rows: Array<{ key: string; hz: string; t: string; s: string; price: string; go: () => void }> = [];
-            const topicRow = (id: TopicId, t: string, s2: string) => ({ key: id, hz: TOPIC_REGISTRY[id].kanji, t, s: s2, price: `${getTopicPrice(id).actualPrice}운`, go: () => goTopic(id) });
-            const exam = gen === 'senior'
-              ? topicRow('exam', '재취업 이직운', em ? `일자리의 별이 ${em}에 들어와요` : '다시 일을 구하거나 옮기기 좋은 달')
-              : gen === 'mid'
-                ? topicRow('exam', '이직운', em ? `옮길 자리의 별이 ${em}에 들어와요` : '옮기기 좋은 달과 버텨야 할 때')
-                : gen === 'young'
-                  ? topicRow('exam', '합격 이직운', em ? `시험과 자리의 별이 ${em}에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날')
-                  : topicRow('exam', '합격 이직운', em ? `시험과 자리의 별이 ${em}에 들어와요` : '시험, 취업, 이직, 다시 일할 때가 풀리는 달');
-            const business = topicRow('business', gen === 'senior' ? '창업운' : '사업운', gen === 'senior' ? '가게나 내 일을 차리기 좋은 때' : '내 일을 시작하거나 넓히기 좋은 때');
-            const marriage = gen === 'senior'
-              ? topicRow('marriage', '결혼, 재혼운', '다시 함께할 사람이 들어오는 해')
-              : topicRow('marriage', '결혼운', facts ? facts.spouse : '결혼하기 좋은 해와 배우자 성향');
-            const compatRow = { key: 'compat', hz: '合', t: '궁합', s: gen === 'senior' ? '배우자, 자녀와 잘 맞는 점과 부딪히는 점' : '잘 맞는 점과 자주 부딪히는 점', price: `${compat}운`, go: () => navigate('/compat') };
-            const health = topicRow('health', '건강운', '약한 곳과 조심할 달');
-            const main = gen === 'senior' ? [exam, business, marriage, compatRow, health]
-              : gen === 'young' ? [exam, compatRow, marriage]
-              : [exam, business, compatRow, marriage];
-            rows.push(...main);
-            if (showAllTopics) {
-              const shown = new Set(main.map((r) => r.key));
-              for (const id of ['career', 'business', 'health', 'move', 'study'] as TopicId[]) {
-                if (!shown.has(id)) rows.push(topicRow(id, TOPIC_REGISTRY[id].label, TOPIC_REGISTRY[id].subCopy));
-              }
-            }
-            return rows.map((r, i) => (
-              <TopicLine key={r.key} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={r.go} last={i === rows.length - 1} />
-            ));
-          })()}
-        </div>
-      </div>
-      {!showAllTopics && (
-        <button type="button" onClick={() => setShowAllTopics(true)}
-          style={{ display: 'block', width: 'calc(100% - 32px)', margin: '10px 16px 0', padding: 14, fontSize: 15, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
-          고민 {listTopics().length}가지 전부 보기 ›
-        </button>
-      )}
 
       {/* ━━━ 6-1. 지금 많이 보는 풀이 (실제 집계만 · 3개 미만이면 숨김) ━━━ */}
       {liveBest.length >= 3 && (
@@ -735,6 +699,21 @@ function SealBox({ children, size, fontSize }: { children: ReactNode; size: numb
     <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 6, background: HJ.seal, color: HJ.paper, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize, fontWeight: 900, flexShrink: 0, boxShadow: 'inset 0 0 0 1.5px rgba(244,239,228,.25)' }}>
       {children}
     </span>
+  );
+}
+
+/** 고민 위 두 개 — 한 줄 카드 (빨간 도장, 2026-10-23 P1-3) */
+function TopicCard({ hz, t, s, price, onClick }: { hz: string; t: string; s: string; price: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full text-left mo-press"
+      style={{ display: 'flex', gap: 14, alignItems: 'center', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '15px 16px', minHeight: 78 }}>
+      <SealBox size={44} fontSize={24}>{hz}</SealBox>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: HJ.ink, lineHeight: 1.35 }}>{t}</span>
+        <span style={{ display: 'block', fontSize: 14.5, lineHeight: 1.5, color: HJ.ink2, marginTop: 3, wordBreak: 'keep-all' }}>{s}</span>
+      </span>
+      <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{price} ›</span>
+    </button>
   );
 }
 

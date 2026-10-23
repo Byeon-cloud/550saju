@@ -14,9 +14,10 @@ import { inspectKoreanSolarTime } from '@/services/saju/timeCorrection';
 import { toSolarInput } from '@/services/saju/calculator';
 import { deriveSipsung, yearGanji, DaeunTable } from './_flow_table';
 import { MotionScope, moVars } from '@/components/motion/Motion';
-import { todayHook, todayHourWindows, loveDday, nextStarMonth, monthDayLabel } from '@/services/saju/hookFacts';
-import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
-import { getTopicPrice } from '@/constants/pricing';
+import { todayHook, todayHourWindows } from '@/services/saju/hookFacts';
+import { genOfAge, worryRows, type WorryRow } from '@/services/saju/worryTopics';
+import type { TopicId } from '@/constants/topics';
+import { PRODUCT_COST } from '@/constants/pricing';
 import { hasFreePass } from '@/services/storage/dailyFreePass';
 import { getReports } from '@/services/storage/localStore';
 import { firstDailyOfferEligible, OFFER as FIRST_DAILY_OFFER } from '@/services/offers/firstDailyOffer';
@@ -200,34 +201,14 @@ export function TodayNextStep({ profileId, name, sajuData }: { profileId: string
   })();
   const offer = !gotToday && FIRST_DAILY_OFFER.enabled && firstDailyOfferEligible();
 
-  /* 나이대별 고민 두 개 — 홈 고민 목록(2026-10-15 세대별)과 같은 나눔: 34세까지, 35~49세, 50세부터 */
+  /* 나이대별 고민 두 개 — 홈 고민 블록의 위 두 개와 같은 목록(worryTopics.ts): 34세까지, 35~49세, 50세부터 */
   const rows = useMemo(() => {
-    const thisYear = Number(today.slice(0, 4));
     const by = Number(sajuData?.input?.birthYear) || 0;
-    const age = by ? thisYear - by : null;
-    const yr = (dk: string) => (Number(dk.slice(0, 4)) > thisYear ? '내년 ' : '');
-    const safe = <T,>(f: () => T): T | null => { try { return f(); } catch { return null; } };
-    const em = safe(() => nextStarMonth(sajuData, today, ['관성', '인성']));
-    const emText = em ? `${yr(em.month.start)}${em.month.calMonth}월` : '';
-    const row = (id: TopicId, t: string, s: string) => ({ id, t, s, hz: TOPIC_REGISTRY[id].kanji, price: `${getTopicPrice(id).actualPrice}운` });
-    if (age != null && age >= 50) {
-      return [
-        row('exam', '재취업 이직운', emText ? `일자리의 별이 ${emText}에 들어와요` : '다시 일을 구하거나 옮기기 좋은 달'),
-        row('business', '창업운', '가게나 내 일을 차리기 좋은 때'),
-      ];
-    }
-    if (age != null && age >= 35) {
-      const wm = safe(() => nextStarMonth(sajuData, today, ['재성']));
-      return [
-        row('exam', '이직운', emText ? `옮길 자리의 별이 ${emText}에 들어와요` : '옮기기 좋은 달과 버텨야 할 때'),
-        row('wealth', '재물운', wm ? `재물의 별이 ${yr(wm.month.start)}${wm.month.calMonth}월에 들어와요` : '돈이 들어오는 달과 새는 곳'),
-      ];
-    }
-    const love = safe(() => loveDday(sajuData, today));
-    return [
-      row('love', '연애운', love ? `${yr(love.month.start)}${monthDayLabel(love.month.start)}부터 연인의 별이 들어와요` : '새 인연이 들어오는 달을 짚어요'),
-      row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날'),
-    ];
+    const gen = genOfAge(by ? Number(today.slice(0, 4)) - by : null) ?? 'young';
+    return worryRows(sajuData, today, gen, PRODUCT_COST.compatibility)
+      .filter((r): r is WorryRow & { key: TopicId } => r.key !== 'compat')
+      .slice(0, 2)
+      .map((r) => ({ id: r.key, t: r.t, s: r.s, hz: r.hz, price: r.price }));
   }, [sajuData, today]);
 
   const withAd = (p: Record<string, string | number>) => (ad ? { ...p, ad } : p);

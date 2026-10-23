@@ -1,9 +1,12 @@
 // ChatListPage — #51 Sprint 2 (A 화면 · /chat)
 // 스펙: docs/mockups/사주500_UI개편_06_사주대화.md §1·§2·§3
 //
-// 골격: TopBar 56 → TicketBalanceBanner 64 → 대화 목록 → ConvertUnModal
+// 골격: TopBar 56 → 인사(이름 + 오늘 무료) → TicketBalanceBanner 64 → 대화 목록(없으면 질문 버튼 세 개) → ConvertUnModal
 // "+" 버튼 → /chat/new (B 화면)
 // 카드 탭 → /chat/:sessionId (C 화면)
+// 2026-10-23 1.6.3 P1-10 (점검 문서 5-9) — 무료 첫 질문을 쓰지 않고 나가는 손님:
+//   인사는 '서윤 님 사주로 무엇이든 물어보세요. 첫 질문은 오늘 무료예요.', 빈 화면은 나이대별 질문 버튼 세 개(누르면 바로 보낸다),
+//   대화권 문구는 '두 번째 질문부터는 1운에 세 번 물을 수 있어요'. 측정: chat_view, chat_starter_click.
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -12,6 +15,7 @@ import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useActiveProfile } from '@/hooks/useHomeData';
 import {
   getChatRooms,
   deleteChatRoom,
@@ -23,13 +27,26 @@ import {
 import { getProfiles } from '@/services/storage/localStore';
 import { CREDITS_PER_UN } from '@/services/storage/chatCredit';
 import { subscribeFreePass } from '@/services/storage/dailyFreePass';
+import { genOfAge } from '@/services/saju/worryTopics';
+import { getMyTti } from '@/services/tti/ttiFortune';
+import { trackEvent } from '@/services/analytics';
+import { kstToday } from '@/utils/kstDate';
+import { realName } from '@/utils/personName';
+import { HJ, SERIF } from '@/components/hanji/Hanji';
 import {
   C,
   ConvertUnModal,
   getTimeGreeting,
   getTotalTickets,
   TaegukAvatar,
+  chatStarterQuestions,
+  CHAT_PENDING_ASK_KEY,
+  type ChatGen,
 } from './_shared';
+
+/** 1운으로 묻는 횟수를 우리말로 (3 → '세 번') */
+const TIMES_WORD = ['', '한', '두', '세', '네', '다섯', '여섯'];
+const perUnTimes = `${TIMES_WORD[CREDITS_PER_UN] || CREDITS_PER_UN} 번`;
 
 export function ChatListPage() {
   usePageTitle('사주대화');
@@ -43,8 +60,43 @@ export function ChatListPage() {
 
   const timeCtx = useMemo(() => getTimeGreeting(), []);
 
+  /* 첫 화면 사람과 나이대 — 홈과 같은 활성 사주(본인 우선). 사주가 없으면 띠 표에서 고른 해 */
+  const { profile: active, name: activeName, hasProfile } = useActiveProfile();
+  const hasSaju = !!(hasProfile && (active as any)?.sajuData?.pillars?.[2]?.천간);
+  const who = realName(activeName);
+  const today = kstToday();
+  const gen: ChatGen = useMemo(() => {
+    const by = hasSaju ? Number((active as any)?.input?.birthYear) || undefined : getMyTti()?.year;
+    return genOfAge(by ? Number(today.slice(0, 4)) - by : null) ?? 'young';
+  }, [hasSaju, active, today]);
+  const starters = useMemo(() => chatStarterQuestions(gen, Number(today.slice(5, 7))), [gen, today]);
+
+  // 첫 화면 진입 한 번 (첫 질문 비율의 분모)
+  useEffect(() => {
+    let rooms = 0;
+    try { rooms = getChatRooms().length; } catch { /* noop */ }
+    trackEvent('chat_view', { has: hasSaju ? 1 : 0, rooms: rooms > 0 ? 1 : 0, free: getTotalTickets().free > 0 ? 1 : 0, gen });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** 질문 버튼 — 사주가 있으면 그 사주로 새 방을 열어 바로 보낸다. 없으면 생일을 넣고 돌아와 보낸다 */
+  function ask(i: number) {
+    const q = starters[i];
+    if (!q) return;
+    trackEvent('chat_starter_click', { i, gen, has: hasSaju ? 1 : 0 });
+    if (!hasSaju || !active) {
+      try { sessionStorage.setItem(CHAT_PENDING_ASK_KEY, JSON.stringify({ q, at: Date.now() })); } catch { /* noop */ }
+      navigate('/input?from=chat&new=1');
+      return;
+    }
+    const room = createChatRoom(active.name);
+    setChatRoomProfileId(room.id, active.id);
+    navigate(`/chat/${room.id}`, { state: { profile: active, autoAsk: q } });
+  }
+
   // 2026-09-17 — 입력 복귀 경로: /input?from=chat 저장 후 /chat?profileId=… 로 오는데 목록이 파라미터를 무시해
   //   방금 등록한 사주로 대화를 시작할 수 없었음 → 그 사주로 새 방을 열어 바로 진입.
+  //   2026-10-23 — 사주 없이 질문 버튼을 눌렀다면 그 질문을 바로 보낸다(30분 안에 돌아온 경우만)
   const [searchParams] = useSearchParams();
   const profileStartRef = useRef(false);
   useEffect(() => {
@@ -53,9 +105,18 @@ export function ChatListPage() {
     profileStartRef.current = true;
     const profile = getProfiles().find((p) => p.id === pid);
     if (!profile) return;
+    let autoAsk: string | undefined;
+    try {
+      const raw = sessionStorage.getItem(CHAT_PENDING_ASK_KEY);
+      if (raw) {
+        sessionStorage.removeItem(CHAT_PENDING_ASK_KEY);
+        const p = JSON.parse(raw);
+        if (typeof p?.q === 'string' && p.q.trim() && Date.now() - Number(p.at || 0) < 30 * 60 * 1000) autoAsk = p.q.trim();
+      }
+    } catch { /* noop */ }
     const room = createChatRoom(profile.name);
     setChatRoomProfileId(room.id, profile.id);
-    navigate(`/chat/${room.id}`, { replace: true, state: { profile } });
+    navigate(`/chat/${room.id}`, { replace: true, state: { profile, ...(autoAsk ? { autoAsk } : {}) } });
   }, [searchParams, navigate]);
 
   function reloadAll() {
@@ -115,7 +176,7 @@ export function ChatListPage() {
         }
       />
 
-      {/* §3 인사 헤더 — 시간대 인사 (몰입 톤) */}
+      {/* §3 인사 헤더 — 2026-10-23 P1-10: 누구 사주로 묻는지와 오늘 무료를 먼저 (예전: '이 늦은 밤, 마음에 무언가 담긴 게 있으시군요') */}
       <FadeIn>
         <div
           style={{
@@ -129,20 +190,28 @@ export function ChatListPage() {
               color: C.mute,
               fontWeight: 600,
               margin: 0,
-              letterSpacing: '0.04em',
             }}
           >
             {timeCtx.label}
           </p>
           <p
             style={{
-              fontSize: 13.5,
-              color: C.inkSoft,
-              lineHeight: 1.55,
+              fontFamily: SERIF,
+              fontSize: 19,
+              fontWeight: 700,
+              color: HJ.ink,
+              lineHeight: 1.45,
+              letterSpacing: '-.02em',
               marginTop: 6,
+              wordBreak: 'keep-all',
             }}
           >
-            {timeCtx.greeting}
+            {hasSaju
+              ? `${who ? `${who} 님` : '내'} 사주로 무엇이든 물어보세요.`
+              : '생일을 넣으면 내 사주로 무엇이든 물어볼 수 있어요.'}
+          </p>
+          <p style={{ fontSize: 15, color: HJ.ink2, lineHeight: 1.6, marginTop: 4, wordBreak: 'keep-all' }}>
+            {tickets.free > 0 ? '첫 질문은 오늘 무료예요.' : '오늘 무료 질문은 이미 썼어요. 내일 다시 무료로 물을 수 있어요.'}
           </p>
         </div>
       </FadeIn>
@@ -162,7 +231,7 @@ export function ChatListPage() {
         {/* §3 대화 목록 */}
         {rooms.length === 0 ? (
           <FadeIn delay={0.08}>
-            <ListEmpty onStart={() => navigate('/chat/new')} />
+            <ListEmpty questions={starters} onAsk={ask} hasSaju={hasSaju} onStart={() => navigate('/chat/new')} />
           </FadeIn>
         ) : (
           <FadeIn delay={0.08}>
@@ -310,17 +379,18 @@ function TicketBalanceBanner({
 }) {
   const noTickets = tickets.total <= 0;
   return (
+    // 2026-10-23 v9 — 상태 표시는 먹과 종이 (금색은 누르는 주 버튼에만)
     <div
       style={{
         margin: '8px 16px 0',
-        height: 64,
-        background: noTickets ? C.warnBeige : C.goldSoft,
+        minHeight: 64,
+        background: noTickets ? C.warnBeige : HJ.card,
         borderRadius: 12,
-        padding: '0 16px',
+        padding: '10px 16px',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        border: `1px solid ${noTickets ? C.line : C.goldLine}`,
+        border: `1px solid ${HJ.line}`,
       }}
       role="status"
       aria-live="polite"
@@ -333,12 +403,12 @@ function TicketBalanceBanner({
           height: 32,
           flexShrink: 0,
           borderRadius: 999,
-          background: noTickets ? '#FFFFFF' : C.goldSoft,
-          border: `1px solid ${noTickets ? C.line : C.goldLine}`,
+          background: '#FFFFFF',
+          border: `1px solid ${HJ.line}`,
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: C.goldDeep,
+          color: HJ.ink,
         }}
       >
         <ChatIcon size={16} />
@@ -386,8 +456,8 @@ function TicketBalanceBanner({
                 </span>
               )}
             </p>
-            <p style={{ fontSize: 13, color: C.inkSoft, margin: '2px 0 0' }}>
-              1운을 대화권 {CREDITS_PER_UN}개로 바꿀 수 있어요
+            <p style={{ fontSize: 13.5, color: HJ.ink2, lineHeight: 1.5, margin: '2px 0 0', wordBreak: 'keep-all' }}>
+              두 번째 질문부터는 1운에 {perUnTimes} 물을 수 있어요
             </p>
           </>
         )}
@@ -400,9 +470,9 @@ function TicketBalanceBanner({
           height: noTickets ? 36 : 32,
           padding: noTickets ? '0 14px' : '0 12px',
           background: noTickets ? C.ink : 'transparent',
-          color: noTickets ? C.paper : C.goldDeep,
-          border: noTickets ? 'none' : `1px solid ${C.goldLine}`,
-          borderRadius: 999,
+          color: noTickets ? C.paper : HJ.ink,
+          border: noTickets ? 'none' : `1px solid ${HJ.ink}`,
+          borderRadius: 8,
           fontSize: 13.5,
           fontWeight: 700,
           cursor: 'pointer',
@@ -536,78 +606,76 @@ function SessionCard({
 }
 
 /* ══════════════════════════════════════════════════════════════════
- * §3-2 빈 상태
+ * §3-2 빈 상태 — 2026-10-23 P1-10: 나이대별 질문 버튼 세 개 (누르면 바로 보낸다)
+ *   예전: '아직 대화가 없어요 / 보관된 사주로 질문을 시작해보세요' + 금색 '새 대화 시작하기'
+ *   직접 쓰기는 먹 테두리 버튼 (금색은 누르는 주 버튼에만, 여기서는 질문 버튼이 주 행동)
  * ═════════════════════════════════════════════════════════════════ */
-function ListEmpty({ onStart }: { onStart: () => void }) {
+function ListEmpty({
+  questions,
+  onAsk,
+  hasSaju,
+  onStart,
+}: {
+  questions: string[];
+  onAsk: (i: number) => void;
+  hasSaju: boolean;
+  onStart: () => void;
+}) {
   return (
-    <div
+    <section
       style={{
-        marginTop: 24,
-        textAlign: 'center',
-        padding: '48px 24px',
-        background: C.surface,
-        border: `1px solid ${C.line}`,
+        marginTop: 16,
+        padding: '4px 16px 16px',
+        background: HJ.card,
+        border: `1px solid ${HJ.line}`,
         borderRadius: 16,
       }}
     >
-      <div
-        aria-hidden
-        style={{
-          width: 64,
-          height: 64,
-          margin: '0 auto 14px',
-          background: C.goldSoft,
-          borderRadius: 999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: C.goldDeep,
-          fontSize: 28,
-          fontWeight: 700,
-          fontFamily: "'Noto Serif KR', serif",
-        }}
-      >
-        言
-      </div>
-      <p
-        style={{
-          fontSize: 15,
-          fontWeight: 700,
-          color: C.ink,
-          margin: '0 0 6px',
-        }}
-      >
-        아직 대화가 없어요
+      <p style={{ fontSize: 13.5, fontWeight: 700, color: HJ.mute, margin: '12px 0 2px' }}>
+        {hasSaju ? '질문을 누르면 바로 물어봐요' : '질문을 고르면 생일을 넣은 뒤 바로 물어봐요'}
       </p>
-      <p
-        style={{
-          fontSize: 13,
-          color: C.inkSoft,
-          lineHeight: 1.55,
-          margin: '0 0 18px',
-        }}
-      >
-        보관된 사주로 질문을 시작해보세요
-      </p>
+      {questions.map((q, i) => (
+        <button
+          key={q}
+          type="button"
+          onClick={() => onAsk(i)}
+          className="w-full text-left mo-press"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            minHeight: 56,
+            padding: '14px 0',
+            background: 'transparent',
+            border: 0,
+            borderTop: i ? `1px solid ${HJ.line}` : 0,
+            cursor: 'pointer',
+          }}
+        >
+          <span style={{ flex: 1, fontSize: 16, fontWeight: 700, color: HJ.ink, lineHeight: 1.5, wordBreak: 'keep-all' }}>{q}</span>
+          <span aria-hidden="true" style={{ fontSize: 18, fontWeight: 700, color: HJ.ink, flexShrink: 0 }}>›</span>
+        </button>
+      ))}
       <button
         type="button"
         onClick={onStart}
+        className="mo-press"
         style={{
-          minWidth: 200,
-          height: 52,
-          background: 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
-          color: '#17110A',
-          border: 'none',
-          borderRadius: 14,
-          fontSize: 16,
+          width: '100%',
+          minHeight: 50,
+          marginTop: 6,
+          background: 'transparent',
+          color: HJ.ink,
+          border: `1.5px solid ${HJ.ink}`,
+          borderRadius: 12,
+          fontSize: 15.5,
           fontWeight: 800,
-          boxShadow: '0 8px 18px rgba(140,109,61,.22)',
           cursor: 'pointer',
         }}
       >
-        새 대화 시작하기
+        다른 질문 직접 쓰기
       </button>
-    </div>
+    </section>
   );
 }
 

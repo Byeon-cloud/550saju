@@ -887,6 +887,7 @@ export function InputPage() {
         <BirthHourField
           birthTime={birthTime}
           timeUnknown={timeUnknown}
+          relation={relation}
           sijiPreview={sijiPreview}
           onTimeChange={(v) => {
             setBirthTime(v);
@@ -1496,10 +1497,13 @@ function parseBirthDigits(digits: string, cal: 'solar' | 'lunar', maxDate: strin
 
 /* ══════════════════════════════════════════════════════════════════
  * §7 BirthHourField — 시트 트리거 + KR 보정 안내 + 모름 경고
+ *   2026-10-23 1.6.3 P1-10 — 시간을 몰라도 된다는 말을 누르기 전부터 늘 보인다(예전엔 '모름'을 눌러야 보였다).
+ *     '모름' 버튼은 시간 칸과 같은 크기, 고르면 성별 칸처럼 먹 바탕 (40~60대 점검 8-1의 4번: 가족 시간을 몰라 막히던 50대)
  * ═════════════════════════════════════════════════════════════════ */
 function BirthHourField({
   birthTime,
   timeUnknown,
+  relation,
   sijiPreview,
   onTimeChange,
   onSetUnknown,
@@ -1508,6 +1512,7 @@ function BirthHourField({
 }: {
   birthTime: string;
   timeUnknown: boolean;
+  relation: Relation;
   sijiPreview: { hanja: string; ko: string } | null;
   onTimeChange: (v: string) => void;
   onSetUnknown: () => void;
@@ -1539,6 +1544,7 @@ function BirthHourField({
           aria-label="태어난 시각 (시:분)"
           style={{
             flex: 1,
+            minWidth: 0,
             height: 52,
             background: C.surface,
             border: `1px solid ${error ? C.danger : hasTime ? C.goldLine : C.line}`,
@@ -1554,21 +1560,29 @@ function BirthHourField({
           onClick={onSetUnknown}
           aria-pressed={timeUnknown}
           style={{
-            flexShrink: 0,
+            flex: 1,
+            minWidth: 0,
             height: 52,
-            padding: '0 18px',
-            background: timeUnknown ? C.goldSoft : C.surface,
-            border: `1px solid ${timeUnknown ? C.goldLine : C.line}`,
+            padding: '0 12px',
+            background: timeUnknown ? C.ink : C.surface,
+            border: `1px solid ${timeUnknown ? C.ink : C.line}`,
             borderRadius: 12,
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: 700,
-            color: timeUnknown ? C.goldDeep : C.mute,
+            color: timeUnknown ? C.paper : C.ink,
             cursor: 'pointer',
           }}
         >
           모름
         </button>
       </div>
+
+      {/* 시간을 몰라도 된다는 안내 — 늘 보인다 (모름을 고른 뒤에는 고른 결과를 말한다) */}
+      <p style={{ fontSize: 15, lineHeight: 1.6, color: C.ink, marginTop: 10, marginBottom: 0, wordBreak: 'keep-all' }}>
+        {timeUnknown
+          ? '모름으로 넣었어요. 시간만 빼고 다 풀어 드려요.'
+          : `${relation === '가족' ? '가족 ' : ''}태어난 시간을 몰라도 괜찮아요. 모름을 누르면 시간만 빼고 다 풀어 드려요.`}
+      </p>
 
       {/* 실시간 시(時) 표시 — 진태양시 자동 판정 결과를 눈으로 확인 */}
       {hasTime && sijiPreview && (
@@ -1629,20 +1643,6 @@ function BirthHourField({
             })()}
           </p>
         </div>
-      )}
-
-      {/* 모름 경고 */}
-      {timeUnknown && (
-        <p
-          style={{
-            fontSize: 13.5,
-            color: C.goldDeep,
-            marginTop: 8,
-            fontWeight: 500,
-          }}
-        >
-          시주(시간 기둥) 부분만 빼고 풀이해드려요. 그 외엔 모두 분석돼요.
-        </p>
       )}
 
       {/* 시(時)만 아는 사람용 fallback */}
