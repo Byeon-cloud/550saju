@@ -355,7 +355,7 @@ export function ChargePage() {
       setBalanceDisplay(getBalance());
       toast.show(result.message, 'success');
       if (redirectTo) {
-        setTimeout(() => navigate(redirectTo), 1400);
+        setTimeout(() => navigate(redirectTo, { replace: true }), 1400);
       } else {
         setTimeout(() => navigate(-1), 1500);
       }
@@ -381,7 +381,7 @@ export function ChargePage() {
       toast.show(r.message, 'success');
       import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: selectedPkg.price, source: chargeSource, pg: 'portone' })).catch(() => {});
       writeChargeCtx(null);
-      if (redirectTo) setTimeout(() => navigate(redirectTo), 1400);
+      if (redirectTo) setTimeout(() => navigate(redirectTo, { replace: true }), 1400);
     } else if (r.cancelled) {
       toast.show('결제가 취소됐어요', 'info');
     } else {
@@ -404,9 +404,11 @@ export function ChargePage() {
     toast.show(r.message, r.ok ? 'success' : r.cancelled ? 'info' : 'warning');
   };
 
+  // 2026-10-23 — 닫기가 돌아갈 화면을 새로 쌓으면(push) 휴대폰 뒤로가 다시 충전 화면을 열어, 나가려는 손님이
+  //   충전과 종합사주 화면을 1~2초 간격으로 오갔다(10-22~23 웹 6기기). 충전 화면 자리를 바꿔 끼운다(replace)
   const goBack = () => {
     writeChargeCtx(null);
-    if (redirectTo) navigate(redirectTo);
+    if (redirectTo) navigate(redirectTo, { replace: true });
     else navigate(-1);
   };
 
