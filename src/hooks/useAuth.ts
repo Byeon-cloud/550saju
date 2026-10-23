@@ -4,6 +4,14 @@ import { onAuthChange, signIn, checkRedirectResult, ensureAuth, maybeUpgradeToTo
 
 const DEV_MODE = false;
 
+/** 로그인 계정의 사주원국 사본 합치기 (웹만 — 앱인토스 판정은 firestoreSync.mergeAccountProfiles 안에서) */
+function mergeAccountProfilesLater(uid: string): void {
+  import('@/services/storage/firestoreSync')
+    .then(({ mergeAccountProfiles }) => mergeAccountProfiles(uid))
+    .then((n) => { if (n > 0) console.info(`[Sync] 로그인 계정 사주원국 ${n}명 합침`); })
+    .catch(() => { /* 무해 — 다음 페이지 로드에서 다시 */ });
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(!DEV_MODE);
@@ -39,6 +47,9 @@ export function useAuth() {
           .catch(() => { /* 무해 — 다음 부팅에서 재시도 */ });
         // P1 엔드게임 — 익명→토스 안정 uid 승격(플래그 OFF 기본, 내부에서 게이팅).
         maybeUpgradeToTossIdentity().catch(() => { /* 무해 — 익명 유지 */ });
+        // 2026-10-23 — 웹 로그인 계정(구글, 카카오, 네이버 맞춤 토큰 모두 여기로 온다): 그 계정의 사주원국 사본을 이 기기에 합친다.
+        //   부팅 복원(restoreProfilesIfEmpty)은 로그인 전 익명 계정의 빈 사본을 읽어 가족 사주가 돌아오지 않았다. 웹만, 계정당 페이지 한 번.
+        if (!u.isAnonymous) mergeAccountProfilesLater(u.uid);
       }
     });
 
@@ -49,6 +60,7 @@ export function useAuth() {
           syncToCloud(u.uid);
           syncFromCloud(u.uid);
         });
+        mergeAccountProfilesLater(u.uid);
       }
     });
 
@@ -65,6 +77,8 @@ export function useAuth() {
         syncToCloud(u.uid);
         syncFromCloud(u.uid);
       });
+      // 익명 연결(uid 그대로)은 onAuthChange 가 다시 오지 않아 여기서도 부른다 (계정당 한 번이라 겹쳐도 한 번 읽음)
+      mergeAccountProfilesLater(u.uid);
       return u;
     } catch (err: any) {
       // 2026-10-19 — 스스로 닫은 것은 조용히, 팝업 막힘 같은 실패는 시트가 안내하도록 넘긴다(그전엔 전부 삼켜서 눌러도 아무 일이 없어 보였다)

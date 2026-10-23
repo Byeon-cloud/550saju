@@ -16,6 +16,7 @@ import { db, auth } from '@/services/auth/firebase';
 import { getReports, saveReport, generateId, mergeProfiles, profilesFromReports, getDeletedReportIds, getDeletedProfileKeys, type LocalReport, type SajuProfile } from './localStore';
 import { type BalanceDetail } from './localStore';
 import { mergeRestoredChatRooms, getDeletedChatIds, type ChatRoom } from './chatStore';
+import { isAppintosBuild } from '@/lib/env';
 
 /**
  * 로컬 → 클라우드 동기화
@@ -419,6 +420,15 @@ export async function pushProfilesMirror(profiles: SajuProfile[]): Promise<void>
   try {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
+    // 2026-10-23 — 웹 로그인 계정은 이 페이지에서 그 계정 사본을 먼저 읽어 합친 뒤에만 덮어쓴다.
+    //   그전엔 로그인 직후 보관함 복원이 인물을 합치며 프로필을 쓰면 2초 뒤 이 기기 목록만으로 계정 사본을 덮어써,
+    //   다른 기기에서 넣은 가족 사주(보관함 기록이 없는 사람)가 사본에서도 지워졌다.
+    if (await isWebAccount(uid)) {
+      const r = await pullAccountProfilesOnce(uid);
+      if (!r.ok) return; // 계정 사본을 못 읽었으면 덮어쓰지 않는다 (다음 쓰기에서 다시)
+      if (auth.currentUser?.uid !== uid) return;
+      profiles = (await import('./localStore')).getProfiles(); // 합친 뒤의 목록으로
+    }
     const items = (profiles || []).slice(0, 100).map((p) => ({
       id: p.id,
       name: p.name ?? '',
@@ -436,13 +446,60 @@ export async function pushProfilesMirror(profiles: SajuProfile[]): Promise<void>
 
 /** 사주원국 미러 pull — 기기 여권 복원 후 병합용 (없으면 빈 배열) */
 export async function pullProfilesMirror(uid: string): Promise<any[]> {
+  try { return await readProfilesMirror(uid); } catch { return []; }
+}
+
+/** 미러 읽기 본체 — 서버 삭제 장부(deletedKeys)에 있는 인물은 뺀다. 읽기 실패는 던진다(빈 사본과 구분하려고) */
+async function readProfilesMirror(uid: string): Promise<any[]> {
+  const snap = await getDoc(doc(db, `users/${uid}/state`, 'profiles'));
+  const data = snap.exists() ? (snap.data() as any) : null;
+  const items = Array.isArray(data?.items) ? data.items : [];
+  const deleted = new Set<string>(Array.isArray(data?.deletedKeys) ? data.deletedKeys : []);
+  return items.filter((p: any) => !deleted.has(`${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`));
+}
+
+/* ── 로그인 계정의 사주원국 사본 합치기 (2026-10-23, 웹만) ──
+ *   부팅 때 restoreProfilesIfEmpty 는 로그인 전 새 익명 uid 의 빈 사본을 읽어서, 다른 기기에서 넣은 가족 사주
+ *   (보관함 기록이 없는 사람)는 로그인해도 이 기기에 돌아오지 않았다. 로그인 계정은 페이지마다 한 번 그 계정 사본을 읽어
+ *   이 기기에 없는 사람만 합친다(mergeProfiles: 이미 있는 사람은 덮어쓰지 않고, 이 기기에서 지운 사람은 되살리지 않는다).
+ *   앱인토스는 기기 여권(devicePassport)이 같은 일을 하므로 하지 않는다. */
+const _accountProfilePull = new Map<string, Promise<{ ok: boolean; added: number }>>();
+
+/** 웹이고 익명이 아닌 지금 로그인 계정인가 */
+async function isWebAccount(uid: string): Promise<boolean> {
+  if (isAppintosBuild) return false;
+  const u = auth.currentUser;
+  if (!u || u.isAnonymous || u.uid !== uid) return false;
   try {
-    const snap = await getDoc(doc(db, `users/${uid}/state`, 'profiles'));
-    const data = snap.exists() ? (snap.data() as any) : null;
-    const items = Array.isArray(data?.items) ? data.items : [];
-    const deleted = new Set<string>(Array.isArray(data?.deletedKeys) ? data.deletedKeys : []);
-    return items.filter((p: any) => !deleted.has(`${p?.name}_${p?.input?.birthYear}_${p?.input?.birthMonth}_${p?.input?.birthDay}`));
-  } catch { return []; }
+    const { isAppsInToss } = await import('@/services/payment/iapService');
+    return !isAppsInToss();
+  } catch { return false; }
+}
+
+function pullAccountProfilesOnce(uid: string): Promise<{ ok: boolean; added: number }> {
+  const cur = _accountProfilePull.get(uid);
+  if (cur) return cur;
+  const run = (async () => {
+    try {
+      const items = await readProfilesMirror(uid);
+      if (!items.length) return { ok: true, added: 0 };
+      const store = await import('./localStore');
+      return { ok: true, added: store.mergeProfiles(items) };
+    } catch {
+      _accountProfilePull.delete(uid); // 읽기 실패 — 다음 호출에서 다시 읽는다
+      return { ok: false, added: 0 };
+    }
+  })();
+  _accountProfilePull.set(uid, run);
+  return run;
+}
+
+/** 로그인 성공 직후(웹) — 로그인한 계정의 사주원국 사본을 이 기기 프로필에 합친다. 합친 사람 수 반환 */
+export async function mergeAccountProfiles(uid: string): Promise<number> {
+  try {
+    if (!uid || !(await isWebAccount(uid))) return 0;
+    return (await pullAccountProfilesOnce(uid)).added;
+  } catch { return 0; }
 }
 
 /** 로컬에 사주가 하나도 없는데 서버 미러에는 있으면 되살린다 (2026-10-14).

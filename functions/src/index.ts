@@ -2067,6 +2067,8 @@ export const confirmPortonePayment = onCall(
 
     // 방어 ① — paymentId 는 클라가 `${uid8}_...` 로 생성. 다른 계정 결제 컨펌 시도 차단.
     if (!paymentId.startsWith(uid.slice(0, 8))) {
+      // 2026-10-23 — 거부는 그대로. 결제한 계정과 돌아온 화면의 계정이 다른 일을 남긴다(watchPortonePaid 가 미지급 경보에 같이 적는다)
+      if (/^[A-Za-z0-9]{8}_[A-Za-z0-9_]{1,60}$/.test(paymentId)) await db.collection('backofficeAlerts').doc(`portone_uid_mismatch_${paymentId}`).set({ kind: 'portone_confirm_uid_mismatch', paymentId, payerUid8: paymentId.slice(0, 8), callerUid8: uid.slice(0, 8), callerAnon: request.auth?.token?.firebase?.sign_in_provider === 'anonymous', amount: Number(amount) || 0, attempts: admin.firestore.FieldValue.increment(1), at: admin.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => undefined);
       throw new HttpsError('permission-denied', '본인 결제만 확인할 수 있어요');
     }
 
@@ -2514,6 +2516,7 @@ export { onInviteReceived } from './invite/onInviteReceived';
 export { deleteAccount } from './auth/deleteAccount';
 export { purgeWithdrawnUsers } from './auth/purgeWithdrawn'; // 2026-10-14 토스 탈퇴 5일 뒤 개인정보 파기 (payments 보존)
 export { syncPortoneCancellations } from './payment/portoneCancelSync'; // 2026-10-16 포트원에서 취소된 웹 결제 → 결제 기록 refunded + 운 회수 지시(balanceAdjustments)
+export { watchPortonePaid } from './payment/portonePaidWatch'; // 2026-10-23 포트원은 결제 완료인데 장부에 confirmed 가 없는 웹 결제를 10분마다 찾아 경보와 오너 메일 (운은 넣지 않음)
 export { seoHit } from './seo/seoHit'; // 2026-10-21 검색용 정적 페이지의 광고 방문 기록 (/api/seo-hit)
 export { renderTtiToday } from './seo/ttiTodayPage'; // 2026-10-17 오늘의 띠별 운세 공개 검색 페이지 /unse/today/ (시험 E9)
 export { ensureTtiFortune } from './tti/ttiFortune'; // 2026-10-15 띠별 오늘의 운세 (하루 한 번 미리 생성, 화면은 읽기만)
