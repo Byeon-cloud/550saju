@@ -144,6 +144,8 @@ interface MailRow {
   daily: 'on' | 'off' | null; dailyDay: string; dailyOffDay: string; dailySource: string; age: string; ilju: string;
   ad: 'on' | 'off' | 'none' | null; adDay: string; adOffDay: string; adSource: string;
   inquiryDay?: string; inquiries?: number;
+  /** 그만 받았는데 주소가 저장소에 남아 있음(10-25 전 수신 거부) */
+  piiLeft?: boolean;
   paid: number; payCount: number;
 }
 type Filter = 'all' | 'daily' | 'ad' | 'off';
@@ -228,10 +230,10 @@ function MailList() {
     setMsg('');
     let done = '';
     try {
-      const r = await callAdmin<{ done: string[]; accounts?: number }>('adminMailOptOut', { uid, scope: 'all', reason: '관리자 화면에서 오너가 끊음' });
+      const r = await callAdmin<{ done: string[]; accounts?: number; cleaned?: number }>('adminMailOptOut', { uid, scope: 'all', reason: '관리자 화면에서 오너가 끊음' });
       done = r.done.length
         ? `메일을 끊었어요${(r.accounts || 0) > 1 ? `(같은 주소를 쓰는 계정 ${r.accounts}개 모두)` : ''}. 다음 메일부터 보내지 않아요.`
-        : '이미 받지 않는 사람이에요.';
+        : (r.cleaned || 0) > 0 ? '그만 받은 사람의 남은 주소를 지웠어요(처리방침의 보관 기간이 끝난 주소).' : '이미 받지 않는 사람이에요.';
       setMsg(done);
       setShown((m) => { const n = { ...m }; delete n[uid]; return n; }); // 끊은 사람의 '보기' 주소도 화면에서 지운다
     } catch (e: any) { setMsg(`끊지 못했어요: ${String(e?.message || e)}`); return; }
@@ -287,7 +289,12 @@ function MailList() {
                   style={{ padding: '3px 8px', borderRadius: 8, border: `1px solid ${K.line}`, background: K.surface, fontSize: 12.5, fontWeight: 700, color: armed === r.uid ? K.red : K.ink, cursor: 'pointer' }}>
                   {armed === r.uid ? '한 번 더 누르면 끊어요' : '그만 보내기'}
                 </button>
-              : '',
+              : r.piiLeft
+                ? <button type="button" onClick={() => { if (armed === r.uid) { setArmed(''); optOut(r.uid); } else setArmed(r.uid); }}
+                    style={{ padding: '3px 8px', borderRadius: 8, border: `1px solid ${K.line}`, background: K.surface, fontSize: 12.5, fontWeight: 700, color: armed === r.uid ? K.red : K.ink, cursor: 'pointer' }}>
+                    {armed === r.uid ? '한 번 더 누르면 지워요' : '남은 주소 지우기'}
+                  </button>
+                : '',
           ])}
         />
       </Box>

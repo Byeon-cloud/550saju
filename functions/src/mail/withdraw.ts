@@ -17,9 +17,9 @@ const norm = (e: unknown) => String(e || '').trim().toLowerCase();
 export const emailHash = (e: string) => createHash('sha256').update(norm(e)).digest('hex');
 
 /** 이 주소(들)를 쓰는 문서를 모두 끈다. 끈 문서 번호를 돌려준다 */
-export async function withdrawByEmail(emails: string[], scope: WithdrawScope, by: string): Promise<{ daily: string[]; ad: string[] }> {
+export async function withdrawByEmail(emails: string[], scope: WithdrawScope, by: string): Promise<{ daily: string[]; ad: string[]; cleaned: string[] }> {
   const want = new Set(emails.map(norm).filter(Boolean));
-  const out = { daily: [] as string[], ad: [] as string[] };
+  const out = { daily: [] as string[], ad: [] as string[], cleaned: [] as string[] }; // cleaned: 이미 꺼져 있어 주소만 지운 문서
   if (!want.size) return out;
   const db = admin.firestore();
   const now = admin.firestore.FieldValue.serverTimestamp();
@@ -35,7 +35,7 @@ export async function withdrawByEmail(emails: string[], scope: WithdrawScope, by
       const pii = { emailHash: emailHash(e), email: del, name: del, birthYear: del, updatedAt: now };
       // 이미 그만 받은 문서는 개인정보만 지운다(철회 날짜를 오늘로 바꾸면 그만 받은 날 통계가 옮겨 간다)
       if (s.get('active')) { batch.set(s.ref, { ...pii, active: false, withdrawnAt: now, withdrawnBy: by }, { merge: true }); out.daily.push(s.id); }
-      else batch.set(s.ref, pii, { merge: true });
+      else { batch.set(s.ref, pii, { merge: true }); out.cleaned.push(s.id); }
       n += 1;
     }
   }
@@ -49,7 +49,7 @@ export async function withdrawByEmail(emails: string[], scope: WithdrawScope, by
       if (!on && pdf) continue; // 결과지 기록만 있고 이미 광고 동의가 없으면 그대로 둔다
       const pii = pdf ? {} : { emailHash: emailHash(e), email: del };
       if (on) { batch.set(l.ref, { ...pii, marketingConsent: false, marketingWithdrawnAt: now, withdrawnBy: by, updatedAt: now }, { merge: true }); out.ad.push(l.id); }
-      else batch.set(l.ref, { ...pii, updatedAt: now }, { merge: true }); // 이미 철회한 광고 전용 문서는 주소만 지운다
+      else { batch.set(l.ref, { ...pii, updatedAt: now }, { merge: true }); out.cleaned.push(l.id); } // 이미 철회한 광고 전용 문서는 주소만 지운다
       n += 1;
     }
   }

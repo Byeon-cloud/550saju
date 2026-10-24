@@ -83,6 +83,8 @@ export const adminMailList = onCall({ timeoutSeconds: 120, memory: '512MiB', cor
     daily: 'on' | 'off' | null; dailyDay: string; dailyOffDay: string; dailySource: string; age: string; ilju: string;
     ad: 'on' | 'off' | 'none' | null; adDay: string; adOffDay: string; adSource: string;
     inquiryDay: string; inquiries: number;
+    /** 그만 받았는데 주소가 아직 남은 문서(10-25 전에 수신 거부한 사람) — 화면의 '주소 지우기' */
+    piiLeft: boolean;
     paid: number; payCount: number;
   };
   const rows = new Map<string, Row>();
@@ -90,7 +92,7 @@ export const adminMailList = onCall({ timeoutSeconds: 120, memory: '512MiB', cor
     let r = rows.get(uid);
     if (!r) {
       r = { uid, owner: OWNER_UIDS.includes(uid), email: '', firstMs: 0, firstDay: '', daily: null, dailyDay: '', dailyOffDay: '', dailySource: '', age: '', ilju: '',
-        ad: null, adDay: '', adOffDay: '', adSource: '', inquiryDay: '', inquiries: 0, paid: 0, payCount: 0 };
+        ad: null, adDay: '', adOffDay: '', adSource: '', inquiryDay: '', inquiries: 0, piiLeft: false, paid: 0, payCount: 0 };
       rows.set(uid, r);
     }
     return r;
@@ -104,7 +106,7 @@ export const adminMailList = onCall({ timeoutSeconds: 120, memory: '512MiB', cor
     if (d.active && d.email) {
       r.email = r.email || maskEmail(d.email);
       if (full && !r.emailFull) r.emailFull = String(d.email);
-    }
+    } else if (!d.active && d.email) r.piiLeft = true;
     r.daily = d.active ? 'on' : 'off';
     r.dailyDay = String(d.consentDay || '');
     r.dailyOffDay = !d.active && d.withdrawnAt ? kstDayOf(tsMs(d.withdrawnAt)) : '';
@@ -116,6 +118,7 @@ export const adminMailList = onCall({ timeoutSeconds: 120, memory: '512MiB', cor
   for (const l of leadsSnap.docs) {
     const d = l.data() as any;
     const r = get(l.id);
+    if (!keepLead(d) && d.email) r.piiLeft = true;
     if (keepLead(d) && d.email) {
       r.email = r.email || maskEmail(d.email);
       if (full && !r.emailFull) r.emailFull = String(d.email);
@@ -178,6 +181,6 @@ export const adminMailOptOut = onCall({ timeoutSeconds: 30, memory: '256MiB', co
   const emails = [s.data()?.email, l.data()?.email, ...(q?.docs || []).map((d) => d.get('email'))].map((e) => String(e || '')).filter(Boolean);
   const res = await withdrawByEmail(emails, scope as WithdrawScope, 'owner');
   const done = [...(res.daily.length ? ['daily'] : []), ...(res.ad.length ? ['ad'] : [])];
-  await audit(by, 'mail_opt_out', uid, { scope, done, dailyUids: res.daily, adUids: res.ad, reason: String(request.data?.reason || '').slice(0, 200) });
-  return { ok: true, done, accounts: new Set([...res.daily, ...res.ad]).size };
+  await audit(by, 'mail_opt_out', uid, { scope, done, dailyUids: res.daily, adUids: res.ad, cleanedUids: res.cleaned, reason: String(request.data?.reason || '').slice(0, 200) });
+  return { ok: true, done, accounts: new Set([...res.daily, ...res.ad]).size, cleaned: res.cleaned.length };
 });

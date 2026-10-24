@@ -26,6 +26,7 @@ import { AD_BANNER_GROUP_ID } from '@/constants/config';
 import { LegalFooter } from '@/components/layout/LegalFooter';
 import { DailyMailSignup, mailPrefillOf } from '@/components/daily/DailyMailSignup';
 import { AdMeasureToggle } from '@/components/my/AdMeasureToggle';
+import { TossLinkMaker } from '@/components/my/TossLinkMaker';
 import { useActiveProfile } from '@/hooks/useHomeData';
 import { ConsentModal, type ConsentResult } from '@/components/auth/ConsentModal';
 import { WebLoginSheet } from '@/components/auth/WebLoginSheet';
@@ -1527,6 +1528,9 @@ function AppMeta({ toast: _toast }: { toast: ReturnType<typeof useToast> }) {
                   </button>
                 </>
               )}
+
+              {/* 2026-10-25 광고, 작가용 토스 앱 링크(E39, E37) — 링크만 만든다(돈, 잔액 무관) */}
+              <TossLinkMaker onToast={(m, k) => _toast.show(m, k)} colors={{ gold: C.gold, ink: C.ink, paper: C.paper }} />
 
               <p className="text-[13.5px] font-bold mt-2 mb-2" style={{ color: C.gold }}>프로모션 TEST 호출 (출시 전)</p>
               <p className="text-[13px] mb-3" style={{ color: 'rgba(248,245,238,0.5)' }}>
