@@ -353,7 +353,9 @@ function recoverPartialJson(text: string): any {
 }
 
 /** 옛 앱(1.6.2) 달 칸 — 올해 1~12월. 6개월 칸 글을 같은 달 번호에 두고, 내년 달은 연도를 앞에 붙이고, 지난 달은 한 줄 */
-function legacyMonthGrid(ahead: any[], year: number, sajuData: any): any[] {
+function legacyMonthGrid(ahead: any[], year: number, nowMonth: number, sajuData: any): any[] {
+  // 10-24 검수 — 달 칸 응답이 비거나 일부 빠지면 앞으로의 달까지 '지난 달'로 찍혔다. 비면 [] (옛 화면이 사주로 채움), 앞으로의 빈 달은 넣지 않는다
+  if (!ahead.length) return [];
   const cal = calendarMonthGanzi(year);
   const out: any[] = [];
   for (let m = 1; m <= 12; m++) {
@@ -361,7 +363,7 @@ function legacyMonthGrid(ahead: any[], year: number, sajuData: any): any[] {
     const next = ahead.find((a) => Number(a?.year) === year + 1 && Number(a?.month) === m);
     if (cur) out.push({ month: m, label: cur.label, ganzi: cur.ganzi, text: cur.text });
     else if (next) out.push({ month: m, label: next.label, ganzi: next.ganzi, text: `${year + 1}년 ${m}월, ${next.text}` });
-    else out.push({ month: m, label: '평탄', ganzi: monthVerdictRow(year, m, sajuData)?.gz || cal[m - 1] || '', text: '이미 지난 달입니다.' });
+    else if (m < nowMonth) out.push({ month: m, label: '평탄', ganzi: monthVerdictRow(year, m, sajuData)?.gz || cal[m - 1] || '', text: '이미 지난 달입니다.' });
   }
   return out;
 }
@@ -392,7 +394,7 @@ function postProcessGroup(group: GroupKey, parsed: any, sajuData?: any): any {
         //   연도 없이 올해 1~3월 자리에 들어가고 지난 달은 화면 자체 문구가 찼다. 새 화면과 PDF 는 monthlyAhead(6개월)를 읽고,
         //   monthlyInsight 는 옛 모양으로 다시 만든다(지난 달은 한 줄, 내년 달은 그 달 번호 칸에 연도를 붙여).
         parsed.monthlyAhead = ahead;
-        parsed.monthlyInsight = legacyMonthGrid(ahead as any[], kn.year, sajuData);
+        parsed.monthlyInsight = legacyMonthGrid(ahead as any[], kn.year, kn.month, sajuData);
       } else {
         const cal = calendarMonthGanzi(kn.year);
         parsed.monthlyInsight.forEach((mi: any) => {
@@ -582,7 +584,8 @@ function premiumMonthContext(sajuData: any): string {
     if (!table) return '';
     const six = monthVerdictTable(sajuData, start, 6);
     const labels = monthInsightLabels(six);
-    const first = monthVerdictTable(sajuData, start, 12).find((r) => r.action === '결정해도 됨');
+    // 10-24 검수 — 20일이 지났으면 이번 달 남은 며칠에 큰일을 권하지 않게 다음 달부터 고른다(꿈해몽 dreamPointMonths 와 같은 기준)
+    const first = monthVerdictTable(sajuData, start, 12).find((r, i) => r.action === '결정해도 됨' && !(i === 0 && kn.day > 20));
     return `${table}
 [앞으로 6개월 달 칸 (monthlyInsight 는 이 여섯 달을 이 순서로 쓰고, year, month, ganzi, label 은 적힌 값 그대로)]
 ${six.map((r, i) => `- year ${r.y}, month ${r.m}, ganzi ${r.gz}, label ${labels[i]} (행동: ${r.action})`).join('\n')}
@@ -808,7 +811,7 @@ ${GOOSEBUMP_BLOCK}
 - 올해([현재 연도])의 키워드 한 줄 ("보여주고 싶다, 그런데 마음대로 되지 않는다" 같은 입체적 표현).
 - '올해 남은 달' 과 '내년 상반기' 흐름 차이 (이번 달이 1~2월이면 상반기/하반기로 써도 됨). 지난 달은 회고 1문장 이내.
 - **monthlyWarnings 필드** 1~3개 시기별 경고:
-  * 형식 예: { "month": "2027년 2월", "title": "새 계약은 미루기", "desc": "월지와 형이 걸려 서류와 절차에서 마찰이 생기는 달입니다. 큰 계약과 이사 결정은 이달 정하지 말고 결정해도 되는 다음 달로 옮기세요. 이달은 조건을 비교해 두는 데 쓰세요." } (달은 '달별 판정표'의 '서명 피함'인 달, 옮겨 갈 달은 '결정해도 됨'인 달, 2026-10-23)
+  * 형식 예: { "month": "2027년 2월", "title": "새 계약은 미루기", "desc": "서류와 절차에서 손이 꼬이기 쉬운 달입니다. 큰 계약과 이사 결정은 2027년 3월로 옮기세요. 이달은 조건을 비교해 두는 데 쓰세요." } (달은 '서명 피함'인 달, 옮겨 갈 달은 '결정해도 됨'인 달의 실제 이름. 등급 말과 '월지, 형' 같은 용어는 desc 에 쓰지 않는다, 2026-10-24)
 
 ### SECTION 07. 실천 — 신살의 결을 살리고, 분기별 액션
 - 길신(도화살, 천을귀인, 천덕귀인 등) 흡수: 어떤 결을 어떻게 살릴지 구체적 행동.
@@ -823,7 +826,7 @@ ${GOOSEBUMP_BLOCK}
 ### 처방 소유권
 처방마다 쓰는 칸이 정해져 있다. 나머지 칸에서는 판단까지만 쓰고 처방은 쓰지 않는다.
 - 말을 하루 묵히기, 답을 며칠 뒤에 하기 같은 습관 처방: cautions 와 actionList 에서만.
-- 피할 달, 미룰 달을 권하는 말: monthlyWarnings 에서만. 다른 칸에서는 그 달을 피하라고 권하지 않는다(monthlyInsight 의 그 달 칸은 성향 한 문장만).
+- 피할 달, 미룰 달을 권하는 말: monthlyWarnings 에서만. 다른 칸에서는 그 달을 피하라고 권하지 않는다(monthlyInsight 의 달 칸은 그달 할 일 한 줄이고, 미룰 일은 서명 피함인 달 칸에만 쓴다).
 - 대운이 바뀌는 나이와 '전성기', '가장 좋은 10년' 같은 말: summary(원국 본문)와 대운 장(daeun 본문, daeun 결론, daeunPeriods)에서만. 다른 칸은 '다음 10년'처럼 쓰고 나이를 다시 적지 않는다. chatQuestions 는 손님이 묻는 말이라 나이를 넣어도 된다.
 - 색, 방위, 음식, 숫자, 물건, 가구 배치: 결과 화면의 행운 표가 용신으로 따로 보여 준다. 네 그룹 어느 칸에도 쓰지 않는다.
 

@@ -414,7 +414,7 @@ function buildPrompt(d: any, picks?: ReturnType<typeof dayPicksForYear>, rank?: 
     return `${name}(${from}~${to}월) 좋은 달 ${g.length ? g.join(', ') + '월' : '없음'}, 조심할 달 ${c.length ? c.join(', ') + '월' : '없음'}`;
   };
   const rankFact = rank
-    ? `- 서버가 정한 좋은 달(열두 달 점수 상위 셋): ${rank.good.join(', ')}월, 조심할 달(하위 둘): ${rank.caution.join(', ')}월. 화면의 달 점수 순서도 이와 같다.
+    ? `- 서버가 정한 좋은 달(결정해도 되는 달 가운데 고른 달): ${rank.good.join(', ')}월, 조심할 달(서명 피하는 달 가운데 고른 달): ${rank.caution.join(', ')}월. 좋은 달과 조심할 달은 이 값만 쓴다.
 - ${halfLine(1, 6, '상반기')} / ${halfLine(7, 12, '하반기')}`
     : '';
   const tyDaeun = daeunList.find((x: any) => Number(x?.시작년도) <= ty && ty <= Number(x?.끝년도));
