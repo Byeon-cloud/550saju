@@ -16,8 +16,17 @@ import { HJ, SERIF } from '@/components/hanji/Hanji';
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$/;
 const LS_DONE = 'saju500:daily_mail_done';
 
+export type MailPrefill = { birth?: string; calendar?: 'solar' | 'lunar'; leap?: boolean; name?: string };
+/** 사주 입력값으로 신청 칸을 미리 채운다. 음력 윤달(lunar_leap)은 윤달 표시까지 넘긴다(2026-10-25 — 예전엔 양력으로 보내 일주가 틀렸다) */
+export function mailPrefillOf(input: any, name?: string): MailPrefill | undefined {
+  if (!input?.birthYear) return undefined;
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  const lunar = input.calendarType === 'lunar' || input.calendarType === 'lunar_leap';
+  return { birth: `${input.birthYear}${p2(input.birthMonth)}${p2(input.birthDay)}`, calendar: lunar ? 'lunar' : 'solar', leap: input.calendarType === 'lunar_leap', name: name || '' };
+}
+
 export function DailyMailSignup({ prefill, source = 'daily', style, compact = false }: {
-  prefill?: { birth?: string; calendar?: 'solar' | 'lunar'; name?: string };
+  prefill?: MailPrefill;
   source?: string;
   style?: React.CSSProperties;
   /** 2026-10-17 홈 한 줄 — 앱의 DailyNotiButton slim 과 같은 자리. 누르면 펼쳐진다 */
@@ -27,13 +36,18 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
   const [email, setEmail] = useState('');
   const [birth, setBirth] = useState(prefill?.birth || '');
   const [calendar, setCalendar] = useState<'solar' | 'lunar'>(prefill?.calendar || 'solar');
+  const [leap, setLeap] = useState(!!prefill?.leap); // 음력일 때만 뜻이 있다
   const [agree, setAgree] = useState(false);
   const [adAgree, setAdAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(() => { try { return localStorage.getItem(LS_DONE); } catch { return null; } });
   const [err, setErr] = useState('');
   const [justDone, setJustDone] = useState(false); // 이번에 신청했으면 확인 문구를 보여 주고, 다음에 열 때는 숨긴다
-  useEffect(() => { if (prefill?.birth && !birth) setBirth(prefill.birth); }, [prefill?.birth]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 사주가 늦게 불러와져 생일이 나중에 채워질 때 양력, 음력, 윤달도 같이 맞춘다
+  useEffect(() => {
+    if (!prefill?.birth || birth) return;
+    setBirth(prefill.birth); setCalendar(prefill.calendar || 'solar'); setLeap(!!prefill.leap);
+  }, [prefill?.birth]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (window.location.hash !== '#daily-mail') return;
     const t = window.setTimeout(() => document.getElementById('daily-mail')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 500);
@@ -76,7 +90,7 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
     try {
       await ensureFunctionsTarget();
       const fn = httpsCallable<any, { ok: boolean; iljuKo: string }>(functions, 'subscribeDailyMail', { timeout: 30000 });
-      const r = await fn({ email: email.trim(), birth, calendar, name: prefill?.name || '', consent: true, adConsent: adAgree, source });
+      const r = await fn({ email: email.trim(), birth, calendar, leap: calendar === 'lunar' && leap, name: prefill?.name || '', consent: true, adConsent: adAgree, source });
       const label = `${r.data.iljuKo} 일주`;
       setDone(label);
       setJustDone(true);
@@ -110,11 +124,18 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <input inputMode="numeric" placeholder="생년월일 8자리 (예: 19640315)" aria-label="생년월일 8자리"
               value={birth} onChange={(e) => setBirth(e.target.value.replace(/\D/g, '').slice(0, 8))} style={{ ...inputStyle, flex: 1 }} />
-            <button type="button" onClick={() => setCalendar(calendar === 'solar' ? 'lunar' : 'solar')} aria-label="양력 음력 바꾸기"
+            <button type="button" onClick={() => { setCalendar(calendar === 'solar' ? 'lunar' : 'solar'); setLeap(false); }} aria-label="양력 음력 바꾸기"
               style={{ width: 72, height: 48, borderRadius: 12, border: `1px solid ${HJ.line}`, background: '#fff', fontWeight: 700, fontSize: 15, color: HJ.ink }}>
               {calendar === 'solar' ? '양력' : '음력'}
             </button>
           </div>
+          {/* 2026-10-25 음력일 때만 윤달 고르기 (예전엔 윤달을 고를 수 없어 윤달 생일은 일주가 틀렸다) */}
+          {calendar === 'lunar' && (
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, fontSize: 14, color: HJ.ink2, cursor: 'pointer' }}>
+              <input type="checkbox" checked={leap} onChange={(e) => setLeap(e.target.checked)} style={{ width: 18, height: 18, flexShrink: 0 }} />
+              <span>윤달에 태어났어요</span>
+            </label>
+          )}
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 10, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, cursor: 'pointer' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
             <span>(필수) 아침 운세 메일을 받으려고 메일 주소와 일주(생일로 계산)를 맡겨요. 생일 전체는 남기지 않고, 메일 안의 수신 거부로 언제든 그만 받을 수 있어요.</span>

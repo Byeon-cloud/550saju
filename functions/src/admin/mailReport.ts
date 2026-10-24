@@ -27,6 +27,7 @@ type Day = {
   newSubs: number; unsubs: number; newAdConsent: number; // 서버 장부
   sent: number; failed: number; skipped: number; // 보낸 메일
   clickers: number; results: number; chargeOpen: number; payers: number; revenue: number; // 메일 링크로 온 사람
+  webVisitors: number; webInputs: number; hasStats: boolean; // 그날 웹 손님과 사주를 넣은 웹 손님(하루 요약, 오늘은 아직 없다)
 };
 
 export const adminMailReport = onCall({ timeoutSeconds: 120, memory: '512MiB', cors: true }, async (request) => {
@@ -39,14 +40,16 @@ export const adminMailReport = onCall({ timeoutSeconds: 120, memory: '512MiB', c
   for (let d = from; d <= today; d = addDays(d, 1)) days.push(d);
   const row = new Map<string, Day>(days.map((d) => [d, {
     day: d, views: 0, opens: 0, submits: 0, subs: 0, fails: 0, newSubs: 0, unsubs: 0, newAdConsent: 0,
-    sent: 0, failed: 0, skipped: 0, clickers: 0, results: 0, chargeOpen: 0, payers: 0, revenue: 0,
+    sent: 0, failed: 0, skipped: 0, clickers: 0, results: 0, chargeOpen: 0, payers: 0, revenue: 0, webVisitors: 0, webInputs: 0, hasStats: false,
   }]));
   const inRange = (d: string) => row.has(d);
 
-  const [subsSnap, leadsSnap, logSnaps, funnelSnap, emailSnap] = await Promise.all([
+  const [subsSnap, leadsSnap, logSnaps, statSnaps, funnelSnap, emailSnap] = await Promise.all([
     db.collection('dailyMailSubs').get(),
     db.collection('emailLeads').get(),
     db.getAll(...days.map((d) => db.doc(`dailyMailLog/${d}`))),
+    // 2026-10-24 '몇 명 중 몇 명이 신청했나' — 그날 사주를 넣은 웹 손님(하루 요약, 오늘 것은 아직 없을 수 있다)
+    db.getAll(...days.map((d) => db.doc(`statsDaily/${d}`))),
     db.collection('analytics').where('name', 'in', [...FUNNEL]).get(),
     db.collection('analytics').where('utm.source', '==', 'email').get(),
   ]);
@@ -90,6 +93,13 @@ export const adminMailReport = onCall({ timeoutSeconds: 120, memory: '512MiB', c
     const r = row.get(s.id);
     if (!r) return;
     r.sent = Number(d.sent) || 0; r.failed = Number(d.failed) || 0; r.skipped = Number(d.skipped) || 0;
+  });
+
+  statSnaps.forEach((s) => {
+    const r = row.get(s.id);
+    if (!r || !s.exists) return;
+    const w = (s.data() as any)?.web || {};
+    r.webVisitors = Number(w.visitors) || 0; r.webInputs = Number(w.inputs) || 0; r.hasStats = true;
   });
 
   // 신청 칸 기록 (기기 수, 오너 기기 제외)

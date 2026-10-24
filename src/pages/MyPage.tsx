@@ -24,7 +24,7 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import { AD_BANNER_GROUP_ID } from '@/constants/config';
 // 웹 단독 출시 법적 컴플라이언스 (앱인토스 비노출)
 import { LegalFooter } from '@/components/layout/LegalFooter';
-import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
+import { DailyMailSignup, mailPrefillOf } from '@/components/daily/DailyMailSignup';
 import { AdMeasureToggle } from '@/components/my/AdMeasureToggle';
 import { useActiveProfile } from '@/hooks/useHomeData';
 import { ConsentModal, type ConsentResult } from '@/components/auth/ConsentModal';
@@ -125,12 +125,7 @@ export function MyPage() {
   const MENU_ITEMS = inAppsInToss ? MENU_ITEMS_AIT : (a2hsMenu && MENU_A2HS ? [...MENU_ITEMS_WEB, MENU_A2HS] : MENU_ITEMS_WEB);
   // 2026-10-17 웹 내 정보의 아침 일주 운세 메일 (앱은 그리지 않음, 토스 9시 알림이 같은 역할)
   const { profile: activeProfile, name: activeName } = useActiveProfile();
-  const mailPrefill = (() => {
-    const inp: any = (activeProfile as any)?.input;
-    if (!inp?.birthYear) return undefined;
-    const p2 = (n: number) => String(n).padStart(2, '0');
-    return { birth: `${inp.birthYear}${p2(inp.birthMonth)}${p2(inp.birthDay)}`, calendar: (inp.calendarType === 'lunar' ? 'lunar' : 'solar') as 'solar' | 'lunar', name: activeName || '' };
-  })();
+  const mailPrefill = mailPrefillOf((activeProfile as any)?.input, activeName);
 
   const [balance, setBalance] = useState(0);
   // 앱에서 결과 화면 '고객문의'로 오면(?inquiry=) 웹 양식 대신 고객문의 창(토스 문의 안내)을 바로 연다

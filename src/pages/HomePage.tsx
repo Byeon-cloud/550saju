@@ -42,7 +42,7 @@ import { realName } from '@/utils/personName';
 import type { SajuData } from '@/types/saju';
 import { TtiFortune } from '@/components/home/TtiFortune';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
-import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
+import { DailyMailSignup, mailPrefillOf } from '@/components/daily/DailyMailSignup';
 import { getMyTti, ttiOfYear, ttiName, yearLabel } from '@/services/tti/ttiFortune';
 import {
   HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
@@ -97,12 +97,7 @@ export function HomePage() {
   const hasSaju = !!(hasProfile && sajuData?.pillars?.[2]?.천간);
   const profileId = (profile as any)?.id as string | undefined;
   // 2026-10-17 웹 홈의 아침 일주 운세 메일 한 줄 (앱은 같은 자리에 토스 9시 알림) — 활성 사주 생일로 미리 채운다
-  const mailPrefill = (() => {
-    const inp: any = (profile as any)?.input;
-    if (!inp?.birthYear) return undefined;
-    const p2 = (n: number) => String(n).padStart(2, '0');
-    return { birth: `${inp.birthYear}${p2(inp.birthMonth)}${p2(inp.birthDay)}`, calendar: (inp.calendarType === 'lunar' ? 'lunar' : 'solar') as 'solar' | 'lunar', name: name || '' };
-  })();
+  const mailPrefill = mailPrefillOf((profile as any)?.input, name);
 
   // 부팅 자동환불·보상·복구 안내 (App 이 플래그 저장 → 홈에서 1회)
   useEffect(() => {

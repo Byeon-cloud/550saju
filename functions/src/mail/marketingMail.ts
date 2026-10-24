@@ -4,7 +4,8 @@
  *   subscribeMarketingMail  웹 신년운세 화면의 '마감 전에 알림 받기'. 메일 주소와 광고성 정보 수신 동의를 emailLeads/{uid} 에 남기고
  *                           곧바로 '수신 동의 확인' 메일을 보낸다(정보통신망법 시행령 62조의3: 동의 처리 결과를 알려야 한다).
  *   unsubscribeMail         메일 속 '그만 받기' 링크(/mail/unsub?u=&t=). 토큰이 맞으면 동의를 거둔다. 메일 앱의 한 번 누르기 거부(POST)도 받는다.
- *   sendNewYearDeadlineMail 2026-11-28 10:00 KST 한 번. 동의한 사람에게만 '(광고)' 제목으로 보낸다. 밤 9시~아침 8시는 보내지 않는다(별도 동의 필요).
+ *   sendNewYearDeadlineMail 2026-11-28 10:00 KST 한 번. 동의한 사람에게만 '(광고)' 제목으로 보낸다. 밤 9시~아침 8시는 보내지 않는다
+ *                           (정보통신망법 시행령 61조 3항이 전자우편을 야간 제한에서 빼지만, 우리 원칙으로 지킨다).
  *                           사람마다 mailCampaigns/{캠페인}/sent/{uid} 를 먼저 만들어 두 번 보내지 않는다.
  *   보내는 계정과 연결은 pdf/mailPdf.ts (info@juulabel.com, 시크릿 MAIL_APP_PASSWORD).
  */
@@ -12,6 +13,7 @@ import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { MAIL_APP_PASSWORD, FROM_ADDR, BIZ_LINE, mailTransport, newUnsubToken, normalizeEmail, unsubUrl } from '../pdf/mailPdf';
+import { withdrawByEmail } from './withdraw';
 
 const CAMPAIGN = 'newyear2027_deadline';
 const LAUNCH_UNTIL = '2026-11-30'; // 클라 pricing.ts TOJUNG launchUntil, 서버 tojungCost 와 같은 날
@@ -103,12 +105,16 @@ export const unsubscribeMail = onRequest(
         res.status(200).send(unsubPage('이미 처리됐거나 받을 메일이 없어요.'));
         return;
       }
+      // 2026-10-25 같은 주소를 쓰는 다른 계정의 문서도 함께 끄고, 끈 문서의 주소는 지운다(mail/withdraw.ts)
+      const email = String(snap.data()?.email || '');
       if (daily) {
-        await ref.set({ active: false, withdrawnAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        if (email) await withdrawByEmail([email], 'daily', 'unsub_link');
+        else await ref.set({ active: false, withdrawnAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
         res.status(200).send(unsubPage('수신 거부가 처리됐어요. 내일부터 아침 운세 메일을 보내지 않아요.'));
         return;
       }
-      await ref.set({ marketingConsent: false, marketingWithdrawnAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      if (email) await withdrawByEmail([email], 'ad', 'unsub_link');
+      else await ref.set({ marketingConsent: false, marketingWithdrawnAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
       res.status(200).send(unsubPage('수신 거부가 처리됐어요. 앞으로 신년운세와 할인 소식 메일을 보내지 않아요.'));
     } catch (e: any) {
       console.error('[unsubscribeMail]', e?.message || e);
@@ -146,10 +152,12 @@ export const sendNewYearDeadlineMail = onSchedule(
     const leads = await db.collection('emailLeads').where('marketingConsent', '==', true).get();
     const transport = mailTransport();
     let sent = 0; let skipped = 0; let failed = 0;
+    const seen = new Set<string>(); // 같은 주소가 계정 여러 개에 있어도 한 번만 (2026-10-25)
     for (const doc of leads.docs) {
       const d = doc.data();
       const email = normalizeEmail(d.email);
-      if (!email) { skipped++; continue; }
+      if (!email || seen.has(email.toLowerCase())) { skipped++; continue; }
+      seen.add(email.toLowerCase());
       const mark = db.doc(`mailCampaigns/${CAMPAIGN}/sent/${doc.id}`);
       try { await mark.create({ at: admin.firestore.FieldValue.serverTimestamp() }); } catch { skipped++; continue; } // 이미 보냄
       let token: string = d.unsubToken;

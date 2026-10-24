@@ -15,7 +15,7 @@ export interface Side {
   shares: number; notiAgree: number;
 }
 export interface ContentRow { opens: number; results: number; purchases: number; un: number }
-export interface ChannelRow { plat: Plat; visitors: number; inputs: number; results: number; payers: number; revenue: number }
+export interface ChannelRow { plat: Plat; visitors: number; inputs: number; results: number; chargeOpen?: number; payers: number; revenue: number }
 export interface DayStats {
   day: string; v: number; builtAt: number; partial?: boolean;
   app: Side; web: Side;

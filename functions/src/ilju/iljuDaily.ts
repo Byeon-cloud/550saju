@@ -293,11 +293,15 @@ export const sendDailyMail = onSchedule(
     const doc = await ensureIlju(db, ANTHROPIC_KEY.value(), dateKey); // 06:30 에 못 만들었으면 여기서
     const transport = mailTransport();
     let sent = 0; let skipped = 0; let failed = 0;
-    for (const s of subs.docs) {
+    const seen = new Set<string>(); // 같은 주소가 계정 여러 개에 있어도 하루 한 통 (2026-10-25)
+    // 같은 주소면 가장 최근에 신청한 것(그 사람이 마지막에 고른 생일, 일주)을 보낸다
+    const ordered = [...subs.docs].sort((a, b) => (b.get('consentAt')?.toMillis?.() || 0) - (a.get('consentAt')?.toMillis?.() || 0));
+    for (const s of ordered) {
       const d = s.data();
       const email = normalizeEmail(d.email);
       const entry: IljuEntry | undefined = doc?.ilju?.[d.ilju];
-      if (!email || !entry) { skipped++; continue; }
+      if (!email || !entry || seen.has(email.toLowerCase())) { skipped++; continue; }
+      seen.add(email.toLowerCase());
       const mark = db.doc(`dailyMailLog/${dateKey}/sent/${s.id}`);
       try { await mark.create({ at: admin.firestore.FieldValue.serverTimestamp() }); } catch { skipped++; continue; }
       let token: string = d.unsubToken;

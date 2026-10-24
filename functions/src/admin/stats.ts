@@ -15,7 +15,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { assertOwner, OWNER_UIDS } from './owner';
 
-const STATS_VERSION = 5; // 5: 홈 버튼 글자에서 날짜, 숫자 나열 제거 | // 2: 오너 시험 결제 제외 / 3: 이벤트별 건수(events), 재방문(retention) / 4: 홈 클릭과 결제 경로
+const STATS_VERSION = 6; // 6: 유입별 충전 화면(channels.chargeOpen, 관리자 '전략 성과') | 5: 홈 버튼 글자에서 날짜, 숫자 나열 제거 | // 2: 오너 시험 결제 제외 / 3: 이벤트별 건수(events), 재방문(retention) / 4: 홈 클릭과 결제 경로
 const RAW_KEEP_DAYS = 400;
 
 export const kstDayOf = (ms: number): string => new Date(ms + 9 * 3600e3).toISOString().slice(0, 10);
@@ -61,7 +61,7 @@ const emptySide = (): Side => ({
   payers: 0, newPayers: 0, orders: 0, revenue: 0, refunds: 0, refundAmount: 0, shares: 0, notiAgree: 0,
 });
 export interface ContentRow { opens: number; results: number; purchases: number; un: number }
-export interface ChannelRow { plat: Plat; visitors: number; inputs: number; results: number; payers: number; revenue: number }
+export interface ChannelRow { plat: Plat; visitors: number; inputs: number; results: number; chargeOpen?: number; payers: number; revenue: number }
 export interface DayStats {
   day: string; v: number; builtAt: number; partial?: boolean;
   app: Side; web: Side;
@@ -249,17 +249,18 @@ export async function computeDay(day: string, ledger: Ledger): Promise<DayStats>
     const who = String(e.did || e.uid || e.sid || '');
     if (!who) continue;
     const src = firstSrc.get(who) || '출처 없음';
-    const row = (channels[src] ??= { plat: whoPlat.get(who) || 'web', visitors: 0, inputs: 0, results: 0, payers: 0, revenue: 0 });
+    const row = (channels[src] ??= { plat: whoPlat.get(who) || 'web', visitors: 0, inputs: 0, results: 0, chargeOpen: 0, payers: 0, revenue: 0 });
     const cs = (chSets[src] ??= {});
     (cs.visitors ??= new Set()).add(who);
     if (e.name === 'profile_created') (cs.inputs ??= new Set()).add(who);
     if (e.name === 'content_result') (cs.results ??= new Set()).add(who);
+    if (e.name === 'charge_open') (cs.chargeOpen ??= new Set()).add(who);
     if (e.name === 'charge_complete') { (cs.payers ??= new Set()).add(who); row.revenue += Number(e.props?.amount) || 0; }
   }
   for (const [src, cs] of Object.entries(chSets)) {
     const row = channels[src];
     row.visitors = cs.visitors?.size || 0; row.inputs = cs.inputs?.size || 0;
-    row.results = cs.results?.size || 0; row.payers = cs.payers?.size || 0;
+    row.results = cs.results?.size || 0; row.chargeOpen = cs.chargeOpen?.size || 0; row.payers = cs.payers?.size || 0;
   }
 
   // 결제 장부
@@ -436,7 +437,8 @@ export const buildDailyStats = onSchedule(
     const snaps = await db.getAll(...back.map((d) => db.collection('statsDaily').doc(d)));
     const missing = back.filter((d, i) => !snaps[i].exists || stale(snaps[i].data() as any, d)).slice(0, 40);
     // 8일 전은 '7일 안 재방문'이 이제 확정된다 → 다시 만든다
-    const n = await buildAndSave([...new Set([...missing.reverse(), addDays(t, -8), addDays(t, -2), addDays(t, -1)])]);
+    // 2026-10-25 어제와 그제를 먼저 만든다(계산 판을 올린 날처럼 밀린 날이 많으면 시간 제한에 걸려 어제 것이 빠질 수 있다)
+    const n = await buildAndSave([...new Set([addDays(t, -1), addDays(t, -2), addDays(t, -8), ...missing.reverse()])]);
     console.info(`[buildDailyStats] ${n}일 저장 (밀린 날 ${missing.length})`);
   },
 );
@@ -511,7 +513,11 @@ export const adminStats = onCall(
     const snaps = refs.length ? await db.getAll(...refs) : [];
     const have = new Map<string, DayStats>();
     snaps.forEach((s) => { if (s.exists) have.set(s.id, s.data() as DayStats); });
-    const missing = past.filter((d) => !have.has(d) || stale(have.get(d), d));
+    // 없는 날은 다 만들고, 옛 계산 판으로 저장된 날은 최근 것부터 한 번에 12일까지만 다시 만든다(계산 판을 올린 날 첫 화면이 시간 제한에 걸리지 않게).
+    // 나머지는 옛 판 그대로 보여 주고(새 칸만 비어 있음) 다음에 열 때와 매일 밤 buildDailyStats 가 채운다
+    const absent = past.filter((d) => !have.has(d));
+    const old = past.filter((d) => have.has(d) && stale(have.get(d), d)).reverse().slice(0, 12);
+    const missing = [...absent, ...old];
     const ledger = await loadLedger();
     for (const d of missing) {
       const st = await computeDay(d, ledger);

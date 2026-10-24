@@ -39,7 +39,7 @@ import { SajuMiniCard, type PillarData } from '@/components/saju/SajuMiniCard';
 import { DailyRewardBadge } from '@/components/common/DailyRewardBadge';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import { MonthGoodDays } from '@/components/home/MonthGoodDays';
-import { DailyMailSignup } from '@/components/daily/DailyMailSignup';
+import { DailyMailSignup, mailPrefillOf } from '@/components/daily/DailyMailSignup';
 import { InviteWelcomeCard } from '@/components/invite/InviteWelcomeCard';
 import { useAttendanceOnResult } from '@/hooks/useAttendanceOnResult';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -622,12 +622,7 @@ export function DailyFortunePage() {
   // 결과 phase 일 때 DarkHeader (PremiumResult 패턴 통일), 그 외 기본 Header
   const isResultPhase = phase === 'result' && !!selectedProfile;
   // 2026-10-17 웹 아침 일주 운세 메일 (앱은 DailyNotiButton 토스 알림) — 고른 사주의 생일로 미리 채운다
-  const mailPrefill = (() => {
-    const inp: any = (selectedProfile as any)?.input;
-    if (!inp?.birthYear) return undefined;
-    const p2 = (n: number) => String(n).padStart(2, '0');
-    return { birth: `${inp.birthYear}${p2(inp.birthMonth)}${p2(inp.birthDay)}`, calendar: (inp.calendarType === 'lunar' ? 'lunar' : 'solar') as 'solar' | 'lunar', name: (selectedProfile as any)?.name || '' };
-  })();
+  const mailPrefill = mailPrefillOf((selectedProfile as any)?.input, (selectedProfile as any)?.name);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-page)' }}>
@@ -736,6 +731,8 @@ export function DailyFortunePage() {
               onMonthlyUpsell={() => navigate(`/monthly?profileId=${encodeURIComponent(selectedProfile.id)}`)}
               onRetry={requestAnalyze}
               offerActive={offerActive}
+              // 반값 카드(종합사주 5운)가 보이는 동안에는 한 줄로 접어 둔다 — 매출로 이어지는 카드를 신청 칸이 밀어내지 않게
+              mailSlot={<DailyMailSignup key={offerActive ? 'mail-line' : 'mail-form'} compact={offerActive} prefill={mailPrefill} source="daily_after" />}
             />
           )}
         </AnimatePresence>
@@ -751,9 +748,8 @@ export function DailyFortunePage() {
           <MonthGoodDays sajuData={selectedProfile.sajuData} name={selectedProfile.name || '나'} price={getMonthlyPrice().actualPrice}
             profileId={selectedProfile.id} source="daily" padding="24px 20px 0" />
         )}
-        {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
-          <div className="px-5"><DailyMailSignup prefill={mailPrefill} source="daily_result" style={{ marginTop: 24 }} /></div>
-        )}
+        {/* 2026-10-24 웹 아침 운세 메일 신청 칸은 풀이를 다 읽은 바로 아래(ResultView mailSlot)로 옮겼다.
+            여기(맨 아래)는 10-22~24 사흘 동안 본 기기 14, 신청 1 — 광고로 온 손님은 끝까지 내리지 않았다 */}
 
         {/* 2026-10-10 — 실제 후기 수집 (생성 끝난 뒤 · 사람·날짜당 한 번) */}
         {hasAnyProfile && phase === 'result' && result && selectedProfile && !isGenerating && !(result as any).__partial && (
@@ -1008,6 +1004,7 @@ function ResultView({
   onMonthlyUpsell,
   onRetry: _onRetry,
   offerActive = false,
+  mailSlot,
 }: {
   result: any;
   profile: SajuProfile;
@@ -1025,6 +1022,8 @@ function ResultView({
   onRetry: () => void;
   /** 2026-10-23 1.6.3 P1-4 — 반값 카드가 보이는 중 (끝의 주간, 월운 카드 숨김) */
   offerActive?: boolean;
+  /** 2026-10-24 웹 아침 운세 메일 신청 칸 — 다 읽은 바로 아래(앱의 9시 알림 자리). 컴포넌트가 앱에서는 숨는다 */
+  mailSlot?: React.ReactNode;
 }) {
   const navigate = useNavigate();
   // 2026-10-19 — 생성 중 공유를 막을 때 안내용
@@ -1236,6 +1235,7 @@ function ResultView({
           // 2026-10-23 1.6.3 P1-4 — 풀이를 다 읽은 바로 아래: 9시 알림 동의(앱 빌드만, 컴포넌트 안 게이트), 그 아래 출석 운
           <div style={{ margin: '22px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <DailyNotiButton variant="closing" />
+            {mailSlot}
             <DailyRewardBadge />
           </div>
         ) : undefined}

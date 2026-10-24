@@ -10,6 +10,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { assertOwner } from './owner';
 import { kstDayOf } from './stats';
 import { PACKAGE_MAP } from '../shared/chargePackages';
+import { emailHash } from '../mail/withdraw';
 
 const tsMs = (v: any): number => {
   if (!v) return 0;
@@ -55,6 +56,9 @@ async function resolveUids(q: string, kind: Kind): Promise<{ uids: string[]; dev
     for (const col of ['emailLeads', 'dailyMailSubs']) {
       const s = await db.collection(col).where('email', '==', q.toLowerCase()).limit(5).get().catch(() => null);
       s?.docs.forEach((d) => uids.add(d.id));
+      // 2026-10-25 수신 거부로 주소를 지운 문서는 주소의 해시만 남는다(mail/withdraw.ts) — 해시로도 찾는다
+      const h = await db.collection(col).where('emailHash', '==', emailHash(q)).limit(5).get().catch(() => null);
+      h?.docs.forEach((d) => uids.add(d.id));
     }
     // 웹 네이버 로그인(10-19)은 Auth 이메일이 없다 → users.naverEmail
     const nv = await db.collection('users').where('naverEmail', '==', q.toLowerCase()).limit(5).get().catch(() => null);

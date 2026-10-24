@@ -15,11 +15,13 @@ import { Tracking } from './Tracking';
 import { Inbox } from './Inbox';
 import { Paths } from './Paths';
 import { Mail } from './Mail';
+import { Strategy } from './Strategy';
 import { callAdmin } from './api';
 
-type Tab = 'overview' | 'paths' | 'inbox' | 'customer' | 'revenue' | 'channels' | 'content' | 'mail' | 'tracking' | 'reviews';
+type Tab = 'overview' | 'strategy' | 'paths' | 'inbox' | 'customer' | 'revenue' | 'channels' | 'content' | 'mail' | 'tracking' | 'reviews';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: '한눈에' },
+  { id: 'strategy', label: '전략 성과' },
   { id: 'paths', label: '어디서 사나' },
   { id: 'inbox', label: '웹 문의함' },
   { id: 'customer', label: '고객 찾기와 운 넣기' },
@@ -88,6 +90,7 @@ export function AdminV4() {
         {tab === 'content' && data && <ContentAi days={days} plat={plat} />}
         {tab === 'tracking' && data && <Tracking days={days} />}
         {tab === 'paths' && data && <Paths days={days} plat={plat} />}
+        {tab === 'strategy' && data && <Strategy all={data} />}
         {tab === 'customer' && <Customer />}
         {tab === 'inbox' && <Inbox onCount={setNewInq} />}
         {tab === 'reviews' && <TabReviews />}

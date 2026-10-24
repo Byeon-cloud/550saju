@@ -5,6 +5,7 @@
  *   FlowNow    운의 흐름 — 지금 대운, 올해, 내년 (예전에 빠졌던 대운과 세운) + 대운 전체 펼치기
  *   NextSteps  무료로 이어 보기 — 꿈해몽, 내 일주(웹), 다른 사람 만세력, 궁합 초대장 (오늘의 운세는 10-22 TodayNextStep 으로)
  *   TodayNextStep 다음 단계 한 칸 (2026-10-22 P1-9) — 카드와 운의 흐름 바로 아래. 오늘의 운세 먼저, 나이대별 고민 두 개
+ *                 2026-10-24 끝에 웹 아침 운세 메일 한 줄(펼치면 신청 칸, 앱에서는 숨음). 만세력 광고 손님 80%가 생일을 넣고 여기서 나간다
  *   캡처(이미지 저장)에는 버튼이 찍히지 않게 data-html2canvas-ignore.
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -24,6 +25,7 @@ import { firstDailyOfferEligible, OFFER as FIRST_DAILY_OFFER } from '@/services/
 import { adVisitSource, trackEvent } from '@/services/analytics';
 import { kstToday } from '@/utils/kstDate';
 import { realName } from '@/utils/personName';
+import { DailyMailSignup, mailPrefillOf } from '@/components/daily/DailyMailSignup';
 import type { SajuData, SajuInput } from '@/types/saju';
 
 const GAN_KO: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계' };
@@ -212,6 +214,7 @@ export function TodayNextStep({ profileId, name, sajuData }: { profileId: string
   }, [sajuData, today]);
 
   const withAd = (p: Record<string, string | number>) => (ad ? { ...p, ad } : p);
+  const mailPrefill = useMemo(() => mailPrefillOf(sajuData?.input, nm), [sajuData, nm]);
   const viewed = useRef(false);
   const seenRef = useCallback((el: HTMLElement | null) => {
     if (!el || viewed.current || typeof IntersectionObserver === 'undefined') return;
@@ -262,6 +265,8 @@ export function TodayNextStep({ profileId, name, sajuData }: { profileId: string
           </button>
         ))}
       </div>
+      {/* 위 줄은 컴포넌트 style 로 — 앱이나 이미 신청한 사람에게는 컴포넌트가 아무것도 그리지 않아 빈 줄이 남지 않는다 */}
+      <DailyMailSignup compact prefill={mailPrefill} source="saju_card" style={{ borderTop: `1px solid ${HJ.line}` }} />
     </section>
   );
 }
