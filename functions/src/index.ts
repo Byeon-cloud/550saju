@@ -71,6 +71,8 @@ const MAIL_APP_PASSWORD = defineSecret('MAIL_APP_PASSWORD'); // 2026-10-17 PDF �
 
 /** 금액 → 패키지 매핑 (서버에서 검증용) — 10-19 공용 파일로 옮김(환불 회수도 같은 표) */
 import { PACKAGE_MAP } from './shared/chargePackages';
+/** 포트원 웹 결제 지급 — 운을 넣는 곳은 이 공용 함수 하나 (손님 화면 확인과 감시의 자동 채우기, 2026-10-24) */
+import { grantPortonePayment, claimPortoneDeviceCredit } from './payment/grantPortone';
 const TOSS_DISCONNECT_AUTH = defineSecret('TOSS_DISCONNECT_AUTH');
 
 // 개발 중: 인증 없이도 동작
@@ -1388,6 +1390,8 @@ export const generateDreamFreeStream = onRequest(
           }
           // 2026-10-22 — 'X가 아니라 Y' 문장만 고쳐 끼움(점검 P0-1). 그룹 칸은 손님에게 바로 보이므로 보내기 전에 고친다(실패하면 원문)
           await repairAniraSentences(ANTHROPIC_KEY.value(), parsed, 'dream');
+          // 2026-10-24 — 잠금 시기 칸의 '이 꿈이 가리키는 달'을 서버가 정한 달로 다시 박는다(콜러블 경로와 같게, 1.6.3 P1-5)
+          if (group === 'B') { try { (await lazyClaudeDream()).applyDreamPointMonths(parsed, saju); } catch { /* 원래 응답 */ } }
           const elapsedMs = Date.now() - tg0;
           console.log(`[dreamFreeStream:${group}] done in ${elapsedMs}ms`);
           // 그룹 완료 즉시 emit (client 가 빠르게 도착하는 그룹부터 머지)
@@ -2053,6 +2057,9 @@ export const grantShareReward = onCall(
  *
  * 활성화: PG 계약 승인 후 PORTONE_V2_API_SECRET 실키 교체 + 클라 VITE_PORTONE_LIVE=1.
  *   그 전엔 시크릿이 PENDING 이라 호출돼도 포트원 인증 실패 → failed (지급 불가) — 무해.
+ *
+ * 2026-10-24 자동 채우기: 지급은 공용 함수 grantPortonePayment(grantedBy 'client') 하나로. 감시(watchPortonePaid)가
+ *   먼저 넣은 결제(deviceCreditPending)는 다시 부르면 서버 잔액은 그대로 두고 그 운을 응답 paidUn 으로 기기 하나에 한 번 넘긴다.
  */
 export const confirmPortonePayment = onCall(
   { secrets: [PORTONE_V2_API_SECRET], timeoutSeconds: 15, memory: '256MiB', cors: true },
@@ -2079,6 +2086,12 @@ export const confirmPortonePayment = onCall(
     if (existing.exists) {
       const s = existing.data()?.status;
       if (s === 'confirmed') {
+        // 2026-10-24 — 감시(watchPortonePaid)가 자동으로 채운 결제는 서버 잔액에만 들어가 있다. 기기 하나에 한 번만 넘긴다
+        //   (서버 잔액은 다시 늘리지 않는다. 기기가 응답의 paidUn 으로 더한다. payment/grantPortone.ts)
+        if (existing.data()?.deviceCreditPending === true) {
+          const c = await claimPortoneDeviceCredit(uid, paymentId);
+          if (c.claimed) return { success: true, message: `${c.totalUn}운이 충전됐어요!`, totalUn: c.totalUn, paidUn: c.paidUn, bonusUn: c.bonusUn, autoGranted: true };
+        }
         return { success: true, message: '이미 처리된 결제예요' };
       }
       if (s === 'needs_reconciliation') {
@@ -2175,37 +2188,13 @@ export const confirmPortonePayment = onCall(
       await failVerify(`channel_${pay?.channel?.type || 'unknown'}`, '테스트 결제는 충전되지 않아요.');
     }
 
-    // 6. Firestore 트랜잭션 — 잔액 지급 + pending → confirmed (confirmPayment 동일)
+    // 6. 지급 — 공용 함수 하나(payment/grantPortone.ts). 트랜잭션이 결제 문서를 다시 읽어 감시의 자동 채우기와 겹쳐도 한 번만 넣는다.
+    //   잔액 지급 + pending → confirmed + grantedBy 'client' + 친구 초대 첫 결제 보상
     const totalUn = pkg.paidUn + pkg.bonusUn;
     let alreadyGranted = false;
     try {
-      await db.runTransaction(async (tx) => {
-        const userRef = db.collection('users').doc(uid);
-        const [userDoc, payDoc] = await Promise.all([tx.get(userRef), tx.get(paymentRef)]);
-        if (isGranted(payDoc.data())) { alreadyGranted = true; return; }
-        const data = userDoc.data() || {};
-
-        // 2026-10-16 — update() 는 users/{uid} 문서가 없는 계정(웹 익명)에서 NOT_FOUND → 돈은 나가고 운은 안 들어가
-        //   needs_reconciliation 으로 빠진다(6월 IAP 19건과 같은 원인). grantPurchase 처럼 set(merge) 로 문서가 없어도 만든다.
-        tx.set(userRef, {
-          balance: {
-            paid: (data.balance?.paid ?? 0) + pkg.paidUn,
-            bonus: (data.balance?.bonus ?? 0) + pkg.bonusUn,
-          },
-          totalCharged: admin.firestore.FieldValue.increment(pkg.paidUn),
-        }, { merge: true });
-
-        tx.update(paymentRef, {
-          unChange: totalUn,
-          portoneStatus: pay.status,
-          portoneMethod: pay?.method?.type || null,
-          portoneChannel: pay?.channel?.type || null,
-          // 2026-10-21 — 카카오페이 안에서 머니로 냈는지 등록 카드로 냈는지 (화면에 '등록한 카드로도' 안내를 넣어 첫 카드 결제로 확인)
-          portoneEasyPayMethod: pay?.method?.easyPayMethod?.type || null,
-          status: 'confirmed',
-          confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      });
+      const r = await grantPortonePayment({ uid, paymentId, pay, pkg, amount, grantedBy: 'client' });
+      alreadyGranted = !r.granted;
     } catch (err: any) {
       // E13 · 포트원은 PAID 인데 DB 실패 — 수동 복구 대상
       console.error('[confirmPortonePayment] needs_reconciliation:', err);
@@ -2217,11 +2206,12 @@ export const confirmPortonePayment = onCall(
       }).catch(() => false);
       throw new HttpsError('internal', '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
     }
-    if (alreadyGranted) return ALREADY;
-
-    // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
-    const { referralOnPurchase } = await import('./referral/referral');
-    await referralOnPurchase(uid, pkg.paidUn, totalUn);
+    if (alreadyGranted) {
+      // 같은 순간 감시가 먼저 넣었으면 그 운을 이 기기에 넘긴다 (한 기기 한 번, 서버 잔액은 그대로)
+      const c = await claimPortoneDeviceCredit(uid, paymentId).catch(() => null);
+      if (c?.claimed) return { success: true, message: `${c.totalUn}운이 충전됐어요!`, totalUn: c.totalUn, paidUn: c.paidUn, bonusUn: c.bonusUn, autoGranted: true };
+      return ALREADY;
+    }
     return { success: true, message: `${totalUn}운이 충전됐어요!`, totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
   }
 );

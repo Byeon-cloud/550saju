@@ -11,7 +11,7 @@ import { CHARGE_PACKAGES, getTopicPrice } from '@/constants/pricing';
 import { resolveChargeContent } from '@/services/payment/chargeContent';
 import type { ChargeContent } from '@/services/payment/chargeContent';
 import type { ChargePackage } from '@/types/payment';
-import { getBalance, addPaidBalance, getMyProfile } from '@/services/storage/localStore';
+import { getBalance, getMyProfile } from '@/services/storage/localStore';
 import { markPaidOnce, hasPaidLocally, hasPaidOnServer } from '@/services/payment/payerHistory';
 import { Seal } from '@/components/hanji/Hanji';
 import { purchasePackage } from '@/services/payment/iapService';
@@ -273,7 +273,7 @@ export function ChargePage() {
       confirmPortonePaymentServer(portonePid, portoneAmount)
         .then((r) => {
           if (r.ok && r.paidUn != null) {
-            addPaidBalance(r.paidUn, r.bonusUn || 0);
+            // 2026-10-24 — 기기 잔액은 confirmPortonePaymentServer 안에서 결제번호마다 한 번 더했다(r.credited). 여기서 더하지 않는다
             markPaidOnce();
             rememberWebPayment(portonePid, portoneAmount);
             setBalanceDisplay(getBalance());
@@ -374,7 +374,7 @@ export function ChargePage() {
     const r = await requestPortoneLivePayment(selectedPkg, method);
     setPurchasing(false);
     if (r.ok && r.paidUn != null) {
-      addPaidBalance(r.paidUn, r.bonusUn || 0);
+      // 2026-10-24 — 기기 잔액은 confirmPortonePaymentServer 안에서 결제번호마다 한 번 더했다(r.credited). 여기서 더하지 않는다
       markPaidOnce();
       if (r.paymentId) rememberWebPayment(r.paymentId, selectedPkg.price);
       setBalanceDisplay(getBalance());
@@ -406,9 +406,12 @@ export function ChargePage() {
 
   // 2026-10-23 — 닫기가 돌아갈 화면을 새로 쌓으면(push) 휴대폰 뒤로가 다시 충전 화면을 열어, 나가려는 손님이
   //   충전과 종합사주 화면을 1~2초 간격으로 오갔다(10-22~23 웹 6기기). 충전 화면 자리를 바꿔 끼운다(replace)
+  //   10-24 검수 — 앱 안 이동으로 열렸으면(앞 화면이 기록에 있음) 뒤로 한 번이면 그 화면이라 navigate(-1).
+  //   replace 는 같은 화면을 두 번 쌓아 휴대폰 뒤로를 두 번 눌러야 나갔다. 새로 열린 경우(결제 앱, 로그인 다녀옴)만 replace
   const goBack = () => {
     writeChargeCtx(null);
-    if (redirectTo) navigate(redirectTo, { replace: true });
+    const inApp = location.key !== 'default' && Number((window.history.state as { idx?: number } | null)?.idx || 0) > 0;
+    if (redirectTo && !inApp) navigate(redirectTo, { replace: true });
     else navigate(-1);
   };
 

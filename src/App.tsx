@@ -10,6 +10,7 @@ import { TabBar } from '@/components/layout/TabBar';
 import { BalanceBar } from '@/components/layout/BalanceBar';
 import { ToastProvider } from '@/components/common/Toast';
 import { claimWelcomeIfPhantom } from '@/services/storage/balanceReconcile';
+import { isAppintosBuild } from '@/lib/env';
 import { HomePage } from '@/pages/HomePage';
 
 /* 2026-10-13 — 홈 v5 시안(HomePageV5, env flag OFF 로 한 번도 켜지지 않음)은 v9 홈으로 대체되어 삭제 */
@@ -142,6 +143,33 @@ function BalanceGuard() {
       unsub = auth.onAuthStateChanged((u) => {
         if (timer) window.clearTimeout(timer);
         if (u && !u.isAnonymous) timer = window.setTimeout(() => { void claimWelcomeIfPhantom(); }, 4000);
+      });
+    }).catch(() => {});
+    return () => { alive = false; if (timer) window.clearTimeout(timer); unsub?.(); };
+  }, []);
+  return null;
+}
+
+/**
+ * 2026-10-24 웹 결제 이어 받기 — 로그인한 웹 기기가 열릴 때(로그인한 뒤 포함) 확인이 끊긴 포트원 결제와 서버가 자동으로 채운 결제를
+ *   이 기기에 한 번 넣는다(balanceAdjust.resumePortonePayments, 계정마다 페이지 한 번). 앱인토스 빌드와 토스 앱 화면에서는 하지 않는다.
+ *   onIdTokenChanged: 익명 계정에 소셜 로그인을 붙이는 경우(회원 ID 그대로)는 onAuthStateChanged 가 다시 오지 않는다.
+ */
+function PortoneResumeGuard() {
+  useEffect(() => {
+    if (isAppintosBuild) return;
+    let unsub: (() => void) | undefined;
+    let timer: number | undefined;
+    let alive = true;
+    import('@/services/auth/firebase').then(({ auth }) => {
+      if (!alive) return;
+      unsub = auth.onIdTokenChanged((u) => {
+        if (timer) window.clearTimeout(timer);
+        if (u && !u.isAnonymous) {
+          timer = window.setTimeout(() => {
+            import('@/services/storage/balanceAdjust').then((m) => m.resumePortonePayments()).catch(() => {});
+          }, 3000);
+        }
       });
     }).catch(() => {});
     return () => { alive = false; if (timer) window.clearTimeout(timer); unsub?.(); };
@@ -553,6 +581,7 @@ export function App() {
           <ToastProvider>
           <ScrollToTop />
           <BalanceGuard />
+          <PortoneResumeGuard />
           <RouteFlags />
           <DesktopBrandPanel />
           <div className="app-container">

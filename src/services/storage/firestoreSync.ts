@@ -210,54 +210,66 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
     //   정책: 클라우드 잔액이 로컬보다 많을 때만 (= 다른 디바이스 충전 흔적) 차이만큼 보강.
     //   로컬보다 적으면 무시 (= 이미 차감했는데 서버는 미반영된 경우 — 클라가 진실).
     //   숫자 schema(legacy)는 객체로 변환해서 비교.
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    if (userDoc.exists()) {
-      const cloudBalanceRaw = userDoc.data().balance as BalanceDetail | number | undefined;
-      const cloudBalance: BalanceDetail | null = (() => {
-        if (cloudBalanceRaw == null) return null;
-        if (typeof cloudBalanceRaw === 'number') return { paid: cloudBalanceRaw, bonus: 0, reward: 0 };
-        return cloudBalanceRaw;
-      })();
-      if (cloudBalance) {
-        try {
+    // 2026-10-24 — 서버 감시가 자동으로 채운 웹 결제(결제 문서 deviceCreditPending)는 서버 잔액에 이미 들어 있지만 기기에는 아직 없다.
+    //   그 몫은 balanceAdjust.resumePortonePayments 가 기기 하나에 한 번 넣으므로, 여기 차이 계산에서는 뺀다(둘 다 더하면 두 번 들어간다).
+    //   서버 잔액을 먼저 읽고 그다음 그 목록을 읽는다(사이에 새로 채워진 결제는 목록에만 있어 덜 더해질 뿐 두 번 더해지지 않는다).
+    //   결제 넣기와 같은 순간 돌지 않게 차례(withBalanceLock)를 지킨다. 목록을 못 읽으면 이번엔 잔액을 맞추지 않는다(두 번 더하지 않게).
+    const { withBalanceLock, listPendingPortoneCredits, pendingPortoneCreditUn } = await import('./balanceAdjust');
+    await withBalanceLock(async () => {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      let pendingCredits: Awaited<ReturnType<typeof listPendingPortoneCredits>> | null = null;
+      try { pendingCredits = await listPendingPortoneCredits(uid); } catch (e) { console.warn('[Sync] 자동 채우기 목록 읽기 실패, 이번엔 잔액 차이를 더하지 않아요:', e); }
+      if (userDoc.exists() && pendingCredits) {
+        const cloudBalanceRaw = userDoc.data().balance as BalanceDetail | number | undefined;
+        const cloudBalance: BalanceDetail | null = (() => {
+          if (cloudBalanceRaw == null) return null;
+          if (typeof cloudBalanceRaw === 'number') return { paid: cloudBalanceRaw, bonus: 0, reward: 0 };
+          return cloudBalanceRaw;
+        })();
+        if (cloudBalance) {
+          // 아직 이 기기에 안 들어간 자동 채우기 몫 (위 설명). 이 아래는 기다림 없이 한 번에 읽고 쓴다
+          const notYetHere = pendingPortoneCreditUn(pendingCredits);
+          try {
+            const localRaw = localStorage.getItem('saju500_balance_v2');
+            const local: BalanceDetail = localRaw ? JSON.parse(localRaw) : { paid: 0, bonus: 0, reward: 0 };
+            const cloudTotal = (cloudBalance.paid || 0) + (cloudBalance.bonus || 0) + (cloudBalance.reward || 0) - notYetHere;
+            const localTotal = (local.paid || 0) + (local.bonus || 0) + (local.reward || 0);
+            // 클라우드가 더 많으면 다른 디바이스 충전분 → 차이만큼 paid 에 보강
+            if (cloudTotal > localTotal) {
+              const diff = cloudTotal - localTotal;
+              local.paid = (local.paid || 0) + diff;
+              localStorage.setItem('saju500_balance_v2', JSON.stringify(local));
+            }
+            // 로컬이 더 많으면 (클라가 차감, 서버 미반영) — 무시. 다음 차감 시 서버에도 반영됨.
+          } catch (parseErr) {
+            // 파싱 실패 시 안전하게 클라우드 잔액으로 초기화 (아직 안 들어간 자동 채우기 몫은 빼고)
+            localStorage.setItem('saju500_balance_v2', JSON.stringify({ ...cloudBalance, paid: Math.max(0, (cloudBalance.paid || 0) - notYetHere) }));
+          }
+        }
+      }
+
+      // 3. 2026-10-21 — 로그아웃 직전 스냅샷으로 되살리기. 로그아웃은 이 기기 잔액을 지우고 그 값을 이 계정 사본에 남긴다(MyPage onLogout).
+      //   서버 잔액에 없던 몫(예전 보상 등)도 다시 로그인하면 돌아오게, 기기 잔액이 스냅샷보다 적을 때만 모자란 만큼 채운다.
+      //   로그인한 계정만, 스냅샷은 한 번 쓰면 표시를 지운다(되풀이 채우기 방지).
+      //   2026-10-24 — 스냅샷은 칸을 통째로 바꾸므로 포트원 결제 넣기와 같은 차례(withBalanceLock) 안에서 한다
+      if (auth.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.uid === uid) {
+        const snap = await getDoc(doc(db, `users/${uid}/state`, 'balance')).catch(() => null);
+        const m = snap?.exists() ? (snap.data() as Record<string, unknown>) : null;
+        if (m && m.logoutAt) {
           const localRaw = localStorage.getItem('saju500_balance_v2');
           const local: BalanceDetail = localRaw ? JSON.parse(localRaw) : { paid: 0, bonus: 0, reward: 0 };
-          const cloudTotal = (cloudBalance.paid || 0) + (cloudBalance.bonus || 0) + (cloudBalance.reward || 0);
+          const want = { paid: Math.max(0, Number(m.paid) || 0), bonus: Math.max(0, Number(m.bonus) || 0), reward: Math.max(0, Number(m.reward) || 0) };
           const localTotal = (local.paid || 0) + (local.bonus || 0) + (local.reward || 0);
-          // 클라우드가 더 많으면 다른 디바이스 충전분 → 차이만큼 paid 에 보강
-          if (cloudTotal > localTotal) {
-            const diff = cloudTotal - localTotal;
-            local.paid = (local.paid || 0) + diff;
-            localStorage.setItem('saju500_balance_v2', JSON.stringify(local));
+          const wantTotal = want.paid + want.bonus + want.reward;
+          if (wantTotal > localTotal + 1e-6) {
+            // 스냅샷은 로그아웃 순간의 이 계정 잔액 전부(서버 잔액 포함)라 칸별로 그대로 되돌린다(칸마다 큰 값을 고르면 합이 부풀 수 있다)
+            localStorage.setItem('saju500_balance_v2', JSON.stringify(want));
+            try { window.dispatchEvent(new Event('saju500:balance-changed')); } catch { /* noop */ }
           }
-          // 로컬이 더 많으면 (클라가 차감, 서버 미반영) — 무시. 다음 차감 시 서버에도 반영됨.
-        } catch (parseErr) {
-          // 파싱 실패 시 안전하게 클라우드 잔액으로 초기화
-          localStorage.setItem('saju500_balance_v2', JSON.stringify(cloudBalance));
+          await setDoc(doc(db, `users/${uid}/state`, 'balance'), { logoutAt: null }, { merge: true }).catch(() => {});
         }
       }
-    }
-
-    // 3. 2026-10-21 — 로그아웃 직전 스냅샷으로 되살리기. 로그아웃은 이 기기 잔액을 지우고 그 값을 이 계정 사본에 남긴다(MyPage onLogout).
-    //   서버 잔액에 없던 몫(예전 보상 등)도 다시 로그인하면 돌아오게, 기기 잔액이 스냅샷보다 적을 때만 모자란 만큼 채운다.
-    //   로그인한 계정만, 스냅샷은 한 번 쓰면 표시를 지운다(되풀이 채우기 방지).
-    if (auth.currentUser && !auth.currentUser.isAnonymous && auth.currentUser.uid === uid) {
-      const snap = await getDoc(doc(db, `users/${uid}/state`, 'balance')).catch(() => null);
-      const m = snap?.exists() ? (snap.data() as Record<string, unknown>) : null;
-      if (m && m.logoutAt) {
-        const localRaw = localStorage.getItem('saju500_balance_v2');
-        const local: BalanceDetail = localRaw ? JSON.parse(localRaw) : { paid: 0, bonus: 0, reward: 0 };
-        const want = { paid: Math.max(0, Number(m.paid) || 0), bonus: Math.max(0, Number(m.bonus) || 0), reward: Math.max(0, Number(m.reward) || 0) };
-        const localTotal = (local.paid || 0) + (local.bonus || 0) + (local.reward || 0);
-        const wantTotal = want.paid + want.bonus + want.reward;
-        if (wantTotal > localTotal + 1e-6) {
-          // 스냅샷은 로그아웃 순간의 이 계정 잔액 전부(서버 잔액 포함)라 칸별로 그대로 되돌린다(칸마다 큰 값을 고르면 합이 부풀 수 있다)
-          localStorage.setItem('saju500_balance_v2', JSON.stringify(want));
-          try { window.dispatchEvent(new Event('saju500:balance-changed')); } catch { /* noop */ }
-        }
-        await setDoc(doc(db, `users/${uid}/state`, 'balance'), { logoutAt: null }, { merge: true }).catch(() => {});
-      }
-    }
+    });
   } catch (err) {
     console.warn('[Sync] 클라우드 다운로드 실패:', err);
   }

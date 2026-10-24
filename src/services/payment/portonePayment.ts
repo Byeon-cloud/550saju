@@ -12,6 +12,7 @@
 import * as PortOne from '@portone/browser-sdk/v2';
 import { auth } from '@/services/auth/firebase';
 import type { ChargePackage } from '@/types/payment';
+import { rememberPortonePending, forgetPortonePending, confirmPortoneAndCredit } from '@/services/storage/balanceAdjust';
 
 export type PortonePgMethod = 'card' | 'kakaopay';
 
@@ -95,6 +96,11 @@ export interface PortoneLiveResult {
   bonusUn?: number;
   /** 결제 번호 (환불 요청 메일에 채우려고 기기에 적어 둔다, 2026-10-16) */
   paymentId?: string;
+  /**
+   * 2026-10-24 — 이 기기 잔액에 이미 더했는가. 포트원 결제 운은 confirmPortonePaymentServer 안(balanceAdjust.confirmPortoneAndCredit)에서
+   *   결제번호마다 한 번만 더한다. 부르는 쪽(충전 화면)은 더하지 않는다.
+   */
+  credited?: boolean;
 }
 
 /** paymentId — 서버 confirmPortonePayment 의 uid 바인딩 검증(접두사 uid 8자)과 반드시 일치 */
@@ -121,6 +127,8 @@ export async function requestPortoneLivePayment(
   if (!channelKey) return { ok: false, cancelled: false, message: '해당 결제수단이 아직 준비되지 않았어요' };
 
   const paymentId = generateLivePaymentId(user.uid, pkg.id);
+  // 2026-10-24 — 결제창을 열기 직전에 적어 둔다. 확인 화면이 끊겨도 다음에 앱을 열 때 다시 확인한다(balanceAdjust.resumePortonePayments)
+  rememberPortonePending(paymentId, pkg.price);
   try {
     const resp = await PortOne.requestPayment({
       storeId: STORE_ID,
@@ -144,6 +152,8 @@ export async function requestPortoneLivePayment(
       },
     });
     if (resp?.code != null) {
+      // 결제창이 실패나 취소로 닫혔다 — 다시 확인할 결제가 아니다 (그래도 실제로 결제됐다면 서버 감시가 찾아 채운다)
+      forgetPortonePending(paymentId);
       const cancelled = String(resp.code).includes('CANCEL') || /취소/.test(resp.message || '');
       return { ok: false, cancelled, message: resp.message || '결제가 완료되지 않았어요' };
     }
@@ -154,20 +164,15 @@ export async function requestPortoneLivePayment(
   }
 }
 
-/** 서버 검증·지급 호출 — 포트원 조회 API 검증(금액·PAID·LIVE 채널·uid)은 전부 서버에서 */
+/**
+ * 서버 검증과 지급 호출 — 포트원 조회 API 검증(금액, PAID, LIVE 채널, uid)은 전부 서버에서.
+ *   2026-10-24 — 응답의 paidUn 을 이 기기 잔액에 더하는 것까지 여기서 한다(balanceAdjust.confirmPortoneAndCredit, 결제번호마다 한 번).
+ *   돌아온 credited 가 true 면 이미 더한 것이라 부르는 쪽은 더하지 않는다.
+ */
 export async function confirmPortonePaymentServer(
   paymentId: string,
   amount: number,
 ): Promise<PortoneLiveResult> {
-  try {
-    const { getFunctions, httpsCallable } = await import('firebase/functions');
-    const { app } = await import('@/services/auth/firebase');
-    const functions = getFunctions(app, 'us-central1');
-    const fn = httpsCallable(functions, 'confirmPortonePayment');
-    const r = await fn({ paymentId, amount });
-    const d = r.data as { success: boolean; message: string; totalUn?: number; paidUn?: number; bonusUn?: number };
-    return { ok: !!d.success, cancelled: false, message: d.message, totalUn: d.totalUn, paidUn: d.paidUn, bonusUn: d.bonusUn };
-  } catch (e: any) {
-    return { ok: false, cancelled: false, message: e?.message || '결제 확인 중 오류가 발생했어요' };
-  }
+  const r = await confirmPortoneAndCredit(paymentId, amount);
+  return { ok: r.ok, cancelled: false, message: r.message, totalUn: r.totalUn, paidUn: r.paidUn, bonusUn: r.bonusUn, credited: r.credited };
 }

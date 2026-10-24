@@ -4,6 +4,22 @@ import { onAuthChange, signIn, checkRedirectResult, ensureAuth, maybeUpgradeToTo
 
 const DEV_MODE = false;
 
+/**
+ * 로그인 직후 — 서버에서 보관함과 잔액을 맞추고(syncFromCloud), 그다음 확인이 끊긴 웹 결제와 서버가 자동으로 채운 웹 결제를 이 기기에 넣는다
+ *   (2026-10-24, balanceAdjust.resumePortonePayments. 웹 화면, 로그인 계정만 — 앱인토스에서는 그 안에서 아무것도 하지 않는다).
+ *   결제 넣기가 잔액 맞추기보다 먼저 돌면 로그아웃 스냅샷 되살리기가 그 운을 덮을 수 있어 순서를 지킨다.
+ */
+function syncAfterLogin(uid: string): void {
+  Promise.all([import('@/services/storage/firestoreSync'), import('@/services/storage/balanceAdjust')])
+    .then(([{ syncFromCloud, syncToCloud }, adj]) => {
+      syncToCloud(uid);
+      const done = syncFromCloud(uid);
+      adj.noteLoginBalanceSync(done);
+      return done.then(() => adj.resumePortonePayments());
+    })
+    .catch(() => { /* 무해 — 다음 페이지 로드에서 다시 */ });
+}
+
 /** 로그인 계정의 사주원국 사본 합치기 (웹만 — 앱인토스 판정은 firestoreSync.mergeAccountProfiles 안에서) */
 function mergeAccountProfilesLater(uid: string): void {
   import('@/services/storage/firestoreSync')
@@ -56,10 +72,7 @@ export function useAuth() {
     // 모바일 리다이렉트 로그인 복귀 처리
     checkRedirectResult().then((u) => {
       if (u) {
-        import('@/services/storage/firestoreSync').then(({ syncFromCloud, syncToCloud }) => {
-          syncToCloud(u.uid);
-          syncFromCloud(u.uid);
-        });
+        syncAfterLogin(u.uid);
         mergeAccountProfilesLater(u.uid);
       }
     });
@@ -73,10 +86,7 @@ export function useAuth() {
       const u = await signIn(provider);
       setUser(u);
       setTick((n) => n + 1);
-      import('@/services/storage/firestoreSync').then(({ syncFromCloud, syncToCloud }) => {
-        syncToCloud(u.uid);
-        syncFromCloud(u.uid);
-      });
+      syncAfterLogin(u.uid);
       // 익명 연결(uid 그대로)은 onAuthChange 가 다시 오지 않아 여기서도 부른다 (계정당 한 번이라 겹쳐도 한 번 읽음)
       mergeAccountProfilesLater(u.uid);
       return u;
