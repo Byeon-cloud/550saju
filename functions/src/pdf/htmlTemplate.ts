@@ -458,7 +458,8 @@ export function buildPremiumPdfHtml(input: PdfTemplateInput): string {
 
   /* ═════════════ §06 조각 — monthlyInsight 12 그리드 + monthlyWarnings ═════════════ */
   const LABEL_CLASS: Record<string, string> = { 상승: 'up', 정점: 'peak', 주의: 'warn', 평탄: 'flat', 지금: 'nowm' };
-  const monthlyInsight = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : [];
+  // 2026-10-24 — 6개월 칸은 monthlyAhead, monthlyInsight 는 옛 앱 모양(올해 1~12월)
+  const monthlyInsight = Array.isArray(aiResult?.monthlyAhead) && aiResult.monthlyAhead.length ? aiResult.monthlyAhead : Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : [];
   const monthlyHtml = monthlyInsight.length > 0
     ? `<div class="mi-grid">${
         monthlyInsight.map((mi: any, idx: number) => {

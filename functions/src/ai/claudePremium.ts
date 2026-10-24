@@ -29,7 +29,7 @@ import { logAnthropicUsage } from '../shared/aiUsageLog';
 import { kstNow, kstNowDate } from '../utils/kstTime';
 import { Solar } from 'lunar-javascript';
 import { myeongriSinsalText } from './sinsal';
-import { upcomingMonthPillarsText, sanitizeAiOutput, lifeTimelineFactsText, sajuCoreFactsText, daeunScoreText, monthVerdictTable, monthVerdictTableText, monthInsightLabels } from './sajuFacts';
+import { upcomingMonthPillarsText, sanitizeAiOutput, lifeTimelineFactsText, sajuCoreFactsText, daeunScoreText, monthVerdictTable, monthVerdictTableText, monthInsightLabels, monthVerdictRow } from './sajuFacts';
 import type { MonthVerdictRow } from './sajuFacts';
 import { computeTopicBaseScore } from './claudeTopic';
 
@@ -352,6 +352,20 @@ function recoverPartialJson(text: string): any {
   return JSON.parse(recovered);
 }
 
+/** 옛 앱(1.6.2) 달 칸 — 올해 1~12월. 6개월 칸 글을 같은 달 번호에 두고, 내년 달은 연도를 앞에 붙이고, 지난 달은 한 줄 */
+function legacyMonthGrid(ahead: any[], year: number, sajuData: any): any[] {
+  const cal = calendarMonthGanzi(year);
+  const out: any[] = [];
+  for (let m = 1; m <= 12; m++) {
+    const cur = ahead.find((a) => Number(a?.year) === year && Number(a?.month) === m);
+    const next = ahead.find((a) => Number(a?.year) === year + 1 && Number(a?.month) === m);
+    if (cur) out.push({ month: m, label: cur.label, ganzi: cur.ganzi, text: cur.text });
+    else if (next) out.push({ month: m, label: next.label, ganzi: next.ganzi, text: `${year + 1}년 ${m}월, ${next.text}` });
+    else out.push({ month: m, label: '평탄', ganzi: monthVerdictRow(year, m, sajuData)?.gz || cal[m - 1] || '', text: '이미 지난 달입니다.' });
+  }
+  return out;
+}
+
 /** 그룹 결과 후처리 — monthlyInsight 간지를 실제 월주로 교정 + 출처·오기 한자·시간 표기 정리 (callable·SSE 공용 경로) */
 function postProcessGroup(group: GroupKey, parsed: any, sajuData?: any): any {
   try {
@@ -371,9 +385,14 @@ function postProcessGroup(group: GroupKey, parsed: any, sajuData?: any): any {
         }
         const dropped = parsed.monthlyInsight.length - picked.size;
         if (dropped > 0) console.warn(`[claudePremium] monthlyInsight 앞으로 6개월 밖 ${dropped}칸 버림`);
-        parsed.monthlyInsight = rows6
+        const ahead = rows6
           .map((r, i) => (picked.has(i) ? { ...picked.get(i), year: r.y, month: r.m, ganzi: r.gz, label: labels[i], score: r.score, verdict: r.verdict, action: r.action } : null))
           .filter(Boolean);
+        // 2026-10-24 검수 — 라이브 앱 1.6.2 는 monthlyInsight 를 '올해 1~12월' 칸으로 그려, 6개월 칸을 그대로 주면 내년 1~3월 글이
+        //   연도 없이 올해 1~3월 자리에 들어가고 지난 달은 화면 자체 문구가 찼다. 새 화면과 PDF 는 monthlyAhead(6개월)를 읽고,
+        //   monthlyInsight 는 옛 모양으로 다시 만든다(지난 달은 한 줄, 내년 달은 그 달 번호 칸에 연도를 붙여).
+        parsed.monthlyAhead = ahead;
+        parsed.monthlyInsight = legacyMonthGrid(ahead as any[], kn.year, sajuData);
       } else {
         const cal = calendarMonthGanzi(kn.year);
         parsed.monthlyInsight.forEach((mi: any) => {
@@ -437,6 +456,7 @@ function mergeGroups(a: any, d: any, b: any, c: any): any {
     monthlyWarnings: b?.monthlyWarnings || [],
     shinsalCards: b?.shinsalCards || [],
     monthlyInsight: b?.monthlyInsight || [],
+    monthlyAhead: b?.monthlyAhead || [],  // 2026-10-24 새 화면과 PDF 의 6개월 칸 (monthlyInsight 는 옛 앱 모양)
     daeunPeriods: b?.daeunPeriods || [],  // 2026-05-04: 8 대운 점수 동적화
     // Group C
     topicMini: c?.topicMini || {},

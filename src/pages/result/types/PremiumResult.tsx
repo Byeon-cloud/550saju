@@ -3762,10 +3762,16 @@ function realMonthGanzi(y: number, m: number): string {
   try { const ec = Solar.fromYmd(y, m, 15).getLunar().getEightChar(); return ec.getMonthGan() + ec.getMonthZhi(); } catch { return ''; }
 }
 
+/** 2026-10-24 — 6개월 칸은 monthlyAhead(새 필드), monthlyInsight 는 옛 앱 모양(올해 1~12월). 둘 다 있으면 monthlyAhead */
+function monthInsightSource(aiResult: any): any[] | null {
+  if (Array.isArray(aiResult?.monthlyAhead) && aiResult.monthlyAhead.length) return aiResult.monthlyAhead;
+  return Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : null;
+}
+
 /** 2026-10-23 (1.6.3 P1-7) — 서버가 '이번 달부터 앞으로 6개월'로 보낸 달 칸 (칸마다 year 가 있다). 날짜순.
  *  옛 결과(1~12월 12칸, year 없음)는 null → 예전 1~12월 그리기 그대로. */
 function upcomingInsight(aiResult: any): Array<{ y: number; m: number; item: any }> | null {
-  const arr = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : null;
+  const arr = monthInsightSource(aiResult);
   if (!arr || !arr.length) return null;
   const rows = arr
     .map((it: any) => ({ y: Number(it?.year), m: Number(it?.month), item: it }))
@@ -3786,7 +3792,7 @@ function newYearTargetOfToday(): number {
  *  · fallback: monthlyFortune 의 score 사용
  */
 function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; sajuData: SajuData; dayOheng: OhengType }) {
-  const insight = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : null;
+  const insight = monthInsightSource(aiResult);
   const fortune = Array.isArray(aiResult?.monthlyFortune) ? aiResult.monthlyFortune : null;
   // 12개월 모두 강제 — AI 데이터 비어도 사주 기반 fallback
   const scores: Array<{ m: number; s: number; label?: string }> = [];
@@ -7181,7 +7187,7 @@ function annotateHanja(text: string): string {
 function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; dayOheng: OhengType; sajuData?: SajuData }) {
   // mockup §6 .month-insight-grid — 2-column grid + .mi.up/peak/warn/now
   // monthlyInsight (label) 우선, fallback monthlyFortune (score), 둘 다 없을 때 12달 자동 fallback
-  const insight = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : null;
+  const insight = monthInsightSource(aiResult);
   const fortune = Array.isArray(aiResult?.monthlyFortune) ? aiResult.monthlyFortune : null;
   const navigate = useNavigate();
   // 2026-10-23 (1.6.3 P1-7) — 새 결과는 이번 달부터 앞으로 6개월 (year 있음). 옛 결과는 예전처럼 1~12월 12칸
