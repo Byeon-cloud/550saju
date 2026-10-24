@@ -67,14 +67,8 @@ function adaptDreamResult(raw: any): any {
   if (!r.dreamQuote && typeof r.verdict === 'string' && r.verdict.length > 0) {
     r.dreamQuote = r.verdict;
   }
-  if (!Array.isArray(r.quoteInterpretations) && typeof r.sajuTone === 'string' && r.sajuTone.length > 50) {
-    r.quoteInterpretations = [{
-      quote: r.title || '꿈',
-      highlight: '',
-      tag: '사주 관점',
-      interp: r.sajuTone,
-    }];
-  }
+  // 2026-10-24 — sajuTone 을 '사용자 문장 인용'(§03)으로 꾸미던 합성 제거. 제목을 손님이 쓴 문장처럼 보여 줬고(DreamMockupView 05-27 주석과 같은 이유),
+  //   sajuTone 은 이제 §04 첫머리에 그대로 그린다(점검 P1-5)
   if (Array.isArray(r.symbols)) {
     const ohengKanji: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
     r.symbols = r.symbols.map((s: any) => ({
@@ -965,8 +959,9 @@ export function DreamPage() {
             onCancel={() => setShowUnlockConfirm(false)}
             onConfirm={confirmDeepUnlock}
           >
-            일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방
-            <strong style={{ color: '#1a1a1a' }}> 다섯 섹션</strong>이 즉시 열려요.<br />
+            {/* 2026-10-24 — 용어 나열 대신 받을 내용으로(점검 P1-5, 잠금 카드와 같은 말) */}
+            이 꿈이 가리키는 달의 풀이와 할 일, 미룰 일까지
+            <strong style={{ color: '#1a1a1a' }}> 다섯 칸</strong>이 바로 열려요.<br />
             현재 잔액 <b style={{ color: '#B8965A' }}>{formatUn(getBalance())}운</b> → 차감 후 <b>{formatUn(getBalance() - 1)}운</b>
           </DreamConfirmModal>
         )}

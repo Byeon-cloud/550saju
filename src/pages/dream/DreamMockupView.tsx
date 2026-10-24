@@ -413,8 +413,8 @@ const MOCKUP_CSS = `
 .dream-mockup .paid-cta::before { display: none; content: '解'; position: absolute; right: -10px; bottom: -30px; font-family: 'Noto Serif KR', serif; font-size: 140px; font-weight: 900; color: rgba(212,175,55,.08); line-height: 1; }
 .dream-mockup .paid-cta .lab { font-size: 13px; color: #E8D9B8; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 6px; position: relative; }
 .dream-mockup .paid-cta h3 { font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; position: relative; line-height: 1.45; }
-.dream-mockup .paid-cta .hook { font-size: 13px; color: #c4baa0; line-height: 1.7; position: relative; margin-bottom: 14px; word-break: keep-all; }
-.dream-mockup .paid-cta .hook strong { color: #f2d678; font-weight: 600; }
+.dream-mockup .paid-cta .hook { font-size: 15px; color: #D9CFBD; line-height: 1.7; position: relative; margin-bottom: 14px; word-break: keep-all; } /* 2026-10-24 — 이 사람의 달 한 줄이 카드 본문이라 본문 크기로 */
+.dream-mockup .paid-cta .hook strong { color: #F4EFE4; font-weight: 700; background: none; padding: 0; } /* 2026-10-24 v9: 금색은 버튼에만, 강조는 종이색 굵은 글자 */
 .dream-mockup .paid-cta .cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #E8D9B8, #B8965A); color: #1a1a1a; padding: 13px 18px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; position: relative; text-align: center; border: none; width: 100%; }
 .dream-mockup .paid-cta .cta-btn .cost { margin-left: 8px; font-size: 14px; font-weight: 700; opacity: .72; } /* 2026-10-14 v9: 알약 대신 글자 (GoldCta sub 와 같게) */
 /* 2026-09-17 — 스트리밍 중 결제 race 차단: 잠금 풀이가 다 쓰일 때까지 CTA 비활성 */
@@ -542,6 +542,38 @@ const SYMBOL_PIC_CLASS: Record<string, string> = {
 const OHENG_KANJI: Record<string, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
 const OHENG_COLOR: Record<string, string> = { 수: '#3E5F82', 토: '#B07F38', 목: '#4E7A57', 화: '#B04A38', 금: '#7D7870' };
 
+/**
+ * 2026-10-24 — 잠금 카드의 '이 꿈이 가리키는 달'(UIUX 점검 P1-5, 6장 표).
+ *   서버가 정한 lockedTimeline.pointMonths 를 먼저 쓰고, 없으면(1.6.3 전 응답, 보관함 저장본) monthMarks 의 표시 달을 쓴다.
+ *   결과를 만든 달부터 0~3달 뒤 안의 1~2달만 믿는다. 그 밖이면 빈 값 → 달 없는 문구로.
+ *   '12월과 내년 1월'처럼 해를 넘긴 첫 달 앞에만 '내년'.
+ */
+function dreamLockMonths(lt: any, createdAt?: string | number): { months: number[]; label: string } {
+  const none = { months: [] as number[], label: '' };
+  try {
+    const d = createdAt != null ? new Date(createdAt) : new Date();
+    const base = (Number.isNaN(d.getTime()) ? new Date() : d).getMonth() + 1;
+    const off = (m: number) => (m - base + 12) % 12;
+    const ok = (a: number[]) => a.length >= 1 && a.length <= 2 && new Set(a).size === a.length
+      && a.every((m) => Number.isInteger(m) && m >= 1 && m <= 12 && off(m) <= 3);
+    let months: number[] = Array.isArray(lt?.pointMonths) ? lt.pointMonths.map((v: any) => Number(v)) : [];
+    if (!ok(months)) {
+      months = Array.isArray(lt?.monthMarks)
+        ? (lt.monthMarks as any[]).slice(0, 12).map((v, i) => (Number(v) >= 1 ? i + 1 : 0)).filter((m) => m > 0)
+        : [];
+      if (!ok(months)) return none;
+    }
+    months = [...months].sort((a, b) => off(a) - off(b));
+    let marked = false;
+    const label = months.map((m) => {
+      const next = m < base && !marked;
+      if (next) marked = true;
+      return `${next ? '내년 ' : ''}${m}월`;
+    }).join('과 ');
+    return { months, label };
+  } catch { return none; }
+}
+
 export function DreamMockupView(props: DreamMockupViewProps) {
   const { result: raw, profile, hasSaju, category, dreamText, concern, unlocked = false, isStreaming = false, createdAt, categoryId, onUnlock, onShare, onChat, onTopic } = props;
 
@@ -587,6 +619,9 @@ export function DreamMockupView(props: DreamMockupViewProps) {
     : [];
   const quotes: any[] = Array.isArray(result.quoteInterpretations) ? result.quoteInterpretations.slice(0, 3) : [];
   const worry = result.worryConnection;
+  // 2026-10-24 — sajuTone(요즘 짚기 + 원국)은 서버가 무료 칸으로 만들지만 화면에 그리는 곳이 없었다(quoteInterpretations 가 오면 버려짐).
+  //   §04 첫머리에 둔다. 10-14 짚어 주는 풀이가 꿈해몽에서 실제로 보이게(점검 P1-5, 무료에는 지난 일 짚기만, 앞날 달은 잠금)
+  const sajuTone = typeof result.sajuTone === 'string' ? result.sajuTone.trim() : '';
   const dreamQuote = stripMd(String(result.dreamQuote || ''));
   const lockedDayganRead = result.lockedDayganRead;
   const lockedOhengFlow = result.lockedOhengFlow;
@@ -594,6 +629,8 @@ export function DreamMockupView(props: DreamMockupViewProps) {
   const lockedTimeline = result.lockedTimeline;
   const lockedAction = result.lockedAction;
   const hasAnyLocked = lockedDayganRead || lockedOhengFlow || lockedWarnList || lockedTimeline || lockedAction;
+  // 2026-10-24 — 잠금 카드 문구의 달 (서버 pointMonths, 없으면 monthMarks). 잠금 카드 설명과 버튼이 이 사람의 달을 말한다(점검 P1-5)
+  const lockMonths = useMemo(() => dreamLockMonths(lockedTimeline, createdAt), [lockedTimeline, createdAt]);
   // 2026-05-27 — streaming 중엔 locked stack 항상 노출 (skeleton 으로 진행감)
   const showLockedStack = hasAnyLocked || isStreaming;
 
@@ -764,16 +801,19 @@ export function DreamMockupView(props: DreamMockupViewProps) {
             </DreamSection>
           )}
 
-          {/* §04 요새 고민과 이 꿈 */}
+          {/* §04 요새 고민과 이 꿈 — 2026-10-24 sajuTone(요즘 짚기) 첫머리 + 기본 펼침(판정 한 줄도 여기 있다) */}
           <DreamSection
             num="四"
             title="요새 고민과 이 꿈"
             han="應夢"
-            defaultOpen={false}
-            hasData={!!(worry?.narrative || dreamQuote)}
+            defaultOpen={true}
+            hasData={!!(sajuTone || worry?.narrative || dreamQuote)}
             isStreaming={isStreaming}
             skeletonLines={4}
           >
+            {sajuTone && sajuTone.split('\n').filter(Boolean).map((para: string, i: number) => (
+              <p key={`tone-${i}`} dangerouslySetInnerHTML={safeHtml(para)} />
+            ))}
             {worry?.narrative && (
               <>
                 <p className="sec-lead">적어 주신 고민과 꿈의 장면이 어떻게 맞물리는지 짚어 봐요.</p>
@@ -939,7 +979,7 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                               })}
                             </div>
                             <div className="tl-lbls"><span>1월</span><span>6월</span><span>12월</span></div>
-                            <div className="tl-cap">표시된 달이 이 꿈이 예고하는 <strong>결정의 시기</strong>입니다.</div>
+                            <div className="tl-cap">칠한 칸이 이 꿈이 가리키는 달이에요.</div>
                           </div>
                         )}
                         <p className="lk-teaser" style={{ marginTop: 10 }} dangerouslySetInnerHTML={safeHtml(lockedTimeline.teaser)} />
@@ -1011,8 +1051,17 @@ export function DreamMockupView(props: DreamMockupViewProps) {
               <div className="paid-cta">
                 <div className="lab">사주와 함께 보는 깊은 풀이</div>
                 <h3>같은 꿈도 사주 일간에 따라<br />뜻이 달라져요.</h3>
+                {/* 2026-10-24 — 잠금 카드 설명을 이 사람의 달 한 줄로(점검 6장 표, P1-5). 달은 서버가 정한 값. 달을 못 읽으면 달 없는 문구 */}
                 <p className="hook">
-                  {profile?.name ? `${profile.name} 님은` : '이 사주는'} <strong>{profile?.sajuData?.pillars?.[2]?.천간 || ''}{profile?.sajuData?.pillars?.[2]?.천간오행 ? `(${profile.sajuData.pillars[2].천간오행})` : ''}</strong> 일간입니다. 위 다섯 섹션(일간 연동, 오행 흐름, 꿈의 경고, 예고 시기, 실천 처방)을 전부 열어드립니다.
+                  {lockMonths.months.length > 0 ? (
+                    <>
+                      이 꿈이 가리키는 달은 <strong>{lockMonths.label}</strong>이에요. {lockMonths.months.length === 2 ? '그 두 달에' : '그달에'} 할 일과 미룰 일을 열어 볼까요?
+                    </>
+                  ) : (
+                    <>
+                      {profile?.name ? `${profile.name} 님` : '내'} 사주로 이 꿈이 가리키는 때와 할 일을 위 다섯 칸에서 열어 드려요.
+                    </>
+                  )}
                 </p>
                 {/* 2026-09-17 — 스트리밍 중 결제 race 차단 (잠금 본문이 다 쓰이기 전 1운 차감 → 해제 저장 누락·자동환불 꼬임) */}
                 <button
@@ -1022,7 +1071,11 @@ export function DreamMockupView(props: DreamMockupViewProps) {
                   disabled={isStreaming}
                   aria-busy={isStreaming || undefined}
                 >
-                  {isStreaming ? '풀이를 마무리하는 중이에요' : '내 사주 연동 심층 풀이 열기'}
+                  {isStreaming
+                    ? '풀이를 마무리하는 중이에요'
+                    : lockMonths.months.length === 2 ? '두 달 풀이 열기'
+                    : lockMonths.months.length === 1 ? `${lockMonths.months[0]}월 풀이 열기`
+                    : '깊은 풀이 열기'}
                   {!isStreaming && <span className="cost">1운</span>}
                 </button>
                 <div className="sub">

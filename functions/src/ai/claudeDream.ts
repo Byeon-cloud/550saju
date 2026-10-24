@@ -4,7 +4,7 @@
 import { realName } from '../shared/personName';
 import { TONE_FINAL_CHECK, READING_VOICE_BLOCK } from './promptsV3';
 import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
-import { sanitizeAiOutput, lifeTimelineFactsText, sajuCoreFactsText, ganziKo, natalRelationsText } from './sajuFacts';
+import { sanitizeAiOutput, lifeTimelineFactsText, sajuCoreFactsText, ganziKo, natalRelationsText, natalRelations, monthVerdictRow } from './sajuFacts';
 import { kstNow, kstNowDate } from '../utils/kstTime';
 // 2026-10-22 — 오늘 일진과 이달 월주를 서버가 계산하고, 신살은 확정표만 쓰게(점검 P0-5)
 import { Solar } from 'lunar-javascript';
@@ -105,10 +105,12 @@ export function buildDreamFreeGroupCall(args: DreamFreeArgs, group: DreamFreeGro
   //   두 그룹 모두 원국 확정표, 짚기 시기표와 규칙은 sajuTone 이 있는 A 에만(한 편에 한 번), B 는 짚기 질문 금지.
   const facts = dreamFactsBlock(args.saju);
   // 2026-10-22 — 두 그룹 모두 신살 확정표, 오늘과 이번 주, 칸별 규칙. 다가올 달 월주는 잠금 칸 그룹(B)에만(무료 칸이 달 이야기를 하지 않게)(점검 P0-5)
+  // 2026-10-24 — 무료 칸 그룹(A) 머리에서 '현재 대운' 줄을 뺀다. 대운은 잠금 본문(B)만 쓴다(점검 P1-5). 짚기 근거로 쓰는 대운 줄은 짚기 시기표(dreamTimelineBlock)에 그대로 있다.
+  //   잠금 칸 그룹(B)은 다가올 석 달 표 대신 서버가 고른 '이 꿈이 가리키는 달'을 받는다(잠금 카드 문구의 달)
   const common = dreamSinsalBlock(args.saju) + dreamTodayBlock(args.saju);
   const user = group === 'A'
-    ? DREAM_FREE_USER_GROUP_A_V3(headerData) + facts + dreamTimelineBlock(args.saju) + common + dreamFieldRules(true)
-    : DREAM_FREE_USER_GROUP_B_V3(headerData) + facts + common + dreamUpcomingMonthsBlock(args.saju) + dreamFieldRules(true)
+    ? DREAM_FREE_USER_GROUP_A_V3({ ...headerData, currentDaeun: undefined }) + facts + dreamTimelineBlock(args.saju) + common + dreamFieldRules(true)
+    : DREAM_FREE_USER_GROUP_B_V3(headerData) + facts + common + dreamPointMonthsBlock(args.saju) + dreamFieldRules(true)
       + "\n→ 이 그룹에서는 '혹시 ~했나요?' 같은 짚기 질문을 쓰지 않는다(다른 그룹이 한 번 했다).";
   // 그룹별 토큰 분할 (2026-05-27 v10 — 안전 복원):
   //   v9 의 5500/5000 은 AI 가 JSON 못 끝내고 잘림 → 파싱 실패 → callable 폴백 → 1분 대기 회귀.
@@ -153,7 +155,8 @@ function dreamTimelineBlock(saju: DreamSajuContext): string {
     return `
 
 ${tl}
-→ 짚기 자리: sajuTone 첫머리에서 위 표의 최근 석 달이나 이번 달 가운데 원국 지지 자리(월지, 일지, 년지, 시지)와 합충이 걸린 달 하나로 '요즘 짚기'를 한 번 한다. 일간만 걸린 달은 그런 달이 없을 때만 고른다. 영역은 그 자리의 영역 하나만 묻고 '일터나 관계'처럼 둘을 묶지 않는다. 물음표로 끝나는 질문 한 문장으로 묻는다(꼴: '지난 N월부터 [그 자리의 영역 하나]에서 [장면 하나]이 이어졌나요?'). '마음에 걸린 관계나 일이 하나쯤 있었을 것입니다'처럼 누구에게나 맞는 단정으로 쓰지 않는다. 다음 문장에서 그달 들어온 글자가 원국 어느 자리를 쳤는지 근거를 대고, 그 마음이 꿈에 어떤 모습으로 나왔는지 잇는다. 다른 필드에서는 다시 묻지 않는다.${READING_VOICE_BLOCK}`;
+→ 짚기 자리: sajuTone 첫머리에서 위 표의 최근 석 달이나 이번 달 가운데 원국 지지 자리(월지, 일지, 년지, 시지)와 합충이 걸린 달 하나로 '요즘 짚기'를 한 번 한다. 일간만 걸린 달은 그런 달이 없을 때만 고른다. 영역은 그 자리의 영역 하나만 묻고 '일터나 관계'처럼 둘을 묶지 않는다. 물음표로 끝나는 질문 한 문장으로 묻는다(꼴: '지난 N월부터 [그 자리의 영역 하나]에서 [장면 하나]이 이어졌나요?'). '마음에 걸린 관계나 일이 하나쯤 있었을 것입니다'처럼 누구에게나 맞는 단정으로 쓰지 않는다. 다음 문장에서 그달 들어온 글자가 원국 어느 자리를 쳤는지 근거를 대고, 그 마음이 꿈에 어떤 모습으로 나왔는지 잇는다. 다른 필드에서는 다시 묻지 않는다.${READING_VOICE_BLOCK}
+→ 꿈해몽에서 짚기는 무료로 보이는 sajuTone 에 있다. 그래서 위 '짚어 주는 풀이' 2항의 '언제까지 가고 언제부터 풀리는지 달로 말한다'는 sajuTone 에서 하지 않는다. 요즘 짚기는 지난 달부터 오늘까지만 말하고, 앞으로 어느 달에 풀리고 그달에 무엇을 할지는 잠금 본문(lockedTimeline.full 등)에만 쓴다. 위 표의 대운 줄은 짚기 근거를 고르는 데만 쓰고, 무료로 보이는 칸에는 대운 이름과 대운 풀이를 쓰지 않는다.`;
   } catch { return ''; }
 }
 
@@ -207,25 +210,122 @@ ${rel ? `${rel}\n` : ''}→ '오늘'이라고 쓸 때는 오늘 일진 ${dayGz}�
   } catch { return ''; }
 }
 
-/** 2026-10-22 — 잠금 lockedTimeline 의 달 고르기 근거. 이번 달부터 석 달 월주와 원국 관계(점검 P0-5, 7-5). 무료 칸 그룹(A)에는 넣지 않는다 */
-function dreamUpcomingMonthsBlock(saju: DreamSajuContext): string {
+/* 2026-10-24 — '이 꿈이 가리키는 달'을 서버가 정한다(점검 P1-5, 6장 잠금 카드 '이 꿈이 가리키는 달은 N월과 N월이에요').
+ *   10-22 에는 다가올 석 달 월주 표만 주고 AI 가 1~2달을 골랐다. 같은 사람, 같은 날에도 달이 바뀔 수 있고 화면 문구에 쓸 값이 AI 몫이었다.
+ *   고르는 법
+ *   ① 후보: 이번 달부터 석 달. 이번 달이 20일을 넘겼으면 다음 달부터 석 달(남은 열흘 남짓을 '가리키는 달'로 내세우지 않는다).
+ *      월주는 그 달 15일 기준(절기 경계 피함, 위 dreamTodayBlock 과 sajuFacts 달 판정표와 같은 기준).
+ *   ② 무게: 그 달 월주가 원국과 맺는 관계(natalRelations). 일간, 일지, 월지에 걸리면 충 3, 형, 육합, 삼합, 같은 글자 겹침 2, 반합, 해 1.
+ *      년간, 월간, 시간, 년지, 시지에 걸리면 하나에 1. 달 판정(monthVerdictRow)이 '도움'이면 1을 더한다.
+ *   ③ 무게 2 이상인 달을 무게 순으로 두 달까지(같으면 빠른 달). 없으면 무게가 가장 큰 한 달, 무게가 모두 0이면 첫 후보 한 달.
+ *   ④ 고른 달은 앞의 달부터. 달 판정의 행동 등급(종합사주, 신년운세와 같은 표)을 같이 넘겨 잠금 본문의 할 일이 다른 상품과 어긋나지 않게 한다.
+ *   스트림 경로(index.ts generateDreamFreeStream)는 프롬프트로만 이 달을 따르고, 콜러블 경로(generateDreamFree)는 응답에 다시 박는다(applyDreamPointMonths).
+ *   화면(DreamMockupView)은 lockedTimeline.pointMonths, 없으면 monthMarks 로 잠금 카드 문구를 만든다. */
+export interface DreamPointMonth {
+  y: number;
+  m: number;
+  gz: string;
+  /** 원국과의 관계 (natalRelations 원문) */
+  links: string[];
+  weight: number;
+  /** 달 판정의 행동 등급 (용신이 없으면 빈 값) */
+  action: string;
+}
+
+const linkWeight = (link: string): number => {
+  const core = /일간|일지|월지/.test(link);
+  const kind = /충\(/.test(link) ? 'chung'
+    : /형\(|자형/.test(link) ? 'hyung'
+    : /겹침/.test(link) ? 'same'
+    : /삼합/.test(link) ? 'samhap'
+    : /반합/.test(link) ? 'banhap'
+    : /합\(/.test(link) ? 'hap'
+    : /해\(/.test(link) ? 'hae' : '';
+  if (!kind) return 0;
+  if (!core) return 1;
+  return kind === 'chung' ? 3 : kind === 'banhap' || kind === 'hae' ? 1 : 2;
+};
+
+export function dreamPointMonths(saju: DreamSajuContext): DreamPointMonth[] {
   try {
     const n = kstNow();
     const sd = dreamSajuData(saju);
-    const lines: string[] = [];
-    for (let i = 0; i < 3; i++) {
+    if (!sd?.pillars?.[2]?.천간) return [];
+    const start = n.day > 20 ? 1 : 0;
+    const cand: DreamPointMonth[] = [];
+    for (let i = start; i < start + 3; i++) {
       const y = n.year + Math.floor((n.month - 1 + i) / 12);
       const m = ((n.month - 1 + i) % 12) + 1;
-      const gz = Solar.fromYmd(y, m, 15).getLunar().getEightChar().getMonth(); // 각 달 15일 = 절기 경계 피함(sajuFacts 와 같은 기준)
-      const t = natalRelationsText(gz, sd, `${y}년 ${m}월 월주${i === 0 ? '(이번 달)' : ''}`);
-      if (t) lines.push(t);
+      const gz = Solar.fromYmd(y, m, 15).getLunar().getEightChar().getMonth();
+      if (!gz || gz.length < 2) continue;
+      const links = natalRelations(gz, sd).links;
+      const row = monthVerdictRow(y, m, sd);
+      const weight = links.reduce((s, l) => s + linkWeight(l), 0) + (row?.verdict === '도움' ? 1 : 0);
+      cand.push({ y, m, gz, links, weight, action: row?.action || '' });
     }
-    if (!lines.length) return '';
+    if (!cand.length) return [];
+    const byWeight = [...cand].sort((a, b) => b.weight - a.weight || (a.y * 12 + a.m) - (b.y * 12 + b.m));
+    let picks = byWeight.filter((c) => c.weight >= 2).slice(0, 2);
+    if (!picks.length) picks = [byWeight[0].weight > 0 ? byWeight[0] : cand[0]];
+    return picks.sort((a, b) => (a.y * 12 + a.m) - (b.y * 12 + b.m));
+  } catch { return []; }
+}
+
+/** '11월과 12월', '12월과 내년 1월', '내년 1월' — 올해가 아닌 첫 달 앞에만 '내년' */
+export function dreamMonthsLabel(picks: Array<{ y: number; m: number }>): string {
+  const thisYear = kstNow().year;
+  let marked = false;
+  return picks.map((p) => {
+    const next = p.y > thisYear && !marked;
+    if (next) marked = true;
+    return `${next ? '내년 ' : ''}${p.m}월`;
+  }).join('과 ');
+}
+
+const ACTION_DESC: Record<string, string> = {
+  '결정해도 됨': '계약, 서명, 확정을 권해도 되는 달',
+  '준비만': '알아보기, 비교, 상담, 정리만 권하는 달',
+  '서명 피함': '계약, 서명, 확정, 이사 결정을 미루라고 하는 달',
+};
+
+/** 잠금 칸 그룹(B)과 단일 호출에 넣는 '이 꿈이 가리키는 달'. 무료 칸 그룹(A)에는 넣지 않는다 */
+function dreamPointMonthsBlock(saju: DreamSajuContext): string {
+  try {
+    const picks = dreamPointMonths(saju);
+    if (!picks.length) return '';
+    const sd = dreamSajuData(saju);
+    const label = dreamMonthsLabel(picks);
+    const two = picks.length === 2;
+    const lines = picks.map((p) => {
+      const rel = natalRelationsText(p.gz, sd, `${p.y}년 ${p.m}월 월주`);
+      return `${rel}${p.action ? `. 이 사람의 그달: ${p.action}(${ACTION_DESC[p.action] || ''})` : ''}`;
+    });
     return `
 
-## 다가올 달 월주 (서버 계산. lockedTimeline 의 달은 이 표에서만 고른다)
-${lines.join('\n')}`;
+## 이 꿈이 가리키는 달 (서버가 정한 달. 잠금 칸에서 앞으로의 달은 이 ${two ? '두 달' : '한 달'}만 쓴다)
+${lines.join('\n')}
+→ lockedTimeline.pointMonths 는 [${picks.map((p) => p.m).join(', ')}] 그대로 쓴다(앞의 달부터).
+→ lockedTimeline.monthMarks 는 ${picks.map((p) => `${p.m}월`).join(', ')} 자리만 1, 나머지는 0으로 쓴다.
+→ lockedTimeline.teaser 는 '이 꿈이 가리키는 달은 ${label}입니다.' 한 문장 그대로 쓴다.
+→ lockedTimeline.full 은 ${two ? '두 달 각각' : '그달'} 월주가 원국 어느 자리와 어떻게 맞물리는지 쓰고, 그달에 할 일 하나와 미룰 일 하나를 날짜 없이 그달 안의 일로 쓴다. 지금 대운과 이어서 왜 이 꿈이 그달을 가리키는지 말한다. '준비만'이나 '서명 피함'인 달에는 계약, 서명, 확정을 권하지 않는다. '준비만', '결정해도 됨', '서명 피함'이라는 말은 본문에 그대로 옮기지 않고 그달에 할 일로 풀어 쓴다.
+→ lockedAction, lockedWarnList, lockedDayganRead, lockedOhengFlow 에서 앞으로의 달을 말할 때도 위 달만 쓴다. 위에 없는 달은 쓰지 않는다.`;
   } catch { return ''; }
+}
+
+/** 콜러블 경로(generateDreamFree)의 응답에 서버가 정한 달을 다시 박는다. 잠금 시기 칸이 없으면 손대지 않는다.
+ *  스트림 경로도 index.ts 에서 머지 뒤 이 함수를 부르면 같아진다(2026-10-24 현재 index.ts 는 다른 작업 중이라 미연결) */
+export function applyDreamPointMonths(result: any, saju?: DreamSajuContext): void {
+  try {
+    if (!saju || !result || typeof result !== 'object') return;
+    const lt = result.lockedTimeline;
+    if (!lt || typeof lt !== 'object') return;
+    const picks = dreamPointMonths(saju);
+    if (!picks.length) return;
+    lt.pointMonths = picks.map((p) => p.m);
+    lt.monthMarks = Array.from({ length: 12 }, (_, i) => (picks.some((p) => p.m === i + 1) ? 1 : 0));
+    const teaser = typeof lt.teaser === 'string' ? lt.teaser : '';
+    if (!picks.every((p) => new RegExp(`(^|[^0-9])${p.m}월`).test(teaser))) lt.teaser = `이 꿈이 가리키는 달은 ${dreamMonthsLabel(picks)}입니다.`;
+  } catch { /* 덧붙임 보정 — 실패해도 원래 응답 */ }
 }
 
 /** 2026-10-22 — '도화살처럼 인연이 모이는 戌월'처럼 원국에 없는 신살을 지어냈다(점검 P0-5). sinsal.ts 확정 결과만 넘긴다 */
@@ -254,10 +354,10 @@ function dreamFieldRules(hasSaju: boolean): string {
 4. 신살: 신살 이름은 '명리 신살' 목록에 있는 것만 쓴다.
 5. 무료 칸과 잠금 칸을 나눈다.
    - 무료로 보이는 칸: title, verdict, keywords, narrative, sajuTone, todayConnection, quoteInterpretations, symbols, ohengComparison, sajuConnection, interpretation, timeline, actionAdvice, luckyProfile, 잠금 다섯 칸의 teaser 와 intro, lockedWarnList.warns 첫째 detail.
-   - 무료로 보이는 칸은 꿈 장면 풀이, 원국 글자와 꿈의 연결, 오늘 하루와 이번 주 남은 날까지만 쓴다.
+   - 무료로 보이는 칸은 꿈 장면 풀이, 원국 글자와 꿈의 연결, 오늘 하루와 이번 주 남은 날까지만 쓴다. verdict, todayConnection, actionAdvice 에서 '언제'를 말할 때도 오늘, 내일, 이번 주 남은 날로만 쓴다.
    - 대운 이름과 대운 풀이, 앞으로 어느 달에 무엇을 할지 같은 달별 시기는 잠금 본문에만 쓴다: lockedDayganRead.full, lockedOhengFlow.full, lockedTimeline.full, lockedWarnList.warns 둘째와 셋째 detail, lockedAction 의 doList 와 dontList.
    - sajuTone 첫머리의 요즘 짚기 한 번은 그대로 둔다. sajuTone, sajuConnection.publicText, interpretation.future 는 일간, 원국 글자, 오늘 일진, 이번 주 남은 날로 쓰고 분량 하한은 그대로 지킨다.
-6. lockedTimeline: monthMarks 에 1을 두는 달은 '다가올 달 월주' 표의 달 가운데 1~2개만 고른다. teaser 는 고른 달을 숫자로 말하는 한 문장으로 쓴다(꼴: '이 꿈이 가리키는 달은 N월과 N월입니다.'). 그 달에 할 일과 까닭은 full 에만 쓴다.`;
+6. lockedTimeline: 위 '이 꿈이 가리키는 달'이 있으면 그 달로 pointMonths, monthMarks, teaser 를 쓴다. 없으면 이번 달부터 석 달 가운데 1~2달을 골라 pointMonths(달 숫자 배열)와 monthMarks 에 같게 쓴다. teaser 는 그 달을 숫자로 말하는 한 문장 하나다(꼴: '이 꿈이 가리키는 달은 N월과 N월입니다.'). 그 달에 할 일과 까닭은 full 에만 쓴다.`;
 }
 
 export function buildDreamFreeCall(args: DreamFreeArgs): {
@@ -281,7 +381,8 @@ export function buildDreamFreeCall(args: DreamFreeArgs): {
         category: args.category,
       }) + dreamFactsBlock(args.saju) + dreamTimelineBlock(args.saju)
         // 2026-10-22 — 신살 확정표, 오늘과 이번 주, 다가올 달 월주, 칸별 규칙(점검 P0-5)
-        + dreamSinsalBlock(args.saju) + dreamTodayBlock(args.saju) + dreamUpcomingMonthsBlock(args.saju) + dreamFieldRules(true)
+        // 2026-10-24 — 다가올 석 달 표 대신 서버가 정한 '이 꿈이 가리키는 달'(점검 P1-5)
+        + dreamSinsalBlock(args.saju) + dreamTodayBlock(args.saju) + dreamPointMonthsBlock(args.saju) + dreamFieldRules(true)
     : DREAM_FREE_USER_NO_SAJU_V3({
         dreamContent: args.dreamContent,
         userConcern: args.userConcern,
@@ -312,6 +413,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const result = parseJsonResponse(text, meta1);
     if (meta1.repairUsed) console.info('[claudeDreamFree] jsonrepair 1차 발동 — 복구 성공');
     await repairAniraSentences(apiKey, result, 'dream'); // 2026-10-22 — 'X가 아니라 Y' 문장만 고쳐 끼움(점검 P0-1, 실패하면 원문)
+    applyDreamPointMonths(result, args.saju); // 2026-10-24 — 서버가 정한 '이 꿈이 가리키는 달'을 응답에 다시 박는다(점검 P1-5)
     return sanitizeAiOutput(result);
   } catch (e1: any) {
     console.warn('[claudeDreamFree] 1차 실패 → 재시도:', e1?.message);
@@ -328,6 +430,7 @@ export async function generateDreamFree(apiKey: string, args: DreamFreeArgs): Pr
     const result = parseJsonResponse(text, meta2);
     console.info('[claudeDreamFree] 2차 성공', meta2.repairUsed ? '(jsonrepair 발동)' : '');
     await repairAniraSentences(apiKey, result, 'dream');
+    applyDreamPointMonths(result, args.saju);
     return sanitizeAiOutput(result);
   }
 }
