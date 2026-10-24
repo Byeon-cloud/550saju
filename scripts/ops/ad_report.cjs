@@ -2,7 +2,7 @@
  *   광고(utm_source=meta, naver)로 들어온 기기를 소재(utm_content)와 노출 위치(utm_term), 나이대(본인 사주 출생 연도)로 나눠
  *   연 사람, 사주 입력, 결과, 충전한 사람, 충전 매출을 센다. 오너 기기(internal) 제외, 사람 수는 기기(did) 기준.
  *   광고비JSON(선택): {"meta": 70000, "naver": 70000} 처럼 주면 한 명당 비용까지 낸다.
- *   판정 기준(2026-10-20 마케팅 오더): 충전한 사람 한 명당 광고비 4,000원 이하 키움, 4,000~10,000원 하나 바꿔 1주 더, 10,000원 넘으면 멈춤.
+ *   판정 기준(2026-10-25 오너 위임 결정): 충전한 사람 한 명당 광고비 2,400원 이하 키움, 2,400~8,000원 하나 바꿔 한 번 더, 8,000원 넘거나 7만 원에 충전 0이면 멈춤.
  *   2026-10-20 이전 기록에는 utm_content 가 없다(그날 웹 배포부터 남는다). */
 const { query } = require('./fs.cjs');
 const [from, to, spendArg] = process.argv.slice(2);
@@ -64,12 +64,12 @@ for (let d = new Date(from + 'T00:00:00Z'); d <= new Date(to + 'T00:00:00Z'); d 
     }
   }
   if (Object.keys(spend).length) {
-    console.log('\n[판정] 충전한 사람 한 명당 광고비 (4,000원 이하 키움, 1만 원 넘으면 멈춤)');
+    console.log('\n[판정] 충전한 사람 한 명당 광고비 (2,400원 이하 키움, 8,000원 넘으면 멈춤)');
     for (const [src, cost] of Object.entries(spend)) {
       const g = groups.source.get(src);
       const payers = g ? g.payers.size : 0; const inputs = g ? g.inputs.size : 0;
       const per = payers ? cost / payers : null;
-      const verdict = per == null ? '판정 불가(충전 0)' : per <= 4000 ? '키움' : per <= 10000 ? '하나 바꿔 1주 더' : '멈춤';
+      const verdict = per == null ? (cost >= 70000 ? '멈춤(7만 원에 충전 0)' : '판정 불가(충전 0)') : per <= 2400 ? '키움' : per <= 8000 ? '하나 바꿔 한 번 더' : '멈춤';
       console.log(`  ${src}: 광고비 ${won(cost)}, 사주 입력 ${inputs}명(한 명당 ${inputs ? won(cost / inputs) : '-'}), 충전 ${payers}명(한 명당 ${per ? won(per) : '-'}), 매출 ${won(g ? g.revenue : 0)} → ${verdict}`);
     }
   }

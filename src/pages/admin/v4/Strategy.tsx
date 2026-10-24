@@ -2,7 +2,8 @@
  * 관리자 v4 — 전략 성과 (2026-10-24, 오너 지시 '어떤 전략은 며칠 했고 효율은 어땠는지')
  *   시험 목록(mktExperiments)과 광고비 장부(adSpend)는 서버 adminStrategyData(functions/src/admin/strategy.ts),
  *   들어온 사람, 사주 입력, 충전 화면, 결제, 매출은 하루 요약(statsDaily.channels, 기기의 그날 첫 출처)을 여기서 더한다.
- *   판정 기준(2026-10-20 마케팅 오더): 결제한 사람 한 명당 비용 4,000원 이하 키움, 1만 원까지 하나 바꿔 더, 넘으면 멈춤.
+ *   판정 기준(2026-10-25 오너 위임 결정, docs/marketing/2026-10-25_오너위임_결정.md): 결제한 사람 한 명당 비용 2,400원 이하 키움,
+ *   8,000원까지 하나 바꿔 한 번 더(두 번까지), 넘거나 7만 원을 쓰고 결제 0이면 멈춤. (예전 기준 4,000원과 1만 원)
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { callAdmin, fmt, pct, shortDay, won, SOURCE_NAME } from './api';
@@ -56,10 +57,10 @@ const spendSum = (spend: Spend[], channel: string, from: string, to: string) =>
 /** 결제 한 명당 비용으로 판정 (비용이 없거나 적으면 판정하지 않는다) */
 function verdict(cost: number, payers: number): { text: string; color: string } {
   if (!(cost > 0)) return { text: '-', color: K.mute };
-  if (!payers) return cost >= 10000 ? { text: '멈춤 (결제 0)', color: K.red } : { text: '더 보기', color: K.mute };
+  if (!payers) return cost >= 70000 ? { text: '멈춤 (결제 0)', color: K.red } : { text: cost >= 10000 ? '결제 0, 더 보기' : '더 보기', color: K.mute };
   const per = cost / payers;
-  if (per <= 4000) return { text: '키움', color: K.green };
-  if (per <= 10000) return { text: '하나 바꿔 더', color: K.goldDeep };
+  if (per <= 2400) return { text: '키움', color: K.green };
+  if (per <= 8000) return { text: '하나 바꿔 더', color: K.goldDeep };
   return { text: '멈춤', color: K.red };
 }
 
@@ -161,7 +162,7 @@ export function Strategy({ all }: { all: DayStats[] }) {
           <Tile label="광고비" value={won(paidTotal.cost)} strong />
           <Tile label="광고로 온 매출" value={won(paidTotal.revenue)} sub={`결제 ${paidTotal.payers}명`} />
           <Tile label="매출 ÷ 광고비" value={pct(paidTotal.revenue, paidTotal.cost)} sub="100%를 넘어야 남아요" />
-          <Tile label="결제 한 명당 광고비" value={paidTotal.payers ? won(paidTotal.cost / paidTotal.payers) : '-'} sub="4,000원 이하면 키움" />
+          <Tile label="결제 한 명당 광고비" value={paidTotal.payers ? won(paidTotal.cost / paidTotal.payers) : '-'} sub="2,400원 이하면 키움" />
           <Tile label="사주 입력 한 명당" value={paidTotal.inputs ? won(paidTotal.cost / paidTotal.inputs) : '-'} sub={`입력 ${fmt(paidTotal.inputs)}명`} />
           <Tile label="충전 화면 → 결제" value={pct(paidTotal.coPayers, paidTotal.chargeOpen)} sub={`충전 화면 ${fmt(paidTotal.chargeOpen)}명${paidTotal.coDays < all.length ? `, ${all.length}일 중 ${paidTotal.coDays}일` : ''}`} />
         </div>
