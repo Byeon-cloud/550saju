@@ -186,23 +186,38 @@ function suggest(reason: Reason, card: CardData | null, payId: string): number {
   return 0;
 }
 
+// 결제 누락의 '어느 결제' 고르기 (2026-10-24 검수): 웹 결제를 고르면 서버가 그 결제를 '오너가 넣음'으로 적어
+//   손님 기기가 나중에 같은 결제를 다시 확인해도 두 번 들어가지 않는다. 앱(토스) 결제는 결제번호 없이 넣는다.
+const PAY_MANUAL = '__manual';
+const PAY_NONE = '__none';
+const WEB_PAY_ID_RE = /^[A-Za-z0-9]{8}_[A-Za-z0-9_]{1,60}$/;
+
 function GrantForm({ target, targetLabel, card, onDone, devices = [] }: { target: string; targetLabel: string; card: CardData | null; onDone: () => void; devices?: string[] }) {
   const [to, setTo] = useState(target);
   const [reason, setReason] = useState<Reason>('apology');
-  const [payId, setPayId] = useState(card?.payments[0]?.id || '');
+  const [payId, setPayId] = useState('');
+  const [manualPay, setManualPay] = useState('');
   const [amount, setAmount] = useState(String(suggest('apology', card, '')));
   const [note, setNote] = useState('');
   const [wipe, setWipe] = useState<string[]>([]);
   const [step, setStep] = useState<'edit' | 'confirm' | 'busy'>('edit');
   const [msg, setMsg] = useState('');
   const n = Math.round(Number(amount) || 0);
-  const ok = n >= 1 && n <= 100;
+  // 회원 ID 로 넣는 결제 누락은 어느 결제인지 꼭 고른다 (토스 기기 ID 로 넣으면 앱 결제라 고르지 않아도 된다)
+  const toIsUid = !/^[0-9a-f]{32,128}$/i.test(to);
+  const pickedPay = card?.payments.find((p) => p.id === payId) || null;
+  const payPayload: { paymentId?: string; noPaymentId?: boolean } | null = reason !== 'pay_missing' ? {}
+    : payId === PAY_MANUAL ? (WEB_PAY_ID_RE.test(manualPay.trim()) ? { paymentId: manualPay.trim() } : null)
+    : payId === PAY_NONE ? { noPaymentId: true }
+    : pickedPay ? (pickedPay.plat === '웹' && toIsUid ? { paymentId: pickedPay.id } : { noPaymentId: true })
+    : toIsUid ? null : { noPaymentId: true };
+  const ok = n >= 1 && n <= 100 && payPayload !== null;
   const pick = (r: Reason) => { setReason(r); const s = suggest(r, card, payId); if (s) setAmount(String(s)); };
   const submit = async () => {
     setStep('busy'); setMsg('');
     try {
-      const r = await callAdmin<{ totalPending: number; accumulated: boolean }>('adminGrantCompensation', { action: 'grant', target: to, amount: n, reason, note, wipeTopics: wipe, uids: card ? [card.uid] : [] });
-      setMsg(`넣었어요. 받을 운 ${r.totalPending}운${r.accumulated ? '(아직 안 받은 것과 합쳐서)' : ''}. 고객이 다시 열면 들어가요.`);
+      const r = await callAdmin<{ totalPending: number; accumulated: boolean; paymentMarked?: boolean }>('adminGrantCompensation', { action: 'grant', target: to, amount: n, reason, note, wipeTopics: wipe, uids: card ? [card.uid] : [], ...(payPayload || {}) });
+      setMsg(`넣었어요. 받을 운 ${r.totalPending}운${r.accumulated ? '(아직 안 받은 것과 합쳐서)' : ''}. 고객이 다시 열면 들어가요.${r.paymentMarked ? ' 그 결제는 오너가 넣은 것으로 적어 두어서 손님 기기가 다시 확인해도 두 번 들어가지 않아요.' : ''}`);
       setStep('edit'); setNote(''); setWipe([]);
       setTimeout(onDone, 600);
     } catch (e: any) { setMsg(`실패: ${e?.message || e}`); setStep('edit'); }
@@ -218,10 +233,22 @@ function GrantForm({ target, targetLabel, card, onDone, devices = [] }: { target
           </button>
         ))}
       </div>
-      {reason === 'pay_missing' && card && card.payments.length > 0 && (
-        <select value={payId} onChange={(e) => { setPayId(e.target.value); setAmount(String(suggest('pay_missing', card, e.target.value))); }} style={{ ...input, width: '100%', marginBottom: 8 }}>
-          {card.payments.map((p) => <option key={p.id} value={p.id}>{timeText(p.at)} {p.plat} {won(p.amount)} {fmt(p.un)}운 ({STATUS[p.status] || p.status})</option>)}
-        </select>
+      {reason === 'pay_missing' && (
+        <div style={{ marginBottom: 8 }}>
+          <select value={payId} onChange={(e) => { setPayId(e.target.value); const s = suggest('pay_missing', card, e.target.value); if (s) setAmount(String(s)); }} style={{ ...input, width: '100%' }} aria-label="어느 결제">
+            <option value="">어느 결제인지 골라 주세요</option>
+            {(card?.payments || []).map((p) => <option key={p.id} value={p.id}>{timeText(p.at)} {p.plat} {won(p.amount)} {fmt(p.un)}운 ({STATUS[p.status] || p.status})</option>)}
+            <option value={PAY_MANUAL}>웹 결제번호 직접 넣기 (경보 메일의 결제번호)</option>
+            <option value={PAY_NONE}>결제번호 없음 (앱 토스 결제)</option>
+          </select>
+          {payId === PAY_MANUAL && (
+            <input style={{ ...input, width: '100%', marginTop: 6, fontFamily: 'monospace' }} value={manualPay} onChange={(e) => setManualPay(e.target.value)} placeholder="예: AbCd1234_p7_…" aria-label="웹 결제번호" />
+          )}
+          <p style={{ fontSize: 12.5, color: K.mute, margin: '6px 0 0', lineHeight: 1.6 }}>
+            웹 결제를 고르면 그 결제를 오너가 넣은 것으로 적어요. 손님 기기가 나중에 같은 결제를 다시 확인해도 두 번 들어가지 않아요. 이미 운이 들어간 결제나 환불된 결제는 서버가 거절해요.
+            {payPayload === null && toIsUid ? ' 회원 ID 로 넣을 때는 결제를 꼭 골라 주세요.' : ''}
+          </p>
+        </div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 8 }}>
         <input style={input} type="number" min={1} max={100} value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="운" />

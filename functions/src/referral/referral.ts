@@ -125,6 +125,11 @@ function grant(tx: admin.firestore.Transaction, uid: string, amount: number, kin
   const ref = db().collection(`rewardGrants/${uid}/items`).doc();
   tx.set(ref, { amount, kind, code, claimed: false, at: FV.serverTimestamp(), ...extra });
 }
+/** 결제 장부 문서가 환불, 부분 환불 검토, 취소 상태인가 (payment/autoGrantRules.ledgerRowOf 의 refunded 와 같은 기준) */
+function paymentRefunded(d: Record<string, any> | undefined): boolean {
+  if (!d) return false;
+  return ['refunded', 'partial_refund_review', 'cancelled'].includes(String(d.status || '')) || !!d.refundedAt || !!d.portoneCancelledAt;
+}
 function alert(kind: string, detail: Record<string, unknown>) {
   db().collection('backofficeAlerts').add({ kind, ...detail, at: FV.serverTimestamp(), source: 'referral' }).catch(() => undefined);
 }
@@ -378,13 +383,30 @@ export const claimRewards = onCall(
       for (const doc of q.docs) {
         if (total >= 100) break; // 한 번에 100운까지 (안전장치)
         if ((Number(doc.data()?.availableAtMs) || 0) > Date.now()) continue; // 보류 중 (결제 보너스 7일)
-        const got = await db().runTransaction(async (tx) => {
-          const s = await tx.get(doc.ref);
-          if (!s.exists || s.data()?.claimed) return 0;
-          const amt = Math.max(0, Math.min(50, Number(s.data()?.amount) || 0));
-          tx.update(doc.ref, { claimed: true, claimedAt: FV.serverTimestamp(), claimedByUid: uid });
-          return amt;
-        });
+        let got = 0;
+        try {
+          got = await db().runTransaction(async (tx) => {
+            const s = await tx.get(doc.ref);
+            if (!s.exists || s.data()?.claimed) return 0;
+            const g = s.data() || {};
+            // 10-24 검수 — 친구 첫 결제 보상은 그 결제가 환불, 취소됐으면 주지 않고 닫는다 (결제번호가 남은 적립만, referralOnPurchase)
+            if (g.kind === 'purchase' && typeof g.payerUid === 'string' && g.payerUid && typeof g.paymentId === 'string' && g.paymentId) {
+              const pay = await tx.get(db().doc(`users/${g.payerUid}/payments/${g.paymentId}`));
+              if (pay.exists && paymentRefunded(pay.data())) {
+                const bonus = Math.max(0, Number(g.amount) || 0);
+                tx.update(doc.ref, { claimed: true, revoked: 'refund', revokedAt: FV.serverTimestamp() });
+                if (g.code) tx.set(db().doc(`referralCodes/${g.code}`), { purchased: FV.increment(-1), earnedUn: FV.increment(-bonus), purchaseRevoked: FV.increment(1) }, { merge: true });
+                return 0;
+              }
+            }
+            const amt = Math.max(0, Math.min(50, Number(g.amount) || 0));
+            tx.update(doc.ref, { claimed: true, claimedAt: FV.serverTimestamp(), claimedByUid: uid });
+            return amt;
+          });
+        } catch (e: any) {
+          console.warn('[claimRewards] 적립 하나 건너뜀(다음에 다시)', u.slice(0, 8), e?.message || e);
+          continue;
+        }
         if (got > 0) {
           total += got;
           const k = String(doc.data()?.kind || 'etc');
@@ -417,8 +439,10 @@ export const claimRewards = onCall(
 /**
  * 결제 확정 뒤 (grantPurchase, confirmPortonePayment) — 받은 사람의 첫 결제면 초대한 사람에게 추가 보상.
  *   돈을 낸 결제라 계정을 찍어 내 얻을 수 없다. 그래도 새 손님으로 들어온 기록(isNew)과 상한은 본다. 실패해도 결제에 영향 없음.
+ *   10-24 검수 — 결제번호(ref.paymentId)를 적립과 referralPurchases 에 남긴다. 받을 때(claimRewards) 그 결제가 환불, 취소됐으면 주지 않는다
+ *   (보류 7일과 환불 기한 7일이 같아 보류만으로는 환불을 막지 못했다). 결제번호가 없는 옛 적립은 예전처럼 준다.
  */
-export async function referralOnPurchase(uid: string, paidUn: number, totalUn: number): Promise<void> {
+export async function referralOnPurchase(uid: string, paidUn: number, totalUn: number, ref?: { paymentId?: string }): Promise<void> {
   try {
     if (!uid || uid === 'anonymous' || !(paidUn > 0)) return;
     const visit = await db().doc(`referralVisits/${uid}`).get();
@@ -435,15 +459,16 @@ export async function referralOnPurchase(uid: string, paidUn: number, totalUn: n
     const once = db().doc(`referralPurchases/${uid}`);
     const bonus = cfg.purchaseBonusUn;
     if (paidUn < cfg.purchaseMinPaidUn) return; // 1운 충전은 보너스 없음. 나중에 4운 묶음 이상을 처음 충전하면 그때 준다
+    const paymentId = typeof ref?.paymentId === 'string' && ref.paymentId ? ref.paymentId.slice(0, 120) : null;
     await db().runTransaction(async (tx) => {
       const [o, c, m, d] = await Promise.all([tx.get(once), tx.get(codeRef), tx.get(monthRef), tx.get(dayRef)]);
       if (o.exists || !c.exists) return;
       const referrerUid = String(c.data()?.uid || '');
-      tx.create(once, { code, referrerUid, paidUn, totalUn, bonus, at: FV.serverTimestamp() });
+      tx.create(once, { code, referrerUid, paidUn, totalUn, bonus, paymentId, at: FV.serverTimestamp() });
       if (!referrerUid || referrerUid === uid) return;
       if ((Number(m.data()?.purchased) || 0) >= cfg.monthlyCap) return;
       if ((Number(d.data()?.un) || 0) + bonus > cfg.globalDailyUn) { alert('referral_global_cap', { day: kstDay(), at: 'purchase' }); return; }
-      grant(tx, referrerUid, bonus, 'purchase', code, { paidUn, availableAtMs: Date.now() + cfg.purchaseHoldDays * 864e5 });
+      grant(tx, referrerUid, bonus, 'purchase', code, { paidUn, availableAtMs: Date.now() + cfg.purchaseHoldDays * 864e5, ...(paymentId ? { payerUid: uid, paymentId } : {}) });
       tx.update(codeRef, { purchased: FV.increment(1), earnedUn: FV.increment(bonus) });
       tx.set(monthRef, { purchased: FV.increment(1), earnedUn: FV.increment(bonus) }, { merge: true });
       tx.set(dayRef, { un: FV.increment(bonus), purchased: FV.increment(1) }, { merge: true });

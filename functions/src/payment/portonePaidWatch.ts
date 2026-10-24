@@ -83,12 +83,12 @@ async function ledgerRowsOf(db: admin.firestore.Firestore, uid: string, paymentI
 }
 
 /** 메일에 적을 장부 요약 — 지급 기록이 하나라도 있으면 confirmed, 없으면 가장 나중 기록의 상태 */
-function ledgerSummary(rows: Array<LedgerRow & { at: number }>): { status: string; failReason: string; where: string } {
+function ledgerSummary(rows: Array<LedgerRow & { at: number }>): { status: string; failReason: string; where: string; grantedBy: string } {
   const g = rows.find((r) => r.granted);
-  if (g) return { status: 'confirmed', failReason: '', where: g.where };
-  if (!rows.length) return { status: 'none', failReason: '', where: '' };
+  if (g) return { status: 'confirmed', failReason: '', where: g.where, grantedBy: g.grantedBy || '' };
+  if (!rows.length) return { status: 'none', failReason: '', where: '', grantedBy: '' };
   const last = [...rows].sort((a, b) => b.at - a.at)[0];
-  return { status: last.status, failReason: last.failReason, where: last.where };
+  return { status: last.status, failReason: last.failReason, where: last.where, grantedBy: '' };
 }
 
 /** 연락 메일(구글, 카카오 선택 동의, 웹 네이버는 users.naverEmail, 오너 메일함으로만 보낸다)과 Auth 계정 여부 */
@@ -211,7 +211,7 @@ async function flushAlertMail(db: admin.firestore.Firestore, now: number, cfg: A
     parts.push(`자동으로 넣지 못했어요. 직접 확인해 주세요.\n\n${sec.blocked.join('\n\n')}`);
     parts.push([
       '할 일',
-      '- 관리자 \'고객 찾기와 운 넣기\'에서 회원 ID 로 찾아 결제 장부를 보고, 받은 운이 없으면 그 묶음만큼 넣어 주세요.',
+      '- 관리자 \'고객 찾기와 운 넣기\'에서 회원 ID 로 찾아 결제 장부를 보고, 받은 운이 없으면 사유 \'결제 누락\'에 이 결제번호를 골라(또는 붙여 넣어) 그 묶음만큼 넣어 주세요. 그러면 손님 기기가 다시 확인해도 두 번 들어가지 않아요.',
       '- 운을 넣지 않고 돌려주려면 포트원 콘솔에서 결제를 취소하면 돼요.',
       '- 이 결제는 자동으로 다시 넣지 않아요.',
     ].join('\n'));
@@ -227,7 +227,7 @@ async function flushAlertMail(db: admin.firestore.Firestore, now: number, cfg: A
       ].join('\n')
       : [
         '할 일 (자동 채우기가 꺼져 있어요)',
-        '- 관리자 \'고객 찾기와 운 넣기\'에서 회원 ID 로 찾아 결제 장부를 보고, 받은 운이 없으면 그 묶음만큼 넣어 주세요.',
+        '- 관리자 \'고객 찾기와 운 넣기\'에서 회원 ID 로 찾아 결제 장부를 보고, 받은 운이 없으면 사유 \'결제 누락\'에 이 결제번호를 골라(또는 붙여 넣어) 그 묶음만큼 넣어 주세요. 그러면 손님 기기가 다시 확인해도 두 번 들어가지 않아요.',
         '- 운을 넣지 않고 돌려주려면 포트원 콘솔에서 결제를 취소하면 돼요.',
         '- 기록: backofficeAlerts portone_unconfirmed_{결제번호}',
       ].join('\n'));
@@ -372,8 +372,12 @@ export async function runPortonePaidWatch(key: string, now: number = Date.now())
       const led = ledgerSummary(rows);
       if (led.status === 'confirmed') {
         if (prev.exists) {
-          await queueMail(alertRef, 'resolved', `결제번호 ${paymentId} (${won(amount)}) — 앞서 알린 결제인데 이제 운이 들어갔어요. 따로 넣지 마세요.`, {
-            resolvedAt: FV().serverTimestamp(), resolvedNote: '앞서 알린 뒤 손님 화면에서 확인돼 운이 들어감',
+          // 10-24 검수 — 오너가 관리자 '결제 누락'에 결제번호를 넣어 처리한 결제는 grantedBy 'owner' (adminGrantCompensation)
+          const byOwner = led.grantedBy === 'owner';
+          await queueMail(alertRef, 'resolved', byOwner
+            ? `결제번호 ${paymentId} (${won(amount)}) — 앞서 알린 결제인데 관리자 화면에서 결제 누락으로 넣었어요. 따로 넣지 마세요.`
+            : `결제번호 ${paymentId} (${won(amount)}) — 앞서 알린 결제인데 이제 운이 들어갔어요. 따로 넣지 마세요.`, {
+            resolvedAt: FV().serverTimestamp(), resolvedNote: byOwner ? '앞서 알린 뒤 오너가 관리자 화면에서 결제 누락으로 넣음' : '앞서 알린 뒤 손님 화면에서 확인돼 운이 들어감',
           });
           out.resolved++;
         }

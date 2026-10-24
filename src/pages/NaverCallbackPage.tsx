@@ -20,7 +20,12 @@ export function NaverCallbackPage() {
         const { returnTo } = await finishNaverLogin(params);
         // 로그인 성공 기록이 저장될 틈을 준다 (바로 새로 열면 기록이 사라졌다, 10-19 첫 성공 때 확인)
         await new Promise((r) => setTimeout(r, 900));
-        if (alive) window.location.replace(returnTo);
+        if (alive) {
+          // 2026-10-24 검수 — 새로 연 페이지가 로그인 잔액 맞추기(로그아웃 스냅샷 되살리기 포함)를 한 번 하게 표시를 남긴다 (services/auth/loginSync.ts)
+          const [{ markLoginSyncPending }, { auth }] = await Promise.all([import('@/services/auth/loginSync'), import('@/services/auth/firebase')]);
+          if (auth.currentUser && !auth.currentUser.isAnonymous) markLoginSyncPending(auth.currentUser.uid);
+          window.location.replace(returnTo);
+        }
       } catch (e: any) {
         const code = String(e?.code || 'error');
         const msg = String(e?.message || '').replace(/^Firebase:\s*/, '');

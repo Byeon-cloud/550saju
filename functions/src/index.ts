@@ -69,10 +69,8 @@ const TOSS_DECRYPT_AAD = defineSecret('TOSS_DECRYPT_AAD');
 const PORTONE_V2_API_SECRET = defineSecret('PORTONE_V2_API_SECRET');
 const MAIL_APP_PASSWORD = defineSecret('MAIL_APP_PASSWORD'); // 2026-10-17 PDF 메일 (mailPdf.ts 와 같은 이름, nodemailer 를 모든 함수에 싣지 않으려고 여기서 따로 선언)
 
-/** 금액 → 패키지 매핑 (서버에서 검증용) — 10-19 공용 파일로 옮김(환불 회수도 같은 표) */
-import { PACKAGE_MAP } from './shared/chargePackages';
-/** 포트원 웹 결제 지급 — 운을 넣는 곳은 이 공용 함수 하나 (손님 화면 확인과 감시의 자동 채우기, 2026-10-24) */
-import { grantPortonePayment, claimPortoneDeviceCredit } from './payment/grantPortone';
+/* 금액 → 패키지 매핑은 shared/chargePackages.ts, 포트원 웹 결제 확인과 지급은 payment/confirmPortone.ts, payment/grantPortone.ts
+ *   (운을 넣는 곳은 grantPortonePayment 하나, 손님 화면 확인과 감시의 자동 채우기, 2026-10-24) */
 const TOSS_DISCONNECT_AUTH = defineSecret('TOSS_DISCONNECT_AUTH');
 
 // 개발 중: 인증 없이도 동작
@@ -1588,8 +1586,9 @@ export const grantPurchase = onCall(
     }
 
     // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
+    //   10-24 검수 — 결제번호를 같이 남겨, 그 결제가 환불되면(syncIapRefunds 가 status 'refunded') 7일 보류 뒤에도 주지 않는다
     const { referralOnPurchase } = await import('./referral/referral');
-    await referralOnPurchase(effectiveUid, paidUn, totalUn);
+    await referralOnPurchase(effectiveUid, paidUn, totalUn, { paymentId: orderId });
     return { success: true };
   }
 );
@@ -2042,177 +2041,24 @@ export const grantShareReward = onCall(
 
 /**
  * confirmPortonePayment — 포트원 V2 웹 실결제 검증·지급 (2026-07-02 선구현)
- *
- * 흐름: 클라 PortOne.requestPayment 완료 → paymentId 전달 → 서버가 포트원 조회 API로
- *   결제 사실·금액·상태를 직접 확인 후 지급. (클라 신고 금액은 참고용 — 진실은 포트원 API)
- *
- * 머니세이프: confirmPayment(E13)와 동일 상태머신 —
- *   pending → confirmed | failed | needs_reconciliation. confirmed 만 중복 차단.
- *
- * 추가 방어 (토스 대비 강화):
- *   ① uid 바인딩 — paymentId 접두사(uid 앞 8자) + customData.uid 이중 확인
- *      (남의 paymentId 를 자기 계정에 컨펌하는 공격 차단)
- *   ② LIVE 채널 게이트 — channel.type !== 'LIVE' 면 지급 거부
- *      (테스트 결제로 실제 운을 적립하는 사고 원천 차단 · 심사용 결제창과 공존 안전)
- *
- * 활성화: PG 계약 승인 후 PORTONE_V2_API_SECRET 실키 교체 + 클라 VITE_PORTONE_LIVE=1.
- *   그 전엔 시크릿이 PENDING 이라 호출돼도 포트원 인증 실패 → failed (지급 불가) — 무해.
- *
- * 2026-10-24 자동 채우기: 지급은 공용 함수 grantPortonePayment(grantedBy 'client') 하나로. 감시(watchPortonePaid)가
- *   먼저 넣은 결제(deviceCreditPending)는 다시 부르면 서버 잔액은 그대로 두고 그 운을 응답 paidUn 으로 기기 하나에 한 번 넘긴다.
+ *   본문은 payment/confirmPortone.ts (2026-10-24 검수: 기기 표식으로 응답이 끊긴 결제 다시 받기, 오너 결제 누락 지급 뒤 자동 지급 막기,
+ *   실패 이유 details, 계정 불일치 기록 줄이기). 시험 scripts/test/portone_auto_grant.cjs 가 그 파일을 그대로 돌린다.
+ *   timeoutSeconds 15 → 30 (포트원 조회 10초 상한 + 지급 트랜잭션 + 친구 초대 기록. 기기는 70초까지 기다린다)
  */
 export const confirmPortonePayment = onCall(
-  { secrets: [PORTONE_V2_API_SECRET], timeoutSeconds: 15, memory: '256MiB', cors: true },
+  { secrets: [PORTONE_V2_API_SECRET], timeoutSeconds: 30, memory: '256MiB', cors: true },
   async (request) => {
-    const { paymentId, amount } = request.data;
-    if (!paymentId || typeof paymentId !== 'string' || !amount) {
+    const uid = request.auth?.uid;
+    if (!request.data?.paymentId || typeof request.data.paymentId !== 'string' || !request.data?.amount) {
       throw new HttpsError('invalid-argument', '필수 파라미터 누락');
     }
-
-    const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', '로그인 필요');
-
-    // 방어 ① — paymentId 는 클라가 `${uid8}_...` 로 생성. 다른 계정 결제 컨펌 시도 차단.
-    if (!paymentId.startsWith(uid.slice(0, 8))) {
-      // 2026-10-23 — 거부는 그대로. 결제한 계정과 돌아온 화면의 계정이 다른 일을 남긴다(watchPortonePaid 가 미지급 경보에 같이 적는다)
-      //   10-24 검수 — 손님이 보낸 값으로 문서를 만들므로 관리자 경보 목록(backofficeAlerts) 밖 전용 컬렉션에, 있는 묶음 금액일 때만 남긴다
-      if (/^[A-Za-z0-9]{8}_[A-Za-z0-9_]{1,60}$/.test(paymentId) && PACKAGE_MAP[amount]) await db.collection('portoneUidMismatch').doc(paymentId).set({ expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + 14 * 864e5), kind: 'portone_confirm_uid_mismatch', paymentId, payerUid8: paymentId.slice(0, 8), callerUid8: uid.slice(0, 8), callerAnon: request.auth?.token?.firebase?.sign_in_provider === 'anonymous', amount: Number(amount) || 0, attempts: admin.firestore.FieldValue.increment(1), at: admin.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => undefined);
-      throw new HttpsError('permission-denied', '본인 결제만 확인할 수 있어요');
-    }
-
-    // 1. E13 · 중복 지급 방지 — confirmed/needs_reconciliation 차단, pending/failed 재시도 허용
-    const paymentRef = db.collection(`users/${uid}/payments`).doc(paymentId);
-    const existing = await paymentRef.get();
-    if (existing.exists) {
-      const s = existing.data()?.status;
-      if (s === 'confirmed') {
-        // 2026-10-24 — 감시(watchPortonePaid)가 자동으로 채운 결제는 서버 잔액에만 들어가 있다. 기기 하나에 한 번만 넘긴다
-        //   (서버 잔액은 다시 늘리지 않는다. 기기가 응답의 paidUn 으로 더한다. payment/grantPortone.ts)
-        if (existing.data()?.deviceCreditPending === true) {
-          const c = await claimPortoneDeviceCredit(uid, paymentId);
-          if (c.claimed) return { success: true, message: `${c.totalUn}운이 충전됐어요!`, totalUn: c.totalUn, paidUn: c.paidUn, bonusUn: c.bonusUn, autoGranted: true };
-        }
-        return { success: true, message: '이미 처리된 결제예요' };
-      }
-      if (s === 'needs_reconciliation') {
-        throw new HttpsError('failed-precondition', '결제가 승인됐지만 지급이 완료되지 않았어요. 고객센터로 문의해주세요.');
-      }
-    }
-
-    // 2. 금액 → 패키지 사전 검증 (최종 검증은 포트원 API 응답 금액으로 재수행)
-    const pkg = PACKAGE_MAP[amount];
-    if (!pkg) throw new HttpsError('invalid-argument', `유효하지 않은 금액: ${amount}`);
-
-    // 2026-10-24 — 같은 결제를 동시에 두 번 확인하면 운이 두 번 들어갈 수 있었다(1번 확인은 트랜잭션 밖, pending 과 failed 기록이 confirmed 를 덮음).
-    //   상태 기록은 지급이 끝난 결제(confirmed 또는 confirmedAt)를 덮지 않고, 지급 트랜잭션은 결제 문서를 다시 읽는다
-    const ALREADY = { success: true, message: '이미 처리된 결제예요' };
-    const isGranted = (d?: admin.firestore.DocumentData) => !!d && (d.status === 'confirmed' || !!d.confirmedAt);
-    const writeUnlessGranted = (fields: Record<string, unknown>) => db.runTransaction(async (tx) => {
-      const d = await tx.get(paymentRef);
-      if (isGranted(d.data())) return false;
-      tx.set(paymentRef, fields, { merge: true });
-      return true;
-    });
-
-    // 3. E13 · pending 선기록
-    const pendingWritten = await writeUnlessGranted({
-      type: 'charge', orderId: paymentId, amount,
-      packageName: pkg.name,
-      paidUn: pkg.paidUn, bonusUn: pkg.bonusUn,
-      pgProvider: 'portone',
-      status: 'pending',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    if (!pendingWritten) return ALREADY;
-
-    // 4. 포트원 V2 결제 조회 API — 결제 사실·상태·금액을 서버가 직접 확인
-    const apiSecret = PORTONE_V2_API_SECRET.value();
-    let pay: any;
-    try {
-      const res = await fetch(`https://api.portone.io/payments/${encodeURIComponent(paymentId)}`, {
-        method: 'GET',
-        headers: { Authorization: `PortOne ${apiSecret}` },
-      });
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        console.error('[confirmPortonePayment] 포트원 조회 실패:', res.status, errBody);
-        await writeUnlessGranted({
-          status: 'failed',
-          failReason: (errBody as any)?.message || `portone_http_${res.status}`,
-          failedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        throw new HttpsError('internal', '결제 확인에 실패했어요. 다시 시도해주세요.');
-      }
-      pay = await res.json();
-    } catch (err: any) {
-      if (err instanceof HttpsError) throw err;
-      console.error('[confirmPortonePayment] 네트워크 에러:', err);
-      await writeUnlessGranted({
-        status: 'failed',
-        failReason: 'network_error: ' + (err.message || 'unknown'),
-        failedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      throw new HttpsError('internal', '결제 확인 중 네트워크 오류가 발생했어요.');
-    }
-
-    // 5. 결제 검증 — 상태 PAID + 금액 일치 + uid 바인딩(customData) + LIVE 채널
-    const failVerify = async (reason: string, userMsg: string) => {
-      console.error('[confirmPortonePayment] 검증 실패:', reason, { paymentId, uid });
-      await writeUnlessGranted({
-        status: 'failed', failReason: reason,
-        failedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      throw new HttpsError('failed-precondition', userMsg);
-    };
-
-    if (pay?.status !== 'PAID') {
-      await failVerify(`status_${pay?.status || 'unknown'}`, '결제가 완료되지 않았어요. 다시 시도해주세요.');
-    }
-    const apiAmount = pay?.amount?.total;
-    if (apiAmount !== amount || !PACKAGE_MAP[apiAmount]) {
-      await failVerify(`amount_mismatch_${apiAmount}_vs_${amount}`, '결제 금액이 일치하지 않아요. 고객센터로 문의해주세요.');
-    }
-    if (pay?.currency && pay.currency !== 'KRW') {
-      await failVerify(`currency_${pay.currency}`, '지원하지 않는 통화예요.');
-    }
-    // 방어 ① 이중 확인 — 클라가 customData 에 넣은 uid 와 호출자 일치
-    try {
-      const cd = typeof pay?.customData === 'string' ? JSON.parse(pay.customData) : pay?.customData;
-      if (cd?.uid && cd.uid !== uid) {
-        await failVerify('customdata_uid_mismatch', '본인 결제만 확인할 수 있어요.');
-      }
-    } catch { /* customData 파싱 실패는 무시 (prefix 검증이 1차 방어) */ }
-    // 방어 ② — 테스트 채널 결제는 절대 지급하지 않음
-    if (pay?.channel?.type !== 'LIVE') {
-      await failVerify(`channel_${pay?.channel?.type || 'unknown'}`, '테스트 결제는 충전되지 않아요.');
-    }
-
-    // 6. 지급 — 공용 함수 하나(payment/grantPortone.ts). 트랜잭션이 결제 문서를 다시 읽어 감시의 자동 채우기와 겹쳐도 한 번만 넣는다.
-    //   잔액 지급 + pending → confirmed + grantedBy 'client' + 친구 초대 첫 결제 보상
-    const totalUn = pkg.paidUn + pkg.bonusUn;
-    let alreadyGranted = false;
-    try {
-      const r = await grantPortonePayment({ uid, paymentId, pay, pkg, amount, grantedBy: 'client' });
-      alreadyGranted = !r.granted;
-    } catch (err: any) {
-      // E13 · 포트원은 PAID 인데 DB 실패 — 수동 복구 대상
-      console.error('[confirmPortonePayment] needs_reconciliation:', err);
-      await writeUnlessGranted({
-        status: 'needs_reconciliation',
-        failReason: 'db_transaction_failed: ' + (err.message || 'unknown'),
-        portoneStatus: pay.status,
-        portoneApprovedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }).catch(() => false);
-      throw new HttpsError('internal', '결제는 승인됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
-    }
-    if (alreadyGranted) {
-      // 같은 순간 감시가 먼저 넣었으면 그 운을 이 기기에 넘긴다 (한 기기 한 번, 서버 잔액은 그대로)
-      const c = await claimPortoneDeviceCredit(uid, paymentId).catch(() => null);
-      if (c?.claimed) return { success: true, message: `${c.totalUn}운이 충전됐어요!`, totalUn: c.totalUn, paidUn: c.paidUn, bonusUn: c.bonusUn, autoGranted: true };
-      return ALREADY;
-    }
-    return { success: true, message: `${totalUn}운이 충전됐어요!`, totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
+    const { confirmPortoneCore } = await import('./payment/confirmPortone');
+    return confirmPortoneCore({
+      uid,
+      isAnon: request.auth?.token?.firebase?.sign_in_provider === 'anonymous',
+      data: request.data,
+    }, PORTONE_V2_API_SECRET.value());
   }
 );
 

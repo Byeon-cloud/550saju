@@ -4,7 +4,14 @@
  *     A. 판정 순수 함수 (functions/src/payment/autoGrantRules.ts)
  *     B. 서버 지급 공용 함수와 감시 (grantPortone.ts, portonePaidWatch.ts) — 가짜 Firestore(트랜잭션 충돌 재시도 포함), 가짜 포트원, 가짜 메일
  *     C. 기기 (src/services/storage/balanceAdjust.ts, firestoreSync.ts syncFromCloud) — 같은 가짜 Firestore, 가짜 localStorage
+ *        서버 결제 확인은 functions/src/payment/confirmPortone.ts 를 그대로 부른다(10-24 검수 뒤)
+ *     D. 서버 결제 확인 (confirmPortone.ts): 기기 표식 다시 받기, pending 단계 넘겨받기, 실패 이유, 계정 불일치 기록 줄이기, 오너 결제 누락 뒤 막기
+ *     E. 관리자 결제 누락 (functions/src/admin/adminGrantCompensation.ts) 뒤 손님 기기 확인
+ *     F. 응답 끊김, 두 탭(모듈 사본 두 벌이 같은 localStorage 와 Web Locks), 네이버 재로그인 잔액 (src/services/auth/loginSync.ts)
+ *     G. 취소 메모 지우기, 이어 받기 알림
+ *     R. 친구 초대 첫 결제 보상과 환불 (functions/src/referral/referral.ts)
  *   사용: 루트에서  node scripts/test/portone_auto_grant.cjs   (자동 채우기, 결제 확인, 잔액 맞추기를 바꾸면 꼭 돌린다)
+ *   일부러 뺀 방어 실험: PT_MUTATE='[{"file":"functions/src/...ts","from":"원래 글","to":"바꾼 글"}]' 로 불러올 때 원본 글을 바꿔 돌린다(파일은 그대로)
  */
 const fs = require('fs');
 const path = require('path');
@@ -13,23 +20,35 @@ const Module = require('module');
 const ROOT = path.resolve(__dirname, '../..');
 const ts = require(path.join(ROOT, 'functions/node_modules/typescript'));
 
-/* ── TS 파일 불러오기 (모듈마다 한 번, 가짜 모듈 바꿔 끼우기) ── */
+/* ── 일부러 뺀 방어 실험 (파일은 건드리지 않고 불러올 때만 바꾼다) ── */
+const MUT = (() => { try { return JSON.parse(process.env.PT_MUTATE || '[]'); } catch { return []; } })();
+const mutUsed = new Set();
+
+/* ── TS 파일 불러오기 (모듈마다 한 번, 가짜 모듈 바꿔 끼우기). cacheMap 이 다르면 같은 파일도 따로 (브라우저 탭 하나 = cacheMap 하나) ── */
 const cache = new Map();
-function loadTs(file, stubs) {
+function loadTs(file, stubs, cacheMap = cache) {
   file = path.resolve(file);
-  if (cache.has(file)) return cache.get(file).exports;
-  const out = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText;
+  if (cacheMap.has(file)) return cacheMap.get(file).exports;
+  let src = fs.readFileSync(file, 'utf8');
+  const rel = path.relative(ROOT, file).replace(/\\/g, '/');
+  MUT.forEach((m, i) => {
+    if (m.file !== rel) return;
+    if (!src.includes(m.from)) throw new Error(`변형할 글을 찾지 못함 ${rel}: ${m.from}`);
+    src = src.split(m.from).join(m.to);
+    mutUsed.add(i);
+  });
+  const out = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText;
   const m = new Module(file, module);
   m.filename = file;
   m.paths = Module._nodeModulePaths(path.dirname(file));
-  cache.set(file, m);
+  cacheMap.set(file, m);
   m.require = (id) => {
     if (Object.prototype.hasOwnProperty.call(stubs, id)) return stubs[id];
     let p = null;
     if (id.startsWith('@/')) p = path.join(ROOT, 'src', id.slice(2));
     else if (id.startsWith('.')) p = path.resolve(path.dirname(file), id);
     if (p) {
-      for (const cand of [p + '.ts', p + '.tsx', path.join(p, 'index.ts')]) if (fs.existsSync(cand)) return loadTs(cand, stubs);
+      for (const cand of [p + '.ts', p + '.tsx', path.join(p, 'index.ts')]) if (fs.existsSync(cand)) return loadTs(cand, stubs, cacheMap);
       throw new Error(`불러올 수 없음 ${id} (${file})`);
     }
     return require(id);
@@ -85,12 +104,13 @@ function adminSnap(p) {
   const e = store.get(p);
   return { exists: !!e, id: p.split('/').pop(), ref: adminDoc(p), data: () => (e ? clone(e.data) : undefined) };
 }
+const afterGet = new Map(); // 경로 → 한 번 부를 함수 (읽은 직후, 돌려주기 전에 다른 쪽이 끼어드는 순간을 만든다)
 function adminDoc(p) {
   const segs = p.split('/');
   return {
     path: p, id: segs[segs.length - 1],
     parent: { id: segs[segs.length - 2], parent: segs.length > 2 ? adminDoc(segs.slice(0, -2).join('/')) : null },
-    get: async () => { await tick(); return adminSnap(p); },
+    get: async () => { await tick(); const s = adminSnap(p); const h = afterGet.get(p); if (h) { afterGet.delete(p); await h(); } return s; },
     set: async (d, o) => { await tick(); opSet(p, d, o); },
     update: async (d) => { await tick(); opUpdate(p, d); },
     create: async (d) => { await tick(); opCreate(p, d); },
@@ -179,19 +199,28 @@ global.fetch = async (url) => {
 const mails = [];
 let mailFail = false;
 let referralCalls = 0;
+const referralArgs = [];
 
+class HttpsError extends Error { constructor(code, message, details) { super(message); this.code = code; this.details = details; } }
 const SERVER_STUBS = {
   'firebase-admin': fakeAdmin,
   'firebase-functions/v2/scheduler': { onSchedule: (_o, fn) => fn },
+  'firebase-functions/v2/https': { HttpsError, onCall: (_o, fn) => fn, onRequest: (_o, fn) => fn },
   'firebase-functions/params': { defineSecret: () => ({ value: () => 'TESTKEY' }) },
   '../pdf/mailPdf': { MAIL_APP_PASSWORD: {}, FROM_ADDR: 'from@test', mailTransport: () => ({ sendMail: async (m) => { await tick(); if (mailFail) throw new Error('smtp down'); mails.push(m); } }) },
   '../admin/owner': { OWNER_EMAILS: ['owner@test'], OWNER_UIDS: [] },
-  '../referral/referral': { referralOnPurchase: async () => { referralCalls++; } },
+  './owner': { assertOwner: () => 'OWNERUID', OWNER_EMAILS: ['owner@test'], OWNER_UIDS: [] },
+  '../referral/referral': { referralOnPurchase: async (...args) => { referralCalls++; referralArgs.push(args); } },
 };
 const R = loadTs(path.join(ROOT, 'functions/src/payment/autoGrantRules.ts'), SERVER_STUBS);
 const G = loadTs(path.join(ROOT, 'functions/src/payment/grantPortone.ts'), SERVER_STUBS);
 const W = loadTs(path.join(ROOT, 'functions/src/payment/portonePaidWatch.ts'), SERVER_STUBS);
+const CF = loadTs(path.join(ROOT, 'functions/src/payment/confirmPortone.ts'), SERVER_STUBS);
+const AG = loadTs(path.join(ROOT, 'functions/src/admin/adminGrantCompensation.ts'), SERVER_STUBS);
+const CC = loadTs(path.join(ROOT, 'functions/src/admin/claimCompensation.ts'), SERVER_STUBS);
 const { PACKAGE_MAP } = loadTs(path.join(ROOT, 'functions/src/shared/chargePackages.ts'), SERVER_STUBS);
+// 친구 초대는 진짜 파일을 따로 불러 시험한다 (위 SERVER_STUBS 의 가짜 referralOnPurchase 와 별개)
+const REF = loadTs(path.join(ROOT, 'functions/src/referral/referral.ts'), SERVER_STUBS, new Map());
 
 /* ── 결과 ── */
 let fails = 0; let passes = 0;
@@ -277,7 +306,7 @@ function payment(id, uid, amount, paidAgoMin, over = {}) {
 const bal = (uid) => raw(`users/${uid}`)?.balance || {};
 const payDoc = (uid, pid) => raw(`users/${uid}/payments/${pid}`);
 const alertDoc = (pid) => raw(`backofficeAlerts/portone_unconfirmed_${pid}`);
-const resetServer = () => { store.clear(); mails.length = 0; portoneItems = []; portoneFail = false; mailFail = false; referralCalls = 0; authUsers.clear(); };
+const resetServer = () => { store.clear(); mails.length = 0; portoneItems = []; portoneFail = false; mailFail = false; referralCalls = 0; referralArgs.length = 0; authUsers.clear(); afterGet.clear(); };
 
 async function partB() {
   // B1 — 기본: 25분 지난 미지급 결제를 한 번만 넣는다
@@ -290,7 +319,7 @@ async function partB() {
   ok('B1 자동으로 한 번 넣음', r.granted === 1 && bal(UID).paid === 6 && bal(UID).bonus === 2, { r, bal: bal(UID) });
   const pd = payDoc(UID, P1);
   ok('B2 결제 문서 confirmed, grantedBy watch, 기기 전달 대기', pd.status === 'confirmed' && pd.grantedBy === 'watch' && pd.deviceCreditPending === true && pd.paidUn === 5 && pd.bonusUn === 2 && pd.amount === 2500 && pd.orderId === P1, pd);
-  ok('B3 친구 초대 첫 결제 확인 한 번', referralCalls === 1, referralCalls);
+  ok('B3 친구 초대 첫 결제 확인 한 번, 결제번호를 같이 넘김', referralCalls === 1 && referralArgs[0][3] && referralArgs[0][3].paymentId === P1, referralArgs);
   const ad = alertDoc(P1);
   ok('B4 경보에 autoGrantedAt, 메일 보낸 뒤 mailedAt', !!ad.autoGrantedAt && !!ad.mailedAt && ad.mailPending === false && !ad.mail, ad);
   ok('B5 오너 메일 한 통, 자동으로 넣었어요, 첫 알림은 그 안에', mails.length === 1 && /자동으로 넣었어요/.test(mails[0].text) && !/운이 들어가지 않은 웹 결제예요/.test(mails[0].text) && /guest@test/.test(mails[0].text), mails.map((m) => m.subject));
@@ -465,14 +494,29 @@ async function partB() {
 }
 
 /* ═════════════ C. 기기 ═════════════ */
-// 가짜 브라우저
-const ls = new Map();
+// 가짜 브라우저 — 기기(localStorage)는 바꿔 끼울 수 있다(다른 기기). 탭은 같은 기기 저장소를 같이 쓴다.
+let ls = new Map();
 global.localStorage = { getItem: (k) => (ls.has(k) ? ls.get(k) : null), setItem: (k, v) => ls.set(k, String(v)), removeItem: (k) => ls.delete(k) };
+let ss = new Map();
+global.sessionStorage = { getItem: (k) => (ss.has(k) ? ss.get(k) : null), setItem: (k, v) => ss.set(k, String(v)), removeItem: (k) => ss.delete(k) };
 const toasts = [];
+const events = [];
 global.CustomEvent = class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } };
 global.Event = class { constructor(type) { this.type = type; } };
-global.window = { dispatchEvent: (e) => { if (e.type === 'saju500:toast') toasts.push(e.detail.text); }, location: { search: '' } };
-try { Object.defineProperty(global, 'navigator', { value: { userAgent: 'Mozilla/5.0 test' }, configurable: true }); } catch { /* noop */ }
+global.window = { dispatchEvent: (e) => { events.push(e); if (e.type === 'saju500:toast') toasts.push(e.detail.text); }, location: { search: '', pathname: '/' } };
+// Web Locks (같은 기기의 모든 탭이 같은 잠금을 본다). locksOn=false 면 Web Locks 가 없는 브라우저
+const lockQueues = new Map();
+const fakeLocks = {
+  request: (name, cb) => {
+    const prev = lockQueues.get(name) || Promise.resolve();
+    const run = prev.then(() => cb());
+    lockQueues.set(name, run.catch(() => undefined));
+    return run;
+  },
+};
+let locksOn = true;
+let navUa = 'Mozilla/5.0 test';
+Object.defineProperty(global, 'navigator', { get: () => ({ userAgent: navUa, ...(locksOn ? { locks: fakeLocks } : {}) }), configurable: true });
 
 const BAL_KEY = 'saju500_balance_v2';
 const local = () => JSON.parse(ls.get(BAL_KEY) || '{"paid":0,"bonus":0,"reward":0}');
@@ -486,6 +530,7 @@ const fakeLocalStore = {
 let clientUid = UID;
 const clientAuth = { get currentUser() { return clientUid ? { uid: clientUid, isAnonymous: false } : null; } };
 // 웹 SDK 모양의 가짜 (같은 저장소)
+const slowPaths = new Map(); // 경로 → 읽기에 걸리는 틱 (보관함 내려받기가 오래 걸리는 경우)
 const webSnap = (p) => { const e = store.get(p); return { id: p.split('/').pop(), exists: () => !!e, data: () => (e ? clone(e.data) : undefined) }; };
 const join = (base, segs) => [base, ...segs].filter(Boolean).join('/');
 const webFirestore = {
@@ -494,41 +539,35 @@ const webFirestore = {
   query: (c, ...cons) => ({ path: c.path, cons }),
   where: (f, op, v) => [f, op, v],
   getDoc: async (r) => { await tick(); return webSnap(r.path); },
-  getDocs: async (q) => { await tick(); const docs = [...store.keys()].filter(inCol(q.path)).filter((k) => matches(raw(k), q.cons || [])).map(webSnap); return { empty: !docs.length, size: docs.length, docs }; },
+  getDocs: async (q) => { await tick(); for (let i = 0; i < (slowPaths.get(q.path) || 0); i++) await tick(); const docs = [...store.keys()].filter(inCol(q.path)).filter((k) => matches(raw(k), q.cons || [])).map(webSnap); return { empty: !docs.length, size: docs.length, docs }; },
   setDoc: async (r, d, o) => { await tick(); opSet(r.path, d, o); },
   updateDoc: async (r, d) => { await tick(); opUpdate(r.path, d); },
   deleteDoc: async (r) => { store.delete(r.path); },
   serverTimestamp: FieldValue.serverTimestamp, arrayUnion: FieldValue.arrayUnion,
   writeBatch: () => { const ops = []; return { set: (r, d, o) => ops.push(() => opSet(r.path, d, o)), update: (r, d) => ops.push(() => opUpdate(r.path, d)), delete: (r) => ops.push(() => store.delete(r.path)), commit: async () => { await tick(); for (const o of ops) o(); } }; },
 };
-// 서버 confirmPortonePayment 를 index.ts 와 같은 순서로 흉내 (포트원 검증은 통과했다고 본다)
+// 서버 confirmPortonePayment = functions/src/payment/confirmPortone.ts 그대로 (index.ts 는 이 함수를 부르기만 한다)
 let confirmCalls = 0;
-let holdConfirm = null; // 서버가 넘겨준 뒤 응답이 오기 전 (C18)
+let lastConfirmData = null;
+let holdConfirm = null; // 서버가 끝낸 뒤 응답이 오기 전 (C18, F6)
 let confirmCommitted = false;
-async function fakeConfirm(data) {
+let dropResponses = 0; // 서버는 끝냈는데 응답이 끊김 (이 수만큼)
+let stripDeviceKey = false; // 기기 표식을 모르는 옛 서버 흉내
+async function callConfirm(data) {
   confirmCalls++;
-  const uid = clientUid; const { paymentId, amount } = data;
-  if (!paymentId.startsWith(uid.slice(0, 8))) throw new Error('본인 결제만 확인할 수 있어요');
-  const ex = payDoc(uid, paymentId);
-  if (ex && ex.status === 'confirmed') {
-    if (ex.deviceCreditPending === true) {
-      const c = await G.claimPortoneDeviceCredit(uid, paymentId);
-      confirmCommitted = true;
-      if (holdConfirm) await holdConfirm;
-      if (c.claimed) return { success: true, message: 'ok', totalUn: c.totalUn, paidUn: c.paidUn, bonusUn: c.bonusUn, autoGranted: true };
-    }
-    return { success: true, message: '이미 처리된 결제예요' };
-  }
-  const pay = portoneItems.find((p) => p.id === paymentId);
-  if (!pay) throw new Error('결제 확인에 실패했어요');
-  const pkg = PACKAGE_MAP[amount];
-  const g = await G.grantPortonePayment({ uid, paymentId, pay, pkg, amount, grantedBy: 'client' });
-  if (!g.granted) { const c = await G.claimPortoneDeviceCredit(uid, paymentId); if (c.claimed) return { success: true, message: 'ok', totalUn: c.totalUn, paidUn: c.paidUn, bonusUn: c.bonusUn, autoGranted: true }; return { success: true, message: '이미 처리된 결제예요' }; }
-  return { success: true, message: 'ok', totalUn: g.totalUn, paidUn: pkg.paidUn, bonusUn: pkg.bonusUn };
+  lastConfirmData = data;
+  const d = { ...data };
+  if (stripDeviceKey) delete d.deviceKey;
+  const res = await CF.confirmPortoneCore({ uid: clientUid, isAnon: false, data: d }, 'TESTKEY');
+  confirmCommitted = true;
+  if (holdConfirm) await holdConfirm;
+  if (dropResponses > 0) { dropResponses--; const e = new Error('deadline-exceeded'); e.code = 'functions/deadline-exceeded'; throw e; }
+  return res;
 }
+let lastCallableTimeout = 0;
 const CLIENT_STUBS = {
   'firebase/firestore': webFirestore,
-  'firebase/functions': { getFunctions: () => ({}), httpsCallable: () => async (data) => ({ data: await fakeConfirm(data) }) },
+  'firebase/functions': { getFunctions: () => ({}), httpsCallable: (_f, name, opt) => { lastCallableTimeout = opt && opt.timeout; return async (data) => { if (name !== 'confirmPortonePayment') throw new Error('callable ' + name); return { data: await callConfirm(data) }; }; } },
   '@/services/auth/firebase': { db: {}, auth: clientAuth, app: {} },
   './localStore': fakeLocalStore,
   './chatStore': { mergeRestoredChatRooms: () => {}, getDeletedChatIds: () => new Set() },
@@ -537,14 +576,22 @@ const CLIENT_STUBS = {
   '@/services/payment/refundRequest': { rememberWebPayment: () => {} },
   '@/services/analytics': { trackEvent: () => {} },
 };
+/** 페이지(탭) 하나 — 모듈 사본 한 벌 (모듈 상태와 차례는 탭마다 따로, 저장소와 Web Locks 는 같은 기기에서 같이) */
 function loadClient() {
-  for (const k of [...cache.keys()]) if (k.includes(`${path.sep}src${path.sep}services${path.sep}`)) cache.delete(k); // 모듈 상태(한 번 가드) 새로
+  const tab = new Map();
   return {
-    A: loadTs(path.join(ROOT, 'src/services/storage/balanceAdjust.ts'), CLIENT_STUBS),
-    S: loadTs(path.join(ROOT, 'src/services/storage/firestoreSync.ts'), CLIENT_STUBS),
+    A: loadTs(path.join(ROOT, 'src/services/storage/balanceAdjust.ts'), CLIENT_STUBS, tab),
+    S: loadTs(path.join(ROOT, 'src/services/storage/firestoreSync.ts'), CLIENT_STUBS, tab),
+    L: loadTs(path.join(ROOT, 'src/services/auth/loginSync.ts'), CLIENT_STUBS, tab),
   };
 }
-const resetClient = () => { resetServer(); ls.clear(); toasts.length = 0; confirmCalls = 0; clientUid = UID; window.location.search = ''; };
+const resetClient = () => {
+  resetServer(); ls = new Map(); ss = new Map(); toasts.length = 0; events.length = 0; confirmCalls = 0; clientUid = UID; window.location.search = '';
+  holdConfirm = null; confirmCommitted = false; dropResponses = 0; stripDeviceKey = false; locksOn = true; navUa = 'Mozilla/5.0 test'; slowPaths.clear(); lockQueues.clear();
+};
+const memoIds = () => (JSON.parse(ls.get('saju500:portone_pending') || '[]')).map((x) => x.id);
+const until = async (cond, max = 4000) => { for (let i = 0; i < max && !cond(); i++) await tick(); };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** 감시가 넣은 결제 하나를 서버에 만든다 (결제 2,500원 → 5+2운) */
 async function serverAutoGranted(pid, startPaid = 0) {
@@ -563,8 +610,9 @@ async function partC() {
   A.rememberPortonePending(Q1, 2500);
   const a1 = await A.confirmPortoneAndCredit(Q1, 2500);
   const a2 = await A.confirmPortoneAndCredit(Q1, 2500);
-  ok('C1 손님 화면 확인: 한 번 더하고, 다시 확인하면 이미 처리됨', a1.credited && !a2.credited && a2.paidUn == null && localTotal() === 7 && !A.isPortoneCreditedHere('nope') && A.isPortoneCreditedHere(Q1), { a1, a2, l: local() });
-  ok('C2 적어 둔 결제번호는 확인 뒤 지움', !(JSON.parse(ls.get('saju500:portone_pending') || '[]')).length);
+  ok('C1 손님 화면 확인: 한 번 더하고, 다시 확인해도(같은 기기 표식이라 paidUn 이 다시 와도) 더하지 않음', a1.credited && !a2.credited && localTotal() === 7 && bal(UID).paid === 5 && !A.isPortoneCreditedHere('nope') && A.isPortoneCreditedHere(Q1), { a1, a2, l: local() });
+  ok('C2 적어 둔 결제번호는 확인 뒤 지움', !memoIds().length);
+  ok('C2b 확인에 기기 표식을 보내고 서버 결제 문서에 남김, 기다림 70초', !!lastConfirmData.deviceKey && lastConfirmData.deviceKey === ls.get('saju500:credit_device') && payDoc(UID, Q1).creditDeviceKey === lastConfirmData.deviceKey && lastCallableTimeout === 70000, { d: lastConfirmData, t: lastCallableTimeout });
 
   // C3 — 확인이 끊겼던 결제: 다음에 열 때 다시 확인해 넣는다 (아직 서버 지급 전)
   resetClient();
@@ -575,7 +623,9 @@ async function partC() {
   A.rememberPortonePending('Other123_p4_x', 1500); // 다른 계정 결제번호는 부르지 않는다
   const n3 = await A.resumePortonePayments();
   ok('C3 이어 받기: 확인이 끊긴 결제를 넣음', n3 === 4 && localTotal() === 4 && toasts.some((t) => /4운을 넣었어요/.test(t)) && confirmCalls === 1, { n3, l: local(), toasts, confirmCalls });
-  ok('C4 다른 계정 결제번호는 부르지 않고 남겨 둠', (JSON.parse(ls.get('saju500:portone_pending'))).some((x) => x.id === 'Other123_p4_x'));
+  ok('C4 다른 계정 결제번호는 부르지 않고 남겨 둠', memoIds().includes('Other123_p4_x'));
+  const ev = events.find((e) => e.type === 'saju500:portone-resumed');
+  ok('C4b 이어 받기로 들어오면 충전 화면에 알림(결제번호, 운)', !!ev && ev.detail.totalUn === 4 && ev.detail.ids.includes(Q2), ev && ev.detail);
 
   // C5 — 감시가 넣은 결제: 이 기기에 적어 둔 결제번호가 있어도, 없어도 한 번
   resetClient();
@@ -588,8 +638,8 @@ async function partC() {
   ({ A } = loadClient()); // 새로 열기
   const n5b = await A.resumePortonePayments();
   ok('C6 다시 열어도 더 넣지 않음', n5b === 0 && localTotal() === 7);
-  // 다른 기기(이 기기 기록 없음)
-  ls.clear();
+  // 다른 기기(이 기기 기록 없음, 표식도 다름)
+  ls = new Map();
   ({ A } = loadClient());
   const n5c = await A.resumePortonePayments();
   ok('C7 다른 기기는 이미 받아 간 결제를 또 받지 않음', n5c === 0 && localTotal() === 0);
@@ -627,13 +677,11 @@ async function partC() {
 
   // C11 — 다른 기기 충전분(손님 화면 확인)은 예전처럼 잔액 맞추기가 더한다
   resetClient();
-  ({ A } = loadClient());
-  let S2 = loadClient().S;
-  ({ A } = { A: loadTs(path.join(ROOT, 'src/services/storage/balanceAdjust.ts'), CLIENT_STUBS) });
+  const L2 = loadClient();
   writeDoc(`users/${UID}`, { balance: { paid: 10, bonus: 5, reward: 0 } });
-  writeDoc(`users/${UID}/payments/${UID.slice(0, 8)}_p15_other`, { status: 'confirmed', pgProvider: 'portone', grantedBy: 'client', amount: 5000, paidUn: 10, bonusUn: 5 });
-  await S2.syncFromCloud(UID);
-  ok('C11 손님 화면 확인분은 그대로 잔액 맞추기로 (15운)', localTotal() === 15, local());
+  writeDoc(`users/${UID}/payments/${UID.slice(0, 8)}_p15_other`, { status: 'confirmed', pgProvider: 'portone', grantedBy: 'client', amount: 5000, paidUn: 10, bonusUn: 5, creditDeviceKey: 'other-device-key-0001', creditKeyAt: mkTs(clock) });
+  await L2.S.syncFromCloud(UID);
+  ok('C11 다른 기기 손님 화면 확인분은 그대로 잔액 맞추기로 (15운)', localTotal() === 15, local());
 
   // C12 — 감시 몫 + 다른 기기 충전분이 섞여도 합이 서버와 같다
   resetClient();
@@ -679,11 +727,11 @@ async function partC() {
 
   // C17 — 앱인토스 화면에서는 아무것도 하지 않는다
   resetClient();
-  Object.defineProperty(global, 'navigator', { value: { userAgent: 'Mozilla/5.0 TossApp/5.0' }, configurable: true });
+  navUa = 'Mozilla/5.0 TossApp/5.0';
   const L7 = loadClient();
   await serverAutoGranted(`${UID.slice(0, 8)}_p7_c17_1`);
   const n17 = await L7.A.resumePortonePayments();
-  Object.defineProperty(global, 'navigator', { value: { userAgent: 'Mozilla/5.0 test' }, configurable: true });
+  navUa = 'Mozilla/5.0 test';
   ok('C17 토스 앱 화면: 이어 받기 안 함', n17 === 0 && confirmCalls === 0 && localTotal() === 0);
 
   // C18 — 서버가 기기에 넘긴 직후, 응답이 오기 전에 로그인 잔액 맞추기가 돌아도 두 번 더하지 않음 (withBalanceLock)
@@ -700,10 +748,343 @@ async function partC() {
   ok('C18 넘겨받는 중 잔액 맞추기: 서버 7운이 기기에도 7운', localTotal() === 7, local());
 }
 
+/* ═════════════ D. 서버 결제 확인 (confirmPortone.ts) ═════════════ */
+const KEY1 = '11111111-1111-4111-8111-111111111111';
+const KEY2 = '22222222-2222-4222-8222-222222222222';
+const OTHER8 = 'Zz9Other'; // UID, UID2 와 앞 8자가 다른 결제한 계정
+const confirmAs = (uid, data) => CF.confirmPortoneCore({ uid, isAnon: false, data }, 'TESTKEY');
+const errOf = async (p) => { try { await p; return null; } catch (e) { return e; } };
+
+async function partD() {
+  // D1 — 손님 화면 지급은 기기 표식을 남기고, 같은 표식으로 다시 부르면 paidUn 을 다시 준다(서버 잔액은 그대로)
+  resetServer();
+  const P = `${UID.slice(0, 8)}_p7_d1_1`;
+  portoneItems = [payment(P, UID, 2500, 1)];
+  const r1 = await confirmAs(UID, { paymentId: P, amount: 2500, deviceKey: KEY1 });
+  ok('D1 지급하고 기기 표식 남김', r1.paidUn === 5 && payDoc(UID, P).creditDeviceKey === KEY1 && !!payDoc(UID, P).creditKeyAt && bal(UID).paid === 5, { r1, p: payDoc(UID, P) });
+  const r2 = await confirmAs(UID, { paymentId: P, amount: 2500, deviceKey: KEY1 });
+  const r3 = await confirmAs(UID, { paymentId: P, amount: 2500, deviceKey: KEY2 });
+  const r4 = await confirmAs(UID, { paymentId: P, amount: 2500 });
+  ok('D2 같은 표식은 다시 받고(recredit), 다른 표식과 표식 없음은 이미 처리됨, 서버 잔액 5 그대로', r2.paidUn === 5 && r2.recredit === true && r3.paidUn == null && r4.paidUn == null && bal(UID).paid === 5, { r2, r3, r4 });
+  opSet(`users/${UID}/payments/${P}`, { creditKeyAt: mkTs(Date.now() - 31 * 864e5) }, { merge: true });
+  const r5 = await confirmAs(UID, { paymentId: P, amount: 2500, deviceKey: KEY1 });
+  ok('D3 30일 지나면 다시 주지 않음', r5.paidUn == null, r5);
+  ok('D3b 잘못된 표식 형식은 표식 없음으로', G.cleanDeviceKey('x') === '' && G.cleanDeviceKey('a/b'.repeat(8)) === '' && G.cleanDeviceKey(KEY1) === KEY1);
+
+  // D4 — 감시가 넣은 결제 넘겨받기도 표식을 남기고, 응답이 끊기면 같은 기기만 다시 받는다
+  resetServer();
+  const P2 = `${UID.slice(0, 8)}_p7_d4_1`;
+  writeDoc(`users/${UID}`, { balance: { paid: 0, bonus: 0, reward: 0 } });
+  const pay2 = payment(P2, UID, 2500, 30);
+  portoneItems = [pay2];
+  await G.grantPortonePayment({ uid: UID, paymentId: P2, pay: pay2, pkg: PACKAGE_MAP[2500], amount: 2500, grantedBy: 'watch' });
+  const c1 = await confirmAs(UID, { paymentId: P2, amount: 2500, deviceKey: KEY1 });
+  const c2 = await confirmAs(UID, { paymentId: P2, amount: 2500, deviceKey: KEY2 });
+  const c3 = await confirmAs(UID, { paymentId: P2, amount: 2500, deviceKey: KEY1 });
+  ok('D4 넘겨받기: 처음 부른 기기에 표식, 다른 기기는 못 받고, 같은 기기는 다시 받음', c1.paidUn === 5 && c1.autoGranted === true && payDoc(UID, P2).deviceCreditPending === false && payDoc(UID, P2).creditDeviceKey === KEY1 && c2.paidUn == null && c3.paidUn === 5 && c3.recredit === true && bal(UID).paid === 5, { c1, c2, c3 });
+
+  // D5 — 확인과 감시가 같은 순간: 결제 문서를 읽은 직후 감시가 넣으면 pending 기록 단계에서 지급 끝남을 보고 넘겨받는다 (검수 P2-5)
+  resetServer();
+  const P3 = `${UID.slice(0, 8)}_p7_d5_1`;
+  writeDoc(`users/${UID}`, { balance: { paid: 0, bonus: 0, reward: 0 } });
+  const pay3 = payment(P3, UID, 2500, 25);
+  portoneItems = [pay3];
+  afterGet.set(`users/${UID}/payments/${P3}`, () => G.grantPortonePayment({ uid: UID, paymentId: P3, pay: pay3, pkg: PACKAGE_MAP[2500], amount: 2500, grantedBy: 'watch' }));
+  const d5 = await confirmAs(UID, { paymentId: P3, amount: 2500, deviceKey: KEY1 });
+  ok('D5 pending 기록 단계에서 지급 끝남: 감시 몫을 이 기기에 넘김(한 번), 서버 잔액 5', d5.paidUn === 5 && d5.autoGranted === true && payDoc(UID, P3).deviceCreditPending === false && payDoc(UID, P3).status === 'confirmed' && bal(UID).paid === 5, { d5, p: payDoc(UID, P3) });
+
+  // D6 — 실패 이유 details (기기가 적어 둔 결제번호를 지우는 근거)
+  resetServer();
+  const P4 = `${UID.slice(0, 8)}_p7_d6_1`;
+  portoneItems = [payment(P4, UID, 2500, 1, { status: 'CANCELLED' })];
+  const e1 = await errOf(confirmAs(UID, { paymentId: P4, amount: 2500, deviceKey: KEY1 }));
+  const P5 = `${UID.slice(0, 8)}_p7_d6_2`;
+  const e2 = await errOf(confirmAs(UID, { paymentId: P5, amount: 2500, deviceKey: KEY1 }));
+  const P6 = `${UID.slice(0, 8)}_p7_d6_3`;
+  portoneItems.push(payment(P6, UID, 2500, 1, { channel: { type: 'TEST' } }));
+  const e3 = await errOf(confirmAs(UID, { paymentId: P6, amount: 2500 }));
+  ok('D6 결제 완료 아님은 not_paid 와 상태, 포트원에 없음은 not_found, 채널 불일치는 mismatch', e1 && e1.details.reason === 'not_paid' && e1.details.status === 'CANCELLED' && e2 && e2.details.reason === 'not_found' && e3 && e3.details.reason === 'mismatch' && !bal(UID).paid, { e1: e1 && e1.details, e2: e2 && e2.details, e3: e3 && e3.details });
+  const createdAt1 = tsOf(payDoc(UID, P4).createdAt);
+  clock += 5 * MIN;
+  await errOf(confirmAs(UID, { paymentId: P4, amount: 2500 }));
+  const createdAt2 = tsOf(payDoc(UID, P4).createdAt);
+  clock -= 5 * MIN;
+  ok('D6b 다시 불러도 createdAt 은 처음 값 그대로', createdAt1 && createdAt1 === createdAt2, { createdAt1, createdAt2 });
+  // customData 의 회원 ID 가 다르면 지급하지 않는다 (예전엔 이 실패를 잡아 삼켜 지급까지 갔다)
+  const P7 = `${UID.slice(0, 8)}_p7_d6_4`;
+  portoneItems.push(payment(P7, UID2, 2500, 1));
+  const e4 = await errOf(confirmAs(UID, { paymentId: P7, amount: 2500 }));
+  ok('D6c customData 회원 ID 불일치는 지급하지 않음', e4 && e4.details.reason === 'mismatch' && payDoc(UID, P7).status === 'failed' && !bal(UID).paid, { e4: e4 && e4.message, p: payDoc(UID, P7) });
+
+  // D7 — 계정 불일치 기록: 첫 기록 보존, 이후 시도 수만 20까지, 호출 계정마다 새 기록 하루 5건
+  resetServer();
+  const MM = `${OTHER8}_p7_d7_1`;
+  const mmPath = `portoneUidMismatch/${MM}`;
+  await errOf(confirmAs(UID, { paymentId: MM, amount: 2500 }));
+  for (let i = 0; i < 25; i++) await errOf(confirmAs(`Third${i}xxxxxxxxxxx`, { paymentId: MM, amount: 2500 }));
+  const mm = raw(mmPath);
+  ok('D7 첫 기록(처음 돌아온 계정) 보존, 시도 수 20에서 멈춤', mm && mm.callerUid8 === UID.slice(0, 8) && mm.attempts === 20 && !!mm.expireAt, mm);
+  for (let i = 0; i < 8; i++) await errOf(confirmAs(UID, { paymentId: `${OTHER8}_p7_d7q_${i}`, amount: 2500 }));
+  const made = [...store.keys()].filter((k) => k.startsWith(`portoneUidMismatch/${OTHER8}_p7_d7q_`)).length;
+  ok('D8 한 계정이 하루에 만드는 새 기록은 5건까지(첫 기록 포함해 하루 6번째부터 안 만듦)', made === 4, made);
+  const e5 = await errOf(confirmAs(UID, { paymentId: `${OTHER8}_p7_zz`, amount: 2500 }));
+  ok('D8b 기록을 안 남겨도 거부는 그대로', e5 && e5.code === 'permission-denied');
+
+  // D9 — 결제 뒤 오너가 결제번호 없이 '결제 누락'으로 넣었으면 자동으로 넣지 않고 오너 확인으로 (검수 P1-1 의 (나))
+  resetServer();
+  const P8 = `${UID.slice(0, 8)}_p7_d9_1`;
+  portoneItems = [payment(P8, UID, 2500, 30)];
+  writeDoc('compensationLog/old1', { target: UID, uids: [UID], amount: 7, reason: 'pay_missing', at: mkTs(clock - 3 * 3600e3) }); // 결제 전 기록은 상관없다
+  writeDoc('compensationLog/x1', { target: UID, uids: [UID], amount: 7, reason: 'pay_missing', paymentId: null, noPaymentId: true, at: mkTs(clock - 5 * MIN) });
+  const e6 = await errOf(confirmAs(UID, { paymentId: P8, amount: 2500, deviceKey: KEY1 }));
+  ok('D9 결제 뒤 결제번호 없는 결제 누락 지급이 있으면 넣지 않고 needs_reconciliation', e6 && e6.details.reason === 'needs_reconciliation' && payDoc(UID, P8).status === 'needs_reconciliation' && !bal(UID).paid, { e6: e6 && e6.message, p: payDoc(UID, P8) });
+  resetServer();
+  portoneItems = [payment(P8, UID, 2500, 30)];
+  writeDoc('compensationLog/a1', { target: UID, uids: [UID], amount: 2, reason: 'apology', at: mkTs(clock - 5 * MIN) });
+  writeDoc('compensationLog/old1', { target: UID, uids: [UID], amount: 7, reason: 'pay_missing', at: mkTs(clock - 3 * 3600e3) });
+  const r9 = await confirmAs(UID, { paymentId: P8, amount: 2500, deviceKey: KEY1 });
+  ok('D10 결제 전 결제 누락 기록이나 다른 사유(사과)는 막지 않음', r9.paidUn === 5 && bal(UID).paid === 5, r9);
+}
+const tsOf = (v) => (v && typeof v.toMillis === 'function' ? v.toMillis() : 0);
+
+/* ═════════════ E. 관리자 결제 누락 ═════════════ */
+const ownerReq = (data) => ({ auth: { uid: 'OWNERUID' }, data });
+const userReq = (uid) => ({ auth: { uid, token: { firebase: { sign_in_provider: 'google.com' } } }, data: {} });
+
+async function partE() {
+  // E1 — 오너가 결제번호를 넣어 결제 누락 지급 → 그 결제는 지급 끝(오너) → 손님 기기가 다시 확인해도 안 들어가고, 보상으로 한 번만
+  resetClient();
+  let { A } = loadClient();
+  const P = `${UID.slice(0, 8)}_p7_e1_1`;
+  writeDoc(`users/${UID}`, { balance: { paid: 0, bonus: 0, reward: 0 } });
+  portoneItems = [payment(P, UID, 2500, 40)];
+  writeDoc(`users/${UID}/payments/${P}`, { orderId: P, status: 'failed', failReason: 'network_error: x', amount: 2500, paidUn: 5, bonusUn: 2, pgProvider: 'portone' });
+  const g = await AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 7, reason: 'pay_missing', paymentId: P }));
+  const pd = payDoc(UID, P);
+  ok('E1 결제 문서를 지급 끝(오너)으로, 보상 장부 7운, 기록에 결제번호', g.ok && g.paymentMarked === true && pd.status === 'confirmed' && pd.grantedBy === 'owner' && !!pd.confirmedAt && pd.paidUn === 7 && pd.bonusUn === 0 && !pd.deviceCreditPending && raw(`compensations/${UID}`).amount === 7 && raw(`compensationLog/${pd.ownerCompLogId}`).paymentId === P, { g, pd });
+  A.rememberPortonePending(P, 2500); // 손님 기기에 확인이 끊긴 결제 메모가 남아 있다
+  const n = await A.resumePortonePayments();
+  ok('E2 손님 기기가 다시 확인: 이미 처리됨, 기기와 서버 잔액 그대로, 메모 지움', n === 0 && localTotal() === 0 && bal(UID).paid === 0 && !memoIds().includes(P), { n, l: local(), b: bal(UID) });
+  const cl = await CC.claimCompensation(userReq(UID));
+  if (cl.amount > 0) fakeLocalStore.addPaidBalance(cl.amount, 0); // App.tsx 보상 받기
+  ({ A } = loadClient());
+  await A.resumePortonePayments();
+  ok('E3 보상으로 한 번만 들어감(기기 7, 서버 7)', cl.amount === 7 && localTotal() === 7 && bal(UID).paid === 7, { cl, l: local(), b: bal(UID) });
+  // 감시는 그 결제를 지급 끝으로 본다
+  writeDoc(`backofficeAlerts/portone_unconfirmed_${P}`, { kind: 'portone_paid_unconfirmed', paymentId: P });
+  authUsers.set(UID, {});
+  const wr = await W.runPortonePaidWatch('TESTKEY', clock);
+  ok('E4 감시: 오너가 넣은 결제는 해결로 보고 넣지 않음', wr.granted === 0 && wr.resolved === 1 && bal(UID).paid === 7 && mails.some((m) => /결제 누락으로 넣었어요/.test(m.text)), { wr, m: mails.map((m) => m.text.slice(0, 120)) });
+
+  // E5 — 이미 운이 들어간 결제, 환불된 결제, 다른 회원 결제번호, 결제번호 없음은 거부 (보상 장부도 안 바뀜)
+  resetServer();
+  const P2 = `${UID.slice(0, 8)}_p7_e5_1`;
+  writeDoc(`users/${UID}/payments/${P2}`, { orderId: P2, status: 'confirmed', grantedBy: 'client', pgProvider: 'portone', amount: 2500 });
+  const x1 = await errOf(AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 7, reason: 'pay_missing', paymentId: P2 })));
+  const P3 = `${UID.slice(0, 8)}_p7_e5_2`;
+  writeDoc(`users/${UID}/payments/${P3}`, { orderId: P3, status: 'refunded', pgProvider: 'portone', amount: 2500 });
+  const x2 = await errOf(AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 7, reason: 'pay_missing', paymentId: P3 })));
+  const x3 = await errOf(AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 7, reason: 'pay_missing', paymentId: `${OTHER8}_p7_e5_3` })));
+  const x4 = await errOf(AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 7, reason: 'pay_missing' })));
+  ok('E5 이미 지급, 환불, 다른 회원 결제번호, 결제번호 없음은 거부하고 보상 장부를 만들지 않음', x1 && x1.code === 'failed-precondition' && x2 && x2.code === 'failed-precondition' && x3 && x3.code === 'invalid-argument' && x4 && x4.code === 'invalid-argument' && !raw(`compensations/${UID}`) && ![...store.keys()].some((k) => k.startsWith('compensationLog/')), { x1: x1 && x1.message, x2: x2 && x2.message, x3: x3 && x3.message, x4: x4 && x4.message });
+  const y1 = await AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 3, reason: 'pay_missing', noPaymentId: true }));
+  const y2 = await AG.adminGrantCompensation(ownerReq({ action: 'grant', target: 'a'.repeat(64), amount: 3, reason: 'pay_missing' }));
+  const y3 = await AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 2, reason: 'apology' }));
+  ok('E6 앱 결제(결제번호 없음 표시), 토스 기기 ID, 다른 사유는 예전처럼 넣음', y1.ok && !y1.paymentMarked && y2.ok && y3.ok && raw(`compensations/${UID}`).amount === 5, { y1, y2, y3 });
+
+  // E7 — 결제 문서가 아직 없는 결제(돌아온 화면 계정이 달라 확인이 거부된 경우)도 지급 끝으로 만들어 둔다
+  resetServer();
+  const P4 = `${UID.slice(0, 8)}_p7_e7_1`;
+  portoneItems = [payment(P4, UID, 2500, 40)];
+  await AG.adminGrantCompensation(ownerReq({ action: 'grant', target: UID, amount: 7, reason: 'pay_missing', paymentId: P4 }));
+  const r = await confirmAs(UID, { paymentId: P4, amount: 2500, deviceKey: KEY1 });
+  ok('E7 문서가 없던 결제도 오너 처리 뒤 확인은 이미 처리됨', payDoc(UID, P4).grantedBy === 'owner' && !!payDoc(UID, P4).createdAt && r.paidUn == null && !bal(UID).paid, { r, p: payDoc(UID, P4) });
+}
+
+/* ═════════════ F. 응답 끊김, 두 탭, 네이버 재로그인 ═════════════ */
+async function partF() {
+  // F1 — 손님 화면 확인: 서버는 지급했는데 응답이 끊김 → 같은 기기가 다시 열면 들어감 (한 번)
+  resetClient();
+  let { A } = loadClient();
+  const P = `${UID.slice(0, 8)}_p7_f1_1`;
+  writeDoc(`users/${UID}`, { balance: { paid: 0, bonus: 0, reward: 0 } });
+  portoneItems = [payment(P, UID, 2500, 1)];
+  A.rememberPortonePending(P, 2500);
+  dropResponses = 1;
+  const a = await A.confirmPortoneAndCredit(P, 2500);
+  ok('F1 응답 끊김: 서버 5운, 기기 아직 0, 메모 남음', !a.ok && bal(UID).paid === 5 && localTotal() === 0 && memoIds().includes(P), { a, l: local() });
+  const devA = ls;
+  ({ A } = loadClient());
+  const n1 = await A.resumePortonePayments();
+  ok('F2 같은 기기 다시 열기: 들어감(7운), 메모 지움, 서버 그대로', n1 === 7 && localTotal() === 7 && bal(UID).paid === 5 && !memoIds().includes(P), { n1, l: local() });
+  ({ A } = loadClient());
+  const n1b = await A.resumePortonePayments();
+  ok('F3 또 열어도 더 넣지 않음', n1b === 0 && localTotal() === 7);
+  // 다른 기기(결제 복귀가 다른 브라우저로 열려 그 기기에도 메모가 있는 경우)
+  ls = new Map();
+  ({ A } = loadClient());
+  A.rememberPortonePending(P, 2500);
+  const n1c = await A.resumePortonePayments();
+  ok('F4 다른 기기 재확인: 안 들어감(이미 처리됨), 메모 지움', n1c === 0 && localTotal() === 0 && !memoIds().includes(P), { n1c, l: local() });
+  ls = devA;
+
+  // F5 — 감시 몫 넘겨받기에서 응답이 끊김 (이 기기에 메모 없음) → 다음 열기에 서버 목록(이 기기 표식)으로 다시 받음
+  resetClient();
+  ({ A } = loadClient());
+  const P2 = `${UID.slice(0, 8)}_p7_f5_1`;
+  await serverAutoGranted(P2);
+  dropResponses = 1;
+  const n2 = await A.resumePortonePayments();
+  ok('F5 넘겨받기 응답 끊김: 기기 0, 서버 깃발은 내려감', n2 === 0 && localTotal() === 0 && payDoc(UID, P2).deviceCreditPending === false, { n2 });
+  ({ A } = loadClient());
+  const n2b = await A.resumePortonePayments();
+  ok('F6 같은 기기 다시 열기: 7운 들어감(한 번)', n2b === 7 && localTotal() === 7, { n2b, l: local() });
+
+  // F7 — 응답이 끊긴 뒤 로그아웃하고 다시 로그인(잔액 맞추기) → 이어 받기: 두 번 들어가지 않음
+  resetClient();
+  ({ A } = loadClient());
+  const P3 = `${UID.slice(0, 8)}_p7_f7_1`;
+  writeDoc(`users/${UID}`, { balance: { paid: 3, bonus: 0, reward: 0 } }); // 다른 운 3 (서버와 기기 같음)
+  ls.set(BAL_KEY, JSON.stringify({ paid: 3, bonus: 0, reward: 0 }));
+  portoneItems = [payment(P3, UID, 2500, 1)];
+  A.rememberPortonePending(P3, 2500);
+  dropResponses = 1;
+  await A.confirmPortoneAndCredit(P3, 2500);
+  // 로그아웃: 스냅샷 남기고 기기 0
+  writeDoc(`users/${UID}/state/balance`, { ...local(), logoutAt: mkTs(clock) });
+  ls.set(BAL_KEY, JSON.stringify({ paid: 0, bonus: 0, reward: 0 }));
+  const Lr = loadClient();
+  Lr.L.syncAfterLogin(UID);
+  await until(() => !ls.get('saju500:login_sync_at') && localTotal() >= 10, 20000);
+  await until(() => false, 300);
+  ok('F7 끊긴 결제 뒤 다시 로그인: 서버 10운 = 기기 10운 (다른 운 3 + 결제 7)', localTotal() === 10 && bal(UID).paid === 8, { l: local(), b: bal(UID) });
+
+  // F8 — 응답이 끊겨 기기에 안 들어간 결제가 환불되면 기기에서 빼지 않는다
+  resetClient();
+  ({ A } = loadClient());
+  const P4 = `${UID.slice(0, 8)}_p7_f8_1`;
+  writeDoc(`users/${UID}`, { balance: { paid: 0, bonus: 0, reward: 0 } });
+  ls.set(BAL_KEY, JSON.stringify({ paid: 4, bonus: 0, reward: 0 }));
+  portoneItems = [payment(P4, UID, 2500, 1)];
+  dropResponses = 1;
+  await A.confirmPortoneAndCredit(P4, 2500);
+  opSet(`users/${UID}/payments/${P4}`, { status: 'refunded', refundedAt: mkTs(clock) }, { merge: true });
+  writeDoc(`users/${UID}/balanceAdjustments/${P4}`, { paid: -5, bonus: -2, reason: 'portone_refund', paymentId: P4, applied: false });
+  const took = await A.applyBalanceAdjustments(UID);
+  ok('F8 이 기기에 안 들어간 결제의 환불은 기기 운(4)을 빼지 않음', took === 0 && localTotal() === 4, { took, l: local() });
+
+  // F9 — 두 탭: 탭 B 가 넘겨받은 직후(응답 전) 탭 A 의 로그인 잔액 맞추기. 기기 표식을 모르는 서버여도 Web Locks 차례로 한 번만
+  resetClient();
+  stripDeviceKey = true;
+  const tabA = loadClient();
+  const tabB = loadClient();
+  await serverAutoGranted(`${UID.slice(0, 8)}_p7_f9_1`);
+  let release; holdConfirm = new Promise((r) => { release = r; }); confirmCommitted = false;
+  const pB = tabB.A.resumePortonePayments();
+  while (!confirmCommitted) await tick();
+  const pA = tabA.S.syncFromCloud(UID);
+  for (let i = 0; i < 80; i++) await tick();
+  release(); holdConfirm = null;
+  await Promise.all([pA, pB]);
+  ok('F9 두 탭(받아 가기와 잔액 맞추기 겹침): 서버 7운 = 기기 7운', localTotal() === 7, local());
+
+  // F10 — 두 탭: 탭 A 로그인(로그아웃 스냅샷 되살리기) 중에 탭 B 이어 받기 → 탭 B 는 탭 A 가 끝날 때까지 기다린다
+  resetClient();
+  const tA = loadClient();
+  const tB = loadClient();
+  await serverAutoGranted(`${UID.slice(0, 8)}_p7_f10_1`, 2); // 서버: 다른 운 2 + 자동 채우기 7
+  writeDoc(`users/${UID}/state/balance`, { paid: 10, bonus: 0, reward: 0, logoutAt: mkTs(clock - 3600e3) }); // 로그아웃 때 기기 10 (기기에서만 받은 운 포함)
+  slowPaths.set(`users/${UID}/reports`, 40); // 보관함 내려받기가 걸리는 동안
+  tA.L.syncAfterLogin(UID);
+  await until(() => !!ls.get('saju500:login_sync_at'));
+  const pTB = tB.A.resumePortonePayments();
+  await pTB;
+  await until(() => !ls.get('saju500:login_sync_at'), 20000);
+  await sleep(10);
+  ok('F10 두 탭 순서: 스냅샷 10 + 결제 7 = 17운', localTotal() === 17, local());
+
+  // F11 — 네이버 로그인: 콜백 화면이 표시를 남기고 새 페이지가 로그인 잔액 맞추기를 한 번 (로그아웃 뒤 다시 로그인)
+  resetClient();
+  writeDoc(`users/${UID}`, { balance: { paid: 15, bonus: 0, reward: 0 } });
+  writeDoc(`users/${UID}/state/balance`, { paid: 15, bonus: 0, reward: 0, logoutAt: mkTs(clock - 60e3) });
+  ls.set(BAL_KEY, JSON.stringify({ paid: 0, bonus: 0, reward: 0 })); // 로그아웃이 기기 잔액을 0으로
+  const cb = loadClient();
+  cb.L.markLoginSyncPending(UID);
+  const page = loadClient(); // 새로 연 페이지
+  const took1 = page.L.takeLoginSyncPending(UID);
+  const took2 = page.L.takeLoginSyncPending(UID);
+  if (took1) page.L.syncAfterLogin(UID);
+  await until(() => localTotal() === 15 && !ls.get('saju500:login_sync_at'), 20000);
+  ok('F11 네이버 재로그인: 표시는 한 번만, 기기 잔액 15운으로 돌아옴', took1 === true && took2 === false && localTotal() === 15, { took1, took2, l: local() });
+  cb.L.markLoginSyncPending(UID);
+  ok('F12 다른 계정으로 들어오면 표시를 쓰지 않음', page.L.takeLoginSyncPending(UID2) === false && page.L.takeLoginSyncPending(UID) === true);
+}
+
+/* ═════════════ G. 취소 메모 지우기 ═════════════ */
+async function partG() {
+  const run = async (status, ageMin, inPortone = true) => {
+    resetClient();
+    const { A } = loadClient();
+    const P = `${UID.slice(0, 8)}_p7_g_${status}_${ageMin}`;
+    if (inPortone) portoneItems = [payment(P, UID, 2500, ageMin, { status })];
+    ls.set('saju500:portone_pending', JSON.stringify([{ id: P, amount: 2500, at: Date.now() - ageMin * MIN }]));
+    await A.resumePortonePayments();
+    return memoIds().includes(P);
+  };
+  ok('G1 결제창 취소(CANCELLED, FAILED)는 바로 메모 지움', !(await run('CANCELLED', 1)) && !(await run('FAILED', 1)));
+  ok('G2 결제 중(READY)은 30분 안이면 남기고, 지나면 지움', (await run('READY', 5)) && !(await run('READY', 40)));
+  ok('G3 포트원에 없는 결제는 30분 안이면 남기고, 지나면 지움', (await run('PAID', 5, false)) && !(await run('PAID', 40, false)));
+}
+
+/* ═════════════ R. 친구 초대 첫 결제 보상과 환불 ═════════════ */
+async function partR() {
+  const setup = (friend, code, pid, payStatus) => {
+    writeDoc(`referralVisits/${friend}`, { isNew: true, code, atMs: Date.now() - 864e5 });
+    writeDoc(`referralCodes/${code}`, { uid: 'REFERRER1xxxxxxxx', purchased: 0, earnedUn: 0 });
+    if (pid) writeDoc(`users/${friend}/payments/${pid}`, { orderId: pid, status: payStatus, pgProvider: 'portone', amount: 2500 });
+  };
+  const grantsOf = (uid) => [...store.keys()].filter((k) => k.startsWith(`rewardGrants/${uid}/items/`)).map((k) => ({ k, d: raw(k) }));
+  const unhold = (uid) => { for (const g of grantsOf(uid)) opSet(g.k, { availableAtMs: Date.now() - 1000 }, { merge: true }); };
+  resetServer();
+  const F1 = 'FriendOne1xxxxxxxx';
+  const PF1 = `${F1.slice(0, 8)}_p7_r1_1`;
+  setup(F1, 'ABCDEF', PF1, 'confirmed');
+  await REF.referralOnPurchase(F1, 5, 7, { paymentId: PF1 });
+  const g1 = grantsOf('REFERRER1xxxxxxxx');
+  ok('R1 첫 결제 보상 적립에 결제한 계정과 결제번호, 7일 보류', g1.length === 1 && g1[0].d.paymentId === PF1 && g1[0].d.payerUid === F1 && g1[0].d.availableAtMs > Date.now() + 6 * 864e5 && raw(`referralPurchases/${F1}`).paymentId === PF1, g1);
+  // 그 결제가 환불됨 (portoneCancelSync 가 status 'refunded')
+  opSet(`users/${F1}/payments/${PF1}`, { status: 'refunded', refundedAt: mkTs(clock) }, { merge: true });
+  unhold('REFERRER1xxxxxxxx');
+  const c1 = await REF.claimRewards(userReq('REFERRER1xxxxxxxx'));
+  const gd = grantsOf('REFERRER1xxxxxxxx')[0].d;
+  ok('R2 환불된 결제의 초대 보상은 7일 뒤에도 주지 않고 닫음, 코드 성과도 되돌림', c1.amount === 0 && gd.claimed === true && gd.revoked === 'refund' && raw('referralCodes/ABCDEF').earnedUn === 0 && raw('referralCodes/ABCDEF').purchased === 0, { c1, gd, code: raw('referralCodes/ABCDEF') });
+  // 환불 안 된 결제는 그대로 준다
+  resetServer();
+  const F2 = 'FriendTwo2xxxxxxxx';
+  const PF2 = `${F2.slice(0, 8)}_p7_r3_1`;
+  setup(F2, 'GHJKLM', PF2, 'confirmed');
+  await REF.referralOnPurchase(F2, 5, 7, { paymentId: PF2 });
+  unhold('REFERRER1xxxxxxxx');
+  const c2 = await REF.claimRewards(userReq('REFERRER1xxxxxxxx'));
+  ok('R3 환불 안 된 결제의 초대 보상은 5운', c2.amount === 5, c2);
+  // 결제번호 없는 옛 적립은 예전처럼
+  resetServer();
+  writeDoc('rewardGrants/REFERRER1xxxxxxxx/items/old1', { amount: 5, kind: 'purchase', code: 'OLDOLD', claimed: false, availableAtMs: Date.now() - 1000 });
+  const c3 = await REF.claimRewards(userReq('REFERRER1xxxxxxxx'));
+  ok('R4 결제번호 없는 옛 적립은 예전처럼 5운', c3.amount === 5, c3);
+}
+
 (async () => {
   partA();
   await partB();
   await partC();
+  await partD();
+  await partE();
+  await partF();
+  await partG();
+  await partR();
+  if (MUT.length) console.log(`\n변형 적용 ${mutUsed.size}/${MUT.length}`);
+  if (MUT.length && mutUsed.size !== MUT.length) { console.log('변형이 다 적용되지 않음'); fails++; }
   console.log(`\n${passes} PASS, ${fails} FAIL`);
   process.exit(fails ? 1 : 0);
 })().catch((e) => { console.error('시험 실패', e && e.stack ? e.stack : e); process.exit(1); });

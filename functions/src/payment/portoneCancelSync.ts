@@ -72,7 +72,8 @@ export const syncPortoneCancellations = onSchedule(
             paid: Math.max(0, Number(bal.paid || 0) - paidUn),
             bonus: Math.max(0, Number(bal.bonus || 0) - bonusUn),
           },
-          totalCharged: admin.firestore.FieldValue.increment(-paidUn),
+          // 2026-10-24 — 오너가 '결제 누락' 보상으로 넣은 결제(grantedBy 'owner', adminGrantCompensation)는 totalCharged 를 늘리지 않았다
+          ...(pd.grantedBy === 'owner' ? {} : { totalCharged: admin.firestore.FieldValue.increment(-paidUn) }),
         }, { merge: true });
         tx.update(payRef, {
           status: 'refunded', portoneStatus: p.status, cancelledAmount,

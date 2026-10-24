@@ -12,6 +12,12 @@
  *   감시가 넣은 결제는 응답을 받을 기기가 없으므로 결제 문서에 deviceCreditPending: true 를 남긴다.
  *   로그인한 웹 기기가 열리면 그 결제를 confirmPortonePayment 로 다시 부르고, claimPortoneDeviceCredit 가 한 기기에만 한 번 넘긴다
  *   (서버 잔액은 다시 늘리지 않는다). 기기 쪽: src/services/storage/balanceAdjust.ts resumePortonePayments.
+ *
+ * 기기 표식 (2026-10-24 검수, 응답이 끊긴 결제): 서버가 paidUn 을 어느 기기에 돌려주기로 정하는 트랜잭션(손님 화면 지급, 감시 몫 넘겨주기)에
+ *   그 기기가 보낸 표식(creditDeviceKey, 기기 localStorage 'saju500:credit_device')을 함께 남긴다. 지급은 끝났는데 응답이 끊기면
+ *   같은 기기가 같은 표식으로 다시 부를 때 paidUn 을 다시 돌려준다(recredit, RECREDIT_WINDOW_MS 안). 기기는 결제번호마다 한 번만 더하고
+ *   (saju500:portone_credited), 다른 기기는 표식이 달라 받지 못한다. 그래서 한 기기에 두 번 들어가지 않고, 응답이 끊겨도 빠지지 않는다.
+ *   오너가 관리자 화면에서 '결제 누락'으로 넣은 결제는 grantedBy 'owner'(adminGrantCompensation)라 표식이 없고 아무 기기도 받지 않는다(운은 보상으로 들어간다).
  */
 import * as admin from 'firebase-admin';
 import { PACKAGE_MAP } from '../shared/chargePackages';
@@ -21,6 +27,16 @@ export interface PortonePkg { name: string; paidUn: number; bonusUn: number }
 
 /** 지급이 끝난 결제인가 (confirmPortonePayment 의 isGranted 와 같은 기준) */
 export const isPortoneGranted = (d?: admin.firestore.DocumentData | null): boolean => !!d && (d.status === 'confirmed' || !!d.confirmedAt);
+
+/** 같은 기기 표식으로 paidUn 을 다시 돌려주는 기간 (기기 쪽 balanceAdjust.CREDIT_KEY_LIST_MS 가 이보다 짧아야 한다) */
+export const RECREDIT_WINDOW_MS = 30 * 864e5;
+
+/** 기기 표식 형식 (기기가 crypto.randomUUID 나 16진수로 만든다). 아니면 표식 없음으로 본다 */
+export function cleanDeviceKey(v: unknown): string {
+  return typeof v === 'string' && /^[A-Za-z0-9-]{16,64}$/.test(v) ? v : '';
+}
+
+const tsMs = (v: any): number => (v && typeof v.toMillis === 'function' ? v.toMillis() : 0);
 
 /**
  * 포트원 결제 지급. 결제 검증(PAID, 금액, 통화, 회원 ID, 실결제 채널)은 부르는 쪽이 이미 끝냈다.
@@ -34,8 +50,11 @@ export async function grantPortonePayment(opts: {
   pkg: PortonePkg;
   amount: number;
   grantedBy: PortoneGrantBy;
+  /** 손님 화면 지급일 때 응답을 받을 기기의 표식 (cleanDeviceKey 를 거친 값, 없으면 '') */
+  deviceKey?: string;
 }): Promise<{ granted: boolean; totalUn: number }> {
   const { uid, paymentId, pay, pkg, amount, grantedBy } = opts;
+  const deviceKey = grantedBy === 'client' ? cleanDeviceKey(opts.deviceKey) : '';
   const db = admin.firestore();
   const FV = admin.firestore.FieldValue;
   const userRef = db.collection('users').doc(uid);
@@ -75,15 +94,18 @@ export async function grantPortonePayment(opts: {
       confirmedAt: FV.serverTimestamp(),
       grantedBy,
       ...(grantedBy === 'watch' ? { deviceCreditPending: true, autoGrantedAt: FV.serverTimestamp() } : {}),
+      // 이 응답의 paidUn 을 받을 기기 (응답이 끊기면 같은 기기가 다시 받아 간다, 위 '기기 표식')
+      ...(deviceKey ? { creditDeviceKey: deviceKey, creditKeyAt: FV.serverTimestamp() } : {}),
     }, { merge: true });
     granted = true;
   });
 
   if (granted) {
     // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관, 지급 응답을 막지 않는다)
+    //   10-24 검수 — 결제번호를 같이 남겨, 그 결제가 환불되면 7일 보류 뒤에도 주지 않는다(referral.ts claimRewards)
     try {
       const { referralOnPurchase } = await import('../referral/referral');
-      await referralOnPurchase(uid, pkg.paidUn, totalUn);
+      await referralOnPurchase(uid, pkg.paidUn, totalUn, { paymentId });
     } catch (e: any) {
       console.warn('[grantPortonePayment] 친구 초대 보상 건너뜀', e?.message || e);
     }
@@ -91,27 +113,51 @@ export async function grantPortonePayment(opts: {
   return { granted, totalUn };
 }
 
+export interface DeviceCreditResult {
+  claimed: boolean;
+  paidUn: number;
+  bonusUn: number;
+  totalUn: number;
+  /** 같은 기기 표식으로 다시 돌려준 것 (응답이 끊겼던 결제) */
+  recredit?: boolean;
+  /** 그 결제를 넣은 쪽 ('client' 손님 화면, 'watch' 감시) */
+  grantedBy?: string;
+}
+
 /**
- * 감시가 넣은 결제의 운을 기기 하나에 한 번만 넘긴다 (서버 잔액은 바꾸지 않는다).
- *   deviceCreditPending 을 트랜잭션으로 내리므로 기기 여러 대가 동시에 불러도 한 기기만 paidUn 을 받는다.
+ * 지급이 끝난 결제의 운을 이 기기에 넘길지 정한다 (서버 잔액은 바꾸지 않는다).
+ *   ① 감시가 넣고 아직 어느 기기에도 안 간 결제(deviceCreditPending): 깃발을 트랜잭션으로 내리고 이 기기 표식을 남긴다.
+ *      기기 여러 대가 동시에 불러도 한 기기만 받는다.
+ *   ② 이미 이 기기 표식이 남은 결제(손님 화면 지급이나 ①로 이 기기가 받기로 한 결제): 응답이 끊겼을 수 있어 다시 돌려준다(recredit).
+ *      기기는 결제번호마다 한 번만 더하므로 두 번 들어가지 않는다. 표식이 없거나 다르면(다른 기기, 옛 화면, 오너 처리) 돌려주지 않는다.
  */
-export async function claimPortoneDeviceCredit(uid: string, paymentId: string): Promise<{ claimed: boolean; paidUn: number; bonusUn: number; totalUn: number }> {
+export async function claimPortoneDeviceCredit(uid: string, paymentId: string, deviceKeyRaw?: unknown): Promise<DeviceCreditResult> {
   const db = admin.firestore();
+  const deviceKey = cleanDeviceKey(deviceKeyRaw);
   const paymentRef = db.collection('users').doc(uid).collection('payments').doc(paymentId);
-  let out = { claimed: false, paidUn: 0, bonusUn: 0, totalUn: 0 };
+  const none = (): DeviceCreditResult => ({ claimed: false, paidUn: 0, bonusUn: 0, totalUn: 0 });
+  let out = none();
   await db.runTransaction(async (tx) => {
-    out = { claimed: false, paidUn: 0, bonusUn: 0, totalUn: 0 };
+    out = none();
     const snap = await tx.get(paymentRef);
     const d = snap.data();
-    if (!d || d.status !== 'confirmed' || d.deviceCreditPending !== true) return;
+    if (!d || d.status !== 'confirmed') return;
     const pkg = PACKAGE_MAP[Number(d.amount)];
     const paidUn = pkg ? pkg.paidUn : Number(d.paidUn) || 0;
     const bonusUn = pkg ? pkg.bonusUn : Number(d.bonusUn) || 0;
-    tx.update(paymentRef, {
-      deviceCreditPending: false,
-      deviceCreditedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    out = { claimed: true, paidUn, bonusUn, totalUn: paidUn + bonusUn };
+    const grantedBy = String(d.grantedBy || '');
+    if (d.deviceCreditPending === true) {
+      tx.update(paymentRef, {
+        deviceCreditPending: false,
+        deviceCreditedAt: admin.firestore.FieldValue.serverTimestamp(),
+        ...(deviceKey ? { creditDeviceKey: deviceKey, creditKeyAt: admin.firestore.FieldValue.serverTimestamp() } : {}),
+      });
+      out = { claimed: true, paidUn, bonusUn, totalUn: paidUn + bonusUn, grantedBy };
+      return;
+    }
+    if (deviceKey && d.creditDeviceKey === deviceKey && Date.now() - tsMs(d.creditKeyAt) <= RECREDIT_WINDOW_MS) {
+      out = { claimed: true, paidUn, bonusUn, totalUn: paidUn + bonusUn, recredit: true, grantedBy };
+    }
   });
   return out;
 }

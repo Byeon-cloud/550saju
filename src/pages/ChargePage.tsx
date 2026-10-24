@@ -11,7 +11,8 @@ import { CHARGE_PACKAGES, getTopicPrice } from '@/constants/pricing';
 import { resolveChargeContent } from '@/services/payment/chargeContent';
 import type { ChargeContent } from '@/services/payment/chargeContent';
 import type { ChargePackage } from '@/types/payment';
-import { getBalance, getMyProfile } from '@/services/storage/localStore';
+import { getBalance, getMyProfile, BALANCE_CHANGED_EVENT } from '@/services/storage/localStore';
+import { forgetPortonePending, PORTONE_RESUMED_EVENT } from '@/services/storage/balanceAdjust';
 import { markPaidOnce, hasPaidLocally, hasPaidOnServer } from '@/services/payment/payerHistory';
 import { Seal } from '@/components/hanji/Hanji';
 import { purchasePackage } from '@/services/payment/iapService';
@@ -264,6 +265,9 @@ export function ChargePage() {
       const portoneAmount = Number(searchParams.get('portone_amount') || 0);
       const pgCode = searchParams.get('code'); // 포트원이 실패 시 code/message 쿼리 부착
       if (pgCode) {
+        // 2026-10-24 검수 — 결제창이 실패나 취소로 돌아왔다. 데스크톱(portonePayment.ts)과 같이 적어 둔 결제번호를 지운다
+        //   (남겨 두면 7일 동안 열 때마다 서버 확인을 다시 불렀다). 그래도 실제로 결제됐다면 서버 감시가 찾아 채운다
+        forgetPortonePending(portonePid);
         import('@/services/analytics').then((a) => a.trackEvent('charge_failed', { pg: 'portone', reason: (searchParams.get('message') || pgCode).slice(0, 60) })).catch(() => {});
         toast.show(searchParams.get('message') || '결제가 완료되지 않았어요', 'warning');
         setSearchParams({}, { replace: true });
@@ -291,6 +295,33 @@ export function ChargePage() {
         });
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2026-10-24 검수 (웹만) — 잔액 숫자는 처음 값과 이 화면의 결제 성공 때만 바뀌어, 이어 받기(balanceAdjust.resumePortonePayments)로
+  //   들어온 운이 화면에 안 보였다. 잔액이 바뀔 때마다 다시 읽고, 이어 받기로 결제가 들어오면 결제 성공처럼 보러 온 화면으로 돌아간다
+  //   (이 화면에서 다른 결제를 하는 중이면 돌아가지 않는다). 앱인토스 빌드는 그대로.
+  const purchasingRef = useRef(false);
+  purchasingRef.current = purchasing;
+  const redirectRef = useRef(redirectTo);
+  redirectRef.current = redirectTo;
+  useEffect(() => {
+    if (isAppintosBuild) return;
+    const onBalance = () => setBalanceDisplay(getBalance());
+    let timer: number | undefined;
+    const onResumed = () => {
+      setBalanceDisplay(getBalance());
+      writeChargeCtx(null);
+      const to = redirectRef.current;
+      if (to && !purchasingRef.current) timer = window.setTimeout(() => { if (!purchasingRef.current) navigate(to, { replace: true }); }, 1400);
+    };
+    window.addEventListener(BALANCE_CHANGED_EVENT, onBalance);
+    window.addEventListener(PORTONE_RESUMED_EVENT, onResumed);
+    return () => {
+      window.removeEventListener(BALANCE_CHANGED_EVENT, onBalance);
+      window.removeEventListener(PORTONE_RESUMED_EVENT, onResumed);
+      if (timer) window.clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

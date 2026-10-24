@@ -214,6 +214,8 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
     //   그 몫은 balanceAdjust.resumePortonePayments 가 기기 하나에 한 번 넣으므로, 여기 차이 계산에서는 뺀다(둘 다 더하면 두 번 들어간다).
     //   서버 잔액을 먼저 읽고 그다음 그 목록을 읽는다(사이에 새로 채워진 결제는 목록에만 있어 덜 더해질 뿐 두 번 더해지지 않는다).
     //   결제 넣기와 같은 순간 돌지 않게 차례(withBalanceLock)를 지킨다. 목록을 못 읽으면 이번엔 잔액을 맞추지 않는다(두 번 더하지 않게).
+    //   10-24 검수 — 그 목록에는 '이 기기 표식으로 받기로 했는데 응답이 끊겨 아직 이 기기에 안 더한 결제'도 들어 있다(이어 받기가 다시 받는다).
+    //   차례는 Web Locks 로 탭 사이에서도 지킨다(다른 탭의 받아 가기와 겹쳐 두 번 더해지던 것).
     const { withBalanceLock, listPendingPortoneCredits, pendingPortoneCreditUn } = await import('./balanceAdjust');
     await withBalanceLock(async () => {
       const userDoc = await getDoc(doc(db, 'users', uid));
@@ -239,6 +241,8 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
               const diff = cloudTotal - localTotal;
               local.paid = (local.paid || 0) + diff;
               localStorage.setItem('saju500_balance_v2', JSON.stringify(local));
+              // 2026-10-24 — 웹 충전 화면이 다시 읽는다 (앱인토스 빌드는 예전 그대로)
+              if (!isAppintosBuild) { try { window.dispatchEvent(new Event('saju500:balance-changed')); } catch { /* noop */ } }
             }
             // 로컬이 더 많으면 (클라가 차감, 서버 미반영) — 무시. 다음 차감 시 서버에도 반영됨.
           } catch (parseErr) {

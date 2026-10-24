@@ -1,24 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthChange, signIn, checkRedirectResult, ensureAuth, maybeUpgradeToTossIdentity, type WebLoginProvider } from '@/services/auth/authService';
+// 로그인 직후 잔액 맞추기 + 웹 결제 이어 받기 (순서 지킴). 네이버 로그인 표시도 여기서 (services/auth/loginSync.ts)
+import { syncAfterLogin, takeLoginSyncPending } from '@/services/auth/loginSync';
 
 const DEV_MODE = false;
-
-/**
- * 로그인 직후 — 서버에서 보관함과 잔액을 맞추고(syncFromCloud), 그다음 확인이 끊긴 웹 결제와 서버가 자동으로 채운 웹 결제를 이 기기에 넣는다
- *   (2026-10-24, balanceAdjust.resumePortonePayments. 웹 화면, 로그인 계정만 — 앱인토스에서는 그 안에서 아무것도 하지 않는다).
- *   결제 넣기가 잔액 맞추기보다 먼저 돌면 로그아웃 스냅샷 되살리기가 그 운을 덮을 수 있어 순서를 지킨다.
- */
-function syncAfterLogin(uid: string): void {
-  Promise.all([import('@/services/storage/firestoreSync'), import('@/services/storage/balanceAdjust')])
-    .then(([{ syncFromCloud, syncToCloud }, adj]) => {
-      syncToCloud(uid);
-      const done = syncFromCloud(uid);
-      adj.noteLoginBalanceSync(done);
-      return done.then(() => adj.resumePortonePayments());
-    })
-    .catch(() => { /* 무해 — 다음 페이지 로드에서 다시 */ });
-}
 
 /** 로그인 계정의 사주원국 사본 합치기 (웹만 — 앱인토스 판정은 firestoreSync.mergeAccountProfiles 안에서) */
 function mergeAccountProfilesLater(uid: string): void {
@@ -66,6 +52,9 @@ export function useAuth() {
         // 2026-10-23 — 웹 로그인 계정(구글, 카카오, 네이버 맞춤 토큰 모두 여기로 온다): 그 계정의 사주원국 사본을 이 기기에 합친다.
         //   부팅 복원(restoreProfilesIfEmpty)은 로그인 전 익명 계정의 빈 사본을 읽어 가족 사주가 돌아오지 않았다. 웹만, 계정당 페이지 한 번.
         if (!u.isAnonymous) mergeAccountProfilesLater(u.uid);
+        // 2026-10-24 검수 — 네이버 로그인(콜백 화면이 남긴 표시)은 새 페이지에서 로그인 잔액 맞추기를 한 번 (loginSync.ts 설명).
+        //   표시는 한 번만 지워지므로 useAuth 를 여러 곳에서 써도 한 번만 돈다. 콜백 화면 자신에서는 돌리지 않는다(곧 새로 연다)
+        if (!u.isAnonymous && !window.location.pathname.startsWith('/auth/') && takeLoginSyncPending(u.uid)) syncAfterLogin(u.uid);
       }
     });
 

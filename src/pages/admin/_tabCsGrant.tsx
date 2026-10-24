@@ -27,6 +27,10 @@ export function TabCsGrant() {
   const [wipe, setWipe] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err' | 'info'; text: string } | null>(null);
+  // 2026-10-24 검수 — 결제 누락이면 어느 웹 결제인지 (서버가 그 결제를 '오너가 넣음'으로 적어 손님 기기가 다시 확인해도 두 번 들어가지 않게)
+  const [payMissing, setPayMissing] = useState(false);
+  const [payId, setPayId] = useState('');
+  const [appPay, setAppPay] = useState(false);
 
   // 2026-06-23 — 디바이스 ID(hex 32~128) 또는 회원 ID(Firebase uid · 영숫자 20~40) 둘 다 허용.
   //   ⚠️ uid 는 대소문자 구분이라 소문자화하면 안 됨(소문자화 시 claim 시 auth.uid 와 불일치 → 영영 미수령).
@@ -35,18 +39,23 @@ export function TabCsGrant() {
   const _isUid = !_isHex && /^[A-Za-z0-9_-]{20,40}$/.test(_raw);
   const did = _isHex ? _raw.toLowerCase() : _raw;
   const didValid = _isHex || _isUid;
+  const payIdValid = /^[A-Za-z0-9]{8}_[A-Za-z0-9_]{1,60}$/.test(payId.trim());
+  // 회원 ID 로 넣는 결제 누락은 웹 결제번호나 '앱 결제라 결제번호 없음' 중 하나가 꼭 있어야 한다 (디바이스 ID 는 앱 결제)
+  const payOk = !payMissing || _isHex || appPay || payIdValid;
+  const canGrant = didValid && payOk;
 
   const toggleWipe = (k: string) => setWipe((s) => {
     const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n;
   });
 
   const grant = async () => {
-    if (!didValid || busy) return;
+    if (!canGrant || busy) return;
     setBusy(true); setMsg(null);
     try {
-      const r = await callGrant({ action: 'grant', deviceId: did, amount: Number(amount) || 0, note, wipeTopics: Array.from(wipe) });
-      setMsg({ kind: 'ok', text: `지급 등록 완료 — 대기 중 합계 ${r.totalPending}운${r.accumulated ? ' (기존 미수령분에 누적)' : ''}. 고객이 앱을 열면 자동 적립돼요.` });
-      setWipe(new Set()); setNote('');
+      const payPart = !payMissing ? {} : { reason: 'pay_missing', ...(_isUid && !appPay ? { paymentId: payId.trim() } : { noPaymentId: true }) };
+      const r = await callGrant({ action: 'grant', deviceId: did, amount: Number(amount) || 0, note, wipeTopics: Array.from(wipe), ...payPart });
+      setMsg({ kind: 'ok', text: `지급 등록 완료 — 대기 중 합계 ${r.totalPending}운${r.accumulated ? ' (기존 미수령분에 누적)' : ''}. 고객이 앱을 열면 자동 적립돼요.${r.paymentMarked ? ' 그 결제는 오너가 넣은 것으로 적어 두었어요(손님 기기가 다시 확인해도 두 번 들어가지 않아요).' : ''}` });
+      setWipe(new Set()); setNote(''); setPayId('');
     } catch (e: any) {
       setMsg({ kind: 'err', text: `실패: ${e?.message || e}` });
     } finally { setBusy(false); }
@@ -95,6 +104,25 @@ export function TabCsGrant() {
             </div>
           </div>
           <div>
+            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <input type="checkbox" checked={payMissing} onChange={(e) => setPayMissing(e.target.checked)} />
+              결제했는데 운이 안 들어옴 (결제 누락)
+            </label>
+            {payMissing && _isUid && (
+              <div style={{ display: 'grid', gap: 6 }}>
+                <input style={{ ...inputStyle, fontFamily: 'monospace', borderColor: payId && !payIdValid ? '#C0392B' : C.line }} disabled={appPay}
+                  value={payId} onChange={(e) => setPayId(e.target.value)} placeholder="웹 결제번호 (경보 메일의 결제번호, 예: AbCd1234_p7_…)" />
+                <label style={{ fontSize: 12, color: C.mute, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={appPay} onChange={(e) => setAppPay(e.target.checked)} />
+                  앱(토스) 결제라 웹 결제번호가 없어요
+                </label>
+                <p style={{ fontSize: 11.5, color: C.mute, margin: 0, lineHeight: 1.6 }}>
+                  웹 결제번호를 넣으면 그 결제를 오너가 넣은 것으로 적어요. 손님 기기가 나중에 같은 결제를 다시 확인해도 두 번 들어가지 않아요.
+                </p>
+              </div>
+            )}
+          </div>
+          <div>
             <label style={labelStyle}>잘못 생성된 주제 결과 동반 삭제 (선택)</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {TOPIC_OPTS.map((t) => (
@@ -108,9 +136,9 @@ export function TabCsGrant() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={grant} disabled={!didValid || busy} style={{
-              flex: 1, padding: '12px 0', borderRadius: 10, border: 'none', cursor: didValid && !busy ? 'pointer' : 'not-allowed',
-              background: didValid && !busy ? C.gold : C.line, color: '#fff', fontSize: 14, fontWeight: 800,
+            <button onClick={grant} disabled={!canGrant || busy} style={{
+              flex: 1, padding: '12px 0', borderRadius: 10, border: 'none', cursor: canGrant && !busy ? 'pointer' : 'not-allowed',
+              background: canGrant && !busy ? C.gold : C.line, color: '#fff', fontSize: 14, fontWeight: 800,
             }}>{busy ? '처리 중...' : '운 지급 등록'}</button>
             <button onClick={checkStatus} disabled={!didValid || busy} style={{
               padding: '12px 18px', borderRadius: 10, cursor: didValid && !busy ? 'pointer' : 'not-allowed',

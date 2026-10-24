@@ -52,6 +52,8 @@ export interface LedgerRow {
   granted: boolean;
   /** 환불, 부분 환불 검토, 취소 기록 */
   refunded: boolean;
+  /** 지급한 쪽 ('client', 'watch', 'owner' 관리자 결제 누락, 없으면 '') */
+  grantedBy?: string;
 }
 
 /** 결제 확인이 이 사유로 실패했으면 결제 자체가 맞지 않는 것이라 자동으로 넣지 않는다 */
@@ -162,6 +164,7 @@ export function ledgerRowOf(where: string, d: Record<string, any>): LedgerRow {
     failReason: String(d?.failReason || ''),
     granted: status === 'confirmed' || !!d?.confirmedAt,
     refunded: ['refunded', 'partial_refund_review', 'cancelled'].includes(status) || !!d?.refundedAt || !!d?.portoneCancelledAt,
+    grantedBy: String(d?.grantedBy || ''),
   };
 }
 
