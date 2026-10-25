@@ -14,7 +14,9 @@ import { ReviewAsk } from '@/components/common/ReviewAsk';
 import { useToast } from '@/components/common/Toast';
 import { AILoading } from '@/components/common/AILoading';
 import {
-  getReport, getReports, getMyProfile, saveReport, refundBalance, getPendingSpends, spendBalance,
+  getReport, getReports, getMyProfile, saveReport, spendBalance,
+  readPremiumFresh, markPremiumFreshStarted, clearPremiumFresh, premiumSajuKey,
+  findPremiumPending, settlePremiumPending, refundPremiumPending, takePremiumAutoRefund,
   type LocalReport,
 } from '@/services/storage/localStore';
 // 2026-05-29 C1 fix — 프리미엄 SSE 실패 시 환불 금액 산정 (세일 반영).
@@ -32,6 +34,9 @@ import {
   type UnlockContentKey,
 } from './_ui_chrome';
 import { PremiumResult } from './types/PremiumResult';
+
+/** 2026-10-25 — 서버가 끊긴 요청을 끝까지 만들어 저장할 수 있는 시간 (5.5 세대 113~147초, 콜러블 마감 300초, 저장 여유) */
+const PREMIUM_RECOVER_WINDOW_MS = 330000;
 
 /** 2026-10-09 — 종합사주 그룹 점진 머지. 그룹마다 sections·sectionConclusions 가 따로 오므로 spread 만 하면
  *  나중 그룹 sections 가 앞 그룹 것을 덮는다(§02 본문이 사라졌다 다시 나타남). id 기준 합치고 정통 순서로 정렬. */
@@ -97,9 +102,12 @@ interface ResultGate {
  * ═════════════════════════════════════════════════════════════════ */
 function PremiumDarkHeader({
   name,
+  paidUn,
   onShareTap: _onShareTap,
 }: {
   name?: string;
+  /** 2026-10-25 — 이 풀이에 실제로 낸 운 (모르면 표시하지 않는다) */
+  paidUn?: number;
   onShareTap: () => void;
 }) {
   // mockup .header 진본 — 좌: ← / 중: title + sub / 우: badge "10운"
@@ -164,21 +172,24 @@ function PremiumDarkHeader({
           종합사주 열 장 풀이
         </div>
       </div>
-      <div
-        style={{
-          background: 'transparent',
-          color: '#E2C98F',
-          border: '1px solid rgba(214,184,122,0.7)',
-          fontSize: 13,
-          fontWeight: 700,
-          padding: '3px 9px',
-          borderRadius: 2,
-          letterSpacing: '0.04em',
-          flexShrink: 0,
-        }}
-      >
-        {getPremiumPrice().actualPrice}운
-      </div>
+      {/* 2026-10-25 — 오늘 가격이 아니라 이 풀이에 실제로 낸 운 (반값 5운으로 산 풀이가 나중에 '10운'으로 보이던 것). 모르는 옛 기록은 감춘다 */}
+      {typeof paidUn === 'number' && paidUn > 0 && (
+        <div
+          style={{
+            background: 'transparent',
+            color: '#E8D9B8',
+            border: '1px solid rgba(232,217,184,0.4)',
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '3px 9px',
+            borderRadius: 2,
+            letterSpacing: '0.04em',
+            flexShrink: 0,
+          }}
+        >
+          {paidUn}운
+        </div>
+      )}
     </header>
   );
 }
@@ -251,12 +262,23 @@ export function ResultPage(props: ResultPageProps = {}) {
       .finally(() => setRestoreSettled(true));
   }, [toast]);
 
+  // 2026-10-25 — 결제할 때 남긴 결과 화면 기록 (산 사람의 사주, 장부 id, 낸 운, 요청을 보냈는지). 화면이 열릴 때 한 번 읽는다.
+  //   SajuContext 는 메모리에만 있어 새로고침하면 비는데, 예전엔 그때 내 사주나 예시 사주로 새로 만들었다(산 사람 결과는 못 받고 서버는 또 깎음)
+  const freshEntry = useMemo(() => readPremiumFresh(reportId), [reportId]);
+
   const sajuData = useMemo(() => {
     // 0. 2026-10-17 — 이미 저장된 기록을 다시 여는 경우(새로 만든 직후가 아님)는 그 기록의 사주가 먼저.
     //    예전엔 앱이 기억하는 사주(ctx)가 먼저라, 뒤로 가기로 돌아오면 본문은 A 인데 이름과 팔자는 다른 사람이 나왔다.
     const freshNow = typeof window !== 'undefined' && /[?&]fresh=1/.test(window.location.search);
     if (!freshNow && reportId && reportId !== 'local') {
       const own = getReport(reportId);
+      if (own?.sajuData?.pillars?.length) return own.sajuData;
+    }
+    // 0-1. 2026-10-25 — 새로 만드는 화면은 결제할 때 남긴 그 사람 사주가 먼저. 기록이 없으면 아래 값은 화면을 그리는 자리 채움일 뿐,
+    //   생성에는 쓰지 않는다 (생성 effect 는 기록이 있어야 시작하고, 없으면 안내 화면)
+    if (freshNow) {
+      if (freshEntry?.sajuData?.pillars?.length) return freshEntry.sajuData;
+      const own = reportId ? getReport(reportId) : null;
       if (own?.sajuData?.pillars?.length) return own.sajuData;
     }
     // 1. Context에 데이터 있으면 사용 (InputPage → Loading → Result 플로우)
@@ -274,7 +296,7 @@ export function ResultPage(props: ResultPageProps = {}) {
     // 4. 데모 데이터
     try { return getDemoData(); } catch { return null; }
     // restoreTick: P0-3 서버 복원 성공 시 재평가 → getReport(reportId) 가 복원분을 집음
-  }, [ctxData, reportId, restoreTick]);
+  }, [ctxData, reportId, restoreTick, freshEntry]);
 
   if (!sajuData) {
     return (
@@ -311,83 +333,196 @@ export function ResultPage(props: ResultPageProps = {}) {
   const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 2026-10-23 — 실패로 보고 돌려준 운(실제로 낸 값). 그 뒤에 풀이가 늦게 도착하면 결과를 주고 이만큼 다시 거둔다
   const refundedAmountRef = useRef(0);
+  // 2026-10-25 — 이 결제의 장부 id 와 낸 운 (결과 화면 기록에서). 장부는 이 건만 지우고 돌려준다(다른 결제 장부는 그대로)
+  const pendingIdRef = useRef<string>('');
+  const paidAmountRef = useRef<number | null>(null);
+  // 2026-10-25 — 서버에 생성 요청을 보낸 시각 (끊긴 뒤 서버가 끝까지 만들 수 있는 동안만 완성본을 찾는다)
+  const streamStartedAtRef = useRef(0);
+  // 2026-10-25 — 실패로 운을 돌려줄 때 반값 혜택도 되살렸는지 (늦게 도착하면 다시 쓴 것으로)
+  const offerRestoredRef = useRef(false);
+  const failureHandlingRef = useRef(false); // 완성본 찾기가 이미 돌고 있는지 (워치독과 onError 가 겹칠 때 한 번만)
   // streamingAiResult 최신값을 effect 의 async 클로저에서 안전하게 읽기 위한 ref 미러
   const streamingAiResultRef = useRef<any>(streamingAiResult);
   useEffect(() => { streamingAiResultRef.current = streamingAiResult; }, [streamingAiResult]);
 
+  /** 2026-10-26 — 이 결제를 다 처리했으면(결과를 줬거나 운을 돌려줌) 주소에서 fresh 를 뗀다. 새로고침으로 다시 만들거나, 돌려준 뒤
+   *  뒤로 가기로 '돌려드릴게요' 화면에 다시 서지 않게. 이 화면을 떠난 뒤 늦게 끝났으면 지금 화면 주소는 건드리지 않는다 */
+  const dropFreshQuery = useCallback(() => {
+    if (window.location.pathname.endsWith(`/${reportId}`) && /[?&]fresh=1\b/.test(window.location.search)) {
+      navigate(window.location.pathname, { replace: true });
+    }
+  }, [reportId, navigate]);
+
   // 2026-07-01 — 완성본 전달 공통 경로 (SSE onDone · 앱인토스 callable · recovery 모두 이걸로). 한 번만.
-  const deliverReport = useCallback((finalAi: any) => {
+  //   2026-10-25 — opts.skipSave: 부팅 복구가 같은 기록 id 로 이미 저장한 것을 보여 줄 때 (다시 저장하지 않는다)
+  const deliverReport = useCallback((finalAi: any, opts?: { skipSave?: boolean }) => {
     if (streamSettledRef.current) return;
     streamSettledRef.current = true;
     if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
     setStreamingAiResult(finalAi);
     setArrivedGroups({ A: true, D: true, B: true, C: true });
     try {
-      saveReport({
-        id: reportId,
-        name: (sajuData as any)?.input?.name || '나',
-        input: (sajuData as any)?.input,
-        sajuData: sajuData as any,
-        type: 'paid',
-        contentType: 'report',
-        createdAt: new Date().toISOString(),
-        aiResult: finalAi as any,
-        // 2026-10-15 보관함 'N운 사용' 장부 — 결제 때 장부에 남긴 금액, 없으면 지금 가격
-        spentUn: (() => {
-          try { const p = getPendingSpends().find((x) => x.type === 'premium'); if (p && p.amount >= 0) return p.amount; } catch { /* noop */ }
-          return getPremiumPrice().actualPrice;
-        })(),
-      });
-      // 결과 영속 완료 → premium pending 해제 (부팅 자동환불 대상 제외)
-      import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
+      if (!opts?.skipSave) {
+        saveReport({
+          id: reportId,
+          name: (sajuData as any)?.input?.name || '나',
+          input: (sajuData as any)?.input,
+          sajuData: sajuData as any,
+          type: 'paid',
+          contentType: 'report',
+          createdAt: new Date().toISOString(),
+          aiResult: finalAi as any,
+          // 2026-10-15 보관함 'N운 사용' 장부 — 결제 때 남긴 금액, 없으면 지금 가격
+          spentUn: (() => {
+            if (typeof paidAmountRef.current === 'number' && paidAmountRef.current >= 0) return paidAmountRef.current;
+            try { const p = pendingIdRef.current ? findPremiumPending({ id: pendingIdRef.current }) : null; if (p && p.amount >= 0) return p.amount; } catch { /* noop */ }
+            return getPremiumPrice().actualPrice;
+          })(),
+        });
+      }
+      // 결과 영속 완료 → 이 결제의 장부만 해제 (부팅 자동환불 대상 제외). 2026-10-25 — 예전엔 'premium' 장부를 종류째 지워
+      //   같은 때 산 다른 사람 몫의 장부까지 사라졌다
+      if (pendingIdRef.current) settlePremiumPending({ id: pendingIdRef.current });
     } catch { /* noop — UI 는 streamingAiResult 로 이미 렌더됨 */ }
-    // URL 정리 (fresh 쿼리 제거 — 새로고침 시 재생성 방지)
-    navigate(window.location.pathname, { replace: true });
-  }, [reportId, sajuData, navigate]);
+    clearPremiumFresh(reportId);
+    // URL 정리 (fresh 쿼리 제거 — 새로고침 시 재생성 방지). 2026-10-25 — 이 화면을 떠난 뒤 늦게 끝났으면 지금 화면 주소는 건드리지 않는다
+    dropFreshQuery();
+  }, [reportId, sajuData, dropFreshQuery]);
 
-  // 차감액 산정: 세일 반영 actualPrice. 1회만 환불 (refundedRef 가드).
-  // 🚨 2026-07-01 — 환불 전에 recovery 먼저: 서버가 이미 완성·저장(generatePremiumReportStream recovery 블롭)했으면
-  //   재생성 0 으로 그대로 전달 → "서버 성공·전달 실패 → 환불+'분석실패'+토큰낭비" 근본 차단(준기 지적).
-  //   2026-10-23 — 서버가 아직 만드는 중일 수 있어 완성본 찾기를 한 번이 아니라 15초 간격 다섯 번(약 1분) 한다.
-  //   10-14 모델 교체 뒤 종합사주가 113~147초 걸리는데 화면은 120초에 실패로 보고 운을 돌려줘, 서버는 끝까지 만들고 깎았다
-  //   (10-23 웹 손님 둘: 실패로 보여 '다시 만들기'로 10운을 또 쓰거나, 부푼 화면 잔액으로 다음 풀이가 '운이 부족합니다'로 막힘).
-  const handleStreamFailure = useCallback(async (_msg: string) => {
-    if (streamSettledRef.current || refundedRef.current) return;
-    for (let i = 0; i < 5; i++) {
-      try {
-        const { recoverPremiumResult } = await import('@/services/ai/reportGenerator');
-        const rec = await recoverPremiumResult();
-        const recOk = !!(rec?.found && rec.content) && (() => {
-          try { return !!rec.sajuData?.pillars && JSON.stringify(rec.sajuData.pillars) === JSON.stringify((sajuData as any)?.pillars); }
-          catch { return false; }
-        })();
-        if (recOk && !streamSettledRef.current && !refundedRef.current) {
-          deliverReport({ ...(rec.content as any), tier: 'premium' as const });
-          return; // 환불 X — 유저는 이미 만든 결과를 받음 (토큰 회수)
-        }
-      } catch { /* noop → 다시 찾기 */ }
-      if (streamSettledRef.current || refundedRef.current) return; // 그사이 스트림이 끝났다
-      if (i < 4) await new Promise((r) => setTimeout(r, 15000));
-    }
+  // 2026-10-25 — 만들지 못했을 때: 이 결제의 장부 건만큼 돌려준다(반값으로 샀으면 혜택도 되살림). 장부에 없으면 이미 결과를 받았거나
+  //   부팅 자동환불로 돌려준 건이라 0. 예전엔 장부가 없으면 지금 가격으로 또 돌려줘 이중 환불이 될 수 있었다
+  const refundFailedPremium = useCallback(() => {
     if (streamSettledRef.current || refundedRef.current) return;
     refundedRef.current = true;
     streamSettledRef.current = true;
     if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
-    // 2026-10-23 — 돌려줄 값은 결제 때 장부에 남긴 실제 금액(반값 5운으로 샀으면 5운). 예전엔 지금 정가(10운)를 돌려줘 화면 잔액이 부풀었다
-    const refundAmount = (() => {
-      try { const pend = getPendingSpends().find((x) => x.type === 'premium'); if (pend && pend.amount > 0) return pend.amount; } catch { /* noop */ }
-      return getPremiumPrice().actualPrice;
-    })();
-    refundedAmountRef.current = refundAmount;
-    try { refundBalance(refundAmount); } catch { /* noop */ }
-    // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
-    import('@/services/storage/localStore').then(m => m.clearPendingSpendByType('premium')).catch(() => {});
-    setStreamError(`풀이를 만들지 못해서 ${refundAmount}운을 돌려드렸어요. 잠시 뒤 다시 만들어 주세요.`);
-  }, [sajuData, deliverReport]);
+    let r = pendingIdRef.current ? refundPremiumPending({ id: pendingIdRef.current }) : { amount: 0, offer: false };
+    // 2026-10-26 — 이미 부팅 자동환불이 돌려준 건이면 그 값으로 안내한다 (늦게 도착하면 아래 onDone 이 그만큼 다시 거둔다)
+    if (r.amount <= 0 && pendingIdRef.current) {
+      const auto = takePremiumAutoRefund(pendingIdRef.current);
+      if (auto) r = auto;
+    }
+    refundedAmountRef.current = r.amount;
+    offerRestoredRef.current = r.offer;
+    clearPremiumFresh(reportId);
+    setStreamError(r.amount > 0
+      ? `풀이를 만들지 못해서 ${r.amount}운을 돌려드렸어요. 잠시 뒤 다시 만들어 주세요.`
+      : '풀이를 만들지 못했어요. 쓰신 운이 돌아오지 않았다면 고객문의로 알려 주세요.');
+    // 2026-10-26 — 돌려준 뒤 주소에서 fresh 를 뗀다 (deliverReport 와 같게). 뒤로 가기로 '자동으로 돌려드려요' 화면에 다시 서지 않게.
+    //   늦게 도착한 풀이(onDone)는 이 뒤에도 그대로 받는다
+    dropFreshQuery();
+  }, [reportId, dropFreshQuery]);
+
+  /** 2026-10-26 — 서버 완성본을 주기 직전. 이 결제 장부가 그대로면 바로 준다(deliverReport 가 장부를 지운다).
+   *  이 화면이 돌려준 게 아닌데 장부가 사라졌고 부팅 자동환불 기록이 있으면(결제 뒤 12분이 지나 새로고침, App.tsx reconcile),
+   *  돌려준 운을 다시 거두고(반값 혜택도 다시 쓴 것으로) 준다. 예전엔 결과도 받고 자동환불도 받았다.
+   *  거둘 운이 모자라면(돌려받은 운을 이미 썼다) 결과 대신 돌려드렸다는 안내를 띄운다. 반환: 결과를 줘도 되는지 */
+  const takeBackAutoRefund = useCallback((): boolean => {
+    const pid = pendingIdRef.current;
+    if (!pid || refundedRef.current || findPremiumPending({ id: pid })) return true;
+    const rec = takePremiumAutoRefund(pid);
+    if (!rec || rec.amount <= 0) return true; // 자동환불로 돌려준 건이 아니다 (로그아웃 정리 등) — 거두지 않는다
+    if (!spendBalance(rec.amount)) {
+      import('@/services/analytics').then((a) => a.trackEvent('premium_auto_refund_kept', { amount: rec.amount })).catch(() => {});
+      refundedRef.current = true;
+      streamSettledRef.current = true;
+      if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; }
+      clearPremiumFresh(reportId);
+      setStreamError(`풀이가 늦게 도착해서, 그사이 쓰신 ${rec.amount}운을 이미 돌려드렸어요. 이 풀이를 보려면 다시 만들어 주세요.`);
+      dropFreshQuery();
+      return false;
+    }
+    if (rec.offer) import('@/services/offers/firstDailyOffer').then((m) => m.markFirstDailyOfferUsed()).catch(() => {});
+    // 홈의 '자동으로 돌려드렸어요' 안내도 그만큼 줄인다 (App.tsx settle → HomePage)
+    try {
+      const n = Number(localStorage.getItem('saju500:refund_notice')) || 0;
+      const left = Math.round((n - rec.amount) * 10) / 10;
+      if (left > 0) localStorage.setItem('saju500:refund_notice', String(left));
+      else localStorage.removeItem('saju500:refund_notice');
+    } catch { /* noop */ }
+    import('@/services/analytics').then((a) => a.trackEvent('premium_auto_refund_reclaimed', { amount: rec.amount })).catch(() => {});
+    return true;
+  }, [reportId, dropFreshQuery]);
+
+  /** 2026-10-25 — 서버 완성본 찾기. 요청을 보낸 뒤 서버가 끝까지 만들 수 있는 동안(startedAt + 330초, 적어도 minTries 번) 15초마다.
+   *  이 사주(premiumSajuKey)의 이번 요청 뒤에 만든 결과만 받는다. 반환: 끝났으면(전달됨, 다른 경로가 끝냄) true, 못 찾았으면 false */
+  const waitForServerResult = useCallback(async (startedAt: number, minTries: number): Promise<boolean> => {
+    const key = premiumSajuKey(sajuData);
+    if (!key) return false;
+    const deadline = Math.max(startedAt + PREMIUM_RECOVER_WINDOW_MS, Date.now() + (minTries - 1) * 15000);
+    for (;;) {
+      if (streamSettledRef.current || refundedRef.current) return true;
+      // 부팅 복구(App.tsx)가 같은 기록 id 로 먼저 저장했으면 그걸 보여 준다
+      const saved = getReport(reportId);
+      if (saved?.aiResult && Object.keys(saved.aiResult).length > 0) {
+        deliverReport(saved.aiResult, { skipSave: true });
+        setRestoreTick((t) => t + 1);
+        return true;
+      }
+      try {
+        const { recoverPremiumResult } = await import('@/services/ai/reportGenerator');
+        const sinceStart = Date.now() - startedAt + 10000; // 이번 요청 뒤에 만든 것만 (상대 시간이라 기기 시계가 틀려도 맞다)
+        const rec = await recoverPremiumResult({ sajuKey: key, maxAgeMs: sinceStart });
+        // 2026-10-26 — ageMs 가 있어야 받는다. 옛 서버는 ageMs 를 주지 않고 sajuKey, maxAgeMs 도 무시해(한 시간 안 가장 새 결과)
+        //   이번 결제 전에 만든 결과를 이번 결과로 줄 수 있었다
+        const recent = typeof rec?.ageMs === 'number' && rec.ageMs <= sinceStart;
+        if (rec?.found && rec.content && recent && premiumSajuKey(rec.sajuData) === key && !streamSettledRef.current && !refundedRef.current) {
+          // 장부가 이미 자동환불됐으면 돌려준 운을 먼저 다시 거둔다. 못 거두면 결과 대신 돌려드렸다는 안내 (takeBackAutoRefund)
+          if (!takeBackAutoRefund()) return true;
+          deliverReport({ ...(rec.content as any), tier: 'premium' as const });
+          return true; // 환불 X — 유저는 이미 만든 결과를 받음 (토큰 회수)
+        }
+      } catch { /* noop → 다시 찾기 */ }
+      if (streamSettledRef.current || refundedRef.current) return true; // 그사이 스트림이 끝났다
+      if (Date.now() + 15000 > deadline) return false;
+      await new Promise((r) => setTimeout(r, 15000));
+    }
+  }, [sajuData, reportId, deliverReport, takeBackAutoRefund]);
+
+  // 🚨 2026-07-01 — 환불 전에 recovery 먼저: 서버가 이미 완성·저장(generatePremiumReportStream recovery 블롭)했으면
+  //   재생성 0 으로 그대로 전달 → "서버 성공·전달 실패 → 환불+'분석실패'+토큰낭비" 근본 차단(준기 지적).
+  //   2026-10-23 — 10-14 모델 교체 뒤 종합사주가 113~147초 걸리는데 화면은 120초에 실패로 보고 운을 돌려줘, 서버는 끝까지 만들고 깎았다
+  //   (10-23 웹 손님 둘: 실패로 보여 '다시 만들기'로 10운을 또 쓰거나, 부푼 화면 잔액으로 다음 풀이가 '운이 부족합니다'로 막힘).
+  //   2026-10-25 — 찾는 시간을 '실패를 안 뒤 1분'에서 '요청을 보낸 뒤 서버가 끝까지 만들 수 있는 시간(330초)'으로 바꿨다(30초에 끊기면
+  //   90초에 돌려주고 서버는 130초에 끝내 깎던 것). 서버가 실패를 알린 경우(kind 'server', 'http')는 서버가 깎지 않았거나 이미 돌려줬으니 바로 돌려준다.
+  const handleStreamFailure = useCallback(async (_msg: string, kind?: string) => {
+    if (streamSettledRef.current || refundedRef.current || failureHandlingRef.current) return;
+    failureHandlingRef.current = true;
+    if (kind !== 'server' && kind !== 'http') {
+      const done = await waitForServerResult(streamStartedAtRef.current || Date.now(), 2);
+      if (done) return;
+    }
+    refundFailedPremium();
+  }, [waitForServerResult, refundFailedPremium]);
 
   useEffect(() => {
     if (!isFreshMode || loadedReport || streamStartedRef.current || !sajuData) return;
+    // 🚨 2026-10-25 — 결제할 때 남긴 결과 화면 기록이 없으면 만들지 않는다 (아래 안내 화면). 예전엔 이 주소만 열리면(새로고침, 뒤로 가기)
+    //   기억에 남은 사주나 내 사주, 예시 사주로 새로 만들어, 산 사람 결과는 못 받고 로그인 계정은 서버에서 한 번 더 깎였다
+    const entry = readPremiumFresh(reportId);
+    if (!entry) return;
     streamStartedRef.current = true;
+    pendingIdRef.current = entry.pendingId || '';
+    paidAmountRef.current = typeof entry.amount === 'number' ? entry.amount : null;
+    // 새로고침 뒤(앱 기억이 빔)거나 이미 요청을 보낸 기록이면: 다시 만들지 않고 서버 완성본만 찾는다
+    if (!ctxData || entry.started) {
+      if (!entry.started) {
+        // 요청을 보내기 전에 화면이 다시 열렸다 → 서버는 만들지도 깎지도 않았다 → 바로 돌려준다
+        refundFailedPremium();
+        return;
+      }
+      const startedAt = entry.startedAt || entry.at || Date.now();
+      streamStartedAtRef.current = startedAt;
+      failureHandlingRef.current = true;
+      (async () => {
+        const done = await waitForServerResult(startedAt, 3);
+        import('@/services/analytics').then((a) => a.trackEvent('premium_reload_recover', { found: done ? 1 : 0 })).catch(() => {});
+        if (!done) refundFailedPremium();
+      })();
+      return;
+    }
+    markPremiumFreshStarted(reportId); // 요청을 보내기 직전 — 이 뒤로 새로고침되면 다시 보내지 않는다
+    streamStartedAtRef.current = Date.now();
     // 🚨 2026-06-22 CRITICAL — wall-clock 워치독(최종 안전망). 연결 hang(reader 무한대기)·부분그룹 도착 후
     //   멈춤 등 gotTerminal/catch 가 못 잡는 '진짜 멈춤'에서, 완료/실패 신호가 전혀 없으면 강제
     //   실패처리(환불 + 에러카드) → "로딩만 길고 결과 안 나옴" 영구 멈춤을 근본 차단.
@@ -437,7 +572,13 @@ export function ResultPage(props: ResultPageProps = {}) {
             deliverReport({ ...(content as any), tier: 'premium' as const });
           } catch (e: any) {
             console.error('[ResultPage:fresh callable] 예외:', e?.message);
-            await handleStreamFailure(e?.message || 'callable exception');
+            // 2026-10-25 — 서버가 실패를 알린 경우(잔액 부족, 하루 상한, 'AI 분석 실패' 뒤 서버 환불)는 바로 돌려준다.
+            //   연결 끊김과 시간 초과('internal' 이름만 온 것, deadline-exceeded, unavailable)만 서버 완성본을 찾는다
+            const code = String(e?.code || '');
+            const m = String(e?.message || '');
+            const serverSaid = /failed-precondition|resource-exhausted|invalid-argument|unauthenticated|permission-denied/.test(code)
+              || (/internal/.test(code) && m.startsWith('AI 분석 실패'));
+            await handleStreamFailure(m || 'callable exception', serverSaid ? 'server' : 'network');
           } finally {
             progressSub?.unsubscribe();
           }
@@ -452,26 +593,33 @@ export function ResultPage(props: ResultPageProps = {}) {
           },
           onDone: ({ content }: { reportId: string; content: any }) => {
             // 2026-10-23 — 이미 실패로 보고 운을 돌려준 뒤 늦게 도착했으면: 결과를 주고 돌려준 운을 다시 거둔다(서버는 이미 깎았다)
-            if (refundedRef.current && refundedAmountRef.current > 0) {
+            //   2026-10-25 — 돌려준 운이 0 이어도(장부가 이미 처리됨) 결과는 보여 준다. 반값 혜택을 되살렸으면 다시 쓴 것으로
+            if (refundedRef.current) {
               const back = refundedAmountRef.current;
               refundedAmountRef.current = 0;
-              try { spendBalance(back); } catch { /* noop */ }
+              if (back > 0) { try { spendBalance(back); } catch { /* noop */ } }
+              if (offerRestoredRef.current) {
+                offerRestoredRef.current = false;
+                import('@/services/offers/firstDailyOffer').then((m) => m.markFirstDailyOfferUsed()).catch(() => {});
+              }
               streamSettledRef.current = false;
               setStreamError(null);
               import('@/services/analytics').then((a) => a.trackEvent('premium_late_done', { amount: back })).catch(() => {});
             }
             deliverReport({ ...(content as any), tier: 'premium' as const }); // 완성본 전달(영속·pending해제·URL정리 공통)
           },
-          onError: (msg: string) => {
-            console.warn('[ResultPage:fresh SSE] 실패:', msg);
+          onError: (msg: string, info?: { kind: string }) => {
+            console.warn('[ResultPage:fresh SSE] 실패:', msg, info?.kind);
             // 2026-07-01 — 스트리밍 중 에러 → handleStreamFailure 가 recovery 우선 시도(가능하면 전달, 안 되면 환불).
-            if (!streamSettledRef.current) handleStreamFailure(msg);
+            //   2026-10-25 — kind 'server', 'http' 는 기다리지 않고 바로 돌려준다 (reportGenerator PremiumStreamCallbacks)
+            if (!streamSettledRef.current) handleStreamFailure(msg, info?.kind);
           },
         });
       } catch (e: any) {
         console.error('[ResultPage:fresh SSE] 예외:', e?.message);
         const hasPartial = Object.keys(streamingAiResultRef.current || {}).length > 0;
-        if (!hasPartial) handleStreamFailure(e?.message || 'stream exception');
+        // 2026-10-25 — 여기로 오는 건 요청을 보내기 전 실패(모듈, 인증 준비)뿐이라 서버는 깎지 않았다 → 'http'
+        if (!hasPartial) handleStreamFailure(e?.message || 'stream exception', 'http');
       }
     })();
     return () => { if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null; } };
@@ -500,7 +648,9 @@ export function ResultPage(props: ResultPageProps = {}) {
   const isFreshStreamingIncomplete = isFreshStreaming && !allGroupsArrived;
 
   // effective storedReport — 저장된 게 우선, 없고 fresh 모드면 streaming 합성
-  const storedReport: LocalReport | null = loadedReport ?? (streamingAiResult ? ({
+  //   2026-10-26 — 실패 안내(streamError) 중에는 합성하지 않는다. 돌려준 뒤 주소에서 fresh 를 떼면(dropFreshQuery) 빈 합성 결과가
+  //   '받은 결과'로 보여 출석이 찍히거나 옛 1운 화면으로 보고 홈으로 튕기던 길을 막는다
+  const storedReport: LocalReport | null = loadedReport ?? (streamingAiResult && !streamError ? ({
     id: reportId,
     name: (sajuData as any)?.input?.name || '나',
     input: (sajuData as any)?.input,
@@ -703,6 +853,33 @@ export function ResultPage(props: ResultPageProps = {}) {
     );
   }
 
+  // 2026-10-25 — 결제할 때 남긴 결과 화면 기록이 없는 fresh 주소 (탭이 새로 열려 기록이 사라짐, 이미 끝난 주소로 되돌아옴).
+  //   만들지 않는다. 진행 중이던 결제는 부팅 복구가 보관함에 넣거나, 못 찾으면 장부 자동환불이 돌려준다(App.tsx)
+  const freshNoRecord = isFreshMode && !loadedReport && !freshEntry;
+  if (freshNoRecord) {
+    return (
+      <div className="min-h-screen" style={{ background: 'var(--bg-page-gradient)' }}>
+        <Header title="종합사주" />
+        <ErrorState
+          title="이 화면에서 풀이를 이어 받지 못했어요"
+          description="화면이 새로 열리면서 만들던 풀이와 연결이 끊겼어요. 풀이가 다 만들어졌다면 곧 보관함에 저장되고, 만들어지지 않았다면 쓰신 운은 자동으로 돌려드려요."
+          onRetry={() => navigate('/storage', { replace: true })}
+          retryLabel="보관함 열기"
+        />
+        <div className="max-w-mobile mx-auto px-5 pb-10 flex gap-2">
+          <button type="button" onClick={() => navigate('/', { replace: true })}
+            className="flex-1 py-3 rounded-xl text-h3 font-semibold" style={{ background: '#FFFDF8', border: '1px solid #E1D7C4', color: '#4B4238' }}>
+            홈으로
+          </button>
+          <button type="button" onClick={() => navigate(`/my?inquiry=ai_fail${reportId ? `&rid=${encodeURIComponent(reportId)}` : ''}`)}
+            className="flex-1 py-3 rounded-xl text-h3 font-semibold" style={{ background: '#FFFDF8', border: '1px solid #E1D7C4', color: '#4B4238' }}>
+            고객문의
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // 2026-06-24 — 인플루언서 피드백 반영(2026-06-15 '즉시 노출' 결정 폐기): premium·basic 모두 전 그룹 도착
   //   전엔 풀스크린 AILoading 유지 → '완성본'만 노출. 부분/ fallback 본문을 먼저 보여주고 나중에 AI 로 바꾸던
   //   것이 "읽는 도중 내용이 바뀜" 혼란의 원인이었음. A(14K)가 병목이라 어차피 대기시간은 비슷하고, 틀린 본문
@@ -776,7 +953,11 @@ export function ResultPage(props: ResultPageProps = {}) {
       }}
     >
       {/* 2026-05-07 — Premium 전용. Basic Header 제거 */}
-      <PremiumDarkHeader name={name} onShareTap={() => setShowShareModal(true)} />
+      <PremiumDarkHeader
+        name={name}
+        paidUn={typeof loadedReport?.spentUn === 'number' ? loadedReport.spentUn : (isFreshMode ? freshEntry?.amount : undefined)}
+        onShareTap={() => setShowShareModal(true)}
+      />
 
       {/* 공유 시트 (Phase B ShareSheet wrapper — Sprint 1 ShareModal forward, P2-1 블러 OG 보존) */}
       <ShareSheet
@@ -812,34 +993,35 @@ export function ResultPage(props: ResultPageProps = {}) {
              페이지로 진입 → PremiumResult 가 partial-safe 라 빈 sections 자리는 자체 fallback. 사용자에게 진행
              중임을 알리는 정보성 banner 로 보완. */}
           {isPremiumLayout && isPremiumStreamingIncomplete && (
+            // 2026-10-25 v9 — 그라데이션과 금색 상태 표시를 걷어 내고 종이 바탕에 먹 (금색은 누르는 주 버튼에만)
             <div style={{
               position: 'sticky', top: 56, zIndex: 40,
               margin: '0 16px 14px',
-              background: 'linear-gradient(135deg, #FFFBF0 0%, #FFF6E0 100%)',
-              border: '1px solid rgba(184,150,90,0.35)',
+              background: '#FFFDF8',
+              border: '1px solid rgba(26,22,18,0.18)',
               borderRadius: 12,
               padding: '12px 14px',
               display: 'flex', alignItems: 'center', gap: 10,
-              boxShadow: '0 2px 8px rgba(184,150,90,0.12)',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.06)',
             }}>
               <div style={{
                 width: 18, height: 18, flexShrink: 0,
-                border: '2px solid rgba(184,150,90,0.25)',
-                borderTopColor: '#B8965A',
+                border: '2px solid rgba(26,22,18,0.15)',
+                borderTopColor: '#1A1612',
                 borderRadius: '50%',
                 animation: 'premium-spin 0.9s linear infinite',
               }} />
               <style>{`@keyframes premium-spin { to { transform: rotate(360deg); } }`}</style>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#5C4A2E', marginBottom: 4 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1612', marginBottom: 4 }}>
                   풀이를 쓰는 중이에요, {(arrivedGroups.A ? 1 : 0) + (arrivedGroups.D ? 1 : 0) + (arrivedGroups.B ? 1 : 0) + (arrivedGroups.C ? 1 : 0)}/4 도착
                 </div>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
                   {(['A', 'D', 'B', 'C'] as const).map((g) => (
-                    <div key={g} style={{ flex: 1, height: 4, borderRadius: 2, background: arrivedGroups[g] ? '#B8965A' : 'rgba(184,150,90,0.18)', transition: 'background 0.4s' }} />
+                    <div key={g} style={{ flex: 1, height: 4, borderRadius: 2, background: arrivedGroups[g] ? '#1A1612' : 'rgba(26,22,18,0.15)', transition: 'background 0.4s' }} />
                   ))}
                 </div>
-                <div style={{ fontSize: 13, color: '#8C6D3D', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 13, color: '#6F6557', lineHeight: 1.5 }}>
                   '작성 중' 표시가 없는 섹션은 지금 바로 읽을 수 있어요. 나머지도 다 쓰는 대로 채워져요.
                 </div>
               </div>

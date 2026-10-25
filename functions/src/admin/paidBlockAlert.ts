@@ -44,7 +44,9 @@ export const alertPaidBlocked = onSchedule(
     const buys = rows.filter((e) => !e.internal && e.uid && e.name === 'content_purchase').sort((a, b) => tsMs(a.ts) - tsMs(b.ts));
     for (let i = 1; i < buys.length; i++) {
       const a = buys[i - 1]; const b = buys[i];
-      if (a.uid === b.uid && a.props?.type === b.props?.type && a.props?.type !== 'chat' && tsMs(b.ts) >= since && tsMs(b.ts) - tsMs(a.ts) < 10 * 60 * 1000 && !OWNER_UIDS.includes(b.uid)) {
+      // 2026-10-26 — 주제운은 같은 주제일 때만(10-24 연애운 뒤 재회운을 산 손님이 경보로 잡힘, 두 풀이 다 정상)
+      const sameTopic = a.props?.type !== 'topic' || (a.props?.topic || '') === (b.props?.topic || '');
+      if (a.uid === b.uid && a.props?.type === b.props?.type && sameTopic && a.props?.type !== 'chat' && tsMs(b.ts) >= since && tsMs(b.ts) - tsMs(a.ts) < 10 * 60 * 1000 && !OWNER_UIDS.includes(b.uid)) {
         note(b.uid, `${kstTime(tsMs(b.ts))} ${b.props?.type} 를 ${Math.round((tsMs(b.ts) - tsMs(a.ts)) / 60000)}분 안에 두 번 삼(${a.props?.amount}운, ${b.props?.amount}운)`);
       }
     }

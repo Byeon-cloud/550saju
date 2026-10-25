@@ -35,11 +35,12 @@ export const ART = {
 export const INK_HERO_BG = "linear-gradient(180deg, rgba(26,22,18,.55) 0%, rgba(26,22,18,.82) 45%, #1A1612 100%), url('/art/inwang.webp') 30% 35% / cover no-repeat, #1A1612";
 export const ART_CREDIT = '그림: 정선 「개화사」「인왕제색도」, 김홍도 「금강사군첩」 중 장안사 (공유마당 저작권 만료 저작물). 책 표지: 훈민정음 해례본 영인본 표지 (서울대 규장각, 퍼블릭 도메인)를 고쳐 씀';
 
-export function GoldCta({ children, sub, onClick, disabled, ariaLabel, style }: {
+export function GoldCta({ children, sub, onClick, disabled, ariaLabel, style, sheen }: {
   children: ReactNode; sub?: ReactNode; onClick?: () => void; disabled?: boolean; ariaLabel?: string; style?: CSSProperties;
+  /** 2026-10-26 화면에서 처음 누를 버튼 하나에만 — 빛이 세 번 지나가고 멈춘다 (hanji.css .hj-sheen) */ sheen?: boolean;
 }) {
   return (
-    <button type="button" className="hj-cta" onClick={onClick} disabled={disabled} aria-label={ariaLabel} style={style}>
+    <button type="button" className={`hj-cta${sheen ? ' hj-sheen' : ''}`} onClick={onClick} disabled={disabled} aria-label={ariaLabel} style={style}>
       <span>{children}</span>
       {sub != null && <small>{sub}</small>}
     </button>

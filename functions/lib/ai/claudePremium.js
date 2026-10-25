@@ -29,6 +29,7 @@ const claudeClient_1 = require("../shared/claudeClient");
 const parseJson_1 = require("./parseJson");
 const promptsV3_2 = require("./promptsV3");
 const aiUsageLog_1 = require("../shared/aiUsageLog");
+const aiFailureLog_1 = require("../shared/aiFailureLog");
 const kstTime_1 = require("../utils/kstTime");
 const lunar_javascript_1 = require("lunar-javascript");
 const sinsal_1 = require("./sinsal");
@@ -92,7 +93,7 @@ JSON 1개로 응답:
     {"id": "sipsung", "title": "십성", "content": "<400~900자>"},
     {"id": "yongsin", "title": "용신과 조후", "content": "<500~900자>"}
   ],
-  "lifestyleAdvice": "<150~250자. 용신에서 나온 생활 행동 딱 두 가지. 하나는 동적 context 의 '앞으로 12개월 달 판정'에서 도움 쪽 달 하나를 골라 그 달에 할 큰일(계약, 접수, 이사 결정 같은 일)을 달 이름과 함께 쓴다. 하나는 매주 정해 둔 요일에 할 작은 습관 하나. 옷, 색, 음식, 가구 배치, 방위, 숫자, 소품 처방은 쓰지 않는다. 형식 예: '큰 계약과 결정은 <u>내년 3월</u>에 잡으세요. 매주 <u>일요일 저녁</u>에 한 주 지출을 한 번 적어 보세요.'>",
+  "lifestyleAdvice": "<150~250자. 용신에서 나온 생활 행동 딱 두 가지. 하나는 동적 context 의 '달별 판정표'에서 오늘부터 12개월 안의 '결정해도 됨'인 달 하나를 골라 그 달에 할 큰일(계약, 접수, 이사 결정 같은 일)을 달 이름과 함께 쓴다. 하나는 매주 정해 둔 요일에 할 작은 습관 하나. 옷, 색, 음식, 가구 배치, 방위, 숫자, 소품 처방은 쓰지 않는다. 형식 예: '큰 계약과 결정은 <u>내년 3월</u>에 잡으세요. 매주 <u>일요일 저녁</u>에 한 주 지출을 한 번 적어 보세요.'>",
   "lifeEdge": {"목": {...}, "화": {...}, "토": {...}, "금": {...}, "수": {...}},
   "sipCluster": {"비겁": {...}, "식상": {...}, "재성": {...}, "관성": {...}, "인성": {...}},
   "sectionConclusions": {
@@ -111,7 +112,7 @@ JSON 1개로 응답:
     {"id": "yearly", "title": "연운", "content": "<첫머리에서 확정표의 최근 석 달로 '요즘 짚기' 한 번(언제부터 무엇이, 언제까지 가고 언제 풀리는지) + [현재 연도] 키워드 + 상/하반기 핵심 충형 1~2개. 400~550자>"},
     {"id": "practice", "title": "실천", "content": "<핵심 액션 위주. 400~550자. 늘어지지 말 것>"}
   ],
-  "monthlyWarnings": [{"month": "<예: 9월. 동적 context '앞으로 12개월 달 판정'의 부담 쪽 달에서만 고른다>", "title": "...", "desc": "<80~120자. 피할 일과 미룰 일은 이 칸에서만 권한다>"}],
+  "monthlyWarnings": [{"month": "<예: 2027년 2월. 동적 context '달별 판정표'에서 오늘부터 12개월 안의 '서명 피함'인 달에서만 고른다. 그런 달이 없으면 '준비만'인 달 가운데 점수가 가장 낮은 달 하나만>", "title": "...", "desc": "<80~120자. 피할 일과 미룰 일은 이 칸에서만 권한다. 미룬 일을 옮겨 갈 달은 '결정해도 됨'인 달로 쓴다>"}],
   "daeunPeriods": [
     "// 2026-05-04 신규: 8 대운 각각의 점수(0-100) + 한 줄 풀이 — 클라이언트 차트에 직접 wire.",
     "// 일간 vs 대운 천간/지지 오행 관계 (인성=80+, 식상=75+, 비겁=70, 재성=65, 관성=55-) 기반.",
@@ -136,11 +137,11 @@ JSON 1개로 응답:
     {"kr": "...", "hanja": "...", "tier": "중", "desc": "<60자 이내, 한 줄 의미만>", "action": "<50자 이내>", "strength": 2-3, "when": "..."},
     {"kr": "...", "hanja": "...", "tier": "참고", "desc": "<30자 이내>", "when": "..."}
   ],
-  "monthlyInsight": [{"month": 1-12, "label": "상승|정점|주의|평탄|지금", "ganzi": "...", "text": "<이번 달과 앞으로의 달은 50자+, 그 달 할 일 하나 포함. 이미 지난 달(이번 달보다 앞선 달)은 25~40자 한 문장으로 그 달 기운의 성향만 쓴다. 지난 달에 무슨 일이 있었다고 단정하는 말('~였습니다', '~늘었습니다', '~흔들린 달이었습니다')은 쓰지 않는다. 형식 예: '흙 기운이 들어와 문서 일에 힘이 붙는 달'>"}],
+  "monthlyInsight": [{"year": <동적 context '앞으로 6개월 달 칸'의 year>, "month": <같은 줄의 month>, "label": "<같은 줄의 label 그대로>", "ganzi": "<같은 줄의 ganzi>", "text": "<50~80자, 그 달 할 일 하나 포함. 행동이 '결정해도 됨'인 달만 계약, 서명, 확정, 이사 결정을 할 일로 붙인다. '준비만'인 달은 알아보기, 비교, 상담, 정리를, '서명 피함'인 달은 무엇을 미룰지를 쓴다>"}, "... 이번 달부터 앞으로 6개월, 정확히 6개. 지난 달은 쓰지 않는다"],
   "sectionConclusions": {
     "// 2026-10-22 결론 상자 규칙 (점검 P0-3): 시스템의 '결론 상자(sectionConclusions) 규칙'을 따른다. 두세 문장 줄글 한 문단, 원문자와 번호와 줄바꿈 없음, <strong> 한 번": "",
     "daeun":   "<§05 결론 60~120자 두세 문장 한 문단. 지금 대운과 다음 대운이 이 사람에게 어떤 10년인지. <u>나이</u> 1회. 본문에 쓴 문장을 다시 쓰지 않는다>",
-    "yearly":  "<§06 결론 60~120자 두세 문장 한 문단. 앞으로 12개월에서 가장 힘을 실을 달 하나와 이유. 본문에 쓴 문장을 다시 쓰지 않는다>",
+    "yearly":  "<§06 결론 60~120자 두세 문장 한 문단. 동적 context 의 '결정해도 되는 첫 달'과 그 달에 정할 일, 이유. 본문에 쓴 문장을 다시 쓰지 않는다>",
     "practice":"<§10 결론 60~120자 두세 문장 한 문단. 오래 가져갈 판단 하나와 <u>시기</u> 1회. 본문에 쓴 문장을 다시 쓰지 않는다>"
   }
 }
@@ -156,7 +157,8 @@ JSON 1개로 응답:
     "//   ✅ '돈과 살림을 뜻하는 글자가 둘인데 겉으로 드러나지 않았습니다. 들어온 돈을 바로 묶어 두는 습관이 먼저입니다.'": "",
     "//   ✅ '직장과 책임을 뜻하는 글자가 태어난 달 자리에 있어 규칙이 분명한 조직에서 인정받습니다.'": "",
     "//   ❌ '재물 흐름이 좋은 결입니다' (일반론, 같은 점수 사용자 모두 동일)": "",
-    "// 2026-10-22 시기 (점검 P0-8): 시기를 말하면 동적 context 의 '오늘'부터 앞으로 12개월 안의 달로 쓴다(예: '내년 3월'). 이미 지난 달을 앞으로 일어날 일처럼 쓰지 않는다. 올해 남은 달이 석 달 이하이면 '올해는 ~이 들어오는 해입니다'처럼 올해를 앞으로의 해로 쓰지 않는다. 대운이 바뀌는 나이는 쓰지 않는다(그 나이는 원국과 대운 장 몫)": "",
+    "// 2026-10-22 시기 (점검 P0-8): 시기를 말하면 동적 context 의 '오늘'부터 앞으로 12개월 안의 달로 쓴다(예: '내년 3월'). 이미 지난 달을 앞으로 일어날 일처럼 쓰지 않는다. 올해 남은 달이 석 달 이하이면 '올해는 ~이 들어오는 해입니다'처럼 올해를 앞으로의 해로 쓰지 않는다. 대운이 바뀌는 나이는 쓰지 않는다(그 나이는 원국과 대운 장 몫). 계약, 이직, 이사 같은 결정을 권하는 달은 '달별 판정표'에서 '결정해도 됨'인 달만 쓴다": "",
+    "// 2026-10-23 점수 (1.6.3 P1-7): user 메시지 끝 '영역 점수 확정값'의 점수에 desc 를 맞춘다": "",
     "wealth":    {"desc": "<60~80자, 돈과 살림을 뜻하는 글자의 개수와 자리 + 생활 판단>"},
     "love":      {"desc": "<60~80자, 배우자 자리와 인연 글자(도화 같은 신살은 확정표에 있을 때만) + 생활 판단>"},
     "career":    {"desc": "<60~80자, 직장과 책임을 뜻하는 글자의 개수와 격국을 생활 말로 + 생활 판단>"},
@@ -221,9 +223,15 @@ JSON 1개로 응답:
 /**
  * T2 · 단일 그룹 호출 (Opus + 캐시)
  */
-async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation) {
+async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation, 
+/** 2026-10-23 — 후처리(달 칸 6개월 맞춤, 영역 점수 확정값)와 그룹 C 영역 점수 줄에 쓴다 (1.6.3 P1-7, P1-8) */
+sajuData, 
+/** 2026-10-25 — 생성 시작 시각. 응답을 못 읽었을 때 다시 만들 시간이 남았는지 판단 (없으면 다시 만들지 않고 던진다) */
+budget, 
+/** 2026-10-25 — 0 첫 생성, 1 다시 만든 것 (한 번만 다시 만든다) */
+attempt = 0) {
     const groupFocus = GROUP_FOCUS[group];
-    const userSituation = buildSituationBlock(situation, groupFocus);
+    const userSituation = buildSituationBlock(situation, groupFocus) + (group === 'C' && sajuData ? areaScoreFixText(sajuData) : '');
     // 2026-05-04 다운 — 분량 컴팩트화 (5,000~6,500자) 후 padding 제거.
     // 한국어 5000-6500자 = ~9000-11700 tokens + JSON overhead 30% 안전마진 = 14000 충분.
     // 효과: Group A 24576→14000 으로 응답 시간 30-40% 단축 (60-120s → 40-80s).
@@ -252,8 +260,13 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
     (0, aiUsageLog_1.logAnthropicUsage)('premium', model, msg, _t0); // C7 best-effort (truncated·cache 포함 · callable/stream 공용이라 via 미지정)
     const text = msg.content[0].text || '';
     // T2 강건성 — JSON 파싱 실패 시 incomplete JSON 복구 시도
+    // 2026-10-25 — 예전엔 복구까지 실패하면 빈 객체 {} 를 돌려줘, 손님은 10운을 내고 장 몇 개가 빠진 채 화면의 대체 문구를 받았다
+    //   (환불, 다시 시도, 기록 모두 없음). 이제 빈 결과나 핵심 칸(A, D, B 는 sections, C 는 topicMini 와 actionList)이 없는 결과는
+    //   실패로 본다. 생성 시작부터 시간이 남아 있으면 한 번 더 만들고, 아니면 던져서 호출부가 서버 환불한다(index.ts catch).
+    let out;
+    let partial = false;
     try {
-        return postProcessGroup(group, (0, parseJson_1.safeParseJson)(text));
+        out = postProcessGroup(group, (0, parseJson_1.safeParseJson)(text), sajuData);
     }
     catch (e) {
         console.error(`[claudePremium] Group ${group} JSON parse failed (length=${text.length}):`, e.message);
@@ -261,14 +274,44 @@ async function callGroup(anthropic, model, group, staticSystem, dynamicSystem, s
         try {
             const recovered = recoverPartialJson(text);
             console.warn(`[claudePremium] Group ${group} recovered partial JSON (keys: ${Object.keys(recovered).join(',')})`);
-            return postProcessGroup(group, recovered);
+            out = postProcessGroup(group, recovered, sajuData);
+            partial = true;
         }
         catch (e2) {
             console.error(`[claudePremium] Group ${group} recovery also failed:`, e2.message);
-            // 빈 객체 반환 — 다른 그룹은 살림 (전체 fail 방지)
-            return {};
+            out = {};
         }
     }
+    const missing = groupCoreMissing(group, out);
+    if (!missing) {
+        if (partial)
+            (0, aiFailureLog_1.logAiFailure)({ type: 'premium', stage: `parse_partial_${group}`, message: `keys=${Object.keys(out || {}).join(',')} len=${text.length}`, ms: Date.now() - _t0 });
+        return out;
+    }
+    const elapsed = budget ? Date.now() - budget.startedAt : 0;
+    (0, aiFailureLog_1.logAiFailure)({ type: 'premium', stage: `parse_${group}`, message: `missing=${missing} attempt=${attempt} len=${text.length} elapsed=${elapsed}`, ms: Date.now() - _t0 });
+    // 한 번만, 생성 시작부터 GROUP_RETRY_BUDGET_MS 안일 때만 (콜러블 마감 300초를 넘기지 않게)
+    if (attempt === 0 && budget && elapsed < GROUP_RETRY_BUDGET_MS) {
+        console.warn(`[claudePremium] Group ${group} 핵심 칸 없음(${missing}) → 한 번 더 생성 (경과 ${elapsed}ms)`);
+        return callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget, 1);
+    }
+    throw new Error(`종합사주 ${group} 그룹 응답을 읽지 못했어요 (${missing})`);
+}
+/** 2026-10-25 — 그룹 재생성은 생성 시작부터 이 시간 안일 때만. 5.5 세대 그룹 하나가 60~140초라, 이보다 늦으면 콜러블 마감(300초)을 넘긴다 */
+const GROUP_RETRY_BUDGET_MS = 140000;
+/** 그룹 결과의 핵심 칸 확인 (2026-10-25) — 없으면 그 칸 이름, 다 있으면 null */
+function groupCoreMissing(group, out) {
+    if (!out || typeof out !== 'object' || Object.keys(out).length === 0)
+        return 'empty';
+    if (group === 'C') {
+        const tm = out.topicMini;
+        if (!tm || typeof tm !== 'object' || Object.keys(tm).length === 0)
+            return 'topicMini';
+        if (!Array.isArray(out.actionList) || out.actionList.length === 0)
+            return 'actionList';
+        return null;
+    }
+    return Array.isArray(out.sections) && out.sections.length > 0 ? null : 'sections';
 }
 /**
  * 미완성 JSON 복구 — Anthropic 응답이 max_tokens 에 잘렸을 때
@@ -364,16 +407,89 @@ function recoverPartialJson(text) {
     }
     return JSON.parse(recovered);
 }
+/** 옛 앱(1.6.2) 달 칸 — 올해 1~12월. 6개월 칸 글을 같은 달 번호에 두고, 내년 달은 연도를 앞에 붙이고, 지난 달은 한 줄 */
+function legacyMonthGrid(ahead, year, nowMonth, sajuData) {
+    // 10-24 검수 — 달 칸 응답이 비거나 일부 빠지면 앞으로의 달까지 '지난 달'로 찍혔다. 비면 [] (옛 화면이 사주로 채움), 앞으로의 빈 달은 넣지 않는다
+    if (!ahead.length)
+        return [];
+    const cal = calendarMonthGanzi(year);
+    const out = [];
+    for (let m = 1; m <= 12; m++) {
+        const cur = ahead.find((a) => Number(a?.year) === year && Number(a?.month) === m);
+        const next = ahead.find((a) => Number(a?.year) === year + 1 && Number(a?.month) === m);
+        if (cur)
+            out.push({ month: m, label: cur.label, ganzi: cur.ganzi, text: cur.text });
+        else if (next)
+            out.push({ month: m, label: next.label, ganzi: next.ganzi, text: `${year + 1}년 ${m}월, ${next.text}` });
+        else if (m < nowMonth)
+            out.push({ month: m, label: '평탄', ganzi: (0, sajuFacts_1.monthVerdictRow)(year, m, sajuData)?.gz || cal[m - 1] || '', text: '이미 지난 달입니다.' });
+    }
+    return out;
+}
 /** 그룹 결과 후처리 — monthlyInsight 간지를 실제 월주로 교정 + 출처·오기 한자·시간 표기 정리 (callable·SSE 공용 경로) */
-function postProcessGroup(group, parsed) {
+function postProcessGroup(group, parsed, sajuData) {
     try {
+        // 2026-10-23 — 달 칸은 이번 달부터 앞으로 6개월(1.6.3 P1-7). 10월에 산 사람에게 12칸 중 9칸이 지난 달이라 '잠이 얕아진 시기였습니다'처럼
+        //   지난 일을 단정했다. 달별 판정표의 여섯 달만 남기고, 해가 바뀌는 달도 맞게 year, ganzi 를 판정표 값으로, label 을 행동 등급으로 맞춘다.
+        //   year, score, verdict, action 은 더한 필드다(옛 앱 화면은 month, label, ganzi, text 만 읽는다).
+        const kn = (0, kstTime_1.kstNow)();
+        const rows6 = sajuData && group === 'B' ? (0, sajuFacts_1.monthVerdictTable)(sajuData, { year: kn.year, month: kn.month }, 6) : [];
         if (group === 'B' && parsed && Array.isArray(parsed.monthlyInsight)) {
-            const cal = calendarMonthGanzi((0, kstTime_1.kstNow)().year);
-            parsed.monthlyInsight.forEach((mi) => {
-                const m = Number(mi?.month);
-                if (m >= 1 && m <= 12 && cal[m - 1])
-                    mi.ganzi = cal[m - 1];
-            });
+            if (rows6.length) {
+                const labels = (0, sajuFacts_1.monthInsightLabels)(rows6);
+                const picked = new Map();
+                for (const mi of parsed.monthlyInsight) {
+                    const m = Number(mi?.month);
+                    const y = Number(mi?.year);
+                    const idx = rows6.findIndex((r) => r.m === m && (!Number.isFinite(y) || !y || r.y === y));
+                    if (idx >= 0 && !picked.has(idx) && typeof mi?.text === 'string' && mi.text.trim())
+                        picked.set(idx, mi);
+                }
+                const dropped = parsed.monthlyInsight.length - picked.size;
+                if (dropped > 0)
+                    console.warn(`[claudePremium] monthlyInsight 앞으로 6개월 밖 ${dropped}칸 버림`);
+                const ahead = rows6
+                    .map((r, i) => (picked.has(i) ? { ...picked.get(i), year: r.y, month: r.m, ganzi: r.gz, label: labels[i], score: r.score, verdict: r.verdict, action: r.action } : null))
+                    .filter(Boolean);
+                // 2026-10-24 검수 — 라이브 앱 1.6.2 는 monthlyInsight 를 '올해 1~12월' 칸으로 그려, 6개월 칸을 그대로 주면 내년 1~3월 글이
+                //   연도 없이 올해 1~3월 자리에 들어가고 지난 달은 화면 자체 문구가 찼다. 새 화면과 PDF 는 monthlyAhead(6개월)를 읽고,
+                //   monthlyInsight 는 옛 모양으로 다시 만든다(지난 달은 한 줄, 내년 달은 그 달 번호 칸에 연도를 붙여).
+                parsed.monthlyAhead = ahead;
+                parsed.monthlyInsight = legacyMonthGrid(ahead, kn.year, kn.month, sajuData);
+            }
+            else {
+                const cal = calendarMonthGanzi(kn.year);
+                parsed.monthlyInsight.forEach((mi) => {
+                    const m = Number(mi?.month);
+                    if (m >= 1 && m <= 12 && cal[m - 1])
+                        mi.ganzi = cal[m - 1];
+                });
+            }
+        }
+        // 2026-10-23 — 경고 달이 판정표의 '결정해도 됨' 달이면 뺀다(1.6.3 P1-8: 다른 칸과 신년운세는 그달에 결정을 권한다)
+        if (group === 'B' && parsed && Array.isArray(parsed.monthlyWarnings) && sajuData) {
+            const rows12 = (0, sajuFacts_1.monthVerdictTable)(sajuData, { year: kn.year, month: kn.month }, 12);
+            if (rows12.length) {
+                parsed.monthlyWarnings = parsed.monthlyWarnings.filter((w) => {
+                    const r = rowOfMonthLabel(String(w?.month || ''), rows12);
+                    if (r && r.action === '결정해도 됨') {
+                        console.warn(`[claudePremium] monthlyWarnings 결정해도 되는 달(${r.y}-${r.m}) 경고 뺌`);
+                        return false;
+                    }
+                    return true;
+                });
+            }
+        }
+        // 2026-10-23 — 영역 점수 확정값을 scores 에 그대로(1.6.3 P1-7). 화면과 PDF 가 같은 숫자를 보이고, 글도 이 숫자에 맞춰 썼다
+        if (group === 'C' && parsed && sajuData) {
+            const fixed = fixedAreaScores(sajuData);
+            if (Object.keys(fixed).length) {
+                const sc = parsed.scores && typeof parsed.scores === 'object' ? parsed.scores : {};
+                const diff = Object.keys(fixed).filter((k) => Number(sc[k]) !== fixed[k]);
+                if (diff.length)
+                    console.warn(`[claudePremium] scores 확정값과 다른 영역 ${diff.join(',')} 고침`);
+                parsed.scores = { ...sc, ...fixed };
+            }
         }
         // 2026-10-22 — chatQuestions 는 누르면 손님 말로 사주대화에 들어가는데 '34세 己丑 대운에', '丙辛합으로' 처럼
         //   한자와 간지가 섞여 나왔다(점검 P0-8). 괄호 속 한자는 지우고, 그래도 한자가 남은 질문은 뺀다.
@@ -409,6 +525,7 @@ function mergeGroups(a, d, b, c) {
         monthlyWarnings: b?.monthlyWarnings || [],
         shinsalCards: b?.shinsalCards || [],
         monthlyInsight: b?.monthlyInsight || [],
+        monthlyAhead: b?.monthlyAhead || [], // 2026-10-24 새 화면과 PDF 의 6개월 칸 (monthlyInsight 는 옛 앱 모양)
         daeunPeriods: b?.daeunPeriods || [], // 2026-05-04: 8 대운 점수 동적화
         // Group C
         topicMini: c?.topicMini || {},
@@ -459,11 +576,13 @@ onGroup) {
         }
         return data;
     };
+    // 2026-10-25 — budget: 응답을 못 읽은 그룹은 시작부터 시간이 남았을 때만 한 번 더 (callGroup)
+    const budget = { startedAt: t0 };
     const [groupA, groupD, groupB, groupC] = await Promise.all([
-        callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation).then(tap('A')),
-        later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('D')),
-        later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('B')),
-        later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation)).then(tap('C')),
+        callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget).then(tap('A')),
+        later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget)).then(tap('D')),
+        later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget)).then(tap('B')),
+        later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget)).then(tap('C')),
     ]);
     console.log(`[claudePremium] T2 parallel done in ${Date.now() - t0}ms`);
     const merged = mergeGroups(groupA, groupD, groupB, groupC);
@@ -492,13 +611,15 @@ function computeTopicBaseScores(sajuData) {
  * T2 · 그룹별 호출 (외부 호출용 — T1 Streaming 에서 그룹 단위 SSE 송출 시 사용)
  *  · generateGroupA·B·C 를 외부에서 직접 호출 가능
  */
-async function generateGroup(apiKey, sajuData, group, situation) {
+async function generateGroup(apiKey, sajuData, group, situation, 
+/** 2026-10-25 — 스트림 생성 시작 시각 (응답을 못 읽은 그룹을 다시 만들 시간이 남았는지). 없으면 지금 */
+startedAt) {
     const anthropic = (0, claudeClient_1.createClaude)(apiKey);
     const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
     const staticSystem = STATIC_SYSTEM_PROMPT;
     const dynamicSystem = buildDynamicSystemContext(sajuData);
     const sajuBase = buildSajuBaseBlock(sajuData);
-    return callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation);
+    return callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation, sajuData, { startedAt: startedAt ?? Date.now() });
 }
 /** 올해 양력 1~12월의 실제 월주 (각 달 15일 기준 — 절입 경계 회피). 양력 1월은 寅월이 아니라 丑월. */
 function calendarMonthGanzi(year) {
@@ -513,37 +634,75 @@ function calendarMonthGanzi(year) {
     }
     return out;
 }
-/** 2026-10-22 — 앞으로 12개월 달 판정표 (점검 P0-3, 7-1 #1). 네 그룹이 서로의 글을 못 봐서 좋은 달과 피할 달을
- *  제각각 고르던 문제. 신년운세와 같은 달 기준 점수(monthBaseScore)로 서버가 한 번 정해 네 그룹에 같은 표를 준다.
- *  용신이 없으면(구버전 sajuData) 점수가 전부 같아 뜻이 없으므로 빈 문자열. */
-function monthVerdictText(sajuData) {
+/** 2026-10-23 — 달별 판정표 18개월 + 앞으로 6개월 달 칸 (1.6.3 P1-7, P1-8). 신년운세(claudeTojung)가 받는 표와 같은 글이다.
+ *  10-22 의 monthVerdictText(달 기준점수만 본 12개월 표, 점검 P0-3)를 대신한다. 판정은 같고, 원국 일간, 일지, 월지와
+ *  대운, 세운의 합충형으로 행동 등급(결정해도 됨, 준비만, 서명 피함)을 더 정한다. 용신이 없으면(구버전 sajuData) 빈 문자열. */
+function premiumMonthContext(sajuData) {
     try {
-        if (!sajuData?.myeongriAnalysis?.용신)
+        const kn = (0, kstTime_1.kstNow)();
+        const start = { year: kn.year, month: kn.month };
+        const table = (0, sajuFacts_1.monthVerdictTableText)(sajuData, start, 18);
+        if (!table)
             return '';
-        const { year: y0, month: m0 } = (0, kstTime_1.kstNow)();
-        const rows = [];
-        for (let i = 0; i < 12; i++) {
-            const y = y0 + Math.floor((m0 - 1 + i) / 12);
-            const m = ((m0 - 1 + i) % 12) + 1;
-            const gz = lunar_javascript_1.Solar.fromYmd(y, m, 15).getLunar().getEightChar().getMonth();
-            const role = (0, sajuFacts_1.ganziRoleText)(gz, sajuData, '달');
-            const verdict = role.includes('→') ? role.split('→')[1].trim() : '';
-            rows.push({ label: `${y}년 ${m}월`, gz, score: (0, sajuFacts_1.monthBaseScore)(gz, sajuData), verdict });
-        }
-        const byScore = rows.map((r, i) => ({ ...r, i })).sort((a, b) => b.score - a.score || a.i - b.i);
-        let good = byScore.filter((r) => r.score > 66).slice(0, 3);
-        if (!good.length)
-            good = byScore.slice(0, 1);
-        const bad = [...byScore].reverse().filter((r) => r.score <= 61).slice(0, 3); // monthlyWarnings 1~3개와 맞춤
-        const inOrder = (xs) => [...xs].sort((a, b) => a.i - b.i).map((r) => r.label).join(', ');
-        return `[앞으로 12개월 달 판정 (서버 계산, 용신과 희신과 기신, 일지 충 기준. 좋은 달, 조심할 달, lifestyleAdvice 의 달, monthlyWarnings 의 달은 이 표에서만 고른다)]
-${rows.map((r, i) => `- ${r.label} ${r.gz}: ${r.score}점${r.verdict ? `, ${r.verdict}` : ''}${i === 0 ? ' ← 이번 달' : ''}`).join('\n')}
-→ 도움 쪽 달: ${inOrder(good)}
-→ 부담 쪽 달: ${bad.length ? inOrder(bad) : `없음 (monthlyWarnings 는 1개만, 점수가 가장 낮은 ${byScore[byScore.length - 1].label}로 가볍게)`}`;
+        const six = (0, sajuFacts_1.monthVerdictTable)(sajuData, start, 6);
+        const labels = (0, sajuFacts_1.monthInsightLabels)(six);
+        // 10-24 검수 — 20일이 지났으면 이번 달 남은 며칠에 큰일을 권하지 않게 다음 달부터 고른다(꿈해몽 dreamPointMonths 와 같은 기준)
+        const first = (0, sajuFacts_1.monthVerdictTable)(sajuData, start, 12).find((r, i) => r.action === '결정해도 됨' && !(i === 0 && kn.day > 20));
+        return `${table}
+[앞으로 6개월 달 칸 (monthlyInsight 는 이 여섯 달을 이 순서로 쓰고, year, month, ganzi, label 은 적힌 값 그대로)]
+${six.map((r, i) => `- year ${r.y}, month ${r.m}, ganzi ${r.gz}, label ${labels[i]} (행동: ${r.action})`).join('\n')}
+[달을 고르는 자리] 오늘부터 12개월 안에서 결정해도 되는 첫 달: ${first ? `${first.y}년 ${first.m}월` : '없음'}. yearly 결론의 달은 이 달로 쓴다. lifestyleAdvice 의 큰일 달과 실천 장의 계약, 이사 시기는 결정해도 되는 달에서, monthlyWarnings 의 달은 서명 피하는 달에서 고른다.`;
     }
     catch {
         return '';
     }
+}
+/** '2027년 2월', '내년 3월', '9월' 같은 달 표기를 판정표의 줄로 (오늘이 든 달 기준, 못 찾으면 null) */
+function rowOfMonthLabel(label, rows) {
+    const t = String(label || '');
+    const mm = t.match(/(\d{1,2})\s*월/);
+    if (!mm || !rows.length)
+        return null;
+    const m = Number(mm[1]);
+    const y0 = rows[0].y;
+    const m0 = rows[0].m;
+    const yy = t.match(/(20\d{2})\s*년/);
+    const y = yy ? Number(yy[1]) : /내년/.test(t) ? y0 + 1 : /올해|이번/.test(t) ? y0 : (m >= m0 ? y0 : y0 + 1);
+    return rows.find((r) => r.y === y && r.m === m) || null;
+}
+/** 2026-10-23 — §09 영역 점수 확정값 (1.6.3 P1-7). 화면(PremiumResult resolveAreaScores)이 topicBaseScores 로 덮어 보여 주는 영역과 같은 짝.
+ *  화면은 이 영역에 주제 점수를 보여 주는데 글은 모델이 정한 점수에 맞춰 써서 '본문은 칭찬, 화면은 47점'이 됐다.
+ *  ⚠️ 화면 AREA_TOPIC 과 같이 바꾼다 (잠재력 potential 은 10-23 화면에서 학업운 연결을 뗐다, 인간관계 social 은 연결 주제 없음). */
+const AREA_FIXED_TOPIC = [
+    { area: 'wealth', topic: 'wealth', label: '재물' },
+    { area: 'love', topic: 'love', label: '사랑' },
+    { area: 'career', topic: 'career', label: '직업' },
+    { area: 'health', topic: 'health', label: '건강' },
+];
+function fixedAreaScores(sajuData) {
+    const base = computeTopicBaseScores(sajuData);
+    const out = {};
+    for (const a of AREA_FIXED_TOPIC)
+        if (typeof base[a.topic] === 'number')
+            out[a.area] = base[a.topic];
+    return out;
+}
+function areaScoreFixText(sajuData) {
+    const fixed = fixedAreaScores(sajuData);
+    const keys = Object.keys(fixed);
+    if (!keys.length)
+        return '';
+    const label = (k) => AREA_FIXED_TOPIC.find((a) => a.area === k)?.label || k;
+    const free = ['wealth', 'love', 'career', 'health', 'social', 'potential'].filter((k) => !keys.includes(k));
+    const FREE_LABEL = { wealth: '재물', love: '사랑', career: '직업', health: '건강', social: '인간관계', potential: '잠재력' };
+    return `
+
+## 영역 점수 확정값 (서버 계산. 화면의 여섯 영역 카드에 이 숫자가 그대로 나간다)
+- ${keys.map((k) => `${label(k)}(${k}) ${fixed[k]}`).join(', ')}
+- scores 의 이 영역 값은 위 숫자를 그대로 쓴다.
+- topicMini 의 이 영역 desc 는 이 점수에 맞는 말로 쓴다. 75점 이상이면 이 사람의 강점으로, 56점 미만이면 약한 곳과 채우는 방법으로, 그 사이면 강점 하나와 조심할 점 하나로 쓴다. desc 에 점수 숫자는 쓰지 않는다.
+- 나머지 영역(${free.map((k) => `${FREE_LABEL[k]} ${k}`).join(', ')})의 점수는 사주 근거로 정하고, 그 영역 desc 도 정한 점수에 맞춘다. 잠재력은 배움과 재주를 키워 갈 힘이다.
+- 여섯 점수는 서로 다른 값이고 5의 배수를 쓰지 않는다. 정하는 점수는 40~92 사이로 쓴다.`;
 }
 /** T3 · 동적 짧은 context — 연도·일간 + 실제 월건·이번 달 (캐시 X)
  *  2026-10-04 — 10월에 산 고객에게 '1~3월/4~6월' 연간 계획·'4월에 결정하세요' 가 나가던 문제 +
@@ -563,13 +722,13 @@ function buildDynamicSystemContext(sajuData) {
     const leftMonths = 12 - month + 1;
     return `[오늘 (한국 시간)]: ${todayLabel}
 [올해 남은 달]: 이번 달 포함 ${leftMonths}달 (${month}~12월)${leftMonths <= 3 ? ` → 석 달 이하이므로 ${year}년을 앞으로의 해처럼 쓰지 않는다. 앞으로의 일은 '${year + 1}년 3월'처럼 달로 쓴다.` : ''}
-${monthVerdictText(sajuData)}
+${premiumMonthContext(sajuData)}
 [현재 연도]: ${year}
 [이번 달]: ${year}년 ${month}월
 [유저 일간]: ${dayGan}
-[${year}년 양력 월 → 실제 월주 (서버 계산, monthlyInsight.ganzi 와 본문의 'N월(○○월)' 표기는 반드시 이 값)]: ${cal}
+[${year}년 양력 월 → 실제 월주 (서버 계산, 본문의 '${year}년 N월(○○월)' 표기는 반드시 이 값. 내년 달은 아래 '이번 달부터 12개월 월주', monthlyInsight 의 ganzi 는 위 '앞으로 6개월 달 칸' 값)]: ${cal}
 [이번 달부터 12개월 월주]: ${(0, sajuFacts_1.upcomingMonthPillarsText)(now, 12)}
-🚨 시기 규칙: 연운(§06), 실천(§07), monthlyWarnings 의 조언은 '이번 달부터 앞으로 12개월' 기준. 이미 지난 달은 추천과 경고 대상으로 쓰지 말고 회고 1문장 이내.
+🚨 시기 규칙: 연운(§06), 실천(§07), monthlyWarnings 의 조언은 '이번 달부터 앞으로 12개월' 기준. 이미 지난 달은 추천과 경고 대상으로 쓰지 말고 회고 1문장 이내. 달마다 무엇을 권해도 되는지는 위 '달별 판정표'의 행동 등급을 따른다.
    §07 분기 액션은 이번 달부터 3개월씩 4구간 (예: 10월이면 '10~12월 / 내년 1~3월 / 4~6월 / 7~9월'). 내년 달은 '내년 3월'처럼 연도를 붙인다.
    monthlyWarnings.month 는 이번 달 이후만 (내년이면 '${year + 1}년 3월' 형식). 월주는 위 값만 사용 — 직접 계산 금지 (양력 1월은 寅월이 아님).`;
 }
@@ -697,7 +856,7 @@ ${promptsV3_2.GOOSEBUMP_BLOCK}
 - 절대 들어와서는 안 되는 글자 (기신) 명시.
 - 색, 방위, 음식, 숫자, 물건은 결과 화면의 행운 표가 용신으로 따로 보여 준다. 용신 본문과 결론에서는 다시 쓰지 않고, 왜 이 오행이 필요한지와 생활에서 무엇(사람, 시간, 습관)으로 채우는지를 쓴다.
 - **lifestyleAdvice 필드**는 150~250자, 용신에서 나온 생활 행동 두 가지만 쓴다.
-  * 하나: 동적 context 의 '앞으로 12개월 달 판정'에서 도움 쪽 달 하나를 골라, 그 달에 할 큰일(계약, 접수, 이사 결정 같은 일)을 달 이름과 함께.
+  * 하나: 동적 context 의 '달별 판정표'에서 오늘부터 12개월 안의 '결정해도 됨'인 달 하나를 골라, 그 달에 할 큰일(계약, 접수, 이사 결정 같은 일)을 달 이름과 함께.
   * 하나: 매주 정해 둔 요일에 할 작은 습관 하나.
   * 형식 예: "큰 계약과 결정은 <u>내년 3월</u>에 잡으세요. 매주 <u>일요일 저녁</u>에 한 주 지출을 한 번 적어 보세요."
   * 옷, 색, 음식, 가구 배치, 방위, 숫자, 소품 처방은 쓰지 않는다.
@@ -712,12 +871,12 @@ ${promptsV3_2.GOOSEBUMP_BLOCK}
 - 올해([현재 연도])의 키워드 한 줄 ("보여주고 싶다, 그런데 마음대로 되지 않는다" 같은 입체적 표현).
 - '올해 남은 달' 과 '내년 상반기' 흐름 차이 (이번 달이 1~2월이면 상반기/하반기로 써도 됨). 지난 달은 회고 1문장 이내.
 - **monthlyWarnings 필드** 1~3개 시기별 경고:
-  * { "month": "9월", "title": "새 일을 벌이지 않기", "desc": "자형(自刑)이 발동하는 시기 — 새 프로젝트, 큰 계약, 이사는 8월 말까지 마무리하거나 10월 이후로 미루기. 9월은 정리와 휴식의 한 달로." }
+  * 형식 예: { "month": "2027년 2월", "title": "새 계약은 미루기", "desc": "서류와 절차에서 손이 꼬이기 쉬운 달입니다. 큰 계약과 이사 결정은 2027년 3월로 옮기세요. 이달은 조건을 비교해 두는 데 쓰세요." } (달은 '서명 피함'인 달, 옮겨 갈 달은 '결정해도 됨'인 달의 실제 이름. 등급 말과 '월지, 형' 같은 용어는 desc 에 쓰지 않는다, 2026-10-24)
 
 ### SECTION 07. 실천 — 신살의 결을 살리고, 분기별 액션
 - 길신(도화살, 천을귀인, 천덕귀인 등) 흡수: 어떤 결을 어떻게 살릴지 구체적 행동.
 - 흉살(자형, 괴강, 양인, 도화살의 부정 측면 등): 의식적으로 비켜가는 행동.
-- 이번 달부터 3개월씩 4구간(동적 context 의 '시기 규칙' 참조) 손에 잡히는 액션 1~2개씩.
+- 이번 달부터 3개월씩 4구간(동적 context 의 '시기 규칙' 참조) 손에 잡히는 액션 1~2개씩. 계약, 서명, 확정, 이사 결정은 그 구간 안의 '결정해도 됨'인 달을 대고 권한다. 구간에 그런 달이 없으면 그 구간은 준비와 정리 액션으로 쓴다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## 네 그룹 공통 규칙 (A, D, B, C 모두, 2026-10-22)
@@ -727,7 +886,7 @@ ${promptsV3_2.GOOSEBUMP_BLOCK}
 ### 처방 소유권
 처방마다 쓰는 칸이 정해져 있다. 나머지 칸에서는 판단까지만 쓰고 처방은 쓰지 않는다.
 - 말을 하루 묵히기, 답을 며칠 뒤에 하기 같은 습관 처방: cautions 와 actionList 에서만.
-- 피할 달, 미룰 달을 권하는 말: monthlyWarnings 에서만. 다른 칸에서는 그 달을 피하라고 권하지 않는다(monthlyInsight 의 그 달 칸은 성향 한 문장만).
+- 피할 달, 미룰 달을 권하는 말: monthlyWarnings 에서만. 다른 칸에서는 그 달을 피하라고 권하지 않는다(monthlyInsight 의 달 칸은 그달 할 일 한 줄이고, 미룰 일은 서명 피함인 달 칸에만 쓴다).
 - 대운이 바뀌는 나이와 '전성기', '가장 좋은 10년' 같은 말: summary(원국 본문)와 대운 장(daeun 본문, daeun 결론, daeunPeriods)에서만. 다른 칸은 '다음 10년'처럼 쓰고 나이를 다시 적지 않는다. chatQuestions 는 손님이 묻는 말이라 나이를 넣어도 된다.
 - 색, 방위, 음식, 숫자, 물건, 가구 배치: 결과 화면의 행운 표가 용신으로 따로 보여 준다. 네 그룹 어느 칸에도 쓰지 않는다.
 
@@ -743,7 +902,9 @@ ${promptsV3_2.GOOSEBUMP_BLOCK}
 
 ### 시기
 - 시기는 동적 context 의 '오늘'부터 앞으로 12개월 안에서 고른다. 이미 지난 달에 무슨 일이 있었다고 단정하지 않는다(지난 일은 정해진 자리의 짚기 질문으로만 묻는다).
-- '좋은 달'과 '조심할 달'은 동적 context 의 '앞으로 12개월 달 판정'에서만 고른다. 표와 다른 달을 좋은 달이나 조심할 달로 쓰지 않는다.
+- '좋은 달'과 '조심할 달'은 동적 context 의 '달별 판정표'에서만 고른다. 좋은 달과 힘을 실을 달은 '결정해도 됨'인 달, 조심할 달과 피할 달은 '서명 피함'인 달이다.
+- '준비만'인 달과 '서명 피함'인 달에는 서명, 계약, 확정, 이사 결정을 권하지 않는다. 그 달의 할 일은 알아보기, 비교, 상담, 정리로 쓴다. 이 규칙은 네 그룹의 모든 칸(본문, 결론, lifestyleAdvice, actionList, topicMini, monthlyInsight)에 같다.
+- 같은 사람의 신년운세도 같은 판정표로 쓴다. 판정표와 다른 달을 권하면 두 풀이가 서로 반대로 말하게 된다.
 - 올해 남은 달이 석 달 이하이면 올해를 앞으로의 해처럼 쓰지 않는다. 앞으로의 일은 '내년 3월'처럼 달로 쓴다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -782,7 +943,7 @@ ${promptsV3_2.GOOSEBUMP_BLOCK}
         이제는 타인의 기준이 아니라 본인의 행복을 위해 그 섬세함을 써보세요. <strong>완벽하지 않아도 충분히 가치 있는 사람입니다</strong>."
 
 4. **마무리는 응원 + 구체 행동**:
-   ✅ 형태: "<u>내년 3월</u>에 미뤄 둔 접수를 끝내 보세요. 그달은 {이름} 님에게 모자란 기운이 들어오는 달입니다." (달은 '앞으로 12개월 달 판정'의 도움 쪽 달, 2026-10-22 색 처방 예문을 시기 행동으로 바꿈)
+   ✅ 형태: "<u>내년 3월</u>에 미뤄 둔 접수를 끝내 보세요. 그달은 {이름} 님에게 모자란 기운이 들어오는 달입니다." (달은 '달별 판정표'의 '결정해도 됨'인 달, 2026-10-22 색 처방 예문을 시기 행동으로 바꿈)
    ❌ "흐름이 풀리는 자리입니다" (모호한 응원)
 
 #### ✨ 우리만의 차별화 (사주아이와 다른 점)
@@ -993,9 +1154,9 @@ STEP 5. 소름 포인트 — 일상 행동/경험을 사주 근거로 또렷이 
     "day": "<일주(나와 배우자) 한 줄>",
     "hour": "<시주(말년과 자녀) 한 줄. 출생시간 미상이면 빈 문자열>"
   },
-  "lifestyleAdvice": "<150~250자. 생활 행동 두 가지: '앞으로 12개월 달 판정'의 도움 쪽 달에 할 큰일 하나, 매주 할 습관 하나. 옷, 색, 음식, 가구 배치, 방위, 숫자 처방 없음.>",
+  "lifestyleAdvice": "<150~250자. 생활 행동 두 가지: '달별 판정표'의 '결정해도 됨'인 달에 할 큰일 하나, 매주 할 습관 하나. 옷, 색, 음식, 가구 배치, 방위, 숫자 처방 없음.>",
   "monthlyWarnings": [
-    {"month": "<예: 9월. '앞으로 12개월 달 판정'의 부담 쪽 달만>", "title": "<핵심 경고 한 줄>", "desc": "<상세 100~200자>"}
+    {"month": "<예: 2027년 2월. '달별 판정표'의 '서명 피함'인 달만>", "title": "<핵심 경고 한 줄>", "desc": "<상세 100~200자>"}
   ],
 
   "lifeEdge": {
@@ -1032,7 +1193,7 @@ STEP 5. 소름 포인트 — 일상 행동/경험을 사주 근거로 또렷이 
   ],
 
   "monthlyInsight": [
-    {"month": 1, "label": "<상승|정점|주의|평탄|지금>", "ganzi": "<예: 庚寅>", "text": "<이번 달과 앞으로의 달은 그 달 작동 한 줄 40~60자. 지난 달은 성향 한 문장, 있었던 일로 단정하지 않음>"}
+    {"year": 2027, "month": 1, "label": "<'앞으로 6개월 달 칸'의 label>", "ganzi": "<예: 庚寅>", "text": "<그 달 작동 한 줄과 할 일 50~80자>"}
   ],
 
   "topicMini": {
@@ -1092,11 +1253,10 @@ STEP 5. 소름 포인트 — 일상 행동/경험을 사주 근거로 또렷이 
 - 7~9개, desc 70~100자 (이전 150+), 사주 근거 1줄 + 구체 행동 1줄
 - "마지막 실천마저 너무 길어" → 늘어지지 말 것. 핵심 1~2 문장.
 
-### monthlyInsight (12개월)
-- 12개 모두 출력 (1~12월)
-- ganzi 는 동적 context 의 '[현재 연도] 양력 월 → 실제 월주' 값 그대로 (직접 계산 금지)
-- text 50자+, 유저 사주 일간 + 그 달 천간지지 관계 기반
-- 2026-10-22 (점검 P0-8): 이번 달보다 앞선 달은 25~40자 한 문장으로 그 달 기운의 성향만 쓴다. 지난 달에 무슨 일이 있었다고 단정하지 않는다('~였습니다', '~늘었습니다' 금지). 무게는 이번 달과 앞으로의 달에 둔다.
+### monthlyInsight (이번 달부터 앞으로 6개월, 2026-10-23 1.6.3 P1-7)
+- 동적 context 의 '앞으로 6개월 달 칸' 여섯 줄을 그 순서로 정확히 6개 출력한다. year, month, ganzi, label 은 그 줄의 값 그대로 (직접 계산 금지)
+- 지난 달은 쓰지 않는다. 지난 달에 무슨 일이 있었다고 단정하는 말('~였습니다', '~늘었습니다')도 쓰지 않는다
+- text 50~80자, 유저 사주 일간 + 그 달 천간지지 관계 기반, 할 일 하나. 계약, 서명, 확정, 이사 결정은 행동이 '결정해도 됨'인 달에만 붙인다
 
 ### sectionConclusions (다크박스 결론)
 - 그룹마다 맡은 결론만 출력 (A: wongug, structure / D: sipsung, yongsin / B: daeun, yearly, practice / C: relation)

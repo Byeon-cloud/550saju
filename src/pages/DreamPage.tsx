@@ -44,6 +44,15 @@ import {
   // generateDreamDeepV3 — 2026-05-27 블러잠금 SSOT 정석화로 사용 제거 (AI 재호출 0). legacy import 보존.
   generateDreamDeepV3 as _generateDreamDeepV3,
 } from '@/services/ai/reportGenerator';
+// 2026-10-25 로그인 계정은 두 번째 꿈과 잠금 풀이의 1운을 서버도 깎는다 (기기 장부 id = spendId)
+import {
+  chargeServerSpend,
+  refundServerSpend,
+  flushServerSpendRefunds,
+  isServerChargedAccount,
+  isServerInsufficient,
+  noteServerSpendShort,
+} from '@/services/ai/serverSpend';
 import { stripMd } from '@/utils/format';
 // v5 mockup (잠금 5섹션 + 아코디언 + 도식화 + 블러잠금 SSOT) — 2026-05-27 복원
 import { DreamMockupView } from './dream/DreamMockupView';
@@ -445,7 +454,9 @@ export function DreamPage() {
         }
         charged = true;
         // 머니세이프 — 생성 중 앱 종료 등으로 저장까지 못 가면 부팅 reconcile 이 5분 후 자동환불
+        //   2026-10-25 이 id 를 spendId 로 보내 로그인 계정이면 서버도 1운을 깎는다(스트림과 callable 폴백은 한 번만)
         pendingId = markPendingSpend('dream', 1);
+        void flushServerSpendRefunds(); // 남은 서버 돌려받기 요청부터 (로그인 계정만, 기다리지 않는다)
         // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
         import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'dream', amount: 1 })).catch(() => {});
       }
@@ -486,6 +497,7 @@ export function DreamPage() {
       const categoryLabel = userInput.category;
       const fullText = [dreamText, concern ? `\n현재 고민: ${concern}` : ''].filter(Boolean).join('');
       const saju = profile?.sajuData ? buildSajuContext(profile) : undefined;
+      const spendField = mode === 'paid' && pendingId ? { spendId: pendingId } : {}; // 2026-10-25 서버 차감 (위 머니세이프 주석)
 
       // 2026-05-27 — SSE 스트리밍 (오늘의 운세 패턴): partial 도달 시 isLoading=false → 결과 페이지 즉시 노출.
       //   HEAD 디자인 그대로 (result.narrative/symbols/lockedXxx 직접 읽기). 단지 전송 방식만 SSE.
@@ -515,7 +527,7 @@ export function DreamPage() {
             reject(new Error('dream stream timeout'));
           }, 60_000);
           generateDreamFreeStream(
-            { saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined, paid: mode === 'paid' },
+            { saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined, paid: mode === 'paid', ...spendField },
             {
               onStart: () => console.log('[dream SSE] start'),
               onPartial: ({ partial, totalChars }) => {
@@ -579,10 +591,19 @@ export function DreamPage() {
         if (streamErr?.code === 'quota' || String(streamErr?.message).includes('쿼터')) {
           throw streamErr;
         }
-        console.warn('[dream] SSE 실패 → callable 폴백:', streamErr?.message);
-        result = await generateDreamFree({
-          saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined, paid: mode === 'paid',
-        });
+        // 2026-10-26 서버 잔액이 모자라 서버가 막았으면(기기 잔액과 어긋난 로그인 계정) 막지 않는다. 기기에서 1운을 냈으니
+        //   서버 차감 없이(spendId 없이, 예전 그대로) 만들고 어긋남만 남긴다 (오너 원칙: 화면에 운이 넉넉한 손님은 막거나 충전으로 보내지 않는다)
+        const short = mode === 'paid' && !!pendingId && isServerInsufficient(streamErr);
+        if (short) noteServerSpendShort('dream', 1);
+        else console.warn('[dream] SSE 실패 → callable 폴백:', streamErr?.message);
+        const callArgs = { saju, dreamContent: fullText, category: categoryLabel, userConcern: concern || undefined, paid: mode === 'paid' };
+        try {
+          result = await generateDreamFree(short ? callArgs : { ...callArgs, ...spendField });
+        } catch (callErr: any) {
+          if (short || !(mode === 'paid' && pendingId && isServerInsufficient(callErr))) throw callErr;
+          noteServerSpendShort('dream', 1);
+          result = await generateDreamFree(callArgs);
+        }
       }
 
       // 필수 필드 검증 — fallback 렌더 금지 (PRD §10.7)
@@ -594,6 +615,7 @@ export function DreamPage() {
       if (charged && !isLockedContentReady(result)) {
         refundBalance(1);
         if (pendingId) clearPendingSpend(pendingId);
+        refundServerSpend(pendingId); // 2026-10-25 서버가 깎았으면 서버 몫도 돌려받는다
         charged = false;
         pendingId = null;
         applyUnlocked(false);
@@ -639,6 +661,9 @@ export function DreamPage() {
       if (charged) {
         refundBalance(1);
         if (pendingId) clearPendingSpend(pendingId);
+        // 2026-10-25 서버가 깎았을 수 있으니 서버 몫도 돌려받는다 (깎지 않은 구매면 서버가 아무것도 하지 않는다).
+        //   2026-10-26 서버 잔액 모자람은 위에서 서버 차감 없이 만들어 여기로 오지 않는다(충전으로 보내지 않는다)
+        refundServerSpend(pendingId);
         setRestoreNote('차감된 1운은 돌려드렸어요.');
       } else if (passUsed) {
         restoreFreePass('dream', passUsedOn); // 그날 쓴 무료권만 복구 (자정 넘김 실패 시 다음 날 무료권 보호)
@@ -646,7 +671,10 @@ export function DreamPage() {
         setRestoreNote('오늘 무료 1회는 그대로 남아 있어요.');
       }
       // 2026-05-29 — e.message(영문 기술오류) 노출 금지. 항상 친절 카피.
-      setApiError(isDailyLimit ? DREAM_DAILY_LIMIT_ERROR : '꿈을 살피는 데 잠시 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.');
+      setApiError(
+        isDailyLimit ? DREAM_DAILY_LIMIT_ERROR
+          : '꿈을 살피는 데 잠시 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.',
+      );
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
@@ -726,7 +754,7 @@ export function DreamPage() {
   }
 
   /** 확인 모달 OK 시 실제 차감 + 잠금 해제 */
-  function confirmDeepUnlock() {
+  async function confirmDeepUnlock() {
     setShowUnlockConfirm(false);
     if (isDeepAnalyzingRef.current || unlockedRef.current) return;
     if (isStreaming || isLoading || isAnalyzingRef.current) return;
@@ -750,6 +778,19 @@ export function DreamPage() {
       // 2026-06-18 머니세이프 — 차감 후 보관함 저장 실패(용량초과 등) 시 부팅 reconcile 이 5분 후 자동환불.
       //   저장 성공 시 아래에서 clearPendingSpend 로 해제. (정상 경로는 동기 실행이라 즉시 해제됨)
       const dreamPendingId = markPendingSpend('dream', 1);
+      // 2026-10-25 로그인 계정은 서버도 같은 1운을 깎는다(spendUn, 이 장부 id 로 한 번만). 서버가 받기 전에는 열지 않는다.
+      //   예전엔 기기만 깎아 웹에서 로그아웃 뒤 다시 로그인하면 이 1운이 돌아왔다. 익명 계정은 예전 그대로(기다림 없음)
+      //   2026-10-26 서버 잔액이 모자라다고 해도 막지 않는다(chargeServerSpend 가 ok, 어긋남만 남긴다). 막는 것은 위 기기 잔액 확인뿐
+      if (isServerChargedAccount()) {
+        toast.show('잠금을 여는 중이에요', 'info');
+        const r = await chargeServerSpend({ spendId: dreamPendingId, kind: 'dreamUnlock', amount: 1 });
+        if (r.ok === false) {
+          refundBalance(1);
+          clearPendingSpend(dreamPendingId);
+          toast.show('잠금을 여는 데 잠시 문제가 생겼어요. 운은 그대로예요. 다시 시도해 주세요', 'warning');
+          return;
+        }
+      }
       // 잠금 해제 시각 효과 (사라랄) — body 에 일시 클래스 추가 → CSS 애니메이션
       setUnlockBurst(true);
       setTimeout(() => setUnlockBurst(false), 1500);
@@ -962,7 +1003,7 @@ export function DreamPage() {
             {/* 2026-10-24 — 용어 나열 대신 받을 내용으로(점검 P1-5, 잠금 카드와 같은 말) */}
             이 꿈이 가리키는 달의 풀이와 할 일, 미룰 일까지
             <strong style={{ color: '#1a1a1a' }}> 다섯 칸</strong>이 바로 열려요.<br />
-            현재 잔액 <b style={{ color: '#B8965A' }}>{formatUn(getBalance())}운</b> → 차감 후 <b>{formatUn(getBalance() - 1)}운</b>
+            현재 잔액 <b style={{ color: '#1A1612' }}>{formatUn(getBalance())}운</b> → 차감 후 <b style={{ color: '#1A1612' }}>{formatUn(getBalance() - 1)}운</b>
           </DreamConfirmModal>
         )}
 
@@ -976,7 +1017,7 @@ export function DreamPage() {
           >
             1운으로 이 꿈을 풀까요?
             <strong style={{ color: '#1a1a1a' }}> 잠금 섹션까지 모두</strong> 열려요.<br />
-            현재 잔액 <b style={{ color: '#B8965A' }}>{formatUn(getBalance())}운</b> → 차감 후 <b>{formatUn(getBalance() - 1)}운</b>
+            현재 잔액 <b style={{ color: '#1A1612' }}>{formatUn(getBalance())}운</b> → 차감 후 <b style={{ color: '#1A1612' }}>{formatUn(getBalance() - 1)}운</b>
           </DreamConfirmModal>
         )}
 
@@ -1134,14 +1175,23 @@ function DetailPhase({
       <FadeIn>
         {cat && cat.id !== 'other' && (
           <div className="flex items-center gap-2 mb-3">
+            {/* 2026-10-25 v9 — 고르는 단계(CategoryPhase)와 같은 먹 선 아이콘, 먹 글자 (분류별 색 정리) */}
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: `${cat.color}15` }}
+              style={{ background: '#F4EFE4', border: '1px solid #E1D7C4' }}
             >
-              <Pictogram k={`dream:${cat.id}`} size={18} color={cat.color} />
+              <Pictogram k={`dream:${cat.id}`} size={18} color="#4B4238" />
             </div>
-            <span className="sec-meta" style={{ color: cat.color }}>{cat.label}</span>
-            <button onClick={onBack} className="ml-auto sec-caption">변경</button>
+            <span className="sec-meta" style={{ color: '#1A1612' }}>{cat.label}</span>
+            {/* 누르는 칸 44px (예전엔 글자만이라 20px 남짓) */}
+            <button
+              type="button"
+              onClick={onBack}
+              className="ml-auto sec-caption"
+              style={{ minHeight: 44, minWidth: 44, padding: '0 10px', marginRight: -10, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >
+              변경
+            </button>
           </div>
         )}
         <h2 className="sec-title-lg">꿈의 내용을<br />자유롭게 적어주세요</h2>
@@ -1302,7 +1352,8 @@ function DreamConfirmModal({
         }}>
           {title}
         </div>
-        <p style={{ fontSize: 13, lineHeight: 1.6, color: '#5C4A2E', marginBottom: 18, wordBreak: 'keep-all' }}>
+        {/* 2026-10-25 v9 — 운을 쓰는 결정 창이라 본문 15px (예전 13px) */}
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: '#4B4238', marginBottom: 18, wordBreak: 'keep-all' }}>
           {children}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -1311,7 +1362,7 @@ function DreamConfirmModal({
             onClick={onCancel}
             style={{
               flex: 1, height: 48, border: '1px solid #E5DFD0', background: '#fff',
-              borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#5C4A2E', cursor: 'pointer',
+              borderRadius: 100, fontSize: 15, fontWeight: 700, color: '#5C4A2E', cursor: 'pointer',
             }}
           >
             취소
@@ -1322,7 +1373,7 @@ function DreamConfirmModal({
             style={{
               flex: 1.5, height: 48, border: 'none',
               background: 'linear-gradient(135deg, #E8D9B8, #B8965A)',
-              color: '#1a1a1a', borderRadius: 100, fontSize: 14, fontWeight: 800,
+              color: '#1a1a1a', borderRadius: 100, fontSize: 15, fontWeight: 800,
               cursor: 'pointer', boxShadow: '0 4px 12px rgba(184,150,90,0.35)',
             }}
           >

@@ -244,8 +244,17 @@ function strengthDots(n) {
  * 메인 빌더
  * ═════════════════════════════════════════════════════════════════ */
 function buildPremiumPdfHtml(input) {
-    const { profile, sajuData, aiResult, issuedAt, issueId } = input;
+    const { profile, sajuData, aiResult, issuedAt, issueId, reportCreatedAt } = input;
     const now = (0, kstTime_1.kstNow)(); // ⚠ 서버 UTC 함정 — 연운 간지·현재 대운 판정은 KST 기준
+    // 2026-10-25 — 연운의 해는 풀이를 받은 해 (KST). 해가 바뀐 뒤 PDF 를 만들면 AI 가 쓴 해 위에 새해 간지가 찍혔다.
+    //   받은 시각이 없으면 새 결과의 첫 달 칸(산 달) 연도, 그것도 없으면 발급 시각의 해
+    const reportYear = (() => {
+        const ms = reportCreatedAt ? new Date(reportCreatedAt).getTime() : NaN;
+        if (!Number.isNaN(ms))
+            return new Date(ms + 9 * 3600e3).getUTCFullYear();
+        const y0 = Number(Array.isArray(aiResult?.monthlyAhead) ? aiResult.monthlyAhead[0]?.year : NaN);
+        return Number.isInteger(y0) && y0 > 2000 ? y0 : now.year;
+    })();
     const year = pillarSlot(sajuData, 0);
     const month = pillarSlot(sajuData, 1);
     const day = pillarSlot(sajuData, 2);
@@ -270,7 +279,7 @@ function buildPremiumPdfHtml(input) {
     const secSipsung = getSection(aiResult, ['sipsung']);
     const secYongsin = getSection(aiResult, ['yongsin']);
     const secDaeun = getSection(aiResult, ['daeun']);
-    const secYearly = getSection(aiResult, ['yearly', `year${now.year}`, 'year2026', 'year2025']);
+    const secYearly = getSection(aiResult, ['yearly', `year${reportYear}`, 'year2026', 'year2025']);
     const secPractice = getSection(aiResult, ['practice']);
     // ── 결론 다크박스 (sectionConclusions — 객체/배열 양쪽 호환, 앱 인덱스 매핑 동일) ──
     const sc = aiResult?.sectionConclusions;
@@ -292,7 +301,7 @@ function buildPremiumPdfHtml(input) {
     // ── 올해 간지 (연운 힌트 — 앱 §06 hint 진본과 동일 산식) ──
     const SIXTY = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉', '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未', '甲申', '乙酉', '丙戌', '丁亥', '戊子', '己丑', '庚寅', '辛卯', '壬辰', '癸巳', '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑', '壬寅', '癸卯', '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬子', '癸丑', '甲寅', '乙卯', '丙辰', '丁巳', '戊午', '己未', '庚申', '辛酉', '壬戌', '癸亥'];
     const HANJA_KO = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계', 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
-    const yearGz = SIXTY[(now.year - 1984 + 6000) % 60];
+    const yearGz = SIXTY[(reportYear - 1984 + 6000) % 60];
     const yearGzKo = (HANJA_KO[yearGz[0]] || '') + (HANJA_KO[yearGz[1]] || '');
     // ═════════════ 표지 조각 ═════════════
     const pillars = [
@@ -425,19 +434,33 @@ function buildPremiumPdfHtml(input) {
         : '';
     /* ═════════════ §06 조각 — monthlyInsight 12 그리드 + monthlyWarnings ═════════════ */
     const LABEL_CLASS = { 상승: 'up', 정점: 'peak', 주의: 'warn', 평탄: 'flat', 지금: 'nowm' };
-    const monthlyInsight = Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : [];
+    // 2026-10-24 — 6개월 칸은 monthlyAhead, monthlyInsight 는 옛 앱 모양(올해 1~12월)
+    const monthlyInsight = Array.isArray(aiResult?.monthlyAhead) && aiResult.monthlyAhead.length ? aiResult.monthlyAhead : Array.isArray(aiResult?.monthlyInsight) ? aiResult.monthlyInsight : [];
     const monthlyHtml = monthlyInsight.length > 0
         ? `<div class="mi-grid">${monthlyInsight.map((mi, idx) => {
-            const cls = LABEL_CLASS[String(mi.label ?? '').trim()] || 'flat';
             // month: 0/누락/범위밖(13 등) 방어 — 유효(1~12)면 그대로, 아니면 배열 인덱스+1 로 대체
             const rawM = Math.round(Number(mi.month));
             const m = Number.isFinite(rawM) && rawM >= 1 && rawM <= 12 ? rawM : idx + 1;
+            // 2026-10-23 — 새 결과는 이번 달부터 6개월(year 있음, 1.6.3 P1-7). 해가 바뀌는 첫 칸에만 연도를 붙인다
+            const yr = Number(mi.year);
+            const prevYr = idx > 0 ? Number(monthlyInsight[idx - 1]?.year) : NaN;
+            const yearTag = Number.isInteger(yr) && yr > 2000 && idx > 0 && yr !== prevYr ? `${yr}년 ` : '';
+            // 2026-10-25 — '지금'은 발급하는 달에만. 서버가 산 달 칸에 붙인 '지금'은 그 달이 지나도 남아 있었다(화면 MonthInsightGrid 와 같은 규칙).
+            //   산 달 칸은 그 달 행동 등급으로, 발급하는 달이 평탄 칸이면 그 칸을 '지금'으로
+            const rowYear = Number.isInteger(yr) && yr > 2000 ? yr : reportYear;
+            const isNowRow = rowYear === now.year && m === now.month;
+            const rawLabel = String(mi.label ?? '').trim();
+            const action = String(mi.action ?? '').trim();
+            const label = rawLabel === '지금'
+                ? (isNowRow ? '지금' : action === '결정해도 됨' ? '상승' : action === '서명 피함' ? '주의' : '평탄')
+                : (isNowRow && (rawLabel === '평탄' || rawLabel === '') ? '지금' : rawLabel);
+            const cls = LABEL_CLASS[label] || 'flat';
             return `
           <div class="mi-cell ${cls}">
             <div class="mi-top">
-              <span class="mi-month">${m}월</span>
+              <span class="mi-month">${yearTag}${m}월</span>
               ${mi.ganzi ? `<span class="mi-ganzi">${txt(mi.ganzi)}</span>` : ''}
-              ${mi.label ? `<span class="mi-label">${txt(mi.label)}</span>` : ''}
+              ${label ? `<span class="mi-label">${txt(label)}</span>` : ''}
             </div>
             ${mi.text ? `<div class="mi-text">${richText(mi.text)}</div>` : ''}
           </div>`;
@@ -663,9 +686,9 @@ function buildPremiumPdfHtml(input) {
     if (secYearly || monthlyHtml || warningsHtml) {
         sections.push(`
 <div class="section">
-  ${sectionHead(6, '연운', '年運', `${now.year}년 ${yearGzKo}(${yearGz}) 해의 흐름`)}
+  ${sectionHead(6, '연운', '年運', `${reportYear}년 ${yearGzKo}(${yearGz}) 해의 흐름`)}
   ${secYearly ? `<div class="body-text">${paragraphs(secYearly)}</div>` : ''}
-  ${monthlyHtml ? subBlock('12개월 흐름', monthlyHtml) : ''}
+  ${monthlyHtml ? subBlock(monthlyInsight.some((mi) => Number(mi?.year) > 2000) ? `앞으로 ${monthlyInsight.length}개월 흐름` : '12개월 흐름', monthlyHtml) : ''}
   ${warningsHtml ? subBlock('시기별 주의', warningsHtml) : ''}
   ${conclusionBox(conclusion('yearly', 5))}
 </div>`);
@@ -900,10 +923,10 @@ function buildPremiumPdfHtml(input) {
     margin-left: 1mm;
   }
   .section-hint {
+    /* 2026-10-25 기울임 뺌 (v9 기울임 금지, 한글 명조 기울임은 크롬이 억지로 눕혀 깨져 보였다) */
     font-size: 9.5pt;
-    color: #7A7269;
+    color: #6F6557;
     margin-bottom: 5mm;
-    font-style: italic;
   }
   .body-text p {
     text-align: justify;
@@ -1251,9 +1274,9 @@ function buildPremiumPdfHtml(input) {
   }
   .disclaimer-source { font-size: 9pt; color: #7A7269; margin-bottom: 3mm; }
   .disclaimer-body {
+    /* 2026-10-25 기울임 뺌 (v9) */
     font-size: 8.5pt;
-    color: #7A7269;
-    font-style: italic;
+    color: #6F6557;
     line-height: 1.7;
   }
   .footer-meta {

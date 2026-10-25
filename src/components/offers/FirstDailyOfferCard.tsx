@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { HJ, SERIF, GoldCta } from '@/components/hanji/Hanji';
 import { firstDailyOfferActive, firstDailyOfferLeft, OFFER } from '@/services/offers/firstDailyOffer';
 import { getBalance } from '@/services/storage/localStore';
+import { CHARGE_PACKAGES } from '@/constants/pricing';
 
 /** 반값 카드가 지금 보이는지 (2026-10-23 1.6.3 P1-4) — 보이는 동안 오늘의 운세 끝의 주간, 월운 카드를 숨겨 연결 카드를 하나로 줄인다 */
 export function useFirstDailyOfferActive(): boolean {
@@ -39,7 +40,12 @@ export function FirstDailyOfferCard({ profileId, name, pos }: { profileId?: stri
     import('@/services/analytics').then((a) => a.trackEvent('daily_offer_view', { pos })).catch(() => {});
   }, [active, pos]);
   if (!active) return null;
-  const short = getBalance() < OFFER.price;
+  const bal = Math.round(getBalance() * 10) / 10;
+  const short = bal < OFFER.price;
+  // 2026-10-25 충전 화면이 미리 고르는 묶음(반값 값이 들어오는 가장 작은 묶음, ChargePage 기본 선택과 같은 규칙)으로 남는 운을 센다.
+  //   예전엔 운이 조금 있는 사람에게도 '운이 없어도 괜찮아요 ... 2운이 남아요'라고 적었다(3운이면 실제로 5운이 남는다)
+  const pkg = [...CHARGE_PACKAGES].sort((a, b) => a.un - b.un).find((p) => p.un >= OFFER.price);
+  const leftAfter = pkg ? Math.round((bal + pkg.un - OFFER.price) * 10) / 10 : 0;
   const go = () => {
     import('@/services/analytics').then((a) => {
       a.trackEvent('daily_offer_click', { pos, short: short ? 1 : 0 });
@@ -60,9 +66,9 @@ export function FirstDailyOfferCard({ profileId, name, pos }: { profileId?: stri
           지금은 <b>{OFFER.price}운</b>이에요 <span style={{ color: HJ.mute }}>(정가 10운)</span>.
         </p>
         <GoldCta style={{ marginTop: 14 }} onClick={go}>종합사주 {OFFER.price}운에 보기</GoldCta>
-        {short && (
+        {short && pkg && (
           <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', margin: '8px 0 0', lineHeight: 1.6 }}>
-            운이 없어도 괜찮아요. 2,500원을 충전하면 바로 시작하고 2운이 남아요.
+            {bal > 0 ? `지금 ${bal}운이 있어요.` : '운이 없어도 괜찮아요.'} {pkg.price.toLocaleString('ko-KR')}원을 충전하면 바로 시작하고 {leftAfter}운이 남아요.
           </p>
         )}
       </div>

@@ -521,6 +521,11 @@ function autoRoomName(text: string): string {
   return text.slice(0, 18) + (text.length > 18 ? '...' : '');
 }
 
+/** 2026-10-26 답을 기다리는 방(방 id → 끝나면 풀리는 약속). 답 오는 중에 나갔다가 같은 방에 다시 들어오면
+ *  질문만 보이고 기다림 표시가 없어 손님이 다시 물었다(대화권 한 번 더). 저장소가 아니라 메모리에 두는 것은,
+ *  새로 고침으로 요청이 죽으면 표시도 같이 사라져야 해서다(나간 화면의 sendMessage 는 같은 JS 안에서 끝까지 돈다) */
+const inFlightChat = new Map<string, Promise<void>>();
+
 /* ══════════════════════════════════════════════════════════════════
  * Page
  * ═════════════════════════════════════════════════════════════════ */
@@ -530,6 +535,8 @@ export function ChatSessionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [pendingAsk, setPendingAsk] = useState<string | null>(null);
+  // 2026-10-26 마무리된 방에 도착한 NEXT 카드 질문 — '새 대화 시작하기'로 여는 방의 입력 칸에 넣어 준다
+  const [carriedAsk, setCarriedAsk] = useState<string | null>(null);
   const toast = useToast();
 
   if (!sessionId) {
@@ -639,9 +646,30 @@ export function ChatSessionPage() {
   }, [contentContext, sessionId]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  // 2026-10-25 '대화 마무리하기' 진행 중 표시 (같은 화면에서 두 번 눌러 AI 를 두 번 부르지 않게)
+  const wrapUpBusyRef = useRef(false);
+  // 2026-10-26 이 화면이 아직 떠 있고 같은 방인지 (나갔다 온 방의 답을 기다렸다가 다시 그릴 때)
+  const liveSessionRef = useRef<string | null>(sessionId);
+  useEffect(() => { liveSessionRef.current = sessionId; return () => { liveSessionRef.current = null; }; }, [sessionId]);
+  /** 답 기다림을 등록하고, 끝날 때 부를 함수를 돌려준다 */
+  const beginInFlight = (): (() => void) => {
+    const sid = sessionId!;
+    let done: () => void = () => {};
+    const p = new Promise<void>((r) => { done = r; });
+    inFlightChat.set(sid, p);
+    return () => { if (inFlightChat.get(sid) === p) inFlightChat.delete(sid); done(); };
+  };
 
   // ── 대화방 로드
   useEffect(() => {
+    // 2026-10-09 — 결과 화면 'NEXT' 카드에서 고른 질문: 한 번만, 환영 메시지 뒤에 바로 전송 (뒤로 갔다 와도 재전송 X)
+    // 2026-10-25 이미 대화가 있는 방으로 들어와도 보낸다. 예전엔 아래 '메시지 있는 방' return 뒤에서 읽어,
+    //   같은 결과(같은 날 오늘의 운세, 같은 종합사주)에서 두 번째로 고른 질문이 아무 표시 없이 사라졌다.
+    const autoAsk = (location.state as any)?.autoAsk;
+    if (typeof autoAsk === 'string' && autoAsk.trim()) {
+      setPendingAsk(autoAsk.trim().slice(0, 200));
+      try { navigate(location.pathname, { replace: true, state: { ...(location.state as any), autoAsk: undefined } }); } catch { /* noop */ }
+    }
     const room = getChatRoom(sessionId!);
     if (room) {
       setIsCompleted(!!room.completed);
@@ -650,6 +678,23 @@ export function ChatSessionPage() {
         setRoomNameSet(true);
         const userCount = room.messages.filter((m) => m.role === 'user').length;
         if (userCount >= 5 && !room.completed) setShowWrapUp(true);
+        // 2026-10-26 답 오는 중에 나갔다 온 방 — 기다림 표시를 다시 켜고, 답이 저장되면 다시 그린다
+        const sid = sessionId!;
+        const pending = inFlightChat.get(sid);
+        if (pending) {
+          setIsLoading(true);
+          void pending.then(() => {
+            if (liveSessionRef.current !== sid) return;
+            const r = getChatRoom(sid);
+            if (r) {
+              setMessages(r.messages);
+              setIsCompleted(!!r.completed);
+              if (r.messages.filter((m) => m.role === 'user').length >= 5 && !r.completed) setShowWrapUp(true);
+            }
+            setIsLoading(false);
+            setRefreshTick((t) => t + 1);
+          });
+        }
         return;
       }
     }
@@ -757,24 +802,27 @@ export function ChatSessionPage() {
       (location.state as any)?.prefill ||
       (window.history.state?.usr as any)?.prefill;
     if (prefill && typeof prefill === 'string') setInputText(prefill);
-    // 2026-10-09 — 결과 화면 'NEXT' 카드에서 고른 질문: 한 번만, 환영 메시지 뒤에 바로 전송 (뒤로 갔다 와도 재전송 X)
-    const autoAsk = (location.state as any)?.autoAsk;
-    if (typeof autoAsk === 'string' && autoAsk.trim()) {
-      setPendingAsk(autoAsk.trim().slice(0, 200));
-      try { navigate(location.pathname, { replace: true, state: { ...(location.state as any), autoAsk: undefined } }); } catch { /* noop */ }
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  // autoAsk 실행 — 환영 메시지가 들어간 뒤(최신 state 로) 1회
+  // autoAsk 실행 — 방 메시지(환영 메시지 또는 지난 대화)가 들어간 뒤(최신 state 로) 1회
+  //   2026-10-25 'welcome' 이 있을 때만 보내던 것을 메시지가 하나라도 있으면 보내게 했다.
+  //   100개를 넘겨 잘린 방은 환영 메시지가 빠져 있어 질문이 사라졌다.
   useEffect(() => {
     if (!pendingAsk || isLoading) return;
-    if (!messages.some((m) => m.id === 'welcome')) return;
+    if (messages.length === 0) return;
     const q = pendingAsk;
     setPendingAsk(null);
+    // 2026-10-26 이미 마무리된 방이면 sendMessage 가 아무 표시 없이 버렸다. 마무리된 방은 입력 칸을 그리지 않으므로
+    //   알리고, 질문은 들고 있다가 '새 대화 시작하기'로 여는 방의 입력 칸에 넣는다
+    if (isCompleted) {
+      setCarriedAsk(q);
+      toast.show('이 대화는 마무리됐어요. 새 대화에서 이어서 물어보세요', 'info');
+      return;
+    }
     void sendMessage(q);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingAsk, messages, isLoading]);
+  }, [pendingAsk, messages, isLoading, isCompleted]);
 
   // ── 자동 스크롤
   useEffect(() => {
@@ -783,20 +831,8 @@ export function ChatSessionPage() {
     el.scrollTop = el.scrollHeight;
   }, [messages, isLoading]);
 
-  // ── AI 응답 중 뒤로가기 차단
-  useEffect(() => {
-    if (!isLoading) return;
-    const handle = (_e: PopStateEvent) => {
-      if (isLoading) {
-        window.history.pushState(null, '', window.location.href);
-        toast.show('사주를 살피는 중이에요. 잠시만 기다려 주세요', 'info');
-      }
-    };
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handle);
-    return () => window.removeEventListener('popstate', handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
+  // 2026-10-25 'AI 응답 중 뒤로가기 차단'을 뺐다. 질문마다 같은 주소를 기록에 하나씩 더 쌓아, 세 번 물으면 뒤로를 네 번 눌러야 나가졌다.
+  // 나가도 sendMessage 가 끝까지 돌아 답과 환불을 저장하므로(addChatMessage) 막을 까닭이 없다.
 
   // ── 잔액 (총 대화권)
   const tickets = useMemo(
@@ -861,6 +897,7 @@ export function ChatSessionPage() {
     setInputText('');
     setActiveRec(null); // 다음 질문으로 넘어가면 이전 추천 카드는 내림
     setIsLoading(true);
+    const endInFlight = beginInFlight();
 
     try {
       const history = messages
@@ -911,6 +948,7 @@ export function ChatSessionPage() {
       setMessages((prev) => [...prev, aiMsg]);
       addChatMessage(sessionId!, aiMsg);
     } finally {
+      endInFlight();
       setIsLoading(false);
     }
   }
@@ -919,7 +957,11 @@ export function ChatSessionPage() {
    *  정책(2026-09-17 오너 결정 · 현행 유지): 마무리 요약은 AI 를 1회 더 호출하지만 대화권·무료권을 차감하지 않음.
    *  실패해도 차감이 없으므로 복구 로직 불필요 (토스트만). */
   async function wrapUp() {
+    // 2026-10-25 두 번 눌러도 한 번만 (마무리는 무료라 두 번 부르면 AI 비용과 마무리 메시지가 두 개씩 남았다)
+    if (isLoading || isCompleted || wrapUpBusyRef.current) return;
+    wrapUpBusyRef.current = true;
     setIsLoading(true);
+    const endInFlight = beginInFlight();
     try {
       const history = messages
         .filter((m) => m.id !== 'welcome')
@@ -946,6 +988,8 @@ export function ChatSessionPage() {
     } catch {
       toast.show('마무리 풀이를 만드는 데 실패했어요', 'warning');
     } finally {
+      endInFlight();
+      wrapUpBusyRef.current = false;
       setIsLoading(false);
     }
   }
@@ -1118,7 +1162,7 @@ export function ChatSessionPage() {
                   msg={msg}
                   isLast={idx === messages.length - 1}
                   isCompleted={isCompleted}
-                  showWrapUp={showWrapUp && idx === messages.length - 1}
+                  showWrapUp={showWrapUp && !isLoading && idx === messages.length - 1}
                   onChipTap={(kw) => sendMessage(kw)}
                   onWrapUp={wrapUp}
                   onContinue={() => setShowWrapUp(false)}
@@ -1142,7 +1186,7 @@ export function ChatSessionPage() {
                   gap: 6,
                   alignItems: 'center',
                   fontSize: 13,
-                  color: '#B8965A',
+                  color: '#6F6557', // 2026-10-25 v9 — 표시 글자는 먹 계열 (금색은 누르는 주 버튼에만)
                   marginBottom: 6,
                   fontWeight: 600,
                   letterSpacing: '0.1em',
@@ -1180,7 +1224,7 @@ export function ChatSessionPage() {
                     style={{
                       fontSize: 15,
                       fontWeight: 800,
-                      color: '#f4d166',
+                      color: '#1A1612', // 2026-10-25 v9 먹 (예전 밝은 노랑은 흰 바탕에서 거의 안 보였다)
                       fontFamily: "'Noto Serif KR', serif",
                     }}
                     animate={{ opacity: [0.2, 1, 0.2] }}
@@ -1266,7 +1310,13 @@ export function ChatSessionPage() {
               onClick={() => {
                 // 2026-10-17 — 마무리된 방의 새 풀이도 같은 사람의 사주로 (친구 대화에서 누르면 내 사주로 바뀌던 문제)
                 const room = createChatRoom(userName || '새 풀이');
-                navigate(`/chat/${room.id}`, { replace: true, state: myProfile ? { profile: myProfile } : undefined });
+                // 2026-10-26 — 이 방에 왔다가 못 보낸 질문이 있으면 새 방 입력 칸에 넣어 준다(prefill). 그 질문이 나온 결과도 같이 넘긴다
+                const carry = carriedAsk;
+                setCarriedAsk(null);
+                const state = carry
+                  ? { ...(myProfile ? { profile: myProfile } : {}), prefill: carry, ...(contentContext ? { contentContext } : {}) }
+                  : (myProfile ? { profile: myProfile } : undefined);
+                navigate(`/chat/${room.id}`, { replace: true, state });
               }}
               style={{
                 padding: '12px 22px',
@@ -1496,7 +1546,7 @@ function DarkChatHeader({
         <div
           style={{
             fontSize: 13,
-            color: '#f4d166',
+            color: 'rgba(244,239,228,0.72)', // 2026-10-25 v9 — 종이색 (밝은 노랑 표시 글자 정리)
             marginTop: 2,
             letterSpacing: '0.05em',
             whiteSpace: 'nowrap',
@@ -1514,21 +1564,31 @@ function DarkChatHeader({
           onClick={onTicketsTap}
           aria-label={`대화권 ${ticketsTotal}개, 탭하여 충전`}
           style={{
-            background: 'rgba(184,150,90,0.15)',
-            border: '1px solid rgba(184,150,90,0.3)',
-            padding: '5px 10px',
-            borderRadius: 100,
-            fontSize: 13,
-            color: '#f4d166',
-            fontWeight: 600,
+            // 2026-10-25 v9 — 금색 알약 표시를 종이색 선 네모로. 누르는 칸은 44px(보이는 테두리는 안쪽 span)
+            background: 'transparent',
+            border: 'none',
+            minHeight: 44,
+            padding: 0,
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 4,
+            flexShrink: 0,
             cursor: 'pointer',
             fontFamily: 'inherit',
           }}
         >
-          대화권 {ticketsTotal}
+          <span
+            style={{
+              border: '1px solid rgba(244,239,228,0.35)',
+              padding: '5px 10px',
+              borderRadius: 2,
+              fontSize: 13,
+              color: '#F4EFE4',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            대화권 {ticketsTotal}
+          </span>
         </button>
       )}
       <button
@@ -1536,8 +1596,11 @@ function DarkChatHeader({
         onClick={onMenuTap}
         aria-label="대화 메뉴"
         style={{
-          width: 36,
-          height: 36,
+          width: 44,
+          height: 44,
+          flexShrink: 0,
+          marginRight: -6, // 2026-10-25 누르는 칸만 44px로 넓히고 점 세 개 자리는 그대로
+          padding: 0,
           background: 'transparent',
           border: 'none',
           color: 'rgba(255,255,255,0.85)',
@@ -1571,16 +1634,17 @@ function ContextBanner({
 }) {
   // 목업 .ctx 진본 — 헤더 아래 골드 카드 (margin 12px 16px 0)
   // 命 한자 + 이름·생년 한 줄, 접기/펼치기 없음 (목업 정렬)
+  // 2026-10-25 v9 — 상태 표시라 금색 바탕과 금색 글자를 종이와 먹으로 (금색은 누르는 주 버튼에만)
   return (
     <div
       style={{
         margin: '12px 16px 0',
-        background: 'rgba(184,150,90,0.08)',
-        border: '1px solid rgba(184,150,90,0.25)',
+        background: '#FFFDF8',
+        border: '1px solid #E1D7C4',
         borderRadius: 10,
         padding: '10px 12px',
         fontSize: 13,
-        color: '#6a5d3f',
+        color: '#4B4238',
         display: 'flex',
         gap: 8,
         alignItems: 'center',
@@ -1589,7 +1653,7 @@ function ContextBanner({
       <span
         style={{
           fontFamily: "'Noto Serif KR', serif",
-          color: '#B8965A',
+          color: '#1A1612',
           fontSize: 14,
           fontWeight: 600,
           flexShrink: 0,
@@ -1609,12 +1673,12 @@ function ContextBanner({
         <strong style={{ color: '#1a1a1a', fontWeight: 700 }}>{name}</strong>
         {birth ? ` (${birth})` : ''}
         {ilgan ? (
-          <span style={{ color: '#B8965A', fontWeight: 600 }}>
+          <span style={{ color: '#1A1612', fontWeight: 600 }}>
             {', '}
             {ilgan}({oheng}) 일간
           </span>
         ) : null}
-        <span style={{ color: '#8a7d5f' }}> 사주를 살피며 대화 중</span>
+        <span style={{ color: '#6F6557' }}> 사주를 살피며 대화 중</span>
       </span>
     </div>
   );
@@ -1691,7 +1755,7 @@ function BubbleRow({
               gap: 6,
               alignItems: 'center',
               fontSize: 13,
-              color: '#B8965A',
+              color: '#6F6557', // 2026-10-25 v9 — 표시 글자는 먹 계열 (금색은 누르는 주 버튼에만)
               marginBottom: 6,
               fontWeight: 600,
               letterSpacing: '0.1em',
@@ -1720,7 +1784,7 @@ function BubbleRow({
             borderRadius: isUser ? '16px 16px 4px 16px' : '4px 16px 16px 16px',
             border: isUser ? 'none' : '1px solid #ebe4d2',
             boxShadow: isUser ? 'none' : '0 2px 8px rgba(0,0,0,0.04)',
-            fontSize: 14,
+            fontSize: 15, // 2026-10-25 v9 본문 15px
             lineHeight: 1.75,
             whiteSpace: 'pre-line',
             wordBreak: 'keep-all',
@@ -1749,8 +1813,9 @@ function BubbleRow({
                   whileTap={{ scale: 0.96 }}
                   onClick={() => onChipTap(kw)}
                   style={{
-                    height: 32,
-                    padding: '0 12px',
+                    minHeight: 44, // 2026-10-25 누르는 칸 44px (예전 32px, 나이 드신 분이 자주 빗나감)
+                    padding: '6px 14px',
+                    textAlign: 'left',
                     background: C.goldSoft,
                     color: C.ink,
                     border: `1px solid ${C.line}`,
@@ -1772,7 +1837,7 @@ function BubbleRow({
                   onClick={onContinue}
                   style={{
                     flex: 1,
-                    height: 40,
+                    height: 44,
                     background: C.surface,
                     color: C.inkSoft,
                     border: `1px solid ${C.line}`,
@@ -1789,7 +1854,7 @@ function BubbleRow({
                   onClick={onWrapUp}
                   style={{
                     flex: 1,
-                    height: 40,
+                    height: 44,
                     background: C.gold,
                     color: '#FFFFFF',
                     border: 'none',
@@ -1884,8 +1949,8 @@ function SuggestedContentCard({
         type="button"
         onClick={onTap}
         style={{
-          height: 32,
-          padding: '0 12px',
+          height: 44, // 2026-10-25 누르는 칸 44px (예전 32px)
+          padding: '0 14px',
           background: C.ink,
           color: C.paper,
           border: 'none',
@@ -1898,16 +1963,17 @@ function SuggestedContentCard({
       >
         보기
       </button>
+      {/* 2026-10-25 닫기: 24px 모서리 단추를 44px 칸으로. '보기'와 겹치지 않게 줄 끝 칸으로 옮기고, 오른쪽 여백을 조금 먹어 글자 자리는 거의 그대로 */}
       <button
         type="button"
         onClick={onDismiss}
         aria-label="추천 닫기"
         style={{
-          position: 'absolute',
-          top: 6,
-          right: 6,
-          width: 24,
-          height: 24,
+          width: 44,
+          height: 44,
+          flexShrink: 0,
+          margin: '0 -12px 0 -8px',
+          padding: 0,
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
@@ -1979,16 +2045,17 @@ function ChatComposer({
         paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
       }}
     >
-      {/* 목업 .ticket-cost — Composer 우상단 다크 칩 */}
+      {/* 목업 .ticket-cost — Composer 우상단 칩. 2026-10-25 v9: 먹 알약에 노랑 글자 → 종이 바탕 먹 선 네모 */}
       <div
         style={{
           position: 'absolute',
           right: 16,
           top: -10,
-          background: '#1a1a1a',
-          color: '#f4d166',
+          background: '#F4EFE4',
+          color: '#1A1612',
+          border: '1px solid #1A1612',
           padding: '3px 10px',
-          borderRadius: 100,
+          borderRadius: 2,
           fontSize: 13,
           fontWeight: 600,
           letterSpacing: '0.02em',
@@ -2027,7 +2094,7 @@ function ChatComposer({
             border: '1px solid #ebe4d2',
             borderRadius: 100,
             color: '#1a1a1a',
-            fontSize: 14,
+            fontSize: 15, // 2026-10-25 v9 본문 15px
             lineHeight: 1.5,
             padding: '10px 16px',
             fontFamily: 'inherit',
@@ -2041,14 +2108,12 @@ function ChatComposer({
           disabled={!canSend && !blocked}
           aria-label="전송"
           style={{
-            width: 40,
-            height: 40,
+            width: 44, // 2026-10-25 누르는 칸 44px
+            height: 44,
             flexShrink: 0,
             borderRadius: '50%',
-            background:
-              canSend || blocked
-                ? 'linear-gradient(135deg, #f4d166, #B8965A)'
-                : '#e5dfd0',
+            // 2026-10-25 v9 — 누르는 주 버튼이라 금색은 남기고 밝은 노랑 그라데이션만 뺐다
+            background: canSend || blocked ? '#B8965A' : '#e5dfd0',
             color: '#1a1a1a',
             border: 'none',
             cursor: canSend || blocked ? 'pointer' : 'not-allowed',

@@ -97,9 +97,12 @@ export function DailyMailSignup({ prefill, source = 'daily', style, compact = fa
       try { localStorage.setItem(LS_DONE, label); } catch { /* noop */ }
       import('@/services/analytics').then((a) => a.trackEvent('mail_subscribe', { source: `daily_${source}` })).catch(() => {});
     } catch (e: any) {
-      const why = String(e?.message || '').replace(/^.*?:\s*/, '');
+      // 2026-10-25 서버가 한국어로 적어 보낸 까닭만 보여 준다. 망 끊김이나 30초 넘김은 'internal', 'deadline-exceeded' 같은 영어 코드라
+      //   그대로 붉은 글씨로 보였다 → 한글이 없으면 기본 문구. 집계에는 코드를 남긴다
+      const raw = String(e?.message || '');
+      const why = /[가-힣]/.test(raw) ? raw.replace(/^[^가-힣]*?:\s*/, '') : '';
       setErr(why || '신청하지 못했어요. 잠시 뒤 다시 시도해 주세요');
-      import('@/services/analytics').then((a) => a.trackEvent('mail_signup_fail', { source, why: why.slice(0, 40) || 'unknown' })).catch(() => {});
+      import('@/services/analytics').then((a) => a.trackEvent('mail_signup_fail', { source, why: (why || String(e?.code || raw || 'unknown')).slice(0, 40) })).catch(() => {});
     } finally {
       setBusy(false);
     }

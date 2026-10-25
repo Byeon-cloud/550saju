@@ -375,6 +375,13 @@ export function App() {
       // 만료(12분) + 여유 15초 후 재검사 (성공 생성은 clearPendingSpend 로 이미 해제돼 영향 0)
       const recheck = window.setTimeout(() => settle(reconcilePendingSpends()), PENDING_EXPIRE_MS + 15000);
       window.addEventListener('beforeunload', () => window.clearTimeout(recheck), { once: true });
+      // 2026-10-26 — 서버 몫 돌려받기 요청(자동환불한 오늘의 운세, 꿈, 대화권과 지난번에 못 보낸 것)을 로그인 확인 뒤 한 번 보낸다.
+      //   로그인 계정만 보내고 익명이면 아무것도 하지 않는다 (serverSpend.ts)
+      import('@/services/auth/authService')
+        .then(({ ensureAuth }) => ensureAuth())
+        .then(() => import('@/services/ai/serverSpend'))
+        .then((s) => s.flushServerSpendRefunds())
+        .catch(() => { /* noop — 다음 차감, 돌려받기, 부팅에 다시 */ });
     }).catch(() => {});
 
     // 0-a2b. 주제 결과 반쪽(__partial) 자가치유 (2026-10-04) — 마감에 잘려 반쪽만 저장된 결과를 서버 완성본으로
@@ -386,30 +393,64 @@ export function App() {
     // 0-a3b. 종합사주 결과복구 (2026-06-18) — 생성 중 앱 종료로 결과 못 받은 경우(미해결 premium 차감 <5분)
     //   서버('recovery' 필드)에서 끌어와 보관함에 복원 (재생성 0). 못 찾으면 위 reconcile 자동환불로 degrade.
     //   pending 있을 때만 서버 호출 → 정상 부팅엔 네트워크 0.
+    // 🚨 2026-10-25 — 엉뚱한 결과 복구 수리. 예전엔 장부의 사주와 시각을 보지 않고 서버의 한 시간 안 가장 새 결과를 받아 저장하고
+    //   'premium' 장부를 종류째 지웠다. 엄마 것을 받은 뒤 아빠 것을 사고 앱이 닫히면 엄마 결과가 보관함에 한 번 더 들어가고
+    //   아빠 몫 10운은 환불 장부에서 사라졌다. 이제 장부 건마다: 그 사주(key)의 결과만, 결제 뒤에 만든 것만 받고, 그 건만 지운다.
+    //   맞는 결과가 없으면 아무것도 하지 않는다(장부가 남아 12분 뒤 자동환불). 생성이 아직 끝나지 않았을 수 있어 몇 번 더 본다.
+    //   새로고침된 결과 화면이 그 결제를 맡고 있으면(결과 화면 기록 + 지금 그 주소) 그 화면이 찾는다(ResultPage).
     import('@/services/storage/localStore').then(async (m) => {
-      const pend = m.getPendingSpends().find((p) => p.type === 'premium' && (Date.now() - p.ts) < m.PENDING_EXPIRE_MS);
-      if (!pend) return;
+      const bootIds = m.getPendingSpends()
+        .filter((p) => p.type === 'premium' && (Date.now() - p.ts) < m.PENDING_EXPIRE_MS)
+        .map((p) => p.id);
+      if (bootIds.length === 0) return;
       const [{ getFunctions, httpsCallable }, { app }, { ensureAuth }] = await Promise.all([
         import('firebase/functions'), import('@/services/auth/firebase'), import('@/services/auth/authService'),
       ]);
-      await ensureAuth();
       const fn = httpsCallable(getFunctions(app, 'us-central1'), 'recoverPremiumResult');
-      const r: any = await fn({});
-      const data = r?.data;
-      if (data?.found && data.content && data.sajuData) {
-        m.saveReport({
-          id: data.reportId || m.generateId(),
-          name: data.sajuData?.input?.name || '나',
-          input: data.sajuData?.input,
-          sajuData: data.sajuData,
-          type: 'paid',
-          contentType: 'report',
-          createdAt: new Date().toISOString(),
-          aiResult: data.reportType === 'premium' ? { ...data.content, tier: 'premium' } : data.content,
-          spentUn: pend.amount, // 2026-10-15 보관함 'N운 사용' 장부
-        });
-        m.clearPendingSpendByType('premium'); // 결과 복구됨 → 환불 대신 결과 전달
-        try { localStorage.setItem('saju500:premium_recovered', '1'); } catch { /* noop */ }
+      const pageOwns = (reportId: string) =>
+        window.location.pathname === `/result/${reportId}` && /[?&]fresh=1\b/.test(window.location.search);
+      const tryRecover = async (): Promise<boolean> => {
+        let left = 0;
+        for (const id of bootIds) {
+          const pend = m.findPremiumPending({ id });
+          if (!pend || Date.now() - pend.ts >= m.PENDING_EXPIRE_MS) continue; // 이미 결과를 받았거나 돌려준 건
+          const owner = m.findPremiumFreshByPending(pend.id);
+          if (owner && pageOwns(owner.reportId)) { left += 1; continue; } // 결과 화면이 찾는 중
+          left += 1;
+          try {
+            await ensureAuth();
+            const maxAgeMs = Date.now() - pend.ts + 120000; // 결제 뒤에 만든 것만 (2분은 기기와 서버 사이 지연 여유, 상대 시간이라 시계가 틀려도 맞다)
+            const r: any = await fn({ ...(pend.key ? { sajuKey: pend.key } : {}), maxAgeMs });
+            const data = r?.data;
+            if (!(data?.found && data.content && data.sajuData)) continue;
+            if (pend.key && m.premiumSajuKey(data.sajuData) !== pend.key) continue; // 다른 사람 결과 (옛 서버 대비 한 번 더 본다)
+            if (typeof data.ageMs === 'number' && data.ageMs > maxAgeMs) continue; // 이번 결제 전에 만든 결과
+            if (!m.findPremiumPending({ id: pend.id })) continue; // 그사이 다른 경로가 처리했다
+            m.saveReport({
+              // 결과 화면 기록이 있으면 그 기록 id 로 (그 화면도 같은 id 로 저장하므로 보관함에 둘이 생기지 않는다)
+              id: owner?.reportId || data.reportId || m.generateId(),
+              name: data.sajuData?.input?.name || '나',
+              input: data.sajuData?.input,
+              sajuData: data.sajuData,
+              type: 'paid',
+              contentType: 'report',
+              createdAt: new Date().toISOString(),
+              aiResult: data.reportType === 'premium' ? { ...data.content, tier: 'premium' } : data.content,
+              spentUn: pend.amount, // 2026-10-15 보관함 'N운 사용' 장부
+            });
+            m.settlePremiumPending({ id: pend.id }); // 결과 복구됨 → 이 건만 환불 대상에서 뺀다
+            if (owner) m.clearPremiumFresh(owner.reportId);
+            left -= 1;
+            try { localStorage.setItem('saju500:premium_recovered', '1'); } catch { /* noop */ }
+          } catch { /* noop — 다음 번에 다시 */ }
+        }
+        return left === 0;
+      };
+      // 부팅 직후, 그리고 생성이 끝날 시간을 두고 몇 번 더 (장부 자동환불 12분 전까지)
+      const delays = [0, 90000, 180000, 300000];
+      for (const d of delays) {
+        if (d > 0) await new Promise((res) => window.setTimeout(res, d));
+        if (await tryRecover()) return;
       }
     }).catch(() => { /* noop — 실패 시 reconcile 자동환불 유지 */ });
 

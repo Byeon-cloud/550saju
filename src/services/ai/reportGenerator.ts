@@ -117,10 +117,15 @@ export async function generateReport(
  * 종합사주 결과 복구 — 서버 recovery 블롭에서 같은 uid 의 최근(1시간 내) 결과를 끌어옴 (재생성 0).
  * 2026-06-30 토큰 절감: SSE 전달 실패 시 callable 재생성 전에 호출 → 이미 만든 결과 재사용.
  * 호출부에서 sajuData 일치 확인 후 사용할 것(다른 사주 결과 오용 방지).
+ * 2026-10-25 — opts.sajuKey(localStore premiumSajuKey) 를 주면 서버가 그 사주 결과만, opts.maxAgeMs 를 주면 그 시간 안 결과만 찾는다
+ *   (이번 결제 전에 만든 같은 사람의 옛 결과를 새 결과로 넘기지 않게). 응답 ageMs 는 서버 기준 결과가 만들어진 뒤 지난 시간(옛 서버는 없음).
  */
-export async function recoverPremiumResult(): Promise<{ found: boolean; reportId?: string; reportType?: string; content?: any; sajuData?: any }> {
+export async function recoverPremiumResult(opts?: { sajuKey?: string; maxAgeMs?: number }): Promise<{ found: boolean; reportId?: string; reportType?: string; content?: any; sajuData?: any; generatedAtMs?: number; ageMs?: number }> {
   try {
-    const result = await callWithAuth('recoverPremiumResult', {});
+    const args: Record<string, unknown> = {};
+    if (opts?.sajuKey) args.sajuKey = opts.sajuKey;
+    if (opts?.maxAgeMs && opts.maxAgeMs > 0) args.maxAgeMs = Math.round(opts.maxAgeMs);
+    const result = await callWithAuth('recoverPremiumResult', args);
     return (result?.data as any) || { found: false };
   } catch {
     return { found: false };
@@ -135,11 +140,15 @@ export async function recoverPremiumResult(): Promise<{ found: boolean; reportId
  *  · onError 콜백: 그룹 실패 또는 잔액 차감 실패 시
  *  · Opus 4.6 단일 모델 (퀄리티 보장)
  */
+/** onError 2번째 인자 kind (2026-10-25 — 주제 스트림과 같은 뜻):
+ *   'server' = 서버가 error/groupError 를 보냄 (잔액 부족, 하루 상한, 생성 실패 뒤 서버 환불) → 서버 완성본을 기다릴 까닭이 없다
+ *   'http'   = 요청이 서버 생성까지 닿지 않음 (인증, 설정, 응답 실패) → 서버가 깎지 않았다
+ *   'closed' / 'network' = 연결만 끊김 → 서버는 끝까지 만들어 저장하고 운을 깎을 수 있다 (완성본을 찾아야 한다) */
 export interface PremiumStreamCallbacks {
   onStart?: () => void;
   onGroup?: (group: 'A' | 'B' | 'C', data: any, elapsedMs: number) => void;
   onDone: (result: { reportId: string; content: AIReportResponse }) => void;
-  onError: (message: string) => void;
+  onError: (message: string, info?: { kind: TopicStreamErrorKind }) => void;
 }
 
 export async function generatePremiumReportStream(
@@ -157,14 +166,14 @@ export async function generatePremiumReportStream(
   const auth = getAuth();
   const idToken = await auth.currentUser?.getIdToken();
   if (!idToken) {
-    callbacks.onError('인증 토큰을 가져올 수 없습니다');
+    callbacks.onError('인증 토큰을 가져올 수 없습니다', { kind: 'http' });
     return;
   }
 
   // Functions endpoint URL — region 'us-central1' 기준
   const projectId = (await import('@/services/auth/firebase')).firebaseConfig?.projectId;
   if (!projectId) {
-    callbacks.onError('Firebase 프로젝트 설정 오류');
+    callbacks.onError('Firebase 프로젝트 설정 오류', { kind: 'http' });
     return;
   }
   const useEmulator =
@@ -185,7 +194,7 @@ export async function generatePremiumReportStream(
     });
 
     if (!res.ok || !res.body) {
-      callbacks.onError(`서버 오류 ${res.status}`);
+      callbacks.onError(`서버 오류 ${res.status}`, { kind: 'http' });
       return;
     }
 
@@ -227,7 +236,7 @@ export async function generatePremiumReportStream(
           });
           return;
         } else if (eventName === 'error' || eventName === 'groupError') {
-          callbacks.onError(payload.message || '알 수 없는 오류');
+          callbacks.onError(payload.message || '알 수 없는 오류', { kind: 'server' });
           return;
         }
       }
@@ -236,9 +245,9 @@ export async function generatePremiumReportStream(
     //   토스 웹뷰·Cloud Run/프록시 idle-timeout 등으로 연결이 '조용히' 끊김). 기존: 그냥 break →
     //   onDone/onError 둘 다 미발화 → ResultPage '분석 중' 배너가 영원히 + 환불·에러·복구 0 (무한로딩 직접 원인).
     //   이제 강제 onError → handleStreamFailure 로 환불 + 에러카드 정상 전환.
-    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.');
+    callbacks.onError('완료 신호 없이 연결이 종료됐어요. 다시 시도해주세요.', { kind: 'closed' });
   } catch (e: any) {
-    callbacks.onError(e?.message || '네트워크 오류');
+    callbacks.onError(e?.message || '네트워크 오류', { kind: 'network' });
   }
 }
 
@@ -288,7 +297,8 @@ export interface DailyFortuneStreamCallbacks {
    */
   onGroup?: (info: { group: DailyFortuneGroupId; data: any; elapsedMs: number }) => void;
   onDone: (info: { result: any | null; cached?: boolean; elapsedMs?: number }) => void;
-  onError: (message: string) => void;
+  /** code 'insufficient' = 서버가 '운이 부족합니다'로 막았다 (2026-10-25, 로그인 계정의 1운 생성) → 2026-10-26 막지 않고 서버 차감 없이 callable 로 다시 만든다 (DailyFortunePage) */
+  onError: (message: string, code?: string) => void;
 }
 
 export async function generateDailyFortuneStream(
@@ -304,6 +314,9 @@ export async function generateDailyFortuneStream(
     baseScores100?: { wealth: number; love: number; career: number; health: number };
     tomorrowGanzi?: string;
     tomorrowDate?: string;
+    /** 2026-10-25 두 번째부터 1운 — 기기 장부 id. 로그인 계정이면 서버도 1운을 깎는다(callable 폴백과 같은 id 는 한 번만) */
+    paid?: boolean;
+    spendId?: string;
   },
   callbacks: DailyFortuneStreamCallbacks,
 ): Promise<void> {
@@ -451,7 +464,7 @@ export async function generateDailyFortuneStream(
           callbacks.onDone({ result: payload.result, cached: payload.cached, elapsedMs: payload.elapsedMs });
           return; // 2026-10-14 — 다른 스트림과 같게. 없으면 아래 끊김 가드가 성공 뒤에도 onError 를 한 번 더 불렀다
         } else if (eventName === 'error') {
-          callbacks.onError(payload.message || '알 수 없는 오류');
+          callbacks.onError(payload.message || '알 수 없는 오류', payload.code);
           return;
         }
       }
@@ -616,7 +629,8 @@ export interface DreamFreeStreamCallbacks {
 }
 
 export async function generateDreamFreeStream(
-  args: { saju?: any; dreamContent: string; category: string; userConcern?: string; paid?: boolean },
+  /** spendId (2026-10-25) — 1운으로 시작한 꿈의 기기 장부 id. 로그인 계정이면 서버도 1운을 깎는다(callable 폴백과 같은 id 는 한 번만) */
+  args: { saju?: any; dreamContent: string; category: string; userConcern?: string; paid?: boolean; spendId?: string },
   callbacks: DreamFreeStreamCallbacks,
 ): Promise<void> {
   callbacks = wrapStreamCallbacks('dream', callbacks); // C3 측정 (로직 무변경)
@@ -777,6 +791,8 @@ export async function generateDreamFree(args: {
   userConcern?: string;
   /** 1운 차감 후 생성 — 서버 월 쿼터 제외 (2026-09-17 하루 1회 무료 정책) */
   paid?: boolean;
+  /** 2026-10-25 기기 장부 id — 로그인 계정이면 서버도 1운을 깎는다(스트림과 같은 id 는 한 번만) */
+  spendId?: string;
 }): Promise<any> {
   const result = await callWithAuth('generateDreamFree', args);
   return result.data;

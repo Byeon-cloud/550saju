@@ -1,8 +1,10 @@
 // HomePage v9 (2026-10-10) — 수묵·고서 시안 적용 (docs/mockups/사주500_v9_고서시안.html)
 //   순서 (2026-10-14 홈 강조 개편, 시안 artifact 2zsAF1fJrFmpcHzQE3mrA3 → 2026-10-23 1.6.3 P1-3 고민을 종합사주 위로):
-//         오늘 예고(히어로) → 오늘 무료(먹 꿈, 한지 대화) → 가족 띠
-//         → 고민(나이대별 위 두 개만 빨간 도장 카드, 나머지는 '고민 더 보기') → 사주책(종합사주) → 신년운세(그림 띠)
-//         → 기간별(달력 장 두 장) → 실시간 인기 → 실제 후기(있을 때만) → 다른 점(먹 띠) → 푸터
+//         오늘 예고(히어로) → 고민(2026-10-26 히어로 바로 아래, 위 두 개 카드 + 아홉 칸 격자, 접지 않음)
+//         → 철 따라 카드(월초 좋은 날, 생일 달, 수능, 초대) → 오늘 무료(먹 꿈, 한지 대화, 만세력) → 가족 띠
+//         → 사주책(종합사주) → 신년운세(그림 띠) → 기간별(달력 장 두 장) → 실시간 인기 → 실제 후기(있을 때만) → 다른 점(먹 띠) → 푸터
+//   10-26 근거: 오너 주변 피드백 '홈에서 뭘 어떻게 눌러야 할지, 뭐부터 볼지 모르겠다', '고민 더 보기가 안 보인다'.
+//     첫 화면의 주 버튼(오늘 운세 전부 열기)에만 빛이 세 번 지나가고 멈춘다(GoldCta sheen). 고민 칸은 보일 때 한 번 차례로 떠오른다.
 //   P1-3 근거: 충전이 가장 잘 되는 주제운이 띠 표, 종합사주, 기간별 아래에 있었다(docs/strategy/2026-10-22_UIUX_콘텐츠_점검.md 5-3).
 //     종합사주 카드 첫 문장은 일주 고정 문구(iljuMeaning.ts, 5월생에게 '겨울')를 빼고 만세력 사실(premiumStory.ts)로.
 //   원칙
@@ -32,10 +34,12 @@ import { getReports } from '@/services/storage/localStore';
 import { getPublicReviews, type PublicReview } from '@/services/reviews';
 import { getTopicTop5 } from '@/services/liveBest';
 import {
-  todayHook, todayGz, weekFact, nextMonthFact, yearFact, yearGz, persona, monthDayLabel, josa, STAR_LUCK,
+  todayHook, todayHourWindows, windowAhead, kstNowHM, todayGz, weekFact, nextMonthFact, yearFact, yearGz, persona, monthDayLabel, josa, STAR_LUCK,
   type WeekFact, type MonthFact,
 } from '@/services/saju/hookFacts';
 import { premiumStory } from '@/services/saju/premiumStory';
+import { isAppsInToss } from '@/services/payment/iapService';
+import { isAppintosBuild } from '@/lib/env';
 import { genOfAge, worryRows, type WorryRow } from '@/services/saju/worryTopics';
 import { trackEvent } from '@/services/analytics';
 import { realName } from '@/utils/personName';
@@ -44,6 +48,7 @@ import { TtiFortune } from '@/components/home/TtiFortune';
 import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import { DailyMailSignup, mailPrefillOf } from '@/components/daily/DailyMailSignup';
 import { getMyTti, ttiOfYear, ttiName, yearLabel } from '@/services/tti/ttiFortune';
+import { MotionScope, moVars } from '@/components/motion/Motion';
 import {
   HJ, SERIF, ART, ART_CREDIT, GoldCta, Seal, Redact, Gwang, GoBook, hanjaNum,
 } from '@/components/hanji/Hanji';
@@ -126,10 +131,9 @@ export function HomePage() {
     const t = window.setTimeout(() => { import('@/services/review/reviewPrompt').then((m) => m.maybeAskReview()).catch(() => {}); }, 900);
     return () => window.clearTimeout(t);
   }, []);
-  // 다른 화면의 '주제별 운세 더 보기'(/#home-topics) 진입 시 고민 섹션으로 (고민 전부를 보러 온 것이라 펼쳐 둔다)
+  // 다른 화면의 '주제별 운세 더 보기'(/#home-topics) 진입 시 고민 섹션으로
   useEffect(() => {
     if (window.location.hash !== '#home-topics') return;
-    setShowAllTopics(true);
     const t = setTimeout(() => document.getElementById('home-topics')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 180);
     return () => clearTimeout(t);
   }, []);
@@ -138,8 +142,10 @@ export function HomePage() {
   const [today, setToday] = useState(() => kstToday());
   const [dailyFree, setDailyFree] = useState(() => hasFreePass('daily'));
   const [dreamFree, setDreamFree] = useState(() => hasFreePass('dream'));
+  // 2026-10-25 — 사주대화 카드도 오늘 무료 질문이 남았을 때만 '무료'라고 쓴다 (10-15 규칙: 다 썼으면 무료라고 말하지 않는다)
+  const [chatFree, setChatFree] = useState(() => hasFreePass('chat'));
   useEffect(() => {
-    const refresh = () => { setToday(kstToday()); setDailyFree(hasFreePass('daily')); setDreamFree(hasFreePass('dream')); };
+    const refresh = () => { setToday(kstToday()); setDailyFree(hasFreePass('daily')); setDreamFree(hasFreePass('dream')); setChatFree(hasFreePass('chat')); };
     refresh();
     return subscribeFreePass(refresh);
   }, []);
@@ -150,7 +156,6 @@ export function HomePage() {
     getPublicReviews(10).then((r) => { if (alive) setReviews(r); }).catch(() => {});
     return () => { alive = false; };
   }, []);
-  const [showAllTopics, setShowAllTopics] = useState(false);
   /* 세대 (2026-10-15 오너: 20대 취준생 말투만 있으면 50~60대의 재취업, 창업, 재혼, 새 출발이 빠진다)
    *   나이 근거: 사주가 있으면 출생 연도, 없으면 띠 운세에서 고른 '내 해'. 둘 다 없으면 누구에게나 맞는 말. */
   const [ttiYear, setTtiYear] = useState<number | undefined>(() => getMyTti()?.year);
@@ -168,7 +173,12 @@ export function HomePage() {
   const facts = useMemo(() => {
     if (!hasSaju || !sajuData) return null;
     try {
+      // 2026-10-25 이미 지난 '조심할 시간'은 첫 줄에 쓰지 않는다(오전 11시에 '오전 7시 반~9시 반에는 미루세요'가 보이던 것)
+      const w = todayHourWindows(today, sajuData);
+      const nowHM = kstNowHM();
+      const todayShow: 'avoid' | 'peak' | null = !w ? null : windowAhead(w.avoid, nowHM) ? 'avoid' : windowAhead(w.peak, nowHM) ? 'peak' : null;
       return {
+        todayShow,
         today: todayHook(sajuData, today),
         week: weekFact(sajuData, today),
         month: nextMonthFact(sajuData, today),
@@ -205,19 +215,15 @@ export function HomePage() {
   /** 올해가 아닌 날짜엔 '내년 ' — '2월'만 쓰면 올해 2월로 읽힌다 */
   const yr = (dateKey: string) => (Number(dateKey.slice(0, 4)) > Number(today.slice(0, 4)) ? '내년 ' : '');
   const goTopic = (id: string) => navigate(`/topic/${id}`, profileId ? { state: { profileId } } : undefined);
-  /* 고민 목록 (2026-10-23 P1-3) — 나이대별 순서, 앞 두 개만 먼저 보이고 나머지는 '고민 더 보기'.
+  /* 고민 목록 (2026-10-23 P1-3, 10-26 전부 펼침) — 나이대별 순서, 앞 두 개는 카드, 나머지 아홉은 세 칸 격자.
    *   사주 카드 아래 다음 단계 칸의 고민 두 개와 같은 목록(worryTopics.ts).
-   *   측정: home_topic_click {topic, pos: top|more, rank, gen, has}, home_topics_more {gen, has}, home_premium_click {pos, has} */
+   *   측정: home_topic_click {topic, pos: top|grid(10-25까지 more), rank, gen, has}, home_premium_click {pos, has} */
   const worries = useMemo(() => worryRows(hasSaju ? sajuData : null, today, gen, compat), [hasSaju, sajuData, today, gen, compat]);
   const evGen = gen ?? 'none';
-  const goWorry = (r: WorryRow, pos: 'top' | 'more', rank: number) => {
+  const goWorry = (r: WorryRow, pos: 'top' | 'grid', rank: number) => {
     trackEvent('home_topic_click', { topic: r.key, pos, rank, gen: evGen, has: hasSaju ? 1 : 0 });
     if (r.key === 'compat') navigate('/compat');
     else goTopic(r.key);
-  };
-  const openMoreTopics = () => {
-    trackEvent('home_topics_more', { gen: evGen, has: hasSaju ? 1 : 0 });
-    setShowAllTopics(true);
   };
   const goPremium = (pos: 'book' | 'card' | 'cta') => {
     trackEvent('home_premium_click', { pos, has: hasSaju ? 1 : 0 });
@@ -267,23 +273,33 @@ export function HomePage() {
               </>
             ) : (
               <>
-                {facts?.today ? (
+                {facts?.today && facts.todayShow === 'avoid' ? (
                   <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 29, lineHeight: 1.38, letterSpacing: '-.03em', marginTop: 14 }}>
                     {facts.today.avoid}에는<br />
                     <span className={heroMo ? 'mo-brush' : undefined} style={{ backgroundImage: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>큰 결정을 미루세요.</span>
+                  </h1>
+                ) : facts?.today && facts.todayShow === 'peak' ? (
+                  <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 29, lineHeight: 1.38, letterSpacing: '-.03em', marginTop: 14 }}>
+                    {facts.today.peak}{josa(facts.today.peak, '이', '가')}<br />
+                    <span className={heroMo ? 'mo-brush' : undefined} style={{ backgroundImage: 'linear-gradient(transparent 70%, rgba(184,150,90,.34) 70%)' }}>오늘 가장 좋은 시간이에요.</span>
                   </h1>
                 ) : (
                   <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 24, lineHeight: 1.45, letterSpacing: '-.02em', marginTop: 14 }}>
                     {todayLine}
                   </h1>
                 )}
-                {facts?.today && (
+                {facts?.today && facts.todayShow === 'avoid' && (
                   <div style={{ marginTop: 16, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '13px 15px', fontSize: 15, lineHeight: 1.65, color: HJ.ink2 }}>
                     <b style={{ color: HJ.ink }}>가장 좋은 시간은 {facts.today.peak}</b>이에요.
                     {' '}오늘 할 일과 피할 일도 같이 확인해 보세요.
                   </div>
                 )}
-                <GoldCta style={{ marginTop: 16 }} onClick={() => navigate('/daily')} sub={dailyFree ? '무료' : '1운'}>
+                {facts?.today && facts.todayShow === 'peak' && (
+                  <div style={{ marginTop: 16, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '13px 15px', fontSize: 15, lineHeight: 1.65, color: HJ.ink2 }}>
+                    중요한 연락과 결정은 이때로 미뤄 보세요. 오늘 할 일과 피할 일도 같이 확인해 보세요.
+                  </div>
+                )}
+                <GoldCta style={{ marginTop: 16 }} onClick={() => navigate('/daily')} sub={dailyFree ? '무료' : '1운'} sheen>
                   오늘 운세 전부 열기
                 </GoldCta>
                 <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>
@@ -320,6 +336,27 @@ export function HomePage() {
            첫 화면 아래, 아침 운세 메일 줄 다음. 앱 빌드와 토스 안에서는 아무것도 그리지 않는다 (components/pwa/HomePwaSlot) */}
       {HomePwaSlot && <Suspense fallback={null}><HomePwaSlot /></Suspense>}
 
+      {/* ━━━ 2. 고민 (주제운) — 2026-10-26 오너 '고민 더 보기가 안 보여 다른 주제운을 못 만난다, 홈에서 뭐부터 볼지 모르겠다'
+           → 오늘 운세 바로 아래로 올리고 접지 않는다. 나이대별 위 두 개는 사실 한 줄이 붙은 카드, 나머지 아홉은 세 칸 격자 ━━━ */}
+      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
+        <SecTitle k="고민별 운세" h="어떤 고민이 있으세요?" />
+      </div>
+      <MotionScope style={{ margin: '0 16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {worries.slice(0, 2).map((r, i) => (
+            <TopicCard key={r.key} i={i} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={() => goWorry(r, 'top', i + 1)} />
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
+          {worries.slice(2).map((r, i) => (
+            <TopicTile key={r.key} i={i + 2} hz={r.hz} t={r.t} price={r.price} onClick={() => goWorry(r, 'grid', i + 3)} />
+          ))}
+        </div>
+      </MotionScope>
+      <p style={{ margin: '10px 22px 0', fontSize: 13.5, color: HJ.mute, lineHeight: 1.6, wordBreak: 'keep-all' }}>
+        누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요.
+      </p>
+
       {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 월운세와 같은 채점, AI 0원 */}
       {hasSaju && <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />}
       {/* 2026-10-17 생일 달 — 종합사주 또는 신년운세(11~2월) */}
@@ -332,7 +369,7 @@ export function HomePage() {
       {/* 2026-10-17 웹 전용 첫 손님 소개 (앱 빌드와 토스 안에서는 안 보임) */}
       {!hasSaju && <WebIntro premiumPrice={premium} />}
 
-      {/* ━━━ 2. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게) ━━━ */}
+      {/* ━━━ 3. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게) ━━━ */}
       <div style={{ padding: '32px 16px 0' }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: HJ.mute, padding: '0 6px' }}>오늘 무료로 볼 수 있어요</div>
         <div className="grid grid-cols-2 gap-2.5" style={{ marginTop: 10 }}>
@@ -353,7 +390,7 @@ export function HomePage() {
               {gen === 'young' ? <>“이직해도<br />될까요?”</> : gen === 'mid' ? <>“지금 옮겨도<br />될까요?”</> : <>“새로 시작해도<br />될까요?”</>}
             </span>
             <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>고민을 물어보면 내 사주로 답해 드려요</span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>첫 질문 무료 ›</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>{chatFree ? '첫 질문 무료 ›' : '1운에 질문 세 번 ›'}</span>
           </button>
         </div>
         {/* 2026-10-18 무료 만세력 입구 — 홈에 없어서 '내 정보', '보관함'으로만 들어갔다. 토스 검색 키워드 '만세력'과 짝 */}
@@ -377,33 +414,11 @@ export function HomePage() {
         <>
           <SecTitle k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" />
           <div style={{ margin: '0 16px' }}>
+            {/* 2026-10-25 가족 생일 넣기는 관계 '가족'으로 시작 (예전엔 '본인'이라 본인 교체 창이 떴다) */}
             <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="family"
-              onInput={() => navigate('/input?new=1&from=daily')} compatPrice={compat} onCompat={() => navigate('/compat')} />
+              onInput={() => navigate('/input?new=1&from=daily', { state: { relation: '가족' } })} compatPrice={compat} onCompat={() => navigate('/compat')} />
           </div>
         </>
-      )}
-
-      {/* ━━━ 3. 고민 (주제운) — 2026-10-23 P1-3 종합사주 위로. 나이대별 위 두 개만 빨간 도장 카드, 나머지는 '고민 더 보기' ━━━ */}
-      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
-        <SecTitle k="요즘 많이 찾는 고민" h="어떤 고민이 있으세요?" />
-      </div>
-      <div style={{ margin: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {worries.slice(0, 2).map((r, i) => (
-          <TopicCard key={r.key} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={() => goWorry(r, 'top', i + 1)} />
-        ))}
-        {showAllTopics && (
-          <div style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, overflow: 'hidden' }}>
-            {worries.slice(2).map((r, i, arr) => (
-              <TopicLine key={r.key} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={() => goWorry(r, 'more', i + 3)} last={i === arr.length - 1} />
-            ))}
-          </div>
-        )}
-      </div>
-      {!showAllTopics && (
-        <button type="button" onClick={openMoreTopics}
-          style={{ display: 'block', width: 'calc(100% - 32px)', margin: '6px 16px 0', padding: 14, fontSize: 15, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
-          고민 더 보기 ›
-        </button>
       )}
 
       {/* ━━━ 4. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
@@ -633,7 +648,8 @@ export function HomePage() {
           <button className="tap-pad" type="button" onClick={() => navigate('/storage')}>보관함</button>
         </div>
         <p style={{ marginTop: 12, fontSize: 13.5, color: HJ.mute, lineHeight: 1.6 }}>{ART_CREDIT}</p>
-        <p style={{ marginTop: 6, fontSize: 13.5, color: HJ.mute }}>© 2026 사주500</p>
+        {/* 웹은 아래 LegalFooter 가 같은 줄을 그린다(두 번 보이던 것). 앱은 LegalFooter 가 없어 여기서 그린다 */}
+        {(isAppintosBuild || isAppsInToss()) && <p style={{ marginTop: 6, fontSize: 13.5, color: HJ.mute }}>© 2026 사주500</p>}
       </div>
       <LegalFooter />
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
@@ -706,11 +722,11 @@ function SealBox({ children, size, fontSize }: { children: ReactNode; size: numb
   );
 }
 
-/** 고민 위 두 개 — 한 줄 카드 (빨간 도장, 2026-10-23 P1-3) */
-function TopicCard({ hz, t, s, price, onClick }: { hz: string; t: string; s: string; price: string; onClick: () => void }) {
+/** 고민 위 두 개 — 한 줄 카드 (빨간 도장, 2026-10-23 P1-3). i 는 보일 때 차례로 떠오르는 순서 */
+function TopicCard({ hz, t, s, price, onClick, i = 0 }: { hz: string; t: string; s: string; price: string; onClick: () => void; i?: number }) {
   return (
-    <button type="button" onClick={onClick} className="w-full text-left mo-press"
-      style={{ display: 'flex', gap: 14, alignItems: 'center', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '15px 16px', minHeight: 78 }}>
+    <button type="button" onClick={onClick} className="w-full text-left mo-press mo-rise"
+      style={{ ...moVars({ i }), display: 'flex', gap: 14, alignItems: 'center', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '15px 16px', minHeight: 78 }}>
       <SealBox size={44} fontSize={24}>{hz}</SealBox>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: HJ.ink, lineHeight: 1.35 }}>{t}</span>
@@ -721,17 +737,14 @@ function TopicCard({ hz, t, s, price, onClick }: { hz: string; t: string; s: str
   );
 }
 
-/** 고민 목록 한 줄 (먹 테두리 도장) */
-function TopicLine({ hz, t, s, price, onClick, last }: { hz: string; t: string; s: string; price: string; onClick: () => void; last?: boolean }) {
+/** 고민 나머지 아홉 — 세 칸 격자 한 칸 (먹 테두리 도장, 2026-10-26 '고민 더 보기' 대신 전부 보이게) */
+function TopicTile({ hz, t, price, onClick, i }: { hz: string; t: string; price: string; onClick: () => void; i: number }) {
   return (
-    <button type="button" onClick={onClick} className="w-full text-left flex items-center gap-3"
-      style={{ padding: '13px 15px', borderBottom: last ? 0 : '1px solid #EDE6D8', background: 'transparent', minHeight: 60 }}>
-      <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: 5, boxShadow: `inset 0 0 0 1.5px ${HJ.ink}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 17, fontWeight: 900, color: HJ.ink, flexShrink: 0 }}>{hz}</span>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 15.5, fontWeight: 700, color: HJ.ink }}>{t}</span>
-        <span style={{ display: 'block', fontSize: 13.5, color: HJ.mute, lineHeight: 1.5, marginTop: 1 }}>{s}</span>
-      </span>
-      <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{price}</span>
+    <button type="button" onClick={onClick} className="mo-press mo-rise"
+      style={{ ...moVars({ i }), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 106, padding: '14px 6px 12px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, textAlign: 'center' }}>
+      <span aria-hidden="true" style={{ width: 36, height: 36, borderRadius: 5, boxShadow: `inset 0 0 0 1.5px ${HJ.ink}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 19, fontWeight: 900, color: HJ.ink }}>{hz}</span>
+      <span style={{ fontSize: 15, fontWeight: 700, color: HJ.ink, lineHeight: 1.3, wordBreak: 'keep-all' }}>{t}</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: HJ.ink2 }}>{price}</span>
     </button>
   );
 }

@@ -28,6 +28,7 @@ import {
   getBalance,
   spendBalance,
   generateId,
+  beginPremiumPurchase,
   type SajuProfile,
 } from '@/services/storage/localStore';
 import { useSajuContext } from '@/contexts/SajuContext';
@@ -149,14 +150,16 @@ export function PremiumSelectPage() {
     if (usedOffer) markFirstDailyOfferUsed();
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'premium', amount: premiumPricing.actualPrice, ...(usedOffer ? { offer: FIRST_DAILY_OFFER.id } : {}) })).catch(() => {});
+    // Phase 4 (2026-05-27) — LoadingPage 우회, 결과 페이지 직진 + fresh SSE
+    const newId = generateId();
     // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
-    import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumPricing.actualPrice)).catch(() => {});
+    // 2026-10-25 — 장부에 산 사람의 사주와 반값 여부를, 결과 화면 기록에 그 사람 사주를 남긴다 (새로고침 뒤 다른 사람으로 다시 만들지 않게,
+    //   부팅 복구가 다른 사람 결과를 저장하지 않게, 실패하면 반값도 되살리게). 결과 화면이 열리기 전에 바로 남긴다
+    beginPremiumPurchase({ reportId: newId, sajuData, amount: premiumPricing.actualPrice, offer: usedOffer });
 
     toast.show(`${premiumPricing.actualPrice}운 차감 (잔액 ${getBalance()}운): 종합사주를 시작해요`, 'success');
     sajuCtx.setInput(selected.input as any);
     sajuCtx.setSajuData(sajuData);
-    // Phase 4 (2026-05-27) — LoadingPage 우회, 결과 페이지 직진 + fresh SSE
-    const newId = generateId();
     navigate(`/result/${newId}?fresh=1&type=premium`, { replace: true });
   }
 

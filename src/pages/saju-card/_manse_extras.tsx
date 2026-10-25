@@ -15,7 +15,7 @@ import { inspectKoreanSolarTime } from '@/services/saju/timeCorrection';
 import { toSolarInput } from '@/services/saju/calculator';
 import { deriveSipsung, yearGanji, DaeunTable } from './_flow_table';
 import { MotionScope, moVars } from '@/components/motion/Motion';
-import { todayHook, todayHourWindows } from '@/services/saju/hookFacts';
+import { todayHook, todayHourWindows, windowAhead, kstNowHM } from '@/services/saju/hookFacts';
 import { genOfAge, worryRows, type WorryRow } from '@/services/saju/worryTopics';
 import type { TopicId } from '@/constants/topics';
 import { PRODUCT_COST } from '@/constants/pricing';
@@ -190,9 +190,7 @@ export function TodayNextStep({ profileId, name, sajuData }: { profileId: string
     try {
       const w = todayHourWindows(today, sajuData);
       if (!w) return null;
-      const k = new Date(Date.now() + 9 * 3600e3);
-      const now = `${String(k.getUTCHours()).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}`;
-      return now < w.avoid[1] ? todayHook(sajuData, today) : null;
+      return windowAhead(w.avoid, kstNowHM()) ? todayHook(sajuData, today) : null; // 자정을 넘는 시간대도 바르게
     } catch { return null; }
   }, [sajuData, today]);
   const free = hasFreePass('daily');

@@ -4,6 +4,7 @@ import { realName } from './shared/personName';
 import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { guardCallable, guardHttp, GEN_LIMIT_MESSAGE } from './shared/genGuard'; // 2026-10-14 익명 생성 하루 상한
+import { holdSpend, releaseSpend, refundSpend, safeSpendId, spendAmountFor, SpendError, SPEND_INSUFFICIENT_MESSAGE, type SpendHold, type SpendKind } from './shared/spendLedger'; // 2026-10-25 기기에서 깎던 1운 콘텐츠의 서버 차감
 import { defineSecret } from 'firebase-functions/params';
 import { logAiFailure } from './shared/aiFailureLog';
 import { createClaude, CLAUDE_MODEL, CONVERSATIONAL } from './shared/claudeClient';
@@ -298,6 +299,7 @@ export const generatePremiumReportStream = onRequest(
 
     // 잔액 차감 (premium · 하반기 세일 자동반영) — 실명 로그인만
     let deductedAmount = 0;
+    let usedOffer = false; // 2026-10-25 반값으로 깎았는지 (생성이 실패하면 계정의 반값 표시도 되돌린다)
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
       const userRef = db.collection('users').doc(uid);
       const userDoc = await userRef.get();
@@ -309,6 +311,7 @@ export const generatePremiumReportStream = onRequest(
             const doc = await tx.get(userRef);
             const pc = premiumCostFor(doc.data(), offer);
             cost = pc.cost;
+            usedOffer = pc.useOffer;
             const result = computeBalanceDeduction(doc.data(), cost);
             if (!result) throw new Error('운이 부족합니다');
             tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
@@ -323,7 +326,8 @@ export const generatePremiumReportStream = onRequest(
     }
 
     // T1 · 3 그룹 병렬 + 각 그룹 완료 시점에 SSE 송출
-    sendEvent('start', { ts: Date.now() });
+    const streamStartedAt = Date.now(); // 2026-10-25 응답을 못 읽은 그룹을 다시 만들 시간이 남았는지 (claudePremium callGroup)
+    sendEvent('start', { ts: streamStartedAt });
     // 🚨 2026-06-22 — SSE heartbeat. start 후 첫 그룹 도착(25~80s)까지 무음이면 모바일/토스 웹뷰·프록시·
     //   Cloud Run idle-timeout(흔히 30~60s)이 연결을 '조용히' 끊어 클라가 무한로딩. 12초마다 ': hb' 코멘트
     //   를 흘려 무음구간을 없애 끊김 자체를 예방한다. (클라 SSE 파서는 코멘트 라인을 무시 → 안전)
@@ -345,7 +349,7 @@ export const generatePremiumReportStream = onRequest(
         if (g !== 'A') await new Promise((r) => setTimeout(r, 5000));
         const t0 = Date.now();
         try {
-          const result = await mod.generateGroup(apiKey, sajuData, g, situation);
+          const result = await mod.generateGroup(apiKey, sajuData, g, situation, streamStartedAt);
           results[g] = result;
           sendEvent('group', {
             group: g,
@@ -411,6 +415,9 @@ export const generatePremiumReportStream = onRequest(
       // 환불
       if (deductedAmount > 0) {
         await refundBalance(uid, deductedAmount, 'generatePremiumReportStream failed');
+        // 2026-10-25 — 반값으로 깎았던 생성이 실패하면 계정의 반값 표시도 되돌린다 (예전엔 운만 돌려주고 반값은 써 버린 것으로 남아
+        //   '다시 만들기'가 10운이었다). 클라도 혜택을 되살린다(firstDailyOffer.ts restoreFirstDailyOffer). 성공한 생성은 그대로 쓴 것으로 둔다
+        if (usedOffer) await db.collection('users').doc(uid).update({ premiumOfferUsed: false }).catch(() => { /* best-effort */ });
       }
       sendEvent('error', { message: error?.message || 'AI 분석 실패' });
       res.end();
@@ -436,6 +443,7 @@ export const generateReport = onCall(
 
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;  // 환불용 차감 기록
+    let usedOffer = false;   // 2026-10-25 반값으로 깎았는지 (생성이 실패하면 계정의 반값 표시도 되돌린다)
 
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
@@ -448,6 +456,7 @@ export const generateReport = onCall(
           const doc = await tx.get(userRef);
           const pc = premiumCostFor(doc.data(), request.data?.offer);
           cost = pc.cost;
+          usedOffer = pc.useOffer;
           const result = computeBalanceDeduction(doc.data(), cost);
           if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
           tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
@@ -498,14 +507,47 @@ export const generateReport = onCall(
       console.error('generateReport error:', error);
       // 서버 환불 — 차감한 잔액을 되돌려 줌 (AI/Firestore 실패 시)
       await refundBalance(uid, deductedAmount, 'generateReport failed');
+      // 2026-10-25 — 반값으로 깎았던 생성이 실패하면 계정의 반값 표시도 되돌린다 (스트림 경로와 같다)
+      if (deductedAmount > 0 && usedOffer) await db.collection('users').doc(uid).update({ premiumOfferUsed: false }).catch(() => { /* best-effort */ });
       throw new HttpsError('internal', `AI 분석 실패: ${error.message || 'unknown'}`);
     }
   }
 );
 
 /**
+ * 2026-10-25 기기에서 깎던 1운 콘텐츠(오늘의 운세 두 번째부터, 두 번째 꿈)의 서버 차감 (shared/spendLedger.ts 머리말).
+ *   기기가 1운을 깎고 paid:true 와 spendId(기기 장부 id)를 보낸 로그인 계정 호출만 깎는다.
+ *   익명 계정과 spendId 를 보내지 않는 옛 앱 번들은 예전 그대로다(서버는 깎지 않는다).
+ *   같은 spendId 로 스트림과 callable 폴백이 함께 와도 한 번만 깎는다.
+ */
+async function holdContentSpend(uid: string | null | undefined, isAnon: boolean, data: any, kind: SpendKind): Promise<SpendHold | null> {
+  const spendId = safeSpendId(data?.spendId);
+  if (DEV_MODE || !uid || uid === 'anonymous' || isAnon || data?.paid !== true || !spendId) return null;
+  const { hold } = await holdSpend(db, computeBalanceDeduction, { uid, spendId, kind, amount: spendAmountFor(kind) ?? 1 });
+  return hold;
+}
+
+/** 차감 실패 → callable 오류. 잔액 모자람은 다른 생성 함수와 같은 failed-precondition '운이 부족합니다' */
+function spendHttpsError(e: any): HttpsError {
+  if (e instanceof SpendError) {
+    return e.reason === 'insufficient'
+      ? new HttpsError('failed-precondition', SPEND_INSUFFICIENT_MESSAGE)
+      : new HttpsError('invalid-argument', e.message);
+  }
+  console.error('[spend] 차감 실패:', e?.message || e);
+  return new HttpsError('unavailable', '잔액을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요');
+}
+
+/** 차감 실패 → 스트림 error 이벤트. code 'insufficient' 면 기기는 callable 로 다시 부르지 않고 낸 운을 돌려준 뒤 충전으로 보낸다 */
+function spendStreamError(e: any): { message: string; code: string } {
+  if (e instanceof SpendError) return { message: e.reason === 'insufficient' ? SPEND_INSUFFICIENT_MESSAGE : e.message, code: e.reason };
+  console.error('[spend] 차감 실패:', e?.message || e);
+  return { message: '잔액을 확인하지 못했어요', code: 'spend' };
+}
+
+/**
  * 오늘의 운세 — Claude Sonnet 4.6 (v3 스키마).
- *   입력: { name, sajuData, date, weekday, todayGanzi, jeolgi?, dayJiShen?, dayXiongSha? }
+ *   입력: { name, sajuData, date, weekday, todayGanzi, jeolgi?, dayJiShen?, dayXiongSha?, paid?, spendId? }
  *   출력: v3 DailyFortune JSON (AI프롬프트_v3 §5 참조).
  *   쿼터: 일 1회 캐시 (Firestore users/{uid}/dailyFortune/{YYYY-MM-DD}).
  */
@@ -521,23 +563,32 @@ export const generateDailyFortune = onCall(
 
     const uid = request.auth?.uid;
 
-    // 당일 캐시 확인 (실명 유저만)
-    // 2026-09-17 — 캐시 키에 사주 8글자 포함. 기존 키(uid+날짜)는 사주와 무관해서, 본인 운세를 받은 뒤
-    //   가족 사주로 1운을 내고 SSE 가 끊겨 이 callable 로 폴백되면 **본인 운세가 반환**됐다(유료화로 돈 문제).
-    const dailyCacheId = `${date}_${buildSajuKey(sajuData)}`;
-    if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(dailyCacheId);
-      const cached = await cacheRef.get();
-      if (cached.exists) {
-        const d = cached.data();
-        if (d?.content) {
-          console.log(`[generateDailyFortune] cache hit uid=${uid} date=${date}`);
-          return d.content;
-        }
-      }
+    // 2026-10-25 두 번째부터 1운 — 기기가 깎고 paid+spendId 를 보낸 로그인 계정은 서버도 깎는다 (캐시보다 먼저, 같은 spendId 는 한 번만)
+    let spendHold: SpendHold | null = null;
+    try {
+      spendHold = await holdContentSpend(uid, !!request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous'), request.data, 'daily');
+    } catch (e: any) {
+      throw spendHttpsError(e);
     }
 
     try {
+      // 당일 캐시 확인 (실명 유저만)
+      // 2026-09-17 — 캐시 키에 사주 8글자 포함. 기존 키(uid+날짜)는 사주와 무관해서, 본인 운세를 받은 뒤
+      //   가족 사주로 1운을 내고 SSE 가 끊겨 이 callable 로 폴백되면 **본인 운세가 반환**됐다(유료화로 돈 문제).
+      const dailyCacheId = `${date}_${buildSajuKey(sajuData)}`;
+      if (uid && !request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+        const cacheRef = db.collection('users').doc(uid).collection('dailyFortune').doc(dailyCacheId);
+        const cached = await cacheRef.get();
+        if (cached.exists) {
+          const d = cached.data();
+          if (d?.content) {
+            console.log(`[generateDailyFortune] cache hit uid=${uid} date=${date}`);
+            await releaseSpend(db, spendHold, true, 'daily cache');
+            return d.content;
+          }
+        }
+      }
+
       console.log('[generateDailyFortune] Starting Sonnet 4.6 call...');
       const { generateDailyFortuneAnalysis } = await lazyClaudeFortune();
       const result = await generateDailyFortuneAnalysis(ANTHROPIC_KEY.value(), {
@@ -567,9 +618,11 @@ export const generateDailyFortune = onCall(
         });
       }
 
+      await releaseSpend(db, spendHold, true, 'daily done');
       return result;
     } catch (error: any) {
       console.error('[generateDailyFortune] FAILED:', error.message, error.stack);
+      await releaseSpend(db, spendHold, false, 'generateDailyFortune failed'); // 같은 구매로 도는 다른 호출이 없으면 1운을 돌려준다
       throw new HttpsError('internal', `오늘의 운세 생성 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -744,6 +797,14 @@ export const generateDailyFortuneStream = onRequest(
       sendEvent('error', { message: GEN_LIMIT_MESSAGE }); res.end(); return;
     }
 
+    // 2026-10-25 두 번째부터 1운 — 로그인 계정이 paid+spendId 를 보내면 서버도 깎는다 (공유 캐시보다 먼저, callable 폴백과 같은 spendId 는 한 번만)
+    let spendHold: SpendHold | null = null;
+    try {
+      spendHold = await holdContentSpend(uid, isAnonymous, req.body, 'daily');
+    } catch (e: any) {
+      sendEvent('error', spendStreamError(e)); res.end(); return;
+    }
+
     sendEvent('start', { ts: Date.now() });
 
     // ── L1 · Shared Cache 조회 (uid 무관 by 8글자 + 날짜) ──
@@ -774,7 +835,9 @@ export const generateDailyFortuneStream = onRequest(
               .set({ servedAt: admin.firestore.FieldValue.serverTimestamp(), via: 'shared' }, { merge: true })
               .catch(() => { /* noop */ });
           }
-          sendEvent('done', { result: await cleanAiOut(content), cached: true, cacheLevel: 'shared' });
+          const cleaned = await cleanAiOut(content);
+          await releaseSpend(db, spendHold, true, 'daily shared cache');
+          sendEvent('done', { result: cleaned, cached: true, cacheLevel: 'shared' });
           res.end();
           return;
         }
@@ -787,6 +850,7 @@ export const generateDailyFortuneStream = onRequest(
     // 실측: Haiku 단일 = 60s (출력 8800자 / ~100 tok/s)
     // 3-way 병렬: max(A1=5s, A2=18s, B=18s) ≈ 18s
     // 각 그룹 sanity check (글자수 + 핵심 필드) → 누락 시 Sonnet 단일 fallback
+    let dailyGroupsSent = false;
     try {
       const {
         DAILY_FORTUNE_SYSTEM_V3,
@@ -931,6 +995,7 @@ export const generateDailyFortuneStream = onRequest(
         return data;
       });
       const [resA1, resA2, resB] = await Promise.all([pA1, pA2, pB]);
+      dailyGroupsSent = true; // 2026-10-25 세 묶음(A1, A2, B)을 기기에 다 보냈다 (아래 catch 의 돌려주기 판단)
 
       const a1: any = (resA1 && typeof resA1 === 'object') ? resA1 : {};
       const a2: any = (resA2 && typeof resA2 === 'object') ? resA2 : {};
@@ -1034,14 +1099,19 @@ export const generateDailyFortuneStream = onRequest(
         }
       }
 
+      const finalResult = await cleanAiOut(merged);
+      await releaseSpend(db, spendHold, true, 'daily stream done');
       sendEvent('done', {
-        result: await cleanAiOut(merged),
+        result: finalResult,
         cached: false,
         cacheLevel: 'miss',
         elapsedMs: Date.now() - t0,
       });
     } catch (e: any) {
       console.error('[dailyFortuneStream] FAILED:', e?.message, e);
+      // 2026-10-25 세 묶음을 다 보낸 뒤의 실패는 돌려주지 않는다(기기는 done 이 늦으면 세 묶음으로 스스로 끝낸다).
+      //   기기가 결과를 못 쓰고 기기 운을 돌려줄 때는 spendUn 'refund' 로 서버 몫을 돌려받는다
+      await releaseSpend(db, spendHold, dailyGroupsSent, 'generateDailyFortuneStream failed');
       sendEvent('error', { message: e?.message || '오늘의 운세 생성 실패' });
     }
 
@@ -1206,6 +1276,8 @@ function buildLegacySajuContext(sajuData: any): any {
  *   2026-09-17 — 꿈해몽 '하루 1회 무료, 이후 1운' 정책: 클라가 1운 차감 후 생성하면 `paid: true` 를 보낸다.
  *   유료 생성은 쿼터에서 제외(1운 낸 꿈이 8일째부터 거부되던 문제). 차감은 클라 기준이라 위조 가능하지만
  *   이 쿼터는 웹 로그인 유저 한정 비용 가드일 뿐이라 허용한다.
+ *   2026-10-25 — 로그인 계정이 paid 와 spendId 를 함께 보내면 서버도 1운을 깎는다(holdContentSpend, 스트림과 같은 spendId 는 한 번만).
+ *   예전엔 기기만 깎아 로그아웃 뒤 다시 로그인하면 쓴 운이 돌아왔다.
  */
 export const generateDreamFree = onCall(
   // minInstances: 0 — warm 비용 대신 로딩 UX 로 Cold start 흡수 (feedback_quality_over_speed 원칙)
@@ -1236,6 +1308,14 @@ export const generateDreamFree = onCall(
       });
     }
 
+    // 2026-10-25 두 번째 꿈 1운 — 로그인 계정이 paid+spendId 를 보내면 서버도 깎는다
+    let spendHold: SpendHold | null = null;
+    try {
+      spendHold = await holdContentSpend(uid, !!request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous'), request.data, 'dream');
+    } catch (e: any) {
+      throw spendHttpsError(e);
+    }
+
     try {
       const { generateDreamFree: run } = await lazyClaudeDream();
       const result = await run(ANTHROPIC_KEY.value(), {
@@ -1244,9 +1324,11 @@ export const generateDreamFree = onCall(
         category,
         userConcern,
       });
+      await releaseSpend(db, spendHold, true, 'dream done');
       return result;
     } catch (error: any) {
       console.error('[generateDreamFree] FAILED:', error.message);
+      await releaseSpend(db, spendHold, false, 'generateDreamFree failed'); // 같은 구매로 도는 다른 호출이 없으면 1운을 돌려준다
       throw new HttpsError('internal', `꿈해몽 무료 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -1256,7 +1338,7 @@ export const generateDreamFree = onCall(
  * generateDreamFreeStream — SSE 스트리밍 (오늘의 운세 패턴)
  *
  * callable generateDreamFree 와 프롬프트·모델·출력 100% 동일 (전송만 SSE).
- * 쿼터(월 7회) 체크도 동일. 무료라 잔액 차감 없음.
+ * 쿼터(월 7회) 체크도 동일. 무료는 잔액 차감 없음 (2026-10-25 두 번째 꿈은 로그인 계정이면 callable 과 같은 spendId 로 1운 차감).
  * 클라가 partial-json 점진 렌더 → 첫 글자 빠르게, 내용 차오름 (저퀄·깨짐 0).
  * ⚠️ 쪼개기 X (구 2그룹 분할 회귀 교훈) — 단일 호출 그대로 스트리밍만.
  * ═════════════════════════════════════════════════════════════════ */
@@ -1332,6 +1414,14 @@ export const generateDreamFreeStream = onRequest(
       }
     }
 
+    // 2026-10-25 두 번째 꿈 1운 — 로그인 계정이 paid+spendId 를 보내면 서버도 깎는다 (callable 폴백과 같은 spendId 는 한 번만)
+    let spendHold: SpendHold | null = null;
+    try {
+      spendHold = await holdContentSpend(uid, isAnon, req.body, 'dream');
+    } catch (e: any) {
+      sendEvent('error', spendStreamError(e)); res.end(); return;
+    }
+
     sendEvent('start', { ts: Date.now() });
 
     try {
@@ -1403,7 +1493,9 @@ export const generateDreamFreeStream = onRequest(
         const merged = { ...groupA.parsed, ...groupB.parsed };
         const totalMs = Date.now() - t0;
         console.log(`[dreamFreeStream] both groups done in ${totalMs}ms (A=${groupA.elapsedMs}ms, B=${groupB.elapsedMs}ms)`);
-        sendEvent('done', { content: await cleanAiOut(merged), elapsedMs: totalMs, mode: '2-group-parallel' });
+        const mergedClean = await cleanAiOut(merged);
+        await releaseSpend(db, spendHold, true, 'dream stream done');
+        sendEvent('done', { content: mergedClean, elapsedMs: totalMs, mode: '2-group-parallel' });
         res.end();
         return;
       }
@@ -1444,12 +1536,54 @@ export const generateDreamFreeStream = onRequest(
       }
       await repairAniraSentences(ANTHROPIC_KEY.value(), parsed, 'dream'); // 2026-10-22 — 점검 P0-1
       console.log(`[dreamFreeStream] single-call done in ${Date.now() - t0}ms`);
-      sendEvent('done', { content: await cleanAiOut(parsed), elapsedMs: Date.now() - t0, mode: 'single-call' });
+      const singleClean = await cleanAiOut(parsed);
+      await releaseSpend(db, spendHold, true, 'dream stream done');
+      sendEvent('done', { content: singleClean, elapsedMs: Date.now() - t0, mode: 'single-call' });
       res.end();
     } catch (error: any) {
       console.error('generateDreamFreeStream error:', error);
+      // 2026-10-25 기기는 이 오류를 받으면 callable 로 다시 만든다(묶음만 받은 결과는 쓰지 않는다) → 같은 구매로 도는 다른 호출이 없으면 1운을 돌려준다
+      await releaseSpend(db, spendHold, false, 'generateDreamFreeStream failed');
       sendEvent('error', { message: error?.message || '꿈해몽 생성 실패' });
       res.end();
+    }
+  }
+);
+
+/**
+ * spendUn — 생성 없이 바로 넘기는 1운 구매의 서버 차감 (2026-10-25, shared/spendLedger.ts 머리말)
+ *   꿈해몽 잠금 풀이(dreamUnlock, 1운)와 운 → 대화권 바꾸기(chat, 고른 운)는 서버 함수를 부르지 않아 기기만 깎았다.
+ *   로그인 계정은 이제 서버도 같은 값을 깎는다. 같은 spendId 로 다시 부르면 깎지 않는다(응답이 끊겨 다시 눌러도 한 번).
+ *   action 'refund': 기기가 그 구매를 실패로 보고 기기 운을 돌려줄 때 서버 몫도 돌려준다(오늘의 운세, 꿈 생성 포함, 깎인 구매만 한 번).
+ *   익명 계정은 서버가 깎지 않는다(기기 잔액만, 예전 그대로) → charged:false.
+ *   대화권 → 운 되돌리기는 서버에 대화권 장부가 없어 서버 잔액을 늘릴 근거가 없으므로 로그인 계정에서는 막았다(chat/_shared.tsx).
+ */
+export const spendUn = onCall(
+  { timeoutSeconds: 20, memory: '256MiB', minInstances: 0, cors: true, invoker: 'public' },
+  async (request) => {
+    const { action, kind, amount } = (request.data || {}) as { action?: string; kind?: string; amount?: unknown };
+    const spendId = safeSpendId(request.data?.spendId);
+    if (!spendId) throw new HttpsError('invalid-argument', 'spendId 가 필요해요');
+    const uid = request.auth?.uid;
+    const isAnon = !uid || !!request.auth?.token?.firebase?.sign_in_provider?.includes('anonymous');
+    if (DEV_MODE || isAnon) return { ok: true, charged: false, why: 'anonymous' };
+
+    if (action === 'refund') {
+      const refunded = await refundSpend(db, uid!, spendId, 'client refund');
+      return { ok: true, refunded };
+    }
+
+    // 생성 콘텐츠(daily, dream)는 생성 함수가 깎는다. 여기서는 바로 넘기는 구매만
+    const k: SpendKind | null = kind === 'dreamUnlock' || kind === 'chat' ? kind : null;
+    if (!k) throw new HttpsError('invalid-argument', '알 수 없는 구매예요');
+    const cost = spendAmountFor(k, amount);
+    if (cost == null) throw new HttpsError('invalid-argument', '운 값이 올바르지 않아요');
+    try {
+      const r = await holdSpend(db, computeBalanceDeduction, { uid: uid!, spendId, kind: k, amount: cost, instant: true });
+      if (!r.charged && !r.already) return { ok: true, charged: false, why: 'no_user_doc' }; // 서버 문서가 없는 계정은 다른 콘텐츠처럼 깎지 않는다
+      return { ok: true, charged: true, already: r.already };
+    } catch (e: any) {
+      throw spendHttpsError(e);
     }
   }
 );

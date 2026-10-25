@@ -28,6 +28,21 @@
 .hj-cta:active { transform: scale(.985); }
 .hj-cta[disabled] { opacity: .55; cursor: default; }
 .hj-cta small { font-size: 14px; font-weight: 700; opacity: .75; }
+/* 2026-10-26 오너 '홈에서 뭐부터 눌러야 할지 모르겠다' — 처음 누를 버튼 하나에만 빛이 세 번 지나가고 멈춘다.
+   반복은 세 번까지(움직임 원칙 2, 가만히 있는 화면은 가만히), 움직임 줄이기 기기는 끈다 */
+.hj-cta.hj-sheen { position: relative; overflow: hidden; isolation: isolate; }
+.hj-cta.hj-sheen::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 32%; z-index: -1; pointer-events: none; opacity: 0;
+  background: linear-gradient(100deg, rgba(255,250,236,0) 0%, rgba(255,250,236,.62) 50%, rgba(255,250,236,0) 100%);
+  animation: hj-sheen 4.8s cubic-bezier(.45,0,.25,1) 1.2s 3 backwards;
+}
+@keyframes hj-sheen {
+  0% { opacity: 0; transform: translateX(-120%) skewX(-18deg); }
+  3% { opacity: 1; }
+  24% { opacity: 1; transform: translateX(340%) skewX(-18deg); }
+  25%, 100% { opacity: 0; transform: translateX(340%) skewX(-18deg); }
+}
+@media (prefers-reduced-motion: reduce) { .hj-cta.hj-sheen::after { animation: none; display: none; } }
 /* 공용 Button 부품 (components/common/Button) — 2026-10-11 GoldCta, GhostButton 과 같은 모양 */
 .hj-btn-gold { background: linear-gradient(180deg, var(--hj-gold-hi) 0%, var(--hj-gold) 100%); color: #17110A; border: 0; box-shadow: 0 8px 18px rgba(140,109,61,.22), inset 0 1px 0 rgba(255,255,255,.45); }
 .hj-btn-ink { background: var(--hj-ink); color: #F5EDDF; border: 0; }

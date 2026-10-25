@@ -38,6 +38,8 @@ interface GeneratePdfRequest {
   email?: string;
   /** 광고성 안내 메일 수신 동의 (선택, 기본 아니오) */
   marketingConsent?: boolean;
+  /** 2026-10-25 — 화면 결과의 받은 시각(LocalReport.createdAt). PDF 연운 해를 그해로 찍는다 */
+  reportCreatedAt?: string | number;
 }
 
 interface GeneratePdfResponse {
@@ -91,17 +93,18 @@ async function verifyReportOwnership(
 ): Promise<{ valid: boolean; reason?: string }> {
   const reportDoc = await db.collection('reports').doc(reportId).get();
   if (!reportDoc.exists) {
-    return { valid: false, reason: '리포트를 찾을 수 없습니다' };
+    return { valid: false, reason: '종합사주 결과를 찾지 못했어요' };
   }
   const data = reportDoc.data() ?? {};
+  // 2026-10-25 — 거절 이유는 화면에 그대로 보이므로 해요체 (PremiumResultFooter 가 permission-denied 문구를 토스트로)
   if (data.uid !== uid) {
-    return { valid: false, reason: '권한이 없습니다' };
+    return { valid: false, reason: '이 결과를 받은 계정에서만 PDF를 만들 수 있어요' };
   }
   // type 은 'basic' | 'premium' (서버 저장) 또는 'paid' (로컬) 다양성 허용
   const t: string = String(data.type ?? '');
   const isPremium = t === 'premium' || t === 'paid';
   if (!isPremium) {
-    return { valid: false, reason: '프리미엄 리포트만 PDF 발급이 가능합니다' };
+    return { valid: false, reason: '종합사주 결과만 PDF로 만들 수 있어요' };
   }
   return { valid: true };
 }
@@ -213,14 +216,20 @@ export async function handleGeneratePremiumPdf(
   //   한 번에 5,000원 결제 기록이 있어야만 통과해 운을 나눠 충전했거나 보너스로 산 사람도 막혔다.
   //   → 서버 번호와 맞으면 그 결과의 주인인지, 아니면 이 계정이 서버에서 종합사주를 받은 적 있는지(reports uid+premium)로 본다.
   let allowed = false;
+  let serverGeneratedAt: Date | null = null; // 2026-10-25 서버 결과 번호와 맞으면 그 결과를 만든 시각
   if (reportId) {
-    const exists = (await db.collection('reports').doc(reportId).get()).exists;
-    if (exists) {
+    const snap = await db.collection('reports').doc(reportId).get();
+    if (snap.exists) {
       const ownership = await verifyReportOwnership(db, reportId, uid);
       if (!ownership.valid) {
-        throw new HttpsError('permission-denied', ownership.reason || '권한이 없습니다');
+        throw new HttpsError('permission-denied', ownership.reason || '이 결과를 받은 계정에서만 PDF를 만들 수 있어요');
       }
       allowed = true;
+      try {
+        const g = snap.get('generatedAt');
+        const d: Date | null = g && typeof g.toDate === 'function' ? g.toDate() : null;
+        if (d && !Number.isNaN(d.getTime())) serverGeneratedAt = d;
+      } catch { /* 시각이 없으면 화면이 보낸 값 */ }
     }
   }
   if (!allowed) allowed = (await hasPremiumReport(db, uid)) || (await verifyPremiumPaid(db, uid));
@@ -231,12 +240,24 @@ export async function handleGeneratePremiumPdf(
   // ── 3. HTML 빌드 ──
   const issuedAt = new Date().toISOString();
   const issueId = buildIssueId(reportId);
+  // 2026-10-25 — 풀이를 받은 시각 (연운 해 간지). 서버 기록이 먼저, 없으면 화면 결과의 createdAt. 둘 다 없으면 템플릿이 정한다
+  const reportCreatedAt = (() => {
+    if (serverGeneratedAt) return serverGeneratedAt.toISOString();
+    const raw = request.data?.reportCreatedAt;
+    if (raw == null || raw === '') return undefined;
+    const d = new Date(typeof raw === 'number' ? raw : String(raw));
+    const t = d.getTime();
+    // 앞날이나 사주500 이전 날짜는 버린다 (조작이나 깨진 값)
+    if (Number.isNaN(t) || t > Date.now() + 86400e3 || t < Date.UTC(2025, 0, 1)) return undefined;
+    return d.toISOString();
+  })();
   const html = buildPremiumPdfHtml({
     profile,
     sajuData,
     aiResult,
     issuedAt,
     issueId,
+    reportCreatedAt,
   });
 
   // ── 4. PDF 생성 ──

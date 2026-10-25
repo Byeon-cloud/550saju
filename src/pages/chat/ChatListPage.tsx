@@ -469,8 +469,8 @@ function TicketBalanceBanner({
         type="button"
         onClick={onCharge}
         style={{
-          height: noTickets ? 36 : 32,
-          padding: noTickets ? '0 14px' : '0 12px',
+          height: 44, // 2026-10-25 누르는 칸 44px (예전 32~36px)
+          padding: '0 14px',
           background: noTickets ? C.ink : 'transparent',
           color: noTickets ? C.paper : HJ.ink,
           border: noTickets ? 'none' : `1px solid ${HJ.ink}`,

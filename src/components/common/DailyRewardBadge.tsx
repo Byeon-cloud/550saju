@@ -15,6 +15,7 @@
  *   - 이모지 절대 금지 (2026-04-22 준기 재확인 · SVG/한자/컬러칩만 허용)
  *   - 한자·이모지 최소 (한자노출_정책.md — 유저 출력물은 한자 금지 기본)
  *   - SSOT 컬러 `--gold #B8965A` 사용
+ *   - 2026-10-25 v9 — 받은 상태와 월 한도 상태는 먹과 종이(상태 표시는 먹). 금색은 '받기' 누르는 칸에만
  *   - 접근성: aria-live · 44×44 터치 영역 보장
  */
 
@@ -26,6 +27,7 @@ import {
   DAILY_REWARD_UN,
 } from '@/services/storage/dailyReward';
 import { useToast } from '@/components/common/Toast';
+import { HJ } from '@/components/hanji/Hanji';
 
 interface DailyRewardBadgeProps {
   className?: string;
@@ -55,11 +57,11 @@ export function DailyRewardBadge({ className = '' }: DailyRewardBadgeProps) {
     return (
       <div
         className={`rounded-2xl px-4 py-3 flex items-center gap-3 ${className}`}
-        style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.25)' }}
+        style={{ background: HJ.card, border: `1px solid ${HJ.line}` }}
       >
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: '#B8965A' }}
+          style={{ background: HJ.ink }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
@@ -78,13 +80,13 @@ export function DailyRewardBadge({ className = '' }: DailyRewardBadgeProps) {
     return (
       <div
         className={`rounded-2xl px-4 py-3 flex items-center gap-3 ${className}`}
-        style={{ background: 'rgba(184,150,90,0.08)', border: '1px solid rgba(184,150,90,0.20)' }}
+        style={{ background: HJ.card, border: `1px solid ${HJ.line}` }}
         aria-live="polite"
       >
         {/* 2026-10-18 방금 받았으면 도장 찍듯 (motion.css mo-stamp) */}
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0${pressed ? ' mo-stamp' : ''}`}
-          style={{ background: '#B8965A' }}
+          style={{ background: HJ.ink }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
@@ -109,14 +111,14 @@ export function DailyRewardBadge({ className = '' }: DailyRewardBadgeProps) {
       aria-label={`출석 운 ${DAILY_REWARD_UN}운 받기`}
       className={`rounded-2xl px-4 py-3 flex items-center gap-3 w-full text-left ${className}`}
       style={{
-        background: 'linear-gradient(135deg, rgba(184,150,90,0.14), rgba(184,150,90,0.06))',
-        border: '1px solid rgba(184,150,90,0.35)',
+        background: HJ.card, // 2026-10-25 v9 — 그라데이션 금 바탕을 종이 카드로
+        border: `1px solid ${HJ.line}`,
         minHeight: 56,
       }}
     >
       <div
         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: '#B8965A' }}
+        style={{ background: HJ.ink }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="7" width="20" height="14" rx="2" />

@@ -83,7 +83,12 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
     setShowOthers(false);
     if (!next) return;
     trackEvent('tti_open', { tti: ji, src });
-    if (hero) setMyTti(ji, myYear && ttiYears(ji).includes(myYear) ? myYear : undefined);
+    // 2026-10-25 — 내 해를 고른 뒤 배우자 띠 등을 둘러보면, 예전엔 저장해 둔 내 해를 지우고(setMyTti(ji)) 제목은 '64년생 용띠'로 남아
+    //   아래 '쥐띠 오늘의 운세'와 어긋났다. 내 해는 pickYear 에서만 저장하고, 둘러볼 때는 제목만 고른 띠에 맞춘다.
+    if (hero) {
+      if (!myYear) setMyTti(ji);
+      onYearPick?.(myYear && ttiYears(ji).includes(myYear) ? myYear : undefined);
+    }
     // 카드가 화면 아래에 열리면 보이게
     setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
   };
@@ -190,8 +195,9 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
                 <div className="flex items-baseline" style={{ gap: 8 }}>
                   <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink }}>{yearLabel(chosen)} {ttiName(sel)}</span>
                   <span style={{ fontSize: 13, color: HJ.mute }}>{yearKo(chosen)}생 (내 해)</span>
-                  <button type="button" onClick={() => { setMyYear(undefined); setMyTti(sel); onYearPick?.(undefined); }}
-                    style={{ marginLeft: 'auto', fontSize: 13, color: HJ.mute, background: 'transparent', border: 0, padding: '4px 0' }}>
+                  {/* 2026-10-25 tap-pad — 누르는 칸 44px (글자 13px에 padding 4px 이라 약 27px 이었다) */}
+                  <button type="button" className="tap-pad" onClick={() => { setMyYear(undefined); setMyTti(sel); onYearPick?.(undefined); }}
+                    style={{ marginLeft: 'auto', fontSize: 13.5, fontWeight: 600, color: HJ.ink2, background: 'transparent', border: 0, padding: '4px 0 4px 12px', textDecoration: 'underline', textUnderlineOffset: 3 }}>
                     해 바꾸기
                   </button>
                 </div>

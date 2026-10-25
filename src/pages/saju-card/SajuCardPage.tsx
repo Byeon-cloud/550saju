@@ -102,6 +102,29 @@ function formatHourKo(hour?: number): string {
   return HOUR_KO_MAP[hour] ?? `${hour}시`;
 }
 
+/** 2026-10-25 — 앱(토스) 안 이미지 저장. SDK File.saveBase64 (3.x, saveBase64Data 는 deprecated) 로 기기에 저장한다.
+ *  최소 토스 버전(Android 5.218.0, iOS 5.216.0)보다 낮으면 아무것도 하지 않고 끝날 수 있어 isSupported() 를 먼저 본다. */
+async function saveBlobInToss(blob: Blob, fileName: string): Promise<'ok' | 'unsupported' | 'fail'> {
+  try {
+    const mod: any = await import('@apps-in-toss/web-framework');
+    const save = mod.File?.saveBase64 ?? mod.saveBase64Data;
+    if (typeof save !== 'function' || (typeof save.isSupported === 'function' && !save.isSupported())) return 'unsupported';
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ''));
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(blob);
+    });
+    const comma = dataUrl.indexOf(',');
+    if (comma < 0) return 'fail';
+    await save({ data: dataUrl.slice(comma + 1), fileName, mimeType: blob.type || 'image/png' });
+    return 'ok';
+  } catch (e) {
+    console.warn('[SajuCard] toss save failed', e);
+    return 'fail';
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════
  * 페이지
  * ═════════════════════════════════════════════════════════════════ */
@@ -212,6 +235,15 @@ export function SajuCardPage() {
       if (!blob) return;
       const birthDate = `${profile.input.birthYear}${String(profile.input.birthMonth).padStart(2, '0')}${String(profile.input.birthDay).padStart(2, '0')}`;
       const filename = buildSajuCardFilename(profile.name + suffix, birthDate);
+      // 2026-10-25 — 앱(토스) 웹뷰는 a[download] 에 반응하지 않아(PremiumResult PDF 와 같은 함정) 파일이 남지 않는데 '저장됐어요'라고 했다.
+      //   앱에서는 SDK File.saveBase64 로 기기에 저장한다. 지원하지 않는 토스 버전이면 저장됐다고 말하지 않고 공유하기를 권한다.
+      if (isAppsInToss()) {
+        const saved = await saveBlobInToss(blob, filename);
+        if (saved === 'ok') toast.show('이미지가 저장됐어요', 'success');
+        else if (saved === 'unsupported') toast.show('이 토스 버전에서는 이미지 저장이 안 돼요. 화면을 캡처하거나 공유하기로 보내 주세요', 'info');
+        else toast.show('이미지를 저장하지 못했어요. 화면을 캡처하거나 공유하기로 보내 주세요', 'warning');
+        return;
+      }
       downloadBlob(blob, filename);
       toast.show('이미지가 저장됐어요', 'success');
     } finally {

@@ -91,6 +91,8 @@ const MENU_ITEMS_WEB: MenuItem[] = [
 // 2026-10-23 웹만 — 홈 화면에 추가하는 법 (이미 홈 화면 앱이면 숨김, PC 는 크롬 설치 창을 잡았을 때만)
 //   앱 빌드에는 문구째 넣지 않는다 (WEB_PWA 가 빌드 때 false 로 정해진다)
 const MENU_A2HS: MenuItem | null = WEB_PWA ? { id: 'a2hs', label: '홈 화면에 추가하기', path: '', icon: 'home-add' } : null;
+// 2026-10-25 로그아웃 진행 중 — 두 번 눌러 대화권 사본(logoutChat, 더하기)이 두 번 쌓이지 않게
+let logoutInFlight = false;
 
 /* ══════════════════════════════════════════
    메인 페이지
@@ -166,6 +168,8 @@ export function MyPage() {
   };
 
   const onLogout = async () => {
+    if (logoutInFlight) return;
+    logoutInFlight = true;
     try {
       // 2026-10-17 — 서버에 다 올린 뒤 이 기기 보관함을 비운다 (남겨 두면 다음 익명 계정이 다시 올려 섞였다). 다시 로그인하면 서버에서 돌아온다
       try {
@@ -183,15 +187,22 @@ export function MyPage() {
         const uid = user?.uid;
         if (uid) {
           try { await (await import('@/services/storage/serverRewardMirror')).flushServerRewards(); } catch { /* 다음에 */ }
-          const [store, sync] = await Promise.all([import('@/services/storage/localStore'), import('@/services/storage/firestoreSync')]);
+          const [store, sync, chat] = await Promise.all([import('@/services/storage/localStore'), import('@/services/storage/firestoreSync'), import('@/services/storage/chatCredit')]);
           const saved = await sync.pushBalanceMirror(store.getBalanceBreakdown(), { logout: true });
-          if (saved) store.clearLocalBalance();
+          if (saved) {
+            store.clearLocalBalance();
+            // 2026-10-25 대화권도 같은 사본(logoutChat)에 남겼으니 이 기기에서 지운다. 남기면 다음 손님이 쓰거나 운으로 되돌렸다.
+            //   다시 로그인하면 syncFromCloud 가 돌려놓는다
+            chat.clearChatCredits();
+          }
         }
       } catch { /* 못 남기면 지우지 않는다 */ }
       await signOut();
       toast.show('로그아웃 됐어요', 'info');
     } catch {
       toast.show('로그아웃에 실패했어요. 다시 시도해 주세요.', 'warning');
+    } finally {
+      logoutInFlight = false;
     }
   };
 

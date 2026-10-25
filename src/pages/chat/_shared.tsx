@@ -10,7 +10,11 @@ import {
   spendBalance,
   getBalance,
   addPaidBalance,
+  markPendingSpend,
+  clearPendingSpend,
 } from '@/services/storage/localStore';
+// 2026-10-25 로그인 계정은 운 → 대화권 바꾸기를 서버도 깎는다 (spendUn)
+import { chargeServerSpend, refundServerSpend, isServerChargedAccount } from '@/services/ai/serverSpend';
 import {
   getChatCredits,
   addChatCredits,
@@ -186,6 +190,7 @@ export function getTotalTickets(): {
  *  - quotaExceeded 모드: 자발적 충전 vs 한도 소진 분기 카피 (P2-4 보존)
  *  - 운도 대화권도 0 → 충전/공유 안내
  *  - 역변환(대화권 → 운): 3단위 단위 환원, reward bucket (Sprint 1 #33 보존)
+ *    2026-10-25 익명 계정만. 로그인 계정은 정방향을 서버도 깎고(spendUn), 역변환은 막는다(canReverse 주석)
  * ═════════════════════════════════════════════════════════════════ */
 export interface ConvertUnModalProps {
   open: boolean;
@@ -210,6 +215,7 @@ export function ConvertUnModal({
   const [unBalance, setUnBalance] = useState(() => getBalance());
   const [credits, setCredits] = useState(() => getChatCredits());
   const [amount, setAmount] = useState(1); // 변환할 운
+  const [busy, setBusy] = useState(false); // 2026-10-25 서버 차감을 기다리는 동안 (두 번 눌러 두 번 깎이지 않게)
 
   // open 시마다 잔액 동기화
   useMemo(() => {
@@ -226,31 +232,58 @@ export function ConvertUnModal({
   const ticketsGain = safeAmount * CREDITS_PER_UN;
 
   const reverseBlocks = Math.floor(credits / CREDITS_PER_UN);
-  const canReverse = reverseBlocks > 0;
+  // 2026-10-25 대화권 → 운 되돌리기는 익명 계정만. 로그인 계정은 서버 잔액이 진본인데 대화권은 기기에만 있어서,
+  //   되돌린 운을 서버에 넣을 근거가 없다(기기 값만 믿고 넣으면 서버 운을 만들어 낼 수 있다). 기기에만 넣으면 서버와 다시 어긋난다
+  const canReverse = reverseBlocks > 0 && !isServerChargedAccount();
 
   const noBalance = unBalance <= 0 && credits <= 0;
+  // 2026-10-25 운이 0.1처럼 1운보다 적으면 바꿀 수 없다. 그때도 충전 버튼을 보여 준다(예전엔 '바꾸기'만 보이고 눌러도 '잔액이 부족해요'뿐인 막다른 창)
+  const canConvert = maxConvertible >= 1;
+  const needCharge = !canConvert;
 
-  function handleConvertForward() {
+  async function handleConvertForward() {
+    if (busy) return;
     if (unBalance < safeAmount) {
       toast.show('잔액이 부족해요', 'warning');
       return;
     }
-    if (!spendBalance(safeAmount)) {
+    const spendAmount = safeAmount;
+    const gain = ticketsGain;
+    if (!spendBalance(spendAmount)) {
       toast.show('잔액 차감에 실패했어요', 'warning');
       return;
     }
+    // 2026-10-25 머니세이프 — 서버 차감을 기다리는 사이 앱이 닫혀도 부팅 reconcile 이 기기 운을 돌려준다. 이 id 가 서버 spendId
+    const pendingId = markPendingSpend('chat', spendAmount);
+    // 2026-10-25 로그인 계정은 서버도 같은 운을 깎는다(spendUn, 이 id 로 한 번만). 서버가 받기 전에는 대화권을 넣지 않는다.
+    //   예전엔 기기만 깎아 웹에서 로그아웃 뒤 다시 로그인하면 바꾼 운이 돌아왔다. 익명 계정은 예전 그대로(기다림 없음)
+    //   2026-10-26 서버 잔액이 모자라다고 해도 막지 않는다(chargeServerSpend 가 ok, 어긋남만 남긴다). 막는 것은 위 기기 잔액 확인뿐
+    if (isServerChargedAccount()) {
+      setBusy(true);
+      const r = await chargeServerSpend({ spendId: pendingId, kind: 'chat', amount: spendAmount });
+      setBusy(false);
+      if (r.ok === false) {
+        addPaidBalance(spendAmount, 0);
+        clearPendingSpend(pendingId);
+        toast.show('바꾸는 데 잠시 문제가 생겼어요. 운은 그대로예요. 다시 시도해 주세요', 'warning');
+        return;
+      }
+    }
     // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
-    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'chat', amount: safeAmount })).catch(() => {});
+    import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'chat', amount: spendAmount })).catch(() => {});
     // 2026-06-18 머니세이프 — 차감과 대화권 적립을 원자적으로. 적립 실패(용량초과 등) 시 차감한 운 즉시 복구.
     try {
-      addChatCredits(ticketsGain);
+      addChatCredits(gain);
     } catch {
-      addPaidBalance(safeAmount, 0);
+      addPaidBalance(spendAmount, 0);
+      clearPendingSpend(pendingId);
+      refundServerSpend(pendingId); // 2026-10-25 서버가 깎았으면 서버 몫도 돌려받는다
       toast.show('전환에 실패해서 운을 돌려드렸어요. 다시 시도해주세요.', 'warning');
       return;
     }
+    clearPendingSpend(pendingId);
     toast.show(
-      `${safeAmount}운을 대화권 ${ticketsGain}개로 바꿨어요`,
+      `${spendAmount}운을 대화권 ${gain}개로 바꿨어요`,
       'success',
     );
     onConverted();
@@ -258,6 +291,8 @@ export function ConvertUnModal({
   }
 
   function handleConvertReverse() {
+    // 2026-10-25 로그인 계정은 되돌리기를 막았다 (canReverse 주석). 버튼이 숨지만 한 번 더 막는다
+    if (isServerChargedAccount()) return;
     const result = convertChatCreditsToUn();
     if (result) {
       toast.show(
@@ -285,16 +320,17 @@ export function ConvertUnModal({
       ? noBalance
         ? '운도 대화권도 없어요'
         : '오늘 무료 한도를 다 썼어요'
-      : noBalance
+      : needCharge
       ? '대화권을 채워볼까요?'
       : '운을 대화권으로 바꿀까요?';
 
-  const subtitle =
-    mode === 'quota_exceeded' && !noBalance
+  const subtitle = canConvert
+    ? mode === 'quota_exceeded'
       ? '1운으로 대화 3회를 이어갈 수 있어요. 아니면 내일 다시 만나요.'
-      : noBalance
-      ? '운을 충전하면 대화를 이어갈 수 있어요.'
-      : '바꿀 운을 골라 주세요. 1운에 대화 3번이에요.';
+      : '바꿀 운을 골라 주세요. 1운에 대화 3번이에요.'
+    : unBalance > 0
+    ? '남은 운이 1운보다 적어요. 운을 충전하면 대화를 이어갈 수 있어요.'
+    : '운을 충전하면 대화를 이어갈 수 있어요.';
 
   return (
     <AnimatePresence>
@@ -383,7 +419,7 @@ export function ConvertUnModal({
             </div>
 
             {/* 정방향 변환 (운 → 대화권) */}
-            {!noBalance && unBalance > 0 && (
+            {canConvert && (
               <>
                 <div
                   style={{
@@ -448,6 +484,8 @@ export function ConvertUnModal({
                 <button
                   type="button"
                   onClick={handleConvertForward}
+                  disabled={busy}
+                  aria-busy={busy}
                   style={{
                     width: '100%',
                     height: 54,
@@ -458,12 +496,13 @@ export function ConvertUnModal({
                     borderRadius: 14,
                     fontSize: 16,
                     fontWeight: 800,
-                    cursor: 'pointer',
+                    cursor: busy ? 'default' : 'pointer',
+                    opacity: busy ? 0.6 : 1,
                     marginBottom: 8,
                     boxShadow: '0 10px 22px rgba(140,109,61,.26), inset 0 1px 0 rgba(255,255,255,.45)',
                   }}
                 >
-                  {safeAmount}운을 대화 {ticketsGain}번으로 바꾸기
+                  {busy ? '바꾸는 중이에요' : `${safeAmount}운을 대화 ${ticketsGain}번으로 바꾸기`}
                 </button>
               </>
             )}
@@ -491,8 +530,8 @@ export function ConvertUnModal({
               </button>
             )}
 
-            {/* 잔액 0 → 충전 안내 (스펙 §5-2) */}
-            {noBalance && (
+            {/* 바꿀 운이 없으면(0운이거나 1운보다 적으면) 충전 안내 (스펙 §5-2) */}
+            {needCharge && (
               <button
                 type="button"
                 onClick={handleGoCharge}
@@ -528,7 +567,7 @@ export function ConvertUnModal({
                 cursor: 'pointer',
               }}
             >
-              {mode === 'quota_exceeded' && noBalance
+              {mode === 'quota_exceeded' && needCharge && credits <= 0
                 ? '내일 다시 올게요'
                 : '취소'}
             </button>

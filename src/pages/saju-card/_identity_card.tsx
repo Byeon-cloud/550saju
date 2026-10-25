@@ -21,6 +21,9 @@ import { ILJU_ALL } from '@/constants/iljuAnimal';
 import { getIljuMeaning } from '@/constants/iljuMeaning';
 import type { SinsalHit, SinsalAnalysis } from '@/services/saju/sinsal';
 import { getManAge, getKoreanAge, getHourBranch } from '@/utils/saju-format';
+import { toSolarInput } from '@/services/saju/calculator';
+import { inspectKoreanSolarTime } from '@/services/saju/timeCorrection';
+import type { SajuInput } from '@/types/saju';
 import { SajuDetailsTable } from './_details_table';
 import { SinsalCardsSection } from './_visual_section';
 import { isAppintosBuild } from '@/lib/env';
@@ -30,7 +33,7 @@ const C = {
   paper: '#F8F5EE',
   paperSoft: '#FBF8F1',
   surface: '#FFFFFF',
-  ink: '#1A1A1A',
+  ink: '#1A1612', // 2026-10-25 v9 먹 (옛 #1A1A1A)
   inkSoft: '#3D3D3D',
   mute: '#6F6557',
   gold: '#B8965A',
@@ -71,6 +74,8 @@ const ZHI_KO: Record<string, string> = {
   子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사',
   午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해',
 };
+/** 시지 순서 (0=子) — 출생 시간 줄의 시(時) 이름과 시계 범위를 계산된 시주에서 만든다 */
+const ZHI_ORDER = '子丑寅卯辰巳午未申酉戌亥';
 
 function getGabjaIndex(ilju: string): number {
   const idx = ILJU_ALL.indexOf(ilju);
@@ -231,17 +236,50 @@ export function IdentityCard({
     const calLabel = isLunar ? '음력' : '양력';
     return `${calLabel} ${yyyymmdd}`;
   })();
+  // 2026-10-25 — 계산에 쓰는 양력 날짜 (음력 생일은 한국 음력 표로 바꾼 날, calculator.toSolarInput).
+  //   만 나이와 서머타임 판정은 이 날짜로 한다 (예전엔 음력 날짜를 양력처럼 써서 생일 무렵 만 나이가 한 살 어긋났다)
+  const solarDate = (() => {
+    if (!birthYear || !birthMonth || !birthDay) return null;
+    const src = sajuData.input;
+    const base: SajuInput = src && src.birthYear === birthYear && src.birthMonth === birthMonth && src.birthDay === birthDay
+      ? src
+      : ({ birthYear, birthMonth, birthDay, calendarType: isLunar ? 'lunar' : 'solar' } as SajuInput);
+    try {
+      const s = toSolarInput(base);
+      return { y: s.birthYear, m: s.birthMonth, d: s.birthDay };
+    } catch {
+      return isLunar ? null : { y: birthYear, m: birthMonth, d: birthDay };
+    }
+  })();
   const ageLine = (() => {
     if (!birthYear || !birthMonth || !birthDay) return '';
-    const man = getManAge(birthYear, birthMonth, birthDay);
+    const man = solarDate ? getManAge(solarDate.y, solarDate.m, solarDate.d) : getManAge(birthYear, birthMonth, birthDay);
     const sehe = getKoreanAge(birthYear);
     return `만 ${man}세, 세는 ${sehe}세`;
   })();
   // 2026-06-02 — 입력은 '시(時) 밴드'만 받음(분 단위 X) → 대표시각 "11시"를 그대로 보이면
   //   11:41 입력자가 "내 시간 아닌데" 혼란. 분이 실제 있을 때만 정확 시각 표기, 없으면 시(時) 이름만.
+  // 2026-10-25 — 시(時) 이름은 실제로 계산된 시주에서 가져온다. getHourBranch 는 날짜가 없어 서머타임을 빼지 못해,
+  //   1988-07-01 12:10 은 이 줄이 '오시'인데 바로 아래 시주 칸은 巳였다 (이미지 저장, 공유에 그대로 찍힘).
+  //   시계 범위도 서머타임 기간 출생이면 한 시간 늦게 쓴다 (진태양시 -90분).
+  const pillarBranch = (() => {
+    const zi = siji ? ZHI_ORDER.indexOf(siji) : -1;
+    if (zi < 0) return null;
+    let dst = false;
+    if (solarDate && birthHour !== undefined) {
+      try { dst = inspectKoreanSolarTime(solarDate.y, solarDate.m, solarDate.d, birthHour, birthMinute ?? 0).isDst; } catch { /* noop */ }
+    }
+    const start = ((zi === 0 ? 23 : zi * 2 - 1) + (dst ? 1 : 0)) % 24;
+    const end = (start + 2) % 24;
+    return {
+      ko: `${ZHI_KO[siji]}시`,
+      hanja: `${siji}時`,
+      range: `${String(start).padStart(2, '0')}:30~${String(end).padStart(2, '0')}:29`,
+    };
+  })();
   const hourLine = (() => {
     if (!hasBirthTime || birthHour === undefined) return '시간 모름';
-    const branch = getHourBranch(birthHour, birthMinute);
+    const branch = pillarBranch ?? getHourBranch(birthHour, birthMinute);
     const hasMinute = (birthMinute ?? 0) > 0;
     if (!branch) {
       return hasMinute
@@ -377,7 +415,7 @@ export function IdentityCard({
           <div
             style={{
               fontSize: 13,
-              color: hasBirthTime ? C.goldDeep : C.mute,
+              color: hasBirthTime ? C.ink : C.mute, // 2026-10-25 v9 금색 글자 → 먹
               fontWeight: hasBirthTime ? 700 : 500,
               fontStyle: 'normal', // 2026-10-15 출생시간 미입력 기울임 → 보통 + 회색 (기울임 금지)
               letterSpacing: '0.02em',
@@ -410,18 +448,18 @@ export function IdentityCard({
             position: 'relative',
           }}
         >
-          {/* "일주(日柱) · 나" 강조 라벨 */}
+          {/* "일주(日柱) · 나" 강조 라벨 — 2026-10-25 v9: 금색 테두리 배지 → 먹 (금색은 누르는 주 버튼에만) */}
           <div
             style={{
               fontSize: 13,
               fontWeight: 800,
-              color: C.gold,
+              color: C.ink,
               letterSpacing: '0.18em',
               marginBottom: 4,
               padding: '2px 8px',
-              border: `1px solid ${C.goldLine}`,
+              border: `1px solid ${C.ink}`,
               borderRadius: 2,
-              background: C.goldSoft,
+              background: 'transparent',
             }}
           >
             나의 일주(日柱)
@@ -452,12 +490,12 @@ export function IdentityCard({
               style={{
                 marginTop: 6,
                 padding: '3px 10px',
-                background: C.goldSoft,
-                border: `1px solid ${C.goldLine}`,
+                background: 'transparent',
+                border: `1px solid ${C.line}`,
                 borderRadius: 2,
                 fontFamily: SERIF,
                 fontSize: 13,
-                color: C.goldDeep,
+                color: C.ink,
                 letterSpacing: '0.08em',
                 fontWeight: 800,
               }}

@@ -26,6 +26,7 @@ import { createClaude, CLAUDE_MODEL } from '../shared/claudeClient';
 import { safeParseJson } from './parseJson';
 import { MYEONGRI_GROUNDS_BLOCK, GOOSEBUMP_BLOCK } from './promptsV3';
 import { logAnthropicUsage } from '../shared/aiUsageLog';
+import { logAiFailure } from '../shared/aiFailureLog';
 import { kstNow, kstNowDate } from '../utils/kstTime';
 import { Solar } from 'lunar-javascript';
 import { myeongriSinsalText } from './sinsal';
@@ -244,6 +245,10 @@ async function callGroup(
   situation?: any,
   /** 2026-10-23 — 후처리(달 칸 6개월 맞춤, 영역 점수 확정값)와 그룹 C 영역 점수 줄에 쓴다 (1.6.3 P1-7, P1-8) */
   sajuData?: any,
+  /** 2026-10-25 — 생성 시작 시각. 응답을 못 읽었을 때 다시 만들 시간이 남았는지 판단 (없으면 다시 만들지 않고 던진다) */
+  budget?: { startedAt: number },
+  /** 2026-10-25 — 0 첫 생성, 1 다시 만든 것 (한 번만 다시 만든다) */
+  attempt = 0,
 ): Promise<any> {
   const groupFocus = GROUP_FOCUS[group];
   const userSituation = buildSituationBlock(situation, groupFocus) + (group === 'C' && sajuData ? areaScoreFixText(sajuData) : '');
@@ -278,21 +283,54 @@ async function callGroup(
 
   const text = (msg.content[0] as any).text || '';
   // T2 강건성 — JSON 파싱 실패 시 incomplete JSON 복구 시도
+  // 2026-10-25 — 예전엔 복구까지 실패하면 빈 객체 {} 를 돌려줘, 손님은 10운을 내고 장 몇 개가 빠진 채 화면의 대체 문구를 받았다
+  //   (환불, 다시 시도, 기록 모두 없음). 이제 빈 결과나 핵심 칸(A, D, B 는 sections, C 는 topicMini 와 actionList)이 없는 결과는
+  //   실패로 본다. 생성 시작부터 시간이 남아 있으면 한 번 더 만들고, 아니면 던져서 호출부가 서버 환불한다(index.ts catch).
+  let out: any;
+  let partial = false;
   try {
-    return postProcessGroup(group, safeParseJson(text), sajuData);
+    out = postProcessGroup(group, safeParseJson(text), sajuData);
   } catch (e) {
     console.error(`[claudePremium] Group ${group} JSON parse failed (length=${text.length}):`, (e as Error).message);
     // 복구 시도 — 미완성 JSON 의 마지막 유효 객체 까지 추출
     try {
       const recovered = recoverPartialJson(text);
       console.warn(`[claudePremium] Group ${group} recovered partial JSON (keys: ${Object.keys(recovered).join(',')})`);
-      return postProcessGroup(group, recovered, sajuData);
+      out = postProcessGroup(group, recovered, sajuData);
+      partial = true;
     } catch (e2) {
       console.error(`[claudePremium] Group ${group} recovery also failed:`, (e2 as Error).message);
-      // 빈 객체 반환 — 다른 그룹은 살림 (전체 fail 방지)
-      return {};
+      out = {};
     }
   }
+  const missing = groupCoreMissing(group, out);
+  if (!missing) {
+    if (partial) logAiFailure({ type: 'premium', stage: `parse_partial_${group}`, message: `keys=${Object.keys(out || {}).join(',')} len=${text.length}`, ms: Date.now() - _t0 });
+    return out;
+  }
+  const elapsed = budget ? Date.now() - budget.startedAt : 0;
+  logAiFailure({ type: 'premium', stage: `parse_${group}`, message: `missing=${missing} attempt=${attempt} len=${text.length} elapsed=${elapsed}`, ms: Date.now() - _t0 });
+  // 한 번만, 생성 시작부터 GROUP_RETRY_BUDGET_MS 안일 때만 (콜러블 마감 300초를 넘기지 않게)
+  if (attempt === 0 && budget && elapsed < GROUP_RETRY_BUDGET_MS) {
+    console.warn(`[claudePremium] Group ${group} 핵심 칸 없음(${missing}) → 한 번 더 생성 (경과 ${elapsed}ms)`);
+    return callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget, 1);
+  }
+  throw new Error(`종합사주 ${group} 그룹 응답을 읽지 못했어요 (${missing})`);
+}
+
+/** 2026-10-25 — 그룹 재생성은 생성 시작부터 이 시간 안일 때만. 5.5 세대 그룹 하나가 60~140초라, 이보다 늦으면 콜러블 마감(300초)을 넘긴다 */
+const GROUP_RETRY_BUDGET_MS = 140000;
+
+/** 그룹 결과의 핵심 칸 확인 (2026-10-25) — 없으면 그 칸 이름, 다 있으면 null */
+function groupCoreMissing(group: GroupKey, out: any): string | null {
+  if (!out || typeof out !== 'object' || Object.keys(out).length === 0) return 'empty';
+  if (group === 'C') {
+    const tm = out.topicMini;
+    if (!tm || typeof tm !== 'object' || Object.keys(tm).length === 0) return 'topicMini';
+    if (!Array.isArray(out.actionList) || out.actionList.length === 0) return 'actionList';
+    return null;
+  }
+  return Array.isArray(out.sections) && out.sections.length > 0 ? null : 'sections';
 }
 
 /**
@@ -516,11 +554,13 @@ export async function generatePremiumReport(
     }
     return data;
   };
+  // 2026-10-25 — budget: 응답을 못 읽은 그룹은 시작부터 시간이 남았을 때만 한 번 더 (callGroup)
+  const budget = { startedAt: t0 };
   const [groupA, groupD, groupB, groupC] = await Promise.all([
-    callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation, sajuData).then(tap('A')),
-    later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation, sajuData)).then(tap('D')),
-    later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation, sajuData)).then(tap('B')),
-    later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation, sajuData)).then(tap('C')),
+    callGroup(anthropic, model, 'A', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget).then(tap('A')),
+    later(5000, () => callGroup(anthropic, model, 'D', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget)).then(tap('D')),
+    later(5000, () => callGroup(anthropic, model, 'B', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget)).then(tap('B')),
+    later(5000, () => callGroup(anthropic, model, 'C', staticSystem, dynamicSystem, sajuBase, situation, sajuData, budget)).then(tap('C')),
   ]);
   console.log(`[claudePremium] T2 parallel done in ${Date.now() - t0}ms`);
 
@@ -555,13 +595,15 @@ export async function generateGroup(
   sajuData: any,
   group: GroupKey,
   situation?: any,
+  /** 2026-10-25 — 스트림 생성 시작 시각 (응답을 못 읽은 그룹을 다시 만들 시간이 남았는지). 없으면 지금 */
+  startedAt?: number,
 ): Promise<any> {
   const anthropic = createClaude(apiKey);
   const model = process.env.SAJU_PREMIUM_MODEL || DEFAULT_PREMIUM_MODEL;
   const staticSystem = STATIC_SYSTEM_PROMPT;
   const dynamicSystem = buildDynamicSystemContext(sajuData);
   const sajuBase = buildSajuBaseBlock(sajuData);
-  return callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation, sajuData);
+  return callGroup(anthropic, model, group, staticSystem, dynamicSystem, sajuBase, situation, sajuData, { startedAt: startedAt ?? Date.now() });
 }
 
 /** 올해 양력 1~12월의 실제 월주 (각 달 15일 기준 — 절입 경계 회피). 양력 1월은 寅월이 아니라 丑월. */

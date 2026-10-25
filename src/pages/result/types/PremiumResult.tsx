@@ -297,7 +297,7 @@ function Section5Body({
     return (
       <div style={{ marginTop: 14 }}>
         {paras.map((p, i) => (
-          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
+          <p key={i} style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
         ))}
       </div>
     );
@@ -359,10 +359,10 @@ function Section5Body({
 
   return (
     <div style={{ marginTop: 14 }}>
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
-      {para3 && <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />}
-      {para4 && <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para4 }} />}
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
+      {para3 && <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />}
+      {para4 && <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para4 }} />}
     </div>
   );
 }
@@ -1091,83 +1091,34 @@ function Section2Conclusion({
   );
 }
 
+// 2026-10-25 — §03, §04, §05 결론은 AI 글이 없으면 그리지 않는다. 화면이 대신 쓰던 처방 문구는
+//   장식 화살표, '~가 아니라' 꼴, 누구에게나 같은 '30대에 깎인 모양' 같은 말이라 사주와 상관없는 글이 결론 자리에 찍혔다.
 function Section3Conclusion({
-  userName, sipDist, aiText,
+  userName, aiText,
 }: {
   userName: string; sipDist: SipDist; aiText: string;
 }) {
   // 2026-05-05 통일성 — 모든 §결론은 SectionConclusion 컴포넌트 통과 (다른 §과 동일 톤·강조 색상)
-  if (aiText && aiText.length >= 30) {
-    return <SectionConclusion label={`한 줄로 ${userName} 님은`}>{aiText}</SectionConclusion>;
-  }
-  // fallback — sipDist 기반 동적 줄 (줄바꿈으로 나눠 SectionConclusion 에 위임, 2026-10-23 원문자 제거)
-  const sorted = (Object.entries(sipDist) as [keyof SipDist, number][]).sort((a, b) => b[1] - a[1]);
-  const top = sorted[0][0];
-  const total = sorted.reduce((a, b) => a + b[1], 0) || 1;
-  const pct = (k: keyof SipDist) => Math.round((sipDist[k] / total) * 100);
-  const ONE_LINE: Record<keyof SipDist, string> = {
-    비겁: '"자기 길을 개척하는 사람"',
-    식상: '"만들고 드러내는 사람"',
-    재성: '"실리와 자원을 다루는 사람"',
-    관성: '"책임과 평가를 받쳐주는 사람"',
-    인성: '"받아들이고 익히는 사람"',
-  };
-  // 줄바꿈으로 묶음 → SectionConclusion 의 numSplit 분기에서 번호 없는 문단으로 렌더
-  const text = [
-    `<strong>${ONE_LINE[top]}</strong>, 본인이 <strong>${top}(${pct(top)}%)이 가장 두꺼운 기질</strong>. 이 장점을 살리는 자리에 가야 본인이 살아납니다.`,
-    sipDist.식상 >= 2 && sipDist.관성 >= 1
-      ? `직장 안에서 답답하다면, 그건 <strong>상관견관(傷官見官) 구조</strong> 탓. 능력 부족이 아닙니다. <strong>혼자 맡는 일과 사업</strong> 쪽이 사주에 더 맞아요.`
-      : `${userName} 님 사주는 한쪽으로 치우치지 않은 <strong>균형 잡힌 흐름</strong>. 어느 자리에서도 적응하지만 본인 결정 권한을 의식적으로 잡아두세요.`,
-    sipDist.비겁 >= 2 && sipDist.재성 >= 1
-      ? `돈을 가까운 사람과 섞지 마세요. <strong>겁재(${pct('비겁')}%)가 정재(${pct('재성')}%)를 밀어내는 구조</strong>, 동업과 지인 투자는 사주에 박힌 취약점입니다.`
-      : ''
-  ].filter(Boolean).join('\n');
-  return <SectionConclusion label={`한 줄로 ${userName} 님은`}>{text}</SectionConclusion>;
+  if (!aiText || aiText.length < 30) return null;
+  return <SectionConclusion label={`한 줄로 ${userName} 님은`}>{aiText}</SectionConclusion>;
 }
 
 function Section4Conclusion({
-  userName, primary, lifestyle, aiText,
+  aiText,
 }: {
   userName: string; primary: OhengType; lifestyle: LifestyleSet; aiText: string;
 }) {
-  if (aiText && aiText.length >= 30) {
-    return <SectionConclusion label="오늘부터 지킬 것">{aiText}</SectionConclusion>;
-  }
-  void userName;
-  const HAN: Record<OhengType, string> = { 목: '木', 화: '火', 토: '土', 금: '金', 수: '水' };
-  const html =
-    `<p>→ 책상을 <strong>${lifestyle.direction}</strong>으로 돌리세요. 이게 1번입니다.</p>` +
-    `<p>→ 옷장에 <strong>${lifestyle.color} 비중을 50% 이상</strong>으로 맞추세요.</p>` +
-    `<p>→ 결정, 계약, 발표는 <strong>${lifestyle.season}</strong>에 잡으세요. 같은 일도 흐름이 다릅니다.</p>` +
-    `<p>→ 매일 <strong>${HAN[primary]}(${primary === '수' ? '물 2L' : primary === '화' ? '햇빛 1시간' : primary === '목' ? '식물과 나무 만지기' : primary === '금' ? '미니멀 정리' : '잡곡과 도자기 활용'})</strong>를 보급하세요. 의지가 아니라 보급입니다.</p>`;
-  return (
-    <div className="section-conclusion">
-      <div className="sc-label">오늘부터 지킬 것</div>
-      <div dangerouslySetInnerHTML={{ __html: html }} />
-    </div>
-  );
+  if (!aiText || aiText.length < 30) return null;
+  return <SectionConclusion label="오늘부터 지킬 것">{aiText}</SectionConclusion>;
 }
 
 function Section5Conclusion({
-  userName, v4Daeun, dayOheng, aiText,
+  aiText,
 }: {
   userName: string; v4Daeun: V4Daeun[]; dayOheng: OhengType; aiText: string;
 }) {
-  if (aiText && aiText.length >= 30) {
-    return <SectionConclusion label="10년 흐름 정리">{aiText}</SectionConclusion>;
-  }
-  const cur = v4Daeun.find((d) => d.current);
-  const curIdx = v4Daeun.findIndex((d) => d.current);
-  const next = curIdx >= 0 && curIdx + 1 < v4Daeun.length ? v4Daeun[curIdx + 1] : null;
-  void dayOheng;
-  if (!cur) return null;
-  const html = `${userName} 님은 지금 <strong>${cur.gz}(${cur.kr || ''}) 대운 ${cur.age}</strong>의 한가운데: <strong>${cur.label || '결과를 받을 그릇을 굽는'} 10년</strong>입니다. ${next ? `다음 <strong>${next.gz}(${next.kr || ''}) 대운 ${next.age}</strong>이 큰 전환점이니, 지금 무리해서 결과를 빨리 보려 하지 마세요.` : '지금의 기운을 잘 굳히는 게 평생 자산입니다.'} <strong>"30대에 깎인 모양이 40대에 빛을 받는다"</strong>, 그게 ${userName} 님 사주의 큰 강줄기입니다.`;
-  return (
-    <div className="section-conclusion">
-      <div className="sc-label">10년 흐름 정리</div>
-      <p dangerouslySetInnerHTML={{ __html: html }} />
-    </div>
-  );
+  if (!aiText || aiText.length < 30) return null;
+  return <SectionConclusion label="10년 흐름 정리">{aiText}</SectionConclusion>;
 }
 
 /**
@@ -1232,7 +1183,7 @@ function Section4Avoid({
 }) {
   if (aiText && aiText.length >= 50) {
     return (
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(aiText)) }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(aiText)) }} />
     );
   }
   const e = sajuData.elements as Record<OhengType, number>;
@@ -1254,7 +1205,7 @@ function Section4Avoid({
   const topPhrase = `<strong>${HAN[top[0]]}(${KR[top[0]]})${top[0] === dayOheng ? '도' : '이'} 더 들어오면 안 됩니다.</strong> 이미 ${top[1]}자가 자리하고 있습니다.`;
   const secondPhrase = second[1] >= 2 ? `<strong>${HAN[second[0]]}(${KR[second[0]]})도 너무 많아지면</strong> ${burns(second[0], dayOheng) || `본인 기질을 흔듭니다`}.` : '';
   return (
-    <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}
+    <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}
        dangerouslySetInnerHTML={{ __html: `그리고 절대 더 들어와서는 안 되는 글자도 분명합니다. ${topPhrase} ${secondPhrase} 이 글자가 강해지는 시기에는 새 일을 벌이지 마세요.` }} />
   );
 }
@@ -1284,7 +1235,7 @@ function _Section3Body({
     return (
       <div style={{ marginTop: 14 }}>
         {paras.map((p, i) => (
-          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
+          <p key={i} style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
         ))}
       </div>
     );
@@ -1334,9 +1285,9 @@ function _Section3Body({
 
   return (
     <div style={{ marginTop: 14 }}>
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />
     </div>
   );
 }
@@ -1367,7 +1318,7 @@ function Section2Body({
     return (
       <div style={{ marginTop: 14 }}>
         {paras.map((p, i) => (
-          <p key={i} style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
+          <p key={i} style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }} />
         ))}
       </div>
     );
@@ -1431,12 +1382,12 @@ function Section2Body({
 
   return (
     <div style={{ marginTop: 14 }}>
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
       {para3 && (
-        <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />
+        <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />
       )}
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para4 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para4 }} />
     </div>
   );
 }
@@ -1470,7 +1421,7 @@ function Section1Body({
         {paras.map((p, i) => (
           <p
             key={i}
-            style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }}
+            style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }}
             dangerouslySetInnerHTML={{ __html: sanitizeAiText(autoEmphasize(p)) }}
           />
         ))}
@@ -1565,9 +1516,9 @@ function Section1Body({
 
   return (
     <div style={{ marginTop: 18 }}>
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para1 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para2 }} />
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }} dangerouslySetInnerHTML={{ __html: para3 }} />
     </div>
   );
 }
@@ -1590,7 +1541,7 @@ function Section10Intro({
 }) {
   if (aiText?.trim()) {
     return (
-      <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }}>
+      <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }}>
         {stripMd(aiText)}
       </p>
     );
@@ -1630,7 +1581,7 @@ function Section10Intro({
 
   return (
     <p
-      style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }}
+      style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '0 0 14px', wordBreak: 'keep-all' }}
       dangerouslySetInnerHTML={{ __html: text }}
     />
   );
@@ -2375,11 +2326,21 @@ function PremiumResultFooter({
     birthTime: formatBirthTime(report.input),
     gender: report.input?.gender,
   };
+  // 2026-10-25 — 풀이를 받은 시각도 보낸다 (PDF 연운 해 간지를 그해로). premiumPdfClient 의 인자 타입에 아직 없어
+  //   변수로 넘긴다(callable 이 그대로 서버에 전달). 서버 generatePremiumPdf.ts 가 reportCreatedAt 으로 읽는다
+  const pdfBase = { reportId, profile, sajuData, aiResult, reportCreatedAt: report.createdAt };
+  /** 권한 거절은 다시 눌러도 같다 — 서버가 준 이유를 보인다 (일반 안내만 보여 손님이 계속 다시 눌렀다) */
+  const deniedMsg = (e: any): string | null => {
+    const msg = String(e?.message || '').trim();
+    return /permission-denied/.test(String(e?.code || '')) && /[가-힣]/.test(msg)
+      ? `${msg.replace(/[.\s]+$/, '')}. 고객센터로 알려 주시면 확인해 드려요`
+      : null;
+  };
   async function handlePdf() {
     if (pdfBusy) return;
     setPdfBusy(true);
     try {
-      const r = await generatePremiumPdf({ reportId, profile, sajuData, aiResult });
+      const r = await generatePremiumPdf(pdfBase);
       if (r?.url) {
         // 2026-07-03 CS fix ("PDF 다운로드가 안 돼요") — 토스 웹뷰는 a[download] 무반응(다운로드 UI 없음).
         //   기존 '외부 브라우저 튕김 방지' a[download] 강등이 오히려 무동작이었음 → window.open 복원.
@@ -2409,7 +2370,7 @@ function PremiumResultFooter({
     } catch (e: any) {
       // 2026-10-15 — 원본 오류 문구(영문 코드 등)는 로그로만, 화면은 사람 말로
       console.warn('[PDF] 생성 실패:', e?.code || '', e?.message || e);
-      toast.show('PDF를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
+      toast.show(deniedMsg(e) || 'PDF를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
     } finally {
       setPdfBusy(false);
     }
@@ -2418,7 +2379,8 @@ function PremiumResultFooter({
     if (mailBusy) return;
     setMailBusy(true);
     try {
-      const r = await generatePremiumPdf({ reportId, profile, sajuData, aiResult, email, marketingConsent });
+      const mailArgs = { ...pdfBase, email, marketingConsent };
+      const r = await generatePremiumPdf(mailArgs);
       if (r?.emailed) {
         setMailOpen(false);
         toast.show('메일로 보냈어요. 받은편지함을 확인해 주세요', 'success');
@@ -2429,7 +2391,7 @@ function PremiumResultFooter({
     } catch (e: any) {
       console.warn('[PDF 메일] 실패:', e?.code || '', e?.message || e);
       const msg = String(e?.message || '');
-      toast.show(/메일|오늘/.test(msg) ? msg : '메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요', 'warning');
+      toast.show(deniedMsg(e) || (/메일|오늘/.test(msg) ? msg : '메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요'), 'warning');
       import('@/services/analytics').then((a) => a.trackEvent('pdf_email', { result: 'fail' })).catch(() => {});
     } finally {
       setMailBusy(false);
@@ -2792,9 +2754,12 @@ export function PremiumResult({
   };
   const monthZhi = sajuData.pillars[1]?.지지 || '';
   const seasonText = monthSeason[monthZhi] || '계절의 흐름';
-  // 풀이 일자 (오늘)
-  const today = new Date();
-  const reportDateText = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')} 풀이`;
+  // 풀이 일자 — 2026-10-25 풀이를 받은 날(report.createdAt)로 찍는다. 예전엔 오늘 날짜라 보관함에서 나중에 다시 열면
+  //   그날 날짜와 그해 간지가 찍혀 AI 가 쓴 해와 어긋났다. 날짜가 깨진 옛 기록만 오늘로 (화면은 한국 시간)
+  const genAt = new Date(report.createdAt);
+  const repDate = Number.isNaN(genAt.getTime()) ? new Date() : genAt;
+  const reportYear = repDate.getFullYear();
+  const reportDateText = `${repDate.getFullYear()}.${String(repDate.getMonth() + 1).padStart(2, '0')}.${String(repDate.getDate()).padStart(2, '0')} 풀이`;
   // 출생 정보
   const birthDateText = report.input?.birthYear
     ? `${report.input.birthYear}년 ${report.input.birthMonth}월 ${report.input.birthDay}일`
@@ -2924,7 +2889,7 @@ export function PremiumResult({
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={2} pending={pendingOf('A', 'D')} title="천간지지" hanja="天干地支" hint="위로 드러난 마음과 아래에 깔린 본능" defaultOpen>
           {/* mockup §2 도입 paragraph */}
-          <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
+          <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             <strong>천간(天干)은 마음</strong>이고, <strong>지지(地支)는 행동</strong>입니다. 사람들에게 보여지는 모습과, 실제로 하루를 굴리는 본능이 서로 다른 자리에 놓입니다.
           </p>
           {/* Stage 2C-#1: ganji-flow 합·충·형 시각 (mockup ganji-flow 진본) */}
@@ -2953,8 +2918,9 @@ export function PremiumResult({
             오행별 인생의 기운: 나에게 뭐가 있고 뭐가 비는가
           </h4>
           <p style={{ fontSize: 13, color: '#5C4A2E', margin: '0 0 10px', lineHeight: 1.55 }}>
-            각 오행이 어떻게 작동하는지, <strong style={{ color: '#355A3E' }}>살릴 것</strong> /{' '}
-            <strong style={{ color: '#8b1a1a' }}>조심할 것</strong>로 못 박아둡니다
+            {/* 2026-10-25 '조심할 것로' 오타와 빗금 구분 수리 */}
+            각 오행이 어떻게 작동하는지 <strong style={{ color: '#355A3E' }}>살릴 것</strong>과{' '}
+            <strong style={{ color: '#8b1a1a' }}>조심할 것</strong>으로 나눠 적었어요.
           </p>
           <LifeEdgeList
             elements={sajuData.elements}
@@ -2980,7 +2946,7 @@ export function PremiumResult({
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={3} pending={pendingOf('D')} title="십성" hanja="十神" hint="사람과 돈, 일을 대하는 방식 열 가지">
           {/* mockup §3 도입 paragraph */}
-          <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
+          <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             <strong>십성(十神)</strong>은 사주가 사람의 욕망과 관계를 풀어내는 언어입니다. 다섯 무리(<strong>비겁, 식상, 재성, 관성, 인성</strong>)로 묶이며, {report.name || '회원'} 님 사주에서는 가장 두꺼운 무리가 본인의 핵심 흐름을 만듭니다.
           </p>
           {/* Phase A2 · SipDonut — 십성 분포 도넛 (mockup §3 sip-donut 진본) */}
@@ -3011,7 +2977,7 @@ export function PremiumResult({
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={4} pending={pendingOf('A', 'D')} title="용신과 조후" hanja="用神 調候" hint="내 사주에 모자라 채워야 할 것: 색, 방위, 계절, 물건, 습관까지">
           {/* mockup §4 도입 paragraph */}
-          <p style={{ fontSize: 14.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
+          <p style={{ fontSize: 15.5, color: '#2a2520', lineHeight: 1.85, margin: '14px 0', wordBreak: 'keep-all' }}>
             사주 풀이의 진짜 가치는 여기서 나옵니다. 원국에서 무엇이 부족한지를 알아냈다면, 그것을 일상에서 어떻게 채울지가 다음 단계입니다. 명리에서 이 자리를 <strong>용신(用神)</strong>이라 부릅니다. {report.name || '회원'} 님 사주의 용신은 두 글자로 못 박을 수 있습니다.
           </p>
           {/* 용신 박스 (두 글자 강조) */}
@@ -3072,18 +3038,18 @@ export function PremiumResult({
       {/* ═════════════ 06 연운 (年運) — 시기별 경고 카드 추가 ═════════════ */}
       <LocalFadeIn delay={50}>
         <CollapsibleSection step={6} pending={pendingOf('B')} title="연운" hanja="年運" hint={(() => {
-          const y = new Date().getFullYear();
+          const y = reportYear; // 2026-10-25 풀이를 받은 해
           const SIXTY = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉', '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未', '甲申', '乙酉', '丙戌', '丁亥', '戊子', '己丑', '庚寅', '辛卯', '壬辰', '癸巳', '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑', '壬寅', '癸卯', '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬子', '癸丑', '甲寅', '乙卯', '丙辰', '丁巳', '戊午', '己未', '庚申', '辛酉', '壬戌', '癸亥'];
           const HK: Record<string, string> = { 甲: '갑', 乙: '을', 丙: '병', 丁: '정', 戊: '무', 己: '기', 庚: '경', 辛: '신', 壬: '임', 癸: '계', 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
           const gz = SIXTY[(y - 1984 + 6000) % 60];
           const kr = (HK[gz[0]] || '') + (HK[gz[1]] || '');
-          return `${y}년 ${kr}(${gz}) 해: 올해의 흐름`;
+          return y === new Date().getFullYear() ? `${y}년 ${kr}(${gz}) 해: 올해의 흐름` : `${y}년 ${kr}(${gz}) 해의 흐름`;
         })()}>
-          <YearlyForecast aiResult={aiResult} dayOheng={dayOheng} />
+          <YearlyForecast aiResult={aiResult} dayOheng={dayOheng} reportYear={reportYear} />
           {/* yeonun-chart SVG line — mockup §6 진본. 12개월 강제 + 점수 라벨 + 사주 fallback */}
-          <YeonunLineChart aiResult={aiResult} sajuData={sajuData} dayOheng={dayOheng} />
+          <YeonunLineChart aiResult={aiResult} sajuData={sajuData} dayOheng={dayOheng} reportYear={reportYear} />
           {/* Stage 2C-2#4+5: 12개월 인사이트 grid (3×4 — up/peak/warn/now 4 분류) — mockup month-insight-grid 진본 */}
-          <MonthInsightGrid aiResult={aiResult} dayOheng={dayOheng} sajuData={sajuData} />
+          <MonthInsightGrid aiResult={aiResult} dayOheng={dayOheng} sajuData={sajuData} reportYear={reportYear} />
           {/* 시기별 경고 카드 (목업 v2 §6 — "9월 조심" 패턴) */}
           <MonthlyWarnings aiResult={aiResult} />
           {/* 관계 grid — mockup §6 relation-grid 진본. 일간 + 오행 카운트 기반 동적 */}
@@ -3354,39 +3320,39 @@ function ReportSources() {
         borderTop: '1px solid rgba(138,125,95,0.16)',
         fontSize: 13,
         lineHeight: 1.72,
-        color: '#a89c7f',
+        color: '#6F6557', // 2026-10-25 #a89c7f(종이 위 2.4:1) → 보조 글자색 #6F6557(5:1)
         letterSpacing: '0.005em',
         wordBreak: 'keep-all',
       }}
     >
       <p style={{ margin: 0 }}>
         본 리포트는{' '}
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#4A4238' }}>
           『연해자평(淵海子平)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#4A4238' }}>
           『자평진전(子平眞詮)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#4A4238' }}>
           『적천수(滴天髓)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#4A4238' }}>
           『궁통보감(窮通寶鑑)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#4A4238' }}>
           『명리약언(命理約言)』
         </span>
 , 
-        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#6F6557' }}>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", color: '#4A4238' }}>
           『삼명통회(三命通會)』
         </span>
         를 비롯한 사주명리 6대 원전과 김만태 「한국 사주명리의 수용양상과 전개」(2011)를 포함한 현대 명리학 논문과 통계 자료를 지식 기반으로, 고성능 인공지능 응용 프로그램 인터페이스(API)가 내 원국, 대운, 연운에 맞춰 개인별로 생성한 풀이입니다.
       </p>
-      <p style={{ margin: '8px 0 0', color: '#9A8B70', fontStyle: 'normal' }}>
+      <p style={{ margin: '8px 0 0', color: '#6F6557', fontStyle: 'normal' }}>
         사주 풀이는 삶의 기운을 살피는 참고 자료이며, 모든 결정은 본인의 몫입니다. 의료, 법률, 재정 등 전문적 판단이 필요한 사안은 해당 분야 전문가의 상담을 권해드립니다.
       </p>
     </div>
@@ -3791,11 +3757,11 @@ function newYearTargetOfToday(): number {
  *  · monthlyInsight (label='상승'/'정점'/'주의'/'평탄'/'지금') 우선 → 점수 매핑
  *  · fallback: monthlyFortune 의 score 사용
  */
-function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; sajuData: SajuData; dayOheng: OhengType }) {
+function YeonunLineChart({ aiResult, sajuData, dayOheng, reportYear }: { aiResult: any; sajuData: SajuData; dayOheng: OhengType; reportYear: number }) {
   const insight = monthInsightSource(aiResult);
   const fortune = Array.isArray(aiResult?.monthlyFortune) ? aiResult.monthlyFortune : null;
   // 12개월 모두 강제 — AI 데이터 비어도 사주 기반 fallback
-  const scores: Array<{ m: number; s: number; label?: string }> = [];
+  const scores: Array<{ m: number; y?: number; s: number; label?: string }> = [];
   const LABEL_TO_SCORE: Record<string, number> = { 정점: 92, 상승: 78, 지금: 70, 평탄: 60, 주의: 38 };
   // 2026-10-23 — 새 결과는 이번 달부터 6개월 (서버 판정표 점수 score 를 그대로 그림, 1.6.3 P1-7)
   const up = upcomingInsight(aiResult);
@@ -3805,7 +3771,7 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
     for (const r of up) {
       const label = String(r.item?.label ?? '평탄').trim();
       const sc = Number(r.item?.score);
-      scores.push({ m: r.m, s: Number.isFinite(sc) && sc > 0 ? Math.round(sc) : (LABEL_TO_SCORE[label] ?? 60), label });
+      scores.push({ m: r.m, y: r.y, s: Number.isFinite(sc) && sc > 0 ? Math.round(sc) : (LABEL_TO_SCORE[label] ?? 60), label });
     }
   } else if (insight && insight.length > 0) {
     for (let m = 1; m <= 12; m++) {
@@ -3833,7 +3799,7 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
   const CHUNG: Record<string, string> = {
     子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳',
   };
-  const lineYear = new Date().getFullYear();
+  const lineYear = reportYear; // 2026-10-25 풀이를 받은 해의 월지 (옛 1~12월 결과)
   for (let m = 1; m <= 12; m++) {
     if (up) break; // 새 결과는 서버가 보낸 달만 (빈 달을 공식 점수로 채우지 않음)
     if (scores.find((s) => s.m === m)) continue;
@@ -3859,8 +3825,14 @@ function YeonunLineChart({ aiResult, sajuData, dayOheng }: { aiResult: any; saju
   const areaPath = `M${xOf(0).toFixed(1)},${BOT} L${points.join(' L')} L${xOf(scores.length - 1).toFixed(1)},${BOT} Z`;
   const peakIdx = scores.reduce((acc, p, i) => p.s > scores[acc].s ? i : acc, 0);
   const lowIdx = scores.reduce((acc, p, i) => p.s < scores[acc].s ? i : acc, 0);
-  const currentMonth = new Date().getMonth() + 1;
-  const nowIdx = scores.findIndex((p) => p.label === '지금' || p.m === currentMonth);
+  // 2026-10-25 — '지금' 표시는 저장된 label('지금'은 산 달에 박힘)이 아니라 오늘 날짜로 고른다.
+  //   10월에 산 결과를 12월에 열면 10월 점에 '지금'이 붙어 있었다. 오늘이 칸 밖이면 표시 없음.
+  const nowD = new Date();
+  const nowY = nowD.getFullYear();
+  const nowM = nowD.getMonth() + 1;
+  const nowIdx = up
+    ? scores.findIndex((p) => p.y === nowY && p.m === nowM)
+    : reportYear === nowY ? scores.findIndex((p) => p.m === nowM) : -1;
 
   return (
     <div style={{ marginTop: 14, marginBottom: 10 }}>
@@ -5057,14 +5029,18 @@ function DaeunTimeline({ v4Daeun }: { v4Daeun: V4Daeun[] }) {
 function YearlyForecast({
   aiResult,
   dayOheng,
+  reportYear,
 }: {
   aiResult: any;
   dayOheng: OhengType;
+  /** 2026-10-25 — 풀이를 산 해. 보관함에서 해가 바뀐 뒤 열어도 AI 가 쓴 해의 간지를 보인다 */
+  reportYear: number;
 }) {
   const aiYearly = aiResult?.yearly ?? aiResult?.sections?.find(
     (s: any) => s.id === 'year2026' || s.id === 'yearly',
   )?.content;
-  const thisYear = new Date().getFullYear();
+  const thisYear = reportYear;
+  const isThisYear = reportYear === new Date().getFullYear();
   // 60갑자 — 1984년 갑자(甲子) 기준
   const SIXTY = ['甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉',
     '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未',
@@ -5084,7 +5060,7 @@ function YearlyForecast({
   const baseText =
     typeof aiYearly === 'string' && aiYearly.length > 0
       ? sanitizeAiText(autoEmphasize(aiYearly))
-      : `올해 ${thisYear}년은 ${yearKr}(${yearGz}) 해입니다. ${EHAN[OHENG_TO_ELEM[dayOheng]]}(${EKR[OHENG_TO_ELEM[dayOheng]]}) 일간을 기준으로 한 흐름이 달마다 어떻게 작동하는지 아래에서 한 달씩 따라가세요.`;
+      : `${isThisYear ? '올해 ' : ''}${thisYear}년은 ${yearKr}(${yearGz}) 해입니다. ${EHAN[OHENG_TO_ELEM[dayOheng]]}(${EKR[OHENG_TO_ELEM[dayOheng]]}) 일간을 기준으로 한 흐름이 달마다 어떻게 작동하는지 아래에서 한 달씩 따라가세요.`;
   void dayOheng;
 
   return (
@@ -5092,7 +5068,7 @@ function YearlyForecast({
       {/* 2026-05-04 fix: AI 가 보낸 <strong> 태그 raw text 노출 → dangerouslySetInnerHTML 통일 */}
       <p
         style={{
-          fontSize: 14,
+          fontSize: 15.5, // 2026-10-25 본문 15px 이상
           color: C.ink,
           lineHeight: 1.75,
           margin: 0,
@@ -7184,7 +7160,7 @@ function annotateHanja(text: string): string {
   return text.replace(/([甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥])(?!\()/g, (_m, c) => `${c}(${HK[c] || ''})`);
 }
 
-function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; dayOheng: OhengType; sajuData?: SajuData }) {
+function MonthInsightGrid({ aiResult, dayOheng, sajuData, reportYear }: { aiResult: any; dayOheng: OhengType; sajuData?: SajuData; reportYear: number }) {
   // mockup §6 .month-insight-grid — 2-column grid + .mi.up/peak/warn/now
   // monthlyInsight (label) 우선, fallback monthlyFortune (score), 둘 다 없을 때 12달 자동 fallback
   const insight = monthInsightSource(aiResult);
@@ -7201,7 +7177,8 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
     }));
   // 60갑자 — 올해 + 월 간지
   const SIXTY = ['甲子','乙丑','丙寅','丁卯','戊辰','己巳','庚午','辛未','壬申','癸酉','甲戌','乙亥','丙子','丁丑','戊寅','己卯','庚辰','辛巳','壬午','癸未','甲申','乙酉','丙戌','丁亥','戊子','己丑','庚寅','辛卯','壬辰','癸巳','甲午','乙未','丙申','丁酉','戊戌','己亥','庚子','辛丑','壬寅','癸卯','甲辰','乙巳','丙午','丁未','戊申','己酉','庚戌','辛亥','壬子','癸丑','甲寅','乙卯','丙辰','丁巳','戊午','己未','庚申','辛酉','壬戌','癸亥'];
-  const thisYear = new Date().getFullYear();
+  // 2026-10-25 — 옛 1~12월 결과의 월주는 풀이를 받은 해 기준 (해가 바뀐 뒤 열면 올해 월주가 찍혔다)
+  const thisYear = reportYear;
   const yearGz = SIXTY[(thisYear - 1984 + 6000) % 60];
   const yearGanIdx = '甲乙丙丁戊己庚辛壬癸'.indexOf(yearGz[0]);
   // 월간 = 5호둔법: 갑·기년 → 丙寅 시작 / 을·경년 → 戊寅 / 병·신 → 庚寅 / 정·임 → 壬寅 / 무·계 → 甲寅
@@ -7211,7 +7188,12 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
   const startGanIdx = ALL_GAN.indexOf(MONTH_START_GAN);
   // m=1 (양력 1월) — 절기 기준으로는 12월에 해당 (대한); 단순화: m → MONTH_ZHI 인덱스 + offset
   // 사용자에게는 양력 1월=인월 (寅) 가정 — 사주명리 일반화
-  const currentMonth = new Date().getMonth() + 1;
+  // 2026-10-25 — '지금'은 오늘 날짜로 고른다. 서버가 산 달 칸에 붙인 label '지금'은 그 달이 지나도 남아 있었다.
+  //   옛 1~12월 결과는 풀이를 받은 해가 올해일 때만 이번 달을 '지금'으로 (다른 해의 칸에 올해 이번 달을 찍지 않는다)
+  const nowD = new Date();
+  const nowY = nowD.getFullYear();
+  const currentMonth = nowD.getMonth() + 1;
+  const legacyNowOk = reportYear === nowY;
   // 2026-10-04 — '양력 1월=寅월' 단순화가 한 칸씩 밀려 있었음 (실제 1월=丑월, 寅월은 입춘 이후 2월).
   //   만세력(lunar) 실값 사용 — 실패 시에만 기존 근사치.
   for (let m = 1; m <= 12; m++) {
@@ -7227,7 +7209,12 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
     up.forEach((r, i) => {
       const cell = cells[i];
       const label = String(r.item?.label ?? '').trim();
-      cell.cls = label === '정점' ? 'peak' : label === '주의' ? 'warn' : label === '상승' ? 'up' : label === '지금' ? 'now' : '';
+      // 산 달 칸(label '지금')은 그 달의 행동 등급으로 색을 고른다 (서버 monthInsightLabels 와 같은 규칙)
+      const action = String(r.item?.action ?? '').trim();
+      const nowCls: Cell['cls'] = action === '결정해도 됨' ? 'up' : action === '서명 피함' ? 'warn' : '';
+      cell.cls = label === '정점' ? 'peak' : label === '주의' ? 'warn' : label === '상승' ? 'up' : label === '지금' ? nowCls : '';
+      // 오늘이 든 달만 '지금'. 산 달 그대로 보면 예전과 같고, 다른 등급 칸은 그 등급을 지킨다
+      if (r.y === nowY && r.m === currentMonth && (label === '지금' || !cell.cls)) cell.cls = 'now';
       if (r.item?.text) cell.text = stripMd(String(r.item.text));
     });
   } else if (insight) {
@@ -7240,8 +7227,9 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
         label === '정점' ? 'peak' :
         label === '주의' ? 'warn' :
         label === '상승' ? 'up' :
-        label === '지금' ? 'now' :
         '';
+      // 옛 결과의 '지금'도 산 달에 박혀 있다 → 오늘이 든 달에만 (풀이를 받은 해가 올해일 때)
+      if (legacyNowOk && m === currentMonth && (label === '지금' || !cell.cls)) cell.cls = 'now';
       if (item.ganzi) cell.ganzi = String(item.ganzi);
       if (item.text) cell.text = stripMd(String(item.text));
     }
@@ -7254,7 +7242,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
       const cell = cells[m - 1];
       const score = Number(f.score) || 50;
       cell.cls =
-        m === currentMonth ? 'now' :
+        legacyNowOk && m === currentMonth ? 'now' :
         score === peakScore && peakScore >= 70 ? 'peak' :
         score === minScore && minScore <= 50 ? 'warn' :
         score >= 65 ? 'up' :
@@ -7343,7 +7331,7 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
       // 합 달은 자동으로 up 클래스
       else if (isHap && !cell.cls) cell.cls = 'up';
       // 현재 달 강조
-      if (cell.month === currentMonth && !cell.cls) cell.cls = 'now';
+      if (!up && legacyNowOk && cell.month === currentMonth && !cell.cls) cell.cls = 'now';
     } else {
       // AI 본문이 있을 때 — 명리학 용어 평이한 한글로 강하게 치환 + 한자 보조
       let t = cell.text;
@@ -7363,16 +7351,14 @@ function MonthInsightGrid({ aiResult, dayOheng, sajuData }: { aiResult: any; day
            .replace(/合/g, '<strong>결합</strong>')
            .replace(/刑/g, '<strong>어긋남</strong>')
            .replace(/破/g, '깨짐')
-           .replace(/害/g, '엇갈림')
-           .replace(/생조/g, '받쳐줌')
-           .replace(/극(?=[하받])/g, '눌림');
-      // 3차: 활성·왕성·득세·실세·휴수 → 친절한 한국어
-      t = t.replace(/활성(?:화)?/g, '활기')
-           .replace(/왕성/g, '강해짐')
-           .replace(/득세/g, '득세(힘 얻음)')
-           .replace(/실세|휴수/g, '힘 빠짐')
-           .replace(/묘\(묘\)|묘지|묘(?= )/g, '저장')
-           .replace(/대운|세운/g, (m) => m === '대운' ? '큰 흐름' : '올해 흐름');
+           .replace(/害/g, '엇갈림');
+      // 3차: 명리에만 있는 말은 뒤에 괄호 풀이만 붙인다 (문장은 그대로)
+      // 2026-10-25 — 낱말을 바꿔 끼우던 치환을 뺐다. '자극받는'→'자눌림받는', '왕성한'→'강해짐한', '실세와'→'힘 빠짐와'(뜻이 뒤집힘),
+      //   '계획을 세운다면'→'올해 흐름다면', '계묘 년'→'계저장 년'처럼 보통 한국어가 깨졌다. 세운, 왕성, 활성, 실세, 극, 묘는 보통 낱말이기도 해 건드리지 않는다.
+      t = t.replace(/득세(?!\()/g, '득세(힘 얻음)')
+           .replace(/휴수(?!\()/g, '휴수(힘 빠짐)')
+           .replace(/생조(?!\()/g, '생조(받쳐 줌)')
+           .replace(/대운(?![동하])(?!\()/g, '대운(큰 흐름)');
       // 4차: 자(子)·축(丑) 등 단일 한자 (한글) 자동 보조
       t = annotateHanja(t);
       // 5차: "본인 X(X)와" 같은 어색한 문장 정리

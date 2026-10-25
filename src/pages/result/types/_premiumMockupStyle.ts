@@ -133,7 +133,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
     margin-bottom: 18px;
   }
   .premium-mockup .section p {
-    font-size: 14.5px; line-height: 1.85;
+    /* 2026-10-25 — 본문 14.5px → 15.5px (v9 본문 15px 이상, hanji.css 와 오늘의 운세 본문과 같게) */
+    font-size: 15.5px; line-height: 1.85;
     color: #2a2520;
     margin-bottom: 14px;
     word-break: keep-all;

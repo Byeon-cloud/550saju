@@ -70,6 +70,8 @@ import {
   subscribeFreePass,
 } from '@/services/storage/dailyFreePass';
 import { generateDailyFortune, generateDailyFortuneStream } from '@/services/ai/reportGenerator';
+// 2026-10-25 로그인 계정은 두 번째 오늘의 운세 1운을 서버도 깎는다 (기기 장부 id = spendId)
+import { refundServerSpend, flushServerSpendRefunds, isServerInsufficient, noteServerSpendShort } from '@/services/ai/serverSpend';
 import { getTopicPrice, formatPriceLabel, getMonthlyPrice } from '@/constants/pricing';
 import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
 import { stripMd } from '@/utils/format';
@@ -346,13 +348,15 @@ export function DailyFortunePage() {
     }
     if (!spendBalance(1)) {
       import('@/services/analytics').then((a) => a.trackEvent('insufficient_balance', { type: 'daily', needed: 1 })).catch(() => {});
-      navigate('/charge?need=1', { state: { message: '오늘의 운세에 1운이 필요해요', returnTo: '/daily' } });
+      // 2026-10-25 고른 사람으로 돌아오게 ?profileId 를 붙인다 (예전엔 충전 뒤 본인으로 열려 엄마를 다시 골라야 했다)
+      navigate('/charge?need=1', { state: { message: '오늘의 운세에 1운이 필요해요', returnTo: `/daily?profileId=${encodeURIComponent(profile.id)}` } });
       return;
     }
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'daily', amount: 1 })).catch(() => {});
     // 머니세이프 — 생성 중 앱 종료 시 부팅 reconcile 이 자동환불. 저장 성공 시 해제. (Dream·Topic 동일 패턴)
     //   type 에 프로필·날짜 태그 → isDailyInProgress 가 '같은 프로필 결제 생성 진행 중' 판정에 사용
     const pendingId = markPendingSpend(`daily:${profile.id}:${key}`, 1);
+    void flushServerSpendRefunds(); // 2026-10-25 남은 서버 돌려받기 요청부터 (로그인 계정만, 기다리지 않는다)
     void runAnalyze({ profile, tier: 'paid', dateKey: key, reuseId: todays[0]?.id, pendingId });
   }
 
@@ -386,7 +390,7 @@ export function DailyFortunePage() {
     try {
       // STEP 2A — 종합사주 base 점수 (subScores ±2 한도 강제용)
       const baseScores100 = computeDailyBase100(profile.sajuData);
-      const callPayload = {
+      const basePayload = {
         name: profile.name || '',
         sajuData: profile.sajuData,
         date: dayInfo.date,
@@ -395,6 +399,21 @@ export function DailyFortunePage() {
         baseScores100,
         tomorrowGanzi: tomorrowInfo.ganzi,
         tomorrowDate: tomorrowInfo.date,
+      };
+      const callPayload = {
+        ...basePayload,
+        // 2026-10-25 1운으로 시작한 생성 — 로그인 계정이면 서버도 1운을 깎는다. 스트림과 callable 폴백이 같은 id 라 한 번만 깎인다
+        ...(tier === 'paid' && pendingId ? { paid: true, spendId: pendingId } : {}),
+      };
+      // 2026-10-25 서버가 '운이 부족합니다'로 막았는지 (스트림)
+      //   2026-10-26 — 막지 않는다. 기기에서 1운을 냈으니 서버 차감 없이(basePayload, 예전 그대로) 다시 만들고 어긋남만 남긴다
+      //   (오너 원칙: 화면에 운이 넉넉한 손님은 서버와 기기 잔액이 어긋났다는 이유로 막거나 충전으로 보내지 않는다)
+      let serverShort = false;
+      let serverShortNoted = false;
+      const noteServerShort = () => {
+        if (serverShortNoted) return;
+        serverShortNoted = true;
+        noteServerSpendShort('daily', 1);
       };
 
       // 2026-05-06 v2 — Streaming SSE + timeout 강제 + 자세한 로그
@@ -510,8 +529,9 @@ export function DailyFortunePage() {
             }
             finish('done');
           },
-          onError: (msg) => {
+          onError: (msg, code) => {
             console.warn('[DailyFortune] SSE error → callable 폴백:', msg);
+            if (code === 'insufficient') serverShort = true;
             clearTimeout(timeoutId);
             clearTimeout(firstChunkTimeoutId);
             finish('sse-error');
@@ -527,20 +547,29 @@ export function DailyFortunePage() {
       // SSE 실패 시 callable 폴백
       if (!streamingDone) {
         console.log('[DailyFortune] callable 폴백 시작');
-        try {
-          res = await generateDailyFortune(callPayload);
-          console.log('[DailyFortune] callable 응답 도달', { hasResult: !!res });
-        } catch (retryErr: any) {
-          const msg = String(retryErr?.message || '');
-          const is500 = msg.includes('500') || msg.includes('Internal server error') || msg.includes('api_error');
-          if (is500) {
+        const callOnce = async (payload: typeof callPayload) => {
+          try {
+            return await generateDailyFortune(payload);
+          } catch (retryErr: any) {
+            const msg = String(retryErr?.message || '');
+            const is500 = msg.includes('500') || msg.includes('Internal server error') || msg.includes('api_error');
+            if (!is500) throw retryErr;
             console.warn('[DailyFortune] callable 일시 500 → 1초 후 재시도');
             await new Promise((r) => setTimeout(r, 1000));
-            res = await generateDailyFortune(callPayload);
-          } else {
-            throw retryErr;
+            return await generateDailyFortune(payload);
           }
+        };
+        // 2026-10-26 서버 잔액이 모자라 스트림이 막혔으면 서버 차감 없이 만든다 (위 serverShort 주석)
+        if (serverShort) noteServerShort();
+        const firstPayload = serverShort ? basePayload : callPayload;
+        try {
+          res = await callOnce(firstPayload);
+        } catch (callErr: any) {
+          if (firstPayload === basePayload || !isServerInsufficient(callErr)) throw callErr;
+          noteServerShort();
+          res = await callOnce(basePayload);
         }
+        console.log('[DailyFortune] callable 응답 도달', { hasResult: !!res });
       }
       console.log('[DailyFortune] analyze() 응답 확보', { hasResult: !!res, keys: res ? Object.keys(res).slice(0, 5) : [] });
 
@@ -564,6 +593,7 @@ export function DailyFortunePage() {
       if (tier === 'paid' && existing) {
         if (pendingId) clearPendingSpend(pendingId); // 즉시 환불하므로 해제 (부팅 이중환불 방지)
         refundBalance(1);
+        refundServerSpend(pendingId); // 2026-10-25 서버가 깎았으면 서버 몫도 돌려받는다
         setResult(existing.aiResult);
         setResultTier(existing.type === 'paid' ? 'paid' : 'free');
         setPhase('result');
@@ -605,6 +635,9 @@ export function DailyFortunePage() {
       if (tier === 'paid') {
         if (pendingId) clearPendingSpend(pendingId); // 즉시 환불하므로 해제 (부팅 이중환불 방지)
         refundBalance(1);
+        // 2026-10-25 서버가 깎았을 수 있으니 서버 몫도 돌려받는다(깎지 않았으면 서버가 아무것도 하지 않는다).
+        //   2026-10-26 서버 잔액 모자람은 위에서 서버 차감 없이 다시 만들어 여기로 오지 않는다(충전으로 보내지 않는다)
+        refundServerSpend(pendingId);
         setApiError('오늘의 운세를 살피는 데 잠시 문제가 생겼어요. 차감된 1운은 바로 돌려드렸어요.');
       } else {
         restoreFreePass('daily', dateKey); // 무료권 쓴 날 = dateKey · 자정 넘겨 실패하면 새 날 무료권은 건드리지 않음
@@ -774,14 +807,15 @@ export function DailyFortunePage() {
         title="오늘 무료 운세를 이미 받았어요"
       >
         <div style={{ marginBottom: 16 }}>
-          <p style={{ fontSize: 14, color: '#3D3D3D', lineHeight: 1.65, marginBottom: 8, wordBreak: 'keep-all' }}>
+          {/* 2026-10-26 v9 — 꿈해몽 확인 창(DreamConfirmModal)과 같게: 본문 15px, 강조는 먹, 안내 목록 13.5px (금색은 누르는 주 버튼에만) */}
+          <p style={{ fontSize: 15, color: '#4B4238', lineHeight: 1.7, marginBottom: 8, wordBreak: 'keep-all' }}>
             1운으로{' '}
-            <strong style={{ color: '#A37A2E' }}>
+            <strong style={{ color: '#1A1612' }}>
               {selectedProfile?.name ? `${selectedProfile.name} 님의 ` : ''}오늘의 운세
             </strong>
             를 볼까요?
           </p>
-          <ul style={{ fontSize: 13, color: '#5C4A2E', lineHeight: 1.7, paddingLeft: 0, listStyle: 'none', wordBreak: 'keep-all' }}>
+          <ul style={{ fontSize: 13.5, color: '#6F6557', lineHeight: 1.7, paddingLeft: 0, listStyle: 'none', wordBreak: 'keep-all' }}>
             {balance >= 1 ? (
               <li>현재 잔액 {balance}운 → 차감 후 {Math.round((balance - 1) * 10) / 10}운</li>
             ) : (
@@ -1269,7 +1303,8 @@ function ResultView({
               topics={nh.topic && nh.topic.id ? [nh.topic] : []}
               questions={Array.isArray(nh.chatQuestions) ? nh.chatQuestions : []}
               onTopic={(id) => { bridge(id, 'next_topic'); goTopic(id); }}
-              onAsk={(q) => { bridge('chat', 'next_chat'); void openChatWithResult({ navigate, name: profile?.name || '나', profile, ctx: { type: 'daily', label: '오늘의 운세', fullResult: result }, question: q }); }}
+              // 2026-10-25 date 를 onChat 과 같게 넣는다. 없으면 방 키가 날짜를 몰라 다음 날에도 어제 방(어제 인사, 어제 제목)이 열렸다
+              onAsk={(q) => { bridge('chat', 'next_chat'); void openChatWithResult({ navigate, name: profile?.name || '나', profile, ctx: { type: 'daily', label: '오늘의 운세', fullResult: result, date: new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) }, question: q }); }}
             />
           );
         })()}

@@ -55,19 +55,17 @@ import {
 /* ══════════════════════════════════════════════════════════════════
  * SSOT 토큰 (D1 fix 정렬)
  * ═════════════════════════════════════════════════════════════════ */
+// 2026-10-25 v9 정렬 — 홈(HJ)과 같은 종이 #F4EFE4, 먹 #1A1612. 안내 상자와 시 미리보기의 금색 바탕, 금색 아이콘은
+//   먹과 종이로 (금색은 누르는 주 버튼에만). 오류 글자는 낙관 빨강.
 const C = {
-  paper: '#F8F5EE',
-  ink: '#1A1A1A',
-  inkSoft: '#3D3D3D',
+  paper: '#F4EFE4',
+  ink: '#1A1612',
+  inkSoft: '#4B4238',
   mute: '#6F6557',
-  gold: '#B8965A',
-  goldDeep: '#8C6D3D',
-  goldSoft: 'rgba(184,150,90,0.14)',
-  goldLine: 'rgba(184,150,90,0.40)',
-  line: '#E5DFD0',
-  surface: '#FFFFFF',
-  danger: '#C0392B',
-  noteBeige: '#F0ECE1', // §7-2 KR 보정 안내 배경 (스펙 명시)
+  line: '#E1D7C4',
+  surface: '#FFFDF8',
+  hanji: '#F5EEDF',
+  danger: '#A23A2A',
 } as const;
 
 /* ══════════════════════════════════════════════════════════════════
@@ -160,6 +158,7 @@ type FromKey =
   | 'saju-card'
   | 'result_other'
   | 'compat' /* 레거시 */
+  | 'web_intro' /* 웹 첫 손님 소개 카드 '내 사주 넣고 오늘의 운세 보기' (2026-10-25) */
   | '';
 
 interface FromIntent {
@@ -196,6 +195,12 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
     // 2026-10-17 — 가족을 새로 넣으면 그 사람으로 열리게 (?profileId · DailyFortunePage 가 처리)
     routeAfterSave: (id) => `/daily?profileId=${encodeURIComponent(id)}`,
   },
+  // 2026-10-25 — 웹 소개 카드는 '오늘의 운세 보기'를 약속한다. 예전엔 기본 흐름(사주 카드)으로 가서 운세가 한참 아래에 있었다
+  web_intro: {
+    hint: '오늘의 운세를 보려면 사주 정보가 필요해요',
+    submitLabel: '오늘의 운세 보기',
+    routeAfterSave: (id) => `/daily?profileId=${encodeURIComponent(id)}`,
+  },
   dream: {
     hint: '꿈을 사주와 함께 풀려면 사주 정보가 필요해요',
     submitLabel: '꿈해몽 시작하기',
@@ -224,7 +229,8 @@ const FROM_INTENT: Record<Exclude<FromKey, ''>, FromIntent> = {
   },
   home_body_premium: {
     hint: '종합사주를 보려면 정보를 넣어 주세요',
-    submitLabel: `종합사주 시작하기 (${getPremiumPrice().actualPrice}운)`,
+    // 2026-10-25 — 가격은 화면을 그릴 때 붙인다 (모듈 상수라 처음 불러올 때 값에 굳어 반값 혜택과 어긋났다, InputPage 의 submitLabel)
+    submitLabel: '종합사주 시작하기',
     // 잔액 확인은 handleSubmit 의 별도 로직에서 처리. home_body_premium 분기가 먼저 처리하므로 이 경로는 실사용 X.
     // 안전 fallback: Phase 4 (2026-05-27) 결과 페이지 직진 패턴 유지.
     routeAfterSave: (id) => `/result/${id}?fresh=1&type=premium`,
@@ -330,12 +336,20 @@ export function InputPage() {
   // 진입 의도 (IntentHint + SubmitBar 라벨)
   // 2026-10-17 — returnTo 로 들어오면(주제운의 '다른 사람 사주') 저장 뒤 그 화면으로 돌아가므로 버튼 글도 그렇게
   const returnToState = (location.state as any)?.returnTo as string | undefined;
+  // 2026-10-25 — 들어온 화면이 누구 사주인지 알 때 넘겨주는 안내와 관계 (수능 카드의 자녀 사주: hint, relation '가족')
+  const hintState = (location.state as any)?.hint as string | undefined;
+  const relationState = (location.state as any)?.relation as Relation | undefined;
   const intent = useMemo<FromIntent>(() => {
     const base = getIntent(fromRaw);
     // 2026-10-21 — 사주대화 광고('생일만 넣고 고민 하나 무료로 물어보세요')로 온 손님에게 약속한 말을 바로 보이게. 오늘 무료권이 있을 때만
     if (fromRaw === 'chat' && hasFreePass('chat')) return { ...base, hint: '생일을 넣으면 내 사주로 고민에 답해 드려요. 오늘 첫 질문은 무료예요', submitLabel: '무료로 첫 질문하기' };
-    return returnToState && !fromRaw ? { ...base, hint: '풀이를 볼 분의 사주 정보를 넣어 주세요', submitLabel: '저장하고 돌아가기' } : base;
-  }, [fromRaw, returnToState]);
+    if (returnToState && !fromRaw) return { ...base, hint: hintState || '풀이를 볼 분의 사주 정보를 넣어 주세요', submitLabel: '저장하고 돌아가기' };
+    return hintState ? { ...base, hint: hintState } : base;
+  }, [fromRaw, returnToState, hintState]);
+  // 2026-10-25 — 종합사주 버튼 가격은 그릴 때마다 SSOT 에서 (반값 혜택이 세션 중에 켜지거나 끝나도 실제 차감액과 같게)
+  const submitLabel = fromRaw === 'home_body_premium'
+    ? `${intent.submitLabel} (${getPremiumPrice().actualPrice}운)`
+    : intent.submitLabel;
 
   // 레거시: 보관함이 location.state로 프로필 전달
   const stateProfile = (location.state as any)?.selectedProfile as
@@ -363,11 +377,16 @@ export function InputPage() {
   const [name, setName] = useState(
     initFromProfile ? initialProfile!.name : '',
   );
-  const [relation, setRelation] = useState<Relation>(
-    initFromProfile
-      ? ((initialProfile!.input.relation as Relation) || '본인')
-      : '본인',
-  );
+  // 2026-10-25 — 새로 넣는 화면의 관계 기본값. 본인 사주가 이미 있으면 '가족'으로 시작한다.
+  //   예전엔 늘 '본인'이라, 가족 띠 칸의 '가족 생일 넣고'나 궁합 상대로 배우자 생일을 넣으면 '본인 사주를 바꾸시는 건가요?' 창이 떴고,
+  //   금색 첫 버튼(교체)을 누르면 내 사주가 지워지고 배우자가 '나'가 됐다. 내 정보(from=my)에서 들어오면 본인.
+  //   본인 생일을 다시 넣은 경우는 handleSubmit 이 이름과 생일로 알아보고 본인으로 저장한다.
+  const [relation, setRelation] = useState<Relation>(() => {
+    if (initFromProfile) return (initialProfile!.input.relation as Relation) || '본인';
+    if (relationState && RELATIONS.some((r) => r.value === relationState)) return relationState;
+    if (fromRaw !== 'my' && findExistingOwnerProfile()) return '가족';
+    return '본인';
+  });
   // 2026-05-28 — '기타' 선택 시 직접 입력 받기 (CompatibilityPage 패턴 동일)
   const [customRelation, setCustomRelation] = useState<string>(() => {
     if (!initFromProfile) return '';
@@ -608,7 +627,8 @@ export function InputPage() {
   // 본인 중복 처리 후 실제 저장 재진입 hook (resolveAction 호출 시 실행)
   const pendingSaveRef = useRef<null | (() => Promise<void>)>(null);
 
-  function buildSajuInput(): SajuInput | null {
+  /** relationOverride: 본인 중복 창에서 '가족으로 저장'처럼 고른 관계 (setRelation 직후 doSave 는 옛 값을 읽으므로 직접 넘긴다) */
+  function buildSajuInput(relationOverride?: Relation): SajuInput | null {
     const m = birthDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (!m || !gender) return null;
     const by = Number(m[1]);
@@ -617,9 +637,11 @@ export function InputPage() {
     const calType: CalendarType =
       calendarSimple === 'lunar' && isLeapMonth ? 'lunar_leap' : calendarSimple;
     // 2026-05-28 — '기타' 선택 + customRelation 입력 시 사용자 입력값 우선 저장
-    const effectiveRelation = (relation === '기타' && customRelation.trim().length > 0)
-      ? (customRelation.trim() as Relation)
-      : relation;
+    const effectiveRelation = relationOverride
+      ? relationOverride
+      : (relation === '기타' && customRelation.trim().length > 0)
+        ? (customRelation.trim() as Relation)
+        : relation;
     const input: SajuInput = {
       name: name.trim(),
       relation: effectiveRelation,
@@ -668,6 +690,22 @@ export function InputPage() {
     //   확인: 기존 본인 != 현재 입력자 (이름+생일 일치는 같은 사람으로 본다 → 그냥 진행).
     const tentativeInput = buildSajuInput();
     const isOwnerNew = tentativeInput && (!tentativeInput.relation || tentativeInput.relation === '본인');
+    // 2026-10-25 — 관계 기본값이 '가족'이 되면서, 본인이 자기 생일을 다시 넣어도 칩이 '가족'일 수 있다.
+    //   이름과 생일이 본인 사주와 같으면 saveProfileDirect 가 그 항목을 가족 사본(새 id)으로 덮어써 '나'가 사라지므로 본인으로 저장한다.
+    if (tentativeInput && !isOwnerNew && !editingProfileId) {
+      const owner = findExistingOwnerProfile();
+      if (
+        owner &&
+        owner.name === tentativeInput.name &&
+        owner.input.birthYear === tentativeInput.birthYear &&
+        owner.input.birthMonth === tentativeInput.birthMonth &&
+        owner.input.birthDay === tentativeInput.birthDay
+      ) {
+        setRelation('본인');
+        await doSave({ replaceOwnerId: null, relationOverride: '본인' });
+        return;
+      }
+    }
     if (isOwnerNew && !editingProfileId) {
       const existing = findExistingOwnerProfile();
       const sameKey =
@@ -689,13 +727,14 @@ export function InputPage() {
   }
 
   /** 실제 사주 저장 + 라우팅 — handleSubmit 의 본문을 추출.
-   *  options.replaceOwnerId: 기존 본인 사주를 삭제하고 새 사주로 교체할 때 사용. */
-  async function doSave(options: { replaceOwnerId: string | null }) {
+   *  options.replaceOwnerId: 기존 본인 사주를 삭제하고 새 사주로 교체할 때 사용.
+   *  options.relationOverride: 화면의 관계 칩 대신 저장할 관계 (본인 중복 창의 '가족으로 저장') */
+  async function doSave(options: { replaceOwnerId: string | null; relationOverride?: Relation }) {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
-      const sajuInput = buildSajuInput();
+      const sajuInput = buildSajuInput(options.relationOverride);
       if (!sajuInput) throw new Error('입력 변환 실패');
       const data = calculateSaju(sajuInput);
 
@@ -791,11 +830,16 @@ export function InputPage() {
         if (usedOffer) offerMod.markFirstDailyOfferUsed();
         // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
         import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'premium', amount: premiumCost, ...(usedOffer ? { offer: offerMod.OFFER.id } : {}) })).catch(() => {});
+        const newId = generateId();
         // P0 CS — 생성 중 앱 종료 시 운 소실 방지 (결과 저장/에러환불 시 해제, 미해제 시 부팅 자동환불)
-        import('@/services/storage/localStore').then(m => m.markPendingSpend('premium', premiumCost)).catch(() => {});
+        // 2026-10-25 — 장부에 산 사람의 사주와 반값 여부를, 결과 화면 기록에 그 사람 사주를 남긴다 (PremiumSelectPage 와 같다).
+        //   결과 화면으로 가기 전에 끝나도록 기다린다 (localStore 는 이미 불러온 모듈이라 바로 끝난다)
+        try {
+          const ls = await import('@/services/storage/localStore');
+          ls.beginPremiumPurchase({ reportId: newId, sajuData: data, amount: premiumCost, offer: usedOffer });
+        } catch { /* noop — 위에서 이미 불러온 모듈이라 실패하지 않는다 */ }
 
         toast.show(`${premiumCost}운을 써서 종합사주를 시작해요`, 'success');
-        const newId = generateId();
         navigate(`/result/${newId}?fresh=1&type=premium`, { replace: true });
         return;
       }
@@ -821,11 +865,34 @@ export function InputPage() {
     }
   }
 
+  // 2026-10-25 — 시(時) 미리보기와 '시만 아세요' 대표 시각은 계산(calculateSaju)과 같은 양력 날짜로 본다.
+  //   음력을 고르면 birthDate 는 음력 날짜라, 그대로 서머타임 표에 대면 음력 1987-04-15(양력 5월 12일, 서머타임)를
+  //   서머타임이 아니라고 보고 午를 12:00 으로 저장했다 → 실제 계산은 -90분이라 巳.
+  const calcDate = useMemo(() => {
+    if (calendarSimple !== 'lunar') return birthDate;
+    const m = birthDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!m) return birthDate;
+    try {
+      const s = toSolarInput({ birthYear: Number(m[1]), birthMonth: Number(m[2]), birthDay: Number(m[3]), calendarType: isLeapMonth ? 'lunar_leap' : 'lunar' } as SajuInput);
+      return `${s.birthYear}-${s.birthMonth}-${s.birthDay}`;
+    } catch { return birthDate; }
+  }, [birthDate, calendarSimple, isLeapMonth]);
+
   // 입력 시각 → 진태양시 보정 후 시지(時支) 실시간 미리보기
   const sijiPreview = useMemo(
-    () => (timeUnknown || birthTime === '' ? null : previewSiji(birthDate, birthTime)),
-    [birthDate, birthTime, timeUnknown],
+    () => (timeUnknown || birthTime === '' ? null : previewSiji(calcDate, birthTime)),
+    [calcDate, birthTime, timeUnknown],
   );
+
+  // 2026-10-25 — '시만 아세요'로 고른 시(時). 서머타임 +60분 앵커는 날짜에 달려 있어서, 시를 고른 뒤 날짜나 양력/음력을
+  //   바꾸면 대표 시각을 새 날짜로 다시 맞춘다 (시각을 직접 치거나 모름을 고르면 지운다)
+  const [pickedHourCode, setPickedHourCode] = useState<HourCode | null>(null);
+  useEffect(() => {
+    if (!pickedHourCode || timeUnknown) return;
+    const t = hourCodeToTime(pickedHourCode, calcDate);
+    if (t && t !== birthTime) setBirthTime(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calcDate]);
 
   return (
     <div
@@ -892,11 +959,13 @@ export function InputPage() {
           onTimeChange={(v) => {
             setBirthTime(v);
             setTimeUnknown(false);
+            setPickedHourCode(null);
             setTouched((t) => ({ ...t, hourCode: true }));
           }}
           onSetUnknown={() => {
             setTimeUnknown(true);
             setBirthTime('');
+            setPickedHourCode(null);
             setTouched((t) => ({ ...t, hourCode: true }));
           }}
           onOpenBlockSheet={() => setHourSheetOpen(true)}
@@ -914,7 +983,7 @@ export function InputPage() {
 
       {/* §10 SubmitBar (sticky 80px) */}
       <SubmitBar
-        label={intent.submitLabel}
+        label={submitLabel}
         loading={isSubmitting}
         disabled={!isValid}
         onSubmit={handleSubmit}
@@ -930,9 +999,11 @@ export function InputPage() {
           if (code === 'unknown') {
             setTimeUnknown(true);
             setBirthTime('');
+            setPickedHourCode(null);
           } else {
             setTimeUnknown(false);
-            setBirthTime(hourCodeToTime(code, birthDate));
+            setBirthTime(hourCodeToTime(code, calcDate));
+            setPickedHourCode(code);
           }
           setTouched((t) => ({ ...t, hourCode: true }));
           setHourSheetOpen(false);
@@ -971,18 +1042,23 @@ export function InputPage() {
 
       {/* 2026-05-28 PM — 본인 사주 중복 가드 Modal.
           user 이슈: 같은 사람이 본인 사주를 여러 개 등록할 수 있어 운 잔액·결제 내역이 헷갈림.
-          해결: 명시적 confirm 으로 [교체] / [다른 관계로 변경] / [취소] 선택 강제. */}
+          2026-10-25 — 주 버튼(금색)은 데이터가 망가지지 않는 '새 분을 가족으로 저장'. 예전엔 금색 첫 버튼이 '교체'라
+            배우자 생일을 넣던 손님이 누르면 내 사주가 지워지고(삭제 기록까지 남아 복원도 안 됨) 배우자가 '나'가 됐다.
+            '교체'는 지운다고 분명히 쓴 글자 버튼으로 맨 아래(취소 위)에 둔다. */}
       <Modal
         isOpen={!!ownerDupModal}
         onClose={() => { setOwnerDupModal(null); pendingSaveRef.current = null; }}
-        title="본인 사주를 바꾸시는 건가요?"
+        title="본인 사주가 이미 있어요"
       >
         {ownerDupModal && (
           <div className="space-y-4">
-            <p className="text-body-sm text-text-muted leading-relaxed" style={{ wordBreak: 'keep-all' }}>
-              이미 본인 사주로 <strong style={{ color: '#1A1A1A' }}>{ownerDupModal.existingName}</strong> 님이 저장되어 있어요.
-              <br />
-              본인 사주는 한 명만 둘 수 있어요. <strong style={{ color: '#1A1A1A' }}>운 잔액과 결제 내역은 그대로 남아요</strong>.
+            <p style={{ fontSize: 15, lineHeight: 1.65, color: C.inkSoft, margin: 0, wordBreak: 'keep-all' }}>
+              본인 사주로 <strong style={{ color: C.ink }}>{ownerDupModal.existingName}</strong> 님이 저장되어 있어요.
+              본인 사주는 한 명만 둘 수 있어요.
+              {' '}지금 넣은 <strong style={{ color: C.ink }}>{name.trim() || '이 분'}</strong>{name.trim() ? ' 님' : ''}이 가족이나 지인이면 가족으로 저장해 주세요.
+            </p>
+            <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.mute, margin: '6px 0 0', wordBreak: 'keep-all' }}>
+              어느 쪽을 골라도 운 잔액과 결제한 풀이는 그대로 남아요.
             </p>
             <div className="flex flex-col gap-2">
               <Button
@@ -990,17 +1066,17 @@ export function InputPage() {
                 variant="gold"
                 fullWidth
                 onClick={async () => {
-                  const existingId = ownerDupModal.existingId;
                   setOwnerDupModal(null);
-                  await doSave({ replaceOwnerId: existingId });
+                  setRelation('가족');
+                  await doSave({ replaceOwnerId: null, relationOverride: '가족' });
                   pendingSaveRef.current = null;
                 }}
               >
-                기존 {ownerDupModal.existingName} 사주 교체
+                가족으로 저장하기
               </Button>
               <Button
                 size="lg"
-                variant="ghost"
+                variant="secondary"
                 fullWidth
                 onClick={async () => {
                   const existingId = ownerDupModal.existingId;
@@ -1011,6 +1087,19 @@ export function InputPage() {
                 }}
               >
                 {ownerDupModal.existingName} 님을 가족으로 옮기기
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                fullWidth
+                onClick={async () => {
+                  const existingId = ownerDupModal.existingId;
+                  setOwnerDupModal(null);
+                  await doSave({ replaceOwnerId: existingId });
+                  pendingSaveRef.current = null;
+                }}
+              >
+                {ownerDupModal.existingName} 님 사주를 지우고 바꾸기
               </Button>
               <Button
                 size="lg"
@@ -1035,12 +1124,12 @@ function IntentHintBlock({ hint }: { hint: string }) {
   return (
     <div
       style={{
-        background: C.goldSoft,
+        background: C.hanji,
         padding: '12px 20px',
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        borderBottom: `1px solid ${C.goldLine}`,
+        borderBottom: `1px solid ${C.line}`,
       }}
     >
       <svg
@@ -1048,7 +1137,7 @@ function IntentHintBlock({ hint }: { hint: string }) {
         height="16"
         viewBox="0 0 24 24"
         fill="none"
-        stroke={C.goldDeep}
+        stroke={C.inkSoft}
         strokeWidth="2"
         strokeLinecap="round"
         aria-hidden
@@ -1058,7 +1147,7 @@ function IntentHintBlock({ hint }: { hint: string }) {
         <path d="M12 8v4M12 16h.01" />
       </svg>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 13, color: C.ink, fontWeight: 500, margin: 0 }}>
+        <p style={{ fontSize: 15, color: C.ink, fontWeight: 600, margin: 0, wordBreak: 'keep-all' }}>
           {hint}
         </p>
         <p style={{ fontSize: 13, color: C.inkSoft, margin: '2px 0 0' }}>
@@ -1164,13 +1253,14 @@ function NameField({
               onClick={() => onRelationChange(r.value)}
               aria-pressed={active}
               style={{
-                height: 32,
-                padding: '0 12px',
+                // 2026-10-25 — 누르는 칸 44px (50~60대가 많이 쓰는 화면, 예전 32px)
+                height: 44,
+                padding: '0 16px',
                 borderRadius: 999,
                 background: active ? C.ink : C.surface,
                 color: active ? C.paper : C.inkSoft,
                 border: `1px solid ${active ? C.ink : C.line}`,
-                fontSize: 13.5,
+                fontSize: 15,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -1197,7 +1287,7 @@ function NameField({
             border: `1px solid ${C.line}`,
             borderRadius: 10,
             padding: '0 14px',
-            fontSize: 14,
+            fontSize: 15,
             color: C.ink,
             outline: 'none',
           }}
@@ -1323,8 +1413,12 @@ function BirthDateField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [birthDate]);
   // 양력과 음력, 윤달을 바꾸면 같은 숫자를 다시 검사 (음력 2월 30일은 양력에선 없는 날)
+  //   2026-10-25 — 이어쓰기, 불러오기로 음력 날짜와 '음력'이 한 번에 바뀌면 이 렌더의 digits 는 아직 옛 값('')이다.
+  //   예전엔 그 옛 값으로 검사해 방금 되살린 생년월일을 ''로 지웠다(칸엔 숫자가 보이는데 '8자리를 넣어 주세요'로 막힘).
+  //   밖에서 들어온 날짜가 칸과 다르면 그 날짜를 새 달력으로 검사한다.
   useEffect(() => {
-    const next = parsed.iso;
+    const src = birthDate && toDigits(birthDate) !== digits ? toDigits(birthDate) : digits;
+    const next = parseBirthDigits(src, calendarSimple, maxDate, isLeapMonth).iso;
     if (next !== birthDate) onBirthDateChange(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calendarSimple, isLeapMonth]);
@@ -1335,6 +1429,18 @@ function BirthDateField({
     if (next !== birthDate) onBirthDateChange(next);
   };
   const shownError = focused ? '' : (digits.length === 8 && parsed.msg) ? parsed.msg : (blurred && digits.length > 0 && digits.length < 8) ? '생년월일 8자리를 넣어 주세요 (예: 19640315)' : error;
+  /* 2026-10-25 — 띠 카드에서 고른 해(?y=1964)를 앞 네 자리에 채워 왔는데 입춘 전 생일이면 한 번 확인한다.
+   *   띠 카드는 '입춘 전에 태어났다면 앞 해의 띠로 보세요'라고 해서 1965년 1월생이 '64년생'을 누르고, 월일만 치면 1964년으로 저장됐다.
+   *   양력은 1월과 2월 4일까지, 음력은 다음 해 음력 1월 그날이 입춘 전인 경우(설이 입춘보다 이른 해). 막지는 않는다. */
+  const ipchunCheck = (() => {
+    if (!prefillYear || !parsed.iso || parsed.y !== prefillYear || !parsed.m || !parsed.d) return false;
+    if (calendarSimple === 'solar') return parsed.m === 1 || (parsed.m === 2 && parsed.d <= 4);
+    if (isLeapMonth || parsed.m !== 1) return false;
+    try {
+      const s = toSolarInput({ birthYear: prefillYear + 1, birthMonth: 1, birthDay: parsed.d, calendarType: 'lunar' } as SajuInput);
+      return s.birthMonth === 1 || (s.birthMonth === 2 && s.birthDay <= 4);
+    } catch { return false; }
+  })();
   return (
     <div style={{ marginBottom: 24 }}>
       <label
@@ -1367,12 +1473,12 @@ function BirthDateField({
               aria-pressed={active}
               style={{
                 width: 120,
-                height: 40,
+                height: 44, // 2026-10-25 누르는 칸 44px (예전 40px)
                 borderRadius: 999,
                 background: active ? C.ink : C.surface,
                 color: active ? C.paper : C.inkSoft,
                 border: `1px solid ${active ? C.ink : C.line}`,
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -1430,16 +1536,23 @@ function BirthDateField({
             : <>양력 {parsed.y}년 {parsed.m}월 {parsed.d}일</>}
         </p>
       )}
+      {ipchunCheck && prefillYear && (
+        <p role="note" style={{ fontSize: 14.5, lineHeight: 1.6, color: C.ink, margin: '8px 2px 0', padding: '10px 12px', background: C.surface, border: `1px solid ${C.line}`, borderRadius: 10, wordBreak: 'keep-all' }}>
+          입춘(양력 2월 4일 무렵) 전 생일은 띠를 앞 해로 봐요. 띠 표에서 {prefillYear}년을 고르셨다면 실제로 태어난 해가 {prefillYear + 1}년인지 한 번 더 확인해 주세요.
+        </p>
+      )}
 
       {/* 윤달 체크박스 — 음력일 때만 (스펙 §6-3) */}
       {calendarSimple === 'lunar' && (
+        // 2026-10-25 — 줄 전체가 누르는 칸 (높이 44px, 예전엔 18px 상자와 13px 글자만), 체크 색은 먹 (금색은 주 버튼에만)
         <label
           style={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            marginTop: 10,
-            fontSize: 13,
+            gap: 10,
+            minHeight: 44,
+            marginTop: 6,
+            fontSize: 15,
             color: C.ink,
             cursor: 'pointer',
           }}
@@ -1448,7 +1561,7 @@ function BirthDateField({
             type="checkbox"
             checked={isLeapMonth}
             onChange={(e) => onLeapChange(e.target.checked)}
-            style={{ width: 18, height: 18, accentColor: C.gold }}
+            style={{ width: 22, height: 22, accentColor: C.ink, flexShrink: 0 }}
           />
           윤달
           <span style={{ fontSize: 13, color: C.mute, marginLeft: 2 }}>
@@ -1547,7 +1660,7 @@ function BirthHourField({
             minWidth: 0,
             height: 52,
             background: C.surface,
-            border: `1px solid ${error ? C.danger : hasTime ? C.goldLine : C.line}`,
+            border: `1px solid ${error ? C.danger : hasTime ? C.inkSoft : C.line}`,
             borderRadius: 12,
             padding: '0 16px',
             fontSize: 16,
@@ -1590,7 +1703,8 @@ function BirthHourField({
           role="note"
           style={{
             marginTop: 10,
-            background: C.goldSoft,
+            background: C.hanji,
+            border: `1px solid ${C.line}`,
             padding: '12px 14px',
             borderRadius: 12,
             display: 'flex',
@@ -1605,8 +1719,8 @@ function BirthHourField({
               height: 30,
               flexShrink: 0,
               borderRadius: '50%',
-              background: 'rgba(184,150,90,0.22)',
-              color: C.goldDeep,
+              background: C.ink,
+              color: C.paper,
               fontSize: 15,
               fontWeight: 900,
               fontFamily: "'Noto Serif KR', serif",
@@ -1620,7 +1734,7 @@ function BirthHourField({
           </span>
           <p style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.55, margin: 0 }}>
             진태양시(약 30분) 보정 후{' '}
-            <strong style={{ color: C.goldDeep }}>
+            <strong style={{ color: C.ink }}>
               {sijiPreview.ko}({sijiPreview.hanja})
             </strong>{' '}
             로 계산돼요.
@@ -1634,7 +1748,7 @@ function BirthHourField({
               return mi >= 28 && mi <= 31 ? (
                 <>
                   <br />
-                  <span style={{ color: C.goldDeep, fontWeight: 600 }}>
+                  <span style={{ color: C.inkSoft, fontWeight: 600 }}>
                     이 시각은 시(時)의 경계 부근이에요. 만세력마다 앞뒤 시로 다르게 보기도 하는데,
                     사주500은 널리 쓰이는 &lsquo;30분 경계&rsquo; 기준으로 풀이해드려요.
                   </span>
@@ -1657,7 +1771,7 @@ function BirthHourField({
             padding: 0,
             fontSize: 13.5,
             fontWeight: 600,
-            color: C.goldDeep,
+            color: C.inkSoft,
             textDecoration: 'underline',
             textUnderlineOffset: 2,
             cursor: 'pointer',
@@ -1758,7 +1872,8 @@ function HourSheet({
               style={{
                 margin: '0 24px 14px',
                 padding: '10px 12px',
-                background: C.goldSoft,
+                background: C.hanji,
+                border: `1px solid ${C.line}`,
                 borderRadius: 12,
                 fontSize: 13.5,
                 lineHeight: 1.55,
@@ -1767,7 +1882,7 @@ function HourSheet({
             >
               우리나라 표준시는 실제 태양 시간보다 약 30분 빨라요. 사주는 태양의 위치가 기준이라, 그만큼 앞당겨 보정한 시간대예요 (서울 기준).
               <br />
-              시각이 <b style={{ color: C.goldDeep, fontWeight: 700 }}>경계에 딱 걸치면</b> 태어난 지역에 따라 앞뒤 시(時)로 갈릴 수 있어요.
+              시각이 <b style={{ color: C.ink, fontWeight: 700 }}>경계에 딱 걸치면</b> 태어난 지역에 따라 앞뒤 시(時)로 갈릴 수 있어요.
             </div>
             <div style={{ padding: '4px 8px 0' }}>
               {HOUR_OPTIONS.map((o) => {
@@ -1782,7 +1897,7 @@ function HourSheet({
                     style={{
                       width: '100%',
                       padding: '14px 16px',
-                      background: active ? C.goldSoft : 'transparent',
+                      background: active ? C.hanji : 'transparent',
                       border: 'none',
                       borderRadius: 12,
                       display: 'flex',
@@ -1796,7 +1911,7 @@ function HourSheet({
                       style={{
                         fontSize: 24,
                         fontWeight: 700,
-                        color: C.goldDeep,
+                        color: C.ink,
                         fontFamily: "'Noto Serif KR', serif",
                         width: 32,
                       }}
@@ -1829,7 +1944,7 @@ function HourSheet({
                         height="18"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke={C.goldDeep}
+                        stroke={C.ink}
                         strokeWidth="2.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1851,7 +1966,7 @@ function HourSheet({
                   width: '100%',
                   padding: '14px 16px',
                   background:
-                    currentCode === 'unknown' ? C.goldSoft : 'transparent',
+                    currentCode === 'unknown' ? C.hanji : 'transparent',
                   border: `1px dashed ${C.line}`,
                   borderRadius: 12,
                   margin: '8px 0 4px',
@@ -1900,7 +2015,8 @@ function LoadPreviousHint({ onLoad }: { onLoad: () => void }) {
     <div
       style={{
         marginBottom: 16,
-        background: C.goldSoft,
+        background: C.surface,
+        border: `1px solid ${C.line}`,
         borderRadius: 12,
         padding: '12px 16px',
         display: 'flex',
@@ -1913,7 +2029,7 @@ function LoadPreviousHint({ onLoad }: { onLoad: () => void }) {
         height="16"
         viewBox="0 0 24 24"
         fill="none"
-        stroke={C.goldDeep}
+        stroke={C.inkSoft}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -1930,14 +2046,16 @@ function LoadPreviousHint({ onLoad }: { onLoad: () => void }) {
         type="button"
         onClick={onLoad}
         style={{
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 700,
-          color: C.goldDeep,
+          color: C.ink,
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           padding: '4px 8px',
           borderRadius: 8,
+          textDecoration: 'underline',
+          textUnderlineOffset: 3,
         }}
       >
         불러오기
@@ -2047,7 +2165,9 @@ function SubmitBar({
           style={{
             flex: 1,
             height: 52,
-            background: disabled ? 'rgba(26,26,26,0.4)' : C.ink,
+            // 2026-10-17 빈 칸이 있어도 눌린다 (눌러서 빠진 칸을 알려 준다).
+            // 2026-10-25 — 덜 채운 상태도 꺼진 버튼처럼 보이지 않게: 반투명(글자 대비 약 1.6:1) 대신 옅은 먹 바탕 (종이색 글자 대비 8:1 이상)
+            background: disabled ? C.inkSoft : C.ink,
             color: C.paper,
             border: 'none',
             borderRadius: 12,
@@ -2055,8 +2175,7 @@ function SubmitBar({
             fontWeight: 700,
             letterSpacing: '-0.01em',
             cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.6 : 1, // 2026-10-17 빈 칸이 있어도 눌린다 (눌러서 빠진 칸을 알려 준다)
-            transition: 'opacity 0.15s',
+            transition: 'background 0.15s',
           }}
         >
           {loading ? '풀이를 준비하고 있어요...' : label}

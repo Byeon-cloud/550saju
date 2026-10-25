@@ -73,6 +73,16 @@ export function markFirstDailyOfferUsed(): void {
   try { sessionStorage.setItem(USE_KEY, JSON.stringify({ id: OFFER.id, at: Date.now() })); } catch { /* noop */ }
 }
 
+/** 반값으로 산 종합사주를 만들지 못해 운을 돌려줄 때 부른다 (2026-10-25) — 혜택 시간이 남아 있으면 다시 반값으로.
+ *  예전엔 운만 돌려주고 혜택은 쓴 것으로 남아 '다시 만들기'가 10운이었다. 서버도 자기 생성이 실패하면 계정의 반값 표시를 되돌린다(index.ts).
+ *  이번 요청 표시(USE_KEY)는 늘 지운다: 시간이 지난 혜택 표시가 다음 요청에 붙지 않게. 다시 반값으로 사면 markFirstDailyOfferUsed 가 다시 남긴다 */
+export function restoreFirstDailyOffer(): void {
+  const s = read();
+  if (s && s.used && Date.now() < s.until) write({ ...s, used: false });
+  try { sessionStorage.removeItem(USE_KEY); } catch { /* noop */ }
+  try { window.dispatchEvent(new Event('saju500:offer-change')); } catch { /* noop */ }
+}
+
 /** 종합사주 생성 요청에 붙일 표시 — 반값으로 산 뒤 30분 안의 요청에만 (스트림이 실패해 다시 부르는 요청에도 붙게 지우지 않는다.
  *  서버는 계정마다 한 번만 반값으로 깎는다) */
 export function takePremiumOfferFlag(): string | undefined {

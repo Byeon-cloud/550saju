@@ -161,6 +161,15 @@ export function todayHourWindows(dateKey: string, s: SajuData): HourWindows | nu
     return { peak: [scored[bestI].start, scored[bestI + 1].end], avoid: [worst.start, worst.end] };
   } catch { return null; }
 }
+/** 지금(한국 시각 'HH:MM') 기준으로 이 시간대가 아직 안 끝났나. 자정을 넘는 시간대(23:30~01:30)는 하루 중 늘 남은 것으로 본다 */
+export function windowAhead([start, end]: [string, string], nowHM: string): boolean {
+  return end > start ? nowHM < end : true;
+}
+/** 지금 한국 시각 'HH:MM' */
+export function kstNowHM(): string {
+  const k = new Date(Date.now() + 9 * 3600e3);
+  return `${String(k.getUTCHours()).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}`;
+}
 /** '15:30' → '오후 3시 반' */
 export function timeLabel(hhmm: string): string {
   const [hh, mm] = hhmm.split(':').map(Number);

@@ -884,7 +884,8 @@ const PENDING_SPENDS_KEY = 'saju500:pending_spends';
 //   아직 생성 중인 결제가 자동환불돼 '결과도 받고 환불도 받는' 누수가 생겼다. 실패 건 환불은 7분 늦어질 뿐.
 export const PENDING_EXPIRE_MS = 12 * 60 * 1000;
 
-interface PendingSpend { id: string; type: string; amount: number; ts: number; }
+/** key 는 어느 사주를 산 것인지(종합사주는 premiumSajuKey), offer 는 첫 오늘의 운세 반값으로 산 것인지 (2026-10-25, 둘 다 없는 옛 기록도 그대로 읽는다) */
+interface PendingSpend { id: string; type: string; amount: number; ts: number; key?: string; offer?: boolean; }
 
 function readPendingSpends(): PendingSpend[] {
   try { return JSON.parse(localStorage.getItem(PENDING_SPENDS_KEY) || '[]'); } catch { return []; }
@@ -895,14 +896,17 @@ function writePendingSpends(list: PendingSpend[]): void {
 
 /** 차감 직후 호출 — 생성 중 이탈 대비 마킹. 반환된 id 로 완료 시 clear. */
 /** 미해결 pending 차감 목록 조회 (토픽 결과 복구 트리거 판단용 — 2026-06-17) */
-export function getPendingSpends(): Array<{ id: string; type: string; amount: number; ts: number }> {
+export function getPendingSpends(): Array<{ id: string; type: string; amount: number; ts: number; key?: string; offer?: boolean }> {
   return readPendingSpends();
 }
 
-export function markPendingSpend(type: string, amount: number): string {
+export function markPendingSpend(type: string, amount: number, extra?: { key?: string; offer?: boolean }): string {
   const id = `${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
   const list = readPendingSpends();
-  list.push({ id, type, amount, ts: Date.now() });
+  const entry: PendingSpend = { id, type, amount, ts: Date.now() };
+  if (extra?.key) entry.key = extra.key;
+  if (extra?.offer) entry.offer = true;
+  list.push(entry);
   writePendingSpends(list.slice(-20)); // 안전 상한
   return id;
 }
@@ -931,6 +935,27 @@ export function reconcilePendingSpends(): number {
     } catch { /* noop */ }
   }
   writePendingSpends(list.filter(p => now - p.ts <= PENDING_EXPIRE_MS));
+  // 2026-10-25 — 반값으로 산 종합사주를 돌려줬으면 반값 혜택도 되살린다 (시간이 남아 있을 때만, firstDailyOffer.ts)
+  if (expired.some((p) => p.offer && p.type.startsWith('premium'))) {
+    import('@/services/offers/firstDailyOffer').then((m) => m.restoreFirstDailyOffer()).catch(() => {});
+  }
+  // 2026-10-26 — 종합사주는 돌려준 건을 적어 둔다. 새로고침된 결과 화면이 그 뒤에 서버 완성본을 받으면 이 기록만큼 다시 거둔다
+  //   (ResultPage — 예전엔 결과도 받고 자동환불도 받았다). 기록이 없으면 거두지 않는다(로그아웃 정리 등 돌려주지 않고 지운 건)
+  const premiumRefunds = expired.filter((p) => p.type === 'premium' && (Number(p.amount) || 0) > 0);
+  if (premiumRefunds.length) {
+    const keep = readAutoRefunds().filter((r) => now - r.at < AUTO_REFUND_KEEP_MS);
+    for (const p of premiumRefunds) keep.push({ id: p.id, amount: Number(p.amount) || 0, offer: !!p.offer, at: now });
+    writeAutoRefunds(keep);
+  }
+  // 2026-10-26 — 오늘의 운세(daily:…), 꿈(dream, 두 번째 꿈과 잠금 풀이), 대화권(chat)은 로그인 계정이면 서버도 이 장부 id 로 깎았다.
+  //   기기 운을 돌려줬으니 서버 몫도 돌려받는다(서버는 깎인 구매만 한 번, 깎지 않았으면 아무것도 하지 않는다).
+  //   부팅 때는 로그인 정보가 아직 없을 수 있어 요청만 남기고 로그인 확인 뒤 보낸다(serverSpend.ts, 서로 불러 돌지 않게 동적으로)
+  const serverIds = expired
+    .filter((p) => p.type.startsWith('daily:') || p.type === 'dream' || p.type === 'chat')
+    .map((p) => p.id);
+  if (serverIds.length) {
+    import('@/services/ai/serverSpend').then((m) => m.queueServerSpendRefunds(serverIds)).catch(() => {});
+  }
   console.info(`[pendingSpend] 자동 환불: ${total}운 (${expired.length}건: 생성 중 이탈 복구)`);
   return total;
 }
@@ -973,14 +998,153 @@ export function clearPendingSpendByType(typePrefix: string): void {
   writePendingSpends(readPendingSpends().filter(p => !p.type.startsWith(typePrefix)));
 }
 
+/* ─────────────────────────────────────────────────────────────
+ * 종합사주 결제 기록 (2026-10-25)
+ *  1. 장부(pending)에 어느 사주를 샀는지(key)와 반값 여부(offer)를 남긴다 → 부팅 복구가 다른 사람 결과를 이 결제의 결과로
+ *    저장하거나, 다른 결제의 장부를 지우지 않는다(예전엔 'premium' 장부를 종류째 지웠다).
+ *  2. 결과 화면 기록(premium_fresh)에 산 사람의 사주를 결과 주소(reportId)별로 남긴다 → 새로고침 뒤에도 같은 사람으로 이어 받고,
+ *    이미 보낸 생성은 다시 보내지 않는다(ResultPage). 메모리와 sessionStorage 에 둔다(탭이 살아 있는 동안만).
+ * ──────────────────────────────────────────────────────────── */
+
+/** 결과가 어느 사주의 것인지 맞춰 보는 열쇠 — 네 기둥 글자와 성별. 서버 functions/src/premium/recoverPremiumResult.ts 와 반드시 같은 식 */
+export function premiumSajuKey(sajuData: any): string {
+  const ps = Array.isArray(sajuData?.pillars) ? sajuData.pillars : [];
+  if (!ps.length) return '';
+  return ps.map((p: any) => `${p?.position ?? ''}:${p?.천간 ?? ''}${p?.지지 ?? ''}:${p?.available === false ? 0 : 1}`).join('|')
+    + `#${sajuData?.input?.gender ?? ''}`;
+}
+
+/** 종합사주 장부 한 건. id 를 주면 그 건만(없으면 이미 결과를 받았거나 돌려준 건이라 null),
+ *  id 가 없으면 같은 사주(key) 건, 그것도 없으면 사주 표시가 없는 옛 건 */
+export function findPremiumPending(opts?: { id?: string; key?: string }): PendingSpend | null {
+  const list = readPendingSpends().filter((p) => p.type === 'premium');
+  if (opts?.id) return list.find((p) => p.id === opts.id) || null;
+  if (opts?.key) { const hit = list.find((p) => p.key === opts.key); if (hit) return hit; }
+  return list.find((p) => !p.key) || null;
+}
+
+/* 2026-10-26 — 부팅 자동환불이 돌려준 종합사주 장부 건 (reconcilePendingSpends 가 남기고, ResultPage 가 늦게 받은 결과를 줄 때 한 번 꺼내 쓴다) */
+const AUTO_REFUNDS_KEY = 'saju500:premium_auto_refunds';
+const AUTO_REFUND_KEEP_MS = 24 * 60 * 60 * 1000;
+interface AutoRefund { id: string; amount: number; offer: boolean; at: number; }
+function readAutoRefunds(): AutoRefund[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(AUTO_REFUNDS_KEY) || '[]');
+    return Array.isArray(v) ? v.filter((x) => x && typeof x.id === 'string') : [];
+  } catch { return []; }
+}
+function writeAutoRefunds(list: AutoRefund[]): void {
+  try {
+    if (list.length) localStorage.setItem(AUTO_REFUNDS_KEY, JSON.stringify(list.slice(-20)));
+    else localStorage.removeItem(AUTO_REFUNDS_KEY);
+  } catch { /* noop */ }
+}
+
+/** 부팅 자동환불이 돌려준 종합사주 건을 꺼낸다(꺼내면 지운다, 한 번만). 없으면 null */
+export function takePremiumAutoRefund(pendingId: string): { amount: number; offer: boolean } | null {
+  if (!pendingId) return null;
+  const list = readAutoRefunds();
+  const hit = list.find((r) => r.id === pendingId);
+  if (!hit) return null;
+  writeAutoRefunds(list.filter((r) => r.id !== pendingId));
+  return { amount: Number(hit.amount) || 0, offer: !!hit.offer };
+}
+
+/** 결과를 받았을 때 — 그 건만 장부에서 지운다. 반환: 지운 건 (없으면 null) */
+export function settlePremiumPending(opts?: { id?: string; key?: string }): PendingSpend | null {
+  const hit = findPremiumPending(opts);
+  if (hit) clearPendingSpend(hit.id);
+  return hit;
+}
+
+/** 종합사주를 못 만들었을 때 — 장부의 그 건만큼 돌려주고 장부에서 지운다. 반값으로 산 건이면 혜택도 되살린다.
+ *  장부에 없으면(이미 결과를 받았거나 부팅 자동환불로 돌려준 건) 아무것도 돌려주지 않는다(예전엔 지금 가격으로 또 돌려줘 이중 환불이 됐다).
+ *  반환: 돌려준 운과 반값 여부 */
+export function refundPremiumPending(opts?: { id?: string; key?: string }): { amount: number; offer: boolean } {
+  const hit = settlePremiumPending(opts);
+  if (!hit) return { amount: 0, offer: false };
+  const amount = Number(hit.amount) || 0;
+  if (amount > 0) refundBalance(amount);
+  if (hit.offer) import('@/services/offers/firstDailyOffer').then((m) => m.restoreFirstDailyOffer()).catch(() => {});
+  return { amount, offer: !!hit.offer };
+}
+
+const PREMIUM_FRESH_PREFIX = 'saju500:premium_fresh:';
+export interface PremiumFreshEntry {
+  reportId: string;
+  sajuData: any;
+  /** 실제로 낸 운 */
+  amount: number;
+  /** 첫 오늘의 운세 반값으로 샀는지 */
+  offer: boolean;
+  /** 장부(pending) id */
+  pendingId: string;
+  /** 결제 시각 */
+  at: number;
+  /** 서버에 생성 요청을 보냈는지 (보냈으면 새로고침 뒤에는 다시 보내지 않고 완성본만 찾는다) */
+  started?: boolean;
+  startedAt?: number;
+}
+const premiumFreshMem = new Map<string, PremiumFreshEntry>();
+
+export function savePremiumFresh(e: PremiumFreshEntry): void {
+  premiumFreshMem.set(e.reportId, e);
+  try { sessionStorage.setItem(PREMIUM_FRESH_PREFIX + e.reportId, JSON.stringify(e)); } catch { /* 메모리 기록으로 이 탭 안에서는 이어진다 */ }
+}
+
+export function readPremiumFresh(reportId: string): PremiumFreshEntry | null {
+  if (!reportId) return null;
+  const mem = premiumFreshMem.get(reportId);
+  if (mem) return mem;
+  try {
+    const v = JSON.parse(sessionStorage.getItem(PREMIUM_FRESH_PREFIX + reportId) || 'null');
+    return v && v.reportId === reportId && v.sajuData?.pillars ? (v as PremiumFreshEntry) : null;
+  } catch { return null; }
+}
+
+/** 생성 요청을 보내기 직전에 부른다 */
+export function markPremiumFreshStarted(reportId: string): void {
+  const e = readPremiumFresh(reportId);
+  if (e) savePremiumFresh({ ...e, started: true, startedAt: Date.now() });
+}
+
+/** 결과를 전달했거나 돌려준 뒤 */
+export function clearPremiumFresh(reportId: string): void {
+  premiumFreshMem.delete(reportId);
+  try { sessionStorage.removeItem(PREMIUM_FRESH_PREFIX + reportId); } catch { /* noop */ }
+}
+
+/** 이 장부 건을 맡은 결과 화면 기록 (부팅 복구가 결과를 같은 기록 id 로 저장하게 — 보관함 중복 방지) */
+export function findPremiumFreshByPending(pendingId: string): PremiumFreshEntry | null {
+  if (!pendingId) return null;
+  for (const e of premiumFreshMem.values()) if (e.pendingId === pendingId) return e;
+  try {
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const k = sessionStorage.key(i) || '';
+      if (!k.startsWith(PREMIUM_FRESH_PREFIX)) continue;
+      const v = JSON.parse(sessionStorage.getItem(k) || 'null');
+      if (v?.pendingId === pendingId && v.reportId) return v as PremiumFreshEntry;
+    }
+  } catch { /* noop */ }
+  return null;
+}
+
+/** 종합사주 결제 직후(운을 깎은 바로 다음, 결과 화면으로 가기 전) — 장부와 결과 화면 기록을 같이 남긴다. 반환: 장부 id */
+export function beginPremiumPurchase(args: { reportId: string; sajuData: any; amount: number; offer: boolean }): string {
+  const pendingId = markPendingSpend('premium', args.amount, { key: premiumSajuKey(args.sajuData), offer: args.offer });
+  savePremiumFresh({ reportId: args.reportId, sajuData: args.sajuData, amount: args.amount, offer: args.offer, pendingId, at: Date.now() });
+  return pendingId;
+}
+
 
 /** 웹 로그아웃, 탈퇴 때 이 기기의 보관함을 비운다 (2026-10-17).
  *  예전엔 남겨 둬서 다음에 생긴 익명 계정이 그 기록을 서버에 다시 올렸다(다른 계정 기록과 섞이고, 탈퇴 파기 약속과도 어긋남).
  *  로그아웃은 서버에 진본이 있어 다시 로그인하면 돌아온다. withBalance 는 탈퇴 때만. 앱인토스에서는 부르지 않는다. */
 export function clearLocalLibrary(opts?: { withBalance?: boolean }): void {
   try {
-    const fixed = [REPORTS_KEY, MY_PROFILE_KEY, PROFILES_KEY, DELETED_REPORTS_KEY, DELETED_PROFILE_KEYS_ALIAS, 'saju500_chats', 'saju500_deleted_chat_ids', PENDING_SPENDS_KEY];
-    if (opts?.withBalance) fixed.push(BALANCE_KEY, BALANCE_LEGACY_KEY);
+    const fixed = [REPORTS_KEY, MY_PROFILE_KEY, PROFILES_KEY, DELETED_REPORTS_KEY, DELETED_PROFILE_KEYS_ALIAS, 'saju500_chats', 'saju500_deleted_chat_ids', PENDING_SPENDS_KEY, AUTO_REFUNDS_KEY];
+    // 2026-10-25 — 대화권(chatCredit.ts)도 운과 같이 지운다 (운은 지우고 대화권만 남아 다음 계정이 쓰던 것)
+    if (opts?.withBalance) fixed.push(BALANCE_KEY, BALANCE_LEGACY_KEY, 'saju500_chat_credits');
     const dynamic: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);

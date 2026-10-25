@@ -11,11 +11,12 @@
  * - 앱 시작 시 syncFromCloud()
  */
 
-import { doc, getDoc, setDoc, collection, getDocs, writeBatch, deleteDoc, arrayUnion, query, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, writeBatch, deleteDoc, arrayUnion, query, where, increment, runTransaction } from 'firebase/firestore';
 import { db, auth } from '@/services/auth/firebase';
 import { getReports, saveReport, generateId, mergeProfiles, profilesFromReports, getDeletedReportIds, getDeletedProfileKeys, type LocalReport, type SajuProfile } from './localStore';
 import { type BalanceDetail } from './localStore';
 import { mergeRestoredChatRooms, getDeletedChatIds, type ChatRoom } from './chatStore';
+import { getChatCredits, hasChatCreditKey, addChatCredits, seedChatCreditsFromMirror } from './chatCredit';
 import { isAppintosBuild } from '@/lib/env';
 
 /**
@@ -272,6 +273,21 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
           }
           await setDoc(doc(db, `users/${uid}/state`, 'balance'), { logoutAt: null }, { merge: true }).catch(() => {});
         }
+        // 2026-10-25 대화권 — 로그아웃 때 이 계정 사본에 남긴 대화권(logoutChat)을 한 번만 가져온다.
+        //   거래(runTransaction)로 읽고 0 으로 바꾼 뒤에만 이 기기에 더한다(두 기기가 같이 가져가거나, 0 으로 못 바꿨는데 다시 더하지 않게).
+        //   로그아웃한 기기는 사본을 남긴 뒤 자기 대화권을 지웠으므로, 더하기는 그 몫을 옮기는 것이다(이 기기에 원래 있던 대화권은 그대로).
+        if (m && Number(m.logoutChat) > 0) {
+          try {
+            const ref = doc(db, `users/${uid}/state`, 'balance');
+            const take = await runTransaction(db, async (tx) => {
+              const cur = await tx.get(ref);
+              const v = Math.max(0, Math.floor(Number((cur.data() as Record<string, unknown> | undefined)?.logoutChat) || 0));
+              if (v > 0) tx.set(ref, { logoutChat: 0 }, { merge: true });
+              return v;
+            });
+            if (take > 0) addChatCredits(take);
+          } catch { /* 다음 로그인에서 다시 (사본은 그대로 남아 있다) */ }
+        }
       }
     });
   } catch (err) {
@@ -386,12 +402,25 @@ export async function pushBalanceMirror(detail: BalanceDetail, opts?: { logout?:
       bonus: Math.max(0, Number(detail.bonus) || 0),
       reward: Math.max(0, Number(detail.reward) || 0),
       updatedAt: new Date(),
+      // 2026-10-25 대화권도 함께 (chatCredit.ts 머리말). 이 기기에 대화권 기록이 없으면 칸을 건드리지 않는다
+      //   (저장소가 빈 기기나 로그아웃으로 지운 기기가 0 으로 옛 사본을 덮지 않게)
+      ...(hasChatCreditKey() ? { chat: getChatCredits() } : {}),
       // 2026-10-21 — 로그아웃 직전 스냅샷 표시. 다시 로그인하면 이 값으로 기기 잔액을 되살린다(syncFromCloud).
       //   평소 저장은 이 표시를 건드리지 않는다(늦게 도착한 저장이 표시를 지우면 되살리기가 빠진다)
-      ...(opts?.logout ? { logoutAt: new Date() } : {}),
+      //   2026-10-25 대화권은 logoutChat 에 더해 둔다(다른 기기의 평소 저장이 덮지 않고, 아직 안 가져간 앞선 로그아웃 몫도 쌓인다)
+      ...(opts?.logout ? { logoutAt: new Date(), logoutChat: increment(Math.max(0, getChatCredits())) } : {}),
     }, { merge: true });
     return true;
   } catch { return false; /* 다음 잔액 변경에서 재시도 */ }
+}
+
+/** 2026-10-25 대화권 칸만 사본에 쓴다 (chatCredit.ts 가 대화권이 바뀔 때 2초 모아 부른다). 운 칸은 건드리지 않는다 */
+export async function pushChatCreditMirror(): Promise<void> {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !hasChatCreditKey()) return;
+    await setDoc(doc(db, `users/${uid}/state`, 'balance'), { chat: getChatCredits(), chatUpdatedAt: new Date() }, { merge: true });
+  } catch { /* 다음 변경에서 재시도 */ }
 }
 
 /**
@@ -612,6 +641,11 @@ export async function pullBalanceMirror(uid: string): Promise<{ paid: number; bo
     const snap = await getDoc(doc(db, `users/${uid}/state`, 'balance'));
     if (!snap.exists()) return null;
     const d = snap.data() as Record<string, unknown>;
+    // 2026-10-25 대화권 되살리기 — 옛 계정에서 옮겨 온 사본이고 이 기기에 대화권 기록이 아예 없을 때만 한 번(seedChatCreditsFromMirror 가드).
+    //   이 함수는 기기 여권(devicePassport.ts)이 잔액 seed 직전에만 부른다. 그 파일을 고치지 않고 같은 자리에서 대화권도 돌려놓는다
+    if (typeof d.migratedFromUid === 'string' && seedChatCreditsFromMirror(d.chat)) {
+      console.info(`[기기여권] 대화권 사본 복원: ${Math.floor(Number(d.chat) || 0)}개`);
+    }
     return {
       paid: Math.max(0, Number(d.paid) || 0),
       bonus: Math.max(0, Number(d.bonus) || 0),
