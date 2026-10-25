@@ -7,6 +7,8 @@
 import { isStandaloneDisplay } from '@/lib/displayMode';
 
 export function inAppBrowserName(ua: string = typeof navigator !== 'undefined' ? navigator.userAgent : ''): string | null {
+  // 2026-10-26 앱 빌드는 늘 토스 안이라 판정할 것이 없다. 다른 앱 이름이 앱 번들에 남지 않게 빌드 상수로 뺀다(1.6.3 검수 반려 대응)
+  if (import.meta.env.VITE_BUILD_TARGET === 'appintos') return null;
   if (!ua || /TossApp/i.test(ua)) return null;
   // 2026-10-23 — 홈 화면에 추가한 사주500(홈 화면 앱)은 UA 에 'Safari/' 가 없어 아래 마지막 줄이 '앱'으로 잘못 보고
   //   로그인 시트에서 구글 버튼을 숨겼다. 지금 이 기기의 UA 를 볼 때 홈 화면 앱이면 앱 안 브라우저가 아니다.

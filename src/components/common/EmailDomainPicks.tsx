@@ -3,7 +3,8 @@
  *   아이디를 치면 아래에 자주 쓰는 메일 뒷부분이 나오고, 누르면 '@' 뒤를 그것으로 바꾼다. 다 맞게 쳤으면 숨는다.
  *   쓰는 곳: PdfMailSheet, DeadlineMailSignup, DailyMailSignup.
  */
-const DOMAINS = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', 'kakao.com', 'nate.com'];
+// 2026-10-26 메일 칸은 웹 전용이라 앱 빌드에서는 빈 목록(앱 번들에 네이버, 카카오 같은 이름이 남지 않게, 1.6.3 검수 반려 대응)
+const DOMAINS = import.meta.env.VITE_BUILD_TARGET === 'appintos' ? [] : ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', 'kakao.com', 'nate.com'];
 
 export function EmailDomainPicks({ value, onPick }: { value: string; onPick: (v: string) => void }) {
   const v = value.trim();

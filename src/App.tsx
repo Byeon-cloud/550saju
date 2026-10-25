@@ -25,7 +25,9 @@ void CompatibilityPage;
 const StoragePage = lazyWithReload(() => import('@/pages/StoragePage').then(m => ({ default: m.StoragePage })));
 const ChargePage = lazyWithReload(() => import('@/pages/ChargePage').then(m => ({ default: m.ChargePage })));
 const MyPage = lazyWithReload(() => import('@/pages/MyPage').then(m => ({ default: m.MyPage })));
-const NaverCallbackPage = lazyWithReload(() => import('@/pages/NaverCallbackPage').then(m => ({ default: m.NaverCallbackPage })));
+// 2026-10-26 웹 전용 화면(네이버 로그인 돌아오는 곳, 관리자)은 앱 빌드에서 import 자체를 뺀다 — 1.6.3 검수 반려('토스 로그인 외 다른 로그인 연동 불가')
+//   빌드 상수를 그 자리에서 비교해야 번들에서 지워진다(다른 파일의 상수를 거치면 남을 수 있다)
+const NaverCallbackPage = import.meta.env.VITE_BUILD_TARGET === 'appintos' ? null : lazyWithReload(() => import('@/pages/NaverCallbackPage').then(m => ({ default: m.NaverCallbackPage })));
 const SharePage = lazyWithReload(() => import('@/pages/SharePage').then(m => ({ default: m.SharePage })));
 const DreamPage = lazyWithReload(() => import('@/pages/DreamPage').then(m => ({ default: m.DreamPage })));
 // #51 Sprint 2 — ChatPage 3-route 분리
@@ -55,7 +57,7 @@ const BusinessInfoPage = lazyWithReload(() => import('@/pages/BusinessInfoPage')
 // #saju-card-share Stage 2 — 만세력 카드 페이지 (lazy)
 const SajuCardPage = lazyWithReload(() => import('@/pages/saju-card/SajuCardPage').then(m => ({ default: m.SajuCardPage })));
 // 2026-05-29 — 오너 전용 어드민 대시보드 (lazy · uid 게이트)
-const AdminPage = lazyWithReload(() => import('@/pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const AdminPage = import.meta.env.VITE_BUILD_TARGET === 'appintos' ? null : lazyWithReload(() => import('@/pages/AdminPage').then(m => ({ default: m.AdminPage })));
 
 /** 페이지 전환 애니메이션 — 토스 스타일 */
 const pageVariants = {
@@ -234,12 +236,12 @@ function AnimatedRoutes() {
             <Route path="/charge" element={<ChargePage />} />
             <Route path="/my" element={<MyPage />} />
             {/* 2026-10-19 웹 네이버 로그인 돌아오는 곳 (서버 loginWithNaver) */}
-            <Route path="/auth/naver" element={<NaverCallbackPage />} />
+            {NaverCallbackPage && <Route path="/auth/naver" element={<NaverCallbackPage />} />}
             {/* 2026-05-29 — type-aware 공유 URL 매칭 fix. shareResult 는 /share/{type}/{id} ·
                 /share/topic/{topicId}/{id} 를 생성하는데 기존 /share/:id (1세그먼트) 만 있어 사람 클릭 시 404.
                 topic(4세그)·일반(3세그)·legacy(2세그) 모두 SharePage 로. (renderShareOg 가 봇 OG 별도 처리) */}
             {/* 2026-05-29 — 오너 전용 어드민 (uid 게이트 · 비오너는 uid 노출 화면) */}
-            <Route path="/admin" element={<AdminPage />} />
+            {AdminPage && <Route path="/admin" element={<AdminPage />} />}
             <Route path="/share/topic/:topicId/:id" element={<SharePage />} />
             <Route path="/share/:type/:id" element={<SharePage />} />
             <Route path="/share/:id" element={<SharePage />} />

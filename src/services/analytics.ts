@@ -379,7 +379,10 @@ async function captureTossSchemeUtm(): Promise<void> {
  *   logToFirestore 는 익명 로그인(최대 6초)을 기다린 뒤 저장해서, 토스애즈 E29 첫날 앱을 연 179명 중 105명이 기록에 없었다.
  *   광고 꼬리표가 있는 첫 진입 한 번만 로그인 없이 sendBeacon 으로 /api/seo-hit 에 보낸다(웹은 같은 주소, 앱은 saju500.app).
  *   받는 쪽은 functions/src/seo/seoHit.ts(kind 'boot' → 'ad_boot'). 경로, 꼬리표, 기기 ID 만 보낸다. */
-const AD_BOOT_SOURCES = new Set(['meta', 'naver', 'tossads', 'instagram', 'facebook', 'google', 'kakao', 'creator', 'blog']);
+// 2026-10-26 앱 빌드에는 앱으로 오는 출처만 둔다(네이버, 구글, 카카오 광고는 웹으로만 온다. 앱 번들에 그 이름이 남지 않게, 1.6.3 검수 반려 대응)
+const AD_BOOT_SOURCES = new Set(import.meta.env.VITE_BUILD_TARGET === 'appintos'
+  ? ['meta', 'tossads', 'instagram', 'facebook', 'creator', 'blog']
+  : ['meta', 'naver', 'tossads', 'instagram', 'facebook', 'google', 'kakao', 'creator', 'blog']);
 const AD_BOOT_KEY = 'saju500:ad_boot';
 function sendAdBoot(): void {
   try {

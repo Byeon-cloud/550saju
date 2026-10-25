@@ -1,5 +1,5 @@
 /**
- * /auth/naver — 웹 네이버 로그인 돌아오는 곳 (2026-10-19, services/auth/authService.ts finishNaverLogin)
+ * /auth/naver — 웹 네이버 로그인 돌아오는 곳 (2026-10-19, services/auth/webLogin.ts finishNaverLogin. 웹 전용, 앱 빌드에는 이 화면이 없다)
  *   네이버가 code 와 state 를 붙여 돌려보내면 서버(loginWithNaver)로 로그인을 마치고, 누르기 전에 보던 화면으로 새로 연다
  *   (새로 열어야 충전 화면의 '로그인하고 결제' 이어 하기가 그대로 동작한다).
  */
@@ -16,7 +16,7 @@ export function NaverCallbackPage() {
     (async () => {
       const params = new URLSearchParams(window.location.search);
       try {
-        const { finishNaverLogin } = await import('@/services/auth/authService');
+        const { finishNaverLogin } = await import('@/services/auth/webLogin'); // 웹 전용 화면(앱 빌드에는 이 화면이 없다)
         const { returnTo } = await finishNaverLogin(params);
         // 로그인 성공 기록이 저장될 틈을 준다 (바로 새로 열면 기록이 사라졌다, 10-19 첫 성공 때 확인)
         await new Promise((r) => setTimeout(r, 900));

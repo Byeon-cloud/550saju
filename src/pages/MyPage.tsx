@@ -489,6 +489,8 @@ const OHENG_BOX_MY: Record<OhengType, { bg: string; fg: string; outline: string 
 
 /** 웹 로그인 계정 한 줄 — '네이버 계정으로 로그인했어요, abc@naver.com' */
 function LoginAccountLine({ user }: { user: any }) {
+  // 2026-10-26 앱은 토스 로그인만 — 소셜 로그인 이름(네이버, 카카오 등)이 앱 번들에 남지 않게 빌드 상수로 통째로 뺀다(1.6.3 검수 반려)
+  if (import.meta.env.VITE_BUILD_TARGET === 'appintos') return null;
   let pid = String(user?.providerData?.[0]?.providerId || '');
   let email = String(user?.email || user?.providerData?.[0]?.email || '');
   // 웹 네이버 로그인(10-19)은 서버 맞춤 토큰이라 providerData 가 비어 있다 → 로그인할 때 남긴 표시

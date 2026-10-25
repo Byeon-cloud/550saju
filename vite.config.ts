@@ -68,6 +68,11 @@ export default defineConfig(({ mode }) => {
       ...(isAitBuild ? [
         { find: '@/services/payment/portonePayment', replacement: path.resolve(__dirname, './src/stubs/portonePaymentStub.ts') },
         { find: '@portone/browser-sdk/v2', replacement: path.resolve(__dirname, './src/stubs/portoneSdkStub.ts') },
+        // 2026-10-26 — 웹 로그인(구글, 카카오, 네이버, 애플)도 앱 번들에서 뺀다. 1.6.3 검수 반려:
+        //   '토스 로그인 외에 기타 로그인 수단은 연동 불가, 네이버 로그인 사용 확인'. 화면은 웹에서만 보였지만 코드가 들어 있었다.
+        { find: '@/services/auth/webLogin', replacement: path.resolve(__dirname, './src/stubs/webLoginStub.ts') },
+        { find: '@/components/auth/WebLoginSheet', replacement: path.resolve(__dirname, './src/stubs/webLoginSheetStub.tsx') },
+        { find: '@/components/pwa/PwaLoginSheet', replacement: path.resolve(__dirname, './src/stubs/pwaLoginSheetStub.tsx') },
       ] : []),
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],
