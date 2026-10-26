@@ -21,14 +21,18 @@ function plainText(raw) {
     const sep = chunk.search(/\r?\n\r?\n/);
     const head = sep >= 0 ? chunk.slice(0, sep) : '';
     const body = sep >= 0 ? chunk.slice(sep).replace(/^\r?\n\r?\n/, '') : chunk;
-    const ct = (head.match(/content-type:\s*([^;\r\n]+)/i) || [])[1] || 'text/plain';
-    const bd = (head.match(/boundary="?([^";\r\n]+)"?/i) || [])[1];
+    // 2026-10-26 머리글은 줄 단위로 읽는다(서명 줄의 h=...:content-type:... 을 형식으로 잘못 읽어 본문이 비던 것)
+    const lines = head.replace(/\r?\n[ \t]+/g, ' ').split(/\r?\n/);
+    const field = (name) => (lines.find((l) => l.toLowerCase().startsWith(`${name}:`)) || '').slice(name.length + 1).trim();
+    const ctLine = field('content-type');
+    const ct = (ctLine.split(';')[0] || 'text/plain').trim() || 'text/plain';
+    const bd = (ctLine.match(/boundary="?([^";]+)"?/i) || [])[1];
     if (/multipart\//i.test(ct) && bd) {
       body.split(`--${bd}`).slice(1).forEach((p) => { if (!p.startsWith('--')) walk(p.replace(/^\r?\n/, '')); });
       return;
     }
-    const cs = (head.match(/charset="?([^";\r\n]+)"?/i) || [])[1] || 'utf-8';
-    const enc = ((head.match(/content-transfer-encoding:\s*([^\r\n]+)/i) || [])[1] || '').trim().toLowerCase();
+    const cs = (ctLine.match(/charset="?([^";]+)"?/i) || [])[1] || 'utf-8';
+    const enc = field('content-transfer-encoding').toLowerCase();
     let buf;
     if (enc === 'base64') buf = Buffer.from(body.replace(/\s+/g, ''), 'base64');
     else if (enc === 'quoted-printable') buf = Buffer.from(body.replace(/=\r?\n/g, '').replace(/=([0-9A-F]{2})/gi, (_m, x) => String.fromCharCode(parseInt(x, 16))), 'binary');
