@@ -3,5 +3,10 @@ Allow: /
 Disallow: /my
 Disallow: /charge
 Disallow: /admin
+# 2026-10-27 — 방문 기록 받는 주소(POST 전용, GET 은 405)와 메일 수신 거부(주소 없이 열면 400)는 페이지가 아니다.
+#   구글이 이 주소를 긁어 '다른 4xx 문제로 인해 차단됨'으로 잡았다. /_shell/ 은 앱 주소에 주는 첫 화면 사본(직접 열 일 없음)
+Disallow: /api/seo-hit
+Disallow: /mail/
+Disallow: /_shell/
 
 Sitemap: https://saju500.app/sitemap.xml

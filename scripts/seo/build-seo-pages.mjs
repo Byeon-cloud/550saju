@@ -847,6 +847,60 @@ location.href='/manse/view?'+q+(window.__adUtm||'${mutm('form')}');});})();</scr
   }
 }
 
+// ── 앱 화면 머리 (2026-10-27) — 사이트맵의 앱 주소(/daily, /topic/love 등)는 전부 index.html 하나를 받아 표준 주소(canonical)가
+//   첫 화면(/)이었다. 구글이 이 주소들을 첫 화면의 사본으로 보고 색인에서 뺐다(Search Console '적절한 표준 태그가 포함된 대체 페이지', 10-26 메일).
+//   주소마다 index.html 사본(dist/_shell/*.html)을 만들어 표준 주소, 제목, 설명을 그 주소 것으로 바꾸고, firebase.json rewrites 가
+//   그 주소에 사본을 준다. 제목과 설명은 화면의 usePageTitle, useSeoMeta 와 같은 글이라 화면이 JS 로 덮어써도 어긋나지 않는다.
+//   주소를 더하거나 뺄 때는 여기와 firebase.json 을 같이 고친다(아래에서 두 목록이 다르면 빌드를 멈춘다).
+const topicDesc = (label) => `${label} 사주 심층 분석: 정통 명리학으로 풀어내는 나의 ${label}. 사주500 주제별 분석.`; // TopicAnalysisPage useSeoMeta
+const SHELLS = [
+  ['/daily', '오늘의 운세', '오늘의 운세를 명리학으로 하루 1회 무료로 풀이해드려요. 매일 보는 나의 운세, 사주500.'], // DailyFortunePage
+  ['/dream', '꿈해몽', '꿈의 의미를 명리학으로 무료로 풀이해드려요. 길몽과 흉몽 해석부터 오늘의 조언까지, 사주500 꿈해몽.'], // DreamPage
+  ['/premium', '종합사주', '10개 운으로 보는 인생 전체 풀이. 정통 명리학 6대 원전 기반 종합사주 프리미엄 리포트, 사주500.'], // PremiumSelectPage
+  ['/tojung', `${YEAR} 신년운세`, `${YEAR}년 ${gzKo(yearGz)}년 신년운세를 내 사주로 풀어 드려요. 한 해의 흐름과 좋은 달, 조심할 달을 정통 명리학으로 짚어 드려요.`],
+  ['/compat', '궁합', '두 사람의 생년월일로 사주 궁합을 풀어 드려요. 서로 잘 맞는 점과 조심할 점을 정통 명리학으로 짚어 드려요.'],
+  ['/topic/love', '연애운', topicDesc('연애운')],
+  ['/topic/wealth', '재물운', topicDesc('재물운')],
+  ['/topic/reunion', '재회운', topicDesc('재회운')],
+  ['/topic/exam', '합격 이직운', topicDesc('합격 이직운')],
+  ['/topic/marriage', '결혼운', topicDesc('결혼운')],
+  ['/topic/career', '직업운', topicDesc('직업운')],
+  ['/terms', '이용약관', '사주500 이용약관입니다. 운 충전과 사용, 환불 기준, 서비스 이용 조건을 안내해요.'],
+  ['/privacy', '개인정보처리방침', '사주500 개인정보처리방침입니다. 모으는 정보와 쓰는 목적, 보관 기간, 파기 방법을 안내해요.'],
+];
+{
+  const indexHtml = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
+  const swapOnce = (html, re, to) => {
+    const n = (html.match(new RegExp(re.source, 'g')) || []).length;
+    if (n !== 1) throw new Error(`앱 화면 머리: index.html 에서 ${re} 가 ${n}번 나온다(1번이어야 한다)`);
+    return html.replace(re, () => to);
+  };
+  fs.mkdirSync(path.join(DIST, '_shell'), { recursive: true });
+  const shellRewrites = new Map();
+  for (const [route, name, desc] of SHELLS) {
+    const url = SITE + route;
+    const title = `${name} — 사주500`;
+    let h = indexHtml;
+    h = swapOnce(h, /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${url}" />`);
+    h = swapOnce(h, /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${url}" />`);
+    h = swapOnce(h, /<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`);
+    h = swapOnce(h, /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/, `<meta name="description" content="${esc(desc)}" />`);
+    h = swapOnce(h, /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${esc(title)}" />`);
+    h = swapOnce(h, /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${esc(desc)}" />`);
+    const file = route.slice(1).replace(/\//g, '-') + '.html';
+    fs.writeFileSync(path.join(DIST, '_shell', file), h);
+    shellRewrites.set(route, `/_shell/${file}`);
+  }
+  // firebase.json rewrites 와 대조 — 사본이 없는 주소로 rewrite 하면 그 화면이 404 가 된다
+  const fbRewrites = (JSON.parse(fs.readFileSync(path.join(ROOT, 'firebase.json'), 'utf8')).hosting.rewrites || [])
+    .filter((r) => String(r.destination || '').startsWith('/_shell/'));
+  const fbMap = new Map(fbRewrites.map((r) => [r.source, r.destination]));
+  const miss = [...shellRewrites].filter(([s, d]) => fbMap.get(s) !== d).map(([s]) => s);
+  const extra = [...fbMap.keys()].filter((s) => !shellRewrites.has(s));
+  if (miss.length || extra.length) throw new Error(`앱 화면 머리: firebase.json rewrites 와 SHELLS 가 다르다. 빠짐 ${miss.join(', ') || '없음'}, 남음 ${extra.join(', ') || '없음'}`);
+  console.log(`앱 화면 머리 ${SHELLS.length}개 (dist/_shell)`);
+}
+
 // ── sitemap (앱 주요 주소 + 이 페이지들)
 const today = new Date().toISOString().slice(0, 10);
 const appUrls = [['/', '1.0'], ['/daily', '0.9'], ['/dream', '0.9'], ['/premium', '0.9'], ['/tojung', '0.9'], ['/compat', '0.8'], ['/topic/love', '0.8'], ['/topic/wealth', '0.8'], ['/topic/reunion', '0.8'], ['/topic/exam', '0.8'], ['/topic/marriage', '0.7'], ['/topic/career', '0.7'], ['/terms', '0.3'], ['/privacy', '0.3']];

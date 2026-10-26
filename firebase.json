@@ -75,6 +75,19 @@
         "source": "/og/tti/**",
         "function": "ttiOgImage"
       },
+      { "source": "/daily", "destination": "/_shell/daily.html" },
+      { "source": "/dream", "destination": "/_shell/dream.html" },
+      { "source": "/premium", "destination": "/_shell/premium.html" },
+      { "source": "/tojung", "destination": "/_shell/tojung.html" },
+      { "source": "/compat", "destination": "/_shell/compat.html" },
+      { "source": "/topic/love", "destination": "/_shell/topic-love.html" },
+      { "source": "/topic/wealth", "destination": "/_shell/topic-wealth.html" },
+      { "source": "/topic/reunion", "destination": "/_shell/topic-reunion.html" },
+      { "source": "/topic/exam", "destination": "/_shell/topic-exam.html" },
+      { "source": "/topic/marriage", "destination": "/_shell/topic-marriage.html" },
+      { "source": "/topic/career", "destination": "/_shell/topic-career.html" },
+      { "source": "/terms", "destination": "/_shell/terms.html" },
+      { "source": "/privacy", "destination": "/_shell/privacy.html" },
       {
         "source": "**",
         "destination": "/index.html"
