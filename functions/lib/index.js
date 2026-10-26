@@ -42,6 +42,7 @@ const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const genGuard_1 = require("./shared/genGuard"); // 2026-10-14 익명 생성 하루 상한
 const spendLedger_1 = require("./shared/spendLedger"); // 2026-10-25 기기에서 깎던 1운 콘텐츠의 서버 차감
+const tossOrder_1 = require("./shared/tossOrder"); // 2026-10-26 토스 앱 결제를 토스에 확인한 뒤 지급 (인증서 비밀값은 아래 같은 이름의 TOSS_MTLS_CERT, TOSS_MTLS_KEY)
 const params_1 = require("firebase-functions/params");
 const aiFailureLog_1 = require("./shared/aiFailureLog");
 const claudeClient_1 = require("./shared/claudeClient");
@@ -1621,9 +1622,14 @@ exports.generateDreamDeep = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], time
  *   - needs_reconciliation: SDK 는 결제 완료 응답했으나 DB 실패 → 수동 복구
  * 중복 지급 방지: status === 'confirmed' 만 차단.
  */
-exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256MiB', cors: true }, async (request) => {
-    const { orderId, sku, paidUn, bonusUn } = request.data;
-    if (!orderId || !sku || !paidUn) {
+exports.grantPurchase = (0, https_1.onCall)(
+// 2026-10-26 토스 확인(최대 세 번, 각 10초) 때문에 10초 → 30초
+{ timeoutSeconds: 30, memory: '256MiB', cors: true, secrets: [TOSS_MTLS_CERT, TOSS_MTLS_KEY] }, async (request) => {
+    // 2026-10-26 운 개수(paidUn, bonusUn)는 받지 않는다. 토스에 주문을 확인하고 토스가 알려 준 상품으로 서버 표(IAP_SKU_MAP)에서 정한다
+    //   (예전엔 클라이언트 값을 그대로 믿어 지어낸 주문번호로 서버 잔액을 늘릴 수 있었다, shared/tossOrder.ts 머리말)
+    const orderId = typeof request.data?.orderId === 'string' ? request.data.orderId.slice(0, 128) : '';
+    const sku = typeof request.data?.sku === 'string' ? request.data.sku.slice(0, 128) : '';
+    if (!orderId || !sku || orderId.includes('/')) {
         throw new https_1.HttpsError('invalid-argument', '필수 파라미터 누락');
     }
     const uid = request.auth?.uid;
@@ -1639,39 +1645,72 @@ exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256Mi
         if (s === 'needs_reconciliation') {
             throw new https_1.HttpsError('failed-precondition', '결제가 완료됐지만 지급이 완료되지 않았어요. 고객센터로 문의해주세요.');
         }
-        // pending 은 재시도 허용
+        // pending, failed 는 재시도 허용 (토스 확인을 다시 한다)
     }
-    const totalUn = paidUn + (bonusUn || 0);
+    const verdict = await (0, tossOrder_1.verifyIapOrder)(orderId, sku, TOSS_MTLS_CERT.value(), TOSS_MTLS_KEY.value());
+    const alertIap = (kind, extra) => db.collection('backofficeAlerts').doc(`iap_verify_${orderId}`).set({
+        kind, uid: effectiveUid, orderId, claimedSku: sku, ...extra, at: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true }).catch(() => undefined);
+    if (verdict.kind === 'deny') {
+        console.warn('[grantPurchase] 토스 확인 실패로 지급 안 함:', orderId.slice(0, 12), verdict.status, verdict.reason);
+        await paymentRef.set({
+            type: 'charge', orderId, sku, pgProvider: 'iap', status: 'failed',
+            tossStatus: verdict.status, failReason: `toss_verify: ${verdict.reason}`,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        await alertIap('iap_verify_denied', { tossStatus: verdict.status, reason: verdict.reason });
+        throw new https_1.HttpsError('failed-precondition', '결제를 확인하지 못했어요. 결제가 됐다면 앱을 다시 열면 자동으로 채워져요.');
+    }
+    if (verdict.kind !== 'ok') {
+        // 처음 보는 상태이거나 토스에 묻지 못했다 — 진짜 손님을 막지 않게 지급하고 경보로 남긴다
+        await alertIap('iap_verify_unsure', verdict.kind === 'odd' ? { tossStatus: verdict.status } : { reason: verdict.reason });
+    }
+    const paidUn = verdict.pkg.paidUn;
+    const bonusUn = verdict.pkg.bonusUn;
+    const totalUn = paidUn + bonusUn;
+    const globalRef = db.doc(`iapOrders/${orderId}`);
     // E13 · pending 선기록
     await paymentRef.set({
-        type: 'charge', orderId, sku,
-        paidUn, bonusUn: bonusUn || 0,
+        type: 'charge', orderId, sku: verdict.sku,
+        paidUn, bonusUn,
         pgProvider: 'iap',
         status: 'pending',
+        tossStatus: verdict.kind === 'unverified' ? null : verdict.status,
+        tossVerified: verdict.kind === 'ok',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
+    let duplicateOnOtherAccount = false;
     try {
         await db.runTransaction(async (tx) => {
             const userRef = db.collection('users').doc(effectiveUid);
             const userDoc = await tx.get(userRef);
+            // 2026-10-26 같은 주문을 다른 계정에서 또 받지 못하게 (진짜 주문번호를 여러 계정에 돌려쓰기). 계정이 바뀐 손님은 recoverIapOrders 가 따로 한 번 챙긴다
+            const g = await tx.get(globalRef);
+            const grantedUid = g.exists ? g.data()?.grantedUid : undefined;
+            if (grantedUid && grantedUid !== effectiveUid) {
+                duplicateOnOtherAccount = true;
+                return;
+            }
             const data = userDoc.data() || {};
             // 2026-06-12 P0 fix — 익명 유저는 users/{uid} 문서가 없어 update()가 NOT_FOUND
             //   → 결제 19건 전부 needs_reconciliation 으로 빠지던 원인. set(merge)로 문서 없어도 생성.
             tx.set(userRef, {
                 balance: {
                     paid: (data.balance?.paid ?? 0) + paidUn,
-                    bonus: (data.balance?.bonus ?? 0) + (bonusUn || 0),
+                    bonus: (data.balance?.bonus ?? 0) + bonusUn,
                 },
                 totalCharged: admin.firestore.FieldValue.increment(paidUn),
             }, { merge: true });
             tx.update(paymentRef, {
                 unChange: totalUn,
-                // 2026-06-12 — IAP 도 매출(KRW) 집계되도록 amount 기록 (paidUn→정가 매핑)
-                amount: { 1: 500, 3: 1500, 5: 2500, 10: 5000 }[paidUn] ?? paidUn * 500,
+                // 2026-06-12 — IAP 도 매출(KRW) 집계되도록 amount 기록 (2026-10-26 서버 상품 표 금액)
+                amount: verdict.pkg.amount,
                 status: 'confirmed',
                 confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
+            tx.set(globalRef, { sku: verdict.sku, grantedUid: effectiveUid, grantedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
         });
     }
     catch (err) {
@@ -1681,6 +1720,11 @@ exports.grantPurchase = (0, https_1.onCall)({ timeoutSeconds: 10, memory: '256Mi
             failReason: 'db_transaction_failed: ' + (err.message || 'unknown'),
         });
         throw new https_1.HttpsError('internal', '결제는 완료됐지만 지급 중 오류가 발생했어요. 고객센터에 문의해주세요.');
+    }
+    if (duplicateOnOtherAccount) {
+        await paymentRef.update({ status: 'failed', failReason: 'granted_on_other_account' }).catch(() => undefined);
+        await alertIap('iap_verify_denied', { reason: '다른 계정에 이미 지급된 주문' });
+        throw new https_1.HttpsError('failed-precondition', '이미 다른 계정에 채워진 결제예요. 고객센터로 문의해 주세요.');
     }
     // 2026-10-18 친구 초대 — 초대받은 사람의 첫 결제면 초대한 사람에게 추가 보상 (실패해도 결제와 무관)
     //   10-24 검수 — 결제번호를 같이 남겨, 그 결제가 환불되면(syncIapRefunds 가 status 'refunded') 7일 보류 뒤에도 주지 않는다

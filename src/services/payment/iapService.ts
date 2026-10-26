@@ -44,6 +44,19 @@ const IAP_PRODUCT_MAP: Record<string, { sku: string; paidUn: number; bonusUn: nu
   p15: { sku: 'ait.0000025955.304b4aa7.cabbd01e5e.5185730660', paidUn: 10, bonusUn: 5 },
 };
 
+/** 이 기기 잔액에 이미 넣은 토스 주문번호 (restorePendingPurchases 와 같은 표, 2026-10-26 결제 콜백과 이력 복구도 같이 쓴다) */
+const IAP_CREDITED_KEY = 'saju500:iap_processed_orders:v1';
+function readIapCredited(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(IAP_CREDITED_KEY) || '[]')); } catch { return new Set(); }
+}
+function markIapOrderCredited(orderId: string): void {
+  try {
+    const s = readIapCredited();
+    s.add(orderId);
+    localStorage.setItem(IAP_CREDITED_KEY, JSON.stringify([...s].slice(-500)));
+  } catch { /* noop */ }
+}
+
 /**
  * 인앱결제 요청
  */
@@ -102,6 +115,9 @@ async function purchaseViaIAP(pkg: ChargePackage): Promise<{ success: boolean; m
               try {
                 // 1. 로컬 즉시 적립 (UX 빠르게)
                 addPaidBalance(product.paidUn, product.bonusUn);
+                // 2026-10-26 이 기기에 넣은 주문으로 표시 — 서버 기록이 실패해 다음 부팅에 결제 이력 복구(recoverIapOrders)가
+                //   같은 주문을 지급해도 기기에는 다시 더하지 않는다(예전엔 7운 묶음 하나로 기기에 14운이 들어갈 수 있었다)
+                markIapOrderCredited(orderId);
                 // 측정 — IAP 충전 완료 (2026-06-12: 웹 PG만 찍히고 IAP 누락이던 갭 fix)
                 import('@/services/analytics').then(a => a.trackEvent('charge_complete', { amount: pkg.price, package: resolvedId, pg: 'iap', order: String(orderId || '').slice(0, 64) })).catch(() => {});
 
@@ -200,8 +216,21 @@ export async function restoreCompletedPurchases(): Promise<{ granted: number; un
     const fns = getFunctions(undefined, 'us-central1');
     const r: any = await httpsCallable(fns, 'recoverIapOrders')({ orders: completed });
     const data = r?.data ?? {};
-    const paidUn = Number(data.paidUn) || 0;
-    const bonusUn = Number(data.bonusUn) || 0;
+    // 2026-10-26 기기에는 이 기기에서 아직 넣지 않은 주문만 더한다(서버 기록은 위 호출이 이미 남겼다).
+    //   기기 저장소가 지워진 경우(이 복구가 있는 이유)는 표시도 같이 지워져 그대로 더해진다
+    const credited = readIapCredited();
+    let paidUn = 0;
+    let bonusUn = 0;
+    const recoveredIds: string[] = Array.isArray(data.orderIds) ? data.orderIds.map(String) : [];
+    for (const id of recoveredIds) {
+      if (credited.has(id)) continue;
+      const sku = completed.find((o) => o.orderId === id)?.sku;
+      const product = Object.values(IAP_PRODUCT_MAP).find((p) => p.sku === sku);
+      if (!product) continue;
+      paidUn += product.paidUn;
+      bonusUn += product.bonusUn;
+      markIapOrderCredited(id);
+    }
 
     if (paidUn > 0 || bonusUn > 0) {
       // 2026-08-13 — 기기 여권이 이번 부팅에 잔액 미러(잔여 잔액 스냅샷)를 이미 seed 했다면
@@ -233,7 +262,7 @@ export async function restoreCompletedPurchases(): Promise<{ granted: number; un
       } catch { /* noop — 다음 부팅 bootSync 가 받아감 */ }
     }
 
-    return { granted: Number(data.granted) || 0, un: paidUn + bonusUn, reports: migrated };
+    return { granted: recoveredIds.length, un: paidUn + bonusUn, reports: migrated };
   } catch {
     return NONE; // 복구 실패는 무해 — 다음 부팅에 재시도
   }

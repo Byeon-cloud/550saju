@@ -17,13 +17,9 @@
  *   응답 { resultType, success: { status: PURCHASED|PAYMENT_COMPLETED|REFUNDED|..., statusDeterminedAt } }, 앱당 분당 3,000회.
  */
 import * as admin from 'firebase-admin';
-import * as https from 'https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { defineSecret } from 'firebase-functions/params';
 import { PACKAGE_MAP } from '../shared/chargePackages';
-
-const TOSS_MTLS_CERT = defineSecret('TOSS_MTLS_CERT');
-const TOSS_MTLS_KEY = defineSecret('TOSS_MTLS_KEY');
+import { TOSS_MTLS_CERT, TOSS_MTLS_KEY, tossOrderStatus } from '../shared/tossOrder'; // 2026-10-26 grantPurchase, recoverIapOrders 와 같이 쓰려고 옮김
 /** 처음 켤 때 한 번은 조회만 하고 바꾸지 않는다(상태 값이 예상과 같은지 로그로 확인) */
 const DRY_RUN = false; // 10-19 시험 확인: 195건 중 PURCHASED 193, REFUNDED 2(6월)
 /** 이 장치를 켜기 전의 환불은 기록만 바꾸고 운은 거두지 않는다 — 6월 두 건은 '상품을 받지 못했어요' 사유라 실제로 못 받았을 수 있다 */
@@ -31,31 +27,7 @@ const RECLAIM_FROM = Date.parse('2026-10-19T00:00:00+09:00');
 
 const tsMs = (v: any): number => (v && typeof v.toMillis === 'function' ? v.toMillis() : typeof v === 'string' ? Date.parse(v) || 0 : 0);
 
-function orderStatus(orderId: string, cert: string, key: string): Promise<{ status: string; at: string | null }> {
-  const body = JSON.stringify({ orderId });
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      host: 'apps-in-toss-api.toss.im', port: 443, method: 'POST',
-      path: '/api-partner/v1/apps-in-toss/order/get-order-status',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-      cert, key, timeout: 10000,
-    }, (res) => {
-      let raw = '';
-      res.on('data', (c) => { raw += c; });
-      res.on('end', () => {
-        try {
-          const j = JSON.parse(raw);
-          if (j.resultType !== 'SUCCESS') return reject(new Error(`토스 응답 ${res.statusCode} ${JSON.stringify(j.error || j).slice(0, 160)}`));
-          resolve({ status: String(j.success?.status || ''), at: j.success?.statusDeterminedAt || null });
-        } catch (e) { reject(new Error(`토스 응답 해석 실패 ${res.statusCode} ${raw.slice(0, 120)}`)); }
-      });
-    });
-    req.on('timeout', () => req.destroy(new Error('토스 응답 시간 초과')));
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
+const orderStatus = tossOrderStatus;
 
 async function run(fromDaysAgo: number, toDaysAgo: number, cert: string, key: string): Promise<string> {
   const db = admin.firestore();

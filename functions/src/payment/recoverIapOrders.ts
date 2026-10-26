@@ -16,10 +16,14 @@
  *   3) 그 외 → 서버 SSOT 매핑으로 지급 + 전역/유저 기록
  *
  * 🚨 보안: sku→운 매핑은 **서버가 진실**이다. 클라가 넘긴 금액을 신뢰하지 않는다.
- *   (기존 grantPurchase 는 클라가 paidUn 을 넘기는 구조라 조작 여지가 있음 — 별도 티켓)
+ *   2026-10-26 — 클라이언트가 보낸 'COMPLETED' 도 믿지 않는다. 지급 전에 주문마다 토스 결제 상태 조회로 확인하고
+ *   (shared/tossOrder.ts, 없는 주문 NOT_FOUND 와 환불 REFUNDED 는 건너뜀), 운은 토스가 알려 준 상품으로 정한다.
+ *   토스에 묻지 못한 주문은 이번엔 건너뛰고 다음 부팅에 다시 본다(복구는 급하지 않다). grantPurchase 도 같은 확인을 한다.
  */
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { IAP_SKU_MAP } from '../shared/chargePackages';
+import { TOSS_MTLS_CERT, TOSS_MTLS_KEY, tossOrderStatus } from '../shared/tossOrder';
 
 const db = admin.firestore();
 
@@ -29,17 +33,8 @@ const MAX_RECOVER_PER_ORDER = 1;
 /** 한 번에 처리할 주문 상한 — 과도한 페이로드 방어 */
 const MAX_ORDERS_PER_CALL = 50;
 
-/**
- * SKU → 지급 운 매핑 (서버 SSOT).
- * 클라 src/services/payment/iapService.ts 의 IAP_PRODUCT_MAP 과 동일해야 한다.
- * 토스 콘솔 4 패키지: 1운/500원 · 4운(3+1)/1500원 · 7운(5+2)/2500원 · 15운(10+5)/5000원
- */
-const SKU_UN_MAP: Record<string, { paidUn: number; bonusUn: number; amount: number }> = {
-  'ait.0000025955.8f74931d.d3f5a2a979.5185316383': { paidUn: 1,  bonusUn: 0, amount: 500 },
-  'ait.0000025955.5d5bec27.6ee0778e2a.5185547787': { paidUn: 3,  bonusUn: 1, amount: 1500 },
-  'ait.0000025955.79d2ae48.26de419a84.5185590911': { paidUn: 5,  bonusUn: 2, amount: 2500 },
-  'ait.0000025955.304b4aa7.cabbd01e5e.5185730660': { paidUn: 10, bonusUn: 5, amount: 5000 },
-};
+/** SKU → 지급 운 매핑 (서버 SSOT) — 2026-10-26 shared/chargePackages.ts IAP_SKU_MAP 으로 옮김(grantPurchase 와 같이 쓴다) */
+const SKU_UN_MAP = IAP_SKU_MAP;
 
 interface IncomingOrder {
   orderId?: unknown;
@@ -49,7 +44,7 @@ interface IncomingOrder {
 }
 
 export const recoverIapOrders = onCall(
-  { timeoutSeconds: 60, memory: '256MiB', cors: true },
+  { timeoutSeconds: 60, memory: '256MiB', cors: true, secrets: [TOSS_MTLS_CERT, TOSS_MTLS_KEY] },
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', '로그인 필요');
@@ -68,9 +63,12 @@ export const recoverIapOrders = onCall(
     let skippedAlreadyMine = 0;
     let skippedAbuseGuard = 0;
     let skippedUnknownSku = 0;
+    let skippedNotVerified = 0;
+    /** 토스가 결제된 주문이라고 확인한 주문번호 (보관함 이관의 소유 증명도 이것만 쓴다) */
+    const verifiedIds: string[] = [];
 
     for (const o of orders) {
-      const map = SKU_UN_MAP[o.sku];
+      let map = SKU_UN_MAP[o.sku];
       if (!map) { skippedUnknownSku++; continue; }
 
       const myPaymentRef = db.doc(`users/${uid}/payments/${o.orderId}`);
@@ -85,6 +83,22 @@ export const recoverIapOrders = onCall(
       const g = await globalRef.get();
       const recoverCount = (g.exists ? (g.data()?.recoverCount as number | undefined) : 0) ?? 0;
       if (recoverCount >= MAX_RECOVER_PER_ORDER) { skippedAbuseGuard++; continue; }
+
+      // 2-1) 2026-10-26 토스 확인 — 결제된 주문만, 운은 토스가 알려 준 상품으로. 묻지 못하면 이번엔 건너뛴다
+      let tossSku = o.sku;
+      try {
+        const st = await tossOrderStatus(o.orderId, TOSS_MTLS_CERT.value(), TOSS_MTLS_KEY.value());
+        if (st.status !== 'PURCHASED' && st.status !== 'PAYMENT_COMPLETED') { skippedNotVerified++; continue; }
+        if (st.sku) tossSku = st.sku;
+        const real = SKU_UN_MAP[tossSku];
+        if (!real) { skippedUnknownSku++; continue; }
+        map = real;
+      } catch (err: any) {
+        console.warn('[recoverIapOrders] 토스 확인 실패, 다음에 다시:', o.orderId.slice(0, 12), err?.message);
+        skippedNotVerified++;
+        continue;
+      }
+      verifiedIds.push(o.orderId);
 
       // 3) 지급 — 유저 잔액 + 유저 결제기록 + 전역 주문기록을 한 트랜잭션으로
       try {
@@ -102,7 +116,7 @@ export const recoverIapOrders = onCall(
           }, { merge: true });
 
           tx.set(myPaymentRef, {
-            type: 'charge', orderId: o.orderId, sku: o.sku,
+            type: 'charge', orderId: o.orderId, sku: tossSku, tossVerified: true,
             paidUn: map.paidUn, bonusUn: map.bonusUn, amount: map.amount,
             pgProvider: 'iap',
             status: 'confirmed',
@@ -113,7 +127,7 @@ export const recoverIapOrders = onCall(
           }, { merge: true });
 
           tx.set(globalRef, {
-            sku: o.sku,
+            sku: tossSku,
             recoverCount: admin.firestore.FieldValue.increment(1),
             lastRecoveredUid: uid,
             lastRecoveredAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -146,7 +160,8 @@ export const recoverIapOrders = onCall(
     let migratedReports = 0;
     const MIGRATE_LIMIT = 200;
     try {
-      const orderIds = orders.map((o) => o.orderId).slice(0, 10); // 역추적은 소수 주문으로 충분
+      // 역추적은 소수 주문으로 충분. 2026-10-26 확인한 주문을 앞에 둔다(주문번호는 추측할 수 없는 값이라 지어낸 번호는 어느 결제 기록과도 맞지 않는다)
+      const orderIds = [...verifiedIds, ...orders.map((o) => o.orderId).filter((id) => !verifiedIds.includes(id))].slice(0, 10);
       const legacyUids = new Set<string>();
       for (const oid of orderIds) {
         const snap = await db.collectionGroup('payments').where('orderId', '==', oid).limit(5).get();
@@ -189,6 +204,7 @@ export const recoverIapOrders = onCall(
         alreadyMine: skippedAlreadyMine,
         abuseGuard: skippedAbuseGuard,
         unknownSku: skippedUnknownSku,
+        notVerified: skippedNotVerified,
       },
     };
   },
