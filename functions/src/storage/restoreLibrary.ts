@@ -12,6 +12,7 @@
  *        · topic: { topicId, ...result } 스프레드
  *
  * 보안: 본인(uid) 것만. content 필드 색인예외라 큰 JSON 도 안전.
+ * 삭제: 손님이 지운 기록(users/{uid}/state/deleted 의 id 와 지문)은 백업본도 원본도 돌려주지 않는다 (2026-10-26).
  */
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
@@ -57,11 +58,46 @@ export const restoreLibrary = onCall(
       return `${contentType ?? 'report'}@${String(iso).slice(0, 16)}@${name ?? ''}`; // YYYY-MM-DDTHH:MM@이름
     };
 
+    // 🚨 2026-10-26 — 손님이 지운 기록은 돌려주지 않는다 (지운 종합사주와 주제운이 다음 보관함 열기에서 되살아났다).
+    //   삭제(firestoreSync.deleteReportRemote)는 백업본 users/{uid}/reports/{id} 만 지우고 생성 원본(top-level reports/{autoId})은 남긴다.
+    //   그래서 예전엔 백업본이 사라진 원본이 dedupe 에 걸리지 않고 그대로 나갔다. 삭제 장부 users/{uid}/state/deleted 를 읽어
+    //   - 지운 id(reportIds): 백업본, 원본 모두 건너뛴다 (주제운은 보관함 id = 원본 id)
+    //   - 지운 지문(fingerprints, 'contentType@YYYY-MM-DDTHH:MM@내용크기버킷'):
+    //       백업본은 지문 전체로(syncFromCloud 와 같은 규칙), 원본은 'contentType@분' 앞부분만 ±1분으로 비교한다
+    //       (원본과 보관함 기록은 내용 크기와 저장 시각이 달라 크기 버킷을 볼 수 없다, orphanAudit 과 같은 앞부분 비교).
+    //   장부를 못 읽으면 예전처럼 전부 돌려준다(클라 restoreLibraryFromServer 가 기기의 삭제 기록으로 한 번 더 거른다).
+    const deletedIds = new Set<string>();
+    const deletedFps = new Set<string>();
+    const deletedMin = new Set<string>();
+    try {
+      const del = await db.doc(`users/${uid}/state/deleted`).get();
+      const dd = del.exists ? (del.data() as Record<string, unknown>) : null;
+      (Array.isArray(dd?.reportIds) ? dd!.reportIds as unknown[] : []).forEach((x) => { if (typeof x === 'string') deletedIds.add(x); });
+      (Array.isArray(dd?.fingerprints) ? dd!.fingerprints as unknown[] : []).forEach((x) => {
+        if (typeof x !== 'string') return;
+        deletedFps.add(x);
+        deletedMin.add(x.split('@').slice(0, 2).join('@'));
+      });
+    } catch { /* 장부 없음 — 예전처럼 */ }
+    const lenFp = (contentType: string | null, iso: string | null, len: number): string | null =>
+      iso ? `${contentType ?? 'report'}@${String(iso).slice(0, 16)}@${Math.round(len / 800)}` : null; // 클라 deleteReportRemote 와 같은 모양
+    /** 원본이 지운 기록인지 — contentType + 생성 분, 앞뒤 1분까지 */
+    const deletedOriginal = (contentType: string, iso: string | null): boolean => {
+      if (!iso || !deletedMin.size) return false;
+      const t = new Date(iso).getTime();
+      if (!Number.isFinite(t)) return false;
+      return [t, t - 60_000, t + 60_000].some((ms) => deletedMin.has(`${contentType}@${new Date(ms).toISOString().slice(0, 16)}`));
+    };
+
     // 1) users/{uid}/reports — 백업본 (메타 + 내용)
     try {
       const subSnap = await db.collection(`users/${uid}/reports`).get();
       subSnap.forEach((doc) => {
+        if (deletedIds.has(doc.id)) return; // 손님이 지운 기록 (2026-10-26)
         const d = doc.data();
+        // 지운 기록의 쌍둥이 사본 (같은 종류, 같은 분, 같은 내용 크기)
+        const delFp = lenFp(d.contentType ?? null, typeof d.createdAt === 'string' ? d.createdAt : tsToIso(d.createdAt), d.aiResultJson ? String(d.aiResultJson).length : 0);
+        if (delFp && deletedFps.has(delFp)) return;
         let aiResult: unknown = null;
         try { if (d.aiResultJson) aiResult = JSON.parse(d.aiResultJson); } catch { /* noop */ }
         if (!aiResult) return; // 내용 없는 옛 백업은 아래 top-level 에서 채움
@@ -85,8 +121,13 @@ export const restoreLibrary = onCall(
       const topSnap = await db.collection('reports').where('uid', '==', uid).limit(300).get();
       topSnap.forEach((doc) => {
         if (seen.has(doc.id)) return;
+        if (deletedIds.has(doc.id)) return; // 손님이 지운 기록 (2026-10-26)
         const d = doc.data();
         const createdAt = tsToIso(d.generatedAt) || tsToIso(d.createdAt);
+        // 지운 종합사주(보관함 contentType 'report')와 주제운의 원본 — 생성 분 ±1분이 삭제 장부 지문과 같으면 돌려주지 않는다
+        if (d.recovery && deletedOriginal('report', createdAt)) return;
+        // 2026-10-27 주제운은 보관함 id 가 이 원본 id 와 같아 위 deletedIds 로 걸러진다. 분 지문까지 쓰면 같은 분에 만든
+        //   다른 주제운(연애운 뒤 바로 재회운 등)도 숨는다(검토 결함) → 주제운에는 분 지문을 쓰지 않는다
         if (d.recovery) {
           // premium / basic — recovery 블롭에 content + sajuData
           try {

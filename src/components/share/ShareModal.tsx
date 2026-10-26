@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/common/Button';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { shareResult } from '@/utils/share';
+import { withInv } from '@/services/referral/referral';
+import { realName } from '@/utils/personName';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -17,12 +19,22 @@ interface ShareModalProps {
  *
  * 앱인토스: 토스 공유 링크 + 공유 시트 / 웹: Web Share API, 안 되면 클립보드 복사
  * 2026-10-14 — 공유 보상(1운) 종료. 앱인토스 공유 리워드 서비스가 10-23 종료되고 share() 는 실제 전송을 알려 주지 않는다 (services/share/invite.ts)
+ * 2026-10-26 v9 정리
+ *   - 미리 보기의 '잠금 풀고 전체 보기' 는 지킬 수 없는 약속이었다(받은 사람은 보낸 사람 풀이를 못 열고 SharePage 초대 화면을 본다).
+ *     → 실제로 일어나는 일 한 줄로. 점수 알약 표시도 글자 한 줄로.
+ *   - 먹 머리의 작은 글씨 흰색 30%(대비 약 2.7:1) → #CFC6B6. 글자 버튼 높이 약 27px → 44px 이상, 금색 글자 버튼 → 먹.
+ *   - 이름은 realName (무료 만세력 프로필 이름 '나' 가 '나 님의 사주'로 나가지 않게).
+ *   - 앱 안에서 토스 공유가 실패하면 예전엔 클립보드로 미니앱 주소(친구가 못 여는 주소)를 복사하고 '복사됐어요'라고 했다
+ *     → 앱에서는 복사하지 않고 다시 눌러 달라고 알린다. 웹 복사 주소도 공유 시트와 같은 공개 주소(https://saju500.app/share/result/..).
  */
 export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareModalProps) {
   const [phase, setPhase] = useState<'ready' | 'copied' | 'shared'>('ready');
+  const [failed, setFailed] = useState(false);
   const inToss = isAppsInToss();
+  const who = realName(name);
 
   async function handleShare() {
+    setFailed(false);
     try {
       const success = await shareResult({ name, reportId, topScore });
 
@@ -34,13 +46,19 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
       // Web Share API 실패
     }
 
+    // 앱: 토스 공유가 안 열렸으면 복사하지 않는다 (미니앱 주소는 친구가 못 연다)
+    if (inToss) {
+      setFailed(true);
+      return;
+    }
     // 웹 폴백 → 클립보드 복사
     await copyToClipboard();
   }
 
   async function copyToClipboard() {
-    const url = `${window.location.origin}/share/${reportId}`;
-    const text = `${name} 님의 사주 결과, 사주500에서 확인해 보세요\n${url}`;
+    // 공유 시트(shareResult)와 같은 공개 주소. 받은 사람은 보낸 사람 풀이가 아니라 초대 화면을 본다 (utils/share.ts getShareCopy)
+    const url = withInv(`https://saju500.app/share/result/${reportId}?ref=share`);
+    const text = `사주500에서 사주 풀이를 봤어요. 내 사주를 넣으면 같은 풀이를 볼 수 있어요\n${url}`;
     try {
       await navigator.clipboard.writeText(text);
       setPhase('copied');
@@ -61,6 +79,7 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
   // 모달 닫을 때 상태 초기화
   function handleClose() {
     setPhase('ready');
+    setFailed(false);
     onClose();
   }
 
@@ -88,34 +107,17 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
               {/* 프리뷰 카드 */}
               <div className="px-5 pt-6 pb-5" style={{ background: 'linear-gradient(135deg, #1A1612, #2A231C)' }}>
                 <div className="text-center">
-                  <p className="text-[13px] text-white/30 mb-1">사주500 분석 결과</p>
-                  <p className="text-h1 text-white">{name} 님의 사주</p>
+                  <p className="text-[13px] mb-1" style={{ color: '#CFC6B6' }}>사주500 분석 결과</p>
+                  <p className="text-h1 text-white">{who ? `${who} 님의 사주` : '내 사주'}</p>
                   {topScore && (
-                    <div className="flex items-center justify-center gap-2 mt-3">
-                      <div className="px-3 py-1 rounded-full" style={{ background: 'rgba(184,150,90,0.15)' }}>
-                        <span className="text-caption text-brand-gold-light font-bold">
-                          {topScore.label} {topScore.score}점
-                        </span>
-                      </div>
-                    </div>
+                    <p className="mt-3 text-[15px] font-bold" style={{ color: '#E4DCCD' }}>
+                      {topScore.label} {topScore.score}점
+                    </p>
                   )}
-                  {/* P2-1 · 블러 티저 프리뷰 — 자물쇠 + "잠금 해제 → 전체 보기" CTA */}
-                  <div className="mt-4 px-4 py-3 rounded-xl relative" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div className="space-y-1.5" style={{ filter: 'blur(4px)' }}>
-                      <div className="h-2.5 w-3/4 mx-auto rounded bg-white/15" />
-                      <div className="h-2.5 w-full rounded bg-white/10" />
-                      <div className="h-2.5 w-2/3 mx-auto rounded bg-white/12" />
-                    </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5" style={{ filter: 'none' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8D5A8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="4" y="11" width="16" height="10" rx="2" />
-                        <path d="M8 11V7a4 4 0 018 0v4" />
-                      </svg>
-                      <p className="text-[13px] font-bold" style={{ color: '#E8D5A8' }}>
-                        잠금 풀고 전체 보기 ›
-                      </p>
-                    </div>
-                  </div>
+                  {/* 2026-10-26 — 받은 사람에게 실제로 보이는 것 (SharePage 초대 화면) */}
+                  <p className="mt-4 text-[14px] leading-relaxed" style={{ color: '#CFC6B6' }}>
+                    받은 사람은 자기 사주를 넣고 같은 풀이를 볼 수 있어요
+                  </p>
                 </div>
               </div>
 
@@ -127,16 +129,22 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                       친구에게 공유하기
                     </Button>
 
+                    {failed && (
+                      <p className="text-center text-[13px] text-text-secondary mt-3" role="status">
+                        공유 창을 열지 못했어요. 잠시 뒤 다시 눌러 주세요
+                      </p>
+                    )}
+
                     {/* 웹에서는 복사 버튼도 별도로 */}
                     {!inToss && (
-                      <button onClick={copyToClipboard}
-                        className="w-full text-center text-caption text-brand-gold font-semibold mt-3 py-1">
+                      <button type="button" onClick={copyToClipboard}
+                        className="w-full min-h-[44px] text-center text-[14px] text-text-primary font-semibold mt-2 py-2">
                         링크 복사하기
                       </button>
                     )}
 
-                    <button onClick={handleClose}
-                      className="w-full text-center text-caption text-text-muted mt-2 py-1">
+                    <button type="button" onClick={handleClose}
+                      className="w-full min-h-[44px] text-center text-[14px] text-text-muted mt-1 py-2">
                       닫기
                     </button>
                   </>
@@ -148,9 +156,9 @@ export function ShareModal({ isOpen, onClose, name, reportId, topScore }: ShareM
                       initial={{ scale: 0 }} animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                       className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                      style={{ background: 'rgba(184,150,90,0.1)' }}
+                      style={{ background: 'rgba(26,22,18,0.06)' }}
                     >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2.5" strokeLinecap="round">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1612" strokeWidth="2.5" strokeLinecap="round">
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     </motion.div>

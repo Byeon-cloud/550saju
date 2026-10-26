@@ -354,7 +354,7 @@ export function HomePage() {
         </div>
       </MotionScope>
       <p style={{ margin: '10px 22px 0', fontSize: 13.5, color: HJ.mute, lineHeight: 1.6, wordBreak: 'keep-all' }}>
-        누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요.
+        누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요. 1운은 500원이에요.
       </p>
 
       {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 월운세와 같은 채점, AI 0원 */}
@@ -369,10 +369,11 @@ export function HomePage() {
       {/* 2026-10-17 웹 전용 첫 손님 소개 (앱 빌드와 토스 안에서는 안 보임) */}
       {!hasSaju && <WebIntro premiumPrice={premium} />}
 
-      {/* ━━━ 3. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게) ━━━ */}
-      <div style={{ padding: '32px 16px 0' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: HJ.mute, padding: '0 6px' }}>오늘 무료로 볼 수 있어요</div>
-        <div className="grid grid-cols-2 gap-2.5" style={{ marginTop: 10 }}>
+      {/* ━━━ 3. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게)
+           2026-10-27 지인 VOC '기능은 좋은데 배치가 제각각이라 헷갈린다' → 모든 덩어리가 같은 머리(작은 분류 + 제목)로 시작한다 ━━━ */}
+      <SecTitle k="매일 무료" h="오늘 무료로 볼 수 있어요" />
+      <div style={{ padding: '0 16px' }}>
+        <div className="grid grid-cols-2 gap-2.5">
           <button type="button" onClick={() => navigate('/dream')} className="text-left"
             style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, padding: '16px 15px', minHeight: 200, background: HJ.ink, color: '#F1ECE1', display: 'flex', flexDirection: 'column', gap: 8, border: 0 }}>
             <svg width="70" height="70" viewBox="0 0 70 70" aria-hidden="true" style={{ position: 'absolute', right: 8, top: 10 }}>
@@ -507,9 +508,10 @@ export function HomePage() {
         </GoldCta>
       </section>
 
-      {/* ━━━ 4. 신년운세 (그림 띠) ━━━ */}
+      {/* ━━━ 4. 신년운세 (그림 띠) — 2026-10-27 다른 덩어리처럼 머리를 단다 ━━━ */}
+      <SecTitle k={`${NEW_YEAR_TARGET} 신년운세`} h={`${NEW_YEAR_TARGET}년, 달마다 미리 보기`} />
       <button type="button" onClick={() => navigate('/tojung')} className="text-left"
-        style={{ display: 'block', margin: '14px 16px 0', width: 'calc(100% - 32px)', borderRadius: 18, overflow: 'hidden', position: 'relative', border: 0, background: HJ.ink, color: '#F1ECE1', padding: 0 }}>
+        style={{ display: 'block', margin: '0 16px', width: 'calc(100% - 32px)', borderRadius: 18, overflow: 'hidden', position: 'relative', border: 0, background: HJ.ink, color: '#F1ECE1', padding: 0 }}>
         <div aria-hidden="true" style={{ height: 168, backgroundImage: `url(${ART.inwang})`, backgroundSize: '190% auto', backgroundPosition: '30% 40%', backgroundRepeat: 'no-repeat' }} />
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(26,22,18,.9) 0%, rgba(26,22,18,.6) 62%, rgba(26,22,18,.25) 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>

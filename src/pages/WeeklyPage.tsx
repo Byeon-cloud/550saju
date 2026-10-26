@@ -25,6 +25,7 @@ import {
 } from './extension/_chrome';
 
 import { realName } from '@/utils/personName';
+import { kstToday } from '@/utils/kstDate';
 type Phase = 'select' | 'loading' | 'result';
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const;
@@ -39,25 +40,31 @@ function ganjiToKo(ganji: string): string {
 }
 
 /**
- * weekDays — 롤링 7일 (구매일 '오늘' 전날부터 7일).
- * i ∈ [-1..5] → 어제·오늘·내일·...(7개). 고정 월~일 절대 사용 안 함.
- * 예: 목요일 실행 → 수·목·금·토·일·월·화.
+ * weekDays — 롤링 '오늘부터 7일' + 어제 하루(덤).
+ * 2026-10-26 — 예전엔 i ∈ [-1..5](어제~5일 뒤, 7개)라 '오늘부터 7일'로 팔고 오늘 이후는 6일만 줬다.
+ *   이제 i ∈ [-1..6] → 어제, 오늘, 내일, ..., 6일 뒤 (8개). 오늘부터 7일을 다 주고, 어제 칸(지난 일을 짚어 주는 풀이)은 그대로 둔다.
+ *   0번=어제, 1번=오늘 순서는 예전과 같아서 결과 화면(WeeklyMockupView dayPhase)과 예전 저장본이 그대로 맞는다.
+ *   날짜는 KST 오늘 기준(kstToday, 기기 시간대와 상관없이). 고정 월~일 절대 사용 안 함.
+ * 예: 목요일 실행 → 수(어제), 목(오늘), 금, 토, 일, 월, 화, 수.
  * 각 일자의 일진 간지는 lunar-javascript: Solar.fromYmd(y,m,d).getLunar().getDayInGanZhi().
  */
 function computeWeekDays(): { day: string; date: string; ganji: string; ganjiRead: string }[] {
-  const base = new Date();
+  const [ky, km, kd] = kstToday().split('-').map(Number);
   const out: { day: string; date: string; ganji: string; ganjiRead: string }[] = [];
-  for (let i = -1; i <= 5; i++) {
-    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+  for (let i = -1; i <= 6; i++) {
+    const d = new Date(Date.UTC(ky, km - 1, kd + i)); // UTC 필드에 KST 날짜 (달, 해 넘김은 Date 가 맞춘다)
+    const y = d.getUTCFullYear();
+    const m = d.getUTCMonth() + 1;
+    const dd = d.getUTCDate();
     let ganji = '';
     try {
-      ganji = Solar.fromYmd(d.getFullYear(), d.getMonth() + 1, d.getDate()).getLunar().getDayInGanZhi();
+      ganji = Solar.fromYmd(y, m, dd).getLunar().getDayInGanZhi();
     } catch {
       ganji = '';
     }
     out.push({
-      day: WEEKDAY_KO[d.getDay()],
-      date: `${d.getMonth() + 1}/${d.getDate()}`,
+      day: WEEKDAY_KO[d.getUTCDay()],
+      date: `${m}/${dd}`,
       ganji,
       ganjiRead: ganjiToKo(ganji),
     });
@@ -120,6 +127,21 @@ export function WeeklyPage() {
     import('@/services/storage/dailyReward').then((m) => m.processAttendanceRewards()).catch(() => {});
   }, [phase, result]);
 
+  /* 2026-10-26 — 결과를 주소(?reportId=)에 남긴다 (월운세, 주제운 09-17 B-1 과 같은 방식).
+   *   예전엔 결과의 '사주대화'나 '월운세 보기'로 갔다가 뒤로 오면 고르기 화면이 떠서, '주간운세 보기'를 다시 눌러 3운이 또 빠졌다.
+   *   저장된 결과(초안 포함)가 생기면 지금 히스토리 항목을 교체 기록한다. 같은 경로라 다시 마운트되지 않아 다듬기도 계속된다.
+   *   마운트 중이고 실제 주소가 이 화면일 때만 바꾼다(App.tsx AnimatePresence mode="wait"). 보관함에서 연 결과는 건드리지 않는다. */
+  useEffect(() => {
+    if (phase !== 'result' || !result || !shareReportId) return;
+    if (rawNavState?.savedReport) return;
+    if (reportIdFromUrl === shareReportId) return;
+    if (typeof window !== 'undefined' && window.location.pathname !== location.pathname) return;
+    const qs = new URLSearchParams(location.search);
+    qs.set('reportId', shareReportId);
+    navigate(`${location.pathname}?${qs.toString()}`, { replace: true, state: location.state });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, result, shareReportId]);
+
   const reports = useMemo(() => getProfiles(), []);
 
   async function startAnalysis() {
@@ -127,7 +149,7 @@ export function WeeklyPage() {
     if (isAnalyzingRef.current || phase === 'loading') return;
     isAnalyzingRef.current = true;
 
-    // 캐시 미사용 — 주간 윈도우(어제부터 7일)가 매일 이동하므로 contentType-only 캐시는 stale(지난주 데이터).
+    // 캐시 미사용 — 주간 윈도우(어제 + 오늘부터 7일)가 매일 이동하므로 contentType-only 캐시는 stale(지난주 데이터).
     //   재조회는 보관함(저장본)으로. 생성은 항상 현재 주 기준 새로. (월운 단일월과 동일 정책)
     const price = getWeeklyPrice().actualPrice; // 2026-06-29 NEW — 주간운세 정가 5운 (SSOT)
     if (!spendBalance(price)) {
@@ -144,7 +166,7 @@ export function WeeklyPage() {
     toast.show(`${price}운이 차감됐어요`, 'info');
     setPhase('loading');
 
-    // 롤링 7일 일진 (어제부터 7일) 계산 → 서버로 전달
+    // 롤링 일진 (어제 + 오늘부터 7일, 8칸) 계산 → 서버로 전달
     const weekDays = computeWeekDays();
 
     setRefining(false);
@@ -247,7 +269,11 @@ export function WeeklyPage() {
   if (!result || !selected) return null;
 
   const days = Array.isArray(result.dailyBreakdown) ? result.dailyBreakdown : [];
-  const periodLabel = days.length > 0 ? `${days[0].date} ~ ${days[days.length - 1].date}` : '';
+  // 2026-10-26 — 8칸(어제 + 오늘부터 7일) 결과는 오늘부터 끝날까지를 기간으로 쓴다(머리의 '오늘부터 7일'과 같게).
+  //   예전 7칸 저장본(어제부터 7일)은 예전처럼 첫날부터.
+  const periodLabel = days.length >= 8
+    ? `${days[1].date} ~ ${days[days.length - 1].date}`
+    : days.length > 0 ? `${days[0].date} ~ ${days[days.length - 1].date}` : '';
   // 교차 CTA(월운세) 가격 — SSOT getMonthlyPrice (세일 시 정가→세일가)
   const monthlyPricing = getMonthlyPrice();
   const monthlyPriceLabel = monthlyPricing.isOnSale

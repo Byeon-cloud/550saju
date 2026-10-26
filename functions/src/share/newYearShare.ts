@@ -59,7 +59,7 @@ export const createNewYearShare = onCall(
     await db.doc(`newYearShares/${id}`).set({
       uid,
       v: 1,
-      name: clean(d.name, 12) || '보낸 분',
+      name: clean(d.name, 12), // 2026-10-27 기본값 '보낸 분'을 저장하지 않는다(받는 화면에 '보낸 분 님의 …'로 보였다)
       y,
       gz,
       verdict: v,

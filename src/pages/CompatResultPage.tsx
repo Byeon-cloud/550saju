@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { getReport } from '@/services/storage/localStore';
+import { getReport, getPendingSpends } from '@/services/storage/localStore';
 import { Header } from '@/components/layout/Header';
 import { FadeIn } from '@/components/common/FadeIn';
 import { Button } from '@/components/common/Button';
@@ -44,6 +44,77 @@ const CATEGORY_COLORS: Record<string, string> = {
   future: '#7A5C7E',
 };
 
+/* 2026-10-26 — 결제 한 건(장부 id)마다 생성은 한 번만.
+ *   예전엔 결과를 받은 뒤 다른 화면에 갔다가 뒤로 오거나(웹은 새로고침도) 처음 넘어온 state 가 그대로 남아 있어,
+ *   다시 마운트될 때마다 AI 를 새로 불렀다(로그인 계정은 서버가 3운을 또 깎고, 실패하면 이번에 내지도 않은 3운을 돌려줬다).
+ *   이제 궁합 화면 세 곳(궁합, 받은 초대장, 보낸 초대장)이 장부 id(pendingId)를 넘기고, 결과 화면은 그 장부가 남아 있을 때만 만든다.
+ *   생성 도중 다른 화면에 갔다가 앞으로 와서 다시 마운트돼도 같은 생성을 이어 받는다(메모리, 새로고침하면 비워짐).
+ *   저장과 환불은 생성 쪽에서 한 번만 하고, 화면은 결과를 받아 그리거나 돌아가기만 한다. */
+type CompatRun = { rid: string; content: CompatibilityResponse; saved: any };
+const compatRuns = new Map<string, Promise<CompatRun>>();
+/** 생성이 끝난 장부 id → 저장한 기록 id (같은 탭 새로고침 뒤에도 그 결과를 연다) */
+const COMPAT_DONE_KEY = (pendingId: string) => `saju500:compat_done:${pendingId}`;
+/** 실패해서 돌려준 장부 id (2026-10-27 — 장부가 없다는 것만으로 '처리 끝'을 판단하지 않는다) */
+const COMPAT_HANDLED_KEY = (pendingId: string) => `saju500:compat_handled:${pendingId}`;
+/** 장부 id 는 만든 시각(36진수)으로 시작한다(localStore.markPendingSpend). 5분 안의 것은 저장 공간이 가득 차
+ *  장부만 못 적힌 경우일 수 있어 생성하고, 실패하면 화면이 넘긴 값만큼 돌려준다(검토 결함: 운만 빠지고 풀이도 환불도 없었다) */
+const isFreshPendingId = (id: string) => {
+  const t = parseInt(id.split('_')[0] || '', 36);
+  return Number.isFinite(t) && Date.now() - t >= 0 && Date.now() - t < 5 * 60 * 1000;
+};
+const wasHandled = (id: string) => {
+  try { return !!(sessionStorage.getItem(COMPAT_DONE_KEY(id)) || sessionStorage.getItem(COMPAT_HANDLED_KEY(id))); } catch { return false; }
+};
+
+function startCompatRun(
+  pendingId: string,
+  st: { person1: any; person2: any; relation: string; cost?: number },
+  showToast: (text: string, type?: 'success' | 'info' | 'warning') => void,
+): Promise<CompatRun> {
+  return generateCompatibilityAnalysis(st.person1.sajuData, st.person2.sajuData, st.relation)
+    .then(async (res) => {
+      const { saveReport, generateId, clearPendingSpend } = await import('@/services/storage/localStore');
+      const rid = res.reportId || generateId();
+      const saved = {
+        id: rid,
+        name: `${st.person1.name} × ${st.person2.name}`,
+        input: { ...st.person1.input, relation: 'compat' } as any,
+        sajuData: st.person1.sajuData,
+        type: 'paid' as const,
+        contentType: 'compat' as const,
+        aiResult: res.content,
+        ...({ partner: { name: st.person2.name, sajuData: st.person2.sajuData, input: st.person2.input }, relation: st.relation } as any),
+        spentUn: Number(st.cost) || undefined, // 2026-10-15 보관함 'N운 사용' 장부 (궁합 화면이 넘긴 실제 차감액)
+        createdAt: new Date().toISOString(),
+      };
+      saveReport(saved);
+      clearPendingSpend(pendingId); // 결과 저장 완료 → 이 결제 건만 자동환불 대상에서 뺀다 (다른 궁합 결제의 장부는 그대로)
+      try { sessionStorage.setItem(COMPAT_DONE_KEY(pendingId), rid); } catch { /* noop */ }
+      return { rid, content: res.content, saved };
+    })
+    .catch(async (e) => {
+      console.error('궁합 분석 실패:', e);
+      compatRuns.delete(pendingId);
+      // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
+      // 2026-10-26 — 이 결제의 장부가 아직 있을 때만, 장부에 적힌 만큼 돌려준다 (이미 돌려줬거나 자동환불된 건은 다시 주지 않는다)
+      const { refundBalance, clearPendingSpend, getPendingSpends: readPending } = await import('@/services/storage/localStore');
+      const entry = readPending().find((p) => p.id === pendingId);
+      // 2026-10-27 장부가 못 적힌 결제(저장 공간 가득, 5분 안, 아직 처리 안 함)도 화면이 넘긴 값만큼 돌려준다
+      const unrecorded = !entry && !wasHandled(pendingId) && isFreshPendingId(pendingId);
+      if (entry || unrecorded) {
+        const paid = Number(entry?.amount) || Number(st.cost) || 0;
+        if (paid > 0) refundBalance(paid);
+        clearPendingSpend(pendingId); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
+        try { sessionStorage.setItem(COMPAT_HANDLED_KEY(pendingId), '1'); } catch { /* noop */ }
+        // 2026-10-15 — 원본 오류 문구(영문 코드 등)는 로그로만, 화면은 사람 말로
+        showToast(paid > 0 ? `풀이를 만들지 못해서 ${paid}운을 돌려드렸어요. 잠시 뒤 다시 시도해 주세요.` : '풀이를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.', 'warning');
+      } else {
+        showToast('풀이를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.', 'warning');
+      }
+      throw e;
+    });
+}
+
 export function CompatResultPage() {
   usePageTitle('궁합 결과');
   const navigate = useNavigate();
@@ -51,10 +122,11 @@ export function CompatResultPage() {
   const toast = useToast();
 
   // 2026-05-07 — 진입 경로 2가지:
-  //  (1) /compat 에서 입력 후: { person1, person2, relation }
+  //  (1) /compat 에서 입력 후: { person1, person2, relation, cost, pendingId }
   //  (2) /storage 에서 클릭 시 (재열람): { savedResult, savedReport }
+  //  2026-10-26 — (1)은 결과 저장 직후 (2)로 바뀐다(히스토리 교체). 뒤로 오기와 새로고침은 저장본을 다시 연다
   const rawLocationState = location.state as
-    | { person1: any; person2: any; relation: string }
+    | { person1: any; person2: any; relation: string; cost?: number; pendingId?: string }
     | { savedResult: CompatibilityResponse; savedReport: any }
     | undefined;
   // 2026-05-28 — URL ?reportId= 폴백. state 손실(새로고침/strict mode) 대비.
@@ -77,7 +149,7 @@ export function CompatResultPage() {
         person2: replayPartner || { name: replayReport?.name?.split(' × ')?.[1] || '상대', sajuData: null, input: null, missing: true },
         relation: replayReport?.relation || '연인',
       }
-    : (rawState as { person1: any; person2: any; relation: string } | undefined);
+    : (rawState as { person1: any; person2: any; relation: string; cost?: number; pendingId?: string } | undefined);
 
   const [phase, setPhase] = useState<'loading' | 'result'>(isReplay ? 'result' : 'loading');
   const [result, setResult] = useState<CompatibilityResponse | null>(
@@ -89,54 +161,83 @@ export function CompatResultPage() {
   // 2026-05-07 fix — 동적 reportId
   const [shareReportId, setShareReportId] = useState<string>(replayReport?.id || '');
   const called = useRef(isReplay);
+  // 2026-10-26 — 이번에 저장한 기록 (히스토리를 재열람 모드로 바꿀 때 state 로 넣는다)
+  const savedRef = useRef<any>(replayReport);
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+  // 실제 주소가 아직 이 화면일 때만 히스토리를 바꾼다. 페이지 전환 애니메이션(App.tsx AnimatePresence mode="wait") 동안
+  //   떠나는 이 화면이 살아 있어, 그때 replace 하면 다음 화면의 히스토리 항목을 덮어쓴다 (TopicAnalysisPage B-1 과 같은 함정)
+  const onThisRoute = () => mountedRef.current && typeof window !== 'undefined' && window.location.pathname === location.pathname;
 
   useEffect(() => {
     if (isReplay) return; // 재열람은 AI 호출 skip
     if (!state?.person1 || !state?.person2) {
-      navigate('/compat');
+      navigate('/compat', { replace: true });
       return;
     }
     if (called.current) return;
     called.current = true;
 
+    const rawPendingId = (state as { pendingId?: unknown }).pendingId;
+    const pendingId = typeof rawPendingId === 'string' ? rawPendingId : '';
+    let run = pendingId ? compatRuns.get(pendingId) : undefined;
+    if (!run) {
+      // 2026-10-26 — 이 결제의 장부가 남아 있을 때만 새로 만든다. 장부가 없으면 이미 결과를 저장했거나 돌려준 결제다
+      //   (뒤로 오기, 새로고침, 장부 id 가 없는 옛 state). 이때는 AI 를 부르지도, 운을 돌려주지도 않는다.
+      //   2026-10-27 — 단, 5분 안에 만든 장부 id 가 아직 처리되지 않았으면(저장 공간이 가득 차 장부만 못 적힌 경우) 생성한다
+      const ledgerHas = !!pendingId && getPendingSpends().some((p) => p.id === pendingId);
+      const unrecorded = !!pendingId && !ledgerHas && !wasHandled(pendingId) && isFreshPendingId(pendingId);
+      if (!pendingId || (!ledgerHas && !unrecorded)) {
+        let doneId = '';
+        try { doneId = pendingId ? sessionStorage.getItem(COMPAT_DONE_KEY(pendingId)) || '' : ''; } catch { /* noop */ }
+        const done = doneId ? getReport(doneId) : null;
+        if (done?.aiResult) {
+          // 결과는 이미 저장됐다(생성 도중 다른 화면에 갔다가 새로고침한 경우) → 그 기록을 연다. 주소는 아래 effect 가 바꾼다
+          savedRef.current = done;
+          setResult(done.aiResult as CompatibilityResponse);
+          setShareReportId(done.id);
+          setPhase('result');
+        } else {
+          navigate('/compat', { replace: true });
+        }
+        return;
+      }
+      run = startCompatRun(pendingId, state as { person1: any; person2: any; relation: string; cost?: number }, toast.show);
+      compatRuns.set(pendingId, run);
+    }
+
     const interval = setInterval(() => setLoadingStep(s => Math.min(s + 1, LOADING_STEPS.length - 1)), 2500);
 
-    generateCompatibilityAnalysis(
-      state.person1.sajuData,
-      state.person2.sajuData,
-      state.relation,
-    ).then(async (res) => {
-      setResult(res.content);
-      const { saveReport, generateId, clearPendingSpendByType } = await import('@/services/storage/localStore');
-      const rid = res.reportId || generateId();
-      saveReport({
-        id: rid,
-        name: `${state!.person1.name} × ${state!.person2.name}`,
-        input: { ...state!.person1.input, relation: 'compat' } as any,
-        sajuData: state!.person1.sajuData,
-        type: 'paid',
-        contentType: 'compat',
-        aiResult: res.content,
-        ...({ partner: { name: state!.person2.name, sajuData: state!.person2.sajuData, input: state!.person2.input }, relation: state!.relation } as any),
-        spentUn: Number((state as any)?.cost) || undefined, // 2026-10-15 보관함 'N운 사용' 장부 (궁합 화면이 넘긴 실제 차감액)
-        createdAt: new Date().toISOString(),
-      });
-      clearPendingSpendByType('compat'); // 결과 저장 완료 → 자동환불 대상 제외
-      setShareReportId(rid);
+    run.then((r) => {
+      savedRef.current = r.saved;
+      setResult(r.content);
+      setShareReportId(r.rid);
       setPhase('result');
-    }).catch(async (e) => {
-      console.error('궁합 분석 실패:', e);
-      // 2026-05-07 fix — AI 실패 시 클라이언트에서 즉시 환불
-      const { refundBalance, clearPendingSpendByType } = await import('@/services/storage/localStore');
-      // 2026-10-14 — 가격 변경(1 → 2운) 뒤에도 실제로 낸 만큼 돌려준다 (예전 화면에서 넘어온 상태는 1운)
-      const paid = Number((state as any)?.cost) || 1;
-      refundBalance(paid);
-      clearPendingSpendByType('compat'); // 즉시 환불했으므로 pending 해제 (부팅 이중환불 방지)
-      // 2026-10-15 — 원본 오류 문구(영문 코드 등)는 로그로만, 화면은 사람 말로
-      toast.show(`풀이를 만들지 못해서 ${paid}운을 돌려드렸어요. 잠시 뒤 다시 시도해 주세요.`, 'warning');
-      setTimeout(() => navigate('/compat'), 3000);
+    }).catch(() => {
+      // 환불과 안내는 생성 쪽(startCompatRun)에서 한 번만 했다.
+      //   궁합 화면으로는 아직 이 화면에 있을 때만, 히스토리를 바꿔서 보낸다(뒤로 와도 이 화면이 다시 열려 생성하지 않게)
+      setTimeout(() => { if (onThisRoute()) navigate('/compat', { replace: true }); }, 3000);
     }).finally(() => clearInterval(interval));
   }, []);
+
+  /* 2026-10-26 — 결과를 저장하면 지금 히스토리 항목을 재열람 모드(?reportId= + savedResult/savedReport)로 바꾼다.
+   *   다른 화면(연애운, 사주대화, 다른 궁합)에 갔다가 뒤로 오거나 웹에서 새로고침하면 AI 를 다시 부르지 않고 저장본을 연다.
+   *   같은 경로라 다시 마운트되지 않는다. 마운트 중이고 실제 주소가 이 화면일 때만 바꾼다(onThisRoute). */
+  useEffect(() => {
+    if (phase !== 'result' || !result || !shareReportId) return;
+    if (isReplay) return; // 보관함이나 주소(?reportId=)로 연 재열람 — 히스토리에 이미 결과가 있다
+    if (!onThisRoute()) return;
+    const qs = new URLSearchParams(location.search);
+    qs.set('reportId', shareReportId);
+    navigate(`${location.pathname}?${qs.toString()}`, {
+      replace: true,
+      state: savedRef.current ? { savedResult: result, savedReport: savedRef.current } : null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, result, shareReportId]);
 
   /** 2026-10-17 궁합 보내기 (시험 E7) — 받는 사람이 점수와 총평을 직접 열어 보는 링크. 서버에 일부만 남긴다(생일 없음).
    *  링크를 만들지 못하면 예전 공유 창으로 돌아간다. */

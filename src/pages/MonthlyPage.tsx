@@ -141,6 +141,23 @@ export function MonthlyPage() {
     import('@/services/storage/dailyReward').then((m) => m.processAttendanceRewards()).catch(() => {});
   }, [phase, result]);
 
+  /* 2026-10-26 — 결과를 주소(?reportId=)에 남긴다 (주제운 09-17 B-1 과 같은 방식).
+   *   예전엔 결과의 '사주대화로 이어가기'나 주제 카드로 갔다가 뒤로 오면 고르기 화면이 떠서, 결과가 사라진 줄 알고
+   *   '운세 보기'를 다시 눌러 7운이 또 빠졌다. 저장된 결과(초안 포함)가 생기면 지금 히스토리 항목을 교체 기록한다.
+   *   같은 경로라 다시 마운트되지 않아 진행 중인 다듬기(refine)도 끊기지 않고, 다듬기는 같은 id 로 저장해 돌아오면 최신본이 열린다.
+   *   effect 라 마운트 중에만 돌고, 실제 주소가 아직 이 화면일 때만 바꾼다(App.tsx AnimatePresence mode="wait" 동안 떠나는
+   *   이 화면이 다음 화면의 히스토리 항목을 덮지 않게). 보관함에서 연 결과는 히스토리 state 에 이미 결과가 있어 건드리지 않는다. */
+  useEffect(() => {
+    if (phase !== 'result' || !result || !shareReportId) return;
+    if (rawNavState?.savedReport) return;
+    if (reportIdFromUrl === shareReportId) return;
+    if (typeof window !== 'undefined' && window.location.pathname !== location.pathname) return;
+    const qs = new URLSearchParams(location.search);
+    qs.set('reportId', shareReportId);
+    navigate(`${location.pathname}?${qs.toString()}`, { replace: true, state: location.state });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, result, shareReportId]);
+
   const reports = useMemo(() => getProfiles(), []);
 
   async function startAnalysis() {

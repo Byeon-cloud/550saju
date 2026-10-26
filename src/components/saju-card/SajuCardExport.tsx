@@ -23,6 +23,7 @@
  *   2차 Clipboard API (ClipboardItem image/png) — 데스크톱 카톡 붙여넣기
  *   3차 강제 다운로드 — 모든 폴백 실패 시 갤러리 저장 후 수동 공유
  */
+import { realName } from '@/utils/personName';
 
 export interface CaptureOptions {
   /** 캡처할 DOM 요소 — 미지정 시 document.getElementById('saju-card-export') */
@@ -389,7 +390,7 @@ export function buildShareTextAndUrl(
     'https://saju500.app';
   const basePath = profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '';
   const url = `${origin}${basePath}?${sajuCardShareQuery(ilju)}`;
-  const text = name ? `${name} 님의 사주 카드예요. 사주500에서 내 사주도 볼 수 있어요` : '사주500에서 만든 사주 카드예요';
+  const text = realName(name) ? `${realName(name)} 님의 사주 카드예요. 사주500에서 내 사주도 볼 수 있어요` : '사주500에서 만든 사주 카드예요';
   return { text, url };
 }
 

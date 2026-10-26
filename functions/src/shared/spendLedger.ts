@@ -85,12 +85,25 @@ export async function holdSpend(
         : { holds: FV.increment(1), updatedAt: FV.serverTimestamp() });
       return { held: !instant, charged: false, already: true };
     }
-    const result = deduct(userDoc.data(), amount);
-    if (!result) throw new SpendError('insufficient', SPEND_INSUFFICIENT_MESSAGE);
+    let result = deduct(userDoc.data(), amount);
+    // 2026-10-27 모자라면 남은 만큼만 깎고 그 값을 paidAmount 로 적는다(0 이면 예전처럼 insufficient, 기기는 막지 않고 진행).
+    //   하나도 안 깎으면 서버가 기기보다 많이 남아 웹 로그인 동기화가 그 차이를 기기에 되살려 줬다(검토 결함). 돌려줄 때는 paidAmount 만큼
+    let paidAmount = amount;
+    if (!result) {
+      const bal = userDoc.data()?.balance;
+      const have = typeof bal === 'object' && bal !== null
+        ? (Number(bal.reward) || 0) + (Number(bal.bonus) || 0) + (Number(bal.paid) || 0)
+        : (typeof bal === 'number' ? bal : 0);
+      result = have > 0 ? deduct(userDoc.data(), have) : null;
+      if (!result) throw new SpendError('insufficient', SPEND_INSUFFICIENT_MESSAGE);
+      paidAmount = have;
+      console.warn(`[spendLedger] 서버 잔액이 모자라 남은 ${have}운만 깎음 uid=${uid} ${kind} ${amount}운`);
+    }
     tx.update(userRef, result.updates);
     tx.set(spendRef, {
       kind,
       amount,
+      paidAmount,
       status: 'charged',
       holds: instant ? 0 : 1,
       delivered: !!instant,
@@ -136,7 +149,7 @@ export async function releaseSpend(db: Db, hold: SpendHold | null, ok: boolean, 
         tx.update(spendRef, { holds, delivered: true, deliveredAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp() });
         return 0;
       }
-      const amount = Number(s.amount) || 0;
+      const amount = Number(s.paidAmount ?? s.amount) || 0; // 2026-10-27 실제로 깎은 만큼 (옛 기록은 amount)
       if (s.status === 'charged' && holds === 0 && !s.delivered && amount > 0 && userDoc.exists) {
         tx.update(userRef, refundUpdates(userDoc.data(), amount, reason));
         tx.update(spendRef, { holds, status: 'refunded', refundedAt: FV.serverTimestamp(), refundReason: reason, updatedAt: FV.serverTimestamp() });
@@ -163,7 +176,7 @@ export async function refundSpend(db: Db, uid: string, spendId: string, reason: 
     const [spendDoc, userDoc] = await Promise.all([tx.get(spendRef), tx.get(userRef)]);
     if (!spendDoc.exists || !userDoc.exists) return 0;
     const s = spendDoc.data() as Record<string, any>;
-    const amount = Number(s.amount) || 0;
+    const amount = Number(s.paidAmount ?? s.amount) || 0; // 2026-10-27 실제로 깎은 만큼 (옛 기록은 amount)
     if (s.status !== 'charged' || amount <= 0) return 0;
     tx.update(userRef, refundUpdates(userDoc.data(), amount, reason));
     tx.update(spendRef, { status: 'refunded', refundedAt: FV.serverTimestamp(), refundReason: reason, updatedAt: FV.serverTimestamp() });

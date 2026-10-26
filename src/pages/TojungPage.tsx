@@ -12,7 +12,7 @@ import { Button } from '@/components/common/Button';
 import { ProfilePicker } from '@/components/common/ProfilePicker';
 import { TojungMonthCard } from '@/components/saju/TojungMonthCard';
 import { ShareModal } from '@/components/share/ShareModal';
-import { getProfiles, spendBalance, refundBalance, saveReport, generateId, getCachedResult, getReport, markPendingSpend, clearPendingSpendByType, type LocalReport } from '@/services/storage/localStore';
+import { getProfiles, getReports, spendBalance, refundBalance, saveReport, generateId, getReport, markPendingSpend, clearPendingSpendByType, premiumSajuKey, type LocalReport } from '@/services/storage/localStore';
 import { generateTojungBigyeol } from '@/services/ai/reportGenerator';
 import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -84,6 +84,35 @@ const LOADING_STEPS = [
   '결정하기 좋은 때와 운을 여는 방법을 정리하고 있어요...',
 ];
 
+/** 입력에서 사주를 바꾸는 값 — 달력 종류(양력, 음력, 윤달), 태어난 시각, 성별 */
+function birthInputSig(i: any): string {
+  const cal = String(i?.calendarType || 'solar');
+  const time = i?.hasBirthTime ? `${Number(i?.birthHour)}:${Number(i?.birthMinute) || 0}` : '-';
+  return `${cal}|${time}|${String(i?.gender || '')}`;
+}
+
+/** 2026-10-26 — 신년운세 다시 열기는 같은 사주일 때만.
+ *   예전엔 이름과 생년월일 숫자만 맞춰 봐서(getCachedResult), 양력/음력이나 태어난 시, 성별을 고친 사람
+ *   (10-15, 10-17 음력 수리 전에 산 사람 포함)에게 옛 기둥으로 쓴 풀이를 '이전 분석 결과'로 무료로 다시 보여 주고 새로 살 길이 없었다.
+ *   입력(달력 종류, 시각, 성별)과 네 기둥을 함께 맞춘다. 서버에서 복원한 옛 기록은 sajuData 가 비어 있을 수 있어
+ *   그때는 입력만 본다(같은 사주인데 다시 결제하게 하지 않게). 안 맞으면 새로 결제하고 만드는 흐름으로 가고, 옛 기록은 보관함에 남는다. */
+function findNewYearCache(sel: LocalReport): LocalReport | null {
+  const i = sel.input as any;
+  if (!i) return null;
+  const sig = birthInputSig(i);
+  const key = premiumSajuKey(sel.sajuData);
+  return getReports().find((r) => {
+    if (r.contentType !== 'tojung' || !r.aiResult || r.name !== sel.name) return false;
+    const ri = r.input as any;
+    if (ri?.birthYear !== i.birthYear || ri?.birthMonth !== i.birthMonth || ri?.birthDay !== i.birthDay) return false;
+    if (birthInputSig(ri) !== sig) return false;
+    const rkey = premiumSajuKey(r.sajuData);
+    if (rkey && key && rkey !== key) return false;
+    const ai = r.aiResult as any;
+    return Number(ai?.targetYear) === TY && Number(ai?.schemaVersion) >= 2;
+  }) || null;
+}
+
 const CATEGORY_ICONS: Record<string, string> = {
   총운: '總', 금전운: '財', 건강운: '健', 직장운: '職', 애정운: '愛', 결혼운: '婚',
 };
@@ -135,9 +164,9 @@ export function TojungPage() {
     if (isAnalyzingRef.current || phase === 'loading') return;
     isAnalyzingRef.current = true;
 
-    // 캐시 확인 — 이전에 분석한 적 있으면 무료로 바로 보여줌
-    const cached = getCachedResult(selected.name, selected.input.birthYear, selected.input.birthMonth, selected.input.birthDay, 'tojung');
-    if (cached?.aiResult && Number((cached.aiResult as any)?.targetYear) === TY && Number((cached.aiResult as any)?.schemaVersion) >= 2) {
+    // 캐시 확인 — 이전에 분석한 적 있으면 무료로 바로 보여줌 (2026-10-26 같은 사주일 때만, findNewYearCache)
+    const cached = findNewYearCache(selected);
+    if (cached?.aiResult) {
       setResult(cached.aiResult);
       setPhase('result');
       toast.show('이전 분석 결과를 불러왔어요', 'info');

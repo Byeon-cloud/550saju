@@ -179,13 +179,20 @@ export function ChargePage() {
    *      (종합사주 10운과 12월부터 신년운세 9운은 15운, 첫 오늘의 운세 반값 5운과 11월 30일까지 신년운세 7운은 7운)
    *   ④ 그 밖(홈 충전 버튼, 마이페이지, 잔액 막대, 주제운에서 need 없이)은 7운(5운 + 보너스 2운, 2,500원)
    *   가격은 pricing.ts 가 기준이라 여기서 숫자를 적지 않는다.
+   *   2026-10-26 — ②③은 이미 가진 운을 빼고 모자란 만큼으로 고른다. 화면들이 need 에 풀이 값 전체를 넘겨서,
+   *   8운 있는 손님이 종합사주(10운)에 오면 15운(5,000원)이 골라져 있었다(4운, 1,500원이면 된다).
+   *   가진 운으로 이미 넉넉하면 예전처럼 풀이 값 기준.
    */
   const [defaultPkg] = useState<string>(() => {
     const byUn = [...CHARGE_PACKAGES].sort((a, b) => a.un - b.un);
     const fit = (n: number) => (byUn.find((p) => p.un >= n) ?? byUn[byUn.length - 1]).id;
+    const fitShort = (n: number) => {
+      const short = Math.round((n - getBalance()) * 10) / 10;
+      return fit(short > 0 ? short : n);
+    };
     if (ctx?.selected && CHARGE_PACKAGES.some((p) => p.id === ctx.selected)) return ctx.selected;
-    if (needUn !== null && needUn > 0) return fit(needUn);
-    if (content && (content.key === 'premium' || content.key === 'tojung')) return fit(content.cost);
+    if (needUn !== null && needUn > 0) return fitShort(needUn);
+    if (content && (content.key === 'premium' || content.key === 'tojung')) return fitShort(content.cost);
     return CHARGE_PACKAGES.some((p) => p.id === 'p7') ? 'p7' : fit(1);
   });
 
@@ -209,8 +216,10 @@ export function ChargePage() {
   }, []);
   const guideFor = (pkg: ChargePackage): string => {
     // 보러 온 콘텐츠가 있으면 기본으로 골라 둔 묶음 설명을 그 콘텐츠로 ('2027 신년운세 한 번'). 그 값이 들어오는 묶음일 때만
-    if (content && pkg.id === defaultPkg && content.cost > 0 && pkg.un >= content.cost) {
+    //   2026-10-26 — 기본 묶음을 모자란 만큼으로 고르게 되어, 가진 운과 합쳐야 들어오는 묶음도 그 콘텐츠로 설명한다
+    if (content && pkg.id === defaultPkg && content.cost > 0 && (pkg.un >= content.cost || balance + pkg.un >= content.cost)) {
       if (content.key === 'chat') return pkg.un === 1 ? '사주대화 세 번' : `사주대화 ${pkg.un * 3}번`; // 1운에 세 번
+      if (pkg.un < content.cost) return `가진 운과 합쳐 ${content.name} 한 번`;
       const left = pkg.un - content.cost;
       return left > 0 ? `${content.name} 한 번에 ${left}운이 더 남아요` : `${content.name} 한 번`;
     }
@@ -532,16 +541,34 @@ export function ChargePage() {
             {/* 2026-10-22 — 메시지 없이 ?need= 만 와도 콘텐츠 이름으로 ('2027 신년운세에 7운이 필요해요') */}
             {stateMessage || (content ? `${content.name}에 ${needUn}운이 필요해요` : `이 풀이에 ${needUn}운이 필요해요`)}
           </div>
-          <div style={{ marginTop: 8, fontSize: 16, color: C.ink, lineHeight: 1.55 }}>
-            {/* v9 강조는 먹 글자와 형광펜 (금색 글자 대신) */}
-            <strong className="hj-hl" style={{ fontWeight: 800 }}>{selectedPkg.price.toLocaleString('ko-KR')}원</strong>이면 바로 볼 수 있어요
-          </div>
-          <div style={{ marginTop: 4, fontSize: 14, color: C.inkSoft, lineHeight: 1.6 }}>
-            {selectedPkg.bonusUn > 0
-              ? `${selectedPkg.paidUn}운에 보너스 ${selectedPkg.bonusUn}운을 더해 ${selectedPkg.un}운이 들어와요. `
-              : `${selectedPkg.un}운이 들어와요. `}
-            {redirectTo ? '결제하면 바로 풀이로 돌아가요.' : '남은 운은 다음 풀이에 쓸 수 있어요.'}
-          </div>
+          {/* 2026-10-26 — 예전엔 어떤 묶음을 골라도 '바로 볼 수 있어요'라고 했다(0운인 손님이 연애운 4운에 1운 묶음을 고르면 500원 내고 다시 막혔다).
+           *   가진 운과 고른 묶음을 합쳐 필요한 운이 되는지 보고, 모자라면 얼마나 모자란지 알린다 */}
+          {(() => {
+            const need = needUn || 0;
+            const enough = balance + selectedPkg.un >= need - 1e-6;
+            const lack = Math.round((need - balance - selectedPkg.un) * 10) / 10;
+            const bigger = !enough && CHARGE_PACKAGES.some((p) => balance + p.un >= need - 1e-6);
+            const usesBalance = enough && balance > 0 && selectedPkg.un < need;
+            return (
+              <>
+                <div style={{ marginTop: 8, fontSize: 16, color: C.ink, lineHeight: 1.55 }}>
+                  {/* v9 강조는 먹 글자와 형광펜 (금색 글자 대신) */}
+                  {enough
+                    ? <><strong className="hj-hl" style={{ fontWeight: 800 }}>{selectedPkg.price.toLocaleString('ko-KR')}원</strong>이면 바로 볼 수 있어요</>
+                    : <>이 묶음으로는 <strong className="hj-hl" style={{ fontWeight: 800 }}>{lack}운</strong>이 모자라요</>}
+                </div>
+                <div style={{ marginTop: 4, fontSize: 14, color: C.inkSoft, lineHeight: 1.6 }}>
+                  {selectedPkg.bonusUn > 0
+                    ? `${selectedPkg.paidUn}운에 보너스 ${selectedPkg.bonusUn}운을 더해 ${selectedPkg.un}운이 들어와요. `
+                    : `${selectedPkg.un}운이 들어와요. `}
+                  {usesBalance ? `지금 있는 ${balance}운과 합쳐서 봐요. ` : ''}
+                  {enough
+                    ? (redirectTo ? '결제하면 바로 풀이로 돌아가요.' : '남은 운은 다음 풀이에 쓸 수 있어요.')
+                    : (bigger ? '더 큰 묶음을 고르면 바로 볼 수 있어요.' : '')}
+                </div>
+              </>
+            );
+          })()}
           <div style={{ marginTop: 6, fontSize: 13, color: C.mute }}>1운은 500원이에요</div>
         </div>
       )}

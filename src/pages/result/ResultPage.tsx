@@ -113,6 +113,7 @@ function PremiumDarkHeader({
   // mockup .header 진본 — 좌: ← / 중: title + sub / 우: badge "10운"
   return (
     <header
+      data-premium-header=""
       style={{
         background: '#1A1612', // 2026-10-13 v9 먹 단색
         color: '#fff',
@@ -641,6 +642,18 @@ export function ResultPage(props: ResultPageProps = {}) {
   // premium 스트리밍 진행 중(전 그룹 도착 전) — 상단 배너 게이트용
   const isPremiumStreamingIncomplete =
     isPremiumStreaming && !(arrivedGroups.A && arrivedGroups.D && arrivedGroups.B && arrivedGroups.C);
+  // 2026-10-27 진행 배너는 머리 띠 바로 아래에 붙는다 — 머리 띠 높이를 재서 쓴다(기기 글자 크기에 따라 71px 안팎)
+  const [premiumHeaderH, setPremiumHeaderH] = useState(72);
+  useEffect(() => {
+    if (!isPremiumStreamingIncomplete) return;
+    const measure = () => {
+      const h = document.querySelector('[data-premium-header]')?.getBoundingClientRect().height;
+      if (h && h > 0) setPremiumHeaderH(Math.round(h));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [isPremiumStreamingIncomplete]);
   // 2026-06-24 — 인플루언서 피드백: 부분 결과를 먼저 보여주면 fallback→AI 로 '읽는 도중 내용이 바뀌어' 혼란
   //   ("로딩중이었구나"). → 완성본만 노출. 전 그룹(A·B·C) 도착 전엔 premium·basic 모두 AILoading 유지(절대 부분 X).
   // 4그룹(premium A·D·B·C)
@@ -995,7 +1008,8 @@ export function ResultPage(props: ResultPageProps = {}) {
           {isPremiumLayout && isPremiumStreamingIncomplete && (
             // 2026-10-25 v9 — 그라데이션과 금색 상태 표시를 걷어 내고 종이 바탕에 먹 (금색은 누르는 주 버튼에만)
             <div style={{
-              position: 'sticky', top: 56, zIndex: 40,
+              // 2026-10-27 머리 띠 높이(약 71px, 글자 크기 설정에 따라 다름)를 재서 그 아래에 붙인다. 56 이면 위가 머리 띠에 가려 잘렸다(지인 VOC 사진)
+              position: 'sticky', top: premiumHeaderH, zIndex: 40,
               margin: '0 16px 14px',
               background: '#FFFDF8',
               border: '1px solid rgba(26,22,18,0.18)',

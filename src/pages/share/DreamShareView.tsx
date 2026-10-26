@@ -12,6 +12,7 @@ import { GoldCta, GhostButton, Verdict, Note, SectionHead, INK_HERO_BG, SERIF, H
 import { isAppsInToss } from '@/services/payment/iapService';
 import { isAppintosBuild } from '@/lib/env';
 import type { DreamShareDoc } from '@/services/share/dreamShare';
+import { realName } from '@/utils/personName';
 
 export function DreamShareView({ data }: { data: DreamShareDoc }) {
   const navigate = useNavigate();
@@ -19,7 +20,9 @@ export function DreamShareView({ data }: { data: DreamShareDoc }) {
   useEffect(() => {
     import('@/services/analytics').then((a) => a.trackEvent('share_view', { type: 'dream' })).catch(() => {});
   }, []);
-  const who = data.name ? `${data.name} 님이` : '친구가';
+  // 2026-10-26 — realName 을 거친다. 무료 만세력 프로필 이름 '나' 가 그대로 '나 님이 보낸 꿈 풀이'로 나갔다
+  const nm = realName(data.name);
+  const who = nm ? `${nm} 님이` : '친구가';
 
   return (
     <div className="min-h-screen" style={{ background: HJ.paper }}>

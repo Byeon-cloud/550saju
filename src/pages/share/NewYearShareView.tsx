@@ -14,6 +14,7 @@ import { isAppintosBuild } from '@/lib/env';
 import { ROLE_PLAIN, yearSentence, months, topic } from '@/components/newyear/NewYearPreviewCard';
 import { ganziKo } from '@/services/saju/newYearPreview';
 import type { NewYearShareDoc } from '@/services/share/newYearShare';
+import { realName } from '@/utils/personName';
 
 export function NewYearShareView({ data }: { data: NewYearShareDoc }) {
   const navigate = useNavigate();
@@ -22,6 +23,9 @@ export function NewYearShareView({ data }: { data: NewYearShareDoc }) {
     import('@/services/analytics').then((a) => a.trackEvent('share_view', { type: 'newyear' })).catch(() => {});
   }, []);
   const utm = (c: string) => `utm_source=share&utm_medium=newyear&utm_campaign=${c}`;
+  // 2026-10-26 — 보낸 사람 이름은 realName 을 거친다. 무료 만세력 프로필 이름 '나' 와 이름이 없을 때 서버가 넣던 '보낸 분' 이
+  //   그대로 '나 님의 2027년', '보낸 분 님에게' 로 나갔다. 부를 이름이 없으면 '님' 없이 쓴다.
+  const nm = realName(data.name === '보낸 분' ? '' : data.name);
 
   const Row = ({ label, value }: { label: string; value: string }) => (
     <div style={{ display: 'flex', gap: 14, padding: '12px 2px', borderBottom: `1px solid ${HJ.line}` }}>
@@ -36,7 +40,7 @@ export function NewYearShareView({ data }: { data: NewYearShareDoc }) {
       <div style={{ background: INK_HERO_BG, color: '#F4EFE4', padding: '30px 20px 26px' }}>
         <p style={{ fontSize: 14, color: '#CFC6B6', fontWeight: 700 }}>받은 신년운세 미리 보기</p>
         <h1 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 26, lineHeight: 1.4, margin: '8px 0 0', wordBreak: 'keep-all' }}>
-          {data.name} 님의 {data.y} {ganziKo(data.gz)}({data.gz})년
+          {nm ? `${nm} 님의 ` : ''}{data.y} {ganziKo(data.gz)}({data.gz})년
         </h1>
       </div>
 
@@ -44,7 +48,7 @@ export function NewYearShareView({ data }: { data: NewYearShareDoc }) {
         <FadeIn>
           <div style={{ background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, padding: '18px 18px 14px' }}>
             <p style={{ fontSize: 15.5, lineHeight: 1.75, color: HJ.ink2 }}>
-              {data.y}년은 {data.name} 님에게 {yearSentence(data.verdict)}
+              {data.y}년은 {nm ? `${nm} 님에게` : '보낸 사람에게'} {yearSentence(data.verdict)}
             </p>
             {data.g && data.b && ROLE_PLAIN[data.r1] && ROLE_PLAIN[data.r2] && (
               <p style={{ fontSize: 13.5, lineHeight: 1.7, color: HJ.mute, marginTop: 6 }}>
@@ -57,7 +61,7 @@ export function NewYearShareView({ data }: { data: NewYearShareDoc }) {
               {data.km > 0 && data.kd > 0 && <Row label="꼭 기억할 날" value={`${data.km}월 ${data.kd}일${data.kn > 1 ? ` 외 ${data.kn - 1}일` : ''}`} />}
             </div>
             <p style={{ fontSize: 13.5, lineHeight: 1.7, color: HJ.mute, marginTop: 10 }}>
-              {data.name} 님 사주로 계산한 표예요. 같은 해라도 사람마다 좋은 달이 달라요.
+              {nm ? `${nm} 님` : '보낸 사람'} 사주로 계산한 표예요. 같은 해라도 사람마다 좋은 달이 달라요.
             </p>
           </div>
         </FadeIn>

@@ -50,7 +50,7 @@ export async function fetchNewYearShare(id: string): Promise<NewYearShareDoc | n
     const d = snap.data() as any;
     const nums = (v: unknown) => (Array.isArray(v) ? v.map(Number).filter((m) => m >= 1 && m <= 12) : []);
     return {
-      name: String(d.name || '보낸 분'),
+      name: String(d.name || ''),
       y: Number(d.y) || 0,
       gz: String(d.gz || ''),
       verdict: String(d.verdict || ''),

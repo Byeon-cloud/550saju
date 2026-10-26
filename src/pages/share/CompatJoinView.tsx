@@ -5,7 +5,7 @@
  *   두 사람 모두 무료로 본다. 전체 풀이(3운)는 지금 궁합 결과 화면으로 보낸다(상대 사주는 생년월일 없이 서버가 넘겨준다).
  *   내 생일은 보낸 사람에게 보이지 않는다. 초대 링크(inv)로 처음 온 사람이면 아래에 친구 초대 선물 카드도 보인다.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FadeIn } from '@/components/common/FadeIn';
 import { GoldCta, GhostButton, SectionHead, INK_HERO_BG, SERIF, HJ } from '@/components/hanji/Hanji';
@@ -61,14 +61,20 @@ export function CompatJoinView({ id }: { id: string }) {
     }
   }
 
+  // 2026-10-26 — 두 번 누름 막기. 화면 전환 애니메이션(0.12초) 동안 이 화면이 남아 눌려서 3운이 두 번 빠지고
+  //   두 번째 3운은 돌아오지 않았다(궁합 화면의 isSubmittingRef 와 같은 막기). 충전에 다녀와 다시 누를 수 있게 1초 뒤 푼다
+  const fullBusyRef = useRef(false);
   function fullReading() {
-    if (!me || !other) return;
+    if (!me || !other || fullBusyRef.current) return;
+    fullBusyRef.current = true;
+    setTimeout(() => { fullBusyRef.current = false; }, 1000);
     if (!spendBalance(cost)) {
       navigate('/charge', { state: { from: 'compat', message: `궁합 전체 풀이에 ${cost}운이 필요해요`, returnTo: `/share/cjoin/${id}` } });
       return;
     }
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: cost, via: 'cjoin' })).catch(() => {});
-    markPendingSpend('compat', cost);
+    // 2026-10-26 — 장부 id 를 결과 화면에 넘긴다 (결과 화면은 이 장부가 있을 때만 생성하고 이 건만 정리한다)
+    const pendingId = markPendingSpend('compat', cost);
     const n1 = realName(view?.n1) || realName(other?.input?.name) || '상대';
     navigate('/compat/result', {
       state: {
@@ -76,6 +82,7 @@ export function CompatJoinView({ id }: { id: string }) {
         person2: { id: `cj_${id}`, name: n1, sajuData: other, input: other?.input || { name: n1 } },
         relation: view?.rel || '연인',
         cost,
+        pendingId,
       },
     });
   }

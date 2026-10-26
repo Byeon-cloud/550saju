@@ -14,6 +14,9 @@
  *   - 해결: 공유 URL 에 query string 으로 name(n) + ilju(i) 전달
  *     예: /saju-card/abc123?n=%ED%99%8D%EA%B8%B8%EB%8F%99&i=%E8%BE%9B%E4%BA%A5
  *   - profileId 는 SPA 진입 후 본인 카드 매칭용 (다른 사람 클릭 시 fallback /storage)
+ *   - 2026-10-26 — n(이름)은 더 쓰지 않는다. 10-15 부터 공유 링크에 이름을 넣지 않아 새 링크는 모두 이름이 비어 있었고,
+ *     그때 제목이 '내님의 사주 카드'(띄어쓰기도 틀린 말)로 나가 그림('나의 사주 카드')과 달랐다. 옛 링크의 n 도 아무 글자나
+ *     넣을 수 있는 값이라 제목과 그림 모두 '나의 사주 카드'로 맞춘다. i 는 60갑자 일주만 받는다(renderSajuCardOgImage.sajuCardIlju).
  *
  * Firebase Hosting 설정 필요 (firebase.json):
  *   rewrites:
@@ -29,6 +32,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.renderSajuCardOg = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const renderSajuCardOgImage_1 = require("./renderSajuCardOgImage");
 /** 봇 UA 식별 — 주요 messenger/SNS 크롤러 (E32 와 동일 정규식) */
 const BOT_UA_RE = /bot|crawler|spider|facebookexternalhit|twitterbot|slackbot|linkedinbot|kakaotalk|telegrambot|discordbot|whatsapp|line-poker|google|bing|yandex|baidu/i;
 function escapeHtml(s) {
@@ -44,21 +48,19 @@ function extractProfileId(path) {
     const m = path.match(/^\/saju-card\/([A-Za-z0-9_\-:.]{4,128})\/?$/);
     return m ? m[1] : null;
 }
-/** 봇 대상 SSR HTML — name + ilju query 로 개인화된 OG 메타 */
+/** 봇 대상 SSR HTML — ilju(검증된 60갑자 일주) 로 만든 OG 메타 */
 function buildBotHtml(params) {
-    const { origin, profileId, name, ilju } = params;
+    const { origin, profileId, ilju } = params;
     const shareUrl = `${origin}/saju-card/${profileId}`;
-    // 동적 OG PNG URL — name/ilju 그대로 query 전달
-    const ogImageQuery = new URLSearchParams();
-    if (name)
-        ogImageQuery.set('n', name);
-    if (ilju)
-        ogImageQuery.set('i', ilju);
-    const ogImage = `${origin}/api/saju-card-og.png${ogImageQuery.toString() ? '?' + ogImageQuery.toString() : ''}`;
-    // 카피 — Stage 3 buildShareTextAndUrl 과 일관
-    const safeName = name || '내';
-    const title = `${safeName}님의 사주 카드`;
-    const description = `${ilju ? `일주 ${ilju}, ` : ''}사주500 에서 풀이 받기 (500원~)`;
+    // 동적 OG PNG URL — 2026-10-26 그림 주소는 ?i=일주 하나만(그림 쪽 캐시 주소와 같게). 일주가 없으면 정적 무료 만세력 그림
+    const ogImage = ilju
+        ? `${origin}/api/saju-card-og.png?i=${encodeURIComponent(ilju)}`
+        : `${origin}/og/manse.jpg`;
+    // 카피 — 2026-10-26 그림(renderSajuCardOgImage)과 같은 제목. 예전 설명의 '(500원~)'은 1운 기본 리포트(07-01 폐기) 시절 값이라 뺐다
+    const title = '나의 사주 카드';
+    const description = ilju
+        ? `${(0, renderSajuCardOgImage_1.iljuKoOf)(ilju)}(${ilju}) 일주의 사주 카드예요. 생일만 넣으면 내 사주 카드도 무료로 만들어요.`
+        : '사주 여덟 글자와 오행을 한 장에 담은 사주 카드예요. 생일만 넣으면 내 사주 카드도 무료로 만들어요.';
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -106,14 +108,13 @@ exports.renderSajuCardOg = (0, https_1.onRequest)({ timeoutSeconds: 10, memory: 
             return;
         }
         const origin = `https://${req.hostname}`;
-        const name = String(req.query.n || '').slice(0, 40);
-        const ilju = String(req.query.i || '').slice(0, 4);
+        const ilju = (0, renderSajuCardOgImage_1.sajuCardIlju)(req.query.i); // 2026-10-26 — n 은 읽지 않는다(위 머리말)
         // 봇: SSR OG HTML
         if (BOT_UA_RE.test(ua)) {
             res.set('Content-Type', 'text/html; charset=utf-8');
-            // 5분 CDN edge cache — name+ilju 가 같으면 same URL 으로 캐시 hit
+            // 5분 CDN edge cache — 같은 주소면 캐시 hit
             res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
-            res.status(200).send(buildBotHtml({ origin, profileId, name, ilju }));
+            res.status(200).send(buildBotHtml({ origin, profileId, ilju }));
             return;
         }
         // 사람: SPA index.html self-fetch (E32 패턴)

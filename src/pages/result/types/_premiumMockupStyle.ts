@@ -1669,7 +1669,8 @@ export const PREMIUM_MOCKUP_CSS = `/* ==========================================
    *   본문 형광펜(strong)과 밑줄(em)은 승인된 강조 양식이라 유지. 오행 막대는 새 오행색(송록, 석간주, 황토, 은회, 쪽빛) 단색. */
   .premium-mockup .wongug { background: #FFFDF8; }
   .premium-mockup .wongug-cell.ilju { background: rgba(184,150,90,.12); }
-  .premium-mockup .wongug-cell.ilju .sip-tag { background: transparent; border: 1px solid rgba(140,109,61,.7); color: #7A5C2E; }
+  /* 2026-10-27 일주 이름표는 칸의 금 테두리 위에 걸쳐 있어 바탕이 비치면 테두리 선이 글자를 가로질렀다(지인 VOC 사진) → 다른 칸처럼 불투명 바탕 */
+  .premium-mockup .wongug-cell.ilju .sip-tag { background: #FFFDF8; border: 1px solid rgba(140,109,61,.7); color: #7A5C2E; }
   .premium-mockup .o-mok  .o-fill { background: #4E7A57; }
   .premium-mockup .o-hwa  .o-fill { background: #B04A38; }
   .premium-mockup .o-to   .o-fill { background: #B07F38; }

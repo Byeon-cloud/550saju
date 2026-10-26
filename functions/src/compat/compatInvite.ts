@@ -105,6 +105,23 @@ export function quickCompat(a: any, b: any, n1: string, n2: string): { score: nu
   return { score, good: good.slice(0, 3), care: care.slice(0, 2), head };
 }
 
+/**
+ * 2026-10-26 — 3운 궁합 풀이(claudeCompat)의 종합 점수를 무료 초대장 점수와 같게 고정하는 값.
+ *   초대장 답하기(answerCompatInvite)와 같은 정리(stripSaju: 한글 간지 → 한자, 오행 0~8)를 거쳐 같은 규칙 계산을 한다.
+ *   quickCompat 점수는 두 사람 순서와 무관하다(모든 규칙이 양방향 쌍 검사, 오행 보완은 양쪽을 더함).
+ *   그래서 보낸 사람이 (나, 상대)로, 받은 사람이 (나, 보낸 사람)으로 풀이를 사도 초대장과 같은 숫자가 나온다.
+ *   일기둥이 없어 계산할 수 없으면 null (그때는 예전처럼 AI 점수).
+ */
+export function quickCompatScore(d1: any, d2: any): number | null {
+  try {
+    const a = stripSaju(d1, 'a');
+    const b = stripSaju(d2, 'b');
+    if (!a || !b) return null;
+    const s = quickCompat(a, b, 'a', 'b').score;
+    return Number.isFinite(s) ? s : null;
+  } catch { return null; }
+}
+
 /** 보내는 사람 — 초대장 만들기 */
 export const createCompatInvite = onCall(
   { timeoutSeconds: 15, memory: '256MiB', minInstances: 0, cors: true, invoker: 'public' },

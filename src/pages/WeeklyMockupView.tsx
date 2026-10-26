@@ -544,7 +544,8 @@ export function WeeklyMockupView(props: WeeklyMockupViewProps) {
             {chartData.length > 0 && (
               <div className="week-chart">
                 <div className="ttl">이번 주 흐름</div>
-                <div className="sub">7일 점수 추이 (요일별)</div>
+                {/* 2026-10-27 새 결과는 8칸(어제 + 오늘부터 7일) */}
+                <div className="sub">{days.length >= 8 ? '어제와 오늘부터 7일 점수 추이' : '7일 점수 추이 (요일별)'}</div>
                 <div className="chart-wrap">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -4, bottom: 0 }} /* 2026-10-10 — left -22 가 Y축(폭 36)을 잘라 '100·75·50' 이 끝자리만 보이던 버그 */>

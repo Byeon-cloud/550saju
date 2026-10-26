@@ -8,7 +8,11 @@ import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { getBalance, addPaidBalance } from '@/services/storage/localStore';
+import { getBalance, getBalanceBreakdown, addPaidBalance, getReports, type LocalReport } from '@/services/storage/localStore';
+import { routeForReport, reportName, LOCKDOWN_CONTENT } from '@/services/storage/reportRoute';
+import { stripDotsDeep } from '@/utils/noDot';
+import { realName } from '@/utils/personName';
+import { openRefundRequest } from '@/services/payment/refundRequest';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { isAppintosBuild } from '@/lib/env';
 import { useToast } from '@/components/common/Toast';
@@ -145,6 +149,15 @@ export function MyPage() {
   const [showConsent, setShowConsent] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  // 2026-10-26 — 탈퇴 확인 창을 열 때의 잔액 (탈퇴하면 남은 운이 사라진다는 안내용. 결제 운은 환불 요청 길도 함께)
+  const [withdrawBal, setWithdrawBal] = useState<{ total: number; paid: number }>({ total: 0, paid: 0 });
+  const openWithdraw = () => {
+    try {
+      const d = getBalanceBreakdown();
+      setWithdrawBal({ total: getBalance(), paid: Math.round((Number(d.paid) || 0) * 10) / 10 });
+    } catch { setWithdrawBal({ total: getBalance(), paid: 0 }); }
+    setShowWithdraw(true);
+  };
 
   /* 잔액 동기화 */
   useEffect(() => {
@@ -278,6 +291,9 @@ export function MyPage() {
 
         {/* Stage 7e-5: ProfileHeader 가 만세력 요약 + 사주 카드 진입을 모두 흡수 */}
 
+        {/* 2026-10-27 지인 VOC '최근에 본 사주 내용이 마이페이지에서 정리되면 좋겠다' — 이 기기 보관함의 최근 세 건 */}
+        <RecentReports />
+
         {/* ── MenuList (§4) ── */}
         <div className="rounded-2xl overflow-hidden mb-3"
           style={{ background: '#FFFFFF', border: `1px solid ${C.line}` }}>
@@ -373,7 +389,7 @@ export function MyPage() {
             <span style={{ color: C.line }}>|</span>
             <button
               type="button"
-              onClick={() => setShowWithdraw(true)}
+              onClick={openWithdraw}
               style={{ background: 'transparent', border: 'none', color: C.danger, fontSize: 13.5, cursor: 'pointer' }}
             >
               회원탈퇴
@@ -427,6 +443,28 @@ export function MyPage() {
         <p className="text-body-sm text-text-secondary leading-relaxed mb-2">
           탈퇴하면 사주 분석 기록, 프로필, 대화 기록이 모두 삭제되며 되돌릴 수 없어요.
         </p>
+        {/* 2026-10-26 — 탈퇴하면 운 잔액도 서버와 이 기기에서 지워진다(purgeUser, clearLocalLibrary). 예전엔 이 창에 그 말이 없었다.
+         *   쓰지 않은 결제 운은 약관 제6조대로 7일 안 환불 요청 길을 탈퇴 전에 알린다 (탈퇴 뒤엔 회원 ID 를 채울 수 없다) */}
+        {withdrawBal.total > 0 && (
+          <p style={{ fontSize: 15, color: C.ink, lineHeight: 1.6, fontWeight: 600, marginBottom: 8 }}>
+            남은 <b style={{ fontWeight: 800 }}>{withdrawBal.total}운</b>은 탈퇴하면 사라지고 돌려드릴 수 없어요.
+          </p>
+        )}
+        {!inAppsInToss && withdrawBal.paid > 0 && (
+          <div style={{ marginBottom: 8 }}>
+            <p style={{ fontSize: 14, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+              쓰지 않은 결제 운은 결제일로부터 7일 안이면 탈퇴하기 전에 환불을 요청할 수 있어요.
+            </p>
+            <button
+              type="button"
+              onClick={() => { void openRefundRequest(); }}
+              disabled={withdrawing}
+              style={{ minHeight: 44, padding: '0 2px', background: 'transparent', border: 'none', color: C.ink, fontSize: 15, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer' }}
+            >
+              환불 요청하기
+            </button>
+          </div>
+        )}
         <p className="text-caption text-text-muted leading-relaxed mb-5">
           단, 전자상거래법에 따라 결제 기록은 5년 동안 따로 보관해요.
         </p>
@@ -499,6 +537,52 @@ const OHENG_BOX_MY: Record<OhengType, { bg: string; fg: string; outline: string 
 };
 
 /** 웹 로그인 계정 한 줄 — '네이버 계정으로 로그인했어요, abc@naver.com' */
+/** 최근 본 풀이 세 건 (2026-10-27) — 누르면 보관함과 같은 길로 다시 연다(reportRoute.ts). 기록이 없으면 그리지 않는다 */
+function RecentReports() {
+  const navigate = useNavigate();
+  const items = useMemo(() => {
+    try {
+      return getReports()
+        .filter((r) => r?.createdAt && !LOCKDOWN_CONTENT.has(r.contentType as string) && (r.aiResult || r.contentType === 'report'))
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+        .slice(0, 3);
+    } catch { return [] as LocalReport[]; }
+  }, []);
+  if (!items.length) return null;
+  const open = (r: LocalReport) => {
+    const route = routeForReport(r);
+    if (!route) { navigate('/storage'); return; }
+    const sep = route.includes('?') ? '&' : '?';
+    const shown = r.aiResult ? { ...r, aiResult: stripDotsDeep(r.aiResult, r.name) } : r;
+    navigate(`${route}${sep}reportId=${encodeURIComponent(r.id)}`, { state: { savedResult: shown.aiResult, savedReport: shown } });
+  };
+  const dateOf = (at: string | number) => {
+    const d = new Date(new Date(at).getTime() + 9 * 3600e3);
+    return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`;
+  };
+  return (
+    <section className="rounded-2xl overflow-hidden mb-3" style={{ background: '#FFFFFF', border: `1px solid ${C.line}` }}>
+      <div style={{ padding: '14px 20px 4px', fontSize: 13.5, fontWeight: 700, color: C.mute }}>최근 본 풀이</div>
+      {items.map((r) => (
+        <button key={r.id} type="button" onClick={() => open(r)} className="w-full flex items-center gap-3 px-5 text-left mo-press"
+          style={{ minHeight: 58, background: 'transparent', borderBottom: `1px solid ${C.line}` }}>
+          <span className="flex-1" style={{ minWidth: 0 }}>
+            <span style={{ display: 'block', fontSize: 16, fontWeight: 700, color: C.ink }}>{reportName(r)}</span>
+            <span style={{ display: 'block', fontSize: 13.5, color: C.mute, marginTop: 1 }}>
+              {realName(r.name) ? `${realName(r.name)} 님, ` : ''}{dateOf(r.createdAt)}
+            </span>
+          </span>
+          <ChevronRightIcon />
+        </button>
+      ))}
+      <button type="button" onClick={() => navigate('/storage')} className="w-full text-center"
+        style={{ minHeight: 48, background: 'transparent', fontSize: 15, fontWeight: 700, color: C.ink }}>
+        보관함에서 전부 보기 ›
+      </button>
+    </section>
+  );
+}
+
 function LoginAccountLine({ user }: { user: any }) {
   // 2026-10-26 앱은 토스 로그인만 — 소셜 로그인 이름(네이버, 카카오 등)이 앱 번들에 남지 않게 빌드 상수로 통째로 뺀다(1.6.3 검수 반려)
   if (import.meta.env.VITE_BUILD_TARGET === 'appintos') return null;

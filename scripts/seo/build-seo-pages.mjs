@@ -54,6 +54,8 @@ const deadlineMailLink = (slug) => {
 };
 const yearGz = data.yearGz; // 丁未
 
+// 2026-10-26 — 사업자 정보가 들어가는 아래 .foot 가 12px #A69C8E(종이 위 대비 약 2.4:1)였다 → 13px #6F6557(약 5:1, v9 보조 글자색)
+//   만세력 예시 칸 글씨(.mc span)도 12.5px → 13px. 오늘의 띠, 일주 운세(functions/src/seo/ttiTodayPage.ts, iljuTodayPage.ts)도 같은 .foot 를 쓴다.
 const CSS = `
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#F4EFE4;color:#1A1612;font-family:Pretendard,-apple-system,sans-serif;line-height:1.75;-webkit-text-size-adjust:100%;word-break:keep-all}
@@ -88,8 +90,8 @@ a{color:inherit}
 .list h3{font-size:17px;font-weight:800;margin-bottom:4px}.list h3 small{font-weight:500;font-size:13.5px;color:#6F6557;margin-left:6px}
 .list p{font-size:15.5px;color:#2E2720}.list a.more{font-size:14.5px;font-weight:700;color:#7A5C2E}
 .note{font-size:13.5px;color:#6F6557;margin-top:18px}
-.foot{margin-top:34px;border-top:1px solid #E1D7C4;padding:16px 0 30px;text-align:center;font-size:12px;color:#A69C8E;line-height:1.7}
-.foot a{color:#A69C8E;margin:0 6px;text-decoration:none}.foot a.b{font-weight:700}
+.foot{margin-top:34px;border-top:1px solid #E1D7C4;padding:16px 0 30px;text-align:center;font-size:13px;color:#6F6557;line-height:1.7}
+.foot a{color:#6F6557;margin:0 6px;text-decoration:none}.foot a.b{font-weight:700}
 .gr{font-weight:800;color:#7A5C2E}.gr.warn{color:#A23A2A}
 .case{padding:14px 0;border-top:1px solid #E1D7C4}.case:first-child{border-top:0;padding-top:0}
 .case h3{font-size:16.5px;font-weight:800;margin-bottom:3px;display:flex;justify-content:space-between;gap:10px}.case h3 .gr{font-size:14px;flex-shrink:0}
@@ -730,7 +732,7 @@ ${SKY_CSS}
 .mtable{display:flex;gap:6px}.mcol{flex:1;display:flex;flex-direction:column;gap:6px}
 .mlab{text-align:center;font-size:13px;font-weight:700;color:#6F6557}
 .mc{border-radius:12px;background:var(--c);color:#fff;text-align:center;padding:10px 0 8px}
-.mc b{display:block;font-family:'Noto Serif KR',serif;font-size:30px;line-height:1.1}.mc span{font-size:12.5px;opacity:.9}
+.mc b{display:block;font-family:'Noto Serif KR',serif;font-size:30px;line-height:1.1}.mc span{font-size:13px}
 .mc.me{box-shadow:0 0 0 3px #FFFDF8,0 0 0 5px #B8965A}
 .excap{font-size:13.5px;color:#6F6557;margin-top:10px}
 @media (max-width:420px){.mhero .sky{width:460px;height:460px;right:-170px;top:-60px;opacity:.7}.mhero h1{font-size:27px}}

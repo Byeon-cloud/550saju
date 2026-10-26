@@ -108,14 +108,15 @@ export function CompatibilityPage() {
       }
       // 측정 — 운 차감 성공 직후 (C1 · fire-and-forget)
       import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: COMPAT_COST })).catch(() => {});
-      // 2026-06-18 머니세이프 — 결과 페이지 이동/생성 중 앱 종료 시 부팅 reconcile 이 5분 후 자동환불.
-      //   (CompatResultPage 가 결과 저장/실패환불 시 clearPendingSpendByType('compat') 로 해제)
-      markPendingSpend('compat', COMPAT_COST);
+      // 2026-06-18 머니세이프 — 결과 페이지 이동/생성 중 앱 종료 시 부팅 reconcile 이 12분 후 자동환불.
+      //   2026-10-26 — 장부 id(pendingId)를 결과 화면에 넘긴다. 결과 화면은 이 장부가 남아 있을 때만 생성하고,
+      //   저장/실패환불 때 이 건만 지운다(clearPendingSpend). 뒤로 오기나 새로고침으로 다시 생성하거나 내지 않은 운을 돌려주지 않게.
+      const pendingId = markPendingSpend('compat', COMPAT_COST);
       toast.show(`${COMPAT_COST}운이 차감됐어요`, 'info');
       const rel = relation === '기타' ? customRelation || '기타' : relation;
       // P2-3 · 궁합 상대방 최근 목록 기록 (person2 = 상대방). MRU 최상단.
       if (person2?.id) addRecentPartner(person2.id);
-      navigate('/compat/result', { state: { person1, person2, relation: rel, cost: COMPAT_COST } });
+      navigate('/compat/result', { state: { person1, person2, relation: rel, cost: COMPAT_COST, pendingId } });
     } finally {
       // 네비게이션 후 페이지 전환되므로 ref만 300ms 뒤 풀어줌 (뒤로 돌아올 때 재시도 가능)
       setTimeout(() => { isSubmittingRef.current = false; setIsSubmitting(false); }, 300);

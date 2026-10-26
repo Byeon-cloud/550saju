@@ -3,7 +3,7 @@
  *   상대 생일을 몰라도 궁합을 시작할 수 있게. 상대가 답하면 두 사람 모두 무료 점수와 한 줄 풀이를 보고,
  *   나는 여기서 바로 전체 풀이(3운)로 갈 수 있다. 상대 생년월일은 나에게 오지 않는다(서버가 생년월일 없는 사주만 준다).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HJ, SERIF } from '@/components/hanji/Hanji';
 import { useToast } from '@/components/common/Toast';
@@ -44,16 +44,23 @@ export function CompatInviteBox({ me, relation }: { me: any | null; relation: st
     }
   }
 
+  // 2026-10-26 — 두 번 누름 막기. 화면 전환 애니메이션(0.12초) 동안 이 버튼이 남아 눌려서 3운이 두 번 빠지고
+  //   두 번째 3운은 돌아오지 않았다. 충전에 다녀와 다시 누를 수 있게 1초 뒤 푼다
+  const fullBusyRef = useRef(false);
   function full(it: MyInvite) {
+    if (fullBusyRef.current) return;
     if (!me?.sajuData || !it.other) { toast.show('먼저 왼쪽에서 내 사주를 골라 주세요', 'info'); return; }
+    fullBusyRef.current = true;
+    setTimeout(() => { fullBusyRef.current = false; }, 1000);
     if (!spendBalance(cost)) {
       navigate('/charge', { state: { from: 'compat', message: `궁합 분석에 ${cost}운이 필요해요`, returnTo: window.location.pathname + window.location.search } });
       return;
     }
     import('@/services/analytics').then((a) => a.trackEvent('content_purchase', { type: 'compat', amount: cost, via: 'cjoin_sender' })).catch(() => {});
-    markPendingSpend('compat', cost);
+    // 2026-10-26 — 장부 id 를 결과 화면에 넘긴다 (결과 화면은 이 장부가 있을 때만 생성하고 이 건만 정리한다)
+    const pendingId = markPendingSpend('compat', cost);
     const n2 = it.n2 || it.other?.input?.name || '상대';
-    navigate('/compat/result', { state: { person1: me, person2: { id: `cj_${it.id}`, name: n2, sajuData: it.other, input: it.other?.input || { name: n2 } }, relation: it.rel || relation || '연인', cost } });
+    navigate('/compat/result', { state: { person1: me, person2: { id: `cj_${it.id}`, name: n2, sajuData: it.other, input: it.other?.input || { name: n2 } }, relation: it.rel || relation || '연인', cost, pendingId } });
   }
 
   return (
@@ -83,7 +90,7 @@ export function CompatInviteBox({ me, relation }: { me: any | null; relation: st
                 <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 900, color: HJ.ink }}>{it.score}<small style={{ fontSize: 13, marginLeft: 2 }}>점</small></span>
               )}
               {it.status === 'answered' && (
-                <button type="button" onClick={() => full(it)} style={{ fontSize: 14, fontWeight: 700, color: HJ.goldText, background: 'none', border: 0, padding: '6px 2px' }}>
+                <button type="button" onClick={() => full(it)} style={{ fontSize: 14, fontWeight: 700, color: HJ.goldText, background: 'none', border: 0, padding: '0 8px', minHeight: 44 /* 2026-10-26 누르는 칸 44px (예전 약 33px) */ }}>
                   전체 풀이 {cost}운
                 </button>
               )}

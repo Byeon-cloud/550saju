@@ -5,6 +5,7 @@ import { MYEONGRI_GROUNDS_BLOCK, parseJsonResponse } from './promptsV3';
 import { kstNow } from '../utils/kstTime';
 import { Solar } from 'lunar-javascript';
 import { sanitizeAiOutput } from './sajuFacts';
+import { quickCompatScore } from '../compat/compatInvite'; // 2026-10-26 종합 점수를 무료 초대장 점수와 같게
 
 /**
  * 두 사주 간 자동 관계 분석 (정통 명리학 산출 결과 주입)
@@ -149,7 +150,11 @@ function computeCrossRelations(d1: any, d2: any): string {
 
 export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: any, sajuData2: any, relation: string): Promise<any> {
   const anthropic = createClaude(apiKey);
-  const prompt = buildPrompt(sajuData1, sajuData2, relation);
+  // 2026-10-26 — 종합 점수 고정. 무료 초대장(answerCompatInvite)은 규칙 계산 점수(예: 80점)를 보여 주고 바로 아래에서 3운 풀이를 파는데,
+  //   풀이는 AI 가 점수를 골라 67점처럼 다른 숫자가 나왔다. 초대장과 같은 계산(quickCompatScore, 두 사람 순서와 무관)으로 정해
+  //   프롬프트에 고정값으로 넣고, 생성 뒤에도 덮어쓴다(주제운 enforceTopicBaseScore 와 같은 방식). 초대장이 아닌 궁합도 같은 두 사주면 같은 점수.
+  const pinned = quickCompatScore(sajuData1, sajuData2);
+  const prompt = buildPrompt(sajuData1, sajuData2, relation, pinned);
 
   const msg = await anthropic.messages.create({
     model: CLAUDE_MODEL.sonnet,
@@ -159,7 +164,9 @@ export async function generateCompatibilityAnalysis(apiKey: string, sajuData1: a
 
   const text = (msg.content[0] as any).text;
   // 2026-10-04 궁합 공개 — 공용 파서(코드블록·잘린 JSON 복구) + 출처·오기 한자·시간 표기 정리
-  return sanitizeAiOutput(parseJsonResponse(text));
+  const out: any = sanitizeAiOutput(parseJsonResponse(text));
+  if (pinned != null && out && typeof out === 'object') out.overallScore = pinned;
+  return out;
 }
 
 /* 2026-10-15 궁합 품질 점검(50대 부부 시험)에서 나온 흠 수리
@@ -228,7 +235,11 @@ function sharedLuckyText(d1: any, d2: any): string {
     : '\n함께 쓰는 공간의 색과 방위: 두 사람 모두에게 맞는 오행이 없으니 공용 색은 권하지 않는다(사람별로만).';
 }
 
-function buildPrompt(d1: any, d2: any, rel: string): string {
+function buildPrompt(d1: any, d2: any, rel: string, pinned: number | null = null): string {
+  // 2026-10-26 — 서버가 정한 종합 점수 (null 이면 예전처럼 AI 가 매긴다)
+  const pinnedRule = pinned != null
+    ? `\n🚨 **종합 점수 고정 (2026-10-26)**: overallScore 는 서버가 두 사주의 일간, 일지, 띠, 오행 보완으로 계산한 ${pinned}점으로 고정한다. 다른 숫자를 쓰지 않는다(5의 배수여도 그대로 ${pinned}). summary 나 본문에서 종합 점수를 말할 땐 ${pinned}점만 쓴다. 다섯 카테고리 점수는 서로 다른 값으로 매기되 평균이 ${pinned}점에서 위아래 5점 안에 들게 한다.\n`
+    : '';
   const relLabels: Record<string, string> = { lover: '연인/배우자', friend: '친구', colleague: '직장동료', family: '가족', business: '사업파트너' };
   const now = kstNow();
   const dateStr = `${now.year}년 ${now.month}월`;
@@ -291,7 +302,7 @@ ${crossRelations}
 
 ## 출력 (JSON만, 코드블록 없이)
 ⚠️ **점수 필드 룰 (2026-05-04 PD 결단)**: 모든 score (categoryScores, subScores, overallScore, monthlyScore, compatScore, careerScore 등) 는 **5의 배수만 반복 금지**. 65, 70, 75, 80 같은 fake 신호 X. 67, 73, 81, 88 같이 자연수로 출력. 같은 카테고리 안 점수가 모두 다른 값이어야 함.
-
+${pinnedRule}
 🚨 **톤 룰 (2026-05-05 PD 결단 — 외계어 X, 일상어 O)**
 
 사용자 피드백:
@@ -359,7 +370,7 @@ ${crossRelations}
 
 
 {
-  "overallScore": 0-100,
+  "overallScore": ${pinned != null ? String(pinned) : '0-100'},
   "relationshipType": "상호보완형/동지형/멘토형/열정형/안정형 중 하나",
   "keywords": ["궁합키워드1","키워드2","키워드3"],
   "summary": "200자 이상. 두 사람의 관계 본질. 🚨 두 사주 cross-relations 1개 이상 직접 호명 mandatory.",

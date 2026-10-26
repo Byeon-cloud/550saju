@@ -57,6 +57,7 @@ import { stripMd } from '@/utils/format';
 // v5 mockup (잠금 5섹션 + 아코디언 + 도식화 + 블러잠금 SSOT) — 2026-05-27 복원
 import { DreamMockupView } from './dream/DreamMockupView';
 import { ReviewAsk } from '@/components/common/ReviewAsk';
+import { realName } from '@/utils/personName';
 
 /**
  * AI V3 schema → DreamMockupView v5 schema 어댑터 (2026-05-27).
@@ -935,7 +936,7 @@ export function DreamPage() {
                       .slice(0, 3);
                     const { createDreamShareId } = await import('@/services/share/dreamShare');
                     const id = await createDreamShareId({
-                      name: profile?.name || '',
+                      name: realName(profile?.name) || '',
                       cat: DREAM_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '',
                       dream: dreamText,
                       title: String(r.title || ''),

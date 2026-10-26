@@ -13,6 +13,7 @@ import { NewYearShareView } from '@/pages/share/NewYearShareView';
 import { CompatJoinView } from '@/pages/share/CompatJoinView';
 import { isCompatInviteId } from '@/services/share/compatInvite';
 import { fetchNewYearShare, isNewYearShareId, type NewYearShareDoc } from '@/services/share/newYearShare';
+import { realName } from '@/utils/personName';
 
 /**
  * 공유 수신 페이지 — 비회원 진입 (2026-05-07 동적화)
@@ -25,6 +26,11 @@ import { fetchNewYearShare, isNewYearShareId, type NewYearShareDoc } from '@/ser
  *   - 둘 다 실패 → 사주 정보 없는 generic CTA (작성자 사주 노출 X)
  *
  * SSR (renderShareOg Cloud Function) 가 OG 미리보기는 별도 처리 — 이 페이지는 SPA fallback.
+ *
+ * 2026-10-26 v9 정리 — 받은 사람이 모두 보는 화면인데 옛 규칙이 남아 있었다.
+ *   먹 머리의 작은 글씨가 흰색 30%(대비 약 2.7:1), 라벨과 자물쇠가 금색(금색은 누르는 주 버튼에만), 본문 14px, '사주500 둘러보기' 높이 약 36px.
+ *   → 머리 글씨는 다른 받은 화면들과 같은 #CFC6B6, 라벨과 자물쇠는 먹과 보조색, 본문 15px, 글자 버튼 높이 44px 이상.
+ *   이름은 realName 을 거친다(무료 만세력 프로필 이름 '나' 가 '나 님의'로 나가지 않게).
  */
 export function SharePage() {
   usePageTitle('사주 결과 미리보기');
@@ -79,7 +85,7 @@ export function SharePage() {
 
   // 사주 데이터가 있으면 동적 미리보기, 없으면 generic
   const dayGanRaw = (report?.sajuData?.pillars?.[2] as any)?.['천간'] ?? (report?.sajuData?.pillars?.[2] as any)?.gan ?? '';
-  const sajuOwner = report?.name || '';
+  const sajuOwner = realName(report?.name);
   // 2026-10-15 — 받는 사람 기기엔 그 기록이 없으니 공유 주소(/share/{type}/...)의 종류로도 상품명을 맞춘다
   const contentType = report?.contentType || (urlTopicId ? 'topic' : urlType) || 'report';
   const topicKey = (report?.aiResult as any)?.topicId || urlTopicId;
@@ -133,11 +139,11 @@ export function SharePage() {
         {/* 히어로 — 동적 (이름 알면 호명, 모르면 generic) */}
         <FadeIn delay={0.03}>
           <div className="card-navy py-7 px-5">
-            <p className="text-[13px] text-white/30 mb-1">{typeLabel} 결과</p>
+            <p className="text-[13px] mb-1" style={{ color: '#CFC6B6' }}>{typeLabel} 결과</p>
             <h1 className="text-display text-white leading-snug">
               {sajuOwner ? `${sajuOwner} 님의 ${typeLabel}\n결과가 도착했어요` : '누군가 나에게\n사주 결과를 공유했어요'}
             </h1>
-            <p className="text-body-sm text-white/45 mt-3 leading-relaxed">
+            <p className="text-[15px] mt-3 leading-relaxed" style={{ color: '#CFC6B6' }}>
               {report ? '핵심 일부만 미리 보고, 전체는 내 사주 분석 후에 만나보세요.' : '나도 내 사주를 분석하면 같은 깊이로 만날 수 있어요.'}
             </p>
           </div>
@@ -148,15 +154,15 @@ export function SharePage() {
           <FadeIn delay={0.06}>
             <div className="card space-y-4">
               <div>
-                <p className="text-label text-brand-gold font-semibold mb-1">일간(日干)</p>
-                <p className="text-body-sm text-text-secondary leading-relaxed">
-                  {sajuOwner} 님은 <b style={{ fontFamily: 'Noto Serif KR, serif' }}>{dayGanRaw}</b> 일간이에요. 이 기운을 중심으로 평생의 사주가 짜여 있어요.
+                <p className="text-label text-text-primary font-semibold mb-1">일간(日干)</p>
+                <p className="text-body text-text-secondary">
+                  {sajuOwner ? `${sajuOwner} 님은` : '이 사주는'} <b style={{ fontFamily: 'Noto Serif KR, serif' }}>{dayGanRaw}</b> 일간이에요. 이 기운을 중심으로 평생의 사주가 짜여 있어요.
                 </p>
               </div>
               <div className="h-px bg-border-light" />
               <div>
-                <p className="text-label text-brand-gold font-semibold mb-1">{typeLabel}</p>
-                <p className="text-body-sm text-text-secondary leading-relaxed">
+                <p className="text-label text-text-primary font-semibold mb-1">{typeLabel}</p>
+                <p className="text-body text-text-secondary">
                   나머지 해석은 내 사주를 입력하면 같은 방식으로 받아볼 수 있어요.
                 </p>
               </div>
@@ -177,13 +183,13 @@ export function SharePage() {
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="w-10 h-10 rounded-xl bg-bg-surface flex items-center justify-center mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B8965A" strokeWidth="2" strokeLinecap="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6F6557" strokeWidth="2" strokeLinecap="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0110 0v4" />
                 </svg>
               </div>
-              <p className="text-label text-text-primary font-semibold">전체 분석</p>
-              <p className="text-caption text-text-muted mt-0.5">내 사주를 분석하면 전체를 볼 수 있어요</p>
+              <p className="text-[15px] text-text-primary font-semibold">전체 분석</p>
+              <p className="text-caption text-text-muted mt-0.5">내 사주를 넣으면 같은 풀이를 내 것으로 볼 수 있어요</p>
             </div>
           </div>
         </FadeIn>
@@ -191,7 +197,7 @@ export function SharePage() {
         {/* 포함 항목 미리보기 — SSOT 라벨 (보일러플레이트 X) */}
         <FadeIn delay={0.12}>
           {/* 2026-10-15 — 알약 칩 대신 글자 한 줄 (고서 디자인 규칙) */}
-          <p className="text-center text-[14px] text-text-muted leading-relaxed">
+          <p className="text-center text-[15px] text-text-muted leading-relaxed">
             연애와 결혼, 재물, 직업, 합격과 이직, 건강, 공부까지<br />주제별로 깊이 볼 수 있어요
           </p>
         </FadeIn>
@@ -206,8 +212,9 @@ export function SharePage() {
               오늘의 운세와 꿈해몽은 하루 한 번 무료예요
             </p>
             <button
+              type="button"
               onClick={() => navigate('/')}
-              className="w-full text-center text-caption text-text-muted py-2"
+              className="w-full min-h-[44px] text-center text-[14px] font-semibold text-text-muted py-2"
             >
               사주500 둘러보기
             </button>

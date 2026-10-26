@@ -23,7 +23,7 @@ import { normalizeTopicId, TOPIC_REGISTRY, TOPIC_IDS, type TopicId } from '@/con
 import { kstToday } from '@/utils/kstDate';
 import { loveStars, loveDday, wealthStars, examFact, spouseSeatFact, josa } from '@/services/saju/hookFacts';
 import { fetchTopicPreview, type TopicPreview } from '@/services/saju/topicPreview';
-import { HJ, GoldCta, Pansim, hanjaNum, INK_HERO_BG, NeedSaju, YiGi, Cell, Tag, Mark, Ledger, Choice } from '@/components/hanji/Hanji';
+import { HJ, GoldCta, GhostButton, Pansim, hanjaNum, INK_HERO_BG, NeedSaju, YiGi, Cell, Tag, Mark, Ledger, Choice } from '@/components/hanji/Hanji';
 import { StandaloneBackButton, standaloneBackVisible } from '@/components/pwa/StandaloneBackButton';
 
 /** 2026-10-10 — 결제 확인 시트의 '내 사주' 한 줄 (만세력 사실만 · 홈 고민 카드와 같은 문장) */
@@ -3288,6 +3288,9 @@ export function TopicAnalysisPage() {
   // 프로필 목록 (독립 저장소)
   const profiles = useMemo(() => getProfiles(), []);
 
+  // 2026-10-26 — '상황을 바꿔 다시 보기'를 누른 뒤에는 지난 결과로 자동으로 넘어가지 않는다 (사람을 바꿨다 돌아와도)
+  const skipAutoLoadRef = useRef(false);
+
   // 이미 분석한 결과가 있는지 확인 (재회운은 상대방이 다를 수 있으므로 auto-load 하지 않음)
   const existingResult = useMemo(() => {
     if (!selected || !topicId) return null;
@@ -3301,6 +3304,11 @@ export function TopicAnalysisPage() {
       if (parsed?.__ref) {
         const rep = getReports().find((r) => r.id === parsed.__ref);
         if (!rep?.aiResult) return null;
+        // 2026-10-26 — 30일이 지난 결과는 자동으로 열지 않는다(보관함에는 그대로). 예전엔 기한이 없어, 6월에 '첫 취업'으로 본 사람이
+        //   12월에 '이직'으로 다시 보려 해도 화면을 열자마자 6월 결과(그때 기준 열두 달 흐름)가 떴고 새로 볼 길이 없었다.
+        //   예전 방식으로 결과 전체를 담은 캐시(__ref 없음, 10-17 이전)는 날짜가 없어 그대로 열고, 결과 화면의 '상황을 바꿔 다시 보기'로 새로 본다.
+        const madeAt = new Date(rep.createdAt).getTime();
+        if (Number.isFinite(madeAt) && Date.now() - madeAt > 30 * 24 * 60 * 60 * 1000) return null;
         const { topicId: _t, ...content } = rep.aiResult as Record<string, unknown>;
         parsed = content;
       }
@@ -3311,7 +3319,7 @@ export function TopicAnalysisPage() {
   }, [selected, topicId]);
 
   useEffect(() => {
-    if (existingResult) {
+    if (existingResult && !skipAutoLoadRef.current) {
       setResult(existingResult);
       setPhase('result');
     }
@@ -3466,6 +3474,35 @@ export function TopicAnalysisPage() {
     if (isAnalyzingRef.current || phase === 'loading') return;
     setAnalyzeError(null);
     setShowConfirm(true);
+  }
+
+  /* 2026-10-26 — '상황을 바꿔 다시 보기': 결과 화면에서 입력 화면으로 돌아간다(같은 사람 그대로).
+   *   지난 결과로 다시 자동으로 넘어가지 않게 막고(skipAutoLoadRef), 주소의 ?reportId= 와 보관함 state 도 뺀다
+   *   (새로고침이나 뒤로 오기에 옛 결과로 돌아가지 않게). 결제는 그대로 확인 시트(requestAnalyze → analyze)를 거친다.
+   *   지난 결과는 보관함과 캐시에 남고, 새로 보면 캐시가 새 결과를 가리킨다. */
+  function rerunWithNewSituation() {
+    if (isAnalyzingRef.current || phase === 'loading') return;
+    skipAutoLoadRef.current = true;
+    // 보관함에서 연 결과면 selected 가 기록이라, 그 기록의 사람(profileId)으로 바꿔 둔다 (새 결과가 그 사람 캐시에 붙게)
+    const pid = selected ? ((selected as any).profileId || selected.id) : '';
+    const prof = pid ? getProfiles().find((p) => p.id === pid) : null;
+    if (prof) setSelected(prof as unknown as LocalReport);
+    setResult(null);
+    setSavedReportId(null);
+    setServerTitles(null);
+    setAnalyzeError(null);
+    setPhase('select');
+    if (typeof window !== 'undefined' && window.location.pathname === location.pathname) {
+      const qs = new URLSearchParams(location.search);
+      qs.delete('reportId');
+      const cur: Record<string, any> = location.state && typeof location.state === 'object' ? { ...(location.state as Record<string, any>) } : {};
+      delete cur.savedResult;
+      delete cur.savedReport;
+      if (prof) cur.profileId = prof.id;
+      const search = qs.toString() ? `?${qs.toString()}` : '';
+      navigate(`${location.pathname}${search}`, { replace: true, state: cur });
+    }
+    try { window.scrollTo(0, 0); } catch { /* noop */ }
   }
 
   async function analyze() {
@@ -5187,6 +5224,23 @@ export function TopicAnalysisPage() {
                   reportKey={savedReportId || `topic:${topicId}:${selected ? ((selected as any).profileId || selected.id) : ''}`}
                   style={{ margin: '8px 0 0' }} />
               )}
+
+              {/* 2026-10-26 — 같은 주제를 지금 상황으로 다시 보기 (예전엔 결과에서 입력 화면으로 돌아갈 길이 없었다).
+                  먹 테두리 버튼(금색은 주 버튼에만), 누르면 입력 화면으로 가고 결제는 확인 시트를 그대로 거친다 */}
+              {streamComplete && (() => {
+                const rp = getTopicPrice(topicId as TopicKey);
+                const rerunPrice = rp.isOnSale && rp.salePrice != null ? rp.salePrice : rp.regularPrice;
+                return (
+                  <div className="pt-2">
+                    <GhostButton onClick={rerunWithNewSituation} sub={`${rerunPrice}운`} ariaLabel="상황을 바꿔 다시 보기">
+                      상황을 바꿔 다시 보기
+                    </GhostButton>
+                    <p style={{ fontSize: 13.5, lineHeight: 1.6, color: '#6F6557', textAlign: 'center', marginTop: 8 }}>
+                      지금 상황을 다시 고르고 새로 봐요. 지난 결과는 보관함에 남아요.
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* ── 다른 주제 CTA — audit 3 P0 E4 ──
                   · navigate 만 호출 (race condition 제거 — 라우터 pathname 변경 시 컴포넌트 재마운트 → state 자동 초기화)

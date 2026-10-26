@@ -144,7 +144,8 @@ function getOgMeta(parsed, compat, dream, ny, cj) {
     }
     if (type === 'dream' && dream) {
         return {
-            title: `${dream.name ? `${dream.name} 님의 ` : ''}꿈 풀이: ${dream.title || '꿈해몽'} | 사주500`,
+            // 2026-10-26 — 이름에도 realName. 무료 만세력 프로필 이름 '나' 가 그대로 '나 님의 꿈 풀이'로 나갔다
+            title: `${(0, personName_1.realName)(dream.name) ? `${(0, personName_1.realName)(dream.name)} 님의 ` : ''}꿈 풀이: ${dream.title || '꿈해몽'} | 사주500`,
             description: (dream.quote || '간밤의 꿈을 사주로 풀었어요. 풀이를 열어 보세요.').slice(0, 120),
             image: OG_IMAGE_FALLBACK,
         };
@@ -219,7 +220,8 @@ async function readNewYearShare(id) {
         const d = snap.data();
         const gz = String(d.gz || '');
         return {
-            name: String(d.name || '보낸 분'), y: Number(d.y) || 0, gzKo: `${GAN_KO[gz[0]] || ''}${ZHI_KO[gz[1]] || ''}`,
+            // 2026-10-26 — 이름이 없을 때 서버가 넣던 '보낸 분' 은 이름이 아니다('보낸 분 님의 2027년'). 빈 이름으로 다룬다
+            name: String(d.name || '') === '보낸 분' ? '' : String(d.name || ''), y: Number(d.y) || 0, gzKo: `${GAN_KO[gz[0]] || ''}${ZHI_KO[gz[1]] || ''}`,
             good: Array.isArray(d.good) ? d.good.map(Number) : [], hard: Array.isArray(d.hard) ? d.hard.map(Number) : [],
         };
     }

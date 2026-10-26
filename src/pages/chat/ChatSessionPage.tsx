@@ -275,7 +275,9 @@ function buildContextPrompt(ctx: any, userName: string): string {
     if (fullResult?.luckyAdvice) lines.push(`개운 조언: ${plainText(fullResult.luckyAdvice).slice(0, 150)}`);
   } else if (type === 'weekly') {
     // 2026-09-17 — 주간운세 (WeeklyDetailResponse · 구매일 전날부터 롤링 7일)
-    if (ctx.periodLabel) lines.push(`기간: ${ctx.periodLabel} (구매일 전날부터 7일)`);
+    // 2026-10-27 주간운세가 8칸(어제, 오늘부터 7일)으로 바뀌었다. 옛 결과는 7칸(구매일 전날부터 7일)
+    const wkDays = Array.isArray(fullResult?.dailyBreakdown) ? fullResult.dailyBreakdown.length : 0;
+    if (ctx.periodLabel) lines.push(`기간: ${ctx.periodLabel} (${wkDays >= 8 ? '오늘부터 7일, 첫 칸은 어제' : '구매일 전날부터 7일'})`);
     dataStart = lines.length;
     if (fullResult?.weekHeadline) lines.push(`이번 주 한 줄: ${plainText(fullResult.weekHeadline)}`);
     if (Array.isArray(fullResult?.keywords) && fullResult.keywords.length > 0) {
@@ -284,7 +286,7 @@ function buildContextPrompt(ctx: any, userName: string): string {
     if (fullResult?.weekTheme) lines.push(`이번 주 흐름: ${plainText(fullResult.weekTheme).slice(0, 400)}`);
     // 요일별 — 날짜·일진·점수·톤 + 본문 앞부분 + 실천
     if (Array.isArray(fullResult?.dailyBreakdown)) {
-      fullResult.dailyBreakdown.slice(0, 7).forEach((d: any) => {
+      fullResult.dailyBreakdown.slice(0, 8).forEach((d: any) => {
         if (!d) return;
         const head = [d.day, d.date, d.ganji].filter(Boolean).map((v: unknown) => plainText(v)).join(' ');
         const score = d.score != null ? ` ${d.score}점` : '';

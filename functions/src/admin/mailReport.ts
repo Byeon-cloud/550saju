@@ -125,7 +125,11 @@ export const adminMailReport = onCall({ timeoutSeconds: 120, memory: '512MiB', c
       if (!src.startsWith('daily_')) continue; // 신년운세 마감 알림(mail_subscribe) 은 따로
       r.subs += 1;
     }
-    const src = String(d.props?.source || '-').replace(/^daily_/, '');
+    // 2026-10-26 — 신청 완료(mail_subscribe)만 'daily_' 를 앞에 붙여 남긴다(DailyMailSignup: daily_${source}). 예전엔 모든 기록에서
+    //   앞 'daily_' 를 떼서, 오늘의 운세 두 자리(daily_empty, daily_after)의 보기와 펼치기는 'empty', 'after' 로, 완료는 'daily_empty' 로
+    //   갈라져 자리별 완료율이 0% 로 읽혔다. 완료 기록에서만 떼면 보기와 완료가 같은 줄(daily_empty, daily_after, home, my, saju_card)에 모인다.
+    const rawSrc = String(d.props?.source || '-');
+    const src = name === 'mail_subscribe' ? rawSrc.replace(/^daily_/, '') : rawSrc;
     funnelSource[src] = funnelSource[src] || {};
     funnelSource[src][name] = (funnelSource[src][name] || 0) + 1;
   }

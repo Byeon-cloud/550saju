@@ -234,6 +234,7 @@ export function ChatListPage() {
         {rooms.length === 0 ? (
           <FadeIn delay={0.08}>
             <ListEmpty questions={starters} onAsk={ask} hasSaju={hasSaju} onStart={() => navigate('/chat/new')} />
+            <AnswerSample />
           </FadeIn>
         ) : (
           <FadeIn delay={0.08}>
@@ -677,6 +678,29 @@ function ListEmpty({
       >
         다른 질문 직접 쓰기
       </button>
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+ * §3-3 답은 이렇게 와요 (2026-10-27 지인 VOC '질문 예시는 있는데 답변 예시가 없어 뭐가 올지 몰라 손이 안 간다')
+ *   예시라고 분명히 적는다. 실제 답과 같은 짜임(사주 근거, 시기, 지난 일 짚기, 할 일)으로, 풀이는 ~입니다 권유는 ~세요
+ * ═════════════════════════════════════════════════════════════════ */
+function AnswerSample() {
+  return (
+    <section style={{ marginTop: 12, padding: '14px 16px 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16 }}>
+      <p style={{ fontSize: 13.5, fontWeight: 700, color: HJ.mute, margin: 0 }}>답은 이렇게 와요 (예시)</p>
+      <p style={{ margin: '10px 0 0', marginLeft: 'auto', maxWidth: '78%', width: 'fit-content', background: HJ.ink, color: '#F4EFE4', borderRadius: '14px 14px 4px 14px', padding: '9px 13px', fontSize: 15, fontWeight: 700, lineHeight: 1.5 }}>
+        돈이 언제 모일까요?
+      </p>
+      <p style={{ margin: '10px 0 0', maxWidth: '92%', background: HJ.paper, border: `1px solid ${HJ.line}`, borderRadius: '14px 14px 14px 4px', padding: '11px 13px', fontSize: 15, color: HJ.ink, lineHeight: 1.7, wordBreak: 'keep-all' }}>
+        쇠 기운이 세 글자로 두꺼운 을목(乙木) 사주입니다. 2027년 10월 무렵부터 일해서 버는 돈이 눈에 띄게 쌓입니다.
+        혹시 2021년에 집이나 일 문제로 돈이 새어 나간 일이 있었나요? 그해 들어온 기운이 태어난 날 자리와 부딪혔습니다.
+        올해는 큰돈을 움직이기보다 고정 지출부터 줄여 두세요.
+      </p>
+      <p style={{ fontSize: 13.5, color: HJ.mute, lineHeight: 1.6, margin: '10px 0 0', wordBreak: 'keep-all' }}>
+        실제 답은 내 사주와 내 질문으로 새로 써요. 읽다가 궁금한 건 이어서 물어보면 돼요.
+      </p>
     </section>
   );
 }

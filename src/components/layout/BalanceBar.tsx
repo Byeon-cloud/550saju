@@ -2,6 +2,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getBalance, BALANCE_CHANGED_EVENT } from '@/services/storage/localStore';
 import { useEffect, useRef, useState } from 'react';
+import { onAuthChange } from '@/services/auth/authService';
+import { isAppsInToss } from '@/services/payment/iapService';
+
+/** 웹만 로그인 상태를 보여 준다 (앱은 토스 계정이라 로그인 개념이 없다). 빌드 상수로 앱 번들에서는 늘 false */
+const SHOW_WEB_ACCOUNT = import.meta.env.VITE_BUILD_TARGET !== 'appintos';
 
 /** 보여줄 페이지 — 탭 네비게이션이 있는 메인 페이지들만 */
 const SHOW = ['/', '/storage', '/my', '/daily'];
@@ -37,6 +42,17 @@ export function BalanceBar() {
     const t = setTimeout(() => setGain(null), 1300);
     return () => clearTimeout(t);
   }, [gain]);
+  // 2026-10-27 지인 VOC '로그인했는지 안 했는지 한눈에 알 수 없음, 내 정보가 아래에 빠져 있어 찾기 어려움'
+  //   → 웹은 위 띠에 '로그인'(손님) 또는 이름 첫 글자 동그라미(로그인됨)를 두고 누르면 내 정보로
+  const [account, setAccount] = useState<{ member: boolean; initial: string } | null>(null);
+  useEffect(() => {
+    if (!SHOW_WEB_ACCOUNT || isAppsInToss()) return;
+    return onAuthChange((u) => {
+      if (!u || u.isAnonymous) { setAccount({ member: false, initial: '' }); return; }
+      const nm = (u.displayName || u.email || '').trim();
+      setAccount({ member: true, initial: nm ? nm.slice(0, 1).toUpperCase() : '나' });
+    });
+  }, []);
 
   // 메인 탭 페이지에서만 표시
   if (!SHOW.some((p) => location.pathname === p)) return null;
@@ -58,8 +74,23 @@ export function BalanceBar() {
           <span className="text-h3 font-bold" style={{ color: '#8C6D3D' }}>500</span>
         </button>
 
-        {/* ? 버튼 (홈에서만) + 잔액 + 충전 */}
+        {/* ? 버튼 (홈에서만) + 웹 로그인 상태 + 잔액 + 충전 */}
         <div className="flex items-center gap-2">
+          {account && location.pathname !== '/my' && (
+            account.member ? (
+              <button type="button" onClick={() => navigate('/my')} aria-label="내 정보, 로그인되어 있어요"
+                className="tap-pad flex items-center justify-center"
+                style={{ width: 32, height: 32, borderRadius: 16, background: '#1A1612', color: '#F4EFE4', fontSize: 14, fontWeight: 800, border: 0 }}>
+                {account.initial}
+              </button>
+            ) : (
+              <button type="button" onClick={() => navigate('/my')} aria-label="로그인하고 기록 지키기"
+                className="tap-pad"
+                style={{ minHeight: 34, padding: '0 11px', borderRadius: 10, background: 'transparent', border: '1px solid rgba(26,22,18,0.35)', color: '#1A1612', fontSize: 14, fontWeight: 800 }}>
+                로그인
+              </button>
+            )
+          )}
           {location.pathname === '/' && (
             <motion.button
               whileTap={{ scale: 0.9 }}

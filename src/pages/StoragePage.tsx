@@ -57,6 +57,7 @@ let restoreTriedThisSession = false;
 import { CHEONGAN_OHENG, OHENG_MAP } from '@/constants/oheng';
 import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
 import { TOPIC_REGISTRY, normalizeTopicId } from '@/constants/topics';
+import { routeForReport, LOCKDOWN_CONTENT } from '@/services/storage/reportRoute';
 // Stage 7e-5: 보관함 카드에서 sajuData 즉시 계산 (모든 프로필 일주/오행 컬러 보장)
 import { calculateSaju } from '@/services/saju/calculator';
 import { stripDotsDeep } from '@/utils/noDot';
@@ -1133,13 +1134,15 @@ function HistorySection({
           </div>
         </header>
 
-        {/* 4 칩 (스펙 §3-2) */}
+        {/* 분류 탭 (스펙 §3-2). 2026-10-26 v9 — 금빛 알약(높이 32) 대신 종이 위 먹 글자 탭. 고른 탭은 먹 밑줄과 굵은 글자,
+         *   누르는 자리는 44px 이상(가로 스크롤 줄이라 ::after 로 넓히면 잘린다 → 버튼 자체 높이), 글자 15px */}
         <div
           style={{
             display: 'flex',
-            gap: 8,
+            gap: 2,
             overflowX: 'auto',
-            paddingBottom: 8,
+            marginBottom: 8,
+            borderBottom: '1px solid rgba(26,22,18,0.16)',
             scrollbarWidth: 'none',
           }}
         >
@@ -1153,14 +1156,15 @@ function HistorySection({
                 aria-pressed={active}
                 style={{
                   flexShrink: 0,
-                  height: 32,
-                  padding: '0 14px',
-                  borderRadius: 999,
-                  background: active ? C.ink : C.goldSoft,
-                  color: active ? C.paper : C.ink,
-                  border: `1px solid ${active ? C.ink : C.line}`,
-                  fontSize: 13.5,
-                  fontWeight: 600,
+                  minHeight: 46,
+                  padding: '0 12px',
+                  borderRadius: 0,
+                  background: 'transparent',
+                  color: active ? '#1A1612' : '#4B4238',
+                  border: 'none',
+                  borderBottom: `2px solid ${active ? '#1A1612' : 'transparent'}`,
+                  fontSize: 15,
+                  fontWeight: active ? 800 : 500,
                   cursor: 'pointer',
                 }}
               >
@@ -2074,7 +2078,6 @@ function formatHourCode(hour: number): string {
 
 /** 출시 lockdown 콘텐츠 — 라우트는 살아있으나 페이지가 홈으로 redirect 됨 (App.tsx) */
 //  2026-06-29: 월운(monthly) NEW 출시로 lockdown 제외. 주간(weekly)도 공개. 대운/궁합/토정만 유지.
-const LOCKDOWN_CONTENT = new Set(['daeun']); // 2026-10-04 궁합 · 10-07 신년운세 공개
 
 /** 콘텐츠 유형별 결과 페이지 라우트 (스펙 §3-3 탭 시 결과 이동) */
 type MergedItem = { kind: 'r'; t: number; r: LocalReport } | { kind: 'c'; t: number; c: ChatRoom };
@@ -2087,25 +2090,7 @@ function mergeByTime(reports: LocalReport[], rooms: ChatRoom[], desc: boolean): 
   return items.sort((a, b) => (desc ? b.t - a.t : a.t - b.t));
 }
 
-function routeForReport(r: LocalReport): string | null {
-  const ct = r.contentType;
-  if (ct === 'dream' || ct === 'deepDream') return '/dream';
-  if (ct === 'daily') return '/daily';
-  if (ct === 'monthly') return '/monthly'; // 2026-06-29 NEW — 재선택 시 캐시 복원
-  if (ct === 'weekly') return '/weekly';   // 2026-06-29 NEW
-  if (ct === 'compat') return '/compat/result'; // 2026-10-04 공개 — savedResult/savedReport state + ?reportId 로 재열람
-  if (ct === 'tojung') return '/tojung';        // 2026-10-07 신년운세 — 같은 방식으로 재열람
-  // 2026-05-28 — 출시 lockdown 4종 (compat/daeun/monthly/tojung) 은 페이지가 홈으로 redirect 됨.
-  //   보관함에서 클릭 시 무한 redirect 사이클 방지 위해 null 반환. openReport 에서 안내 toast.
-  if (LOCKDOWN_CONTENT.has(ct as string)) return null;
-  if (ct === 'topic') {
-    const topicId = (r as any).aiResult?.topicId;
-    return topicId ? `/topic/${topicId}` : null; // 2026-10-17 'love' 기본값 제거 — 주제를 모르면 열지 않는다
-  }
-  // 기본 사주 리포트
-  if (r.sajuData?.pillars?.length) return `/result/${r.id}`;
-  return '/input?from=storage';
-}
+/* routeForReport, LOCKDOWN_CONTENT — 2026-10-27 services/storage/reportRoute.ts 로 옮김(내 정보 '최근 본 풀이'와 같이 쓴다) */
 
 // 사용하지 않는 import 보장 — saveProfileDirect 는 향후 동기화 정책 확장 시 사용 예정
 void saveProfileDirect;

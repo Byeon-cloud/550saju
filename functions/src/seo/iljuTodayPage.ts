@@ -34,7 +34,7 @@ const CSS = `*{box-sizing:border-box;margin:0;padding:0}body{background:#F4EFE4;
 .ij .hd{font-family:'Noto Serif KR',serif;font-size:16px;font-weight:600;margin:4px 0}.ij p{font-size:15px;color:#2E2720}.ij .meta{font-size:14px;color:#4B4238;margin-top:6px}
 .cta{margin:24px 0 8px;background:#1A1612;color:#F4EFE4;border-radius:16px;padding:20px}.cta h3{font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;margin-bottom:6px}.cta p{font-size:14.5px;color:#CFC6B6;margin-bottom:14px}
 .btn{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:13px;background:linear-gradient(180deg,#D2B477,#B8965A);color:#17110A;font-weight:800;font-size:16px;text-decoration:none}.sub{display:block;text-align:center;margin-top:12px;font-size:14.5px;font-weight:700;color:#E4DCCD;text-decoration:underline}
-.note{font-size:13.5px;color:#6F6557;margin-top:18px}.foot{margin-top:30px;border-top:1px solid #E1D7C4;padding:16px 0 30px;text-align:center;font-size:12px;color:#A69C8E;line-height:1.7}.foot a{color:#A69C8E;margin:0 6px;text-decoration:none}.foot a.b{font-weight:700}`;
+.note{font-size:13.5px;color:#6F6557;margin-top:18px}.foot{margin-top:30px;border-top:1px solid #E1D7C4;padding:16px 0 30px;text-align:center;font-size:13px;color:#6F6557;line-height:1.7}.foot a{color:#6F6557;margin:0 6px;text-decoration:none}.foot a.b{font-weight:700}`;
 
 function render(doc: any, dateKey: string, isToday: boolean): string {
   const [y, m, d] = dateKey.split('-').map(Number);

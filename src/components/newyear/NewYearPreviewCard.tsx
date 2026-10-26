@@ -50,12 +50,13 @@ export function NewYearPreviewCard({ year, name, sajuData }: { year: number; nam
     setSending(true);
     try {
       const { createNewYearShareId } = await import('@/services/share/newYearShare');
+      // 2026-10-27 이름이 아닌 값('나', '본인' 등)은 보내지 않는다 — 받는 화면에 '나 님의 …'로 보였다
       const id = await createNewYearShareId({
-        name, y: year, gz: yearGz, verdict: yv.verdict, g: yv.g, b: yv.b, r1: yv.r1, r2: yv.r2,
+        name: realName(name), y: year, gz: yearGz, verdict: yv.verdict, g: yv.g, b: yv.b, r1: yv.r1, r2: yv.r2,
         good: goodMonths, goodLabel, hard: hardMonths, km: first?.m || 0, kd: first?.d || 0, kn: keyDates.length,
       }, `${name}-${year}-${yearGz}-${goodMonths.join('.')}-${hardMonths.join('.')}`);
       const { shareNewYearLink } = await import('@/utils/share');
-      const via = await shareNewYearLink({ id, name, year });
+      const via = await shareNewYearLink({ id, name: realName(name), year });
       if (via === 'clipboard') toast.show('링크를 복사했어요. 카카오톡이나 문자에 붙여 넣어 보내세요', 'success');
     } catch (e) {
       console.warn('[newyear] 보내기 링크 실패', e);

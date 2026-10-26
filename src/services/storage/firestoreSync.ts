@@ -296,6 +296,28 @@ export async function syncFromCloud(uid: string, opts?: { reportsOnly?: boolean 
 }
 
 /**
+ * 서버 삭제 장부 읽기 (2026-10-26, 보관함 복원용) — 지운 기록 id 와 '종류@분' 지문.
+ *   장부의 지문은 '종류@분@크기'라 앞 두 칸만 쓴다. 못 읽으면 빈 장부(이 기기 삭제 기록만으로 거른다).
+ */
+async function readDeletedLedger(): Promise<{ ids: Set<string>; minutes: Set<string> }> {
+  const ids = new Set<string>();
+  const minutes = new Set<string>();
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return { ids, minutes };
+    const del = await getDoc(doc(db, `users/${uid}/state`, 'deleted'));
+    const d = del.exists() ? (del.data() as any) : null;
+    (Array.isArray(d?.reportIds) ? d.reportIds : []).forEach((x: unknown) => { if (typeof x === 'string' && x) ids.add(x); });
+    (Array.isArray(d?.fingerprints) ? d.fingerprints : []).forEach((x: unknown) => {
+      if (typeof x !== 'string') return;
+      const parts = x.split('@');
+      if (parts.length >= 2 && parts[1]) minutes.add(`${parts[0]}@${parts[1]}`);
+    });
+  } catch { /* 장부 없음 또는 읽기 실패 */ }
+  return { ids, minutes };
+}
+
+/**
  * 보관함 서버 복원 (2026-06-19) — 기기 저장소가 비워져 보관함이 사라진 경우,
  *   서버(users/{uid}/reports 백업 + top-level reports 생성원본)에서 내용까지 끌어와 복원.
  *   @returns 복원된 리포트 수.
@@ -309,9 +331,27 @@ export async function restoreLibraryFromServer(): Promise<number> {
     ]);
     await ensureAuth();
     const fn = httpsCallable(getFunctions(app, 'us-central1'), 'restoreLibrary');
-    const r = await fn({});
+    // 2026-10-26 — 지운 종합사주와 주제운이 보관함을 열 때마다 되살아났다. 서버 생성 원본(top-level reports)은 삭제 때 지워지지 않아
+    //   restoreLibrary 가 그대로 돌려줬고, 여기서 다시 저장하고 백업까지 올렸다. 이 기기 삭제 기록과 서버 삭제 장부(state/deleted)로 거른다.
+    //   장부는 복원 호출과 같이 읽는다(기다림을 늘리지 않게). 못 읽으면 이 기기 삭제 기록만으로 거른다.
+    const [r, ledger] = await Promise.all([fn({}), readDeletedLedger()]);
     const reports = ((r?.data as { reports?: unknown[] })?.reports ?? []) as Array<Record<string, unknown>>;
     const localReports = getReports();
+    const deletedIds = getDeletedReportIds();
+    ledger.ids.forEach((x) => deletedIds.add(x));
+    // 지운 기록 지문은 '종류@분'만 본다(내용 크기는 빼고). 생성 원본과 보관함 사본은 내용 크기와 저장 시각이 조금씩 달라서, 앞뒤 1분까지 같은 기록으로 본다
+    const deletedMin = ledger.minutes;
+    const minuteKeys = (ct: unknown, created: unknown): string[] => {
+      if (!created) return [];
+      const type = String(ct ?? 'report');
+      const keys = new Set<string>();
+      if (typeof created === 'string') keys.add(`${type}@${created.slice(0, 16)}`);
+      const t = typeof created === 'number' ? created : Date.parse(String(created));
+      if (Number.isFinite(t)) {
+        for (const off of [-60_000, 0, 60_000]) keys.add(`${type}@${new Date(t + off).toISOString().slice(0, 16)}`);
+      }
+      return [...keys];
+    };
     // twin 지문 필터 (2026-08-13) — 서버가 이미 dedupe 하지만 ±60s 경계 누락 대비 이중 방어.
     //   contentType + 분단위 + 내용 크기 버킷 (같은 분 다른 리포트 오탐 방지, syncFromCloud 와 동일 규칙).
     const lenOf = (ai: unknown) => { try { return JSON.stringify(ai ?? '').length; } catch { return 0; } };
@@ -326,6 +366,14 @@ export async function restoreLibraryFromServer(): Promise<number> {
       // 2026-10-17 — 이미 보관함에 있어도 본문이 비어 있으면(옛 백업에서 내려온 빈 기록) 서버 본문으로 채운다
       const local = rep.id ? localReports.find((x) => x.id === rep.id) : undefined;
       if (local && local.aiResult) continue; // 이미 보관함에 있으면 skip
+      // 2026-10-26 — 지운 기록은 되살리지 않는다 (보관함에 남아 있는 기록은 지운 것이 아니니 거르지 않는다)
+      if (!local) {
+        if (typeof rep.id === 'string' && deletedIds.has(rep.id)) continue;
+        // 2026-10-27 분 지문은 종합사주 생성 원본에만 쓴다. 종합사주만 보관함 id 와 서버 원본 id 가 달라 id 로 못 거른다
+        //   (주제운은 보관함 id 가 서버 id 와 같다). 오늘의 운세, 꿈처럼 같은 분에 여러 건 만드는 기록에 쓰면 지우지 않은 기록까지 숨었다(검토 결함)
+        const isPremiumOriginal = (rep.contentType ?? 'report') === 'report';
+        if (isPremiumOriginal && deletedMin.size > 0 && minuteKeys(rep.contentType, rep.createdAt).some((k) => deletedMin.has(k))) continue;
+      }
       const fp = fpOf(rep.contentType, rep.createdAt, lenOf(rep.aiResult));
       if (!local && fp && localFps.has(fp)) continue; // 같은 리포트의 다른 id 사본 — 재저장 안 함
       if (fp) localFps.add(fp);
@@ -437,12 +485,22 @@ export async function deleteReportRemote(report: LocalReport): Promise<void> {
     let len = 0;
     try { len = JSON.stringify(report.aiResult ?? '').length; } catch { /* noop */ }
     const fp = `${report.contentType ?? 'report'}@${iso.slice(0, 16)}@${Math.round(len / 800)}`;
+    // 2026-10-26 — 이 기록이 서버 생성 원본 번호를 따로 들고 있으면(주제운 반쪽을 서버 완성본으로 고친 기록의 __serverReportId 등)
+    //   그 번호도 장부에 남긴다. 보관함 복원(restoreLibrary)은 생성 원본을 그 번호로 돌려주므로, 번호로 걸러야 지운 기록이 돌아오지 않는다.
+    //   보관함에 그 번호로 남아 있는 다른 기록이 있으면 건드리지 않는다.
+    const liveIds = new Set(getReports().map((x) => x.id));
+    const serverIds = [(report as { serverReportId?: unknown }).serverReportId, report.aiResult?.__serverReportId]
+      .filter((x): x is string => typeof x === 'string' && !!x && x !== report.id && !liveIds.has(x));
     await setDoc(doc(db, `users/${uid}/state`, 'deleted'), {
-      reportIds: arrayUnion(report.id),
+      reportIds: arrayUnion(report.id, ...serverIds),
       fingerprints: arrayUnion(fp),
       updatedAt: new Date(),
     }, { merge: true });
     await deleteDoc(doc(db, `users/${uid}/reports`, report.id));
+    // 생성 원본 번호로 올라간 백업 사본 (예전 복원이 그 번호로 저장하고 다시 백업했을 수 있다)
+    for (const sid of serverIds) {
+      try { await deleteDoc(doc(db, `users/${uid}/reports`, sid)); } catch { /* 없으면 무해 — 장부가 다시 내려받기를 막는다 */ }
+    }
     // 쌍둥이 사본 (과거 이중저장 버그로 auto-id 사본이 남아 있을 수 있다)
     try {
       const twins = await getDocs(query(collection(db, `users/${uid}/reports`), where('createdAt', '==', report.createdAt)));

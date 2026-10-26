@@ -42,6 +42,7 @@ const admin = __importStar(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const genGuard_1 = require("./shared/genGuard"); // 2026-10-14 익명 생성 하루 상한
 const spendLedger_1 = require("./shared/spendLedger"); // 2026-10-25 기기에서 깎던 1운 콘텐츠의 서버 차감
+const chargeOrShort_1 = require("./shared/chargeOrShort"); // 2026-10-26 서버 잔액이 모자라도 막지 않는 차감 (주제운, 궁합, 월운세, 주간운세, 신년운세)
 const tossOrder_1 = require("./shared/tossOrder"); // 2026-10-26 토스 앱 결제를 토스에 확인한 뒤 지급 (인증서 비밀값은 아래 같은 이름의 TOSS_MTLS_CERT, TOSS_MTLS_KEY)
 const params_1 = require("firebase-functions/params");
 const aiFailureLog_1 = require("./shared/aiFailureLog");
@@ -1788,22 +1789,13 @@ exports.generateMonthly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeou
     const authUid = request.auth?.uid; // 점진 progress rules 매칭용 (익명도 실제 uid)
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            // 2026-05-28 — schema 통일 helper
-            // 2026-07-01 월운 — 서버가 직접 세일 계산(monthlyCost): 하반기 이벤트 5운(7/15까지)·이후 정가 7운.
-            //   클라 getMonthlyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
-            const cost = monthlyCost();
-            await db.runTransaction(async (tx) => {
-                const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), cost);
-                if (!result)
-                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
-            });
-            deductedAmount = cost;
-        }
+        // 2026-07-01 월운 — 서버가 직접 세일 계산(monthlyCost): 하반기 이벤트 5운(7/15까지)·이후 정가 7운.
+        //   클라 getMonthlyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
+        // 2026-10-26 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 깎은 만큼만 실패 때 돌려준다)
+        const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost: monthlyCost(), quota: 'monthly', label: 'monthly', ip: (0, chargeOrShort_1.requestIp)(request.rawRequest) });
+        if (c.limited)
+            throw new https_1.HttpsError('resource-exhausted', genGuard_1.GEN_LIMIT_MESSAGE);
+        deductedAmount = c.deducted;
     }
     try {
         const { generateMonthlyFortune } = await lazyClaudeMonthly();
@@ -1840,19 +1832,11 @@ exports.generateMonthlyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], t
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            const cost = monthlyCost(); // 하반기 이벤트 반영 (generateMonthly 와 동일 로직)
-            await db.runTransaction(async (tx) => {
-                const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), cost);
-                if (!result)
-                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
-            });
-            deductedAmount = cost;
-        }
+        // 하반기 이벤트 반영 (generateMonthly 와 동일 로직). 2026-10-26 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts)
+        const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost: monthlyCost(), quota: 'monthly', label: 'monthlyDraft', ip: (0, chargeOrShort_1.requestIp)(request.rawRequest) });
+        if (c.limited)
+            throw new https_1.HttpsError('resource-exhausted', genGuard_1.GEN_LIMIT_MESSAGE);
+        deductedAmount = c.deducted;
     }
     try {
         const cm = await lazyClaudeMonthly();
@@ -1874,24 +1858,67 @@ exports.generateMonthlyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], t
     }
 });
 /**
+ * 2026-10-26 — 월운세, 주간운세 다듬기(refine)는 그 손님이 낸 초안 리포트 하나에 한 번만.
+ *   예전엔 reportId 와 draft 를 받아 소유자 확인 없이 reports/{id} 를 덮어썼고(공유 링크에 실린 id 로 남의 것도),
+ *   로그인 계정은 genGuard 상한 밖이라 빈 draft 를 넣어 아무 달, 아무 주의 풀이를 차감 없이 끝없이 받을 수 있었다.
+ *   이제 문서가 있고, uid 가 부른 사람이고, type 이 맞고, draft === true 이고, 아직 다듬기를 잡지 않았을 때만
+ *   같은 트랜잭션에서 refineClaimedAt 을 적어 자리를 잡는다(동시에 여러 번 불러도 한 번만, 실패해도 다시 하지 않는다).
+ *   다듬을 초안은 서버에 저장된 것(content, 글자 사본이면 contentJson)을 쓴다(클라가 보낸 draft 는 쓰지 않는다).
+ *   조건이 안 맞으면 null → 호출부는 모델을 부르지 않고 받은 draft 를 그대로 돌려준다(화면은 초안을 그대로 둔다).
+ *   정상 흐름(MonthlyPage, WeeklyPage: 초안 callable 이 준 reportId 로 한 번 부름)은 그대로 다듬어진다.
+ */
+async function claimRefineDraft(reportId, uid, type) {
+    if (!uid || typeof reportId !== 'string' || !/^[A-Za-z0-9_-]{4,64}$/.test(reportId))
+        return null;
+    const ref = db.collection('reports').doc(reportId);
+    try {
+        return await db.runTransaction(async (tx) => {
+            const s = await tx.get(ref);
+            if (!s.exists)
+                return null;
+            const d = s.data() || {};
+            if (d.uid !== uid || d.type !== type || d.draft !== true || d.refineClaimedAt)
+                return null;
+            let stored = d.content ?? null;
+            if (stored == null && typeof d.contentJson === 'string') {
+                try {
+                    stored = JSON.parse(d.contentJson);
+                }
+                catch {
+                    stored = null;
+                }
+            }
+            if (!stored || typeof stored !== 'object')
+                return null;
+            tx.update(ref, { refineClaimedAt: admin.firestore.FieldValue.serverTimestamp() });
+            return stored;
+        });
+    }
+    catch (e) {
+        console.warn(`[refine:${type}] 초안 확인 실패(다듬지 않음):`, e?.message || e);
+        return null;
+    }
+}
+/**
  * ⚡ 월별 운세 보정 (refine·2차만) — async 2차리뷰 백그라운드. 🛡️ 무차감.
  *   draft 를 받아 자가 점검·보정 → 최종본. 실패해도 draft 반환(유저는 이미 draft 봤음·환불 X).
- *   같은 reportId 리포트를 최종본으로 갱신(draft:false).
+ *   같은 reportId 리포트를 최종본으로 갱신(draft:false). 2026-10-26 본인 초안에 한 번만 (claimRefineDraft)
  */
 exports.generateMonthlyRefine = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
     await (0, genGuard_1.guardCallable)(request, 'monthly'); // 익명 하루 상한 (genGuard)
     const { sajuData, monthInfo, draft, reportId } = request.data;
     if (!sajuData || !draft)
         throw new https_1.HttpsError('invalid-argument', '보정할 데이터가 없습니다');
+    const stored = await claimRefineDraft(reportId, request.auth?.uid, 'monthly');
+    if (!stored)
+        return { content: draft };
     try {
         const cm = await lazyClaudeMonthly();
-        const refined = await cm.generateMonthlyRefine(ANTHROPIC_KEY.value(), sajuData, monthInfo, draft);
-        if (reportId && typeof reportId === 'string') {
-            try {
-                await (0, firestoreSafe_1.setReportSafe)(db.collection('reports').doc(reportId), { content: refined, draft: false, refinedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-            }
-            catch { /* 갱신 실패 무해 — 클라가 자체 저장 */ }
+        const refined = await cm.generateMonthlyRefine(ANTHROPIC_KEY.value(), sajuData, monthInfo, stored);
+        try {
+            await (0, firestoreSafe_1.setReportSafe)(db.collection('reports').doc(reportId), { content: refined, draft: false, refinedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
         }
+        catch { /* 갱신 실패 무해 — 클라가 자체 저장 */ }
         return { content: refined };
     }
     catch (error) {
@@ -1912,21 +1939,13 @@ exports.generateWeekly = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            // 2026-07-01 주간 — 서버가 직접 세일 계산(weeklyCost): 하반기 이벤트 3운(7/15까지)·이후 정가 5운.
-            //   클라 getWeeklyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
-            const cost = weeklyCost();
-            await db.runTransaction(async (tx) => {
-                const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), cost);
-                if (!result)
-                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
-            });
-            deductedAmount = cost;
-        }
+        // 2026-07-01 주간 — 서버가 직접 세일 계산(weeklyCost): 하반기 이벤트 3운(7/15까지)·이후 정가 5운.
+        //   클라 getWeeklyPrice().actualPrice 와 동일 로직 → 로컬/Firestore 잔액 정합(over/under-charge 0).
+        // 2026-10-26 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 깎은 만큼만 실패 때 돌려준다)
+        const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost: weeklyCost(), quota: 'weekly', label: 'weekly', ip: (0, chargeOrShort_1.requestIp)(request.rawRequest) });
+        if (c.limited)
+            throw new https_1.HttpsError('resource-exhausted', genGuard_1.GEN_LIMIT_MESSAGE);
+        deductedAmount = c.deducted;
     }
     try {
         const { generateWeeklyFortune } = await lazyClaudeWeekly();
@@ -1956,19 +1975,11 @@ exports.generateWeeklyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], ti
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            const cost = weeklyCost(); // 하반기 이벤트 반영 (generateWeekly 와 동일)
-            await db.runTransaction(async (tx) => {
-                const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), cost);
-                if (!result)
-                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
-            });
-            deductedAmount = cost;
-        }
+        // 하반기 이벤트 반영 (generateWeekly 와 동일). 2026-10-26 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts)
+        const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost: weeklyCost(), quota: 'weekly', label: 'weeklyDraft', ip: (0, chargeOrShort_1.requestIp)(request.rawRequest) });
+        if (c.limited)
+            throw new https_1.HttpsError('resource-exhausted', genGuard_1.GEN_LIMIT_MESSAGE);
+        deductedAmount = c.deducted;
     }
     try {
         const cw = await lazyClaudeWeekly();
@@ -1990,21 +2001,23 @@ exports.generateWeeklyDraft = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], ti
 /**
  * ⚡ 주간운세 보정 (refine·2차만) — async 2차리뷰 백그라운드. 🛡️ 무차감.
  *   실패해도 draft 반환(유저는 이미 draft 봤음·환불 X). 같은 reportId 최종본 갱신.
+ *   2026-10-26 본인 초안에 한 번만 (claimRefineDraft, 월운세와 같다)
  */
 exports.generateWeeklyRefine = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeoutSeconds: 300, memory: '1GiB', minInstances: 0, cors: true, invoker: 'public' }, async (request) => {
     await (0, genGuard_1.guardCallable)(request, 'weekly'); // 익명 하루 상한 (genGuard)
     const { sajuData, weekDays, draft, reportId } = request.data;
     if (!sajuData || !draft)
         throw new https_1.HttpsError('invalid-argument', '보정할 데이터가 없습니다');
+    const stored = await claimRefineDraft(reportId, request.auth?.uid, 'weekly');
+    if (!stored)
+        return { content: draft };
     try {
         const cw = await lazyClaudeWeekly();
-        const refined = await cw.generateWeeklyRefine(ANTHROPIC_KEY.value(), sajuData, weekDays, draft);
-        if (reportId && typeof reportId === 'string') {
-            try {
-                await (0, firestoreSafe_1.setReportSafe)(db.collection('reports').doc(reportId), { content: refined, draft: false, refinedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-            }
-            catch { /* 갱신 실패 무해 */ }
+        const refined = await cw.generateWeeklyRefine(ANTHROPIC_KEY.value(), sajuData, weekDays, stored);
+        try {
+            await (0, firestoreSafe_1.setReportSafe)(db.collection('reports').doc(reportId), { content: refined, draft: false, refinedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
         }
+        catch { /* 갱신 실패 무해 */ }
         return { content: refined };
     }
     catch (error) {
@@ -2023,19 +2036,11 @@ exports.generateCompatibility = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            // 2026-05-28 — schema 통일 helper
-            await db.runTransaction(async (tx) => {
-                const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), COMPAT_COST);
-                if (!result)
-                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
-            });
-            deductedAmount = COMPAT_COST;
-        }
+        // 2026-10-26 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 깎은 만큼만 실패 때 돌려준다)
+        const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost: COMPAT_COST, quota: 'compat', label: 'compat', ip: (0, chargeOrShort_1.requestIp)(request.rawRequest) });
+        if (c.limited)
+            throw new https_1.HttpsError('resource-exhausted', genGuard_1.GEN_LIMIT_MESSAGE);
+        deductedAmount = c.deducted;
     }
     try {
         const { generateCompatibilityAnalysis } = await lazyClaudeCompat();
@@ -2065,20 +2070,12 @@ exports.generateTojung = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], timeout
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            const cost = tojungCostFor(request.data?.priceUn); // 2026-10-15 정가 9운, 얼리버드 7운, 10-21 자정 경계 15분
-            // 2026-05-28 — schema 통일 helper
-            await db.runTransaction(async (tx) => {
-                const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), cost);
-                if (!result)
-                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
-            });
-            deductedAmount = cost;
-        }
+        const cost = tojungCostFor(request.data?.priceUn); // 2026-10-15 정가 9운, 얼리버드 7운, 10-21 자정 경계 15분
+        // 2026-10-26 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 깎은 만큼만 실패 때 돌려준다)
+        const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost, quota: 'newyear', label: 'tojung', ip: (0, chargeOrShort_1.requestIp)(request.rawRequest) });
+        if (c.limited)
+            throw new https_1.HttpsError('resource-exhausted', genGuard_1.GEN_LIMIT_MESSAGE);
+        deductedAmount = c.deducted;
     }
     try {
         const { generateTojungBigyeol } = await lazyClaudeTojung();
@@ -2255,20 +2252,11 @@ exports.generateTopicAnalysis = (0, https_1.onCall)({ secrets: [ANTHROPIC_KEY], 
     let deductedAmount = 0;
     // 잔액 차감 — 실명 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            const cost = topicCost(topicId);
-            // 2026-05-28 — schema 통일 helper
-            await db.runTransaction(async (tx) => {
-                const doc = await tx.get(userRef);
-                const result = computeBalanceDeduction(doc.data(), cost);
-                if (!result)
-                    throw new https_1.HttpsError('failed-precondition', '운이 부족합니다');
-                tx.update(userRef, result.updates);
-            });
-            deductedAmount = cost;
-        }
+        // 2026-10-26 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 깎은 만큼만 실패 때 돌려준다)
+        const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost: topicCost(topicId), quota: 'topic', label: `topic_${topicId}`, ip: (0, chargeOrShort_1.requestIp)(request.rawRequest) });
+        if (c.limited)
+            throw new https_1.HttpsError('resource-exhausted', genGuard_1.GEN_LIMIT_MESSAGE);
+        deductedAmount = c.deducted;
     }
     try {
         const { generateTopicAnalysisAI } = await lazyClaudeTopic();
@@ -2358,29 +2346,23 @@ exports.generateTopicAnalysisStream = (0, https_1.onRequest)({
         res.end();
         return;
     }
-    // 잔액 차감 (1운) — callable 과 동일 (실명 유저만)
+    // 잔액 차감 — callable 과 동일 (실명 유저만)
+    //   2026-10-26 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts). 'start' 전 error 는 상한 초과와 Firestore 장애뿐
     let deductedAmount = 0;
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
-        const userRef = db.collection('users').doc(uid);
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-            try {
-                // 2026-05-28 — schema 통일 helper
-                const cost = topicCost(topicId);
-                await db.runTransaction(async (tx) => {
-                    const doc = await tx.get(userRef);
-                    const result = computeBalanceDeduction(doc.data(), cost);
-                    if (!result)
-                        throw new Error('운이 부족합니다');
-                    tx.update(userRef, result.updates);
-                });
-                deductedAmount = cost;
-            }
-            catch (e) {
-                sendEvent('error', { message: e.message || '잔액 차감 실패' });
+        try {
+            const c = await (0, chargeOrShort_1.chargeOrShort)(db, computeBalanceDeduction, { uid, cost: topicCost(topicId), quota: 'topic', label: `topic_${topicId}`, ip: (0, chargeOrShort_1.requestIp)(req) });
+            if (c.limited) {
+                sendEvent('error', { message: genGuard_1.GEN_LIMIT_MESSAGE });
                 res.end();
                 return;
             }
+            deductedAmount = c.deducted;
+        }
+        catch (e) {
+            sendEvent('error', { message: e.message || '잔액 차감 실패' });
+            res.end();
+            return;
         }
     }
     sendEvent('start', { ts: Date.now() });
