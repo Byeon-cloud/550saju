@@ -261,6 +261,8 @@ const TOJUNG_PRICING_RAW: PricingDef = {
 export function getTojungPrice(): PricingInfo {
   return resolvePricing(TOJUNG_PRICING_RAW);
 }
+/** 2026-10-27 신년운세 출시 기념가 마지막 날 (홈 첫 화면 '11월 30일까지 7운' 과 남은 날) */
+export const TOJUNG_LAUNCH_UNTIL = TOJUNG_PRICING_RAW.launchUntil || '';
 
 /** 주간운세 가격 조회 — 항상 actualPrice 포함 */
 export function getWeeklyPrice(): PricingInfo {

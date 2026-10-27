@@ -33,7 +33,7 @@ interface Props {
 }
 
 /* 2026-10-27 v9 수묵 고서로 다시 그림(예전 금색 테두리, 주제 색 그림 폐기) — 홈 고민 위 두 칸과 같은 모양.
- *   빨간 도장 글자, 이름과 값, AI 연결 문장, 사실 한 줄, 오른쪽 남은 날 큰 숫자 */
+ *   먹 도장 글자, 이름과 값, AI 연결 문장, 사실 한 줄, 오른쪽 남은 날 큰 숫자 */
 const C = { ink: '#1A1612', ink2: '#4B4238', mute: '#6F6557', line: '#E1D7C4', card: '#FFFDF8', seal: '#A23A2A', paper: '#F4EFE4' };
 const SERIF = "'Noto Serif KR', serif";
 
@@ -61,7 +61,7 @@ export function NextStepsCard({ topics, questions, onTopic, onAsk, title = '이 
             return (
               <button key={t.id} type="button" onClick={() => goTopic(t.id, i)} className="mo-press"
                 style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', background: '#fff', border: `1px solid ${C.line}`, borderRadius: 14, padding: '13px 14px', minHeight: 64, cursor: 'pointer', width: '100%' }}>
-                <span aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 6, background: C.seal, color: C.paper, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 22, fontWeight: 900, flexShrink: 0 }}>
+                <span aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 6, background: C.ink, color: C.paper, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 22, fontWeight: 900, flexShrink: 0 }}>
                   {meta.kanji}
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>

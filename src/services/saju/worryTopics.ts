@@ -49,11 +49,13 @@ export function worryGroupOrder(gen: Gen): WorryGroup[] {
   return gen === 'mid' || gen === 'senior' ? ['money', 'people', 'life'] : ['people', 'money', 'life'];
 }
 
+/* 2026-10-27 위 두 칸을 실제로 팔린 순서로 (45일 구매: 20~30대 연애운 22, 재회운 8 / 40~50대 궁합 3, 재물운 1, 종합사주 2,
+ *   이직은 40대가 열어만 보고 사지 않음). 예전 35세부터 위 두 칸은 이직, 재물(50세부터 재취업, 창업)이었다 */
 const ORDER: Record<'young' | 'mid' | 'senior' | 'any', Array<TopicId | 'compat'>> = {
-  senior: ['exam', 'business', 'marriage', 'compat', 'health', 'wealth', 'love', 'reunion', 'career', 'move', 'study'],
-  mid: ['exam', 'wealth', 'business', 'compat', 'marriage', 'love', 'reunion', 'career', 'health', 'move', 'study'],
-  young: ['love', 'exam', 'reunion', 'wealth', 'compat', 'marriage', 'career', 'business', 'health', 'move', 'study'],
-  any: ['love', 'exam', 'reunion', 'wealth', 'compat', 'marriage', 'career', 'business', 'health', 'move', 'study'],
+  senior: ['compat', 'wealth', 'exam', 'business', 'marriage', 'health', 'love', 'reunion', 'career', 'move', 'study'],
+  mid: ['wealth', 'compat', 'exam', 'business', 'marriage', 'love', 'reunion', 'career', 'health', 'move', 'study'],
+  young: ['love', 'reunion', 'exam', 'wealth', 'compat', 'marriage', 'career', 'business', 'health', 'move', 'study'],
+  any: ['love', 'reunion', 'exam', 'wealth', 'compat', 'marriage', 'career', 'business', 'health', 'move', 'study'],
 };
 
 /**
@@ -71,16 +73,17 @@ export function worryRows(s: SajuData | null | undefined, today: string, gen: Ge
   const row = (id: TopicId, t: string, sub: string, short: string, days: number | null = null): WorryRow => ({
     key: id, hz: TOPIC_REGISTRY[id].kanji, t, s: sub, price: `${getTopicPrice(id).actualPrice}운`, short, days, group: GROUP_OF[id] || 'life',
   });
-  const emShort = em ? `${emText} 자리의 별` : '';
+  const emShort = em ? `${emText} 일자리 운` : '';
   const emDays = em ? em.days : null;
 
   const make = (key: TopicId | 'compat'): WorryRow => {
     switch (key) {
       case 'exam':
-        if (gen === 'senior') return row('exam', '재취업 이직운', emText ? `일자리의 별이 ${emText}에 들어와요` : '다시 일을 구하거나 옮기기 좋은 달', emShort || '다시 일할 때', emDays);
-        if (gen === 'mid') return row('exam', '이직운', emText ? `옮길 자리의 별이 ${emText}에 들어와요` : '옮기기 좋은 달과 버텨야 할 때', emShort || '옮기기 좋은 달', emDays);
-        if (gen === 'young') return row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날', emShort || '합격 소식 오는 달', emDays);
-        return row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '시험, 취업, 이직, 다시 일할 때가 풀리는 달', emShort || '합격, 이직 시기', emDays);
+        // 2026-10-27 '자리의 별' → '일자리 운' (독립 검토: 50~60대에게 별 비유가 한 번 더 걸린다)
+        if (gen === 'senior') return row('exam', '재취업 이직운', emText ? `${emText}에 일자리 운이 들어와요` : '다시 일을 구하거나 옮기기 좋은 달', emShort || '다시 일할 때', emDays);
+        if (gen === 'mid') return row('exam', '이직운', emText ? `${emText}에 옮길 자리 운이 들어와요` : '옮기기 좋은 달과 버텨야 할 때', emShort || '옮기기 좋은 달', emDays);
+        if (gen === 'young') return row('exam', '합격 이직운', emText ? `${emText}에 시험과 일자리 운이 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날', emShort || '합격 소식 오는 달', emDays);
+        return row('exam', '합격 이직운', emText ? `${emText}에 시험과 일자리 운이 들어와요` : '시험, 취업, 이직, 다시 일할 때가 풀리는 달', emShort || '합격, 이직 시기', emDays);
       case 'love': {
         const love = safe(() => loveDday(s as SajuData, today));
         return row('love', '연애운', love ? `${yr(love.month.start)}${monthDayLabel(love.month.start)}부터 연인의 별이 들어와요` : '새 인연이 들어오는 달을 짚어요',

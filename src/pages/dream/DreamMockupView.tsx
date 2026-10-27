@@ -436,7 +436,7 @@ const MOCKUP_CSS = `
 .dream-mockup .topic-rec .tr-card { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #E5DFD0; border-radius: 16px; padding: 14px 14px 14px 16px; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease; }
 .dream-mockup .topic-rec .tr-card:hover { border-color: #1A1612; }
 .dream-mockup .topic-rec .tr-card:focus-visible, .dream-mockup .topic-rec .tr-sub:focus-visible { outline: 2px solid #B8965A; outline-offset: 2px; }
-.dream-mockup .topic-rec .tr-kanji { flex-shrink: 0; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 900; background: #A23A2A; color: #F4EFE4; }
+.dream-mockup .topic-rec .tr-kanji { flex-shrink: 0; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 900; background: #1A1612; color: #F4EFE4; }
 .dream-mockup .topic-rec .tr-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .dream-mockup .topic-rec .tr-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dream-mockup .topic-rec .tr-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }

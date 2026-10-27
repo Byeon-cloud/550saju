@@ -20,7 +20,7 @@ import { useToast } from '@/components/common/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { LegalFooter } from '@/components/layout/LegalFooter';
-import { useActiveProfile, useTodayHeadline } from '@/hooks/useHomeData';
+import { useActiveProfile, useTodayHeadline, useBalance } from '@/hooks/useHomeData';
 import { MonthGoodDays } from '@/components/home/MonthGoodDays';
 import { BirthdayMonth } from '@/components/home/BirthdayMonth';
 import { SuneungCard } from '@/components/home/SuneungCard';
@@ -28,7 +28,8 @@ import { InviteWelcomeCard } from '@/components/invite/InviteWelcomeCard';
 import { InviteRow } from '@/components/invite/InviteRow';
 import { WebIntro } from '@/components/home/WebIntro';
 import { TOPIC_REGISTRY, type TopicId } from '@/constants/topics';
-import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST } from '@/constants/pricing';
+import { getTopicPrice, getPremiumPrice, getMonthlyPrice, getWeeklyPrice, getTojungPrice, PRODUCT_COST, TOJUNG_LAUNCH_UNTIL } from '@/constants/pricing';
+import { CHEONGAN_KO, JIJI_KO } from '@/constants/oheng';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { getReports } from '@/services/storage/localStore';
 import { getPublicReviews, type PublicReview } from '@/services/reviews';
@@ -246,8 +247,67 @@ export function HomePage() {
     ? (Math.min(...worryNums) === Math.max(...worryNums) ? `${worryNums[0]}운` : `${Math.min(...worryNums)}~${Math.max(...worryNums)}운`)
     : '1운부터';
   const periodFrom = `${Math.min(weekly, monthly)}운부터`;
-  /** 오늘 아직 무료로 남은 것 (매일 무료 머리 한 줄) */
-  const freeLeft = [dailyFree && '오늘의 운세', dreamFree && '꿈해몽', chatFree && '사주대화 첫 질문'].filter((x): x is string => !!x);
+  /** 오늘 아직 무료로 남은 것 (매일 무료 머리 한 줄, 오늘의 운세는 첫 화면이 말한다) */
+  const freeLeft = [chatFree && '사주대화 첫 질문', dreamFree && '꿈해몽'].filter((x): x is string => !!x);
+  const freeLine = freeLeft.length
+    ? `${freeLeft.join('과 ')}${josa(freeLeft[freeLeft.length - 1], '은', '는')} 오늘 한 번 무료예요. 만세력은 언제든 무료예요.`
+    : '오늘 무료는 다 썼어요. 내일 다시 무료로 열리고, 만세력은 언제든 무료예요.';
+  /* 2026-10-27 독립 검토 — 신년운세 출시 기념가 마감(진짜 날짜)을 첫 화면에. 마감 뒤에는 launch 가 없어져 정가 문장만 */
+  const nyLaunch = tojungInfo.launch;
+  const nyUntil = TOJUNG_LAUNCH_UNTIL ? `${Number(TOJUNG_LAUNCH_UNTIL.slice(5, 7))}월 ${Number(TOJUNG_LAUNCH_UNTIL.slice(8, 10))}일` : '';
+  const nyDaysLeft = nyLaunch && TOJUNG_LAUNCH_UNTIL ? Math.round((Date.parse(`${TOJUNG_LAUNCH_UNTIL}T12:00:00+09:00`) - Date.parse(`${today}T12:00:00+09:00`)) / 864e5) : null;
+  const nyPriceLine = nyLaunch ? `${nyUntil}까지 ${tojung}운, ${nyLaunch.note}이에요` : `${tojung}운이에요`;
+  /* 2026-10-27 독립 검토 — 가진 운이 홈에서 아무 일도 하지 않았다. 1운 넘게 있으면 지금 바로 열 수 있는 것 한 줄 (가격표에서 고른다) */
+  const balance = useBalance();
+  const spendLine = (() => {
+    if (!(balance >= 1)) return '';
+    const fit = worries.filter((r) => { const n = parseInt(r.price, 10); return Number.isFinite(n) && n <= balance; })
+      .sort((a, b) => parseInt(b.price, 10) - parseInt(a.price, 10));
+    const shown = Math.floor(balance * 10) / 10;
+    const pick = fit[0];
+    return pick
+      ? `가진 ${shown}운으로 ${pick.t}${josa(pick.t, '이나', '나')} 사주대화 세 번을 바로 볼 수 있어요`
+      : `가진 ${shown}운으로 사주대화 세 번을 바로 물어볼 수 있어요`;
+  })();
+  /** 대운 간지 한글로 (50~60대가 한자에서 막힌다, 독립 검토) */
+  const gzKo = (gz: string) => `${CHEONGAN_KO[gz[0]] || gz[0] || ''}${JIJI_KO[gz[1]] || gz[1] || ''}`;
+  const topWorry = worries[0];
+
+  const freeBlock = (
+    <>
+      {/* ━━━ 매일 무료 — 2026-10-27 독립 검토: 판매 1위 사주대화(15건)를 맨 위로, 이어 산 사람 0인 꿈해몽은 진한 큰 카드에서 줄로 ━━━ */}
+      <SecTitle id="home-free" mark="日" k="매일 무료" h="오늘 무료로 볼 수 있어요" price="무료" d={freeLine} />
+      <div style={{ margin: '0 16px', borderTop: `1px solid ${HJ.line}` }}>
+        <FreeRow mark="問" t="궁금한 걸 물으면 내 사주로 답해 드려요"
+          s={gen === 'young' ? '“이직해도 될까요?”처럼 물어보세요' : gen === 'mid' ? '“지금 옮겨도 될까요?”처럼 물어보세요' : '“새로 시작해도 될까요?”처럼 물어보세요'}
+          right={chatFree ? '첫 질문 무료' : '1운에 세 번'} onClick={() => navigate('/chat')} />
+        <FreeRow mark="夢" t="어젯밤 꿈을 적으면 뜻을 풀어 드려요" s="꿈과 내 사주가 가리키는 달까지 짚어 드려요"
+          right={dreamFree ? '무료' : '1운'} onClick={() => navigate('/dream')} />
+        <FreeRow mark="曆" t={hasSaju ? '내 만세력' : '무료 만세력'} s="여덟 글자와 오행, 지금 대운을 한 장에 보여 드려요" right="무료"
+          onClick={() => {
+            import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '홈 무료 만세력', page: '/' })).catch(() => {});
+            navigate(hasSaju && profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '/input?from=manse');
+          }} />
+      </div>
+
+    </>
+  );
+  const reviewsBand = reviews.length > 0 ? (
+        <Band tone="deep">
+          <SecTitle rule={false} mark="言" k="먼저 본 사람들" h="읽어본 사람들이 남긴 말" />
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar" style={{ padding: '0 16px 4px' }}>
+            {reviews.map((r) => (
+              <div key={r.id} style={{ flex: '0 0 270px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 13, color: HJ.goldText, fontWeight: 800 }} aria-label={`별점 ${r.rating}점`}>
+                  {'★'.repeat(r.rating)}<span style={{ color: HJ.line }}>{'★'.repeat(5 - r.rating)}</span>
+                </div>
+                <p style={{ fontSize: 15.5, lineHeight: 1.65, marginTop: 8, color: HJ.ink }}>“{r.text}”</p>
+                <p style={{ fontSize: 13, color: HJ.mute, marginTop: 10 }}>{reviewByline(r)}</p>
+              </div>
+            ))}
+          </div>
+        </Band>
+      ) : null;
 
   return (
     <div style={{ background: HJ.paper, minHeight: '100vh', paddingBottom: 112, color: HJ.ink }}>
@@ -281,10 +341,23 @@ export function HomePage() {
                 <h1 className={heroMo ? 'mo-ink' : undefined} style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 26, lineHeight: 1.42, letterSpacing: '-.03em', marginTop: 14 }}>
                   {todayLine}
                 </h1>
-                <GoldCta style={{ marginTop: 18 }} onClick={() => navigate('/daily')}>오늘 운세 다시 보기</GoldCta>
-                <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>오늘 받은 풀이를 그대로 다시 열어요</p>
-                <DailyNotiButton variant="slim" className="mt-1" />
-                <DailyMailSignup compact prefill={mailPrefill} source="home" style={{ marginTop: 4 }} />
+                {/* 2026-10-27 독립 검토 — 오늘의 운세를 본 242명이 홈에 돌아오면 금색 버튼이 이미 본 무료 풀이로 보냈다(다른 걸 산 사람 30명).
+                     마감 전에는 신년운세, 마감 뒤에는 고민 첫 칸. 오늘 운세 다시 보기는 아래 글자로 */}
+                {nyLaunch ? (
+                  <GoldCta style={{ marginTop: 18 }} sub={`${tojung}운`} sheen
+                    onClick={() => { trackEvent('cta_click', { label: '홈 첫 화면 신년운세', page: '/', pos: 'hero_after_daily' }); navigate('/tojung'); }}>
+                    {NEW_YEAR_TARGET}년 열두 달 미리 보기
+                  </GoldCta>
+                ) : topWorry ? (
+                  <GoldCta style={{ marginTop: 18 }} sub={topWorry.price} sheen onClick={() => goWorry(topWorry, 'top', 1)}>
+                    {topWorry.t} 보기
+                  </GoldCta>
+                ) : null}
+                {nyLaunch && <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.ink2, marginTop: 10 }}>{nyPriceLine}</p>}
+                <button type="button" onClick={() => navigate('/daily')} className="w-full tap-pad"
+                  style={{ marginTop: 4, padding: '8px 0', fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
+                  오늘 운세 다시 보기 ›
+                </button>
               </>
             ) : (
               <>
@@ -303,25 +376,23 @@ export function HomePage() {
                     {todayLine}
                   </h1>
                 )}
+                {/* 2026-10-27 독립 검토 — 회색 상자 대신 한 줄. 돈 흐름과 피할 일은 오늘의 운세 결과에 실제로 있는 칸 */}
                 {facts?.today && facts.todayShow === 'avoid' && (
-                  <div style={{ marginTop: 16, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '13px 15px', fontSize: 15, lineHeight: 1.65, color: HJ.ink2 }}>
-                    <b style={{ color: HJ.ink }}>가장 좋은 시간은 {facts.today.peak}</b>이에요.
-                    {' '}오늘 할 일과 피할 일도 같이 확인해 보세요.
-                  </div>
+                  <p style={{ marginTop: 12, fontSize: 15.5, lineHeight: 1.65, color: HJ.ink2, wordBreak: 'keep-all' }}>
+                    가장 좋은 시간은 <b style={{ color: HJ.ink }}>{facts.today.peak}</b>이에요. 돈 흐름과 피할 일까지 열어 보세요.
+                  </p>
                 )}
                 {facts?.today && facts.todayShow === 'peak' && (
-                  <div style={{ marginTop: 16, background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 12, padding: '13px 15px', fontSize: 15, lineHeight: 1.65, color: HJ.ink2 }}>
-                    중요한 연락과 결정은 이때로 미뤄 보세요. 오늘 할 일과 피할 일도 같이 확인해 보세요.
-                  </div>
+                  <p style={{ marginTop: 12, fontSize: 15.5, lineHeight: 1.65, color: HJ.ink2, wordBreak: 'keep-all' }}>
+                    중요한 연락은 이 시간에 하세요. 돈 흐름과 피할 일까지 열어 보세요.
+                  </p>
                 )}
                 <GoldCta style={{ marginTop: 16 }} onClick={() => navigate('/daily')} sub={dailyFree ? '무료' : '1운'} sheen>
                   오늘 운세 전부 열기
                 </GoldCta>
                 <p style={{ textAlign: 'center', fontSize: 13.5, color: HJ.mute, marginTop: 10 }}>
-                  {dailyFree ? '오늘 1회 무료, 결제 없이 바로 열려요' : '오늘 무료 1회는 썼어요, 두 번째부터 1운'}
+                  {dailyFree ? '오늘 한 번은 결제 없이 열려요' : '오늘 무료 한 번은 썼어요. 한 번 더 보면 1운이에요'}
                 </p>
-                <DailyNotiButton variant="slim" className="mt-1" />
-                <DailyMailSignup compact prefill={mailPrefill} source="home" style={{ marginTop: 4 }} />
               </>
             )
           ) : (
@@ -349,17 +420,56 @@ export function HomePage() {
 
       {/* 2026-10-23 웹 홈 화면 앱(PWA) 안내 한 자리 — 아이폰 홈 화면 앱 로그인 전 '로그인하면 이어져요', 다시 온 휴대폰 손님에게 홈 화면에 추가.
            첫 화면 아래, 아침 운세 메일 줄 다음. 앱 빌드와 토스 안에서는 아무것도 그리지 않는다 (components/pwa/HomePwaSlot) */}
+      {/* 2026-10-27 독립 검토 — 신년운세 철인데 일곱 번째 화면에 묻혀 있었다 → 사주 있는 손님은 첫 화면 바로 아래 한 장.
+           운세를 받은 뒤(금색 버튼이 이미 신년운세)에는 이 자리에 고민 첫 칸 */}
+      {hasSaju && (gotDaily && nyLaunch ? (
+        topWorry ? <div style={{ margin: '22px 16px 0' }}><TopicCard hz={topWorry.hz} t={topWorry.t} s={topWorry.s} price={topWorry.price} days={topWorry.days} onClick={() => goWorry(topWorry, 'top', 1)} /></div> : null
+      ) : (
+        <button type="button" id="home-newyear" onClick={() => { trackEvent('cta_click', { label: '홈 첫 화면 신년운세', page: '/', pos: 'hero_card' }); navigate('/tojung'); }} className="text-left mo-press"
+          style={{ display: 'block', margin: '22px 16px 0', width: 'calc(100% - 32px)', borderRadius: 16, overflow: 'hidden', position: 'relative', border: 0, background: HJ.ink, color: '#F1ECE1', padding: 0, borderTop: '3px double rgba(184,150,90,.8)', borderBottom: '3px double rgba(184,150,90,.8)', scrollMarginTop: 72 }}>
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.inwang})`, backgroundSize: '190% auto', backgroundPosition: '30% 40%', backgroundRepeat: 'no-repeat', opacity: 0.35 }} />
+          <div style={{ position: 'relative', padding: '16px 18px 15px' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#CFC6B6' }}>{NEW_YEAR_TARGET} 신년운세{nyDaysLeft != null && nyDaysLeft >= 0 ? `, 출시 기념가 ${nyDaysLeft === 0 ? '오늘까지' : `${nyDaysLeft}일 남음`}` : ''}</div>
+            <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, lineHeight: 1.4, marginTop: 6, wordBreak: 'keep-all' }}>
+              {facts?.year?.cat
+                ? <>{NEW_YEAR_TARGET}년에는 {realName(name) ? `${realName(name)} 님에게 ` : ''}{STAR_LUCK[facts.year.cat]}{josa(STAR_LUCK[facts.year.cat], '이', '가')} 들어와요</>
+                : <>{NEW_YEAR_TARGET}년은 나에게 어떤 해일까요</>}
+            </div>
+            <div style={{ fontSize: 14.5, color: '#E2D9C8', marginTop: 6, lineHeight: 1.55, wordBreak: 'keep-all' }}>
+              열두 달 좋은 날까지 알려 드려요. <b style={{ color: '#F1ECE1' }}>{nyPriceLine} ›</b>
+            </div>
+          </div>
+        </button>
+      ))}
+      {/* 9시 알림(앱)과 아침 메일(웹) 한 줄 — 첫 화면 버튼 사이에서 신년운세 한 장 아래로 (2026-10-27) */}
+      {hasSaju && (
+        <div style={{ margin: '8px 16px 0' }}>
+          <DailyNotiButton variant="slim" />
+          <DailyMailSignup compact prefill={mailPrefill} source="home" style={{ marginTop: 4 }} />
+        </div>
+      )}
       {HomePwaSlot && <Suspense fallback={null}><HomePwaSlot /></Suspense>}
 
       {/* 2026-10-27 지인 VOC '홈에 콘텐츠는 많은데 뭐가 뭔지 구분이 안 간다, 가격은 얼마냐' → 첫 화면 바로 아래에 홈 목차 한 줄(값은 운으로).
-           덩어리마다 같은 먹 도장 글자를 머리에도 달아 목차와 본문이 이어지게 한다. 누르면 그 덩어리로 내려간다 */}
-      <QuickNav items={[
+           덩어리마다 같은 먹 도장 글자를 머리에도 달아 목차와 본문이 이어지게 한다. 누르면 그 덩어리로 내려간다.
+           2026-10-27 독립 검토 — 사주 있는 손님 홈을 다섯 화면으로 줄이면서 목차는 사주 없는 첫 손님에게만 */}
+      {!hasSaju && <QuickNav items={[
         { mark: '心', label: '고민별', price: worryRange, to: 'home-topics' },
         { mark: '日', label: '매일 무료', price: '무료', to: 'home-free' },
         { mark: '命', label: '종합사주', price: `${premium}운`, to: 'home-premium' },
         { mark: '歲', label: '신년운세', price: `${tojung}운`, to: 'home-newyear' },
         { mark: '月', label: '주간 월간', price: periodFrom, to: 'home-period' },
-      ]} />
+      ]} />}
+
+      {/* 시기 카드(월초 좋은 날, 생일 달, 수능, 초대받은 친구) — 그날 해당하는 첫 장 하나만, 머리 없이 (2026-10-27 독립 검토) */}
+      {hasSaju && (
+        <SeasonGroup>
+          <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />
+          <BirthdayMonth sajuData={sajuData as any} name={displayName} premiumPrice={premium} newYearPrice={tojung} />
+          <SuneungCard sajuData={sajuData as any} name={displayName} age={age} today={today} price={getTopicPrice('exam' as TopicId).actualPrice} profileId={profileId} />
+          <InviteWelcomeCard padding="0" />
+        </SeasonGroup>
+      )}
 
       {/* ━━━ 2. 고민 (주제운) — 2026-10-26 오너 '고민 더 보기가 안 보여 다른 주제운을 못 만난다, 홈에서 뭐부터 볼지 모르겠다'
            → 오늘 운세 바로 아래로 올리고 접지 않는다. 나이대별 위 두 개는 사실 한 줄이 붙은 카드, 나머지 아홉은 세 칸 격자 ━━━ */}
@@ -367,7 +477,10 @@ export function HomePage() {
            위 두 칸은 그 별이 들어오기까지 남은 날을 큰 숫자로, 나머지는 사람과 인연, 돈과 일, 몸과 생활 세 묶음에 칸마다 보는 것 한 줄 */}
       <Band tone="deep">
         <SecTitle id="home-topics" rule={false} mark="心" k="고민별 운세" h="어떤 고민이 있으세요?" price={worryRange}
-          d={hasSaju ? `${displayName} 님 사주에서 날짜가 먼저 잡히는 고민부터 보여 드려요` : '연애, 돈, 일 가운데 고민 하나를 골라 깊게 풀어요'} />
+          d="누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요." />
+        {spendLine && (
+          <p style={{ margin: '-4px 22px 12px', fontSize: 14.5, fontWeight: 700, color: HJ.ink, lineHeight: 1.55, wordBreak: 'keep-all' }}>{spendLine}</p>
+        )}
         <MotionScope style={{ margin: '0 16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {worries.slice(0, 2).map((r, i) => (
@@ -394,101 +507,31 @@ export function HomePage() {
             );
           })}
         </MotionScope>
-        <p style={{ margin: '14px 22px 0', fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, wordBreak: 'keep-all' }}>
-          누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요.
-        </p>
       </Band>
 
-      {/* 2026-10-27 시기 카드와 초대는 머리 없이 고민과 무료 사이에 떠 있어 '뭐가 뭔지' 헷갈렸다 → '이번 달 소식과 혜택' 한 덩어리로 묶는다.
-           카드가 하나도 안 그려지면 머리도 숨긴다 (SeasonGroup) */}
-      {hasSaju && (
-        <SeasonGroup>
-          {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 월운세와 같은 채점, AI 0원 */}
-          <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />
-          {/* 2026-10-17 생일 달 — 종합사주 또는 신년운세(11~2월) */}
-          <BirthdayMonth sajuData={sajuData as any} name={displayName} premiumPrice={premium} newYearPrice={tojung} />
-          {/* 2026-10-17 수능 시즌(11/1~11/19) — 40~59세는 자녀 합격운, 17~21세는 내 합격운 */}
-          <SuneungCard sajuData={sajuData as any} name={displayName} age={age} today={today} price={getTopicPrice('exam' as TopicId).actualPrice} profileId={profileId} />
-          {/* 2026-10-18 친구 초대 — 초대받은 친구는 받기 카드, 사주를 넣은 사람은 초대 한 줄 */}
-          <InviteWelcomeCard padding="0" />
-          <InviteRow />
-        </SeasonGroup>
-      )}
       {/* 2026-10-17 웹 전용 첫 손님 소개 (앱 빌드와 토스 안에서는 안 보임) */}
       {!hasSaju && <WebIntro premiumPrice={premium} />}
 
-      {/* ━━━ 3. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게)
-           2026-10-27 지인 VOC '기능은 좋은데 배치가 제각각이라 헷갈린다' → 모든 덩어리가 같은 머리(작은 분류 + 제목)로 시작한다 ━━━ */}
-      <SecTitle id="home-free" mark="日" k="매일 무료" h="오늘 무료로 볼 수 있어요" price="무료"
-        d={freeLeft.length
-          ? `오늘 아직 무료로 남은 것: ${freeLeft.join(', ')}. 만세력은 언제나 무료예요.`
-          : '오늘 무료는 다 썼어요. 내일 다시 무료로 열리고, 만세력은 언제나 무료예요.'} />
-      <div style={{ padding: '0 16px' }}>
-        <div className="grid grid-cols-2 gap-2.5">
-          <button type="button" onClick={() => navigate('/dream')} className="text-left"
-            style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, padding: '16px 15px', minHeight: 200, background: HJ.ink, color: '#F1ECE1', display: 'flex', flexDirection: 'column', gap: 8, border: 0 }}>
-            <svg width="70" height="70" viewBox="0 0 70 70" aria-hidden="true" style={{ position: 'absolute', right: 8, top: 10 }}>
-              <path d="M44 12a24 24 0 1 0 14 40A20 20 0 1 1 44 12z" fill="none" stroke={HJ.gold} strokeWidth="1.6" />
-            </svg>
-            <Seal size={32} fontSize={18}>夢</Seal>
-            <span style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.35, marginTop: 4 }}>어젯밤 꿈,<br />무슨 뜻일까</span>
-            <span style={{ fontSize: 13.5, lineHeight: 1.5, color: '#CFC6B6', flex: 1 }}>어젯밤 꾼 꿈을 적어 보세요</span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#D2B477' }}>꿈해몽 {dreamFree ? '무료' : '1운'} ›</span>
-          </button>
-          <button type="button" onClick={() => navigate('/chat')} className="text-left"
-            style={{ borderRadius: 16, padding: '16px 15px', minHeight: 200, background: HJ.card, border: `1px solid ${HJ.line}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Seal size={32} fontSize={18}>問</Seal>
-            <span style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.35, marginTop: 4, color: HJ.ink }}>
-              {gen === 'young' ? <>“이직해도<br />될까요?”</> : gen === 'mid' ? <>“지금 옮겨도<br />될까요?”</> : <>“새로 시작해도<br />될까요?”</>}
-            </span>
-            <span style={{ fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, flex: 1 }}>고민을 물어보면 내 사주로 답해 드려요</span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>{chatFree ? '첫 질문 무료 ›' : '1운에 질문 세 번 ›'}</span>
-          </button>
-        </div>
-        {/* 2026-10-18 무료 만세력 입구 — 홈에 없어서 '내 정보', '보관함'으로만 들어갔다. 토스 검색 키워드 '만세력'과 짝 */}
-        <button type="button" className="w-full text-left mo-press"
-          onClick={() => {
-            import('@/services/analytics').then((a) => a.trackEvent('cta_click', { label: '홈 무료 만세력', page: '/' })).catch(() => {});
-            navigate(hasSaju && profileId ? `/saju-card/${encodeURIComponent(profileId)}` : '/input?from=manse');
-          }}
-          style={{ marginTop: 10, borderRadius: 16, padding: '14px 15px', background: HJ.card, border: `1px solid ${HJ.line}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Seal size={32} fontSize={18}>曆</Seal>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: HJ.ink }}>{hasSaju ? '내 만세력' : '무료 만세력'}</span>
-            <span style={{ display: 'block', fontSize: 13.5, lineHeight: 1.5, color: HJ.ink2, marginTop: 2 }}>사주 여덟 글자와 오행, 지금 대운을 한 장으로</span>
-          </span>
-          <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink, flexShrink: 0 }}>무료 ›</span>
-        </button>
-      </div>
-
-      {/* ━━━ 2-1. 가족 띠 운세 (사주 있는 사람) — 배우자, 자녀, 부모님 띠도 오늘 운세를 한 번에 ━━━ */}
-      {hasSaju && (
-        <Band tone="deep">
-          <SecTitle rule={false} mark="家" k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" price="무료" />
-          <div style={{ margin: '0 16px' }}>
-            {/* 2026-10-25 가족 생일 넣기는 관계 '가족'으로 시작 (예전엔 '본인'이라 본인 교체 창이 떴다) */}
-            <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="family"
-              onInput={() => navigate('/input?new=1&from=daily', { state: { relation: '가족' } })} compatPrice={compat} onCompat={() => navigate('/compat')} />
-          </div>
-        </Band>
-      )}
+      {/* 후기 — 사주 있는 손님은 10운을 권하기 전에(승인된 것이 있을 때만) */}
+      {hasSaju && reviewsBand}
+      {!hasSaju && freeBlock}
 
       {/* ━━━ 4. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
       {/* 2026-10-27 가장 큰 풀이라 먹 바탕에 금선 두 줄(프리미엄 예외)로 다른 덩어리와 확실히 가른다 */}
       <Band tone="ink" gold>
-      <SecTitle id="home-premium" rule={false} dark mark="命" k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" price={`${premium}운`}
-        d="내 사주 전체를 열 장으로 풀어 드리는 가장 긴 풀이예요" />
+      <SecTitle id="home-premium" rule={false} dark mark="命" k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년마다 바뀌는 운까지" price={`${premium}운`}
+        d="PDF로 저장할 수 있고, 읽다가 궁금한 건 바로 물어볼 수 있어요." />
       {/* 2026-10-15 오너: 책을 눌러도 종합사주로 — 책 그림, 소개, 대운 띠, 목차 어디를 눌러도 같은 곳으로 */}
       <button type="button" onClick={() => goPremium('book')} aria-label="종합사주 보기"
-        style={{ display: 'block', width: 'calc(100% - 32px)', margin: '0 16px', padding: 0, border: 0, borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD', cursor: 'pointer' }}>
+        style={{ display: 'block', width: 'calc(100% - 32px)', margin: '0 16px', padding: 0, border: 0, borderRadius: '20px 20px 0 0', height: 250, position: 'relative', overflow: 'hidden', background: '#E9E0CD', cursor: 'pointer' }}>
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ART.jangansa})`, backgroundSize: 'cover', backgroundPosition: '40% 55%', opacity: 0.42 }} />
         <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(233,224,205,0) 30%, rgba(233,224,205,.7) 100%)' }} />
-        <div style={{ position: 'absolute', left: '50%', top: 18, transform: 'translateX(-50%)' }}>
+        <div style={{ position: 'absolute', left: '50%', top: 10, transform: 'translateX(-50%) scale(.72)', transformOrigin: 'top center' }}>
           <GoBook title={facts?.persona ? `${facts.persona.dayGz}命書` : '四柱命書'} />
         </div>
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 14, textAlign: 'center', fontSize: 13, color: HJ.ink2, fontWeight: 600 }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10, textAlign: 'center', fontSize: 13, color: HJ.ink2, fontWeight: 600 }}>
           {/* 10-23 — 시간을 모르면 여섯 글자 (아래 첫 문장이 '여섯 글자'라고 말해 한 카드 안에서 어긋났다) */}
-          {facts?.persona ? `${displayName}, ${facts.persona.birthYearGz}生: ${hasTime ? '8' : '6'}글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
+          {facts?.persona ? `${realName(name) ? `${realName(name)} 님 ` : '내 '}${hasTime ? '여덟' : '여섯'} 글자로 엮은 열 장` : '태어난 날과 시간으로 엮는 열 장'}
         </div>
       </button>
       <section style={{ margin: '0 16px', background: HJ.card, border: `1px solid ${HJ.line}`, borderTop: 0, borderRadius: '0 0 20px 20px', padding: 18 }}>
@@ -505,9 +548,6 @@ export function HomePage() {
             {story.secondKind === 'bring' && story.second && (
               <p style={{ fontSize: 15, color: HJ.ink2, marginTop: 6, lineHeight: 1.65, wordBreak: 'keep-all' }}>{story.second}</p>
             )}
-            <p style={{ fontSize: 14, color: HJ.mute, marginTop: 6, lineHeight: 1.6 }}>
-              {story.dayGz}일주에서 시작해 돈, 사랑, 일, 건강까지 열 장으로 풀어요.
-            </p>
           </>
         ) : (
           <p style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 700, lineHeight: 1.5 }}>
@@ -538,8 +578,8 @@ export function HomePage() {
             </div>
             {facts.persona.current && (
               <p style={{ fontSize: 15, color: HJ.ink2, marginTop: 10, lineHeight: 1.65 }}>
-                지금은 <b style={{ color: HJ.ink }}>{facts.persona.current.gz} 대운</b>({facts.persona.current.from}~{facts.persona.current.to}세)
-                {facts.persona.nextYear && !nextYearSaid ? <>, 다음 10년이 바뀌는 해는 <b style={{ color: HJ.ink }}>{facts.persona.nextYear}년</b>이에요.</> : '이에요.'}
+                지금은 <b style={{ color: HJ.ink }}>{gzKo(facts.persona.current.gz)} 대운</b>({facts.persona.current.from}~{facts.persona.current.to}세)이에요.
+                {facts.persona.nextYear && !nextYearSaid ? <> <b style={{ color: HJ.ink }}>{facts.persona.nextYear}년</b>에 다음 10년으로 바뀌어요.</> : ''}
                 {' '}인생에서 가장 좋은 10년은 <Redact w={92} />
               </p>
             )}
@@ -551,19 +591,17 @@ export function HomePage() {
           <TocRow no={2} t="돈, 사랑, 일, 건강, 사람, 공부 점수" pv={hasSaju ? <>가장 강한 영역 <Redact w={44} lock={false} /> 가장 약한 영역 <Redact w={44} /></> : '여섯 영역의 강약을 한눈에'} />
           <TocRow no={3} t="나에게 부족한 기운과 채우는 법" pv="색, 방위, 계절, 습관까지" />
           <TocRow no={4} t="오늘부터 바꿀 다섯 가지" pv="읽고 끝나지 않게 할 일로 정리해 드려요" />
-          <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>원국, 십성, 대운, 신살, 올해 흐름까지 여섯 장이 더 있어요</p>
+          <p style={{ fontSize: 13.5, color: HJ.mute, textAlign: 'center', padding: '10px 0 2px' }}>타고난 사주 구조부터 올해 흐름까지 여섯 장이 더 있어요</p>
         </Gwang>
         </div>
-        <p style={{ marginTop: 14, fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, textAlign: 'center', wordBreak: 'keep-all' }}>
-          보관함에서 다시 볼 수 있고 PDF로 저장할 수 있어요. 다 읽고 궁금한 건 바로 물어보세요.
-        </p>
-        <GoldCta style={{ marginTop: 14 }} onClick={() => goPremium('cta')} sub={`${premium}운`}>
+        <GoldCta style={{ marginTop: 16 }} onClick={() => goPremium('cta')} sub={`${premium}운`}>
           {hasSaju ? '내 종합사주 보기' : '종합사주 보기'}
         </GoldCta>
       </section>
       </Band>
 
-      {/* ━━━ 4. 신년운세 (그림 띠) — 2026-10-27 다른 덩어리처럼 머리를 단다 ━━━ */}
+      {/* ━━━ 4. 신년운세 (그림 띠, 사주 없는 손님) — 사주 있는 손님은 첫 화면 바로 아래 한 장 ━━━ */}
+      {!hasSaju && (<>
       <SecTitle id="home-newyear" rule={false} mark="歲" k={`${NEW_YEAR_TARGET} 신년운세`} h={`${NEW_YEAR_TARGET}년, 달마다 미리 보기`} price={`${tojung}운`}
         d={`${NEW_YEAR_TARGET}년 열두 달을 달마다 좋은 날까지 풀어요`} />
       <button type="button" onClick={() => navigate('/tojung')} className="text-left"
@@ -581,7 +619,7 @@ export function HomePage() {
               : <>{NEW_YEAR_TARGET}년은 나에게<br />어떤 해일까요</>}
           </div>
           <div style={{ fontSize: 14, color: '#E2D9C8' }}>달마다 좋은 날까지 알려 드려요 <b style={{ color: '#F1ECE1' }}>{tojung}운 ›</b></div>
-          {tojungInfo.launch && <div style={{ fontSize: 13, color: '#D2B477' }}>{tojungInfo.launch.badge} 가격, {tojungInfo.launch.note}</div>}
+          {nyLaunch && <div style={{ fontSize: 13, color: '#D2B477' }}>{nyPriceLine}</div>}
         </div>
       </button>
       {/* 2026-10-19 열두 띠 2027년 한 장 (가족 단톡방용, 무료) → 내 사주 신년운세로 */}
@@ -589,11 +627,11 @@ export function HomePage() {
         className="w-full" style={{ marginTop: 6, padding: '8px 16px', fontSize: 14.5, fontWeight: 700, color: HJ.ink2, background: 'transparent', border: 0 }}>
         열두 띠 {NEW_YEAR_TARGET}년 운세 한 장으로 보기 ›
       </button>
+      </>)}
 
       {/* ━━━ 5. 기간별 (달력 장 두 장 — 큰 숫자로 읽기 전에 보이게) ━━━ */}
       <Band tone="deep">
-      <SecTitle id="home-period" rule={false} mark="月" k="기간별 운세" h="이번 주와 다음 달" price={periodFrom}
-        d={`날마다 좋은 일과 조심할 일을 미리 봐요. 주간운세 ${weekly}운, 월운세 ${monthly}운`} />
+      <SecTitle id="home-period" rule={false} mark="月" k="기간별 운세" h="이번 주와 다음 달 좋은 날을 알려 드려요" />
       <div className="grid grid-cols-2 gap-2.5" style={{ margin: '0 16px' }}>
         <button type="button" onClick={() => navigate('/weekly', profileId ? { state: { profileId } } : undefined)} className="text-left"
           style={{ borderRadius: 14, background: HJ.card, border: `1px solid ${HJ.line}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 }}>
@@ -602,7 +640,7 @@ export function HomePage() {
             {facts?.week ? (
               <>
                 <span className="flex items-center gap-2.5">
-                  <span style={{ width: 56, height: 56, borderRadius: 28, boxShadow: `inset 0 0 0 2px ${HJ.seal}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 30, fontWeight: 900, color: HJ.seal, flexShrink: 0 }}>
+                  <span style={{ width: 56, height: 56, borderRadius: 28, boxShadow: `inset 0 0 0 2px ${HJ.ink}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 30, fontWeight: 900, color: HJ.ink, flexShrink: 0 }}>
                     {Number(facts.week.date.slice(8))}
                   </span>
                   <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.45, color: HJ.ink }}>{facts.week.weekday}요일<br /><span style={{ fontFamily: SERIF }}>{facts.week.gz}일</span></span>
@@ -640,8 +678,21 @@ export function HomePage() {
       </div>
       </Band>
 
+      {hasSaju && freeBlock}
+      {/* ━━━ 가족과 친구 — 2026-10-27 독립 검토: 사주를 넣은 손님에게 띠 12칸이 한 화면을 차지했다 → 두 줄 ━━━ */}
+      {hasSaju && (
+        <div style={{ margin: '30px 16px 0' }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: HJ.mute, margin: '0 2px 8px' }}>가족과 친구</p>
+          <div style={{ borderTop: `1px solid ${HJ.line}` }}>
+            <FreeRow mark="家" t="배우자, 자녀, 부모님 띠 운세도 볼 수 있어요" s="열두 띠 오늘 운세를 한 장으로 보고 가족에게 보내요" right="무료"
+              onClick={() => { trackEvent('cta_click', { label: '홈 가족 띠 한 장', page: '/' }); navigate('/tti'); }} />
+          </div>
+          <InviteRow padding="10px 0 0" />
+        </div>
+      )}
+
       {/* ━━━ 6-1. 지금 많이 보는 풀이 (실제 집계만 · 3개 미만이면 숨김) ━━━ */}
-      {liveBest.length >= 3 && (
+      {!hasSaju && liveBest.length >= 3 && (
         <>
           <SecTitle rule={false} mark="衆" k="실시간 인기" h="지금 많이 보는 풀이" />
           <ol style={{ margin: '0 16px', borderTop: `1px solid ${HJ.line}`, listStyle: 'none', padding: 0 }}>
@@ -662,23 +713,7 @@ export function HomePage() {
         </>
       )}
 
-      {/* ━━━ 7. 실제 후기 (승인된 것만 · 없으면 숨김) ━━━ */}
-      {reviews.length > 0 && (
-        <Band tone="deep">
-          <SecTitle rule={false} mark="言" k="먼저 본 사람들" h="읽어본 사람들이 남긴 말" />
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar" style={{ padding: '0 16px 4px' }}>
-            {reviews.map((r) => (
-              <div key={r.id} style={{ flex: '0 0 270px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 16 }}>
-                <div style={{ fontSize: 13, color: HJ.goldText, fontWeight: 800 }} aria-label={`별점 ${r.rating}점`}>
-                  {'★'.repeat(r.rating)}<span style={{ color: HJ.line }}>{'★'.repeat(5 - r.rating)}</span>
-                </div>
-                <p style={{ fontSize: 15.5, lineHeight: 1.65, marginTop: 8, color: HJ.ink }}>“{r.text}”</p>
-                <p style={{ fontSize: 13, color: HJ.mute, marginTop: 10 }}>{reviewByline(r)}</p>
-              </div>
-            ))}
-          </div>
-        </Band>
-      )}
+      {!hasSaju && reviewsBand}
 
       {/* ━━━ 8. 사주500이 다른 점 (먹 띠) ━━━ */}
       <section id="voices-section" style={{ margin: '36px 0 0', background: HJ.ink, color: '#F1ECE1', padding: '30px 22px 32px', scrollMarginTop: 72 }}>
@@ -701,19 +736,13 @@ export function HomePage() {
 
       {/* ━━━ 푸터 ━━━ */}
       <div style={{ margin: '26px 16px 0', textAlign: 'center' }}>
-        <div className="flex items-center justify-center gap-3" style={{ fontSize: 13.5, color: HJ.mute }}>
-          <button className="tap-pad" type="button" onClick={() => navigate('/my')}>내 정보</button>
-          <span style={{ color: HJ.line }}>|</span>
-          <button className="tap-pad" type="button" onClick={() => navigate('/charge')}>충전</button>
-          <span style={{ color: HJ.line }}>|</span>
-          <button className="tap-pad" type="button" onClick={() => navigate('/storage')}>보관함</button>
-        </div>
-        <p style={{ marginTop: 12, fontSize: 13.5, color: HJ.mute, lineHeight: 1.6 }}>{ART_CREDIT}</p>
+        {/* 2026-10-27 내 정보, 충전, 보관함 링크는 아래 탭바와 같아 뺐다(독립 검토) */}
+        <p style={{ fontSize: 13.5, color: HJ.mute, lineHeight: 1.6 }}>{ART_CREDIT}</p>
         {/* 웹은 아래 LegalFooter 가 같은 줄을 그린다(두 번 보이던 것). 앱은 LegalFooter 가 없어 여기서 그린다 */}
         {(isAppintosBuild || isAppsInToss()) && <p style={{ marginTop: 6, fontSize: 13.5, color: HJ.mute }}>© 2026 사주500</p>}
       </div>
       <LegalFooter />
-      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}.home-season>div{padding:0 16px!important}.home-season>div+div{padding-top:10px!important}`}</style>
+      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}.home-season>div{padding:0 16px!important}.home-season>div+div{display:none!important}`}</style>
     </div>
   );
 }
@@ -811,8 +840,7 @@ function SeasonGroup({ children }: { children: ReactNode }) {
   }, []);
   return (
     <>
-      {has && <SecTitle rule={false} mark="今" k="이번 달 소식과 혜택" h="지금 챙겨 볼 것" />}
-      <div ref={ref} className="home-season">{children}</div>
+      <div ref={ref} className="home-season" style={{ marginTop: has ? 22 : 0 }}>{children}</div>
     </>
   );
 }
@@ -851,33 +879,25 @@ function CalHead({ l, r }: { l: string; r: string }) {
   );
 }
 
-/** 빨간 도장 칸 (많이 찾는 고민) */
-function SealBox({ children, size, fontSize }: { children: ReactNode; size: number; fontSize: number }) {
-  return (
-    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 6, background: HJ.seal, color: HJ.paper, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize, fontWeight: 900, flexShrink: 0, boxShadow: 'inset 0 0 0 1.5px rgba(244,239,228,.25)' }}>
-      {children}
-    </span>
-  );
-}
-
-/** 고민 위 두 개 — 한 줄 카드 (빨간 도장, 2026-10-23 P1-3). i 는 보일 때 차례로 떠오르는 순서 */
+/** 고민 위 두 개 — 한 줄 카드 (2026-10-27 빨간 도장 → 먹 도장, 빨강은 아주 작게만). i 는 보일 때 차례로 떠오르는 순서 */
 function TopicCard({ hz, t, s, price, days, onClick, i = 0 }: { hz: string; t: string; s: string; price: string; days?: number | null; onClick: () => void; i?: number }) {
   // 2026-10-27 별이 들어오기까지 남은 날(hookFacts 계산)을 오른쪽에 큰 숫자로. 사실이 없으면 값만
   const hasDays = typeof days === 'number' && days >= 0 && days <= 400;
   return (
     <button type="button" onClick={onClick} className="w-full text-left mo-press mo-rise"
       style={{ ...moVars({ i }), display: 'flex', gap: 14, alignItems: 'center', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '15px 16px', minHeight: 86 }}>
-      <SealBox size={44} fontSize={24}>{hz}</SealBox>
+      <InkMark size={44} fontSize={24}>{hz}</InkMark>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: HJ.ink, lineHeight: 1.35 }}>{t}</span>
         <span style={{ display: 'block', fontSize: 14.5, lineHeight: 1.5, color: HJ.ink2, marginTop: 3, wordBreak: 'keep-all' }}>{s}</span>
       </span>
       {hasDays ? (
         <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, paddingLeft: 10, borderLeft: `1px solid ${HJ.line}` }}>
-          <span style={{ fontSize: 13, color: HJ.mute, fontWeight: 700 }}>{days === 0 ? '오늘부터' : '남은 날'}</span>
-          {days !== 0 && (
+          {days === 0 ? (
+            <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 900, color: HJ.ink }}>오늘부터</span>
+          ) : (
             <span style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.ink, lineHeight: 1.05 }}>
-              <span style={{ fontSize: 30 }}>{days}</span><span style={{ fontSize: 14, fontWeight: 700 }}>일</span>
+              <span style={{ fontSize: 30 }}>{days}</span><span style={{ fontSize: 14, fontWeight: 700 }}>일 뒤</span>
             </span>
           )}
           <span style={{ fontSize: 13.5, fontWeight: 800, color: HJ.ink2, marginTop: 2, whiteSpace: 'nowrap' }}>{price} ›</span>
@@ -898,6 +918,21 @@ function TopicTile({ hz, t, short, price, onClick, i }: { hz: string; t: string;
       <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, lineHeight: 1.3, wordBreak: 'keep-all' }}>{t}</span>
       {short && <span style={{ fontSize: 13, color: HJ.ink2, lineHeight: 1.4, wordBreak: 'keep-all', flex: 1 }}>{short}</span>}
       <span style={{ fontSize: 13, fontWeight: 800, color: HJ.ink }}>{price}</span>
+    </button>
+  );
+}
+
+/** 줄 목록 한 칸 (2026-10-27 매일 무료, 가족과 친구) — 먹 도장 글자, 제목, 한 줄, 오른쪽 값 */
+function FreeRow({ mark, t, s, right, onClick }: { mark: string; t: string; s: string; right: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full text-left mo-press"
+      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 4px', minHeight: 72, background: 'transparent', border: 0, borderBottom: `1px solid ${HJ.line}` }}>
+      <InkMark size={36} fontSize={19}>{mark}</InkMark>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: SERIF, fontSize: 16.5, fontWeight: 700, color: HJ.ink, lineHeight: 1.4, wordBreak: 'keep-all' }}>{t}</span>
+        <span style={{ display: 'block', fontSize: 14, color: HJ.ink2, lineHeight: 1.5, marginTop: 2, wordBreak: 'keep-all' }}>{s}</span>
+      </span>
+      <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap', flexShrink: 0 }}>{right} ›</span>
     </button>
   );
 }
