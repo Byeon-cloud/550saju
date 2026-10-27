@@ -23,12 +23,14 @@ import { HJ, SERIF } from '@/components/hanji/Hanji';
 const TEMPLATE_CODE = import.meta.env.VITE_TOSS_NOTI_TEMPLATE_CODE as string | undefined;
 const AGREED_KEY = 'saju500:daily_noti_agreed';
 
-type Variant = 'card' | 'closing' | 'slim';
+type Variant = 'card' | 'closing' | 'slim' | 'tti';
 
 const COPY: Record<Variant, { title: string; sub: string }> = {
   card: { title: '아침 9시마다 그날 운세를 알려 드릴까요?', sub: '무료예요. 필요 없으면 언제든 끌 수 있어요' },
   closing: { title: '내일 운세도 아침 9시에 알려 드릴까요?', sub: '무료예요. 토스 알림으로 보내 드리고, 언제든 끌 수 있어요' },
   slim: { title: '아침 9시마다 그날 운세를 알려 드릴까요?', sub: '무료예요. 필요 없으면 언제든 끌 수 있어요' },
+  // 2026-10-27 홈 띠 표에서 내 해를 고른 바로 아래 — 혜택탭으로 하루 370명이 새로 오지만 다음 날 다시 오는 사람이 없었다
+  tti: { title: '내일 아침 9시에 내 띠 운세를 알려 드릴까요?', sub: '무료예요. 토스 알림으로 보내 드리고, 언제든 끌 수 있어요' },
 };
 
 export function DailyNotiButton({ className, variant = 'card' }: { className?: string; variant?: Variant }) {

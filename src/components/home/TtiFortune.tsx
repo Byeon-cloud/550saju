@@ -20,6 +20,7 @@ import { TtiAnimal } from '@/components/tti/TtiAnimal';
 import { ageBandOfYear, trackEvent } from '@/services/analytics';
 import { hasFreePass, subscribeFreePass } from '@/services/storage/dailyFreePass';
 import { currentSajuMonth, monthDayLabel } from '@/services/saju/hookFacts';
+import { DailyNotiButton } from '@/components/common/DailyNotiButton';
 import {
   TTI, ttiName, ttiYears, yearLabel, fallbackHead, fallbackYearLine, loadTtiDay, getMyTti, setMyTti,
   goodHourOf, badHour, monthTtiLine, yearTtiLine, type TtiDay,
@@ -208,6 +209,8 @@ export function TtiFortune({ today, dayGz, dayKo, src, onYearPick, onInput, newY
                   <Fact k="이번 달">{monthTtiLine(month.gz, sel, monthLabel)} <span style={{ color: HJ.mute }}>({monthDayLabel(month.lastDay)}까지)</span></Fact>
                 </dl>
               </div>
+              {/* 2026-10-27 내 해를 고른 첫 화면 손님에게 아침 9시 알림 (앱만, 동의했으면 숨김) — 다음 날 다시 오게 */}
+              {hero && <DailyNotiButton variant="tti" className="mt-3" />}
 
               {/* ── 생일을 넣으면 열리는 것 ── */}
               <div style={{ marginTop: 18 }}>

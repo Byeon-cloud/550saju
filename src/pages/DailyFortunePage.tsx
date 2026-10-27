@@ -85,6 +85,9 @@ import { DailyMockupView, DAILY_TOPIC_GROUPS } from './daily/DailyMockupView';
 
 import { FirstDailyOfferCard, useFirstDailyOfferActive } from '@/components/offers/FirstDailyOfferCard';
 import { realName } from '@/utils/personName';
+import { TtiFortune } from '@/components/home/TtiFortune';
+import { getMyTti } from '@/services/tti/ttiFortune';
+import { todayGz } from '@/services/saju/hookFacts';
 /* ══════════════════════════════════════════════════════════════════
  * 토큰 / 매핑
  * ═════════════════════════════════════════════════════════════════ */
@@ -131,6 +134,10 @@ export function DailyFortunePage() {
 
   const profiles: SajuProfile[] = useMemo(() => getProfiles(), []);
   const hasAnyProfile = profiles.length > 0;
+  // 2026-10-27 사주 없이 띠 표에서 내 해를 고른 손님 (위 빈 화면에서 띠 운세를 먼저 보여 준다)
+  const [tti] = useState(() => (hasAnyProfile ? null : getMyTti()));
+  const kstTodayKey = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const ttiDay = useMemo(() => todayGz(kstTodayKey), [kstTodayKey]);
 
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(() => {
     // navState 의 savedReport 가 있으면 그 input 으로 매칭되는 프로필 우선
@@ -685,6 +692,11 @@ export function DailyFortunePage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
+              {/* 2026-10-27 띠 표에서 내 해를 고르고 9시 알림으로 온 손님 — 입력 칸만 보이면 바로 나간다. 고른 띠의 오늘 운세부터 */}
+              {tti?.year && (
+                <TtiFortune today={kstTodayKey} dayGz={ttiDay.gz} dayKo={ttiDay.ko} src="hero"
+                  onInput={(y) => navigate(`/input?from=daily${y ? `&y=${y}` : ''}`)} />
+              )}
               <ProfileSelector
                 profiles={profiles}
                 selectedId={selectedProfileId}
