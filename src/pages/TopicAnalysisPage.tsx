@@ -5209,6 +5209,8 @@ export function TopicAnalysisPage() {
                 return (
                   <div className="pt-2">
                     <NextStepsCard
+                      from={`topic_${topicId}`}
+                      sajuData={(selected as any)?.sajuData}
                       topics={Array.isArray(nh.topics) ? nh.topics : []}
                       questions={Array.isArray(nh.chatQuestions) ? nh.chatQuestions : []}
                       onTopic={(id) => navigate(`/topic/${id}`, nextProfileId ? { state: { profileId: nextProfileId } } : undefined)}

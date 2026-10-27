@@ -372,7 +372,7 @@ export function DreamPage() {
   /** 꿈 종류 → 주제 추천 카드 탭 (공용 계약: TopicAnalysisPage 가 state.profileId 로 프로필 미리 선택) */
   function openTopic(topicId: string) {
     import('@/services/analytics')
-      .then((a) => a.trackEvent('dream_topic_rec_click', { topic: topicId, category: selectedCategory || 'other' }))
+      .then((a) => { a.trackEvent('dream_topic_rec_click', { topic: topicId, category: selectedCategory || 'other' }); a.trackEvent('next_click', { from: 'dream', to: topicId, kind: 'topic', pos: 1 }); })
       .catch(() => {});
     navigate(`/topic/${topicId}`, { state: { profileId: profile?.id } });
   }

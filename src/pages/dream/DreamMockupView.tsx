@@ -20,6 +20,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import type { SajuProfile } from '@/services/storage/localStore';
 import { stripMd, sanitizeAiText } from '@/utils/format';
 import { getDreamTopicRec } from './dreamTopicRec';
+import { topicFactOf } from '@/services/saju/topicFacts';
 import { underlineMatches, splitAfter } from '@/utils/safeRegex';
 
 /** AI 본문 강약 자동 보강 — 사주용어 b 태그 + 시간/방위/숫자 u 밑줄 + 결론 strong 형광펜 (꿈해몽 톤 확장) */
@@ -424,26 +425,32 @@ const MOCKUP_CSS = `
 /* Actions */
 .dream-mockup .actions { margin: 22px 20px 0; padding: 18px 0; border-top: 1px solid #E5DFD0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dream-mockup .actions .btn { background: #fff; border: 1px solid #E5DFD0; border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #1a1a1a; cursor: pointer; transition: .2s; }
-.dream-mockup .actions .btn:hover { border-color: #B8965A; }
-.dream-mockup .actions .btn svg { width: 22px; height: 22px; color: #B8965A; }
+.dream-mockup .actions .btn:hover { border-color: #1A1612; }
+.dream-mockup .actions .btn svg { width: 22px; height: 22px; color: #1A1612; }
 .dream-mockup .actions .btn .ti { font-size: 13.5px; font-weight: 600; }
 .dream-mockup .actions .btn .sb { font-size: 13px; color: #6F6557; }
 
 /* 꿈 종류 → 주제 추천 (2026-09-17) — 카드 1장 + 보조 링크 */
 .dream-mockup .topic-rec { margin: 22px 20px 0; }
-.dream-mockup .topic-rec .tr-lab { font-size: 13px; color: #6F6557; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; }
+.dream-mockup .topic-rec .tr-lab { font-size: 15px; color: #1A1612; font-family: 'Noto Serif KR', serif; font-weight: 700; margin-bottom: 10px; }
 .dream-mockup .topic-rec .tr-card { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #E5DFD0; border-radius: 16px; padding: 14px 14px 14px 16px; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease; }
-.dream-mockup .topic-rec .tr-card:hover { border-color: #B8965A; box-shadow: 0 4px 12px rgba(184,150,90,.12); }
+.dream-mockup .topic-rec .tr-card:hover { border-color: #1A1612; }
 .dream-mockup .topic-rec .tr-card:focus-visible, .dream-mockup .topic-rec .tr-sub:focus-visible { outline: 2px solid #B8965A; outline-offset: 2px; }
-.dream-mockup .topic-rec .tr-kanji { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; }
+.dream-mockup .topic-rec .tr-kanji { flex-shrink: 0; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 900; background: #A23A2A; color: #F4EFE4; }
 .dream-mockup .topic-rec .tr-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .dream-mockup .topic-rec .tr-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dream-mockup .topic-rec .tr-name { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 700; color: #1a1a1a; }
-.dream-mockup .topic-rec .tr-price { font-size: 13px; font-weight: 700; color: #8C6D3D; background: rgba(184,150,90,.12); padding: 2px 8px; border-radius: 2px; }
+.dream-mockup .topic-rec .tr-price { font-size: 13.5px; font-weight: 800; color: #4B4238; }
+.dream-mockup .topic-rec .tr-fact { font-size: 13.5px; font-weight: 700; line-height: 1.5; color: #1A1612; word-break: keep-all; }
+.dream-mockup .topic-rec .tr-days { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; padding-left: 10px; border-left: 1px solid #E1D7C4; }
+.dream-mockup .topic-rec .tr-days .l { font-size: 13px; color: #6F6557; font-weight: 700; }
+.dream-mockup .topic-rec .tr-days .n { font-family: 'Noto Serif KR', serif; font-weight: 900; color: #1A1612; line-height: 1.05; font-size: 28px; }
+.dream-mockup .topic-rec .tr-days .n small { font-size: 13.5px; font-weight: 700; }
+.dream-mockup .topic-rec .tr-days .p { font-size: 13.5px; font-weight: 800; color: #4B4238; margin-top: 2px; white-space: nowrap; }
 .dream-mockup .topic-rec .tr-copy { font-size: 13.5px; line-height: 1.65; color: #2a2520; word-break: keep-all; }
-.dream-mockup .topic-rec .tr-arrow { flex-shrink: 0; font-size: 20px; color: #B8965A; line-height: 1; }
+.dream-mockup .topic-rec .tr-arrow { flex-shrink: 0; font-size: 20px; color: #4B4238; line-height: 1; }
 .dream-mockup .topic-rec .tr-sub { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 12px 4px; font-size: 13.5px; color: #6F6557; text-align: center; cursor: pointer; word-break: keep-all; }
-.dream-mockup .topic-rec .tr-sub .tr-sub-name { color: #5C4A2E; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.dream-mockup .topic-rec .tr-sub .tr-sub-name { color: #1A1612; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Notice */
 .dream-mockup .service-notice { margin: 22px 20px 0; padding: 14px 18px; border-top: 1px dashed #E5DFD0; font-size: 13px; line-height: 1.65; color: #9A8B70; text-align: center; }
@@ -611,6 +618,9 @@ export function DreamMockupView(props: DreamMockupViewProps) {
   const isTodayRecord = dateLabel === fmtDate(new Date());
   // 꿈 종류 → 주제 추천 (SSOT 파생 · 카테고리 없으면 기본 규칙)
   const topicRec = useMemo(() => getDreamTopicRec(categoryId), [categoryId]);
+  // 2026-10-27 추천 주제의 내 사주 사실과 남은 날 (홈 고민 칸, 결과 끝 카드와 같은 계산)
+  const recFact = useMemo(() => topicFactOf(profile?.sajuData, topicRec.id), [profile?.sajuData, topicRec.id]);
+  const recDays = recFact?.days != null && recFact.days > 0 && recFact.days <= 400 ? recFact.days : null;
   const ilganLabel = profile?.sajuData?.pillars?.[2]?.천간 ? ` ${profile.sajuData.pillars[2].천간}${profile.sajuData.pillars[2].천간오행 || ''} 일간` : '';
 
   const firstImpression = result.firstImpression;
@@ -1093,21 +1103,24 @@ export function DreamMockupView(props: DreamMockupViewProps) {
           <section className="topic-rec" aria-label="이 꿈과 이어서 볼 주제">
             <div className="tr-lab">이 꿈과 이어서 보면 좋은 풀이</div>
             <button type="button" className="tr-card" onClick={() => onTopic(topicRec.id)}>
-              <span
-                className="tr-kanji"
-                aria-hidden="true"
-                style={{ color: topicRec.color, background: `${topicRec.color}1F` }}
-              >
-                {topicRec.kanji}
-              </span>
+              <span className="tr-kanji" aria-hidden="true">{topicRec.kanji}</span>
               <span className="tr-main">
                 <span className="tr-head">
                   <span className="tr-name">{topicRec.label}</span>
-                  <span className="tr-price">{topicRec.price}</span>
+                  {recDays == null && <span className="tr-price">{topicRec.price}</span>}
                 </span>
                 <span className="tr-copy">{topicRec.copy}</span>
+                {recFact && <span className="tr-fact">{recFact.line}</span>}
               </span>
-              <span className="tr-arrow" aria-hidden="true">›</span>
+              {recDays != null ? (
+                <span className="tr-days">
+                  <span className="l">남은 날</span>
+                  <span className="n">{recDays}<small>일</small></span>
+                  <span className="p">{topicRec.price} ›</span>
+                </span>
+              ) : (
+                <span className="tr-arrow" aria-hidden="true">›</span>
+              )}
             </button>
             {topicRec.secondary && (
               <button

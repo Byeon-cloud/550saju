@@ -1299,6 +1299,8 @@ function ResultView({
           if (!nh) return undefined;
           return (
             <NextStepsCard
+              from="daily"
+              sajuData={(profile as any)?.sajuData}
               title="오늘 풀이에서 이어지는 이야기"
               topics={nh.topic && nh.topic.id ? [nh.topic] : []}
               questions={Array.isArray(nh.chatQuestions) ? nh.chatQuestions : []}
