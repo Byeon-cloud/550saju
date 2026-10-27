@@ -29,6 +29,24 @@ export interface WorryRow {
   s: string;
   /** '4운' */
   price: string;
+  /** 2026-10-27 칸 안 짧은 한 줄 (홈 고민 칸, 열 글자 안팎) — 사실이 있으면 사실('12월 연인의 별'), 없으면 무엇을 보는지 */
+  short: string;
+  /** 2026-10-27 그 별이 들어오는 사주 달까지 남은 날 (hookFacts 계산, 없으면 null) — 홈 위 두 칸의 큰 숫자 */
+  days: number | null;
+  /** 2026-10-27 홈 고민 묶음 — 사람과 인연, 돈과 일, 몸과 생활 */
+  group: WorryGroup;
+}
+
+export type WorryGroup = 'people' | 'money' | 'life';
+export const WORRY_GROUP_LABEL: Record<WorryGroup, string> = { people: '사람과 인연', money: '돈과 일', life: '몸과 생활' };
+const GROUP_OF: Record<TopicId | 'compat', WorryGroup> = {
+  love: 'people', reunion: 'people', marriage: 'people', compat: 'people',
+  wealth: 'money', exam: 'money', career: 'money', business: 'money',
+  health: 'life', move: 'life', study: 'life',
+} as Record<TopicId | 'compat', WorryGroup>;
+/** 세대마다 묶음 순서 — 35세부터는 돈과 일을 먼저 */
+export function worryGroupOrder(gen: Gen): WorryGroup[] {
+  return gen === 'mid' || gen === 'senior' ? ['money', 'people', 'life'] : ['people', 'money', 'life'];
 }
 
 const ORDER: Record<'young' | 'mid' | 'senior' | 'any', Array<TopicId | 'compat'>> = {
@@ -50,41 +68,50 @@ export function worryRows(s: SajuData | null | undefined, today: string, gen: Ge
   const safe = <T,>(f: () => T): T | null => { try { return s ? f() : null; } catch { return null; } };
   const em = safe(() => nextStarMonth(s as SajuData, today, ['관성', '인성']));
   const emText = em ? `${yr(em.month.start)}${em.month.calMonth}월` : '';
-  const row = (id: TopicId, t: string, sub: string): WorryRow => ({ key: id, hz: TOPIC_REGISTRY[id].kanji, t, s: sub, price: `${getTopicPrice(id).actualPrice}운` });
+  const row = (id: TopicId, t: string, sub: string, short: string, days: number | null = null): WorryRow => ({
+    key: id, hz: TOPIC_REGISTRY[id].kanji, t, s: sub, price: `${getTopicPrice(id).actualPrice}운`, short, days, group: GROUP_OF[id] || 'life',
+  });
+  const emShort = em ? `${emText} 자리의 별` : '';
+  const emDays = em ? em.days : null;
 
   const make = (key: TopicId | 'compat'): WorryRow => {
     switch (key) {
       case 'exam':
-        if (gen === 'senior') return row('exam', '재취업 이직운', emText ? `일자리의 별이 ${emText}에 들어와요` : '다시 일을 구하거나 옮기기 좋은 달');
-        if (gen === 'mid') return row('exam', '이직운', emText ? `옮길 자리의 별이 ${emText}에 들어와요` : '옮기기 좋은 달과 버텨야 할 때');
-        if (gen === 'young') return row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날');
-        return row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '시험, 취업, 이직, 다시 일할 때가 풀리는 달');
+        if (gen === 'senior') return row('exam', '재취업 이직운', emText ? `일자리의 별이 ${emText}에 들어와요` : '다시 일을 구하거나 옮기기 좋은 달', emShort || '다시 일할 때', emDays);
+        if (gen === 'mid') return row('exam', '이직운', emText ? `옮길 자리의 별이 ${emText}에 들어와요` : '옮기기 좋은 달과 버텨야 할 때', emShort || '옮기기 좋은 달', emDays);
+        if (gen === 'young') return row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '합격 소식이 오는 달과 면접 보기 좋은 날', emShort || '합격 소식 오는 달', emDays);
+        return row('exam', '합격 이직운', emText ? `시험과 자리의 별이 ${emText}에 들어와요` : '시험, 취업, 이직, 다시 일할 때가 풀리는 달', emShort || '합격, 이직 시기', emDays);
       case 'love': {
         const love = safe(() => loveDday(s as SajuData, today));
-        return row('love', '연애운', love ? `${yr(love.month.start)}${monthDayLabel(love.month.start)}부터 연인의 별이 들어와요` : '새 인연이 들어오는 달을 짚어요');
+        return row('love', '연애운', love ? `${yr(love.month.start)}${monthDayLabel(love.month.start)}부터 연인의 별이 들어와요` : '새 인연이 들어오는 달을 짚어요',
+          love ? `${yr(love.month.start)}${love.month.calMonth}월 연인의 별` : '새 인연 오는 달', love ? love.days : null);
       }
       case 'wealth': {
         const wm = safe(() => nextStarMonth(s as SajuData, today, ['재성']));
-        return row('wealth', '재물운', wm ? `재물의 별이 ${yr(wm.month.start)}${wm.month.calMonth}월에 들어와요` : '돈이 들어오는 달과 새는 곳');
+        return row('wealth', '재물운', wm ? `재물의 별이 ${yr(wm.month.start)}${wm.month.calMonth}월에 들어와요` : '돈이 들어오는 달과 새는 곳',
+          wm ? `${yr(wm.month.start)}${wm.month.calMonth}월 재물의 별` : '돈 들어오는 달', wm ? wm.days : null);
       }
       case 'reunion':
-        return row('reunion', '재회운', '그 사람과 다시 연락이 닿을 때를 두 사람 사주로 봐요');
+        return row('reunion', '재회운', '그 사람과 다시 연락이 닿을 때를 두 사람 사주로 봐요', '다시 닿을 때');
       case 'business':
         return gen === 'senior'
-          ? row('business', '창업운', '가게나 내 일을 차리기 좋은 때')
-          : row('business', '사업운', '내 일을 시작하거나 넓히기 좋은 때');
+          ? row('business', '창업운', '가게나 내 일을 차리기 좋은 때', '차리기 좋은 때')
+          : row('business', '사업운', '내 일을 시작하거나 넓히기 좋은 때', '넓히기 좋은 때');
       case 'marriage':
         return gen === 'senior'
-          ? row('marriage', '결혼, 재혼운', '다시 함께할 사람이 들어오는 해')
-          : row('marriage', '결혼운', safe(() => spouseSeatFact(s as SajuData)) || '결혼하기 좋은 해와 배우자 성향');
+          ? row('marriage', '결혼, 재혼운', '다시 함께할 사람이 들어오는 해', '다시 함께할 해')
+          : row('marriage', '결혼운', safe(() => spouseSeatFact(s as SajuData)) || '결혼하기 좋은 해와 배우자 성향', '결혼하기 좋은 해');
       case 'compat':
-        return { key: 'compat', hz: '合', t: '궁합', s: gen === 'senior' ? '배우자, 자녀와 잘 맞는 점과 부딪히는 점' : '잘 맞는 점과 자주 부딪히는 점', price: `${compatPrice}운` };
+        return { key: 'compat', hz: '合', t: '궁합', s: gen === 'senior' ? '배우자, 자녀와 잘 맞는 점과 부딪히는 점' : '잘 맞는 점과 자주 부딪히는 점', price: `${compatPrice}운`, short: '서로 맞는 점', days: null, group: 'people' };
       case 'health':
-        return row('health', '건강운', '약한 곳과 조심할 달');
+        return row('health', '건강운', '약한 곳과 조심할 달', '약한 곳, 조심할 달');
       default:
-        return row(key, TOPIC_REGISTRY[key].label, TOPIC_REGISTRY[key].subCopy);
+        return row(key, TOPIC_REGISTRY[key].label, TOPIC_REGISTRY[key].subCopy, SHORT[key] || TOPIC_REGISTRY[key].subCopy);
     }
   };
 
   return ORDER[gen ?? 'any'].map(make);
 }
+
+/** 사실이 없는 주제의 칸 안 한 줄 */
+const SHORT: Partial<Record<TopicId, string>> = { career: '맞는 일, 오를 때', move: '옮기기 좋은 달', study: '공부가 붙는 때' };

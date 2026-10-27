@@ -40,7 +40,7 @@ import {
 import { premiumStory } from '@/services/saju/premiumStory';
 import { isAppsInToss } from '@/services/payment/iapService';
 import { isAppintosBuild } from '@/lib/env';
-import { genOfAge, worryRows, type WorryRow } from '@/services/saju/worryTopics';
+import { genOfAge, worryRows, worryGroupOrder, WORRY_GROUP_LABEL, type WorryRow } from '@/services/saju/worryTopics';
 import { trackEvent } from '@/services/analytics';
 import { realName } from '@/utils/personName';
 import type { SajuData } from '@/types/saju';
@@ -55,7 +55,6 @@ import {
 
 /** 웹 홈 화면 앱 안내 (2026-10-23) — 앱 빌드에는 코드째 넣지 않는다. 못 불러오면 그 칸만 빈다 */
 import { HeroPillars } from '@/components/home/HeroPillars';
-const HERO2 = import.meta.env.DEV && typeof location !== 'undefined' && location.search.includes('hero2'); // 첫 화면 시안 (dev 전용)
 const HomePwaSlot = import.meta.env.VITE_BUILD_TARGET !== 'appintos'
   ? lazy(() => import('@/components/pwa/HomePwaSlot').then((m) => ({ default: m.HomePwaSlot })).catch(() => ({ default: () => null })))
   : null;
@@ -247,6 +246,8 @@ export function HomePage() {
     ? (Math.min(...worryNums) === Math.max(...worryNums) ? `${worryNums[0]}운` : `${Math.min(...worryNums)}~${Math.max(...worryNums)}운`)
     : '1운부터';
   const periodFrom = `${Math.min(weekly, monthly)}운부터`;
+  /** 오늘 아직 무료로 남은 것 (매일 무료 머리 한 줄) */
+  const freeLeft = [dailyFree && '오늘의 운세', dreamFree && '꿈해몽', chatFree && '사주대화 첫 질문'].filter((x): x is string => !!x);
 
   return (
     <div style={{ background: HJ.paper, minHeight: '100vh', paddingBottom: 112, color: HJ.ink }}>
@@ -262,7 +263,8 @@ export function HomePage() {
         }}>
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(244,239,228,.0) 0%, rgba(244,239,228,0) 48%, rgba(244,239,228,.85) 82%, ${HJ.paper} 100%)` }} />
         </div>
-        {HERO2 && hasSaju && sajuData && (
+        {/* 2026-10-27 지인 VOC '첫 화면에 눈을 잡아끄는 게 없다' → 사주를 넣은 손님은 그림 위에 내 여덟 글자를 오행 색 칸으로 */}
+        {hasSaju && sajuData && (
           <div style={{ position: 'absolute', top: 18, left: 16, right: 16 }}>
             <HeroPillars sajuData={sajuData as SajuData} name={displayName} />
           </div>
@@ -361,23 +363,41 @@ export function HomePage() {
 
       {/* ━━━ 2. 고민 (주제운) — 2026-10-26 오너 '고민 더 보기가 안 보여 다른 주제운을 못 만난다, 홈에서 뭐부터 볼지 모르겠다'
            → 오늘 운세 바로 아래로 올리고 접지 않는다. 나이대별 위 두 개는 사실 한 줄이 붙은 카드, 나머지 아홉은 세 칸 격자 ━━━ */}
-      <SecTitle id="home-topics" mark="心" k="고민별 운세" h="어떤 고민이 있으세요?" price={worryRange}
-        d="연애, 돈, 일 가운데 고민 하나를 골라 깊게 풀어요" />
-      <MotionScope style={{ margin: '0 16px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {worries.slice(0, 2).map((r, i) => (
-            <TopicCard key={r.key} i={i} hz={r.hz} t={r.t} s={r.s} price={r.price} onClick={() => goWorry(r, 'top', i + 1)} />
-          ))}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
-          {worries.slice(2).map((r, i) => (
-            <TopicTile key={r.key} i={i + 2} hz={r.hz} t={r.t} price={r.price} onClick={() => goWorry(r, 'grid', i + 3)} />
-          ))}
-        </div>
-      </MotionScope>
-      <p style={{ margin: '10px 22px 0', fontSize: 13.5, color: HJ.mute, lineHeight: 1.6, wordBreak: 'keep-all' }}>
-        누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요.
-      </p>
+      {/* 2026-10-27 2차 VOC '구분선 말고는 뭐가 바뀐지 모르겠다, 고민별이 무난하다' → 짙은 한지 바탕 띠로 덩어리를 가르고,
+           위 두 칸은 그 별이 들어오기까지 남은 날을 큰 숫자로, 나머지는 사람과 인연, 돈과 일, 몸과 생활 세 묶음에 칸마다 보는 것 한 줄 */}
+      <Band tone="deep">
+        <SecTitle id="home-topics" rule={false} mark="心" k="고민별 운세" h="어떤 고민이 있으세요?" price={worryRange}
+          d={hasSaju ? `${displayName} 님 사주에서 날짜가 먼저 잡히는 고민부터 보여 드려요` : '연애, 돈, 일 가운데 고민 하나를 골라 깊게 풀어요'} />
+        <MotionScope style={{ margin: '0 16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {worries.slice(0, 2).map((r, i) => (
+              <TopicCard key={r.key} i={i} hz={r.hz} t={r.t} s={r.s} price={r.price} days={r.days} onClick={() => goWorry(r, 'top', i + 1)} />
+            ))}
+          </div>
+          {worryGroupOrder(gen).map((g) => {
+            const items = worries.slice(2).filter((r) => r.group === g);
+            if (!items.length) return null;
+            const cols = items.length === 4 ? 2 : Math.min(items.length, 3);
+            return (
+              <div key={g} style={{ marginTop: 18 }}>
+                <div className="flex items-center gap-2.5" style={{ padding: '0 2px 8px' }}>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{WORRY_GROUP_LABEL[g]}</span>
+                  <span aria-hidden="true" style={{ flex: 1, height: 1, background: 'rgba(26,22,18,.18)' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 8 }}>
+                  {items.map((r) => {
+                    const rank = worries.indexOf(r) + 1;
+                    return <TopicTile key={r.key} i={rank - 1} hz={r.hz} t={r.t} short={r.short} price={r.price} onClick={() => goWorry(r, 'grid', rank)} />;
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </MotionScope>
+        <p style={{ margin: '14px 22px 0', fontSize: 13.5, color: HJ.ink2, lineHeight: 1.6, wordBreak: 'keep-all' }}>
+          누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요.
+        </p>
+      </Band>
 
       {/* 2026-10-27 시기 카드와 초대는 머리 없이 고민과 무료 사이에 떠 있어 '뭐가 뭔지' 헷갈렸다 → '이번 달 소식과 혜택' 한 덩어리로 묶는다.
            카드가 하나도 안 그려지면 머리도 숨긴다 (SeasonGroup) */}
@@ -400,7 +420,9 @@ export function HomePage() {
       {/* ━━━ 3. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게)
            2026-10-27 지인 VOC '기능은 좋은데 배치가 제각각이라 헷갈린다' → 모든 덩어리가 같은 머리(작은 분류 + 제목)로 시작한다 ━━━ */}
       <SecTitle id="home-free" mark="日" k="매일 무료" h="오늘 무료로 볼 수 있어요" price="무료"
-        d="꿈해몽과 사주대화 첫 질문은 하루 한 번, 만세력은 언제나 무료예요" />
+        d={freeLeft.length
+          ? `오늘 아직 무료로 남은 것: ${freeLeft.join(', ')}. 만세력은 언제나 무료예요.`
+          : '오늘 무료는 다 썼어요. 내일 다시 무료로 열리고, 만세력은 언제나 무료예요.'} />
       <div style={{ padding: '0 16px' }}>
         <div className="grid grid-cols-2 gap-2.5">
           <button type="button" onClick={() => navigate('/dream')} className="text-left"
@@ -441,18 +463,20 @@ export function HomePage() {
 
       {/* ━━━ 2-1. 가족 띠 운세 (사주 있는 사람) — 배우자, 자녀, 부모님 띠도 오늘 운세를 한 번에 ━━━ */}
       {hasSaju && (
-        <>
-          <SecTitle mark="家" k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" price="무료" />
+        <Band tone="deep">
+          <SecTitle rule={false} mark="家" k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" price="무료" />
           <div style={{ margin: '0 16px' }}>
             {/* 2026-10-25 가족 생일 넣기는 관계 '가족'으로 시작 (예전엔 '본인'이라 본인 교체 창이 떴다) */}
             <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="family"
               onInput={() => navigate('/input?new=1&from=daily', { state: { relation: '가족' } })} compatPrice={compat} onCompat={() => navigate('/compat')} />
           </div>
-        </>
+        </Band>
       )}
 
       {/* ━━━ 4. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
-      <SecTitle id="home-premium" mark="命" k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" price={`${premium}운`}
+      {/* 2026-10-27 가장 큰 풀이라 먹 바탕에 금선 두 줄(프리미엄 예외)로 다른 덩어리와 확실히 가른다 */}
+      <Band tone="ink" gold>
+      <SecTitle id="home-premium" rule={false} dark mark="命" k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" price={`${premium}운`}
         d="내 사주 전체를 열 장으로 풀어 드리는 가장 긴 풀이예요" />
       {/* 2026-10-15 오너: 책을 눌러도 종합사주로 — 책 그림, 소개, 대운 띠, 목차 어디를 눌러도 같은 곳으로 */}
       <button type="button" onClick={() => goPremium('book')} aria-label="종합사주 보기"
@@ -537,9 +561,10 @@ export function HomePage() {
           {hasSaju ? '내 종합사주 보기' : '종합사주 보기'}
         </GoldCta>
       </section>
+      </Band>
 
       {/* ━━━ 4. 신년운세 (그림 띠) — 2026-10-27 다른 덩어리처럼 머리를 단다 ━━━ */}
-      <SecTitle id="home-newyear" mark="歲" k={`${NEW_YEAR_TARGET} 신년운세`} h={`${NEW_YEAR_TARGET}년, 달마다 미리 보기`} price={`${tojung}운`}
+      <SecTitle id="home-newyear" rule={false} mark="歲" k={`${NEW_YEAR_TARGET} 신년운세`} h={`${NEW_YEAR_TARGET}년, 달마다 미리 보기`} price={`${tojung}운`}
         d={`${NEW_YEAR_TARGET}년 열두 달을 달마다 좋은 날까지 풀어요`} />
       <button type="button" onClick={() => navigate('/tojung')} className="text-left"
         style={{ display: 'block', margin: '0 16px', width: 'calc(100% - 32px)', borderRadius: 18, overflow: 'hidden', position: 'relative', border: 0, background: HJ.ink, color: '#F1ECE1', padding: 0 }}>
@@ -566,8 +591,9 @@ export function HomePage() {
       </button>
 
       {/* ━━━ 5. 기간별 (달력 장 두 장 — 큰 숫자로 읽기 전에 보이게) ━━━ */}
-      <SecTitle id="home-period" mark="月" k="기간별 운세" h="이번 주와 다음 달 미리 보기" price={periodFrom}
-        d={`주간운세 ${weekly}운, 월운세 ${monthly}운`} />
+      <Band tone="deep">
+      <SecTitle id="home-period" rule={false} mark="月" k="기간별 운세" h="이번 주와 다음 달" price={periodFrom}
+        d={`날마다 좋은 일과 조심할 일을 미리 봐요. 주간운세 ${weekly}운, 월운세 ${monthly}운`} />
       <div className="grid grid-cols-2 gap-2.5" style={{ margin: '0 16px' }}>
         <button type="button" onClick={() => navigate('/weekly', profileId ? { state: { profileId } } : undefined)} className="text-left"
           style={{ borderRadius: 14, background: HJ.card, border: `1px solid ${HJ.line}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 }}>
@@ -612,11 +638,12 @@ export function HomePage() {
           </span>
         </button>
       </div>
+      </Band>
 
       {/* ━━━ 6-1. 지금 많이 보는 풀이 (실제 집계만 · 3개 미만이면 숨김) ━━━ */}
       {liveBest.length >= 3 && (
         <>
-          <SecTitle mark="衆" k="실시간 인기" h="지금 많이 보는 풀이" />
+          <SecTitle rule={false} mark="衆" k="실시간 인기" h="지금 많이 보는 풀이" />
           <ol style={{ margin: '0 16px', borderTop: `1px solid ${HJ.line}`, listStyle: 'none', padding: 0 }}>
             {liveBest.map((it, i) => (
               <li key={it.id} style={{ borderBottom: `1px solid ${HJ.line}` }}>
@@ -637,8 +664,8 @@ export function HomePage() {
 
       {/* ━━━ 7. 실제 후기 (승인된 것만 · 없으면 숨김) ━━━ */}
       {reviews.length > 0 && (
-        <>
-          <SecTitle mark="言" k="먼저 본 사람들" h="읽어본 사람들이 남긴 말" />
+        <Band tone="deep">
+          <SecTitle rule={false} mark="言" k="먼저 본 사람들" h="읽어본 사람들이 남긴 말" />
           <div className="flex gap-2.5 overflow-x-auto no-scrollbar" style={{ padding: '0 16px 4px' }}>
             {reviews.map((r) => (
               <div key={r.id} style={{ flex: '0 0 270px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 16 }}>
@@ -650,7 +677,7 @@ export function HomePage() {
               </div>
             ))}
           </div>
-        </>
+        </Band>
       )}
 
       {/* ━━━ 8. 사주500이 다른 점 (먹 띠) ━━━ */}
@@ -706,26 +733,38 @@ function reviewByline(r: PublicReview): string {
 
 /** 덩어리 머리 — 2026-10-27 지인 VOC '구분이 안 간다' → 위에 고서 장 구분선(두 줄), 왼쪽 먹 도장 글자(홈 목차와 같은 글자),
  *  오른쪽 값, 아래 한 줄 설명. 금색 없이 먹과 종이만 */
-function SecTitle({ k, h, mark, price, d, id }: { k: string; h: string; mark?: string; price?: string; d?: string; id?: string }) {
+function SecTitle({ k, h, mark, price, d, id, rule = true, dark = false }: { k: string; h: string; mark?: string; price?: string; d?: string; id?: string; rule?: boolean; dark?: boolean }) {
   return (
-    <div id={id} style={{ margin: '34px 16px 0', padding: '20px 6px 14px', borderTop: '3px double rgba(26,22,18,.3)', scrollMarginTop: 72 }}>
+    <div id={id} style={{ margin: rule ? '34px 16px 0' : '0 16px', padding: rule ? '20px 6px 14px' : '24px 6px 14px', borderTop: rule ? '3px double rgba(26,22,18,.3)' : undefined, scrollMarginTop: 72 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {mark && <InkMark size={38} fontSize={21}>{mark}</InkMark>}
+        {mark && <InkMark size={38} fontSize={21} invert={dark}>{mark}</InkMark>}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: HJ.mute }}>{k}</div>
-          <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.38, marginTop: 2, wordBreak: 'keep-all' }}>{h}</h2>
+          <div style={{ fontSize: 13, fontWeight: 700, color: dark ? '#B9AF9E' : HJ.mute }}>{k}</div>
+          <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.38, marginTop: 2, wordBreak: 'keep-all', color: dark ? '#F4EFE4' : HJ.ink }}>{h}</h2>
         </div>
-        {price && <span style={{ alignSelf: 'flex-end', fontSize: 14, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap', paddingBottom: 3 }}>{price}</span>}
+        {price && <span style={{ alignSelf: 'flex-end', fontSize: 14, fontWeight: 800, color: dark ? '#F1ECE1' : HJ.ink, whiteSpace: 'nowrap', paddingBottom: 3 }}>{price}</span>}
       </div>
-      {d && <p style={{ fontSize: 14, color: HJ.ink2, lineHeight: 1.6, marginTop: 10, wordBreak: 'keep-all' }}>{d}</p>}
+      {d && <p style={{ fontSize: 14, color: dark ? '#CFC6B6' : HJ.ink2, lineHeight: 1.6, marginTop: 10, wordBreak: 'keep-all' }}>{d}</p>}
+    </div>
+  );
+}
+
+/** 덩어리 바탕 띠 (2026-10-27) — 같은 종이 위에 흰 카드만 이어져 덩어리가 안 갈렸다. 짙은 한지, 먹(종합사주는 금선 두 줄) */
+const HJ_DEEP = '#EBE3D2';
+function Band({ tone, gold, children }: { tone: 'deep' | 'ink'; gold?: boolean; children: ReactNode }) {
+  const ink = tone === 'ink';
+  const edge = gold ? '3px double rgba(184,150,90,.8)' : `1px solid ${ink ? HJ.ink : 'rgba(26,22,18,.1)'}`;
+  return (
+    <div style={{ marginTop: 34, background: ink ? HJ.ink : HJ_DEEP, padding: '0 0 30px', borderTop: edge, borderBottom: edge }}>
+      {children}
     </div>
   );
 }
 
 /** 먹 도장 글자 칸 (덩어리 머리와 홈 목차) — 주제 칸의 먹 테두리, 위 두 고민의 빨간 도장과 다르게 먹을 채운다 */
-function InkMark({ children, size, fontSize }: { children: ReactNode; size: number; fontSize: number }) {
+function InkMark({ children, size, fontSize, invert }: { children: ReactNode; size: number; fontSize: number; invert?: boolean }) {
   return (
-    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 6, background: HJ.ink, color: '#F1ECE1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize, fontWeight: 900, flexShrink: 0 }}>
+    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 6, background: invert ? '#F4EFE4' : HJ.ink, color: invert ? HJ.ink : '#F1ECE1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize, fontWeight: 900, flexShrink: 0 }}>
       {children}
     </span>
   );
@@ -772,7 +811,7 @@ function SeasonGroup({ children }: { children: ReactNode }) {
   }, []);
   return (
     <>
-      {has && <SecTitle mark="今" k="이번 달 소식과 혜택" h="지금 챙겨 볼 것" />}
+      {has && <SecTitle rule={false} mark="今" k="이번 달 소식과 혜택" h="지금 챙겨 볼 것" />}
       <div ref={ref} className="home-season">{children}</div>
     </>
   );
@@ -822,28 +861,43 @@ function SealBox({ children, size, fontSize }: { children: ReactNode; size: numb
 }
 
 /** 고민 위 두 개 — 한 줄 카드 (빨간 도장, 2026-10-23 P1-3). i 는 보일 때 차례로 떠오르는 순서 */
-function TopicCard({ hz, t, s, price, onClick, i = 0 }: { hz: string; t: string; s: string; price: string; onClick: () => void; i?: number }) {
+function TopicCard({ hz, t, s, price, days, onClick, i = 0 }: { hz: string; t: string; s: string; price: string; days?: number | null; onClick: () => void; i?: number }) {
+  // 2026-10-27 별이 들어오기까지 남은 날(hookFacts 계산)을 오른쪽에 큰 숫자로. 사실이 없으면 값만
+  const hasDays = typeof days === 'number' && days >= 0 && days <= 400;
   return (
     <button type="button" onClick={onClick} className="w-full text-left mo-press mo-rise"
-      style={{ ...moVars({ i }), display: 'flex', gap: 14, alignItems: 'center', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '15px 16px', minHeight: 78 }}>
+      style={{ ...moVars({ i }), display: 'flex', gap: 14, alignItems: 'center', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '15px 16px', minHeight: 86 }}>
       <SealBox size={44} fontSize={24}>{hz}</SealBox>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: HJ.ink, lineHeight: 1.35 }}>{t}</span>
         <span style={{ display: 'block', fontSize: 14.5, lineHeight: 1.5, color: HJ.ink2, marginTop: 3, wordBreak: 'keep-all' }}>{s}</span>
       </span>
-      <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{price} ›</span>
+      {hasDays ? (
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, paddingLeft: 10, borderLeft: `1px solid ${HJ.line}` }}>
+          <span style={{ fontSize: 13, color: HJ.mute, fontWeight: 700 }}>{days === 0 ? '오늘부터' : '남은 날'}</span>
+          {days !== 0 && (
+            <span style={{ fontFamily: SERIF, fontWeight: 900, color: HJ.ink, lineHeight: 1.05 }}>
+              <span style={{ fontSize: 30 }}>{days}</span><span style={{ fontSize: 14, fontWeight: 700 }}>일</span>
+            </span>
+          )}
+          <span style={{ fontSize: 13.5, fontWeight: 800, color: HJ.ink2, marginTop: 2, whiteSpace: 'nowrap' }}>{price} ›</span>
+        </span>
+      ) : (
+        <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap' }}>{price} ›</span>
+      )}
     </button>
   );
 }
 
 /** 고민 나머지 아홉 — 세 칸 격자 한 칸 (먹 테두리 도장, 2026-10-26 '고민 더 보기' 대신 전부 보이게) */
-function TopicTile({ hz, t, price, onClick, i }: { hz: string; t: string; price: string; onClick: () => void; i: number }) {
+function TopicTile({ hz, t, short, price, onClick, i }: { hz: string; t: string; short?: string; price: string; onClick: () => void; i: number }) {
   return (
     <button type="button" onClick={onClick} className="mo-press mo-rise"
-      style={{ ...moVars({ i }), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 106, padding: '14px 6px 12px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, textAlign: 'center' }}>
+      style={{ ...moVars({ i }), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 5, minHeight: 132, padding: '14px 6px 12px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 14, textAlign: 'center' }}>
       <span aria-hidden="true" style={{ width: 36, height: 36, borderRadius: 5, boxShadow: `inset 0 0 0 1.5px ${HJ.ink}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 19, fontWeight: 900, color: HJ.ink }}>{hz}</span>
-      <span style={{ fontSize: 15, fontWeight: 700, color: HJ.ink, lineHeight: 1.3, wordBreak: 'keep-all' }}>{t}</span>
-      <span style={{ fontSize: 13, fontWeight: 700, color: HJ.ink2 }}>{price}</span>
+      <span style={{ fontSize: 15, fontWeight: 800, color: HJ.ink, lineHeight: 1.3, wordBreak: 'keep-all' }}>{t}</span>
+      {short && <span style={{ fontSize: 13, color: HJ.ink2, lineHeight: 1.4, wordBreak: 'keep-all', flex: 1 }}>{short}</span>}
+      <span style={{ fontSize: 13, fontWeight: 800, color: HJ.ink }}>{price}</span>
     </button>
   );
 }
