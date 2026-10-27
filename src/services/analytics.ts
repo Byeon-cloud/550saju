@@ -245,6 +245,7 @@ const FIRESTORE_TRACKED = new Set<string>([
   'saju_next_view',     // {ad?} — 사주 카드 아래 다음 단계 칸이 화면에 보였다
   'saju_next_click',    // {to: daily|주제 id, ad?} — 다음 단계 칸에서 눌렀다
   'next_click',         // {from: daily|topic_주제|dream|..., to: 주제 id|chat, kind: topic|question, pos} — 결과 끝 '이어서 보면 좋은 것'(2026-10-27 한 이름으로)
+  'charge_login_wait',  // {result: ok|fail|timeout, tapped?} — 웹 로그인하고 돌아와 확인을 기다린 결과 (2026-10-27 '또 로그인' 고리 수리)
   // 2026-10-23 1.6.3 P1-4 — 오늘의 운세 결과 끝 (결과가 다음 콘텐츠로 이어지는지)
   'bridge_click',       // {from: daily, to: premium|weekly|monthly|chat|주제 id|menu_묶음, pos: offer_top|offer_end|next_topic|next_chat|grid|grid_menu|upsell|upsell_sub|actions|month_picks} — 결과의 연결 카드를 눌렀다
   'daily_scroll',       // {pct: 25|50|75|100} — 오늘의 운세 결과 화면을 그만큼 내려 읽었다(결과 하나에 한 번씩)

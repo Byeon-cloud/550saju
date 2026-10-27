@@ -115,6 +115,8 @@ async function signInIfAlreadyInUse(err: any): Promise<User | null> {
   }
 }
 
+/** 리다이렉트 로그인 결과가 나오면 window 에 쏘는 이벤트 이름 (detail.ok) — ChargePage 가 듣는다 */
+export const LOGIN_REDIRECT_DONE = 'saju500:login-redirect-done';
 /** 리다이렉트 로그인을 떠나기 직전에 남긴다 — 돌아와서 성공, 실패를 집계하려고 (2026-10-19) */
 const REDIRECT_MARK = 'saju500:login_redirect';
 function markRedirectLogin(provider: WebLoginProvider): void {
@@ -132,6 +134,8 @@ export async function checkRedirectResult(): Promise<User | null> {
   const report = (name: 'login_success' | 'login_fail', extra: Record<string, string | number>) => {
     if (!fresh) return;
     import('@/services/analytics').then((a) => a.trackEvent(name, { provider: String(mark?.provider || ''), via: 'redirect', ...extra })).catch(() => {});
+    // 2026-10-27 결과를 기다리는 화면(충전 화면 '로그인 확인 중')이 실패를 바로 알도록
+    try { window.dispatchEvent(new CustomEvent(LOGIN_REDIRECT_DONE, { detail: { ok: name === 'login_success' } })); } catch { /* noop */ }
   };
   try {
     const result = await getRedirectResult(auth);

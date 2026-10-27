@@ -140,6 +140,9 @@ export function ChargePage() {
     writeChargeCtx(null);
     return null;
   });
+  /** 2026-10-27 로그인하러 떠났다 막 돌아와 로그인 확인을 기다리는 중 (아래 복귀 효과) */
+  const [loginChecking, setLoginChecking] = useState<boolean>(() => !isAppintosBuild && !!ctx?.loginThenPay && Date.now() - ctx.loginThenPay <= 15 * 60e3);
+  const payAfterLoginRef = useRef(false);
   const stateReturnTo = ((location.state as any)?.returnTo as string | undefined) || ctx?.returnTo;
   const redirectTo = searchParams.get('redirect') || stateReturnTo || null;
   // 2026-05-29 — 잔액부족 모달 등이 보낸 안내 메시지 (왜 충전 화면에 왔는지). 기존엔 어디서도 표시 안 됨.
@@ -371,6 +374,9 @@ export function ChargePage() {
     if (!selectedPkg || purchasing) return;
     // 웹 실결제 전 로그인 — 익명으로 결제하면 브라우저 저장소가 지워질 때 운과 결제 기록을 찾을 길이 없다
     if (portoneLive && !pgReview) {
+      // 2026-10-27 — 로그인하고 돌아온 직후엔 로그인 확인이 1~2초 늦게 끝난다. 그 사이 누르면 로그인 창이 또 떠
+      //   손님 3명이 '또 로그인?' 고리에 걸렸다(10-21~26 웹, 1명은 그대로 나감). 확인 중이면 끝날 때까지 기다렸다 결제 창을 연다
+      if (loginChecking) { payAfterLoginRef.current = true; return; }
       const { auth } = await import('@/services/auth/firebase');
       if (!auth.currentUser || auth.currentUser.isAnonymous) {
         trackEvent('charge_login_gate', { source: chargeSource });
@@ -456,19 +462,43 @@ export function ChargePage() {
   };
 
   // 2026-10-19 — 결제하려다 로그인하러 떠났다 돌아왔으면(모바일 리다이렉트), 로그인이 확인되는 대로 결제 창을 연다
+  //   2026-10-27 — 확인되는 동안(최대 12초) 결제하기 단추를 '로그인 확인 중'으로 잠그고, 그 사이 누른 것은 확인 뒤 결제 창으로 잇는다.
+  //   열 때 로그인 창은 닫는다(예전엔 로그인 창과 결제 창이 겹쳐 '닫기'를 여러 번 눌렀다)
   useEffect(() => {
-    if (isAppintosBuild || !ctx?.loginThenPay || Date.now() - ctx.loginThenPay > 15 * 60e3) return;
+    if (!loginChecking) return;
     let off: (() => void) | undefined;
     let done = false;
+    const giveUp = window.setTimeout(() => {
+      if (done) return;
+      setLoginChecking(false);
+      trackEvent('charge_login_wait', { result: 'timeout' });
+      if (payAfterLoginRef.current) toast.show('로그인이 아직 확인되지 않았어요. 결제하기를 누르면 다시 로그인할 수 있어요', 'info');
+      payAfterLoginRef.current = false;
+    }, 12000);
+    // 로그인 결과가 실패로 나오면(손님이 카카오에서 취소 등) 12초를 기다리지 않고 바로 푼다 (webLogin LOGIN_REDIRECT_DONE, 이름 글자 그대로)
+    const onDone = (e: Event) => {
+      if (done || (e as CustomEvent<{ ok?: boolean }>).detail?.ok) return;
+      window.clearTimeout(giveUp);
+      setLoginChecking(false);
+      trackEvent('charge_login_wait', { result: 'fail' });
+      if (payAfterLoginRef.current) toast.show('로그인이 끝나지 않았어요. 결제하기를 누르면 다시 로그인할 수 있어요', 'info');
+      payAfterLoginRef.current = false;
+    };
+    window.addEventListener('saju500:login-redirect-done', onDone);
     import('@/services/auth/firebase').then(({ auth }) => {
       off = auth.onAuthStateChanged((u) => {
         if (done || !u || u.isAnonymous) return;
         done = true;
+        window.clearTimeout(giveUp);
         writeChargeCtx({ loginThenPay: 0 });
+        setLoginChecking(false);
+        setShowLogin(false);
         setShowPgSheet(true);
+        trackEvent('charge_login_wait', { result: 'ok', tapped: payAfterLoginRef.current ? 1 : 0 });
+        payAfterLoginRef.current = false;
       });
     }).catch(() => {});
-    return () => { off?.(); };
+    return () => { off?.(); window.clearTimeout(giveUp); window.removeEventListener('saju500:login-redirect-done', onDone); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -834,9 +864,10 @@ export function ChargePage() {
               <button
                 onClick={handlePurchase}
                 disabled={purchasing}
+                aria-busy={loginChecking || undefined}
                 style={{
                   height: 50, minWidth: 140, padding: '0 18px',
-                  background: purchasing ? 'rgba(210,180,119,0.5)' : 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
+                  background: purchasing || loginChecking ? 'rgba(210,180,119,0.5)' : 'linear-gradient(180deg, #D2B477 0%, #B8965A 100%)',
                   color: '#17110A', borderRadius: 14,
                   fontSize: 16, fontWeight: 800,
                   cursor: purchasing ? 'not-allowed' : 'pointer',
@@ -848,7 +879,9 @@ export function ChargePage() {
               >
                 {purchasing
                   ? '처리 중...'
-                  : (!webPaymentReady && !portoneTest)
+                  : loginChecking
+                    ? '로그인 확인 중'
+                    : (!webPaymentReady && !portoneTest)
                     ? '결제 준비 중'
                     : (isAppintosBuild ? '토스페이로 결제' : `${selectedPkg.price.toLocaleString()}원 결제하기`)}
               </button>
