@@ -54,6 +54,8 @@ import {
 } from '@/components/hanji/Hanji';
 
 /** 웹 홈 화면 앱 안내 (2026-10-23) — 앱 빌드에는 코드째 넣지 않는다. 못 불러오면 그 칸만 빈다 */
+import { HeroPillars } from '@/components/home/HeroPillars';
+const HERO2 = import.meta.env.DEV && typeof location !== 'undefined' && location.search.includes('hero2'); // 첫 화면 시안 (dev 전용)
 const HomePwaSlot = import.meta.env.VITE_BUILD_TARGET !== 'appintos'
   ? lazy(() => import('@/components/pwa/HomePwaSlot').then((m) => ({ default: m.HomePwaSlot })).catch(() => ({ default: () => null })))
   : null;
@@ -260,6 +262,11 @@ export function HomePage() {
         }}>
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(244,239,228,.0) 0%, rgba(244,239,228,0) 48%, rgba(244,239,228,.85) 82%, ${HJ.paper} 100%)` }} />
         </div>
+        {HERO2 && hasSaju && sajuData && (
+          <div style={{ position: 'absolute', top: 18, left: 16, right: 16 }}>
+            <HeroPillars sajuData={sajuData as SajuData} name={displayName} />
+          </div>
+        )}
         <div style={{ position: 'relative', marginTop: -64, padding: '0 22px' }}>
           <div className="flex items-center gap-2" style={{ fontSize: 14, color: HJ.ink2, fontWeight: 600 }}>
             <Seal size={36} stamp={heroMo} delay={80}>{tg.gz}</Seal>
