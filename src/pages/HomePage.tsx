@@ -349,7 +349,7 @@ export function HomePage() {
            첫 화면 아래, 아침 운세 메일 줄 다음. 앱 빌드와 토스 안에서는 아무것도 그리지 않는다 (components/pwa/HomePwaSlot) */}
       {HomePwaSlot && <Suspense fallback={null}><HomePwaSlot /></Suspense>}
 
-      {/* 2026-10-27 지인 VOC '홈에 콘텐츠는 많은데 뭐가 뭔지 구분이 안 간다, 가격은 얼마냐' → 첫 화면 바로 아래에 홈 목차 한 줄.
+      {/* 2026-10-27 지인 VOC '홈에 콘텐츠는 많은데 뭐가 뭔지 구분이 안 간다, 가격은 얼마냐' → 첫 화면 바로 아래에 홈 목차 한 줄(값은 운으로).
            덩어리마다 같은 먹 도장 글자를 머리에도 달아 목차와 본문이 이어지게 한다. 누르면 그 덩어리로 내려간다 */}
       <QuickNav items={[
         { mark: '心', label: '고민별', price: worryRange, to: 'home-topics' },
@@ -376,7 +376,7 @@ export function HomePage() {
         </div>
       </MotionScope>
       <p style={{ margin: '10px 22px 0', fontSize: 13.5, color: HJ.mute, lineHeight: 1.6, wordBreak: 'keep-all' }}>
-        누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요. 1운은 500원이에요.
+        누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요.
       </p>
 
       {/* 2026-10-27 시기 카드와 초대는 머리 없이 고민과 무료 사이에 떠 있어 '뭐가 뭔지' 헷갈렸다 → '이번 달 소식과 혜택' 한 덩어리로 묶는다.
@@ -741,10 +741,8 @@ function QuickNav({ items }: { items: Array<{ mark: string; label: string; price
   };
   return (
     <nav aria-label="홈 목차" style={{ margin: '22px 16px 0', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '12px 4px 10px' }}>
-      <div className="flex items-baseline justify-between" style={{ padding: '0 12px 8px' }}>
-        <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>사주500에서 볼 수 있는 것</span>
-        <span style={{ fontSize: 13, color: HJ.mute }}>1운은 500원</span>
-      </div>
+      {/* 2026-10-27 오너: 원화 표기(1운은 500원)는 굳이 넣지 않는다 — 원화는 충전 화면에서만 (4월 방침 그대로) */}
+      <div style={{ padding: '0 12px 8px', fontSize: 14, fontWeight: 800, color: HJ.ink }}>사주500에서 볼 수 있는 것</div>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((it, i) => (
           <button key={it.to} type="button" onClick={() => go(it.to, it.label)} className="mo-press"
