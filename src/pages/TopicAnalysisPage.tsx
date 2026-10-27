@@ -23,6 +23,7 @@ import { normalizeTopicId, TOPIC_REGISTRY, TOPIC_IDS, type TopicId } from '@/con
 import { kstToday } from '@/utils/kstDate';
 import { loveStars, loveDday, wealthStars, examFact, spouseSeatFact, josa } from '@/services/saju/hookFacts';
 import { fetchTopicPreview, type TopicPreview } from '@/services/saju/topicPreview';
+import { topicFactOf } from '@/services/saju/topicFacts';
 import { HJ, GoldCta, GhostButton, Pansim, hanjaNum, INK_HERO_BG, NeedSaju, YiGi, Cell, Tag, Mark, Ledger, Choice } from '@/components/hanji/Hanji';
 import { StandaloneBackButton, standaloneBackVisible } from '@/components/pwa/StandaloneBackButton';
 
@@ -3270,6 +3271,8 @@ export function TopicAnalysisPage() {
   const previewSeenRef = useRef<string>('');
   const previewSajuData = (selected as any)?.sajuData;
   const previewProfileId = selected ? ((selected as any).profileId || selected.id) : '';
+  // 2026-10-27 홈 고민 칸('12월 7일부터 연인의 별이 들어와요, 남은 날 41일')과 같은 사실 — 홈에서 보고 들어온 손님이 같은 날짜를 다시 본다
+  const homeFact = useMemo(() => (topicId ? topicFactOf(previewSajuData, topicId) : null), [previewSajuData, topicId]);
   useEffect(() => {
     setPreview(null);
     if (phase !== 'select' || !previewSajuData || !topicId) return;
@@ -4722,13 +4725,18 @@ export function TopicAnalysisPage() {
                   )}
 
                   {/* 2026-10-23 1.6.3 P1-6 — 결제 전 미리 보기 두 줄 (서버 확정값을 틀에 넣는다. 못 불러오면 그리지 않는다) */}
-                  {selected && preview && (() => {
-                    const hook = preview.hook;
+                  {selected && (preview || homeFact) && (() => {
+                    const hook = preview?.hook || null;
                     // 재회운의 달은 상대 정보 없이 계산한 값 → 상대 생일을 넣고 열면 풀이의 달이 달라질 수 있어 숨긴다
                     const partnerOn = topicId === 'reunion' && showPartner && !!partnerInfo.name;
-                    const month = preview.month && !(preview.month.noPartnerOnly && partnerOn) ? preview.month : null;
-                    if (!hook && !month) return null;
+                    const month = preview?.month && !(preview.month.noPartnerOnly && partnerOn) ? preview.month : null;
+                    if (!hook && !month && !homeFact) return null;
                     const rows: { mark: string; label: string; value: string }[] = [];
+                    // 2026-10-27 첫 줄은 홈과 같은 사실과 남은 날, 그다음 가장 좋은 달(별이 들어오는 달과 다를 수 있어 '그중'으로 잇는다)
+                    if (homeFact) {
+                      const left = homeFact.days != null && homeFact.days > 0 ? ` 오늘부터 ${homeFact.days}일 남았어요.` : '';
+                      rows.push({ mark: '星', label: homeFact.days != null ? '들어오는 별' : '내 자리', value: `${homeFact.line}.${left}`.replace('요..', '요.') });
+                    }
                     if (hook) rows.push({ mark: '年', label: '짚을 해', value: `사주로 보면 ${hook.y}년에 ${hook.place}${josa(hook.place, '이', '가')} 크게 움직였어요. 풀이 첫 장에서 그해 일을 짚어 드려요.` });
                     if (month) rows.push({ mark: '月', label: '좋은 달', value: `앞으로 열두 달 중 ${topic.label}${josa(topic.label, '이', '가')} 가장 좋은 달은 ${month.y}년 ${month.m}월이에요.` });
                     return (
