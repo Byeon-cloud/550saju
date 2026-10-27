@@ -956,8 +956,10 @@ export async function generateCompatibilityAnalysis(
   sajuData1: SajuData,
   sajuData2: SajuData,
   relation: string,
+  /** 2026-10-27 기기 결제 장부 id — 만드는 중에 새로고침해 같은 결제로 다시 불러도 서버가 한 번만 깎는다 */
+  chargeId?: string,
 ): Promise<{ reportId: string; content: CompatibilityResponse }> {
-  const result = await callWithAuth('generateCompatibility', { sajuData1, sajuData2, relation });
+  const result = await callWithAuth('generateCompatibility', { sajuData1, sajuData2, relation, ...(chargeId ? { chargeId } : {}) });
   return result.data as { reportId: string; content: CompatibilityResponse };
 }
 

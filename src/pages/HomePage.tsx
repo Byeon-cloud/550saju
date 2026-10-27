@@ -13,7 +13,7 @@
 //   - 금색은 누르는 곳에만 · 색은 먹·종이 · 글자는 그림 위에 올리지 않는다 (가독성).
 //   - 후기는 실제 구매자 후기(노출 동의 + 오너 승인)만. 없으면 섹션째 숨김 (구 HOME_REVIEWS 시드는 노출 중단).
 
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { kstToday } from '@/utils/kstDate';
 import { useToast } from '@/components/common/Toast';
@@ -239,6 +239,12 @@ export function HomePage() {
   /** '다른 점' 예시 — 이 사람 실제 날짜가 있으면 그걸로 (없으면 보기 값) */
   const whyExample = `${facts?.month ? `${facts.month.month.calMonth}월` : '11월'}, ${facts?.week ? `${Number(facts.week.date.slice(8))}일 ${facts.week.weekday}요일` : '18일 일요일'}, ${facts?.today ? facts.today.peak.split('~')[0] : '저녁 7시 반'}`;
   const withPid = (path: string) => (profileId ? `${path}${path.includes('?') ? '&' : '?'}profileId=${encodeURIComponent(profileId)}` : path);
+  /** 고민별 운세 값 범위 (머리와 바로 가기에 같이 쓴다) */
+  const worryNums = worries.map((r) => parseInt(r.price, 10)).filter((n) => Number.isFinite(n));
+  const worryRange = worryNums.length
+    ? (Math.min(...worryNums) === Math.max(...worryNums) ? `${worryNums[0]}운` : `${Math.min(...worryNums)}~${Math.max(...worryNums)}운`)
+    : '1운부터';
+  const periodFrom = `${Math.min(weekly, monthly)}운부터`;
 
   return (
     <div style={{ background: HJ.paper, minHeight: '100vh', paddingBottom: 112, color: HJ.ink }}>
@@ -336,11 +342,20 @@ export function HomePage() {
            첫 화면 아래, 아침 운세 메일 줄 다음. 앱 빌드와 토스 안에서는 아무것도 그리지 않는다 (components/pwa/HomePwaSlot) */}
       {HomePwaSlot && <Suspense fallback={null}><HomePwaSlot /></Suspense>}
 
+      {/* 2026-10-27 지인 VOC '홈에 콘텐츠는 많은데 뭐가 뭔지 구분이 안 간다, 가격은 얼마냐' → 첫 화면 바로 아래에 홈 목차 한 줄.
+           덩어리마다 같은 먹 도장 글자를 머리에도 달아 목차와 본문이 이어지게 한다. 누르면 그 덩어리로 내려간다 */}
+      <QuickNav items={[
+        { mark: '心', label: '고민별', price: worryRange, to: 'home-topics' },
+        { mark: '日', label: '매일 무료', price: '무료', to: 'home-free' },
+        { mark: '命', label: '종합사주', price: `${premium}운`, to: 'home-premium' },
+        { mark: '歲', label: '신년운세', price: `${tojung}운`, to: 'home-newyear' },
+        { mark: '月', label: '주간 월간', price: periodFrom, to: 'home-period' },
+      ]} />
+
       {/* ━━━ 2. 고민 (주제운) — 2026-10-26 오너 '고민 더 보기가 안 보여 다른 주제운을 못 만난다, 홈에서 뭐부터 볼지 모르겠다'
            → 오늘 운세 바로 아래로 올리고 접지 않는다. 나이대별 위 두 개는 사실 한 줄이 붙은 카드, 나머지 아홉은 세 칸 격자 ━━━ */}
-      <div id="home-topics" style={{ scrollMarginTop: 72 }}>
-        <SecTitle k="고민별 운세" h="어떤 고민이 있으세요?" />
-      </div>
+      <SecTitle id="home-topics" mark="心" k="고민별 운세" h="어떤 고민이 있으세요?" price={worryRange}
+        d="연애, 돈, 일 가운데 고민 하나를 골라 깊게 풀어요" />
       <MotionScope style={{ margin: '0 16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {worries.slice(0, 2).map((r, i) => (
@@ -357,21 +372,28 @@ export function HomePage() {
         누르면 바로 결제되지 않아요. 무엇을 풀어 드리는지 먼저 보여 드려요. 1운은 500원이에요.
       </p>
 
-      {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 월운세와 같은 채점, AI 0원 */}
-      {hasSaju && <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />}
-      {/* 2026-10-17 생일 달 — 종합사주 또는 신년운세(11~2월) */}
-      {hasSaju && <BirthdayMonth sajuData={sajuData as any} name={displayName} premiumPrice={premium} newYearPrice={tojung} />}
-      {/* 2026-10-17 수능 시즌(11/1~11/19) — 40~59세는 자녀 합격운, 17~21세는 내 합격운 */}
-      {hasSaju && <SuneungCard sajuData={sajuData as any} name={displayName} age={age} today={today} price={getTopicPrice('exam' as TopicId).actualPrice} profileId={profileId} />}
-      {/* 2026-10-18 친구 초대 — 초대받은 친구는 받기 카드, 사주를 넣은 사람은 초대 한 줄 */}
-      {hasSaju && <InviteWelcomeCard padding="28px 16px 0" />}
-      {hasSaju && <InviteRow />}
+      {/* 2026-10-27 시기 카드와 초대는 머리 없이 고민과 무료 사이에 떠 있어 '뭐가 뭔지' 헷갈렸다 → '이번 달 소식과 혜택' 한 덩어리로 묶는다.
+           카드가 하나도 안 그려지면 머리도 숨긴다 (SeasonGroup) */}
+      {hasSaju && (
+        <SeasonGroup>
+          {/* 2026-10-17 월초(1~7일) 이번 달 좋은 날 — 월운세와 같은 채점, AI 0원 */}
+          <MonthGoodDays sajuData={sajuData as any} name={displayName} price={monthly} profileId={profileId} />
+          {/* 2026-10-17 생일 달 — 종합사주 또는 신년운세(11~2월) */}
+          <BirthdayMonth sajuData={sajuData as any} name={displayName} premiumPrice={premium} newYearPrice={tojung} />
+          {/* 2026-10-17 수능 시즌(11/1~11/19) — 40~59세는 자녀 합격운, 17~21세는 내 합격운 */}
+          <SuneungCard sajuData={sajuData as any} name={displayName} age={age} today={today} price={getTopicPrice('exam' as TopicId).actualPrice} profileId={profileId} />
+          {/* 2026-10-18 친구 초대 — 초대받은 친구는 받기 카드, 사주를 넣은 사람은 초대 한 줄 */}
+          <InviteWelcomeCard padding="0" />
+          <InviteRow />
+        </SeasonGroup>
+      )}
       {/* 2026-10-17 웹 전용 첫 손님 소개 (앱 빌드와 토스 안에서는 안 보임) */}
       {!hasSaju && <WebIntro premiumPrice={premium} />}
 
       {/* ━━━ 3. 오늘 무료 (꿈은 먹 카드, 대화는 한지 카드 — 명암으로 바로 갈리게)
            2026-10-27 지인 VOC '기능은 좋은데 배치가 제각각이라 헷갈린다' → 모든 덩어리가 같은 머리(작은 분류 + 제목)로 시작한다 ━━━ */}
-      <SecTitle k="매일 무료" h="오늘 무료로 볼 수 있어요" />
+      <SecTitle id="home-free" mark="日" k="매일 무료" h="오늘 무료로 볼 수 있어요" price="무료"
+        d="꿈해몽과 사주대화 첫 질문은 하루 한 번, 만세력은 언제나 무료예요" />
       <div style={{ padding: '0 16px' }}>
         <div className="grid grid-cols-2 gap-2.5">
           <button type="button" onClick={() => navigate('/dream')} className="text-left"
@@ -413,7 +435,7 @@ export function HomePage() {
       {/* ━━━ 2-1. 가족 띠 운세 (사주 있는 사람) — 배우자, 자녀, 부모님 띠도 오늘 운세를 한 번에 ━━━ */}
       {hasSaju && (
         <>
-          <SecTitle k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" />
+          <SecTitle mark="家" k="띠별 오늘의 운세" h="가족 띠도 오늘 운세를 볼 수 있어요" price="무료" />
           <div style={{ margin: '0 16px' }}>
             {/* 2026-10-25 가족 생일 넣기는 관계 '가족'으로 시작 (예전엔 '본인'이라 본인 교체 창이 떴다) */}
             <TtiFortune today={today} dayGz={tg.gz} dayKo={tg.ko} src="family"
@@ -423,7 +445,8 @@ export function HomePage() {
       )}
 
       {/* ━━━ 4. 사주책 (종합사주) — 오너가 좋다고 한 책, 대운 띠, 목차 그대로 ━━━ */}
-      <SecTitle k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" />
+      <SecTitle id="home-premium" mark="命" k="평생 한 번 읽는 종합사주" h="타고난 성격부터 10년 대운까지" price={`${premium}운`}
+        d="내 사주 전체를 열 장으로 풀어 드리는 가장 긴 풀이예요" />
       {/* 2026-10-15 오너: 책을 눌러도 종합사주로 — 책 그림, 소개, 대운 띠, 목차 어디를 눌러도 같은 곳으로 */}
       <button type="button" onClick={() => goPremium('book')} aria-label="종합사주 보기"
         style={{ display: 'block', width: 'calc(100% - 32px)', margin: '0 16px', padding: 0, border: 0, borderRadius: '20px 20px 0 0', height: 318, position: 'relative', overflow: 'hidden', background: '#E9E0CD', cursor: 'pointer' }}>
@@ -509,7 +532,8 @@ export function HomePage() {
       </section>
 
       {/* ━━━ 4. 신년운세 (그림 띠) — 2026-10-27 다른 덩어리처럼 머리를 단다 ━━━ */}
-      <SecTitle k={`${NEW_YEAR_TARGET} 신년운세`} h={`${NEW_YEAR_TARGET}년, 달마다 미리 보기`} />
+      <SecTitle id="home-newyear" mark="歲" k={`${NEW_YEAR_TARGET} 신년운세`} h={`${NEW_YEAR_TARGET}년, 달마다 미리 보기`} price={`${tojung}운`}
+        d={`${NEW_YEAR_TARGET}년 열두 달을 달마다 좋은 날까지 풀어요`} />
       <button type="button" onClick={() => navigate('/tojung')} className="text-left"
         style={{ display: 'block', margin: '0 16px', width: 'calc(100% - 32px)', borderRadius: 18, overflow: 'hidden', position: 'relative', border: 0, background: HJ.ink, color: '#F1ECE1', padding: 0 }}>
         <div aria-hidden="true" style={{ height: 168, backgroundImage: `url(${ART.inwang})`, backgroundSize: '190% auto', backgroundPosition: '30% 40%', backgroundRepeat: 'no-repeat' }} />
@@ -535,7 +559,8 @@ export function HomePage() {
       </button>
 
       {/* ━━━ 5. 기간별 (달력 장 두 장 — 큰 숫자로 읽기 전에 보이게) ━━━ */}
-      <SecTitle k="기간별 운세" h="이번 주와 다음 달 미리 보기" />
+      <SecTitle id="home-period" mark="月" k="기간별 운세" h="이번 주와 다음 달 미리 보기" price={periodFrom}
+        d={`주간운세 ${weekly}운, 월운세 ${monthly}운`} />
       <div className="grid grid-cols-2 gap-2.5" style={{ margin: '0 16px' }}>
         <button type="button" onClick={() => navigate('/weekly', profileId ? { state: { profileId } } : undefined)} className="text-left"
           style={{ borderRadius: 14, background: HJ.card, border: `1px solid ${HJ.line}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 }}>
@@ -584,7 +609,7 @@ export function HomePage() {
       {/* ━━━ 6-1. 지금 많이 보는 풀이 (실제 집계만 · 3개 미만이면 숨김) ━━━ */}
       {liveBest.length >= 3 && (
         <>
-          <SecTitle k="실시간 인기" h="지금 많이 보는 풀이" />
+          <SecTitle mark="衆" k="실시간 인기" h="지금 많이 보는 풀이" />
           <ol style={{ margin: '0 16px', borderTop: `1px solid ${HJ.line}`, listStyle: 'none', padding: 0 }}>
             {liveBest.map((it, i) => (
               <li key={it.id} style={{ borderBottom: `1px solid ${HJ.line}` }}>
@@ -606,7 +631,7 @@ export function HomePage() {
       {/* ━━━ 7. 실제 후기 (승인된 것만 · 없으면 숨김) ━━━ */}
       {reviews.length > 0 && (
         <>
-          <SecTitle k="먼저 본 사람들" h="읽어본 사람들이 남긴 말" />
+          <SecTitle mark="言" k="먼저 본 사람들" h="읽어본 사람들이 남긴 말" />
           <div className="flex gap-2.5 overflow-x-auto no-scrollbar" style={{ padding: '0 16px 4px' }}>
             {reviews.map((r) => (
               <div key={r.id} style={{ flex: '0 0 270px', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: 16 }}>
@@ -654,7 +679,7 @@ export function HomePage() {
         {(isAppintosBuild || isAppsInToss()) && <p style={{ marginTop: 6, fontSize: 13.5, color: HJ.mute }}>© 2026 사주500</p>}
       </div>
       <LegalFooter />
-      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
+      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}.home-season>div{padding:0 16px!important}.home-season>div+div{padding-top:10px!important}`}</style>
     </div>
   );
 }
@@ -672,12 +697,79 @@ function reviewByline(r: PublicReview): string {
   return `${label} ${who}${r.month ? ` (${r.month}월)` : ''}`;
 }
 
-function SecTitle({ k, h }: { k: string; h: string }) {
+/** 덩어리 머리 — 2026-10-27 지인 VOC '구분이 안 간다' → 위에 고서 장 구분선(두 줄), 왼쪽 먹 도장 글자(홈 목차와 같은 글자),
+ *  오른쪽 값, 아래 한 줄 설명. 금색 없이 먹과 종이만 */
+function SecTitle({ k, h, mark, price, d, id }: { k: string; h: string; mark?: string; price?: string; d?: string; id?: string }) {
   return (
-    <div style={{ padding: '34px 22px 12px' }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: HJ.mute }}>{k}</div>
-      <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.4, marginTop: 4 }}>{h}</h2>
+    <div id={id} style={{ margin: '34px 16px 0', padding: '20px 6px 14px', borderTop: '3px double rgba(26,22,18,.3)', scrollMarginTop: 72 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {mark && <InkMark size={38} fontSize={21}>{mark}</InkMark>}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: HJ.mute }}>{k}</div>
+          <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.38, marginTop: 2, wordBreak: 'keep-all' }}>{h}</h2>
+        </div>
+        {price && <span style={{ alignSelf: 'flex-end', fontSize: 14, fontWeight: 800, color: HJ.ink, whiteSpace: 'nowrap', paddingBottom: 3 }}>{price}</span>}
+      </div>
+      {d && <p style={{ fontSize: 14, color: HJ.ink2, lineHeight: 1.6, marginTop: 10, wordBreak: 'keep-all' }}>{d}</p>}
     </div>
+  );
+}
+
+/** 먹 도장 글자 칸 (덩어리 머리와 홈 목차) — 주제 칸의 먹 테두리, 위 두 고민의 빨간 도장과 다르게 먹을 채운다 */
+function InkMark({ children, size, fontSize }: { children: ReactNode; size: number; fontSize: number }) {
+  return (
+    <span aria-hidden="true" style={{ width: size, height: size, borderRadius: 6, background: HJ.ink, color: '#F1ECE1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize, fontWeight: 900, flexShrink: 0 }}>
+      {children}
+    </span>
+  );
+}
+
+/** 홈 목차 한 줄 (2026-10-27) — 무엇이 있고 얼마인지 한눈에, 누르면 그 덩어리로 내려간다 */
+function QuickNav({ items }: { items: Array<{ mark: string; label: string; price: string; to: string }> }) {
+  const go = (to: string, label: string) => {
+    trackEvent('cta_click', { label: `홈 목차 ${label}`, page: '/' });
+    const el = document.getElementById(to);
+    if (!el) return;
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch { el.scrollIntoView(); }
+  };
+  return (
+    <nav aria-label="홈 목차" style={{ margin: '22px 16px 0', background: HJ.card, border: `1px solid ${HJ.line}`, borderRadius: 16, padding: '12px 4px 10px' }}>
+      <div className="flex items-baseline justify-between" style={{ padding: '0 12px 8px' }}>
+        <span style={{ fontSize: 14, fontWeight: 800, color: HJ.ink }}>사주500에서 볼 수 있는 것</span>
+        <span style={{ fontSize: 13, color: HJ.mute }}>1운은 500원</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+        {items.map((it, i) => (
+          <button key={it.to} type="button" onClick={() => go(it.to, it.label)} className="mo-press"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '6px 2px', minHeight: 88, background: 'transparent', border: 0, borderLeft: i ? `1px solid ${HJ.line}` : 0 }}>
+            <InkMark size={34} fontSize={19}>{it.mark}</InkMark>
+            <span style={{ fontSize: 13, fontWeight: 700, color: HJ.ink, lineHeight: 1.25, wordBreak: 'keep-all', textAlign: 'center' }}>{it.label}</span>
+            <span style={{ fontSize: 13, color: HJ.ink2, lineHeight: 1.2, whiteSpace: 'nowrap' }}>{it.price}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+/** '이번 달 소식' 묶음 — 안의 카드는 날짜, 생일, 나이에 따라 스스로 숨는다. 하나도 안 그려지면 머리도 숨긴다 */
+function SeasonGroup({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [has, setHas] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setHas(el.childElementCount > 0);
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(el, { childList: true });
+    return () => mo.disconnect();
+  }, []);
+  return (
+    <>
+      {has && <SecTitle mark="今" k="이번 달 소식과 혜택" h="지금 챙겨 볼 것" />}
+      <div ref={ref} className="home-season">{children}</div>
+    </>
   );
 }
 

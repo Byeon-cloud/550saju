@@ -16,6 +16,12 @@
  *     상한을 넘으면 limited: true 를 돌려주고 호출부가 GEN_LIMIT_MESSAGE 로 막는다. 정상 손님은 하루에 닿지 않는 수다(주제운 20건 등).
  *   - users 문서가 없는 계정은 예전처럼 깎지 않는다(그 계정은 guardCallable, guardHttp 가 이미 익명과 같은 상한을 건다).
  *   - 트랜잭션 자체가 실패하면(Firestore 장애) 예전처럼 예외를 그대로 던진다(어긋남이 아니라 장애라서).
+ *   - costFor(2026-10-27, 종합사주 반값): 값을 계정 문서로 정하는 콘텐츠. 같은 트랜잭션에서 값과 함께 적을 필드(extra)와
+ *     상한에 막혀 되돌릴 때 적을 필드(revert)를 돌려준다. 모자란 경우에도 extra 는 적는다(반값을 쓴 것으로 본다).
+ *   - chargeId(2026-10-27, 궁합): 기기 결제 장부 id. 같은 id 로 두 번 오면(웹에서 만드는 중에 새로고침) 두 번째는 깎지 않는다.
+ *     표시는 users/{uid}/genCharges/{id}(클라 규칙 없음 = 서버만 씀). 다 만들면 markChargeDone 이 reportId 를 적어
+ *     두 번째 호출이 같은 결과를 돌려줄 수 있게 하고, 실패하면 releaseCharge 가 지워 다시 누를 때 정상으로 깎게 한다.
+ *     깎지 않는 두 번째 호출에도 모자란 생성과 같은 하루 상한을 건다(같은 id 로 계속 불러 공짜로 받는 구멍).
  */
 import * as admin from 'firebase-admin';
 import { checkGenQuota, type GenType } from './genGuard';
@@ -30,6 +36,39 @@ export interface ChargeOrShortResult {
   short: boolean;
   /** 모자란 생성이 오늘 상한을 넘었다 → 호출부가 막는다 */
   limited: boolean;
+  /** 정한 값 (costFor 가 있으면 그 값, 없으면 cost) */
+  cost?: number;
+  /** costFor 의 extra 를 적었다 (실패 때 호출부가 되돌린다) */
+  extraApplied?: boolean;
+  /** 같은 chargeId 로 이미 깎은 호출이 있다 (이번에는 깎지 않았다). 다 만든 것이면 reportId 가 있다 */
+  already?: { reportId: string | null };
+}
+
+export interface CostPick {
+  cost: number;
+  extra?: Record<string, unknown>;
+  revert?: Record<string, unknown>;
+}
+
+/** 기기 결제 장부 id 형식 (spendLedger.safeSpendId 와 같은 규칙) */
+export function safeChargeId(v: unknown): string | null {
+  return typeof v === 'string' && /^[A-Za-z0-9_-]{6,64}$/.test(v) ? v : null;
+}
+
+const chargeRef = (db: Db, uid: string, chargeId: string) => db.collection('users').doc(uid).collection('genCharges').doc(chargeId);
+
+/** 다 만들었다 — 같은 장부 id 로 다시 오면 이 결과를 돌려줄 수 있게. 실패해도 생성은 그대로 */
+export async function markChargeDone(db: Db, uid: string, chargeId: string | null | undefined, reportId: string): Promise<void> {
+  if (!uid || !chargeId) return;
+  try { await chargeRef(db, uid, chargeId).set({ status: 'done', reportId, doneAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true }); }
+  catch (e: any) { console.warn('[chargeOrShort] 완료 표시 실패:', e?.message || e); }
+}
+
+/** 실패해서 돌려줬다 — 표시를 지워 다시 누를 때 정상으로 깎게 한다 */
+export async function releaseCharge(db: Db, uid: string, chargeId: string | null | undefined): Promise<void> {
+  if (!uid || !chargeId) return;
+  try { await chargeRef(db, uid, chargeId).delete(); }
+  catch (e: any) { console.warn('[chargeOrShort] 표시 지우기 실패:', e?.message || e); }
 }
 
 /** 요청 IP — genGuard.ts clientIp 와 같은 규칙 (callable 은 request.rawRequest, 스트림은 req 를 넘긴다) */
@@ -79,48 +118,81 @@ async function noteShort(db: Db, uid: string, label: string, cost: number, serve
 export async function chargeOrShort(
   db: Db,
   deduct: Deduct,
-  args: { uid: string; cost: number; quota: GenType; label: string; ip?: string },
+  args: { uid: string; cost: number; quota: GenType; label: string; ip?: string; costFor?: (data: any) => CostPick; chargeId?: string | null },
 ): Promise<ChargeOrShortResult> {
-  const { uid, cost, quota, ip } = args;
+  const { uid, quota, ip } = args;
+  const chargeId = safeChargeId(args.chargeId);
   const label = String(args.label || quota).replace(/[^A-Za-z0-9_]/g, '').slice(0, 40) || quota;
-  if (!uid || !(cost > 0)) return { deducted: 0, short: false, limited: false };
+  if (!uid || !(args.cost > 0)) return { deducted: 0, short: false, limited: false };
   const userRef = db.collection('users').doc(uid);
+  let revert: Record<string, unknown> | undefined;
   const r = await db.runTransaction(async (tx) => {
     const doc = await tx.get(userRef);
-    if (!doc.exists) return { deducted: 0, short: false, have: 0 };
+    const mark = chargeId ? await tx.get(chargeRef(db, uid, chargeId)) : null;
+    if (!doc.exists) return { deducted: 0, short: false, have: 0, cost: args.cost, extra: false, already: null as null | { reportId: string | null } };
+    if (mark?.exists) {
+      // 같은 결제의 두 번째 호출 — 깎지 않는다
+      const reportId = typeof mark.data()?.reportId === 'string' ? mark.data()!.reportId as string : null;
+      return { deducted: 0, short: false, have: 0, cost: args.cost, extra: false, already: { reportId } };
+    }
+    const pick: CostPick = args.costFor ? args.costFor(doc.data()) : { cost: args.cost };
+    const cost = pick.cost;
+    revert = pick.revert;
+    const extra = pick.extra && Object.keys(pick.extra).length ? pick.extra : null;
     const result = deduct(doc.data(), cost);
+    let out: { deducted: number; short: boolean; have: number };
     if (!result) {
       // 2026-10-27 모자라면 서버에 남은 만큼은 깎는다. 하나도 안 깎으면 서버 잔액이 기기보다 많이 남아,
       //   웹 로그인 동기화(서버가 많으면 기기에 더한다)가 그 차이를 기기에 되살려 줬다(검토 결함). 실패 때는 깎은 만큼만 돌려준다
       const have = balanceTotal(doc.data());
       const drain = have > 0 ? deduct(doc.data(), have) : null;
-      if (drain) tx.update(userRef, drain.updates);
-      return { deducted: drain ? have : 0, short: true, have };
+      const upd = { ...(drain?.updates || {}), ...(extra || {}) };
+      if (Object.keys(upd).length) tx.update(userRef, upd);
+      out = { deducted: drain ? have : 0, short: true, have };
+    } else {
+      tx.update(userRef, extra ? { ...result.updates, ...extra } : result.updates);
+      out = { deducted: cost, short: false, have: result.totalBefore };
     }
-    tx.update(userRef, result.updates);
-    return { deducted: cost, short: false, have: result.totalBefore };
+    if (chargeId) {
+      tx.set(chargeRef(db, uid, chargeId), {
+        label, cost, deducted: out.deducted, short: out.short, status: 'running',
+        at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    return { ...out, cost, extra: !!extra, already: null as null | { reportId: string | null } };
   });
-  if (!r.short) return { deducted: r.deducted, short: false, limited: false };
 
-  console.warn(`[serverShort] 서버 잔액이 모자라 깎지 않고 생성: uid=${uid} ${label} ${cost}운 (서버 잔액 ${r.have}운)`);
+  if (r.already) {
+    console.warn(`[chargeOrShort] 같은 결제의 두 번째 호출, 깎지 않음: uid=${uid} ${label} id=${chargeId} reportId=${r.already.reportId || '-'}`);
+    const ok = await checkGenQuota({ type: quota, uid, anonymous: true, ip });
+    return { deducted: 0, short: false, limited: !ok, cost: r.cost, extraApplied: false, already: r.already };
+  }
+  if (!r.short) return { deducted: r.deducted, short: false, limited: false, cost: r.cost, extraApplied: r.extra };
+
+  console.warn(`[serverShort] 서버 잔액이 모자라 남은 만큼만 깎고 생성: uid=${uid} ${label} ${r.cost}운 (서버 잔액 ${r.have}운)`);
   const [, ok] = await Promise.all([
-    noteShort(db, uid, label, cost, r.have),
+    noteShort(db, uid, label, r.cost, r.have),
     checkGenQuota({ type: quota, uid, anonymous: true, ip }),
   ]);
-  if (!ok && r.deducted > 0) {
-    // 상한에 걸려 막을 거면 방금 깎은 남은 몫을 돌려준다(막으면서 운만 가져가지 않게)
+  if (!ok) {
+    // 상한에 걸려 막을 거면 방금 깎은 남은 몫과 함께 적은 필드(반값 사용 등)를 되돌린다(막으면서 운만 가져가지 않게)
     try {
       await db.runTransaction(async (tx) => {
         const doc = await tx.get(userRef);
         const bal = doc.data()?.balance;
         const FV = admin.firestore.FieldValue;
-        if (typeof bal === 'object' && bal !== null) tx.update(userRef, { 'balance.paid': FV.increment(r.deducted), totalSpent: FV.increment(-r.deducted) });
-        else tx.update(userRef, { balance: FV.increment(r.deducted), totalSpent: FV.increment(-r.deducted) });
+        const upd: Record<string, unknown> = r.extra && revert ? { ...revert } : {};
+        if (r.deducted > 0) {
+          if (typeof bal === 'object' && bal !== null) Object.assign(upd, { 'balance.paid': FV.increment(r.deducted), totalSpent: FV.increment(-r.deducted) });
+          else Object.assign(upd, { balance: FV.increment(r.deducted), totalSpent: FV.increment(-r.deducted) });
+        }
+        if (Object.keys(upd).length) tx.update(userRef, upd);
+        if (chargeId) tx.delete(chargeRef(db, uid, chargeId));
       });
     } catch (e: any) {
       console.error(`[serverShort] 상한 막힘 뒤 돌려주기 실패 uid=${uid} ${r.deducted}운:`, e?.message || e);
     }
-    return { deducted: 0, short: true, limited: true };
+    return { deducted: 0, short: true, limited: true, cost: r.cost, extraApplied: false };
   }
-  return { deducted: r.deducted, short: true, limited: !ok };
+  return { deducted: r.deducted, short: true, limited: false, cost: r.cost, extraApplied: r.extra };
 }

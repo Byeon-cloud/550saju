@@ -71,7 +71,7 @@ function startCompatRun(
   st: { person1: any; person2: any; relation: string; cost?: number },
   showToast: (text: string, type?: 'success' | 'info' | 'warning') => void,
 ): Promise<CompatRun> {
-  return generateCompatibilityAnalysis(st.person1.sajuData, st.person2.sajuData, st.relation)
+  return generateCompatibilityAnalysis(st.person1.sajuData, st.person2.sajuData, st.relation, pendingId)
     .then(async (res) => {
       const { saveReport, generateId, clearPendingSpend } = await import('@/services/storage/localStore');
       const rid = res.reportId || generateId();

@@ -80,7 +80,7 @@ export function DreamShareView({ data }: { data: DreamShareDoc }) {
             </GhostButton>
             {!inToss && (
               <a href="/kkum/?utm_source=share&utm_medium=dream&utm_campaign=dream_view_kkum"
-                style={{ display: 'block', textAlign: 'center', fontSize: 14.5, fontWeight: 700, color: HJ.goldText, padding: '6px 0' }}>
+                style={{ display: 'block', textAlign: 'center', fontSize: 14.5, fontWeight: 700, color: HJ.ink, padding: '6px 0' }}>
                 꿈해몽 모음 보기 ›
               </a>
             )}

@@ -5,7 +5,7 @@ import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { guardCallable, guardHttp, GEN_LIMIT_MESSAGE } from './shared/genGuard'; // 2026-10-14 익명 생성 하루 상한
 import { holdSpend, releaseSpend, refundSpend, safeSpendId, spendAmountFor, SpendError, SPEND_INSUFFICIENT_MESSAGE, type SpendHold, type SpendKind } from './shared/spendLedger'; // 2026-10-25 기기에서 깎던 1운 콘텐츠의 서버 차감
-import { chargeOrShort, requestIp } from './shared/chargeOrShort'; // 2026-10-26 서버 잔액이 모자라도 막지 않는 차감 (주제운, 궁합, 월운세, 주간운세, 신년운세)
+import { chargeOrShort, requestIp, markChargeDone, releaseCharge, safeChargeId } from './shared/chargeOrShort'; // 2026-10-26 서버 잔액이 모자라도 막지 않는 차감 (주제운, 궁합, 월운세, 주간운세, 신년운세, 10-27 종합사주, 대운, 꿈 심층)
 import { verifyIapOrder } from './shared/tossOrder'; // 2026-10-26 토스 앱 결제를 토스에 확인한 뒤 지급 (인증서 비밀값은 아래 같은 이름의 TOSS_MTLS_CERT, TOSS_MTLS_KEY)
 import { defineSecret } from 'firebase-functions/params';
 import { logAiFailure } from './shared/aiFailureLog';
@@ -27,6 +27,11 @@ const premiumCost = (): number => (onHalfEvent() ? 5 : 10);
 const premiumCostFor = (userData: any, offer: unknown): { cost: number; useOffer: boolean } => {
   const useOffer = offer === 'first_daily' && !userData?.premiumOfferUsed && premiumCost() > 5;
   return { cost: useOffer ? 5 : premiumCost(), useOffer };
+};
+/** chargeOrShort costFor — 반값이면 같은 트랜잭션에서 premiumOfferUsed 를 적고, 상한에 막히면 되돌린다 */
+const premiumPick = (offer: unknown) => (data: any) => {
+  const pc = premiumCostFor(data, offer);
+  return pc.useOffer ? { cost: pc.cost, extra: { premiumOfferUsed: true }, revert: { premiumOfferUsed: false } } : { cost: pc.cost };
 };
 const monthlyCost = (): number => (onHalfEvent() ? 5 : 7);
 const weeklyCost = (): number => 3; // 2026-10-15 정가 5 → 3운 (클라 getWeeklyPrice 와 일치)
@@ -303,27 +308,17 @@ export const generatePremiumReportStream = onRequest(
     let deductedAmount = 0;
     let usedOffer = false; // 2026-10-25 반값으로 깎았는지 (생성이 실패하면 계정의 반값 표시도 되돌린다)
     if (!DEV_MODE && uid !== 'anonymous' && !isAnonymous) {
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        try {
-          // 2026-05-28 — schema 통일 helper (객체/숫자 양쪽 지원)
-          let cost = premiumCost();
-          await db.runTransaction(async (tx) => {
-            const doc = await tx.get(userRef);
-            const pc = premiumCostFor(doc.data(), offer);
-            cost = pc.cost;
-            usedOffer = pc.useOffer;
-            const result = computeBalanceDeduction(doc.data(), cost);
-            if (!result) throw new Error('운이 부족합니다');
-            tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
-          });
-          deductedAmount = cost;
-        } catch (e: any) {
-          sendEvent('error', { message: e.message || '잔액 차감 실패' });
-          res.end();
-          return;
-        }
+      // 2026-10-27 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 남은 만큼만 깎고 실패 때 그만큼 돌려준다).
+      //   예전엔 화면에 10운이 있어도 서버가 모자라면 '운이 부족합니다'로 막혔다(다른 콘텐츠는 10-26 에 고침)
+      try {
+        const c = await chargeOrShort(db, computeBalanceDeduction, { uid, cost: premiumCost(), quota: 'premium', label: 'premium', ip: requestIp(req), costFor: premiumPick(offer) });
+        if (c.limited) { sendEvent('error', { message: GEN_LIMIT_MESSAGE }); res.end(); return; }
+        deductedAmount = c.deducted;
+        usedOffer = !!c.extraApplied;
+      } catch (e: any) {
+        sendEvent('error', { message: e.message || '잔액 차감 실패' });
+        res.end();
+        return;
       }
     }
 
@@ -415,12 +410,11 @@ export const generatePremiumReportStream = onRequest(
       console.error('generatePremiumReportStream error:', error);
       logAiFailure({ type: 'premium', stage: 'stream', message: error?.message || 'unknown', uid });
       // 환불
-      if (deductedAmount > 0) {
-        await refundBalance(uid, deductedAmount, 'generatePremiumReportStream failed');
-        // 2026-10-25 — 반값으로 깎았던 생성이 실패하면 계정의 반값 표시도 되돌린다 (예전엔 운만 돌려주고 반값은 써 버린 것으로 남아
-        //   '다시 만들기'가 10운이었다). 클라도 혜택을 되살린다(firstDailyOffer.ts restoreFirstDailyOffer). 성공한 생성은 그대로 쓴 것으로 둔다
-        if (usedOffer) await db.collection('users').doc(uid).update({ premiumOfferUsed: false }).catch(() => { /* best-effort */ });
-      }
+      if (deductedAmount > 0) await refundBalance(uid, deductedAmount, 'generatePremiumReportStream failed');
+      // 2026-10-25 — 반값으로 깎았던 생성이 실패하면 계정의 반값 표시도 되돌린다 (예전엔 운만 돌려주고 반값은 써 버린 것으로 남아
+      //   '다시 만들기'가 10운이었다). 클라도 혜택을 되살린다(firstDailyOffer.ts restoreFirstDailyOffer). 성공한 생성은 그대로 쓴 것으로 둔다
+      //   2026-10-27 서버가 모자라 0운을 깎았어도 반값은 쓴 것으로 적으므로 깎은 운과 따로 되돌린다
+      if (usedOffer) await db.collection('users').doc(uid).update({ premiumOfferUsed: false }).catch(() => { /* best-effort */ });
       sendEvent('error', { message: error?.message || 'AI 분석 실패' });
       res.end();
     }
@@ -449,22 +443,11 @@ export const generateReport = onCall(
 
     // 런칭 시 잔액 차감 — 실명 로그인 유저만 (익명 유저는 Firestore 문서 없음)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        // 2026-05-28 — schema 통일 helper
-        let cost = premiumCost();
-        await db.runTransaction(async (tx) => {
-          const doc = await tx.get(userRef);
-          const pc = premiumCostFor(doc.data(), request.data?.offer);
-          cost = pc.cost;
-          usedOffer = pc.useOffer;
-          const result = computeBalanceDeduction(doc.data(), cost);
-          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, pc.useOffer ? { ...result.updates, premiumOfferUsed: true } : result.updates);
-        });
-        deductedAmount = cost;
-      }
+      // 2026-10-27 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 스트림 경로와 같다)
+      const c = await chargeOrShort(db, computeBalanceDeduction, { uid, cost: premiumCost(), quota: 'premium', label: 'premium', ip: requestIp(request.rawRequest), costFor: premiumPick(request.data?.offer) });
+      if (c.limited) throw new HttpsError('resource-exhausted', GEN_LIMIT_MESSAGE);
+      deductedAmount = c.deducted;
+      usedOffer = !!c.extraApplied;
     }
 
     try {
@@ -509,8 +492,8 @@ export const generateReport = onCall(
       console.error('generateReport error:', error);
       // 서버 환불 — 차감한 잔액을 되돌려 줌 (AI/Firestore 실패 시)
       await refundBalance(uid, deductedAmount, 'generateReport failed');
-      // 2026-10-25 — 반값으로 깎았던 생성이 실패하면 계정의 반값 표시도 되돌린다 (스트림 경로와 같다)
-      if (deductedAmount > 0 && usedOffer) await db.collection('users').doc(uid).update({ premiumOfferUsed: false }).catch(() => { /* best-effort */ });
+      // 2026-10-25 — 반값으로 깎았던 생성이 실패하면 계정의 반값 표시도 되돌린다 (스트림 경로와 같다, 10-27 깎은 운이 0 이어도)
+      if (usedOffer) await db.collection('users').doc(uid).update({ premiumOfferUsed: false }).catch(() => { /* best-effort */ });
       throw new HttpsError('internal', `AI 분석 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -1602,19 +1585,11 @@ export const generateDreamDeep = onCall(
 
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
-    if (request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        // 2026-05-28 — schema 통일 helper
-        await db.runTransaction(async (tx) => {
-          const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 1);
-          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, result.updates);
-        });
-        deductedAmount = 1;
-      }
+    if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
+      // 2026-10-27 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts)
+      const c = await chargeOrShort(db, computeBalanceDeduction, { uid, cost: 1, quota: 'dreamDeep', label: 'dreamDeep', ip: requestIp(request.rawRequest) });
+      if (c.limited) throw new HttpsError('resource-exhausted', GEN_LIMIT_MESSAGE);
+      deductedAmount = c.deducted;
     }
 
     try {
@@ -1782,18 +1757,10 @@ export const generateDaeun = onCall(
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        // 2026-05-28 — schema 통일 helper
-        await db.runTransaction(async (tx) => {
-          const doc = await tx.get(userRef);
-          const result = computeBalanceDeduction(doc.data(), 1);
-          if (!result) throw new HttpsError('failed-precondition', '운이 부족합니다');
-          tx.update(userRef, result.updates);
-        });
-        deductedAmount = 1;
-      }
+      // 2026-10-27 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts)
+      const c = await chargeOrShort(db, computeBalanceDeduction, { uid, cost: 1, quota: 'daeun', label: 'daeun', ip: requestIp(request.rawRequest) });
+      if (c.limited) throw new HttpsError('resource-exhausted', GEN_LIMIT_MESSAGE);
+      deductedAmount = c.deducted;
     }
 
     try {
@@ -2088,11 +2055,24 @@ export const generateCompatibility = onCall(
 
     const uid = request.auth?.uid || 'anonymous';
     let deductedAmount = 0;
+    // 2026-10-27 기기 결제 장부 id — 웹에서 만드는 중에 새로고침하면 결과 화면이 같은 id 로 다시 부른다. 두 번째는 깎지 않고,
+    //   첫 번째가 이미 끝났으면 그 결과를 그대로 돌려준다 (예전엔 서버에서 3운이 한 번 더 빠졌다)
+    const chargeId = safeChargeId(request.data?.chargeId);
+    let ownMark = false; // 이번 호출이 장부 표시를 만들었다 (실패하면 지운다)
     if (!DEV_MODE && request.auth && !request.auth.token?.firebase?.sign_in_provider?.includes('anonymous')) {
       // 2026-10-26 — 서버 잔액이 모자라도 막지 않는다 (shared/chargeOrShort.ts, 깎은 만큼만 실패 때 돌려준다)
-      const c = await chargeOrShort(db, computeBalanceDeduction, { uid, cost: COMPAT_COST, quota: 'compat', label: 'compat', ip: requestIp(request.rawRequest) });
+      const c = await chargeOrShort(db, computeBalanceDeduction, { uid, cost: COMPAT_COST, quota: 'compat', label: 'compat', ip: requestIp(request.rawRequest), chargeId });
       if (c.limited) throw new HttpsError('resource-exhausted', GEN_LIMIT_MESSAGE);
       deductedAmount = c.deducted;
+      ownMark = !!chargeId && !c.already;
+      if (c.already?.reportId) {
+        try {
+          const prev = await db.collection('reports').doc(c.already.reportId).get();
+          const pd = prev.data();
+          const content = pd?.content ?? (typeof pd?.contentJson === 'string' ? JSON.parse(pd.contentJson) : null);
+          if (prev.exists && pd?.uid === uid && content) return { reportId: prev.id, content };
+        } catch { /* 못 읽으면 새로 만든다 (깎지는 않는다) */ }
+      }
     }
 
     try {
@@ -2106,10 +2086,13 @@ export const generateCompatibility = onCall(
         aiModel: CLAUDE_MODEL.sonnet,
         generatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
+      if (ownMark) await markChargeDone(db, uid, chargeId, reportRef.id);
       return { reportId: reportRef.id, content: result };
     } catch (error: any) {
       console.error('generateCompatibility error:', error);
       await refundBalance(uid, deductedAmount, 'generateCompatibility failed');
+      // 이번 호출이 만든 표시만 지운다 (깎지 않은 두 번째 호출이 실패해도 첫 번째의 표시는 남긴다)
+      if (ownMark) await releaseCharge(db, uid, chargeId);
       throw new HttpsError('internal', `궁합 분석 실패: ${error.message || 'unknown'}`);
     }
   }
@@ -2566,7 +2549,7 @@ export { renderIljuToday } from './seo/iljuTodayPage'; // 2026-10-17 오늘의 �
 /* ─── #saju-card-share Stage 4 · 사주 카드 OG SSR (2026-04-27) ───
  * 만세력 카드 카톡 공유 시 미리보기 이미지 노출. E32 패턴 응용.
  *  - renderSajuCardOg: /saju-card/:profileId 봇 UA 시 SSR OG 메타 HTML
- *  - renderSajuCardOgImage: /api/saju-card-og.png?n=&i= 동적 1200×630 PNG (puppeteer + Noto Serif KR)
+ *  - renderSajuCardOgImage: /api/saju-card-og.png?i= 동적 1200×630 PNG (puppeteer + Noto Serif KR, 10-26 부터 일주 i 만 읽는다. n 은 무시)
  *
  * Firebase Hosting 설정 필요 (firebase.json rewrites — 순서 중요):
  *   { source: "/api/saju-card-og.png", function: "renderSajuCardOgImage" }
