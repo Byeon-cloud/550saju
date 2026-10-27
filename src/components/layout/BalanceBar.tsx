@@ -76,7 +76,8 @@ export function BalanceBar() {
 
         {/* ? 버튼 (홈에서만) + 웹 로그인 상태 + 잔액 + 충전 */}
         <div className="flex items-center gap-2">
-          {account && location.pathname !== '/my' && (
+          {/* 빌드 상수를 먼저 봐서 앱 번들에서는 이 버튼 코드가 통째로 빠진다 (10-25 웹 로그인 코드 반려 대응) */}
+          {SHOW_WEB_ACCOUNT && account && location.pathname !== '/my' && (
             account.member ? (
               <button type="button" onClick={() => navigate('/my')} aria-label="내 정보, 로그인되어 있어요"
                 className="tap-pad flex items-center justify-center"
