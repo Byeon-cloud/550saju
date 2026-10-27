@@ -85,7 +85,7 @@ export interface DayStats {
 }
 
 /** 하루치 계산에 공통으로 쓰는 작은 장부들 (여러 날을 만들 때 한 번만 읽는다) */
-interface Ledger {
+export interface Ledger {
   orders: { uid: string; orderId: string; plat: Plat; amount: number; day: string; refundedDay: string | null; refundAmount: number; status: string }[];
   firstPayDay: Map<string, string>; // uid → 첫 결제 날
   comps: { createdDay: string; amount: number; claimedDay: string | null; target: string }[];
@@ -113,7 +113,7 @@ function whoOfDay(day: string, ledger: Ledger): Promise<Map<string, Plat>> {
   return p;
 }
 
-async function loadLedger(): Promise<Ledger> {
+export async function loadLedger(): Promise<Ledger> {
   const db = admin.firestore();
   const [paySnap, compSnap, logSnap, alertSnap] = await Promise.all([
     db.collectionGroup('payments').get(),
@@ -420,6 +420,8 @@ async function buildAndSave(days: string[]): Promise<number> {
     const st = await computeDay(day, ledger);
     if (day === kstToday()) continue; // 오늘 것은 저장하지 않는다(늘 바로 계산)
     await db.collection('statsDaily').doc(day).set(st);
+    // 2026-10-27 그날 온 기기 명단(관리자 '재방문' 판, loyalty.ts). 실패해도 하루 요약은 그대로
+    try { const { saveRoster } = await import('./loyalty'); await saveRoster(day); } catch (e: any) { console.warn('[buildAndSave] 기기 명단 실패', day, e?.message || e); }
     n += 1;
   }
   return n;

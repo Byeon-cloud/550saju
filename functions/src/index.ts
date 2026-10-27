@@ -2515,6 +2515,7 @@ export { restoreLibrary } from './storage/restoreLibrary';
 export { adminGrantCompensation } from './admin/adminGrantCompensation';
 // 관리자 v4 (2026-10-19) — 하루 요약(statsDaily), 고객 찾기, 원본 400일 보관
 export { adminStats, buildDailyStats, pruneRawAnalytics } from './admin/stats';
+export { adminLoyalty } from './admin/loyalty'; // 2026-10-27 관리자 '재방문' 판 (며칠 왔나, 단골, 다시 온 기기, 웹 홈 화면 앱)
 export { adminLookup } from './admin/customer';
 export { adminMailReport } from './admin/mailReport'; // 2026-10-22 관리자 '메일' 판 (아침 운세 메일 구독, 보낸 수, 링크로 온 사람, 구독자 결제)
 export { adminMailList, adminMailOptOut } from './admin/mailList'; // 2026-10-24 메일 준 사람 명단(주소 가림, 보기는 기록), 오너가 대신 수신 거부
